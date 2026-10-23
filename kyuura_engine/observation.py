@@ -49,6 +49,8 @@ from .decisions import (
     DISCARD_TO_DECK,
     DISCARD_TO_DECK_TOP,
     ENTRY_POWER,
+    REACTION_ORDER,
+    REACTION_POWER,
     EVOLUTION_HEAL,
     STADIUM_RETURN_BENCH,
     USE_DISCARD_TRAINER,
@@ -119,6 +121,7 @@ OPTION_MEANINGS: dict[str, str] = {
     PEEK_CARD: "peek_target",
     PROMOTE_ACTIVE: "pokemon", SELECT_POKEMON: "pokemon", FORCED_SWITCH: "pokemon", KO_PREVENTION: "pokemon", KNOCK_OUT_POWER: "pokemon", ATTACH_TO_BENCH: "pokemon", NINJA_TRICK: "pokemon", REACTION_SWITCH: "pokemon", BENCH_GUARD: "pokemon",
     ENTRY_POWER: "pokemon",
+    REACTION_POWER: "pokemon", REACTION_ORDER: "number",  # v0.86: 反応の特殊能力の使う機会（場のポケモンの番号）・同じ時点の反応の順番（待っている反応の位置）
     DISCARD_ENERGY: "card", RECOVER_ENERGY: "card", POST_KNOCKOUT_POWER: "card", DISCARD_FROM_HAND: "card", SEARCH_DECK: "card",
     RETURN_TO_DECK: "card", SELECT_EVOLUTION_CARD: "card", RETRIEVE_ENERGY: "card", DISCARD_OPPONENT_ENERGY: "card", RECOVER_TRAINER: "card",
     ATTACH_FROM_DISCARD: "card", BENCH_FROM_DECK: "card", ATTACH_FROM_DECK: "card", RETURN_ENERGY: "card", MOVE_ENERGY: "card",
@@ -501,6 +504,9 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
+    # v0.86: ［かんでん］のダメージ・［いなびかり］がはたらかなかった（相手の控えなし）・反応の特殊能力を使わなかった・［はしりさる］のコインの結果とはたらかなかった・
+    # ダークドレインのポケモンごとのコインの結果・［おたけび］の番の終わり（どれも場・コイン・公開の結果）
+    "conductivity", "lightning_burst_skipped", "reaction_power_declined", "bolt_check", "bolt_skipped", "pokemon_coin_results", "power_turn_end",
     # v0.85: ［あばれんぼう］で山札の上からトラッシュしたカード（トラッシュは公開）・［ファイヤーブースト］で山札からつけた・［ファイヤーリチャージ］でトラッシュからつけた
     # カード（場は公開）・ミラクルエネルギーのトラッシュ・ぎゃくりゅうでトラッシュから山札にもどしたカード（トラッシュは公開）
     "power_discard_deck", "power_attach_from_deck", "power_attach_from_discard", "miracle_energy_discarded", "attack_discard_to_deck",

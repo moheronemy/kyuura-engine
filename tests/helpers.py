@@ -1335,6 +1335,13 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DiscardEnergyCardsThenDamageNoneIfLacking,
     _effects.DiscardFireThenDamageBothBenches,
     _effects.PlusDiscardTypeCardsThenReturnToDeck,
+    # v0.86（docs/entry-energy-evolution-reactions-v0.86.md 7 章）
+    _effects.CoinPerOpponentPokemonDamageThenHealDealt,
+    _effects.DamageThenLockOpponentHandTrainersOnHeads,
+    _effects.DamageThenParalyzeOrSleepByTwoCoins,
+    _effects.DamageThenProtectOwnBench,
+    _effects.DamageThenStopDefenderPowers,
+    _effects.DiscardTypeCardsThenDamageNoneIfLacking,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -2141,3 +2148,11 @@ V0_85_CARDS = (*V0_85_POKEMON[:5], BAYLEEF_PF1, MEGANIUM_PF1, MEGANIUM_NIP1X, TY
                MIRACLE_ENERGY)  # 写しの組 pool_v0_85 の並び
 # 進化元（どれも前の版で対応済み。名前の完全一致で決まる）
 CHIKORITA_NEO1, CYNDAQUIL_NEO1, QUILAVA_PF1, TOTODILE_NEO1, CHARMELEON_BASE = "neo1-002", "neo1-018", "PF1-005", "neo1-024", "PMCG1-017"
+
+# v0.86（docs/entry-energy-evolution-reactions-v0.86.md）: 登場・エネルギー・進化への反応 13 枚
+EEVEE_NEO2, EEVEE_PF2, EEVEE_PRN = "neo2-049", "PF2-005", "PRN-024"  # イーブイ（［エナジーしんか］2 枚・［れんさしんか］）
+ENTEI_NEO3, RAIKOU_NEO3, BLISSEY_NEO3, DRAGONITE_PR1, ENTEI_PF2 = "neo3-010", "neo3-029", "neo3-052", "PR1-056", "PF2-008"
+DARK_CROBAT, DARK_FLAAFFY, DARK_AMPHAROS, SUICUNE_NEO3, VENUSAUR_PR1 = "neo4-012", "neo4-044", "neo4-046", "neo3-021", "PR1-058"
+V0_86_POKEMON = (EEVEE_NEO2, EEVEE_PF2, EEVEE_PRN, ENTEI_NEO3, RAIKOU_NEO3, BLISSEY_NEO3, DRAGONITE_PR1, ENTEI_PF2, DARK_CROBAT, DARK_FLAAFFY, DARK_AMPHAROS,
+                 SUICUNE_NEO3, VENUSAUR_PR1)
+V0_86_CARDS = V0_86_POKEMON  # 写しの組 pool_v0_86 の並び

@@ -766,15 +766,15 @@ class RegistryTest(unittest.TestCase):
         self.assertEqual((len(E.V0_84_ATTACKS), len(E.V0_84_POWERS), len(E.V0_84_TRAINERS)), (19, 5, 1))
         pool = load_card_pool()
         categories = [pool.get(c).category for c in pool.playable_ids]
-        self.assertEqual((len(categories), categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (1053, 756, 260, 37))
+        self.assertEqual((len(categories), categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (1066, 769, 260, 37))  # v0.86 でポケモン 13 枚を加えた
         reg = E.DEFAULT_EFFECTS
-        self.assertEqual((len(reg.attack_keys()), len(reg.power_keys()), len(reg.trainer_ids()), len(reg.energy_ids())), (1284, 88, 260, 19))
+        self.assertEqual((len(reg.attack_keys()), len(reg.power_keys()), len(reg.trainer_ids()), len(reg.energy_ids())), (1298, 100, 260, 19))  # v0.86 でワザ 14・特殊能力 12 を加えた
         stripped = reg.without_attacks("without-v0.84-attacks", list(E.V0_84_ATTACKS))
         stripped = stripped.without_powers("without-v0.84-powers", list(E.V0_84_POWERS))
         stripped = stripped.without_trainers("without-v0.84", list(E.V0_84_TRAINERS))
         before = pool_from_extract(extract, stripped)
         self.assertFalse(before.playable_ids & set(H.V0_84_CARDS))
-        self.assertEqual(len(before.playable_ids), 1026 + len(extract["pool_v0_85"]))  # v0.85 から、あとの版の 14 枚（pool_v0_85）も対応
+        self.assertEqual(len(before.playable_ids), 1026 + len(extract["pool_v0_85"]) + len(extract["pool_v0_86"]))  # v0.85 から、あとの版の 14 枚（pool_v0_85）も対応。v0.86 の 13 枚（pool_v0_86）も
         self.assertEqual(pool.playable_ids - before.playable_ids, frozenset(H.V0_84_CARDS))
         # 未対応（kyuura data/engine_targets.json（7d3f4ca）の対象 1,377 件から今の登録を差し引く）。../kyuura がなければ確かめない
         import json
@@ -785,7 +785,7 @@ class RegistryTest(unittest.TestCase):
             targets = json.loads(subprocess.check_output(["git", "-C", str(kyuura), "show", f"{extract['source']['commit']}:data/engine_targets.json"]))
             missing = [c for c in targets["cards"] if c["id"] not in pool.playable_ids]
             self.assertEqual((len(targets["cards"]), len(missing), sum(1 for c in missing if c["id"].startswith("neo")),
-                              sum(1 for c in missing if c["product_group"] != "expansion_pack")), (1377, 324, 148, 176))  # v0.85 でポケモン 13 枚・ミラクルエネルギーを加えた
+                              sum(1 for c in missing if c["product_group"] != "expansion_pack")), (1377, 311, 140, 171))  # v0.86 でポケモン 13 枚を加えた  # v0.85 でポケモン 13 枚・ミラクルエネルギーを加えた
 
     def test_new_events_and_decisions_are_classified(self):
         from kyuura_engine.observation import (

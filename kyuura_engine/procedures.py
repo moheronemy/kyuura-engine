@@ -332,7 +332,7 @@ def _berry_view(state: GameState, order: tuple[int, int], skip: int) -> tuple:
             try:
                 hp = max_hp(state, pokemon)
                 form = repr(current_form(state, pokemon))
-                powers = tuple(power_suppressed(state, slot.power) for slot in powers_of(state, pokemon))
+                powers = tuple(power_suppressed(state, slot.power, pokemon) for slot in powers_of(state, pokemon))
             except UnsupportedError as error:
                 hp, form, powers = error.code, None, None
             view.append((pokemon.pokemon_id, hp, form, powers, triggers.get(pokemon.pokemon_id)))
@@ -516,7 +516,7 @@ def _mid_check_view(state: GameState, order: tuple[int, int], keep: frozenset[in
                 final = pokemon.damage + (received if isinstance(received, int) else 0)
                 hp = max_hp(state, pokemon)
                 knocked = final >= hp
-                powers = tuple((str(slot.key), power_suppressed(state, slot.power)) for slot in powers_of(state, pokemon)) if knocked else ()
+                powers = tuple((str(slot.key), power_suppressed(state, slot.power, pokemon)) for slot in powers_of(state, pokemon)) if knocked else ()
                 view[pokemon.pokemon_id] = (received, knocked, hp - final == 10 and scram_watch(state, pokemon), powers)
             except (UnsupportedError, TypeReadingsDiffer) as error:
                 view[pokemon.pokemon_id] = ("stop", getattr(error, "code", type(error).__name__))

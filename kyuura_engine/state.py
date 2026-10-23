@@ -1074,6 +1074,49 @@ class DoubledDamage:
     on_opponent: ClassVar[bool] = False
 
 
+
+@dataclass(frozen=True)
+class PowersStopped:
+    """ワザによる「持続する効果」（v0.86。docs/entry-energy-evolution-reactions-v0.86.md 7 章）のうち、わるいモココ（neo4-044）の「スタンウェーブ」の「次の自分の番が終わる
+    まで、このワザを受けた相手は「特殊能力」を使うことができず、その効果も消える。」（kyuura の印刷の文面）。
+
+    相手に与える効果（``on_opponent``）。受けるのは相手の対戦ポケモン（このワザを受けた相手）。はたらくのは与えた番から、効果を与えたプレイヤーの次の番（``active_turn`` =
+    ``created_turn + 2``）の終わりまで（``from_creation``）。その間、受けているポケモンの特殊能力は、宣言して使う特殊能力の使用も、常にはたらく・自動的にはたらく特殊能力の力も
+    止まる（「使うことができず、その効果も消える」。かがくへんかガスの「使えず、その力も消える」と同じ範囲だが、発生源・期限・対象はこのポケモンだけ。``persistent.powers_stopped``）。
+    消える契機はほかの持続する効果と同じ（期限・ベンチにもどる・進化・退化・場をはなれる。GR-2000-P322-PERSISTENT-EFFECTS）。"""
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "powers_stopped"
+    turns_until_active: ClassVar[int] = 2
+    on_opponent: ClassVar[bool] = True
+    from_creation: ClassVar[bool] = True  # 与えた番からはたらく（「次の自分の番が終わるまで」）
+
+
+@dataclass(frozen=True)
+class BenchProtection:
+    """ワザによる「持続する効果」（v0.86。7 章）のうち、エンテイ（PF2-008）の「ほのおのまもり」の「次の相手の番が終わるまで、自分の控えポケモン全員は、ワザによるダメージや
+    効果を受けない。」（kyuura の印刷の文面）。
+
+    効果を与えたときの自分の控えポケモンそれぞれに与える（``bench_ok``。``source_card``・``source_player`` は効果を与えたワザを使ったポケモンとそのプレイヤー。受けるポケモンとは
+    別のポケモン（``from_other``））。はたらくのは与えた番から次の相手の番（``active_turn`` = ``created_turn + 1``）の終わりまで（``from_creation``）。こおりのはしら（v0.84。
+    バトル場のやさしいジュゴンが持ち、「このカードがバトル場をはなれると消える」）と違い、説明は発生源が場をはなれても消えるとは書かないので、受けるポケモンが持つ（発生源の
+    エンテイが場をはなれても消えない）。消える契機は受けるポケモンについての持続する効果の規定（期限・進化・退化・場をはなれる。GR-2000-P322-PERSISTENT-EFFECTS）。
+    バトル場に出た受けるポケモン・効果のない控えポケモンに当てはめるかは決まらない（PL1。``kernel.first_void``）。"""
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "bench_protection"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+    from_creation: ClassVar[bool] = True  # 与えた番からはたらく（「次の相手の番が終わるまで」）
+    bench_ok: ClassVar[bool] = True  # ベンチのポケモンが受ける
+    from_other: ClassVar[bool] = True  # 受けるポケモンは効果を与えたポケモンとは別
+
 # ワザによる持続する効果の型（v0.4b。v0.12 で Retaliation、v0.27 で NextTurnAttackDamage、v0.31 で DestinyBond・AttackBarrier・DamageReduction・
 # CannotAttack、v0.34 で ReducedDamageToSource、v0.35 で CannotUseOwnAttack・CannotUseAttack、v0.36 で AttackCoinCheck・CannotRetreat、v0.40 で
 # CannotAttackWhileSourceActive、v0.45 で ZeroDamageBelow、v0.46 で HalvedDamage、v0.48 で WeaknessChange・ResistanceChange・MaxHpSet を加えた）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
@@ -1086,7 +1129,8 @@ PERSISTENT_EFFECT_TYPES = (PreventDamage, PreventAttackDamage, Retaliation, Next
                            ReflectShield,  # v0.83: ReflectShield（リフレクトシールド）
                            # v0.84: きらめきタッチ・こおりのはしら・パルスガード・ひかりのはどう
                            StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard,
-                           StatusImmunityNextTurn)  # v0.85: しんぴのこな
+                           StatusImmunityNextTurn,  # v0.85: しんぴのこな
+                           PowersStopped, BenchProtection)  # v0.86: スタンウェーブ・ほのおのまもり
 
 
 @dataclass(frozen=True)

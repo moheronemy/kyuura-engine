@@ -235,7 +235,7 @@ class RegistrationTest(unittest.TestCase):
         after = load_card_pool()
         self.assertFalse(before.playable_ids & set(V0_77_CARDS))
         self.assertEqual(after.playable_ids - before.playable_ids, frozenset(V0_77_CARDS))
-        self.assertEqual(len(before.playable_ids), 1001)  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.84 でポケモン 12 枚・ポケモン育て屋夫婦を加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.78 の 13 枚・v0.79 の 52 枚・v0.80 の 30 枚を含む（v0.77 では 826）  # v0.83 でポケモン 18 枚（ワザ 33）を加えた
+        self.assertEqual(len(before.playable_ids), 1014)  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.84 でポケモン 12 枚・ポケモン育て屋夫婦を加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.78 の 13 枚・v0.79 の 52 枚・v0.80 の 30 枚を含む（v0.77 では 826）  # v0.83 でポケモン 18 枚（ワザ 33）を加えた
         for card in V0_77_CARDS:
             self.assertFalse(before.get(card).supported)
         self.assertFalse(set(E.EQUIVALENT_CARDS) & set(V0_77_CARDS))
@@ -278,10 +278,10 @@ class RegistrationTest(unittest.TestCase):
         エネルギー 5 枚とポケモン 8 枚（ワザ 16）、v0.79 でポケモン 52 枚（ワザ 94）を加えたので、今の数は 943（695・213・35）、ワザ 1,182・特殊エネルギー 17。"""
         pool = load_card_pool()
         categories = Counter(pool.get(card).category for card in pool.playable_ids)
-        self.assertEqual((len(pool.playable_ids), categories["pokemon"], categories["trainer"], categories["energy"]), (1053, 756, 260, 37))  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
+        self.assertEqual((len(pool.playable_ids), categories["pokemon"], categories["trainer"], categories["energy"]), (1066, 769, 260, 37))  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
         registry = E.DEFAULT_EFFECTS
-        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids()), len(registry.energy_ids())), (1284, 88, 260, 19))  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚を含む）を加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
-        self.assertEqual(len(read_extract()["cards"]), 1053)  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
+        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids()), len(registry.energy_ids())), (1298, 100, 260, 19))  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚を含む）を加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
+        self.assertEqual(len(read_extract()["cards"]), 1066)  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
 
     def test_unsupported_counts_with_neo_in_scope(self):
         """kyuura data/engine_targets.json（7d3f4ca）の対象 1,377 件（PMCG1〜6 の 457・拡張パック以外の 597・neo の 323）から登録を差し引く。全対象の未対応 499・
@@ -297,9 +297,9 @@ class RegistrationTest(unittest.TestCase):
         pmcg = [x["id"] for x in targets if x["id"].startswith("PMCG")]
         self.assertEqual((len(ids), len(pmcg), len(non_pack), len(neo)), (1377, 457, 597, 323))
         self.assertTrue(pool.playable_ids <= set(ids))
-        self.assertEqual(sum(1 for c in ids if c not in pool.playable_ids), 324)  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.79 で 52 枚を加えた  # v0.78 で 13 枚を加えた（v0.77 は 499）  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
-        self.assertEqual(sum(1 for c in neo if c not in pool.playable_ids), 148)  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 で neo のトレーナー 11 枚（ポケモンのどうぐ・スタジアム）を加えた  # v0.80 で neo のトレーナー 25 枚を加えた  # v0.79 で neo 36 枚を加えた  # v0.77 は 271  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
-        self.assertEqual(sum(1 for c in non_pack if c not in pool.playable_ids), 176)  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（拡張パック以外 4 枚）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.79 で拡張パック以外 16 枚を加えた  # v0.77 は 228  # v0.83 でポケモン 18 枚（ワザ 33）を加えた
+        self.assertEqual(sum(1 for c in ids if c not in pool.playable_ids), 311)  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.79 で 52 枚を加えた  # v0.78 で 13 枚を加えた（v0.77 は 499）  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
+        self.assertEqual(sum(1 for c in neo if c not in pool.playable_ids), 140)  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 で neo のトレーナー 11 枚（ポケモンのどうぐ・スタジアム）を加えた  # v0.80 で neo のトレーナー 25 枚を加えた  # v0.79 で neo 36 枚を加えた  # v0.77 は 271  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
+        self.assertEqual(sum(1 for c in non_pack if c not in pool.playable_ids), 171)  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（拡張パック以外 4 枚）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.79 で拡張パック以外 16 枚を加えた  # v0.77 は 228  # v0.83 でポケモン 18 枚（ワザ 33）を加えた
         self.assertEqual(Counter(x["jp_set"] for x in targets if x["id"].startswith("neo")), Counter({"neo1": 96, "neo2": 57, "neo3": 57, "neo4": 113}))
 
     def test_other_cards_in_the_copy_are_unchanged(self):
@@ -311,7 +311,7 @@ class RegistrationTest(unittest.TestCase):
         new = read_extract()
         old_cards = {c["id"]: c for c in old["cards"]}
         new_cards = {c["id"]: c for c in new["cards"]}
-        self.assertEqual(set(new_cards) - set(old_cards), set(V0_77_CARDS) | set(read_extract()["pool_v0_78"]) | set(read_extract()["pool_v0_79"]) | set(read_extract()["pool_v0_80"]) | set(read_extract()["pool_v0_81"]) | set(read_extract()["pool_v0_82"]) | set(read_extract()["pool_v0_83"]) | set(read_extract()["pool_v0_84"]) | set(read_extract()["pool_v0_85"]))  # v0.78 の 13 枚・v0.79 の 52 枚も加えた
+        self.assertEqual(set(new_cards) - set(old_cards), set(V0_77_CARDS) | set(read_extract()["pool_v0_78"]) | set(read_extract()["pool_v0_79"]) | set(read_extract()["pool_v0_80"]) | set(read_extract()["pool_v0_81"]) | set(read_extract()["pool_v0_82"]) | set(read_extract()["pool_v0_83"]) | set(read_extract()["pool_v0_84"]) | set(read_extract()["pool_v0_85"]) | set(read_extract()["pool_v0_86"]))  # v0.78 の 13 枚・v0.79 の 52 枚も加えた
         self.assertEqual({k: v for k, v in new_cards.items() if k in old_cards}, old_cards)
         self.assertEqual(new["source"], old["source"])
         for key in old:
@@ -342,7 +342,7 @@ class RegistrationTest(unittest.TestCase):
                     self.assertEqual(f"{card}/{key}" in adopted, attack_def.text_ja is not None)
                     texts += attack_def.text_ja is not None
         self.assertEqual(texts, 50)
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (186, 188))  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.84 で RF1・WD1・WD2 を加えた  # v0.83 で RS1・LT1 を加えた  # v0.81a で MH2 を加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.79 で PK1 を加えた  # v0.78 で MT1・DE1 を加えた（v0.77 は 163・165）
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (193, 195))  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.84 で RF1・WD1・WD2 を加えた  # v0.83 で RS1・LT1 を加えた  # v0.81a で MH2 を加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.79 で PK1 を加えた  # v0.78 で MT1・DE1 を加えた（v0.77 は 163・165）
 
     def test_rule_base_and_release_dates_are_kept(self):
         """発売日は写しの欄のまま（neo1 は 2000.02.14 版の前、neo2〜neo4 はあと）。ルールの基準は 2000.02.14 版のまま（カードの範囲を広げただけ）。"""
@@ -580,7 +580,7 @@ class SecretPlanAndQuizTest(unittest.TestCase):
     def test_quiz_names(self):
         extract = read_extract()
         cards = {c["id"]: c for c in extract["cards"]}
-        earlier = {cards[c]["name"]["ja"] for c in cards if c not in V0_77_CARDS and c not in extract["pool_v0_79"] and c not in extract["pool_v0_82"] and c not in extract["pool_v0_83"] and c not in extract["pool_v0_84"] and c not in extract["pool_v0_85"] and cards[c]["category"] == "pokemon"}  # v0.79・v0.82 で同じ名前のカードを加えた
+        earlier = {cards[c]["name"]["ja"] for c in cards if c not in V0_77_CARDS and c not in extract["pool_v0_79"] and c not in extract["pool_v0_82"] and c not in extract["pool_v0_83"] and c not in extract["pool_v0_84"] and c not in extract["pool_v0_85"] and c not in extract["pool_v0_86"] and cards[c]["category"] == "pokemon"}  # v0.79・v0.82 で同じ名前のカードを加えた
         new = sorted({cards[c]["name"]["ja"] for c in V0_77_POKEMON} - earlier)
         # トゲピー・ノコッチ・ホーホーは拡張パック以外の商品のカードで前からある名前
         self.assertEqual(new, sorted(["マンタイン", "ヌオー", "キングドラ", "キリンリキ", "ウソッキー", "グライガー", "オタチ", "オドシシ", "オオタチ", "ウリムー",

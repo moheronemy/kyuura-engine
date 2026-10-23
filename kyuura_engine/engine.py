@@ -78,7 +78,9 @@ from .decisions import (
     phase_for,
 )
 from .effects import (
+    ATTACK_HAND_TRAINER_LOCK,
     BALLOON_BERRY_FAILED_RETREAT_CODE,
+    AttachEnergyFromHand,
     DISCARD_BY_RETREAT,
     energy_discard_plan,
     return_discarded_energy,
@@ -176,7 +178,7 @@ from .continuous import goop_gas_effects, power_suppressed, suppressors_of
 from .deck import deck_problems
 from .evolution import DEVOLVED_THIS_TURN_CODE, evolution_block, place_evolution_card, skipped_stage1_basic
 from .errors import DeckValidationError, HiddenPropertyRead, IllegalActionError, StateIntegrityError, UnsupportedError
-from .persistent import (DISCARD_FROM_PLAY, KNOCK_OUT, cannot_retreat, effect_attack_card, energy_attach_blocked, expires_at_turn_start, lasting, powers_use_prevented,
+from .persistent import (DISCARD_FROM_PLAY, KNOCK_OUT, cannot_retreat, effect_attack_card, energy_attach_blocked, expires_at_turn_start, lasting, powers_stopped, powers_use_prevented,
                          remove_persistent_effects)
 from .rules import RULES_2000_02_14, RuleSet
 from .stadiums import bench_has_room, bench_limit, stadium_in_play
@@ -189,6 +191,8 @@ from .state import (
     CannotAttackWhileSourceActive,
     CannotRetreat,
     CannotUsePowers,
+    PowersStopped,
+    BenchProtection,
     CannotAttachEnergy,
     EnergyRole,
     CannotUseAttack,
@@ -253,10 +257,11 @@ from .procedures import begin_turn as _begin_turn
 from .procedures import confusion_check as _confusion_check
 from .history import close_probe, open_probe
 from . import resolution  # v0.15b: 効果の解決の基盤（engine.py を読み込まない）
+from . import reactions  # v0.86: 手札からつけたエネルギー・進化・場に出したことへの反応と、決定をまたぐ続き
 
 # PLAYERS（checks）・NEXT_TURN（procedures）は v0.15a で共通の部品に移した（上で読み込む。engine.PLAYERS・engine.NEXT_TURN のまま使える）
 # 決定の再開先（v0.16b: 解決の基盤が続ける 5 つと、engine.py が続けるトレーナーの決定）
-DECISION_RESUMES = resolution.RESUMES | {"trainer", "power", "stadium"}  # v0.42: 宣言して使う特殊能力の途中の決定（"power"）。v0.57: スタジアム（"stadium"）
+DECISION_RESUMES = resolution.RESUMES | {"trainer", "power", "stadium", "reaction"}  # v0.42: 宣言して使う特殊能力の途中の決定（"power"）。v0.57: スタジアム（"stadium"）
 # 対戦準備の段階（番はまだ始まっていない）
 SETUP_PHASES = frozenset({Phase.SETUP_PLACEMENT, Phase.SETUP_MULLIGAN_DRAW, Phase.SETUP_FIRST_PLAYER})
 
@@ -740,9 +745,36 @@ def _apply_once(state: GameState, command, context: resolution.Context | None, *
         dead_end = _trainer_dead_end(state, new, context)
         if dead_end is not None:
             raise UnsupportedError(*dead_end)
+    if (new.decision is not None and new.decision.resume == reactions.RESUME and (state.decision is None or state.decision.id != new.decision.id)
+            and new.phase not in (Phase.HALTED, Phase.GAME_OVER)):
+        # v0.86（docs/entry-energy-evolution-reactions-v0.86.md 2 章）: 反応の決定（順番・使う機会・進化カード・入れ替え）のどの答えも受け付けられない（RA1・RA2 など）なら、答えのない
+        # 決定を残さずに、このコマンドを受け付けない
+        stop = _reaction_dead_end(new, context)
+        if stop is not None:
+            raise stop
     if verify:
         _require_integrity(new)
     return new
+
+
+def _reaction_dead_end(state: GameState, context: resolution.Context | None) -> UnsupportedError | None:
+    """v0.86: 反応の決定 ``state.decision`` のすべての答えを状態の複製の上で試し、どれも受け付けられなければ最初の拒否（``UnsupportedError``）を返す。受け付けられる答えがあれば None。"""
+    from .resolution.programs import answer_count, iter_answers
+
+    decision = state.decision
+    if answer_count(decision) > _ALTERNATIVE_ANSWER_LIMIT:
+        return None
+    first = None
+    for choices in iter_answers(decision):
+        try:
+            apply_command_with(state, ResolveDecision(decision.player, decision.id, tuple(choices)),
+                               preflight=context.preflight if context else "derived", catalog=context.catalog if context else None)
+            return None
+        except UnsupportedError as error:
+            first = first or error
+        except IllegalActionError:
+            continue
+    return first
 
 
 # v0.67: うらのカードがすると、その前におもてにする操作（「そのカードが「ワザ・特殊能力」を使う時や、「進化・にげる」をする時」）と、おもてにする理由（ログの ``cause``）
@@ -1045,9 +1077,12 @@ def _play_basic_to_bench(state: GameState, cmd: PlayBasicToBench) -> None:
     state.add_event("play_to_bench", player=cmd.player, card=cmd.card)
     # v0.57: 場のロケット団の爆発ジム（手札からたねポケモンのカードをベンチに出す時、持ち主がコインを投げ、「うら」なら 20 ダメージ。docs/stadiums-v0.57.md 5 章）
     bench_entry_damage(state, cmd.player, pokemon)
+    # v0.86: 手札から場に出したときに使える特殊能力（エンテイの［おたけび］）。使うかは持ち主が決める（決定 ENTRY_POWER。再開先 "power"。docs/entry-energy-evolution-reactions-v0.86.md 4 章）
+    if pokemon in p.bench:
+        offer_entry_power(state, cmd.player, pokemon, from_hand=True)
 
 
-def _evolve_pokemon(state: GameState, cmd: EvolvePokemon) -> None:
+def _evolve_pokemon(state: GameState, cmd: EvolvePokemon, context: resolution.Context) -> None:
     """手札の進化カードを、自分の場のポケモンに重ねて進化させる（p.309「場にいるポケモンを進化させる」・p.310。v0.4a）。
 
     v0.4a は、たねポケモン → 1 進化ポケモン。v0.4c で、1 進化ポケモン → 2 進化ポケモンも同じコマンド・同じ手順で
@@ -1129,6 +1164,15 @@ def _evolve_pokemon(state: GameState, cmd: EvolvePokemon) -> None:
     forced_entry_check(state, cmd.player, cmd.card)
     before_name = form_def(state, target).name_ja
     place_evolution_card(state, cmd.player, target, cmd.card)
+    if reactions.has_chain_reactions(state, cmd.player, target):
+        # v0.86: ほかのポケモンの［れんさしんか］の機会がある進化。場に出たときの特殊能力の機会と同じ時点の反応として、番のプレイヤーが順番を決める（``reactions``。
+        # docs/entry-energy-evolution-reactions-v0.86.md 3.2 節）。トキワシティジムの機会（進化させる時）は先に聞き、答えたあと続きで反応を処理する
+        steps = reactions.evolution_steps(state, cmd.player, target, entry_from_hand=True)
+        if offer_evolution_heal(state, cmd.player, target, before_name, then=("followup", 1, ())):
+            reactions.attach_followup(state, steps)
+            return
+        reactions.run(state, steps, context, _REACTION_HOOKS)
+        return
     # v0.57: 場のトキワシティジム（自分の「サカキのポケモン」を進化させる時、のぞむならダメージカウンターを 2 つとりのぞいてよい）。答えたあと、場に出たときの特殊能力の
     # 機会にもどる（``_resume_stadium``。docs/stadiums-v0.57.md 5 章）
     if offer_evolution_heal(state, cmd.player, target, before_name, then=("entry", 1, ())):
@@ -1196,11 +1240,19 @@ def _attach_energy(state: GameState, cmd: AttachEnergy, context: resolution.Cont
             # v0.58: 特殊エネルギーの、手札から出してつけたときの効果が決められない（RB1・RB4）。カードを動かす前
             raise UnsupportedError(*problem)
     knocks_out = False
+    pre_status = (int(target.conditions.asleep), int(target.conditions.paralyzed), int(target.conditions.confused))  # v0.86: 「つけるときすでに」
     for card in cards:
         attach_energy_from_hand(state, cmd.player, card, target)
     state.energy_attachments_this_turn += len(cards)
     extra = {} if cmd.energy2 is None else {"energy2": cmd.energy2, "trainer_card": blaine_effect_card(state, cmd.player)}
     state.add_event("attach_energy", player=cmd.player, energy=cmd.energy, target=cmd.target, **extra)
+    steps = reactions.attach_steps(state, cmd.player, cmd.player, target, cards, pre_status)
+    if steps is not None:
+        # v0.86（docs/entry-energy-evolution-reactions-v0.86.md 2 章）: 手札からつけた事実への反応（特殊エネルギーのつけたときの効果・ほのおでかいふく・［エナジーしんか］・
+        # ［いなびかり］・［かんでん］）が 2 つ以上ある・v0.86 の反応があるなら、``reactions`` が順番（番のプレイヤー）と決定をまたぐ続きを扱う。カツラの 2 枚は、つけたカードの順に
+        # 1 枚ずつの事実（実装上の順番）
+        reactions.run(state, steps, context, _REACTION_HOOKS)
+        return
     for card in cards:
         # v0.58: 特殊エネルギーの、手札から出してつけたときの効果（きずぐすり配合・なんでもなおし配合・レインボー。GR-2000-P310-ATTACH-ENERGY）。場にあるカードの
         # 移動（エナジートランスなど）では呼ばない
@@ -1510,6 +1562,11 @@ def _after_trainer_step(state: GameState, effect, use: TrainerUse, outcome, cont
             raise RuntimeError("トレーナーの効果が決定を出したまま、別のトレーナーカードを使おうとした（エンジンの不具合）")
         _start_nested_trainer(state, use, outcome.card, context)
         return
+    if isinstance(outcome, reactions.Followup):
+        # v0.86: トレーナーの効果で場に出した・進化させたことへの反応の段（1 進化を飛ばす進化・相手に場に出させる効果・手札から出させる効果のあとの反応）。
+        # 段の最後にこのトレーナーを使い終える段がある（実装が加える。決定が出たら、その決定の続きに持たせる）
+        reactions.run(state, outcome.steps, context, _REACTION_HOOKS)
+        return
     if state.decision is None:
         _finish_trainer(state, effect, context, end_turn=_ends_turn(effect, outcome))
 
@@ -1749,6 +1806,13 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower, context: resoluti
             f"トレーナー「{state.card_def(goop[0].source_card).name_ja}」（カード {goop[0].source_card}）の効果がはたらいているので、特殊能力「{power.name_ja}」は"
             "使えず、その力も消えている",
         )
+    if powers_stopped(state, user) is not None:
+        # v0.86: わるいモココの「スタンウェーブ」（「次の自分の番が終わるまで、このワザを受けた相手は「特殊能力」を使うことができず、その効果も消える」）。かがくへんかガスと
+        # 同じコード（使えず、その力も消えている）。止まるのはこのポケモンの特殊能力だけ
+        raise IllegalActionError(
+            "POWER_SUPPRESSED",
+            f"場のポケモン {user.pokemon_id} は、相手のワザ（スタンウェーブ）の効果で特殊能力を使うことができず、その効果も消えている",
+        )
     if powers_use_prevented(state, user) is not None:
         # v0.59: わるいアーボックの「ショックアイ」（「次の相手の番の終わりまで、そのポケモンは特殊能力を使うことができない」）。宣言して使う特殊能力の使用だけを止める
         # （CR-CHEMICAL-GAS-USE-VS-POWER の読み方）。パワーごとの確認・宣言の前
@@ -1771,11 +1835,19 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower, context: resoluti
     if effect.once_per_turn:
         # v0.42: 「自分の番ごとに1回」の記録は宣言のとき（v0.31 のしぜんになおるは処理の中で記録していた。状態の結果は同じ）。v0.49: 印刷したカードで区別する
         state.power_uses_this_turn = state.power_uses_this_turn + (power_use_record(state, use),)
-    effect.resolve(state, use)
-    _after_power_step(state, use, context)
+    attached = state.find_pokemon(use.target) if isinstance(effect, AttachEnergyFromHand) else None
+    pre_status = None if attached is None else (int(attached[1].conditions.asleep), int(attached[1].conditions.paralyzed), int(attached[1].conditions.confused))
+    outcome = effect.resolve(state, use)
+    if attached is not None:
+        # v0.86: あまごい（手札からつける特殊能力）でつけた事実への反応（［エナジーしんか］・［かんでん］。``reactions``）。特殊能力の処理のあとに続ける
+        steps = reactions.attach_steps(state, cmd.player, attached[0], attached[1], (use.energy,), pre_status)
+        if steps is not None:
+            outcome = reactions.Followup(steps)
+    _after_power_step(state, use, context, steps=outcome.steps if isinstance(outcome, reactions.Followup) else ())
 
 
-def _after_power_step(state: GameState, use: PowerUse, context: resolution.Context, converted=None) -> None:
+def _after_power_step(state: GameState, use: PowerUse, context: resolution.Context, converted=None, *, steps: tuple = (), used: bool = True,
+                      defer: bool = False) -> tuple | None:
     """特殊能力の処理（宣言・決定への答え）のあと（v0.42）: 決定を出していれば待つ（再開先 ``"power"`` だけ）。出していなければ、処理のあとの場を整える
     （``resolution.after_power``。きぜつ・空いたバトル場。なければ番のプレイヤーの ``Phase.MAIN``）。
 
@@ -1785,21 +1857,32 @@ def _after_power_step(state: GameState, use: PowerUse, context: resolution.Conte
     if state.decision is not None:
         if state.decision.resume != "power":
             raise RuntimeError(f"特殊能力 {use.key} の処理の途中で、再開先 {state.decision.resume!r} の決定を出した（エンジンの不具合）")
+        if steps:
+            raise RuntimeError(f"特殊能力 {use.key} が決定を出したまま、続きの段を返した（エンジンの不具合）")
         return
     effect = state.effects.power_entry(use.key.card_id, use.key.power_index).effect
     resolution.after_power(state, context, knock_outs=effect.may_knock_out, converted=converted)
+    # v0.86: 処理のあとの続き（docs/entry-energy-evolution-reactions-v0.86.md 2 章）: 反応の段（あまごい・［うか］のあとの反応）→ もどる先のトレーナーを使い終える（v0.43。
+    # v0.85 までは、そのあいだにきぜつ・サイド・バトル場に出す決定が来ることを扱っていなかった。来たら、その決定の続きに持たせる）→ ［おたけび］の「使ったら、自分の番は終わる」
+    tail = tuple(steps)
     if use.return_to is not None:
-        if state.decision is not None:
-            raise RuntimeError(f"トレーナーの効果の途中で使った特殊能力 {use.key} のあとに、決定（{state.decision.kind}）が来た（今の対応カードでは起こらない。エンジンの不具合）")
         kind, player, card, card_id = use.return_to
-        used = state.trainer_in_use
-        if kind != "trainer" or used is None or (used.using_player, used.card) != (player, card):  # v0.58: もどる先は使うプレイヤーと使用中のカード
+        current = state.trainer_in_use
+        if kind != "trainer" or current is None or (current.using_player, current.card) != (player, card):  # v0.58: もどる先は使うプレイヤーと使用中のカード
             raise RuntimeError(f"特殊能力 {use.key} のもどる先 {use.return_to!r} が、使用中のトレーナー {state.trainer_in_use} ではない（エンジンの不具合）")
-        _finish_trainer(state, state.effects.trainer_entry(card_id).effect, context)
+        tail += ((reactions.TRAINER, player, card, card_id),)
+    if used and getattr(effect, "ends_turn", False):
+        tail += ((reactions.END_TURN, use.player, str(use.key)),)
+    if defer:
+        # 決定への答えから呼ばれた: 答えた決定の続き（``followup``。使用中のトレーナーを使い終えるなど）とまとめて処理する（番を終える段はその最後。``reactions.merge``）
+        return tail
+    reactions.run(state, tail, context, _REACTION_HOOKS)
+    return None
 
 
-def _resume_power(state: GameState, decision, choices: tuple[int, ...], context: resolution.Context) -> None:
-    """特殊能力の処理の途中で出した決定の続き（v0.42）。続きの情報（``"use"``）から実装を引き、``resume`` を呼ぶ（宣言・回数の記録・コインは繰り返さない）。"""
+def _resume_power(state: GameState, decision, choices: tuple[int, ...], context: resolution.Context) -> tuple | None:
+    """特殊能力の処理の途中で出した決定の続き（v0.42）。続きの情報（``"use"``）から実装を引き、``resume`` を呼ぶ（宣言・回数の記録・コインは繰り返さない）。
+    v0.86: 処理のあとの段を返す（呼ぶ側が、答えた決定の続きとまとめて処理する）。"""
     player, pokemon_id, card_id, power_index = decision.context_value("use")
     definition = state.definitions[card_id]
     effect = state.effects.power_effect(definition.id, definition.powers[power_index])
@@ -1815,14 +1898,16 @@ def _resume_power(state: GameState, decision, choices: tuple[int, ...], context:
         name = definition.powers[power_index].name_ja
         if not choices:
             state.add_event("entry_power_declined", player=player, pokemon=pokemon.card, pokemon_id=pokemon_id, power=name, power_index=power_index)
-        else:
-            state.add_event("pokemon_power", player=player, pokemon=pokemon.card, pokemon_id=pokemon_id, power=name, power_index=power_index,
-                            entry=decision.context_value("entry"))
-            effect.resolve(state, use)
-        _after_power_step(state, use, context)
-        return
+            return _after_power_step(state, use, context, used=False, defer=True)
+        state.add_event("pokemon_power", player=player, pokemon=pokemon.card, pokemon_id=pokemon_id, power=name, power_index=power_index,
+                        entry=decision.context_value("entry"))
+        outcome = effect.resolve(state, use)
+        return _after_power_step(state, use, context, steps=outcome.steps if isinstance(outcome, reactions.Followup) else (), defer=True)
     converted = effect.resume(state, use, decision, choices)  # v0.59: ［エネエネ］は使用後の処理への指示（``SelfKnockOutToEnergy``）を返す。ほかは None
-    _after_power_step(state, use, context, converted)
+    if isinstance(converted, reactions.Followup):
+        # v0.86: ［うか］で山札から進化したあとの反応（［れんさしんか］）の段
+        return _after_power_step(state, use, context, steps=converted.steps, defer=True)
+    return _after_power_step(state, use, context, converted, defer=True)
 
 
 def _use_stadium(state: GameState, cmd: UseStadium, context: resolution.Context) -> None:
@@ -1867,7 +1952,9 @@ def _resume_stadium(state: GameState, decision, choices: tuple[int, ...], contex
             raise RuntimeError(f"トキワシティジムの決定のポケモン {decision.context_value('pokemon')} が場にいない（エンジンの不具合）")
         owner, pokemon = found
         apply_evolution_heal(state, owner, pokemon, card, bool(choices))
-        _, from_hand, return_to = decision.context_value("after_heal")
+        tag, from_hand, return_to = decision.context_value("after_heal")
+        if tag == "followup":
+            return  # v0.86: 進化への反応（場に出たときの特殊能力・［れんさしんか］）ともどる先は、この決定の続き（``followup``）にある（``_answer_decision`` が続ける）
         return_to = tuple(return_to) or None
         if offer_entry_power(state, owner, pokemon, from_hand=bool(from_hand), return_to=return_to):
             return
@@ -1939,20 +2026,35 @@ def _remove_disguise(state: GameState, cmd: RemoveDisguise) -> None:
 
 
 def _answer_decision(state: GameState, cmd, context: resolution.Context) -> None:
+    """保留中の決定に答える（v0.86 から、答える決定の続き ``followup``（``reactions``）があれば、答えの処理が終わったあと（新しい決定が出たらその決定に持たせて）続ける）。"""
+    decision = state.decision
+    followup = () if decision is None else tuple(decision.context_value(reactions.FOLLOWUP, ()))
+    prefix = _answer_decision_once(state, cmd, context)
+    steps = reactions.merge(prefix or (), followup)
+    if steps:
+        reactions.run(state, steps, context, _REACTION_HOOKS)
+
+
+def _answer_decision_once(state: GameState, cmd, context: resolution.Context) -> tuple | None:
     """保留中の決定に答える（``ResolveDecision``・v0.1 からある形の ``TakePrize``・``PromoteActive``）。確認（決定を待つ段階・決定する
     プレイヤー・決定の番号・選択）は ``checks.decision_choices``（v0.15 と同じ確認・同じ順番・同じコード）。確かめ終わった選択で、再開先が
     解決の基盤の再開先（``resolution.RESUMES``: ワザの途中・きぜつの判定・サイド・きぜつしたあとの特殊能力・バトル場に出す）なら解決の基盤、
     トレーナーの決定（``trainer``）なら ``_resume_trainer`` で続ける（決定そのものはログに残さない。選んだ結果を再開した処理がログに残す）。"""
     choices = decision_choices(state, cmd)
     decision = state.decision
+    if decision.resume == reactions.RESUME:
+        # v0.86: 反応の順番・使う機会・進化カード・入れ替えの決定（``reactions.answer``。続きの最初に処理する段を返す）
+        state.decision = None
+        state.phase = Phase.MAIN
+        _designate_answer(state, decision, choices, None)
+        return reactions.answer(state, decision, choices)
     if decision.resume in resolution.RESUMES:
         resolution.resume_decision(state, choices, context)
         return
     if decision.resume == "power":
         state.decision = None
         _designate_answer(state, decision, choices, None)  # v0.67: うらのカードを指定したら、おもてにする（「たねポケモン」でなければ扱えない）
-        _resume_power(state, decision, choices, context)  # v0.42
-        return
+        return _resume_power(state, decision, choices, context)  # v0.42（v0.86: 処理のあとの段を返す）
     if decision.resume == "stadium":
         state.decision = None
         _designate_answer(state, decision, choices, None)
@@ -1969,6 +2071,25 @@ def _answer_decision(state: GameState, cmd, context: resolution.Context) -> None
             _finish_trainer(state, entry.effect, context)
             return
     _resume_trainer(state, decision, choices, context)
+
+
+class _ReactionHooks:
+    """v0.86: ``reactions.run`` が続きの段で呼ぶエンジンの処理（reactions は engine を読み込まない）。"""
+
+    @staticmethod
+    def finish_trainer(state: GameState, card_id: str, context: resolution.Context) -> None:
+        _finish_trainer(state, state.effects.trainer_entry(card_id).effect, context)
+
+    @staticmethod
+    def end_turn(state: GameState, player: int, power: str, context: resolution.Context) -> None:
+        resolution.end_turn_after_power(state, context, player, power)
+
+    @staticmethod
+    def settle_energy(state: GameState, context: resolution.Context) -> None:
+        resolution.after_energy(state, context)
+
+
+_REACTION_HOOKS = _ReactionHooks()
 
 
 def _engine(handler: Callable[[GameState, object], None]) -> Callable[[GameState, object, resolution.Context], None]:
@@ -1989,7 +2110,7 @@ _HANDLERS: dict[type, Callable[[GameState, object, resolution.Context], None]] =
     PromoteActive: _answer_decision,
     ResolveDecision: _answer_decision,
     PlayTrainer: _play_trainer,  # v0.50: 使ったあとのきぜつ・交代（退化スプレー）に解決の設定を使う
-    EvolvePokemon: _engine(_evolve_pokemon),
+    EvolvePokemon: _evolve_pokemon,  # v0.86: 進化への反応（［れんさしんか］）の続きに解決の設定を使う
     UsePokemonPower: _use_pokemon_power,  # v0.42: 処理のあとのきぜつ・交代に解決の設定（効果の定義の対応表）を使う
     DiscardFromPlay: _discard_from_play,  # v0.47: 空いたバトル場の勝ち負け・交代に解決の設定を使う
     RemoveDisguise: _engine(_remove_disguise),  # v0.49
@@ -2624,6 +2745,10 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
         if effect.on_opponent:
             if effect.source_player != giver or effect.source_card not in state.cards or state.cards[effect.source_card].owner != giver:
                 problems.append(f"{where} {effect!r} の発生源が、相手（プレイヤー {giver}）のカードではない")
+        elif getattr(effect, "from_other", False):
+            # v0.86: 「ほのおのまもり」（``BenchProtection``）は、効果を与えたワザを使った自分のほかのポケモン（その場をはなれても消えない）
+            if effect.source_player != player or effect.source_card not in state.cards or state.cards[effect.source_card].owner != player:
+                problems.append(f"{where} {effect!r} の発生源が、持ち主（プレイヤー {player}）のカードではない")
         elif effect.source_player != player or effect.source_card != pokemon.card:
             problems.append(f"{where} {effect!r} の発生源が、このポケモン（カード {pokemon.card}、プレイヤー {player}）ではない")
         if isinstance(effect, (DamageReduction, ReducedDamageToSource)) and (type(effect.amount) is not int or effect.amount <= 0 or effect.amount % 10):
@@ -2664,7 +2789,7 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.extend(_next_turn_attack_damage_problems(state, pokemon, effect, where))  # v0.27
         if isinstance(effect, (CannotUseOwnAttack, CannotUseAttack)):
             problems.extend(_attack_lock_problems(state, pokemon, effect, where))  # v0.35
-        if isinstance(effect, (AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive, CannotUsePowers, CannotAttachEnergy)):
+        if isinstance(effect, (AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive, CannotUsePowers, CannotAttachEnergy, PowersStopped, BenchProtection)):
             problems.extend(_given_by_attack_problems(state, pokemon, effect, where))  # v0.36（v0.40: すごむ。v0.59: ショックアイ・クリスタルビーム）
         if isinstance(effect, (WeaknessChange, ResistanceChange, MaxHpSet)):
             problems.extend(_effective_value_effect_problems(state, pokemon, effect, where))  # v0.48
@@ -2921,6 +3046,12 @@ def _given_by_attack_problems(state: GameState, pokemon: PokemonInPlay, effect, 
     elif isinstance(effect, CannotAttachEnergy):
         terms = getattr(entry.effect, "attach_lock_terms", None) if entry is not None else None  # v0.59: クリスタルビーム
         expected = CannotAttachEnergy
+    elif isinstance(effect, PowersStopped):
+        terms = getattr(entry.effect, "stop_terms", None) if entry is not None else None  # v0.86: スタンウェーブ
+        expected = (PowersStopped,)
+    elif isinstance(effect, BenchProtection):
+        terms = getattr(entry.effect, "protection_terms", None) if entry is not None else None  # v0.86: ほのおのまもり
+        expected = (BenchProtection,)
     else:
         terms = getattr(entry.effect, "retreat_lock_terms", None) if entry is not None else None
         expected = CannotRetreat
@@ -3075,8 +3206,8 @@ def _trainer_lock_problems(state: GameState) -> list[str]:
             problems += _hand_trainer_lock_problems(state, lock, where)
             keys.append((lock.player, lock.expires_turn, lock.origin))
             continue
-        if lock.origin not in ("attack", "trainer"):
-            problems.append(f"{where} の出どころ {lock.origin!r} が attack・trainer・hand ではない")
+        if lock.origin not in ("attack", "trainer", ATTACK_HAND_TRAINER_LOCK):
+            problems.append(f"{where} の出どころ {lock.origin!r} が attack・trainer・hand・attack_hand ではない")
             continue
         if lock.player not in PLAYERS or lock.source_player != (lock.player if trainer_origin else 1 - lock.player):
             problems.append(f"{where} の与えたプレイヤー {lock.source_player!r} が、{'使えなくなるプレイヤー自身' if trainer_origin else '使えなくなるプレイヤーの相手'}ではない")
@@ -3109,6 +3240,9 @@ def _trainer_lock_problems(state: GameState) -> list[str]:
             entry = state.effects.attack_entry(card_id, int(index)) if index.isdigit() else None
             if entry is None or getattr(entry.effect, "lock_terms", None) is None:
                 problems.append(f"{where} を与えたワザ {lock.effect!r} の登録された実装が、トレーナーの使用を禁止する実装ではない")
+            elif getattr(entry.effect, "hand_only", False) != (lock.origin == ATTACK_HAND_TRAINER_LOCK):
+                # v0.86: 手札から出して使うことだけを止める禁止（こうしゅうは。わるいモココ）と、ワザの実装の範囲が合う
+                problems.append(f"{where} の出どころ {lock.origin!r} が、与えたワザ {lock.effect!r} の登録された実装の範囲と合わない")
         keys.append((lock.player, lock.expires_turn, lock.origin))
     if len(set(keys)) != len(keys):
         problems.append(f"同じプレイヤー・同じ消える番・同じ出どころのトレーナーの使用の禁止が重なっている {keys}")
@@ -3423,7 +3557,7 @@ def _knock_out_power_decision_problems(state: GameState, d) -> list[str]:
         problems.append(f"［ファイナルビーム］の決定の対象のポケモン {pokemon.pokemon_id} が HP 以上のダメージを受けていない")
     if not slot.effect.is_able(pokemon):
         problems.append(f"［ファイナルビーム］の決定の対象のポケモン {pokemon.pokemon_id} がねむり・マヒ・こんらん（使えない）")
-    if power_suppressed(state, slot.power) or powers_use_prevented(state, pokemon) is not None:
+    if power_suppressed(state, slot.power, pokemon) or powers_use_prevented(state, pokemon) is not None:
         problems.append(f"［ファイナルビーム］の決定の対象のポケモン {pokemon.pokemon_id} の特殊能力が消えている・使うことができない")
     located = state.find_pokemon(source) if isinstance(source, int) else None
     if located is None or located[0] == d.player:
@@ -3633,9 +3767,15 @@ def _power_decision_problems(state: GameState, d) -> list[str]:
     if return_to is not None and not (isinstance(return_to, tuple) and len(return_to) == 4 and return_to[0] == "trainer"):
         return [f"特殊能力の決定のもどる先 {return_to!r} が正しくない"]
     problems = []
-    if player != state.current_player:
-        problems.append(f"特殊能力の決定の続きのプレイヤー {player!r} が、番のプレイヤー {state.current_player} ではない")
     found = state.find_pokemon(pokemon_id)
+    # v0.86: 番のプレイヤーのトレーナーの効果（エリカの香水）で手札から場に出させられた相手のポケモンの、場に出たときの特殊能力の使う機会は、持ち主（番でないプレイヤー）が決める
+    # （もとの事実のログ ``trainer_bench_from_hand`` を、番のプレイヤーが使ったトレーナーで出したときだけ。ほかの決定に広げない）
+    placed_by_opponent = (d.kind == ENTRY_POWER and found is not None and found[0] == player and player != state.current_player
+                          and state.trainer_in_use is not None and state.trainer_in_use.using_player == state.current_player
+                          and (_entry_fact_event(state, PowerUse(player, pokemon_id, PowerKey(card_id, power_index)), found[1]) or {}).get("kind")
+                          == "trainer_bench_from_hand")
+    if player != state.current_player and not placed_by_opponent:
+        problems.append(f"特殊能力の決定の続きのプレイヤー {player!r} が、番のプレイヤー {state.current_player} ではない")
     if found is None or found[0] != player:
         return problems + [f"特殊能力の決定の続きのポケモン {pokemon_id!r} が、プレイヤー {player!r} の場にいない"]
     pokemon = found[1]
@@ -3671,6 +3811,24 @@ def _power_decision_problems(state: GameState, d) -> list[str]:
     return problems
 
 
+def _entry_fact_event(state: GameState, use: PowerUse, pokemon) -> dict | None:
+    """v0.86: 場に出たときに使える特殊能力の機会（``ENTRY_POWER``）のもとの事実のログ: 今の番の、このポケモンに今のいちばん上のカードを重ねた進化（``evolve``）か、手札から場に
+    出した（``play_to_bench``・``trainer_bench_from_hand``・``trainer_hand_to_active``）ログ。そのあとにワザ・このポケモンの機会への答え（``pokemon_power`` の ``entry``・
+    ``entry_power_declined``）があれば None（機会は 1 度だけ）。"""
+    events = _events_since_turn_start(state)  # 新しい順
+    for event in events:
+        kind = event["kind"]
+        if kind == "attack":
+            return None
+        if kind in ("pokemon_power", "entry_power_declined") and event.get("pokemon_id") == use.pokemon_id and (kind == "entry_power_declined" or event.get("entry")):
+            return None
+        if kind == "evolve" and event.get("pokemon_id") == use.pokemon_id and event.get("to_card") == pokemon.card:
+            return event
+        if kind in ("play_to_bench", "trainer_bench_from_hand", "trainer_hand_to_active") and event.get("card") == pokemon.card and not pokemon.evolution_stack:
+            return event
+    return None
+
+
 def _entry_power_decision_problems(state: GameState, d, pokemon, effect, use: PowerUse) -> list[str]:
     """場に出たときに使える特殊能力の使う機会の決定（v0.43。``ENTRY_POWER``）の整合性。
 
@@ -3686,7 +3844,11 @@ def _entry_power_decision_problems(state: GameState, d, pokemon, effect, use: Po
         return [f"使う機会の決定（ポケモン {use.pokemon_id}）の特殊能力 {use.key} が、場に出たときに使う特殊能力ではない"]
     last = next((e for e in _events_since_turn_start(state) if e["kind"] in ("pokemon_power", "attack", "evolve")), None)
     if last is None or last["kind"] != "evolve" or last.get("pokemon_id") != use.pokemon_id or last.get("to_card") != pokemon.card:
-        return problems + [f"使う機会の決定（ポケモン {use.pokemon_id}）の前の、今の番の最後の宣言・進化が、このポケモンの進化ではない"]
+        # v0.86: 同じ時点の反応（``reactions``。［れんさしんか］など）を先に処理したあとの機会と、手札から場に出したたねポケモン（［おたけび］）の機会。このポケモンの場に出した・
+        # 進化した事実のあとにワザ・このポケモンの機会への答えがない
+        last = _entry_fact_event(state, use, pokemon)
+        if last is None:
+            return problems + [f"使う機会の決定（ポケモン {use.pokemon_id}）の前の、今の番の最後の宣言・進化が、このポケモンの進化ではない"]
     route = d.context_value("entry")
     from_hand = "source_zone" not in last
     if route != ("hand" if from_hand else "play"):
@@ -3706,7 +3868,8 @@ def _entry_power_decision_problems(state: GameState, d, pokemon, effect, use: Po
     expected = (use.pokemon_id,) if problem is not None else ()
     if tuple(d.context_value("unresolved_choices", ())) != expected or (problem is not None and d.context_value("unresolved_code") != problem.code):
         problems.append(f"使う機会の決定の、選ぶと止める選択 {d.context_value('unresolved_choices', ())} が {expected} ではない")
-    if (use.return_to is not None) != ("trainer_card" in last):
+    returns = use.return_to is not None or any(step[0] == reactions.TRAINER for step in d.context_value(reactions.FOLLOWUP, ()))  # v0.86: 続きのトレーナー
+    if returns != ("trainer_card" in last):
         problems.append(f"使う機会の決定のもどる先 {use.return_to!r} が、進化のログ（トレーナー {last.get('trainer_card')!r}）と合わない")
     return problems
 
@@ -4223,6 +4386,8 @@ def _decision_problems(state: GameState) -> list[str]:
         problems.extend(_power_decision_problems(state, d))  # v0.42
     if d.resume == "stadium":
         problems.extend(_stadium_decision_problems(state, d))  # v0.57
+    if d.resume == reactions.RESUME:
+        problems.extend(reactions.answer_problems(state, d))  # v0.86
     # 選べるもののうち原典で扱いを決められないもの（v0.2b）: 選べるものの中にあり、残りで答えられる
     unresolved = d.context_value("unresolved_choices", ())
     if unresolved:
@@ -4237,8 +4402,9 @@ def _decision_problems(state: GameState) -> list[str]:
         # v0.66: ナツメのESPのやり直しの機会（ESP_REDO。ES1〜ES3 でやり直すと止める場合）も、やり直さない（0 個）がいつも答えになる
         # v0.67: マチスの秘策で出すカード（SECRET_PLAN_CARD。FD2 で出すと止める場合）も、出さない（0 個。「出してよい」）がいつも答えになる
         # v0.81: 学習装置（EXP_ALL_ENERGY。RB3・CB1 で選ぶと止める場合）も、つけ替えない（0 個）がいつも答えになる
+        # v0.86: 反応の特殊能力の使う機会（REACTION_POWER。RB1・MEC1・DV2 で使うと止める場合）も、使わない（0 個）がいつも答えになる
         no_choice_answers = d.kind in (ENTRY_POWER, EVOLUTION_HEAL, USE_DISCARD_TRAINER, KNOCK_OUT_POWER, EXP_ALL_ENERGY, NINJA_TRICK, REACTION_SWITCH, BENCH_GUARD, ESP_REDO,
-                                       SECRET_PLAN_CARD) or (d.kind == ACCEPT_REQUEST and d.context_value("chaos") is not None)
+                                       SECRET_PLAN_CARD, reactions.REACTION_POWER) or (d.kind == ACCEPT_REQUEST and d.context_value("chaos") is not None)
         needed = 0 if no_choice_answers and d.min_choices == 0 else max(d.min_choices, 1)
         if len(set(d.options) - set(unresolved)) < needed:
             problems.append(f"決定 {d.kind} に、扱いを決められる選択が足りない（答えられない）")
@@ -4818,8 +4984,19 @@ def _trainer_problems(state: GameState) -> list[str]:
             problems.append(f"特殊能力の決定のもどる先 {d.context_value('return_to')!r} があるのに、使用中のトレーナーがない")
         if healing:
             problems.append(f"トキワシティジムの決定のもどる先 {d.context_value('then')!r} があるのに、使用中のトレーナーがない")
+        if d is not None and any(step[0] == reactions.TRAINER for step in d.context_value(reactions.FOLLOWUP, ())):
+            problems.append("決定の続きにトレーナーを使い終える段があるのに、使用中のトレーナーがない")  # v0.86
         return problems
     problems.extend(_trainer_stack_problems(state, used))
+    # v0.86: 続き（``reactions`` の ``followup``）の段にこのトレーナーを使い終える段がある決定（トレーナーの効果で場に出した・進化させたことへの反応、特殊能力のあとのきぜつ・サイド・
+    # バトル場に出す決定）を待つ間も、使用中のまま
+    followup = () if d is None else tuple(d.context_value(reactions.FOLLOWUP, ()))
+    pending_finish = [step for step in followup if step[0] == reactions.TRAINER]
+    if pending_finish:
+        expected = (reactions.TRAINER, used.using_player, used.card, state.card_def(used.card).id)
+        if tuple(pending_finish[0]) != expected:
+            problems.append(f"決定の続きのトレーナーの段 {pending_finish[0]!r} が、使用中のトレーナー {expected} と違う")
+        return problems
     if returning or healing:
         expected = ("trainer", used.using_player, used.card, state.card_def(used.card).id)
         back = tuple(d.context_value("return_to")) if returning else tuple(d.context_value("after_heal")[2])

@@ -102,9 +102,9 @@ class RegistrationTest(unittest.TestCase):
         categories = {"pokemon": 0, "trainer": 0, "energy": 0}
         for card_id in pool.playable_ids:
             categories[pool.get(card_id).category] += 1
-        self.assertEqual((len(pool.playable_ids), categories["pokemon"], categories["trainer"], categories["energy"]), (1053, 756, 260, 37))
+        self.assertEqual((len(pool.playable_ids), categories["pokemon"], categories["trainer"], categories["energy"]), (1066, 769, 260, 37))  # v0.86 でポケモン 13 枚を加えた
         registry = E.DEFAULT_EFFECTS
-        self.assertEqual((len(registry.attack_keys()), len(registry._powers)), (1284, 88))
+        self.assertEqual((len(registry.attack_keys()), len(registry._powers)), (1298, 100))  # v0.86 でワザ 14・特殊能力 12 を加えた
         self.assertEqual(tuple(read_extract()["pool_v0_85"]), H.V0_85_CARDS)
 
     def test_without_v0_85_registrations_gives_back_1039(self):
@@ -114,7 +114,7 @@ class RegistrationTest(unittest.TestCase):
         energies = {k: v for k, v in registry._energies.items() if k not in E.V0_85_ENERGIES}
         before = E.EffectRegistry(registry.id, attacks, registry._trainers, powers, energies)
         pool = pool_from_extract(read_extract(), before)
-        self.assertEqual(len(pool.playable_ids), 1039)
+        self.assertEqual(len(pool.playable_ids), 1052)  # v0.86 の 13 枚は登録したまま
         self.assertTrue(all(card not in pool.playable_ids for card in H.V0_85_CARDS))
 
     def test_unsupported_quiz_names_and_identity_candidates(self):
@@ -127,18 +127,18 @@ class RegistrationTest(unittest.TestCase):
         from kyuura_engine import engine
         pool = load_card_pool()
         names = {pool.get(c).name_ja for c in pool.playable_ids if pool.get(c).category == "pokemon"}
-        self.assertEqual(len(names), 404)
+        self.assertEqual(len(names), 411)  # v0.86 で 7 つの名前を加えた
         self.assertTrue({"メガニウム", "バクフーン", "オーダイル"} <= names)
         candidates = engine._identity_candidates(pool)
         basics = [c for c in candidates if pool.get(c).category == "pokemon" and pool.get(c).stage == "basic"]
-        self.assertEqual((len(candidates), len(basics)), (862, 391))
+        self.assertEqual((len(candidates), len(basics)), (874, 397))  # v0.86 の 13 枚
         kyuura = pathlib.Path(__file__).resolve().parent.parent.parent / "kyuura"
         if (kyuura / ".git").exists():
             extract = read_extract()
             targets = json.loads(subprocess.check_output(["git", "-C", str(kyuura), "show", f"{extract['source']['commit']}:data/engine_targets.json"]))
             missing = [c for c in targets["cards"] if c["id"] not in pool.playable_ids]
             self.assertEqual((len(targets["cards"]), len(missing), sum(1 for c in missing if c["id"].startswith("neo")),
-                              sum(1 for c in missing if c["product_group"] != "expansion_pack")), (1377, 324, 148, 176))
+                              sum(1 for c in missing if c["product_group"] != "expansion_pack")), (1377, 311, 140, 171))  # v0.86 でポケモン 13 枚を加えた
 
     def test_every_attack_and_power_is_registered(self):
         pool = load_card_pool()

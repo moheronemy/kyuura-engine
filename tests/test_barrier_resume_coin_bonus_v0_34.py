@@ -436,7 +436,9 @@ class BarrierCoinTest(unittest.TestCase):
                                     "FailOnTailsPlusOwnCounters", "CoinsPerDefenderEnergyChosenStatus", "ThreeCoinsStatusByHeads",
                                     # v0.84: やさしいサンダースの「サンダーニードル」（3 枚のコインは相手へのダメージと相手のマヒだけを決める。
                                     # docs/light-powers-evolution-v0.84.md）
-                                    "CoinsTimesDamageThenParalyzeIfAtLeast"})
+                                    "CoinsTimesDamageThenParalyzeIfAtLeast",
+                                    # v0.86: スイクンの「オーロラウェーブ」（2 枚のコインは相手のマヒかねむりだけを決める。docs/entry-energy-evolution-reactions-v0.86.md 7 章）
+                                    "DamageThenParalyzeOrSleepByTwoCoins"})
         self.assertIn("CoinBonusOrSelfDamage", flipping)
         self.assertIn("SelfDamageInsteadOnTails", flipping)
 

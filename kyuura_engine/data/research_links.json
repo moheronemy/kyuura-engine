@@ -12,8 +12,8 @@
   "card_data_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 188,
-    "engine_stop_codes": 186,
+    "engine_unresolved_rulings": 195,
+    "engine_stop_codes": 193,
     "kyuura_issues": 71
   },
   "stop_codes": {
@@ -2173,6 +2173,83 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_REACTION_AFTER_KNOCKOUT": {
+      "engine_rulings": [
+        {
+          "version": "v0.86",
+          "document": "docs/entry-energy-evolution-reactions-v0.86.md",
+          "ruling_id": "RA1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_REACTION_CONDITION_CHANGED": {
+      "engine_rulings": [
+        {
+          "version": "v0.86",
+          "document": "docs/entry-energy-evolution-reactions-v0.86.md",
+          "ruling_id": "RA2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES": {
+      "engine_rulings": [
+        {
+          "version": "v0.86",
+          "document": "docs/entry-energy-evolution-reactions-v0.86.md",
+          "ruling_id": "CV1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_HOWL_OUTSIDE_OWN_TURN": {
+      "engine_rulings": [
+        {
+          "version": "v0.86",
+          "document": "docs/entry-energy-evolution-reactions-v0.86.md",
+          "ruling_id": "OT1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_BOLT_DURING_OWN_ATTACK": {
+      "engine_rulings": [
+        {
+          "version": "v0.86",
+          "document": "docs/entry-energy-evolution-reactions-v0.86.md",
+          "ruling_id": "BT1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_PROTECTIVE_FLAME_SCOPE": {
+      "engine_rulings": [
+        {
+          "version": "v0.86",
+          "document": "docs/entry-energy-evolution-reactions-v0.86.md",
+          "ruling_id": "PL1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SOLAR_POWER_WITHOUT_CONDITION": {
+      "engine_rulings": [
+        {
+          "version": "v0.86",
+          "document": "docs/entry-energy-evolution-reactions-v0.86.md",
+          "ruling_id": "SO1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -3596,7 +3673,30 @@
       "NIP2X-001/attack/0",
       "NIP2X-001/power/0",
       "PF2-009/attack/0",
-      "PF2-009/power/0"
+      "PF2-009/power/0",
+      "neo2-049/power/0",
+      "PF2-005/power/0",
+      "PRN-024/power/0",
+      "neo3-010/attack/0",
+      "neo3-010/power/0",
+      "neo3-029/attack/0",
+      "neo3-029/power/0",
+      "neo3-052/attack/0",
+      "neo3-052/power/0",
+      "PR1-056/attack/0",
+      "PR1-056/power/0",
+      "PF2-008/attack/0",
+      "PF2-008/power/0",
+      "neo4-012/attack/0",
+      "neo4-012/power/0",
+      "neo4-044/attack/0",
+      "neo4-044/attack/1",
+      "neo4-046/attack/0",
+      "neo4-046/power/0",
+      "neo3-021/attack/0",
+      "neo3-021/power/0",
+      "PR1-058/attack/0",
+      "PR1-058/power/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

@@ -665,7 +665,10 @@ class G37Test(unittest.TestCase):
         "CoinsTimesDamageThenParalyzeIfAtLeast",
         # v0.85: ベイリーフの「あまいかおり」（「うら」なら相手の場のポケモンからダメージカウンターをとりのぞく。回復の要素。ダメージがないので G37 には当たらない。
         # docs/entry-powers-energy-lifecycle-v0.85.md）
-        "CoinChosenSideHealAttack"]))
+        "CoinChosenSideHealAttack",
+        # v0.86: スイクンの「オーロラウェーブ」（2 枚のコインでマヒかねむり）・わるいモココの「スタンウェーブ」（相手の対戦ポケモンの特殊能力を止める持続する効果）
+        # （docs/entry-energy-evolution-reactions-v0.86.md 7 章）
+        "DamageThenParalyzeOrSleepByTwoCoins", "DamageThenStopDefenderPowers"]))
 
 
 class DecisionTest(unittest.TestCase):

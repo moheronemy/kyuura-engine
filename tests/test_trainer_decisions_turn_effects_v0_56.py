@@ -53,6 +53,7 @@ from kyuura_engine.state import (
 from tests.helpers import (
     BLAINES_RHYHORN,
     BROCKS_DIGLETT,
+    DARK_DRAGONITE,
     DARK_GOLBAT,
     DARK_VILEPLUME,
     DEFENDER,
@@ -223,14 +224,19 @@ class RegistrationTest(unittest.TestCase):
                 self.assertNotEqual(effect.check(d[card_id]), [])
 
     def test_entry_power_guard(self):
-        state = board([DARK_GOLBAT, RATTATA])
+        """v0.86 から、``placed_entry_power_guard`` が止めるのは「場に出た時」（手札からに限らない）の特殊能力の機会だけ（わるいカイリューの［てしたをよぶ］など。たねポケモンには
+        ない）。「手札から出した時」の特殊能力（わるいゴルバット・エンテイの［おたけび］）は、手札から出す経路なら v0.86 の反応の続き（``effects._placed_entry_followup``）が機会を出し、
+        山札から出す経路（``from_hand`` が偽）なら機会がない（docs/entry-energy-evolution-reactions-v0.86.md 4 章）。"""
+        state = board([DARK_DRAGONITE, DARK_GOLBAT, RATTATA])
         with self.assertRaises(RuntimeError):
-            E.placed_entry_power_guard(state, card_of(state, DARK_GOLBAT))
+            E.placed_entry_power_guard(state, card_of(state, DARK_DRAGONITE))
+        E.placed_entry_power_guard(state, card_of(state, DARK_GOLBAT))
         E.placed_entry_power_guard(state, card_of(state, RATTATA))
 
     def test_no_basic_pokemon_has_an_entry_power(self):
-        """エリカの香水・マチスが手札から場に出すのはたねポケモンで、場に出たときに使える特殊能力（``EntryPower``）を持つたねポケモンは写しにない（どれも進化カード）。
-        来たら ``placed_entry_power_guard`` が状態を変える前に RuntimeError（トレーナーの途中で特殊能力の決定を出して残りにもどる処理は加えていない。docs 4 章）。"""
+        """エリカの香水・マチスが手札から場に出すのはたねポケモン。v0.85 までは場に出たときに使える特殊能力（``EntryPower``）を持つたねポケモンは写しになかった。v0.86 で
+        エンテイ（neo3-010）の［おたけび］（「手札から場に出した時」）を加え、トレーナーの途中で特殊能力の決定を出して残り（トレーナーを使い終える）にもどる処理を加えた
+        （docs/entry-energy-evolution-reactions-v0.86.md 4 章。tests/test_entry_energy_evolution_reactions_v0_86.py の HowlTest）。「場に出た時」の特殊能力を持つたねポケモンは今もない。"""
         pool = load_card_pool()
         holders = []
         for card_id, definition in pool.definitions.items():
@@ -241,7 +247,8 @@ class RegistrationTest(unittest.TestCase):
                 if entry is not None and isinstance(entry.effect, E.EntryPower):
                     holders.append((card_id, definition.stage))
         self.assertTrue(holders)
-        self.assertEqual([c for c, stage in holders if stage == "basic"], [])
+        self.assertEqual([c for c, stage in holders if stage == "basic"], ["neo3-010"])
+        self.assertTrue(E.DEFAULT_EFFECTS.power_entry("neo3-010", 0).effect.from_hand_only)
 
     def test_card_sources_and_research_links(self):
         sources = json.loads((ROOT / "kyuura_engine" / "data" / "card_sources.json").read_text())["cards"]

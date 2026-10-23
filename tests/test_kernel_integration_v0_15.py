@@ -204,7 +204,11 @@ class DependencyTest(unittest.TestCase):
                                  # v0.67: うらのカード（マチスの秘策）。コマンドの入口の分け方（``_apply_checked``・``_apply_once``・``_identity_independent``）は型の注釈と
                                  # 設定（``resolution.Context``）だけ。おもてにしてトラッシュしたあとの交代は、特殊能力のあとと同じ ``resolution.after_power``
                                  # （``_reveal_for_action``・``_reveal_face_down``）
-                                 "_apply_checked", "_apply_once", "_identity_independent", "_reveal_for_action", "_reveal_face_down"})
+                                 "_apply_checked", "_apply_once", "_identity_independent", "_reveal_for_action", "_reveal_face_down",
+                                 # v0.86: 反応の続き（docs/entry-energy-evolution-reactions-v0.86.md 2 章）。決定への答えを分けた ``_answer_decision_once``（v0.85 までの
+                                 # ``_answer_decision`` の本体。解決の基盤の再開先へ振り分ける）、反応の答えの確かめ（``_reaction_dead_end``）・進化（``_evolve_pokemon``）は
+                                 # 設定（``resolution.Context``）を渡すだけ
+                                 "_answer_decision_once", "_reaction_dead_end", "_evolve_pokemon"})
         trial_names = {
             node.attr
             for function in functions if function.name in ("_decision_has_unstopped_answer", "_trainer_dead_end")
@@ -245,6 +249,19 @@ class DependencyTest(unittest.TestCase):
             if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "resolution"
         }
         self.assertEqual(retreat_names, {"Context", "after_retreat"})
+        # v0.86: 反応の続き（``reactions.run``）がエンジンに頼む処理（``_ReactionHooks``）は、つける操作のあとのきぜつの処理（``resolution.after_energy``）と、
+        # ［おたけび］の「使ったら、自分の番は終わる」（``resolution.end_turn_after_power``）だけ。決定への答えを分けた本体（``_answer_decision_once``）は、v0.85 までの
+        # ``_answer_decision`` と同じく解決の基盤の再開先へ振り分ける（``RESUMES``・``resume_decision``）。そのほかの v0.86 の関数は設定（``Context``）だけ
+        hooks = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "_ReactionHooks")
+        hook_names = {node.attr for node in ast.walk(hooks) if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "resolution"}
+        self.assertEqual(hook_names, {"Context", "after_energy", "end_turn_after_power"})
+        answer_names = {
+            node.attr
+            for function in functions if function.name in ("_answer_decision", "_answer_decision_once", "_reaction_dead_end", "_evolve_pokemon")
+            for node in ast.walk(function)
+            if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "resolution"
+        }
+        self.assertEqual(answer_names, {"Context", "RESUMES", "resume_decision"})
 
     def test_no_copy_of_the_kernel_remains(self):
         """解決の基盤の実装は ``kyuura_engine/resolution`` だけ（コードの複製がない）。v0.15b〜v0.16c は v0.14 の名前の互換の層
@@ -301,7 +318,7 @@ class DispatchTest(unittest.TestCase):
         範囲外のコマンドは engine.py。"""
         self.assertEqual(set(resolution.COMMANDS), {UseAttack, EndTurn})
         self.assertEqual(resolution.RESUMES, {"attack", "knock_out", "post_knockout", "take_prize", "promote_active"})
-        self.assertEqual(engine.DECISION_RESUMES, resolution.RESUMES | {"trainer", "power", "stadium"})  # v0.57: スタジアムの効果の途中の決定（stadium）
+        self.assertEqual(engine.DECISION_RESUMES, resolution.RESUMES | {"trainer", "power", "stadium", "reaction"})  # v0.57: スタジアムの効果の途中の決定（stadium）。v0.86: 反応（reaction）
         for command in (UseAttack, EndTurn):
             self.assertIs(engine._HANDLERS[command], resolution.handle)
         waiting = kyuura_engine.apply_command(board(PONYTA_, {**GIOVANNI_, "damage": 80}), UseAttack(0, 1))  # こんじょうの決定（knock_out）

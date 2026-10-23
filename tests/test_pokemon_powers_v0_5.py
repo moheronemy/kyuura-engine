@@ -158,16 +158,24 @@ FLEE = PowerKey("PMCG5-033", 0)  # v0.65: カスミのドククラゲの［に�
 BENCH_GUARD = PowerKey("PMCG5-055", 0)  # v0.65: タケシのサイドンの［ベンチガード］
 ALL_POWERS = (# v0.85（docs/entry-powers-energy-lifecycle-v0.85.md）: ［ハーブのかおり］（NIP1X-001）・［どしゃぶり］（NIP2X-001）・［ハーブのかおり］（PF1-003）・
               # ［ファイヤーブースト］・［どしゃぶり］（PF1-009）・［ファイヤーレイズ］（並びはカード id の順）
-              PowerKey("NIP1X-001", 0), PowerKey("NIP2X-001", 0), PowerKey("PF1-003", 0), PowerKey("PF1-006", 0), PowerKey("PF1-009", 0), PowerKey("PF2-009", 0),
+              PowerKey("NIP1X-001", 0), PowerKey("NIP2X-001", 0), PowerKey("PF1-003", 0), PowerKey("PF1-006", 0), PowerKey("PF1-009", 0),
+              # v0.86（docs/entry-energy-evolution-reactions-v0.86.md）: ［エナジーしんか］（PF2-005）・［はしりさる］
+              PowerKey("PF2-005", 0), PowerKey("PF2-008", 0), PowerKey("PF2-009", 0),
               ENERGY_TRANS, ENERGY_BURN, RAIN_DANCE, BUZZAP, DAMAGE_SWAP, STRIKES_BACK, HEALING_POLLEN, SHIFT, MYSTERIOUS_WALL, PEEK, RETREAT_AID, IMMUNITY,
               CHEMICAL_GAS, COWARDICE, CLAIRVOYANCE, STRANGE_BEHAVIOR, TRANSPARENCY, CURSE, KABUTO_ARMOR, PREHISTORIC_POWER, TRANSFORM, STEP_IN, POLLEN_STENCH,
               STICKY_GOO, SNEAK_ATTACK, ALLERGIC_POLLEN, GATHER_FIRE, FINAL_BEAM, LONG_DISTANCE_HYPNOSIS, MATTER_EXCHANGE, REEL_IN, FRENZY, SINKHOLE, TRICKERY,
               EVOLUTIONARY_LIGHT, SUMMON_MINIONS, SOAK_UP, DEFENSIVE_POLLEN, SWEET_TRAP, SHAPESHIFT, REBIRTH, FLEE, REBELLION, ENERGY_CHARGE, SCRAM, BENCH_GUARD, STRANGE_BARRIER,
               CALMING_AROMA, METAMORPHOSIS, ENERGY_DRAIN, NATURAL_CURE, FIRE_RECOVERY, GASEOUS_FORM, PSYLINK, GUTS, BOSS_CALL, RESTLESS_SLEEP, RUN_AWAY,
+              # v0.86: ［いやしのかぜ］・［ソーラーパワー］・［れんさしんか］
+              PowerKey("PR1-056", 0), PowerKey("PR1-058", 0), PowerKey("PRN-024", 0),
               # v0.85: ［おいしげる］・［ファイヤーリチャージ］・［あばれんぼう］
               PowerKey("neo1-014", 0), PowerKey("neo1-021", 0), PowerKey("neo1-033", 0),
+              # v0.86: ［エナジーしんか］（neo2-049）・［おたけび］・［クリスタルボディ］・［いなびかり］・［タマゴうみ］・［とつぜんかみつく］
+              PowerKey("neo2-049", 0), PowerKey("neo3-010", 0), PowerKey("neo3-021", 0), PowerKey("neo3-029", 0), PowerKey("neo3-052", 0), PowerKey("neo4-012", 0),
               # v0.84（docs/light-powers-evolution-v0.84.md）: ［おいはらう］・［ふかふかなからだ］・［たすけだす］・［きせきのかぜ］・［おくりもの］
-              PowerKey("neo4-021", 0), PowerKey("neo4-041", 0), PowerKey("neo4-077", 0), PowerKey("neo4-094", 0), PowerKey("neo4-095", 0))
+              PowerKey("neo4-021", 0), PowerKey("neo4-041", 0),
+              PowerKey("neo4-046", 0),  # v0.86: ［かんでん］
+              PowerKey("neo4-077", 0), PowerKey("neo4-094", 0), PowerKey("neo4-095", 0))
 
 
 def _original_power_keys(registry):
@@ -280,7 +288,7 @@ class PowerRegistryTest(unittest.TestCase):
         # v0.69 は 68（拡張パック以外の商品の同じカードの新しい id 10。tests/helpers.py の V0_69_POWER_CARDS）
         # v0.71 は 74（拡張パック以外の商品の再録のカード 6。tests/helpers.py の V0_71_POWER_CARDS）
         self.assertEqual(tuple(k.card_id for k in DEFAULT_EFFECTS.power_keys() if k not in ALL_POWERS), tuple(sorted(V0_69_POWER_CARDS + V0_71_POWER_CARDS)))
-        self.assertIn("88 powers", repr(DEFAULT_EFFECTS))
+        self.assertIn("100 powers", repr(DEFAULT_EFFECTS))  # v0.86 で 12 を加えた
 
     def test_power_is_not_an_attack(self):
         """ポケモンパワーはワザ（AttackEffect）の一種ではない。識別子もワザ（AttackKey）とは別で、同じカードの同じ位置のワザ

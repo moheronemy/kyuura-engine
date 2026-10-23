@@ -52,7 +52,7 @@ from ..state import (
     NEXT_TURN_MULTIPLY, NEXT_TURN_SET, RETALIATION_FIXED, RETALIATION_RECEIVED, AttackBarrier, AttackCoinCheck, CannotAttack, CannotAttackNextOwnTurn,
     CannotAttachEnergy, CannotAttackWhileSourceActive, CannotRetreat, CannotUseAttack, CannotUsePowers, CannotUseOwnAttack, DamageReduction, DestinyBond, DoubledDamage, HalvedDamage, NextTurnAttackDamage, PreventAttackDamage, PreventDamage,
     MaxHpSet, ReducedDamageToSource, ReducedDamageToSourceNextTurn, ReflectShield, ResistanceChange, Retaliation, TailsDamageGuard, TrainerUseLock, WeaknessChange, ZeroDamageBelow, mark_returned_to_bench,
-    StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard, StatusImmunityNextTurn,
+    StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard, StatusImmunityNextTurn, PowersStopped, BenchProtection,
 )
 from ..history import note_processed
 from ..zones import (
@@ -5087,7 +5087,8 @@ class EvolveFromDeck(Element):
                         if len(E.evolution_hp_problem_targets(run.state, card, targets)) == len(targets))
         # v0.43: 場に出たときに使える特殊能力を持つ進化カード（わるいカイリューの［てしたをよぶ］）を重ねると、ワザの最中に特殊能力を使う機会が来る（PW4）。
         # 選べるが選ぶと止める（``entry_power_choices``。答えのときに止める）
-        entry = tuple(card for card in candidates if card not in blocked and E.applicable_entry_power(run.state, card, from_hand=False) is not None)
+        # v0.86: 重ねられるポケモンがどれも、ほかのポケモンの［れんさしんか］の機会が来るポケモンのカードも同じ（PW4。``effects.deck_evolution_entry_cards``）
+        entry = E.deck_evolution_entry_cards(run.state, run.player, candidates, blocked)
         if len(blocked) + len(entry) == len(candidates):
             # どの進化カードも選ぶと止める（v0.42 では、先読みが選べる答えのない決定で内部エラーになっていた。docs/declared-entry-powers-v0.43.md 4.3）
             if entry:
@@ -5121,11 +5122,17 @@ class EvolveFromDeck(Element):
             extra: tuple = (("card", card),)
             if blocked:
                 extra += (("unresolved_choices", blocked), ("unresolved_code", "UNRESOLVED_EVOLUTION_HP"), ("unresolved_reason", E.EVOLUTION_HP_REASON))
+            chain = E.chain_evolution_targets(run.state, run.player, [pid for pid in targets if pid not in blocked])
+            if chain:
+                extra += (("entry_power_choices", chain),)  # v0.86: 重ねるとほかのポケモンの［れんさしんか］の機会が来るポケモン（PW4。選ぶと止める）
             run.suspend(kind=SELECT_POKEMON, player=run.player, options=targets, extra=extra)
             return
         card = decision.context_value("card")
         if card not in candidates or choices[0] not in candidates[card]:
             raise RuntimeError(f"つきのちからで重ねるポケモン {choices}（カード {card}）が、重ねられるポケモンではない（エンジンの不具合）")
+        if choices[0] in decision.context_value("entry_power_choices", ()):
+            question = QUESTIONS["entry_power_during_attack"]
+            raise UnsupportedError(question.code, f"{question.message}（PW4。［れんさしんか］の機会が来るポケモン {choices[0]}）")
         self._evolve(run, card, choices[0])
 
     def _evolve(self, run: AttackRun, card: int, pokemon_id: int) -> None:
@@ -5350,7 +5357,8 @@ class EvolveAttackerFromDeck(Element):
             shuffle_in_attack(run, self, run.player)
             return False
         blocked = tuple(uid for uid in candidates if attacker.damage >= E.evolution_hp(state, attacker, uid))  # v0.48
-        entry = tuple(uid for uid in candidates if uid not in blocked and E.applicable_entry_power(state, uid, from_hand=False) is not None)
+        chain = bool(E.chain_evolution_targets(state, run.player, (attacker.pokemon_id,)))  # v0.86: ほかのポケモンの［れんさしんか］の機会が来る（PW4）
+        entry = tuple(uid for uid in candidates if uid not in blocked and (chain or E.applicable_entry_power(state, uid, from_hand=False) is not None))
         extra: tuple = ()
         if blocked:
             extra = (("unresolved_choices", blocked), ("unresolved_code", "UNRESOLVED_EVOLUTION_HP"), ("unresolved_reason", E.EVOLUTION_HP_REASON))
@@ -5809,6 +5817,10 @@ class AttachFromHand(Element):
         attacker = run.attacker()
         cards = tuple(uid for uid in run.state.players[run.player].hand if uid in choices)  # 手札の並びの順につける（選んだ順によらない）
         for uid in cards:
+            question = E.attack_hand_attach_question(run.state, run.player, attacker, uid)  # v0.86: 手札からつけた事実への反応（PW4・エンジンの未対応）
+            if question is not None:
+                raise run.res.question(question, f"手札からつけるカード {uid}・ポケモン {attacker.pokemon_id}")
+        for uid in cards:
             attach_energy_from_hand(run.state, run.player, uid, attacker)
         run.state.add_event("attach_energy_from_hand", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
                             cards=cards)
@@ -5951,6 +5963,9 @@ class LockOpponentTrainers(Element):
     """
 
     local_coin: CoinSide | None = None
+    # v0.86: 「手札から「トレーナーカード」を出して使うことができない」（わるいモココの「こうしゅうは」）。出どころ ``ATTACK_HAND_TRAINER_LOCK``（手札から出して使うことだけを止める。
+    # ``effects.trainer_use_blockers``）。消える番・与えるプレイヤーはワザの禁止と同じ
+    hand_only: bool = False
     phase: ClassVar[Phase] = Phase.EFFECT
 
     def run(self, run: AttackRun) -> bool:
@@ -5959,13 +5974,15 @@ class LockOpponentTrainers(Element):
         state = run.state
         opponent = 1 - run.player
         expires = state.turn_number + 1
-        if any(lock.player == opponent and lock.expires_turn == expires and lock.origin == "attack" for lock in state.trainer_locks):
+        origin = E.ATTACK_HAND_TRAINER_LOCK if self.hand_only else "attack"
+        if any(lock.player == opponent and lock.expires_turn == expires and lock.origin == origin for lock in state.trainer_locks):
             raise RuntimeError(f"プレイヤー {opponent} に、消える番 {expires} のトレーナーの使用の禁止がすでにある（エンジンの不具合）")
         lock = TrainerUseLock(player=opponent, source_player=run.player, source_card=run.attacker().card, effect=str(run.key),
-                              created_turn=state.turn_number, expires_turn=expires)
+                              created_turn=state.turn_number, expires_turn=expires, origin=origin)
         state.trainer_locks = state.trainer_locks + (lock,)
+        extra = {} if origin == "attack" else {"origin": origin}  # ワザの禁止のログの形は v0.85 と同じ
         state.add_event("trainer_lock_added", player=opponent, source_player=run.player, source_card=lock.source_card, effect=lock.effect,
-                        expires_turn=expires)
+                        expires_turn=expires, **extra)
         return False
 
 
@@ -7544,6 +7561,10 @@ class AttachFromHandToChosen(Element):
             return
         ordered = tuple(uid for uid in state.players[run.player].hand if uid in choices)
         for uid in ordered:
+            question = E.attack_hand_attach_question(state, run.player, target, uid)  # v0.86: 手札からつけた事実への反応（PW4・エンジンの未対応）
+            if question is not None:
+                raise run.res.question(question, f"手札からつけるカード {uid}・ポケモン {target.pokemon_id}")
+        for uid in ordered:
             attach_energy_from_hand(state, run.player, uid, target)
         state.add_event("attach_energy_from_hand", player=run.player, pokemon=target.card, pokemon_id=target.pokemon_id, effect=str(run.key), cards=ordered)
         for uid in ordered:
@@ -7923,6 +7944,10 @@ class EachPlayerEvolvesFromDeck(EachPlayerStep):
         if devolved:
             question = QUESTIONS["evolve_after_devolution"]
             return question.code, f"{question.message}（山札の進化カードと場のポケモン {list(devolved)}）"
+        if E.chain_evolution_targets(state, owner, (pokemon.pokemon_id,)):
+            # v0.86: 進化させると、そのプレイヤーのほかのポケモンの［れんさしんか］の機会が来る（ワザの最中の宣言。PW4）
+            question = QUESTIONS["entry_power_during_attack"]
+            return question.code, f"{question.message}（PW4。［れんさしんか］の機会が来るポケモン {pokemon.pokemon_id}）"
         cards = evolution_song_cards(state, owner, pokemon)
         blocked = [card for card in cards if card in self._blocked_cards(run, owner, pokemon, cards)]
         if cards and len(blocked) == len(cards):
@@ -8789,7 +8814,110 @@ BUILDERS: dict[type, Any] = {
     E.CoinsTimesDamageThenParalyzeIfAtLeast: lambda e: (
         ReparalysisGuard(), Coin("coin", count=e.coins), Damage(OPP, HeadsOfCoin("coin", e.per)), Status(PARALYSIS, gate=("coin", AtLeast(e.at_least))),
     ),
+    # v0.86（docs/entry-energy-evolution-reactions-v0.86.md 7 章）
+    E.DiscardTypeCardsThenDamageNoneIfLacking: lambda e: (
+        DiscardOwnEnergy(e.energy_type, count=e.count, when_lacking=LACKING_NONE, timing=TIMING_EFFECT), Damage(OPP, Printed(), requires="discard"),
+    ),
+    E.CoinPerOpponentPokemonDamageThenHealDealt: lambda e: (CoinPerOpponentPokemon(e.amount, name="dark_drain"), Drain("dark_drain", full=True)),
+    E.DamageThenLockOpponentHandTrainersOnHeads: lambda e: (Damage(OPP, Printed()), LockOpponentTrainers(local_coin=HEADS, hand_only=True)),
+    E.DamageThenStopDefenderPowers: lambda e: (Damage(OPP, Printed()), StopDefenderPowers()),
+    E.DamageThenParalyzeOrSleepByTwoCoins: lambda e: (
+        ReparalysisGuard(), Coin("coin", count=2), Damage(OPP, Printed()), Status(PARALYSIS, gate=("coin", Exactly(2))), Status(SLEEP, gate=("coin", Exactly(1))),
+    ),
+    E.DamageThenProtectOwnBench: lambda e: (Damage(OPP, Printed()), ProtectOwnBench()),
 }
+
+
+# ---------------------------------------------------------------- v0.86（docs/entry-energy-evolution-reactions-v0.86.md 7 章）
+
+
+@dataclass(frozen=True)
+class DealtTotal:
+    """v0.86: 要素が与えたダメージの合計（``DamageResult.dealt`` の和）。``Drain`` が ``dealt`` を読む（ダークドレインの「与えたダメージの合計ぶん」）。"""
+
+    dealt: int
+
+
+@dataclass(frozen=True)
+class CoinPerOpponentPokemon(Element):
+    """相手の場のポケモン全員に対して 1 枚ずつコインを投げ、「おもて」が出たポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ ``amount`` ダメージ（v0.86。わるいクロバットの
+    「ダークドレイン」）。結果は与えたダメージの合計（``DealtTotal``。``fs.results[name]``）。
+
+    - 対象はこの要素を処理する時点の相手の場の並び（バトル場 → ベンチの順）。コインは 1 匹 1 枚、並びの順に 1 回の ``flip`` で投げ、``i`` 枚目は ``i`` 番目のポケモンのもの
+      （「おもて」の数でまとめない。どのポケモンかが要る。ログ ``pokemon_coin_results``）。v0.60 の ``CoinPerOpponentBench`` と同じ形
+    - すべて投げてから、「おもて」のポケモンに並びの順でダメージ（バトル場は ``OPPONENT_ACTIVE``・控えは ``OPPONENT_BENCH``。弱点・抵抗力なし）。控えへのダメージは［ベンチガード］の
+      決定を出しうる（決定をまたいで、残りの並びとそれまでの合計を運ぶ。コインは投げ直さない）
+    - 「とうめい」がはたらいているポケモンのあとにポケモンがいれば TS1（コインの割り当てが投げ方で変わる。v0.60 と同じ問い）。2 匹以上は T27
+    """
+
+    amount: int
+    name: str = "pokemon_coins"
+    phase: ClassVar[Phase] = Phase.DAMAGE
+    guards_bench: ClassVar[bool] = True
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        side = state.players[1 - run.player]
+        targets = ([side.active] if side.active is not None else []) + list(side.bench)
+        if not targets:
+            run.fs.results[self.name] = DealtTotal(0)
+            return False
+        if any(E.evasion_power(state, pokemon) is not None for pokemon in targets[:-1]):
+            raise run.res.question("bench_coin_transparency_order", f"相手の場のポケモン {[p.pokemon_id for p in targets]}")
+        flips = run.flip(len(targets))
+        run.fs.coins[self.name] = flips
+        state.add_event("pokemon_coin_results", player=run.player, pokemon=run.attacker().card, pokemon_id=run.attacker().pokemon_id, effect=str(run.key),
+                        targets=tuple(p.pokemon_id for p in targets), results=tuple(face.value for face in flips.results))
+        entries = tuple((E.OPPONENT_ACTIVE if pokemon is side.active else E.OPPONENT_BENCH, pokemon.pokemon_id, self.amount, False)
+                        for pokemon, face in zip(targets, flips.results) if face is HEADS)
+        return self._deal(run, entries, 0)
+
+    def _deal(self, run: AttackRun, entries: tuple, total: int, guard: tuple[int, ...] | None = None) -> bool:
+        for i, (kind, pid, base, wr) in enumerate(entries):
+            try:
+                result = deal_damage(run.res, run.fs, kind, base, pokemon_id=pid, weakness_resistance=bool(wr), guard=guard if i == 0 else None,
+                                     guard_suspend=True)
+            except BenchGuardRequest as request:
+                run.suspend(kind=BENCH_GUARD, player=request.owner, options=list(request.options), min_choices=0, max_choices=request.max_choices, carry=True,
+                            extra=(("element", run.index), ("bench_guard", (entries[i:], total, 0))) + request.extra())
+                return True
+            total += result.dealt
+        run.fs.results[self.name] = DealtTotal(total)
+        return False
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        entries, total, _ = run.carried["bench_guard"]
+        self._deal(run, tuple(tuple(e) for e in entries), total, tuple(choices))
+
+
+@dataclass(frozen=True)
+class StopDefenderPowers(OpponentRetreatLock):
+    """次の自分の番が終わるまで、このワザを受けた相手（相手の対戦ポケモン）は「特殊能力」を使うことができず、その効果も消える（v0.86。わるいモココの「スタンウェーブ」。持続する効果
+    ``PowersStopped``）。v0.41 の ``OpponentRetreatLock`` と同じ形（対象がこのワザで HP 以上なら与えない・「とうめい」・「ワザをうけない」状態・クリスタルボディの評価）。"""
+
+    opponent_element: ClassVar[str] = E.POWER_LOCK_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        return _opponent_lock(self, run, PowersStopped, E.POWER_LOCK_ELEMENT)
+
+
+@dataclass(frozen=True)
+class ProtectOwnBench(Element):
+    """次の相手の番が終わるまで、自分の控えポケモン全員は、ワザによるダメージや効果を受けない（v0.86。エンテイ（PF2-008）の「ほのおのまもり」）。この要素を処理する時点の自分の
+    控えポケモンそれぞれに持続する効果 ``BenchProtection`` を与える（自分のポケモンへの効果なので、受けるかを評価する（``reaches``）。控えがいなければ何もしない）。"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def run(self, run: AttackRun) -> bool:
+        attacker = run.attacker()
+        turn = run.state.turn_number
+        for pokemon in list(run.state.players[run.player].bench):
+            if not reaches(run.res, run.fs, run.player, pokemon, E.BENCH_PROTECTION_ELEMENT):
+                continue
+            effect = BenchProtection(source_card=attacker.card, source_player=run.player, created_turn=turn,
+                                     active_turn=turn + BenchProtection.turns_until_active)
+            add_persistent_effect(run.state, run.player, pokemon, effect, attack=str(run.key))
+        return False
 
 
 def compile_attack(effect: E.AttackEffect) -> tuple[Element, ...]:

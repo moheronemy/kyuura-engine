@@ -47,6 +47,7 @@ from .state import (
     AttackCoinCheck,
     AttackEffectGuard,
     BenchAttackDamageGuard,
+    BenchProtection,
     CannotAttachEnergy,
     CannotAttack,
     CannotAttackWhileSourceActive,
@@ -60,6 +61,7 @@ from .state import (
     HalvedDamage,
     MaxHpSet,
     NextTurnAttackDamage,
+    PowersStopped,
     PreventDamage,
     ReducedDamageToSource,
     ReflectShield,
@@ -423,6 +425,25 @@ def powers_use_prevented(state: GameState, pokemon: PokemonInPlay) -> CannotUseP
     与えた番から次の相手の番（``active_turn``）の終わりまで（「次の相手の番の終わりまで」）。宣言して使う特殊能力の使用だけを止める（呼ぶ側が決める）。"""
     for effect in pokemon.persistent_effects:
         if isinstance(effect, CannotUsePowers) and effect.created_turn <= state.turn_number <= effect.active_turn:
+            return effect
+    return None
+
+
+def powers_stopped(state: GameState, pokemon: PokemonInPlay) -> PowersStopped | None:
+    """今 ``pokemon`` の特殊能力が「使うことができず、その効果も消え」ている効果（v0.86。``PowersStopped``。わるいモココの「スタンウェーブ」を受けた）がはたらいているなら、
+    その効果。はたらくのは与えた番から、効果を与えたプレイヤーの次の番（``active_turn``）の終わりまで。宣言して使う特殊能力の使用も、常にはたらく・自動的にはたらく特殊能力の
+    力も止める（``continuous.power_suppressed`` の ``holder``・``continuous._suppressor``・``catalog.stopped``）。"""
+    for effect in pokemon.persistent_effects:
+        if isinstance(effect, PowersStopped) and effect.created_turn <= state.turn_number <= effect.active_turn:
+            return effect
+    return None
+
+
+def bench_protection(state: GameState, pokemon: PokemonInPlay) -> BenchProtection | None:
+    """今 ``pokemon`` が「ほのおのまもり」の効果（v0.86。``BenchProtection``。ワザによるダメージや効果を受けない）を受けているなら、その効果。はたらくのは与えた番から次の相手の番の
+    終わりまで。当てはめる場所（控え・バトル場）は呼ぶ側（``kernel`` の効果の定義 ``PROTECTIVE_FLAME`` と PL1）が決める。"""
+    for effect in pokemon.persistent_effects:
+        if isinstance(effect, BenchProtection) and effect.created_turn <= state.turn_number <= effect.active_turn:
             return effect
     return None
 

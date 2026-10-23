@@ -324,6 +324,14 @@ DISCARD_STADIUM = "discard_stadium"
 # 0〜1 匹（0 は選ばない）。選ぶと止めるポケモン（``unresolved_choices``）が山札の中身で決まるので、選べるものの数・止める選択は決めるプレイヤーだけが見る（観測）
 EVOLUTION_SONG_POKEMON = "evolution_song_pokemon"
 
+# v0.86（docs/entry-energy-evolution-reactions-v0.86.md 2 章）。再開先は "reaction"（``reactions``）
+# 同じ時点に起こる 2 つ以上の反応（手札からつけたエネルギーカード・進化への反応）の順番。決めるのはその時に番を行っているプレイヤー（GR-2000-P325-SAME-TIMING）。
+# 選べるものは待っている反応の位置（``context`` の ``"reaction"``）。1 つ選ぶと、それを処理し、残りの反応はそのあとに処理する
+REACTION_ORDER = "reaction_order"
+# 決められた事実（手札からエネルギーカードをつけた・ほかのポケモンが進化した）のときに使える特殊能力（［エナジーしんか］・［れんさしんか］）の使う機会。決めるのは持ち主。
+# 選べるものはそのポケモンの番号 1 つ。0 個（使わない）か 1 個（使う）
+REACTION_POWER = "reaction_power"
+
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 
 # 決定を待っている段階。並び（DECISION_PHASE_ORDER。段階の定義の順）は、決定への答えを拒否する理由の文（WRONG_PHASE）に書く順番。

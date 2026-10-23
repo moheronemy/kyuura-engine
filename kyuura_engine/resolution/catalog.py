@@ -20,9 +20,9 @@ from typing import TYPE_CHECKING, Any
 
 from .. import effects as E
 from ..continuous import goop_gas_effects, suppressors_of
-from ..persistent import powers_use_prevented
+from ..persistent import powers_stopped, powers_use_prevented
 from ..decisions import BENCH_GUARD, KNOCK_OUT_POWER, KO_PREVENTION, POST_KNOCKOUT_POWER, REACTION_SWITCH
-from ..state import AttackBarrier, AttackEffectGuard, BenchAttackDamageGuard, PreventDamage, Retaliation
+from ..state import AttackBarrier, AttackEffectGuard, BenchAttackDamageGuard, BenchProtection, PreventDamage, Retaliation
 
 from .events import DamageClass, Window
 
@@ -227,7 +227,35 @@ class EffectGuardRecord:
     source_card: int
     kind: str = "effect_guard"
 
+@dataclass(frozen=True)
+class PowerVoidRecord:
+    """v0.86: 要素を無効にする特殊能力（［クリスタルボディ］）の効果のもと（特殊能力を持つポケモンのカード・種類・特殊能力の実装）。``first_void`` が返す効果の ``implementation``
+    （エフェクトガードの ``EffectGuardRecord`` と同じ形。ログ ``effect_prevented`` の ``persistent_effect``・``source_card``）。"""
+
+    source_card: int
+    kind: str
+    effect: object
+
 # v0.13 の実装の型 → 効果の定義（型での振り分けはここだけ。部分型は親の型の定義を使う）
+# v0.86（docs/entry-energy-evolution-reactions-v0.86.md 6 章）: スイクンの［クリスタルボディ］（「場にいるかぎり、相手のワザによる「ダメージ以外の効果」を受けない(ダメージは受ける)。
+# ねむり・マヒ・こんらんのとき、はたらかない」）。エフェクトガード・ひかりのはどうと同じ窓（効果の要素の前だけ）・同じ処理。特殊能力なので特殊状態・ガス・スタンウェーブで消える
+CRYSTAL_BODY = EffectDefinition(
+    "crystal_body", Origin.PRINTED_POWER, Mode.AUTOMATIC, Timing.VOID, frozenset({Window.BEFORE_EFFECT}), BLOCKING_CONDITIONS, "now", True,
+    "receiving_element", "void_effect", frozenset({DamageClass.ATTACK}), True,
+)
+# v0.86（6.1 節）: エンテイの［はしりさる］。はんげきと同じ窓（バトル場で相手のワザの分類のダメージを受けるときに、受けるときの特殊状態（「すでに」）で候補にし、そのワザのダメージの
+# 要素のあと・ダメージ以外の効果の前に処理する。``kernel.bolt_return_on_heads``）
+BOLT = EffectDefinition(
+    "bolt", Origin.PRINTED_POWER, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
+    BLOCKING_CONDITIONS, "on_damage", True, "self", "bolt_return_on_heads", frozenset({DamageClass.ATTACK}), True, active_only=True,
+)
+# v0.86（7 章）: エンテイの「ほのおのまもり」（「次の相手の番が終わるまで、自分の控えポケモン全員は、ワザによるダメージや効果を受けない」）。バリアーと同じ窓（ダメージと効果の要素の前）。
+# 効果を受けた控えポケモンが持つ持続する効果（``state.BenchProtection``）で、相手のワザだけ（``by_opponent``）。当てはめる範囲が決まらない場面は PL1（``kernel.protective_flame_scope``）
+PROTECTIVE_FLAME = EffectDefinition(
+    "protective_flame", Origin.PERSISTENT_EFFECT, Mode.AUTOMATIC, Timing.VOID, frozenset({Window.BEFORE_DAMAGE, Window.BEFORE_EFFECT}), frozenset(), "now",
+    False, "receiving_element", "void_attack", frozenset({DamageClass.ATTACK}), True,
+)
+
 POWER_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (E.AttackImmunityOnHeads, TRANSPARENCY),
     (E.CounterattackDamage, STRIKES_BACK),
@@ -241,12 +269,15 @@ POWER_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (E.TakeBenchDamageInstead, BENCH_GUARD_DEFINITION),  # v0.65
     (E.DiscardAttackerEnergyOnDamage, ENERGY_DRAIN),  # v0.68
     (E.SleepDamageSourceOnHeads, FLUFFY_WOOL),  # v0.84
+    (E.OpponentAttackEffectImmunity, CRYSTAL_BODY),  # v0.86
+    (E.ReturnToDeckOnHeadsAfterDamage, BOLT),  # v0.86
 )
 PERSISTENT_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (PreventDamage, HARDEN),
     (Retaliation, RETALIATION),
     (AttackBarrier, BARRIER),  # v0.31
     (AttackEffectGuard, LIGHT_PULSE),  # v0.84
+    (BenchProtection, PROTECTIVE_FLAME),  # v0.86
 )
 
 
@@ -287,6 +318,9 @@ def instances(state: GameState, owner: int, pokemon: PokemonInPlay, table=None) 
             continue
         effect_definition = definition_for(implementation, powers)
         if effect_definition is not None:
+            if effect_definition is CRYSTAL_BODY:
+                # v0.86: 要素を無効にする特殊能力。``first_void`` の結果のログ（``effect_prevented`` の ``persistent_effect``・``source_card``）に、効果のもと（このポケモンのカード）を書く
+                implementation = PowerVoidRecord(pokemon.card, CRYSTAL_BODY.name, implementation)
             found.append(EffectInstance(effect_definition, owner, pokemon.pokemon_id, pokemon.card, slot.key, slot.power, implementation))
     for effect in pokemon.persistent_effects:
         effect_definition = definition_for(effect, persistent)
@@ -336,6 +370,9 @@ def stopped(state: GameState, instance: EffectInstance) -> bool:
     （``continuous.goop_gas_effects``）。印刷された特殊能力でない効果・消えない効果は False。"""
     if instance.definition.origin is not Origin.PRINTED_POWER or not instance.definition.suppressible:
         return False
+    found = state.find_pokemon(instance.pokemon_id)
+    if found is not None and powers_stopped(state, found[1]) is not None:
+        return True  # v0.86: スタンウェーブを受けたポケモンの特殊能力（「使うことができず、その効果も消える」）
     return bool(goop_gas_effects(state)) or bool(suppressors_of(state, instance.power))
 
 

@@ -969,12 +969,15 @@ def discard_pile_to_deck(state: GameState, player: int, *, trainer: int) -> tupl
     return cards
 
 
-def deck_top_to_discard(state: GameState, player: int, count: int, *, trainer: int) -> tuple[int, ...]:
+def deck_top_to_discard(state: GameState, player: int, count: int, *, trainer: int | None = None, power: str | None = None) -> tuple[int, ...]:
     """自分の山札の上から ``count`` 枚を、上から順に自分のトラッシュに置く（v0.55。トラッシュ交換の「数えた枚数のカードを山札の上から取って、トラッシュする」）。「カードを
     引く」ではない。山札が足りなければ確認の漏れ（``RuntimeError``。トラッシュ交換では、もどしたあとの山札は数えた枚数以上ある）。ログ ``deck_top_to_discard``（公開。0 枚でも
-    書く）。トラッシュしたカードを返す。"""
+    書く）。トラッシュしたカードを返す。v0.86: 特殊能力の効果（エンテイの［おたけび］）なら ``power``（``PowerKey`` の文字列。ログの ``power``。``trainer`` とどちらか一方）。"""
+    if (trainer is None) == (power is None):
+        raise ValueError("山札の上からトラッシュする効果の出どころ（トレーナー・特殊能力）はどちらか一方")
     cards = discard_from_deck(state, player, count)
-    state.add_event("deck_top_to_discard", player=player, cards=cards, trainer_card=trainer)
+    source = {"trainer_card": trainer} if power is None else {"power": power}
+    state.add_event("deck_top_to_discard", player=player, cards=cards, **source)
     return cards
 
 

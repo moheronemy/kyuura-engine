@@ -29,7 +29,7 @@ from .. import effects as E
 from ..effects import (AttackKey, AttackUse, PowerKey, usable_ninja_tricks, attach_converted_energy, attack_rebellion_powers, counts_as_knockout, dormant_scram, max_hp,
                        received_modifiers_log, received_power_damage, retreat_trap_powers, stadium_attack_coin_available, status_at_attack_blocked)
 from ..errors import IllegalActionError, UnsupportedError
-from ..state import AttackEffectGuard, BenchAttackDamageGuard, GameState, Phase, StatusImmunityNextTurn, ZeroDamageAtLeast
+from ..state import AttackEffectGuard, BenchAttackDamageGuard, BenchProtection, GameState, Phase, PowersStopped, StatusImmunityNextTurn, ZeroDamageAtLeast
 from ..history import close_probe, note_used
 from ..zones import face_up_fields, prize_left, promote_from_bench, return_in_play_to_deck, shuffle_deck
 
@@ -212,6 +212,13 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
     if any(isinstance(effect, v084) for side in state.players for pokemon in side.in_play() for effect in pokemon.persistent_effects):
         # v0.84: こおりのはしら（控えへのワザのダメージを無効にする）・ひかりのはどう（効果の要素を無効にする）・パルスガード（8 段階）。v0.13 の止める関数は知らない
         found.append("v0.84 の持続する効果")
+    if any(isinstance(slot.effect, (E.ReturnToDeckOnHeadsAfterDamage, E.OpponentAttackEffectImmunity))
+           for side in state.players for pokemon in side.in_play() for slot in E.powers_of(state, pokemon)):
+        # v0.86: ［はしりさる］（ダメージの要素のあとのコインと山札にもどる）・［クリスタルボディ］（効果の要素を無効にする）。v0.13 の止める関数は知らない
+        found.append("はしりさる・クリスタルボディ")
+    if any(isinstance(effect, (PowersStopped, BenchProtection)) for side in state.players for pokemon in side.in_play() for effect in pokemon.persistent_effects):
+        # v0.86: スタンウェーブ（特殊能力を止める）・ほのおのまもり（控えへのワザのダメージと効果を無効にする）。v0.13 の止める関数は知らない
+        found.append("v0.86 の持続する効果")
     return tuple(found)
 
 
@@ -797,6 +804,15 @@ def end_turn_after_trainer(state: GameState, ctx: Context, player: int, card: in
     → ポケモンチェック → 次の番（``_end_turn``）。ワザを使っていないので、ワザのあとのきぜつの処理はない。"""
     require_turn(state, player)
     state.add_event("trainer_turn_end", player=player, trainer_card=card)
+    _end_turn(Resolution(state, catalog=ctx.catalog, trace=ctx.trace))
+
+
+def end_turn_after_power(state: GameState, ctx: Context, player: int, power: str) -> None:
+    """v0.86: 特殊能力の説明の「使ったら、自分の番は終わる」（エンテイの［おたけび］）。特殊能力の処理・続き（使用中のトレーナーを使い終える）のあとに呼ぶ。ログ ``power_turn_end``
+    （``player``・``power``）のあと、トレーナーの番の終わり（``end_turn_after_trainer``）と同じ番の終わりの窓 → ポケモンチェック → 次の番。ワザを使っていないので、ワザのあとの
+    きぜつの処理はない。持ち主の番でないときは使う機会で止めている（OT1）。"""
+    require_turn(state, player)
+    state.add_event("power_turn_end", player=player, power=power)
     _end_turn(Resolution(state, catalog=ctx.catalog, trace=ctx.trace))
 
 

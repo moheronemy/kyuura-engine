@@ -56,7 +56,7 @@ from ..effects import (
 )
 from ..conditions import confuse, put_to_sleep
 from ..decisions import KNOCK_OUT_POWER, KO_PREVENTION, REACTION_SWITCH
-from ..persistent import RETURN_IN_PLAY_TO_DECK, effect_attack_card, expires_at_turn_start, reduced_damage_to_source, reflect_shield, remove_on_damage, remove_persistent_effects, tails_damage_guard
+from ..persistent import RETURN_IN_PLAY_TO_DECK, bench_protection, effect_attack_card, expires_at_turn_start, reduced_damage_to_source, reflect_shield, remove_on_damage, remove_persistent_effects, tails_damage_guard
 from ..zones import designate_face_down, return_in_play_to_deck, shuffle_deck
 from ..errors import UnsupportedError
 from .. import effects as E
@@ -328,7 +328,10 @@ def first_void(res: Resolution, owner: int, pokemon: PokemonInPlay, window: Wind
     ``Window.BEFORE_EFFECT`` を渡すと、効果の要素を無効にする効果（「ワザをうけない」状態。バリアー）。
 
     v0.60: ``held_by_receiver`` が False なら、受けるポケモン自身が持っている効果（持続する効果・特殊能力）は除く（タケシのサンドパンの「スピードスター」。トレーナーの
-    効果（見えない壁。プレイヤーの記録）は受けるポケモンの持っている効果ではないので残す）。"""
+    効果（見えない壁。プレイヤーの記録）は受けるポケモンの持っている効果ではないので残す）。
+
+    v0.86: 「ほのおのまもり」（``BenchProtection``）を当てはめる範囲が決まらない場面（PL1）は、ここで問いにする（``protective_flame_scope``）。"""
+    protective_flame_scope(res, owner, pokemon)
     for instance in C.in_window(res.state, window, owner, pokemon, res.catalog):
         if not held_by_receiver and instance.definition.origin is not C.Origin.TRAINER_EFFECT and instance.pokemon_id == pokemon.pokemon_id:
             continue
@@ -337,6 +340,22 @@ def first_void(res: Resolution, owner: int, pokemon: PokemonInPlay, window: Wind
         if instance.definition.timing is C.Timing.VOID and C.working(res.state, instance, pokemon):
             return instance
     return None
+
+
+def protective_flame_scope(res: Resolution, owner: int, pokemon: PokemonInPlay) -> None:
+    """v0.86（PL1）: 相手のワザの要素が持ち主 ``owner`` のポケモン ``pokemon`` に来るとき、「ほのおのまもり」の効果（``BenchProtection``）を当てはめるかが決まらない場面なら問いにする:
+    効果を受けたポケモンが今バトル場にいる・効果を受けていない控えポケモンが、持ち主のほかのポケモンが効果を受けている間にワザを受ける。自分のワザには当てはめない（相手のワザだけ）。"""
+    state = res.state
+    if owner == state.current_player:
+        return
+    side = state.players[owner]
+    holders = [p for p in side.in_play() if bench_protection(state, p) is not None]
+    if not holders:
+        return
+    if side.active is pokemon and bench_protection(state, pokemon) is not None:
+        raise res.question("protective_flame_scope", f"効果を受けたポケモン {pokemon.pokemon_id} がバトル場にいる")
+    if side.active is not pokemon and bench_protection(state, pokemon) is None:
+        raise res.question("protective_flame_scope", f"効果を受けていない控えポケモン {pokemon.pokemon_id}（効果を受けたポケモン {[p.pokemon_id for p in holders]}）")
 
 
 def note_receipt(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay, **what) -> None:
@@ -1495,6 +1514,39 @@ def counters_to_damage_source_on_heads(res: Resolution, fs: FrameState, deferred
     E.discard_attached_tool(state, holder[1], attached, E.TOOL_USED)
 
 
+def bolt_return_on_heads(res: Resolution, fs: FrameState, deferred: Deferred) -> None:
+    """v0.86（docs/entry-energy-evolution-reactions-v0.86.md 6.1 節）: エンテイの［はしりさる］。持ち主がコインを投げ、「おもて」ならこのカードとついているすべてのカードを
+    持ち主の山札にもどし（``zones.return_in_play_to_deck`` の ``power``）、持続する効果を消し、その山札を切る（先読みでは切らない）。
+
+    - 処理する時点でこのカードが HP 以上なら（「それによって、このカードが「きぜつ」しなければ」）はたらかない（コインを投げない。ログ ``bolt_skipped``）
+    - このカードの持ち主のワザの処理の中（相手の返す効果のダメージ）なら BT1（``bolt_during_own_attack``）
+    - もどしたら、このワザの残りの要素では対象がいない（``res.secret_lost`` に入れる。サイドは取られない。空いたバトル場は、ワザのあとの勝ち負けの判定・バトル場に出す決定でうめる）"""
+    state = res.state
+    instance = deferred.instance
+    found = state.find_pokemon(instance.pokemon_id)
+    if found is None or found[0] != instance.owner:
+        raise RuntimeError(f"［はしりさる］のポケモン {instance.pokemon_id} が場にいない（エンジンの不具合）")
+    pokemon = found[1]
+    base = {"player": instance.owner, "pokemon": pokemon.card, "pokemon_id": pokemon.pokemon_id, "power": str(instance.power_key),
+            "effect": str(fs.frame.attack_key)}
+    if pokemon.damage >= hp_of(state, pokemon):
+        state.add_event("bolt_skipped", **base, reason="knocked_out")
+        return
+    if state.current_player == instance.owner:
+        raise res.question("bolt_during_own_attack", f"ポケモン {pokemon.pokemon_id}")
+    flips = flip_coins(state, instance.owner, 1, source="power", effect=str(instance.power_key), card=pokemon.card, pokemon_id=pokemon.pokemon_id)
+    returned = flips.results[0] is CoinSide.HEADS
+    state.add_event("bolt_check", **base, result=flips.results[0].value, returned=returned)
+    if not returned:
+        return
+    was_active = state.players[instance.owner].active is pokemon
+    return_in_play_to_deck(state, instance.owner, pokemon, power=str(instance.power_key))
+    remove_persistent_effects(state, instance.owner, pokemon, RETURN_IN_PLAY_TO_DECK)
+    res.secret_lost[pokemon.pokemon_id] = (instance.owner, pokemon, was_active)
+    if not res.dry_run:
+        shuffle_deck(state, instance.owner, power=str(instance.power_key))
+
+
 ACTIONS: dict[str, Callable[[Resolution, FrameState, Deferred], None]] = {
     "power_damage_to_damage_source": power_damage_to_damage_source,
     "attack_damage_to_damage_source": attack_damage_to_damage_source,
@@ -1503,6 +1555,7 @@ ACTIONS: dict[str, Callable[[Resolution, FrameState, Deferred], None]] = {
     "counters_to_damage_source_on_heads": counters_to_damage_source_on_heads,  # v0.81
     "reflect_damage_to_damage_source": reflect_damage_to_damage_source,  # v0.83
     "power_sleep_to_damage_source": power_sleep_to_damage_source,  # v0.84
+    "bolt_return_on_heads": bolt_return_on_heads,  # v0.86
 }
 
 

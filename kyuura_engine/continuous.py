@@ -32,7 +32,10 @@ def _suppressor(state: GameState, pokemon: PokemonInPlay) -> tuple[SuppressOther
     カードの特殊能力は入らない（TF1。写した特殊能力を持つかは決まらないので、``effects.form_problems`` がその状態にしない））のうち、ほかの特殊能力を消す実装が
     登録されたもの。［へんしん］がはたらいているかはこの答えを聞くので、［へんしん］で決まる姿を聞かない（循環しない）。"""
     from .effects import powers_of
+    from .persistent import powers_stopped
 
+    if powers_stopped(state, pokemon) is not None:
+        return ()  # v0.86: スタンウェーブを受けたポケモンの特殊能力（かがくへんかガスも）は「その効果も消える」
     return tuple(slot.effect for slot in powers_of(state, pokemon) if isinstance(slot.effect, SuppressOtherPowers))
 
 
@@ -73,11 +76,19 @@ def goop_gas_effects(state: GameState) -> tuple[TrainerTurnEffect, ...]:
     return tuple(r for r in state.trainer_effects if r.kind == POWER_SUPPRESSION and r.created_turn <= turn <= r.expires_turn)
 
 
-def power_suppressed(state: GameState, power: Power) -> bool:
+def power_suppressed(state: GameState, power: Power, holder: PokemonInPlay | None = None) -> bool:
     """特殊能力 ``power``（場のポケモンの特殊能力）が今「使えず、その力も消え」ているか（v0.59）: はたらいているかがくへんかガスに消されている（``suppressors_of``）か、
     まきちらせ!ベトベトガスの効果がはたらいている（``goop_gas_effects``）。宣言して使う特殊能力の使用・常にはたらく・自動的にはたらく特殊能力の力のどちらにも当てはまる
     （kyuura の CR-CHEMICAL-GAS-USE-VS-POWER・CR-CHEMICAL-GAS-ALL-POWERS）。わるいアーボックの「ショックアイ」（使うことだけができない）は含まない
-    （``persistent.powers_use_prevented``）。"""
+    （``persistent.powers_use_prevented``）。
+
+    v0.86: ``holder``（その特殊能力を持つ場のポケモン）を渡したら、そのポケモンがわるいモココの「スタンウェーブ」を受けている（``persistent.powers_stopped``。「使うことが
+    できず、その効果も消える」）ときも消えている。止まるのはそのポケモンの特殊能力だけ。"""
+    if holder is not None:
+        from .persistent import powers_stopped
+
+        if powers_stopped(state, holder) is not None:
+            return True
     return bool(goop_gas_effects(state)) or bool(suppressors_of(state, power))
 
 

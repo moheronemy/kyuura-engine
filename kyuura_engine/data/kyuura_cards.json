@@ -1286,6 +1286,21 @@
     "PF2-009",
     "neo4-113"
   ],
+  "pool_v0_86": [
+    "neo2-049",
+    "PF2-005",
+    "PRN-024",
+    "neo3-010",
+    "neo3-029",
+    "neo3-052",
+    "PR1-056",
+    "PF2-008",
+    "neo4-012",
+    "neo4-044",
+    "neo4-046",
+    "neo3-021",
+    "PR1-058"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -93839,6 +93854,1302 @@
       "play_scope": "standard",
       "data_gaps": [],
       "same_card_group": null
+    },
+    {
+      "id": "neo2-049",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "イーブイ",
+        "en": "Eevee"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          133
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "エナジーしんか",
+              "en": "Energy Evolution"
+            },
+            "text": {
+              "ja": "この力は、このカードに手札から「エネルギーカード」をつけたとき、使える。コインを投げて「おもて」なら、自分の山札から、「イーブイ」を進化させる「進化カード」のうち、このカードにつけた「エネルギーカード」と同じ「色(タイプ)」の「進化カード」を1枚選び出し、このイーブイの上にのせて、進化させる。その後、その山札をよく切る。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。",
+              "en": "Whenever you attach an Energy card to Eevee, flip a coin. If heads, search your deck for a card that evolves from Eevee that is the same type as the Energy card you attached to Eevee. Attach that card to Eevee. This counts as evolving Eevee. Shuffle your deck afterward. This power can't be used if Eevee is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "けとばす",
+              "en": "Smash Kick"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-049",
+        "pokemontcg": [
+          "neo2-38"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-049-eievui/",
+      "jp_print": {
+        "level": 14,
+        "rarity": "◆(U)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-049-eievui/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-neo2-049"
+    },
+    {
+      "id": "PF2-005",
+      "jp_set": "PF2",
+      "category": "pokemon",
+      "name": {
+        "ja": "イーブイ",
+        "en": "Eevee"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          133
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "エナジーしんか",
+              "en": "Energy Evolution"
+            },
+            "text": {
+              "ja": "この力は、このカードに手札から「エネルギーカード」をつけたとき、使える。コインを投げて「おもて」なら、自分の山札から、「イーブイ」を進化させる「進化カード」のうち、このカードにつけた「エネルギーカード」と同じ「色(タイプ)」の「進化カード」を1枚選び出し、このイーブイの上にのせて、進化させる。その後、その山札をよく切る。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。",
+              "en": "Whenever you attach an Energy card to Eevee, flip a coin. If heads, search your deck for a card that evolves from Eevee that is the same type as the Energy card you attached to Eevee. Attach that card to Eevee. This counts as evolving Eevee. Shuffle your deck afterward. This power can't be used if Eevee is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "けとばす",
+              "en": "Smash Kick"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo2-38"
+        ],
+        "pcg_search": [
+          "neopf2005"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neopf2005.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プレミアムファイル2",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neopf2005.php"
+      },
+      "product_group": "premium_file",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-neo2-049",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "same_card:neo2-049",
+        "english_text": "same_card:neo2-049",
+        "pokemon.dex": "same_card:neo2-049"
+      },
+      "copies": [
+        {
+          "page": "neopf2005",
+          "list_number": "005/009"
+        }
+      ]
+    },
+    {
+      "id": "PRN-024",
+      "jp_set": "PRN",
+      "category": "pokemon",
+      "name": {
+        "ja": "イーブイ",
+        "en": "Eevee"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          133
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 30,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "れんさしんか",
+              "en": "Chain Reaction"
+            },
+            "text": {
+              "ja": "この力は、自分の場にいるほかのポケモンが進化したとき、使える。自分の山札から、このカードを進化させる「進化カード」を1枚選び出し、このカードの上にのせて、進化させる。その後、その山札をよく切る。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。",
+              "en": "This power can only be used when a Pokémon evolves. Search your deck for a card that evolves from Eevee and attach it to Eevee. This counts as evolving Eevee. Shuffle your deck afterward. This power can't be used if Eevee is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かみつく",
+              "en": "Bite"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-11"
+        ],
+        "pcg_search": [
+          "neop024"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop024.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop024.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-11",
+        "pokemon.dex": "pokemontcg:basep-11"
+      },
+      "copies": [
+        {
+          "page": "neop024",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "neo3-010",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "エンテイ",
+        "en": "Entei"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          244
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 80,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "おたけび",
+              "en": "Howl"
+            },
+            "text": {
+              "ja": "この力は、このカードを手札から場に出したとき、1回だけ使うことができ、使ったら、自分の番は終わる。自分の山札の上からカードを5枚トラッシュする。トラッシュしたカードの中に「炎」エネルギーカードがあれば、それらすべてをトラッシュからとり出し、自分の場の「炎」ポケモンそれぞれに、好きなようにつける。",
+              "en": "When you play Entei from your hand, you may discard the top 5 cards of your deck. (If you have fewer cards in your deck than that, discard all of them.) If any of those are Fire Energy cards, attach them to any of your Fire Pokémon of your choice. Using this power ends your turn."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ぐれんのほのお",
+              "en": "Searing Flames"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 60,
+              "modifier": null,
+              "display": "60"
+            },
+            "text": {
+              "ja": "自分についている「炎」エネルギーカードを2枚トラッシュする。(トラッシュできないとき、このワザのダメージはなくなる。)",
+              "en": "Discard 2 Fire Energy cards attached to Entei or this attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-010",
+        "pokemontcg": [
+          "neo3-6"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%B3%E3%83%86%E3%82%A4_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 38,
+        "rarity": "★(R)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%B3%E3%83%86%E3%82%A4_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-029",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ライコウ",
+        "en": "Raikou"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          243
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 80,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "いなびかり",
+              "en": "Lightning Burst"
+            },
+            "text": {
+              "ja": "この力は、このカードに手札から「雷」エネルギーカードをつけたとき、かならずはたらく。相手の対戦ポケモンを相手の控えポケモンと入れ替える。入れ替えるポケモンは相手プレイヤーが選ぶ。相手に控えがいないときや、「エネルギーカード」をつけるときすでにこのカードが「ねむり・マヒ・こんらん」状態だったなら、この力は、はたらかない。",
+              "en": "Whenever you attach a Lightning Energy card from your hand to Raikou, if your opponent has any Benched Pokémon, he or she chooses 1 of them and switches it with the Defending Pokémon. This power stops working while Raikou is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ライトニングタックル",
+              "en": "Lightning Tackle"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、自分にも20ダメージ。",
+              "en": "Flip a coin. If tails, Raikou does 20 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-029",
+        "pokemontcg": [
+          "neo3-13"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%A9%E3%82%A4%E3%82%B3%E3%82%A6_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 40,
+        "rarity": "★(R)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%A9%E3%82%A4%E3%82%B3%E3%82%A6_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-052",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ハピナス",
+        "en": "Blissey"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          242
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ラッキー",
+          "en": "Chansey"
+        },
+        "hp": 120,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "タマゴうみ",
+              "en": "Softboiled"
+            },
+            "text": {
+              "ja": "この力は、このカードを手札から場に出してポケモンを進化させたとき、1回だけ使うことができる。このカードにのっているダメージカウンターを、4個とりのぞく。その後、コインを投げて「おもて」なら、さらにこのカードにのっているダメージカウンターを、4個とりのぞく。",
+              "en": "When you play Blissey from your hand, you may flip a coin. If heads, remove 8 damage counters from Blissey. If tails, remove 4 damage counters from Blissey. Either way, if Blissey has fewer damage counters than that, remove all of them."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "のしかかり",
+              "en": "Body Slam"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-052",
+        "pokemontcg": [
+          "neo3-2"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8F%E3%83%94%E3%83%8A%E3%82%B9_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 62,
+        "rarity": "★(R)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8F%E3%83%94%E3%83%8A%E3%82%B9_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "PR1-056",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "カイリュー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "ハクリュー",
+          "en": null
+        },
+        "hp": 100,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "いやしのかぜ",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、このカードを手札から場に出した時、1度だけ使える。自分の場のポケモン全員から、ダメージカウンターを、それぞれ2つずつ、とりのぞく。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たたきつける",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": "×",
+              "display": "30×"
+            },
+            "text": {
+              "ja": "コインを2枚投げ、「おもて」の数×30のダメージ。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp056"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp056.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(キラ)",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp056.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stp056",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PF2-008",
+      "jp_set": "PF2",
+      "category": "pokemon",
+      "name": {
+        "ja": "エンテイ",
+        "en": "Entei"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          244
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 80,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "はしりさる",
+              "en": "Bolt"
+            },
+            "text": {
+              "ja": "このカードが、バトル場で、相手のワザによるダメージを受けたとき(それによって、このカードが「きぜつ」しなければ)、このカードの持ち主はコインを投げる。「おもて」なら、このカードとこのカードについているすべてのカードを自分の山札にもどし、その山札をよく切る。ダメージを受けるとき、すでにこのカードが「ねむり・マヒ・こんらん」状態だったなら、この力は、はたらかない。",
+              "en": "Whenever your opponent's attack damages Entei, unless that attack Knocks Out Entei, flip a coin. If heads, shuffle Entei and all cards attached to it into your deck. This power can't be used if Entei is already Asleep, Confused, or Paralyzed when it is damaged."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ほのおのまもり",
+              "en": "Protective Flame"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "次の相手の番が終わるまで、自分の控えポケモン全員は、ワザによるダメージや効果を受けない。",
+              "en": "During your opponent's next turn, prevent all effects of attacks, including damage, done to your Benched Pokémon."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-34"
+        ],
+        "pcg_search": [
+          "neopf2008"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neopf2008.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "プレミアムファイル2",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neopf2008.php"
+      },
+      "product_group": "premium_file",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-34",
+        "pokemon.dex": "pokemontcg:basep-34"
+      },
+      "copies": [
+        {
+          "page": "neopf2008",
+          "list_number": "008/009"
+        }
+      ]
+    },
+    {
+      "id": "neo4-012",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいクロバット",
+        "en": "Dark Crobat"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          169
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "わるいゴルバット",
+          "en": "Dark Golbat"
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "とつぜんかみつく",
+              "en": "Surprise Bite"
+            },
+            "text": {
+              "ja": "この力は、このカードを手札から場に出してポケモンを進化させたとき、1回だけ使うことができる。相手の場のポケモンを1匹選び、そのポケモンに、「弱点・抵抗力」に関係なく、20ダメージ。",
+              "en": "When you play Dark Crobat from your hand, you may choose 1 of your opponent's Pokémon. This power does 20 damage to that Pokémon. (Don't apply Weakness and Resistance.)"
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ダークドレイン",
+              "en": "Dark Drain"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "相手の場のポケモン全員に対して、1枚ずつコインを投げ、「おもて」が出たポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。その後、与えたダメージの合計ぶんのダメージカウンターを、自分からとりのぞく。",
+              "en": "Flip a coin for each of your opponent's Pokémon. For each heads, this attack does 10 damage to that Pokémon. Don't apply Weakness and Resistance. Remove a number of damage counters from Dark Crobat equal to the damage dealt. If Dark Crobat has fewer damage counters than that, remove all of them."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-012",
+        "pokemontcg": [
+          "neo4-2"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%82%AF%E3%83%AD%E3%83%90%E3%83%83%E3%83%88_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 39,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%82%AF%E3%83%AD%E3%83%90%E3%83%83%E3%83%88_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-044",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいモココ",
+        "en": "Dark Flaaffy"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          180
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "メリープ",
+          "en": "Mareep"
+        },
+        "hp": 60,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "こうしゅうは",
+              "en": "High Voltage"
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、次の相手の番、相手プレイヤーは手札から「トレーナーカード」を出して使うことができない。",
+              "en": "Flip a coin. If heads, your opponent can't play Trainer cards during his or her next turn."
+            }
+          },
+          {
+            "name": {
+              "ja": "スタンウェーブ",
+              "en": "Stun Wave"
+            },
+            "cost": [
+              "lightning",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "次の自分の番が終わるまで、このワザを受けた相手は「特殊能力」を使うことができず、その効果も消える。",
+              "en": "If the Defending Pokémon has a Pokémon Power, that power stops working until the end of your next turn."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-044",
+        "pokemontcg": [
+          "neo4-34"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%83%A2%E3%82%B3%E3%82%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 25,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%83%A2%E3%82%B3%E3%82%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-046",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいデンリュウ",
+        "en": "Dark Ampharos"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          181
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "わるいモココ",
+          "en": "Dark Flaaffy"
+        },
+        "hp": 70,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "かんでん",
+              "en": "Conductivity"
+            },
+            "text": {
+              "ja": "この力は、このカードが場にいるかぎり、はたらく。相手プレイヤーが手札から「エネルギーカード」を出してポケモンにつけるたび、そのポケモンに、「弱点・抵抗力」に関係なく、10ダメージ。自分の場のほかの「わるいデンリュウ」の「かんでん」がはたらいているときや、このカードが「ねむり・マヒ・こんらん」状態のとき、この力は、はたらかない。",
+              "en": "Whenever your opponent attaches an Energy card from his or her hand to a Pokémon, this power does 10 damage to that Pokémon. (Don't apply Weakness and Resistance.) This power stops working if you have more than 1 Dark Ampharos in play or while Dark Ampharos is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ショックボルト",
+              "en": "Shock Bolt"
+            },
+            "cost": [
+              "lightning",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "自分についている「雷」エネルギーカードを、すべてトラッシュする。(トラッシュできないとき、このワザのダメージはなくなる。)",
+              "en": "Discard all Lightning Energy cards attached to Dark Ampharos or this attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-046",
+        "pokemontcg": [
+          "neo4-1"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%83%87%E3%83%B3%E3%83%AA%E3%83%A5%E3%82%A6_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 36,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%83%87%E3%83%B3%E3%83%AA%E3%83%A5%E3%82%A6_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-021",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "スイクン",
+        "en": "Suicune"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          245
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 70,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "クリスタルボディ",
+              "en": "Crystal Body"
+            },
+            "text": {
+              "ja": "このカードは、場にいるかぎり、相手のワザによる「ダメージ以外の効果」を受けない(ダメージは受ける)。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は、はたらかない。",
+              "en": "Prevent all effects of your opponent's attacks, other than damage, done to Suicune. This power stops working while Suicune is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "オーロラウェーブ",
+              "en": "Aurora Wave"
+            },
+            "cost": [
+              "water",
+              "water",
+              "water"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを2枚投げ、すべて「おもて」なら相手を「マヒ」状態に、「おもて」が1枚なら相手を「ねむり」状態にする。",
+              "en": "Flip 2 coins. If both are heads, the Defending Pokémon is now Paralyzed. If only 1 is heads, the Defending Pokémon is now Asleep."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-021",
+        "pokemontcg": [
+          "neo3-14"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B9%E3%82%A4%E3%82%AF%E3%83%B3_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 33,
+        "rarity": "★(R)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B9%E3%82%A4%E3%82%AF%E3%83%B3_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "PR1-058",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "フシギバナ",
+        "en": "Venusaur"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          3
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "フシギソウ",
+          "en": "Ivysaur"
+        },
+        "hp": 100,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ソーラーパワー",
+              "en": "Solar Power"
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使える。お互いの対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": "Once during your turn (before your attack), you may use this power. Your Active Pokémon and the Defending Pokémon are no longer Asleep, Confused, Paralyzed, or Poisoned. This power can't be used if Venusaur is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "メガドレイン",
+              "en": "Mega Drain"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "相手にダメージを与えたら、その半分(切り上げ)のダメージカウンターを、自分からとりのぞく。",
+              "en": "Remove a number of damage counters from Venusaur equal to half the damage done to the Defending Pokémon (after applying Weakness and Resistance) (rounded up to the nearest 10). If Venusaur has fewer damage counters than that, remove all of them."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-13"
+        ],
+        "pcg_search": [
+          "1stp058"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp058.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp058.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-13",
+        "pokemon.dex": "pokemontcg:basep-13",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stp058",
+          "list_number": "-/-"
+        }
+      ]
     }
   ]
 }

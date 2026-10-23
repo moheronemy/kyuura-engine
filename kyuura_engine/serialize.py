@@ -102,6 +102,8 @@
 - 22: 21 に、最上位の ``face_down_cards``（うらにしてベンチに出したカードの uid の並び。マチスの秘策）を加えたもの（v0.67。docs/secret-plan-preflight-v0.67.md 7 章）。
   内部の完全な記録なので、場のポケモンの ``card_id``・``name``・``hp`` は本当のカードの値を書く（プレイヤーに渡すときは観測 ``observation.observe`` を使う）。形式 1〜21 は、
   うらのカードがあると ``ValueError``（なければ形式 1〜21 の書き出しは v0.66 と同じ）。
+  v0.86: 持続する効果の種類 ``"powers_stopped"``（わるいモココの「スタンウェーブ」）・``"bench_protection"``（エンテイ PF2-008 の「ほのおのまもり」）は共通の項目だけで、
+  形式 8 から書ける（形式は増やしていない）。反応の続き（決定の ``context`` の ``followup``・``reaction``）は既存の ``decision`` の項目で書く。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -180,6 +182,8 @@ from .state import (
     BenchAttackDamageGuard,
     AttackEffectGuard,
     StatusImmunityNextTurn,
+    PowersStopped,
+    BenchProtection,
     NEXT_TURN_MULTIPLY,
     CannotUseAttack,
     CannotUseOwnAttack,
@@ -284,7 +288,7 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
         data["threshold"] = effect.threshold  # v0.84: 「パルスガード」
     elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive, HalvedDamage,
                                          CannotUsePowers, CannotAttachEnergy, TailsDamageGuard, DoubledDamage, BenchAttackDamageGuard, AttackEffectGuard,
-                                         StatusImmunityNextTurn)):
+                                         StatusImmunityNextTurn, PowersStopped, BenchProtection)):
         raise ValueError(f"書き出せない持続する効果 {effect!r}")
     # v0.49（形式 14）: ワザを印刷したカードの id（いちばん上のカードと違うときだけ。状態の書き出しの前に、形式 14 より古い形式では拒否している）
     for name in ("attack_card", "target_attack_card"):
