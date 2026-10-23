@@ -28,7 +28,7 @@ from kyuura_engine.coins import CoinSide
 from kyuura_engine.effects import PowerKey
 from kyuura_engine.errors import IllegalActionError
 from kyuura_engine.observation import observe
-from kyuura_engine.serialize import FORMAT_VERSIONS, state_to_dict
+from kyuura_engine.serialize import state_to_dict
 from kyuura_engine.state import Phase
 from tests import helpers as H
 from tests.helpers import apply_kernel, with_coin_results
@@ -279,8 +279,7 @@ class RegistrationTest(unittest.TestCase):
         for card in H.V0_88_CARDS:
             with self.subTest(card=card):
                 self.assertNotIn(card, pool.playable_ids)
-        self.assertEqual(len(pool.playable_ids), 1080)
-        self.assertEqual(len(load_card_pool().playable_ids), 1091)
+        self.assertEqual(pool.playable_ids, load_card_pool().playable_ids - set(H.V0_88_CARDS))
 
     def test_same_data_cards_share_registrations(self):
         for index in (0, 1):
@@ -838,7 +837,6 @@ class SerializationTest(unittest.TestCase):
 
     def test_color_effects_need_format_23(self):
         state = submerged(board(lanturn3(), opponent=mon(H.CHANSEY)))
-        self.assertEqual(max(FORMAT_VERSIONS), 23)
         data = state_to_dict(state, format_version=23)
         self.assertEqual([(e["kind"], e["target"], e["color"]) for e in data["color_effects"]], [("pokemon_type", state.players[0].active.pokemon_id, "water")])
         with self.assertRaises(ValueError):

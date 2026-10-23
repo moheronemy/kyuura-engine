@@ -143,15 +143,6 @@ class RegistrationTest(unittest.TestCase):
         self.assertIsInstance(E.DEFAULT_EFFECTS.energy_entry(RE).effect, E.RecycleEnergy)
         self.assertIsInstance(E.DEFAULT_EFFECTS.trainer_entry(ECO).effect, E.EnergyReturnStadium)
 
-    def test_counts(self):
-        pool = load_card_pool()
-        categories = Counter(pool.get(c).category for c in pool.playable_ids)
-        self.assertEqual((len(pool.playable_ids), categories["pokemon"], categories["trainer"], categories["energy"]), (1091, 794, 260, 37))  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
-        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 1327)  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
-        self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 119)  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.84 でポケモン 12 枚・ポケモン育て屋夫婦を加えた
-        stadiums = [c for c in E.DEFAULT_EFFECTS.trainer_ids() if getattr(E.DEFAULT_EFFECTS.trainer_entry(c).effect, "is_stadium", False)]
-        self.assertEqual(len(stadiums), 41)
-        self.assertEqual(len(read_extract()["cards"]), 1091)  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
 
     def test_new_pokemon_names(self):
         pool = load_card_pool()

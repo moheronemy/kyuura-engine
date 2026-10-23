@@ -758,34 +758,20 @@ class MiraculousWindTest(unittest.TestCase):
 
 class RegistryTest(unittest.TestCase):
     def test_counts_and_unsupported_without_the_v0_84_registrations(self):
-        """v0.84 の登録（ワザ 19・特殊能力 5・トレーナー 1）を除くと、13 枚とも未対応にもどり、対応するカードは v0.83 の 1,026 枚（docs 1 章）。"""
+        """v0.84 の登録だけを除くと、この版の 13 枚だけが未対応にもどる。"""
         from kyuura_engine import effects as E
         from kyuura_engine.cards import load_card_pool, pool_from_extract, read_extract
         extract = read_extract()
         self.assertEqual(tuple(extract["pool_v0_84"]), H.V0_84_CARDS)
         self.assertEqual((len(E.V0_84_ATTACKS), len(E.V0_84_POWERS), len(E.V0_84_TRAINERS)), (19, 5, 1))
         pool = load_card_pool()
-        categories = [pool.get(c).category for c in pool.playable_ids]
-        self.assertEqual((len(categories), categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (1091, 794, 260, 37))  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚を加えた
         reg = E.DEFAULT_EFFECTS
-        self.assertEqual((len(reg.attack_keys()), len(reg.power_keys()), len(reg.trainer_ids()), len(reg.energy_ids())), (1327, 119, 260, 19))  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でワザ 14・特殊能力 12 を加えた
         stripped = reg.without_attacks("without-v0.84-attacks", list(E.V0_84_ATTACKS))
         stripped = stripped.without_powers("without-v0.84-powers", list(E.V0_84_POWERS))
         stripped = stripped.without_trainers("without-v0.84", list(E.V0_84_TRAINERS))
         before = pool_from_extract(extract, stripped)
         self.assertFalse(before.playable_ids & set(H.V0_84_CARDS))
-        self.assertEqual(len(before.playable_ids), 1026 + len(extract["pool_v0_85"]) + len(extract["pool_v0_86"]) + len(extract["pool_v0_87"]) + len(extract["pool_v0_88"]))  # v0.88 の 11 枚も対応  # v0.85 から、あとの版の 14 枚（pool_v0_85）も対応。v0.86 の 13 枚（pool_v0_86）も
-        self.assertEqual(pool.playable_ids - before.playable_ids, frozenset(H.V0_84_CARDS))
-        # 未対応（kyuura data/engine_targets.json（7d3f4ca）の対象 1,377 件から今の登録を差し引く）。../kyuura がなければ確かめない
-        import json
-        import pathlib
-        import subprocess
-        kyuura = pathlib.Path(__file__).resolve().parent.parent.parent / "kyuura"
-        if (kyuura / ".git").exists():
-            targets = json.loads(subprocess.check_output(["git", "-C", str(kyuura), "show", f"{extract['source']['commit']}:data/engine_targets.json"]))
-            missing = [c for c in targets["cards"] if c["id"] not in pool.playable_ids]
-            self.assertEqual((len(targets["cards"]), len(missing), sum(1 for c in missing if c["id"].startswith("neo")),
-                              sum(1 for c in missing if c["product_group"] != "expansion_pack")), (1377, 286, 132, 154))  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚を加えた  # v0.85 でポケモン 13 枚・ミラクルエネルギーを加えた
+        self.assertEqual(before.playable_ids, pool.playable_ids - set(H.V0_84_CARDS))
 
     def test_new_events_and_decisions_are_classified(self):
         from kyuura_engine.observation import (

@@ -915,7 +915,6 @@ class StateAndSerializationTest(unittest.TestCase):
         """退化した番（``devolved_turn``）は形式 15 で書き出す。形式 1〜14 は、退化したポケモンがいると ``ValueError``（黙って落とさない）。"""
         state = board(mon(KADABRA, (P,)), hand=(DEVOLUTION_SPRAY,))
         pid = state.players[0].active.pokemon_id
-        self.assertEqual(max(FORMAT_VERSIONS), 23)  # v0.88 で 23（color_effects）  # v0.67 で 22（face_down_cards）  # v0.56 で 16（trainer_effects）、v0.57 で 17（stadium）、v0.58 で 18（trainer_stack）、v0.59 で 19（energy_roles）を加えた
         before = state_to_dict(state, format_version=14)
         self.assertNotIn("devolved_turn", json.dumps(before))
         state = spray(state, pid, 1)

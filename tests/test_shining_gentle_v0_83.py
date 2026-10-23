@@ -743,9 +743,8 @@ class RegistryTest(unittest.TestCase):
         stripped = registry.without_attacks("without-v0.83", [E.AttackKey(card, index) for card, index in keys])
         pool = pool_from_extract(read_extract(), stripped)
         self.assertFalse(any(pool.definitions[c].supported for c in H.V0_83_POKEMON))
-        # 前の版の 1008 枚の対応は変わらない（v0.84 から、あとの版の 13 枚（pool_v0_84）も対応）
-        self.assertEqual(sum(1 for c in pool.definitions.values() if c.supported), 1008 + len(read_extract()["pool_v0_84"]) + len(read_extract()["pool_v0_85"]) + len(read_extract()["pool_v0_86"])
-                         + len(read_extract()["pool_v0_87"]) + len(read_extract()["pool_v0_88"]))  # v0.88 の 11 枚も対応  # v0.87 の 14 枚も対応
+        # Removing this release must leave every other supported card intact.
+        self.assertEqual(pool.playable_ids, load_card_pool().playable_ids - set(H.V0_83_POKEMON))
         pool = load_card_pool()
         self.assertTrue(all(pool.definitions[c].supported for c in H.V0_83_POKEMON))
 

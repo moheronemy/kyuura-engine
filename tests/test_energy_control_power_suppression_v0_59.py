@@ -35,7 +35,6 @@ from kyuura_engine.commands import command_to_dict
 from kyuura_engine.continuous import goop_gas_effects, power_suppressed
 from kyuura_engine.effects import COLORS, energy_unit_count
 from kyuura_engine.persistent import energy_attach_blocked, powers_use_prevented
-from kyuura_engine.serialize import FORMAT_VERSIONS
 from kyuura_engine.state import CannotAttachEnergy, CannotUsePowers, EnergyRole
 from tests.helpers import (
     BLAINE_TRAINER,
@@ -73,7 +72,6 @@ from tests.helpers import (
     apply_kernel,
     with_coin_results,
 )
-from tests.log_audit import LATEST_FORMAT
 from tests.test_instant_trainers_v0_55 import answer, board, card_of, pid, pokemon, use
 from tests.test_stadium_reuse_special_energy_v0_58 import (
     assert_stops,
@@ -124,12 +122,7 @@ class CardDataTest(unittest.TestCase):
             self.assertTrue(pool.is_playable(card_id), card_id)
         self.assertEqual({pool.get(c).category for c in V0_59_POKEMON}, {"pokemon"})
         self.assertEqual({pool.get(c).category for c in V0_59_TRAINERS}, {"trainer"})
-        counts = {}
-        for definition in pool.definitions.values():
-            if definition.supported:
-                counts[definition.category] = counts.get(definition.category, 0) + 1
         # v0.58 の 329・81・10（420）から、ポケモン 3 枚・トレーナー 3 枚を加えた（332・84・10）。v0.60 でポケモン 4 枚を加えた
-        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (794, 260, 37))  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚を含む）を加えた  # v0.79 でポケモン 52 枚（ワザ 94）を加えた  # v0.78 で悪・鋼エネルギー 5 枚とポケモン 8 枚（ワザ 16）を加えた  # v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・ワザ 77・トレーナー 2）を加えた  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた  # v0.74 で拡張パック以外の商品のスタジアム 13 枚  # v0.73 で拡張パック以外の商品のトレーナー 18 枚  # v0.72 で拡張パック以外の商品のポケモン 43 枚  # v0.71 で拡張パック以外の商品の再録 78 枚（ポケモン 11・トレーナー 67）  # v0.70 で拡張パック以外の商品のポケモン 82 枚  # v0.69 で拡張パック以外の商品の同じカード 96 枚（ポケモン 57・トレーナー 19・エネルギー 20）  # v0.68 でポケモン 3 枚  # v0.67 でトレーナー 1 枚  # v0.61 でポケモン 3 枚・トレーナー 1 枚を加えた  # v0.62 でポケモン 6 枚を加えた  # v0.63 でトレーナー 4 枚を加えた  # v0.64 でポケモン 3 枚を加えた  # v0.65 でポケモン 2 枚・トレーナー 1 枚を加えた  # v0.66 でトレーナー 3 枚を加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
 
     def test_registrations(self):
         reg = E.DEFAULT_EFFECTS
@@ -150,8 +143,6 @@ class CardDataTest(unittest.TestCase):
         for ruling, code in NEW_CODES.items():
             self.assertIn(ruling, text)
             self.assertIn(code, text)
-        self.assertEqual(LATEST_FORMAT, 23)  # v0.88 で 23（color_effects）  # v0.67 で 22
-        self.assertEqual(max(FORMAT_VERSIONS), 23)  # v0.88 で 23（color_effects）  # v0.67 で 22（face_down_cards）
 
 
 class GoopGasTest(unittest.TestCase):

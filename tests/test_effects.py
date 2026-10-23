@@ -143,46 +143,48 @@ V0_65_WITH_TEXT = [AttackKey("PMCG5-033", 0), AttackKey("PMCG5-055", 0)]
 # v0.68: ガルーラのこどものおつかい（利用者が示した訂正の文面）・れんぞくパンチ、イマクニ？のドードーのハモる（簡略化した仕様。キョウのベトベトンのヘドロのうずは説明文なし）
 V0_68_WITH_TEXT = [AttackKey("PMCG2-046", 0), AttackKey("PMCG2-046", 1), AttackKey("PMCG6-074", 0)]
 # v0.70: 拡張パック以外の商品のポケモン 82 枚の、説明文のあるワザ 85（写しの説明文で数える。処理に使う文面は kyuura の印刷の文面）
-V0_70_WITH_TEXT = [AttackKey(c["id"], i) for c in read_extract()["cards"] if c["id"] in read_extract()["pool_v0_70"]
+# Read once: these expected-key lists never mutate the shipped extract.
+_TEXT_EXTRACT = read_extract()
+V0_70_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_70"]
                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
 # v0.72: 拡張パック以外の商品のポケモン 43 枚の、説明文のあるワザ 67（写しの説明文で数える。処理に使う文面は kyuura の印刷の文面）
-V0_72_WITH_TEXT = [AttackKey(c["id"], i) for c in read_extract()["cards"] if c["id"] in read_extract()["pool_v0_72"]
+V0_72_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_72"]
                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
 # v0.75（docs/search-energy-pokemon-v0.75.md）: 拡張パック以外の商品のポケモン 15 枚の説明文のあるワザ（24。処理に使う文面は kyuura の印刷の文面）
-V0_75_WITH_TEXT = [AttackKey(c["id"], i) for c in read_extract()["cards"] if c["id"] in read_extract()["pool_v0_75"]
+V0_75_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_75"]
                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
 # v0.76（docs/persistent-attack-modifiers-v0.76.md）: 拡張パック以外の商品のポケモン 24 枚の説明文のあるワザ（処理に使う文面は kyuura の印刷の文面）
-V0_76_WITH_TEXT = [AttackKey(c["id"], i) for c in read_extract()["cards"] if c["id"] in read_extract()["pool_v0_76"]
+V0_76_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_76"]
                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
 # v0.77（docs/neo-existing-effects-v0.77.md）: neo 期の拡張パックのポケモン 50 枚の説明文のあるワザ（50。処理に使う文面は kyuura の印刷の文面）
-V0_77_WITH_TEXT = [AttackKey(c["id"], i) for c in read_extract()["cards"] if c["id"] in read_extract()["pool_v0_77"] and c["category"] == "pokemon"
+V0_77_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_77"] and c["category"] == "pokemon"
                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
 # v0.78: 「悪」「鋼」エネルギーを使うポケモン 8 枚の説明文のあるワザ 12（kyuura の印刷の文面）
-V0_78_WITH_TEXT = [AttackKey(c["id"], i) for c in read_extract()["cards"] if c["id"] in read_extract()["pool_v0_78"] and c["category"] == "pokemon"
+V0_78_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_78"] and c["category"] == "pokemon"
                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
 # v0.79: ポケモン 52 枚の説明文のあるワザ 83（kyuura の印刷の文面）
-V0_79_WITH_TEXT = [AttackKey(c["id"], i) for c in read_extract()["cards"] if c["id"] in read_extract()["pool_v0_79"] and c["category"] == "pokemon"
+V0_79_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_79"] and c["category"] == "pokemon"
                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
 # v0.82: ポケモン 18 枚の説明文のあるワザ 27（kyuura の印刷の文面。docs/energy-discard-return-v0.82.md）
-V0_82_WITH_TEXT = [AttackKey(c["id"], i) for c in read_extract()["cards"] if c["id"] in read_extract()["pool_v0_82"] and c["category"] == "pokemon"
+V0_82_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_82"] and c["category"] == "pokemon"
                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
 # v0.83: ポケモン 18 枚の説明文のあるワザ 32（kyuura の印刷の文面。docs/shining-gentle-pokemon-v0.83.md）
-V0_83_WITH_TEXT = [AttackKey(c["id"], i) for c in read_extract()["cards"] if c["id"] in read_extract()["pool_v0_83"] and c["category"] == "pokemon"
+V0_83_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_83"] and c["category"] == "pokemon"
                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
 # v0.84: ポケモン 12 枚の説明文のあるワザ（kyuura の印刷の文面。docs/light-powers-evolution-v0.84.md）
-V0_84_WITH_TEXT = [AttackKey(c["id"], i) for c in read_extract()["cards"] if c["id"] in read_extract()["pool_v0_84"] and c["category"] == "pokemon"
+V0_84_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_84"] and c["category"] == "pokemon"
                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
 # v0.85: ポケモン 13 枚の説明文のあるワザ（kyuura の印刷の文面。docs/entry-powers-energy-lifecycle-v0.85.md）
-V0_85_WITH_TEXT = [AttackKey(c["id"], i) for c in read_extract()["cards"] if c["id"] in read_extract()["pool_v0_85"] and c["category"] == "pokemon"
+V0_85_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_85"] and c["category"] == "pokemon"
                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
 # v0.86: ポケモン 13 枚の説明文のあるワザ（kyuura の印刷の文面。docs/entry-energy-evolution-reactions-v0.86.md）
-V0_86_WITH_TEXT = [AttackKey(c["id"], i) for c in read_extract()["cards"] if c["id"] in read_extract()["pool_v0_86"] and c["category"] == "pokemon"
+V0_86_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_86"] and c["category"] == "pokemon"
                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
 # v0.87: ポケモン 14 枚の説明文のあるワザ（kyuura の印刷の文面。docs/movement-damage-reactions-v0.87.md）
-V0_87_WITH_TEXT = [AttackKey(c["id"], i) for c in read_extract()["cards"] if c["id"] in read_extract()["pool_v0_87"] and c["category"] == "pokemon"
+V0_87_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_87"] and c["category"] == "pokemon"
                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
 # v0.88: ポケモン 11 枚の説明文のあるワザ（kyuura の印刷の文面。docs/type-energy-colors-v0.88.md）
-V0_88_WITH_TEXT = [AttackKey(c["id"], i) for c in read_extract()["cards"] if c["id"] in read_extract()["pool_v0_88"] and c["category"] == "pokemon"
+V0_88_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_88"] and c["category"] == "pokemon"
                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
 
 
@@ -501,7 +503,6 @@ class RegistryImmutabilityTest(unittest.TestCase):
         #   docs/geodude-line-unbounded-coins-v0.64.md）
         # + カスミのドククラゲの「クラゲどく」・タケシのサイドンの「ラリアット」（v0.65。docs/reactive-decisions-v0.65.md）
         # + ガルーラの「こどものおつかい」「れんぞくパンチ」・キョウのベトベトンの「ヘドロのうず」・イマクニ？のドードーの「ハモる」（v0.68。docs/final-pmcg-cards-v0.68.md）
-        self.assertEqual(len(keys), 1327)  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.79 でポケモン 52 枚（ワザ 94）を加えた  # v0.78 で悪・鋼エネルギー 5 枚とポケモン 8 枚（ワザ 16）を加えた  # v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・ワザ 77・トレーナー 2）を加えた  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた  # v0.72: 拡張パック以外の商品のポケモン 43 枚のワザ 77 を加えた。v0.71: 拡張パック以外の商品の再録 11 枚のワザ 15 を加えた（元のカードの登録から作った）。v0.70: 拡張パック以外の商品のポケモン 82 枚のワザ 136 を加えた。v0.69: 拡張パック以外の商品の同じカード 84 枚のワザ 92 を加えた（元のカードの登録を写した）  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)

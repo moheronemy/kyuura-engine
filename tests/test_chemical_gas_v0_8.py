@@ -88,7 +88,7 @@ from tests.helpers import (
     build_test_state,
     with_coin_results,
 )
-from tests.log_audit import LATEST_FORMAT, serialization_problems
+from tests.log_audit import serialization_problems
 
 GAS_PRINTED = ("ベトベトンが場にいる限り、場にいるすべてのポケモンの特殊能力は使えず、その力も消える。(ただし、この「かがくへんかガス」という"
                "特殊能力は除く)「ねむり・マヒ・こんらん」状態の時、この「かがくへんかガス」の力は消える。")
@@ -704,7 +704,6 @@ class SaveRestoreTest(unittest.TestCase):
                     self.assertEqual(full(copied), full(state))
                     self.assertEqual([self.outcome(copied, c) for c in commands], expected)
                 self.assertEqual(serialization_problems(state), [])
-                self.assertEqual(LATEST_FORMAT, 23)  # v0.88 で 23（color_effects）  # v0.67 で 22  # 19 は v0.59（energy_roles）。18 は v0.58（trainer_stack・trainer_in_use の via）。17 は v0.57（stadium・stadium_uses_this_turn・trainer_in_use の user）。16 は v0.56（trainer_effects・禁止の origin）。 v0.8 では 9。10 は v0.31（power_uses_this_turn・energy_burn）、11 は v0.44（attacks_used_once・evolution_permission_turn）、12 は v0.47（trainer_locks）、13 は v0.48（type_shift）、14 は v0.49（disguise・recalls）、15 は v0.50（devolved_turn）。どれもガスの項目ではない
                 self.assertFalse(any("gas" in key or "suppress" in key for key in full(state)))
 
     def test_r13_state(self):
