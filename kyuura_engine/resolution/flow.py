@@ -23,15 +23,16 @@ from .. import judge
 from .. import procedures as PR
 from ..checks import PLAYERS, attack_request, require_turn
 from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack
-from ..decisions import BENCH_GUARD, ENERGY_DRAIN_DISCARD, ESP_REDO, KNOCK_OUT_POWER, NINJA_TRICK, PROMOTE_ACTIVE, REACTION_SWITCH, TAKE_PRIZE
+from ..decisions import BENCH_GUARD, ENERGY_DRAIN_DISCARD, ESP_REDO, EXP_ALL_ENERGY, KNOCK_OUT_POWER, NINJA_TRICK, PROMOTE_ACTIVE, REACTION_SWITCH, SPLIT_FROM_DECK, TAKE_PRIZE
 from ..coins import CoinSide, flip_coins
 from .. import effects as E
 from ..effects import (AttackKey, AttackUse, PowerKey, usable_ninja_tricks, attach_converted_energy, attack_rebellion_powers, counts_as_knockout, dormant_scram, max_hp,
                        received_modifiers_log, received_power_damage, retreat_trap_powers, stadium_attack_coin_available, status_at_attack_blocked)
 from ..errors import IllegalActionError, UnsupportedError
-from ..state import GameState, Phase
+from ..state import AttackEffectGuard, BenchAttackDamageGuard, BenchProtection, GameState, Phase, PowersStopped, StatusImmunityNextTurn, ZeroDamageAtLeast
 from ..history import close_probe, note_used
 from ..zones import face_up_fields, prize_left, promote_from_bench, return_in_play_to_deck, shuffle_deck
+from ..movement import promotion_spikes_now
 
 from . import catalog as C
 from . import codec
@@ -40,9 +41,11 @@ from . import v013_checks
 from .contract import is_contract, program_for
 from .events import FrameKind, Suspended, Trace, Window, WindowOpened
 from ..persistent import RETURN_IN_PLAY_TO_DECK, attack_coin_checks, destiny_bond, remove_on_damage, remove_persistent_effects
-from .kernel import (DryRunComplete, Resolution, apply_energy_drain, capture_post_knockout, check_simultaneous, hp_of, knock_out_beam_problem, knock_out_power_offers, knocked,
-                     ko_prevention_offers, scram_restored_question, settle_scram, track_ko)
-from .programs import (AttackRun, EspRedoOffer, apply_esp_redo, apply_flee, apply_ninja_trick, decision_index, declare, offer_ninja_trick, program_may_fail, resume_guarded, run_elements,
+from .kernel import (DryRunComplete, Resolution, apply_energy_drain, apply_split, capture_post_knockout, check_simultaneous, exp_all_offers, exp_all_options, exp_all_unresolved,
+                     focus_band_offers, hp_of, knock_out_beam_problem, knock_out_power_offers, knocked, ko_prevention_offers, scram_restored_question, settle_scram,
+                     track_ko)
+from .programs import (
+    resume_moves,AttackRun, EspRedoOffer, apply_esp_redo, apply_flee, apply_ninja_trick, decision_index, declare, offer_ninja_trick, program_may_fail, resume_guarded, run_elements,
                        with_stadium_self_damage)
 from .questions import OpenQuestion, to_error
 
@@ -127,13 +130,21 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
         if contract_program:
             raise UnsupportedError("UNSUPPORTED_ATTACK", "v0.13 の約束で書いたワザの実装では、クチバシティジムのコインを扱わない（エンジンの未対応）")
         coin_stadium = found[0].card
+    if cmd.attack_power:
+        # v0.88: ワザといっしょに使える特殊能力（［すいりょくはつでん］）を使うことを選んだ。持たない・使えない状態・数え方が決まらないなら、状態を変える前に拒否する。v0.13 の約束で
+        # 書いた実装（テスト専用）は扱わない
+        E.attack_power_check(state, attacker, key)
+        if is_contract(program):
+            raise UnsupportedError("UNSUPPORTED_ATTACK", "v0.13 の約束で書いたワザの実装では、ワザといっしょに使う特殊能力を扱わない（エンジンの未対応）")
 
     def body(res: Resolution) -> None:
-        _attack_body(res, cmd.player, res.state.find_pokemon(pid)[1], key, attack, program, once, option, coin_stadium)
+        _attack_body(res, cmd.player, res.state.find_pokemon(pid)[1], key, attack, program, once, option, coin_stadium, cmd.attack_power)
 
     # v0.67（docs/secret-plan-preflight-v0.67.md 8 章）: v0.13 の止める関数（``v013_checks``）が知らない選択・役割がある盤面。ワザの型が ``VERIFIED`` でも、それらの安全の
     # 根拠にならないので、v0.13 の止める関数で確かめる経路（上限を超えたあとのフォールバック・比べる方法 legacy・v0.13 の約束の実装）を使わない
     unknown = legacy_unknown_features(state, attacker)
+    if cmd.attack_power:
+        unknown = (*unknown, "ワザといっしょに使う特殊能力")  # v0.88: v0.13 の止める関数は［すいりょくはつでん］の追加を知らない
 
     def on_limit() -> None:
         """先読みで試す結果の数が上限を超えた（途中までの結果は使わない）。v0.13 の止める関数で確かめたワザの実装なら、それで確かめる
@@ -182,20 +193,55 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
     - 場のうらのカード（v0.67。マチスの秘策）: ワザがダメージや効果を与える時におもてにし、「たねポケモン」でなければトラッシュする。v0.13 の止める関数はうらのカードの
       定義を読めず（FD1）、おもてにしたあとの結果も試さない
     - 場の［だつりょくえき］（v0.68。キョウのベトベトン）: ダメージの要素のあとにコインと持ち主の決定があり、DR8・DR13 で止める。v0.13 の止める関数は知らない
+    - 場の悪・鋼エネルギー（v0.78）: ワザでないダメージの「-10」（NIP1X-010）を、v0.13 の止める関数の特殊能力のダメージの見積もりは知らない
     """
     found = []
     if any(state.effects.trainer_entry(state.cards[t.card].card_id).effect.reduces_attack_damage for t in attacker.trainers):
         found.append("お上品攻撃の減らす量")
     if state.face_down_cards:
         found.append("うらのカード")
+    if any(state.card_def(uid).is_special_energy and E.special_energy_effect(state, uid).affects_damage
+           for side in state.players for pokemon in side.in_play() for uid in pokemon.energy):
+        # v0.78: 場の悪・鋼エネルギー（ワザのダメージの 5・7 段階・ワザでないダメージの「-10」）。v0.13 の止める関数の特殊能力のダメージの見積もり（はんげきの 10 など）は、
+        # 鋼エネルギー（NIP1X-010）で減らした量を知らない
+        found.append("悪・鋼エネルギー")
     if E.energy_drain_holders(state):
         # v0.68: キョウのベトベトンの［だつりょくえき］（ダメージの要素のあとのコイン・持ち主が選ぶトラッシュ・DR8・DR13）。v0.13 の止める関数は知らない
         found.append("だつりょくえき")
+    if any(E.tool_effect_of(state, pokemon, (E.FocusBand, E.CounterClaw, E.ExpAll)) for side in state.players for pokemon in side.in_play()):
+        # v0.81: きあいのハチマキ（きぜつの判定のコイン・FB1）・はんげきのツメ（ダメージのあとのコインとダメージカウンター）・学習装置（きぜつの判定の決定）。v0.13 の止める関数は
+        # 知らない
+        found.append("ワザに反応するポケモンのどうぐ")
+    if E.miraculous_wind_sources(state) and any(state.card_def(uid).is_special_energy for side in state.players for pokemon in side.in_play() for uid in pokemon.energy):
+        # v0.84: ［きせきのかぜ］で役割の変わった場の特殊エネルギーカード（「無色」1 個・効果なし）。v0.13 の止める関数は知らない
+        found.append("きせきのかぜ")
+    if any(isinstance(slot.effect, E.SleepDamageSourceOnHeads) for side in state.players for pokemon in side.in_play() for slot in E.powers_of(state, pokemon)):
+        # v0.84: ［ふかふかなからだ］（ダメージの要素のあとのコインとねむり）。v0.13 の止める関数は知らない
+        found.append("ふかふかなからだ")
+    v084 = (BenchAttackDamageGuard, AttackEffectGuard, ZeroDamageAtLeast, StatusImmunityNextTurn)  # v0.85: しんぴのこな
+    if any(isinstance(effect, v084) for side in state.players for pokemon in side.in_play() for effect in pokemon.persistent_effects):
+        # v0.84: こおりのはしら（控えへのワザのダメージを無効にする）・ひかりのはどう（効果の要素を無効にする）・パルスガード（8 段階）。v0.13 の止める関数は知らない
+        found.append("v0.84 の持続する効果")
+    if any(isinstance(slot.effect, (E.ReturnToDeckOnHeadsAfterDamage, E.OpponentAttackEffectImmunity))
+           for side in state.players for pokemon in side.in_play() for slot in E.powers_of(state, pokemon)):
+        # v0.86: ［はしりさる］（ダメージの要素のあとのコインと山札にもどる）・［クリスタルボディ］（効果の要素を無効にする）。v0.13 の止める関数は知らない
+        found.append("はしりさる・クリスタルボディ")
+    if any(isinstance(effect, (PowersStopped, BenchProtection)) for side in state.players for pokemon in side.in_play() for effect in pokemon.persistent_effects):
+        # v0.86: スタンウェーブ（特殊能力を止める）・ほのおのまもり（控えへのワザのダメージと効果を無効にする）。v0.13 の止める関数は知らない
+        found.append("v0.86 の持続する効果")
+    v087 = (E.CoinDamageBothActivesOnAttackDamage, E.PoisonDamageSourceOnAttackDamage, E.BenchNamedFromDeckOnAttackDamage, E.OwnBenchAttackImmunityWhileActive,
+            E.BenchAttackDamageImmunity, E.DamageOnOpponentPromotion, E.MoveTypeEnergyOnBenching, E.DamageOnHandBasicWhileActive)
+    if any(isinstance(slot.effect, v087) for side in state.players for pokemon in side.in_play() for slot in E.powers_of(state, pokemon)):
+        # v0.87: ダメージを受けたとき（［ショックボム］・［どくのたいえき］・［ぶんれつ］）・場の移動（［まきびし］・［やけのこり］・［ヒートプレート］）に反応する特殊能力と、
+        # ワザから守る特殊能力（［オーロラヴェール］・［もぐる］）。v0.13 の止める関数は知らない
+        found.append("v0.87 の反応・守る特殊能力")
+    if any(r.kind == E.OPPONENT_POWER_SUPPRESSION for r in state.trainer_effects):
+        found.append("ふしぎなガス")  # v0.87: 相手の場の特殊能力だけを止める効果（v0.13 の止める関数は知らない）
     return tuple(found)
 
 
 def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack, program, once: bool = False, option=None,
-                 coin_stadium: int | None = None) -> None:
+                 coin_stadium: int | None = None, attack_power: bool = False) -> None:
     state = res.state
     if option is None or option.card == attacker.card:
         state.add_event("attack", player=player, pokemon=attacker.card, attack=attack.name_ja, attack_index=key.attack_index)
@@ -217,6 +263,12 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
     # v0.62（docs/history-attacks-v0.62.md 2 章）: 使ったワザの記録（A）。宣言のとき（手順 4・5・ワザの要素より前）に置く（失敗・こんらんの「うら」でも使ったことになる）
     note_used(state, attacker, key)
     res.attack_declared = key
+    if attack_power:
+        # v0.88（docs/type-energy-colors-v0.88.md 5.1 節）: ワザといっしょに使う特殊能力の宣言（p.311 の手順 1。ワザの宣言と同じ時点。宣言の前に確かめた）。ログ ``attack_power``
+        slot = E.attack_power_slot(state, attacker, key)
+        state.add_event("attack_power", player=player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, power=slot.power.name_ja,
+                        power_index=slot.key.power_index, card=slot.card, effect=str(key))
+        res.attack_power = True
     use = (player, attacker.pokemon_id, key.card_id, key.attack_index)
     declare(program, res, player, attacker)  # v0.31: 宣言のあと・こんらんのコインの前の確認（トラッシュの時点が決まらないワザ。HC1）
     if usable_ninja_tricks(state, 1 - player) and (attack_coin_checks(state, attacker) or attack_rebellion_powers(state, attacker)
@@ -334,11 +386,14 @@ def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
     bonded = _destiny_bond(res)  # v0.31: 「みちづれ」
     offers = ko_prevention_offers(res)
     beams = knock_out_power_offers(res)  # v0.61: ［ファイナルビーム］
-    if bonded and (offers or beams):
-        raise res.question("destiny_bond_with_ko_prevention", f"{[o[1].pokemon_id for o in offers + beams]}")
-    if len(offers) + len(beams) > 1:
-        # v0.61: こんじょうと［ファイナルビーム］・2 匹の［ファイナルビーム］など、きぜつするときに使える特殊能力の候補が 2 つ以上（G40 と同じ問い）
-        raise res.question("multiple_ko_prevention", f"{[o[1].pokemon_id for o in offers + beams]}")
+    bands = focus_band_offers(res)  # v0.81: きあいのハチマキ
+    exps = exp_all_offers(res)  # v0.81: 学習装置
+    if bonded and (offers or beams or bands):
+        raise res.question("destiny_bond_with_ko_prevention", f"{[o[1].pokemon_id for o in offers + beams + bands]}")
+    if len(offers) + len(beams) + len(bands) + len(exps) > 1:
+        # v0.61: こんじょうと［ファイナルビーム］・2 匹の［ファイナルビーム］など、きぜつするときに使える特殊能力の候補が 2 つ以上（G40 と同じ問い）。v0.81: きあいのハチマキ・
+        # 学習装置（きぜつの判定の窓ではたらくどうぐ）も同じ窓の候補として数える（どれを先に処理するかで結果・コインの割り当てが変わる。ポケモンの番号・学習装置をつけたポケモン）
+        raise res.question("multiple_ko_prevention", f"{[o[1].pokemon_id for o in offers + beams + bands]}・学習装置 {[e[2].pokemon_id for e in exps]}")
     scram_restored_question(res, knocked(res))  # v0.61: きぜつの処理でかがくへんかガスの発生源が場をはなれ、［ずらかる］の力がもどる（SC2）
     # v0.31: きぜつの処理の窓の問い（P19・P32）を、先読みの範囲の中で確かめる（控えポケモンへのダメージで起こるようになった。記録は残さない。
     # 実際の写しはきぜつの処理の前に ``_knock_out_after_attack`` が行う）
@@ -364,7 +419,56 @@ def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
         codec.ko_check_decision(state, cont, player=owner, pokemon_id=pokemon.pokemon_id, kind=KNOCK_OUT_POWER, extra=extra)
         res.trace.record(Suspended(codec.KNOCK_OUT, state.decision.kind, owner))
         return
+    if bands:
+        _focus_band(res, *bands[0])  # v0.81: きあいのハチマキ（決定を出さない。コインはここ）
+    if exps:
+        # v0.81: 学習装置（つけ替えるかを持ち主に聞く。選ぶと止めるカードは ``unresolved_choices``。つけ替えない（0 個）はいつも答えになる）
+        owner, active, holder, attached = exps[0]
+        unresolved, code, reason = exp_all_unresolved(state, active, holder)
+        extra = () if not unresolved else (("unresolved_choices", unresolved), ("unresolved_code", code), ("unresolved_reason", reason))
+        codec.exp_all_decision(state, codec.KoCheckContinuation(use, None), player=owner, options=exp_all_options(state, active), tool=attached.card,
+                               holder=holder.pokemon_id, source=active.pokemon_id, extra=extra)
+        res.trace.record(Suspended(codec.KNOCK_OUT, state.decision.kind, owner))
+        return
     _knock_out_after_attack(res)
+
+
+def _focus_band(res: Resolution, owner: int, pokemon, attached, effect) -> None:
+    """v0.81（docs/pokemon-tools-stadiums-v0.81.md 5 章）: きあいのハチマキ。持ち主がコインを 1 枚投げ（``source="trainer"``）、「おもて」ならのっているダメージを今有効な最大HP
+    − ``remaining_hp`` にして（「きぜつ」せず、残りHPは「10」。ログ ``focus_band`` の ``survived``）、このカードをトラッシュする（``reason`` ``used``）。「うら」ならそのまま
+    （きぜつの処理でほかのついているカードといっしょにトラッシュする）。そのあと［ずらかる］を確かめる（残りHPが「10」になった）。"""
+    state = res.state
+    flips = flip_coins(state, owner, 1, source="trainer", effect=state.cards[attached.card].card_id, card=attached.card, pokemon_id=pokemon.pokemon_id)
+    survived = flips.results[0] is CoinSide.HEADS
+    if survived:
+        pokemon.damage = max(0, max_hp(state, pokemon) - effect.remaining_hp)
+    state.add_event("focus_band", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, card=attached.card, result=flips.results[0].value,
+                    survived=survived, total_damage=pokemon.damage)
+    if survived:
+        E.discard_attached_tool(state, pokemon, attached, E.TOOL_USED)
+        settle_scram(res)
+
+
+def _resume_exp_all(res: Resolution, decision, choices) -> None:
+    """v0.81: 学習装置の答えのあと。選ばなければ何もしない（ログ ``exp_all_declined``。学習装置はついたまま）。選んだら、そのエネルギーカードを学習装置をつけたポケモンに
+    つけ替え（手札からつける操作ではない。ログ ``tool_move_energy``）、学習装置をトラッシュする。"""
+    state = res.state
+    owner = decision.player
+    tool = decision.context_value("tool")
+    holder = state.find_pokemon(decision.context_value("holder"))
+    source = state.find_pokemon(decision.context_value("source"))
+    if holder is None or source is None:
+        raise RuntimeError("学習装置の決定のポケモンが場にいない（決定を待つ間に場は変わらない。エンジンの不具合）")
+    base = {"player": owner, "card": tool, "pokemon_id": holder[1].pokemon_id, "source_pokemon_id": source[1].pokemon_id}
+    if not choices:
+        state.add_event("exp_all_declined", **base)
+        return
+    card = choices[0]
+    source[1].energy.remove(card)
+    holder[1].energy.append(card)
+    state.add_event("tool_move_energy", **base, energy=card)
+    attached = next(a for a in holder[1].trainers if a.card == tool)
+    E.discard_attached_tool(state, holder[1], attached, E.TOOL_USED)
 
 
 def _destiny_bond(res: Resolution) -> bool:
@@ -515,8 +619,7 @@ def after_power(state: GameState, ctx: Context, *, knock_outs: bool, converted=N
     if gone and not knock_outs:
         return  # 不変条件（場のポケモンのダメージは HP 未満）が StateIntegrityError にする
     if gone:
-        if len(gone) > 1:
-            raise RuntimeError(f"特殊能力の処理のあとで 2 匹以上が HP 以上（{[p.pokemon_id for _, p in gone]}。今の対応カードでは起こらない。エンジンの不具合）")
+        # v0.87: 特殊能力の効果の入れ替えへの反応（［まきびし］）のダメージで HP 以上になったポケモンも、同じきぜつの処理（同時。p.324）
         try:
             candidates = capture_post_knockout(res, gone)
         except OpenQuestion as question:
@@ -603,6 +706,7 @@ def after_trainer(state: GameState, ctx: Context) -> None:
     # 退化したほかのポケモンは、ワザのあとのきぜつの処理で残らない）
     # v0.61: トレーナーのダメージ（バトル場は穴だらけ!。このコマンドのログ ``trainer_damage``）で HP 以上になったポケモンも
     damaged = _trainer_damaged(state)
+    # v0.87: トレーナーの効果の入れ替え・手札から場に出させたことへの反応のダメージ（［まきびし］・［ヒートプレート］・爆発ジム）で HP 以上になったポケモンも
     gone = [(player, pokemon) for player in PLAYERS for pokemon in state.players[player].in_play()
             if (pokemon.devolved_turn == state.turn_number or pokemon.pokemon_id in damaged) and pokemon.damage >= hp_of(state, pokemon)]
     if not gone:
@@ -610,7 +714,7 @@ def after_trainer(state: GameState, ctx: Context) -> None:
         if any(state.players[p].active is None or not state.players[p].prizes for p in PLAYERS):
             _next_prize_or_judge(res, (), CONTINUE_TURN, ())
         return
-    if len(gone) > 1:
+    if len(gone) > 1 and not all(pokemon.pokemon_id in damaged for _, pokemon in gone):
         raise RuntimeError(f"トレーナーの使用のあとで 2 匹以上が HP 以上（{[p.pokemon_id for _, p in gone]}。1 回の使用で退化するのは 1 匹。エンジンの不具合）")
     try:
         scram_restored_question(res, gone)  # v0.61
@@ -628,7 +732,53 @@ def _trainer_damaged(state: GameState) -> set[int]:
             break
         if event["kind"] == "trainer_damage":
             found.add(event["pokemon_id"])
+        elif event["kind"] in MOVEMENT_DAMAGE_EVENTS:
+            found.add(event.get("target_pokemon_id", event.get("pokemon_id")))  # v0.87
     return found
+
+
+# v0.87: 場の移動への反応のダメージのログ（［まきびし］・［ヒートプレート］・爆発ジム）
+MOVEMENT_DAMAGE_EVENTS = frozenset({"spikes_damage", "hot_plate_damage", "stadium_damage"})
+
+
+def after_effects(state: GameState, ctx: Context) -> None:
+    """v0.87（docs/movement-damage-reactions-v0.87.md 4.3 節）: 手札からたねポケモンをベンチに出したあと（［ヒートプレート］・ロケット団の爆発ジムのダメージ）、場を整える。
+    HP 以上のポケモンがいれば、きぜつの処理（ログ ``knock_out`` の ``timing`` は ``"entry"``。1 つの操作で起こったきぜつは同時。p.324）→ サイド → 勝ち負け → ふしちょう →
+    バトル場に出す → 同じ番（``CONTINUE_TURN``）。いなければ番のプレイヤーの ``Phase.MAIN``（決定を待っていなければ）。"""
+    res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace, dormant=dormant_scram(ctx.original))
+    if state.decision is None:
+        state.phase = Phase.MAIN
+    _settle_outside_attack(res)
+    gone = knocked(res)
+    if not gone:
+        if any(state.players[p].active is None for p in PLAYERS):
+            _next_prize_or_judge(res, (), CONTINUE_TURN, ())
+        return
+    try:
+        scram_restored_question(res, gone)
+        candidates = capture_post_knockout(res, gone)
+    except OpenQuestion as question:
+        raise to_error(question.key, question.detail, question.error) from None
+    _after_knockouts(res, _knock_out_all(state, gone, timing="entry"), CONTINUE_TURN, candidates)
+
+
+def settle_after_retreat(state: GameState, ctx: Context, player: int, retreated: int) -> None:
+    """v0.87: 「にげる」の反応（［やけのこり］・［まきびし］・同じ時点の［おとしあな］。``reactions``）のあと、v0.61 の ``after_retreat`` の後半と同じく場を整える（［ずらかる］→
+    きぜつ（``timing`` は ``"retreat"``）→ サイド → 勝ち負け → ふしちょう → バトル場に出す → 同じ番）。"""
+    res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace, dormant=dormant_scram(ctx.original))
+    state.phase = Phase.MAIN
+    _settle_outside_attack(res)
+    gone = knocked(res)
+    if not gone:
+        if any(state.players[p].active is None for p in PLAYERS):
+            _next_prize_or_judge(res, (), CONTINUE_TURN, ())
+        return
+    try:
+        scram_restored_question(res, gone)
+        candidates = capture_post_knockout(res, gone)
+    except OpenQuestion as question:
+        raise to_error(question.key, question.detail, question.error) from None
+    _after_knockouts(res, _knock_out_all(state, gone, timing="retreat"), CONTINUE_TURN, candidates)
 
 
 def _settle_outside_attack(res: Resolution) -> None:
@@ -727,6 +877,15 @@ def end_turn_after_trainer(state: GameState, ctx: Context, player: int, card: in
     _end_turn(Resolution(state, catalog=ctx.catalog, trace=ctx.trace))
 
 
+def end_turn_after_power(state: GameState, ctx: Context, player: int, power: str) -> None:
+    """v0.86: 特殊能力の説明の「使ったら、自分の番は終わる」（エンテイの［おたけび］）。特殊能力の処理・続き（使用中のトレーナーを使い終える）のあとに呼ぶ。ログ ``power_turn_end``
+    （``player``・``power``）のあと、トレーナーの番の終わり（``end_turn_after_trainer``）と同じ番の終わりの窓 → ポケモンチェック → 次の番。ワザを使っていないので、ワザのあとの
+    きぜつの処理はない。持ち主の番でないときは使う機会で止めている（OT1）。"""
+    require_turn(state, player)
+    state.add_event("power_turn_end", player=player, power=power)
+    _end_turn(Resolution(state, catalog=ctx.catalog, trace=ctx.trace))
+
+
 # ---------------------------------------------------------------- 番の終わり・ポケモンチェック
 
 def _end_turn(res: Resolution) -> None:
@@ -742,7 +901,7 @@ def _end_turn(res: Resolution) -> None:
 def _pokemon_check(res: Resolution) -> None:
     """ポケモンチェック（p.323）。どくのきぜつのあとは、ワザのあとと同じきぜつの処理の窓（ふしちょうの写し）を通る。"""
     state = res.state
-    knocked = PR.pokemon_check_poison(state)  # 始まり・2 の「どく」・両方のきぜつで止める処理（v0.13 の経路と同じ手続き）
+    knocked = PR.pokemon_check_poison(state)  # 始まり・1 の悪エネルギー（v0.78）・2 の「どく」・両方のきぜつで止める処理（v0.13 の経路と同じ手続き）
     if knocked is None:
         return
     try:
@@ -826,13 +985,20 @@ def _resume_attack(res: Resolution, decision, cont: codec.AttackContinuation, ch
     if boundary is not None:
         # v0.65: 要素と要素のあいだの決定（変わり身の術はワザの要素の前、［にげこむ］はダメージの要素のあと）。答えを処理して、その位置の要素から続ける（それまでの要素・コインは
         # 繰り返さない）
-        if decision.kind == NINJA_TRICK:
+        if "move_order" in carried or "move_magma" in carried:
+            # v0.87: 場の移動への反応の決定（同じ時点の反応の順番・［やけのこり］でつけ替えるカード）。答えを処理し、残りの反応を続けてから、その位置の要素から続ける
+            if resume_moves(run, boundary, decision, carried, choices):
+                return
+        elif decision.kind == NINJA_TRICK:
             apply_ninja_trick(run, tuple(carried["tricks"]), choices)
         elif decision.kind == REACTION_SWITCH:
             apply_flee(run, tuple(carried["flee"]), choices)
         elif decision.kind == ENERGY_DRAIN_DISCARD:
             # v0.68: ［だつりょくえき］のトラッシュするカード（コインはもう投げた。送る効果はもう処理したので、続きの位置で窓を開き直しても何もしない）
             apply_energy_drain(state, tuple(carried["drain"]), choices)
+        elif decision.kind == SPLIT_FROM_DECK:
+            # v0.87: ［ぶんれつ］の答え（出すなら山札を切る。送る効果はもう処理した）
+            apply_split(state, tuple(carried["split"]), choices)
         else:
             raise RuntimeError(f"要素のあいだの決定 {decision.kind} は扱わない（エンジンの不具合）")
         if run_elements(run, boundary):
@@ -873,6 +1039,10 @@ def _offer_effect(res: Resolution, card_id: str, power_index: int):
 def _resume_ko_check(res: Resolution, decision, cont: codec.KoCheckContinuation, choices) -> None:
     """きぜつの判定の任意の効果（こんじょう）の答えのあと: 宣言と効果の中身（v0.13 の実装の ``prevent``）→ きぜつの処理。"""
     state = res.state
+    if decision.kind == EXP_ALL_ENERGY:
+        _resume_exp_all(res, decision, choices)  # v0.81: 学習装置
+        _knock_out_after_attack(res)
+        return
     owner = decision.player
     pokemon_id = decision.options[0]
     _, pokemon = state.find_pokemon(pokemon_id)
@@ -956,7 +1126,26 @@ def _resume_take_prize(res: Resolution, decision, cont: codec.AftermathContinuat
 
 
 def _resume_promote(res: Resolution, decision, cont: codec.AftermathContinuation, choices) -> None:
-    promote_from_bench(res.state, decision.player, choices[0])  # v0.38: ワザの効果で場をはなれたあとの交代と共通（動き・ログは v0.37 と同じ）
+    state = res.state
+    promoted = promote_from_bench(state, decision.player, choices[0])  # v0.38: ワザの効果で場をはなれたあとの交代と共通（動き・ログは v0.37 と同じ）
+    # v0.87（docs/movement-damage-reactions-v0.87.md 4.1 節）: 控えから出たポケモンへの相手の［まきびし］（その相手の番の中だけ。ポケモンチェックのあとの交代はどちらの番でもない）。
+    # 同じ時点のほかの反応はない（もどったポケモンがいない）。HP 以上になったら、きぜつの処理をもう一度して、同じ続きに進む（そのあとの交代も同じ続き）
+    if cont.then != NEXT_TURN and promotion_spikes_now(state, decision.player, promoted):
+        _settle_outside_attack(res)
+        gone = knocked(res)
+        if gone:
+            if cont.remaining:
+                raise RuntimeError(f"［まきびし］で HP 以上になったあとに、ほかのプレイヤーの交代 {cont.remaining} が残っている（番のプレイヤーの交代は最後。エンジンの不具合）")
+            try:
+                scram_restored_question(res, gone)
+                candidates = capture_post_knockout(res, gone)
+            except OpenQuestion as question:
+                raise to_error(question.key, question.detail, question.error) from None
+            _after_knockouts(res, _knock_out_all(state, gone, timing="power"), cont.then, candidates)
+            return
+        if state.players[decision.player].active is None:
+            _next_prize_or_judge(res, cont.remaining, cont.then, ())
+            return
     _next_promotion_or_end(res, cont.remaining, cont.then)
 
 

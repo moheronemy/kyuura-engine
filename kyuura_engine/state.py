@@ -191,6 +191,8 @@ class PreventDamage:
     active_turn: int
     kind: ClassVar[str] = "prevent_damage"
     turns_until_active: ClassVar[int] = 1  # はたらく番は効果を与えた番の何番あとか（v0.27。次の相手の番）
+    # v0.79: 防ぐのがワザによるダメージだけか（``PreventAttackDamage``）。「ダメージを受けない」（かたまる）は、トレーナーのダメージも防ぐ（v0.61。p.235 の解説の記録）
+    attack_only: ClassVar[bool] = False
     on_opponent: ClassVar[bool] = False  # 相手に与える効果か（v0.31。v0.30 までの効果はどれも自分自身）
 
 
@@ -201,6 +203,21 @@ RETALIATION_KINDS = {RETALIATION_FIXED: "retaliation", RETALIATION_RECEIVED: "re
 # v0.45: 受けたダメージで決まり、倍数（``multiplier``）か、はたらくときのコイン（``on_heads``）のある効果の種類（R団のエビワラーの「クロスカウンター」。
 # 「こうらがえし」と同じ決め方 ``RETALIATION_RECEIVED`` に、量の倍数とコインの条件を明示した値。v0.44 までの読み手は知らない種類として拒否する）
 RETALIATION_RECEIVED_SCALED_KIND = "retaliation_received_damage_scaled"
+
+
+@dataclass(frozen=True)
+class PreventAttackDamage(PreventDamage):
+    """ワザによる「持続する効果」（v0.79。docs/shared-checks-pokemon-reuse-v0.79.md 7 章）のうち、ピカチュウ（neo1-036）の「こうそくいどう」の「コインを投げて「おもて」なら、
+    次の相手の番、このカードはワザによるダメージを受けない。」（kyuura の印刷の文面）。
+
+    はたらく番・自分自身に与えること・ワザのダメージの要素を計算の前に無効にすること・ダメージ以外の効果は受けること・消える契機は ``PreventDamage``（「かたまる」）と同じ
+    （部分型なので ``persistent.damage_prevention`` が見つける）。違うのは、説明が「ワザによるダメージ」と書くので、トレーナーのダメージ（バトル場は穴だらけ!）は防がない
+    こと（``attack_only``。v0.61 の「ダメージを受けない」状態はトレーナーのダメージも防ぐ）。「ワザによるダメージや効果を受けない」（バリアー ``AttackBarrier``）とも違う
+    （効果は受ける）。種類 ``kind`` を分ける（v0.78 までのエンジンは知らない種類として読まない）。
+    """
+
+    kind: ClassVar[str] = "prevent_attack_damage"
+    attack_only: ClassVar[bool] = True
 
 
 @dataclass(frozen=True)
@@ -485,6 +502,21 @@ class CannotAttack:
 
 
 @dataclass(frozen=True)
+class CannotAttackNextOwnTurn(CannotAttack):
+    """ワザによる「持続する効果」（v0.78）のうち、エアームド（NIP1X-005）の「メタルスラッシュ」の「次の自分の番、このカードはワザを使うことができない。」（kyuura の
+    印刷の文面）。
+
+    v0.31 の ``CannotAttack``（「しっぽをふる」。相手に与え、次の相手の番）と同じく、はたらく番の間このポケモンのすべてのワザを使えなくする（``checks.attack_request`` の
+    ``persistent.cannot_attack``。同じ所・同じコード）。自分自身に与え（``on_opponent`` が偽。``source_card`` は自分のカード）、はたらく番は次の自分の番
+    （``created_turn + 2``）。消える契機はほかの持続する効果と同じ（期限・ベンチにもどる・進化・きぜつ）。v0.35 の ``CannotUseOwnAttack``（1 つのワザだけ）とは別。
+    """
+
+    kind: ClassVar[str] = "cannot_attack_next_own_turn"
+    turns_until_active: ClassVar[int] = 2
+    on_opponent: ClassVar[bool] = False
+
+
+@dataclass(frozen=True)
 class ReducedDamageToSource:
     """ワザによる「持続する効果」（v0.34）のうち、カラカラ（PMCG2-029）の「なきつく」の「「なきつく」を受けた相手は、このカードにワザを使う時、与える
     ダメージが20へる。この状態は次の自分の番の始めに消える。」（kyuura の印刷の文面）。
@@ -508,6 +540,22 @@ class ReducedDamageToSource:
     turns_until_active: ClassVar[int] = 1
     on_opponent: ClassVar[bool] = True
     expires_at_turn_start: ClassVar[bool] = True
+
+
+@dataclass(frozen=True)
+class ReducedDamageToSourceNextTurn(ReducedDamageToSource):
+    """ワザによる「持続する効果」（v0.76。docs/persistent-attack-modifiers-v0.76.md 4 章）のうち、ヒトカゲ（ES1-013 など）・ドードー・パウワウ・ピカチュウ（IP1-040）・
+    チコリータの「なきごえ」の「このワザを受けた相手は、次の相手の番でこのカードにダメージを与える時、そのダメージが「-10」される」・「次の相手の番、このワザを
+    受けた相手がこのカードに与えるダメージは「-10」される。」（kyuura の印刷の文面）。
+
+    はたらく番・相手に与えること・「このカード」に与えるダメージの 2 段階で減らすことは v0.34 の ``ReducedDamageToSource``（「なきつく」）と同じ（部分型なので、
+    ``persistent.reduced_damage_to_source``・ダメージの計算・NK5 の確かめ・書き出しの ``amount`` はそのまま当てはまる）。違うのは期限だけで、説明は「次の相手の番」
+    （はたらく番の終わりに消える。ほかの持続する効果と同じ ``persistent.remove_expired_persistent_effects``）。「なきつく」の「この状態は次の自分の番の始めに消える」
+    （``expires_at_turn_start``）を、説明の違うワザに当てはめない。種類 ``kind`` も分ける（v0.75 までのエンジンは知らない種類として読まない）。
+    """
+
+    kind: ClassVar[str] = "reduced_damage_to_source_next_turn"
+    expires_at_turn_start: ClassVar[bool] = False
 
 
 @dataclass(frozen=True)
@@ -741,6 +789,146 @@ class TailsDamageGuard:
 
 
 @dataclass(frozen=True)
+class ReflectShield:
+    """ワザによる「持続する効果」（v0.83）のうち、ひかるミュウツー（neo4-068）の「リフレクトシールド」の「次の相手の番、このカードが相手のワザによるダメージを受けるとき、
+    このカードの持ち主はコインを投げる。「おもて」なら、相手に20ダメージを与え、このカードが受けるダメージは、すべてなくなる(ダメージ以外の効果は、そのまま受ける)。」
+    （kyuura の印刷の文面。docs/shining-gentle-pokemon-v0.83.md 5 章）。
+
+    自分自身に与え、はたらく番は次の相手の番（``created_turn + 1``）、その番の終わりに消える（v0.4b の期限）。ベンチにもどる・場をはなれる・進化・きぜつで消える。ダメージを
+    受けても消えない（「かげぶんしん」の ``TailsDamageGuard`` と違う）。コインは、相手のワザによるダメージ（最終ダメージが 0 より大きい）を受けるときに、このカードの持ち主が
+    投げる（``resolution.kernel.deal_damage``）。「おもて」なら、そのダメージの要素で受けるダメージはなく、相手（ダメージを与えたポケモン）に ``amount`` のダメージを与える
+    （このワザ（``attack_index``）によるダメージ。そのワザのダメージの要素のあとの窓。``kernel.reflect_damage_to_damage_source``）。
+
+    - ``attack_index``: 効果を与えたワザの位置。``attack_card`` は v0.49 の ``Retaliation`` と同じ（いちばん上のカードと違うときだけ）
+    - ``amount``: 相手に与えるダメージの基本となるダメージ（20）
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    attack_index: int
+    amount: int
+    attack_card: str | None = None
+    kind: ClassVar[str] = "reflect_shield"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+
+    def __post_init__(self) -> None:
+        _check_attack_card(self.attack_card)
+        if type(self.amount) is not int or self.amount <= 0 or type(self.attack_index) is not int:
+            raise ValueError(f"与えるダメージ・ワザの位置は整数（{self.amount!r}・{self.attack_index!r}）")
+
+
+@dataclass(frozen=True)
+class StatusImmunityWhileActive:
+    """ワザによる「持続する効果」（v0.84）のうち、やさしいレディアン（neo4-010）の「きらめきタッチ」の「このワザで新しく出てきたポケモンは、バトル場にいるかぎり、
+    「どく•ねむり•マヒ•こんらん」状態にならない」（kyuura の印刷の文面。docs/light-powers-evolution-v0.84.md 4 章）。
+
+    ワザを使ったポケモン（``given_by``。やさしいレディアンのカード）が、入れ替えで新しくバトル場に出た自分のポケモンに与える（受けるのはワザを使ったポケモンではない。
+    ``source_card`` は受けたポケモンのいちばん上のカード（発生源を確かめる不変条件と同じ形。v0.48 の ``MaxHpSet`` と同じ置き場所）。与えたときからはたらき、期限では
+    消えない（``lasting``）。バトル場をはなれる（ベンチにもどる・場をはなれる）・進化・退化・きぜつで消える（v0.4b の消える契機。「バトル場にいるかぎり」）。はたらく間、
+    このポケモンを特殊状態にする処理は特殊状態にしない（``effects.status_immunity``。v0.46 の［めんえき］と同じ入口）。すでにある特殊状態は回復しない。
+
+    - ``attack_index``: 効果を与えたワザの位置。``attack_card`` は効果を与えたワザを印刷したカードの id（``given_by`` のいちばん上のカードと違うときだけ）
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    attack_index: int
+    given_by: int
+    attack_card: str | None = None
+    kind: ClassVar[str] = "status_immunity_while_active"
+    turns_until_active: ClassVar[int] = 0
+    on_opponent: ClassVar[bool] = False
+    lasting: ClassVar[bool] = True
+
+    def __post_init__(self) -> None:
+        _check_attack_card(self.attack_card)
+        if type(self.attack_index) is not int or type(self.given_by) is not int:
+            raise ValueError(f"ワザの位置・効果を与えたカードは整数（{self.attack_index!r}・{self.given_by!r}）")
+
+
+@dataclass(frozen=True)
+class BenchAttackDamageGuard:
+    """ワザによる「持続する効果」（v0.84）のうち、やさしいジュゴン（neo4-033）の「こおりのはしら」の「次の相手の番が終わるまで、自分の控えポケモン全員は、ワザによる
+    ダメージを受けない(ダメージ以外の効果は受ける)。このカードがバトル場をはなれたとき、この効果は消える。」（kyuura の印刷の文面。docs 4 章）。
+
+    ワザを使ったポケモン自身（バトル場のやさしいジュゴン）に与え、はたらく番は次の相手の番（その前の自分の番の残りには、控えポケモンが受けるワザのダメージはない）。
+    はたらく間、持ち主の控えポケモン（受ける時点の控え。あとからベンチに出したポケモン・バトル場からベンチにもどったポケモンも）が受けるワザのダメージの要素を無効にする
+    （v0.56 の見えない壁と同じ窓・同じ処理。``resolution.catalog.ICE_PILLAR``）。効果の要素は無効にしない。このカードがバトル場をはなれる（ベンチにもどる・場をはなれる）・
+    進化・退化・きぜつで消える（効果をこのカードに持つので、v0.4b の消える契機と同じ）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "bench_attack_damage_guard"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+
+
+@dataclass(frozen=True)
+class ZeroDamageAtLeast:
+    """ワザによる「持続する効果」（v0.84）のうち、やさしいサンダース（neo4-043）の「パルスガード」の「次の相手の番、このカードがワザによって受けるダメージが「30」
+    以上なら、このカードはダメージを受けない（ダメージ以外の効果は受ける）。」（kyuura の印刷の文面。docs 4 章）。
+
+    自分自身に与え、はたらく番は次の相手の番。その番に、このポケモンがワザのダメージを受けるとき、p.321 の 8 段階（ワザを受けるポケモンの持っている効果）で、その段階の
+    ダメージが ``threshold`` 以上なら 0 にし、より小さければそのまま（``damage.ZERO_IF_AT_LEAST``。v0.46 の［なぞのかべ］と同じ計算。v0.45 の ``ZeroDamageBelow``（かたくなる）
+    と比べる向きが逆）。ワザでないダメージ（特殊能力・どく・トレーナー・特殊エネルギー）・ダメージ以外の効果には当てはめない。消える契機は ``ZeroDamageBelow`` と同じ。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    threshold: int
+    kind: ClassVar[str] = "zero_damage_at_least"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+
+
+@dataclass(frozen=True)
+class AttackEffectGuard:
+    """ワザによる「持続する効果」（v0.84）のうち、やさしいカイリュー（neo4-094）の「ひかりのはどう」の「次の相手の番、このカードはワザによる「ダメージ以外の効果」を
+    受けない(ダメージは受ける)。」（kyuura の印刷の文面。docs 4 章）。
+
+    自分自身に与え、はたらく番は次の相手の番。その番に、このポケモンへのワザの効果の要素（ダメージの要素でないもの）を無効にする（v0.80 のエフェクトガードと同じ窓・同じ
+    処理。``resolution.catalog.LIGHT_PULSE``。ついているトレーナーではないので、エフェクトガードのカードとして扱わない）。ダメージの要素・ワザでない効果は無効にしない。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "attack_effect_guard"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+
+
+@dataclass(frozen=True)
+class StatusImmunityNextTurn:
+    """ワザによる「持続する効果」（v0.85）のうち、ベイリーフ（PF1-002）の「しんぴのこな」の「次の相手の番、このカードは「どく・ねむり・マヒ・こんらん」状態にならない。」
+    （kyuura の印刷の文面。docs/entry-powers-energy-lifecycle-v0.85.md 6 章）。
+
+    自分自身に与え、はたらく番は次の相手の番（期限はその番の終わり）。はたらく間、このポケモンを特殊状態にする処理は特殊状態にしない（``effects.status_immunity``。v0.46 の
+    ［めんえき］・v0.84 の「きらめきタッチ」と同じ入口）。すでにある特殊状態は回復しない。入れ替えはしない（「きらめきタッチ」とは別の効果）。ベンチにもどる・進化・きぜつで
+    消える（v0.4b の消える契機）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "status_immunity_next_turn"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+
+
+@dataclass(frozen=True)
 class TypeShift:
     """特殊能力でポケモンの色（タイプ）を変えた記録（v0.48。モルフォン（PMCG2-015）の［へんしょく］の「このカード持ち主は、自分の番に1回、このカードの色を場にいる
     ポケモンのどれかの色に変えることができる。「ねむり・マヒ・こんらん」状態の時、この力は消える。」。kyuura の印刷の文面）。
@@ -886,13 +1074,63 @@ class DoubledDamage:
     on_opponent: ClassVar[bool] = False
 
 
+
+@dataclass(frozen=True)
+class PowersStopped:
+    """ワザによる「持続する効果」（v0.86。docs/entry-energy-evolution-reactions-v0.86.md 7 章）のうち、わるいモココ（neo4-044）の「スタンウェーブ」の「次の自分の番が終わる
+    まで、このワザを受けた相手は「特殊能力」を使うことができず、その効果も消える。」（kyuura の印刷の文面）。
+
+    相手に与える効果（``on_opponent``）。受けるのは相手の対戦ポケモン（このワザを受けた相手）。はたらくのは与えた番から、効果を与えたプレイヤーの次の番（``active_turn`` =
+    ``created_turn + 2``）の終わりまで（``from_creation``）。その間、受けているポケモンの特殊能力は、宣言して使う特殊能力の使用も、常にはたらく・自動的にはたらく特殊能力の力も
+    止まる（「使うことができず、その効果も消える」。かがくへんかガスの「使えず、その力も消える」と同じ範囲だが、発生源・期限・対象はこのポケモンだけ。``persistent.powers_stopped``）。
+    消える契機はほかの持続する効果と同じ（期限・ベンチにもどる・進化・退化・場をはなれる。GR-2000-P322-PERSISTENT-EFFECTS）。"""
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "powers_stopped"
+    turns_until_active: ClassVar[int] = 2
+    on_opponent: ClassVar[bool] = True
+    from_creation: ClassVar[bool] = True  # 与えた番からはたらく（「次の自分の番が終わるまで」）
+
+
+@dataclass(frozen=True)
+class BenchProtection:
+    """ワザによる「持続する効果」（v0.86。7 章）のうち、エンテイ（PF2-008）の「ほのおのまもり」の「次の相手の番が終わるまで、自分の控えポケモン全員は、ワザによるダメージや
+    効果を受けない。」（kyuura の印刷の文面）。
+
+    効果を与えたときの自分の控えポケモンそれぞれに与える（``bench_ok``。``source_card``・``source_player`` は効果を与えたワザを使ったポケモンとそのプレイヤー。受けるポケモンとは
+    別のポケモン（``from_other``））。はたらくのは与えた番から次の相手の番（``active_turn`` = ``created_turn + 1``）の終わりまで（``from_creation``）。こおりのはしら（v0.84。
+    バトル場のやさしいジュゴンが持ち、「このカードがバトル場をはなれると消える」）と違い、説明は発生源が場をはなれても消えるとは書かないので、受けるポケモンが持つ（発生源の
+    エンテイが場をはなれても消えない）。消える契機は受けるポケモンについての持続する効果の規定（期限・進化・退化・場をはなれる。GR-2000-P322-PERSISTENT-EFFECTS）。
+    バトル場に出た受けるポケモン・効果のない控えポケモンに当てはめるかは決まらない（PL1。``kernel.first_void``）。"""
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "bench_protection"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+    from_creation: ClassVar[bool] = True  # 与えた番からはたらく（「次の相手の番が終わるまで」）
+    bench_ok: ClassVar[bool] = True  # ベンチのポケモンが受ける
+    from_other: ClassVar[bool] = True  # 受けるポケモンは効果を与えたポケモンとは別
+
 # ワザによる持続する効果の型（v0.4b。v0.12 で Retaliation、v0.27 で NextTurnAttackDamage、v0.31 で DestinyBond・AttackBarrier・DamageReduction・
 # CannotAttack、v0.34 で ReducedDamageToSource、v0.35 で CannotUseOwnAttack・CannotUseAttack、v0.36 で AttackCoinCheck・CannotRetreat、v0.40 で
 # CannotAttackWhileSourceActive、v0.45 で ZeroDamageBelow、v0.46 で HalvedDamage、v0.48 で WeaknessChange・ResistanceChange・MaxHpSet を加えた）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
-PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation, NextTurnAttackDamage, DestinyBond, AttackBarrier, DamageReduction, CannotAttack,
+PERSISTENT_EFFECT_TYPES = (PreventDamage, PreventAttackDamage, Retaliation, NextTurnAttackDamage, DestinyBond, AttackBarrier, DamageReduction, CannotAttack,
                            ReducedDamageToSource, CannotUseOwnAttack, CannotUseAttack, AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive,
                            ZeroDamageBelow, HalvedDamage, WeaknessChange, ResistanceChange, MaxHpSet, CannotUsePowers, CannotAttachEnergy, TailsDamageGuard,
-                           DoubledDamage)  # v0.75: DoubledDamage（もろばバサミ）
+                           DoubledDamage,  # v0.75: DoubledDamage（もろばバサミ）
+                           ReducedDamageToSourceNextTurn,  # v0.76: ReducedDamageToSourceNextTurn（なきごえ。期限が次の相手の番の終わり）
+                           CannotAttackNextOwnTurn,  # v0.78: CannotAttackNextOwnTurn（メタルスラッシュ。次の自分の番にすべてのワザを使えない）
+                           ReflectShield,  # v0.83: ReflectShield（リフレクトシールド）
+                           # v0.84: きらめきタッチ・こおりのはしら・パルスガード・ひかりのはどう
+                           StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard,
+                           StatusImmunityNextTurn,  # v0.85: しんぴのこな
+                           PowersStopped, BenchProtection)  # v0.86: スタンウェーブ・ほのおのまもり
 
 
 @dataclass(frozen=True)
@@ -926,8 +1164,14 @@ ATTACK_DAMAGE_BONUS = "attack_damage_bonus"  # カスミ: 「カスミのポケ�
 POISON_ON_ATTACK_DAMAGE = "poison_on_attack_damage"  # キョウ: 「キョウのポケモン」がワザで相手の対戦ポケモンにダメージを与えたら、どく状態にする（この番）
 BENCH_ATTACK_DAMAGE_PREVENTION = "bench_attack_damage_prevention"  # 見えない壁: 次の相手の番が終わるまで、控えポケモンはワザによるダメージを受けない
 POWER_SUPPRESSION = "power_suppression"  # v0.59 まきちらせ!ベトベトガス: 次の相手の番が終わるまで、おたがいの場のすべてのポケモンは特殊能力を使えず、その力も消える
+# v0.87: ドガースの「ふしぎなガス」（ワザの効果）: 次の相手の番が終わるまで、相手の場にいるポケモンは特殊能力を使えず、その力も消える。``player`` はワザを使ったプレイヤー、
+# ``source_card`` はワザを印刷したカード、``attack_index`` はワザの位置（効果を受けるのは ``player`` の相手の場）
+OPPONENT_POWER_SUPPRESSION = "opponent_power_suppression"
 FIRE_DOUBLE_ATTACH = "fire_double_attach"  # v0.59 カツラ: この番だけ、手札から「カツラのポケモン」につける「炎」エネルギーカードの枚数を 1 枚でなく 2 枚にする
-TRAINER_TURN_EFFECT_KINDS = (ATTACK_DAMAGE_BONUS, POISON_ON_ATTACK_DAMAGE, BENCH_ATTACK_DAMAGE_PREVENTION, POWER_SUPPRESSION, FIRE_DOUBLE_ATTACH)
+# v0.80 退化スプレーHYPER: 「(退化させたポケモンを、同じ番に進化させることはできない。)」。この番の終わりまで、``TrainerTurnEffect.pokemon_id`` の場のポケモンを進化させない
+EVOLUTION_BAN = "evolution_ban"
+TRAINER_TURN_EFFECT_KINDS = (ATTACK_DAMAGE_BONUS, POISON_ON_ATTACK_DAMAGE, BENCH_ATTACK_DAMAGE_PREVENTION, POWER_SUPPRESSION, FIRE_DOUBLE_ATTACH, EVOLUTION_BAN,
+                             OPPONENT_POWER_SUPPRESSION)
 
 
 @dataclass(frozen=True)
@@ -968,6 +1212,10 @@ class TrainerTurnEffect:
     card_id: str
     created_turn: int
     expires_turn: int
+    # v0.80: 効果を受ける場のポケモンの番号（``EVOLUTION_BAN`` だけ。退化スプレーHYPER で退化させたポケモン）。ほかの種類は None（書き出しの形は v0.79 と同じ）
+    pokemon_id: int | None = None
+    # v0.87: ワザで与えた効果（``OPPONENT_POWER_SUPPRESSION``。ドガースの「ふしぎなガス」）のワザの位置（``card_id`` のカードのワザ）。トレーナーの効果は None（書き出しの形は v0.86 と同じ）
+    attack_index: int | None = None
 
 
 @dataclass(frozen=True)
@@ -987,6 +1235,39 @@ class RecallEffect:
     pokemon_id: int
     card: int
     trainer: int
+
+
+# v0.88（docs/type-energy-colors-v0.88.md 2 章）: 特殊能力で、この番が終わるまで色を変える効果（``ColorEffect``）の種類
+COLOR_POKEMON_TYPE = "pokemon_type"  # せんすい（ランターン neo3-026）: この番が終わるまで、このカードの「色(タイプ)」は「水」になる
+COLOR_ENERGY = "energy"  # エナジーコンバーター（ポリゴン2 neo3-051）: この番が終わるまで、選んだ「基本エネルギーカード」の「エネルギー」は選んだ色の「エネルギー」としてあつかう
+COLOR_EFFECT_KINDS = (COLOR_POKEMON_TYPE, COLOR_ENERGY)
+
+
+@dataclass(frozen=True)
+class ColorEffect:
+    """v0.88（docs/type-energy-colors-v0.88.md 2 章）: 特殊能力で、この番が終わるまで色を変える効果の記録（ランターンの［せんすい］・ポリゴン2の［エナジーコンバーター］）。
+
+    - ``kind``: ``COLOR_EFFECT_KINDS`` のどれか。``player``: 特殊能力を使ったプレイヤー。``source``: 特殊能力を使った場のポケモンの番号。``source_card``・``power_index``: 特殊能力を
+      印刷したカードの uid（使ったときの今の姿のカード）と、その特殊能力の位置
+    - ``target``: ``COLOR_POKEMON_TYPE`` なら色を変える場のポケモンの番号（このカード。``source`` と同じ）、``COLOR_ENERGY`` なら色を変えるエネルギーカードの uid（カードを追う。
+      場のポケモンのあいだのつけかえでは効果は続く。エナジーバーンの (ポケモン, カード) の記録とは違う）
+    - ``color``: 変えた色。``turn``: 使った番（その番の終わりに消す。``procedures.expire_at_turn_end``）
+    - ``left_play``: ``COLOR_ENERGY`` で、使ったあとにカードが場をはなれた（トラッシュ・手札など。コマンドの終わりに確かめる ``engine._apply``）。同じ uid のカードがもう一度場に
+      ついたときに効果が続くかは決まらない（CE1。``effects.color_effect_status``）
+    - 発生源が「ねむり・マヒ・こんらん」状態になったら、効果も消す（記録を消す。回復しても戻らない。``conditions`` の特殊状態にする処理）。かがくへんかガスなどで力が消えた・
+      発生源が場をはなれた・発生源のいちばん上のカードが変わったあとに効果が続くかは決まらない（CE1。記録は残し、読み方を 2 つにする）
+    - 場のポケモン・カードの定義には写さない（色は問い合わせのたびに ``effects`` が求める）。書き出しは形式 23 だけが表せる
+    """
+
+    kind: str
+    player: int
+    source: int
+    source_card: int
+    power_index: int
+    target: int
+    color: EnergyType
+    turn: int
+    left_play: bool = False
 
 
 # v0.63（docs/hidden-card-trainers-v0.63.md 2 章）: 一時的に置いておくカード（``SetAsideCards``）の種類。カードが物理的にある場所の名前で、手札・山札・ベンチ・場の
@@ -1365,6 +1646,13 @@ class GameState:
     # カード（重なり・のせたカードはない）で、うらのあいだはカードの定義が「たねポケモン」としてあつかう定義（``FACE_DOWN_DEFINITION``。名前・HP・タイプなどは読めない）。
     # おもてにしたら並びから除く（``zones.reveal_face_down``）。書き出しは形式 22 だけが表せる（空でなければ形式 1〜21 は ``ValueError``）
     face_down_cards: tuple[int, ...] = ()
+    # v0.88（docs/type-energy-colors-v0.88.md 2 章）: 特殊能力で、この番が終わるまで色を変える効果（``ColorEffect`` の並び。使った順）。番の終わりに消す
+    # （``procedures.expire_at_turn_end``）。発生源が「ねむり・マヒ・こんらん」状態になったら、その発生源の効果を消す。書き出しは形式 23 だけが表せる（空でなければ形式 1〜22 は ``ValueError``）
+    color_effects: tuple[ColorEffect, ...] = ()
+    # v0.87（docs/movement-damage-reactions-v0.87.md 3 章）: 場の移動（控え → バトル場・バトル場 → ベンチ・手札からの登場）の事実への、まだ処理していない反応の段（``movement``。
+    # ``reactions`` の ``("same", …)`` の段の並び）。事実を起こした処理の流れが、同じコマンドの中で処理する（ワザの要素のあいだ・トレーナー・特殊能力を使い終える前・にげるのあと・
+    # バトル場に出したあと）。コマンドの終わり・決定を待つ間は空（決定をまたぐ続きは決定の ``context`` に移す）。書き出さない（不変条件 ``engine._pending_moves_problems``）
+    pending_moves: tuple = ()
 
     def clone(self) -> GameState:
         new = object.__new__(type(self))

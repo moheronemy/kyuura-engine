@@ -20,9 +20,9 @@ from typing import TYPE_CHECKING, Any
 
 from .. import effects as E
 from ..continuous import goop_gas_effects, suppressors_of
-from ..persistent import powers_use_prevented
-from ..decisions import BENCH_GUARD, KNOCK_OUT_POWER, KO_PREVENTION, POST_KNOCKOUT_POWER, REACTION_SWITCH
-from ..state import AttackBarrier, PreventDamage, Retaliation
+from ..persistent import powers_stopped, powers_use_prevented
+from ..decisions import BENCH_GUARD, KNOCK_OUT_POWER, KO_PREVENTION, POST_KNOCKOUT_POWER, REACTION_SWITCH, SPLIT_FROM_DECK
+from ..state import AttackBarrier, AttackEffectGuard, BenchAttackDamageGuard, BenchProtection, PreventDamage, Retaliation
 
 from .events import DamageClass, Window
 
@@ -89,6 +89,8 @@ class EffectDefinition:
     # v0.42: 受けるポケモンがバトル場にいるときだけ候補になる（エリカのラフレシアの［ぼうぎょかふん］「このカードがバトル場でワザによるダメージを受けた時」）。
     # 既定（はんげき・わるいねぞう・返す効果）は場所を見ない（p.311・p.323）
     active_only: bool = False
+    # v0.81: 受けるポケモンの持ち主の相手の番だけ候補になる（はんげきのツメ「相手の番に」）
+    opponent_turn_only: bool = False
 
 
 TRANSPARENCY = EffectDefinition(
@@ -175,8 +177,114 @@ INVISIBLE_WALL = EffectDefinition(
     "invisible_wall", Origin.TRAINER_EFFECT, Mode.AUTOMATIC, Timing.VOID, frozenset({Window.BEFORE_DAMAGE}), frozenset(), "now", False,
     "receiving_element", "void_damage", frozenset({DamageClass.ATTACK}),
 )
+# v0.80（docs/neo-trainer-components-v0.80.md 6 章）: エフェクトガード（「このカードをつけているポケモンは、相手のワザによる「ダメージ以外の効果」を受けない。(ダメージは、そのまま
+# 受ける)」）。ついているトレーナーの効果で、効果の要素の前の窓（BEFORE_EFFECT）だけで無効にする（ダメージの要素は無効にしない。BEFORE_DAMAGE の窓に入れない）。「相手の」ワザだけ
+# （``by_opponent``。受けるポケモンの持ち主がワザを使うプレイヤーなら当てはめない。``kernel.first_void``）。特殊能力ではないので、特殊状態・かがくへんかガスでは消えない
+EFFECT_GUARD = EffectDefinition(
+    "effect_guard", Origin.TRAINER_EFFECT, Mode.AUTOMATIC, Timing.VOID, frozenset({Window.BEFORE_EFFECT}), frozenset(), "now", False,
+    "receiving_element", "void_effect", frozenset({DamageClass.ATTACK}), True,
+)
+
+# v0.84（docs/light-powers-evolution-v0.84.md 4 章）: やさしいジュゴンの「こおりのはしら」（「次の相手の番が終わるまで、自分の控えポケモン全員は、ワザによるダメージを受けない
+# (ダメージ以外の効果は受ける)」）。見えない壁と同じ窓・同じ処理（受ける時点の控えポケモンへのワザのダメージの要素を無効にする）。効果はバトル場のやさしいジュゴンが持つ
+# 持続する効果（``state.BenchAttackDamageGuard``。はたらく番は次の相手の番。``active_now``）で、受けるポケモンは持ち主の控え（``instances`` が今の場で決める）
+ICE_PILLAR = EffectDefinition(
+    "ice_pillar", Origin.PERSISTENT_EFFECT, Mode.AUTOMATIC, Timing.VOID, frozenset({Window.BEFORE_DAMAGE}), frozenset(), "now", False,
+    "receiving_element", "void_damage", frozenset({DamageClass.ATTACK}),
+)
+# v0.84（4 章）: やさしいカイリューの「ひかりのはどう」（「次の相手の番、このカードはワザによる「ダメージ以外の効果」を受けない(ダメージは受ける)」）。エフェクトガードと同じ窓
+# （効果の要素の前だけ）。自分自身に与える持続する効果（``state.AttackEffectGuard``）。説明は「相手の」と書かないが、はたらく番は次の相手の番なので、受けるのは相手のワザ
+# （``by_opponent``。その番に自分のワザはない）
+LIGHT_PULSE = EffectDefinition(
+    "light_pulse", Origin.PERSISTENT_EFFECT, Mode.AUTOMATIC, Timing.VOID, frozenset({Window.BEFORE_EFFECT}), frozenset(), "now", False,
+    "receiving_element", "void_effect", frozenset({DamageClass.ATTACK}), True,
+)
+# v0.84（5 章）: やさしいイノムーの［ふかふかなからだ］（「相手の番の中で、このカードが、バトル場でワザによるダメージを受けたとき(それによって、このカードが「きぜつ」しても)、
+# このカードの持ち主はコインを投げる。「おもて」なら、ダメージを与えたポケモンを「ねむり」状態にする。ダメージを受けるとき、すでにこのカードが「ねむり・マヒ・こんらん」状態
+# だったなら、この力は、はたらかない」）。［ぼうぎょかふん］と同じ窓・同じ形の処理（``kernel.power_sleep_to_damage_source``）で、特殊状態の条件（受けるときの「すでに」）・
+# 相手の番（``opponent_turn_only``）・バトル場（``active_only``）・相手のワザ（``by_opponent``）がある
+FLUFFY_WOOL = EffectDefinition(
+    "fluffy_wool", Origin.PRINTED_POWER, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
+    BLOCKING_CONDITIONS, "on_damage", True, "damage_source", "power_sleep_to_damage_source", frozenset({DamageClass.ATTACK}), True,
+    active_only=True, opponent_turn_only=True,
+)
+
+# v0.81（docs/pokemon-tools-stadiums-v0.81.md 5 章）: はんげきのツメ（ポケモンのどうぐ）。はんげきと同じ窓（受けるときに候補にし、そのワザのダメージの要素のあと・ダメージ以外の
+# 効果の前に処理する。CR-COUNTERATTACK-TIMING）で、処理は「持ち主がコインを投げ、「おもて」なら相手の対戦ポケモンにダメージカウンターを 2 個のせる。その後、このカードを
+# トラッシュする」（``kernel.counters_to_damage_source_on_heads``）。ついているトレーナーの効果なので、特殊状態・かがくへんかガスでは消えない。相手の番に（``opponent_turn_only``）、
+# バトル場で（``active_only``）、相手のワザ（``by_opponent``）のダメージを受けたとき
+COUNTER_CLAW = EffectDefinition(
+    "counter_claw", Origin.TRAINER_EFFECT, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
+    frozenset(), "on_damage", False, "damage_source", "counters_to_damage_source_on_heads", frozenset({DamageClass.ATTACK}), True,
+    active_only=True, opponent_turn_only=True,
+)
+
+
+@dataclass(frozen=True)
+class EffectGuardRecord:
+    """v0.80: エフェクトガードの効果のもと（ついているカード）。``first_void`` が返す効果の ``implementation``（ログ ``effect_prevented`` の ``persistent_effect``・``source_card``）。"""
+
+    source_card: int
+    kind: str = "effect_guard"
+
+@dataclass(frozen=True)
+class PowerVoidRecord:
+    """v0.86: 要素を無効にする特殊能力（［クリスタルボディ］）の効果のもと（特殊能力を持つポケモンのカード・種類・特殊能力の実装）。``first_void`` が返す効果の ``implementation``
+    （エフェクトガードの ``EffectGuardRecord`` と同じ形。ログ ``effect_prevented`` の ``persistent_effect``・``source_card``）。"""
+
+    source_card: int
+    kind: str
+    effect: object
 
 # v0.13 の実装の型 → 効果の定義（型での振り分けはここだけ。部分型は親の型の定義を使う）
+# v0.86（docs/entry-energy-evolution-reactions-v0.86.md 6 章）: スイクンの［クリスタルボディ］（「場にいるかぎり、相手のワザによる「ダメージ以外の効果」を受けない(ダメージは受ける)。
+# ねむり・マヒ・こんらんのとき、はたらかない」）。エフェクトガード・ひかりのはどうと同じ窓（効果の要素の前だけ）・同じ処理。特殊能力なので特殊状態・ガス・スタンウェーブで消える
+CRYSTAL_BODY = EffectDefinition(
+    "crystal_body", Origin.PRINTED_POWER, Mode.AUTOMATIC, Timing.VOID, frozenset({Window.BEFORE_EFFECT}), BLOCKING_CONDITIONS, "now", True,
+    "receiving_element", "void_effect", frozenset({DamageClass.ATTACK}), True,
+)
+# v0.86（6.1 節）: エンテイの［はしりさる］。はんげきと同じ窓（バトル場で相手のワザの分類のダメージを受けるときに、受けるときの特殊状態（「すでに」）で候補にし、そのワザのダメージの
+# 要素のあと・ダメージ以外の効果の前に処理する。``kernel.bolt_return_on_heads``）
+BOLT = EffectDefinition(
+    "bolt", Origin.PRINTED_POWER, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
+    BLOCKING_CONDITIONS, "on_damage", True, "self", "bolt_return_on_heads", frozenset({DamageClass.ATTACK}), True, active_only=True,
+)
+# v0.86（7 章）: エンテイの「ほのおのまもり」（「次の相手の番が終わるまで、自分の控えポケモン全員は、ワザによるダメージや効果を受けない」）。バリアーと同じ窓（ダメージと効果の要素の前）。
+# 効果を受けた控えポケモンが持つ持続する効果（``state.BenchProtection``）で、相手のワザだけ（``by_opponent``）。当てはめる範囲が決まらない場面は PL1（``kernel.protective_flame_scope``）
+PROTECTIVE_FLAME = EffectDefinition(
+    "protective_flame", Origin.PERSISTENT_EFFECT, Mode.AUTOMATIC, Timing.VOID, frozenset({Window.BEFORE_DAMAGE, Window.BEFORE_EFFECT}), frozenset(), "now",
+    False, "receiving_element", "void_attack", frozenset({DamageClass.ATTACK}), True,
+)
+
+# v0.87（docs/movement-damage-reactions-v0.87.md 5 章）: マチスのマルマインの［ショックボム］。はんげきと同じ窓（受けたときに候補にし、そのワザのダメージの要素のあと・ダメージ以外の
+# 効果の前に処理する）。かならずはたらく（特殊状態の条件はない）。バトル場で（``active_only``）、ワザの分類のダメージ（自分のワザを含む。``by_opponent`` は偽）
+SHOCK_BLAST = EffectDefinition(
+    "shock_blast", Origin.PRINTED_POWER, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
+    frozenset(), "on_damage", True, "both_actives", "power_damage_both_actives_on_tails", frozenset({DamageClass.ATTACK}), False, active_only=True,
+)
+# v0.87（5.2 節）: コクーンの［どくのたいえき］（v0.10 の読取記録の最新の説明。自動的にはたらく）。はんげきと同じ窓・同じ条件（相手のワザ・受けるときの特殊状態・場所を見ない）
+POISON_FLUID = EffectDefinition(
+    "poison_fluid", Origin.PRINTED_POWER, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
+    BLOCKING_CONDITIONS, "on_damage", True, "damage_source", "poison_damage_source", frozenset({DamageClass.ATTACK}), True,
+)
+# v0.87（5.3 節）: ドガースの［ぶんれつ］。使うかは持ち主が決める（決定 ``SPLIT_FROM_DECK``）が、時点ははんげきと同じ窓（ダメージの要素のあと・ダメージ以外の効果の前）なので、
+# 送る効果として集める（受けるときにはたらいている（特殊状態の条件はない）なら候補。使えるか（ガス・ショックアイ）は処理する時点で ``offer_stopped`` が見る）。場所・相手のワザかを問わない
+SPLIT = EffectDefinition(
+    "split", Origin.PRINTED_POWER, Mode.OPTIONAL, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
+    frozenset(), "on_damage", True, "self", "split_from_deck", frozenset({DamageClass.ATTACK}), False, SPLIT_FROM_DECK,
+)
+# v0.87（7.1 節）: フリーザーの［オーロラヴェール］。バリアーと同じ窓（ダメージと効果の要素の前）。効果を持つのはバトル場のフリーザーで、受けるポケモンは持ち主の控え（``instances`` が
+# 今の場で決める）。はたらいているか（バトル場・特殊状態・力が消えているか）は ``effects.continuous_powers`` で求める（ここでは重ねて見ない。``suppressible`` は偽）。自分のワザも守る
+AURORA_VEIL = EffectDefinition(
+    "aurora_veil", Origin.PRINTED_POWER, Mode.CONTINUOUS, Timing.VOID, frozenset({Window.BEFORE_DAMAGE, Window.BEFORE_EFFECT}), frozenset(), "now",
+    False, "receiving_element", "void_attack", frozenset({DamageClass.ATTACK}),
+)
+# v0.87（7.2 節）: ダグトリオの［もぐる］。見えない壁と同じ窓（ダメージの要素の前だけ）。受けるポケモン自身がベンチにいるとき（``continuous_powers`` で求める）。自分のワザも
+DIG_UNDER = EffectDefinition(
+    "dig_under", Origin.PRINTED_POWER, Mode.CONTINUOUS, Timing.VOID, frozenset({Window.BEFORE_DAMAGE}), frozenset(), "now",
+    False, "receiving_element", "void_damage", frozenset({DamageClass.ATTACK}),
+)
+
 POWER_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (E.AttackImmunityOnHeads, TRANSPARENCY),
     (E.CounterattackDamage, STRIKES_BACK),
@@ -189,11 +297,19 @@ POWER_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (E.FleeAfterAttackDamage, FLEE),  # v0.65
     (E.TakeBenchDamageInstead, BENCH_GUARD_DEFINITION),  # v0.65
     (E.DiscardAttackerEnergyOnDamage, ENERGY_DRAIN),  # v0.68
+    (E.SleepDamageSourceOnHeads, FLUFFY_WOOL),  # v0.84
+    (E.OpponentAttackEffectImmunity, CRYSTAL_BODY),  # v0.86
+    (E.ReturnToDeckOnHeadsAfterDamage, BOLT),  # v0.86
+    (E.CoinDamageBothActivesOnAttackDamage, SHOCK_BLAST),  # v0.87
+    (E.PoisonDamageSourceOnAttackDamage, POISON_FLUID),  # v0.87
+    (E.BenchNamedFromDeckOnAttackDamage, SPLIT),  # v0.87
 )
 PERSISTENT_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (PreventDamage, HARDEN),
     (Retaliation, RETALIATION),
     (AttackBarrier, BARRIER),  # v0.31
+    (AttackEffectGuard, LIGHT_PULSE),  # v0.84
+    (BenchProtection, PROTECTIVE_FLAME),  # v0.86
 )
 
 
@@ -234,6 +350,9 @@ def instances(state: GameState, owner: int, pokemon: PokemonInPlay, table=None) 
             continue
         effect_definition = definition_for(implementation, powers)
         if effect_definition is not None:
+            if effect_definition is CRYSTAL_BODY:
+                # v0.86: 要素を無効にする特殊能力。``first_void`` の結果のログ（``effect_prevented`` の ``persistent_effect``・``source_card``）に、効果のもと（このポケモンのカード）を書く
+                implementation = PowerVoidRecord(pokemon.card, CRYSTAL_BODY.name, implementation)
             found.append(EffectInstance(effect_definition, owner, pokemon.pokemon_id, pokemon.card, slot.key, slot.power, implementation))
     for effect in pokemon.persistent_effects:
         effect_definition = definition_for(effect, persistent)
@@ -243,6 +362,29 @@ def instances(state: GameState, owner: int, pokemon: PokemonInPlay, table=None) 
     # 問い合わせの時点の場で決める（``effects.bench_damage_preventions``）
     for record in E.bench_damage_preventions(state, owner, pokemon):
         found.append(EffectInstance(INVISIBLE_WALL, owner, pokemon.pokemon_id, pokemon.card, implementation=record))
+    # v0.80: ついているエフェクトガード（効果の登録表の実装が ``blocks_attack_effects``。カード id で分けない）
+    for card in E.effect_guards(state, pokemon):
+        found.append(EffectInstance(EFFECT_GUARD, owner, pokemon.pokemon_id, pokemon.card, implementation=EffectGuardRecord(card)))
+    # v0.84: こおりのはしら（持ち主のバトル場のポケモンが持つ持続する効果。受けるポケモンが今、持ち主の控えなら）
+    side = state.players[owner]
+    if side.active is not None and side.active is not pokemon and any(b is pokemon for b in side.bench):
+        for effect in side.active.persistent_effects:
+            if isinstance(effect, BenchAttackDamageGuard):
+                found.append(EffectInstance(ICE_PILLAR, owner, pokemon.pokemon_id, pokemon.card, implementation=effect))
+    # v0.81: ついているはんげきのツメ（ポケモンのどうぐ。効果の登録表の実装の型で探す）。実装は (ついているカード, 実装)
+    # v0.87: ［オーロラヴェール］（持ち主のバトル場のポケモンの常にはたらく特殊能力。受けるポケモンが今、持ち主の控えなら）と［もぐる］（受けるポケモン自身。ベンチにいるとき）。
+    # はたらいているかは ``continuous_powers``（場所・特殊状態・力が消えているか）。効果のもとはその特殊能力を持つポケモンのカード（``PowerVoidRecord``）
+    if any(b is pokemon for b in side.bench):
+        for holder_owner, holder, key, effect in E.continuous_powers(state, (E.OwnBenchAttackImmunityWhileActive, E.BenchAttackDamageImmunity)):
+            if holder_owner != owner:
+                continue
+            if isinstance(effect, E.OwnBenchAttackImmunityWhileActive) and holder is side.active and holder is not pokemon:
+                found.append(EffectInstance(AURORA_VEIL, owner, holder.pokemon_id, holder.card, key, None, PowerVoidRecord(holder.card, AURORA_VEIL.name, effect)))
+            elif isinstance(effect, E.BenchAttackDamageImmunity) and holder is pokemon:
+                found.append(EffectInstance(DIG_UNDER, owner, holder.pokemon_id, holder.card, key, None, PowerVoidRecord(holder.card, DIG_UNDER.name, effect)))
+    claw = E.tool_effect_of(state, pokemon, E.CounterClaw)
+    if claw is not None:
+        found.append(EffectInstance(COUNTER_CLAW, owner, pokemon.pokemon_id, pokemon.card, implementation=claw))
     return tuple(found)
 
 
@@ -270,7 +412,11 @@ def stopped(state: GameState, instance: EffectInstance) -> bool:
     （``continuous.goop_gas_effects``）。印刷された特殊能力でない効果・消えない効果は False。"""
     if instance.definition.origin is not Origin.PRINTED_POWER or not instance.definition.suppressible:
         return False
-    return bool(goop_gas_effects(state)) or bool(suppressors_of(state, instance.power))
+    found = state.find_pokemon(instance.pokemon_id)
+    if found is not None and powers_stopped(state, found[1]) is not None:
+        return True  # v0.86: スタンウェーブを受けたポケモンの特殊能力（「使うことができず、その効果も消える」）
+    # v0.87: ふしぎなガス（相手プレイヤーが与えた効果。この効果の持ち主の側だけ）
+    return bool(goop_gas_effects(state)) or bool(suppressors_of(state, instance.power)) or bool(E.strange_gas_effects(state, instance.owner))
 
 
 def offer_stopped(state: GameState, instance: EffectInstance, pokemon: PokemonInPlay) -> bool:

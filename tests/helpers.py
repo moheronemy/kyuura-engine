@@ -1249,6 +1249,109 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.CoinAttachEnergyFromDeckToSelf,  # キングラー（ES3-014）の「しおまねき」（AttachFromDeck の max_cards・local_coin・shuffle）
     _effects.DamageThenDoubleDamageNextTurn,  # キングラー（ES3-014）の「もろばバサミ」（持続する効果 DoubledDamage）
     _effects.AttachDiscardEnergyCardsToSelf,  # ミュウツー（PR1-007・PR1-008）の「エネルギーきゅうしゅう」（AttachFromDiscard の energy_type None）
+) + (
+    # v0.76（docs/persistent-attack-modifiers-v0.76.md）
+    _effects.ReduceDamageToSelfNextOpponentTurn,  # ヒトカゲ（ES1-013）などの「なきごえ」（OpponentReducedDamage の until_turn_end）
+    _effects.LockOpponentAttackOnHeads,  # コンパン（ES3-004）の「かなしばり」（OpponentAttackLock の local_coin）
+    _effects.CoinNextTurnMultiplyElseLockAttack,  # ワンリキー（ES2-021・QSG-035）の「きあいいっぱつ」（Coin → SelfNextTurnAttackDamage・SelfAttackLock の gate）
+    _effects.AttackLockWhileSourceActiveOnHeads,  # ヒノアラシ（PF1-004）などの「にらみつける」（OpponentAttackLockWhileSourceActive の max_hp None・local_coin）
+) + (
+    # v0.78（docs/darkness-metal-energy-v0.78.md）
+    _effects.CoinsPerOwnPokemonDamage,  # ニューラ（neo1-056）の「ふくろだたき」（HeadsTimesNamedPokemon の names None）
+    _effects.DiscardOpponentTrainersThenDamage,  # デルビル（neo2-039・NIP2X-005）の「ごうだつ」（DiscardOpponentTrainers → Damage）
+    _effects.RetreatLockWithoutDamage,  # デルビル（neo4-081）の「おいつめる」（OpponentRetreatLock だけ）
+    _effects.DamageThenSelfCannotAttack,  # エアームド（NIP1X-005）の「メタルスラッシュ」（持続する効果 CannotAttackNextOwnTurn）
+    # v0.79（docs/shared-checks-pokemon-reuse-v0.79.md 5 章）: 既存の要素を組み合わせた 11 の型
+    _effects.DamageThenParalyzeAndOpponentBenchOnHeads,  # バブルシャワー・ギガショック・ダイヤモンドダスト
+    _effects.DamageThenPreventAttackDamageOnHeads,  # ピカチュウ（neo1-036）の「こうそくいどう」（PreventAttackDamage）
+    _effects.DamageThenOpponentBenchOnHeads,  # モココ（neo3-027）の「エレキテール」
+    _effects.CoinBonusDamageAndConfuse,  # ルージュラ（neo3-018）の「あやしいおどり」
+    _effects.CoinBonusPerOwnCounter,  # ブルー（neo3-048）の「いかりのずつき」
+    _effects.HealSelfWithoutDamage,  # ミニリュウ（neo4-087）の「だっぴ」
+    _effects.DamageThenDiscardOneOnTails,  # カツラのヒトカゲ（GD5-001）の「ファイヤーテール」
+    _effects.CoinChooseOpponentBenchDamage,  # ナツメのゴースト（GD6-007）の「かげからおそう」
+    _effects.SearchTrainerRequiredOnHeads,  # ヤドキング（SI-014）の「ひらめく」
+    _effects.CoinDiscardAllOpponentTrainers,  # ニューラ（PF3-003）の「だましとる」
+    _effects.FailOnTailsDamageThenSelfCannotAttack,  # ハガネール（PRN-014）の「メタルクラッシュ」
+) + (
+    # v0.82: エネルギーをトラッシュするワザの 9 つの型（docs/energy-discard-return-v0.82.md）
+    _effects.CoinDiscardEnergyCardThenDamage,
+    _effects.OptionalDiscardEnergyBonusDamage,
+    _effects.DamageThenDiscardAllEnergyCards,
+    _effects.OptionalDiscardAllSetDamage,
+    _effects.DiscardEachTypeThenDamage,
+    _effects.ChooseBenchThenAttachFromDeck,
+    _effects.CoinsDiscardThenBonusDamage,
+    _effects.CoinDiscardOneOrAllThenDamage,
+    _effects.DamageThenChosenBenchCoinDamage,
+) + (
+    # v0.83: ひかるポケモン・やさしいポケモンのワザの 24 の型（docs/shining-gentle-pokemon-v0.83.md）
+    _effects.ChooseBenchThenDamageAndEnergyBenchDamage,
+    _effects.ChooseOwnTypeThenAttachFromHand,
+    _effects.CoinBonusAndBenchElseSelfDamage,
+    _effects.CoinWashChosenBench,
+    _effects.CoinsPerDefenderEnergyChosenStatus,
+    _effects.DamageSleepThenHealBothBench,
+    _effects.DiscardEnergyThenCoinConfuseElseSleep,
+    _effects.DiscardEnergyThenPlusDefenderEnergyUnits,
+    _effects.DiscardEnergyThenSpreadThenCoinDiscardEach,
+    _effects.EachPlayerLookTopTakeBasicEnergy,
+    _effects.EachPlayerMayDrawAttack,
+    _effects.EachPlayerRecoverFromDiscard,
+    _effects.ExcessEnergyDamageIgnoringResistance,
+    _effects.FailOnTailsPlusOwnCounters,
+    _effects.FailOnTailsSpreadBothThenSelfCannotAttack,
+    _effects.FailUnlessEqualEnergyCardsDamage,
+    _effects.HealChosenBenchByEnergy,
+    _effects.HealOwnPokemonWithoutDamage,
+    _effects.LookTopTakeOneThenShuffle,
+    _effects.PlusDefenderSpecialEnergyCardsDamage,
+    _effects.PlusIfDefenderMoreEnergyDamage,
+    _effects.RevealOneNamedPokemonFromDeck,
+    _effects.SelfReflectShield,
+    _effects.ThreeCoinsStatusByHeads,
+) + (
+    # v0.84: やさしいポケモンのワザの 14 の型（docs/light-powers-evolution-v0.84.md）
+    _effects.AmountIfDefenderDamagedDamage,
+    _effects.BenchBabyOrBasicFromOwnDiscardAttack,
+    _effects.CoinSetIfDefenderDarkDamage,
+    _effects.CoinsTimesDamageThenParalyzeIfAtLeast,
+    _effects.DamageByDefenderStage,
+    _effects.DamageThenAttackEffectGuard,
+    _effects.DamageThenBenchAttackDamageGuard,
+    _effects.DamageThenBubbleJump,
+    _effects.DamageThenOpponentMayDraw,
+    _effects.DamageThenOptionalDiscardStadium,
+    _effects.EachPlayerEvolutionSong,
+    _effects.ReturnOwnBenchToDeckAttack,
+    _effects.SwitchSelfThenStatusGuardAttack,
+    _effects.ZeroDamageAtLeastNextTurn,
+    # v0.85（docs/entry-powers-energy-lifecycle-v0.85.md）
+    _effects.AttachFromDeckUpToNamedCount,
+    _effects.CoinChosenSideHealAttack,
+    _effects.CoinsPerOwnCountersBonusDamage,
+    _effects.DamageThenMillOwnDeck,
+    _effects.DamageThenStatusImmunityNextTurn,
+    _effects.DiscardEnergyCardsThenDamageNoneIfLacking,
+    _effects.DiscardFireThenDamageBothBenches,
+    _effects.PlusDiscardTypeCardsThenReturnToDeck,
+    # v0.86（docs/entry-energy-evolution-reactions-v0.86.md 7 章）
+    _effects.CoinPerOpponentPokemonDamageThenHealDealt,
+    _effects.DamageThenLockOpponentHandTrainersOnHeads,
+    _effects.DamageThenParalyzeOrSleepByTwoCoins,
+    _effects.DamageThenProtectOwnBench,
+    _effects.DamageThenStopDefenderPowers,
+    _effects.DiscardTypeCardsThenDamageNoneIfLacking,
+    # v0.87（docs/movement-damage-reactions-v0.87.md 3 章・8 章）
+    _effects.DamageThenSelfSleepThenSleepOpponentOnHeads,
+    _effects.DamageThenSuppressOpponentPowersOnHeads,
+    _effects.DamageThenSwitchBothActives,
+    # v0.88（docs/type-energy-colors-v0.88.md 6 章）
+    _effects.ChosenColorEnergySpreadDamage,
+    _effects.OwnBasicColorTypeSpreadDamage,
+    _effects.PlusDistinctBasicEnergyColors,
+    _effects.ChangeOwnResistanceOptional,
+    _effects.ChangeWeaknessAndResistanceOptional,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -1870,3 +1973,233 @@ SUNKERN_PRN = "PRN-032"  # ヒマナッツ（せいちょう・メガドレイ�
 V0_75_POKEMON = (BROCKS_ZUBAT_GD1, MISTYS_PSYDUCK_GD2, MISTYS_TENTACOOL_GD2, BLAINES_VULPIX_GD5, BLAINES_GROWLITHE_GD5, SABRINAS_DROWZEE_GD6, PARAS_ES1,
                  GROWLITHE_ES3, GROWLITHE_QSG, KINGLER_ES3, PIKACHU_QSG, PIKACHU_PR1, MEWTWO_PR1, MEWTWO_PR1_B, SUNKERN_PRN)
 V0_75_CARDS = V0_75_POKEMON
+
+
+# v0.76（docs/persistent-attack-modifiers-v0.76.md）: 拡張パック以外の商品の、持続する効果・ワザの使用の制限を中心とするポケモン 24 枚（kyuura データの採用）
+LT_SURGES_RATTATA_GD3 = "GD3-011"  # マチスのコラッタ（きあいだめ・かじる。PMCG5-056 とは別のカード）
+NIDORAN_M_ES1, NIDORAN_M_QSG = "ES1-007", "QSG-005"  # ニドラン♂（きあいだめ・つのでとっしん。同じデータ）
+SQUIRTLE_ES1, SQUIRTLE_QSG, SQUIRTLE_IP2 = "ES1-015", "QSG-013", "IP2-018"  # ゼニガメ（ウォーターパワー・はたく。同じデータ）
+MARILL_PRN = "PRN-028"  # マリル（はずむ・とびのる）
+CHARMANDER_ES1, CHARMANDER_QSG = "ES1-013", "QSG-007"  # ヒトカゲ（なきごえ・ほのおのしっぽ。同じデータ）
+DODUO_ES1, DODUO_QSG = "ES1-028", "QSG-041"  # ドードー（なきごえ・つつく。同じデータ）
+SEEL_ES2, SEEL_QSG = "ES2-006", "QSG-017"  # パウワウ（なきごえ・れいとうビーム。同じデータ）
+PIKACHU_IP1 = "IP1-040"  # ピカチュウ（なきごえ・でんきショック）
+CHIKORITA_PF1 = "PF1-001"  # チコリータ（なきごえ・はっぱカッター）
+SLOWPOKE_PR1 = "PR1-006"  # ヤドン（ずつき・ドわすれ）
+VENONAT_ES3 = "ES3-004"  # コンパン（かなしばり・サイケこうせん）
+MACHOP_ES2, MACHOP_QSG = "ES2-021", "QSG-035"  # ワンリキー（きあいいっぱつ・どつく。同じデータ）
+CYNDAQUIL_PF1 = "PF1-004"  # ヒノアラシ（にらみつける・スピードスター）
+WOOPER_PRN = "PRN-003"  # ウパー（しっぽをふる・みずでっぽう）
+TOTODILE_PRN, TOTODILE_PRN_B = "PRN-008", "PRN-011"  # ワニノコ（にらみつける・みだれひっかき。同じデータ）
+GROWLITHE_IP2 = "IP2-026"  # ガーディ（とびかかる・ひのこ。ES3-010 とは別のデータ）
+V0_76_POKEMON = (LT_SURGES_RATTATA_GD3, NIDORAN_M_ES1, NIDORAN_M_QSG, SQUIRTLE_ES1, SQUIRTLE_QSG, SQUIRTLE_IP2, MARILL_PRN, CHARMANDER_ES1, CHARMANDER_QSG,
+                 DODUO_ES1, DODUO_QSG, SEEL_ES2, SEEL_QSG, PIKACHU_IP1, CHIKORITA_PF1, SLOWPOKE_PR1, VENONAT_ES3, MACHOP_ES2, MACHOP_QSG, CYNDAQUIL_PF1,
+                 WOOPER_PRN, TOTODILE_PRN, TOTODILE_PRN_B, GROWLITHE_IP2)
+V0_76_CARDS = V0_76_POKEMON
+
+# v0.77（docs/neo-existing-effects-v0.77.md）: neo 期の拡張パック（neo1〜neo4）の、既存の効果の型で表せるカード 52 枚（kyuura データの採用。id は kyuura の小文字の id のまま）
+SUNKERN_NEO1 = "neo1-006"  # ヒマナッツ（せいちょう・メガドレイン。PRN-032 と同じデータ）
+SKIPLOOM_NEO1 = "neo1-012"  # ポポッコ（どくのこな・しびれごな。ハネッコから進化）
+TOTODILE_NEO1 = "neo1-024"  # ワニノコ（にらみつける・みだれひっかき。PRN-008 と同じデータ）
+WOOPER_NEO1 = "neo1-026"  # ウパー（ドわすれ・たたきつける）
+MANTINE_NEO1 = "neo1-028"  # マンタイン（ゆらゆらおよぐ）
+QUAGSIRE_NEO1 = "neo1-031"  # ヌオー（なみのり・じしん。ウパーから進化）
+KINGDRA_NEO1 = "neo1-035"  # キングドラ（こうそくいどう・りゅうのたつまき。シードラから進化する 2 進化）
+ELECTABUZZ_NEO1 = "neo1-039"  # エレブー（パンチ・スピードスター）
+SUDOWOODO_NEO1 = "neo1-051"  # ウソッキー（じたばた・いわおとし）
+SENTRET_NEO1 = "neo1-059"  # オタチ（みだれひっかき）
+FURRET_NEO1 = "neo1-064"  # オオタチ（でんこうせっか・たたきつける。オタチから進化）
+SUPER_SCOOP_UP_NEO1 = "neo1-083"  # スーパーポケモン回収（IP1-009 と同じデータ）
+BILLS_TELEPORTER_NEO1 = "neo1-084"  # マサキの転送装置（IP1-020 と同じデータ）
+HOPPIP_NEO2 = "neo2-004"  # ハネッコ（ころがりタックル。PRN-047 と同じデータ）
+MAREEP_NEO2 = "neo2-020"  # メリープ（でんげき。NIP2-018 と同じデータ）
+POLIWRATH_NEO2 = "neo2-037"  # ニョロボン（とづく・じごくぐるま。ニョロゾから進化する 2 進化）
+ZUBAT_NEO3 = "neo3-001"  # ズバット（かみつく・どくをとばす）
+PARAS_NEO3 = "neo3-002"  # パラス（ねむりのほうし・ひっかく。NIP1-022 と同じデータ）
+SKIPLOOM_NEO3 = "neo3-003"  # ポポッコ（はねる・ふしぎなこな。ハネッコから進化）
+SCYTHER_NEO4 = "neo4-007"  # ストライク（こうそくいどう・するどいカマ）
+HERACROSS_NEO4 = "neo4-009"  # ヘラクロス（たいあたり・とつげきホーン）
+TOTODILE_NEO4 = "neo4-028"  # ワニノコ（みずでっぽう）
+HITMONLEE_NEO4 = "neo4-075"  # サワムラー（にだんげり・かかとおとし）
+V0_77_CARDS = (
+    "neo1-006", "neo1-012", "neo1-019", "neo1-024", "neo1-026", "neo1-027", "neo1-028", "neo1-031", "neo1-035", "neo1-039", "neo1-047", "neo1-051",
+    "neo1-052", "neo1-059", "neo1-060", "neo1-062", "neo1-064", "neo1-066", "neo1-083", "neo1-084",
+    "neo2-001", "neo2-003", "neo2-004", "neo2-013", "neo2-020", "neo2-034", "neo2-037", "neo2-047",
+    "neo3-001", "neo3-002", "neo3-003", "neo3-012", "neo3-013", "neo3-037", "neo3-038",
+    "neo4-001", "neo4-005", "neo4-007", "neo4-009", "neo4-015", "neo4-017", "neo4-027", "neo4-028", "neo4-029", "neo4-030", "neo4-042", "neo4-048",
+    "neo4-049", "neo4-069", "neo4-072", "neo4-075", "neo4-086",
+)
+V0_77_TRAINERS = (SUPER_SCOOP_UP_NEO1, BILLS_TELEPORTER_NEO1)
+V0_77_POKEMON = tuple(card for card in V0_77_CARDS if card not in V0_77_TRAINERS)
+
+# v0.78（docs/darkness-metal-energy-v0.78.md）: 悪・鋼エネルギー 5 枚と、「悪」「鋼」エネルギーを使うポケモン 8 枚（写しの組 pool_v0_78）
+DARKNESS_ENERGY_NEO1 = "neo1-094"  # 悪エネルギー（ポケモンチェックで 10 ダメージ）
+METAL_ENERGY_NEO1 = "neo1-095"  # 鋼エネルギー（受けるワザのダメージ -10）
+METAL_ENERGY_NIP1X = "NIP1X-010"  # 鋼エネルギー（受けるダメージ -10。ワザに限らない）
+DARKNESS_ENERGY_NIP2X = "NIP2X-010"  # 悪エネルギー（ポケモンチェックでダメージカウンター 1 個）
+DARKNESS_ENERGY_PRN = "PRN-002"  # 悪エネルギー（neo1-094 と同じ処理）
+SNEASEL_NEO1 = "neo1-056"  # ニューラ（みだれひっかき・ふくろだたき）
+STEELIX_NEO1 = "neo1-057"  # ハガネール（たいあたり・テールクラッシュ。イワークから進化）
+SKARMORY_NEO1 = "neo1-058"  # エアームド（かぎづめ・はがねのつばさ）
+HOUNDOUR_NEO2 = "neo2-039"  # デルビル（かみつく・ごうだつ）
+SCIZOR_NEO2 = "neo2-045"  # ハッサム（みねうち・ダブルクロー。ストライクから進化）
+HOUNDOUR_NEO4 = "neo4-081"  # デルビル（おいつめる・とびかかる）
+SKARMORY_NIP1X = "NIP1X-005"  # エアームド（つつく・メタルスラッシュ）
+HOUNDOUR_NIP2X = "NIP2X-005"  # デルビル（かみつく・ごうだつ。neo2-039 と同じデータ）
+V0_78_ENERGIES = (DARKNESS_ENERGY_NEO1, METAL_ENERGY_NEO1, METAL_ENERGY_NIP1X, DARKNESS_ENERGY_NIP2X, DARKNESS_ENERGY_PRN)
+V0_78_POKEMON = (SNEASEL_NEO1, STEELIX_NEO1, SKARMORY_NEO1, HOUNDOUR_NEO2, SCIZOR_NEO2, HOUNDOUR_NEO4, SKARMORY_NIP1X, HOUNDOUR_NIP2X)
+V0_78_CARDS = V0_78_ENERGIES + V0_78_POKEMON
+
+# v0.79（docs/shared-checks-pokemon-reuse-v0.79.md）: ポケモン 52 枚（写しの組 pool_v0_79。neo 36 枚・拡張パック以外の商品 16 枚）
+SANDSHREW_ES2 = "ES2-020"  # サンド（どくばり・スピードスター）
+SANDSHREW_QSG = "QSG-033"  # サンド（どくばり・スピードスター）
+GASTLY_ES3 = "ES3-022"  # ゴース（こわがらせる・あんこく）
+GASTLY_QSG = "QSG-028"  # ゴース（こわがらせる・あんこく）
+BROCKS_MANKEY_GD1 = "GD1-005"  # タケシのマンキー（からかう・けとばす）
+LT_SURGES_RATICATE_GD3 = "GD3-012"  # マチスのラッタ（いかりのまえば）
+BLAINES_CHARMANDER_GD5 = "GD5-001"  # カツラのヒトカゲ（ファイヤーテール）
+SABRINAS_HAUNTER_GD6 = "GD6-007"  # ナツメのゴースト（あくむ・かげからおそう）
+QUILAVA_NIP1 = "NIP1-013"  # マグマラシ（たいあたり・かえんほうしゃ）
+SNEASEL_PF3 = "PF3-003"  # ニューラ（だましとる・でんこうせっか）
+ELECTABUZZ_PR1 = "PR1-010"  # エレブー（ひかりのかべ・でんこうせっか）
+ARTICUNO_PR1 = "PR1-064"  # フリーザー（ダイヤモンドダスト）
+STEELIX_PRN = "PRN-014"  # ハガネール（メタルクラッシュ・じひびき）
+PRIMEAPE_SI = "SI-012"  # オコリザル（けたぐり・いかりくるう）
+SLOWKING_SI = "SI-014"  # ヤドキング（ひらめく・サイコキネシス）
+MARILL_SI = "SI-017"  # マリル（みずとばし・ころがりタックル）
+ODDISH_NEO1 = "neo1-001"  # ナゾノクサ（かくれる・すいとる）
+CHIKORITA_NEO1 = "neo1-002"  # チコリータ（たいあたり・リフレクター）
+LEDYBA_NEO1 = "neo1-003"  # レディバ（ちょうおんぱ・れんぞくパンチ）
+SHUCKLE_NEO1 = "neo1-007"  # ツボツボ（からにこもる・まきつく）
+SUNFLORA_NEO1 = "neo1-013"  # キマワリ（はなびらのまい）
+JUMPLUFF_NEO1 = "neo1-016"  # ワタッコ（ねむりごな・やどりぎのたね）
+MARILL_NEO1 = "neo1-025"  # マリル（まるくなる・バブルボム）
+SEADRA_NEO1 = "neo1-029"  # シードラ（あわ・だくりゅう）
+AZUMARILL_NEO1 = "neo1-034"  # マリルリ（たいあたり・バブルシャワー）
+PIKACHU_NEO1 = "neo1-036"  # ピカチュウ（でんこうせっか・こうそくいどう）
+CHINCHOU_NEO1 = "neo1-037"  # チョンチー（ちょうおんぱ・じたばた）
+AMPHAROS_NEO1 = "neo1-043"  # デンリュウ（ギガショック）
+SLOWPOKE_NEO1 = "neo1-045"  # ヤドン（ねんりき・みずでっぽう）
+NATU_NEO1 = "neo1-046"  # ネイティ（つつく・テレキネシス）
+BEEDRILL_NEO2 = "neo2-010"  # スピアー（さんばいどく・ミサイルばり）
+HOUNDOUR_NEO2_FIRE = "neo2-012"  # デルビル（スモッグ・ほのおをまとう）
+CORSOLA_NEO2 = "neo2-017"  # サニーゴ（じこさいせい・とげキャノン）
+NATU_NEO2 = "neo2-022"  # ネイティ（あやしいひかり）
+ESPEON_NEO2 = "neo2-029"  # エーフィ（かみつく・サイコキネシス）
+OMASTAR_NEO2 = "neo2-035"  # オムスター（しめあげる・とげとげMAX）
+HITMONTOP_NEO2 = "neo2-038"  # カポエラー（みきり・トリプルキック）
+SLUGMA_NEO3 = "neo3-008"  # マグマッグ（ほのお・マグマでかこむ）
+HO_OH_NEO3 = "neo3-011"  # ホウオウ（もえあがる・せいなるほのお・ゴッドバード）
+QWILFISH_NEO3 = "neo3-015"  # ハリーセン（どくばり・はりせんぼん）
+REMORAID_NEO3 = "neo3-016"  # テッポウオ（ねらいうち）
+SEAKING_NEO3 = "neo3-017"  # アズマオウ（つきあげる・つのでいちげき）
+JYNX_NEO3 = "neo3-018"  # ルージュラ（こごえるキッス・あやしいおどり）
+FLAAFFY_NEO3 = "neo3-027"  # モココ（ビリリパンチ・エレキテール）
+SNUBBULL_NEO3 = "neo3-048"  # ブルー（かみつく・いかりのずつき）
+VULPIX_NEO4 = "neo4-014"  # ロコン（ひのこ）
+MANTINE_NEO4 = "neo4-031"  # マンタイン（おおなみ）
+GLIGAR_NEO4 = "neo4-071"  # グライガー（しんけいどく）
+JIGGLYPUFF_NEO4 = "neo4-085"  # プリン（ふくらむ）
+DRATINI_NEO4 = "neo4-087"  # ミニリュウ（だっぴ・みだれづき）
+GIRAFARIG_NEO4 = "neo4-089"  # キリンリキ（しっぽでかみつく・サイコキネシス）
+CHANSEY_NEO4 = "neo4-092"  # ラッキー（おうふくびんた・タマゴなげ）
+V0_79_POKEMON = (SANDSHREW_ES2, SANDSHREW_QSG, GASTLY_ES3, GASTLY_QSG, BROCKS_MANKEY_GD1, LT_SURGES_RATICATE_GD3, BLAINES_CHARMANDER_GD5, SABRINAS_HAUNTER_GD6, QUILAVA_NIP1, SNEASEL_PF3, ELECTABUZZ_PR1, ARTICUNO_PR1, STEELIX_PRN, PRIMEAPE_SI, SLOWKING_SI, MARILL_SI, ODDISH_NEO1, CHIKORITA_NEO1, LEDYBA_NEO1, SHUCKLE_NEO1, SUNFLORA_NEO1, JUMPLUFF_NEO1, MARILL_NEO1, SEADRA_NEO1, AZUMARILL_NEO1, PIKACHU_NEO1, CHINCHOU_NEO1, AMPHAROS_NEO1, SLOWPOKE_NEO1, NATU_NEO1, BEEDRILL_NEO2, HOUNDOUR_NEO2_FIRE, CORSOLA_NEO2, NATU_NEO2, ESPEON_NEO2, OMASTAR_NEO2, HITMONTOP_NEO2, SLUGMA_NEO3, HO_OH_NEO3, QWILFISH_NEO3, REMORAID_NEO3, SEAKING_NEO3, JYNX_NEO3, FLAAFFY_NEO3, SNUBBULL_NEO3, VULPIX_NEO4, MANTINE_NEO4, GLIGAR_NEO4, JIGGLYPUFF_NEO4, DRATINI_NEO4, GIRAFARIG_NEO4, CHANSEY_NEO4)
+V0_79_CARDS = V0_79_POKEMON
+# v0.80: トレーナー 30 枚（neo 期の拡張パック・拡張パック以外の商品。スタジアム 4 枚を含む。docs/neo-trainer-components-v0.80.md）
+V0_80_CARDS = (
+    "neo1-074", "neo1-087", "neo1-092", "neo2-053", "neo4-102", "neo1-078", "neo1-089", "neo1-091", "neo4-100", "neo1-082",
+    "neo1-090", "neo1-093", "neo1-075", "neo1-076", "neo2-056", "GD5-017", "neo1-080", "neo4-105", "neo4-107", "neo4-111",
+    "PR1-013", "PR1-074", "PRN-026", "neo1-077", "neo4-099", "neo3-054", "neo4-101", "neo4-106", "neo4-112", "ES2-033",
+)
+# v0.81: ポケモンのどうぐ 11 枚・ピントレンズ・常にはたらくスタジアム 3 枚（docs/pokemon-tools-stadiums-v0.81.md）
+V0_81_CARDS = (
+    "neo1-073", "PRN-004", "NIP1X-008", "NIP2X-008", "neo1-079", "neo1-081", "PRN-005", "neo3-055", "neo1-088", "neo4-103",
+    "neo4-109", "neo4-104", "neo1-085", "neo3-057", "neo4-110",
+)
+# v0.82（docs/energy-discard-return-v0.82.md）: リサイクルエネルギー・エコロジムと、エネルギーカードをトラッシュするワザを持つポケモン 18 枚（写しの組 pool_v0_82 の並び）
+RECYCLE_ENERGY = "neo1-096"
+ECOGYM = "neo1-086"
+V0_82_POKEMON = (
+    "neo1-018", "PRN-007", "PRN-010", "ES3-011", "QSG-010", "ES3-012", "QSG-012", "QSG-011", "IP1-003", "PR1-062", "neo3-025", "neo1-041", "neo1-072",
+    "neo4-025", "neo4-019", "PR1-071", "PF1-005", "neo3-014",
+)
+V0_82_CARDS = (RECYCLE_ENERGY, ECOGYM, *V0_82_POKEMON)
+# v0.83（docs/shining-gentle-pokemon-v0.83.md）: ひかるポケモン 10 枚・やさしいポケモン 7 枚・ギャロップ（ES1-014）（写しの組 pool_v0_83 の並び）
+SHINING_MAGIKARP, SHINING_MAGIKARP_PRN, SHINING_GYARADOS = "neo3-022", "PRN-046", "neo3-023"
+SHINING_CELEBI, SHINING_RAICHU, SHINING_MEWTWO, SHINING_KABUTOPS = "neo4-013", "neo4-047", "neo4-068", "neo4-080"
+SHINING_STEELIX, SHINING_NOCTOWL, SHINING_MEW = "neo4-084", "neo4-098", "PRN-044"
+LIGHT_SUNFLORA, LIGHT_VENOMOTH, LIGHT_GOLDUCK, LIGHT_VAPOREON = "neo4-004", "neo4-006", "neo4-032", "neo4-034"
+LIGHT_LANTURN, LIGHT_SLOWBRO, LIGHT_DRAGONAIR, RAPIDASH_ES1 = "neo4-045", "neo4-054", "neo4-093", "ES1-014"
+V0_83_SHINING = (SHINING_MAGIKARP, SHINING_MAGIKARP_PRN, SHINING_GYARADOS, SHINING_CELEBI, SHINING_RAICHU, SHINING_MEWTWO, SHINING_KABUTOPS,
+                 SHINING_STEELIX, SHINING_NOCTOWL, SHINING_MEW)
+V0_83_POKEMON = (*V0_83_SHINING, LIGHT_SUNFLORA, LIGHT_VENOMOTH, LIGHT_GOLDUCK, LIGHT_VAPOREON, LIGHT_LANTURN, LIGHT_SLOWBRO, LIGHT_DRAGONAIR, RAPIDASH_ES1)
+V0_83_CARDS = V0_83_POKEMON
+
+# v0.84（docs/light-powers-evolution-v0.84.md）: やさしいポケモン 12 枚・ポケモン育て屋夫婦
+BREEDER_COUPLE = "neo3-056"  # ポケモン育て屋夫婦（トレーナー。最大 2 匹にコイン 1 枚ずつ。「おもて」のポケモンから進化するカードを山札からさがす）
+LIGHT_LEDIAN, LIGHT_NINETALES, LIGHT_ARCANINE, LIGHT_DEWGONG = "neo4-010", "neo4-018", "neo4-021", "neo4-033"
+LIGHT_AZUMARILL, LIGHT_PILOSWINE, LIGHT_JOLTEON, LIGHT_MACHOKE = "neo4-040", "neo4-041", "neo4-043", "neo4-074"
+LIGHT_MACHAMP, LIGHT_WIGGLYTUFF, LIGHT_DRAGONITE, LIGHT_TOGETIC = "neo4-077", "neo4-090", "neo4-094", "neo4-095"
+V0_84_POKEMON = (LIGHT_LEDIAN, LIGHT_NINETALES, LIGHT_ARCANINE, LIGHT_DEWGONG, LIGHT_AZUMARILL, LIGHT_PILOSWINE, LIGHT_JOLTEON, LIGHT_MACHOKE,
+                 LIGHT_MACHAMP, LIGHT_WIGGLYTUFF, LIGHT_DRAGONITE, LIGHT_TOGETIC)
+V0_84_CARDS = (BREEDER_COUPLE, *V0_84_POKEMON)  # 写しの組 pool_v0_84 の並び
+# 進化元（どれも前の版で対応済み。名前の完全一致で決まる）
+LEDYBA_NEO1, VULPIX_NEO4, GROWLITHE_NEO4, SEEL_NEO4, MARILL_NEO1, SWINUB_NEO4 = "neo1-003", "neo4-014", "neo4-015", "neo4-027", "neo1-025", "neo4-029"
+MACHOP_NEO4, JIGGLYPUFF_NEO4, TOGEPI_NEO1 = "neo4-069", "neo4-085", "neo1-066"
+
+# v0.85（docs/entry-powers-energy-lifecycle-v0.85.md）: 進化したときの特殊能力・エネルギーを動かすポケモン 13 枚とミラクルエネルギー
+BAYLEEF_NEO1, MEGANIUM_NEO1, TYPHLOSION_NEO1, FERALIGATR_NEO1, MAREEP_NEO1 = "neo1-009", "neo1-014", "neo1-021", "neo1-033", "neo1-038"
+BAYLEEF_PF1, MEGANIUM_PF1, MEGANIUM_NIP1X, TYPHLOSION_PF1, CROCONAW_PF1 = "PF1-002", "PF1-003", "NIP1X-001", "PF1-006", "PF1-008"
+FERALIGATR_PF1, FERALIGATR_NIP2X, CHARIZARD_PF2 = "PF1-009", "NIP2X-001", "PF2-009"
+MIRACLE_ENERGY = "neo4-113"  # ミラクルエネルギー（特殊エネルギー。「ひかる」「やさしい」ポケモンにだけつけられ、つけた番の終わりにトラッシュする）
+V0_85_POKEMON = (BAYLEEF_NEO1, MEGANIUM_NEO1, TYPHLOSION_NEO1, FERALIGATR_NEO1, MAREEP_NEO1, BAYLEEF_PF1, MEGANIUM_PF1, MEGANIUM_NIP1X,
+                 TYPHLOSION_PF1, CROCONAW_PF1, FERALIGATR_PF1, FERALIGATR_NIP2X, CHARIZARD_PF2)
+V0_85_CARDS = (*V0_85_POKEMON[:5], BAYLEEF_PF1, MEGANIUM_PF1, MEGANIUM_NIP1X, TYPHLOSION_PF1, CROCONAW_PF1, FERALIGATR_PF1, FERALIGATR_NIP2X, CHARIZARD_PF2,
+               MIRACLE_ENERGY)  # 写しの組 pool_v0_85 の並び
+# 進化元（どれも前の版で対応済み。名前の完全一致で決まる）
+CHIKORITA_NEO1, CYNDAQUIL_NEO1, QUILAVA_PF1, TOTODILE_NEO1, CHARMELEON_BASE = "neo1-002", "neo1-018", "PF1-005", "neo1-024", "PMCG1-017"
+
+# v0.86（docs/entry-energy-evolution-reactions-v0.86.md）: 登場・エネルギー・進化への反応 13 枚
+EEVEE_NEO2, EEVEE_PF2, EEVEE_PRN = "neo2-049", "PF2-005", "PRN-024"  # イーブイ（［エナジーしんか］2 枚・［れんさしんか］）
+ENTEI_NEO3, RAIKOU_NEO3, BLISSEY_NEO3, DRAGONITE_PR1, ENTEI_PF2 = "neo3-010", "neo3-029", "neo3-052", "PR1-056", "PF2-008"
+DARK_CROBAT, DARK_FLAAFFY, DARK_AMPHAROS, SUICUNE_NEO3, VENUSAUR_PR1 = "neo4-012", "neo4-044", "neo4-046", "neo3-021", "PR1-058"
+V0_86_POKEMON = (EEVEE_NEO2, EEVEE_PF2, EEVEE_PRN, ENTEI_NEO3, RAIKOU_NEO3, BLISSEY_NEO3, DRAGONITE_PR1, ENTEI_PF2, DARK_CROBAT, DARK_FLAAFFY, DARK_AMPHAROS,
+                 SUICUNE_NEO3, VENUSAUR_PR1)
+V0_86_CARDS = V0_86_POKEMON  # 写しの組 pool_v0_86 の並び
+
+# v0.87（docs/movement-damage-reactions-v0.87.md）: 場の移動・ダメージへの反応と、ワザから守る特殊能力のポケモン 14 枚
+FORRETRESS_NEO2, MAGCARGO_NEO3, DARK_MAGCARGO = "neo2-044", "neo3-009", "neo4-023"  # フォレトス［まきびし］・マグカルゴ［やけのこり］・わるいマグカルゴ［ヒートプレート］
+LT_SURGES_ELECTRODE, KAKUNA_ES1, KOFFING_ES2 = "GD3-009", "ES1-005", "ES2-003"  # マチスのマルマイン［ショックボム］・コクーン［どくのたいえき］・ドガース［ぶんれつ］
+MAGNEMITE_ES2, MAGNEMITE_QSG, GENGAR_PR1 = "ES2-014", "QSG-023", "PR1-053"  # コイル［マグネット］2 枚・ゲンガー［やみのちから］
+ARTICUNO_ES2, ARTICUNO_QSG, DUGTRIO_PR1 = "ES2-012", "QSG-057", "PR1-046"  # フリーザー［オーロラヴェール］2 枚・ダグトリオ［もぐる］
+SNORLAX_ES1, SNORLAX_QSG = "ES1-034", "QSG-046"  # カビゴン［とおせんぼ］2 枚
+PINECO_NEO4, SLUGMA_NEO4 = "neo4-005", "neo4-017"  # 進化元（クヌギダマ・マグマッグ）
+V0_87_POKEMON = (FORRETRESS_NEO2, MAGCARGO_NEO3, DARK_MAGCARGO, LT_SURGES_ELECTRODE, KAKUNA_ES1, KOFFING_ES2, MAGNEMITE_ES2, MAGNEMITE_QSG, GENGAR_PR1,
+                 ARTICUNO_ES2, ARTICUNO_QSG, DUGTRIO_PR1, SNORLAX_ES1, SNORLAX_QSG)
+V0_87_CARDS = V0_87_POKEMON
+
+# v0.88（docs/type-energy-colors-v0.88.md）: ポケモンのタイプとエネルギーの色を変える特殊能力、色を選ぶ・数えるワザ、変えたカードをつけ替える特殊能力の 11 枚
+LANTURN_NEO1, LANTURN_NEO3, PORYGON2_NEO3 = "neo1-040", "neo3-026", "neo3-051"  # ランターン［すいりょくはつでん］・ランターン［せんすい］・ポリゴン2［エナジーコンバーター］
+ERIKAS_ODDISH_GD4, STARMIE_NEO3, MEW_SI = "GD4-001", "neo3-034", "SI-004"  # エリカのナゾノクサ［こうごうせい］・スターミー（コアストリーム）・ミュウ（レインボーウェーブ）
+HO_OH_PF3, MAGNETON_NEO3 = "PF3-007", "neo3-045"  # ホウオウ（レインボーバーン）・レアコイル［でんじりょく］
+PORYGON_ES1, PORYGON_QSG, COOL_PORYGON = "ES1-033", "QSG-045", "PR1-023"  # ポリゴン（テクスチャー2）2 枚・かっこいいポリゴン（テクスチャーマジック）
+V0_88_POKEMON = (LANTURN_NEO1, LANTURN_NEO3, PORYGON2_NEO3, ERIKAS_ODDISH_GD4, STARMIE_NEO3, MEW_SI, HO_OH_PF3, MAGNETON_NEO3, PORYGON_ES1, PORYGON_QSG,
+                 COOL_PORYGON)
+V0_88_CARDS = V0_88_POKEMON  # 写しの組 pool_v0_88 の並び
+
+
+def _self_sleep_shape_only(attack):
+    from kyuura_engine.effects import _check_damage_then_effect
+
+    return _check_damage_then_effect(attack, "自分をねむり状態にする")
+
+
+def self_sleep_for_other_text():
+    """テスト専用（v0.87）: 説明の違うワザ（ゴーストの「あくむ」・ケーシィの「ねんりき」）を、テスト専用の登録表で「ダメージを与えた後、自分を「ねむり」状態にする」
+    （``DamageAndSelfSleep``）として処理するための実装。v0.87 から ``DamageAndSelfSleep.check`` は日本語の全文を確かめるので、この 1 つの値だけ全文の比べを外し、
+    形（ダメージの目安があること）の確かめは残す。型は ``DamageAndSelfSleep`` のまま（要素の並び・先読み・止める問いは製品の登録と同じ）。製品の登録表には使わない。"""
+    from kyuura_engine.effects import DamageAndSelfSleep
+
+    effect = DamageAndSelfSleep()
+    object.__setattr__(effect, "check", _self_sleep_shape_only)
+    return effect

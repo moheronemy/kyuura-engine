@@ -45,6 +45,9 @@ from .conditions import DEVOLVE, EVOLVE, FORCED_SWITCH, RETREAT, SWITCH
 from .state import (
     AttackBarrier,
     AttackCoinCheck,
+    AttackEffectGuard,
+    BenchAttackDamageGuard,
+    BenchProtection,
     CannotAttachEnergy,
     CannotAttack,
     CannotAttackWhileSourceActive,
@@ -58,12 +61,17 @@ from .state import (
     HalvedDamage,
     MaxHpSet,
     NextTurnAttackDamage,
+    PowersStopped,
     PreventDamage,
     ReducedDamageToSource,
+    ReflectShield,
     ResistanceChange,
     Retaliation,
+    StatusImmunityNextTurn,
+    StatusImmunityWhileActive,
     TailsDamageGuard,
     WeaknessChange,
+    ZeroDamageAtLeast,
     ZeroDamageBelow,
 )
 
@@ -343,6 +351,37 @@ def attack_coin_checks(state: GameState, pokemon: PokemonInPlay) -> tuple[Attack
     return tuple(e for e in pokemon.persistent_effects if isinstance(e, AttackCoinCheck) and e.active_on(state.turn_number))
 
 
+def reflect_shield(state: GameState, pokemon: PokemonInPlay) -> ReflectShield | None:
+    """``pokemon`` の今はたらいている「リフレクトシールド」の効果（v0.83。``ReflectShield``。はたらく番が今の番）。なければ None。"""
+    return next((e for e in pokemon.persistent_effects if isinstance(e, ReflectShield) and e.active_turn == state.turn_number), None)
+
+
+def status_immunity_while_active(pokemon: PokemonInPlay) -> StatusImmunityWhileActive | None:
+    """``pokemon`` の「きらめきタッチ」で受けた「バトル場にいるかぎり、特殊状態にならない」効果（v0.84。``StatusImmunityWhileActive``）。与えたときからはたらき、期限はない
+    （バトル場をはなれると消える）。なければ None。"""
+    return next((e for e in pokemon.persistent_effects if isinstance(e, StatusImmunityWhileActive)), None)
+
+
+def bench_attack_damage_guard(state: GameState, pokemon: PokemonInPlay) -> BenchAttackDamageGuard | None:
+    """バトル場の ``pokemon`` の、今の番にはたらく「こおりのはしら」の効果（v0.84。``BenchAttackDamageGuard``。持ち主の控えポケモンが受けるワザのダメージを無効にする）。"""
+    return _active(state, pokemon, BenchAttackDamageGuard)
+
+
+def zero_damage_at_least(state: GameState, pokemon: PokemonInPlay) -> ZeroDamageAtLeast | None:
+    """今の番に ``pokemon`` が受けるワザのダメージが決まった数以上なら 0 にする効果（v0.84。やさしいサンダースの「パルスガード」）がはたらいているなら、その効果。"""
+    return _active(state, pokemon, ZeroDamageAtLeast)
+
+
+def status_immunity_next_turn(state: GameState, pokemon: PokemonInPlay) -> StatusImmunityNextTurn | None:
+    """今の番に ``pokemon`` が特殊状態にならない効果（v0.85。ベイリーフの「しんぴのこな」。次の相手の番）がはたらいているなら、その効果。"""
+    return _active(state, pokemon, StatusImmunityNextTurn)
+
+
+def attack_effect_guard(state: GameState, pokemon: PokemonInPlay) -> AttackEffectGuard | None:
+    """今の番に ``pokemon`` がワザによる「ダメージ以外の効果」を受けない効果（v0.84。やさしいカイリューの「ひかりのはどう」）がはたらいているなら、その効果。"""
+    return _active(state, pokemon, AttackEffectGuard)
+
+
 def tails_damage_guard(pokemon: PokemonInPlay) -> TailsDamageGuard | None:
     """``pokemon`` の「かげぶんしん」の効果（v0.60。``TailsDamageGuard``）。なければ None。与えたときからはたらき、期限はない。"""
     return next((e for e in pokemon.persistent_effects if isinstance(e, TailsDamageGuard)), None)
@@ -386,6 +425,25 @@ def powers_use_prevented(state: GameState, pokemon: PokemonInPlay) -> CannotUseP
     与えた番から次の相手の番（``active_turn``）の終わりまで（「次の相手の番の終わりまで」）。宣言して使う特殊能力の使用だけを止める（呼ぶ側が決める）。"""
     for effect in pokemon.persistent_effects:
         if isinstance(effect, CannotUsePowers) and effect.created_turn <= state.turn_number <= effect.active_turn:
+            return effect
+    return None
+
+
+def powers_stopped(state: GameState, pokemon: PokemonInPlay) -> PowersStopped | None:
+    """今 ``pokemon`` の特殊能力が「使うことができず、その効果も消え」ている効果（v0.86。``PowersStopped``。わるいモココの「スタンウェーブ」を受けた）がはたらいているなら、
+    その効果。はたらくのは与えた番から、効果を与えたプレイヤーの次の番（``active_turn``）の終わりまで。宣言して使う特殊能力の使用も、常にはたらく・自動的にはたらく特殊能力の
+    力も止める（``continuous.power_suppressed`` の ``holder``・``continuous._suppressor``・``catalog.stopped``）。"""
+    for effect in pokemon.persistent_effects:
+        if isinstance(effect, PowersStopped) and effect.created_turn <= state.turn_number <= effect.active_turn:
+            return effect
+    return None
+
+
+def bench_protection(state: GameState, pokemon: PokemonInPlay) -> BenchProtection | None:
+    """今 ``pokemon`` が「ほのおのまもり」の効果（v0.86。``BenchProtection``。ワザによるダメージや効果を受けない）を受けているなら、その効果。はたらくのは与えた番から次の相手の番の
+    終わりまで。当てはめる場所（控え・バトル場）は呼ぶ側（``kernel`` の効果の定義 ``PROTECTIVE_FLAME`` と PL1）が決める。"""
+    for effect in pokemon.persistent_effects:
+        if isinstance(effect, BenchProtection) and effect.created_turn <= state.turn_number <= effect.active_turn:
             return effect
     return None
 

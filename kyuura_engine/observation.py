@@ -35,27 +35,35 @@ from .decisions import (
     DAMAGE_STEP_ORDER,
     DAMAGE_REDUCTION,
     ESP_REDO,
+    OPTIONAL_DISCARD_ALL,
     JANKEN_HAND,
     OPTIONAL_DRAIN,
     SEARCH_DECK_OR_DISCARD,
     TAKE_LOOKED_POKEMON,
     SECRET_PLAN_CARD,
+    SELECT_OPPONENT_PRIZE,
+    TAKE_LOOKED_TRAINER,
     DISCARD_ENERGY,
     DISCARD_FROM_HAND,
     DISCARD_OPPONENT_ENERGY,
     DISCARD_TO_DECK,
     DISCARD_TO_DECK_TOP,
     ENTRY_POWER,
+    REACTION_ORDER,
+    REACTION_POWER,
     EVOLUTION_HEAL,
     STADIUM_RETURN_BENCH,
     USE_DISCARD_TRAINER,
     FORCED_SWITCH,
     HAND_TO_DECK,
     KNOCK_OUT_POWER,
+    EXP_ALL_ENERGY,
     NINJA_TRICK,
     REACTION_SWITCH,
     BENCH_GUARD,
     ENERGY_DRAIN_DISCARD,
+    MAGMA_POOL_ENERGY,
+    SPLIT_FROM_DECK,
     KO_PREVENTION,
     MOVE_ENERGY,
     MOVE_OPPONENT_ENERGY,
@@ -76,6 +84,8 @@ from .decisions import (
     SELECT_DEVOLVE_COUNT,
     SELECT_DRAW_COUNT,
     TAKE_LOOKED_CARDS,
+    DISCARD_STADIUM,
+    EVOLUTION_SONG_POKEMON,
     OPPONENT_HAND_TO_DECK,
     SELECT_COUNTER_COUNT,
     ACCEPT_REQUEST,
@@ -99,6 +109,7 @@ from .decisions import (
 from .effects import (
     JANKEN_HANDS,
     COLORS, attack_of, available_attacks, current_form, hand_revealed_by, max_hp, powers_of, resistance_of, type_readings, type_shift_determined, weakness_of,
+    attached_units, card_color_readings,
 )
 from .serialize import history_record
 from .state import GameState, PokemonInPlay
@@ -113,6 +124,7 @@ OPTION_MEANINGS: dict[str, str] = {
     PEEK_CARD: "peek_target",
     PROMOTE_ACTIVE: "pokemon", SELECT_POKEMON: "pokemon", FORCED_SWITCH: "pokemon", KO_PREVENTION: "pokemon", KNOCK_OUT_POWER: "pokemon", ATTACH_TO_BENCH: "pokemon", NINJA_TRICK: "pokemon", REACTION_SWITCH: "pokemon", BENCH_GUARD: "pokemon",
     ENTRY_POWER: "pokemon",
+    REACTION_POWER: "pokemon", REACTION_ORDER: "number",  # v0.86: 反応の特殊能力の使う機会（場のポケモンの番号）・同じ時点の反応の順番（待っている反応の位置）
     DISCARD_ENERGY: "card", RECOVER_ENERGY: "card", POST_KNOCKOUT_POWER: "card", DISCARD_FROM_HAND: "card", SEARCH_DECK: "card",
     RETURN_TO_DECK: "card", SELECT_EVOLUTION_CARD: "card", RETRIEVE_ENERGY: "card", DISCARD_OPPONENT_ENERGY: "card", RECOVER_TRAINER: "card",
     ATTACH_FROM_DISCARD: "card", BENCH_FROM_DECK: "card", ATTACH_FROM_DECK: "card", RETURN_ENERGY: "card", MOVE_ENERGY: "card",
@@ -122,6 +134,8 @@ OPTION_MEANINGS: dict[str, str] = {
     REMOVE_COUNTERS: "number", SELECT_DECK_OWNER: "number", SELECT_LOOK_COUNT: "number",
     SELECT_DEVOLVE_COUNT: "number",  # v0.50: 退化スプレーではがす枚数
     ENERGY_DRAIN_DISCARD: "card",  # v0.68: ［だつりょくえき］（場についているエネルギーカード。公開）
+    MAGMA_POOL_ENERGY: "card",  # v0.87: ［やけのこり］でつけ替えるカード（場についているエネルギーカード。公開）
+    SPLIT_FROM_DECK: "card",  # v0.87: ［ぶんれつ］で出す山札のカード（選べるものの数は決めるプレイヤーだけ。HIDDEN_COUNT_KINDS）
     BENCH_FROM_DISCARD: "card",  # v0.51: トラッシュ（公開）のたねポケモンのカード
     DISCARD_TO_DECK: "card",  # v0.53: 夜の廃品回収（トラッシュ（公開）のカード）
     SELECT_DRAW_COUNT: "number",  # v0.54: エリカで引く枚数
@@ -139,14 +153,22 @@ OPTION_MEANINGS: dict[str, str] = {
     # 答えるカードの名前（``context`` の ``"names"`` の位置。選べるものに名前を添える）
     CHALLENGE_BENCH: "card", QUIZ_CARD: "card", QUIZ_ATTACK: "number", QUIZ_ANSWER: "name",
     # v0.66: お上品攻撃で減らす量・ナツメのESPのやり直し（1 = やり直す）・カスミの勝負のじゃんけんの手（選べるものに手の名前を添える。もう 1 人の手は続きの情報にあり、見せない）
-    DAMAGE_REDUCTION: "number", ESP_REDO: "number", JANKEN_HAND: "janken", OPTIONAL_DRAIN: "pokemon", SEARCH_DECK_OR_DISCARD: "card", TAKE_LOOKED_POKEMON: "card",
+    DAMAGE_REDUCTION: "number", ESP_REDO: "number", OPTIONAL_DISCARD_ALL: "number", JANKEN_HAND: "janken", OPTIONAL_DRAIN: "pokemon", SEARCH_DECK_OR_DISCARD: "card", TAKE_LOOKED_POKEMON: "card",
     # v0.67: マチスの秘策でうらにして出す手札のカード（決めるプレイヤーの手札）
     SECRET_PLAN_CARD: "card",
+    # v0.80: カードめくりゲームで選ぶ相手のサイドの位置（裏のカード）・ポケモンギアで見た 7 枚から手札に加えるトレーナーカード
+    SELECT_OPPONENT_PRIZE: "position", TAKE_LOOKED_TRAINER: "card",
+    # v0.84: つきくずすでトラッシュする場のスタジアム（公開）・しんかのうたで進化させる自分の場のポケモン（選べるものの数・止める選択は決めるプレイヤーだけ）
+    DISCARD_STADIUM: "card", EVOLUTION_SONG_POKEMON: "pokemon",
+    # v0.81: 学習装置でつけ替える、きぜつする対戦ポケモンについているエネルギーカード（場のカード。公開）
+    EXP_ALL_ENERGY: "card",
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
 # v0.73: 化石の発掘（山札とトラッシュ）・マスターボール（見た山札の上の 7 枚）も、決めるプレイヤーが自分の山札を見る
+# v0.88: ［ぶんれつ］で出す山札のカード（SPLIT_FROM_DECK。決めるプレイヤーが自分の山札をさがす）も。v0.87 は入れておらず、決めるプレイヤーの観測の選べるものに、見えないカードの uid が
+# あることになっていた（docs/type-energy-colors-v0.88.md 1 章）
 DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK, ARRANGE_DECK_TOP, TAKE_LOOKED_CARDS, CHALLENGE_BENCH, SEARCH_DECK_OR_DISCARD,
-                                  TAKE_LOOKED_POKEMON})
+                                  TAKE_LOOKED_POKEMON, TAKE_LOOKED_TRAINER, SPLIT_FROM_DECK})
 # v0.63: 決めるプレイヤーでない人に、選ぶ数・選べるものの数を見せない決定（たたきつけろ!挑戦状の山札から選ぶ決定は山札のたねポケモンの数、カツラのクイズ その3の置く
 # カード・伝えるワザの決定は手札のポケモンの数・置いたカードのワザの数を漏らすため。種類と決めるプレイヤーだけを見せる）
 # v0.73: 化石の発掘（山札とトラッシュの「なにかの化石」）・マスターボール（見た 7 枚のうちのポケモン）も、選べるものの数が山札の中身を漏らすので見せない
@@ -155,7 +177,21 @@ DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK
 # v0.75: 山札のカードを選ぶ決定（SEARCH_DECK。カスミのメノクラゲの「くらげのむれ」は選べるものの数だけ選べる）・山札のエネルギーカードをつける決定（ATTACH_FROM_DECK。キングラーの
 # 「しおまねき」は最大 3 枚）も、選べるものの数・選ぶ数が山札の中身を漏らすので見せない（v0.74 までは、トレーナー・ワザのこの 2 つの決定の数を決めるプレイヤーでない人にも
 # 見せていた。意図した変更）
-HIDDEN_COUNT_KINDS = frozenset({CHALLENGE_BENCH, QUIZ_CARD, QUIZ_ATTACK, SEARCH_DECK_OR_DISCARD, TAKE_LOOKED_POKEMON, BENCH_FROM_DECK, SEARCH_DECK, ATTACH_FROM_DECK})
+# v0.80: ポケモンギアの見た 7 枚のうちのトレーナーカード（TAKE_LOOKED_TRAINER）も、選べるものの数が山札の中身を漏らすので見せない
+HIDDEN_COUNT_KINDS = frozenset({SPLIT_FROM_DECK, CHALLENGE_BENCH, QUIZ_CARD, QUIZ_ATTACK, SEARCH_DECK_OR_DISCARD, TAKE_LOOKED_POKEMON, BENCH_FROM_DECK, SEARCH_DECK, ATTACH_FROM_DECK,
+                                TAKE_LOOKED_TRAINER,
+                                # v0.81（docs/pokemon-tools-stadiums-v0.81.md 2 章）: 決めるプレイヤーの手札（相手の手札を見た決定は、見た相手の手札）から種類でしぼったカードを
+                                # 選べるものにする決定も、選べるものの数・選ぶ数が見えない手札の中身を漏らすので見せない。エネルギーアンプの段階 1・ポケモン交換おじさん
+                                # （RETURN_TO_DECK）、ポケモン育て屋さん・「ばける」（SELECT_EVOLUTION_CARD）、せいちょう（ATTACH_FROM_HAND）、マチス（HAND_TO_ACTIVE）、
+                                # 元気のかたまり（DISCARD_FROM_HAND の手札のエネルギーカード）、ロケット団のおねーさん（OPPONENT_HAND_TO_DECK）、エリカの香水（OPPONENT_HAND_TO_BENCH）。
+                                # 同じ種類の、手札すべてを選べるものにする決定（パソコン通信など）の数も、決めるプレイヤーでない人に見せなくなる（意図した変更）
+                                RETURN_TO_DECK, SELECT_EVOLUTION_CARD, ATTACH_FROM_HAND, HAND_TO_ACTIVE, DISCARD_FROM_HAND, OPPONENT_HAND_TO_DECK,
+                                OPPONENT_HAND_TO_BENCH,
+                                # v0.83: 見た山札の上のカードから選ぶ決定（やさしいゴルダックの「みずかき」は見た 3 枚のうちの基本エネルギーカードの数が選べるもの・選ぶ数になる）。
+                                # カスミのいかり（v0.55。見た 7 枚から 2 枚）・ひかるミュウの「フラッシュサーチ」の数も、決めるプレイヤーでない人に見せなくなる（意図した変更）
+                                TAKE_LOOKED_CARDS,
+                                # v0.84: しんかのうたの進化させるポケモンの決定（選ぶと止めるポケモン（``unresolved_choices``）が山札の中身で決まる）
+                                EVOLUTION_SONG_POKEMON})
 # v0.63: 選べるものがサイドの位置（決めるプレイヤーのサイド）の決定。おもてのサイド（ロケット団参上!）の位置には、カードの id を添える
 PRIZE_POSITION_KINDS = frozenset({TAKE_PRIZE, SELECT_PRIZE_CARD})
 # v0.55: 決めるプレイヤーが効果で見た相手の手札のカードを選べるものにする決定（ロケット団のおねーさん）。選べるもののカードは、決めるプレイヤーに見える（相手の手札を
@@ -227,6 +263,10 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay) -> dict[str, Any]:
         "evolution_stack": [_card(state, uid) for uid in pokemon.evolution_stack],
         "damage": pokemon.damage,
         "energy": [_card(state, uid) for uid in pokemon.energy],
+        # v0.88: ついているエネルギーが今出すエネルギー（1 個ずつ、使える色。エンジンの ``effects.attached_units`` と同じ値。こうごうせい・エナジーコンバーター・エナジーバーン・
+        # ［おいしげる］を当てはめた最初の読み方）。色の読み方が決まらないカード（CE1・CE2）があれば ``energy_units_determined`` が偽（エンジンは読み方で結果が変わる処理を止める）
+        "energy_units": [sorted(color.value for color in unit) for unit in attached_units(state, pokemon)],
+        "energy_units_determined": all(len(card_color_readings(state, pokemon, uid)) == 1 for uid in pokemon.energy),
         "trainers": [_card(state, t.card) for t in pokemon.trainers],
         "special_conditions": list(pokemon.conditions.names()),
         "persistent_effects": [effect.kind for effect in pokemon.persistent_effects],
@@ -387,12 +427,17 @@ def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
                            "origin": lock.origin}
                           for lock in state.trainer_locks],
         # v0.56: トレーナーを使ったプレイヤーに与えた期限のある効果（カスミ・キョウ・見えない壁。公開の情報）
-        "trainer_effects": [{"kind": e.kind, "player": e.player, "card": e.source_card, "card_id": e.card_id, "expires_turn": e.expires_turn}
+        "trainer_effects": [{"kind": e.kind, "player": e.player, "card": e.source_card, "card_id": e.card_id, "expires_turn": e.expires_turn,
+                             **({} if e.pokemon_id is None else {"pokemon_id": e.pokemon_id})}  # v0.80: 退化スプレーHYPER の禁止
                             for e in state.trainer_effects],
         # v0.57: 場に出ているスタジアム（両方の場の境界線上。公開の情報）と、この番にスタジアムの効果を使ったプレイヤー
         "stadium": None if state.stadium is None else {"owner": state.stadium.owner, "placed_turn": state.stadium.placed_turn,
                                                        **_card(state, state.stadium.card)},
         "stadium_uses_this_turn": [list(use) for use in state.stadium_uses_this_turn],
+        # v0.88: 特殊能力で色を変える効果（［せんすい］・［エナジーコンバーター］。公開の情報。書き出しの形式 23 と同じ項目）
+        "color_effects": [{"kind": e.kind, "player": e.player, "source": e.source, **_card(state, e.source_card), "power_index": e.power_index,
+                           "target": e.target, "color": e.color.value, "turn": e.turn, "left_play": e.left_play}
+                          for e in state.color_effects],
         "decision": _decision(state, viewer),
         "result": None if state.result is None else {"outcome": state.result.outcome, "winner": state.result.winner},
     }
@@ -424,6 +469,11 @@ def _hand_owner_or_looker(event, viewer) -> bool:
     return viewer is not None and viewer in (event.get("player"), event.get("looker"))
 
 
+def _looker_only(event, viewer) -> bool:
+    """v0.80: にせオーキドの発明で相手の山札にもどしたサイドは、サイドを見たプレイヤー（``looker``）だけに見える（サイドの持ち主は見ていない）。"""
+    return viewer is not None and viewer == event.get("looker")
+
+
 def _taken_deck_top(event, viewer) -> bool:
     """てつだうふり（v0.45）: トラッシュに置いたら公開。手札に加えたら、見たプレイヤーと持ち主。"""
     return event.get("destination") == "discard" or (viewer is not None and viewer in (event.get("looker"), event.get("player")))
@@ -441,7 +491,8 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
     "look_at_deck_top": (("cards",), _only_player),  # v0.47 のみらいよち（見る）
     "arrange_deck_top": (("cards",), _only_player),  # v0.47 のみらいよち（もどす並び）
     "take_deck_top": (("card",), _taken_deck_top),
-    "trainer_take_none": (("reason",), _only_player),  # v0.53: 山札をさがして選べるカードがなかったか・選ばなかったかは、山札の中身の情報
+    "trainer_take_none": (("reason",), _only_player),
+    "gift_take_none": (("reason",), _only_player),  # v0.84: ［おくりもの］で山札を見て選ばなかった理由（山札にどうぐがなかったか）は、山札の中身の情報  # v0.53: 山札をさがして選べるカードがなかったか・選ばなかったかは、山札の中身の情報
     "look_at_hand": (("cards",), _hand_looker_or_owner),  # v0.54: スパイ作戦（見たプレイヤーと持ち主だけ。観戦者には見せない）
     "looked_to_hand": (("cards",), _only_player),  # v0.55: カスミのいかり（見た山札の上のカードから手札に加えたカード）
     "opponent_hand_to_deck": (("card",), _hand_owner_or_looker),  # v0.55: ロケット団のおねーさん（持ち主と、見て選んだプレイヤーだけ）
@@ -459,9 +510,39 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
     "quiz_card_set": (("card",), _only_player),
     # v0.67: マチスの秘策でうらにしてベンチに出したカード（持ち主だけ。おもてにしたら ``secret_plan_revealed`` で全員）
     "secret_plan_placed": (("card",), _only_player),
+    # v0.80: にせオーキドの発明で見た相手のサイド（見たプレイヤーだけ）・山札にもどしたサイド（見たプレイヤーだけ。枚数は公開）・ポケモンマーチで出さなかった理由（山札の中身の情報）
+    "look_at_prizes": (("cards",), _only_player),
+    "prizes_to_deck": (("cards",), _looker_only),
+    "trainer_bench_from_deck_declined": (("reason",), _only_player),
+    # v0.83: やさしいゴルダックの「みずかき」で、見た山札の上から選ばなかった理由（選べるカードがなかった・選ばなかった。山札の上の中身の情報なので、見たプレイヤーだけ）
+    "deck_top_take_declined": (("reason",), _only_player),
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
+    # v0.88: 色を変える効果の追加・消去（［せんすい］・［エナジーコンバーター］）・ワザといっしょに使った特殊能力（［すいりょくはつでん］）・ワザで選んだ色・色を選べなかった・
+    # テクスチャーで色を変えなかった（どれも場・公開の選択）
+    "color_effect_added", "color_effect_removed", "attack_power", "attack_color_chosen", "attack_color_none", "color_change_declined",
+    # v0.86: ［かんでん］のダメージ・［いなびかり］がはたらかなかった（相手の控えなし）・反応の特殊能力を使わなかった・［はしりさる］のコインの結果とはたらかなかった・
+    # ダークドレインのポケモンごとのコインの結果・［おたけび］の番の終わり（どれも場・コイン・公開の結果）
+    "conductivity", "lightning_burst_skipped", "reaction_power_declined", "bolt_check", "bolt_skipped", "pokemon_coin_results", "power_turn_end",
+    # v0.87: 場の移動・ダメージへの反応（どれも場・コインの公開の情報）
+    "spikes_damage", "hot_plate_damage", "movement_damage_skipped", "magma_pool", "magma_pool_none", "shock_blast_check", "shock_blast_damage",
+    "shock_blast_skipped", "poison_fluid", "poison_fluid_skipped", "split_skipped", "split_declined",
+    # v0.85: ［あばれんぼう］で山札の上からトラッシュしたカード（トラッシュは公開）・［ファイヤーブースト］で山札からつけた・［ファイヤーリチャージ］でトラッシュからつけた
+    # カード（場は公開）・ミラクルエネルギーのトラッシュ・ぎゃくりゅうでトラッシュから山札にもどしたカード（トラッシュは公開）
+    "power_discard_deck", "power_attach_from_deck", "power_attach_from_discard", "miracle_energy_discarded", "attack_discard_to_deck",
+    # v0.82: 場からトラッシュに置かれて手札にもどしたエネルギーカード（場・トラッシュのカードは公開の情報）・のぞむならトラッシュしなかったこと
+    "energy_returned_to_hand", "discard_energy_declined",
+    # v0.83: おたがいのプレイヤーが選ぶワザ（引かなかった（山札の枚数は公開）・トラッシュから見せて手札に加えた・山札にもどした・選ばなかった（トラッシュは公開））と、
+    # 「リフレクトシールド」（コイン・相手に与えたダメージ・与えなかった）
+    "attack_draw_declined", "each_player_recover", "each_player_discard_to_deck", "each_player_declined",
+    # v0.84: ［ふかふかなからだ］（コインの結果）・［たすけだす］のとりのぞき・［おくりもの］で山札を見なかった・ポケモン育て屋夫婦のポケモンごとのコイン・つきくずすで
+    # トラッシュしなかった・バブルジャンプのつけ替え（場のカードの公開の情報）
+    "power_sleep", "power_sleep_skipped", "tag_team_heal", "gift_declined", "breeder_couple_coins", "stadium_discard_declined",
+    "reflect_shield_check", "reflect_shield_damage", "reflect_shield_skipped",
+    # v0.81: ポケモンのどうぐ（きのみのとりのぞき・きあいのハチマキ・はんげきのツメ・学習装置。どれも場のカード・コインの結果で公開）
+    "tool_heal", "focus_band", "counter_claw", "tool_damage_counters", "exp_all_declined", "tool_move_energy",
+    "darkness_energy_damage", "darkness_energy_counters",  # v0.78: ポケモンチェックの悪エネルギー（場のカードの公開の情報）
     # v0.67: マチスの秘策（出さなかった・出せなかった理由・おもてにした本当のカード・トラッシュしたカード・指定した対象がいなくなった。どれも表の情報）
     "secret_plan_none", "secret_plan_declined", "secret_plan_revealed", "secret_plan_discarded", "secret_plan_target_lost",
     # v0.66: ナツメのESPのやり直し（投げたコインは表の情報）・カスミの勝負のじゃんけん（両方の手を決めたあとに見せる）・お上品攻撃の手札にもどす期限
@@ -519,6 +600,9 @@ PUBLIC_EVENTS = frozenset({
     "discard_to_hand_suppressed", "stadium_retrieve_energy", "stadium_bench_from_deck",
     # v0.75: エナジーサポートで、つける控えが「とうめい」で受けなかったので持ち主のトラッシュに置いたカード（トラッシュは公開の情報）
     "deck_energy_evaded",
+    # v0.80: カードめくりゲーム（おもてにしたサイド・答え）・山札の上から置いたサイド（枚数だけ）・スロットゲーム（見せた 3 枚）・クイズの種類の答えと表にしたカード・ポケモンマーチで
+    # ベンチに出したカード・いやしの野原（場は公開の情報）
+    "prize_revealed", "prize_guess", "deck_top_to_prizes", "reveal_deck_top", "quiz_kind_answer", "quiz_kind_reveal", "trainer_bench_from_deck", "stadium_heal",
 })
 
 

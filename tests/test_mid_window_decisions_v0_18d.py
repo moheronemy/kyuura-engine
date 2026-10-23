@@ -70,12 +70,32 @@ class DesignAssumptionTest(unittest.TestCase):
 
         v0.68（docs/final-pmcg-cards-v0.68.md 3 章）: キョウのベトベトンの［だつりょくえき］（``drain_energy_from_damage_source``）を同じ窓に加えた。この処理も決定の口を
         直接使わず、「おもて」のときは ``kernel.EnergyDrainRequest`` を投げ、窓を開いた ``programs.fire_or_suspend`` が、次の要素の位置（"boundary"）を続きの情報にして
-        決定を出す（v0.65 の要素のあいだの決定と同じ持ち方。案 B）。窓の途中でほかの送る効果が残ることはない（1 つの枠で 2 つ以上なら C34・C35 で止める）。"""
+        決定を出す（v0.65 の要素のあいだの決定と同じ持ち方。案 B）。窓の途中でほかの送る効果が残ることはない（1 つの枠で 2 つ以上なら C34・C35 で止める）。
+
+        v0.81（docs/pokemon-tools-stadiums-v0.81.md 5.2）: はんげきのツメ（ポケモンのどうぐ。``counters_to_damage_source_on_heads``）を同じ窓に加えた。持ち主のコインで、
+        ダメージを与えたポケモンにダメージカウンターをのせる。決定を出さないので、この文書の前提は変わらない。効果の定義はついているトレーナーのもの（``C.COUNTER_CLAW``）。"""
         definitions = [d for _, d in C.POWER_DEFINITIONS + C.PERSISTENT_DEFINITIONS if d.timing is C.Timing.DEFER]
-        self.assertEqual(sorted(d.name for d in definitions), ["defensive_pollen", "energy_drain", "restless_sleep", "retaliation", "strikes_back"])
-        self.assertTrue(all(d.decision_kind is None for d in definitions))
-        self.assertEqual(sorted(kernel.ACTIONS), ["attack_damage_to_damage_source", "drain_energy_from_damage_source", "power_confusion_to_damage_source",
-                                                  "power_damage_to_damage_source"])
+        # v0.84（docs/light-powers-evolution-v0.84.md）: やさしいイノムーの［ふかふかなからだ］（``power_sleep_to_damage_source``）を同じ窓に加えた。持ち主のコインで、ダメージを
+        # 与えたポケモンをねむりにする（「ぼうぎょかふん」と同じ形）。決定を出さないので、この文書の前提は変わらない
+        # v0.86（docs/entry-energy-evolution-reactions-v0.86.md 6.1 節）: エンテイの［はしりさる］（``bolt_return_on_heads``）を同じ窓に加えた。持ち主のコインで、「おもて」なら
+        # このカードを山札にもどす。決定を出さない（空いたバトル場はワザのあとのきぜつの処理・バトル場に出す決定）ので、この文書の前提は変わらない
+        # v0.87（docs/movement-damage-reactions-v0.87.md 5 章）: マチスのマルマインの［ショックボム］（``power_damage_both_actives_on_tails``）・コクーンの［どくのたいえき］（``poison_damage_source``）は
+        # 決定を出さない。ドガースの［ぶんれつ］（``split_from_deck``）は使うかを持ち主が決める（定義の ``decision_kind`` は ``SPLIT_FROM_DECK``）が、処理は決定の口を直接使わず、
+        # ``kernel.SplitRequest`` を投げ、窓を開いた ``programs.fire_or_suspend`` が次の要素の位置（"boundary"）を続きの情報にして決定を出す（［だつりょくえき］と同じ持ち方。案 B）
+        self.assertEqual(sorted(d.name for d in definitions), ["bolt", "defensive_pollen", "energy_drain", "fluffy_wool", "poison_fluid", "restless_sleep", "retaliation",
+                                                               "shock_blast", "split", "strikes_back"])
+        self.assertTrue(all(d.decision_kind is None for d in definitions if d.name != "split"))
+        self.assertEqual(C.SPLIT.decision_kind, "split_from_deck")
+        self.assertEqual(sorted(kernel.ACTIONS), ["attack_damage_to_damage_source", "bolt_return_on_heads", "counters_to_damage_source_on_heads", "drain_energy_from_damage_source",
+                                                  "poison_damage_source",  # v0.87
+                                                  "power_confusion_to_damage_source",
+                                                  "power_damage_both_actives_on_tails",  # v0.87
+                                                  "power_damage_to_damage_source", "power_sleep_to_damage_source",
+                                                  # v0.83: リフレクトシールドの 20（効果の定義 REFLECT_SHIELD_RETURN。決定を出さない。docs/shining-gentle-pokemon-v0.83.md 6 章）
+                                                  "reflect_damage_to_damage_source",
+                                                  "split_from_deck"])  # v0.87
+        self.assertEqual(C.COUNTER_CLAW.timing, C.Timing.DEFER)
+        self.assertIsNone(C.COUNTER_CLAW.decision_kind)
         for action in kernel.ACTIONS.values():
             source = inspect.getsource(action)
             self.assertNotIn("push_decision", source)

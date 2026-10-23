@@ -427,7 +427,18 @@ class BarrierCoinTest(unittest.TestCase):
         # docs/effective-pokemon-properties-v0.48.md）
         self.assertEqual(stopping, {"CoinBonusDamageAndParalyze", "DamageAndParalyzeOnHeadsElseFail", "FailOnTailsDamage", "FailOnTailsAmountIfBenchNamed",
                                     "DamageThenConfuseOnAnyHeads", "DamageThenPoisonAndParalyzeOnHeads", "DamageThenPoisonAndConfuseOnAllHeads",
-                                    "DamageThenPoisonAndConfuseOnHeads", "DamageThenCoinsReturnOpponentToDeck"})
+                                    "DamageThenPoisonAndConfuseOnHeads", "DamageThenCoinsReturnOpponentToDeck",
+                                    # v0.79: ルージュラの「あやしいおどり」（CoinBonusDamageAndConfuse。1 枚のコインが追加のダメージとこんらんを決める。ねばりつくと同じ形）
+                                    "CoinBonusDamageAndConfuse",
+                                    # v0.83: ひかるギャラドスの「げきりん」（FailOnTailsPlusOwnCounters。失敗のコインのあとはダメージだけ）・ひかるセレビィの「ミラクルリーフ」
+                                    # （CoinsPerDefenderEnergyChosenStatus。コインは選んだ特殊状態だけを決める）・ひかるヨルノズクの「フラッシュアイ」（ThreeCoinsStatusByHeads。
+                                    # 3 枚のコインは相手の特殊状態だけを決める。docs/shining-gentle-pokemon-v0.83.md）
+                                    "FailOnTailsPlusOwnCounters", "CoinsPerDefenderEnergyChosenStatus", "ThreeCoinsStatusByHeads",
+                                    # v0.84: やさしいサンダースの「サンダーニードル」（3 枚のコインは相手へのダメージと相手のマヒだけを決める。
+                                    # docs/light-powers-evolution-v0.84.md）
+                                    "CoinsTimesDamageThenParalyzeIfAtLeast",
+                                    # v0.86: スイクンの「オーロラウェーブ」（2 枚のコインは相手のマヒかねむりだけを決める。docs/entry-energy-evolution-reactions-v0.86.md 7 章）
+                                    "DamageThenParalyzeOrSleepByTwoCoins"})
         self.assertIn("CoinBonusOrSelfDamage", flipping)
         self.assertIn("SelfDamageInsteadOnTails", flipping)
 

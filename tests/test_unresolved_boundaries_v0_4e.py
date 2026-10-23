@@ -237,6 +237,43 @@ ALL_CODES = (
     # v0.75（tests/test_search_energy_pokemon_v0_75.py）
     "UNRESOLVED_RAINBOW_RECOVER_AS_TYPE",  # RB5（CallWillOTheWispTest）
     "UNRESOLVED_DOUBLED_DAMAGE_POWER_DAMAGE",  # DB1（DoubleEdgedTest）
+    "UNRESOLVED_METAL_ENERGY_POWER_ORDER",  # MT1（test_darkness_metal_energy_v0_78.py NonAttackDamageTest）
+    "UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER",  # DE1（test_darkness_metal_energy_v0_78.py PokemonCheckTest）
+    "UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT",  # PK1（test_shared_checks_pokemon_reuse_v0_79.py MidCheckKnockoutTest）
+    "UNRESOLVED_SUPER_ROD_WITHOUT_TARGET",  # SRD1（v0.80。tests/test_neo_trainer_components_v0_80.py）
+    "UNRESOLVED_TRAINER_UP_TO_ZERO_CHOICE",  # UPZ1（v0.80。tests/test_neo_trainer_components_v0_80.py）
+    "UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET",  # UPZ2（v0.80。tests/test_neo_trainer_components_v0_80.py）
+    "UNRESOLVED_DECK_TOP_SHORT",  # TOP1（v0.80。tests/test_neo_trainer_components_v0_80.py）
+    "UNRESOLVED_HAND_TRAINER_LOCK_BORROW",  # TL1（v0.80。tests/test_neo_trainer_components_v0_80.py）
+    "UNRESOLVED_DEVOLUTION_SPRAY_HYPER_WITHOUT_TARGET",  # HY1（v0.80。tests/test_neo_trainer_components_v0_80.py）
+    "UNRESOLVED_MOOMOO_MILK_UNDAMAGED_TARGET",  # MK1（v0.80。tests/test_neo_trainer_components_v0_80.py）
+    "UNRESOLVED_ALL_PURPOSE_POWDER_WITHOUT_TARGET",  # BP1（v0.80。tests/test_neo_trainer_components_v0_80.py）
+    "UNRESOLVED_HEALING_FIELD_WITHOUT_DAMAGE",  # HF1（v0.80。tests/test_neo_trainer_components_v0_80.py）
+    "UNRESOLVED_POKEMON_CHECK_BERRY_ORDER",  # BY1（v0.81。tests/test_pokemon_tools_stadiums_v0_81.py）
+    "UNRESOLVED_BALLOON_BERRY_FAILED_RETREAT",  # BB1（v0.81。tests/test_pokemon_tools_stadiums_v0_81.py）
+    "UNRESOLVED_FOCUS_BAND_TIMING",  # FB1（v0.81。tests/test_pokemon_tools_stadiums_v0_81.py）
+    "UNRESOLVED_MAX_HP_SET_AND_INCREASE",  # MH2（v0.81a。tests/test_berry_maxhp_fixes_v0_81a.py）
+    "UNRESOLVED_REFLECT_SHIELD_TIMING",  # RS1（v0.83。tests/test_shining_gentle_v0_83.py）
+    "UNRESOLVED_ATTACK_DECK_TOP_SHORT",  # LT1（v0.83。tests/test_shining_gentle_v0_83.py）
+    "UNRESOLVED_REFLECT_SHIELD_OVERLAP",  # RF1（v0.84。tests/test_light_powers_evolution_v0_84.py）
+    "UNRESOLVED_MIRACULOUS_WIND_CONVERTED_ENERGY",  # WD1（v0.84。同）
+    "UNRESOLVED_MIRACULOUS_WIND_ENERGY_BURN",  # WD2（v0.84。同）
+    "UNRESOLVED_MIRACLE_ENERGY_AS_TYPE",  # MEC1（v0.85。tests/test_entry_powers_energy_lifecycle_v0_85.py）
+    "UNRESOLVED_MIRACLE_ENERGY_UNDER_WIND",  # MEW1（v0.85。同）
+    "UNRESOLVED_REACTION_AFTER_KNOCKOUT",  # RA1（v0.86。tests/test_entry_energy_evolution_reactions_v0_86.py）
+    "UNRESOLVED_REACTION_CONDITION_CHANGED",  # RA2（v0.86。同）
+    "UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES",  # CV1（v0.86。同）
+    "UNRESOLVED_HOWL_OUTSIDE_OWN_TURN",  # OT1（v0.86。同）
+    "UNRESOLVED_BOLT_DURING_OWN_ATTACK",  # BT1（v0.86。同）
+    "UNRESOLVED_PROTECTIVE_FLAME_SCOPE",  # PL1（v0.86。同）
+    "UNRESOLVED_SOLAR_POWER_WITHOUT_CONDITION",  # SO1（v0.86。同）
+    "UNRESOLVED_HOT_PLATE_FACE_DOWN",  # HP1（v0.87。tests/test_movement_damage_reactions_v0_87.py）
+    "UNRESOLVED_STRANGE_GAS_NEW_POKEMON",  # MG1（v0.87。同）
+    "UNRESOLVED_STRANGE_GAS_PROTECTED_POKEMON",  # MG2（v0.87。同）
+    "UNRESOLVED_POWER_DAMAGE_PREVENTED",  # SB1（v0.87。同）
+    "UNRESOLVED_COLOR_EFFECT_CONTINUATION",  # CE1（v0.88。tests/test_type_energy_colors_v0_88.py）
+    "UNRESOLVED_COLOR_REPLACEMENT_ORDER",  # CE2（v0.88。同）
+    "UNRESOLVED_COLOR_CHANGED_ENERGY_CARD",  # CE3（v0.88。同）
 )
 TURN = 7
 

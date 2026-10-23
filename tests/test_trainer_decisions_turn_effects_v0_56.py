@@ -53,6 +53,7 @@ from kyuura_engine.state import (
 from tests.helpers import (
     BLAINES_RHYHORN,
     BROCKS_DIGLETT,
+    DARK_DRAGONITE,
     DARK_GOLBAT,
     DARK_VILEPLUME,
     DEFENDER,
@@ -182,7 +183,7 @@ class RegistrationTest(unittest.TestCase):
                 self.assertFalse(entry.effect.may_knock_out or entry.effect.empties_active or entry.effect.enters_play or entry.effect.stays_in_play)
         extract = json.loads((ROOT / "kyuura_engine" / "data" / "kyuura_cards.json").read_text())
         self.assertEqual(extract["pool_v0_56"], list(V0_56_CARDS))
-        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 211)  # v0.74 で拡張パック以外の商品のスタジアム 13 枚を加えた。v0.73 で拡張パック以外の商品の検索・回収・ドローのトレーナー 18 枚を加えた。v0.71 で拡張パック以外の商品の再録のトレーナー 67 枚を加えた。v0.69 で拡張パック以外の商品の同じカード 19 枚の写しを加えた。v0.67 でマチスの秘策を加えた。v0.66 で 3 枚を加えた。v0.65 で変わり身の術を加えた。v0.63 で 4 枚を加えた。 56（v0.55）+ 10。v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 で 3 枚を加えた、v0.61 でバトル場は穴だらけ!を加えた
+        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 260)  # v0.84 でポケモン 12 枚・ポケモン育て屋夫婦を加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚を含む）を加えた  # v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・ワザ 77・トレーナー 2）を加えた  # v0.74 で拡張パック以外の商品のスタジアム 13 枚を加えた。v0.73 で拡張パック以外の商品の検索・回収・ドローのトレーナー 18 枚を加えた。v0.71 で拡張パック以外の商品の再録のトレーナー 67 枚を加えた。v0.69 で拡張パック以外の商品の同じカード 19 枚の写しを加えた。v0.67 でマチスの秘策を加えた。v0.66 で 3 枚を加えた。v0.65 で変わり身の術を加えた。v0.63 で 4 枚を加えた。 56（v0.55）+ 10。v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 で 3 枚を加えた、v0.61 でバトル場は穴だらけ!を加えた
         e = {card_id: E.DEFAULT_EFFECTS.trainer_entry(card_id).effect for card_id in V0_56_CARDS}
         self.assertEqual([c for c in V0_56_CARDS if e[c].may_end_turn], [ROCKET_GRUNT])
         self.assertEqual([c for c in V0_56_CARDS if e[c].takes_prizes], [LT_SURGES_TREATY])
@@ -223,14 +224,19 @@ class RegistrationTest(unittest.TestCase):
                 self.assertNotEqual(effect.check(d[card_id]), [])
 
     def test_entry_power_guard(self):
-        state = board([DARK_GOLBAT, RATTATA])
+        """v0.86 から、``placed_entry_power_guard`` が止めるのは「場に出た時」（手札からに限らない）の特殊能力の機会だけ（わるいカイリューの［てしたをよぶ］など。たねポケモンには
+        ない）。「手札から出した時」の特殊能力（わるいゴルバット・エンテイの［おたけび］）は、手札から出す経路なら v0.86 の反応の続き（``effects._placed_entry_followup``）が機会を出し、
+        山札から出す経路（``from_hand`` が偽）なら機会がない（docs/entry-energy-evolution-reactions-v0.86.md 4 章）。"""
+        state = board([DARK_DRAGONITE, DARK_GOLBAT, RATTATA])
         with self.assertRaises(RuntimeError):
-            E.placed_entry_power_guard(state, card_of(state, DARK_GOLBAT))
+            E.placed_entry_power_guard(state, card_of(state, DARK_DRAGONITE))
+        E.placed_entry_power_guard(state, card_of(state, DARK_GOLBAT))
         E.placed_entry_power_guard(state, card_of(state, RATTATA))
 
     def test_no_basic_pokemon_has_an_entry_power(self):
-        """エリカの香水・マチスが手札から場に出すのはたねポケモンで、場に出たときに使える特殊能力（``EntryPower``）を持つたねポケモンは写しにない（どれも進化カード）。
-        来たら ``placed_entry_power_guard`` が状態を変える前に RuntimeError（トレーナーの途中で特殊能力の決定を出して残りにもどる処理は加えていない。docs 4 章）。"""
+        """エリカの香水・マチスが手札から場に出すのはたねポケモン。v0.85 までは場に出たときに使える特殊能力（``EntryPower``）を持つたねポケモンは写しになかった。v0.86 で
+        エンテイ（neo3-010）の［おたけび］（「手札から場に出した時」）を加え、トレーナーの途中で特殊能力の決定を出して残り（トレーナーを使い終える）にもどる処理を加えた
+        （docs/entry-energy-evolution-reactions-v0.86.md 4 章。tests/test_entry_energy_evolution_reactions_v0_86.py の HowlTest）。「場に出た時」の特殊能力を持つたねポケモンは今もない。"""
         pool = load_card_pool()
         holders = []
         for card_id, definition in pool.definitions.items():
@@ -241,7 +247,8 @@ class RegistrationTest(unittest.TestCase):
                 if entry is not None and isinstance(entry.effect, E.EntryPower):
                     holders.append((card_id, definition.stage))
         self.assertTrue(holders)
-        self.assertEqual([c for c, stage in holders if stage == "basic"], [])
+        self.assertEqual([c for c, stage in holders if stage == "basic"], ["neo3-010"])
+        self.assertTrue(E.DEFAULT_EFFECTS.power_entry("neo3-010", 0).effect.from_hand_only)
 
     def test_card_sources_and_research_links(self):
         sources = json.loads((ROOT / "kyuura_engine" / "data" / "card_sources.json").read_text())["cards"]
@@ -718,7 +725,7 @@ class RocketsExperimentTest(unittest.TestCase):
 class SaveObservationTest(unittest.TestCase):
     def test_format_16_and_older_formats_reject(self):
         """期限のある効果（``trainer_effects``）・ロケット団の実験の禁止（``origin`` が trainer）は形式 16 で書き出し、形式 1〜15 は ``ValueError``（黙って落とさない）。"""
-        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (22, 22))  # v0.67 で形式 22  # v0.63 で形式 21。 v0.57 で 17、v0.58 で 18、v0.59 で 19
+        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (23, 23))  # v0.88 で 23（color_effects）  # v0.67 で形式 22  # v0.63 で形式 21。 v0.57 で 17、v0.58 で 18、v0.59 で 19
         wall = use(board([INVISIBLE_WALL]), INVISIBLE_WALL)
         locked = use(board([ROCKETS_EXPERIMENT], deck=[G]), ROCKETS_EXPERIMENT, coins=(T,))
         for state in (wall, locked):

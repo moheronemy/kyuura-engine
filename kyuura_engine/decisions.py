@@ -77,6 +77,11 @@ KO_PREVENTION = "ko_prevention"
 # 持ち主が決める。選べるものはそのポケモンの番号 1 つで、0 個（使わない）か 1 個（使用を宣言する）。``context`` は "attack"・"power"（こんじょうと同じ）と "source"
 # （「きぜつ」させたポケモンの番号）。コインは答えのあと。再開先は "knock_out"（こんじょうと同じ続きの情報。特殊能力の定義で処理を分ける）。段階は Phase.DECISION
 KNOCK_OUT_POWER = "knock_out_power"
+# v0.81（docs/pokemon-tools-stadiums-v0.81.md 5 章）: ワザのあとのきぜつの判定で、相手の番にワザのダメージで「きぜつ」する対戦ポケモンについている基本エネルギーカードを、
+# 学習装置をつけたポケモンにつけ替えるか（どれをつけ替えるか）を、持ち主が決める。選べるものはきぜつする対戦ポケモンについている基本エネルギーカード（とレインボーエネルギー。
+# 選ぶと RB3 で止める）で、0 個（つけ替えない）か 1 個。``context`` は "attack"（こんじょうと同じ）・"tool"（学習装置のカード）・"holder"（学習装置をつけたポケモンの番号）・
+# "source"（きぜつする対戦ポケモンの番号）。再開先は "knock_out"。段階は Phase.DECISION
+EXP_ALL_ENERGY = "exp_all_energy"
 # v0.65（docs/reactive-decisions-v0.65.md）: ワザの途中の任意の決定（再開先は "attack"。続きの情報は ``resolution.codec.AttackContinuation`` の extra。段階は Phase.DECISION）
 # - 相手がワザを使う時（ワザの要素の前）に、つけた「キョウ秘伝,変わり身の術」で入れ替えるか。決めるのは、つけたポケモンの持ち主（ワザを使われた側）。選べるものは自分の控えの
 #   番号で、0 個（入れ替えない）か 1 個。``context`` の "boundary"（入れ替えのあとに処理を始める要素の位置。0）・"tricks"（ついている変わり身の術のカード）
@@ -161,6 +166,10 @@ DAMAGE_REDUCTION = "damage_reduction"
 # - ナツメのESP（ワザを使うポケモンについている）の「そのワザの説明文に書かれているすべてのコイントスを、もう1度やり直してよい」。決めるのはワザを使ったプレイヤー。選べる
 #   ものは 1（やり直す）で、0 個（やり直さない）か 1 個。``context`` の "esp"（コインを投げた要素の位置・枚数・投げたプレイヤー・最初の結果・ESP のカード）
 ESP_REDO = "esp_redo"
+# v0.82（docs/energy-discard-return-v0.82.md 6 章）: ライチュウ（neo3-025）の「らいげき」の「のぞむなら、自分についている「雷」エネルギーカードをすべてトラッシュしてよい」。
+# 決めるのはワザを使ったプレイヤー。選べるものは 1（すべてトラッシュする）で、0 個（トラッシュしない）か 1 個（一部だけはトラッシュできない）。ついている「雷」エネルギー
+# カードがなければ出さない。再開先は "attack"
+OPTIONAL_DISCARD_ALL = "optional_discard_all"
 # - カスミの勝負（トレーナー。再開先は "trainer"）の「じゃんけん」の手。決めるのは使ったプレイヤー（``context`` の "stage" 0）→ 相手プレイヤー（"stage" 1）。選べるものは
 #   0 グー・1 チョキ・2 パーで 1 つ。"round" はあいこのくり返しの回数（1 から）、"first" は 1 人目の手（2 人目の決定だけ。観測には出さない）
 JANKEN_HAND = "janken_hand"
@@ -301,6 +310,31 @@ QUIZ_ANSWER = "quiz_answer"
 # v0.67（docs/secret-plan-preflight-v0.67.md）: マチスの秘策で、うらにしてベンチに出す手札のカード。決めるのは使ったプレイヤー。選べるものは手札のカード（どの種類でもよい）。
 # 0〜1 枚（0 枚は出さない）。選べるもの・選ぶ数は使ったプレイヤーだけが見る（観測）
 SECRET_PLAN_CARD = "secret_plan_card"
+
+# v0.80（docs/neo-trainer-components-v0.80.md）。どれもトレーナーの効果の途中の決定（再開先は "trainer"、段階は Phase.DECISION）
+# カードめくりゲームで選ぶ、うらになっている相手のサイドの位置。決めるのは使ったプレイヤー（位置で選ぶ。選ぶ前に内容を見せない）
+SELECT_OPPONENT_PRIZE = "select_opponent_prize"
+# ポケモンギアで、見た山札の上の 7 枚のうちのトレーナーカードから手札に加える 1 枚。決めるのは使ったプレイヤー（選べるものの数は山札の中身を漏らすので、ほかの人に見せない）
+TAKE_LOOKED_TRAINER = "take_looked_trainer"
+
+# v0.84（docs/light-powers-evolution-v0.84.md）。どれもワザの途中の決定（再開先は "attack"、段階は Phase.DECISION）
+# やさしいイノムーの「つきくずす」で、場のスタジアムをトラッシュするか。決めるのはワザを使ったプレイヤー。選べるものは場のスタジアムのカード 1 つ。0〜1 個（選ばない = トラッシュしない）
+DISCARD_STADIUM = "discard_stadium"
+# やさしいプクリンの「しんかのうた」で、進化させる自分の場のポケモン。決めるのはそれぞれのプレイヤー（``context`` の ``"stage"``）。選べるものはそのプレイヤーの場のポケモンの番号。
+# 0〜1 匹（0 は選ばない）。選ぶと止めるポケモン（``unresolved_choices``）が山札の中身で決まるので、選べるものの数・止める選択は決めるプレイヤーだけが見る（観測）
+EVOLUTION_SONG_POKEMON = "evolution_song_pokemon"
+
+# v0.86（docs/entry-energy-evolution-reactions-v0.86.md 2 章）。再開先は "reaction"（``reactions``）
+# 同じ時点に起こる 2 つ以上の反応（手札からつけたエネルギーカード・進化への反応）の順番。決めるのはその時に番を行っているプレイヤー（GR-2000-P325-SAME-TIMING）。
+# 選べるものは待っている反応の位置（``context`` の ``"reaction"``）。1 つ選ぶと、それを処理し、残りの反応はそのあとに処理する
+REACTION_ORDER = "reaction_order"
+# v0.87: ［やけのこり］で新しい対戦ポケモンにつけ替える「炎」エネルギーカード（決めるのは持ち主。選べるものはこのカードについているカード。1 枚）
+MAGMA_POOL_ENERGY = "magma_pool_energy"
+# v0.87: ［ぶんれつ］でベンチに出す山札の「ドガース」（決めるのは持ち主。0〜1 枚。選べるものの数は山札の中身を漏らすので、決めるプレイヤーだけに見せる）
+SPLIT_FROM_DECK = "split_from_deck"
+# 決められた事実（手札からエネルギーカードをつけた・ほかのポケモンが進化した）のときに使える特殊能力（［エナジーしんか］・［れんさしんか］）の使う機会。決めるのは持ち主。
+# 選べるものはそのポケモンの番号 1 つ。0 個（使わない）か 1 個（使う）
+REACTION_POWER = "reaction_power"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

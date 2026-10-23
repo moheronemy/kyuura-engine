@@ -40,7 +40,7 @@ class KoCheckContinuation:
     """きぜつの判定の窓の任意の効果（こんじょう）の決定のあと。答えのあと、きぜつの処理へ。"""
 
     attack: tuple[int, int, str, int]
-    power: tuple[str, int]
+    power: tuple[str, int] | None  # v0.81: 学習装置（ついているどうぐ）の決定では None（``context`` の "tool"）
 
 
 @dataclass(frozen=True)
@@ -74,6 +74,15 @@ def ko_check_decision(state: GameState, cont: KoCheckContinuation, *, player: in
                          context=(("attack", cont.attack), ("power", cont.power), *extra), min_choices=0, max_choices=1)
 
 
+def exp_all_decision(state: GameState, cont: KoCheckContinuation, *, player: int, options, tool: int, holder: int, source: int,
+                     extra: tuple = ()) -> PendingDecision:
+    """v0.81: きぜつの判定の窓の学習装置の決定（``EXP_ALL_ENERGY``。0〜1 枚。``extra`` は使うを選ぶと止める場合（``unresolved_*``））。"""
+    from ..decisions import EXP_ALL_ENERGY
+
+    return push_decision(state, kind=EXP_ALL_ENERGY, player=player, options=options, resume=KNOCK_OUT,
+                         context=(("attack", cont.attack), ("tool", tool), ("holder", holder), ("source", source), *extra), min_choices=0, max_choices=1)
+
+
 def prize_decision(state: GameState, player: int, cont: AftermathContinuation) -> PendingDecision:
     """サイドを取る決定（v0.13 の ``engine._next_prize_or_judge`` と同じ形）。"""
     post = () if not cont.post_knockout else (("post_knockout", tuple(cont.post_knockout)),)
@@ -101,7 +110,8 @@ def decode(decision: PendingDecision):
         extra = tuple((name, value) for name, value in decision.context if name != "use")
         return AttackContinuation(tuple(use), decision.kind, extra)
     if resume == KNOCK_OUT:
-        return KoCheckContinuation(tuple(decision.context_value("attack")), tuple(decision.context_value("power")))
+        power = decision.context_value("power")
+        return KoCheckContinuation(tuple(decision.context_value("attack")), None if power is None else tuple(power))
     if resume == TAKE_PRIZE:
         return AftermathContinuation(TAKE_PRIZE, tuple(decision.context_value("remaining", ())), decision.context_value("then"),
                                      tuple(decision.context_value("post_knockout", ())))
@@ -128,6 +138,7 @@ __all__ = [
     "RESUMES",
     "attack_decision",
     "decode",
+    "exp_all_decision",
     "ko_check_decision",
     "phase_for",
     "post_knockout_decision",

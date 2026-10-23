@@ -683,7 +683,9 @@ EVOLUTIONS = {METAPOD: (CATERPIE,), KAKUNA: (WEEDLE,), DEWGONG: (SEEL,), STARMIE
               "PMCG5-050": ("PMCG5-043",),  # v0.60: タケシのサンドパン（タケシのサンドから）
               # v0.70: 拡張パック以外の商品の進化カード（ニョロゾ・カスミのスターミー・カメール・モココ・エーフィ）
               "ES1-017": ("ES1-016",), "QSG-015": ("QSG-014",), "GD2-014": ("GD2-013",), "IP2-003": ("IP2-016",), "NIP2-026": ("NIP2-018",),
-              "PF2-004": ("ES1-032",)}
+              "PF2-004": ("ES1-032",),
+              # v0.88: ランターン（neo1-040・neo3-026。チョンチー neo1-037 から）・スターミー（neo3-034。ヒトデマンから）
+              "neo1-040": ("neo1-037",), "neo3-026": ("neo1-037",), "neo3-034": (STARYU,)}
 
 
 class EvadedEffectCoinTest(unittest.TestCase):
@@ -765,7 +767,39 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         "どくばり", "どくばり", "でんきショック", "でんきショック", "しめつける", "しめつける", "しびれごな",
                                         # v0.75: カツラのガーディ（GD5-006）の「のしかかり」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
                                         # docs/search-energy-pokemon-v0.75.md）
-                                        "のしかかり"]))
+                                        "のしかかり",
+                                        # v0.76: マリル（PRN-028）の「とびのる」・パウワウ（ES2-006・QSG-017）の「れいとうビーム」・ピカチュウ（IP1-040）の「でんきショック」
+                                        # （ParalyzeOnHeads）・コンパン（ES3-004）の「サイケこうせん」（ConfuseOnHeads）。既存の型の登録だけなので、同じ T19b で止まる
+                                        # （docs/persistent-attack-modifiers-v0.76.md）
+                                        "とびのる", "れいとうビーム", "れいとうビーム", "でんきショック", "サイケこうせん",
+                                        # v0.77: neo 期の拡張パックのポケモンの「しびれごな」「へびにらみ」「バブルこうせん」「こおらせる」「ねんりき」（ParalyzeOnHeads）・
+                                        # 「サイケこうせん」「つのでまどわす」「ふしぎなこな」（ConfuseOnHeads）・「どくばり」2（PoisonOnHeads）。既存の型の登録だけなので、
+                                        # 同じ T19b で止まる（docs/neo-existing-effects-v0.77.md）
+                                        "しびれごな", "へびにらみ", "バブルこうせん", "こおらせる", "ねんりき", "サイケこうせん", "つのでまどわす", "ふしぎなこな",
+                                        "どくばり", "どくばり",
+                                        # v0.79: サンド（ES2-020・QSG-033）・ハリーセンの「どくばり」・デルビル（neo2-012）の「スモッグ」（PoisonOnHeads）、ゴース（ES3-022・QSG-028）の
+                                        # 「あんこく」・ネイティ（neo2-022）の「あやしいひかり」（ConfuseOnHeads）、ツボツボの「まきつく」・シードラ（neo1-029）の「あわ」・ヤドン
+                                        # （neo1-045）の「ねんりき」（ParalyzeOnHeads）。既存の型の登録だけなので、同じ T19b で止まる（docs/shared-checks-pokemon-reuse-v0.79.md）。
+                                        # サンドの「どくばり」はゴースト（抵抗力 闘）への最終ダメージが 0
+                                        "どくばり", "どくばり", "どくばり", "スモッグ", "あんこく", "あんこく", "あやしいひかり", "まきつく", "あわ", "ねんりき",
+                                        # v0.82: ライチュウ（neo3-025）の「でんきショック」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                        # docs/energy-discard-return-v0.82.md）
+                                        "でんきショック",
+                                        # v0.84: やさしいマリルリの「あわ」・やさしいプクリンの「のしかかり」（ParalyzeOnHeads。既存の型の登録だけ。
+                                        # docs/light-powers-evolution-v0.84.md）
+                                        "あわ", "のしかかり",
+                                        # v0.85: メガニウム（PF1-003・NIP1X-001）の「のしかかり」・メリープの「でんきショック」（ParalyzeOnHeads）、ベイリーフ（PF1-002）の
+                                        # 「どくのこな」（PoisonOnHeads）。既存の型の登録だけなので、同じ T19b で止まる（docs/entry-powers-energy-lifecycle-v0.85.md）
+                                        "のしかかり", "のしかかり", "でんきショック", "どくのこな",
+                                    # v0.86: ハピナス（neo3-052）の「のしかかり」（ParalyzeOnHeads）。既存の型の登録だけなので、同じ T19b で止まる
+                                    "のしかかり",
+                                    # v0.87: フリーザー（ES2-012・QSG-057。同じデータの組）の「れいとうビーム」（ParalyzeOnHeads）。既存の型の登録だけなので、同じ T19b で止まる
+                                    # （docs/movement-damage-reactions-v0.87.md 8 章）
+                                    "れいとうビーム", "れいとうビーム",
+                                    # v0.88: エリカのナゾノクサ（GD4-001）の「どくのこな」（PoisonOnHeads）・ランターン（neo1-040）の「まぶしいひかり」（ParalyzeOnHeads）・
+                                    # ランターン（neo3-026）の「アクアフラッシュ」・スターミー（neo3-034）の「あやしいひかり」（ConfuseOnHeads）。既存の型の登録だけなので、
+                                    # 同じ T19b で止まる（docs/type-energy-colors-v0.88.md 6.6 節）
+                                    "どくのこな", "まぶしいひかり", "アクアフラッシュ", "あやしいひかり"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}
@@ -779,7 +813,7 @@ class EvadedEffectCoinTest(unittest.TestCase):
                         self.assertIsNone(working_evasion_power(state, state.players[1].active.pokemon_id))
                         self.assertEqual(power_coins(apply_command(state, UseAttack(0, key.attack_index)).log), [])
                         continue
-                    if key.card_id in ("PMCG5-050", "ES2-026", "ES2-024", "QSG-037"):  # v0.72: イワークの「しめつける」10 も最終ダメージが 0
+                    if key.card_id in ("PMCG5-050", "ES2-026", "ES2-024", "QSG-037", "neo1-052", "ES2-020", "QSG-033"):  # v0.72: イワークの「しめつける」10 も最終ダメージが 0。v0.77: グライガー（闘）の「どくばり」10 も。v0.79: サンド（闘）の「どくばり」10 も
                         # v0.60: タケシのサンドパン（闘）の「とげボール」30 は、ゴースト（抵抗力 闘 -30）への最終ダメージが 0 なので「ダメージを受けなかった」（T21）。
                         # 「とうめい」はダメージの要素ではたらかず、受けないと決まっていないので、そのあとのどくのコインを投げる（T19b に当たらない。「おもて」なら、
                         # どくの要素を受ける前に「とうめい」のコインを投げる）。v0.70: サワムラー（闘）の「まわしげり」30 も同じ（マヒのコイン）

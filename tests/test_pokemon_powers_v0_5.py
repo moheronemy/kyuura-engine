@@ -156,11 +156,39 @@ SINKHOLE = PowerKey("PMCG4-043", 0)
 SCRAM = PowerKey("PMCG5-051", 0)
 FLEE = PowerKey("PMCG5-033", 0)  # v0.65: カスミのドククラゲの［にげこむ］
 BENCH_GUARD = PowerKey("PMCG5-055", 0)  # v0.65: タケシのサイドンの［ベンチガード］
-ALL_POWERS = (ENERGY_TRANS, ENERGY_BURN, RAIN_DANCE, BUZZAP, DAMAGE_SWAP, STRIKES_BACK, HEALING_POLLEN, SHIFT, MYSTERIOUS_WALL, PEEK, RETREAT_AID, IMMUNITY,
+ALL_POWERS = (# v0.87（docs/movement-damage-reactions-v0.87.md）: ［どくのたいえき］・［とおせんぼ］・［ぶんれつ］・［オーロラヴェール］・［マグネット］・［ショックボム］
+              PowerKey("ES1-005", 0), PowerKey("ES1-034", 0), PowerKey("ES2-003", 0), PowerKey("ES2-012", 0), PowerKey("ES2-014", 0), PowerKey("GD3-009", 0),
+              PowerKey("GD4-001", 0),  # v0.88（docs/type-energy-colors-v0.88.md）: こうごうせい
+              # v0.85（docs/entry-powers-energy-lifecycle-v0.85.md）: ［ハーブのかおり］（NIP1X-001）・［どしゃぶり］（NIP2X-001）・［ハーブのかおり］（PF1-003）・
+              # ［ファイヤーブースト］・［どしゃぶり］（PF1-009）・［ファイヤーレイズ］（並びはカード id の順）
+              PowerKey("NIP1X-001", 0), PowerKey("NIP2X-001", 0), PowerKey("PF1-003", 0), PowerKey("PF1-006", 0), PowerKey("PF1-009", 0),
+              # v0.86（docs/entry-energy-evolution-reactions-v0.86.md）: ［エナジーしんか］（PF2-005）・［はしりさる］
+              PowerKey("PF2-005", 0), PowerKey("PF2-008", 0), PowerKey("PF2-009", 0),
+              ENERGY_TRANS, ENERGY_BURN, RAIN_DANCE, BUZZAP, DAMAGE_SWAP, STRIKES_BACK, HEALING_POLLEN, SHIFT, MYSTERIOUS_WALL, PEEK, RETREAT_AID, IMMUNITY,
               CHEMICAL_GAS, COWARDICE, CLAIRVOYANCE, STRANGE_BEHAVIOR, TRANSPARENCY, CURSE, KABUTO_ARMOR, PREHISTORIC_POWER, TRANSFORM, STEP_IN, POLLEN_STENCH,
               STICKY_GOO, SNEAK_ATTACK, ALLERGIC_POLLEN, GATHER_FIRE, FINAL_BEAM, LONG_DISTANCE_HYPNOSIS, MATTER_EXCHANGE, REEL_IN, FRENZY, SINKHOLE, TRICKERY,
               EVOLUTIONARY_LIGHT, SUMMON_MINIONS, SOAK_UP, DEFENSIVE_POLLEN, SWEET_TRAP, SHAPESHIFT, REBIRTH, FLEE, REBELLION, ENERGY_CHARGE, SCRAM, BENCH_GUARD, STRANGE_BARRIER,
-              CALMING_AROMA, METAMORPHOSIS, ENERGY_DRAIN, NATURAL_CURE, FIRE_RECOVERY, GASEOUS_FORM, PSYLINK, GUTS, BOSS_CALL, RESTLESS_SLEEP, RUN_AWAY)
+              CALMING_AROMA, METAMORPHOSIS, ENERGY_DRAIN, NATURAL_CURE, FIRE_RECOVERY, GASEOUS_FORM, PSYLINK, GUTS, BOSS_CALL, RESTLESS_SLEEP, RUN_AWAY,
+              # v0.86: ［いやしのかぜ］・［ソーラーパワー］・［れんさしんか］
+              PowerKey("PR1-046", 0), PowerKey("PR1-053", 0),  # v0.87: ［もぐる］・［やみのちから］
+              PowerKey("PR1-056", 0), PowerKey("PR1-058", 0), PowerKey("PRN-024", 0),
+              PowerKey("QSG-023", 0), PowerKey("QSG-046", 0), PowerKey("QSG-057", 0),  # v0.87: ［マグネット］・［とおせんぼ］・［オーロラヴェール］（同じデータの組）
+              # v0.85: ［おいしげる］・［ファイヤーリチャージ］・［あばれんぼう］
+              PowerKey("neo1-014", 0), PowerKey("neo1-021", 0), PowerKey("neo1-033", 0),
+              PowerKey("neo1-040", 0),  # v0.88: ［すいりょくはつでん］
+              # v0.86: ［エナジーしんか］（neo2-049）・［おたけび］・［クリスタルボディ］・［いなびかり］・［タマゴうみ］・［とつぜんかみつく］
+              PowerKey("neo2-044", 0),  # v0.87: ［まきびし］（同じ行の下の neo3-009 は v0.87 の［やけのこり］）
+              PowerKey("neo2-049", 0), PowerKey("neo3-009", 0), PowerKey("neo3-010", 0), PowerKey("neo3-021", 0),
+              PowerKey("neo3-026", 0),  # v0.88: ［せんすい］
+              PowerKey("neo3-029", 0),
+              PowerKey("neo3-045", 0), PowerKey("neo3-051", 0),  # v0.88: ［でんじりょく］・［エナジーコンバーター］
+              PowerKey("neo3-052", 0), PowerKey("neo4-012", 0),
+              # v0.84（docs/light-powers-evolution-v0.84.md）: ［おいはらう］・［ふかふかなからだ］・［たすけだす］・［きせきのかぜ］・［おくりもの］
+              PowerKey("neo4-021", 0),
+              PowerKey("neo4-023", 0),  # v0.87: ［ヒートプレート］
+              PowerKey("neo4-041", 0),
+              PowerKey("neo4-046", 0),  # v0.86: ［かんでん］
+              PowerKey("neo4-077", 0), PowerKey("neo4-094", 0), PowerKey("neo4-095", 0))
 
 
 def _original_power_keys(registry):
@@ -273,7 +301,7 @@ class PowerRegistryTest(unittest.TestCase):
         # v0.69 は 68（拡張パック以外の商品の同じカードの新しい id 10。tests/helpers.py の V0_69_POWER_CARDS）
         # v0.71 は 74（拡張パック以外の商品の再録のカード 6。tests/helpers.py の V0_71_POWER_CARDS）
         self.assertEqual(tuple(k.card_id for k in DEFAULT_EFFECTS.power_keys() if k not in ALL_POWERS), tuple(sorted(V0_69_POWER_CARDS + V0_71_POWER_CARDS)))
-        self.assertIn("74 powers", repr(DEFAULT_EFFECTS))
+        self.assertIn("119 powers", repr(DEFAULT_EFFECTS))  # v0.88 で 5 を加えた  # v0.87 で 14 を加えた  # v0.86 で 12 を加えた
 
     def test_power_is_not_an_attack(self):
         """ポケモンパワーはワザ（AttackEffect）の一種ではない。識別子もワザ（AttackKey）とは別で、同じカードの同じ位置のワザ
@@ -392,7 +420,7 @@ class PowerRegistryTest(unittest.TestCase):
         removed = DEFAULT_EFFECTS.without_powers("e", DEFAULT_EFFECTS.power_keys())
         self.assertEqual((removed.power_keys(), removed.attack_keys(), removed.trainer_ids()),
                          ((), DEFAULT_EFFECTS.attack_keys(), DEFAULT_EFFECTS.trainer_ids()))
-        self.assertEqual(_original_power_keys(DEFAULT_EFFECTS.without_powers("f", [ENERGY_TRANS])), ALL_POWERS[1:])
+        self.assertEqual(_original_power_keys(DEFAULT_EFFECTS.without_powers("f", [ENERGY_TRANS])), tuple(k for k in ALL_POWERS if k != ENERGY_TRANS))  # v0.85 から、エナジートランスは並びの最初ではない
         # 元の登録表は変わらない
         self.assertEqual(_original_power_keys(DEFAULT_EFFECTS), ALL_POWERS)
 
@@ -575,7 +603,7 @@ class AtomicityTest(unittest.TestCase):
         self.assertEqual(new.energy_attached_by_powers_this_turn, 0)
         self.assertEqual(state_to_dict(new, format_version=9), {**full(new), "format_version": 9, "energy_attached_by_powers_this_turn": 0})
         with self.assertRaises(ValueError):
-            state_to_dict(new, format_version=23)  # v0.67 で 22、v0.63 で 21、v0.56 で 16、v0.57 で 17、v0.58 で 18、v0.59 で 19 を加えた。v0.5 では 10 がなかった。10 は v0.31（1 番に 1 回の特殊能力の使用・エナジーバーン）、11 は v0.44、12 は v0.47、13 は v0.48、14 は v0.49、15 は v0.50
+            state_to_dict(new, format_version=24)  # v0.88 で 23 を加えた  # v0.67 で 22、v0.63 で 21、v0.56 で 16、v0.57 で 17、v0.58 で 18、v0.59 で 19 を加えた。v0.5 では 10 がなかった。10 は v0.31（1 番に 1 回の特殊能力の使用・エナジーバーン）、11 は v0.44、12 は v0.47、13 は v0.48、14 は v0.49、15 は v0.50
 
     def test_invalid_powers_never_use_randomness(self):
         """拒否した使用は乱数を使わない（変異: 不正なコマンドで乱数が進む、を見つける）。受け付けた使用も乱数を使わない。"""

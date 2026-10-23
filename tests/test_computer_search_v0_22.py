@@ -134,7 +134,17 @@ class RegistrationTest(unittest.TestCase):
             with self.subTest(path=path.name):
                 text = path.read_text(encoding="utf-8")
                 self.assertNotIn(COMPUTER_SEARCH, text)
-                self.assertIsNone(re.search(r"DiscardFromHandThenSearchDeck|search_deck_to_hand|discard_from_hand", text))
+                self.assertIsNone(re.search(r"DiscardFromHandThenSearchDeck|discard_from_hand", text))
+                # v0.83: 山札から選んだカードを見せずに手札に加えるゾーンの関数 ``search_deck_to_hand`` は、ワザの要素（ひかるミュウの「フラッシュサーチ」。
+                # ``programs.LookTopTakeOne``）も使う（共通の関数。このカードの処理ではない）ので、programs.py のその要素の中の 1 か所だけを許す
+                uses = [m.start() for m in re.finditer(r"search_deck_to_hand\(", text)]
+                if path.name == "programs.py":
+                    start = text.index("class LookTopTakeOne(")
+                    end = text.find("\nclass ", start + 1)
+                    self.assertEqual(len(uses), 1)
+                    self.assertTrue(start < uses[0] < end)
+                else:
+                    self.assertEqual(uses, [])
 
 
 class UsableTest(Base):

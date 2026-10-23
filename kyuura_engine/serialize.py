@@ -102,6 +102,11 @@
 - 22: 21 に、最上位の ``face_down_cards``（うらにしてベンチに出したカードの uid の並び。マチスの秘策）を加えたもの（v0.67。docs/secret-plan-preflight-v0.67.md 7 章）。
   内部の完全な記録なので、場のポケモンの ``card_id``・``name``・``hp`` は本当のカードの値を書く（プレイヤーに渡すときは観測 ``observation.observe`` を使う）。形式 1〜21 は、
   うらのカードがあると ``ValueError``（なければ形式 1〜21 の書き出しは v0.66 と同じ）。
+  v0.86: 持続する効果の種類 ``"powers_stopped"``（わるいモココの「スタンウェーブ」）・``"bench_protection"``（エンテイ PF2-008 の「ほのおのまもり」）は共通の項目だけで、
+  形式 8 から書ける（形式は増やしていない）。反応の続き（決定の ``context`` の ``followup``・``reaction``）は既存の ``decision`` の項目で書く。
+- 23: 22 に、最上位の ``color_effects``（特殊能力で、この番が終わるまで色を変える効果。``{"kind", "player", "source", "source_card", "card_id", "power_index", "target",
+  "color", "turn", "left_play"}`` の並び。ランターンの［せんすい］・ポリゴン2の［エナジーコンバーター］）を加えたもの（v0.88。docs/type-energy-colors-v0.88.md 2 章）。形式 1〜22 は、
+  その効果があると ``ValueError``（なければ形式 1〜22 の書き出しは v0.87 と同じ）。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -174,6 +179,14 @@ from .state import (
     DoubledDamage,
     MaxHpSet,
     TailsDamageGuard,
+    ReflectShield,
+    StatusImmunityWhileActive,
+    ZeroDamageAtLeast,
+    BenchAttackDamageGuard,
+    AttackEffectGuard,
+    StatusImmunityNextTurn,
+    PowersStopped,
+    BenchProtection,
     NEXT_TURN_MULTIPLY,
     CannotUseAttack,
     CannotUseOwnAttack,
@@ -187,7 +200,7 @@ from .state import (
     WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -268,8 +281,17 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
         data["color"] = effect.color.value  # v0.48: 「テクスチャー1」「テクスチャー2」の変えた色
     elif isinstance(effect, MaxHpSet):
         data["amount"] = effect.amount  # v0.48: 「きょだいか」の最大HP
+    elif isinstance(effect, ReflectShield):
+        data["attack_index"] = effect.attack_index  # v0.83: 「リフレクトシールド」（相手に与えるダメージ）
+        data["amount"] = effect.amount
+    elif isinstance(effect, StatusImmunityWhileActive):
+        data["attack_index"] = effect.attack_index  # v0.84: 「きらめきタッチ」（効果を与えたワザと、それを使ったポケモンのカード）
+        data["given_by"] = effect.given_by
+    elif isinstance(effect, ZeroDamageAtLeast):
+        data["threshold"] = effect.threshold  # v0.84: 「パルスガード」
     elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive, HalvedDamage,
-                                         CannotUsePowers, CannotAttachEnergy, TailsDamageGuard, DoubledDamage)):
+                                         CannotUsePowers, CannotAttachEnergy, TailsDamageGuard, DoubledDamage, BenchAttackDamageGuard, AttackEffectGuard,
+                                         StatusImmunityNextTurn, PowersStopped, BenchProtection)):
         raise ValueError(f"書き出せない持続する効果 {effect!r}")
     # v0.49（形式 14）: ワザを印刷したカードの id（いちばん上のカードと違うときだけ。状態の書き出しの前に、形式 14 より古い形式では拒否している）
     for name in ("attack_card", "target_attack_card"):
@@ -451,6 +473,8 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         raise ValueError(f"形式 {format_version} は、一時的に置いておくカード・おもてのサイドを表せない（format_version=21 を使う）")
     if format_version < 22 and state.face_down_cards:
         raise ValueError(f"形式 {format_version} は、うらにしてベンチに出したカード（マチスの秘策）を表せない（format_version=22 を使う）")
+    if format_version < 23 and state.color_effects:
+        raise ValueError(f"形式 {format_version} は、特殊能力で色を変える効果（［せんすい］・［エナジーコンバーター］）を表せない（format_version=23 を使う）")
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
     if format_version == 1 and state.decision is not None and state.decision.resume == "attack":
@@ -561,7 +585,8 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
     if format_version >= 16:
         data["trainer_effects"] = [
             {"kind": e.kind, "player": e.player, "source_card": e.source_card, "card_id": e.card_id, "created_turn": e.created_turn,
-             "expires_turn": e.expires_turn}
+             "expires_turn": e.expires_turn, **({} if e.pokemon_id is None else {"pokemon_id": e.pokemon_id}),  # v0.80: 退化スプレーHYPER の禁止だけ
+             **({} if e.attack_index is None else {"attack_index": e.attack_index})}  # v0.87: ワザで与えた効果（ふしぎなガス）だけ
             for e in state.trainer_effects
         ]
     if format_version >= 17:
@@ -589,4 +614,10 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         data["face_up_prizes"] = list(state.face_up_prizes)
     if format_version >= 22:
         data["face_down_cards"] = list(state.face_down_cards)  # v0.67
+    if format_version >= 23:
+        data["color_effects"] = [
+            {"kind": e.kind, "player": e.player, "source": e.source, "source_card": e.source_card, "card_id": state.cards[e.source_card].card_id,
+             "power_index": e.power_index, "target": e.target, "color": e.color.value, "turn": e.turn, "left_play": e.left_play}
+            for e in state.color_effects
+        ]  # v0.88
     return data

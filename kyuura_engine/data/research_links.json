@@ -12,8 +12,8 @@
   "card_data_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 165,
-    "engine_stop_codes": 163,
+    "engine_unresolved_rulings": 202,
+    "engine_stop_codes": 200,
     "kyuura_issues": 71
   },
   "stop_codes": {
@@ -816,6 +816,17 @@
       ],
       "kyuura_issue": "UQ-EVOLUTION-HP-BELOW-DAMAGE",
       "kyuura_disposition": "issue"
+    },
+    "UNRESOLVED_MAX_HP_SET_AND_INCREASE": {
+      "engine_rulings": [
+        {
+          "version": "v0.81a",
+          "document": "docs/berry-maxhp-fixes-v0.81a.md",
+          "ruling_id": "MH2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     },
     "UNRESOLVED_TRANSFORM_ENERGY_COUNT": {
       "engine_rulings": [
@@ -1920,6 +1931,402 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_METAL_ENERGY_POWER_ORDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.78",
+          "document": "docs/darkness-metal-energy-v0.78.md",
+          "ruling_id": "MT1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER": {
+      "engine_rulings": [
+        {
+          "version": "v0.78",
+          "document": "docs/darkness-metal-energy-v0.78.md",
+          "ruling_id": "DE1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT": {
+      "engine_rulings": [
+        {
+          "version": "v0.79",
+          "document": "docs/shared-checks-pokemon-reuse-v0.79.md",
+          "ruling_id": "PK1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SUPER_ROD_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.80",
+          "document": "docs/neo-trainer-components-v0.80.md",
+          "ruling_id": "SRD1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TRAINER_UP_TO_ZERO_CHOICE": {
+      "engine_rulings": [
+        {
+          "version": "v0.80",
+          "document": "docs/neo-trainer-components-v0.80.md",
+          "ruling_id": "UPZ1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.80",
+          "document": "docs/neo-trainer-components-v0.80.md",
+          "ruling_id": "UPZ2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DECK_TOP_SHORT": {
+      "engine_rulings": [
+        {
+          "version": "v0.80",
+          "document": "docs/neo-trainer-components-v0.80.md",
+          "ruling_id": "TOP1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_HAND_TRAINER_LOCK_BORROW": {
+      "engine_rulings": [
+        {
+          "version": "v0.80",
+          "document": "docs/neo-trainer-components-v0.80.md",
+          "ruling_id": "TL1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DEVOLUTION_SPRAY_HYPER_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.80",
+          "document": "docs/neo-trainer-components-v0.80.md",
+          "ruling_id": "HY1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MOOMOO_MILK_UNDAMAGED_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.80",
+          "document": "docs/neo-trainer-components-v0.80.md",
+          "ruling_id": "MK1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ALL_PURPOSE_POWDER_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.80",
+          "document": "docs/neo-trainer-components-v0.80.md",
+          "ruling_id": "BP1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_HEALING_FIELD_WITHOUT_DAMAGE": {
+      "engine_rulings": [
+        {
+          "version": "v0.80",
+          "document": "docs/neo-trainer-components-v0.80.md",
+          "ruling_id": "HF1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POKEMON_CHECK_BERRY_ORDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.81",
+          "document": "docs/pokemon-tools-stadiums-v0.81.md",
+          "ruling_id": "BY1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_BALLOON_BERRY_FAILED_RETREAT": {
+      "engine_rulings": [
+        {
+          "version": "v0.81",
+          "document": "docs/pokemon-tools-stadiums-v0.81.md",
+          "ruling_id": "BB1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_FOCUS_BAND_TIMING": {
+      "engine_rulings": [
+        {
+          "version": "v0.81",
+          "document": "docs/pokemon-tools-stadiums-v0.81.md",
+          "ruling_id": "FB1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_REFLECT_SHIELD_TIMING": {
+      "engine_rulings": [
+        {
+          "version": "v0.83",
+          "document": "docs/shining-gentle-pokemon-v0.83.md",
+          "ruling_id": "RS1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ATTACK_DECK_TOP_SHORT": {
+      "engine_rulings": [
+        {
+          "version": "v0.83",
+          "document": "docs/shining-gentle-pokemon-v0.83.md",
+          "ruling_id": "LT1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_REFLECT_SHIELD_OVERLAP": {
+      "engine_rulings": [
+        {
+          "version": "v0.84",
+          "document": "docs/light-powers-evolution-v0.84.md",
+          "ruling_id": "RF1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MIRACULOUS_WIND_CONVERTED_ENERGY": {
+      "engine_rulings": [
+        {
+          "version": "v0.84",
+          "document": "docs/light-powers-evolution-v0.84.md",
+          "ruling_id": "WD1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MIRACULOUS_WIND_ENERGY_BURN": {
+      "engine_rulings": [
+        {
+          "version": "v0.84",
+          "document": "docs/light-powers-evolution-v0.84.md",
+          "ruling_id": "WD2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MIRACLE_ENERGY_AS_TYPE": {
+      "engine_rulings": [
+        {
+          "version": "v0.85",
+          "document": "docs/entry-powers-energy-lifecycle-v0.85.md",
+          "ruling_id": "MEC1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MIRACLE_ENERGY_UNDER_WIND": {
+      "engine_rulings": [
+        {
+          "version": "v0.85",
+          "document": "docs/entry-powers-energy-lifecycle-v0.85.md",
+          "ruling_id": "MEW1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_REACTION_AFTER_KNOCKOUT": {
+      "engine_rulings": [
+        {
+          "version": "v0.86",
+          "document": "docs/entry-energy-evolution-reactions-v0.86.md",
+          "ruling_id": "RA1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_REACTION_CONDITION_CHANGED": {
+      "engine_rulings": [
+        {
+          "version": "v0.86",
+          "document": "docs/entry-energy-evolution-reactions-v0.86.md",
+          "ruling_id": "RA2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES": {
+      "engine_rulings": [
+        {
+          "version": "v0.86",
+          "document": "docs/entry-energy-evolution-reactions-v0.86.md",
+          "ruling_id": "CV1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_HOWL_OUTSIDE_OWN_TURN": {
+      "engine_rulings": [
+        {
+          "version": "v0.86",
+          "document": "docs/entry-energy-evolution-reactions-v0.86.md",
+          "ruling_id": "OT1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_BOLT_DURING_OWN_ATTACK": {
+      "engine_rulings": [
+        {
+          "version": "v0.86",
+          "document": "docs/entry-energy-evolution-reactions-v0.86.md",
+          "ruling_id": "BT1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_PROTECTIVE_FLAME_SCOPE": {
+      "engine_rulings": [
+        {
+          "version": "v0.86",
+          "document": "docs/entry-energy-evolution-reactions-v0.86.md",
+          "ruling_id": "PL1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SOLAR_POWER_WITHOUT_CONDITION": {
+      "engine_rulings": [
+        {
+          "version": "v0.86",
+          "document": "docs/entry-energy-evolution-reactions-v0.86.md",
+          "ruling_id": "SO1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_HOT_PLATE_FACE_DOWN": {
+      "engine_rulings": [
+        {
+          "version": "v0.87",
+          "document": "docs/movement-damage-reactions-v0.87.md",
+          "ruling_id": "HP1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_STRANGE_GAS_NEW_POKEMON": {
+      "engine_rulings": [
+        {
+          "version": "v0.87",
+          "document": "docs/movement-damage-reactions-v0.87.md",
+          "ruling_id": "MG1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_STRANGE_GAS_PROTECTED_POKEMON": {
+      "engine_rulings": [
+        {
+          "version": "v0.87",
+          "document": "docs/movement-damage-reactions-v0.87.md",
+          "ruling_id": "MG2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POWER_DAMAGE_PREVENTED": {
+      "engine_rulings": [
+        {
+          "version": "v0.87",
+          "document": "docs/movement-damage-reactions-v0.87.md",
+          "ruling_id": "SB1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_COLOR_EFFECT_CONTINUATION": {
+      "engine_rulings": [
+        {
+          "version": "v0.88",
+          "document": "docs/type-energy-colors-v0.88.md",
+          "ruling_id": "CE1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_COLOR_REPLACEMENT_ORDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.88",
+          "document": "docs/type-energy-colors-v0.88.md",
+          "ruling_id": "CE2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_COLOR_CHANGED_ENERGY_CARD": {
+      "engine_rulings": [
+        {
+          "version": "v0.88",
+          "document": "docs/type-energy-colors-v0.88.md",
+          "ruling_id": "CE3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -2377,7 +2784,9 @@
       "PMCG3-022/attack/0": "LD-PMCG3-022-ATK0"
     },
     "registered_without_kyuura_record": [
-      "PMCG5-033/power/0"
+      "PMCG5-033/power/0",
+      "GD3-009/power/0",
+      "ES1-005/power/0"
     ],
     "kyuura_records_not_registered": [],
     "note": "登録した最新の説明（play_text_ja）を持つワザ・特殊能力（カード id/種類/位置）と kyuura の記録の対応。registered は kyuura の最新の説明（LD-）の id。recorded_in_card_checks は、印刷の文面と同じ最新の説明を kyuura が照合の記録（CC-）に書いたもの（照合した欄の文面、またはデータの誤りの資料の値がエンジンの最新の説明と同じ。kyuura は文面が同じ最新の説明を LD- にしない）。card_checks_without_text は、照合の記録はあるが、ワザの文面を照合した欄に入れていないもの（ドードーのみだれづき。図版の版が決まらない）。registered_without_kyuura_record は kyuura に記録のない登録（2026-10-15 の kyuura の取り込みのあとは空になった。v0.27 でストライクの「つるぎのまい」（PMCG2-017/attack/0。p.56・p.321。2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（「2倍」）だけで、最新の説明（「「60」になる」）の LD- はない）を加えた。v0.28 で、既存の効果の型の登録だけで加えたラプラス（PMCG3-022。p.116）・スターミー（PMCG1-026。p.112）・カイロス（PMCG2-018。p.58）・タマタマ（PMCG2-006。p.49）・プリン（PMCG2-035。p.225）・ラッキー（PMCG1-068。p.235）・スリープ（PMCG1-045。p.164）・シェルダー（PMCG3-012。p.103）の説明文のあるワザ 13 を加えた（2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（cards.json）だけで、LD-・CC- はない）。kyuura への報告事項）。文面の一致は scripts/check_research_links.py が kyuura の研究の基準のコミットで確かめる。adopted_printed_text（2026-10-15 からの方針。docs/card-data-policy.md）は、kyuura データの採用（kyuura_engine/data/card_sources.json）で、処理に使う文面を kyuura の印刷の文面（data/cards.json）にした登録（研究の基準のコミットに、その対象の LD- がないもの。LD- があれば registered に挙げ、最新の説明にしたがう）。エンジンが原典と照合した記録ではない（registered_without_kyuura_record とは別）。v0.29 で、既存の効果の型で加えたポケモン 14 枚の説明文のあるワザ 14 を加えた。errata_text（v0.30）は、kyuura のエラッタの記録（ERR-・TXT-・RUL-。data/rule_history.json の errata）を処理に使う文面にした登録（登録の出典がその id。文面は記録の notes の引用と同じ）。記録の cards にないカードに記録の範囲として当てはめるものは errata_scope に、当てはめる文（scope_quote）・処理に使う文面（play_text_quote）・印刷の文面（printed_text。記録が挙げるカードのワザと同じ）・対象を書く。v0.30 で、エネルギーをトラッシュしてダメージを与えるワザ 4（ヒトカゲの「ひのこ」・リザード／ウインディ／ブーバーの「かえんほうしゃ」）をerrata_text に、ウインディの「とっしん」・第4弾のポニータの「ひのこ」を adopted_printed_text に加えた。difference_text（v0.31）は、処理に使う文面を kyuura の data/curation/card_differences.json の記録（確度: 確実）の最新の説明にした登録（LD- はない。kyuura への報告事項）。v0.31 でピッピの「ゆびをふる」、v0.42 でカイリューの［かけつける］（PMCG3-043/power/0）を加えた。user_corrected_text（v0.68）は、利用者が示した修正（scripts/extract_kyuura_cards.py の USER_PROVIDED_CORRECTIONS。kyuura の記録ではない）を当てはめた写しの説明文を処理に使う文面にした登録（ガルーラの「こどものおつかい」。研究の基準のコミットの kyuura の文面は修正の前の値のまま。kyuura への報告事項）。engine_simplified_text（v0.68）は、エンジンの簡略化した仕様を処理に使う文面にした登録（イマクニ？のドードー。公式の裁定・エラッタではない）",
@@ -3054,7 +3463,364 @@
       "PR1-007/attack/0",
       "PR1-008/attack/0",
       "PRN-032/attack/0",
-      "PRN-032/attack/1"
+      "PRN-032/attack/1",
+      "GD3-011/attack/0",
+      "ES1-007/attack/0",
+      "ES1-007/attack/1",
+      "QSG-005/attack/0",
+      "QSG-005/attack/1",
+      "ES1-015/attack/0",
+      "QSG-013/attack/0",
+      "IP2-018/attack/0",
+      "PRN-028/attack/0",
+      "PRN-028/attack/1",
+      "ES1-013/attack/0",
+      "QSG-007/attack/0",
+      "ES1-028/attack/0",
+      "QSG-041/attack/0",
+      "ES2-006/attack/0",
+      "ES2-006/attack/1",
+      "QSG-017/attack/0",
+      "QSG-017/attack/1",
+      "IP1-040/attack/0",
+      "IP1-040/attack/1",
+      "PF1-001/attack/0",
+      "PR1-006/attack/1",
+      "ES3-004/attack/0",
+      "ES3-004/attack/1",
+      "ES2-021/attack/0",
+      "QSG-035/attack/0",
+      "PF1-004/attack/0",
+      "PF1-004/attack/1",
+      "PRN-003/attack/0",
+      "PRN-003/attack/1",
+      "PRN-008/attack/0",
+      "PRN-008/attack/1",
+      "PRN-011/attack/0",
+      "PRN-011/attack/1",
+      "IP2-026/attack/0",
+      "IP2-026/attack/1",
+      "neo1-006/attack/0",
+      "neo1-006/attack/1",
+      "neo1-012/attack/0",
+      "neo1-012/attack/1",
+      "neo1-024/attack/0",
+      "neo1-024/attack/1",
+      "neo1-026/attack/0",
+      "neo1-026/attack/1",
+      "neo1-027/attack/0",
+      "neo1-028/attack/0",
+      "neo1-031/attack/1",
+      "neo1-035/attack/0",
+      "neo1-035/attack/1",
+      "neo1-039/attack/1",
+      "neo1-047/attack/0",
+      "neo1-047/attack/1",
+      "neo1-051/attack/0",
+      "neo1-052/attack/0",
+      "neo1-059/attack/0",
+      "neo1-060/attack/0",
+      "neo1-062/attack/0",
+      "neo1-062/attack/1",
+      "neo1-064/attack/0",
+      "neo1-064/attack/1",
+      "neo1-066/attack/0",
+      "neo2-001/attack/0",
+      "neo2-003/attack/0",
+      "neo2-013/attack/1",
+      "neo2-020/attack/0",
+      "neo2-037/attack/1",
+      "neo2-047/attack/0",
+      "neo3-001/attack/1",
+      "neo3-002/attack/0",
+      "neo3-003/attack/1",
+      "neo3-012/attack/0",
+      "neo3-013/attack/1",
+      "neo3-038/attack/1",
+      "neo4-001/attack/1",
+      "neo4-007/attack/0",
+      "neo4-009/attack/1",
+      "neo4-027/attack/0",
+      "neo4-028/attack/0",
+      "neo4-029/attack/0",
+      "neo4-030/attack/0",
+      "neo4-048/attack/0",
+      "neo4-049/attack/0",
+      "neo4-049/attack/1",
+      "neo4-072/attack/0",
+      "neo4-075/attack/0",
+      "neo4-075/attack/1",
+      "neo1-056/attack/0",
+      "neo1-056/attack/1",
+      "neo1-057/attack/1",
+      "neo1-058/attack/0",
+      "neo1-058/attack/1",
+      "neo2-039/attack/1",
+      "neo2-045/attack/0",
+      "neo2-045/attack/1",
+      "neo4-081/attack/0",
+      "neo4-081/attack/1",
+      "NIP1X-005/attack/1",
+      "NIP2X-005/attack/1",
+      "ES2-020/attack/0",
+      "ES2-020/attack/1",
+      "QSG-033/attack/0",
+      "QSG-033/attack/1",
+      "ES3-022/attack/0",
+      "ES3-022/attack/1",
+      "QSG-028/attack/0",
+      "QSG-028/attack/1",
+      "GD1-005/attack/0",
+      "GD3-012/attack/0",
+      "GD5-001/attack/0",
+      "GD6-007/attack/0",
+      "GD6-007/attack/1",
+      "NIP1-013/attack/1",
+      "PF3-003/attack/0",
+      "PF3-003/attack/1",
+      "PR1-010/attack/0",
+      "PR1-010/attack/1",
+      "PR1-064/attack/0",
+      "PRN-014/attack/0",
+      "PRN-014/attack/1",
+      "SI-012/attack/1",
+      "SI-014/attack/0",
+      "SI-014/attack/1",
+      "SI-017/attack/0",
+      "neo1-001/attack/0",
+      "neo1-001/attack/1",
+      "neo1-002/attack/1",
+      "neo1-003/attack/0",
+      "neo1-003/attack/1",
+      "neo1-007/attack/0",
+      "neo1-007/attack/1",
+      "neo1-013/attack/0",
+      "neo1-016/attack/0",
+      "neo1-016/attack/1",
+      "neo1-025/attack/0",
+      "neo1-025/attack/1",
+      "neo1-029/attack/0",
+      "neo1-029/attack/1",
+      "neo1-034/attack/1",
+      "neo1-036/attack/0",
+      "neo1-036/attack/1",
+      "neo1-037/attack/0",
+      "neo1-037/attack/1",
+      "neo1-043/attack/0",
+      "neo1-045/attack/0",
+      "neo1-045/attack/1",
+      "neo1-046/attack/1",
+      "neo2-010/attack/0",
+      "neo2-010/attack/1",
+      "neo2-012/attack/0",
+      "neo2-012/attack/1",
+      "neo2-017/attack/0",
+      "neo2-017/attack/1",
+      "neo2-022/attack/0",
+      "neo2-029/attack/1",
+      "neo2-035/attack/0",
+      "neo2-035/attack/1",
+      "neo2-038/attack/0",
+      "neo2-038/attack/1",
+      "neo3-008/attack/1",
+      "neo3-011/attack/0",
+      "neo3-011/attack/1",
+      "neo3-011/attack/2",
+      "neo3-015/attack/0",
+      "neo3-015/attack/1",
+      "neo3-016/attack/0",
+      "neo3-017/attack/0",
+      "neo3-017/attack/1",
+      "neo3-018/attack/0",
+      "neo3-018/attack/1",
+      "neo3-027/attack/1",
+      "neo3-048/attack/1",
+      "neo4-014/attack/0",
+      "neo4-031/attack/0",
+      "neo4-071/attack/0",
+      "neo4-085/attack/0",
+      "neo4-087/attack/0",
+      "neo4-087/attack/1",
+      "neo4-089/attack/0",
+      "neo4-089/attack/1",
+      "neo4-092/attack/0",
+      "neo4-092/attack/1",
+      "neo1-018/attack/0",
+      "neo1-018/attack/1",
+      "PRN-007/attack/0",
+      "PRN-007/attack/1",
+      "PRN-010/attack/0",
+      "PRN-010/attack/1",
+      "ES3-011/attack/1",
+      "QSG-010/attack/1",
+      "ES3-012/attack/0",
+      "QSG-012/attack/0",
+      "QSG-011/attack/0",
+      "QSG-011/attack/1",
+      "IP1-003/attack/0",
+      "IP1-003/attack/1",
+      "PR1-062/attack/1",
+      "neo3-025/attack/0",
+      "neo3-025/attack/1",
+      "neo1-041/attack/0",
+      "neo1-041/attack/1",
+      "neo1-072/attack/0",
+      "neo4-025/attack/0",
+      "neo4-019/attack/0",
+      "neo4-019/attack/1",
+      "PR1-071/attack/0",
+      "PF1-005/attack/0",
+      "PF1-005/attack/1",
+      "neo3-014/attack/1",
+      "neo3-022/attack/0",
+      "neo3-022/attack/1",
+      "PRN-046/attack/0",
+      "PRN-046/attack/1",
+      "neo3-023/attack/0",
+      "neo3-023/attack/1",
+      "neo4-013/attack/0",
+      "neo4-013/attack/1",
+      "neo4-047/attack/0",
+      "neo4-068/attack/0",
+      "neo4-068/attack/1",
+      "neo4-080/attack/0",
+      "neo4-080/attack/1",
+      "neo4-084/attack/0",
+      "neo4-098/attack/0",
+      "PRN-044/attack/0",
+      "PRN-044/attack/1",
+      "neo4-004/attack/0",
+      "neo4-006/attack/0",
+      "neo4-006/attack/1",
+      "neo4-032/attack/0",
+      "neo4-032/attack/1",
+      "neo4-034/attack/0",
+      "neo4-034/attack/1",
+      "neo4-045/attack/0",
+      "neo4-045/attack/1",
+      "neo4-054/attack/0",
+      "neo4-054/attack/1",
+      "neo4-093/attack/0",
+      "neo4-093/attack/1",
+      "ES1-014/attack/0",
+      "ES1-014/attack/1",
+      "neo4-010/attack/0",
+      "neo4-010/attack/1",
+      "neo4-018/attack/0",
+      "neo4-018/attack/1",
+      "neo4-021/attack/0",
+      "neo4-033/attack/0",
+      "neo4-033/attack/1",
+      "neo4-040/attack/0",
+      "neo4-040/attack/1",
+      "neo4-041/attack/0",
+      "neo4-043/attack/0",
+      "neo4-043/attack/1",
+      "neo4-074/attack/0",
+      "neo4-074/attack/1",
+      "neo4-077/attack/0",
+      "neo4-090/attack/0",
+      "neo4-090/attack/1",
+      "neo4-094/attack/0",
+      "neo4-095/attack/0",
+      "neo4-021/power/0",
+      "neo4-041/power/0",
+      "neo4-077/power/0",
+      "neo4-094/power/0",
+      "neo4-095/power/0",
+      "neo1-009/attack/0",
+      "neo1-009/attack/1",
+      "neo1-014/attack/0",
+      "neo1-014/power/0",
+      "neo1-021/attack/0",
+      "neo1-021/power/0",
+      "neo1-033/attack/0",
+      "neo1-033/power/0",
+      "neo1-038/attack/0",
+      "neo1-038/attack/1",
+      "PF1-002/attack/0",
+      "PF1-002/attack/1",
+      "PF1-003/attack/0",
+      "PF1-003/power/0",
+      "NIP1X-001/attack/0",
+      "NIP1X-001/power/0",
+      "PF1-006/attack/0",
+      "PF1-006/power/0",
+      "PF1-008/attack/1",
+      "PF1-009/attack/0",
+      "PF1-009/power/0",
+      "NIP2X-001/attack/0",
+      "NIP2X-001/power/0",
+      "PF2-009/attack/0",
+      "PF2-009/power/0",
+      "neo2-049/power/0",
+      "PF2-005/power/0",
+      "PRN-024/power/0",
+      "neo3-010/attack/0",
+      "neo3-010/power/0",
+      "neo3-029/attack/0",
+      "neo3-029/power/0",
+      "neo3-052/attack/0",
+      "neo3-052/power/0",
+      "PR1-056/attack/0",
+      "PR1-056/power/0",
+      "PF2-008/attack/0",
+      "PF2-008/power/0",
+      "neo4-012/attack/0",
+      "neo4-012/power/0",
+      "neo4-044/attack/0",
+      "neo4-044/attack/1",
+      "neo4-046/attack/0",
+      "neo4-046/power/0",
+      "neo3-021/attack/0",
+      "neo3-021/power/0",
+      "PR1-058/attack/0",
+      "PR1-058/power/0",
+      "neo2-044/attack/0",
+      "neo2-044/power/0",
+      "neo3-009/attack/0",
+      "neo3-009/power/0",
+      "neo4-023/attack/0",
+      "neo4-023/power/0",
+      "GD3-009/attack/0",
+      "ES2-003/attack/0",
+      "ES2-003/power/0",
+      "ES2-014/attack/0",
+      "ES2-014/power/0",
+      "QSG-023/attack/0",
+      "QSG-023/power/0",
+      "PR1-053/attack/0",
+      "PR1-053/power/0",
+      "ES2-012/attack/0",
+      "ES2-012/power/0",
+      "QSG-057/attack/0",
+      "QSG-057/power/0",
+      "PR1-046/attack/0",
+      "PR1-046/power/0",
+      "ES1-034/attack/0",
+      "ES1-034/power/0",
+      "QSG-046/attack/0",
+      "QSG-046/power/0",
+      "neo1-040/attack/0",
+      "neo1-040/power/0",
+      "neo3-026/attack/0",
+      "neo3-026/power/0",
+      "neo3-051/attack/0",
+      "neo3-051/power/0",
+      "GD4-001/attack/0",
+      "GD4-001/power/0",
+      "neo3-034/attack/0",
+      "neo3-034/attack/1",
+      "SI-004/attack/0",
+      "PF3-007/attack/0",
+      "neo3-045/attack/0",
+      "neo3-045/power/0",
+      "ES1-033/attack/0",
+      "ES1-033/attack/1",
+      "QSG-045/attack/0",
+      "QSG-045/attack/1",
+      "PR1-023/attack/0",
+      "PR1-023/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

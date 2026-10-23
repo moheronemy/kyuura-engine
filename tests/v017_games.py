@@ -26,6 +26,7 @@ from kyuura_engine.continuous import goop_gas_effects  # v0.59
 from kyuura_engine.effects import GOOP_GAS_SCOPE_CODE, blaine_effects, energy_attach_block, energy_unit_count  # v0.59
 from kyuura_engine.effects import retreat_trap_powers, scram_slots  # v0.61
 from kyuura_engine.effects import POKEMON_TOWER_TRAINER_CODE, discard_to_hand_suppressor  # v0.74
+from kyuura_engine.effects import STRANGE_GAS_SCOPE_CODE, retreat_guards, strange_gas_effects  # v0.87
 from kyuura_engine.persistent import cannot_retreat, powers_use_prevented
 from tests.helpers import GIOVANNIS_MACHAMP, HAUNTER, MACHAMP, MUK, ROCKETS_MOLTRES
 from tests.test_alakazam_games_v0_7 import POWER_REJECTIONS
@@ -167,6 +168,24 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                     turn_tried.add(("max_hp_drop_card", card) if card is not None and card in state.players[command.player].hand
                                    else ("max_hp_drop_command", command))
                     continue
+                if error.code in (STRANGE_GAS_SCOPE_CODE, "POWER_SUPPRESSED") and strange_gas_effects(state, command.player) \
+                        and not isinstance(command, UseAttack):
+                    # v0.87: ドガースの「ふしぎなガス」の効果がはたらいている側で、特殊能力を持つポケモンを場に出す・進化させる（MG1）・特殊能力を使う（止まっている）。
+                    # 場から確かめる（その側にふしぎなガスがはたらいている）。同じカード・操作を繰り返さない
+                    kind = type(command).__name__
+                    observed[f"stopped_{kind}_{error.code}"] += 1
+                    card = getattr(command, "card", None)
+                    turn_tried.add(("max_hp_drop_card", card) if card is not None and card in state.players[command.player].hand
+                                   else ("max_hp_drop_command", command))
+                    continue
+                if error.code == "UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES" and sum(
+                        state.cards[p.card].card_id == "neo4-046" for pl in state.players for p in pl.in_play()) >= 2:
+                    # v0.86 の CV1（わるいデンリュウの［かんでん］の発生源が 2 匹以上）。v0.87 の組で手札からつける通常の操作に当たった。場から確かめる。同じ操作を繰り返さない
+                    kind = type(command).__name__
+                    observed[f"stopped_{kind}_{error.code}"] += 1
+                    turn_tried.add(("attack_index", command.attack_index) if kind == "UseAttack" else ("max_hp_drop_card", getattr(command, "energy", None))
+                                   if kind == "AttachEnergy" else ("max_hp_drop_command", command))
+                    continue
                 if error.code in V061_CODES and v061_stop_expected(state, command, error.code):
                     # v0.61: ［おとしあな］の時点（SH1）・［ずらかる］の時点（SC1）・力がもどる時（SC2）・バトル場は穴だらけ!のダメージの変更（TD1）。場から確かめる
                     # （［おとしあな］・［ずらかる］を持つポケモンが場にいる、バトル場は穴だらけ!を使う）。同じ操作を繰り返さない
@@ -274,7 +293,8 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                     continue
                 if isinstance(command, Retreat) and error.code == "RETREAT_PREVENTED":
                     # v0.36: 「にげる」ことができない効果（アイスバーン・わしづかみ）を受けたポケモン。場から確かめる（エネルギー・コインの前に拒否）
-                    if cannot_retreat(state, state.players[command.player].active) is None:
+                    # v0.87: 相手のバトル場の［とおせんぼ］（カビゴン）も
+                    if cannot_retreat(state, state.players[command.player].active) is None and not retreat_guards(state, command.player):
                         raise AssertionError(f"「にげる」ことができない効果がないのに RETREAT_PREVENTED: {command}")
                     observed["stopped_retreat_RETREAT_PREVENTED"] += 1
                     turn_tried.add("retreat")
@@ -330,9 +350,11 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                     continue
                 if isinstance(command, EvolvePokemon) and error.code == "EVOLUTION_PREVENTED":
                     # v0.47: はたらいている［げんしのちから］（プテラ）。場から確かめる（重ねる前に拒否）
-                    if not evolution_preventers(state):
+                    # v0.80: 退化スプレーHYPER でその番に退化させたポケモン（evolution_ban）も、同じコードで拒否する
+                    banned = any(record.kind == "evolution_ban" and record.pokemon_id == command.target for record in state.trainer_effects)
+                    if not evolution_preventers(state) and not banned:
                         raise AssertionError(f"進化できなくする特殊能力がはたらいていないのに EVOLUTION_PREVENTED: {command}")
-                    observed["stopped_evolve_EVOLUTION_PREVENTED"] += 1
+                    observed["stopped_evolve_EVOLUTION_PREVENTED_ban" if banned else "stopped_evolve_EVOLUTION_PREVENTED"] += 1
                     turn_tried.update({"evolution_prevented", "evolve", "evolve2"})
                     continue
                 if isinstance(command, EvolvePokemon):

@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.75）
+# 実装状況（v0.1〜v0.88）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3637,3 +3637,260 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | もろばバサミ（次の相手の番、受けるワザのダメージは 8 段階で 2 倍） | 実装済み・テスト済み（トレーナーのダメージは TD1、特殊能力のダメージは DB1 で止める） | 印刷の文面と GR-2000-P321-DAMAGE-ORDER | 同 `DoubleEdgedTest` |
 | `SEARCH_DECK`・`ATTACH_FROM_DECK` の選べるものの数を相手の観測に見せない | 実装済み・テスト済み | 見えない情報の扱い（意図した変更） | 同 `RegistrationTest.test_observation_tables`・tests/log_audit.py |
 | 15 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は pcg-search.com の転記） | — |
+
+## v0.76: 拡張パック以外の商品の、持続する効果・ワザの使用の制限を中心とするポケモン 24 枚
+
+[persistent-attack-modifiers-v0.76.md](persistent-attack-modifiers-v0.76.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 24 枚（`pool_v0_76`。kyuura の `new_effect_needed` のポケモン）・ワザ 48・同じデータの 7 組（15 枚）の共有 | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面（kyuura データの採用） | test_persistent_attack_modifiers_v0_76.py `RegistrationTest` |
+| 指定したワザの 2 倍・3 倍（きあいだめ・ウォーターパワー。p.321 の 2 段階） | 実装済み・テスト済み | 印刷の文面と GR-2000-P321-DAMAGE-ORDER（v0.35 の型） | 同 `MultiplyNextTurnTest` |
+| 説明のあるワザを「30」にする（はずむ。とびのるのマヒのコインは残す） | 実装済み・テスト済み | 印刷の文面（v0.27 の型に `target_text`） | 同 `SetNextTurnWithEffectTest` |
+| なきごえ（相手に与える効果。2 段階で −10。期限は次の相手の番の終わり） | 実装済み・テスト済み（控えへのダメージは NK5 で止める） | 印刷の文面と GR-2000-P321-DAMAGE-ORDER・GR-2000-P322-PERSISTENT-EFFECTS | 同 `GrowlTest` |
+| ドわすれ・かなしばり（コインの「おもて」で選ぶ。選ぶのはワザを使ったプレイヤー） | 実装済み・テスト済み（「ワザをうけない」相手は HC3） | 印刷の文面（v0.35・v0.49 の型） | 同 `OpponentAttackLockTest` |
+| きあいいっぱつ（1 枚のコインで、どつくの 2 倍か、どつくだけを使えない） | 実装済み・テスト済み | 印刷の文面 | 同 `FocusPunchTest` |
+| にらみつける・しっぽをふる（コインの「おもて」で、発生源がバトル場にいる間ワザを使えない。最大HPの条件なし） | 実装済み・テスト済み（同じ番に発生源がもどる場面は SG1） | 印刷の文面（v0.40 の型） | 同 `LockWhileSourceActiveTest` |
+| ガーディ IP2-026（とびかかる・ひのこ） | 実装済み・テスト済み | v0.75 のガーディと同じ登録（RUL-ENERGY-DISCARD-ATTACKS） | 同 `GrowlitheAndOthersTest` |
+| まねるワザでの、次の自分の番の効果・ドわすれ・かなしばり | エンジンの未対応（`UNSUPPORTED_COPIED_ATTACK`。状態を変える前に拒否） | 既存の制限のまま | 同 `test_copied_effects_are_rejected_before_state_changes` |
+| 24 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は pcg-search.com の転記） | — |
+
+## v0.77: neo 期の拡張パックの対象化と、既存の効果の型で表せる 52 枚
+
+[neo-existing-effects-v0.77.md](neo-existing-effects-v0.77.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 52 枚（`pool_v0_77`。neo1〜neo4。ポケモン 50・ワザ 77・トレーナー 2） | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面（kyuura データの採用。既存の効果の型） | test_neo_existing_effects_v0_77.py `RegistrationTest` |
+| 前の版のカードと同じデータの 7 枚の共有 | 実装済み・テスト済み | 写しの日本語のゲーム用データが同じ | 同 `test_same_data_cards_share_one_registration` |
+| 商品をまたぐ進化の系統（ポポッコ・ヌオー・キングドラ・オオタチ・ニョロボン）とポケモン育て屋さん | 実装済み・テスト済み | 名前の完全一致と段階（GR-2000-P310-EVOLUTION） | 同 `EvolutionLineTest` |
+| にらみつける・ドわすれ・りゅうのたつまき・じしん・じたばた・かかとおとし・スピードスター・みずでっぽう | 実装済み・テスト済み（既存の型） | 印刷の文面と既存の型の記録 | 同 `LeerAndAmnesiaTest`・`TwisterTest`・`OtherRepresentativesTest` |
+| スーパーポケモン回収・マサキの転送装置（neo1） | 実装済み・テスト済み（v0.73 の型と同じ値） | 印刷の文面 | 同 `ScoopUpAndTeleporterNeoTest`・`TrainerTest` |
+| `CoinFlipDamage` の確かめが説明のコインの枚数を照らす | 実装済み・テスト済み（処理は変えていない） | 登録の照合 | 同 `test_parameters_are_the_cards_own` |
+| neo を含む全対象（1,377）の未対応の数（全対象 499・neo 271・拡張パック以外 228） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `test_unsupported_counts_with_neo_in_scope` |
+| ハガネール neo1-057（鋼が必要）・ベイビィ・アンノーン・ひかるポケモン・新しい特殊エネルギー | 未対応（今回の範囲の外） | — | — |
+| 52 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は nazonobasho.com・ポケモンWiki の転記） | — |
+
+## v0.78: 悪・鋼エネルギーと、「悪」「鋼」エネルギーを使うポケモン 8 枚
+
+[darkness-metal-energy-v0.78.md](darkness-metal-energy-v0.78.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 特殊エネルギー 5 枚（悪エネルギー neo1-094・PRN-002・NIP2X-010、鋼エネルギー neo1-095・NIP1X-010） | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面（kyuura データの採用） | test_darkness_metal_energy_v0_78.py `RegistrationTest`・`UnitsAndPaymentTest` |
+| ポケモン 8 枚・ワザ 16（新しい型 4・引数を加えた型 2） | 実装済み・テスト済み | 印刷の文面 | 同 `RegistrationTest`・`AttackEffectTest` |
+| ワザのダメージの悪エネルギー（5 段階 +10。対戦ポケモンだけ）・鋼エネルギー（7 段階 -10、「鋼」でないなら 5 段階 -10） | 実装済み・テスト済み | GR-2000-P321-DAMAGE-ORDER・kyuura card_differences の neo1-095（日本語の範囲） | 同 `AttackDamageTest` |
+| NIP1X-010 のワザでないダメージの -10（特殊能力・どく・トレーナー・スタジアム・特殊エネルギー・悪エネルギーのダメージ） | 実装済み・テスト済み（受けるダメージを変える特殊能力と順番で量が変わるなら MT1 で止める） | 印刷の文面（「ダメージを受けるとき」） | 同 `NonAttackDamageTest` |
+| ポケモンチェックの悪エネルギー（10 ダメージ・ダメージカウンター 1 個。「悪」「わるい」は受けない） | 実装済み・テスト済み（DE1・ベンチガード・VS1・両方のきぜつ・SC1 で止める） | GR-2000-P323-POKEMON-CHECK・GR-2000-P320-COUNTER-MOVE | 同 `PokemonCheckTest` |
+| 同じ名前 4 枚・基本エネルギーではない・PF3-009 のこうそくいどうを鋼エネルギーで払える | 実装済み・テスト済み | GR-2000-P308-SAME-NAME | 同 `test_same_name_limit_and_not_basic`・`test_pf3_skarmory_can_now_pay_metal` |
+| 未対応の数（全対象 486・neo 263・拡張パック以外 223） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `test_unsupported_counts` |
+| MT1（`UNRESOLVED_METAL_ENERGY_POWER_ORDER`）・DE1（`UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER`） | 裁定が未解決（止める） | 記録で決まらない | 同 `test_metal_and_received_power_order_is_unresolved`・`test_kabuto_armor_is_unresolved` |
+| 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は nazonobasho.com・ポケモンWiki・pcg-search.com の転記） | — |
+| リサイクルエネルギー・ミラクルエネルギー・ベイビィ・ひかるポケモン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.79: v0.78 の共通処理の修正と、ポケモン 52 枚
+
+[shared-checks-pokemon-reuse-v0.79.md](shared-checks-pokemon-reuse-v0.79.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| ポケモンチェックの 1 と 2 のあいだのきぜつで、2 の問い合わせが変わる盤面（PK1。`UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT`） | 裁定が未解決（止める。変わらない盤面は v0.78 と同じ） | GR-2000-P323-POKEMON-CHECK の順番だけでは決まらない | test_shared_checks_pokemon_reuse_v0_79.py `MidCheckKnockoutTest` |
+| DE1・KA1・RB4・EX1・TD1 を、鋼エネルギー（NIP1X-010）を含めた最終の量で比べる | 実装済み・テスト済み（どの読み方でも同じ量なら止めない。問いそのものは未解決のまま） | 印刷の文面（鋼エネルギーは説明のとおり当てはめる） | 同 `FinalAmountTest` |
+| ポケモン 52 枚・ワザ 94（既存の型 81・組み合わせの型 11（13 のワザ）） | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面（kyuura データの採用） | 同 `RegistrationTest` と組み合わせごとのテスト |
+| 持続する効果 `prevent_attack_damage`（ワザによるダメージだけを受けない。トレーナーのダメージは受ける） | 実装済み・テスト済み | 印刷の文面（neo1-036 のこうそくいどう） | 同 `PreventAttackDamageTest` |
+| ワザの失敗のあとも処理する要素（メタルクラッシュの次の自分の番の使用の禁止） | 実装済み・テスト済み | 印刷の文面（PRN-014） | 同 `MetalCrushTest` |
+| `CoinBonusDamageAndParalyze`・`DamageThenDiscardAllOnTails` の文面の確かめ（あやしいおどり・ファイヤーテールを受け付けない） | 実装済み・テスト済み | 印刷の文面 | 同 `test_wrong_reuses_are_rejected` |
+| 未対応の数（全対象 434・neo 227・拡張パック以外 207） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `test_unsupported_counts` |
+| 52 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は pcg-search.com・nazonobasho.com・ポケモンWiki の転記） | — |
+| リサイクルエネルギー・ミラクルエネルギー・ベイビィ・ひかるポケモン・GD5-007／IP2-032 のウィンディ・NIP1X-004 | 未対応（今回の範囲の外） | — | — |
+
+## v0.80: v0.79 の共通処理の修正（A・B）と、トレーナー 30 枚
+
+[neo-trainer-components-v0.80.md](neo-trainer-components-v0.80.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| A: PK1 の確かめで、2 の前にバトル場に出しうる控えを出してから比べる（出し方のすべての組。対戦が終わりうる読み方も） | 実装済み・テスト済み（PK1 の裁定は未解決のまま） | GR-2000-P323-POKEMON-CHECK の順番だけでは決まらない | test_neo_trainer_components_v0_80.py `MidCheckReplacementTest` |
+| B: ワザが失敗しても処理する要素を、失敗のコインが決める要素に数えない | 実装済み・テスト済み（「ダメージを受けない」相手は既存の `UNRESOLVED_PREVENTED_COIN_DAMAGE`。3 つの先読みの方法・両方のコインの面） | 印刷の文面（PRN-014） | 同 `FailureSurvivingElementTest` |
+| エフェクトガード（相手のワザのダメージ以外の効果を受けない。コインの前の確かめでダメージと効果を別々に） | 実装済み・テスト済み（両方が無効なら既存の HC3） | 印刷の文面（ES2-033） | 同 `EffectGuardCoinTableTest` |
+| 手札から出して使うことの禁止（ウツギはかせ・タイムカプセル・ポケモンギア。次の相手の番の終わりまで。スタジアム・ついているカードは止めない） | 実装済み・テスト済み | 印刷の文面 | 同 `HandTrainerLockTest` |
+| 錯乱ジムで、手札から出して使うことの禁止を受けているプレイヤーがかわりに使う（TL1） | 裁定が未解決（使うを選ぶと止める） | 記録で決まらない | 同 `test_borrowing_under_a_hand_lock_is_tl1` |
+| 退化スプレーHYPER（その番の進化の禁止 `EVOLUTION_BAN`） | 実装済み・テスト済み（ほかの効果で退化したポケモンの DV2 は未解決のまま） | 印刷の文面 | 同 `DevolutionSprayHyperTest` |
+| トレーナー 30 枚（スタジアム 4 枚） | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面（kyuura データの採用） | 同 `RegistrationTest` とカードごとのテスト |
+| SRD1・UPZ1・UPZ2・TOP1・HY1・MK1・BP1・HF1 | 裁定が未解決（止める） | 記録で決まらない | 同 カードごとのテスト |
+| 未対応の数（全対象 404・neo 202・拡張パック以外 202） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistrationTest` |
+| 30 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は nazonobasho.com・ポケモンWiki・pcg-search.com の転記） | — |
+| ポケモンのどうぐ・ベイビィ・ひかるポケモン・リサイクルエネルギー・ミラクルエネルギー・GD5-007／IP2-032 のウィンディ・NIP1X-004 | 未対応（今回の範囲の外） | — | — |
+
+## v0.81: ポケモンのどうぐ 11 枚・ピントレンズ・常にはたらくスタジアム 3 枚と、v0.80 の修正
+
+[pokemon-tools-stadiums-v0.81.md](pokemon-tools-stadiums-v0.81.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 手札・山札の中身から選ぶ決定 7 種類の選べるものの数を、決めるプレイヤーでない人の観測に見せない（`HIDDEN_COUNT_KINDS`） | 実装済み・テスト済み | 見えない情報（v0.63 の形） | test_pokemon_tools_stadiums_v0_81.py `HiddenCountTest` |
+| v0.80 の文書の誤り 3 点（エネルギーアークのコインの枚数・メタルクラッシュの比べ・SRD1 の条件）の訂正 | 直した（文書だけ） | v0.80 の実装とテスト | 同 `DocCorrectionTest` |
+| ポケモンのどうぐの共通の処理（共通の文の 2 通りの書き方・1 匹に 1 枚まで・有効期限なし・つけられるポケモンがいなければ TR1） | 実装済み・テスト済み | 印刷の文面 | 同 `RegistrationTest`・`ToolCommonTest` |
+| きのみ・おうごんのみ・きせきのみ（ポケモンチェックの 1） | 実装済み・テスト済み | 印刷の文面・GR-2000-P323-POKEMON-CHECK | 同 `BerryTest` |
+| 悪エネルギーの効果ときのみの順番で結果が変わる（BY1） | 裁定が未解決（止める） | 記録で決まらない | 同 `test_darkness_energy_and_berry_order_stops_only_when_it_matters` |
+| ふうせんのみ（「にげる」の数を 0。にげたらトラッシュ。ほかの増減とは CP2） | 実装済み・テスト済み | 印刷の文面 | 同 `BalloonAndBumpyTest` |
+| こんらん状態でふうせんのみのあるポケモンの「にげる」（BB1） | 裁定が未解決（止める） | 記録で決まらない | 同 `test_confused_retreat_with_balloon_is_bb1` |
+| きあいのハチマキ（きぜつの判定の窓。コインの「おもて」で残りHP 10） | 実装済み・テスト済み | 印刷の文面 | 同 `FocusBandTest` |
+| きあいのハチマキのコインを投げる時点で結果が変わる（FB1） | 裁定が未解決（止める） | 記録で決まらない | 同 `test_effect_after_damage_is_fb1` |
+| はんげきのツメ（「ダメージを受けたとき」の効果の窓。ダメージカウンター 2 個。勝ち負けが変わるそろってのきぜつは C18） | 実装済み・テスト済み | 印刷の文面・GR-2000-P320-COUNTER-MOVE | 同 `CounterClawTest` |
+| 学習装置（きぜつの判定の窓の任意の決定 `exp_all_energy`） | 実装済み・テスト済み | 印刷の文面 | 同 `ExpAllTest` |
+| ピントレンズ（相手の対戦ポケモンへのワザのダメージで抵抗力を計算しない。使った番の終わりにトラッシュ） | 実装済み・テスト済み | 印刷の文面 | 同 `DamageStadiumAndLensTest` |
+| マダツボミのとう（「無色」ポケモンのワザのダメージを 6 段階で -30。こんらんの 20 は既存の問いで止める） | 実装済み・テスト済み | 印刷の文面・GR-2000-P321-DAMAGE-ORDER | 同 `DamageStadiumAndLensTest` |
+| ロケット団のアジト（「わるい」ポケモンの最大HP + 20） | 実装済み・テスト済み | 印刷の文面 | 同 `test_hideout_raises_max_hp_of_dark_pokemon` |
+| でこぼこジム（たねポケモンの「にげる」の数 + 1） | 実装済み・テスト済み | 印刷の文面 | 同 `test_bumpy_gym_adds_one_to_basic_only` |
+| 未対応の数（全対象 389・neo 191・拡張パック以外 198） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistrationTest` |
+| 15 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は nazonobasho.com・ポケモンWiki・pcg-search.com の転記） | — |
+| ベイビィ・ひかるポケモン・リサイクルエネルギー・ミラクルエネルギー・GD5-007／IP2-032 のウィンディ・NIP1X-004 | 未対応（今回の範囲の外） | — | — |
+
+## v0.81a: 回復したあとの場での判断と、最大HPの到達しうる組み合わせの修正
+
+[berry-maxhp-fixes-v0.81a.md](berry-maxhp-fixes-v0.81a.md)。新しいカードはない。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| ポケモンチェックの 1 の悪エネルギーの効果・きのみを、決まらない順番の読み方ごとに、処理する時点の場で判断する（A: 回復で［へんしん］がもどって対象が変わる → BY1） | 直した・テスト済み | GR-2000-P323-POKEMON-CHECK・印刷の文面 | test_berry_maxhp_fixes_v0_81a.py `DarknessTargetAfterCureTest` |
+| 2 の「どく」の KA1 を 1 のあとの場で判断する（B: 回復でかがくへんかガスがもどる）・ちがうポケモンの効果どうしも BY1 で比べる | 直した・テスト済み | 同 | 同 `GasReturnsAfterCureTest` |
+| きのみの回復で最大HPがのっているダメージ以下に下がる（C）を、状態を変える前に MH1 で止める | 直した・テスト済み | v0.48 の MH1 | 同 `MaxHpDropAfterCureTest` |
+| 最大HPを決まった数にする効果と大きくする効果が同時にはたらく（MH2。v0.81 は `RuntimeError`） | 裁定が未解決（止める） | 記録で決まらない | 同 `HideoutAndGrowTest`・`HideoutAndGrowOtherPathsTest` |
+| ログの監査の観測と照らす最大HPに、ロケット団のアジトの + 20 | 直した・テスト済み | 印刷の文面 | 同 `LogAuditHideoutTest` |
+| BY1・KA1・MH1・PK1・DE1・SC1 の問いそのもの | 裁定が未解決（止める。変えていない） | 記録で決まらない | 前の版のテスト |
+
+## v0.82: 場からトラッシュに置かれたエネルギーカードの共通の処理と、リサイクルエネルギー・エコロジム・ポケモン 18 枚
+
+[energy-discard-return-v0.82.md](energy-discard-return-v0.82.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| きのみどうしで、回復でかがくへんかガス・［へんしん］がもどってほかのポケモンの問い合わせが変わる場合も、並べ方を比べて BY1（v0.81a の修正の漏れ） | 直した・テスト済み | v0.81a の BY1・MH1 | test_berry_order_v0_82.py `BerryVersusBerryOrderTest` |
+| 比べるきのみが 3 つより多い場（`UNSUPPORTED_BERRY_ORDER_LIMIT`） | 未対応（エンジンの制限。止める） | — | 同 `test_too_many_interacting_berries_halt_as_unsupported` |
+| 場のエネルギーカードをトラッシュに置くすべての経路の共通の処理（原因・使ったプレイヤーの記録、置いたあとのもどし） | 実装済み・テスト済み | 印刷の文面 | test_energy_discard_return_v0_82.py `RecycleEnergyTest`・`EcogymTest` |
+| リサイクルエネルギー（「無色」1 個。どの原因でも場からトラッシュに置かれたら持ち主の手札へ。ポケモンタワーで消えない） | 実装済み・テスト済み | 印刷の文面（日本語の説明） | 同 `RecycleEnergyTest` |
+| エコロジム（相手のワザ・特殊能力・トレーナーでトラッシュされた「無色」以外のエネルギーカード。きぜつ・にげる・自分の効果は当たらない） | 実装済み・テスト済み | 印刷の文面・GR-2000-P323-KNOCKOUT | 同 `EcogymTest` |
+| エコロジムで［へんしん］のメタモンの無色の特殊エネルギー（TE2） | 裁定が未解決（止める） | v0.58 の TE2 | 同 `test_transformed_ditto_colorless_special_energy_is_te2` |
+| ひかるリザードンのルール文（そのカードの名前のデッキの上限 1 枚） | 実装済み・テスト済み | 印刷の文面 | 同 `ShiningCharizardDeckTest` |
+| ポケモン 18 枚のワザ 33（同じデータの 3 組 7 枚は同じ登録の値） | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面 | 同 `RegistrationTest`・`SparkTest` ほか |
+| `DiscardEnergyThenDamage`・`DiscardAllThenCoinDamage`・`DamageThenMoveOneEnergyToBench` の確かめを全文で照らす | 直した・テスト済み | 印刷の文面 | 同 `TightenedChecksTest` |
+| 未対応の数（全対象 369・neo 182・拡張パック以外 187） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistrationTest` |
+| 20 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
+| ベイビィ・ほかのひかるポケモン・ミラクルエネルギー・GD5-007／IP2-032 のウィンディ・NIP1X-004 | 未対応（今回の範囲の外） | — | — |
+
+## v0.83: エコロジムとリサイクルエネルギーの不要な TE2 の修正と、ひかるポケモン 10 枚・やさしいポケモン 7 枚・ギャロップ
+
+[shining-gentle-pokemon-v0.83.md](shining-gentle-pokemon-v0.83.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| エコロジムの場で、リサイクルエネルギーなら［へんしん］のメタモンについていても TE2 で止めない（結果が変わるカードだけ止める。選ばせる決定では選べるが選ぶと止める） | 直した・テスト済み | v0.82 の共通の処理・v0.58 の TE2 | test_shining_gentle_v0_83.py `EcogymRecycleTe2Test` |
+| 無色2個エネルギー（リサイクルエネルギーでない無色の特殊エネルギー）のエコロジムの TE2 | 裁定が未解決（止める） | v0.58 の TE2 | 同 `test_dce_alone_is_still_te2` |
+| ひかるポケモン 10 枚のルール文（名前ごとにデッキに 1 枚まで） | 実装済み・テスト済み | 印刷の文面 | 同 `ShiningDeckLimitTest` |
+| 「おたがいのプレイヤーは、それぞれ、…」のワザの共通の進み方（それぞれ自分が決める。見えない情報・選べるものの数を漏らさない） | 実装済み・テスト済み | 印刷の文面 | 同 `EachPlayerDrawTest`・`RecoveryFromDiscardTest`・`WebbingTest` |
+| その順番（ワザを使ったプレイヤー → 相手） | 実装上の順番（研究の論点） | 説明は順番を書かない | 同 |
+| リフレクトシールド（持続する効果 `reflect_shield`。20 はダメージの要素のあとの窓） | 実装済み・テスト済み | 印刷の文面・CR-COUNTERATTACK-TIMING | 同 `ShiningMewtwoTest` |
+| RS1（20 を与えるまでにダメージを与えたポケモンのダメージが変わる）・LT1（山札の上 3 枚を見るワザで山札が 3 枚より少ない） | 裁定が未解決（止める） | — | 同 `BoundaryTest`・`WebbingTest` |
+| ポケモン 18 枚のワザ 33（同じデータの 2 組は同じ登録の値） | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面 | 同 `RegistryTest` ほか |
+| 未対応の数（全対象 351・neo 167・拡張パック以外 184） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistryTest` |
+| 18 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
+| ベイビィ・ほかのひかるポケモン・ほかのやさしいポケモン・ミラクルエネルギー・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.84: リフレクトシールド・みずかきの修正と、やさしいポケモン 12 枚・ポケモン育て屋夫婦
+
+[light-powers-evolution-v0.84.md](light-powers-evolution-v0.84.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| リフレクトシールドの「おもて」の 20 を、ワザの途中の決定・状態の保存（複製・deepcopy・pickle）をまたいで運ぶ（A1） | 直した・テスト済み | v0.34 の送る効果の持ち方（決定の続きの情報） | test_light_powers_evolution_v0_84.py `ReflectShieldCarryTest` |
+| リフレクトシールドと、かげぶんしん・「とうめい」が同じポケモンに重なる（RF1。状態を変える前・コインの前に止める）（A2） | 裁定が未解決（止める） | — | 同 `ReflectShieldOverlapTest` |
+| みずかき・おくりもの・しんかのうた・ポケモン育て屋夫婦は、見えない山札の中身で決定の有無・数を変えない（A3） | 直した・テスト済み | — | 同 `FlipperStrokeLeakTest`・`GiftTest`・`EvolutionSongTest`・`BreederCoupleTest` |
+| ポケモン育て屋夫婦（選んだポケモンごとのコイン・直接進化する進化カードをさがす・同じカードを 2 度選ばない・いつも切る） | 実装済み・テスト済み | 印刷の文面 | 同 `BreederCoupleTest` |
+| きらめきタッチ・こおりのはしら・パルスガード・ひかりのはどう（持続する効果 4 種類） | 実装済み・テスト済み | 印刷の文面・GR-2000-P321-DAMAGE-ORDER | 同 `GlitterTouchTest`・`ProtectionTest` |
+| むかえび・やまにかえす・バブルジャンプ・つきくずす・てんしのキッス・やさしいほのお・やさしいキック・せいけんづき・サンダーニードル | 実装済み・テスト済み | 印刷の文面 | 同 `WelcomeFireTest` ほか |
+| バブルジャンプの「効果はすべてなくなる」をダメージ以外の効果と読む | 実装上の読み方 | 説明の「ダメージ以外の効果」の使い方 | 同 `BubbleJumpTest` |
+| ［おいはらう］・［ふかふかなからだ］・［たすけだす］（ベンチで進化させたときだけ）・［おくりもの］ | 実装済み・テスト済み | 印刷の文面 | 同 `DriveOffTest`・`FluffyWoolTest`・`TagTeamTest`・`GiftTest` |
+| しんかのうた（おたがいのプレイヤーが自分のポケモンを山札のカードで進化させる。進化の制限は通常どおり） | 実装済み・テスト済み | 印刷の文面・GR-2000-P310-EVOLUTION | 同 `EvolutionSongTest` |
+| おたがいのプレイヤーの順番（ワザを使ったプレイヤー → 相手） | 実装上の順番（研究の論点） | 説明は順番を書かない | 同 |
+| ［きせきのかぜ］（場の特殊エネルギーを「無色」1 個にして効果をなくす。特殊エネルギーの効果を問い合わせる 1 か所で答える） | 実装済み・テスト済み | 印刷の文面 | 同 `MiraculousWindTest` |
+| WD1（［エネエネ］のカード）・WD2（エナジーバーンの特殊エネルギー） | 裁定が未解決（止める） | — | 同 |
+| ポケモン 12 枚のワザ 19・特殊能力 5・トレーナー 1 | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面 | 同 `RegistryTest` |
+| 未対応の数（全対象 338・neo 154・拡張パック以外 184） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistryTest` |
+| 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
+| ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.88: ポケモンのタイプとエネルギーの色を変える特殊能力、色を選ぶ・数えるワザの 11 枚
+
+[type-energy-colors-v0.88.md](type-energy-colors-v0.88.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| v0.85 の 6 か所の `is_face_down` の引数（場にうらのカードがあると `AttributeError`） | 実装済み・テスト済み | 不具合の修正 | test_type_energy_colors_v0_88.py `FaceDownArgumentRegressionTest` |
+| v0.87 の［ぶんれつ］の決定の観測（`DECK_REVEALING_KINDS`・監査の一覧） | 実装済み・テスト済み | 不具合の修正 | 同 `SplitObservationRegressionTest` |
+| きぜつのあとの記録を読み飛ばす確かめ（「ふしちょう」とリサイクルエネルギー・［せんすい］の `target_gone`） | 実装済み・テスト済み | 不具合の修正 | 同 `KnockOutBookkeepingRegressionTest` |
+| 色を変える効果の記録（`GameState.color_effects`。形式 23。番の終わり・ねむり・マヒ・こんらん・発生源がはなれたら消える） | 実装済み・テスト済み | 印刷の文面 | 同 `SubmergeTest`・`EnergyConverterTest`・`SerializationTest` |
+| 色の層（印刷の色・エネルギーの今の色と個数・今のタイプ。「「X」エネルギー」と「「X」エネルギーカード」） | 実装済み・テスト済み | 印刷の文面 | 同 `EnergyConverterTest`・`PhotosynthesisTest`・`RainbowBurnTest` |
+| ［すいりょくはつでん］（ワザの宣言といっしょ）・［せんすい］・［エナジーコンバーター］・こうごうせい・［でんじりょく］ | 実装済み・テスト済み | 印刷の文面 | 同 `HydroelectricTest`・`SubmergeTest`・`EnergyConverterTest`・`PhotosynthesisTest`・`MagneticForceTest` |
+| コアストリーム・レインボーウェーブ・レインボーバーン・テクスチャー2・テクスチャーマジック・デルタビーム・プラズマ・3Dアタック | 実装済み・テスト済み | 印刷の文面 | 同 `CoreStreamTest`・`RainbowWaveTest`・`RainbowBurnTest`・`TextureTest`・`OtherAttacksTest` |
+| CE1・CE2・CE3 | 裁定が未解決（読み方で結果が変わるときだけ止める） | — | 同 |
+| 色の読み方の組が 256 を超える支払い | エンジンの未対応（`UNSUPPORTED_COLOR_READINGS_LIMIT`） | — | — |
+| 未対応の数（全対象 286・neo 132・拡張パック以外 154） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistrationTest` |
+| 11 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
+
+## v0.87: 場の移動・ダメージへの反応と、控えの保護・「にげる」の禁止のポケモン 14 枚
+
+[movement-damage-reactions-v0.87.md](movement-damage-reactions-v0.87.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 場の移動の事実と反応の段（`movement.py`。同じ時点の順番・ワザの途中の段・トレーナーの決定をもどす段） | 実装済み・テスト済み | GR-2000-P325-SAME-TIMING | test_movement_damage_reactions_v0_87.py `SpikesTest`・`MagmaPoolTest`・`AttackTest` |
+| ［まきびし］・［やけのこり］・［ヒートプレート］（爆発ジムとの順番。登場時のダメージのきぜつ） | 実装済み・テスト済み | 印刷の文面 | 同 `SpikesTest`・`MagmaPoolTest`・`HotPlateTest` |
+| ［ショックボム］（Z9 は最終の量で比べる）・［どくのたいえき］・［ぶんれつ］（要素のあいだの任意の決定） | 実装済み・テスト済み | v0.10 の読取記録（p.20・p.138）・印刷の文面 | 同 `ShockBlastTest`・`PoisonFluidTest`・`SplitTest` |
+| ［マグネット］・［やみのちから］（育て屋さんの使用中に相手のバトル場が空く） | 実装済み・テスト済み | 印刷の文面・v0.43 の場に出たときの特殊能力 | 同 `MagnetTest`・`DarkPowerTest` |
+| ［オーロラヴェール］・［もぐる］・［とおせんぼ］ | 実装済み・テスト済み | 印刷の文面 | 同 `AuroraVeilTest`・`DigUnderTest`・`GuardTest` |
+| ワザ 14（こうそくスピン・ふしぎなガス・ねころぶなど）と `DamageAndSelfSleep` の全文の検査 | 実装済み・テスト済み | 印刷の文面 | 同 `AttackTest`・`TextCheckTest` |
+| 要素のあいだの決定のあとに、前のダメージの結果を読む要素（続きの情報 `damage_results`） | 実装済み・テスト済み | 対戦の検証で見つけた内部エラーの修正 | 同 `SplitTest` |
+| HP1・MG1・MG2・SB1 | 裁定が未解決（止める） | — | 同 |
+| 未対応の数（全対象 297・neo 137・拡張パック以外 160） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistrationTest` |
+| 14 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
+
+## v0.86: 登場・エネルギー・進化への反応 13 枚
+
+[entry-energy-evolution-reactions-v0.86.md](entry-energy-evolution-reactions-v0.86.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 同じ時点の反応の順番（番のプレイヤーが決める）と、決定をまたぐ続き（`followup`） | 実装済み・テスト済み | GR-2000-P325-SAME-TIMING | test_entry_energy_evolution_reactions_v0_86.py `SameTimingTest` |
+| ［エナジーしんか］・［れんさしんか］（山札から進化。通常の進化の制限。候補がなくても決定を出す） | 実装済み・テスト済み | 印刷の文面・GR-2000-P310-EVOLUTION | 同 `EnergyEvolutionTest`・`ChainReactionTest`・`MoreRoutesTest` |
+| ［おたけび］（今回トラッシュした炎だけ。使用中のトレーナーを使い終えてから番を終える） | 実装済み・テスト済み | 印刷の文面・v0.31 の HC6 | 同 `HowlTest` |
+| ［タマゴうみ］・［いやしのかぜ］・［とつぜんかみつく］（育て屋さんの使用中のきぜつのあと、トレーナーにもどる） | 実装済み・テスト済み | 印刷の文面・v0.43 の場に出たときの特殊能力 | 同 `EntryHealDamageTest` |
+| ［いなびかり］（かならずはたらく。相手が控えを選ぶ。つける前の特殊状態）・［かんでん］（特殊能力のダメージ 10） | 実装済み・テスト済み | 印刷の文面 | 同 `LightningBurstTest`・`ConductivityTest` |
+| ［はしりさる］・ほのおのまもり・［クリスタルボディ］・［ソーラーパワー］ | 実装済み・テスト済み | 印刷の文面・v0.80 のエフェクトガードの窓 | 同 `BoltTest`・`ProtectiveFlameTest`・`CrystalBodyTest`・`SolarPowerTest` |
+| ワザ 14（ダークドレイン・こうしゅうは・スタンウェーブ・ショックボルト・ぐれんのほのお・オーロラウェーブ・ほのおのまもりなど） | 実装済み・テスト済み | 印刷の文面 | 同 `AttackTest`・`TextCheckTest` |
+| RA1・RA2・CV1・OT1・BT1・PL1・SO1 | 裁定が未解決（止める） | — | 同 |
+| ワザの途中に手札からつけたときの［いなびかり］・［かんでん］（`UNSUPPORTED_ENERGY_REACTION_DURING_ATTACK`） | エンジンの未対応（止める） | — | — |
+| 未対応の数（全対象 311・neo 140・拡張パック以外 171） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistrationTest` |
+| 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
+| ランターン・ポリゴン2 の色の変換、でんせつのからだ、ベイビィ・アンノーン、ひかるバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン、所有権の交換・相棒・保留のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.85: 進化したときの特殊能力・エネルギーを動かす特殊能力のポケモン 13 枚と、ミラクルエネルギー
+
+[entry-powers-energy-lifecycle-v0.85.md](entry-powers-energy-lifecycle-v0.85.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| ［あばれんぼう］（かならずはたらく。手札から重ねる進化のあと。山札が足りなければ重ねる前に HC6） | 実装済み・テスト済み | 印刷の文面・v0.31 の HC6 | test_entry_powers_energy_lifecycle_v0_85.py `BerserkTest` |
+| ［ハーブのかおり］・［ファイヤーブースト］（場に出たときに使える） | 実装済み・テスト済み | 印刷の文面・v0.43 の場に出たときの特殊能力 | 同 `HerbalScentTest`・`FireBoostTest` |
+| ［おいしげる］（「草」エネルギーカードを「草」2 個ぶん。決まらないカードは支払い・個数が変わるときだけ止める） | 実装済み・テスト済み | 印刷の文面・v0.78 のエネルギーの単位 | 同 `WildGrowthTest` |
+| ［ファイヤーリチャージ］・［どしゃぶり］・［ファイヤーレイズ］ | 実装済み・テスト済み | 印刷の文面 | 同 `FireRechargeTest`・`DownpourTest`・`FireRaiseTest` |
+| ［どしゃぶり］の 1 回の使用で 1 枚 | 実装上の読み方 | NIP2X-001 の文面の「1枚選び」 | 同 `DownpourTest` |
+| せいでんき・あまいかおり・いかりのキバ・しんぴのこな・かえんぐるま・まきこむ・ぎゃくりゅう・ほのおのうず | 実装済み・テスト済み | 印刷の文面・RUL-ENERGY-DISCARD-ATTACKS | 同 `StaticElectricityTest`・`AttackTest` |
+| ミラクルエネルギー（すべての色 2 個ぶん・つける先の制限・番の終わりのトラッシュ・「ひかる」「やさしい」でなくなったときのトラッシュ） | 実装済み・テスト済み | 印刷の文面・v0.82 の共通の処理 | 同 `MiracleEnergyTest` |
+| ミラクルエネルギーを「「X」エネルギー(カード)」として数える・選ぶ（MEC1） | 裁定が未解決（止める） | — | 同 |
+| ［きせきのかぜ］の間のミラクルエネルギーのトラッシュの時・つけること（MEW1） | 裁定が未解決（止める） | — | 同 |
+| 決定を待つ間にミラクルエネルギーのトラッシュの時が来る（`UNSUPPORTED_MIRACLE_ENERGY_DURING_EFFECT`） | エンジンの未対応（止める） | — | — |
+| ポケモン 13 枚のワザ 17・特殊能力 9・特殊エネルギー 1 | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面 | 同 `RegistrationTest` |
+| 未対応の数（全対象 324・neo 148・拡張パック以外 176） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistrationTest` |
+| 14 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
+| ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |

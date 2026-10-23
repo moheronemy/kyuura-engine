@@ -186,6 +186,18 @@ QUESTIONS: dict[str, Question] = {
         Question("shift_color_duration", "UNRESOLVED_SHIFT_COLOR_DURATION", ("VS1",), 10,
                  "モルフォンの［へんしょく］で変えた色が、使った番のあと・バトル場からベンチにもどったあと・この力が消えている（ねむり・マヒ・こんらん状態・"
                  "かがくへんかガス）あいだも続くかは、印刷の文面（効果の期限を書かない）・kyuura の記録から決められず、変えた色と印刷の色で結果が変わる"),
+        # v0.88（docs/type-energy-colors-v0.88.md 4 章）: 特殊能力で色を変える効果（［せんすい］・［エナジーコンバーター］）とこうごうせい
+        Question("color_effect_continuation", "UNRESOLVED_COLOR_EFFECT_CONTINUATION", ("CE1",), 10,
+                 "［せんすい］・［エナジーコンバーター］の「この番が終わるまで」の効果が、使ったあとに力が消えた・発生源が場をはなれた・発生源のカードが変わった・色を変えた"
+                 "エネルギーカードが場をはなれてもう一度ついたあとも続くかは、印刷の文面・kyuura の記録（CR-CHEMICAL-GAS-PRIOR-RESULTS は消える前にすませた結果のもの）から"
+                 "決められず、続く読み方と続かない読み方で結果が変わる"),
+        Question("color_replacement_order", "UNRESOLVED_COLOR_REPLACEMENT_ORDER", ("CE2",), 10,
+                 "同じエネルギー・同じポケモンの色を、続いてはたらく 2 つの効果が違う色にする（エナジーコンバーターとこうごうせい・エナジーバーン、こうごうせいと［きせきのかぜ］、"
+                 "［せんすい］と［へんしょく］）とき、どちらの色になるかは、印刷の文面・kyuura の記録（GR-2000-P325-SAME-TIMING は続いてはたらく置きかえの優先を決めない）から"
+                 "決められない"),
+        Question("color_changed_energy_card", "UNRESOLVED_COLOR_CHANGED_ENERGY_CARD", ("CE3",), 10,
+                 "エナジーコンバーター・こうごうせいで「エネルギー」の色が変わったエネルギーカードが、説明の「「○」エネルギーカード」（カードとしての色。「基本エネルギー"
+                 "カード」の色を含む）に当たるかは、印刷の文面・kyuura の記録（エナジーバーンの同じ問い UQ-ENERGY-BURN-TRANSFER も未解決）から決められない"),
         Question("change_absent_weakness_resistance", "UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE", ("PG1",), 10,
                  "弱点（抵抗力）を持たないポケモンの弱点（抵抗力）を「好きな「色」にかえる」効果（ポリゴンの「テクスチャー1」「テクスチャー2」）で、弱点（抵抗力）を新しく"
                  "持たせるのか、何もしないのか（抵抗力なら引く数も）は、印刷の文面・kyuura の記録から決められない（英語版の「If the Defending Pokémon has a Weakness」は"
@@ -202,6 +214,10 @@ QUESTIONS: dict[str, Question] = {
         Question("rainbow_attach_type", "UNRESOLVED_RAINBOW_ATTACH_AS_TYPE", ("RB2",), 10,
                  "山札・トラッシュ・手札のレインボーエネルギーを、「「○」エネルギーカード」をつけるワザの効果で、その色のエネルギーカードとして選べるかは、kyuura の記録から"
                  "決められない"),
+        # v0.85（docs/entry-powers-energy-lifecycle-v0.85.md）
+        Question("miracle_energy_type", "UNRESOLVED_MIRACLE_ENERGY_AS_TYPE", ("MEC1",), 10,
+                 "場のミラクルエネルギー（「すべての「色(タイプ)」の「エネルギー」2個ぶんの「エネルギーカード」」）を、ワザの説明の「「○」エネルギー(カード)」として数える・選ぶか"
+                 "（［おいしげる］の「「草」エネルギーカード」を含む）は、印刷の文面・kyuura の記録から決められず、数える・選べるカードが変わる"),
         Question("rainbow_basic_energy_card", "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD", ("RB3",), 10,
                  "場のポケモンについているレインボーエネルギーを、説明の「基本エネルギーカード」として選べるかは、印刷の文面・kyuura の記録から決められない"),
         # v0.75（docs/search-energy-pokemon-v0.75.md 5 章）
@@ -301,8 +317,49 @@ QUESTIONS: dict[str, Question] = {
         Question("energy_drain_no_energy", "UNRESOLVED_ENERGY_DRAIN_NO_ENERGY", ("DR13",), 10,
                  "ダメージを与えたポケモンにエネルギーカードがついていないとき、［だつりょくえき］のコインを投げるかは、日本語の文面・kyuura の記録（UQ-ENERGY-DRAIN-NO-ENERGY）"
                  "から決められない（英語版の「if it has any」は使わない）"),
+        Question("reflect_shield_timing", "UNRESOLVED_REFLECT_SHIELD_TIMING", ("RS1",), 50,
+                 "「リフレクトシールド」の「おもて」の「相手に20ダメージを与え」を、ダメージを受けるときにすぐ与えるか、そのワザのダメージの要素のあとに与えるかは、"
+                 "日本語の文面・kyuura の記録から決められない。コインのあとにダメージを与えたポケモンのダメージが変わる（同じワザの自分へのダメージなど）と、"
+                 "どちらの時点かで結果（きぜつ・返す効果の対象）が変わりうる"),
+        # v0.84（docs/light-powers-evolution-v0.84.md 2 章の A2）: ゆびをふる・ちょうのうりょくなどで、ほかのワザの効果を 1 匹に重ねたとき
+        Question("reflect_shield_overlap", "UNRESOLVED_REFLECT_SHIELD_OVERLAP", ("RF1",), 50,
+                 "「リフレクトシールド」と、ダメージを受けるときにコインで受けないと決める効果（「かげぶんしん」・「とうめい」）が、同じポケモンが受ける 1 つのダメージに"
+                 "はたらくとき、どちらのコインを先に投げるか（先の「うら」・「おもて」であとのコインを投げるか、20 を返すか）は、日本語の文面・kyuura の記録から決められない"),
+        Question("attack_deck_top_short", "UNRESOLVED_ATTACK_DECK_TOP_SHORT", ("LT1",), 10,
+                 "「山札の上からカードを3枚見る」ワザ（ひかるミュウの「フラッシュサーチ」・やさしいゴルダックの「みずかき」）で、見るプレイヤーの山札が 3 枚より"
+                 "少ないとき（あるだけ見るか）は、日本語の文面・kyuura の記録から決められない（トレーナーの TOP1・ML1・MW1 と同じ形の、別のカードの問い）"),
         Question("energy_drain_decision", "UNSUPPORTED_ENERGY_DRAIN_DECISION", ("v0.68",), 10,
                  "［だつりょくえき］のトラッシュするカードの決定を、v0.13 の約束で書いたワザの実装の中では出せない（エンジンの未対応）"),
+        # v0.81（docs/pokemon-tools-stadiums-v0.81.md 5 章）: きあいのハチマキのコインを投げる時点（残りHPがなくなったすぐあとか、きぜつの判定の時か）で結果が変わる場合
+        Question("focus_band_timing", "UNRESOLVED_FOCUS_BAND_TIMING", ("FB1",), 10,
+                 "きあいのハチマキの「相手のワザによるダメージで、…残りHPがなくなったとき、コインを投げる」を、残りHPがなくなったすぐあとに処理するか、ワザの処理のあとのきぜつの"
+                 "判定の時に処理するかは、印刷の文面・kyuura の記録から決められず、同じワザのあとの処理がこのポケモンにダメージ・効果を与えるかで結果が変わる"),
+        # v0.86（docs/entry-energy-evolution-reactions-v0.86.md 8 章）
+        Question("bolt_during_own_attack", "UNRESOLVED_BOLT_DURING_OWN_ATTACK", ("BT1",), 10,
+                 "エンテイの［はしりさる］が、エンテイの持ち主のワザの処理の中で受けた相手の返す効果のワザによるダメージではたらき、ワザを使っているエンテイ自身をワザの途中で"
+                 "山札にもどすとき、そのワザの残りの処理と番の終わりをどうするかは、印刷の文面・kyuura の記録から決められない（v0.65 の FL1 と同じ場面の、自動的にはたらく"
+                 "特殊能力の問い）"),
+        Question("protective_flame_scope", "UNRESOLVED_PROTECTIVE_FLAME_SCOPE", ("PL1",), 10,
+                 "エンテイの「ほのおのまもり」の「次の相手の番が終わるまで、自分の控えポケモン全員は、ワザによるダメージや効果を受けない」が、効果を与えたときの控えポケモン"
+                 "（バトル場に出たあとも）か、ワザを受ける時点の控えポケモン（あとから控えになったポケモンも）かは、印刷の文面・kyuura の記録から決められず、当てはめるかで"
+                 "結果が変わる"),
+        # v0.87（docs/movement-damage-reactions-v0.87.md 9 章）: 場の移動への反応（ワザの途中）。同じ時点の反応の RA1・RA2 は v0.86 と同じコード
+        Question("reaction_after_knockout", "UNRESOLVED_REACTION_AFTER_KNOCKOUT", ("RA1",), 10,
+                 "同じ時点に起こる反応のうち、先に処理した反応でポケモンが HP 以上になったとき、そのポケモンの「きぜつ」の判定を残りの反応の前にするか後にするかは、"
+                 "記録（GR-2000-P325-SAME-TIMING）から決められない"),
+        Question("reaction_condition_changed", "UNRESOLVED_REACTION_CONDITION_CHANGED", ("RA2",), 10,
+                 "同じ時点に起こる反応のうち、先に処理した反応で場が変わり、あとの反応の特殊能力がはたらくかが事実の時点と変わるとき、どちらの時点の状態で決めるかは、"
+                 "記録から決められない"),
+        Question("power_damage_prevented", "UNRESOLVED_POWER_DAMAGE_PREVENTED", ("SB1",), 10,
+                 "マチスのマルマインの［ショックボム］の特殊能力のダメージを、「ダメージを受けない」状態（「かたまる」など。説明はワザによるダメージを書く）のポケモンが受けるかは、"
+                 "印刷の文面・kyuura の記録から決められない（トレーナーのダメージの p.235 の解説の記録は特殊能力のダメージを書かない）"),
+        Question("strange_gas_protected", "UNRESOLVED_STRANGE_GAS_PROTECTED_POKEMON", ("MG2",), 10,
+                 "ドガースの「ふしぎなガス」の「相手の場にいるポケモン」に、ワザの効果を受けないポケモン（「ワザをうけない」状態・［オーロラヴェール］の控え・エフェクトガード・"
+                 "［クリスタルボディ］・「とうめい」など）がいるとき、そのポケモンの特殊能力も止まるのかは、印刷の文面・kyuura の記録から決められない"),
+        # ルールの問いではなく、エンジンの未対応（コードは UNSUPPORTED_…。研究の対応表の停止コードには入れない）
+        Question("energy_reaction_during_attack", "UNSUPPORTED_ENERGY_REACTION_DURING_ATTACK", ("v0.86",), 10,
+                 "ワザの効果で手札からエネルギーカードをつけたときにはたらく相手の［かんでん］・つけたポケモンの［いなびかり］を、ワザの処理の途中で処理する続きは"
+                 "エンジンが扱わない（エンジンの未対応。［エナジーしんか］はワザの最中の宣言なので PW4）"),
         # 今の写しのワザの並びでは起こらない（コードのない問い。当たったらエンジンの不具合）
         Question("esp_separate_coin_tosses", None, ("ES0",), 10,
                  "ナツメのESPのやり直しのあとに、同じワザの説明文のコイントスをもう一度投げる並びのワザは、今の写しにない（どのワザも説明文のコイントスは 1 回にまとまっている）"),

@@ -97,7 +97,33 @@ class ResearchLinksTest(unittest.TestCase):
                                          "UNRESOLVED_ENERGY_STADIUM_WITHOUT_TARGET", "UNRESOLVED_NINJA_GYM_WITHOUT_TARGET",
                                          "UNRESOLVED_POKEMON_TOWER_TRAINER_WITHOUT_EFFECT",
                                          # v0.75 で加えた RB5・DB1 も kyuura の一覧にない（docs/search-energy-pokemon-v0.75.md 5 章）
-                                         "UNRESOLVED_RAINBOW_RECOVER_AS_TYPE", "UNRESOLVED_DOUBLED_DAMAGE_POWER_DAMAGE"})
+                                         "UNRESOLVED_RAINBOW_RECOVER_AS_TYPE", "UNRESOLVED_DOUBLED_DAMAGE_POWER_DAMAGE",
+                                         "UNRESOLVED_METAL_ENERGY_POWER_ORDER", "UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER",
+                                         # v0.79 で加えた PK1 も kyuura の一覧にない（docs/shared-checks-pokemon-reuse-v0.79.md 2 章）
+                                         "UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT",
+                                         # v0.80 で加えた 9 件も kyuura の一覧にない（docs/neo-trainer-components-v0.80.md 7 章）
+                                         "UNRESOLVED_SUPER_ROD_WITHOUT_TARGET", "UNRESOLVED_TRAINER_UP_TO_ZERO_CHOICE",
+                                         "UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET", "UNRESOLVED_DECK_TOP_SHORT", "UNRESOLVED_HAND_TRAINER_LOCK_BORROW",
+                                         "UNRESOLVED_DEVOLUTION_SPRAY_HYPER_WITHOUT_TARGET", "UNRESOLVED_MOOMOO_MILK_UNDAMAGED_TARGET",
+                                         "UNRESOLVED_ALL_PURPOSE_POWDER_WITHOUT_TARGET", "UNRESOLVED_HEALING_FIELD_WITHOUT_DAMAGE",
+                                         "UNRESOLVED_POKEMON_CHECK_BERRY_ORDER", "UNRESOLVED_BALLOON_BERRY_FAILED_RETREAT", "UNRESOLVED_FOCUS_BAND_TIMING",
+                                     "UNRESOLVED_MAX_HP_SET_AND_INCREASE",  # v0.81a: MH2
+                                 "UNRESOLVED_REFLECT_SHIELD_TIMING", "UNRESOLVED_ATTACK_DECK_TOP_SHORT",  # v0.83: RS1・LT1
+                                 # v0.84: RF1・WD1・WD2（docs/light-powers-evolution-v0.84.md 7 章）
+                                 "UNRESOLVED_REFLECT_SHIELD_OVERLAP", "UNRESOLVED_MIRACULOUS_WIND_CONVERTED_ENERGY",
+                                 "UNRESOLVED_MIRACULOUS_WIND_ENERGY_BURN",
+                             # v0.85: MEC1・MEW1（docs/entry-powers-energy-lifecycle-v0.85.md 7 章）
+                             "UNRESOLVED_MIRACLE_ENERGY_AS_TYPE", "UNRESOLVED_MIRACLE_ENERGY_UNDER_WIND",
+                             # v0.86: RA1・RA2・CV1・OT1・BT1・PL1・SO1（docs/entry-energy-evolution-reactions-v0.86.md 8 章）
+                             "UNRESOLVED_REACTION_AFTER_KNOCKOUT", "UNRESOLVED_REACTION_CONDITION_CHANGED",
+                             "UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES", "UNRESOLVED_HOWL_OUTSIDE_OWN_TURN",
+                             "UNRESOLVED_BOLT_DURING_OWN_ATTACK", "UNRESOLVED_PROTECTIVE_FLAME_SCOPE",
+                             "UNRESOLVED_SOLAR_POWER_WITHOUT_CONDITION",
+                             # v0.87: HP1・MG1・MG2・SB1（docs/movement-damage-reactions-v0.87.md 9 章）
+                             "UNRESOLVED_HOT_PLATE_FACE_DOWN", "UNRESOLVED_STRANGE_GAS_NEW_POKEMON", "UNRESOLVED_STRANGE_GAS_PROTECTED_POKEMON",
+                             "UNRESOLVED_POWER_DAMAGE_PREVENTED",
+                             # v0.88: CE1・CE2・CE3（docs/type-energy-colors-v0.88.md 4 章）
+                             "UNRESOLVED_COLOR_EFFECT_CONTINUATION", "UNRESOLVED_COLOR_REPLACEMENT_ORDER", "UNRESOLVED_COLOR_CHANGED_ENERGY_CARD"})
         # v0.31〜v0.68 は、kyuura の一覧でコードのない行を指していた停止コード 8 件（T27・C34/C35・G40・P19・P32・Z9・DR8・DR13）に kyuura_index_engine_key を
         # 書いていた。v0.69 で kyuura が停止コードを書いたので外した（scripts/check_research_links.py が、kyuura の一覧のコードで照らす）
         self.assertEqual({code for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}, set())

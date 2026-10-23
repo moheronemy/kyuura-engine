@@ -155,10 +155,10 @@ class RegistrationTest(unittest.TestCase):
         counts = {"pokemon": 0, "trainer": 0, "energy": 0}
         for card_id in pool.playable_ids:
             counts[pool.get(card_id).category] += 1
-        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (561, 211, 30))  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた  # v0.74 で拡張パック以外の商品のスタジアム 13 枚  # v0.73 で拡張パック以外の商品のトレーナー 18 枚  # v0.72 で拡張パック以外の商品のポケモン 43 枚  # v0.71 で拡張パック以外の商品の再録 78 枚（ポケモン 11・トレーナー 67）  # v0.70 で拡張パック以外の商品のポケモン 82 枚  # v0.69 で拡張パック以外の商品の同じカード 96 枚（ポケモン 57・トレーナー 19・エネルギー 20）  # v0.68 でポケモン 3 枚  # v0.67 でトレーナー 1 枚  # v0.64 でポケモン 3 枚を加えた  # v0.65 でポケモン 2 枚・トレーナー 1 枚を加えた  # v0.66 でトレーナー 3 枚を加えた
-        self.assertEqual(sum(counts.values()), 802)  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた  # v0.74 で 13 枚を加えた  # v0.73 で 18 枚を加えた  # v0.72 で 43 枚を加えた  # v0.71 で 78 枚を加えた  # v0.70 で 82 枚を加えた  # v0.69 で 96 枚を加えた  # v0.68 で 3 枚を加えた  # v0.64 でポケモン 3 枚を加えた  # v0.65 で 3 枚を加えた  # v0.66 で 3 枚を加えた  # v0.67 で 1 枚を加えた
-        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 947)  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた  # v0.72 でワザ 77（拡張パック以外の商品のポケモン 43 枚）  # v0.71 でワザ 15（拡張パック以外の商品の再録）  # v0.70 でワザ 136（拡張パック以外の商品のポケモン 82 枚）  # v0.69 でワザ 92（拡張パック以外の商品の同じカード。元のカードの登録を写した）  # v0.68 でワザ 4 つ  # v0.63 ではワザ・特殊能力を変えていない。v0.64 でワザ 5 つ、v0.65 でワザ 2 つを加えた
-        self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 74)  # v0.71 で 6（再録）  # v0.69 で 10  # v0.68 で 2 つ  # v0.65 で 2 つを加えた
+        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (794, 260, 37))  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚を含む）を加えた  # v0.79 でポケモン 52 枚（ワザ 94）を加えた  # v0.78 で悪・鋼エネルギー 5 枚とポケモン 8 枚（ワザ 16）を加えた  # v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・ワザ 77・トレーナー 2）を加えた  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた  # v0.74 で拡張パック以外の商品のスタジアム 13 枚  # v0.73 で拡張パック以外の商品のトレーナー 18 枚  # v0.72 で拡張パック以外の商品のポケモン 43 枚  # v0.71 で拡張パック以外の商品の再録 78 枚（ポケモン 11・トレーナー 67）  # v0.70 で拡張パック以外の商品のポケモン 82 枚  # v0.69 で拡張パック以外の商品の同じカード 96 枚（ポケモン 57・トレーナー 19・エネルギー 20）  # v0.68 でポケモン 3 枚  # v0.67 でトレーナー 1 枚  # v0.64 でポケモン 3 枚を加えた  # v0.65 でポケモン 2 枚・トレーナー 1 枚を加えた  # v0.66 でトレーナー 3 枚を加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
+        self.assertEqual(sum(counts.values()), 1091)  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）を加えた  # v0.79 でポケモン 52 枚（ワザ 94）を加えた  # v0.78 で悪・鋼エネルギー 5 枚とポケモン 8 枚（ワザ 16）を加えた  # v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・ワザ 77・トレーナー 2）を加えた  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた  # v0.74 で 13 枚を加えた  # v0.73 で 18 枚を加えた  # v0.72 で 43 枚を加えた  # v0.71 で 78 枚を加えた  # v0.70 で 82 枚を加えた  # v0.69 で 96 枚を加えた  # v0.68 で 3 枚を加えた  # v0.64 でポケモン 3 枚を加えた  # v0.65 で 3 枚を加えた  # v0.66 で 3 枚を加えた  # v0.67 で 1 枚を加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
+        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 1327)  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.79 でポケモン 52 枚（ワザ 94）を加えた  # v0.78 で悪・鋼エネルギー 5 枚とポケモン 8 枚（ワザ 16）を加えた  # v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・ワザ 77・トレーナー 2）を加えた  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた  # v0.72 でワザ 77（拡張パック以外の商品のポケモン 43 枚）  # v0.71 でワザ 15（拡張パック以外の商品の再録）  # v0.70 でワザ 136（拡張パック以外の商品のポケモン 82 枚）  # v0.69 でワザ 92（拡張パック以外の商品の同じカード。元のカードの登録を写した）  # v0.68 でワザ 4 つ  # v0.63 ではワザ・特殊能力を変えていない。v0.64 でワザ 5 つ、v0.65 でワザ 2 つを加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
+        self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 119)  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.84 で 5 つ。 v0.71 で 6（再録）  # v0.69 で 10  # v0.68 で 2 つ  # v0.65 で 2 つを加えた
 
     def test_registration_rejects_text_mismatches(self):
         pool = load_card_pool()
@@ -198,12 +198,24 @@ class RegistrationTest(unittest.TestCase):
         # v0.74: 山札のたねポケモンをベンチに出す決定（キョウの忍者ジム・v0.32 からのワザ・特殊能力）も数を見せない（docs/remaining-stadiums-v0.74.md 6 章）
         # v0.75: search_deck・attach_from_deck も（選べるものの数が山札の中身を漏らす。docs/search-energy-pokemon-v0.75.md 5 章）
         self.assertEqual(HIDDEN_COUNT_KINDS, frozenset({CHALLENGE_BENCH, QUIZ_CARD, QUIZ_ATTACK, "search_deck_or_discard", "take_looked_pokemon", "bench_from_deck",
-                                                        "search_deck", "attach_from_deck"}))
+                                                        "search_deck", "attach_from_deck",
+                                                        "take_looked_trainer",  # v0.80: ポケモンギア（見た 7 枚のうちのトレーナーカードの数が山札の中身を漏らす）
+                                                        # v0.81: 手札（見た相手の手札）から種類でしぼったカードを選ぶ決定（docs/pokemon-tools-stadiums-v0.81.md 2 章）
+                                                        "return_to_deck", "select_evolution_card", "attach_from_hand", "hand_to_active", "discard_from_hand",
+                                                        "opponent_hand_to_deck", "opponent_hand_to_bench",
+                                                        # v0.83: 見た山札の上のカードから選ぶ決定（docs/shining-gentle-pokemon-v0.83.md 3.1）
+                                                        "take_looked_cards",
+                                                        # v0.84: しんかのうたで進化させるポケモンを選ぶ決定（選べるものの数が、山札の進化カードの有無を漏らしうる。
+                                                        # docs/light-powers-evolution-v0.84.md）
+                                                        "evolution_song_pokemon",
+                                                        # v0.87: ［ぶんれつ］で山札のドガースをベンチに出すかの決定（選べるものの数が山札の中身を漏らす。
+                                                        # docs/movement-damage-reactions-v0.87.md 5 章）
+                                                        "split_from_deck"}))
         for event in ("set_aside_hand", "set_aside_returned", "face_down_bench", "challenge_bench_skipped", "quiz_card_set"):
             self.assertIn(event, PRIVATE_FIELDS)
         for event in ("prizes_revealed", "face_down_revealed", "quiz_hint", "quiz_answer", "quiz_reveal"):
             self.assertIn(event, PUBLIC_EVENTS)
-        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (22, 22))  # v0.67 で形式 22
+        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (23, 23))  # v0.88 で 23（color_effects）  # v0.67 で形式 22
 
     def test_no_card_id_branches_in_engine_or_resolution(self):
         texts = [(ROOT / "kyuura_engine" / "engine.py").read_text(encoding="utf-8")]

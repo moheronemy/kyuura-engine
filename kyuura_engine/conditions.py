@@ -87,8 +87,10 @@ def _prevented(state: GameState, owner: int, pokemon: PokemonInPlay, condition: 
     key = status_immunity(state, owner, pokemon)
     if key is None:
         return False
+    # v0.84: 「きらめきタッチ」の効果（持続する効果）で防いだら、``power`` のかわりに ``persistent_effect``・``source_card``（効果を与えたポケモンのカード）
+    source = {"power": str(key)} if not hasattr(key, "kind") else {"persistent_effect": key.kind, "source_card": key.given_by}
     state.add_event("special_condition_prevented", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, condition=condition, **fields,
-                    effect=effect, power=str(key))
+                    effect=effect, **source)
     return True
 
 
@@ -100,6 +102,20 @@ def _end_disguise(state: GameState, owner: int, pokemon: PokemonInPlay, effect: 
         from .zones import DISGUISE_SPECIAL_CONDITION, remove_disguise  # zones.py は state.py だけを読み込む。conditions.py の読み込みの順番に合わせて使うときに読む
 
         remove_disguise(state, owner, pokemon, reason=DISGUISE_SPECIAL_CONDITION, effect=effect)
+
+
+def _end_color_effects(state: GameState, owner: int, pokemon: PokemonInPlay, effect: str) -> None:
+    """v0.88（docs/type-energy-colors-v0.88.md 2 章）: ランターンの［せんすい］・ポリゴン2の［エナジーコンバーター］の「このカードが「ねむり・マヒ・こんらん」状態のとき、
+    この力を使うことはできず、その効果も消える」。ねむり・マヒ・こんらんにする 3 つの関数が、特殊状態を付けたあとに呼ぶ（［めんえき］で防いだら呼ばない。どくでは呼ばない）。
+    ``pokemon`` が発生源の色を変える効果（``GameState.color_effects``）を消す（ログ ``color_effect_removed`` の ``reason`` ``special_condition``）。回復しても戻らない
+    （記録を消すので）。"""
+    removed = [e for e in state.color_effects if e.source == pokemon.pokemon_id]
+    if not removed:
+        return
+    state.color_effects = tuple(e for e in state.color_effects if e.source != pokemon.pokemon_id)
+    for record in removed:
+        state.add_event("color_effect_removed", player=record.player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, color_effect=record.kind,
+                        target=record.target, color=record.color.value, reason="special_condition", effect=effect)
 
 
 def _require_active(state: GameState, owner: int, pokemon: PokemonInPlay, condition: str) -> None:
@@ -150,6 +166,7 @@ def put_to_sleep(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect
     already = _set_exclusive(state, owner, pokemon, ASLEEP)
     _log_applied(state, owner, pokemon, SLEEP, effect, already)
     _end_disguise(state, owner, pokemon, effect)
+    _end_color_effects(state, owner, pokemon, effect)  # v0.88
 
 
 def confuse(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: str) -> None:
@@ -168,6 +185,7 @@ def confuse(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: str
     already = _set_exclusive(state, owner, pokemon, CONFUSED)
     _log_applied(state, owner, pokemon, CONFUSION, effect, already)
     _end_disguise(state, owner, pokemon, effect)
+    _end_color_effects(state, owner, pokemon, effect)  # v0.88
 
 
 def paralysis_recovery_turn(state: GameState, owner: int, turn: int) -> int:
@@ -234,6 +252,7 @@ def paralyze(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: st
         paralyzed_turn=paralyzed.turn, recovery_turn=paralysis_recovery_turn(state, owner, paralyzed.turn),
     )
     _end_disguise(state, owner, pokemon, effect)
+    _end_color_effects(state, owner, pokemon, effect)  # v0.88
 
 
 def recover_from_sleep(state: GameState, owner: int, pokemon: PokemonInPlay) -> None:

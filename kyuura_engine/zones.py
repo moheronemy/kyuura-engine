@@ -99,6 +99,7 @@ def reveal_face_down(state: GameState, owner: int, pokemon: PokemonInPlay, *, ca
     if pokemon.evolution_stack or pokemon.disguise is not None or pokemon.persistent_effects or pokemon.damage:
         raise RuntimeError(f"うらのカード {pokemon.pokemon_id} に、重なり・のせたカード・持続する効果・ダメージがある（エンジンの不具合）")
     zone = "active" if p.active is pokemon else "bench"
+    returns = _energy_plan(state, pokemon, pokemon.energy, "rule")  # v0.82: リサイクルエネルギー（場をはなれる前の場で決める）
     if p.active is pokemon:
         p.active = None
     else:
@@ -111,6 +112,7 @@ def reveal_face_down(state: GameState, owner: int, pokemon: PokemonInPlay, *, ca
         state.players[attached.player].discard.append(attached.card)
     state.add_event("secret_plan_discarded", player=owner, pokemon_id=pokemon.pokemon_id, cards=(pokemon.card, *energy, *trainers), energy=energy,
                     trainers=trainers, zone=zone)
+    _return_energy(state, returns)
     return None
 
 
@@ -226,6 +228,20 @@ def return_in_play_to_deck(state: GameState, player: int, pokemon: PokemonInPlay
     return cards
 
 
+def _energy_plan(state: GameState, pokemon: PokemonInPlay, cards, cause: str, by_player: int | None = None):
+    """v0.82: ``effects.energy_discard_plan``（場からトラッシュに置くエネルギーカードのうち、そのあと手札にもどすもの。動かす前に呼ぶ）。"""
+    from .effects import energy_discard_plan
+
+    return energy_discard_plan(state, pokemon, cards, cause=cause, by_player=by_player)
+
+
+def _return_energy(state: GameState, plan) -> None:
+    """v0.82: ``effects.return_discarded_energy``（トラッシュに置いてログを残したあとに呼ぶ）。"""
+    from .effects import return_discarded_energy
+
+    return_discarded_energy(state, plan)
+
+
 def return_basic_to_hand(state: GameState, player: int, pokemon: PokemonInPlay, *, trainer: int) -> tuple[int, tuple[int, ...]]:
     """自分の場のポケモン ``pokemon`` のいちばん下のカードを、同じ uid のまま自分の手札にもどし、のっている進化カード・エネルギーカードを自分のトラッシュに
     置く（v0.52。ポケモン回収（PMCG1-092）の「自分の場のポケモン1匹を手札に戻す。そのポケモンのダメージカウンター、エネルギーカード、進化カードは全てはがして
@@ -255,6 +271,7 @@ def return_basic_to_hand(state: GameState, player: int, pokemon: PokemonInPlay, 
         raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} を手札にもどせない（確認の漏れ。エンジンの不具合）")
     card, evolution_cards = stack[0], stack[1:]
     discarded = (*evolution_cards, *energy)
+    returns = _energy_plan(state, pokemon, energy, "trainer", player)  # v0.82: リサイクルエネルギー
     zone = "active" if p.active is pokemon else "bench"
     if p.active is pokemon:
         p.active = None
@@ -265,6 +282,7 @@ def return_basic_to_hand(state: GameState, player: int, pokemon: PokemonInPlay, 
     disguise = {} if pokemon.disguise is None else {"disguise": pokemon.disguise}
     state.add_event("return_basic_to_hand", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, zone=zone, trainer_card=trainer, card=card,
                     discarded=discarded, evolution_cards=evolution_cards, energy=energy, damage=pokemon.damage, **disguise)
+    _return_energy(state, returns)
     return card, discarded
 
 
@@ -338,12 +356,14 @@ def discard_attached_cards(state: GameState, player: int, pokemon: PokemonInPlay
     if (p.active is not pokemon and not any(b is pokemon for b in p.bench)) or any(state.cards[uid].owner != player for uid in (*energy, *trainers)) \
             or (effect is None) == (power is None):
         raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} についているカードをトラッシュできない（確認の漏れ。エンジンの不具合）")
+    returns = _energy_plan(state, pokemon, energy, "attack" if effect is not None else "power", player)  # v0.82: 自分のワザ・特殊能力
     pokemon.energy.clear()
     pokemon.trainers.clear()
     p.discard.extend((*energy, *trainers))
     source = {"effect": effect} if effect is not None else {"power": power}
     state.add_event("discard_attached_cards", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, **source, energy=energy,
                     trainers=trainers)
+    _return_energy(state, returns)
     return energy, trainers
 
 
@@ -760,6 +780,7 @@ def discard_from_play(state: GameState, player: int, pokemon: PokemonInPlay) -> 
     on_bench = any(b is pokemon for b in p.bench)
     if (p.active is not pokemon and not on_bench) or pokemon.evolution_stack or any(state.cards[uid].owner != player for uid in (pokemon.card, *pokemon.energy)):
         raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} をトラッシュできない（確認の漏れ。エンジンの不具合）")
+    returns = _energy_plan(state, pokemon, pokemon.energy, "rule")  # v0.82: リサイクルエネルギー（場をはなれる前の場で決める）
     if p.active is pokemon:
         p.active = None
     else:
@@ -772,6 +793,7 @@ def discard_from_play(state: GameState, player: int, pokemon: PokemonInPlay) -> 
     cards = (pokemon.card, *pokemon.energy, *trainers)
     state.add_event("discard_from_play", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, cards=cards, energy=tuple(pokemon.energy),
                     trainers=trainers, damage=pokemon.damage)
+    _return_energy(state, returns)
     return cards
 
 
@@ -870,10 +892,12 @@ def discard_attached_energy_cards(state: GameState, owner: int, pokemon: Pokemon
     ``trainer_discard_energy``（``player`` はカードの持ち主、``user`` はトレーナーを使ったプレイヤー。場のカードとトラッシュは公開の情報なので ``cards`` は公開）。
     ワザの効果のトラッシュ（``discard_energy``・``discard_attached_energy``）とは出どころが違うので、ログを分ける。トラッシュしたカード（ついていた順）を返す。"""
     moved = _attached_energy_cards(state, owner, pokemon, cards)
+    returns = _energy_plan(state, pokemon, moved, "trainer", user)  # v0.82: リサイクルエネルギー・エコロジム（相手が使ったトレーナー）
     for uid in moved:
         pokemon.energy.remove(uid)
     state.players[owner].discard.extend(moved)
     state.add_event("trainer_discard_energy", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, cards=moved, trainer_card=trainer, user=user)
+    _return_energy(state, returns)
     return moved
 
 
@@ -945,12 +969,15 @@ def discard_pile_to_deck(state: GameState, player: int, *, trainer: int) -> tupl
     return cards
 
 
-def deck_top_to_discard(state: GameState, player: int, count: int, *, trainer: int) -> tuple[int, ...]:
+def deck_top_to_discard(state: GameState, player: int, count: int, *, trainer: int | None = None, power: str | None = None) -> tuple[int, ...]:
     """自分の山札の上から ``count`` 枚を、上から順に自分のトラッシュに置く（v0.55。トラッシュ交換の「数えた枚数のカードを山札の上から取って、トラッシュする」）。「カードを
     引く」ではない。山札が足りなければ確認の漏れ（``RuntimeError``。トラッシュ交換では、もどしたあとの山札は数えた枚数以上ある）。ログ ``deck_top_to_discard``（公開。0 枚でも
-    書く）。トラッシュしたカードを返す。"""
+    書く）。トラッシュしたカードを返す。v0.86: 特殊能力の効果（エンテイの［おたけび］）なら ``power``（``PowerKey`` の文字列。ログの ``power``。``trainer`` とどちらか一方）。"""
+    if (trainer is None) == (power is None):
+        raise ValueError("山札の上からトラッシュする効果の出どころ（トレーナー・特殊能力）はどちらか一方")
     cards = discard_from_deck(state, player, count)
-    state.add_event("deck_top_to_discard", player=player, cards=cards, trainer_card=trainer)
+    source = {"trainer_card": trainer} if power is None else {"power": power}
+    state.add_event("deck_top_to_discard", player=player, cards=cards, **source)
     return cards
 
 
@@ -1087,9 +1114,11 @@ def discard_attached_energy_by_stadium(state: GameState, owner: int, pokemon: Po
     「自分の「エリカのポケモン」についているエネルギーカードを1枚トラッシュして」）。ログ ``stadium_discard_energy``（公開）。ついていなければ ``RuntimeError``。"""
     if card not in pokemon.energy or state.cards[card].owner != owner:
         raise RuntimeError(f"ポケモン {pokemon.pokemon_id} についていないカード {card} をトラッシュしようとした（エンジンの不具合）")
+    returns = _energy_plan(state, pokemon, (card,), "stadium", owner)  # v0.82: リサイクルエネルギー
     pokemon.energy.remove(card)
     state.players[owner].discard.append(card)
     state.add_event("stadium_discard_energy", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, card=card, stadium_card=stadium)
+    _return_energy(state, returns)
 
 
 def return_attached_energy_by_stadium(state: GameState, owner: int, pokemon: PokemonInPlay, card: int, *, stadium: int) -> None:
@@ -1135,6 +1164,55 @@ def reveal_prizes(state: GameState, players: tuple[int, ...], *, trainer: int) -
         cards = tuple(prizes[i] for i in positions)
         state.face_up_prizes = state.face_up_prizes + cards
         state.add_event("prizes_revealed", player=player, positions=positions, cards=cards, trainer_card=trainer)
+
+
+def reveal_prize(state: GameState, owner: int, position: int, *, trainer: int) -> int:
+    """プレイヤー ``owner`` のサイドの位置 ``position`` のうらのカードを、おもてにする（v0.80。カードめくりゲームの「そのカードをおもてにして、…おもてにした「サイドカード」は、そのまま
+    にしておく」）。カードは動かさない。``GameState.face_up_prizes`` に加える（サイドをはなれたら ``prize_left`` で除く。v0.63 のロケット団参上!と同じ記録）。ログ ``prize_revealed``
+    （``player``・``position``・``card``（公開）・``trainer_card``）。位置にカードがない・もうおもてなら ``RuntimeError``。おもてにしたカードを返す。"""
+    prizes = state.players[owner].prizes
+    if not 0 <= position < len(prizes) or prizes[position] in state.face_up_prizes:
+        raise RuntimeError(f"プレイヤー {owner} のサイドの位置 {position} のうらのカードをおもてにできない（確認の漏れ。エンジンの不具合）")
+    card = prizes[position]
+    state.face_up_prizes = state.face_up_prizes + (card,)
+    state.add_event("prize_revealed", player=owner, position=position, card=card, trainer_card=trainer)
+    return card
+
+
+def look_at_prizes(state: GameState, viewer: int, owner: int, *, trainer: int) -> tuple[int, ...]:
+    """プレイヤー ``viewer`` が、プレイヤー ``owner`` のサイドをすべて見る（v0.80。にせオーキドの発明の「相手の「サイドカード」を、すべて見る」）。カードは動かさない。ログ
+    ``look_at_prizes``（``cards`` は見たプレイヤーだけ。サイドの持ち主も見ない）。見たカード（サイドの並び）を返す。"""
+    cards = tuple(state.players[owner].prizes)
+    state.add_event("look_at_prizes", player=viewer, owner=owner, cards=cards, trainer_card=trainer)
+    return cards
+
+
+def prizes_to_deck(state: GameState, owner: int, *, trainer: int, looker: int) -> tuple[int, ...]:
+    """プレイヤー ``owner`` のサイドをすべて、同じ uid のまま ``owner`` の山札（一番下。このあと必ず切る）にもどす（v0.80。にせオーキドの発明の「それらをすべて相手の山札に
+    もどし」）。サイドを取ることではない（きぜつ・サイドを取る処理・勝ち負けの判定をしない）。おもてのサイドの記録は ``prize_left`` で除く。ログ ``prizes_to_deck``（``count`` は
+    公開・``cards`` は見たプレイヤー ``looker`` だけ）。もどしたカードを返す。"""
+    p = state.players[owner]
+    cards = tuple(p.prizes)
+    for card in cards:
+        prize_left(state, card)
+    p.prizes.clear()
+    p.deck.extend(cards)
+    state.add_event("prizes_to_deck", player=owner, count=len(cards), cards=cards, looker=looker, trainer_card=trainer)
+    return cards
+
+
+def deck_top_to_prizes(state: GameState, owner: int, count: int, *, trainer: int) -> tuple[int, ...]:
+    """プレイヤー ``owner`` の山札の上から ``count`` 枚を、おもてを見ないで、同じ uid のまま ``owner`` のサイドに置く（v0.80。にせオーキドの発明の「相手の山札の上から、
+    もどした枚数ぶんのカードを、おもてを見ないで引いて、相手の「サイドカード」におく」）。「カードを引く」（p.312）ではない（手札に加えない）。だれも見ない（ログ
+    ``deck_top_to_prizes`` は ``count`` だけ。カードを書かない）。山札が足りないなら ``RuntimeError``。置いたカードを返す。"""
+    p = state.players[owner]
+    if count > len(p.deck):
+        raise RuntimeError(f"プレイヤー {owner} の山札 {len(p.deck)} 枚から {count} 枚をサイドに置けない（エンジンの不具合）")
+    cards = tuple(p.deck[:count])
+    del p.deck[:count]
+    p.prizes.extend(cards)
+    state.add_event("deck_top_to_prizes", player=owner, count=count, trainer_card=trainer)
+    return cards
 
 
 def _add_set_aside(state: GameState, group: SetAsideCards) -> None:

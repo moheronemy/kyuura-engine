@@ -317,8 +317,9 @@ class CardDataTest(unittest.TestCase):
         self.assertEqual(OPTION_MEANINGS[BENCH_FROM_DISCARD], "card")
 
     def test_no_basic_pokemon_has_an_entry_power(self):
-        """場に出たときに使える特殊能力（``EntryPower``）を持つカードは、どれも進化カード（トラッシュから出せるたねポケモンにはない）。だから、トラッシュから出すときに
-        「手札から出した時」の経路と取りちがえる場面も、「場に出た時」の使う機会を決める場面も、今の対応カードでは起こらない（``discard_entry_power_guard``）。"""
+        """場に出たときに使える特殊能力（``EntryPower``）を持つカードは、v0.85 までどれも進化カード（トラッシュから出せるたねポケモンにはない）だった。v0.86 でエンテイ
+        （neo3-010）の［おたけび］を加えたが「手札から場に出した時」（``from_hand_only``）なので、トラッシュから出しても使う機会はない（``discard_entry_power_guard`` は止めない）。
+        「場に出た時」の使う機会を決める場面は、今の対応カードでは起こらない（「場に出た時」の特殊能力を持つたねポケモンはない）。"""
         entry_cards = set()
         for key in E.DEFAULT_EFFECTS.power_keys():
             entry = E.DEFAULT_EFFECTS.power_entry(key.card_id, key.power_index)
@@ -327,7 +328,11 @@ class CardDataTest(unittest.TestCase):
         self.assertTrue(entry_cards)
         for card in sorted(entry_cards):
             with self.subTest(card=card):
-                self.assertNotEqual(self.pool.get(card).stage, "basic")
+                if self.pool.get(card).stage == "basic":
+                    self.assertEqual(card, "neo3-010")
+                    self.assertTrue(E.DEFAULT_EFFECTS.power_entry(card, 0).effect.from_hand_only)
+                else:
+                    self.assertNotEqual(self.pool.get(card).stage, "basic")
 
 
 # ---------------------------------------------------------------- 共通の処理
@@ -820,7 +825,7 @@ class StateAndObservationTest(unittest.TestCase):
     def test_no_new_state_or_format(self):
         """状態の項目・書き出しの形式は加えていない（形式 15 のまま。出したポケモンは場に出た番を持つ、ふつうのたねポケモン）。古い形式（場に出た番をログから分かる形）でも
         書き出せる。"""
-        self.assertEqual(max(FORMAT_VERSIONS), 22)  # v0.67 で 22（face_down_cards）  # v0.56 で 16（trainer_effects）、v0.57 で 17（stadium）、v0.58 で 18（trainer_stack）、v0.59 で 19（energy_roles）を加えた（v0.51 では 15 のまま）
+        self.assertEqual(max(FORMAT_VERSIONS), 23)  # v0.88 で 23（color_effects）  # v0.67 で 22（face_down_cards）  # v0.56 で 16（trainer_effects）、v0.57 で 17（stadium）、v0.58 で 18（trainer_stack）、v0.59 で 19（energy_roles）を加えた（v0.51 では 15 のまま）
         state = play(board(mon(HITMONCHAN), hand=(REVIVE,), discard=(HITMONCHAN,)), REVIVE)
         state = answer(state, [discard_uid(state, 0, HITMONCHAN)])
         audited(self, state)

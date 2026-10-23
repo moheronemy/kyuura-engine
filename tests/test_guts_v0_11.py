@@ -649,7 +649,31 @@ class G37Test(unittest.TestCase):
             "StatusByCoinWithoutDamage",
             # v0.72（ダメージを与えた後に自分と相手を特殊状態にする・ダメージのないどくとねむり・ねむりから回復させる・ダメージを与えた後に入れ替える。
             # docs/status-coins-effect-reuse-v0.72.md）
-            "DamageThenStatusSelfAndOpponent", "PoisonAndSleepWithoutDamage", "DamageThenWakeOpponent", "DamageThenForceSwitchAfterDamage"]))
+            "DamageThenStatusSelfAndOpponent", "PoisonAndSleepWithoutDamage", "DamageThenWakeOpponent", "DamageThenForceSwitchAfterDamage",
+            # v0.76（なきごえ・かなしばり・にらみつける。docs/persistent-attack-modifiers-v0.76.md）
+            "ReduceDamageToSelfNextOpponentTurn", "LockOpponentAttackOnHeads", "AttackLockWhileSourceActiveOnHeads",
+            # v0.78（ダメージの前に相手のトレーナーをトラッシュする「ごうだつ」・ダメージのない「おいつめる」。docs/darkness-metal-energy-v0.78.md）
+            "DiscardOpponentTrainersThenDamage", "RetreatLockWithoutDamage",
+            # v0.79（1 枚のコインでマヒと相手の控えへのダメージ・1 枚のコインでダメージとこんらん・相手の場のトレーナーをすべてトラッシュする。
+            # docs/shared-checks-pokemon-reuse-v0.79.md）
+            "DamageThenParalyzeAndOpponentBenchOnHeads", "CoinBonusDamageAndConfuse", "CoinDiscardAllOpponentTrainers",
+            # v0.83（相手のエネルギーカードをトラッシュする「やきつくす」・選んだ特殊状態の「ミラクルリーフ」・「おもて」の数で特殊状態が決まる「フラッシュアイ」・
+            # 1 枚のコインでこんらんかねむりの「ふしぎなほのお」・ねむりと控えの回復の「ヒプノシャワー」。docs/shining-gentle-pokemon-v0.83.md）
+            "DiscardEnergyThenSpreadThenCoinDiscardEach", "CoinsPerDefenderEnergyChosenStatus", "ThreeCoinsStatusByHeads",
+            "DiscardEnergyThenCoinConfuseElseSleep", "DamageSleepThenHealBothBench",
+        # v0.84: やさしいサンダースの「サンダーニードル」（「おもて」の数で相手をマヒ。docs/light-powers-evolution-v0.84.md）
+        "CoinsTimesDamageThenParalyzeIfAtLeast",
+        # v0.85: ベイリーフの「あまいかおり」（「うら」なら相手の場のポケモンからダメージカウンターをとりのぞく。回復の要素。ダメージがないので G37 には当たらない。
+        # docs/entry-powers-energy-lifecycle-v0.85.md）
+        "CoinChosenSideHealAttack",
+        # v0.86: スイクンの「オーロラウェーブ」（2 枚のコインでマヒかねむり）・わるいモココの「スタンウェーブ」（相手の対戦ポケモンの特殊能力を止める持続する効果）
+        # （docs/entry-energy-evolution-reactions-v0.86.md 7 章）
+        "DamageThenParalyzeOrSleepByTwoCoins", "DamageThenStopDefenderPowers",
+        # v0.87: カビゴンの「ねころぶ」（「おもて」なら相手もねむり）・フォレトスの「こうそくスピン」（相手の入れ替え）（docs/movement-damage-reactions-v0.87.md 3 章・8 章）。
+        # ドガースの「ふしぎなガス」は相手プレイヤーの場に与える期限のある効果で、相手の対戦ポケモンへの要素ではない（宣言しない）
+        "DamageThenSelfSleepThenSleepOpponentOnHeads", "DamageThenSwitchBothActives",
+        # v0.88: かっこいいポリゴンの「テクスチャーマジック」（相手の対戦ポケモンの弱点の色を変える。docs/type-energy-colors-v0.88.md 6.5 節）
+        "ChangeWeaknessAndResistanceOptional"]))
 
 
 class DecisionTest(unittest.TestCase):

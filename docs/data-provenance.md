@@ -1836,3 +1836,185 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: ナツメのスリープ GD6-009 の「エナジーサポート」の英語の欄（手札に加える）は、日本語の文面（自分の控えポケモンにつける）と処理が違う。エンジンは日本語にしたがった。
 - 報告事項（kyuura の作業）: RB5・DB1 は kyuura の未解決の一覧にない（RB5 は UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY と同じ形）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.75 の登録を写すと、15 枚の `engine_status` が `registered` になる。
+
+## v0.76: 拡張パック以外の商品の、持続する効果・ワザの使用の制限を中心とするポケモン 24 枚
+
+[persistent-attack-modifiers-v0.76.md](persistent-attack-modifiers-v0.76.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_76`（24 枚。kyuura data/engine_targets.json の `new_effect_needed` のポケモン）を加え、写しの作り直しの
+  道具で作った（手で直していない）。v0.75 までの 802 枚の記録は変わっていない。
+- 24 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-20・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面。研究の基準のコミットに、24 の id と
+  旧 pcg-search のページの id を指す LD-・CC-・CR-・UQ-・訂正の記録はない（収録の記録と同じカードの組だけ）。
+- kyuura の日本語の文面は 24 枚とも pcg-search.com の転記で、同じサイトでの照合は独立した照合にならない。
+- PRN-028・PRN-003・PRN-008・PRN-011（プロモ neo）・PF1-001・PF1-004（プレミアムファイル）は 2000.02.14 版のあとに発売したカードを含む。発売日を変えずに持ち、のちのルールは持ち込まない。
+- ガーディ IP2-026 のひのこのトラッシュの時点は、kyuura の RUL-ENERGY-DISCARD-ATTACKS の範囲としてワザの効果（v0.75 のガーディ ES3-010 と同じ文面・同じ登録）。
+- 報告事項（kyuura の作業）: 同じカードの組 SC-ES1-028（ドードー ES1-028・QSG-041）の `text_difference` の要約は、この組のワザの文面に当たらない。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.76 の登録を写すと、24 枚の `engine_status` が `registered` になる。
+
+## v0.77: neo 期の拡張パックの対象化と、既存の効果の型で表せる 52 枚
+
+[neo-existing-effects-v0.77.md](neo-existing-effects-v0.77.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_77`（52 枚。neo1〜neo4 のカード。id は kyuura の小文字の id のまま）を加え、写しの作り直しの
+  道具で作った（手で直していない）。v0.76 までの 826 枚の記録は変わっていない。
+- 実装の対象に neo1〜neo4（kyuura data/engine_targets.json の 323 件）を加えた。全対象は 1,377 件（PMCG1〜6 の 457・拡張パック以外の 597・neo の 323）。未対応の数は engine_targets.json の
+  `engine_status`（v0.68 の索引）ではなく、今の登録を差し引いて数えた（全対象 499・neo 271・拡張パック以外 228）。
+- 52 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-20・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面。研究の基準のコミットに、
+  52 の id を指す LD-・CC-・CR-・UQ-・訂正の記録はない。既存の登録の照合の出典（「P43 p.xx」など）は、新しいカードの照合として写していない。`card_verification.json` には加えていない。
+- kyuura の日本語の文面は nazonobasho.com（28 枚）・ポケモンWiki（24 枚）の転記で、そのページを開き直すことは独立した照合にならない。pcg-search.com も開いていない。
+- neo1（2000-02-04）は 2000.02.14 版の前、neo2〜neo4 はあとに発売したカード。発売日を変えずに持ち、ルールの基準は 2000.02.14 版のまま（後年のルール・2002 年の特殊能力の分類は持ち込まない）。
+- 報告事項（kyuura の作業）: ニョロボン neo2-037 のワザ 0 の名前「とづく」は写しの値のまま使った（誤記かどうかは確かめていない）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.77 の登録を写すと、52 枚の `engine_status` が `registered` になる。
+
+## v0.78: 悪・鋼エネルギーと、「悪」「鋼」エネルギーを使うポケモン 8 枚
+
+[darkness-metal-energy-v0.78.md](darkness-metal-energy-v0.78.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_78`（13 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.77 までの 878 枚の
+  記録は変わっていない。
+- 13 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-20・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面（特殊エネルギーは
+  `play_text` の `energy`）。研究の基準のコミットに、13 の id を指す LD-・CC-・CR-・UQ-・訂正の記録はない。鋼エネルギーの受けるダメージの範囲は kyuura data/curation/card_differences.json の
+  neo1-095（確度: 確実。日本語は「ワザによるダメージ」、英語はワザに限らない）にしたがい、日本語の範囲を使った。`card_verification.json` には加えていない。
+- kyuura の日本語の文面は nazonobasho.com（7 枚）・ポケモンWiki（1 枚）・pcg-search.com（イントロパック・プロモの 5 枚）の転記。同じサイトとの照合は独立した照合にならない。外部照合はしていない。
+- 報告事項（kyuura の作業）: 5 枚の特殊エネルギーの `energy.provides` が空（エンジンは日本語の説明の「「悪」エネルギー1個ぶん」「「鋼」エネルギー1個ぶん」で決めた）。
+- 報告事項（kyuura の作業）: 同じカードの組 SC-neo1-095（neo1-095・NIP1X-010）は受けるダメージの範囲が、SC-PRN-002（neo1-094・PRN-002・NIP2X-010）はポケモンチェックの効果（10 ダメージか
+  ダメージカウンター 1 個か）が版で違う。card_differences は neo1-095 の日英の違いだけを記録している。
+- 報告事項（kyuura の作業）: NIP1X-005 の `pokemon.dex`・`jp_print.level`、NIP2X-005 の `jp_print.level` が欠けている（処理に使う欄ではない）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.78 の登録を写すと、13 枚の `engine_status` が `registered` になる。
+
+## v0.79: v0.78 の共通処理の修正と、ポケモン 52 枚
+
+[shared-checks-pokemon-reuse-v0.79.md](shared-checks-pokemon-reuse-v0.79.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_79`（52 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.78 までの 891 枚の
+  記録は変わっていない。
+- 52 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-21・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面。研究の基準のコミットに、
+  52 の id を指す LD-・CC-・CR-・UQ-・訂正の記録はない。`card_verification.json` には加えていない。
+- kyuura の日本語の文面は pcg-search.com（拡張シート・クイックスターターギフト・ポケモンジム・イントロパック・プレミアムファイル・プロモ・サザンアイランドの 16 枚）・nazonobasho.com（neo1・neo2）・
+  ポケモンWiki（neo3・neo4）の転記。同じ所との照合は独立した照合にならない。外部照合はしていない。
+- 報告事項（kyuura の作業）: サンド（ES2-020・QSG-033）のスピードスターの説明の「抵抗カ」（カタカナの「カ」）。エンジンは写しを直さず、その書き方をそのまま受け付けた。
+- 報告事項（kyuura の作業）: ヤドン（neo1-045）・ネイティ（neo1-046）の `ja_text_source` の URL の番号が入れかわっている（neo01-046-yadon・neo01-045-naty）。
+- 報告事項（kyuura の作業）: マチスのラッタ（GD3-012）のいかりのまえばのダメージの目安が null（「?」がない）。エンジンは写しに「?」を足さず、この書き方と組にして受け付けた。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.79 の登録を写すと、52 枚の `engine_status` が `registered` になる。
+
+## v0.80: v0.79 の共通処理の修正と、トレーナー 30 枚
+
+[neo-trainer-components-v0.80.md](neo-trainer-components-v0.80.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_80`（30 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.79 までの 943 枚の
+  記録は変わっていない。
+- 30 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-21・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面。研究の基準のコミットに、
+  30 の id を指す LD-・CC-・CR-・UQ-・エラッタの記録はない。`card_verification.json` には加えていない。
+- neo1-092（超エネルギー回収の neo の版）は同じカードの組 SC-PR1-009 にあるが、ERR-SUPER-ENERGY-RETRIEVAL の `cards` は 1stp009 だけなので、エラッタの範囲として当てはめず、この版の印刷の
+  文面で処理する（研究の対応表の `errata_card_ids` に加えていない）。
+- kyuura の日本語の文面は nazonobasho.com（neo1・neo2）・ポケモンWiki（neo3・neo4）・pcg-search.com（GD5・PR1・PRN・ES2）の転記。同じ所との照合は独立した照合にならない。外部照合はしていない。
+- 報告事項（kyuura の作業）: スロットゲーム（neo1-090）の `ja_text_source` の URL の番号が 091（neo01-091-slotgame）で、カード番号と違う。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.80 の登録を写すと、30 枚の `engine_status` が `registered` になる。
+
+## v0.81: ポケモンのどうぐ 11 枚・ピントレンズ・常にはたらくスタジアム 3 枚
+
+[pokemon-tools-stadiums-v0.81.md](pokemon-tools-stadiums-v0.81.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_81`（15 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.80 までの 973 枚の
+  記録は変わっていない。
+- 15 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-21・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面。研究の基準のコミットに、
+  15 の id を指す LD-・CC-・CR-・UQ-・エラッタの記録はない。`card_verification.json` には加えていない。
+- kyuura の日本語の文面は nazonobasho.com（neo1）・ポケモンWiki（neo3・neo4）・pcg-search.com（PRN・NIP1X・NIP2X）の転記。同じ所との照合は独立した照合にならない。外部照合はしていない。
+- 新しい停止コード 3 件（BY1・BB1・FB1）を研究の対応表の `stop_codes` に `not_in_kyuura` で加えた。
+- 報告事項（kyuura の作業）: ポケモンのどうぐの共通の文の書き方が 2 通りある（「あなたの場にいるポケモン」（neo1・neo4・PRN）・「あなたの場のポケモン」（neo3・NIP1X・NIP2X））。エンジンは同じ意味として
+  明示的に登録した。どちらが印刷どおりかは確かめていない。
+- 報告事項（kyuura の作業）: 研究の基準のコミットの記録（rule_history.json の NEO-2000-OFFICIAL-RULES・rule_differences.json）に「ポケモンのどうぐ」の一般の規定の記録がない（NEO-2000-PLAYRULE の notes に『トレーナーズ』Vol.4 の予告記事があるだけ。エンジンは規定として使っていない）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.81 の登録を写すと、15 枚の `engine_status` が `registered` になる。
+
+## v0.83: エコロジムとリサイクルエネルギーの不要な TE2 の修正と、ひかるポケモン 10 枚・やさしいポケモン 7 枚・ギャロップ（ES1-014）
+
+[shining-gentle-pokemon-v0.83.md](shining-gentle-pokemon-v0.83.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_83`（18 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.82 までの 1,008 枚の
+  記録は変わっていない。
+- 18 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-21・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面。研究の基準のコミットに、
+  18 の id を指す LD-・CC-・CR-・UQ-・エラッタの記録はない。`card_verification.json` には加えていない。
+- kyuura の日本語の文面はポケモンWiki（neo3・neo4）・pcg-search.com（PRN-044・PRN-046・ES1-014）の転記。同じ所との照合は独立した照合にならない。外部照合はしていない。
+- 研究の対応表の `adopted_printed_text` に説明文のあるワザ 32 を加えた。新しい停止コード 2 件（RS1・LT1）を `stop_codes` に `not_in_kyuura` で加えた。
+- 報告事項（kyuura の作業）: やさしいヤドランの「すくいあげる」の文面は「、」で終わる（写しのまま受け付けた）。
+- 報告事項（kyuura の作業）: 「おたがいのプレイヤーは、それぞれ、…」のワザ（きんいろのうろこ・ふしぎなはばたき・あかりでてらす・すくいあげる・みずかき）の、プレイヤーの順番の記録がない
+  （エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.83 の登録を写すと、18 枚の `engine_status` が `registered` になる。
+
+## v0.84: リフレクトシールド・みずかきの修正と、やさしいポケモン 12 枚・ポケモン育て屋夫婦
+
+[light-powers-evolution-v0.84.md](light-powers-evolution-v0.84.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_84`（13 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.83 までの 1,026 枚の
+  記録は変わっていない。
+- 13 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-22・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面。研究の基準のコミットに、
+  13 の id を指す LD-・CC-・CR-・UQ-・エラッタの記録はない。`card_verification.json` には加えていない。
+- kyuura の日本語の文面はポケモンWiki（neo3・neo4）の転記。同じ所との照合は独立した照合にならない。外部照合はしていない。
+- 研究の対応表の `adopted_printed_text` に説明文のあるワザ 19・特殊能力 5 を加えた（トレーナーの印刷の文面は、今までどおり対応表に挙げない）。新しい停止コード 3 件（RF1・WD1・WD2）を
+  `stop_codes` に `not_in_kyuura` で加えた。
+- 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
+
+## v0.88: ポケモンのタイプとエネルギーの色を変える特殊能力、色を選ぶ・数えるワザの 11 枚
+
+[type-energy-colors-v0.88.md](type-energy-colors-v0.88.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_88`（11 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.87 までの 1,080 枚の
+  記録は変わっていない。
+- 11 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-23・外部照合なし・`kyuura_records` は空）。研究の基準のコミットに、11 の id を指す LD-・CC-・CR-・UQ-・
+  エラッタの記録はない。`card_verification.json` には加えていない。
+- 処理に使う文面はどれも kyuura の印刷の文面（研究の対応表の `adopted_printed_text` に 20）。レインボーウェーブ（SI-004）は、日本語の文面（基本エネルギーカードに限る）にしたがい、英語版の
+  「other than Colorless」は持ち込んでいない（kyuura の other_products の日英の違いの記録）。
+- kyuura の日本語の文面（`ja_text_source`）は、pcg-search.com の転記 6 枚（GD4・SI・PF3・ES1・QSG・PR1 の商品）・ポケモンWiki の転記 4 枚（neo3-026・neo3-051・neo3-034・neo3-045）・
+  nazonobasho.com の転記 1 枚（neo1-040）。同じ所との照合は独立した照合にならない。外部照合はしていない。
+- 新しい停止コード 3 件（CE1・CE2・CE3）を `stop_codes` に `not_in_kyuura` で加えた。
+- 報告事項（kyuura の作業）: CE1・CE2・CE3 は kyuura の未解決の一覧にない論点。kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写しで、v0.88 の登録を写すと 11 枚の
+  `engine_status` が `registered` になる。
+
+## v0.87: 場の移動・ダメージへの反応と、控えの保護・「にげる」の禁止のポケモン 14 枚
+
+[movement-damage-reactions-v0.87.md](movement-damage-reactions-v0.87.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_87`（14 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.86 までの 1,066 枚の
+  記録は変わっていない。
+- 14 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-23・外部照合なし・`kyuura_records` は空）。研究の基準のコミットに、14 の id を指す LD-・CC-・CR-・UQ-・
+  エラッタの記録はない。`card_verification.json` には加えていない。
+- 処理に使う文面は、12 枚が kyuura の印刷の文面。コクーン ES1-005 の［どくのたいえき］・マチスのマルマイン GD3-009 の［ショックボム］は、このリポジトリの v0.10 の読取記録
+  （docs/counterattack-v0.10.md 2 章。p.20・p.138。2026-10-14 に『オフィシャルブック2000』を読んだ記録）の再利用で、v0.87 では原典を開いていない。記録の範囲は特殊能力の文面（と p.138 の解説）だけで、
+  カードの全体を照合した記録ではない。kyuura が原典を読んだ記録とは数えない（研究の対応表の `registered_without_kyuura_record`）。
+- kyuura の日本語の文面（`ja_text_source`）は、pcg-search.com の転記 11 枚（GD3・ES1・ES2・QSG・PR1 の商品）・ポケモンWiki の転記 2 枚（neo3-009・neo4-023）・nazonobasho.com の転記 1 枚（neo2-044）。
+  同じ所との照合は独立した照合にならない。外部照合はしていない。
+- 研究の対応表の `adopted_printed_text` に説明文のあるワザ・特殊能力 25、`registered_without_kyuura_record` に 2（ES1-005/power/0・GD3-009/power/0）を加えた。新しい停止コード 4 件（HP1・MG1・MG2・SB1）を
+  `stop_codes` に `not_in_kyuura` で加えた。
+- カビゴン（ES1-034・QSG-046）の転記の「このカは消える」は写しのまま（「この力は消える」の誤りと思われる。データは直していない）。
+- 報告事項（kyuura の作業）: ES1-005（p.20）・GD3-009（p.138）の特殊能力の最新の説明は、エンジンの v0.10 の読取記録だけにあり、kyuura に LD- がない。HP1・MG1・MG2・SB1 は kyuura の未解決の一覧に
+  ない論点。カビゴンの転記の「このカは消える」。kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写しで、v0.87 の登録を写すと 14 枚の `engine_status` が `registered` になる。
+
+## v0.86: 登場・エネルギー・進化への反応 13 枚
+
+[entry-energy-evolution-reactions-v0.86.md](entry-energy-evolution-reactions-v0.86.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_86`（13 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.85 までの 1,053 枚の
+  記録は変わっていない。
+- 13 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-22・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面。研究の基準のコミットに、
+  13 の id を指す LD-・CC-・CR-・UQ-・エラッタの記録はない。`card_verification.json` には加えていない。
+- kyuura の日本語の文面（`ja_text_source`）は、ポケモンWiki の転記 7 枚（neo3・neo4）・pcg-search.com の転記 5 枚（PF2・PRN・PR1 の商品）・nazonobasho.com の転記 1 枚（neo2-049）。同じ所との
+  照合は独立した照合にならない。外部照合はしていない。
+- 研究の対応表の `adopted_printed_text` に説明文のあるワザ・特殊能力 23 を加えた。新しい停止コード 7 件（RA1・RA2・CV1・OT1・BT1・PL1・SO1）を `stop_codes` に `not_in_kyuura` で加えた。
+- 報告事項（kyuura の作業）: RA1・RA2・CV1・OT1・BT1・PL1・SO1 は kyuura の未解決の一覧にない論点。kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写しで、v0.86 の登録を写すと
+  13 枚の `engine_status` が `registered` になる。
+
+## v0.85: 進化したときの特殊能力・エネルギーを動かす特殊能力のポケモン 13 枚と、ミラクルエネルギー
+
+[entry-powers-energy-lifecycle-v0.85.md](entry-powers-energy-lifecycle-v0.85.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_85`（14 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.84 までの 1,039 枚の
+  記録は変わっていない。
+- 14 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-22・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面。研究の基準のコミットに、
+  14 の id を指す LD-・CC-・CR-・UQ-・エラッタの記録はない。`card_verification.json` には加えていない。
+- kyuura の日本語の文面（`ja_text_source`）は、pcg-search.com の転記 8 枚（PF・NIP の商品）・nazonobasho.com の転記 5 枚（neo1）・ポケモンWiki の転記 1 枚（neo4-113）。同じ所との照合は
+  独立した照合にならない（pcg-search.com の転記の 8 枚は、同じサイトを開き直しても外部照合にならない）。外部照合はしていない。
+- 研究の対応表の `adopted_printed_text` に説明文のあるワザ・特殊能力 25 を加えた。新しい停止コード 2 件（MEC1・MEW1）を `stop_codes` に `not_in_kyuura` で加えた。
+- 報告事項（kyuura の作業）: メガニウム PF1-003 の［ハーブのかおり］と other_products の再録の文面（`kind: clarify`）の書き方の違い。ミラクルエネルギーの「デッキに1枚まで」が英語の文面だけに
+  あることと、`energy.provides` が空であること。オーダイル NIP2X-001 のぎゃくりゅうの括弧書きが PF1-009 にないこと。メガニウム neo1-014 が card_lists.poke_body（2002 年の分類）に挙がること。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.85 の登録を写すと、14 枚の `engine_status` が `registered` になる。

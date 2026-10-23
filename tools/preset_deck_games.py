@@ -310,7 +310,17 @@ TRAINER_EVENTS = {
     # ［てしたをよぶ］）の使う機会の答え（使わない・宣言）と、その処理（山札からベンチに出す・山札を切る）
     POKEMON_BREEDER: {"evolve": "user", "special_conditions_removed": "user", "persistent_effect_removed": "user",
                       "retreat_failure_cleared": "user", "entry_power_declined": "user", "pokemon_power": "user", "bench_from_deck": "user",
-                      "shuffle": "user"},
+                      "shuffle": "user",
+                      # v0.85: 進化させた 2 進化ポケモンの［あばれんぼう］（かならずはたらく。コインで相手か自分の山札）・［ハーブのかおり］（おたがいの「草」ポケモン）・
+                      # ［ファイヤーブースト］（山札からこのカードに）のコインと処理
+                      "coin_flip": "user", "power_discard_deck": "either", "remove_damage_counters": "either", "power_attach_from_deck": "user",
+                      # v0.86: 進化させた 2 進化ポケモンの［とつぜんかみつく］（相手の場のポケモンに特殊能力のダメージ。きぜつ・サイド・バトル場に出すを挟んでから使い終える）・
+                      # ［いやしのかぜ］（remove_damage_counters）と、その進化への［れんさしんか］（使う・使わない・山札から重ねる・重ねるカードがない）
+                      "power_damage": "user", "knock_out": "either", "take_prize": "either", "promote_active": "either", "reaction_power_declined": "user",
+                      "evolve_from_deck_none": "user",
+                      # v0.87: 進化させたゲンガー（PR1-053）の［やみのちから］（コインの「おもて」で相手の場のポケモンを持ち主の手札へ。そのあとバトル場に出す）と、相手の場の
+                      # ［まきびし］（バトル場に出したポケモンへ）
+                      "return_in_play_to_hand": "opponent", "spikes_damage": "either"},
     # v0.50: 退化スプレー。自分の進化ポケモンからはがす（退化で消える特殊状態・持続する効果・にげるの失敗の記録）か、はがさない（0 枚）。きぜつはトラッシュしたあと
     DEVOLUTION_SPRAY: {"devolve": "user", "devolve_declined": "user", "special_conditions_removed": "user", "persistent_effect_removed": "user",
                        "retreat_failure_cleared": "user"},
@@ -377,7 +387,7 @@ def trainer_sequence_problems(state):
             acting = borrowed.get(card, user)
             if kind not in allowed:
                 problems.append(f"{i}: {card_id} の使用中に {kind}")
-            elif e.get("player") != (acting if allowed[kind] == "user" else 1 - acting):
+            elif allowed[kind] != "either" and e.get("player") != (acting if allowed[kind] == "user" else 1 - acting):
                 problems.append(f"{i}: {card_id} の使用中の {kind} の player が {e.get('player')}")
             continue
         if kind == "play_trainer" and _card(state, e["card"]) in TRAINER_EVENTS:
