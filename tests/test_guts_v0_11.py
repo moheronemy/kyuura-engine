@@ -673,7 +673,9 @@ class G37Test(unittest.TestCase):
         # ドガースの「ふしぎなガス」は相手プレイヤーの場に与える期限のある効果で、相手の対戦ポケモンへの要素ではない（宣言しない）
         "DamageThenSelfSleepThenSleepOpponentOnHeads", "DamageThenSwitchBothActives",
         # v0.88: かっこいいポリゴンの「テクスチャーマジック」（相手の対戦ポケモンの弱点の色を変える。docs/type-energy-colors-v0.88.md 6.5 節）
-        "ChangeWeaknessAndResistanceOptional"]))
+        "ChangeWeaknessAndResistanceOptional",
+        # v0.89: レアコイルの「マイクロウェーブ」（選んだ個体のエネルギーカードのトラッシュ）・ベロリンガの「きずをなめる」（おたがいの場から選ぶ回復。docs/selected-target-damage-v0.89.md）
+        "ChooseOpponentPokemonDamageThenDiscardEnergyOnHeads", "CoinChooseEitherPokemonHeal"]))
 
 
 class DecisionTest(unittest.TestCase):

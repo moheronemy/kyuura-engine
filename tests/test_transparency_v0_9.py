@@ -684,7 +684,9 @@ EVOLUTIONS = {METAPOD: (CATERPIE,), KAKUNA: (WEEDLE,), DEWGONG: (SEEL,), STARMIE
               "ES1-017": ("ES1-016",), "QSG-015": ("QSG-014",), "GD2-014": ("GD2-013",), "IP2-003": ("IP2-016",), "NIP2-026": ("NIP2-018",),
               "PF2-004": ("ES1-032",),
               # v0.88: ランターン（neo1-040・neo3-026。チョンチー neo1-037 から）・スターミー（neo3-034。ヒトデマンから）
-              "neo1-040": ("neo1-037",), "neo3-026": ("neo1-037",), "neo3-034": (STARYU,)}
+              "neo1-040": ("neo1-037",), "neo3-026": ("neo1-037",), "neo3-034": (STARYU,),
+              # v0.89: ライチュウ（ES2-013・QSG-022。ピカチュウから）・ゴーリキー（ES3-028。ワンリキーから）
+              "ES2-013": (PIKACHU,), "QSG-022": (PIKACHU,), "ES3-028": (MACHOP,)}
 
 
 class EvadedEffectCoinTest(unittest.TestCase):
@@ -798,7 +800,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                     # v0.88: エリカのナゾノクサ（GD4-001）の「どくのこな」（PoisonOnHeads）・ランターン（neo1-040）の「まぶしいひかり」（ParalyzeOnHeads）・
                                     # ランターン（neo3-026）の「アクアフラッシュ」・スターミー（neo3-034）の「あやしいひかり」（ConfuseOnHeads）。既存の型の登録だけなので、
                                     # 同じ T19b で止まる（docs/type-energy-colors-v0.88.md 6.6 節）
-                                    "どくのこな", "まぶしいひかり", "アクアフラッシュ", "あやしいひかり"]))
+                                    "どくのこな", "まぶしいひかり", "アクアフラッシュ", "あやしいひかり",
+                                    # v0.89: ライチュウ（ES2-013・QSG-022。同じデータの組）の「ビリビリキック」・ゴーリキー（ES3-028）の「じごくづき」（ParalyzeOnHeads）。既存の型の
+                                    # 登録だけなので、同じ T19b で止まる（docs/selected-target-damage-v0.89.md 5 章）。じごくづき（闘 20）はゴースト（抵抗力 闘）への最終ダメージが 0
+                                    "ビリビリキック", "ビリビリキック", "じごくづき"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}
@@ -812,7 +817,7 @@ class EvadedEffectCoinTest(unittest.TestCase):
                         self.assertIsNone(working_evasion_power(state, state.players[1].active.pokemon_id))
                         self.assertEqual(power_coins(apply_command(state, UseAttack(0, key.attack_index)).log), [])
                         continue
-                    if key.card_id in ("PMCG5-050", "ES2-026", "ES2-024", "QSG-037", "neo1-052", "ES2-020", "QSG-033"):  # v0.72: イワークの「しめつける」10 も最終ダメージが 0。v0.77: グライガー（闘）の「どくばり」10 も。v0.79: サンド（闘）の「どくばり」10 も
+                    if key.card_id in ("PMCG5-050", "ES2-026", "ES2-024", "QSG-037", "neo1-052", "ES2-020", "QSG-033", "ES3-028"):  # v0.72: イワークの「しめつける」10 も最終ダメージが 0。v0.77: グライガー（闘）の「どくばり」10 も。v0.79: サンド（闘）の「どくばり」10 も。v0.89: ゴーリキー（ES3-028。闘）の「じごくづき」20 も
                         # v0.60: タケシのサンドパン（闘）の「とげボール」30 は、ゴースト（抵抗力 闘 -30）への最終ダメージが 0 なので「ダメージを受けなかった」（T21）。
                         # 「とうめい」はダメージの要素ではたらかず、受けないと決まっていないので、そのあとのどくのコインを投げる（T19b に当たらない。「おもて」なら、
                         # どくの要素を受ける前に「とうめい」のコインを投げる）。v0.70: サワムラー（闘）の「まわしげり」30 も同じ（マヒのコイン）

@@ -159,7 +159,7 @@ class RegistrationTest(unittest.TestCase):
         for card in H.V0_82_CARDS:
             with self.subTest(card=card):
                 self.assertNotIn(card, pool.playable_ids)
-        self.assertEqual(len(pool.playable_ids), 1071)  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.84 でポケモン 12 枚・ポケモン育て屋夫婦を加えた  # v0.83 でポケモン 18 枚を加えた（v0.82 の時点は 988）
+        self.assertEqual(load_card_pool().playable_ids - pool.playable_ids, frozenset(H.V0_82_CARDS))  # ほかのカードの対応は変わらない
 
     def test_same_data_groups_share_entries(self):
         groups = {"PRN-007": CYNDAQUIL, "PRN-010": CYNDAQUIL, "QSG-010": PONYTA, "QSG-012": MAGMAR}

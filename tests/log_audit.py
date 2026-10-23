@@ -85,6 +85,7 @@ from kyuura_engine.effects import HealOnAttachEnergy, RainbowEnergy  # v0.58
 from kyuura_engine.effects import ConvertSelfToEnergy  # v0.59
 from kyuura_engine.effects import DiscardAttackerEnergyOnDamage  # v0.68
 from kyuura_engine.effects import EachPlayerRecoverFromDiscard  # v0.83
+from kyuura_engine.effects import CoinChooseEitherPokemonHeal  # v0.89
 from kyuura_engine.effects import CoinWashChosenBench, DamageSleepThenHealBothBench, EachPlayerLookTopTakeBasicEnergy, HealChosenBenchByEnergy  # v0.83
 from kyuura_engine.effects import HealOwnPokemonWithoutDamage, LookTopTakeOneThenShuffle  # v0.83
 from kyuura_engine.effects import BenchBabyOrBasicFromOwnDiscardAttack, DamageThenBubbleJump, ReturnOwnBenchToDeckAttack  # v0.84
@@ -270,6 +271,8 @@ from kyuura_engine.resolution.programs import (
     BUILDERS, Damage, DiscardOwnEnergy, MoveOneEnergyToBench, MoveOwnEnergyToBench, OptionalDiscardBenchDamage, ReturnOwnEnergyToHand,
     DiscardEachType, OptionalDiscardAll, OptionalDiscardForBonus,
 )
+from kyuura_engine.resolution.programs import TargetDamage  # v0.89
+from kyuura_engine.effects import TARGET_IN_PLAY, TARGET_SIDE_BOTH, TARGET_SIDE_OPPONENT, TARGET_SIDE_OWN  # v0.89
 from kyuura_engine.serialize import FORMAT_VERSIONS
 from kyuura_engine.state import (
     RETALIATION_FIXED,
@@ -1107,6 +1110,11 @@ def _damage_element_limits(effect) -> tuple[int, int]:
     program = _program_of(effect)
     opponent = sum(1 for element in program if isinstance(element, Damage) and element.target == "opponent_active")
     own = sum(1 for element in program if isinstance(element, Damage) and element.target == "self")
+    # v0.89: 選んだ個体へのダメージ（``TargetDamage``）は、選べる範囲に相手の対戦ポケモン・ワザを使ったポケモン自身があれば、そのダメージの要素に数える
+    for element in program:
+        if isinstance(element, TargetDamage) and element.scope == TARGET_IN_PLAY:
+            opponent += element.side in (TARGET_SIDE_OPPONENT, TARGET_SIDE_BOTH)
+            own += element.side in (TARGET_SIDE_OWN, TARGET_SIDE_BOTH)
     return max(opponent, 1), max(own, 1)
 
 
@@ -4370,6 +4378,9 @@ def log_problems(state) -> list[str]:
             elif isinstance(effect, CoinChosenSideHealAttack):
                 # v0.85: あまいかおり。コインで決めたどちらかの場のポケモン 1 匹（自分の場ならワザを使ったポケモンも）
                 allowed = pid in in_play and e.get("attacker") == attack_window["player"]
+            elif isinstance(effect, CoinChooseEitherPokemonHeal):
+                # v0.89: きずをなめる。おたがいの場のポケモンから選んだ 1 匹（自分の場ならワザを使ったポケモンも）。相手のポケモンなら ``attacker`` つき
+                allowed = pid in in_play and (pokemon_owner.get(pid) == attack_window["player"] or e.get("attacker") == attack_window["player"])
             elif isinstance(effect, DamageSleepThenHealBothBench):
                 # v0.83: ヒプノシャワー。おたがいの控えポケモン全員（バトル場のポケモンは除く）
                 allowed = pid in in_play and pid != attack_window["pokemon_id"] and pid != active_of.get(1 - attack_window["player"])
