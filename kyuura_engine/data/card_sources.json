@@ -26548,6 +26548,250 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.88 で加えた（docs/type-energy-colors-v0.88.md）。kyuura data/engine_targets.json（7d3f4ca）の対象。テクスチャーマジック=ChangeWeaknessAndResistanceOptional（相手の弱点（あれば）と自分の抵抗力を、それぞれ変えてよい）、3Dアタック=CoinFlipDamage(3, 20)。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT）は持ち込まない"
+    },
+    "neo2-040": {
+      "basis": "kyuura_data",
+      "name_ja": "ブラッキー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.89 で加えた（docs/selected-target-damage-v0.89.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（neo2。日本語の文面は nazonobasho.com の転記）。かみつく=DamageOnly、だましうち=ChooseOpponentPokemonDamageIgnoringEffects(30)（選んだポケモンの持っている効果を除く。除く範囲の読み方で受けるダメージが変わるポケモンは選ぶと止める。FA1）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo4-035": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいオムナイト",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.89 で加えた（docs/selected-target-damage-v0.89.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（neo4。日本語の文面は pokemonwiki の転記）。てっぽうみず=ChooseOpponentPokemonOwnEnergyDamage(水, 10, 3)（エネルギーの個数。どの読み方でも 3 個以上なら止めない）。進化元はなにかの化石（PMCG3-046。名前と段階で決まる）。kyuura の研究の基準（7d3f4ca）に、このカードを指す記録はない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "GD1-007": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのイシツブテ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.89 で加えた（docs/selected-target-damage-v0.89.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（GD1）。たいあたり=DamageOnly、ロングショット=ChooseOpponentBenchThenCoinDamage(30)（選んでからコイン。相手に控えがいないときは使えない（usage_problem））。kyuura の研究の基準（7d3f4ca）に、このカードを指す記録はない。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "GD2-011": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのアズマオウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.89 で加えた（docs/selected-target-damage-v0.89.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（GD2）。つのでつく=DamageOnly、だくりゅう=DamageThenChooseBenchCoinDamage(10)（相手の対戦ポケモンに 30 → 控えを選ぶ → コイン → その控えに 10）。進化元はカスミのトサキント（名前と段階で決まる）。kyuura の研究の基準（7d3f4ca）に、このカードを指す記録はない。kyuura の日本語の文面は pcg-search.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "GD6-011": {
+      "basis": "kyuura_data",
+      "name_ja": "ナツメのバリヤード",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.89 で加えた（docs/selected-target-damage-v0.89.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（GD6）。マジックダーツ=ChooseOpponentPokemonCoinsDamage(3, 10)（選んでからコイン 3 枚）。kyuura の研究の基準（7d3f4ca）に、このカードを指す記録はない。kyuura の日本語の文面は pcg-search.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES2-013": {
+      "basis": "kyuura_data",
+      "name_ja": "ライチュウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.89 で加えた（docs/selected-target-damage-v0.89.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（拡張シート第2弾）。ろうでん=ChooseOpponentPokemonTargetEnergyDamage(水, 10)（選んだポケモンの「水」エネルギーの個数）、ビリビリキック=ParalyzeOnHeads。QSG-022 と同じゲーム用データ（同じ登録の値を共有する。SAME_DATA_CARDS_V0_89）。kyuura の研究の基準（7d3f4ca）に、このカードを指す記録はない。kyuura の日本語の文面は pcg-search.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "QSG-022": {
+      "basis": "kyuura_data",
+      "name_ja": "ライチュウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.89 で加えた（docs/selected-target-damage-v0.89.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（クイックスターターギフト）。ES2-013 と同じゲーム用データ（同じ登録の値を共有する。SAME_DATA_CARDS_V0_89）。kyuura の日本語の文面は pcg-search.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES2-015": {
+      "basis": "kyuura_data",
+      "name_ja": "レアコイル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.89 で加えた（docs/selected-target-damage-v0.89.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（拡張シート第2弾）。マイクロウェーブ=ChooseOpponentPokemonDamageThenDiscardEnergyOnHeads(20)（選んだ個体に 20 → コイン → 同じ個体のエネルギーカード）。QSG-024 と同じゲーム用データ（SAME_DATA_CARDS_V0_89）。kyuura の研究の基準（7d3f4ca）に、このカードを指す記録はない。kyuura の日本語の文面は pcg-search.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "QSG-024": {
+      "basis": "kyuura_data",
+      "name_ja": "レアコイル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.89 で加えた（docs/selected-target-damage-v0.89.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（クイックスターターギフト）。ES2-015 と同じゲーム用データ（SAME_DATA_CARDS_V0_89）。kyuura の日本語の文面は pcg-search.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "SI-010": {
+      "basis": "kyuura_data",
+      "name_ja": "ベロリンガ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.89 で加えた（docs/selected-target-damage-v0.89.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（サザンアイランド）。きずをなめる=CoinChooseEitherPokemonHeal(2)（おたがいの場から選ぶ。条件なし）、のびるベロ=CoinChooseOpponentPokemonDamage(20)（v0.44 の型）。ワザ 1 の名前「のびるベロ」は kyuura の台帳の修正 FIX-SI-010-ATK1-NAME（kyuura_existing_record。「のびるべ口」→「のびるベロ」）が写しの元にすでに当てはめた値で、写しには当てはめ直さない（scripts/extract_kyuura_cards.py の KYUURA_CORRECTIONS）。kyuura の CC-PMCG2-041-P234 は SI-010 に触れるが、SI-010 の全体を照合した記録ではない（kyuura_records に入れない）。kyuura の日本語の文面は pcg-search.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "SI-013": {
+      "basis": "kyuura_data",
+      "name_ja": "ナッシー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.89 で加えた（docs/selected-target-damage-v0.89.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（サザンアイランド）。ねらいだま=ChooseOpponentPokemonCoinsPerOwnEnergyDamage(草, 10)（選んでから「草」エネルギーの個数だけコイン）。文面の「抵抗カ」（カタカナ）は写しのまま照らす（kyuura への報告事項）。kyuura の研究の基準（7d3f4ca）に、このカードを指す記録はない。kyuura の日本語の文面は pcg-search.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES3-028": {
+      "basis": "kyuura_data",
+      "name_ja": "ゴーリキー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.89 で加えた（docs/selected-target-damage-v0.89.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（拡張シート第3弾）。じごくづき=ParalyzeOnHeads、きあいだま=CoinChooseOpponentPokemonDamageApplyingWR(20)（控えへのダメージも弱点・抵抗力を計算する。説明に明記）。kyuura の研究の基準（7d3f4ca）に、このカードを指す記録はない。kyuura の日本語の文面は pcg-search.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES3-030": {
+      "basis": "kyuura_data",
+      "name_ja": "カラカラ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.89 で加えた（docs/selected-target-damage-v0.89.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（拡張シート第3弾）。ほねをなげる=CoinActiveElseChosenBenchDamage(30, 10, False)（「うら」で選んだ控えに 10。控えがいなければ何もしない）。kyuura の研究の基準（7d3f4ca）に、このカードを指す記録はない。kyuura の日本語の文面は pcg-search.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PR1-057": {
+      "basis": "kyuura_data",
+      "name_ja": "ニャース",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.89 で加えた（docs/selected-target-damage-v0.89.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（プロモ）。ねこパンチ=CoinActiveElseChosenBenchDamage(20, 20, True)（「うら」で相手プレイヤーが控えを選ぶ。控えへの弱点・抵抗力の記述がないので、計算するかで変わる控えは選ぶと止める。JS1）。kyuura の研究の基準（7d3f4ca）に、このカードを指す記録はない。kyuura の日本語の文面は pcg-search.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PR1-070": {
+      "basis": "kyuura_data",
+      "name_ja": "サンダー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.89 で加えた（docs/selected-target-damage-v0.89.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（プロモ）。ライトニングバーン=CoinChooseBenchElseSelfDamage(30, 30)（1 枚のコインで、選んだ控えに 30 か自分に 30）。kyuura の研究の基準（7d3f4ca）に、このカードを指す記録はない。kyuura の日本語の文面は pcg-search.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES2-018": {
+      "basis": "kyuura_data",
+      "name_ja": "サンダー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.89 で加えた（docs/selected-target-damage-v0.89.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（拡張シート第2弾）。らくらい=DamageThenTailsChooseOwnPokemonDamage(30)（「うら」で自分の場のポケモン（自分自身も）を選ぶ）、サンダークラッシュ=CoinBonusOrSelfDamage(20, 20)（v0.34 の型。書き方の違いを明示して受け付けた）。QSG-056 と同じゲーム用データ（SAME_DATA_CARDS_V0_89）。kyuura の研究の基準（7d3f4ca）に、このカードを指す記録はない。kyuura の日本語の文面は pcg-search.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "QSG-056": {
+      "basis": "kyuura_data",
+      "name_ja": "サンダー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.89 で加えた（docs/selected-target-damage-v0.89.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（クイックスターターギフト）。ES2-018 と同じゲーム用データ（SAME_DATA_CARDS_V0_89）。kyuura の日本語の文面は pcg-search.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
     }
   }
 }

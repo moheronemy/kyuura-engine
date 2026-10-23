@@ -1352,6 +1352,20 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.PlusDistinctBasicEnergyColors,
     _effects.ChangeOwnResistanceOptional,
     _effects.ChangeWeaknessAndResistanceOptional,
+    # v0.89（docs/selected-target-damage-v0.89.md 5 章。選ぶ要素 ChooseTarget と選んだ個体へのダメージ・効果の要素の組み合わせ）
+    _effects.ChooseOpponentPokemonDamageIgnoringEffects,
+    _effects.ChooseOpponentPokemonOwnEnergyDamage,
+    _effects.ChooseOpponentBenchThenCoinDamage,
+    _effects.DamageThenChooseBenchCoinDamage,
+    _effects.ChooseOpponentPokemonCoinsDamage,
+    _effects.ChooseOpponentPokemonTargetEnergyDamage,
+    _effects.ChooseOpponentPokemonDamageThenDiscardEnergyOnHeads,
+    _effects.CoinChooseEitherPokemonHeal,
+    _effects.ChooseOpponentPokemonCoinsPerOwnEnergyDamage,
+    _effects.CoinChooseOpponentPokemonDamageApplyingWR,
+    _effects.CoinActiveElseChosenBenchDamage,
+    _effects.CoinChooseBenchElseSelfDamage,
+    _effects.DamageThenTailsChooseOwnPokemonDamage,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -2186,6 +2200,17 @@ PORYGON_ES1, PORYGON_QSG, COOL_PORYGON = "ES1-033", "QSG-045", "PR1-023"  # ポ�
 V0_88_POKEMON = (LANTURN_NEO1, LANTURN_NEO3, PORYGON2_NEO3, ERIKAS_ODDISH_GD4, STARMIE_NEO3, MEW_SI, HO_OH_PF3, MAGNETON_NEO3, PORYGON_ES1, PORYGON_QSG,
                  COOL_PORYGON)
 V0_88_CARDS = V0_88_POKEMON  # 写しの組 pool_v0_88 の並び
+
+# v0.89（docs/selected-target-damage-v0.89.md）: 対象を選ぶダメージ・選べる回復のポケモン 17 枚（同じ名前の別の版と取りちがえない）
+UMBREON_NEO2, DARK_OMANYTE, BROCKS_GEODUDE_GD1 = "neo2-040", "neo4-035", "GD1-007"  # ブラッキー（だましうち）・わるいオムナイト（てっぽうみず）・タケシのイシツブテ（ロングショット）
+MISTYS_SEAKING_GD2, SABRINAS_MR_MIME_GD6 = "GD2-011", "GD6-011"  # カスミのアズマオウ（だくりゅう）・ナツメのバリヤード（マジックダーツ）
+RAICHU_ES2, RAICHU_QSG, MAGNETON_ES2, MAGNETON_QSG = "ES2-013", "QSG-022", "ES2-015", "QSG-024"  # ライチュウ（ろうでん）2 枚・レアコイル（マイクロウェーブ）2 枚
+LICKITUNG_SI, EXEGGUTOR_SI = "SI-010", "SI-013"  # ベロリンガ（きずをなめる・のびるベロ）・ナッシー（ねらいだま）
+MACHOKE_ES3, CUBONE_ES3, MEOWTH_PR1 = "ES3-028", "ES3-030", "PR1-057"  # ゴーリキー（きあいだま）・カラカラ（ほねをなげる）・ニャース（ねこパンチ）
+ZAPDOS_PR1, ZAPDOS_ES2, ZAPDOS_QSG = "PR1-070", "ES2-018", "QSG-056"  # サンダー（ライトニングバーン）・サンダー（らくらい・サンダークラッシュ）2 枚
+V0_89_POKEMON = (UMBREON_NEO2, DARK_OMANYTE, BROCKS_GEODUDE_GD1, MISTYS_SEAKING_GD2, SABRINAS_MR_MIME_GD6, RAICHU_ES2, RAICHU_QSG, MAGNETON_ES2, MAGNETON_QSG,
+                 LICKITUNG_SI, EXEGGUTOR_SI, MACHOKE_ES3, CUBONE_ES3, MEOWTH_PR1, ZAPDOS_PR1, ZAPDOS_ES2, ZAPDOS_QSG)
+V0_89_CARDS = V0_89_POKEMON  # 写しの組 pool_v0_89 の並び
 
 
 def _self_sleep_shape_only(attack):

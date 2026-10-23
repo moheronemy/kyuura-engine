@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.88）
+# 実装状況（v0.1〜v0.89）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3819,6 +3819,21 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 338・neo 154・拡張パック以外 184） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistryTest` |
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.89: 対象を選ぶダメージ・選べる回復のポケモン 17 枚
+
+[selected-target-damage-v0.89.md](selected-target-damage-v0.89.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 選ぶ対象の共通の処理（範囲・選ぶプレイヤー・時点を別々に表す。選んだ個体を番号と持ち主で運ぶ。場をはなれた個体にすり替えない） | 実装済み・テスト済み | 印刷の文面 | test_selected_target_damage_v0_89.py `ChooseTargetTest`・`DecisionPersistenceTest` |
+| 選ぶと止めるポケモン（コインがダメージだけを決める・JS1・FA1・数え方・HC3・T19b） | 実装済み・テスト済み | 既存の問い（v0.4b・JS1・T19b・HC3・TE1・RB1・BZ2・MEC1・CE1・CE2）と FA1 | 同 `LongShotTest`・`BoneTossAndCatPunchTest`・`FeintAttackTest`・`ShockStorageTest`・`MicrowaveTest` |
+| 「弱点・抵抗力・特殊能力・その他の効果」に関係なく与えるダメージを控えポケモンにも（だましうち） | 実装済み・テスト済み | 印刷の文面・v0.60 のスピードスター | 同 `FeintAttackTest` |
+| FA1（だましうちの除く効果の範囲） | 裁定が未解決（読み方で結果が変わるときだけ止める） | — | 同 `FeintAttackTest` |
+| ワザ 26（だましうち・てっぽうみず・ロングショット・だくりゅう・マジックダーツ・ろうでん・マイクロウェーブ・きずをなめる・のびるベロ・ねらいだま・きあいだま・ほねをなげる・ねこパンチ・ライトニングバーン・らくらい・サンダークラッシュほか） | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面 | 同 各ワザのクラス・`TextVariantTest` |
+| v0.43〜v0.88 の相手の場のポケモンを選ぶダメージの移行（選んだ相手の対戦ポケモンへの順番・お上品攻撃の決定。こばんなげのコインの前の確かめ） | 実装済み・テスト済み | 意図した変化（docs 6 章） | 同 `ChooseOpponentPokemonTest` |
+| 未対応の数（全対象 269・neo 130・拡張パック以外 139） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | test_catalog_contract.py |
+| 17 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 
 ## v0.88: ポケモンのタイプとエネルギーの色を変える特殊能力、色を選ぶ・数えるワザの 11 枚
 

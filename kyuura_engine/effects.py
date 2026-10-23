@@ -569,6 +569,26 @@ SELF_BENCH = "self_bench"  # (4) 自分の控えポケモンへのダメージ�
 DAMAGE_TARGETS = (OPPONENT_ACTIVE, SELF, OPPONENT_BENCH, SELF_BENCH)
 BENCH_TARGETS = (OPPONENT_BENCH, SELF_BENCH)  # v0.33: 控えポケモンへのダメージ（プラスパワーを変えない。``attack_damage_modifiers`` の ``bench``）
 
+# v0.89（docs/selected-target-damage-v0.89.md 3 章）: ワザの説明が選ばせる場のポケモンの範囲。どちらの場から（``TARGET_SIDES``）・対戦ポケモンと控えポケモンか控えポケモンだけか
+# （``TARGET_SCOPES``）・選ぶプレイヤー（``TARGET_CHOOSERS``）を別々に表す（``resolution.programs.ChooseTarget``）
+TARGET_SIDE_OPPONENT, TARGET_SIDE_OWN, TARGET_SIDE_BOTH = "opponent", "own", "both"
+TARGET_SIDES = (TARGET_SIDE_OPPONENT, TARGET_SIDE_OWN, TARGET_SIDE_BOTH)
+TARGET_IN_PLAY, TARGET_BENCH = "in_play", "bench"
+TARGET_SCOPES = (TARGET_IN_PLAY, TARGET_BENCH)
+CHOOSER_ATTACKER, CHOOSER_OPPONENT = "attacker", "opponent"
+TARGET_CHOOSERS = (CHOOSER_ATTACKER, CHOOSER_OPPONENT)
+
+
+def target_candidates(state: GameState, player: int, side: str, scope: str) -> list[tuple[int, PokemonInPlay]]:
+    """v0.89: ワザを使ったプレイヤー ``player`` のワザの説明が選ばせる場のポケモン（(持ち主, ポケモン)）。並びは場ごとにバトル場 → ベンチ。``TARGET_SIDE_BOTH`` はワザを使った
+    プレイヤーの場 → 相手の場（選べるものの並び。決定の確かめ（``decision_problems``）と選ぶ要素が同じ関数を使う）。"""
+    sides = {TARGET_SIDE_OPPONENT: (1 - player,), TARGET_SIDE_OWN: (player,), TARGET_SIDE_BOTH: (player, 1 - player)}[side]
+    found: list[tuple[int, PokemonInPlay]] = []
+    for owner in sides:
+        pool = state.players[owner].bench if scope == TARGET_BENCH else state.players[owner].in_play()
+        found.extend((owner, pokemon) for pokemon in pool)
+    return found
+
 
 def damage_receiver(state: GameState, use: AttackUse, target: str) -> PokemonInPlay:
     """ワザのダメージを受けるポケモン。``target`` は ``OPPONENT_ACTIVE`` か ``SELF``。"""
@@ -3263,6 +3283,8 @@ class CoinBonusOrSelfDamage(AttackEffect):
         accepted = (
             f"コインを投げて「おもて」なら、相手に{self.bonus}ダメージを追加する。「うら」なら自分にも{self.self_damage}ダメージ。",
             f"コインを投げて「おもて」なら相手に追加{self.bonus}ダメージ、「うら」なら自分に{self.self_damage}ダメージ。",
+            # v0.89: サンダー（ES2-018・QSG-056）の「サンダークラッシュ」の書き方（「相手に」を書かず、「うら」のあとに読点。ダメージの目安の数字に追加する意味は同じ）
+            f"コインを投げて「おもて」なら、{self.bonus}ダメージを追加する。「うら」なら、自分にも{self.self_damage}ダメージ。",
         )
         if attack.text_ja not in accepted:
             problems.append(f"説明 {attack.text_ja!r} が、コイン 1 枚で追加ダメージか自分へのダメージが決まるワザの説明ではない")
@@ -35335,3 +35357,419 @@ V0_88_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
 SAME_DATA_CARDS_V0_88: Mapping[str, str] = MappingProxyType({"QSG-045": "ES1-033"})
 
 DEFAULT_EFFECTS = _with_shared_entries(_with_powers(_with_attacks(DEFAULT_EFFECTS, V0_88_ATTACKS), V0_88_POWERS), SAME_DATA_CARDS_V0_88)
+
+
+# ---------------------------------------------------------------- v0.89（docs/selected-target-damage-v0.89.md）: 対象を選ぶダメージの 17 枚
+
+
+def target_decision_problems(state: GameState, use: AttackUse, decision: PendingDecision, *, side: str, scope: str, chooser: str = CHOOSER_ATTACKER) -> list[str]:
+    """v0.89: 場のポケモンを選ぶ決定（``programs.ChooseTarget``。``SELECT_POKEMON``）の形。選ぶのは ``chooser``、選べるものは ``target_candidates`` の並び（選ぶと止めるポケモン
+    ``unresolved_choices`` も選べるものに入れる）、1 匹。"""
+    player = use.player if chooser == CHOOSER_ATTACKER else 1 - use.player
+    options = (pokemon.pokemon_id for _, pokemon in target_candidates(state, use.player, side, scope))
+    return _decision_form(decision, _label(state, use), kind=SELECT_POKEMON, player=player, choices=(1, 1), options=options)
+
+
+FEINT_ATTACK_TEXT = "相手の場のポケモンを1匹選び、そのポケモンに、「弱点・抵抗力・特殊能力・その他の効果」に関係なく、{damage}ダメージ。"
+
+
+@dataclass(frozen=True)
+class ChooseOpponentPokemonDamageIgnoringEffects(AttackEffect):
+    """相手の場のポケモンを 1 匹選び、そのポケモンに「弱点・抵抗力・特殊能力・その他の効果」に関係なく ``damage`` ダメージ（v0.89。ブラッキー（neo2-040）の「だましうち」。
+    kyuura の印刷の文面。docs 4.3 節）。ダメージの目安の数字はない。
+
+    - 要素は ``ChooseTarget``（ワザを使ったプレイヤーが相手の場のポケモンを選ぶ）→ ``TargetDamage(defender_effects=False, ignore_scope=IGNORE_UNSTATED)``。v0.60 のスピードスター
+      （相手の対戦ポケモンだけ）と同じく、受けるポケモン自身の持っている効果（弱点・抵抗力・ついているカード・持続する効果・特殊能力・「とうめい」など）を除く。v0.89 から
+      控えポケモンへのダメージにも除く指定を通す（``kernel.deal_damage``）
+    - 説明は「相手の持っている」「そのポケモンの持っている」と書かない。受けるポケモン自身の効果だけを除く読み方・持ち主の場の効果も除く読み方・ワザを使うポケモンや
+      スタジアム・トレーナーの効果も含めてすべてを除く読み方で受けるダメージ（無効になるか・［ベンチガード］を含む）が変わるポケモンは、選ぶと止める（FA1。どれもそうなら
+      選ぶ前に止める）。読み方で変わらないときは、どの読み方でも同じ量を与える
+    - ダメージを受けたあとの反応（はんげき・返す効果・こんじょう）は、v0.60 のスピードスターと同じく今までどおり（実装上の読み方）
+    """
+
+    damage: int
+    implementation_id = "choose_opponent_pokemon_damage_ignoring_effects"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.damage, "ダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の場のポケモンを選び、効果に関係なくダメージを与えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (FEINT_ATTACK_TEXT.format(damage=self.damage),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return target_decision_problems(state, use, decision, side=TARGET_SIDE_OPPONENT, scope=TARGET_IN_PLAY)
+
+
+WATER_GUN_CHOSEN_TEXT = ("相手の場のポケモンを1匹選び、そのポケモンに、自分についている「{ja}」エネルギーの数×{per}のダメージを、「弱点・抵抗力」に関係なく与える。"
+                         "このワザで与えることのできるダメージは、「{ja}」エネルギー{cap}個ぶんまで。")
+
+
+@dataclass(frozen=True)
+class ChooseOpponentPokemonOwnEnergyDamage(AttackEffect):
+    """相手の場のポケモンを 1 匹選び、自分についている「``energy_type``」エネルギーの数 × ``per`` のダメージを「弱点・抵抗力」に関係なく与える。与えることのできるダメージは
+    「``energy_type``」エネルギー ``cap`` 個ぶんまで（v0.89。わるいオムナイト（neo4-035）の「てっぽうみず」。kyuura の印刷の文面）。
+
+    - 要素は ``ChooseTarget`` → ``TargetDamage(OwnTypedEnergyTimesCapped)``。数えるのはエネルギーの個数（無色2個エネルギーは「水」ではない。［エナジーコンバーター］で「水」にした
+      カードは「水」）。数え方の読み方（TE1・RB1・BZ2・MEC1・CE1・CE2）で数が変わっても、どの読み方でも ``cap`` 個以上なら止めない。0 個なら 0（ダメージを与えない）
+    """
+
+    energy_type: EnergyType
+    per: int
+    cap: int
+    implementation_id = "choose_opponent_pokemon_own_energy_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の場のポケモンを選び、自分のエネルギーの数（上限つき）のダメージを与えるワザ"
+        text = WATER_GUN_CHOSEN_TEXT.format(ja=self.energy_type.ja, per=self.per, cap=self.cap)
+        return _check_form(attack, what, damage="none", cost_types=(self.energy_type,)) + _check_exact_text(attack, what, (text,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return target_decision_problems(state, use, decision, side=TARGET_SIDE_OPPONENT, scope=TARGET_IN_PLAY)
+
+
+LONG_SHOT_TEXT = "相手の控えポケモンから1匹を選ぶ。その後、コインを投げて「おもて」なら、そのポケモンに(「弱点・抵抗力」に関係なく){damage}ダメージ。(相手に控えがいないとき、このワザは使えない)"
+
+
+@dataclass(frozen=True)
+class ChooseOpponentBenchThenCoinDamage(AttackEffect):
+    """相手の控えポケモンから 1 匹を選ぶ。その後、コインを投げて「おもて」なら、そのポケモンに（「弱点・抵抗力」に関係なく）``damage`` ダメージ。相手に控えがいないとき、
+    このワザは使えない（v0.89。タケシのイシツブテ（GD1-007）の「ロングショット」。kyuura の印刷の文面）。
+
+    - 「使えない」はワザを使うための条件（``usage_problem``。``NO_OPPONENT_BENCH``。こんらんのコインの前）。相手のワザとして使うときは選ぶ要素の ``copy_problem``
+    - 選んでからコインを投げる（v0.79 のかげからおそう ``CoinChooseOpponentBenchDamage`` はコインが先で、別の型）。コインは選んだポケモンへのダメージだけを決めるので、そのポケモンが
+      ダメージを受けない（見えない壁・こおりのはしら など）なら選ぶと止める（v0.4b の問い。どれもそうなら選ぶ前）
+    """
+
+    damage: int
+    implementation_id = "choose_opponent_bench_then_coin_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.damage, "控えポケモンへのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の控えポケモンを選んでからコインでダメージを与えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (LONG_SHOT_TEXT.format(damage=self.damage),))
+
+    def usage_problem(self, state: GameState, attacker: PokemonInPlay) -> IllegalActionError | None:
+        owner, _ = state.find_pokemon(attacker.pokemon_id)
+        if not state.players[1 - owner].bench:
+            return IllegalActionError("NO_OPPONENT_BENCH", "相手に控えポケモンがいないので、このワザは使えない（ワザの説明）")
+        return None
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return target_decision_problems(state, use, decision, side=TARGET_SIDE_OPPONENT, scope=TARGET_BENCH)
+
+
+MUDDY_WATER_TEXT = "相手に控えポケモンがいれば、そのうちの1匹を選ぶ。その後、コインを投げて「おもて」なら、そのポケモンにも(「弱点・抵抗力」に関係なく){bench}ダメージ。"
+
+
+@dataclass(frozen=True)
+class DamageThenChooseBenchCoinDamage(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。相手に控えポケモンがいれば 1 匹を選び、その後、コインを投げて「おもて」なら、そのポケモンにも（「弱点・抵抗力」に
+    関係なく）``bench_damage`` ダメージ（v0.89。カスミのアズマオウ（GD2-011）の「だくりゅう」。kyuura の印刷の文面）。
+
+    - 要素は ``Damage(OPP)`` → ``ChooseTarget``（ダメージの要素のまとまりの中。相手の対戦ポケモンへのダメージの「ダメージを受けたとき」の効果は、控えへのダメージのあとに処理する）→
+      ``TargetDamage(local_gate=おもて)``。相手の対戦ポケモンがこのワザで HP 以上になっても、控えへの内容は処理する（対象が違う。p.309）。控えがいなければ選ばず、コインも投げない
+      （説明の「いれば」）。v0.82 のほのおのかぜ（コインの枚数 × のダメージ）とは別の型
+    """
+
+    bench_damage: int
+    implementation_id = "damage_then_choose_bench_coin_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.bench_damage, "控えポケモンへのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の控えを選び、コインでその控えにもダメージを与えるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (MUDDY_WATER_TEXT.format(bench=self.bench_damage),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return target_decision_problems(state, use, decision, side=TARGET_SIDE_OPPONENT, scope=TARGET_BENCH)
+
+
+MAGIC_DARTS_TEXT = "相手の場にいるポケモンを1匹選ぶ。コインを{coins}枚投げ、「おもて」の数×{per}のダメージを、「弱点・抵抗力」に関係なく、そのポケモンに与える。"
+
+
+@dataclass(frozen=True)
+class ChooseOpponentPokemonCoinsDamage(AttackEffect):
+    """相手の場にいるポケモンを 1 匹選ぶ。コインを ``coins`` 枚投げ、「おもて」の数 × ``per`` のダメージを「弱点・抵抗力」に関係なく、そのポケモンに与える（v0.89。ナツメのバリヤード
+    （GD6-011）の「マジックダーツ」。kyuura の印刷の文面）。選んでからコインを投げる（ナツメのESPのやり直しでは 3 枚をすべて投げ直し、選んだ個体は続きの情報で運ぶので選び直さない）。"""
+
+    coins: int
+    per: int
+    implementation_id = "choose_opponent_pokemon_coins_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の場のポケモンを選び、コインの「おもて」の数のダメージを与えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (MAGIC_DARTS_TEXT.format(coins=self.coins, per=self.per),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return target_decision_problems(state, use, decision, side=TARGET_SIDE_OPPONENT, scope=TARGET_IN_PLAY)
+
+
+SHOCK_STORAGE_TEXT = "相手の場のポケモンから1匹を選び、そのポケモンについている「{ja}」エネルギーの数×{per}ダメージを、(「弱点・抵抗力」に関係なく)そのポケモンに与える。"
+
+
+@dataclass(frozen=True)
+class ChooseOpponentPokemonTargetEnergyDamage(AttackEffect):
+    """相手の場のポケモンから 1 匹を選び、そのポケモンについている「``energy_type``」エネルギーの数 × ``per`` ダメージを（「弱点・抵抗力」に関係なく）そのポケモンに与える（v0.89。
+    ライチュウ（ES2-013・QSG-022）の「ろうでん」。kyuura の印刷の文面）。数えるのは選んだポケモンについているエネルギーの個数（``programs.TargetTypedEnergyTimes``）。0 個なら
+    ダメージを与えない（p.321 の 2 段階）。数え方の読み方で数が変われば止める（TE1・RB1・BZ2・MEC1・CE1・CE2）。"""
+
+    energy_type: EnergyType
+    per: int
+    implementation_id = "choose_opponent_pokemon_target_energy_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の場のポケモンを選び、そのポケモンのエネルギーの数のダメージを与えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (SHOCK_STORAGE_TEXT.format(ja=self.energy_type.ja, per=self.per),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return target_decision_problems(state, use, decision, side=TARGET_SIDE_OPPONENT, scope=TARGET_IN_PLAY)
+
+
+MICROWAVE_TEXT = "相手の場のポケモンから1匹を選び、(「弱点・抵抗力」に関係なく){damage}ダメージ。コインを投げて「おもて」なら、そのポケモンについているエネルギーカードを1枚選び、トラッシュさせる。"
+
+
+@dataclass(frozen=True)
+class ChooseOpponentPokemonDamageThenDiscardEnergyOnHeads(AttackEffect):
+    """相手の場のポケモンから 1 匹を選び、（「弱点・抵抗力」に関係なく）``damage`` ダメージ。コインを投げて「おもて」なら、そのポケモンについているエネルギーカードを 1 枚選び、
+    トラッシュさせる（v0.89。レアコイル（ES2-015・QSG-024）の「マイクロウェーブ」。kyuura の印刷の文面）。
+
+    - 要素は ``ChooseTarget`` → ``TargetDamage`` → ``DiscardOpponentEnergy(local_coin=おもて, chosen="target")``（選んだ個体だけ。控えポケモンを選んだら、その控えのカード。
+      今の対戦ポケモンのカードにすり替えない）。トラッシュはダメージ以外の効果（ダメージの要素のあと・［にげこむ］のあと）。選んだポケモンがこのワザで HP 以上・エネルギーカードが
+      ない・タケシの保護・［にげこむ］で入れ替わったなら、処理の対象がないのでコインを投げない（p.309）。「とうめい」で受けないと決まった・「ワザをうけない」ポケモンへの効果のコインは
+      T19b・HC3。トラッシュは v0.82 の共通の経路（原因はワザ、使ったプレイヤー。リサイクルエネルギー・エコロジム・TE2）
+    - 選ぶのはどちらもワザを使ったプレイヤー（ポケモン ``SELECT_POKEMON`` → カード ``DISCARD_OPPONENT_ENERGY``）
+    """
+
+    damage: int
+    implementation_id = "choose_opponent_pokemon_damage_then_discard_energy_on_heads"
+    opponent_effect_elements = (ENERGY_DISCARD_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の場のポケモンを選んでダメージを与え、コインでそのポケモンのエネルギーカードをトラッシュさせるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (MICROWAVE_TEXT.format(damage=self.damage),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        if decision.kind == DISCARD_OPPONENT_ENERGY:
+            return opponent_energy_decision_problems(state, use, decision)
+        return target_decision_problems(state, use, decision, side=TARGET_SIDE_OPPONENT, scope=TARGET_IN_PLAY)
+
+
+LICK_WOUNDS_TEXT = "コインを投げて「おもて」なら、お互いの場にいるポケモンから1匹を選び、そのポケモンにのっているダメージカウンターを、{n}つとりのぞく。"
+
+
+@dataclass(frozen=True)
+class CoinChooseEitherPokemonHeal(AttackEffect):
+    """コインを投げて「おもて」なら、お互いの場にいるポケモンから 1 匹を選び、そのポケモンにのっているダメージカウンターを ``counters`` 個とりのぞく（v0.89。ベロリンガ（SI-010）の
+    「きずをなめる」。kyuura の印刷の文面）。ダメージの目安の数字はない。
+
+    - 要素は ``Coin`` → ``ChooseEffectTarget``（おたがいの場。ワザを使ったプレイヤーの場 → 相手の場。選ぶのはワザを使ったプレイヤー）→ ``TargetHeal``（のっている数まで。0 個なら何も
+      しない）。説明に「ダメージカウンターののっている」の条件はないので、どのポケモンも選べる（v0.85 のあまいかおりの「おもてなら自分・うらなら相手」・条件を持ち込まない）
+    - コインが決める回復は自分のポケモンにも当てはまりうるので、相手の状態によらずコインを投げる。とりのぞく前に「ワザをうけない」状態・「とうめい」を評価する
+    """
+
+    counters: int
+    implementation_id = "coin_choose_either_pokemon_heal"
+    opponent_effect_elements = (HEAL_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインでおたがいの場のポケモンを選んで回復するワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (LICK_WOUNDS_TEXT.format(n=self.counters),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return target_decision_problems(state, use, decision, side=TARGET_SIDE_BOTH, scope=TARGET_IN_PLAY)
+
+
+AIMED_SHOT_TEXT = ("相手の場のポケモンを、1匹選ぶ。自分についている「{ja}」エネルギーの数だけコインを投げ、「おもて」の数×{per}のダメージを、「弱点・抵抗カ」に関係なく、"
+                   "そのポケモンに与える。")
+
+
+@dataclass(frozen=True)
+class ChooseOpponentPokemonCoinsPerOwnEnergyDamage(AttackEffect):
+    """相手の場のポケモンを 1 匹選ぶ。自分についている「``energy_type``」エネルギーの数だけコインを投げ、「おもて」の数 × ``per`` のダメージを「弱点・抵抗力」に関係なく、そのポケモンに
+    与える（v0.89。ナッシー（SI-013）の「ねらいだま」。kyuura の印刷の文面）。
+
+    - kyuura の文面の「抵抗カ」（カタカナの「カ」。転記の字形）は写しのまま照らす（直さない。kyuura への報告事項。v0.79 のサンドと同じ）。意味は「弱点・抵抗力」に関係なく
+    - 選んでからコインを投げる。枚数はエネルギーの個数（［おいしげる］の「草」2 個ぶんも数える。数え方が決まらなければ止める）。先読みは「おもて」の数でまとめる（v0.35）
+    """
+
+    energy_type: EnergyType
+    per: int
+    implementation_id = "choose_opponent_pokemon_coins_per_own_energy_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の場のポケモンを選び、エネルギーの数だけ投げたコインのダメージを与えるワザ"
+        return _check_form(attack, what, damage="none", cost_types=(self.energy_type,)) + _check_exact_text(
+            attack, what, (AIMED_SHOT_TEXT.format(ja=self.energy_type.ja, per=self.per),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return target_decision_problems(state, use, decision, side=TARGET_SIDE_OPPONENT, scope=TARGET_IN_PLAY)
+
+
+FOCUS_BLAST_TEXT = "コインを投げて「おもて」なら、相手の場のポケモンから1匹を選び、{damage}ダメージ。(このワザによる控えへのダメージは「弱点・抵抗力」の影響を受ける)"
+
+
+@dataclass(frozen=True)
+class CoinChooseOpponentPokemonDamageApplyingWR(AttackEffect):
+    """コインを投げて「おもて」なら、相手の場のポケモンから 1 匹を選び、``damage`` ダメージ。このワザによる控えへのダメージは「弱点・抵抗力」の影響を受ける（v0.89。ゴーリキー
+    （ES3-028）の「きあいだま」。kyuura の印刷の文面）。v0.44 の ``CoinChooseOpponentPokemonDamage``（「弱点・抵抗力」に関係なく）とは計算が違う別の型。要素は同じ形
+    （``ChooseTarget(local_coin=おもて)`` → ``TargetDamage(weakness_resistance=True)``）。控えへの弱点・抵抗力は説明に書かれているので JS1 で止めない。"""
+
+    damage: int
+    implementation_id = "coin_choose_opponent_pokemon_damage_applying_wr"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.damage, "ダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで相手の場のポケモンを選び、弱点・抵抗力を計算するダメージを与えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (FOCUS_BLAST_TEXT.format(damage=self.damage),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return target_decision_problems(state, use, decision, side=TARGET_SIDE_OPPONENT, scope=TARGET_IN_PLAY)
+
+
+BONE_TOSS_TEXT = "コインを投げて「おもて」なら、相手に{damage}ダメージ。「うら」なら、相手の控えポケモンから1匹を選び、「弱点・抵抗力」に関係なく、{bench}ダメージ。"
+CAT_PUNCH_TEXT = "コインを投げて「おもて」なら、相手に{damage}ダメージ。「うら」なら、相手の控えポケモンから1匹を相手プレイヤーに選ばせ、そのポケモンに{bench}ダメージ。"
+
+
+@dataclass(frozen=True)
+class CoinActiveElseChosenBenchDamage(AttackEffect):
+    """コインを投げて「おもて」なら、相手の対戦ポケモンに ``damage`` ダメージ。「うら」なら、相手の控えポケモンから 1 匹を選び（``opponent_chooses`` なら相手プレイヤーに選ばせ）、
+    ``bench_damage`` ダメージ（v0.89。カラカラ（ES3-030）の「ほねをなげる」・ニャース（PR1-057）の「ねこパンチ」。kyuura の印刷の文面）。ダメージの目安の数字はない。
+
+    - 1 枚のコイン（ワザ全体のコイン）で、相手の対戦ポケモンへのダメージか、控えを選ぶダメージかを決める（要素ごとに投げ直さない）。「うら」で相手に控えがいなければ、処理の対象が
+      ないので何もしない（ワザの失敗・使うための条件にしない。p.309）
+    - ``opponent_chooses``: ねこパンチ。選ぶのは相手プレイヤー（番のプレイヤーは変えない）。説明が控えへのダメージの弱点・抵抗力について書かないので、計算するかどうかで受けるダメージが
+      変わる控えは選ぶと止める（JS1。どれもそうなら選ぶ前に止める）。ほねをなげるは「「弱点・抵抗力」に関係なく」（説明どおり）。``opponent_chooses`` と説明の書き方を組で照らす
+    """
+
+    damage: int
+    bench_damage: int
+    opponent_chooses: bool
+    implementation_id = "coin_active_else_chosen_bench_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.damage, "ダメージ")
+        _positive_tens(self.bench_damage, "控えポケモンへのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで相手の対戦ポケモンか選んだ控えにダメージを与えるワザ"
+        text = (CAT_PUNCH_TEXT if self.opponent_chooses else BONE_TOSS_TEXT).format(damage=self.damage, bench=self.bench_damage)
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (text,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return target_decision_problems(state, use, decision, side=TARGET_SIDE_OPPONENT, scope=TARGET_BENCH,
+                                        chooser=CHOOSER_OPPONENT if self.opponent_chooses else CHOOSER_ATTACKER)
+
+
+LIGHTNING_BURN_TEXT = "コインを投げて「おもて」なら、相手の控えポケモンを1匹選び、そのポケモンにも、「弱点・抵抗力」に関係なく、{bench}ダメージ。「うら」なら、自分にも{self_damage}ダメージ。"
+
+
+@dataclass(frozen=True)
+class CoinChooseBenchElseSelfDamage(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。コインを投げて「おもて」なら、相手の控えポケモンを 1 匹選び、そのポケモンにも「弱点・抵抗力」に関係なく
+    ``bench_damage`` ダメージ。「うら」なら、自分にも ``self_damage`` ダメージ（v0.89。サンダー（PR1-070）の「ライトニングバーン」。kyuura の印刷の文面）。
+
+    - 要素は ``Coin`` → ``Damage(OPP)`` → ``ChooseTarget(おもて)`` → ``TargetDamage(おもて)`` → ``Damage(SELF, うら)``。1 枚のコインで控えへのダメージと自分へのダメージのどちらかを
+      決める（要素ごとに投げ直さない）。自分へのダメージがあるので、相手の状態によらずコインを投げる
+    """
+
+    bench_damage: int
+    self_damage: int
+    implementation_id = "coin_choose_bench_else_self_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで選んだ控えか自分にダメージを与えるワザ"
+        text = LIGHTNING_BURN_TEXT.format(bench=self.bench_damage, self_damage=self.self_damage)
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (text,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return target_decision_problems(state, use, decision, side=TARGET_SIDE_OPPONENT, scope=TARGET_BENCH)
+
+
+THUNDERBOLT_FALL_TEXT = "コインを投げて「うら」なら、自分の場のポケモンから1匹を選び、そのポケモンにも、弱点・抵抗力に関係なく{damage}ダメージ。"
+
+
+@dataclass(frozen=True)
+class DamageThenTailsChooseOwnPokemonDamage(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。コインを投げて「うら」なら、自分の場のポケモンから 1 匹を選び、そのポケモンにも弱点・抵抗力に関係なく ``own_damage``
+    ダメージ（v0.89。サンダー（ES2-018・QSG-056）の「らくらい」。kyuura の印刷の文面。「弱点・抵抗力」を「」に入れない書き方）。
+
+    - 選べるのは自分の場のポケモン（ワザを使ったポケモン自身も。バトル場 → ベンチ）。自分を選んだら p.320 の (3)（ワザによる自分へのダメージ）、控えを選んだら (4)。どちらも弱点・
+      抵抗力を計算しない。選ぶのはワザを使ったプレイヤー。自分の場のポケモンへのダメージなので、相手の状態によらずコインを投げる
+    """
+
+    own_damage: int
+    implementation_id = "damage_then_tails_choose_own_pokemon_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.own_damage, "自分の場のポケモンへのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインの「うら」で自分の場のポケモンを選んでダメージを与えるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (THUNDERBOLT_FALL_TEXT.format(damage=self.own_damage),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return target_decision_problems(state, use, decision, side=TARGET_SIDE_OWN, scope=TARGET_IN_PLAY)
+
+
+SHOCK_STORAGE_WATER = SHOCK_STORAGE_TEXT.format(ja="水", per=10)
+MICROWAVE_20 = MICROWAVE_TEXT.format(damage=20)
+THUNDERBOLT_FALL_30 = THUNDERBOLT_FALL_TEXT.format(damage=30)
+THUNDER_CRASH_TEXT = "コインを投げて「おもて」なら、20ダメージを追加する。「うら」なら、自分にも20ダメージ。"
+PARALYZE_HEADS_TEXT = "コインを投げて「おもて」なら、相手を「マヒ」状態にする。"
+
+# v0.89 の 17 枚のポケモンのワザの登録（26）。同じゲーム用データの 3 組（``SAME_DATA_CARDS_V0_89``）は id ごとに書いたうえで同じ登録の値にまとめる
+V0_89_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # ブラッキー（neo2-040）
+    AttackKey("neo2-040", 0): AttackEntry(DAMAGE_ONLY, "かみつく"),  # 説明文のないワザ（文面・出典を持たない）
+    AttackKey("neo2-040", 1): _printed(ChooseOpponentPokemonDamageIgnoringEffects(30), "だましうち", FEINT_ATTACK_TEXT.format(damage=30)),
+    # わるいオムナイト（neo4-035）
+    AttackKey("neo4-035", 0): _printed(ChooseOpponentPokemonOwnEnergyDamage(EnergyType.WATER, 10, 3), "てっぽうみず",
+                                       WATER_GUN_CHOSEN_TEXT.format(ja="水", per=10, cap=3)),
+    # タケシのイシツブテ（GD1-007）
+    AttackKey("GD1-007", 0): AttackEntry(DAMAGE_ONLY, "たいあたり"),
+    AttackKey("GD1-007", 1): _printed(ChooseOpponentBenchThenCoinDamage(30), "ロングショット", LONG_SHOT_TEXT.format(damage=30)),
+    # カスミのアズマオウ（GD2-011）
+    AttackKey("GD2-011", 0): AttackEntry(DAMAGE_ONLY, "つのでつく"),
+    AttackKey("GD2-011", 1): _printed(DamageThenChooseBenchCoinDamage(10), "だくりゅう", MUDDY_WATER_TEXT.format(bench=10)),
+    # ナツメのバリヤード（GD6-011）
+    AttackKey("GD6-011", 0): _printed(ChooseOpponentPokemonCoinsDamage(3, 10), "マジックダーツ", MAGIC_DARTS_TEXT.format(coins=3, per=10)),
+    # ライチュウ（ES2-013・QSG-022）
+    AttackKey("ES2-013", 0): _printed(ChooseOpponentPokemonTargetEnergyDamage(EnergyType.WATER, 10), "ろうでん", SHOCK_STORAGE_WATER),
+    AttackKey("ES2-013", 1): _printed(ParalyzeOnHeads(), "ビリビリキック", PARALYZE_HEADS_TEXT),
+    AttackKey("QSG-022", 0): _printed(ChooseOpponentPokemonTargetEnergyDamage(EnergyType.WATER, 10), "ろうでん", SHOCK_STORAGE_WATER),
+    AttackKey("QSG-022", 1): _printed(ParalyzeOnHeads(), "ビリビリキック", PARALYZE_HEADS_TEXT),
+    # レアコイル（ES2-015・QSG-024）
+    AttackKey("ES2-015", 0): _printed(ChooseOpponentPokemonDamageThenDiscardEnergyOnHeads(20), "マイクロウェーブ", MICROWAVE_20),
+    AttackKey("QSG-024", 0): _printed(ChooseOpponentPokemonDamageThenDiscardEnergyOnHeads(20), "マイクロウェーブ", MICROWAVE_20),
+    # ベロリンガ（SI-010。ワザ 1 の名前は kyuura の台帳の FIX-SI-010-ATK1-NAME で「のびるベロ」になった値。写しに当てはめ直さない）
+    AttackKey("SI-010", 0): _printed(CoinChooseEitherPokemonHeal(2), "きずをなめる", LICK_WOUNDS_TEXT.format(n=2)),
+    AttackKey("SI-010", 1): _printed(CoinChooseOpponentPokemonDamage(20), "のびるベロ",
+                                     "コインを投げて「おもて」なら、相手の場のポケモンを1匹選び、「弱点・抵抗力」に関係なく、20ダメージ。"),
+    # ナッシー（SI-013）
+    AttackKey("SI-013", 0): _printed(ChooseOpponentPokemonCoinsPerOwnEnergyDamage(EnergyType.GRASS, 10), "ねらいだま", AIMED_SHOT_TEXT.format(ja="草", per=10)),
+    # ゴーリキー（ES3-028）
+    AttackKey("ES3-028", 0): _printed(ParalyzeOnHeads(), "じごくづき", PARALYZE_HEADS_TEXT),
+    AttackKey("ES3-028", 1): _printed(CoinChooseOpponentPokemonDamageApplyingWR(20), "きあいだま", FOCUS_BLAST_TEXT.format(damage=20)),
+    # カラカラ（ES3-030）
+    AttackKey("ES3-030", 0): _printed(CoinActiveElseChosenBenchDamage(30, 10, False), "ほねをなげる", BONE_TOSS_TEXT.format(damage=30, bench=10)),
+    # ニャース（PR1-057）
+    AttackKey("PR1-057", 0): _printed(CoinActiveElseChosenBenchDamage(20, 20, True), "ねこパンチ", CAT_PUNCH_TEXT.format(damage=20, bench=20)),
+    # サンダー（PR1-070）
+    AttackKey("PR1-070", 0): _printed(CoinChooseBenchElseSelfDamage(30, 30), "ライトニングバーン", LIGHTNING_BURN_TEXT.format(bench=30, self_damage=30)),
+    # サンダー（ES2-018・QSG-056）
+    AttackKey("ES2-018", 0): _printed(DamageThenTailsChooseOwnPokemonDamage(30), "らくらい", THUNDERBOLT_FALL_30),
+    AttackKey("ES2-018", 1): _printed(CoinBonusOrSelfDamage(20, 20), "サンダークラッシュ", THUNDER_CRASH_TEXT),
+    AttackKey("QSG-056", 0): _printed(DamageThenTailsChooseOwnPokemonDamage(30), "らくらい", THUNDERBOLT_FALL_30),
+    AttackKey("QSG-056", 1): _printed(CoinBonusOrSelfDamage(20, 20), "サンダークラッシュ", THUNDER_CRASH_TEXT),
+})
+
+# 同じゲーム用データのカード（登録の値を共有する。名前だけが同じほかの版とはまとめない）
+SAME_DATA_CARDS_V0_89: Mapping[str, str] = MappingProxyType({"QSG-022": "ES2-013", "QSG-024": "ES2-015", "QSG-056": "ES2-018"})
+
+DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_89_ATTACKS), SAME_DATA_CARDS_V0_89)

@@ -5016,6 +5016,20 @@ def _carried_flee_problems(state: GameState, d) -> list[str]:
         a, b = state.find_pokemon(orig), state.find_pokemon(new)
         if a is None or b is None or a[0] != b[0]:
             problems.append(f"運んだ［にげこむ］の入れ替え {orig} → {new} のポケモンが、同じ持ち主の場にいない")
+    # v0.89: 先に選んだ個体（``chosen_targets`` の (名前, 番号) か (名前, 番号, 持ち主)）。名前は重ならない。持ち主を運ぶなら 0 か 1 で、その個体が場にいれば持ち主の場にいる
+    # （場をはなれた個体は、あとの要素が何もしない。今の対戦ポケモン・同じ名前の別の個体にすり替えない）
+    names = []
+    for entry in d.context_value("chosen_targets") or ():
+        if not (isinstance(entry, tuple) and len(entry) in (2, 3) and isinstance(entry[0], str) and (entry[1] is None or isinstance(entry[1], int))):
+            problems.append(f"運んだ選んだ個体 {entry!r} の形が正しくない")
+            continue
+        names.append(entry[0])
+        if len(entry) == 3:
+            located = None if entry[1] is None else state.find_pokemon(entry[1])
+            if entry[2] not in (0, 1) or (located is not None and located[0] != entry[2]):
+                problems.append(f"運んだ選んだ個体 {entry!r} の持ち主が、そのポケモンの持ち主と違う")
+    if len(names) != len(set(names)):
+        problems.append(f"運んだ選んだ個体の名前 {names} が重なる")
     return problems
 
 

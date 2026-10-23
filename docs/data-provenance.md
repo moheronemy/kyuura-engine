@@ -1955,6 +1955,22 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.89: 対象を選ぶダメージ・選べる回復のポケモン 17 枚
+
+[selected-target-damage-v0.89.md](selected-target-damage-v0.89.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_89`（17 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.88 までの 1,091 枚の
+  記録は変わっていない。
+- 17 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-24・外部照合なし・`kyuura_records` は空）。`card_verification.json` には加えていない。
+- 処理に使う文面はどれも kyuura の印刷の文面（研究の対応表の `adopted_printed_text` に 23）。
+- ベロリンガ（SI-010）のワザ 1 の名前「のびるベロ」は、kyuura の台帳 FIX-SI-010-ATK1-NAME（kyuura の前の作業で 2 つの転記を突き合わせた判定。kyuura の
+  docs/cards/products/southern-islands.md「2 つの転記の食い違い」）で kyuura が当てはめた値。写しの作り直しの道具の `KYUURA_CORRECTIONS` に根拠 `kyuura_existing_record` で挙げ、当てはめ直して
+  いない。エンジンは画像を見ていない。照合の記録 CC-PMCG2-041-P234（第2弾のベロリンガの記録）を、SI-010 を照合した記録として数えていない。
+- 日本語の文面は kyuura の転記（pcg-search.com・なぞのばしょ）。同じ所との照合は独立した照合にならない。外部照合はしていない。
+- 新しい停止コード 1 件（FA1）を `stop_codes` に `not_in_kyuura` で加えた。
+- 報告事項（kyuura の作業）: FA1 は kyuura の未解決の一覧にない論点。ナッシー（SI-013）の文面の「抵抗カ」（カタカナの「カ」）は転記の字形と思われる。kyuura の engine_targets.json の
+  `engine_reference` は v0.68 の登録の写しで、v0.89 の登録を写すと 17 枚の `engine_status` が `registered` になる。
+
 ## v0.88: ポケモンのタイプとエネルギーの色を変える特殊能力、色を選ぶ・数えるワザの 11 枚
 
 [type-energy-colors-v0.88.md](type-energy-colors-v0.88.md)。
