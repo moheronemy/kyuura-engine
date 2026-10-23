@@ -152,6 +152,7 @@ def _key_and_bound(run: AttackRun, element: Damage, per: int) -> tuple[Callable[
     receiver_views = definition_views(state, receiver)
     readings = len(definition_views(state, attacker)) * len(receiver_views)
     resistance = max((view.resistance_value or 0) for view in receiver_views)
+    weakness = _weakness_multiplier(state, receiver_views)
     reducing = any(m.operation == REDUCE_CHOICE for m in modifiers)
     if reducing:
         # v0.66（docs/optional-trainers-v0.66.md 2.5 節）: お上品攻撃（5 段階で好きなだけ小さくしてよい）。減らしたあとの 5 段階のダメージ x の選び方は 0〜v（v は 5 段階の
@@ -162,9 +163,9 @@ def _key_and_bound(run: AttackRun, element: Damage, per: int) -> tuple[Callable[
         before = [m for m in modifiers if m.step <= 5 and m.operation != REDUCE_CHOICE]
         tail_period, tail_bound = _pipeline_bound([tail], 0, saturation, readings, 1, unit)
         cap = tail_bound + (tail_period + 1) * unit
-        period, bound = _pipeline_bound([before], resistance, cap, readings, state.rules.weakness_multiplier, unit)
+        period, bound = _pipeline_bound([before], resistance, cap, readings, weakness, unit)
     else:
-        period, bound = _pipeline_bound([modifiers], resistance, saturation, readings, state.rules.weakness_multiplier, unit)
+        period, bound = _pipeline_bound([modifiers], resistance, saturation, readings, weakness, unit)
         period *= periods
 
     def key(heads: int):
@@ -232,8 +233,14 @@ def _retaliation(res, run: AttackRun, instance, effect: Retaliation, attacker, u
     attacker_views = definition_views(state, attacker)
     readings = len(definition_views(state, holder)) * len(attacker_views)
     resistance = max((view.resistance_value or 0) for view in attacker_views)
-    period, bound = _pipeline_bound(lists, resistance, attacker_remaining, readings, state.rules.weakness_multiplier, unit)
+    period, bound = _pipeline_bound(lists, resistance, attacker_remaining, readings, _weakness_multiplier(state, attacker_views), unit)
     return returned, -(-bound // effect.multiplier), period
+
+
+def _weakness_multiplier(state, views) -> int:
+    """受けるポケモンの弱点の計算でかける数（v0.90。今有効な値の定義の ``weakness_multiplier``（のろいマーカーの「×4」）、なければ共通のルールの数）。実際の計算
+    （``K.compute_damage``）と同じ定義から読み、key もこの数で計算した結果で分ける（上限だけを広げて済ませない）。"""
+    return max(state.rules.weakness_multiplier if view.weakness_multiplier is None else view.weakness_multiplier for view in views)
 
 
 def _require_unit(value: int, unit: int, what: str) -> None:

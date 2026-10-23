@@ -189,6 +189,9 @@ from .persistent import (DISCARD_FROM_PLAY, KNOCK_OUT, cannot_retreat, effect_at
 from .rules import RULES_2000_02_14, RuleSet
 from .stadiums import bench_has_room, bench_limit, stadium_in_play
 from .state import (
+    MARKER_AND_COUNTER_KINDS,
+    MARKER_COLOR,
+    Marker,
     PERSISTENT_EFFECT_TYPES,
     TRAINER_TURN_EFFECT_KINDS,
     EVOLUTION_BAN,
@@ -1378,7 +1381,8 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
             f"「にげる」でトラッシュするエネルギーの数（印刷の {cost.printed}、増やす {[a for _, _, a in cost.increases]}、少なくできる {[a for _, _, a in cost.reductions]}"
             + (f"、スタジアムで増やす {[a for _, a in cost.stadium_increases]}・へらす {[a for _, a in cost.stadium_reductions]}"
                if cost.stadium_increases or cost.stadium_reductions else "")
-            + (f"、ふうせんのみ {list(cost.zeroed)}（すべてなくなる）" if cost.zeroed else "") + "）を、"
+            + (f"、ふうせんのみ {list(cost.zeroed)}（すべてなくなる）" if cost.zeroed else "")
+            + (f"、マーカーで増やす {[a for _, a in cost.marker_increases]}" if cost.marker_increases else "") + "）を、"
             f"少なくしてから 0 で止めて増やすか、合わせてから 0 で止めるかで、{units if units != len(discard) else len(discard)} {'個' if units != len(discard) else '枚'}が足りるかが変わる。どちらの読み方かは kyuura の記録・印刷の文面から決められない"
             "ので扱わない（CP2）",
         )
@@ -1406,6 +1410,8 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
             (card, -amount) for card, amount in cost.stadium_reductions)
     if cost.zeroed:
         cost_log["retreat_cost_zeroed"] = cost.zeroed  # v0.81: ふうせんのみ（「にげる」ときに必要なエネルギーはすべてなくなる）
+    if cost.marker_increases:
+        cost_log["retreat_cost_markers"] = cost.marker_increases  # v0.90: ベトベトマーカー（(マーカーの種類, 増やす数)）
     if active.conditions.confused and not _confusion_check(state, cmd.player, active, action="retreat", effect="retreat"):
         # 「にげる」は失敗。トラッシュしたエネルギーは取り戻せず、入れ替えはしない（p.311 の手順 3・4。v0.3c）
         active.retreat_failed_turn = state.turn_number
@@ -2337,6 +2343,7 @@ def check_invariants(state: GameState) -> list[str]:
             problems.extend(_evolution_permission_problems(state, player, pokemon))  # v0.44
             problems.extend(_type_shift_problems(state, player, pokemon))  # v0.48
             problems.extend(_disguise_problems(state, player, pokemon))  # v0.49
+            problems.extend(_marker_problems(state, pokemon))  # v0.90
         limit = _bench_limit_or_default(state, player)
         if len(p.bench) > limit and not _narrow_cleanup_pending(state, player):
             # v0.57: ベンチの上限は場のスタジアム（せまいジム）を当てはめた数。場に出た時の、手札にもどすポケモンを選ぶ決定を待つ間だけ、そのプレイヤーは多くてよい
@@ -3227,6 +3234,62 @@ def _type_shift_problems(state: GameState, player: int, pokemon: PokemonInPlay) 
                 kind in ("switch", "forced_switch") and event.get("old_active_pokemon_id") == pokemon.pokemon_id):
             benched = True
     return problems + [f"{where} {shift!r} に対応するログ type_shift がない"]
+
+
+def _marker_problems(state: GameState, pokemon: PokemonInPlay) -> list[str]:
+    """v0.90（docs/markers-counters-v0.90.md 3 章。形式 24）: 場のポケモンにのっているマーカー・カウンター（``PokemonInPlay.markers``）の整合。
+
+    - ``Marker`` のタプル。種類は ``MARKER_AND_COUNTER_KINDS``、のせたプレイヤーは 0・1、のせたワザのカードは対戦のカード、番は整数で、いまの姿になった番〜今の番（進化・退化で
+      取りのぞくので、それより前の番のものは残らない）。対戦準備の段階にはない
+    - 色を持つのは色マーカーだけで、色は無色以外の色。色マーカーは 1 つまで（のせ替える。2 つあると、どの色としてあつかうかが決まらない）。ほかの種類の数に上限は置かない
+      （のろいマーカーは「2つ以上のっていても、効果は同じ」。ベトベトマーカー・ほねカウンターは「のっていなければ」・たべものカウンターは使うための条件で数が決まるが、状態の不正には
+      しない）
+    - ログとの対応: このポケモン（番号）の ``marker_added`` の数から ``marker_removed`` の ``count`` の合計を引いた数が、種類ごとに今の数と同じ。色マーカーの色は最後の
+      ``marker_added`` の色（エンジンは記録をログから決めない。食い違っていないかだけを確かめる）"""
+    markers = pokemon.markers
+    where = f"ポケモン {pokemon.pokemon_id} のマーカー・カウンター"
+    if not isinstance(markers, tuple) or any(type(m) is not Marker for m in markers):
+        return [f"{where} {markers!r} が Marker のタプルではない"]
+    if not markers:
+        return []
+    if state.phase in SETUP_PHASES:
+        return [f"{where} が対戦準備の段階（{state.phase.value}）にある"]
+    problems = []
+    for marker in markers:
+        if marker.kind not in MARKER_AND_COUNTER_KINDS:
+            problems.append(f"{where} {marker!r} の種類が {MARKER_AND_COUNTER_KINDS} のどれでもない")
+            continue
+        if marker.player not in PLAYERS or type(marker.turn) is not int or type(marker.source_card) is not int or marker.source_card not in state.cards                 or not isinstance(marker.attack, str):
+            problems.append(f"{where} {marker!r} の項目が正しくない")
+            continue
+        if not pokemon.current_form_turn <= marker.turn <= state.turn_number:
+            problems.append(f"{where} {marker!r} の番が、いまの姿になった番〜今の番ではない（進化・退化で取りのぞくはず）")
+        if (marker.kind == MARKER_COLOR) != isinstance(marker.color, EnergyType) or marker.color is EnergyType.COLORLESS:
+            problems.append(f"{where} {marker!r} の色が正しくない（色を持つのは色マーカーだけ。無色以外）")
+    colors = [m for m in markers if m.kind == MARKER_COLOR]
+    if len(colors) > 1:
+        problems.append(f"{where} に色マーカーが {len(colors)} つ（のせ替えるので 1 つまで）")
+    if problems:
+        return problems
+    added: dict[str, int] = {}
+    removed: dict[str, int] = {}
+    last_color = None
+    for event in state.log:
+        if event.get("pokemon_id") != pokemon.pokemon_id:
+            continue
+        if event["kind"] == "marker_added":
+            added[event["marker"]] = added.get(event["marker"], 0) + 1
+            if event["marker"] == MARKER_COLOR:
+                last_color = event.get("color")
+        elif event["kind"] == "marker_removed":
+            removed[event["marker"]] = removed.get(event["marker"], 0) + event["count"]
+    for kind in MARKER_AND_COUNTER_KINDS:
+        count = sum(1 for m in markers if m.kind == kind)
+        if added.get(kind, 0) - removed.get(kind, 0) != count:
+            problems.append(f"{where} の {kind} の数 {count} が、ログ（のせた {added.get(kind, 0)}・取りのぞいた {removed.get(kind, 0)}）と合わない")
+    if colors and last_color != colors[0].color.value:
+        problems.append(f"{where} の色マーカーの色 {colors[0].color.value} が、最後のログ marker_added の色 {last_color} と違う")
+    return problems
 
 
 def _persistent_effect_added_event(state: GameState, pokemon: PokemonInPlay, effect):

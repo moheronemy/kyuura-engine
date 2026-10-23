@@ -189,6 +189,9 @@ V0_88_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["i
 # v0.89: 対象を選ぶダメージ・選べる回復のポケモン 17 枚の説明文のあるワザ 23（kyuura の印刷の文面。docs/selected-target-damage-v0.89.md）
 V0_89_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_89"] and c["category"] == "pokemon"
                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.90: マーカー・ダメージカウンター以外のカウンターのポケモン 7 枚の説明文のあるワザ 12（kyuura の印刷の文面。docs/markers-counters-v0.90.md）
+V0_90_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_90"] and c["category"] == "pokemon"
+                   for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
 
 
 
@@ -341,7 +344,7 @@ class DefaultRegistryTest(unittest.TestCase):
                                     + V0_35_WITH_TEXT + V0_36_WITH_TEXT + V0_37_WITH_TEXT + V0_38_WITH_TEXT
                                     + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT + V0_42_WITH_TEXT + V0_43_WITH_TEXT
                                 + V0_44_WITH_TEXT + V0_45_WITH_TEXT + V0_46_WITH_TEXT + V0_47_WITH_TEXT + V0_48_WITH_TEXT
-                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT + V0_52_WITH_TEXT + V0_58_WITH_TEXT + V0_59_WITH_TEXT + V0_60_WITH_TEXT + V0_61_WITH_TEXT + V0_62_WITH_TEXT + V0_64_WITH_TEXT + V0_65_WITH_TEXT + V0_68_WITH_TEXT + V0_70_WITH_TEXT + V0_72_WITH_TEXT + V0_75_WITH_TEXT + V0_76_WITH_TEXT + V0_77_WITH_TEXT + V0_78_WITH_TEXT + V0_79_WITH_TEXT + V0_82_WITH_TEXT + V0_83_WITH_TEXT + V0_84_WITH_TEXT + V0_85_WITH_TEXT + V0_86_WITH_TEXT + V0_87_WITH_TEXT + V0_88_WITH_TEXT + V0_89_WITH_TEXT)
+                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT + V0_52_WITH_TEXT + V0_58_WITH_TEXT + V0_59_WITH_TEXT + V0_60_WITH_TEXT + V0_61_WITH_TEXT + V0_62_WITH_TEXT + V0_64_WITH_TEXT + V0_65_WITH_TEXT + V0_68_WITH_TEXT + V0_70_WITH_TEXT + V0_72_WITH_TEXT + V0_75_WITH_TEXT + V0_76_WITH_TEXT + V0_77_WITH_TEXT + V0_78_WITH_TEXT + V0_79_WITH_TEXT + V0_82_WITH_TEXT + V0_83_WITH_TEXT + V0_84_WITH_TEXT + V0_85_WITH_TEXT + V0_86_WITH_TEXT + V0_87_WITH_TEXT + V0_88_WITH_TEXT + V0_89_WITH_TEXT + V0_90_WITH_TEXT)
         # v0.69: 拡張パック以外の商品の同じカード（effects.EQUIVALENT_CARDS）の新しい id には、元のカードと同じ登録（説明文のあるワザも同じ）がある
         expected = expected + [AttackKey(new, key.attack_index) for new, original in EQUIVALENT_CARDS.items() for key in expected if key.card_id == original]
         # v0.71: 拡張パック以外の商品の再録のカード（effects.REPRINT_CARDS）の新しい id にも、元のカードの説明文のあるワザの登録がある（照合する文面はこの版の印刷の文面）

@@ -26,7 +26,7 @@ from .effects import (
     energy_received_damage, energy_reduction_log, scram_watch, SCRAM_TIMING_CODE,
     knocked_by_hp, discard_expiring_energy, miracle_turn_end_problem,
     EXPIRE_TO_HAND,
-    TypeReadingsDiffer, attack_damage_modifiers, confusion_power_modifiers, definition_views, max_hp, poison_received_power_problem,
+    TypeReadingsDiffer, attack_damage_modifiers, confusion_power_modifiers, cursed_weakness_multiplier, definition_views, max_hp, poison_received_power_problem,
     same_for_type_readings, shift_duration_error, MAX_HP_DROP_CODE, state_stop_after, stadium_attack_damage_modifiers,
     pokemon_check_berries, special_energy_effect,
     DISCARD_BY_KNOCK_OUT, energy_discard_plan, return_discarded_energy,
@@ -832,6 +832,9 @@ def confusion_damage_problem(state: GameState, pokemon: PokemonInPlay, attack_st
     v0.46: 同じ問いで、場の常にはたらく特殊能力が、こんらんの 20 をワザのダメージ（このポケモンが与えるダメージ）として扱うなら当てはまるとき（エリカのフシギソウの
     ［くつろぐかおり］の「すべてのワザのダメージ」・わるいオコリザルの［きょうぼう］の「このカードがポケモンに与えるダメージ」。``effects.confusion_power_modifiers``。
     ``attack_status`` はワザが使われた時の特殊状態）も止める（新しい問いにしない）。
+
+    v0.90: 同じ問いで、のろいマーカーののっているポケモンの 20 ダメージに自分の弱点が当てはまる（自分のタイプが自分の弱点のタイプ）なら止める。のろいマーカーは「弱点のタイプの
+    ポケモンからワザのダメージを受ける時」の効果で、こんらんの 20 が「ワザによるダメージ」かで「×2」か「×4」かが変わる。弱点が当てはまらなければ止めない（docs/markers-counters-v0.90.md 5 章）
     """
     modifiers = attack_damage_modifiers(state, pokemon, pokemon)
     if modifiers:
@@ -841,6 +844,18 @@ def confusion_damage_problem(state: GameState, pokemon: PokemonInPlay, attack_st
             "ダメージに、プラスパワー・ディフェンダーの効果を計算するか（こんらんのダメージが「ワザによるダメージ」か）は"
             "『オフィシャルブック2000』（p.257・p.309・p.321・p.322）から決められないので扱わない",
         )
+    if cursed_weakness_multiplier(state, pokemon) is not None:
+        try:
+            weak = same_for_type_readings(state, (pokemon,), lambda views: calculate_confusion_damage(views[0], state.rules, CONFUSION_DAMAGE).weakness_applied)
+        except TypeReadingsDiffer:
+            weak = True  # 読み方のどれかで弱点が当てはまる（読み方の違いそのものは、下の確かめが VS1・CE1・CE2・CM1 で止める）
+        if weak:
+            return UnsupportedError(
+                "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS",
+                f"こんらん状態のポケモン {pokemon.pokemon_id} にのろいマーカーがのっていて、こんらんしたワザで自分が受ける 20 ダメージに自分の弱点が当てはまる。のろいマーカーの"
+                "「弱点のタイプのポケモンからワザのダメージを受ける時、弱点の計算を「×2」ではなく、「×4」でおこなう」が、この 20 ダメージに当てはまるか（こんらんのダメージが"
+                "「ワザによるダメージ」か）は、公式ルール 2000.02.14版（p.309・p.321・p.322）と kyuura の記録から決められないので扱わない（docs/markers-counters-v0.90.md 5 章）",
+            )
     try:
         # v0.48: 自分のタイプ（色）と自分の弱点・抵抗力（今有効な値。``effects.definition_views``）。［へんしょく］で変えた色の読み方（VS1）で 20 ダメージの計算が
         # 変わるなら、コインを投げる前に止める（こんらん状態のモルフォンでは［へんしょく］の力が消えているので、変えた色が続くかが決まらない）

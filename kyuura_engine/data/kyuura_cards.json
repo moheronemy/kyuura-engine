@@ -1349,6 +1349,15 @@
     "ES2-018",
     "QSG-056"
   ],
+  "pool_v0_90": [
+    "ES2-002",
+    "ES2-025",
+    "ES3-026",
+    "PR1-024",
+    "PR1-034",
+    "PR1-035",
+    "PRN-029"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -99507,6 +99516,741 @@
         {
           "page": "1stqsg056",
           "list_number": "056/058"
+        }
+      ]
+    },
+    {
+      "id": "ES2-002",
+      "jp_set": "ES2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ベトベター",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ベトベトえき",
+              "en": null
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手に「ベトベトマーカー」がのっていなければ、1つのせる。(「ベトベトマーカー」をのせているポケモンは、「にげる」時トラッシュするエネルギーが、1つぶん多く必要になる)",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "どくえき",
+              "en": null
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex2002"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex2002.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第2弾(赤版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex2002.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex2002",
+          "list_number": "002/036"
+        }
+      ]
+    },
+    {
+      "id": "ES2-025",
+      "jp_set": "ES2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ガラガラ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "カラカラ",
+          "en": null
+        },
+        "hp": 60,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "lightning",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ほねさがし",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "このカードに「ほねカウンター」がのっていなければ、1つのせる。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ほねこんぼう",
+              "en": null
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "このワザは、このカードに「ほねカウンター」がのっている時だけ、使える。それを1つとりのぞいてコインを投げ、「おもて」なら相手を「マヒ」状態にする。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex2025"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex2025.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第2弾(赤版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex2025.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stex2025",
+          "list_number": "025/036"
+        }
+      ]
+    },
+    {
+      "id": "ES3-026",
+      "jp_set": "ES3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ミュウツー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 80,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かんぜんかいふく",
+              "en": null
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "自分についているエネルギーカードをすべてトラッシュする。その後、自分にのっているダメージカウンターやマーカーをすべて取りのぞき、「どく・こんらん」状態のすべてからも回復させる。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "サイコブラスト",
+              "en": null
+            },
+            "cost": [
+              "psychic",
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手についているエネルギーカードから1枚を選び、トラッシュさせる。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex3026"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex3026.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第3弾(緑版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex3026.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex3026",
+          "list_number": "026/036"
+        }
+      ]
+    },
+    {
+      "id": "PR1-024",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "くいしんぼカビゴン",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 100,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 4,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たべる",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "「たべものカウンター」を1つ、このカードの上にのせる。(このカードに「たべものカウンター」が2つのっている時、このワザは使えない)",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ころがる",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "のぞむなら、このカードにのっている「たべものカウンター」を好きなだけ取りのぞき、取りのぞいた数×30ダメージを追加してもよい。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp024"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp024.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp024.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stp024",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PR1-034",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "カラカラ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "lightning",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ほねさがし",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "このカードの上に「ほねカウンター」がのっていなければ、1つのせる。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ボーンキラー",
+              "en": null
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "のぞむなら、このカードにのっている「ほねカウンター」を1つとりのぞき、30ダメージを追加してもよい。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp034"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp034.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp034.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stp034",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PR1-035",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ルージュラ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "あくまののろい",
+              "en": null
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手の対戦ポケモンの上に「のろいマーカー」をのせる。「のろいマーカー」をのせているポケモンは、弱点のタイプのポケモンからワザのダメージを受ける時、弱点の計算を「×2」ではなく、「×4」でおこなう。(「のろいマーカー」が2つ以上のっていても、効果は同じ)",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "つららパンチ",
+              "en": null
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp035"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp035.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp035.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stp035",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PRN-029",
+      "jp_set": "PRN",
+      "category": "pokemon",
+      "name": {
+        "ja": "ドーブル",
+        "en": "Smeargle"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          235
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ペイント",
+              "en": "Paint"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、好きな「色(タイプ)」(無色以外)を1つ選び、相手に「色マーカー」を1つのせる。(すでに相手に「色マーカー」がのっているなら、それをとりのぞいて、新たに「色マーカー」をのせ替える。)「色マーカー」がのっているポケモンは、それをのせるときに選ばれた「色(タイプ)」のポケモンとしてあつかわれる。",
+              "en": "Flip a coin. If heads, choose a type (other than Colorless) and put a Coloring counter on the Defending Pokémon. That Pokémon is now the type you chose. If it already had a Coloring counter, remove the old one. If tails, this attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-32"
+        ],
+        "pcg_search": [
+          "neop029"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop029.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop029.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-32",
+        "pokemon.dex": "pokemontcg:basep-32"
+      },
+      "copies": [
+        {
+          "page": "neop029",
+          "list_number": "-/-"
         }
       ]
     }

@@ -320,10 +320,14 @@ TRAINER_EVENTS = {
                       "evolve_from_deck_none": "user",
                       # v0.87: 進化させたゲンガー（PR1-053）の［やみのちから］（コインの「おもて」で相手の場のポケモンを持ち主の手札へ。そのあとバトル場に出す）と、相手の場の
                       # ［まきびし］（バトル場に出したポケモンへ）
-                      "return_in_play_to_hand": "opponent", "spikes_damage": "either"},
+                      "return_in_play_to_hand": "opponent", "spikes_damage": "either",
+                      # v0.90: 進化で取りのぞくマーカー・カウンター（docs/markers-counters-v0.90.md 3 章）
+                      "marker_removed": "user"},
     # v0.50: 退化スプレー。自分の進化ポケモンからはがす（退化で消える特殊状態・持続する効果・にげるの失敗の記録）か、はがさない（0 枚）。きぜつはトラッシュしたあと
     DEVOLUTION_SPRAY: {"devolve": "user", "devolve_declined": "user", "special_conditions_removed": "user", "persistent_effect_removed": "user",
-                       "retreat_failure_cleared": "user"},
+                       "retreat_failure_cleared": "user",
+                       # v0.90: 退化で取りのぞくマーカー・カウンター（docs/markers-counters-v0.90.md 3 章）
+                       "marker_removed": "user"},
 }
 
 

@@ -270,6 +270,19 @@ def wake_up(state: GameState, owner: int, pokemon: PokemonInPlay, effect: str) -
     _remove_exclusive(state, owner, pokemon, CURED, effect=effect)
 
 
+def cure_conditions(state: GameState, owner: int, pokemon: PokemonInPlay, names: tuple[str, ...], *, effect: str) -> None:
+    """v0.90: ワザの効果で、説明が書く特殊状態（``names``）だけを回復させる（ミュウツー（ES3-026）の「かんぜんかいふく」の「「どく・こんらん」状態のすべてからも回復させる」）。
+    書かない特殊状態は残す。理由は ``CURED``（ログ ``special_conditions_removed`` の ``conditions`` は回復した状態（p.322 の順）・``effect`` はワザ）。当てはまる状態がなければ何もしない。"""
+    removed = tuple(name for name in pokemon.conditions.names() if name in names)
+    if not removed:
+        return
+    conditions = pokemon.conditions
+    pokemon.conditions = replace(conditions, poison=None if POISON in removed else conditions.poison,
+                                 exclusive=None if conditions.exclusive is not None and conditions.exclusive.name in removed else conditions.exclusive)
+    state.add_event("special_conditions_removed", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, conditions=removed, reason=CURED,
+                    effect=effect)
+
+
 def recover_from_paralysis(state: GameState, owner: int, pokemon: PokemonInPlay) -> None:
     """ポケモンチェックの 4: マヒ状態から自動的に回復する（p.322・p.323）。どく状態はそのまま。"""
     if not pokemon.conditions.paralyzed:

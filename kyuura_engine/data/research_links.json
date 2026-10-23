@@ -12,8 +12,8 @@
   "card_data_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 203,
-    "engine_stop_codes": 201,
+    "engine_unresolved_rulings": 205,
+    "engine_stop_codes": 203,
     "kyuura_issues": 71
   },
   "stop_codes": {
@@ -2338,6 +2338,28 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_COLOR_MARKER_PRECEDENCE": {
+      "engine_rulings": [
+        {
+          "version": "v0.90",
+          "document": "docs/markers-counters-v0.90.md",
+          "ruling_id": "CM1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_FULL_RECOVERY_COUNTERS": {
+      "engine_rulings": [
+        {
+          "version": "v0.90",
+          "document": "docs/markers-counters-v0.90.md",
+          "ruling_id": "KR1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -3854,7 +3876,19 @@
       "ES2-018/attack/0",
       "ES2-018/attack/1",
       "QSG-056/attack/0",
-      "QSG-056/attack/1"
+      "QSG-056/attack/1",
+      "ES2-002/attack/0",
+      "ES2-002/attack/1",
+      "ES2-025/attack/0",
+      "ES2-025/attack/1",
+      "ES3-026/attack/0",
+      "ES3-026/attack/1",
+      "PR1-024/attack/0",
+      "PR1-024/attack/1",
+      "PR1-034/attack/0",
+      "PR1-034/attack/1",
+      "PR1-035/attack/0",
+      "PRN-029/attack/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

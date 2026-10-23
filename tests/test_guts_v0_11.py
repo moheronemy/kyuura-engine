@@ -675,7 +675,10 @@ class G37Test(unittest.TestCase):
         # v0.88: かっこいいポリゴンの「テクスチャーマジック」（相手の対戦ポケモンの弱点の色を変える。docs/type-energy-colors-v0.88.md 6.5 節）
         "ChangeWeaknessAndResistanceOptional",
         # v0.89: レアコイルの「マイクロウェーブ」（選んだ個体のエネルギーカードのトラッシュ）・ベロリンガの「きずをなめる」（おたがいの場から選ぶ回復。docs/selected-target-damage-v0.89.md）
-        "ChooseOpponentPokemonDamageThenDiscardEnergyOnHeads", "CoinChooseEitherPokemonHeal"]))
+        "ChooseOpponentPokemonDamageThenDiscardEnergyOnHeads", "CoinChooseEitherPokemonHeal",
+        # v0.90: ベトベターの「ベトベトえき」・ルージュラの「あくまののろい」・ドーブルの「ペイント」（相手にマーカーをのせる）・ガラガラの「ほねこんぼう」（マヒ。
+        # docs/markers-counters-v0.90.md）
+        "MarkOpponentIfAbsent", "CoinMarkOpponent", "CoinPaintOpponent", "DamageThenRemoveOwnMarkerParalyzeOnHeads"]))
 
 
 class DecisionTest(unittest.TestCase):

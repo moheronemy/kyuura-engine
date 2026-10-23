@@ -1955,6 +1955,22 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.90: マーカー・ダメージカウンター以外のカウンターのポケモン 7 枚
+
+[markers-counters-v0.90.md](markers-counters-v0.90.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_90`（7 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.89 までの 1,108 枚の
+  記録は変わっていない。
+- 7 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-24・外部照合なし・`kyuura_records` は空）。`card_verification.json` には加えていない。
+- 処理に使う文面はどれも kyuura の印刷の文面（研究の対応表の `adopted_printed_text` に 12）。7 枚の id と旧 pcg-search の id で、kyuura の研究の基準に LD-・CC-・CR-・UQ-・エラッタがないことを
+  確かめた。くいしんぼカビゴンの 2001 年の殿堂入りカードの一覧・ドーブル（neo2）のスケッチの記録は、このカードの処理の根拠に使っていない。
+- 進化・退化・ベンチでのマーカー・カウンターの扱いは、基準の一般条項（GR-2000-P310-EVOLUTION・GR-2000-P311-RETREAT・GR-2000-P322-PERSISTENT-EFFECTS・GR-2000-P324-DEVOLUTION）から読んだ。
+  2000 年 5 月 1 日の RUL-CHAR-MARKER は基準の後の記録なので持ち込んでいない。
+- 日本語の文面は kyuura の転記（pcg-search.com）。同じ所との照合は独立した照合にならない。外部照合はしていない。
+- 新しい停止コード 2 件（CM1・KR1）を `stop_codes` に `not_in_kyuura` で加えた。
+- 報告事項（kyuura の作業）: CM1（色マーカーと特殊能力で変えた色）・KR1（かんぜんかいふくの「ダメージカウンターやマーカー」とほかのカウンター）は kyuura の未解決の一覧にない論点。kyuura の
+  engine_targets.json の `engine_reference` は v0.68 の登録の写しで、v0.90 の登録を写すと 7 枚の `engine_status` が `registered` になる。
+
 ## v0.89: 対象を選ぶダメージ・選べる回復のポケモン 17 枚
 
 [selected-target-damage-v0.89.md](selected-target-damage-v0.89.md)。

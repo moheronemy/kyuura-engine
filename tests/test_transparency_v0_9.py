@@ -803,7 +803,9 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                     "どくのこな", "まぶしいひかり", "アクアフラッシュ", "あやしいひかり",
                                     # v0.89: ライチュウ（ES2-013・QSG-022。同じデータの組）の「ビリビリキック」・ゴーリキー（ES3-028）の「じごくづき」（ParalyzeOnHeads）。既存の型の
                                     # 登録だけなので、同じ T19b で止まる（docs/selected-target-damage-v0.89.md 5 章）。じごくづき（闘 20）はゴースト（抵抗力 闘）への最終ダメージが 0
-                                    "ビリビリキック", "ビリビリキック", "じごくづき"]))
+                                    "ビリビリキック", "ビリビリキック", "じごくづき",
+                                    # v0.90: ベトベター（ES2-002）の「どくえき」（PoisonOnHeads。既存の型の登録だけなので、同じ T19b で止まる。docs/markers-counters-v0.90.md 4 章）
+                                    "どくえき"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

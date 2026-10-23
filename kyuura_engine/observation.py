@@ -105,6 +105,7 @@ from .decisions import (
     QUIZ_ANSWER,
     QUIZ_ATTACK,
     QUIZ_CARD,
+    SELECT_MARKER_COUNT,
 )
 from .effects import (
     JANKEN_HANDS,
@@ -162,6 +163,8 @@ OPTION_MEANINGS: dict[str, str] = {
     DISCARD_STADIUM: "card", EVOLUTION_SONG_POKEMON: "pokemon",
     # v0.81: 学習装置でつけ替える、きぜつする対戦ポケモンについているエネルギーカード（場のカード。公開）
     EXP_ALL_ENERGY: "card",
+    # v0.90: ボーンキラー・ころがるで取りのぞくカウンターの数（のっている数は公開）
+    SELECT_MARKER_COUNT: "number",
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
 # v0.73: 化石の発掘（山札とトラッシュ）・マスターボール（見た山札の上の 7 枚）も、決めるプレイヤーが自分の山札を見る
@@ -225,6 +228,7 @@ def _face_down_pokemon(state: GameState, pokemon: PokemonInPlay, owner: int, vie
         "trainers": [_card(state, t.card) for t in pokemon.trainers],
         "special_conditions": list(pokemon.conditions.names()),
         "persistent_effects": [effect.kind for effect in pokemon.persistent_effects],
+        "markers": [_marker(marker) for marker in pokemon.markers],  # v0.90
     }
     if viewer == owner:
         view["real"] = {**_card(state, pokemon.card), "name_ja": state.printed_def(pokemon.card).name_ja}
@@ -270,6 +274,8 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay) -> dict[str, Any]:
         "trainers": [_card(state, t.card) for t in pokemon.trainers],
         "special_conditions": list(pokemon.conditions.names()),
         "persistent_effects": [effect.kind for effect in pokemon.persistent_effects],
+        # v0.90（docs/markers-counters-v0.90.md 3 章）: のっているマーカー・ダメージカウンター以外のカウンター（のせた順。種類と、色マーカーの色。場の表の情報）
+        "markers": [_marker(marker) for marker in pokemon.markers],
         # v0.49（docs/virtual-attacks-transformation-v0.49.md 9 章）: 実際のカード（``card``・``card_id``・``name_ja``。いちばん上のポケモンのカード）と、今の姿
         # （``form``。［へんしん］で同じカードとしてあつかう相手のカード・「ばける」でのせたカード）・のせたカード（``disguise``）・今持つワザ（``attacks``。印刷した
         # カード・位置・持ち方・供給するポケモン・選ぶと止める理由のコード）・今持つ特殊能力（``powers``。印刷したカード・位置）を分けて書く。どれも表のカード
@@ -288,6 +294,14 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay) -> dict[str, Any]:
         ],
         "powers": [{**_card(state, slot.card), "power_index": slot.key.power_index, "name_ja": slot.power.name_ja} for slot in powers_of(state, pokemon)],
     }
+
+
+def _marker(marker) -> dict[str, Any]:
+    """v0.90: マーカー・カウンター 1 つの観測（種類・のせたプレイヤー・のせたワザ・のせた番。色マーカーだけ色）。"""
+    view: dict[str, Any] = {"kind": marker.kind, "player": marker.player, "effect": marker.attack, "turn": marker.turn}
+    if marker.color is not None:
+        view["color"] = marker.color.value
+    return view
 
 
 def _form(state: GameState, pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -603,6 +617,8 @@ PUBLIC_EVENTS = frozenset({
     # v0.80: カードめくりゲーム（おもてにしたサイド・答え）・山札の上から置いたサイド（枚数だけ）・スロットゲーム（見せた 3 枚）・クイズの種類の答えと表にしたカード・ポケモンマーチで
     # ベンチに出したカード・いやしの野原（場は公開の情報）
     "prize_revealed", "prize_guess", "deck_top_to_prizes", "reveal_deck_top", "quiz_kind_answer", "quiz_kind_reveal", "trainer_bench_from_deck", "stadium_heal",
+    # v0.90: マーカー・カウンターをのせた・取りのぞいた（場の表の情報）
+    "marker_added", "marker_removed", "marker_removal_declined",
 })
 
 

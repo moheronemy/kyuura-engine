@@ -211,14 +211,15 @@ def type_question(res: Resolution, error: TypeReadingsDiffer, what: str) -> Open
     name = "shift_color_duration"
     for pokemon in error.pokemons:  # v0.88: 色の読み方が 2 つ以上になる理由が［せんすい］なら CE1・CE2（VS1 は［へんしょく］の問いだけ）
         cause = E.type_reading_cause(res.state, pokemon) if res.state.find_pokemon(pokemon.pokemon_id) is not None else None
-        if cause in ("ce1", "ce2"):
+        if cause in ("ce1", "ce2", "cm1"):
             name = COLOR_QUESTIONS[cause]
             break
     return res.question(name, f"{what}（ポケモン {[p.pokemon_id for p in error.pokemons]}）")
 
 
-# v0.88: 色の読み方が決まらない理由の問い（``effects.type_reading_cause``・``card_color_cause``・``color_changed_cards``）
-COLOR_QUESTIONS = {"vs1": "shift_color_duration", "ce1": "color_effect_continuation", "ce2": "color_replacement_order", "ce3": "color_changed_energy_card"}
+# v0.88: 色の読み方が決まらない理由の問い（``effects.type_reading_cause``・``card_color_cause``・``color_changed_cards``）。v0.90: 色マーカー（CM1）
+COLOR_QUESTIONS = {"vs1": "shift_color_duration", "ce1": "color_effect_continuation", "ce2": "color_replacement_order", "ce3": "color_changed_energy_card",
+                   "cm1": "color_marker_precedence"}
 
 
 def track_ko(res: Resolution, fs: FrameState, pokemon: PokemonInPlay, before: int) -> None:
@@ -807,6 +808,8 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         extra["step_orders"] = tuple((step, tuple(m.label for m in calc.modifiers if m.step == step)) for step in sorted(orders))
     if calc.stopped_after_step_2:
         extra["stopped_after_step_2"] = True
+    if calc.weakness_multiplier is not None:
+        extra["weakness_multiplier"] = calc.weakness_multiplier  # v0.90: のろいマーカーの「×4」（共通のルールの数のときは書かない。v0.89 までのログの形は変えない）
     if target != OPPONENT_ACTIVE:
         extra.update(target=target, pokemon_id=receiver.pokemon_id, effect=str(frame.attack_key))
     if not defender_effects:
