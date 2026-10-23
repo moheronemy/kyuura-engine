@@ -23,7 +23,7 @@ from .. import judge
 from .. import procedures as PR
 from ..checks import PLAYERS, attack_request, require_turn
 from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack
-from ..decisions import BENCH_GUARD, ENERGY_DRAIN_DISCARD, ESP_REDO, EXP_ALL_ENERGY, KNOCK_OUT_POWER, NINJA_TRICK, PROMOTE_ACTIVE, REACTION_SWITCH, TAKE_PRIZE
+from ..decisions import BENCH_GUARD, ENERGY_DRAIN_DISCARD, ESP_REDO, EXP_ALL_ENERGY, KNOCK_OUT_POWER, NINJA_TRICK, PROMOTE_ACTIVE, REACTION_SWITCH, SPLIT_FROM_DECK, TAKE_PRIZE
 from ..coins import CoinSide, flip_coins
 from .. import effects as E
 from ..effects import (AttackKey, AttackUse, PowerKey, usable_ninja_tricks, attach_converted_energy, attack_rebellion_powers, counts_as_knockout, dormant_scram, max_hp,
@@ -32,6 +32,7 @@ from ..errors import IllegalActionError, UnsupportedError
 from ..state import AttackEffectGuard, BenchAttackDamageGuard, BenchProtection, GameState, Phase, PowersStopped, StatusImmunityNextTurn, ZeroDamageAtLeast
 from ..history import close_probe, note_used
 from ..zones import face_up_fields, prize_left, promote_from_bench, return_in_play_to_deck, shuffle_deck
+from ..movement import promotion_spikes_now
 
 from . import catalog as C
 from . import codec
@@ -40,10 +41,11 @@ from . import v013_checks
 from .contract import is_contract, program_for
 from .events import FrameKind, Suspended, Trace, Window, WindowOpened
 from ..persistent import RETURN_IN_PLAY_TO_DECK, attack_coin_checks, destiny_bond, remove_on_damage, remove_persistent_effects
-from .kernel import (DryRunComplete, Resolution, apply_energy_drain, capture_post_knockout, check_simultaneous, exp_all_offers, exp_all_options, exp_all_unresolved,
+from .kernel import (DryRunComplete, Resolution, apply_energy_drain, apply_split, capture_post_knockout, check_simultaneous, exp_all_offers, exp_all_options, exp_all_unresolved,
                      focus_band_offers, hp_of, knock_out_beam_problem, knock_out_power_offers, knocked, ko_prevention_offers, scram_restored_question, settle_scram,
                      track_ko)
-from .programs import (AttackRun, EspRedoOffer, apply_esp_redo, apply_flee, apply_ninja_trick, decision_index, declare, offer_ninja_trick, program_may_fail, resume_guarded, run_elements,
+from .programs import (
+    resume_moves,AttackRun, EspRedoOffer, apply_esp_redo, apply_flee, apply_ninja_trick, decision_index, declare, offer_ninja_trick, program_may_fail, resume_guarded, run_elements,
                        with_stadium_self_damage)
 from .questions import OpenQuestion, to_error
 
@@ -219,6 +221,14 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
     if any(isinstance(effect, (PowersStopped, BenchProtection)) for side in state.players for pokemon in side.in_play() for effect in pokemon.persistent_effects):
         # v0.86: スタンウェーブ（特殊能力を止める）・ほのおのまもり（控えへのワザのダメージと効果を無効にする）。v0.13 の止める関数は知らない
         found.append("v0.86 の持続する効果")
+    v087 = (E.CoinDamageBothActivesOnAttackDamage, E.PoisonDamageSourceOnAttackDamage, E.BenchNamedFromDeckOnAttackDamage, E.OwnBenchAttackImmunityWhileActive,
+            E.BenchAttackDamageImmunity, E.DamageOnOpponentPromotion, E.MoveTypeEnergyOnBenching, E.DamageOnHandBasicWhileActive)
+    if any(isinstance(slot.effect, v087) for side in state.players for pokemon in side.in_play() for slot in E.powers_of(state, pokemon)):
+        # v0.87: ダメージを受けたとき（［ショックボム］・［どくのたいえき］・［ぶんれつ］）・場の移動（［まきびし］・［やけのこり］・［ヒートプレート］）に反応する特殊能力と、
+        # ワザから守る特殊能力（［オーロラヴェール］・［もぐる］）。v0.13 の止める関数は知らない
+        found.append("v0.87 の反応・守る特殊能力")
+    if any(r.kind == E.OPPONENT_POWER_SUPPRESSION for r in state.trainer_effects):
+        found.append("ふしぎなガス")  # v0.87: 相手の場の特殊能力だけを止める効果（v0.13 の止める関数は知らない）
     return tuple(found)
 
 
@@ -595,8 +605,7 @@ def after_power(state: GameState, ctx: Context, *, knock_outs: bool, converted=N
     if gone and not knock_outs:
         return  # 不変条件（場のポケモンのダメージは HP 未満）が StateIntegrityError にする
     if gone:
-        if len(gone) > 1:
-            raise RuntimeError(f"特殊能力の処理のあとで 2 匹以上が HP 以上（{[p.pokemon_id for _, p in gone]}。今の対応カードでは起こらない。エンジンの不具合）")
+        # v0.87: 特殊能力の効果の入れ替えへの反応（［まきびし］）のダメージで HP 以上になったポケモンも、同じきぜつの処理（同時。p.324）
         try:
             candidates = capture_post_knockout(res, gone)
         except OpenQuestion as question:
@@ -683,6 +692,7 @@ def after_trainer(state: GameState, ctx: Context) -> None:
     # 退化したほかのポケモンは、ワザのあとのきぜつの処理で残らない）
     # v0.61: トレーナーのダメージ（バトル場は穴だらけ!。このコマンドのログ ``trainer_damage``）で HP 以上になったポケモンも
     damaged = _trainer_damaged(state)
+    # v0.87: トレーナーの効果の入れ替え・手札から場に出させたことへの反応のダメージ（［まきびし］・［ヒートプレート］・爆発ジム）で HP 以上になったポケモンも
     gone = [(player, pokemon) for player in PLAYERS for pokemon in state.players[player].in_play()
             if (pokemon.devolved_turn == state.turn_number or pokemon.pokemon_id in damaged) and pokemon.damage >= hp_of(state, pokemon)]
     if not gone:
@@ -690,7 +700,7 @@ def after_trainer(state: GameState, ctx: Context) -> None:
         if any(state.players[p].active is None or not state.players[p].prizes for p in PLAYERS):
             _next_prize_or_judge(res, (), CONTINUE_TURN, ())
         return
-    if len(gone) > 1:
+    if len(gone) > 1 and not all(pokemon.pokemon_id in damaged for _, pokemon in gone):
         raise RuntimeError(f"トレーナーの使用のあとで 2 匹以上が HP 以上（{[p.pokemon_id for _, p in gone]}。1 回の使用で退化するのは 1 匹。エンジンの不具合）")
     try:
         scram_restored_question(res, gone)  # v0.61
@@ -708,7 +718,53 @@ def _trainer_damaged(state: GameState) -> set[int]:
             break
         if event["kind"] == "trainer_damage":
             found.add(event["pokemon_id"])
+        elif event["kind"] in MOVEMENT_DAMAGE_EVENTS:
+            found.add(event.get("target_pokemon_id", event.get("pokemon_id")))  # v0.87
     return found
+
+
+# v0.87: 場の移動への反応のダメージのログ（［まきびし］・［ヒートプレート］・爆発ジム）
+MOVEMENT_DAMAGE_EVENTS = frozenset({"spikes_damage", "hot_plate_damage", "stadium_damage"})
+
+
+def after_effects(state: GameState, ctx: Context) -> None:
+    """v0.87（docs/movement-damage-reactions-v0.87.md 4.3 節）: 手札からたねポケモンをベンチに出したあと（［ヒートプレート］・ロケット団の爆発ジムのダメージ）、場を整える。
+    HP 以上のポケモンがいれば、きぜつの処理（ログ ``knock_out`` の ``timing`` は ``"entry"``。1 つの操作で起こったきぜつは同時。p.324）→ サイド → 勝ち負け → ふしちょう →
+    バトル場に出す → 同じ番（``CONTINUE_TURN``）。いなければ番のプレイヤーの ``Phase.MAIN``（決定を待っていなければ）。"""
+    res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace, dormant=dormant_scram(ctx.original))
+    if state.decision is None:
+        state.phase = Phase.MAIN
+    _settle_outside_attack(res)
+    gone = knocked(res)
+    if not gone:
+        if any(state.players[p].active is None for p in PLAYERS):
+            _next_prize_or_judge(res, (), CONTINUE_TURN, ())
+        return
+    try:
+        scram_restored_question(res, gone)
+        candidates = capture_post_knockout(res, gone)
+    except OpenQuestion as question:
+        raise to_error(question.key, question.detail, question.error) from None
+    _after_knockouts(res, _knock_out_all(state, gone, timing="entry"), CONTINUE_TURN, candidates)
+
+
+def settle_after_retreat(state: GameState, ctx: Context, player: int, retreated: int) -> None:
+    """v0.87: 「にげる」の反応（［やけのこり］・［まきびし］・同じ時点の［おとしあな］。``reactions``）のあと、v0.61 の ``after_retreat`` の後半と同じく場を整える（［ずらかる］→
+    きぜつ（``timing`` は ``"retreat"``）→ サイド → 勝ち負け → ふしちょう → バトル場に出す → 同じ番）。"""
+    res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace, dormant=dormant_scram(ctx.original))
+    state.phase = Phase.MAIN
+    _settle_outside_attack(res)
+    gone = knocked(res)
+    if not gone:
+        if any(state.players[p].active is None for p in PLAYERS):
+            _next_prize_or_judge(res, (), CONTINUE_TURN, ())
+        return
+    try:
+        scram_restored_question(res, gone)
+        candidates = capture_post_knockout(res, gone)
+    except OpenQuestion as question:
+        raise to_error(question.key, question.detail, question.error) from None
+    _after_knockouts(res, _knock_out_all(state, gone, timing="retreat"), CONTINUE_TURN, candidates)
 
 
 def _settle_outside_attack(res: Resolution) -> None:
@@ -915,13 +971,20 @@ def _resume_attack(res: Resolution, decision, cont: codec.AttackContinuation, ch
     if boundary is not None:
         # v0.65: 要素と要素のあいだの決定（変わり身の術はワザの要素の前、［にげこむ］はダメージの要素のあと）。答えを処理して、その位置の要素から続ける（それまでの要素・コインは
         # 繰り返さない）
-        if decision.kind == NINJA_TRICK:
+        if "move_order" in carried or "move_magma" in carried:
+            # v0.87: 場の移動への反応の決定（同じ時点の反応の順番・［やけのこり］でつけ替えるカード）。答えを処理し、残りの反応を続けてから、その位置の要素から続ける
+            if resume_moves(run, boundary, decision, carried, choices):
+                return
+        elif decision.kind == NINJA_TRICK:
             apply_ninja_trick(run, tuple(carried["tricks"]), choices)
         elif decision.kind == REACTION_SWITCH:
             apply_flee(run, tuple(carried["flee"]), choices)
         elif decision.kind == ENERGY_DRAIN_DISCARD:
             # v0.68: ［だつりょくえき］のトラッシュするカード（コインはもう投げた。送る効果はもう処理したので、続きの位置で窓を開き直しても何もしない）
             apply_energy_drain(state, tuple(carried["drain"]), choices)
+        elif decision.kind == SPLIT_FROM_DECK:
+            # v0.87: ［ぶんれつ］の答え（出すなら山札を切る。送る効果はもう処理した）
+            apply_split(state, tuple(carried["split"]), choices)
         else:
             raise RuntimeError(f"要素のあいだの決定 {decision.kind} は扱わない（エンジンの不具合）")
         if run_elements(run, boundary):
@@ -1049,7 +1112,26 @@ def _resume_take_prize(res: Resolution, decision, cont: codec.AftermathContinuat
 
 
 def _resume_promote(res: Resolution, decision, cont: codec.AftermathContinuation, choices) -> None:
-    promote_from_bench(res.state, decision.player, choices[0])  # v0.38: ワザの効果で場をはなれたあとの交代と共通（動き・ログは v0.37 と同じ）
+    state = res.state
+    promoted = promote_from_bench(state, decision.player, choices[0])  # v0.38: ワザの効果で場をはなれたあとの交代と共通（動き・ログは v0.37 と同じ）
+    # v0.87（docs/movement-damage-reactions-v0.87.md 4.1 節）: 控えから出たポケモンへの相手の［まきびし］（その相手の番の中だけ。ポケモンチェックのあとの交代はどちらの番でもない）。
+    # 同じ時点のほかの反応はない（もどったポケモンがいない）。HP 以上になったら、きぜつの処理をもう一度して、同じ続きに進む（そのあとの交代も同じ続き）
+    if cont.then != NEXT_TURN and promotion_spikes_now(state, decision.player, promoted):
+        _settle_outside_attack(res)
+        gone = knocked(res)
+        if gone:
+            if cont.remaining:
+                raise RuntimeError(f"［まきびし］で HP 以上になったあとに、ほかのプレイヤーの交代 {cont.remaining} が残っている（番のプレイヤーの交代は最後。エンジンの不具合）")
+            try:
+                scram_restored_question(res, gone)
+                candidates = capture_post_knockout(res, gone)
+            except OpenQuestion as question:
+                raise to_error(question.key, question.detail, question.error) from None
+            _after_knockouts(res, _knock_out_all(state, gone, timing="power"), cont.then, candidates)
+            return
+        if state.players[decision.player].active is None:
+            _next_prize_or_judge(res, cont.remaining, cont.then, ())
+            return
     _next_promotion_or_end(res, cont.remaining, cont.then)
 
 

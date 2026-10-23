@@ -146,12 +146,12 @@ class RegistrationTest(unittest.TestCase):
     def test_counts(self):
         pool = load_card_pool()
         categories = Counter(pool.get(c).category for c in pool.playable_ids)
-        self.assertEqual((len(pool.playable_ids), categories["pokemon"], categories["trainer"], categories["energy"]), (1066, 769, 260, 37))  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
-        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 1298)  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
-        self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 100)  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.84 でポケモン 12 枚・ポケモン育て屋夫婦を加えた
+        self.assertEqual((len(pool.playable_ids), categories["pokemon"], categories["trainer"], categories["energy"]), (1080, 783, 260, 37))  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
+        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 1312)  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
+        self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 114)  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.84 でポケモン 12 枚・ポケモン育て屋夫婦を加えた
         stadiums = [c for c in E.DEFAULT_EFFECTS.trainer_ids() if getattr(E.DEFAULT_EFFECTS.trainer_entry(c).effect, "is_stadium", False)]
         self.assertEqual(len(stadiums), 41)
-        self.assertEqual(len(read_extract()["cards"]), 1066)  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
+        self.assertEqual(len(read_extract()["cards"]), 1080)  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
 
     def test_new_pokemon_names(self):
         pool = load_card_pool()
@@ -168,7 +168,7 @@ class RegistrationTest(unittest.TestCase):
         for card in H.V0_82_CARDS:
             with self.subTest(card=card):
                 self.assertNotIn(card, pool.playable_ids)
-        self.assertEqual(len(pool.playable_ids), 1046)  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.84 でポケモン 12 枚・ポケモン育て屋夫婦を加えた  # v0.83 でポケモン 18 枚を加えた（v0.82 の時点は 988）
+        self.assertEqual(len(pool.playable_ids), 1060)  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.84 でポケモン 12 枚・ポケモン育て屋夫婦を加えた  # v0.83 でポケモン 18 枚を加えた（v0.82 の時点は 988）
 
     def test_same_data_groups_share_entries(self):
         groups = {"PRN-007": CYNDAQUIL, "PRN-010": CYNDAQUIL, "QSG-010": PONYTA, "QSG-012": MAGMAR}

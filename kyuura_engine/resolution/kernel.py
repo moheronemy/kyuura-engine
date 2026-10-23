@@ -54,7 +54,7 @@ from ..effects import (
     type_readings,
     weakness_of,
 )
-from ..conditions import confuse, put_to_sleep
+from ..conditions import confuse, poison, put_to_sleep
 from ..decisions import KNOCK_OUT_POWER, KO_PREVENTION, REACTION_SWITCH
 from ..persistent import RETURN_IN_PLAY_TO_DECK, bench_protection, effect_attack_card, expires_at_turn_start, reduced_damage_to_source, reflect_shield, remove_on_damage, remove_persistent_effects, tails_damage_guard
 from ..zones import designate_face_down, return_in_play_to_deck, shuffle_deck
@@ -1547,6 +1547,161 @@ def bolt_return_on_heads(res: Resolution, fs: FrameState, deferred: Deferred) ->
         shuffle_deck(state, instance.owner, power=str(instance.power_key))
 
 
+def power_damage_both_actives_on_tails(res: Resolution, fs: FrameState, deferred: Deferred) -> None:
+    """v0.87（docs/movement-damage-reactions-v0.87.md 5.1 節）: マチスのマルマインの［ショックボム］。持ち主がコインを投げ（かならずはたらく。ログ ``shock_blast_check``）、「うら」なら、
+    お互いの対戦ポケモン（このカードも含む。番のプレイヤー → 相手の順）に、それぞれ特殊能力のダメージ（ログ ``shock_blast_damage``）。
+
+    - すでに HP 以上のポケモンには与えない（処理の対象がない。ログ ``shock_blast_skipped``）。2 匹ともそうならコインを投げない
+    - 特殊能力のダメージ（ワザのダメージの計算をしない。``effects.received_power_damage`` は当てはめる）。特殊能力の分類の枠なので、どの「ダメージを受けたとき」の効果もはたらかない
+    - コインの前に、受けるポケモンごとに Z9（弱点・抵抗力を計算するかで量が変わる）、「ダメージを受けない」状態（SB1）を確かめる（先読みが見つける）"""
+    state = res.state
+    instance = deferred.instance
+    holder_found = state.find_pokemon(instance.pokemon_id)
+    if holder_found is None:
+        raise RuntimeError(f"［ショックボム］のポケモン {instance.pokemon_id} が場にいない（エンジンの不具合）")
+    holder = holder_found[1]
+    base = {"player": instance.owner, "pokemon": instance.card, "pokemon_id": instance.pokemon_id, "power": str(instance.power_key),
+            "effect": str(fs.frame.attack_key)}
+    order = (state.current_player, 1 - state.current_player)
+    targets = []
+    for side in order:
+        target = state.players[side].active
+        if target is None:
+            continue
+        if target.damage >= hp_of(state, target):
+            state.add_event("shock_blast_skipped", **base, target_player=side, target_pokemon=target.card, target_pokemon_id=target.pokemon_id,
+                            reason=COUNTERATTACK_TARGET_KNOCKED_OUT)
+            continue
+        targets.append((side, target))
+    if not targets:
+        return
+    amount = instance.implementation.amount
+    for side, target in targets:
+        # Z9（kyuura の UQ-POWER-DAMAGE-WEAKNESS-RESISTANCE。［ショックボム］も挙げる）: 弱点・抵抗力を計算する読み方と計算しない読み方で、受けるダメージ全体を書く効果
+        # （``received_power_damage``）を当てはめたあとの量が違うときだけ止める（このカード自身の側も同じに比べる。量が同じなら進む）
+        plain = received_power_damage(state, side, target, holder, amount)[0]  # DB1・MT1 はここで（コインの前に）止まる
+        weakness = weakness_of(state, target)
+        resistance, value = resistance_of(state, target)
+        for color in type_readings(state, holder):
+            computed = amount
+            if weakness is not None and color == weakness:
+                computed *= state.rules.weakness_multiplier
+            if resistance is not None and color == resistance:
+                computed -= value
+            computed = max(computed, 0)
+            if received_power_damage(state, side, target, holder, computed)[0] != plain:
+                raise res.question("power_damage_weakness_resistance", f"{instance.power_key} → ポケモン {target.pokemon_id}")
+        if first_void(res, side, target) is not None:
+            raise res.question("power_damage_prevented", f"{instance.power_key} → ポケモン {target.pokemon_id}")
+    flips = flip_coins(state, instance.owner, 1, source="power", effect=str(instance.power_key), card=instance.card, pokemon_id=instance.pokemon_id)
+    tails = flips.results[0] is CoinSide.TAILS
+    state.add_event("shock_blast_check", **base, result=flips.results[0].value)
+    if not tails:
+        return
+    for side, target in targets:
+        child = res.open_frame(FrameKind.POWER_DAMAGE, parent=fs.frame.id, player=instance.owner, source_pid=instance.pokemon_id,
+                               attack_key=fs.frame.attack_key)
+        child.origin = instance
+        before = target.damage
+        hp = hp_of(state, target)
+        dealt, applied = received_power_damage(state, side, target, holder, amount)
+        target.damage += dealt
+        child.applied[target.pokemon_id] = dealt
+        extra = {} if not applied else {"amount_before": amount, "received_modifiers": received_modifiers_log(applied)}
+        state.add_event("shock_blast_damage", **base, target_player=side, target_pokemon=target.card, target_pokemon_id=target.pokemon_id, amount=dealt,
+                        total_damage=target.damage, knocked_out=target.damage >= hp, **extra)
+        remove_on_damage(state, side, target, dealt)
+        track_ko(res, child, target, before)
+
+
+def poison_damage_source(res: Resolution, fs: FrameState, deferred: Deferred) -> None:
+    """v0.87（5.2 節）: コクーンの［どくのたいえき］（v0.10 の読取記録の最新の説明。自動的にはたらく）。ダメージを与えたポケモンを「どく」状態にする（コインなし）。
+
+    - ダメージを与えたポケモンがすでに HP 以上なら、処理の対象がない（ログ ``poison_fluid_skipped``）
+    - 特殊能力の効果なので、ダメージを与えたポケモンの「ワザをうけない」状態・「とうめい」は評価しない。［めんえき］なら「どく」にならない（``conditions.poison``）
+    - ログ ``poison_fluid``。どくにするのは ``conditions.poison``（通常のどく。特殊などくのポケモンは通常のどくになる）"""
+    state = res.state
+    instance = deferred.instance
+    source = _damage_source(res, fs, "どく")
+    base = {"player": instance.owner, "pokemon": instance.card, "pokemon_id": instance.pokemon_id, "power": str(instance.power_key),
+            "attacker": fs.frame.player, "attacker_pokemon": source.card, "attacker_pokemon_id": source.pokemon_id, "effect": str(fs.frame.attack_key)}
+    if source.damage >= hp_of(state, source):
+        state.add_event("poison_fluid_skipped", **base, reason=COUNTERATTACK_TARGET_KNOCKED_OUT)
+        return
+    if state.players[fs.frame.player].active is not source:
+        raise RuntimeError(f"ダメージを与えたポケモン {source.pokemon_id} がバトル場にいない（どく状態にできない。エンジンの不具合）")
+    state.add_event("poison_fluid", **base)
+    poison(state, fs.frame.player, source, effect=str(instance.power_key))
+
+
+class SplitRequest(Exception):
+    """v0.87: ［ぶんれつ］を使うかを持ち主に聞く（呼ぶ側の ``programs.fire_or_suspend`` が決定 ``SPLIT_FROM_DECK`` を出し、答えのあとに ``apply_split`` で続ける）。"""
+
+    def __init__(self, entry: tuple[int, int, str, int, str], options: tuple[int, ...], unresolved: tuple = ((), None, None)):
+        super().__init__(entry)
+        self.entry = entry  # (持ち主, ポケモンの番号, カード id, 特殊能力の位置, 出すカードの名前)
+        self.options = options
+        self.unresolved = unresolved
+
+
+def split_from_deck(res: Resolution, fs: FrameState, deferred: Deferred) -> None:
+    """v0.87（5.3 節）: ドガースの［ぶんれつ］。持ち主に、山札の「ドガース」をベンチに出すかを聞く（使うかは持ち主が決める）。
+
+    - 処理する時点で使えない（かがくへんかガス・まきちらせ!ベトベトガス・ふしぎなガス・スタンウェーブ・ショックアイ。``catalog.offer_stopped``）なら聞かない（ログ ``split_skipped``）
+    - ベンチに空きがない（``stadiums.bench_has_room``）・山札が 0 枚なら聞かない（ログ ``split_skipped``。どちらも公開の情報）。山札に「ドガース」がなくても聞く（選べるものは空。
+      見えない山札の中身で、決定の有無・人を変えない）
+    - 選べるカードのうち、出すと止める（GG1・MG1）ものは、選べるが選ぶと止める答え。先読みは答えのすべて（出さないを含む）を試す"""
+    from ..stadiums import bench_has_room
+
+    state = res.state
+    instance = deferred.instance
+    owner = instance.owner
+    found = state.find_pokemon(instance.pokemon_id)
+    base = {"player": owner, "pokemon": instance.card, "pokemon_id": instance.pokemon_id, "power": str(instance.power_key), "effect": str(fs.frame.attack_key)}
+    reason = None
+    if found is None:
+        raise RuntimeError(f"［ぶんれつ］のポケモン {instance.pokemon_id} が場にいない（エンジンの不具合）")
+    if C.offer_stopped(state, instance, found[1]):
+        reason = "power_stopped"
+    elif not bench_has_room(state, owner):
+        reason = "bench_full"
+    elif not state.players[owner].deck:
+        reason = "deck_empty"
+    if reason is not None:
+        state.add_event("split_skipped", **base, reason=reason)
+        return
+    name = instance.implementation.name
+    options = tuple(E.deck_named_basics(state, owner, name))
+    blocked, code, why = E.bench_entry_unresolved(state, options)
+    key = instance.power_key
+    entry = (owner, instance.pokemon_id, key.card_id, key.power_index, name)
+    if res.dry_run:
+        answers = [()] + [(card,) for card in options if card not in blocked]
+        apply_split(state, entry, res.oracle.choose(answers), dry_run=True)
+        return
+    raise SplitRequest(entry, options, (blocked, code, why) if blocked else ((), None, None))
+
+
+def apply_split(state: GameState, entry: tuple, choices: tuple[int, ...], *, dry_run: bool = False) -> None:
+    """v0.87: ［ぶんれつ］の答え。0 枚なら出さない（ログ ``split_declined``。山札を切らない）。1 枚なら、手札を通さずにベンチに出し（``zones.bench_from_deck`` の ``power``）、
+    山札を切る（先読みでは切らない）。"""
+    from ..zones import bench_from_deck
+
+    owner, pokemon_id, card_id, power_index, name = entry
+    power = str(E.PowerKey(card_id, power_index))
+    if not choices:
+        state.add_event("split_declined", player=owner, pokemon_id=pokemon_id, power=power)
+        return
+    if len(choices) != 1 or choices[0] not in state.players[owner].deck or state.card_def(choices[0]).name_ja != name:
+        raise RuntimeError(f"［ぶんれつ］で出すカード {choices} が、山札の「{name}」ではない（エンジンの不具合）")
+    holder = state.find_pokemon(pokemon_id)
+    placed = bench_from_deck(state, owner, choices[0])
+    state.add_event("bench_from_deck", player=owner, pokemon=None if holder is None else holder[1].card, pokemon_id=pokemon_id, power=power, card=choices[0],
+                    to_pokemon_id=placed.pokemon_id)
+    if not dry_run:
+        shuffle_deck(state, owner, power=power)
+
+
 ACTIONS: dict[str, Callable[[Resolution, FrameState, Deferred], None]] = {
     "power_damage_to_damage_source": power_damage_to_damage_source,
     "attack_damage_to_damage_source": attack_damage_to_damage_source,
@@ -1556,6 +1711,9 @@ ACTIONS: dict[str, Callable[[Resolution, FrameState, Deferred], None]] = {
     "reflect_damage_to_damage_source": reflect_damage_to_damage_source,  # v0.83
     "power_sleep_to_damage_source": power_sleep_to_damage_source,  # v0.84
     "bolt_return_on_heads": bolt_return_on_heads,  # v0.86
+    "power_damage_both_actives_on_tails": power_damage_both_actives_on_tails,  # v0.87
+    "poison_damage_source": poison_damage_source,  # v0.87
+    "split_from_deck": split_from_deck,  # v0.87
 }
 
 

@@ -62,6 +62,8 @@ from .decisions import (
     REACTION_SWITCH,
     BENCH_GUARD,
     ENERGY_DRAIN_DISCARD,
+    MAGMA_POOL_ENERGY,
+    SPLIT_FROM_DECK,
     KO_PREVENTION,
     MOVE_ENERGY,
     MOVE_OPPONENT_ENERGY,
@@ -131,6 +133,8 @@ OPTION_MEANINGS: dict[str, str] = {
     REMOVE_COUNTERS: "number", SELECT_DECK_OWNER: "number", SELECT_LOOK_COUNT: "number",
     SELECT_DEVOLVE_COUNT: "number",  # v0.50: 退化スプレーではがす枚数
     ENERGY_DRAIN_DISCARD: "card",  # v0.68: ［だつりょくえき］（場についているエネルギーカード。公開）
+    MAGMA_POOL_ENERGY: "card",  # v0.87: ［やけのこり］でつけ替えるカード（場についているエネルギーカード。公開）
+    SPLIT_FROM_DECK: "card",  # v0.87: ［ぶんれつ］で出す山札のカード（選べるものの数は決めるプレイヤーだけ。HIDDEN_COUNT_KINDS）
     BENCH_FROM_DISCARD: "card",  # v0.51: トラッシュ（公開）のたねポケモンのカード
     DISCARD_TO_DECK: "card",  # v0.53: 夜の廃品回収（トラッシュ（公開）のカード）
     SELECT_DRAW_COUNT: "number",  # v0.54: エリカで引く枚数
@@ -171,7 +175,7 @@ DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK
 # 「しおまねき」は最大 3 枚）も、選べるものの数・選ぶ数が山札の中身を漏らすので見せない（v0.74 までは、トレーナー・ワザのこの 2 つの決定の数を決めるプレイヤーでない人にも
 # 見せていた。意図した変更）
 # v0.80: ポケモンギアの見た 7 枚のうちのトレーナーカード（TAKE_LOOKED_TRAINER）も、選べるものの数が山札の中身を漏らすので見せない
-HIDDEN_COUNT_KINDS = frozenset({CHALLENGE_BENCH, QUIZ_CARD, QUIZ_ATTACK, SEARCH_DECK_OR_DISCARD, TAKE_LOOKED_POKEMON, BENCH_FROM_DECK, SEARCH_DECK, ATTACH_FROM_DECK,
+HIDDEN_COUNT_KINDS = frozenset({SPLIT_FROM_DECK, CHALLENGE_BENCH, QUIZ_CARD, QUIZ_ATTACK, SEARCH_DECK_OR_DISCARD, TAKE_LOOKED_POKEMON, BENCH_FROM_DECK, SEARCH_DECK, ATTACH_FROM_DECK,
                                 TAKE_LOOKED_TRAINER,
                                 # v0.81（docs/pokemon-tools-stadiums-v0.81.md 2 章）: 決めるプレイヤーの手札（相手の手札を見た決定は、見た相手の手札）から種類でしぼったカードを
                                 # 選べるものにする決定も、選べるものの数・選ぶ数が見えない手札の中身を漏らすので見せない。エネルギーアンプの段階 1・ポケモン交換おじさん
@@ -507,6 +511,9 @@ PUBLIC_EVENTS = frozenset({
     # v0.86: ［かんでん］のダメージ・［いなびかり］がはたらかなかった（相手の控えなし）・反応の特殊能力を使わなかった・［はしりさる］のコインの結果とはたらかなかった・
     # ダークドレインのポケモンごとのコインの結果・［おたけび］の番の終わり（どれも場・コイン・公開の結果）
     "conductivity", "lightning_burst_skipped", "reaction_power_declined", "bolt_check", "bolt_skipped", "pokemon_coin_results", "power_turn_end",
+    # v0.87: 場の移動・ダメージへの反応（どれも場・コインの公開の情報）
+    "spikes_damage", "hot_plate_damage", "movement_damage_skipped", "magma_pool", "magma_pool_none", "shock_blast_check", "shock_blast_damage",
+    "shock_blast_skipped", "poison_fluid", "poison_fluid_skipped", "split_skipped", "split_declined",
     # v0.85: ［あばれんぼう］で山札の上からトラッシュしたカード（トラッシュは公開）・［ファイヤーブースト］で山札からつけた・［ファイヤーリチャージ］でトラッシュからつけた
     # カード（場は公開）・ミラクルエネルギーのトラッシュ・ぎゃくりゅうでトラッシュから山札にもどしたカード（トラッシュは公開）
     "power_discard_deck", "power_attach_from_deck", "power_attach_from_discard", "miracle_energy_discarded", "attack_discard_to_deck",

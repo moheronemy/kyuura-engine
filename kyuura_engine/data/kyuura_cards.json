@@ -1301,6 +1301,22 @@
     "neo3-021",
     "PR1-058"
   ],
+  "pool_v0_87": [
+    "neo2-044",
+    "neo3-009",
+    "neo4-023",
+    "GD3-009",
+    "ES1-005",
+    "ES2-003",
+    "ES2-014",
+    "QSG-023",
+    "PR1-053",
+    "ES2-012",
+    "QSG-057",
+    "PR1-046",
+    "ES1-034",
+    "QSG-046"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -95148,6 +95164,1466 @@
         {
           "page": "1stp058",
           "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "neo2-044",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "フォレトス",
+        "en": "Forretress"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          205
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "クヌギダマ",
+          "en": "Pineco"
+        },
+        "hp": 80,
+        "types": [
+          "metal"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "grass",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "まきびし",
+              "en": "Spikes"
+            },
+            "text": {
+              "ja": "この力は、相手の番の中で、相手の控えポケモンがバトル場に出てくるたびに、はたらく。新しく出てきた相手の対戦ポケモンに、「弱点・抵抗力」に関係なく、10ダメージ。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は、はたらかない。",
+              "en": "During your opponent's turn, whenever 1 of your opponent's Benched Pokémon becomes his or her Active Pokémon, Forretress does 10 damage to it. (Don't apply Weakness and Resistance.) This power stops working if Forretress is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "こうそくスピン",
+              "en": "Rapid Spin"
+            },
+            "cost": [
+              "metal",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "相手を相手の控えポケモンと入れ替える。その後、自分を自分の控えポケモンと入れ替える。入れ替えるときは、それぞれのプレイヤーが、それぞれ自分の場のポケモンを選ぶ。(控えがいない側は、入れ替えをしない。)",
+              "en": "If your opponent has any Benched Pokémon, he or she chooses 1 of them and switches it with his or her Active Pokémon, then, if you have any Benched Pokémon, you switch 1 of them with your Active Pokémon. (Do the damage before switching the Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-044",
+        "pokemontcg": [
+          "neo2-2",
+          "neo2-21"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-044-foretos/",
+      "jp_print": {
+        "level": 40,
+        "rarity": "★(R)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-044-foretos/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-009",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "マグカルゴ",
+        "en": "Magcargo"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          219
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "マグマッグ",
+          "en": "Slugma"
+        },
+        "hp": 80,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "やけのこり",
+              "en": "Magma Pool"
+            },
+            "text": {
+              "ja": "この力は、このカードがバトル場からベンチにもどるたび、はたらく。このカードに「炎」エネルギーカードがついているなら、1枚をはがし、新しく出てきた対戦ポケモンにつけ替える。",
+              "en": "If Magcargo is your Active Pokémon and moves to the Bench, remove 1 Fire Energy card attached to Magcargo, if any, and attach it to the new Active Pokémon. (You can't choose an Energy card that you used to pay the Retreat Cost.)"
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ようがんりゅう",
+              "en": "Lava Flow"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": "+",
+              "display": "40+"
+            },
+            "text": {
+              "ja": "のぞむなら、自分についている「炎」エネルギーカードを好きなだけトラッシュしてよい。トラッシュした場合、トラッシュした「炎」エネルギーカードの数×20のダメージを追加する。",
+              "en": "You may discard any number of Fire Energy cards attached to Magcargo when you use this attack. If you do, this attack does 40 damage plus 20 more damage for each Fire Energy card you discarded in this way."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-009",
+        "pokemontcg": [
+          "neo3-33"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%82%B0%E3%82%AB%E3%83%AB%E3%82%B4_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 48,
+        "rarity": "◆(U)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%82%B0%E3%82%AB%E3%83%AB%E3%82%B4_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-023",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいマグカルゴ",
+        "en": "Dark Magcargo"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          219
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "マグマッグ",
+          "en": "Slugma"
+        },
+        "hp": 60,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ヒートプレート",
+              "en": "Hot Plate"
+            },
+            "text": {
+              "ja": "この力は、このカードがバトル場にいるかぎり、はたらく。おたがいのプレイヤーは、それぞれ、自分の手札から「ベイビィポケモン」または「たねポケモン」を出すたび、そのポケモンに、「弱点・抵抗力」に関係なく、10ダメージ。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は、はたらかない。",
+              "en": "As long as Dark Magcargo is your Active Pokémon, whenever a player puts a Baby Pokémon or Basic Pokémon onto his or her Bench from his or her hand, this power does 10 damage to that Pokémon. (Don't apply Weakness and Resistance.) This power stops working if Dark Magcargo is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かえんだん",
+              "en": "Ball of Flame"
+            },
+            "cost": [
+              "fire",
+              "fire"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "のぞむなら、自分についている「炎」エネルギーカードを1枚トラッシュしてよい。トラッシュしたなら、相手の控えポケモンを1匹選び、そのポケモンにも、「弱点・抵抗力」に関係なく、20ダメージ。",
+              "en": "You may discard a Fire Energy card attached to Dark Magcargo when you use this attack. If you do and if your opponent has any Benched Pokémon, choose 1 of them and this attack does 20 damage to it. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-023",
+        "pokemontcg": [
+          "neo4-18"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%83%9E%E3%82%B0%E3%82%AB%E3%83%AB%E3%82%B4_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 36,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%83%9E%E3%82%B0%E3%82%AB%E3%83%AB%E3%82%B4_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "GD3-009",
+      "jp_set": "GD3",
+      "category": "pokemon",
+      "name": {
+        "ja": "マチスのマルマイン",
+        "en": "Lt. Surge's Electrode"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          101
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "マチスのビリリダマ",
+          "en": "Lt. Surge's Voltorb"
+        },
+        "hp": 70,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ショックボム",
+              "en": "Shock Blast"
+            },
+            "text": {
+              "ja": "このカードがバトル場でワザによるダメージを受けた時、(このカードが「きぜつ」するしないにかかわらず)コインを投げ、「うら」なら、お互いの対戦ポケモンに、それぞれ20ダメージ。この力は、このカードが「ねむり・マヒ・こんらん」状態でも、必ずはたらく。",
+              "en": "If Lt. Surge's Electrode is your Active Pokémon and gets damaged (even if it's Knocked Out), flip a coin. If tails, this power does 20 damage to each Active Pokémon. This power works even if Lt. Surge's Electrode is already Asleep, Confused, or Paralyzed when it takes damage."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "パワーアップボール",
+              "en": "Power Ball"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": "+",
+              "display": "30+"
+            },
+            "text": {
+              "ja": "コインを3枚投げ、「おもて」の数×10のダメージを追加する。",
+              "en": "Flip 3 coins. This attack does 30 damage plus 10 more damage for each heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym2-52"
+        ],
+        "pcg_search": [
+          "1stgymd3009"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd3009.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「クチバシティジム マチス」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd3009.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym2-52",
+        "pokemon.dex": "pokemontcg:gym2-52",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stgymd3009",
+          "list_number": "009/025"
+        }
+      ]
+    },
+    {
+      "id": "ES1-005",
+      "jp_set": "ES1",
+      "category": "pokemon",
+      "name": {
+        "ja": "コクーン",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ビードル",
+          "en": null
+        },
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "どくのたいえき",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、このカードが相手のワザによってダメージを受けた時だけ、使える。このカードにダメージを与えたポケモンを「どく」状態にする。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ころがる",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex1005"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex1005.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第1弾(青版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex1005.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stex1005",
+          "list_number": "005/036"
+        }
+      ]
+    },
+    {
+      "id": "ES2-003",
+      "jp_set": "ES2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ドガース",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ぶんれつ",
+              "en": null
+            },
+            "text": {
+              "ja": "このカードがワザによるダメージを受けた時、(このカードが「きぜつ」するしないにかかわらず、)自分の山札から「ドガース」を1枚選び出し、ベンチに出してよい。その後、その山札をよく切る。この力は、このカードが「ねむり・マヒ・こんらん」状態でも使えるが、自分のベンチに空きがない時は、使えない。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ふしぎなガス",
+              "en": null
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、次の相手の番が終わるまで、相手の場にいるポケモンは、特殊能力を使うことができず、その力も消える。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex2003"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex2003.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第2弾(赤版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex2003.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex2003",
+          "list_number": "003/036"
+        }
+      ]
+    },
+    {
+      "id": "ES2-014",
+      "jp_set": "ES2",
+      "category": "pokemon",
+      "name": {
+        "ja": "コイル",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "マグネット",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使える。コインを投げて「おもて」なら、自分の山札から「コイル」を選び出し、ベンチに出してよい。その後、その山札をよく切る。自分のベンチに空きがない時や、このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ちょうでんどう",
+              "en": null
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手の場のポケモンから1匹を選び、(「弱点・抵抗力」に関係なく)10ダメージ。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex2014"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex2014.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第2弾(赤版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex2014.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES2-014",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex2014",
+          "list_number": "014/036"
+        }
+      ]
+    },
+    {
+      "id": "QSG-023",
+      "jp_set": "QSG",
+      "category": "pokemon",
+      "name": {
+        "ja": "コイル",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "マグネット",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使える。コインを投げて「おもて」なら、自分の山札から「コイル」を選び出し、ベンチに出してよい。その後、その山札をよく切る。自分のベンチに空きがない時や、このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ちょうでんどう",
+              "en": null
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手の場のポケモンから1匹を選び、(「弱点・抵抗力」に関係なく)10ダメージ。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg023"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg023.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg023.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES2-014",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stqsg023",
+          "list_number": "023/058"
+        }
+      ]
+    },
+    {
+      "id": "PR1-053",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ゲンガー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "ゴースト",
+          "en": null
+        },
+        "hp": 80,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "やみのちから",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、このカードが場に出た時、1度だけ使える。コインを投げて「おもて」なら、相手の場のポケモンを1体選び、そのカードと、それについているすべてのカードを、持ち主の手札にもどす。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "サイコホラー",
+              "en": null
+            },
+            "cost": [
+              "psychic",
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「ねむり」状態に、「うら」なら「こんらん」状態にする。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp053"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp053.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(キラ)",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp053.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stp053",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "ES2-012",
+      "jp_set": "ES2",
+      "category": "pokemon",
+      "name": {
+        "ja": "フリーザー",
+        "en": "Articuno"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          144
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 80,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "オーロラヴェール",
+              "en": "Aurora Veil"
+            },
+            "text": {
+              "ja": "このカードがバトル場にいる限り、自分のベンチにいるすべてのポケモンは、ワザによるダメージや効果を受けない。このカードが「ねむり・マヒ・こんらん」状態の時、この力は消える。",
+              "en": "As long as Articuno is your Active Pokémon, your Benched Pokémon do not take damage from and are not affected by attacks. This power cannot be used if Articuno is affected by a Special Condition."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "れいとうビーム",
+              "en": "Ice Beam"
+            },
+            "cost": [
+              "water",
+              "water",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "text",
+          "summary": "ポケモンパワー オーロラヴェール（Aurora Veil）が働かなくなる状態",
+          "ja": "「このカードが『ねむり・マヒ・こんらん』状態の時、この力は消える」",
+          "en": "「This power cannot be used if Articuno is affected by a Special Condition.」と、どく・やけども含む特殊状態すべて",
+          "confidence": "確実",
+          "sources": [
+            "N3",
+            "X41"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-48"
+        ],
+        "pcg_search": [
+          "1stex2012"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex2012.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第2弾(赤版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex2012.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES2-012",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-48",
+        "pokemon.dex": "pokemontcg:basep-48"
+      },
+      "copies": [
+        {
+          "page": "1stex2012",
+          "list_number": "012/036"
+        }
+      ]
+    },
+    {
+      "id": "QSG-057",
+      "jp_set": "QSG",
+      "category": "pokemon",
+      "name": {
+        "ja": "フリーザー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 80,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "オーロラヴェール",
+              "en": null
+            },
+            "text": {
+              "ja": "このカードがバトル場にいる限り、自分のベンチにいるすべてのポケモンは、ワザによるダメージや効果を受けない。このカードが「ねむり・マヒ・こんらん」状態の時、この力は消える。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "れいとうビーム",
+              "en": null
+            },
+            "cost": [
+              "water",
+              "water",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg057"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg057.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg057.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES2-012",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stqsg057",
+          "list_number": "057/058"
+        }
+      ]
+    },
+    {
+      "id": "PR1-046",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ダグトリオ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ディグダ",
+          "en": null
+        },
+        "hp": 80,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "lightning",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "もぐる",
+              "en": null
+            },
+            "text": {
+              "ja": "ベンチにいる限り、このカードは、ワザによるダメージを受けない。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "アースウェイブ",
+              "en": null
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "相手の控えポケモンから最大2匹を選び、それぞれに、「弱点・抵抗力」に関係なく10ダメージ。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp046"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp046.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp046.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stp046",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "ES1-034",
+      "jp_set": "ES1",
+      "category": "pokemon",
+      "name": {
+        "ja": "カビゴン",
+        "en": "Snorlax"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          143
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 90,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 4,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "とおせんぼ",
+              "en": "Guard"
+            },
+            "text": {
+              "ja": "このカードがバトル場にいる限り、相手の対戦ポケモンは「にげる」ことができない。このカードが「ねむり・マヒ・こんらん」状態の時、このカは消える。",
+              "en": "As long as Snorlax is your Active Pokémon, the Defending Pokémon can't Retreat. This power stops working when Snorlax is affected by a Special Condition."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ねころぶ",
+              "en": "Roll Over"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "ダメージを与えた後、自分を「ねむり」状態にする。コインを投げて「おもて」なら、相手も「ねむり」状態にする。",
+              "en": "Snorlax is now Asleep. Flip a coin. If heads, the Defending Pokémon is now Asleep."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "text",
+          "summary": "ポケモンパワー とおせんぼ（Guard）が働かなくなる状態",
+          "ja": "「このカードが『ねむり・マヒ・こんらん』状態の時、この力は消える」（pcg-search の転記は「このカは消える」）",
+          "en": "「This power stops working when Snorlax is affected by a Special Condition.」と、どく・やけども含む特殊状態すべて",
+          "confidence": "有力",
+          "sources": [
+            "N3"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-49"
+        ],
+        "pcg_search": [
+          "1stex1034"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex1034.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第1弾(青版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex1034.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES1-034",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-49",
+        "pokemon.dex": "pokemontcg:basep-49"
+      },
+      "copies": [
+        {
+          "page": "1stex1034",
+          "list_number": "034/036"
+        }
+      ]
+    },
+    {
+      "id": "QSG-046",
+      "jp_set": "QSG",
+      "category": "pokemon",
+      "name": {
+        "ja": "カビゴン",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 90,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 4,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "とおせんぼ",
+              "en": null
+            },
+            "text": {
+              "ja": "このカードがバトル場にいる限り、相手の対戦ポケモンは「にげる」ことができない。このカードが「ねむり・マヒ・こんらん」状態の時、このカは消える。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ねころぶ",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "ダメージを与えた後、自分を「ねむり」状態にする。コインを投げて「おもて」なら、相手も「ねむり」状態にする。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg046"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg046.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg046.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES1-034",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stqsg046",
+          "list_number": "046/058"
         }
       ]
     }

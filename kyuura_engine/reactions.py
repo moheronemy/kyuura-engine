@@ -20,8 +20,10 @@ import dataclasses
 from typing import TYPE_CHECKING, Any
 
 from . import effects as E
+from . import movement as M
 from .coins import CoinSide, flip_coins
 from .decisions import (
+    MAGMA_POOL_ENERGY,
     REACTION_ORDER,
     REACTION_POWER,
     SEARCH_DECK,
@@ -45,6 +47,17 @@ SAME = "same"
 TRAINER = "trainer"
 END_TURN = "end_turn"
 SETTLE_ENERGY = "settle_energy"
+# v0.87（docs/movement-damage-reactions-v0.87.md 3 章）: 場の移動の反応のあとの段
+RESTORE = "restore"  # ``("restore", (種類, プレイヤー, 選べるもの, 最小, 最大, 再開先, context))``: 反応の前に出ていた決定を、反応のあとに出し直す（トレーナーの 2 つめの入れ替え）
+SETTLE_POWER = "settle_power"  # 特殊能力の処理のあとの場の整理（``resolution.after_power``。反応のダメージで HP 以上になったポケモンのきぜつ）
+SETTLE_EFFECTS = "settle_effects"  # 手札からベンチに出したあとの場の整理（［ヒートプレート］・爆発ジムのダメージのきぜつ。``resolution.after_effects``）
+SETTLE_RETREAT = "settle_retreat"  # ``("settle_retreat", にげたプレイヤー, ベンチにもどったポケモンの番号)``: 「にげる」の反応のあと（［ずらかる］・きぜつ・交代・同じ番）
+SINKHOLE = M.SINKHOLE  # 「にげる」の反応のうち、相手の［おとしあな］（v0.61 の処理。ほかの反応と同じ時点のときだけ、反応の 1 つとして扱う）
+
+
+def restore_step(payload: tuple) -> tuple:
+    """反応のあとに、待っていた決定を出し直す段（``engine._stash_decision`` の値）。"""
+    return (RESTORE, payload)
 
 # 反応の種類（記述の 1 つめ）
 ENERGY = "energy"  # 手札からつけた特殊エネルギーの、つけたときの効果
@@ -143,6 +156,20 @@ def _run_step(state: GameState, step: tuple, ctx, hooks) -> tuple:
     if kind == SETTLE_ENERGY:
         hooks.settle_energy(state, ctx)
         return ()
+    if kind == RESTORE:
+        _, (decision_kind, player, options, low, high, resume, context) = step
+        push_decision(state, kind=decision_kind, player=player, options=options, resume=resume, context=context, min_choices=low, max_choices=high)
+        return ()
+    if kind == SETTLE_POWER:
+        hooks.settle_power(state, ctx)
+        return ()
+    if kind == SETTLE_EFFECTS:
+        hooks.settle_effects(state, ctx)
+        return ()
+    if kind == SETTLE_RETREAT:
+        _, player, retreated = step
+        hooks.settle_retreat(state, ctx, player, retreated)
+        return ()
     raise RuntimeError(f"知らない続きの段 {step!r}（エンジンの不具合）")
 
 
@@ -163,7 +190,7 @@ def _stopped(state: GameState, pokemon: PokemonInPlay, slot, *, declared: bool) 
     """この特殊能力の力が今消えている・使えないか（かがくへんかガス・まきちらせ!ベトベトガス・スタンウェーブ。宣言して使う特殊能力ならショックアイも）。"""
     from .continuous import power_suppressed
 
-    if power_suppressed(state, slot.power) or powers_stopped(state, pokemon) is not None:
+    if power_suppressed(state, slot.power, pokemon) or powers_stopped(state, pokemon) is not None:
         return True
     return declared and powers_use_prevented(state, pokemon) is not None
 
@@ -306,6 +333,8 @@ def has_chain_reactions(state: GameState, owner: int, evolved: PokemonInPlay) ->
 def _still_working(state: GameState, reaction: tuple) -> int | None:
     """反応が今はたらくか（1・0）。反応の発生源・対象がいない（場をはなれた・進化して特殊能力がない）なら None（その反応はなくなる）。"""
     kind = reaction[0]
+    if kind in M.KINDS:
+        return M.still_working(state, reaction)  # v0.87: 場の移動の反応
     if kind == ENERGY:
         _, owner, pid, card, _, _ = reaction
         target = _locate(state, owner, pid)
@@ -370,6 +399,8 @@ def _process_same(state: GameState, step: tuple) -> tuple:
     if not live:
         return ()
     knocked = _knocked(state)
+    if label == "moved":
+        knocked = [pid for pid in knocked if pid not in info[2]]  # v0.87: 場の移動の反応の段は、その事実の時点ですでに HP 以上のポケモンを除く
     if knocked:
         raise UnsupportedError(REACTION_AFTER_KNOCKOUT_CODE, f"HP 以上のポケモン {knocked}・残りの反応 {[r[0] for r in live]}: {REACTION_AFTER_KNOCKOUT_REASON}")
     # 今はたらかない反応（ねむりのポケモンの［エナジーしんか］など）を、先に処理する反応（なんでもなおし配合エネルギーの回復）がはたらくようにする組だけ、その反応も順番の決定に
@@ -425,6 +456,27 @@ def process(state: GameState, reaction: tuple, after: tuple) -> tuple:
         _, owner, pid, from_hand, _ = reaction
         pokemon = _locate(state, owner, pid)
         E.offer_entry_power(state, owner, pokemon, from_hand=bool(from_hand))
+        return after
+    if kind in (M.SPIKES, M.HOT_PLATE):
+        M.power_damage(state, reaction)  # v0.87: ［まきびし］・［ヒートプレート］
+        return after
+    if kind == M.MINEFIELD:
+        M.minefield_damage(state, reaction)  # v0.87: ［ヒートプレート］と同じ時点の爆発ジム
+        return after
+    if kind == M.SINKHOLE:
+        M.sinkhole_damage(state, reaction)  # v0.87: ほかの反応と同じ時点の［おとしあな］
+        return after
+    if kind == M.MAGMA:
+        choice = M.magma_choice(state, reaction)  # v0.87: ［やけのこり］
+        if choice is None:
+            M.magma_none(state, reaction)
+        elif isinstance(choice, M.MagmaChoice):
+            blocked, code, reason = choice.unresolved
+            extra: tuple = () if not blocked else (("unresolved_choices", blocked), ("unresolved_code", code), ("unresolved_reason", reason))
+            push_decision(state, kind=MAGMA_POOL_ENERGY, player=choice.player, options=choice.options, resume=RESUME,
+                          context=((REACTION, ("magma", reaction)),) + extra)
+        else:
+            M.magma_move(state, reaction, choice)
         return after
     raise RuntimeError(f"知らない反応 {reaction!r}（エンジンの不具合）")
 
@@ -536,6 +588,11 @@ def answer(state: GameState, decision, choices: tuple[int, ...]) -> tuple:
         return ()
     if tag == "use":
         return _answer_use(state, reaction, choices)
+    if tag == "magma":
+        if choices[0] in tuple(decision.context_value("unresolved_choices", ())):
+            raise UnsupportedError(decision.context_value("unresolved_code"), decision.context_value("unresolved_reason"))
+        M.magma_move(state, reaction, choices[0])
+        return ()
     if tag == "search":
         return _answer_search(state, reaction, choices)
     raise RuntimeError(f"知らない反応の決定 {item!r}（エンジンの不具合）")
@@ -616,6 +673,16 @@ def answer_problems(state: GameState, decision) -> list[str]:
         expected = tuple(p.pokemon_id for p in state.players[1 - owner].bench)
         if decision.kind != SELECT_POKEMON or decision.player != 1 - owner or decision.options != expected:
             return [f"［いなびかり］の決定 {decision.kind} {decision.options} を選ぶのが相手プレイヤー {1 - owner} の控え {expected} ではない"]
+        return []
+    if tag == "magma":
+        # v0.87: ［やけのこり］でつけ替えるカード（決めるのは持ち主。選べるものは今のつけ替えられるカード。1 枚）
+        try:
+            choice = M.magma_choice(state, reaction)
+        except UnsupportedError as error:
+            return [f"［やけのこり］の決定 {decision.id} の候補が決められない（{error.code}）"]
+        if not isinstance(choice, M.MagmaChoice) or decision.kind != MAGMA_POOL_ENERGY or decision.player != owner or decision.options != choice.options or (
+                decision.min_choices, decision.max_choices) != (1, 1):
+            return [f"［やけのこり］の決定 {decision.kind} {decision.options} が、持ち主 {owner} のつけ替えられるカードの 1 枚ではない"]
         return []
     if tag == "use":
         if decision.kind != REACTION_POWER or decision.player != owner or decision.options != (pid,) or (decision.min_choices, decision.max_choices) != (0, 1):

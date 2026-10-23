@@ -525,6 +525,7 @@ POOL_KEYS = (
     "pool_v0_84",  # v0.84（やさしいポケモン 12 枚・ポケモン育て屋夫婦。docs/light-powers-evolution-v0.84.md）
     "pool_v0_85",  # v0.85（進化したときの特殊能力・エネルギーを動かすポケモン 13 枚とミラクルエネルギー。docs/entry-powers-energy-lifecycle-v0.85.md）
     "pool_v0_86",  # v0.86（登場・エネルギー・進化に反応する特殊能力のポケモン 13 枚。docs/entry-energy-evolution-reactions-v0.86.md）
+    "pool_v0_87",  # v0.87（場の移動・ダメージへの反応とベンチの保護のポケモン 14 枚。docs/movement-damage-reactions-v0.87.md）
 )
 
 

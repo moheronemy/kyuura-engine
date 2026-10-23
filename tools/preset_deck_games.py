@@ -317,7 +317,10 @@ TRAINER_EVENTS = {
                       # v0.86: 進化させた 2 進化ポケモンの［とつぜんかみつく］（相手の場のポケモンに特殊能力のダメージ。きぜつ・サイド・バトル場に出すを挟んでから使い終える）・
                       # ［いやしのかぜ］（remove_damage_counters）と、その進化への［れんさしんか］（使う・使わない・山札から重ねる・重ねるカードがない）
                       "power_damage": "user", "knock_out": "either", "take_prize": "either", "promote_active": "either", "reaction_power_declined": "user",
-                      "evolve_from_deck_none": "user"},
+                      "evolve_from_deck_none": "user",
+                      # v0.87: 進化させたゲンガー（PR1-053）の［やみのちから］（コインの「おもて」で相手の場のポケモンを持ち主の手札へ。そのあとバトル場に出す）と、相手の場の
+                      # ［まきびし］（バトル場に出したポケモンへ）
+                      "return_in_play_to_hand": "opponent", "spikes_damage": "either"},
     # v0.50: 退化スプレー。自分の進化ポケモンからはがす（退化で消える特殊状態・持続する効果・にげるの失敗の記録）か、はがさない（0 枚）。きぜつはトラッシュしたあと
     DEVOLUTION_SPRAY: {"devolve": "user", "devolve_declined": "user", "special_conditions_removed": "user", "persistent_effect_removed": "user",
                        "retreat_failure_cleared": "user"},

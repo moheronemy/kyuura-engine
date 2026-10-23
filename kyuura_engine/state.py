@@ -1164,10 +1164,14 @@ ATTACK_DAMAGE_BONUS = "attack_damage_bonus"  # カスミ: 「カスミのポケ�
 POISON_ON_ATTACK_DAMAGE = "poison_on_attack_damage"  # キョウ: 「キョウのポケモン」がワザで相手の対戦ポケモンにダメージを与えたら、どく状態にする（この番）
 BENCH_ATTACK_DAMAGE_PREVENTION = "bench_attack_damage_prevention"  # 見えない壁: 次の相手の番が終わるまで、控えポケモンはワザによるダメージを受けない
 POWER_SUPPRESSION = "power_suppression"  # v0.59 まきちらせ!ベトベトガス: 次の相手の番が終わるまで、おたがいの場のすべてのポケモンは特殊能力を使えず、その力も消える
+# v0.87: ドガースの「ふしぎなガス」（ワザの効果）: 次の相手の番が終わるまで、相手の場にいるポケモンは特殊能力を使えず、その力も消える。``player`` はワザを使ったプレイヤー、
+# ``source_card`` はワザを印刷したカード、``attack_index`` はワザの位置（効果を受けるのは ``player`` の相手の場）
+OPPONENT_POWER_SUPPRESSION = "opponent_power_suppression"
 FIRE_DOUBLE_ATTACH = "fire_double_attach"  # v0.59 カツラ: この番だけ、手札から「カツラのポケモン」につける「炎」エネルギーカードの枚数を 1 枚でなく 2 枚にする
 # v0.80 退化スプレーHYPER: 「(退化させたポケモンを、同じ番に進化させることはできない。)」。この番の終わりまで、``TrainerTurnEffect.pokemon_id`` の場のポケモンを進化させない
 EVOLUTION_BAN = "evolution_ban"
-TRAINER_TURN_EFFECT_KINDS = (ATTACK_DAMAGE_BONUS, POISON_ON_ATTACK_DAMAGE, BENCH_ATTACK_DAMAGE_PREVENTION, POWER_SUPPRESSION, FIRE_DOUBLE_ATTACH, EVOLUTION_BAN)
+TRAINER_TURN_EFFECT_KINDS = (ATTACK_DAMAGE_BONUS, POISON_ON_ATTACK_DAMAGE, BENCH_ATTACK_DAMAGE_PREVENTION, POWER_SUPPRESSION, FIRE_DOUBLE_ATTACH, EVOLUTION_BAN,
+                             OPPONENT_POWER_SUPPRESSION)
 
 
 @dataclass(frozen=True)
@@ -1210,6 +1214,8 @@ class TrainerTurnEffect:
     expires_turn: int
     # v0.80: 効果を受ける場のポケモンの番号（``EVOLUTION_BAN`` だけ。退化スプレーHYPER で退化させたポケモン）。ほかの種類は None（書き出しの形は v0.79 と同じ）
     pokemon_id: int | None = None
+    # v0.87: ワザで与えた効果（``OPPONENT_POWER_SUPPRESSION``。ドガースの「ふしぎなガス」）のワザの位置（``card_id`` のカードのワザ）。トレーナーの効果は None（書き出しの形は v0.86 と同じ）
+    attack_index: int | None = None
 
 
 @dataclass(frozen=True)
@@ -1607,6 +1613,10 @@ class GameState:
     # カード（重なり・のせたカードはない）で、うらのあいだはカードの定義が「たねポケモン」としてあつかう定義（``FACE_DOWN_DEFINITION``。名前・HP・タイプなどは読めない）。
     # おもてにしたら並びから除く（``zones.reveal_face_down``）。書き出しは形式 22 だけが表せる（空でなければ形式 1〜21 は ``ValueError``）
     face_down_cards: tuple[int, ...] = ()
+    # v0.87（docs/movement-damage-reactions-v0.87.md 3 章）: 場の移動（控え → バトル場・バトル場 → ベンチ・手札からの登場）の事実への、まだ処理していない反応の段（``movement``。
+    # ``reactions`` の ``("same", …)`` の段の並び）。事実を起こした処理の流れが、同じコマンドの中で処理する（ワザの要素のあいだ・トレーナー・特殊能力を使い終える前・にげるのあと・
+    # バトル場に出したあと）。コマンドの終わり・決定を待つ間は空（決定をまたぐ続きは決定の ``context`` に移す）。書き出さない（不変条件 ``engine._pending_moves_problems``）
+    pending_moves: tuple = ()
 
     def clone(self) -> GameState:
         new = object.__new__(type(self))

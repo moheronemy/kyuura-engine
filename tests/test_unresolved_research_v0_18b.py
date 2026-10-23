@@ -21,6 +21,7 @@ from kyuura_engine.rng import rng_fingerprint
 from tests.helpers import (
     ABRA, CATERPIE, DEFENDER, FIRE, GASTLY, H, HAUNTER, MACHOP, METAPOD, PSYCHIC, RATTATA, ROCKETS_SNORLAX, T, apply_kernel,
     build_test_state, with_coin_results,
+    self_sleep_for_other_text,  # v0.87
 )
 
 TURN = 7  # プレイヤー 0 の番
@@ -47,7 +48,7 @@ def psychic_self_sleep_registry():
     抵抗力 超 −30 のコラッタに使うと、最終ダメージが 0 になる（Z23-b の抵抗力の場合。たおれこむは無色なので抵抗力では起こらない）。"""
     attack = load_card_pool().get(ABRA).attacks[0]
     registry = E.DEFAULT_EFFECTS.with_attacks("test-psychic-self-sleep", {
-        E.AttackKey(ABRA, 0): E.AttackEntry(E.DamageAndSelfSleep(), attack.name_ja, text_ja=attack.text_ja, play_text_ja="（テスト）", source="test"),
+        E.AttackKey(ABRA, 0): E.AttackEntry(self_sleep_for_other_text(), attack.name_ja, text_ja=attack.text_ja, play_text_ja="（テスト）", source="test"),
     })
     return registry, pool_from_extract(read_extract(), registry)
 

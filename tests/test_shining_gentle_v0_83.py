@@ -744,7 +744,8 @@ class RegistryTest(unittest.TestCase):
         pool = pool_from_extract(read_extract(), stripped)
         self.assertFalse(any(pool.definitions[c].supported for c in H.V0_83_POKEMON))
         # 前の版の 1008 枚の対応は変わらない（v0.84 から、あとの版の 13 枚（pool_v0_84）も対応）
-        self.assertEqual(sum(1 for c in pool.definitions.values() if c.supported), 1008 + len(read_extract()["pool_v0_84"]) + len(read_extract()["pool_v0_85"]) + len(read_extract()["pool_v0_86"]))
+        self.assertEqual(sum(1 for c in pool.definitions.values() if c.supported), 1008 + len(read_extract()["pool_v0_84"]) + len(read_extract()["pool_v0_85"]) + len(read_extract()["pool_v0_86"])
+                         + len(read_extract()["pool_v0_87"]))  # v0.87 の 14 枚も対応
         pool = load_card_pool()
         self.assertTrue(all(pool.definitions[c].supported for c in H.V0_83_POKEMON))
 

@@ -34,7 +34,7 @@ from .effects import (
 from .errors import UnsupportedError
 from .persistent import (KNOCK_OUT, USED, remove_expired_persistent_effects, remove_on_damage, remove_persistent_effects,
                          remove_turn_start_expired_persistent_effects)
-from .state import POWER_SUPPRESSION, Halt, Phase
+from .state import OPPONENT_POWER_SUPPRESSION, POWER_SUPPRESSION, Halt, Phase
 from .history import prune as prune_history
 from .zones import draw_cards, return_expired_set_aside
 
@@ -79,13 +79,13 @@ def expire_at_turn_end(state: GameState) -> bool:
     読み方）の状態が受け付けられない状態（決められない姿・ダメージ以外の原因で最大HPがのっているダメージ以下。``effects.state_stop_after``）になるかを、期限の処理の前に
     状態の複製の上で確かめ、なるなら対戦を止めて（``Phase.HALTED``）偽を返す（番の終わりのあとにきぜつの判定はなく、どの操作でも番は終わるので、コマンドを拒否しない。
     v0.48 のポケモンチェックの MH1 と同じ形）。ほかは期限の処理をして真を返す。"""
-    if any(record.kind == POWER_SUPPRESSION and record.expires_turn == state.turn_number for record in state.trainer_effects):
+    if any(record.kind in (POWER_SUPPRESSION, OPPONENT_POWER_SUPPRESSION) and record.expires_turn == state.turn_number for record in state.trainer_effects):
         trial = state.clone()
         _expire_at_turn_end(trial)
         stop = state_stop_after(state, trial)
         if stop is not None:
             code, message = stop
-            halt(state, Halt(code=code, message=f"番の終わりにまきちらせ!ベトベトガスの効果が消えると: {message}",
+            halt(state, Halt(code=code, message=f"番の終わりに特殊能力を消す効果（まきちらせ!ベトベトガス・ふしぎなガス）が消えると: {message}",
                              references=("GR-2000-P323-KNOCKOUT", "CR-POWER-BACK-AFTER-RECOVERY", "docs/energy-control-power-suppression-v0.59.md")))
             return False
     miracle = miracle_turn_end_problem(state)

@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.86）
+# 実装状況（v0.1〜v0.87）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3819,6 +3819,23 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 338・neo 154・拡張パック以外 184） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistryTest` |
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.87: 場の移動・ダメージへの反応と、控えの保護・「にげる」の禁止のポケモン 14 枚
+
+[movement-damage-reactions-v0.87.md](movement-damage-reactions-v0.87.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 場の移動の事実と反応の段（`movement.py`。同じ時点の順番・ワザの途中の段・トレーナーの決定をもどす段） | 実装済み・テスト済み | GR-2000-P325-SAME-TIMING | test_movement_damage_reactions_v0_87.py `SpikesTest`・`MagmaPoolTest`・`AttackTest` |
+| ［まきびし］・［やけのこり］・［ヒートプレート］（爆発ジムとの順番。登場時のダメージのきぜつ） | 実装済み・テスト済み | 印刷の文面 | 同 `SpikesTest`・`MagmaPoolTest`・`HotPlateTest` |
+| ［ショックボム］（Z9 は最終の量で比べる）・［どくのたいえき］・［ぶんれつ］（要素のあいだの任意の決定） | 実装済み・テスト済み | v0.10 の読取記録（p.20・p.138）・印刷の文面 | 同 `ShockBlastTest`・`PoisonFluidTest`・`SplitTest` |
+| ［マグネット］・［やみのちから］（育て屋さんの使用中に相手のバトル場が空く） | 実装済み・テスト済み | 印刷の文面・v0.43 の場に出たときの特殊能力 | 同 `MagnetTest`・`DarkPowerTest` |
+| ［オーロラヴェール］・［もぐる］・［とおせんぼ］ | 実装済み・テスト済み | 印刷の文面 | 同 `AuroraVeilTest`・`DigUnderTest`・`GuardTest` |
+| ワザ 14（こうそくスピン・ふしぎなガス・ねころぶなど）と `DamageAndSelfSleep` の全文の検査 | 実装済み・テスト済み | 印刷の文面 | 同 `AttackTest`・`TextCheckTest` |
+| 要素のあいだの決定のあとに、前のダメージの結果を読む要素（続きの情報 `damage_results`） | 実装済み・テスト済み | 対戦の検証で見つけた内部エラーの修正 | 同 `SplitTest` |
+| HP1・MG1・MG2・SB1 | 裁定が未解決（止める） | — | 同 |
+| 未対応の数（全対象 297・neo 137・拡張パック以外 160） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistrationTest` |
+| 14 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 
 ## v0.86: 登場・エネルギー・進化への反応 13 枚
 

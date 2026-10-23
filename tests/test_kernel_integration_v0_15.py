@@ -208,7 +208,10 @@ class DependencyTest(unittest.TestCase):
                                  # v0.86: 反応の続き（docs/entry-energy-evolution-reactions-v0.86.md 2 章）。決定への答えを分けた ``_answer_decision_once``（v0.85 までの
                                  # ``_answer_decision`` の本体。解決の基盤の再開先へ振り分ける）、反応の答えの確かめ（``_reaction_dead_end``）・進化（``_evolve_pokemon``）は
                                  # 設定（``resolution.Context``）を渡すだけ
-                                 "_answer_decision_once", "_reaction_dead_end", "_evolve_pokemon"})
+                                 "_answer_decision_once", "_reaction_dead_end", "_evolve_pokemon",
+                                 # v0.87: 手札からたねポケモンをベンチに出したあとの登場時のダメージ（［ヒートプレート］・ロケット団の爆発ジム）のきぜつ・サイド・交代は、特殊能力のあとと
+                                 # 同じ形の ``resolution.after_effects``（docs/movement-damage-reactions-v0.87.md 4.3 節）
+                                 "_play_basic_to_bench"})
         trial_names = {
             node.attr
             for function in functions if function.name in ("_decision_has_unstopped_answer", "_trainer_dead_end")
@@ -254,7 +257,9 @@ class DependencyTest(unittest.TestCase):
         # ``_answer_decision`` と同じく解決の基盤の再開先へ振り分ける（``RESUMES``・``resume_decision``）。そのほかの v0.86 の関数は設定（``Context``）だけ
         hooks = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "_ReactionHooks")
         hook_names = {node.attr for node in ast.walk(hooks) if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "resolution"}
-        self.assertEqual(hook_names, {"Context", "after_energy", "end_turn_after_power"})
+        # v0.87: 場の移動の反応の段（docs/movement-damage-reactions-v0.87.md 4 章）のあとの場を整える処理（特殊能力の効果の入れ替えのあと ``after_power``・手札からベンチに出したあと
+        # ``after_effects``・「にげる」のあと ``settle_after_retreat``）。どれもきぜつ・サイド・勝ち負け・バトル場に出すを、ワザのあとと同じ解決の基盤の処理で行う
+        self.assertEqual(hook_names, {"Context", "after_energy", "end_turn_after_power", "after_power", "after_effects", "settle_after_retreat"})
         answer_names = {
             node.attr
             for function in functions if function.name in ("_answer_decision", "_answer_decision_once", "_reaction_dead_end", "_evolve_pokemon")

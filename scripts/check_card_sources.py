@@ -74,7 +74,10 @@ NAME_AND_SYMBOLS_SOURCE = "kyuura data/cards.json name.ja + pcg-search.com 1st10
 # v0.65: このリポジトリの過去の記録（版の文書の節）の最新の説明を処理に使う文面にした登録の根拠・出典（カスミのドククラゲの［にげこむ］。v0.18b に p.100 を読んで
 # docs/unresolved-research-v0.18b.md 4.1 に記録した文面の再利用）。許すのは ``ENGINE_RECORDS`` の根拠だけで、文面がその文書にそのまま書かれていること・研究の対応表の
 # registered_without_kyuura_record（kyuura に記録がない。kyuura への報告事項）にあること・印刷の文面と違うことを確かめる
-ENGINE_RECORDS = {"kyuura-engine docs/unresolved-research-v0.18b.md#4.1": ROOT / "docs" / "unresolved-research-v0.18b.md"}
+ENGINE_RECORDS = {"kyuura-engine docs/unresolved-research-v0.18b.md#4.1": ROOT / "docs" / "unresolved-research-v0.18b.md",
+                  # v0.87（docs/movement-damage-reactions-v0.87.md 2 章）: v0.10 の読取記録（p.20 のコクーンの［どくのたいえき］・p.138 のマチスのマルマインの［ショックボム］の
+                  # 特殊能力欄。2026-10-14 に読んだ。v0.87 では原典を開いていない）
+                  "kyuura-engine docs/counterattack-v0.10.md#2": ROOT / "docs" / "counterattack-v0.10.md"}
 # v0.68（docs/final-pmcg-cards-v0.68.md 2 章）: 利用者が示した修正を当てはめた説明文を、処理に使う文面にした登録の根拠・出典（ガルーラの「こどものおつかい」）。
 # kyuura の照合の記録（CC-）・最新の説明（LD-）ではない。v0.68 はエンジンが写しに当てはめていた（USER_PROVIDED_CORRECTIONS）。v0.69 から kyuura が data/cards.json に
 # 当てはめた（台帳 data/curation/card_corrections.json の根拠 user_provided の記録。写しの書き出しの ``kyuura_corrections``）。根拠の名前は変えない（利用者が示した訂正）
@@ -478,7 +481,9 @@ def play_text_problems(where: str, record: dict, card: dict, registry, links: di
                 found.append(f"{where} {target}: 根拠が {basis} なのに、出典が {entry.source!r}")
             if entry.play_text_ja == entry.text_ja:
                 found.append(f"{where} {target}: 根拠がこのリポジトリの記録の最新の説明なのに、処理に使う文面が印刷の文面と同じ")
-            if f"「{entry.play_text_ja}」" not in ENGINE_RECORDS[basis].read_text(encoding="utf-8"):
+            quoted = ENGINE_RECORDS[basis].read_text(encoding="utf-8")
+            # v0.87: 特殊能力欄の引用は、誌面のとおり「●名前 文面」の形のことがある（v0.10 の記録の p.138）。名前は登録の名前と同じであること
+            if f"「{entry.play_text_ja}」" not in quoted and f"「●{getattr(entry, 'name_ja', None)} {entry.play_text_ja}」" not in quoted:
                 found.append(f"{where} {target}: 処理に使う文面が、根拠の文書 {ENGINE_RECORDS[basis].name} の引用（「」）にない")
             if key not in links["latest_descriptions"].get("registered_without_kyuura_record", []):
                 found.append(f"{where} {target}: 根拠 {basis} の登録が、研究の対応表の registered_without_kyuura_record にない")

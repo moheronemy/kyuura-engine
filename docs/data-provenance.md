@@ -1955,6 +1955,25 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.87: 場の移動・ダメージへの反応と、控えの保護・「にげる」の禁止のポケモン 14 枚
+
+[movement-damage-reactions-v0.87.md](movement-damage-reactions-v0.87.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_87`（14 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.86 までの 1,066 枚の
+  記録は変わっていない。
+- 14 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-23・外部照合なし・`kyuura_records` は空）。研究の基準のコミットに、14 の id を指す LD-・CC-・CR-・UQ-・
+  エラッタの記録はない。`card_verification.json` には加えていない。
+- 処理に使う文面は、12 枚が kyuura の印刷の文面。コクーン ES1-005 の［どくのたいえき］・マチスのマルマイン GD3-009 の［ショックボム］は、このリポジトリの v0.10 の読取記録
+  （docs/counterattack-v0.10.md 2 章。p.20・p.138。2026-10-14 に『オフィシャルブック2000』を読んだ記録）の再利用で、v0.87 では原典を開いていない。記録の範囲は特殊能力の文面（と p.138 の解説）だけで、
+  カードの全体を照合した記録ではない。kyuura が原典を読んだ記録とは数えない（研究の対応表の `registered_without_kyuura_record`）。
+- kyuura の日本語の文面（`ja_text_source`）は、pcg-search.com の転記 11 枚（GD3・ES1・ES2・QSG・PR1 の商品）・ポケモンWiki の転記 2 枚（neo3-009・neo4-023）・nazonobasho.com の転記 1 枚（neo2-044）。
+  同じ所との照合は独立した照合にならない。外部照合はしていない。
+- 研究の対応表の `adopted_printed_text` に説明文のあるワザ・特殊能力 25、`registered_without_kyuura_record` に 2（ES1-005/power/0・GD3-009/power/0）を加えた。新しい停止コード 4 件（HP1・MG1・MG2・SB1）を
+  `stop_codes` に `not_in_kyuura` で加えた。
+- カビゴン（ES1-034・QSG-046）の転記の「このカは消える」は写しのまま（「この力は消える」の誤りと思われる。データは直していない）。
+- 報告事項（kyuura の作業）: ES1-005（p.20）・GD3-009（p.138）の特殊能力の最新の説明は、エンジンの v0.10 の読取記録だけにあり、kyuura に LD- がない。HP1・MG1・MG2・SB1 は kyuura の未解決の一覧に
+  ない論点。カビゴンの転記の「このカは消える」。kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写しで、v0.87 の登録を写すと 14 枚の `engine_status` が `registered` になる。
+
 ## v0.86: 登場・エネルギー・進化への反応 13 枚
 
 [entry-energy-evolution-reactions-v0.86.md](entry-energy-evolution-reactions-v0.86.md)。

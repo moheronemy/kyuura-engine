@@ -1342,6 +1342,10 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DamageThenProtectOwnBench,
     _effects.DamageThenStopDefenderPowers,
     _effects.DiscardTypeCardsThenDamageNoneIfLacking,
+    # v0.87（docs/movement-damage-reactions-v0.87.md 3 章・8 章）
+    _effects.DamageThenSelfSleepThenSleepOpponentOnHeads,
+    _effects.DamageThenSuppressOpponentPowersOnHeads,
+    _effects.DamageThenSwitchBothActives,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -2156,3 +2160,31 @@ DARK_CROBAT, DARK_FLAAFFY, DARK_AMPHAROS, SUICUNE_NEO3, VENUSAUR_PR1 = "neo4-012
 V0_86_POKEMON = (EEVEE_NEO2, EEVEE_PF2, EEVEE_PRN, ENTEI_NEO3, RAIKOU_NEO3, BLISSEY_NEO3, DRAGONITE_PR1, ENTEI_PF2, DARK_CROBAT, DARK_FLAAFFY, DARK_AMPHAROS,
                  SUICUNE_NEO3, VENUSAUR_PR1)
 V0_86_CARDS = V0_86_POKEMON  # 写しの組 pool_v0_86 の並び
+
+# v0.87（docs/movement-damage-reactions-v0.87.md）: 場の移動・ダメージへの反応と、ワザから守る特殊能力のポケモン 14 枚
+FORRETRESS_NEO2, MAGCARGO_NEO3, DARK_MAGCARGO = "neo2-044", "neo3-009", "neo4-023"  # フォレトス［まきびし］・マグカルゴ［やけのこり］・わるいマグカルゴ［ヒートプレート］
+LT_SURGES_ELECTRODE, KAKUNA_ES1, KOFFING_ES2 = "GD3-009", "ES1-005", "ES2-003"  # マチスのマルマイン［ショックボム］・コクーン［どくのたいえき］・ドガース［ぶんれつ］
+MAGNEMITE_ES2, MAGNEMITE_QSG, GENGAR_PR1 = "ES2-014", "QSG-023", "PR1-053"  # コイル［マグネット］2 枚・ゲンガー［やみのちから］
+ARTICUNO_ES2, ARTICUNO_QSG, DUGTRIO_PR1 = "ES2-012", "QSG-057", "PR1-046"  # フリーザー［オーロラヴェール］2 枚・ダグトリオ［もぐる］
+SNORLAX_ES1, SNORLAX_QSG = "ES1-034", "QSG-046"  # カビゴン［とおせんぼ］2 枚
+PINECO_NEO4, SLUGMA_NEO4 = "neo4-005", "neo4-017"  # 進化元（クヌギダマ・マグマッグ）
+V0_87_POKEMON = (FORRETRESS_NEO2, MAGCARGO_NEO3, DARK_MAGCARGO, LT_SURGES_ELECTRODE, KAKUNA_ES1, KOFFING_ES2, MAGNEMITE_ES2, MAGNEMITE_QSG, GENGAR_PR1,
+                 ARTICUNO_ES2, ARTICUNO_QSG, DUGTRIO_PR1, SNORLAX_ES1, SNORLAX_QSG)
+V0_87_CARDS = V0_87_POKEMON
+
+
+def _self_sleep_shape_only(attack):
+    from kyuura_engine.effects import _check_damage_then_effect
+
+    return _check_damage_then_effect(attack, "自分をねむり状態にする")
+
+
+def self_sleep_for_other_text():
+    """テスト専用（v0.87）: 説明の違うワザ（ゴーストの「あくむ」・ケーシィの「ねんりき」）を、テスト専用の登録表で「ダメージを与えた後、自分を「ねむり」状態にする」
+    （``DamageAndSelfSleep``）として処理するための実装。v0.87 から ``DamageAndSelfSleep.check`` は日本語の全文を確かめるので、この 1 つの値だけ全文の比べを外し、
+    形（ダメージの目安があること）の確かめは残す。型は ``DamageAndSelfSleep`` のまま（要素の並び・先読み・止める問いは製品の登録と同じ）。製品の登録表には使わない。"""
+    from kyuura_engine.effects import DamageAndSelfSleep
+
+    effect = DamageAndSelfSleep()
+    object.__setattr__(effect, "check", _self_sleep_shape_only)
+    return effect

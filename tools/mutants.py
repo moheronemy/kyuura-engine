@@ -214,9 +214,10 @@ MUTANTS: tuple[Mutant, ...] = (
            '    if attacker.damage >= hp:\n        state.add_event("counterattack_skipped"',
            '    holder = state.find_pokemon(instance.pokemon_id)[1]\n    if attacker.damage >= hp or holder.damage >= hp_of(state, holder):\n        state.add_event("counterattack_skipped"',
            origin='v0.17d'),
+    # S06: v0.87 で［ショックボム］も同じ形で枠を開く（字下げの深い行）ので、行の始めから一致させて、はんげき・わるいねぞうの行に絞った（同じ誤りを入れる）
     Mutant('S06', '不正なダメージ分類（特殊能力のダメージをワザの分類の枠で処理する）', R + 'kernel.py',
-           '    child = res.open_frame(FrameKind.POWER_DAMAGE, parent=fs.frame.id, player=instance.owner, source_pid=instance.pokemon_id,',
-           '    child = res.open_frame(FrameKind.RETALIATION, parent=fs.frame.id, player=instance.owner, source_pid=instance.pokemon_id,',
+           '\n    child = res.open_frame(FrameKind.POWER_DAMAGE, parent=fs.frame.id, player=instance.owner, source_pid=instance.pokemon_id,',
+           '\n    child = res.open_frame(FrameKind.RETALIATION, parent=fs.frame.id, player=instance.owner, source_pid=instance.pokemon_id,',
            origin='v0.17d'),
     # S07: v0.56 でダメージをのせたあとにキョウのどくの処理を加えたので、置きかえる前の文字列を送る効果を加える行の直後に絞った（同じ誤りを入れる）
     Mutant('S07', '処理窓を誤る（受けた直後に処理する）', R + 'kernel.py',

@@ -331,6 +331,19 @@ QUESTIONS: dict[str, Question] = {
                  "エンテイの「ほのおのまもり」の「次の相手の番が終わるまで、自分の控えポケモン全員は、ワザによるダメージや効果を受けない」が、効果を与えたときの控えポケモン"
                  "（バトル場に出たあとも）か、ワザを受ける時点の控えポケモン（あとから控えになったポケモンも）かは、印刷の文面・kyuura の記録から決められず、当てはめるかで"
                  "結果が変わる"),
+        # v0.87（docs/movement-damage-reactions-v0.87.md 9 章）: 場の移動への反応（ワザの途中）。同じ時点の反応の RA1・RA2 は v0.86 と同じコード
+        Question("reaction_after_knockout", "UNRESOLVED_REACTION_AFTER_KNOCKOUT", ("RA1",), 10,
+                 "同じ時点に起こる反応のうち、先に処理した反応でポケモンが HP 以上になったとき、そのポケモンの「きぜつ」の判定を残りの反応の前にするか後にするかは、"
+                 "記録（GR-2000-P325-SAME-TIMING）から決められない"),
+        Question("reaction_condition_changed", "UNRESOLVED_REACTION_CONDITION_CHANGED", ("RA2",), 10,
+                 "同じ時点に起こる反応のうち、先に処理した反応で場が変わり、あとの反応の特殊能力がはたらくかが事実の時点と変わるとき、どちらの時点の状態で決めるかは、"
+                 "記録から決められない"),
+        Question("power_damage_prevented", "UNRESOLVED_POWER_DAMAGE_PREVENTED", ("SB1",), 10,
+                 "マチスのマルマインの［ショックボム］の特殊能力のダメージを、「ダメージを受けない」状態（「かたまる」など。説明はワザによるダメージを書く）のポケモンが受けるかは、"
+                 "印刷の文面・kyuura の記録から決められない（トレーナーのダメージの p.235 の解説の記録は特殊能力のダメージを書かない）"),
+        Question("strange_gas_protected", "UNRESOLVED_STRANGE_GAS_PROTECTED_POKEMON", ("MG2",), 10,
+                 "ドガースの「ふしぎなガス」の「相手の場にいるポケモン」に、ワザの効果を受けないポケモン（「ワザをうけない」状態・［オーロラヴェール］の控え・エフェクトガード・"
+                 "［クリスタルボディ］・「とうめい」など）がいるとき、そのポケモンの特殊能力も止まるのかは、印刷の文面・kyuura の記録から決められない"),
         # ルールの問いではなく、エンジンの未対応（コードは UNSUPPORTED_…。研究の対応表の停止コードには入れない）
         Question("energy_reaction_during_attack", "UNSUPPORTED_ENERGY_REACTION_DURING_ATTACK", ("v0.86",), 10,
                  "ワザの効果で手札からエネルギーカードをつけたときにはたらく相手の［かんでん］・つけたポケモンの［いなびかり］を、ワザの処理の途中で処理する続きは"

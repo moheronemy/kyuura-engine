@@ -41,6 +41,7 @@ from tests.helpers import (
     GRIMER, H, HAUNTER, KADABRA, KOGAS_MUK, LIGHTNING, MACHAMP, MACHOKE, MACHOP, METAPOD, MUK, PIKACHU, PLUSPOWER, POTION, PSYCHIC,
     RATTATA, ROCKET_SQUIRTLE, ROCKETS_MOLTRES, ROCKETS_SNORLAX, SWITCH, T, apply_kernel, build_test_state, coin_events, expand_decklist,
     with_coin_results,
+    self_sleep_for_other_text,  # v0.87
 )
 from tests.log_audit import log_problems, serialization_problems
 from tests.test_confusion_games import TERMINAL
@@ -417,7 +418,7 @@ class TumbleTest(unittest.TestCase):
         haunter = load_card_pool().get(HAUNTER)
         attack = haunter.attacks[0]
         registry = E.DEFAULT_EFFECTS.with_attacks("test-self-sleep", {
-            E.AttackKey(HAUNTER, 0): E.AttackEntry(E.DamageAndSelfSleep(), attack.name_ja, text_ja=attack.text_ja, play_text_ja="（テスト）", source="test"),
+            E.AttackKey(HAUNTER, 0): E.AttackEntry(self_sleep_for_other_text(), attack.name_ja, text_ja=attack.text_ja, play_text_ja="（テスト）", source="test"),
         })
         pool = pool_from_extract(read_extract(), registry)
         for side, asleep in ((H, False), (T, True)):

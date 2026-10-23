@@ -76,6 +76,7 @@ from __future__ import annotations
 
 from collections import Counter
 
+from kyuura_engine import effects as E
 from kyuura_engine import state_to_dict
 from kyuura_engine.cards import EnergyType
 from kyuura_engine.decisions import DISCARD_ENERGY
@@ -988,6 +989,9 @@ def _follows_declaration(state, key: str, player: int, pid: int, e: dict) -> boo
         return not (kind == "remove_damage_counters" and (e.get("power") != key or e["player"] != player))
     if isinstance(effect, CureBothActivesOncePerTurn):
         return kind == "special_conditions_removed" and e.get("reason") == "cured"
+    # v0.87: ［マグネット］・［やみのちから］は持ち主のコイン
+    if isinstance(effect, (E.CoinBenchNamedFromDeck, E.CoinReturnOpponentPokemonToHandOnEntry)):
+        return kind == "coin_flip" and e["source"] == "power" and e.get("effect") == key and e["player"] == player and e.get("pokemon_id") == pid
     return False
 
 
@@ -1060,6 +1064,17 @@ def _power_coin_follows(state, coin: dict, e: dict) -> bool:
         # v0.86: ［タマゴうみ］。「おもて」なら 2 回目の remove_damage_counters（step 2）。「うら」なら何もしない
         mine = kind == "remove_damage_counters" and e.get("power") == coin["effect"] and e.get("step") == 2
         return mine if coin["result"] == "heads" else not (kind == "remove_damage_counters" and e.get("power") == coin["effect"])
+    if isinstance(effect, E.CoinDamageBothActivesOnAttackDamage):
+        # v0.87: ［ショックボム］。持ち主のコインのすぐあとに判定（shock_blast_check）。「うら」ならそのあとにお互いの対戦ポケモンへのダメージ（shock_blast_damage）
+        return kind == "shock_blast_check" and e["power"] == coin["effect"] and e["player"] == coin["player"] and e["result"] == coin["result"]
+    if isinstance(effect, E.CoinBenchNamedFromDeck):
+        # v0.87: ［マグネット］。「おもて」なら山札からベンチに出す（bench_from_deck）か出さない（bench_from_deck_declined。そのあいだに決定がある）。「うら」なら何もしない
+        mine = kind in ("bench_from_deck", "bench_from_deck_declined") and e.get("power") == coin["effect"]
+        return mine if coin["result"] == "heads" else not mine
+    if isinstance(effect, E.CoinReturnOpponentPokemonToHandOnEntry):
+        # v0.87: ［やみのちから］。「おもて」なら相手の場のポケモンを手札にもどす（return_in_play_to_hand。そのあいだに決定がある）。「うら」なら何もしない
+        mine = kind == "return_in_play_to_hand" and e.get("power") == coin["effect"]
+        return mine if coin["result"] == "heads" else not mine
     return kind in ("evade_check", "ko_prevented", "ko_prevention_failed")
 
 
@@ -3714,6 +3729,13 @@ def log_problems(state) -> list[str]:
             if e["to_prize"] in taken_cards:
                 # v0.57 で直した v0.56 の監査の漏れ: 前に取ったサイドのカードを、カスミのわがままでサイドにもどした（また取れる。同じカードの 2 回目の取得ではない）
                 taken_cards.remove(e["to_prize"])
+        elif kind == "trainer_effect_added" and e.get("effect_kind") == "opponent_power_suppression":
+            # v0.87: ドガースの「ふしぎなガス」（ワザで与えた効果。相手の場の特殊能力を、次の相手の番の終わりまで止める）。そのワザの処理の中で、ワザを使ったプレイヤーに、
+            # 登録のワザの位置で、消える番は与えた番 + 1。``trainer_card`` はワザを使ったポケモンのカード
+            if not _same_attack(attack_window, e) or e["player"] != attack_window["player"] or e["expires_turn"] != e["turn"] + 1 \
+                    or not isinstance(_effect_of_event(state, e), E.DamageThenSuppressOpponentPowersOnHeads) or (e["player"], e["trainer_card"]) in trainer_effects_log:
+                problems.append(f"{e['turn']} 番の「ふしぎなガス」の効果が、そのワザの処理の中の、次の相手の番の終わりまでのものではない")
+            trainer_effects_log[(e["player"], e["trainer_card"])] = e
         elif kind in ("request_answered", "trainer_effect_added"):
             # v0.56: 相手の答え（マチスの交渉・カスミのわがまま）・期限のある効果を与えた（カスミ・キョウ・見えない壁）。使っている最中のそのトレーナーの処理
             user = trainer_user(e["trainer_card"])
@@ -3895,6 +3917,28 @@ def log_problems(state) -> list[str]:
             damage[pid] += e["amount"]
             if damage[pid] != e["total_damage"]:
                 problems.append(f"{e['turn']} 番の stadium_damage のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う")
+        elif kind in ("spikes_damage", "hot_plate_damage", "shock_blast_damage"):
+            # v0.87: ［まきびし］・［ヒートプレート］・［ショックボム］の特殊能力のダメージ（ワザのダメージではない。量はログの amount）。発生源はその特殊能力を持つ場のポケモン
+            pid = e["target_pokemon_id"]
+            if pid not in in_play or pokemon_owner.get(e["pokemon_id"]) != e["player"] or e["pokemon_id"] not in in_play:
+                problems.append(f"{e['turn']} 番の {kind}（発生源 {e['pokemon_id']}・受けるポケモン {pid}）が、場のポケモンのものではない")
+            if kind == "spikes_damage" and (turn_player != e["target_player"] or e["target_player"] == e["player"] or active_of.get(e["target_player"]) != pid):
+                problems.append(f"{e['turn']} 番の［まきびし］が、相手の番にその相手のバトル場に出たポケモンへのものではない")
+            if kind == "shock_blast_damage" and active_of.get(e["target_player"]) != pid:
+                problems.append(f"{e['turn']} 番の［ショックボム］のダメージが、対戦ポケモンへのものではない")
+            if kind == "hot_plate_damage" and active_of.get(e["player"]) != e["pokemon_id"]:
+                problems.append(f"{e['turn']} 番の［ヒートプレート］の発生源 {e['pokemon_id']} が、バトル場にいない")
+            damage[pid] += e["amount"]
+            if damage[pid] != e["total_damage"]:
+                problems.append(f"{e['turn']} 番の {kind} のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う")
+        elif kind == "magma_pool":
+            # v0.87: ［やけのこり］。ベンチにもどったこのカードの「炎」エネルギーカード 1 枚を、新しい対戦ポケモンにつけ替える（同じ uid のカードを動かすだけ）
+            pid, to = e["pokemon_id"], e["to_pokemon_id"]
+            if e["card"] not in energy.get(pid, []) or active_of.get(e["player"]) != to or pokemon_owner.get(pid) != e["player"] or active_of.get(e["player"]) == pid:
+                problems.append(f"{e['turn']} 番の［やけのこり］のつけ替え（{e['card']}: {pid} → {to}）が、ベンチのこのカードのエネルギーから新しい対戦ポケモンへのものではない")
+            else:
+                energy[pid].remove(e["card"])
+                energy.setdefault(to, []).append(e["card"])
         elif kind in ("sinkhole_damage", "knock_out_power_damage", "trainer_damage"):
             # v0.61: ［おとしあな］・［ファイナルビーム］のダメージ（特殊能力のダメージ）とバトル場は穴だらけ!のダメージ（トレーナーのダメージ）。どれもワザのダメージ
             # ではない（弱点・抵抗力を計算しない。量はログの amount）
@@ -4219,7 +4263,10 @@ def log_problems(state) -> list[str]:
             effect = _power_effect(state, e["power"])
             uid = e["card"]
             definition = state.printed_def(uid)
-            if not isinstance(effect, BenchBasicsFromDeckOnEntry) or pokemon_owner.get(e["pokemon_id"]) != e["player"] or owner.get(uid) != e["player"] \
+            # v0.87: ［マグネット］・［ぶんれつ］（山札の名前の合うたねポケモン 1 枚。そのあとに山札を切る）
+            named = isinstance(effect, (E.CoinBenchNamedFromDeck, E.BenchNamedFromDeckOnAttackDamage))
+            if not (isinstance(effect, BenchBasicsFromDeckOnEntry) or (named and definition.name_ja == effect.name)) \
+                    or pokemon_owner.get(e["pokemon_id"]) != e["player"] or owner.get(uid) != e["player"] \
                     or uid in hand[e["player"]] or uid in discard[e["player"]] or uid in ids or not definition.is_basic_pokemon:
                 problems.append(f"{e['turn']} 番に特殊能力 {e['power']} でベンチに出したカード {uid} が、プレイヤー {e['player']} の山札のたねポケモンではない")
             benched = (shuffle_due["count"] + 1) if shuffle_due is not None and shuffle_due.get("power") == e["power"] and "count" in shuffle_due else 1
@@ -4398,7 +4445,11 @@ def log_problems(state) -> list[str]:
             # v0.42: 特殊能力（おくびょう。ついているカードをトラッシュしたすぐあと）・ワザ（ようせいのきせき）で、自分の場のポケモンを手札にもどす（きぜつでは
             # ない。重なったカードとついているカードもいっしょに手札へ）
             pid = e["pokemon_id"]
-            if "power" in e:
+            if "power" in e and isinstance(_power_effect(state, e["power"]), E.CoinReturnOpponentPokemonToHandOnEntry):
+                # v0.87: ［やみのちから］（「おもて」のコインのあと。そのあいだに決定がある）。相手の場のポケモンを持ち主の手札へ
+                valid = prior is not None and prior["kind"] == "coin_flip" and prior.get("effect") == e["power"] and prior["result"] == "heads" \
+                    and prior["player"] == 1 - e["player"]
+            elif "power" in e:
                 valid = prior is not None and prior["kind"] == "discard_attached_cards" and prior.get("power") == e["power"] and prior["pokemon_id"] == pid \
                     and isinstance(_power_effect(state, e["power"]), ReturnSelfToHand)
             elif "stadium_card" in e:

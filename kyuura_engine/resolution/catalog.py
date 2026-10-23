@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any
 from .. import effects as E
 from ..continuous import goop_gas_effects, suppressors_of
 from ..persistent import powers_stopped, powers_use_prevented
-from ..decisions import BENCH_GUARD, KNOCK_OUT_POWER, KO_PREVENTION, POST_KNOCKOUT_POWER, REACTION_SWITCH
+from ..decisions import BENCH_GUARD, KNOCK_OUT_POWER, KO_PREVENTION, POST_KNOCKOUT_POWER, REACTION_SWITCH, SPLIT_FROM_DECK
 from ..state import AttackBarrier, AttackEffectGuard, BenchAttackDamageGuard, BenchProtection, PreventDamage, Retaliation
 
 from .events import DamageClass, Window
@@ -256,6 +256,35 @@ PROTECTIVE_FLAME = EffectDefinition(
     False, "receiving_element", "void_attack", frozenset({DamageClass.ATTACK}), True,
 )
 
+# v0.87（docs/movement-damage-reactions-v0.87.md 5 章）: マチスのマルマインの［ショックボム］。はんげきと同じ窓（受けたときに候補にし、そのワザのダメージの要素のあと・ダメージ以外の
+# 効果の前に処理する）。かならずはたらく（特殊状態の条件はない）。バトル場で（``active_only``）、ワザの分類のダメージ（自分のワザを含む。``by_opponent`` は偽）
+SHOCK_BLAST = EffectDefinition(
+    "shock_blast", Origin.PRINTED_POWER, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
+    frozenset(), "on_damage", True, "both_actives", "power_damage_both_actives_on_tails", frozenset({DamageClass.ATTACK}), False, active_only=True,
+)
+# v0.87（5.2 節）: コクーンの［どくのたいえき］（v0.10 の読取記録の最新の説明。自動的にはたらく）。はんげきと同じ窓・同じ条件（相手のワザ・受けるときの特殊状態・場所を見ない）
+POISON_FLUID = EffectDefinition(
+    "poison_fluid", Origin.PRINTED_POWER, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
+    BLOCKING_CONDITIONS, "on_damage", True, "damage_source", "poison_damage_source", frozenset({DamageClass.ATTACK}), True,
+)
+# v0.87（5.3 節）: ドガースの［ぶんれつ］。使うかは持ち主が決める（決定 ``SPLIT_FROM_DECK``）が、時点ははんげきと同じ窓（ダメージの要素のあと・ダメージ以外の効果の前）なので、
+# 送る効果として集める（受けるときにはたらいている（特殊状態の条件はない）なら候補。使えるか（ガス・ショックアイ）は処理する時点で ``offer_stopped`` が見る）。場所・相手のワザかを問わない
+SPLIT = EffectDefinition(
+    "split", Origin.PRINTED_POWER, Mode.OPTIONAL, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
+    frozenset(), "on_damage", True, "self", "split_from_deck", frozenset({DamageClass.ATTACK}), False, SPLIT_FROM_DECK,
+)
+# v0.87（7.1 節）: フリーザーの［オーロラヴェール］。バリアーと同じ窓（ダメージと効果の要素の前）。効果を持つのはバトル場のフリーザーで、受けるポケモンは持ち主の控え（``instances`` が
+# 今の場で決める）。はたらいているか（バトル場・特殊状態・力が消えているか）は ``effects.continuous_powers`` で求める（ここでは重ねて見ない。``suppressible`` は偽）。自分のワザも守る
+AURORA_VEIL = EffectDefinition(
+    "aurora_veil", Origin.PRINTED_POWER, Mode.CONTINUOUS, Timing.VOID, frozenset({Window.BEFORE_DAMAGE, Window.BEFORE_EFFECT}), frozenset(), "now",
+    False, "receiving_element", "void_attack", frozenset({DamageClass.ATTACK}),
+)
+# v0.87（7.2 節）: ダグトリオの［もぐる］。見えない壁と同じ窓（ダメージの要素の前だけ）。受けるポケモン自身がベンチにいるとき（``continuous_powers`` で求める）。自分のワザも
+DIG_UNDER = EffectDefinition(
+    "dig_under", Origin.PRINTED_POWER, Mode.CONTINUOUS, Timing.VOID, frozenset({Window.BEFORE_DAMAGE}), frozenset(), "now",
+    False, "receiving_element", "void_damage", frozenset({DamageClass.ATTACK}),
+)
+
 POWER_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (E.AttackImmunityOnHeads, TRANSPARENCY),
     (E.CounterattackDamage, STRIKES_BACK),
@@ -271,6 +300,9 @@ POWER_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (E.SleepDamageSourceOnHeads, FLUFFY_WOOL),  # v0.84
     (E.OpponentAttackEffectImmunity, CRYSTAL_BODY),  # v0.86
     (E.ReturnToDeckOnHeadsAfterDamage, BOLT),  # v0.86
+    (E.CoinDamageBothActivesOnAttackDamage, SHOCK_BLAST),  # v0.87
+    (E.PoisonDamageSourceOnAttackDamage, POISON_FLUID),  # v0.87
+    (E.BenchNamedFromDeckOnAttackDamage, SPLIT),  # v0.87
 )
 PERSISTENT_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (PreventDamage, HARDEN),
@@ -340,6 +372,16 @@ def instances(state: GameState, owner: int, pokemon: PokemonInPlay, table=None) 
             if isinstance(effect, BenchAttackDamageGuard):
                 found.append(EffectInstance(ICE_PILLAR, owner, pokemon.pokemon_id, pokemon.card, implementation=effect))
     # v0.81: ついているはんげきのツメ（ポケモンのどうぐ。効果の登録表の実装の型で探す）。実装は (ついているカード, 実装)
+    # v0.87: ［オーロラヴェール］（持ち主のバトル場のポケモンの常にはたらく特殊能力。受けるポケモンが今、持ち主の控えなら）と［もぐる］（受けるポケモン自身。ベンチにいるとき）。
+    # はたらいているかは ``continuous_powers``（場所・特殊状態・力が消えているか）。効果のもとはその特殊能力を持つポケモンのカード（``PowerVoidRecord``）
+    if any(b is pokemon for b in side.bench):
+        for holder_owner, holder, key, effect in E.continuous_powers(state, (E.OwnBenchAttackImmunityWhileActive, E.BenchAttackDamageImmunity)):
+            if holder_owner != owner:
+                continue
+            if isinstance(effect, E.OwnBenchAttackImmunityWhileActive) and holder is side.active and holder is not pokemon:
+                found.append(EffectInstance(AURORA_VEIL, owner, holder.pokemon_id, holder.card, key, None, PowerVoidRecord(holder.card, AURORA_VEIL.name, effect)))
+            elif isinstance(effect, E.BenchAttackDamageImmunity) and holder is pokemon:
+                found.append(EffectInstance(DIG_UNDER, owner, holder.pokemon_id, holder.card, key, None, PowerVoidRecord(holder.card, DIG_UNDER.name, effect)))
     claw = E.tool_effect_of(state, pokemon, E.CounterClaw)
     if claw is not None:
         found.append(EffectInstance(COUNTER_CLAW, owner, pokemon.pokemon_id, pokemon.card, implementation=claw))
@@ -373,7 +415,8 @@ def stopped(state: GameState, instance: EffectInstance) -> bool:
     found = state.find_pokemon(instance.pokemon_id)
     if found is not None and powers_stopped(state, found[1]) is not None:
         return True  # v0.86: スタンウェーブを受けたポケモンの特殊能力（「使うことができず、その効果も消える」）
-    return bool(goop_gas_effects(state)) or bool(suppressors_of(state, instance.power))
+    # v0.87: ふしぎなガス（相手プレイヤーが与えた効果。この効果の持ち主の側だけ）
+    return bool(goop_gas_effects(state)) or bool(suppressors_of(state, instance.power)) or bool(E.strange_gas_effects(state, instance.owner))
 
 
 def offer_stopped(state: GameState, instance: EffectInstance, pokemon: PokemonInPlay) -> bool:

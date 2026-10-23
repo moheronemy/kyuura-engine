@@ -51,8 +51,8 @@ from ..persistent import RETURN_IN_PLAY_TO_DECK, RETURN_IN_PLAY_TO_HAND, add_per
 from ..state import (
     NEXT_TURN_MULTIPLY, NEXT_TURN_SET, RETALIATION_FIXED, RETALIATION_RECEIVED, AttackBarrier, AttackCoinCheck, CannotAttack, CannotAttackNextOwnTurn,
     CannotAttachEnergy, CannotAttackWhileSourceActive, CannotRetreat, CannotUseAttack, CannotUsePowers, CannotUseOwnAttack, DamageReduction, DestinyBond, DoubledDamage, HalvedDamage, NextTurnAttackDamage, PreventAttackDamage, PreventDamage,
-    MaxHpSet, ReducedDamageToSource, ReducedDamageToSourceNextTurn, ReflectShield, ResistanceChange, Retaliation, TailsDamageGuard, TrainerUseLock, WeaknessChange, ZeroDamageBelow, mark_returned_to_bench,
-    StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard, StatusImmunityNextTurn, PowersStopped, BenchProtection,
+    MaxHpSet, ReducedDamageToSource, ReducedDamageToSourceNextTurn, ReflectShield, ResistanceChange, Retaliation, TailsDamageGuard, TrainerTurnEffect, TrainerUseLock, WeaknessChange, ZeroDamageBelow, mark_returned_to_bench,
+    OPPONENT_POWER_SUPPRESSION, StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard, StatusImmunityNextTurn, PowersStopped, BenchProtection,
 )
 from ..history import note_processed
 from ..zones import (
@@ -64,9 +64,11 @@ from ..zones import discard_stadium, look_at_card
 
 from . import catalog as C
 from . import codec
-from .events import ElementStarted, KnockedOutRecorded, Suspended, Window
-from .kernel import BenchGuardRequest, EnergyDrainRequest, Resolution, check_simultaneous, deal_damage, fire_pending, reaches, settle_scram, track_ko, type_question, weakness_resistance_matters
+from .events import ElementStarted, FrameKind, KnockedOutRecorded, Suspended, Window
+from .kernel import BenchGuardRequest, EnergyDrainRequest, Resolution, SplitRequest, check_simultaneous, knocked_out, deal_damage, fire_pending, reaches, settle_scram, track_ko, type_question, weakness_resistance_matters
 from ..decisions import BENCH_GUARD, DAMAGE_REDUCTION, ESP_REDO, KO_PREVENTION, NINJA_TRICK, REACTION_SWITCH
+from ..decisions import MAGMA_POOL_ENERGY, REACTION_ORDER, SPLIT_FROM_DECK
+from .. import movement as M
 from .questions import QUESTIONS
 
 if TYPE_CHECKING:
@@ -249,6 +251,8 @@ class AttackRun:
             self.fs.coins[name] = CoinFlips(tuple(CoinSide(side) for side in sides))
         for name, pid in carried.get("chosen_targets", ()):
             self.fs.results[name] = ChosenTarget(pid)  # v0.83
+        for name, values in carried.get("damage_results", ()):
+            self.fs.results[name] = E.DamageResult(*values)  # v0.87
         frame = dict(carried.get("frame", ()))
         for pid, value in frame.get("reception", ()):
             self.fs.reception[pid] = bool(value)
@@ -373,6 +377,15 @@ class AttackRun:
         if chosen:
             # v0.83: 先に選んだ控えポケモン（「サンダースコール」。``ChooseOpponentBench``）。あとのダメージの要素が順番の決定などで止まっても、選び直さない
             extra += (("chosen_targets", chosen),)
+        boundary = dict(extra).get("boundary")
+        if boundary is not None:
+            # v0.87: 要素のあいだの決定（［ぶんれつ］・［だつりょくえき］など。``boundary`` は次に処理する要素の位置）のあとの要素が、前のダメージの要素の結果を
+            # 名前で読む（「ダメージを与えた後、…」の ``after_damage`` など）なら、その結果を運ぶ。読まなければ書かない（v0.86 までの決定の形は変えない）
+            used_later = {value for later in self.program[boundary:] for value in _result_names(later)}
+            damage = tuple(sorted((name, tuple(dataclasses.astuple(result))) for name, result in self.fs.results.items()
+                                  if isinstance(result, E.DamageResult) and name in used_later))
+            if damage:
+                extra += (("damage_results", damage),)
         if carry:
             frame = (
                 ("reception", tuple(sorted((pid, int(value)) for pid, value in self.fs.reception.items()))),
@@ -418,6 +431,8 @@ def run_elements(run: AttackRun, start: int) -> bool:
         if run.redirect is not None:
             run.apply_redirect()
             index = 0
+        if run.state.pending_moves and settle_moves(run, index):
+            return True  # v0.87: 前の要素の入れ替えへの反応（［まきびし］・［やけのこり］）の決定
         if index >= len(run.program):
             break
         element = run.program[index]
@@ -482,6 +497,12 @@ def fire_or_suspend(run: AttackRun, index: int) -> bool:
         run.suspend(kind=ENERGY_DRAIN_DISCARD, player=request.entry[0], options=list(request.options), min_choices=1, max_choices=1, carry=True,
                     extra=(("boundary", index), ("drain", request.entry)) + _unresolved_extra(*request.unresolved))
         return True
+    except SplitRequest as request:
+        # v0.87: ［ぶんれつ］。持ち主に、山札の名前の合うたねポケモンをベンチに出すかを聞く（0〜1 枚。選べるカードがなくても聞く。続きの情報の "split" は
+        # (持ち主, ポケモンの番号, カード id, 特殊能力の位置, 名前)）
+        run.suspend(kind=SPLIT_FROM_DECK, player=request.entry[0], options=list(request.options), min_choices=0, max_choices=1 if request.options else 0,
+                    carry=True, extra=(("boundary", index), ("split", request.entry)) + _unresolved_extra(*request.unresolved))
+        return True
     return False
 
 
@@ -511,6 +532,94 @@ def apply_esp_redo(run: AttackRun, esp: tuple, choices: tuple[int, ...]) -> int:
     run.esp_done = True
     run.esp_preset = (count, flips.results)
     return index
+
+
+# ---------------------------------------------------------------- v0.87 ワザの途中の場の移動への反応（docs/movement-damage-reactions-v0.87.md 3 章）
+
+
+def settle_moves(run: AttackRun, index: int) -> bool:
+    """前の要素の入れ替え・バトル場に出す処理の事実への反応（``GameState.pending_moves``）を、次の要素（``index``）の前に処理する。決定を出したら True（続きの情報の ``boundary`` は
+    ``index``、``moves`` は残りの反応の段）。同じ時点に 2 つ以上の反応があれば、番のプレイヤーが順番を選ぶ（``REACTION_ORDER``。GR-2000-P325-SAME-TIMING）。"""
+    queue = M.take(run.state)
+    while queue:
+        step, queue = queue[0], queue[1:]
+        if _settle_move_step(run, index, step, queue):
+            return True
+    return False
+
+
+def _settle_move_step(run: AttackRun, index: int, step: tuple, rest: tuple) -> bool:
+    res, state = run.res, run.state
+    _, label, pending, info = step
+    live = []
+    for reaction in pending:
+        now = M.still_working(state, reaction)
+        if now is None:
+            continue
+        if now != reaction[-1]:
+            raise res.question("reaction_condition_changed", f"反応 {reaction!r}")
+        if now:
+            live.append(reaction)
+    if not live:
+        return False
+    baseline = set(info[2]) if len(info) > 2 else set()
+    fresh = [p.pokemon_id for _, p in knocked_out(state) if p.pokemon_id not in baseline]
+    if fresh:
+        raise res.question("reaction_after_knockout", f"HP 以上のポケモン {fresh}・残りの反応 {[r[0] for r in live]}")
+    if len(live) >= 2:
+        if res.dry_run:
+            chosen = res.oracle.choose([(i,) for i in range(len(live))])[0]
+            others = tuple(r for i, r in enumerate(live) if i != chosen)
+            return _apply_move(run, index, live[chosen], ((M.SAME, label, others, info),) + rest)
+        run.suspend(kind=REACTION_ORDER, player=state.current_player, options=list(range(len(live))), carry=True,
+                    extra=(("boundary", index), ("move_order", (M.SAME, label, tuple(live), info)), ("moves", rest)))
+        return True
+    return _apply_move(run, index, live[0], rest)
+
+
+def _apply_move(run: AttackRun, index: int, reaction: tuple, rest: tuple) -> bool:
+    """反応 1 つを処理する。決定を出したら True。出さなければ残りの段を状態にもどして False（``settle_moves`` が続ける）。"""
+    res, state = run.res, run.state
+    kind = reaction[0]
+    if kind in (M.SPIKES, M.HOT_PLATE):
+        child = res.open_frame(FrameKind.POWER_DAMAGE, parent=run.fs.frame.id, player=1 - reaction[1], source_pid=reaction[3][0][1],
+                               attack_key=run.fs.frame.attack_key)
+        M.power_damage(state, reaction, track=lambda pokemon, before: track_ko(res, child, pokemon, before))
+    elif kind == M.MAGMA:
+        choice = M.magma_choice(state, reaction)
+        if choice is None:
+            M.magma_none(state, reaction)
+        elif isinstance(choice, M.MagmaChoice):
+            blocked, code, reason = choice.unresolved
+            if res.dry_run:
+                M.magma_move(state, reaction, res.oracle.choose([(uid,) for uid in choice.options if uid not in blocked])[0])
+            else:
+                run.suspend(kind=MAGMA_POOL_ENERGY, player=choice.player, options=list(choice.options), carry=True,
+                            extra=(("boundary", index), ("move_magma", reaction), ("moves", rest)) + _unresolved_extra(blocked, code, reason))
+                return True
+        else:
+            M.magma_move(state, reaction, choice)
+    else:
+        raise RuntimeError(f"ワザの途中に来ない場の移動の反応 {reaction!r}（エンジンの不具合）")
+    state.pending_moves = tuple(rest) + state.pending_moves
+    return False
+
+
+def resume_moves(run: AttackRun, index: int, decision: PendingDecision, carried: dict, choices: tuple[int, ...]) -> bool:
+    """v0.87: ワザの途中の場の移動への反応の決定（順番・［やけのこり］のカード）の答え。答えを処理し、残りの反応の段を状態にもどす。もう一度決定を出したら True。"""
+    rest = tuple(carried.get("moves", ()))
+    if decision.kind == REACTION_ORDER:
+        _, label, live, info = carried["move_order"]
+        chosen = live[choices[0]]
+        others = tuple(r for i, r in enumerate(live) if i != choices[0])
+        return _apply_move(run, index, chosen, (((M.SAME, label, others, info),) if others else ()) + rest)
+    if decision.kind == MAGMA_POOL_ENERGY:
+        if choices[0] in tuple(carried.get("unresolved_choices", ())):
+            raise UnsupportedError(carried.get("unresolved_code"), carried.get("unresolved_reason"))
+        M.magma_move(run.state, tuple(carried["move_magma"]), choices[0])
+        run.state.pending_moves = rest + run.state.pending_moves
+        return False
+    raise RuntimeError(f"場の移動の反応の決定 {decision.kind} は扱わない（エンジンの不具合）")
 
 
 # ---------------------------------------------------------------- v0.65 ワザの途中の任意の決定（docs/reactive-decisions-v0.65.md 2 章）
@@ -1587,6 +1696,7 @@ class ForceSwitch(Element):
             raise RuntimeError(f"入れ替えの対象 {target} が相手のバトル場にいない（エンジンの不具合）")
         index = next(i for i, pokemon in enumerate(p.bench) if pokemon.pokemon_id == choices[0])
         p.active, p.bench[index] = p.bench[index], old
+        M.note_switch(run.state, opponent, old, p.active)  # v0.87: 入れ替えの事実（相手の［やけのこり］。次の要素の前に処理する）
         extra = {"chosen_by": "attacker"} if self.chooser == "attacker" else {}  # v0.31: かどわかす（ふきとばしのログの形は v0.30 と同じ）
         run.state.add_event(
             "forced_switch",
@@ -3639,7 +3749,8 @@ class PromoteFromBench(Element):
         p = run.state.players[run.player]
         if p.active is not None or choices[0] not in [pokemon.pokemon_id for pokemon in p.bench]:
             raise RuntimeError(f"バトル場に出すポケモン {choices} が、空いたバトル場のプレイヤー {run.player} の控えにいない（エンジンの不具合）")
-        promote_from_bench(run.state, run.player, choices[0], effect=str(run.key))
+        promoted = promote_from_bench(run.state, run.player, choices[0], effect=str(run.key))
+        M.note_switch(run.state, run.player, None, promoted)  # v0.87: 控えからバトル場に出た事実（相手の［まきびし］）
 
 
 @dataclass(frozen=True)
@@ -8318,6 +8429,8 @@ BUILDERS: dict[type, Any] = {
     E.ConfuseOnHeadsWithoutDamage: lambda e: (Status(CONFUSION, local_coin=HEADS),),
     # v0.17b: 自分への特殊状態（R団のカビゴンの「たおれこむ」。docs/rocket-snorlax-v0.17b.md）
     E.DamageAndSelfSleep: lambda e: (Damage(OPP, Printed()), Status(SLEEP, target=SELF, after_damage="damage")),
+    E.DamageThenSelfSleepThenSleepOpponentOnHeads: lambda e: (Damage(OPP, Printed()), Status(SLEEP, target=SELF, after_damage="damage"),
+                                                               Status(SLEEP, local_coin=HEADS)),
     # v0.27: 次の自分の番にワザのダメージを変える持続する効果（ストライクの「つるぎのまい」。docs/scyther-v0.27.md）
     E.SetNextTurnAttackDamage: lambda e: (SelfNextTurnAttackDamage(e.target_attack_index, e.damage),),
     # v0.30: 自分のエネルギーカードを選んで 1 枚トラッシュしてから、相手にダメージ（ひのこ・かえんほうしゃ。RUL-ENERGY-DISCARD-ATTACKS。
@@ -8926,3 +9039,49 @@ def compile_attack(effect: E.AttackEffect) -> tuple[Element, ...]:
     if builder is None:
         raise UnsupportedByKernel(f"ワザの実装 {type(effect).__name__}（{effect.implementation_id}）はプロトタイプの対応表にない")
     return builder(effect)
+
+
+# ---------------------------------------------------------------- v0.87（docs/movement-damage-reactions-v0.87.md 8 章）
+
+
+@dataclass(frozen=True)
+class OpponentPowerSuppression(Element):
+    """コインを投げて ``local_coin`` なら、次の相手の番が終わるまで、相手の場にいるポケモンは特殊能力を使うことができず、その力も消える（v0.87。ドガースの「ふしぎなガス」）。
+
+    - 相手プレイヤーの場に与える期限のある効果（``state.TrainerTurnEffect`` の種類 ``OPPONENT_POWER_SUPPRESSION``。``player`` はワザを使ったプレイヤー・``source_card`` はワザを
+      印刷したカード・``attack_index``。消える番は与えた番 + 1）。場のポケモンに写さないので、入れ替え・きぜつ・場をはなれることでは消えない。ログ ``trainer_effect_added``
+      （``attack_index``・``effect``）
+    - 相手の場に、ワザの効果を受けないポケモン（「ワザをうけない」状態・［オーロラヴェール］の控え・エフェクトガード・［クリスタルボディ］・「とうめい」）がいれば、そのポケモンも
+      止まるかは決まらない（MG2）。効果だけを決めるコインなので、コインの前に止める（先読みが見つける）
+    """
+
+    local_coin: CoinSide | None = None
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def run(self, run: AttackRun) -> bool:
+        from .kernel import first_void
+        state = run.state
+        opponent = 1 - run.player
+        for pokemon in state.players[opponent].in_play():
+            if state.is_face_down(pokemon):
+                continue
+            if first_void(run.res, opponent, pokemon, Window.BEFORE_EFFECT) is not None or E.evasion_power(state, pokemon) is not None:
+                raise run.res.question("strange_gas_protected", f"ポケモン {pokemon.pokemon_id}")
+        if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
+            return False
+        expires = state.turn_number + 1
+        card = run.attacker().card
+        record = TrainerTurnEffect(kind=OPPONENT_POWER_SUPPRESSION, player=run.player, source_card=card, card_id=run.key.card_id, created_turn=state.turn_number,
+                                   expires_turn=expires, attack_index=run.key.attack_index)
+        if any(r.kind == OPPONENT_POWER_SUPPRESSION and r.player == run.player and r.expires_turn == expires for r in state.trainer_effects):
+            raise RuntimeError(f"プレイヤー {run.player} の「ふしぎなガス」が、消える番 {expires} にすでにある（1 番に使えるワザは 1 つ。エンジンの不具合）")
+        state.trainer_effects = state.trainer_effects + (record,)
+        state.add_event("trainer_effect_added", player=run.player, effect_kind=OPPONENT_POWER_SUPPRESSION, trainer_card=card, card_id=run.key.card_id,
+                        expires_turn=expires, attack_index=run.key.attack_index, effect=str(run.key))
+        return False
+
+
+BUILDERS |= {
+    E.DamageThenSwitchBothActives: lambda e: (Damage(OPP, Printed()), ForceSwitch(carry=True), SelfSwitch()),
+    E.DamageThenSuppressOpponentPowersOnHeads: lambda e: (Damage(OPP, Printed()), OpponentPowerSuppression(local_coin=HEADS)),
+}

@@ -654,25 +654,44 @@ class CatalogTest(unittest.TestCase):
                            "double_type_energy_cards", "coin_mill_deck_on_evolve",
                            # v0.86: ライコウの［いなびかり］・わるいデンリュウの［かんでん］（手札からエネルギーカードをつけた事実への反応。ワザの外で ``reactions`` が処理する。
                            # 窓の中の反応ではない。docs/entry-energy-evolution-reactions-v0.86.md 2 章・5 章）
-                           "switch_opponent_on_type_energy_attach", "damage_on_opponent_hand_energy_attach")
+                           "switch_opponent_on_type_energy_attach", "damage_on_opponent_hand_energy_attach",
+                           # v0.87: フォレトスの［まきびし］・マグカルゴの［やけのこり］・わるいマグカルゴの［ヒートプレート］（場の移動の事実への反応。``movement`` の段で処理する）・
+                           # カビゴンの［とおせんぼ］（「にげる」の禁止。``effects.retreat_guards`` が問い合わせる）。窓の中の反応ではない。docs/movement-damage-reactions-v0.87.md 4 章・7 章
+                           "damage_on_opponent_promotion", "move_type_energy_on_benching", "damage_on_hand_basic_while_active", "opponent_active_cannot_retreat")
+        # v0.87: フリーザーの［オーロラヴェール］・ダグトリオの［もぐる］は窓の中の反応（要素を無効にする）だが、守るのは持ち主の控え・ベンチにいるこのカードなので、印刷した
+        # ポケモンの効果の対応表（``POWER_DEFINITIONS``）ではなく ``catalog.instances`` が受けるポケモンについて作る（v0.84 のこおりのはしらと同じ形）
+        built_by_instances = {"own_bench_attack_immunity_while_active": C.AURORA_VEIL, "bench_attack_damage_immunity": C.DIG_UNDER}
         for key in DEFAULT_EFFECTS.power_keys():
             effect = DEFAULT_EFFECTS.power_entry(key.card_id, key.power_index).effect
             definition = C.definition_for(effect, C.POWER_DEFINITIONS)
             with self.subTest(power=str(key)):
+                if effect.implementation_id in built_by_instances:
+                    self.assertIsNone(definition)
+                    built = built_by_instances[effect.implementation_id]
+                    self.assertEqual((built.origin, built.timing), (C.Origin.PRINTED_POWER, C.Timing.VOID))
+                    continue
                 expected = ((not effect.declared and effect.implementation_id not in outside_windows)
                             or effect.implementation_id in ("prevent_knock_out_on_heads", "return_to_hand_on_knock_out", "beam_on_knock_out",
                                                            # v0.65: ［にげこむ］・［ベンチガード］（宣言する。ワザの途中の決定を出す定義が対応表にある）
-                                                           "flee_after_attack_damage", "take_bench_damage_instead"))
+                                                           "flee_after_attack_damage", "take_bench_damage_instead",
+                                                           # v0.87: ［ぶんれつ］（使うかを持ち主が決める。はんげきと同じ窓の定義が対応表にある）
+                                                           "bench_named_from_deck_on_attack_damage"))
                 self.assertEqual(definition is not None, expected)
         # v0.69 の拡張パック以外の商品の同じカードの新しい id（tests/helpers.py の V0_69_POWER_CARDS）は元のカードと同じ登録なので、ここでは数えない
         self.assertEqual([str(k) for k in DEFAULT_EFFECTS.power_keys()
                           if DEFAULT_EFFECTS.power_entry(k.card_id, k.power_index).effect.implementation_id in outside_windows
                           and k.card_id not in V0_69_POWER_CARDS],
-                         ["PMCG2-027@power0", "PMCG2-040@power0", "PMCG2-047@power0", "PMCG3-015@power0", "PMCG3-035@power0", "PMCG3-041@power0",
+                         ["ES1-034@power0",  # v0.87
+                          "PMCG2-027@power0", "PMCG2-040@power0", "PMCG2-047@power0", "PMCG3-015@power0", "PMCG3-035@power0", "PMCG3-041@power0",
                           "PMCG3-042@power0", "PMCG4-007@power0", "PMCG4-010@power0", "PMCG4-041@power0", "PMCG4-043@power0", "PMCG5-035@power0", "PMCG5-051@power0",
                           "PMCG5-063@power0", "PMCG6-010@power0",
-                          "PMCG6-033@power0", "PMCG6-049@power0", "PMCG6-053@power0", "PMCG6-074@power0", "neo1-014@power0", "neo1-033@power0",
-                          "neo3-029@power0", "neo4-046@power0", "neo4-094@power0"])
+                          "PMCG6-033@power0", "PMCG6-049@power0", "PMCG6-053@power0", "PMCG6-074@power0",
+                          "QSG-046@power0",  # v0.87
+                          "neo1-014@power0", "neo1-033@power0",
+                          "neo2-044@power0", "neo3-009@power0",  # v0.87
+                          "neo3-029@power0",
+                          "neo4-023@power0",  # v0.87
+                          "neo4-046@power0", "neo4-094@power0"])
 
 
 # ---------------------------------------------------------------- 対戦（new_game から）: 再現性・ログの監査

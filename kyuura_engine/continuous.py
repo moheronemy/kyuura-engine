@@ -20,7 +20,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .effects import SuppressOtherPowers
-from .state import POWER_SUPPRESSION
+from .state import OPPONENT_POWER_SUPPRESSION, POWER_SUPPRESSION
 
 if TYPE_CHECKING:
     from .cards import Power
@@ -76,20 +76,41 @@ def goop_gas_effects(state: GameState) -> tuple[TrainerTurnEffect, ...]:
     return tuple(r for r in state.trainer_effects if r.kind == POWER_SUPPRESSION and r.created_turn <= turn <= r.expires_turn)
 
 
-def power_suppressed(state: GameState, power: Power, holder: PokemonInPlay | None = None) -> bool:
+def power_suppressed(state: GameState, power: Power, holder: PokemonInPlay | None = None, *, owner: int | None = None) -> bool:
     """特殊能力 ``power``（場のポケモンの特殊能力）が今「使えず、その力も消え」ているか（v0.59）: はたらいているかがくへんかガスに消されている（``suppressors_of``）か、
     まきちらせ!ベトベトガスの効果がはたらいている（``goop_gas_effects``）。宣言して使う特殊能力の使用・常にはたらく・自動的にはたらく特殊能力の力のどちらにも当てはまる
     （kyuura の CR-CHEMICAL-GAS-USE-VS-POWER・CR-CHEMICAL-GAS-ALL-POWERS）。わるいアーボックの「ショックアイ」（使うことだけができない）は含まない
     （``persistent.powers_use_prevented``）。
 
     v0.86: ``holder``（その特殊能力を持つ場のポケモン）を渡したら、そのポケモンがわるいモココの「スタンウェーブ」を受けている（``persistent.powers_stopped``。「使うことが
-    できず、その効果も消える」）ときも消えている。止まるのはそのポケモンの特殊能力だけ。"""
+    できず、その効果も消える」）ときも消えている。止まるのはそのポケモンの特殊能力だけ。
+
+    v0.87: ドガースの「ふしぎなガス」（``effects.strange_gas_effects``。相手プレイヤーが与えた ``OPPONENT_POWER_SUPPRESSION``）がはたらいているプレイヤーの場のポケモンの特殊能力も
+    消えている。止まるのはその側だけなので、特殊能力の持ち主（``holder`` の持ち主か ``owner``）が要る。ふしぎなガスがはたらいているのに、どちらも渡さない問い合わせは
+    エンジンの不具合（RuntimeError。持ち主を推測しない）。"""
     if holder is not None:
         from .persistent import powers_stopped
 
         if powers_stopped(state, holder) is not None:
             return True
-    return bool(goop_gas_effects(state)) or bool(suppressors_of(state, power))
+    if goop_gas_effects(state) or suppressors_of(state, power):
+        return True
+    if any(r.kind == OPPONENT_POWER_SUPPRESSION for r in state.trainer_effects):
+        from .effects import strange_gas_effects
+
+        if holder is not None:
+            found = state.find_pokemon(holder.pokemon_id)
+            if found is None:
+                raise RuntimeError(f"特殊能力を持つポケモン {holder.pokemon_id} が場にいない（ふしぎなガスの持ち主を決められない。エンジンの不具合）")
+            side = found[0]
+            if owner is not None and owner != side:
+                raise RuntimeError(f"特殊能力の持ち主 {owner} と、ポケモン {holder.pokemon_id} の持ち主 {side} が違う（エンジンの不具合）")
+        elif owner is not None:
+            side = owner
+        else:
+            raise RuntimeError("ふしぎなガスがはたらいている場で、特殊能力の持ち主を渡さない問い合わせ（エンジンの不具合）")
+        return bool(strange_gas_effects(state, side))
+    return False
 
 
 def power_suppressors(state: GameState, pokemon_id: int, power_index: int = 0) -> tuple[int, ...]:

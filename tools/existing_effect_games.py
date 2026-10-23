@@ -498,6 +498,11 @@ MIRACLE_ENERGY = "neo4-113"
 # v0.86 のカードのワザ・特殊能力の決定は ``_v086_decision``、［ソーラーパワー］は ``_v086_step``。ログから数えるのは ``v086_uses``
 V0_86 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_86"])
 V0_86_POKEMON = V0_86
+# v0.87（docs/movement-damage-reactions-v0.87.md）: 場の移動・ダメージへの反応と、控えの保護・「にげる」の禁止のポケモン 14 枚（写しの組 pool_v0_87）。ポケモンは TARGETS に加え、
+# 使っていないワザを選ぶ手順・エネルギーをためる手順を重ねる。v0.87 の反応の決定（［やけのこり］のカード・［ぶんれつ］・同じ時点の順番）と v0.87 のカードのワザ・特殊能力の決定は
+# ``_v087_decision``、［マグネット］と、相手の［とおせんぼ］のある番の「にげる」の確かめは ``_v087_step``。ログから数えるのは ``v087_uses``
+V0_87 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_87"])
+V0_87_POKEMON = V0_87
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
            + ("PMCG5-052", "PMCG5-053")  # ワザの選び方を重ね、動きを数えるカード（v0.58: タケシのゴローン・ゴローニャ）
@@ -517,7 +522,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_83  # v0.83: ひかるポケモン 10 枚・やさしいポケモン 7 枚・ギャロップ（ES1-014）
            + V0_84_POKEMON  # v0.84: やさしいポケモン 12 枚
            + V0_85_POKEMON  # v0.85: 進化したときの特殊能力・エネルギーを動かすポケモン 13 枚
-           + V0_86_POKEMON)  # v0.86: 登場・エネルギー・進化への反応 13 枚
+           + V0_86_POKEMON  # v0.86: 登場・エネルギー・進化への反応 13 枚
+           + V0_87_POKEMON)  # v0.87: 場の移動・ダメージへの反応と、控えの保護・「にげる」の禁止 14 枚
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -1079,6 +1085,15 @@ DECKS = {
     # フシギダネ → フシギソウ → フシギバナ（［ソーラーパワー］）・エンテイ（［はしりさる］）と、ポケモン育て屋さん・エリカの香水（相手の手札のたねポケモンを相手の場に出させる）
     "D86": (("PMCG1-068", 3), ("neo3-052", 2), ("PMCG1-065", 3), ("PMCG1-069", 2), ("PR1-056", 2), ("neo3-001", 4), ("PMCG4-009", 3), ("neo4-012", 2),
             ("PMCG1-001", 3), ("PMCG1-008", 2), ("PR1-058", 2), ("PF2-008", 2), ("PMCG1-094", 2), ("PMCG5-073", 2), (GRASS, 18), (FIRE, 8)),
+    # v0.87: クヌギダマ → フォレトス（［まきびし］・こうそくスピン）・マグマッグ → マグカルゴ（［やけのこり］）・わるいマグカルゴ（［ヒートプレート］）・カビゴン 2 枚（［とおせんぼ］・
+    # ねころぶ）と、ポケモンいれかえ・突風（バトル場とベンチの移動）・ロケット団の爆発ジム（［ヒートプレート］と同じ時点）・鋼エネルギー（こうそくスピン）
+    "M87": (("neo4-005", 4), ("neo2-044", 3), ("neo3-008", 4), ("neo3-009", 2), ("neo4-023", 2), ("ES1-034", 1), ("QSG-046", 1), (SWITCH, 3), (driver.GUST, 2),
+            ("PMCG6-092", 1), ("neo1-095", 4), (FIRE, 21), ("PMCG1-096", 4), (WATER, 8)),
+    # v0.87: マチスのビリリダマ → マチスのマルマイン（［ショックボム］）・ビードル → コクーン（［どくのたいえき］）・ドガース（［ぶんれつ］・ふしぎなガス）・コイル 2 枚（［マグネット］）・
+    # フリーザー 2 枚（［オーロラヴェール］）・ディグダ → ダグトリオ（［もぐる］）・ゴース → ゴースト → ゲンガー（［やみのちから］）と、ポケモン育て屋さん
+    "S87": (("PMCG5-038", 3), ("GD3-009", 2), ("PMCG1-004", 3), ("ES1-005", 2), ("ES2-003", 4), ("ES2-014", 2), ("QSG-023", 2), ("ES2-012", 1), ("QSG-057", 1),
+            ("PMCG1-052", 3), ("PR1-046", 2), ("PMCG3-029", 3), ("PMCG3-030", 2), ("PR1-053", 2), ("PMCG1-094", 2), (LIGHTNING, 5), (GRASS, 5), (WATER, 6),
+            (FIGHTING, 6), (PSYCHIC, 4)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -1223,6 +1238,7 @@ PAIRINGS_V0_85 = (("M85", "F85"), ("L85", "M85"), ("F85", "W84"), ("L85", "E82")
 # v0.86: R86 対 D86（手札からつけたエネルギー・進化・場に出したときの反応どうし。エリカの香水で相手の場に出させるエンテイ）・R86 対 F85（F85 の［あばれんぼう］・育て屋さんの場で
 # ［かんでん］・［いなびかり］）・D86 対 P31
 PAIRINGS_V0_86 = (("R86", "D86"), ("R86", "F85"), ("D86", "P31"))
+PAIRINGS_V0_87 = (("M87", "S87"), ("M87", "R86"), ("S87", "P31"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -1236,7 +1252,8 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.74": PAIRINGS_V0_74, "v0.75": PAIRINGS_V0_75, "v0.76": PAIRINGS_V0_76,
            "v0.77": PAIRINGS_V0_77, "v0.78": PAIRINGS_V0_78, "v0.79": PAIRINGS_V0_79, "v0.80": PAIRINGS_V0_80,
            "v0.81": PAIRINGS_V0_81, "v0.82": PAIRINGS_V0_82, "v0.83": PAIRINGS_V0_83,
-           "v0.84": PAIRINGS_V0_84, "v0.85": PAIRINGS_V0_85, "v0.86": PAIRINGS_V0_86}
+           "v0.84": PAIRINGS_V0_84, "v0.85": PAIRINGS_V0_85, "v0.86": PAIRINGS_V0_86,
+           "v0.87": PAIRINGS_V0_87}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -1345,6 +1362,21 @@ def _v081_tools_on(state, players, kinds) -> bool:
     return any(effects.tool_effect_of(state, p, types) is not None for player in players for p in state.players[player].in_play())
 
 
+def _v087_shock_blast_on(state, player) -> bool:
+    """v0.87: ``player`` の場に、今はたらく［ショックボム］（``CoinDamageBothActivesOnAttackDamage``）を持つポケモンがいるか（ねむり・マヒ・こんらんでなく、力が消えていない）。"""
+    from kyuura_engine import effects
+    from kyuura_engine.continuous import power_suppressed
+
+    for pokemon in state.players[player].in_play():
+        c = pokemon.conditions
+        if c.asleep or c.paralyzed or c.confused:
+            continue
+        if any(isinstance(slot.effect, effects.CoinDamageBothActivesOnAttackDamage) and not power_suppressed(state, slot.power, pokemon)
+               for slot in effects.powers_of(state, pokemon)):
+            return True
+    return False
+
+
 def _v086_crystal_body(state, pokemon) -> bool:
     """v0.86: 場のポケモン ``pokemon`` の［クリスタルボディ］が今はたらくか（ねむり・マヒ・こんらんでなく、かがくへんかガスなど・スタンウェーブで力が消えていない）。"""
     from kyuura_engine import effects
@@ -1363,7 +1395,8 @@ V031_STOPS = {
     # ポケモンもきぜつし勝ち負けが変わる（C18）。どれも場にそのどうぐがついているときだけ
     "UNRESOLVED_KO_PREVENTION_ORDER": lambda st, c: _v081_tools_on(st, (0, 1), ("FocusBand", "ExpAll")),
     "UNRESOLVED_FOCUS_BAND_TIMING": lambda st, c: _v081_tools_on(st, (0, 1), ("FocusBand",)),
-    "UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT": lambda st, c: _v081_tools_on(st, (1 - c.player,), ("CounterClaw",)),
+    # v0.87: 相手の場の［ショックボム］（受けたワザのダメージで、両方の対戦ポケモンに特殊能力のダメージ。ワザを使ったポケモンもきぜつし勝ち負けが変わる）も
+    "UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT": lambda st, c: _v081_tools_on(st, (1 - c.player,), ("CounterClaw",)) or _v087_shock_blast_on(st, 1 - c.player),
     # v0.68: 相手のうらのカード（マチスの秘策）を 2 枚以上、効果の対象にするコマンド（控え全員へのダメージなど）は、受け付けるかを本当のカードによらないものにできない
     # （エンジンの未対応。docs/final-pmcg-cards-v0.68.md 5.3 節）。コマンドを出したプレイヤーの相手の場に、うらのカードが 2 枚以上ある
     "UNSUPPORTED_SECRET_PLAN_IDENTITIES": lambda st, c: sum(
@@ -1476,7 +1509,18 @@ V031_STOPS = {
     # v0.65: 変わり身の術のついた相手の対戦ポケモンに、手順 4・5・クチバシティジムのコインを投げるワザを使う（NT1）・変わり身の術のついたポケモンを山札・手札にもどす（NT2）
     "UNRESOLVED_NINJA_TRICK_ATTACK_COIN_ORDER": lambda st, c: _v065_tricked(st, 1 - c.player),
     "UNRESOLVED_NINJA_TRICK_LEAVES_WITH_POKEMON": lambda st, c: _v065_tricked(st, c.player) or _v065_tricked(st, 1 - c.player),
+    # v0.87: 1 つのワザで「ダメージを受けたとき」の効果が 2 つ以上はたらく（C34/C35。わるいマグカルゴの「かえんだん」で対戦ポケモンと控えのコクーンの［どくのたいえき］など）。
+    # 場から確かめる（相手の場に「ダメージを受けたとき」の送る効果を持つポケモンがいる）
+    "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS": lambda st, c: _v087_damage_triggers(st, 1 - c.player) >= 1,
 }
+
+
+def _v087_damage_triggers(state, player):
+    """v0.87: プレイヤー ``player`` の場の、「ダメージを受けたとき」の窓の送る効果（はんげき・［どくのたいえき］・［ショックボム］・［ぶんれつ］など）を持つポケモンの数。"""
+    from kyuura_engine.resolution import catalog as C
+    from kyuura_engine.resolution.events import Window
+    return sum(any(i.definition.timing is C.Timing.DEFER for i in C.in_window(state, Window.DAMAGE_RECEIVING, player, p))
+               for p in state.players[player].in_play())
 
 
 def _v065_tricked(state, player) -> bool:
@@ -4410,6 +4454,98 @@ def _v086_step(state, tried, counts):
     return None
 
 
+def _v087_decision(state, counts):
+    """v0.87 の決定への答え（元の手順より先に答える）: ［やけのこり］のカード・［ぶんれつ］・ワザの途中の同じ時点の反応の順番と、v0.87 のカードのワザ・特殊能力の決定（使う機会を
+    含む。相手の決定にも答える）。v0.86 の ``_v086_decision`` と同じ回し方。どちらでもなければ何もしない。"""
+    d = state.decision
+    if d is None:
+        return None
+    if d.kind in ("magma_pool_energy", "split_from_deck") or (d.kind == "reaction_order" and d.context_value("move_order") is not None):
+        key = f"v087_reaction_{d.kind}"
+    else:
+        card_id = _v085_source(state, d)
+        if card_id not in V0_87:
+            return None
+        key = f"v087_{card_id}_{d.kind}"
+    seen = counts[f"{key}_seen"]
+    counts[f"{key}_seen"] += 1
+    rotated = list(d.options[seen % len(d.options):]) + list(d.options[:seen % len(d.options)]) if d.options else []
+    sizes = [d.max_choices, d.min_choices, max(d.min_choices, 1)] if seen % 2 == 0 else [d.min_choices, max(d.min_choices, 1), d.max_choices]
+    candidates = [tuple(rotated[:n]) for n in sizes] + [(o,) for o in d.options]
+    for choices in candidates:
+        if d.min_choices <= len(choices) <= d.max_choices and _v052_accepted(state, ResolveDecision(d.player, d.id, choices)):
+            counts[f"{key}_{len(choices)}"] += 1
+            return ResolveDecision(d.player, d.id, choices)
+    counts[f"{key}_no_accepted_answer"] += 1
+    return None
+
+
+def _v087_step(state, tried, counts):
+    """v0.87: ［マグネット］（自分の番ごとに 1 回）を、受け付けるなら使う。相手のバトル場に［とおせんぼ］のカビゴンがいる番に 1 度だけ、自分のバトル場のポケモンの「にげる」を
+    エンジンに渡して、拒否（``RETREAT_PREVENTED``）を数える（手順は変えない。受け付けたら数えるだけで使わない）。v0.87 のカードがない局では何もしない。"""
+    player = state.current_player
+    for pokemon in state.players[player].in_play():
+        card_id = state.cards[pokemon.card].card_id
+        if card_id not in ("ES2-014", "QSG-023") or ("v087_power", pokemon.pokemon_id, state.turn_number) in tried:
+            continue
+        tried.add(("v087_power", pokemon.pokemon_id, state.turn_number))
+        use = UsePokemonPower(player, pokemon.pokemon_id, 0)
+        if _v052_accepted(state, use):
+            counts[f"v087_power_{card_id}"] += 1
+            return use
+        counts[f"v087_power_{card_id}_not_usable"] += 1
+    opponent = state.players[1 - player].active
+    active = state.players[player].active
+    if opponent is not None and active is not None and state.players[player].bench and state.cards[opponent.card].card_id in ("ES1-034", "QSG-046") \
+            and ("v087_guard", state.turn_number) not in tried:
+        tried.add(("v087_guard", state.turn_number))
+        try:
+            apply_command(state, Retreat(player, tuple(active.energy), state.players[player].bench[0].card))
+            counts["v087_guard_retreat_accepted"] += 1
+        except IllegalActionError as error:
+            counts[f"v087_guard_retreat_{error.code}"] += 1
+        except UnsupportedError as error:
+            counts[f"v087_guard_retreat_{error.code}"] += 1
+    return None
+
+
+def v087_uses(state):
+    """v0.87: ログから数えた v0.87 のカードの動き（ない局では空）。``attack_<id>#<位置>``（そのカードが使ったワザ）・``power_<id>``（宣言・使う機会で使った）と、特殊能力が実際に
+    はたらいたこと（``spikes_<id>``・``magma_<id>``・``magma_none``・``hot_plate_<id>``・``shock_<id>_<面>``・``poison_fluid_<id>``・``split_<id>``・``split_declined``・``split_skipped_<理由>``・
+    ``aurora_<id>``・``dig_<id>``・``strange_gas``）。在場していること・まねて使ったこと・同じ組の別の id の使用は、その id の使用に数えない。"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_87 for uid in state.cards):
+        return counts
+
+    def card_of(uid):
+        return state.cards[uid].card_id if isinstance(uid, int) and uid in state.cards else None
+
+    for e in state.log:
+        kind = e["kind"]
+        holder = card_of(e.get("pokemon"))
+        if kind == "attack" and holder in V0_87 and e.get("card_id", holder) == holder:
+            counts[f"attack_{holder}#{e['attack_index']}"] += 1
+        elif kind == "pokemon_power" and holder in V0_87:
+            counts[f"power_{holder}"] += 1
+        elif kind in ("spikes_damage", "hot_plate_damage", "magma_pool", "poison_fluid") and holder in V0_87:
+            counts[f"{kind.split('_')[0]}_{holder}"] += 1
+        elif kind == "magma_pool_none":
+            counts["magma_none"] += 1
+        elif kind == "shock_blast_check" and holder in V0_87:
+            counts[f"shock_{holder}_{e['result']}"] += 1
+        elif kind == "bench_from_deck" and isinstance(e.get("power"), str) and e["power"].startswith("ES2-003"):
+            counts["split_ES2-003"] += 1
+        elif kind == "split_declined":
+            counts["split_declined"] += 1
+        elif kind == "split_skipped":
+            counts[f"split_skipped_{e['reason']}"] += 1
+        elif kind in ("damage_prevented", "effect_prevented") and e.get("persistent_effect") in ("aurora_veil", "dig_under"):
+            counts[f"{'aurora' if e['persistent_effect'] == 'aurora_veil' else 'dig'}_{card_of(e.get('source_card'))}"] += 1
+        elif kind == "trainer_effect_added" and e.get("effect_kind") == "opponent_power_suppression":
+            counts["strange_gas"] += 1
+    return counts
+
+
 def v086_uses(state):
     """v0.86: ログから数えた v0.86 のカードの動き（ない局では空）。``attack_<id>#<位置>``・``power_<id>``（宣言・使う機会で使った・かならずはたらく）・``entry_declined``・
     ``reaction_declined``・``reaction_evolved``（［エナジーしんか］・［れんさしんか］で山札から重ねた）・``conductivity``・``burst_switched``・``burst_skipped``・``bolt_<面>``・
@@ -5705,7 +5841,8 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = (_v086_decision(state, counts)  # v0.86: 反応の決定・v0.86 のカードの決定（相手の決定にも答える。v0.86 のカードのない局では何もしない）
+            early = (_v087_decision(state, counts)  # v0.87: v0.87 の反応の決定・v0.87 のカードの決定（v0.87 のカードのない局では何もしない）
+                     or _v086_decision(state, counts)  # v0.86: 反応の決定・v0.86 のカードの決定（相手の決定にも答える。v0.86 のカードのない局では何もしない）
                      or _v085_decision(state, counts)  # v0.85: v0.85 のカードの決定（使う機会を含む。v0.85 のカードのない局では何もしない）
                      or _v084_decision(state, counts)  # v0.84: v0.84 のカードの決定（相手の決定・使う機会を含む。v0.84 のカードのない局では何もしない）
                      or _v083_decision(state, counts)  # v0.83: v0.83 のワザの決定（相手プレイヤーの決定を含む。v0.83 のポケモンのない局では何もしない）
@@ -5789,7 +5926,8 @@ def make_policy(seen: dict, counts: Counter):
                      or _v082_trainer(state, tried, counts)  # v0.82: エコロジム
                      or _v084_step(state, tried, counts)  # v0.84: ［おいはらう］・ポケモン育て屋夫婦
                      or _v085_step(state, tried, counts)  # v0.85: ［ファイヤーリチャージ］・［どしゃぶり］・［ファイヤーレイズ］
-                     or _v086_step(state, tried, counts))  # v0.86: ［ソーラーパワー］
+                     or _v086_step(state, tried, counts)  # v0.86: ［ソーラーパワー］
+                     or _v087_step(state, tried, counts))  # v0.87: ［マグネット］・［とおせんぼ］の「にげる」の確かめ
             if power is not None:
                 return power
             history = _v062_attack(state, tried, counts)  # v0.62: 履歴を読むワザ（ドリルホール・オウムがえし）を使える番に使う
@@ -5815,7 +5953,7 @@ def make_policy(seen: dict, counts: Counter):
         attacks = state.card_def(active.card).attacks
         provided = state.energy_types(active)
         usable = [a.index for a in attacks if can_pay_cost(a.cost, provided) and ("attack_index", a.index) not in tried]
-        if card_id in V0_78_POKEMON + V0_79 + V0_82_POKEMON + V0_83 + V0_84_POKEMON + V0_85_POKEMON + V0_86_POKEMON:  # v0.83 のポケモンも（鋼エネルギー）。v0.79 のポケモンも（C79 は悪・鋼エネルギーを使う）。v0.82 のポケモンも（リサイクルエネルギー）
+        if card_id in V0_78_POKEMON + V0_79 + V0_82_POKEMON + V0_83 + V0_84_POKEMON + V0_85_POKEMON + V0_86_POKEMON + V0_87_POKEMON:  # v0.83 のポケモンも（鋼エネルギー）。v0.79 のポケモンも（C79 は悪・鋼エネルギーを使う）。v0.82 のポケモンも（リサイクルエネルギー）
             # v0.78: 悪・鋼エネルギー（特殊エネルギー）は ``state.energy_types`` では数えられない（provides がない）ので、エンジンの支払いの問い合わせで払えるかを見る
             # （v0.78 のポケモンだけ。前の版の組の手順は変えない）
             usable = [a.index for a in attacks if attack_cost_payable(state, active, a) and ("attack_index", a.index) not in tried]
@@ -5842,7 +5980,7 @@ def make_policy(seen: dict, counts: Counter):
             # 使えるワザをどれも 2 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v031_wait_{card_id}"] += 1
             return EndTurn(player)
-        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 + V0_58 + V0_64 + V0_70 + V0_72 + V0_75 + V0_76 + V0_77_POKEMON + V0_79 + V0_82_POKEMON + V0_83 + V0_84_POKEMON + V0_85_POKEMON + V0_86_POKEMON and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
+        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 + V0_58 + V0_64 + V0_70 + V0_72 + V0_75 + V0_76 + V0_77_POKEMON + V0_79 + V0_82_POKEMON + V0_83 + V0_84_POKEMON + V0_85_POKEMON + V0_86_POKEMON + V0_87_POKEMON and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
             # v0.38: 必要なエネルギーの少ないワザ（でんれい・どくばりタックルなど）を使い続けると、もう一つのワザが使えるようにならない（でんれいは自分を
             # 山札にもどす）。使えるワザをどれも 1 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v038_wait_{card_id}"] += 1  # v0.39〜v0.41 のカードも同じ手順（じばく・メガトンパンチ・ギガスパーク・ひのとりなど）
@@ -5967,6 +6105,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v084"] = v084_uses(state)
         result["v085"] = v085_uses(state)
         result["v086"] = v086_uses(state)
+        result["v087"] = v087_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
@@ -6414,7 +6553,8 @@ def summarize(games):
          "v083": Counter(), "v083_games_with": Counter(), "v083_policy": Counter(),
          "v084": Counter(), "v084_games_with": Counter(), "v084_policy": Counter(),
          "v085": Counter(), "v085_games_with": Counter(), "v085_policy": Counter(),
-         "v086": Counter(), "v086_games_with": Counter(), "v086_policy": Counter()}
+         "v086": Counter(), "v086_games_with": Counter(), "v086_policy": Counter(),
+         "v087": Counter(), "v087_games_with": Counter(), "v087_policy": Counter()}
     for r in games:
         s["v058"].update(r.get("v058", {}))  # v0.58
         s["v058_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v058_")})
@@ -6477,6 +6617,9 @@ def summarize(games):
         s["v086"].update(r.get("v086", {}))  # v0.86
         s["v086_games_with"].update({k: 1 for k, v in r.get("v086", {}).items() if v})
         s["v086_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v086_")})
+        s["v087"].update(r.get("v087", {}))  # v0.87
+        s["v087_games_with"].update({k: 1 for k, v in r.get("v087", {}).items() if v})
+        s["v087_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v087_")})
         s["unresolved_rejections"].update(r["unresolved_rejections"])
         s["audit_failures"].update(r["audit"])
         s["end_conditions"].update(r.get("conditions", []))

@@ -668,7 +668,10 @@ class G37Test(unittest.TestCase):
         "CoinChosenSideHealAttack",
         # v0.86: スイクンの「オーロラウェーブ」（2 枚のコインでマヒかねむり）・わるいモココの「スタンウェーブ」（相手の対戦ポケモンの特殊能力を止める持続する効果）
         # （docs/entry-energy-evolution-reactions-v0.86.md 7 章）
-        "DamageThenParalyzeOrSleepByTwoCoins", "DamageThenStopDefenderPowers"]))
+        "DamageThenParalyzeOrSleepByTwoCoins", "DamageThenStopDefenderPowers",
+        # v0.87: カビゴンの「ねころぶ」（「おもて」なら相手もねむり）・フォレトスの「こうそくスピン」（相手の入れ替え）（docs/movement-damage-reactions-v0.87.md 3 章・8 章）。
+        # ドガースの「ふしぎなガス」は相手プレイヤーの場に与える期限のある効果で、相手の対戦ポケモンへの要素ではない（宣言しない）
+        "DamageThenSelfSleepThenSleepOpponentOnHeads", "DamageThenSwitchBothActives"]))
 
 
 class DecisionTest(unittest.TestCase):
