@@ -449,19 +449,18 @@ class RegistrationTest(unittest.TestCase):
                 self.assertEqual(entry.effect.check(definition), [])
 
 
-    def test_unsupported_counts(self):
-        """kyuura data/engine_targets.json（7d3f4ca）の対象 1,377 件から今の登録を差し引くと、未対応は全対象 404・neo 202・拡張パック以外 202（v0.79 は 434・227・207）。
-        ../kyuura がなければ飛ばす。"""
+    def test_cards_are_targets_and_no_longer_unsupported(self):
+        """v0.80 の 30 枚は kyuura data/engine_targets.json（7d3f4ca）の対象 1,377 件にあり、今は未対応の数に入らない（v0.80 の時点の未対応は全対象 404・neo 202・
+        拡張パック以外 202。v0.79 は 434・227・207）。今の未対応の数は tests/test_catalog_contract.py。../kyuura がなければ飛ばす。"""
         import json
         import subprocess
         kyuura = ROOT.parent / "kyuura"
         if not (kyuura / ".git").exists():
             self.skipTest("../kyuura がない")
         targets = json.loads(subprocess.check_output(["git", "-C", str(kyuura), "show", "7d3f4ca76c084774efb4ac6a1d3a943387e183c3:data/engine_targets.json"]))
-        playable = load_card_pool().playable_ids
-        missing = [c for c in targets["cards"] if c["id"] not in playable]
-        self.assertEqual((len(targets["cards"]), len(missing), sum(1 for c in missing if c["id"].startswith("neo")),
-                          sum(1 for c in missing if c["product_group"] != "expansion_pack")), (1377, 286, 132, 154))  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚を加えた  # v0.85 で neo の 6 枚を加えた  # v0.84 で neo の 13 枚を加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた
+        ids = {c["id"] for c in targets["cards"]}
+        self.assertLessEqual(set(H.V0_80_CARDS), ids)
+        self.assertLessEqual(set(H.V0_80_CARDS), load_card_pool().playable_ids)
 
     def test_unregistered_without_the_v0_80_entries(self):
         registry = without_v0_80(E.DEFAULT_EFFECTS)

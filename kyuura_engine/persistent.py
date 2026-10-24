@@ -33,6 +33,12 @@ p.56・p.321 の最新の説明。p.57 のワザ解説）を加えた。自分�
 v0.45: 期限のない効果（``AttackCoinCheck.lasting``。カスミのタッツーの「スミをかける」の「それ以後」）は ``EXPIRED`` で消えない（``lasting``）。ほかの契機
 （ベンチ・進化・きぜつ・山札や手札にもどる）では、ほかの効果と同じに消える。
 
+v0.92（docs/power-suppression-lasting-locks-v0.92.md 4 章）: 期間と消える契機を明示した効果（``state.PERIOD_EFFECT_TYPES``）。期間は ``active_turn``（はたらき始める番）〜
+``end_turn``（その番の終わりに ``EXPIRED``。None なら期限なし）。説明が「このカード…がバトル場をはなれたとき、この効果は消える」と書く効果（``ends_on`` の
+``SOURCE_LEAVES_ACTIVE``）は、発生源がバトル場をはなれた時点で消す（``SOURCE_LEFT_ACTIVE``。``remove_source_left_effects``。場のポケモンをバトル場から動かすすべての処理が、
+動かしたすぐあとに呼ぶ）。「このカードがバトル場にいるかぎり」（``while_source_active``）は問い合わせのときに発生源の場所を確かめる。前者は一度消したら、同じ番に発生源が
+もどっても復活しない。既存の型（v0.91 まで）は、期間の始まり・終わりがどちらも ``active_turn``（``lasting`` なら終わりがない）の既定の値で、v0.40 の「すごむ」の SG1 などは変えない。
+
 持続する効果は物理的なカードではないので、消えてもトラッシュには何も置かない。乱数も使わない。一度消えた効果は、
 ベンチから再びバトル場に出ても復活しない（p.322）。
 """
@@ -43,6 +49,8 @@ from typing import TYPE_CHECKING
 
 from .conditions import DEVOLVE, EVOLVE, FORCED_SWITCH, RETREAT, SWITCH
 from .state import (
+    PERIOD_EFFECT_TYPES,
+    SOURCE_LEAVES_ACTIVE,
     AttackBarrier,
     AttackCoinCheck,
     AttackEffectGuard,
@@ -61,8 +69,11 @@ from .state import (
     HalvedDamage,
     MaxHpSet,
     NextTurnAttackDamage,
+    PeriodAttackLock,
+    PeriodRetreatLock,
     PowersStopped,
     PreventDamage,
+    ReceivedAttackDamageBonus,
     ReducedDamageToSource,
     ReflectShield,
     ResistanceChange,
@@ -93,8 +104,13 @@ REPLACED = "replaced"
 # v0.50: 退化した（p.324「19」。CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION。理由の値は特殊状態の ``conditions.DEVOLVE`` と同じ）
 # v0.60: 効果を持つポケモンがダメージを受けた（R団のストライクの「かげぶんしん」の「このカードがダメージを受けるか…この効果は消える」。``remove_on_damage``）
 DAMAGED = "damaged"
+# v0.91: ワザの効果で「その他の効果」から回復させた（ポリゴンの「オールクリア」の「おたがいの場にいるポケモン全員を「どく・ねむり・マヒ・こんらん」状態や「その他の効果」から、
+# すべて回復させる」。理由の値は特殊状態の ``conditions.CURED`` と同じ）
+CURED = "cured"
+# v0.92: 説明が「このカード…がバトル場をはなれたとき、この効果は消える」と書く効果の発生源が、バトル場をはなれた（``remove_source_left_effects``）
+SOURCE_LEFT_ACTIVE = "source_left_active"
 REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT, FORCED_SWITCH, RETURN_IN_PLAY_TO_DECK, USED, RETURN_IN_PLAY_TO_HAND, DISCARD_FROM_PLAY,
-                   REPLACED, DEVOLVE, DAMAGED)
+                   REPLACED, DEVOLVE, DAMAGED, CURED, SOURCE_LEFT_ACTIVE)
 
 
 def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, effect, *, attack: str, **extra) -> None:
@@ -158,8 +174,49 @@ def remove_expired_persistent_effects(state: GameState) -> None:
     for owner in (state.current_player, 1 - state.current_player):
         for pokemon in state.players[owner].in_play():
             expired = tuple(e for e in pokemon.persistent_effects
-                            if e.active_turn == state.turn_number and not expires_at_turn_start(e) and not lasting(e))
+                            if end_turn(e) == state.turn_number and not expires_at_turn_start(e) and not lasting(e))
             remove_persistent_effects(state, owner, pokemon, EXPIRED, expired)
+
+
+def end_turn(effect) -> int | None:
+    """効果がはたらく最後の番（その番の終わりに ``EXPIRED`` で消える。v0.92）。期間を明示した効果（``PERIOD_EFFECT_TYPES``）は ``end_turn``、期限のない効果は None、
+    ほかの型は v0.91 までと同じ ``active_turn``（「なきつく」の次の番の始めに消える型も、はたらく番は ``active_turn``）。"""
+    if lasting(effect):
+        return None
+    if isinstance(effect, PERIOD_EFFECT_TYPES):
+        return effect.end_turn
+    return effect.active_turn
+
+
+def period_active(state: GameState, effect) -> bool:
+    """期間を明示した効果（v0.92）が今の番にはたらいているか: はたらき始める番〜最後の番（期限なしなら以後のすべての番）で、``while_source_active`` なら発生源（場の番号
+    ``source_pokemon``）が ``source_player`` のバトル場にいる（問い合わせのときに確かめる。同じ位置の別のポケモンを発生源にしない）。"""
+    turn = state.turn_number
+    if turn < effect.active_turn or (effect.end_turn is not None and turn > effect.end_turn):
+        return False
+    if effect.while_source_active:
+        active = state.players[effect.source_player].active
+        return active is not None and active.pokemon_id == effect.source_pokemon
+    return True
+
+
+def remove_source_left_effects(state: GameState, owner: int, pokemon: PokemonInPlay) -> None:
+    """v0.92: プレイヤー ``owner`` の場のポケモン ``pokemon`` がバトル場をはなれた（ベンチにもどる・きぜつ・山札や手札にもどる・トラッシュ）。説明が「このカード…がバトル場を
+    はなれたとき、この効果は消える」と書く効果（``ends_on`` の ``SOURCE_LEAVES_ACTIVE``）のうち、発生源がこのポケモンのものを、受けているポケモン（おたがいの場）から理由
+    ``SOURCE_LEFT_ACTIVE`` で消す。番のプレイヤーの場（バトル場 → ベンチ）、相手の場の順。発生源がはなれても消えると書かれていない効果は消さない（p.322）。バトル場から動かす
+    すべての処理が、動かしたすぐあと（受けているポケモンの効果を消すのと同じ時点）に呼ぶ。動かす前の確かめの複製の上で呼んでもよい（状態だけを変え、乱数を使わない）。"""
+    for side in (state.current_player, 1 - state.current_player):
+        for holder in state.players[side].in_play():
+            found = tuple(e for e in holder.persistent_effects
+                          if isinstance(e, PERIOD_EFFECT_TYPES) and SOURCE_LEAVES_ACTIVE in e.ends_on
+                          and e.source_player == owner and e.source_pokemon == pokemon.pokemon_id)
+            remove_persistent_effects(state, side, holder, SOURCE_LEFT_ACTIVE, found)
+
+
+def source_bound_effects(state: GameState, owner: int, pokemon: PokemonInPlay) -> tuple:
+    """v0.92: 発生源の場所で決まる期間を明示した効果（``while_source_active``）のうち、発生源がプレイヤー ``owner`` の ``pokemon`` のもの（受けているポケモンはおたがいの場）。"""
+    return tuple(e for side in state.players for holder in side.in_play() for e in holder.persistent_effects
+                 if isinstance(e, PERIOD_EFFECT_TYPES) and e.while_source_active and e.source_player == owner and e.source_pokemon == pokemon.pokemon_id)
 
 
 def lasting(effect) -> bool:
@@ -300,9 +357,13 @@ def destiny_bond(state: GameState, pokemon: PokemonInPlay) -> DestinyBond | None
     return _active(state, pokemon, DestinyBond)
 
 
-def cannot_attack(state: GameState, pokemon: PokemonInPlay) -> CannotAttack | None:
-    """今の番に ``pokemon`` がワザを使えない効果（v0.31。イーブイの「しっぽをふる」を受けた）がはたらいているなら、その効果。"""
-    return _active(state, pokemon, CannotAttack)
+def cannot_attack(state: GameState, pokemon: PokemonInPlay) -> CannotAttack | PeriodAttackLock | None:
+    """今の番に ``pokemon`` がワザを使えない効果（v0.31。イーブイの「しっぽをふる」を受けた）がはたらいているなら、その効果。v0.92: 期間を明示した「ワザを使えない」効果
+    （``PeriodAttackLock``。ヨーギラスの「にらみつける」。``period_active``）も同じ問い合わせで返す。"""
+    found = _active(state, pokemon, CannotAttack)
+    if found is not None:
+        return found
+    return next((e for e in pokemon.persistent_effects if isinstance(e, PeriodAttackLock) and period_active(state, e)), None)
 
 
 def cannot_attack_while_source_active(state: GameState, pokemon: PokemonInPlay) -> CannotAttackWhileSourceActive | None:
@@ -414,10 +475,19 @@ def resistance_change(pokemon: PokemonInPlay) -> ResistanceChange | None:
     return next((e for e in pokemon.persistent_effects if isinstance(e, ResistanceChange)), None)
 
 
-def cannot_retreat(state: GameState, pokemon: PokemonInPlay) -> CannotRetreat | None:
+def cannot_retreat(state: GameState, pokemon: PokemonInPlay) -> CannotRetreat | PeriodRetreatLock | None:
     """今の番に ``pokemon`` が「にげる」ことができない効果（v0.36。``CannotRetreat``。「アイスバーン」・「わしづかみ」を受けた）がはたらいているなら、
-    その効果。"""
-    return _active(state, pokemon, CannotRetreat)
+    その効果。v0.92: 期間を明示した「にげる」ことができない効果（``PeriodRetreatLock``。クモのす・くろいまなざし。``period_active``）も同じ問い合わせで返す。"""
+    found = _active(state, pokemon, CannotRetreat)
+    if found is not None:
+        return found
+    return next((e for e in pokemon.persistent_effects if isinstance(e, PeriodRetreatLock) and period_active(state, e)), None)
+
+
+def received_attack_damage_bonuses(state: GameState, pokemon: PokemonInPlay) -> tuple[ReceivedAttackDamageBonus, ...]:
+    """v0.92: 今の番に ``pokemon`` が受けるワザによるダメージを増やす効果（``ReceivedAttackDamageBonus``。いやなおと）のうち、はたらいているもの（受けた順）。重なっていれば
+    それぞれがはたらく（p.323「持続する効果は重複することがある」。加算なので順番で結果は変わらない）。"""
+    return tuple(e for e in pokemon.persistent_effects if isinstance(e, ReceivedAttackDamageBonus) and period_active(state, e))
 
 
 def powers_use_prevented(state: GameState, pokemon: PokemonInPlay) -> CannotUsePowers | None:

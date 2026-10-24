@@ -107,6 +107,9 @@
 - 23: 22 に、最上位の ``color_effects``（特殊能力で、この番が終わるまで色を変える効果。``{"kind", "player", "source", "source_card", "card_id", "power_index", "target",
   "color", "turn", "left_play"}`` の並び。ランターンの［せんすい］・ポリゴン2の［エナジーコンバーター］）を加えたもの（v0.88。docs/type-energy-colors-v0.88.md 2 章）。形式 1〜22 は、
   その効果があると ``ValueError``（なければ形式 1〜22 の書き出しは v0.87 と同じ）。
+- 24: 23 に、場のポケモンごとの ``markers``（のっているマーカー・ダメージカウンター以外のカウンター。のせた順に ``{"kind", "player", "source_card", "source_card_id", "effect",
+  "turn"}``、色マーカーだけ ``"color"`` を加える。なければ ``[]``）を加えたもの（v0.90。docs/markers-counters-v0.90.md 3 章）。形式 1〜23 は、マーカー・カウンターがあると
+  ``ValueError``（なければ形式 1〜23 の書き出しは v0.89 と同じ）。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -187,6 +190,8 @@ from .state import (
     StatusImmunityNextTurn,
     PowersStopped,
     BenchProtection,
+    PERIOD_EFFECT_TYPES,
+    ReceivedAttackDamageBonus,
     NEXT_TURN_MULTIPLY,
     CannotUseAttack,
     CannotUseOwnAttack,
@@ -200,7 +205,7 @@ from .state import (
     WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -289,6 +294,18 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
         data["given_by"] = effect.given_by
     elif isinstance(effect, ZeroDamageAtLeast):
         data["threshold"] = effect.threshold  # v0.84: 「パルスガード」
+    elif isinstance(effect, PERIOD_EFFECT_TYPES):
+        # v0.92: 期間を明示した効果（``"period_retreat_lock"``・``"period_attack_lock"``・``"received_attack_damage_bonus"``）。期間の終わり（null は期限なし）・発生源の場の番号と、
+        # あるときだけ発生源がバトル場にいる間だけの印・明記された消える契機、いやなおとは増やす数。種類の値を加えただけで形式は変えない（v0.84・v0.86 と同じ。v0.91 までの書き出しを
+        # 読む側は、知らない種類として拒否すること）
+        data["end_turn"] = effect.end_turn
+        data["source_pokemon"] = effect.source_pokemon
+        if effect.while_source_active:
+            data["while_source_active"] = True
+        if effect.ends_on:
+            data["ends_on"] = list(effect.ends_on)
+        if isinstance(effect, ReceivedAttackDamageBonus):
+            data["amount"] = effect.amount
     elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive, HalvedDamage,
                                          CannotUsePowers, CannotAttachEnergy, TailsDamageGuard, DoubledDamage, BenchAttackDamageGuard, AttackEffectGuard,
                                          StatusImmunityNextTurn, PowersStopped, BenchProtection)):
@@ -384,6 +401,17 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay | None, format_version: in
         data["devolved_turn"] = pokemon.devolved_turn  # v0.50
     if format_version >= 20:
         data["history"] = [history_record(record) for record in pokemon.history]  # v0.62
+    if format_version >= 24:
+        data["markers"] = [marker_record(state, marker) for marker in pokemon.markers]  # v0.90
+    return data
+
+
+def marker_record(state: GameState, marker) -> dict[str, Any]:
+    """v0.90: マーカー・カウンター 1 つ（``state.Marker``）。色マーカーだけ ``color`` を書く。"""
+    data: dict[str, Any] = {"kind": marker.kind, "player": marker.player, "source_card": marker.source_card,
+                            "source_card_id": state.cards[marker.source_card].card_id, "effect": marker.attack, "turn": marker.turn}
+    if marker.color is not None:
+        data["color"] = marker.color.value
     return data
 
 
@@ -475,6 +503,8 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         raise ValueError(f"形式 {format_version} は、うらにしてベンチに出したカード（マチスの秘策）を表せない（format_version=22 を使う）")
     if format_version < 23 and state.color_effects:
         raise ValueError(f"形式 {format_version} は、特殊能力で色を変える効果（［せんすい］・［エナジーコンバーター］）を表せない（format_version=23 を使う）")
+    if format_version < 24 and any(pokemon.markers for p in state.players for pokemon in p.in_play()):
+        raise ValueError(f"形式 {format_version} は、場のポケモンのマーカー・カウンター（ダメージカウンター以外）を表せない（format_version=24 を使う）")
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
     if format_version == 1 and state.decision is not None and state.decision.resume == "attack":

@@ -221,8 +221,10 @@ class CorrectionTest(unittest.TestCase):
 
     def test_only_lickitung_and_kangaskhan_are_corrected(self):
         # v0.71: 写しに加えたナツメのスリーパー（GD6-010。ふりこののろいのダメージの「×」。kyuura の前の判定による台帳の修正）
-        self.assertEqual({c["card_id"] for c in self.data["kyuura_corrections"]}, {LICKITUNG, "PMCG2-046", "GD6-010"})
-        self.assertEqual({c["id"] for c in self.data["cards"] if c.get("corrections")}, {LICKITUNG, "PMCG2-046", "GD6-010"})
+        # v0.89: 写しに加えたベロリンガ（SI-010。サザンアイランド。ワザ 1 の名前「のびるベロ」。kyuura の前の判定による台帳の修正 FIX-SI-010-ATK1-NAME。docs/selected-target-damage-v0.89.md 2 章）
+        corrected = {LICKITUNG, "PMCG2-046", "GD6-010", "SI-010"}
+        self.assertEqual({c["card_id"] for c in self.data["kyuura_corrections"]}, corrected)
+        self.assertEqual({c["id"] for c in self.data["cards"] if c.get("corrections")}, corrected)
 
     @unittest.skipUnless((KYUURA / ".git").exists(), "../kyuura がない")
     def test_correction_sources_check_and_tampering(self):

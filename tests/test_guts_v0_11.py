@@ -673,7 +673,18 @@ class G37Test(unittest.TestCase):
         # ドガースの「ふしぎなガス」は相手プレイヤーの場に与える期限のある効果で、相手の対戦ポケモンへの要素ではない（宣言しない）
         "DamageThenSelfSleepThenSleepOpponentOnHeads", "DamageThenSwitchBothActives",
         # v0.88: かっこいいポリゴンの「テクスチャーマジック」（相手の対戦ポケモンの弱点の色を変える。docs/type-energy-colors-v0.88.md 6.5 節）
-        "ChangeWeaknessAndResistanceOptional"]))
+        "ChangeWeaknessAndResistanceOptional",
+        # v0.89: レアコイルの「マイクロウェーブ」（選んだ個体のエネルギーカードのトラッシュ）・ベロリンガの「きずをなめる」（おたがいの場から選ぶ回復。docs/selected-target-damage-v0.89.md）
+        "ChooseOpponentPokemonDamageThenDiscardEnergyOnHeads", "CoinChooseEitherPokemonHeal",
+        # v0.90: ベトベターの「ベトベトえき」・ルージュラの「あくまののろい」・ドーブルの「ペイント」（相手にマーカーをのせる）・ガラガラの「ほねこんぼう」（マヒ。
+        # docs/markers-counters-v0.90.md）
+        "MarkOpponentIfAbsent", "CoinMarkOpponent", "CoinPaintOpponent", "DamageThenRemoveOwnMarkerParalyzeOnHeads",
+        # v0.91: マグマラシの「やきこがす」・エレブーの「ひらいしん」・ポリゴンの「ハイパーテクスチャー」（相手にマーカーをのせる）・「オールクリア」（相手の場のトレーナー・特殊状態・
+        # その他の効果・マーカー。docs/marker-check-field-reset-v0.91.md）
+        "DamageThenCoinMarkOpponentIfAbsent", "ChooseOpponentPokemonMarkIfAbsent", "ChooseOpponentPokemonReplaceColorMarker", "AllClear",
+        # v0.92: イトマルの「こわいかお」（ワザとにげるの禁止）・クモのす・くろいまなざし・ヨーギラスの「にらみつける」（期間を明示した禁止）・いやなおと（受けるダメージの +20）・
+        # きゅうけつどく（どく）・やみのはどう（おたがいの場の特殊能力。相手の対戦ポケモンも受ける。docs/power-suppression-lasting-locks-v0.92.md）
+        "CoinAttackAndRetreatLock", "PeriodLockAttack", "ReceivedAttackDamageBonusAttack", "DamageDrainThenPoison", "DamageThenFieldPowerSuppression"]))
 
 
 class DecisionTest(unittest.TestCase):

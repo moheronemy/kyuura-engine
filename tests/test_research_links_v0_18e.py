@@ -123,7 +123,17 @@ class ResearchLinksTest(unittest.TestCase):
                              "UNRESOLVED_HOT_PLATE_FACE_DOWN", "UNRESOLVED_STRANGE_GAS_NEW_POKEMON", "UNRESOLVED_STRANGE_GAS_PROTECTED_POKEMON",
                              "UNRESOLVED_POWER_DAMAGE_PREVENTED",
                              # v0.88: CE1・CE2・CE3（docs/type-energy-colors-v0.88.md 4 章）
-                             "UNRESOLVED_COLOR_EFFECT_CONTINUATION", "UNRESOLVED_COLOR_REPLACEMENT_ORDER", "UNRESOLVED_COLOR_CHANGED_ENERGY_CARD"})
+                             "UNRESOLVED_COLOR_EFFECT_CONTINUATION", "UNRESOLVED_COLOR_REPLACEMENT_ORDER", "UNRESOLVED_COLOR_CHANGED_ENERGY_CARD",
+                             # v0.89: FA1（docs/selected-target-damage-v0.89.md 4.3 節）
+                             "UNRESOLVED_IGNORED_EFFECTS_SCOPE",
+                             # v0.90: CM1・KR1（docs/markers-counters-v0.90.md 6 章・7 章）
+                             "UNRESOLVED_COLOR_MARKER_PRECEDENCE", "UNRESOLVED_FULL_RECOVERY_COUNTERS",
+                             # v0.91: KK1・HR1・HX1・ZC1・ZC2・ZC3（docs/marker-check-field-reset-v0.91.md 9 章）
+                             "UNRESOLVED_POKEMON_CHECK_CHAR_COIN_ORDER", "UNRESOLVED_LIGHTNING_BOLT_DEFENDER_UNITS", "UNRESOLVED_HYPER_TEXTURE_UNMARKED_TARGET",
+                             "UNRESOLVED_ALL_CLEAR_OTHER_EFFECTS", "UNRESOLVED_ALL_CLEAR_ATTACK_SOURCE", "UNRESOLVED_ALL_CLEAR_FOSSIL_IN_PLAY",
+                             # v0.92: DW1・DW2・DW3・ML1（docs/power-suppression-lasting-locks-v0.92.md 10 章）
+                             "UNRESOLVED_DARK_WAVE_NEW_POKEMON", "UNRESOLVED_DARK_WAVE_PROTECTED_POKEMON", "UNRESOLVED_DARK_WAVE_KNOCKED_OUT_POWER",
+                             "UNRESOLVED_MEAN_LOOK_SOURCE_EVOLVED"})
         # v0.31〜v0.68 は、kyuura の一覧でコードのない行を指していた停止コード 8 件（T27・C34/C35・G40・P19・P32・Z9・DR8・DR13）に kyuura_index_engine_key を
         # 書いていた。v0.69 で kyuura が停止コードを書いたので外した（scripts/check_research_links.py が、kyuura の一覧のコードで照らす）
         self.assertEqual({code for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}, set())

@@ -1955,6 +1955,73 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.92: 能力の消去・続く制限の 8 枚
+
+[power-suppression-lasting-locks-v0.92.md](power-suppression-lasting-locks-v0.92.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_92`（8 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.91 までの
+  1,119 枚の記録は変わっていない。
+- 8 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-24・`kyuura_records` は空・外部照合なし）。`card_verification.json` には加えていない。
+- 処理に使う文面はどれも kyuura の印刷の文面（研究の対応表の `adopted_printed_text` に 15。ヨーギラスのいわおとしは説明文がない）。8 枚の id と旧 pcg-search の id（`1stgymd6008`・
+  `neop025`）で、kyuura の研究の基準に LD-・CC-・CR-・UQ-・エラッタがないことを確かめた。
+- 基準の一般条項（GR-2000-P309-ATTACK-PROCEDURE・P310・P311・GR-2000-P320-DAMAGE-FIGURE・P321・P322・P323・P324・P325）を再利用した。印刷の文面・既存の記録・実装上の読み方は
+  docs の各章で分けた。
+- 日本語の文面の転記元は nazonobasho.com（イトマル・アリアドス・イワーク・ヤミカラス）・pokemonwiki（ゴルバット・ヨーギラス）・pcg-search.com（ナツメのゲンガー・ハッサム）。外部照合は
+  していない。
+- 新しい停止コード 4 件（DW1・DW2・DW3・ML1）を `stop_codes` に `not_in_kyuura` で加えた。
+- 報告事項（kyuura の作業）: 4 つの論点は kyuura の未解決の一覧にない。kyuura の engine_targets.json の `engine_reference` を v0.92 の登録で写すと 8 枚の `engine_status` が
+  `registered` になる。きゅうけつどくの括弧の字形がアリアドス（半角）とゴルバット（全角）で違う（意味は同じ）。data/Silver_Bible_structured.md のナツメのゲンガーの解説の、かげしばりの
+  語順が印刷の文面と違う（挙動は変わらない。エンジンは根拠にしていない。docs 13 章）。
+
+## v0.91: 残りのマーカーのポケモン 3 枚とヒノアラシ
+
+[marker-check-field-reset-v0.91.md](marker-check-field-reset-v0.91.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_91`（4 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.90 までの
+  1,115 枚の記録は変わっていない。
+- 4 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-24・外部照合なし）。マグマラシの `kyuura_records` は RUL-CHAR-MARKER（このカードを指す記録）で、
+  基準（2000.02.14 版）の後の記録なので処理の根拠に使っていない。ほかの 3 枚の `kyuura_records` は空。`card_verification.json` には加えていない。
+- 処理に使う文面はどれも kyuura の印刷の文面（研究の対応表の `adopted_printed_text` に 7）。4 枚の id と旧 pcg-search の id で、kyuura の研究の基準に LD-・CC-・CR-・UQ- がないことを
+  確かめた。
+- 基準の一般条項（GR-2000-P309-ATTACK-PROCEDURE・P310・P311・GR-2000-P320-DAMAGE-FIGURE・P321・P322・GR-2000-P323-POKEMON-CHECK・P324・P325）を再利用した。印刷の文面・既存の記録・
+  実装上の読み方は docs の各章で分けた。
+- 日本語の文面の転記元は nazonobasho.com（マグマラシ）・pokemonwiki（ヒノアラシ）・pcg-search.com（エレブー・ポリゴン）。外部照合はしていない。
+- 新しい停止コード 6 件（KK1・HR1・HX1・ZC1・ZC2・ZC3）を `stop_codes` に `not_in_kyuura` で加えた。
+- 報告事項（kyuura の作業）: 6 つの論点は kyuura の未解決の一覧にない。kyuura の engine_targets.json の `engine_reference` を v0.91 の登録で写すと 4 枚の `engine_status` が
+  `registered` になる。data/Silver_Bible_structured.md のエレブーの解説の、進化・退化でマーカー・カウンターを取りのぞく記述は研究の記録にない（エンジンは根拠にしていない。docs 12 章）。
+
+## v0.90: マーカー・ダメージカウンター以外のカウンターのポケモン 7 枚
+
+[markers-counters-v0.90.md](markers-counters-v0.90.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_90`（7 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.89 までの 1,108 枚の
+  記録は変わっていない。
+- 7 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-24・外部照合なし・`kyuura_records` は空）。`card_verification.json` には加えていない。
+- 処理に使う文面はどれも kyuura の印刷の文面（研究の対応表の `adopted_printed_text` に 12）。7 枚の id と旧 pcg-search の id で、kyuura の研究の基準に LD-・CC-・CR-・UQ-・エラッタがないことを
+  確かめた。くいしんぼカビゴンの 2001 年の殿堂入りカードの一覧・ドーブル（neo2）のスケッチの記録は、このカードの処理の根拠に使っていない。
+- 進化・退化・ベンチでのマーカー・カウンターの扱いは、基準の一般条項（GR-2000-P310-EVOLUTION・GR-2000-P311-RETREAT・GR-2000-P322-PERSISTENT-EFFECTS・GR-2000-P324-DEVOLUTION）から読んだ。
+  2000 年 5 月 1 日の RUL-CHAR-MARKER は基準の後の記録なので持ち込んでいない。
+- 日本語の文面は kyuura の転記（pcg-search.com）。同じ所との照合は独立した照合にならない。外部照合はしていない。
+- 新しい停止コード 2 件（CM1・KR1）を `stop_codes` に `not_in_kyuura` で加えた。
+- 報告事項（kyuura の作業）: CM1（色マーカーと特殊能力で変えた色）・KR1（かんぜんかいふくの「ダメージカウンターやマーカー」とほかのカウンター）は kyuura の未解決の一覧にない論点。kyuura の
+  engine_targets.json の `engine_reference` は v0.68 の登録の写しで、v0.90 の登録を写すと 7 枚の `engine_status` が `registered` になる。
+
+## v0.89: 対象を選ぶダメージ・選べる回復のポケモン 17 枚
+
+[selected-target-damage-v0.89.md](selected-target-damage-v0.89.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_89`（17 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.88 までの 1,091 枚の
+  記録は変わっていない。
+- 17 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-24・外部照合なし・`kyuura_records` は空）。`card_verification.json` には加えていない。
+- 処理に使う文面はどれも kyuura の印刷の文面（研究の対応表の `adopted_printed_text` に 23）。
+- ベロリンガ（SI-010）のワザ 1 の名前「のびるベロ」は、kyuura の台帳 FIX-SI-010-ATK1-NAME（kyuura の前の作業で 2 つの転記を突き合わせた判定。kyuura の
+  docs/cards/products/southern-islands.md「2 つの転記の食い違い」）で kyuura が当てはめた値。写しの作り直しの道具の `KYUURA_CORRECTIONS` に根拠 `kyuura_existing_record` で挙げ、当てはめ直して
+  いない。エンジンは画像を見ていない。照合の記録 CC-PMCG2-041-P234（第2弾のベロリンガの記録）を、SI-010 を照合した記録として数えていない。
+- 日本語の文面は kyuura の転記（pcg-search.com・なぞのばしょ）。同じ所との照合は独立した照合にならない。外部照合はしていない。
+- 新しい停止コード 1 件（FA1）を `stop_codes` に `not_in_kyuura` で加えた。
+- 報告事項（kyuura の作業）: FA1 は kyuura の未解決の一覧にない論点。ナッシー（SI-013）の文面の「抵抗カ」（カタカナの「カ」）は転記の字形と思われる。kyuura の engine_targets.json の
+  `engine_reference` は v0.68 の登録の写しで、v0.89 の登録を写すと 17 枚の `engine_status` が `registered` になる。
+
 ## v0.88: ポケモンのタイプとエネルギーの色を変える特殊能力、色を選ぶ・数えるワザの 11 枚
 
 [type-energy-colors-v0.88.md](type-energy-colors-v0.88.md)。

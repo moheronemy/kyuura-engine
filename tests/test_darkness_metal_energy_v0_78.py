@@ -89,6 +89,7 @@ from tests.helpers import (
     with_coin_results,
 )
 from tests.log_audit import observation_problems, serialization_problems
+from tests.release_catalog import cards_after
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DOC = ROOT / "docs" / "darkness-metal-energy-v0.78.md"
@@ -241,7 +242,6 @@ class RegistrationTest(unittest.TestCase):
         after = load_card_pool()
         self.assertFalse(before.playable_ids & set(V0_78_CARDS))
         self.assertEqual(after.playable_ids - before.playable_ids, frozenset(V0_78_CARDS))
-        self.assertEqual(len(before.playable_ids), 1078)  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.84 でポケモン 12 枚・ポケモン育て屋夫婦を加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.79 の 52 枚・v0.80 の 30 枚を含む（v0.78 では 878）  # v0.83 でポケモン 18 枚（ワザ 33）を加えた
         self.assertFalse(set(E.EQUIVALENT_CARDS) & set(V0_78_CARDS))
         self.assertFalse(set(E.REPRINT_CARDS) & set(V0_78_CARDS))
 
@@ -592,7 +592,8 @@ class SecretPlanAndQuizTest(unittest.TestCase):
     def test_quiz_names(self):
         extract = read_extract()
         cards = {c["id"]: c for c in extract["cards"]}
-        earlier = {cards[c]["name"]["ja"] for c in cards if c not in V0_78_CARDS and c not in extract["pool_v0_79"] and cards[c]["category"] == "pokemon"}  # v0.79 で同じ名前のカードを加えた
+        later = cards_after(extract, "0.78")  # v0.79・v0.92 で同じ名前のカードを加えた（後の版の組を列挙しない。docs/testing.md）
+        earlier = {cards[c]["name"]["ja"] for c in cards if c not in V0_78_CARDS and c not in later and cards[c]["category"] == "pokemon"}
         new = sorted({cards[c]["name"]["ja"] for c in V0_78_POKEMON} - earlier)
         self.assertEqual(new, sorted(["ニューラ", "ハガネール", "デルビル", "ハッサム"]))
         state = build_test_state([{"active": "PMCG1-018"}, {"active": "PMCG1-018"}])

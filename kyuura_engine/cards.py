@@ -137,6 +137,9 @@ class CardDefinition:
     # v0.82（docs/energy-discard-return-v0.82.md 5 章）: ポケモンのルール文「「（このカードの名前）」はデッキに1枚までしか入れることができません。」の枚数（ひかるリザードン
     # neo4-025）。同じ名前のカードの枚数の上限（デッキの検査 ``deck.deck_problems``）。ほかのルール文のあるポケモンは今までどおり未対応
     deck_limit: int | None = None
+    # v0.90（docs/markers-counters-v0.90.md 5 章）: 弱点の計算でかける数（p.321 の 3 段階）。印刷の定義はいつも None（共通のルールの ``RuleSet.weakness_multiplier``）。のろいマーカーの
+    # のっている場のポケモンの今有効な値の定義（``effects.definition_views``）だけが、「×2」ではなく「×4」の 4 を持つ（全体のルールは変えない）
+    weakness_multiplier: int | None = None
 
     @property
     def is_basic_pokemon(self) -> bool:
@@ -527,6 +530,10 @@ POOL_KEYS = (
     "pool_v0_86",  # v0.86（登場・エネルギー・進化に反応する特殊能力のポケモン 13 枚。docs/entry-energy-evolution-reactions-v0.86.md）
     "pool_v0_87",  # v0.87（場の移動・ダメージへの反応とベンチの保護のポケモン 14 枚。docs/movement-damage-reactions-v0.87.md）
     "pool_v0_88",  # v0.88（タイプとエネルギーの色を変える・数えるポケモン 11 枚。docs/type-energy-colors-v0.88.md）
+    "pool_v0_89",  # v0.89（対象を選ぶダメージ・選べる回復のポケモン 17 枚。docs/selected-target-damage-v0.89.md）
+    "pool_v0_90",  # v0.90（マーカー・ダメージカウンター以外のカウンターのポケモン 7 枚。docs/markers-counters-v0.90.md）
+    "pool_v0_91",  # v0.91（残りのマーカーのポケモン 3 枚とヒノアラシ。docs/marker-check-field-reset-v0.91.md）
+    "pool_v0_92",  # v0.92（能力の消去・続く制限のポケモン 8 枚。docs/power-suppression-lasting-locks-v0.92.md）
 )
 
 

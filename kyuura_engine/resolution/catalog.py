@@ -19,7 +19,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any
 
 from .. import effects as E
-from ..continuous import goop_gas_effects, suppressors_of
+from ..continuous import field_powers_suppressed, suppressors_of
 from ..persistent import powers_stopped, powers_use_prevented
 from ..decisions import BENCH_GUARD, KNOCK_OUT_POWER, KO_PREVENTION, POST_KNOCKOUT_POWER, REACTION_SWITCH, SPLIT_FROM_DECK
 from ..state import AttackBarrier, AttackEffectGuard, BenchAttackDamageGuard, BenchProtection, PreventDamage, Retaliation
@@ -416,7 +416,9 @@ def stopped(state: GameState, instance: EffectInstance) -> bool:
     if found is not None and powers_stopped(state, found[1]) is not None:
         return True  # v0.86: スタンウェーブを受けたポケモンの特殊能力（「使うことができず、その効果も消える」）
     # v0.87: ふしぎなガス（相手プレイヤーが与えた効果。この効果の持ち主の側だけ）
-    return bool(goop_gas_effects(state)) or bool(suppressors_of(state, instance.power)) or bool(E.strange_gas_effects(state, instance.owner))
+    # v0.91: オールクリアのワザを使っているあいだ。v0.92: やみのはどう（``continuous.field_powers_suppressed``）
+    return (field_powers_suppressed(state) or bool(suppressors_of(state, instance.power))
+            or bool(E.strange_gas_effects(state, instance.owner)))
 
 
 def offer_stopped(state: GameState, instance: EffectInstance, pokemon: PokemonInPlay) -> bool:

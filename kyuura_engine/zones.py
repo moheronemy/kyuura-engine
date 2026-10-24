@@ -112,6 +112,7 @@ def reveal_face_down(state: GameState, owner: int, pokemon: PokemonInPlay, *, ca
         state.players[attached.player].discard.append(attached.card)
     state.add_event("secret_plan_discarded", player=owner, pokemon_id=pokemon.pokemon_id, cards=(pokemon.card, *energy, *trainers), energy=energy,
                     trainers=trainers, zone=zone)
+    _left_active(state, owner, pokemon, zone == "active")
     _return_energy(state, returns)
     return None
 
@@ -183,6 +184,15 @@ def bench_from_discard(state: GameState, card: int, *, counters: int = 0) -> Pok
     return pokemon
 
 
+def _left_active(state: GameState, player: int, pokemon: PokemonInPlay, was_active: bool) -> None:
+    """v0.92: プレイヤー ``player`` の ``pokemon`` がバトル場をはなれた（``was_active``）なら、説明が「このカード…がバトル場をはなれたとき、この効果は消える」と書く効果の
+    うち、発生源がこのポケモンのものを消す（``persistent.remove_source_left_effects``。受けているのはほかのポケモン）。ベンチからはなれたときは何もしない。"""
+    if was_active:
+        from .persistent import remove_source_left_effects
+
+        remove_source_left_effects(state, player, pokemon)
+
+
 def return_in_play_to_deck(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str | None = None, trainer: int | None = None,
                            stadium: int | None = None, power: str | None = None) -> tuple[int, ...]:
     """自分の場のポケモン ``pokemon`` と、ついているすべてのカードを、同じ uid のまま自分の山札の一番下にもどす（v0.36。キョウのドガースの「くもがくれ
@@ -225,6 +235,7 @@ def return_in_play_to_deck(state: GameState, player: int, pokemon: PokemonInPlay
     disguise = {} if pokemon.disguise is None else {"disguise": pokemon.disguise}  # v0.49: 「ばける」でのせていた進化カード（いっしょにもどす）
     state.add_event("return_in_play_to_deck", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, **source, cards=cards,
                     evolution_stack=pokemon.evolution_stack, energy=tuple(pokemon.energy), trainers=trainers, damage=pokemon.damage, **disguise)
+    _left_active(state, player, pokemon, not on_bench)
     return cards
 
 
@@ -282,6 +293,7 @@ def return_basic_to_hand(state: GameState, player: int, pokemon: PokemonInPlay, 
     disguise = {} if pokemon.disguise is None else {"disguise": pokemon.disguise}
     state.add_event("return_basic_to_hand", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, zone=zone, trainer_card=trainer, card=card,
                     discarded=discarded, evolution_cards=evolution_cards, energy=energy, damage=pokemon.damage, **disguise)
+    _left_active(state, player, pokemon, zone == "active")
     _return_energy(state, returns)
     return card, discarded
 
@@ -332,6 +344,7 @@ def return_in_play_to_hand(state: GameState, player: int, pokemon: PokemonInPlay
         source["zone"] = "bench" if on_bench else "active"
     state.add_event("return_in_play_to_hand", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, **source, cards=cards,
                     evolution_stack=pokemon.evolution_stack, energy=tuple(pokemon.energy), trainers=trainers, damage=pokemon.damage, **disguise)
+    _left_active(state, player, pokemon, not on_bench)
     return cards
 
 
@@ -793,6 +806,7 @@ def discard_from_play(state: GameState, player: int, pokemon: PokemonInPlay) -> 
     cards = (pokemon.card, *pokemon.energy, *trainers)
     state.add_event("discard_from_play", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, cards=cards, energy=tuple(pokemon.energy),
                     trainers=trainers, damage=pokemon.damage)
+    _left_active(state, player, pokemon, not on_bench)
     _return_energy(state, returns)
     return cards
 
@@ -1019,6 +1033,7 @@ def hand_basic_to_active(state: GameState, player: int, card: int, *, trainer: i
     p.active = new
     state.add_event("trainer_hand_to_active", player=player, old_active=old.card, old_active_pokemon_id=old.pokemon_id, card=card,
                     pokemon_id=new.pokemon_id, trainer_card=trainer)
+    _left_active(state, player, old, True)
     return old, new
 
 

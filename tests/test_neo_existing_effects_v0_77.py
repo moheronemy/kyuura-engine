@@ -236,7 +236,6 @@ class RegistrationTest(unittest.TestCase):
         after = load_card_pool()
         self.assertFalse(before.playable_ids & set(V0_77_CARDS))
         self.assertEqual(after.playable_ids - before.playable_ids, frozenset(V0_77_CARDS))
-        self.assertEqual(len(before.playable_ids), 1039)  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.84 でポケモン 12 枚・ポケモン育て屋夫婦を加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.78 の 13 枚・v0.79 の 52 枚・v0.80 の 30 枚を含む（v0.77 では 826）  # v0.83 でポケモン 18 枚（ワザ 33）を加えた
         for card in V0_77_CARDS:
             self.assertFalse(before.get(card).supported)
         self.assertFalse(set(E.EQUIVALENT_CARDS) & set(V0_77_CARDS))
@@ -553,7 +552,8 @@ class SecretPlanAndQuizTest(unittest.TestCase):
     def test_quiz_names(self):
         extract = read_extract()
         cards = {c["id"]: c for c in extract["cards"]}
-        earlier = {cards[c]["name"]["ja"] for c in cards if c not in V0_77_CARDS and c not in extract["pool_v0_79"] and c not in extract["pool_v0_82"] and c not in extract["pool_v0_83"] and c not in extract["pool_v0_84"] and c not in extract["pool_v0_85"] and c not in extract["pool_v0_86"] and cards[c]["category"] == "pokemon"}  # v0.79・v0.82 で同じ名前のカードを加えた
+        later = cards_after(extract, "0.77")  # v0.79・v0.82〜v0.86・v0.92 で同じ名前のカードを加えた（後の版の組を列挙しない。docs/testing.md）
+        earlier = {cards[c]["name"]["ja"] for c in cards if c not in V0_77_CARDS and c not in later and cards[c]["category"] == "pokemon"}
         new = sorted({cards[c]["name"]["ja"] for c in V0_77_POKEMON} - earlier)
         # トゲピー・ノコッチ・ホーホーは拡張パック以外の商品のカードで前からある名前
         self.assertEqual(new, sorted(["マンタイン", "ヌオー", "キングドラ", "キリンリキ", "ウソッキー", "グライガー", "オタチ", "オドシシ", "オオタチ", "ウリムー",

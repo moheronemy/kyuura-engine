@@ -30,6 +30,12 @@ P を周期とする。返す効果があれば、受けたダメージの飽和
 
 対応する計算（``SUPPORTED_OPERATIONS``）・前提（変更効果の数・しきい値・抵抗力・残りの HP がダメージカウンターの単位の倍数）を満たさない場は、
 推測せずに止める（エンジンの未対応。問い ``unbounded_coin_preflight``・``UNSUPPORTED_UNBOUNDED_COIN_PREFLIGHT``。今の写しでは起こらない）。
+
+v0.92（docs/power-suppression-lasting-locks-v0.92.md 9 章）: 基本となるダメージに固定の値を加えるワザ（ハッサムの「メタルニッパー」の ``30 + 10 × おもての数``。``HeadsUntilTails.fixed``）。
+b(h) = fixed + per × h（``HeadsUntilTails.damage_for``）を、実際のダメージ・``key(h)``・境界のどれにも使う。根拠の前提（3.2 節）は b の値についての主張（b ≥ B で各道が一定か「P 枚
+ごとに同じ数だけ増える」）で、固定の値はそのままでは崩さない: b(h + P) − b(h) = per × P は h によらず（周期はそのまま P）、b(h) ≥ B ⟺ h ≥ ⌈(B − fixed) / per⌉（0 より小さければ 0）。
+加える前提は、固定の値が 0 以上でダメージカウンターの単位の倍数であること（半分にする効果の丸めの周期が b の単位の倍数で揃う。満たさなければ未対応として止める）。キーを
+``per × h`` のまま作ると、組の代表の実際のダメージ（``fixed + per × h``）とずれる（同じ組の h で結果が変わりうる）ので、そうしない。
 """
 
 from __future__ import annotations
@@ -106,8 +112,8 @@ class _Frame:
 
 
 def head_classes(run: AttackRun, element: Damage, per: int) -> HeadClasses:
-    """ワザの要素 ``element``（``Damage(OPP, HeadsUntilTails(per))``）の「おもて」の数の組を、今の場から求める。状態を変えず、乱数を使わない。
-    前提を満たさない場は ``res.question("unbounded_coin_preflight")``（エンジンの未対応）。"""
+    """ワザの要素 ``element``（``Damage(OPP, HeadsUntilTails(per, fixed))``）の「おもて」の数の組を、今の場から求める。状態を変えず、乱数を使わない。
+    前提を満たさない場は ``res.question("unbounded_coin_preflight")``（エンジンの未対応）。v0.92: 基本となるダメージは要素の ``base.damage_for``（固定の値を含む）。"""
     try:
         key, bound, period = _key_and_bound(run, element, per)
     except UnsupportedBoard as reason:
@@ -119,8 +125,11 @@ def head_classes(run: AttackRun, element: Damage, per: int) -> HeadClasses:
 
 
 def _key_and_bound(run: AttackRun, element: Damage, per: int) -> tuple[Callable[[int], Any], int, int]:
-    from .programs import OPP
+    from .programs import OPP, HeadsUntilTails
 
+    if not isinstance(element.base, HeadsUntilTails) or element.base.per != per:
+        raise RuntimeError(f"「うら」が出るまで投げるコインの組の「おもて」1 枚あたりのダメージ {per} が、要素の基本となるダメージ {element.base!r} と合わない（エンジンの不具合）")
+    fixed = element.base.fixed
     if (element.target != OPP or element.gate is not None or element.local_gate is not None or element.requires is not None or element.names is not None
             or not element.weakness_resistance or not element.resistance or not element.defender_effects):
         raise RuntimeError("「うら」が出るまで投げるコインのダメージの要素は、相手の対戦ポケモンへの、項目が既定のものだけ（エンジンの不具合）")
@@ -129,6 +138,8 @@ def _key_and_bound(run: AttackRun, element: Damage, per: int) -> tuple[Callable[
     unit = state.rules.damage_per_counter
     if per % unit or per <= 0:
         raise UnsupportedBoard(f"「おもて」1 枚あたりのダメージ {per} がダメージカウンターの単位の倍数ではない")
+    if type(fixed) is not int or fixed < 0 or fixed % unit:
+        raise UnsupportedBoard(f"基本となるダメージの固定の値 {fixed!r} が 0 以上のダメージカウンターの単位の倍数ではない")  # v0.92
     frame = run.fs.frame
     attacker = run.attacker()
     owner = 1 - run.player
@@ -152,6 +163,7 @@ def _key_and_bound(run: AttackRun, element: Damage, per: int) -> tuple[Callable[
     receiver_views = definition_views(state, receiver)
     readings = len(definition_views(state, attacker)) * len(receiver_views)
     resistance = max((view.resistance_value or 0) for view in receiver_views)
+    weakness = _weakness_multiplier(state, receiver_views)
     reducing = any(m.operation == REDUCE_CHOICE for m in modifiers)
     if reducing:
         # v0.66（docs/optional-trainers-v0.66.md 2.5 節）: お上品攻撃（5 段階で好きなだけ小さくしてよい）。減らしたあとの 5 段階のダメージ x の選び方は 0〜v（v は 5 段階の
@@ -162,13 +174,13 @@ def _key_and_bound(run: AttackRun, element: Damage, per: int) -> tuple[Callable[
         before = [m for m in modifiers if m.step <= 5 and m.operation != REDUCE_CHOICE]
         tail_period, tail_bound = _pipeline_bound([tail], 0, saturation, readings, 1, unit)
         cap = tail_bound + (tail_period + 1) * unit
-        period, bound = _pipeline_bound([before], resistance, cap, readings, state.rules.weakness_multiplier, unit)
+        period, bound = _pipeline_bound([before], resistance, cap, readings, weakness, unit)
     else:
-        period, bound = _pipeline_bound([modifiers], resistance, saturation, readings, state.rules.weakness_multiplier, unit)
+        period, bound = _pipeline_bound([modifiers], resistance, saturation, readings, weakness, unit)
         period *= periods
 
     def key(heads: int):
-        base = per * heads
+        base = element.base.damage_for(heads)  # v0.92: 実際のダメージと同じ式（固定の値を含む）
 
         def tree(orders: dict[int, tuple[int, ...]], reduction: int | None = None):
             try:
@@ -191,7 +203,7 @@ def _key_and_bound(run: AttackRun, element: Damage, per: int) -> tuple[Callable[
 
         return tree({})
 
-    return key, -(-bound // per), period
+    return key, max(0, -(-(bound - fixed) // per)), period  # v0.92: b(h) ≥ B になる最小の h（固定の値のぶん小さくなる）
 
 
 def _retaliation(res, run: AttackRun, instance, effect: Retaliation, attacker, unit: int) -> tuple[Callable[[int], Any], int, int]:
@@ -232,8 +244,14 @@ def _retaliation(res, run: AttackRun, instance, effect: Retaliation, attacker, u
     attacker_views = definition_views(state, attacker)
     readings = len(definition_views(state, holder)) * len(attacker_views)
     resistance = max((view.resistance_value or 0) for view in attacker_views)
-    period, bound = _pipeline_bound(lists, resistance, attacker_remaining, readings, state.rules.weakness_multiplier, unit)
+    period, bound = _pipeline_bound(lists, resistance, attacker_remaining, readings, _weakness_multiplier(state, attacker_views), unit)
     return returned, -(-bound // effect.multiplier), period
+
+
+def _weakness_multiplier(state, views) -> int:
+    """受けるポケモンの弱点の計算でかける数（v0.90。今有効な値の定義の ``weakness_multiplier``（のろいマーカーの「×4」）、なければ共通のルールの数）。実際の計算
+    （``K.compute_damage``）と同じ定義から読み、key もこの数で計算した結果で分ける（上限だけを広げて済ませない）。"""
+    return max(state.rules.weakness_multiplier if view.weakness_multiplier is None else view.weakness_multiplier for view in views)
 
 
 def _require_unit(value: int, unit: int, what: str) -> None:
