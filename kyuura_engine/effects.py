@@ -165,7 +165,7 @@ from .state import (
     StadiumInPlay, TrainerTurnEffect, TrainerUseLock, mark_returned_to_bench, turn_owner, EVOLUTION_BAN,
     SET_ASIDE_FACE_DOWN_BENCH, SET_ASIDE_QUIZ, SetAsideCards, StatusImmunityWhileActive, OPPONENT_POWER_SUPPRESSION,
     COLOR_ENERGY, COLOR_POKEMON_TYPE, ColorEffect,
-    COUNTER_BONE, COUNTER_FOOD, MARKER_COLOR, MARKER_CURSE, MARKER_STICKY,
+    COUNTER_BONE, COUNTER_FOOD, MARKER_CHAR, MARKER_COLOR, MARKER_CURSE, MARKER_LIGHTNING_ROD, MARKER_STICKY,
 )
 from .zones import (
     attach_energy_from_hand, attach_trainer, bench_from_deck, bench_from_discard, discard_attached_cards, discard_from_hand, discard_hand, draw_cards, return_discard_to_hand,
@@ -732,11 +732,13 @@ STATUS_GUARD_ELEMENT = "status_guard"  # v0.84: 新しく出てきた自分の�
 BENCH_PROTECTION_ELEMENT = "bench_protection"  # v0.86: 自分の控えポケモンに「ワザによるダメージや効果を受けない」効果を与える（エンテイの「ほのおのまもり」）
 # v0.90: マーカー・ダメージカウンター以外のカウンターをのせる効果（ベトベトえき・あくまののろい・ペイントは相手の対戦ポケモン、ほねさがし・たべるは自分）
 MARKER_ELEMENT = "marker"
+# v0.91: おたがいの場のポケモン全員を、特殊状態・「その他の効果」から回復させる効果（ポリゴン（PRN-023）の「オールクリア」。相手のポケモンへの効果なので「ワザをうけない」状態を評価する）
+CURE_ELEMENT = "cure"
 ATTACK_ELEMENTS = (DAMAGE_ELEMENT, FORCED_SWITCH_ELEMENT, POISON, SLEEP, PARALYSIS, CONFUSION, ENERGY_DISCARD_ELEMENT, ATTACK_LOCK_ELEMENT,
                    ENERGY_ATTACH_ELEMENT, REDUCED_DAMAGE_ELEMENT, ATTACK_CHECK_ELEMENT, RETREAT_LOCK_ELEMENT, RETURN_IN_PLAY_TO_DECK_ELEMENT,
                    HEAL_ELEMENT, COUNTERS_ELEMENT, EVOLVE_ELEMENT, RETURN_IN_PLAY_TO_HAND_ELEMENT, ENERGY_MOVE_ELEMENT, WEAKNESS_CHANGE_ELEMENT,
                    RESISTANCE_CHANGE_ELEMENT, MAX_HP_ELEMENT, DEVOLVE_ELEMENT, POWER_LOCK_ELEMENT, ATTACH_LOCK_ELEMENT, WAKE_ELEMENT, TRAINER_DISCARD_ELEMENT,
-                   STATUS_GUARD_ELEMENT, BENCH_PROTECTION_ELEMENT, MARKER_ELEMENT)
+                   STATUS_GUARD_ELEMENT, BENCH_PROTECTION_ELEMENT, MARKER_ELEMENT, CURE_ELEMENT)
 
 
 def evasion_power(state: GameState, pokemon: PokemonInPlay) -> tuple[PowerKey, AttackImmunityOnHeads] | None:
@@ -3787,6 +3789,8 @@ ATTACK_COIN_CHECK_TEXTS: dict[str, bool] = {
     "このワザを受けたポケモンは、次の相手の番にワザを使うときにコインを投げ、「うら」ならワザは失敗する。": False,
     # キョウのポッポ（PMCG6-062）の「すなかけ」・カスミのパウワウ（PMCG5-023）の「しんきろう」・キョウのドガース（PMCG6-015）の「えんまく」
     "このワザを受けた相手は、次の相手の番でワザを使う時にコインを投げ、「うら」なら、ワザは失敗する。": False,
+    # v0.91: マグマラシ（neo1-020）・ヒノアラシ（neo4-016）の「えんまく」（「次の相手の番、」を前に書き、「そのワザは失敗する」と書く。効果が1回で消えるとは書かない）
+    "次の相手の番、このワザを受けた相手は、ワザを使うときにコインを投げ、「うら」なら、そのワザは失敗する。": False,
 }
 RETREAT_LOCK_TEXT = "このワザを受けた相手は、次の相手の番に「にげる」ことができない。"
 # v0.79（docs/shared-checks-pokemon-reuse-v0.79.md 6 章）: ハガネール（PRN-014）の「じひびき」・マグマッグ（neo3-008）の「マグマでかこむ」の書き方（「次の相手の番、」を前に書くだけの違い）
@@ -18086,6 +18090,21 @@ def form_problems(state: GameState) -> list[tuple[str, str]]:
                 names = "・".join(slot.power.name_ja for slot in copied)
                 problems.append((TRANSFORM_POWER_CODE, f"{where}・写す特殊能力［{names}］: {TRANSFORM_POWER_REASON}"))
     return problems
+
+
+def attack_state_stop_after(before: GameState, after: GameState) -> tuple[str, str] | None:
+    """v0.91: ワザの効果による ``before`` から ``after`` までの変化で、受け付けられない状態になったら、その (コード, 理由の文)。``state_stop_after`` から、最大HP がのっているダメージ
+    以下に下がる場合（MH1）を除いたもの: ワザの効果で最大HP が下がったポケモンは、ワザのあとのきぜつの判定がきぜつにする（v0.81 のロケット団のアジトと同じ既存の処理）。新しく
+    できた決められない姿（``form_problems``）と、［ずらかる］の力がもどる（SC2）は止める。状態を変えない。"""
+    known = set(form_problems(before))
+    for problem in form_problems(after):
+        if problem not in known:
+            return problem
+    restored = scram_restored(before, after)
+    if restored:
+        error = scram_restored_error(restored)
+        return error.code, error.message
+    return None
 
 
 def state_stop_after(before: GameState, after: GameState) -> tuple[str, str] | None:
@@ -35860,7 +35879,7 @@ MARKER_USAGE_CODES = ("MARKER_REQUIRED", "MARKER_LIMIT")  # ワザを使うた�
 
 def _marker_name(kind: str) -> str:
     return {MARKER_STICKY: "ベトベトマーカー", COUNTER_BONE: "ほねカウンター", COUNTER_FOOD: "たべものカウンター", MARKER_CURSE: "のろいマーカー",
-            MARKER_COLOR: "色マーカー"}[kind]
+            MARKER_COLOR: "色マーカー", MARKER_CHAR: "くろこげマーカー", MARKER_LIGHTNING_ROD: "ひらいしんマーカー"}[kind]
 
 
 @dataclass(frozen=True)
@@ -36091,3 +36110,166 @@ V0_90_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_90_ATTACKS)
+
+
+# ---------------------------------------------------------------- v0.91（docs/marker-check-field-reset-v0.91.md）: 残りのマーカーのポケモン 3 枚とヒノアラシ
+
+
+# マグマラシ（neo1-020）・ヒノアラシ（neo4-016）の「えんまく」（``DamageThenAttackCoinCheck`` が受け付ける全文の 1 つ。``ATTACK_COIN_CHECK_TEXTS``）
+SMOKESCREEN_NEO_TEXT = "次の相手の番、このワザを受けた相手は、ワザを使うときにコインを投げ、「うら」なら、そのワザは失敗する。"
+CHAR_TEXT = ("相手に「くろこげマーカー」がのっていなければ、コインを投げ、「おもて」なら、相手に「くろこげマーカー」を1つのせる。おたがいのプレイヤーは、ポケモンチェックの"
+             "たび、自分の場の「くろこげマーカー」をのせているポケモンそれぞれに対してコインを投げ、「うら」なら、そのポケモンに「弱点・抵抗力・特殊能力・その他の効果」に"
+             "関係なく、20ダメージ。")
+LIGHTNING_ROD_TEXT = "相手の場のポケモンから1匹を選ぶ。そのポケモンに「ひらいしんマーカー」がのっていなければ、1つのせる。"
+LIGHTNING_BOLT_TEXT = "「ひらいしんマーカー」をのせているすべてのポケモンに、それぞれ20ダメージ。(このワザのダメージは「弱点・抵抗力」の影響を受ける)"
+ALL_CLEAR_TEXT = ("おたがいの場にある、すべての「トレーナーカード」をトラッシュして、おたがいの場にいるポケモン全員を「どく・ねむり・マヒ・こんらん」状態や「その他の効果」から、"
+                  "すべて回復させる。おたがいの場にいるポケモン全員から、マーカーとカウンターを、すべてとりのぞく。(ダメージカウンターはそのまま)。このワザを使っているあいだ、"
+                  "おたがいの場にいるすべてのポケモンは「特殊能力」を使うことができず、その力も消える。")
+HYPER_TEXTURE_TEXT = ("相手の場のポケモンを1匹選ぶ。そのポケモンに「色マーカー」がのっているなら、それをとりのぞき、好きな「色(タイプ)」(無色以外)を選んでから、そのポケモンの"
+                      "上に「色マーカー」を1つのせる。「色マーカー」をのせているポケモンは、それをのせたときに選ばれた「色(タイプ)」のポケモンとしてあつかわれる。")
+# くろこげマーカーのポケモンチェックのダメージ（「うら」なら、「弱点・抵抗力・特殊能力・その他の効果」に関係なく、20ダメージ。``procedures.pokemon_check_poison``）
+CHAR_CHECK_DAMAGE = 20
+
+
+def char_check_targets(state: GameState, order: tuple[int, int]) -> list[tuple[int, PokemonInPlay, int]]:
+    """ポケモンチェックの 1 の「指示されたこと」で、くろこげマーカーのコインを投げる (持ち主, 場のポケモン, 「うら」のときのダメージ)（v0.91。マグマラシの「やきこがす」の
+    「おたがいのプレイヤーは、ポケモンチェックのたび、自分の場の「くろこげマーカー」をのせているポケモンそれぞれに対してコインを投げ」）。並びは ``order`` のプレイヤーの場
+    （バトル場 → ベンチ）。コインは 1 匹に 1 枚（マーカーの数ではない。「やきこがす」はのっていなければのせるので 1 つまで）。うらのカード（マチスの秘策）にはマーカーがない
+    （不変条件）。状態を変えない。"""
+    return [(owner, pokemon, CHAR_CHECK_DAMAGE) for owner in order for pokemon in state.players[owner].in_play() if has_marker(pokemon, MARKER_CHAR)]
+
+
+@dataclass(frozen=True)
+class DamageThenCoinMarkOpponentIfAbsent(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。相手に「``kind``」がのっていなければ、コインを投げ、「おもて」なら 1 つのせる（v0.91。マグマラシ（neo1-020）の
+    「やきこがす」。kyuura の印刷の文面）。要素は ``Damage(OPP)`` → ``programs.PlaceMarker(kind, OPP, if_absent=True, local_coin=おもて)``。
+
+    - のっていればコインを投げない（「のっていなければ、コインを投げ」。数を増やさない）。相手がこのワザで HP 以上になったら効果を与えないので投げない（p.309）。コインは相手への
+      効果だけを決めるので、「とうめい」で受けないと決まっていれば T19b、「ワザをうけない」状態なら HC3 でコインの前に止める（v0.90 の ``PlaceMarker`` と同じ順番）。ダメージを
+      受けない状態でも、効果の要素は有効（p.321。ダメージの防止と効果の防止を分ける）
+    - くろこげマーカーののっているポケモンの持ち主は、ポケモンチェックのたびの 1 の「指示されたこと」で、そのポケモンについてコインを投げ、「うら」なら「弱点・抵抗力・特殊能力・
+      その他の効果」に関係なく 20 ダメージ（``procedures.pokemon_check_poison``。ワザによるダメージではない。後年の「やけど」・修正版の「ダメージカウンターを2個」には読みかえない）"""
+
+    kind: str
+    implementation_id = "damage_then_coin_mark_opponent_if_absent"
+    opponent_effect_elements = (MARKER_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "ダメージのあと、相手にマーカーがのっていなければコインでのせるワザ"
+        if self.kind != MARKER_CHAR:
+            return [f"マーカーの種類 {self.kind!r} の説明がない"]
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (CHAR_TEXT,))
+
+
+@dataclass(frozen=True)
+class ChooseOpponentPokemonMarkIfAbsent(AttackEffect):
+    """相手の場のポケモンから 1 匹を選ぶ。そのポケモンに「``kind``」がのっていなければ、1 つのせる（v0.91。エレブー（ES2-017）の「ひらいしん」。kyuura の印刷の文面）。要素は
+    ``programs.ChooseEffectTarget``（v0.89。ワザを使ったプレイヤーが相手のバトル場・ベンチから選ぶ）→ ``PlaceMarker(kind, chosen="target", if_absent=True)``。
+
+    - すでにのっているポケモンも選べる（説明は選べるものをしぼらない。のっていれば何もしない）。相手のポケモンへの効果なので、のせる前に「ワザをうけない」状態・「とうめい」を
+      評価する（``reaches``。控えにも）。うらのカードは効果を受ける時におもてにする（たねポケモンでなくトラッシュしたら、のせない）。選んだ個体が場をはなれたら何もしない
+    - ひらいしんマーカーののっているポケモンは、かみなりショックの 20 ダメージを受ける（``DamageThenMarkedPokemonDamage``）"""
+
+    kind: str
+    implementation_id = "choose_opponent_pokemon_mark_if_absent"
+    opponent_effect_elements = (MARKER_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の場のポケモンを選び、マーカーがのっていなければのせるワザ"
+        if self.kind != MARKER_LIGHTNING_ROD:
+            return [f"マーカーの種類 {self.kind!r} の説明がない"]
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (LIGHTNING_ROD_TEXT,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return target_decision_problems(state, use, decision, side=TARGET_SIDE_OPPONENT, scope=TARGET_IN_PLAY)
+
+
+@dataclass(frozen=True)
+class DamageThenMarkedPokemonDamage(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ（p.320 の、説明の最初で省略された「相手に○○ダメージ。」）。「``kind``」をのせているすべてのポケモン（おたがいの場。
+    ワザを使ったポケモン自身・相手の対戦ポケモンを含む）に、それぞれ ``damage`` ダメージ。このダメージは「弱点・抵抗力」の影響を受ける（v0.91。エレブー（ES2-017）の
+    「かみなりショック」。kyuura の印刷の文面）。
+
+    - 要素は ``DamageUnitsCheck``（相手の対戦ポケモンにマーカーがのっているときの HR1）→ ``Damage(OPP)``（目安）→ ``Damage(OPP, marker)`` → ``Damage(SELF, marker)`` →
+      ``BenchDamage(marker)``（相手の控え）→ ``BenchDamage(marker, own=True)``（自分の控え）。並びは v0.40 の「みんなでばくはつ」（NE2）と同じ。マーカーがなければ目安の
+      ダメージだけ（目安を落とさない）。どれも弱点・抵抗力を計算する（説明に書いてあるので、控えへのダメージでも JS1 で止めない）。プラスパワーは控えへのダメージを変えない
+    - 相手の対戦ポケモンにマーカーがのっていれば、目安と 20 の 2 つのダメージを受ける。2 つを別々に計算するか（v0.40 の NE3 はみんなでばくはつの実装上の判断）、合わせて
+      1 つのダメージとして計算するかは記録から決まらないので、読み方で受けるダメージ・「ダメージを受けたとき」の効果が変わるなら止める（HR1。変わらなければ別々に計算する）
+    - きぜつの判定はすべての要素のあと（p.309・p.323。同じワザでのきぜつは同時）"""
+
+    kind: str
+    damage: int
+    implementation_id = "damage_then_marked_pokemon_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.damage, "ダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "マーカーをのせているすべてのポケモンにダメージを与えるワザ"
+        if self.kind != MARKER_LIGHTNING_ROD:
+            return [f"マーカーの種類 {self.kind!r} の説明がない"]
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (LIGHTNING_BOLT_TEXT.replace("20", str(self.damage)),))
+
+
+@dataclass(frozen=True)
+class ChooseOpponentPokemonReplaceColorMarker(AttackEffect):
+    """相手の場のポケモンを 1 匹選ぶ。そのポケモンに色マーカーがのっているなら、それをとりのぞき、好きな色（無色以外）を選んでから、そのポケモンの上に色マーカーを 1 つのせる
+    （v0.91。ポリゴン（PRN-023）の「ハイパーテクスチャー」。kyuura の印刷の文面）。要素は ``ChooseEffectTarget`` → ``RemoveChosenMarker(色マーカー)``（とりのぞく。ログ
+    ``marker_removed`` の ``reason`` ``replaced``）→ ``ChooseColor(requires)``（とりのぞいたときだけ。v0.88 の 8 色。悪・鋼を含む）→ ``PlaceMarker(色マーカー, chosen)``。
+
+    - 説明の順番（とりのぞく → 色を選ぶ → のせる）のまま処理し、色を選ぶ決定のあいだは色マーカーがない。決定への答えのあとは、とりのぞき直さない（続きは選んだ個体と色だけを運ぶ）。
+      答えが不正なら、とりのぞいたあとの状態のまま決定を残す
+    - 色マーカーがのっていないポケモンを選んだとき、「のっているなら」が「とりのぞき」だけにかかるのか（新しくのせる）、そのあとの「選んでから…のせる」にもかかるのか（何もしない）は、
+      日本語の文の形からは後者が自然だが、印刷の文面・kyuura の記録から決められない（HX1）。のっていないポケモンは選べるが選ぶと止める。どれものっていなければ宣言の前に止める
+    - 変えるのはポケモンのタイプだけ（v0.90 の色マーカー。CM1 はそのまま）。相手のポケモンへの効果なので「ワザをうけない」状態・「とうめい」を評価する"""
+
+    implementation_id = "choose_opponent_pokemon_replace_color_marker"
+    opponent_effect_elements = (MARKER_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の場のポケモンを選び、色マーカーをのせ替えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (HYPER_TEXTURE_TEXT,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        if decision.kind == SELECT_COLOR:
+            return _decision_form(decision, _label(state, use), kind=SELECT_COLOR, player=use.player, choices=(1, 1), options=NON_COLORLESS_CHOICES)
+        return target_decision_problems(state, use, decision, side=TARGET_SIDE_OPPONENT, scope=TARGET_IN_PLAY)
+
+
+@dataclass(frozen=True)
+class AllClear(AttackEffect):
+    """おたがいの場にあるすべてのトレーナーカードをトラッシュし、おたがいの場のポケモン全員を「どく・ねむり・マヒ・こんらん」状態や「その他の効果」からすべて回復させ、マーカーと
+    カウンターをすべてとりのぞく（ダメージカウンターはそのまま）。このワザを使っているあいだ、おたがいの場のすべてのポケモンは特殊能力を使えず、その力も消える（v0.91。ポリゴン
+    （PRN-023）の「オールクリア」。kyuura の印刷の文面。docs 7 章）。
+
+    - 要素は ``AllClearPowerSuppression``（期間の始まり）→ ``DiscardFieldTrainers`` → ``CureAllPokemon`` → ``ClearAllMarkers``。期間の終わりはワザの処理のあと・きぜつの判定の前
+      （``flow._finish_attack`` の ``end_attack_power_suppression``）。どの効果も相手のポケモンには「ワザをうけない」状態を評価する（「とうめい」は力が消えているので投げない）
+    - 期間の始まり・終わり・各段階のあとで受け付けられない状態（「ばける」の DG1 などの決められない姿・［ずらかる］の力がもどる。``attack_state_stop_after``）になるなら、宣言の前に
+      止める。最大HP が下がってのっているダメージ以下になったポケモンは、ワザのあとのきぜつの判定がきぜつにする（v0.81 のロケット団のアジトと同じ）
+    - 「その他の効果」の範囲・場にいるなにかの化石・ワザの出どころの特殊能力は、記録で決まらない場面だけ止める（ZC1・ZC3・ZC2。docs 7 章の表）"""
+
+    implementation_id = "all_clear"
+    opponent_effect_elements = (TRAINER_DISCARD_ELEMENT, CURE_ELEMENT, MARKER_ELEMENT)
+    suppresses_powers_while_used = True  # 「このワザを使っているあいだ…特殊能力を使うことができず、その力も消える」（``engine._trainer_effect_problems`` が読む）
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "おたがいの場のトレーナーカード・特殊状態・その他の効果・マーカーとカウンターを取りのぞくワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (ALL_CLEAR_TEXT,))
+
+
+# v0.91 の 4 枚のポケモンのワザの登録（7）。マグマラシとヒノアラシの「えんまく」は同じ文面（必要なエネルギー・目安は各カードの値）。ゲーム用データの同じ組はない
+V0_91_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # マグマラシ（neo1-020。ヒノアラシから進化）
+    AttackKey("neo1-020", 0): _printed(DamageThenAttackCoinCheck(), "えんまく", SMOKESCREEN_NEO_TEXT),
+    AttackKey("neo1-020", 1): _printed(DamageThenCoinMarkOpponentIfAbsent(MARKER_CHAR), "やきこがす", CHAR_TEXT),
+    # エレブー（ES2-017）
+    AttackKey("ES2-017", 0): _printed(ChooseOpponentPokemonMarkIfAbsent(MARKER_LIGHTNING_ROD), "ひらいしん", LIGHTNING_ROD_TEXT),
+    AttackKey("ES2-017", 1): _printed(DamageThenMarkedPokemonDamage(MARKER_LIGHTNING_ROD, 20), "かみなりショック", LIGHTNING_BOLT_TEXT),
+    # ポリゴン（PRN-023）
+    AttackKey("PRN-023", 0): _printed(AllClear(), "オールクリア", ALL_CLEAR_TEXT),
+    AttackKey("PRN-023", 1): _printed(ChooseOpponentPokemonReplaceColorMarker(), "ハイパーテクスチャー", HYPER_TEXTURE_TEXT),
+    # ヒノアラシ（neo4-016）
+    AttackKey("neo4-016", 0): _printed(DamageThenAttackCoinCheck(), "えんまく", SMOKESCREEN_NEO_TEXT),
+})
+
+DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_91_ATTACKS)

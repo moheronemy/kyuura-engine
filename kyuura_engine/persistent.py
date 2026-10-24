@@ -93,8 +93,11 @@ REPLACED = "replaced"
 # v0.50: 退化した（p.324「19」。CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION。理由の値は特殊状態の ``conditions.DEVOLVE`` と同じ）
 # v0.60: 効果を持つポケモンがダメージを受けた（R団のストライクの「かげぶんしん」の「このカードがダメージを受けるか…この効果は消える」。``remove_on_damage``）
 DAMAGED = "damaged"
+# v0.91: ワザの効果で「その他の効果」から回復させた（ポリゴンの「オールクリア」の「おたがいの場にいるポケモン全員を「どく・ねむり・マヒ・こんらん」状態や「その他の効果」から、
+# すべて回復させる」。理由の値は特殊状態の ``conditions.CURED`` と同じ）
+CURED = "cured"
 REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT, FORCED_SWITCH, RETURN_IN_PLAY_TO_DECK, USED, RETURN_IN_PLAY_TO_HAND, DISCARD_FROM_PLAY,
-                   REPLACED, DEVOLVE, DAMAGED)
+                   REPLACED, DEVOLVE, DAMAGED, CURED)
 
 
 def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, effect, *, attack: str, **extra) -> None:

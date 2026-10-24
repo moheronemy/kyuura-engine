@@ -381,9 +381,31 @@ def _rebellion_failed(res: Resolution, player: int, attacker, key: AttackKey, sl
     return True
 
 
+def end_attack_power_suppression(res: Resolution) -> None:
+    """v0.91（docs/marker-check-field-reset-v0.91.md 7 章）: ワザを使っているあいだの特殊能力の抑止（``ATTACK_POWER_SUPPRESSION``。ポリゴンの「オールクリア」）を、ワザの処理のあと・
+    きぜつの判定の前に消す（「このワザを使っているあいだ」の終わり）。1 つにつきログ ``trainer_effect_removed``（``reason`` は ``attack_end``）。消したあと（特殊能力がまたはたらく）の
+    状態が受け付けられない（決められない姿・［ずらかる］の力がもどる。``effects.attack_state_stop_after``）なら、``UnsupportedError``（先読みが宣言の前に見つけ、ワザの宣言を
+    受け付けない）。最大HP がのっているダメージ以下になったポケモンは、このあとのきぜつの判定がきぜつにする。抑止がなければ何もしない（ほかのワザの経路は変わらない）。"""
+    from ..continuous import attack_power_suppressions
+
+    state = res.state
+    records = attack_power_suppressions(state)
+    if not records:
+        return
+    before = state.peek()
+    state.trainer_effects = tuple(r for r in state.trainer_effects if r not in records)
+    for record in records:
+        state.add_event("trainer_effect_removed", player=record.player, effect_kind=record.kind, trainer_card=record.source_card, card_id=record.card_id,
+                        created_turn=record.created_turn, expires_turn=record.expires_turn, reason="attack_end")
+    stop = E.attack_state_stop_after(before, state)  # 最大HP が下がるのは、このあとのきぜつの判定がきぜつにする
+    if stop is not None:
+        raise UnsupportedError(stop[0], f"ワザを使っているあいだの特殊能力の抑止が終わると: {stop[1]}")
+
+
 def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
     """ワザの要素のあと: きぜつの判定の窓（同時のきぜつの原因・任意の効果の候補）→ 決定か、きぜつの処理。"""
     state = res.state
+    end_attack_power_suppression(res)  # v0.91: 「このワザを使っているあいだ」の特殊能力の抑止の終わり（きぜつの判定の前）
     settle_scram(res)  # v0.61: ［ずらかる］（ワザの要素のあとに残りHPが「10」になったポケモン。ワザの要素を処理しない経路（こんらん・手順 4 の失敗）も通る）
     res.trace.record(WindowOpened(Window.KO_CHECK, None))
     check_simultaneous(res)

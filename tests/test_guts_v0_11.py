@@ -678,7 +678,10 @@ class G37Test(unittest.TestCase):
         "ChooseOpponentPokemonDamageThenDiscardEnergyOnHeads", "CoinChooseEitherPokemonHeal",
         # v0.90: ベトベターの「ベトベトえき」・ルージュラの「あくまののろい」・ドーブルの「ペイント」（相手にマーカーをのせる）・ガラガラの「ほねこんぼう」（マヒ。
         # docs/markers-counters-v0.90.md）
-        "MarkOpponentIfAbsent", "CoinMarkOpponent", "CoinPaintOpponent", "DamageThenRemoveOwnMarkerParalyzeOnHeads"]))
+        "MarkOpponentIfAbsent", "CoinMarkOpponent", "CoinPaintOpponent", "DamageThenRemoveOwnMarkerParalyzeOnHeads",
+        # v0.91: マグマラシの「やきこがす」・エレブーの「ひらいしん」・ポリゴンの「ハイパーテクスチャー」（相手にマーカーをのせる）・「オールクリア」（相手の場のトレーナー・特殊状態・
+        # その他の効果・マーカー。docs/marker-check-field-reset-v0.91.md）
+        "DamageThenCoinMarkOpponentIfAbsent", "ChooseOpponentPokemonMarkIfAbsent", "ChooseOpponentPokemonReplaceColorMarker", "AllClear"]))
 
 
 class DecisionTest(unittest.TestCase):

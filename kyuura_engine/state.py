@@ -1170,8 +1170,12 @@ OPPONENT_POWER_SUPPRESSION = "opponent_power_suppression"
 FIRE_DOUBLE_ATTACH = "fire_double_attach"  # v0.59 カツラ: この番だけ、手札から「カツラのポケモン」につける「炎」エネルギーカードの枚数を 1 枚でなく 2 枚にする
 # v0.80 退化スプレーHYPER: 「(退化させたポケモンを、同じ番に進化させることはできない。)」。この番の終わりまで、``TrainerTurnEffect.pokemon_id`` の場のポケモンを進化させない
 EVOLUTION_BAN = "evolution_ban"
+# v0.91 ポリゴン（PRN-023）の「オールクリア」（ワザの効果）: 「このワザを使っているあいだ、おたがいの場にいるすべてのポケモンは「特殊能力」を使うことができず、その力も消える」。
+# ``player`` はワザを使ったプレイヤー、``source_card`` はワザを使ったポケモンのいちばん上のカード、``card_id``・``attack_index`` は処理しているワザ。``created_turn`` と
+# ``expires_turn`` は使った番（番の終わりではなく、ワザの処理のあと・きぜつの判定の前に消す。``resolution.flow.end_attack_power_suppression``）
+ATTACK_POWER_SUPPRESSION = "attack_power_suppression"
 TRAINER_TURN_EFFECT_KINDS = (ATTACK_DAMAGE_BONUS, POISON_ON_ATTACK_DAMAGE, BENCH_ATTACK_DAMAGE_PREVENTION, POWER_SUPPRESSION, FIRE_DOUBLE_ATTACH, EVOLUTION_BAN,
-                             OPPONENT_POWER_SUPPRESSION)
+                             OPPONENT_POWER_SUPPRESSION, ATTACK_POWER_SUPPRESSION)
 
 
 @dataclass(frozen=True)
@@ -1306,15 +1310,18 @@ class SetAsideCards:
 
 
 # v0.90（docs/markers-counters-v0.90.md 3 章）: 場のポケモンにのせるマーカー・ダメージカウンター以外のカウンターの種類（``Marker.kind``）。ワザの説明が名前で書くものだけ
-# （くろこげマーカーなど、まだ対応しないワザのものは加えない）
+# （まだ対応しないワザのものは加えない）
 MARKER_STICKY = "sticky"  # ベトベター（ES2-002）の「ベトベトえき」のベトベトマーカー
 COUNTER_BONE = "bone"  # ガラガラ（ES2-025）・カラカラ（PR1-034）の「ほねさがし」のほねカウンター
 COUNTER_FOOD = "food"  # くいしんぼカビゴン（PR1-024）の「たべる」のたべものカウンター
 MARKER_CURSE = "curse"  # ルージュラ（PR1-035）の「あくまののろい」ののろいマーカー
 MARKER_COLOR = "color"  # ドーブル（PRN-029）の「ペイント」の色マーカー（のせるときに選んだ色を持つ）
+# v0.91（docs/marker-check-field-reset-v0.91.md 3 章）
+MARKER_CHAR = "char"  # マグマラシ（neo1-020）の「やきこがす」のくろこげマーカー（ポケモンチェックのたびにコインを投げる）
+MARKER_LIGHTNING_ROD = "lightning_rod"  # エレブー（ES2-017）の「ひらいしん」のひらいしんマーカー（「かみなりショック」の 20 ダメージを受ける）
 # マーカー（名前が「…マーカー」）とカウンター（名前が「…カウンター」。ダメージカウンター以外）。ミュウツー（ES3-026）の「かんぜんかいふく」の「ダメージカウンターやマーカー」が
 # どちらを含むかを分けるために持つ（p.310 の進化・p.324 の退化は両方を取りのぞく）
-MARKER_KINDS = (MARKER_STICKY, MARKER_CURSE, MARKER_COLOR)
+MARKER_KINDS = (MARKER_STICKY, MARKER_CURSE, MARKER_COLOR, MARKER_CHAR, MARKER_LIGHTNING_ROD)
 COUNTER_KINDS = (COUNTER_BONE, COUNTER_FOOD)
 MARKER_AND_COUNTER_KINDS = MARKER_KINDS + COUNTER_KINDS
 
@@ -1698,6 +1705,15 @@ class GameState:
         new = object.__new__(type(self))
         new.__dict__.update(self.__dict__)
         new.rng = copy_rng(self.rng)
+        new.players = [p.clone() for p in self.players]
+        return new
+
+    def peek(self) -> GameState:
+        """乱数を使わない確かめのための複製（v0.91）。場・プレイヤーの状態は ``clone`` と同じに複製し、乱数は持たない（None。使えばエンジンの不具合として例外になる）。先読みの
+        乱数（状態を写せない）のあいだのワザの要素の確かめ（``effects.state_stop_after`` で比べる前の状態・試しの状態）に使う。"""
+        new = object.__new__(type(self))
+        new.__dict__.update(self.__dict__)
+        new.rng = None
         new.players = [p.clone() for p in self.players]
         return new
 

@@ -26895,6 +26895,67 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.90 で加えた（docs/markers-counters-v0.90.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（プロモ（neo））。ペイント=CoinPaintOpponent（無色以外の色を選び、色マーカーをのせ替える。タイプだけを変える。特殊能力で変えた色といっしょなら CM1）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id と旧 pcg-search の id で確かめた）。kyuura の docs/cards/card-differences.md のドーブルの記録（スケッチ）は別のカード（neo2）のもので、このカードの記録に数えない。kyuura の日本語の文面は pcg-search.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定（2000 年 5 月の RUL-CHAR-MARKER を含む）は持ち込まない"
+    },
+    "neo1-020": {
+      "basis": "kyuura_data",
+      "name_ja": "マグマラシ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [
+        "RUL-CHAR-MARKER"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.91 で加えた（docs/marker-check-field-reset-v0.91.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（neo 第1弾）。ヒノアラシから進化（進化元は既存の写しのヒノアラシ）。えんまく=DamageThenAttackCoinCheck（single_use=False。効果は1回で消えない）、やきこがす=DamageThenCoinMarkOpponentIfAbsent(char)（のっていなければコイン。くろこげマーカーのポケモンチェックの 20 ダメージは procedures.pokemon_check_poison）。kyuura の記録 RUL-CHAR-MARKER（『トレーナーズ』Vol.6。2000-05-01）はこのカードを指すが、基準（2000.02.14 版）の後の記録なので処理の根拠に使っていない（処理に使う文面は印刷の文面のまま。3 月の記事の「おもて」・修正版の「ダメージカウンターを2個」で置きかえない）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ- はない（カードの id で確かめた。旧 pcg-search の id はない）。kyuura の日本語の文面は nazonobasho.com の転記（修正前の文面）。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES2-017": {
+      "basis": "kyuura_data",
+      "name_ja": "エレブー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.91 で加えた（docs/marker-check-field-reset-v0.91.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（拡張シート第2弾）。ひらいしん=ChooseOpponentPokemonMarkIfAbsent(lightning_rod)（相手の場から 1 匹選び、のっていなければ 1 つ）、かみなりショック=DamageThenMarkedPokemonDamage(lightning_rod, 20)（目安の 10 のほか、おたがいの場のマーカーのポケモンに弱点・抵抗力を計算する 20。相手の対戦ポケモンが 2 つ受ける計算の単位は HR1）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ- はない（カードの id と旧 pcg-search の id で確かめた）。kyuura の日本語の文面は pcg-search.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定（2000 年 5 月の RUL-CHAR-MARKER を含む）は持ち込まない"
+    },
+    "PRN-023": {
+      "basis": "kyuura_data",
+      "name_ja": "ポリゴン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.91 で加えた（docs/marker-check-field-reset-v0.91.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（プロモ(neo)）。オールクリア=AllClear（おたがいの場のトレーナーカード・特殊状態・その他の効果・マーカーとカウンター。ワザを使っているあいだの特殊能力の抑止。ZC1〜ZC3）、ハイパーテクスチャー=ChooseOpponentPokemonReplaceColorMarker（のっている色マーカーをとりのぞき、色を選んでからのせる。のっていないポケモンは HX1）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ- はない（カードの id と旧 pcg-search の id で確かめた）。kyuura の日本語の文面は pcg-search.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定（2000 年 5 月の RUL-CHAR-MARKER を含む）は持ち込まない"
+    },
+    "neo4-016": {
+      "basis": "kyuura_data",
+      "name_ja": "ヒノアラシ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.91 で加えた（docs/marker-check-field-reset-v0.91.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（neo 第4弾）。えんまく=DamageThenAttackCoinCheck（マグマラシと同じ文面。必要なエネルギー・目安はこのカードの値）。マグマラシ（neo1-020）の進化元にもなる（名前で進化する）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ- はない（カードの id で確かめた。旧 pcg-search の id はない）。kyuura の日本語の文面は pokemonwiki の転記。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
     }
   }
 }

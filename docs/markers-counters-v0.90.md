@@ -243,7 +243,7 @@ v0.90 は、ワザの説明が「…マーカー」「…カウンター」（�
   比較。`KYUURA_COMPAT_BASE` を設定したときだけ走る）。Windows のこの環境では、文書・JSON を `encoding` を書かずに読むテストが cp932 で失敗するので、`PYTHONUTF8=1` で走らせました
   （テストは変えていない）。
 - `python3 scripts/extract_kyuura_cards.py --check`（写しは kyuura 7d3f4ca と一致）・`python3 scripts/check_card_sources.py`（記録 1,028 件）・
-  `python3 scripts/check_research_links.py --kyuura ../kyuura` は通りました。`python3 tools/run_mutants.py check` は 50 の変異のどれも入り、証人のテストが見つけました。
+  `python3 scripts/check_research_links.py --kyuura ../kyuura` は通りました。`python3 tools/run_mutants.py check`（定義の適用検査: 50 の変異の置きかえる前の文字列がどれも今のコードにちょうど 1 か所あり、置きかえたあとが構文として正しい）は 50 件とも ok でした。証人のテスト（`witness`）は実行していません（v0.91 で訂正。docs/marker-check-field-reset-v0.91.md 11 章）。
 
 ## 12. kyuura への報告事項
 

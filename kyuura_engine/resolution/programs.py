@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from .. import effects as E
 from ..cards import EnergyType
 from ..coins import CoinFlips, CoinSide, flip_coins, flip_until_tails
-from ..conditions import CONFUSION, PARALYSIS, POISON, SLEEP, clear_special_conditions, confuse, cure_conditions, paralysis_problem, paralyze, poison, put_to_sleep, wake_up
+from ..conditions import CONFUSION, CURED, PARALYSIS, POISON, SLEEP, clear_special_conditions, confuse, cure_conditions, paralysis_problem, paralyze, poison, put_to_sleep, wake_up
 from ..conditions import FORCED_SWITCH as FORCED_SWITCH_REASON
 from ..damage import DAMAGE_STEP_CHOOSER, DamageOrderRequired, DamageReductionRequired, step_orders
 from ..decisions import (
@@ -48,14 +48,16 @@ from ..stadiums import bench_limit
 from ..errors import UnsupportedError
 from ..evolution import DEVOLVE_TO_HAND, devolve, evolution_block, place_evolution_card
 from ..persistent import RETURN_IN_PLAY_TO_DECK, RETURN_IN_PLAY_TO_HAND, add_persistent_effect, max_hp_set, remove_persistent_effects, replace_persistent_effect
+from ..persistent import CURED as PERSISTENT_CURED
 from ..state import (
     NEXT_TURN_MULTIPLY, NEXT_TURN_SET, RETALIATION_FIXED, RETALIATION_RECEIVED, AttackBarrier, AttackCoinCheck, CannotAttack, CannotAttackNextOwnTurn,
     CannotAttachEnergy, CannotAttackWhileSourceActive, CannotRetreat, CannotUseAttack, CannotUsePowers, CannotUseOwnAttack, DamageReduction, DestinyBond, DoubledDamage, HalvedDamage, NextTurnAttackDamage, PreventAttackDamage, PreventDamage,
     MaxHpSet, ReducedDamageToSource, ReducedDamageToSourceNextTurn, ReflectShield, ResistanceChange, Retaliation, TailsDamageGuard, TrainerTurnEffect, TrainerUseLock, WeaknessChange, ZeroDamageBelow, mark_returned_to_bench,
     OPPONENT_POWER_SUPPRESSION, StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard, StatusImmunityNextTurn, PowersStopped, BenchProtection,
 )
-from ..state import COUNTER_BONE, COUNTER_FOOD, COUNTER_KINDS, MARKER_COLOR, MARKER_CURSE, MARKER_KINDS, MARKER_STICKY, Marker
+from ..state import ATTACK_POWER_SUPPRESSION, BENCH_ATTACK_DAMAGE_PREVENTION, COUNTER_BONE, COUNTER_FOOD, COUNTER_KINDS, MARKER_CHAR, MARKER_COLOR, MARKER_CURSE, MARKER_KINDS, MARKER_LIGHTNING_ROD, MARKER_STICKY, POWER_SUPPRESSION, Marker
 from ..markers import CLEARED as MARKERS_CLEARED
+from ..markers import REPLACED as MARKERS_REPLACED
 from ..markers import USED as MARKERS_USED
 from ..markers import add_marker, has_marker, marker_count, remove_markers, replace_marker
 from ..decisions import SELECT_MARKER_COUNT
@@ -1269,17 +1271,22 @@ class Damage(Element):
     defender_effects: bool = True
     # v0.88: 受けるポケモンを、前の ``ChooseColor`` で選んだ色でしぼる（(``COLOR_BY_ENERGY`` か ``COLOR_BY_TYPE``, 選んだ色の結果の名前)。``color_filter_hit``）。None ならしぼらない
     color_filter: tuple[str, str] | None = None
+    # v0.91: 受けるポケモンに種類 ``marker`` のマーカーがのっているときだけ与える（エレブーの「かみなりショック」の「「ひらいしんマーカー」をのせているすべてのポケモンに、それぞれ
+    # 20ダメージ」の、相手の対戦ポケモンと自分へのダメージ）。この要素を処理する時点の場で見る。None ならマーカーを見ない
+    marker: str | None = None
     phase: ClassVar[Phase] = Phase.DAMAGE
 
     def coin_receiver(self) -> str | None:
         return "damage" if self.target == OPP else None
 
     def has_target(self, run: AttackRun) -> bool:
-        if self.names is None and self.color_filter is None:
+        if self.names is None and self.color_filter is None and self.marker is None:
             return True
         _, receiver = receiver_of_target(run, self.target)
         if receiver is None:
             return False
+        if self.marker is not None and not has_marker(receiver, self.marker):
+            return False  # v0.91（うらのカードにはマーカーがないので、おもてにしない）
         if self.color_filter is not None and not color_filter_hit(run, receiver, self.color_filter):
             return False
         return self.names is None or E.form_def(run.state, receiver).name_ja in self.names  # v0.49: 今の姿の名前（［へんしん］・「ばける」）
@@ -2392,12 +2399,15 @@ class BenchDamage(Element):
     names: tuple[str, ...] | None = None
     requires: str | None = None  # v0.85: トラッシュの要素の名前。トラッシュできなかったら（「このワザのダメージは、すべてなくなる」。かえんぐるま）何もしない
     color_filter: tuple[str, str] | None = None  # v0.88: ``Damage.color_filter`` と同じ（コアストリーム・レインボーウェーブ）
+    marker: str | None = None  # v0.91: ``Damage.marker`` と同じ（かみなりショック。マーカーのない控え・うらのカードは受けない）
     phase: ClassVar[Phase] = Phase.DAMAGE
     guards_bench: ClassVar[bool] = True  # v0.65
 
     def targets(self, run: AttackRun) -> list[PokemonInPlay]:
         side = run.player if self.own else 1 - run.player
         bench = run.state.players[side].bench
+        if self.marker is not None:
+            bench = [p for p in bench if has_marker(p, self.marker)]
         named = [p for p in bench if self.names is None or E.form_def(run.state, p).name_ja in self.names]  # v0.49: 今の姿の名前
         if self.color_filter is not None:
             named = [p for p in named if color_filter_hit(run, p, self.color_filter)]  # v0.88
@@ -9211,6 +9221,9 @@ class ChooseColor(Element):
     source: str = COLOR_ANY
     name: str = "color"
     gate: tuple | None = None
+    # v0.91: 前の要素（``RemoveChosenMarker``）の結果の名前。取りのぞいた数が 0 なら選ばない（ポリゴンの「ハイパーテクスチャー」の「のっているなら、それをとりのぞき、好きな
+    # 「色(タイプ)」(無色以外)を選んでから」）。None なら見ない
+    requires: str | None = None
     phase: ClassVar[Phase] = Phase.NEUTRAL
     decision_kind: ClassVar[str] = SELECT_COLOR
 
@@ -9229,6 +9242,15 @@ class ChooseColor(Element):
         if self.gate is not None and not run.coin_is(self.gate):
             run.fs.results[self.name] = ChosenColor(None)  # v0.90: コインの面が違う（選ばない。ログは残さない）
             return False
+        if self.requires is not None:
+            removed = run.fs.results.get(self.requires)
+            if removed is None:
+                raise RuntimeError(f"取りのぞいた数の結果 {self.requires!r} がない（要素の並びの誤り。エンジンの不具合）")
+            if not isinstance(removed, MarkersRemoved):
+                raise TypeError(f"取りのぞいた数の結果 {self.requires!r} が {type(removed).__name__}（MarkersRemoved でない。エンジンの不具合）")
+            if removed.count == 0:
+                run.fs.results[self.name] = ChosenColor(None)  # v0.91: 取りのぞかなかった（選ばない。ログは残さない）
+                return False
         options = self.options(run)
         if not options:
             run.fs.results[self.name] = ChosenColor(None)
@@ -9787,7 +9809,7 @@ BUILDERS |= {
 
 def _marker_label(kind: str) -> str:
     return {MARKER_STICKY: "ベトベトマーカー", COUNTER_BONE: "ほねカウンター", COUNTER_FOOD: "たべものカウンター", MARKER_CURSE: "のろいマーカー",
-            MARKER_COLOR: "色マーカー"}[kind]
+            MARKER_COLOR: "色マーカー", MARKER_CHAR: "くろこげマーカー", MARKER_LIGHTNING_ROD: "ひらいしんマーカー"}[kind]
 
 
 @dataclass(frozen=True)
@@ -9811,6 +9833,9 @@ class PlaceMarker(Element):
     local_coin: CoinSide | None = None
     gate: tuple | None = None
     color: str | None = None
+    # v0.91: 先に選んだ個体（``ChooseEffectTarget`` の結果の名前）にのせる（エレブーの「ひらいしん」・ポリゴンの「ハイパーテクスチャー」）。``target`` は読まない。選んだ個体が
+    # 場をはなれていれば何もしない（同じ位置に出た別のポケモンにのせない）
+    chosen: str | None = None
     phase: ClassVar[Phase] = Phase.EFFECT
 
     def __post_init__(self) -> None:
@@ -9818,19 +9843,27 @@ class PlaceMarker(Element):
             raise ValueError(f"マーカーをのせる対象 {self.target!r} は相手の対戦ポケモンか自分")
         if (self.kind == MARKER_COLOR) != (self.color is not None):
             raise ValueError("色マーカーだけが、のせる色を選んだ結果を読む")
+        if self.chosen is not None and (self.limit is not None or self.local_coin is not None):
+            raise ValueError("選んだ個体にのせる要素は、数の上限・この要素のコインを持たない")
 
     @property
     def opponent_element(self) -> str | None:
-        return E.MARKER_ELEMENT if self.target == OPP else None
+        return E.MARKER_ELEMENT if self.target == OPP or self.chosen is not None else None
 
     def coin_receiver(self) -> str | None:
-        return "effect" if self.target == OPP else None
+        return "effect" if self.target == OPP and self.chosen is None else None
 
-    def receiver(self, run: AttackRun) -> tuple[int, PokemonInPlay]:
+    def receiver(self, run: AttackRun) -> tuple[int, PokemonInPlay] | None:
+        if self.chosen is not None:
+            picked = chosen_pokemon(run, self.chosen)
+            return None if not picked else run.state.find_pokemon(picked[0].pokemon_id)
         return (1 - run.player, run.opponent_active()) if self.target == OPP else (run.player, run.attacker())
 
     def has_target(self, run: AttackRun) -> bool:
-        owner, target = self.receiver(run)
+        found = self.receiver(run)
+        if found is None:
+            return False  # v0.91: 選ばなかった・選んだ個体が場をはなれた
+        owner, target = found
         if run.knocked_out(target):
             run.ko_prevention_conflict(target, owner)
             return False
@@ -9845,7 +9878,10 @@ class PlaceMarker(Element):
     def run(self, run: AttackRun) -> bool:
         if self.gate is not None and not run.coin_is(self.gate):
             return False
-        owner, target = self.receiver(run)
+        found = self.receiver(run)
+        if found is None:
+            return False  # v0.91: 選ばなかった・選んだ個体が場をはなれた
+        owner, target = found
         if run.knocked_out(target):
             run.ko_prevention_conflict(target, owner)
             return False
@@ -10035,4 +10071,277 @@ BUILDERS |= {
     E.DiscardAllEnergyThenFullRecovery: lambda e: (
         DiscardOwnEnergy(None, count=None), HealAllCounters(), ClearOwnMarkers(), CureOwnConditions(e.conditions),
     ),
+}
+
+
+# ---------------------------------------------------------------- v0.91（docs/marker-check-field-reset-v0.91.md）: 選んだ個体のマーカー・マーカーのポケモンへのダメージ・オールクリア
+
+
+@dataclass(frozen=True)
+class RemoveChosenMarker(Element):
+    """先に選んだ個体（``chosen``）にのっている種類 ``kind`` を取りのぞく（v0.91。ポリゴンの「ハイパーテクスチャー」の「そのポケモンに「色マーカー」がのっているなら、それを
+    とりのぞき」。ログ ``marker_removed`` の ``reason`` ``replaced``）。結果は ``MarkersRemoved``（取りのぞいた数。あとの ``ChooseColor(requires)`` が読む）。
+
+    - ``question``: のっていないポケモンを選ぶと止める問い（HX1）。選ぶ要素（``ChooseTarget``）の ``choice_problem`` として返すので、選べるが選ぶと止める（どれものっていなければ
+      選ぶ前に止める）
+    - 相手のポケモンへの効果なので、取りのぞく前に「ワザをうけない」状態・「とうめい」を評価する（``reaches``。受けないなら、あとの色を選ぶ・のせるもしない）
+    - 取りのぞいたあと（あとの色を選ぶ決定のあいだ）の状態が受け付けられない（決められない姿など。``effects.attack_state_stop_after``）なら止める（宣言の前に先読みが見つける）"""
+
+    kind: str
+    chosen: str = "target"
+    name: str = "removed_marker"
+    question: str | None = None
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.MARKER_ELEMENT
+
+    def choice_problem(self, run: AttackRun, owner: int, pokemon: PokemonInPlay) -> tuple[str, str] | None:
+        if self.question is not None and not has_marker(pokemon, self.kind):
+            return self.question, f"ポケモン {pokemon.pokemon_id}（{_marker_label(self.kind)}がのっていない）"
+        return None
+
+    def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
+        # 相手のワザとして使うとき、選べるどのポケモンにものっていなければ、選べるが選ぶと止める（HX1 の理由。宣言のすべては止めない。v0.90 の KR1 と同じ書き方）
+        candidates = E.target_candidates(run.state, run.player, E.TARGET_SIDE_OPPONENT, E.TARGET_IN_PLAY)
+        if self.question is not None and candidates and not any(has_marker(pokemon, self.kind) for _, pokemon in candidates):
+            return UNRESOLVED, f"選べるポケモンのどれにも{_marker_label(self.kind)}がのっていない（HX1）"
+        return None
+
+    def run(self, run: AttackRun) -> bool:
+        run.fs.results[self.name] = MarkersRemoved(0)
+        picked = chosen_pokemon(run, self.chosen)
+        if not picked:
+            return False  # 選ばなかった・選んだ個体が場をはなれた
+        owner, target = run.state.find_pokemon(picked[0].pokemon_id)
+        if run.knocked_out(target):
+            run.ko_prevention_conflict(target, owner)
+            return False
+        if not has_marker(target, self.kind):
+            if self.question is not None:
+                raise run.res.question(self.question, f"ポケモン {target.pokemon_id}（{_marker_label(self.kind)}がのっていない）")
+            return False
+        if not reaches(run.res, run.fs, owner, target, E.MARKER_ELEMENT):
+            return False
+        before = run.state.peek()
+        removed = remove_markers(run.state, owner, target, MARKERS_REPLACED, kinds=(self.kind,), effect=str(run.key))
+        stop = E.attack_state_stop_after(before, run.state)
+        if stop is not None:
+            raise UnsupportedError(*stop)
+        run.fs.results[self.name] = MarkersRemoved(removed)
+        return False
+
+
+def damage_units_difference(run: AttackRun, owner: int, receiver: PokemonInPlay, first: int, second: int) -> str | None:
+    """v0.91（HR1）: 相手の対戦ポケモン ``receiver`` が 1 つのワザで基本となるダメージ ``first``（目安）と ``second`` の 2 つを受けるとき、2 つを別々に計算する読み方（v0.40 の
+    NE3 と同じ。p.321 の段階をダメージごとに）と、合わせて 1 つのダメージとして計算する読み方で、受けるダメージか「ダメージを受けたとき」「ダメージを受ける時」の効果が変わるなら、その
+    違い（理由の文の一部）。変わらなければ None。状態を変えず、乱数を使わない。どちらの読み方でもダメージの要素が無効なら変わらない。"""
+    from ..persistent import tails_damage_guard
+    from .kernel import (
+        _receiving_candidates,
+        attack_modifiers_of,
+        compute_damage,
+        deferred_receivers,
+        first_void,
+        with_stadium_coin,
+    )
+
+    res, fs, state = run.res, run.fs, run.state
+    if first_void(res, owner, receiver) is not None:
+        return None
+    attacker = run.attacker()
+    modifiers = with_stadium_coin(res, fs.frame, OPP, attack_modifiers_of(res, fs.frame, attacker, receiver, OPP))
+    try:
+        separate = (compute_damage(state, attacker, receiver, first, modifiers).final, compute_damage(state, attacker, receiver, second, modifiers).final)
+        combined = compute_damage(state, attacker, receiver, first + second, modifiers).final
+    except (DamageOrderRequired, DamageReductionRequired):
+        return "計算に決定（同じ段階の順番・お上品攻撃の減らす量）が要る"
+    except E.TypeReadingsDiffer as differ:
+        raise type_question(res, differ, f"ワザ {run.key} の相手の対戦ポケモンへのダメージ") from None
+    if sum(max(value, 0) for value in separate) != max(combined, 0):
+        return f"別々に計算すると {separate[0]}・{separate[1]}、合わせて計算すると {combined}"
+    if tails_damage_guard(receiver) is not None:
+        return "かげぶんしん（ダメージを受ける時のコイン）を受けている"
+    if deferred_receivers(res, fs.frame, owner, receiver) or any(True for _ in _receiving_candidates(res, fs.frame, owner, receiver)):
+        return "「ダメージを受けたとき」「ダメージを受ける時」の効果がある"
+    return None
+
+
+@dataclass(frozen=True)
+class DamageUnitsCheck(Element):
+    """v0.91（HR1）: 相手の対戦ポケモンに種類 ``kind`` のマーカーがのっていれば、目安のダメージ（``Printed``）と ``extra`` の 2 つを受ける（エレブーの「かみなりショック」）。
+    2 つを別々に計算するか、合わせて計算するかで結果が変わるなら、ダメージを与える前に止める（``damage_units_difference``。先読みが宣言の前に見つける）。何も処理しない。"""
+
+    kind: str
+    extra: Any
+    phase: ClassVar[Phase] = Phase.DAMAGE
+
+    def run(self, run: AttackRun) -> bool:
+        defender = run.opponent_active()
+        if defender is None or run.state.is_face_down(defender) or not has_marker(defender, self.kind):
+            return False
+        difference = damage_units_difference(run, 1 - run.player, defender, run.attack.damage, self.extra.value(run, None))
+        if difference is not None:
+            raise run.res.question("lightning_bolt_units", f"ポケモン {defender.pokemon_id}（{_marker_label(self.kind)}）: {difference}")
+        return False
+
+
+def _field_pokemon(run: AttackRun) -> list[tuple[int, PokemonInPlay]]:
+    """v0.91: おたがいの場のポケモン（ワザを使ったプレイヤーの場 → 相手の場。それぞれバトル場 → ベンチ）。うらのカード（マチスの秘策）は除く（全体にはたらく効果ではおもてに
+    しない。v0.67 の 4 章。うらのあいだはトレーナー・特殊状態・持続する効果・マーカーがない）。"""
+    state = run.state
+    return [(owner, pokemon) for owner in (run.player, 1 - run.player) for pokemon in state.players[owner].in_play() if not state.is_face_down(pokemon)]
+
+
+def _raise_state_stop(before: GameState, after: GameState) -> None:
+    """v0.91: ``effects.attack_state_stop_after``（決められない姿・［ずらかる］の力がもどる）なら止める。最大HP が下がるのはワザのあとのきぜつの判定で扱う。"""
+    stop = E.attack_state_stop_after(before, after)
+    if stop is not None:
+        raise UnsupportedError(*stop)
+
+
+# v0.91: オールクリアの「その他の効果」に含むかが記録から決まらない、ポケモンに写していない効果（プレイヤーに与えた効果で、この番のあとも続くもの）の種類。この番で消えるもの
+# （カスミ・キョウ・カツラ・退化スプレーHYPER・特殊能力で色を変える効果・エナジーバーン）は、ワザで番が終わるので、消すかどうかで結果が変わらない（docs 7.3 節）
+ALL_CLEAR_UNDECIDED_FIELD_EFFECTS = (BENCH_ATTACK_DAMAGE_PREVENTION, POWER_SUPPRESSION, OPPONENT_POWER_SUPPRESSION)
+
+
+def all_clear_question(run: AttackRun) -> None:
+    """v0.91: オールクリアで、記録から決まらず結果が変わる場面なら問いで止める（状態を変えない）。
+
+    - ZC1: 「その他の効果」に含むかが決まらない効果がある（［へんしょく］で色を変えた記録、この番のあとも続く見えない壁・まきちらせ!ベトベトガス・ふしぎなガスの効果）
+    - ZC3: 場になにかの化石のカードがある（「場に出ている限りポケモンとしてあつかわれる」が、「トレーナーカード」でもあるかは書かれていない。ピッピ人形は「場に出ているとき以外は、
+      トレーナーカードとしてあつかう」ので、場ではトレーナーカードではない）"""
+    state = run.state
+    shifted = [pokemon.pokemon_id for _, pokemon in _field_pokemon(run) if pokemon.type_shift is not None]
+    lasting = [record.kind for record in state.trainer_effects if record.kind in ALL_CLEAR_UNDECIDED_FIELD_EFFECTS and record.expires_turn > state.turn_number]
+    if shifted or lasting:
+        raise run.res.question("all_clear_other_effects", f"［へんしょく］で色を変えたポケモン {shifted}・続く効果 {lasting}")
+    fossils = [pokemon.pokemon_id for _, pokemon in _field_pokemon(run) if any(state.in_play_def(uid).play_role == "fossil" for uid in pokemon.cards())]
+    if fossils:
+        raise run.res.question("all_clear_fossil", f"なにかの化石のカードのあるポケモン {fossils}")
+
+
+@dataclass(frozen=True)
+class AllClearPowerSuppression(Element):
+    """v0.91: 「このワザを使っているあいだ、おたがいの場にいるすべてのポケモンは「特殊能力」を使うことができず、その力も消える」の期間の始まり（ポリゴンの「オールクリア」）。
+    ワザの説明を処理する始め（p.309 の手順 6。宣言・ワザの失敗のコイン・こんらんのコインのあと）に、期限のある効果（``ATTACK_POWER_SUPPRESSION``。ワザの処理のあと・きぜつの
+    判定の前に ``flow.end_attack_power_suppression`` が消す）を加える。ログ ``trainer_effect_added``。
+
+    - 始める前に、ZC1・ZC3（``all_clear_question``）と、ワザの出どころが特殊能力（［へんしん］・［サイコリンク］など）でそのワザを持たなくなるか（ZC2）を確かめる
+    - 特殊能力が消えたあとの状態が受け付けられない（「ばける」の DG1 などの決められない姿・［ずらかる］の力がもどる。``effects.attack_state_stop_after``）なら止める（宣言の前に
+      先読みが見つける）。最大HP が変わるのは、ワザのあとのきぜつの判定（期間が終わったあと）で扱う（途中できぜつの判定はしない。p.309・p.323）"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def record(self, run: AttackRun) -> TrainerTurnEffect:
+        turn = run.state.turn_number
+        return TrainerTurnEffect(kind=ATTACK_POWER_SUPPRESSION, player=run.player, source_card=run.attacker().card, card_id=run.key.card_id, created_turn=turn,
+                                 expires_turn=turn, attack_index=run.key.attack_index)
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        all_clear_question(run)
+        record = self.record(run)
+        if any(r.kind == ATTACK_POWER_SUPPRESSION for r in state.trainer_effects):
+            raise RuntimeError("ワザを使っているあいだの特殊能力の抑止が、すでにある（ワザの処理のあとに消していない。エンジンの不具合）")
+        trial = state.peek()
+        trial.trainer_effects = trial.trainer_effects + (record,)
+        attacker = run.attacker()
+        held = [option for option in E.available_attacks(state, attacker) if option.key == run.declared]
+        kept = [option for option in E.available_attacks(trial, trial.find_pokemon(attacker.pokemon_id)[1]) if option.key == run.declared]
+        if held and {(o.card, o.route) for o in kept} != {(o.card, o.route) for o in held}:
+            raise run.res.question("all_clear_attack_source", f"ポケモン {attacker.pokemon_id}・宣言したワザ {run.declared}（{[o.route for o in held]}）")
+        _raise_state_stop(state, trial)
+        state.trainer_effects = state.trainer_effects + (record,)
+        state.add_event("trainer_effect_added", player=run.player, effect_kind=ATTACK_POWER_SUPPRESSION, trainer_card=record.source_card, card_id=record.card_id,
+                        expires_turn=record.expires_turn, attack_index=record.attack_index, effect=str(run.key))
+        return False
+
+
+@dataclass(frozen=True)
+class DiscardFieldTrainers(Element):
+    """v0.91: おたがいの場にある、すべてのトレーナーカードをトラッシュする（オールクリア）。場のポケモン（ワザを使ったプレイヤーの場 → 相手の場。バトル場 → ベンチ）についている
+    トレーナーカード（ついている順）→ 場のスタジアム。
+
+    - カードは持ち主（カードの ``owner``）のトラッシュに置く。ついているトレーナーはログ ``discard_attached_trainer``（``reason`` ``attack``・``effect``）、スタジアムは
+      ``zones.discard_stadium``（``reason`` ``attack``・``by_card``・``effect``）。エネルギーカード・進化カード・「ばける」のカード・［エネエネ］のカードはトレーナーカードではない
+    - 場のピッピ人形（「場に出ているとき以外は、トレーナーカードとしてあつかう」）・うらのカード（「たねポケモン」としてあつかわれる）はポケモンなので、トラッシュしない（場を
+      はなれない。なにかの化石は ZC3 で止める）
+    - ポケモンごとに「ワザをうけない」状態を評価する（``reaches``。「とうめい」は力が消えているので投げない）。トラッシュしたあとの状態が受け付けられないなら止める"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.TRAINER_DISCARD_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        before = state.peek()
+        for owner, pokemon in _field_pokemon(run):
+            if not pokemon.trainers or not reaches(run.res, run.fs, owner, pokemon, E.TRAINER_DISCARD_ELEMENT):
+                continue
+            for attached in list(pokemon.trainers):
+                pokemon.trainers.remove(attached)
+                card_owner = state.cards[attached.card].owner
+                state.players[card_owner].discard.append(attached.card)
+                state.add_event("discard_attached_trainer", player=card_owner, card=attached.card, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id,
+                                reason="attack", effect=str(run.key))
+        if state.stadium is not None:
+            discard_stadium(state, state.stadium, reason="attack", by_card=run.attacker().card, effect=str(run.key))
+        _raise_state_stop(before, state)
+        return False
+
+
+@dataclass(frozen=True)
+class CureAllPokemon(Element):
+    """v0.91: おたがいの場にいるポケモン全員を「どく・ねむり・マヒ・こんらん」状態や「その他の効果」から、すべて回復させる（オールクリア）。特殊状態はすべて消し（ログ
+    ``special_conditions_removed`` の ``reason`` ``cured``）、ワザによる持続する効果（``persistent_effects``）はすべて消す（ログ ``persistent_effect_removed`` の ``reason``
+    ``cured``。p.324 の退化の「その他の「持続する効果」から回復する」と同じ範囲）。ダメージカウンター・マーカー（次の要素）・ついているカード・プレイヤーの記録は変えない
+    （docs 7.3 節の表）。ポケモンごとに「ワザをうけない」状態を評価する。回復させたあとの状態が受け付けられないなら止める。"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.CURE_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        before = state.peek()
+        for owner, pokemon in _field_pokemon(run):
+            if not (pokemon.conditions.names() or pokemon.persistent_effects) or not reaches(run.res, run.fs, owner, pokemon, E.CURE_ELEMENT):
+                continue
+            if pokemon.conditions.names():
+                clear_special_conditions(state, owner, pokemon, CURED, effect=str(run.key))
+            if pokemon.persistent_effects:
+                remove_persistent_effects(state, owner, pokemon, PERSISTENT_CURED)
+        _raise_state_stop(before, state)
+        return False
+
+
+@dataclass(frozen=True)
+class ClearAllMarkers(Element):
+    """v0.91: おたがいの場にいるポケモン全員から、マーカーとカウンターを、すべてとりのぞく（ダメージカウンターはそのまま。オールクリア）。ほねカウンター・たべものカウンターも
+    含む（説明が「マーカーとカウンター」と書く。KR1 のかんぜんかいふくとは書き方が違う）。ログ ``marker_removed`` の ``reason`` ``cleared``。ポケモンごとに「ワザをうけない」状態を
+    評価する。とりのぞいたあとの状態が受け付けられないなら止める。"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.MARKER_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        before = state.peek()
+        for owner, pokemon in _field_pokemon(run):
+            if pokemon.markers and reaches(run.res, run.fs, owner, pokemon, E.MARKER_ELEMENT):
+                remove_markers(state, owner, pokemon, MARKERS_CLEARED, effect=str(run.key))
+        _raise_state_stop(before, state)
+        return False
+
+
+BUILDERS |= {
+    E.DamageThenCoinMarkOpponentIfAbsent: lambda e: (Damage(OPP, Printed()), PlaceMarker(e.kind, OPP, if_absent=True, local_coin=HEADS)),
+    E.ChooseOpponentPokemonMarkIfAbsent: lambda e: (ChooseEffectTarget(), PlaceMarker(e.kind, if_absent=True, chosen="target")),
+    E.DamageThenMarkedPokemonDamage: lambda e: (
+        DamageUnitsCheck(e.kind, Fixed(e.damage)), Damage(OPP, Printed()), Damage(OPP, Fixed(e.damage), name="marker_damage", marker=e.kind),
+        Damage(SELF, Fixed(e.damage), name="self_damage", marker=e.kind), BenchDamage(Fixed(e.damage), weakness_resistance=True, marker=e.kind),
+        BenchDamage(Fixed(e.damage), weakness_resistance=True, own=True, name="own_bench_damage", marker=e.kind),
+    ),
+    E.ChooseOpponentPokemonReplaceColorMarker: lambda e: (
+        ChooseEffectTarget(), RemoveChosenMarker(MARKER_COLOR, question="hyper_texture_unmarked", name="removed_color"),
+        ChooseColor(COLOR_ANY, requires="removed_color"), PlaceMarker(MARKER_COLOR, chosen="target", color="color"),
+    ),
+    E.AllClear: lambda e: (AllClearPowerSuppression(), DiscardFieldTrainers(), CureAllPokemon(), ClearAllMarkers()),
 }

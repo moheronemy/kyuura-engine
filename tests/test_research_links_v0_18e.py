@@ -127,7 +127,10 @@ class ResearchLinksTest(unittest.TestCase):
                              # v0.89: FA1（docs/selected-target-damage-v0.89.md 4.3 節）
                              "UNRESOLVED_IGNORED_EFFECTS_SCOPE",
                              # v0.90: CM1・KR1（docs/markers-counters-v0.90.md 6 章・7 章）
-                             "UNRESOLVED_COLOR_MARKER_PRECEDENCE", "UNRESOLVED_FULL_RECOVERY_COUNTERS"})
+                             "UNRESOLVED_COLOR_MARKER_PRECEDENCE", "UNRESOLVED_FULL_RECOVERY_COUNTERS",
+                             # v0.91: KK1・HR1・HX1・ZC1・ZC2・ZC3（docs/marker-check-field-reset-v0.91.md 9 章）
+                             "UNRESOLVED_POKEMON_CHECK_CHAR_COIN_ORDER", "UNRESOLVED_LIGHTNING_BOLT_DEFENDER_UNITS", "UNRESOLVED_HYPER_TEXTURE_UNMARKED_TARGET",
+                             "UNRESOLVED_ALL_CLEAR_OTHER_EFFECTS", "UNRESOLVED_ALL_CLEAR_ATTACK_SOURCE", "UNRESOLVED_ALL_CLEAR_FOSSIL_IN_PLAY"})
         # v0.31〜v0.68 は、kyuura の一覧でコードのない行を指していた停止コード 8 件（T27・C34/C35・G40・P19・P32・Z9・DR8・DR13）に kyuura_index_engine_key を
         # 書いていた。v0.69 で kyuura が停止コードを書いたので外した（scripts/check_research_links.py が、kyuura の一覧のコードで照らす）
         self.assertEqual({code for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}, set())

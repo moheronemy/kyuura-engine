@@ -20,7 +20,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .effects import SuppressOtherPowers
-from .state import OPPONENT_POWER_SUPPRESSION, POWER_SUPPRESSION
+from .state import (
+    ATTACK_POWER_SUPPRESSION,
+    OPPONENT_POWER_SUPPRESSION,
+    POWER_SUPPRESSION,
+)
 
 if TYPE_CHECKING:
     from .cards import Power
@@ -76,6 +80,13 @@ def goop_gas_effects(state: GameState) -> tuple[TrainerTurnEffect, ...]:
     return tuple(r for r in state.trainer_effects if r.kind == POWER_SUPPRESSION and r.created_turn <= turn <= r.expires_turn)
 
 
+def attack_power_suppressions(state: GameState) -> tuple[TrainerTurnEffect, ...]:
+    """今はたらいている、ワザを使っているあいだの特殊能力の抑止（v0.91。``TrainerTurnEffect`` の種類 ``ATTACK_POWER_SUPPRESSION``。ポリゴンの「オールクリア」の「このワザを使って
+    いるあいだ、おたがいの場にいるすべてのポケモンは「特殊能力」を使うことができず、その力も消える」）。ワザの処理の始めに加え、ワザの処理のあと（きぜつの判定の前）に消すので、
+    ワザの処理の外にはない（不変条件）。まきちらせ!ベトベトガスと同じく、かがくへんかガスも除かずにすべての特殊能力を止める（説明の「すべてのポケモン」）。"""
+    return tuple(r for r in state.trainer_effects if r.kind == ATTACK_POWER_SUPPRESSION)
+
+
 def power_suppressed(state: GameState, power: Power, holder: PokemonInPlay | None = None, *, owner: int | None = None) -> bool:
     """特殊能力 ``power``（場のポケモンの特殊能力）が今「使えず、その力も消え」ているか（v0.59）: はたらいているかがくへんかガスに消されている（``suppressors_of``）か、
     まきちらせ!ベトベトガスの効果がはたらいている（``goop_gas_effects``）。宣言して使う特殊能力の使用・常にはたらく・自動的にはたらく特殊能力の力のどちらにも当てはまる
@@ -93,7 +104,7 @@ def power_suppressed(state: GameState, power: Power, holder: PokemonInPlay | Non
 
         if powers_stopped(state, holder) is not None:
             return True
-    if goop_gas_effects(state) or suppressors_of(state, power):
+    if goop_gas_effects(state) or attack_power_suppressions(state) or suppressors_of(state, power):  # v0.91: オールクリアのワザを使っているあいだ
         return True
     if any(r.kind == OPPONENT_POWER_SUPPRESSION for r in state.trainer_effects):
         from .effects import strange_gas_effects

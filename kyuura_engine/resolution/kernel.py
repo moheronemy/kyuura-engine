@@ -319,10 +319,10 @@ def scram_restored_question(res: Resolution, gone) -> None:
     前に確かめる。先読みの範囲の中）。"""
     state = res.state
     gone_ids = {pokemon.pokemon_id for _, pokemon in gone}
-    from ..continuous import goop_gas_effects, suppressors_of
+    from ..continuous import attack_power_suppressions, goop_gas_effects, suppressors_of
 
-    if goop_gas_effects(state):
-        return  # まきちらせ!ベトベトガスはきぜつで消えない
+    if goop_gas_effects(state) or attack_power_suppressions(state):
+        return  # まきちらせ!ベトベトガス・オールクリアのワザを使っているあいだ（v0.91）の抑止はきぜつで消えない
     for _, pokemon, slot in E.scram_slots(state):
         if pokemon.pokemon_id in gone_ids or not E.scram_due(state, pokemon, slot) or E.scram_working(state, pokemon, slot):
             continue

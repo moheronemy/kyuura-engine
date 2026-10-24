@@ -1955,6 +1955,23 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.91: 残りのマーカーのポケモン 3 枚とヒノアラシ
+
+[marker-check-field-reset-v0.91.md](marker-check-field-reset-v0.91.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_91`（4 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.90 までの
+  1,115 枚の記録は変わっていない。
+- 4 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-24・外部照合なし）。マグマラシの `kyuura_records` は RUL-CHAR-MARKER（このカードを指す記録）で、
+  基準（2000.02.14 版）の後の記録なので処理の根拠に使っていない。ほかの 3 枚の `kyuura_records` は空。`card_verification.json` には加えていない。
+- 処理に使う文面はどれも kyuura の印刷の文面（研究の対応表の `adopted_printed_text` に 7）。4 枚の id と旧 pcg-search の id で、kyuura の研究の基準に LD-・CC-・CR-・UQ- がないことを
+  確かめた。
+- 基準の一般条項（GR-2000-P309-ATTACK-PROCEDURE・P310・P311・GR-2000-P320-DAMAGE-FIGURE・P321・P322・GR-2000-P323-POKEMON-CHECK・P324・P325）を再利用した。印刷の文面・既存の記録・
+  実装上の読み方は docs の各章で分けた。
+- 日本語の文面の転記元は nazonobasho.com（マグマラシ）・pokemonwiki（ヒノアラシ）・pcg-search.com（エレブー・ポリゴン）。外部照合はしていない。
+- 新しい停止コード 6 件（KK1・HR1・HX1・ZC1・ZC2・ZC3）を `stop_codes` に `not_in_kyuura` で加えた。
+- 報告事項（kyuura の作業）: 6 つの論点は kyuura の未解決の一覧にない。kyuura の engine_targets.json の `engine_reference` を v0.91 の登録で写すと 4 枚の `engine_status` が
+  `registered` になる。data/Silver_Bible_structured.md のエレブーの解説の、進化・退化でマーカー・カウンターを取りのぞく記述は研究の記録にない（エンジンは根拠にしていない。docs 12 章）。
+
 ## v0.90: マーカー・ダメージカウンター以外のカウンターのポケモン 7 枚
 
 [markers-counters-v0.90.md](markers-counters-v0.90.md)。

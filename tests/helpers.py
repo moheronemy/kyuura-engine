@@ -1395,6 +1395,12 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.CoinMarkOpponent,
     _effects.CoinPaintOpponent,
     _effects.DiscardAllEnergyThenFullRecovery,
+    # v0.91（docs/marker-check-field-reset-v0.91.md 4〜7 章。くろこげマーカー・ひらいしんマーカー・色マーカーののせ替え・オールクリア）
+    _effects.DamageThenCoinMarkOpponentIfAbsent,
+    _effects.ChooseOpponentPokemonMarkIfAbsent,
+    _effects.DamageThenMarkedPokemonDamage,
+    _effects.ChooseOpponentPokemonReplaceColorMarker,
+    _effects.AllClear,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -2246,6 +2252,11 @@ GRIMER_ES2, MAROWAK_ES2, MEWTWO_ES3 = "ES2-002", "ES2-025", "ES3-026"  # ベト�
 HUNGRY_SNORLAX, CUBONE_PR1, JYNX_PR1, SMEARGLE_PRN = "PR1-024", "PR1-034", "PR1-035", "PRN-029"  # くいしんぼカビゴン・カラカラ（ボーンキラー）・ルージュラ（あくまののろい）・ドーブル（ペイント）
 V0_90_POKEMON = (GRIMER_ES2, MAROWAK_ES2, MEWTWO_ES3, HUNGRY_SNORLAX, CUBONE_PR1, JYNX_PR1, SMEARGLE_PRN)
 V0_90_CARDS = V0_90_POKEMON  # 写しの組 pool_v0_90 の並び
+
+# v0.91（docs/marker-check-field-reset-v0.91.md）: 残りのマーカーのポケモン 3 枚とヒノアラシ（同じ名前の別の版と取りちがえない）
+QUILAVA_NEO1, ELECTABUZZ_ES2, POLYGON_PRN, CYNDAQUIL_NEO4 = "neo1-020", "ES2-017", "PRN-023", "neo4-016"  # マグマラシ（やきこがす）・エレブー（ひらいしん）・ポリゴン（オールクリア）・ヒノアラシ（えんまく）
+V0_91_POKEMON = (QUILAVA_NEO1, ELECTABUZZ_ES2, POLYGON_PRN, CYNDAQUIL_NEO4)
+V0_91_CARDS = V0_91_POKEMON  # 写しの組 pool_v0_91 の並び
 
 
 def _self_sleep_shape_only(attack):

@@ -196,6 +196,7 @@ from .state import (
     TRAINER_TURN_EFFECT_KINDS,
     EVOLUTION_BAN,
     OPPONENT_POWER_SUPPRESSION,
+    ATTACK_POWER_SUPPRESSION,
     TrainerTurnEffect,
     AttackCoinCheck,
     CannotAttackWhileSourceActive,
@@ -3467,6 +3468,25 @@ def _trainer_effect_problems(state: GameState) -> list[str]:
         where = f"プレイヤー {record.player!r} のトレーナーの効果（{record.card_id}・{record.kind}）"
         if record.kind not in TRAINER_TURN_EFFECT_KINDS or record.player not in PLAYERS or type(record.created_turn) is not int:
             problems.append(f"{where} の種類・プレイヤー・与えた番が正しくない")
+            continue
+        if record.kind == ATTACK_POWER_SUPPRESSION:
+            # v0.91: ワザを使っているあいだの特殊能力の抑止（ポリゴンの「オールクリア」）。登録はワザ（``card_id``・``attack_index``）の ``suppresses_powers_while_used``。与えた番に
+            # 消え、ワザの処理の外（ワザの途中の決定を待つあいだ以外）には残らない（``flow.end_attack_power_suppression``）
+            attack = state.effects.attack_entry(record.card_id, record.attack_index) if type(record.attack_index) is int else None
+            if attack is None or not getattr(attack.effect, "suppresses_powers_while_used", False):
+                problems.append(f"{where} のワザ {record.attack_index!r} が、ワザを使っているあいだ特殊能力を止めるワザではない")
+            if record.pokemon_id is not None:
+                problems.append(f"{where} にポケモンの番号 {record.pokemon_id!r} がある（退化スプレーHYPER の禁止だけ）")
+            if record.created_turn != state.turn_number or record.expires_turn != state.turn_number:
+                problems.append(f"{where} を与えた番 {record.created_turn}・消える番 {record.expires_turn} が今の番 {state.turn_number} ではない")
+            if state.first_player in PLAYERS and turn_owner(state, record.created_turn) != record.player:
+                problems.append(f"{where} を与えた番 {record.created_turn} が、ワザを使ったプレイヤーの番ではない")
+            if state.decision is None or state.decision.resume != "attack":
+                problems.append(f"{where} が、ワザの処理の外に残っている（ワザの処理のあとに消す）")
+            card = state.cards.get(record.source_card)
+            if card is None or card.owner != record.player:
+                problems.append(f"{where} のワザを使ったポケモンのカード {record.source_card!r} が、ワザを使ったプレイヤーのカードではない")
+            keys.append((record.player, record.source_card, record.expires_turn))
             continue
         if record.kind == OPPONENT_POWER_SUPPRESSION:
             # v0.87: ワザで与えた効果（ドガースの「ふしぎなガス」）。登録はワザ（``card_id``・``attack_index``）の ``field_effect_terms()``。``source_card`` はワザを使った

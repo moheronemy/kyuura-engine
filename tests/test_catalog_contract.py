@@ -19,19 +19,19 @@ class CatalogContractTest(unittest.TestCase):
     def test_current_catalog_totals(self):
         pool = load_card_pool()
         extract = read_extract()
-        self.assertEqual(len(extract["cards"]), 1115)
-        self.assertEqual(len(pool.playable_ids), 1115)
+        self.assertEqual(len(extract["cards"]), 1119)
+        self.assertEqual(len(pool.playable_ids), 1119)
         self.assertEqual(pool.playable_ids, frozenset(
             card.id for card in pool.definitions.values() if card.supported))
         self.assertEqual(
             Counter(pool.get(card).category for card in pool.playable_ids),
-            {"pokemon": 818, "trainer": 260, "energy": 37},
+            {"pokemon": 822, "trainer": 260, "energy": 37},
         )
         registry = DEFAULT_EFFECTS
         self.assertEqual(
             (len(registry.attack_keys()), len(registry.power_keys()),
              len(registry.trainer_ids()), len(registry.energy_ids())),
-            (1366, 119, 260, 19),
+            (1373, 119, 260, 19),
         )
         self.assertEqual(
             sum(registry.trainer_entry(card).effect.is_stadium
@@ -48,7 +48,7 @@ class CatalogContractTest(unittest.TestCase):
         self.assertEqual(len(names), 423)
         candidates = engine._identity_candidates(pool)
         basics = [card for card in candidates if pool.get(card).category == "pokemon" and pool.get(card).stage == "basic"]
-        self.assertEqual((len(candidates), len(basics)), (916, 419))
+        self.assertEqual((len(candidates), len(basics)), (920, 422))
         self.assertEqual(engine._IDENTITY_TRIAL_LIMIT, 512)
 
     def test_current_research_totals(self):
@@ -57,9 +57,9 @@ class CatalogContractTest(unittest.TestCase):
         self.assertEqual(
             (links["counts"]["engine_stop_codes"],
              links["counts"]["engine_unresolved_rulings"]),
-            (203, 205),
+            (209, 211),
         )
-        self.assertEqual(len(links["latest_descriptions"]["adopted_printed_text"]), 1022)
+        self.assertEqual(len(links["latest_descriptions"]["adopted_printed_text"]), 1029)
 
     def test_current_format_and_audit_agree(self):
         # Keep the audit's independently maintained schema check. Deriving its
@@ -93,7 +93,7 @@ class CatalogContractTest(unittest.TestCase):
         self.assertLessEqual(playable, ids)
         self.assertLessEqual(pmcg, playable)
         self.assertEqual((len(ids - playable), len(neo - playable),
-                          len(non_pack - playable)), (262, 130, 132))
+                          len(non_pack - playable)), (258, 128, 130))
 
 
 class ReleaseCohortTest(unittest.TestCase):

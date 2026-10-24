@@ -619,6 +619,8 @@ PUBLIC_EVENTS = frozenset({
     "prize_revealed", "prize_guess", "deck_top_to_prizes", "reveal_deck_top", "quiz_kind_answer", "quiz_kind_reveal", "trainer_bench_from_deck", "stadium_heal",
     # v0.90: マーカー・カウンターをのせた・取りのぞいた（場の表の情報）
     "marker_added", "marker_removed", "marker_removal_declined",
+    # v0.91（docs/marker-check-field-reset-v0.91.md 4 章）: ポケモンチェックのくろこげマーカーのコインとダメージ
+    "char_check", "char_damage",
 })
 
 

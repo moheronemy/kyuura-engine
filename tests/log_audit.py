@@ -87,6 +87,7 @@ from kyuura_engine.effects import DiscardAttackerEnergyOnDamage  # v0.68
 from kyuura_engine.effects import EachPlayerRecoverFromDiscard  # v0.83
 from kyuura_engine.effects import CoinChooseEitherPokemonHeal  # v0.89
 from kyuura_engine.effects import MarkOpponentIfAbsent, MarkSelfIfAbsent, MarkSelfUpToLimit  # v0.90
+from kyuura_engine.effects import AllClear, ChooseOpponentPokemonMarkIfAbsent, DamageThenCoinMarkOpponentIfAbsent  # v0.91
 from kyuura_engine.markers import CLEARED as MARKERS_CLEARED
 from kyuura_engine.markers import REMOVAL_REASONS as MARKER_REMOVAL_REASONS
 from kyuura_engine.markers import REPLACED as MARKERS_REPLACED
@@ -1512,6 +1513,7 @@ def log_problems(state) -> list[str]:
     # v0.90: ログから組み立てた、場のポケモンのマーカー・カウンター（番号 → のせた順の {"marker", "color", "turn"}）と、進化・退化で取りのぞくはずのポケモン（番号 → 理由）
     marks: dict[int, list[dict]] = {}
     marker_clear_due: dict[int, str] = {}
+    char_due: dict[int, bool] = {}  # v0.91: ポケモンチェックのくろこげマーカーのコインの結果（「うら」ならダメージを受ける）
 
     def power_defs(pid: int) -> list[tuple[object, int, object]]:
         """v0.49: ログから組み立てた今の場の、ポケモン ``pid`` が今持つ特殊能力（``effects.powers_of`` と同じ求め方）: [(印刷したカードの定義, 位置, 特殊能力)]。
@@ -1705,7 +1707,7 @@ def log_problems(state) -> list[str]:
                 found.append(f"{where} が、そのワザ（{e.get('effect')}）を使ったポケモンのワザの処理の中にない")
             if e["count"] != len(same) + 1:
                 found.append(f"{where} の数 {e['count']} が、ログから組み立てた {len(same)} + 1 と違う")
-            if isinstance(effect, (MarkOpponentIfAbsent, MarkSelfIfAbsent)) and same:
+            if isinstance(effect, (MarkOpponentIfAbsent, MarkSelfIfAbsent, DamageThenCoinMarkOpponentIfAbsent, ChooseOpponentPokemonMarkIfAbsent)) and same:
                 found.append(f"{where}: 「のっていなければ」のワザで、のっているポケモンにのせた")
             if isinstance(effect, MarkSelfUpToLimit) and len(same) >= effect.limit:
                 found.append(f"{where}: {effect.limit} つのっているのに、使えないワザを使った")
@@ -1721,9 +1723,11 @@ def log_problems(state) -> list[str]:
                 found.append(f"{where}: {reason} で取りのぞくのは、その直後のすべて")
             if reason in (MARKERS_USED, MARKERS_CLEARED, MARKERS_REPLACED) and not in_attack:
                 found.append(f"{where} が、ワザ（{e.get('effect')}）の処理の中にない")
-            if reason in (MARKERS_USED, MARKERS_CLEARED) and (attack_window is None or attack_window["pokemon_id"] != pid):
+            # v0.91: オールクリアは、おたがいの場のポケモン全員のマーカーとカウンター（すべての種類）を取りのぞく
+            all_clear = reason == MARKERS_CLEARED and in_attack and isinstance(state.effects.attack_entry(*_attack_key(e["effect"])).effect, AllClear)
+            if reason in (MARKERS_USED, MARKERS_CLEARED) and not all_clear and (attack_window is None or attack_window["pokemon_id"] != pid):
                 found.append(f"{where}: ワザの説明で取りのぞくのは、ワザを使ったポケモン自身のもの")
-            if (reason == MARKERS_CLEARED and e["marker"] not in MARKER_KINDS) or (reason == MARKERS_REPLACED and e["marker"] != MARKER_COLOR):
+            if (reason == MARKERS_CLEARED and not all_clear and e["marker"] not in MARKER_KINDS) or (reason == MARKERS_REPLACED and e["marker"] != MARKER_COLOR):
                 found.append(f"{where}: 理由 {reason} で取りのぞけない種類")
             for marker in same[:e["count"]]:
                 present.remove(marker)
@@ -2124,9 +2128,9 @@ def log_problems(state) -> list[str]:
         elif kind == "color_effect_removed" and e["color_effect"] == "pokemon_type":
             color_types.pop(e["target"], None)
         problems.extend(marker_event_problems(e))  # v0.90
-        if kind == "trainer_effect_added" and e["effect_kind"] == "power_suppression":
+        if kind == "trainer_effect_added" and e["effect_kind"] in ("power_suppression", "attack_power_suppression"):  # v0.91: オールクリアのワザを使っているあいだ
             goop_gases[e["trainer_card"]] = e["expires_turn"]
-        elif kind == "trainer_effect_removed" and e.get("effect_kind") == "power_suppression":
+        elif kind == "trainer_effect_removed" and e.get("effect_kind") in ("power_suppression", "attack_power_suppression"):
             goop_gases.pop(e.get("trainer_card"), None)
         prior = previous  # 1 つ前のイベント（v0.11。「こんじょう」の宣言・コイン・結果の順番）
         if prior is not None and prior["kind"] == "attack" and kind != "once_attack_recorded":
@@ -2564,6 +2568,9 @@ def log_problems(state) -> list[str]:
             turn_player = e["player"]
             current_turn = e["turn"]  # v0.48
             attached_this_turn = power_attached_this_turn = 0
+            if any(char_due.values()):
+                problems.append(f"{e['turn']} 番の前のポケモンチェックで、くろこげマーカーの「うら」のポケモン {[pid for pid, due in char_due.items() if due]} がダメージを受けていない")
+            char_due.clear()  # v0.91: くろこげマーカーのコインは、そのポケモンチェックの中だけ
         if kind == "draw":
             hand[e["player"]].extend(e["cards"])
         elif kind == "mulligan":
@@ -3198,6 +3205,23 @@ def log_problems(state) -> list[str]:
                 del exclusive[e["pokemon_id"]]
             if "poison" in e["conditions"]:
                 poisoned.pop(e["pokemon_id"], None)
+        elif kind == "char_check":
+            # v0.91: ポケモンチェックのくろこげマーカーのコイン。くろこげマーカーののっている場のポケモン 1 匹に 1 枚、持ち主が投げ（直前の coin_flip）、結果が「うら」ならダメージを受ける
+            pid = e["pokemon_id"]
+            flip = prior  # 1 つ前のイベント
+            if not any(m["marker"] == "char" for m in marks.get(pid, [])) or pokemon_owner.get(pid) != e["player"] or pid in char_due \
+                    or flip is None or flip["kind"] != "coin_flip" or flip.get("source") != "pokemon_check" or flip.get("effect") != "char" \
+                    or flip["player"] != e["player"] or flip["result"] != e["result"] or e["damaged"] != (e["result"] == "tails"):
+                problems.append(f"{e['turn']} 番のくろこげマーカーのコイン（ポケモン {pid}）が、のっているポケモンの持ち主のコインと合わない")
+            char_due[pid] = e["damaged"]
+        elif kind == "char_damage":
+            # v0.91: くろこげマーカーの「うら」の 20（弱点・抵抗力・特殊能力・その他の効果に関係なく。鋼エネルギーも当てはめない）
+            pid = e["pokemon_id"]
+            if char_due.pop(pid, None) is not True or e["amount"] != 20:
+                problems.append(f"{e['turn']} 番のくろこげマーカーのダメージ {e['amount']}（ポケモン {pid}）が、「うら」のコインの 20 と合わない")
+            damage[pid] += e["amount"]
+            if damage[pid] != e["total_damage"]:
+                problems.append(f"{e['turn']} 番の char_damage のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う")
         elif kind == "poison_damage":
             # v0.34: ポケモンチェックのどくのダメージは、そのポケモンのどくの量（通常 10・特殊などくはその量。p.322・p.323）
             # 盤面を直接作ったテスト（build_test_state）は、どく状態にしたログがないので、ログで組み立てたどくだけを確かめる
@@ -3879,6 +3903,13 @@ def log_problems(state) -> list[str]:
             if e["to_prize"] in taken_cards:
                 # v0.57 で直した v0.56 の監査の漏れ: 前に取ったサイドのカードを、カスミのわがままでサイドにもどした（また取れる。同じカードの 2 回目の取得ではない）
                 taken_cards.remove(e["to_prize"])
+        elif kind == "trainer_effect_added" and e.get("effect_kind") == "attack_power_suppression":
+            # v0.91: ポリゴンの「オールクリア」（ワザを使っているあいだの特殊能力の抑止）。そのワザの処理の中で、ワザを使ったプレイヤーに、消える番は与えた番。``trainer_card`` は
+            # ワザを使ったポケモンのカード。ワザの処理のあと（reason attack_end）に消す
+            if not _same_attack(attack_window, e) or e["player"] != attack_window["player"] or e["expires_turn"] != e["turn"] \
+                    or not getattr(_effect_of_event(state, e), "suppresses_powers_while_used", False) or (e["player"], e["trainer_card"]) in trainer_effects_log:
+                problems.append(f"{e['turn']} 番のオールクリアの特殊能力の抑止が、そのワザの処理の中の、その番だけのものではない")
+            trainer_effects_log[(e["player"], e["trainer_card"])] = e
         elif kind == "trainer_effect_added" and e.get("effect_kind") == "opponent_power_suppression":
             # v0.87: ドガースの「ふしぎなガス」（ワザで与えた効果。相手の場の特殊能力を、次の相手の番の終わりまで止める）。そのワザの処理の中で、ワザを使ったプレイヤーに、
             # 登録のワザの位置で、消える番は与えた番 + 1。``trainer_card`` はワザを使ったポケモンのカード
@@ -3913,7 +3944,8 @@ def log_problems(state) -> list[str]:
                 trainer_effects_log[(e["player"], e["trainer_card"])] = e
         elif kind == "trainer_effect_removed":
             info = trainer_effects_log.pop((e["player"], e["trainer_card"]), None)
-            if info is None or e["reason"] != "expired" or e["turn"] != e["expires_turn"] or e["created_turn"] != info["turn"] or e["effect_kind"] != info["effect_kind"]:
+            reason = "attack_end" if e.get("effect_kind") == "attack_power_suppression" else "expired"  # v0.91: ワザを使っているあいだの抑止はワザの処理のあとに消す
+            if info is None or e["reason"] != reason or e["turn"] != e["expires_turn"] or e["created_turn"] != info["turn"] or e["effect_kind"] != info["effect_kind"]:
                 problems.append(f"{e['turn']} 番に消した期限のある効果（プレイヤー {e['player']}・カード {e['trainer_card']}）が、与えた効果の期限と合わない")
         elif kind == "trainer_turn_end":
             # v0.56: ロケット団員の「うら」。使い終えたそのトレーナーをトラッシュしたすぐあとに、番の終わりに進む

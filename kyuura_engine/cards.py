@@ -532,6 +532,7 @@ POOL_KEYS = (
     "pool_v0_88",  # v0.88（タイプとエネルギーの色を変える・数えるポケモン 11 枚。docs/type-energy-colors-v0.88.md）
     "pool_v0_89",  # v0.89（対象を選ぶダメージ・選べる回復のポケモン 17 枚。docs/selected-target-damage-v0.89.md）
     "pool_v0_90",  # v0.90（マーカー・ダメージカウンター以外のカウンターのポケモン 7 枚。docs/markers-counters-v0.90.md）
+    "pool_v0_91",  # v0.91（残りのマーカーのポケモン 3 枚とヒノアラシ。docs/marker-check-field-reset-v0.91.md）
 )
 
 

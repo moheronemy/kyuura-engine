@@ -12,8 +12,8 @@
   "card_data_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 205,
-    "engine_stop_codes": 203,
+    "engine_unresolved_rulings": 211,
+    "engine_stop_codes": 209,
     "kyuura_issues": 71
   },
   "stop_codes": {
@@ -2360,6 +2360,72 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POKEMON_CHECK_CHAR_COIN_ORDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.91",
+          "document": "docs/marker-check-field-reset-v0.91.md",
+          "ruling_id": "KK1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_LIGHTNING_BOLT_DEFENDER_UNITS": {
+      "engine_rulings": [
+        {
+          "version": "v0.91",
+          "document": "docs/marker-check-field-reset-v0.91.md",
+          "ruling_id": "HR1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_HYPER_TEXTURE_UNMARKED_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.91",
+          "document": "docs/marker-check-field-reset-v0.91.md",
+          "ruling_id": "HX1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ALL_CLEAR_OTHER_EFFECTS": {
+      "engine_rulings": [
+        {
+          "version": "v0.91",
+          "document": "docs/marker-check-field-reset-v0.91.md",
+          "ruling_id": "ZC1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ALL_CLEAR_ATTACK_SOURCE": {
+      "engine_rulings": [
+        {
+          "version": "v0.91",
+          "document": "docs/marker-check-field-reset-v0.91.md",
+          "ruling_id": "ZC2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ALL_CLEAR_FOSSIL_IN_PLAY": {
+      "engine_rulings": [
+        {
+          "version": "v0.91",
+          "document": "docs/marker-check-field-reset-v0.91.md",
+          "ruling_id": "ZC3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -3888,7 +3954,14 @@
       "PR1-034/attack/0",
       "PR1-034/attack/1",
       "PR1-035/attack/0",
-      "PRN-029/attack/0"
+      "PRN-029/attack/0",
+      "neo1-020/attack/0",
+      "neo1-020/attack/1",
+      "ES2-017/attack/0",
+      "ES2-017/attack/1",
+      "PRN-023/attack/0",
+      "PRN-023/attack/1",
+      "neo4-016/attack/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

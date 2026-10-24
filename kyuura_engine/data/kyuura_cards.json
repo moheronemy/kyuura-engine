@@ -1358,6 +1358,12 @@
     "PR1-035",
     "PRN-029"
   ],
+  "pool_v0_91": [
+    "neo1-020",
+    "ES2-017",
+    "PRN-023",
+    "neo4-016"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -100253,6 +100259,401 @@
           "list_number": "-/-"
         }
       ]
+    },
+    {
+      "id": "neo1-020",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "マグマラシ",
+        "en": "Quilava"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          156
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ヒノアラシ",
+          "en": "Cyndaquil"
+        },
+        "hp": 70,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "えんまく",
+              "en": "Smokescreen"
+            },
+            "cost": [
+              "fire",
+              "fire"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "次の相手の番、このワザを受けた相手は、ワザを使うときにコインを投げ、「うら」なら、そのワザは失敗する。",
+              "en": "If the Defending Pokémon tries to attack during your opponent's next turn, your opponent flips a coin. If tails, that attack does nothing."
+            }
+          },
+          {
+            "name": {
+              "ja": "やきこがす",
+              "en": "Char"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "相手に「くろこげマーカー」がのっていなければ、コインを投げ、「おもて」なら、相手に「くろこげマーカー」を1つのせる。おたがいのプレイヤーは、ポケモンチェックのたび、自分の場の「くろこげマーカー」をのせているポケモンそれぞれに対してコインを投げ、「うら」なら、そのポケモンに「弱点・抵抗力・特殊能力・その他の効果」に関係なく、20ダメージ。",
+              "en": "If the Defending Pokémon doesn't have a Char counter on it, flip a coin. If heads, put a Char counter on it. A Char counter requires your opponent to flip a coin after every turn. If tails, put 2 damage counters on the Pokémon with that Char counter. (Char counters stay on the Pokémon as long as it's in play.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-020",
+        "pokemontcg": [
+          "neo1-47"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-020-magmarashi/",
+      "jp_print": {
+        "level": 35,
+        "rarity": "◆(U)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [
+          "修正版は「やきこがす」の説明文の一部が変更されている",
+          "修正前：そのポケモンに「弱点・抵抗力・特殊能力・その他の効果」に関係なく、20ダメージ。",
+          "修正後：そのポケモンにダメージカウンターを2個のせる。"
+        ],
+        "source": "https://nazonobasho.com/neo01-020-magmarashi/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "ES2-017",
+      "jp_set": "ES2",
+      "category": "pokemon",
+      "name": {
+        "ja": "エレブー",
+        "en": "Electabuzz"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          125
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひらいしん",
+              "en": "Lightning Rod"
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手の場のポケモンから1匹を選ぶ。そのポケモンに「ひらいしんマーカー」がのっていなければ、1つのせる。",
+              "en": "Choose 1 of your opponent's Pokémon and put a Lightning Rod marker on it. (A Pokémon can have only 1 Lightning Rod marker on it at a time.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "かみなりショック",
+              "en": "Lightning Bolt"
+            },
+            "cost": [
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "「ひらいしんマーカー」をのせているすべてのポケモンに、それぞれ20ダメージ。(このワザのダメージは「弱点・抵抗力」の影響を受ける)",
+              "en": "This attack does 20 damage to any Pokémon with a Lightning Rod marker on it. Apply Weakness and Resistance."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-46"
+        ],
+        "pcg_search": [
+          "1stex2017"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex2017.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第2弾(赤版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex2017.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-46",
+        "pokemon.dex": "pokemontcg:basep-46"
+      },
+      "copies": [
+        {
+          "page": "1stex2017",
+          "list_number": "017/036"
+        }
+      ]
+    },
+    {
+      "id": "PRN-023",
+      "jp_set": "PRN",
+      "category": "pokemon",
+      "name": {
+        "ja": "ポリゴン",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "オールクリア",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "おたがいの場にある、すべての「トレーナーカード」をトラッシュして、おたがいの場にいるポケモン全員を「どく・ねむり・マヒ・こんらん」状態や「その他の効果」から、すべて回復させる。おたがいの場にいるポケモン全員から、マーカーとカウンターを、すべてとりのぞく。(ダメージカウンターはそのまま)。このワザを使っているあいだ、おたがいの場にいるすべてのポケモンは「特殊能力」を使うことができず、その力も消える。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ハイパーテクスチャー",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "相手の場のポケモンを1匹選ぶ。そのポケモンに「色マーカー」がのっているなら、それをとりのぞき、好きな「色(タイプ)」(無色以外)を選んでから、そのポケモンの上に「色マーカー」を1つのせる。「色マーカー」をのせているポケモンは、それをのせたときに選ばれた「色(タイプ)」のポケモンとしてあつかわれる。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neop023"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop023.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop023.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "neop023",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "neo4-016",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ヒノアラシ",
+        "en": "Cyndaquil"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          155
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "えんまく",
+              "en": "Smokescreen"
+            },
+            "cost": [
+              "fire"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "次の相手の番、このワザを受けた相手は、ワザを使うときにコインを投げ、「うら」なら、そのワザは失敗する。",
+              "en": "If the Defending Pokémon tries to attack during your opponent's next turn, your opponent flips a coin. If tails, that attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-016",
+        "pokemontcg": [
+          "neo4-61"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%92%E3%83%8E%E3%82%A2%E3%83%A9%E3%82%B7_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 15,
+        "rarity": "●(C)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%92%E3%83%8E%E3%82%A2%E3%83%A9%E3%82%B7_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
     }
   ]
 }
