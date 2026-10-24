@@ -196,6 +196,32 @@ class Resolution:
         if self.on_horizon is not None:
             self.on_horizon()
 
+    def hidden_choice(self, alternatives, actual):
+        """v0.95（docs/private-looks-deck-movement-v0.95.md 4.1 節）: ワザを使うプレイヤーが宣言の前に知らないカードで決まる値 ``actual``（見た相手の手札のトレーナーカードの枚数・
+        山札の上からトラッシュしたカードの中のエネルギーカードの枚数）。``alternatives`` は、宣言の前にそのプレイヤーが知っている情報（手札の枚数・山札とサイドの中身）から
+        ありうる値のすべて（同じ並び）。
+
+        - 先読み（``dry_run``）: ``oracle`` で ``alternatives`` のすべてを試す（コイン・決定の答えと同じ台本の値）。状態の複製のカードは本当のカードのままで、この値だけを
+          置きかえる（値を使う要素だけが読む）
+        - 実際の処理: ``actual`` を返し、その位置を台本の値として記録する（``preflight.RecordingRandom.record_hidden``。まだ試していない値を、ほかの結果と同じに先読みで
+          試す）。先読みの範囲の外（決定のあとの再開など）では記録しない
+        - ありうる値が 1 つなら、台本の値を使わない（先読みと実際の処理のどちらも）
+
+        受け付けるか・止める問いが、見えないカードの中身によらない（どの値でも当たる問いを、宣言の前に見つける）。"""
+        alternatives = tuple(alternatives)
+        if len(alternatives) <= 1:
+            if alternatives and not self.dry_run and actual != alternatives[0]:
+                raise RuntimeError(f"見えないカードで決まる値 {actual!r} が、ありうる値 {alternatives} にない（エンジンの不具合）")
+            return alternatives[0] if self.dry_run and alternatives else actual
+        if self.dry_run:
+            return self.oracle.choose(list(alternatives))
+        if actual not in alternatives:
+            raise RuntimeError(f"見えないカードで決まる値 {actual!r} が、ありうる値 {alternatives} にない（エンジンの不具合）")
+        record = getattr(type(self.state.rng), "record_hidden", None)
+        if record is not None:
+            self.state.rng.record_hidden(alternatives.index(actual), len(alternatives))
+        return actual
+
     def question(self, key: str, detail: str = "", error=None) -> OpenQuestion:
         self.trace.record(QuestionHit(key, detail))
         return OpenQuestion(key, detail, error)
@@ -289,6 +315,11 @@ def settle_scram(res: Resolution, *, rest: tuple | None = None) -> list[int]:
             continue
         if pokemon.pokemon_id in res.dormant:
             raise res.question("scram_power_restored", f"ポケモン {pokemon.pokemon_id}")
+        from ..persistent import leave_lock
+
+        if leave_lock(state, owner, pokemon) is not None:
+            # v0.93（AL3）: 「バトル場をはなれられない」効果を受けたバトル場のポケモンは、山札にもどれない。もどれないまま、あとではたらくのかが決まらない
+            raise res.question("leave_lock_scram", f"ポケモン {pokemon.pokemon_id}")
         due.append((owner, pokemon, slot))
     if not due:
         return []
@@ -626,7 +657,7 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
                 weakness_resistance: bool = True, orders: dict[int, tuple[int, ...]] | None = None,
                 order_decision: bool = False, resistance: bool = True, defender_effects: bool = True,
                 guard: tuple[int, ...] | None = None, guard_suspend: bool = False, reduction: int | None = None,
-                ignore_scope: str = IGNORE_HELD) -> DamageResult:
+                ignore_scope: str = IGNORE_HELD, private_amount: bool = False) -> DamageResult:
     """ワザの分類のダメージの要素 1 つ（v0.13 の ``deal_attack_damage`` と同じ結果・ログ・乱数）。
 
     v0.31: ``target`` が ``OPPONENT_BENCH`` なら ``pokemon_id`` の相手の控えポケモン（プラスパワーは変えない。``attack_damage_modifiers`` の
@@ -742,16 +773,18 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         trainer_self_bonus_question(res, attacker, receiver, base, modifiers, calc.final, weakness_resistance, orders, resistance)
     if calc.final > 0 and defender_effects and receiver_player != frame.player:
         reflect_shield_overlap(res, fs, receiver)
-    if calc.final > 0 and defender_effects and not reaches(res, fs, receiver_player, receiver, DAMAGE_ELEMENT, amount=calc.final):
+    if calc.final > 0 and defender_effects and not reaches(res, fs, receiver_player, receiver, DAMAGE_ELEMENT, amount=calc.final, amount_private=private_amount):
         fs.evaded[receiver.pokemon_id] = calc.final
         res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
         note_receipt(res, fs, receiver_player, receiver, voided=(DAMAGE_ELEMENT, VOID_EVADED))
         return DamageResult(target, receiver_player, receiver.pokemon_id, False, None, receiver.damage >= hp_of(state, receiver), evaded=True)
-    if calc.final > 0 and defender_effects and receiver_player != frame.player and not damage_guard_passes(res, fs, receiver_player, receiver, calc.final):
+    if calc.final > 0 and defender_effects and receiver_player != frame.player and not damage_guard_passes(res, fs, receiver_player, receiver, calc.final,
+                                                                                                         private=private_amount):
         res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
         note_receipt(res, fs, receiver_player, receiver, voided=(DAMAGE_ELEMENT, VOID_DODGED))
         return DamageResult(target, receiver_player, receiver.pokemon_id, False, None, receiver.damage >= hp_of(state, receiver), dodged=True)
-    if calc.final > 0 and defender_effects and receiver_player != frame.player and reflect_shield_holds(res, fs, receiver_player, receiver, attacker, calc.final):
+    if calc.final > 0 and defender_effects and receiver_player != frame.player and reflect_shield_holds(res, fs, receiver_player, receiver, attacker, calc.final,
+                                                                                                        private=private_amount):
         # v0.83: 「リフレクトシールド」の「おもて」。このダメージの要素で受けるダメージはない（のせない。受けたときの効果・きぜつ・こんじょうの写しもない）
         res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
         note_receipt(res, fs, receiver_player, receiver, voided=(DAMAGE_ELEMENT, VOID_REFLECTED))
@@ -862,7 +895,14 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     return DamageResult(target, receiver_player, receiver.pokemon_id, False, final, receiver.damage >= hp_of(state, receiver))
 
 
-def damage_guard_passes(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay, final: int) -> bool:
+def _amount_privacy(private: bool) -> dict:
+    """v0.95（docs/private-looks-deck-movement-v0.95.md 4 章）: 基本となるダメージが見た手札の中身で決まるワザ（ゴーストの「ポルターガイスト」）のダメージの要素で、受けなかった
+    ダメージの量を書くログ（``attack_evaded``・``damage_guard_check``・``reflect_shield_check`` の ``amount``）の印 ``amount_private``。観戦者にはその量を見せない（見たプレイヤーと
+    手札の持ち主は、手札の中身を知っている。``observation.PRIVATE_FIELDS``）。印のないワザのログの形は v0.94 と同じ。のせたダメージ（ログ ``damage``）はワザの結果で公開。"""
+    return {"amount_private": True} if private else {}
+
+
+def damage_guard_passes(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay, final: int, *, private: bool = False) -> bool:
     """v0.60: 「かげぶんしん」（R団のストライク。``state.TailsDamageGuard``）。``pokemon``（持ち主 ``owner``）がこの効果を持っていれば、相手プレイヤー（``owner`` の相手。
     ワザ・返す効果を使うプレイヤー）がコインを 1 枚投げ、「おもて」なら True（ダメージを受ける）、「うら」なら False（そのダメージを受けない）。効果がなければ True（コインなし）。
 
@@ -884,7 +924,7 @@ def damage_guard_passes(res: Resolution, fs: FrameState, owner: int, pokemon: Po
     received = flips.results[0] is CoinSide.HEADS
     state.add_event("damage_guard_check", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, flipped_by=1 - owner,
                     persistent_effect=guard.kind, source_card=guard.source_card, created_turn=guard.created_turn, effect=str(frame.attack_key),
-                    amount=final, result=flips.results[0].value, received=received)
+                    amount=final, result=flips.results[0].value, received=received, **_amount_privacy(private))
     return received
 
 
@@ -894,7 +934,8 @@ REFLECT_SHIELD_RETURN = C.EffectDefinition(
 )
 
 
-def reflect_shield_holds(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay, attacker: PokemonInPlay, final: int) -> bool:
+def reflect_shield_holds(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay, attacker: PokemonInPlay, final: int, *,
+                         private: bool = False) -> bool:
     """v0.83: 「リフレクトシールド」（ひかるミュウツー。``state.ReflectShield``）。``pokemon``（持ち主 ``owner``）が今この効果を持ち、相手のワザによるダメージ（最終ダメージが 0 より
     大きい。呼ぶ側が確かめる）を受けるとき、持ち主がコインを 1 枚投げ（``coin_flip`` の ``source`` は ``"persistent_effect"``。ログ ``reflect_shield_check``）、「おもて」なら
     True（このダメージの要素で受けるダメージはない）。相手（ダメージを与えたポケモン）に与える ``amount`` は、このワザのダメージの要素のあとの窓で与える（``fs.pending`` に
@@ -917,7 +958,7 @@ def reflect_shield_holds(res: Resolution, fs: FrameState, owner: int, pokemon: P
     held = flips.results[0] is CoinSide.HEADS
     state.add_event("reflect_shield_check", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, persistent_effect=shield.kind,
                     source_card=shield.source_card, created_turn=shield.created_turn, effect=str(frame.attack_key), attacker=frame.player,
-                    attacker_pokemon_id=attacker.pokemon_id, amount=final, result=flips.results[0].value, reflected=held)
+                    attacker_pokemon_id=attacker.pokemon_id, amount=final, result=flips.results[0].value, reflected=held, **_amount_privacy(private))
     if held:
         instance = C.EffectInstance(REFLECT_SHIELD_RETURN, owner, pokemon.pokemon_id, pokemon.card, implementation=shield)
         fs.pending.append(Deferred(instance, frame.id, attacker.damage))
@@ -1165,8 +1206,10 @@ def receiving(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPla
     return found
 
 
-def reaches(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay, element: str, *, amount: int | None = None) -> bool:
-    """受ける前の置きかえ（とうめい）の窓（v0.13 の ``attack_reaches`` と同じ結果・ログ・乱数）。1 つの枠で 1 匹 1 回（T4）。"""
+def reaches(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay, element: str, *, amount: int | None = None,
+            amount_private: bool = False) -> bool:
+    """受ける前の置きかえ（とうめい）の窓（v0.13 の ``attack_reaches`` と同じ結果・ログ・乱数）。1 つの枠で 1 匹 1 回（T4）。v0.95: ``amount_private`` なら、受けなかった
+    ダメージの量（ログ ``attack_evaded`` の ``amount``）は対戦するプレイヤーだけに見える（``_amount_privacy``）。"""
     state = res.state
     frame = fs.frame
     if element not in ATTACK_ELEMENTS:
@@ -1229,7 +1272,7 @@ def reaches(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay,
             evaded=evaded,
         )
     if not memo:
-        extra = {} if amount is None else {"amount": amount}
+        extra = {} if amount is None else {"amount": amount, **_amount_privacy(amount_private)}
         state.add_event(
             "attack_evaded", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, effect=str(frame.attack_key), element=element, **extra
         )
@@ -1608,6 +1651,11 @@ def bolt_return_on_heads(res: Resolution, fs: FrameState, deferred: Deferred) ->
         return
     if state.current_player == instance.owner:
         raise res.question("bolt_during_own_attack", f"ポケモン {pokemon.pokemon_id}")
+    from ..persistent import leave_lock
+
+    if leave_lock(state, instance.owner, pokemon) is not None:
+        # v0.93（AL2）: 「バトル場をはなれられない」なら、このコインは山札にもどる部分（起こらない）だけを決める
+        raise res.question("leave_locked_coin", f"ポケモン {pokemon.pokemon_id}（［はしりさる］のコイン）")
     flips = flip_coins(state, instance.owner, 1, source="power", effect=str(instance.power_key), card=pokemon.card, pokemon_id=pokemon.pokemon_id)
     returned = flips.results[0] is CoinSide.HEADS
     state.add_event("bolt_check", **base, result=flips.results[0].value, returned=returned)

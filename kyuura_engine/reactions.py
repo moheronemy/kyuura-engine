@@ -508,6 +508,11 @@ def _lightning_burst(state: GameState, reaction: tuple, after: tuple) -> tuple:
         state.add_event("lightning_burst_skipped", player=owner, pokemon=holder.card, pokemon_id=pid, power=str(slot.key), energy=card, reason="no_bench")
         return after
     state.add_event("pokemon_power", player=owner, pokemon=holder.card, pokemon_id=pid, power=slot.power.name_ja, power_index=index, forced=True, trigger=card)
+    lock = E.active_leave_lock(state, opponent)
+    if lock is not None:
+        # v0.93: 相手の対戦ポケモンが「バトル場をはなれられない」なら、入れ替える部分は起こらない（相手に選ばせない）
+        E.note_leave_prevented(state, opponent, state.players[opponent].active, lock, E.LEAVE_SWITCH, power=str(slot.key))
+        return after
     stops = E.switch_choice_stops(state, opponent)
     extra: tuple = ()
     if stops:

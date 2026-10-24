@@ -1955,6 +1955,58 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.95: 手札・山札の閲覧とカード移動の 11 枚
+
+[private-looks-deck-movement-v0.95.md](private-looks-deck-movement-v0.95.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_95`（11 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.94 までの
+  1,149 枚の記録は変わっていない。
+- 11 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-24・`kyuura_records` は空・外部照合なし）。`card_verification.json` には加えていない。ゴーストの
+  2 枚（ES3-024・QSG-029。SC-ES3-024）はゲーム用データが同じ組で、id ごとに記録し、登録は同じ値を使う。
+- 処理に使う文面はどれも kyuura の印刷の文面（研究の対応表の `adopted_printed_text` に 18。ワザ 16・特殊能力 2。説明文のない 4 つのワザを除く）。11 枚の id と旧 pcg-search の id（`1stgymd6002`・
+  `1stex3024`・`1stqsg029`・`1stex3031`）で、kyuura の研究の基準に LD-・CC-・CR-・UQ-・エラッタがないことを確かめた。kyuura data/Silver_Bible_structured.md のポルターガイスト・やまくずし・
+  みらいよち（別のカード）・マインドショックの解説は研究の記録ではなく、根拠にしていない（印刷の文面の読み方と矛盾しない）。
+- 日本語の文面の転記元は pcg-search.com（ナツメのケーシィ・ゴースト 2 枚・サイドン）・nazonobasho.com（ネイティオ・ヨルノズク・オタチ）・pokemonwiki（わるいハッサム・わるいヤドキング・
+  わるいマグマラシ・エイパム）。外部照合はしていない。
+- 新しい停止コードはない。研究の対応表の FV1（`UNRESOLVED_FERVOR_RAINBOW_ENERGY`）に v0.95 の記録を加えた。報告事項（kyuura の作業）: FV1 を山札の上からトラッシュするワザにも当てはめた
+  （kyuura の未解決の一覧にない論点のまま）。おどす・とりさるで選べるカードがないときに切る読み方（v0.75・v0.79）を、kyuura の記録で確かめる材料にする。kyuura の engine_targets.json の
+  `engine_reference` を v0.95 の登録で写すと 11 枚の `engine_status` が `registered` になる（docs 15 章）。
+
+## v0.94: 入れ替え・帰還のワザの 13 枚
+
+[switch-return-attacks-v0.94.md](switch-return-attacks-v0.94.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_94`（13 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.93 までの
+  1,136 枚の記録は変わっていない。
+- 13 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-24・`kyuura_records` は空・外部照合なし）。`card_verification.json` には加えていない。ピッピの
+  2 枚（ES1-026・QSG-040。SC-ES1-026）・ロコンの 2 枚（ES3-009・QSG-008。SC-ES3-009）はゲーム用データが同じ組で、id ごとに記録し、登録は同じ値を使う。
+- 処理に使う文面はどれも kyuura の印刷の文面（研究の対応表の `adopted_printed_text` に 20。きょだいなキバは説明文がない）。13 枚の id と旧 pcg-search の id（`1stex1026`・`1stqsg040`・
+  `1stmv002`・`1stex2001`・`neop033`・`neop043`・`1stex3034`・`1stp052`・`1stex3009`・`1stqsg008`）で、kyuura の研究の基準に LD-・CC-・CR-・UQ-・エラッタがないことを確かめた。
+- ドンファン（neo1-054）のじたばたのダメージの目安「10×」は、kyuura の転記の照合の記録（data/curation/nazonobasho_review.json の `neo1-054|damage`）で直した値（研究の裁定ではない）。
+- 日本語の文面の転記元は pcg-search.com（ピッピ 2 枚・プリン・モルフォン・トゲピー・キレイハナ・ケンタロス・カイリキー・ロコン 2 枚）・nazonobasho.com（ブルー・ドンファン）・pokemonwiki
+  （わるいドンファン）。外部照合はしていない。
+- 新しい停止コードはない。報告事項（kyuura の作業）: RX1 をワザの効果の入れ替えでも止めるようになった（kyuura の未解決の一覧にない論点のまま）。kyuura の engine_targets.json の
+  `engine_reference` を v0.94 の登録で写すと 13 枚の `engine_status` が `registered` になる（docs 13 章）。
+
+## v0.93: バトル場をはなれられない効果と続くワザの制限の 9 枚
+
+[active-leave-locks-v0.93.md](active-leave-locks-v0.93.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_93`（9 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.92 までの
+  1,127 枚の記録は変わっていない。
+- 9 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-24・`kyuura_records` は空・外部照合なし）。`card_verification.json` には加えていない。キャタピーの
+  2 枚（ES1-002・QSG-002）はゲーム用データが同じ組（SC-ES1-002）で、id ごとに記録し、登録は同じ値を使う。
+- 処理に使う文面はどれも kyuura の印刷の文面（研究の対応表の `adopted_printed_text` に 14。たいあたり 2・つるのムチは説明文がない）。9 枚の id と旧 pcg-search の id（`1stex1002`・
+  `1stqsg002`・`1stex2004`）で、kyuura の研究の基準に LD-・CC-・CR-・UQ-・エラッタがないことを確かめた。
+- きぜつの例外は、書いてあるモンジャラ・アリゲイツ・わるいアリアドスの文面のまま使い、書いていないキャタピー・クサイハナに別のカードの括弧書きを補っていない。
+- 日本語の文面の転記元は pcg-search.com（キャタピー 2 枚・モンジャラ）・nazonobasho.com（クサイハナ・アリゲイツ・イノムー）・pokemonwiki（わるいアリアドス・わるいアリゲイツ・オクタン）。
+  外部照合はしていない。
+- 新しい停止コード 6 件（AL1・AL2・AL3・JC1・JC2・CJ1）を `stop_codes` に `not_in_kyuura` で加えた。v0.92 のくろいまなざしの短い論点名を ML1 から ML2 に直した（`ruling_id` だけ。
+  公開コード・件数は同じ）。
+- 報告事項（kyuura の作業）: 6 つの論点は kyuura の未解決の一覧にない（AL2 は UQ-CARD-USE-WITHOUT-TARGET・UQ-TARGET-WITHOUT-EFFECT・UQ-COIN-IN-NULLIFIED-ELEMENT と、JC1 は
+  UQ-ATTACK-LOCK-SOURCE-RETURNED と同じ形の別の原因の問い）。kyuura の engine_targets.json の `engine_reference` を v0.93 の登録で写すと 9 枚の `engine_status` が `registered` になる
+  （docs 13 章）。
+
 ## v0.92: 能力の消去・続く制限の 8 枚
 
 [power-suppression-lasting-locks-v0.92.md](power-suppression-lasting-locks-v0.92.md)。
@@ -1968,7 +2020,7 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   docs の各章で分けた。
 - 日本語の文面の転記元は nazonobasho.com（イトマル・アリアドス・イワーク・ヤミカラス）・pokemonwiki（ゴルバット・ヨーギラス）・pcg-search.com（ナツメのゲンガー・ハッサム）。外部照合は
   していない。
-- 新しい停止コード 4 件（DW1・DW2・DW3・ML1）を `stop_codes` に `not_in_kyuura` で加えた。
+- 新しい停止コード 4 件（DW1・DW2・DW3・ML2）を `stop_codes` に `not_in_kyuura` で加えた。
 - 報告事項（kyuura の作業）: 4 つの論点は kyuura の未解決の一覧にない。kyuura の engine_targets.json の `engine_reference` を v0.92 の登録で写すと 8 枚の `engine_status` が
   `registered` になる。きゅうけつどくの括弧の字形がアリアドス（半角）とゴルバット（全角）で違う（意味は同じ）。data/Silver_Bible_structured.md のナツメのゲンガーの解説の、かげしばりの
   語順が印刷の文面と違う（挙動は変わらない。エンジンは根拠にしていない。docs 13 章）。

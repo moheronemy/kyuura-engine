@@ -35,7 +35,7 @@ from .effects import (
 )
 from .errors import UnsupportedError
 from .persistent import (KNOCK_OUT, USED, received_attack_damage_bonuses, remove_expired_persistent_effects, remove_on_damage, remove_persistent_effects,
-                         remove_source_left_effects, remove_turn_start_expired_persistent_effects)
+                         remove_source_left_effects, remove_turn_start_expired_persistent_effects, require_can_leave)
 from .state import ATTACK_FIELD_POWER_SUPPRESSION, OPPONENT_POWER_SUPPRESSION, POWER_SUPPRESSION, Halt, Phase
 from .history import prune as prune_history
 from .zones import draw_cards, return_expired_set_aside
@@ -295,7 +295,42 @@ def _pokemon_check_plan(state: GameState, order: tuple[int, int], char_damages: 
         what = "（v0.78: 悪エネルギーの効果を含む）" if not canonical.chars else "（v0.91: くろこげマーカーのダメージを含む）"
         return Halt(code=POKEMON_CHECK_DOUBLE_KNOCKOUT.code, message=what + POKEMON_CHECK_DOUBLE_KNOCKOUT.message,
                     references=POKEMON_CHECK_DOUBLE_KNOCKOUT.references + ("docs/darkness-metal-energy-v0.78.md 5 章",))
+    leave_stop = _pokemon_check_leave_lock_stop(after_two, order)
+    if leave_stop is not None:
+        return leave_stop
     return poisoned_ids
+
+
+def _pokemon_check_leave_lock_stop(after: GameState, order: tuple[int, int]) -> Halt | None:
+    """v0.93（docs/active-leave-locks-v0.93.md 4.3 節）: ポケモンチェックの 1・2 のあとの場（状態の複製）で、「バトル場をはなれられない」効果を受けたバトル場のポケモンが、
+    きぜつの例外を書いていない効果を受けたまま HP 以上なら AL1（きぜつの処理でバトル場をはなれるかが決まらない）、力のはたらく［ずらかる］の残りHPが「10」なら AL3（もどれない
+    まま、あとではたらくかが決まらない）。ポケモンチェックはどちらの番の操作でもないので、ダメージを与える前に対戦を止める（v0.48 の MH1 と同じ形）。"""
+    from .effects import (
+        LEAVE_LOCK_KNOCKOUT_CODE,
+        LEAVE_LOCK_KNOCKOUT_REASON,
+        LEAVE_LOCK_SCRAM_CODE,
+        LEAVE_LOCK_SCRAM_REASON,
+        scram_due,
+        scram_slots,
+        scram_working,
+    )
+    from .persistent import leave_lock
+
+    references = ("GR-2000-P323-POKEMON-CHECK", "GR-2000-P323-KNOCKOUT", "docs/active-leave-locks-v0.93.md")
+    for owner in order:
+        active = after.players[owner].active
+        if active is None or after.is_face_down(active):
+            continue
+        if knocked_by_hp(after, active):
+            lock = leave_lock(after, owner, active, knock_out=True)
+            if lock is not None:
+                return Halt(code=LEAVE_LOCK_KNOCKOUT_CODE, message=f"ポケモンチェックで、ポケモン {active.pokemon_id}（{lock.kind}・与えた番 {lock.created_turn}）: {LEAVE_LOCK_KNOCKOUT_REASON}",
+                            references=references)
+    for owner, pokemon, slot in scram_slots(after):
+        if after.players[owner].active is pokemon and scram_due(after, pokemon, slot) and scram_working(after, pokemon, slot) \
+                and leave_lock(after, owner, pokemon) is not None:
+            return Halt(code=LEAVE_LOCK_SCRAM_CODE, message=f"ポケモンチェックで、ポケモン {pokemon.pokemon_id}: {LEAVE_LOCK_SCRAM_REASON}", references=references)
+    return None
 
 
 # v0.91（KK1。docs/marker-check-field-reset-v0.91.md 4 章）: 両方のプレイヤーが、自分の場のくろこげマーカーのポケモンについてコインを投げる（どちらが先に投げるか）
@@ -1105,6 +1140,8 @@ def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous
     同じで、相手はサイドを取らない。ログに ``counted`` が False と書く。真なら書かない（v0.46 までと同じ形））。サイドを取るプレイヤーを決めるのは呼ぶ側。
     """
     p = state.players[owner]
+    # v0.93: きぜつの例外を書いていない「バトル場をはなれられない」効果（AL1）は、きぜつの処理の前（``resolution.flow``）に止める（ここに来たら漏れ）
+    require_can_leave(state, owner, pokemon, knock_out=True)
     returns = energy_discard_plan(state, pokemon, pokemon.energy, cause=DISCARD_BY_KNOCK_OUT)  # v0.82: リサイクルエネルギー（場をはなれる前の場で決める）
     was_active = p.active is pokemon
     if was_active:

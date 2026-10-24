@@ -30,7 +30,7 @@ from ..effects import (AttackKey, AttackUse, PowerKey, usable_ninja_tricks, atta
                        received_modifiers_log, received_power_damage, retreat_trap_powers, stadium_attack_coin_available, status_at_attack_blocked)
 from ..errors import IllegalActionError, UnsupportedError
 from ..state import AttackEffectGuard, BenchAttackDamageGuard, BenchProtection, GameState, Phase, PowersStopped, StatusImmunityNextTurn, ZeroDamageAtLeast
-from ..state import MARKER_COLOR, MARKER_CURSE, PERIOD_EFFECT_TYPES
+from ..state import MARKER_COLOR, MARKER_CURSE, PERIOD_EFFECT_TYPES, PeriodAttackCoinCheck, PeriodLeaveLock
 from ..history import close_probe, note_used
 from ..zones import face_up_fields, prize_left, promote_from_bench, return_in_play_to_deck, shuffle_deck
 from ..movement import promotion_spikes_now
@@ -41,7 +41,7 @@ from . import preflight as P
 from . import v013_checks
 from .contract import is_contract, program_for
 from .events import FrameKind, Suspended, Trace, Window, WindowOpened
-from ..persistent import RETURN_IN_PLAY_TO_DECK, attack_coin_checks, destiny_bond, remove_on_damage, remove_persistent_effects
+from ..persistent import RETURN_IN_PLAY_TO_DECK, attack_coin_checks, destiny_bond, leave_lock, remove_on_damage, remove_persistent_effects
 from .kernel import (DryRunComplete, Resolution, apply_energy_drain, apply_split, capture_post_knockout, check_simultaneous, exp_all_offers, exp_all_options, exp_all_unresolved,
                      focus_band_offers, hp_of, knock_out_beam_problem, knock_out_power_offers, knocked, ko_prevention_offers, scram_restored_question, settle_scram,
                      track_ko)
@@ -240,9 +240,13 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
         found.append("ふしぎなガス")  # v0.87: 相手の場の特殊能力だけを止める効果（v0.13 の止める関数は知らない）
     if any(r.kind == E.ATTACK_FIELD_POWER_SUPPRESSION for r in state.trainer_effects):
         found.append("やみのはどう")  # v0.92: ワザで与えた、おたがいの場の特殊能力を止める効果（v0.13 の止める関数は知らない）
-    if any(isinstance(effect, PERIOD_EFFECT_TYPES) for side in state.players for pokemon in side.in_play() for effect in pokemon.persistent_effects):
+    v093 = (PeriodLeaveLock, PeriodAttackCoinCheck)
+    if any(isinstance(effect, PERIOD_EFFECT_TYPES) and not isinstance(effect, v093) for side in state.players for pokemon in side.in_play() for effect in pokemon.persistent_effects):
         # v0.92: 期間を明示した持続する効果（いやなおとの 8 段階の +20・発生源がはなれたら消える禁止）。v0.13 の止める関数は知らない
         found.append("v0.92 の持続する効果")
+    if any(isinstance(effect, v093) for side in state.players for pokemon in side.in_play() for effect in pokemon.persistent_effects):
+        # v0.93: 「バトル場をはなれられない」効果（入れ替え・もどす要素が起こらない・AL1〜AL3・JC1・JC2）・期間を明示した手順 4 のコイン（かぶりつく・CJ1）。v0.13 の止める関数は知らない
+        found.append("v0.93 のバトル場をはなれられない効果・手順 4 のコイン")
     if any(marker.kind in (MARKER_CURSE, MARKER_COLOR) for side in state.players for pokemon in side.in_play() for marker in pokemon.markers):
         # v0.90: のろいマーカー（弱点の「×4」）・色マーカー（タイプ。CM1）。v0.13 の止める関数は、このマーカーで変わる計算と問いを確かめたことがない
         found.append("のろいマーカー・色マーカー")
@@ -379,6 +383,11 @@ def _rebellion_failed(res: Resolution, player: int, attacker, key: AttackKey, sl
     if not failed:
         return False
     state.add_event("attack_failed", player=player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(key), reason=REBELLION_FAILED, power=power)
+    lock = leave_lock(state, player, attacker)
+    if lock is not None:
+        # v0.93: 「バトル場をはなれられない」なら、ワザは失敗する（コインの結果）が、山札にもどる部分は起こらない（山札も切らない）
+        E.note_leave_prevented(state, player, attacker, lock, E.LEAVE_TO_DECK, power=power)
+        return True
     return_in_play_to_deck(state, player, attacker, power=power)
     remove_persistent_effects(state, player, attacker, RETURN_IN_PLAY_TO_DECK)
     if not res.dry_run:
@@ -426,6 +435,7 @@ def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
         # 学習装置（きぜつの判定の窓ではたらくどうぐ）も同じ窓の候補として数える（どれを先に処理するかで結果・コインの割り当てが変わる。ポケモンの番号・学習装置をつけたポケモン）
         raise res.question("multiple_ko_prevention", f"{[o[1].pokemon_id for o in offers + beams + bands]}・学習装置 {[e[2].pokemon_id for e in exps]}")
     scram_restored_question(res, knocked(res))  # v0.61: きぜつの処理でかがくへんかガスの発生源が場をはなれ、［ずらかる］の力がもどる（SC2）
+    leave_lock_knockout_question(res, knocked(res))  # v0.93: AL1（きぜつの例外を書いていない「バトル場をはなれられない」効果。こんじょう・きあいのハチマキでまぬがれない答えもある）
     # v0.31: きぜつの処理の窓の問い（P19・P32）を、先読みの範囲の中で確かめる（控えポケモンへのダメージで起こるようになった。記録は残さない。
     # 実際の写しはきぜつの処理の前に ``_knock_out_after_attack`` が行う）
     capture_post_knockout(res, knocked(res), record=False)
@@ -539,9 +549,32 @@ def _knock_out_after_attack(res: Resolution) -> None:
     _after_knockouts(res, _knock_out_all(state, gone, simultaneous=len(gone) > 1), None, candidates)
 
 
+def leave_lock_knockout_question(res: Resolution, gone) -> None:
+    """v0.93（AL1。docs/active-leave-locks-v0.93.md 4.3 節）: きぜつの処理に送るポケモンのうち、きぜつの例外を書いていない「バトル場をはなれられない」効果（キャタピーの「からまるいと」・
+    クサイハナの「ねばるみつ」）を受けたバトル場のポケモンがいれば、問い ``leave_lock_knockout``（きぜつの処理の前。ワザなら先読みが宣言の前に見つける）。例外を書いた効果
+    （モンジャラ・アリゲイツ・わるいアリアドス）はきぜつの処理を止めない。"""
+    for owner, pokemon in gone:
+        lock = leave_lock(res.state, owner, pokemon, knock_out=True)
+        if lock is not None:
+            raise res.question("leave_lock_knockout", f"ポケモン {pokemon.pokemon_id}（{lock.kind}・与えた番 {lock.created_turn}）")
+
+
+def _leave_lock_knockout_error(state: GameState, gone) -> UnsupportedError | None:
+    """``leave_lock_knockout_question`` と同じ確かめ（``Resolution`` を持たないきぜつの処理の入口。止める理由の文を返す）。"""
+    for owner, pokemon in gone:
+        lock = leave_lock(state, owner, pokemon, knock_out=True)
+        if lock is not None:
+            return UnsupportedError(E.LEAVE_LOCK_KNOCKOUT_CODE, f"ポケモン {pokemon.pokemon_id}（{lock.kind}・与えた番 {lock.created_turn}）: {E.LEAVE_LOCK_KNOCKOUT_REASON}")
+    return None
+
+
 def _knock_out_all(state: GameState, gone, **how) -> list[int]:
     """きぜつした (持ち主, ポケモン) をきぜつの処理（トラッシュ）に送り、サイドを取るプレイヤーの並びを返す（きぜつ 1 匹につき相手側のプレイヤー 1 人。p.323）。
-    v0.47: カウントされないきぜつ（なにかの化石・ピッピ人形。``effects.counts_as_knockout``。トラッシュの前に、場にいるうちに聞く）では、相手はサイドを取らない。"""
+    v0.47: カウントされないきぜつ（なにかの化石・ピッピ人形。``effects.counts_as_knockout``。トラッシュの前に、場にいるうちに聞く）では、相手はサイドを取らない。
+    v0.93: AL1 のポケモンがいれば、どれもトラッシュに送る前に止める（ワザのあとは ``_finish_attack`` が先に問いにする。ポケモンチェックは ``procedures._pokemon_check_plan`` がダメージの前に対戦を止める）。"""
+    error = _leave_lock_knockout_error(state, gone)
+    if error is not None:
+        raise error
     prize_takers = []
     for owner, pokemon in gone:
         counted = counts_as_knockout(state, pokemon)
@@ -673,6 +706,9 @@ def _knock_out_to_energy(res: Resolution, converted) -> None:
         raise RuntimeError(f"［エネエネ］のポケモン {converted.pokemon_id} が使ったプレイヤーの場にいない（エンジンの不具合）")
     owner, pokemon = found
     gone = [(owner, pokemon)]
+    error = _leave_lock_knockout_error(state, gone)  # v0.93: AL1（みずから「きぜつ」する）
+    if error is not None:
+        raise error
     try:
         candidates = capture_post_knockout(res, gone)
     except OpenQuestion as question:

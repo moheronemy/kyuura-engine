@@ -1410,6 +1410,31 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.ChooseOpponentPokemonDamageIgnoringHeldEffects,
     _effects.DamageThenFieldPowerSuppression,
     _effects.CoinsUntilTailsBonusDamage,
+    # v0.93（docs/active-leave-locks-v0.93.md 5〜7 章。バトル場をはなれられない効果・ダメージのあとの期間を明示したワザの禁止・相手を入れ替えて新しく出てきたポケモンをマヒ・
+    # にげるの禁止とワザを使うときのコイン）
+    _effects.DamageThenPeriodLock,
+    _effects.CoinBonusDamageThenLeaveLock,
+    _effects.DamageThenPoisonThenLeaveLockOnHeads,
+    _effects.SwitchOpponentThenParalyzeNewOnHeads,
+    _effects.DamageThenRetreatLockAndAttackCoinCheck,
+    # v0.94（docs/switch-return-attacks-v0.94.md 4〜8 章。選ぶ側・必要な控え・コインを分けた相手の入れ替え・ダメージのあとの必ずの自分の入れ替え・同じコインで分かれる入れ替え・
+    # ダメージの前の任意の入れ替え・相手を手札にもどすか入れ替える）
+    _effects.SwitchOpponentActiveRequiringBench,
+    _effects.ForceSwitchOnHeadsWithoutDamage,
+    _effects.DamageThenSelfSwitch,
+    _effects.DamageThenStatusOnHeadsElseSelfSwitch,
+    _effects.CoinBonusDamageElseForceSwitch,
+    _effects.OptionalSwitchOpponentThenDamage,
+    _effects.CoinReturnOpponentToHandElseForceSwitch,
+    # v0.95（docs/private-looks-deck-movement-v0.95.md 5〜10 章。相手の手札を見る・見た手札のトレーナーカードの枚数のダメージ・山札の上からちょうどの枚数を見て並べかえる・
+    # コインで見た手札のトレーナーカードを山札にもどす・相手の山札の一番上を見てトラッシュ・ダメージのあと山札をトラッシュして手札に加える・ついているトレーナーを山札にもどす）
+    _effects.LookOpponentHandAttack,
+    _effects.DamageTimesLookedHandTrainers,
+    _effects.ArrangeDeckTopExactlyEffect,
+    _effects.CoinLookOpponentHandTrainerToDeck,
+    _effects.OpponentDeckTopDiscardIfTrainer,
+    _effects.DamageThenMillReturnTypeEnergy,
+    _effects.ReturnOpponentAttachedTrainerToDeck,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -2272,6 +2297,32 @@ SPINARAK_NEO1, ARIADOS_NEO1, ONIX_NEO1, MURKROW_NEO1 = "neo1-004", "neo1-011", "
 GOLBAT_NEO3, LARVITAR_NEO4, SABRINAS_GENGAR_GD6, SCIZOR_PRN = "neo3-004", "neo4-073", "GD6-008", "PRN-025"  # ゴルバット（いやなおと・きゅうけつどく）・ヨーギラス（にらみつける）・ナツメのゲンガー（やみのはどう）・ハッサム（メタルニッパー）
 V0_92_POKEMON = (SPINARAK_NEO1, ARIADOS_NEO1, ONIX_NEO1, MURKROW_NEO1, GOLBAT_NEO3, LARVITAR_NEO4, SABRINAS_GENGAR_GD6, SCIZOR_PRN)
 V0_92_CARDS = V0_92_POKEMON  # 写しの組 pool_v0_92 の並び
+
+# v0.93（docs/active-leave-locks-v0.93.md）: バトル場をはなれられない効果・続くワザの制限のポケモン 9 枚（同じ名前の別の版と取りちがえない）。キャタピーの 2 枚は同じゲーム用データ
+CATERPIE_ES1, CATERPIE_QSG, TANGELA_ES2 = "ES1-002", "QSG-002", "ES2-004"  # キャタピー（からまるいと）・キャタピー（同じデータ）・モンジャラ（からみつく）
+GLOOM_NEO1, CROCONAW_NEO1, DARK_ARIADOS_NEO4 = "neo1-008", "neo1-030", "neo4-011"  # クサイハナ（へんなこな・ねばるみつ）・アリゲイツ（いやなおと・くいつく）・わるいアリアドス（からめとる・どくしばり）
+PILOSWINE_NEO1, DARK_CROCONAW_NEO4, OCTILLERY_NEO3 = "neo1-032", "neo4-036", "neo3-019"  # イノムー（こおりつかせる・ふぶき）・わるいアリゲイツ（かぶりつく）・オクタン（からみつく・オクタンほう）
+SWINUB_NEO1 = "neo1-027"  # ウリムー（イノムーの進化元）
+V0_93_POKEMON = (CATERPIE_ES1, CATERPIE_QSG, TANGELA_ES2, GLOOM_NEO1, CROCONAW_NEO1, DARK_ARIADOS_NEO4, PILOSWINE_NEO1, DARK_CROCONAW_NEO4, OCTILLERY_NEO3)
+V0_93_CARDS = V0_93_POKEMON  # 写しの組 pool_v0_93 の並び
+
+# v0.94（docs/switch-return-attacks-v0.94.md）: 入れ替え・帰還のワザのポケモン 13 枚（ワザ 21）。ピッピ・ロコンの 2 組は同じゲーム用データ
+CLEFAIRY_ES1, CLEFAIRY_QSG, JIGGLYPUFF_SI, SNUBBULL_NEO1 = "ES1-026", "QSG-040", "SI-002", "neo1-061"  # ピッピ（このゆびとまれ）・同じデータ・プリン（ひとみでさそう）・ブルー（ほえる）
+VENOMOTH_ES2, DONPHAN_NEO1, TOGEPI_PRN, BELLOSSOM_PRN = "ES2-001", "neo1-054", "PRN-033", "PRN-043"  # モルフォン・ドンファン（こうそくスピン）・トゲピー（はしゃぐ）・キレイハナ
+TAUROS_ES3, MACHAMP_PR1, VULPIX_ES3, VULPIX_QSG, DARK_DONPHAN = "ES3-034", "PR1-052", "ES3-009", "QSG-008", "neo4-078"  # ケンタロス・カイリキー・ロコン（きつねび）・同じデータ・わるいドンファン
+PHANPY_NEO4 = "neo4-072"  # ゴマゾウ（ドンファン・わるいドンファンの進化元）
+V0_94_POKEMON = (CLEFAIRY_ES1, CLEFAIRY_QSG, JIGGLYPUFF_SI, SNUBBULL_NEO1, VENOMOTH_ES2, DONPHAN_NEO1, TOGEPI_PRN, BELLOSSOM_PRN, TAUROS_ES3, MACHAMP_PR1, VULPIX_ES3,
+                 VULPIX_QSG, DARK_DONPHAN)
+V0_94_CARDS = V0_94_POKEMON  # 写しの組 pool_v0_94 の並び
+
+# v0.95（docs/private-looks-deck-movement-v0.95.md）: 手札・山札を見る効果とカードを動かすポケモン 11 枚（ワザ 20・特殊能力 2）。ゴーストの 2 枚は同じゲーム用データ
+XATU_NEO1, NOCTOWL_NEO1, SENTRET_NEO2, SABRINAS_ABRA_GD6 = "neo1-048", "neo1-065", "neo2-046", "GD6-002"  # ネイティオ（みらいよち）・ヨルノズク（［みやぶる］）・オタチ（さぐる）・ナツメのケーシィ（とうし）
+HAUNTER_ES3, HAUNTER_QSG, DARK_SCIZOR_NEO4, DARK_SLOWKING_NEO4 = "ES3-024", "QSG-029", "neo4-083", "neo4-061"  # ゴースト（ポルターガイスト）・同じデータ・わるいハッサム（おどす）・わるいヤドキング（［わるぢえ］）
+DARK_QUILAVA_NEO4, RHYDON_ES3, AIPOM_NEO3 = "neo4-020", "ES3-031", "neo3-047"  # わるいマグマラシ（もやす・マグマラッシュ）・サイドン（やまくずし）・エイパム（とりさる）
+NATU_NEO1, HOOTHOOT_NEO1, SLOWPOKE_NEO1, CYNDAQUIL_NEO1, RHYHORN = "neo1-046", "neo1-060", "neo1-045", "neo1-018", "PMCG2-030"  # 進化元（ネイティ・ホーホー・ヤドン・ヒノアラシ・サイホーン）
+V0_95_POKEMON = (XATU_NEO1, NOCTOWL_NEO1, SENTRET_NEO2, SABRINAS_ABRA_GD6, HAUNTER_ES3, HAUNTER_QSG, DARK_SCIZOR_NEO4, DARK_SLOWKING_NEO4, DARK_QUILAVA_NEO4, RHYDON_ES3,
+                 AIPOM_NEO3)
+V0_95_CARDS = V0_95_POKEMON  # 写しの組 pool_v0_95 の並び
 
 
 def _self_sleep_shape_only(attack):
