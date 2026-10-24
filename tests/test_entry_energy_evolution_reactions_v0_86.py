@@ -41,6 +41,7 @@ from kyuura_engine.serialize import state_to_dict
 from kyuura_engine.state import BenchProtection, Phase, PowersStopped
 from tests import helpers as H
 from tests.helpers import apply_kernel, with_coin_results
+from tests.release_catalog import cards_before
 from tests.test_neo_trainer_components_v0_80 import audited, mon, new_events, rejects
 from tests.test_shining_gentle_v0_83 import answer, board
 
@@ -114,7 +115,7 @@ class RegistrationTest(unittest.TestCase):
         powers = {k: v for k, v in registry._powers.items() if k.card_id not in H.V0_86_CARDS}
         before = E.EffectRegistry(registry.id, attacks, registry._trainers, powers, registry._energies)
         pool = pool_from_extract(read_extract(), before)
-        self.assertEqual(len(pool.playable_ids), 1078)  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた
+        self.assertEqual(load_card_pool().playable_ids - pool.playable_ids, frozenset(H.V0_86_CARDS))  # ほかのカードの対応は変わらない
         self.assertTrue(all(card not in pool.playable_ids for card in H.V0_86_CARDS))
         # 特殊能力を持つカードは、ワザだけの登録では対応にならない
         attacks_only = E.EffectRegistry(registry.id, registry._attacks, registry._trainers,
@@ -153,27 +154,17 @@ class RegistrationTest(unittest.TestCase):
         self.assertEqual(pool.get(H.DRAGONITE_PR1).evolves_from, "ハクリュー")
         self.assertEqual(pool.get(H.VENUSAUR_PR1).evolves_from, "フシギソウ")
 
-    def test_unsupported_quiz_names_and_identity_candidates(self):
-        """未対応（kyuura data/engine_targets.json（7d3f4ca）の対象 1,377 件から今の登録を差し引く。../kyuura がなければ確かめない）・カツラのクイズの名前の候補
-        （新しい名前は 7 つ）・マチスの秘策の試すカード（docs 1 章・10 章）。"""
-        import subprocess
-
+    def test_quiz_names_and_identity_trials(self):
+        """カツラのクイズの名前の候補（新しい名前は 7 つ。v0.86 までの写しで 411）・マチスの秘策の試す回数が上限の中（docs 1 章・10 章）。今の未対応の数・名前の候補の数・試すカードの数は tests/test_catalog_contract.py。"""
         from kyuura_engine import engine
         pool = load_card_pool()
         names = {pool.get(c).name_ja for c in pool.playable_ids if pool.get(c).category == "pokemon"}
         new_names = {"わるいクロバット", "わるいデンリュウ", "わるいモココ", "エンテイ", "スイクン", "ハピナス", "ライコウ"}
-        self.assertEqual(len(names), 418)  # v0.88 で 3 つの名前（ランターン・ポリゴン2・かっこいいポリゴン）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた
+        self.assertEqual(len({pool.get(c).name_ja for c in cards_before(read_extract(), "0.87") if pool.get(c).category == "pokemon"}), 411)  # この版までの写しのポケモンの名前（今の総数は tests/test_catalog_contract.py）
         self.assertTrue(new_names <= names)
         candidates = engine._identity_candidates(pool)
         basics = [c for c in candidates if pool.get(c).category == "pokemon" and pool.get(c).stage == "basic"]
-        self.assertEqual((len(candidates), len(basics)), (895, 406))  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた
-        kyuura = ROOT.parent / "kyuura"
-        if (kyuura / ".git").exists():
-            extract = read_extract()
-            targets = json.loads(subprocess.check_output(["git", "-C", str(kyuura), "show", f"{extract['source']['commit']}:data/engine_targets.json"]))
-            missing = [c for c in targets["cards"] if c["id"] not in pool.playable_ids]
-            self.assertEqual((len(targets["cards"]), len(missing), sum(1 for c in missing if c["id"].startswith("neo")),
-                              sum(1 for c in missing if c["product_group"] != "expansion_pack")), (1377, 286, 132, 154))  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた
+        self.assertLessEqual(1 + len(basics) + 1, engine._IDENTITY_TRIAL_LIMIT)  # 1 枚を指定するコマンドの試す回数（今の総数は tests/test_catalog_contract.py）
 
     def test_new_public_events_and_decisions(self):
         for kind in ("conductivity", "lightning_burst_skipped", "reaction_power_declined", "bolt_check", "bolt_skipped", "pokemon_coin_results",

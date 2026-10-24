@@ -1170,8 +1170,12 @@ OPPONENT_POWER_SUPPRESSION = "opponent_power_suppression"
 FIRE_DOUBLE_ATTACH = "fire_double_attach"  # v0.59 カツラ: この番だけ、手札から「カツラのポケモン」につける「炎」エネルギーカードの枚数を 1 枚でなく 2 枚にする
 # v0.80 退化スプレーHYPER: 「(退化させたポケモンを、同じ番に進化させることはできない。)」。この番の終わりまで、``TrainerTurnEffect.pokemon_id`` の場のポケモンを進化させない
 EVOLUTION_BAN = "evolution_ban"
+# v0.91 ポリゴン（PRN-023）の「オールクリア」（ワザの効果）: 「このワザを使っているあいだ、おたがいの場にいるすべてのポケモンは「特殊能力」を使うことができず、その力も消える」。
+# ``player`` はワザを使ったプレイヤー、``source_card`` はワザを使ったポケモンのいちばん上のカード、``card_id``・``attack_index`` は処理しているワザ。``created_turn`` と
+# ``expires_turn`` は使った番（番の終わりではなく、ワザの処理のあと・きぜつの判定の前に消す。``resolution.flow.end_attack_power_suppression``）
+ATTACK_POWER_SUPPRESSION = "attack_power_suppression"
 TRAINER_TURN_EFFECT_KINDS = (ATTACK_DAMAGE_BONUS, POISON_ON_ATTACK_DAMAGE, BENCH_ATTACK_DAMAGE_PREVENTION, POWER_SUPPRESSION, FIRE_DOUBLE_ATTACH, EVOLUTION_BAN,
-                             OPPONENT_POWER_SUPPRESSION)
+                             OPPONENT_POWER_SUPPRESSION, ATTACK_POWER_SUPPRESSION)
 
 
 @dataclass(frozen=True)
@@ -1305,6 +1309,46 @@ class SetAsideCards:
     return_turn: int | None = None
 
 
+# v0.90（docs/markers-counters-v0.90.md 3 章）: 場のポケモンにのせるマーカー・ダメージカウンター以外のカウンターの種類（``Marker.kind``）。ワザの説明が名前で書くものだけ
+# （まだ対応しないワザのものは加えない）
+MARKER_STICKY = "sticky"  # ベトベター（ES2-002）の「ベトベトえき」のベトベトマーカー
+COUNTER_BONE = "bone"  # ガラガラ（ES2-025）・カラカラ（PR1-034）の「ほねさがし」のほねカウンター
+COUNTER_FOOD = "food"  # くいしんぼカビゴン（PR1-024）の「たべる」のたべものカウンター
+MARKER_CURSE = "curse"  # ルージュラ（PR1-035）の「あくまののろい」ののろいマーカー
+MARKER_COLOR = "color"  # ドーブル（PRN-029）の「ペイント」の色マーカー（のせるときに選んだ色を持つ）
+# v0.91（docs/marker-check-field-reset-v0.91.md 3 章）
+MARKER_CHAR = "char"  # マグマラシ（neo1-020）の「やきこがす」のくろこげマーカー（ポケモンチェックのたびにコインを投げる）
+MARKER_LIGHTNING_ROD = "lightning_rod"  # エレブー（ES2-017）の「ひらいしん」のひらいしんマーカー（「かみなりショック」の 20 ダメージを受ける）
+# マーカー（名前が「…マーカー」）とカウンター（名前が「…カウンター」。ダメージカウンター以外）。ミュウツー（ES3-026）の「かんぜんかいふく」の「ダメージカウンターやマーカー」が
+# どちらを含むかを分けるために持つ（p.310 の進化・p.324 の退化は両方を取りのぞく）
+MARKER_KINDS = (MARKER_STICKY, MARKER_CURSE, MARKER_COLOR, MARKER_CHAR, MARKER_LIGHTNING_ROD)
+COUNTER_KINDS = (COUNTER_BONE, COUNTER_FOOD)
+MARKER_AND_COUNTER_KINDS = MARKER_KINDS + COUNTER_KINDS
+
+
+@dataclass(frozen=True)
+class Marker:
+    """v0.90（docs/markers-counters-v0.90.md 3 章）: 場のポケモンにのっているマーカー・ダメージカウンター以外のカウンター 1 つ（``PokemonInPlay.markers``）。
+
+    ダメージ（``PokemonInPlay.damage``）・特殊状態（``conditions``）・ついているカード・ワザによる持続する効果（``persistent_effects``）・特殊能力の使用の記録とは別に持つ。
+    のっている数は、同じ種類の値の数（1 つずつ 1 つの値）。
+
+    - ``kind``: ``MARKER_AND_COUNTER_KINDS`` のどれか
+    - ``player``: のせたプレイヤー（ワザを使ったプレイヤー）。``source_card``: のせたワザを使ったポケモンのいちばん上のカード（そのときの uid）。``attack``: のせたワザ
+      （処理したワザの ``AttackKey`` の文字列。相手のワザとして使ったなら、まねたワザ）。``turn``: のせた番
+    - ``color``: 色マーカーの、のせるときに選んだ色（ほかの種類は None）
+    - 場のポケモンにのっているあいだだけある。にげる・入れ替え・バトル場に出す・番の終わり・特殊状態・かがくへんかガスでは変えない（p.311・p.322 の「カウンター・マーカーを
+      のせるタイプ」の持続する効果）。進化（p.310）・退化（p.324）で取りのぞき、場をはなれたら場のポケモンといっしょになくなる。発生源が場をはなれたことでは消えない（p.322）
+    """
+
+    kind: str
+    player: int
+    source_card: int
+    attack: str
+    turn: int
+    color: EnergyType | None = None
+
+
 # 特殊状態のないポケモン（共有してよい。frozen）
 NO_SPECIAL_CONDITIONS = SpecialConditions()
 # ねむり状態（持つ情報がないので 1 つを共有してよい。frozen）
@@ -1392,6 +1436,8 @@ class PokemonInPlay:
     # （``effects.HISTORY_READERS``）のカードが対戦にあるときだけ記録する（``history.history_needed``）。番の最初に、2 つ前の番より古い記録を消す。進化・退化で消し、
     # にげる・入れ替え・番の終わりでは消さない。場をはなれたらなくなる。ログから作らない
     history: tuple[Any, ...] = ()
+    # v0.90（docs/markers-counters-v0.90.md 3 章）: のっているマーカー・ダメージカウンター以外のカウンター（``Marker`` のタプル。のせた順）。``markers.py`` の関数で変える
+    markers: tuple[Marker, ...] = ()
 
     @property
     def current_form_turn(self) -> int:
@@ -1426,6 +1472,7 @@ class PokemonInPlay:
             self.disguise,
             self.devolved_turn,
             self.history,
+            self.markers,
         )
 
 
@@ -1658,6 +1705,15 @@ class GameState:
         new = object.__new__(type(self))
         new.__dict__.update(self.__dict__)
         new.rng = copy_rng(self.rng)
+        new.players = [p.clone() for p in self.players]
+        return new
+
+    def peek(self) -> GameState:
+        """乱数を使わない確かめのための複製（v0.91）。場・プレイヤーの状態は ``clone`` と同じに複製し、乱数は持たない（None。使えばエンジンの不具合として例外になる）。先読みの
+        乱数（状態を写せない）のあいだのワザの要素の確かめ（``effects.state_stop_after`` で比べる前の状態・試しの状態）に使う。"""
+        new = object.__new__(type(self))
+        new.__dict__.update(self.__dict__)
+        new.rng = None
         new.players = [p.clone() for p in self.players]
         return new
 

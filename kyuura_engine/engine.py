@@ -189,10 +189,14 @@ from .persistent import (DISCARD_FROM_PLAY, KNOCK_OUT, cannot_retreat, effect_at
 from .rules import RULES_2000_02_14, RuleSet
 from .stadiums import bench_has_room, bench_limit, stadium_in_play
 from .state import (
+    MARKER_AND_COUNTER_KINDS,
+    MARKER_COLOR,
+    Marker,
     PERSISTENT_EFFECT_TYPES,
     TRAINER_TURN_EFFECT_KINDS,
     EVOLUTION_BAN,
     OPPONENT_POWER_SUPPRESSION,
+    ATTACK_POWER_SUPPRESSION,
     TrainerTurnEffect,
     AttackCoinCheck,
     CannotAttackWhileSourceActive,
@@ -1378,7 +1382,8 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
             f"「にげる」でトラッシュするエネルギーの数（印刷の {cost.printed}、増やす {[a for _, _, a in cost.increases]}、少なくできる {[a for _, _, a in cost.reductions]}"
             + (f"、スタジアムで増やす {[a for _, a in cost.stadium_increases]}・へらす {[a for _, a in cost.stadium_reductions]}"
                if cost.stadium_increases or cost.stadium_reductions else "")
-            + (f"、ふうせんのみ {list(cost.zeroed)}（すべてなくなる）" if cost.zeroed else "") + "）を、"
+            + (f"、ふうせんのみ {list(cost.zeroed)}（すべてなくなる）" if cost.zeroed else "")
+            + (f"、マーカーで増やす {[a for _, a in cost.marker_increases]}" if cost.marker_increases else "") + "）を、"
             f"少なくしてから 0 で止めて増やすか、合わせてから 0 で止めるかで、{units if units != len(discard) else len(discard)} {'個' if units != len(discard) else '枚'}が足りるかが変わる。どちらの読み方かは kyuura の記録・印刷の文面から決められない"
             "ので扱わない（CP2）",
         )
@@ -1406,6 +1411,8 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
             (card, -amount) for card, amount in cost.stadium_reductions)
     if cost.zeroed:
         cost_log["retreat_cost_zeroed"] = cost.zeroed  # v0.81: ふうせんのみ（「にげる」ときに必要なエネルギーはすべてなくなる）
+    if cost.marker_increases:
+        cost_log["retreat_cost_markers"] = cost.marker_increases  # v0.90: ベトベトマーカー（(マーカーの種類, 増やす数)）
     if active.conditions.confused and not _confusion_check(state, cmd.player, active, action="retreat", effect="retreat"):
         # 「にげる」は失敗。トラッシュしたエネルギーは取り戻せず、入れ替えはしない（p.311 の手順 3・4。v0.3c）
         active.retreat_failed_turn = state.turn_number
@@ -2337,6 +2344,7 @@ def check_invariants(state: GameState) -> list[str]:
             problems.extend(_evolution_permission_problems(state, player, pokemon))  # v0.44
             problems.extend(_type_shift_problems(state, player, pokemon))  # v0.48
             problems.extend(_disguise_problems(state, player, pokemon))  # v0.49
+            problems.extend(_marker_problems(state, pokemon))  # v0.90
         limit = _bench_limit_or_default(state, player)
         if len(p.bench) > limit and not _narrow_cleanup_pending(state, player):
             # v0.57: ベンチの上限は場のスタジアム（せまいジム）を当てはめた数。場に出た時の、手札にもどすポケモンを選ぶ決定を待つ間だけ、そのプレイヤーは多くてよい
@@ -3229,6 +3237,62 @@ def _type_shift_problems(state: GameState, player: int, pokemon: PokemonInPlay) 
     return problems + [f"{where} {shift!r} に対応するログ type_shift がない"]
 
 
+def _marker_problems(state: GameState, pokemon: PokemonInPlay) -> list[str]:
+    """v0.90（docs/markers-counters-v0.90.md 3 章。形式 24）: 場のポケモンにのっているマーカー・カウンター（``PokemonInPlay.markers``）の整合。
+
+    - ``Marker`` のタプル。種類は ``MARKER_AND_COUNTER_KINDS``、のせたプレイヤーは 0・1、のせたワザのカードは対戦のカード、番は整数で、いまの姿になった番〜今の番（進化・退化で
+      取りのぞくので、それより前の番のものは残らない）。対戦準備の段階にはない
+    - 色を持つのは色マーカーだけで、色は無色以外の色。色マーカーは 1 つまで（のせ替える。2 つあると、どの色としてあつかうかが決まらない）。ほかの種類の数に上限は置かない
+      （のろいマーカーは「2つ以上のっていても、効果は同じ」。ベトベトマーカー・ほねカウンターは「のっていなければ」・たべものカウンターは使うための条件で数が決まるが、状態の不正には
+      しない）
+    - ログとの対応: このポケモン（番号）の ``marker_added`` の数から ``marker_removed`` の ``count`` の合計を引いた数が、種類ごとに今の数と同じ。色マーカーの色は最後の
+      ``marker_added`` の色（エンジンは記録をログから決めない。食い違っていないかだけを確かめる）"""
+    markers = pokemon.markers
+    where = f"ポケモン {pokemon.pokemon_id} のマーカー・カウンター"
+    if not isinstance(markers, tuple) or any(type(m) is not Marker for m in markers):
+        return [f"{where} {markers!r} が Marker のタプルではない"]
+    if not markers:
+        return []
+    if state.phase in SETUP_PHASES:
+        return [f"{where} が対戦準備の段階（{state.phase.value}）にある"]
+    problems = []
+    for marker in markers:
+        if marker.kind not in MARKER_AND_COUNTER_KINDS:
+            problems.append(f"{where} {marker!r} の種類が {MARKER_AND_COUNTER_KINDS} のどれでもない")
+            continue
+        if marker.player not in PLAYERS or type(marker.turn) is not int or type(marker.source_card) is not int or marker.source_card not in state.cards                 or not isinstance(marker.attack, str):
+            problems.append(f"{where} {marker!r} の項目が正しくない")
+            continue
+        if not pokemon.current_form_turn <= marker.turn <= state.turn_number:
+            problems.append(f"{where} {marker!r} の番が、いまの姿になった番〜今の番ではない（進化・退化で取りのぞくはず）")
+        if (marker.kind == MARKER_COLOR) != isinstance(marker.color, EnergyType) or marker.color is EnergyType.COLORLESS:
+            problems.append(f"{where} {marker!r} の色が正しくない（色を持つのは色マーカーだけ。無色以外）")
+    colors = [m for m in markers if m.kind == MARKER_COLOR]
+    if len(colors) > 1:
+        problems.append(f"{where} に色マーカーが {len(colors)} つ（のせ替えるので 1 つまで）")
+    if problems:
+        return problems
+    added: dict[str, int] = {}
+    removed: dict[str, int] = {}
+    last_color = None
+    for event in state.log:
+        if event.get("pokemon_id") != pokemon.pokemon_id:
+            continue
+        if event["kind"] == "marker_added":
+            added[event["marker"]] = added.get(event["marker"], 0) + 1
+            if event["marker"] == MARKER_COLOR:
+                last_color = event.get("color")
+        elif event["kind"] == "marker_removed":
+            removed[event["marker"]] = removed.get(event["marker"], 0) + event["count"]
+    for kind in MARKER_AND_COUNTER_KINDS:
+        count = sum(1 for m in markers if m.kind == kind)
+        if added.get(kind, 0) - removed.get(kind, 0) != count:
+            problems.append(f"{where} の {kind} の数 {count} が、ログ（のせた {added.get(kind, 0)}・取りのぞいた {removed.get(kind, 0)}）と合わない")
+    if colors and last_color != colors[0].color.value:
+        problems.append(f"{where} の色マーカーの色 {colors[0].color.value} が、最後のログ marker_added の色 {last_color} と違う")
+    return problems
+
+
 def _persistent_effect_added_event(state: GameState, pokemon: PokemonInPlay, effect):
     """持続する効果を与えたログ（``persistent_effect_added``。同じポケモン・種類・番・発生源）。なければ None（v0.36）。"""
     for event in reversed(state.log):
@@ -3404,6 +3468,25 @@ def _trainer_effect_problems(state: GameState) -> list[str]:
         where = f"プレイヤー {record.player!r} のトレーナーの効果（{record.card_id}・{record.kind}）"
         if record.kind not in TRAINER_TURN_EFFECT_KINDS or record.player not in PLAYERS or type(record.created_turn) is not int:
             problems.append(f"{where} の種類・プレイヤー・与えた番が正しくない")
+            continue
+        if record.kind == ATTACK_POWER_SUPPRESSION:
+            # v0.91: ワザを使っているあいだの特殊能力の抑止（ポリゴンの「オールクリア」）。登録はワザ（``card_id``・``attack_index``）の ``suppresses_powers_while_used``。与えた番に
+            # 消え、ワザの処理の外（ワザの途中の決定を待つあいだ以外）には残らない（``flow.end_attack_power_suppression``）
+            attack = state.effects.attack_entry(record.card_id, record.attack_index) if type(record.attack_index) is int else None
+            if attack is None or not getattr(attack.effect, "suppresses_powers_while_used", False):
+                problems.append(f"{where} のワザ {record.attack_index!r} が、ワザを使っているあいだ特殊能力を止めるワザではない")
+            if record.pokemon_id is not None:
+                problems.append(f"{where} にポケモンの番号 {record.pokemon_id!r} がある（退化スプレーHYPER の禁止だけ）")
+            if record.created_turn != state.turn_number or record.expires_turn != state.turn_number:
+                problems.append(f"{where} を与えた番 {record.created_turn}・消える番 {record.expires_turn} が今の番 {state.turn_number} ではない")
+            if state.first_player in PLAYERS and turn_owner(state, record.created_turn) != record.player:
+                problems.append(f"{where} を与えた番 {record.created_turn} が、ワザを使ったプレイヤーの番ではない")
+            if state.decision is None or state.decision.resume != "attack":
+                problems.append(f"{where} が、ワザの処理の外に残っている（ワザの処理のあとに消す）")
+            card = state.cards.get(record.source_card)
+            if card is None or card.owner != record.player:
+                problems.append(f"{where} のワザを使ったポケモンのカード {record.source_card!r} が、ワザを使ったプレイヤーのカードではない")
+            keys.append((record.player, record.source_card, record.expires_turn))
             continue
         if record.kind == OPPONENT_POWER_SUPPRESSION:
             # v0.87: ワザで与えた効果（ドガースの「ふしぎなガス」）。登録はワザ（``card_id``・``attack_index``）の ``field_effect_terms()``。``source_card`` はワザを使った
@@ -5016,6 +5099,20 @@ def _carried_flee_problems(state: GameState, d) -> list[str]:
         a, b = state.find_pokemon(orig), state.find_pokemon(new)
         if a is None or b is None or a[0] != b[0]:
             problems.append(f"運んだ［にげこむ］の入れ替え {orig} → {new} のポケモンが、同じ持ち主の場にいない")
+    # v0.89: 先に選んだ個体（``chosen_targets`` の (名前, 番号) か (名前, 番号, 持ち主)）。名前は重ならない。持ち主を運ぶなら 0 か 1 で、その個体が場にいれば持ち主の場にいる
+    # （場をはなれた個体は、あとの要素が何もしない。今の対戦ポケモン・同じ名前の別の個体にすり替えない）
+    names = []
+    for entry in d.context_value("chosen_targets") or ():
+        if not (isinstance(entry, tuple) and len(entry) in (2, 3) and isinstance(entry[0], str) and (entry[1] is None or isinstance(entry[1], int))):
+            problems.append(f"運んだ選んだ個体 {entry!r} の形が正しくない")
+            continue
+        names.append(entry[0])
+        if len(entry) == 3:
+            located = None if entry[1] is None else state.find_pokemon(entry[1])
+            if entry[2] not in (0, 1) or (located is not None and located[0] != entry[2]):
+                problems.append(f"運んだ選んだ個体 {entry!r} の持ち主が、そのポケモンの持ち主と違う")
+    if len(names) != len(set(names)):
+        problems.append(f"運んだ選んだ個体の名前 {names} が重なる")
     return problems
 
 

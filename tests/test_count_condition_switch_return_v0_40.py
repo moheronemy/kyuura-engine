@@ -522,7 +522,8 @@ class ExplosionTest(unittest.TestCase):
     def test_each_damage_element_is_calculated_separately(self):
         """相手の対戦ポケモンへの 2 つのダメージ（数 × 20 と 20）と自分への 20 は、どれも p.321 の段階で別々に計算する（ダメージの要素ごと。v0.2c・v0.2e の
         プラスパワー・ディフェンダーの最新の説明「ダメージを与えるとき」「ダメージを受けるとき」。自分へのダメージは v0.2f・v0.3d）。1 つのワザで相手の対戦ポケモンに
-        ダメージの要素が 2 つあるのは、対応カードでこのワザだけ。"""
+        ダメージの要素が 2 つあるのは、対応カードでこのワザと、v0.91 のエレブーの「かみなりショック」（相手の対戦ポケモンにひらいしんマーカーがのっているときだけ 2 つ目を受ける。
+        2 つを別々に計算するか合わせるかで結果が変わるなら HR1 で止める。docs/marker-check-field-reset-v0.91.md 5 章）。"""
         from tests.helpers import DEFENDER
 
         state = board(mon(DARK_WEEZING, trainers=[(PLUSPOWER, TURN)]), mon(KOFFING, (G,), trainers=[(DEFENDER, TURN)]), bench=(), opponent_bench=(RATTATA,))
@@ -536,7 +537,7 @@ class ExplosionTest(unittest.TestCase):
             return [] if builder is None else [e for e in builder(effect) if isinstance(e, programs.Damage) and e.target == programs.OPP]
 
         twice = [key for key in E.DEFAULT_EFFECTS.attack_keys() if len(opponent_damage_elements(key)) >= 2]
-        self.assertEqual([str(key) for key in twice], [f"{DARK_WEEZING}#0"])
+        self.assertEqual([str(key) for key in twice], ["ES2-017#1", f"{DARK_WEEZING}#0"])
 
     def test_simultaneous_knock_outs_and_prizes(self):
         """ダメージをすべてのせてから、きぜつの処理（p.309）。相手の対戦ポケモンと控え、自分の控えがそろってきぜつし、お互いにサイドを取る（番のプレイヤーから）。"""
