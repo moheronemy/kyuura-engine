@@ -535,7 +535,7 @@ def return_hand_to_deck(state: GameState, player: int, card: int) -> None:
 
 
 def return_hand_cards_to_deck(state: GameState, player: int, cards: tuple[int, ...], *, effect: str | None = None,
-                              trainer: int | None = None) -> tuple[int, ...]:
+                              trainer: int | None = None, power: str | None = None) -> tuple[int, ...]:
     """自分の手札のカード ``cards`` を、相手に見せずに、同じ uid のまま手札の並びの順に自分の山札の一番下にもどす（v0.44。ナツメのバリヤードの「てじな」の
     「自分の手札から最大3枚のカードを選び、山札にもどす」・_____のラッキーの「ラッキーたまご」の「自分の手札からカードを2枚選び、山札にもどして、よく切る」）。
 
@@ -545,11 +545,12 @@ def return_hand_cards_to_deck(state: GameState, player: int, cards: tuple[int, .
     イベント。選んでよいかの確認は呼ぶ側が済ませる。手札にない・持ち主の違う・重なったカードなら ``RuntimeError``（状態を変える前）。もどしたカードを返す。
 
     v0.53: トレーナーの効果（エリカのお付きの使うための条件・メンテナンス。どちらも見せる指示がない）でもどすときは、ワザの ``effect`` のかわりに ``trainer``（使っている
-    トレーナーのカードの uid。ログの ``trainer_card``）を渡す（ちょうど一方。ワザのログの形は v0.52 と同じ）。"""
-    if (effect is None) == (trainer is None):
-        raise RuntimeError("手札を山札にもどす効果の出どころ（ワザ effect・トレーナー trainer）はちょうど一方（エンジンの不具合）")
+    トレーナーのカードの uid。ログの ``trainer_card``）を渡す（ちょうど一方。ワザのログの形は v0.52 と同じ）。
+
+    v0.96: 特殊能力の効果（アンノーン[E] の［ENGAGE］の「自分の手札をすべて山札にもどしてよい」。このあと同じ処理の中で山札を切る）は ``power``（ログの ``power``）を渡す
+    （``effect``・``trainer``・``power`` のちょうど一つ。ワザ・トレーナーのログの形は v0.95 と同じ）。"""
+    source = _effect_source("手札を山札にもどす効果", trainer, effect, power)
     returned = _hand_to_deck_bottom(state, player, cards)
-    source = {"effect": effect} if effect is not None else {"trainer_card": trainer}
     state.add_event("hand_to_deck", player=player, cards=returned, **source)
     return returned
 
@@ -665,7 +666,8 @@ def take_deck_top(state: GameState, owner: int, *, effect: str, looker: int) -> 
     return card, destination
 
 
-def shuffle_deck(state: GameState, player: int, *, effect: str | None = None, power: str | None = None, stadium: int | None = None) -> None:
+def shuffle_deck(state: GameState, player: int, *, effect: str | None = None, power: str | None = None, stadium: int | None = None,
+                 shuffled_by: int | None = None) -> None:
     """自分の山札を切る（乱数 ``state.rng`` で 1 回並べかえる。ログ ``"shuffle"``）。対戦の準備・切り直し（p.308。v0.1 から
     ``engine._shuffle_deck``）と、カードの効果で山札を切る処理（v0.22 のパソコン通信の「その後、その山札をよく切る。」。p.260）で共通。
     v0.21 までの ``engine._shuffle_deck`` の本体をそのまま関数にした（乱数の使い方・ログは同じ）。
@@ -673,13 +675,17 @@ def shuffle_deck(state: GameState, player: int, *, effect: str | None = None, po
     ``effect``（v0.40）: v0.40 から加えたワザの効果で山札を切るとき（タケシのマンキーの「ひまつぶし」・マンキーの「いたずら」・キョウのズバットの「むれでおそう」・
     わるいカイリキーの「つまみだす」）のワザの識別子。渡したときだけログに ``effect`` を書く（``player`` は切る山札の持ち主。v0.39 までの呼び出しのログの形は
     同じ）。v0.43: 特殊能力の効果で山札を切るとき（わるいハクリューの［しんかのひかり］・わるいカイリューの［てしたをよぶ］）は ``power``（``PowerKey`` の
-    文字列）を書く。v0.57: スタジアムの効果で山札を切るとき（セキチクシティジム）は ``stadium``（スタジアムカードの uid。ログの ``stadium_card``）を書く。"""
+    文字列）を書く。v0.57: スタジアムの効果で山札を切るとき（セキチクシティジム）は ``stadium``（スタジアムカードの uid。ログの ``stadium_card``）を書く。
+    v0.96: 山札の持ち主でないプレイヤーが切るとき（アンノーンL の［LAUGH］の「おたがいのプレイヤーは、それぞれ、相手の山札をよく切る」）は、切ったプレイヤーを ``shuffled_by``
+    （ログの ``shuffled_by``）に書く（``player`` はいつも切る山札の持ち主。乱数の使い方は同じ）。"""
     state.rng.shuffle(state.players[player].deck)
     extra = {} if effect is None else {"effect": effect}
     if power is not None:
         extra["power"] = power
     if stadium is not None:
         extra["stadium_card"] = stadium
+    if shuffled_by is not None:
+        extra["shuffled_by"] = shuffled_by
     state.add_event("shuffle", player=player, **extra)
 
 

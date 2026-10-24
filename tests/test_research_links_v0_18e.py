@@ -136,7 +136,9 @@ class ResearchLinksTest(unittest.TestCase):
                              "UNRESOLVED_MEAN_LOOK_SOURCE_EVOLVED",
                              # v0.93: AL1・AL2・AL3・JC1・JC2・CJ1（docs/active-leave-locks-v0.93.md 10 章）
                              "UNRESOLVED_LEAVE_LOCK_KNOCKOUT", "UNRESOLVED_LEAVE_LOCK_NO_EFFECT", "UNRESOLVED_LEAVE_LOCK_SCRAM", "UNRESOLVED_JAW_CLAMP_SOURCE_RETURNED",
-                             "UNRESOLVED_JAW_CLAMP_SOURCE_EVOLVED", "UNRESOLVED_CLAMPING_JAW_SOURCE_DEVOLVED"})
+                             "UNRESOLVED_JAW_CLAMP_SOURCE_EVOLVED", "UNRESOLVED_CLAMPING_JAW_SOURCE_DEVOLVED",
+                             # v0.96: EG1・OB1（docs/unown-family-powers-v0.96.md 9 章）
+                             "UNRESOLVED_ENGAGE_EMPTY_HAND", "UNRESOLVED_POWER_DECK_TOP_SHORT"})
         # v0.31〜v0.68 は、kyuura の一覧でコードのない行を指していた停止コード 8 件（T27・C34/C35・G40・P19・P32・Z9・DR8・DR13）に kyuura_index_engine_key を
         # 書いていた。v0.69 で kyuura が停止コードを書いたので外した（scripts/check_research_links.py が、kyuura の一覧のコードで照らす）
         self.assertEqual({code for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}, set())

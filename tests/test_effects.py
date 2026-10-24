@@ -589,7 +589,9 @@ class RegistryImmutabilityTest(unittest.TestCase):
                                        # v0.88: 色・タイプ・エネルギーの数え方を変える特殊能力 5（docs/type-energy-colors-v0.88.md 5 章）
                                        *(PowerKey(card, 0) for card in ("neo1-040", "neo3-026", "neo3-051", "GD4-001", "neo3-045")),
                                        # v0.95: 相手の手札・山札を見る特殊能力 2（docs/private-looks-deck-movement-v0.95.md）
-                                       *(PowerKey(card, 0) for card in ("neo1-065", "neo4-061"))))))
+                                       *(PowerKey(card, 0) for card in ("neo1-065", "neo4-061")),
+                                       # v0.96: アンノーンの特殊能力 7（docs/unown-family-powers-v0.96.md）
+                                       *(PowerKey(card, 0) for card in ("PF2-002", "PF2-003", "PRN-035", "neo4-050", "neo4-051", "neo4-052", "neo4-060"))))))
 
 
 if __name__ == "__main__":

@@ -1955,6 +1955,27 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.96: アンノーン 7 枚と遺跡の石版 2 枚
+
+[unown-family-powers-v0.96.md](unown-family-powers-v0.96.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_96`（9 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.95 までの
+  1,160 枚の記録は変わっていない。
+- 9 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-24・`kyuura_records` は空・外部照合なし）。特殊能力 7 は `power/0`、トレーナー 2 は `trainer` の
+  印刷の文面。説明文のないワザ（めざめるパワー 7）は文面・出典を持たない。遺跡の石版の 2 枚（neo2-054・neo2-057。SC-neo2-054）はゲーム用データが同じ組で、id ごとに記録し、登録は同じ値を使う。
+  `card_verification.json` には加えていない。
+- 処理に使う文面はどれも kyuura の印刷の文面（研究の対応表の `adopted_printed_text` に特殊能力 7 を加えた。トレーナーは今までどおり対応表に書かない）。デッキの規定の根拠は、写しの各カードの
+  ルール文（`rules_text`）「「アンノーン」はデッキに4枚までしか入れることができません。」。9 枚の id と旧 pcg-search の id（`neopf2002`・`neopf2003`・`neop035`）で、kyuura の研究の基準に
+  LD-・CC-・CR-・UQ-・エラッタがないことを確かめた。kyuura data/rule_history.json の 2002-05-24 の Q&A の「ポケボディー」の一覧（MIX-POWER-ERRATA。アンノーンZ を含む）と、P39・P40
+  （2000年7月・9月の誌面の「アンノーンはデッキに4枚まで」）は、2000.02.14 版の根拠にしていない。
+- アンノーンT（neo4-052）のめざめるパワーのエネルギーは写しの値（超・無色。20）。kyuura data/curation/pokemonwiki_review.json の `neo4-052|cost`（判定 `site_error`。転記元の「超」は誤りとする記録）
+  を確かめた。カードの画像は新しく読んでいない。
+- 日本語の文面の転記元は pcg-search.com（アンノーン[E]・[O]・[R]。同じサイトとの照合は独立した照合にならない）・pokemonwiki（アンノーンL・S・T・Z）・nazonobasho.com（遺跡の石版）。
+  外部照合はしていない。
+- 新しい停止コード 2 件（EG1 `UNRESOLVED_ENGAGE_EMPTY_HAND`・OB1 `UNRESOLVED_POWER_DECK_TOP_SHORT`）を研究の対応表の `stop_codes` に `kyuura_disposition: not_in_kyuura` で加えた
+  （停止コード 219 → 221・未解決の裁定 221 → 223）。報告事項（kyuura の作業）: EG1・OB1 は kyuura の未解決の一覧にない（同じ形の論点は UQ-CARD-USE-WITHOUT-TARGET・LT1 の形）。kyuura の
+  engine_targets.json の `engine_reference` を v0.96 の登録で写すと 9 枚の `engine_status` が `registered` になる（docs 13 章）。
+
 ## v0.95: 手札・山札の閲覧とカード移動の 11 枚
 
 [private-looks-deck-movement-v0.95.md](private-looks-deck-movement-v0.95.md)。

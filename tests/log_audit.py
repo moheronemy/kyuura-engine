@@ -1045,6 +1045,19 @@ def _follows_declaration(state, key: str, player: int, pid: int, e: dict) -> boo
     # ［でんじりょく］のつけ替えは move_energy の分岐が確かめる
     if isinstance(effect, (E.TypeChangeSelfUntilTurnEnd, E.ConvertBasicEnergyColor)):
         return kind == "color_effect_added" and e.get("power") == key and e["player"] == player and e["pokemon_id"] == pid
+    # v0.96: ［ENGAGE］は使ったプレイヤーの答えの結果（hand_to_deck・hand_return_declined の power。そのあいだに決定がある）、［REASSURE］はポケモンごとの
+    # remove_damage_counters（ダメージカウンターのあるアンノーンがいなければ何もない）、［OBSERVE］は相手の山札の上を見る処理（look_at_deck_top の power）、［SEARCH］は自分の
+    # サイドを見る処理（look_at_card の power。そのあいだに決定がある）、［LAUGH］・［TELL］は持ち主のコイン
+    if isinstance(effect, E.EachPlayerMayReturnHandThenDrawOnEntry):
+        return kind in ("hand_to_deck", "hand_return_declined") and e.get("power") == key and e["player"] == player
+    if isinstance(effect, E.HealAllNameGroupOnEntry):
+        return not (kind == "remove_damage_counters" and (e.get("power") != key or e["player"] != player))
+    if isinstance(effect, E.LookOpponentDeckTopKeepOrder):
+        return kind == "look_at_deck_top" and e.get("power") == key and e["player"] == player
+    if isinstance(effect, E.LookOwnPrizeCard):
+        return kind == "look_at_card" and e.get("power") == key and e["player"] == player
+    if isinstance(effect, (E.CoinEachPlayerShufflesOpponentDeck, E.CoinEachPlayerLooksOpponentHand)):
+        return kind == "coin_flip" and e["source"] == "power" and e.get("effect") == key and e["player"] == player and e.get("pokemon_id") == pid
     return False
 
 
@@ -1132,6 +1145,14 @@ def _power_coin_follows(state, coin: dict, e: dict) -> bool:
         # v0.87: ［やみのちから］。「おもて」なら相手の場のポケモンを手札にもどす（return_in_play_to_hand。そのあいだに決定がある）。「うら」なら何もしない
         mine = kind == "return_in_play_to_hand" and e.get("power") == coin["effect"]
         return mine if coin["result"] == "heads" else not mine
+    if isinstance(effect, E.CoinEachPlayerShufflesOpponentDeck):
+        # v0.96: ［LAUGH］。「おもて」なら、まず使ったプレイヤーが相手の山札を切る（shuffle の power・shuffled_by）。2 回目は shuffle の分岐が確かめる。「うら」なら何もしない
+        mine = kind == "shuffle" and e.get("power") == coin["effect"]
+        return (mine and e["player"] == 1 - coin["player"] and e.get("shuffled_by") == coin["player"]) if coin["result"] == "heads" else not mine
+    if isinstance(effect, E.CoinEachPlayerLooksOpponentHand):
+        # v0.96: ［TELL］。「おもて」なら、まず使ったプレイヤーが相手の手札を見る（look_at_hand の power）。2 回目は look_at_hand の分岐が確かめる。「うら」なら何もしない
+        mine = kind == "look_at_hand" and e.get("power") == coin["effect"]
+        return (mine and e["player"] == coin["player"]) if coin["result"] == "heads" else not mine
     return kind in ("evade_check", "ko_prevented", "ko_prevention_failed")
 
 
@@ -1518,6 +1539,8 @@ def log_problems(state) -> list[str]:
     # サイコエクスチェンジ（手札を山札にもどしたあと、切ってから引く）の引く処理（プレイヤー, 枚数の上限, 番）
     active_of: dict[int, int | None] = {0: None, 1: None}
     exchange_due: tuple | None = None
+    # v0.96: ［LAUGH］・［TELL］の 1 回目（使ったプレイヤーが相手の山札を切った・相手の手札を見た）。すぐあとに 2 回目（相手が、使ったプレイヤーの山札を切る・手札を見る）が続くはず
+    each_due: dict | None = None
     # v0.47: ログから組み立てた、期限のあるトレーナーの使用の禁止（(禁止されたプレイヤー, 消える番) → 与えたログ）。みらいよちの見たカード（すぐあとに、その並べかえ
     # arrange_deck_top が続くはず）
     trainer_locks_log: dict[tuple, dict] = {}  # v0.56: (使えなくなるプレイヤー, 消える番, 出どころ)
@@ -2182,6 +2205,17 @@ def log_problems(state) -> list[str]:
         turn_now = e["turn"]
         if kind == "damage":
             last_damage = e
+        if each_due is not None:
+            # v0.96: ［LAUGH］・［TELL］の 2 回目は 1 回目のすぐあと（同じ特殊能力・逆のプレイヤー）
+            due, each_due = each_due, None
+            if kind != due["kind"] or e.get("power") != due["power"] or (e["player"], e.get("shuffled_by"), e.get("owner")) != (
+                    1 - due["player"], 1 - due["shuffled_by"] if kind == "shuffle" else None, 1 - due["owner"] if kind == "look_at_hand" else None):
+                problems.append(f"{due['turn']} 番の {due['power']} の 1 回目の {due['kind']} のすぐあとに、相手の 2 回目がない（{kind}）")
+        elif kind == "shuffle" and "shuffled_by" in e:
+            # v0.96: ［LAUGH］。1 回目は使ったプレイヤー（番のプレイヤー）が相手の山札を切る。すぐあとの 2 回目は相手が、使ったプレイヤーの山札を切る（each_due）
+            if not isinstance(_power_effect(state, e.get("power")), E.CoinEachPlayerShufflesOpponentDeck) or e["shuffled_by"] != turn_player                     or e["player"] != 1 - turn_player:
+                problems.append(f"{e['turn']} 番に山札の持ち主でないプレイヤー {e['shuffled_by']} が切った山札（プレイヤー {e['player']}）が、［LAUGH］の 1 回目ではない")
+            each_due = e
         if kind == "duel_janken":
             # v0.66: カスミの勝負のじゃんけん。使っている最中のそのカードで、両方の手と勝ったプレイヤー（あいこなら None）が手の組と合う
             from kyuura_engine.effects import JANKEN_HANDS, janken_winner
@@ -3478,13 +3512,19 @@ def log_problems(state) -> list[str]:
             # v0.81: ふうせんのみ（ログから組み立てたついているどうぐ）。「すべてなくなる」を当てはめる読み方（エンジンの ``RetreatCost.readings``）のどれでも正しい数（CP2 で
             # 止める数は宣言しない）
             zeroed = tuple(c for c in tools_on.get(pid, ()) if isinstance(_trainer_effect_of(state, c), BalloonBerry))
-            if zeroed:
+            # v0.96: 自分のベンチのはたらいている［ZOOM］（ログから組み立てた場）。にげるポケモンの今の姿の名前のグループが説明の「アンノーン」のときだけ。ふうせんのみと同じ
+            # 「すべてなくなる」の読み方（BB1・トラッシュはふうせんのみだけ）
+            power_zeroed = sorted((hpid, key) for hpid in in_play if pokemon_owner.get(hpid) == e["player"] and hpid != pid
+                                  for key, eff, _ in working_continuous(hpid, E.ZeroGroupRetreatCostFromBench) if form_def(pid).name_group == eff.group)
+            if zeroed or power_zeroed:
                 readings = RetreatCost(printed, tuple(increases), tuple(reductions), tuple((c, a) for c, a in stadium_terms if a > 0),
-                                       tuple((c, -a) for c, a in stadium_terms if a < 0), zeroed, marker_terms)
+                                       tuple((c, -a) for c, a in stadium_terms if a < 0), zeroed, marker_terms, tuple(power_zeroed))
                 last_ok = first_ok = all(low <= count <= high for low, high in readings.readings)
                 minimum, maximum = readings.minimum, readings.maximum
             if tuple(e.get("retreat_cost_zeroed", ())) != zeroed:
                 problems.append(f"{e['turn']} 番の{kind}のふうせんのみの記録 {e.get('retreat_cost_zeroed')} が、ログから組み立てたついているふうせんのみ {zeroed} と違う")
+            if sorted(tuple(x) for x in e.get("retreat_cost_power_zeroed", ())) != power_zeroed:
+                problems.append(f"{e['turn']} 番の{kind}の［ZOOM］の記録 {e.get('retreat_cost_power_zeroed')} が、ログから組み立てたはたらいている［ZOOM］ {power_zeroed} と違う")
             if not is_active(pid) or not last_ok or not first_ok:
                 problems.append(f"{e['turn']} 番の{kind}（ポケモン {pid}）でトラッシュした {count} 個が、にげるエネルギーの範囲 {minimum}〜{maximum}"
                                 f"（印刷 {printed}・増やす {increases}・少なくできる {reductions}。CP2 の下限 {floor_first}）にない")
@@ -3492,7 +3532,7 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番の{kind}のマーカーのにげるエネルギーの記録 {e.get('retreat_cost_markers')} が、ログから組み立てた {marker_terms} と違う")
             if tuple(tuple(x) for x in e.get("retreat_cost_stadium", ())) != tuple(stadium_terms):
                 problems.append(f"{e['turn']} 番の{kind}のスタジアムのにげるエネルギーの記録 {e.get('retreat_cost_stadium')} が、ログから組み立てた {stadium_terms} と違う")
-            if increases or reductions or stadium_terms or zeroed or marker_terms:
+            if increases or reductions or stadium_terms or zeroed or marker_terms or power_zeroed:
                 if (tuple(e.get("retreat_cost", ())), e.get("retreat_cost_printed"), sorted(tuple(x) for x in e.get("retreat_cost_increases", ())),
                         sorted(tuple(x) for x in e.get("retreat_cost_reductions", ()))) != ((minimum, maximum), printed, increases, reductions):
                     problems.append(f"{e['turn']} 番の{kind}のにげるエネルギーの記録が、ログから組み立てた範囲 {minimum}〜{maximum}・{increases}・{reductions} と違う")
@@ -3656,7 +3696,12 @@ def log_problems(state) -> list[str]:
                 from_hand(e, e["player"], uid)
         elif kind == "look_at_hand" and "trainer_card" not in e:
             # v0.95: ワザ（さぐる・とうし・ポルターガイスト・おどす）・特殊能力（［みやぶる］）で、使ったプレイヤーが相手の手札をすべて見る（カードは動かない。1 回見るだけ）
-            if "power" in e:
+            if "power" in e and isinstance(_power_effect(state, e["power"]), E.CoinEachPlayerLooksOpponentHand):
+                # v0.96: ［TELL］。1 回目は使ったプレイヤー（番のプレイヤー）、すぐあとの 2 回目は相手（each_due）
+                valid = e["player"] == turn_player or (prior is not None and prior["kind"] == "look_at_hand" and prior.get("power") == e["power"])
+                if e["player"] == turn_player:
+                    each_due = e
+            elif "power" in e:
                 valid = isinstance(_power_effect(state, e["power"]), CoinLookOpponentHandMayReturnTrainer) and e["player"] == turn_player
             else:
                 valid = _same_attack(attack_window, e) and e["player"] == attack_window["player"] and isinstance(
@@ -3767,6 +3812,19 @@ def log_problems(state) -> list[str]:
                         or any(owner.get(uid) != e["owner"] or uid in hand[e["owner"]] or uid in discard[e["owner"]] for uid in e["cards"]):
                     problems.append(f"{e['turn']} 番のポケモン図鑑で見たカード {e['cards']} が、自分の山札の上の {trainer_effect.max_cards} 枚までではない")
                 arrange_due = e
+        elif kind == "hand_to_deck" and "power" in e:
+            # v0.96: ［ENGAGE］。それぞれのプレイヤーが、自分の手札をすべて見せずに山札にもどす → すぐあとに切る → 4 枚まで引く（引けるだけ。p.312）
+            effect = _power_effect(state, e["power"])
+            if not isinstance(effect, E.EachPlayerMayReturnHandThenDrawOnEntry) or not e["cards"] or sorted(e["cards"]) != sorted(hand[e["player"]]):
+                problems.append(f"{e['turn']} 番に［ENGAGE］で山札にもどしたカード {e['cards']} が、ログから組み立てたプレイヤー {e['player']} の手札のすべてではない")
+            for uid in e["cards"]:
+                from_hand(e, e["player"], uid)
+            if isinstance(effect, E.EachPlayerMayReturnHandThenDrawOnEntry):
+                shuffle_due, exchange_due = e, (e["player"], effect.draw, e["turn"])
+        elif kind == "hand_return_declined":
+            # v0.96: ［ENGAGE］で手札をもどさなかった（手札・山札は変わらない）
+            if not isinstance(_power_effect(state, e.get("power")), E.EachPlayerMayReturnHandThenDrawOnEntry):
+                problems.append(f"{e['turn']} 番の hand_return_declined が、［ENGAGE］の処理のものではない")
         elif kind == "hand_to_deck" and isinstance(_effect_of_event(state, e), LookOpponentHandCardToDeck):
             # v0.47: おどろかす。見た相手の手札の 1 枚（直前の look_at_card）を、相手が山札にもどし（見せない）、すぐあとに相手の山札を切る
             if not _same_attack(attack_window, e) or e["player"] != 1 - attack_window["player"] or prior is None or prior["kind"] != "look_at_card" \
@@ -4197,7 +4255,13 @@ def log_problems(state) -> list[str]:
         elif kind == "trainer_bench_from_deck":
             # v0.80: ポケモンマーチ。使っている最中のそのトレーナーで、それぞれのプレイヤーが自分の山札のたねポケモンを手札を通さずにベンチへ（山札は組み立て直さない）
             uid = e["card"]
-            if not isinstance(_trainer_effect_of(state, e["trainer_card"]), EachPlayerMayBenchBasicFromDeck) or owner.get(uid) != e["player"] \
+            # v0.96: 遺跡の石版。使ったプレイヤーの山札の「アンノーン」（名前のグループ）のたねポケモン 1 枚。すぐあとに同じプレイヤーの山札を切る
+            ruin_wall = _trainer_effect_of(state, e["trainer_card"])
+            if isinstance(ruin_wall, E.BenchNameGroupFromDeckTrainer):
+                if using_trainer.get(e["player"]) != e["trainer_card"] or state.printed_def(uid).name_group != ruin_wall.group:
+                    problems.append(f"{e['turn']} 番に遺跡の石版でベンチに出したカード {uid} が、使っている最中のそのトレーナーの「{ruin_wall.group}」ではない")
+                shuffle_due = e
+            if not isinstance(ruin_wall, (EachPlayerMayBenchBasicFromDeck, E.BenchNameGroupFromDeckTrainer)) or owner.get(uid) != e["player"] \
                     or uid in hand[e["player"]] or uid in discard[e["player"]] or ids.get(uid) in in_play or not state.printed_def(uid).is_basic_pokemon:
                 problems.append(f"{e['turn']} 番にポケモンマーチでベンチに出したカード {uid} が、プレイヤー {e['player']} の山札のたねポケモンではない")
             enter(uid)
@@ -4461,6 +4525,9 @@ def log_problems(state) -> list[str]:
                 # v0.56: カスミのわがまま（使っている最中のそのトレーナーで、自分のサイドの位置を見る）
                 valid = using_trainer.get(e["player"]) == e["trainer_card"] and isinstance(_trainer_effect_of(state, e["trainer_card"]), LookPrizeAskSwapElseDraw) \
                     and zone == "prize" and holder == e["player"]
+            elif "power" in e and isinstance(_power_effect(state, e["power"]), E.LookOwnPrizeCard):
+                # v0.96: ［SEARCH］（自分のサイドの位置。サイドは動かない）
+                valid = e["player"] == turn_player and holder == e["player"] and zone == "prize"
             elif "power" in e and isinstance(_power_effect(state, e["power"]), CoinPeekOpponentDeckTopMayShuffle):
                 # v0.95: ［わるぢえ］（相手の山札の一番上）
                 valid = e["player"] == turn_player and holder == 1 - e["player"] and zone == "deck" and e["position"] == 0
@@ -4477,6 +4544,13 @@ def log_problems(state) -> list[str]:
             if not valid or owner.get(card) != holder or (where is not None and card not in where) \
                     or (where is None and (card in hand[holder] or card in discard[holder])):
                 problems.append(f"{e['turn']} 番に見たカード {card}（プレイヤー {holder} の {zone}）が、その特殊能力・ワザで見られるカードではない")
+        elif kind in ("look_at_deck_top", "look_at_deck_top_none") and "power" in e:
+            # v0.96: ［OBSERVE］。使ったプレイヤーが相手の山札の上からちょうど count 枚を見る（並び・乱数は変えない。山札が足りなければ使う前に止まるので、見ない場合はない）
+            effect = _power_effect(state, e["power"])
+            if not isinstance(effect, E.LookOpponentDeckTopKeepOrder) or kind != "look_at_deck_top" or e["player"] != turn_player or e["owner"] != 1 - e["player"] \
+                    or e["count"] != effect.count or len(e["cards"]) != e["count"] or len(set(e["cards"])) != e["count"] \
+                    or any(owner.get(uid) != e["owner"] or uid in hand[e["owner"]] or uid in discard[e["owner"]] for uid in e["cards"]):
+                problems.append(f"{e['turn']} 番の {kind} が、相手の山札の上からちょうど {getattr(effect, 'count', None)} 枚を見る［OBSERVE］の処理ではない")
         elif kind in ("look_at_deck_top", "look_at_deck_top_none"):
             # v0.47: みらいよち。ワザを使ったプレイヤーが、自分または相手の山札の上から見る（相手には見せない）
             effect = _effect_of_event(state, e)

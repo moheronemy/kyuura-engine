@@ -12,8 +12,8 @@
   "card_data_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 221,
-    "engine_stop_codes": 219,
+    "engine_unresolved_rulings": 223,
+    "engine_stop_codes": 221,
     "kyuura_issues": 71
   },
   "stop_codes": {
@@ -2541,6 +2541,28 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ENGAGE_EMPTY_HAND": {
+      "engine_rulings": [
+        {
+          "version": "v0.96",
+          "document": "docs/unown-family-powers-v0.96.md",
+          "ruling_id": "EG1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POWER_DECK_TOP_SHORT": {
+      "engine_rulings": [
+        {
+          "version": "v0.96",
+          "document": "docs/unown-family-powers-v0.96.md",
+          "ruling_id": "OB1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -4143,7 +4165,14 @@
       "neo4-020/attack/1",
       "ES3-031/attack/0",
       "ES3-031/attack/1",
-      "neo3-047/attack/0"
+      "neo3-047/attack/0",
+      "PF2-002/power/0",
+      "PF2-003/power/0",
+      "PRN-035/power/0",
+      "neo4-050/power/0",
+      "neo4-051/power/0",
+      "neo4-052/power/0",
+      "neo4-060/power/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

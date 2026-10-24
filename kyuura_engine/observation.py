@@ -611,6 +611,7 @@ PUBLIC_EVENTS = frozenset({
     # v0.95: とりさるで相手の山札にもどした、ついているトレーナーカード（場の公開のカード）・もやすで見たカードがトレーナーカードでなく、もとの山札の上にもどした（カードは書かない）・
     # ［わるぢえ］で見た山札を切らなかった（山札の並びは変わらない）
     "attached_trainer_to_deck", "deck_top_returned", "shuffle_declined",
+    "hand_return_declined",  # v0.96: ［ENGAGE］で手札を山札にもどさなかった（手札・山札の枚数は公開）
     "return_to_deck", "return_to_hand", "reveal_from_deck", "reveal_from_deck_declined", "reveal_from_deck_none",
     "reveal_pokemon", "set_prizes", "shuffle", "sleep_check", "special_condition", "special_condition_prevented", "special_conditions_removed",
     "swap_damage_counters", "swap_prize_with_deck_top", "switch", "switch_declined", "trainer_lock_added", "trainer_lock_removed", "turn_end",

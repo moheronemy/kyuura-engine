@@ -1413,6 +1413,17 @@
     "ES3-031",
     "neo3-047"
   ],
+  "pool_v0_96": [
+    "PF2-002",
+    "PF2-003",
+    "PRN-035",
+    "neo4-050",
+    "neo4-051",
+    "neo4-052",
+    "neo4-060",
+    "neo2-054",
+    "neo2-057"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -104872,6 +104883,778 @@
       "play_scope": "standard",
       "data_gaps": [],
       "same_card_group": null
+    },
+    {
+      "id": "PF2-002",
+      "jp_set": "PF2",
+      "category": "pokemon",
+      "name": {
+        "ja": "アンノーン[E]",
+        "en": "Unown [E]"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          201
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "en": null
+        },
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ENGAGE[エンゲージ]",
+              "en": "[Engage]"
+            },
+            "text": {
+              "ja": "この力は、このカードを手札から場に出したとき、1回だけ使える。おたがいのプレイヤーは、のぞむなら、それぞれ自分の手札をすべて山札にもどしてよい。もどしたプレイヤーは、その山札をよく切り、カードを4枚引いて、手札にする。",
+              "en": "When you play Unown [E] from your hand, your opponent may shuffle his or her hand into his or her deck and then draw 4 cards. Either way, you may shuffle your hand into your deck and draw 4 cards."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "めざめるパワー",
+              "en": "Hidden Power"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo2-67"
+        ],
+        "pcg_search": [
+          "neopf2002"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neopf2002.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プレミアムファイル2",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neopf2002.php"
+      },
+      "product_group": "premium_file",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.rules_text.ja": "pcg_search.note",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:neo2-67",
+        "pokemon.dex": "pokemontcg:neo2-67"
+      },
+      "copies": [
+        {
+          "page": "neopf2002",
+          "list_number": "002/009"
+        }
+      ]
+    },
+    {
+      "id": "PF2-003",
+      "jp_set": "PF2",
+      "category": "pokemon",
+      "name": {
+        "ja": "アンノーン[O]",
+        "en": "Unown [O]"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          201
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "en": null
+        },
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "OBSERVE[オブザーブ]",
+              "en": "[Observe]"
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使える。相手プレイヤーの山札の上から5枚のカードを見て、もとの山札にもどす。(見たカードの順番を入れ替えることはできない。)",
+              "en": "Once during your turn (before your attack), you may look at 5 cards from the top of your opponent's deck and put them back in the same order."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "めざめるパワー",
+              "en": "Hidden Power"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo2-69"
+        ],
+        "pcg_search": [
+          "neopf2003"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neopf2003.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プレミアムファイル2",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neopf2003.php"
+      },
+      "product_group": "premium_file",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.rules_text.ja": "pcg_search.note",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:neo2-69",
+        "pokemon.dex": "pokemontcg:neo2-69"
+      },
+      "copies": [
+        {
+          "page": "neopf2003",
+          "list_number": "003/009"
+        }
+      ]
+    },
+    {
+      "id": "PRN-035",
+      "jp_set": "PRN",
+      "category": "pokemon",
+      "name": {
+        "ja": "アンノーン[R]",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "en": null
+        },
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "REASSURE[リーアシュア]",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、このカードを手札から場に出したとき、1回だけ使える。自分の場の「アンノーン」全員にのっているダメージカウンターを、すべてとりのぞく。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "めざめるパワー",
+              "en": null
+            },
+            "cost": [
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neop035"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop035.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop035.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.rules_text.ja": "pcg_search.note"
+      },
+      "copies": [
+        {
+          "page": "neop035",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "neo4-050",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "アンノーンL",
+        "en": "Unown [L]"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          201
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "en": "You may have up to 4 Basic Pokémon cards in your deck with Unown in their names."
+        },
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "LAUGH [ラフ]",
+              "en": "[Laugh]"
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使うことができる。コインを投げて「おもて」なら、おたがいのプレイヤーは、それぞれ、相手の山札をよく切る。",
+              "en": "Once during your turn (before your attack), you may flip a coin. If heads, each player shuffles his or her deck. This power can be used even if Unown [L] is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "めざめるパワー",
+              "en": "Hidden Power"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-050",
+        "pokemontcg": [
+          "neo4-86"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A2%E3%83%B3%E3%83%8E%E3%83%BC%E3%83%B3L_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 19,
+        "rarity": "●(C)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A2%E3%83%B3%E3%83%8E%E3%83%BC%E3%83%B3L_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-051",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "アンノーンS",
+        "en": "Unown [S]"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          201
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "en": "You may have up to 4 Basic Pokémon cards in your deck with Unown in their names."
+        },
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "SEARCH[サーチ]",
+              "en": "[Search]"
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使うことができる。自分の「サイドカード」を1枚選び、おもてを見る。見たカードは、もとにもどす。",
+              "en": "Once during your turn (before your attack), you may look at 1 of your Prize cards. Return that Prize card face down. This power can be used even if Unown [S] is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "めざめるパワー",
+              "en": "Hidden Power"
+            },
+            "cost": [
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-051",
+        "pokemontcg": [
+          "neo4-87"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A2%E3%83%B3%E3%83%8E%E3%83%BC%E3%83%B3S_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 19,
+        "rarity": "●(C)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A2%E3%83%B3%E3%83%8E%E3%83%BC%E3%83%B3S_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-052",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "アンノーンT",
+        "en": "Unown [T]"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          201
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "en": "You may have up to 4 Basic Pokémon cards in your deck with Unown in their names."
+        },
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "TELL[テル]",
+              "en": "[Tell]"
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使うことができる。コインを投げて「おもて」なら、おたがいのプレイヤーは、それぞれ、相手プレイヤーの手札を見る。",
+              "en": "Once during your turn (before your attack), you may flip a coin. If heads, look at your opponent's hand and show your hand to your opponent. This power can be used even if Unown [T] is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "めざめるパワー",
+              "en": "Hidden Power"
+            },
+            "cost": [
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-052",
+        "pokemontcg": [
+          "neo4-88"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A2%E3%83%B3%E3%83%8E%E3%83%BC%E3%83%B3T_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 12,
+        "rarity": "●(C)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A2%E3%83%B3%E3%83%8E%E3%83%BC%E3%83%B3T_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-060",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "アンノーンZ",
+        "en": "Unown [Z]"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          201
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "en": "You may have up to 4 Basic Pokémon cards in your deck with Unown in their names."
+        },
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ZOOM[ズーム]",
+              "en": "[Zoom]"
+            },
+            "text": {
+              "ja": "この力は、このカードがベンチにいるかぎり、はたらく。自分の場の「アンノーン」の「にげる」ときに必要な「エネルギー」は、すべてなくなる。",
+              "en": "As long as Unown [Z] is Benched, you pay no Energy cost to retreat a Pokémon with Unown in its name."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "めざめるパワー",
+              "en": "Hidden Power"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-060",
+        "pokemontcg": [
+          "neo4-60"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A2%E3%83%B3%E3%83%8E%E3%83%BC%E3%83%B3Z_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 9,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A2%E3%83%B3%E3%83%8E%E3%83%BC%E3%83%B3Z_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo2-054",
+      "jp_set": "neo2",
+      "category": "trainer",
+      "name": {
+        "ja": "遺跡の石版",
+        "en": "Ruin Wall"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの山札から「アンノーン」を1枚選び出し、ベンチに出す。その後、その山札をよく切る。\n(あなたのベンチに空きがないとき、このカードは使えない。)",
+          "en": "Search your deck for a card with Unown in its name and put it onto your Bench. Shuffle your deck afterward. (You can't play this card if your Bench is full.)"
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "TCGdex となぞのばしょは 2 種として掲載（TCGdex は絵柄違い〔カブト／プテラ〕とする）。Scrydex 由来のデータは 1 種のみ"
+      ],
+      "source_ids": {
+        "tcgdex": "neo2-054",
+        "pokemontcg": [
+          "neo2-74"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-054-isekinosekiban/",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-054-isekinosekiban/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-neo2-054"
+    },
+    {
+      "id": "neo2-057",
+      "jp_set": "neo2",
+      "category": "trainer",
+      "name": {
+        "ja": "遺跡の石版",
+        "en": "Ruin Wall"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの山札から「アンノーン」を1枚選び出し、ベンチに出す。その後、その山札をよく切る。\n(あなたのベンチに空きがないとき、このカードは使えない。)",
+          "en": "Search your deck for a card with Unown in its name and put it onto your Bench. Shuffle your deck afterward. (You can't play this card if your Bench is full.)"
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "TCGdex となぞのばしょは 2 種として掲載（TCGdex は絵柄違い〔カブト／プテラ〕とする）。Scrydex 由来のデータは 1 種のみ"
+      ],
+      "source_ids": {
+        "tcgdex": "neo2-057",
+        "pokemontcg": [
+          "neo2-74"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-055-isekinosekiban/",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-055-isekinosekiban/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-neo2-054"
     }
   ]
 }

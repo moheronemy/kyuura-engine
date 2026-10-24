@@ -12484,6 +12484,38 @@ class IncreaseOpponentActiveRetreatCost(ContinuousPower):
         return (STICKY_GOO_TEXT.format(n=self.amount),)
 
 
+ZOOM_TEXT = "この力は、このカードがベンチにいるかぎり、はたらく。自分の場の「{group}」の「にげる」ときに必要な「エネルギー」は、すべてなくなる。"
+
+
+@dataclass(frozen=True)
+class ZeroGroupRetreatCostFromBench(ContinuousPower):
+    """この力は、このカードがベンチにいるかぎり、はたらく。自分の場の「``group``」の「にげる」ときに必要な「エネルギー」は、すべてなくなる（v0.96。アンノーンZ（neo4-060）の
+    ［ZOOM］。kyuura の印刷の文面。docs/unown-family-powers-v0.96.md 6 章）。
+
+    - 常にはたらく（宣言しない・使った記録を持たない）。このカードが自分のベンチにいるとき（バトル場では、はたらかない）。説明に特殊状態の条件はない。かがくへんかガスなどで消える
+      （``continuous_powers`` の共通の確かめ）。はたらいているかは「にげる」のたびに今の場から求める（``retreat_cost``）
+    - 当てはめるのは、自分のバトル場のポケモンの今の姿のカード（``form_def``）の名前のグループが「``group``」のとき（``in_name_group``。印刷の名前の完全一致ではない。相手の場・
+      ほかの名前のポケモンには当てはめない）。「にげる」でトラッシュするエネルギーの数を、ふうせんのみと同じ「すべてなくなる」にする（``RetreatCost.power_zeroed``。増やす効果・
+      スタジアム・マーカーとの重なりは CP2 の読み方）。ふうせんのみではないので、このカード・ほかのカードをトラッシュしない・BB1 に当てはめない（こんらんのコインは今までどおり）
+    - 2 匹以上の［ZOOM］がはたらいても重ならない（どれも 0 にするだけ）。払う数は「にげる」の宣言のときの場で決める（入れ替えでこのカードがバトル場に出ても、払い直さない）
+    """
+
+    group: str = "アンノーン"
+    implementation_id = "zero_group_retreat_cost_from_bench"
+    location = CONTINUOUS_BENCH
+    blocked_by_status = False
+    what = "自分の場の名前のグループのポケモンの「にげる」エネルギーをなくす特殊能力"
+
+    def texts(self) -> tuple[str, ...]:
+        return (ZOOM_TEXT.format(group=self.group),)
+
+
+def in_name_group(state: GameState, pokemon: PokemonInPlay, group: str) -> bool:
+    """場のポケモン ``pokemon`` の今の姿のカード（``form_def``。「ばける」・［へんしん］）の名前のグループが ``group`` か（v0.96。「自分の場の「アンノーン」」）。印刷の名前の
+    完全一致・カード id では決めない。うらのカード（マチスの秘策）の名前のグループは読めない（``HiddenPropertyRead``。FD1）。"""
+    return form_def(state, pokemon).name_group == group
+
+
 @dataclass(frozen=True)
 class RetreatCost:
     """「にげる」でトラッシュするエネルギーの数（v0.46。``retreat_cost``）。
@@ -12495,6 +12527,9 @@ class RetreatCost:
     - ``stadium_reductions``（v0.57）: 決まってへらす場のスタジアム（(スタジアムカード, 数)。ハナダシティジム。選べない）
     - ``marker_increases``（v0.90）: 決まって増やすマーカー（(マーカーの種類, 数)。ベトベトマーカーの「「にげる」時トラッシュするエネルギーが、1つぶん多く必要になる」。
       ［ねんちゃくえき］と同じ書き方なので、同じ増やす数として当てはめる（CP2・ふうせんのみの読み方も同じ））。特殊能力・スタジアムとは別に記録する
+    - ``power_zeroed``（v0.96）: 「にげる」ときに必要なエネルギーをすべてなくす、はたらいている特殊能力（(持つポケモンの番号, ``PowerKey`` の文字列)。アンノーンZ の［ZOOM］）。
+      ふうせんのみ（``zeroed``。ついているどうぐ）と同じ「すべてなくなる」で、数の読み方（``readings``・CP2）は同じに当てはめる。ふうせんのみだけの処理（「にげる」とき、
+      このカードをトラッシュする・BB1）には当てはめない（``engine._retreat`` は ``zeroed`` だけを見る）。2 つ以上あっても重ならない（どれも 0 にするだけ）
 
     増やす数とへらす数をまとめ、最後に 0 で下限をつける（``maximum`` = max(0, 印刷の数 + 増やす数 − 決まってへらす数)、``minimum`` = max(0, それ − 少なくできる数)）。
     へらす数が印刷の数より多く、増やす数もあるときは、先にへらして 0 で止めてから増やす読み方（``floor_first_minimum``・``floor_first_maximum``）と最後に下限をつける
@@ -12508,6 +12543,12 @@ class RetreatCost:
     stadium_reductions: tuple[tuple[int, int], ...] = ()
     zeroed: tuple[int, ...] = ()  # v0.81: ふうせんのみ（「にげる」ときに必要な「エネルギー」は、すべてなくなる）のカード
     marker_increases: tuple[tuple[str, int], ...] = ()  # v0.90: ベトベトマーカー
+    power_zeroed: tuple[tuple[int, str], ...] = ()  # v0.96: ［ZOOM］（「にげる」ときに必要な「エネルギー」は、すべてなくなる）
+
+    @property
+    def _zeroing(self) -> bool:
+        """「すべてなくなる」があるか（ふうせんのみ・特殊能力。v0.96）。"""
+        return bool(self.zeroed or self.power_zeroed)
 
     @property
     def _increase(self) -> int:
@@ -12524,13 +12565,13 @@ class RetreatCost:
 
     @property
     def maximum(self) -> int:
-        if self.zeroed:
+        if self._zeroing:
             return max(high for _, high in self.readings)
         return max(0, self.printed + self._increase - self._forced_reduction)
 
     @property
     def minimum(self) -> int:
-        if self.zeroed:
+        if self._zeroing:
             return min(low for low, _ in self.readings)
         return max(0, self.printed + self._increase - self._forced_reduction - self._optional_reduction)
 
@@ -12538,12 +12579,12 @@ class RetreatCost:
     def readings(self) -> tuple[tuple[int, int], ...]:
         """トラッシュしてよい数の範囲（下限, 上限）の読み方ごとの並び（v0.81）。ふうせんのみ（``zeroed``）がなければ、最後に下限をつける読み方と、先にへらして 0 で止める
         読み方（v0.46 の CP2 の 2 つ）。ふうせんのみがあれば、「すべてなくなる」を最後に当てはめる読み方（0）と、先に当てはめる読み方（印刷の数を 0 として、増やす・へらす数を
-        当てはめる 2 つ）。読み方で答えが変わる数は CP2 で止める（``floor_ambiguous``）。"""
-        if not self.zeroed:
+        当てはめる 2 つ）。読み方で答えが変わる数は CP2 で止める（``floor_ambiguous``）。v0.96: ［ZOOM］（``power_zeroed``）も同じ「すべてなくなる」として当てはめる。"""
+        if not self._zeroing:
             return ((max(0, self.printed + self._increase - self._forced_reduction - self._optional_reduction),
                      max(0, self.printed + self._increase - self._forced_reduction)),
                     (self.floor_first_minimum, self.floor_first_maximum))
-        first = _dataclass_replace(self, printed=0, zeroed=())
+        first = _dataclass_replace(self, printed=0, zeroed=(), power_zeroed=())
         return ((0, 0),) + first.readings
 
     @property
@@ -12564,20 +12605,21 @@ class RetreatCost:
 
     def allows(self, count: int) -> bool:
         """どちらかの読み方で正しい数か（両方で正しくなければ ``WRONG_RETREAT_COST``）。v0.81: ふうせんのみがあれば、どれかの読み方（``readings``）で正しい数か。"""
-        if self.zeroed:
+        if self._zeroing:
             return any(low <= count <= high for low, high in self.readings)
         return self._last(count) or self._first(count)
 
     def floor_ambiguous(self, count: int) -> bool:
         """``count`` 枚が、読み方の一方では正しく、もう一方では正しくない（CP2）。v0.81: ふうせんのみがあれば、読み方（``readings``）のどれかで正しく、どれかで正しくない。"""
-        if self.zeroed:
+        if self._zeroing:
             fits = [low <= count <= high for low, high in self.readings]
             return any(fits) and not all(fits)
         return self._last(count) != self._first(count)
 
     @property
     def modified(self) -> bool:
-        return bool(self.increases or self.reductions or self.stadium_increases or self.stadium_reductions or self.zeroed or self.marker_increases)
+        return bool(self.increases or self.reductions or self.stadium_increases or self.stadium_reductions or self.zeroed or self.marker_increases
+                    or self.power_zeroed)
 
 
 def retreat_cost(state: GameState, player: int) -> RetreatCost:
@@ -12585,26 +12627,30 @@ def retreat_cost(state: GameState, player: int) -> RetreatCost:
     はたらいている［ねんちゃくえき］、少なくできるのは自分のはたらいている［にげるサポート］。状態を変えず、乱数を使わない。バトル場にポケモンがいなければ ``ValueError``。
     v0.47: バトル場がなにかの化石・ピッピ人形（場での役割のあるカード）なら、にげるエネルギーの数が決まらない（PF2）ので ``UnsupportedError``
     （``UNRESOLVED_PLAY_AS_POKEMON_RETREAT``。``engine._retreat`` と同じ問い）。v0.57: 場のスタジアム（ロケット団の特訓ジムは決まって増やし、ハナダシティジムは
-    「カスミのポケモン」なら決まってへらす。``stadium_retreat_terms``）も当てはめる。v0.90: バトル場のポケモンのベトベトマーカー（決まって 1 増やす）も当てはめる。"""
+    「カスミのポケモン」なら決まってへらす。``stadium_retreat_terms``）も当てはめる。v0.90: バトル場のポケモンのベトベトマーカー（決まって 1 増やす）も当てはめる。
+    v0.96: 自分のベンチのはたらいている［ZOOM］（``ZeroGroupRetreatCostFromBench``）は、バトル場のポケモンの今の姿のカードが名前のグループ（「アンノーン」）なら、すべてなくす
+    （``power_zeroed``）。グループは［ZOOM］がはたらくときだけ読む（うらのカードの名前は読まない）。"""
     active = state.players[player].active
     if active is None:
         raise ValueError(f"プレイヤー {player} のバトル場にポケモンがいない")
     definition = form_def(state, active)  # v0.49: 今の姿のカードのにげるエネルギー（［へんしん］・「ばける」）
     if definition.play_role is not None:
         raise UnsupportedError(PLAY_AS_POKEMON_RETREAT_CODE, f"バトル場のポケモン {active.pokemon_id}: {PLAY_AS_POKEMON_RETREAT_REASON}")
-    increases, reductions = [], []
-    for owner, holder, key, effect in continuous_powers(state, (IncreaseOpponentActiveRetreatCost, ReduceOwnActiveRetreatCost)):
+    increases, reductions, power_zeroed = [], [], []
+    for owner, holder, key, effect in continuous_powers(state, (IncreaseOpponentActiveRetreatCost, ReduceOwnActiveRetreatCost, ZeroGroupRetreatCostFromBench)):
         if isinstance(effect, IncreaseOpponentActiveRetreatCost) and owner != player:
             increases.append((holder.pokemon_id, str(key), effect.amount))
         elif isinstance(effect, ReduceOwnActiveRetreatCost) and owner == player:
             reductions.append((holder.pokemon_id, str(key), effect.amount))
+        elif isinstance(effect, ZeroGroupRetreatCostFromBench) and owner == player and in_name_group(state, active, effect.group):
+            power_zeroed.append((holder.pokemon_id, str(key)))
     stadium_increases, stadium_reductions = stadium_retreat_terms(state, player, active)
     # v0.90: ベトベトマーカー（「「ベトベトマーカー」をのせているポケモンは、「にげる」時トラッシュするエネルギーが、1つぶん多く必要になる」。のせているポケモンについて 1 つぶん。
     # 「のっていなければ、1つのせる」ので 2 つにはならない）
     markers = ((MARKER_STICKY, STICKY_MARKER_RETREAT_INCREASE),) if has_marker(active, MARKER_STICKY) else ()
     # v0.81: ふうせんのみ（ついているどうぐ。「にげる」ときに必要な「エネルギー」は、すべてなくなる）
     return RetreatCost(definition.retreat_cost, tuple(increases), tuple(reductions), stadium_increases, stadium_reductions, balloon_berries(state, active),
-                       markers)
+                       markers, tuple(power_zeroed))
 
 
 ALLERGIC_POLLEN_TEXT = "このカードが場にいる限り、誰もトレーナーカードを使うことができない。「ねむり・マヒ・こんらん」状態の時、この力は消える。"
@@ -15577,6 +15623,8 @@ class CardFilter:
     - ``name``（v0.73）: 名前の完全一致（化石の発掘の「「なにかの化石」」）。名前の一部・カード id で決めない。``name_prefix`` とどちらか一方
     - ``pokemon_type``（v0.73）: ポケモンのカードの印刷のタイプ（月の石の「「無色」ポケモンへの「進化カード」」。進化カード自身のタイプ）。``kind`` が ``"pokemon"``・
       ``"basic_pokemon"`` のときだけ。``energy_type`` は基本エネルギーカードの色の条件で、ポケモンのタイプの条件ではない（意味のない組み合わせは作るときに ``ValueError``）
+    - ``name_group``（v0.96）: 名前のグループ（遺跡の石版の「「アンノーン」」。印刷の定義の ``CardDefinition.name_group``。「アンノーンT」「アンノーン[O]」を含み、名前の完全一致
+      ``name`` では決めない）。``kind`` が ``"pokemon"``・``"basic_pokemon"`` のときだけ。``name``・``name_prefix`` とはいっしょに使わない
     """
 
     kind: str
@@ -15585,6 +15633,7 @@ class CardFilter:
     evolution_only: bool = False
     name: str | None = None
     pokemon_type: EnergyType | None = None
+    name_group: str | None = None
 
     def __post_init__(self) -> None:
         # v0.73: どの種類にも当てはまらない条件を黙って無視しない（v0.72 までは ``CardFilter("pokemon", energy_type=…)`` が色を無視していた）
@@ -15596,6 +15645,8 @@ class CardFilter:
             raise ValueError(f"evolution_only は kind pokemon だけの条件で、kind {self.kind!r} には使えない")
         if self.name is not None and self.name_prefix is not None:
             raise ValueError("名前の完全一致（name）と名前の始まり（name_prefix）は、どちらか一方")
+        if self.name_group is not None and (self.kind not in ("pokemon", "basic_pokemon") or self.name is not None or self.name_prefix is not None):
+            raise ValueError("名前のグループ（name_group）はポケモンのカード（kind pokemon・basic_pokemon）の条件で、name・name_prefix とはいっしょに使わない")
 
     def matches(self, definition: CardDefinition) -> bool:
         pokemon = definition.is_basic_pokemon or definition.is_evolution_pokemon
@@ -15618,6 +15669,8 @@ class CardFilter:
         if self.pokemon_type is not None and definition.pokemon_type is not self.pokemon_type:
             ok = False
         if self.name is not None and definition.name_ja != self.name:
+            ok = False
+        if self.name_group is not None and definition.name_group != self.name_group:
             ok = False
         return ok and (self.name_prefix is None or definition.name_ja.startswith(self.name_prefix))
 
@@ -37662,3 +37715,380 @@ V0_95_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
 SAME_DATA_CARDS_V0_95: Mapping[str, str] = MappingProxyType({"QSG-029": "ES3-024"})
 
 DEFAULT_EFFECTS = _with_shared_entries(_with_powers(_with_attacks(DEFAULT_EFFECTS, V0_95_ATTACKS), V0_95_POWERS), SAME_DATA_CARDS_V0_95)
+
+
+# ---------------------------------------------------------------- v0.96（docs/unown-family-powers-v0.96.md）: アンノーン 7 枚と遺跡の石版 2 枚
+#
+# 「自分の場の「アンノーン」」は、場のポケモンの今の姿のカードの名前のグループ（``in_name_group``。カードの印刷の定義の ``CardDefinition.name_group``）で決め、名前の完全一致・カード id
+# では決めない。デッキに入れられる枚数（「「アンノーン」はデッキに4枚までしか入れることができません。」）はデッキの規定で、``deck.deck_problems`` が数える（場の数の制限ではない）
+
+ENGAGE_TEXT = ("この力は、このカードを手札から場に出したとき、1回だけ使える。おたがいのプレイヤーは、のぞむなら、それぞれ自分の手札をすべて山札にもどしてよい。もどしたプレイヤーは、"
+               "その山札をよく切り、カードを{n}枚引いて、手札にする。")
+# EG1: ［ENGAGE］で、手札が 0 枚のプレイヤーが「手札をすべて山札にもどす」を選べるか（選んだら「もどしたプレイヤー」として切って引くか）。もどさないことは選べる
+ENGAGE_EMPTY_HAND_CODE = "UNRESOLVED_ENGAGE_EMPTY_HAND"
+ENGAGE_EMPTY_HAND_REASON = (
+    "［ENGAGE］で、手札が 0 枚のプレイヤーが「自分の手札をすべて山札にもどす」ことを選べるか（選んだら、もどしたプレイヤーとして山札を切り、カードを引くか）は、印刷の文面・"
+    "kyuura の記録から決められないので扱わない（EG1。もどさないことは選べる。v0.54 の HD2 は、かならずもどす効果の読み方で、「のぞむなら」「もどしたプレイヤーは」の文面には当てはめない）"
+)
+
+
+@dataclass(frozen=True)
+class EachPlayerMayReturnHandThenDrawOnEntry(EntryPower):
+    """この力は、このカードを手札から場に出したとき、1 回だけ使える。おたがいのプレイヤーは、のぞむなら、それぞれ自分の手札をすべて山札にもどしてよい。もどしたプレイヤーは、その
+    山札をよく切り、カードを ``draw`` 枚引いて、手札にする（v0.96。アンノーン[E]（PF2-002）の［ENGAGE］。kyuura の印刷の文面。docs 4 章）。
+
+    - 使う機会は手札から場に出したとき（手札からベンチに出す操作・エリカの香水・マチスなどのトレーナーの効果で手札から出す。``from_hand_only``）だけ。山札から出す（遺跡の石版）・
+      姿が変わる（「ばける」・［へんしん］）では機会がない。使うかは持ち主が決める（決定 ``ENTRY_POWER``）
+    - 使ったら、それぞれのプレイヤーが自分で、手札をもどすかを決める（決定 ``ACCEPT_REQUEST``。選べるものは 1。0〜1 個。``context`` の ``"stage"`` は 0（使ったプレイヤー）・1（相手）。
+      相手の分は相手が決める。1 つの答えを両方に当てはめない）。順番は使ったプレイヤー → 相手プレイヤー（実装上の順番。説明は順番を書かない。v0.84 の［おくりもの］と同じ）
+    - もどすなら、手札をすべて見せずに山札の一番下にもどし（``zones.return_hand_cards_to_deck`` の ``power``。もどす位置はこのあと切るので実装上の仮定）→ その山札を 1 回切る →
+      ``draw`` 枚引く（山札が足りなければ引けるだけ。p.312。［ぶっしつこうかん］と同じ規定）。そのプレイヤーの処理を終えてから、次のプレイヤーに聞く。もどさないなら、そのプレイヤーの
+      手札・山札・乱数は変えない（ログ ``hand_return_declined``）
+    - 手札が 0 枚のプレイヤーの「もどす」は EG1（``ENGAGE_EMPTY_HAND_CODE``。選べるが選ぶと止める。「もどさない」はいつも選べる）
+    """
+
+    draw: int = 4
+    implementation_id = "each_player_may_return_hand_then_draw_on_entry"
+
+    def check(self, power: Power) -> list[str]:
+        problems = _check_power_text(power, "手札から場に出したとき、おたがいのプレイヤーが手札を山札にもどして引いてよい特殊能力", (ENGAGE_TEXT.format(n=self.draw),))
+        if self.draw != 4:
+            problems.append(f"説明は 4 枚（登録は {self.draw} 枚）")
+        return problems
+
+    @staticmethod
+    def _chooser(use: PowerUse, stage: int) -> int:
+        return use.player if stage == 0 else 1 - use.player
+
+    @staticmethod
+    def _unresolved(state: GameState, player: int) -> tuple[int, ...]:
+        return () if state.players[player].hand else (1,)
+
+    def _ask(self, state: GameState, use: PowerUse, stage: int) -> None:
+        if stage > 1:
+            return
+        player = self._chooser(use, stage)
+        blocked = self._unresolved(state, player)
+        extra = {} if not blocked else {"unresolved_choices": blocked, "unresolved_code": ENGAGE_EMPTY_HAND_CODE, "unresolved_reason": ENGAGE_EMPTY_HAND_REASON}
+        push_power_decision(state, use, kind=ACCEPT_REQUEST, player=player, options=(1,), min_choices=0, max_choices=1, context=(("stage", stage),), **extra)
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        self._ask(state, use, 0)
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        stage = decision.context_value("stage")
+        player = self._chooser(use, stage)
+        key = str(use.key)
+        if choices:
+            hand = tuple(state.players[player].hand)
+            if choices != (1,) or not hand:
+                raise RuntimeError(f"［ENGAGE］の答え {choices} で、プレイヤー {player} の手札 {len(hand)} 枚をもどせない（決定の確認の漏れ。エンジンの不具合）")
+            return_hand_cards_to_deck(state, player, hand, power=key)
+            shuffle_deck(state, player, power=key)
+            _draw_up_to(state, player, self.draw)
+        else:
+            state.add_event("hand_return_declined", player=player, power=key)
+        self._ask(state, use, stage + 1)
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        stage = decision.context_value("stage")
+        if type(stage) is not int or stage not in (0, 1):
+            return [f"特殊能力 {use.key} の決定の段階 {stage!r} が 0・1 ではない"]
+        player = self._chooser(use, stage)
+        problems = [] if decision.player == player else [f"特殊能力 {use.key} の段階 {stage} の決定をするのがプレイヤー {decision.player}（{player} のはず）"]
+        form = (decision.kind, decision.options, decision.min_choices, decision.max_choices)
+        if form != (ACCEPT_REQUEST, (1,), 0, 1):
+            problems.append(f"特殊能力 {use.key} の段階 {stage} の決定の形 {form} が {(ACCEPT_REQUEST, (1,), 0, 1)} ではない")
+        blocked = self._unresolved(state, player)
+        if tuple(decision.context_value("unresolved_choices", ())) != blocked:
+            problems.append(f"特殊能力 {use.key} の段階 {stage} の選ぶと止める選択 {decision.context_value('unresolved_choices', ())} が {blocked} ではない")
+        return problems
+
+
+REASSURE_TEXT = "この力は、このカードを手札から場に出したとき、1回だけ使える。自分の場の「{group}」全員にのっているダメージカウンターを、すべてとりのぞく。"
+
+
+@dataclass(frozen=True)
+class HealAllNameGroupOnEntry(EntryPower):
+    """この力は、このカードを手札から場に出したとき、1 回だけ使える。自分の場の「``group``」全員にのっているダメージカウンターを、すべてとりのぞく（v0.96。アンノーン[R]（PRN-035）の
+    ［REASSURE］。kyuura の印刷の文面。docs 4 章）。
+
+    - 使う機会は手札から場に出したときだけ（``from_hand_only``。［ENGAGE］と同じ）。使うかは持ち主が決める
+    - 対象は使ったプレイヤーの場（バトル場 → ベンチ。このカードも）のポケモンのうち、今の姿のカードの名前のグループが「``group``」のもの（``in_name_group``。ほかの名前・相手の場は
+      入らない）。のっているダメージカウンターをすべてとりのぞく（のっていないポケモンは効果を受けない・ログを残さない。0 匹でも使える。v0.86 の［いやしのかぜ］と同じ）。
+      特殊状態・マーカー・持続する効果は変えない。ログはポケモンごとの ``remove_damage_counters``（``power``）
+    - ダメージカウンターがのっているうらのカード（マチスの秘策）があれば、名前のグループを読めないので FD1（使うを選ぶと止める。``accept_problem``）。のっていなければ名前を読まない
+      （とりのぞくものがないので、結果は同じ）
+    """
+
+    group: str = "アンノーン"
+    implementation_id = "heal_all_name_group_on_entry"
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "手札から場に出したとき、自分の場の名前のグループのポケモン全員を回復する特殊能力", (REASSURE_TEXT.format(group=self.group),))
+
+    def _targets(self, state: GameState, player: int) -> list[PokemonInPlay]:
+        per = state.rules.damage_per_counter
+        return [pokemon for pokemon in state.players[player].in_play() if pokemon.damage >= per and in_name_group(state, pokemon, self.group)]
+
+    def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
+        from .errors import HiddenPropertyRead
+
+        try:
+            self._targets(state, use.player)
+        except HiddenPropertyRead as error:
+            return error
+        return None
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        per = state.rules.damage_per_counter
+        for pokemon in self._targets(state, use.player):
+            removed = pokemon.damage // per
+            pokemon.damage -= removed * per
+            state.add_event("remove_damage_counters", player=use.player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, counters=removed,
+                            total_damage=pokemon.damage, power=str(use.key), user=use.player)
+
+
+OBSERVE_TEXT = "この力は、自分の番ごとに1回使える。相手プレイヤーの山札の上から{n}枚のカードを見て、もとの山札にもどす。(見たカードの順番を入れ替えることはできない。)"
+# OB1: ［OBSERVE］で、相手の山札が 5 枚より少ない（1 枚以上）とき。ワザの LT1・トレーナーの TOP1・ML1・MW1 と同じ形の、別のカードの問い（0 枚は［わるぢえ］・［スパイ］と同じ PW3）
+POWER_DECK_TOP_SHORT_CODE = "UNRESOLVED_POWER_DECK_TOP_SHORT"
+POWER_DECK_TOP_SHORT_REASON = (
+    "「相手プレイヤーの山札の上から5枚のカードを見て」の特殊能力（アンノーン[O] の［OBSERVE］）で、相手の山札が 5 枚より少ないとき、使えるか（あるだけ見るか）は、印刷の文面・"
+    "kyuura の記録から決められないので扱わない（OB1。ワザの LT1・トレーナーの TOP1・ML1・MW1 と同じ形の、別のカードの問い）"
+)
+
+
+@dataclass(frozen=True)
+class LookOpponentDeckTopKeepOrder(PowerEffect):
+    """この力は、自分の番ごとに 1 回使える。相手プレイヤーの山札の上から ``count`` 枚のカードを見て、もとの山札にもどす。(見たカードの順番を入れ替えることはできない。)（v0.96。
+    アンノーン[O]（PF2-003）の［OBSERVE］。kyuura の印刷の文面。docs 5 章）。
+
+    - 宣言して使う（``once_per_turn``）。説明にねむり・マヒ・こんらんの条件はない（ほかの特殊能力の条件を写さない）。特殊能力を消す効果はエンジンの共通の確かめ
+    - 相手の山札の上から ``count`` 枚を見る（ログ ``look_at_deck_top`` の ``cards`` は見たプレイヤーだけ。山札の持ち主・観戦者には見せない）。ちょうど ``count`` 枚で、「まで」ではない。
+      並べかえ・切ることはしない（並び・乱数は変わらない。v0.95 のみらいよちの並べかえの決定・［わるぢえ］のコイン・切るかの決定は使わない）
+    - 相手の山札が 0 枚なら PW3（見るカードがない）、1〜``count`` − 1 枚なら OB1（``POWER_DECK_TOP_SHORT_CODE``）。どちらも宣言の前（山札の枚数は公開の情報）
+    """
+
+    count: int = 5
+    implementation_id = "look_opponent_deck_top_keep_order"
+    once_per_turn: ClassVar[bool] = True
+
+    def check(self, power: Power) -> list[str]:
+        problems = _check_power_text(power, "相手の山札の上から決まった枚数を見る特殊能力", (OBSERVE_TEXT.format(n=self.count),))
+        if self.count != 5:
+            problems.append(f"説明は 5 枚（登録は {self.count} 枚）")
+        return problems
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+        deck = state.players[1 - use.player].deck
+        if not deck:
+            raise _power_zero_cards("［OBSERVE］で、相手の山札が 0 枚（見るカードがない。v0.95 の［わるぢえ］と同じ問い）")
+        if len(deck) < self.count:
+            raise UnsupportedError(POWER_DECK_TOP_SHORT_CODE, f"{POWER_DECK_TOP_SHORT_REASON}。相手の山札が {len(deck)} 枚")
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        opponent = 1 - use.player
+        cards = tuple(state.players[opponent].deck[: self.count])
+        state.add_event("look_at_deck_top", player=use.player, owner=opponent, count=self.count, cards=cards, power=str(use.key))
+
+
+UNOWN_SEARCH_TEXT = "この力は、自分の番ごとに1回使うことができる。自分の「サイドカード」を1枚選び、おもてを見る。見たカードは、もとにもどす。"
+
+
+@dataclass(frozen=True)
+class LookOwnPrizeCard(PowerEffect):
+    """この力は、自分の番ごとに 1 回使うことができる。自分の「サイドカード」を 1 枚選び、おもてを見る。見たカードは、もとにもどす（v0.96。アンノーンS（neo4-051）の［SEARCH］。
+    kyuura の印刷の文面。docs 5 章）。
+
+    - 宣言して使う（``once_per_turn``）。説明にねむり・マヒ・こんらんの条件はない
+    - 宣言のあと決定 ``SELECT_PRIZE_CARD``（使ったプレイヤー。選べるものは自分のサイドの位置。1 つ。v0.47 の［わるふざけ］と同じ形）→ 見る（``zones.look_at_card`` の ``"prize"``・
+      ``power``。ログ ``look_at_card`` の ``card`` は見たプレイヤーだけ。相手・観戦者には見せない）。サイドは動かさない（位置・枚数・並びは同じ）
+    - サイドが 0 枚なら PW3（勝ちが決まっているので、自分の番には起こらない）
+    """
+
+    implementation_id = "look_own_prize_card"
+    once_per_turn: ClassVar[bool] = True
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "自分のサイドを 1 枚選んで見る特殊能力", (UNOWN_SEARCH_TEXT,))
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+        if not state.players[use.player].prizes:
+            raise _power_zero_cards("［SEARCH］で、自分のサイドが 0 枚（見るカードがない）")
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        push_power_decision(state, use, kind=SELECT_PRIZE_CARD, player=use.player, options=range(len(state.players[use.player].prizes)))
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        look_at_card(state, use.player, use.player, "prize", choices[0], power=str(use.key))
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        return _power_decision_form(decision, use, kind=SELECT_PRIZE_CARD, choices=(1, 1), options=range(len(state.players[use.player].prizes)))
+
+
+LAUGH_TEXT = "この力は、自分の番ごとに1回使うことができる。コインを投げて「おもて」なら、おたがいのプレイヤーは、それぞれ、相手の山札をよく切る。"
+
+
+@dataclass(frozen=True)
+class CoinEachPlayerShufflesOpponentDeck(PowerEffect):
+    """この力は、自分の番ごとに 1 回使うことができる。コインを投げて「おもて」なら、おたがいのプレイヤーは、それぞれ、相手の山札をよく切る（v0.96。アンノーンL（neo4-050）の
+    ［LAUGH］。kyuura の印刷の文面。docs 5 章）。
+
+    - 宣言して使う（``once_per_turn``。コインの「うら」でも使ったことになる）。説明にねむり・マヒ・こんらんの条件はない
+    - 「おもて」なら、使ったプレイヤーが相手の山札を切り、そのあと相手が使ったプレイヤーの山札を切る（実装上の順番。説明は順番を書かない。ログ ``shuffle`` の ``player`` は山札の
+      持ち主、``shuffled_by`` は切ったプレイヤー）。山札をそれぞれ 1 回ずつ切る。「うら」なら何もしない（切らない）
+    """
+
+    implementation_id = "coin_each_player_shuffles_opponent_deck"
+    once_per_turn: ClassVar[bool] = True
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "コインでおたがいのプレイヤーが相手の山札を切る特殊能力", (LAUGH_TEXT,))
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        if _power_coin(state, use) is not CoinSide.HEADS:
+            return
+        for shuffler in (use.player, 1 - use.player):
+            shuffle_deck(state, 1 - shuffler, power=str(use.key), shuffled_by=shuffler)
+
+
+TELL_TEXT = "この力は、自分の番ごとに1回使うことができる。コインを投げて「おもて」なら、おたがいのプレイヤーは、それぞれ、相手プレイヤーの手札を見る。"
+
+
+@dataclass(frozen=True)
+class CoinEachPlayerLooksOpponentHand(PowerEffect):
+    """この力は、自分の番ごとに 1 回使うことができる。コインを投げて「おもて」なら、おたがいのプレイヤーは、それぞれ、相手プレイヤーの手札を見る（v0.96。アンノーンT（neo4-052）の
+    ［TELL］。kyuura の印刷の文面。docs 5 章）。
+
+    - 宣言して使う（``once_per_turn``。コインの「うら」でも使ったことになる）。説明にねむり・マヒ・こんらんの条件はない
+    - 「おもて」なら、使ったプレイヤーが相手の手札を見て、そのあと相手が使ったプレイヤーの手札を見る（実装上の順番。``zones.look_at_hand`` の ``power``。それぞれ 1 回。ログ
+      ``look_at_hand`` の ``cards`` は見たプレイヤーと持ち主だけ。観戦者には見せない。「見せる」（公開）ではない）。手札が 0 枚でも見る処理をする。「うら」なら何もしない
+    """
+
+    implementation_id = "coin_each_player_looks_opponent_hand"
+    once_per_turn: ClassVar[bool] = True
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "コインでおたがいのプレイヤーが相手の手札を見る特殊能力", (TELL_TEXT,))
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        if _power_coin(state, use) is not CoinSide.HEADS:
+            return
+        for viewer in (use.player, 1 - use.player):
+            look_at_hand(state, viewer, 1 - viewer, power=str(use.key))
+
+
+RUIN_WALL_TEXT = "あなたの山札から「{group}」を1枚選び出し、ベンチに出す。その後、その山札をよく切る。\n(あなたのベンチに空きがないとき、このカードは使えない。)"
+
+
+@dataclass(frozen=True)
+class BenchNameGroupFromDeckTrainer(TrainerEffect):
+    """あなたの山札から「``group``」を 1 枚選び出し、ベンチに出す。その後、その山札をよく切る。(あなたのベンチに空きがないとき、このカードは使えない。)（v0.96。遺跡の石版
+    （neo2-054・neo2-057）。kyuura の印刷の文面。docs 7 章）。
+
+    - ベンチに空きがない（``bench_has_space``）なら、手札から出す前に ``BENCH_FULL``（説明が使えないと書く）
+    - 選べるのは山札の、印刷の定義の名前のグループが「``group``」のたねポケモンのカード（``CardFilter`` の ``name_group``。「アンノーンT」「アンノーン[O]」を含む。uid の小さい順）。
+      ちょうど 1 枚（「選び出し、ベンチに出す」。選ばなくてよいとは書かれていない）。選べるカードがない（山札 0 枚を含む）ときは v0.53 の ST1（説明が山札から決まったカードを
+      1 枚選ばせるトレーナー）で、手札から出す前に止める
+    - 決定 ``BENCH_FROM_DECK``（選べるものの数は使ったプレイヤーだけが見る）→ 手札を通さずにベンチの最後へ（``zones.bench_from_deck``。場に出た番は今の番。ログ ``trainer_bench_from_deck``
+      は公開）→ 山札を 1 回切る。手札から出していないので、「手札から場に出したとき」の特殊能力（［ENGAGE］・［REASSURE］）の機会はない
+    - まきちらせ!ベトベトガス・ふしぎなガス・やみのはどうの間の特殊能力を持つカードは GG1 など（選べるが選ぶと止める。どれもそうなら手札から出す前に止める）
+    """
+
+    text: str
+    group: str = "アンノーン"
+    implementation_id = "bench_name_group_from_deck_trainer"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        return _require_v080_text(definition, self.text, self, f"あなたの山札から「{self.group}」を1枚選び出し、ベンチに出す", "その後、その山札をよく切る",
+                                  "あなたのベンチに空きがないとき、このカードは使えない")
+
+    def candidates(self, state: GameState, use: TrainerUse) -> tuple[int, ...]:
+        return deck_cards_matching(state, use.player, CardFilter("basic_pokemon", name_group=self.group))
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        if not bench_has_space(state, use.player):
+            raise IllegalActionError("BENCH_FULL", f"あなたのベンチに空きがない（{bench_limit(state, use.player)} 匹）ので、このカードは使えない（カードの説明）")
+        options = self.candidates(state, use)
+        if not options:
+            raise UnsupportedError(SEARCH_TRAINER_WITHOUT_TARGET_CODE, f"{SEARCH_TRAINER_WITHOUT_TARGET_REASON}。山札に「{self.group}」がない")
+        blocked, code, reason = bench_entry_unresolved(state, options)
+        if len(blocked) == len(options):
+            raise UnsupportedError(code, f"山札の「{self.group}」がどれも、ベンチに出すと止めるカード: {reason}")
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        options = self.candidates(state, use)
+        for card in options:
+            placed_entry_power_guard(state, card)
+        blocked, code, reason = bench_entry_unresolved(state, options)
+        extra = {} if not blocked else {"unresolved_choices": blocked, "unresolved_code": code, "unresolved_reason": reason}
+        push_trainer_decision(state, use, kind=BENCH_FROM_DECK, player=use.player, options=options, min_choices=1, max_choices=1, **extra)
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        (card,) = choices
+        if card not in self.candidates(state, use) or not bench_has_space(state, use.player):
+            raise RuntimeError(f"{use.card_id} で選んだカード {card} をベンチに出せない（決定の確認の漏れ。エンジンの不具合）")
+        pokemon = bench_from_deck(state, use.player, card)
+        state.add_event("trainer_bench_from_deck", player=use.player, card=card, to_pokemon_id=pokemon.pokemon_id, trainer_card=use.card)
+        shuffle_deck(state, use.player)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = f"トレーナー {use.card_id}"
+        problems = _decided_by(decision, use.player, what)
+        expected = self.candidates(state, use)
+        if decision.kind != BENCH_FROM_DECK or not expected or decision.options != expected or (decision.min_choices, decision.max_choices) != (1, 1) \
+                or not bench_has_space(state, use.player):
+            problems.append(f"{what}の決定 {decision.options} が、山札の「{self.group}」{expected} からちょうど 1 枚ではない")
+        blocked, _, _ = bench_entry_unresolved(state, expected)
+        if tuple(decision.context_value("unresolved_choices", ())) != blocked:
+            problems.append(f"{what}の決定の選ぶと止める選択 {decision.context_value('unresolved_choices', ())} が {blocked} ではない")
+        return problems
+
+
+# v0.96 のアンノーン 7 枚のワザの登録（7）。どれも説明文のない「めざめるパワー」（文面・出典を持たない）
+V0_96_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    AttackKey("PF2-002", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーン[E]（超・10）
+    AttackKey("PF2-003", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーン[O]（超・10）
+    AttackKey("PRN-035", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーン[R]（超無・20）
+    AttackKey("neo4-050", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーンL（超・10）
+    AttackKey("neo4-051", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーンS（超無・20）
+    AttackKey("neo4-052", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーンT（超無・20。写しの値）
+    AttackKey("neo4-060", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーンZ（超・10）
+})
+
+# v0.96 の特殊能力の登録（7）。処理に使う文面は kyuura の印刷の文面（名前は写しの表記のまま。［LAUGH］の名前は「LAUGH [ラフ]」）
+V0_96_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
+    PowerKey("PF2-002", 0): PowerEntry(EachPlayerMayReturnHandThenDrawOnEntry(), "ENGAGE[エンゲージ]", ENGAGE_TEXT.format(n=4), ENGAGE_TEXT.format(n=4),
+                                       _KYUURA_PRINTED_TEXT),
+    PowerKey("PF2-003", 0): PowerEntry(LookOpponentDeckTopKeepOrder(), "OBSERVE[オブザーブ]", OBSERVE_TEXT.format(n=5), OBSERVE_TEXT.format(n=5), _KYUURA_PRINTED_TEXT),
+    PowerKey("PRN-035", 0): PowerEntry(HealAllNameGroupOnEntry(), "REASSURE[リーアシュア]", REASSURE_TEXT.format(group="アンノーン"), REASSURE_TEXT.format(group="アンノーン"),
+                                       _KYUURA_PRINTED_TEXT),
+    PowerKey("neo4-050", 0): PowerEntry(CoinEachPlayerShufflesOpponentDeck(), "LAUGH [ラフ]", LAUGH_TEXT, LAUGH_TEXT, _KYUURA_PRINTED_TEXT),
+    PowerKey("neo4-051", 0): PowerEntry(LookOwnPrizeCard(), "SEARCH[サーチ]", UNOWN_SEARCH_TEXT, UNOWN_SEARCH_TEXT, _KYUURA_PRINTED_TEXT),
+    PowerKey("neo4-052", 0): PowerEntry(CoinEachPlayerLooksOpponentHand(), "TELL[テル]", TELL_TEXT, TELL_TEXT, _KYUURA_PRINTED_TEXT),
+    PowerKey("neo4-060", 0): PowerEntry(ZeroGroupRetreatCostFromBench(), "ZOOM[ズーム]", ZOOM_TEXT.format(group="アンノーン"), ZOOM_TEXT.format(group="アンノーン"),
+                                        _KYUURA_PRINTED_TEXT),
+})
+
+# v0.96 のトレーナーの登録（2）。遺跡の石版の 2 枚（SC-neo2-054）は同じゲーム用データで、id ごとに書いたうえで同じ登録の値にまとめる
+_RUIN_WALL = RUIN_WALL_TEXT.format(group="アンノーン")
+V0_96_TRAINERS: Mapping[str, TrainerEntry] = MappingProxyType({
+    "neo2-054": TrainerEntry(BenchNameGroupFromDeckTrainer(_RUIN_WALL), "遺跡の石版", _RUIN_WALL, _RUIN_WALL, _KYUURA_PRINTED_TEXT),
+    "neo2-057": TrainerEntry(BenchNameGroupFromDeckTrainer(_RUIN_WALL), "遺跡の石版", _RUIN_WALL, _RUIN_WALL, _KYUURA_PRINTED_TEXT),
+})
+SAME_DATA_TRAINERS_V0_96: Mapping[str, str] = MappingProxyType({"neo2-057": "neo2-054"})
+
+DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_96_ATTACKS), V0_96_POWERS)
+DEFAULT_EFFECTS = _with_shared_trainers(_with_trainers(DEFAULT_EFFECTS, V0_96_TRAINERS), SAME_DATA_TRAINERS_V0_96)

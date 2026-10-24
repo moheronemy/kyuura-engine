@@ -1401,6 +1401,7 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
             + (f"、スタジアムで増やす {[a for _, a in cost.stadium_increases]}・へらす {[a for _, a in cost.stadium_reductions]}"
                if cost.stadium_increases or cost.stadium_reductions else "")
             + (f"、ふうせんのみ {list(cost.zeroed)}（すべてなくなる）" if cost.zeroed else "")
+            + (f"、特殊能力 {[k for _, k in cost.power_zeroed]}（すべてなくなる）" if cost.power_zeroed else "")
             + (f"、マーカーで増やす {[a for _, a in cost.marker_increases]}" if cost.marker_increases else "") + "）を、"
             f"少なくしてから 0 で止めて増やすか、合わせてから 0 で止めるかで、{units if units != len(discard) else len(discard)} {'個' if units != len(discard) else '枚'}が足りるかが変わる。どちらの読み方かは kyuura の記録・印刷の文面から決められない"
             "ので扱わない（CP2）",
@@ -1429,6 +1430,9 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
             (card, -amount) for card, amount in cost.stadium_reductions)
     if cost.zeroed:
         cost_log["retreat_cost_zeroed"] = cost.zeroed  # v0.81: ふうせんのみ（「にげる」ときに必要なエネルギーはすべてなくなる）
+    if cost.power_zeroed:
+        # v0.96: ［ZOOM］（(持つポケモンの番号, PowerKey の文字列)）。ふうせんのみの記録とは分ける（ふうせんのみだけがトラッシュされ、BB1 に当たる）
+        cost_log["retreat_cost_power_zeroed"] = cost.power_zeroed
     if cost.marker_increases:
         cost_log["retreat_cost_markers"] = cost.marker_increases  # v0.90: ベトベトマーカー（(マーカーの種類, 増やす数)）
     if active.conditions.confused and not _confusion_check(state, cmd.player, active, action="retreat", effect="retreat"):
@@ -4087,6 +4091,9 @@ def _power_decision_problems(state: GameState, d) -> list[str]:
                           and state.trainer_in_use is not None and state.trainer_in_use.using_player == state.current_player
                           and (_entry_fact_event(state, PowerUse(player, pokemon_id, PowerKey(card_id, power_index)), found[1]) or {}).get("kind")
                           == "trainer_bench_from_hand")
+    # v0.96: その機会に使った特殊能力の処理の途中の決定（［ENGAGE］の、それぞれが手札をもどすかの決定）も、持ち主の番でないまま続く（``_opponent_entry_followup``）
+    placed_by_opponent = placed_by_opponent or (d.kind != ENTRY_POWER and found is not None and found[0] == player
+                                                and _opponent_entry_followup(state, player, pokemon_id, found[1]))
     if player != state.current_player and not placed_by_opponent:
         problems.append(f"特殊能力の決定の続きのプレイヤー {player!r} が、番のプレイヤー {state.current_player} ではない")
     if found is None or found[0] != player:
@@ -4122,6 +4129,30 @@ def _power_decision_problems(state: GameState, d) -> list[str]:
         problems.extend(effect.decision_problems(state, PowerUse(player, pokemon_id, PowerKey(card_id, power_index), return_to=return_to,
                                                                  card=power_card), d))
     return problems
+
+
+def _opponent_entry_followup(state: GameState, player: int, pokemon_id: int, pokemon) -> bool:
+    """v0.96: 番のプレイヤーが使っているトレーナーの効果（エリカの香水）で手札から場に出させられた相手のポケモン ``pokemon`` の、場に出たときの特殊能力を使ったあとの決定か。
+    今の番の最後の特殊能力の宣言が、このポケモンの機会への答え（``pokemon_power`` の ``entry``）で、その前のもとの事実が、使っているトレーナーで出した ``trainer_bench_from_hand``
+    （そのあいだにワザ・ほかの宣言がない）。ほかの決定に広げない。"""
+    trainer = state.trainer_in_use
+    if player == state.current_player or trainer is None or trainer.using_player != state.current_player:
+        return False
+    declared = False
+    for event in _events_since_turn_start(state):  # 新しい順
+        kind = event["kind"]
+        if kind == "attack":
+            return False
+        if not declared:
+            if kind == "pokemon_power":
+                if event.get("pokemon_id") != pokemon_id or not event.get("entry"):
+                    return False
+                declared = True
+            continue
+        if kind == "trainer_bench_from_hand" and event.get("card") == pokemon.card and event.get("trainer_card") == trainer.card \
+                and not pokemon.evolution_stack:
+            return True
+    return False
 
 
 def _entry_fact_event(state: GameState, use: PowerUse, pokemon) -> dict | None:
@@ -4786,7 +4817,10 @@ def _decision_problems(state: GameState) -> list[str]:
         no_choice_answers = d.kind in (ENTRY_POWER, EVOLUTION_HEAL, USE_DISCARD_TRAINER, KNOCK_OUT_POWER, EXP_ALL_ENERGY, NINJA_TRICK, REACTION_SWITCH, BENCH_GUARD, ESP_REDO,
                                        SECRET_PLAN_CARD, reactions.REACTION_POWER) or (d.kind == ACCEPT_REQUEST and d.context_value("chaos") is not None) \
             or (d.kind == SELECT_COLOR and d.resume == "attack" and d.min_choices == 0) \
-            or (d.kind == FORCED_SWITCH and d.resume == "attack" and d.min_choices == 0)  # v0.94: ワザの任意の入れ替え（きつねび。RX1 で止める控え）も、入れ替えない（0 個）が答え
+            or (d.kind == FORCED_SWITCH and d.resume == "attack" and d.min_choices == 0) \
+            or (d.kind == ACCEPT_REQUEST and d.resume == "power" and d.min_choices == 0)
+        # v0.94: ワザの任意の入れ替え（きつねび。RX1 で止める控え）も、入れ替えない（0 個）が答え。v0.96: 特殊能力の「のぞむなら」の決定（［ENGAGE］で手札をもどすか。
+        # 手札 0 枚の「もどす」は EG1）も、もどさない（0 個）がいつも答えになる
         needed = 0 if no_choice_answers and d.min_choices == 0 else max(d.min_choices, 1)
         if len(set(d.options) - set(unresolved)) < needed:
             problems.append(f"決定 {d.kind} に、扱いを決められる選択が足りない（答えられない）")

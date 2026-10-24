@@ -545,6 +545,13 @@ V0_94_POKEMON = V0_94
 V0_95 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_95"])
 V0_95_POKEMON = V0_95
 V095_DECLARED = ("neo1-065", "neo4-061")  # ヨルノズク［みやぶる］・わるいヤドキング［わるぢえ］
+# v0.96（docs/unown-family-powers-v0.96.md）: アンノーン 7 枚（ワザ 7・特殊能力 7）と遺跡の石版 2 枚（写しの組 pool_v0_96）。ポケモンは TARGETS に加える。v0.96 の特殊能力・トレーナーの
+# 決定は ``_v096_decision``、［OBSERVE］・［LAUGH］・［SEARCH］・［TELL］は ``_v096_step``、遺跡の石版は ``_v096_trainer``、［ZOOM］の「にげる」は ``_v096_retreat``。ログから数えるのは
+# ``v096_uses``。デッキのアンノーンはどれも合わせて 4 枚まで（カードのルール文。デッキの検査を緩めない）
+V0_96 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_96"])
+V0_96_POKEMON = V0_96[:7]
+V0_96_TRAINERS = V0_96[7:]
+V096_DECLARED = ("PF2-003", "neo4-050", "neo4-051", "neo4-052")  # アンノーン[O]［OBSERVE］・L［LAUGH］・S［SEARCH］・T［TELL］
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
            + ("PMCG5-052", "PMCG5-053")  # ワザの選び方を重ね、動きを数えるカード（v0.58: タケシのゴローン・ゴローニャ）
@@ -573,7 +580,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_92_POKEMON  # v0.92: 能力の消去・続く制限のポケモン 8 枚
            + V0_93_POKEMON  # v0.93: バトル場をはなれられない効果・続くワザの制限のポケモン 9 枚
            + V0_94_POKEMON  # v0.94: 入れ替え・帰還のワザのポケモン 13 枚
-           + V0_95_POKEMON)  # v0.95: 手札・山札を見る効果とカードを動かすポケモン 11 枚
+           + V0_95_POKEMON  # v0.95: 手札・山札を見る効果とカードを動かすポケモン 11 枚
+           + V0_96_POKEMON)  # v0.96: アンノーン 7 枚
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -1227,6 +1235,19 @@ DECKS = {
     # v0.95: F95 の炎エネルギー 1 枚をレインボーエネルギーにした組（山札・サイドにあるあいだ、マグマラッシュ・やまくずしを FV1 で止める）
     "F95R": (("neo1-018", 4), ("neo4-020", 3), ("PMCG2-030", 4), ("ES3-031", 3), ("PMCG1-053", 4), (V0_74_TOWER, 2), (driver.DEFENDER, 2), (driver.PLUSPOWER, 2),
              (driver.BILL, 2), ("PMCG4-065", 1), (FIRE, 16), (FIGHTING, 17)),
+    # v0.96: 超。アンノーン[E]（PF2-002。［ENGAGE］）2 枚・アンノーン[R]（PRN-035。［REASSURE］）2 枚（「アンノーン」は合わせて 4 枚まで）と遺跡の石版 2 種（neo2-054・neo2-057。
+    # 山札から出すので手札からの機会はない）・ネイティ（neo1-046）→ ネイティオ（neo1-048）・ナツメのケーシィ（GD6-002）と、きずぐすり・ポケモンいれかえ
+    "U96": (("PF2-002", 2), ("PRN-035", 2), ("neo2-054", 1), ("neo2-057", 1), ("neo1-046", 4), ("neo1-048", 2), ("GD6-002", 4),
+            (driver.POTION, 2), (SWITCH, 2), (driver.BILL, 2), (PSYCHIC, 38)),
+    # v0.96: 超。アンノーン[O]（PF2-003。［OBSERVE］）2 枚・アンノーンZ（neo4-060。［ZOOM］）2 枚と遺跡の石版 2 種・ヤドン（neo1-045）→ わるいヤドキング（neo4-061）・ナツメのケーシィ（GD6-002）と、
+    # ふうせんのみ（［ZOOM］と本当のふうせんのみの重なり）・ポケモンいれかえ
+    "Z96": (("PF2-003", 2), ("neo4-060", 2), ("neo2-054", 1), ("neo2-057", 1), ("neo1-045", 4), ("neo4-061", 2), ("GD6-002", 3), ("neo3-055", 2),
+            (SWITCH, 2), (driver.BILL, 2), (PSYCHIC, 39)),
+    # v0.96: 超。アンノーンL（neo4-050。［LAUGH］）・アンノーンS（neo4-051。［SEARCH］）・アンノーンT（neo4-052。［TELL］）・アンノーンZ（neo4-060）の 4 枚と遺跡の石版 2 種・ヤドン（neo1-045）→
+    # わるいヤドキング（neo4-061）・ゴース（ES3-022）→ ゴースト（ES3-024）と、エリカの香水（相手の手札のアンノーン[E]・[R] を相手の番でないときに場に出させる）・ふうせんのみ（［ZOOM］と
+    # 本当のふうせんのみの重なり）
+    "L96": (("neo4-050", 1), ("neo4-051", 1), ("neo4-052", 1), ("neo4-060", 1), ("neo2-054", 1), ("neo2-057", 1), ("neo1-045", 4), ("neo4-061", 2), ("ES3-022", 3),
+            ("ES3-024", 2), (ERIKAS_PERFUME, 2), ("neo3-055", 2), (SWITCH, 2), (driver.BILL, 2), (PSYCHIC, 35)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -1394,6 +1415,9 @@ PAIRINGS_V0_94 = (("C94", "G94"), ("G94", "F94"), ("F94", "C94"), ("F94", "L93")
 # v0.95: P95 対 C95（見る・山札にもどす・ポルターガイストと［みやぶる］・おどす・とりさる）・C95 対 F95（相手の手札・場のトレーナーと、もやす・マグマラッシュ・やまくずし）・F95 対 P95
 # （山札のトラッシュ・ポケモンタワーと、みらいよち・［わるぢえ］）・F95R 対 C95（山札・サイドのレインボーエネルギーでマグマラッシュ・やまくずしを止める FV1）
 PAIRINGS_V0_95 = (("P95", "C95"), ("C95", "F95"), ("F95", "P95"), ("F95R", "C95"))
+# v0.96: U96 対 L96（アンノーンどうし。エリカの香水で相手の手札のアンノーン[E]・[R] を出させる）・Z96 対 U96（［OBSERVE］・［ZOOM］と［ENGAGE］・［REASSURE］）・L96 対 P95・
+# Z96 対 C95（v0.95 の組を相手にする）。組・席・seed は先に決めた（seed 0〜7。局を選び直さない）
+PAIRINGS_V0_96 = (("U96", "L96"), ("Z96", "U96"), ("L96", "P95"), ("Z96", "C95"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -1409,7 +1433,8 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.81": PAIRINGS_V0_81, "v0.82": PAIRINGS_V0_82, "v0.83": PAIRINGS_V0_83,
            "v0.84": PAIRINGS_V0_84, "v0.85": PAIRINGS_V0_85, "v0.86": PAIRINGS_V0_86,
            "v0.87": PAIRINGS_V0_87, "v0.88": PAIRINGS_V0_88, "v0.89": PAIRINGS_V0_89, "v0.90": PAIRINGS_V0_90, "v0.91": PAIRINGS_V0_91,
-           "v0.92": PAIRINGS_V0_92, "v0.93": PAIRINGS_V0_93, "v0.94": PAIRINGS_V0_94, "v0.95": PAIRINGS_V0_95}
+           "v0.92": PAIRINGS_V0_92, "v0.93": PAIRINGS_V0_93, "v0.94": PAIRINGS_V0_94, "v0.95": PAIRINGS_V0_95,
+           "v0.96": PAIRINGS_V0_96}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -5202,6 +5227,191 @@ def v095_uses(state):
     return +counts
 
 
+def _v096_source(state, d):
+    """v0.96: 決定のもとになった v0.96 のカードの id（アンノーンのワザ・特殊能力・遺跡の石版。なければ None）。"""
+    if d.resume == "trainer":
+        use = d.context_value("use")
+        return use[2] if use is not None and use[2] in V0_96_TRAINERS else None
+    card_id = _v085_source(state, d)
+    return card_id if card_id in V0_96_POKEMON else None
+
+
+def _v096_decision(state, counts):
+    """v0.96 の決定への答え（元の手順より先に答える）: 場に出たときの特殊能力の使う機会・［ENGAGE］のそれぞれのもどすか・［SEARCH］のサイドの位置・遺跡の石版のベンチに出すカード。
+    場に出たときの特殊能力の使う機会（``ENTRY_POWER``）は、局の中で使う・使わないを交互に答え（最初の機会は使う）、［ENGAGE］のもどすか（``ACCEPT_REQUEST``）は、番の数の偶奇で、
+    偶数の番は使ったプレイヤーがもどして相手がもどさず、奇数の番はその逆に答える（1 回の［ENGAGE］で、もどす・もどさないの両方が出る。数えるのは局ごとなので、局の中の回数では回さない）。
+    選ぶ決定は選べるものを順に回す（選ぶと止める答えは選ばない）。v0.96 のカードの決定でなければ何もしない。"""
+    d = state.decision
+    if d is None:
+        return None
+    card_id = _v096_source(state, d)
+    if card_id is None:
+        return None
+    use = d.context_value("use")
+    who = "user" if use is not None and d.player == use[0] else "opponent"
+    key = f"v096_{card_id}_{d.kind}_{who}"
+    seen = counts[f"{key}_seen"]
+    counts[f"{key}_seen"] += 1
+    blocked = set(d.context_value("unresolved_choices", ()) or ())
+    if blocked:
+        counts[f"{key}_blocked_choices"] += 1
+    if d.kind == "accept_request":
+        decline = (state.turn_number + (0 if who == "user" else 1)) % 2 == 1
+    else:
+        decline = seen % 2 == 1
+    if d.min_choices == 0 and decline:
+        counts[f"{key}_declined"] += 1
+        return ResolveDecision(d.player, d.id, ())
+    rotated = list(d.options[seen % len(d.options):]) + list(d.options[:seen % len(d.options)]) if d.options else []
+    for choice in [o for o in rotated if o not in blocked]:
+        if _v052_accepted(state, ResolveDecision(d.player, d.id, (choice,))):
+            counts[f"{key}_answered"] += 1
+            return ResolveDecision(d.player, d.id, (choice,))
+    if d.min_choices == 0:
+        counts[f"{key}_declined_no_choice"] += 1
+        return ResolveDecision(d.player, d.id, ())
+    counts[f"{key}_no_accepted_answer"] += 1
+    return None
+
+
+def _v096_step(state, tried, counts):
+    """v0.96: ［OBSERVE］・［LAUGH］・［SEARCH］・［TELL］を、場のポケモンごとに自分の番ごとに 1 回、受け付けるなら使う（特殊能力を消す効果・PW3・OB1 で受け付けないなら使わない）。
+    v0.96 のカードがない局では何もしない。"""
+    player = state.current_player
+    for pokemon in state.players[player].in_play():
+        if state.is_face_down(pokemon):
+            continue
+        card_id = state.cards[pokemon.card].card_id
+        marker = ("v096_power", pokemon.pokemon_id, state.turn_number)
+        if card_id not in V096_DECLARED or marker in tried:
+            continue
+        tried.add(marker)
+        use = UsePokemonPower(player, pokemon.pokemon_id, 0)
+        if _v052_accepted(state, use):
+            counts[f"v096_power_{card_id}"] += 1
+            return use
+        counts[f"v096_power_{card_id}_not_usable"] += 1
+    return None
+
+
+def _v096_trainer(state, tried, counts):
+    """v0.96: 手札の遺跡の石版を、受け付けるなら使う（カード id ごとに 1 番に 1 回まで）。使う前に止まる・拒否される場面（BENCH_FULL・ST1・GG1）は使わず
+    ``v096_<カード>_not_playable_<コード>`` に数える。"""
+    player = state.current_player
+    for uid in state.players[player].hand:
+        card_id = state.cards[uid].card_id
+        if card_id not in V0_96_TRAINERS or (f"v096_{card_id}", state.turn_number) in tried:
+            continue
+        tried.add((f"v096_{card_id}", state.turn_number))
+        play = PlayTrainer(player, uid)
+        real = _V052_REAL.get("state")
+        try:
+            apply_command(real if real is not None and real.turn_number == state.turn_number and real.decision == state.decision else state, play)
+        except (IllegalActionError, UnsupportedError) as error:
+            counts[f"v096_{card_id}_not_playable_{error.code}"] += 1
+            continue
+        counts[f"v096_play_{card_id}"] += 1
+        return play
+    return None
+
+
+def _v096_retreat(state, tried, counts):
+    """v0.96: 自分のベンチの［ZOOM］がはたらき、バトル場のアンノーン（今の姿）の「にげる」エネルギーがなくなっているとき、1 番に 1 回、エネルギーをトラッシュせずに「にげる」（入れ替える
+    控えは、局の中で順に回す。［ZOOM］のアンノーンも選ぶ）。受け付けない（CP2・BB1・ねむり・マヒなど）なら「にげる」ず、``v096_zoom_retreat_not_accepted`` に数える。"""
+    player = state.current_player
+    p = state.players[player]
+    marker = ("v096_retreat", state.turn_number)
+    if marker in tried or p.active is None or not p.bench or state.is_face_down(p.active):
+        return None
+    try:
+        cost = retreat_cost(state, player)
+    except (UnsupportedError, ValueError):
+        return None
+    if not cost.power_zeroed:
+        return None
+    tried.add(marker)
+    seen = counts["v096_zoom_retreat_seen"]
+    counts["v096_zoom_retreat_seen"] += 1
+    targets = [b.card for b in p.bench if not state.is_face_down(b)]
+    for card in targets[seen % len(targets):] + targets[:seen % len(targets)] if targets else []:
+        command = Retreat(player, (), card)
+        if _v052_accepted(state, command):
+            counts[f"v096_zoom_retreat{'_balloon' if cost.zeroed else ''}{'_confused' if p.active.conditions.confused else ''}"] += 1
+            return command
+    counts["v096_zoom_retreat_not_accepted"] += 1
+    return None
+
+
+def v096_uses(state):
+    """v0.96: ログから数えた v0.96 のカードの動き（v0.96 のカードのない局では空）。``attack_<id>#0``（めざめるパワー）・``power_<id>``（宣言・場に出たときの使う答え）・
+    ``entry_declined_<id>``・``engage_returned_<user か opponent>``・``engage_declined_<user か opponent>``・``engage_draw=<枚数>``・``reassure_healed``・``observe_looked``・
+    ``search_looked``・``laugh_coin_<表裏>``・``laugh_shuffled``・``tell_coin_<表裏>``・``tell_looked``・``zoom_retreat``（``_balloon``・``_failed``）・``ruin_wall_<id>``・
+    ``ruin_wall_benched``・``unown_in_deck=<枚数>``（その局のデッキのアンノーンの枚数の最大）。"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_96 for uid in state.cards):
+        return counts
+    for player in (0, 1):
+        owned = sum(1 for uid in state.cards if state.cards[uid].owner == player and state.card_def(uid).category == "pokemon"
+                    and state.printed_def(uid).name_group == "アンノーン")
+        counts[f"unown_in_deck_p{player}={owned}"] += 1
+    power = None
+    user = turn_player = None
+    for e in state.log:
+        kind = e["kind"]
+        if kind == "turn_start":
+            turn_player = e.get("player")
+        if kind == "attack":
+            holder = state.cards[e["pokemon"]].card_id if e.get("pokemon") in state.cards else None
+            current = e.get("card_id", holder)
+            if current in V0_96_POKEMON:
+                counts[f"attack_{current}#{e['attack_index']}"] += 1
+            power = None
+            continue
+        if kind == "pokemon_power":
+            holder = state.cards[e["pokemon"]].card_id if e.get("pokemon") in state.cards else None
+            power, user = (holder, e["player"]) if holder in V0_96_POKEMON else (None, None)
+            if power is not None:
+                counts[f"power_{power}{'_entry' if e.get('entry') else ''}{'_outside_turn' if e['player'] != turn_player else ''}"] += 1
+            continue
+        if kind == "entry_power_declined" and e.get("pokemon") in state.cards and state.cards[e["pokemon"]].card_id in V0_96_POKEMON:
+            counts[f"entry_declined_{state.cards[e['pokemon']].card_id}"] += 1
+            continue
+        if kind == "play_trainer" and e.get("card") in state.cards and state.cards[e["card"]].card_id in V0_96_TRAINERS:
+            counts[f"ruin_wall_{state.cards[e['card']].card_id}"] += 1
+            continue
+        if kind == "trainer_bench_from_deck" and e.get("trainer_card") in state.cards and state.cards[e["trainer_card"]].card_id in V0_96_TRAINERS:
+            counts[f"ruin_wall_benched_{state.cards[e['card']].card_id}"] += 1
+            continue
+        if kind in ("retreat", "retreat_failed") and e.get("retreat_cost_power_zeroed"):
+            counts[f"zoom_{kind}{'_balloon' if e.get('retreat_cost_zeroed') else ''}"] += 1
+            continue
+        if kind in ("turn_start", "turn_end"):
+            power = None
+            continue
+        if power is None or not e.get("power", "").startswith(power):
+            continue
+        who = "user" if e.get("player") == user else "opponent"
+        if kind == "hand_to_deck":
+            counts[f"engage_returned_{who}"] += 1
+        elif kind == "hand_return_declined":
+            counts[f"engage_declined_{who}"] += 1
+        elif kind == "draw":
+            counts[f"engage_draw={len(e['cards'])}"] += 1
+        elif kind == "remove_damage_counters":
+            counts["reassure_healed"] += 1
+        elif kind == "look_at_deck_top":
+            counts["observe_looked"] += 1
+        elif kind == "look_at_card":
+            counts["search_looked"] += 1
+        elif kind == "coin_flip":
+            counts[f"{'laugh' if power == 'neo4-050' else 'tell'}_coin_{e['result']}"] += 1
+        elif kind == "shuffle" and "shuffled_by" in e:
+            counts["laugh_shuffled"] += 1
+        elif kind == "look_at_hand":
+            counts["tell_looked"] += 1
+    return +counts
+
+
 def _v094_decision(state, counts):
     """v0.94 のワザの決定への答え（元の手順より先に答える）: きつねびの任意の入れ替え（``FORCED_SWITCH`` の 0〜1 匹）は、決定のたびに 入れ替えない・控えを順に を回す（入れ替えない
     答えも起こす）。ほかの v0.94 のワザの決定（相手・自分の入れ替えの控え）は、選べるものを順に回す（v0.92 の ``_v092_decision`` と同じ。選ぶと止める答えは選ばない）。v0.94 のワザの
@@ -6787,7 +6997,8 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = (_v095_decision(state, counts)  # v0.95: v0.95 のワザ・特殊能力の決定（v0.95 のカードのない局では何もしない）
+            early = (_v096_decision(state, counts)  # v0.96: v0.96 の特殊能力・遺跡の石版の決定（v0.96 のカードのない局では何もしない）
+                     or _v095_decision(state, counts)  # v0.95: v0.95 のワザ・特殊能力の決定（v0.95 のカードのない局では何もしない）
                      or _v094_decision(state, counts)  # v0.94: v0.94 のワザの決定（きつねびの入れ替えない答えを含む。v0.94 のカードのない局では何もしない）
                      or _v092_decision(state, counts)  # v0.92: v0.92 のワザの決定（だましうちの選ぶポケモン。v0.92 のカードのない局では何もしない）
                      or _v091_decision(state, counts)  # v0.91: v0.91 のワザの決定（選ぶポケモン・色。v0.91 のカードのない局では何もしない）
@@ -6882,7 +7093,9 @@ def make_policy(seen: dict, counts: Counter):
                      or _v086_step(state, tried, counts)  # v0.86: ［ソーラーパワー］
                      or _v087_step(state, tried, counts)  # v0.87: ［マグネット］・［とおせんぼ］の「にげる」の確かめ
                      or _v088_step(state, tried, counts)  # v0.88: ［せんすい］・［エナジーコンバーター］・［でんじりょく］
-                     or _v095_step(state, tried, counts))  # v0.95: ［みやぶる］・［わるぢえ］
+                     or _v095_step(state, tried, counts)  # v0.95: ［みやぶる］・［わるぢえ］
+                     or _v096_trainer(state, tried, counts)  # v0.96: 遺跡の石版
+                     or _v096_step(state, tried, counts))  # v0.96: ［OBSERVE］・［LAUGH］・［SEARCH］・［TELL］
             if power is not None:
                 return power
             history = _v062_attack(state, tried, counts)  # v0.62: 履歴を読むワザ（ドリルホール・オウムがえし）を使える番に使う
@@ -6894,7 +7107,8 @@ def make_policy(seen: dict, counts: Counter):
             probe = _v093_probe(state, tried, counts) or _v036_retreat_probe(state, tried, counts)  # v0.93・v0.36
             if probe is not None:
                 return probe
-            retreat = (_v046_retreat(state, tried, counts) or _v058_retreat(state, tried, counts) or _v068_retreat(state, tried, counts)  # v0.46・v0.58
+            retreat = (_v096_retreat(state, tried, counts)  # v0.96: ［ZOOM］
+                       or _v046_retreat(state, tried, counts) or _v058_retreat(state, tried, counts) or _v068_retreat(state, tried, counts)  # v0.46・v0.58
                        or _v061_retreat(state, tried, counts))  # v0.61
             if retreat is not None:
                 return retreat
@@ -7070,6 +7284,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v093"] = v093_uses(state)
         result["v094"] = v094_uses(state)
         result["v095"] = v095_uses(state)
+        result["v096"] = v096_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
@@ -7084,7 +7299,7 @@ def audit(result, state, commands):
     if state is None or result["outcome"] not in ("game_over", "sudden_death", "halted"):
         return {"not_audited": 1}
     current = new_game(*(deck_cards(label) for label in result["decks"]), result["seed"])
-    watch = any(state.cards[uid].card_id in V0_47 + V0_47_TRAINERS + V0_48 + V0_54_TRAINERS + V0_55_TRAINERS + V0_56_TRAINERS + V0_63_TRAINERS + V0_95
+    watch = any(state.cards[uid].card_id in V0_47 + V0_47_TRAINERS + V0_48 + V0_54_TRAINERS + V0_55_TRAINERS + V0_56_TRAINERS + V0_63_TRAINERS + V0_95 + V0_96
                 for uid in state.cards)  # v0.48: 観測の今有効な値も（v0.54・v0.55: 見る・見せるトレーナー。v0.95: 手札・山札を見るワザ・特殊能力）
     for command in commands:
         current = apply_command(current, command)
@@ -7526,7 +7741,8 @@ def summarize(games):
          "v092": Counter(), "v092_games_with": Counter(), "v092_policy": Counter(),
          "v093": Counter(), "v093_games_with": Counter(), "v093_policy": Counter(),
          "v094": Counter(), "v094_games_with": Counter(), "v094_policy": Counter(),
-         "v095": Counter(), "v095_games_with": Counter(), "v095_policy": Counter()}
+         "v095": Counter(), "v095_games_with": Counter(), "v095_policy": Counter(),
+         "v096": Counter(), "v096_games_with": Counter(), "v096_policy": Counter()}
     for r in games:
         s["v058"].update(r.get("v058", {}))  # v0.58
         s["v058_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v058_")})
@@ -7616,6 +7832,9 @@ def summarize(games):
         s["v095"].update(r.get("v095", {}))  # v0.95
         s["v095_games_with"].update({k: 1 for k, v in r.get("v095", {}).items() if v})
         s["v095_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v095_")})
+        s["v096"].update(r.get("v096", {}))  # v0.96
+        s["v096_games_with"].update({k: 1 for k, v in r.get("v096", {}).items() if v})
+        s["v096_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v096_")})
         s["unresolved_rejections"].update(r["unresolved_rejections"])
         s["audit_failures"].update(r["audit"])
         s["end_conditions"].update(r.get("conditions", []))

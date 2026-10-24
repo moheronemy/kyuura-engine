@@ -2324,6 +2324,14 @@ V0_95_POKEMON = (XATU_NEO1, NOCTOWL_NEO1, SENTRET_NEO2, SABRINAS_ABRA_GD6, HAUNT
                  AIPOM_NEO3)
 V0_95_CARDS = V0_95_POKEMON  # 写しの組 pool_v0_95 の並び
 
+# v0.96（docs/unown-family-powers-v0.96.md）: アンノーン 7 枚（ワザ 7・特殊能力 7）と遺跡の石版 2 枚（同じゲーム用データ）。名前の書き方は「アンノーン[E]」「アンノーンL」の 2 通り
+UNOWN_E, UNOWN_O, UNOWN_R = "PF2-002", "PF2-003", "PRN-035"  # アンノーン[E]（［ENGAGE］）・アンノーン[O]（［OBSERVE］）・アンノーン[R]（［REASSURE］）
+UNOWN_L, UNOWN_S, UNOWN_T, UNOWN_Z = "neo4-050", "neo4-051", "neo4-052", "neo4-060"  # アンノーンL（［LAUGH］）・S（［SEARCH］）・T（［TELL］）・Z（［ZOOM］）
+RUIN_WALL, RUIN_WALL_2 = "neo2-054", "neo2-057"  # 遺跡の石版（2 枚は同じゲーム用データ）
+V0_96_POKEMON = (UNOWN_E, UNOWN_O, UNOWN_R, UNOWN_L, UNOWN_S, UNOWN_T, UNOWN_Z)
+V0_96_TRAINERS = (RUIN_WALL, RUIN_WALL_2)
+V0_96_CARDS = V0_96_POKEMON + V0_96_TRAINERS  # 写しの組 pool_v0_96 の並び
+
 
 def _self_sleep_shape_only(attack):
     from kyuura_engine.effects import _check_damage_then_effect

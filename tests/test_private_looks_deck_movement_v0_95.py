@@ -209,7 +209,7 @@ class RegistrationTest(unittest.TestCase):
         before = pool_from_extract(read_extract(), registry)
         self.assertEqual(load_card_pool().playable_ids - before.playable_ids, frozenset(H.V0_95_CARDS))
         self.assertEqual(set(H.V0_95_CARDS) & set(cards_before(read_extract(), "0.95")), set())
-        self.assertEqual(set(cards_after(read_extract(), "0.94")), set(H.V0_95_CARDS))
+        self.assertEqual(set(cards_after(read_extract(), "0.94")) & set(cards_before(read_extract(), "0.96")), set(H.V0_95_CARDS))
 
     def test_evolution_bases_exist(self):
         pool = load_card_pool()
