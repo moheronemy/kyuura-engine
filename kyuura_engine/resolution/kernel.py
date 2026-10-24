@@ -289,6 +289,11 @@ def settle_scram(res: Resolution, *, rest: tuple | None = None) -> list[int]:
             continue
         if pokemon.pokemon_id in res.dormant:
             raise res.question("scram_power_restored", f"ポケモン {pokemon.pokemon_id}")
+        from ..persistent import leave_lock
+
+        if leave_lock(state, owner, pokemon) is not None:
+            # v0.93（AL3）: 「バトル場をはなれられない」効果を受けたバトル場のポケモンは、山札にもどれない。もどれないまま、あとではたらくのかが決まらない
+            raise res.question("leave_lock_scram", f"ポケモン {pokemon.pokemon_id}")
         due.append((owner, pokemon, slot))
     if not due:
         return []
@@ -1608,6 +1613,11 @@ def bolt_return_on_heads(res: Resolution, fs: FrameState, deferred: Deferred) ->
         return
     if state.current_player == instance.owner:
         raise res.question("bolt_during_own_attack", f"ポケモン {pokemon.pokemon_id}")
+    from ..persistent import leave_lock
+
+    if leave_lock(state, instance.owner, pokemon) is not None:
+        # v0.93（AL2）: 「バトル場をはなれられない」なら、このコインは山札にもどる部分（起こらない）だけを決める
+        raise res.question("leave_locked_coin", f"ポケモン {pokemon.pokemon_id}（［はしりさる］のコイン）")
     flips = flip_coins(state, instance.owner, 1, source="power", effect=str(instance.power_key), card=pokemon.card, pokemon_id=pokemon.pokemon_id)
     returned = flips.results[0] is CoinSide.HEADS
     state.add_event("bolt_check", **base, result=flips.results[0].value, returned=returned)

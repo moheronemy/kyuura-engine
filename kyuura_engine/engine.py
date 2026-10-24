@@ -184,8 +184,8 @@ from .continuous import goop_gas_effects, power_suppressed, suppressors_of
 from .deck import deck_problems
 from .evolution import DEVOLVED_THIS_TURN_CODE, evolution_block, place_evolution_card, skipped_stage1_basic
 from .errors import DeckValidationError, HiddenPropertyRead, IllegalActionError, StateIntegrityError, UnsupportedError
-from .persistent import (DISCARD_FROM_PLAY, KNOCK_OUT, SOURCE_LEFT_ACTIVE, cannot_retreat, effect_attack_card, end_turn, energy_attach_blocked, expires_at_turn_start, lasting, powers_stopped,
-                         powers_use_prevented, remove_persistent_effects, remove_source_left_effects)
+from .persistent import (DISCARD_FROM_PLAY, KNOCK_OUT, SOURCE_LEFT_ACTIVE, cannot_retreat, effect_attack_card, end_turn, energy_attach_blocked, expires_at_turn_start, lasting, leave_lock,
+                         powers_stopped, powers_use_prevented, remove_persistent_effects, remove_source_left_effects, require_can_leave, require_source_card_present)
 from .rules import RULES_2000_02_14, RuleSet
 from .stadiums import bench_has_room, bench_limit, stadium_in_play
 from .state import (
@@ -195,6 +195,7 @@ from .state import (
     PERSISTENT_EFFECT_TYPES,
     PERIOD_EFFECT_TYPES,
     SOURCE_LEAVES_ACTIVE,
+    PeriodLeaveLock,
     ReceivedAttackDamageBonus,
     TRAINER_TURN_EFFECT_KINDS,
     EVOLUTION_BAN,
@@ -1289,6 +1290,10 @@ def _attach_energy(state: GameState, cmd: AttachEnergy, context: resolution.Cont
         resolution.after_energy(state, context)  # v0.58: レインボーエネルギーの 10 ダメージで HP 以上になったら、きぜつの処理
 
 
+# v0.93: 「バトル場をはなれられない」効果を受けたバトル場のポケモンの「にげる」・すてる操作の拒否（docs/active-leave-locks-v0.93.md 4 章）
+LEAVE_ACTIVE_PREVENTED = "LEAVE_ACTIVE_PREVENTED"
+
+
 def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> None:
     """にげる（pp.310-311）。1 番に何度でも。控えがいなければ宣言できない。
 
@@ -1313,9 +1318,17 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
     if state.card_def(active.card).play_role is not None:
         # v0.47: バトル場のなにかの化石・ピッピ人形が「にげる」ことができるか（にげるエネルギーの数）は決められない（PF2）。エネルギーのトラッシュ・こんらんのコインの前
         raise UnsupportedError(PLAY_AS_POKEMON_RETREAT_CODE, f"バトル場のポケモン {active.pokemon_id}: {PLAY_AS_POKEMON_RETREAT_REASON}")
-    if cannot_retreat(state, active) is not None:
+    if leave_lock(state, cmd.player, active) is not None:
+        # v0.93（docs/active-leave-locks-v0.93.md 4 章）: 「バトル場をはなれられない」効果（からまるいと・からみつく・ねばるみつ・くいつく・どくしばり）を受けた。「にげる」でバトル場を
+        # はなれることもできないので、宣言を拒否する（エネルギーのトラッシュ・こんらんのコインの前。状態・乱数・ログは変わらない）。「にげる」だけを止める効果とは別のコード
+        raise IllegalActionError(
+            LEAVE_ACTIVE_PREVENTED, f"バトル場のポケモン {active.pokemon_id} は、バトル場をはなれられない（相手のワザの効果）ので「にげる」ことができない"
+        )
+    retreat_lock = cannot_retreat(state, active)
+    if retreat_lock is not None:
         # v0.36: 「アイスバーン」・「わしづかみ」を受けた（次の相手の番に「にげる」ことができない）。ねむり・マヒと同じく宣言できないので、エネルギーの
         # トラッシュ・こんらんのコインの前に拒否する（状態・乱数・ログは変わらない）。「ポケモンいれかえ」などの入れ替えは制限しない（p.325）
+        require_source_card_present(state, retreat_lock, active)  # v0.93: CJ1（かぶりつくの発生源の「このカード」が退化ではがれた）
         raise IllegalActionError(
             "RETREAT_PREVENTED", f"バトル場のポケモン {active.pokemon_id} は、この番は「にげる」ことができない（相手のワザの効果）"
         )
@@ -1426,6 +1439,7 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
         return_discarded_energy(state, returns)
         return
     # ついているカード・ダメージはいっしょに移動する（p.311）
+    require_can_leave(state, cmd.player, active)  # v0.93: 宣言の前に拒否した（ここに来たら確かめの漏れ）
     p.active, p.bench[index] = p.bench[index], active
     state.add_event("retreat", player=cmd.player, discarded=discard, old_active=active.card, new_active=cmd.new_active, **cost_log)
     return_discarded_energy(state, returns)
@@ -2094,6 +2108,9 @@ def _discard_from_play(state: GameState, cmd: DiscardFromPlay, context: resoluti
             "NOT_DISCARDABLE",
             f"場のポケモン {pokemon.pokemon_id}（{name}）は、自分の番にすてられるカード（進化カードがのっていないなにかの化石・ピッピ人形）ではない",
         )
+    if leave_lock(state, cmd.player, pokemon) is not None:
+        # v0.93: バトル場の「バトル場をはなれられない」効果を受けたなにかの化石・ピッピ人形は、すててバトル場をはなれることもできない（「にげる」と同じく、すてる前に拒否する）
+        raise IllegalActionError(LEAVE_ACTIVE_PREVENTED, f"バトル場のポケモン {pokemon.pokemon_id} は、バトル場をはなれられない（相手のワザの効果）のですてられない")
     discard_from_play(state, cmd.player, pokemon)
     remove_persistent_effects(state, cmd.player, pokemon, DISCARD_FROM_PLAY)
     resolution.after_power(state, context, knock_outs=False)
@@ -3197,19 +3214,41 @@ def _period_effect_problems(state: GameState, pokemon: PokemonInPlay, effect, wh
         return problems
     card_id, _, index = str(added.get("effect", "")).partition("#")
     entry = state.effects.attack_entry(card_id, int(index)) if index.isdigit() else None
-    terms = getattr(entry.effect, "period_terms", None) if entry is not None else None
+    options = period_terms_options(entry.effect) if entry is not None else ()
     actual = (type(effect), effect.active_turn - effect.created_turn, None if effect.end_turn is None else effect.end_turn - effect.created_turn,
               effect.while_source_active, effect.ends_on)
     logged = (added.get("end_turn"), added.get("source_pokemon"), added.get("while_source_active", False), tuple(added.get("ends_on", ())))
     if isinstance(effect, ReceivedAttackDamageBonus):
         actual += (effect.amount,)
         logged += (added.get("amount"),)
-    if terms is None or terms() != actual:
+    if isinstance(effect, PeriodLeaveLock):
+        # v0.93: 「バトル場をはなれられない」効果は、きぜつの例外も登録と照らす（ログはあるときだけ ``knockout_exception``）
+        actual += (effect.knockout_exception,)
+        logged += (added.get("knockout_exception", False),)
+    if actual not in options:
         problems.append(f"{where} {effect!r} が、効果を与えたワザ {added.get('effect')!r}（登録された実装）の期間・消える契機と合わない")
     expected_log = (effect.end_turn, effect.source_pokemon, effect.while_source_active, effect.ends_on) + ((effect.amount,) if isinstance(effect, ReceivedAttackDamageBonus) else ())
+    if isinstance(effect, PeriodLeaveLock):
+        expected_log += (effect.knockout_exception,)
     if logged != expected_log:
         problems.append(f"{where} {effect!r} が、与えたログの期間・発生源 {logged!r} と合わない")
+    if isinstance(effect, PeriodLeaveLock) and effect.source_left:
+        # v0.93: 発生源がはなれた印（くいつく）は、与えたあとのログ ``persistent_effect_source_left`` と合う
+        marked = any(e["kind"] == "persistent_effect_source_left" and e.get("pokemon_id") == pokemon.pokemon_id and e.get("persistent_effect") == effect.kind
+                     and e.get("created_turn") == effect.created_turn and e.get("source_pokemon") == effect.source_pokemon for e in state.log)
+        if not marked:
+            problems.append(f"{where} {effect!r} の発生源がはなれた印に、対応するログ persistent_effect_source_left がない")
     return problems
+
+
+def period_terms_options(effect) -> tuple[tuple, ...]:
+    """v0.92・v0.93: ワザの登録された実装が与えうる期間を明示した持続する効果の、型と期間・消える契機の組の並び（``period_terms``。2 つの効果を与えるワザ（わるいアリゲイツの
+    「かぶりつく」）は ``period_terms_list``）。どちらもなければ ()。"""
+    if hasattr(effect, "period_terms_list"):
+        return tuple(effect.period_terms_list())
+    if hasattr(effect, "period_terms"):
+        return (effect.period_terms(),)
+    return ()
 
 
 def _effective_value_effect_problems(state: GameState, pokemon: PokemonInPlay, effect, where: str) -> list[str]:
@@ -4860,9 +4899,11 @@ def _knockout_bookkeeping(event) -> bool:
     """直前のきぜつをログの終わりから読むとき（サイドの並び・「ふしちょう」の候補）、きぜつのあとに続いてよい記録: きぜつで消えた持続する効果、v0.82 のきぜつでトラッシュに
     置かれたリサイクルエネルギーを持ち主の手札にもどしたこと、v0.88 のきぜつで場をはなれた［せんすい］の発生源の記録をコマンドの終わり（``effects.settle_color_effects``）に
     消したこと（``target_gone``）。v0.87 までの「ふしちょう」の確かめは、リサイクルエネルギーのもどしを読み飛ばしていなかった（docs/type-energy-colors-v0.88.md 8 章）。
-    v0.92: きぜつで発生源がバトル場をはなれて消えた、相手のポケモンの持続する効果（くろいまなざし。理由 ``source_left_active``）も。"""
+    v0.92: きぜつで発生源がバトル場をはなれて消えた、相手のポケモンの持続する効果（くろいまなざし。理由 ``source_left_active``）も。v0.93: きぜつで発生源がはなれた印を
+    付けた記録（くいつく。``persistent_effect_source_left``）も。"""
     kind = event["kind"]
     return (kind == "persistent_effect_removed" and event.get("reason") in (KNOCK_OUT, SOURCE_LEFT_ACTIVE)) \
+        or kind == "persistent_effect_source_left" \
         or (kind == "energy_returned_to_hand" and event.get("cause") == "knock_out") \
         or (kind == "color_effect_removed" and event.get("reason") == "target_gone")
 

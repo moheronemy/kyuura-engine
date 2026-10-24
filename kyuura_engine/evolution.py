@@ -172,7 +172,7 @@ def place_evolution_card(state: GameState, player: int, target: PokemonInPlay, c
     from .effects import goop_gas_entry_check, lock_source_form_check
 
     goop_gas_entry_check(state, card, how="evolve")  # v0.59: GG1（状態を変える前）
-    lock_source_form_check(state, player, target, how="evolve")  # v0.92: ML1（状態を変える前）
+    lock_source_form_check(state, player, target, how="evolve")  # v0.92: ML2（状態を変える前）
     if effect is None and power is None:
         p.hand.remove(card)
     else:
@@ -283,7 +283,7 @@ def devolve(state: GameState, owner: int, target: PokemonInPlay, count: int, *, 
     from .effects import goop_gas_entry_check, lock_source_form_check
 
     goop_gas_entry_check(state, chain[-count - 1], how="devolve")  # v0.59: GG1（状態を変える前）
-    lock_source_form_check(state, owner, target, how="devolve")  # v0.92: ML1（状態を変える前）
+    lock_source_form_check(state, owner, target, how="devolve")  # v0.92: ML2（状態を変える前）
     previous = target.card
     retag_power_uses(state, target)
     target.card = chain[-count - 1]

@@ -621,6 +621,8 @@ PUBLIC_EVENTS = frozenset({
     "marker_added", "marker_removed", "marker_removal_declined",
     # v0.91（docs/marker-check-field-reset-v0.91.md 4 章）: ポケモンチェックのくろこげマーカーのコインとダメージ
     "char_check", "char_damage",
+    # v0.93（docs/active-leave-locks-v0.93.md 11 章）: 「バトル場をはなれられない」効果で起こらなかった部分・くいつくの発生源がはなれた印（場の表の情報）
+    "leave_prevented", "persistent_effect_source_left",
 })
 
 

@@ -184,6 +184,14 @@ def bench_from_discard(state: GameState, card: int, *, counters: int = 0) -> Pok
     return pokemon
 
 
+def _require_can_leave(state: GameState, player: int, pokemon: PokemonInPlay) -> None:
+    """v0.93: バトル場のポケモンを動かす前の、「バトル場をはなれられない」効果の確かめの漏れ（``persistent.require_can_leave``。ベンチのポケモンは何もしない）。"""
+    if state.players[player].active is pokemon:
+        from .persistent import require_can_leave
+
+        require_can_leave(state, player, pokemon)
+
+
 def _left_active(state: GameState, player: int, pokemon: PokemonInPlay, was_active: bool) -> None:
     """v0.92: プレイヤー ``player`` の ``pokemon`` がバトル場をはなれた（``was_active``）なら、説明が「このカード…がバトル場をはなれたとき、この効果は消える」と書く効果の
     うち、発生源がこのポケモンのものを消す（``persistent.remove_source_left_effects``。受けているのはほかのポケモン）。ベンチからはなれたときは何もしない。"""
@@ -225,6 +233,7 @@ def return_in_play_to_deck(state: GameState, player: int, pokemon: PokemonInPlay
     sources = [value for value in (effect, trainer, stadium, power) if value is not None]
     if (p.active is not pokemon and not on_bench) or any(state.cards[uid].owner != player for uid in cards) or len(sources) != 1:
         raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} を山札にもどせない（確認の漏れ。エンジンの不具合）")
+    _require_can_leave(state, player, pokemon)  # v0.93
     if p.active is pokemon:
         p.active = None
     else:
@@ -280,6 +289,7 @@ def return_basic_to_hand(state: GameState, player: int, pokemon: PokemonInPlay, 
     on_bench = any(b is pokemon for b in p.bench)
     if (p.active is not pokemon and not on_bench) or pokemon.trainers or any(state.cards[uid].owner != player for uid in (*stack, *energy)):
         raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} を手札にもどせない（確認の漏れ。エンジンの不具合）")
+    _require_can_leave(state, player, pokemon)  # v0.93
     card, evolution_cards = stack[0], stack[1:]
     discarded = (*evolution_cards, *energy)
     returns = _energy_plan(state, pokemon, energy, "trainer", player)  # v0.82: リサイクルエネルギー
@@ -332,6 +342,7 @@ def return_in_play_to_hand(state: GameState, player: int, pokemon: PokemonInPlay
     sources = [value for value in (effect, power, trainer, stadium) if value is not None]
     if (p.active is not pokemon and not on_bench) or any(state.cards[uid].owner != player for uid in cards) or len(sources) != 1:
         raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} を手札にもどせない（確認の漏れ。エンジンの不具合）")
+    _require_can_leave(state, player, pokemon)  # v0.93
     if p.active is pokemon:
         p.active = None
     else:
@@ -793,6 +804,7 @@ def discard_from_play(state: GameState, player: int, pokemon: PokemonInPlay) -> 
     on_bench = any(b is pokemon for b in p.bench)
     if (p.active is not pokemon and not on_bench) or pokemon.evolution_stack or any(state.cards[uid].owner != player for uid in (pokemon.card, *pokemon.energy)):
         raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} をトラッシュできない（確認の漏れ。エンジンの不具合）")
+    _require_can_leave(state, player, pokemon)  # v0.93
     returns = _energy_plan(state, pokemon, pokemon.energy, "rule")  # v0.82: リサイクルエネルギー（場をはなれる前の場で決める）
     if p.active is pokemon:
         p.active = None
@@ -1027,6 +1039,7 @@ def hand_basic_to_active(state: GameState, player: int, card: int, *, trainer: i
     old = p.active
     if old is None or card not in p.hand or state.cards[card].owner != player or not state.card_def(card).is_basic_pokemon or len(p.bench) >= bench_limit(state, player):
         raise RuntimeError(f"プレイヤー {player} の手札のカード {card} をバトル場に出せない（確認の漏れ。エンジンの不具合）")
+    _require_can_leave(state, player, old)  # v0.93
     p.hand.remove(card)
     new = enter_play(state, card)
     p.bench.append(old)

@@ -89,6 +89,7 @@ from kyuura_engine.effects import CoinChooseEitherPokemonHeal  # v0.89
 from kyuura_engine.effects import MarkOpponentIfAbsent, MarkSelfIfAbsent, MarkSelfUpToLimit  # v0.90
 from kyuura_engine.effects import AllClear, ChooseOpponentPokemonMarkIfAbsent, DamageThenCoinMarkOpponentIfAbsent  # v0.91
 from kyuura_engine.effects import CoinAttackAndRetreatLock, DamageDrainThenPoison  # v0.92
+from kyuura_engine.effects import LEAVE_CAUSES, LEAVE_LOCK_ELEMENT, DamageThenRetreatLockAndAttackCoinCheck  # v0.93
 from kyuura_engine.markers import CLEARED as MARKERS_CLEARED
 from kyuura_engine.markers import REMOVAL_REASONS as MARKER_REMOVAL_REASONS
 from kyuura_engine.markers import REPLACED as MARKERS_REPLACED
@@ -289,7 +290,9 @@ from kyuura_engine.state import (
     RETALIATION_RECEIVED_SCALED_KIND,
     NEXT_TURN_DAMAGE_KINDS,
     SOURCE_LEAVES_ACTIVE,
+    PeriodAttackCoinCheck,
     PeriodAttackLock,
+    PeriodLeaveLock,
     PeriodRetreatLock,
     ReceivedAttackDamageBonus,
     CannotAttack,
@@ -320,7 +323,12 @@ LASTING_KINDS = (*V048_LASTING_KINDS, TailsDamageGuard.kind, StatusImmunityWhile
 # v0.76: 「このカード」に与えるダメージを 2 段階で減らす相手に与える効果（なきつく・かみつく は次の自分の番の始め、なきごえ は次の相手の番の終わりに消える）
 REDUCED_DAMAGE_KINDS = (ReducedDamageToSource.kind, ReducedDamageToSourceNextTurn.kind)
 # v0.92: 期間を明示した持続する効果の種類（はたらき始める番・最後の番（end_turn。null は期限なし）・発生源・消える契機をログに書く）と、受ける要素の種類
-PERIOD_KINDS = {PeriodRetreatLock.kind: RETREAT_LOCK_ELEMENT, PeriodAttackLock.kind: ATTACK_LOCK_ELEMENT, ReceivedAttackDamageBonus.kind: "damage_taken"}
+PERIOD_KINDS = {PeriodRetreatLock.kind: RETREAT_LOCK_ELEMENT, PeriodAttackLock.kind: ATTACK_LOCK_ELEMENT, ReceivedAttackDamageBonus.kind: "damage_taken",
+                # v0.93: 「バトル場をはなれられない」効果・期間を明示した手順 4 のコイン（かぶりつく）
+                PeriodLeaveLock.kind: LEAVE_LOCK_ELEMENT, PeriodAttackCoinCheck.kind: ATTACK_CHECK_ELEMENT}
+# v0.93: 場のポケモンがバトル場からはなれるログ（きぜつを除く）と、その場のポケモンの番号の項目（retreat はいちばん上のカードの uid）
+LEAVE_EVENTS = ("retreat", "switch", "forced_switch", "trainer_hand_to_active", "return_in_play_to_deck", "return_in_play_to_hand", "return_basic_to_hand",
+                "discard_from_play", "secret_plan_discarded")
 # v0.92: おたがいの場のすべての特殊能力を止める期限のある効果（まきちらせ!ベトベトガス・オールクリアのワザを使っているあいだ・やみのはどう）
 FIELD_POWER_SUPPRESSION_KINDS = ("power_suppression", "attack_power_suppression", "attack_field_power_suppression")
 
@@ -345,6 +353,8 @@ COUNTER_BARRIERS = (
     "deck_energy_evaded",
     # v0.90: マーカー・カウンターをのせる・取りのぞく（ほねこんぼうの「それを1つとりのぞいて」はダメージのあと）
     "marker_added", "marker_removed", "marker_removal_declined",
+    # v0.93: 「バトル場をはなれられない」効果で、入れ替え・もどす部分が起こらなかった
+    "leave_prevented",
 )
 # v0.10: ダメージの要素のあとのワザのコインが、ダメージ以外の効果（特殊状態）を決めるワザ（「はんげき」はそのコインより先）。でんげきの
 # コインは自分へのダメージ（ダメージの要素）を決めるので含めない
@@ -354,7 +364,10 @@ EFFECT_COIN_AFTER_DAMAGE = ("poison_on_heads", "paralyze_on_heads", "confuse_on_
                             "damage_then_confuse_on_any_heads", "damage_then_sleep_on_heads", "damage_then_retreat_lock_on_heads",
                             "damage_then_draw_on_heads",
                             # v0.90: ほねこんぼう（ダメージのあと、ほねカウンターを取りのぞいてからマヒのコイン）
-                            "damage_then_remove_own_marker_paralyze_on_heads")
+                            "damage_then_remove_own_marker_paralyze_on_heads",
+                            # v0.93: ダメージのあとのコインが、期間を明示した禁止（はなれられない・ワザを使えない）だけを決める（からまるいと・からみつく・こおりつかせる。どくしばりは
+                            # どくのあと）
+                            "damage_then_period_lock", "damage_then_poison_then_leave_lock_on_heads")
 
 # 形式ごとに加わった場のポケモンの項目（serialize.py の説明）
 POKEMON_FIELDS_SINCE = {
@@ -1013,7 +1026,8 @@ def _follows_declaration(state, key: str, player: int, pid: int, e: dict) -> boo
     if isinstance(effect, DiscardDeckTopAttachTypeEnergyThenEndTurn):
         return kind == "deck_top_to_discard" and e.get("power") == key and e["player"] == player
     if isinstance(effect, SwitchOpponentOnTypeEnergyAttach):
-        return kind == "switch" and e.get("power") == key and e["player"] == 1 - player
+        # v0.93: 相手の対戦ポケモンが「バトル場をはなれられない」なら、入れ替えずに leave_prevented
+        return kind in ("switch", "leave_prevented") and e.get("power") == key and e["player"] == 1 - player
     if isinstance(effect, HealEachOwnPokemonOnEntry):
         return not (kind == "remove_damage_counters" and (e.get("power") != key or e["player"] != player))
     if isinstance(effect, CureBothActivesOncePerTurn):
@@ -1277,9 +1291,10 @@ def log_problems(state) -> list[str]:
             # v0.86: ほのおのまもり（DamageThenProtectOwnBench）は、自分の控えポケモン全員に 1 つずつ（下で確かめる）
             protects_bench = isinstance(window_effect, DamageThenProtectOwnBench)
             # v0.92: こわいかお（CoinAttackAndRetreatLock）は、「おもて」なら同じポケモンに使えなくなる効果とにげられなくなる効果の 2 つ（種類の違う 2 つ。下の鍵で確かめる）
-            two_locks = isinstance(window_effect, CoinAttackAndRetreatLock)
+            # v0.93: かぶりつく（DamageThenRetreatLockAndAttackCoinCheck）も、にげられなくなる効果と手順 4 のコインの効果の 2 つ（受けないなら 0）
+            two_locks = isinstance(window_effect, (CoinAttackAndRetreatLock, DamageThenRetreatLockAndAttackCoinCheck))
             if two_locks and window["persistent_effect_added"] not in (0, 2):
-                problems.append(f"1 回のワザでこわいかおの効果が {window['persistent_effect_added']} 回（「おもて」なら 2 つ、「うら」なら 0）")
+                problems.append(f"1 回のワザで 2 つの禁止を与えるワザの効果が {window['persistent_effect_added']} 回（与えるなら 2 つ、与えないなら 0）")
             if protects_bench and window["persistent_effect_added"] > 5:
                 problems.append(f"1 回のワザでほのおのまもりの効果が {window['persistent_effect_added']} 回（控えポケモンの数より多い）")
             for once in ("forced_switch", "drain_heal", "confusion_check", "confusion_damage", *(() if protects_bench or two_locks else ("persistent_effect_added",)),
@@ -2124,6 +2139,29 @@ def log_problems(state) -> list[str]:
         else:
             problems.append(f"{e['turn']} 番の {e['kind']} のカード {uid} が、ログから組み立てたプレイヤー {player} の手札にない")
 
+    def leave_locks_of(pid: int, turn: int) -> list[dict]:
+        """v0.93: ログから組み立てた、ポケモン ``pid`` が番 ``turn`` に受けている、はたらいている「バトル場をはなれられない」効果（期間の中。くいつくは発生源がバトル場にいて、
+        はなれた印がない）。``pid`` がバトル場にいなければ空。"""
+        if pid is None or active_of.get(pokemon_owner.get(pid)) != pid:
+            return []
+        return [info for (effect_pid, _, _), info in alive.items()
+                if effect_pid == pid and info["kind"] == PeriodLeaveLock.kind and info["active_turn"] <= turn <= info["until"]
+                and (not info["while_source_active"] or (not info.get("source_left") and active_of.get(info["source_player"]) == info["source_pokemon"]
+                                                         and info["source_pokemon"] in in_play))]
+
+    def leaving_pokemon(e: dict) -> int | None:
+        """v0.93: ログ ``e`` でバトル場からはなれる場のポケモンの番号（バトル場からでなければ None。``LEAVE_EVENTS``）。"""
+        kind = e["kind"]
+        if kind == "retreat":
+            pid = ids.get(e["old_active"])
+        elif kind in ("switch", "forced_switch", "trainer_hand_to_active"):
+            pid = e.get("old_active_pokemon_id")
+        elif kind in LEAVE_EVENTS:
+            pid = e.get("pokemon_id")
+        else:
+            return None
+        return pid if pid is not None and active_of.get(pokemon_owner.get(pid)) == pid else None
+
     owner = {uid: card.owner for uid, card in state.cards.items()}
     turn_now = 0  # v0.46: 今処理しているイベントの番（continuous_expected が持続する効果のはたらく番を見る）
     declared = None  # 直前の特殊能力の宣言（番・プレイヤー・ポケモン）。移動のログはその直後に続く（v0.5）
@@ -2149,6 +2187,26 @@ def log_problems(state) -> list[str]:
         elif kind == "color_effect_removed" and e["color_effect"] == "pokemon_type":
             color_types.pop(e["target"], None)
         problems.extend(marker_event_problems(e))  # v0.90
+        # v0.93（docs/active-leave-locks-v0.93.md 11 章）: 「バトル場をはなれられない」効果を受けたポケモンは、きぜつ（例外を書いた効果）のほかではバトル場をはなれない。起こらなかった
+        # 部分のログ（leave_prevented）は、はたらいている効果を受けたバトル場のポケモンのもの。くいつくの発生源がはなれた印は、発生源がバトル場をはなれたあと
+        leaving = leaving_pokemon(e)
+        if leaving is not None and leave_locks_of(leaving, e["turn"]):
+            problems.append(f"{e['turn']} 番に、バトル場をはなれられないポケモン {leaving} がバトル場をはなれた（{kind}）")
+        if kind == "knock_out":
+            knocked_pid = ids.get(e["pokemon"])
+            if any(not info.get("knockout_exception") for info in leave_locks_of(knocked_pid, e["turn"])):
+                problems.append(f"{e['turn']} 番に、きぜつの例外を書いていないバトル場をはなれられない効果を受けたポケモン {knocked_pid} がきぜつした（AL1 で止めるはず）")
+        if kind == "leave_prevented" and (e["cause"] not in LEAVE_CAUSES or not leave_locks_of(e["pokemon_id"], e["turn"])
+                                          or pokemon_owner.get(e["pokemon_id"]) != e["player"]):
+            problems.append(f"{e['turn']} 番の leave_prevented（ポケモン {e['pokemon_id']}・{e['cause']}）が、はたらいているバトル場をはなれられない効果を受けたバトル場のポケモンのものではない")
+        if kind == "persistent_effect_source_left":
+            marked = alive.get((e["pokemon_id"], e["created_turn"], e["persistent_effect"]))
+            if marked is None or marked["kind"] != PeriodLeaveLock.kind or not marked["while_source_active"] or SOURCE_LEAVES_ACTIVE in marked["ends_on"] \
+                    or marked.get("source_left") or marked["source_pokemon"] != e["source_pokemon"] \
+                    or (active_of.get(marked["source_player"]) == marked["source_pokemon"] and marked["source_pokemon"] in in_play):
+                problems.append(f"{e['turn']} 番に、発生源がはなれた印（ポケモン {e['pokemon_id']}）を、発生源がバトル場にいる・印を付ける効果でないものに付けた")
+            else:
+                marked["source_left"] = True
         if kind == "trainer_effect_added" and e["effect_kind"] in FIELD_POWER_SUPPRESSION_KINDS:  # v0.91: オールクリアのワザを使っているあいだ。v0.92: やみのはどう
             goop_gases[e["trainer_card"]] = e["expires_turn"]
         elif kind == "trainer_effect_removed" and e.get("effect_kind") in FIELD_POWER_SUPPRESSION_KINDS:
@@ -2437,8 +2495,10 @@ def log_problems(state) -> list[str]:
                     problems.append(f"{e['turn']} 番に、ポケモン {effect_pid} が使えないワザ（{e['attack_index']} 番目。{info['kind']}）を使った")
             # v0.36: はたらいている手順 4 のコインの効果（すなかけ・えんまくなど）。宣言のすぐあとにコインがあるはず
             due_checks = [(effect_pid, created, bool(info.get("single_use"))) for (effect_pid, created, _), info in alive.items()
-                          if effect_pid == ids.get(e["pokemon"]) and info["kind"] == AttackCoinCheck.kind
-                          and (info["active_turn"] <= e["turn"] if info.get("lasting") else info["active_turn"] == e["turn"])]
+                          if effect_pid == ids.get(e["pokemon"]) and ((info["kind"] == AttackCoinCheck.kind
+                          and (info["active_turn"] <= e["turn"] if info.get("lasting") else info["active_turn"] == e["turn"]))
+                          # v0.93: 期間を明示した手順 4 のコイン（かぶりつく。はたらき始める番から最後の番まで）
+                          or (info["kind"] == PeriodAttackCoinCheck.kind and info["active_turn"] <= e["turn"] <= info["until"]))]
             if len(due_checks) > 1:
                 problems.append(f"{e['turn']} 番のワザを使うポケモン {ids.get(e['pokemon'])} に、手順 4 のコインの効果が 2 つ以上ある")
             check_due = due_checks[0] if due_checks else None
@@ -3436,7 +3496,10 @@ def log_problems(state) -> list[str]:
                 # v0.36: 「アイスバーン」・「わしづかみ」を受けたポケモンは、はたらく番に「にげる」を宣言しない（エネルギーのトラッシュ・コインの前に拒否）
                 if effect_pid == pid and info["kind"] == CannotRetreat.kind and info["active_turn"] == e["turn"]:
                     problems.append(f"{e['turn']} 番に、「にげる」ことができないポケモン {pid} が「にげる」を宣言した（{kind}）")
-                # v0.92: クモのす・くろいまなざし（期間の中。くろいまなざしは発生源がバトル場にいる間）
+                # v0.92: クモのす・くろいまなざし（期間の中。くろいまなざしは発生源がバトル場にいる間）。v0.93: かぶりつくも同じ種類（発生源がはなれたら消える）。
+                # 「バトル場をはなれられない」効果の retreat は、ループの先頭の LEAVE_EVENTS の確かめ（retreat_failed はバトル場をはなれていないが、宣言は拒否するはず）
+                if kind == "retreat_failed" and effect_pid == pid and info["kind"] == PeriodLeaveLock.kind and info in leave_locks_of(pid, e["turn"]):
+                    problems.append(f"{e['turn']} 番に、バトル場をはなれられないポケモン {pid} が「にげる」を宣言した（retreat_failed）")
                 if effect_pid == pid and info["kind"] == PeriodRetreatLock.kind and info["active_turn"] <= e["turn"] <= info["until"] \
                         and (not info["while_source_active"] or (active_of.get(info["source_player"]) == info["source_pokemon"] and info["source_pokemon"] in in_play)):
                     problems.append(f"{e['turn']} 番に、「にげる」ことができないポケモン {pid} が「にげる」を宣言した（{kind}。期間を明示した効果）")
@@ -5035,7 +5098,8 @@ def log_problems(state) -> list[str]:
                 # v0.92: 期間を明示した効果。最後の番（end_turn。null は期限なし）まで。発生源・発生源がバトル場にいる間だけか・明記された消える契機
                 info = alive[effect_key]
                 info.update(until=float("inf") if e.get("end_turn") is None else e["end_turn"], source_pokemon=e.get("source_pokemon"),
-                            source_player=e["source_player"], while_source_active=e.get("while_source_active", False), ends_on=tuple(e.get("ends_on", ())))
+                            source_player=e["source_player"], while_source_active=e.get("while_source_active", False), ends_on=tuple(e.get("ends_on", ())),
+                            knockout_exception=e.get("knockout_exception", False), source_left=False)  # v0.93
             if e.get("lasting") and (e["persistent_effect"] != AttackCoinCheck.kind or e.get("single_use")):
                 problems.append(f"{e['turn']} 番の期限のない持続する効果（ポケモン {e['pokemon_id']}）が、手順 4 のコインの「1回できえる」でない効果ではない")
             # v0.35: 「きあいだめ」（next_turn_attack_damage_multiplier）・「あわあわ」（cannot_use_own_attack）も次の自分の番
@@ -5047,10 +5111,14 @@ def log_problems(state) -> list[str]:
             if e["persistent_effect"] in PERIOD_KINDS:
                 # v0.92: 期間は登録のワザの ``period_terms``（始まり・終わりの番の数・発生源の条件・消える契機）。発生源はそのワザを使ったポケモン
                 entry = state.effects.attack_entry(*_attack_key(e["effect"]))
-                terms = getattr(entry.effect, "period_terms", lambda: None)() if entry is not None else None
+                # v0.93: 2 つの効果を与えるワザ（かぶりつく）は ``period_terms_list``。効果の種類で選ぶ。はなれられない効果はきぜつの例外（6 つめ）も照らす
+                options = (() if entry is None else entry.effect.period_terms_list() if hasattr(entry.effect, "period_terms_list")
+                           else (entry.effect.period_terms(),) if hasattr(entry.effect, "period_terms") else ())
+                terms = next((t for t in options if t[0].kind == e["persistent_effect"]), None)
                 offset = e["active_turn"] - e["turn"]
                 end = None if e.get("end_turn") is None else e["end_turn"] - e["turn"]
-                if terms is None or terms[0].kind != e["persistent_effect"] or terms[1:5] != (offset, end, e.get("while_source_active", False), tuple(e.get("ends_on", ()))) \
+                if terms is None or terms[1:5] != (offset, end, e.get("while_source_active", False), tuple(e.get("ends_on", ()))) \
+                        or (e["persistent_effect"] == PeriodLeaveLock.kind and terms[5] != e.get("knockout_exception", False)) \
                         or attack_window is None or e.get("source_pokemon") != attack_window["pokemon_id"] or e["source_player"] != attack_window["player"]:
                     problems.append(f"{e['turn']} 番の期間を明示した持続する効果 {e['persistent_effect']}（ポケモン {e['pokemon_id']}）が、そのワザを使ったポケモンの登録の期間・消える契機と合わない")
             if e["active_turn"] != e["turn"] + offset:

@@ -1410,6 +1410,13 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.ChooseOpponentPokemonDamageIgnoringHeldEffects,
     _effects.DamageThenFieldPowerSuppression,
     _effects.CoinsUntilTailsBonusDamage,
+    # v0.93（docs/active-leave-locks-v0.93.md 5〜7 章。バトル場をはなれられない効果・ダメージのあとの期間を明示したワザの禁止・相手を入れ替えて新しく出てきたポケモンをマヒ・
+    # にげるの禁止とワザを使うときのコイン）
+    _effects.DamageThenPeriodLock,
+    _effects.CoinBonusDamageThenLeaveLock,
+    _effects.DamageThenPoisonThenLeaveLockOnHeads,
+    _effects.SwitchOpponentThenParalyzeNewOnHeads,
+    _effects.DamageThenRetreatLockAndAttackCoinCheck,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -2272,6 +2279,14 @@ SPINARAK_NEO1, ARIADOS_NEO1, ONIX_NEO1, MURKROW_NEO1 = "neo1-004", "neo1-011", "
 GOLBAT_NEO3, LARVITAR_NEO4, SABRINAS_GENGAR_GD6, SCIZOR_PRN = "neo3-004", "neo4-073", "GD6-008", "PRN-025"  # ゴルバット（いやなおと・きゅうけつどく）・ヨーギラス（にらみつける）・ナツメのゲンガー（やみのはどう）・ハッサム（メタルニッパー）
 V0_92_POKEMON = (SPINARAK_NEO1, ARIADOS_NEO1, ONIX_NEO1, MURKROW_NEO1, GOLBAT_NEO3, LARVITAR_NEO4, SABRINAS_GENGAR_GD6, SCIZOR_PRN)
 V0_92_CARDS = V0_92_POKEMON  # 写しの組 pool_v0_92 の並び
+
+# v0.93（docs/active-leave-locks-v0.93.md）: バトル場をはなれられない効果・続くワザの制限のポケモン 9 枚（同じ名前の別の版と取りちがえない）。キャタピーの 2 枚は同じゲーム用データ
+CATERPIE_ES1, CATERPIE_QSG, TANGELA_ES2 = "ES1-002", "QSG-002", "ES2-004"  # キャタピー（からまるいと）・キャタピー（同じデータ）・モンジャラ（からみつく）
+GLOOM_NEO1, CROCONAW_NEO1, DARK_ARIADOS_NEO4 = "neo1-008", "neo1-030", "neo4-011"  # クサイハナ（へんなこな・ねばるみつ）・アリゲイツ（いやなおと・くいつく）・わるいアリアドス（からめとる・どくしばり）
+PILOSWINE_NEO1, DARK_CROCONAW_NEO4, OCTILLERY_NEO3 = "neo1-032", "neo4-036", "neo3-019"  # イノムー（こおりつかせる・ふぶき）・わるいアリゲイツ（かぶりつく）・オクタン（からみつく・オクタンほう）
+SWINUB_NEO1 = "neo1-027"  # ウリムー（イノムーの進化元）
+V0_93_POKEMON = (CATERPIE_ES1, CATERPIE_QSG, TANGELA_ES2, GLOOM_NEO1, CROCONAW_NEO1, DARK_ARIADOS_NEO4, PILOSWINE_NEO1, DARK_CROCONAW_NEO4, OCTILLERY_NEO3)
+V0_93_CARDS = V0_93_POKEMON  # 写しの組 pool_v0_93 の並び
 
 
 def _self_sleep_shape_only(attack):

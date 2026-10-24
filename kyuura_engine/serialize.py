@@ -110,6 +110,9 @@
 - 24: 23 に、場のポケモンごとの ``markers``（のっているマーカー・ダメージカウンター以外のカウンター。のせた順に ``{"kind", "player", "source_card", "source_card_id", "effect",
   "turn"}``、色マーカーだけ ``"color"`` を加える。なければ ``[]``）を加えたもの（v0.90。docs/markers-counters-v0.90.md 3 章）。形式 1〜23 は、マーカー・カウンターがあると
   ``ValueError``（なければ形式 1〜23 の書き出しは v0.89 と同じ）。
+  v0.92・v0.93: 期間を明示した持続する効果（v0.92 の ``"period_retreat_lock"``・``"period_attack_lock"``・``"received_attack_damage_bonus"``、v0.93 の ``"period_leave_lock"``
+  （「バトル場をはなれられない」。あるときだけ ``"knockout_exception"``・``"source_left"``）・``"period_attack_coin_check"``（かぶりつく））は、形式 8 の ``persistent_effects`` の
+  種類の値と種類ごとの項目を加えただけ（形式は 24 のまま。docs/active-leave-locks-v0.93.md 11 章。前の版の書き出しを読む側は、知らない種類として拒否すること）。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -295,7 +298,8 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
     elif isinstance(effect, ZeroDamageAtLeast):
         data["threshold"] = effect.threshold  # v0.84: 「パルスガード」
     elif isinstance(effect, PERIOD_EFFECT_TYPES):
-        # v0.92: 期間を明示した効果（``"period_retreat_lock"``・``"period_attack_lock"``・``"received_attack_damage_bonus"``）。期間の終わり（null は期限なし）・発生源の場の番号と、
+        # v0.92: 期間を明示した効果（``"period_retreat_lock"``・``"period_attack_lock"``・``"received_attack_damage_bonus"``。v0.93 で ``"period_leave_lock"``・
+        # ``"period_attack_coin_check"`` を加えた）。期間の終わり（null は期限なし）・発生源の場の番号と、
         # あるときだけ発生源がバトル場にいる間だけの印・明記された消える契機、いやなおとは増やす数。種類の値を加えただけで形式は変えない（v0.84・v0.86 と同じ。v0.91 までの書き出しを
         # 読む側は、知らない種類として拒否すること）
         data["end_turn"] = effect.end_turn
@@ -306,6 +310,10 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
             data["ends_on"] = list(effect.ends_on)
         if isinstance(effect, ReceivedAttackDamageBonus):
             data["amount"] = effect.amount
+        if getattr(effect, "knockout_exception", False):
+            data["knockout_exception"] = True  # v0.93: 「バトル場をはなれられない」効果の「(「きぜつ」した場合をのぞく)」（あるときだけ）
+        if getattr(effect, "source_left", False):
+            data["source_left"] = True  # v0.93: くいつくの発生源が与えたあとにバトル場をはなれた印（あるときだけ）
     elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive, HalvedDamage,
                                          CannotUsePowers, CannotAttachEnergy, TailsDamageGuard, DoubledDamage, BenchAttackDamageGuard, AttackEffectGuard,
                                          StatusImmunityNextTurn, PowersStopped, BenchProtection)):
