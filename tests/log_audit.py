@@ -1058,6 +1058,12 @@ def _follows_declaration(state, key: str, player: int, pid: int, e: dict) -> boo
         return kind == "look_at_card" and e.get("power") == key and e["player"] == player
     if isinstance(effect, (E.CoinEachPlayerShufflesOpponentDeck, E.CoinEachPlayerLooksOpponentHand)):
         return kind == "coin_flip" and e["source"] == "power" and e.get("effect") == key and e["player"] == player and e.get("pokemon_id") == pid
+    # v0.97: ［INCREASE］は山札からベンチに出す処理（bench_from_deck の power。そのあいだに決定がある）、［FIND］・［JOIN］は山札から見せて手札に加える処理（reveal_from_deck の
+    # power。そのあいだに決定がある）
+    if isinstance(effect, E.BenchNameGroupFromDeckOnEntry):
+        return kind == "bench_from_deck" and e.get("power") == key and e["player"] == player and e["pokemon_id"] == pid
+    if isinstance(effect, E.SearchDeckWithBenchLettersToHand):
+        return kind == "reveal_from_deck" and e.get("power") == key and e["player"] == player
     return False
 
 
@@ -1620,6 +1626,10 @@ def log_problems(state) -> list[str]:
                     return None  # v0.84: ［たすけだす］は、このポケモンがベンチにいるときだけ使える
                 if effect.discard_to_hand_only and tower_in_play():
                     return None  # v0.74: ポケモンタワーで効果が消える（使う機会を出さない）
+                holder = pokemon_owner.get(ids.get(uid))
+                if isinstance(effect, E.BenchNameGroupFromDeckOnEntry) \
+                        and sum(1 for q in in_play if pokemon_owner.get(q) == holder) - (1 if active_of.get(holder) in in_play else 0) >= bench_limit_now():
+                    return None  # v0.97: ［INCREASE］の「自分のベンチに空きがないとき、この力は使えない」（場に出したあとのログから組み立てた場。機会を出さない）
                 return f"{definition.id}@power{index}"
         return None
 
@@ -1861,6 +1871,8 @@ def log_problems(state) -> list[str]:
         pid = e["pokemon_id"] if "pokemon_id" in e else ids.get(e["pokemon"])
         expected = []
         for (effect_pid, _, _), info in alive.items():
+            if e.get("ignore_defender_effects"):
+                break  # v0.97: 受けるポケモンの持っている効果を除くワザ（スピードスター・だましうち）は、受けるポケモンの持続する効果を集めない（エンジンの EXCLUDE_DEFENDER_HELD）
             if effect_pid == pid and info["kind"] == "zero_damage_below" and info["active_turn"] == e["turn"]:
                 card_id, index = info["effect"].split("#")
                 expected.append((8, info["source_card"], state.effects.attack_entry(card_id, int(index)).effect.threshold_terms()[1]))
@@ -1975,33 +1987,46 @@ def log_problems(state) -> list[str]:
             found.append((f"{definition.id}@power{index}", effect, power))
         return found
 
-    def continuous_expected(attacker_pid: int | None, receiver_pid: int | None, attack_status: frozenset | None) -> list[tuple]:
+    def continuous_expected(attacker_pid: int | None, receiver_pid: int | None, attack_status: frozenset | None, *,
+                            held_excluded: bool = False) -> list[tuple]:
         """ワザのダメージ（``attacker_pid`` → ``receiver_pid``）に当てはまる、常にはたらく特殊能力と「リフレクター」の変更効果（v0.46）:
-        [(段階, 名前, 計算, しきい値, 数, 発生源のカード)]。ログから組み立てた場（場所・特殊状態・かがくへんかガス・持続する効果）で求める。"""
+        [(段階, 名前, 計算, しきい値, 数, 発生源のカード)]。ログから組み立てた場（場所・特殊状態・かがくへんかガス・持続する効果）で求める。
+
+        v0.97: ``held_excluded`` は、受けるポケモンの持っている効果を除くワザ（スピードスター・ブラッキーとヤミカラスの「だましうち」。ログの ``ignore_defender_effects``）の
+        ダメージ。受けるポケモンの持っている持続する効果と、受けるポケモン自身の常にはたらく特殊能力を集めない（エンジンが計算に使う ``EXCLUDE_DEFENDER_HELD`` の読み方。場の
+        ほかのポケモンの特殊能力は残す。SS1・FA1 の比べで止まらなかったダメージだけがログにある）。［DARK df］・［NORMAL df］（同時にはたらくのは多くても 1 つ）は、持ち主ごとに
+        同じ力がはたらいているポケモンが 2 匹以上なら当てはめない（1 つもはたらかない読み方。エンジンは DF1 で読み方の結果が同じことを確かめてから使う）。2 匹以上かは除く前に
+        数える（除かれる受けるポケモン自身の力も、はたらいている候補）。与えるポケモンの色は今の色の読み方の最初（読み方で計算が変わるならエンジンが VS1 で止める）"""
         expected = []
         if attacker_pid not in in_play or receiver_pid not in in_play:
             return expected
-        for (effect_pid, _, _), info in alive.items():
+        receiver_held = {} if held_excluded else alive
+        for (effect_pid, _, _), info in receiver_held.items():
             # v0.84: 「パルスガード」（8 段階の、決まった数以上なら 0。リフレクターの前に集める）。しきい値は効果を与えたワザの登録（threshold_terms）
             if effect_pid == receiver_pid and info["kind"] == ZeroDamageAtLeast.kind and info["active_turn"] == turn_now:
                 entry = state.effects.attack_entry(*_attack_key(info["effect"]))
                 threshold = entry.effect.threshold_terms()[1]
                 expected.append((8, f"{state.printed_def(info['source_card']).name_ja}（{ZeroDamageAtLeast.kind}）", ZERO_IF_AT_LEAST, None, threshold,
                                  info["source_card"]))
-        for (effect_pid, _, _), info in alive.items():
+        for (effect_pid, _, _), info in receiver_held.items():
             if effect_pid == receiver_pid and info["kind"] == HalvedDamage.kind and info["active_turn"] == turn_now:
                 expected.append((8, f"{state.printed_def(info['source_card']).name_ja}（{HalvedDamage.kind}）", HALVE_DOWN, None, 2, info["source_card"]))
-        for (effect_pid, _, _), info in alive.items():
+        for (effect_pid, _, _), info in receiver_held.items():
             # v0.75: 「もろばバサミ」（8 段階の 2 倍。リフレクターのあとに集める）
             if effect_pid == receiver_pid and info["kind"] == DoubledDamage.kind and info["active_turn"] == turn_now:
                 expected.append((8, f"{state.printed_def(info['source_card']).name_ja}（{DoubledDamage.kind}）", MULTIPLY, None, 2, info["source_card"]))
-        for (effect_pid, _, _), info in alive.items():
+        for (effect_pid, _, _), info in receiver_held.items():
             # v0.92: 「いやなおと」（8 段階の加算。はたらき始める番から最後の番まで。期間の重なる 2 つは両方を加える）
             if effect_pid == receiver_pid and info["kind"] == ReceivedAttackDamageBonus.kind and info["active_turn"] <= turn_now <= info["until"]:
                 expected.append((8, f"{state.printed_def(info['source_card']).name_ja}（{ReceivedAttackDamageBonus.kind}）", ADD, None, info["amount"],
                                  info["source_card"]))
         attacker_active = is_active(attacker_pid)
+        # v0.97: 同時にはたらくのが多くても 1 つの特殊能力（［DARK df］・［NORMAL df］）の、持ち主と力ごとの、はたらいているポケモンの数（除く前に数える）
+        copies = Counter((pokemon_owner.get(q), effect) for q in in_play for _, effect, _ in working_continuous(q, ContinuousPower, attack_status=attack_status)
+                         if getattr(effect, "self_excluding", False))
         for pid in sorted(in_play, key=lambda q: (pokemon_owner.get(q), not is_active(q), q)):
+            if held_excluded and pid == receiver_pid:
+                continue  # v0.97: 受けるポケモン自身の常にはたらく特殊能力（効果を除くワザ）
             for key, effect, power in working_continuous(pid, ContinuousPower, attack_status=attack_status):
                 label, source = f"{state.definitions[key.partition('@')[0]].name_ja}［{power.name_ja}］", top[pid]  # v0.49: 特殊能力を印刷したカードの名前
                 if isinstance(effect, ZeroLargeDamageReceived) and pid == receiver_pid:
@@ -2014,6 +2039,12 @@ def log_problems(state) -> list[str]:
                     expected.append((2, label, ADD, None, effect.amount, source))
                 elif isinstance(effect, HalveDamageReceived) and pid == receiver_pid:
                     expected.append((8, label, HALVE_DOWN, None, 2, source))  # v0.47: ［カブトアーマー］
+                elif isinstance(effect, E.ReduceOwnGroupDamageFromType) and copies[(pokemon_owner.get(pid), effect)] == 1 \
+                        and pokemon_owner.get(pid) == pokemon_owner.get(receiver_pid) and form_def(receiver_pid).name_group == effect.group \
+                        and type_readings_now(attacker_pid)[0] is effect.attacker_type:
+                    # v0.97: ［DARK df］・［NORMAL df］（持ち主の場の、今の姿の名前のグループが「アンノーン」のポケモンが、今の色が決まったタイプのポケモンから受ける。
+                    # 受けるのがこの力を持つポケモン自身なら 8 段階、ほかは 6 段階の「-30」）
+                    expected.append((8 if pid == receiver_pid else 6, label, ADD, None, -effect.amount, source))
         return expected
 
     def continuous_damage_problems(e: dict) -> list[str]:
@@ -2031,7 +2062,8 @@ def log_problems(state) -> list[str]:
         steps = [tuple(step) for step in (e.get("steps") or ())]
         early = [step for step in steps if str(step[0])[:2] in ("1 ", "2 ")]
         ended_early = bool(early) and early[-1][1] <= 0 and len(early) == len(steps)
-        expected = [x for x in continuous_expected(attacker_pid, receiver_pid, attack_window.get("status_at_attack"))
+        expected = [x for x in continuous_expected(attacker_pid, receiver_pid, attack_window.get("status_at_attack"),
+                                                   held_excluded=bool(e.get("ignore_defender_effects")))  # v0.97
                     if not ended_early or x[0] <= 2]
         by_label = {f"{x[0]} {x[1]}": x for x in expected}
         labels = [f"{x[0]} {x[1]}" for x in expected]  # v0.92: 期間の重なる同じ名前の「いやなおと」は、同じ記録が 2 つある
@@ -3633,14 +3665,18 @@ def log_problems(state) -> list[str]:
                 kind_ok = definition.is_basic_energy  # v0.72: おつきみ（RevealBasicEnergyFromDeck）も基本エネルギーカード
             elif isinstance(revealer, RevealNamedPokemonFromDeckAny):
                 kind_ok = definition.category == "pokemon" and definition.name_ja in revealer.names  # v0.75: くらげのむれ（名前の完全一致）
+            elif "power" in e and isinstance(_power_effect(state, e["power"]), E.SearchDeckWithBenchLettersToHand):
+                kind_ok = _power_effect(state, e["power"]).target.matches(definition)  # v0.97: ［FIND］はトレーナーカード、［JOIN］はたねポケモン・進化カード
             else:
                 kind_ok = definition.is_basic_pokemon or definition.is_evolution_pokemon
             if owner.get(uid) != e["player"] or uid in hand[e["player"]] or uid in discard[e["player"]] or not kind_ok:
                 problems.append(f"{e['turn']} 番に山札から見せて手札に加えたカード {uid} が、プレイヤー {e['player']} の山札のたねポケモン・進化カード"
                                 "（おつかいならトレーナー、てじな・おつきみなら基本エネルギーカード）ではない")
             if "power" in e:
-                # v0.43: しんかのひかり。山札の進化カードを見せて手札に加え、すぐあとに山札を切る
-                if not isinstance(_power_effect(state, e["power"]), SearchEvolutionCardToHand) or not state.printed_def(uid).is_evolution_pokemon:
+                # v0.43: しんかのひかり。山札の進化カードを見せて手札に加え、すぐあとに山札を切る。v0.97: ［FIND］・［JOIN］も 1 枚を見せて手札に加え、すぐあとに山札を切る
+                # （カードの種類は上の kind_ok で確かめた）
+                searched = isinstance(_power_effect(state, e["power"]), E.SearchDeckWithBenchLettersToHand)
+                if not searched and (not isinstance(_power_effect(state, e["power"]), SearchEvolutionCardToHand) or not state.printed_def(uid).is_evolution_pokemon):
                     problems.append(f"{e['turn']} 番に特殊能力 {e['power']} で山札から見せて手札に加えたカード {uid} が、しんかのひかりの進化カードではない")
                 shuffle_due = e
             hand[e["player"]].append(uid)
@@ -4706,13 +4742,17 @@ def log_problems(state) -> list[str]:
             definition = state.printed_def(uid)
             # v0.87: ［マグネット］・［ぶんれつ］（山札の名前の合うたねポケモン 1 枚。そのあとに山札を切る）
             named = isinstance(effect, (E.CoinBenchNamedFromDeck, E.BenchNamedFromDeckOnAttackDamage))
-            if not (isinstance(effect, BenchBasicsFromDeckOnEntry) or (named and definition.name_ja == effect.name)) \
+            # v0.97: ［INCREASE］（山札の、印刷の定義の名前のグループが説明の「アンノーン」のたねポケモン 1 枚。そのあとに山札を切る）
+            grouped = isinstance(effect, E.BenchNameGroupFromDeckOnEntry) and definition.name_group == effect.group
+            if not (isinstance(effect, BenchBasicsFromDeckOnEntry) or (named and definition.name_ja == effect.name) or grouped) \
                     or pokemon_owner.get(e["pokemon_id"]) != e["player"] or owner.get(uid) != e["player"] \
                     or uid in hand[e["player"]] or uid in discard[e["player"]] or uid in ids or not definition.is_basic_pokemon:
                 problems.append(f"{e['turn']} 番に特殊能力 {e['power']} でベンチに出したカード {uid} が、プレイヤー {e['player']} の山札のたねポケモンではない")
             benched = (shuffle_due["count"] + 1) if shuffle_due is not None and shuffle_due.get("power") == e["power"] and "count" in shuffle_due else 1
             if isinstance(effect, BenchBasicsFromDeckOnEntry) and benched > effect.max_cards:
                 problems.append(f"{e['turn']} 番のてしたをよぶで、1 回に {benched} 枚ベンチに出した")
+            if isinstance(effect, E.BenchNameGroupFromDeckOnEntry) and benched > 1:
+                problems.append(f"{e['turn']} 番の特殊能力 {e['power']} で、1 回に {benched} 枚ベンチに出した")  # v0.97: ［INCREASE］はちょうど 1 枚
             enter(uid)
             if ids[uid] != e["to_pokemon_id"]:
                 problems.append(f"{e['turn']} 番にベンチに出したポケモンの番号 {e['to_pokemon_id']} が、ログから組み立てた {ids[uid]} と違う")

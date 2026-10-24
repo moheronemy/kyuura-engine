@@ -1424,6 +1424,13 @@
     "neo2-054",
     "neo2-057"
   ],
+  "pool_v0_97": [
+    "neo2-023",
+    "neo2-025",
+    "neo2-026",
+    "PF2-001",
+    "PRN-034"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -105775,6 +105782,557 @@
       "play_scope": "standard",
       "data_gaps": [],
       "same_card_group": "SC-neo2-054"
+    },
+    {
+      "id": "neo2-023",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "アンノーンI",
+        "en": "Unown [I]"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          201
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "en": "You may have up to 4 Basic Pokémon cards in your deck with Unown in their names."
+        },
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "INCREASE[インクリーズ]",
+              "en": "[Increase]"
+            },
+            "text": {
+              "ja": "この力は、このカードを手札から場に出したとき、1回だけ使える。 自分の山札から「アンノーン」を1枚選び出し、ベンチに出す。その後、その山札をよく切る。 自分のベンチに空きがないとき、この力は使えない。",
+              "en": "When you play Unown [I] from your hand, you may search your deck for a card with Unown in its name and put it onto your Bench. Shuffle your deck afterward. You can't use this power if your Bench is full."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "めざめるパワー",
+              "en": "Hidden Power"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-neo2-023-RULES-TEXT-JA）: 空だった pokemon.rules_text.ja に「「アンノーン」はデッキに4枚までしか入れることができません。」を入れた。根拠: kyuura が、同じカード（第2弾「遺跡をこえて...」のアンノーン「I」）の日本語版のカードの画像を 2 つのサイトで読み、カード名の上（右上）の小さい文字のルール文「「アンノーン」はデッキに4枚までしか入れることができません。」を確かめた（2026-10-24）。転記（なぞのばしょ）はこの欄を載せていなかった（なぞのばしょのページの欄にルール文がない。印刷されていないのではない）。英語版の文面・ほかの文字のアンノーンの文面からは写していない"
+      ],
+      "source_ids": {
+        "tcgdex": "neo2-023",
+        "pokemontcg": [
+          "neo2-68"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-023-unknown-i/",
+      "jp_print": {
+        "level": 10,
+        "rarity": "●(C)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-023-unknown-i/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "corrections": [
+        {
+          "id": "FIX-neo2-023-RULES-TEXT-JA",
+          "field": "pokemon.rules_text.ja",
+          "before": null,
+          "after": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "basis": "card_image_check",
+          "decided_on": "2026-10-24"
+        }
+      ]
+    },
+    {
+      "id": "neo2-025",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "アンノーンD",
+        "en": "Unown [D]"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          201
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "en": "You may have up to 4 Basic Pokémon cards in your deck with Unown in their names."
+        },
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "DARK df[ダーク ディーエフ]",
+              "en": "[Darkness]"
+            },
+            "text": {
+              "ja": "自分の場の「アンノーン」が「悪」ポケモンからダメージを受けるとき、そのダメージは「-30」される。自分の場のほかのアンノーン「D」の「DARK df」がはたらいているとき、この力は、はたらかない。",
+              "en": "Whenever a Darkness Pokémon damages 1 of your Pokémon, reduce that damage by 30 (after applying Weakness and Resistance). This power stops working if you have more than 1 Unown [D] in play. (This power works even if Unown [D] is Asleep, Confused, or Paralyzed.)"
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "めざめるパワー",
+              "en": "Hidden Power"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "text",
+          "summary": "ポケモンパワー DARK df（[Darkness]）で「-30」するダメージの対象と、2 匹以上のときの条件",
+          "ja": "「自分の場の「アンノーン」が「悪」ポケモンからダメージを受けるとき、そのダメージは「-30」される。自分の場のほかのアンノーン「D」の「DARK df」がはたらいているとき、この力は、はたらかない。」と、減らすのは自分の場の「アンノーン」が「悪」ポケモンから受けるダメージだけで、自分の場のほかのアンノーン「D」の力がはたらいているときにはたらかないと書く（2026-10-24 にカードの画像で確認）。弱点・抵抗力との順番、ねむり・マヒ・こんらんのときの扱いは書かれていない",
+          "en": "「Whenever a Darkness Pokémon damages 1 of your Pokémon, reduce that damage by 30 (after applying Weakness and Resistance). This power stops working if you have more than 1 Unown [D] in play. (This power works even if Unown [D] is Asleep, Confused, or Paralyzed.)」と、自分のポケモンすべてが受けるダメージを減らし（弱点・抵抗力のあと）、場にアンノーン[D] が 2 匹以上いれば止まると書く。英語版の文面は日本語版の処理の根拠にしない（kyuura の裁定・論点は日本語の文面だけで決める）",
+          "confidence": "確実",
+          "sources": [
+            "N1",
+            "N3"
+          ]
+        }
+      ],
+      "notes": [
+        "訂正（FIX-neo2-025-RULES-TEXT-JA）: 空だった pokemon.rules_text.ja に「「アンノーン」はデッキに4枚までしか入れることができません。」を入れた。根拠: kyuura が、同じカード（第2弾「遺跡をこえて...」のアンノーン「D」）の日本語版のカードの画像を 2 つのサイトで読み、カード名の上（右上）の小さい文字のルール文「「アンノーン」はデッキに4枚までしか入れることができません。」を確かめた（2026-10-24）。転記（なぞのばしょ）はこの欄を載せていなかった（なぞのばしょのページの欄にルール文がない。印刷されていないのではない）。英語版の文面・ほかの文字のアンノーンの文面からは写していない"
+      ],
+      "source_ids": {
+        "tcgdex": "neo2-025",
+        "pokemontcg": [
+          "neo2-47"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-026-unknown-d/",
+      "jp_print": {
+        "level": 14,
+        "rarity": "◆(U)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-026-unknown-d/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "corrections": [
+        {
+          "id": "FIX-neo2-025-RULES-TEXT-JA",
+          "field": "pokemon.rules_text.ja",
+          "before": null,
+          "after": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "basis": "card_image_check",
+          "decided_on": "2026-10-24"
+        }
+      ]
+    },
+    {
+      "id": "neo2-026",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "アンノーンF",
+        "en": "Unown [F]"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          201
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "en": "You may have up to 4 Basic Pokémon cards in your deck with Unown in their names."
+        },
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "FIND[ファインド]",
+              "en": "[Find]"
+            },
+            "text": {
+              "ja": "この力は、自分のベンチに、このカードとアンノーン「I」「N」「D」がいるとき、自分の番ごとに1回使える。 自分の山札から「トレーナーカード」を1枚選び出し、相手プレイヤーに見せてから、手札に加える。 その後、その山札をよく切る。",
+              "en": "Once during your turn (before your attack), if you have Unown [F], Unown [I], Unown [N], and Unown [D] on your Bench, you may search your deck for a Trainer card. Show that card to your opponent, then put it into your hand. Shuffle your deck afterward."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "めざめるパワー",
+              "en": "Hidden Power"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-neo2-026-RULES-TEXT-JA）: 空だった pokemon.rules_text.ja に「「アンノーン」はデッキに4枚までしか入れることができません。」を入れた。根拠: kyuura が、同じカード（第2弾「遺跡をこえて...」のアンノーン「F」）の日本語版のカードの画像を 2 つのサイトで読み、カード名の上（右上）の小さい文字のルール文「「アンノーン」はデッキに4枚までしか入れることができません。」を確かめた（2026-10-24）。転記（なぞのばしょ）はこの欄を載せていなかった（なぞのばしょのページの欄にルール文がない。印刷されていないのではない）。英語版の文面・ほかの文字のアンノーンの文面からは写していない"
+      ],
+      "source_ids": {
+        "tcgdex": "neo2-026",
+        "pokemontcg": [
+          "neo2-48"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-025-unknown-f/",
+      "jp_print": {
+        "level": 16,
+        "rarity": "◆(U)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-025-unknown-f/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "corrections": [
+        {
+          "id": "FIX-neo2-026-RULES-TEXT-JA",
+          "field": "pokemon.rules_text.ja",
+          "before": null,
+          "after": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "basis": "card_image_check",
+          "decided_on": "2026-10-24"
+        }
+      ]
+    },
+    {
+      "id": "PF2-001",
+      "jp_set": "PF2",
+      "category": "pokemon",
+      "name": {
+        "ja": "アンノーン[N]",
+        "en": "Unown [N]"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          201
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "en": null
+        },
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "NORMAL df[ノーマル ディーエフ]",
+              "en": "[Normal]"
+            },
+            "text": {
+              "ja": "自分の場の「アンノーン」が「無色」ポケモンからダメージを受けるとき、そのダメージは「-30」される。自分の場のほかのアンノーン「N」の「NORMAL df」がはたらいているとき、この力は、はたらかない。",
+              "en": "Whenever a Colorless Pokémon damages 1 of your Pokémon, reduce that damage by 30 (after applying Weakness and Resistance). This power stops working if you have more than 1 Unown [N] in play. (This power works even if Unown [N] is Asleep, Confused, or Paralyzed.)"
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "めざめるパワー",
+              "en": "Hidden Power"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "text",
+          "summary": "ポケモンパワー NORMAL df（[Normal]）で「-30」するダメージの対象と、2 匹以上のときの条件",
+          "ja": "「自分の場の「アンノーン」が「無色」ポケモンからダメージを受けるとき、そのダメージは「-30」される。自分の場のほかのアンノーン「N」の「NORMAL df」がはたらいているとき、この力は、はたらかない。」と、減らすのは自分の場の「アンノーン」が「無色」ポケモンから受けるダメージだけで、自分の場のほかのアンノーン「N」の力がはたらいているときにはたらかないと書く（2026-10-24 にカードの画像で確認）。弱点・抵抗力との順番、ねむり・マヒ・こんらんのときの扱いは書かれていない",
+          "en": "「Whenever a Colorless Pokémon damages 1 of your Pokémon, reduce that damage by 30 (after applying Weakness and Resistance). This power stops working if you have more than 1 Unown [N] in play. (This power works even if Unown [N] is Asleep, Confused, or Paralyzed.)」と、自分のポケモンすべてが受けるダメージを減らし（弱点・抵抗力のあと）、場にアンノーン[N] が 2 匹以上いれば止まると書く。英語版の文面は日本語版の処理の根拠にしない（kyuura の裁定・論点は日本語の文面だけで決める）",
+          "confidence": "確実",
+          "sources": [
+            "N1",
+            "N3"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo2-50"
+        ],
+        "pcg_search": [
+          "neopf2001"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neopf2001.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プレミアムファイル2",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neopf2001.php"
+      },
+      "product_group": "premium_file",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.rules_text.ja": "pcg_search.note",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:neo2-50",
+        "pokemon.dex": "pokemontcg:neo2-50"
+      },
+      "copies": [
+        {
+          "page": "neopf2001",
+          "list_number": "001/009"
+        }
+      ]
+    },
+    {
+      "id": "PRN-034",
+      "jp_set": "PRN",
+      "category": "pokemon",
+      "name": {
+        "ja": "アンノーン[J]",
+        "en": "Unown [J]"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          201
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "en": null
+        },
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "JOIN[ジョイン]",
+              "en": "[Join]"
+            },
+            "text": {
+              "ja": "この力は、自分のベンチに、このカードとアンノーン「O」「I」「N」がいるとき、自分の番ごとに1回使える。自分の山札から「ベイビィポケモン」「たねポケモン」「進化カード」のうち1枚を選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。",
+              "en": "Once during your turn (before your attack), if you have Unown [J], Unown [O], Unown [I], and Unown Dragon on your Bench, you may search your deck for a Basic Pokémon or Evolution card. Show that card to your opponent, then put it into your hand. Shuffle your deck afterward."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "めざめるパワー",
+              "en": "Hidden Power"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-38"
+        ],
+        "pcg_search": [
+          "neop034"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop034.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop034.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.rules_text.ja": "pcg_search.note",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-38",
+        "pokemon.dex": "pokemontcg:basep-38"
+      },
+      "copies": [
+        {
+          "page": "neop034",
+          "list_number": "-/-"
+        }
+      ]
     }
   ]
 }

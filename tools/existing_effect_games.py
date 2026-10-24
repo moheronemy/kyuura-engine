@@ -552,6 +552,12 @@ V0_96 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_
 V0_96_POKEMON = V0_96[:7]
 V0_96_TRAINERS = V0_96[7:]
 V096_DECLARED = ("PF2-003", "neo4-050", "neo4-051", "neo4-052")  # アンノーン[O]［OBSERVE］・L［LAUGH］・S［SEARCH］・T［TELL］
+# v0.97（docs/unown-research-idfnj-v0.97.md）: アンノーンI・D・F・[N]・[J] の 5 枚（写しの組 pool_v0_97）。ポケモンは TARGETS に加える。v0.97 の特殊能力の決定は ``_v097_decision``、
+# ［FIND］・［JOIN］は ``_v097_step``。ログから数えるのは ``v097_uses``。デッキのアンノーンはどれも合わせて 4 枚まで（カードのルール文。デッキの検査を緩めない）
+V0_97 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_97"])
+V0_97_POKEMON = V0_97
+V097_DECLARED = ("neo2-026", "PRN-034")  # アンノーンF［FIND］・アンノーン[J]［JOIN］
+V097_DF = {"neo2-025": "D", "PF2-001": "N"}  # ［DARK df］・［NORMAL df］
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
            + ("PMCG5-052", "PMCG5-053")  # ワザの選び方を重ね、動きを数えるカード（v0.58: タケシのゴローン・ゴローニャ）
@@ -581,7 +587,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_93_POKEMON  # v0.93: バトル場をはなれられない効果・続くワザの制限のポケモン 9 枚
            + V0_94_POKEMON  # v0.94: 入れ替え・帰還のワザのポケモン 13 枚
            + V0_95_POKEMON  # v0.95: 手札・山札を見る効果とカードを動かすポケモン 11 枚
-           + V0_96_POKEMON)  # v0.96: アンノーン 7 枚
+           + V0_96_POKEMON  # v0.96: アンノーン 7 枚
+           + V0_97_POKEMON)  # v0.97: アンノーン 5 枚
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -1248,6 +1255,19 @@ DECKS = {
     # 本当のふうせんのみの重なり）
     "L96": (("neo4-050", 1), ("neo4-051", 1), ("neo4-052", 1), ("neo4-060", 1), ("neo2-054", 1), ("neo2-057", 1), ("neo1-045", 4), ("neo4-061", 2), ("ES3-022", 3),
             ("ES3-024", 2), (ERIKAS_PERFUME, 2), ("neo3-055", 2), (SWITCH, 2), (driver.BILL, 2), (PSYCHIC, 35)),
+    # v0.97: 超・無色。アンノーンF（neo2-026。［FIND］）・I（neo2-023。［INCREASE］）・[N]（PF2-001。［NORMAL df］）・D（neo2-025。［DARK df］）の 4 枚（「アンノーン」は合わせて 4 枚まで）と
+    # 遺跡の石版 2 種。4 文字をベンチにそろえるためのバトル場の要員に、エリカのミニリュウ → エリカのハクリュー（無色。「ふぶき」の「うら」は自分の控え全員に 10。自分の［NORMAL df］が
+    # 自分の控えのアンノーンを守る）・ヒノアラシ（PF1-004。スピードスター。相手のピジョンが受けて「オウムがえし」で出す手順の候補）と、きずぐすり・ポケモンいれかえ
+    "F97": (("neo2-026", 1), ("neo2-023", 1), ("PF2-001", 1), ("neo2-025", 1), ("neo2-054", 1), ("neo2-057", 1), (ERIKAS_DRATINI, 4), (ERIKAS_DRAGONAIR, 3),
+            ("PF1-004", 4), (driver.POTION, 2), (SWITCH, 2), (driver.BILL, 2), (PSYCHIC, 20), (FIRE, 17)),
+    # v0.97: 超・無色。アンノーン[J]（PRN-034。［JOIN］）・[O]（PF2-003）・I・[N] の 4 枚と遺跡の石版 2 種。バトル場の要員にポッポ → ピジョン（無色。オウムがえし）・コラッタ（無色）と、
+    # 突風（相手の控えのアンノーンをバトル場に出す）。炎エネルギーはピジョンが受けたスピードスターを出す支払いのため
+    "J97": (("PRN-034", 1), ("PF2-003", 1), ("neo2-023", 1), ("PF2-001", 1), ("neo2-054", 1), ("neo2-057", 1), (PIDGEY, 4), (PIDGEOTTO, 3), ("PMCG1-060", 3),
+            (driver.GUST, 2), (driver.POTION, 2), (SWITCH, 2), (driver.BILL, 2), (PSYCHIC, 18), (FIRE, 18)),
+    # v0.97: 悪・無色（［DARK df］・［NORMAL df］の相手）。ヤミカラス（neo1-055。だましうちは選んだポケモンの持っている効果を除く）・イーブイ → ブラッキー（neo2-040。だましうちは FA1 の型）・
+    # コラッタ（無色。かみつく）・R団のカビゴン（無色。［わるいねぞう］の特殊能力のダメージ）と、悪エネルギー（neo1-094）・突風
+    "K97": (("neo1-055", 4), ("PMCG2-037", 4), ("neo2-040", 3), ("PMCG1-060", 4), ("PMCG6-073", 2), ("neo1-094", 4), (driver.GUST, 2), (driver.POTION, 2), (SWITCH, 2),
+            (driver.BILL, 2), (WATER, 31)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -1418,6 +1438,9 @@ PAIRINGS_V0_95 = (("P95", "C95"), ("C95", "F95"), ("F95", "P95"), ("F95R", "C95"
 # v0.96: U96 対 L96（アンノーンどうし。エリカの香水で相手の手札のアンノーン[E]・[R] を出させる）・Z96 対 U96（［OBSERVE］・［ZOOM］と［ENGAGE］・［REASSURE］）・L96 対 P95・
 # Z96 対 C95（v0.95 の組を相手にする）。組・席・seed は先に決めた（seed 0〜7。局を選び直さない）
 PAIRINGS_V0_96 = (("U96", "L96"), ("Z96", "U96"), ("L96", "P95"), ("Z96", "C95"))
+# v0.97: F97 対 K97・J97 対 K97（［DARK df］・［NORMAL df］と悪・無色のワザ）・F97 対 J97（［FIND］・［JOIN］・［INCREASE］のアンノーンどうし。無色のピジョン・コラッタのワザ）・J97 対 U96
+# （v0.96 の組を相手にする）。組・席・seed は先に決めた（seed 0〜3。局を選び直さない）
+PAIRINGS_V0_97 = (("F97", "K97"), ("J97", "K97"), ("F97", "J97"), ("J97", "U96"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -1434,7 +1457,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.84": PAIRINGS_V0_84, "v0.85": PAIRINGS_V0_85, "v0.86": PAIRINGS_V0_86,
            "v0.87": PAIRINGS_V0_87, "v0.88": PAIRINGS_V0_88, "v0.89": PAIRINGS_V0_89, "v0.90": PAIRINGS_V0_90, "v0.91": PAIRINGS_V0_91,
            "v0.92": PAIRINGS_V0_92, "v0.93": PAIRINGS_V0_93, "v0.94": PAIRINGS_V0_94, "v0.95": PAIRINGS_V0_95,
-           "v0.96": PAIRINGS_V0_96}
+           "v0.96": PAIRINGS_V0_96, "v0.97": PAIRINGS_V0_97}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -5412,6 +5435,118 @@ def v096_uses(state):
     return +counts
 
 
+def _v097_source(state, d):
+    """v0.97: 決定のもとになった v0.97 のカードの id（アンノーンの特殊能力。なければ None）。"""
+    card_id = _v085_source(state, d)
+    return card_id if card_id in V0_97_POKEMON else None
+
+
+def _v097_decision(state, counts):
+    """v0.97 の決定への答え（元の手順より先に答える）: ［INCREASE］の使う機会（局の中で使う・使わないを交互に答え、最初の機会は使う。選ぶと止める答え（PW3）は選ばない）・ベンチに出す
+    山札のアンノーン・［FIND］・［JOIN］の山札のカード（選べるものを順に回す）。v0.97 のカードの決定でなければ何もしない。"""
+    d = state.decision
+    if d is None:
+        return None
+    card_id = _v097_source(state, d)
+    if card_id is None:
+        return None
+    key = f"v097_{card_id}_{d.kind}"
+    seen = counts[f"{key}_seen"]
+    counts[f"{key}_seen"] += 1
+    blocked = set(d.context_value("unresolved_choices", ()) or ())
+    if blocked:
+        counts[f"{key}_blocked_{d.context_value('unresolved_code')}"] += 1
+    if d.min_choices == 0 and (seen % 2 == 1 or all(o in blocked for o in d.options)):
+        counts[f"{key}_declined"] += 1
+        return ResolveDecision(d.player, d.id, ())
+    rotated = list(d.options[seen % len(d.options):]) + list(d.options[:seen % len(d.options)]) if d.options else []
+    for choice in [o for o in rotated if o not in blocked]:
+        if _v052_accepted(state, ResolveDecision(d.player, d.id, (choice,))):
+            counts[f"{key}_answered"] += 1
+            return ResolveDecision(d.player, d.id, (choice,))
+    if d.min_choices == 0:
+        counts[f"{key}_declined_no_choice"] += 1
+        return ResolveDecision(d.player, d.id, ())
+    counts[f"{key}_no_accepted_answer"] += 1
+    return None
+
+
+def _v097_step(state, tried, counts):
+    """v0.97: ［FIND］・［JOIN］を、場のポケモンごとに自分の番ごとに 1 回、受け付けるなら使う。受け付けない理由（文字がそろっていない・ベンチにいない・PW3・特殊能力を消す効果）は
+    ``v097_power_<カード>_not_usable_<コード>`` に数える。v0.97 のカードがない局では何もしない。"""
+    player = state.current_player
+    for pokemon in state.players[player].in_play():
+        if state.is_face_down(pokemon):
+            continue
+        card_id = state.cards[pokemon.card].card_id
+        marker = ("v097_power", pokemon.pokemon_id, state.turn_number)
+        if card_id not in V097_DECLARED or marker in tried:
+            continue
+        tried.add(marker)
+        use = UsePokemonPower(player, pokemon.pokemon_id, 0)
+        real = _V052_REAL.get("state")
+        try:
+            apply_command(real if real is not None and real.turn_number == state.turn_number and real.decision == state.decision else state, use)
+        except (IllegalActionError, UnsupportedError) as error:
+            counts[f"v097_power_{card_id}_not_usable_{error.code}"] += 1
+            continue
+        counts[f"v097_power_{card_id}"] += 1
+        return use
+    return None
+
+
+def v097_uses(state):
+    """v0.97: ログから数えた v0.97 のカードの動き（v0.97 のカードのない局では空）。``attack_<id>#0``（めざめるパワー）・``power_<id>``（宣言・場に出たときの使う答え）・
+    ``entry_declined_<id>``・``increase_benched_<id>``・``find_revealed_<種類>``・``join_revealed_<段階>``・``df_<D か N>_step<段階>_<own か opponent の攻撃>_final<0 か pos>``
+    （［DARK df］・［NORMAL df］の「-30」を当てはめたワザのダメージ。持ち主の場のアンノーンが受けた）・``unown_in_deck_p<プレイヤー>=<枚数>``。"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_97 for uid in state.cards):
+        return counts
+    for player in (0, 1):
+        owned = sum(1 for uid in state.cards if state.cards[uid].owner == player and state.card_def(uid).category == "pokemon"
+                    and state.printed_def(uid).name_group == "アンノーン")
+        counts[f"unown_in_deck_p{player}={owned}"] += 1
+    power = None
+    attacker = None
+    for e in state.log:
+        kind = e["kind"]
+        if kind == "attack":
+            holder = state.cards[e["pokemon"]].card_id if e.get("pokemon") in state.cards else None
+            current = e.get("card_id", holder)
+            if current in V0_97_POKEMON:
+                counts[f"attack_{current}#{e['attack_index']}"] += 1
+            attacker = e.get("player")
+            power = None
+            continue
+        if kind == "pokemon_power":
+            holder = state.cards[e["pokemon"]].card_id if e.get("pokemon") in state.cards else None
+            power = holder if holder in V0_97_POKEMON else None
+            if power is not None:
+                counts[f"power_{power}{'_entry' if e.get('entry') else ''}"] += 1
+            continue
+        if kind == "entry_power_declined" and e.get("pokemon") in state.cards and state.cards[e["pokemon"]].card_id in V0_97_POKEMON:
+            counts[f"entry_declined_{state.cards[e['pokemon']].card_id}"] += 1
+            continue
+        if kind == "damage":
+            for step, source, amount in e.get("modifiers") or ():
+                card_id = state.cards[source].card_id if source in state.cards else None
+                if card_id in V097_DF and amount == -30:
+                    who = "own" if attacker == e.get("player") else "opponent"
+                    counts[f"df_{V097_DF[card_id]}_step{step}_{who}_attack_final{'0' if e['amount'] == 0 else 'pos'}"] += 1
+            continue
+        if kind in ("turn_start", "turn_end"):
+            power = None
+            continue
+        if power is None or not str(e.get("power", "")).startswith(power):
+            continue
+        if kind == "bench_from_deck":
+            counts[f"increase_benched_{state.cards[e['card']].card_id}"] += 1
+        elif kind == "reveal_from_deck":
+            definition = state.printed_def(e["card"])
+            counts[f"{'find' if power == 'neo2-026' else 'join'}_revealed_{definition.category if power == 'neo2-026' else definition.stage}"] += 1
+    return +counts
+
+
 def _v094_decision(state, counts):
     """v0.94 のワザの決定への答え（元の手順より先に答える）: きつねびの任意の入れ替え（``FORCED_SWITCH`` の 0〜1 匹）は、決定のたびに 入れ替えない・控えを順に を回す（入れ替えない
     答えも起こす）。ほかの v0.94 のワザの決定（相手・自分の入れ替えの控え）は、選べるものを順に回す（v0.92 の ``_v092_decision`` と同じ。選ぶと止める答えは選ばない）。v0.94 のワザの
@@ -6997,7 +7132,8 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = (_v096_decision(state, counts)  # v0.96: v0.96 の特殊能力・遺跡の石版の決定（v0.96 のカードのない局では何もしない）
+            early = (_v097_decision(state, counts)  # v0.97: v0.97 の特殊能力の決定（v0.97 のカードのない局では何もしない）
+                     or _v096_decision(state, counts)  # v0.96: v0.96 の特殊能力・遺跡の石版の決定（v0.96 のカードのない局では何もしない）
                      or _v095_decision(state, counts)  # v0.95: v0.95 のワザ・特殊能力の決定（v0.95 のカードのない局では何もしない）
                      or _v094_decision(state, counts)  # v0.94: v0.94 のワザの決定（きつねびの入れ替えない答えを含む。v0.94 のカードのない局では何もしない）
                      or _v092_decision(state, counts)  # v0.92: v0.92 のワザの決定（だましうちの選ぶポケモン。v0.92 のカードのない局では何もしない）
@@ -7095,7 +7231,8 @@ def make_policy(seen: dict, counts: Counter):
                      or _v088_step(state, tried, counts)  # v0.88: ［せんすい］・［エナジーコンバーター］・［でんじりょく］
                      or _v095_step(state, tried, counts)  # v0.95: ［みやぶる］・［わるぢえ］
                      or _v096_trainer(state, tried, counts)  # v0.96: 遺跡の石版
-                     or _v096_step(state, tried, counts))  # v0.96: ［OBSERVE］・［LAUGH］・［SEARCH］・［TELL］
+                     or _v096_step(state, tried, counts)  # v0.96: ［OBSERVE］・［LAUGH］・［SEARCH］・［TELL］
+                     or _v097_step(state, tried, counts))  # v0.97: ［FIND］・［JOIN］
             if power is not None:
                 return power
             history = _v062_attack(state, tried, counts)  # v0.62: 履歴を読むワザ（ドリルホール・オウムがえし）を使える番に使う
@@ -7285,6 +7422,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v094"] = v094_uses(state)
         result["v095"] = v095_uses(state)
         result["v096"] = v096_uses(state)
+        result["v097"] = v097_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
@@ -7300,7 +7438,7 @@ def audit(result, state, commands):
         return {"not_audited": 1}
     current = new_game(*(deck_cards(label) for label in result["decks"]), result["seed"])
     watch = any(state.cards[uid].card_id in V0_47 + V0_47_TRAINERS + V0_48 + V0_54_TRAINERS + V0_55_TRAINERS + V0_56_TRAINERS + V0_63_TRAINERS + V0_95 + V0_96
-                for uid in state.cards)  # v0.48: 観測の今有効な値も（v0.54・v0.55: 見る・見せるトレーナー。v0.95: 手札・山札を見るワザ・特殊能力）
+                + V0_97 for uid in state.cards)  # v0.48: 観測の今有効な値も（v0.54・v0.55: 見る・見せるトレーナー。v0.95: 手札・山札を見るワザ・特殊能力）
     for command in commands:
         current = apply_command(current, command)
         if watch:

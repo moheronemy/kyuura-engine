@@ -39,7 +39,7 @@ import itertools
 from dataclasses import dataclass
 from typing import Mapping, Sequence
 
-from .cards import CardDefinition
+from .cards import CardDefinition, EnergyType
 from .rules import RuleSet
 
 # 同じ段階に複数の変更効果があるときに、計算の順番を決めるプレイヤー（p.321）。
@@ -90,6 +90,8 @@ class DamageModifier:
       ``amount`` はしきい値。その段階のダメージが ``amount`` より小さければ 0、``amount`` 以上ならそのまま）。v0.46: ``ZERO_IF_AT_LEAST``（``amount`` はしきい値）・
       ``SET_IF_AT_LEAST``（``threshold`` 以上なら ``amount`` にする）・``HALVE_UP``・``HALVE_DOWN``（``amount`` は 2。割る数）
     - ``threshold``（v0.46）: ``SET_IF_AT_LEAST`` のしきい値（ほかの計算では None）
+    - ``attacker_type``（v0.97）: ダメージを与えるポケモンの今有効なタイプがこのタイプのときだけ当てはめる（アンノーンD の［DARK df］の「「悪」ポケモンからダメージを受けるとき」）。
+      色の読み方（VS1 など）ごとの計算（``calculate_attack_damage`` の ``attacker``）で決める。None ならタイプによらない（v0.96 までの変更効果はすべてこれ）
     """
 
     step: int
@@ -98,6 +100,7 @@ class DamageModifier:
     source: int | None = None
     operation: str = ADD
     threshold: int | None = None
+    attacker_type: EnergyType | None = None
 
     def __post_init__(self) -> None:
         if self.step not in DAMAGE_STEP_CHOOSER:
@@ -237,8 +240,9 @@ def calculate_attack_damage(
     ``reduction``（v0.66）: 5 段階の「好きなだけ小さくしてよい」効果（``REDUCE_CHOICE``。お上品攻撃）で減らす量。その効果があり、2 段階で計算を終えないのに
     渡されていなければ ``DamageReductionRequired``（呼ぶ側が決定で選ばせる）。2 段階の順番の決定は減らす量より先、6〜8 段階の順番の決定は減らす量のあと（減らした
     あとのダメージで比べる）。``REDUCE_CHOICE`` は 5 段階のほかの効果（加算だけ）のあとに当てはめる（docs/optional-trainers-v0.66.md 2.3 節）。
+    v0.97: ``attacker_type`` のある変更効果は、``attacker``（ダメージを与えるポケモンの今有効な値の定義。色の読み方ごと）のタイプが同じときだけ当てはめる（ほかは集めない）。
     """
-    used = tuple(modifiers)
+    used = tuple(m for m in modifiers if m.attacker_type is None or m.attacker_type is attacker.pokemon_type)
     reducers = tuple(m for m in used if m.operation == REDUCE_CHOICE)
     used = tuple(m for m in used if m.operation != REDUCE_CHOICE)
     if reducers and any(m.step == 5 and m.operation != ADD for m in used):

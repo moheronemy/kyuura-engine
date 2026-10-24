@@ -99,7 +99,7 @@ from .cards import EnergyType, can_pay_with_units
 from .coins import CoinSide, flip_coins
 from .conditions import CONFUSION, CURED, PARALYSIS, POISON, SLEEP, SWITCH, clear_special_conditions, confuse, put_to_sleep
 from .damage import (
-    HALVE_DOWN, HALVE_UP, MULTIPLY, REDUCE_CHOICE, SET, SET_IF_AT_LEAST, ZERO_IF_AT_LEAST, ZERO_IF_BELOW, DamageModifier, DamageReductionRequired,
+    HALVE_DOWN, HALVE_UP, MULTIPLY, REDUCE_CHOICE, SET, SET_IF_AT_LEAST, ZERO_IF_AT_LEAST, ZERO_IF_BELOW, DamageModifier, DamageOrderRequired, DamageReductionRequired,
     calculate_attack_damage,
 )
 from .decisions import (
@@ -677,8 +677,21 @@ def preview_attack_damage(state: GameState, use: AttackUse, target: str, base: i
     receiver = damage_receiver(state, use, target)
     if damage_prevention(state, receiver) is not None or attack_barrier(state, receiver) is not None:  # v0.31: 「バリアー」も要素を無効にする
         return None
-    modifiers = attack_damage_modifiers(state, attacker, receiver, attack=use.key)
     resistance = attack_ignores_resistance(state, attacker, receiver) is None  # v0.81: ピントレンズ
+    readings = self_excluding_readings(state, attacker, receiver)
+    if len(readings) > 1:
+        # v0.97（DF1）: 同じ力が 2 匹以上ではたらきうる。どれがはたらくかの読み方で最終ダメージが変わるなら止める（減らす量は最も大きいダメージで比べる。下と同じ）
+        finals = set()
+        for copies in readings:
+            variant = attack_damage_modifiers(state, attacker, receiver, attack=use.key, copies=copies)
+            try:
+                finals.add(same_for_type_readings(state, (attacker, receiver), lambda views, v=variant: calculate_with_stadium(state,
+                    base, views[0], views[1], v, resistance=resistance, reduction=0 if any(m.operation == REDUCE_CHOICE for m in v) else None).final))
+            except (TypeReadingsDiffer, DamageOrderRequired):
+                finals.add(None)
+        if len(finals) > 1:
+            raise UnsupportedError(SELF_EXCLUDING_COPIES_CODE, f"{SELF_EXCLUDING_COPIES_REASON}。ワザ {use.key} のダメージの計算（ポケモン {receiver.pokemon_id}）")
+    modifiers = attack_damage_modifiers(state, attacker, receiver, attack=use.key)
     # v0.48: 今有効な値の定義（``definition_views``）。色の読み方（VS1）で最終ダメージが変わるなら止める（``kernel.deal_damage`` と同じ判定）
     try:
         try:
@@ -5997,7 +6010,7 @@ EXCLUDE_DEFENDER_SIDE = "defender_side"  # そのうえ、受けるポケモン�
 
 def attack_damage_modifiers(
     state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay, *, attack: AttackKey | None = None, bench: bool = False,
-    attack_status: frozenset[int] | None = None, exclude: str | None = None,
+    attack_status: frozenset[int] | None = None, exclude: str | None = None, copies=None,
 ) -> tuple[DamageModifier, ...]:
     """ワザでダメージを与えるときの変更効果（v0.2c）。
 
@@ -6024,6 +6037,9 @@ def attack_damage_modifiers(
     ワザを使うポケモンの持っている効果（プラスパワー・つるぎのまい・きあいだめ・ワザを使うポケモンが受けている「なきつく」・きょうぼう）・場のほかのポケモン・プレイヤー・
     スタジアムの効果は、だれが与えたかによらず残す（効果を持っているのがだれかで分ける）。``EXCLUDE_DEFENDER_SIDE`` なら、そのうえ ``defender`` の持ち主の場のほかの
     ポケモンが持っている常にはたらく特殊能力も集めない（「相手の持っている」を相手プレイヤーの場が持っていると読む読み方。SS1 の比べるため）。
+
+    v0.97: ``copies`` は、同じ力（「自分の場のほかの…がはたらいているとき、この力は、はたらかない」。［DARK df］・［NORMAL df］）が 2 匹以上ではたらきうるときの、どれがはたらくかの
+    読み方（``with_copies``。既定は 1 つもはたらかない読み方）。読み方は除く範囲（``exclude``）より先に当てはめる（除かれる力も、はたらいている候補として数える）。
     """
     if exclude not in (None, EXCLUDE_DEFENDER_HELD, EXCLUDE_DEFENDER_SIDE):
         raise ValueError(f"除く効果の範囲 {exclude!r} は未定義")
@@ -6076,7 +6092,7 @@ def attack_damage_modifiers(
     if attack is not None and defender_held:
         # v0.60: 「スピードスター」。受けるポケモンの持っている持続する効果（8 段階）は集めない。常にはたらく特殊能力は持ち主で分ける
         defender_owner = state.find_pokemon(defender.pokemon_id)[0]
-        for holder_owner, holder, key, effect in continuous_powers(state, attack_status=attack_status):
+        for holder_owner, holder, key, effect in with_copies(continuous_powers(state, attack_status=attack_status), copies):
             if holder is defender or (exclude == EXCLUDE_DEFENDER_SIDE and holder_owner == defender_owner):
                 continue
             modifiers.extend(effect.attack_damage_modifiers(state, holder, _power_label(state, holder, key), attacker, defender))
@@ -6115,7 +6131,7 @@ def attack_damage_modifiers(
         for bonus in received_attack_damage_bonuses(state, defender):
             modifiers.append(DamageModifier(step=8, amount=bonus.amount, label=_persistent_effect_name(state, bonus), source=bonus.source_card))
         # v0.46: 常にはたらく特殊能力（2・6・8 段階）。こんらんの 20（``attack`` を渡さない呼び出し）には使わない（``confusion_power_modifiers`` で別に聞く）
-        modifiers.extend(continuous_attack_damage_modifiers(state, attacker, defender, attack_status=attack_status))
+        modifiers.extend(continuous_attack_damage_modifiers(state, attacker, defender, attack_status=attack_status, copies=copies))
     return tuple(modifiers)
 
 
@@ -9127,6 +9143,11 @@ class EntryPower(PowerEffect):
     def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
         return None
 
+    def entry_blocked(self, state: GameState, owner: int, pokemon: PokemonInPlay) -> bool:
+        """v0.97: 説明が「…とき、この力は使えない」と書く条件が、場に出たあと（機会を出す時点）に成り立っているか（［INCREASE］の「自分のベンチに空きがないとき」）。成り立って
+        いれば機会を出さない（場に出すこと自体は拒否しない）。既定は成り立たない（v0.96 までの場に出たときの特殊能力）。"""
+        return False
+
 
 def entry_power(state: GameState, card: int) -> tuple[int, EntryPower] | None:
     """カード ``card``（場のポケモンならいちばん上のカード）の、場に出たときに使える特殊能力（位置と実装。登録された ``EntryPower`` だけ）（v0.43）。"""
@@ -9151,9 +9172,12 @@ def applicable_entry_power(state: GameState, card: int, *, from_hand: bool, towe
         return None
     if effect.bench_only and not on_bench:
         return None  # v0.84: ベンチで進化させたときだけ（場所が分からない問い合わせ（None）では機会がない）
-    holder = next((pk for player in state.players for pk in player.in_play() if pk.card == card), None)
+    holder_found = next(((owner, pk) for owner, player in enumerate(state.players) for pk in player.in_play() if pk.card == card), None)
+    holder = None if holder_found is None else holder_found[1]
     if power_suppressed(state, state.card_def(card).powers[index], holder):  # v0.87: ふしぎなガスはその側だけを止めるので、持ち主のポケモンを渡す
         return None
+    if holder_found is not None and effect.entry_blocked(state, *holder_found):
+        return None  # v0.97: 説明の「…とき、この力は使えない」（［INCREASE］のベンチの空き。機会がない）
     if tower and effect.discard_to_hand_only and discard_to_hand_suppressor(state) is not None:
         return None  # v0.74: ポケモンタワーで効果が消えた（使っても状態は同じなので、機会を出さない。``tower`` が偽なら、タワーを見ない）
     return found
@@ -12181,6 +12205,9 @@ class ContinuousPower(PowerEffect):
     requires_confusion: ClassVar[bool] = False
     status_at_attack: ClassVar[bool] = False
     what: ClassVar[str] = "常にはたらく特殊能力"
+    # v0.97: 「自分の場のほかの…の［…］がはたらいているとき、この力は、はたらかない」（同時にはたらくのは、同じ持ち主の同じ力のうち多くても 1 つ。CR-UNOWN-DF-AT-MOST-ONE）。
+    # どれがはたらくかは決まらないので、2 匹以上ではたらきうるときは、呼ぶ側が読み方（``self_excluding_readings``）ごとに比べる（``with_copies``）
+    self_excluding: ClassVar[bool] = False
 
     def texts(self) -> tuple[str, ...]:
         """受け付ける説明（kyuura の写しの印刷の文面と完全に同じ）。"""
@@ -12220,6 +12247,12 @@ class ContinuousPower(PowerEffect):
         なぞのかべ・カブトアーマー）。当てはめると量が変わるなら止める（KA1。``poison_received_power_problem``）。"""
         return None
 
+    def non_attack_damage_modifier(self, state: GameState, holder: PokemonInPlay, label: str, receiver: PokemonInPlay,
+                                   source: PokemonInPlay | None) -> DamageModifier | None:
+        """v0.97: ``receiver`` が ``source`` から、ワザでない（特殊能力の）ダメージを受けるとき、当てはめるかが問われる変更（説明は「ワザ」と書かず、ダメージを与えるポケモンを
+        書く。［NORMAL df］）。当てはめるかどうかで量が変わるなら止める（DF2。``received_power_damage``）。``holder`` は受けるポケモンでなくてよい（ベンチの力も見る）。"""
+        return None
+
 
 def continuous_powers(state: GameState, kind: type | tuple[type, ...] = ContinuousPower, *, attack_status: frozenset[int] | None = None,
                       ignore_status: bool = False) -> list[tuple[int, PokemonInPlay, PowerKey, ContinuousPower]]:
@@ -12242,6 +12275,48 @@ def continuous_powers(state: GameState, kind: type | tuple[type, ...] = Continuo
     return found
 
 
+def self_excluding_groups(found) -> dict[tuple, list]:
+    """v0.97: ``continuous_powers`` の結果のうち、同時にはたらくのが多くても 1 つの特殊能力（``self_excluding``）を、持ち主と実装（同じ力）ごとに集めたもの（(持ち主, 実装) →
+    はたらきうる候補の並び）。"""
+    groups: dict[tuple, list] = {}
+    for item in found:
+        if getattr(item[3], "self_excluding", False):
+            groups.setdefault((item[0], item[3]), []).append(item)
+    return groups
+
+
+def with_copies(found, copies=None) -> list:
+    """v0.97: ``continuous_powers`` の結果に、同じ力がはたらきうる 2 匹以上のときの読み方 ``copies``（(持ち主, 実装) → はたらく候補のポケモンの番号。書いていない・None なら
+    1 つもはたらかない）を当てはめたもの。候補が 1 匹ならそのまま。どの読み方にするかは呼ぶ側が決める（``self_excluding_readings``。代表を uid・場の並び・場に出た順で選ばない）。
+    読み方を渡さない呼び方（既定）は 1 つもはたらかない読み方で、ダメージの要素（``kernel.self_excluding_copies_question``）が、読み方で結果が変わらないことを確かめてから使う。"""
+    groups = self_excluding_groups(found)
+    chosen = dict(copies or {})
+    return [item for item in found if not getattr(item[3], "self_excluding", False) or len(groups[(item[0], item[3])]) == 1
+            or chosen.get((item[0], item[3])) == item[1].pokemon_id]
+
+
+def self_excluding_readings(state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay, *, attack_status: frozenset[int] | None = None,
+                            ignore_status: bool = False) -> tuple[dict | None, ...]:
+    """v0.97（DF1）: ``attacker`` が ``defender`` に与えるワザのダメージに当たりうる、同じ力がはたらきうる 2 匹以上の組（``self_excluding_groups``）ごとの、どれがはたらくかの読み方
+    （1 つもはたらかない読み方と、候補ごとの読み方。組が 2 つ以上なら組み合わせ）。当たる組がなければ ``(None,)``（読み方は 1 つ）。最初の読み方はどの組も 1 つもはたらかない読み方
+    （``with_copies`` の既定）。状態を変えず、乱数を使わない。"""
+    found = continuous_powers(state, attack_status=attack_status, ignore_status=ignore_status)
+    choices = []
+    for key, members in self_excluding_groups(found).items():
+        if len(members) < 2 or not any(effect.attack_damage_modifiers(state, holder, _power_label(state, holder, power_key), attacker, defender)
+                                       for _, holder, power_key, effect in members):
+            continue
+        choices.append([(key, None)] + [(key, holder.pokemon_id) for _, holder, _, _ in members])
+    if not choices:
+        return (None,)
+    return tuple(dict(combo) for combo in itertools.product(*choices))
+
+
+def copies_label(copies) -> tuple:
+    """v0.97: 読み方 ``copies`` の、理由の文に出す表し方（(持ち主, 特殊能力の名前, はたらく候補のポケモンの番号か None) の並び）。"""
+    return tuple(sorted(((key[0], getattr(key[1], "name", key[1].implementation_id), choice) for key, choice in (copies or {}).items()), key=repr))
+
+
 def _power_label(state: GameState, holder: PokemonInPlay, key: PowerKey) -> str:
     """ダメージの記録・ログに出す名前（カードの名前と特殊能力の名前）。"""
     definition = state.definitions[key.card_id]  # v0.49: 特殊能力を印刷したカード
@@ -12249,10 +12324,11 @@ def _power_label(state: GameState, holder: PokemonInPlay, key: PowerKey) -> str:
 
 
 def continuous_attack_damage_modifiers(state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay, *,
-                                       attack_status: frozenset[int] | None = None, ignore_status: bool = False) -> list[DamageModifier]:
-    """``attacker`` が ``defender`` にワザのダメージを与えるときの、場の常にはたらく特殊能力の変更効果（v0.46。``attack_damage_modifiers`` から呼ぶ）。"""
+                                       attack_status: frozenset[int] | None = None, ignore_status: bool = False, copies=None) -> list[DamageModifier]:
+    """``attacker`` が ``defender`` にワザのダメージを与えるときの、場の常にはたらく特殊能力の変更効果（v0.46。``attack_damage_modifiers`` から呼ぶ）。v0.97: ``copies`` は同じ力が
+    2 匹以上ではたらきうるときの読み方（``with_copies``）。"""
     modifiers: list[DamageModifier] = []
-    for _, holder, key, effect in continuous_powers(state, attack_status=attack_status, ignore_status=ignore_status):
+    for _, holder, key, effect in with_copies(continuous_powers(state, attack_status=attack_status, ignore_status=ignore_status), copies):
         modifiers.extend(effect.attack_damage_modifiers(state, holder, _power_label(state, holder, key), attacker, defender))
     return modifiers
 
@@ -12760,7 +12836,29 @@ def received_power_damage(state: GameState, owner: int, receiver: PokemonInPlay,
             raise UnsupportedError(METAL_POWER_ORDER_CODE, f"ポケモン {receiver.pokemon_id} の特殊能力のダメージ {printed}（{applied[0].label}・鋼エネルギー {list(cards)}）: "
                                    + METAL_POWER_ORDER_REASON)
     applied.extend(DamageModifier(step=7, amount=-METAL_REDUCTION, label=state.card_def(uid).name_ja, source=uid) for uid in used)
+    if printed > 0:
+        _non_attack_damage_question(state, receiver, source, printed, amount)
     return reduced, tuple(applied)
+
+
+def _non_attack_damage_question(state: GameState, receiver: PokemonInPlay, source: PokemonInPlay | None, printed: int, amount: int) -> None:
+    """v0.97（DF2）: ワザでない特殊能力のダメージ ``printed`` を ``receiver`` が受けるとき、場の常にはたらく特殊能力のうち、当てはめるかが決まらないもの（``non_attack_damage_modifier``。
+    受けるポケモンでないベンチの力も見る。［NORMAL df］は「「無色」ポケモンからダメージを受けるとき」とワザと書かない）を当てはめると最終の量が変わるなら止める（``UnsupportedError``。
+    量を変える前。呼ぶ側が状態を変える前に聞く。v0.75 の DB1 と同じ扱い）。比べ方は v0.79 の ``non_attack_change_matters``（鋼エネルギーの前・あとのすべての順番。``amount`` は受ける
+    ポケモン自身の受けるダメージを変える特殊能力を当てはめたあとの量）で、0 以下は「ダメージを受けなかった」として 0 にそろえる（「-30」で負になるため）。同じ力が 2 匹以上でも
+    当てはめるのは多くても 1 つ（CR-UNOWN-DF-AT-MOST-ONE。同じ変更は 1 つにまとめる）。p.321 のワザのダメージの段階は使わない。"""
+    per = state.rules.damage_per_counter
+    uncertain: dict[tuple, DamageModifier] = {}
+    for _, holder, key, effect in continuous_powers(state):
+        modifier = effect.non_attack_damage_modifier(state, holder, _power_label(state, holder, key), receiver, source)
+        if modifier is not None:
+            uncertain.setdefault((modifier.operation, modifier.amount, modifier.threshold), modifier)
+    if not uncertain:
+        return
+    changes = tuple((lambda value, m=m: max(0, m.apply(value, per))) for m in uncertain.values())
+    if non_attack_change_matters(state, receiver, amount, changes):
+        raise UnsupportedError(POWER_DAMAGE_RECEIVED_POWER_CODE, f"ポケモン {receiver.pokemon_id} の特殊能力のダメージ {printed}（{[m.label for m in uncertain.values()]}）: "
+                               f"{POWER_DAMAGE_RECEIVED_POWER_REASON}")
 
 
 def received_modifiers_log(applied: tuple[DamageModifier, ...]) -> tuple[tuple, ...]:
@@ -38092,3 +38190,256 @@ SAME_DATA_TRAINERS_V0_96: Mapping[str, str] = MappingProxyType({"neo2-057": "neo
 
 DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_96_ATTACKS), V0_96_POWERS)
 DEFAULT_EFFECTS = _with_shared_trainers(_with_trainers(DEFAULT_EFFECTS, V0_96_TRAINERS), SAME_DATA_TRAINERS_V0_96)
+
+
+# ---------------------------------------------------------------- v0.97（docs/unown-research-idfnj-v0.97.md）: アンノーンI・D・F・[N]・[J] の 5 枚
+#
+# kyuura 73a1690（研究 78d090c を取り込んだ main）の調査の裁定（CR-UNOWN-…）にしたがう。「自分のベンチに…アンノーン「I」「N」「D」がいる」の文字は、場のポケモンの今の姿のカードの
+# 名前のグループと文字（``form_def``・``CardDefinition.name_group``・``name_letter``）で決め、名前の完全一致・カード id では決めない。デッキに入れられる枚数はデッキの規定（v0.96 の
+# ``deck.deck_problems``。文字を合わせて 4 枚。CR-UNOWN-DECK-LIMIT-ALL-LETTERS）
+
+INCREASE_TEXT = ("この力は、このカードを手札から場に出したとき、1回だけ使える。 自分の山札から「{group}」を1枚選び出し、ベンチに出す。その後、その山札をよく切る。 "
+                 "自分のベンチに空きがないとき、この力は使えない。")
+
+
+@dataclass(frozen=True)
+class BenchNameGroupFromDeckOnEntry(EntryPower):
+    """この力は、このカードを手札から場に出したとき、1 回だけ使える。自分の山札から「``group``」を 1 枚選び出し、ベンチに出す。その後、その山札をよく切る。自分のベンチに空きが
+    ないとき、この力は使えない（v0.97。アンノーンI（neo2-023）の［INCREASE］。kyuura の印刷の文面（転記の半角の空白のまま）。docs 4 章）。
+
+    - 使う機会は手札から場に出したとき（手札からベンチに出す操作・エリカの香水・マチスなどの手札から出す経路。v0.96 の［ENGAGE］と同じ ``from_hand_only``）だけ。山札から出した
+      （遺跡の石版・この力）アンノーンには「手札から」の機会はない。使うかは持ち主が決める（決定 ``ENTRY_POWER``）
+    - 場に出したあとで自分のベンチに空きがない（このカードを出してベンチがいっぱいになったときを含む）なら、この力は使えないので機会を出さない（``entry_blocked``。場に出すこと
+      自体は拒否しない）。ベンチの数は公開の情報
+    - 選べるのは山札の、印刷の定義の名前のグループが「``group``」のたねポケモンのカード（v0.96 の遺跡の石版と同じ ``CardFilter``。文字を問わない。uid の小さい順）。ちょうど 1 枚
+      （「選び出し、ベンチに出す」。選ばなくてよいとは書かれていない）。山札に選べるカードがない（山札 0 枚を含む）ときに使えるかは決まらない（kyuura の UQ-CARD-USE-WITHOUT-TARGET の
+      事例。エンジンは同じ「1枚選び出し」で選ぶカードが 0 枚になる v0.43 の PW3 で、使うを選ぶと止める。使わないは選べる）。機会の決定の形（選べるもの・選ぶ数）は山札の中身で
+      変えない（相手に見えるのは種類・プレイヤー・数だけ。選ぶと止める選択は見せない）
+    - 決定 ``BENCH_FROM_DECK``（選べるものの数は使ったプレイヤーだけが見る）→ 手札を通さずにベンチの最後へ（``zones.bench_from_deck``。ログ ``bench_from_deck`` の ``power``）→
+      山札を 1 回切る（ログ ``shuffle`` の ``power``）。出したカードの「手札から場に出したとき」の特殊能力（［INCREASE］・［ENGAGE］・［REASSURE］）の機会はない。まきちらせ!ベトベトガスの
+      ような、出すと止めるカードは GG1 など（選べるが選ぶと止める。どれもそうなら使うを選ぶと止める）
+    """
+
+    group: str = "アンノーン"
+    implementation_id = "bench_name_group_from_deck_on_entry"
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "手札から場に出したとき、山札の名前のグループのたねポケモンをベンチに出す特殊能力", (INCREASE_TEXT.format(group=self.group),))
+
+    def entry_blocked(self, state: GameState, owner: int, pokemon: PokemonInPlay) -> bool:
+        return not bench_has_space(state, owner)
+
+    def candidates(self, state: GameState, player: int) -> tuple[int, ...]:
+        return deck_cards_matching(state, player, CardFilter("basic_pokemon", name_group=self.group))
+
+    def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
+        options = self.candidates(state, use.player)
+        if not options:
+            return _power_zero_cards(f"［INCREASE］で、山札に「{self.group}」がない（山札 0 枚を含む。kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例）")
+        blocked, code, reason = bench_entry_unresolved(state, options)
+        if len(blocked) == len(options):
+            return UnsupportedError(code, f"山札の「{self.group}」がどれも、ベンチに出すと止めるカード: {reason}")
+        return None
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        problem = self.accept_problem(state, use)
+        if problem is not None or not bench_has_space(state, use.player):
+            raise RuntimeError(f"［INCREASE］を、止めるはずの場合・ベンチに空きがない場合に使った（{problem}。機会の決定の確認の漏れ。エンジンの不具合）")
+        options = self.candidates(state, use.player)
+        for card in options:
+            placed_entry_power_guard(state, card)
+        blocked, code, reason = bench_entry_unresolved(state, options)
+        extra = {} if not blocked else {"unresolved_choices": blocked, "unresolved_code": code, "unresolved_reason": reason}
+        push_power_decision(state, use, kind=BENCH_FROM_DECK, player=use.player, options=options, **extra)
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        (card,) = choices
+        if card not in self.candidates(state, use.player) or not bench_has_space(state, use.player):
+            raise RuntimeError(f"［INCREASE］で選んだカード {card} をベンチに出せない（決定の確認の漏れ。エンジンの不具合）")
+        _, user = state.find_pokemon(use.pokemon_id)
+        pokemon = bench_from_deck(state, use.player, card)
+        state.add_event("bench_from_deck", player=use.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key), card=card,
+                        to_pokemon_id=pokemon.pokemon_id)
+        shuffle_deck(state, use.player, power=str(use.key))
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        options = self.candidates(state, use.player)
+        blocked, _, _ = bench_entry_unresolved(state, options)
+        problems = _power_decision_form(decision, use, kind=BENCH_FROM_DECK, choices=(1, 1), options=options, unresolved=blocked)
+        if not bench_has_space(state, use.player):
+            problems.append(f"特殊能力 {use.key} の決定のときに、ベンチに空きがない")
+        return problems
+
+
+FIND_TEXT = ("この力は、自分のベンチに、このカードとアンノーン「{letters}」がいるとき、自分の番ごとに1回使える。 自分の山札から「トレーナーカード」を1枚選び出し、"
+             "相手プレイヤーに見せてから、手札に加える。 その後、その山札をよく切る。")
+JOIN_TEXT = ("この力は、自分のベンチに、このカードとアンノーン「{letters}」がいるとき、自分の番ごとに1回使える。自分の山札から「ベイビィポケモン」「たねポケモン」「進化カード」の"
+             "うち1枚を選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。")
+
+
+def bench_group_letters(state: GameState, player: int, group: str, *, excluding: int | None = None) -> frozenset[str]:
+    """プレイヤー ``player`` のベンチ（``excluding`` の番号のポケモンを除く）の、今の姿のカードの名前のグループが ``group`` のポケモンの文字（v0.97。「自分のベンチに…アンノーン「I」
+    「N」「D」がいる」）。うらのカード（マチスの秘策）は名前を読めない（読むと FD1。呼ぶ側がおもてのポケモンで足りるかを先に見る）。"""
+    return frozenset(form_def(state, pokemon).name_letter for pokemon in state.players[player].bench
+                     if pokemon.pokemon_id != excluding and not state.is_face_down(pokemon) and in_name_group(state, pokemon, group))
+
+
+@dataclass(frozen=True)
+class SearchDeckWithBenchLettersToHand(PowerEffect):
+    """この力は、自分のベンチに、このカードとアンノーン「``letters``」がいるとき、自分の番ごとに 1 回使える。自分の山札から ``what`` のカードを 1 枚選び出し、相手プレイヤーに見せてから、
+    手札に加える。その後、その山札をよく切る（v0.97。アンノーンF（neo2-026）の［FIND］（「トレーナーカード」）・アンノーン[J]（PRN-034）の［JOIN］（「ベイビィポケモン」「たねポケモン」
+    「進化カード」）。kyuura の印刷の文面。docs 5 章）。
+
+    - 宣言して使う。自分の番ごとに 1 回（``once_per_turn``。宣言のときに記録する）。日本語の文面にねむり・マヒ・こんらんの条件はない（ベンチのポケモンは特殊状態にならない。ほかの
+      特殊能力の条件を写さない）。特殊能力を消す効果は共通の確かめ
+    - このカードが自分のベンチにいて（``POKEMON_NOT_ON_BENCH``）、自分のベンチのほかのポケモンに、今の姿の名前のグループが「アンノーン」で文字が ``letters`` のそれぞれのポケモンが
+      いること（``REQUIRED_BENCH_POKEMON_MISSING``。相手の場・バトル場のポケモンは数えない）。うらのカードは、おもてのポケモンで足りないときだけ読む（読むと FD1）
+    - 選べるのは山札の ``target`` のカード（山札にある間の印刷の定義。［FIND］はトレーナーカードのすべて（スタジアム・どうぐ・なにかの化石・ピッピ人形を含む）、［JOIN］はたねポケモン・
+      進化カード（ベイビィポケモンのカードは写しにない。cards.py が拒否する）。uid の小さい順）。1 枚（省略できない）。山札に選べるカードがない（山札 0 枚を含む）ときに使えるかは決まら
+      ない（kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例。エンジンは v0.43 のしんかのひかりと同じ PW3 で、宣言の前に止める。v0.43 からの既存の検索の特殊能力と同じ扱い）
+    - 宣言のあと決定 ``SEARCH_DECK``（使ったプレイヤー。選べるものの数は見せない）→ 見せてから手札に加える（``zones.reveal_deck_to_hand``。ログ ``reveal_from_deck`` の ``card`` は公開）→
+      山札を 1 回切る（ログ ``shuffle`` の ``power``）
+    """
+
+    letters: tuple[str, ...]
+    target: CardFilter
+    text: str
+    implementation_id = "search_deck_with_bench_letters_to_hand"
+    once_per_turn: ClassVar[bool] = True
+    group: str = "アンノーン"
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "自分のベンチに名前のグループの決まった文字がそろっているとき、山札のカードを見せて手札に加える特殊能力", (self.text,))
+
+    def options(self, state: GameState, use: PowerUse) -> tuple[int, ...]:
+        return deck_cards_matching(state, use.player, self.target)
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+        if not any(pokemon.pokemon_id == use.pokemon_id for pokemon in state.players[use.player].bench):
+            raise IllegalActionError("POKEMON_NOT_ON_BENCH", f"ポケモン {use.pokemon_id} はベンチにいない（この力は、自分のベンチにこのカードがいるときに使える）")
+        missing = set(self.letters) - bench_group_letters(state, use.player, self.group, excluding=use.pokemon_id)
+        if missing:
+            hidden = [pokemon for pokemon in state.players[use.player].bench if pokemon.pokemon_id != use.pokemon_id and state.is_face_down(pokemon)]
+            for pokemon in hidden:
+                form_def(state, pokemon).name_group  # noqa: B018  うらのカードの名前のグループ・文字は読めない（FD1。``HiddenPropertyRead``）
+            raise IllegalActionError("REQUIRED_BENCH_POKEMON_MISSING",
+                                     f"自分のベンチに、このカードのほかに{self.group}「{'」「'.join(sorted(missing))}」がいない（この力の条件）")
+        if not self.options(state, use):
+            raise _power_zero_cards("山札に選べるカードがない（山札 0 枚を含む。kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例）")
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        push_power_decision(state, use, kind=SEARCH_DECK, player=use.player, options=self.options(state, use))
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if choices[0] not in self.options(state, use):
+            raise RuntimeError(f"特殊能力 {use.key} で選んだカード {choices} が、山札の選べるカードではない（エンジンの不具合）")
+        reveal_deck_to_hand(state, use.player, choices[0], power=str(use.key))
+        shuffle_deck(state, use.player, power=str(use.key))
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        return _power_decision_form(decision, use, kind=SEARCH_DECK, choices=(1, 1), options=self.options(state, use))
+
+
+DARK_DF_TEXT = ("自分の場の「{group}」が「{type}」ポケモンからダメージを受けるとき、そのダメージは「-{amount}」される。自分の場のほかの{group}「{letter}」の「{name}」が"
+                "はたらいているとき、この力は、はたらかない。")
+# DF1: 「自分の場のほかの…の［…］がはたらいているとき、この力は、はたらかない」の特殊能力が、ほかの条件ではたらきうる 2 匹以上のとき、どれがはたらくか（1 つもはたらかないことが
+# あるか）。kyuura の UQ-SELF-EXCLUDING-POWER-COPIES（多くても 1 つは CR-UNOWN-DF-AT-MOST-ONE）
+SELF_EXCLUDING_COPIES_CODE = "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES"
+SELF_EXCLUDING_COPIES_REASON = (
+    "「自分の場のほかのアンノーン「D」の「DARK df」がはたらいているとき、この力は、はたらかない」の特殊能力（［DARK df］・［NORMAL df］）がはたらきうるカードが自分の場に 2 匹以上いるとき、"
+    "どれがはたらくか・1 つもはたらかないのかは、印刷の文面・kyuura の記録から決められず（多くても 1 つ。CR-UNOWN-DF-AT-MOST-ONE。kyuura の UQ-SELF-EXCLUDING-POWER-COPIES）、"
+    "読み方で受けるダメージ・要る決定が変わるので扱わない（DF1。uid・場の並び・場に出た順で代表を選ばない）"
+)
+# DF2: 「…ポケモンからダメージを受けるとき」（ワザと書かない）の「-30」を、ワザでない特殊能力のダメージ（R団のカビゴンの［わるいねぞう］）に当てはめるか。kyuura の
+# UQ-NON-ATTACK-DAMAGE-MODIFIERS（ポケモンチェックのどく・スタジアム・トレーナーの KA1・EX1・RB4・TD1 と同じ論点の、特殊能力のダメージの事例）
+POWER_DAMAGE_RECEIVED_POWER_CODE = "UNRESOLVED_POWER_DAMAGE_RECEIVED_POWER"
+POWER_DAMAGE_RECEIVED_POWER_REASON = (
+    "ワザでない特殊能力のダメージに、「「無色」ポケモンからダメージを受けるとき、そのダメージは「-30」される」（ワザと書かない受けるダメージを変える特殊能力。［NORMAL df］・"
+    "［DARK df］）を当てはめるかは、印刷の文面・kyuura の記録から決められず（kyuura の UQ-NON-ATTACK-DAMAGE-MODIFIERS）、当てはめるかどうかで受けるダメージが変わるので扱わない"
+    "（DF2。p.321 のワザのダメージの段階を、ワザでないダメージに移さない）"
+)
+
+
+@dataclass(frozen=True)
+class ReduceOwnGroupDamageFromType(ContinuousPower):
+    """自分の場の「``group``」が「``attacker_type``」ポケモンからダメージを受けるとき、そのダメージは「-``amount``」される。自分の場のほかの ``group``「``letter``」の「``name``」が
+    はたらいているとき、この力は、はたらかない（v0.97。アンノーンD（neo2-025）の［DARK df］（「悪」）・アンノーン[N]（PF2-001）の［NORMAL df］（「無色」）。kyuura の印刷の文面。
+    docs 6 章）。
+
+    - 常にはたらく（宣言しない）。場（バトル場・ベンチ）のどこでもはたらく。日本語の文面に特殊状態の条件はない（``blocked_by_status`` は偽）。特殊能力を消す効果は共通の確かめ
+    - 守るのは、この力を持つポケモンの持ち主の場の、今の姿の名前のグループが「``group``」のポケモン全員（この力を持つカード自身・ベンチも。CR-UNOWN-DF-PROTECTS-OWN-UNOWN）。
+      相手の場のアンノーン・自分のほかの名前のポケモンは守らない
+    - 当てはめるのは、ダメージを与えるポケモン（ワザを使うポケモン。写したワザでも、写して使うポケモン）の今有効なタイプ（色の読み方ごと。``DamageModifier.attacker_type``）が
+      「``attacker_type``」のとき（持ち主を限らない。自分のポケモンのワザが自分の控えに与えるダメージも。CR-UNOWN-DF-SOURCE-TYPE）。名前の「わるい」・ついているエネルギー・写した
+      ワザを印刷したカードのタイプでは決めない
+    - p.321 の段階は、受けるポケモンがこの力を持つカード自身なら 8、ほかのアンノーンの力なら 6（CR-UNOWN-DF-DAMAGE-STEP）。同じ段階の順番で結果が変わるときは既存の順番の決定
+      （6 段階はワザを使うプレイヤー）。0 以下なら「ダメージを受けなかった」
+    - 同じ力が 2 匹以上ではたらきうるとき（``self_excluding``）、同時にはたらくのは多くても 1 つ（CR-UNOWN-DF-AT-MOST-ONE。「-60」にしない）。どれがはたらくか（0 か）は決まらないので、
+      読み方（0 と各候補）で受けるダメージ・要る決定が変わるときだけ DF1（``kernel.self_excluding_copies_question``）。ダメージを計算しない処理（登場・ほかの操作）では止めない
+    - ワザでない特殊能力のダメージ（［わるいねぞう］など）に当てはめるかは決まらない（``non_attack_damage_modifier``。当てはめるかどうかで量が変われば DF2。``received_power_damage``）。
+      ダメージカウンターをのせる・移す効果はダメージではない（GR-2000-P320-COUNTER-MOVE。この力を通さない）
+    """
+
+    attacker_type: EnergyType
+    letter: str
+    name: str
+    amount: int = 30
+    group: str = "アンノーン"
+    implementation_id = "reduce_own_group_damage_from_type"
+    blocked_by_status = False
+    self_excluding: ClassVar[bool] = True
+    what = "自分の場の名前のグループのポケモンが決まったタイプのポケモンから受けるダメージをへらす特殊能力"
+
+    def texts(self) -> tuple[str, ...]:
+        return (DARK_DF_TEXT.format(group=self.group, type=self.attacker_type.ja, amount=self.amount, letter=self.letter, name=self.name),)
+
+    def _protects(self, state: GameState, holder: PokemonInPlay, receiver: PokemonInPlay) -> bool:
+        holder_found, receiver_found = state.find_pokemon(holder.pokemon_id), state.find_pokemon(receiver.pokemon_id)
+        if holder_found is None or receiver_found is None or holder_found[0] != receiver_found[0]:
+            return False
+        return in_name_group(state, receiver, self.group)
+
+    def attack_damage_modifiers(self, state, holder, label, attacker, defender):
+        if not self._protects(state, holder, defender):
+            return ()
+        readings = type_readings(state, attacker)
+        if self.attacker_type not in readings:
+            return ()
+        step = 8 if holder is defender else 6
+        # 色の読み方が 2 つ以上なら、読み方ごとに当てはめるか決める（``damage.calculate_attack_damage``。読み方で結果が変われば VS1 などで止まる）
+        return (DamageModifier(step=step, amount=-self.amount, label=label, source=holder.card, attacker_type=self.attacker_type),)
+
+    def non_attack_damage_modifier(self, state, holder, label, receiver, source):
+        if source is None or not self._protects(state, holder, receiver) or self.attacker_type not in type_readings(state, source):
+            return None
+        return DamageModifier(step=8, amount=-self.amount, label=label, source=holder.card)
+
+
+# v0.97 のアンノーン 5 枚のワザの登録（5）。どれも説明文のない「めざめるパワー」（超・10。文面・出典を持たない）
+V0_97_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    AttackKey("neo2-023", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーンI（超・10）
+    AttackKey("neo2-025", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーンD（超・10）
+    AttackKey("neo2-026", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーンF（超・10）
+    AttackKey("PF2-001", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーン[N]（超・10）
+    AttackKey("PRN-034", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーン[J]（超・10）
+})
+
+_INCREASE = INCREASE_TEXT.format(group="アンノーン")
+_FIND = FIND_TEXT.format(letters="I」「N」「D")
+_JOIN = JOIN_TEXT.format(letters="O」「I」「N")
+_DARK_DF = ReduceOwnGroupDamageFromType(EnergyType.DARKNESS, "D", "DARK df")
+_NORMAL_DF = ReduceOwnGroupDamageFromType(EnergyType.COLORLESS, "N", "NORMAL df")
+# v0.97 の特殊能力の登録（5）。処理に使う文面は kyuura の印刷の文面（名前・文面は写しの表記のまま。［INCREASE］・［FIND］の文面の半角の空白も写しのまま）
+V0_97_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
+    PowerKey("neo2-023", 0): PowerEntry(BenchNameGroupFromDeckOnEntry(), "INCREASE[インクリーズ]", _INCREASE, _INCREASE, _KYUURA_PRINTED_TEXT),
+    PowerKey("neo2-025", 0): PowerEntry(_DARK_DF, "DARK df[ダーク ディーエフ]", _DARK_DF.texts()[0], _DARK_DF.texts()[0], _KYUURA_PRINTED_TEXT),
+    PowerKey("neo2-026", 0): PowerEntry(SearchDeckWithBenchLettersToHand(("I", "N", "D"), CardFilter("trainer"), _FIND), "FIND[ファインド]", _FIND, _FIND,
+                                        _KYUURA_PRINTED_TEXT),
+    PowerKey("PF2-001", 0): PowerEntry(_NORMAL_DF, "NORMAL df[ノーマル ディーエフ]", _NORMAL_DF.texts()[0], _NORMAL_DF.texts()[0], _KYUURA_PRINTED_TEXT),
+    PowerKey("PRN-034", 0): PowerEntry(SearchDeckWithBenchLettersToHand(("O", "I", "N"), CardFilter("pokemon"), _JOIN), "JOIN[ジョイン]", _JOIN, _JOIN,
+                                       _KYUURA_PRINTED_TEXT),
+})
+
+DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_97_ATTACKS), V0_97_POWERS)

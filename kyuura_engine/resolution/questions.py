@@ -287,9 +287,16 @@ QUESTIONS: dict[str, Question] = {
                  "「みちづれ」がはたらくワザのあとのきぜつの判定で、きぜつするときに使える特殊能力の候補もある"),
         # v0.60（docs/coins-defense-rebellion-v0.60.md）: 「ワザのダメージを変える常にはたらく特殊能力」で、持っているのが相手の対戦ポケモン以外の相手の場のポケモンのものは、
         # 今の写しにない（［くつろぐかおり］はバトル場にいる限りはたらくので、持っているのは受けるポケモン自身）
-        Question("speed_star_scope", None, ("SS1",), 90,
+        # v0.97（docs/unown-research-idfnj-v0.97.md 9 章）: ベンチのアンノーン[N] の［NORMAL df］（相手の場のほかのポケモンの特殊能力）と、「無色」ポケモンが写したスピードスターで
+        # 起こるようになったので、コードを付けた（問い・分類は変えていない。v0.96 まではコードのない問い）
+        Question("speed_star_scope", "UNRESOLVED_SPEED_STAR_SCOPE", ("SS1",), 90,
                  "タケシのサンドパンの「スピードスター」の「相手の持っている…その他の効果」に、相手の対戦ポケモン自身が持っている効果だけでなく、相手の場のほかのポケモンが"
                  "持っている常にはたらく特殊能力も含むかは、印刷の文面・kyuura の記録から決められず、最終ダメージが変わる"),
+        # v0.97（docs/unown-research-idfnj-v0.97.md 8 章）: ［DARK df］・［NORMAL df］（「自分の場のほかの…がはたらいているとき、この力は、はたらかない」）が 2 匹以上ではたらきうる
+        Question("self_excluding_power_copies", "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES", ("DF1",), 10,
+                 "「自分の場のほかのアンノーン「D」の「DARK df」がはたらいているとき、この力は、はたらかない」の特殊能力（［DARK df］・［NORMAL df］）がはたらきうるカードが自分の場に "
+                 "2 匹以上いるとき、どれがはたらくか・1 つもはたらかないのかは、印刷の文面・kyuura の記録から決められず（多くても 1 つ。CR-UNOWN-DF-AT-MOST-ONE。kyuura の "
+                 "UQ-SELF-EXCLUDING-POWER-COPIES）、読み方で受けるダメージ・要る決定が変わる（uid・場の並び・場に出た順で代表を選ばない）"),
         # v0.89（docs/selected-target-damage-v0.89.md 4.3 節）: ブラッキーの「だましうち」（だれの効果かを書かない「…その他の効果」に関係なく）
         Question("ignored_effects_scope", "UNRESOLVED_IGNORED_EFFECTS_SCOPE", ("FA1",), 10,
                  "ブラッキーの「だましうち」の「「弱点・抵抗力・特殊能力・その他の効果」に関係なく」（「相手の持っている」「そのポケモンの持っている」のない書き方）が、"

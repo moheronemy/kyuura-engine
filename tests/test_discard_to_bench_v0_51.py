@@ -320,7 +320,8 @@ class CardDataTest(unittest.TestCase):
         """場に出たときに使える特殊能力（``EntryPower``）を持つカードは、v0.85 までどれも進化カード（トラッシュから出せるたねポケモンにはない）だった。v0.86 でエンテイ
         （neo3-010）の［おたけび］を加えたが「手札から場に出した時」（``from_hand_only``）なので、トラッシュから出しても使う機会はない（``discard_entry_power_guard`` は止めない）。
         「場に出た時」の使う機会を決める場面は、今の対応カードでは起こらない（「場に出た時」の特殊能力を持つたねポケモンはない）。v0.96 のアンノーン[E]（PF2-002。［ENGAGE］）・
-        アンノーン[R]（PRN-035。［REASSURE］）も「手札から場に出したとき」なので同じ（docs/unown-family-powers-v0.96.md 4 章）。"""
+        アンノーン[R]（PRN-035。［REASSURE］）も「手札から場に出したとき」なので同じ（docs/unown-family-powers-v0.96.md 4 章）。v0.97 のアンノーンI（neo2-023。［INCREASE］）も
+        同じ（docs/unown-research-idfnj-v0.97.md 6 章）。"""
         entry_cards = set()
         for key in E.DEFAULT_EFFECTS.power_keys():
             entry = E.DEFAULT_EFFECTS.power_entry(key.card_id, key.power_index)
@@ -330,7 +331,7 @@ class CardDataTest(unittest.TestCase):
         for card in sorted(entry_cards):
             with self.subTest(card=card):
                 if self.pool.get(card).stage == "basic":
-                    self.assertIn(card, ("neo3-010", "PF2-002", "PRN-035"))
+                    self.assertIn(card, ("neo3-010", "PF2-002", "PRN-035", "neo2-023"))
                     self.assertTrue(E.DEFAULT_EFFECTS.power_entry(card, 0).effect.from_hand_only)
                 else:
                     self.assertNotEqual(self.pool.get(card).stage, "basic")

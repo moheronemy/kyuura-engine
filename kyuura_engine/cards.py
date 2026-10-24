@@ -587,6 +587,7 @@ POOL_KEYS = (
     "pool_v0_94",  # v0.94（入れ替え・帰還のワザのポケモン 13 枚。docs/switch-return-attacks-v0.94.md）
     "pool_v0_95",  # v0.95（手札・山札を見る効果とカードを動かすポケモン 11 枚。docs/private-looks-deck-movement-v0.95.md）
     "pool_v0_96",  # v0.96（アンノーン 7 枚と遺跡の石版 2 枚。docs/unown-family-powers-v0.96.md）
+    "pool_v0_97",  # v0.97（アンノーンI・D・F・[N]・[J] の 5 枚。docs/unown-research-idfnj-v0.97.md）
 )
 
 

@@ -2344,6 +2344,15 @@ POOL_V0_96 = [
     "neo2-057",  # 遺跡の石版（neo2-054 と同じゲーム用データ）
 ]
 
+# v0.97（docs/unown-research-idfnj-v0.97.md）: アンノーンI・D・F・[N]・[J] の 5 枚（ワザ 5・特殊能力 5）。I・D・F のルール文は 73a1690 の kyuura の訂正（FIX-neo2-023/025/026-RULES-TEXT-JA）
+POOL_V0_97 = [
+    "neo2-023",  # アンノーンI（INCREASE・めざめるパワー）
+    "neo2-025",  # アンノーンD（DARK df・めざめるパワー）
+    "neo2-026",  # アンノーンF（FIND・めざめるパワー）
+    "PF2-001",  # アンノーン[N]（NORMAL df・めざめるパワー）
+    "PRN-034",  # アンノーン[J]（JOIN・めざめるパワー）
+]
+
 POOLS = [
     ("pool_v0_1", POOL_V0_1),
     ("pool_v0_2b", POOL_V0_2B),
@@ -2446,6 +2455,7 @@ POOLS = [
     ("pool_v0_94", POOL_V0_94),
     ("pool_v0_95", POOL_V0_95),
     ("pool_v0_96", POOL_V0_96),
+    ("pool_v0_97", POOL_V0_97),
 ]
 
 

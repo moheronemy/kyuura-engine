@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable
 
 from ..coins import CoinSide, flip_coins
-from ..damage import ADD, HALVE_DOWN, HALVE_UP, MULTIPLY, SET, SET_IF_AT_LEAST, ZERO_IF_AT_LEAST, ZERO_IF_BELOW, DamageOrderRequired, DamageReductionRequired
+from ..damage import ADD, HALVE_DOWN, HALVE_UP, MULTIPLY, SET, SET_IF_AT_LEAST, ZERO_IF_AT_LEAST, ZERO_IF_BELOW, DamageOrderRequired, DamageReductionRequired, step_orders
 from ..effects import (
     knocked_by_hp,
     calculate_with_stadium,
@@ -476,30 +476,32 @@ def weakness_resistance_matters(res: Resolution, fs: FrameState, target: str, ba
     receiver_player, receiver = receiver_of(res, fs, target, pokemon_id)
     if first_void(res, receiver_player, receiver) is not None:
         return False
-    modifiers = attack_damage_modifiers(state, attacker, receiver, attack=fs.frame.attack_key, bench=True, attack_status=res.attack_status)
-    # v0.48: 今有効な値の定義（``effects.definition_views``）で比べる。色の読み方（VS1）が 2 つあれば、どの読み方でも弱点・抵抗力の計算で変わるかを見る（読み方で
-    # 結果が変わることは、ダメージを与えるとき ``deal_damage`` が止める）
-    try:
-        for attacker_def in definition_views(state, attacker):
-            for receiver_def in definition_views(state, receiver):
-                finals = {calculate_with_stadium(state, base, attacker_def, receiver_def, modifiers, weakness_resistance=flag).final
-                          for flag in (True, False)}
-                if len(finals) > 1:
-                    return True
-    except (DamageOrderRequired, DamageReductionRequired):
-        return False
+    # v0.97: 同じ力が 2 匹以上ではたらきうるときは、どれがはたらくかの読み方（``effects.self_excluding_readings``）ごとにも比べる（読み方の違いそのものは deal_damage が DF1 で見る）
+    for copies in E.self_excluding_readings(state, attacker, receiver, attack_status=res.attack_status):
+        modifiers = attack_damage_modifiers(state, attacker, receiver, attack=fs.frame.attack_key, bench=True, attack_status=res.attack_status, copies=copies)
+        # v0.48: 今有効な値の定義（``effects.definition_views``）で比べる。色の読み方（VS1）が 2 つあれば、どの読み方でも弱点・抵抗力の計算で変わるかを見る（読み方で
+        # 結果が変わることは、ダメージを与えるとき ``deal_damage`` が止める）
+        try:
+            for attacker_def in definition_views(state, attacker):
+                for receiver_def in definition_views(state, receiver):
+                    finals = {calculate_with_stadium(state, base, attacker_def, receiver_def, modifiers, weakness_resistance=flag).final
+                              for flag in (True, False)}
+                    if len(finals) > 1:
+                        return True
+        except (DamageOrderRequired, DamageReductionRequired):
+            continue
     return False
 
 
 def attack_modifiers_of(res: Resolution, frame, attacker: PokemonInPlay, receiver: PokemonInPlay, target: str, *, defender_effects: bool = True,
-                        exclude: str | None = None) -> list:
+                        exclude: str | None = None, copies=None) -> list:
     """ワザの分類のダメージの要素 1 つの、場の変更効果（p.321 の 2・5〜8 段階。クチバシティジムのコインを除く）（v0.64。``deal_damage`` から分けた。先読みの
     「うら」が出るまで投げるコインの組（``resolution.unbounded``）が同じ関数を使う）。状態を変えず、乱数を使わない。v0.89: ``exclude`` を渡すと、除く範囲をそれにする
-    （FA1 の読み方の比べ。``ignored_effects_scope_difference``）。"""
+    （FA1 の読み方の比べ。``ignored_effects_scope_difference``）。v0.97: ``copies`` は同じ力が 2 匹以上ではたらきうるときの読み方（``effects.with_copies``。DF1 の比べ）。"""
     if exclude is None:
         exclude = None if defender_effects else EXCLUDE_DEFENDER_HELD
     modifiers = list(attack_damage_modifiers(res.state, attacker, receiver, attack=frame.attack_key, bench=target in BENCH_TARGETS,
-                                             attack_status=res.attack_status, exclude=exclude))
+                                             attack_status=res.attack_status, exclude=exclude, copies=copies))
     if res.attack_power and target == OPPONENT_ACTIVE and frame.kind is FrameKind.ATTACK:
         # v0.88: ワザといっしょに使った特殊能力（［すいりょくはつでん］。p.321 の 2 段階。ワザを使うポケモンの効果）
         extra = E.attack_power_modifier(res.state, attacker, frame.attack_key)
@@ -619,7 +621,11 @@ def bench_guard_answer(res: Resolution, fs: FrameState, attacker, owner: int, re
 
 IGNORE_HELD = "held"  # v0.89: 説明が「相手の持っている」と書く（スピードスター）。除くのは受けるポケモン自身の持っている効果（SS1 で受けるポケモンの持ち主の場と比べる）
 IGNORE_UNSTATED = "unstated"  # v0.89: 説明がだれの効果かを書かない（ブラッキーの「だましうち」）。読み方で結果が変われば FA1（``ignored_effects_scope_difference``）
-IGNORE_SCOPES = (IGNORE_HELD, IGNORE_UNSTATED)
+# v0.97（docs/unown-research-idfnj-v0.97.md 9 章）: 説明が「そのポケモンの持っている」と書く（ヤミカラスの「だましうち」。v0.92 の型の定義）。除くのは受けるポケモン自身の持っている効果だけ
+# （p.321 の 8 段階の「ワザを受けるポケモンの持っている」と同じ言い方。ほかのポケモンの効果は 6 段階）で、スピードスターの「相手の持っている」の SS1 の比べはしない（v0.92〜v0.96 は
+# 同じ IGNORE_HELD で SS1 の比べを通していた。実装上のことで、裁定ではない）
+IGNORE_RECEIVER_HELD = "receiver_held"
+IGNORE_SCOPES = (IGNORE_HELD, IGNORE_UNSTATED, IGNORE_RECEIVER_HELD)
 
 
 def ignored_effects_scope_difference(res: Resolution, fs: FrameState, attacker: PokemonInPlay, owner: int, receiver: PokemonInPlay, target: str, base: int, *,
@@ -708,6 +714,11 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         difference = ignored_effects_scope_difference(res, fs, attacker, receiver_player, receiver, target, base, orders=orders, reduction=reduction)
         if difference is not None:
             raise res.question("ignored_effects_scope", f"ポケモン {attacker.pokemon_id} → ポケモン {receiver.pokemon_id}・{difference}")
+        # v0.97（DF1）: 除く範囲の読み方 A・A' のどれかで、同じ力のどれがはたらくかの読み方で受けるダメージが変わる（B の読み方には特殊能力がない）
+        copies = self_excluding_copies_question(res, fs, attacker, receiver, target, base, excludes=(EXCLUDE_DEFENDER_HELD, EXCLUDE_DEFENDER_SIDE),
+                                                weakness_resistance=False, resistance=False, orders=orders, reduction=reduction)
+        if copies is not None:
+            raise res.question("self_excluding_power_copies", copies)
     void = first_void(res, receiver_player, receiver, held_by_receiver=defender_effects)
     if void is not None:
         # 無効（p.321）。計算しない。ログは v0.13 の damage_prevented
@@ -741,6 +752,13 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         weakness_resistance = False
         if ignore_scope == IGNORE_HELD:
             speed_star_scope_question(res, frame.attack_key, attacker, receiver, base, base_modifiers, orders, resistance, reduction)
+    # v0.97（DF1）: 同じ力（［DARK df］・［NORMAL df］）が 2 匹以上ではたらきうるとき、どれがはたらくかの読み方で受けるダメージ・要る決定が変わるなら止める（だましうち（ブラッキー）は上で見た）
+    if defender_effects or ignore_scope != IGNORE_UNSTATED:
+        excludes = (None,) if defender_effects else ((EXCLUDE_DEFENDER_HELD, EXCLUDE_DEFENDER_SIDE) if ignore_scope == IGNORE_HELD else (EXCLUDE_DEFENDER_HELD,))
+        copies = self_excluding_copies_question(res, fs, attacker, receiver, target, base, excludes=excludes, weakness_resistance=weakness_resistance,
+                                                resistance=resistance, orders=orders, reduction=reduction)
+        if copies is not None:
+            raise res.question("self_excluding_power_copies", copies)
     modifiers = with_stadium_coin(res, frame, target, base_modifiers)
     if frame.kind is FrameKind.RETALIATION:
         calming_retaliation_question(res, fs, attacker, receiver, base, target, weakness_resistance, resistance)
@@ -1018,13 +1036,58 @@ def reflect_damage_to_damage_source(res: Resolution, fs: FrameState, deferred: D
     fire_pending(res, child)
 
 
+def _damage_outcome(compute, orders, reduction):
+    """v0.97: 読み方の比べ（DF1）に使う、ダメージの計算の結果。最終ダメージと、要る決定（同じ段階の順番・お上品攻撃の減らす量）とその答えごとの結果（``compute(orders, reduction)`` は
+    ``DamageCalculation``）。色の読み方で変わるなら ``("type_readings",)``。状態を変えず、乱数を使わない。"""
+    try:
+        return ("final", compute(orders, reduction).final)
+    except TypeReadingsDiffer:
+        return ("type_readings",)
+    except DamageReductionRequired as need:
+        return ("reduce", need.below_zero, tuple(_damage_outcome(compute, orders, choice) for choice in need.choices))
+    except DamageOrderRequired as need:
+        return ("order", need.step, tuple(m.label for m in need.modifiers),
+                tuple(_damage_outcome(compute, {**(orders or {}), need.step: order}, reduction) for order in step_orders(len(need.modifiers))))
+
+
+def self_excluding_copies_question(res: Resolution, fs: FrameState, attacker: PokemonInPlay, receiver: PokemonInPlay, target: str, base: int, *,
+                                   excludes: tuple, weakness_resistance: bool, resistance: bool, orders=None, reduction: int | None = None) -> str | None:
+    """v0.97（DF1。docs/unown-research-idfnj-v0.97.md 8 章）: 「自分の場のほかの…がはたらいているとき、この力は、はたらかない」の常にはたらく特殊能力（``self_excluding``。［DARK df］・
+    ［NORMAL df］）が、このダメージにはたらきうる 2 匹以上のとき、どれがはたらくか（1 つもはたらかないか）の読み方（``effects.self_excluding_readings``。0 と各候補）で、受けるダメージ・
+    要る決定（``_damage_outcome``）が変わるなら、その違い（理由の文の一部）。変わらなければ None。
+
+    ``excludes`` は除く効果の範囲の読み方（ふつうのダメージは ``(None,)``、スピードスターは ``(EXCLUDE_DEFENDER_HELD, EXCLUDE_DEFENDER_SIDE)``、だましうち（ブラッキー）も同じ 2 つ
+    （すべての効果を除く読み方 B には特殊能力がない）、ヤミカラスのだましうちは ``(EXCLUDE_DEFENDER_HELD,)``）。範囲の読み方を 1 つに決めたうえで、どれがはたらくかの読み方で変わるか
+    を比べる（範囲の読み方だけで変わる場合は SS1・FA1 が見る）。無視される力も、はたらいている候補として数える（無視される力を存在しなかったことにして、ほかの候補がはたらく読み方を
+    暗黙に選ばない）。状態を変えず、乱数を使わない。"""
+    state = res.state
+    frame = fs.frame
+    readings = E.self_excluding_readings(state, attacker, receiver, attack_status=res.attack_status)
+    if len(readings) <= 1:
+        return None
+    for exclude in excludes:
+        outcomes = {}
+        for copies in readings:
+            modifiers = with_stadium_coin(res, frame, target, attack_modifiers_of(res, frame, attacker, receiver, target, exclude=exclude, copies=copies))
+
+            def compute(o, r, m=modifiers):
+                return same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(
+                    state, base, views[0], views[1], m, weakness_resistance=weakness_resistance, orders=o, resistance=resistance, reduction=r))
+
+            outcomes[E.copies_label(copies)] = _damage_outcome(compute, orders, reduction)
+        if len(set(outcomes.values())) > 1:
+            scope = "" if exclude is None else f"（除く範囲 {exclude}）"
+            return f"ポケモン {attacker.pokemon_id} → ポケモン {receiver.pokemon_id}{scope}・読み方ごとの結果 {outcomes}"
+    return None
+
+
 def speed_star_scope_question(res: Resolution, attack_key, attacker: PokemonInPlay, receiver: PokemonInPlay, base: int, modifiers, orders, resistance: bool,
                               reduction: int | None = None) -> None:
     """v0.60（SS1）: 「スピードスター」の「相手の持っている…その他の効果」が、相手の対戦ポケモン自身が持っている効果だけか、相手プレイヤーの場のほかのポケモンが持っている
     効果（常にはたらく特殊能力。エリカのフシギソウの［くつろぐかおり］の「すべてのワザのダメージ」）も含むかは、印刷の文面・kyuura の記録から決まらない（太字の「相手」の
     定義（p.320）は相手の対戦ポケモンだが、「相手の持っている」という言い方を扱う記録はない。v0.33 の CD4 と同じ理由で決めない）。2 つの読み方（``EXCLUDE_DEFENDER_HELD``・
-    ``EXCLUDE_DEFENDER_SIDE``）で最終ダメージ（または順番の決定の要否）が変わるときだけ止める（問い ``speed_star_scope``。今の写しでは起こらないのでコードのない問い。
-    当たったらエンジンの不具合として止まる。ワザのダメージを変える常にはたらく特殊能力で、バトル場以外ではたらくものを加えるときに見直す）。"""
+    ``EXCLUDE_DEFENDER_SIDE``）で最終ダメージ（または順番の決定の要否）が変わるときだけ止める（問い ``speed_star_scope``。v0.96 まではコードのない問い。v0.97 から、ベンチの
+    アンノーン[N] の［NORMAL df］（相手の場のほかのポケモンの特殊能力）で起こるので、停止コード ``UNRESOLVED_SPEED_STAR_SCOPE`` にした（問い・分類は変えていない））。"""
     state = res.state
     side = attack_damage_modifiers(state, attacker, receiver, attack=attack_key, attack_status=res.attack_status, exclude=EXCLUDE_DEFENDER_SIDE)
     if tuple(side) == tuple(modifiers):

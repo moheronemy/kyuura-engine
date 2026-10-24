@@ -295,6 +295,9 @@ ALL_CODES = (
     "UNRESOLVED_CLAMPING_JAW_SOURCE_DEVOLVED",  # CJ1（v0.93。同）
     "UNRESOLVED_ENGAGE_EMPTY_HAND",  # EG1（v0.96。tests/test_unown_family_powers_v0_96.py）
     "UNRESOLVED_POWER_DECK_TOP_SHORT",  # OB1（v0.96。同）
+    "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES",  # DF1（v0.97。tests/test_unown_idfnj_powers_v0_97.py）
+    "UNRESOLVED_POWER_DAMAGE_RECEIVED_POWER",  # DF2（v0.97。同）
+    "UNRESOLVED_SPEED_STAR_SCOPE",  # SS1（v0.60 のコードのない問いに v0.97 でコードを付けた。同）
 )
 TURN = 7
 

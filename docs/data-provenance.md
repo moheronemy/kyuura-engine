@@ -1972,6 +1972,26 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: CV1（わるいデンリュウの［かんでん］。v0.86）は UQ-SELF-EXCLUDING-POWER-COPIES の事例と同じ問い。kyuura の engine_unresolved_index・engine_refs は v0.68 までの
   取り込みで、CV1 の行・参照がない。
 
+## v0.97: アンノーンI・D・F・[N]・[J] の 5 枚
+
+[unown-research-idfnj-v0.97.md](unown-research-idfnj-v0.97.md) の 4 章〜。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534`（上の移行）。写しの組 `pool_v0_97`（5 枚）を加え、写しの作り直しの道具で作った（手で直していない）。I・D・F の
+  ルール文は kyuura の訂正（`FIX-neo2-023/025/026-RULES-TEXT-JA`）が当てはまった値で、写しで当てはめ直していない。1,169 枚の記録は変わっていない。
+- 5 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-25・外部照合なし）。`kyuura_records` は研究の基準でカードを指す記録（5 枚とも
+  CR-UNOWN-DECK-LIMIT-ALL-LETTERS。I・F・[J] は UQ-CARD-USE-WITHOUT-TARGET、D・[N] は CR-UNOWN-DF-… の 4 件と UQ-SELF-EXCLUDING-POWER-COPIES、[N] はさらに
+  UQ-NON-ATTACK-DAMAGE-MODIFIERS・UQ-SPEED-STAR-SCOPE）。特殊能力 5 は `power/0` の印刷の文面（研究の対応表の `adopted_printed_text` に加えた）。説明文のないワザ（めざめるパワー 5）は文面・
+  出典を持たない。LD-・CC-・エラッタはない。`card_verification.json` には加えていない。
+- 日本語の文面の転記元は nazonobasho.com（I・D・F。kyuura の id とサイトの番号の違い（D・F）と、D のページの名前の欄の既存の誤記は kyuura の記録のまま）・pcg-search.com（[N]・[J]。同じ
+  サイトとの照合は独立した照合にならない）。外部照合はしていない。画像を読んだのは kyuura で、エンジンは画像・公式の書籍を新しく照合していない（2 つのサイトの画像を独立した 2 枚の実物の
+  照合として数えない）。
+- 新しい停止コード 2 件（DF1 `UNRESOLVED_SELF_EXCLUDING_POWER_COPIES`・DF2 `UNRESOLVED_POWER_DAMAGE_RECEIVED_POWER`。どちらも `issue_not_in_index`）と、SS1 のコード
+  `UNRESOLVED_SPEED_STAR_SCOPE`（`kyuura_index_engine_key` SS1。コードのない問いから移した）を研究の対応表の `stop_codes` に加えた（停止コード 221 → 224・未解決の裁定 223 → 225）。kyuura の論点の
+  事例のうちエンジンの裁定 id のないもの 13 件のエンジンの扱いを、5 枚の登録に合わせた（I・F・[J] の選べるカードがない場面は既存の PW3。`engine_issue_differs`）。
+- 報告事項（kyuura の作業）: PW3 の論点の結び方（`UQ-UP-TO-ZERO-CHOICE`）と、I・F・[J] の事例の論点（`UQ-CARD-USE-WITHOUT-TARGET`）の違い。DF1・DF2・SS1 のコード。ヤミカラスのだましうちの
+  除く範囲（kyuura は決めていない。エンジンは v0.92 の型のとおり受けるポケモン自身の効果だけ）。kyuura の engine_targets.json を v0.97 の登録で写すと 5 枚の `engine_status` が `registered`
+  になる（docs 14 章）。
+
 ## v0.96: アンノーン 7 枚と遺跡の石版 2 枚
 
 [unown-family-powers-v0.96.md](unown-family-powers-v0.96.md)。

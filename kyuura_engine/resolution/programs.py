@@ -76,7 +76,7 @@ from ..zones import look_at_hand, opponent_hand_card_to_deck, return_attached_tr
 from . import catalog as C
 from . import codec
 from .events import ElementStarted, FrameKind, KnockedOutRecorded, Suspended, Window
-from .kernel import IGNORE_HELD, IGNORE_UNSTATED, BenchGuardRequest, EnergyDrainRequest, Resolution, SplitRequest, check_simultaneous, knocked_out, deal_damage, fire_pending, reaches, settle_scram, track_ko, type_question, weakness_resistance_matters
+from .kernel import IGNORE_HELD, IGNORE_RECEIVER_HELD, IGNORE_UNSTATED, BenchGuardRequest, EnergyDrainRequest, Resolution, SplitRequest, check_simultaneous, knocked_out, deal_damage, fire_pending, reaches, settle_scram, track_ko, type_question, weakness_resistance_matters
 from ..decisions import BENCH_GUARD, DAMAGE_REDUCTION, ESP_REDO, KO_PREVENTION, NINJA_TRICK, REACTION_SWITCH
 from ..decisions import MAGMA_POOL_ENERGY, REACTION_ORDER, SPLIT_FROM_DECK
 from .. import movement as M
@@ -9860,6 +9860,20 @@ class TargetDamage(Element):
             difference = ignored_effects_scope_difference(run.res, run.fs, run.attacker(), owner, pokemon, kind, self._fixed_base(run))
             if difference is not None:
                 return "ignored_effects_scope", f"ポケモン {run.attacker().pokemon_id} → ポケモン {pokemon.pokemon_id}・{difference}"
+        if isinstance(self.base, Fixed):
+            # v0.97（DF1）: 選んだポケモンへのダメージで、同じ力（［DARK df］・［NORMAL df］）のどれがはたらくかの読み方で受けるダメージが変わるなら、そのポケモンは選ぶと止める
+            # （ほかのポケモンは選べる。決まった数でない基本は、ダメージを与えるときに deal_damage が止める）
+            from .kernel import self_excluding_copies_question
+
+            if self.defender_effects:
+                excludes = (None,)
+            else:
+                excludes = (E.EXCLUDE_DEFENDER_HELD,) if self.ignore_scope == IGNORE_RECEIVER_HELD else (E.EXCLUDE_DEFENDER_HELD, E.EXCLUDE_DEFENDER_SIDE)
+            wr = self.weakness_resistance and self.defender_effects
+            copies = self_excluding_copies_question(run.res, run.fs, run.attacker(), pokemon, kind, self._fixed_base(run), excludes=excludes,
+                                                    weakness_resistance=wr, resistance=self.resistance and self.defender_effects)
+            if copies is not None:
+                return "self_excluding_power_copies", copies
         return None
 
     def _fixed_base(self, run: AttackRun) -> int:
@@ -10814,7 +10828,8 @@ BUILDERS |= {
     ),
     E.ReceivedAttackDamageBonusAttack: lambda e: (OpponentDamageTakenBonus(e.amount, e.start, e.end),),
     E.DamageDrainThenPoison: lambda e: (Damage(OPP, Printed()), Drain("damage"), Status(POISON, after_damage="damage")),
-    E.ChooseOpponentPokemonDamageIgnoringHeldEffects: lambda e: chosen_damage(Fixed(e.damage), defender_effects=False, ignore_scope=IGNORE_HELD),
+    # v0.97: 「そのポケモンの持っている」（ヤミカラス）は IGNORE_RECEIVER_HELD（受けるポケモン自身の効果だけを除く。SS1 の比べはしない。docs/unown-research-idfnj-v0.97.md 9 章）
+    E.ChooseOpponentPokemonDamageIgnoringHeldEffects: lambda e: chosen_damage(Fixed(e.damage), defender_effects=False, ignore_scope=IGNORE_RECEIVER_HELD),
     E.DamageThenFieldPowerSuppression: lambda e: (Damage(OPP, Printed()), FieldPowerSuppression()),
     E.CoinsUntilTailsBonusDamage: lambda e: (Damage(OPP, HeadsUntilTails(e.per, fixed=e.base)),),
 }
