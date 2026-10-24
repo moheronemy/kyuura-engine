@@ -12,8 +12,8 @@
   "card_data_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 215,
-    "engine_stop_codes": 213,
+    "engine_unresolved_rulings": 221,
+    "engine_stop_codes": 219,
     "kyuura_issues": 71
   },
   "stop_codes": {
@@ -2465,7 +2465,73 @@
         {
           "version": "v0.92",
           "document": "docs/power-suppression-lasting-locks-v0.92.md",
-          "ruling_id": "ML1"
+          "ruling_id": "ML2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_LEAVE_LOCK_KNOCKOUT": {
+      "engine_rulings": [
+        {
+          "version": "v0.93",
+          "document": "docs/active-leave-locks-v0.93.md",
+          "ruling_id": "AL1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_LEAVE_LOCK_NO_EFFECT": {
+      "engine_rulings": [
+        {
+          "version": "v0.93",
+          "document": "docs/active-leave-locks-v0.93.md",
+          "ruling_id": "AL2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_LEAVE_LOCK_SCRAM": {
+      "engine_rulings": [
+        {
+          "version": "v0.93",
+          "document": "docs/active-leave-locks-v0.93.md",
+          "ruling_id": "AL3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_JAW_CLAMP_SOURCE_RETURNED": {
+      "engine_rulings": [
+        {
+          "version": "v0.93",
+          "document": "docs/active-leave-locks-v0.93.md",
+          "ruling_id": "JC1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_JAW_CLAMP_SOURCE_EVOLVED": {
+      "engine_rulings": [
+        {
+          "version": "v0.93",
+          "document": "docs/active-leave-locks-v0.93.md",
+          "ruling_id": "JC2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_CLAMPING_JAW_SOURCE_DEVOLVED": {
+      "engine_rulings": [
+        {
+          "version": "v0.93",
+          "document": "docs/active-leave-locks-v0.93.md",
+          "ruling_id": "CJ1"
         }
       ],
       "kyuura_issue": null,
@@ -4020,7 +4086,41 @@
       "GD6-008/attack/0",
       "GD6-008/attack/1",
       "PRN-025/attack/0",
-      "PRN-025/attack/1"
+      "PRN-025/attack/1",
+      "ES1-002/attack/1",
+      "QSG-002/attack/1",
+      "ES2-004/attack/0",
+      "neo1-008/attack/0",
+      "neo1-008/attack/1",
+      "neo1-030/attack/0",
+      "neo1-030/attack/1",
+      "neo4-011/attack/0",
+      "neo4-011/attack/1",
+      "neo1-032/attack/0",
+      "neo1-032/attack/1",
+      "neo4-036/attack/0",
+      "neo3-019/attack/0",
+      "neo3-019/attack/1",
+      "ES1-026/attack/0",
+      "ES1-026/attack/1",
+      "QSG-040/attack/0",
+      "QSG-040/attack/1",
+      "SI-002/attack/0",
+      "SI-002/attack/1",
+      "neo1-061/attack/0",
+      "neo1-061/attack/1",
+      "ES2-001/attack/0",
+      "ES2-001/attack/1",
+      "neo1-054/attack/0",
+      "neo1-054/attack/1",
+      "PRN-033/attack/0",
+      "PRN-043/attack/0",
+      "ES3-034/attack/0",
+      "PR1-052/attack/0",
+      "PR1-052/attack/1",
+      "ES3-009/attack/0",
+      "QSG-008/attack/0",
+      "neo4-078/attack/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

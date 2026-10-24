@@ -45,6 +45,7 @@ v0.92（docs/power-suppression-lasting-locks-v0.92.md 4 章）: 期間と消え�
 
 from __future__ import annotations
 
+import dataclasses
 from typing import TYPE_CHECKING
 
 from .conditions import DEVOLVE, EVOLVE, FORCED_SWITCH, RETREAT, SWITCH
@@ -69,7 +70,9 @@ from .state import (
     HalvedDamage,
     MaxHpSet,
     NextTurnAttackDamage,
+    PeriodAttackCoinCheck,
     PeriodAttackLock,
+    PeriodLeaveLock,
     PeriodRetreatLock,
     PowersStopped,
     PreventDamage,
@@ -211,12 +214,107 @@ def remove_source_left_effects(state: GameState, owner: int, pokemon: PokemonInP
                           if isinstance(e, PERIOD_EFFECT_TYPES) and SOURCE_LEAVES_ACTIVE in e.ends_on
                           and e.source_player == owner and e.source_pokemon == pokemon.pokemon_id)
             remove_persistent_effects(state, side, holder, SOURCE_LEFT_ACTIVE, found)
+            _mark_source_left(state, side, holder, owner, pokemon)
+
+
+def _mark_source_left(state: GameState, side: int, holder: PokemonInPlay, owner: int, pokemon: PokemonInPlay) -> None:
+    """v0.93（docs/active-leave-locks-v0.93.md 6.2 節）: 「このカードがバトル場にいるかぎり」で、発生源がはなれても消えると書かれていない「バトル場をはなれられない」効果（アリゲイツの
+    「くいつく」）の発生源がはなれたら、効果を消さずに印（``source_left``）を付ける（ログ ``persistent_effect_source_left``）。はなれているあいだははたらかず、もどってきたら JC1
+    （``leave_locks``）。一度付けた印は外さない。"""
+    for effect in holder.persistent_effects:
+        if (isinstance(effect, PeriodLeaveLock) and effect.while_source_active and SOURCE_LEAVES_ACTIVE not in effect.ends_on and not effect.source_left
+                and effect.source_player == owner and effect.source_pokemon == pokemon.pokemon_id):
+            marked = dataclasses.replace(effect, source_left=True)
+            holder.persistent_effects = tuple(marked if e is effect else e for e in holder.persistent_effects)
+            state.add_event("persistent_effect_source_left", player=side, pokemon=holder.card, pokemon_id=holder.pokemon_id, persistent_effect=effect.kind,
+                            source_card=effect.source_card, source_player=effect.source_player, source_pokemon=effect.source_pokemon,
+                            created_turn=effect.created_turn, active_turn=effect.active_turn)
 
 
 def source_bound_effects(state: GameState, owner: int, pokemon: PokemonInPlay) -> tuple:
-    """v0.92: 発生源の場所で決まる期間を明示した効果（``while_source_active``）のうち、発生源がプレイヤー ``owner`` の ``pokemon`` のもの（受けているポケモンはおたがいの場）。"""
+    """v0.92: 発生源の場所で決まる期間を明示した効果（``while_source_active``）のうち、発生源がプレイヤー ``owner`` の ``pokemon`` のもの（受けているポケモンはおたがいの場）。
+    v0.93: アリゲイツの「くいつく」（``PeriodLeaveLock``）は含めない（発生源の姿が変わる問いは、はなれようとしたときの JC2。``leave_locks``）。"""
     return tuple(e for side in state.players for holder in side.in_play() for e in holder.persistent_effects
-                 if isinstance(e, PERIOD_EFFECT_TYPES) and e.while_source_active and e.source_player == owner and e.source_pokemon == pokemon.pokemon_id)
+                 if isinstance(e, PERIOD_EFFECT_TYPES) and not isinstance(e, PeriodLeaveLock) and e.while_source_active and e.source_player == owner
+                 and e.source_pokemon == pokemon.pokemon_id)
+
+
+def _source_in_play(state: GameState, effect) -> PokemonInPlay | None:
+    """効果の発生源（``source_player`` の場の番号 ``source_pokemon``）が今バトル場にいれば、そのポケモン。"""
+    active = state.players[effect.source_player].active
+    return active if active is not None and active.pokemon_id == effect.source_pokemon else None
+
+
+def leave_locks(state: GameState, pokemon: PokemonInPlay) -> tuple[PeriodLeaveLock, ...]:
+    """v0.93（docs/active-leave-locks-v0.93.md 4 章）: ``pokemon`` が今受けている、はたらいている「バトル場をはなれられない」効果（``PeriodLeaveLock``。受けた順）。
+
+    - 期間（``period_active``）。「このカードがバトル場にいるかぎり」（くいつく）は、発生源（場の番号）が今バトル場にいるときだけ
+    - 発生源が与えたあとにバトル場をはなれた（``source_left``）効果は、はなれているあいだははたらかない。同じ発生源がバトル場にもどっていたら、またはたらくかが決まらない（JC1）
+    - 発生源がバトル場にいても、そのいちばん上のカードが与えたときのカードと違う（進化・退化した）なら、「このカード」がバトル場にいることになるかが決まらない（JC2）
+    決められない場合は ``UnsupportedError``（呼ぶ側の状態・乱数・ログを変える前）。"""
+    found = []
+    for effect in pokemon.persistent_effects:
+        if not isinstance(effect, PeriodLeaveLock):
+            continue
+        turn = state.turn_number
+        if turn < effect.active_turn or (effect.end_turn is not None and turn > effect.end_turn):
+            continue
+        if effect.while_source_active:
+            source = _source_in_play(state, effect)
+            if source is None:
+                continue
+            # effects.py は persistent.py を読み込むので、使うときに読み込む
+            from .effects import jaw_clamp_source_error
+
+            if effect.source_left:
+                raise jaw_clamp_source_error(pokemon, effect, returned=True)
+            if source.card != effect.source_card:
+                raise jaw_clamp_source_error(pokemon, effect, returned=False)
+        found.append(effect)
+    return tuple(found)
+
+
+def leave_lock(state: GameState, owner: int, pokemon: PokemonInPlay, *, knock_out: bool = False) -> PeriodLeaveLock | None:
+    """v0.93: プレイヤー ``owner`` の ``pokemon`` がバトル場をはなれることを止める効果（``leave_locks`` の最初のもの）。``pokemon`` が ``owner`` のバトル場にいなければ None
+    （ベンチのポケモンは受けていない。受けた効果はバトル場をはなれると消える）。
+
+    ``knock_out``: きぜつの処理ではなれる（p.323）。説明が「(「きぜつ」した時（場合）をのぞく)」と書く効果（``knockout_exception``）は止めない（発生源の場所を確かめずに除く）。
+    書かない効果を受けていれば、その効果を返す（呼ぶ側が AL1 で止める）。ダメージが HP 以上になっているだけ（ワザの途中・きぜつの判定の前）は、きぜつの処理ではない
+    （呼ぶ側は ``knock_out`` を渡さない）。"""
+    if state.players[owner].active is not pokemon:
+        return None
+    if knock_out:
+        if all(e.knockout_exception for e in pokemon.persistent_effects if isinstance(e, PeriodLeaveLock)):
+            return None
+        return next((e for e in leave_locks(state, pokemon) if not e.knockout_exception), None)
+    locks = leave_locks(state, pokemon)
+    return locks[0] if locks else None
+
+
+def require_can_leave(state: GameState, owner: int, pokemon: PokemonInPlay, *, knock_out: bool = False) -> None:
+    """v0.93: 場のポケモンをバトル場から動かす処理（「にげる」・入れ替え・手札や山札にもどす・トラッシュ・きぜつ）の、動かす直前の確かめ。止める効果が残っていれば
+    ``RuntimeError``（動かす前の確かめ（``leave_lock``）の漏れ。エンジンの不具合）。"""
+    lock = leave_lock(state, owner, pokemon, knock_out=knock_out)
+    if lock is not None:
+        raise RuntimeError(f"バトル場をはなれられない効果 {lock!r} を受けたポケモン {pokemon.pokemon_id} を動かそうとした（動かす前の確かめの漏れ。エンジンの不具合）")
+
+
+def source_card_left(state: GameState, effect) -> bool:
+    """v0.93（CJ1）: 発生源がはなれたら消える効果（``SOURCE_LEAVES_ACTIVE``）の発生源のポケモンはバトル場にいるが、与えたときのいちばん上のカード（「このカード」）が、そのポケモンの
+    重なりにもうない（退化ではがれた）。"""
+    if not isinstance(effect, PERIOD_EFFECT_TYPES) or SOURCE_LEAVES_ACTIVE not in effect.ends_on:
+        return False  # v0.91 までの型（発生源の消える契機を持たない）は当たらない
+    source = _source_in_play(state, effect)
+    return source is not None and effect.source_card not in (source.card, *source.evolution_stack)
+
+
+def require_source_card_present(state: GameState, effect, pokemon: PokemonInPlay) -> None:
+    """v0.93（CJ1）: ``source_card_left`` なら、「このカード…がバトル場をはなれたとき、この効果は消える」が当てはまるかが決まらないので ``UnsupportedError``（効果を読む前）。"""
+    if source_card_left(state, effect):
+        # effects.py は persistent.py を読み込むので、使うときに読み込む
+        from .effects import clamping_jaw_source_error
+
+        raise clamping_jaw_source_error(pokemon, effect)
 
 
 def lasting(effect) -> bool:
@@ -404,12 +502,21 @@ def attack_locked(state: GameState, pokemon: PokemonInPlay, key) -> CannotUseOwn
     return None
 
 
-def attack_coin_checks(state: GameState, pokemon: PokemonInPlay) -> tuple[AttackCoinCheck, ...]:
+def attack_coin_checks(state: GameState, pokemon: PokemonInPlay) -> tuple[AttackCoinCheck | PeriodAttackCoinCheck, ...]:
     """今の番に ``pokemon`` がワザを使うときに、p.309 の手順 4 のコインを投げる効果（v0.36。``AttackCoinCheck``。「すなかけ」・「えんまく」など）のうち、
     はたらいているもの（はたらく番が今の番。v0.45 の期限のない効果（「スミをかける」の「それ以後」）は、はたらく番とそれ以後の番。``AttackCoinCheck.active_on``）。
     v0.36 の効果だけなら 0 か 1 つ（効果を与えたワザは前の番の 1 回だけで、効果は次の番の終わりまで）。v0.45 から、期限のない効果を受けたポケモンが
-    もう 1 つの効果を受けると 2 つ以上になる（その状態でワザを使うときは AC13。``flow._attack_check_failed``）。"""
-    return tuple(e for e in pokemon.persistent_effects if isinstance(e, AttackCoinCheck) and e.active_on(state.turn_number))
+    もう 1 つの効果を受けると 2 つ以上になる（その状態でワザを使うときは AC13。``flow._attack_check_failed``）。
+    v0.93: 期間を明示した手順 4 の効果（``PeriodAttackCoinCheck``。わるいアリゲイツの「かぶりつく」。``period_active``）も、受けた順に含める。その発生源の「このカード」が退化で
+    はがれていたら CJ1（``require_source_card_present``）。"""
+    found = []
+    for effect in pokemon.persistent_effects:
+        if isinstance(effect, AttackCoinCheck) and effect.active_on(state.turn_number):
+            found.append(effect)
+        elif isinstance(effect, PeriodAttackCoinCheck) and period_active(state, effect):
+            require_source_card_present(state, effect, pokemon)
+            found.append(effect)
+    return tuple(found)
 
 
 def reflect_shield(state: GameState, pokemon: PokemonInPlay) -> ReflectShield | None:

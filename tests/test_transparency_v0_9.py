@@ -686,7 +686,9 @@ EVOLUTIONS = {METAPOD: (CATERPIE,), KAKUNA: (WEEDLE,), DEWGONG: (SEEL,), STARMIE
               # v0.88: ランターン（neo1-040・neo3-026。チョンチー neo1-037 から）・スターミー（neo3-034。ヒトデマンから）
               "neo1-040": ("neo1-037",), "neo3-026": ("neo1-037",), "neo3-034": (STARYU,),
               # v0.89: ライチュウ（ES2-013・QSG-022。ピカチュウから）・ゴーリキー（ES3-028。ワンリキーから）
-              "ES2-013": (PIKACHU,), "QSG-022": (PIKACHU,), "ES3-028": (MACHOP,)}
+              "ES2-013": (PIKACHU,), "QSG-022": (PIKACHU,), "ES3-028": (MACHOP,),
+              # v0.93: オクタン（neo3-019。テッポウオ neo3-016 から）
+              "neo3-019": ("neo3-016",)}
 
 
 class EvadedEffectCoinTest(unittest.TestCase):
@@ -808,7 +810,12 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                     "どくえき",
                                     # v0.92: イトマル（neo1-004）の「いとをはく」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
                                     # docs/power-suppression-lasting-locks-v0.92.md 5 章）
-                                    "いとをはく"]))
+                                    "いとをはく",
+                                    # v0.93: オクタン（neo3-019）の「からみつく」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                    # docs/active-leave-locks-v0.93.md 7.3 節）
+                                    "からみつく",
+                                    # v0.94: ブルー（neo1-061）の「したでなめる」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。docs/switch-return-attacks-v0.94.md 6 章）
+                                    "したでなめる"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

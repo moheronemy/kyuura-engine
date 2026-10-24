@@ -361,7 +361,9 @@ class UnsupportedWithoutRegistrationTest(unittest.TestCase):
         self.assertTrue(E.DamageThenStatusSelfAndOpponent(SLEEP).check(pool.get("GD4-003").attacks[1]))
         self.assertTrue(E.DamageAndFullDrain().check(pool.get("ES1-009").attacks[0]) == [])  # v0.32 の型は形だけを確かめる（使わない。いつも取りのぞく）
         self.assertTrue(E.DamageAndOptionalFullDrain().check(pool.get("PMCG2-004").attacks[1]))  # 「…自分からとりのぞく。」は取りのぞいてよいではない
-        self.assertTrue(E.DamageAndForceSwitch().check(pool.get("GD1-012").attacks[0]) == [])  # 形だけを確かめる型（Z23 を見落とすので使わない）
+        # 「ダメージを与えた後」の入れ替えは別の型（Z23）。v0.93 までのふきとばしの型は形だけを確かめて通していたので使わなかった。v0.94 から全文を照らして拒否する
+        # （docs/switch-return-attacks-v0.94.md 2 章）
+        self.assertTrue(E.DamageAndForceSwitch().check(pool.get("GD1-012").attacks[0]))
         self.assertTrue(E.DamageThenForceSwitchAfterDamage().check(pool.get("GD5-005").attacks[0]))
         self.assertTrue(E.DamageThenMoveOneEnergyToBench(EnergyType.WATER).check(pool.get("GD3-010").attacks[1]))
         self.assertTrue(E.SearchTrainerOnHeads().check(pool.get("GD4-012").attacks[0]))

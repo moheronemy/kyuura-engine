@@ -27015,7 +27015,7 @@
       },
       "external_checks": [],
       "issues": [],
-      "notes": "v0.92 で加えた（docs/power-suppression-lasting-locks-v0.92.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（neo 第1弾）。くろいまなざし=PeriodLockAttack（「以後」、発生源がバトル場にいる間にげるを止める。発生源か受けたポケモンがバトル場をはなれた時点で消える。発生源の進化・退化は ML1）、だましうち=ChooseOpponentPokemonDamageIgnoringHeldEffects(20)（選んだポケモン自身の持っている効果だけを除く。FA1 は付けない）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id（旧 pcg-search の id はない）で確かめた）。kyuura の日本語の文面は nazonobasho.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+      "notes": "v0.92 で加えた（docs/power-suppression-lasting-locks-v0.92.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（neo 第1弾）。くろいまなざし=PeriodLockAttack（「以後」、発生源がバトル場にいる間にげるを止める。発生源か受けたポケモンがバトル場をはなれた時点で消える。発生源の進化・退化は ML2）、だましうち=ChooseOpponentPokemonDamageIgnoringHeldEffects(20)（選んだポケモン自身の持っている効果だけを除く。FA1 は付けない）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id（旧 pcg-search の id はない）で確かめた）。kyuura の日本語の文面は nazonobasho.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
     },
     "neo3-004": {
       "basis": "kyuura_data",
@@ -27075,6 +27075,326 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.92 で加えた（docs/power-suppression-lasting-locks-v0.92.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（プロモ(neo)）。ストライクから進化（進化元は既存の写しのストライク）。にらみつける=AttackLockWhileSourceActiveOnHeads（v0.76 の既存の全文と同じ。SG1 はそのまま）、メタルニッパー=CoinsUntilTailsBonusDamage(30, 10)（30 + 10 × おもての数。先読みは固定の値を含む有限の組）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id と旧 pcg-search の id（neop025）で確かめた）。kyuura の日本語の文面は pcg-search.com の転記（同じサイトとの照合は独立した照合にならない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES1-002": {
+      "basis": "kyuura_data",
+      "name_ja": "キャタピー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.93 で加えた（docs/active-leave-locks-v0.93.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（拡張シート第1弾）。QSG-002 と同じゲーム用データ（SC-ES1-002。同じ登録の値を共有する）。たいあたり=DamageOnly（説明文のないワザ）、からまるいと=DamageThenPeriodLock(leave。おもてで、与えた番から次の相手の番の終わりまでバトル場をはなれられない。きぜつの例外を書いていない（AL1）)。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id と旧 pcg-search の id（1stex1002）で確かめた）。kyuura の日本語の文面は pcg-search.com の転記。同じサイトとの照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "QSG-002": {
+      "basis": "kyuura_data",
+      "name_ja": "キャタピー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.93 で加えた（docs/active-leave-locks-v0.93.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（クイックスターターギフト）。ES1-002 と同じゲーム用データ（SC-ES1-002。登録は ES1-002 の値を共有する）。たいあたり=DamageOnly、からまるいと=DamageThenPeriodLock(leave。ES1-002 と同じ)。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id と旧 pcg-search の id（1stqsg002）で確かめた）。kyuura の日本語の文面は pcg-search.com の転記。同じサイトとの照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES2-004": {
+      "basis": "kyuura_data",
+      "name_ja": "モンジャラ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.93 で加えた（docs/active-leave-locks-v0.93.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（拡張シート第2弾）。からみつく=DamageThenPeriodLock(leave。おもてで、次の相手の番の終わりまでバトル場をはなれられない。「(「きぜつ」した時をのぞく)」)、つるのムチ=DamageOnly（説明文のないワザ）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id と旧 pcg-search の id（1stex2004）で確かめた）。kyuura の日本語の文面は pcg-search.com の転記。同じサイトとの照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo1-008": {
+      "basis": "kyuura_data",
+      "name_ja": "クサイハナ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.93 で加えた（docs/active-leave-locks-v0.93.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（neo 第1弾）。ナゾノクサから進化（進化元は既存の写し）。へんなこな=DamageThenStatusByCoin(こんらん, ねむり)（「コインを投げ、」の全文 1 通りを加えた）、ねばるみつ=CoinBonusDamageThenLeaveLock(10)（1 枚のコインで +10 と、その場合のバトル場をはなれられない効果。きぜつの例外を書いていない（AL1））。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id（旧 pcg-search の id はない）で確かめた）。kyuura の日本語の文面は nazonobasho.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo1-030": {
+      "basis": "kyuura_data",
+      "name_ja": "アリゲイツ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.93 で加えた（docs/active-leave-locks-v0.93.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（neo 第1弾）。ワニノコから進化（進化元は既存の写し）。いやなおと=ReceivedAttackDamageBonusAttack(20, 1, 2)（v0.92 のイワークと同じ全文）、くいつく=DamageThenPeriodLock(leave。次の相手の番、このカードがバトル場にいるかぎり。発生源がはなれても消えるとは書いていない（もどれば JC1・姿が変われば JC2）。「(「きぜつ」した場合をのぞく)」)。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id（旧 pcg-search の id はない）で確かめた）。kyuura の日本語の文面は nazonobasho.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo4-011": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいアリアドス",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.93 で加えた（docs/active-leave-locks-v0.93.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（neo 第4弾）。イトマルから進化（進化元は既存の写し）。からめとる=SwitchOpponentThenParalyzeNewOnHeads（ワザを使ったプレイヤーが相手の控えを選んで入れ替え、入れ替えたときだけ新しく出てきたポケモンをおもてでマヒ。相手に控えがいないときはワザの失敗）、どくしばり=DamageThenPoisonThenLeaveLockOnHeads（どくはコインなし、禁止だけをこの要素のコインで。「(「きぜつ」した場合をのぞく)」）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id（旧 pcg-search の id はない）で確かめた）。kyuura の日本語の文面は pokemonwiki の転記。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo1-032": {
+      "basis": "kyuura_data",
+      "name_ja": "イノムー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.93 で加えた（docs/active-leave-locks-v0.93.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（neo 第1弾）。ウリムーから進化（進化元は既存の写し）。こおりつかせる=DamageThenPeriodLock(attack。おもてで、以後ワザを使えない。受けたポケモンがはなれる・進化・退化で消え、発生源がはなれても消えない)、ふぶき=DamageThenCoinBenchDamageEitherSide(10)（v0.52 の「コインを投げ、」の全文と同じ）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id（旧 pcg-search の id はない）で確かめた）。kyuura の日本語の文面は nazonobasho.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo4-036": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいアリゲイツ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.93 で加えた（docs/active-leave-locks-v0.93.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（neo 第4弾）。ワニノコから進化（進化元は既存の写し）。かぶりつく=DamageThenRetreatLockAndAttackCoinCheck（次の相手の番の「にげる」の禁止と、ワザを使うときのコイン（PeriodAttackCoinCheck）。与えるときのコインはない。発生源か受けたポケモンがバトル場をはなれた時点で両方が消える。発生源の退化は CJ1）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id（旧 pcg-search の id はない）で確かめた）。kyuura の日本語の文面は pokemonwiki の転記。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo3-019": {
+      "basis": "kyuura_data",
+      "name_ja": "オクタン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.93 で加えた（docs/active-leave-locks-v0.93.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（neo 第3弾）。テッポウオから進化（進化元は既存の写し）。からみつく=ParalyzeOnHeads（既存の全文）、オクタンほう=DamageThenLastingAttackCoinCheckOnHeads（「以後、…ワザを使うときにコインを投げ」の全文 1 通りを加えた。与えるコインと、ワザを使うときのコインは別。1 回で消えない）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id（旧 pcg-search の id はない）で確かめた）。kyuura の日本語の文面は pokemonwiki の転記。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES1-026": {
+      "basis": "kyuura_data",
+      "name_ja": "ピッピ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.94 で加えた（docs/switch-return-attacks-v0.94.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（拡張シート第1弾）。QSG-040 と同じゲーム用データ（SC-ES1-026。同じ登録の値を共有する）。このゆびとまれ=SwitchOpponentActiveRequiringBench（ワザを使ったプレイヤーが相手の控えを選ぶ。相手に控えがいなければ使えない。コインなし。かどわかす・ゆうわくの型と別に照らした）、ひかるゆび=SleepOpponent（既存の登録と同じ全文「相手を「ねむり」状態にする。」。型は形だけを確かめるので、同じ型の既存の登録と全文が同じことをテストが確かめる）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id と旧 pcg-search の id（1stex1026）で確かめた）。kyuura の日本語の文面は pcg-search.com の転記。同じサイトとの照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "QSG-040": {
+      "basis": "kyuura_data",
+      "name_ja": "ピッピ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.94 で加えた（docs/switch-return-attacks-v0.94.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（クイックスターターギフト）。ES1-026 と同じゲーム用データ（SC-ES1-026。登録は ES1-026 の値を共有する）。このゆびとまれ=SwitchOpponentActiveRequiringBench、ひかるゆび=SleepOpponent（ES1-026 と同じ）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id と旧 pcg-search の id（1stqsg040）で確かめた）。kyuura の日本語の文面は pcg-search.com の転記。同じサイトとの照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "SI-002": {
+      "basis": "kyuura_data",
+      "name_ja": "プリン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.94 で加えた（docs/switch-return-attacks-v0.94.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（南の島）。ひとみでさそう=SwitchOpponentActive（かどわかすと同じ意味。「相手の対戦ポケモンと」を「相手と」と書く全文 1 通りを加えた。選ぶのはワザを使ったプレイヤー・控えがいなくても使える・コインなし）、うたう=SleepOnHeadsWithoutDamage（既存の登録と同じ全文。型は形だけを確かめるので、同じ型の既存の登録と全文が同じことをテストが確かめる）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id と旧 pcg-search の id（1stmv002）で確かめた）。kyuura の日本語の文面は pcg-search.com の転記。同じサイトとの照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo1-061": {
+      "basis": "kyuura_data",
+      "name_ja": "ブルー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.94 で加えた（docs/switch-return-attacks-v0.94.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（neo 第1弾）。ほえる=ForceSwitchOnHeadsWithoutDamage（ダメージなし。この要素のコインの「おもて」で、相手が選ぶ入れ替え。控えがいなければ入れ替えずコインも投げない）、したでなめる=ParalyzeOnHeads（既存の全文）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id（旧 pcg-search の id はない）で確かめた）。kyuura の日本語の文面は nazonobasho.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES2-001": {
+      "basis": "kyuura_data",
+      "name_ja": "モルフォン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.94 で加えた（docs/switch-return-attacks-v0.94.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（拡張シート第2弾）。コンパンから進化（進化元は既存の写し）。たつまきおこし=DamageThenSwitchBothActives（v0.87 のフォレトスのこうそくスピンと同じ意味。ダメージ → 相手が選ぶ相手の入れ替え → ワザを使ったプレイヤーが選ぶ自分の入れ替え。全文 1 通りを加えた）、レインボーパウダー=DamageThenStatusByCoin(マヒ, どく)（既存の全文）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id と旧 pcg-search の id（1stex2001）で確かめた）。kyuura の日本語の文面は pcg-search.com の転記。同じサイトとの照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo1-054": {
+      "basis": "kyuura_data",
+      "name_ja": "ドンファン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.94 で加えた（docs/switch-return-attacks-v0.94.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（neo 第1弾）。ゴマゾウから進化（進化元は既存の写し）。じたばた=DamageTimesOwnCounters(10)（既存の登録と同じ全文。ダメージの目安「10×」は kyuura の転記の照合の記録 data/curation/nazonobasho_review.json（neo1-054|damage。転記元のダメージの空欄を直した）の値で、研究の裁定ではない）、こうそくスピン=DamageThenSwitchBothActives（モルフォンのたつまきおこしと同じ全文）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id（旧 pcg-search の id はない）で確かめた）。kyuura の日本語の文面は nazonobasho.com の転記。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PRN-033": {
+      "basis": "kyuura_data",
+      "name_ja": "トゲピー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.94 で加えた（docs/switch-return-attacks-v0.94.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（neo のプロモーション）。はしゃぐ=DamageThenSelfSwitch（ダメージのあと自分の控えと必ず入れ替える。任意のテレポートブラストの型にしない。選ぶのはワザを使ったプレイヤー（実装上の読み方））。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id と旧 pcg-search の id（neop033）で確かめた）。kyuura の日本語の文面は pcg-search.com の転記。同じサイトとの照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PRN-043": {
+      "basis": "kyuura_data",
+      "name_ja": "キレイハナ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.94 で加えた（docs/switch-return-attacks-v0.94.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（neo のプロモーション）。クサイハナから進化（進化元は既存の写し）。フローラルスピン=DamageThenStatusOnHeadsElseSelfSwitch(ねむり)（ダメージのあとの 1 枚のコインで、「おもて」は相手のねむり、「うら」は自分の入れ替え。自分に控えがいなければ入れ替える効果はなくなる）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id と旧 pcg-search の id（neop043）で確かめた）。kyuura の日本語の文面は pcg-search.com の転記。同じサイトとの照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES3-034": {
+      "basis": "kyuura_data",
+      "name_ja": "ケンタロス",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.94 で加えた（docs/switch-return-attacks-v0.94.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（拡張シート第3弾）。ふんだりけったり=CoinBonusDamageElseForceSwitch(10)（ダメージの前の 1 枚のコインで、「おもて」は基本となるダメージの +10、「うら」はダメージのあとに相手が選ぶ入れ替え）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id と旧 pcg-search の id（1stex3034）で確かめた）。kyuura の日本語の文面は pcg-search.com の転記。同じサイトとの照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PR1-052": {
+      "basis": "kyuura_data",
+      "name_ja": "カイリキー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.94 で加えた（docs/switch-return-attacks-v0.94.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（第1期のプロモーション）。ゴーリキーから進化（進化元は既存の写し）。いかりばくはつ=CoinsPerOwnCountersBonusDamage(10)（v0.85 のいかりのキバと同じ意味。「数ぶん」→「数だけ」・「×10ダメージ」→「×10のダメージ」の全文 1 通りを加えた）、なげとばす=DamageAndForceSwitch（v0.94 で照合を全文にした型。全文 1 通りを加えた）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id と旧 pcg-search の id（1stp052）で確かめた）。kyuura の日本語の文面は pcg-search.com の転記。同じサイトとの照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES3-009": {
+      "basis": "kyuura_data",
+      "name_ja": "ロコン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.94 で加えた（docs/switch-return-attacks-v0.94.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（拡張シート第3弾）。QSG-008 と同じゲーム用データ（SC-ES3-009。同じ登録の値を共有する）。きつねび=OptionalSwitchOpponentThenDamage（ダメージの前に、のぞむならワザを使ったプレイヤーが相手の控えを選んで入れ替え、そのあとのバトル場のポケモンに 10。必須の SwitchOpponentThenDamage に文面を足していない）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id と旧 pcg-search の id（1stex3009）で確かめた）。kyuura の日本語の文面は pcg-search.com の転記。同じサイトとの照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "QSG-008": {
+      "basis": "kyuura_data",
+      "name_ja": "ロコン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.94 で加えた（docs/switch-return-attacks-v0.94.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（クイックスターターギフト）。ES3-009 と同じゲーム用データ（SC-ES3-009。登録は ES3-009 の値を共有する）。きつねび=OptionalSwitchOpponentThenDamage（ES3-009 と同じ）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id と旧 pcg-search の id（1stqsg008）で確かめた）。kyuura の日本語の文面は pcg-search.com の転記。同じサイトとの照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo4-078": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいドンファン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-24",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.94 で加えた（docs/switch-return-attacks-v0.94.md）。kyuura data/engine_targets.json（7d3f4ca）の対象（neo 第4弾）。ゴマゾウから進化（進化元は既存の写し）。すくいなげ=CoinReturnOpponentToHandElseForceSwitch（ダメージなし。相手に控えがいなければワザの失敗（日本語の括弧書きはワザ全体にかかる。英語版の「うら」だけの条件に狭めない）。1 枚のコインで、「おもて」は相手とついているすべてのカードを相手の手札に、「うら」は相手が選ぶ入れ替え）、きょだいなキバ=DamageOnly（説明文のないワザ）。kyuura の研究の基準（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id（旧 pcg-search の id はない）で確かめた）。kyuura の日本語の文面は pokemonwiki の転記。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
     }
   }
 }
