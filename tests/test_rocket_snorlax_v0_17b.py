@@ -35,7 +35,7 @@ from kyuura_engine.resolution import PREFLIGHT_MODES, contract, programs
 from kyuura_engine.rng import copy_rng, rng_fingerprint
 from kyuura_engine.state import PreventDamage
 from tests.helpers import (
-    CARD_DATA_COMMIT_SINCE_V0_69,
+    CARD_DATA_COMMIT,
     with_card_data_commit_before_v0_69,
     ABRA, ALAKAZAM, BILL, BUTTERFREE, CATERPIE, DARK_WARTORTLE, DEFENDER, DODUO, FIGHTING, FIRE, GASTLY, GIOVANNIS_MEOWTH, GRASS,
     GRIMER, H, HAUNTER, KADABRA, KOGAS_MUK, LIGHTNING, MACHAMP, MACHOKE, MACHOP, METAPOD, MUK, PIKACHU, PLUSPOWER, POTION, PSYCHIC,
@@ -549,8 +549,8 @@ class GoldenGameTest(unittest.TestCase):
         counted = count(state)
         self.assertTrue(counted["tumble_self_sleep"] > 0 and counted["restless_sleep_knock_out"] > 0, dict(counted))
         data = full(state)
-        # v0.69: 写しの元を上げた（7d3f4ca）。固定値は変えず、写しの元の 2 か所だけを確かめた移行でもどして比べる（tests/helpers.py）
-        self.assertEqual(data["card_data"]["commit"], CARD_DATA_COMMIT_SINCE_V0_69)
+        # v0.69・v0.97: 写しの元を上げた（7d3f4ca・73a1690）。固定値は変えず、写しの元の 2 か所だけを確かめた移行でもどして比べる（tests/helpers.py）
+        self.assertEqual(data["card_data"]["commit"], CARD_DATA_COMMIT)
         data = with_card_data_commit_before_v0_69(data)
         self.assertEqual(data.pop("effects"), "kyuura-engine-0.13")
         digest = hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False).encode()).hexdigest()

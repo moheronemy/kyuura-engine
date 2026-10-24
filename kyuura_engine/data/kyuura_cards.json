@@ -3,7 +3,7 @@
   "description": "kyuura の data/cards.json から、kyuura-engine が使うカードの記録を抜き出した写し。カード情報の正本は kyuura。値は書き換えていない。生成: scripts/extract_kyuura_cards.py（手で編集しない）。",
   "source": {
     "repository": "https://github.com/moheronemy/kyuura",
-    "commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+    "commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
     "path": "data/cards.json",
     "schema_version": 3
   },
@@ -1427,7 +1427,7 @@
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
-    "note": "v0.68 までの写しの元。このコミットにあったカードの写す欄は、kyuura_corrections の欄と出典の記録の欄（previous_provenance_fields）を除いて同じ（書き出すたびに previous_copy_problems で確かめる）",
+    "note": "v0.68 までの写しの元。このコミットにあったカードの写す欄は、kyuura_corrections の欄と出典の記録の欄（previous_provenance_fields）を除いて同じ（書き出すたびに previous_copy_problems で確かめる）。v0.97 から、移行の連鎖（source_migrations）の段ごとにも確かめる",
     "previous_provenance_fields": [
       "notes",
       "ja_text_source",
@@ -1435,6 +1435,32 @@
       "jp_en_differences"
     ]
   },
+  "source_migrations": [
+    {
+      "id": "v0.69",
+      "from": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "to": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "document": "docs/equivalent-non-pack-cards-v0.69.md",
+      "corrections": [
+        "FIX-PMCG2-041-ATK0-NAME",
+        "FIX-PMCG2-041-LEVEL",
+        "FIX-PMCG2-046-ATK0-TEXT",
+        "FIX-GD6-010-ATK1-DAMAGE",
+        "FIX-SI-010-ATK1-NAME"
+      ]
+    },
+    {
+      "id": "v0.97",
+      "from": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "to": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "document": "docs/unown-research-idfnj-v0.97.md",
+      "corrections": [
+        "FIX-neo2-023-RULES-TEXT-JA",
+        "FIX-neo2-025-RULES-TEXT-JA",
+        "FIX-neo2-026-RULES-TEXT-JA"
+      ]
+    }
+  ],
   "kyuura_corrections": [
     {
       "id": "FIX-PMCG2-041-ATK0-NAME",
@@ -1443,6 +1469,8 @@
       "before": "したでなめる",
       "after": "まきつくベロ",
       "basis": "kyuura_source_check",
+      "kind": "transcription_error",
+      "migration": "v0.69",
       "record": "CC-PMCG2-041-P234",
       "commit": "f52a8e2e9d65055727f7b8bc3165e0fd15b96967",
       "engine_history": "v0.62〜v0.68 は、写しの元（ecb2d69）の値に、エンジンが確定した修正（CONFIRMED_CORRECTIONS）として当てはめていた",
@@ -1456,6 +1484,8 @@
       "before": 29,
       "after": 26,
       "basis": "kyuura_source_check",
+      "kind": "transcription_error",
+      "migration": "v0.69",
       "record": "CC-PMCG2-041-P234",
       "commit": "f52a8e2e9d65055727f7b8bc3165e0fd15b96967",
       "engine_history": "v0.62〜v0.68 は、写しの元（ecb2d69）の値に、エンジンが確定した修正（CONFIRMED_CORRECTIONS）として当てはめていた",
@@ -1469,6 +1499,8 @@
       "before": "コインを投げて「おもて」なら、自分の山札の上からカードを1枚ひいて、手札に加える。",
       "after": "自分の山札の上からカードを1枚ひいて、手札に加える。",
       "basis": "user_provided",
+      "kind": "transcription_error",
+      "migration": "v0.69",
       "kyuura_saw_image": false,
       "engine_saw_image": false,
       "engine_history": "v0.68 は、写しの元（ecb2d69）の値に、利用者が示した修正（USER_PROVIDED_CORRECTIONS。2026-10-19）として当てはめていた。転記の誤りの訂正で、公式エラッタ・別の版の文面・画像の読み直しではない",
@@ -1490,6 +1522,8 @@
         "display": "20×"
       },
       "basis": "kyuura_existing_record",
+      "kind": "transcription_error",
+      "migration": "v0.69",
       "kyuura_record": "data/curation/other_products.json reprint_checks「ナツメのスリーパー」",
       "engine_saw_image": false,
       "engine_history": "v0.71 で写しに加えた（前の版の写しにないカード）",
@@ -1503,11 +1537,97 @@
       "before": "のびるべ口",
       "after": "のびるベロ",
       "basis": "kyuura_existing_record",
+      "kind": "transcription_error",
+      "migration": "v0.69",
       "kyuura_record": "docs/cards/products/southern-islands.md「2 つの転記の食い違い」",
       "engine_saw_image": false,
       "engine_history": "v0.89 で写しに加えた（前の版の写しにないカード）",
       "applied_in_source": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "previous_source": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
+    },
+    {
+      "id": "FIX-neo2-023-RULES-TEXT-JA",
+      "card_id": "neo2-023",
+      "field": "pokemon.rules_text.ja",
+      "before": null,
+      "after": "「アンノーン」はデッキに4枚までしか入れることができません。",
+      "basis": "card_image_check",
+      "kind": "transcription_omission",
+      "migration": "v0.97",
+      "decided_on": "2026-10-24",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neo2023.png",
+          "image_sha256": "57548cc0fd60aaba0797e7f90a71185811f39ccf2480a1ee3306e5014d429b3f",
+          "accessed_on": "2026-10-24"
+        },
+        {
+          "image_url": "https://nazonobasho.com/wp-content/uploads/2021/05/neo2_B_023_unknown-i_copy.jpg",
+          "image_sha256": "838076599ffd2be2aa01a8829d65c34d0be214d286a142d3ed2c7f551ce100bd",
+          "accessed_on": "2026-10-24"
+        }
+      ],
+      "engine_history": "v0.97 で写しの元を 7d3f4ca から上げたときに台帳と照らした（v0.96 までは写しにないカード。ルール文は null だった）",
+      "applied_in_source": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "previous_source": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"
+    },
+    {
+      "id": "FIX-neo2-025-RULES-TEXT-JA",
+      "card_id": "neo2-025",
+      "field": "pokemon.rules_text.ja",
+      "before": null,
+      "after": "「アンノーン」はデッキに4枚までしか入れることができません。",
+      "basis": "card_image_check",
+      "kind": "transcription_omission",
+      "migration": "v0.97",
+      "decided_on": "2026-10-24",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neo2026.png",
+          "image_sha256": "fbf1c613e098e0ecdc35925a73b4d47a2c2d2bb2503c06c800bc0ec0e1a513c2",
+          "accessed_on": "2026-10-24"
+        },
+        {
+          "image_url": "https://nazonobasho.com/wp-content/uploads/2021/05/neo2_B_026_unknown-d_copy.jpg",
+          "image_sha256": "f425a4b87daecfa13345e215eee9c91b617fb13c38c72dfe2f118b6f360bae9f",
+          "accessed_on": "2026-10-24"
+        }
+      ],
+      "engine_history": "v0.97 で写しの元を 7d3f4ca から上げたときに台帳と照らした（v0.96 までは写しにないカード。ルール文は null だった。kyuura の id は D、サイトの番号は 026）",
+      "applied_in_source": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "previous_source": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"
+    },
+    {
+      "id": "FIX-neo2-026-RULES-TEXT-JA",
+      "card_id": "neo2-026",
+      "field": "pokemon.rules_text.ja",
+      "before": null,
+      "after": "「アンノーン」はデッキに4枚までしか入れることができません。",
+      "basis": "card_image_check",
+      "kind": "transcription_omission",
+      "migration": "v0.97",
+      "decided_on": "2026-10-24",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neo2025.png",
+          "image_sha256": "43f5f5b21f0576b7d6c347964967f31f83f9d58bd9f07d207a010f984e3922e5",
+          "accessed_on": "2026-10-24"
+        },
+        {
+          "image_url": "https://nazonobasho.com/wp-content/uploads/2021/05/neo2_B_025_unknown-f_copy.jpg",
+          "image_sha256": "60c17562ed1734179b7ce8fe2278f44abdf80fbb30371d5f2d9b4c9dd3ee39be",
+          "accessed_on": "2026-10-24"
+        }
+      ],
+      "engine_history": "v0.97 で写しの元を 7d3f4ca から上げたときに台帳と照らした（v0.96 までは写しにないカード。ルール文は null だった。kyuura の id は F、サイトの番号は 025）",
+      "applied_in_source": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "previous_source": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"
     }
   ],
   "engine_user_corrections": [
@@ -1525,12 +1645,12 @@
       "reference_url_role": "利用者が示した補助資料。エンジンは本文を取得していない（ネットワークのプロキシが 403）。サイトの本文を検証した・ルーン文字を解読したとは扱わない",
       "engine_saw_image": false,
       "kyuura_saw_image": false,
-      "source_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"
+      "source_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534"
     }
   ],
   "equivalent_targets": {
     "path": "data/engine_targets.json",
-    "commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+    "commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
     "cards": [
       {
         "id": "GD1-002",
@@ -2896,7 +3016,7 @@
   },
   "reprint_targets": {
     "path": "data/engine_targets.json",
-    "commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+    "commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
     "cards": [
       {
         "id": "GD1-006",

@@ -101,6 +101,7 @@ from tests.helpers import (
     WATER,
     WOOPER_PRN,
     apply_kernel,
+    kyuura_records_since_v0_69,
     with_coin_results,
 )
 from tests.log_audit import (
@@ -292,7 +293,8 @@ class RegistrationTest(unittest.TestCase):
         for card in V0_76_POKEMON:
             with self.subTest(card=card):
                 record = sources[card]
-                self.assertEqual((record["basis"], record["status"], record["external_checks"], record["kyuura_records"]), ("kyuura_data", "adopted", [], []))
+                self.assertEqual((record["basis"], record["status"], record["external_checks"], record["kyuura_records"]),
+                                 ("kyuura_data", "adopted", [], kyuura_records_since_v0_69(card)))  # v0.97: 研究の基準を上げて加わった kyuura の記録（tests/helpers.py の V0_97_KYUURA_RECORDS_ADDED）
                 for index, attack_def in enumerate(pool.get(card).attacks):
                     key = f"attack/{index}"
                     self.assertEqual(key in record["play_text"], attack_def.text_ja is not None)

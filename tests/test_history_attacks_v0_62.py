@@ -206,7 +206,8 @@ class CorrectionTest(unittest.TestCase):
         self.assertEqual({x["id"] for x in self.card["corrections"]}, {"FIX-PMCG2-041-ATK0-NAME", "FIX-PMCG2-041-LEVEL"})
 
     def test_corrections_recorded_with_source(self):
-        self.assertEqual(self.data["source"]["commit"], "7d3f4ca76c084774efb4ac6a1d3a943387e183c3")
+        # v0.97: 写しの元は移行の連鎖の最後（73a1690）。この修正は v0.69 の段（ecb2d69 → 7d3f4ca）で kyuura が当てはめたもの（段の値は書き換えない）
+        self.assertEqual(self.data["source"]["commit"], self.data["source_migrations"][-1]["to"])
         self.assertNotIn("corrections", self.data)  # エンジンが当てはめる修正はもうない（二重の修正をしない）
         fields = {(c["card_id"], c["field"]): c for c in self.data["kyuura_corrections"] if c["card_id"] == LICKITUNG}
         self.assertEqual(set(fields), {(LICKITUNG, "pokemon.attacks[0].name.ja"), (LICKITUNG, "jp_print.level")})
@@ -214,7 +215,7 @@ class CorrectionTest(unittest.TestCase):
             self.assertEqual(c["basis"], "kyuura_source_check")
             self.assertEqual(c["record"], "CC-PMCG2-041-P234")
             self.assertEqual(c["commit"], "f52a8e2e9d65055727f7b8bc3165e0fd15b96967")
-            self.assertEqual(c["applied_in_source"], self.data["source"]["commit"])
+            self.assertEqual((c["migration"], c["applied_in_source"]), ("v0.69", "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"))
             self.assertEqual(c["previous_source"], "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691")
         self.assertEqual(fields[(LICKITUNG, "pokemon.attacks[0].name.ja")]["before"], "したでなめる")
         self.assertEqual(fields[(LICKITUNG, "jp_print.level")]["before"], 29)
@@ -223,8 +224,10 @@ class CorrectionTest(unittest.TestCase):
         # v0.71: 写しに加えたナツメのスリーパー（GD6-010。ふりこののろいのダメージの「×」。kyuura の前の判定による台帳の修正）
         # v0.89: 写しに加えたベロリンガ（SI-010。サザンアイランド。ワザ 1 の名前「のびるベロ」。kyuura の前の判定による台帳の修正 FIX-SI-010-ATK1-NAME。docs/selected-target-damage-v0.89.md 2 章）
         corrected = {LICKITUNG, "PMCG2-046", "GD6-010", "SI-010"}
-        self.assertEqual({c["card_id"] for c in self.data["kyuura_corrections"]}, corrected)
-        self.assertEqual({c["id"] for c in self.data["cards"] if c.get("corrections")}, corrected)
+        # v0.97: kyuura がカードの画像で埋めたアンノーンI・D・F のルール文（台帳 FIX-neo2-023/025/026-RULES-TEXT-JA。v0.97 の移行の段。docs/unown-research-idfnj-v0.97.md 2 章）
+        unown = {"neo2-023", "neo2-025", "neo2-026"}
+        self.assertEqual({c["card_id"] for c in self.data["kyuura_corrections"]}, corrected | unown)
+        self.assertEqual({c["id"] for c in self.data["cards"] if c.get("corrections")}, corrected | (unown & {c["id"] for c in self.data["cards"]}))
 
     @unittest.skipUnless((KYUURA / ".git").exists(), "../kyuura がない")
     def test_correction_sources_check_and_tampering(self):

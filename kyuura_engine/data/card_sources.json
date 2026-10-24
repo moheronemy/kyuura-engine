@@ -15,6 +15,14 @@
       "check": "scripts/extract_kyuura_cards.py の previous_copy_problems・kyuura_correction_problems（写す欄が、kyuura が当てはめた修正の欄と出典の記録の欄を除いて同じ）",
       "document": "docs/equivalent-non-pack-cards-v0.69.md",
       "note": "v0.69 で写しの元を ecb2d69 から 7d3f4ca に上げた。v0.68 までの採用の記録の kyuura_commit（採用したときのデータのコミット）・記録した日・外部照合の確認日と照らしたコミットは書き換えない（採用し直した・照合し直したことにしない）。kyuura_records は、研究の基準のコミットを 7d3f4ca に上げたので、そのコミットでカードを指す kyuura の記録の id に合わせた（記録を読み直したのではなく、id の対応を直した）"
+    },
+    {
+      "from": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "to": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "on": "2026-10-25",
+      "check": "scripts/extract_kyuura_cards.py の migration_copy_problems・previous_copy_problems・kyuura_correction_problems（移行の段ごとに、写す欄が、その段で kyuura が当てはめた修正の欄と出典の記録の欄を除いて同じ。修正は段の前の値・あとの値・台帳・カードの記録・根拠で確かめる）",
+      "document": "docs/unown-research-idfnj-v0.97.md",
+      "note": "v0.97 で写しの元を 7d3f4ca から 73a1690（kyuura main の PR #5 のマージ。木は研究のコミット 78d090c と同じ）に上げた。v0.69 の段（ecb2d69 → 7d3f4ca）は書き換えない。v0.96 までの採用の記録の kyuura_commit（ecb2d69・7d3f4ca）・記録した日・外部照合の確認日と照らしたコミットは書き換えない（採用し直した・照合し直したことにしない）。この段で値が変わったのは、写しの外のアンノーンI・D・F のルール文（kyuura の台帳 FIX-neo2-023/025/026-RULES-TEXT-JA）と出典の記録の欄だけ。kyuura_records は、研究の基準のコミットを 73a1690 に上げたので、そのコミットでカードを指す kyuura の記録の id に合わせた（7 件。記録を読み直したのではなく、id の対応を直した）"
     }
   ],
   "cards": {
@@ -12938,7 +12946,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "CR-UNOWN-DF-SOURCE-TYPE"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -16026,7 +16036,8 @@
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
       "kyuura_records": [
-        "UQ-COPIED-ATTACK"
+        "UQ-COPIED-ATTACK",
+        "UQ-SPEED-STAR-SCOPE"
       ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
@@ -22666,7 +22677,9 @@
       "status": "adopted",
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-20",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-SPEED-STAR-SCOPE"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -23459,7 +23472,9 @@
       "status": "adopted",
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-20",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "CR-UNOWN-DF-SOURCE-TYPE"
+      ],
       "play_text": {
         "energy": "kyuura_printed_text"
       },
@@ -26138,7 +26153,9 @@
       "status": "adopted",
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-22",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-SELF-EXCLUDING-POWER-COPIES"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "power/0": "kyuura_printed_text"
@@ -27661,7 +27678,9 @@
       "status": "adopted",
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-24",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "CR-UNOWN-DECK-LIMIT-ALL-LETTERS"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -27675,7 +27694,9 @@
       "status": "adopted",
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-24",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "CR-UNOWN-DECK-LIMIT-ALL-LETTERS"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },

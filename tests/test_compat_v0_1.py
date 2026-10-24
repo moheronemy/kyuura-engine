@@ -30,7 +30,7 @@ from pathlib import Path
 
 from kyuura_engine import EngineError, IllegalActionError, apply_command, command_from_dict, new_game, state_to_dict
 
-from tests.helpers import CARD_DATA_COMMIT_SINCE_V0_69, with_card_data_commit_before_v0_69
+from tests.helpers import CARD_DATA_COMMIT, with_card_data_commit_before_v0_69
 
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "v0_1_reference.json"
 
@@ -68,9 +68,9 @@ class V01CompatibilityTest(unittest.TestCase):
                             self.assertEqual(ctx.exception.code, step["error"], (number, step))
                     else:
                         state = apply_command(state, command)
-                # v0.69: 写しの元を上げた（7d3f4ca）。参照データは作り直さず、写しの元の 2 か所だけを確かめた移行でもどして比べる（tests/helpers.py）
+                # v0.69・v0.97: 写しの元を上げた（7d3f4ca・73a1690）。参照データは作り直さず、写しの元の 2 か所だけを確かめた移行でもどして比べる（tests/helpers.py）
                 raw = plain(state_to_dict(state))
-                self.assertEqual(raw["card_data"]["commit"], CARD_DATA_COMMIT_SINCE_V0_69)
+                self.assertEqual(raw["card_data"]["commit"], CARD_DATA_COMMIT)
                 self.assertEqual(with_card_data_commit_before_v0_69(raw), scenario["final_state"])
         # 変わったのは、ルールによる拒否のコードだけ（未対応・整合性の破れではない）。POKEMON_NOT_IN_PLAY は v0.5 の特殊能力
         self.assertLessEqual(changed_codes, {"WRONG_PHASE", "INVALID_PLAYER", "NOT_YOUR_TURN", "CARD_NOT_IN_HAND", "NOT_TRAINER", "GAME_OVER",

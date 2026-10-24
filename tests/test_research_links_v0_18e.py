@@ -62,7 +62,8 @@ class ResearchLinksTest(unittest.TestCase):
         self.assertRegex(LINKS["research_commit"], r"^[0-9a-f]{40}$")
         # v0.69: 研究の基準を kyuura 7d3f4ca（v0.68 までのエンジンの記録を取り込んだコミット。kyuura の main）に上げ、写しの元も同じコミットにした
         # （docs/equivalent-non-pack-cards-v0.69.md 7 章）。v0.68 までは研究の基準 3f34908・写しの元 ecb2d69 を分けて持っていた
-        self.assertEqual(LINKS["research_commit"], "7d3f4ca76c084774efb4ac6a1d3a943387e183c3")
+        # v0.97: 研究の基準と写しの元を kyuura 73a1690（研究 78d090c を取り込んだ main の PR #5 のマージ。木は 78d090c と同じ）に上げた（docs/unown-research-idfnj-v0.97.md 2 章・3 章）
+        self.assertEqual(LINKS["research_commit"], "73a169063463bbf7bcaa3137d70cbf9721d11534")
         self.assertEqual(LINKS["engine_import_id"], "ENGINE-46A3E2E")
         self.assertEqual(LINKS["card_data_commit"], read_extract()["source"]["commit"])
         self.assertEqual(LINKS["research_commit"], LINKS["card_data_commit"])
@@ -77,11 +78,15 @@ class ResearchLinksTest(unittest.TestCase):
         self.assertEqual(set(LINKS["stop_codes"]), engine_stop_codes())
         self.assertEqual(len(LINKS["stop_codes"]), LINKS["counts"]["engine_stop_codes"])
         not_in_kyuura = set()
+        unindexed = set()  # v0.97: kyuura に論点はあるが、kyuura の未解決の一覧（v0.68 までの取り込み）にコードの行がない停止コード（issue_not_in_index）
         for code, entry in LINKS["stop_codes"].items():
             with self.subTest(code=code):
                 if entry["kyuura_disposition"] == "not_in_kyuura":
                     self.assertIsNone(entry["kyuura_issue"])
                     not_in_kyuura.add(code)
+                elif entry["kyuura_disposition"] == "issue_not_in_index":
+                    self.assertIsNotNone(entry["kyuura_issue"])
+                    unindexed.add(code)
                 else:
                     self.assertEqual(entry["kyuura_disposition"], "issue" if entry["kyuura_issue"] else "out_of_scope")
         # v0.69: kyuura が、v0.68 までのエンジンの記録を取り込んで、not_in_kyuura だった停止コード 123 件をすべて論点（UQ-）に結んだ（kyuura の未解決の一覧。
@@ -114,9 +119,9 @@ class ResearchLinksTest(unittest.TestCase):
                                  "UNRESOLVED_MIRACULOUS_WIND_ENERGY_BURN",
                              # v0.85: MEC1・MEW1（docs/entry-powers-energy-lifecycle-v0.85.md 7 章）
                              "UNRESOLVED_MIRACLE_ENERGY_AS_TYPE", "UNRESOLVED_MIRACLE_ENERGY_UNDER_WIND",
-                             # v0.86: RA1・RA2・CV1・OT1・BT1・PL1・SO1（docs/entry-energy-evolution-reactions-v0.86.md 8 章）
+                             # v0.86: RA1・RA2・OT1・BT1・PL1・SO1（docs/entry-energy-evolution-reactions-v0.86.md 8 章。CV1 は v0.97 から issue_not_in_index）
                              "UNRESOLVED_REACTION_AFTER_KNOCKOUT", "UNRESOLVED_REACTION_CONDITION_CHANGED",
-                             "UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES", "UNRESOLVED_HOWL_OUTSIDE_OWN_TURN",
+                             "UNRESOLVED_HOWL_OUTSIDE_OWN_TURN",
                              "UNRESOLVED_BOLT_DURING_OWN_ATTACK", "UNRESOLVED_PROTECTIVE_FLAME_SCOPE",
                              "UNRESOLVED_SOLAR_POWER_WITHOUT_CONDITION",
                              # v0.87: HP1・MG1・MG2・SB1（docs/movement-damage-reactions-v0.87.md 9 章）
@@ -139,6 +144,9 @@ class ResearchLinksTest(unittest.TestCase):
                              "UNRESOLVED_JAW_CLAMP_SOURCE_EVOLVED", "UNRESOLVED_CLAMPING_JAW_SOURCE_DEVOLVED",
                              # v0.96: EG1・OB1（docs/unown-family-powers-v0.96.md 9 章）
                              "UNRESOLVED_ENGAGE_EMPTY_HAND", "UNRESOLVED_POWER_DECK_TOP_SHORT"})
+        # v0.97（docs/unown-research-idfnj-v0.97.md 3 章）: kyuura が調査で立てた UQ-SELF-EXCLUDING-POWER-COPIES の事例にわるいデンリュウ（neo4-046）の［かんでん］があるので、
+        # CV1 を論点に結んだ（kyuura は v0.86 を取り込んでいないので、未解決の一覧に CV1 の行はない。kyuura の事例は kyuura_cases_without_engine_ruling で照らす）
+        self.assertEqual(unindexed, {"UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES"})
         # v0.31〜v0.68 は、kyuura の一覧でコードのない行を指していた停止コード 8 件（T27・C34/C35・G40・P19・P32・Z9・DR8・DR13）に kyuura_index_engine_key を
         # 書いていた。v0.69 で kyuura が停止コードを書いたので外した（scripts/check_research_links.py が、kyuura の一覧のコードで照らす）
         self.assertEqual({code for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}, set())

@@ -18,6 +18,8 @@ v0.4c 以降の 2 進化ポケモン。v0.11 はサカキのワンリキー・�
   除いて同じことも、書き出すたびに確かめます（docs/equivalent-non-pack-cards-v0.69.md 2 章）。
 - v0.70 から、kyuura にまだない利用者が示した訂正（``ENGINE_USER_CORRECTIONS``。PR1-069 の名前「？？？」→「ミュウ」）を、写しの作り直しで当てはめます
   （書き出しの ``engine_user_corrections``。kyuura が当てはめた修正の表 ``KYUURA_CORRECTIONS`` とは別。docs/non-pack-effect-reuse-v0.70.md 3 章）。
+- v0.97 から、写しの元を上げた移行を連鎖（``KYUURA_MIGRATIONS``。ecb2d69 → 7d3f4ca → 73a1690。書き出しの ``source_migrations``）で持ちます。kyuura が当てはめた
+  修正は、当てはめた移行の段（``migration``）の前・あとのコミットの値で確かめ、写す欄は段ごとに比べます（docs/unown-research-idfnj-v0.97.md 2 章）。
 
 使い方::
 
@@ -35,7 +37,8 @@ import sys
 from pathlib import Path
 
 KYUURA_REPOSITORY = "https://github.com/moheronemy/kyuura"
-KYUURA_COMMIT = "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"
+# v0.97: kyuura main の PR #5 のマージ（木は研究のコミット 78d090c329aca58c4b5fbaefa2a1e5c089433b58 と同じ）。v0.69〜v0.96 は 7d3f4ca（``V0_69_KYUURA_COMMIT``）
+KYUURA_COMMIT = "73a169063463bbf7bcaa3137d70cbf9721d11534"
 KYUURA_PATH = "data/cards.json"
 
 # v0.1 の対戦で使うカード（kyuura docs/engine-readiness.md 5章の段階 1 のたねポケモンと基本エネルギー）
@@ -1414,7 +1417,15 @@ POOL_V0_79 = [
 # 同じ記録（id・欄・前・後・根拠）があること、KYUURA_COMMIT の値が ``after``・前の写しの元（PREVIOUS_KYUURA_COMMIT）の値が ``before`` であること、根拠ごとの
 # 出どころ（kyuura の照合の記録とコミット・利用者が示した訂正で kyuura もエンジンも画像を見ていない）を確かめる（違えば書き出さない）。写しのカードに
 # kyuura の台帳の修正があれば、ここに挙げていなければ書き出さない（知らない修正を黙って受け入れない）
-PREVIOUS_KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
+PREVIOUS_KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"  # v0.68 までの写しの元（移行の連鎖の最初の段の前。採用の記録の採用したときのデータのコミット）
+V0_69_KYUURA_COMMIT = "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"  # v0.69〜v0.96 の写しの元
+# v0.97（docs/unown-research-idfnj-v0.97.md 2 章）: 写しの元を上げた移行の連鎖。段ごとに、前のコミット（``from``）とあとのコミット（``to``）。最後の段の ``to`` が写しの元、
+# 最初の段の ``from`` が PREVIOUS_KYUURA_COMMIT。過去の段の値は書き換えない（v0.69 の段の ``to`` は 7d3f4ca のまま）。kyuura が当てはめた修正は、当てはめた段（``migration``）の
+# ``from`` の値が ``before``・``to`` の値が ``after`` で、写しの元でも ``after``。写す欄は段ごとに、その段の修正の欄と出典の記録の欄を除いて同じことを確かめる
+KYUURA_MIGRATIONS = (
+    {"id": "v0.69", "from": PREVIOUS_KYUURA_COMMIT, "to": V0_69_KYUURA_COMMIT, "document": "docs/equivalent-non-pack-cards-v0.69.md"},
+    {"id": "v0.97", "from": V0_69_KYUURA_COMMIT, "to": KYUURA_COMMIT, "document": "docs/unown-research-idfnj-v0.97.md"},
+)
 KYUURA_CORRECTIONS_PATH = "data/curation/card_corrections.json"
 KYUURA_TARGETS_PATH = "data/engine_targets.json"
 KYUURA_CORRECTIONS = [
@@ -1425,6 +1436,8 @@ KYUURA_CORRECTIONS = [
         "before": "したでなめる",
         "after": "まきつくベロ",
         "basis": "kyuura_source_check",
+        "kind": "transcription_error",
+        "migration": "v0.69",
         "record": "CC-PMCG2-041-P234",
         "commit": "f52a8e2e9d65055727f7b8bc3165e0fd15b96967",
         "engine_history": "v0.62〜v0.68 は、写しの元（ecb2d69）の値に、エンジンが確定した修正（CONFIRMED_CORRECTIONS）として当てはめていた",
@@ -1436,6 +1449,8 @@ KYUURA_CORRECTIONS = [
         "before": 29,
         "after": 26,
         "basis": "kyuura_source_check",
+        "kind": "transcription_error",
+        "migration": "v0.69",
         "record": "CC-PMCG2-041-P234",
         "commit": "f52a8e2e9d65055727f7b8bc3165e0fd15b96967",
         "engine_history": "v0.62〜v0.68 は、写しの元（ecb2d69）の値に、エンジンが確定した修正（CONFIRMED_CORRECTIONS）として当てはめていた",
@@ -1447,6 +1462,8 @@ KYUURA_CORRECTIONS = [
         "before": "コインを投げて「おもて」なら、自分の山札の上からカードを1枚ひいて、手札に加える。",
         "after": "自分の山札の上からカードを1枚ひいて、手札に加える。",
         "basis": "user_provided",
+        "kind": "transcription_error",
+        "migration": "v0.69",
         "kyuura_saw_image": False,
         "engine_saw_image": False,
         "engine_history": "v0.68 は、写しの元（ecb2d69）の値に、利用者が示した修正（USER_PROVIDED_CORRECTIONS。2026-10-19）として当てはめていた。"
@@ -1461,6 +1478,8 @@ KYUURA_CORRECTIONS = [
         "before": {"base": 20, "modifier": None, "display": "20"},
         "after": {"base": 20, "modifier": "×", "display": "20×"},
         "basis": "kyuura_existing_record",
+        "kind": "transcription_error",
+        "migration": "v0.69",
         "kyuura_record": "data/curation/other_products.json reprint_checks「ナツメのスリーパー」",
         "engine_saw_image": False,
         "engine_history": "v0.71 で写しに加えた（前の版の写しにないカード）",
@@ -1475,13 +1494,84 @@ KYUURA_CORRECTIONS = [
         "before": "のびるべ口",
         "after": "のびるベロ",
         "basis": "kyuura_existing_record",
+        "kind": "transcription_error",
+        "migration": "v0.69",
         "kyuura_record": "docs/cards/products/southern-islands.md「2 つの転記の食い違い」",
         "engine_saw_image": False,
         "engine_history": "v0.89 で写しに加えた（前の版の写しにないカード）",
     },
+    # v0.97（docs/unown-research-idfnj-v0.97.md 2 章）: アンノーンI・D・F のルール文の欠け（転記元のなぞのばしょの欄にない）を、kyuura がカードの画像（pcg-search.com・なぞのばしょ）
+    # で確かめて埋めた（根拠 ``card_image_check``・種類 ``transcription_omission``。2026-10-24）。画像を見たのは kyuura で、エンジンは画像・公式の書籍を見ていない
+    # （``engine_saw_image``）。kyuura の照合の記録（CC-）・最新の説明（LD-）ではない（``record`` を書かない）。``evidence`` は台帳の画像の URL・sha256・取得日の写しで、
+    # 書き出すたびに台帳と照らす。2 つのサイトの画像は独立した 2 枚の実物の照合として数えない（kyuura の台帳の ``scope``）
+    {
+        "id": "FIX-neo2-023-RULES-TEXT-JA",
+        "card_id": "neo2-023",
+        "field": "pokemon.rules_text.ja",
+        "before": None,
+        "after": "「アンノーン」はデッキに4枚までしか入れることができません。",
+        "basis": "card_image_check",
+        "kind": "transcription_omission",
+        "migration": "v0.97",
+        "decided_on": "2026-10-24",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neo2023.png",
+             "image_sha256": "57548cc0fd60aaba0797e7f90a71185811f39ccf2480a1ee3306e5014d429b3f", "accessed_on": "2026-10-24"},
+            {"image_url": "https://nazonobasho.com/wp-content/uploads/2021/05/neo2_B_023_unknown-i_copy.jpg",
+             "image_sha256": "838076599ffd2be2aa01a8829d65c34d0be214d286a142d3ed2c7f551ce100bd", "accessed_on": "2026-10-24"},
+        ],
+        "engine_history": "v0.97 で写しの元を 7d3f4ca から上げたときに台帳と照らした（v0.96 までは写しにないカード。ルール文は null だった）",
+    },
+    {
+        "id": "FIX-neo2-025-RULES-TEXT-JA",
+        "card_id": "neo2-025",
+        "field": "pokemon.rules_text.ja",
+        "before": None,
+        "after": "「アンノーン」はデッキに4枚までしか入れることができません。",
+        "basis": "card_image_check",
+        "kind": "transcription_omission",
+        "migration": "v0.97",
+        "decided_on": "2026-10-24",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neo2026.png",
+             "image_sha256": "fbf1c613e098e0ecdc35925a73b4d47a2c2d2bb2503c06c800bc0ec0e1a513c2", "accessed_on": "2026-10-24"},
+            {"image_url": "https://nazonobasho.com/wp-content/uploads/2021/05/neo2_B_026_unknown-d_copy.jpg",
+             "image_sha256": "f425a4b87daecfa13345e215eee9c91b617fb13c38c72dfe2f118b6f360bae9f", "accessed_on": "2026-10-24"},
+        ],
+        "engine_history": "v0.97 で写しの元を 7d3f4ca から上げたときに台帳と照らした（v0.96 までは写しにないカード。ルール文は null だった。kyuura の id は D、サイトの番号は 026）",
+    },
+    {
+        "id": "FIX-neo2-026-RULES-TEXT-JA",
+        "card_id": "neo2-026",
+        "field": "pokemon.rules_text.ja",
+        "before": None,
+        "after": "「アンノーン」はデッキに4枚までしか入れることができません。",
+        "basis": "card_image_check",
+        "kind": "transcription_omission",
+        "migration": "v0.97",
+        "decided_on": "2026-10-24",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neo2025.png",
+             "image_sha256": "43f5f5b21f0576b7d6c347964967f31f83f9d58bd9f07d207a010f984e3922e5", "accessed_on": "2026-10-24"},
+            {"image_url": "https://nazonobasho.com/wp-content/uploads/2021/05/neo2_B_025_unknown-f_copy.jpg",
+             "image_sha256": "60c17562ed1734179b7ce8fe2278f44abdf80fbb30371d5f2d9b4c9dd3ee39be", "accessed_on": "2026-10-24"},
+        ],
+        "engine_history": "v0.97 で写しの元を 7d3f4ca から上げたときに台帳と照らした（v0.96 までは写しにないカード。ルール文は null だった。kyuura の id は F、サイトの番号は 025）",
+    },
 ]
 # 前の写しの元と比べるときに、変わってよい欄（出典の記録。エンジンは使わない）。ほかの欄は修正の欄を除いて同じでなければ書き出さない
 PROVENANCE_FIELDS = ("notes", "ja_text_source", "source_ids", "jp_en_differences")
+# v0.97: 欠けていた欄を埋める修正（種類 ``transcription_omission``）では、欠けている欄の一覧（``data_gaps``）から、ちょうどその欄だけが消えてよい（ほかの欠けは変わらない）
+OMISSION_KIND = "transcription_omission"
+CORRECTION_KINDS = ("transcription_error", OMISSION_KIND)
+_SHA256 = re.compile(r"[0-9a-f]{64}")
+_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 # v0.70（docs/non-pack-effect-reuse-v0.70.md 3 章）: エンジンが写しの作り直しで当てはめる、利用者が示した訂正（kyuura にはまだない）。kyuura が当てはめた修正
 # （``KYUURA_CORRECTIONS``。台帳とカードの記録で確かめる）とは別の表で、書き出しでも別の欄（``engine_user_corrections``）に残す。kyuura の照合の記録（CC-）・
@@ -1630,25 +1720,123 @@ def _records(data):
     return data["records"] if isinstance(data, dict) and "records" in data else data
 
 
-def kyuura_correction_problems(kyuura: Path, source: dict, previous: dict, pool: list[str]) -> list[str]:
-    """kyuura が当てはめた修正（``KYUURA_CORRECTIONS``。v0.69）を、台帳・カードの記録・前の写しの元で確かめる。問題の一覧（空なら書き出してよい）。"""
+def migration_problems() -> list[str]:
+    """移行の連鎖（``KYUURA_MIGRATIONS``。v0.97）の形: 段の id が重ならず、最初の段の前が PREVIOUS_KYUURA_COMMIT、段の前がその前の段のあと、最後の段のあとが写しの元。"""
     problems = []
+    ids = [step["id"] for step in KYUURA_MIGRATIONS]
+    if len(set(ids)) != len(ids) or not KYUURA_MIGRATIONS:
+        problems.append(f"移行の段の id が重なっている・段がない（{ids}）")
+    expected = PREVIOUS_KYUURA_COMMIT
+    for step in KYUURA_MIGRATIONS:
+        if set(step) != {"id", "from", "to", "document"}:
+            problems.append(f"移行の段 {step.get('id')} の項目が id・from・to・document ではない")
+        if step.get("from") != expected:
+            problems.append(f"移行の段 {step.get('id')} の前のコミット {str(step.get('from'))[:7]} が、その前の段のあと（{expected[:7]}）ではない")
+        if step.get("from") == step.get("to"):
+            problems.append(f"移行の段 {step.get('id')} の前とあとが同じ")
+        expected = step.get("to")
+    if expected != KYUURA_COMMIT:
+        problems.append(f"移行の連鎖の最後のコミット {str(expected)[:7]} が写しの元（{KYUURA_COMMIT[:7]}）ではない")
+    return problems
+
+
+def _step(correction: dict) -> dict | None:
+    return next((step for step in KYUURA_MIGRATIONS if step["id"] == correction.get("migration")), None)
+
+
+def migration_snapshots(kyuura: Path, source: dict, previous: dict) -> dict[str, dict]:
+    """移行の連鎖のコミットごとの data/cards.json（v0.97）。写しの元（``source``）と最初の段の前（``previous``）は渡された値、あいだのコミットは ``git show`` で読む。"""
+    snapshots = {KYUURA_COMMIT: source, PREVIOUS_KYUURA_COMMIT: previous}
+    for step in KYUURA_MIGRATIONS:
+        for commit in (step["from"], step["to"]):
+            if commit not in snapshots:
+                snapshots[commit] = json.loads(_show(kyuura, commit, KYUURA_PATH).decode("utf-8"))
+    return snapshots
+
+
+def _ledger(kyuura: Path, commit: str) -> dict:
+    try:
+        return {entry["id"]: entry for entry in json.loads(_show(kyuura, commit, KYUURA_CORRECTIONS_PATH).decode("utf-8"))["corrections"]}
+    except subprocess.CalledProcessError:
+        return {}  # 台帳のないコミット（v0.68 までの写しの元）
+
+
+def card_image_check_problems(label: str, c: dict, entry: dict, card_ids_with_checks: set[tuple[str, str]], previous_ledger: dict) -> list[str]:
+    """v0.97: kyuura がカードの画像で確かめた修正（根拠 ``card_image_check``）の出どころ。台帳に、画像の URL（https）・sha256（64 桁）・取得日（決めた日まで）・カードの識別・
+    確かめた範囲・エラッタでないことの記録があり、写しの記録の画像（``evidence``）が台帳の画像と同じで、kyuura が画像を見た・エンジンは見ていない。kyuura の照合の記録（CC-）・
+    最新の説明（LD-）・修正のコミットを書かない（作らない）。修正はその段で入った（段の前のコミットの台帳にない）。問題の一覧。"""
+    problems = []
+    if c.get("kyuura_saw_image") is not True or entry.get("kyuura_saw_image") is not True or c.get("engine_saw_image") is not False:
+        problems.append(f"{label}: カードの画像による修正は、kyuura が画像を見た（kyuura_saw_image は True）・エンジンは見ていない（engine_saw_image は False）")
+    if any(key in c or key in entry for key in ("record", "commit", "kyuura_record")):
+        problems.append(f"{label}: カードの画像による修正に、照合の記録（CC-）・最新の説明・修正のコミットを書かない")
+    if entry.get("card_checks_affected") != []:
+        problems.append(f"{label}: カードの画像による修正が、照合の記録（card_checks_affected）を変える")
+    if (c["card_id"], c["field"]) in card_ids_with_checks:
+        problems.append(f"{label}: kyuura の照合の記録（CC-）がこの欄を照合している（画像の確認を CC- の代わりにしない）")
+    decided = entry.get("decided_on")
+    if not isinstance(decided, str) or not _DATE.fullmatch(decided) or decided != c.get("decided_on"):
+        problems.append(f"{label}: 台帳の決めた日 {decided!r} が写しの記録 {c.get('decided_on')!r} と違う")
+    for key in ("identification", "scope", "not_errata", "source_of_error", "basis_detail"):
+        if not isinstance(entry.get(key), str) or not entry[key].strip():
+            problems.append(f"{label}: 台帳に {key}（カードの識別・確かめた範囲・エラッタでないこと・誤りの出どころ・根拠の説明）がない")
+    evidence = entry.get("evidence")
+    if not isinstance(evidence, list) or not evidence:
+        return [*problems, f"{label}: 台帳に画像の記録（evidence）がない"]
+    recorded = set()
+    for i, item in enumerate(evidence):
+        where = f"{label}: 台帳の画像 {i}"
+        if not isinstance(item, dict):
+            problems.append(f"{where} が辞書ではない")
+            continue
+        url, digest, accessed = item.get("image_url"), item.get("image_sha256"), item.get("accessed_on")
+        if not isinstance(url, str) or not url.startswith("https://"):
+            problems.append(f"{where} の URL {url!r} が https ではない")
+        if not isinstance(item.get("page_url"), str) or not item["page_url"].startswith("https://"):
+            problems.append(f"{where} のページの URL がない")
+        if not isinstance(digest, str) or not _SHA256.fullmatch(digest):
+            problems.append(f"{where} の sha256 {digest!r} が 64 桁の 16 進数ではない")
+        if not isinstance(accessed, str) or not _DATE.fullmatch(accessed) or (isinstance(decided, str) and accessed > decided):
+            problems.append(f"{where} の取得日 {accessed!r} が、決めた日 {decided!r} までの日付ではない")
+        recorded.add((url, digest, accessed))
+    ours = {(x.get("image_url"), x.get("image_sha256"), x.get("accessed_on")) for x in c.get("evidence") or ()}
+    if ours != recorded or len(ours) != len(c.get("evidence") or ()):
+        problems.append(f"{label}: 写しの記録の画像（evidence）が台帳の画像（URL・sha256・取得日）と違う")
+    if c["id"] in previous_ledger:
+        problems.append(f"{label}: 修正が、当てはめた段の前のコミットの台帳にすでにある（段 {c.get('migration')} で入った修正ではない）")
+    return problems
+
+
+def kyuura_correction_problems(kyuura: Path, source: dict, previous: dict, pool: list[str]) -> list[str]:
+    """kyuura が当てはめた修正（``KYUURA_CORRECTIONS``。v0.69）を、台帳・カードの記録・前の写しの元で確かめる。問題の一覧（空なら書き出してよい）。
+
+    v0.97: 修正ごとに、当てはめた移行の段（``migration``）の前のコミットの値が ``before``、あとのコミットと写しの元の値が ``after``（``previous`` は最初の段の前の
+    data/cards.json）。照合の記録による修正（``kyuura_source_check``）のコミットはその段の前とあとのあいだ。カードの画像による修正（``card_image_check``）は
+    ``card_image_check_problems``。修正の種類（``kind``）は台帳と同じ。"""
+    problems = migration_problems()
     ledger = json.loads(_show(kyuura, KYUURA_COMMIT, KYUURA_CORRECTIONS_PATH).decode("utf-8"))["corrections"]
     by_ledger = {entry["id"]: entry for entry in ledger}
     current = {card["id"]: card for card in source["cards"]}
-    old = {card["id"]: card for card in previous["cards"]}
+    snapshots = {commit: {card["id"]: card for card in data["cards"]} for commit, data in migration_snapshots(kyuura, source, previous).items()}
     checks = None
     known = set()
     for c in KYUURA_CORRECTIONS:
         label = f"{c['card_id']} の {c['field']}（{c['id']}）"
         known.add(c["id"])
+        step = _step(c)
+        if step is None:
+            problems.append(f"{label}: 当てはめた移行の段 {c.get('migration')!r} が KYUURA_MIGRATIONS にない")
+            continue
+        old, new = snapshots[step["from"]], snapshots[step["to"]]
         entry = by_ledger.get(c["id"])
         if entry is None:
             problems.append(f"{label}: kyuura（{KYUURA_COMMIT[:7]}）の {KYUURA_CORRECTIONS_PATH} に記録がない")
             continue
-        for key in ("card_id", "field", "before", "after", "basis"):
-            if entry.get(key) != c[key]:
-                problems.append(f"{label}: 台帳の {key} が {entry.get(key)!r}（写しの記録は {c[key]!r}）")
+        for key in ("card_id", "field", "before", "after", "basis", "kind"):
+            if entry.get(key) != c.get(key):
+                problems.append(f"{label}: 台帳の {key} が {entry.get(key)!r}（写しの記録は {c.get(key)!r}）")
+        if c.get("kind") not in CORRECTION_KINDS:
+            problems.append(f"{label}: 修正の種類 {c.get('kind')!r} を扱えない")
         card = current.get(c["card_id"])
         if card is None:
             problems.append(f"{label}: kyuura（{KYUURA_COMMIT[:7]}）にカードがない")
@@ -1657,10 +1845,18 @@ def kyuura_correction_problems(kyuura: Path, source: dict, previous: dict, pool:
             problems.append(f"{label}: カードの記録の corrections に同じ修正がない")
         if get_field(card, c["field"]) != c["after"]:
             problems.append(f"{label}: 写しの元（{KYUURA_COMMIT[:7]}）の値が {c['after']!r} ではない（修正が当てはまっていない）")
+        if c["card_id"] not in new or get_field(new[c["card_id"]], c["field"]) != c["after"]:
+            problems.append(f"{label}: 移行の段 {step['id']} のあと（{step['to'][:7]}）の値が {c['after']!r} ではない")
         if c["card_id"] in old and get_field(old[c["card_id"]], c["field"]) != c["before"]:
-            problems.append(f"{label}: 前の写しの元（{PREVIOUS_KYUURA_COMMIT[:7]}）の値が {c['before']!r} ではない")
+            problems.append(f"{label}: 移行の段 {step['id']} の前の写しの元（{step['from'][:7]}）の値が {c['before']!r} ではない")
         if c["card_id"] not in old and c["basis"] != "kyuura_existing_record":
-            problems.append(f"{label}: 前の写しの元（{PREVIOUS_KYUURA_COMMIT[:7]}）にカードがない")
+            problems.append(f"{label}: 移行の段 {step['id']} の前の写しの元（{step['from'][:7]}）にカードがない")
+        if c.get("kind") == OMISSION_KIND:
+            # 欠けていた欄（前の値が null）を埋めた。段の前の data_gaps にその欄があり、あとにない
+            gaps_before = (old.get(c["card_id"]) or {}).get("data_gaps")
+            gaps_after = (new.get(c["card_id"]) or {}).get("data_gaps")
+            if c["before"] is not None or not isinstance(gaps_before, list) or c["field"] not in gaps_before or c["field"] in (gaps_after or ()):
+                problems.append(f"{label}: 欠けの修正なのに、前の値が null でない・段の前の data_gaps にこの欄がない・あとの data_gaps に残っている")
         if c["basis"] == "kyuura_source_check":
             if entry.get("record") != c.get("record") or entry.get("commit") != c.get("commit"):
                 problems.append(f"{label}: 台帳の照合の記録・コミットが違う")
@@ -1671,8 +1867,13 @@ def kyuura_correction_problems(kyuura: Path, source: dict, previous: dict, pool:
                     x.get("field") == c["field"] and x.get("before") == c["before"] and x.get("after") == c["after"] and x.get("commit") == c.get("commit")
                     for x in record.get("corrections", ())):
                 problems.append(f"{label}: 照合の記録 {c.get('record')} の corrections に、同じ修正（欄・前・後・コミット）がない")
-            if not (c.get("commit") and _is_ancestor(kyuura, PREVIOUS_KYUURA_COMMIT, c["commit"]) and _is_ancestor(kyuura, c["commit"], KYUURA_COMMIT)):
-                problems.append(f"{label}: 修正のコミットが、前の写しの元のあと・写しの元の前にない")
+            if not (c.get("commit") and _is_ancestor(kyuura, step["from"], c["commit"]) and _is_ancestor(kyuura, c["commit"], step["to"])):
+                problems.append(f"{label}: 修正のコミットが、移行の段 {step['id']} の前のあと・あとの前にない")
+        elif c["basis"] == "card_image_check":
+            if checks is None:
+                checks = _records(json.loads(_show(kyuura, KYUURA_COMMIT, "data/sidecar/card_checks.json").decode("utf-8")))
+            checked = {(r.get("card_id"), field) for r in checks if isinstance(r, dict) for field in (r.get("checked_fields") or {})}
+            problems.extend(card_image_check_problems(label, c, entry, checked, _ledger(kyuura, step["from"])))
         elif c["basis"] == "user_provided":
             if entry.get("kyuura_saw_image") is not False or c.get("kyuura_saw_image") is not False or c.get("engine_saw_image") is not False:
                 problems.append(f"{label}: 利用者が示した訂正は、kyuura もエンジンも画像を見ていない（kyuura_saw_image・engine_saw_image は False）")
@@ -1759,23 +1960,44 @@ def apply_engine_user_corrections(cards: list[dict]) -> list[dict]:
     return cards
 
 
-def previous_copy_problems(source: dict, previous: dict, pool: list[str]) -> list[str]:
-    """前の写しの元（PREVIOUS_KYUURA_COMMIT）にあったカードの写す欄が、修正の欄と出典の記録の欄（``PROVENANCE_FIELDS``）を除いて同じことを確かめる（v0.69）。"""
+def previous_copy_problems(source: dict, previous: dict, pool: list[str], *, start: str = PREVIOUS_KYUURA_COMMIT, end: str = KYUURA_COMMIT) -> list[str]:
+    """前の写しの元（PREVIOUS_KYUURA_COMMIT）にあったカードの写す欄が、修正の欄と出典の記録の欄（``PROVENANCE_FIELDS``）を除いて同じことを確かめる（v0.69）。
+
+    v0.97: ``previous`` は ``start``、``source`` は ``end`` の data/cards.json で、当てはめるのは移行の連鎖の ``start`` から ``end`` までの段の修正だけ（既定は最初の段の前から
+    写しの元まで、すべての修正）。段ごとの比べ（``migration_copy_problems``）と、最初の段の前から写しの元までの比べの両方に使う。欠けを埋める修正（``OMISSION_KIND``）は、
+    欠けている欄の一覧（``data_gaps``）からその欄が消えてよい（ほかの欠けの増減は許さない）。"""
+    commits = [KYUURA_MIGRATIONS[0]["from"], *(step["to"] for step in KYUURA_MIGRATIONS)]
+    if start not in commits or end not in commits or commits.index(start) >= commits.index(end):
+        raise ValueError(f"比べるコミット {start[:7]} → {end[:7]} が、移行の連鎖の前とあとの順ではない")
+    steps = {step["id"] for step in KYUURA_MIGRATIONS[commits.index(start):commits.index(end)]}
+    corrections = [c for c in KYUURA_CORRECTIONS if c.get("migration") in steps]
     problems = []
     current = {card["id"]: card for card in source["cards"]}
     old = {card["id"]: card for card in previous["cards"]}
     for card_id in pool:
-        if card_id not in old:
+        if card_id not in old or card_id not in current:
             continue
         before = json.loads(json.dumps(old[card_id]))
-        for c in KYUURA_CORRECTIONS:
+        for c in corrections:
             if c["card_id"] == card_id:
                 set_field(before, c["field"], c["after"])
+                if c.get("kind") == OMISSION_KIND and isinstance(before.get("data_gaps"), list):
+                    before["data_gaps"] = [gap for gap in before["data_gaps"] if gap != c["field"]]
         for field in FIELDS:
             if field in PROVENANCE_FIELDS or field not in before:
                 continue
             if before[field] != current[card_id][field]:
-                problems.append(f"{card_id} の {field} が、前の写しの元（{PREVIOUS_KYUURA_COMMIT[:7]}）と修正の欄のほかでも違う")
+                problems.append(f"{card_id} の {field} が、前の写しの元（{start[:7]}）と修正の欄のほかでも違う（{end[:7]} と比べた）")
+    return problems
+
+
+def migration_copy_problems(kyuura: Path, source: dict, previous: dict, pool: list[str]) -> list[str]:
+    """移行の連鎖の段ごとに、段の前のコミットにあったカードの写す欄が、段のあとのコミットで、その段の修正の欄と出典の記録の欄を除いて同じことを確かめる（v0.97）。"""
+    snapshots = migration_snapshots(kyuura, source, previous)
+    problems = []
+    for step in KYUURA_MIGRATIONS:
+        problems.extend(f"移行の段 {step['id']}: {p}" for p in previous_copy_problems(snapshots[step["to"]], snapshots[step["from"]], pool,
+                                                                                 start=step["from"], end=step["to"]))
     return problems
 
 
@@ -2260,10 +2482,16 @@ def build_extract(source: dict, targets: list[dict], reprints: list[dict]) -> di
     extract["previous_source"] = {
         "commit": PREVIOUS_KYUURA_COMMIT,
         "note": "v0.68 までの写しの元。このコミットにあったカードの写す欄は、kyuura_corrections の欄と出典の記録の欄（previous_provenance_fields）を除いて同じ"
-                "（書き出すたびに previous_copy_problems で確かめる）",
+                "（書き出すたびに previous_copy_problems で確かめる）。v0.97 から、移行の連鎖（source_migrations）の段ごとにも確かめる",
         "previous_provenance_fields": list(PROVENANCE_FIELDS),
     }
-    extract["kyuura_corrections"] = [dict(correction, applied_in_source=KYUURA_COMMIT, previous_source=PREVIOUS_KYUURA_COMMIT) for correction in KYUURA_CORRECTIONS]
+    # v0.97: 移行の連鎖（段ごとの前・あとのコミットと、その段で kyuura が当てはめた修正の id）。過去の段の値は書き換えない
+    extract["source_migrations"] = [
+        dict(step, corrections=[c["id"] for c in KYUURA_CORRECTIONS if c["migration"] == step["id"]]) for step in KYUURA_MIGRATIONS
+    ]
+    # 修正ごとの、当てはめた段のあと（applied_in_source）と前（previous_source）のコミット（v0.69 の段の修正は 7d3f4ca・ecb2d69 のまま）
+    extract["kyuura_corrections"] = [dict(correction, applied_in_source=_step(correction)["to"], previous_source=_step(correction)["from"])
+                                     for correction in KYUURA_CORRECTIONS]
     extract["engine_user_corrections"] = [dict(correction, source_commit=KYUURA_COMMIT) for correction in ENGINE_USER_CORRECTIONS]
     extract["equivalent_targets"] = {"path": KYUURA_TARGETS_PATH, "commit": KYUURA_COMMIT, "cards": targets}
     extract["reprint_targets"] = {"path": KYUURA_TARGETS_PATH, "commit": KYUURA_COMMIT, "cards": reprints}
@@ -2288,8 +2516,8 @@ def main(argv: list[str] | None = None) -> int:
     reprints = reprint_targets(args.kyuura)
     pool = all_pool_cards() + REFERENCE_ONLY
     problems = (kyuura_correction_problems(args.kyuura, source, previous, pool) + engine_user_correction_problems(args.kyuura, source, pool)
-                + previous_copy_problems(source, previous, pool) + equivalent_target_problems(targets)
-                + reprint_target_problems(reprints))
+                + previous_copy_problems(source, previous, pool) + migration_copy_problems(args.kyuura, source, previous, pool)
+                + equivalent_target_problems(targets) + reprint_target_problems(reprints))
     if problems:
         print("kyuura のデータを写しにできない:\n" + "\n".join(problems), file=sys.stderr)
         return 1

@@ -1955,6 +1955,23 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.97: 写しの元・研究の基準を kyuura 73a1690 に上げる移行
+
+[unown-research-idfnj-v0.97.md](unown-research-idfnj-v0.97.md) の 2 章・3 章。
+
+- 写しの元・研究の基準を kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` から `73a169063463bbf7bcaa3137d70cbf9721d11534`（kyuura main の PR #5 のマージ。木は研究のコミット
+  `78d090c329aca58c4b5fbaefa2a1e5c089433b58` と同じ。78d090c 以後の差分はない）に上げた。2 回目の移行なので、移行を連鎖（ecb2d69 → 7d3f4ca → 73a1690。`KYUURA_MIGRATIONS`・写しの
+  `source_migrations`・`card_sources.json` の `data_migrations` の 2 段）にした。v0.69 の段の記録（前・あと・日付・修正）は書き換えていない。
+- 7d3f4ca → 73a1690 の data/cards.json の値の違いは、写しの外のアンノーンI・D・F（neo2-023・025・026）のルール文（null → 全文。kyuura の台帳 `FIX-neo2-023/025/026-RULES-TEXT-JA`、
+  根拠 `card_image_check`・種類 `transcription_omission`）と、出典の記録の欄（notes・D と [N] の jp_en_differences）・`data_gaps`・`corrections` だけ。写しの 1,169 枚の値は変わって
+  いない（写しの `cards` が同じ）。3 件の修正は、台帳の画像の記録（URL・sha256・取得日・カードの識別・確かめた範囲）を写しの `kyuura_corrections` の `evidence` に写して照らす。
+  画像を読んだのは kyuura で、エンジンは画像・公式の書籍を新しく照合していない。2 つのサイトの画像を独立した 2 枚の実物の照合に数えず、CC-・LD- の代わりにもしていない。
+- 研究の対応表: kyuura の論点 71 → 72（新しい UQ-SELF-EXCLUDING-POWER-COPIES）、新しい裁定 5 件（CR-UNOWN-…）、事例を加えた論点 3 件。kyuura の論点の事例のうちエンジンの裁定 id の
+  ないもの 13 件を `kyuura_cases_without_engine_ruling` に結び、CV1 を `issue_not_in_index`（論点はあるが kyuura の未解決の一覧に行がない）にした。採用の記録 7 件の `kyuura_records` を
+  研究の基準のコミットの記録に合わせた（採用したときのデータのコミット・記録した日は変えていない）。
+- 報告事項（kyuura の作業）: CV1（わるいデンリュウの［かんでん］。v0.86）は UQ-SELF-EXCLUDING-POWER-COPIES の事例と同じ問い。kyuura の engine_unresolved_index・engine_refs は v0.68 までの
+  取り込みで、CV1 の行・参照がない。
+
 ## v0.96: アンノーン 7 枚と遺跡の石版 2 枚
 
 [unown-family-powers-v0.96.md](unown-family-powers-v0.96.md)。

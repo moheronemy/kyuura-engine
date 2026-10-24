@@ -205,7 +205,8 @@ class RegistrationTest(unittest.TestCase):
         for card in H.V0_96_CARDS:
             with self.subTest(card=card):
                 record = data[card]
-                self.assertEqual((record["basis"], record["status"], record["kyuura_records"], record["external_checks"]), ("kyuura_data", "adopted", [], []))
+                self.assertEqual((record["basis"], record["status"], record["kyuura_records"], record["external_checks"]),
+                                 ("kyuura_data", "adopted", H.kyuura_records_since_v0_69(card), []))  # v0.97: 研究の基準を上げて加わった kyuura の記録（tests/helpers.py の V0_97_KYUURA_RECORDS_ADDED）
                 self.assertEqual(record["play_text"], {"trainer": "kyuura_printed_text"} if card in H.V0_96_TRAINERS else {"power/0": "kyuura_printed_text"})
         links = json.loads((ROOT / "kyuura_engine" / "data" / "research_links.json").read_text(encoding="utf-8"))
         adopted = links["latest_descriptions"]["adopted_printed_text"]
