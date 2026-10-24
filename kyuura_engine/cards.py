@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections import Counter
 from dataclasses import dataclass, replace
 from enum import Enum
@@ -137,6 +138,16 @@ class CardDefinition:
     # v0.82（docs/energy-discard-return-v0.82.md 5 章）: ポケモンのルール文「「（このカードの名前）」はデッキに1枚までしか入れることができません。」の枚数（ひかるリザードン
     # neo4-025）。同じ名前のカードの枚数の上限（デッキの検査 ``deck.deck_problems``）。ほかのルール文のあるポケモンは今までどおり未対応
     deck_limit: int | None = None
+    # v0.96（docs/unown-family-powers-v0.96.md 2 章）: 名前が「グループの名前」と文字の書き方（「アンノーンT」の英字 1 文字・「アンノーン[O]」の角かっこの英字 1 文字）で
+    # できたポケモンのカードの、グループの名前（「アンノーン」）と文字（"T"・"O"）。そのグループの名前を、同じ写しのどれかのカードのルール文が「デッキにN枚まで」と書くとき
+    # だけ持つ（``pool_from_extract`` が同じ写しの中で決める。名前・id・文面は書き換えない。名前の一部・ほかの書き方で推測しない）。印刷の定義の値で、デッキと山札・手札の
+    # カードの「アンノーン」はこれで決める。場のポケモンが「アンノーン」かは、今の姿のカードの定義（``effects.form_def``）のこの値で決める
+    name_group: str | None = None
+    name_letter: str | None = None
+    # v0.96: このカード自身のルール文が、グループの名前（``name_group``）で書くデッキの枚数の上限（「「アンノーン」はデッキに4枚までしか入れることができません。」の 4）。
+    # デッキの検査（``deck.deck_problems``）だけが使い、デッキのどれかのカードのルール文が書いた上限を、そのグループのカードを合わせた枚数に当てはめる。同じ名前の上限
+    # （``deck_limit``・p.308 の 4 枚）とは別に数える
+    deck_group_limit: int | None = None
     # v0.90（docs/markers-counters-v0.90.md 5 章）: 弱点の計算でかける数（p.321 の 3 段階）。印刷の定義はいつも None（共通のルールの ``RuleSet.weakness_multiplier``）。のろいマーカーの
     # のっている場のポケモンの今有効な値の定義（``effects.definition_views``）だけが、「×2」ではなく「×4」の 4 を持つ（全体のルールは変えない）
     weakness_multiplier: int | None = None
@@ -174,14 +185,16 @@ class CardDefinition:
 
 
 # v0.67（docs/secret-plan-preflight-v0.67.md 3 章）: うらにしてベンチに出したカード（マチスの秘策）の、うらのあいだのカードの定義で、読めない項目
-FACE_DOWN_HIDDEN_FIELDS = frozenset({"id", "name_ja", "name_en", "hp", "pokemon_type", "weakness", "resistance", "resistance_value", "retreat_cost", "attacks"})
+# v0.96: 名前のグループ（「アンノーン」）・文字・グループの上限も、名前と同じく読めない
+FACE_DOWN_HIDDEN_FIELDS = frozenset({"id", "name_ja", "name_en", "hp", "pokemon_type", "weakness", "resistance", "resistance_value", "retreat_cost", "attacks",
+                                     "name_group", "name_letter", "deck_group_limit"})
 
 
 class FaceDownDefinition(CardDefinition):
     """うらにしてベンチに出したカード（v0.67。マチスの秘策）の、うらのあいだのカードの定義（``GameState.card_def``）。
 
     「うらになっている限り、「たねポケモン」としてあつかわれる」ので、種類は "pokemon"・段階は "basic"。特殊能力はない（うらのカード自身の特殊能力ははたらかない）。
-    ほかの項目（``FACE_DOWN_HIDDEN_FIELDS``。名前・HP・タイプ・弱点・抵抗力・にげる・ワザ・カードの id）は本文が決めないので、読むと ``HiddenPropertyRead``（FD1）。
+    ほかの項目（``FACE_DOWN_HIDDEN_FIELDS``。名前・HP・タイプ・弱点・抵抗力・にげる・ワザ・カードの id・名前のグループ）は本文が決めないので、読むと ``HiddenPropertyRead``（FD1）。
     決まった値（化石・人形の HP 10 など）を置かない。印刷の定義・写しは変えない（``printed_def`` は本当のカードの定義のまま）。"""
 
     def __getattribute__(self, name: str):
@@ -341,9 +354,13 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
         if not power.supported:
             reasons.append(f"ポケモンパワー「{power.name_ja}」: {power.unsupported_reason}")
     deck_limit = None
+    group_rule = None
     if pokemon.get("rules_text") is not None:
-        deck_limit = _deck_limit_rule(record["name"].get("ja") or "", pokemon["rules_text"].get("ja"))
+        rules_ja = pokemon["rules_text"].get("ja")
+        deck_limit = _deck_limit_rule(record["name"].get("ja") or "", rules_ja)
         if deck_limit is None:
+            group_rule = _deck_group_rule(record["name"].get("ja") or "", rules_ja)  # v0.96
+        if deck_limit is None and group_rule is None:
             reasons.append("ルール文のあるポケモンは未実装")
     if len(pokemon["types"]) != 1:
         reasons.append("タイプが 1 つではない")
@@ -391,6 +408,9 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
         attacks=attacks,
         powers=powers,
         deck_limit=deck_limit,
+        name_group=None if group_rule is None else group_rule[0],
+        name_letter=None if group_rule is None else group_rule[1],
+        deck_group_limit=None if group_rule is None else group_rule[2],
     )
 
 
@@ -399,6 +419,35 @@ def _deck_limit_rule(name: str, text: str | None) -> int | None:
     できません。」）。ほかの書き方・ほかの名前・ほかの規定のルール文は None（未対応のまま。ルール文のあるポケモンを一括で対応にしない。ひかるポケモン全体を合わせた上限・
     のちのルールの「ひかるポケモン」の規定を持ち込まない）。"""
     return 1 if name and text == f"「{name}」はデッキに1枚までしか入れることができません。" else None
+
+
+# v0.96（docs/unown-family-powers-v0.96.md 2 章）: ルール文の「「（グループの名前）」はデッキにN枚までしか入れることができません。」と、名前の文字の書き方（英字 1 文字・角かっこの
+# 英字 1 文字）。ほかの書き方（全角の英字・記号・2 文字以上）は文字と読まない
+_DECK_GROUP_RULE = re.compile(r"「(?P<group>[^「」]+)」はデッキに(?P<count>[1-9])枚までしか入れることができません。")
+_NAME_LETTER_NOTATIONS = (re.compile(r"(?P<letter>[A-Z])"), re.compile(r"\[(?P<letter>[A-Z])\]"))
+
+
+def _name_letter(name: str, group: str) -> str | None:
+    """名前が「``group``」と文字の書き方（「アンノーンT」の英字 1 文字・「アンノーン[O]」の角かっこの英字 1 文字）だけでできていれば、その文字（v0.96）。ほかは None。"""
+    if not group or not name.startswith(group):
+        return None
+    rest = name[len(group):]
+    for notation in _NAME_LETTER_NOTATIONS:
+        found = notation.fullmatch(rest)
+        if found is not None:
+            return found["letter"]
+    return None
+
+
+def _deck_group_rule(name: str, text: str | None) -> tuple[str, str, int] | None:
+    """ポケモンのルール文が、このカードの名前のグループの名前の「デッキにN枚まで」だけなら (グループの名前, 文字, N)（v0.96。アンノーンの「「アンノーン」はデッキに4枚までしか
+    入れることができません。」）。名前が「グループの名前＋文字の書き方」でない・ほかの書き方・ほかの規定のルール文は None（未対応のまま。ルール文のあるポケモンを一括で
+    対応にしない）。"""
+    found = _DECK_GROUP_RULE.fullmatch(text or "")
+    if found is None:
+        return None
+    letter = _name_letter(name, found["group"])
+    return None if letter is None else (found["group"], letter, int(found["count"]))
 
 
 def _annotate_attack(card_id: str, attack: Attack, effects: EffectRegistry, attacks: tuple[Attack, ...]) -> Attack:
@@ -534,6 +583,10 @@ POOL_KEYS = (
     "pool_v0_90",  # v0.90（マーカー・ダメージカウンター以外のカウンターのポケモン 7 枚。docs/markers-counters-v0.90.md）
     "pool_v0_91",  # v0.91（残りのマーカーのポケモン 3 枚とヒノアラシ。docs/marker-check-field-reset-v0.91.md）
     "pool_v0_92",  # v0.92（能力の消去・続く制限のポケモン 8 枚。docs/power-suppression-lasting-locks-v0.92.md）
+    "pool_v0_93",  # v0.93（バトル場をはなれられない効果・続くワザの制限のポケモン 9 枚。docs/active-leave-locks-v0.93.md）
+    "pool_v0_94",  # v0.94（入れ替え・帰還のワザのポケモン 13 枚。docs/switch-return-attacks-v0.94.md）
+    "pool_v0_95",  # v0.95（手札・山札を見る効果とカードを動かすポケモン 11 枚。docs/private-looks-deck-movement-v0.95.md）
+    "pool_v0_96",  # v0.96（アンノーン 7 枚と遺跡の石版 2 枚。docs/unown-family-powers-v0.96.md）
 )
 
 
@@ -542,6 +595,7 @@ def pool_from_extract(extract: dict, effects: EffectRegistry | None = None) -> C
         from .effects import DEFAULT_EFFECTS as effects
     definitions = {record["id"]: classify_record(record, effects) for record in extract["cards"]}
     definitions = _with_stage1_lineage(definitions)
+    definitions = _with_name_groups(definitions)
     playable = frozenset(
         card_id for key in POOL_KEYS for card_id in extract.get(key, ()) if definitions[card_id].supported
     )
@@ -568,6 +622,21 @@ def _with_stage1_lineage(definitions: dict[str, CardDefinition]) -> dict[str, Ca
         if definition.is_stage2_pokemon else definition
         for card_id, definition in definitions.items()
     }
+
+
+def _with_name_groups(definitions: dict[str, CardDefinition]) -> dict[str, CardDefinition]:
+    """同じ写しのどれかのカードのルール文がデッキの枚数の上限を書くグループの名前（``deck_group_limit`` のあるカードの ``name_group``）について、名前が「グループの名前＋
+    文字の書き方」のポケモンのカードに、グループの名前と文字を加える（v0.96）。ルール文のないカード（アンノーンI など。今の写しにはない）もグループのカードとして
+    数えるため。上限（``deck_group_limit``）は、そのカード自身のルール文が書くときだけで、加えない。対戦に使えるかは変えない。"""
+    groups = {definition.name_group for definition in definitions.values() if definition.deck_group_limit is not None}
+    result = {}
+    for card_id, definition in definitions.items():
+        if definition.category == "pokemon" and definition.name_group is None:
+            found = [(group, letter) for group in sorted(groups) if (letter := _name_letter(definition.name_ja, group)) is not None]
+            if len(found) == 1:
+                definition = replace(definition, name_group=found[0][0], name_letter=found[0][1])
+        result[card_id] = definition
+    return result
 
 
 def read_extract() -> dict:

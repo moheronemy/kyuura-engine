@@ -63,6 +63,18 @@ def deck_problems(cards: Sequence[str], pool: CardPool | None = None, rules: Rul
             problems.append(f"TOO_MANY_COPIES: 「{name}」が {count} 枚（同じ名前は {rules.max_copies_per_name} 枚まで）")
         elif name in limits and count > limits[name]:
             problems.append(f"TOO_MANY_COPIES: 「{name}」が {count} 枚（カードのルール文で、デッキに {limits[name]} 枚まで）")
+    # v0.96（docs/unown-family-powers-v0.96.md 2 章）: ルール文で、名前のグループ（「アンノーン」。``CardDefinition.name_group``）のカードを合わせた枚数の上限を書くポケモン
+    # （「「アンノーン」はデッキに4枚までしか入れることができません。」。``deck_group_limit``）。デッキのどれかのカードのルール文が書いたときに、そのグループのカード（文字の
+    # 違うカード・ルール文のないカードを含む）を合わせて数える。デッキの規定で、場のポケモンの数の制限ではない。カードの印刷の定義で数える
+    group_limits: dict[str, int] = {}
+    for c in known:
+        definition = pool.get(c)
+        if definition.deck_group_limit is not None and definition.name_group is not None:
+            group_limits[definition.name_group] = min(definition.deck_group_limit, group_limits.get(definition.name_group, definition.deck_group_limit))
+    for group, limit in sorted(group_limits.items()):
+        count = sum(1 for c in known if pool.get(c).name_group == group)
+        if count > limit:
+            problems.append(f"TOO_MANY_GROUP_COPIES: 「{group}」のカードが合わせて {count} 枚（カードのルール文で、デッキに {limit} 枚まで）")
 
     # たねポケモン（ベイビィポケモン）を必ず入れる（p.308）
     if not any(pool.get(c).is_basic_pokemon for c in known):

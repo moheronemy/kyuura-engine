@@ -660,7 +660,10 @@ class CatalogTest(unittest.TestCase):
                            "damage_on_opponent_promotion", "move_type_energy_on_benching", "damage_on_hand_basic_while_active", "opponent_active_cannot_retreat",
                            # v0.88: エリカのナゾノクサのこうごうせい（エネルギーの色を変える。エネルギーの単位・色を数える ``effects.energy_units`` が、その時点の場から
                            # 求める。窓の中の反応ではない。docs/type-energy-colors-v0.88.md 5.4 節）
-                           "type_energy_as_grass")
+                           "type_energy_as_grass",
+                           # v0.96: アンノーンZ の［ZOOM］（「にげる」のエネルギーの数。``effects.retreat_cost`` が、その時点の場から問い合わせる。窓の中の反応ではない。
+                           # docs/unown-family-powers-v0.96.md 6 章）
+                           "zero_group_retreat_cost_from_bench")
         # v0.87: フリーザーの［オーロラヴェール］・ダグトリオの［もぐる］は窓の中の反応（要素を無効にする）だが、守るのは持ち主の控え・ベンチにいるこのカードなので、印刷した
         # ポケモンの効果の対応表（``POWER_DEFINITIONS``）ではなく ``catalog.instances`` が受けるポケモンについて作る（v0.84 のこおりのはしらと同じ形）
         built_by_instances = {"own_bench_attack_immunity_while_active": C.AURORA_VEIL, "bench_attack_damage_immunity": C.DIG_UNDER}
@@ -695,7 +698,9 @@ class CatalogTest(unittest.TestCase):
                           "neo2-044@power0", "neo3-009@power0",  # v0.87
                           "neo3-029@power0",
                           "neo4-023@power0",  # v0.87
-                          "neo4-046@power0", "neo4-094@power0"])
+                          "neo4-046@power0",
+                          "neo4-060@power0",  # v0.96
+                          "neo4-094@power0"])
 
 
 # ---------------------------------------------------------------- 対戦（new_game から）: 再現性・ログの監査

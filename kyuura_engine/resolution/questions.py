@@ -359,6 +359,12 @@ QUESTIONS: dict[str, Question] = {
         Question("reflect_shield_overlap", "UNRESOLVED_REFLECT_SHIELD_OVERLAP", ("RF1",), 50,
                  "「リフレクトシールド」と、ダメージを受けるときにコインで受けないと決める効果（「かげぶんしん」・「とうめい」）が、同じポケモンが受ける 1 つのダメージに"
                  "はたらくとき、どちらのコインを先に投げるか（先の「うら」・「おもて」であとのコインを投げるか、20 を返すか）は、日本語の文面・kyuura の記録から決められない"),
+        # v0.95（docs/private-looks-deck-movement-v0.95.md 5 章）: 山札の上からトラッシュしたカードの中の「「X」エネルギーカード」を数える・手札に加えるワザ（マグマふんしゅつ・
+        # マグマラッシュ・やまくずし）で、山札・サイドにレインボーエネルギーがあるとき。v0.73 の熱血!の FV1 と同じ問い（同じコード）
+        Question("milled_rainbow_energy", "UNRESOLVED_FERVOR_RAINBOW_ENERGY", ("FV1",), 10,
+                 "山札の上からトラッシュしたレインボーエネルギー（場の外の特殊エネルギーカード）が、説明の「「X」エネルギーカード」に当たるか（数える・手札に加えるか）は、"
+                 "印刷の文面・kyuura の記録で決まらない（v0.73 の熱血!と同じ問い。トラッシュするまで山札の上のカードは分からないので、山札・サイドにレインボーエネルギーがあるとき、"
+                 "宣言の前に止める）"),
         Question("attack_deck_top_short", "UNRESOLVED_ATTACK_DECK_TOP_SHORT", ("LT1",), 10,
                  "「山札の上からカードを3枚見る」ワザ（ひかるミュウの「フラッシュサーチ」・やさしいゴルダックの「みずかき」）で、見るプレイヤーの山札が 3 枚より"
                  "少ないとき（あるだけ見るか）は、日本語の文面・kyuura の記録から決められない（トレーナーの TOP1・ML1・MW1 と同じ形の、別のカードの問い）"),
@@ -397,6 +403,20 @@ QUESTIONS: dict[str, Question] = {
         Question("dark_wave_knocked_out_power", "UNRESOLVED_DARK_WAVE_KNOCKED_OUT_POWER", ("DW3",), 10,
                  "「やみのはどう」で HP 以上になったポケモン（きぜつの判定の前）の、きぜつの判定・きぜつのあとに使える特殊能力（［ファイナルビーム］・ふしちょうなど）も、このワザの"
                  "「お互いの場にいるすべてのポケモン」として止まるのか（処理の対象がいないので受けないのか。p.309）は、印刷の文面・kyuura の記録から決められない（こんじょうは G37）"),
+        # v0.93（docs/active-leave-locks-v0.93.md 10 章）: 「バトル場をはなれられない」効果
+        Question("leave_locked_coin", "UNRESOLVED_LEAVE_LOCK_NO_EFFECT", ("AL2",), 10,
+                 "「バトル場をはなれられない」効果を受けたポケモンをバトル場からはなれさせる部分だけを決めるコインを投げるか（その部分は起こらない）は、印刷の文面・kyuura の記録から"
+                 "決められない（投げるかどうかで乱数の続きが変わる。HC3 と同じ形の、別の原因の問い）"),
+        Question("leave_lock_knockout", "UNRESOLVED_LEAVE_LOCK_KNOCKOUT", ("AL1",), 40,
+                 "きぜつしたときを除くと書いていない「バトル場をはなれられない」効果（からまるいと・ねばるみつ）を受けたポケモンが、きぜつの処理でバトル場をはなれるのかは、"
+                 "印刷の文面・kyuura の記録から決められない（ほかのカードの括弧書きを補わない。p.323）"),
+        Question("leave_lock_scram", "UNRESOLVED_LEAVE_LOCK_SCRAM", ("AL3",), 90,
+                 "［ずらかる］が、「バトル場をはなれられない」効果を受けたポケモンで必ずはたらくとき、もどれないまま効果がなくなったあとにはたらくのかは、印刷の文面・kyuura の記録から"
+                 "決められない（SC2 と同じ形の、別の原因の問い）"),
+        # v0.94（docs/switch-return-attacks-v0.94.md 7 章）: ワザの効果の入れ替えで、ワザを使っている［へんしん］のメタモンの今の姿が変わる（v0.65 の RX1 と同じ問い）
+        Question("attack_switch_transformed_attacker", "UNRESOLVED_REACTIVE_SWITCH_TRANSFORMED_ATTACKER", ("RX1",), 10,
+                 "ワザの効果で相手の対戦ポケモンを入れ替えると、ワザを使っている［へんしん］のメタモンの今の姿（相手の対戦ポケモンのカード）が変わり、あとのダメージの要素をどの姿で"
+                 "処理するかは、印刷の文面・kyuura の記録から決められない（選べるどの控えでも姿が変わる。v0.65 のワザの途中の入れ替えと同じ問い）"),
         # ルールの問いではなく、エンジンの未対応（コードは UNSUPPORTED_…。研究の対応表の停止コードには入れない）
         Question("energy_reaction_during_attack", "UNSUPPORTED_ENERGY_REACTION_DURING_ATTACK", ("v0.86",), 10,
                  "ワザの効果で手札からエネルギーカードをつけたときにはたらく相手の［かんでん］・つけたポケモンの［いなびかり］を、ワザの処理の途中で処理する続きは"

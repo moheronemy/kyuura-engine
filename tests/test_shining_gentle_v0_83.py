@@ -757,9 +757,14 @@ class RegistryTest(unittest.TestCase):
             self.assertEqual(pool.definitions[card].stage, "basic", card)
 
     def test_new_events_are_classified(self):
-        for kind in ("attack_draw_declined", "each_player_recover", "each_player_discard_to_deck", "each_player_declined", "reflect_shield_check",
+        for kind in ("attack_draw_declined", "each_player_recover", "each_player_discard_to_deck", "each_player_declined",
                      "reflect_shield_damage", "reflect_shield_skipped"):
             self.assertIn(kind, PUBLIC_EVENTS)
+        # v0.95: reflect_shield_check は、受けなかったダメージの量（amount）に印 amount_private があるときだけ観戦者に見せない見えない項目のあるイベントにした
+        # （印のないワザでは全員に見える。docs/private-looks-deck-movement-v0.95.md 4 章）
+        from kyuura_engine.observation import PRIVATE_FIELDS
+
+        self.assertEqual(PRIVATE_FIELDS["reflect_shield_check"][0], ("amount",))
 
     def test_doc_exists(self):
         self.assertTrue(DOC.exists())

@@ -1249,8 +1249,88 @@ class ReceivedAttackDamageBonus:
         return False
 
 
-# v0.92: 期間と消える契機を明示した持続する効果の型（``persistent`` の期間・消える契機の問い合わせ、書き出し、不変条件が共通に読む）
-PERIOD_EFFECT_TYPES = (PeriodRetreatLock, PeriodAttackLock, ReceivedAttackDamageBonus)
+@dataclass(frozen=True)
+class PeriodLeaveLock:
+    """ワザによる「持続する効果」（v0.93。docs/active-leave-locks-v0.93.md 4 章）のうち、期間を明示した「バトル場をはなれられない」効果。キャタピー（ES1-002・QSG-002）の
+    「からまるいと」・モンジャラ（ES2-004）の「からみつく」・クサイハナ（neo1-008）の「ねばるみつ」・アリゲイツ（neo1-030）の「くいつく」・わるいアリアドス（neo4-011）の
+    「どくしばり」（kyuura の印刷の文面）。
+
+    - 項目の意味は ``PeriodRetreatLock`` と同じ（相手に与える効果。期間・発生源・``while_source_active``（くいつくの「このカードがバトル場にいるかぎり」）・``ends_on``）
+    - 止めるのは、受けたポケモンがバトル場からはなれること（「にげる」・入れ替え・手札や山札にもどす・きぜつでないトラッシュ。``persistent.leave_lock``）。v0.36 の ``CannotRetreat``・
+      v0.92 の ``PeriodRetreatLock``（「にげる」だけを止める。p.325）とは別の型。進化・退化・ついているカードの移動はバトル場をはなれることではないので止めない
+    - ``knockout_exception``: 説明が「(「きぜつ」した時（場合）をのぞく)」と書く（モンジャラ・アリゲイツ・わるいアリアドス）。きぜつの処理ではなれることは止めない。書かない効果
+      （キャタピー・クサイハナ）のきぜつは、一般のきぜつの規定（p.323）との関係が記録から決まらないので AL1 で止める（別のカードの括弧書きを補わない）
+    - ``source_left``: ``while_source_active`` で、発生源がはなれたら消えると書かれていない効果（くいつく）の発生源が、与えたあとにバトル場をはなれた印（消さずに残し、はなれている
+      あいだははたらかない。同じ番にもどったら JC1。``persistent.remove_source_left_effects`` が付ける）
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    end_turn: int | None
+    source_pokemon: int
+    while_source_active: bool = False
+    ends_on: tuple[str, ...] = ()
+    knockout_exception: bool = False
+    source_left: bool = False
+    kind: ClassVar[str] = "period_leave_lock"
+    on_opponent: ClassVar[bool] = True
+
+    def __post_init__(self) -> None:
+        _check_period(self)
+        if type(self.knockout_exception) is not bool or type(self.source_left) is not bool:
+            raise ValueError(f"バトル場をはなれられない効果のきぜつの例外・発生源がはなれた印が真偽値ではない（{self!r}）")
+        if self.source_left and (not self.while_source_active or SOURCE_LEAVES_ACTIVE in self.ends_on):
+            raise ValueError(f"発生源がはなれた印は、発生源がバトル場にいるかぎりの、はなれても消えない効果だけが持つ（{self!r}）")
+
+    @property
+    def turns_until_active(self) -> int:
+        return self.active_turn - self.created_turn
+
+    @property
+    def lasting(self) -> bool:
+        return self.end_turn is None
+
+
+@dataclass(frozen=True)
+class PeriodAttackCoinCheck:
+    """ワザによる「持続する効果」（v0.93。docs/active-leave-locks-v0.93.md 7 章）のうち、期間と消える契機を明示した p.309 の手順 4 の効果（ワザを使うときにコインを投げ、「うら」なら
+    そのワザは失敗する）。わるいアリゲイツ（neo4-036）の「かぶりつく」（「次の相手の番、このワザを受けた相手は「にげる」ことができず、ワザを使うときにコインを投げ、「うら」なら、
+    そのワザは失敗する。(このカード、またはこのワザを受けた相手がバトル場をはなれたとき、この効果は消える。)」。kyuura の印刷の文面）。
+
+    - 項目の意味は ``PeriodRetreatLock`` と同じ。いっしょに与える「にげる」の禁止（``PeriodRetreatLock``）と同じ期間・消える契機（``SOURCE_LEAVES_ACTIVE``）
+    - コインは v0.36 の ``AttackCoinCheck`` と同じ時点（宣言のあと・こんらんの前。``resolution.flow._attack_check_failed``。AC6・AC13 も同じ）。ワザを使えない状態ではない（宣言を拒否しない）。
+      与えるときのコインはない。投げても消えない（「1回できえる」ではない）。v0.36・v0.45 の ``AttackCoinCheck``（えんまく・スミをかける）の期限・消える契機は変えない
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    end_turn: int | None
+    source_pokemon: int
+    while_source_active: bool = False
+    ends_on: tuple[str, ...] = ()
+    kind: ClassVar[str] = "period_attack_coin_check"
+    on_opponent: ClassVar[bool] = True
+    single_use: ClassVar[bool] = False  # ``procedures.attack_coin_check`` が読む（コインを投げても消えない）
+
+    def __post_init__(self) -> None:
+        _check_period(self)
+
+    @property
+    def turns_until_active(self) -> int:
+        return self.active_turn - self.created_turn
+
+    @property
+    def lasting(self) -> bool:
+        return self.end_turn is None
+
+
+# v0.92: 期間と消える契機を明示した持続する効果の型（``persistent`` の期間・消える契機の問い合わせ、書き出し、不変条件が共通に読む）。v0.93: バトル場をはなれられない効果・
+# 期間を明示したワザを使うときのコイン
+PERIOD_EFFECT_TYPES = (PeriodRetreatLock, PeriodAttackLock, ReceivedAttackDamageBonus, PeriodLeaveLock, PeriodAttackCoinCheck)
 
 # ワザによる持続する効果の型（v0.4b。v0.12 で Retaliation、v0.27 で NextTurnAttackDamage、v0.31 で DestinyBond・AttackBarrier・DamageReduction・
 # CannotAttack、v0.34 で ReducedDamageToSource、v0.35 で CannotUseOwnAttack・CannotUseAttack、v0.36 で AttackCoinCheck・CannotRetreat、v0.40 で
@@ -1266,7 +1346,7 @@ PERSISTENT_EFFECT_TYPES = (PreventDamage, PreventAttackDamage, Retaliation, Next
                            StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard,
                            StatusImmunityNextTurn,  # v0.85: しんぴのこな
                            PowersStopped, BenchProtection,  # v0.86: スタンウェーブ・ほのおのまもり
-                           *PERIOD_EFFECT_TYPES)  # v0.92: クモのす・くろいまなざし・にらみつける（ヨーギラス）・いやなおと
+                           *PERIOD_EFFECT_TYPES)  # v0.92: クモのす・くろいまなざし・にらみつける（ヨーギラス）・いやなおと。v0.93: はなれられない効果・かぶりつく
 
 
 @dataclass(frozen=True)

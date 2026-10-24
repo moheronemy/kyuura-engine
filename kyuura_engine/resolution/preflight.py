@@ -197,6 +197,13 @@ class RecordingRandom:
         self.tokens.append((found.index_of_heads(len(bits) - 1), len(found.representatives)))
         return tuple(bits)
 
+    def record_hidden(self, index: int, count: int) -> None:
+        """v0.95: 見えないカードで決まる値（``kernel.Resolution.hidden_choice``）の、実際の値の位置を (位置, ありうる値の数) として 1 つ記録する（乱数は使わない。
+        ``Oracle.choose`` と同じ値の意味。まだ試していない値を ``sibling_roots`` が覆う）。"""
+        if not 0 <= index < count:
+            raise RuntimeError(f"見えないカードで決まる値の位置 {index} が 0〜{count - 1} にない（エンジンの不具合）")
+        self.tokens.append((index, count))
+
     def __getattr__(self, name):
         self.opaque = True
         return getattr(self._rng, name)

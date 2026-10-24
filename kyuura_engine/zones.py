@@ -184,6 +184,14 @@ def bench_from_discard(state: GameState, card: int, *, counters: int = 0) -> Pok
     return pokemon
 
 
+def _require_can_leave(state: GameState, player: int, pokemon: PokemonInPlay) -> None:
+    """v0.93: バトル場のポケモンを動かす前の、「バトル場をはなれられない」効果の確かめの漏れ（``persistent.require_can_leave``。ベンチのポケモンは何もしない）。"""
+    if state.players[player].active is pokemon:
+        from .persistent import require_can_leave
+
+        require_can_leave(state, player, pokemon)
+
+
 def _left_active(state: GameState, player: int, pokemon: PokemonInPlay, was_active: bool) -> None:
     """v0.92: プレイヤー ``player`` の ``pokemon`` がバトル場をはなれた（``was_active``）なら、説明が「このカード…がバトル場をはなれたとき、この効果は消える」と書く効果の
     うち、発生源がこのポケモンのものを消す（``persistent.remove_source_left_effects``。受けているのはほかのポケモン）。ベンチからはなれたときは何もしない。"""
@@ -225,6 +233,7 @@ def return_in_play_to_deck(state: GameState, player: int, pokemon: PokemonInPlay
     sources = [value for value in (effect, trainer, stadium, power) if value is not None]
     if (p.active is not pokemon and not on_bench) or any(state.cards[uid].owner != player for uid in cards) or len(sources) != 1:
         raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} を山札にもどせない（確認の漏れ。エンジンの不具合）")
+    _require_can_leave(state, player, pokemon)  # v0.93
     if p.active is pokemon:
         p.active = None
     else:
@@ -280,6 +289,7 @@ def return_basic_to_hand(state: GameState, player: int, pokemon: PokemonInPlay, 
     on_bench = any(b is pokemon for b in p.bench)
     if (p.active is not pokemon and not on_bench) or pokemon.trainers or any(state.cards[uid].owner != player for uid in (*stack, *energy)):
         raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} を手札にもどせない（確認の漏れ。エンジンの不具合）")
+    _require_can_leave(state, player, pokemon)  # v0.93
     card, evolution_cards = stack[0], stack[1:]
     discarded = (*evolution_cards, *energy)
     returns = _energy_plan(state, pokemon, energy, "trainer", player)  # v0.82: リサイクルエネルギー
@@ -332,6 +342,7 @@ def return_in_play_to_hand(state: GameState, player: int, pokemon: PokemonInPlay
     sources = [value for value in (effect, power, trainer, stadium) if value is not None]
     if (p.active is not pokemon and not on_bench) or any(state.cards[uid].owner != player for uid in cards) or len(sources) != 1:
         raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} を手札にもどせない（確認の漏れ。エンジンの不具合）")
+    _require_can_leave(state, player, pokemon)  # v0.93
     if p.active is pokemon:
         p.active = None
     else:
@@ -524,7 +535,7 @@ def return_hand_to_deck(state: GameState, player: int, card: int) -> None:
 
 
 def return_hand_cards_to_deck(state: GameState, player: int, cards: tuple[int, ...], *, effect: str | None = None,
-                              trainer: int | None = None) -> tuple[int, ...]:
+                              trainer: int | None = None, power: str | None = None) -> tuple[int, ...]:
     """自分の手札のカード ``cards`` を、相手に見せずに、同じ uid のまま手札の並びの順に自分の山札の一番下にもどす（v0.44。ナツメのバリヤードの「てじな」の
     「自分の手札から最大3枚のカードを選び、山札にもどす」・_____のラッキーの「ラッキーたまご」の「自分の手札からカードを2枚選び、山札にもどして、よく切る」）。
 
@@ -534,11 +545,12 @@ def return_hand_cards_to_deck(state: GameState, player: int, cards: tuple[int, .
     イベント。選んでよいかの確認は呼ぶ側が済ませる。手札にない・持ち主の違う・重なったカードなら ``RuntimeError``（状態を変える前）。もどしたカードを返す。
 
     v0.53: トレーナーの効果（エリカのお付きの使うための条件・メンテナンス。どちらも見せる指示がない）でもどすときは、ワザの ``effect`` のかわりに ``trainer``（使っている
-    トレーナーのカードの uid。ログの ``trainer_card``）を渡す（ちょうど一方。ワザのログの形は v0.52 と同じ）。"""
-    if (effect is None) == (trainer is None):
-        raise RuntimeError("手札を山札にもどす効果の出どころ（ワザ effect・トレーナー trainer）はちょうど一方（エンジンの不具合）")
+    トレーナーのカードの uid。ログの ``trainer_card``）を渡す（ちょうど一方。ワザのログの形は v0.52 と同じ）。
+
+    v0.96: 特殊能力の効果（アンノーン[E] の［ENGAGE］の「自分の手札をすべて山札にもどしてよい」。このあと同じ処理の中で山札を切る）は ``power``（ログの ``power``）を渡す
+    （``effect``・``trainer``・``power`` のちょうど一つ。ワザ・トレーナーのログの形は v0.95 と同じ）。"""
+    source = _effect_source("手札を山札にもどす効果", trainer, effect, power)
     returned = _hand_to_deck_bottom(state, player, cards)
-    source = {"effect": effect} if effect is not None else {"trainer_card": trainer}
     state.add_event("hand_to_deck", player=player, cards=returned, **source)
     return returned
 
@@ -571,12 +583,26 @@ def reveal_hand(state: GameState, player: int, *, trainer: int) -> tuple[int, ..
     return cards
 
 
-def look_at_hand(state: GameState, viewer: int, owner: int, *, trainer: int) -> tuple[int, ...]:
+def _effect_source(what: str, trainer: int | None, effect: str | None, power: str | None) -> dict:
+    """v0.95: 効果の出どころのログの項目（トレーナー ``trainer_card``・ワザ ``effect``・特殊能力 ``power`` のちょうど一つ）。ちょうど一つでなければ ``RuntimeError``（状態を変える前）。"""
+    given = [(name, value) for name, value in (("trainer_card", trainer), ("effect", effect), ("power", power)) if value is not None]
+    if len(given) != 1:
+        raise RuntimeError(f"{what}の出どころ（トレーナー trainer・ワザ effect・特殊能力 power）はちょうど一つ（エンジンの不具合）")
+    return dict(given)
+
+
+def look_at_hand(state: GameState, viewer: int, owner: int, *, trainer: int | None = None, effect: str | None = None,
+                 power: str | None = None) -> tuple[int, ...]:
     """プレイヤー ``viewer`` が、プレイヤー ``owner`` の手札をすべて見る（v0.54。スパイ作戦の「相手プレイヤーの手札を見る」）。カードは動かさない。ログ ``look_at_hand``
     （``player`` は見たプレイヤー、``owner`` は手札の持ち主）の ``cards`` は、見たプレイヤーと持ち主にだけ見える（観戦者・ほかの人に見せる処理ではない。
-    ``observation.visible_log``）。見たのはこの時点の手札だけ。見たカードを返す（手札が 0 枚なら空）。"""
+    ``observation.visible_log``）。見たのはこの時点の手札だけ。見たカードを返す（手札が 0 枚なら空）。
+
+    v0.95: ワザの効果（オタチの「さぐる」・ゴーストの「ポルターガイスト」など）は ``effect``（ログの ``effect``）、特殊能力の効果（ヨルノズクの［みやぶる］）は ``power``
+    （ログの ``power``）を、トレーナーの ``trainer``（ログの ``trainer_card``）のかわりに渡す（ちょうど一つ。トレーナーのログの形は v0.94 と同じ）。1 回見るだけで、あとで
+    観測の手札を公開しない（［おみとおし］のような続けて見せる効果ではない）。"""
+    source = _effect_source("手札を見る効果", trainer, effect, power)
     cards = tuple(state.players[owner].hand)
-    state.add_event("look_at_hand", player=viewer, owner=owner, cards=cards, trainer_card=trainer)
+    state.add_event("look_at_hand", player=viewer, owner=owner, cards=cards, **source)
     return cards
 
 
@@ -640,7 +666,8 @@ def take_deck_top(state: GameState, owner: int, *, effect: str, looker: int) -> 
     return card, destination
 
 
-def shuffle_deck(state: GameState, player: int, *, effect: str | None = None, power: str | None = None, stadium: int | None = None) -> None:
+def shuffle_deck(state: GameState, player: int, *, effect: str | None = None, power: str | None = None, stadium: int | None = None,
+                 shuffled_by: int | None = None) -> None:
     """自分の山札を切る（乱数 ``state.rng`` で 1 回並べかえる。ログ ``"shuffle"``）。対戦の準備・切り直し（p.308。v0.1 から
     ``engine._shuffle_deck``）と、カードの効果で山札を切る処理（v0.22 のパソコン通信の「その後、その山札をよく切る。」。p.260）で共通。
     v0.21 までの ``engine._shuffle_deck`` の本体をそのまま関数にした（乱数の使い方・ログは同じ）。
@@ -648,13 +675,17 @@ def shuffle_deck(state: GameState, player: int, *, effect: str | None = None, po
     ``effect``（v0.40）: v0.40 から加えたワザの効果で山札を切るとき（タケシのマンキーの「ひまつぶし」・マンキーの「いたずら」・キョウのズバットの「むれでおそう」・
     わるいカイリキーの「つまみだす」）のワザの識別子。渡したときだけログに ``effect`` を書く（``player`` は切る山札の持ち主。v0.39 までの呼び出しのログの形は
     同じ）。v0.43: 特殊能力の効果で山札を切るとき（わるいハクリューの［しんかのひかり］・わるいカイリューの［てしたをよぶ］）は ``power``（``PowerKey`` の
-    文字列）を書く。v0.57: スタジアムの効果で山札を切るとき（セキチクシティジム）は ``stadium``（スタジアムカードの uid。ログの ``stadium_card``）を書く。"""
+    文字列）を書く。v0.57: スタジアムの効果で山札を切るとき（セキチクシティジム）は ``stadium``（スタジアムカードの uid。ログの ``stadium_card``）を書く。
+    v0.96: 山札の持ち主でないプレイヤーが切るとき（アンノーンL の［LAUGH］の「おたがいのプレイヤーは、それぞれ、相手の山札をよく切る」）は、切ったプレイヤーを ``shuffled_by``
+    （ログの ``shuffled_by``）に書く（``player`` はいつも切る山札の持ち主。乱数の使い方は同じ）。"""
     state.rng.shuffle(state.players[player].deck)
     extra = {} if effect is None else {"effect": effect}
     if power is not None:
         extra["power"] = power
     if stadium is not None:
         extra["stadium_card"] = stadium
+    if shuffled_by is not None:
+        extra["shuffled_by"] = shuffled_by
     state.add_event("shuffle", player=player, **extra)
 
 
@@ -793,6 +824,7 @@ def discard_from_play(state: GameState, player: int, pokemon: PokemonInPlay) -> 
     on_bench = any(b is pokemon for b in p.bench)
     if (p.active is not pokemon and not on_bench) or pokemon.evolution_stack or any(state.cards[uid].owner != player for uid in (pokemon.card, *pokemon.energy)):
         raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} をトラッシュできない（確認の漏れ。エンジンの不具合）")
+    _require_can_leave(state, player, pokemon)  # v0.93
     returns = _energy_plan(state, pokemon, pokemon.energy, "rule")  # v0.82: リサイクルエネルギー（場をはなれる前の場で決める）
     if p.active is pokemon:
         p.active = None
@@ -943,13 +975,36 @@ def move_attached_energy(state: GameState, owner: int, source: PokemonInPlay, ta
     return moved
 
 
-def opponent_hand_card_to_deck(state: GameState, owner: int, card: int, *, looker: int, trainer: int) -> None:
+def opponent_hand_card_to_deck(state: GameState, owner: int, card: int, *, looker: int, trainer: int | None = None, effect: str | None = None,
+                               power: str | None = None) -> None:
     """トレーナーの効果で、プレイヤー ``owner`` の手札のカード ``card`` を、``owner`` の山札（一番下）にもどさせる（v0.55。ロケット団のおねーさんの「その中に
     トレーナーカードがあれば、1枚を選び、それを相手の山札にもどさせる」。選んだのは手札を見たプレイヤー ``looker``）。このあと同じ効果の中で山札を切るので、もどす位置は
     実装上の仮定（v0.24 の PT7 と同じ。結果は変わらない）。もどしたカードは、手札を見たプレイヤーと持ち主だけが知っている（ログ ``opponent_hand_to_deck`` の ``card`` は
-    その 2 人だけに見える。``observation.PRIVATE_FIELDS``。手札の枚数が 1 枚へったことは公開）。"""
+    その 2 人だけに見える。``observation.PRIVATE_FIELDS``。手札の枚数が 1 枚へったことは公開）。
+
+    v0.95: ワザの効果（わるいハッサムの「おどす」）は ``effect``、特殊能力の効果（ヨルノズクの［みやぶる］）は ``power`` を、``trainer`` のかわりに渡す（ちょうど一つ。
+    ``look_at_hand`` と同じ）。手札にない・持ち主が違うカードなら ``RuntimeError``（状態を変える前）。"""
+    source = _effect_source("相手の手札のカードを山札にもどす効果", trainer, effect, power)
+    if card not in state.players[owner].hand or state.cards[card].owner != owner:
+        raise RuntimeError(f"プレイヤー {owner} の手札のカード {card} を山札にもどせない（確認の漏れ。エンジンの不具合）")
     _hand_to_deck_bottom(state, owner, (card,))
-    state.add_event("opponent_hand_to_deck", player=owner, card=card, looker=looker, trainer_card=trainer)
+    state.add_event("opponent_hand_to_deck", player=owner, card=card, looker=looker, **source)
+
+
+def return_attached_trainer_to_deck(state: GameState, owner: int, pokemon: PokemonInPlay, card: int, *, effect: str, chooser: int) -> None:
+    """プレイヤー ``owner`` の場のポケモン ``pokemon`` についているトレーナーカード ``card`` を、同じ uid のまま ``owner`` の山札（一番下）にもどす（v0.95。エイパムの「とりさる」の
+    「相手の場のポケモンについている「トレーナーカード」を1枚選び、相手の山札にもどす」。選んだのはワザを使ったプレイヤー ``chooser``）。ポケモン・ほかのついているカードは
+    動かさない（場をはなれるのはそのカードだけ）。このあと同じ効果の中で山札を切るので、もどす位置は実装上の仮定（PT7 と同じ。結果は変わらない）。
+
+    ついているトレーナーは場の公開のカードなので、ログ ``attached_trainer_to_deck`` の ``card`` は公開（``player`` はカードとポケモンの持ち主、``chooser`` は選んだプレイヤー）。
+    ついているトレーナーはどれもつけたプレイヤー（ポケモンの持ち主）のカード（``engine`` の不変条件）。ついていない・持ち主が違うなら ``RuntimeError``（状態を変える前）。
+    ついているあいだの効果（ディフェンダー・ポケモンのどうぐなど）は、ついているカードから毎回求めるので、もどしたら残らない（v0.78 のごうだつのトラッシュと同じ）。"""
+    attached = next((entry for entry in pokemon.trainers if entry.card == card), None)
+    if attached is None or attached.player != owner or state.cards[card].owner != owner:
+        raise RuntimeError(f"プレイヤー {owner} のポケモン {pokemon.pokemon_id} についているトレーナー {card} を山札にもどせない（確認の漏れ。エンジンの不具合）")
+    pokemon.trainers.remove(attached)
+    state.players[owner].deck.append(card)
+    state.add_event("attached_trainer_to_deck", player=owner, card=card, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, effect=effect, chooser=chooser)
 
 
 def take_looked_deck_cards(state: GameState, player: int, looked: int, cards: tuple[int, ...], *, trainer: int) -> tuple[tuple[int, ...], tuple[int, ...]]:
@@ -1027,6 +1082,7 @@ def hand_basic_to_active(state: GameState, player: int, card: int, *, trainer: i
     old = p.active
     if old is None or card not in p.hand or state.cards[card].owner != player or not state.card_def(card).is_basic_pokemon or len(p.bench) >= bench_limit(state, player):
         raise RuntimeError(f"プレイヤー {player} の手札のカード {card} をバトル場に出せない（確認の漏れ。エンジンの不具合）")
+    _require_can_leave(state, player, old)  # v0.93
     p.hand.remove(card)
     new = enter_play(state, card)
     p.bench.append(old)

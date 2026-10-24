@@ -303,8 +303,9 @@ TRAINER_EVENTS = {
     # v0.23: 使ってからトラッシュするまでのあいだに出てよいログ（その実装が出すものだけ）と、そのイベントの player が使ったプレイヤーか相手か
     # v0.65: 入れ替えでバトル場をはなれた相手のポケモンの、変わり身の術のトラッシュ（discard_attached_trainer の reason left_active。player はそのカードの持ち主）
     # v0.92: 入れ替えでバトル場をはなれた相手のポケモンが発生源の、使ったプレイヤーのポケモンの持続する効果（くろいまなざし・にらみつける。理由 source_left_active）
+    # v0.93: 入れ替えでバトル場をはなれた相手のポケモンが発生源の、使ったプレイヤーのポケモンのくいつくの印（persistent_effect_source_left。player は受けたポケモンの持ち主）
     GUST: {"switch": "opponent", "special_conditions_removed": "opponent", "persistent_effect_removed": "opponent", "discard_attached_trainer": "opponent",
-           "persistent_effect_removed:source_left_active": "user"},
+           "persistent_effect_removed:source_left_active": "user", "persistent_effect_source_left": "user"},
     COMPUTER_SEARCH: {"discard_from_hand": "user", "search_deck": "user", "shuffle": "user"},
     ENERGY_RETRIEVAL: {"discard_from_hand": "user", "retrieve_energy": "user"},
     POKEMON_TRADER: {"return_to_deck": "user", "reveal_from_deck": "user", "shuffle": "user"},  # v0.24

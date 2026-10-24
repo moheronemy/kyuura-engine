@@ -198,6 +198,15 @@ V0_91_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["i
 # v0.92: 能力の消去・続く制限のポケモン 8 枚の説明文のあるワザ 15（kyuura の印刷の文面。docs/power-suppression-lasting-locks-v0.92.md）
 V0_92_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_92"] and c["category"] == "pokemon"
                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.93: バトル場をはなれられない効果・続くワザの制限のポケモン 9 枚の説明文のあるワザ 14（kyuura の印刷の文面。docs/active-leave-locks-v0.93.md）
+V0_93_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_93"] and c["category"] == "pokemon"
+                   for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.94: 入れ替え・帰還のワザのポケモン 13 枚の説明文のあるワザ 20（kyuura の印刷の文面。docs/switch-return-attacks-v0.94.md）
+V0_94_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_94"] and c["category"] == "pokemon"
+                   for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.95: 手札・山札を見る効果とカードを動かすポケモン 11 枚の説明文のあるワザ 16（kyuura の印刷の文面。docs/private-looks-deck-movement-v0.95.md）
+V0_95_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_95"] and c["category"] == "pokemon"
+                   for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
 
 
 
@@ -350,7 +359,7 @@ class DefaultRegistryTest(unittest.TestCase):
                                     + V0_35_WITH_TEXT + V0_36_WITH_TEXT + V0_37_WITH_TEXT + V0_38_WITH_TEXT
                                     + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT + V0_42_WITH_TEXT + V0_43_WITH_TEXT
                                 + V0_44_WITH_TEXT + V0_45_WITH_TEXT + V0_46_WITH_TEXT + V0_47_WITH_TEXT + V0_48_WITH_TEXT
-                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT + V0_52_WITH_TEXT + V0_58_WITH_TEXT + V0_59_WITH_TEXT + V0_60_WITH_TEXT + V0_61_WITH_TEXT + V0_62_WITH_TEXT + V0_64_WITH_TEXT + V0_65_WITH_TEXT + V0_68_WITH_TEXT + V0_70_WITH_TEXT + V0_72_WITH_TEXT + V0_75_WITH_TEXT + V0_76_WITH_TEXT + V0_77_WITH_TEXT + V0_78_WITH_TEXT + V0_79_WITH_TEXT + V0_82_WITH_TEXT + V0_83_WITH_TEXT + V0_84_WITH_TEXT + V0_85_WITH_TEXT + V0_86_WITH_TEXT + V0_87_WITH_TEXT + V0_88_WITH_TEXT + V0_89_WITH_TEXT + V0_90_WITH_TEXT + V0_91_WITH_TEXT + V0_92_WITH_TEXT)
+                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT + V0_52_WITH_TEXT + V0_58_WITH_TEXT + V0_59_WITH_TEXT + V0_60_WITH_TEXT + V0_61_WITH_TEXT + V0_62_WITH_TEXT + V0_64_WITH_TEXT + V0_65_WITH_TEXT + V0_68_WITH_TEXT + V0_70_WITH_TEXT + V0_72_WITH_TEXT + V0_75_WITH_TEXT + V0_76_WITH_TEXT + V0_77_WITH_TEXT + V0_78_WITH_TEXT + V0_79_WITH_TEXT + V0_82_WITH_TEXT + V0_83_WITH_TEXT + V0_84_WITH_TEXT + V0_85_WITH_TEXT + V0_86_WITH_TEXT + V0_87_WITH_TEXT + V0_88_WITH_TEXT + V0_89_WITH_TEXT + V0_90_WITH_TEXT + V0_91_WITH_TEXT + V0_92_WITH_TEXT + V0_93_WITH_TEXT + V0_94_WITH_TEXT + V0_95_WITH_TEXT)
         # v0.69: 拡張パック以外の商品の同じカード（effects.EQUIVALENT_CARDS）の新しい id には、元のカードと同じ登録（説明文のあるワザも同じ）がある
         expected = expected + [AttackKey(new, key.attack_index) for new, original in EQUIVALENT_CARDS.items() for key in expected if key.card_id == original]
         # v0.71: 拡張パック以外の商品の再録のカード（effects.REPRINT_CARDS）の新しい id にも、元のカードの説明文のあるワザの登録がある（照合する文面はこの版の印刷の文面）
@@ -578,7 +587,11 @@ class RegistryImmutabilityTest(unittest.TestCase):
                                        *(PowerKey(card, 0) for card in ("neo2-044", "neo3-009", "neo4-023", "GD3-009", "ES1-005", "ES2-003", "ES2-014",
                                                                         "QSG-023", "PR1-053", "ES2-012", "QSG-057", "PR1-046", "ES1-034", "QSG-046")),
                                        # v0.88: 色・タイプ・エネルギーの数え方を変える特殊能力 5（docs/type-energy-colors-v0.88.md 5 章）
-                                       *(PowerKey(card, 0) for card in ("neo1-040", "neo3-026", "neo3-051", "GD4-001", "neo3-045"))))))
+                                       *(PowerKey(card, 0) for card in ("neo1-040", "neo3-026", "neo3-051", "GD4-001", "neo3-045")),
+                                       # v0.95: 相手の手札・山札を見る特殊能力 2（docs/private-looks-deck-movement-v0.95.md）
+                                       *(PowerKey(card, 0) for card in ("neo1-065", "neo4-061")),
+                                       # v0.96: アンノーンの特殊能力 7（docs/unown-family-powers-v0.96.md）
+                                       *(PowerKey(card, 0) for card in ("PF2-002", "PF2-003", "PRN-035", "neo4-050", "neo4-051", "neo4-052", "neo4-060"))))))
 
 
 if __name__ == "__main__":
