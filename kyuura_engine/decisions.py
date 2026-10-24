@@ -335,6 +335,9 @@ SPLIT_FROM_DECK = "split_from_deck"
 # 決められた事実（手札からエネルギーカードをつけた・ほかのポケモンが進化した）のときに使える特殊能力（［エナジーしんか］・［れんさしんか］）の使う機会。決めるのは持ち主。
 # 選べるものはそのポケモンの番号 1 つ。0 個（使わない）か 1 個（使う）
 REACTION_POWER = "reaction_power"
+# v0.90（docs/markers-counters-v0.90.md 4 章）: ワザの説明の「のぞむなら、このカードにのっている「…カウンター」を…取りのぞき、…ダメージを追加してもよい」で取りのぞく数（ボーンキラーは
+# 0〜1・ころがるは 0〜のっている数）。決めるのはワザを使ったプレイヤー。選べるものは数（0 = 取りのぞかない）で 1 つ。``context`` の "marker"（種類）。再開先は "attack"
+SELECT_MARKER_COUNT = "select_marker_count"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

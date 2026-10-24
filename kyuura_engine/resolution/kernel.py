@@ -211,14 +211,15 @@ def type_question(res: Resolution, error: TypeReadingsDiffer, what: str) -> Open
     name = "shift_color_duration"
     for pokemon in error.pokemons:  # v0.88: 色の読み方が 2 つ以上になる理由が［せんすい］なら CE1・CE2（VS1 は［へんしょく］の問いだけ）
         cause = E.type_reading_cause(res.state, pokemon) if res.state.find_pokemon(pokemon.pokemon_id) is not None else None
-        if cause in ("ce1", "ce2"):
+        if cause in ("ce1", "ce2", "cm1"):
             name = COLOR_QUESTIONS[cause]
             break
     return res.question(name, f"{what}（ポケモン {[p.pokemon_id for p in error.pokemons]}）")
 
 
-# v0.88: 色の読み方が決まらない理由の問い（``effects.type_reading_cause``・``card_color_cause``・``color_changed_cards``）
-COLOR_QUESTIONS = {"vs1": "shift_color_duration", "ce1": "color_effect_continuation", "ce2": "color_replacement_order", "ce3": "color_changed_energy_card"}
+# v0.88: 色の読み方が決まらない理由の問い（``effects.type_reading_cause``・``card_color_cause``・``color_changed_cards``）。v0.90: 色マーカー（CM1）
+COLOR_QUESTIONS = {"vs1": "shift_color_duration", "ce1": "color_effect_continuation", "ce2": "color_replacement_order", "ce3": "color_changed_energy_card",
+                   "cm1": "color_marker_precedence"}
 
 
 def track_ko(res: Resolution, fs: FrameState, pokemon: PokemonInPlay, before: int) -> None:
@@ -459,10 +460,13 @@ def weakness_resistance_matters(res: Resolution, fs: FrameState, target: str, ba
     return False
 
 
-def attack_modifiers_of(res: Resolution, frame, attacker: PokemonInPlay, receiver: PokemonInPlay, target: str, *, defender_effects: bool = True) -> list:
+def attack_modifiers_of(res: Resolution, frame, attacker: PokemonInPlay, receiver: PokemonInPlay, target: str, *, defender_effects: bool = True,
+                        exclude: str | None = None) -> list:
     """ワザの分類のダメージの要素 1 つの、場の変更効果（p.321 の 2・5〜8 段階。クチバシティジムのコインを除く）（v0.64。``deal_damage`` から分けた。先読みの
-    「うら」が出るまで投げるコインの組（``resolution.unbounded``）が同じ関数を使う）。状態を変えず、乱数を使わない。"""
-    exclude = None if defender_effects else EXCLUDE_DEFENDER_HELD
+    「うら」が出るまで投げるコインの組（``resolution.unbounded``）が同じ関数を使う）。状態を変えず、乱数を使わない。v0.89: ``exclude`` を渡すと、除く範囲をそれにする
+    （FA1 の読み方の比べ。``ignored_effects_scope_difference``）。"""
+    if exclude is None:
+        exclude = None if defender_effects else EXCLUDE_DEFENDER_HELD
     modifiers = list(attack_damage_modifiers(res.state, attacker, receiver, attack=frame.attack_key, bench=target in BENCH_TARGETS,
                                              attack_status=res.attack_status, exclude=exclude))
     if res.attack_power and target == OPPONENT_ACTIVE and frame.kind is FrameKind.ATTACK:
@@ -582,10 +586,47 @@ def bench_guard_answer(res: Resolution, fs: FrameState, attacker, owner: int, re
     raise BenchGuardRequest(owner, receiver.pokemon_id, final, options, limit, unresolved, code, reason)
 
 
+IGNORE_HELD = "held"  # v0.89: 説明が「相手の持っている」と書く（スピードスター）。除くのは受けるポケモン自身の持っている効果（SS1 で受けるポケモンの持ち主の場と比べる）
+IGNORE_UNSTATED = "unstated"  # v0.89: 説明がだれの効果かを書かない（ブラッキーの「だましうち」）。読み方で結果が変われば FA1（``ignored_effects_scope_difference``）
+IGNORE_SCOPES = (IGNORE_HELD, IGNORE_UNSTATED)
+
+
+def ignored_effects_scope_difference(res: Resolution, fs: FrameState, attacker: PokemonInPlay, owner: int, receiver: PokemonInPlay, target: str, base: int, *,
+                                     orders=None, reduction: int | None = None) -> str | None:
+    """v0.89（FA1。docs/selected-target-damage-v0.89.md 4.3 節）: 説明が「「弱点・抵抗力・特殊能力・その他の効果」に関係なく」とだけ書き、「相手の持っている」（スピードスター）・
+    「そのポケモンの持っている」のない書き方（ブラッキーの「だましうち」）で、除く効果の範囲の読み方によって受けるダメージが変わるなら、その違い（理由の文の一部）。変わらなければ None。
+
+    比べる 3 つの読み方（どれも弱点・抵抗力は計算しない。状態を変えず、乱数を使わない）:
+
+    - A（受けるポケモン自身の持っている効果だけを除く。スピードスターと同じ処理。実際の処理はこの読み方）: ワザを使うポケモン・場のほかのポケモン・プレイヤー・スタジアムの効果は
+      当てはめる（``EXCLUDE_DEFENDER_HELD``）。受けるポケモン自身の持っていない、ダメージの要素を無効にする効果（見えない壁・こおりのはしら・［オーロラヴェール］）と
+      ［ベンチガード］も当てはめる
+    - A'（受けるポケモンの持ち主の場のポケモンの持っている効果も除く。``EXCLUDE_DEFENDER_SIDE``。SS1 と同じ比べ）
+    - B（すべての効果を除く。基本となるダメージのまま）
+
+    無効にする効果・［ベンチガード］は A だけにあるので、当てはまるなら違う。お上品攻撃の減らす量・順番の決定が要る計算は、B（決定がない）と違う。"""
+    state = res.state
+    frame = fs.frame
+    void = first_void(res, owner, receiver, held_by_receiver=False)
+    if void is not None:
+        return f"受けるポケモンの持っていない、ダメージの要素を無効にする効果 {void.implementation.kind}"
+    if target in BENCH_TARGETS and E.bench_guard_holders(state, owner, receiver):
+        return "受けるポケモンの持っていない［ベンチガード］"
+    plain = max(base, 0)
+    for label, exclude in (("A", EXCLUDE_DEFENDER_HELD), ("A'", EXCLUDE_DEFENDER_SIDE)):
+        modifiers = with_stadium_coin(res, frame, target, attack_modifiers_of(res, frame, attacker, receiver, target, exclude=exclude))
+        final = _finals_over_reductions(lambda r, v=modifiers: same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
+            base, views[0], views[1], v, weakness_resistance=False, orders=orders, resistance=False, reduction=r)), reduction)
+        if final != plain:
+            return f"読み方 {label} の受けるダメージ {final!r} と、すべての効果を除く読み方の {plain}"
+    return None
+
+
 def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_extra: dict | None = None, pokemon_id: int | None = None,
                 weakness_resistance: bool = True, orders: dict[int, tuple[int, ...]] | None = None,
                 order_decision: bool = False, resistance: bool = True, defender_effects: bool = True,
-                guard: tuple[int, ...] | None = None, guard_suspend: bool = False, reduction: int | None = None) -> DamageResult:
+                guard: tuple[int, ...] | None = None, guard_suspend: bool = False, reduction: int | None = None,
+                ignore_scope: str = IGNORE_HELD) -> DamageResult:
     """ワザの分類のダメージの要素 1 つ（v0.13 の ``deal_attack_damage`` と同じ結果・ログ・乱数）。
 
     v0.31: ``target`` が ``OPPONENT_BENCH`` なら ``pokemon_id`` の相手の控えポケモン（プラスパワーは変えない。``attack_damage_modifiers`` の
@@ -623,10 +664,19 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     if res.fled and frame.kind is FrameKind.ATTACK and receiver.pokemon_id in res.fled.values():
         # v0.65: ［にげこむ］のあとに、そのワザの残りのダメージの要素がかわりに出たポケモンに来た（今の写しのワザの並びでは起こらない。コードのない問い）
         raise res.question("flee_then_damage", f"ポケモン {receiver.pokemon_id}")
-    if not defender_effects and target != OPPONENT_ACTIVE:
-        raise ValueError(f"相手の持っている効果を除くダメージは相手の対戦ポケモンへのダメージだけ（{target!r}）")
+    if not defender_effects and target not in (OPPONENT_ACTIVE, OPPONENT_BENCH):
+        # v0.89: 相手の控えポケモンへのダメージにも当てはめる（ブラッキーの「だましうち」の選んだポケモン）。自分・自分の控えへのダメージに、受けるポケモンの持っている効果を除く
+        # ワザはない
+        raise ValueError(f"相手の持っている効果を除くダメージは相手のポケモンへのダメージだけ（{target!r}）")
+    if ignore_scope not in IGNORE_SCOPES:
+        raise ValueError(f"除く効果の範囲の書き方 {ignore_scope!r} は未定義")
     res.trace.record(DamageProposal(frame.id, receiver.pokemon_id, receiver_player, target, base))
     res.trace.record(WindowOpened(Window.BEFORE_DAMAGE, frame.id))
+    if not defender_effects and ignore_scope == IGNORE_UNSTATED:
+        # v0.89（FA1）: だれの効果かを書かない「…その他の効果」に関係なく。除く範囲の読み方で受けるダメージが変わるなら止める（無効にする効果を見る前。B の読み方では無効にならない）
+        difference = ignored_effects_scope_difference(res, fs, attacker, receiver_player, receiver, target, base, orders=orders, reduction=reduction)
+        if difference is not None:
+            raise res.question("ignored_effects_scope", f"ポケモン {attacker.pokemon_id} → ポケモン {receiver.pokemon_id}・{difference}")
     void = first_void(res, receiver_player, receiver, held_by_receiver=defender_effects)
     if void is not None:
         # 無効（p.321）。計算しない。ログは v0.13 の damage_prevented
@@ -658,7 +708,8 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     base_modifiers = attack_modifiers_of(res, frame, attacker, receiver, target, defender_effects=defender_effects)
     if not defender_effects:
         weakness_resistance = False
-        speed_star_scope_question(res, frame.attack_key, attacker, receiver, base, base_modifiers, orders, resistance, reduction)
+        if ignore_scope == IGNORE_HELD:
+            speed_star_scope_question(res, frame.attack_key, attacker, receiver, base, base_modifiers, orders, resistance, reduction)
     modifiers = with_stadium_coin(res, frame, target, base_modifiers)
     if frame.kind is FrameKind.RETALIATION:
         calming_retaliation_question(res, fs, attacker, receiver, base, target, weakness_resistance, resistance)
@@ -757,10 +808,14 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         extra["step_orders"] = tuple((step, tuple(m.label for m in calc.modifiers if m.step == step)) for step in sorted(orders))
     if calc.stopped_after_step_2:
         extra["stopped_after_step_2"] = True
+    if calc.weakness_multiplier is not None:
+        extra["weakness_multiplier"] = calc.weakness_multiplier  # v0.90: のろいマーカーの「×4」（共通のルールの数のときは書かない。v0.89 までのログの形は変えない）
     if target != OPPONENT_ACTIVE:
         extra.update(target=target, pokemon_id=receiver.pokemon_id, effect=str(frame.attack_key))
     if not defender_effects:
         extra["ignore_defender_effects"] = True  # v0.60: 「スピードスター」（弱点・抵抗力も計算しない）
+        if ignore_scope == IGNORE_UNSTATED:
+            extra["ignore_effects_scope"] = IGNORE_UNSTATED  # v0.89: 「だましうち」（FA1 の読み方で変わらないことを確かめた。スピードスターのログの形は変えない）
     if not weakness_resistance:
         extra["ignore_weakness_resistance"] = True  # v0.31
     elif not resistance:

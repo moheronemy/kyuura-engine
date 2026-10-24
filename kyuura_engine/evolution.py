@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 
 from .conditions import DEVOLVE, EVOLVE, clear_special_conditions
 from .history import clear_history
+from .markers import remove_markers
 from .persistent import remove_persistent_effects
 
 if TYPE_CHECKING:
@@ -152,7 +153,7 @@ def place_evolution_card(state: GameState, player: int, target: PokemonInPlay, c
 
     1・2. 手札から出して見せ、進化するポケモンの上に置く（下のカードはトラッシュしない。いちばん上のカードの内容がそのポケモンを
     表す）→ 3. 特殊状態と持続する効果から回復させる（``clear_special_conditions`` と ``remove_persistent_effects`` の ``EVOLVE``。
-    別々の処理）→ 4. マーカー・カウンター（ダメージカウンター以外）・5. 進化によって引き起こされること（対応カードにない）。
+    別々の処理）→ 4. マーカー・カウンター（ダメージカウンター以外）を取りのぞく（v0.90。``markers.remove_markers``）・5. 進化によって引き起こされること（対応カードにない）。
     受け継ぐもの（ダメージカウンター・エネルギー・ついているトレーナー・場のポケモンの番号・場に出た番）は変えない。
 
     ログ ``evolve``（``player``・``pokemon_id``・進化前と進化後のカードの uid とカード id）。``trainer`` 引数は、トレーナーの効果で 1 進化を
@@ -209,7 +210,9 @@ def place_evolution_card(state: GameState, player: int, target: PokemonInPlay, c
     target.type_shift = None
     # v0.62: ワザの履歴（使ったワザ・受けたワザ）も、進化前のポケモンのもの（別のポケモン。p.310。``history.clear_history``。ログは残さない）
     clear_history(target)
-    # 4. マーカー・カウンター（ダメージカウンター以外）・5. 進化によって引き起こされること: 対応カードにない
+    # 4. マーカー・カウンター（ダメージカウンター以外）をとりのぞく（v0.90。GR-2000-P310-EVOLUTION。ログ ``marker_removed`` の ``reason`` ``evolve``）
+    remove_markers(state, player, target, EVOLVE)
+    # 5. 進化によって引き起こされること: 対応カードにない
 
 
 def skipped_stage1_basic(definition: CardDefinition) -> str | None:
@@ -260,7 +263,7 @@ def devolve(state: GameState, owner: int, target: PokemonInPlay, count: int, *, 
     - 退化した番（``devolved_turn``）を今の番にする。重なりがなくなれば進化した番（``evolved_turn``）を None にする（重なりが残れば、最後に進化した番のまま）。場に出た番・
       場のポケモンの番号・ダメージカウンター・エネルギー・ついているトレーナー・トレーナー「サカキ」の許可は変えない（カードの説明が「進化カード」をはがすだけ）
     - 特殊状態と持続する効果から回復させる（理由 ``devolve``。GR-2000-P324-DEVOLUTION・CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION）。にげるの失敗の記録・［へんしょく］の記録
-      （退化前のポケモンのもの）も消す。場に出てから 1 度だけ使えるワザの記録（``attacks_used_once``）は、はがしたカードのものだけを消す（そのカードは場をはなれた。
+      （退化前のポケモンのもの）も消す。v0.90: マーカー・カウンター（ダメージカウンター以外）も取りのぞく（``markers.remove_markers``）。場に出てから 1 度だけ使えるワザの記録（``attacks_used_once``）は、はがしたカードのものだけを消す（そのカードは場をはなれた。
       残るカードの記録は「別のポケモン」だけを理由に消さない）。「自分の番ごとに1回」の記録は ``retag_power_uses``
     - ログ ``devolve``（``player`` は持ち主・``pokemon_id``・``from_card``／``from_card_id``（はがす前のいちばん上）・``to_card``／``to_card_id``（はがしたあと）・
       ``removed``／``removed_ids``（はがしたカード。上から順）・``destination``・``by_player``（はがしたプレイヤー）・ワザなら ``effect``、トレーナーなら ``trainer_card``）
@@ -309,6 +312,9 @@ def devolve(state: GameState, owner: int, target: PokemonInPlay, count: int, *, 
         state.add_event("retreat_failure_cleared", player=owner, pokemon=target.card, pokemon_id=target.pokemon_id, reason=DEVOLVE)
     target.type_shift = None
     clear_history(target)  # v0.62: 退化前のポケモンのワザの履歴（退化したポケモンは別のポケモン。p.324「19」）
+    # v0.90: マーカー・カウンター（ダメージカウンター以外）も取りのぞく（GR-2000-P324-DEVOLUTION の「その他の「持続する効果」から回復」。カウンター・マーカーをのせるタイプも
+    # 持続する効果で、ベンチにもどったときだけを除く（GR-2000-P322-PERSISTENT-EFFECTS）。docs/markers-counters-v0.90.md 3 章）
+    remove_markers(state, owner, target, DEVOLVE)
     if any(card in removed for card, _ in target.attacks_used_once):
         target.attacks_used_once = tuple(entry for entry in target.attacks_used_once if entry[0] not in removed)
     return removed

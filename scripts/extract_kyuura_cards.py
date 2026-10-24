@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -1464,6 +1465,20 @@ KYUURA_CORRECTIONS = [
         "engine_saw_image": False,
         "engine_history": "v0.71 で写しに加えた（前の版の写しにないカード）",
     },
+    {
+        # v0.89: 写しに加えたベロリンガ（サザンアイランド）。kyuura が前の作業で 2 つの転記（pcg-search・なぞのばしょ）を突き合わせ、「のびるベロ」が正しく pcg-search 側の
+        # 誤記とした判定（kyuura の docs/cards/products/southern-islands.md「2 つの転記の食い違い」）を、kyuura が台帳で当てはめたもの。エンジンは画像を見ていない。
+        # 前の写しの元（ecb2d69）にないカード。写しには当てはめ直さない（二重の修正をしない）
+        "id": "FIX-SI-010-ATK1-NAME",
+        "card_id": "SI-010",
+        "field": "pokemon.attacks[1].name.ja",
+        "before": "のびるべ口",
+        "after": "のびるベロ",
+        "basis": "kyuura_existing_record",
+        "kyuura_record": "docs/cards/products/southern-islands.md「2 つの転記の食い違い」",
+        "engine_saw_image": False,
+        "engine_history": "v0.89 で写しに加えた（前の版の写しにないカード）",
+    },
 ]
 # 前の写しの元と比べるときに、変わってよい欄（出典の記録。エンジンは使わない）。ほかの欄は修正の欄を除いて同じでなければ書き出さない
 PROVENANCE_FIELDS = ("notes", "ja_text_source", "source_ids", "jp_en_differences")
@@ -1667,10 +1682,25 @@ def kyuura_correction_problems(kyuura: Path, source: dict, previous: dict, pool:
             # v0.71: kyuura の前の作業の判定（data/curation/other_products.json の reprint_checks。キーはカード名）を、kyuura が台帳で当てはめた修正
             if c.get("engine_saw_image") is not False or any(key in c for key in ("record", "commit")):
                 problems.append(f"{label}: kyuura の前の判定による修正は、エンジンが画像を見ていない（engine_saw_image は False）・照合の記録とコミットを書かない")
-            other = json.loads(_show(kyuura, KYUURA_COMMIT, "data/curation/other_products.json").decode("utf-8"))
             name = card["name"]["ja"]
-            if c.get("kyuura_record") != f"data/curation/other_products.json reprint_checks「{name}」" or name not in (other.get("reprint_checks") or {}):
-                problems.append(f"{label}: kyuura の data/curation/other_products.json の reprint_checks に「{name}」の判定がない")
+            doc = re.fullmatch(r"(docs/[^「」]+\.md)「(.+)」", c.get("kyuura_record") or "")
+            if doc is not None:
+                # v0.89: kyuura の文書の節（2 つの転記の突き合わせの表）。節の見出しと、カードの名前・前の値・後の値が並ぶ表の行があること
+                try:
+                    text = _show(kyuura, KYUURA_COMMIT, doc.group(1)).decode("utf-8")
+                except subprocess.CalledProcessError:
+                    text = ""
+                heading = f"## {doc.group(2)}"
+                lines = text.splitlines()
+                start = lines.index(heading) + 1 if heading in lines else len(lines)
+                end = next((i for i in range(start, len(lines)) if lines[i].startswith("## ")), len(lines))
+                section = "\n".join(lines[start:end])
+                if not any(name in line and str(c["before"]) in line and str(c["after"]) in line for line in section.splitlines() if line.startswith("|")):
+                    problems.append(f"{label}: kyuura の {doc.group(1)} の節「{doc.group(2)}」に「{name}」の {c['before']!r} と {c['after']!r} の行がない")
+            else:
+                other = json.loads(_show(kyuura, KYUURA_COMMIT, "data/curation/other_products.json").decode("utf-8"))
+                if c.get("kyuura_record") != f"data/curation/other_products.json reprint_checks「{name}」" or name not in (other.get("reprint_checks") or {}):
+                    problems.append(f"{label}: kyuura の data/curation/other_products.json の reprint_checks に「{name}」の判定がない")
             if c["card_id"] in old:
                 problems.append(f"{label}: 前の写しの元にあるカードの修正は、台帳の根拠の記録（照合の記録とコミット）で確かめる")
         else:
@@ -1982,6 +2012,39 @@ POOL_V0_88 = [
     "PR1-023",  # かっこいいポリゴン（テクスチャーマジック）
 ]
 
+# v0.89: 対象を選ぶダメージ（選んでからコイン・コインのあとに選ぶ・選ぶ側が違う・同じ個体への後続の効果・自分の場へのダメージ・選べる回復）のポケモン 17 枚
+# （docs/selected-target-damage-v0.89.md）
+POOL_V0_89 = [
+    "neo2-040",  # ブラッキー（だましうち）
+    "neo4-035",  # わるいオムナイト（てっぽうみず）
+    "GD1-007",  # タケシのイシツブテ（ロングショット）
+    "GD2-011",  # カスミのアズマオウ（だくりゅう）
+    "GD6-011",  # ナツメのバリヤード（マジックダーツ）
+    "ES2-013",  # ライチュウ（ろうでん）
+    "QSG-022",  # ライチュウ（ES2-013 と同じデータ）
+    "ES2-015",  # レアコイル（マイクロウェーブ）
+    "QSG-024",  # レアコイル（ES2-015 と同じデータ）
+    "SI-010",  # ベロリンガ（きずをなめる・のびるベロ）
+    "SI-013",  # ナッシー（ねらいだま）
+    "ES3-028",  # ゴーリキー（きあいだま）
+    "ES3-030",  # カラカラ（ほねをなげる）
+    "PR1-057",  # ニャース（ねこパンチ）
+    "PR1-070",  # サンダー（ライトニングバーン）
+    "ES2-018",  # サンダー（らくらい・サンダークラッシュ）
+    "QSG-056",  # サンダー（ES2-018 と同じデータ）
+]
+
+# v0.90: マーカー・ダメージカウンター以外のカウンターをのせる・消費する・取りのぞくワザのポケモン 7 枚（docs/markers-counters-v0.90.md）
+POOL_V0_90 = [
+    "ES2-002",  # ベトベター（ベトベトえき・どくえき）
+    "ES2-025",  # ガラガラ（ほねさがし・ほねこんぼう。カラカラから進化）
+    "ES3-026",  # ミュウツー（かんぜんかいふく・サイコブラスト）
+    "PR1-024",  # くいしんぼカビゴン（たべる・ころがる）
+    "PR1-034",  # カラカラ（ほねさがし・ボーンキラー）
+    "PR1-035",  # ルージュラ（あくまののろい・つららパンチ）
+    "PRN-029",  # ドーブル（ペイント）
+]
+
 POOLS = [
     ("pool_v0_1", POOL_V0_1),
     ("pool_v0_2b", POOL_V0_2B),
@@ -2076,6 +2139,8 @@ POOLS = [
     ("pool_v0_86", POOL_V0_86),
     ("pool_v0_87", POOL_V0_87),
     ("pool_v0_88", POOL_V0_88),
+    ("pool_v0_89", POOL_V0_89),
+    ("pool_v0_90", POOL_V0_90),
 ]
 
 

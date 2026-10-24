@@ -341,7 +341,7 @@ class UnsupportedWithoutRegistrationTest(unittest.TestCase):
         registry = E.DEFAULT_EFFECTS.without_attacks("test-no-v070", keys)
         pool = pool_from_extract(read_extract(), registry)
         self.assertEqual([c for c in POOL_V0_70 if pool.get(c).supported], [])
-        self.assertEqual(len(pool.playable_ids), 1009)  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.84 でポケモン 12 枚・ポケモン育て屋夫婦を加えた  # v0.83 の 18 枚も含む。 v0.82 の 20 枚も含む。 v0.81 の 15 枚・v0.80 の 30 枚・v0.79 の 52 枚・v0.78 の 13 枚も含む。 v0.71 の再録 78 枚・v0.72 の 43 枚・v0.73 の 18 枚・v0.74 の 13 枚・v0.75 の 15 枚・v0.76 の 24 枚・v0.77 の 52 枚を含む（v0.70 の時点は 553）
+        self.assertEqual(load_card_pool().playable_ids - pool.playable_ids, frozenset(POOL_V0_70))  # ほかのカードの対応は変わらない
         one = E.DEFAULT_EFFECTS.without_attacks("test-no-tail-drop", [AttackKey(KANGASKHAN, 1)])
         pool = pool_from_extract(read_extract(), one)
         self.assertFalse(pool.get(KANGASKHAN).supported)

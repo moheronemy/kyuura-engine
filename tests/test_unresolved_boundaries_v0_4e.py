@@ -274,6 +274,9 @@ ALL_CODES = (
     "UNRESOLVED_COLOR_EFFECT_CONTINUATION",  # CE1（v0.88。tests/test_type_energy_colors_v0_88.py）
     "UNRESOLVED_COLOR_REPLACEMENT_ORDER",  # CE2（v0.88。同）
     "UNRESOLVED_COLOR_CHANGED_ENERGY_CARD",  # CE3（v0.88。同）
+    "UNRESOLVED_IGNORED_EFFECTS_SCOPE",  # FA1（v0.89。tests/test_selected_target_damage_v0_89.py）
+    "UNRESOLVED_COLOR_MARKER_PRECEDENCE",  # CM1（v0.90。tests/test_markers_counters_v0_90.py）
+    "UNRESOLVED_FULL_RECOVERY_COUNTERS",  # KR1（v0.90。同）
 )
 TURN = 7
 

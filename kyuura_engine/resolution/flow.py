@@ -30,6 +30,7 @@ from ..effects import (AttackKey, AttackUse, PowerKey, usable_ninja_tricks, atta
                        received_modifiers_log, received_power_damage, retreat_trap_powers, stadium_attack_coin_available, status_at_attack_blocked)
 from ..errors import IllegalActionError, UnsupportedError
 from ..state import AttackEffectGuard, BenchAttackDamageGuard, BenchProtection, GameState, Phase, PowersStopped, StatusImmunityNextTurn, ZeroDamageAtLeast
+from ..state import MARKER_COLOR, MARKER_CURSE
 from ..history import close_probe, note_used
 from ..zones import face_up_fields, prize_left, promote_from_bench, return_in_play_to_deck, shuffle_deck
 from ..movement import promotion_spikes_now
@@ -237,6 +238,9 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
         found.append("v0.87 の反応・守る特殊能力")
     if any(r.kind == E.OPPONENT_POWER_SUPPRESSION for r in state.trainer_effects):
         found.append("ふしぎなガス")  # v0.87: 相手の場の特殊能力だけを止める効果（v0.13 の止める関数は知らない）
+    if any(marker.kind in (MARKER_CURSE, MARKER_COLOR) for side in state.players for pokemon in side.in_play() for marker in pokemon.markers):
+        # v0.90: のろいマーカー（弱点の「×4」）・色マーカー（タイプ。CM1）。v0.13 の止める関数は、このマーカーで変わる計算と問いを確かめたことがない
+        found.append("のろいマーカー・色マーカー")
     return tuple(found)
 
 

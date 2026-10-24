@@ -36,6 +36,8 @@ from kyuura_engine.rules import RULES_2000_02_14
 from kyuura_engine.stadiums import bench_limit  # v0.57
 from kyuura_engine.state import (
     ASLEEP,
+    COUNTER_KINDS,
+    Marker,
     AttachedTrainer,
     CONFUSED,
     NextTurnAttackDamage,
@@ -757,7 +759,9 @@ def build_test_state(
               の持続する効果 ``NextTurnAttackDamage``（v0.27。「つるぎのまい」。はたらく番は与えた番 + 2。カードはストライク。ログも同じく
               置き、ログの ``effect`` は効果を与えたワザ）。
               "trainers" は、ついているトレーナー（v0.4e）の [(カード id, トラッシュする番), ...]。使ったプレイヤーは持ち主。
-              トラッシュする番は、プラスパワーなら使った番、ディフェンダーなら使った番 + 1（不変条件: 使った番は持ち主の番））
+              トラッシュする番は、プラスパワーなら使った番、ディフェンダーなら使った番 + 1（不変条件: 使った番は持ち主の番）。
+              "markers"（v0.90）は、のっているマーカー・カウンターの [種類, ...]（色マーカーは (種類, 色)）。のせたのはカウンター（ほね・たべもの）なら持ち主、
+              マーカーなら相手、のせた番は今の番の 1 つ前（いまの姿になった番より前なら、いまの姿になった番）、ワザは "test"。のせたログ marker_added も置く）
       bench:  active と同じ形のリスト
       hand / deck / discard: カード id のリスト（deck は先頭が一番上）
       prizes: カード id のリスト、または枚数（枚数なら炎エネルギーで埋める）
@@ -832,6 +836,11 @@ def build_test_state(
         poison = Poison(spec["poison"]) if "poison" in spec else None
         if poison is not None or exclusive is not None:
             result.conditions = SpecialConditions(poison=poison, exclusive=exclusive)
+        for entry in spec.get("markers", ()):
+            # v0.90: マーカー・カウンター（ログはあとで置く）
+            kind, color = (entry, None) if isinstance(entry, str) else entry
+            placer = owner if kind in COUNTER_KINDS else 1 - owner
+            result.markers = (*result.markers, Marker(kind, placer, result.card, "test", max(result.current_form_turn, turn_number - 1), color))
         return result
 
     states = []
@@ -886,6 +895,17 @@ def build_test_state(
                     persistent_effect=effect.kind, source_card=effect.source_card, source_player=effect.source_player,
                     active_turn=effect.active_turn, effect=attack,
                 )
+                state.turn_number = current
+    # v0.90: "markers" を書いたポケモンには、のせたログ marker_added も置く（不変条件: のっている数はログと対応する）
+    for owner, p in enumerate(states):
+        for pokemon in p.in_play():
+            for index, marker in enumerate(pokemon.markers):
+                current = state.turn_number
+                state.turn_number = marker.turn
+                extra = {} if marker.color is None else {"color": marker.color.value}
+                count = sum(1 for m in pokemon.markers[:index + 1] if m.kind == marker.kind)
+                state.add_event("marker_added", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, marker=marker.kind, **extra, count=count,
+                                by_player=marker.player, source_card=marker.source_card, effect=marker.attack)
                 state.turn_number = current
     return state
 
@@ -1352,6 +1372,29 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.PlusDistinctBasicEnergyColors,
     _effects.ChangeOwnResistanceOptional,
     _effects.ChangeWeaknessAndResistanceOptional,
+    # v0.89（docs/selected-target-damage-v0.89.md 5 章。選ぶ要素 ChooseTarget と選んだ個体へのダメージ・効果の要素の組み合わせ）
+    _effects.ChooseOpponentPokemonDamageIgnoringEffects,
+    _effects.ChooseOpponentPokemonOwnEnergyDamage,
+    _effects.ChooseOpponentBenchThenCoinDamage,
+    _effects.DamageThenChooseBenchCoinDamage,
+    _effects.ChooseOpponentPokemonCoinsDamage,
+    _effects.ChooseOpponentPokemonTargetEnergyDamage,
+    _effects.ChooseOpponentPokemonDamageThenDiscardEnergyOnHeads,
+    _effects.CoinChooseEitherPokemonHeal,
+    _effects.ChooseOpponentPokemonCoinsPerOwnEnergyDamage,
+    _effects.CoinChooseOpponentPokemonDamageApplyingWR,
+    _effects.CoinActiveElseChosenBenchDamage,
+    _effects.CoinChooseBenchElseSelfDamage,
+    _effects.DamageThenTailsChooseOwnPokemonDamage,
+    # v0.90（docs/markers-counters-v0.90.md 4〜7 章。マーカー・ダメージカウンター以外のカウンターをのせる・消費する・取りのぞく）
+    _effects.MarkOpponentIfAbsent,
+    _effects.MarkSelfIfAbsent,
+    _effects.MarkSelfUpToLimit,
+    _effects.DamageThenRemoveOwnMarkerParalyzeOnHeads,
+    _effects.OptionalRemoveOwnMarkersBonusDamage,
+    _effects.CoinMarkOpponent,
+    _effects.CoinPaintOpponent,
+    _effects.DiscardAllEnergyThenFullRecovery,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -2186,6 +2229,23 @@ PORYGON_ES1, PORYGON_QSG, COOL_PORYGON = "ES1-033", "QSG-045", "PR1-023"  # ポ�
 V0_88_POKEMON = (LANTURN_NEO1, LANTURN_NEO3, PORYGON2_NEO3, ERIKAS_ODDISH_GD4, STARMIE_NEO3, MEW_SI, HO_OH_PF3, MAGNETON_NEO3, PORYGON_ES1, PORYGON_QSG,
                  COOL_PORYGON)
 V0_88_CARDS = V0_88_POKEMON  # 写しの組 pool_v0_88 の並び
+
+# v0.89（docs/selected-target-damage-v0.89.md）: 対象を選ぶダメージ・選べる回復のポケモン 17 枚（同じ名前の別の版と取りちがえない）
+UMBREON_NEO2, DARK_OMANYTE, BROCKS_GEODUDE_GD1 = "neo2-040", "neo4-035", "GD1-007"  # ブラッキー（だましうち）・わるいオムナイト（てっぽうみず）・タケシのイシツブテ（ロングショット）
+MISTYS_SEAKING_GD2, SABRINAS_MR_MIME_GD6 = "GD2-011", "GD6-011"  # カスミのアズマオウ（だくりゅう）・ナツメのバリヤード（マジックダーツ）
+RAICHU_ES2, RAICHU_QSG, MAGNETON_ES2, MAGNETON_QSG = "ES2-013", "QSG-022", "ES2-015", "QSG-024"  # ライチュウ（ろうでん）2 枚・レアコイル（マイクロウェーブ）2 枚
+LICKITUNG_SI, EXEGGUTOR_SI = "SI-010", "SI-013"  # ベロリンガ（きずをなめる・のびるベロ）・ナッシー（ねらいだま）
+MACHOKE_ES3, CUBONE_ES3, MEOWTH_PR1 = "ES3-028", "ES3-030", "PR1-057"  # ゴーリキー（きあいだま）・カラカラ（ほねをなげる）・ニャース（ねこパンチ）
+ZAPDOS_PR1, ZAPDOS_ES2, ZAPDOS_QSG = "PR1-070", "ES2-018", "QSG-056"  # サンダー（ライトニングバーン）・サンダー（らくらい・サンダークラッシュ）2 枚
+V0_89_POKEMON = (UMBREON_NEO2, DARK_OMANYTE, BROCKS_GEODUDE_GD1, MISTYS_SEAKING_GD2, SABRINAS_MR_MIME_GD6, RAICHU_ES2, RAICHU_QSG, MAGNETON_ES2, MAGNETON_QSG,
+                 LICKITUNG_SI, EXEGGUTOR_SI, MACHOKE_ES3, CUBONE_ES3, MEOWTH_PR1, ZAPDOS_PR1, ZAPDOS_ES2, ZAPDOS_QSG)
+V0_89_CARDS = V0_89_POKEMON  # 写しの組 pool_v0_89 の並び
+
+# v0.90（docs/markers-counters-v0.90.md）: マーカー・ダメージカウンター以外のカウンターのポケモン 7 枚（同じ名前の別の版と取りちがえない）
+GRIMER_ES2, MAROWAK_ES2, MEWTWO_ES3 = "ES2-002", "ES2-025", "ES3-026"  # ベトベター（ベトベトえき）・ガラガラ（ほねさがし・ほねこんぼう）・ミュウツー（かんぜんかいふく）
+HUNGRY_SNORLAX, CUBONE_PR1, JYNX_PR1, SMEARGLE_PRN = "PR1-024", "PR1-034", "PR1-035", "PRN-029"  # くいしんぼカビゴン・カラカラ（ボーンキラー）・ルージュラ（あくまののろい）・ドーブル（ペイント）
+V0_90_POKEMON = (GRIMER_ES2, MAROWAK_ES2, MEWTWO_ES3, HUNGRY_SNORLAX, CUBONE_PR1, JYNX_PR1, SMEARGLE_PRN)
+V0_90_CARDS = V0_90_POKEMON  # 写しの組 pool_v0_90 の並び
 
 
 def _self_sleep_shape_only(attack):

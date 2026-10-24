@@ -205,6 +205,8 @@ class DamageCalculation:
     modifiers: tuple[DamageModifier, ...] = ()  # 計算に使った変更効果（v0.2c）。2 段階で終えたら 2 段階のものだけ（v0.2d）
     reduction: int = 0  # v0.66: 5 段階で「好きなだけ小さく」した量（お上品攻撃。減らさなければ 0）
     reduced_by: tuple[int | None, ...] = ()  # v0.66: その効果の発生源のカード（減らす量を決めたときだけ。量が 0 でも書く）
+    # v0.90: 3 段階で、共通のルールの数（×2）ではない数をかけたとき、その数（のろいマーカーの「×4」）。弱点を計算しなかった・共通のルールの数なら None
+    weakness_multiplier: int | None = None
 
 
 def calculate_attack_damage(
@@ -306,9 +308,11 @@ def _calculate(base: int, attacker: CardDefinition, defender: CardDefinition, ru
         return DamageCalculation(base, False, False, True, 0, tuple(steps), _in_order(tuple(m for m in used if m.step == 2), orders))
 
     # 3. ワザを使うポケモンのタイプが、ワザを受けるポケモンの「弱点」のタイプなら 2 倍（p.315, p.321）
+    # v0.90: 受けるポケモンの今有効な値の定義が弱点の計算でかける数を持てば、その数（のろいマーカーの「×2」ではなく「×4」。``CardDefinition.weakness_multiplier``）
     weakness_applied = weakness_resistance and weakness and defender.weakness is not None and attacker.pokemon_type == defender.weakness
+    special = defender.weakness_multiplier if weakness_applied and defender.weakness_multiplier not in (None, rules.weakness_multiplier) else None
     if weakness_applied:
-        amount *= rules.weakness_multiplier
+        amount *= rules.weakness_multiplier if special is None else special
         steps.append(("3 弱点", amount))
 
     # 4. ワザを使うポケモンのタイプが「抵抗力」のタイプなら、抵抗力の数字をマイナス（p.315, p.321）
@@ -325,12 +329,12 @@ def _calculate(base: int, attacker: CardDefinition, defender: CardDefinition, ru
     if reducers:
         # v0.66: 5 段階の「好きなだけ小さくしてよい」（お上品攻撃）。5 段階のほかの効果のあと
         if partial:
-            return DamageCalculation(base, weakness_applied, resistance_applied, False, amount, tuple(steps), ())
+            return DamageCalculation(base, weakness_applied, resistance_applied, False, amount, tuple(steps), (), weakness_multiplier=special)
         if reduction is None:
             unit = rules.damage_per_counter
 
             def tail(value: int) -> tuple[int, bool]:
-                return _outcome(_finish(value, [], base, weakness_applied, resistance_applied, used, orders, rules))
+                return _outcome(_finish(value, [], base, weakness_applied, resistance_applied, used, orders, rules, special=special))
 
             choices = tuple(range(0, amount + 1, unit)) if amount > 0 else (0,)
             reachable = {tail(amount - r) for r in choices}
@@ -343,11 +347,12 @@ def _calculate(base: int, attacker: CardDefinition, defender: CardDefinition, ru
         applied_reduction = reduction
         amount -= reduction
         steps.append((f"5 {reducers[0].label}", amount))
-    return _finish(amount, steps, base, weakness_applied, resistance_applied, used, orders, rules, applied_reduction, reducers)
+    return _finish(amount, steps, base, weakness_applied, resistance_applied, used, orders, rules, applied_reduction, reducers, special=special)
 
 
 def _finish(amount: int, steps: list, base: int, weakness_applied: bool, resistance_applied: bool, used: tuple[DamageModifier, ...],
-            orders: Mapping[int, tuple[int, ...]], rules: RuleSet, reduction: int = 0, reducers: tuple[DamageModifier, ...] = ()) -> DamageCalculation:
+            orders: Mapping[int, tuple[int, ...]], rules: RuleSet, reduction: int = 0, reducers: tuple[DamageModifier, ...] = (), *,
+            special: int | None = None) -> DamageCalculation:
     """6〜8 段階と最終ダメージ（v0.66。``_calculate`` から分けた。5 段階の減らす量の比べにも使う）。"""
     def at(step: int) -> list[DamageModifier]:
         found = [m for m in used if m.step == step]
@@ -363,7 +368,7 @@ def _finish(amount: int, steps: list, base: int, weakness_applied: bool, resista
     # 最終的に 0 以下なら「ダメージを与えなかった」（p.319, p.321）
     final = amount if amount > 0 else 0
     return DamageCalculation(base, weakness_applied, resistance_applied, False, final, tuple(steps), _in_order(used, orders), reduction,
-                             tuple(m.source for m in reducers))
+                             tuple(m.source for m in reducers), special)
 
 
 def _in_order(modifiers: tuple[DamageModifier, ...], orders: Mapping[int, tuple[int, ...]]) -> tuple[DamageModifier, ...]:
@@ -384,6 +389,8 @@ def calculate_confusion_damage(pokemon: CardDefinition, rules: RuleSet, base: in
     - 「このダメージは「弱点・抵抗力」の影響を受けます」（p.322。CONFIRMED）。ダメージを与えるのも受けるのも同じポケモン
       なので、そのポケモンのタイプが自分の弱点のタイプなら 2 倍、抵抗力のタイプなら抵抗力の数字をマイナスする（p.321 の
       3・4 段階の定義をそのまま当てはめる。SUPPORTED）。0 以下なら 0（「ダメージを受けなかった」。p.321）。
+    - v0.90: かける数は共通のルールの数（のろいマーカーの「×4」は「ワザのダメージを受ける時」の効果で、こんらんの 20 が「ワザによるダメージ」かは決まらないので、
+      当てはまりうるときはコインの前に止める。``procedures.confusion_damage_problem``）。
     - これは ``calculate_attack_damage``（「ワザによるダメージ」の 8 段階。p.321「8」「9」）とは別の計算にしている。こんらんの
       ダメージが「ワザによるダメージ」かは原典に書かれていないので、プラスパワー（5 段階）・ディフェンダー（7 段階）などを
       計算するかは決められない（UNRESOLVED）。ワザを使うポケモンにそれらがついているときは、エンジンがコインを投げる前に
