@@ -115,6 +115,7 @@ from .decisions import (
     DAMAGE_STEP_ORDER,
     CHALLENGE_BENCH, QUIZ_ANSWER, QUIZ_ATTACK, QUIZ_CARD, SECRET_PLAN_CARD,
     JANKEN_HAND, OPTIONAL_DRAIN, OPTIONAL_DISCARD_ALL, SELECT_MARKER_COUNT,
+    OPTIONAL_SHUFFLE, SELECT_ATTACHED_TRAINER,
     SEARCH_DECK_OR_DISCARD, TAKE_LOOKED_POKEMON, SELECT_OPPONENT_PRIZE, TAKE_LOOKED_TRAINER,
     EVOLUTION_SONG_POKEMON,
 )
@@ -740,11 +741,14 @@ MARKER_ELEMENT = "marker"
 CURE_ELEMENT = "cure"
 DAMAGE_TAKEN_ELEMENT = "damage_taken"  # v0.92: 相手に与える「受けるワザのダメージを増やす」効果（イワーク・ゴルバットの「いやなおと」）
 LEAVE_LOCK_ELEMENT = "leave_lock"  # v0.93: 相手に与える「バトル場をはなれられない」効果（からまるいと・からみつく・ねばるみつ・くいつく・どくしばり）
+# v0.95: 相手の場のポケモンについているトレーナーカードを 1 枚、相手の山札にもどす効果（エイパムの「とりさる」。ついているポケモンへの効果なので「ワザをうけない」状態・「とうめい」を評価する）
+TRAINER_RETURN_ELEMENT = "trainer_return"
 ATTACK_ELEMENTS = (DAMAGE_ELEMENT, FORCED_SWITCH_ELEMENT, POISON, SLEEP, PARALYSIS, CONFUSION, ENERGY_DISCARD_ELEMENT, ATTACK_LOCK_ELEMENT,
                    ENERGY_ATTACH_ELEMENT, REDUCED_DAMAGE_ELEMENT, ATTACK_CHECK_ELEMENT, RETREAT_LOCK_ELEMENT, RETURN_IN_PLAY_TO_DECK_ELEMENT,
                    HEAL_ELEMENT, COUNTERS_ELEMENT, EVOLVE_ELEMENT, RETURN_IN_PLAY_TO_HAND_ELEMENT, ENERGY_MOVE_ELEMENT, WEAKNESS_CHANGE_ELEMENT,
                    RESISTANCE_CHANGE_ELEMENT, MAX_HP_ELEMENT, DEVOLVE_ELEMENT, POWER_LOCK_ELEMENT, ATTACH_LOCK_ELEMENT, WAKE_ELEMENT, TRAINER_DISCARD_ELEMENT,
-                   STATUS_GUARD_ELEMENT, BENCH_PROTECTION_ELEMENT, MARKER_ELEMENT, CURE_ELEMENT, DAMAGE_TAKEN_ELEMENT, LEAVE_LOCK_ELEMENT)
+                   STATUS_GUARD_ELEMENT, BENCH_PROTECTION_ELEMENT, MARKER_ELEMENT, CURE_ELEMENT, DAMAGE_TAKEN_ELEMENT, LEAVE_LOCK_ELEMENT,
+                   TRAINER_RETURN_ELEMENT)
 
 
 def evasion_power(state: GameState, pokemon: PokemonInPlay) -> tuple[PowerKey, AttackImmunityOnHeads] | None:
@@ -2858,7 +2862,11 @@ class CoinBonusDamage(AttackEffect):
 @dataclass(frozen=True)
 class MillSelfThenDamage(AttackEffect):
     """自分の山札の上から、カードを ``count`` 枚トラッシュする。トラッシュした中にあった ``energy_type`` エネルギーカードの数 × ``per`` のダメージ（v0.31。
-    カツラのブーバーの「マグマふんしゅつ」）。山札が足りないときは決められない（HC6）。"""
+    カツラのブーバーの「マグマふんしゅつ」）。山札が足りないときは決められない（HC6）。
+
+    v0.95: わるいマグマラシ（neo4-020）の「マグマラッシュ」（「そのトラッシュしたカードの中にあった…の枚数」。意味と引数は同じ）も受け付ける。v0.94 までは形だけを確かめていた
+    （全文と枚数・色・1 枚あたりのダメージを照らすようにした）。数えるのはカードの枚数で、山札・サイドのレインボーエネルギーは FV1、場の外のミラクルエネルギーは当たらない
+    （``programs.PerMilledEnergy``。マグマふんしゅつにも同じに当てはまる。意図した既存の動きの変化）。"""
 
     count: int
     energy_type: EnergyType
@@ -2866,7 +2874,19 @@ class MillSelfThenDamage(AttackEffect):
     implementation_id = "mill_self_then_damage"
 
     def check(self, attack: Attack) -> list[str]:
-        return _check_form(attack, "山札をトラッシュしてダメージのワザ", damage="modified", modifier="×")
+        what = "山札をトラッシュしてダメージのワザ"
+        texts = tuple(text.format(count=self.count, ja=self.energy_type.ja, per=self.per) for text in MAGMA_ERUPTION_TEXTS)
+        problems = _check_form(attack, what, damage="modified", modifier="×") + _check_exact_text(attack, what, texts)
+        if attack.damage != self.per:
+            problems.append(f"ダメージの目安の数字 {attack.damage!r} が、1 枚あたりのダメージ {self.per} と違う")
+        return problems
+
+
+# v0.95: 受け付ける全文（カツラのブーバー PMCG6-031 の「カード5枚」・GD5-011 の「カードを5枚」・わるいマグマラシ neo4-020 のマグマラッシュ）。どれも同じ意味
+MAGMA_ERUPTION_TEXT = "自分の山札の上から、カード{count}枚トラッシュする。トラッシュした{count}枚の中にあった「{ja}」エネルギーカードの数×{per}のダメージ。"
+MAGMA_RUSH_TEXT = "自分の山札の上からカードを{count}枚トラッシュする。そのトラッシュしたカードの中にあった「{ja}」エネルギーカードの枚数×{per}のダメージ。"
+MAGMA_ERUPTION_TEXTS = (MAGMA_ERUPTION_TEXT, "自分の山札の上から、カードを{count}枚トラッシュする。トラッシュした{count}枚の中にあった「{ja}」エネルギーカードの数×{per}のダメージ。",
+                        MAGMA_RUSH_TEXT)
 
 
 @dataclass(frozen=True)
@@ -4787,9 +4807,14 @@ class DamageIgnoringWeaknessResistance(AttackEffect):
     def check(self, attack: Attack) -> list[str]:
         # v0.42: わるいユンゲラー・わるいフーディンの「マインドショック」の書き方（「このワザのダメージは」。「この「ソニックブーム」の」と同じく、このワザ自身の
         # ダメージを指す）も受け付ける
+        # v0.95: わるいヤドキング（neo4-061）の「マインドショック」の書き方（「このワザは、…に関係なく、ダメージを与える。」。弱点・抵抗力を計算しない同じ意味）の全文 1 通りだけを
+        # 加えた（広く読み替えない）
         expected = (f"この「{attack.name_ja}」のダメージは、相手の「弱点・抵抗力」の影響を受けない。",
-                    "このワザのダメージは、相手の「弱点・抵抗力」の影響を受けない。")
+                    "このワザのダメージは、相手の「弱点・抵抗力」の影響を受けない。", MIND_SHOCK_IGNORING_TEXT)
         return _check_form(attack, "弱点・抵抗力の影響を受けないワザ", damage="fixed") + _check_exact_text(attack, "弱点・抵抗力の影響を受けないワザ", expected)
+
+
+MIND_SHOCK_IGNORING_TEXT = "このワザは、相手の「弱点・抵抗力」に関係なく、ダメージを与える。"
 
 
 @dataclass(frozen=True)
@@ -37299,3 +37324,341 @@ V0_94_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
 SAME_DATA_CARDS_V0_94: Mapping[str, str] = MappingProxyType({"QSG-040": "ES1-026", "QSG-008": "ES3-009"})
 
 DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_94_ATTACKS), SAME_DATA_CARDS_V0_94)
+
+
+# ---------------------------------------------------------------- v0.95（docs/private-looks-deck-movement-v0.95.md）: 手札・山札を見る効果と、見たカード・山札・ついている
+# トレーナーを動かすワザ・特殊能力。処理に使う文面は kyuura の印刷の文面
+
+
+def hand_trainer_cards(state: GameState, cards: Iterable[int]) -> tuple[int, ...]:
+    """v0.95: 手札のカード ``cards`` のうち、トレーナーカード（手札にある間の印刷の分類。``CardFilter("trainer")``。なにかの化石・ピッピ人形も含む）。並びは ``cards`` の順。"""
+    trainer = CardFilter("trainer")
+    return tuple(uid for uid in cards if trainer.matches(state.card_def(uid)))
+
+
+def opponent_attached_trainer_cards(state: GameState, player: int) -> tuple[int, ...]:
+    """v0.95: プレイヤー ``player`` の相手の場のポケモン（バトル場 → ベンチ）についているトレーナーカード（ついている順）。HP 以上のポケモン（そのワザの処理の対象がない）は除く。"""
+    return tuple(attached.card for pokemon in state.players[1 - player].in_play() if not knocked_by_hp(state, pokemon) for attached in pokemon.trainers)
+
+
+LOOK_OPPONENT_HAND_TEXT = "相手の手札を見る。"
+POLTERGEIST_TEXT = "相手の手札を見て、その中にある「トレーナーカード」の枚数×{per}のダメージ。"
+PROPHECY_EXACT_TEXT = "自分または相手の山札の上から{n}枚のカードを見る。その後、その{n}枚を好きな順番に入れ替えて、もとの山札の上にもどす。"
+THREATEN_TEXT = "コインを投げて「おもて」なら、相手プレイヤーの手札を見る。その中にある「トレーナーカード」を1枚選び、相手の山札にもどす。その後、その山札をよく切る。"
+SCORCH_TEXT = "相手の山札の1番上のカードを見て、それが「トレーナーカード」なら、トラッシュする。「トレーナーカード」でないなら、そのカードをもとの山札の上にもどす。"
+LANDSLIDE_TEXT = "自分の山札の上からカードを{count}枚トラッシュする。トラッシュした{count}枚の中に「{ja}」エネルギーカードがあれば、それらをすべてトラッシュから取り出し、手札に加える。"
+SNATCH_TEXT = "相手の場のポケモンについている「トレーナーカード」を1枚選び、相手の山札にもどす。その後、その山札をよく切る。"
+GLARING_GAZE_TEXT = ("この力は、自分の番ごとに1回使える。コインを投げて「おもて」なら、相手の手札を見る。その中に「トレーナーカード」があれば、1枚を選び、それを山札にもどして、"
+                     "よく切る。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。")
+CUNNING_TEXT = ("この力は、自分の番ごとに1回使うことができる。コインを投げて「おもて」なら、相手の山札の一番上のカードを見て、もとの山札の上にもどす。その後、のぞむなら、その山札を"
+                "よく切る。このカードが「ねむり・マヒ・こんらん」状態のとき、この力を使うことはできない。")
+
+
+@dataclass(frozen=True)
+class LookOpponentHandAttack(AttackEffect):
+    """相手の手札を見る（v0.95。オタチ（neo2-046）の「さぐる」・ナツメのケーシィ（GD6-002）の「とうし」）。ダメージの目安の数字はない。要素 ``LookOpponentHand``。
+
+    - 見るのはワザを使ったプレイヤー（``zones.look_at_hand``。ログの ``cards`` は見たプレイヤーと持ち主だけ。観戦者には見せない）。1 回見るだけで、あとで観測の手札を公開しない
+      （［おみとおし］のような続けて見せる効果ではない）。相手の手札が 0 枚でも使える（見るカードがない。p.309）。カードは動かさない
+    - 相手の手札への効果なので、相手の対戦ポケモンの「ワザをうけない」状態・「とうめい」は評価しない"""
+
+    implementation_id = "look_opponent_hand_attack"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の手札を見るワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (LOOK_OPPONENT_HAND_TEXT,))
+
+
+@dataclass(frozen=True)
+class DamageTimesLookedHandTrainers(AttackEffect):
+    """相手の手札を見て、その中にある「トレーナーカード」の枚数 × ``per`` のダメージ（v0.95。ゴースト（ES3-024・QSG-029）の「ポルターガイスト」）。要素 ``CountLookedHandTrainers`` →
+    ``Damage(OPP, PerLookedTrainers)``。
+
+    - 数えるのは見た手札のトレーナーカード（``CardFilter("trainer")``）。枚数 × ``per`` が p.321 の 1 段階（基本となるダメージ）で、そのあとの計算（弱点・抵抗力・プラスパワー・
+      ディフェンダーなど）は今までどおり。0 枚なら基本となるダメージは 0（ワザの失敗ではない）
+    - 宣言の前の先読みは、トレーナーカードの枚数を 0〜相手の手札の枚数のすべてで試す（``Resolution.hidden_choice``。受け付けるかが相手の手札の中身によらない）
+    - 受けなかったダメージの量（「とうめい」・「かげぶんしん」・「リフレクトシールド」のログ）は、観戦者に見せない（``kernel._amount_privacy``）。のせたダメージはワザの結果で公開"""
+
+    per: int = 10
+    implementation_id = "damage_times_looked_hand_trainers"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "見た手札のトレーナーカードの枚数でダメージが決まるワザ"
+        problems = _check_form(attack, what, damage="modified", modifier="×") + _check_exact_text(attack, what, (POLTERGEIST_TEXT.format(per=self.per),))
+        if attack.damage != self.per:
+            problems.append(f"ダメージの目安の数字 {attack.damage!r} が、1 枚あたりのダメージ {self.per} と違う")
+        return problems
+
+
+@dataclass(frozen=True)
+class ArrangeDeckTopExactlyEffect(AttackEffect):
+    """自分または相手の山札の上から ``count`` 枚のカードを見る。その後、その ``count`` 枚を好きな順番に入れ替えて、もとの山札の上にもどす（v0.95。ネイティオ（neo1-048）の
+    「みらいよち」。kyuura の印刷の文面）。ダメージの目安の数字はない。要素 ``ArrangeDeckTop(count, exact=True)``。
+
+    - v0.47 の「3枚まで」（``ArrangeDeckTopEffect``）とは別の文面で、ちょうど ``count`` 枚（見る枚数の決定はない。GS1 は当たらない）
+    - 選ぶのはワザを使ったプレイヤー: 見る山札の持ち主（決定 ``SELECT_DECK_OWNER``）→ 見る（ログ ``look_at_deck_top`` の ``cards`` は見たプレイヤーにだけ見える。相手の山札でも
+      持ち主には見せない）→ 新しい並び（決定 ``ARRANGE_DECK_TOP``。見たカードを上から順に並べた答え）→ もどす（ログ ``arrange_deck_top``）。見た部分より下の並び・乱数は変えず、
+      山札を切らない
+    - 山札が ``count`` 枚より少ない持ち主は、v0.83 の LT1（「山札の上からカードを3枚見る」ワザで山札が 3 枚より少ない。0 枚を含む）で、選べるが選ぶと止める（決定は待ったまま）。
+      もう一方の山札は止めない。どちらも少なければ宣言の前に止める。「カードを引く」ときの「引けるだけ引く」は当てはめない"""
+
+    count: int = 3
+    implementation_id = "arrange_deck_top_exactly"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "山札の上からちょうどの枚数を見て並べかえるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (PROPHECY_EXACT_TEXT.format(n=self.count),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        label = _label(state, use)
+        if decision.kind == SELECT_DECK_OWNER:
+            problems = _decision_form(decision, label, kind=SELECT_DECK_OWNER, player=use.player, choices=(1, 1), options=(use.player, 1 - use.player))
+            short = tuple(owner for owner in (use.player, 1 - use.player) if len(state.players[owner].deck) < self.count)
+            if tuple(decision.context_value("unresolved_choices", ())) != short:
+                problems.append(f"{label} の決定の選ぶと止める山札の持ち主 {decision.context_value('unresolved_choices', ())} が、山札が {self.count} 枚より少ない持ち主 {short} と違う")
+            return problems
+        owner = decision.context_value("owner")
+        if owner not in (0, 1):
+            return [f"{label} の決定 {decision.kind} の山札の持ち主 {owner!r} が正しくない"]
+        return _decision_form(decision, label, kind=ARRANGE_DECK_TOP, player=use.player, choices=(self.count, self.count),
+                              options=state.players[owner].deck[:self.count])
+
+
+@dataclass(frozen=True)
+class CoinLookOpponentHandTrainerToDeck(AttackEffect):
+    """コインを投げて「おもて」なら、相手プレイヤーの手札を見る。その中にある「トレーナーカード」を 1 枚選び、相手の山札にもどす。その後、その山札をよく切る（v0.95。わるいハッサム
+    （neo4-083）の「おどす」。kyuura の印刷の文面）。ダメージの目安の数字はない。要素 ``LookHandTrainerToDeck``。
+
+    - 「うら」なら何もしない。「おもて」なら見る → 選ぶ（決定 ``OPPONENT_HAND_TO_DECK``。決めるのはワザを使ったプレイヤー。選べるものは見た手札のトレーナーカード。ちょうど 1 枚）→
+      相手の山札にもどす → 相手の山札を切る（1 回）
+    - トレーナーカードがない（相手の手札が 0 枚を含む）なら、もどさずに相手の山札を切る（v0.75・v0.79 の、選び出す対象がないときの読み方。p.309。実装上の読み方）。ヨルノズクの
+      ［みやぶる］の「あれば」（ないなら切らない）・v0.47 のおどろかすの「手札から1枚選び」（相手の手札 0 枚は FC1）とは文面が違うので、同じに扱わない
+    - 見る前に、トレーナーカードがないことでコインを省いたり、宣言を拒否したりしない（宣言の前に分かるのは手札の枚数だけ）"""
+
+    implementation_id = "coin_look_opponent_hand_trainer_to_deck"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで相手の手札のトレーナーカードを山札にもどすワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (THREATEN_TEXT,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        opponent = 1 - use.player
+        label = _label(state, use)
+        problems = _decision_form(decision, label, kind=OPPONENT_HAND_TO_DECK, player=use.player, choices=(1, 1),
+                                  options=hand_trainer_cards(state, state.players[opponent].hand))
+        if decision.context_value("owner") != opponent:
+            problems.append(f"{label} の決定の手札の持ち主 {decision.context_value('owner')!r} が相手 {opponent} ではない")
+        if not decision.options:
+            problems.append(f"{label} の決定に選べるトレーナーカードがない（ないなら決定を出さない）")
+        return problems
+
+
+@dataclass(frozen=True)
+class OpponentDeckTopDiscardIfTrainer(AttackEffect):
+    """相手の山札の 1 番上のカードを見て、それが「トレーナーカード」なら、トラッシュする。「トレーナーカード」でないなら、そのカードをもとの山札の上にもどす（v0.95。わるいマグマラシ
+    （neo4-020）の「もやす」。kyuura の印刷の文面）。ダメージの目安の数字はない。コインはない。要素 ``OpponentDeckTopDiscardIfTrainer``（見る → トラッシュするか。手札に加えない・
+    山札を切らない。相手の山札が 0 枚なら見るカードがない）。"""
+
+    implementation_id = "opponent_deck_top_discard_if_trainer"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の山札の一番上を見てトレーナーカードならトラッシュするワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (SCORCH_TEXT,))
+
+
+@dataclass(frozen=True)
+class DamageThenMillReturnTypeEnergy(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。自分の山札の上からカードを ``count`` 枚トラッシュする。トラッシュした ``count`` 枚の中に「``energy_type``」エネルギー
+    カードがあれば、それらをすべてトラッシュから取り出し、手札に加える（v0.95。サイドン（ES3-031）の「やまくずし」。kyuura の印刷の文面）。
+
+    - 要素 ``Damage(OPP, Printed())`` → ``MillOwnDeck(count)`` → ``ReturnMilledTypeEnergy``。ダメージを先に処理し、ダメージ以外の効果（トラッシュ・手札に加える）をそのあとに
+      処理する（p.309 のワザの手順。ダメージの量はトラッシュするカードによらない）
+    - 山札が ``count`` 枚より少ないとき（0 枚を含む）は v0.31 の HC6（宣言の前に止める）。手札に加えるのは、今トラッシュしたカードのうちその色の基本エネルギーカードだけ（カードの
+      枚数。前からトラッシュにあったカードは加えない）。山札・サイドにレインボーエネルギーがあれば FV1（ポケモンタワーで手札に加える部分が消えるときは当たらない）
+    - 場のポケモンタワーは「トラッシュから手札に加える」部分だけを消す（ダメージ・トラッシュはする）"""
+
+    count: int = 5
+    energy_type: EnergyType = EnergyType.FIGHTING
+    implementation_id = "damage_then_mill_return_type_energy"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "ダメージのあと山札の上からトラッシュしてエネルギーカードを手札に加えるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(
+            attack, what, (LANDSLIDE_TEXT.format(count=self.count, ja=self.energy_type.ja),))
+
+
+@dataclass(frozen=True)
+class ReturnOpponentAttachedTrainerToDeck(AttackEffect):
+    """相手の場のポケモンについている「トレーナーカード」を 1 枚選び、相手の山札にもどす。その後、その山札をよく切る（v0.95。エイパム（neo3-047）の「とりさる」。kyuura の
+    印刷の文面）。ダメージの目安の数字はない。要素 ``ReturnAttachedTrainerToDeck``。
+
+    - 選ぶのはワザを使ったプレイヤー（決定 ``SELECT_ATTACHED_TRAINER``。選べるものは相手の場のポケモンについているトレーナーカード。ちょうど 1 枚）。カード・ポケモンの持ち主は
+      相手で、もどすのは相手の山札。ポケモンは動かない（入れ替え・帰還ではない）
+    - 選んだカードのついているポケモンの「ワザをうけない」状態・エフェクトガード・「とうめい」を評価する（受けないなら何もしない。切らない）
+    - 選べるカードがなければ、もどさずに相手の山札を切る（v0.75・v0.79 の読み方。p.309。実装上の読み方）"""
+
+    implementation_id = "return_opponent_attached_trainer_to_deck"
+    opponent_effect_elements = (TRAINER_RETURN_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手のポケモンについているトレーナーカードを山札にもどすワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (SNATCH_TEXT,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        label = _label(state, use)
+        problems = _decision_form(decision, label, kind=SELECT_ATTACHED_TRAINER, player=use.player, choices=(1, 1),
+                                  options=opponent_attached_trainer_cards(state, use.player))
+        if decision.context_value("owner") != 1 - use.player:
+            problems.append(f"{label} の決定のポケモンの持ち主 {decision.context_value('owner')!r} が相手 {1 - use.player} ではない")
+        if not decision.options:
+            problems.append(f"{label} の決定に選べるトレーナーカードがない（ないなら決定を出さない）")
+        return problems
+
+
+def _looked_since_power(state: GameState, use: PowerUse, kind: str) -> bool:
+    """v0.95: この特殊能力の宣言（ログ ``pokemon_power``）のあとに、この特殊能力の ``kind`` のログ（見た）があるか（決定の不変条件が、すんだ段階を確かめる）。"""
+    since = max((i for i, e in enumerate(state.log) if e["kind"] == "pokemon_power" and e.get("pokemon_id") == use.pokemon_id), default=None)
+    return since is not None and any(e["kind"] == kind and e.get("power") == str(use.key) for e in state.log[since:])
+
+
+@dataclass(frozen=True)
+class CoinLookOpponentHandMayReturnTrainer(PowerEffect):
+    """ヨルノズク（neo1-065）の［みやぶる］（v0.95。kyuura の印刷の文面「この力は、自分の番ごとに1回使える。コインを投げて「おもて」なら、相手の手札を見る。その中に「トレーナー
+    カード」があれば、1枚を選び、それを山札にもどして、よく切る。…」）。
+
+    - 宣言して使う。自分の番ごとに 1 回（``once_per_turn``。場のポケモンごと）。コインの「うら」でも使ったことになる。ねむり・マヒ・こんらんのこのカードは使えない。特殊能力を消す
+      効果（かがくへんかガスなど）は、エンジンの共通の確かめ（``POWER_SUPPRESSED``）
+    - 「おもて」なら見る（``zones.look_at_hand``。ログの ``power``）。トレーナーカード（``CardFilter("trainer")``）があれば、使ったプレイヤーが 1 枚選ぶ（決定 ``OPPONENT_HAND_TO_DECK``。
+      「あれば、1枚を選び」で、あるのに選ばない答えはない）→ カードの持ち主（相手）の山札にもどす（説明の「山札」。カードは持ち主の山札にしかもどらない）→ その山札を 1 回切る
+    - トレーナーカードがない（相手の手札が 0 枚を含む）なら、もどさず切らない（「あれば」の処理のあとの「よく切る」。v0.55 のロケット団のおねーさんと同じ読み方）。手札が 0 枚でも
+      使える（「あれば」がトレーナーカードのない場合を書いている。見る前に、トレーナーカードがないことでコインを省いたり、使うのを拒否したりしない）
+    - 使う前の確かめ（使えるか）は、相手の手札の中身によらない。見たあとの処理に問いはない"""
+
+    implementation_id = "coin_look_opponent_hand_may_return_trainer"
+    once_per_turn: ClassVar[bool] = True
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "コインで相手の手札を見てトレーナーカードを山札にもどす特殊能力", (GLARING_GAZE_TEXT,))
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_user_not_asleep_paralyzed_confused(state, use)
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        if _power_coin(state, use) is not CoinSide.HEADS:
+            return
+        opponent = 1 - use.player
+        trainers = hand_trainer_cards(state, look_at_hand(state, use.player, opponent, power=str(use.key)))
+        if trainers:
+            push_power_decision(state, use, kind=OPPONENT_HAND_TO_DECK, player=use.player, options=trainers)
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        opponent = 1 - use.player
+        if len(choices) != 1 or choices[0] not in hand_trainer_cards(state, state.players[opponent].hand):
+            raise RuntimeError(f"［みやぶる］で選んだカード {choices} が、相手の手札のトレーナーカードではない（エンジンの不具合）")
+        opponent_hand_card_to_deck(state, opponent, choices[0], looker=use.player, power=str(use.key))
+        shuffle_deck(state, opponent, power=str(use.key))
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        options = hand_trainer_cards(state, state.players[1 - use.player].hand)
+        problems = _power_decision_form(decision, use, kind=OPPONENT_HAND_TO_DECK, choices=(1, 1), options=options)
+        if not options:
+            problems.append(f"特殊能力 {use.key} の決定に選べるトレーナーカードがない（ないなら決定を出さない）")
+        if not _looked_since_power(state, use, "look_at_hand"):
+            problems.append(f"特殊能力 {use.key} の決定が、相手の手札を見るまえに出ている")
+        return problems
+
+
+@dataclass(frozen=True)
+class CoinPeekOpponentDeckTopMayShuffle(PowerEffect):
+    """わるいヤドキング（neo4-061）の［わるぢえ］（v0.95。kyuura の印刷の文面「この力は、自分の番ごとに1回使うことができる。コインを投げて「おもて」なら、相手の山札の一番上の
+    カードを見て、もとの山札の上にもどす。その後、のぞむなら、その山札をよく切る。…」）。
+
+    - 宣言して使う。自分の番ごとに 1 回（``once_per_turn``）。コインの「うら」でも使ったことになる（「うら」なら見ない・切るかを聞かない。「その後」は「おもて」の処理のあと。
+      v0.53 の MB1 と同じ読み方）。ねむり・マヒ・こんらんのこのカードは使えない
+    - 「おもて」なら相手の山札の一番上を見る（``zones.look_at_card``。ログ ``look_at_card`` の ``card`` は見たプレイヤーだけ）→ 動かさない（もとの山札の上にもどす）→ 切るかを使った
+      プレイヤーが選ぶ（決定 ``OPTIONAL_SHUFFLE``。選べるものは相手の番号で、0 個は切らない）。切るなら 1 回切る（``zones.shuffle_deck``）、切らないならログ ``shuffle_declined``
+      （並び・乱数は変わらない）
+    - 相手の山札が 0 枚なら、見るカードがない。v0.47 の［スパイ］（見られるカードがない）と同じ PW3（``UNRESOLVED_POWER_ZERO_CARDS``）で、コインの前に止める（公開の情報）"""
+
+    implementation_id = "coin_peek_opponent_deck_top_may_shuffle"
+    once_per_turn: ClassVar[bool] = True
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "コインで相手の山札の一番上を見て切るかを選ぶ特殊能力", (CUNNING_TEXT,))
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_user_not_asleep_paralyzed_confused(state, use)
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+        if not state.players[1 - use.player].deck:
+            raise _power_zero_cards("［わるぢえ］で、相手の山札が 0 枚（見るカードがない。v0.47 の［スパイ］と同じ問い）")
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        if _power_coin(state, use) is not CoinSide.HEADS:
+            return
+        opponent = 1 - use.player
+        look_at_card(state, use.player, opponent, "deck", 0, power=str(use.key))
+        push_power_decision(state, use, kind=OPTIONAL_SHUFFLE, player=use.player, options=(opponent,), min_choices=0, max_choices=1)
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        opponent = 1 - use.player
+        if choices not in ((), (opponent,)):
+            raise RuntimeError(f"［わるぢえ］の答え {choices} が正しくない（エンジンの不具合）")
+        if choices:
+            shuffle_deck(state, opponent, power=str(use.key))
+        else:
+            state.add_event("shuffle_declined", player=use.player, owner=opponent, power=str(use.key))
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        problems = _power_decision_form(decision, use, kind=OPTIONAL_SHUFFLE, choices=(0, 1), options=(1 - use.player,))
+        if not _looked_since_power(state, use, "look_at_card"):
+            problems.append(f"特殊能力 {use.key} の決定が、相手の山札の一番上を見るまえに出ている")
+        return problems
+
+
+# v0.95 の 11 枚のポケモンのワザの登録（20）。ゴーストの 2 枚（``SAME_DATA_CARDS_V0_95``）は同じゲーム用データで、id ごとに書いたうえで同じ登録の値にまとめる。既存の型の
+# 再利用は、意味と引数が同じ文面だけ（マグマラッシュはマグマふんしゅつの型、マインドショックは弱点・抵抗力に関係なくの型に、その全文を 1 通りずつ加えた）
+V0_95_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # ネイティオ（neo1-048。ネイティから進化）
+    AttackKey("neo1-048", 0): _printed(ArrangeDeckTopExactlyEffect(3), "みらいよち", PROPHECY_EXACT_TEXT.format(n=3)),
+    AttackKey("neo1-048", 1): _printed(ConfuseOnHeads(), "あやしいひかり", "コインを投げて「おもて」なら、相手を「こんらん」状態にする。"),
+    # ヨルノズク（neo1-065。ホーホーから進化）
+    AttackKey("neo1-065", 0): AttackEntry(DAMAGE_ONLY, "つばさでうつ"),  # 説明文のないワザ（文面・出典を持たない）
+    # オタチ（neo2-046）
+    AttackKey("neo2-046", 0): _printed(LookOpponentHandAttack(), "さぐる", LOOK_OPPONENT_HAND_TEXT),
+    AttackKey("neo2-046", 1): AttackEntry(DAMAGE_ONLY, "たいあたり"),
+    # ナツメのケーシィ（GD6-002）
+    AttackKey("GD6-002", 0): _printed(LookOpponentHandAttack(), "とうし", LOOK_OPPONENT_HAND_TEXT),
+    AttackKey("GD6-002", 1): _printed(CoinBonusDamage(20), "クイックアタック", "コインを投げて「おもて」なら、20ダメージを追加する。"),
+    # ゴースト（ES3-024・QSG-029。ゴースから進化）
+    AttackKey("ES3-024", 0): _printed(DamageTimesLookedHandTrainers(10), "ポルターガイスト", POLTERGEIST_TEXT.format(per=10)),
+    AttackKey("ES3-024", 1): _printed(DamageThenStatusByCoin(SLEEP, CONFUSION), "ナイトメア", PSYCHIC_HORROR_TEXT),
+    AttackKey("QSG-029", 0): _printed(DamageTimesLookedHandTrainers(10), "ポルターガイスト", POLTERGEIST_TEXT.format(per=10)),
+    AttackKey("QSG-029", 1): _printed(DamageThenStatusByCoin(SLEEP, CONFUSION), "ナイトメア", PSYCHIC_HORROR_TEXT),
+    # わるいハッサム（neo4-083。ストライクから進化）
+    AttackKey("neo4-083", 0): _printed(CoinLookOpponentHandTrainerToDeck(), "おどす", THREATEN_TEXT),
+    AttackKey("neo4-083", 1): AttackEntry(DAMAGE_ONLY, "きりさく"),
+    # わるいヤドキング（neo4-061。ヤドンから進化）
+    AttackKey("neo4-061", 0): _printed(DamageIgnoringWeaknessResistance(), "マインドショック", MIND_SHOCK_IGNORING_TEXT),
+    # わるいマグマラシ（neo4-020。ヒノアラシから進化）
+    AttackKey("neo4-020", 0): _printed(OpponentDeckTopDiscardIfTrainer(), "もやす", SCORCH_TEXT),
+    AttackKey("neo4-020", 1): _printed(MillSelfThenDamage(5, EnergyType.FIRE, 20), "マグマラッシュ", MAGMA_RUSH_TEXT.format(count=5, ja="炎", per=20)),
+    # サイドン（ES3-031。サイホーンから進化）
+    AttackKey("ES3-031", 0): _printed(DamageThenMillReturnTypeEnergy(5, EnergyType.FIGHTING), "やまくずし", LANDSLIDE_TEXT.format(count=5, ja="闘")),
+    AttackKey("ES3-031", 1): _printed(CoinBonusDamage(20), "にだんづき", "コインを投げて「おもて」なら、20ダメージを追加する。"),
+    # エイパム（neo3-047）
+    AttackKey("neo3-047", 0): _printed(ReturnOpponentAttachedTrainerToDeck(), "とりさる", SNATCH_TEXT),
+    AttackKey("neo3-047", 1): AttackEntry(DAMAGE_ONLY, "しっぽでパンチ"),
+})
+
+# v0.95 の特殊能力の登録（2）。処理に使う文面は kyuura の印刷の文面
+V0_95_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
+    PowerKey("neo1-065", 0): PowerEntry(CoinLookOpponentHandMayReturnTrainer(), "みやぶる", GLARING_GAZE_TEXT, GLARING_GAZE_TEXT, _KYUURA_PRINTED_TEXT),
+    PowerKey("neo4-061", 0): PowerEntry(CoinPeekOpponentDeckTopMayShuffle(), "わるぢえ", CUNNING_TEXT, CUNNING_TEXT, _KYUURA_PRINTED_TEXT),
+})
+
+SAME_DATA_CARDS_V0_95: Mapping[str, str] = MappingProxyType({"QSG-029": "ES3-024"})
+
+DEFAULT_EFFECTS = _with_shared_entries(_with_powers(_with_attacks(DEFAULT_EFFECTS, V0_95_ATTACKS), V0_95_POWERS), SAME_DATA_CARDS_V0_95)

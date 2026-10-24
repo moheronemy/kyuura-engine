@@ -338,6 +338,12 @@ REACTION_POWER = "reaction_power"
 # v0.90（docs/markers-counters-v0.90.md 4 章）: ワザの説明の「のぞむなら、このカードにのっている「…カウンター」を…取りのぞき、…ダメージを追加してもよい」で取りのぞく数（ボーンキラーは
 # 0〜1・ころがるは 0〜のっている数）。決めるのはワザを使ったプレイヤー。選べるものは数（0 = 取りのぞかない）で 1 つ。``context`` の "marker"（種類）。再開先は "attack"
 SELECT_MARKER_COUNT = "select_marker_count"
+# v0.95（docs/private-looks-deck-movement-v0.95.md）: エイパムの「とりさる」の「相手の場のポケモンについている「トレーナーカード」を1枚選び」で、相手の山札にもどすカード。決めるのは
+# ワザを使ったプレイヤー。選べるものは相手の場のポケモン（バトル場 → ベンチの並び）についているトレーナーカードの uid（ついている順。場の公開のカード）で 1 枚。再開先は "attack"
+SELECT_ATTACHED_TRAINER = "select_attached_trainer"
+# v0.95: わるいヤドキングの［わるぢえ］の「その後、のぞむなら、その山札をよく切る」で、見た山札を切るか。決めるのは特殊能力を使ったプレイヤー。選べるものは山札の持ち主の
+# プレイヤーの番号 1 つで、0 個（切らない）か 1 個（切る）。再開先は "power"
+OPTIONAL_SHUFFLE = "optional_shuffle"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

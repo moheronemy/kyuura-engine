@@ -688,7 +688,9 @@ EVOLUTIONS = {METAPOD: (CATERPIE,), KAKUNA: (WEEDLE,), DEWGONG: (SEEL,), STARMIE
               # v0.89: ライチュウ（ES2-013・QSG-022。ピカチュウから）・ゴーリキー（ES3-028。ワンリキーから）
               "ES2-013": (PIKACHU,), "QSG-022": (PIKACHU,), "ES3-028": (MACHOP,),
               # v0.93: オクタン（neo3-019。テッポウオ neo3-016 から）
-              "neo3-019": ("neo3-016",)}
+              "neo3-019": ("neo3-016",),
+              # v0.95: ネイティオ（neo1-048。ネイティ neo1-046 から）
+              "neo1-048": ("neo1-046",)}
 
 
 class EvadedEffectCoinTest(unittest.TestCase):
@@ -815,7 +817,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                     # docs/active-leave-locks-v0.93.md 7.3 節）
                                     "からみつく",
                                     # v0.94: ブルー（neo1-061）の「したでなめる」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。docs/switch-return-attacks-v0.94.md 6 章）
-                                    "したでなめる"]))
+                                    "したでなめる",
+                                    # v0.95: ネイティオ（neo1-048）の「あやしいひかり」（ConfuseOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                    # docs/private-looks-deck-movement-v0.95.md）
+                                    "あやしいひかり"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

@@ -73,7 +73,7 @@ from .state import (
     TrainerInUse,
 )
 
-__version__ = "0.94.0"
+__version__ = "0.95.0"
 
 __all__ = [
     "Asleep",

@@ -691,7 +691,9 @@ class G37Test(unittest.TestCase):
         "DamageThenRetreatLockAndAttackCoinCheck",
         # v0.94: このゆびとまれ・ほえる・ふんだりけったり・きつねび（相手の入れ替え）・フローラルスピン（ねむり）・すくいなげ（相手を手札にもどす・入れ替え。docs/switch-return-attacks-v0.94.md）
         "SwitchOpponentActiveRequiringBench", "ForceSwitchOnHeadsWithoutDamage", "CoinBonusDamageElseForceSwitch", "OptionalSwitchOpponentThenDamage",
-        "DamageThenStatusOnHeadsElseSelfSwitch", "CoinReturnOpponentToHandElseForceSwitch"]))
+        "DamageThenStatusOnHeadsElseSelfSwitch", "CoinReturnOpponentToHandElseForceSwitch",
+        # v0.95: とりさる（相手の場のポケモンについているトレーナーカードを山札にもどす。ついているポケモンへの効果。docs/private-looks-deck-movement-v0.95.md）
+        "ReturnOpponentAttachedTrainerToDeck"]))
 
 
 class DecisionTest(unittest.TestCase):

@@ -1850,6 +1850,11 @@
           "version": "v0.73",
           "document": "docs/search-recovery-trainers-v0.73.md",
           "ruling_id": "FV1"
+        },
+        {
+          "version": "v0.95",
+          "document": "docs/private-looks-deck-movement-v0.95.md",
+          "ruling_id": "FV1"
         }
       ],
       "kyuura_issue": null,
@@ -4120,7 +4125,25 @@
       "PR1-052/attack/1",
       "ES3-009/attack/0",
       "QSG-008/attack/0",
-      "neo4-078/attack/0"
+      "neo4-078/attack/0",
+      "neo1-048/attack/0",
+      "neo1-048/attack/1",
+      "neo1-065/power/0",
+      "neo2-046/attack/0",
+      "GD6-002/attack/0",
+      "GD6-002/attack/1",
+      "ES3-024/attack/0",
+      "ES3-024/attack/1",
+      "QSG-029/attack/0",
+      "QSG-029/attack/1",
+      "neo4-083/attack/0",
+      "neo4-061/attack/0",
+      "neo4-061/power/0",
+      "neo4-020/attack/0",
+      "neo4-020/attack/1",
+      "ES3-031/attack/0",
+      "ES3-031/attack/1",
+      "neo3-047/attack/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

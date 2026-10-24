@@ -582,12 +582,26 @@ def reveal_hand(state: GameState, player: int, *, trainer: int) -> tuple[int, ..
     return cards
 
 
-def look_at_hand(state: GameState, viewer: int, owner: int, *, trainer: int) -> tuple[int, ...]:
+def _effect_source(what: str, trainer: int | None, effect: str | None, power: str | None) -> dict:
+    """v0.95: 効果の出どころのログの項目（トレーナー ``trainer_card``・ワザ ``effect``・特殊能力 ``power`` のちょうど一つ）。ちょうど一つでなければ ``RuntimeError``（状態を変える前）。"""
+    given = [(name, value) for name, value in (("trainer_card", trainer), ("effect", effect), ("power", power)) if value is not None]
+    if len(given) != 1:
+        raise RuntimeError(f"{what}の出どころ（トレーナー trainer・ワザ effect・特殊能力 power）はちょうど一つ（エンジンの不具合）")
+    return dict(given)
+
+
+def look_at_hand(state: GameState, viewer: int, owner: int, *, trainer: int | None = None, effect: str | None = None,
+                 power: str | None = None) -> tuple[int, ...]:
     """プレイヤー ``viewer`` が、プレイヤー ``owner`` の手札をすべて見る（v0.54。スパイ作戦の「相手プレイヤーの手札を見る」）。カードは動かさない。ログ ``look_at_hand``
     （``player`` は見たプレイヤー、``owner`` は手札の持ち主）の ``cards`` は、見たプレイヤーと持ち主にだけ見える（観戦者・ほかの人に見せる処理ではない。
-    ``observation.visible_log``）。見たのはこの時点の手札だけ。見たカードを返す（手札が 0 枚なら空）。"""
+    ``observation.visible_log``）。見たのはこの時点の手札だけ。見たカードを返す（手札が 0 枚なら空）。
+
+    v0.95: ワザの効果（オタチの「さぐる」・ゴーストの「ポルターガイスト」など）は ``effect``（ログの ``effect``）、特殊能力の効果（ヨルノズクの［みやぶる］）は ``power``
+    （ログの ``power``）を、トレーナーの ``trainer``（ログの ``trainer_card``）のかわりに渡す（ちょうど一つ。トレーナーのログの形は v0.94 と同じ）。1 回見るだけで、あとで
+    観測の手札を公開しない（［おみとおし］のような続けて見せる効果ではない）。"""
+    source = _effect_source("手札を見る効果", trainer, effect, power)
     cards = tuple(state.players[owner].hand)
-    state.add_event("look_at_hand", player=viewer, owner=owner, cards=cards, trainer_card=trainer)
+    state.add_event("look_at_hand", player=viewer, owner=owner, cards=cards, **source)
     return cards
 
 
@@ -955,13 +969,36 @@ def move_attached_energy(state: GameState, owner: int, source: PokemonInPlay, ta
     return moved
 
 
-def opponent_hand_card_to_deck(state: GameState, owner: int, card: int, *, looker: int, trainer: int) -> None:
+def opponent_hand_card_to_deck(state: GameState, owner: int, card: int, *, looker: int, trainer: int | None = None, effect: str | None = None,
+                               power: str | None = None) -> None:
     """トレーナーの効果で、プレイヤー ``owner`` の手札のカード ``card`` を、``owner`` の山札（一番下）にもどさせる（v0.55。ロケット団のおねーさんの「その中に
     トレーナーカードがあれば、1枚を選び、それを相手の山札にもどさせる」。選んだのは手札を見たプレイヤー ``looker``）。このあと同じ効果の中で山札を切るので、もどす位置は
     実装上の仮定（v0.24 の PT7 と同じ。結果は変わらない）。もどしたカードは、手札を見たプレイヤーと持ち主だけが知っている（ログ ``opponent_hand_to_deck`` の ``card`` は
-    その 2 人だけに見える。``observation.PRIVATE_FIELDS``。手札の枚数が 1 枚へったことは公開）。"""
+    その 2 人だけに見える。``observation.PRIVATE_FIELDS``。手札の枚数が 1 枚へったことは公開）。
+
+    v0.95: ワザの効果（わるいハッサムの「おどす」）は ``effect``、特殊能力の効果（ヨルノズクの［みやぶる］）は ``power`` を、``trainer`` のかわりに渡す（ちょうど一つ。
+    ``look_at_hand`` と同じ）。手札にない・持ち主が違うカードなら ``RuntimeError``（状態を変える前）。"""
+    source = _effect_source("相手の手札のカードを山札にもどす効果", trainer, effect, power)
+    if card not in state.players[owner].hand or state.cards[card].owner != owner:
+        raise RuntimeError(f"プレイヤー {owner} の手札のカード {card} を山札にもどせない（確認の漏れ。エンジンの不具合）")
     _hand_to_deck_bottom(state, owner, (card,))
-    state.add_event("opponent_hand_to_deck", player=owner, card=card, looker=looker, trainer_card=trainer)
+    state.add_event("opponent_hand_to_deck", player=owner, card=card, looker=looker, **source)
+
+
+def return_attached_trainer_to_deck(state: GameState, owner: int, pokemon: PokemonInPlay, card: int, *, effect: str, chooser: int) -> None:
+    """プレイヤー ``owner`` の場のポケモン ``pokemon`` についているトレーナーカード ``card`` を、同じ uid のまま ``owner`` の山札（一番下）にもどす（v0.95。エイパムの「とりさる」の
+    「相手の場のポケモンについている「トレーナーカード」を1枚選び、相手の山札にもどす」。選んだのはワザを使ったプレイヤー ``chooser``）。ポケモン・ほかのついているカードは
+    動かさない（場をはなれるのはそのカードだけ）。このあと同じ効果の中で山札を切るので、もどす位置は実装上の仮定（PT7 と同じ。結果は変わらない）。
+
+    ついているトレーナーは場の公開のカードなので、ログ ``attached_trainer_to_deck`` の ``card`` は公開（``player`` はカードとポケモンの持ち主、``chooser`` は選んだプレイヤー）。
+    ついているトレーナーはどれもつけたプレイヤー（ポケモンの持ち主）のカード（``engine`` の不変条件）。ついていない・持ち主が違うなら ``RuntimeError``（状態を変える前）。
+    ついているあいだの効果（ディフェンダー・ポケモンのどうぐなど）は、ついているカードから毎回求めるので、もどしたら残らない（v0.78 のごうだつのトラッシュと同じ）。"""
+    attached = next((entry for entry in pokemon.trainers if entry.card == card), None)
+    if attached is None or attached.player != owner or state.cards[card].owner != owner:
+        raise RuntimeError(f"プレイヤー {owner} のポケモン {pokemon.pokemon_id} についているトレーナー {card} を山札にもどせない（確認の漏れ。エンジンの不具合）")
+    pokemon.trainers.remove(attached)
+    state.players[owner].deck.append(card)
+    state.add_event("attached_trainer_to_deck", player=owner, card=card, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, effect=effect, chooser=chooser)
 
 
 def take_looked_deck_cards(state: GameState, player: int, looked: int, cards: tuple[int, ...], *, trainer: int) -> tuple[tuple[int, ...], tuple[int, ...]]:

@@ -1955,6 +1955,23 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.95: 手札・山札の閲覧とカード移動の 11 枚
+
+[private-looks-deck-movement-v0.95.md](private-looks-deck-movement-v0.95.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_95`（11 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.94 までの
+  1,149 枚の記録は変わっていない。
+- 11 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-24・`kyuura_records` は空・外部照合なし）。`card_verification.json` には加えていない。ゴーストの
+  2 枚（ES3-024・QSG-029。SC-ES3-024）はゲーム用データが同じ組で、id ごとに記録し、登録は同じ値を使う。
+- 処理に使う文面はどれも kyuura の印刷の文面（研究の対応表の `adopted_printed_text` に 18。ワザ 16・特殊能力 2。説明文のない 4 つのワザを除く）。11 枚の id と旧 pcg-search の id（`1stgymd6002`・
+  `1stex3024`・`1stqsg029`・`1stex3031`）で、kyuura の研究の基準に LD-・CC-・CR-・UQ-・エラッタがないことを確かめた。kyuura data/Silver_Bible_structured.md のポルターガイスト・やまくずし・
+  みらいよち（別のカード）・マインドショックの解説は研究の記録ではなく、根拠にしていない（印刷の文面の読み方と矛盾しない）。
+- 日本語の文面の転記元は pcg-search.com（ナツメのケーシィ・ゴースト 2 枚・サイドン）・nazonobasho.com（ネイティオ・ヨルノズク・オタチ）・pokemonwiki（わるいハッサム・わるいヤドキング・
+  わるいマグマラシ・エイパム）。外部照合はしていない。
+- 新しい停止コードはない。研究の対応表の FV1（`UNRESOLVED_FERVOR_RAINBOW_ENERGY`）に v0.95 の記録を加えた。報告事項（kyuura の作業）: FV1 を山札の上からトラッシュするワザにも当てはめた
+  （kyuura の未解決の一覧にない論点のまま）。おどす・とりさるで選べるカードがないときに切る読み方（v0.75・v0.79）を、kyuura の記録で確かめる材料にする。kyuura の engine_targets.json の
+  `engine_reference` を v0.95 の登録で写すと 11 枚の `engine_status` が `registered` になる（docs 15 章）。
+
 ## v0.94: 入れ替え・帰還のワザの 13 枚
 
 [switch-return-attacks-v0.94.md](switch-return-attacks-v0.94.md)。

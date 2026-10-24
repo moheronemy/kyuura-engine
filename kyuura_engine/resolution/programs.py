@@ -63,6 +63,7 @@ from ..markers import REPLACED as MARKERS_REPLACED
 from ..markers import USED as MARKERS_USED
 from ..markers import add_marker, has_marker, marker_count, remove_markers, replace_marker
 from ..decisions import SELECT_MARKER_COUNT
+from ..decisions import OPPONENT_HAND_TO_DECK, SELECT_ATTACHED_TRAINER
 from ..history import note_processed
 from ..zones import (
     attach_energy_from_hand, attach_from_deck, attach_from_discard, bench_from_deck, bench_from_discard, discard_attached_cards, discard_from_deck, draw_cards, promote_from_bench, put_discard_on_deck_top,
@@ -70,6 +71,7 @@ from ..zones import (
     take_deck_top,
 )
 from ..zones import discard_stadium, look_at_card
+from ..zones import look_at_hand, opponent_hand_card_to_deck, return_attached_trainer_to_deck
 
 from . import catalog as C
 from . import codec
@@ -1376,7 +1378,8 @@ class Damage(Element):
         try:
             run.fs.results[self.name] = deal_damage(run.res, run.fs, self.target, base, weakness_resistance=self.weakness_resistance,
                                                     orders=orders or None, order_decision=True, resistance=self.resistance,
-                                                    defender_effects=self.defender_effects, reduction=reduction)
+                                                    defender_effects=self.defender_effects, reduction=reduction,
+                                                    private_amount=getattr(self.base, "private", False))
         except DamageOrderRequired as need:
             suspend_step_order(run, self, need, base, orders, reduction)
             return True
@@ -2479,7 +2482,11 @@ class HeadsOfDiscarded:
 @dataclass(frozen=True)
 class PerMilledEnergy:
     """山札からトラッシュの要素 ``mill`` でトラッシュしたカードの中の ``energy_type`` の基本エネルギーカードの数 × ``per``（カツラのブーバーの
-    「マグマふんしゅつ」）。"""
+    「マグマふんしゅつ」。v0.95: わるいマグマラシの「マグマラッシュ」）。
+
+    v0.95（docs/private-looks-deck-movement-v0.95.md 5 章）: カードの枚数で数える（エネルギーの個数ではない）。山札・サイドにレインボーエネルギーがあれば FV1（``milled_type_energy``。
+    印刷の文面にない「基本」の条件を書き足さない）。ミラクルエネルギーは場の外では色がない（v0.85 の読み方）ので数えない。数は宣言の前には分からない（山札の上の並び）ので、先読みは
+    山札とサイドの中身からありうる数のすべてを試す（``Resolution.hidden_choice``。受け付けるかがトラッシュする 5 枚によらない）。"""
 
     mill: str
     energy_type: EnergyType
@@ -2488,8 +2495,35 @@ class PerMilledEnergy:
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
         cards = run.fs.results[self.mill].cards
-        definitions = [run.state.card_def(uid) for uid in cards]
-        return sum(1 for d in definitions if d.is_basic_energy and d.provides is self.energy_type) * self.per
+        found = milled_type_energy(run, cards, self.energy_type)
+        pool = hidden_deck_pool(run, cards)
+        typed = sum(1 for uid in pool if _typed_basic_energy(run.state, uid, self.energy_type))
+        low, high = max(0, len(cards) - (len(pool) - typed)), min(len(cards), typed)
+        return run.res.hidden_choice(range(low, high + 1), len(found)) * self.per
+
+
+def hidden_deck_pool(run: AttackRun, milled: tuple[int, ...]) -> tuple[int, ...]:
+    """v0.95: ワザを使ったプレイヤーが、山札の上からトラッシュする前に見えなかった自分のカード（今トラッシュした ``milled`` と、残りの山札・サイド）。中身は持ち主が知っている
+    （デッキから見えているカードを除いたもの）が、どのカードが山札の上にあったかは知らない（v0.73 の熱血!の FV1 と同じ範囲）。"""
+    p = run.state.players[run.player]
+    return (*milled, *p.deck, *(uid for uid in p.prizes if uid is not None))
+
+
+def _typed_basic_energy(state: GameState, uid: int, energy_type: EnergyType) -> bool:
+    definition = state.card_def(uid)
+    return definition.is_basic_energy and definition.provides is energy_type
+
+
+def milled_type_energy(run: AttackRun, milled: tuple[int, ...], energy_type: EnergyType) -> tuple[int, ...]:
+    """v0.95: 自分の山札の上からトラッシュしたカード ``milled`` のうち、説明の「「``energy_type``」エネルギーカード」（その色の基本エネルギーカード。トラッシュした順）。
+
+    - 山札の上からトラッシュしたレインボーエネルギーが「「X」エネルギーカード」に当たるかは決まらない（v0.73 の熱血!の FV1 と同じ問い ``milled_rainbow_energy``）。トラッシュするまで
+      山札の上のカードは分からないので、山札・サイド（``hidden_deck_pool``）にレインボーエネルギーがあれば止める（先読みが宣言の前に見つける。トラッシュした 5 枚によらない）
+    - 特殊エネルギーのうち、その色を出さないもの（無色2個エネルギーなど）は当たらない。ミラクルエネルギーは場の外では色がない（v0.85 の読み方。``rainbow_cards_in`` と同じ）"""
+    rainbow = E.rainbow_cards_in(run.state, hidden_deck_pool(run, milled))
+    if rainbow:
+        raise run.res.question("milled_rainbow_energy", f"ワザ {run.key}・山札・サイドのレインボーエネルギー {rainbow}・「{energy_type.ja}」エネルギーカード")
+    return tuple(uid for uid in milled if _typed_basic_energy(run.state, uid, energy_type))
 
 
 @dataclass(frozen=True)
@@ -6255,13 +6289,27 @@ class ArrangeDeckTop(Element):
     """
 
     max_cards: int
+    # v0.95（docs/private-looks-deck-movement-v0.95.md 6 章）: ちょうど ``max_cards`` 枚を見る（ネイティオの「みらいよち」の「自分または相手の山札の上から3枚のカードを見る」。
+    # 見る枚数の決定はない）。山札が ``max_cards`` 枚より少ない持ち主は、v0.83 の LT1（``attack_deck_top_short``）で、選べるが選ぶと止める（もう一方の山札は止めない）。
+    # どちらの山札も少なければ宣言の前に止める。偽なら v0.47 の「3枚まで」
+    exact: bool = False
     phase: ClassVar[Phase] = Phase.EFFECT
 
     def decides(self, kind: str) -> bool:
         return kind in (SELECT_DECK_OWNER, SELECT_LOOK_COUNT, ARRANGE_DECK_TOP)
 
     def run(self, run: AttackRun) -> bool:
-        run.suspend(kind=SELECT_DECK_OWNER, player=run.player, options=(run.player, 1 - run.player))
+        owners = (run.player, 1 - run.player)
+        extra: tuple = ()
+        if self.exact:
+            short = tuple(owner for owner in owners if len(run.state.players[owner].deck) < self.max_cards)
+            detail = f"ワザ {run.key}・山札が {self.max_cards} 枚より少ないプレイヤー {[(owner, len(run.state.players[owner].deck)) for owner in short]}"
+            if len(short) == len(owners):
+                raise run.res.question("attack_deck_top_short", detail)
+            if short:
+                error = to_error("attack_deck_top_short", detail)
+                extra = _unresolved_extra(short, error.code, error.message)
+        run.suspend(kind=SELECT_DECK_OWNER, player=run.player, options=owners, extra=extra)
         return True
 
     def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
@@ -6269,6 +6317,11 @@ class ArrangeDeckTop(Element):
         if decision.kind == SELECT_DECK_OWNER:
             owner = choices[0]
             deck = state.players[owner].deck
+            if self.exact:
+                if owner in decision.context_value("unresolved_choices", ()) or len(deck) < self.max_cards:
+                    raise RuntimeError(f"みらいよちで山札が {len(deck)} 枚の持ち主 {owner} を選んだ（答えのときに止めるはず。エンジンの不具合）")
+                self._look(run, owner, self.max_cards)
+                return
             if not deck:
                 state.add_event("look_at_deck_top_none", player=run.player, owner=owner, effect=str(run.key))
                 return
@@ -6284,12 +6337,7 @@ class ArrangeDeckTop(Element):
                     f"山札があるときに 0 枚を見るのを選べるか（「上から{self.max_cards}枚まで見て」が 0 枚を含むか）は、記録から決められないので扱わない"
                     "（v0.39 の GS1 と同じ問い。ワザの説明の「最大N」が 0 を含むか）。1 枚以上を選ぶ",
                 )
-            cards = tuple(deck[:count])
-            state.add_event("look_at_deck_top", player=run.player, owner=owner, count=count, cards=cards, effect=str(run.key))
-            if count == 1:
-                state.add_event("arrange_deck_top", player=run.player, owner=owner, count=1, cards=cards, effect=str(run.key))
-                return
-            run.suspend(kind=ARRANGE_DECK_TOP, player=run.player, options=cards, min_choices=count, max_choices=count, extra=(("owner", owner),))
+            self._look(run, owner, count)
             return
         count = len(decision.options)
         if tuple(deck[:count]) != tuple(decision.options) or sorted(choices) != sorted(decision.options):
@@ -6297,10 +6345,21 @@ class ArrangeDeckTop(Element):
         deck[:count] = list(choices)
         state.add_event("arrange_deck_top", player=run.player, owner=owner, count=count, cards=tuple(choices), effect=str(run.key))
 
+    def _look(self, run: AttackRun, owner: int, count: int) -> None:
+        """山札の上から ``count`` 枚を見る（ログ ``look_at_deck_top``）。2 枚以上なら並べかえる決定を出し、1 枚ならそのままもどす。"""
+        state = run.state
+        cards = tuple(state.players[owner].deck[:count])
+        state.add_event("look_at_deck_top", player=run.player, owner=owner, count=count, cards=cards, effect=str(run.key))
+        if count == 1:
+            state.add_event("arrange_deck_top", player=run.player, owner=owner, count=1, cards=cards, effect=str(run.key))
+            return
+        run.suspend(kind=ARRANGE_DECK_TOP, player=run.player, options=cards, min_choices=count, max_choices=count, extra=(("owner", owner),))
+
     def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
         if decision.kind == SELECT_LOOK_COUNT:
             return [(count,) for count in decision.options if count]  # 0 枚は答えのときに止める（GS1）
-        return all_answers(decision)
+        blocked = set(decision.context_value("unresolved_choices", ()))  # v0.95: 選ぶと止める山札の持ち主（LT1）は試さない（答えのときに止める）
+        return [answer for answer in all_answers(decision) if not blocked & set(answer)]
 
 
 @dataclass(frozen=True)
@@ -10821,4 +10880,242 @@ BUILDERS |= {
     E.CoinReturnOpponentToHandElseForceSwitch: lambda e: (
         FailWithoutOpponentBench(), Coin("coin"), ReturnOpponentToHand(gate=("coin", HEADS)), ForceSwitch(gate=("coin", TAILS)),
     ),
+}
+
+
+# ---------------------------------------------------------------- v0.95（docs/private-looks-deck-movement-v0.95.md）: 手札・山札を見る効果と、見たカード・山札・ついている
+# トレーナーを動かすワザ
+
+
+@dataclass(frozen=True)
+class LookedCount:
+    """v0.95: 見た相手の手札の中のトレーナーカードの枚数（``CountLookedHandTrainers`` の結果。``Resolution.hidden_choice`` で求めた値）。"""
+
+    count: int
+
+
+@dataclass(frozen=True)
+class LookOpponentHand(Element):
+    """相手の手札を見る（v0.95。オタチの「さぐる」・ナツメのケーシィの「とうし」）。``zones.look_at_hand``（ログ ``look_at_hand`` の ``cards`` は見たプレイヤーと持ち主だけ。
+    1 回見るだけで、あとで観測の手札を公開しない）。相手の手札が 0 枚でも見る処理をして終わる（見るカードがない。p.309）。相手の手札への効果なので、「ワザをうけない」状態・
+    「とうめい」は評価しない。カードは動かさない。"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def run(self, run: AttackRun) -> bool:
+        look_at_hand(run.state, run.player, 1 - run.player, effect=str(run.key))
+        return False
+
+
+@dataclass(frozen=True)
+class CountLookedHandTrainers(Element):
+    """相手の手札を見て、その中にある「トレーナーカード」の枚数を数える（v0.95。ゴーストの「ポルターガイスト」の「相手の手札を見て、その中にある「トレーナーカード」の枚数」）。
+
+    - 見る（``zones.look_at_hand``。``LookOpponentHand`` と同じログ）。トレーナーカードは手札にある間の印刷の分類（``CardFilter("trainer")``）
+    - 数は見る前には分からないので、先読みは 0〜手札の枚数のすべてを試す（``Resolution.hidden_choice``。宣言を受け付けるか・止める問いが、相手の手札の中身によらない）
+    - 結果（``LookedCount``）はダメージの要素の基本となるダメージ（``PerLookedTrainers``）が読む。この要素とダメージの要素のあいだに決定はない（ダメージの要素の中の決定は、
+      基本となるダメージを続きの情報で運ぶので、数え直さない）
+    - ダメージを決める確認なので ``Phase.NEUTRAL``（ダメージの要素より前）"""
+
+    name: str = "looked_trainers"
+    phase: ClassVar[Phase] = Phase.NEUTRAL
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        cards = look_at_hand(state, run.player, 1 - run.player, effect=str(run.key))
+        actual = len(E.hand_trainer_cards(state, cards))
+        run.fs.results[self.name] = LookedCount(run.res.hidden_choice(range(len(cards) + 1), actual))
+        return False
+
+
+@dataclass(frozen=True)
+class PerLookedTrainers:
+    """見た相手の手札の中のトレーナーカードの枚数（``CountLookedHandTrainers`` の結果 ``looked``）× ``per``（v0.95。「ポルターガイスト」）。p.321 の 1 段階（基本となるダメージ）。
+    0 枚なら 0（ワザの失敗ではない。そのあとの計算は今までどおり）。``private``: 受けなかったダメージの量を観戦者に見せない（``kernel._amount_privacy``）。"""
+
+    looked: str
+    per: int
+    local_coins: ClassVar[int] = 0
+    private: ClassVar[bool] = True
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return run.fs.results[self.looked].count * self.per
+
+
+@dataclass(frozen=True)
+class LookHandTrainerToDeck(Element):
+    """コインを投げて ``local_coin`` なら、相手プレイヤーの手札を見る。その中にある「トレーナーカード」を 1 枚選び、相手の山札にもどす。その後、その山札をよく切る（v0.95。
+    わるいハッサムの「おどす」）。
+
+    - 見る（``zones.look_at_hand``）→ 選ぶ（決定 ``OPPONENT_HAND_TO_DECK``。決めるのはワザを使ったプレイヤー。選べるものは見た手札のトレーナーカード（``CardFilter("trainer")``。
+      手札の並び）。「てよい」がないので、あればちょうど 1 枚。1 枚でも決定を出す）→ 相手の山札にもどす（``zones.opponent_hand_card_to_deck``）→ 相手の山札を切る（1 回）
+    - トレーナーカードがない（相手の手札が 0 枚を含む）なら、もどさずに相手の山札を切る（v0.75 のもえあがる・v0.79 の「選べるカードがない・山札が 0 枚なら、加えずに山札を切る」と
+      同じ読み方。p.309。説明の「その後、その山札をよく切る」は別の文）。見る前に、トレーナーカードがないことでコインを省いたり、宣言を拒否したりしない
+    - 相手の手札・山札への効果なので、相手の対戦ポケモンの「ワザをうけない」状態・「とうめい」は評価しない。相手の手札も山札も 0 枚なら、処理の対象がないのでコインを投げない（p.309）
+    - 見たあとの処理（もどす・切る）は問いに当たらない（ワザの最後の要素で、ダメージもない）ので、先読みは見た手札の中身で分けない
+    - 先読み（``res.dry_run``）では切らない（``shuffle_in_attack``）"""
+
+    local_coin: CoinSide | None = HEADS
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = OPPONENT_HAND_TO_DECK
+
+    def has_target(self, run: AttackRun) -> bool:
+        p = run.state.players[1 - run.player]
+        return bool(p.hand or p.deck)
+
+    def run(self, run: AttackRun) -> bool:
+        if not self.has_target(run):
+            return False
+        if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
+            return False
+        state = run.state
+        opponent = 1 - run.player
+        cards = look_at_hand(state, run.player, opponent, effect=str(run.key))
+        trainers = E.hand_trainer_cards(state, cards)
+        if not trainers:
+            shuffle_in_attack(run, self, opponent)
+            return False
+        run.suspend(kind=OPPONENT_HAND_TO_DECK, player=run.player, options=trainers, extra=(("owner", opponent),))
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        opponent = decision.context_value("owner")
+        if opponent != 1 - run.player or len(choices) != 1 or choices[0] not in E.hand_trainer_cards(state, state.players[opponent].hand):
+            raise RuntimeError(f"おどすの決定 {decision.kind}・答え {choices} が、相手の手札のトレーナーカードではない（エンジンの不具合）")
+        opponent_hand_card_to_deck(state, opponent, choices[0], looker=run.player, effect=str(run.key))
+        shuffle_in_attack(run, self, opponent)
+
+
+@dataclass(frozen=True)
+class OpponentDeckTopDiscardIfTrainer(Element):
+    """相手の山札の 1 番上のカードを見て、それが「トレーナーカード」なら、トラッシュする。「トレーナーカード」でないなら、そのカードをもとの山札の上にもどす（v0.95。わるいマグマラシの
+    「もやす」）。
+
+    - 見る（``zones.look_at_card``。ログ ``look_at_card`` の ``card`` は見たプレイヤーだけ。相手には見せない）。トレーナーカードは山札にある間の印刷の分類（``CardFilter("trainer")``）
+    - トレーナーカードなら相手のトラッシュに置く（``zones.discard_from_deck``。ログ ``discard_from_deck`` は公開。v0.31 のやまやきと同じ形）。でなければ動かさない（ログ
+      ``deck_top_returned``。公開でカードを書かない）。どちらでも山札を切らない（説明にない）。手札に加えない（v0.45 のてつだうふりではない）
+    - 相手の山札が 0 枚なら、見るカードがない（p.309。ログ ``look_at_deck_top_none``。v0.47 のみらいよちと同じ）
+    - 相手の山札への効果なので、「ワザをうけない」状態・「とうめい」は評価しない。見たあとの処理は問いに当たらない（ワザの最後の要素で、ダメージもない）"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    reads_deck_order: ClassVar[bool] = True
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        opponent = 1 - run.player
+        if not state.players[opponent].deck:
+            state.add_event("look_at_deck_top_none", player=run.player, owner=opponent, effect=str(run.key))
+            return False
+        card = look_at_card(state, run.player, opponent, "deck", 0, effect=str(run.key))
+        if not E.CardFilter("trainer").matches(state.card_def(card)):
+            state.add_event("deck_top_returned", player=run.player, owner=opponent, effect=str(run.key))
+            return False
+        cards = discard_from_deck(state, opponent, 1)
+        state.add_event("discard_from_deck", player=opponent, effect=str(run.key), cards=cards, attacker=run.player, attacker_pokemon_id=run.attacker().pokemon_id)
+        return False
+
+
+@dataclass(frozen=True)
+class ReturnMilledTypeEnergy(Element):
+    """山札からトラッシュの要素 ``mill`` でトラッシュしたカードの中に「``energy_type``」エネルギーカードがあれば、それらをすべてトラッシュから取り出し、手札に加える（v0.95。サイドンの
+    「やまくずし」）。
+
+    - 加えるのは、このワザでトラッシュしたカード（``mill`` の結果）のうち、その色の基本エネルギーカードだけ（前からトラッシュにあったカードは加えない。同じ uid。
+      ``zones.return_discard_to_hand``。ログ ``milled_to_hand`` は公開。トラッシュから手札に動いたので見える）。なければ空のログ
+    - 場のポケモンタワーで「トラッシュから手札に加える」部分だけが消える（トラッシュはする。v0.74。ログ ``discard_to_hand_suppressed``）。そのときはレインボーエネルギーの問い（FV1）に
+      当たらない（加えるカードを決めない。v0.73 の熱血!と同じ）
+    - 山札・サイドにレインボーエネルギーがあれば FV1（``milled_type_energy``）。カードの枚数で数え、特殊エネルギーで色を出さないもの・場の外のミラクルエネルギーは当たらない
+    - 決定はなく、トラッシュの要素のすぐあとに 1 回だけ処理する（決定をまたがない）"""
+
+    energy_type: EnergyType
+    mill: str = "mill"
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def run(self, run: AttackRun) -> bool:
+        milled = run.fs.results.get(self.mill)
+        if milled is None:
+            raise RuntimeError(f"ワザ {run.key} で、手札に加える前にトラッシュの要素 {self.mill} の結果がない（エンジンの不具合）")
+        if suppressed_discard_to_hand(run):
+            return False
+        state = run.state
+        returned = milled_type_energy(run, milled.cards, self.energy_type)
+        if any(uid not in state.players[run.player].discard for uid in returned):
+            raise RuntimeError(f"ワザ {run.key} でトラッシュしたカード {returned} が、トラッシュにない（エンジンの不具合）")
+        if returned:
+            return_discard_to_hand(state, run.player, returned)
+        state.add_event("milled_to_hand", player=run.player, cards=returned, effect=str(run.key))
+        return False
+
+
+@dataclass(frozen=True)
+class ReturnAttachedTrainerToDeck(Element):
+    """相手の場のポケモンについている「トレーナーカード」を 1 枚選び、相手の山札にもどす。その後、その山札をよく切る（v0.95。エイパムの「とりさる」）。
+
+    - 選べるもの: 相手の場のポケモン（バトル場 → ベンチ）についているトレーナーカード（``PokemonInPlay.trainers``。ついている順）。進化カード・エネルギーカード・「ばける」のカード・
+      ポケモンとして場に出ているトレーナーカード（ピッピ人形・なにかの化石）・進化のもとになったなにかの化石は、ついているトレーナーではない。このワザで HP 以上になったポケモンの
+      カードは選べない（処理の対象がない。p.309。こんじょうを使えるなら G37）
+    - 選ぶのはワザを使ったプレイヤー（決定 ``SELECT_ATTACHED_TRAINER``。1 枚でも決定を出す）。もどすのはカードとポケモンの持ち主（相手）の山札（``zones.return_attached_trainer_to_deck``。
+      ポケモンは動かない。ログ ``attached_trainer_to_deck`` は公開）→ 相手の山札を切る（1 回）
+    - ついているポケモンへの効果（要素の種類 ``TRAINER_RETURN_ELEMENT``）なので、選んだあと、そのポケモンの「ワザをうけない」状態・エフェクトガード・「とうめい」を評価する（``reaches``。
+      うらのカードはおもてにする）。受けないなら何もしない（もどさない・切らない。v0.40 のつまみだすと同じ）
+    - 選べるカードがないなら、もどさずに相手の山札を切る（v0.75 のもえあがる・v0.79 の L と同じ読み方。p.309）
+    - ポケモンは場をはなれないので、「バトル場をはなれられない」効果では止めない。もどしたあとの場は、v0.91 のオールクリアと同じ確かめ（``_raise_state_stop``）にかける
+    - 先読み（``res.dry_run``）では切らない（``shuffle_in_attack``）"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = SELECT_ATTACHED_TRAINER
+    opponent_element: ClassVar[str] = E.TRAINER_RETURN_ELEMENT
+
+    def _options(self, run: AttackRun) -> tuple[int, ...]:
+        opponent = 1 - run.player
+        found = []
+        for pokemon in run.state.players[opponent].in_play():
+            if not pokemon.trainers:
+                continue
+            if run.knocked_out(pokemon):
+                run.ko_prevention_conflict(pokemon, opponent)
+                continue
+            found.extend(attached.card for attached in pokemon.trainers)
+        return tuple(found)
+
+    def run(self, run: AttackRun) -> bool:
+        options = self._options(run)
+        opponent = 1 - run.player
+        if not options:
+            shuffle_in_attack(run, self, opponent)
+            return False
+        run.suspend(kind=SELECT_ATTACHED_TRAINER, player=run.player, options=options, extra=(("owner", opponent),))
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        opponent = decision.context_value("owner")
+        holder = next((pokemon for pokemon in state.players[1 - run.player].in_play() if len(choices) == 1
+                       and any(attached.card == choices[0] for attached in pokemon.trainers)), None)
+        if opponent != 1 - run.player or holder is None or choices[0] not in self._options(run):
+            raise RuntimeError(f"とりさるの決定 {decision.kind}・答え {choices} が、相手のポケモンについているトレーナーカードではない（エンジンの不具合）")
+        before = state.peek()
+        if not reaches(run.res, run.fs, opponent, holder, E.TRAINER_RETURN_ELEMENT):
+            return
+        return_attached_trainer_to_deck(state, opponent, holder, choices[0], effect=str(run.key), chooser=run.player)
+        shuffle_in_attack(run, self, opponent)
+        _raise_state_stop(before, state)
+
+
+BUILDERS |= {
+    # さぐる（オタチ）・とうし（ナツメのケーシィ）: 相手の手札を見るだけ
+    E.LookOpponentHandAttack: lambda e: (LookOpponentHand(),),
+    # ポルターガイスト（ゴースト）: 見た手札のトレーナーカードの枚数 × per が基本となるダメージ
+    E.DamageTimesLookedHandTrainers: lambda e: (CountLookedHandTrainers(), Damage(OPP, PerLookedTrainers("looked_trainers", e.per))),
+    # みらいよち（ネイティオ）: 自分または相手の山札の上からちょうど count 枚を見て並べかえる
+    E.ArrangeDeckTopExactlyEffect: lambda e: (ArrangeDeckTop(e.count, exact=True),),
+    # おどす（わるいハッサム）: この要素のコインの「おもて」で、見た手札のトレーナーカードを 1 枚相手の山札にもどして切る
+    E.CoinLookOpponentHandTrainerToDeck: lambda e: (LookHandTrainerToDeck(),),
+    # もやす（わるいマグマラシ）: 相手の山札の一番上を見て、トレーナーカードならトラッシュ
+    E.OpponentDeckTopDiscardIfTrainer: lambda e: (OpponentDeckTopDiscardIfTrainer(),),
+    # やまくずし（サイドン）: ダメージ → 自分の山札の上から count 枚をトラッシュ → その中の energy_type エネルギーカードを手札に加える
+    E.DamageThenMillReturnTypeEnergy: lambda e: (Damage(OPP, Printed()), MillOwnDeck(e.count), ReturnMilledTypeEnergy(e.energy_type)),
+    # とりさる（エイパム）: 相手の場のポケモンについているトレーナーカードを 1 枚選び、相手の山札にもどして切る
+    E.ReturnOpponentAttachedTrainerToDeck: lambda e: (ReturnAttachedTrainerToDeck(),),
 }

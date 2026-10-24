@@ -177,6 +177,7 @@ ALL_POWERS = (# v0.87（docs/movement-damage-reactions-v0.87.md）: ［どくの
               # v0.85: ［おいしげる］・［ファイヤーリチャージ］・［あばれんぼう］
               PowerKey("neo1-014", 0), PowerKey("neo1-021", 0), PowerKey("neo1-033", 0),
               PowerKey("neo1-040", 0),  # v0.88: ［すいりょくはつでん］
+              PowerKey("neo1-065", 0),  # v0.95: ［みやぶる］
               # v0.86: ［エナジーしんか］（neo2-049）・［おたけび］・［クリスタルボディ］・［いなびかり］・［タマゴうみ］・［とつぜんかみつく］
               PowerKey("neo2-044", 0),  # v0.87: ［まきびし］（同じ行の下の neo3-009 は v0.87 の［やけのこり］）
               PowerKey("neo2-049", 0), PowerKey("neo3-009", 0), PowerKey("neo3-010", 0), PowerKey("neo3-021", 0),
@@ -189,6 +190,7 @@ ALL_POWERS = (# v0.87（docs/movement-damage-reactions-v0.87.md）: ［どくの
               PowerKey("neo4-023", 0),  # v0.87: ［ヒートプレート］
               PowerKey("neo4-041", 0),
               PowerKey("neo4-046", 0),  # v0.86: ［かんでん］
+              PowerKey("neo4-061", 0),  # v0.95: ［わるぢえ］
               PowerKey("neo4-077", 0), PowerKey("neo4-094", 0), PowerKey("neo4-095", 0))
 
 
@@ -302,7 +304,7 @@ class PowerRegistryTest(unittest.TestCase):
         # v0.69 は 68（拡張パック以外の商品の同じカードの新しい id 10。tests/helpers.py の V0_69_POWER_CARDS）
         # v0.71 は 74（拡張パック以外の商品の再録のカード 6。tests/helpers.py の V0_71_POWER_CARDS）
         self.assertEqual(tuple(k.card_id for k in DEFAULT_EFFECTS.power_keys() if k not in ALL_POWERS), tuple(sorted(V0_69_POWER_CARDS + V0_71_POWER_CARDS)))
-        self.assertIn("119 powers", repr(DEFAULT_EFFECTS))  # v0.88 で 5 を加えた  # v0.87 で 14 を加えた  # v0.86 で 12 を加えた
+        self.assertIn("121 powers", repr(DEFAULT_EFFECTS))  # v0.95 で 2 を加えた  # v0.88 で 5 を加えた  # v0.87 で 14 を加えた  # v0.86 で 12 を加えた
 
     def test_power_is_not_an_attack(self):
         """ポケモンパワーはワザ（AttackEffect）の一種ではない。識別子もワザ（AttackKey）とは別で、同じカードの同じ位置のワザ

@@ -106,6 +106,8 @@ from .decisions import (
     QUIZ_ATTACK,
     QUIZ_CARD,
     SELECT_MARKER_COUNT,
+    SELECT_ATTACHED_TRAINER,
+    OPTIONAL_SHUFFLE,
 )
 from .effects import (
     JANKEN_HANDS,
@@ -165,6 +167,8 @@ OPTION_MEANINGS: dict[str, str] = {
     EXP_ALL_ENERGY: "card",
     # v0.90: ボーンキラー・ころがるで取りのぞくカウンターの数（のっている数は公開）
     SELECT_MARKER_COUNT: "number",
+    SELECT_ATTACHED_TRAINER: "card",  # v0.95: とりさる（相手の場のポケモンについているトレーナーカード。公開）
+    OPTIONAL_SHUFFLE: "number",  # v0.95: ［わるぢえ］で見た山札を切るか（山札の持ち主の番号。0 個は切らない）
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
 # v0.73: 化石の発掘（山札とトラッシュ）・マスターボール（見た山札の上の 7 枚）も、決めるプレイヤーが自分の山札を見る
@@ -488,6 +492,12 @@ def _looker_only(event, viewer) -> bool:
     return viewer is not None and viewer == event.get("looker")
 
 
+def _amount_unless_private(event, viewer) -> bool:
+    """v0.95: 受けなかったダメージの量（``amount``）は、印 ``amount_private``（基本となるダメージが見た手札の中身で決まるワザ。``kernel._amount_privacy``）があれば対戦する
+    プレイヤーだけに見える（観戦者には見せない）。印がなければ全員（v0.94 までと同じ）。"""
+    return not event.get("amount_private") or viewer is not None
+
+
 def _taken_deck_top(event, viewer) -> bool:
     """てつだうふり（v0.45）: トラッシュに置いたら公開。手札に加えたら、見たプレイヤーと持ち主。"""
     return event.get("destination") == "discard" or (viewer is not None and viewer in (event.get("looker"), event.get("player")))
@@ -530,6 +540,11 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
     "trainer_bench_from_deck_declined": (("reason",), _only_player),
     # v0.83: やさしいゴルダックの「みずかき」で、見た山札の上から選ばなかった理由（選べるカードがなかった・選ばなかった。山札の上の中身の情報なので、見たプレイヤーだけ）
     "deck_top_take_declined": (("reason",), _only_player),
+    # v0.95: 受けなかったダメージの量（「とうめい」・「かげぶんしん」・「リフレクトシールド」）。ゴーストの「ポルターガイスト」のように基本となるダメージが見た手札の中身で
+    # 決まるワザなら、観戦者には量を見せない（のせたダメージはワザの結果で公開）。ほかのワザのログは全員に見える（v0.94 までは見えない項目のないイベント）
+    "attack_evaded": (("amount",), _amount_unless_private),
+    "damage_guard_check": (("amount",), _amount_unless_private),
+    "reflect_shield_check": (("amount",), _amount_unless_private),
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
@@ -553,7 +568,7 @@ PUBLIC_EVENTS = frozenset({
     # v0.84: ［ふかふかなからだ］（コインの結果）・［たすけだす］のとりのぞき・［おくりもの］で山札を見なかった・ポケモン育て屋夫婦のポケモンごとのコイン・つきくずすで
     # トラッシュしなかった・バブルジャンプのつけ替え（場のカードの公開の情報）
     "power_sleep", "power_sleep_skipped", "tag_team_heal", "gift_declined", "breeder_couple_coins", "stadium_discard_declined",
-    "reflect_shield_check", "reflect_shield_damage", "reflect_shield_skipped",
+    "reflect_shield_damage", "reflect_shield_skipped",
     # v0.81: ポケモンのどうぐ（きのみのとりのぞき・きあいのハチマキ・はんげきのツメ・学習装置。どれも場のカード・コインの結果で公開）
     "tool_heal", "focus_band", "counter_claw", "tool_damage_counters", "exp_all_declined", "tool_move_energy",
     "darkness_energy_damage", "darkness_energy_counters",  # v0.78: ポケモンチェックの悪エネルギー（場のカードの公開の情報）
@@ -568,8 +583,8 @@ PUBLIC_EVENTS = frozenset({
     "digger_result", "trainer_damage", "trainer_damage_prevented",
     # v0.62: オウムがえし（受けた記録は表の情報）
     "mirror_move_none", "reflect_received",
-    "attach_energy", "energy_conversion", "bench_coin_results", "damage_guard_check", "rebellion_check", "attach_energy_from_deck", "attach_energy_from_deck_none", "attach_energy_from_discard",
-    "attach_energy_from_hand", "attach_trainer", "attack", "attack_attach_energy", "attack_check", "attack_evaded", "attack_failed", "attack_heal",
+    "attach_energy", "energy_conversion", "bench_coin_results", "rebellion_check", "attach_energy_from_deck", "attach_energy_from_deck_none", "attach_energy_from_discard",
+    "attach_energy_from_hand", "attach_trainer", "attack", "attack_attach_energy", "attack_check", "attack_failed", "attack_heal",
     "bench_from_deck", "bench_from_deck_declined", "bench_from_deck_none",
     "bench_from_discard", "bench_from_discard_declined", "bench_from_discard_none",  # v0.51: トラッシュと場は公開の情報
     "coin_flip", "confusion_check", "confusion_damage", "copy_attack",
@@ -593,6 +608,9 @@ PUBLIC_EVENTS = frozenset({
     "trainer_draw_declined", "trainer_discard_declined", "look_at_deck_top_declined",  # v0.54: 引かない・トラッシュしない・見ない（山札・手札の枚数は公開）
     "discard_to_deck", "retrieve_trainer",  # v0.53: 夜の廃品回収（見せて山札にもどす）・ダウジングマシーン（トラッシュ → 手札）。トラッシュは公開の情報
     "milled_to_hand",  # v0.73: 熱血!（山札の上からトラッシュしたカードのうち手札に加えたもの。トラッシュから動いたので公開）
+    # v0.95: とりさるで相手の山札にもどした、ついているトレーナーカード（場の公開のカード）・もやすで見たカードがトレーナーカードでなく、もとの山札の上にもどした（カードは書かない）・
+    # ［わるぢえ］で見た山札を切らなかった（山札の並びは変わらない）
+    "attached_trainer_to_deck", "deck_top_returned", "shuffle_declined",
     "return_to_deck", "return_to_hand", "reveal_from_deck", "reveal_from_deck_declined", "reveal_from_deck_none",
     "reveal_pokemon", "set_prizes", "shuffle", "sleep_check", "special_condition", "special_condition_prevented", "special_conditions_removed",
     "swap_damage_counters", "swap_prize_with_deck_top", "switch", "switch_declined", "trainer_lock_added", "trainer_lock_removed", "turn_end",

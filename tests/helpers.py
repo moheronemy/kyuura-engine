@@ -1426,6 +1426,15 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.CoinBonusDamageElseForceSwitch,
     _effects.OptionalSwitchOpponentThenDamage,
     _effects.CoinReturnOpponentToHandElseForceSwitch,
+    # v0.95（docs/private-looks-deck-movement-v0.95.md 5〜10 章。相手の手札を見る・見た手札のトレーナーカードの枚数のダメージ・山札の上からちょうどの枚数を見て並べかえる・
+    # コインで見た手札のトレーナーカードを山札にもどす・相手の山札の一番上を見てトラッシュ・ダメージのあと山札をトラッシュして手札に加える・ついているトレーナーを山札にもどす）
+    _effects.LookOpponentHandAttack,
+    _effects.DamageTimesLookedHandTrainers,
+    _effects.ArrangeDeckTopExactlyEffect,
+    _effects.CoinLookOpponentHandTrainerToDeck,
+    _effects.OpponentDeckTopDiscardIfTrainer,
+    _effects.DamageThenMillReturnTypeEnergy,
+    _effects.ReturnOpponentAttachedTrainerToDeck,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -2305,6 +2314,15 @@ PHANPY_NEO4 = "neo4-072"  # ゴマゾウ（ドンファン・わるいドンフ�
 V0_94_POKEMON = (CLEFAIRY_ES1, CLEFAIRY_QSG, JIGGLYPUFF_SI, SNUBBULL_NEO1, VENOMOTH_ES2, DONPHAN_NEO1, TOGEPI_PRN, BELLOSSOM_PRN, TAUROS_ES3, MACHAMP_PR1, VULPIX_ES3,
                  VULPIX_QSG, DARK_DONPHAN)
 V0_94_CARDS = V0_94_POKEMON  # 写しの組 pool_v0_94 の並び
+
+# v0.95（docs/private-looks-deck-movement-v0.95.md）: 手札・山札を見る効果とカードを動かすポケモン 11 枚（ワザ 20・特殊能力 2）。ゴーストの 2 枚は同じゲーム用データ
+XATU_NEO1, NOCTOWL_NEO1, SENTRET_NEO2, SABRINAS_ABRA_GD6 = "neo1-048", "neo1-065", "neo2-046", "GD6-002"  # ネイティオ（みらいよち）・ヨルノズク（［みやぶる］）・オタチ（さぐる）・ナツメのケーシィ（とうし）
+HAUNTER_ES3, HAUNTER_QSG, DARK_SCIZOR_NEO4, DARK_SLOWKING_NEO4 = "ES3-024", "QSG-029", "neo4-083", "neo4-061"  # ゴースト（ポルターガイスト）・同じデータ・わるいハッサム（おどす）・わるいヤドキング（［わるぢえ］）
+DARK_QUILAVA_NEO4, RHYDON_ES3, AIPOM_NEO3 = "neo4-020", "ES3-031", "neo3-047"  # わるいマグマラシ（もやす・マグマラッシュ）・サイドン（やまくずし）・エイパム（とりさる）
+NATU_NEO1, HOOTHOOT_NEO1, SLOWPOKE_NEO1, CYNDAQUIL_NEO1, RHYHORN = "neo1-046", "neo1-060", "neo1-045", "neo1-018", "PMCG2-030"  # 進化元（ネイティ・ホーホー・ヤドン・ヒノアラシ・サイホーン）
+V0_95_POKEMON = (XATU_NEO1, NOCTOWL_NEO1, SENTRET_NEO2, SABRINAS_ABRA_GD6, HAUNTER_ES3, HAUNTER_QSG, DARK_SCIZOR_NEO4, DARK_SLOWKING_NEO4, DARK_QUILAVA_NEO4, RHYDON_ES3,
+                 AIPOM_NEO3)
+V0_95_CARDS = V0_95_POKEMON  # 写しの組 pool_v0_95 の並び
 
 
 def _self_sleep_shape_only(attack):
