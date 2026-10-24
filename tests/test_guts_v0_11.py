@@ -681,7 +681,10 @@ class G37Test(unittest.TestCase):
         "MarkOpponentIfAbsent", "CoinMarkOpponent", "CoinPaintOpponent", "DamageThenRemoveOwnMarkerParalyzeOnHeads",
         # v0.91: マグマラシの「やきこがす」・エレブーの「ひらいしん」・ポリゴンの「ハイパーテクスチャー」（相手にマーカーをのせる）・「オールクリア」（相手の場のトレーナー・特殊状態・
         # その他の効果・マーカー。docs/marker-check-field-reset-v0.91.md）
-        "DamageThenCoinMarkOpponentIfAbsent", "ChooseOpponentPokemonMarkIfAbsent", "ChooseOpponentPokemonReplaceColorMarker", "AllClear"]))
+        "DamageThenCoinMarkOpponentIfAbsent", "ChooseOpponentPokemonMarkIfAbsent", "ChooseOpponentPokemonReplaceColorMarker", "AllClear",
+        # v0.92: イトマルの「こわいかお」（ワザとにげるの禁止）・クモのす・くろいまなざし・ヨーギラスの「にらみつける」（期間を明示した禁止）・いやなおと（受けるダメージの +20）・
+        # きゅうけつどく（どく）・やみのはどう（おたがいの場の特殊能力。相手の対戦ポケモンも受ける。docs/power-suppression-lasting-locks-v0.92.md）
+        "CoinAttackAndRetreatLock", "PeriodLockAttack", "ReceivedAttackDamageBonusAttack", "DamageDrainThenPoison", "DamageThenFieldPowerSuppression"]))
 
 
 class DecisionTest(unittest.TestCase):

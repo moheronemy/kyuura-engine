@@ -34,9 +34,9 @@ from .effects import (
     bench_guard_holders, char_check_targets,
 )
 from .errors import UnsupportedError
-from .persistent import (KNOCK_OUT, USED, remove_expired_persistent_effects, remove_on_damage, remove_persistent_effects,
-                         remove_turn_start_expired_persistent_effects)
-from .state import OPPONENT_POWER_SUPPRESSION, POWER_SUPPRESSION, Halt, Phase
+from .persistent import (KNOCK_OUT, USED, received_attack_damage_bonuses, remove_expired_persistent_effects, remove_on_damage, remove_persistent_effects,
+                         remove_source_left_effects, remove_turn_start_expired_persistent_effects)
+from .state import ATTACK_FIELD_POWER_SUPPRESSION, OPPONENT_POWER_SUPPRESSION, POWER_SUPPRESSION, Halt, Phase
 from .history import prune as prune_history
 from .zones import draw_cards, return_expired_set_aside
 
@@ -84,13 +84,15 @@ def expire_at_turn_end(state: GameState) -> bool:
     読み方）の状態が受け付けられない状態（決められない姿・ダメージ以外の原因で最大HPがのっているダメージ以下。``effects.state_stop_after``）になるかを、期限の処理の前に
     状態の複製の上で確かめ、なるなら対戦を止めて（``Phase.HALTED``）偽を返す（番の終わりのあとにきぜつの判定はなく、どの操作でも番は終わるので、コマンドを拒否しない。
     v0.48 のポケモンチェックの MH1 と同じ形）。ほかは期限の処理をして真を返す。"""
-    if any(record.kind in (POWER_SUPPRESSION, OPPONENT_POWER_SUPPRESSION) and record.expires_turn == state.turn_number for record in state.trainer_effects):
+    # v0.92: やみのはどう（``ATTACK_FIELD_POWER_SUPPRESSION``）も同じ（消える番の終わり）
+    if any(record.kind in (POWER_SUPPRESSION, OPPONENT_POWER_SUPPRESSION, ATTACK_FIELD_POWER_SUPPRESSION) and record.expires_turn == state.turn_number
+           for record in state.trainer_effects):
         trial = state.clone()
         _expire_at_turn_end(trial)
         stop = state_stop_after(state, trial)
         if stop is not None:
             code, message = stop
-            halt(state, Halt(code=code, message=f"番の終わりに特殊能力を消す効果（まきちらせ!ベトベトガス・ふしぎなガス）が消えると: {message}",
+            halt(state, Halt(code=code, message=f"番の終わりに特殊能力を消す効果（まきちらせ!ベトベトガス・ふしぎなガス・やみのはどう）が消えると: {message}",
                              references=("GR-2000-P323-KNOCKOUT", "CR-POWER-BACK-AFTER-RECOVERY", "docs/energy-control-power-suppression-v0.59.md")))
             return False
     miracle = miracle_turn_end_problem(state)
@@ -1053,6 +1055,14 @@ def confusion_damage_problem(state: GameState, pokemon: PokemonInPlay, attack_st
             "自分が受ける 20 ダメージが、その特殊能力の書く「ワザのダメージ」「このカードがポケモンに与えるダメージ」か（こんらんのダメージが「ワザによるダメージ」か）は"
             "『オフィシャルブック2000』（p.309・p.321・p.322）と kyuura の記録から決められないので扱わない",
         )
+    if received_attack_damage_bonuses(state, pokemon):
+        # v0.92: 「いやなおと」の「このワザを受けた相手が、ワザによるダメージを受けるとき、そのダメージは「+20」される」を受けているポケモンのワザがこんらんした。こんらんの 20 が
+        # 「ワザによるダメージ」かで +20 が当てはまるかが変わる（ほかの変更効果と同じ問い。新しい問いにしない）
+        return UnsupportedError(
+            "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS",
+            f"こんらん状態のポケモン {pokemon.pokemon_id} が、ワザによるダメージを受けるとき「+20」される効果（いやなおと）を受けている。こんらんしたワザで自分が受ける 20 ダメージが"
+            "「ワザによるダメージ」かは、公式ルール 2000.02.14版（p.309・p.321・p.322）と kyuura の記録から決められないので扱わない（docs/power-suppression-lasting-locks-v0.92.md 6 章）",
+        )
     return None
 
 
@@ -1096,7 +1106,8 @@ def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous
     """
     p = state.players[owner]
     returns = energy_discard_plan(state, pokemon, pokemon.energy, cause=DISCARD_BY_KNOCK_OUT)  # v0.82: リサイクルエネルギー（場をはなれる前の場で決める）
-    if p.active is pokemon:
+    was_active = p.active is pokemon
+    if was_active:
         p.active = None
     else:
         p.bench.remove(pokemon)
@@ -1125,5 +1136,7 @@ def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous
     state.add_event("knock_out", player=owner, pokemon=pokemon.card, discarded_energy=tuple(pokemon.energy), **extra)
     # 場をはなれたので、ワザによる持続する効果も消える（p.322。v0.4b）。カードではないので、トラッシュには何も置かない
     remove_persistent_effects(state, owner, pokemon, KNOCK_OUT)
+    if was_active:
+        remove_source_left_effects(state, owner, pokemon)  # v0.92: 発生源がバトル場をはなれたら消える効果（くろいまなざし・ヨーギラスのにらみつける）
     return_discarded_energy(state, returns)  # v0.82: トラッシュに置いたあと（ログ knock_out のあと）
 

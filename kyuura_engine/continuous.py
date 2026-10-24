@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING
 
 from .effects import SuppressOtherPowers
 from .state import (
+    ATTACK_FIELD_POWER_SUPPRESSION,
     ATTACK_POWER_SUPPRESSION,
     OPPONENT_POWER_SUPPRESSION,
     POWER_SUPPRESSION,
@@ -87,6 +88,21 @@ def attack_power_suppressions(state: GameState) -> tuple[TrainerTurnEffect, ...]
     return tuple(r for r in state.trainer_effects if r.kind == ATTACK_POWER_SUPPRESSION)
 
 
+def attack_field_power_suppressions(state: GameState) -> tuple[TrainerTurnEffect, ...]:
+    """今はたらいている、ワザで与えたおたがいの場の特殊能力の抑止（v0.92。``TrainerTurnEffect`` の種類 ``ATTACK_FIELD_POWER_SUPPRESSION``。ナツメのゲンガーの「やみのはどう」の
+    「次の相手の番の終わりまで、お互いの場にいるすべてのポケモンは、特殊能力を使うことができず、それらの力も消える」）。与えた番〜消える番（与えた番 + 1。その番の終わりに
+    ``procedures.expire_at_turn_end`` が消す）。まきちらせ!ベトベトガスと同じく、かがくへんかガスも除かずにすべての特殊能力を止める（説明の「すべてのポケモン」）。オールクリアの
+    ワザを使っているあいだの抑止（``attack_power_suppressions``）とは期限が違う。発生源のポケモンが場をはなれても消えない（説明に書かれていない）。"""
+    turn = state.turn_number
+    return tuple(r for r in state.trainer_effects if r.kind == ATTACK_FIELD_POWER_SUPPRESSION and r.created_turn <= turn <= r.expires_turn)
+
+
+def field_powers_suppressed(state: GameState) -> bool:
+    """おたがいの場のすべての特殊能力を止める期限のある効果（まきちらせ!ベトベトガス・オールクリアのワザを使っているあいだ・やみのはどう。v0.92 でまとめた）がはたらいているか。
+    かがくへんかガス（場の特殊能力）・スタンウェーブ（1 匹）・ふしぎなガス（片方の場）は含まない。"""
+    return bool(goop_gas_effects(state) or attack_power_suppressions(state) or attack_field_power_suppressions(state))
+
+
 def power_suppressed(state: GameState, power: Power, holder: PokemonInPlay | None = None, *, owner: int | None = None) -> bool:
     """特殊能力 ``power``（場のポケモンの特殊能力）が今「使えず、その力も消え」ているか（v0.59）: はたらいているかがくへんかガスに消されている（``suppressors_of``）か、
     まきちらせ!ベトベトガスの効果がはたらいている（``goop_gas_effects``）。宣言して使う特殊能力の使用・常にはたらく・自動的にはたらく特殊能力の力のどちらにも当てはまる
@@ -104,7 +120,8 @@ def power_suppressed(state: GameState, power: Power, holder: PokemonInPlay | Non
 
         if powers_stopped(state, holder) is not None:
             return True
-    if goop_gas_effects(state) or attack_power_suppressions(state) or suppressors_of(state, power):  # v0.91: オールクリアのワザを使っているあいだ
+    # v0.91: オールクリアのワザを使っているあいだ。v0.92: やみのはどう（``field_powers_suppressed``）
+    if field_powers_suppressed(state) or suppressors_of(state, power):
         return True
     if any(r.kind == OPPONENT_POWER_SUPPRESSION for r in state.trainer_effects):
         from .effects import strange_gas_effects

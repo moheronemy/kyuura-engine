@@ -47,13 +47,15 @@ from ..decisions import DISCARD_STADIUM, EVOLUTION_SONG_POKEMON
 from ..stadiums import bench_limit
 from ..errors import UnsupportedError
 from ..evolution import DEVOLVE_TO_HAND, devolve, evolution_block, place_evolution_card
-from ..persistent import RETURN_IN_PLAY_TO_DECK, RETURN_IN_PLAY_TO_HAND, add_persistent_effect, max_hp_set, remove_persistent_effects, replace_persistent_effect
+from ..persistent import (RETURN_IN_PLAY_TO_DECK, RETURN_IN_PLAY_TO_HAND, add_persistent_effect, max_hp_set, remove_persistent_effects, remove_source_left_effects,
+                          replace_persistent_effect)
 from ..persistent import CURED as PERSISTENT_CURED
 from ..state import (
     NEXT_TURN_MULTIPLY, NEXT_TURN_SET, RETALIATION_FIXED, RETALIATION_RECEIVED, AttackBarrier, AttackCoinCheck, CannotAttack, CannotAttackNextOwnTurn,
     CannotAttachEnergy, CannotAttackWhileSourceActive, CannotRetreat, CannotUseAttack, CannotUsePowers, CannotUseOwnAttack, DamageReduction, DestinyBond, DoubledDamage, HalvedDamage, NextTurnAttackDamage, PreventAttackDamage, PreventDamage,
     MaxHpSet, ReducedDamageToSource, ReducedDamageToSourceNextTurn, ReflectShield, ResistanceChange, Retaliation, TailsDamageGuard, TrainerTurnEffect, TrainerUseLock, WeaknessChange, ZeroDamageBelow, mark_returned_to_bench,
     OPPONENT_POWER_SUPPRESSION, StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard, StatusImmunityNextTurn, PowersStopped, BenchProtection,
+    ATTACK_FIELD_POWER_SUPPRESSION, PeriodAttackLock, PeriodRetreatLock, ReceivedAttackDamageBonus,
 )
 from ..state import ATTACK_POWER_SUPPRESSION, BENCH_ATTACK_DAMAGE_PREVENTION, COUNTER_BONE, COUNTER_FOOD, COUNTER_KINDS, MARKER_CHAR, MARKER_COLOR, MARKER_CURSE, MARKER_KINDS, MARKER_LIGHTNING_ROD, MARKER_STICKY, POWER_SUPPRESSION, Marker
 from ..markers import CLEARED as MARKERS_CLEARED
@@ -888,10 +890,18 @@ class HeadsUntilTails:
       （2 段階で計算を終える「ダメージを与えなかった」。ワザの失敗ではない）
     - 先読みは「おもて」の数の有限の組（``resolution.unbounded.head_classes``）の代表だけを試す。代表の値を実際のダメージ・ログ・履歴に使わない
     - コインはダメージの量だけを決めるので、「ダメージを受けない」相手には v0.4b の問い（``local_coins`` が 1 以上なのはそのため。``Damage.run``）
-    - コインを投げたあとで決定（順番の決定）をまたいでも、基本となるダメージを続きの情報で運び、投げ直さない（``Damage.resume``）"""
+    - コインを投げたあとで決定（順番の決定）をまたいでも、基本となるダメージを続きの情報で運び、投げ直さない（``Damage.resume``）
+
+    v0.92: ``fixed``（ハッサムの「メタルニッパー」の目安の 30。既定 0）。基本となるダメージは ``fixed + per × おもての数``（``damage_for``）。実際のダメージ・先読みの組を分けるキー・
+    有限の境界（``resolution.unbounded``）はどれも ``damage_for`` で求める（キーを ``per × おもての数`` のまま作らない）"""
 
     per: int
+    fixed: int = 0
     local_coins: ClassVar[int] = 1
+
+    def damage_for(self, heads: int) -> int:
+        """「おもて」の数 ``heads`` のときの基本となるダメージ（p.321 の 1 段階）。"""
+        return self.fixed + self.per * heads
 
     def flip_until_tails(self, run: AttackRun, element: Damage) -> CoinFlips:
         from .unbounded import head_classes
@@ -912,7 +922,7 @@ class HeadsUntilTails:
                                 classes=classes)
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
-        return flips.heads * self.per
+        return self.damage_for(flips.heads)
 
 
 @dataclass(frozen=True)
@@ -1788,6 +1798,7 @@ class ForceSwitch(Element):
         )
         clear_special_conditions(run.state, opponent, old, FORCED_SWITCH_REASON)
         remove_persistent_effects(run.state, opponent, old, FORCED_SWITCH_REASON)
+        remove_source_left_effects(run.state, opponent, old)  # v0.92: 発生源がバトル場をはなれたら消える効果
         mark_returned_to_bench(old)  # v0.48: 特殊能力で色を変えた記録に、ベンチにもどったことを残す（VS1）
         E.discard_on_leaving_active(run.state, opponent, old)  # v0.65: バトル場をはなれた時にトラッシュするついているトレーナー（変わり身の術）
         run.fs.results[self.name] = p.active.pokemon_id  # v0.45: 入れ替えて出た控えポケモン
@@ -2619,10 +2630,20 @@ class OpponentCannotAttack(Element):
     相手に与える効果なので「とうめい」・「ワザをうけない」状態を評価する）。"""
 
     local_coin: CoinSide | None = HEADS
+    # v0.92: ワザ全体のコインの面（イトマルの「こわいかお」の 1 枚のコインで、ワザとにげるの両方の禁止を決める。``local_coin`` は None）。None ならこの要素のコインだけ（v0.91 まで）
+    gate: tuple | None = None
     phase: ClassVar[Phase] = Phase.EFFECT
     opponent_element: ClassVar[str] = E.ATTACK_LOCK_ELEMENT
 
+    def coin_receiver(self) -> str | None:
+        return "effect"  # v0.92: ワザ全体のコインが決める相手の対戦ポケモンへの効果（``void_coin_question``）
+
+    def has_target(self, run: AttackRun) -> bool:
+        return not run.knocked_out(run.opponent_active())  # v0.92: このワザで HP 以上なら処理の対象がない（ワザ全体のコインを投げない。p.309）
+
     def run(self, run: AttackRun) -> bool:
+        if self.gate is not None and not run.coin_is(self.gate):
+            return False
         opponent = 1 - run.player
         target = run.opponent_active()
         if run.knocked_out(target):
@@ -3622,10 +3643,20 @@ class OpponentRetreatLock(Element):
     # v0.41: この要素のコイン（ウツボットの「ようかいえき」は「おもて」で与える）。対象がこのワザで HP 以上なら投げない（p.309）。「とうめい」で受けないと
     # 決まった相手・「ワザをうけない」相手には、効果だけを決めるコインなので投げるかが決められない（T19b・HC3。v0.38 の ``ForceSwitch`` の ``local_coin`` と同じ）
     local_coin: CoinSide | None = None
+    # v0.92: ワザ全体のコインの面（こわいかお。``OpponentCannotAttack.gate`` と同じ 1 枚のコイン）。None ならこの要素のコインだけ（v0.91 まで）
+    gate: tuple | None = None
     phase: ClassVar[Phase] = Phase.EFFECT
     opponent_element: ClassVar[str] = E.RETREAT_LOCK_ELEMENT
 
+    def coin_receiver(self) -> str | None:
+        return "effect"  # v0.92: ワザ全体のコインが決める相手の対戦ポケモンへの効果（``void_coin_question``）
+
+    def has_target(self, run: AttackRun) -> bool:
+        return not run.knocked_out(run.opponent_active())  # v0.92: このワザで HP 以上なら処理の対象がない（ワザ全体のコインを投げない。p.309）
+
     def run(self, run: AttackRun) -> bool:
+        if self.gate is not None and not run.coin_is(self.gate):
+            return False
         opponent = 1 - run.player
         target = run.opponent_active()
         if run.knocked_out(target):
@@ -3662,6 +3693,8 @@ class OpponentAttachLock(OpponentRetreatLock):
 
 
 def _opponent_lock(element, run: AttackRun, kind: type, element_kind: str) -> bool:
+    if element.gate is not None and not run.coin_is(element.gate):
+        return False
     opponent = 1 - run.player
     target = run.opponent_active()
     if run.knocked_out(target):
@@ -10200,7 +10233,8 @@ def _raise_state_stop(before: GameState, after: GameState) -> None:
 
 # v0.91: オールクリアの「その他の効果」に含むかが記録から決まらない、ポケモンに写していない効果（プレイヤーに与えた効果で、この番のあとも続くもの）の種類。この番で消えるもの
 # （カスミ・キョウ・カツラ・退化スプレーHYPER・特殊能力で色を変える効果・エナジーバーン）は、ワザで番が終わるので、消すかどうかで結果が変わらない（docs 7.3 節）
-ALL_CLEAR_UNDECIDED_FIELD_EFFECTS = (BENCH_ATTACK_DAMAGE_PREVENTION, POWER_SUPPRESSION, OPPONENT_POWER_SUPPRESSION)
+ALL_CLEAR_UNDECIDED_FIELD_EFFECTS = (BENCH_ATTACK_DAMAGE_PREVENTION, POWER_SUPPRESSION, OPPONENT_POWER_SUPPRESSION,
+                                     ATTACK_FIELD_POWER_SUPPRESSION)  # v0.92: やみのはどう（次の相手の番の終わりまで）
 
 
 def all_clear_question(run: AttackRun) -> None:
@@ -10344,4 +10378,176 @@ BUILDERS |= {
         ChooseColor(COLOR_ANY, requires="removed_color"), PlaceMarker(MARKER_COLOR, chosen="target", color="color"),
     ),
     E.AllClear: lambda e: (AllClearPowerSuppression(), DiscardFieldTrainers(), CureAllPokemon(), ClearAllMarkers()),
+}
+
+
+# ---------------------------------------------------------------- v0.92（docs/power-suppression-lasting-locks-v0.92.md）: 能力の消去・続く制限
+
+
+@dataclass(frozen=True)
+class OpponentPeriodLock(Element):
+    """相手の対戦ポケモンに、期間と消える契機を明示した「にげる」ことができない効果（``lock`` が ``E.LOCK_RETREAT``。``state.PeriodRetreatLock``）か、ワザを使えない効果
+    （``E.LOCK_ATTACK``。``state.PeriodAttackLock``）を与える（v0.92。クモのす・くろいまなざし・ヨーギラスの「にらみつける」）。
+
+    - ``start``・``end``: 与えた番からの番の数（期間の始まり・終わり。``end`` が None なら期限なし）。``while_source_active``・``ends_on``: ``state.PeriodRetreatLock`` と同じ。発生源は
+      ワザを使ったポケモン（相手のワザとして使ったときは使ったポケモン。場の番号 ``source_pokemon``）
+    - ``local_coin``: この要素のコイン。相手がこのワザで HP 以上なら投げない（p.309。こんじょうを使えるなら G37）。「とうめい」で受けないと決まった相手は T19b、「ワザをうけない」相手は
+      HC3（v0.76 の ``effect_coin_questions``）。「うら」なら与えない（ワザの失敗ではない）
+    - 相手に与える効果なので「とうめい」・「ワザをうけない」状態を評価する（要素の種類は禁止の種類）。ログ ``persistent_effect_added`` に ``end_turn``・``source_pokemon`` と、あるときだけ
+      ``while_source_active``・``ends_on`` を書く"""
+
+    lock: str
+    start: int
+    end: int | None
+    while_source_active: bool = False
+    ends_on: tuple[str, ...] = ()
+    local_coin: CoinSide | None = None
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    @property
+    def opponent_element(self) -> str:
+        return E.RETREAT_LOCK_ELEMENT if self.lock == E.LOCK_RETREAT else E.ATTACK_LOCK_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        opponent = 1 - run.player
+        target = run.opponent_active()
+        if run.knocked_out(target):
+            run.ko_prevention_conflict(target)
+            return False
+        if self.local_coin is not None:
+            effect_coin_questions(run, opponent, target)
+            if run.flip(1).results[0] is not self.local_coin:
+                return False
+        if not reaches(run.res, run.fs, opponent, target, self.opponent_element):
+            return False
+        attacker = run.attacker()
+        if (self.while_source_active or self.ends_on) and run.state.players[run.player].active is not attacker:
+            raise RuntimeError(f"発生源の場所で決まる効果を与えるポケモン {attacker.pokemon_id} がバトル場にいない（今の写しでは起こらない。エンジンの不具合）")
+        turn = run.state.turn_number
+        kind = PeriodRetreatLock if self.lock == E.LOCK_RETREAT else PeriodAttackLock
+        effect = kind(source_card=attacker.card, source_player=run.player, created_turn=turn, active_turn=turn + self.start,
+                      end_turn=None if self.end is None else turn + self.end, source_pokemon=attacker.pokemon_id,
+                      while_source_active=self.while_source_active, ends_on=self.ends_on)
+        add_persistent_effect(run.state, opponent, target, effect, attack=str(run.key), **period_log_fields(effect))
+        return False
+
+
+def period_log_fields(effect) -> dict:
+    """v0.92: 期間を明示した持続する効果のログ ``persistent_effect_added`` の項目（期間の終わり・発生源の場の番号。発生源の条件・消える契機はあるときだけ）。"""
+    fields: dict = {"end_turn": effect.end_turn, "source_pokemon": effect.source_pokemon}
+    if effect.while_source_active:
+        fields["while_source_active"] = True
+    if effect.ends_on:
+        fields["ends_on"] = effect.ends_on
+    return fields
+
+
+@dataclass(frozen=True)
+class OpponentDamageTakenBonus(Element):
+    """相手の対戦ポケモン（このワザを受けた相手）に、与えた番 + ``start``〜+ ``end`` の番、受けるワザによるダメージを ``amount`` 増やす効果（``state.ReceivedAttackDamageBonus``）を
+    与える（v0.92。イワーク・ゴルバットの「いやなおと」）。相手に与える効果なので「とうめい」・「ワザをうけない」状態を評価する。相手がこのワザで HP 以上なら与えない。ログ
+    ``persistent_effect_added`` に ``end_turn``・``source_pokemon``・``amount``。"""
+
+    amount: int
+    start: int
+    end: int
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.DAMAGE_TAKEN_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        opponent = 1 - run.player
+        target = run.opponent_active()
+        if run.knocked_out(target):
+            run.ko_prevention_conflict(target)
+            return False
+        if not reaches(run.res, run.fs, opponent, target, E.DAMAGE_TAKEN_ELEMENT):
+            return False
+        attacker = run.attacker()
+        turn = run.state.turn_number
+        effect = ReceivedAttackDamageBonus(source_card=attacker.card, source_player=run.player, created_turn=turn, active_turn=turn + self.start,
+                                           end_turn=turn + self.end, source_pokemon=attacker.pokemon_id, amount=self.amount)
+        add_persistent_effect(run.state, opponent, target, effect, attack=str(run.key), amount=self.amount, **period_log_fields(effect))
+        return False
+
+
+# きぜつの判定・きぜつのあとに使える特殊能力の窓（こんじょうは G37 で別に聞く）
+_KNOCK_OUT_WINDOWS = frozenset({Window.KO_CHECK, Window.KO_PROCESS, Window.AFTER_JUDGE})
+
+
+@dataclass(frozen=True)
+class FieldPowerSuppression(Element):
+    """v0.92: 次の相手の番の終わりまで、お互いの場にいるすべてのポケモンは、特殊能力を使うことができず、それらの力も消える（ナツメのゲンガーの「やみのはどう」）。プレイヤーに与える
+    期限のある効果（``ATTACK_FIELD_POWER_SUPPRESSION``。``player`` はワザを使ったプレイヤー、``source_card``・``pokemon_id`` は実際にワザを使ったポケモン、``card_id``・``attack_index`` は
+    ワザの出どころ、消える番は与えた番 + 1）を加える。ログ ``trainer_effect_added``。
+
+    - 決められない場面（加える前に止める。先読みが宣言の前に見つける）: 相手の場の特殊能力を持つポケモンが、相手のワザの効果を受けない（「ワザをうけない」状態・［オーロラヴェール］・
+      エフェクトガード・［クリスタルボディ］・「とうめい」。このワザで受けると決まったポケモンは除く）なら DW2。このワザで HP 以上になったポケモンがこんじょうを使えるなら G37、
+      きぜつの時の特殊能力（［ファイナルビーム］・ふしちょう）を持つなら DW3
+    - 加えたあとの状態が受け付けられない（決められない姿・［ずらかる］の力がもどる。``effects.attack_state_stop_after``）なら止める。最大HP が下がるのはワザのあとのきぜつの判定で扱う
+    - これがワザの最後の要素なので、ワザの出どころが特殊能力でも、処理を続けるかの問い（オールクリアの ZC2）はない"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.POWER_LOCK_ELEMENT
+
+    def record(self, run: AttackRun) -> TrainerTurnEffect:
+        turn = run.state.turn_number
+        attacker = run.attacker()
+        return TrainerTurnEffect(kind=ATTACK_FIELD_POWER_SUPPRESSION, player=run.player, source_card=attacker.card, card_id=run.key.card_id, created_turn=turn,
+                                 expires_turn=turn + 1, pokemon_id=attacker.pokemon_id, attack_index=run.key.attack_index)
+
+    def _protected_question(self, run: AttackRun) -> None:
+        from .kernel import first_void
+
+        state = run.state
+        opponent = 1 - run.player
+        for pokemon in state.players[opponent].in_play():
+            if state.is_face_down(pokemon) or not E.powers_of(state, pokemon):
+                continue  # うらのカードは全体にはたらく効果ではおもてにしない。特殊能力のないポケモンは、止まるかどうかで結果が変わらない
+            received = run.fs.reception.get(pokemon.pokemon_id)
+            evasion = received is not True and E.evasion_power(state, pokemon) is not None
+            if received is False or evasion or first_void(run.res, opponent, pokemon, Window.BEFORE_EFFECT) is not None:
+                raise run.res.question("dark_wave_protected", f"ポケモン {pokemon.pokemon_id}")
+
+    def _knocked_out_question(self, run: AttackRun) -> None:
+        state = run.state
+        for owner in (run.player, 1 - run.player):
+            for pokemon in state.players[owner].in_play():
+                if state.is_face_down(pokemon) or not E.knocked_by_hp(state, pokemon):
+                    continue
+                if owner != run.player:
+                    run.ko_prevention_conflict(pokemon, owner)  # こんじょう（G37）
+                for instance in C.instances(state, owner, pokemon, run.res.catalog):
+                    definition = instance.definition
+                    if (definition.origin is C.Origin.PRINTED_POWER and definition.suppressible and definition.windows & _KNOCK_OUT_WINDOWS
+                            and definition.decision_kind != KO_PREVENTION and not C.stopped(state, instance) and not C.blocked_by_status(instance, pokemon)):
+                        raise run.res.question("dark_wave_knocked_out_power", f"ポケモン {pokemon.pokemon_id}（{definition.name}）")
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        self._protected_question(run)
+        self._knocked_out_question(run)
+        record = self.record(run)
+        if any(r.kind == ATTACK_FIELD_POWER_SUPPRESSION and r.player == run.player and r.created_turn == record.created_turn for r in state.trainer_effects):
+            raise RuntimeError(f"プレイヤー {run.player} の「やみのはどう」の効果が、与えた番 {record.created_turn} にすでにある（1 番に使えるワザは 1 つ。エンジンの不具合）")
+        trial = state.peek()
+        trial.trainer_effects = trial.trainer_effects + (record,)
+        _raise_state_stop(state, trial)
+        state.trainer_effects = state.trainer_effects + (record,)
+        state.add_event("trainer_effect_added", player=run.player, effect_kind=ATTACK_FIELD_POWER_SUPPRESSION, trainer_card=record.source_card, card_id=record.card_id,
+                        expires_turn=record.expires_turn, attack_index=record.attack_index, pokemon_id=record.pokemon_id, effect=str(run.key))
+        return False
+
+
+BUILDERS |= {
+    E.CoinAttackAndRetreatLock: lambda e: (
+        Coin("coin"), OpponentCannotAttack(local_coin=None, gate=("coin", HEADS)), OpponentRetreatLock(gate=("coin", HEADS)),
+    ),
+    E.PeriodLockAttack: lambda e: (
+        OpponentPeriodLock(e.lock, e.start, e.end, e.while_source_active, e.ends_on, local_coin=HEADS if e.on_heads else None),
+    ),
+    E.ReceivedAttackDamageBonusAttack: lambda e: (OpponentDamageTakenBonus(e.amount, e.start, e.end),),
+    E.DamageDrainThenPoison: lambda e: (Damage(OPP, Printed()), Drain("damage"), Status(POISON, after_damage="damage")),
+    E.ChooseOpponentPokemonDamageIgnoringHeldEffects: lambda e: chosen_damage(Fixed(e.damage), defender_effects=False, ignore_scope=IGNORE_HELD),
+    E.DamageThenFieldPowerSuppression: lambda e: (Damage(OPP, Printed()), FieldPowerSuppression()),
+    E.CoinsUntilTailsBonusDamage: lambda e: (Damage(OPP, HeadsUntilTails(e.per, fixed=e.base)),),
 }

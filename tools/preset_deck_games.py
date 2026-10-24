@@ -302,7 +302,9 @@ MIXED_VARIANTS = ("mixed", "retrieval", "trader", "breeder")
 TRAINER_EVENTS = {
     # v0.23: 使ってからトラッシュするまでのあいだに出てよいログ（その実装が出すものだけ）と、そのイベントの player が使ったプレイヤーか相手か
     # v0.65: 入れ替えでバトル場をはなれた相手のポケモンの、変わり身の術のトラッシュ（discard_attached_trainer の reason left_active。player はそのカードの持ち主）
-    GUST: {"switch": "opponent", "special_conditions_removed": "opponent", "persistent_effect_removed": "opponent", "discard_attached_trainer": "opponent"},
+    # v0.92: 入れ替えでバトル場をはなれた相手のポケモンが発生源の、使ったプレイヤーのポケモンの持続する効果（くろいまなざし・にらみつける。理由 source_left_active）
+    GUST: {"switch": "opponent", "special_conditions_removed": "opponent", "persistent_effect_removed": "opponent", "discard_attached_trainer": "opponent",
+           "persistent_effect_removed:source_left_active": "user"},
     COMPUTER_SEARCH: {"discard_from_hand": "user", "search_deck": "user", "shuffle": "user"},
     ENERGY_RETRIEVAL: {"discard_from_hand": "user", "retrieve_energy": "user"},
     POKEMON_TRADER: {"return_to_deck": "user", "reveal_from_deck": "user", "shuffle": "user"},  # v0.24
@@ -389,6 +391,8 @@ def trainer_sequence_problems(state):
                 continue
             allowed = TRAINER_EVENTS[card_id]
             acting = borrowed.get(card, user)
+            if f"{kind}:{e.get('reason')}" in allowed:
+                kind = f"{kind}:{e.get('reason')}"  # v0.92: 理由ごとに持ち主の違うイベント
             if kind not in allowed:
                 problems.append(f"{i}: {card_id} の使用中に {kind}")
             elif allowed[kind] != "either" and e.get("player") != (acting if allowed[kind] == "user" else 1 - acting):

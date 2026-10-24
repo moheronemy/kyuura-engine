@@ -190,6 +190,8 @@ from .state import (
     StatusImmunityNextTurn,
     PowersStopped,
     BenchProtection,
+    PERIOD_EFFECT_TYPES,
+    ReceivedAttackDamageBonus,
     NEXT_TURN_MULTIPLY,
     CannotUseAttack,
     CannotUseOwnAttack,
@@ -292,6 +294,18 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
         data["given_by"] = effect.given_by
     elif isinstance(effect, ZeroDamageAtLeast):
         data["threshold"] = effect.threshold  # v0.84: 「パルスガード」
+    elif isinstance(effect, PERIOD_EFFECT_TYPES):
+        # v0.92: 期間を明示した効果（``"period_retreat_lock"``・``"period_attack_lock"``・``"received_attack_damage_bonus"``）。期間の終わり（null は期限なし）・発生源の場の番号と、
+        # あるときだけ発生源がバトル場にいる間だけの印・明記された消える契機、いやなおとは増やす数。種類の値を加えただけで形式は変えない（v0.84・v0.86 と同じ。v0.91 までの書き出しを
+        # 読む側は、知らない種類として拒否すること）
+        data["end_turn"] = effect.end_turn
+        data["source_pokemon"] = effect.source_pokemon
+        if effect.while_source_active:
+            data["while_source_active"] = True
+        if effect.ends_on:
+            data["ends_on"] = list(effect.ends_on)
+        if isinstance(effect, ReceivedAttackDamageBonus):
+            data["amount"] = effect.amount
     elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive, HalvedDamage,
                                          CannotUsePowers, CannotAttachEnergy, TailsDamageGuard, DoubledDamage, BenchAttackDamageGuard, AttackEffectGuard,
                                          StatusImmunityNextTurn, PowersStopped, BenchProtection)):

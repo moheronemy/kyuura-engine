@@ -533,6 +533,7 @@ POOL_KEYS = (
     "pool_v0_89",  # v0.89（対象を選ぶダメージ・選べる回復のポケモン 17 枚。docs/selected-target-damage-v0.89.md）
     "pool_v0_90",  # v0.90（マーカー・ダメージカウンター以外のカウンターのポケモン 7 枚。docs/markers-counters-v0.90.md）
     "pool_v0_91",  # v0.91（残りのマーカーのポケモン 3 枚とヒノアラシ。docs/marker-check-field-reset-v0.91.md）
+    "pool_v0_92",  # v0.92（能力の消去・続く制限のポケモン 8 枚。docs/power-suppression-lasting-locks-v0.92.md）
 )
 
 

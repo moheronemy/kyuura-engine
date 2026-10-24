@@ -152,6 +152,8 @@ from .persistent import (
     RETURN_IN_PLAY_TO_HAND,
     remove_on_damage,
     remove_persistent_effects,
+    remove_source_left_effects,
+    received_attack_damage_bonuses,
     resistance_change,
     retaliation,
     weakness_change,
@@ -166,6 +168,7 @@ from .state import (
     SET_ASIDE_FACE_DOWN_BENCH, SET_ASIDE_QUIZ, SetAsideCards, StatusImmunityWhileActive, OPPONENT_POWER_SUPPRESSION,
     COLOR_ENERGY, COLOR_POKEMON_TYPE, ColorEffect,
     COUNTER_BONE, COUNTER_FOOD, MARKER_CHAR, MARKER_COLOR, MARKER_CURSE, MARKER_LIGHTNING_ROD, MARKER_STICKY,
+    ATTACK_FIELD_POWER_SUPPRESSION, SOURCE_LEAVES_ACTIVE,
 )
 from .zones import (
     attach_energy_from_hand, attach_trainer, bench_from_deck, bench_from_discard, discard_attached_cards, discard_from_hand, discard_hand, draw_cards, return_discard_to_hand,
@@ -734,11 +737,12 @@ BENCH_PROTECTION_ELEMENT = "bench_protection"  # v0.86: 自分の控えポケモ
 MARKER_ELEMENT = "marker"
 # v0.91: おたがいの場のポケモン全員を、特殊状態・「その他の効果」から回復させる効果（ポリゴン（PRN-023）の「オールクリア」。相手のポケモンへの効果なので「ワザをうけない」状態を評価する）
 CURE_ELEMENT = "cure"
+DAMAGE_TAKEN_ELEMENT = "damage_taken"  # v0.92: 相手に与える「受けるワザのダメージを増やす」効果（イワーク・ゴルバットの「いやなおと」）
 ATTACK_ELEMENTS = (DAMAGE_ELEMENT, FORCED_SWITCH_ELEMENT, POISON, SLEEP, PARALYSIS, CONFUSION, ENERGY_DISCARD_ELEMENT, ATTACK_LOCK_ELEMENT,
                    ENERGY_ATTACH_ELEMENT, REDUCED_DAMAGE_ELEMENT, ATTACK_CHECK_ELEMENT, RETREAT_LOCK_ELEMENT, RETURN_IN_PLAY_TO_DECK_ELEMENT,
                    HEAL_ELEMENT, COUNTERS_ELEMENT, EVOLVE_ELEMENT, RETURN_IN_PLAY_TO_HAND_ELEMENT, ENERGY_MOVE_ELEMENT, WEAKNESS_CHANGE_ELEMENT,
                    RESISTANCE_CHANGE_ELEMENT, MAX_HP_ELEMENT, DEVOLVE_ELEMENT, POWER_LOCK_ELEMENT, ATTACH_LOCK_ELEMENT, WAKE_ELEMENT, TRAINER_DISCARD_ELEMENT,
-                   STATUS_GUARD_ELEMENT, BENCH_PROTECTION_ELEMENT, MARKER_ELEMENT, CURE_ELEMENT)
+                   STATUS_GUARD_ELEMENT, BENCH_PROTECTION_ELEMENT, MARKER_ELEMENT, CURE_ELEMENT, DAMAGE_TAKEN_ELEMENT)
 
 
 def evasion_power(state: GameState, pokemon: PokemonInPlay) -> tuple[PowerKey, AttackImmunityOnHeads] | None:
@@ -1756,8 +1760,18 @@ class DamageAndDrain(AttackEffect):
 
     implementation_id = "damage_and_drain"
 
+    # v0.92: 受け付ける説明の全文（kyuura の写しの印刷の文面）。v0.91 までは形だけを確かめ、末尾にどくのある「きゅうけつどく」も回復だけの型として通っていた。8 登録・5 通りの文面
+    # （処理に使う文面はそれぞれの登録の ``play_text_ja``。PMCG2-007 は p.19 の最新の説明。tests/test_power_suppression_lasting_locks_v0_92.py が照らす）
+    TEXTS = (
+        "相手にダメージを与えたら、与えたダメージの半分(切り上げ)のダメージカウンターを、自分からとりのぞく。",  # GD4-004・PRN-032・neo1-006
+        "相手に与えたダメージの半分(切り上げ)のダメージカウンターを自分からとりのぞく。",  # PMCG2-007（バタフリー）
+        "相手にあたえたダメージの半分(切り上げ)のダメージカウンターを自分からとりのぞく。",  # PMCG3-040
+        "相手にダメージを与えたら、与えたダメージの半分（切り上げ）のダメージカウンターを、自分からとりのぞく。",  # PMCG5-014
+        "相手にダメージを与えたら、その半分(切り上げ)のダメージカウンターを、自分からとりのぞく。",  # PR1-058・neo1-001
+    )
+
     def check(self, attack: Attack) -> list[str]:
-        return _check_damage_then_effect(attack, "与えたダメージの半分を回復する")
+        return _check_damage_then_effect(attack, "与えたダメージの半分を回復する") + _check_exact_text(attack, "与えたダメージの半分を回復するワザ", self.TEXTS)
 
 
 
@@ -6040,6 +6054,12 @@ def attack_damage_modifiers(
         doubled = doubled_damage(state, defender)
         if doubled is not None:
             modifiers.append(DamageModifier(step=8, amount=2, label=_persistent_effect_name(state, doubled), source=doubled.source_card, operation=MULTIPLY))
+        # v0.92: 同じ 8 段階の、受けるワザによるダメージを増やす効果（イワーク・ゴルバットの「いやなおと」の「そのダメージは「+20」される」。``ReceivedAttackDamageBonus``）。
+        # 受けるポケモンの持っている効果なので 8 段階の加算。相手のワザ・自分のワザの自分へのダメージ・返す効果のダメージ（どれもワザによるダメージ。この関数に ``attack`` を
+        # 渡す経路）に当てはめ、こんらんの 20（``attack`` を渡さない。``procedures.confusion_damage_problem`` が止める）には当てはめない。2 段階までで 0 以下なら計算を終えるので
+        # 加わらない（``damage.calculate_attack_damage``）。重なっていればそれぞれ加える（p.323）
+        for bonus in received_attack_damage_bonuses(state, defender):
+            modifiers.append(DamageModifier(step=8, amount=bonus.amount, label=_persistent_effect_name(state, bonus), source=bonus.source_card))
         # v0.46: 常にはたらく特殊能力（2・6・8 段階）。こんらんの 20（``attack`` を渡さない呼び出し）には使わない（``confusion_power_modifiers`` で別に聞く）
         modifiers.extend(continuous_attack_damage_modifiers(state, attacker, defender, attack_status=attack_status))
     return tuple(modifiers)
@@ -6969,6 +6989,7 @@ def _switch_active_with_bench(state: GameState, owner: int, pokemon_id: int, *, 
     clear_special_conditions(state, owner, old, SWITCH)
     # ワザによる持続する効果も消える（p.322「通常、「持続する効果」を受けたポケモンがベンチにもどったら…消えてなくなります」。v0.4b）
     remove_persistent_effects(state, owner, old, SWITCH)
+    remove_source_left_effects(state, owner, old)  # v0.92: 発生源がバトル場をはなれたら消える効果（くろいまなざし・ヨーギラスのにらみつける）
     mark_returned_to_bench(old)  # v0.48: 特殊能力で色を変えた記録に、ベンチにもどったことを残す（VS1）
     discard_on_leaving_active(state, owner, old)  # v0.65: バトル場をはなれた時にトラッシュするついているトレーナー（変わり身の術）
     # v0.87: 入れ替えの事実への反応（ベンチにもどった ``old`` の［やけのこり］・控えから出た ``p.active`` への相手の［まきびし］）を記録する（処理するのは呼ぶ側の流れ。``movement``）
@@ -17361,6 +17382,8 @@ def goop_gas_entry_check(state: GameState, card: int, *, how: str) -> None:
             definition = state.in_play_def(card)
             raise UnsupportedError(STRANGE_GAS_SCOPE_CODE, f"特殊能力「{definition.powers[0].name_ja}」を持つカード {card}（{definition.name_ja}）を{_GOOP_GAS_HOW[how]}"
                                    f"（ワザ {strange[0].card_id} の効果がはたらいている）: {STRANGE_GAS_SCOPE_REASON}")
+        # v0.92（DW1）: やみのはどうの効果がはたらいている間（おたがいの場）。この入口を通るすべての経路（手札・山札・トラッシュから出す・進化・退化）で同じに止める
+        attack_field_power_suppression_entry_check(state, card, how)
         return
     definition = state.in_play_def(card)
     if definition.powers:
@@ -36273,3 +36296,322 @@ V0_91_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_91_ATTACKS)
+
+
+# ---------------------------------------------------------------- v0.92（docs/power-suppression-lasting-locks-v0.92.md）: 能力の消去・続く制限の 8 枚
+
+
+SCARY_FACE_TEXT = "コインを投げて「おもて」なら、次の相手の番、相手はワザを使えず、「にげる」こともできない。"
+
+
+@dataclass(frozen=True)
+class CoinAttackAndRetreatLock(AttackEffect):
+    """ダメージの要素のないワザ。コインを投げて「おもて」なら、次の相手の番、相手はワザを使えず、「にげる」こともできない（v0.92。イトマル（neo1-004）の「こわいかお」。kyuura の
+    印刷の文面。docs 5 章）。
+
+    - 要素は ``Coin`` → ``OpponentCannotAttack(gate=おもて)`` → ``OpponentRetreatLock(gate=おもて)``。1 枚のコイン（ワザ全体のコイン）で 2 つの禁止を決める（要素ごとに投げ直さない）。
+      与える持続する効果は v0.31 の ``CannotAttack``（しっぽをふる）・v0.36 の ``CannotRetreat``（アイスバーン）と同じ（どちらも次の相手の番だけ。期間・消える契機も同じ）
+    - 「うら」なら効果を与えないだけ（ワザの失敗ではない）。相手に与える効果なので、コインの前に「とうめい」で受けないと決まった相手は T19b、「ワザをうけない」相手は HC3
+      （v0.34 の ``void_coin_question``）。それぞれの禁止を与える前に「とうめい」・「ワザをうけない」状態を評価する
+    - 「にげる」だけを止める（入れ替え・バトル場からのほかの移動は止めない。p.325）"""
+
+    implementation_id = "coin_attack_and_retreat_lock"
+    opponent_effect_elements = (ATTACK_LOCK_ELEMENT, RETREAT_LOCK_ELEMENT)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで次の相手の番のワザとにげるを止めるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (SCARY_FACE_TEXT,))
+
+    def retreat_lock_terms(self) -> type:
+        from .state import CannotRetreat
+
+        return CannotRetreat
+
+
+SPIDER_WEB_TEXT = "コインを投げて「おもて」なら、以後、このワザを受けた相手は、「にげる」ことができない。(相手がバトル場をはなれたとき、この効果は消える。)"
+MEAN_LOOK_TEXT = "以後、このワザを受けた相手は、このカードがバトル場にいるかぎり、「にげる」ことができない。(自分か相手がバトル場をはなれたとき、この効果は消える)"
+LEER_UNTIL_LEAVE_TEXT = ("コインを投げて「おもて」なら、次の相手の番、このワザを受けた相手はワザを使うことができない。(このカード、またはこのワザを受けた相手がバトル場をはなれたとき、"
+                         "この効果は消える。)")
+LOCK_RETREAT = "retreat"
+LOCK_ATTACK = "attack"
+# 期間を明示した禁止の、登録の組（禁止, コイン, 始まり（与えた番からの番の数）, 終わり（同じ。None は期限なし）, 発生源がバトル場にいる間だけ, 明記された消える契機）と、受け付ける
+# 説明の全文。組と文面をまとめて照らす（同じ型で違う期間・消える契機の文面を受け付けない）
+PERIOD_LOCK_TEXTS: Mapping[tuple, tuple[str, ...]] = MappingProxyType({
+    (LOCK_RETREAT, True, 0, None, False, ()): (SPIDER_WEB_TEXT,),  # クモのす（アリアドス neo1-011）
+    (LOCK_RETREAT, False, 0, None, True, (SOURCE_LEAVES_ACTIVE,)): (MEAN_LOOK_TEXT,),  # くろいまなざし（ヤミカラス neo1-055）
+    (LOCK_ATTACK, True, 1, 1, False, (SOURCE_LEAVES_ACTIVE,)): (LEER_UNTIL_LEAVE_TEXT,),  # にらみつける（ヨーギラス neo4-073）
+})
+
+
+@dataclass(frozen=True)
+class PeriodLockAttack(AttackEffect):
+    """ダメージの要素のないワザ。相手の対戦ポケモンに、期間と消える契機を明示した「にげる」ことができない効果（``lock`` が ``LOCK_RETREAT``）か、ワザを使えない効果（``LOCK_ATTACK``）を
+    与える（v0.92。アリアドスの「クモのす」・ヤミカラスの「くろいまなざし」・ヨーギラスの「にらみつける」。kyuura の印刷の文面。docs 4・5・7 章）。
+
+    - ``on_heads``: コインを投げて「おもて」なら与える（この要素のコイン。「うら」はワザの失敗ではない）。``start``・``end``: 期間（与えた番からの番の数。``end`` が None なら期限なし。
+      「以後」は与えた番から）。``while_source_active``: 「このカードがバトル場にいるかぎり」（問い合わせのとき確かめる）。``ends_on``: 説明に明記された消える契機
+      （``SOURCE_LEAVES_ACTIVE`` は発生源がはなれた時点で消す。もどっても復活しない）。受けたポケモンがバトル場をはなれる・進化・退化・きぜつで消えるのは一般の規定
+    - 持続する効果は ``state.PeriodRetreatLock``・``PeriodAttackLock``。要素は ``OpponentPeriodLock``。登録の組と文面は ``PERIOD_LOCK_TEXTS`` で照らす
+    - クモのすの「相手がバトル場をはなれたとき」は一般の規定と同じ（明記された発生源の消える契機はない。発生源のアリアドスがはなれても消えない）。くろいまなざしの「自分か相手」・
+      ヨーギラスの「このカード、または…相手」は発生源もはなれたら消える（ハッサムの「にらみつける」（SG1）とは別の文面・別の型）"""
+
+    lock: str
+    on_heads: bool
+    start: int
+    end: int | None
+    while_source_active: bool = False
+    ends_on: tuple[str, ...] = ()
+    implementation_id = "period_lock_attack"
+
+    def __post_init__(self) -> None:
+        if self._terms() not in PERIOD_LOCK_TEXTS:
+            raise ValueError(f"期間を明示した禁止の組 {self._terms()!r} を受け付ける文面がない")
+
+    def _terms(self) -> tuple:
+        return (self.lock, self.on_heads, self.start, self.end, self.while_source_active, self.ends_on)
+
+    @property
+    def opponent_effect_elements(self) -> tuple[str, ...]:  # type: ignore[override]
+        return (RETREAT_LOCK_ELEMENT if self.lock == LOCK_RETREAT else ATTACK_LOCK_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "期間と消える契機の決まった、にげる・ワザの禁止を与えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, PERIOD_LOCK_TEXTS[self._terms()])
+
+    def period_terms(self) -> tuple:
+        """不変条件（``engine._period_effect_problems``）が照らす、与える持続する効果の型と (始まり, 終わり, 発生源がバトル場にいる間だけ, 消える契機)。"""
+        from .state import PeriodAttackLock, PeriodRetreatLock
+
+        return (PeriodRetreatLock if self.lock == LOCK_RETREAT else PeriodAttackLock, self.start, self.end, self.while_source_active, self.ends_on)
+
+
+SCREECH_TEXTS: Mapping[tuple[int, int, int], tuple[str, ...]] = MappingProxyType({
+    # イワーク（neo1-050）: 次の相手の番（与えた番 + 1）と、次の自分の番（与えた番 + 2）
+    (20, 1, 2): ("次の相手の番と、次の自分の番、このワザを受けた相手が、ワザによるダメージを受けるとき、そのダメージは「+20」される。",),
+    # ゴルバット（neo3-004）: 与えた番から、次の自分の番（与えた番 + 2）が終わるまで
+    (20, 0, 2): ("次の自分の番が終わるまで、このワザを受けた相手がワザによるダメージを受けるたび、そのダメージは「+20」される。",),
+})
+
+
+@dataclass(frozen=True)
+class ReceivedAttackDamageBonusAttack(AttackEffect):
+    """ダメージの要素のないワザ。決まった期間、このワザを受けた相手が受けるワザによるダメージを ``amount`` 増やす（v0.92。イワーク・ゴルバットの「いやなおと」。kyuura の印刷の
+    文面。docs 6 章）。
+
+    - 期間は文面ごと（``SCREECH_TEXTS``。イワークは与えた番 + 1〜+ 2、ゴルバットは与えた番〜+ 2）。同じ全文として扱わない。持続する効果は ``state.ReceivedAttackDamageBonus``
+      （要素 ``OpponentDamageTakenBonus``。相手に与える効果なので「とうめい」・「ワザをうけない」状態を評価する）
+    - はたらき方は p.321 の 8 段階（受けるポケモンの持っている効果）の加算。基本となるダメージ・ワザを使う側の効果・ダメージカウンターの直接の配置にしない。2 段階までで 0 以下なら
+      計算を終えるので加えない。ワザによるダメージなら、相手のワザ・受けたポケモン自身のワザの自分へのダメージ・返す効果のダメージにも当てはまる（どれも p.321 の計算。だれの番かで
+      決めない）。こんらんの 20 は「ワザによるダメージ」か決まらない既存の問い（``UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS``）
+    - 受けたポケモンがバトル場をはなれる・進化・退化・きぜつで消える。発生源だけがはなれても消えない（説明に書かれていない）"""
+
+    amount: int
+    start: int
+    end: int
+    implementation_id = "received_attack_damage_bonus_attack"
+    opponent_effect_elements = (DAMAGE_TAKEN_ELEMENT,)
+
+    def __post_init__(self) -> None:
+        if (self.amount, self.start, self.end) not in SCREECH_TEXTS:
+            raise ValueError(f"受けるワザのダメージを増やす期間の組 {(self.amount, self.start, self.end)!r} を受け付ける文面がない")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "決まった期間、受けるワザのダメージを増やすワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, SCREECH_TEXTS[(self.amount, self.start, self.end)])
+
+    def period_terms(self) -> tuple:
+        from .state import ReceivedAttackDamageBonus
+
+        return (ReceivedAttackDamageBonus, self.start, self.end, False, (), self.amount)
+
+
+# きゅうけつどく: アリアドス（neo1-011）は半角の「(切り上げ)」、ゴルバット（neo3-004）は全角の「（切り上げ）」（転記の字形。意味は同じ）
+POISON_BITE_TEXTS = (
+    "相手にダメージを与えたら、その半分(切り上げ)のダメージカウンターを、自分からとりのぞく。その後、相手を「どく」状態にする。",
+    "相手にダメージを与えたら、その半分（切り上げ）のダメージカウンターを、自分からとりのぞく。その後、相手を「どく」状態にする。",
+)
+
+
+@dataclass(frozen=True)
+class DamageDrainThenPoison(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。相手にダメージを与えたら、その半分（切り上げ）のダメージカウンターを自分からとりのぞく。その後、相手を「どく」状態に
+    する（v0.92。アリアドス・ゴルバットの「きゅうけつどく」。kyuura の印刷の文面。docs 5 章）。
+
+    - 要素は ``Damage(OPP)`` → ``Drain("damage")``（v0.4d のメガドレインと同じ。与えたダメージは最終ダメージ。相手の残りHP で上限をつけない。のっている数より多くはとりのぞかない。
+      相手が HP 以上でも自分は回復する）→ ``Status(POISON, after_damage="damage")``（相手が HP 以上なら与えない。p.309）。最終ダメージの結果は決定の続きにも運ぶ（v0.87 の
+      ``damage_results``）
+    - ダメージを与えなかったとき: 回復はしない（「与えたら」の条件）。「その後、」のどくは、回復の文の条件の中か（与えたときだけ）、順番だけか（いつも）が文面・記録から決まらない
+      （v0.17b の Z23 と同じ「順番か条件か」の問い。``UNRESOLVED_EFFECT_AFTER_NO_DAMAGE``。どくにならないポケモンなら、どちらでも同じなので止めない）
+    - v0.91 までの ``DamageAndDrain``（回復だけの型）では登録しない（末尾のどくを落とさない。``DamageAndDrain.check`` が全文で拒否する）"""
+
+    implementation_id = "damage_drain_then_poison"
+    opponent_effect_elements = (POISON,)
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_damage_then_effect(attack, "与えたダメージの半分を回復し、そのあと相手をどく状態にする") + _check_exact_text(
+            attack, "与えたダメージの半分を回復してからどく状態にするワザ", POISON_BITE_TEXTS)
+
+
+FEINT_ATTACK_HELD_TEXT = "相手の場のポケモンを1匹選び、そのポケモンの持っている「弱点・抵抗力・特殊能力・その他の効果」に関係なく、{damage}ダメージ。"
+
+
+@dataclass(frozen=True)
+class ChooseOpponentPokemonDamageIgnoringHeldEffects(AttackEffect):
+    """相手の場のポケモンを 1 匹選び、そのポケモンの持っている「弱点・抵抗力・特殊能力・その他の効果」に関係なく ``damage`` ダメージ（v0.92。ヤミカラス（neo1-055）の
+    「だましうち」。kyuura の印刷の文面。docs 7 章）。ダメージの目安の数字はない。
+
+    - 要素は v0.89 の ``ChooseTarget`` → ``TargetDamage(defender_effects=False, ignore_scope=IGNORE_HELD)``。説明が「そのポケモンの持っている」と書くので、除くのは受けるポケモン
+      自身の持っている効果（弱点・抵抗力・ついているカード・持続する効果・自分の特殊能力・「とうめい」など）だけ。持ち主の場のほかのポケモン・ワザを使う側・スタジアム・プレイヤーの
+      効果は除かない
+    - 「持っている」と書かない v0.89 の ``ChooseOpponentPokemonDamageIgnoringEffects``（ブラッキー。除く範囲が決まらず FA1）と別の型。FA1 の判定は付けない"""
+
+    damage: int
+    implementation_id = "choose_opponent_pokemon_damage_ignoring_held_effects"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.damage, "ダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の場のポケモンを選び、そのポケモンの持っている効果に関係なくダメージを与えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (FEINT_ATTACK_HELD_TEXT.format(damage=self.damage),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return target_decision_problems(state, use, decision, side=TARGET_SIDE_OPPONENT, scope=TARGET_IN_PLAY)
+
+
+DARK_WAVE_TEXT = "次の相手の番の終わりまで、お互いの場にいるすべてのポケモンは、特殊能力を使うことができず、それらの力も消える。"
+DARK_WAVE_SCOPE_CODE = "UNRESOLVED_DARK_WAVE_NEW_POKEMON"
+DARK_WAVE_SCOPE_REASON = (
+    "ナツメのゲンガーの「やみのはどう」（「次の相手の番の終わりまで、お互いの場にいるすべてのポケモンは、特殊能力を使うことができず、それらの力も消える」）の効果がはたらいている間に、"
+    "特殊能力を持つポケモンを場に出す・進化させる・退化させるとき、そのポケモンも止まるのか（ワザを使った時点で場にいたポケモンだけか）は、印刷の文面・kyuura の記録から決められないので"
+    "扱わない（DW1。まきちらせ!ベトベトガスの GG1・ふしぎなガスの MG1 とは別のカードの問い）")
+DARK_WAVE_PROTECTED_CODE = "UNRESOLVED_DARK_WAVE_PROTECTED_POKEMON"
+DARK_WAVE_PROTECTED_REASON = (
+    "ナツメのゲンガーの「やみのはどう」の「お互いの場にいるすべてのポケモン」に、相手のワザの効果を受けないポケモン（「ワザをうけない」状態・［オーロラヴェール］の控え・エフェクトガード・"
+    "［クリスタルボディ］・「とうめい」など）がいるとき、そのポケモンの特殊能力も止まるのかは、印刷の文面・kyuura の記録から決められないので扱わない（DW2。ふしぎなガスの MG2 とは別の"
+    "カードの問い）")
+DARK_WAVE_KNOCKED_OUT_CODE = "UNRESOLVED_DARK_WAVE_KNOCKED_OUT_POWER"
+DARK_WAVE_KNOCKED_OUT_REASON = (
+    "このワザで HP 以上になったポケモン（きぜつの判定の前）が、きぜつの判定・きぜつのあとに使える特殊能力（［ファイナルビーム］・ふしちょうなど）を持つとき、そのポケモンも「やみのはどう」の"
+    "「お互いの場にいるすべてのポケモン」として特殊能力が止まるのか（処理の対象がいないので受けないのか。p.309）は、印刷の文面・kyuura の記録から決められないので扱わない（DW3。こんじょうは"
+    "既存の G37）")
+
+
+@dataclass(frozen=True)
+class DamageThenFieldPowerSuppression(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。次の相手の番の終わりまで、お互いの場にいるすべてのポケモンは、特殊能力を使うことができず、それらの力も消える（v0.92。
+    ナツメのゲンガー（GD6-008）の「やみのはどう」。kyuura の印刷の文面。docs 8 章）。
+
+    - 要素は ``Damage(OPP)`` → ``FieldPowerSuppression``。ダメージの時点ではまだ特殊能力ははたらく（受けるときの特殊能力・ダメージを受けたときの反応・［にげこむ］は、ダメージの要素の
+      あと・効果の要素の前に今までどおり処理する）。効果の要素で、プレイヤーに与える期限のある効果（``state.TrainerTurnEffect`` の種類 ``ATTACK_FIELD_POWER_SUPPRESSION``。ワザを
+      使ったプレイヤー・実際にワザを使ったポケモン（カードと場の番号）・ワザの出どころ（カード id と位置）・消える番は与えた番 + 1）を加える
+    - 止める範囲・問い合わせは ``continuous.power_suppressed``（宣言して使う特殊能力・常にはたらく・自動的にはたらく特殊能力。かがくへんかガスも）。オールクリア（ワザの処理のあとに消える）
+      の記録は使わない。発生源が場をはなれても消えない
+    - 決められない場面: 期間中に特殊能力を持つポケモンを場に出す・進化・退化（DW1）、相手の場のワザの効果を受けないポケモン（DW2）、このワザで HP 以上になったポケモンのこんじょう（G37）・
+      きぜつの時の特殊能力（DW3）。始まりで決められない姿・［ずらかる］の力がもどる（``attack_state_stop_after``）、終わりで受け付けられない状態（番の終わりの ``state_stop_after``）は止める"""
+
+    implementation_id = "damage_then_field_power_suppression"
+    opponent_effect_elements = (POWER_LOCK_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "ダメージのあとおたがいの場の特殊能力を止めるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (DARK_WAVE_TEXT,))
+
+    def field_effect_terms(self) -> tuple[str, int]:
+        return (ATTACK_FIELD_POWER_SUPPRESSION, 1)
+
+
+METAL_PINCER_TEXT = "「うら」が出るまでコインを投げつづけ、その間に出た「おもて」の数×{per}のダメージを追加する。"
+
+
+@dataclass(frozen=True)
+class CoinsUntilTailsBonusDamage(AttackEffect):
+    """ダメージの目安の数字（``base``）に、「うら」が出るまで投げ続けたコインの「おもて」の数 × ``per`` を追加する（v0.92。ハッサム（PRN-025）の「メタルニッパー」。kyuura の印刷の
+    文面。docs 9 章）。基本となるダメージは ``base + per × おもての数``（1 枚目が「うら」でも ``base``）。
+
+    - 要素は ``Damage(OPP, HeadsUntilTails(per, fixed=base))``。v0.64 の ``CoinsUntilTailsDamage``（目安が「×」で ``per × おもての数``）とは別の型で、``per`` の倍数に読み替えない。最後に
+      最終ダメージへ足さない（p.321 の 1 段階の値）
+    - 実際の対戦では「うら」が出るまで 1 枚ずつ投げる（上限なし）。先読みは「おもて」の数の有限の組（``resolution.unbounded``。実際のダメージ・組を分けるキー・有限の境界を同じ式
+      ``HeadsUntilTails.damage_for`` で求める）の代表だけを試し、代表の値を実際のログ・乱数・履歴に使わない。v0.13 の止める関数は使えない（``damage_profile`` は候補を並べられない）"""
+
+    base: int
+    per: int
+    implementation_id = "coins_until_tails_bonus_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.base, "ダメージの目安の数字")
+        _positive_tens(self.per, "「おもて」1 枚あたりのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "「うら」が出るまで投げたコインのダメージを目安に追加するワザ"
+        problems = _check_form(attack, what, damage="modified", modifier="+")
+        if attack.damage != self.base:
+            problems.append(f"ダメージの目安の数字 {attack.damage!r} と、登録した目安 {self.base} が違う")
+        return problems + _check_exact_text(attack, what, (METAL_PINCER_TEXT.format(per=self.per),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        raise NotImplementedError(f"{self.implementation_id}: 「おもて」の数に上限がないので、基本となるダメージの候補を並べられない（先読みは resolution.unbounded の組を使う）")
+
+
+def attack_field_power_suppression_entry_check(state: GameState, card: int, how: str) -> None:
+    """v0.92（DW1）: やみのはどうの効果がはたらいている間に、特殊能力を持つカード ``card`` のポケモンを場に出す・進化させる・退化させるなら止める（``goop_gas_entry_check`` が呼ぶ。
+    状態を変える前）。"""
+    from .continuous import attack_field_power_suppressions
+
+    records = attack_field_power_suppressions(state)
+    definition = state.in_play_def(card)
+    if records and definition.powers:
+        raise UnsupportedError(DARK_WAVE_SCOPE_CODE, f"特殊能力「{definition.powers[0].name_ja}」を持つカード {card}（{definition.name_ja}）を{_GOOP_GAS_HOW[how]}"
+                               f"（ワザ {records[0].card_id} の効果がはたらいている）: {DARK_WAVE_SCOPE_REASON}")
+
+
+MEAN_LOOK_SOURCE_FORM_CODE = "UNRESOLVED_MEAN_LOOK_SOURCE_EVOLVED"
+MEAN_LOOK_SOURCE_FORM_REASON = (
+    "ヤミカラスの「くろいまなざし」（「以後、このワザを受けた相手は、このカードがバトル場にいるかぎり、「にげる」ことができない。(自分か相手がバトル場をはなれたとき、この効果は"
+    "消える)」）の効果を与えたポケモンが進化・退化したとき、進化カードの下になった（または上の進化カードをはがした）「このカード」が「バトル場にいる」ことになるのか（進化したポケモンは"
+    "別のポケモン。p.310）は、印刷の文面・kyuura の記録から決められないので扱わない（ML1。バトル場をはなれていないので効果は消さない。ハッサムなどの「次の相手の番」の SG1 の型は"
+    "v0.40 のまま）")
+
+
+def lock_source_form_check(state: GameState, owner: int, target: PokemonInPlay, *, how: str) -> None:
+    """v0.92（ML1）: プレイヤー ``owner`` の場のポケモン ``target`` を進化・退化させる前に、``target`` が「このカードがバトル場にいるかぎり」の期間を明示した効果（``while_source_active``。
+    くろいまなざし）の発生源なら止める（``evolution.place_evolution_card``・``devolve`` が、まきちらせ!ベトベトガスの GG1 と同じ時点（状態を変える前）に呼ぶ）。"""
+    from .persistent import source_bound_effects
+
+    found = source_bound_effects(state, owner, target)
+    if found:
+        raise UnsupportedError(MEAN_LOOK_SOURCE_FORM_CODE, f"ポケモン {target.pokemon_id} を{_GOOP_GAS_HOW[how]}（{found[0].kind} の発生源）: {MEAN_LOOK_SOURCE_FORM_REASON}")
+
+
+LEER_ON_HEADS_HASSAM_TEXT = LOCK_WHILE_SOURCE_ACTIVE_ON_HEADS_TEXTS[1]
+SHADOW_BIND_TEXT = "このワザを受けた相手は、次の相手の番に「にげる」ことができない。"
+
+# v0.92 の 8 枚のポケモンのワザの登録（16）。同じゲーム用データの組はない
+V0_92_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # イトマル（neo1-004）
+    AttackKey("neo1-004", 0): _printed(CoinAttackAndRetreatLock(), "こわいかお", SCARY_FACE_TEXT),
+    AttackKey("neo1-004", 1): _printed(ParalyzeOnHeads(), "いとをはく", PARALYZE_HEADS_TEXT),
+    # アリアドス（neo1-011。イトマルから進化）
+    AttackKey("neo1-011", 0): _printed(PeriodLockAttack(LOCK_RETREAT, True, 0, None), "クモのす", SPIDER_WEB_TEXT),
+    AttackKey("neo1-011", 1): _printed(DamageDrainThenPoison(), "きゅうけつどく", POISON_BITE_TEXTS[0]),
+    # イワーク（neo1-050）
+    AttackKey("neo1-050", 0): _printed(ReceivedAttackDamageBonusAttack(20, 1, 2), "いやなおと", SCREECH_TEXTS[(20, 1, 2)][0]),
+    AttackKey("neo1-050", 1): _printed(DamagePlusOwnCounters(10), "いかり", "自分にのっているダメージカウンターの数×10のダメージを追加する。"),
+    # ヤミカラス（neo1-055）
+    AttackKey("neo1-055", 0): _printed(PeriodLockAttack(LOCK_RETREAT, False, 0, None, True, (SOURCE_LEAVES_ACTIVE,)), "くろいまなざし", MEAN_LOOK_TEXT),
+    AttackKey("neo1-055", 1): _printed(ChooseOpponentPokemonDamageIgnoringHeldEffects(20), "だましうち", FEINT_ATTACK_HELD_TEXT.format(damage=20)),
+    # ゴルバット（neo3-004。ズバットから進化）
+    AttackKey("neo3-004", 0): _printed(ReceivedAttackDamageBonusAttack(20, 0, 2), "いやなおと", SCREECH_TEXTS[(20, 0, 2)][0]),
+    AttackKey("neo3-004", 1): _printed(DamageDrainThenPoison(), "きゅうけつどく", POISON_BITE_TEXTS[1]),
+    # ヨーギラス（neo4-073）
+    AttackKey("neo4-073", 0): _printed(PeriodLockAttack(LOCK_ATTACK, True, 1, 1, False, (SOURCE_LEAVES_ACTIVE,)), "にらみつける", LEER_UNTIL_LEAVE_TEXT),
+    AttackKey("neo4-073", 1): AttackEntry(DAMAGE_ONLY, "いわおとし"),  # 説明文のないワザ（文面・出典を持たない）
+    # ナツメのゲンガー（GD6-008。ナツメのゴーストから進化）
+    AttackKey("GD6-008", 0): _printed(DamageThenFieldPowerSuppression(), "やみのはどう", DARK_WAVE_TEXT),
+    AttackKey("GD6-008", 1): _printed(DamageThenRetreatLock(), "かげしばり", SHADOW_BIND_TEXT),
+    # ハッサム（PRN-025。ストライクから進化）
+    AttackKey("PRN-025", 0): _printed(AttackLockWhileSourceActiveOnHeads(), "にらみつける", LEER_ON_HEADS_HASSAM_TEXT),
+    AttackKey("PRN-025", 1): _printed(CoinsUntilTailsBonusDamage(30, 10), "メタルニッパー", METAL_PINCER_TEXT.format(per=10)),
+})
+
+DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_92_ATTACKS)

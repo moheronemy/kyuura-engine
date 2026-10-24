@@ -27,6 +27,9 @@ from kyuura_engine.effects import GOOP_GAS_SCOPE_CODE, blaine_effects, energy_at
 from kyuura_engine.effects import retreat_trap_powers, scram_slots  # v0.61
 from kyuura_engine.effects import POKEMON_TOWER_TRAINER_CODE, discard_to_hand_suppressor  # v0.74
 from kyuura_engine.effects import STRANGE_GAS_SCOPE_CODE, retreat_guards, strange_gas_effects  # v0.87
+from kyuura_engine.continuous import attack_field_power_suppressions  # v0.92
+from kyuura_engine.effects import DARK_WAVE_SCOPE_CODE, MEAN_LOOK_SOURCE_FORM_CODE  # v0.92
+from kyuura_engine.persistent import source_bound_effects  # v0.92
 from kyuura_engine.persistent import cannot_retreat, powers_use_prevented
 from tests.helpers import GIOVANNIS_MACHAMP, HAUNTER, MACHAMP, MUK, ROCKETS_MOLTRES
 from tests.test_alakazam_games_v0_7 import POWER_REJECTIONS
@@ -167,6 +170,23 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                     card = getattr(command, "card", None)
                     turn_tried.add(("max_hp_drop_card", card) if card is not None and card in state.players[command.player].hand
                                    else ("max_hp_drop_command", command))
+                    continue
+                if error.code in (DARK_WAVE_SCOPE_CODE, "POWER_SUPPRESSED") and attack_field_power_suppressions(state) and not isinstance(command, UseAttack):
+                    # v0.92: ナツメのゲンガーの「やみのはどう」の効果がはたらいている間に、特殊能力を持つポケモンを場に出す・進化させる（DW1）・特殊能力を使う（止まっている）。
+                    # 場から確かめる（効果がはたらいている）。同じカード・操作を繰り返さない
+                    kind = type(command).__name__
+                    observed[f"stopped_{kind}_{error.code}"] += 1
+                    card = getattr(command, "card", None)
+                    turn_tried.add(("max_hp_drop_card", card) if card is not None and card in state.players[command.player].hand
+                                   else ("max_hp_drop_command", command))
+                    continue
+                if error.code == MEAN_LOOK_SOURCE_FORM_CODE and getattr(command, "target", None) is not None:
+                    # v0.92: くろいまなざしの発生源（まねた場合はまねたポケモン）を進化・退化させる（ML1）。場から確かめる（その場のポケモンが発生源の効果がある）
+                    found = state.find_pokemon(command.target)
+                    if found is None or not source_bound_effects(state, found[0], found[1]):
+                        raise AssertionError(f"くろいまなざしの発生源でないのに {error.code}: {command}")
+                    observed[f"stopped_{type(command).__name__}_{error.code}"] += 1
+                    turn_tried.add(("max_hp_drop_card", command.card))
                     continue
                 if error.code in (STRANGE_GAS_SCOPE_CODE, "POWER_SUPPRESSED") and strange_gas_effects(state, command.player) \
                         and not isinstance(command, UseAttack):

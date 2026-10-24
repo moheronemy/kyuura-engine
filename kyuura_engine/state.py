@@ -1117,6 +1117,141 @@ class BenchProtection:
     bench_ok: ClassVar[bool] = True  # ベンチのポケモンが受ける
     from_other: ClassVar[bool] = True  # 受けるポケモンは効果を与えたポケモンとは別
 
+
+# v0.92（docs/power-suppression-lasting-locks-v0.92.md 4 章）: 期間と消える契機を明示した持続する効果。説明に明記された消える契機の値（``ends_on``）
+SOURCE_LEAVES_ACTIVE = "source_leaves_active"  # 効果を与えたポケモン（発生源）がバトル場をはなれたとき、この効果は消える（はなれた時点で消し、もどっても復活しない）
+LIFETIME_ENDS_ON = (SOURCE_LEAVES_ACTIVE,)
+
+
+def _check_period(effect) -> None:
+    """v0.92: 期間（``created_turn`` ≤ ``active_turn`` ≤ ``end_turn``。``end_turn`` が None なら期限なし）と、発生源・消える契機の値の確かめ。"""
+    ints = (effect.source_card, effect.source_player, effect.created_turn, effect.active_turn, effect.source_pokemon)
+    if any(type(value) is not int for value in ints) or (effect.end_turn is not None and type(effect.end_turn) is not int):
+        raise ValueError(f"期間のある持続する効果の項目が整数ではない（{effect!r}）")
+    if not effect.created_turn <= effect.active_turn or (effect.end_turn is not None and effect.end_turn < effect.active_turn):
+        raise ValueError(f"期間のある持続する効果の番が、与えた番 ≤ はたらき始める番 ≤ 最後の番 ではない（{effect!r}）")
+    if type(effect.while_source_active) is not bool or type(effect.ends_on) is not tuple or any(e not in LIFETIME_ENDS_ON for e in effect.ends_on) \
+            or len(set(effect.ends_on)) != len(effect.ends_on):
+        raise ValueError(f"期間のある持続する効果の発生源の条件・消える契機が正しくない（{effect!r}）")
+
+
+@dataclass(frozen=True)
+class PeriodRetreatLock:
+    """ワザによる「持続する効果」（v0.92。docs/power-suppression-lasting-locks-v0.92.md 4 章）のうち、期間と消える契機を明示した「「にげる」ことができない」効果。
+    アリアドス（neo1-011）の「クモのす」（「以後、このワザを受けた相手は、「にげる」ことができない。(相手がバトル場をはなれたとき、この効果は消える。)」）と、ヤミカラス
+    （neo1-055）の「くろいまなざし」（「以後、このワザを受けた相手は、このカードがバトル場にいるかぎり、「にげる」ことができない。(自分か相手がバトル場をはなれたとき、この効果は
+    消える)」）（kyuura の印刷の文面）。
+
+    - 相手に与える効果（``on_opponent``）。``source_card``・``source_player`` は効果を与えたワザを使ったポケモンのいちばん上のカードとそのプレイヤー（相手のワザとして使ったときは
+      使ったポケモン）。``source_pokemon`` はそのポケモンの場の番号（個体。同じ位置に出た別のポケモンを指さない）
+    - 期間: ``active_turn`` からはたらき、``end_turn`` の番の終わりに消える。``end_turn`` が None なら期限で消えない（「以後」。``lasting``）。v0.36 の ``CannotRetreat``（次の
+      相手の番だけ）と別の型（種類 ``kind`` も分ける。v0.91 までのエンジンは知らない種類として読まない）
+    - ``while_source_active``: 発生源が持ち主のバトル場にいる間だけはたらく（「このカードがバトル場にいるかぎり」。問い合わせのとき確かめる）
+    - ``ends_on``: 説明に明記された消える契機。``SOURCE_LEAVES_ACTIVE`` は発生源がバトル場をはなれた時点で消す（``persistent.remove_source_left_effects``）。書かれていない効果は、
+      発生源のきぜつ・移動では消さない（p.322）。受けたポケモンがバトル場をはなれる・進化・退化・きぜつで消えるのは、ほかの持続する効果と同じ一般の規定
+    - 「にげる」だけを止める（入れ替え・バトル場からのほかの移動は止めない。p.325）。宣言の拒否はエネルギーのトラッシュ・こんらんのコインの前（``engine._retreat``）
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    end_turn: int | None
+    source_pokemon: int
+    while_source_active: bool = False
+    ends_on: tuple[str, ...] = ()
+    kind: ClassVar[str] = "period_retreat_lock"
+    on_opponent: ClassVar[bool] = True
+
+    def __post_init__(self) -> None:
+        _check_period(self)
+
+    @property
+    def turns_until_active(self) -> int:
+        """はたらき始める番は与えた番の何番あとか（型ではなく効果ごとの値。不変条件は登録の値と照らす）。"""
+        return self.active_turn - self.created_turn
+
+    @property
+    def lasting(self) -> bool:
+        """期限で消えないか（``end_turn`` が None。「以後」）。"""
+        return self.end_turn is None
+
+
+@dataclass(frozen=True)
+class PeriodAttackLock:
+    """ワザによる「持続する効果」（v0.92。4 章）のうち、期間と消える契機を明示した「ワザを使えない」効果。ヨーギラス（neo4-073）の「にらみつける」（「コインを投げて「おもて」なら、
+    次の相手の番、このワザを受けた相手はワザを使うことができない。(このカード、またはこのワザを受けた相手がバトル場をはなれたとき、この効果は消える。)」。kyuura の印刷の文面）。
+
+    項目と消える契機の意味は ``PeriodRetreatLock`` と同じ。止めるのは受けたポケモンのワザ（すべて。``checks.attack_request`` の ``ATTACK_PREVENTED``）。v0.31 の ``CannotAttack``
+    （しっぽをふる）・v0.40 の ``CannotAttackWhileSourceActive``（「このカードがバトル場にいる限り」を問い合わせのときだけ確かめ、同じ番にもどる場合は SG1）とは別の型で、
+    説明が書く「はなれたとき、この効果は消える」を、はなれた時点で消す（もどっても復活しない）。"""
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    end_turn: int | None
+    source_pokemon: int
+    while_source_active: bool = False
+    ends_on: tuple[str, ...] = ()
+    kind: ClassVar[str] = "period_attack_lock"
+    on_opponent: ClassVar[bool] = True
+
+    def __post_init__(self) -> None:
+        _check_period(self)
+
+    @property
+    def turns_until_active(self) -> int:
+        return self.active_turn - self.created_turn
+
+    @property
+    def lasting(self) -> bool:
+        return self.end_turn is None
+
+
+@dataclass(frozen=True)
+class ReceivedAttackDamageBonus:
+    """ワザによる「持続する効果」（v0.92。6 章）のうち、受けたポケモンが受けるワザによるダメージを増やす効果。イワーク（neo1-050）の「いやなおと」（「次の相手の番と、次の自分の
+    番、このワザを受けた相手が、ワザによるダメージを受けるとき、そのダメージは「+20」される。」）と、ゴルバット（neo3-004）の「いやなおと」（「次の自分の番が終わるまで、このワザを
+    受けた相手がワザによるダメージを受けるたび、そのダメージは「+20」される。」）（kyuura の印刷の文面）。
+
+    - 相手に与える効果（``on_opponent``）。期間の項目は ``PeriodRetreatLock`` と同じで、文面ごとに違う: イワークは次の相手の番（与えた番 + 1）から次の自分の番（与えた番 + 2）、
+      ゴルバットは与えた番から次の自分の番（与えた番 + 2）の終わりまで。同じ全文として扱わない（登録の ``period_terms`` と照らす）
+    - はたらき方: 受けたポケモンがワザによるダメージ（相手のワザ・自分のワザの自分へのダメージ・返す効果のダメージ。GR-2000-P321-ATTACK-DAMAGE）を受けるときの、p.321 の 8 段階
+      （ワザを受けるポケモンの持っている「ダメージを変更する効果」）の ``amount`` の加算（``effects.attack_damage_modifiers``）。2 段階までで 0 以下なら計算を終えるので加えない。
+      基本となるダメージ・ワザを使う側の効果・ダメージカウンターの直接の配置ではない。同じ段階の加算でない効果と順番で結果が変わるなら v0.35 の順番の決定
+    - 発生源がはなれても消えない（説明に書かれていない）。``ends_on`` は空、``while_source_active`` は偽
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    end_turn: int | None
+    source_pokemon: int
+    amount: int
+    while_source_active: bool = False
+    ends_on: tuple[str, ...] = ()
+    kind: ClassVar[str] = "received_attack_damage_bonus"
+    on_opponent: ClassVar[bool] = True
+
+    def __post_init__(self) -> None:
+        _check_period(self)
+        if type(self.amount) is not int or self.amount <= 0 or self.amount % 10 or self.end_turn is None:
+            raise ValueError(f"受けるワザのダメージを増やす効果の数は 10 の倍数の正の数で、期限がある（{self!r}）")
+
+    @property
+    def turns_until_active(self) -> int:
+        return self.active_turn - self.created_turn
+
+    @property
+    def lasting(self) -> bool:
+        return False
+
+
+# v0.92: 期間と消える契機を明示した持続する効果の型（``persistent`` の期間・消える契機の問い合わせ、書き出し、不変条件が共通に読む）
+PERIOD_EFFECT_TYPES = (PeriodRetreatLock, PeriodAttackLock, ReceivedAttackDamageBonus)
+
 # ワザによる持続する効果の型（v0.4b。v0.12 で Retaliation、v0.27 で NextTurnAttackDamage、v0.31 で DestinyBond・AttackBarrier・DamageReduction・
 # CannotAttack、v0.34 で ReducedDamageToSource、v0.35 で CannotUseOwnAttack・CannotUseAttack、v0.36 で AttackCoinCheck・CannotRetreat、v0.40 で
 # CannotAttackWhileSourceActive、v0.45 で ZeroDamageBelow、v0.46 で HalvedDamage、v0.48 で WeaknessChange・ResistanceChange・MaxHpSet を加えた）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
@@ -1130,7 +1265,8 @@ PERSISTENT_EFFECT_TYPES = (PreventDamage, PreventAttackDamage, Retaliation, Next
                            # v0.84: きらめきタッチ・こおりのはしら・パルスガード・ひかりのはどう
                            StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard,
                            StatusImmunityNextTurn,  # v0.85: しんぴのこな
-                           PowersStopped, BenchProtection)  # v0.86: スタンウェーブ・ほのおのまもり
+                           PowersStopped, BenchProtection,  # v0.86: スタンウェーブ・ほのおのまもり
+                           *PERIOD_EFFECT_TYPES)  # v0.92: クモのす・くろいまなざし・にらみつける（ヨーギラス）・いやなおと
 
 
 @dataclass(frozen=True)
@@ -1174,8 +1310,13 @@ EVOLUTION_BAN = "evolution_ban"
 # ``player`` はワザを使ったプレイヤー、``source_card`` はワザを使ったポケモンのいちばん上のカード、``card_id``・``attack_index`` は処理しているワザ。``created_turn`` と
 # ``expires_turn`` は使った番（番の終わりではなく、ワザの処理のあと・きぜつの判定の前に消す。``resolution.flow.end_attack_power_suppression``）
 ATTACK_POWER_SUPPRESSION = "attack_power_suppression"
+# v0.92 ナツメのゲンガー（GD6-008）の「やみのはどう」（ワザの効果）: 「次の相手の番の終わりまで、お互いの場にいるすべてのポケモンは、特殊能力を使うことができず、それらの力も消える。」。
+# ``player`` はワザを使ったプレイヤー、``source_card`` はワザを使ったポケモン（実際にワザを使ったもの。相手のワザとして使ったときは使ったポケモン）のいちばん上のカード、``pokemon_id`` は
+# その場の番号、``card_id``・``attack_index`` はワザを印刷したカードとワザの位置（ワザの出どころ）。``expires_turn`` は与えた番 + 1。オールクリアの ``ATTACK_POWER_SUPPRESSION``（ワザの
+# 処理のあとに消える）とは期限が違う別の種類。まきちらせ!ベトベトガス（``POWER_SUPPRESSION``。トレーナー）とも出どころが違う
+ATTACK_FIELD_POWER_SUPPRESSION = "attack_field_power_suppression"
 TRAINER_TURN_EFFECT_KINDS = (ATTACK_DAMAGE_BONUS, POISON_ON_ATTACK_DAMAGE, BENCH_ATTACK_DAMAGE_PREVENTION, POWER_SUPPRESSION, FIRE_DOUBLE_ATTACH, EVOLUTION_BAN,
-                             OPPONENT_POWER_SUPPRESSION, ATTACK_POWER_SUPPRESSION)
+                             OPPONENT_POWER_SUPPRESSION, ATTACK_POWER_SUPPRESSION, ATTACK_FIELD_POWER_SUPPRESSION)
 
 
 @dataclass(frozen=True)
@@ -1216,7 +1357,8 @@ class TrainerTurnEffect:
     card_id: str
     created_turn: int
     expires_turn: int
-    # v0.80: 効果を受ける場のポケモンの番号（``EVOLUTION_BAN`` だけ。退化スプレーHYPER で退化させたポケモン）。ほかの種類は None（書き出しの形は v0.79 と同じ）
+    # v0.80: 効果を受ける場のポケモンの番号（``EVOLUTION_BAN`` だけ。退化スプレーHYPER で退化させたポケモン）。ほかの種類は None（書き出しの形は v0.79 と同じ）。
+    # v0.92: ``ATTACK_FIELD_POWER_SUPPRESSION``（やみのはどう）では、ワザを使ったポケモン（実際の実行者）の場の番号
     pokemon_id: int | None = None
     # v0.87: ワザで与えた効果（``OPPONENT_POWER_SUPPRESSION``。ドガースの「ふしぎなガス」）のワザの位置（``card_id`` のカードのワザ）。トレーナーの効果は None（書き出しの形は v0.86 と同じ）
     attack_index: int | None = None

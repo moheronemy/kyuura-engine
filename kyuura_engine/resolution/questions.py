@@ -390,6 +390,13 @@ QUESTIONS: dict[str, Question] = {
         Question("strange_gas_protected", "UNRESOLVED_STRANGE_GAS_PROTECTED_POKEMON", ("MG2",), 10,
                  "ドガースの「ふしぎなガス」の「相手の場にいるポケモン」に、ワザの効果を受けないポケモン（「ワザをうけない」状態・［オーロラヴェール］の控え・エフェクトガード・"
                  "［クリスタルボディ］・「とうめい」など）がいるとき、そのポケモンの特殊能力も止まるのかは、印刷の文面・kyuura の記録から決められない"),
+        # v0.92（docs/power-suppression-lasting-locks-v0.92.md 8 章）: ナツメのゲンガーの「やみのはどう」（MG2 とは別のカードの問い。新しく場に出すポケモンの DW1 は登場時のガード）
+        Question("dark_wave_protected", "UNRESOLVED_DARK_WAVE_PROTECTED_POKEMON", ("DW2",), 10,
+                 "ナツメのゲンガーの「やみのはどう」の「お互いの場にいるすべてのポケモン」に、相手のワザの効果を受けないポケモン（「ワザをうけない」状態・［オーロラヴェール］の控え・"
+                 "エフェクトガード・［クリスタルボディ］・「とうめい」など）がいるとき、そのポケモンの特殊能力も止まるのかは、印刷の文面・kyuura の記録から決められない"),
+        Question("dark_wave_knocked_out_power", "UNRESOLVED_DARK_WAVE_KNOCKED_OUT_POWER", ("DW3",), 10,
+                 "「やみのはどう」で HP 以上になったポケモン（きぜつの判定の前）の、きぜつの判定・きぜつのあとに使える特殊能力（［ファイナルビーム］・ふしちょうなど）も、このワザの"
+                 "「お互いの場にいるすべてのポケモン」として止まるのか（処理の対象がいないので受けないのか。p.309）は、印刷の文面・kyuura の記録から決められない（こんじょうは G37）"),
         # ルールの問いではなく、エンジンの未対応（コードは UNSUPPORTED_…。研究の対応表の停止コードには入れない）
         Question("energy_reaction_during_attack", "UNSUPPORTED_ENERGY_REACTION_DURING_ATTACK", ("v0.86",), 10,
                  "ワザの効果で手札からエネルギーカードをつけたときにはたらく相手の［かんでん］・つけたポケモンの［いなびかり］を、ワザの処理の途中で処理する続きは"

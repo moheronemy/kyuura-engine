@@ -1401,6 +1401,15 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DamageThenMarkedPokemonDamage,
     _effects.ChooseOpponentPokemonReplaceColorMarker,
     _effects.AllClear,
+    # v0.92（docs/power-suppression-lasting-locks-v0.92.md 4〜9 章。期間と消える契機を明示した禁止・受けるダメージの +20・回復のあとのどく・持っている効果だけを除くだましうち・
+    # おたがいの場の特殊能力の抑止・固定の値を加える「うら」が出るまでのコイン）
+    _effects.CoinAttackAndRetreatLock,
+    _effects.PeriodLockAttack,
+    _effects.ReceivedAttackDamageBonusAttack,
+    _effects.DamageDrainThenPoison,
+    _effects.ChooseOpponentPokemonDamageIgnoringHeldEffects,
+    _effects.DamageThenFieldPowerSuppression,
+    _effects.CoinsUntilTailsBonusDamage,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -2257,6 +2266,12 @@ V0_90_CARDS = V0_90_POKEMON  # 写しの組 pool_v0_90 の並び
 QUILAVA_NEO1, ELECTABUZZ_ES2, POLYGON_PRN, CYNDAQUIL_NEO4 = "neo1-020", "ES2-017", "PRN-023", "neo4-016"  # マグマラシ（やきこがす）・エレブー（ひらいしん）・ポリゴン（オールクリア）・ヒノアラシ（えんまく）
 V0_91_POKEMON = (QUILAVA_NEO1, ELECTABUZZ_ES2, POLYGON_PRN, CYNDAQUIL_NEO4)
 V0_91_CARDS = V0_91_POKEMON  # 写しの組 pool_v0_91 の並び
+
+# v0.92（docs/power-suppression-lasting-locks-v0.92.md）: 能力の消去・続く制限のポケモン 8 枚（同じ名前の別の版と取りちがえない）
+SPINARAK_NEO1, ARIADOS_NEO1, ONIX_NEO1, MURKROW_NEO1 = "neo1-004", "neo1-011", "neo1-050", "neo1-055"  # イトマル（こわいかお）・アリアドス（クモのす・きゅうけつどく）・イワーク（いやなおと）・ヤミカラス（くろいまなざし）
+GOLBAT_NEO3, LARVITAR_NEO4, SABRINAS_GENGAR_GD6, SCIZOR_PRN = "neo3-004", "neo4-073", "GD6-008", "PRN-025"  # ゴルバット（いやなおと・きゅうけつどく）・ヨーギラス（にらみつける）・ナツメのゲンガー（やみのはどう）・ハッサム（メタルニッパー）
+V0_92_POKEMON = (SPINARAK_NEO1, ARIADOS_NEO1, ONIX_NEO1, MURKROW_NEO1, GOLBAT_NEO3, LARVITAR_NEO4, SABRINAS_GENGAR_GD6, SCIZOR_PRN)
+V0_92_CARDS = V0_92_POKEMON  # 写しの組 pool_v0_92 の並び
 
 
 def _self_sleep_shape_only(attack):

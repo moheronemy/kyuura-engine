@@ -89,6 +89,7 @@ from tests.helpers import (
     with_coin_results,
 )
 from tests.log_audit import observation_problems, serialization_problems
+from tests.release_catalog import cards_after
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DOC = ROOT / "docs" / "darkness-metal-energy-v0.78.md"
@@ -591,7 +592,8 @@ class SecretPlanAndQuizTest(unittest.TestCase):
     def test_quiz_names(self):
         extract = read_extract()
         cards = {c["id"]: c for c in extract["cards"]}
-        earlier = {cards[c]["name"]["ja"] for c in cards if c not in V0_78_CARDS and c not in extract["pool_v0_79"] and cards[c]["category"] == "pokemon"}  # v0.79 で同じ名前のカードを加えた
+        later = cards_after(extract, "0.78")  # v0.79・v0.92 で同じ名前のカードを加えた（後の版の組を列挙しない。docs/testing.md）
+        earlier = {cards[c]["name"]["ja"] for c in cards if c not in V0_78_CARDS and c not in later and cards[c]["category"] == "pokemon"}
         new = sorted({cards[c]["name"]["ja"] for c in V0_78_POKEMON} - earlier)
         self.assertEqual(new, sorted(["ニューラ", "ハガネール", "デルビル", "ハッサム"]))
         state = build_test_state([{"active": "PMCG1-018"}, {"active": "PMCG1-018"}])

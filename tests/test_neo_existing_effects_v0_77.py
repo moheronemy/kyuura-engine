@@ -552,7 +552,8 @@ class SecretPlanAndQuizTest(unittest.TestCase):
     def test_quiz_names(self):
         extract = read_extract()
         cards = {c["id"]: c for c in extract["cards"]}
-        earlier = {cards[c]["name"]["ja"] for c in cards if c not in V0_77_CARDS and c not in extract["pool_v0_79"] and c not in extract["pool_v0_82"] and c not in extract["pool_v0_83"] and c not in extract["pool_v0_84"] and c not in extract["pool_v0_85"] and c not in extract["pool_v0_86"] and cards[c]["category"] == "pokemon"}  # v0.79・v0.82 で同じ名前のカードを加えた
+        later = cards_after(extract, "0.77")  # v0.79・v0.82〜v0.86・v0.92 で同じ名前のカードを加えた（後の版の組を列挙しない。docs/testing.md）
+        earlier = {cards[c]["name"]["ja"] for c in cards if c not in V0_77_CARDS and c not in later and cards[c]["category"] == "pokemon"}
         new = sorted({cards[c]["name"]["ja"] for c in V0_77_POKEMON} - earlier)
         # トゲピー・ノコッチ・ホーホーは拡張パック以外の商品のカードで前からある名前
         self.assertEqual(new, sorted(["マンタイン", "ヌオー", "キングドラ", "キリンリキ", "ウソッキー", "グライガー", "オタチ", "オドシシ", "オオタチ", "ウリムー",
