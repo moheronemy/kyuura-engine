@@ -30,6 +30,10 @@ from kyuura_engine.effects import STRANGE_GAS_SCOPE_CODE, retreat_guards, strang
 from kyuura_engine.continuous import attack_field_power_suppressions  # v0.92
 from kyuura_engine.effects import DARK_WAVE_SCOPE_CODE, MEAN_LOOK_SOURCE_FORM_CODE  # v0.92
 from kyuura_engine.persistent import source_bound_effects  # v0.92
+from kyuura_engine.engine import LEAVE_ACTIVE_PREVENTED  # v0.93
+from kyuura_engine.effects import (CLAMPING_JAW_SOURCE_DEVOLVED_CODE, JAW_CLAMP_SOURCE_EVOLVED_CODE, JAW_CLAMP_SOURCE_RETURNED_CODE,  # v0.93
+                                   LEAVE_LOCK_KNOCKOUT_CODE, LEAVE_LOCK_NO_EFFECT_CODE, LEAVE_LOCK_SCRAM_CODE)
+from kyuura_engine.state import PeriodAttackCoinCheck, PeriodLeaveLock  # v0.93
 from kyuura_engine.persistent import cannot_retreat, powers_use_prevented
 from tests.helpers import GIOVANNIS_MACHAMP, HAUNTER, MACHAMP, MUK, ROCKETS_MOLTRES
 from tests.test_alakazam_games_v0_7 import POWER_REJECTIONS
@@ -110,6 +114,17 @@ def v061_stop_expected(state, command, code) -> bool:
     return isinstance(command, PlayTrainer) and state.cards[command.card].card_id == "PMCG4-055"
 
 
+# v0.93（docs/active-leave-locks-v0.93.md）: 「バトル場をはなれられない」効果（にげる・すてるの拒否・AL1〜AL3）・くいつく（JC1・JC2）・かぶりつく（CJ1）で止まる・拒否する場面
+V093_LEAVE_CODES = (LEAVE_ACTIVE_PREVENTED, LEAVE_LOCK_KNOCKOUT_CODE, LEAVE_LOCK_NO_EFFECT_CODE, LEAVE_LOCK_SCRAM_CODE, JAW_CLAMP_SOURCE_RETURNED_CODE,
+                    JAW_CLAMP_SOURCE_EVOLVED_CODE, CLAMPING_JAW_SOURCE_DEVOLVED_CODE)
+
+
+def v093_lock_in_play(state) -> bool:
+    """v0.93: 場のポケモンが、はなれられない効果か期間を明示した手順 4 のコイン（かぶりつく）を受けている（止める理由を場から確かめる）。"""
+    return any(isinstance(effect, (PeriodLeaveLock, PeriodAttackCoinCheck)) for side in state.players for pokemon in side.in_play()
+               for effect in pokemon.persistent_effects)
+
+
 def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), extra_stop: dict[str, Callable] | None = None,
               double_ko_check: Callable | None = None, policy=None):
     """``decks``（2 つの 60 枚）・``seed`` の対戦を終わるまで進める。受け付けた操作の列と、拒否された操作・場面の観測を返す。
@@ -181,12 +196,26 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                                    else ("max_hp_drop_command", command))
                     continue
                 if error.code == MEAN_LOOK_SOURCE_FORM_CODE and getattr(command, "target", None) is not None:
-                    # v0.92: くろいまなざしの発生源（まねた場合はまねたポケモン）を進化・退化させる（ML1）。場から確かめる（その場のポケモンが発生源の効果がある）
+                    # v0.92: くろいまなざしの発生源（まねた場合はまねたポケモン）を進化・退化させる（ML2）。場から確かめる（その場のポケモンが発生源の効果がある）
                     found = state.find_pokemon(command.target)
                     if found is None or not source_bound_effects(state, found[0], found[1]):
                         raise AssertionError(f"くろいまなざしの発生源でないのに {error.code}: {command}")
                     observed[f"stopped_{type(command).__name__}_{error.code}"] += 1
                     turn_tried.add(("max_hp_drop_card", command.card))
+                    continue
+                if error.code in V093_LEAVE_CODES:
+                    # v0.93: 「バトル場をはなれられない」効果を受けたポケモンの「にげる」・すてる（LEAVE_ACTIVE_PREVENTED）、移動だけが効果の使用・選択・コイン（AL2）、きぜつ（AL1）、
+                    # ［ずらかる］（AL3）、くいつく・かぶりつくの発生源（JC1・JC2・CJ1）。場から確かめる（その効果を受けているポケモンがいる）。同じ操作を繰り返さない
+                    if not v093_lock_in_play(state):
+                        raise AssertionError(f"はなれられない効果・かぶりつくの効果がないのに {error.code}: {command}")
+                    if error.code == LEAVE_ACTIVE_PREVENTED and not any(isinstance(e, PeriodLeaveLock) for e in state.players[command.player].active.persistent_effects):
+                        raise AssertionError(f"バトル場のポケモンがはなれられない効果を受けていないのに {error.code}: {command}")
+                    kind = type(command).__name__
+                    observed[f"stopped_{kind}_{error.code}"] += 1
+                    turn_tried.add("retreat" if kind == "Retreat" else ("attack_index", command.attack_index) if kind == "UseAttack"
+                                   else ("max_hp_drop_card", command.card) if kind in ("PlayTrainer", "EvolvePokemon") else ("max_hp_drop_command", command))
+                    if kind == "UseAttack":
+                        turn_tried.add(error.code)
                     continue
                 if error.code in (STRANGE_GAS_SCOPE_CODE, "POWER_SUPPRESSED") and strange_gas_effects(state, command.player) \
                         and not isinstance(command, UseAttack):

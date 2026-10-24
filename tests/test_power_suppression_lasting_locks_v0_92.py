@@ -75,7 +75,7 @@ V092_ATTACKS = [AttackKey(c, i) for c in H.V0_92_POKEMON for i in range(len(load
 Z23 = "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE"
 G37 = "UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT"
 SG1 = "UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED"
-DW1, DW2, DW3, ML1 = E.DARK_WAVE_SCOPE_CODE, E.DARK_WAVE_PROTECTED_CODE, E.DARK_WAVE_KNOCKED_OUT_CODE, E.MEAN_LOOK_SOURCE_FORM_CODE
+DW1, DW2, DW3, ML2 = E.DARK_WAVE_SCOPE_CODE, E.DARK_WAVE_PROTECTED_CODE, E.DARK_WAVE_KNOCKED_OUT_CODE, E.MEAN_LOOK_SOURCE_FORM_CODE
 BELOW = {ARIADOS: SPINARAK, GOLBAT: ZUBAT, GENGAR: [SABRINAS_GASTLY, SABRINAS_HAUNTER], SCIZOR: SCYTHER}
 
 
@@ -548,8 +548,8 @@ class MeanLookTest(unittest.TestCase):
         switched = answer(chosen, (chosen.decision.options[0],))
         self.assertEqual(removed(chosen, switched), [("period_retreat_lock", "switch")])
 
-    def test_copied_source_is_the_copier_and_its_evolution_is_ml1(self):
-        """ゆびをふるでまねたくろいまなざしの発生源は、まねたピッピ。発生源の進化で「このカード」がバトル場にいることになるかは決まらない（ML1。状態を変える前）。"""
+    def test_copied_source_is_the_copier_and_its_evolution_is_ml2(self):
+        """ゆびをふるでまねたくろいまなざしの発生源は、まねたピッピ。発生源の進化で「このカード」がバトル場にいることになるかは決まらない（ML2。状態を変える前）。"""
         state = board(mon(H.CLEFAIRY, (R, R, R), played_turn=1), opponent=mon(MURKROW, (DK,)), hand=(H.CLEFABLE,))
         asked = declare(state, 1)
         self.assertEqual(asked.decision.kind, SELECT_ATTACK)
@@ -559,7 +559,7 @@ class MeanLookTest(unittest.TestCase):
         self.assertEqual(new_events(asked, done, "persistent_effect_added")[0]["effect"], f"{MURKROW}#0")
         audited(self, done)
         mine = end(done)
-        rejects(self, mine, EvolvePokemon(0, uid(mine, H.CLEFABLE), mine.players[0].active.pokemon_id), ML1)
+        rejects(self, mine, EvolvePokemon(0, uid(mine, H.CLEFABLE), mine.players[0].active.pokemon_id), ML2)
 
 
 class FeintAttackHeldTest(unittest.TestCase):
@@ -1009,7 +1009,7 @@ class DocumentTest(unittest.TestCase):
         text = DOC.read_text(encoding="utf-8")
         for card in H.V0_92_CARDS:
             self.assertIn(card, text)
-        for ruling, code in (("DW1", DW1), ("DW2", DW2), ("DW3", DW3), ("ML1", ML1)):
+        for ruling, code in (("DW1", DW1), ("DW2", DW2), ("DW3", DW3), ("ML2", ML2)):
             self.assertIn(ruling, text)
             self.assertIn(code, text)
         for word in ("1,127", "SOURCE_LEAVES_ACTIVE", "damage_for", "Z23", "G37", "SG1", "FA1", "POWER_SUPPRESSED"):

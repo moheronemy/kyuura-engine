@@ -397,6 +397,16 @@ QUESTIONS: dict[str, Question] = {
         Question("dark_wave_knocked_out_power", "UNRESOLVED_DARK_WAVE_KNOCKED_OUT_POWER", ("DW3",), 10,
                  "「やみのはどう」で HP 以上になったポケモン（きぜつの判定の前）の、きぜつの判定・きぜつのあとに使える特殊能力（［ファイナルビーム］・ふしちょうなど）も、このワザの"
                  "「お互いの場にいるすべてのポケモン」として止まるのか（処理の対象がいないので受けないのか。p.309）は、印刷の文面・kyuura の記録から決められない（こんじょうは G37）"),
+        # v0.93（docs/active-leave-locks-v0.93.md 10 章）: 「バトル場をはなれられない」効果
+        Question("leave_locked_coin", "UNRESOLVED_LEAVE_LOCK_NO_EFFECT", ("AL2",), 10,
+                 "「バトル場をはなれられない」効果を受けたポケモンをバトル場からはなれさせる部分だけを決めるコインを投げるか（その部分は起こらない）は、印刷の文面・kyuura の記録から"
+                 "決められない（投げるかどうかで乱数の続きが変わる。HC3 と同じ形の、別の原因の問い）"),
+        Question("leave_lock_knockout", "UNRESOLVED_LEAVE_LOCK_KNOCKOUT", ("AL1",), 40,
+                 "きぜつしたときを除くと書いていない「バトル場をはなれられない」効果（からまるいと・ねばるみつ）を受けたポケモンが、きぜつの処理でバトル場をはなれるのかは、"
+                 "印刷の文面・kyuura の記録から決められない（ほかのカードの括弧書きを補わない。p.323）"),
+        Question("leave_lock_scram", "UNRESOLVED_LEAVE_LOCK_SCRAM", ("AL3",), 90,
+                 "［ずらかる］が、「バトル場をはなれられない」効果を受けたポケモンで必ずはたらくとき、もどれないまま効果がなくなったあとにはたらくのかは、印刷の文面・kyuura の記録から"
+                 "決められない（SC2 と同じ形の、別の原因の問い）"),
         # ルールの問いではなく、エンジンの未対応（コードは UNSUPPORTED_…。研究の対応表の停止コードには入れない）
         Question("energy_reaction_during_attack", "UNSUPPORTED_ENERGY_REACTION_DURING_ATTACK", ("v0.86",), 10,
                  "ワザの効果で手札からエネルギーカードをつけたときにはたらく相手の［かんでん］・つけたポケモンの［いなびかり］を、ワザの処理の途中で処理する続きは"

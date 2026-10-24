@@ -515,6 +515,7 @@ def push_stadium_decision(
     unresolved_choices: Iterable[int] = (),
     unresolved_code: str = "UNRESOLVED_RULING",
     unresolved_reason: str = "",
+    unresolved_detail: Iterable[tuple[int, str, str]] = (),
 ) -> PendingDecision:
     """場のスタジアムの効果の途中で決定を出す（v0.57。再開先 ``"stadium"``。``engine._resume_stadium`` が ``stage`` で続きを選ぶ）。``context`` の ``"stadium"`` は
     スタジアムカードの uid、``"stage"`` は段階（``narrow``: せまいジムが場に出た時の控えポケモンを手札にもどす・``fuchsia``: セキチクシティジムの「おもて」のあとの
@@ -524,6 +525,13 @@ def push_stadium_decision(
     unresolved = tuple(unresolved_choices)
     if unresolved:
         entries += [("unresolved_choices", unresolved), ("unresolved_code", unresolved_code), ("unresolved_reason", unresolved_reason)]
+    detail = tuple(tuple(item) for item in unresolved_detail)
+    if detail:
+        # v0.93: 選ぶと止める選択ごとの (選択, コード, 理由)（トレーナーの決定と同じ。理由の違う選択があるときだけ書く）
+        if not {item[0] for item in detail} <= set(unresolved):
+            raise RuntimeError(f"選択ごとの止める理由 {detail} の選択が、選ぶと止める選択 {unresolved} にない（エンジンの不具合）")
+        if len({item[1] for item in detail}) > 1:
+            entries.append(("unresolved_detail", detail))
     return push_decision(state, kind=kind, player=player, options=options, resume="stadium", context=(*entries, *tuple(context)),
                          min_choices=min_choices, max_choices=max_choices)
 

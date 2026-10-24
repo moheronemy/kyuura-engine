@@ -684,7 +684,11 @@ class G37Test(unittest.TestCase):
         "DamageThenCoinMarkOpponentIfAbsent", "ChooseOpponentPokemonMarkIfAbsent", "ChooseOpponentPokemonReplaceColorMarker", "AllClear",
         # v0.92: イトマルの「こわいかお」（ワザとにげるの禁止）・クモのす・くろいまなざし・ヨーギラスの「にらみつける」（期間を明示した禁止）・いやなおと（受けるダメージの +20）・
         # きゅうけつどく（どく）・やみのはどう（おたがいの場の特殊能力。相手の対戦ポケモンも受ける。docs/power-suppression-lasting-locks-v0.92.md）
-        "CoinAttackAndRetreatLock", "PeriodLockAttack", "ReceivedAttackDamageBonusAttack", "DamageDrainThenPoison", "DamageThenFieldPowerSuppression"]))
+        "CoinAttackAndRetreatLock", "PeriodLockAttack", "ReceivedAttackDamageBonusAttack", "DamageDrainThenPoison", "DamageThenFieldPowerSuppression",
+        # v0.93: からまるいと・からみつく・くいつく・こおりつかせる（期間を明示した禁止）・ねばるみつ（はなれられない効果）・どくしばり（どくと、はなれられない効果）・からめとる（入れ替えと
+        # 新しく出てきたポケモンのマヒ）・かぶりつく（にげるの禁止と手順 4 のコイン。docs/active-leave-locks-v0.93.md）
+        "DamageThenPeriodLock", "CoinBonusDamageThenLeaveLock", "DamageThenPoisonThenLeaveLockOnHeads", "SwitchOpponentThenParalyzeNewOnHeads",
+        "DamageThenRetreatLockAndAttackCoinCheck"]))
 
 
 class DecisionTest(unittest.TestCase):

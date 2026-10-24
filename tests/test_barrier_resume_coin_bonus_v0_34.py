@@ -442,7 +442,9 @@ class BarrierCoinTest(unittest.TestCase):
                                     # v0.90: ドーブルの「ペイント」（1 枚のコインは相手への色マーカーだけを決める。色を選ぶ要素は数えない。docs/markers-counters-v0.90.md 6 章）
                                     "CoinPaintOpponent",
                                     # v0.92: イトマルの「こわいかお」（1 枚のコインは相手の対戦ポケモンへのワザと「にげる」の禁止だけを決める。docs/power-suppression-lasting-locks-v0.92.md 5 章）
-                                    "CoinAttackAndRetreatLock"})
+                                    "CoinAttackAndRetreatLock",
+                                    # v0.93: クサイハナの「ねばるみつ」（1 枚のコインは追加のダメージと、はなれられない効果だけを決める。ねばりつくと同じ形。docs/active-leave-locks-v0.93.md 5 章）
+                                    "CoinBonusDamageThenLeaveLock"})
         self.assertIn("CoinBonusOrSelfDamage", flipping)
         self.assertIn("SelfDamageInsteadOnTails", flipping)
 
