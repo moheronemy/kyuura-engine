@@ -1702,8 +1702,22 @@ class DamageAndForceSwitch(AttackEffect):
     implementation_id = "damage_and_force_switch"
     opponent_effect_elements = (FORCED_SWITCH_ELEMENT,)  # v0.11: 相手の対戦ポケモンに与える効果の要素（ko_prevention_attack_effect_problem）
 
+    # v0.94（docs/switch-return-attacks-v0.94.md 2 章）: 受け付ける説明の全文（kyuura の写しの印刷の文面。``check`` が照らすのは印刷の文面）。v0.93 までは形だけを確かめ、ダメージの
+    # 前の任意の入れ替え（ロコンの「きつねび」）もダメージのあとの相手が選ぶ入れ替えとして通っていた。9 登録・7 通りの文面（処理に使う文面はそれぞれの登録の ``play_text_ja``。
+    # PMCG2-007 は p.19 の最新の説明）と、v0.94 のカイリキーの「なげとばす」。印刷の文面を削らず、広く読み替えない
+    TEXTS = (
+        "相手の対戦ポケモンを控えポケモンと入れ替える。入れ替わるポケモンは相手が選ぶ。(相手に控えがいない時、入れ替えはおこらない)",  # ES1-014・QSG-011（けりとばす）
+        "相手を、控えポケモンと入れ替える。入れ替わるポケモンは、相手が選ぶ。",  # GD5-005・PR1-059（ふりとばす）
+        "相手の対戦ポケモンを控えポケモンと入れ替える。入れ替えは相手が行う。相手の控えポケモンがいないときには、ダメージだけをあたえる。",  # PMCG1-059（かぜおこし）
+        "相手の対戦ポケモンを控えポケモンと入れ替える。控えポケモンは相手がえらぶ。控えポケモンがいないときにはダメージのみ。",  # PMCG1-066（ふきとばし）
+        "相手を控えポケモンと入れ替える。控えポケモンは相手プレイヤーがえらぶ。相手プレイヤーに控えポケモンがいないときには入れ替えはおこらない。",  # PMCG2-007（ふきとばし）
+        "相手の対戦ポケモンを控えポケモンと入れ替える。入れ替えるポケモンは相手が選ぶ。（相手に控えがいない時、入れ替えは起こらない）",  # PMCG4-042（なぐりとばす）
+        "相手を、控えポケモンと入れ替える。入れ替えるポケモンは、相手が選ぶ。（相手に控えがいない時、入れ替えはおこらない。）",  # PMCG5-057（ふきとばし）
+        "相手を控えポケモンと入れ替える。入れ替わるポケモンは相手が選ぶ。(相手に控えがいない時、入れ替えはおこらない)",  # v0.94: PR1-052（なげとばす）
+    )
+
     def check(self, attack: Attack) -> list[str]:
-        return _check_damage_then_effect(attack, "相手を控えポケモンと入れ替える")
+        return _check_damage_then_effect(attack, "相手を控えポケモンと入れ替える") + _check_exact_text(attack, "ダメージのあと相手が選ぶ控えと入れ替えるワザ", self.TEXTS)
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         """「ふきとばし」の決定を待っている状態の確認: 種類は ``FORCED_SWITCH``、決定するのは相手（ワザを使ったプレイヤーではない）、
@@ -2277,6 +2291,9 @@ SWITCH_OPPONENT_ACTIVE_TEXTS = (
     "相手の控えポケモンを選んで、相手の対戦ポケモンと入れ替える。",
     "相手の控えポケモンを選び、相手の対戦ポケモンと入れ替える。",
     "相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。",  # v0.79（docs/shared-checks-pokemon-reuse-v0.79.md 6 章）: タケシのマンキー（GD1-005）の「からかう」（「1匹」を書くだけの違い）
+    # v0.94（docs/switch-return-attacks-v0.94.md 4 章）: プリン（SI-002）の「ひとみでさそう」（「相手の対戦ポケモンと」を「相手と」と書くだけの違い。p.320 の太字の「相手」は相手の
+    # 対戦ポケモン。選ぶのはワザを使ったプレイヤー・控えがいなくても使える・コインなしは同じ）
+    "相手の控えポケモンを1匹選び、相手と入れ替える。",
 )
 
 
@@ -33453,6 +33470,9 @@ class CoinChosenSideHealAttack(AttackEffect):
 
 
 CHOMP_TEXT = "自分にのっているダメージカウンターの数ぶんコインを投げ、「おもて」の数×{per}ダメージを追加する。"
+# v0.94（docs/switch-return-attacks-v0.94.md 5 章）: カイリキー（PR1-052）の「いかりばくはつ」（「数ぶん」を「数だけ」、「×10ダメージ」を「×10のダメージ」と書くだけの違い。コインの
+# 枚数は自分のダメージカウンターの数、「おもて」の数 × 10 を基本となるダメージに足す同じ意味）
+SEETHING_ANGER_TEXT = "自分にのっているダメージカウンターの数だけコインを投げ、「おもて」の数×{per}のダメージを追加する。"
 
 
 @dataclass(frozen=True)
@@ -33470,7 +33490,8 @@ class CoinsPerOwnCountersBonusDamage(AttackEffect):
 
     def check(self, attack: Attack) -> list[str]:
         what = "自分のダメージカウンターの数だけコインを投げてダメージを追加するワザ"
-        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(attack, what, (CHOMP_TEXT.format(per=self.per),))
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(
+            attack, what, (CHOMP_TEXT.format(per=self.per), SEETHING_ANGER_TEXT.format(per=self.per)))
 
 
 POLLEN_SHIELD_TEXT = "次の相手の番、このカードは「どく・ねむり・マヒ・こんらん」状態にならない。"
@@ -34898,6 +34919,11 @@ def strange_gas_effects(state: GameState, owner: int) -> tuple[TrainerTurnEffect
 
 RAPID_SPIN_TEXT = ("相手を相手の控えポケモンと入れ替える。その後、自分を自分の控えポケモンと入れ替える。入れ替えるときは、それぞれのプレイヤーが、それぞれ自分の場のポケモンを選ぶ。"
                    "(控えがいない側は、入れ替えをしない。)")
+# v0.94（docs/switch-return-attacks-v0.94.md 5 章）: モルフォン（ES2-001）の「たつまきおこし」・ドンファン（neo1-054）の「こうそくスピン」（同じ全文）。相手は相手が選んだ控えと、そのあと
+# 自分はワザを使ったプレイヤーが選んだ控えと入れ替え、控えがいない側は入れ替えない（フォレトスと同じ意味。選ぶ側・順番・必須を照らした）
+SWIRL_SWITCH_TEXT = ("相手を控えポケモンと入れ替える。入れ替わるポケモンは相手が選ぶ。その後、自分の控えポケモンから1匹を選び、自分と入れ替える。"
+                     "(控えがいない側は、入れ替えをしない)")
+SWITCH_BOTH_ACTIVES_TEXTS = (RAPID_SPIN_TEXT, SWIRL_SWITCH_TEXT)
 
 
 @dataclass(frozen=True)
@@ -34912,7 +34938,7 @@ class DamageThenSwitchBothActives(AttackEffect):
 
     def check(self, attack: Attack) -> list[str]:
         what = "ダメージのあと相手と自分を入れ替えるワザ"
-        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (RAPID_SPIN_TEXT,))
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, SWITCH_BOTH_ACTIVES_TEXTS)
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         if decision.kind == FORCED_SWITCH:
@@ -37017,3 +37043,259 @@ V0_93_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
 SAME_DATA_CARDS_V0_93: Mapping[str, str] = MappingProxyType({"QSG-002": "ES1-002"})
 
 DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_93_ATTACKS), SAME_DATA_CARDS_V0_93)
+
+
+
+# ---------------------------------------------------------------- v0.94（docs/switch-return-attacks-v0.94.md）: 入れ替え・帰還のワザの 13 枚
+
+
+def _opponent_bench_switch_problems(state: GameState, use: AttackUse, decision: PendingDecision, *, chooser: int, choices: tuple[int, int]) -> list[str]:
+    """相手の控えと入れ替える決定（``FORCED_SWITCH``）の形（v0.94）: 選ぶプレイヤー・選ぶ数・選べるもの（相手のベンチ）・対象（相手のバトル場のポケモン）。"""
+    p = state.players[1 - use.player]
+    problems = _decision_form(decision, _label(state, use), kind=FORCED_SWITCH, player=chooser, choices=choices, options=(pokemon.pokemon_id for pokemon in p.bench))
+    if p.active is None or p.active.pokemon_id != decision.context_value("target"):
+        problems.append(f"入れ替えの対象 {decision.context_value('target')!r} が相手のバトル場のポケモンではない")
+    return problems
+
+
+def _own_bench_switch_problems(state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+    """自分の控えと入れ替える決定（``SELECT_POKEMON``。ワザを使ったプレイヤーが 1 匹）の形（v0.94）。"""
+    bench = state.players[use.player].bench
+    return _decision_form(decision, _label(state, use), kind=SELECT_POKEMON, player=use.player, choices=(1, 1), options=(p.pokemon_id for p in bench))
+
+
+LURE_TEXT = "相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。(相手に控えがいない時、このワザは使えない)"
+
+
+@dataclass(frozen=True)
+class SwitchOpponentActiveRequiringBench(AttackEffect):
+    """ダメージを与えず、相手の控えポケモンを 1 匹（ワザを使ったプレイヤーが）選び、相手の対戦ポケモンと入れ替える。相手に控えがいない時、このワザは使えない（v0.94。ピッピ
+    （ES1-026・QSG-040）の「このゆびとまれ」。kyuura の印刷の文面。docs 4 章）。要素 ``ForceSwitch(chooser="attacker", required=True)``。
+
+    - 選ぶ側・必要な控え・コインを、似た型と別に照らした: かどわかす（``SwitchOpponentActive``）は控えがいなくても使え、ゆうわく（``SwitchOpponentActiveOnHeads``）はコインを
+      投げる。このワザは控えがいることがワザを使うための条件（``usage_problem``。``NO_OPPONENT_BENCH``。こんらんのコインの前）で、コインはない
+    - 入れ替えは相手の対戦ポケモンへの効果（「とうめい」・「ワザをうけない」を評価する。v0.31 のかどわかすと同じ）。「にげる」ではない
+    """
+
+    implementation_id = "switch_opponent_active_requiring_bench"
+    opponent_effect_elements = (FORCED_SWITCH_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の控えを選んで入れ替える、相手に控えがいなければ使えないワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (LURE_TEXT,))
+
+    def usage_problem(self, state: GameState, attacker: PokemonInPlay) -> IllegalActionError | None:
+        owner, _ = state.find_pokemon(attacker.pokemon_id)
+        if not state.players[1 - owner].bench:
+            return IllegalActionError("NO_OPPONENT_BENCH", "相手に控えポケモンがいないので、このワザは使えない（ワザの説明）")
+        return None
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return _opponent_bench_switch_problems(state, use, decision, chooser=use.player, choices=(1, 1))
+
+
+ROAR_TEXT = "コインを投げて「おもて」なら、相手を控えポケモンと入れ替える。入れ替わるポケモンは、相手が選ぶ。(相手に控えがいないとき、入れ替えは起こらない)"
+
+
+@dataclass(frozen=True)
+class ForceSwitchOnHeadsWithoutDamage(AttackEffect):
+    """ダメージを与えず、コインを投げて「おもて」なら、相手を控えポケモンと入れ替える（入れ替わるポケモンは相手が選ぶ）。相手に控えがいないとき、入れ替えは起こらない（v0.94。ブルー
+    （neo1-061）の「ほえる」。kyuura の印刷の文面。docs 4 章）。要素 ``ForceSwitch(local_coin=おもて)``（v0.38 のいかくこうげきのダメージのない形）。
+
+    - 選ぶのは相手（決定 ``FORCED_SWITCH``。ふきとばしと同じ）。控えがいないことはワザを使うための条件ではなく、処理の対象がないのでコインを投げない（p.309。v0.38 と同じ読み方）
+    - コインは入れ替えだけを決める: 「ワザをうけない」相手は HC3、「とうめい」で受けないと決まった相手は T19b、「バトル場をはなれられない」相手は AL2（コインの前）
+    """
+
+    implementation_id = "force_switch_on_heads_without_damage"
+    opponent_effect_elements = (FORCED_SWITCH_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで相手が選ぶ控えと入れ替えるダメージのないワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (ROAR_TEXT,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return forced_switch_decision_problems(state, use, decision)
+
+
+FROLIC_TEXT = "自分を自分の控えポケモンと入れ替える。(自分に控えがいないとき、入れ替えはおこらない。)"
+
+
+@dataclass(frozen=True)
+class DamageThenSelfSwitch(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。そのあと、自分を自分の控えポケモンと入れ替える。自分に控えがいないとき、入れ替えはおこらない（v0.94。トゲピー
+    （PRN-033）の「はしゃぐ」。kyuura の印刷の文面。docs 5 章）。要素 ``Damage(OPP)`` → ``SelfSwitch()``。
+
+    - 控えがいれば必ず入れ替える（任意ではない）。テレポートブラスト（``DamageThenOptionalSelfSwitch``。「のぞむなら…入れ替えてもよい」）の型にせず、入れ替えない答えを加えない
+    - 選ぶのはワザを使ったプレイヤー（説明は選ぶプレイヤーを書かない。自分の場のポケモンを入れ替えるので、その持ち主。テレポート・こうそくスピンの自分の側と同じ。実装上の読み方）
+    - 「ダメージを与えた後」の条件はない（ダメージを与えなくても入れ替える。Z23 ではない）。ワザを使ったポケモンがこのワザの中で HP 以上なら入れ替えない（p.309）
+    """
+
+    implementation_id = "damage_then_self_switch"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "ダメージのあと自分を控えと入れ替えるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (FROLIC_TEXT,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return _own_bench_switch_problems(state, use, decision)
+
+
+FLORAL_SPIN_TEXT = "コインを投げて「おもて」なら、相手を「{ja}」状態にする。「うら」なら、自分の控えポケモンを1匹選び、自分と入れ替える。(自分に控えがいないとき、入れ替える効果はなくなる。)"
+
+
+@dataclass(frozen=True)
+class DamageThenStatusOnHeadsElseSelfSwitch(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。そのあと 1 枚のコインで、「おもて」なら相手を ``condition`` 状態にし、「うら」なら自分の控えポケモンを 1 匹選び、
+    自分と入れ替える（v0.94。キレイハナ（PRN-043）の「フローラルスピン」のねむり。kyuura の印刷の文面。docs 6 章）。
+
+    - 要素は ``Damage(OPP)`` → ``Coin`` → ``Status(gate=おもて)`` → ``SelfSwitch(gate=うら)``。コインはダメージのあと（ダメージ以外の効果だけを決める。「げんかくおんぱ」と同じ時点。
+      「ダメージを受けたとき」の効果はコインの前に処理する）。要素ごとに投げ直さない
+    - コインの前の確かめは、コインが決める 2 つの要素の全体で行う（``programs.Coin``）: 相手が HP 以上で自分に控えがいなければ、どちらにも対象がないので投げない。相手の効果だけが
+      無効（「ワザをうけない」）でも、自分の入れ替えが残れば投げる。自分が「バトル場をはなれられない」なら、残る要素（相手の特殊状態）だけを無効の判定にかける（相手が受けない
+      なら HC3）。どちらも起こらないなら止める
+    - 「(自分に控えがいないとき、入れ替える効果はなくなる。)」: 控えがいなければ「うら」でも何もしない（ワザの失敗ではない）。入れ替えは「にげる」ではない
+    """
+
+    condition: str
+    implementation_id = "damage_then_status_on_heads_else_self_switch"
+
+    def __post_init__(self) -> None:
+        if self.condition not in _CONDITION_JA:
+            raise ValueError(f"特殊状態 {self.condition!r} が正しくない")
+
+    @property
+    def opponent_effect_elements(self) -> tuple[str, ...]:  # type: ignore[override]
+        return (self.condition,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "ダメージのあとのコインで相手の特殊状態か自分の入れ替えが決まるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (FLORAL_SPIN_TEXT.format(ja=_CONDITION_JA[self.condition]),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return _own_bench_switch_problems(state, use, decision)
+
+
+TRAMPLE_TEXT = "コインを投げて「おもて」なら、{bonus}ダメージを追加する。「うら」なら、相手を控えポケモンと入れ替える。入れ替わるポケモンは、相手が選ぶ。(相手に控えがいない時、入れ替えはおこらない)"
+
+
+@dataclass(frozen=True)
+class CoinBonusDamageElseForceSwitch(AttackEffect):
+    """1 枚のコインで、「おもて」ならダメージの目安の数字に ``bonus`` を加えたダメージ、「うら」なら目安の数字ぶんのダメージを与えたあと、相手を控えポケモンと入れ替える（入れ替わる
+    ポケモンは相手が選ぶ）。相手に控えがいない時、入れ替えはおこらない（v0.94。ケンタロス（ES3-034）の「ふんだりけったり」。kyuura の印刷の文面。docs 6 章）。
+
+    - 要素は ``Coin`` → ``Damage(OPP, PrintedPlusBonus)`` → ``ForceSwitch(gate=うら)``。コインはダメージの量も決めるので、ダメージの前に投げる（v0.8 のねばりつく・v0.93 のねばるみつと
+      同じ形）。追加は基本となるダメージ（p.321 の 1 段階）への加算。入れ替えはダメージのあと（p.309 の手順 6）
+    - コインの前の確かめは、決める 2 つの要素の全体で行う: 「ダメージを受けない」相手でも入れ替えは有効なので投げる。「ワザをうけない」相手はどちらも無効なので HC3。相手に控えが
+      いない・相手が「バトル場をはなれられない」なら、残る追加のダメージだけを無効の判定にかける（入れ替えが起こらないことで、追加のダメージのコインを止めない）
+    """
+
+    bonus: int
+    implementation_id = "coin_bonus_damage_else_force_switch"
+    opponent_effect_elements = (FORCED_SWITCH_ELEMENT,)
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.bonus, "「おもて」のときに追加するダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインでダメージの追加か相手が選ぶ入れ替えが決まるワザ"
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(attack, what, (TRAMPLE_TEXT.format(bonus=self.bonus),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return forced_switch_decision_problems(state, use, decision)
+
+
+FOX_FIRE_TEXT = "のぞむなら、ダメージを与える前に相手の控えポケモンを1匹選び、相手と入れ替えてよい。(ダメージは、新しい対戦ポケモンに与える)"
+
+
+@dataclass(frozen=True)
+class OptionalSwitchOpponentThenDamage(AttackEffect):
+    """のぞむなら、ダメージを与える前に相手の控えポケモンを 1 匹（ワザを使ったプレイヤーが）選び、相手と入れ替えてよい。ダメージは新しい対戦ポケモンに与える（v0.94。ロコン
+    （ES3-009・QSG-008）の「きつねび」。kyuura の印刷の文面。docs 7 章）。要素 ``ForceSwitch(chooser="attacker", optional=True, carry=True)`` → ``Damage(OPP)``。
+
+    - 入れ替えるかはワザを使ったプレイヤーが選ぶ（決定 ``FORCED_SWITCH`` の 0〜1 匹。入れ替えないならログ ``forced_switch_declined``）。v0.40 の必須の入れ替え
+      （``SwitchOpponentThenDamage``。ひきずりだす）に文面だけ足していない。相手に控えがいないことはワザを使うための条件ではない（入れ替えずにダメージを与える）
+    - 入れ替えたら、ダメージは新しい対戦ポケモンに、その弱点・抵抗力・防ぐ効果・「とうめい」・「ダメージを受けたとき」の効果で計算する（決定をまたいで枠の値を運ぶ。T27）。入れ替え
+      のあとの場の移動への反応（［まきびし］・［やけのこり］）はダメージの前に処理する
+    - 入れ替えなかった（選ばない・控えがいない・「ワザをうけない」・「とうめい」・「バトル場をはなれられない」）ときは、そのままのバトル場のポケモンにダメージ（v0.40 の DO3 と同じ読み方）
+    - 入れ替えるとワザを使っている［へんしん］のメタモンの姿が変わる控えは、選べるが選ぶと止める（RX1。入れ替えない答えは残る）
+    """
+
+    implementation_id = "optional_switch_opponent_then_damage"
+    opponent_effect_elements = (FORCED_SWITCH_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "ダメージの前にのぞむなら相手を入れ替えるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (FOX_FIRE_TEXT,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return _opponent_bench_switch_problems(state, use, decision, chooser=use.player, choices=(0, 1))
+
+
+TUSK_TOSS_TEXT = ("コインを投げて「おもて」なら、相手と相手についているすべてのカードを、相手プレイヤーの手札にもどす。「うら」なら、相手を相手の控えポケモンと入れ替える。"
+                  "入れ替えるポケモンは相手プレイヤーが選ぶ。(相手に控えがいないとき、このワザは失敗する。)")
+
+
+@dataclass(frozen=True)
+class CoinReturnOpponentToHandElseForceSwitch(AttackEffect):
+    """ダメージを与えず、1 枚のコインで、「おもて」なら相手と相手についているすべてのカードを相手プレイヤーの手札にもどし、「うら」なら相手を相手の控えポケモンと入れ替える（入れ替える
+    ポケモンは相手プレイヤーが選ぶ）。相手に控えがいないとき、このワザは失敗する（v0.94。わるいドンファン（neo4-078）の「すくいなげ」。kyuura の印刷の文面。docs 8 章）。
+
+    - 要素は ``FailWithoutOpponentBench`` → ``Coin`` → ``ReturnOpponentToHand(gate=おもて)`` → ``ForceSwitch(gate=うら)``。括弧書きは日本語の文面のとおりワザ全体にかかり、相手に
+      控えがいなければコインを投げずに失敗する（「うら」の場合だけの条件に狭めない。ワザを使うための条件の「使えない」でもない）
+    - 手札にもどすのは v0.62 のハリケーンと同じ処理（``zones.return_in_play_to_hand``。重なったカード・エネルギー・トレーナーを持ち主の手札に。ダメージカウンター・特殊状態・持続する
+      効果はなくなる。きぜつではなく、サイドは取らない。トラッシュしないので、トラッシュにかかわる効果ははたらかない）。空いたバトル場は、ワザのあとに相手が控えから選んで出す
+    - コインの前の確かめは、決める 2 つの要素の全体で行う: 「ワザをうけない」相手は HC3、「バトル場をはなれられない」相手はどちらの要素も起こらないので AL2。おもての
+      変わり身の術の NT2 は、先読みが宣言の前に見つける
+    """
+
+    implementation_id = "coin_return_opponent_to_hand_else_force_switch"
+    opponent_effect_elements = (RETURN_IN_PLAY_TO_HAND_ELEMENT, FORCED_SWITCH_ELEMENT)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで相手を手札にもどすか相手が選ぶ入れ替えが決まるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (TUSK_TOSS_TEXT,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return forced_switch_decision_problems(state, use, decision)
+
+
+# v0.94 の 13 枚のポケモンのワザの登録（21）。ピッピ・ロコンの 2 組（``SAME_DATA_CARDS_V0_94``）は同じゲーム用データで、id ごとに書いたうえで同じ登録の値にまとめる。既存の型の
+# 再利用は、要素の順番・選ぶ側・コイン・ダメージの有無を照らした（形だけを確かめる既存の型（ねむり・じたばた）は、同じ型の既存の登録と全文が同じことをテストが確かめる）
+V0_94_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # ピッピ（ES1-026・QSG-040）
+    AttackKey("ES1-026", 0): _printed(SwitchOpponentActiveRequiringBench(), "このゆびとまれ", LURE_TEXT),
+    AttackKey("ES1-026", 1): _printed(SleepOpponent(), "ひかるゆび", "相手を「ねむり」状態にする。"),
+    AttackKey("QSG-040", 0): _printed(SwitchOpponentActiveRequiringBench(), "このゆびとまれ", LURE_TEXT),
+    AttackKey("QSG-040", 1): _printed(SleepOpponent(), "ひかるゆび", "相手を「ねむり」状態にする。"),
+    # プリン（SI-002）
+    AttackKey("SI-002", 0): _printed(SwitchOpponentActive(), "ひとみでさそう", SWITCH_OPPONENT_ACTIVE_TEXTS[3]),
+    AttackKey("SI-002", 1): _printed(SleepOnHeadsWithoutDamage(), "うたう", "コインを投げて「おもて」なら、相手を「ねむり」状態にする。"),
+    # ブルー（neo1-061）
+    AttackKey("neo1-061", 0): _printed(ForceSwitchOnHeadsWithoutDamage(), "ほえる", ROAR_TEXT),
+    AttackKey("neo1-061", 1): _printed(ParalyzeOnHeads(), "したでなめる", PARALYZE_HEADS_TEXT),
+    # モルフォン（ES2-001。コンパンから進化）
+    AttackKey("ES2-001", 0): _printed(DamageThenSwitchBothActives(), "たつまきおこし", SWIRL_SWITCH_TEXT),
+    AttackKey("ES2-001", 1): _printed(DamageThenStatusByCoin(PARALYSIS, POISON), "レインボーパウダー", "コインを投げて「おもて」なら、相手を「マヒ」状態に、「うら」なら「どく」状態にする。"),
+    # ドンファン（neo1-054。ゴマゾウから進化）
+    AttackKey("neo1-054", 0): _printed(DamageTimesOwnCounters(10), "じたばた", "自分にのっているダメージカウンターの数×10のダメージ。"),
+    AttackKey("neo1-054", 1): _printed(DamageThenSwitchBothActives(), "こうそくスピン", SWIRL_SWITCH_TEXT),
+    # トゲピー（PRN-033）
+    AttackKey("PRN-033", 0): _printed(DamageThenSelfSwitch(), "はしゃぐ", FROLIC_TEXT),
+    # キレイハナ（PRN-043。クサイハナから進化）
+    AttackKey("PRN-043", 0): _printed(DamageThenStatusOnHeadsElseSelfSwitch(SLEEP), "フローラルスピン", FLORAL_SPIN_TEXT.format(ja=_CONDITION_JA[SLEEP])),
+    # ケンタロス（ES3-034）
+    AttackKey("ES3-034", 0): _printed(CoinBonusDamageElseForceSwitch(10), "ふんだりけったり", TRAMPLE_TEXT.format(bonus=10)),
+    # カイリキー（PR1-052。ゴーリキーから進化）
+    AttackKey("PR1-052", 0): _printed(CoinsPerOwnCountersBonusDamage(10), "いかりばくはつ", SEETHING_ANGER_TEXT.format(per=10)),
+    AttackKey("PR1-052", 1): _printed(DamageAndForceSwitch(), "なげとばす", DamageAndForceSwitch.TEXTS[7]),
+    # ロコン（ES3-009・QSG-008）
+    AttackKey("ES3-009", 0): _printed(OptionalSwitchOpponentThenDamage(), "きつねび", FOX_FIRE_TEXT),
+    AttackKey("QSG-008", 0): _printed(OptionalSwitchOpponentThenDamage(), "きつねび", FOX_FIRE_TEXT),
+    # わるいドンファン（neo4-078。ゴマゾウから進化）
+    AttackKey("neo4-078", 0): _printed(CoinReturnOpponentToHandElseForceSwitch(), "すくいなげ", TUSK_TOSS_TEXT),
+    AttackKey("neo4-078", 1): AttackEntry(DAMAGE_ONLY, "きょだいなキバ"),  # 説明文のないワザ（文面・出典を持たない）
+})
+
+SAME_DATA_CARDS_V0_94: Mapping[str, str] = MappingProxyType({"QSG-040": "ES1-026", "QSG-008": "ES3-009"})
+
+DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_94_ATTACKS), SAME_DATA_CARDS_V0_94)

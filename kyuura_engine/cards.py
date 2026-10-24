@@ -535,6 +535,7 @@ POOL_KEYS = (
     "pool_v0_91",  # v0.91（残りのマーカーのポケモン 3 枚とヒノアラシ。docs/marker-check-field-reset-v0.91.md）
     "pool_v0_92",  # v0.92（能力の消去・続く制限のポケモン 8 枚。docs/power-suppression-lasting-locks-v0.92.md）
     "pool_v0_93",  # v0.93（バトル場をはなれられない効果・続くワザの制限のポケモン 9 枚。docs/active-leave-locks-v0.93.md）
+    "pool_v0_94",  # v0.94（入れ替え・帰還のワザのポケモン 13 枚。docs/switch-return-attacks-v0.94.md）
 )
 
 

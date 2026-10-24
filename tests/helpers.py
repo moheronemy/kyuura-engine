@@ -1417,6 +1417,15 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DamageThenPoisonThenLeaveLockOnHeads,
     _effects.SwitchOpponentThenParalyzeNewOnHeads,
     _effects.DamageThenRetreatLockAndAttackCoinCheck,
+    # v0.94（docs/switch-return-attacks-v0.94.md 4〜8 章。選ぶ側・必要な控え・コインを分けた相手の入れ替え・ダメージのあとの必ずの自分の入れ替え・同じコインで分かれる入れ替え・
+    # ダメージの前の任意の入れ替え・相手を手札にもどすか入れ替える）
+    _effects.SwitchOpponentActiveRequiringBench,
+    _effects.ForceSwitchOnHeadsWithoutDamage,
+    _effects.DamageThenSelfSwitch,
+    _effects.DamageThenStatusOnHeadsElseSelfSwitch,
+    _effects.CoinBonusDamageElseForceSwitch,
+    _effects.OptionalSwitchOpponentThenDamage,
+    _effects.CoinReturnOpponentToHandElseForceSwitch,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -2287,6 +2296,15 @@ PILOSWINE_NEO1, DARK_CROCONAW_NEO4, OCTILLERY_NEO3 = "neo1-032", "neo4-036", "ne
 SWINUB_NEO1 = "neo1-027"  # ウリムー（イノムーの進化元）
 V0_93_POKEMON = (CATERPIE_ES1, CATERPIE_QSG, TANGELA_ES2, GLOOM_NEO1, CROCONAW_NEO1, DARK_ARIADOS_NEO4, PILOSWINE_NEO1, DARK_CROCONAW_NEO4, OCTILLERY_NEO3)
 V0_93_CARDS = V0_93_POKEMON  # 写しの組 pool_v0_93 の並び
+
+# v0.94（docs/switch-return-attacks-v0.94.md）: 入れ替え・帰還のワザのポケモン 13 枚（ワザ 21）。ピッピ・ロコンの 2 組は同じゲーム用データ
+CLEFAIRY_ES1, CLEFAIRY_QSG, JIGGLYPUFF_SI, SNUBBULL_NEO1 = "ES1-026", "QSG-040", "SI-002", "neo1-061"  # ピッピ（このゆびとまれ）・同じデータ・プリン（ひとみでさそう）・ブルー（ほえる）
+VENOMOTH_ES2, DONPHAN_NEO1, TOGEPI_PRN, BELLOSSOM_PRN = "ES2-001", "neo1-054", "PRN-033", "PRN-043"  # モルフォン・ドンファン（こうそくスピン）・トゲピー（はしゃぐ）・キレイハナ
+TAUROS_ES3, MACHAMP_PR1, VULPIX_ES3, VULPIX_QSG, DARK_DONPHAN = "ES3-034", "PR1-052", "ES3-009", "QSG-008", "neo4-078"  # ケンタロス・カイリキー・ロコン（きつねび）・同じデータ・わるいドンファン
+PHANPY_NEO4 = "neo4-072"  # ゴマゾウ（ドンファン・わるいドンファンの進化元）
+V0_94_POKEMON = (CLEFAIRY_ES1, CLEFAIRY_QSG, JIGGLYPUFF_SI, SNUBBULL_NEO1, VENOMOTH_ES2, DONPHAN_NEO1, TOGEPI_PRN, BELLOSSOM_PRN, TAUROS_ES3, MACHAMP_PR1, VULPIX_ES3,
+                 VULPIX_QSG, DARK_DONPHAN)
+V0_94_CARDS = V0_94_POKEMON  # 写しの組 pool_v0_94 の並び
 
 
 def _self_sleep_shape_only(attack):

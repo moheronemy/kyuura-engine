@@ -54,6 +54,7 @@ from .commands import (
 from .decisions import (
     ACCEPT_REQUEST,
     BENCH_GUARD,
+    FORCED_SWITCH,
     SELECT_COLOR,
     NINJA_TRICK,
     REACTION_SWITCH,
@@ -4784,7 +4785,8 @@ def _decision_problems(state: GameState) -> list[str]:
         # 変えない（0 個）がいつも答えになる
         no_choice_answers = d.kind in (ENTRY_POWER, EVOLUTION_HEAL, USE_DISCARD_TRAINER, KNOCK_OUT_POWER, EXP_ALL_ENERGY, NINJA_TRICK, REACTION_SWITCH, BENCH_GUARD, ESP_REDO,
                                        SECRET_PLAN_CARD, reactions.REACTION_POWER) or (d.kind == ACCEPT_REQUEST and d.context_value("chaos") is not None) \
-            or (d.kind == SELECT_COLOR and d.resume == "attack" and d.min_choices == 0)
+            or (d.kind == SELECT_COLOR and d.resume == "attack" and d.min_choices == 0) \
+            or (d.kind == FORCED_SWITCH and d.resume == "attack" and d.min_choices == 0)  # v0.94: ワザの任意の入れ替え（きつねび。RX1 で止める控え）も、入れ替えない（0 個）が答え
         needed = 0 if no_choice_answers and d.min_choices == 0 else max(d.min_choices, 1)
         if len(set(d.options) - set(unresolved)) < needed:
             problems.append(f"決定 {d.kind} に、扱いを決められる選択が足りない（答えられない）")

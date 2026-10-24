@@ -444,7 +444,11 @@ class BarrierCoinTest(unittest.TestCase):
                                     # v0.92: イトマルの「こわいかお」（1 枚のコインは相手の対戦ポケモンへのワザと「にげる」の禁止だけを決める。docs/power-suppression-lasting-locks-v0.92.md 5 章）
                                     "CoinAttackAndRetreatLock",
                                     # v0.93: クサイハナの「ねばるみつ」（1 枚のコインは追加のダメージと、はなれられない効果だけを決める。ねばりつくと同じ形。docs/active-leave-locks-v0.93.md 5 章）
-                                    "CoinBonusDamageThenLeaveLock"})
+                                    "CoinBonusDamageThenLeaveLock",
+                                    # v0.94: ケンタロスの「ふんだりけったり」（1 枚のコインは追加のダメージと相手が選ぶ入れ替えだけを決める）・わるいドンファンの「すくいなげ」（1 枚のコインは
+                                    # 相手を手札にもどすか入れ替えるかだけを決める）。キレイハナの「フローラルスピン」は自分の入れ替えが残るので投げる（docs/switch-return-attacks-v0.94.md 6 章・8 章）
+                                    "CoinBonusDamageElseForceSwitch", "CoinReturnOpponentToHandElseForceSwitch"})
+        self.assertIn("DamageThenStatusOnHeadsElseSelfSwitch", flipping)
         self.assertIn("CoinBonusOrSelfDamage", flipping)
         self.assertIn("SelfDamageInsteadOnTails", flipping)
 

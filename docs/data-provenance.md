@@ -1955,6 +1955,22 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.94: 入れ替え・帰還のワザの 13 枚
+
+[switch-return-attacks-v0.94.md](switch-return-attacks-v0.94.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_94`（13 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.93 までの
+  1,136 枚の記録は変わっていない。
+- 13 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-24・`kyuura_records` は空・外部照合なし）。`card_verification.json` には加えていない。ピッピの
+  2 枚（ES1-026・QSG-040。SC-ES1-026）・ロコンの 2 枚（ES3-009・QSG-008。SC-ES3-009）はゲーム用データが同じ組で、id ごとに記録し、登録は同じ値を使う。
+- 処理に使う文面はどれも kyuura の印刷の文面（研究の対応表の `adopted_printed_text` に 20。きょだいなキバは説明文がない）。13 枚の id と旧 pcg-search の id（`1stex1026`・`1stqsg040`・
+  `1stmv002`・`1stex2001`・`neop033`・`neop043`・`1stex3034`・`1stp052`・`1stex3009`・`1stqsg008`）で、kyuura の研究の基準に LD-・CC-・CR-・UQ-・エラッタがないことを確かめた。
+- ドンファン（neo1-054）のじたばたのダメージの目安「10×」は、kyuura の転記の照合の記録（data/curation/nazonobasho_review.json の `neo1-054|damage`）で直した値（研究の裁定ではない）。
+- 日本語の文面の転記元は pcg-search.com（ピッピ 2 枚・プリン・モルフォン・トゲピー・キレイハナ・ケンタロス・カイリキー・ロコン 2 枚）・nazonobasho.com（ブルー・ドンファン）・pokemonwiki
+  （わるいドンファン）。外部照合はしていない。
+- 新しい停止コードはない。報告事項（kyuura の作業）: RX1 をワザの効果の入れ替えでも止めるようになった（kyuura の未解決の一覧にない論点のまま）。kyuura の engine_targets.json の
+  `engine_reference` を v0.94 の登録で写すと 13 枚の `engine_status` が `registered` になる（docs 13 章）。
+
 ## v0.93: バトル場をはなれられない効果と続くワザの制限の 9 枚
 
 [active-leave-locks-v0.93.md](active-leave-locks-v0.93.md)。

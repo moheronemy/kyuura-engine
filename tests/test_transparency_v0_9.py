@@ -813,7 +813,9 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                     "いとをはく",
                                     # v0.93: オクタン（neo3-019）の「からみつく」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
                                     # docs/active-leave-locks-v0.93.md 7.3 節）
-                                    "からみつく"]))
+                                    "からみつく",
+                                    # v0.94: ブルー（neo1-061）の「したでなめる」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。docs/switch-return-attacks-v0.94.md 6 章）
+                                    "したでなめる"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

@@ -623,6 +623,8 @@ PUBLIC_EVENTS = frozenset({
     "char_check", "char_damage",
     # v0.93（docs/active-leave-locks-v0.93.md 11 章）: 「バトル場をはなれられない」効果で起こらなかった部分・くいつくの発生源がはなれた印（場の表の情報）
     "leave_prevented", "persistent_effect_source_left",
+    # v0.94（docs/switch-return-attacks-v0.94.md 9 章）: 任意の入れ替え（きつねび）で入れ替えなかった（場の表の情報。ワザを使ったプレイヤーの答え）
+    "forced_switch_declined",
 })
 
 

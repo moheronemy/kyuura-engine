@@ -211,6 +211,7 @@ from kyuura_engine.effects import (
     CoinEvolveSelfFromDeck,
     CoinPutOpponentDiscardOnDeckTop,
     DamageThenReturnOpponentToHand,
+    CoinReturnOpponentToHandElseForceSwitch,  # v0.94
     DamageThenReturnSelfToHandOnHeads,
     EvolutionPermissionForOwnerPokemon,
     EvolveSelfFromDeck,
@@ -4751,6 +4752,9 @@ def log_problems(state) -> list[str]:
             elif _same_attack(attack_window, e) and isinstance(_effect_of_event(state, e), DamageThenReturnOpponentToHand):
                 # v0.62: ハリケーン（相手の対戦ポケモンを持ち主の手札へ。ダメージの要素のあと・きぜつしていないとき）
                 valid = e["player"] == 1 - attack_window["player"] and active_of.get(e["player"]) == pid and window_damaged(attack_window)
+            elif _same_attack(attack_window, e) and isinstance(_effect_of_event(state, e), CoinReturnOpponentToHandElseForceSwitch):
+                # v0.94: すくいなげ（コインの「おもて」で、相手の対戦ポケモンを持ち主の手札へ。ダメージの要素はない。docs/switch-return-attacks-v0.94.md 8 章）
+                valid = e["player"] == 1 - attack_window["player"] and active_of.get(e["player"]) == pid
             else:
                 # v0.44: スターブーメラン（DamageThenReturnSelfToHandOnHeads。ワザを使ったポケモン自身）
                 valid = _same_attack(attack_window, e) and e["player"] == attack_window["player"] \

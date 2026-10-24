@@ -407,6 +407,10 @@ QUESTIONS: dict[str, Question] = {
         Question("leave_lock_scram", "UNRESOLVED_LEAVE_LOCK_SCRAM", ("AL3",), 90,
                  "［ずらかる］が、「バトル場をはなれられない」効果を受けたポケモンで必ずはたらくとき、もどれないまま効果がなくなったあとにはたらくのかは、印刷の文面・kyuura の記録から"
                  "決められない（SC2 と同じ形の、別の原因の問い）"),
+        # v0.94（docs/switch-return-attacks-v0.94.md 7 章）: ワザの効果の入れ替えで、ワザを使っている［へんしん］のメタモンの今の姿が変わる（v0.65 の RX1 と同じ問い）
+        Question("attack_switch_transformed_attacker", "UNRESOLVED_REACTIVE_SWITCH_TRANSFORMED_ATTACKER", ("RX1",), 10,
+                 "ワザの効果で相手の対戦ポケモンを入れ替えると、ワザを使っている［へんしん］のメタモンの今の姿（相手の対戦ポケモンのカード）が変わり、あとのダメージの要素をどの姿で"
+                 "処理するかは、印刷の文面・kyuura の記録から決められない（選べるどの控えでも姿が変わる。v0.65 のワザの途中の入れ替えと同じ問い）"),
         # ルールの問いではなく、エンジンの未対応（コードは UNSUPPORTED_…。研究の対応表の停止コードには入れない）
         Question("energy_reaction_during_attack", "UNSUPPORTED_ENERGY_REACTION_DURING_ATTACK", ("v0.86",), 10,
                  "ワザの効果で手札からエネルギーカードをつけたときにはたらく相手の［かんでん］・つけたポケモンの［いなびかり］を、ワザの処理の途中で処理する続きは"

@@ -688,7 +688,10 @@ class G37Test(unittest.TestCase):
         # v0.93: からまるいと・からみつく・くいつく・こおりつかせる（期間を明示した禁止）・ねばるみつ（はなれられない効果）・どくしばり（どくと、はなれられない効果）・からめとる（入れ替えと
         # 新しく出てきたポケモンのマヒ）・かぶりつく（にげるの禁止と手順 4 のコイン。docs/active-leave-locks-v0.93.md）
         "DamageThenPeriodLock", "CoinBonusDamageThenLeaveLock", "DamageThenPoisonThenLeaveLockOnHeads", "SwitchOpponentThenParalyzeNewOnHeads",
-        "DamageThenRetreatLockAndAttackCoinCheck"]))
+        "DamageThenRetreatLockAndAttackCoinCheck",
+        # v0.94: このゆびとまれ・ほえる・ふんだりけったり・きつねび（相手の入れ替え）・フローラルスピン（ねむり）・すくいなげ（相手を手札にもどす・入れ替え。docs/switch-return-attacks-v0.94.md）
+        "SwitchOpponentActiveRequiringBench", "ForceSwitchOnHeadsWithoutDamage", "CoinBonusDamageElseForceSwitch", "OptionalSwitchOpponentThenDamage",
+        "DamageThenStatusOnHeadsElseSelfSwitch", "CoinReturnOpponentToHandElseForceSwitch"]))
 
 
 class DecisionTest(unittest.TestCase):
