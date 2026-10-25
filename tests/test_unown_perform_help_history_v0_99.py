@@ -63,7 +63,7 @@ UE, UL, UI = H.UNOWN_E, H.UNOWN_L, "neo2-023"
 V099 = (UP, UH, HORSEA)
 V099_ATTACKS = [AttackKey(c, 0) for c in V099]
 V099_POWERS = [PowerKey(UP, 0), PowerKey(UH, 0)]
-PF1, FD1 = "UNRESOLVED_PERFORM_DAMAGE_PLACES", "UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY"
+PFM1, FD1 = "UNRESOLVED_PERFORM_DAMAGE_PLACES", "UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY"
 RULE_TEXT = "「アンノーン」はデッキに4枚までしか入れることができません。"
 # 依頼で示された固定データの日本語（写しの文面と照らす。広い正規化をしない）
 QUOTED = {
@@ -182,7 +182,7 @@ class RegistrationTest(unittest.TestCase):
         before = pool_from_extract(read_extract(), registry)
         self.assertEqual(load_card_pool().playable_ids - before.playable_ids, frozenset(V099))
         self.assertEqual(set(V099) & set(cards_before(read_extract(), "0.99")), set())
-        self.assertEqual(set(cards_after(read_extract(), "0.98")), set(V099))
+        self.assertEqual(set(cards_after(read_extract(), "0.98")) & set(cards_before(read_extract(), "0.100")), set(V099))
 
     def test_extract_values(self):
         cards = {c["id"]: c for c in read_extract()["cards"]}
@@ -209,8 +209,8 @@ class RegistrationTest(unittest.TestCase):
         links = json.loads((ROOT / "kyuura_engine" / "data" / "research_links.json").read_text(encoding="utf-8"))
         self.assertEqual([k for k in links["latest_descriptions"]["adopted_printed_text"] if k.split("/")[0] in V099],
                          [f"{UP}/power/0", f"{UH}/power/0", f"{HORSEA}/attack/0"])
-        entry = links["stop_codes"][PF1]
-        self.assertEqual((entry["kyuura_issue"], entry["kyuura_disposition"], [r["ruling_id"] for r in entry["engine_rulings"]]), (None, "not_in_kyuura", ["PF1"]))
+        entry = links["stop_codes"][PFM1]
+        self.assertEqual((entry["kyuura_issue"], entry["kyuura_disposition"], [r["ruling_id"] for r in entry["engine_rulings"]]), (None, "not_in_kyuura", ["PFM1"]))
         self.assertEqual([c for c in links["kyuura_cases_without_engine_ruling"]["cases"] if c["card_id"] in V099], [])
 
 
@@ -283,7 +283,7 @@ class DamagePlaceHistoryTest(unittest.TestCase):
         """形式 25 は受けた記録に場所（``active_damage``）を書く。形式 20〜24 は、場所の分かる 0 より大きいダメージの記録があると書き出さない（合計 0・場所の分からない記録だけなら書ける）。"""
         state = hit(mon(UP, (PS,)))
         latest = state_to_dict(state, 25)
-        self.assertEqual(max(FORMAT_VERSIONS), 25)
+        self.assertIn(25, FORMAT_VERSIONS)  # 今の最新の形式は tests/test_catalog_contract.py（docs/testing.md）
         received = [r for r in latest["players"][0]["active"]["history"] if r["kind"] == "received"]
         self.assertEqual([(r["damage"], r["active_damage"]) for r in received], [(20, 20)])
         for version in (20, 24):
@@ -452,12 +452,12 @@ class PerformTest(unittest.TestCase):
         self.assertEqual([e["amount"] for e in new_events(confused, tails, "confusion_damage")], [40])  # 20 に自分の弱点 超（p.322）。P の追加はない
 
     def test_damage_places_question_only_when_both_places(self):
-        """同じ相手のワザで、バトル場とベンチの両方で受けていたら PF1（今の写しでは起こらない。記録を手で作った盤面）。片方だけなら止めない。"""
+        """同じ相手のワザで、バトル場とベンチの両方で受けていたら PFM1（今の写しでは起こらない。記録を手で作った盤面）。片方だけなら止めない。"""
         state = hit(mon(UP, (PS,)))
         mixed = state.clone()
         target = mixed.players[0].active
         target.history = tuple(dataclasses.replace(r, damage=30, active_damage=20) if isinstance(r, AttackReceived) else r for r in target.history)
-        rejects(self, mixed, UseAttack(0, 0), PF1)
+        rejects(self, mixed, UseAttack(0, 0), PFM1)
         horsea = hit(mon(HORSEA, (W, W)))
         both = horsea.clone()
         both.players[0].active.history = tuple(dataclasses.replace(r, damage=30, active_damage=20) if isinstance(r, AttackReceived) else r
@@ -574,7 +574,7 @@ class HelpTest(unittest.TestCase):
 class DocumentTest(unittest.TestCase):
     def test_document_lists_the_cards_codes_and_unhit_boundaries(self):
         text = DOC.read_text(encoding="utf-8")
-        for needle in (*V099, *NAMES.values(), "ひれがえし", PF1, DAMAGE_PLACE_UNKNOWN_CODE, "HD2", "EG1", "PW2", "FD1", "73a1690", "形式 25",
+        for needle in (*V099, *NAMES.values(), "ひれがえし", PFM1, DAMAGE_PLACE_UNKNOWN_CODE, "HD2", "EG1", "PW2", "FD1", "73a1690", "形式 25",
                        "対戦で一度も起こらなかったもの"):
             self.assertIn(needle, text)
 

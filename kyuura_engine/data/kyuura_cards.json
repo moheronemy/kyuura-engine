@@ -1442,6 +1442,10 @@
     "neo4-063",
     "neo1-023"
   ],
+  "pool_v0_100": [
+    "neo2-052",
+    "neo3-035"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -106962,6 +106966,187 @@
         "series": "金、銀、新世界へ...、スターターパック",
         "remarks": [],
         "source": "https://nazonobasho.com/neo01-023-tattu/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo2-052",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ドーブル",
+        "en": "Smeargle"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          235
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "スケッチ",
+              "en": "Sketch"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "前の相手の番に、相手のポケモンがワザを使っていたなら、そのワザを、このカードが持っているワザとして使う。(そのワザに必要な「エネルギー」がついていなくても、かまわない。)前の相手の番、このカードが場に出ていなければ、このワザは失敗する。",
+              "en": "If the Defending Pokémon attacked last turn, and Smeargle was in play during that attack, Smeargle copies that attack except for its Energy costs and anything else required in order to use that attack."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "text",
+          "summary": "ワザ スケッチ（Sketch）でコピーしたワザの条件",
+          "ja": "「(そのワザに必要な『エネルギー』がついていなくても、かまわない。)」とエネルギーだけを不要としている",
+          "en": "エネルギーコストに加えて「そのワザを使うために必要なこと」も不要と書かれている",
+          "confidence": "確実",
+          "sources": [
+            "N1",
+            "X3"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-052",
+        "pokemontcg": [
+          "neo2-11",
+          "neo2-30"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-052-doble/",
+      "jp_print": {
+        "level": 27,
+        "rarity": "★(R)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-052-doble/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-035",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ムウマ",
+        "en": "Misdreavus"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          200
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "やみのひとみ",
+              "en": "Night Eyes"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手を「ねむり」状態にする。",
+              "en": "The Defending Pokémon is now Asleep."
+            }
+          },
+          {
+            "name": {
+              "ja": "ほろびのうた",
+              "en": "Perish Song"
+            },
+            "cost": [
+              "psychic",
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 3,
+            "damage": null,
+            "text": {
+              "ja": "このワザを受ける相手が「ねむり」状態で、前の自分の番に「やみのひとみ」を受けていたなら、相手は「きぜつ」する。",
+              "en": "If the Defending Pokémon is Asleep and was attacked with Night Eyes during your last turn, it is Knocked Out."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-035",
+        "pokemontcg": [
+          "neo3-11"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%A0%E3%82%A6%E3%83%9E_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 25,
+        "rarity": "★(R)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%A0%E3%82%A6%E3%83%9E_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
       },
       "product_group": "expansion_pack",
       "play_scope": "standard",

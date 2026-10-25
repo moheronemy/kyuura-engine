@@ -19,19 +19,19 @@ class CatalogContractTest(unittest.TestCase):
     def test_current_catalog_totals(self):
         pool = load_card_pool()
         extract = read_extract()
-        self.assertEqual(len(extract["cards"]), 1181)
-        self.assertEqual(len(pool.playable_ids), 1181)
+        self.assertEqual(len(extract["cards"]), 1183)
+        self.assertEqual(len(pool.playable_ids), 1183)
         self.assertEqual(pool.playable_ids, frozenset(
             card.id for card in pool.definitions.values() if card.supported))
         self.assertEqual(
             Counter(pool.get(card).category for card in pool.playable_ids),
-            {"pokemon": 882, "trainer": 262, "energy": 37},
+            {"pokemon": 884, "trainer": 262, "energy": 37},
         )
         registry = DEFAULT_EFFECTS
         self.assertEqual(
             (len(registry.attack_keys()), len(registry.power_keys()),
              len(registry.trainer_ids()), len(registry.energy_ids())),
-            (1466, 139, 262, 19),
+            (1469, 139, 262, 19),
         )
         self.assertEqual(
             sum(registry.trainer_entry(card).effect.is_stadium
@@ -45,10 +45,10 @@ class CatalogContractTest(unittest.TestCase):
 
         pool = load_card_pool()
         names = {pool.get(card).name_ja for card in pool.playable_ids if pool.get(card).category == "pokemon"}
-        self.assertEqual(len(names), 456)
+        self.assertEqual(len(names), 457)
         candidates = engine._identity_candidates(pool)
         basics = [card for card in candidates if pool.get(card).category == "pokemon" and pool.get(card).stage == "basic"]
-        self.assertEqual((len(candidates), len(basics)), (977, 456))
+        self.assertEqual((len(candidates), len(basics)), (979, 458))
         self.assertEqual(engine._IDENTITY_TRIAL_LIMIT, 512)
 
     def test_current_research_totals(self):
@@ -57,14 +57,14 @@ class CatalogContractTest(unittest.TestCase):
         self.assertEqual(
             (links["counts"]["engine_stop_codes"],
              links["counts"]["engine_unresolved_rulings"]),
-            (228, 229),
+            (231, 232),
         )
-        self.assertEqual(len(links["latest_descriptions"]["adopted_printed_text"]), 1115)
+        self.assertEqual(len(links["latest_descriptions"]["adopted_printed_text"]), 1118)
 
     def test_current_format_and_audit_agree(self):
         # Keep the audit's independently maintained schema check. Deriving its
         # version from the serializer would hide missing audit field coverage.
-        self.assertEqual(LATEST_FORMAT, 25)
+        self.assertEqual(LATEST_FORMAT, 26)
         self.assertEqual(FORMAT_VERSIONS, tuple(range(1, LATEST_FORMAT + 1)))
 
     def test_target_universe_and_current_unsupported_totals(self):
@@ -93,7 +93,7 @@ class CatalogContractTest(unittest.TestCase):
         self.assertLessEqual(playable, ids)
         self.assertLessEqual(pmcg, playable)
         self.assertEqual((len(ids - playable), len(neo - playable),
-                          len(non_pack - playable)), (196, 90, 106))
+                          len(non_pack - playable)), (194, 88, 106))
 
 
 class ReleaseCohortTest(unittest.TestCase):

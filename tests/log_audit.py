@@ -75,6 +75,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from typing import Any
 
 from kyuura_engine import effects as E
 from kyuura_engine import state_to_dict
@@ -110,6 +111,7 @@ from kyuura_engine.effects import (  # v0.86
     TriggeredPower, DamageThenLockOpponentHandTrainersOnHeads, DamageThenProtectOwnBench, ATTACK_HAND_TRAINER_LOCK,
 )
 from kyuura_engine.state import PowersStopped  # v0.86
+from kyuura_engine.state import AttackBarrier  # v0.100: やみのひとみを「ワザをうけない」で受けなかった（受けていない）
 from kyuura_engine.state import StatusImmunityWhileActive, ZeroDamageAtLeast  # v0.84
 from kyuura_engine.effects import BenchBasicFromOwnDiscardThenCounters  # v0.71
 from kyuura_engine.effects import CoinReturnOwnPokemonWithAttachedToHand, DiscardDeckTopThenReturnTypeEnergy, LookTopTakePokemonThenShuffle  # v0.73
@@ -385,8 +387,9 @@ TOP_FIELDS_SINCE = {
     "energy_attached_by_powers_this_turn": 9, "power_uses_this_turn": 10, "energy_burn": 10, "trainer_locks": 12, "recalls": 14,
     "trainer_effects": 16, "stadium": 17, "stadium_uses_this_turn": 17, "trainer_stack": 18, "energy_roles": 19, "set_aside": 21, "face_up_prizes": 21, "face_down_cards": 22,
     "color_effects": 23,
+    "turn_history": 26,  # v0.100: プレイヤーの番ごとの記録（使ったワザ・番でないプレイヤーの場にいたカード）
 }
-LATEST_FORMAT = 25
+LATEST_FORMAT = 26
 # v0.99: 形式 25 で、場のポケモンの履歴の受けた記録（``"kind": "received"``）に加わった項目（ダメージを受けた場所）
 RECEIVED_FIELDS_SINCE = {"active_damage": 25}
 
@@ -488,6 +491,8 @@ def required_format(state) -> tuple[int, bool]:
     if any(type(record).__name__ == "AttackReceived" and record.damage > 0 and record.active_damage is not None
            for pokemon in in_play for record in pokemon.history):
         needed = max(needed, 25)  # v0.99: 受けた場所の分かる 0 より大きいダメージの受けた記録（形式 24 までは合計だけ）
+    if state.turn_history:
+        needed = max(needed, 26)  # v0.100: プレイヤーの番ごとの記録（「スケッチ」の対戦だけ）
     d = state.decision
     not_v0_1 = d is not None and (
         d.context_value("then") is not None or d.resume in ("attack", "knock_out", "post_knockout", "power")  # v0.42: 特殊能力の途中の決定
@@ -1540,6 +1545,16 @@ def log_problems(state) -> list[str]:
     rebirth_answered: dict | None = None  # 直前の答え（宣言なら、すぐあとに return_to_hand が続くはず）
     batch_answered = False  # このきぜつの処理で答えがあった（そのあとにサイド・きぜつ・対戦の終わりはないはず）
     destiny_knocked: set[int] = set()  # v0.31: 「みちづれ」できぜつする相手の対戦ポケモン（HP 未満できぜつしてよい）
+    # v0.100（docs/sketch-perish-song-history-v0.100.md）: ログから組み立てた、番ごとに番のプレイヤーが使ったワザ（番 → [プレイヤー, 宣言したワザ, まねたワザ]）・場のポケモンが場に出た番・
+    # 番でないプレイヤーの、その番に場にいたカード（(番, プレイヤー) → uid の集合）とうらのカードの数・受けたやみのひとみ（(番, 場のポケモンの番号) → received・undetermined）。スケッチの
+    # 切りかえ・何もしない・失敗と、ほろびのうたの「きぜつ」を、エンジンのプレイヤーの記録・場のポケモンの履歴と別に確かめる。ワザの効果できぜつしたポケモンは HP 未満できぜつしてよい
+    v100_attacks: dict[int, list] = {}
+    v100_entered: dict[int, int] = {}
+    v100_field: dict[tuple[int, int], set[int]] = {}
+    v100_face_down: dict[tuple[int, int], int] = {}
+    v100_night_eyes: dict[tuple[int, int], str] = {}
+    v100_due: dict[str, Any] = {"sketch": None, "perish": None}  # v0.100: 今のスケッチ（番, ポケモンの番号）・今のほろびのうた
+    effect_knocked: set[int] = set()
     shuffle_due: dict | None = None  # v0.32: 直前の bench_from_deck・bench_from_deck_none（すぐあとに同じプレイヤーの shuffle が続くはず）
     static_attaches: set[int] = set()  # v0.85: せいでんきのつけるログ（続けてつけるあいだは山札を切らない）
     discard_entered: dict[int, int] = {}  # v0.51: トラッシュからベンチに出したポケモンの番号 → 出した番（状態の場に出た番と同じはず）
@@ -2071,10 +2086,10 @@ def log_problems(state) -> list[str]:
                     expected.append((2, label, ADD, None, effect.amount, source))
                 elif isinstance(effect, E.AddActiveDamageReceivedToNamedAttack) and pid == attacker_pid and attack_window is not None                         and state.definitions[_attack_key(attack_window["effect"])[0]].attacks[_attack_key(attack_window["effect"])[1]].name_ja == effect.attack_name:
                     # v0.99: ［PERFORM］（このカード自身の「めざめるパワー」に、前の番にバトル場で相手のワザから受けたダメージを 2 段階で加える。ベンチでだけ受けた分は加えない。両方の
-                    # 場所で受けていればエンジンは PF1 で止める）
+                    # 場所で受けていればエンジンは PFM1 で止める）
                     active_part, bench_part = received_before(pid)
                     if active_part > 0 and bench_part > 0:
-                        expected.append((2, label, "PF1", None, 0, source))  # 止まるはずの場面（記録と合わない）
+                        expected.append((2, label, "PFM1", None, 0, source))  # 止まるはずの場面（記録と合わない）
                     elif active_part > 0:
                         expected.append((2, label, ADD, None, active_part, source))
                 elif isinstance(effect, HalveDamageReceived) and pid == receiver_pid:
@@ -2241,6 +2256,99 @@ def log_problems(state) -> list[str]:
             if key is not None and blocked_by is None:
                 problems.append(f"{e['turn']} 番のワザの {element} を、はたらいている「とうめい」のポケモン {pid} が判定（evade_check）なしで受けた")
 
+
+    def v100_attack_name(key: str | None) -> str | None:
+        if key is None:
+            return None
+        card_id, index = _attack_key(key)
+        definition = state.definitions.get(card_id)
+        return None if definition is None or index >= len(definition.attacks) else definition.attacks[index].name_ja
+
+    def v100_effect(key: str | None):
+        entry = state.effects.attack_entry(*_attack_key(key)) if key is not None else None
+        return None if entry is None else entry.effect
+
+    def v100_perish_start(e: dict, key: str) -> None:
+        """v0.100: ほろびのうた（``KnockOutIfAsleepAndReceived``）を処理するワザ: ログから組み立てた相手の対戦ポケモンの今のねむりと、前の自分の番（2 つ前の番）のやみのひとみの受け方から、
+        「きぜつ」するはずか・止まるはずか（PSG1。止まれば、このワザはログにない）を決める。"""
+        effect = v100_effect(key)
+        if not isinstance(effect, E.KnockOutIfAsleepAndReceived):
+            return
+        target = active_of.get(1 - e["player"])
+        asleep = exclusive.get(target) == "sleep"
+        receipt = v100_night_eyes.get((e["turn"] - 2, target))
+        v100_due["perish"] = {"turn": e["turn"], "target": target, "expected": asleep and receipt == "received", "prevented": False, "knocked": False}
+        if asleep and receipt == "undetermined":
+            problems.append(f"{e['turn']} 番のほろびのうた（相手 {target}）が、前の自分の番のやみのひとみの受け方が決まらない（PSG1。止まるはず）のに処理された")
+
+    def v100_problems(e: dict) -> list[str]:
+        """v0.100: スケッチ（``UseLastOpponentAttack``）の切りかえ・何もしない・失敗と、やみのひとみの受け方・ほろびのうたの「きぜつ」を、ログから組み立て直して確かめる。"""
+        found: list[str] = []
+        kind = e["kind"]
+        turn = e.get("turn")
+        if kind == "attack" and attack_window is not None:
+            key = attack_window["effect"]
+            v100_attacks[turn] = [e["player"], key, None]
+            v100_due["sketch"] = (turn, attack_window["pokemon_id"]) if isinstance(v100_effect(key), E.UseLastOpponentAttack) else None
+            v100_due["perish"] = None
+            v100_perish_start(e, key)
+        elif kind == "copy_attack" and attack_window is not None:
+            if turn in v100_attacks:
+                v100_attacks[turn][2] = e["copied"]
+            if "used_turn" in e:
+                due, v100_due["sketch"] = v100_due["sketch"], None
+                record = v100_attacks.get(e["used_turn"])
+                if due is None or due[1] != e["pokemon_id"] or e["used_turn"] != turn - 1:
+                    found.append(f"{turn} 番の copy_attack（used_turn {e['used_turn']}）が、この番のスケッチのものではない")
+                elif record is None or record[0] == e["player"] or record[2] is not None or record[1] != e["copied"]:
+                    found.append(f"{turn} 番のスケッチで使ったワザ {e['copied']} が、ログの前の相手の番の宣言したワザ {record}（まねたワザでない）ではない")
+                elif v100_entered.get(e["pokemon_id"], turn) >= turn - 1:
+                    found.append(f"{turn} 番にスケッチを使ったポケモン {e['pokemon_id']} が、前の相手の番の始めから場にいない（{v100_entered.get(e['pokemon_id'])} 番に場に出た）")
+                elif e.get("used_by") is not None and e["used_by"] not in v100_entered:
+                    found.append(f"{turn} 番のスケッチの used_by {e['used_by']} が、ログの場のポケモンの番号ではない")
+            v100_perish_start(e, e["copied"])
+        elif kind == "sketch_none":
+            due, v100_due["sketch"] = v100_due["sketch"], None
+            if due is None or due[1] != e["pokemon_id"] or turn - 1 in v100_attacks and v100_attacks[turn - 1][0] != e["player"]:
+                found.append(f"{turn} 番のスケッチが何もしなかったが、ログの前の相手の番にワザ {v100_attacks.get(turn - 1)} がある（またはスケッチのワザではない）")
+            elif v100_entered.get(e["pokemon_id"], turn) >= turn - 1:
+                found.append(f"{turn} 番に何もしなかったスケッチのポケモン {e['pokemon_id']} が、前の相手の番の始めから場にいない")
+        elif kind == "attack_failed" and e.get("reason") == "not_in_play":
+            due, v100_due["sketch"] = v100_due["sketch"], None
+            pid = e["pokemon_id"]
+            seen = v100_field.get((turn - 1, e["player"]))
+            if due is None or due[1] != pid or seen is None or v100_entered.get(pid) != turn or top.get(pid) in seen or v100_face_down.get((turn - 1, e["player"]), 0):
+                found.append(f"{turn} 番のスケッチの失敗（ポケモン {pid}・{v100_entered.get(pid)} 番に場に出た）が、前の相手の番に場にいなかったポケモンのものではない")
+        elif kind in ("confusion_damage", "attack_failed") and attack_window is not None:
+            v100_due["sketch"] = None  # こんらんの「うら」・手順 4 の失敗（ワザの効果を処理しない）
+            v100_due["perish"] = None
+        if kind in ("special_condition", "special_condition_prevented") and e.get("condition") == "sleep" and attack_window is not None:
+            effective = attack_window.get("copied") or attack_window["effect"]
+            if v100_attack_name(effective) == "やみのひとみ" and e.get("player") != attack_window["player"]:
+                v100_night_eyes[(turn, e["pokemon_id"])] = "undetermined" if attack_window.get("copied") else "received"
+        if kind == "effect_prevented" and e.get("element") == "sleep" and attack_window is not None \
+                and v100_attack_name(attack_window.get("copied") or attack_window["effect"]) == "やみのひとみ" and e.get("persistent_effect") != AttackBarrier.kind:
+            v100_night_eyes.setdefault((turn, e["pokemon_id"]), "undetermined")  # 効果だけを無効にする効果（エフェクトガードなど）
+        perish = v100_due["perish"]
+        if kind in ("effect_prevented", "attack_evaded") and e.get("element") == E.KNOCK_OUT_ELEMENT:
+            if perish is None or e["pokemon_id"] != perish["target"]:
+                found.append(f"{turn} 番の「きぜつ」の効果の無効（ポケモン {e['pokemon_id']}）が、ほろびのうたの相手のものではない")
+            else:
+                perish["prevented"] = True
+        if kind == "effect_knock_out":
+            if perish is None or not perish["expected"] or perish["prevented"] or e["target_pokemon_id"] != perish["target"]:
+                found.append(f"{turn} 番のワザの効果の「きぜつ」（ポケモン {e['target_pokemon_id']}）が、ログから組み立てた、ねむりで前の自分の番にやみのひとみを受けていた相手ではない")
+            else:
+                perish["knocked"] = True
+                effect_knocked.add(e["target_pokemon_id"])
+        if kind in ("turn_end", "game_end", "halted"):
+            if v100_due["sketch"] is not None:
+                found.append(f"{v100_due['sketch'][0]} 番のスケッチ（ポケモン {v100_due['sketch'][1]}）が、切りかえ・何もしない・失敗のどれでもない")
+            if perish is not None and perish["expected"] and not perish["prevented"] and not perish["knocked"]:
+                found.append(f"{perish['turn']} 番のほろびのうたで、ねむりで前の自分の番にやみのひとみを受けていた相手 {perish['target']} が「きぜつ」していない")
+            v100_due["sketch"] = v100_due["perish"] = None
+        return found
+
     def window_damaged(window: dict) -> bool:
         """今のワザ（attack_window）に、すでにダメージの要素（damage・damage_prevented・ダメージの attack_evaded）があったか（v0.42）。"""
         return bool(window.get("any_damage"))
@@ -2249,6 +2357,9 @@ def log_problems(state) -> list[str]:
 
     def enter(uid: int) -> None:
         nonlocal next_id
+        v100_entered[next_id] = current_turn  # v0.100
+        if current_turn >= 1 and turn_player is not None and owner[uid] != turn_player:
+            v100_field.setdefault((current_turn, owner[uid]), set()).add(uid)  # v0.100: 番でないプレイヤーのポケモンがその番に場に出た（ポケモンの笛など）
         ids[uid] = next_id
         energy[next_id] = []
         in_play.add(next_id)
@@ -2756,6 +2867,7 @@ def log_problems(state) -> list[str]:
             received(e, e["pokemon_id"], DEVOLVE_ELEMENT)  # v0.50: たいかビーム（自分・相手の場のポケモンへの効果）
         if kind == "copy_attack" and attack_window is not None:
             attack_window["copied"] = e["copied"]  # v0.44: 相手のワザを自分のワザとして使った（そのワザの効果のログの effect は copied）
+        problems.extend(v100_problems(e))  # v0.100: スケッチ・やみのひとみ・ほろびのうた
         if kind in ("damage", "confusion_damage"):
             # v0.90: のろいマーカーののっているポケモンが弱点の計算をしたワザのダメージは「×4」（ログの weakness_multiplier）。ほかは書かない。こんらんの 20 は、のろいマーカーと
             # 自分の弱点が当てはまるならコインの前に止まる（UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS）ので、弱点の計算をしたこんらんのダメージはない
@@ -2794,6 +2906,9 @@ def log_problems(state) -> list[str]:
         if kind == "turn_start":
             turn_player = e["player"]
             current_turn = e["turn"]  # v0.48
+            # v0.100: 番の始めに、番でないプレイヤーの場にいたおもてのポケモンのカードと、うらのカードの数
+            v100_field[(current_turn, 1 - turn_player)] = {top[pid] for pid in in_play if pokemon_owner.get(pid) == 1 - turn_player and pid not in face_down_pids}
+            v100_face_down[(current_turn, 1 - turn_player)] = sum(1 for pid in in_play if pokemon_owner.get(pid) == 1 - turn_player and pid in face_down_pids)
             attached_this_turn = power_attached_this_turn = 0
             if any(char_due.values()):
                 problems.append(f"{e['turn']} 番の前のポケモンチェックで、くろこげマーカーの「うら」のポケモン {[pid for pid, due in char_due.items() if due]} がダメージを受けていない")
@@ -5318,7 +5433,7 @@ def log_problems(state) -> list[str]:
             fixed_hp = lasting_value(pid, MaxHpSet.kind, "amount") if pid in top else None
             # v0.49: 今の姿（「ばける」・［へんしん］）の HP。きぜつのログの順番で［へんしん］の相手が先に場をはなれることがあるので、いちばん上のカードの HP との小さいほう
             hp_floor = fixed_hp if fixed_hp is not None else min(state.in_play_def(e["pokemon"]).hp, form_def(pid).hp if pid in top else 10 ** 6)
-            if damage[pid] < hp_floor and pid not in destiny_knocked and "to_energy" not in e:
+            if damage[pid] < hp_floor and pid not in destiny_knocked and pid not in effect_knocked and "to_energy" not in e:
                 problems.append(f"場のポケモン {pid} が、ログから組み立てたダメージ {damage[pid]}（HP 未満）できぜつした")
             destiny_knocked.discard(pid)
             rkey, rpower = rebirth_power(e["pokemon"])

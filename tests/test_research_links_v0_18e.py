@@ -147,8 +147,10 @@ class ResearchLinksTest(unittest.TestCase):
                              # v0.98: BE1・BE2・VN1（docs/unown-bear-yield-vanish-give-v0.98.md 7 章。BE2・VN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形だが、kyuura の事例にない）
                              "UNRESOLVED_POWER_COUNTER_MOVE_TO_SAME_POKEMON", "UNRESOLVED_POWER_COUNTER_MOVE_WITHOUT_COUNTERS",
                              "UNRESOLVED_POWER_RETURN_WITHOUT_TARGET",
-                             # v0.99: PF1（docs/unown-perform-help-history-v0.99.md 7 章）
-                             "UNRESOLVED_PERFORM_DAMAGE_PLACES"})
+                             # v0.99: PFM1（docs/unown-perform-help-history-v0.99.md 7 章）
+                             "UNRESOLVED_PERFORM_DAMAGE_PLACES",
+                             # v0.100: SK1・SK2・PSG1（docs/sketch-perish-song-history-v0.100.md 8 章。SK2・PSG1 は UQ-COPIED-ATTACK と近い形だが、kyuura の事例にない）
+                             "UNRESOLVED_SKETCH_PRESENCE", "UNRESOLVED_SKETCH_COPIED_ATTACK", "UNRESOLVED_PERISH_SONG_RECEIVED_ATTACK"})
         # v0.97（docs/unown-research-idfnj-v0.97.md 3 章）: kyuura が調査で立てた UQ-SELF-EXCLUDING-POWER-COPIES の事例にわるいデンリュウ（neo4-046）の［かんでん］があるので、
         # CV1 を論点に結んだ（kyuura は v0.86 を取り込んでいないので、未解決の一覧に CV1 の行はない。kyuura の事例は kyuura_cases_without_engine_ruling で照らす）
         # v0.97 で加えた DF1・DF2 も、kyuura に論点（UQ-SELF-EXCLUDING-POWER-COPIES・UQ-NON-ATTACK-DAMAGE-MODIFIERS）はあるが、未解決の一覧に行がない

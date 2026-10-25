@@ -2368,6 +2368,12 @@ POOL_V0_99 = [
     "neo1-023",  # タッツー（ひれがえし）
 ]
 
+# v0.100（docs/sketch-perish-song-history-v0.100.md）: ドーブル・ムウマの 2 枚（ワザ 3）。写しの元・研究の基準は v0.97 と同じ 73a1690
+POOL_V0_100 = [
+    "neo2-052",  # ドーブル（スケッチ）
+    "neo3-035",  # ムウマ（やみのひとみ・ほろびのうた）
+]
+
 POOLS = [
     ("pool_v0_1", POOL_V0_1),
     ("pool_v0_2b", POOL_V0_2B),
@@ -2473,6 +2479,7 @@ POOLS = [
     ("pool_v0_97", POOL_V0_97),
     ("pool_v0_98", POOL_V0_98),
     ("pool_v0_99", POOL_V0_99),
+    ("pool_v0_100", POOL_V0_100),
 ]
 
 

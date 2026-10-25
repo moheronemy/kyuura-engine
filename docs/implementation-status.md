@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.99）
+# 実装状況（v0.1〜v0.100）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534`（v0.97 から。v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3820,6 +3820,23 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
 
+## v0.100: ドーブル・ムウマの 2 枚と、前の相手の番のワザの記録・ワザの効果による「きぜつ」
+
+[sketch-perish-song-history-v0.100.md](sketch-perish-song-history-v0.100.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 2 枚の登録（写しの組 pool_v0_100。印刷の文面のまま正規化しない。やみのひとみは v0.3b の既存の型） | 実装済み・テスト済み | kyuura 73a1690 の写し | test_sketch_perish_song_history_v0_100.py `RegistrationTest` |
+| 略号の訂正（v0.99 の PF1 → PFM1。v0.47 の PF1 と長い停止コードは変えない） | 確かめた | 2.1 節 | 同 `RegistrationTest.test_abbreviations_are_separated` |
+| プレイヤーの番ごとの記録（`TurnAttack`・`TurnField`。宣言・切りかえ・番の最初・場に出たときに作る。スケッチのある対戦だけ。2 つ前の番まで。記録のない状態を「使わなかった」と読まない） | 実装済み・テスト済み | v0.62 の使った時点・p.310 | 同 `TurnHistoryTest`・`MidTurnStateTest` |
+| スケッチ（前の相手の番に相手が使ったワザを、このカードのワザとして新しく処理する。必要なエネルギーはいらない。ほかの条件は免除しない（HC9）。場に出ていなければ失敗。SK1・SK2） | 実装済み・テスト済み | 印刷の文面・p.309・p.323・v0.31・v0.62 | 同 `SketchTest`・`SketchPresenceTest`・`CopyInteractionTest` |
+| やみのひとみ・ほろびのうた（今ねむりで、前の自分の番にやみのひとみを受けていた相手は「きぜつ」する。受けた記録の意味は v0.62 のまま。決まらなければ PSG1） | 実装済み・テスト済み | 印刷の文面・p.309・p.322・v0.62・v0.72 | 同 `NightEyesTest`・`PerishSongTest`・`ReceivedRecordMeaningTest` |
+| ワザの効果による「きぜつ」（ダメージではない。原因を `effect_ko` に残し、決定をまたいで運ぶ。こんじょう・ハチマキ・学習装置の候補にしない） | 実装済み・テスト済み（決定をまたぐ場面はテスト限定） | 6 章・p.323・p.324 | 同 `PerishSongTest`・`EffectKnockOutCauseTest` |
+| 書き出しの形式 26（`turn_history`。形式 1〜25 は記録があると書き出さない）・観測・不変条件 | 実装済み・テスト済み | 7 章 | 同 `TurnHistoryTest`・tests/log_audit.py |
+| ログの監査（前の相手の番のワザ・場に出た番・場にいたカード・受けたやみのひとみの組み立て直しと、スケッチ・ほろびのうたの結果） | 実装済み・対戦で確かめた | 10 章 | tests/log_audit.py・`tools/existing_effect_games.py --batch v0.100` |
+| 未対応の数（全対象 194・neo 88・拡張パック以外 106） | 確かめた | kyuura data/engine_targets.json（73a1690）から今の登録を差し引いた数 | test_catalog_contract.py |
+| 2 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
+
 ## v0.99: アンノーンP・H とタッツーの 3 枚と、受けたダメージの場所の履歴
 
 [unown-perform-help-history-v0.99.md](unown-perform-help-history-v0.99.md)。
@@ -3828,7 +3845,7 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 |---|---|---|---|
 | 3 枚の登録（写しの組 pool_v0_99。印刷の文面のまま正規化しない。アンノーンP・H は文字を合わせて 4 枚まで（共通の規定の再利用）） | 実装済み・テスト済み | kyuura 73a1690 の写し・v0.96 の deck_problems | test_unown_perform_help_history_v0_99.py `RegistrationTest`・`DeckLimitTest` |
 | 受けたダメージの場所の履歴（`AttackReceived.active_damage`。のせた時の場所で分ける。回復・入れ替えで変えない。特殊能力だけが読む対戦でも記録する。場所の分からない記録の写しは推測しない） | 実装済み・テスト済み | v0.62 の履歴・p.319・p.310 | 同 `DamagePlaceHistoryTest` |
-| ［PERFORM］（常にはたらく。このカード自身の今持つ「めざめるパワー」に、前の相手の番にバトル場で受けたダメージを p.321 の 2 段階で加える。こんらんの 20 には加えない。両方の場所で受けていれば PF1） | 実装済み・テスト済み | 印刷の文面・p.321・p.309・v0.27・v0.46 | 同 `BasicExamplesTest`・`PerformTest` |
+| ［PERFORM］（常にはたらく。このカード自身の今持つ「めざめるパワー」に、前の相手の番にバトル場で受けたダメージを p.321 の 2 段階で加える。こんらんの 20 には加えない。両方の場所で受けていれば PFM1） | 実装済み・テスト済み | 印刷の文面・p.321・p.309・v0.27・v0.46 | 同 `BasicExamplesTest`・`PerformTest` |
 | 「ひれがえし」（前の相手の番にワザによるダメージを受けていれば基本となるダメージに 10。場所を問わない。まねたワザでは使うポケモンの記録） | 実装済み・テスト済み | 印刷の文面・p.321・v0.62 | 同 `BasicExamplesTest`・`PerformTest` |
 | ［HELP］（自分の番ごとに 1 回。このカードと E・L・P が自分のベンチにいるとき。手札をすべて見せずにもどして切り、もどした枚数を引く。手札 0 枚は HD2 の読み方で使える） | 実装済み・テスト済み | 印刷の文面・v0.54・v0.97 | 同 `HelpTest` |
 | 書き出しの形式 25（受けた記録の場所。形式 20〜24 は場所の落ちる記録があると書き出さない）・観測・不変条件 | 実装済み・テスト済み | 6 章 | 同 `DamagePlaceHistoryTest`・tests/log_audit.py |

@@ -1955,6 +1955,29 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.100: ドーブル・ムウマの 2 枚
+
+[sketch-perish-song-history-v0.100.md](sketch-perish-song-history-v0.100.md)。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534` のまま（今回の追加を理由に上げていない）。写しの組 `pool_v0_100`（2 枚）を加え、写しの作り直しの道具で作った
+  （手で直していない）。v0.99 までの 1,181 枚の値・移行の記録（`source_migrations`・`data_migrations`）は変わっていない。2 枚とも `data_gaps` は空。
+- 2 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-25・外部照合なし）。研究の基準に 2 枚を指す LD-・CC-・CR-・UQ-・エラッタはなく（カードの id で
+  確かめた。pcg-search の id はない）、`kyuura_records` は空。ワザ 3（スケッチ・やみのひとみ・ほろびのうた）は印刷の文面（研究の対応表の `adopted_printed_text` に加えた。1,115 → 1,118）。
+  `card_verification.json` には加えていない。
+- kyuura data/curation/card_differences.json#neo2-052（確度: 確実。日本版はエネルギーだけを不要とし、英語版は使うために必要なことも不要とする）は日英の違いの記録として写しに保ち、処理に
+  使う文面にしていない（最新の説明の記録ではない。研究の対応表の `difference_text` にも入れない）。
+- kyuura data/rule_history.json の RUL-ENERGY-DISCARD-ATTACKS の notes の『トレーナーズ』Vol.9 p.22 の Q&A（2000-12-01。スケッチで第1弾のウインディの「かえんほうしゃ」を使う例）は後年の
+  記録で、2000.02.14 版の裁定として新しく採らない（記録の `cards` は PMCG1-019 で、ドーブルを指さないので `kyuura_records` に入れない）。
+- 日本語の文面の転記元は nazonobasho.com（ドーブル）・wiki.pokemonwiki.com（ムウマ）。この転記・cards.json と cards.csv の一致を、新しい画像の確認・独立した照合として記録していない。
+  外部照合・カードの画像の照合・公式の書籍の新しい照合はしていない。
+- 新しい停止コード 3 件（SK1 `UNRESOLVED_SKETCH_PRESENCE`・SK2 `UNRESOLVED_SKETCH_COPIED_ATTACK`・PSG1 `UNRESOLVED_PERISH_SONG_RECEIVED_ATTACK`。どれも `not_in_kyuura`）を研究の対応表の
+  `stop_codes` に加えた（停止コード 228 → 231・未解決の裁定 229 → 232）。エンジンの情報の不足のコード `UNSUPPORTED_HISTORY_TURN_RECORD_MISSING` は研究上の未解決ではないので加えていない。
+  kyuura の論点の事例のうちエンジンの裁定 id のないもの（`kyuura_cases_without_engine_ruling`）は kyuura と同じまま（2 枚の事例は kyuura にない）。
+- 略号の訂正: v0.99 の停止コード `UNRESOLVED_PERFORM_DAMAGE_PLACES` の略号を、v0.47 の PF1（`UNRESOLVED_PLAY_AS_POKEMON_SETUP`）と重ならない PFM1 に改めた（研究の対応表の `ruling_id`・
+  アンノーンP の採用の記録の注記・下の v0.99 の節の 2 か所。長い停止コード・数は変わらない）。
+- 報告事項（kyuura の作業）: SK1・SK2・PSG1 の論点がない（SK2・PSG1 は UQ-COPIED-ATTACK と同じ形）。engine_targets.json の 2 枚の `engine_status`（`new_effect_needed`）を v0.100 の登録で
+  写すと `registered` になる（docs 11 章）。
+
 ## v0.99: アンノーンP・H とタッツーの 3 枚
 
 [unown-perform-help-history-v0.99.md](unown-perform-help-history-v0.99.md)。
@@ -1970,10 +1993,10 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   v0.97 の 5 枚と遺跡の石版）。
 - 日本語の文面の転記元は wiki.pokemonwiki.com（アンノーンP・H）・nazonobasho.com（タッツー）。転記元の「カード名称」の「アンノーン[P]」などの書き方は、写しの名前を変えない（カード名の
   表記の問題は範囲外）。外部照合・カードの画像の照合・公式の書籍の新しい照合はしていない。
-- 新しい停止コード 1 件（PF1 `UNRESOLVED_PERFORM_DAMAGE_PLACES`。`not_in_kyuura`）を研究の対応表の `stop_codes` に加えた（停止コード 227 → 228・未解決の裁定 228 → 229）。エンジンの
+- 新しい停止コード 1 件（PFM1 `UNRESOLVED_PERFORM_DAMAGE_PLACES`。`not_in_kyuura`）を研究の対応表の `stop_codes` に加えた（停止コード 227 → 228・未解決の裁定 228 → 229）。エンジンの
   情報の不足のコード `UNSUPPORTED_HISTORY_DAMAGE_PLACE_UNKNOWN` は研究上の未解決ではないので加えていない。kyuura の論点の事例のうちエンジンの裁定 id のないもの
   （`kyuura_cases_without_engine_ruling`）は kyuura と同じまま（3 枚の事例は kyuura にない）。
-- 報告事項（kyuura の作業）: PF1 の論点がない。engine_targets.json の 3 枚の `engine_status`（`new_effect_needed`）を v0.99 の登録で写すと `registered` になる（docs 10 章）。
+- 報告事項（kyuura の作業）: PFM1 の論点がない。engine_targets.json の 3 枚の `engine_status`（`new_effect_needed`）を v0.99 の登録で写すと `registered` になる（docs 10 章）。
 
 ## v0.98: アンノーンB・Y・V・G の 4 枚
 

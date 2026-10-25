@@ -693,7 +693,9 @@ class G37Test(unittest.TestCase):
         "SwitchOpponentActiveRequiringBench", "ForceSwitchOnHeadsWithoutDamage", "CoinBonusDamageElseForceSwitch", "OptionalSwitchOpponentThenDamage",
         "DamageThenStatusOnHeadsElseSelfSwitch", "CoinReturnOpponentToHandElseForceSwitch",
         # v0.95: とりさる（相手の場のポケモンについているトレーナーカードを山札にもどす。ついているポケモンへの効果。docs/private-looks-deck-movement-v0.95.md）
-        "ReturnOpponentAttachedTrainerToDeck"]))
+        "ReturnOpponentAttachedTrainerToDeck",
+        # v0.100: ほろびのうた（相手をダメージによらず「きぜつ」させる効果。docs/sketch-perish-song-history-v0.100.md）
+        "KnockOutIfAsleepAndReceived"]))
 
 
 class DecisionTest(unittest.TestCase):

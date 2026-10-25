@@ -168,7 +168,9 @@ class RegistryTest(unittest.TestCase):
     def test_history_readers(self):
         readers = {type(e.effect).__name__ for e in E.DEFAULT_EFFECTS._attacks.values() if e.effect.reads_history}
         # v0.99: タッツーの「ひれがえし」（docs/unown-perform-help-history-v0.99.md）。特殊能力の履歴を読む効果（［PERFORM］）は tests/test_unown_perform_help_history_v0_99.py
-        self.assertEqual(readers, {"DamageIfUsedAttackLastTurn", "RepeatReceivedAttack", "ReflectReceivedDamageAndEffects", "PlusIfDamagedByAttackLastOpponentTurn"})
+        # v0.100: ムウマの「ほろびのうた」（docs/sketch-perish-song-history-v0.100.md）。プレイヤーの番ごとの記録を読むワザ（「スケッチ」の ``reads_turn_history``）は別の印
+        self.assertEqual(readers, {"DamageIfUsedAttackLastTurn", "RepeatReceivedAttack", "ReflectReceivedDamageAndEffects", "PlusIfDamagedByAttackLastOpponentTurn",
+                                   "KnockOutIfAsleepAndReceived"})
 
     def test_history_only_recorded_when_a_reader_is_in_the_game(self):
         # 履歴を読むワザのない対戦では記録しない（v0.61 までと同じ状態・書き出し）

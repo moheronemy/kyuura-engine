@@ -1008,6 +1008,43 @@ class OtherReceived:
 ATTACK_HISTORY_TYPES = (AttackUsed, AttackReceived, OtherReceived)
 
 
+@dataclass(frozen=True)
+class TurnAttack:
+    """番のプレイヤーが、その番に使ったワザの記録（v0.100。docs/sketch-perish-song-history-v0.100.md 3 章。ドーブルの「スケッチ」の「前の相手の番に、相手のポケモンが
+    ワザを使っていたなら」）。場のポケモンの履歴（``AttackUsed``）とは別に、プレイヤーの記録（``GameState.turn_history``）として持つ。ワザを使ったポケモンがあとで場を
+    はなれても（手札・山札にもどる・きぜつ・みずからきぜつ）、ベンチにもどっても、使った事実は残る。
+
+    - ``turn``・``player``: 使った番と、その番のプレイヤー（ワザは番に 1 回なので、番ごとに 1 つ）
+    - ``pokemon_id``・``card``: ワザを使った場のポケモンの番号と、その時のいちばん上のカード（過去の参照。ログ・確かめにだけ使い、新しい操作の対象にしない）
+    - ``declared``・``processed``: ``AttackUsed`` と同じ（宣言したワザ・相手のワザなどを自分のワザとして使ったときの処理したワザ。使った時点は宣言（p.309 の手順 3））
+    """
+
+    turn: int
+    player: int
+    pokemon_id: int
+    card: int
+    declared: tuple[str, int]
+    processed: tuple[str, int] | None = None
+
+
+@dataclass(frozen=True)
+class TurnField:
+    """その番に、番でないプレイヤーの場にいたポケモンのカードの記録（v0.100。docs 3 章。「スケッチ」の「前の相手の番、このカードが場に出ていなければ」）。番の始めに場にいた
+    ポケモンのカード（重なり・「ばける」でのせたカードを含む）と、その番に場に出たポケモンのカード（``zones.enter_play``）。場のポケモンの「場に出た番」（``played_turn``）は
+    場をはなれて出し直すと新しくなるので、前の相手の番に場にいたカードかは、これで確かめる。
+
+    - ``face_down``: その番に場にいた、うらのカード（マチスの秘策）の数。うらのカードの uid は書かない（記録・観測に正体を混ぜない）
+    """
+
+    turn: int
+    player: int
+    cards: tuple[int, ...]
+    face_down: int = 0
+
+
+TURN_HISTORY_TYPES = (TurnAttack, TurnField)
+
+
 def mark_returned_to_bench(pokemon: PokemonInPlay) -> None:
     """バトル場からベンチにもどったポケモンの、特殊能力で色を変えた記録（``TypeShift``）に、ベンチにもどったことを残す（v0.48）。記録がなければ何もしない。
     にげる・ポケモンいれかえ／突風・ワザによる入れ替えの 3 か所で、特殊状態・持続する効果を消すのと同じところで呼ぶ（ログは残さない。記録の項目が変わるだけ）。"""
@@ -1922,6 +1959,10 @@ class GameState:
     # v0.88（docs/type-energy-colors-v0.88.md 2 章）: 特殊能力で、この番が終わるまで色を変える効果（``ColorEffect`` の並び。使った順）。番の終わりに消す
     # （``procedures.expire_at_turn_end``）。発生源が「ねむり・マヒ・こんらん」状態になったら、その発生源の効果を消す。書き出しは形式 23 だけが表せる（空でなければ形式 1〜22 は ``ValueError``）
     color_effects: tuple[ColorEffect, ...] = ()
+    # v0.100（docs/sketch-perish-song-history-v0.100.md 3 章）: プレイヤーの番ごとの記録（``TurnAttack``・``TurnField`` の並び。番の順）。プレイヤーの記録を読む効果
+    # （``AttackEffect.reads_turn_history``。「スケッチ」）のカードが対戦にあるときだけ記録する（``history.turn_history_needed``。ないときは空のまま）。番の最初に、2 つ前の番より
+    # 古い記録を消す。書き出しは形式 26 だけが表せる（空でなければ形式 1〜25 は ``ValueError``）。v0.99 までの状態の写し（pickle）は項目がなく、この既定値（空）になる
+    turn_history: tuple[Any, ...] = ()
     # v0.87（docs/movement-damage-reactions-v0.87.md 3 章）: 場の移動（控え → バトル場・バトル場 → ベンチ・手札からの登場）の事実への、まだ処理していない反応の段（``movement``。
     # ``reactions`` の ``("same", …)`` の段の並び）。事実を起こした処理の流れが、同じコマンドの中で処理する（ワザの要素のあいだ・トレーナー・特殊能力を使い終える前・にげるのあと・
     # バトル場に出したあと）。コマンドの終わり・決定を待つ間は空（決定をまたぐ続きは決定の ``context`` に移す）。書き出さない（不変条件 ``engine._pending_moves_problems``）

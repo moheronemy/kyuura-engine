@@ -590,6 +590,7 @@ POOL_KEYS = (
     "pool_v0_97",  # v0.97（アンノーンI・D・F・[N]・[J] の 5 枚。docs/unown-research-idfnj-v0.97.md）
     "pool_v0_98",  # v0.98（アンノーンB・Y・V・G の 4 枚。docs/unown-bear-yield-vanish-give-v0.98.md）
     "pool_v0_99",  # v0.99（アンノーンP・H とタッツーの 3 枚。docs/unown-perform-help-history-v0.99.md）
+    "pool_v0_100",  # v0.100（ドーブル・ムウマの 2 枚。docs/sketch-perish-song-history-v0.100.md）
 )
 
 

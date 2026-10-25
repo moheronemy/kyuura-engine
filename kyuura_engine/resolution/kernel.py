@@ -130,6 +130,10 @@ class Resolution:
         # v0.31: ダメージによらず「きぜつ」するポケモン（「みちづれ」で、相手の対戦ポケモンも「きぜつ」する。場のポケモンの番号）。きぜつの判定・
         # 処理は、HP 以上のダメージのポケモンといっしょに扱う（``knocked``）
         self.forced: set[int] = set()
+        # v0.100（docs/sketch-perish-song-history-v0.100.md 6 章）: ``forced`` のうち、ワザの効果で「きぜつ」させたポケモン（番号 → (ワザを使ったプレイヤー, ワザを使ったポケモンの番号)。
+        # ムウマの「ほろびのうた」。``knock_out_by_effect``）。「みちづれ」で「きぜつ」するポケモンは入れない（原因の枠がない v0.31 の扱いのまま）。きぜつの原因（``ko_cause``）として
+        # ［ファイナルビーム］の候補などに渡し、決定をまたぐときは続きの情報で運ぶ（``AttackRun.suspend``・``flow._finish_attack``）
+        self.effect_ko: dict[int, tuple[int, int]] = {}
         # v0.46: ワザが使われた時（宣言）に「ねむり・マヒ・こんらん」状態だった、その時点の特殊状態で決める常にはたらく特殊能力（エリカのフシギソウの
         # ［くつろぐかおり］）を持つ場のポケモンの番号（``effects.status_at_attack_blocked``）。ワザの宣言で写し（``flow._attack_body``）、決定をまたぐときは
         # 続きの情報で運ぶ（``AttackRun.suspend``）。ワザの外（None）では今の特殊状態で決める
@@ -1973,6 +1977,8 @@ def ko_prevention_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, C.Ef
             if able is None:
                 if owner == state.current_player:
                     break  # 相手のワザのダメージで HP 以上になったのではない（G4・G5）
+                if pokemon.pokemon_id in res.effect_ko:
+                    break  # v0.100: ワザの効果で「きぜつ」する（ダメージではない。こんじょうは「相手のワザによるダメージで」）
                 raise RuntimeError(f"任意の効果を持つポケモン {pokemon.pokemon_id} が HP 以上なのに、ダメージを受けたときの写しがない（エンジンの不具合）")
             if able and not C.offer_stopped(state, instance, pokemon):
                 offers.append((owner, pokemon, instance))
@@ -1985,11 +1991,44 @@ def ko_prevention_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, C.Ef
 
 def ko_cause(res: Resolution, pokemon_id: int) -> tuple[int, int, bool] | None:
     """HP 以上になった場のポケモンのきぜつの原因（v0.61）: (原因の枠のプレイヤー, ダメージを与えたポケモンの番号, ワザの分類の枠か)。この解決の枠（``knocked_by``）か、決定を
-    またいで運んだ値（``ko_carried``）。どちらもなければ None。"""
+    またいで運んだ値（``ko_carried``）。どちらもなければ None。v0.100: ワザの効果で「きぜつ」させたポケモン（``effect_ko``）は、(ワザを使ったプレイヤー, ワザを使ったポケモン, 真)。"""
     if pokemon_id in res.knocked_by:
         frame = res.frames[res.knocked_by[pokemon_id]].frame
         return frame.player, frame.source_pid, frame.damage_class is DamageClass.ATTACK
+    if pokemon_id in res.effect_ko:
+        player, source = res.effect_ko[pokemon_id]
+        return player, source, True
     return res.ko_carried.get(pokemon_id)
+
+
+def knock_out_by_effect(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay) -> None:
+    """v0.100（docs/sketch-perish-song-history-v0.100.md 6 章）: ワザの効果で、``owner`` の場のポケモン ``pokemon`` を「きぜつ」させる（ムウマの「ほろびのうた」の「相手は「きぜつ」する」）。
+
+    - ダメージではない: ダメージ・ダメージカウンターをのせず（残りHPぶんの架空のダメージにしない）、ダメージの計算（弱点・抵抗力）・ダメージを受けたときの効果・［ずらかる］・ワザのダメージで
+      HP 以上になった記録（``knocked_by``・``damage_ko``。こんじょう・きあいのハチマキ・学習装置の候補）は起こらない
+    - きぜつの判定・処理は、ワザのあとの既存の処理（``flow._finish_attack``）で HP 以上のポケモンといっしょに扱う（``res.forced``。同じワザの中のきぜつは同時。p.324）。サイド・
+      トラッシュ・リサイクルエネルギー・勝ち負け・バトル場に出す決定・ふしちょう・「みちづれ」の判定は、その処理が決める
+    - 原因（ワザを使ったプレイヤー・ワザを使ったポケモン）を ``res.effect_ko`` に残す（``ko_cause``。［ファイナルビーム］の「相手のワザによって「きぜつ」する時」の候補）
+    - ログ ``effect_knock_out``（``player``・``pokemon``・``pokemon_id``（ワザを使ったプレイヤー・ポケモン）・``effect``・``target_player``・``target_pokemon``・``target_pokemon_id``）"""
+    if fs.frame.kind is not FrameKind.ATTACK or owner == fs.frame.player:
+        raise RuntimeError("ワザの効果できぜつさせるのは、ワザの枠の、相手のポケモンだけ（今の写しでは起こらない。エンジンの不具合）")
+    res.forced.add(pokemon.pokemon_id)
+    res.effect_ko[pokemon.pokemon_id] = (fs.frame.player, fs.frame.source_pid)
+    located = res.state.find_pokemon(fs.frame.source_pid)
+    res.state.add_event("effect_knock_out", player=fs.frame.player, pokemon=None if located is None else located[1].card, pokemon_id=fs.frame.source_pid,
+                        effect=str(fs.frame.attack_key), target_player=owner, target_pokemon=pokemon.card, target_pokemon_id=pokemon.pokemon_id)
+
+
+def effect_ko_entries(res: Resolution) -> tuple[tuple[int, int, int], ...]:
+    """v0.100: 決定の続きの情報に運ぶ、ワザの効果で「きぜつ」させたポケモン（``res.effect_ko``。(番号, ワザを使ったプレイヤー, ワザを使ったポケモン) の並び。番号の順）。"""
+    return tuple(sorted((pid, player, source) for pid, (player, source) in res.effect_ko.items()))
+
+
+def restore_effect_ko(res: Resolution, entries) -> None:
+    """v0.100: 続きの情報で運んだ ``effect_ko_entries`` を、新しい解決にもどす（決定のあとのきぜつの判定でも「きぜつ」する。``res.forced`` にも入れる）。"""
+    for pid, player, source in entries:
+        res.forced.add(pid)
+        res.effect_ko.setdefault(pid, (player, source))
 
 
 def knock_out_power_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, C.EffectInstance, int | None]]:
@@ -1999,7 +2038,8 @@ def knock_out_power_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, C.
     - 原因の枠がワザの分類（ワザ・返す効果のダメージ・ワザでのせたダメージカウンター）で、そのプレイヤーが持ち主の相手。特殊能力のダメージ・こんらん・自分のワザでは使えない
     - きぜつの判定の時点でねむり・マヒ・こんらんでない（「状態のまま「きぜつ」する時」）、かがくへんかガス・まきちらせ!ベトベトガス・ショックアイでない（``offer_stopped``）
     - 「きぜつ」させたポケモンが場にいる（いなければダメージを与える相手がいない）
-    - 「みちづれ」で「きぜつ」するポケモンは原因の枠がない（「きぜつ」させたポケモンは None。呼ぶ側が HC2 と同じ問いで止める）"""
+    - 「みちづれ」で「きぜつ」するポケモンは原因の枠がない（「きぜつ」させたポケモンは None。呼ぶ側が HC2 と同じ問いで止める）
+    - v0.100: ワザの効果で「きぜつ」するポケモン（``effect_ko``。ほろびのうた）は、そのワザを使ったポケモンが「きぜつ」させたポケモン（``ko_cause``）"""
     state = res.state
     offers = []
     for owner, pokemon in knocked(res):
@@ -2008,7 +2048,7 @@ def knock_out_power_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, C.
                 continue
             if C.blocked_by_status(instance, pokemon) or C.offer_stopped(state, instance, pokemon):
                 break
-            if pokemon.pokemon_id in res.forced and pokemon.pokemon_id not in res.knocked_by:
+            if pokemon.pokemon_id in res.forced and pokemon.pokemon_id not in res.knocked_by and pokemon.pokemon_id not in res.effect_ko:
                 offers.append((owner, pokemon, instance, None))
                 break
             cause = ko_cause(res, pokemon.pokemon_id)

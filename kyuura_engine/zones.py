@@ -35,6 +35,11 @@ def enter_play(state: GameState, uid: int) -> PokemonInPlay:
     goop_gas_entry_check(state, uid, how="enter")  # v0.59: GG1（場に出す前。番号を付ける前）
     pokemon = PokemonInPlay(uid, pokemon_id=state.next_pokemon_id, played_turn=state.turn_number)
     state.next_pokemon_id += 1
+    # v0.100（docs/sketch-perish-song-history-v0.100.md 3 章）: 番でないプレイヤーのポケモンがその番に場に出たら、プレイヤーの記録（``TurnField``）に加える（「スケッチ」の
+    # 「前の相手の番、このカードが場に出ていなければ」。読むカードのない対戦では何もしない）
+    from .history import note_entered
+
+    note_entered(state, state.cards[uid].owner, pokemon)
     return pokemon
 
 

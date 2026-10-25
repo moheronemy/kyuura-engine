@@ -27867,7 +27867,7 @@
       },
       "external_checks": [],
       "issues": [],
-      "notes": "v0.99 で加えた（docs/unown-perform-help-history-v0.99.md）。kyuura data/engine_targets.json（73a1690）の対象。めざめるパワー=DamageOnly（説明文のないワザ。超・10。文面・出典を持たない）。ルール文「「アンノーン」はデッキに4枚までしか入れることができません。」は、写しのこのカードの rules_text を根拠に、文字の違うアンノーンを合わせた枚数の上限として当てはめた（v0.96 の deck.deck_problems・CardDefinition.name_group。共通の規定の再利用で、kyuura の CR-UNOWN-DECK-LIMIT-ALL-LETTERS はこのカードを挙げていない（v0.97 の 5 枚と遺跡の石版の記録）。このカードを直接確かめた記録ではない）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id で確かめた。pcg-search の id はない）。kyuura data/rule_history.json の card_lists.poke_body（MIX-POWER-ERRATA。2002-05-24 の Q&A の「ポケボディー」の一覧）にこのカードがあるが、後年の分類で、2000.02.14 版の規定としては使わない（エラッタの errata の cards ではない）。kyuura の日本語の文面は wiki.pokemonwiki.com の転記（転記元のカード名称の「アンノーン[P]」の表記は、写しの名前「アンノーンP」を変えない。処理には使わない）。［PERFORM］=AddActiveDamageReceivedToNamedAttack（常にはたらく。このカード自身が今持つ「めざめるパワー」を使うとき、前の相手の番にこのカードがバトル場で相手のワザから受けたダメージ（受けた記録の受けた時の場所。v0.99 の共通の履歴）を p.321 の 2 段階で加える。ベンチでだけ受けたダメージは加えない。両方の場所で受けていれば PF1。特殊状態の条件は日本語の文面にないので持ち込まない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面（「This power can be used even if Unown [P] is Confused.」など）・現代のルール・後年の裁定は持ち込まない"
+      "notes": "v0.99 で加えた（docs/unown-perform-help-history-v0.99.md）。kyuura data/engine_targets.json（73a1690）の対象。めざめるパワー=DamageOnly（説明文のないワザ。超・10。文面・出典を持たない）。ルール文「「アンノーン」はデッキに4枚までしか入れることができません。」は、写しのこのカードの rules_text を根拠に、文字の違うアンノーンを合わせた枚数の上限として当てはめた（v0.96 の deck.deck_problems・CardDefinition.name_group。共通の規定の再利用で、kyuura の CR-UNOWN-DECK-LIMIT-ALL-LETTERS はこのカードを挙げていない（v0.97 の 5 枚と遺跡の石版の記録）。このカードを直接確かめた記録ではない）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id で確かめた。pcg-search の id はない）。kyuura data/rule_history.json の card_lists.poke_body（MIX-POWER-ERRATA。2002-05-24 の Q&A の「ポケボディー」の一覧）にこのカードがあるが、後年の分類で、2000.02.14 版の規定としては使わない（エラッタの errata の cards ではない）。kyuura の日本語の文面は wiki.pokemonwiki.com の転記（転記元のカード名称の「アンノーン[P]」の表記は、写しの名前「アンノーンP」を変えない。処理には使わない）。［PERFORM］=AddActiveDamageReceivedToNamedAttack（常にはたらく。このカード自身が今持つ「めざめるパワー」を使うとき、前の相手の番にこのカードがバトル場で相手のワザから受けたダメージ（受けた記録の受けた時の場所。v0.99 の共通の履歴）を p.321 の 2 段階で加える。ベンチでだけ受けたダメージは加えない。両方の場所で受けていれば PFM1（v0.100 で PF1 から改めた略号。PF1 は v0.47 の別の問い）。特殊状態の条件は日本語の文面にないので持ち込まない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面（「This power can be used even if Unown [P] is Confused.」など）・現代のルール・後年の裁定は持ち込まない"
     },
     "neo4-063": {
       "basis": "kyuura_data",
@@ -27896,6 +27896,35 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.99 で加えた（docs/unown-perform-help-history-v0.99.md）。kyuura data/engine_targets.json（73a1690）の対象。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id で確かめた。pcg-search の id はない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。ひれがえし=PlusIfDamagedByAttackLastOpponentTurn(10)（水水・20+。前の相手の番に、このカード（ワザを使うポケモン）が受けた記録の最終ダメージの合計が 0 より大きければ、p.321 の 1 段階で 10 を加える。場所は問わない。条件を満たさなくても20 で使える。v0.62 の共通の履歴）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面（「If an attack damaged Horsea during your opponent's last turn」）・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo2-052": {
+      "basis": "kyuura_data",
+      "name_ja": "ドーブル",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-25",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.100 で加えた（docs/sketch-perish-song-history-v0.100.md）。kyuura data/engine_targets.json（73a1690）の対象。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id で確かめた。pcg-search の id はない）。新しい原典照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source。cards.json と cards.csv の一致は独立した照合に数えない）。スケッチ=UseLastOpponentAttack（無無・目安なし。前の相手の番に相手が使ったワザのプレイヤーの記録を、このカードのワザとして新しく処理する。必要なエネルギーはいらない・ほかの使うための条件は免除しない（clause なし。カスミのコダックと同じ）。このカードが前の相手の番に場に出ていなければワザの失敗。v0.100 のプレイヤーの番ごとの記録）。kyuura data/curation/card_differences.json#neo2-052（確度: 確実。日本版はエネルギーだけを不要としている・英語版は「そのワザを使うために必要なこと」も不要）は日英の違いの記録として保ち、処理に使う文面にしない（最新の説明の記録ではない）。kyuura data/rule_history.json の RUL-ENERGY-DISCARD-ATTACKS の notes にある『トレーナーズ』Vol.9（2000-12-01）のスケッチの Q&A は後年の記録で、2000.02.14 版の裁定として新しく採らない（この記録の cards は PMCG1-019 で、このカードを指さないので kyuura_records に入れない。登録済みのワザの最新の記述・エネルギーのトラッシュの扱いは、その採用の根拠のまま）"
+    },
+    "neo3-035": {
+      "basis": "kyuura_data",
+      "name_ja": "ムウマ",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-25",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.100 で加えた（docs/sketch-perish-song-history-v0.100.md）。kyuura data/engine_targets.json（73a1690）の対象。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id で確かめた。pcg-search の id はない）。新しい原典照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない。kyuura の日本語の文面は wiki.pokemonwiki.com の転記（ja_text_source。cards.json と cards.csv の一致は独立した照合に数えない）。やみのひとみ=PutToSleep（超・目安なし。v0.3b のパラスの「キノコのほうし」と同じ説明。ダメージの要素を作らない）。ほろびのうた=KnockOutIfAsleepAndReceived(\"やみのひとみ\")（超超超・目安なし。相手が今ねむりで、前の自分の番にやみのひとみを受けていた（場のポケモンの受けた記録）なら、ダメージによらず「きぜつ」させる。v0.100 の直接のきぜつの共通の処理）"
     }
   }
 }

@@ -15,6 +15,16 @@
 v0.99（docs/unown-perform-help-history-v0.99.md 3 章）: 受けたダメージを、受けた時にバトル場にいた分（``AttackReceived.active_damage``）とベンチにいた分に分けて持つ（アンノーンP の
 ［PERFORM］の「バトル場で相手のワザによるダメージを受けていたなら」。書き出しの形式 25）。履歴を読む効果に特殊能力（``PowerEffect.reads_history``）を加えた。
 
+v0.100（docs/sketch-perish-song-history-v0.100.md 3 章）: 場のポケモンの履歴とは別に、プレイヤーの番ごとの記録（``GameState.turn_history``）を持つ。
+
+- ``TurnAttack``: 番のプレイヤーがその番に使ったワザ（ドーブルの「スケッチ」の「前の相手の番に、相手のポケモンがワザを使っていたなら」）。宣言のとき（``note_used``）に作り、
+  切りかえたら処理したワザを書く（``note_processed``）。場のポケモンの記録と同じ時点で、ワザを使ったポケモンが場をはなれても残る（今の相手の場から探さない）
+- ``TurnField``: 番でないプレイヤーの場に、その番にいたポケモンのカード（「スケッチ」の「前の相手の番、このカードが場に出ていなければ」）。番の始め（``note_turn_start``）と、
+  その番に場に出たとき（``note_entered``）に作る
+
+プレイヤーの記録を読む効果（``AttackEffect.reads_turn_history``）のカードが対戦にあるときだけ記録する（``turn_history_needed``。場のポケモンの履歴の ``history_needed`` とは
+別に決める。ないときは v0.99 と同じ状態）。保持するのは場のポケモンの履歴と同じ 2 つ前の番まで（``prune``）。
+
 このモジュールは ``engine.py``・``resolution`` を読み込まない（``state``・``effects`` だけ。``effects`` は使うときに読み込む）。
 """
 
@@ -23,7 +33,15 @@ from __future__ import annotations
 import dataclasses
 
 from .errors import UnsupportedError
-from .state import AttackReceived, AttackUsed, GameState, OtherReceived, PokemonInPlay
+from .state import (
+    AttackReceived,
+    AttackUsed,
+    GameState,
+    OtherReceived,
+    PokemonInPlay,
+    TurnAttack,
+    TurnField,
+)
 
 # 受けなかった要素の理由（``AttackReceived.voided``）
 VOID_ATTACK_BARRIER = "attack_barrier"  # ダメージと効果の要素を無効にする効果（「ワザをうけない」「ワザによるダメージや効果を受けない」。``AttackBarrier``）
@@ -58,19 +76,41 @@ def history_needed(state: GameState) -> bool:
     return False
 
 
+def turn_history_needed(state: GameState) -> bool:
+    """v0.100: この対戦に、プレイヤーの番ごとの記録を読むワザ（効果の登録の ``reads_turn_history``。「スケッチ」）を持つカードがあるか。``history_needed`` と同じく、対戦の
+    カードの定義と効果の登録表から求める（状態に持たない）。ないときはプレイヤーの記録を作らない（v0.99 までと同じ状態・書き出し）。"""
+    for definition in state.definitions.values():
+        for attack in definition.attacks:
+            effect = state.effects.attack_effect(definition.id, attack, definition.attacks)
+            if effect is not None and getattr(effect, "reads_turn_history", False):
+                return True
+    return False
+
+
 def _key(key) -> tuple[str, int]:
     return (key.card_id, key.attack_index)
 
 
 def note_used(state: GameState, pokemon: PokemonInPlay, key) -> None:
-    """ワザの宣言（p.309 の手順 3）のときに、使ったワザ（A）を記録する。"""
+    """ワザの宣言（p.309 の手順 3）のときに、使ったワザ（A）を記録する。v0.100: プレイヤーの記録（``TurnAttack``）も同じ時点で作る（宣言のあとの失敗・こんらんの「うら」でも
+    使ったことになる。宣言の前に拒否したワザは状態ごと捨てるので残らない）。"""
+    if turn_history_needed(state):
+        state.turn_history = state.turn_history + (TurnAttack(state.turn_number, state.current_player, pokemon.pokemon_id, pokemon.card, _key(key)),)
     if not history_needed(state):
         return
     pokemon.history = pokemon.history + (AttackUsed(state.turn_number, pokemon.card, _key(key)),)
 
 
 def note_processed(state: GameState, pokemon: PokemonInPlay, key) -> None:
-    """宣言したワザが、相手のワザ・受けたワザを自分のワザとして使った（切りかえた）ときに、処理したワザを今の番の記録に書く。"""
+    """宣言したワザが、相手のワザ・受けたワザを自分のワザとして使った（切りかえた）ときに、処理したワザを今の番の記録に書く。v0.100: プレイヤーの記録（``TurnAttack``）にも書く。"""
+    if turn_history_needed(state):
+        found = [i for i, record in enumerate(state.turn_history) if isinstance(record, TurnAttack) and record.turn == state.turn_number]
+        if len(found) > 1 or (not found and any(isinstance(record, TurnField) and record.turn == state.turn_number for record in state.turn_history)):
+            raise RuntimeError(f"今の番のワザのプレイヤーの記録が {len(found)} つ（切りかえの前に宣言の記録がない。エンジンの不具合）")
+        if found:  # 記録がなく、今の番の始めの記録もない（v0.99 までの状態の写しで宣言したワザ）なら、記録を作らない
+            index = found[0]
+            state.turn_history = (*state.turn_history[:index], dataclasses.replace(state.turn_history[index], processed=_key(key)),
+                                  *state.turn_history[index + 1:])
     if not history_needed(state):
         return
     found = [i for i, record in enumerate(pokemon.history) if isinstance(record, AttackUsed) and record.turn == state.turn_number]
@@ -132,12 +172,69 @@ def clear_history(pokemon: PokemonInPlay) -> None:
 
 
 def prune(state: GameState) -> None:
-    """番の最初に、2 つ前の番より古い記録を消す（読む効果は 1 つ前・2 つ前の番だけを読む）。"""
+    """番の最初に、2 つ前の番より古い記録を消す（読む効果は 1 つ前・2 つ前の番だけを読む）。v0.100: プレイヤーの記録（``turn_history``）も同じ範囲だけ残す。"""
     oldest = state.turn_number - KEPT_TURNS
     for p in state.players:
         for pokemon in p.in_play():
             if pokemon.history and any(record.turn < oldest for record in pokemon.history):
                 pokemon.history = tuple(record for record in pokemon.history if record.turn >= oldest)
+    if state.turn_history and any(record.turn < oldest for record in state.turn_history):
+        state.turn_history = tuple(record for record in state.turn_history if record.turn >= oldest)
+
+
+def _field_of(state: GameState, player: int) -> tuple[tuple[int, ...], int]:
+    """``player`` の場のポケモンのカード（おもてのポケモンの重なり・のせたカード。場の順）と、うらのカードの数。"""
+    cards: list[int] = []
+    face_down = 0
+    for pokemon in state.players[player].in_play():
+        if state.is_face_down(pokemon):
+            face_down += 1
+        else:
+            cards.extend(pokemon.cards())
+    return tuple(cards), face_down
+
+
+def note_turn_start(state: GameState) -> None:
+    """v0.100: 番の最初（``procedures.begin_turn``。番の数・番のプレイヤーを変え、古い記録を消したあと）に、番でないプレイヤーの場のポケモンのカードを記録する（``TurnField``）。
+    プレイヤーの記録を読むカードがなければ何もしない。"""
+    if state.current_player is None or state.turn_number < 1 or not turn_history_needed(state):
+        return
+    owner = 1 - state.current_player
+    cards, face_down = _field_of(state, owner)
+    state.turn_history = state.turn_history + (TurnField(state.turn_number, owner, cards, face_down),)
+
+
+def note_entered(state: GameState, owner: int, pokemon: PokemonInPlay) -> None:
+    """v0.100: 番でないプレイヤー ``owner`` のポケモンが、その番に場に出た（相手のポケモンの笛・エリカの香水。``zones.enter_play`` のあと）ことを、今の番の ``TurnField`` に
+    加える。番のプレイヤーのポケモン・対戦準備（番が 1 より前）・プレイヤーの記録を読むカードのない対戦では何もしない。"""
+    if state.current_player is None or state.turn_number < 1 or owner == state.current_player or not turn_history_needed(state):
+        return
+    found = [i for i, record in enumerate(state.turn_history)
+             if isinstance(record, TurnField) and record.turn == state.turn_number and record.player == owner]
+    if not found:
+        # 今の番の始めの記録がない（v0.99 までの状態の写し・番の途中から作った状態）。途中から記録を作らない（番の始めの場を表せない）。読むときにエンジンの情報の不足として止める
+        return
+    if len(found) != 1:
+        raise RuntimeError(f"今の番の場のカードの記録が {len(found)} つ（エンジンの不具合）")
+    index = found[0]
+    record = state.turn_history[index]
+    if state.is_face_down(pokemon):
+        record = dataclasses.replace(record, face_down=record.face_down + 1)
+    else:
+        record = dataclasses.replace(record, cards=record.cards + tuple(uid for uid in pokemon.cards() if uid not in record.cards))
+    state.turn_history = (*state.turn_history[:index], record, *state.turn_history[index + 1:])
+
+
+def turn_attack(state: GameState, turn: int) -> TurnAttack | None:
+    """v0.100: 番 ``turn`` に番のプレイヤーが使ったワザの記録（なければ None。ワザを使わなかったか、記録していない。区別は ``turn_field`` があるかで決める）。"""
+    found = [record for record in state.turn_history if isinstance(record, TurnAttack) and record.turn == turn]
+    return found[0] if found else None
+
+
+def turn_field(state: GameState, turn: int, player: int) -> TurnField | None:
+    """v0.100: 番 ``turn``（``player`` の相手の番）に ``player`` の場にいたポケモンのカードの記録（記録していなければ None）。"""
+    found = [record for record in state.turn_history if isinstance(record, TurnField) and record.turn == turn and record.player == player]
+    return found[0] if found else None
 
 
 def _this_card(pokemon: PokemonInPlay, record) -> bool:
@@ -172,6 +269,41 @@ def damage_places(record: AttackReceived) -> tuple[int, int]:
         raise UnsupportedError(DAMAGE_PLACE_UNKNOWN_CODE, f"受けた記録（{record.turn} 番・カード {record.card}）のダメージ {record.damage} を受けた場所が記録にない（v0.98 までの"
                                "記録の写し）。バトル場で受けた分を、合計・0 で代用しない（エンジンの持つ情報の不足。docs/unown-perform-help-history-v0.99.md 6 章）")
     return record.active_damage, record.damage - record.active_damage
+
+
+# v0.100（docs/sketch-perish-song-history-v0.100.md 5 章）: 名前の決まったワザを受けていたか（``named_attack_received``）
+RECEIVED = "received"  # 受けた（どれかの要素を受けた。［めんえき］で特殊状態にならなかった効果の要素も受けた。v0.62 の記録の意味）
+NOT_RECEIVED = "not_received"  # 受けていない（記録がない・ほかのワザ・どの要素も「ワザをうけない」状態・「とうめい」で受けなかった）
+RECEIVED_UNDETERMINED = "undetermined"  # 受けたことになるかが決まらない（効果だけを無効にする効果で受けなかった・まねたワザ）
+
+
+def named_attack_received(state: GameState, pokemon: PokemonInPlay, turn: int, name: str) -> tuple[str, str]:
+    """v0.100: ``turn`` の番に、このポケモン（このカード）が名前 ``name`` の相手のワザを受けていたか（``RECEIVED``・``NOT_RECEIVED``・``RECEIVED_UNDETERMINED``, 理由の文）。ムウマの
+    「ほろびのうた」の「前の自分の番に「やみのひとみ」を受けていたなら」。受けた記録（``received_on``。使った記録・今の特殊状態からは決めない）の、ワザの名前と受けた要素で決める。
+
+    - ワザは、受けた記録の処理したワザの名前で照らす（同じ名前の別のカードのワザも同じ。ワザの位置・カードで限らない）。宣言したワザと処理したワザが違う（「ゆびをふる」「スケッチ」で
+      まねたワザ）なら、どちらかがその名前のとき、受けたワザがどちらかが決まらない（v0.62 のピジョンの MM1 と同じ記録の性質）
+    - どれかの要素を受けた・［めんえき］で特殊状態にならなかった（効果の要素は受けた）なら受けた。どの要素も「ワザをうけない」状態・「とうめい」で受けなかったなら受けていない（v0.62 の
+      ピジョンの「オウムがえし」の「受けた」と同じ記録の意味）。ほかの理由（効果だけを無効にする効果など）で受けなかったなら決まらない"""
+    record = received_on(pokemon, turn)
+    if record is None:
+        return NOT_RECEIVED, f"{turn} 番に受けた相手のワザの記録がない"
+
+    def name_of(key) -> str:
+        return state.definitions[key[0]].attacks[key[1]].name_ja
+
+    if record.declared != record.processed:
+        if name in (name_of(record.declared), name_of(record.processed)):
+            return RECEIVED_UNDETERMINED, (f"{turn} 番に受けたワザは、宣言したワザ「{name_of(record.declared)}」が処理したワザ「{name_of(record.processed)}」"
+                                           "（まねたワザ。どちらを受けたかが決まらない）")
+        return NOT_RECEIVED, f"{turn} 番に受けたワザは「{name_of(record.processed)}」"
+    if name_of(record.processed) != name:
+        return NOT_RECEIVED, f"{turn} 番に受けたワザは「{name_of(record.processed)}」"
+    if record.reached or any(reason == VOID_IMMUNE for _, reason in record.voided):
+        return RECEIVED, f"{turn} 番に「{name}」を受けた（受けた要素 {list(record.reached)}・受けなかった要素 {list(record.voided)}）"
+    if all(reason in (VOID_ATTACK_BARRIER, VOID_EVADED) for _, reason in record.voided):
+        return NOT_RECEIVED, f"{turn} 番の「{name}」の要素を、どれも受けなかった（{list(record.voided)}）"
+    return RECEIVED_UNDETERMINED, f"{turn} 番の「{name}」の要素を受けなかった（{list(record.voided)}。受けたことになるかが決まらない）"
 
 
 def other_received_on(pokemon: PokemonInPlay, turn: int) -> bool:

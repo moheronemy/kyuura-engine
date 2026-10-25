@@ -114,7 +114,7 @@ from .effects import (
     COLORS, attack_of, available_attacks, current_form, hand_revealed_by, max_hp, powers_of, resistance_of, type_readings, type_shift_determined, weakness_of,
     attached_units, card_color_readings,
 )
-from .serialize import history_record
+from .serialize import history_record, turn_record
 from .state import GameState, PokemonInPlay
 
 VIEWERS = (0, 1, None)
@@ -456,6 +456,9 @@ def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
         "color_effects": [{"kind": e.kind, "player": e.player, "source": e.source, **_card(state, e.source_card), "power_index": e.power_index,
                            "target": e.target, "color": e.color.value, "turn": e.turn, "left_play": e.left_play}
                           for e in state.color_effects],
+        # v0.100（docs/sketch-perish-song-history-v0.100.md 7 章）: プレイヤーの番ごとの記録（使ったワザ・番でないプレイヤーの場にいたカード）。どちらも両方のプレイヤーが見た
+        # 表の情報（うらのカードは数だけで、uid を書かない）。書き出しの形式 26 と同じ形
+        "turn_history": [turn_record(record) for record in state.turn_history],
         "decision": _decision(state, viewer),
         "result": None if state.result is None else {"outcome": state.result.outcome, "winner": state.result.winner},
     }
@@ -551,6 +554,8 @@ PUBLIC_EVENTS = frozenset({
     # v0.88: 色を変える効果の追加・消去（［せんすい］・［エナジーコンバーター］）・ワザといっしょに使った特殊能力（［すいりょくはつでん］）・ワザで選んだ色・色を選べなかった・
     # テクスチャーで色を変えなかった（どれも場・公開の選択）
     "color_effect_added", "color_effect_removed", "attack_power", "attack_color_chosen", "attack_color_none", "color_change_declined",
+    # v0.100: 「スケッチ」で前の相手の番にワザが使われていなかった・「ほろびのうた」の条件の確かめ・ワザの効果による「きぜつ」（どれも場の表の情報と使ったワザ）
+    "sketch_none", "knock_out_condition", "effect_knock_out",
     # v0.86: ［かんでん］のダメージ・［いなびかり］がはたらかなかった（相手の控えなし）・反応の特殊能力を使わなかった・［はしりさる］のコインの結果とはたらかなかった・
     # ダークドレインのポケモンごとのコインの結果・［おたけび］の番の終わり（どれも場・コイン・公開の結果）
     "conductivity", "lightning_burst_skipped", "reaction_power_declined", "bolt_check", "bolt_skipped", "pokemon_coin_results", "power_turn_end",

@@ -301,7 +301,10 @@ ALL_CODES = (
     "UNRESOLVED_POWER_COUNTER_MOVE_TO_SAME_POKEMON",  # BE1（v0.98。tests/test_unown_bear_yield_vanish_give_v0_98.py）
     "UNRESOLVED_POWER_COUNTER_MOVE_WITHOUT_COUNTERS",  # BE2（v0.98。同）
     "UNRESOLVED_POWER_RETURN_WITHOUT_TARGET",  # VN1（v0.98。同）
-    "UNRESOLVED_PERFORM_DAMAGE_PLACES",  # PF1（v0.99。tests/test_unown_perform_help_history_v0_99.py）
+    "UNRESOLVED_PERFORM_DAMAGE_PLACES",  # PFM1（v0.99。tests/test_unown_perform_help_history_v0_99.py）
+    "UNRESOLVED_SKETCH_PRESENCE",  # SK1（v0.100。tests/test_sketch_perish_song_history_v0_100.py）
+    "UNRESOLVED_SKETCH_COPIED_ATTACK",  # SK2（v0.100。同）
+    "UNRESOLVED_PERISH_SONG_RECEIVED_ATTACK",  # PSG1（v0.100。同）
 )
 TURN = 7
 

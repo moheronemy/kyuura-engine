@@ -1437,6 +1437,9 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.ReturnOpponentAttachedTrainerToDeck,
     # v0.99（docs/unown-perform-help-history-v0.99.md 4 章。前の相手の番にワザによるダメージを受けていたら追加する）
     _effects.PlusIfDamagedByAttackLastOpponentTurn,
+    # v0.100（docs/sketch-perish-song-history-v0.100.md。前の相手の番に相手が使ったワザを使う・ねむりで前の自分の番に受けていたら「きぜつ」させる）
+    _effects.UseLastOpponentAttack,
+    _effects.KnockOutIfAsleepAndReceived,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

@@ -77,6 +77,7 @@ from . import catalog as C
 from . import codec
 from .events import ElementStarted, FrameKind, KnockedOutRecorded, Suspended, Window
 from .kernel import IGNORE_HELD, IGNORE_RECEIVER_HELD, IGNORE_UNSTATED, BenchGuardRequest, EnergyDrainRequest, Resolution, SplitRequest, check_simultaneous, knocked_out, deal_damage, fire_pending, reaches, settle_scram, track_ko, type_question, weakness_resistance_matters
+from .kernel import effect_ko_entries, knock_out_by_effect, restore_effect_ko
 from ..decisions import BENCH_GUARD, DAMAGE_REDUCTION, ESP_REDO, KO_PREVENTION, NINJA_TRICK, REACTION_SWITCH
 from ..decisions import MAGMA_POOL_ENERGY, REACTION_ORDER, SPLIT_FROM_DECK
 from .. import movement as M
@@ -290,6 +291,7 @@ class AttackRun:
                                 for pid, owner, card, was_active in frame.get("secret_lost", ())}
         for pid, player, source in frame.get("damage_ko", ()):
             self.res.damage_ko.setdefault(pid, (player, source))  # v0.81
+        restore_effect_ko(self.res, frame.get("effect_ko", ()))  # v0.100: このワザの効果で「きぜつ」させたポケモン（決定のあとのきぜつの判定でも「きぜつ」する）
         # v0.46: ワザが使われた時の特殊状態（くつろぐかおり）。決定の前の宣言で写した値（書いていなければ空。決定をまたいでも今の特殊状態で決め直さない）
         self.res.attack_status = frozenset(carried.get("attack_status", ()))
         # v0.57: クチバシティジムのコインの結果（投げ直さない）
@@ -390,6 +392,9 @@ class AttackRun:
         if damage_ko:
             # v0.81: ワザの分類のダメージで HP 以上になったポケモン（きあいのハチマキ・学習装置）。なければ書かない（v0.80 までの決定の形は変えない）
             flee += (("damage_ko", damage_ko),)
+        if self.res.effect_ko:
+            # v0.100: このワザの効果で「きぜつ」させたポケモン（(番号, ワザを使ったプレイヤー, ワザを使ったポケモン)）。なければ書かない（v0.99 までの決定の形は変えない）
+            flee += (("effect_ko", effect_ko_entries(self.res)),)
         chosen = tuple(sorted(((name, result.pokemon_id) if result.owner is None else (name, result.pokemon_id, result.owner))
                               for name, result in self.fs.results.items() if isinstance(result, ChosenTarget)))
         if chosen:
@@ -1432,7 +1437,8 @@ def with_stadium_self_damage(program: tuple, stadium: int, amount: int) -> tuple
 def program_may_fail(program: tuple) -> bool:
     """並びに、ワザを失敗させうる要素（コインで失敗する・条件で失敗する・トラッシュできなければ失敗する）があるか（v0.57。クチバシティジムの VM1）。"""
     # v0.93: 相手に控えがいないときの失敗（からめとる。``FailWithoutOpponentBench``）も数える
-    return any(isinstance(element, (FailOnTails, FailUnlessOpponentStatus, FailWithoutOpponentBench))
+    # v0.100: 「スケッチ」（このカードが前の相手の番に場に出ていなければ失敗する。``UseLastOpponentAttack``）も数える
+    return any(isinstance(element, (FailOnTails, FailUnlessOpponentStatus, FailWithoutOpponentBench, UseLastOpponentAttack))
                or (isinstance(element, DiscardOwnEnergy) and element.when_lacking == LACKING_FAIL) for element in program)
 
 
@@ -11159,4 +11165,153 @@ class PlusIfDamagedLastOpponentTurn:
 BUILDERS |= {
     # ひれがえし（タッツー）: 前の相手の番にワザによるダメージを受けていたら bonus を追加する
     E.PlusIfDamagedByAttackLastOpponentTurn: lambda e: (Damage(OPP, PlusIfDamagedLastOpponentTurn(e.bonus)),),
+}
+
+
+# ---------------------------------------------------------------- v0.100（docs/sketch-perish-song-history-v0.100.md）。前の相手の番のワザを使う・前の自分の番に受けたワザで「きぜつ」させる
+
+SKETCH_NOT_IN_PLAY = "not_in_play"  # ログ attack_failed の reason（「スケッチ」の「前の相手の番、このカードが場に出ていなければ、このワザは失敗する」）
+SKETCH_NO_ATTACK = "no_attack"  # ログ sketch_none の reason（前の相手の番に、相手がワザを使っていない）
+# ``sketch_presence`` の答え
+PRESENT = "present"  # 前の相手の番の始めから、同じポケモンとして場にいた
+ABSENT = "absent"  # 前の相手の番には場にいなかった（今の番に場に出た・今の姿になったカードで、前の相手の番に場にいたカードの記録にない）
+PRESENCE_UNDETERMINED = "undetermined"  # 読み方で失敗するかが変わる（SK1）
+PRESENCE_UNRECORDED = "unrecorded"  # 前の相手の番に場にいたカードの記録がない（エンジンの持つ情報の不足）
+
+
+def sketch_presence(state, player: int, pokemon: PokemonInPlay) -> tuple[str, str]:
+    """v0.100: 「前の相手の番、このカードが場に出ていなければ、このワザは失敗する」の、プレイヤー ``player`` の ``pokemon``（このカード）が前の相手の番に場に出ていたか（答え, 理由の文）。
+
+    - 今の姿になった番（``current_form_turn``。場に出た番・進化・退化した番。ドーブルはたねポケモンで進化・退化しないので場に出た番と同じ）が前の相手の番より前なら、前の相手の番の
+      始めから同じポケモンとして場にいた（``PRESENT``。場をはなれたら別のポケモン）
+    - 前の相手の番に場に出た・今の姿になった: 前の相手の番の途中から場にいた（``PRESENCE_UNDETERMINED``。英語版の「攻撃の時に場にいた」を足さない）
+    - 今の番に場に出た・今の姿になった: 前の相手の番に場にいたカードの記録（``history.turn_field``）にこのカードがなく、うらのカードもなかったなら ``ABSENT``。記録にこのカードがある
+      （前の相手の番に場にいて、そのあと場をはなれて出し直した。場に出た番は新しくなるので、それだけでは区別を失う）・うらのカードがあった（正体を記録しないので、このカードでないと
+      言えない）なら ``PRESENCE_UNDETERMINED``。記録がなければ ``PRESENCE_UNRECORDED``
+    - 前の相手の番がない（今の番が 1。対戦準備は相手の番ではない）: ``PRESENCE_UNDETERMINED``"""
+    from ..history import turn_field
+
+    previous = state.turn_number - 1
+    entered = pokemon.current_form_turn
+    if previous < 1:
+        return PRESENCE_UNDETERMINED, "前の相手の番がない（先攻の最初の番）"
+    if entered < previous:
+        return PRESENT, f"{entered} 番から場にいる"
+    if entered == previous:
+        return PRESENCE_UNDETERMINED, f"前の相手の番（{previous} 番）の途中に場に出た・今の姿になった"
+    field = turn_field(state, previous, player)
+    if field is None:
+        return PRESENCE_UNRECORDED, f"前の相手の番（{previous} 番）に場にいたカードの記録がない"
+    if pokemon.card in field.cards:
+        return PRESENCE_UNDETERMINED, f"前の相手の番（{previous} 番）に場にいたこのカードを、場をはなれたあと今の番に出し直した"
+    if field.face_down:
+        return PRESENCE_UNDETERMINED, f"前の相手の番（{previous} 番）に場にいたうらのカード {field.face_down} 枚（正体を記録しない）が、このカードでないと言えない"
+    return ABSENT, f"今の番（{entered} 番）に場に出た・今の姿になった"
+
+
+@dataclass(frozen=True)
+class UseLastOpponentAttack(Element):
+    """前の相手の番に相手が使ったワザを、このカードのワザとして使う（v0.100。ドーブルの「スケッチ」。実装 ``effects.UseLastOpponentAttack``）。
+
+    - 先に「このカードが場に出ていなければ、このワザは失敗する」を確かめる（``sketch_presence``）。場に出ていなければワザの失敗（``run.fail``。ログ ``attack_failed`` の ``reason``
+      ``not_in_play``。使ったことになり、番は終わる）。決まらなければ SK1（宣言の前の先読みが見つける）
+    - 前の相手の番のプレイヤーの記録（``history.turn_attack``）がなければ、処理の対象がないので何もしない（ログ ``sketch_none``。失敗ではない）。記録していない番ならエンジンの情報の不足
+      （``UNSUPPORTED_HISTORY_TURN_RECORD_MISSING``。「使わなかった」と読まない）
+    - 宣言したワザと処理したワザが違う（まねたワザ）なら SK2。そのワザを使えるか（``copy_status``。説明が条件をみたさないときの処理を書かないので ``clause`` なし）が決まらなければ
+      HC9（``copied_attack``）・エンジンの未対応なら ``copied_attack_unsupported``。必要なエネルギーは確かめない
+    - そのワザの要素の並びに切りかえる（``run.redirect``。v0.31 の ``CopyOpponentAttack``・v0.62 の ``RepeatReceivedAttack`` と同じ。処理したワザを使った記録に書く ``note_processed``）。
+      ログ ``copy_attack``（``used_turn`` に使われた番・``used_by`` に使った相手のポケモンの番号。過去の参照で、新しい対象にしない）
+    """
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
+        return UNRESOLVED, "相手のワザを自分のワザとして使うワザを、さらに自分のワザとして使う"
+
+    def run(self, run: AttackRun) -> bool:
+        from ..history import turn_attack, turn_field
+
+        state = run.state
+        attacker = run.attacker()
+        previous = state.turn_number - 1
+        presence, why = sketch_presence(state, run.player, attacker)
+        if presence == PRESENCE_UNDETERMINED:
+            raise run.res.question("sketch_presence", f"ポケモン {attacker.pokemon_id}: {why}")
+        if presence == PRESENCE_UNRECORDED:
+            raise run.res.question("turn_history_missing", f"ポケモン {attacker.pokemon_id}: {why}")
+        if presence == ABSENT:
+            run.fail(SKETCH_NOT_IN_PLAY)
+            return False
+        record = turn_attack(state, previous)
+        if record is None:
+            if turn_field(state, previous, run.player) is None:
+                raise run.res.question("turn_history_missing", f"{previous} 番")
+            state.add_event("sketch_none", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key), reason=SKETCH_NO_ATTACK,
+                            used_turn=previous)
+            return False
+        if record.player != 1 - run.player:
+            raise RuntimeError(f"前の相手の番（{previous} 番）のワザの記録のプレイヤーが {record.player}（エンジンの不具合）")
+        if record.processed is not None and record.processed != record.declared:
+            raise run.res.question("sketch_copied_attack", f"宣言したワザ {E.AttackKey(*record.declared)}・処理したワザ {E.AttackKey(*record.processed)}")
+        key = E.AttackKey(*record.declared)
+        definition = state.definitions[key.card_id]
+        attack = definition.attacks[key.attack_index]
+        status = copy_status(run, definition, attack, None)
+        if status is not None:
+            raise run.res.question("copied_attack_unsupported" if status[0] == UNSUPPORTED else "copied_attack", f"「{attack.name_ja}」: {status[1]}")
+        effect = state.effects.attack_effect(definition.id, attack, definition.attacks)
+        state.add_event("copy_attack", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.declared),
+                        copied=str(key), copied_attack=attack.name_ja, used_turn=previous, used_by=record.pokemon_id)
+        run.redirect = (key, attack, BUILDERS[type(effect)](effect))
+        return False
+
+
+@dataclass(frozen=True)
+class KnockOutIfAsleepAndReceived(Element):
+    """このワザを受ける相手が「ねむり」状態で、前の自分の番に「``attack_name``」を受けていたなら、相手は「きぜつ」する（v0.100。ムウマの「ほろびのうた」。実装
+    ``effects.KnockOutIfAsleepAndReceived``）。
+
+    - 相手の対戦ポケモンが今ねむりでなければ、何もしない（「とうめい」も評価しない。v0.72 の「めざめのキッス」と同じ順番。受けた記録も読まない）
+    - 前の自分の番（今の番の 2 つ前）の受けた記録（``history.named_attack_received``）で受けていなければ何もしない。決まらなければ PSG1。ログ ``knock_out_condition``（今ねむりか・
+      受けていたか）
+    - 成り立てば、相手のこのワザの中で HP 以上なら処理の対象がない（こんじょうなら G37）。相手への効果として ``reaches``（``KNOCK_OUT_ELEMENT``。「ワザをうけない」状態・「とうめい」・
+      効果だけを無効にする効果）を評価し、受けるなら ``kernel.knock_out_by_effect``（ダメージによらない「きぜつ」。きぜつの処理はワザのあと）
+    """
+
+    attack_name: str
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.KNOCK_OUT_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        from ..history import RECEIVED, RECEIVED_UNDETERMINED, named_attack_received
+
+        state = run.state
+        owner, target = 1 - run.player, run.opponent_active()
+        if target is None:
+            return False
+        attacker = run.attacker()
+        turn = state.turn_number - 2
+        asleep = state.find_pokemon(target.pokemon_id) is not None and target.conditions.asleep
+        received = named_attack_received(state, target, turn, self.attack_name) if asleep else None
+        state.add_event("knock_out_condition", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key), target_player=owner,
+                        target_pokemon_id=target.pokemon_id, asleep=asleep, received_attack=self.attack_name, received_turn=turn,
+                        received=None if received is None else received[0])
+        if received is None or received[0] not in (RECEIVED, RECEIVED_UNDETERMINED):
+            return False
+        if received[0] == RECEIVED_UNDETERMINED:
+            raise run.res.question("perish_song_received_attack", f"ポケモン {target.pokemon_id}: {received[1]}")
+        if run.knocked_out(target):
+            run.ko_prevention_conflict(target, owner)
+            return False
+        if not reaches(run.res, run.fs, owner, target, E.KNOCK_OUT_ELEMENT):
+            return False
+        knock_out_by_effect(run.res, run.fs, owner, target)
+        return False
+
+
+BUILDERS |= {
+    # スケッチ（ドーブル）: 前の相手の番に相手が使ったワザを、このカードのワザとして使う（必要なエネルギーはいらない）
+    E.UseLastOpponentAttack: lambda e: (UseLastOpponentAttack(),),
+    # ほろびのうた（ムウマ）: 相手が今ねむりで、前の自分の番に attack_name を受けていたなら、相手は「きぜつ」する
+    E.KnockOutIfAsleepAndReceived: lambda e: (KnockOutIfAsleepAndReceived(e.attack_name),),
 }

@@ -304,6 +304,9 @@ class AttackEffect:
     # v0.62（docs/history-attacks-v0.62.md）: 前の番のこと（場のポケモンのワザの履歴 ``PokemonInPlay.history``）を読むワザ。対戦のカードにこのワザがあるときだけ、エンジンが
     # 履歴を記録する（``history.history_needed``）
     reads_history: ClassVar[bool] = False
+    # v0.100（docs/sketch-perish-song-history-v0.100.md 3 章）: プレイヤーの番ごとの記録（``GameState.turn_history``。前の相手の番に使われたワザ・場にいたカード）を読むワザ（「スケッチ」）。
+    # 対戦のカードにこのワザがあるときだけ、エンジンがプレイヤーの記録を作る（``history.turn_history_needed``。場のポケモンの履歴の ``reads_history`` とは別に決める）
+    reads_turn_history: ClassVar[bool] = False
 
     def check(self, attack: Attack) -> list[str]:
         return []
@@ -756,12 +759,15 @@ DAMAGE_TAKEN_ELEMENT = "damage_taken"  # v0.92: 相手に与える「受ける�
 LEAVE_LOCK_ELEMENT = "leave_lock"  # v0.93: 相手に与える「バトル場をはなれられない」効果（からまるいと・からみつく・ねばるみつ・くいつく・どくしばり）
 # v0.95: 相手の場のポケモンについているトレーナーカードを 1 枚、相手の山札にもどす効果（エイパムの「とりさる」。ついているポケモンへの効果なので「ワザをうけない」状態・「とうめい」を評価する）
 TRAINER_RETURN_ELEMENT = "trainer_return"
+# v0.100（docs/sketch-perish-song-history-v0.100.md 5 章）: 相手の対戦ポケモンを、ダメージによらず「きぜつ」させる効果（ムウマの「ほろびのうた」。相手のポケモンへの効果なので「ワザをうけない」
+# 状態・「とうめい」・効果だけを無効にする効果を評価する。ダメージの要素ではない）
+KNOCK_OUT_ELEMENT = "knock_out"
 ATTACK_ELEMENTS = (DAMAGE_ELEMENT, FORCED_SWITCH_ELEMENT, POISON, SLEEP, PARALYSIS, CONFUSION, ENERGY_DISCARD_ELEMENT, ATTACK_LOCK_ELEMENT,
                    ENERGY_ATTACH_ELEMENT, REDUCED_DAMAGE_ELEMENT, ATTACK_CHECK_ELEMENT, RETREAT_LOCK_ELEMENT, RETURN_IN_PLAY_TO_DECK_ELEMENT,
                    HEAL_ELEMENT, COUNTERS_ELEMENT, EVOLVE_ELEMENT, RETURN_IN_PLAY_TO_HAND_ELEMENT, ENERGY_MOVE_ELEMENT, WEAKNESS_CHANGE_ELEMENT,
                    RESISTANCE_CHANGE_ELEMENT, MAX_HP_ELEMENT, DEVOLVE_ELEMENT, POWER_LOCK_ELEMENT, ATTACH_LOCK_ELEMENT, WAKE_ELEMENT, TRAINER_DISCARD_ELEMENT,
                    STATUS_GUARD_ELEMENT, BENCH_PROTECTION_ELEMENT, MARKER_ELEMENT, CURE_ELEMENT, DAMAGE_TAKEN_ELEMENT, LEAVE_LOCK_ELEMENT,
-                   TRAINER_RETURN_ELEMENT)
+                   TRAINER_RETURN_ELEMENT, KNOCK_OUT_ELEMENT)
 
 
 def evasion_power(state: GameState, pokemon: PokemonInPlay) -> tuple[PowerKey, AttackImmunityOnHeads] | None:
@@ -38778,12 +38784,12 @@ DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_98_ATTACKS), V0
 
 PERFORM_TEXT = ("この力は、このカードが「{attack}」を使うとき、はたらく。前の相手の番、このカードが、バトル場で相手のワザによるダメージを受けていたなら、その受けたダメージと同じ"
                 "ダメージを、このカードが使う「{attack}」のダメージに追加する。")
-# PF1: ［PERFORM］で、前の相手の番の同じ相手のワザで、このカードがバトル場とベンチの両方でダメージを受けていた（ダメージの要素ごとの場所が違う）とき、追加するのはバトル場で受けた分か、
+# PFM1: ［PERFORM］で、前の相手の番の同じ相手のワザで、このカードがバトル場とベンチの両方でダメージを受けていた（ダメージの要素ごとの場所が違う）とき、追加するのはバトル場で受けた分か、
 # そのワザで受けたダメージ全体か
 PERFORM_PLACES_CODE = "UNRESOLVED_PERFORM_DAMAGE_PLACES"
 PERFORM_PLACES_REASON = (
     "［PERFORM］で、前の相手の番の相手のワザで、このカードがバトル場とベンチの両方でダメージを受けていたとき、「その受けたダメージ」がバトル場で受けた分か、そのワザで受けたダメージ"
-    "全体かは、印刷の文面・kyuura の記録から決められず、追加するダメージが変わるので扱わない（PF1。どちらか一方の場所だけで受けたときは止めない）"
+    "全体かは、印刷の文面・kyuura の記録から決められず、追加するダメージが変わるので扱わない（PFM1。どちらか一方の場所だけで受けたときは止めない）"
 )
 
 
@@ -38799,7 +38805,7 @@ class AddActiveDamageReceivedToNamedAttack(ContinuousPower):
       ワザには当てはめない。今の写しでは、この力を持つポケモンが今持たない「``attack_name``」を処理することはない（まねるワザを持たない）ので、起これば止める（エンジンの不具合）
     - 追加する量は、前の相手の番（今の番の 1 つ前）の、このカードの受けた記録（``history.received_on``。進化・退化・場をはなれたら別のポケモン）の、バトル場で受けた分
       （``history.damage_places``。受けた時の場所。最終ダメージの合計で、あとで回復しても減らさない・残りHPで丸めない）。0 なら「受けなかった」ので追加しない（p.319）。
-      ベンチでだけ受けたダメージは追加しない。両方の場所で受けていれば PF1（``PERFORM_PLACES_CODE``）。場所の記録のない記録の写しは、エンジンの情報の不足（``history.DAMAGE_PLACE_UNKNOWN_CODE``）
+      ベンチでだけ受けたダメージは追加しない。両方の場所で受けていれば PFM1（``PERFORM_PLACES_CODE``）。場所の記録のない記録の写しは、エンジンの情報の不足（``history.DAMAGE_PLACE_UNKNOWN_CODE``）
     - ワザ以外（トレーナー・特殊能力・ポケモンチェック）のダメージ・ダメージカウンターをのせる・移す効果は、受けた記録のダメージに入らない（``history.note_received`` はワザの枠のダメージの
       要素だけを記録する。GR-2000-P320-COUNTER-MOVE）。受けた時にこの力が消えていても（ガス・特殊状態）、使う時にはたらいていれば読む（文面に受けた時の条件はない）
     - p.321 の 2 段階（ワザを使うポケモンの持っている「ダメージを変更する効果」。v0.46 の［きょうぼう］・v0.88 の［すいりょくはつでん］と同じ段階。GR-2000-P321-DAMAGE-ORDER）の加算。
@@ -38817,7 +38823,7 @@ class AddActiveDamageReceivedToNamedAttack(ContinuousPower):
         return (PERFORM_TEXT.format(attack=self.attack_name),)
 
     def bonus(self, state: GameState, holder: PokemonInPlay) -> int:
-        """前の相手の番に、このカード（``holder``）がバトル場で受けたワザによるダメージ（受けていなければ 0）。両方の場所で受けていれば PF1。"""
+        """前の相手の番に、このカード（``holder``）がバトル場で受けたワザによるダメージ（受けていなければ 0）。両方の場所で受けていれば PFM1。"""
         from .history import damage_places, received_on
 
         record = received_on(holder, state.turn_number - 1)
@@ -38926,3 +38932,94 @@ V0_99_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_99_ATTACKS), V0_99_POWERS)
+
+
+# ---------------------------------------------------------------- v0.100（docs/sketch-perish-song-history-v0.100.md）。ドーブル・ムウマ
+
+SKETCH_TEXT = ("前の相手の番に、相手のポケモンがワザを使っていたなら、そのワザを、このカードが持っているワザとして使う。(そのワザに必要な「エネルギー」がついていなくても、かまわない。)"
+               "前の相手の番、このカードが場に出ていなければ、このワザは失敗する。")
+
+
+@dataclass(frozen=True)
+class UseLastOpponentAttack(AttackEffect):
+    """前の相手の番に、相手のポケモンがワザを使っていたなら、そのワザを、このカードが持っているワザとして使う。（そのワザに必要な「エネルギー」がついていなくても、かまわない。）
+    前の相手の番、このカードが場に出ていなければ、このワザは失敗する（v0.100。ドーブル（neo2-052）の「スケッチ」。kyuura の印刷の文面。要素 ``programs.UseLastOpponentAttack``。
+    docs 4 章）。
+
+    - 読むのは、前の相手の番（今の番の 1 つ前）に相手が使ったワザのプレイヤーの記録（``history.turn_attack``。宣言のときの記録）。今の相手の対戦ポケモン・このカードの受けた記録からは
+      探さない（相手がそのあと控えにもどった・場をはなれた・ダメージのないワザ・自分の場だけへのワザでも、使った事実は残る）。日本語にない「今の相手の対戦ポケモンが使った」
+      「このカードが受けた」「攻撃の時に場にいた」の限定を加えない
+    - 「このカードが場に出ていなければ、このワザは失敗する」はワザの効果（宣言の拒否にしない。p.323「12 ワザの失敗」。``programs.sketch_presence``）。前の相手の番の始めから場に
+      いたポケモンなら場に出ていた。この番に場に出た（いちばん上のカードがこの番に場に出た・今の姿になった）カードで、前の相手の番に場にいた記録（``history.turn_field``）にないなら
+      失敗する。前の相手の番の途中に場に出た・前の相手の番に場にいたカードを出し直した・前の相手の番がない（先攻の最初の番）なら、読み方で失敗するかが変わるので SK1
+    - 前の相手の番に相手がワザを使っていなければ、処理の対象がないので何もしない（失敗ではない。p.309）。記録していない前の番（v0.99 までの状態の写し）は「使わなかった」と読まない
+      （エンジンの情報の不足）
+    - 使ったワザが、相手のワザなどを自分のワザとして使ったもの（宣言したワザと処理したワザが違う）なら、「そのワザ」がどちらを指すかで結果が変わるので SK2（ピジョンの MM1 は
+      受けたワザの問いで、文面が違うので当てはめない）
+    - そのワザの要素を、このワザの枠の中で、このカードのワザとして新しく処理する（``run.redirect``。コイン・選ぶものは新しく決める。タイプ・弱点・抵抗力・「このカード」・自分／相手は
+      このカード。元のワザのダメージ・コイン・対象を写さない）。必要なエネルギーはいらない（スケッチ自体の無色 2 個は通常どおり要る）。ほかの使うための条件（``Element.copy_problem``）は
+      免除しない。説明が条件をみたさないときの処理を書かないので、カスミのコダックの「ちょうのうりょく」と同じ ``clause`` なし（みたさなければ決められない。HC9）。ピッピの
+      ``FOLLOW_TEXT``（kyuura の card_differences の PMCG1-067 の最新の説明と解説を根拠にした区分）はこのカードに当てはめない。ピジョンの必要なエネルギーの MM2 も持ち込まない
+    - まねるワザ（ゆびをふる・オウムがえし・スケッチ）をまねる・場に出てから 1 回しか使えないワザなどは、既存の未解決（HC9）・未対応（``UNSUPPORTED_COPIED_ATTACK``）のまま
+    """
+
+    implementation_id = "use_last_opponent_attack"
+    reads_turn_history = True
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "前の相手の番に相手が使ったワザを自分のワザとして使うワザ", damage="none") + _check_exact_text(
+            attack, "前の相手の番に相手が使ったワザを自分のワザとして使うワザ", (SKETCH_TEXT,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        copied = decision.context_value("copied")
+        if copied is None:
+            return [f"前の相手の番のワザを自分のワザとして使うワザの決定 {decision.kind} に、使ったワザ（copied）がない"]
+        entry = state.effects.attack_entry(*copied)
+        if entry is None:
+            return [f"使ったワザ {copied!r} の登録がない"]
+        return entry.effect.decision_problems(state, AttackUse(use.player, use.pokemon_id, AttackKey(*copied)), decision)
+
+
+PERISH_SONG_TEXT = "このワザを受ける相手が「ねむり」状態で、前の自分の番に「{attack}」を受けていたなら、相手は「きぜつ」する。"
+
+
+@dataclass(frozen=True)
+class KnockOutIfAsleepAndReceived(AttackEffect):
+    """このワザを受ける相手が「ねむり」状態で、前の自分の番に「``attack_name``」を受けていたなら、相手は「きぜつ」する（v0.100。ムウマ（neo3-035）の「ほろびのうた」。kyuura の
+    印刷の文面。要素 ``programs.KnockOutIfAsleepAndReceived``。docs 5 章）。
+
+    - 確かめるのは、ワザの内容を処理するとき（こんらんのコインのあと）の相手の対戦ポケモンが、今「ねむり」状態であることと、前の自分の番（今の番の 2 つ前）に「``attack_name``」を
+      受けていたこと（場のポケモンの受けた記録 ``history.received_on``。このカードのもの）。2 つは別々に読む（今のねむりを受けた証拠にしない。受けたことを今のねむりの代わりにしない）。
+      文面にない「同じムウマから受けた」「そのあと目を覚ましていない」の条件は置かない。片方だけなら「きぜつ」させない（ワザを使うための条件にしない）
+    - 受けたワザは、その記録の処理したワザの名前で照らす（同じ名前の別のカードのワザも同じ）。どの要素も受けなかった（「ワザをうけない」状態・「とうめい」）なら受けていない。［めんえき］で
+      ねむりにならなかった・すでにねむっていたのは、効果の要素を受けた（v0.62 の記録の意味）。効果だけを無効にする効果で受けなかった・まねたワザ（宣言したワザと処理したワザが違う）は、
+      受けたかが決まらないので、今ねむりなら PSG1
+    - 成り立てば、相手への効果として「ワザをうけない」状態・「とうめい」・効果だけを無効にする効果を評価し（``KNOCK_OUT_ELEMENT``）、ダメージによらず「きぜつ」させる（解決の基盤の
+      ``kernel.knock_out_by_effect``。ダメージの計算・弱点・抵抗力・ダメージを受けたときの効果は起こらない。こんじょう・きあいのハチマキ・学習装置（どれも「ダメージで」）は使えない）。
+      きぜつの処理・サイド・勝ち負け・バトル場に出す決定・きぜつしたときの特殊能力は、ワザのあとの既存の処理
+    - ダメージだけを防ぐ状態（「ダメージを受けない」状態・かげぶんしんなど）では防がれない（効果）
+    """
+
+    attack_name: str = "やみのひとみ"
+    implementation_id = "knock_out_if_asleep_and_received"
+    reads_history = True
+    opponent_effect_elements = (KNOCK_OUT_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手がねむりで、前の自分の番に決まったワザを受けていたら「きぜつ」させるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (PERISH_SONG_TEXT.format(attack=self.attack_name),))
+
+    def card_problems(self, attack: Attack, attacks: tuple[Attack, ...]) -> list[str]:
+        if not any(other.name_ja == self.attack_name for other in attacks if other is not attack):
+            return [f"受けていたかを確かめるワザ「{self.attack_name}」が、同じカードのほかのワザにない"]
+        return []
+
+
+# v0.100 のワザの登録（3）。処理に使う文面は kyuura の印刷の文面（名前・文面は写しの表記のまま）。やみのひとみは既存の型（v0.3b のパラスの「キノコのほうし」と同じ説明）
+V0_100_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    AttackKey("neo2-052", 0): _printed(UseLastOpponentAttack(), "スケッチ", SKETCH_TEXT),  # ドーブル（無無）
+    AttackKey("neo3-035", 0): _printed(PutToSleep(), "やみのひとみ", "相手を「ねむり」状態にする。"),  # ムウマ（超）
+    AttackKey("neo3-035", 1): _printed(KnockOutIfAsleepAndReceived("やみのひとみ"), "ほろびのうた", PERISH_SONG_TEXT.format(attack="やみのひとみ")),  # ムウマ（超超超）
+})
+
+DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_100_ATTACKS)

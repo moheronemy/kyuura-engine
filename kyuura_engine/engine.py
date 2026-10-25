@@ -3870,7 +3870,9 @@ def _knock_out_power_decision_problems(state: GameState, d) -> list[str]:
     slot = next((slot for slot in powers_of(state, pokemon) if isinstance(power, tuple) and slot.key == PowerKey(*power)), None)
     if slot is None or not isinstance(slot.effect, BeamOnKnockOut):
         return [f"［ファイナルビーム］の決定の特殊能力 {power!r} が、ポケモン {pokemon.pokemon_id} の今持つ［ファイナルビーム］ではない"]
-    if pokemon.damage < max_hp(state, pokemon):
+    # v0.100: ワザの効果で「きぜつ」するポケモン（続きの情報の ``effect_ko``。ダメージによらない）は、HP 以上のダメージを受けていなくてよい
+    effect_ko = {entry[0] for entry in d.context_value("effect_ko", ())}
+    if pokemon.damage < max_hp(state, pokemon) and pokemon.pokemon_id not in effect_ko:
         problems.append(f"［ファイナルビーム］の決定の対象のポケモン {pokemon.pokemon_id} が HP 以上のダメージを受けていない")
     if not slot.effect.is_able(pokemon):
         problems.append(f"［ファイナルビーム］の決定の対象のポケモン {pokemon.pokemon_id} がねむり・マヒ・こんらん（使えない）")
@@ -4335,6 +4337,49 @@ def _history_problems(state: GameState) -> list[str]:
                 for k in keys:
                     if state.effects.attack_entry(k[0], k[1]) is None:
                         problems.append(f"{label} のワザ {k!r} が効果の登録表にない")
+    return problems + _turn_history_problems(state)
+
+
+def _turn_history_problems(state: GameState) -> list[str]:
+    """v0.100（docs/sketch-perish-song-history-v0.100.md 3 章）: プレイヤーの番ごとの記録（``GameState.turn_history``）の不変条件。
+
+    - プレイヤーの記録を読むワザのカードが対戦になければ空（``history.turn_history_needed``）
+    - 記録の型は ``TURN_HISTORY_TYPES``。番は 1 以上・今の番以下で、2 つ前の番より古くない。番の順
+    - 使ったワザの記録（``TurnAttack``）は番ごとに 1 つ・その番のプレイヤーのもので、宣言したワザ・処理したワザは効果の登録表にあるワザ。ワザを使った場のポケモンの番号は付けた番号
+    - 場にいたカードの記録（``TurnField``）は番ごとに 1 つ・その番でないプレイヤーのもので、カードはその持ち主の重ならない uid。うらのカードの数は 0 以上"""
+    from .history import KEPT_TURNS, turn_history_needed
+    from .state import TURN_HISTORY_TYPES, TurnAttack, TurnField
+
+    if not state.turn_history:
+        return []
+    if not turn_history_needed(state):
+        return ["プレイヤーの記録を読むワザのない対戦で、プレイヤーの番ごとの記録がある"]
+    problems = []
+    seen = set()
+    last = 0
+    for record in state.turn_history:
+        label = f"プレイヤーの番ごとの記録 {record!r}"
+        if type(record) not in TURN_HISTORY_TYPES:
+            problems.append(f"{label} の型がプレイヤーの記録ではない")
+            continue
+        if not (max(1, state.turn_number - KEPT_TURNS) <= record.turn <= state.turn_number) or record.turn < last:
+            problems.append(f"{label} の番が、今の番 {state.turn_number} から 2 つ前までにない・番の順ではない")
+        last = record.turn
+        key = (type(record).__name__, record.turn)
+        if key in seen:
+            problems.append(f"{label} と同じ種類の記録が同じ番にもう 1 つある")
+        seen.add(key)
+        if isinstance(record, TurnAttack):
+            if record.player != turn_owner(state, record.turn) or not 1 <= record.pokemon_id < state.next_pokemon_id:
+                problems.append(f"{label} のプレイヤー・場のポケモンの番号が正しくない")
+            for k in (record.declared,) + (() if record.processed is None else (record.processed,)):
+                if state.effects.attack_entry(k[0], k[1]) is None:
+                    problems.append(f"{label} のワザ {k!r} が効果の登録表にない")
+        elif isinstance(record, TurnField):
+            if record.player != 1 - turn_owner(state, record.turn) or record.face_down < 0 or len(set(record.cards)) != len(record.cards):
+                problems.append(f"{label} のプレイヤー・カード・うらのカードの数が正しくない")
+            if any(uid not in state.cards or state.cards[uid].owner != record.player for uid in record.cards):
+                problems.append(f"{label} のカードが、そのプレイヤーのカードではない")
     return problems
 
 
