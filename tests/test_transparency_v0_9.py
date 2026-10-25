@@ -820,7 +820,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                     "したでなめる",
                                     # v0.95: ネイティオ（neo1-048）の「あやしいひかり」（ConfuseOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
                                     # docs/private-looks-deck-movement-v0.95.md）
-                                    "あやしいひかり"]))
+                                    "あやしいひかり",
+                                    # v0.102: トランセル（ES1-003・QSG-003）の「ふしぎなこな」（ConfuseOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                    # docs/weakness-resistance-powers-v0.102.md）
+                                    "ふしぎなこな", "ふしぎなこな"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

@@ -1901,10 +1901,16 @@ def log_problems(state) -> list[str]:
         steps = e.get("steps") or ()
         if not steps or tuple(steps[0]) != ("1 基本となる計算", ret["amount"]):
             found.append(f"{e['turn']} 番の「ほのおのかべ」・「こうらがえし」のダメージの基本となるダメージ {steps[:1]} が {ret['amount']} ではない（W14）")
+        holders = wr_power_holders(pid, e["player"]) if pid in top else None
         if pid in top and ret["pokemon_id"] in top:
             # v0.48: 受けたポケモンの今有効な弱点・抵抗力（テクスチャー1・2）と、効果を持つポケモンの色の読み方（読み方で結果が変わる場合はエンジンが止める）
+            # v0.102: ログから組み立てた、弱点・抵抗力の影響を受けない特殊能力がはたらけば、その段階は当てはめない（``wr_power_holders``。ログから決められなければ v0.101 までと同じ確かめ）
             readings = type_readings_now(ret["pokemon_id"])
             weakness, resistance = weakness_now(pid), resistance_now(pid)
+            if holders is not None and holders[0]:
+                weakness = None
+            if holders is not None and holders[1]:
+                resistance = None
             if e["weakness"] not in {weakness is not None and weakness is color for color in readings}:
                 found.append(f"{e['turn']} 番の「ほのおのかべ」・「こうらがえし」のダメージの弱点 {e['weakness']} が、タイプと弱点に合わない（W15）")
             if e["resistance"] not in {resistance is not None and resistance is color for color in readings}:
@@ -2358,6 +2364,65 @@ def log_problems(state) -> list[str]:
         return sorted(pid for pid in in_play if pokemon_owner.get(pid) == owner and pid not in face_down_pids  # うらのカードの力ははたらかない
                       and working_continuous(pid, E.VoidOpponentEnergyDiscardOnGroup))
 
+    def wr_power_holders(receiver_pid: int, owner: int) -> tuple[list[int], list[int]] | None:
+        """v0.102: ログから組み立てた今の場で、ポケモン ``receiver_pid``（持ち主 ``owner``）がダメージを受ける時に、(弱点, 抵抗力) の影響を受けなくする、はたらいている力を持つ
+        ポケモンの番号（小さい順）。［グリーンシールド］（``IgnoreWeaknessForOwnType``）は持ち主の場の力で、受けるポケモンの今の色の読み方がその型のタイプのとき、［ニュートラルダメージ］
+        （``IgnoreWeaknessResistanceForActives``）はお互いの場の力で、受けるポケモンがバトル場にいるとき（場所・特殊状態・かがくへんかガスは ``working_continuous``。エンジンの
+        ``weakness_resistance_ignored`` を読まない）。まきちらせ!ベトベトガスなど（``goop_gases``）がはたらく・色の読み方で答えが変わるなら、ログからは決めない（None）。"""
+        if goop_gases or receiver_pid not in in_play:
+            return None
+        neutral: list[int] = []
+        shields: dict = {}
+        for pid in in_play:
+            if pid in face_down_pids:
+                continue  # うらのカードの力ははたらかない
+            neutral += [pid for _ in working_continuous(pid, E.IgnoreWeaknessResistanceForActives)]
+            if pokemon_owner.get(pid) == owner:
+                for _, effect, _ in working_continuous(pid, E.IgnoreWeaknessForOwnType):
+                    shields.setdefault(effect.pokemon_type, []).append(pid)
+        active = is_active(receiver_pid)
+        answers = {tuple(sorted((neutral if active else []) + shields.get(color, []))) for color in type_readings_now(receiver_pid)}
+        if len(answers) != 1:
+            return None
+        return list(answers.pop()), sorted(neutral) if active else []
+
+    def v102_problems(e: dict) -> list[str]:
+        """v0.102: ダメージ（``damage``）・こんらんのダメージ（``confusion_damage``）のログの弱点・抵抗力が、ログから組み立てた場ではたらく、影響を受けなくする力
+        （``wr_power_holders``）と合うかを確かめる。はたらく力があれば、その段階を当てはめていないこと・書いた力（``weakness_ignored_by_powers``・``resistance_ignored_by_powers``）が
+        それと同じこと、力がなければ当てはめていた（ワザを使うポケモンの色が 1 つで、その色が弱点・抵抗力。スタジアム・ワザの説明・2 段階で終えた場合を除く）のに書いていないことが
+        ないこと。"""
+        kind = e["kind"]
+        if kind not in ("damage", "confusion_damage") or (kind == "damage" and attack_window is None):
+            return []
+        found: list[str] = []
+        pid = e.get("pokemon_id", ids.get(e["pokemon"]))
+        logged_w = sorted(source[0] for source in e.get("weakness_ignored_by_powers", ()))
+        logged_r = sorted(source[0] for source in e.get("resistance_ignored_by_powers", ()))
+        if e.get("ignore_weakness_resistance") or e.get("ignore_defender_effects"):
+            if logged_w or logged_r:
+                found.append(f"{e['turn']} 番の弱点・抵抗力に関係ないダメージ（ポケモン {pid}）に、影響を受けなかった力 {logged_w}・{logged_r} が書かれている")
+            return found
+        holders = wr_power_holders(pid, e["player"])
+        if holders is None:
+            return found
+        weak, resist = holders
+        if e["weakness"] and weak:
+            found.append(f"{e['turn']} 番の {kind}（ポケモン {pid}）に、［グリーンシールド］・［ニュートラルダメージ］（ポケモン {weak}）がはたらくのに弱点を当てはめた")
+        if e["resistance"] and resist:
+            found.append(f"{e['turn']} 番の {kind}（ポケモン {pid}）に、［ニュートラルダメージ］（ポケモン {resist}）がはたらくのに抵抗力を当てはめた")
+        if logged_w and logged_w != weak:
+            found.append(f"{e['turn']} 番の {kind}（ポケモン {pid}）の弱点の影響を受けなかった力 {logged_w} が、ログから組み立てたはたらく力 {weak} と違う")
+        if logged_r and logged_r != resist:
+            found.append(f"{e['turn']} 番の {kind}（ポケモン {pid}）の抵抗力の影響を受けなかった力 {logged_r} が、ログから組み立てたはたらく力 {resist} と違う")
+        attacker = pid if kind == "confusion_damage" else (None if e.get("retaliation") else attack_window["pokemon_id"])
+        if attacker is not None and attacker in in_play and stadium_zone is None and not e.get("stopped_after_step_2"):
+            colors = type_readings_now(attacker)
+            if weak and not logged_w and len(colors) == 1 and colors[0] is not None and colors[0] is weakness_now(pid):
+                found.append(f"{e['turn']} 番の {kind}（ポケモン {pid}）で、力（ポケモン {weak}）がなければ当てはめていた弱点を、影響を受けなかった力として書いていない")
+            if resist and not logged_r and not e.get("ignore_resistance") and len(colors) == 1 and colors[0] is not None and colors[0] is resistance_now(pid):
+                found.append(f"{e['turn']} 番の {kind}（ポケモン {pid}）で、力（ポケモン {resist}）がなければ当てはめていた抵抗力を、影響を受けなかった力として書いていない")
+        return found
+
     def v101_problems(e: dict) -> list[str]:
         """v0.101: ［KEEP］でなくなったトラッシュの効果（``energy_discard_voided``）が、ログから組み立てた場ではたらく［KEEP］の持ち主の場の「アンノーン」への、相手が使った
         ワザ・特殊能力・トレーナーの効果のものであることと、その場合に相手の効果でトラッシュしたログ（ワザ・トレーナー・［だつりょくえき］・つけかえで受けずにトラッシュ）が
@@ -2762,7 +2827,10 @@ def log_problems(state) -> list[str]:
                         attack_window["ret_due"].append((pid, info, e["amount"]))
             elif attack_window["ret_due"] and (
                 kind in COUNTER_BARRIERS or (kind == "special_conditions_removed" and e["reason"] == "replaced")
-                or (kind == "coin_flip" and e["source"] == "attack" and attack_window["counter_after_coin"])
+                or (kind == "coin_flip" and e["source"] == "attack" and attack_window["counter_after_coin"]
+                    # v0.102: はたらく返す効果自身のコイン（カウンター・クロスカウンターの「はたらくときのコイン」。持つポケモンと効果のワザが同じ）は、返すダメージの前の手順で、
+                    # ワザのダメージ以外の効果の前に来てよい（v0.101 までは、ダメージのあとにコインのあるワザ（あやしいひかりなど）を受けた局で誤って見つけていた）
+                    and (e.get("pokemon_id"), e.get("effect")) != (attack_window["ret_due"][0][0], attack_window["ret_due"][0][1]["effect"]))
             ):
                 problems.append(f"{e['turn']} 番のワザで、はたらいた「ほのおのかべ」・「こうらがえし」（ポケモン {[d[0] for d in attack_window['ret_due']]}）より先に {kind} がある（p.89・W21）")
                 attack_window["ret_due"].clear()
@@ -2917,6 +2985,7 @@ def log_problems(state) -> list[str]:
             attack_window["copied"] = e["copied"]  # v0.44: 相手のワザを自分のワザとして使った（そのワザの効果のログの effect は copied）
         problems.extend(v100_problems(e))  # v0.100: スケッチ・やみのひとみ・ほろびのうた
         problems.extend(v101_problems(e))  # v0.101: ［KEEP］
+        problems.extend(v102_problems(e))  # v0.102: ［グリーンシールド］・［ニュートラルダメージ］
         if kind in ("damage", "confusion_damage"):
             # v0.90: のろいマーカーののっているポケモンが弱点の計算をしたワザのダメージは「×4」（ログの weakness_multiplier）。ほかは書かない。こんらんの 20 は、のろいマーカーと
             # 自分の弱点が当てはまるならコインの前に止まる（UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS）ので、弱点の計算をしたこんらんのダメージはない

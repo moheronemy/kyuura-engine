@@ -583,6 +583,13 @@ SMEARGLE, MISDREAVUS, GASTLY_BASE = "neo2-052", "neo3-035", "PMCG1-044"
 V0_101 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_101"])
 V0_101_POKEMON = V0_101
 WOBBUFFET, UNOWN_K, UNOWN_D = "neo2-031", "neo3-030", "neo2-025"
+# v0.102（docs/weakness-resistance-powers-v0.102.md）: トランセル・バリヤードの 4 枚（写しの組 pool_v0_102。同じデータの 2 組で、デッキには id ごとに 2 枚ずつ入れる）。ポケモンは TARGETS に
+# 加える。ワザ（ふしぎなこな・ジャグリング）は既存の手順のまま選ぶ。［グリーンシールド］・［ニュートラルダメージ］は常にはたらく（手順は何もしない）。ワザを宣言した時点の配置は
+# ``_v102_attack_observe``、ログから数えるのは ``v102_uses``
+V0_102 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_102"])
+V0_102_POKEMON = V0_102
+METAPOD_ES1, METAPOD_QSG, MR_MIME_ES1, MR_MIME_QSG = "ES1-003", "QSG-003", "ES1-021", "QSG-030"
+BASE_CATERPIE, BASE_DROWZEE, BASE_BELLSPROUT = "PMCG1-002", "PMCG1-045", "PMCG2-005"
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -618,7 +625,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_98_POKEMON  # v0.98: アンノーン 4 枚
            + V0_99_POKEMON  # v0.99: アンノーンP・H とタッツー
            + V0_100_POKEMON  # v0.100: ドーブル・ムウマ
-           + V0_101_POKEMON)  # v0.101: ソーナンス・アンノーンK
+           + V0_101_POKEMON  # v0.101: ソーナンス・アンノーンK
+           + V0_102_POKEMON)  # v0.102: トランセル・バリヤード
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -1332,6 +1340,12 @@ DECKS = {
     # 遺跡の石版 2 種 4 枚。バトル場の要員にポッポ → ピジョン・コラッタ（無色。［KEEP］で守らない「アンノーン」でないポケモン）
     "K101": ((UNOWN_K, 3), (UNOWN_D, 1), ("neo2-054", 2), ("neo2-057", 2), (PIDGEY, 4), (PIDGEOTTO, 3), ("PMCG1-060", 3), (driver.POTION, 2), (SWITCH, 2),
              (driver.BILL, 2), (PSYCHIC, 36)),
+    # v0.102: 草。トランセル（［グリーンシールド］・ふしぎなこな 草草）を ES1-003・QSG-003 で 2 枚ずつ、進化元は第1弾のキャタピー（PMCG1-002。商品をまたぐ名前の進化）。ほかの草ポケモンは
+    # 第2弾のマダツボミ（炎が弱点。相手の炎のワザで［グリーンシールド］が弱点を当てはめない場面）
+    "G102": ((BASE_CATERPIE, 4), (METAPOD_ES1, 2), (METAPOD_QSG, 2), (BASE_BELLSPROUT, 4), (driver.POTION, 2), (SWITCH, 2), (driver.BILL, 2), (GRASS, 42)),
+    # v0.102: 超・無色。バリヤード（［ニュートラルダメージ］・ジャグリング 超無）を ES1-021・QSG-030 で 2 枚ずつ（「バリヤード」は合わせて 4 枚）。バトル場の要員は第1弾のスリープ
+    # （超。超が弱点）とコラッタ（無色。超の抵抗力）。ベンチのバリヤードがお互いの対戦ポケモンの弱点・抵抗力を当てはめない場面
+    "N102": ((MR_MIME_ES1, 2), (MR_MIME_QSG, 2), (BASE_DROWZEE, 4), ("PMCG1-060", 3), (driver.POTION, 2), (SWITCH, 2), (driver.BILL, 2), (PSYCHIC, 43)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -1521,6 +1535,10 @@ PAIRINGS_V0_100 = (("S100", "M100"), ("S100", "H62"), ("M100", "G61"), ("M100", 
 # 組・席・seed は先に決めた（seed 0〜3。局を選び直さない）
 PAIRINGS_V0_101 = (("K101", "W33"), ("K101", "C33"), ("K101", "R45"), ("K101", "U55"), ("K101", "K68"), ("K101", "L82"), ("C101", "K101"), ("C101", "P31"),
                    ("C101", "S100"))
+# v0.102: G102 対 F30（炎のワザを受ける草ポケモンの弱点）・G102 対 R31（炎・ロケット団のリザードンなど）・G102 対 N102（新しいカードどうし。ふしぎなこなのこんらんと、両方の力が重なる
+# 草の対戦ポケモン）・N102 対 C33（超の抵抗力を持つ無色のポケモン。抵抗力を当てはめず量が増える場面）・N102 対 G32（超が弱点の草ポケモン）・N102 対 C101（ソーナンスのカウンターで返す
+# ダメージ）・N102 対 S48（ベトベトンの［かがくへんかガス］で力が消える場面）。組・席・seed は先に決めた（seed 0〜3。局を選び直さない）
+PAIRINGS_V0_102 = (("G102", "F30"), ("G102", "R31"), ("G102", "N102"), ("N102", "C33"), ("N102", "G32"), ("N102", "C101"), ("N102", "S48"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -1538,7 +1556,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.87": PAIRINGS_V0_87, "v0.88": PAIRINGS_V0_88, "v0.89": PAIRINGS_V0_89, "v0.90": PAIRINGS_V0_90, "v0.91": PAIRINGS_V0_91,
            "v0.92": PAIRINGS_V0_92, "v0.93": PAIRINGS_V0_93, "v0.94": PAIRINGS_V0_94, "v0.95": PAIRINGS_V0_95,
            "v0.96": PAIRINGS_V0_96, "v0.97": PAIRINGS_V0_97, "v0.98": PAIRINGS_V0_98, "v0.99": PAIRINGS_V0_99, "v0.100": PAIRINGS_V0_100,
-           "v0.101": PAIRINGS_V0_101}
+           "v0.101": PAIRINGS_V0_101, "v0.102": PAIRINGS_V0_102}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -6018,6 +6036,92 @@ def _v101_attack(state, tried, counts):
     return None
 
 
+def _v102_attack_observe(state, seen, counts) -> None:
+    """v0.102: 前に見た番の場（``seen["v102"]``。番のプレイヤーと、相手の対戦ポケモンに当てはまるはたらく力の有無）のあとに、そのプレイヤーのワザのログ（``attack``）があれば、
+    ワザを宣言した時点で相手の対戦ポケモンに［グリーンシールド］・［ニュートラルダメージ］が当てはまる配置にあったとして数え（``v102_attack_power_weakness``・
+    ``v102_attack_power_resistance``）、今の場を記録する。拒否されたコマンドはワザのログを残さないので数えない。v0.102 の力のない場では何も記録しない（前の版の組の結果は変わらない）。
+    数えるのに使う問い合わせはエンジンの ``weakness_resistance_ignored``（監査はログから別に組み立てる）。"""
+    previous = seen.pop("v102", None)
+    if previous is not None:
+        index, player, weakness, resistance = previous
+        if any(e["kind"] == "attack" and e["player"] == player for e in state.log[index:]):
+            if weakness:
+                counts["v102_attack_power_weakness"] += 1
+            if resistance:
+                counts["v102_attack_power_resistance"] += 1
+    if state.phase is not Phase.MAIN or not E.continuous_powers(state, E.WeaknessResistancePower):
+        return
+    player = state.current_player
+    receiver = state.players[1 - player].active
+    if receiver is None or state.is_face_down(receiver):
+        return
+    receiving = E.Receiving(1 - player, receiver)
+    found = [E.weakness_resistance_ignored(state, receiving, color) for color in E.type_readings(state, receiver)]
+    weakness, resistance = any(f.weakness for f in found), any(f.resistance for f in found)
+    if weakness or resistance:
+        seen["v102"] = (len(state.log), player, weakness, resistance)
+
+
+_V102_NON_ADD = ("damage_set", "damage_multiplied", "damage_zero_below", "damage_zero_at_least", "damage_set_if_at_least", "damage_halved", "damage_reduced",
+                 "bench_guard", "weakness_multiplier")
+
+
+def _v102_final_without(state, e, stadium_seen: bool) -> int | None:
+    """v0.102: 力で影響を受けなかった弱点・抵抗力を当てはめていたときの最終ダメージ（ログの計算の段階から求める）。2 段階のあとが加算（``modifiers``）だけで、スタジアムのない局の
+    ときだけ求め、ほかは None（決めない）。"""
+    if stadium_seen or any(key in e for key in _V102_NON_ADD):
+        return None
+    steps = [tuple(step) for step in e.get("steps") or ()]
+    early = [amount for label, amount in steps if str(label)[:1] in ("1", "2") or e["kind"] == "confusion_damage" and label == "こんらん"]
+    if not early:
+        return None
+    amount = early[-1]
+    if e.get("weakness_ignored_by_powers"):
+        amount *= state.rules.weakness_multiplier
+    if e.get("resistance_ignored_by_powers"):
+        amount -= state.card_def(e["pokemon"]).resistance_value or 0
+    amount += sum(added for step, _, added in e.get("modifiers", ()) if step >= 5)
+    return max(amount, 0)
+
+
+def v102_uses(state):
+    """v0.102: ログから数えた v0.102 のカードの動き（v0.102 のカードのない局では空）。
+
+    - ``attack_<id>#0``（ふしぎなこな・ジャグリング。id ごと）
+    - 力で影響を受けなかった弱点・抵抗力（ログ ``weakness_ignored_by_powers``・``resistance_ignored_by_powers``）: ``<damage|confusion_damage|retaliation>_weakness_ignored``・
+      ``…_resistance_ignored``、はたらいた力のカードの id ごとの ``weakness_ignored_by_<id>``・``resistance_ignored_by_<id>``、受けたポケモンの場所 ``ignored_on_bench``
+    - 最終ダメージ: ``final_changed``（当てはめていたら違った）・``final_same``・``final_undetermined``（加算でない計算・スタジアム・ベンチガードなどで求めない）"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_102 for uid in state.cards):
+        return counts
+    stadium_seen = False
+    for e in state.log:
+        kind = e["kind"]
+        if kind == "stadium_placed":
+            stadium_seen = True
+        if kind == "attack":
+            current = e.get("card_id") or state.cards[e["pokemon"]].card_id
+            if current in V0_102:
+                counts[f"attack_{current}#{e['attack_index']}"] += 1
+            continue
+        if kind not in ("damage", "confusion_damage"):
+            continue
+        weakness, resistance = e.get("weakness_ignored_by_powers", ()), e.get("resistance_ignored_by_powers", ())
+        if not weakness and not resistance:
+            continue
+        label = "retaliation" if e.get("retaliation") else kind
+        for part, sources in (("weakness", weakness), ("resistance", resistance)):
+            if sources:
+                counts[f"{label}_{part}_ignored"] += 1
+                for card in sorted({str(source[1]).split("@")[0] for source in sources}):
+                    counts[f"{part}_ignored_by_{card}"] += 1
+        if e.get("target") in ("opponent_bench", "self_bench"):
+            counts["ignored_on_bench"] += 1
+        without = _v102_final_without(state, e, stadium_seen)
+        counts["final_undetermined" if without is None else "final_changed" if without != e["amount"] else "final_same"] += 1
+    return counts
+
+
 def v101_uses(state):
     """v0.101: ログから数えた v0.101 の動き（ソーナンス・アンノーンK のない局では空）。
 
@@ -7912,6 +8016,7 @@ def make_policy(seen: dict, counts: Counter):
     def _policy_body(state, *, janken_winner, cure, tried):
         _V052_REAL["state"] = state  # v0.52: 手札を隠した写し（view）ではなく、本当の状態で受け付けるかを確かめる
         _v048_observe(state, counts)
+        _v102_attack_observe(state, seen, counts)  # v0.102: ワザを宣言した時点の［グリーンシールド］・［ニュートラルダメージ］の配置
         # v0.48: この番に、最大HPがのっているダメージ以下に下がる（MH1）ので拒否された手札のカード（進化カード・トレーナー）。この番に拒否がなければ空
         blocked = {marker[1] for marker in tried if isinstance(marker, tuple) and marker[0] == "max_hp_drop_card"}
         if state.phase is Phase.MAIN and (blocked or "trainer_locked" in tried or "evolution_prevented" in tried):
@@ -7971,6 +8076,8 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         state, observed = seen.get("state"), Counter()
         outcome = "internal_error"
         result["error"] = "".join(traceback.format_exception_only(type(error), error))[:500]
+    if state is not None:
+        _v102_attack_observe(state, seen, counts)  # v0.102: 最後の番のワザ（このあとに手順が呼ばれない）
     result["outcome"] = outcome
     result["steps"] = len(commands)
     result["observed"] = dict(observed)
@@ -8024,6 +8131,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v099"] = v099_uses(state)
         result["v100"] = v100_uses(state)
         result["v101"] = v101_uses(state)
+        result["v102"] = v102_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:

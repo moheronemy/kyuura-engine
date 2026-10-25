@@ -49,10 +49,8 @@ from ..effects import (
     TypeReadingsDiffer,
     definition_views,
     max_hp,
-    resistance_of,
     same_for_type_readings,
     type_readings,
-    weakness_of,
 )
 from ..conditions import confuse, poison, put_to_sleep
 from ..decisions import KNOCK_OUT_POWER, KO_PREVENTION, REACTION_SWITCH
@@ -488,7 +486,10 @@ def weakness_resistance_matters(res: Resolution, fs: FrameState, target: str, ba
         try:
             for attacker_def in definition_views(state, attacker):
                 for receiver_def in definition_views(state, receiver):
-                    finals = {calculate_with_stadium(state, base, attacker_def, receiver_def, modifiers, weakness_resistance=flag).final
+                    # v0.102: 弱点・抵抗力の影響を受けない特殊能力も、実際の処理と同じ問い合わせで当てはめる（控えには［ニュートラルダメージ］は当てはまらない。［グリーンシールド］は
+                    # 弱点だけ）
+                    finals = {calculate_with_stadium(state, base, attacker_def, receiver_def, modifiers, receiving=E.Receiving(receiver_player, receiver),
+                                                     weakness_resistance=flag).final
                               for flag in (True, False)}
                     if len(finals) > 1:
                         return True
@@ -523,15 +524,18 @@ def with_stadium_coin(res: Resolution, frame, target: str, modifiers: list) -> l
 
 
 def compute_damage(state: GameState, attacker: PokemonInPlay, receiver: PokemonInPlay, base: int, modifiers, *, weakness_resistance: bool = True,
-                   orders=None, resistance: bool = True, reduction: int | None = None):
+                   orders=None, resistance: bool = True, reduction: int | None = None, exclude: str | None = None):
     """p.321 の計算（v0.64。``deal_damage`` から分けた）。v0.48: ワザを使うポケモン・受けるポケモンの今有効な最大HP・タイプ（色）・弱点・抵抗力
     （``effects.definition_views``）。色の読み方（VS1）が 2 つあり、読み方で計算の結果が変わるなら ``TypeReadingsDiffer``（変わらなければ、読み方が 1 つのときと
     同じ計算）。順番の決定が要れば ``DamageOrderRequired``。状態を変えず、乱数を使わない。v0.81: ワザを使うポケモンにピントレンズがついていて、受けるのが相手の対戦ポケモンなら
-    抵抗力を計算しない（``effects.attack_ignores_resistance``）。"""
+    抵抗力を計算しない（``effects.attack_ignores_resistance``）。v0.102: 受ける個体（``receiver`` と今の場の持ち主。``exclude`` は除く効果の範囲）を、弱点・抵抗力の影響を受けない
+    特殊能力の問い合わせ（``effects.weakness_resistance_ignored``）に渡す。"""
     if resistance and E.attack_ignores_resistance(state, attacker, receiver) is not None:
         resistance = False
+    receiving = E.receiving_of(state, receiver, exclude=exclude)
     return same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
-        base, views[0], views[1], modifiers, weakness_resistance=weakness_resistance, orders=orders, resistance=resistance, reduction=reduction))
+        base, views[0], views[1], modifiers, receiving=receiving, weakness_resistance=weakness_resistance, orders=orders, resistance=resistance,
+        reduction=reduction))
 
 
 class BenchGuardRequest(Exception):
@@ -656,8 +660,9 @@ def ignored_effects_scope_difference(res: Resolution, fs: FrameState, attacker: 
     plain = max(base, 0)
     for label, exclude in (("A", EXCLUDE_DEFENDER_HELD), ("A'", EXCLUDE_DEFENDER_SIDE)):
         modifiers = with_stadium_coin(res, frame, target, attack_modifiers_of(res, frame, attacker, receiver, target, exclude=exclude))
-        final = _finals_over_reductions(lambda r, v=modifiers: same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
-            base, views[0], views[1], v, weakness_resistance=False, orders=orders, resistance=False, reduction=r)), reduction)
+        receiving = E.Receiving(owner, receiver, exclude)  # v0.102: 除く範囲を問い合わせまで運ぶ（弱点・抵抗力は計算しないので、ここでは力は当てはまらない）
+        final = _finals_over_reductions(lambda r, v=modifiers, g=receiving: same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
+            base, views[0], views[1], v, receiving=g, weakness_resistance=False, orders=orders, resistance=False, reduction=r)), reduction)
         if final != plain:
             return f"読み方 {label} の受けるダメージ {final!r} と、すべての効果を除く読み方の {plain}"
     return None
@@ -865,6 +870,7 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         extra["stopped_after_step_2"] = True
     if calc.weakness_multiplier is not None:
         extra["weakness_multiplier"] = calc.weakness_multiplier  # v0.90: のろいマーカーの「×4」（共通のルールの数のときは書かない。v0.89 までのログの形は変えない）
+    extra.update(E.weakness_resistance_log(calc))  # v0.102: 特殊能力で影響を受けなかった弱点・抵抗力（その力がなければ当てはめていたときだけ）
     if target != OPPONENT_ACTIVE:
         extra.update(target=target, pokemon_id=receiver.pokemon_id, effect=str(frame.attack_key))
     if not defender_effects:
@@ -1073,10 +1079,11 @@ def self_excluding_copies_question(res: Resolution, fs: FrameState, attacker: Po
         outcomes = {}
         for copies in readings:
             modifiers = with_stadium_coin(res, frame, target, attack_modifiers_of(res, frame, attacker, receiver, target, exclude=exclude, copies=copies))
+            receiving = E.receiving_of(state, receiver, exclude=exclude)  # v0.102
 
-            def compute(o, r, m=modifiers):
+            def compute(o, r, m=modifiers, g=receiving):
                 return same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(
-                    state, base, views[0], views[1], m, weakness_resistance=weakness_resistance, orders=o, resistance=resistance, reduction=r))
+                    state, base, views[0], views[1], m, receiving=g, weakness_resistance=weakness_resistance, orders=o, resistance=resistance, reduction=r))
 
             outcomes[E.copies_label(copies)] = _damage_outcome(compute, orders, reduction)
         if len(set(outcomes.values())) > 1:
@@ -1097,9 +1104,10 @@ def speed_star_scope_question(res: Resolution, attack_key, attacker: PokemonInPl
     if tuple(side) == tuple(modifiers):
         return
     finals = set()
-    for variant in (modifiers, side):
-        finals.add(_finals_over_reductions(lambda r, v=variant: same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
-            base, views[0], views[1], v, weakness_resistance=False, orders=orders, resistance=resistance, reduction=r)), reduction))
+    for variant, exclude in ((modifiers, EXCLUDE_DEFENDER_HELD), (side, EXCLUDE_DEFENDER_SIDE)):
+        receiving = E.receiving_of(state, receiver, exclude=exclude)  # v0.102: 除く範囲を問い合わせまで運ぶ
+        finals.add(_finals_over_reductions(lambda r, v=variant, g=receiving: same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
+            base, views[0], views[1], v, receiving=g, weakness_resistance=False, orders=orders, resistance=resistance, reduction=r)), reduction))
     if len(finals) > 1:
         raise res.question("speed_star_scope", f"ポケモン {attacker.pokemon_id} → ポケモン {receiver.pokemon_id}")
 
@@ -1136,8 +1144,10 @@ def trainer_self_bonus_question(res: Resolution, attacker: PokemonInPlay, receiv
         return
     extra = tuple(DamageModifier(step=6, amount=amount, label=state.card_def(record.source_card).name_ja, source=record.source_card) for record, amount in bonuses)
     try:
+        receiving = E.receiving_of(state, receiver)  # v0.102
         alternative = same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
-            base, views[0], views[1], (*modifiers, *extra), weakness_resistance=weakness_resistance, orders=orders, resistance=resistance)).final
+            base, views[0], views[1], (*modifiers, *extra), receiving=receiving, weakness_resistance=weakness_resistance, orders=orders,
+            resistance=resistance)).final
     except (TypeReadingsDiffer, DamageOrderRequired):
         alternative = None
     if alternative != final:
@@ -1200,12 +1210,13 @@ def calming_retaliation_differs(state: GameState, attack_key, attacker: PokemonI
     # v0.48: 色の読み方（VS1）が 2 つあるポケモンは、読み方の組ごとに比べる（どれかの組で当てはめるかどうかで変われば止める。読み方の違いそのものは deal_damage が VS1 で見る）
     readings = [(a, r) for a in definition_views(state, attacker) for r in definition_views(state, receiver)]
     by_reading: list[set] = [set() for _ in readings]
+    receiving = E.receiving_of(state, receiver)  # v0.102
     for snapshot in (frozenset(), every):  # 当てはめる読み方・当てはめない読み方
         modifiers = attack_damage_modifiers(state, attacker, receiver, attack=attack_key, bench=target in BENCH_TARGETS, attack_status=snapshot)
         for outcomes, (attacker_def, receiver_def) in zip(by_reading, readings):
             try:
                 outcomes.add(_finals_over_reductions(lambda r, a=attacker_def, d=receiver_def, m=modifiers: calculate_with_stadium(
-                    state, base, a, d, m, weakness_resistance=weakness_resistance, resistance=resistance, reduction=r), None))
+                    state, base, a, d, m, receiving=receiving, weakness_resistance=weakness_resistance, resistance=resistance, reduction=r), None))
             except DamageOrderRequired:
                 outcomes.add(None)
     return any(len(outcomes) > 1 for outcomes in by_reading)
@@ -1445,8 +1456,9 @@ def power_damage_to_damage_source(res: Resolution, fs: FrameState, deferred: Def
         # v0.17b: 説明に「弱点・抵抗力」に関係なく、がない特殊能力のダメージ（わるいねぞう）に弱点・抵抗力を計算するかは原典で決まらない（Z9）。
         # 計算しない処理で結果が同じなのは、受けるポケモンの弱点・抵抗力が与えるポケモンのタイプでないときだけ（今の対応カードでは起こらない）
         # v0.48: 与えるポケモンの今有効な色（読み方のどれか）と、受けるポケモンの今有効な弱点・抵抗力（``effects.weakness_of``・``resistance_of``）で比べる
+        # v0.102: 弱点・抵抗力を計算する読み方でも、受けるポケモンが影響を受けない特殊能力（［ニュートラルダメージ］など）がはたらく色は比べない（どちらの読み方でも同じ量）
         source = state.find_pokemon(instance.pokemon_id)[1]
-        against = {weakness_of(state, attacker), resistance_of(state, attacker)[0]} - {None}
+        against = {color for reading in E.weakness_resistance_readings(state, fs.frame.player, attacker) for color in reading[:2]} - {None}
         if any(color in against for color in type_readings(state, source)):
             raise res.question("power_damage_weakness_resistance", f"{instance.power_key} → ポケモン {attacker.pokemon_id}")
     if first_void(res, fs.frame.player, attacker) is not None:
@@ -1772,17 +1784,17 @@ def power_damage_both_actives_on_tails(res: Resolution, fs: FrameState, deferred
         # Z9（kyuura の UQ-POWER-DAMAGE-WEAKNESS-RESISTANCE。［ショックボム］も挙げる）: 弱点・抵抗力を計算する読み方と計算しない読み方で、受けるダメージ全体を書く効果
         # （``received_power_damage``）を当てはめたあとの量が違うときだけ止める（このカード自身の側も同じに比べる。量が同じなら進む）
         plain = received_power_damage(state, side, target, holder, amount)[0]  # DB1・MT1 はここで（コインの前に）止まる
-        weakness = weakness_of(state, target)
-        resistance, value = resistance_of(state, target)
-        for color in type_readings(state, holder):
-            computed = amount
-            if weakness is not None and color == weakness:
-                computed *= state.rules.weakness_multiplier
-            if resistance is not None and color == resistance:
-                computed -= value
-            computed = max(computed, 0)
-            if received_power_damage(state, side, target, holder, computed)[0] != plain:
-                raise res.question("power_damage_weakness_resistance", f"{instance.power_key} → ポケモン {target.pokemon_id}")
+        # v0.102: 弱点・抵抗力を計算する読み方でも、影響を受けない特殊能力（［ニュートラルダメージ］など）がはたらくものは当てはめない（``weakness_resistance_readings``）
+        for weakness, resistance, value in E.weakness_resistance_readings(state, side, target):
+            for color in type_readings(state, holder):
+                computed = amount
+                if weakness is not None and color == weakness:
+                    computed *= state.rules.weakness_multiplier
+                if resistance is not None and color == resistance:
+                    computed -= value
+                computed = max(computed, 0)
+                if received_power_damage(state, side, target, holder, computed)[0] != plain:
+                    raise res.question("power_damage_weakness_resistance", f"{instance.power_key} → ポケモン {target.pokemon_id}")
         if first_void(res, side, target) is not None:
             raise res.question("power_damage_prevented", f"{instance.power_key} → ポケモン {target.pokemon_id}")
     flips = flip_coins(state, instance.owner, 1, source="power", effect=str(instance.power_key), card=instance.card, pokemon_id=instance.pokemon_id)

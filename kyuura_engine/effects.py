@@ -99,8 +99,8 @@ from .cards import EnergyType, can_pay_with_units
 from .coins import CoinSide, flip_coins
 from .conditions import CONFUSION, CURED, PARALYSIS, POISON, SLEEP, SWITCH, clear_special_conditions, confuse, put_to_sleep
 from .damage import (
-    HALVE_DOWN, HALVE_UP, MULTIPLY, REDUCE_CHOICE, SET, SET_IF_AT_LEAST, ZERO_IF_AT_LEAST, ZERO_IF_BELOW, DamageModifier, DamageOrderRequired, DamageReductionRequired,
-    calculate_attack_damage,
+    HALVE_DOWN, HALVE_UP, MULTIPLY, REDUCE_CHOICE, SET, SET_IF_AT_LEAST, ZERO_IF_AT_LEAST, ZERO_IF_BELOW, DamageCalculation, DamageModifier, DamageOrderRequired,
+    DamageReductionRequired, calculate_attack_damage, calculate_confusion_damage,
 )
 from .decisions import (
     ATTACH_FROM_DECK, ATTACH_FROM_DISCARD, ATTACH_FROM_HAND, ATTACH_TO_BENCH, BENCH_FROM_DECK, DISCARD_ENERGY, DISCARD_FROM_HAND, DISCARD_OPPONENT_ENERGY, ENTRY_POWER, FORCED_SWITCH,
@@ -681,6 +681,7 @@ def preview_attack_damage(state: GameState, use: AttackUse, target: str, base: i
     if damage_prevention(state, receiver) is not None or attack_barrier(state, receiver) is not None:  # v0.31: 「バリアー」も要素を無効にする
         return None
     resistance = attack_ignores_resistance(state, attacker, receiver) is None  # v0.81: ピントレンズ
+    receiving = receiving_of(state, receiver)  # v0.102: 受ける個体（弱点・抵抗力の影響を受けない特殊能力。実際の処理の ``kernel.compute_damage`` と同じ問い合わせ）
     readings = self_excluding_readings(state, attacker, receiver)
     if len(readings) > 1:
         # v0.97（DF1）: 同じ力が 2 匹以上ではたらきうる。どれがはたらくかの読み方で最終ダメージが変わるなら止める（減らす量は最も大きいダメージで比べる。下と同じ）
@@ -689,7 +690,8 @@ def preview_attack_damage(state: GameState, use: AttackUse, target: str, base: i
             variant = attack_damage_modifiers(state, attacker, receiver, attack=use.key, copies=copies)
             try:
                 finals.add(same_for_type_readings(state, (attacker, receiver), lambda views, v=variant: calculate_with_stadium(state,
-                    base, views[0], views[1], v, resistance=resistance, reduction=0 if any(m.operation == REDUCE_CHOICE for m in v) else None).final))
+                    base, views[0], views[1], v, receiving=receiving, resistance=resistance,
+                    reduction=0 if any(m.operation == REDUCE_CHOICE for m in v) else None).final))
             except (TypeReadingsDiffer, DamageOrderRequired):
                 finals.add(None)
         if len(finals) > 1:
@@ -699,12 +701,12 @@ def preview_attack_damage(state: GameState, use: AttackUse, target: str, base: i
     try:
         try:
             return same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
-                base, views[0], views[1], modifiers, resistance=resistance).final)
+                base, views[0], views[1], modifiers, receiving=receiving, resistance=resistance).final)
         except DamageReductionRequired:
             # v0.66: お上品攻撃（5 段階で好きなだけ小さくしてよい）。この計算（v0.13 の止める関数の比べ）は減らす量の決定を出せないので、減らさない量（最も大きい
             # ダメージ）で求める（docs/optional-trainers-v0.66.md 2.6 節。解決の基盤の処理・先読みは、選べるすべての量を試す）
             return same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
-                base, views[0], views[1], modifiers, reduction=0, resistance=resistance).final)
+                base, views[0], views[1], modifiers, receiving=receiving, reduction=0, resistance=resistance).final)
     except TypeReadingsDiffer as differ:
         raise shift_duration_error(differ.pokemons[0], f"ワザ {use.key} のダメージの計算", state=state) from None
 
@@ -18564,7 +18566,9 @@ class BeamOnKnockOut(PowerEffect):
         if counted is not None:
             return counted.code, counted.message
         if self.energy_count(state, pokemon) * self.per > 0:
-            against = {weakness_of(state, source), resistance_of(state, source)[0]} - {None}
+            # v0.102: 弱点・抵抗力を計算する読み方でも、受けるポケモンが影響を受けない特殊能力のはたらく色は比べない（``weakness_resistance_readings``）
+            owner = state.find_pokemon(source.pokemon_id)[0]
+            against = {color for reading in weakness_resistance_readings(state, owner, source) for color in reading[:2]} - {None}
             if any(color in against for color in type_readings(state, pokemon)):
                 return POWER_DAMAGE_WR_CODE, f"ポケモン {pokemon.pokemon_id} の［ファイナルビーム］→ ポケモン {source.pokemon_id}: {POWER_DAMAGE_WR_REASON}"
         return None
@@ -19278,14 +19282,21 @@ def stadium_damage_options(state: GameState, attacker: CardDefinition, receiver:
     return weakness, resistance, stadium.card
 
 
-def calculate_with_stadium(state: GameState, base: int, attacker: CardDefinition, receiver: CardDefinition, modifiers=(), *,
+def calculate_with_stadium(state: GameState, base: int, attacker: CardDefinition, receiver: CardDefinition, modifiers=(), *, receiving: Receiving,
                            weakness_resistance: bool = True, orders=None, resistance: bool = True, reduction: int | None = None):
     """``damage.calculate_attack_damage`` に、場のスタジアムが変える計算（``stadium_damage_options``）を当てはめたもの（v0.57）。ワザのダメージを計算するところ
-    （実際の処理 ``kernel.deal_damage``・宣言の前の ``preview_attack_damage``・止める問いの比べ）はどれもこれを使う（片方だけに当てはめない）。"""
+    （実際の処理 ``kernel.deal_damage``・宣言の前の ``preview_attack_damage``・止める問いの比べ）はどれもこれを使う（片方だけに当てはめない）。
+
+    v0.102: ``receiving``（受ける個体の文脈。省略できない）で、弱点・抵抗力の影響を受けなくする特殊能力（``weakness_resistance_ignored``）も当てはめる。``receiver`` は
+    その個体の今有効な値の定義（色の読み方の 1 つ）で、力の当てはまるタイプはこの読み方で決める。ワザの説明・スタジアム・ピントレンズですでに計算しない段階はそのまま
+    （力で計算し直さない）。弱点・抵抗力の性質（``receiver.weakness``・``resistance``）は変えない。"""
     weakness, stadium_resistance, _ = stadium_damage_options(state, attacker, receiver)
+    resistance = resistance and stadium_resistance
+    ignored = weakness_resistance_ignored(state, receiving, receiver.pokemon_type) if weakness_resistance else NOT_IGNORED
     modifiers = tuple(modifiers) + stadium_attack_damage_modifiers(state, attacker)
-    return calculate_attack_damage(base, attacker, receiver, state.rules, modifiers, weakness_resistance=weakness_resistance, orders=orders,
-                                   resistance=resistance and stadium_resistance, weakness=weakness, reduction=reduction)
+    calc = calculate_attack_damage(base, attacker, receiver, state.rules, modifiers, weakness_resistance=weakness_resistance, orders=orders,
+                                   resistance=resistance and not ignored.resistance, weakness=weakness and not ignored.weakness, reduction=reduction)
+    return _with_ignored(calc, ignored, attacker.pokemon_type, receiver, weakness=weakness, resistance=resistance)
 
 
 def stadium_attack_damage_modifiers(state: GameState, attacker: CardDefinition) -> tuple[DamageModifier, ...]:
@@ -39173,3 +39184,209 @@ V0_101_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_101_ATTACKS), V0_101_POWERS)
+
+
+# ---------------------------------------------------------------- v0.102（docs/weakness-resistance-powers-v0.102.md）
+# トランセル（ES1-003・QSG-003）の［グリーンシールド］・バリヤード（ES1-021・QSG-030）の［ニュートラルダメージ］と、ダメージの計算で弱点・抵抗力を当てはめるかの共通の問い合わせ。
+# 処理に使う文面は kyuura の印刷の文面
+
+GREEN_SHIELD_TEXT = ("このカードが場にいる限り、自分の「{type}」ポケモンがダメージを受ける時に「弱点」の影響を受けない。"
+                     "このカードが「ねむり・マヒ・こんらん」状態の時、この力は消える。")
+NEUTRAL_DAMAGE_TEXT = "このカードがベンチにいる限り、お互いの対戦ポケモンは、ダメージを受ける時に、「弱点・抵抗力」の影響を受けない。"
+
+
+@dataclass(frozen=True)
+class Receiving:
+    """ダメージを受ける個体の文脈（v0.102。docs 4 章）。弱点・抵抗力を当てはめるかの問い合わせ（``weakness_resistance_ignored``）に、カードの定義ではなく実際の個体を渡す。
+
+    - ``owner``: 受けるポケモンの持ち主（今の場のプレイヤー）。場にいない（おもてにしてトラッシュしたうらのカードなど）なら None（どの力も当てはまらない）
+    - ``pokemon``: 受けるポケモン（場の個体。場所（バトル場・ベンチ）は問い合わせのたびに今の場から読む）
+    - ``exclude``: 除く効果の範囲（``EXCLUDE_DEFENDER_HELD``・``EXCLUDE_DEFENDER_SIDE``。``attack_damage_modifiers`` と同じ書き方）。除く範囲の力は当てはめない。量を変える効果の
+      一覧（``DamageModifier``）には弱点・抵抗力の力が出ないので、範囲はここで運ぶ（一覧から推測しない）
+    """
+
+    owner: int | None
+    pokemon: PokemonInPlay
+    exclude: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.exclude not in (None, EXCLUDE_DEFENDER_HELD, EXCLUDE_DEFENDER_SIDE):
+            raise ValueError(f"除く効果の範囲 {self.exclude!r} は未定義")
+
+
+def receiving_of(state: GameState, pokemon: PokemonInPlay, *, exclude: str | None = None) -> Receiving:
+    """場の個体 ``pokemon`` の、今の場の持ち主での ``Receiving``（v0.102）。場にいなければ持ち主は None。"""
+    found = state.find_pokemon(pokemon.pokemon_id)
+    return Receiving(found[0] if found is not None and found[1] is pokemon else None, pokemon, exclude)
+
+
+@dataclass(frozen=True)
+class IgnoredWeaknessResistance:
+    """弱点・抵抗力の影響を受けなくする、はたらいている力（v0.102）。どちらも (持つポケモンの番号, ``PowerKey`` の文字列) の並び（``continuous_powers`` の順）。空なら影響を受ける。
+    2 つ以上でも、影響を受けないのは 1 回（重ねて何かを加減しない）。"""
+
+    weakness: tuple[tuple[int, str], ...] = ()
+    resistance: tuple[tuple[int, str], ...] = ()
+
+
+NOT_IGNORED = IgnoredWeaknessResistance()
+
+
+class WeaknessResistancePower(ContinuousPower):
+    """ダメージを受ける時に「弱点」「弱点・抵抗力」の影響を受けなくする、常にはたらく特殊能力の基底（v0.102）。はたらいているか（場所・特殊状態・かがくへんかガスなど）は
+    ``continuous_powers`` の共通の確かめで決め、当てはまる受けるポケモンは実装の ``ignores`` で決める。量を変える効果（``DamageModifier``）を作らない（p.321 の 3・4 段階を当てはめるか
+    だけを変える。``calculate_with_stadium``）。"""
+
+    def ignores(self, state: GameState, holder_owner: int, holder: PokemonInPlay, receiving: Receiving, receiver_type: EnergyType | None) -> tuple[bool, bool]:
+        """``holder``（持ち主 ``holder_owner``）のこの力で、``receiving`` の個体（今のタイプの読み方 ``receiver_type``）が (弱点, 抵抗力) の影響を受けないか。"""
+        raise NotImplementedError
+
+
+@dataclass(frozen=True)
+class IgnoreWeaknessForOwnType(WeaknessResistancePower):
+    """このカードが場にいる限り、自分の「``pokemon_type``」ポケモンがダメージを受ける時に「弱点」の影響を受けない。このカードが「ねむり・マヒ・こんらん」状態の時、この力は消える
+    （v0.102。トランセル（ES1-003・QSG-003）の［グリーンシールド］。kyuura の印刷の文面。docs 3 章）。
+
+    - 常にはたらく（宣言しない）。このカードがバトル場・ベンチのどちらにいてもはたらく。このカード（持つポケモン）がねむり・マヒ・こんらんなら消える（``blocked_by_status``。受ける
+      ポケモンの特殊状態ではない）。かがくへんかガスなどで消える（共通の確かめ）
+    - 当てはまるのは、このカードの持ち主の場の、今のタイプ（色の読み方ごと）が「``pokemon_type``」のポケモン（このカード自身も）。相手のポケモン・自分のほかのタイプのポケモンには
+      当てはまらない。影響を受けないのは弱点（p.321 の 3 段階）だけで、抵抗力は当てはめる
+    """
+
+    pokemon_type: EnergyType = EnergyType.GRASS
+    implementation_id = "ignore_weakness_for_own_type"
+    what = "自分のタイプのポケモンがダメージを受ける時に弱点の影響を受けない特殊能力"
+
+    def texts(self) -> tuple[str, ...]:
+        return (GREEN_SHIELD_TEXT.format(type=self.pokemon_type.ja),)
+
+    def ignores(self, state: GameState, holder_owner: int, holder: PokemonInPlay, receiving: Receiving, receiver_type: EnergyType | None) -> tuple[bool, bool]:
+        return receiving.owner == holder_owner and receiver_type is self.pokemon_type, False
+
+
+@dataclass(frozen=True)
+class IgnoreWeaknessResistanceForActives(WeaknessResistancePower):
+    """このカードがベンチにいる限り、お互いの対戦ポケモンは、ダメージを受ける時に、「弱点・抵抗力」の影響を受けない（v0.102。バリヤード（ES1-021・QSG-030）の
+    ［ニュートラルダメージ］。kyuura の印刷の文面。docs 3 章）。
+
+    - 常にはたらく（宣言しない）。このカードがベンチにいるときだけ（``CONTINUOUS_BENCH``。バトル場に出たらこのカードの力は当てはまらない）。日本語の文面に特殊状態の条件はない
+      （``blocked_by_status`` は偽）。かがくへんかガスなどで消える（共通の確かめ）
+    - 当てはまるのは、お互いのプレイヤーのバトル場のポケモン（ダメージを受ける時の今の場所）。控えのポケモンには当てはまらない。弱点（3 段階）・抵抗力（4 段階）の両方
+    """
+
+    implementation_id = "ignore_weakness_resistance_for_actives"
+    location = CONTINUOUS_BENCH
+    blocked_by_status = False
+    what = "お互いの対戦ポケモンがダメージを受ける時に弱点・抵抗力の影響を受けない特殊能力"
+
+    def texts(self) -> tuple[str, ...]:
+        return (NEUTRAL_DAMAGE_TEXT,)
+
+    def ignores(self, state: GameState, holder_owner: int, holder: PokemonInPlay, receiving: Receiving, receiver_type: EnergyType | None) -> tuple[bool, bool]:
+        active = receiving.owner is not None and state.players[receiving.owner].active is receiving.pokemon
+        return active, active
+
+
+def weakness_resistance_ignored(state: GameState, receiving: Receiving, receiver_type: EnergyType | None) -> IgnoredWeaknessResistance:
+    """``receiving`` の個体が、今のタイプの読み方 ``receiver_type`` でダメージを受ける時に、影響を受けない弱点・抵抗力と、そうする力（v0.102。docs 4 章）。状態を変えず、乱数を
+    使わない。ダメージの計算（``calculate_with_stadium``・``confusion_damage_calculation``）と、ワザでないダメージで弱点・抵抗力を計算するかの比べ（Z9。``weakness_resistance_readings``）が
+    同じ答えを使う。
+
+    - はたらいている力は ``continuous_powers``（今の場・いちばん上のカード・場所・特殊状態・かがくへんかガス）。きぜつの処理の前の HP 以上のポケモンも場にいるので、その力もはたらく
+    - 除く範囲（``Receiving.exclude``）: ``EXCLUDE_DEFENDER_HELD`` なら受けるポケモン自身の力を、``EXCLUDE_DEFENDER_SIDE`` ならそのうえ受けるポケモンの持ち主の場の力を当てはめない
+      （ワザを使う側の場の力は当てはめる）
+    - 受けるポケモンが場にいなければ、どの力も当てはまらない
+    """
+    if receiving.owner is None:
+        return NOT_IGNORED
+    found = state.find_pokemon(receiving.pokemon.pokemon_id)
+    if found is None:
+        return NOT_IGNORED
+    if found[0] != receiving.owner or found[1] is not receiving.pokemon:
+        raise RuntimeError(f"受けるポケモン {receiving.pokemon.pokemon_id} の持ち主 {receiving.owner} が、今の場の持ち主 {found[0]} と違う（エンジンの不具合）")
+    weakness: list[tuple[int, str]] = []
+    resistance: list[tuple[int, str]] = []
+    for owner, holder, key, effect in continuous_powers(state, WeaknessResistancePower):
+        if receiving.exclude is not None and holder is receiving.pokemon:
+            continue
+        if receiving.exclude == EXCLUDE_DEFENDER_SIDE and owner == receiving.owner:
+            continue
+        ignores_weakness, ignores_resistance = effect.ignores(state, owner, holder, receiving, receiver_type)
+        if ignores_weakness:
+            weakness.append((holder.pokemon_id, str(key)))
+        if ignores_resistance:
+            resistance.append((holder.pokemon_id, str(key)))
+    if not weakness and not resistance:
+        return NOT_IGNORED
+    return IgnoredWeaknessResistance(tuple(weakness), tuple(resistance))
+
+
+def _with_ignored(calc: DamageCalculation, ignored: IgnoredWeaknessResistance, attacker_type: EnergyType | None, receiver: CardDefinition, *,
+                  weakness: bool, resistance: bool) -> DamageCalculation:
+    """計算の結果 ``calc`` に、力がなければ当てはめていた弱点・抵抗力の、影響を受けなくした力を書いたもの（v0.102。ログ・監査が読む）。タイプが合わない・ほかの理由で計算しない
+    （``weakness``・``resistance`` が偽）・2 段階で終えたときは書かない。"""
+    if calc.stopped_after_step_2 or ignored is NOT_IGNORED:
+        return calc
+    weak = ignored.weakness if weakness and receiver.weakness is not None and attacker_type == receiver.weakness else ()
+    resist = ignored.resistance if resistance and receiver.resistance is not None and attacker_type == receiver.resistance else ()
+    if not weak and not resist:
+        return calc
+    return _dataclass_replace(calc, weakness_ignored_by=weak, resistance_ignored_by=resist)
+
+
+def confusion_damage_calculation(state: GameState, owner: int, pokemon: PokemonInPlay, view: CardDefinition, base: int) -> DamageCalculation:
+    """こんらんしたワザで自分が受けるダメージ（v0.102。``damage.calculate_confusion_damage`` に、弱点・抵抗力の影響を受けない力（``weakness_resistance_ignored``）を当てはめたもの）。
+    ``view`` は ``pokemon`` の今有効な値の定義（色の読み方の 1 つ）。こんらんのダメージは弱点・抵抗力の影響を受ける（p.322）ダメージで、力の説明の「ダメージを受ける時」はワザのダメージに
+    限らないので当てはめる（docs 4.3 節）。"""
+    ignored = weakness_resistance_ignored(state, Receiving(owner, pokemon), view.pokemon_type)
+    calc = calculate_confusion_damage(view, state.rules, base, weakness=not ignored.weakness, resistance=not ignored.resistance)
+    return _with_ignored(calc, ignored, view.pokemon_type, view, weakness=True, resistance=True)
+
+
+def weakness_resistance_readings(state: GameState, owner: int, pokemon: PokemonInPlay) -> tuple[tuple[EnergyType | None, EnergyType | None, int], ...]:
+    """ワザでないダメージ（特殊能力のダメージ）で弱点・抵抗力を計算するかの比べ（Z9）に使う、受けるポケモンの今有効な (弱点, 抵抗力, 抵抗力の数)（色の読み方ごと。同じものは 1 つ）
+    （v0.102）。弱点・抵抗力を計算する読み方でも、力（``weakness_resistance_ignored``）で影響を受けないものは None にする（受けるポケモンの性質は変えない）。"""
+    found = []
+    receiving = Receiving(owner, pokemon)
+    for view in definition_views(state, pokemon):
+        ignored = weakness_resistance_ignored(state, receiving, view.pokemon_type)
+        reading = (None if ignored.weakness else view.weakness, None if ignored.resistance else view.resistance, view.resistance_value or 0)
+        if reading not in found:
+            found.append(reading)
+    return tuple(found)
+
+
+def weakness_resistance_log(calc: DamageCalculation) -> dict[str, Any]:
+    """ログ ``damage``・``confusion_damage`` に加える、力で影響を受けなかった弱点・抵抗力（v0.102。なければ空。v0.101 までのログの形は変えない）。"""
+    extra: dict[str, Any] = {}
+    if calc.weakness_ignored_by:
+        extra["weakness_ignored_by_powers"] = calc.weakness_ignored_by
+    if calc.resistance_ignored_by:
+        extra["resistance_ignored_by_powers"] = calc.resistance_ignored_by
+    return extra
+
+
+_GREEN_SHIELD = IgnoreWeaknessForOwnType()
+_NEUTRAL_DAMAGE = IgnoreWeaknessResistanceForActives()
+FUSHIGINAKONA_TEXT = "コインを投げて「おもて」なら、相手を「こんらん」状態にする。"
+JUGGLING_TEXT = "コインを4枚投げ、「おもて」の数×10のダメージ。"
+
+# v0.102 のワザの登録（id ごとに書き、同じデータの 2 枚は下の SAME_DATA_CARDS_V0_102 で同じ登録の値にまとめる）
+V0_102_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    **{AttackKey(card, 0): _printed(ConfuseOnHeads(), "ふしぎなこな", FUSHIGINAKONA_TEXT) for card in ("ES1-003", "QSG-003")},  # トランセル（草・20）
+    **{AttackKey(card, 0): _printed(CoinFlipDamage(coins=4, damage_per_heads=10), "ジャグリング", JUGGLING_TEXT) for card in ("ES1-021", "QSG-030")},  # バリヤード（超・10×）
+})
+# v0.102 の特殊能力の登録
+V0_102_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
+    **{PowerKey(card, 0): PowerEntry(_GREEN_SHIELD, "グリーンシールド", _GREEN_SHIELD.texts()[0], _GREEN_SHIELD.texts()[0], _KYUURA_PRINTED_TEXT)
+       for card in ("ES1-003", "QSG-003")},
+    **{PowerKey(card, 0): PowerEntry(_NEUTRAL_DAMAGE, "ニュートラルダメージ", NEUTRAL_DAMAGE_TEXT, NEUTRAL_DAMAGE_TEXT, _KYUURA_PRINTED_TEXT)
+       for card in ("ES1-021", "QSG-030")},
+})
+# kyuura の同じカードの組（SC-ES1-003・SC-ES1-021）で、日本語の名前・pokemon 欄の対戦に使う値が同じ 2 組（新しい id → 同じデータのカード）。元データの id は消さない
+SAME_DATA_CARDS_V0_102: Mapping[str, str] = MappingProxyType({
+    "QSG-003": "ES1-003",  # トランセル（拡張シート第1弾青版・クイックスターターギフト）
+    "QSG-030": "ES1-021",  # バリヤード（同上）
+})
+
+DEFAULT_EFFECTS = _with_shared_entries(_with_powers(_with_attacks(DEFAULT_EFFECTS, V0_102_ATTACKS), V0_102_POWERS), SAME_DATA_CARDS_V0_102)

@@ -27953,6 +27953,66 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.101 で加えた（docs/counter-keep-energy-protection-v0.101.md）。kyuura data/engine_targets.json（73a1690）の対象。めざめるパワー=DamageOnly（説明文のないワザ。超・10。文面・出典を持たない）。ルール文「「アンノーン」はデッキに4枚までしか入れることができません。」は、写しのこのカードの rules_text を根拠に、文字の違うアンノーンを合わせた枚数の上限として当てはめた（v0.96 の deck.deck_problems・CardDefinition.name_group。共通の規定の再利用で、kyuura の CR-UNOWN-DECK-LIMIT-ALL-LETTERS はこのカードを挙げていない。このカードを直接確かめた記録ではない）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id で確かめた。pcg-search の id はない）。kyuura data/rule_history.json の card_lists.poke_body（MIX-POWER-ERRATA。2002-05-24 の Q&A の「ポケボディー」の一覧）と docs/rules/errata-history.md の一覧にこのカードがあるが、後年の分類で、2000.02.14 版の根拠にしていない（エラッタの errata の cards ではない）。kyuura の日本語の文面は wiki.pokemonwiki.com の転記（ja_text_source）。［KEEP］=VoidOpponentEnergyDiscardOnGroup（常にはたらく。特殊状態の条件は日本語の文面にないので持ち込まない。自分の場の今の姿が「アンノーン」のポケモンについているエネルギーカードを、持ち主の相手が実際に使ったワザ・特殊能力・トレーナーの効果でトラッシュする効果を、トラッシュする前になくす（共通の問い合わせ effects.energy_discard_void）。トレーナーで選ばせるときは KP1、なくなる効果だけを決めるコインは KP2、つけかえで受けずにトラッシュに置くときは KP3 で止める）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面（「(Any other effects still happen.)」など）・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES1-003": {
+      "basis": "kyuura_data",
+      "name_ja": "トランセル",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-25",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text",
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.102 で加えた（docs/weakness-resistance-powers-v0.102.md）。ES1（expansion_sheet。発売 1998-03-23）。QSG-003 と同じデータ（SAME_DATA_CARDS_V0_102。登録の値は同じ・記録は id ごと）。［グリーンシールド］=IgnoreWeaknessForOwnType（常にはたらく。場（バトル場・ベンチ）のどこでも。このカードがねむり・マヒ・こんらんなら消える。持ち主の場の今のタイプが「草」のポケモンがダメージを受ける時、p.321 の 3 段階（弱点）を当てはめない。抵抗力は当てはめる。共通の問い合わせ effects.weakness_resistance_ignored）。ふしぎなこな=ConfuseOnHeads（草草・20。p.67 のロコンの「あやしいひかり」と同じ型。印刷の文面がその最新の説明と同じ）。キャタピーから進化（既存の進化の経路。商品をまたぐ）。kyuura data/engine_targets.json（73a1690）の対象（candidate）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stex1003・同じカードの組 SC-ES1-003 で確かめた）。kyuura data/sidecar/card_checks.json の CC-PMCG1-003-P18 は第1弾のトランセル（PMCG1-003）の照合で、グリーンシールドのトランセルは別のカードと書いている（このカードに当てはめない）。kyuura data/rule_history.json の card_lists.poke_body（MIX-POWER-ERRATA。2002 年の「ポケボディー」の一覧。外部 id 1stex1003・1stex1021）と docs/rules/errata-history.md の一覧にこの特殊能力があるが、後年の分類で、2000.02.14 版の根拠・QSG の照合にしていない（エラッタの errata の cards ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じ所との一致は独立した照合にならない。data_gaps（pokemon.dex・jp_print.level）はほかのカード・名前から補っていない（対戦に使う値はある）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない。"
+    },
+    "QSG-003": {
+      "basis": "kyuura_data",
+      "name_ja": "トランセル",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-25",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text",
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.102 で加えた（docs/weakness-resistance-powers-v0.102.md）。QSG（quick_starter_gift。発売 1998-12-04）。ES1-003 と同じデータ（SAME_DATA_CARDS_V0_102。登録の値は同じ・記録は id ごと）。［グリーンシールド］=IgnoreWeaknessForOwnType・ふしぎなこな=ConfuseOnHeads（ES1-003 と同じ）。kyuura data/engine_targets.json（73a1690）の対象（candidate）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stqsg003・同じカードの組 SC-ES1-003 で確かめた）。kyuura data/sidecar/card_checks.json の CC-PMCG1-003-P18 は第1弾のトランセル（PMCG1-003）の照合で、グリーンシールドのトランセルは別のカードと書いている（このカードに当てはめない）。kyuura data/rule_history.json の card_lists.poke_body（MIX-POWER-ERRATA。2002 年の「ポケボディー」の一覧。外部 id 1stex1003・1stex1021）と docs/rules/errata-history.md の一覧にこの特殊能力があるが、後年の分類で、2000.02.14 版の根拠・QSG の照合にしていない（エラッタの errata の cards ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じ所との一致は独立した照合にならない。data_gaps（pokemon.dex・jp_print.level）はほかのカード・名前から補っていない（対戦に使う値はある）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない。"
+    },
+    "ES1-021": {
+      "basis": "kyuura_data",
+      "name_ja": "バリヤード",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-25",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text",
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.102 で加えた（docs/weakness-resistance-powers-v0.102.md）。ES1（expansion_sheet。発売 1998-03-23）。QSG-030 と同じデータ（SAME_DATA_CARDS_V0_102。登録の値は同じ・記録は id ごと）。［ニュートラルダメージ］=IgnoreWeaknessResistanceForActives（常にはたらく。このカードがベンチにいるときだけ。日本語の文面に特殊状態の条件はないので持ち込まない。お互いのバトル場のポケモンがダメージを受ける時、p.321 の 3・4 段階（弱点・抵抗力）を当てはめない。控えのポケモンには当てはまらない。共通の問い合わせ effects.weakness_resistance_ignored）。ジャグリング=CoinFlipDamage(4, 10)（超無・10×。v0.2d の「みだれづき」と同じ型。コインの枚数・「おもて」1 枚あたりのダメージを印刷の文面と照らした）。kyuura data/engine_targets.json（73a1690）の対象（candidate）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stex1021・同じカードの組 SC-ES1-021 で確かめた）。kyuura data/sidecar/card_checks.json の CC-PMCG1-003-P18 は第1弾のトランセル（PMCG1-003）の照合で、グリーンシールドのトランセルは別のカードと書いている（このカードに当てはめない）。kyuura data/rule_history.json の card_lists.poke_body（MIX-POWER-ERRATA。2002 年の「ポケボディー」の一覧。外部 id 1stex1003・1stex1021）と docs/rules/errata-history.md の一覧にこの特殊能力があるが、後年の分類で、2000.02.14 版の根拠・QSG の照合にしていない（エラッタの errata の cards ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じ所との一致は独立した照合にならない。data_gaps（pokemon.dex・jp_print.level）はほかのカード・名前から補っていない（対戦に使う値はある）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない。"
+    },
+    "QSG-030": {
+      "basis": "kyuura_data",
+      "name_ja": "バリヤード",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-25",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text",
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.102 で加えた（docs/weakness-resistance-powers-v0.102.md）。QSG（quick_starter_gift。発売 1998-12-04）。ES1-021 と同じデータ（SAME_DATA_CARDS_V0_102。登録の値は同じ・記録は id ごと）。［ニュートラルダメージ］=IgnoreWeaknessResistanceForActives・ジャグリング=CoinFlipDamage(4, 10)（ES1-021 と同じ）。kyuura data/engine_targets.json（73a1690）の対象（candidate）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stqsg030・同じカードの組 SC-ES1-021 で確かめた）。kyuura data/sidecar/card_checks.json の CC-PMCG1-003-P18 は第1弾のトランセル（PMCG1-003）の照合で、グリーンシールドのトランセルは別のカードと書いている（このカードに当てはめない）。kyuura data/rule_history.json の card_lists.poke_body（MIX-POWER-ERRATA。2002 年の「ポケボディー」の一覧。外部 id 1stex1003・1stex1021）と docs/rules/errata-history.md の一覧にこの特殊能力があるが、後年の分類で、2000.02.14 版の根拠・QSG の照合にしていない（エラッタの errata の cards ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じ所との一致は独立した照合にならない。data_gaps（pokemon.dex・jp_print.level）はほかのカード・名前から補っていない（対戦に使う値はある）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない。"
     }
   }
 }

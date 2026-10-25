@@ -158,7 +158,10 @@ SCRAM = PowerKey("PMCG5-051", 0)
 FLEE = PowerKey("PMCG5-033", 0)  # v0.65: カスミのドククラゲの［にげこむ］
 BENCH_GUARD = PowerKey("PMCG5-055", 0)  # v0.65: タケシのサイドンの［ベンチガード］
 ALL_POWERS = (# v0.87（docs/movement-damage-reactions-v0.87.md）: ［どくのたいえき］・［とおせんぼ］・［ぶんれつ］・［オーロラヴェール］・［マグネット］・［ショックボム］
-              PowerKey("ES1-005", 0), PowerKey("ES1-034", 0), PowerKey("ES2-003", 0), PowerKey("ES2-012", 0), PowerKey("ES2-014", 0), PowerKey("GD3-009", 0),
+              PowerKey("ES1-003", 0),  # v0.102（docs/weakness-resistance-powers-v0.102.md）: ［グリーンシールド］
+              PowerKey("ES1-005", 0),
+              PowerKey("ES1-021", 0),  # v0.102: ［ニュートラルダメージ］
+              PowerKey("ES1-034", 0), PowerKey("ES2-003", 0), PowerKey("ES2-012", 0), PowerKey("ES2-014", 0), PowerKey("GD3-009", 0),
               PowerKey("GD4-001", 0),  # v0.88（docs/type-energy-colors-v0.88.md）: こうごうせい
               # v0.85（docs/entry-powers-energy-lifecycle-v0.85.md）: ［ハーブのかおり］（NIP1X-001）・［どしゃぶり］（NIP2X-001）・［ハーブのかおり］（PF1-003）・
               # ［ファイヤーブースト］・［どしゃぶり］（PF1-009）・［ファイヤーレイズ］（並びはカード id の順）
@@ -177,7 +180,10 @@ ALL_POWERS = (# v0.87（docs/movement-damage-reactions-v0.87.md）: ［どくの
               PowerKey("PR1-056", 0), PowerKey("PR1-058", 0), PowerKey("PRN-024", 0),
               PowerKey("PRN-034", 0),  # v0.97: ［JOIN］
               PowerKey("PRN-035", 0),  # v0.96: ［REASSURE］
-              PowerKey("QSG-023", 0), PowerKey("QSG-046", 0), PowerKey("QSG-057", 0),  # v0.87: ［マグネット］・［とおせんぼ］・［オーロラヴェール］（同じデータの組）
+              PowerKey("QSG-003", 0),  # v0.102: ［グリーンシールド］（ES1-003 と同じデータ）
+              PowerKey("QSG-023", 0),
+              PowerKey("QSG-030", 0),  # v0.102: ［ニュートラルダメージ］（ES1-021 と同じデータ）
+              PowerKey("QSG-046", 0), PowerKey("QSG-057", 0),  # v0.87: ［マグネット］（QSG-023）・［とおせんぼ］・［オーロラヴェール］（同じデータの組）
               # v0.85: ［おいしげる］・［ファイヤーリチャージ］・［あばれんぼう］
               PowerKey("neo1-014", 0), PowerKey("neo1-021", 0), PowerKey("neo1-033", 0),
               PowerKey("neo1-040", 0),  # v0.88: ［すいりょくはつでん］
@@ -318,7 +324,7 @@ class PowerRegistryTest(unittest.TestCase):
         # v0.69 は 68（拡張パック以外の商品の同じカードの新しい id 10。tests/helpers.py の V0_69_POWER_CARDS）
         # v0.71 は 74（拡張パック以外の商品の再録のカード 6。tests/helpers.py の V0_71_POWER_CARDS）
         self.assertEqual(tuple(k.card_id for k in DEFAULT_EFFECTS.power_keys() if k not in ALL_POWERS), tuple(sorted(V0_69_POWER_CARDS + V0_71_POWER_CARDS)))
-        self.assertIn("140 powers", repr(DEFAULT_EFFECTS))  # v0.101 で 1 を加えた  # v0.99 で 2 を加えた  # v0.98 で 4 を加えた  # v0.97 で 5 を加えた  # v0.96 で 7 を加えた  # v0.95 で 2 を加えた  # v0.88 で 5 を加えた  # v0.87 で 14 を加えた  # v0.86 で 12 を加えた
+        self.assertIn("144 powers", repr(DEFAULT_EFFECTS))  # v0.102 で 4 を加えた  # v0.101 で 1 を加えた  # v0.99 で 2 を加えた  # v0.98 で 4 を加えた  # v0.97 で 5 を加えた  # v0.96 で 7 を加えた  # v0.95 で 2 を加えた  # v0.88 で 5 を加えた  # v0.87 で 14 を加えた  # v0.86 で 12 を加えた
 
     def test_power_is_not_an_attack(self):
         """ポケモンパワーはワザ（AttackEffect）の一種ではない。識別子もワザ（AttackKey）とは別で、同じカードの同じ位置のワザ

@@ -5122,6 +5122,7 @@ def _damage_reduction_decision_problems(state: GameState, d, player: int, attack
     from .damage import DamageReductionRequired
     from .effects import (
         OPPONENT_ACTIVE,
+        Receiving,
         attack_damage_modifiers,
         attack_ignores_resistance,
         calculate_with_stadium,
@@ -5151,7 +5152,7 @@ def _damage_reduction_decision_problems(state: GameState, d, player: int, attack
         collected = (*collected, stadium_coin_modifier(state, coin[0]))
     try:
         calculate_with_stadium(state, base, definition_views(state, attacker)[0], definition_views(state, receiver)[0], collected,
-                               weakness_resistance=context.get("weakness_resistance", True), orders=orders,
+                               receiving=Receiving(1 - player, receiver), weakness_resistance=context.get("weakness_resistance", True), orders=orders,
                                resistance=context.get("resistance", True) and attack_ignores_resistance(state, attacker, receiver) is None)
     except DamageReductionRequired as need:
         if tuple(d.options) != need.choices or context.get("value") != need.value:
@@ -5351,7 +5352,7 @@ def _damage_order_decision_problems(state: GameState, d, player: int, attacker: 
     決めるプレイヤー（2・5・6 段階はワザを使うプレイヤー、7・8 段階は受けるポケモンの持ち主。p.321）・選べるもの（並べかえの位置）・選ぶ数を確かめる。"""
     from .damage import DAMAGE_STEP_CHOOSER, DamageOrderRequired, step_orders
     from .effects import calculate_with_stadium
-    from .effects import OPPONENT_ACTIVE, SELF, attack_damage_modifiers, attack_ignores_resistance
+    from .effects import OPPONENT_ACTIVE, SELF, Receiving, attack_damage_modifiers, attack_ignores_resistance
 
     context = dict(d.context)
     step, target, base = context.get("step"), context.get("target"), context.get("base")
@@ -5382,7 +5383,7 @@ def _damage_order_decision_problems(state: GameState, d, player: int, attacker: 
         return [f"順番の決定の {step} 段階の変更効果 {modifiers!r} が、今の場で集めた効果と違う"]
     try:
         calculate_with_stadium(state, base, definition_views(state, attacker)[0], definition_views(state, receiver)[0], collected,
-                                weakness_resistance=context.get("weakness_resistance", True), orders=orders,
+                                receiving=Receiving(owner, receiver), weakness_resistance=context.get("weakness_resistance", True), orders=orders,
                                 resistance=context.get("resistance", True) and attack_ignores_resistance(state, attacker, receiver) is None)
     except DamageOrderRequired as need:
         if need.step == step:

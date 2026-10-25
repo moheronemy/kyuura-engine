@@ -1955,6 +1955,26 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.102: トランセル・バリヤードの 4 枚
+
+[weakness-resistance-powers-v0.102.md](weakness-resistance-powers-v0.102.md)。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534` のまま（今回の追加を理由に上げていない）。写しの組 `pool_v0_102`（4 枚）を加え、写しの作り直しの道具で作った
+  （手で直していない）。v0.101 までの 1,185 枚の値・移行の記録は変わっていない。4 枚とも `data_gaps` は `pokemon.dex`・`jp_print.level`（ほかのカード・名前から補っていない）。
+- 4 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-25・外部照合なし。記録 1,098 → 1,102）。研究の基準に 4 枚を指す LD-・CC-・CR-・UQ-・エラッタはなく
+  （カードの id・pcg-search の id・同じカードの組・特殊能力の名前で探した）、`kyuura_records` は空。処理に使う文面はどれも印刷の文面（研究の対応表の `adopted_printed_text` に 8 を加えた。
+  1,120 → 1,128）。ES1-003/QSG-003・ES1-021/QSG-030 は kyuura の同じカードの組（SC-ES1-003・SC-ES1-021）で、日本語の名前・pokemon 欄の対戦の値が同じ（id ごとに記録し、登録の値は同じ）。
+- `CC-PMCG1-003-P18`（第1弾のトランセルの照合）は、グリーンシールドのトランセルを別のカードと書いている。この照合・LD を、同じ名前という理由で 4 枚に当てはめていない。
+- kyuura data/rule_history.json の `card_lists.poke_body`（2002 年の「ポケボディー」の一覧。外部 id `1stex1003`・`1stex1021`）と docs/rules/errata-history.md の一覧に 2 つの特殊能力が
+  あるが、後年の分類で、2000.02.14 版の根拠・QSG の独立した照合にしていない（エラッタの `errata` の `cards` ではない）。
+- kyuura data/Silver_Bible_structured.md（研究の記録ではない）の［グリーンシールド］の書き方が印刷の文面と違う（語順・「すでに…だったなら、はたらかない」）。エンジンは根拠にしていない
+  （読み直しではない）。処理（ダメージを受ける時点の発生源の特殊状態）とは矛盾しない。
+- 日本語の文面の転記元は 4 枚とも pcg-search.com。同じ所との一致を独立した照合に数えず、新しく画像を見たことにしていない。外部照合・カードの画像の照合・公式の書籍の新しい照合はしていない。
+- 弱点・抵抗力の計算の段階・こんらんのダメージ・JS1・Z9 の扱いは、p.321・p.322・v0.57・v0.37・v0.17b の既存の根拠と適用範囲の再利用で、4 枚の独立した原典照合ではない。新しい停止コードは
+  ない（停止コード 234・未解決の裁定 235 のまま）。
+- 報告事項（kyuura の作業）: engine_targets.json の 4 枚の `engine_status` を v0.102 の登録で写すと `registered` になる。Silver_Bible_structured.md の［グリーンシールド］の書き方を記録に
+  するかは kyuura の判断。
+
 ## v0.101: ソーナンス・アンノーンK の 2 枚
 
 [counter-keep-energy-protection-v0.101.md](counter-keep-energy-protection-v0.101.md)。
