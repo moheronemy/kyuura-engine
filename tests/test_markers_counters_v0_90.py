@@ -161,7 +161,7 @@ class MarkerStateTest(unittest.TestCase):
         audited(self, state)  # のろいマーカー 2 つは不正な状態ではない（「2つ以上のっていても、効果は同じ」）
         chansey = state.players[0].active
         self.assertEqual((chansey.damage, chansey.persistent_effects, chansey.conditions.names(), chansey.type_shift), (0, (), (), None))
-        self.assertEqual(max(FORMAT_VERSIONS), 24)
+        self.assertIn(24, FORMAT_VERSIONS)  # v0.99: 今の最新の形式（25）は tests/test_catalog_contract.py。マーカーは形式 24 から
         with self.assertRaises(ValueError):
             state_to_dict(state, format_version=23)
         written = state_to_dict(state, format_version=24)["players"][0]["active"]["markers"]

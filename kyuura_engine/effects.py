@@ -6095,7 +6095,7 @@ def attack_damage_modifiers(
         for holder_owner, holder, key, effect in with_copies(continuous_powers(state, attack_status=attack_status), copies):
             if holder is defender or (exclude == EXCLUDE_DEFENDER_SIDE and holder_owner == defender_owner):
                 continue
-            modifiers.extend(effect.attack_damage_modifiers(state, holder, _power_label(state, holder, key), attacker, defender))
+            modifiers.extend(effect.attack_damage_modifiers(state, holder, _power_label(state, holder, key), attacker, defender, attack=attack))
         return tuple(modifiers)
     if attack is not None:
         # v0.31: ワザを受けるポケモンの持っている「ダメージを変更する効果」（p.321 の 8 段階。ピクシーの「ちいさくなる」。``DamageReduction``）。
@@ -6131,7 +6131,7 @@ def attack_damage_modifiers(
         for bonus in received_attack_damage_bonuses(state, defender):
             modifiers.append(DamageModifier(step=8, amount=bonus.amount, label=_persistent_effect_name(state, bonus), source=bonus.source_card))
         # v0.46: 常にはたらく特殊能力（2・6・8 段階）。こんらんの 20（``attack`` を渡さない呼び出し）には使わない（``confusion_power_modifiers`` で別に聞く）
-        modifiers.extend(continuous_attack_damage_modifiers(state, attacker, defender, attack_status=attack_status, copies=copies))
+        modifiers.extend(continuous_attack_damage_modifiers(state, attacker, defender, attack=attack, attack_status=attack_status, copies=copies))
     return tuple(modifiers)
 
 
@@ -7487,6 +7487,9 @@ class PowerEffect:
     # v0.42: 説明が、処理の結果としてポケモンを「きぜつ」させうるか（ゲンガーの［のろい］だけ。説明に「きぜつ」しない範囲の条件がない）。偽の特殊能力の
     # 処理のあとに HP 以上のポケモンがいれば、きぜつの処理をせず不変条件で止める（``resolution.after_power``）
     may_knock_out: ClassVar[bool] = False
+    # v0.99（docs/unown-perform-help-history-v0.99.md 3 章）: 前の番のこと（場のポケモンのワザの履歴）を読む特殊能力（アンノーンP の［PERFORM］）。対戦のカードにこの特殊能力が
+    # あるときも、エンジンが履歴を記録する（``history.history_needed``。ワザの ``AttackEffect.reads_history`` と同じ）
+    reads_history: ClassVar[bool] = False
 
     def check(self, power: Power) -> list[str]:
         return []
@@ -12234,8 +12237,12 @@ class ContinuousPower(PowerEffect):
         return not _asleep_paralyzed_or_confused(pokemon)
 
     def attack_damage_modifiers(self, state: GameState, holder: PokemonInPlay, label: str, attacker: PokemonInPlay,
-                                defender: PokemonInPlay) -> tuple[DamageModifier, ...]:
-        """``attacker`` が ``defender`` にワザのダメージを与えるときの、この特殊能力（``holder`` が持つ）の変更効果（p.321 の段階）。"""
+                                defender: PokemonInPlay, *, attack: AttackKey | None) -> tuple[DamageModifier, ...]:
+        """``attacker`` が ``defender`` にワザのダメージを与えるときの、この特殊能力（``holder`` が持つ）の変更効果（p.321 の段階）。
+
+        v0.99（docs/unown-perform-help-history-v0.99.md 4 章）: ``attack`` は処理しているワザ（``AttackKey``。印刷したカードの id と位置。``attack_damage_modifiers`` の ``attack`` と同じ）。
+        名前で限られる特殊能力（［PERFORM］の「めざめるパワー」）が使う。ワザのダメージでない、こんらんの 20 の問い合わせ（``confusion_power_modifiers``）だけが None を渡す
+        （呼ぶ側はどれも、渡すか None かを明示する。省略できない）。"""
         return ()
 
     def received_damage_modifier(self, state: GameState, holder: PokemonInPlay, label: str, source: PokemonInPlay) -> DamageModifier | None:
@@ -12303,7 +12310,8 @@ def self_excluding_readings(state: GameState, attacker: PokemonInPlay, defender:
     found = continuous_powers(state, attack_status=attack_status, ignore_status=ignore_status)
     choices = []
     for key, members in self_excluding_groups(found).items():
-        if len(members) < 2 or not any(effect.attack_damage_modifiers(state, holder, _power_label(state, holder, power_key), attacker, defender)
+        # 同じ力（［DARK df］・［NORMAL df］）の当たりうるかはワザによらない（v0.99 の ``attack`` は名前で限られる力だけが読む）
+        if len(members) < 2 or not any(effect.attack_damage_modifiers(state, holder, _power_label(state, holder, power_key), attacker, defender, attack=None)
                                        for _, holder, power_key, effect in members):
             continue
         choices.append([(key, None)] + [(key, holder.pokemon_id) for _, holder, _, _ in members])
@@ -12323,13 +12331,13 @@ def _power_label(state: GameState, holder: PokemonInPlay, key: PowerKey) -> str:
     return f"{definition.name_ja}［{definition.powers[key.power_index].name_ja}］"
 
 
-def continuous_attack_damage_modifiers(state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay, *,
+def continuous_attack_damage_modifiers(state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay, *, attack: AttackKey | None,
                                        attack_status: frozenset[int] | None = None, ignore_status: bool = False, copies=None) -> list[DamageModifier]:
     """``attacker`` が ``defender`` にワザのダメージを与えるときの、場の常にはたらく特殊能力の変更効果（v0.46。``attack_damage_modifiers`` から呼ぶ）。v0.97: ``copies`` は同じ力が
-    2 匹以上ではたらきうるときの読み方（``with_copies``）。"""
+    2 匹以上ではたらきうるときの読み方（``with_copies``）。v0.99: ``attack`` は処理しているワザ（``ContinuousPower.attack_damage_modifiers`` に渡す。省略できない）。"""
     modifiers: list[DamageModifier] = []
     for _, holder, key, effect in with_copies(continuous_powers(state, attack_status=attack_status, ignore_status=ignore_status), copies):
-        modifiers.extend(effect.attack_damage_modifiers(state, holder, _power_label(state, holder, key), attacker, defender))
+        modifiers.extend(effect.attack_damage_modifiers(state, holder, _power_label(state, holder, key), attacker, defender, attack=attack))
     return modifiers
 
 
@@ -12382,7 +12390,7 @@ class ZeroLargeDamageReceived(ContinuousPower):
     def _modifier(self, holder: PokemonInPlay, label: str) -> DamageModifier:
         return DamageModifier(step=8, amount=self.threshold, label=label, source=holder.card, operation=ZERO_IF_AT_LEAST)
 
-    def attack_damage_modifiers(self, state, holder, label, attacker, defender):
+    def attack_damage_modifiers(self, state, holder, label, attacker, defender, *, attack):
         return (self._modifier(holder, label),) if holder is defender else ()
 
     def received_damage_modifier(self, state, holder, label, source):
@@ -12429,7 +12437,7 @@ class CapDamageFromBasic(ContinuousPower):
             return None
         return DamageModifier(step=8, amount=self.amount, label=label, source=holder.card, operation=SET_IF_AT_LEAST, threshold=self.threshold)
 
-    def attack_damage_modifiers(self, state, holder, label, attacker, defender):
+    def attack_damage_modifiers(self, state, holder, label, attacker, defender, *, attack):
         if holder is not defender:
             return ()
         found = self._modifier(state, holder, label, attacker)
@@ -12469,7 +12477,7 @@ class HalveActiveAttackDamage(ContinuousPower):
     def texts(self) -> tuple[str, ...]:
         return (CALMING_AROMA_TEXT,)
 
-    def attack_damage_modifiers(self, state, holder, label, attacker, defender):
+    def attack_damage_modifiers(self, state, holder, label, attacker, defender, *, attack):
         located = state.find_pokemon(attacker.pokemon_id)
         if located is None or state.players[located[0]].active is not attacker:
             return ()  # 対戦ポケモンのワザのダメージではない
@@ -12508,7 +12516,7 @@ class BonusDamageWhileConfused(ContinuousPower):
     def texts(self) -> tuple[str, ...]:
         return (FRENZY_TEXT.format(n=self.amount),)
 
-    def attack_damage_modifiers(self, state, holder, label, attacker, defender):
+    def attack_damage_modifiers(self, state, holder, label, attacker, defender, *, attack):
         return (DamageModifier(step=2, amount=self.amount, label=label, source=holder.card),) if holder is attacker else ()
 
 
@@ -12870,7 +12878,10 @@ def confusion_power_modifiers(state: GameState, pokemon: PokemonInPlay, attack_s
     """こんらんしたワザの 20（ワザを使ったポケモン ``pokemon`` が自分に受ける）を、ワザのダメージ（このポケモンが与えるダメージ）として扱うなら当てはまる、常に
     はたらく特殊能力の名前（v0.46。くつろぐかおり・きょうぼう・なぞのかべ・ふしぎなバリアー）。こんらんの 20 がワザによるダメージか・このポケモンが与えるダメージかは
     決まらない（v0.3c）ので、当てはまるものがあれば、コインの前に止める（``procedures.confusion_damage_problem``）。"""
-    return [modifier.label for modifier in continuous_attack_damage_modifiers(state, pokemon, pokemon, attack_status=attack_status, ignore_status=False)]
+    # v0.99: ワザ（``attack``）は None。こんらんの 20 は、もとのワザの内容に関わらない（p.309 の手順 5）ので、ワザの名前で限られる特殊能力（［PERFORM］の「めざめるパワー」）の
+    # 「そのワザのダメージ」ではない（v0.27 の「つるぎのまい」の「「きりさく」のダメージ」と同じ分類。``attack_damage_modifiers`` の説明）
+    return [modifier.label for modifier in continuous_attack_damage_modifiers(state, pokemon, pokemon, attack=None, attack_status=attack_status,
+                                                                              ignore_status=False)]
 
 
 # --- v0.46 のワザ（エリカのフシギソウ・わるいオコリザル・わるいラフレシア・エリカのフシギバナ・エリカのタマタマ・エリカのナッシー）
@@ -13224,7 +13235,7 @@ class HalveDamageReceived(ContinuousPower):
     def _modifier(self, holder: PokemonInPlay, label: str) -> DamageModifier:
         return DamageModifier(step=8, amount=2, label=label, source=holder.card, operation=HALVE_DOWN)
 
-    def attack_damage_modifiers(self, state, holder, label, attacker, defender):
+    def attack_damage_modifiers(self, state, holder, label, attacker, defender, *, attack):
         return (self._modifier(holder, label),) if holder is defender else ()
 
     def received_damage_modifier(self, state, holder, label, source):
@@ -38408,7 +38419,7 @@ class ReduceOwnGroupDamageFromType(ContinuousPower):
             return False
         return in_name_group(state, receiver, self.group)
 
-    def attack_damage_modifiers(self, state, holder, label, attacker, defender):
+    def attack_damage_modifiers(self, state, holder, label, attacker, defender, *, attack):
         if not self._protects(state, holder, defender):
             return ()
         readings = type_readings(state, attacker)
@@ -38761,3 +38772,157 @@ V0_98_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_98_ATTACKS), V0_98_POWERS)
+
+
+# ---------------------------------------------------------------- v0.99（docs/unown-perform-help-history-v0.99.md）。アンノーンP・H とタッツー
+
+PERFORM_TEXT = ("この力は、このカードが「{attack}」を使うとき、はたらく。前の相手の番、このカードが、バトル場で相手のワザによるダメージを受けていたなら、その受けたダメージと同じ"
+                "ダメージを、このカードが使う「{attack}」のダメージに追加する。")
+# PF1: ［PERFORM］で、前の相手の番の同じ相手のワザで、このカードがバトル場とベンチの両方でダメージを受けていた（ダメージの要素ごとの場所が違う）とき、追加するのはバトル場で受けた分か、
+# そのワザで受けたダメージ全体か
+PERFORM_PLACES_CODE = "UNRESOLVED_PERFORM_DAMAGE_PLACES"
+PERFORM_PLACES_REASON = (
+    "［PERFORM］で、前の相手の番の相手のワザで、このカードがバトル場とベンチの両方でダメージを受けていたとき、「その受けたダメージ」がバトル場で受けた分か、そのワザで受けたダメージ"
+    "全体かは、印刷の文面・kyuura の記録から決められず、追加するダメージが変わるので扱わない（PF1。どちらか一方の場所だけで受けたときは止めない）"
+)
+
+
+@dataclass(frozen=True)
+class AddActiveDamageReceivedToNamedAttack(ContinuousPower):
+    """この力は、このカードが「``attack_name``」を使うとき、はたらく。前の相手の番、このカードが、バトル場で相手のワザによるダメージを受けていたなら、その受けたダメージと同じダメージを、
+    このカードが使う「``attack_name``」のダメージに追加する（v0.99。アンノーンP（neo4-058）の［PERFORM］。kyuura の印刷の文面。docs 4 章）。
+
+    - 常にはたらく（宣言しない。``UsePokemonPower``・``UseAttack.attack_power`` で使うかを聞かない。回数の制限はない）。日本語の文面に特殊状態の条件はない（``blocked_by_status`` は偽。
+      こんらんのこのカードでも、ワザがこんらんで失敗しなければはたらく）。かがくへんかガスなど特殊能力を消す効果は、ダメージを計算する時の共通の確かめ（``continuous_powers``）
+    - 当てはめるのは、この力を持つポケモン自身がワザを使うポケモンで（「このカードが…使う」）、処理しているワザ（``attack``）の名前が「``attack_name``」で、そのワザがこのポケモンの
+      今持つワザ（``available_attacks``。今の姿のワザ・思い出させる・［サイコリンク］）のとき。場にいるだけで、ほかのポケモン（ほかのアンノーン・このワザを借りたポケモン）の
+      ワザには当てはめない。今の写しでは、この力を持つポケモンが今持たない「``attack_name``」を処理することはない（まねるワザを持たない）ので、起これば止める（エンジンの不具合）
+    - 追加する量は、前の相手の番（今の番の 1 つ前）の、このカードの受けた記録（``history.received_on``。進化・退化・場をはなれたら別のポケモン）の、バトル場で受けた分
+      （``history.damage_places``。受けた時の場所。最終ダメージの合計で、あとで回復しても減らさない・残りHPで丸めない）。0 なら「受けなかった」ので追加しない（p.319）。
+      ベンチでだけ受けたダメージは追加しない。両方の場所で受けていれば PF1（``PERFORM_PLACES_CODE``）。場所の記録のない記録の写しは、エンジンの情報の不足（``history.DAMAGE_PLACE_UNKNOWN_CODE``）
+    - ワザ以外（トレーナー・特殊能力・ポケモンチェック）のダメージ・ダメージカウンターをのせる・移す効果は、受けた記録のダメージに入らない（``history.note_received`` はワザの枠のダメージの
+      要素だけを記録する。GR-2000-P320-COUNTER-MOVE）。受けた時にこの力が消えていても（ガス・特殊状態）、使う時にはたらいていれば読む（文面に受けた時の条件はない）
+    - p.321 の 2 段階（ワザを使うポケモンの持っている「ダメージを変更する効果」。v0.46 の［きょうぼう］・v0.88 の［すいりょくはつでん］と同じ段階。GR-2000-P321-DAMAGE-ORDER）の加算。
+      同じ段階の順番で結果が変わるなら既存の順番の決定（``damage.DamageOrderRequired``）
+    - こんらんの 20（``attack`` が None の問い合わせ）は、もとのワザの内容に関わらない（p.309 の手順 5）ので「``attack_name``」のダメージではない（v0.27 の「つるぎのまい」と同じ分類）
+    """
+
+    attack_name: str = "めざめるパワー"
+    implementation_id = "add_active_damage_received_to_named_attack"
+    blocked_by_status = False
+    reads_history: ClassVar[bool] = True
+    what = "前の相手の番にバトル場で受けたダメージを、名前の決まったワザのダメージに追加する特殊能力"
+
+    def texts(self) -> tuple[str, ...]:
+        return (PERFORM_TEXT.format(attack=self.attack_name),)
+
+    def bonus(self, state: GameState, holder: PokemonInPlay) -> int:
+        """前の相手の番に、このカード（``holder``）がバトル場で受けたワザによるダメージ（受けていなければ 0）。両方の場所で受けていれば PF1。"""
+        from .history import damage_places, received_on
+
+        record = received_on(holder, state.turn_number - 1)
+        if record is None:
+            return 0
+        active, bench = damage_places(record)
+        if active > 0 and bench > 0:
+            raise UnsupportedError(PERFORM_PLACES_CODE, f"ポケモン {holder.pokemon_id}（バトル場 {active}・ベンチ {bench}）: {PERFORM_PLACES_REASON}")
+        return active
+
+    def attack_damage_modifiers(self, state, holder, label, attacker, defender, *, attack):
+        if attack is None or holder is not attacker or attack_of(state, attack).name_ja != self.attack_name:
+            return ()
+        if attack not in {option.key for option in available_attacks(state, holder)}:
+            raise RuntimeError(f"{label} を持つポケモン {holder.pokemon_id} が、今持たない「{self.attack_name}」（{attack}）を処理した（今の写しでは起こらない。エンジンの不具合）")
+        amount = self.bonus(state, holder)
+        return (DamageModifier(step=2, amount=amount, label=label, source=holder.card),) if amount > 0 else ()
+
+
+HELP_TEXT = ("この力は、自分のベンチに、このカードとアンノーン{letters}がいるとき、自分の番ごとに1回使うことができる。自分の手札の枚数を数え、それらをすべて山札にもどし、その山札を"
+             "よく切る。その後、その山札から、もどした枚数ぶんのカードを引いて、手札にする。")
+
+
+@dataclass(frozen=True)
+class ReturnHandThenDrawSameWithBenchLetters(PowerEffect):
+    """この力は、自分のベンチに、このカードとアンノーン「``letters``」がいるとき、自分の番ごとに 1 回使える。自分の手札の枚数を数え、それらをすべて山札にもどし、その山札をよく切る。その後、
+    その山札から、もどした枚数ぶんのカードを引いて、手札にする（v0.99。アンノーンH（neo4-063）の［HELP］。kyuura の印刷の文面。docs 5 章）。
+
+    - 宣言して使う。自分の番ごとに 1 回（``once_per_turn``。宣言のときに記録する）。日本語の文面にねむり・マヒ・こんらんの条件はない（ベンチのポケモンは特殊状態にならない）。特殊能力を
+      消す効果は共通の確かめ
+    - 条件は v0.97 の［FIND］・v0.98 の［GIVE］と同じ ``require_bench_letters``（このカードが自分のベンチにいる・自分のベンチのほかのポケモンに今の姿のグループが「``group``」で文字が
+      ``letters`` のそれぞれがいる。相手の場・バトル場は数えない。うらのカードは FD1）
+    - 処理は説明の順: 手札の枚数を数える（処理の前の枚数）→ 手札をすべて見せずに山札の一番下にもどす（``zones.return_hand_cards_to_deck`` の ``power``。もどす位置はこのあと切るので実装上の
+      仮定。ログ ``hand_to_deck`` のカードは持ち主だけ）→ 山札を 1 回切る（ログ ``shuffle`` の ``power``）→ もどした枚数を引く（``zones.draw_cards``。もどしたあとの山札はその枚数以上なので
+      足りる。番の最初のドローではない）。相手の手札・山札は動かさない。このカードは場にいるので、使っている最中のトレーナーのように手札から除くカードはない
+    - 手札が 0 枚: 必ずもどす効果（「…すべて山札にもどし、その山札をよく切る」）なので、v0.54 の HD2（もどすカードが 0 枚でも山札を切る。ナツメの眼などの実装上の判断）を当てはめ、
+      使える（山札を切り、0 枚引く。回数を使う）。v0.42 の［ぶっしつこうかん］の PW2（「1 枚選んでトラッシュ」の選ぶカードがない）とは違い、選ぶものを持たない処理で、「のぞむなら」
+      「もどしたプレイヤーは」の［ENGAGE］（EG1）とも文面が違う
+    """
+
+    letters: tuple[str, ...]
+    text: str
+    group: str = "アンノーン"
+    implementation_id = "return_hand_then_draw_same_with_bench_letters"
+    once_per_turn: ClassVar[bool] = True
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "自分のベンチに名前のグループの決まった文字がそろっているとき、手札をすべて山札にもどして同じ枚数を引く特殊能力", (self.text,))
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+        require_bench_letters(state, use, self.letters, self.group)
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        key = str(use.key)
+        hand = tuple(state.players[use.player].hand)
+        if hand:
+            return_hand_cards_to_deck(state, use.player, hand, power=key)
+        shuffle_deck(state, use.player, power=key)
+        draw_cards(state, use.player, len(hand))
+
+
+FIN_SLAP_TEXT = "前の相手の番、このカードがワザによるダメージを受けていたなら、{bonus}ダメージを追加する。"
+
+
+@dataclass(frozen=True)
+class PlusIfDamagedByAttackLastOpponentTurn(AttackEffect):
+    """ダメージの目安の数字。前の相手の番、このカードがワザによるダメージを受けていたなら ``bonus`` を追加する（v0.99。タッツー（neo1-023）の「ひれがえし」。kyuura の印刷の文面。要素は
+    ``Damage(OPP, programs.PlusIfDamagedLastOpponentTurn)``。docs 4 章）。
+
+    - 条件を満たさなくてもワザは使え、ダメージの目安の数字ぶん（ドリルホールのような宣言の拒否にしない）。追加はワザの基本となるダメージ（p.321 の 1 段階）への加算
+    - 「このカード」はワザを使うポケモン（相手のワザとして使う（ゆびをふる・オウムがえし）ときは使うポケモン。印刷したタッツーの記録は読まない）。前の相手の番（今の番の 1 つ前）の、この
+      カードの受けた記録（``history.received_on``。進化・退化・場をはなれたら別のポケモン）の最終ダメージの合計が 0 より大きいとき。バトル場・ベンチのどちらで受けたかは問わない
+      （文面に場所の限定がない。［PERFORM］とは違う）。あとで回復していても受けたことは変わらない
+    - 「ワザによるダメージ」: 前の相手の番にこのカードが受けうるワザによるダメージは相手のワザのダメージの要素だけ（返す効果のダメージ・こんらんの 20 は番のプレイヤーのポケモンが受ける）で、
+      受けた記録（ワザの枠のダメージの要素だけ）と同じ範囲。ワザ以外のダメージ・ダメージカウンターをのせる・移す効果は入らない（オニスズメの「オウムがえし」の OM2 の問いとは違い、文面が
+      ワザによるダメージに限る）。0 の最終ダメージは「受けなかった」
+    """
+
+    bonus: int
+    implementation_id = "plus_if_damaged_by_attack_last_opponent_turn"
+    reads_history = True
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.bonus, "追加するダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "前の相手の番にワザによるダメージを受けていたら追加するワザ"
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(attack, what, (FIN_SLAP_TEXT.format(bonus=self.bonus),))
+
+
+# v0.99 のワザの登録（3）。アンノーンP・H は説明文のない「めざめるパワー」（超・10。文面・出典を持たない）
+V0_99_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    AttackKey("neo4-058", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーンP（超・10）
+    AttackKey("neo4-063", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーンH（超・10）
+    AttackKey("neo1-023", 0): _printed(PlusIfDamagedByAttackLastOpponentTurn(10), "ひれがえし", FIN_SLAP_TEXT.format(bonus=10)),  # タッツー（水水・20+）
+})
+
+_PERFORM = PERFORM_TEXT.format(attack="めざめるパワー")
+_HELP = HELP_TEXT.format(letters="「E」「L」「P」")
+# v0.99 の特殊能力の登録（2）。処理に使う文面は kyuura の印刷の文面（名前・文面は写しの表記のまま）
+V0_99_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
+    PowerKey("neo4-058", 0): PowerEntry(AddActiveDamageReceivedToNamedAttack(), "PERFORM[パフォーム]", _PERFORM, _PERFORM, _KYUURA_PRINTED_TEXT),
+    PowerKey("neo4-063", 0): PowerEntry(ReturnHandThenDrawSameWithBenchLetters(("E", "L", "P"), _HELP), "HELP[ヘルプ]", _HELP, _HELP, _KYUURA_PRINTED_TEXT),
+})
+
+DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_99_ATTACKS), V0_99_POWERS)

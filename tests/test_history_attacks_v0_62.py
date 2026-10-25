@@ -167,7 +167,8 @@ class RegistryTest(unittest.TestCase):
 
     def test_history_readers(self):
         readers = {type(e.effect).__name__ for e in E.DEFAULT_EFFECTS._attacks.values() if e.effect.reads_history}
-        self.assertEqual(readers, {"DamageIfUsedAttackLastTurn", "RepeatReceivedAttack", "ReflectReceivedDamageAndEffects"})
+        # v0.99: タッツーの「ひれがえし」（docs/unown-perform-help-history-v0.99.md）。特殊能力の履歴を読む効果（［PERFORM］）は tests/test_unown_perform_help_history_v0_99.py
+        self.assertEqual(readers, {"DamageIfUsedAttackLastTurn", "RepeatReceivedAttack", "ReflectReceivedDamageAndEffects", "PlusIfDamagedByAttackLastOpponentTurn"})
 
     def test_history_only_recorded_when_a_reader_is_in_the_game(self):
         # 履歴を読むワザのない対戦では記録しない（v0.61 までと同じ状態・書き出し）

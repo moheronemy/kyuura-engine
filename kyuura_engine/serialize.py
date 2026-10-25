@@ -1,6 +1,6 @@
 """ゲーム状態を JSON にできる辞書にする（画面やほかの言語に渡すため・テストで比べるため）。
 
-形式は 20 あります（``format_version``）。
+形式は 25 あります（``format_version``）。
 
 - 1（既定）: v0.1 と同じ形。v0.1 の固定値のテストと互換性の参照データは、この形で比べる。
 - 2: 1 に次を加えたもの（v0.2a）。``format_version``、``effects``（効果の登録表の id）、
@@ -113,6 +113,10 @@
   v0.92・v0.93: 期間を明示した持続する効果（v0.92 の ``"period_retreat_lock"``・``"period_attack_lock"``・``"received_attack_damage_bonus"``、v0.93 の ``"period_leave_lock"``
   （「バトル場をはなれられない」。あるときだけ ``"knockout_exception"``・``"source_left"``）・``"period_attack_coin_check"``（かぶりつく））は、形式 8 の ``persistent_effects`` の
   種類の値と種類ごとの項目を加えただけ（形式は 24 のまま。docs/active-leave-locks-v0.93.md 11 章。前の版の書き出しを読む側は、知らない種類として拒否すること）。
+- 25: 24 の場のポケモンの ``history`` の受けた記録（``"kind": "received"``）に、``active_damage``（受けたダメージ ``damage`` のうち、受けた時に持ち主のバトル場にいた分。場所の
+  分からない記録の写しは ``None``）を加えたもの（v0.99。docs/unown-perform-help-history-v0.99.md 6 章）。形式 20〜24 の受けた記録は合計だけなので、場所の分かる 0 より大きい
+  ダメージの記録があると ``ValueError``（合計が 0 の記録・場所の分からない記録だけなら形式 20〜24 の書き出しは v0.98 と同じ。形式 24 の受けた記録を読む側は、合計が 0 より大きい
+  記録の場所を分からないものとして読み、すべてバトル場・すべてベンチにしないこと）。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -208,7 +212,7 @@ from .state import (
     WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -359,6 +363,12 @@ def _uses_v050_fields(state: GameState) -> bool:
     return bool(retagged) and not set(retagged) <= _disguise_power_records(state)
 
 
+def _uses_v099_fields(state: GameState) -> bool:
+    """v0.99: 形式 24 までの受けた記録（合計だけ）では落ちる、受けた場所の分かる 0 より大きいダメージの記録があるか（合計が 0 なら場所によらず 0。場所の分からない記録はそのまま書ける）。"""
+    return any(isinstance(record, AttackReceived) and record.damage > 0 and record.active_damage is not None
+               for p in state.players for pokemon in p.in_play() for record in pokemon.history)
+
+
 def _pokemon(state: GameState, pokemon: PokemonInPlay | None, format_version: int) -> dict[str, Any] | None:
     if pokemon is None:
         return None
@@ -408,7 +418,7 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay | None, format_version: in
     if format_version >= 15:
         data["devolved_turn"] = pokemon.devolved_turn  # v0.50
     if format_version >= 20:
-        data["history"] = [history_record(record) for record in pokemon.history]  # v0.62
+        data["history"] = [history_record(record, format_version) for record in pokemon.history]  # v0.62（v0.99: 形式 25 から受けた記録の場所）
     if format_version >= 24:
         data["markers"] = [marker_record(state, marker) for marker in pokemon.markers]  # v0.90
     return data
@@ -423,15 +433,19 @@ def marker_record(state: GameState, marker) -> dict[str, Any]:
     return data
 
 
-def history_record(record) -> dict[str, Any]:
-    """v0.62: ワザの履歴の記録 1 つ（``AttackUsed``・``AttackReceived``・``OtherReceived``）。"""
+def history_record(record, format_version: int | None = None) -> dict[str, Any]:
+    """v0.62: ワザの履歴の記録 1 つ（``AttackUsed``・``AttackReceived``・``OtherReceived``）。v0.99: ``format_version`` が 25 以上（None は最新。観測が使う）なら、受けた記録に
+    ``active_damage`` を書く。"""
     if isinstance(record, AttackUsed):
         return {"kind": "used", "turn": record.turn, "card": record.card, "declared": list(record.declared),
                 "processed": None if record.processed is None else list(record.processed)}
     if isinstance(record, AttackReceived):
-        return {"kind": "received", "turn": record.turn, "card": record.card, "player": record.player, "source": record.source,
+        data = {"kind": "received", "turn": record.turn, "card": record.card, "player": record.player, "source": record.source,
                 "declared": list(record.declared), "processed": list(record.processed), "damage": record.damage, "reached": list(record.reached),
                 "voided": [list(v) for v in record.voided]}
+        if format_version is None or format_version >= 25:
+            data["active_damage"] = record.active_damage
+        return data
     if isinstance(record, OtherReceived):
         return {"kind": "other_received", "turn": record.turn, "card": record.card}
     raise ValueError(f"ワザの履歴の記録の型 {type(record).__name__} は書き出せない")
@@ -513,6 +527,8 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         raise ValueError(f"形式 {format_version} は、特殊能力で色を変える効果（［せんすい］・［エナジーコンバーター］）を表せない（format_version=23 を使う）")
     if format_version < 24 and any(pokemon.markers for p in state.players for pokemon in p.in_play()):
         raise ValueError(f"形式 {format_version} は、場のポケモンのマーカー・カウンター（ダメージカウンター以外）を表せない（format_version=24 を使う）")
+    if format_version < 25 and _uses_v099_fields(state):
+        raise ValueError(f"形式 {format_version} は、場のポケモンの受けた記録の、ダメージを受けた場所（バトル場・ベンチ）を表せない（format_version=25 を使う）")
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
     if format_version == 1 and state.decision is not None and state.decision.resume == "attack":

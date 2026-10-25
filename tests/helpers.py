@@ -1435,6 +1435,8 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.OpponentDeckTopDiscardIfTrainer,
     _effects.DamageThenMillReturnTypeEnergy,
     _effects.ReturnOpponentAttachedTrainerToDeck,
+    # v0.99（docs/unown-perform-help-history-v0.99.md 4 章。前の相手の番にワザによるダメージを受けていたら追加する）
+    _effects.PlusIfDamagedByAttackLastOpponentTurn,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

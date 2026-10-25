@@ -386,7 +386,9 @@ TOP_FIELDS_SINCE = {
     "trainer_effects": 16, "stadium": 17, "stadium_uses_this_turn": 17, "trainer_stack": 18, "energy_roles": 19, "set_aside": 21, "face_up_prizes": 21, "face_down_cards": 22,
     "color_effects": 23,
 }
-LATEST_FORMAT = 24
+LATEST_FORMAT = 25
+# v0.99: 形式 25 で、場のポケモンの履歴の受けた記録（``"kind": "received"``）に加わった項目（ダメージを受けた場所）
+RECEIVED_FIELDS_SINCE = {"active_damage": 25}
 
 
 
@@ -400,8 +402,18 @@ def _project(data_latest: dict, version: int) -> dict:
     if "format_version" in data:
         data["format_version"] = version
 
+    def record(r):
+        if r.get("kind") != "received":
+            return r
+        return {k: v for k, v in r.items() if RECEIVED_FIELDS_SINCE.get(k, 1) <= version}  # v0.99: 受けた場所は形式 25 から
+
     def pokemon(p):
-        return None if p is None else {k: v for k, v in p.items() if POKEMON_FIELDS_SINCE.get(k, 1) <= version}
+        if p is None:
+            return None
+        projected = {k: v for k, v in p.items() if POKEMON_FIELDS_SINCE.get(k, 1) <= version}
+        if "history" in projected:
+            projected["history"] = [record(r) for r in projected["history"]]
+        return projected
 
     data["players"] = [
         {**player, "active": pokemon(player["active"]), "bench": [pokemon(b) for b in player["bench"]]} for player in data_latest["players"]
@@ -473,6 +485,9 @@ def required_format(state) -> tuple[int, bool]:
         needed = max(needed, 23)  # v0.88: 特殊能力で色を変える効果（［せんすい］・［エナジーコンバーター］）
     if any(pokemon.markers for pokemon in in_play):
         needed = max(needed, 24)  # v0.90: 場のポケモンのマーカー・カウンター（ダメージカウンター以外）
+    if any(type(record).__name__ == "AttackReceived" and record.damage > 0 and record.active_damage is not None
+           for pokemon in in_play for record in pokemon.history):
+        needed = max(needed, 25)  # v0.99: 受けた場所の分かる 0 より大きいダメージの受けた記録（形式 24 までは合計だけ）
     d = state.decision
     not_v0_1 = d is not None and (
         d.context_value("then") is not None or d.resume in ("attack", "knock_out", "post_knockout", "power")  # v0.42: 特殊能力の途中の決定
@@ -1064,6 +1079,9 @@ def _follows_declaration(state, key: str, player: int, pid: int, e: dict) -> boo
         return kind == "bench_from_deck" and e.get("power") == key and e["player"] == player and e["pokemon_id"] == pid
     if isinstance(effect, E.SearchDeckWithBenchLettersToHand):
         return kind == "reveal_from_deck" and e.get("power") == key and e["player"] == player
+    # v0.99: ［HELP］は手札を山札にもどす処理（hand_to_deck の power）か、手札が 0 枚なら山札を切る処理（shuffle の power）
+    if isinstance(effect, E.ReturnHandThenDrawSameWithBenchLetters):
+        return kind in ("hand_to_deck", "shuffle") and e.get("power") == key and e["player"] == player
     # v0.98: ［YIELD］・［GIVE］・［VANISH］は持ち主のコイン（［BEAR］の move_damage_counter は、その分岐が宣言との対応を確かめる）
     if isinstance(effect, (E.CoinAttachEnergyFromDeckToOwnPokemon, E.CoinReturnOtherGroupToHandOnEntry)):
         return kind == "coin_flip" and e["source"] == "power" and e.get("effect") == key and e["player"] == player and e.get("pokemon_id") == pid
@@ -1556,6 +1574,9 @@ def log_problems(state) -> list[str]:
     # サイコエクスチェンジ（手札を山札にもどしたあと、切ってから引く）の引く処理（プレイヤー, 枚数の上限, 番）
     active_of: dict[int, int | None] = {0: None, 1: None}
     exchange_due: tuple | None = None
+    # v0.99: ログから組み立てた、相手のワザのダメージの要素で受けたダメージ（(番, 場のポケモンの番号, いちばん上のカードの uid) → [バトル場で受けた分, ベンチで受けた分]。のせた時の
+    # 場所で分ける。返す効果のダメージ・自分のワザのダメージは入れない）。［PERFORM］の 2 段階の追加・「ひれがえし」の基本となるダメージを、エンジンの履歴と別に確かめる
+    received_places: dict[tuple[int, int, int], list[int]] = {}
     # v0.96: ［LAUGH］・［TELL］の 1 回目（使ったプレイヤーが相手の山札を切った・相手の手札を見た）。すぐあとに 2 回目（相手が、使ったプレイヤーの山札を切る・手札を見る）が続くはず
     each_due: dict | None = None
     # v0.47: ログから組み立てた、期限のあるトレーナーの使用の禁止（(禁止されたプレイヤー, 消える番) → 与えたログ）。みらいよちの見たカード（すぐあとに、その並べかえ
@@ -2048,6 +2069,14 @@ def log_problems(state) -> list[str]:
                     expected.append((2 if pid == attacker_pid else 8 if pid == receiver_pid else 6, label, HALVE_UP, None, 2, source))
                 elif isinstance(effect, BonusDamageWhileConfused) and pid == attacker_pid:
                     expected.append((2, label, ADD, None, effect.amount, source))
+                elif isinstance(effect, E.AddActiveDamageReceivedToNamedAttack) and pid == attacker_pid and attack_window is not None                         and state.definitions[_attack_key(attack_window["effect"])[0]].attacks[_attack_key(attack_window["effect"])[1]].name_ja == effect.attack_name:
+                    # v0.99: ［PERFORM］（このカード自身の「めざめるパワー」に、前の番にバトル場で相手のワザから受けたダメージを 2 段階で加える。ベンチでだけ受けた分は加えない。両方の
+                    # 場所で受けていればエンジンは PF1 で止める）
+                    active_part, bench_part = received_before(pid)
+                    if active_part > 0 and bench_part > 0:
+                        expected.append((2, label, "PF1", None, 0, source))  # 止まるはずの場面（記録と合わない）
+                    elif active_part > 0:
+                        expected.append((2, label, ADD, None, active_part, source))
                 elif isinstance(effect, HalveDamageReceived) and pid == receiver_pid:
                     expected.append((8, label, HALVE_DOWN, None, 2, source))  # v0.47: ［カブトアーマー］
                 elif isinstance(effect, E.ReduceOwnGroupDamageFromType) and copies[(pokemon_owner.get(pid), effect)] == 1 \
@@ -2057,6 +2086,25 @@ def log_problems(state) -> list[str]:
                     # 受けるのがこの力を持つポケモン自身なら 8 段階、ほかは 6 段階の「-30」）
                     expected.append((8 if pid == receiver_pid else 6, label, ADD, None, -effect.amount, source))
         return expected
+
+    def received_before(pid: int | None) -> tuple[int, int]:
+        """v0.99: ログから組み立てた、ポケモン ``pid``（今のいちばん上のカード）が前の番（今の番の 1 つ前）に相手のワザから受けたダメージ（バトル場で受けた分, ベンチで受けた分）。"""
+        return tuple(received_places.get((turn_now - 1, pid, top.get(pid)), (0, 0)))
+
+    def fin_slap_problems(e: dict) -> list[str]:
+        """v0.99: 「ひれがえし」（``PlusIfDamagedByAttackLastOpponentTurn``）のダメージの基本となる計算（1 段階）が、ワザを使ったポケモンが前の番に相手のワザによるダメージを受けていたなら
+        目安の数字 + 追加、受けていなければ目安の数字（場所は問わない。ログから組み立てた受けたダメージで確かめる）。"""
+        if e.get("retaliation"):
+            return []
+        key = _attack_key(attack_window.get("copied") or attack_window["effect"])
+        entry = state.effects.attack_entry(*key)
+        if entry is None or not isinstance(entry.effect, E.PlusIfDamagedByAttackLastOpponentTurn):
+            return []
+        steps = [tuple(step) for step in (e.get("steps") or ())]
+        expected = state.definitions[key[0]].attacks[key[1]].damage + (entry.effect.bonus if sum(received_before(attack_window["pokemon_id"])) > 0 else 0)
+        if not steps or steps[0][1] != expected:
+            return [f"{e['turn']} 番の「ひれがえし」（ポケモン {attack_window['pokemon_id']}）の基本となるダメージ {steps[:1]} が、前の番に受けたダメージから求めた {expected} と違う"]
+        return []
 
     def continuous_damage_problems(e: dict) -> list[str]:
         """ワザのダメージのログ（v0.46）の、常にはたらく特殊能力（なぞのかべ・ふしぎなバリアー・くつろぐかおり・きょうぼう）と「リフレクター」の記録。ログから組み立てた
@@ -2393,6 +2441,8 @@ def log_problems(state) -> list[str]:
             due_draw, draw_due = draw_due, None
             if kind != "draw" or e["player"] != due_draw[0] or len(e["cards"]) > due_draw[1]:
                 problems.append(f"{due_draw[2]} 番の {due_draw[3]} のすぐあとに、プレイヤー {due_draw[0]} が {due_draw[1]} 枚まで引く処理（draw）がない（{kind}）")
+            elif due_draw[4:] == ("exact",) and len(e["cards"]) != due_draw[1]:
+                problems.append(f"{due_draw[2]} 番の {due_draw[3]} のすぐあとに引いた枚数 {len(e['cards'])} が、もどした枚数 {due_draw[1]} と違う（v0.99。［HELP］）")
         answers_entry = kind == "entry_power_declined" or (kind == "pokemon_power" and "entry" in e)
         # v0.43: 場に出たときの特殊能力の使う機会には、その機会のあと（進化・手札から場に出したあと）に 1 回だけ答える。v0.86 から、同じ時点のほかの反応（［れんさしんか］・
         # 別のポケモンの使う機会。順番は番のプレイヤーが決める）のあとに答えることがあるので、答えを待つ機会を番号ごとに持ち、ワザ・番の終わりまでにすべて答えたことを確かめる
@@ -2720,6 +2770,12 @@ def log_problems(state) -> list[str]:
         if kind == "damage" and attack_window is not None:
             problems.extend(zero_damage_below_problems(e))  # v0.45
             problems.extend(continuous_damage_problems(e))  # v0.46
+            problems.extend(fin_slap_problems(e))  # v0.99
+        if kind in ("damage", "bench_guard") and attack_window is not None and not e.get("retaliation") and e["player"] != attack_window["player"]:
+            # v0.99: 相手のワザのダメージの要素で受けたダメージ（ベンチガードのサイドンがかわりに受けた 10 も）を、のせた時の場所で分けて数える
+            receiver_pid = e["pokemon_id"] if "pokemon_id" in e else ids.get(e["pokemon"])
+            places = received_places.setdefault((e["turn"], receiver_pid, top.get(receiver_pid)), [0, 0])
+            places[0 if is_active(receiver_pid) else 1] += e["amount"]
         if kind == "confusion_damage" and attack_window is not None:
             # v0.46: こんらんの 20 に当てはまりうる常にはたらく特殊能力（くつろぐかおり・きょうぼう・なぞのかべ・ふしぎなバリアー）がはたらいていれば、コインの前に
             # 止まる（UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS）ので、こんらんのダメージはない
@@ -3866,13 +3922,16 @@ def log_problems(state) -> list[str]:
                 arrange_due = e
         elif kind == "hand_to_deck" and "power" in e:
             # v0.96: ［ENGAGE］。それぞれのプレイヤーが、自分の手札をすべて見せずに山札にもどす → すぐあとに切る → 4 枚まで引く（引けるだけ。p.312）
+            # v0.99: ［HELP］。使ったプレイヤーの手札をすべて見せずに山札にもどす → すぐあとに切る → もどした枚数をちょうど引く
             effect = _power_effect(state, e["power"])
-            if not isinstance(effect, E.EachPlayerMayReturnHandThenDrawOnEntry) or not e["cards"] or sorted(e["cards"]) != sorted(hand[e["player"]]):
-                problems.append(f"{e['turn']} 番に［ENGAGE］で山札にもどしたカード {e['cards']} が、ログから組み立てたプレイヤー {e['player']} の手札のすべてではない")
+            if not isinstance(effect, (E.EachPlayerMayReturnHandThenDrawOnEntry, E.ReturnHandThenDrawSameWithBenchLetters)) or not e["cards"]                     or sorted(e["cards"]) != sorted(hand[e["player"]]):
+                problems.append(f"{e['turn']} 番に［ENGAGE］・［HELP］で山札にもどしたカード {e['cards']} が、ログから組み立てたプレイヤー {e['player']} の手札のすべてではない")
             for uid in e["cards"]:
                 from_hand(e, e["player"], uid)
             if isinstance(effect, E.EachPlayerMayReturnHandThenDrawOnEntry):
                 shuffle_due, exchange_due = e, (e["player"], effect.draw, e["turn"])
+            elif isinstance(effect, E.ReturnHandThenDrawSameWithBenchLetters):
+                shuffle_due, exchange_due = e, (e["player"], len(e["cards"]), e["turn"], "exact")
         elif kind == "hand_return_declined":
             # v0.96: ［ENGAGE］で手札をもどさなかった（手札・山札は変わらない）
             if not isinstance(_power_effect(state, e.get("power")), E.EachPlayerMayReturnHandThenDrawOnEntry):
@@ -5434,8 +5493,13 @@ def log_problems(state) -> list[str]:
             if e.get("old_active_pokemon_id") in shifts:
                 shifts[e["old_active_pokemon_id"]]["returned"] = True  # v0.48: ［へんしょく］を使ってからベンチにもどった
         elif kind == "shuffle" and exchange_due is not None and e["player"] == exchange_due[0]:
-            # v0.46: サイコエクスチェンジ。手札を山札にもどして切ったすぐあとに、count 枚まで引く
-            draw_due, exchange_due = (exchange_due[0], exchange_due[1], exchange_due[2], "サイコエクスチェンジの shuffle"), None
+            # v0.46: サイコエクスチェンジ。手札を山札にもどして切ったすぐあとに、count 枚まで引く（v0.99: ［HELP］はちょうど count 枚）
+            draw_due, exchange_due = (exchange_due[0], exchange_due[1], exchange_due[2], "サイコエクスチェンジの shuffle", *exchange_due[3:]), None
+        elif kind == "shuffle" and isinstance(_power_effect(state, e.get("power")), E.ReturnHandThenDrawSameWithBenchLetters):
+            # v0.99: ［HELP］で手札が 0 枚（もどすカードがない）。山札を切り、すぐあとに 0 枚引く（v0.54 の HD2 の読み方）
+            if hand[e["player"]] or prior is None or prior["kind"] != "pokemon_power" or prior["player"] != e["player"]:
+                problems.append(f"{e['turn']} 番の［HELP］の shuffle が、宣言のすぐあとの手札 0 枚のプレイヤーのものではない")
+            draw_due = (e["player"], 0, e["turn"], "［HELP］の shuffle", "exact")
 
     if declared is not None and not (state.decision is not None and state.decision.resume == "power"
                                      and (state.decision.context_value("use") or (None, None))[1] == declared[2]):

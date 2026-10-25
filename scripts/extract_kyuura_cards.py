@@ -2361,6 +2361,13 @@ POOL_V0_98 = [
     "neo4-062",  # アンノーンG（GIVE・めざめるパワー）
 ]
 
+# v0.99（docs/unown-perform-help-history-v0.99.md）: アンノーンP・H とタッツーの 3 枚（ワザ 3・特殊能力 2）。写しの元・研究の基準は v0.97 と同じ 73a1690
+POOL_V0_99 = [
+    "neo4-058",  # アンノーンP（PERFORM・めざめるパワー）
+    "neo4-063",  # アンノーンH（HELP・めざめるパワー）
+    "neo1-023",  # タッツー（ひれがえし）
+]
+
 POOLS = [
     ("pool_v0_1", POOL_V0_1),
     ("pool_v0_2b", POOL_V0_2B),
@@ -2465,6 +2472,7 @@ POOLS = [
     ("pool_v0_96", POOL_V0_96),
     ("pool_v0_97", POOL_V0_97),
     ("pool_v0_98", POOL_V0_98),
+    ("pool_v0_99", POOL_V0_99),
 ]
 
 

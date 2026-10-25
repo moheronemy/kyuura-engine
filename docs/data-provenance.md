@@ -1955,6 +1955,26 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.99: アンノーンP・H とタッツーの 3 枚
+
+[unown-perform-help-history-v0.99.md](unown-perform-help-history-v0.99.md)。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534` のまま（今回の追加を理由に上げていない）。写しの組 `pool_v0_99`（3 枚）を加え、写しの作り直しの道具で作った
+  （手で直していない）。v0.98 までの 1,178 枚の値・移行の記録（`source_migrations`・`data_migrations`）は変わっていない。
+- 3 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-25・外部照合なし）。研究の基準に 3 枚を指す LD-・CC-・CR-・UQ-・エラッタはなく（カードの id で
+  確かめた。pcg-search の id はない）、`kyuura_records` は空。特殊能力 2（`power/0`）・タッツーのワザ（`attack/0`）は印刷の文面（研究の対応表の `adopted_printed_text` に加えた）。説明文の
+  ないワザ（めざめるパワー 2）は文面・出典を持たない。`card_verification.json` には加えていない。
+- kyuura data/rule_history.json の `card_lists.poke_body`（MIX-POWER-ERRATA。2002-05-24 の Q&A の「ポケボディー」の一覧）にアンノーンP があるが、後年の分類で、2000.02.14 版の規定としては
+  使わない（エラッタの `errata` の `cards` ではないので `kyuura_records` にも入れない。v0.8 からの扱いと同じ）。
+- デッキの「文字を合わせて 4 枚まで」は、ほかのカードの記録・共通の規定の再利用で、アンノーンP・H を直接確かめた記録ではない（kyuura の CR-UNOWN-DECK-LIMIT-ALL-LETTERS が挙げるのは
+  v0.97 の 5 枚と遺跡の石版）。
+- 日本語の文面の転記元は wiki.pokemonwiki.com（アンノーンP・H）・nazonobasho.com（タッツー）。転記元の「カード名称」の「アンノーン[P]」などの書き方は、写しの名前を変えない（カード名の
+  表記の問題は範囲外）。外部照合・カードの画像の照合・公式の書籍の新しい照合はしていない。
+- 新しい停止コード 1 件（PF1 `UNRESOLVED_PERFORM_DAMAGE_PLACES`。`not_in_kyuura`）を研究の対応表の `stop_codes` に加えた（停止コード 227 → 228・未解決の裁定 228 → 229）。エンジンの
+  情報の不足のコード `UNSUPPORTED_HISTORY_DAMAGE_PLACE_UNKNOWN` は研究上の未解決ではないので加えていない。kyuura の論点の事例のうちエンジンの裁定 id のないもの
+  （`kyuura_cases_without_engine_ruling`）は kyuura と同じまま（3 枚の事例は kyuura にない）。
+- 報告事項（kyuura の作業）: PF1 の論点がない。engine_targets.json の 3 枚の `engine_status`（`new_effect_needed`）を v0.99 の登録で写すと `registered` になる（docs 10 章）。
+
 ## v0.98: アンノーンB・Y・V・G の 4 枚
 
 [unown-bear-yield-vanish-give-v0.98.md](unown-bear-yield-vanish-give-v0.98.md)。

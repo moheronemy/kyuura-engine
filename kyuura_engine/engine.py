@@ -4284,7 +4284,8 @@ def _history_problems(state: GameState) -> list[str]:
     - 記録の型は ``ATTACK_HISTORY_TYPES``。番は今の番以下で、2 つ前の番より古くない（番の最初に消す）
     - 記録は今の「このカード」のもの（いちばん上のカードが同じで、今の姿になった番より前でない。進化・退化で消す）
     - 使った記録は持ち主の番、受けた記録・ワザ以外で受けた記録は相手の番のもの。受けたワザを使ったのは相手。同じ種類の記録は 1 つの番に 1 つ
-    - 使った記録の宣言したワザ・処理したワザ、受けた記録のワザは、効果の登録表にあるワザ。受けた要素の種類・受けなかった理由は決まったもの"""
+    - 使った記録の宣言したワザ・処理したワザ、受けた記録のワザは、効果の登録表にあるワザ。受けた要素の種類・受けなかった理由は決まったもの
+    - v0.99: 受けた記録のバトル場で受けた分は、合計以下の 10 の倍数（場所の分からない記録の写しは None）"""
     from .effects import ATTACK_ELEMENTS, DAMAGE_ELEMENT
     from .history import KEPT_TURNS, VOID_REASONS, history_needed
     from .state import ATTACK_HISTORY_TYPES, AttackReceived, AttackUsed
@@ -4328,6 +4329,9 @@ def _history_problems(state: GameState) -> list[str]:
                         problems.append(f"{label} の受けた要素・受けなかった理由が決まったものではない")
                     if record.damage and DAMAGE_ELEMENT not in record.reached:
                         problems.append(f"{label} のダメージがあるのに、受けた要素にダメージがない")
+                    # v0.99: 受けた時にバトル場にいた分（None は場所の分からない記録の写し）は、合計以下の 10 の倍数
+                    if record.active_damage is not None and (not 0 <= record.active_damage <= record.damage or record.active_damage % 10):
+                        problems.append(f"{label} のバトル場で受けたダメージが、受けたダメージの合計以下の 10 の倍数ではない")
                 for k in keys:
                     if state.effects.attack_entry(k[0], k[1]) is None:
                         problems.append(f"{label} のワザ {k!r} が効果の登録表にない")

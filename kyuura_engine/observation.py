@@ -289,7 +289,7 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay) -> dict[str, Any]:
         # これまでどおり書かない（ログからわかる）
         "devolved_turn": pokemon.devolved_turn,
         # v0.62（docs/history-attacks-v0.62.md 9 章）: ワザの履歴（使ったワザ・受けたワザと受けた結果・ワザ以外で受けたこと）。どれも表の情報（使った・受けたワザ、場のダメージと
-        # 効果）で、見えないカードを含まない。書き出しの形式 20 と同じ形
+        # 効果）で、見えないカードを含まない。書き出しの最新の形式と同じ形（v0.99: 形式 25 の受けた記録の、ダメージを受けた場所 ``active_damage``。場所は場の表の情報）
         "history": [history_record(record) for record in pokemon.history],
         "attacks": [
             {**_card(state, option.card), "attack_index": option.attack_index, "name_ja": attack_of(state, option.key).name_ja, "route": option.route,

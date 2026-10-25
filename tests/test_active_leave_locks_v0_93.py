@@ -763,7 +763,7 @@ class StateTest(unittest.TestCase):
         written = state_to_dict(marked, format_version=24)["players"][1]["active"]["persistent_effects"]
         self.assertEqual([(w["effect"], w.get("knockout_exception"), w.get("source_left"), w.get("while_source_active")) for w in written],
                          [("period_leave_lock", True, True, True)])
-        self.assertEqual(max(FORMAT_VERSIONS), 24)
+        self.assertIn(24, FORMAT_VERSIONS)  # v0.99: 今の最新の形式（25）は tests/test_catalog_contract.py。この版の項目は形式 24 で表す（形式を増やしていない）
         with self.assertRaises(ValueError):
             state_to_dict(done, format_version=7)
         for viewer in (0, 1):

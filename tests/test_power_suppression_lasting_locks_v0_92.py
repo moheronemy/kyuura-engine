@@ -957,7 +957,7 @@ class LifetimeTest(unittest.TestCase):
 
     def test_export_format_24_carries_the_new_kinds(self):
         """新しい種類は形式 24 の持続する効果・期限のある効果の値で表す（種類ごとの項目。v0.84・v0.86 と同じく形式は増やさない）。形式 1〜7 は持続する効果を表せないので拒否する。"""
-        self.assertEqual(max(FORMAT_VERSIONS), 24)
+        self.assertIn(24, FORMAT_VERSIONS)  # v0.99: 今の最新の形式（25）は tests/test_catalog_contract.py。この版の項目は形式 24 で表す（形式を増やしていない）
         looked = declare(board(mon(MURKROW, (DK,)), opponent=mon(H.CHANSEY, (W, W))), 0)
         written = state_to_dict(looked, format_version=24)["players"][1]["active"]["persistent_effects"]
         self.assertEqual([(w["effect"], w["end_turn"], w["source_pokemon"], w.get("while_source_active"), w.get("ends_on")) for w in written],

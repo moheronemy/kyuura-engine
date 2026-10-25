@@ -199,9 +199,11 @@ ALL_POWERS = (# v0.87（docs/movement-damage-reactions-v0.87.md）: ［どくの
               # v0.96: ［LAUGH］・［SEARCH］・［TELL］・［ZOOM］
               PowerKey("neo4-050", 0), PowerKey("neo4-051", 0), PowerKey("neo4-052", 0),
               PowerKey("neo4-053", 0),  # v0.98: ［VANISH］
+              PowerKey("neo4-058", 0),  # v0.99（docs/unown-perform-help-history-v0.99.md）: ［PERFORM］
               PowerKey("neo4-060", 0),
               PowerKey("neo4-061", 0),  # v0.95: ［わるぢえ］
               PowerKey("neo4-062", 0),  # v0.98: ［GIVE］
+              PowerKey("neo4-063", 0),  # v0.99: ［HELP］
               PowerKey("neo4-077", 0), PowerKey("neo4-094", 0), PowerKey("neo4-095", 0))
 
 
@@ -315,7 +317,7 @@ class PowerRegistryTest(unittest.TestCase):
         # v0.69 は 68（拡張パック以外の商品の同じカードの新しい id 10。tests/helpers.py の V0_69_POWER_CARDS）
         # v0.71 は 74（拡張パック以外の商品の再録のカード 6。tests/helpers.py の V0_71_POWER_CARDS）
         self.assertEqual(tuple(k.card_id for k in DEFAULT_EFFECTS.power_keys() if k not in ALL_POWERS), tuple(sorted(V0_69_POWER_CARDS + V0_71_POWER_CARDS)))
-        self.assertIn("137 powers", repr(DEFAULT_EFFECTS))  # v0.98 で 4 を加えた  # v0.97 で 5 を加えた  # v0.96 で 7 を加えた  # v0.95 で 2 を加えた  # v0.88 で 5 を加えた  # v0.87 で 14 を加えた  # v0.86 で 12 を加えた
+        self.assertIn("139 powers", repr(DEFAULT_EFFECTS))  # v0.99 で 2 を加えた  # v0.98 で 4 を加えた  # v0.97 で 5 を加えた  # v0.96 で 7 を加えた  # v0.95 で 2 を加えた  # v0.88 で 5 を加えた  # v0.87 で 14 を加えた  # v0.86 で 12 を加えた
 
     def test_power_is_not_an_attack(self):
         """ポケモンパワーはワザ（AttackEffect）の一種ではない。識別子もワザ（AttackKey）とは別で、同じカードの同じ位置のワザ

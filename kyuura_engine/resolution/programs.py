@@ -11134,3 +11134,29 @@ BUILDERS |= {
     # とりさる（エイパム）: 相手の場のポケモンについているトレーナーカードを 1 枚選び、相手の山札にもどして切る
     E.ReturnOpponentAttachedTrainerToDeck: lambda e: (ReturnAttachedTrainerToDeck(),),
 }
+
+
+# ---------------------------------------------------------------- v0.99（docs/unown-perform-help-history-v0.99.md）。前の相手の番に受けたダメージで追加するワザ
+
+
+@dataclass(frozen=True)
+class PlusIfDamagedLastOpponentTurn:
+    """ダメージの目安の数字 + （前の相手の番、このカードがワザによるダメージを受けていたなら ``bonus``）（v0.99。タッツーの「ひれがえし」。p.321 の 1 段階）。
+
+    - 「このカード」はワザを使うポケモン（``run.attacker()``。相手のワザとして使うときは使うポケモン）。読むのは前の相手の番（今の番の 1 つ前）の、このカードの受けた記録
+      （``history.received_on``）の最終ダメージの合計（バトル場・ベンチを問わない。0 は受けなかった）。今のダメージカウンター・場所・ログからは決めない"""
+
+    bonus: int
+    local_coins: ClassVar[int] = 0
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        from ..history import received_on
+
+        record = received_on(run.attacker(), run.state.turn_number - 1)
+        return run.attack.damage + (self.bonus if record is not None and record.damage > 0 else 0)
+
+
+BUILDERS |= {
+    # ひれがえし（タッツー）: 前の相手の番にワザによるダメージを受けていたら bonus を追加する
+    E.PlusIfDamagedByAttackLastOpponentTurn: lambda e: (Damage(OPP, PlusIfDamagedLastOpponentTurn(e.bonus)),),
+}

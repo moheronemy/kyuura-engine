@@ -158,7 +158,7 @@ class MarkerKindsTest(unittest.TestCase):
         self.assertIn(MARKER_LIGHTNING_ROD, MARKER_KINDS)
         self.assertEqual(MARKER_AND_COUNTER_KINDS[-2:], (COUNTER_BONE, "food"))
         state = board(mon(H.CHANSEY, markers=[MARKER_CHAR, MARKER_LIGHTNING_ROD]))
-        self.assertEqual(max(FORMAT_VERSIONS), 24)  # 新しい種類は形式 24 の markers の値（形式を増やさない）
+        self.assertIn(24, FORMAT_VERSIONS)  # 新しい種類は形式 24 の markers の値（形式を増やさない。v0.99: 今の最新の形式（25）は tests/test_catalog_contract.py）
         data = state_to_dict(state, format_version=24)
         self.assertEqual([m["kind"] for m in data["players"][0]["active"]["markers"]], [MARKER_CHAR, MARKER_LIGHTNING_ROD])
         with self.assertRaises(ValueError):

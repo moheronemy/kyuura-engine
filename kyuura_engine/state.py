@@ -977,6 +977,9 @@ class AttackReceived:
       選んだワザ。自分のワザなら ``declared`` と同じ）
     - C（実際に受けた結果）: ``damage``（受けたワザのダメージの最終ダメージの合計。のせた量）・``reached``（受けた要素の種類。``effects.ATTACK_ELEMENTS``。ダメージの
       計算の結果が 0 のダメージの要素も ``damage`` として入れる）・``voided``（受けなかった要素 (種類, 理由)。理由は ``history.VOID_*``）
+    - ``active_damage``（v0.99。docs/unown-perform-help-history-v0.99.md 3 章）: ``damage`` のうち、ダメージの要素を受けた時（のせた時）にこのポケモンが持ち主のバトル場に
+      いた分の合計（残りの ``damage - active_damage`` はベンチで受けた分）。受けた量は ``damage`` と同じ最終ダメージで、あとの回復・場所の移動では変えない。None は場所が
+      分からない記録（v0.98 までの記録の写し。``history.active_damage_received``）で、作り直さない。``history.note_received`` が作る記録は 0 から数える
     - ``turn``・``card``: 受けた番・受けたときのいちばん上のカード（``AttackUsed`` と同じ）
     """
 
@@ -989,6 +992,7 @@ class AttackReceived:
     damage: int = 0
     reached: tuple[str, ...] = ()
     voided: tuple[tuple[str, str], ...] = ()
+    active_damage: int | None = None
 
 
 @dataclass(frozen=True)

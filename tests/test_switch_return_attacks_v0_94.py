@@ -660,7 +660,7 @@ class StateTest(unittest.TestCase):
         for state in (asked, declined):
             for copied in (state.clone(), copy.deepcopy(state), pickle.loads(pickle.dumps(state))):
                 self.assertEqual(state_to_dict(copied, format_version=24), state_to_dict(state, format_version=24))
-        self.assertEqual(max(FORMAT_VERSIONS), 24)
+        self.assertIn(24, FORMAT_VERSIONS)  # v0.99: 今の最新の形式（25）は tests/test_catalog_contract.py。この版の項目は形式 24 で表す（形式を増やしていない）
         for viewer in (0, 1):
             self.assertIn("forced_switch_declined", [e["kind"] for e in visible_log(declined, viewer)])
         self.assertEqual(json.loads(json.dumps(state_to_dict(asked, format_version=24)))["decision"]["min_choices"], 0)

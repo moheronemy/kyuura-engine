@@ -12,6 +12,9 @@
 記録は状態に持ち（書き出しの形式 20）、ログ・過去のコマンドから作り直さない。過去のカードの uid を新しい対象として使わない（記録の uid は「このカード」の確かめにだけ使う）。
 履歴を読む効果のカードが対戦にあるときだけ記録する（``history_needed``。ないときは v0.61 と同じ状態）。
 
+v0.99（docs/unown-perform-help-history-v0.99.md 3 章）: 受けたダメージを、受けた時にバトル場にいた分（``AttackReceived.active_damage``）とベンチにいた分に分けて持つ（アンノーンP の
+［PERFORM］の「バトル場で相手のワザによるダメージを受けていたなら」。書き出しの形式 25）。履歴を読む効果に特殊能力（``PowerEffect.reads_history``）を加えた。
+
 このモジュールは ``engine.py``・``resolution`` を読み込まない（``state``・``effects`` だけ。``effects`` は使うときに読み込む）。
 """
 
@@ -19,6 +22,7 @@ from __future__ import annotations
 
 import dataclasses
 
+from .errors import UnsupportedError
 from .state import AttackReceived, AttackUsed, GameState, OtherReceived, PokemonInPlay
 
 # 受けなかった要素の理由（``AttackReceived.voided``）
@@ -37,11 +41,18 @@ KEPT_TURNS = 2
 
 
 def history_needed(state: GameState) -> bool:
-    """この対戦に、履歴を読むワザ（効果の登録の ``reads_history``）を持つカードがあるか。対戦のカードの定義（両方のデッキ）と効果の登録表から求める（状態に持たない）。
-    ないときは履歴を記録しない（v0.61 までと同じ状態・書き出し）。相手のカードのワザを自分のワザとして使う（「ゆびをふる」）ときも、そのワザは対戦のカードにある。"""
+    """この対戦に、履歴を読むワザ・特殊能力（効果の登録の ``reads_history``）を持つカードがあるか。対戦のカードの定義（両方のデッキ）と効果の登録表から求める（状態に持たない）。
+    ないときは履歴を記録しない（v0.61 までと同じ状態・書き出し）。相手のカードのワザを自分のワザとして使う（「ゆびをふる」）ときも、そのワザは対戦のカードにある。
+
+    v0.99: 特殊能力だけが履歴を読む対戦（アンノーンP の［PERFORM］）でも記録する。特殊能力がはたらいているか（かがくへんかガス・場所・特殊状態）では決めない（記録するのは対戦に
+    カードがあるかだけで決め、受けた時に特殊能力が消えていても、使う時にはたらいていれば読む）。"""
     for definition in state.definitions.values():
         for attack in definition.attacks:
             effect = state.effects.attack_effect(definition.id, attack, definition.attacks)
+            if effect is not None and getattr(effect, "reads_history", False):
+                return True
+        for power in definition.powers:
+            effect = state.effects.power_effect(definition.id, power)
             if effect is not None and getattr(effect, "reads_history", False):
                 return True
     return False
@@ -72,7 +83,10 @@ def note_processed(state: GameState, pokemon: PokemonInPlay, key) -> None:
 def note_received(state: GameState, *, attacker_player: int, source: int, declared, processed, owner: int, pokemon: PokemonInPlay,
                   damage: int | None = None, reached: str | None = None, voided: tuple[str, str] | None = None) -> None:
     """相手のワザの要素が ``pokemon``（``owner`` の場のポケモン）を対象にしたことを、受けた記録（B・C）に加える。番のプレイヤーのワザで、受けるポケモンの持ち主が
-    相手のときだけ記録する（自分へのダメージ・自分の控えへの効果・返す効果のダメージは記録しない）。1 つの番に受ける相手のワザは 1 つ（ワザは番に 1 回）。"""
+    相手のときだけ記録する（自分へのダメージ・自分の控えへの効果・返す効果のダメージは記録しない）。1 つの番に受ける相手のワザは 1 つ（ワザは番に 1 回）。
+
+    v0.99: ``damage``（のせた最終ダメージ。0 も受けた要素）は、のせた時に ``pokemon`` が持ち主のバトル場にいれば ``active_damage`` にも加える（ダメージの要素ごとに、その時の
+    場所で分ける。今の場所・あとの場所からは決めない）。"""
     if owner == attacker_player or attacker_player != state.current_player or not history_needed(state):
         return
     turn = state.turn_number
@@ -83,10 +97,12 @@ def note_received(state: GameState, *, attacker_player: int, source: int, declar
         if (record.player, record.source, record.declared, record.processed) != (attacker_player, source, _key(declared), _key(processed)):
             raise RuntimeError(f"ポケモン {pokemon.pokemon_id} が同じ番に 2 つの相手のワザを受けた（ワザは番に 1 回。エンジンの不具合）")
     else:
-        record = AttackReceived(turn, pokemon.card, attacker_player, source, _key(declared), _key(processed))
+        record = AttackReceived(turn, pokemon.card, attacker_player, source, _key(declared), _key(processed), active_damage=0)
         index = len(pokemon.history)
         pokemon.history = pokemon.history + (record,)
     if damage is not None:
+        if record.active_damage is not None and state.players[owner].active is pokemon:
+            record = dataclasses.replace(record, active_damage=record.active_damage + damage)
         record = dataclasses.replace(record, damage=record.damage + damage)
         if "damage" not in record.reached:
             record = dataclasses.replace(record, reached=record.reached + ("damage",))
@@ -138,6 +154,24 @@ def received_on(pokemon: PokemonInPlay, turn: int) -> AttackReceived | None:
     """``turn`` の番にこのポケモン（このカード）が受けた相手のワザの記録（なければ None）。"""
     found = [record for record in pokemon.history if isinstance(record, AttackReceived) and record.turn == turn and _this_card(pokemon, record)]
     return found[0] if found else None
+
+
+# v0.99: 受けたダメージの場所が分からない記録（v0.98 までの記録の写し。``AttackReceived.active_damage`` が None）を、場所で分けて読む必要があるとき。エンジンの持つ情報の
+# 不足で、研究上の未解決（裁定の問い）ではない
+DAMAGE_PLACE_UNKNOWN_CODE = "UNSUPPORTED_HISTORY_DAMAGE_PLACE_UNKNOWN"
+
+
+def damage_places(record: AttackReceived) -> tuple[int, int]:
+    """受けた記録の、ワザによるダメージの (バトル場で受けた分, ベンチで受けた分)（v0.99）。どちらも最終ダメージの合計で、0 は「受けなかった」（p.319・p.321）。
+
+    合計が 0 なら、場所が分からない記録でも (0, 0)（のせた量はどれも 0 以上なので、どの分け方でも 0）。合計が 0 より大きく場所が分からない記録は、バトル場・ベンチのどちらかに
+    寄せず（合計をバトル場の分・0 にしない）、``UnsupportedError``（``DAMAGE_PLACE_UNKNOWN_CODE``）。"""
+    if record.active_damage is None:
+        if record.damage == 0:
+            return 0, 0
+        raise UnsupportedError(DAMAGE_PLACE_UNKNOWN_CODE, f"受けた記録（{record.turn} 番・カード {record.card}）のダメージ {record.damage} を受けた場所が記録にない（v0.98 までの"
+                               "記録の写し）。バトル場で受けた分を、合計・0 で代用しない（エンジンの持つ情報の不足。docs/unown-perform-help-history-v0.99.md 6 章）")
+    return record.active_damage, record.damage - record.active_damage
 
 
 def other_received_on(pokemon: PokemonInPlay, turn: int) -> bool:
