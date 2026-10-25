@@ -27798,6 +27798,62 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.97 で加えた（docs/unown-research-idfnj-v0.97.md）。kyuura data/engine_targets.json（73a1690）の対象。めざめるパワー=DamageOnly（説明文のないワザ。超・10。文面・出典を持たない）。ルール文「「アンノーン」はデッキに4枚までしか入れることができません。」は、写しのこのカードの rules_text を根拠に、文字の違うアンノーンを合わせた枚数の上限として当てはめた（v0.96 の deck.deck_problems・CardDefinition.name_group。kyuura の CR-UNOWN-DECK-LIMIT-ALL-LETTERS（SUPPORTED）と同じ）。［JOIN］=SearchDeckWithBenchLettersToHand（［FIND］と同じ型で、条件は O・I・N、選べるのはたねポケモン・進化カード（ベイビィポケモンのカードは写しにない））。kyuura の日本語の文面は pcg-search.com の転記。レベル・英語の「Unown Dragon」は kyuura が直していない候補で、補っていない（日本語の処理には使わない）。外部照合はしていない"
+    },
+    "neo3-032": {
+      "basis": "kyuura_data",
+      "name_ja": "アンノーンB",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-25",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.98 で加えた（docs/unown-bear-yield-vanish-give-v0.98.md）。kyuura data/engine_targets.json（73a1690）の対象。めざめるパワー=DamageOnly（説明文のないワザ。超・10。文面・出典を持たない）。ルール文「「アンノーン」はデッキに4枚までしか入れることができません。」は、写しのこのカードの rules_text を根拠に、文字の違うアンノーンを合わせた枚数の上限として当てはめた（v0.96 の deck.deck_problems・CardDefinition.name_group。共通の規定の再利用で、kyuura の CR-UNOWN-DECK-LIMIT-ALL-LETTERS はこのカードを挙げていない（v0.97 の 5 枚と遺跡の石版の記録）。このカードを直接確かめた記録ではない）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id で確かめた。pcg-search の id はない）。kyuura の日本語の文面は wiki.pokemonwiki.com の転記（転記元のカード名称の「アンノーン[B]」の表記は、写しの名前「アンノーンB」を変えない。処理には使わない）。［BEAR］=MoveGroupCounterToSelf（自分の番ごとに 1 回。自分の場の今の姿が「アンノーン」のポケモン（相手の場・ほかの名前を除く。ベンチも）のダメージカウンター 1 個をこのカードにのせ替える。v0.42 のへんなこうどうと同じ移動の処理（ダメージの計算をしない。GR-2000-P320-COUNTER-MOVE の再利用）で、好きなだけ・回数の制限なしは持ち込まない。残りHPが 10 なら使えない。このカード自身から選ぶのは BE1、どのアンノーンにもカウンターがないのは BE2（UQ-CARD-USE-WITHOUT-TARGET と同じ形）。特殊状態の条件は日本語の文面にないので持ち込まない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo3-033": {
+      "basis": "kyuura_data",
+      "name_ja": "アンノーンY",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-25",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.98 で加えた（docs/unown-bear-yield-vanish-give-v0.98.md）。kyuura data/engine_targets.json（73a1690）の対象。めざめるパワー=DamageOnly（説明文のないワザ。超・10。文面・出典を持たない）。ルール文「「アンノーン」はデッキに4枚までしか入れることができません。」は、写しのこのカードの rules_text を根拠に、文字の違うアンノーンを合わせた枚数の上限として当てはめた（v0.96 の deck.deck_problems・CardDefinition.name_group。共通の規定の再利用で、kyuura の CR-UNOWN-DECK-LIMIT-ALL-LETTERS はこのカードを挙げていない（v0.97 の 5 枚と遺跡の石版の記録）。このカードを直接確かめた記録ではない）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id で確かめた。pcg-search の id はない）。kyuura の日本語の文面は wiki.pokemonwiki.com の転記（転記元のカード名称の「アンノーン[Y]」の表記は、写しの名前「アンノーンY」を変えない。処理には使わない）。［YIELD］=CoinAttachEnergyFromDeckToOwnPokemon（自分の番ごとに 1 回。コイン「おもて」なら山札の「超」の基本エネルギーカード 1 枚を自分の場の今の姿が「アンノーン」のポケモン（このカード・ベンチも）につけて山札を 1 回切る。「うら」は何もしない。山札のレインボーエネルギーは RB2、選べるカード・つけ先がなければ PW3（コインの前）。特殊状態の条件は日本語の文面にないので持ち込まない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo4-053": {
+      "basis": "kyuura_data",
+      "name_ja": "アンノーンV",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-25",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.98 で加えた（docs/unown-bear-yield-vanish-give-v0.98.md）。kyuura data/engine_targets.json（73a1690）の対象。めざめるパワー=DamageOnly（説明文のないワザ。超・10。文面・出典を持たない）。ルール文「「アンノーン」はデッキに4枚までしか入れることができません。」は、写しのこのカードの rules_text を根拠に、文字の違うアンノーンを合わせた枚数の上限として当てはめた（v0.96 の deck.deck_problems・CardDefinition.name_group。共通の規定の再利用で、kyuura の CR-UNOWN-DECK-LIMIT-ALL-LETTERS はこのカードを挙げていない（v0.97 の 5 枚と遺跡の石版の記録）。このカードを直接確かめた記録ではない）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id で確かめた。pcg-search の id はない）。kyuura の日本語の文面は wiki.pokemonwiki.com の転記（転記元のカード名称の「アンノーン[V]」の表記は、写しの名前「アンノーンV」を変えない。処理には使わない）。［VANISH］=CoinReturnOtherGroupToHandOnEntry（手札から場に出したときだけの機会。コイン「おもて」なら、自分の場のこのカード以外の今の姿が「アンノーン」のポケモン 1 匹について、ついているすべてのカードをトラッシュしてから、そのポケモンを手札にもどす。きぜつではない。このカード以外のアンノーンがいないのは VN1（UQ-CARD-USE-WITHOUT-TARGET と同じ形）。うらのカードは FD1、はなれられないバトル場のポケモンは AL2）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo4-062": {
+      "basis": "kyuura_data",
+      "name_ja": "アンノーンG",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-25",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.98 で加えた（docs/unown-bear-yield-vanish-give-v0.98.md）。kyuura data/engine_targets.json（73a1690）の対象。めざめるパワー=DamageOnly（説明文のないワザ。超・10。文面・出典を持たない）。ルール文「「アンノーン」はデッキに4枚までしか入れることができません。」は、写しのこのカードの rules_text を根拠に、文字の違うアンノーンを合わせた枚数の上限として当てはめた（v0.96 の deck.deck_problems・CardDefinition.name_group。共通の規定の再利用で、kyuura の CR-UNOWN-DECK-LIMIT-ALL-LETTERS はこのカードを挙げていない（v0.97 の 5 枚と遺跡の石版の記録）。このカードを直接確かめた記録ではない）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id で確かめた。pcg-search の id はない）。kyuura の日本語の文面は wiki.pokemonwiki.com の転記（転記元のカード名称の「アンノーン[G]」の表記は、写しの名前「アンノーンG」を変えない。処理には使わない）。［GIVE］=CoinAttachEnergyFromDeckToOwnPokemon（自分の番ごとに 1 回。このカードとアンノーン I・V・E が自分のベンチにいるとき（v0.97 の［FIND］・［JOIN］と同じ条件の共通処理）。コイン「おもて」なら山札の基本エネルギーカード 1 枚（特殊エネルギーを含めない）を自分の場のポケモン（アンノーンに限らない）につけて山札を 1 回切る。選べるカード・つけ先がなければ PW3（コインの前）。文面の半角のかぎかっこ「｢I｣｢V｣｢E｣」・「一回」は写しのまま）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
     }
   }
 }

@@ -17,6 +17,7 @@ from collections import Counter
 from kyuura_engine.cards import read_extract
 from scripts import check_card_sources as cs
 from tests import helpers as H
+from tests.release_catalog import cards_after
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 KYUURA = ROOT.parent / "kyuura"
@@ -64,7 +65,8 @@ class MigrationChainTest(unittest.TestCase):
         self.assertEqual((first["from"], first["to"], first["on"], first["document"]), (ECB, V069, "2026-10-19", "docs/equivalent-non-pack-cards-v0.69.md"))
         self.assertEqual((second["from"], second["to"], second["on"], second["document"]), (V069, NOW, "2026-10-25", "docs/unown-research-idfnj-v0.97.md"))
         # v0.96 までの採用の記録の採用したときのデータのコミットは、v0.68 までの 378 件が ecb2d69、v0.69〜v0.96 の 700 件が 7d3f4ca（過去の原典照合のカードの記録 4 件はコミットなし）
-        old = {card: r for card, r in sources["cards"].items() if card not in set(read_extract().get("pool_v0_97", ()))}
+        # v0.98: v0.97 から後の版で加えた採用の記録は、今の写しの元（73a1690）で採用したもの（``cards_after`` で切り出す。後続の組を列挙しない）
+        old = {card: r for card, r in sources["cards"].items() if card not in cards_after(read_extract(), "0.96")}
         self.assertEqual(Counter(r.get("kyuura_commit") for r in old.values()), {ECB: 378, V069: 700, None: 4})
         self.assertTrue(all(r["recorded_on"] <= "2026-10-24" for r in old.values() if "recorded_on" in r))
         # 外部照合の照らしたコミット・確認日も書き換えていない（移行の前のコミットか、今の写しのコミット。v0.97 の移行のあとの照合はない）

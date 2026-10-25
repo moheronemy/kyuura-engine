@@ -188,6 +188,7 @@ ALL_POWERS = (# v0.87（docs/movement-damage-reactions-v0.87.md）: ［どくの
               PowerKey("neo2-049", 0), PowerKey("neo3-009", 0), PowerKey("neo3-010", 0), PowerKey("neo3-021", 0),
               PowerKey("neo3-026", 0),  # v0.88: ［せんすい］
               PowerKey("neo3-029", 0),
+              PowerKey("neo3-032", 0), PowerKey("neo3-033", 0),  # v0.98（docs/unown-bear-yield-vanish-give-v0.98.md）: ［BEAR］・［YIELD］
               PowerKey("neo3-045", 0), PowerKey("neo3-051", 0),  # v0.88: ［でんじりょく］・［エナジーコンバーター］
               PowerKey("neo3-052", 0), PowerKey("neo4-012", 0),
               # v0.84（docs/light-powers-evolution-v0.84.md）: ［おいはらう］・［ふかふかなからだ］・［たすけだす］・［きせきのかぜ］・［おくりもの］
@@ -196,8 +197,11 @@ ALL_POWERS = (# v0.87（docs/movement-damage-reactions-v0.87.md）: ［どくの
               PowerKey("neo4-041", 0),
               PowerKey("neo4-046", 0),  # v0.86: ［かんでん］
               # v0.96: ［LAUGH］・［SEARCH］・［TELL］・［ZOOM］
-              PowerKey("neo4-050", 0), PowerKey("neo4-051", 0), PowerKey("neo4-052", 0), PowerKey("neo4-060", 0),
+              PowerKey("neo4-050", 0), PowerKey("neo4-051", 0), PowerKey("neo4-052", 0),
+              PowerKey("neo4-053", 0),  # v0.98: ［VANISH］
+              PowerKey("neo4-060", 0),
               PowerKey("neo4-061", 0),  # v0.95: ［わるぢえ］
+              PowerKey("neo4-062", 0),  # v0.98: ［GIVE］
               PowerKey("neo4-077", 0), PowerKey("neo4-094", 0), PowerKey("neo4-095", 0))
 
 
@@ -311,7 +315,7 @@ class PowerRegistryTest(unittest.TestCase):
         # v0.69 は 68（拡張パック以外の商品の同じカードの新しい id 10。tests/helpers.py の V0_69_POWER_CARDS）
         # v0.71 は 74（拡張パック以外の商品の再録のカード 6。tests/helpers.py の V0_71_POWER_CARDS）
         self.assertEqual(tuple(k.card_id for k in DEFAULT_EFFECTS.power_keys() if k not in ALL_POWERS), tuple(sorted(V0_69_POWER_CARDS + V0_71_POWER_CARDS)))
-        self.assertIn("133 powers", repr(DEFAULT_EFFECTS))  # v0.97 で 5 を加えた  # v0.96 で 7 を加えた  # v0.95 で 2 を加えた  # v0.88 で 5 を加えた  # v0.87 で 14 を加えた  # v0.86 で 12 を加えた
+        self.assertIn("137 powers", repr(DEFAULT_EFFECTS))  # v0.98 で 4 を加えた  # v0.97 で 5 を加えた  # v0.96 で 7 を加えた  # v0.95 で 2 を加えた  # v0.88 で 5 を加えた  # v0.87 で 14 を加えた  # v0.86 で 12 を加えた
 
     def test_power_is_not_an_attack(self):
         """ポケモンパワーはワザ（AttackEffect）の一種ではない。識別子もワザ（AttackKey）とは別で、同じカードの同じ位置のワザ

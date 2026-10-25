@@ -593,7 +593,9 @@ class RegistryImmutabilityTest(unittest.TestCase):
                                        # v0.96: アンノーンの特殊能力 7（docs/unown-family-powers-v0.96.md）
                                        *(PowerKey(card, 0) for card in ("PF2-002", "PF2-003", "PRN-035", "neo4-050", "neo4-051", "neo4-052", "neo4-060")),
                                        # v0.97: アンノーンの特殊能力 5（docs/unown-research-idfnj-v0.97.md）
-                                       *(PowerKey(card, 0) for card in ("neo2-023", "neo2-025", "neo2-026", "PF2-001", "PRN-034"))))))
+                                       *(PowerKey(card, 0) for card in ("neo2-023", "neo2-025", "neo2-026", "PF2-001", "PRN-034")),
+                                       # v0.98: アンノーンの特殊能力 4（docs/unown-bear-yield-vanish-give-v0.98.md）
+                                       *(PowerKey(card, 0) for card in ("neo3-032", "neo3-033", "neo4-053", "neo4-062"))))))
 
 
 if __name__ == "__main__":

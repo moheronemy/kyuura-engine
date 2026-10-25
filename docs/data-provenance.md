@@ -1955,6 +1955,25 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.98: アンノーンB・Y・V・G の 4 枚
+
+[unown-bear-yield-vanish-give-v0.98.md](unown-bear-yield-vanish-give-v0.98.md)。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534` のまま（今回の追加を理由に上げていない）。写しの組 `pool_v0_98`（4 枚）を加え、写しの作り直しの道具で作った
+  （手で直していない）。v0.97 までの 1,174 枚の値・移行の記録（`source_migrations`・`data_migrations`）は変わっていない。
+- 4 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-25・外部照合なし）。研究の基準に 4 枚を指す LD-・CC-・CR-・UQ-・エラッタはなく（カードの id で
+  確かめた。pcg-search の id はない）、`kyuura_records` は空。特殊能力 4 は `power/0` の印刷の文面（研究の対応表の `adopted_printed_text` に加えた）。説明文のないワザ（めざめるパワー 4）は
+  文面・出典を持たない。`card_verification.json` には加えていない。
+- デッキの「文字を合わせて 4 枚まで」・カウンターの移動はダメージではないこと（GR-2000-P320-COUNTER-MOVE）は、ほかのカードの記録・共通の規定の再利用で、この 4 枚を直接確かめた記録では
+  ない（kyuura の CR-UNOWN-DECK-LIMIT-ALL-LETTERS が挙げるのは v0.97 の 5 枚と遺跡の石版）。
+- 日本語の文面の転記元は wiki.pokemonwiki.com（4 枚とも）。転記元の「カード名称」の「アンノーン[B]」などの書き方は、写しの名前（「アンノーンB」）を変えない（カード名の表記の問題は範囲外）。
+  外部照合・カードの画像の照合・公式の書籍の新しい照合はしていない。
+- 新しい停止コード 3 件（BE1 `UNRESOLVED_POWER_COUNTER_MOVE_TO_SAME_POKEMON`・BE2 `UNRESOLVED_POWER_COUNTER_MOVE_WITHOUT_COUNTERS`・VN1 `UNRESOLVED_POWER_RETURN_WITHOUT_TARGET`。どれも
+  `not_in_kyuura`）を研究の対応表の `stop_codes` に加えた（停止コード 224 → 227・未解決の裁定 225 → 228）。kyuura の論点の事例のうちエンジンの裁定 id のないもの（`kyuura_cases_without_engine_ruling`）
+  は kyuura と同じまま（4 枚の事例は kyuura にない）。
+- 報告事項（kyuura の作業）: `UQ-CARD-USE-WITHOUT-TARGET` の事例に［BEAR］（BE2）・［VANISH］（VN1）・［YIELD］・［GIVE］（PW3）がない。BE1 の論点がない。engine_targets.json の 4 枚の
+  `engine_status`（`new_effect_needed`）を v0.98 の登録で写すと `registered` になる（docs 10 章）。
+
 ## v0.97: 写しの元・研究の基準を kyuura 73a1690 に上げる移行
 
 [unown-research-idfnj-v0.97.md](unown-research-idfnj-v0.97.md) の 2 章・3 章。

@@ -2353,6 +2353,14 @@ POOL_V0_97 = [
     "PRN-034",  # アンノーン[J]（JOIN・めざめるパワー）
 ]
 
+# v0.98（docs/unown-bear-yield-vanish-give-v0.98.md）: アンノーンB・Y・V・G の 4 枚（ワザ 4・特殊能力 4）。写しの元・研究の基準は v0.97 と同じ 73a1690
+POOL_V0_98 = [
+    "neo3-032",  # アンノーンB（BEAR・めざめるパワー）
+    "neo3-033",  # アンノーンY（YIELD・めざめるパワー）
+    "neo4-053",  # アンノーンV（VANISH・めざめるパワー）
+    "neo4-062",  # アンノーンG（GIVE・めざめるパワー）
+]
+
 POOLS = [
     ("pool_v0_1", POOL_V0_1),
     ("pool_v0_2b", POOL_V0_2B),
@@ -2456,6 +2464,7 @@ POOLS = [
     ("pool_v0_95", POOL_V0_95),
     ("pool_v0_96", POOL_V0_96),
     ("pool_v0_97", POOL_V0_97),
+    ("pool_v0_98", POOL_V0_98),
 ]
 
 

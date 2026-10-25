@@ -192,7 +192,7 @@ class RegistrationTest(unittest.TestCase):
         self.assertEqual((codes[DF2]["kyuura_issue"], codes[DF2]["kyuura_disposition"]), ("UQ-NON-ATTACK-DAMAGE-MODIFIERS", "issue_not_in_index"))
         self.assertEqual((codes[SS1]["kyuura_issue"], codes[SS1]["kyuura_disposition"], codes[SS1]["kyuura_index_engine_key"]), ("UQ-SPEED-STAR-SCOPE", "issue", "SS1"))
         self.assertNotIn("speed_star_scope", links["codeless_questions"])
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (224, 225))
+        # 停止コード・未解決の裁定の今の総数は tests/test_catalog_contract.py（v0.98 で、版ごとのテストに重ねていた今の総数の確かめを外した）
         cases = {(c["kyuura_issue"], c["card_id"]): c for c in links["kyuura_cases_without_engine_ruling"]["cases"]}
         for card in (UI, UF, UJ):  # 候補なしは v0.43 の PW3 を使う（kyuura の一覧では PW3 は UQ-UP-TO-ZERO-CHOICE。kyuura への報告事項）
             self.assertEqual((cases[("UQ-CARD-USE-WITHOUT-TARGET", card)]["engine"], cases[("UQ-CARD-USE-WITHOUT-TARGET", card)]["engine_issue_differs"]),

@@ -143,7 +143,10 @@ class ResearchLinksTest(unittest.TestCase):
                              "UNRESOLVED_LEAVE_LOCK_KNOCKOUT", "UNRESOLVED_LEAVE_LOCK_NO_EFFECT", "UNRESOLVED_LEAVE_LOCK_SCRAM", "UNRESOLVED_JAW_CLAMP_SOURCE_RETURNED",
                              "UNRESOLVED_JAW_CLAMP_SOURCE_EVOLVED", "UNRESOLVED_CLAMPING_JAW_SOURCE_DEVOLVED",
                              # v0.96: EG1・OB1（docs/unown-family-powers-v0.96.md 9 章）
-                             "UNRESOLVED_ENGAGE_EMPTY_HAND", "UNRESOLVED_POWER_DECK_TOP_SHORT"})
+                             "UNRESOLVED_ENGAGE_EMPTY_HAND", "UNRESOLVED_POWER_DECK_TOP_SHORT",
+                             # v0.98: BE1・BE2・VN1（docs/unown-bear-yield-vanish-give-v0.98.md 7 章。BE2・VN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形だが、kyuura の事例にない）
+                             "UNRESOLVED_POWER_COUNTER_MOVE_TO_SAME_POKEMON", "UNRESOLVED_POWER_COUNTER_MOVE_WITHOUT_COUNTERS",
+                             "UNRESOLVED_POWER_RETURN_WITHOUT_TARGET"})
         # v0.97（docs/unown-research-idfnj-v0.97.md 3 章）: kyuura が調査で立てた UQ-SELF-EXCLUDING-POWER-COPIES の事例にわるいデンリュウ（neo4-046）の［かんでん］があるので、
         # CV1 を論点に結んだ（kyuura は v0.86 を取り込んでいないので、未解決の一覧に CV1 の行はない。kyuura の事例は kyuura_cases_without_engine_ruling で照らす）
         # v0.97 で加えた DF1・DF2 も、kyuura に論点（UQ-SELF-EXCLUDING-POWER-COPIES・UQ-NON-ATTACK-DAMAGE-MODIFIERS）はあるが、未解決の一覧に行がない

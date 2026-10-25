@@ -119,7 +119,7 @@ from .decisions import (
     SEARCH_DECK_OR_DISCARD, TAKE_LOOKED_POKEMON, SELECT_OPPONENT_PRIZE, TAKE_LOOKED_TRAINER,
     EVOLUTION_SONG_POKEMON,
 )
-from .errors import IllegalActionError, UnsupportedError
+from .errors import SECRET_PLAN_HIDDEN_CODE, IllegalActionError, UnsupportedError
 from .markers import color_marker, has_marker, marker_count
 from .evolution import (
     DEVOLVE_TO_DISCARD,
@@ -38284,6 +38284,21 @@ def bench_group_letters(state: GameState, player: int, group: str, *, excluding:
                      if pokemon.pokemon_id != excluding and not state.is_face_down(pokemon) and in_name_group(state, pokemon, group))
 
 
+def require_bench_letters(state: GameState, use: PowerUse, letters: Iterable[str], group: str) -> None:
+    """「この力は、自分のベンチに、このカードとアンノーン「…」がいるとき…使える」の条件（v0.98 で v0.97 の［FIND］・［JOIN］の ``check_usable`` から分けた。［GIVE］も使う。動き・
+    拒否のコードは v0.97 と同じ）。このカード（``use.pokemon_id``）が自分のベンチにいる（``POKEMON_NOT_ON_BENCH``）ことと、自分のベンチのほかのポケモンに、今の姿の名前のグループが
+    ``group`` で文字が ``letters`` のそれぞれのポケモンがいること（``REQUIRED_BENCH_POKEMON_MISSING``。相手の場・バトル場は数えない）。うらのカードは、おもてのポケモンで足りないとき
+    だけ読む（読むと FD1）。回数の制限・ほかの条件は呼ぶ側が確かめる。"""
+    if not any(pokemon.pokemon_id == use.pokemon_id for pokemon in state.players[use.player].bench):
+        raise IllegalActionError("POKEMON_NOT_ON_BENCH", f"ポケモン {use.pokemon_id} はベンチにいない（この力は、自分のベンチにこのカードがいるときに使える）")
+    missing = set(letters) - bench_group_letters(state, use.player, group, excluding=use.pokemon_id)
+    if missing:
+        hidden = [pokemon for pokemon in state.players[use.player].bench if pokemon.pokemon_id != use.pokemon_id and state.is_face_down(pokemon)]
+        for pokemon in hidden:
+            form_def(state, pokemon).name_group  # noqa: B018  うらのカードの名前のグループ・文字は読めない（FD1。``HiddenPropertyRead``）
+        raise IllegalActionError("REQUIRED_BENCH_POKEMON_MISSING", f"自分のベンチに、このカードのほかに{group}「{'」「'.join(sorted(missing))}」がいない（この力の条件）")
+
+
 @dataclass(frozen=True)
 class SearchDeckWithBenchLettersToHand(PowerEffect):
     """この力は、自分のベンチに、このカードとアンノーン「``letters``」がいるとき、自分の番ごとに 1 回使える。自分の山札から ``what`` のカードを 1 枚選び出し、相手プレイヤーに見せてから、
@@ -38317,15 +38332,7 @@ class SearchDeckWithBenchLettersToHand(PowerEffect):
     def check_usable(self, state: GameState, use: PowerUse) -> None:
         _require_no_choices(use)
         require_power_not_used(state, use)
-        if not any(pokemon.pokemon_id == use.pokemon_id for pokemon in state.players[use.player].bench):
-            raise IllegalActionError("POKEMON_NOT_ON_BENCH", f"ポケモン {use.pokemon_id} はベンチにいない（この力は、自分のベンチにこのカードがいるときに使える）")
-        missing = set(self.letters) - bench_group_letters(state, use.player, self.group, excluding=use.pokemon_id)
-        if missing:
-            hidden = [pokemon for pokemon in state.players[use.player].bench if pokemon.pokemon_id != use.pokemon_id and state.is_face_down(pokemon)]
-            for pokemon in hidden:
-                form_def(state, pokemon).name_group  # noqa: B018  うらのカードの名前のグループ・文字は読めない（FD1。``HiddenPropertyRead``）
-            raise IllegalActionError("REQUIRED_BENCH_POKEMON_MISSING",
-                                     f"自分のベンチに、このカードのほかに{self.group}「{'」「'.join(sorted(missing))}」がいない（この力の条件）")
+        require_bench_letters(state, use, self.letters, self.group)  # v0.98: ［GIVE］と共通にした（動きは v0.97 と同じ）
         if not self.options(state, use):
             raise _power_zero_cards("山札に選べるカードがない（山札 0 枚を含む。kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例）")
 
@@ -38443,3 +38450,314 @@ V0_97_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_97_ATTACKS), V0_97_POWERS)
+
+
+# ---------------------------------------------------------------- v0.98（docs/unown-bear-yield-vanish-give-v0.98.md）: アンノーンB・Y・V・G の 4 枚
+#
+# 写しの元・研究の基準は v0.97 のまま（kyuura 73a1690）。4 枚を指す LD-・CC-・CR-・UQ-・エラッタはない（kyuura の記録の id・カード id で確かめた）ので、処理に使う文面は kyuura の印刷の
+# 文面（名前・文面・括弧・「一回」は写しの表記のまま）。「アンノーン」は場のポケモンの今の姿のカードの名前のグループ（``in_name_group``）、文字は v0.97 の ``bench_group_letters`` で決める
+
+BEAR_TEXT = ("この力は、自分の番ごとに1回使うことができる。自分の場の「{group}」にのっているダメージカウンターを1個選び、このカードにのせ替える。このカードの残りHPが「{hp}」のとき、"
+             "この力を使うことはできない。")
+# BE1: ［BEAR］で、のせ替える元にこのカード自身を選ぶ（「自分の場の「アンノーン」」はこのカードを除くと書かれていない。ほかのカードの「別のポケモン」「このカード以外」は写さない）
+COUNTER_MOVE_SAME_POKEMON_CODE = "UNRESOLVED_POWER_COUNTER_MOVE_TO_SAME_POKEMON"
+COUNTER_MOVE_SAME_POKEMON_REASON = (
+    "「自分の場の「アンノーン」にのっているダメージカウンターを1個選び、このカードにのせ替える」（アンノーンB の［BEAR］）で、このカード自身にのっているダメージカウンターを選べるか"
+    "（選んだら、のせ替えずに使ったことになるのか）は、印刷の文面（このカードを除くと書かれていない）・kyuura の記録から決められないので扱わない（BE1。ダメージスワップ・のろいの"
+    "「別のポケモン」、へんなこうどうの読み方を写さない）"
+)
+# BE2: ［BEAR］で、自分の場のどの「アンノーン」にもダメージカウンターがのっていないとき（kyuura の UQ-CARD-USE-WITHOUT-TARGET と同じ形の、別のカードの問い）
+COUNTER_MOVE_WITHOUT_COUNTERS_CODE = "UNRESOLVED_POWER_COUNTER_MOVE_WITHOUT_COUNTERS"
+COUNTER_MOVE_WITHOUT_COUNTERS_REASON = (
+    "自分の場のどの「アンノーン」にもダメージカウンターがのっていないときに、アンノーンB の［BEAR］を使えるか（自分の番ごとに1回を使ったことになるか）は、印刷の文面・kyuura の記録から"
+    "決められないので扱わない（BE2。kyuura の UQ-CARD-USE-WITHOUT-TARGET と同じ形の、別のカードの問い。ヒーリングの HC8・かおりのわなの PW1 の答えを流用しない）"
+)
+
+
+@dataclass(frozen=True)
+class MoveGroupCounterToSelf(PowerEffect):
+    """この力は、自分の番ごとに 1 回使うことができる。自分の場の「``group``」にのっているダメージカウンターを 1 個選び、このカードにのせ替える。このカードの残りHPが「10」のとき、
+    この力を使うことはできない（v0.98。アンノーンB（neo3-032）の［BEAR］。kyuura の印刷の文面。docs 3 章）。
+
+    - 宣言して使う。自分の番ごとに 1 回（``once_per_turn``。宣言のときに記録する）。日本語の文面に特殊状態の条件はない（ほかの特殊能力の条件を写さない）。特殊能力を消す効果は共通の確かめ
+    - 選ぶのは ``source``（移動元。自分の場（バトル場・ベンチ）の、今の姿の名前のグループが「``group``」でダメージカウンターがのっているポケモン）だけ。移動先はいつもこのカード
+      （``target``・``energy`` は ``POWER_CHOICE_NOT_USED``）。相手の場・ほかの名前のポケモンからは移さない
+    - 1 回の使用で 1 個（「1個選び」）。v0.42 のへんなこうどう（``MoveDamageCounterToSelf``。好きなだけ・回数の制限なし）と同じ ``_move_one_counter`` で、ダメージの計算をしない
+      （「ダメージを受けた」ことにならない。弱点・抵抗力・［DARK df］・［NORMAL df］・ダメージを受けたときの効果は通らない。GR-2000-P320-COUNTER-MOVE）
+    - このカードの残りHP（今有効な最大HP − ダメージ。``max_hp``）が「10」なら使えない（``REMAINING_HP_10``。状態を変える前）。20 なら使えて、のせ替えたあとは 10
+    - 移動元にこのカード自身を選ぶのは BE1（その選択だけを止める。ほかのアンノーンからの移動は止めない）。自分の場のどのアンノーンにもカウンターがのっていない（移動元を指定できない）
+      ときに使うのは BE2（kyuura の UQ-CARD-USE-WITHOUT-TARGET と同じ形）。うらのカードはダメージがない（v0.67）ので、移動元にならない
+    """
+
+    group: str = "アンノーン"
+    remaining_hp: int = 10
+    implementation_id = "move_group_counter_to_self"
+    once_per_turn: ClassVar[bool] = True
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "自分の場の名前のグループのポケモンのダメージカウンターを 1 個このカードにのせ替える特殊能力",
+                                 (BEAR_TEXT.format(group=self.group, hp=self.remaining_hp),))
+
+    def sources(self, state: GameState, player: int) -> tuple[int, ...]:
+        """移動元に選べるポケモン（自分の場の、ダメージカウンターがのっている、今の姿の名前のグループが「``group``」のポケモン。バトル場 → ベンチ。このカードも含む）。"""
+        per = state.rules.damage_per_counter
+        return tuple(pokemon.pokemon_id for pokemon in state.players[player].in_play()
+                     if pokemon.damage >= per and not state.is_face_down(pokemon) and in_name_group(state, pokemon, self.group))
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        if use.energy is not None or use.target is not None:
+            raise IllegalActionError("POWER_CHOICE_NOT_USED", "この特殊能力の移動先はこのカードなので、エネルギー（energy）・移動先（target）は指定しない")
+        require_power_not_used(state, use)
+        _, user = state.find_pokemon(use.pokemon_id)
+        if max_hp(state, user) - user.damage == self.remaining_hp:
+            raise IllegalActionError("REMAINING_HP_10", f"このカード（ポケモン {use.pokemon_id}）の残りHPが「{self.remaining_hp}」なので、この力を使うことはできない（説明）")
+        if use.source is None:
+            if self.sources(state, use.player):
+                raise IllegalActionError("POWER_CHOICE_MISSING", "ダメージカウンターの移動元（source。自分の場の「アンノーン」）を指定する（移動先はこのカード）")
+            raise UnsupportedError(COUNTER_MOVE_WITHOUT_COUNTERS_CODE, COUNTER_MOVE_WITHOUT_COUNTERS_REASON)
+        source = _own_pokemon(state, use, use.source, "SOURCE")
+        if source.damage < state.rules.damage_per_counter:
+            raise IllegalActionError("NO_DAMAGE_COUNTERS", f"移動元のポケモン {use.source} にダメージカウンターがのっていない")
+        if not in_name_group(state, source, self.group):
+            raise IllegalActionError("SOURCE_NOT_IN_GROUP", f"移動元のポケモン {use.source} は「{self.group}」ではない（今の姿のカードの名前のグループ）")
+        if source is user:
+            raise UnsupportedError(COUNTER_MOVE_SAME_POKEMON_CODE, COUNTER_MOVE_SAME_POKEMON_REASON)
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        _, user = state.find_pokemon(use.pokemon_id)
+        _, source = state.find_pokemon(use.source)
+        _move_one_counter(state, use, source, user)
+
+
+YIELD_TEXT = ("この力は、自分の番ごとに1回使うことができる。コインを投げて「おもて」なら、自分の山札から「{type}」エネルギーカードを1枚選び出し、自分の場の「{group}」につける。"
+              "その後、その山札をよく切る。")
+GIVE_TEXT = ("この力は、自分のベンチに、このカードとアンノーン｢{letters}｣がいるとき、自分の番ごとに一回使うことができる。コインを投げて「おもて」なら、自分の山札から"
+             "「基本エネルギーカード」を1枚選び出し、自分の場のポケモンにつける。その後、その山札をよく切る。")
+HIDDEN_GROUP_REASON = "うらにしてベンチに出したカード（マチスの秘策）の名前のグループは、おもてにしないまま読めない（FD1。「自分の場の「アンノーン」」に当たるかが決まらない）"
+
+
+@dataclass(frozen=True)
+class CoinAttachEnergyFromDeckToOwnPokemon(PowerEffect):
+    """自分の番ごとに 1 回、コインを投げて「おもて」なら、自分の山札から ``energy`` のカードを 1 枚選び出し、自分の場のポケモン（``group`` があれば、今の姿の名前のグループが
+    ``group`` のポケモン）につける。その後、その山札をよく切る（v0.98。アンノーンY（neo3-033）の［YIELD］（「超」エネルギーカード・自分の場の「アンノーン」）・アンノーンG（neo4-062）の
+    ［GIVE］（「基本エネルギーカード」・自分の場のポケモン。自分のベンチにこのカードとアンノーン｢I｣｢V｣｢E｣がいるとき）。kyuura の印刷の文面。docs 4 章）。
+
+    - 宣言して使う。自分の番ごとに 1 回（``once_per_turn``。宣言のときに記録するので「うら」でも使ったことになる）。日本語の文面に特殊状態の条件はない。特殊能力を消す効果は共通の確かめ
+    - ``letters`` があれば、v0.97 の［FIND］・［JOIN］と同じ条件（``require_bench_letters``。このカードが自分のベンチにいて、ほかのベンチのポケモンにその文字のアンノーンがそろう）
+    - 宣言のあとコインを 1 回（再開で投げ直さない）。「うら」なら何もしない（山札を見ない・つけない・切らない）
+    - 「おもて」なら、山札の ``energy`` のカード（uid の小さい順。［YIELD］は「超」の基本エネルギーカード、［GIVE］はすべての基本エネルギーカード）を 1 枚選ぶ決定 ``ATTACH_FROM_DECK``
+      → つける自分の場のポケモン（バトル場 → ベンチ。このカードも。エネルギーカードをつけられないポケモン（クリスタルビーム）は選べない）を 1 匹選ぶ決定 ``SELECT_POKEMON`` → 山札から直接
+      つける（``zones.attach_from_deck``。手札を通さない・手札からつける通常の操作・特殊能力でつけた枚数に数えない。つけたときの特殊エネルギーの効果はない）→ ログ ``power_attach_from_deck``
+      （公開）→ つけたあとの特殊能力（``after_energy_attached``）→ 山札を 1 回切る（ログ ``shuffle`` の ``power``）。選べるものの数は決めるプレイヤーだけが見る
+    - 山札に選べるカードがない（山札 0 枚を含む）・つけられるポケモンがいないときは、v0.85 の［ファイヤーリチャージ］と同じく宣言の前（コインの前）に PW3（kyuura の
+      UQ-CARD-USE-WITHOUT-TARGET の事例の形。空振り・0 枚の答えは許さない）
+    - 山札のレインボーエネルギーを「「超」エネルギーカード」として選べるかは RB2（選べるが選ぶと止める。それしかなければコインの前に止める）。「基本エネルギーカード」には入らない
+      （手札・山札・トラッシュの特殊エネルギーカードは基本エネルギーカードではない。RB3 の理由）。ミラクルエネルギーは場の外で色がない（v0.85）ので「「超」エネルギーカード」に入らない
+    - ``group`` のつける先に、うらのカード（マチスの秘策）は名前のグループを読めないので、選べるが選ぶと止める（FD1）。``group`` がなければ、うらのカードもポケモンとして選べる（選んだら
+      共通の処理がおもてにする。``engine._designate_answer``）
+    """
+
+    energy: CardFilter
+    text: str
+    group: str | None = None
+    letters: tuple[str, ...] = ()
+    bench_group: str = "アンノーン"
+    implementation_id = "coin_attach_energy_from_deck_to_own_pokemon"
+    once_per_turn: ClassVar[bool] = True
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "コインで山札のエネルギーカードを自分の場のポケモンにつける特殊能力", (self.text,))
+
+    def cards(self, state: GameState, player: int) -> tuple[tuple[int, ...], tuple[int, ...]]:
+        """(選べるカード, そのうちの選ぶと止めるレインボーエネルギー)。山札にあるあいだの印刷の定義で決める（uid の小さい順。山札の並びを決定に写さない）。"""
+        options = set(deck_cards_matching(state, player, self.energy))
+        rainbow: tuple[int, ...] = ()
+        if self.energy.energy_type is not None:
+            rainbow = tuple(sorted(rainbow_cards_in(state, state.players[player].deck)))
+        return tuple(sorted(options | set(rainbow))), rainbow
+
+    def targets(self, state: GameState, player: int) -> tuple[tuple[int, ...], tuple[int, ...]]:
+        """(つけられる自分の場のポケモン, そのうちの選ぶと止めるうらのカード)（バトル場 → ベンチ）。"""
+        options, hidden = [], []
+        for pokemon in state.players[player].in_play():
+            if energy_attach_block(state, pokemon) is not None:
+                continue
+            if self.group is not None and state.is_face_down(pokemon):
+                hidden.append(pokemon.pokemon_id)
+            elif self.group is not None and not in_name_group(state, pokemon, self.group):
+                continue
+            options.append(pokemon.pokemon_id)
+        return tuple(options), tuple(hidden)
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+        if self.letters:
+            require_bench_letters(state, use, self.letters, self.bench_group)
+        cards, rainbow = self.cards(state, use.player)
+        targets, hidden = self.targets(state, use.player)
+        if not cards:
+            raise _power_zero_cards("山札に選べるエネルギーカードがない（山札 0 枚を含む。kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例の形）")
+        if not targets:
+            raise _power_zero_cards("自分の場に、エネルギーカードをつけられるポケモンがいない（kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例の形）")
+        if len(rainbow) == len(cards):
+            raise rainbow_attach_error(self.energy.energy_type, rainbow)
+        if len(hidden) == len(targets):
+            from .errors import HiddenPropertyRead
+
+            raise HiddenPropertyRead("名前")
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        if _power_coin(state, use) is not CoinSide.HEADS:
+            return
+        cards, rainbow = self.cards(state, use.player)
+        extra = {} if not rainbow else {"unresolved_choices": rainbow, "unresolved_code": RAINBOW_ATTACH_CODE,
+                                        "unresolved_reason": RAINBOW_ATTACH_REASON.format(type=self.energy.energy_type.ja)}
+        push_power_decision(state, use, kind=ATTACH_FROM_DECK, player=use.player, options=cards, context=(("stage", "card"),), **extra)
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if decision.context_value("stage") == "card":
+            (card,) = choices
+            cards, rainbow = self.cards(state, use.player)
+            if card not in cards or card in rainbow:
+                raise RuntimeError(f"特殊能力 {use.key} で選んだカード {card} が、山札の選べるエネルギーカードではない（決定の確認の漏れ。エンジンの不具合）")
+            targets, hidden = self.targets(state, use.player)
+            extra = {} if not hidden else {"unresolved_choices": hidden, "unresolved_code": SECRET_PLAN_HIDDEN_CODE, "unresolved_reason": HIDDEN_GROUP_REASON}
+            push_power_decision(state, use, kind=SELECT_POKEMON, player=use.player, options=targets, context=(("stage", "target"), ("card", card)), **extra)
+            return
+        card = decision.context_value("card")
+        (target,) = choices
+        targets, hidden = self.targets(state, use.player)
+        if card not in self.cards(state, use.player)[0] or target not in targets or target in hidden:
+            raise RuntimeError(f"特殊能力 {use.key} のつけるカード {card}・つける先 {target} が選べるものではない（決定の確認の漏れ。エンジンの不具合）")
+        _, pokemon = state.find_pokemon(target)
+        attach_from_deck(state, use.player, card, pokemon)
+        state.add_event("power_attach_from_deck", player=use.player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, power=str(use.key), card=card,
+                        user_pokemon_id=use.pokemon_id)
+        after_energy_attached(state, use.player, pokemon, card)
+        shuffle_deck(state, use.player, power=str(use.key))
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        cards, rainbow = self.cards(state, use.player)
+        if decision.context_value("stage") == "card":
+            return _power_decision_form(decision, use, kind=ATTACH_FROM_DECK, choices=(1, 1), options=cards, unresolved=rainbow)
+        if decision.context_value("stage") == "target":
+            targets, hidden = self.targets(state, use.player)
+            problems = _power_decision_form(decision, use, kind=SELECT_POKEMON, choices=(1, 1), options=targets, unresolved=hidden)
+            if decision.context_value("card") not in cards or decision.context_value("card") in rainbow:
+                problems.append(f"特殊能力 {use.key} の決定の続きのつけるカード {decision.context_value('card')!r} が、山札の選べるエネルギーカードではない")
+            return problems
+        return [f"特殊能力 {use.key} の決定の段階 {decision.context_value('stage')!r} が正しくない"]
+
+
+VANISH_TEXT = ("この力は、このカードを手札から場に出したとき、1回だけ使うことができる。コインを投げて「おもて」なら、自分の場の、このカード以外の「{group}」を1匹選ぶ。その後、その"
+               "「{group}」についているすべてのカードをトラッシュし、その「{group}」を自分の手札にもどす。")
+# VN1: ［VANISH］で、自分の場にこのカード以外の「アンノーン」がいないとき（kyuura の UQ-CARD-USE-WITHOUT-TARGET と同じ形の、別のカードの問い）
+RETURN_WITHOUT_TARGET_CODE = "UNRESOLVED_POWER_RETURN_WITHOUT_TARGET"
+RETURN_WITHOUT_TARGET_REASON = (
+    "自分の場にこのカード以外の「アンノーン」がいないときに、アンノーンV の［VANISH］を使えるか（コインを投げて、「おもて」なら選ぶものがないまま使い終わるのか）は、印刷の文面・kyuura の"
+    "記録から決められないので扱わない（VN1。kyuura の UQ-CARD-USE-WITHOUT-TARGET と同じ形の、別のカードの問い。かおりのわなの PW1 の答えを流用しない）"
+)
+
+
+@dataclass(frozen=True)
+class CoinReturnOtherGroupToHandOnEntry(EntryPower):
+    """この力は、このカードを手札から場に出したとき、1 回だけ使うことができる。コインを投げて「おもて」なら、自分の場の、このカード以外の「``group``」を 1 匹選ぶ。その後、その
+    「``group``」についているすべてのカードをトラッシュし、その「``group``」を自分の手札にもどす（v0.98。アンノーンV（neo4-053）の［VANISH］。kyuura の印刷の文面。docs 5 章）。
+
+    - 使う機会は手札から場に出したとき（``from_hand_only``。手札からベンチに出す操作・エリカの香水・マチスなどの手札から出す経路）だけ。山札から出した・姿が変わったときには機会はなく、
+      あとから ``UsePokemonPower`` では使えない。使うかは持ち主が決める（決定 ``ENTRY_POWER``）。コインは使うを選んだあと 1 回（再開で投げ直さない）。「うら」なら何もしない
+    - 選べるのは、持ち主の場（バトル場 → ベンチ）の、このカード（場のポケモンの番号）以外の、今の姿の名前のグループが「``group``」のポケモン（別の同じアンノーンV も選べる）。決定
+      ``SELECT_POKEMON``（ちょうど 1 匹）
+    - 処理の順番は説明どおり: ついているすべてのカード（エネルギー・トレーナー）をトラッシュ（``zones.discard_attached_cards``。原因は特殊能力・実際に使ったのは持ち主。リサイクル
+      エネルギーはトラッシュに置いてログを残したあとに手札にもどる。エコロジムは相手の効果だけ）→ そのポケモン（重なったカード・［へんしん］の本当のカード）を手札にもどす
+      （``zones.return_in_play_to_hand``。ダメージカウンター・特殊状態はなくなる）→ 持続する効果を消す（理由 ``return_in_play_to_hand``）。v0.87 の［やみのちから］・ポケモン回収の
+      手札にもどすカードとは違う。きぜつではない（サイドは取られない）。空いたバトル場は使用後の処理（``resolution.after_power``）
+    - 選ぶと止める: うらのカード（名前のグループが読めない。FD1）・「バトル場をはなれられない」バトル場のポケモン（AL2。ポケモン回収と同じ）。どれもそうなら使うを選ぶと止める。
+      このカード以外の「``group``」がいないなら VN1（使うを選ぶと止める。使わないは選べる）
+    """
+
+    group: str = "アンノーン"
+    implementation_id = "coin_return_other_group_to_hand_on_entry"
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "手札から場に出したとき、コインで自分の場のほかの名前のグループのポケモンを手札にもどす特殊能力", (VANISH_TEXT.format(group=self.group),))
+
+    def options(self, state: GameState, owner: int, user: int) -> tuple[int, ...]:
+        return tuple(pokemon.pokemon_id for pokemon in state.players[owner].in_play()
+                     if pokemon.pokemon_id != user and (state.is_face_down(pokemon) or in_name_group(state, pokemon, self.group)))
+
+    def stops(self, state: GameState, owner: int, user: int) -> tuple[tuple[int, str, str], ...]:
+        """選ぶと止める選択ごとの (場のポケモンの番号, コード, 理由)（選べるものの並び）。"""
+        options = self.options(state, owner, user)
+        locked = leave_locked_choices(state, owner, options)
+        found = []
+        for pid in options:
+            _, pokemon = state.find_pokemon(pid)
+            if state.is_face_down(pokemon):
+                found.append((pid, SECRET_PLAN_HIDDEN_CODE, HIDDEN_GROUP_REASON))
+            elif pid in locked:
+                found.append((pid, LEAVE_LOCK_NO_EFFECT_CODE, LEAVE_LOCK_NO_EFFECT_REASON))
+        return tuple(found)
+
+    def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
+        options = self.options(state, use.player, use.pokemon_id)
+        if not options:
+            return UnsupportedError(RETURN_WITHOUT_TARGET_CODE, RETURN_WITHOUT_TARGET_REASON)
+        stops = self.stops(state, use.player, use.pokemon_id)
+        if len(stops) == len(options):
+            return UnsupportedError(stops[0][1], stops[0][2])
+        return None
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        problem = self.accept_problem(state, use)
+        if problem is not None:
+            raise RuntimeError(f"［VANISH］を、止めるはずの場合に使った（{problem}。機会の決定の確認の漏れ。エンジンの不具合）")
+        if _power_coin(state, use) is not CoinSide.HEADS:
+            return
+        stops = self.stops(state, use.player, use.pokemon_id)
+        extra = {} if not stops else {"unresolved_choices": tuple(pid for pid, _, _ in stops), "unresolved_code": stops[0][1], "unresolved_reason": stops[0][2],
+                                      "unresolved_detail": stops}
+        push_power_decision(state, use, kind=SELECT_POKEMON, player=use.player, options=self.options(state, use.player, use.pokemon_id), **extra)
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        (target,) = choices
+        if target not in self.options(state, use.player, use.pokemon_id) or target in {pid for pid, _, _ in self.stops(state, use.player, use.pokemon_id)}:
+            raise RuntimeError(f"［VANISH］で選んだポケモン {target} が、手札にもどせる自分の場の「{self.group}」ではない（決定の確認の漏れ。エンジンの不具合）")
+        _, pokemon = state.find_pokemon(target)
+        discard_attached_cards(state, use.player, pokemon, power=str(use.key))
+        return_in_play_to_hand(state, use.player, pokemon, power=str(use.key))
+        remove_persistent_effects(state, use.player, pokemon, RETURN_IN_PLAY_TO_HAND)
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        stops = self.stops(state, use.player, use.pokemon_id)
+        problems = _power_decision_form(decision, use, kind=SELECT_POKEMON, choices=(1, 1), options=self.options(state, use.player, use.pokemon_id),
+                                        unresolved=tuple(pid for pid, _, _ in stops))
+        if tuple(tuple(item) for item in decision.context_value("unresolved_detail", ())) != stops:
+            problems.append(f"［VANISH］の決定の選択ごとの止める理由 {decision.context_value('unresolved_detail', ())} が {stops} ではない")
+        return problems
+
+
+# v0.98 のアンノーン 4 枚のワザの登録（4）。どれも説明文のない「めざめるパワー」（超・10。文面・出典を持たない）
+V0_98_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    AttackKey("neo3-032", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーンB（超・10）
+    AttackKey("neo3-033", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーンY（超・10）
+    AttackKey("neo4-053", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーンV（超・10）
+    AttackKey("neo4-062", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーンG（超・10）
+})
+
+_BEAR = BEAR_TEXT.format(group="アンノーン", hp=10)
+_YIELD = YIELD_TEXT.format(type="超", group="アンノーン")
+_VANISH = VANISH_TEXT.format(group="アンノーン")
+_GIVE = GIVE_TEXT.format(letters="I｣｢V｣｢E")
+# v0.98 の特殊能力の登録（4）。処理に使う文面は kyuura の印刷の文面（名前・文面は写しの表記のまま。［GIVE］の半角のかぎかっこ・「一回」も写しのまま）
+V0_98_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
+    PowerKey("neo3-032", 0): PowerEntry(MoveGroupCounterToSelf(), "BEAR[ベアー]", _BEAR, _BEAR, _KYUURA_PRINTED_TEXT),
+    PowerKey("neo3-033", 0): PowerEntry(CoinAttachEnergyFromDeckToOwnPokemon(CardFilter("basic_energy", energy_type=EnergyType.PSYCHIC), _YIELD, group="アンノーン"),
+                                        "YIELD[イールド]", _YIELD, _YIELD, _KYUURA_PRINTED_TEXT),
+    PowerKey("neo4-053", 0): PowerEntry(CoinReturnOtherGroupToHandOnEntry(), "VANISH[バニッシュ]", _VANISH, _VANISH, _KYUURA_PRINTED_TEXT),
+    PowerKey("neo4-062", 0): PowerEntry(CoinAttachEnergyFromDeckToOwnPokemon(CardFilter("basic_energy"), _GIVE, letters=("I", "V", "E")),
+                                        "GIVE[ギブ]", _GIVE, _GIVE, _KYUURA_PRINTED_TEXT),
+})
+
+DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_98_ATTACKS), V0_98_POWERS)

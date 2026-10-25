@@ -1064,6 +1064,9 @@ def _follows_declaration(state, key: str, player: int, pid: int, e: dict) -> boo
         return kind == "bench_from_deck" and e.get("power") == key and e["player"] == player and e["pokemon_id"] == pid
     if isinstance(effect, E.SearchDeckWithBenchLettersToHand):
         return kind == "reveal_from_deck" and e.get("power") == key and e["player"] == player
+    # v0.98: ［YIELD］・［GIVE］・［VANISH］は持ち主のコイン（［BEAR］の move_damage_counter は、その分岐が宣言との対応を確かめる）
+    if isinstance(effect, (E.CoinAttachEnergyFromDeckToOwnPokemon, E.CoinReturnOtherGroupToHandOnEntry)):
+        return kind == "coin_flip" and e["source"] == "power" and e.get("effect") == key and e["player"] == player and e.get("pokemon_id") == pid
     return False
 
 
@@ -1159,6 +1162,14 @@ def _power_coin_follows(state, coin: dict, e: dict) -> bool:
         # v0.96: ［TELL］。「おもて」なら、まず使ったプレイヤーが相手の手札を見る（look_at_hand の power）。2 回目は look_at_hand の分岐が確かめる。「うら」なら何もしない
         mine = kind == "look_at_hand" and e.get("power") == coin["effect"]
         return (mine and e["player"] == coin["player"]) if coin["result"] == "heads" else not mine
+    if isinstance(effect, E.CoinAttachEnergyFromDeckToOwnPokemon):
+        # v0.98: ［YIELD］・［GIVE］。「おもて」なら山札からつける（power_attach_from_deck。そのあいだに 2 つの決定がある）。「うら」なら何もしない（山札を見ない・切らない）
+        mine = kind in ("power_attach_from_deck", "shuffle") and e.get("power") == coin["effect"]
+        return (kind == "power_attach_from_deck" and mine and e["player"] == coin["player"]) if coin["result"] == "heads" else not mine
+    if isinstance(effect, E.CoinReturnOtherGroupToHandOnEntry):
+        # v0.98: ［VANISH］。「おもて」なら選んだアンノーンについているカードのトラッシュ（discard_attached_cards。そのあいだに決定がある）。「うら」なら何もしない
+        mine = kind in ("discard_attached_cards", "return_in_play_to_hand") and e.get("power") == coin["effect"]
+        return (kind == "discard_attached_cards" and mine and e["player"] == coin["player"]) if coin["result"] == "heads" else not mine
     return kind in ("evade_check", "ko_prevented", "ko_prevention_failed")
 
 
@@ -2230,6 +2241,7 @@ def log_problems(state) -> list[str]:
     owner = {uid: card.owner for uid, card in state.cards.items()}
     turn_now = 0  # v0.46: 今処理しているイベントの番（continuous_expected が持続する効果のはたらく番を見る）
     declared = None  # 直前の特殊能力の宣言（番・プレイヤー・ポケモン）。移動のログはその直後に続く（v0.5）
+    vanish_pending = None  # v0.98: ［VANISH］でついているカードをトラッシュしたポケモン（(特殊能力, 場のポケモンの番号)。すぐあとに手札にもどす）
     last_damage = None  # v0.65: 直前のログ damage（［ベンチガード］の確かめ）
     duel_winner = {}  # v0.66: カスミの勝負のカード → 直前のじゃんけん（duel_janken）で勝ったプレイヤー（あいこなら None）
     for e in log:
@@ -3457,15 +3469,19 @@ def log_problems(state) -> list[str]:
             entry = state.effects.power_entry(card_id, int(index)) if index.isdigit() else None
             # v0.42: へんなこうどう（MoveDamageCounterToSelf。移動先は使ったポケモン）・のろい（MoveOpponentDamageCounter。相手の場のポケモンのあいだ。
             # ログの owner は相手。説明に「きぜつ」しない範囲の条件がないので、移動先が HP 以上になってよい（すぐあとにきぜつ））
-            movers = (MoveDamageCounter, MoveDamageCounterToSelf, MoveOpponentDamageCounter)
+            # v0.98: ［BEAR］（MoveGroupCounterToSelf。移動先は使ったポケモン。移動元は自分の場の今の姿の名前のグループのポケモン。使う前のこのカードの残りHPは 10 でない）
+            movers = (MoveDamageCounter, MoveDamageCounterToSelf, MoveOpponentDamageCounter, E.MoveGroupCounterToSelf)
             effect = None if entry is None else entry.effect
             if not isinstance(effect, movers) or state.cards[top[e["pokemon_id"]]].card_id != card_id:
                 problems.append(f"{e['turn']} 番のダメージカウンターの移動の特殊能力 {e['power']} が、使ったポケモンのダメージカウンターを移す特殊能力ではない")
             if count != 1:
                 problems.append(f"{e['turn']} 番のダメージカウンターの移動が 1 回に {count} 個（1 個のはず）")
             side = e.get("owner", e["player"])
+            if isinstance(effect, E.MoveGroupCounterToSelf) and source in in_play and target in in_play and (
+                    form_def(source).name_group != effect.group or max_hp_now(target) - damage[target] == effect.remaining_hp):
+                problems.append(f"{e['turn']} 番の［BEAR］の移動（{source} → {target}）が、移動元が「{effect.group}」でない・このカードの残りHPが {effect.remaining_hp} のときのもの")
             if isinstance(effect, MoveOpponentDamageCounter) != (side != e["player"]) or (
-                    isinstance(effect, MoveDamageCounterToSelf) and target != e["pokemon_id"]):
+                    isinstance(effect, (MoveDamageCounterToSelf, E.MoveGroupCounterToSelf)) and target != e["pokemon_id"]):
                 problems.append(f"{e['turn']} 番のダメージカウンターの移動（{source} → {target}・owner {e.get('owner')}）が、特殊能力 {e['power']} の移す場所と合わない")
             if pokemon_owner.get(source) != side or pokemon_owner.get(target) != side:
                 problems.append(f"{e['turn']} 番のダメージカウンターの移動（{source} → {target}）が、{'自分' if side == e['player'] else '相手'}の場のポケモンのあいだではない")
@@ -4933,6 +4949,10 @@ def log_problems(state) -> list[str]:
                 # v0.87: ［やみのちから］（「おもて」のコインのあと。そのあいだに決定がある）。相手の場のポケモンを持ち主の手札へ
                 valid = prior is not None and prior["kind"] == "coin_flip" and prior.get("effect") == e["power"] and prior["result"] == "heads" \
                     and prior["player"] == 1 - e["player"]
+            elif "power" in e and isinstance(_power_effect(state, e["power"]), E.CoinReturnOtherGroupToHandOnEntry):
+                # v0.98: ［VANISH］（ついているカードをトラッシュしたすぐあと。リサイクルエネルギーが手札にもどったログがそのあいだにあってよい）
+                valid = vanish_pending == (e["power"], pid) and prior is not None and prior["kind"] in ("discard_attached_cards", "energy_returned_to_hand")
+                vanish_pending = None
             elif "power" in e:
                 valid = prior is not None and prior["kind"] == "discard_attached_cards" and prior.get("power") == e["power"] and prior["pokemon_id"] == pid \
                     and isinstance(_power_effect(state, e["power"]), ReturnSelfToHand)
@@ -5057,6 +5077,12 @@ def log_problems(state) -> list[str]:
             definition = state.printed_def(uid)
             if owner.get(uid) != e["player"] or uid in hand[e["player"]] or uid in discard[e["player"]] or not definition.is_basic_energy or pid not in in_play:
                 problems.append(f"{e['turn']} 番に［ファイヤーブースト］でつけたカード {uid} が、プレイヤー {e['player']} の山札の基本エネルギーカードではない")
+            attach_effect = _power_effect(state, e.get("power"))
+            if isinstance(attach_effect, E.CoinAttachEnergyFromDeckToOwnPokemon) and pid in in_play and (
+                    not attach_effect.energy.matches(definition) or pokemon_owner.get(pid) != e["player"]
+                    or (attach_effect.group is not None and form_def(pid).name_group != attach_effect.group)):
+                # v0.98: ［YIELD］（山札の「超」の基本エネルギーカードを自分の場のアンノーンに）・［GIVE］（山札の基本エネルギーカードを自分の場のポケモンに）
+                problems.append(f"{e['turn']} 番に特殊能力 {e['power']} でつけたカード {uid}・つける先 {pid} が、その特殊能力のカード・つける先ではない")
             energy.setdefault(pid, []).append(uid)
         elif kind == "power_attach_from_discard":
             # v0.85: ［ファイヤーリチャージ］で、トラッシュの「炎」の基本エネルギーカードを自分の場の「炎」ポケモンにつけた
@@ -5189,8 +5215,16 @@ def log_problems(state) -> list[str]:
             # v0.42: 特殊能力（おくびょう）は、ダメージカウンターをすべてとりのぞいたすぐあとに、使ったポケモンについているカードをトラッシュする
             by_power = "power" in e and prior is not None and prior["kind"] == "remove_all_damage_counters" and prior.get("power") == e["power"] \
                 and prior["pokemon_id"] == pid
-            if pid not in in_play or pokemon_owner.get(pid) != e["player"] or (not by_power and (attack_window is None or pid != attack_window["pokemon_id"])) \
-                    or sorted(e["energy"]) != sorted(energy.get(pid, [])) or damage[pid] != 0 \
+            # v0.98: ［VANISH］は、「おもて」のコインのあと（そのあいだに決定がある）、使ったポケモン以外の自分の場の今の姿の名前のグループのポケモンについているカードをトラッシュする
+            # （ダメージカウンターはそのまま。そのあと手札にもどすときになくなる）
+            vanish_effect = _power_effect(state, e.get("power"))
+            by_vanish = isinstance(vanish_effect, E.CoinReturnOtherGroupToHandOnEntry) and prior is not None and prior["kind"] == "coin_flip" \
+                and prior.get("effect") == e["power"] and prior["result"] == "heads" and prior["player"] == e["player"] and prior.get("pokemon_id") != pid \
+                and pid in in_play and form_def(pid).name_group == vanish_effect.group
+            if by_vanish:
+                vanish_pending = (e["power"], pid)
+            if pid not in in_play or pokemon_owner.get(pid) != e["player"] or (not by_power and not by_vanish and (attack_window is None or pid != attack_window["pokemon_id"])) \
+                    or sorted(e["energy"]) != sorted(energy.get(pid, [])) or (damage[pid] != 0 and not by_vanish) \
                     or any(owner.get(uid) != e["player"] for uid in (*e["energy"], *e["trainers"])):
                 problems.append(f"{e['turn']} 番のついているカードのトラッシュ（ポケモン {pid}）が、ログから組み立てたワザを使ったポケモンのカードと合わない")
             else:

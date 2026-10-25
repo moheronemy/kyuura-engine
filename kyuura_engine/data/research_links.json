@@ -12,8 +12,8 @@
   "card_data_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 225,
-    "engine_stop_codes": 224,
+    "engine_unresolved_rulings": 228,
+    "engine_stop_codes": 227,
     "kyuura_issues": 72
   },
   "stop_codes": {
@@ -2602,6 +2602,39 @@
       ],
       "kyuura_issue": "UQ-NON-ATTACK-DAMAGE-MODIFIERS",
       "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_POWER_COUNTER_MOVE_TO_SAME_POKEMON": {
+      "engine_rulings": [
+        {
+          "version": "v0.98",
+          "document": "docs/unown-bear-yield-vanish-give-v0.98.md",
+          "ruling_id": "BE1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POWER_COUNTER_MOVE_WITHOUT_COUNTERS": {
+      "engine_rulings": [
+        {
+          "version": "v0.98",
+          "document": "docs/unown-bear-yield-vanish-give-v0.98.md",
+          "ruling_id": "BE2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POWER_RETURN_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.98",
+          "document": "docs/unown-bear-yield-vanish-give-v0.98.md",
+          "ruling_id": "VN1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -4351,7 +4384,11 @@
       "neo2-025/power/0",
       "neo2-026/power/0",
       "PF2-001/power/0",
-      "PRN-034/power/0"
+      "PRN-034/power/0",
+      "neo3-032/power/0",
+      "neo3-033/power/0",
+      "neo4-053/power/0",
+      "neo4-062/power/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
