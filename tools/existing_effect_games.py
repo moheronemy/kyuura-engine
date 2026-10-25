@@ -589,6 +589,11 @@ WOBBUFFET, UNOWN_K, UNOWN_D = "neo2-031", "neo3-030", "neo2-025"
 V0_102 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_102"])
 V0_102_POKEMON = V0_102
 METAPOD_ES1, METAPOD_QSG, MR_MIME_ES1, MR_MIME_QSG = "ES1-003", "QSG-003", "ES1-021", "QSG-030"
+# v0.103（docs/neutral-shield-attack-origin-v0.103.md）: ミュウの 2 枚（写しの組 pool_v0_103。同じデータの 1 組で、デッキには id ごとに 2 枚ずつ入れる）。ポケモンは TARGETS に加える。
+# ワザ（ねんりき）は既存の手順のまま選ぶ。［ニュートラルシールド］は常にはたらく（手順は何もしない）。ログから数えるのは ``v103_uses``
+V0_103 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_103"])
+V0_103_POKEMON = V0_103
+MEW_COROCORO, MEW_JR = "PR1-005", "PR1-012"
 BASE_CATERPIE, BASE_DROWZEE, BASE_BELLSPROUT = "PMCG1-002", "PMCG1-045", "PMCG2-005"
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
@@ -626,7 +631,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_99_POKEMON  # v0.99: アンノーンP・H とタッツー
            + V0_100_POKEMON  # v0.100: ドーブル・ムウマ
            + V0_101_POKEMON  # v0.101: ソーナンス・アンノーンK
-           + V0_102_POKEMON)  # v0.102: トランセル・バリヤード
+           + V0_102_POKEMON  # v0.102: トランセル・バリヤード
+           + V0_103_POKEMON)  # v0.103: ミュウ（ニュートラルシールド）
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -1346,6 +1352,9 @@ DECKS = {
     # v0.102: 超・無色。バリヤード（［ニュートラルダメージ］・ジャグリング 超無）を ES1-021・QSG-030 で 2 枚ずつ（「バリヤード」は合わせて 4 枚）。バトル場の要員は第1弾のスリープ
     # （超。超が弱点）とコラッタ（無色。超の抵抗力）。ベンチのバリヤードがお互いの対戦ポケモンの弱点・抵抗力を当てはめない場面
     "N102": ((MR_MIME_ES1, 2), (MR_MIME_QSG, 2), (BASE_DROWZEE, 4), ("PMCG1-060", 3), (driver.POTION, 2), (SWITCH, 2), (driver.BILL, 2), (PSYCHIC, 43)),
+    # v0.103: 超・無色。ミュウ（［ニュートラルシールド］・ねんりき 超）を PR1-005・PR1-012 で 2 枚ずつ（「ミュウ」は合わせて 4 枚）。ほかのたねポケモンは第1弾のスリープ（超）・コラッタ（無色）。
+    # 相手の進化ポケモンのワザ（返す効果を含む）をバトル場・ベンチで受けない場面と、たねポケモン・特殊能力・こんらんのダメージは受ける場面
+    "M103": ((MEW_COROCORO, 2), (MEW_JR, 2), (BASE_DROWZEE, 4), ("PMCG1-060", 3), (driver.POTION, 2), (SWITCH, 2), (driver.BILL, 2), (PSYCHIC, 43)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -1539,6 +1548,11 @@ PAIRINGS_V0_101 = (("K101", "W33"), ("K101", "C33"), ("K101", "R45"), ("K101", "
 # 草の対戦ポケモン）・N102 対 C33（超の抵抗力を持つ無色のポケモン。抵抗力を当てはめず量が増える場面）・N102 対 G32（超が弱点の草ポケモン）・N102 対 C101（ソーナンスのカウンターで返す
 # ダメージ）・N102 対 S48（ベトベトンの［かがくへんかガス］で力が消える場面）。組・席・seed は先に決めた（seed 0〜3。局を選び直さない）
 PAIRINGS_V0_102 = (("G102", "F30"), ("G102", "R31"), ("G102", "N102"), ("N102", "C33"), ("N102", "G32"), ("N102", "C101"), ("N102", "S48"))
+# v0.103: M103 対 F30（リザード・ウインディの進化ポケモンのワザと、ヒトカゲ・ガーディ・ブーバーのたねポケモンのワザ）・M103 対 W45（わるいカメールのこうらがえしで返すダメージ・わるいカメックス・
+# ゴースト）・M103 対 C101（ソーナンスのカウンター（たねポケモンの返す効果）・ピジョン（進化ポケモン。受けた記録を読むオウムがえし））・M103 対 R52（エリカのハクリューのつれさる（自分を先に
+# 山札にもどす）・ふぶき・ラッタ）・M103 対 S87（マチスのマルマインの［ショックボム］（進化ポケモンの特殊能力のダメージ）・コクーン・ダグトリオ・ゲンガー）・M103 対 S48（ベトベトンの
+# ［かがくへんかガス］で力が消える場面）・M103 対 P31（ピッピ・ピクシーのゆびをふる（借りたワザと実際の使い手）・わるいゴルダック）。組・席・seed は先に決めた（seed 0〜3。局を選び直さない）
+PAIRINGS_V0_103 = (("M103", "F30"), ("M103", "W45"), ("M103", "C101"), ("M103", "R52"), ("M103", "S87"), ("M103", "S48"), ("M103", "P31"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -1556,7 +1570,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.87": PAIRINGS_V0_87, "v0.88": PAIRINGS_V0_88, "v0.89": PAIRINGS_V0_89, "v0.90": PAIRINGS_V0_90, "v0.91": PAIRINGS_V0_91,
            "v0.92": PAIRINGS_V0_92, "v0.93": PAIRINGS_V0_93, "v0.94": PAIRINGS_V0_94, "v0.95": PAIRINGS_V0_95,
            "v0.96": PAIRINGS_V0_96, "v0.97": PAIRINGS_V0_97, "v0.98": PAIRINGS_V0_98, "v0.99": PAIRINGS_V0_99, "v0.100": PAIRINGS_V0_100,
-           "v0.101": PAIRINGS_V0_101, "v0.102": PAIRINGS_V0_102}
+           "v0.101": PAIRINGS_V0_101, "v0.102": PAIRINGS_V0_102, "v0.103": PAIRINGS_V0_103}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -1712,6 +1726,30 @@ def _v086_crystal_body(state, pokemon) -> bool:
                for slot in effects.powers_of(state, pokemon))
 
 
+def _v103_neutral_shield(state, command) -> bool:
+    """v0.103: 相手の場のポケモン（バトル場・ベンチ。カスミのゴルダックの「スーパーデストロイ」はエネルギーのついた相手のポケモン全員が対象）に、今はたらく［ニュートラルシールド］
+    （ねむり・マヒ・こんらんでなく、かがくへんかガスなど・スタンウェーブで力が消えていない）を持つポケモンがいて、ワザを使うポケモンの今の姿が進化ポケモンか（場から確かめる。HC3 の
+    止める理由のワザの効果を受けないポケモン）。"""
+    from kyuura_engine import effects
+
+    attacker = _attacker(state, command)
+    if not any(_v086_power_working(state, pokemon, effects.EvolvedOpponentAttackImmunity) for pokemon in state.players[1 - command.player].in_play()):
+        return False
+    return effects.form_def(state, attacker).is_evolution_pokemon
+
+
+def _v086_power_working(state, pokemon, kind) -> bool:
+    """v0.103: 場のポケモン ``pokemon`` の、型 ``kind`` の特殊能力が今はたらくか（``_v086_crystal_body`` と同じ確かめ）。"""
+    from kyuura_engine import effects
+    from kyuura_engine.continuous import power_suppressed
+    from kyuura_engine.persistent import powers_stopped
+
+    c = pokemon.conditions
+    if c.asleep or c.paralyzed or c.confused or powers_stopped(state, pokemon) is not None:
+        return False
+    return any(isinstance(slot.effect, kind) and not power_suppressed(state, slot.power, pokemon) for slot in effects.powers_of(state, pokemon))
+
+
 def _v091_marked(st, player, kind):
     """v0.91: ``player`` の場の（うらでない）ポケモンの、種類 ``kind`` のマーカーがのっているかの並び。"""
     return [any(m.kind == kind for m in p.markers) for p in st.players[player].in_play() if not st.is_face_down(p)]
@@ -1758,7 +1796,9 @@ V031_STOPS = {
     # v0.85: やさしいカイリューの「ひかりのはどう」（v0.84。相手のワザの効果の要素だけを受けない。v0.84 の組では、コインが効果だけを決めるワザで当たらなかった）
     or __import__("kyuura_engine.persistent", fromlist=["attack_effect_guard"]).attack_effect_guard(st, _defender(st, c)) is not None
     # v0.86: スイクンの［クリスタルボディ］（相手のワザのダメージ以外の効果を受けない。特殊状態・ガス・スタンウェーブでは、はたらかない）
-    or _v086_crystal_body(st, _defender(st, c)),
+    or _v086_crystal_body(st, _defender(st, c))
+    # v0.103: ミュウの［ニュートラルシールド］（相手の進化ポケモンからのワザを受けない。ワザを使うポケモンの今の姿で決まる）
+    or _v103_neutral_shield(st, c),
     "UNRESOLVED_DESTINY_BOND_KNOCKOUT": lambda st, c: destiny_bond(st, _defender(st, c)) is not None,  # HC2
     # しっぽをふる。v0.40: すごむ（効果を与えたポケモンがバトル場にいる間）
     "ATTACK_PREVENTED": lambda st, c: (cannot_attack(st, _attacker(st, c)) is not None
@@ -6122,6 +6162,77 @@ def v102_uses(state):
     return counts
 
 
+def _v103_stage(state, uid) -> str | None:
+    """v0.103: 数えるための、カード ``uid``（場のポケモンのいちばん上のカード）の印刷の段階（今の姿は数えない。監査は今の姿をログから別に組み立てる）。"""
+    return None if uid is None else state.printed_def(uid).stage
+
+
+def v103_uses(state):
+    """v0.103: ログから数えたミュウの［ニュートラルシールド］の動き（ミュウのない局では空）。
+
+    - ``attack_<id>#0``（ねんりき。id ごと）
+    - 候補: 相手のワザ（返す効果を含む）の要素がミュウを対象にした回数（``candidate_<damage|effect>``。ログ ``damage``・``damage_prevented``・``effect_prevented``・ワザの ``special_condition``）
+    - 防いだもの: ``prevented_damage_<attack|retaliation>``・``prevented_effect_<要素>``、発生元の段階ごとの ``prevented_by_<段階>``、ベンチで防いだ ``prevented_on_bench``
+    - 防がずに進んだもの: たねポケモンのワザ（``passed_basic_<damage|effect>``）・自分のワザ（``passed_own``）・進化ポケモンのワザで力がはたらかなかった・受けるポケモン自身の効果を除く
+      ワザ（``passed_evolved_unprotected``）・特殊能力のダメージ（``power_damage_on_mew``）・こんらん（``confusion_on_mew``）
+    - 防いだワザの中で残った有効な要素（``remaining_after_prevented``。同じワザの、ほかのポケモン・自分へのダメージと効果のログ）"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_103 for uid in state.cards):
+        return counts
+    window = None  # 今のワザの {"player", "stage", "ret": (player, stage) | None, "prevented": bool}
+    for e in state.log:
+        kind = e["kind"]
+        if kind == "attack":
+            current = e.get("card_id") or state.cards[e["pokemon"]].card_id
+            if current in V0_103:
+                counts[f"attack_{current}#{e['attack_index']}"] += 1
+            window = {"player": e["player"], "stage": _v103_stage(state, e["pokemon"]), "ret": None, "prevented": False}
+            continue
+        if kind in ("turn_end", "game_end", "halted"):
+            window = None
+            continue
+        if window is None:
+            continue
+        if kind == "retaliation":
+            window["ret"] = (e["player"], _v103_stage(state, e["pokemon"]))
+            continue
+        if kind in ("counterattack", "shock_blast_damage"):
+            target = e.get("attacker_pokemon") if kind == "counterattack" else e.get("target_pokemon")
+            if target is not None and state.cards[target].card_id in V0_103:
+                counts["power_damage_on_mew"] += 1
+            continue
+        if kind == "confusion_damage":
+            if state.cards[e["pokemon"]].card_id in V0_103:
+                counts["confusion_on_mew"] += 1
+            continue
+        if kind not in ("damage", "damage_prevented", "effect_prevented", "special_condition"):
+            continue
+        if kind == "special_condition" and e.get("effect", "").find("#") < 0:
+            continue  # ワザでない特殊状態（特殊能力・トレーナー）
+        on_mew = state.cards[e["pokemon"]].card_id in V0_103
+        retaliation = bool(e.get("retaliation"))  # 返す効果のダメージ（damage・damage_prevented の印）
+        player, stage = window["ret"] if retaliation and window["ret"] is not None else (window["player"], window["stage"])
+        part = "damage" if kind in ("damage", "damage_prevented") else "effect"
+        if not on_mew:
+            if window["prevented"] and kind in ("damage", "special_condition"):
+                counts["remaining_after_prevented"] += 1
+            continue
+        if player == e["player"]:
+            counts["passed_own"] += 1
+            continue
+        counts[f"candidate_{part}"] += 1
+        if kind in ("damage_prevented", "effect_prevented"):
+            if e.get("persistent_effect") == "neutral_shield":
+                window["prevented"] = True
+                counts[f"prevented_damage_{'retaliation' if retaliation else 'attack'}" if part == "damage" else f"prevented_effect_{e.get('element')}"] += 1
+                counts[f"prevented_by_{stage}"] += 1
+                if e.get("target") == "opponent_bench":
+                    counts["prevented_on_bench"] += 1
+            continue
+        counts[f"passed_basic_{part}" if stage == "basic" else "passed_evolved_unprotected"] += 1
+    return counts
+
+
 def v101_uses(state):
     """v0.101: ログから数えた v0.101 の動き（ソーナンス・アンノーンK のない局では空）。
 
@@ -8132,6 +8243,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v100"] = v100_uses(state)
         result["v101"] = v101_uses(state)
         result["v102"] = v102_uses(state)
+        result["v103"] = v103_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:

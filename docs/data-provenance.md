@@ -1955,6 +1955,25 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.103: ミュウの 2 枚
+
+[neutral-shield-attack-origin-v0.103.md](neutral-shield-attack-origin-v0.103.md)。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534` のまま（今回の追加を理由に上げていない）。写しの組 `pool_v0_103`（2 枚）を加え、写しの作り直しの道具で作った
+  （手で直していない）。v0.102 までの 1,189 枚の値・移行の記録は変わっていない。2 枚とも `data_gaps` は `jp_print.level`（ほかのカード・名前から補っていない）。
+- 2 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-26・外部照合なし。記録 1,102 → 1,104）。研究の基準に 2 枚を指す LD-・CC-・CR-・UQ-・エラッタはなく
+  （カードの id・pcg-search の id `1stp005`・`1stp012`・同じカードの組 `SC-PR1-005`・特殊能力の名前で探した）、`kyuura_records` は空。処理に使う文面はどれも印刷の文面（研究の対応表の
+  `adopted_printed_text` に 4 を加えた。1,128 → 1,132）。PR1-005/PR1-012 は日本語の名前・pokemon 欄の対戦の値が同じ（id ごとに記録し、登録の値は同じ）。
+- kyuura data/rule_history.json の `card_lists.poke_body`（2002 年の「ポケボディー」の一覧）・docs/rules/errata-history.md・docs/rules/mixed-2002.md は 1stp005・1stp012 を同じ行で挙げ、
+  どちらのプロモかを区別していない（kyuura の注）。後年の分類で、2000.02.14 版の根拠・2 枚それぞれの独立した照合にしていない（エラッタの `errata` の `cards` ではない）。
+- kyuura data/Silver_Bible_structured.md（研究の記録ではない）に特殊能力の名前が当たった。内容を根拠にしていない（ガイドブックの読み直しをしない）。
+- 日本語の文面の転記元は 2 枚とも pcg-search.com。同じ所との一致を独立した照合に数えず、新しく画像を見たことにしていない。外部照合・カードの画像の照合・公式の書籍の新しい照合はしていない。
+- ねんりきの日本語「…相手を「マヒ」状態にする。」と英語の欄（pokemontcg:basep-47）「…is now Confused.」が違う。日本語を採用し（英語で置きかえない）、この違いだけで保留にせず、原典と照合して
+  いないので転記の誤りとも決めていない。採用の記録の論点（`affects_behavior: false`）に書いた。
+- ［ニュートラルシールド］の「ミュウ」「つかえない」・段階・返す効果の分類は、v0.10・v0.49・v0.46・GR-2000-P321-ATTACK-DAMAGE の既存の読み方と根拠の再利用で、2 枚の独立した原典照合では
+  ない。新しい停止コードはない（停止コード 234・未解決の裁定 235 のまま）。
+- 報告事項（kyuura の作業）: engine_targets.json の 2 枚の `engine_status` を v0.103 の登録で写すと `registered` になる。ねんりきの日英の違いを照合の対象にするかは kyuura の判断。
+
 ## v0.102: トランセル・バリヤードの 4 枚
 
 [weakness-resistance-powers-v0.102.md](weakness-resistance-powers-v0.102.md)。

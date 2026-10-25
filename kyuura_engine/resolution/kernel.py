@@ -64,6 +64,7 @@ from ..history import VOID_ATTACK_BARRIER, VOID_DAMAGE_ONLY, VOID_DODGED, VOID_E
 from . import catalog as C
 from .events import (
     DamageClass,
+    FRAME_DAMAGE_CLASS,
     SPAWN_REFUSALS,
     SPAWNS,
     Activated,
@@ -76,6 +77,7 @@ from .events import (
     FrameKind,
     FrameOpened,
     FrameState,
+    Incoming,
     KnockedOutRecorded,
     QuestionHit,
     Trace,
@@ -167,6 +169,11 @@ class Resolution:
         # プレイヤー, ダメージを与えたポケモン)）。ダメージカウンターの移動・こんらん・特殊能力のダメージでは記録しない。きあいのハチマキ・学習装置の候補（きぜつの判定の窓）と、
         # きあいのハチマキの処理の時点の問い（FB1）に使う。決定をまたぐときは続きの情報で運ぶ（``AttackRun.suspend``）
         self.damage_ko: dict[int, tuple[int, int]] = {}
+        # v0.103（docs/neutral-shield-attack-origin-v0.103.md 4.4 節）: ワザの要素を始めるときの、枠の発生元（ワザを使ったポケモン）の今の姿が進化ポケモンか（番号 → 真偽。
+        # ``note_source_form``）。その要素の中で発生元が場をはなれた（エリカのハクリューの「つれさる」は自分を山札にもどしてから相手の対戦ポケモンを評価する）あとも、続く要素の
+        # 無効にする効果の判定（``source_evolved``）に要る事実だけを運ぶ（はなれたカードの uid を新しい対象として扱わない）。状態に保存しない。決定をまたいでは運ばない（運ぶ
+        # 経路は今の写しにない。要るのに値がなければエンジンの未対応として止める）
+        self.source_forms: dict[int, bool] = {}
 
     def open_frame(self, kind: FrameKind, *, parent: int | None, player: int, source_pid: int, attack_key: AttackKey) -> FrameState:
         if parent is not None:
@@ -369,7 +376,7 @@ def scram_restored_question(res: Resolution, gone) -> None:
 # ---------------------------------------------------------------- ダメージの要素（窓: 適用の前 → 受けるとき → 適用 → 受けたとき）
 
 
-def first_void(res: Resolution, owner: int, pokemon: PokemonInPlay, window: Window = Window.BEFORE_DAMAGE, *,
+def first_void(res: Resolution, incoming: Incoming, owner: int, pokemon: PokemonInPlay, window: Window = Window.BEFORE_DAMAGE, *,
                held_by_receiver: bool = True) -> C.EffectInstance | None:
     """受けるポケモンのダメージの要素を無効にする効果（「ダメージを受けない」状態。かたまる）のうち、今はたらいているもの。v0.31: ``window`` に
     ``Window.BEFORE_EFFECT`` を渡すと、効果の要素を無効にする効果（「ワザをうけない」状態。バリアー）。
@@ -377,7 +384,11 @@ def first_void(res: Resolution, owner: int, pokemon: PokemonInPlay, window: Wind
     v0.60: ``held_by_receiver`` が False なら、受けるポケモン自身が持っている効果（持続する効果・特殊能力）は除く（タケシのサンドパンの「スピードスター」。トレーナーの
     効果（見えない壁。プレイヤーの記録）は受けるポケモンの持っている効果ではないので残す）。
 
-    v0.86: 「ほのおのまもり」（``BenchProtection``）を当てはめる範囲が決まらない場面（PL1）は、ここで問いにする（``protective_flame_scope``）。"""
+    v0.86: 「ほのおのまもり」（``BenchProtection``）を当てはめる範囲が決まらない場面（PL1）は、ここで問いにする（``protective_flame_scope``）。
+
+    v0.103（docs/neutral-shield-attack-origin-v0.103.md 4 章）: ``incoming`` は受ける要素の発生元（``events.Incoming``。省略できない。実際の使い手・発生元の個体・処理の分類・
+    処理したワザ）。発生元で無効にするかが決まる効果（相手の進化ポケモンからのワザだけを受けない［ニュートラルシールド］。``EffectDefinition.from_evolved_opponent``）は、
+    はたらいているときに ``from_evolved_opponent`` で判定する。ほかの効果の判定は v0.102 までと同じ（エフェクトガードなどの「相手の」は今の番のプレイヤーで判定したまま）。"""
     protective_flame_scope(res, owner, pokemon)
     for instance in C.in_window(res.state, window, owner, pokemon, res.catalog):
         if not held_by_receiver and instance.definition.origin is not C.Origin.TRAINER_EFFECT and instance.pokemon_id == pokemon.pokemon_id:
@@ -385,8 +396,65 @@ def first_void(res: Resolution, owner: int, pokemon: PokemonInPlay, window: Wind
         if instance.definition.by_opponent and instance.definition.timing is C.Timing.VOID and owner == res.state.current_player:
             continue  # v0.80: 「相手のワザによる」（エフェクトガード）。受けるポケモンの持ち主のワザ（自分のワザの自分への効果）には当てはめない
         if instance.definition.timing is C.Timing.VOID and C.working(res.state, instance, pokemon):
+            if instance.definition.from_evolved_opponent and not from_evolved_opponent(res, incoming, owner):
+                continue  # v0.103: 発生元が相手の進化ポケモンのワザでない（自分のワザ・たねポケモン・特殊能力・こんらん）
             return instance
     return None
+
+
+def from_evolved_opponent(res: Resolution, incoming: Incoming, owner: int) -> bool:
+    """v0.103: 受ける要素の発生元 ``incoming`` が、持ち主 ``owner`` の相手の進化ポケモンからのワザか（［ニュートラルシールド］の「相手の進化ポケモンからの「ワザ」」）。
+
+    - ワザの分類（``DamageClass.ATTACK``。宣言したワザ・返す効果。p.321 の「ワザによるダメージ」と同じ既存の分類）だけ。特殊能力のダメージ・こんらんは、発生元が進化ポケモンでもワザに
+      しない（親の枠がワザでも、子の分類で決める）
+    - 相手: 実際の使い手（``incoming.player``）が ``owner`` でない（今の番のプレイヤーで決めない。返す効果の使い手は番でないプレイヤー）
+    - 進化ポケモン: 発生元の個体の、その時点の今の姿（``effects.form_def``。v0.49。［へんしん］・「ばける」を含む）が 1 進化・2 進化のポケモン（``CardDefinition.is_evolution_pokemon``）。
+      処理しているワザを印刷したカード（借りたワザの ``AttackKey.card_id``）・名前・進化の重なりの長さでは決めない（``source_evolved``）"""
+    if incoming.damage_class is not DamageClass.ATTACK or incoming.player == owner:
+        return False
+    return source_evolved(res, incoming)
+
+
+SOURCE_LEFT_CODE = "UNSUPPORTED_ATTACK_SOURCE_LEFT_PLAY"
+SOURCE_LEFT_REASON = (
+    "ワザを使ったポケモンがワザの途中で場をはなれ、続く要素の無効にする効果（［ニュートラルシールド］）の判定に要る、はなれる前の今の姿（進化ポケモンか）の記録がない"
+    "（エンジンの情報の不足。ワザの要素を始めるときに記録し、決定をまたいでは運ばない。研究上の未解決ではない）"
+)
+
+
+def source_evolved(res: Resolution, incoming: Incoming) -> bool:
+    """v0.103: 発生元の個体の今の姿が進化ポケモンか。場にいれば、その時点の場から求める（宣言の前の場で固定しない。途中で進化・退化・［へんしん］が変われば、その時点の姿）。この解決の
+    ワザの中で場をはなれていれば、要素を始めたときの記録（``Resolution.source_forms``。``note_source_form``）。記録もなければエンジンの未対応（``SOURCE_LEFT_CODE``。推測しない）。"""
+    state = res.state
+    found = state.find_pokemon(incoming.source_pid)
+    if found is not None:
+        if found[0] != incoming.player:
+            raise RuntimeError(f"発生元のポケモン {incoming.source_pid} の持ち主 {found[0]} が、使い手 {incoming.player} と違う（エンジンの不具合）")
+        return E.form_def(state, found[1]).is_evolution_pokemon
+    recorded = res.source_forms.get(incoming.source_pid)
+    if recorded is None:
+        raise UnsupportedError(SOURCE_LEFT_CODE, f"ポケモン {incoming.source_pid}・ワザ {incoming.attack_key}: {SOURCE_LEFT_REASON}")
+    return recorded
+
+
+def note_source_form(res: Resolution, frame: Frame) -> None:
+    """v0.103: ワザの要素を始めるとき（``programs.run_elements``）、枠の発生元が場にいれば、その今の姿が進化ポケモンかを記録する（``Resolution.source_forms``。状態を変えない）。"""
+    found = res.state.find_pokemon(frame.source_pid)
+    if found is not None and found[0] == frame.player:
+        res.source_forms[frame.source_pid] = E.form_def(res.state, found[1]).is_evolution_pokemon
+
+
+def incoming_of(fs: FrameState) -> Incoming:
+    """v0.103: 開いた枠 ``fs`` の発生元（``events.Incoming.of``）。"""
+    return Incoming.of(fs.frame)
+
+
+def void_source_log(void: C.EffectInstance, incoming: Incoming) -> dict[str, Any]:
+    """v0.103: 発生元で無効にするかが決まる効果（［ニュートラルシールド］）が無効にしたときだけ、ログ ``damage_prevented``・``effect_prevented`` に加える発生元（実際の使い手・
+    個体）。ほかの効果のログの形は v0.102 までと同じ（書かない）。監査はこれをログから組み立てた場の発生元・今の姿と独立に照らす。"""
+    if not void.definition.from_evolved_opponent:
+        return {}
+    return {"attacker": incoming.player, "attacker_pokemon_id": incoming.source_pid}
 
 
 def protective_flame_scope(res: Resolution, owner: int, pokemon: PokemonInPlay) -> None:
@@ -415,11 +483,12 @@ def note_receipt(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonIn
                   owner=owner, pokemon=pokemon, **what)
 
 
-def _void_reason(res: Resolution, owner: int, pokemon: PokemonInPlay) -> str:
-    """v0.62: ダメージの要素を無効にした効果が、効果の要素も無効にする効果（「ワザをうけない」）か、ダメージだけを無効にする効果か。"""
+def _void_reason(res: Resolution, incoming: Incoming, owner: int, pokemon: PokemonInPlay) -> str:
+    """v0.62: ダメージの要素を無効にした効果が、効果の要素も無効にする効果（「ワザをうけない」）か、ダメージだけを無効にする効果か。v0.103: 無効にした判定と同じ発生元 ``incoming``
+    で引き直す（［ニュートラルシールド］で受けなかったワザを、ダメージだけの無効と取り違えない）。"""
     # v0.80: ダメージの要素を無効にした効果そのものが、効果の要素も無効にするか（エフェクトガードは効果の要素だけを無効にするので、「ダメージを受けない」状態と重なっても
     # ダメージだけの無効のまま）
-    void = first_void(res, owner, pokemon)
+    void = first_void(res, incoming, owner, pokemon)
     return VOID_ATTACK_BARRIER if void is not None and Window.BEFORE_EFFECT in void.definition.windows else VOID_DAMAGE_ONLY
 
 
@@ -476,7 +545,7 @@ def weakness_resistance_matters(res: Resolution, fs: FrameState, target: str, ba
     state = res.state
     _, attacker = state.find_pokemon(fs.frame.source_pid)
     receiver_player, receiver = receiver_of(res, fs, target, pokemon_id)
-    if first_void(res, receiver_player, receiver) is not None:
+    if first_void(res, incoming_of(fs), receiver_player, receiver) is not None:
         return False
     # v0.97: 同じ力が 2 匹以上ではたらきうるときは、どれがはたらくかの読み方（``effects.self_excluding_readings``）ごとにも比べる（読み方の違いそのものは deal_damage が DF1 で見る）
     for copies in E.self_excluding_readings(state, attacker, receiver, attack_status=res.attack_status):
@@ -586,7 +655,7 @@ def _bench_guard_unresolved(res: Resolution, fs: FrameState, attacker, owner: in
         return knocked_out, E.KNOCKED_OUT_REACTION_CODE, E.KNOCKED_OUT_REACTION_REASON
     differs = []
     for holder, _ in holders:
-        if first_void(res, owner, holder) is not None:
+        if first_void(res, incoming_of(fs), owner, holder) is not None:
             differs.append(holder.pokemon_id)
             continue
         try:
@@ -652,7 +721,7 @@ def ignored_effects_scope_difference(res: Resolution, fs: FrameState, attacker: 
     無効にする効果・［ベンチガード］は A だけにあるので、当てはまるなら違う。お上品攻撃の減らす量・順番の決定が要る計算は、B（決定がない）と違う。"""
     state = res.state
     frame = fs.frame
-    void = first_void(res, owner, receiver, held_by_receiver=False)
+    void = first_void(res, incoming_of(fs), owner, receiver, held_by_receiver=False)
     if void is not None:
         return f"受けるポケモンの持っていない、ダメージの要素を無効にする効果 {void.implementation.kind}"
     if target in BENCH_TARGETS and E.bench_guard_holders(state, owner, receiver):
@@ -728,7 +797,8 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
                                                 weakness_resistance=False, resistance=False, orders=orders, reduction=reduction)
         if copies is not None:
             raise res.question("self_excluding_power_copies", copies)
-    void = first_void(res, receiver_player, receiver, held_by_receiver=defender_effects)
+    incoming = incoming_of(fs)  # v0.103: 受けるダメージの要素の発生元（無効にする効果の判定に渡す）
+    void = first_void(res, incoming, receiver_player, receiver, held_by_receiver=defender_effects)
     if void is not None:
         # 無効（p.321）。計算しない。ログは v0.13 の damage_prevented
         state.add_event(
@@ -740,9 +810,13 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
             effect=str(frame.attack_key),
             persistent_effect=void.implementation.kind,
             source_card=void.implementation.source_card,
+            **void_source_log(void, incoming),
+            # v0.103: 返す効果の枠のダメージの要素を無効にした（［ニュートラルシールド］。ログ ``damage`` の ``retaliation`` と同じ印。v0.102 までの写しでは、返す効果のダメージを無効にする
+            # 効果は起こらなかった）
+            **({"retaliation": True} if frame.kind is FrameKind.RETALIATION else {}),
         )
         res.trace.record(DamageVoided(frame.id, receiver.pokemon_id, void.name))
-        note_receipt(res, fs, receiver_player, receiver, voided=(DAMAGE_ELEMENT, _void_reason(res, receiver_player, receiver)))
+        note_receipt(res, fs, receiver_player, receiver, voided=(DAMAGE_ELEMENT, _void_reason(res, incoming, receiver_player, receiver)))
         return DamageResult(target, receiver_player, receiver.pokemon_id, True, None, receiver.damage >= hp_of(state, receiver))
     if target in BENCH_TARGETS:
         cry = reduced_damage_to_source(state, attacker)
@@ -1311,10 +1385,12 @@ def reaches(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay,
         return False
     if element != DAMAGE_ELEMENT:
         # v0.31: 効果の要素を無効にする効果（「ワザをうけない」状態。バリアー）。「とうめい」より先（ダメージの要素の無効（first_void）と同じ順番）
-        void = first_void(res, owner, pokemon, Window.BEFORE_EFFECT)
+        incoming = incoming_of(fs)
+        void = first_void(res, incoming, owner, pokemon, Window.BEFORE_EFFECT)
         if void is not None:
             state.add_event("effect_prevented", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, effect=str(frame.attack_key),
-                            element=element, persistent_effect=void.implementation.kind, source_card=void.implementation.source_card)
+                            element=element, persistent_effect=void.implementation.kind, source_card=void.implementation.source_card,
+                            **void_source_log(void, incoming))
             res.trace.record(DamageVoided(frame.id, pokemon.pokemon_id, void.name))
             reason = VOID_ATTACK_BARRIER if Window.BEFORE_DAMAGE in void.definition.windows else VOID_EFFECT_ONLY  # v0.80: エフェクトガード
             note_receipt(res, fs, owner, pokemon, voided=(element, reason))
@@ -1461,7 +1537,9 @@ def power_damage_to_damage_source(res: Resolution, fs: FrameState, deferred: Def
         against = {color for reading in E.weakness_resistance_readings(state, fs.frame.player, attacker) for color in reading[:2]} - {None}
         if any(color in against for color in type_readings(state, source)):
             raise res.question("power_damage_weakness_resistance", f"{instance.power_key} → ポケモン {attacker.pokemon_id}")
-    if first_void(res, fs.frame.player, attacker) is not None:
+    # v0.103: これから起こす特殊能力のダメージの発生元（子の枠を開く前。特殊能力の分類なので、発生元が進化ポケモンでも［ニュートラルシールド］は当てはまらない）
+    incoming = Incoming(instance.owner, instance.pokemon_id, FRAME_DAMAGE_CLASS[FrameKind.POWER_DAMAGE], fs.frame.attack_key)
+    if first_void(res, incoming, fs.frame.player, attacker) is not None:
         raise RuntimeError(f"ワザを使ったポケモン {attacker.pokemon_id} が自分の番に「ダメージを受けない」状態（エンジンの不具合）")
     child = res.open_frame(FrameKind.POWER_DAMAGE, parent=fs.frame.id, player=instance.owner, source_pid=instance.pokemon_id,
                            attack_key=fs.frame.attack_key)
@@ -1795,7 +1873,8 @@ def power_damage_both_actives_on_tails(res: Resolution, fs: FrameState, deferred
                 computed = max(computed, 0)
                 if received_power_damage(state, side, target, holder, computed)[0] != plain:
                     raise res.question("power_damage_weakness_resistance", f"{instance.power_key} → ポケモン {target.pokemon_id}")
-        if first_void(res, side, target) is not None:
+        # v0.103: これから起こす特殊能力のダメージの発生元（子の枠を開く前。特殊能力の分類）
+        if first_void(res, Incoming(instance.owner, instance.pokemon_id, FRAME_DAMAGE_CLASS[FrameKind.POWER_DAMAGE], fs.frame.attack_key), side, target) is not None:
             raise res.question("power_damage_prevented", f"{instance.power_key} → ポケモン {target.pokemon_id}")
     flips = flip_coins(state, instance.owner, 1, source="power", effect=str(instance.power_key), card=instance.card, pokemon_id=instance.pokemon_id)
     tails = flips.results[0] is CoinSide.TAILS

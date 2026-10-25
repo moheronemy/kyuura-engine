@@ -28013,6 +28013,54 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.102 で加えた（docs/weakness-resistance-powers-v0.102.md）。QSG（quick_starter_gift。発売 1998-12-04）。ES1-021 と同じデータ（SAME_DATA_CARDS_V0_102。登録の値は同じ・記録は id ごと）。［ニュートラルダメージ］=IgnoreWeaknessResistanceForActives・ジャグリング=CoinFlipDamage(4, 10)（ES1-021 と同じ）。kyuura data/engine_targets.json（73a1690）の対象（candidate）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stqsg030・同じカードの組 SC-ES1-021 で確かめた）。kyuura data/sidecar/card_checks.json の CC-PMCG1-003-P18 は第1弾のトランセル（PMCG1-003）の照合で、グリーンシールドのトランセルは別のカードと書いている（このカードに当てはめない）。kyuura data/rule_history.json の card_lists.poke_body（MIX-POWER-ERRATA。2002 年の「ポケボディー」の一覧。外部 id 1stex1003・1stex1021）と docs/rules/errata-history.md の一覧にこの特殊能力があるが、後年の分類で、2000.02.14 版の根拠・QSG の照合にしていない（エラッタの errata の cards ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じ所との一致は独立した照合にならない。data_gaps（pokemon.dex・jp_print.level）はほかのカード・名前から補っていない（対戦に使う値はある）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない。"
+    },
+    "PR1-005": {
+      "basis": "kyuura_data",
+      "name_ja": "ミュウ",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text",
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [
+        {
+          "question": "ねんりきの日本語の文面は「コインを投げて「おもて」なら、相手を「マヒ」状態にする。」で、kyuura の英語の欄（pokemontcg:basep-47）は「Flip a coin. If heads, the Defending Pokémon is now Confused.」（こんらん）。日本語の文面を採用し、英語版の文面で置きかえない。原典（カードの画像）と照合していないので、どちらかの転記の誤りとは決めない（kyuura への報告事項）",
+          "fields": [
+            "pokemon.attacks[0].text.ja"
+          ],
+          "affects_behavior": false,
+          "note": "処理に使う文面は日本語の印刷の文面（マヒ）。英語版の文面は日本語版の処理の根拠にしない（CLAUDE.md のルールの扱い）ので、この違いだけで保留にしない"
+        }
+      ],
+      "notes": "v0.103 で加えた（docs/neutral-shield-attack-origin-v0.103.md）。PR1（promo。1997-01-15 月刊コロコロコミック 1997年2月号の付録）。PR1-012 と同じデータ（SAME_DATA_CARDS_V0_103。登録の値は同じ・記録は id ごと）。［ニュートラルシールド］=EvolvedOpponentAttackImmunity（常にはたらく。宣言しない。場（バトル場・ベンチ）のどこでも。このカードがねむり・マヒ・こんらんならはたらかない（「つかえない」。v0.10 のカイリキーの［はんげき］と同じ読み方）。文面の「ミュウ」はこの特殊能力を持つ個体自身（v0.10 の「カイリキーが」と同じ読み方。場のほかのミュウは守らない）。受けないのは、相手（ワザを実際に使った・返したプレイヤーが、このカードの持ち主の相手）の進化ポケモン（ワザを実際に使った・返す個体の、その時点の今の姿のカード（v0.49 の form_def）が1 進化・2 進化）からのワザの分類（宣言したワザ・返す効果）のダメージと効果の要素。特殊能力・こんらん・どく・トレーナーのダメージと効果、相手プレイヤーへの効果、ワザを使うための条件は範囲の外。無効にする効果の判定に発生元（kernel.Incoming）を渡す共通の処理。docs/neutral-shield-attack-origin-v0.103.md）。ねんりき=ParalyzeOnHeads（超・10。ダメージの目安の 10 → コイン 1 枚 →「おもて」で相手をマヒ。v0.3b のキャタピーの「いとをはく」の p.17 の最新の説明と同じ文面の型）。kyuura data/engine_targets.json（73a1690）の対象（candidate）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stp005・同じカードの組 SC-PR1-005・特殊能力の名前で確かめた）。kyuura data/rule_history.json の card_lists.poke_body（MIX-POWER-ERRATA。2002 年の「ポケボディー」の一覧）と docs/rules/errata-history.md・docs/rules/mixed-2002.md は、外部 id 1stp005・1stp012 を同じ行で挙げ、どちらのプロモかを区別していない（kyuura の記録の注のとおり）。後年の分類なので、2000.02.14 版の根拠・2 枚それぞれの独立した照合にしていない（エラッタの errata の cards ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じ所との一致は独立した照合にならない。data_gaps（jp_print.level）はほかのカード・名前から補っていない（対戦に使う値はある）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない。"
+    },
+    "PR1-012": {
+      "basis": "kyuura_data",
+      "name_ja": "ミュウ",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text",
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [
+        {
+          "question": "ねんりきの日本語の文面は「コインを投げて「おもて」なら、相手を「マヒ」状態にする。」で、kyuura の英語の欄（pokemontcg:basep-47）は「Flip a coin. If heads, the Defending Pokémon is now Confused.」（こんらん）。日本語の文面を採用し、英語版の文面で置きかえない。原典（カードの画像）と照合していないので、どちらかの転記の誤りとは決めない（kyuura への報告事項）",
+          "fields": [
+            "pokemon.attacks[0].text.ja"
+          ],
+          "affects_behavior": false,
+          "note": "処理に使う文面は日本語の印刷の文面（マヒ）。英語版の文面は日本語版の処理の根拠にしない（CLAUDE.md のルールの扱い）ので、この違いだけで保留にしない"
+        }
+      ],
+      "notes": "v0.103 で加えた（docs/neutral-shield-attack-origin-v0.103.md）。PR1（promo。1997-08 JR東日本 ポケモンスタンプラリー）。PR1-005 と同じデータ（SAME_DATA_CARDS_V0_103。登録の値は同じ・記録は id ごと）。［ニュートラルシールド］=EvolvedOpponentAttackImmunity・ねんりき=ParalyzeOnHeads（PR1-005 と同じ）。kyuura data/engine_targets.json（73a1690）の対象（candidate）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stp012・同じカードの組 SC-PR1-005・特殊能力の名前で確かめた）。kyuura data/rule_history.json の card_lists.poke_body（MIX-POWER-ERRATA。2002 年の「ポケボディー」の一覧）と docs/rules/errata-history.md・docs/rules/mixed-2002.md は、外部 id 1stp005・1stp012 を同じ行で挙げ、どちらのプロモかを区別していない（kyuura の記録の注のとおり）。後年の分類なので、2000.02.14 版の根拠・2 枚それぞれの独立した照合にしていない（エラッタの errata の cards ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じ所との一致は独立した照合にならない。data_gaps（jp_print.level）はほかのカード・名前から補っていない（対戦に使う値はある）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない。"
     }
   }
 }

@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.102）
+# 実装状況（v0.1〜v0.103）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534`（v0.97 から。v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3819,6 +3819,22 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 338・neo 154・拡張パック以外 184） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistryTest` |
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.103: ミュウの 2 枚と、無効にする効果の判定に渡す発生元
+
+[neutral-shield-attack-origin-v0.103.md](neutral-shield-attack-origin-v0.103.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 2 枚の登録（写しの組 pool_v0_103。印刷の文面のまま正規化しない。同じデータの 1 組は id ごとに登録し同じ値にまとめる。ねんりき=ParalyzeOnHeads（原文と処理を照らした）） | 実装済み・テスト済み | kyuura 73a1690 の写し | test_neutral_shield_attack_origin_v0_103.py `RegistrationTest` |
+| ［ニュートラルシールド］（常にはたらく。場のどこでも。ねむり・マヒ・こんらんではたらかない。持つ個体自身だけ。相手（実際の使い手）の進化ポケモン（実際にワザを使う・返す個体の今の姿）からのワザの分類のダメージと効果の要素を無効にする。特殊能力・こんらん・どく・トレーナー・自分のワザ・支払いは範囲の外） | 実装済み・テスト済み | 印刷の文面・v0.10 の「カイリキーが」「つかえない」・v0.49 の今の姿・v0.31 のバリアーの窓 | 同 `ScopeTest`・`BorrowedAndFormTest`・`OriginClassTest` |
+| 無効にする効果の判定に渡す発生元（`events.Incoming`。`first_void` の必須の引数。実際の処理・コインの役割・先読み・返す効果の予測・JS1・FA1・SS1・BG1・CX1・MG2・DW2・受けた記録・上限なしのコイン・legacy が同じ発生元。子の枠を開く前の判定も、これから起こす処理の発生元） | 実装済み・テスト済み | GR-2000-P321-ATTACK-DAMAGE・`events.FRAME_DAMAGE_CLASS` | 同 `OriginClassTest`・`CoinTest`・`SharedQueryTest` |
+| ワザの途中で場をはなれた発生元（要素を始めたときの今の姿を記録して使う。決定をまたいで要る経路は `UNSUPPORTED_ATTACK_SOURCE_LEFT_PLAY`） | 実装済み・テスト済み（決定をまたぐ経路は今の写しにない） | エリカのハクリューのつれさる | 同 `DecisionAndCopyTest`・`BorrowedAndFormTest` |
+| HC3・v0.4b・TF1・MG2・DW2・SS1・FA1・W24（既存の未解決。新しい能力で解決しない） | 裁定が未解決（止める） | — | 同 `CoinTest`・`BorrowedAndFormTest` |
+| トレーナーの使用中に対戦が終わる（v0.102 までの内部エラー。使用中のカードをトラッシュしてから終える） | 実装済み・テスト済み | 見つけた既存の不具合（9 章） | 同 `GameEndDuringTrainerTest` |
+| ログの監査（エンジンの判定を読まずに、発生元・今の姿・受け手・分類・無効を照らす） | 実装済み・テスト済み・対戦で確かめた | 6 章 | tests/log_audit.py・同 `AuditTest`・`tools/existing_effect_games.py --batch v0.103` |
+| 未対応の数（全対象 186・neo 86・拡張パック以外 100） | 確かめた | kyuura data/engine_targets.json（73a1690）から今の登録を差し引いた数 | test_catalog_contract.py |
+| 2 枚の外部照合（pcg-search.com・カードの画像）・ねんりきの日英の違い（日本語「マヒ」・英語「Confused」） | 原典未確認 | していない（日本語を採用。kyuura への報告事項） | — |
 
 ## v0.102: トランセル・バリヤードの 4 枚と、弱点・抵抗力の影響を受けない特殊能力の共通の問い合わせ
 

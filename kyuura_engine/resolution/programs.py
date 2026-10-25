@@ -75,9 +75,9 @@ from ..zones import look_at_hand, opponent_hand_card_to_deck, return_attached_tr
 
 from . import catalog as C
 from . import codec
-from .events import ElementStarted, FrameKind, KnockedOutRecorded, Suspended, Window
+from .events import ElementStarted, FrameKind, Incoming, KnockedOutRecorded, Suspended, Window
 from .kernel import IGNORE_HELD, IGNORE_RECEIVER_HELD, IGNORE_UNSTATED, BenchGuardRequest, EnergyDrainRequest, Resolution, SplitRequest, check_simultaneous, knocked_out, deal_damage, fire_pending, reaches, settle_scram, track_ko, type_question, weakness_resistance_matters
-from .kernel import effect_ko_entries, knock_out_by_effect, restore_effect_ko
+from .kernel import effect_ko_entries, knock_out_by_effect, note_source_form, restore_effect_ko
 from ..decisions import BENCH_GUARD, DAMAGE_REDUCTION, ESP_REDO, KO_PREVENTION, NINJA_TRICK, REACTION_SWITCH
 from ..decisions import MAGMA_POOL_ENERGY, REACTION_ORDER, SPLIT_FROM_DECK
 from .. import movement as M
@@ -165,6 +165,10 @@ class AttackRun:
 
     def attacker(self) -> PokemonInPlay:
         return self.state.find_pokemon(self.fs.frame.source_pid)[1]
+
+    def incoming(self) -> Incoming:
+        """v0.103: このワザの枠の発生元（``events.Incoming``。実際の使い手・ワザを使ったポケモン・ワザの分類・処理しているワザ）。無効にする効果の判定（``kernel.first_void``）に渡す。"""
+        return Incoming.of(self.fs.frame)
 
     def opponent_active(self) -> PokemonInPlay:
         active = self.state.players[1 - self.player].active
@@ -493,6 +497,7 @@ def run_elements(run: AttackRun, start: int) -> bool:
         if boundary and not run.fs.pending:
             settle_scram(res, rest=run.program[index:])
         res.trace.record(ElementStarted(run.fs.frame.id, index, type(element).__name__, element.phase.value))
+        note_source_form(res, run.fs.frame)  # v0.103: 要素の中でワザを使ったポケモンが場をはなれても、続く無効の判定に要る今の姿を残す
         run.index = index
         run.element_log = len(res.state.log)
         try:
@@ -1225,8 +1230,8 @@ def void_coin_question(run: AttackRun, decided: list[Element]) -> None:
                                None if final is None else E.evaded_effect_coin_error(target.pokemon_id, final))
     # v0.80（docs/neo-trainer-components-v0.80.md 6 章）: ダメージの要素と効果の要素は、それぞれを無効にする効果で別々に確かめる（v0.79 までは「効果の要素を無効にするなら
     # ダメージの要素も無効」として、効果の要素があれば効果の窓だけを見ていた。エフェクトガードは効果の要素だけを無効にする）。どれかの要素が有効なら投げる
-    effect_void = first_void(run.res, owner, target, Window.BEFORE_EFFECT) if "effect" in roles else None
-    damage_void = first_void(run.res, owner, target) if "damage" in roles else None
+    effect_void = first_void(run.res, run.incoming(), owner, target, Window.BEFORE_EFFECT) if "effect" in roles else None
+    damage_void = first_void(run.res, run.incoming(), owner, target) if "damage" in roles else None
     if ("effect" in roles and effect_void is None) or ("damage" in roles and damage_void is None):
         return
     if "effect" in roles:
@@ -1349,7 +1354,7 @@ class Damage(Element):
             receiver = run.opponent_active() if self.target == OPP else run.attacker()
             from .kernel import first_void
 
-            void = first_void(run.res, owner, receiver)
+            void = first_void(run.res, run.incoming(), owner, receiver)
             if void is not None:
                 raise run.res.question("prevented_coin_damage", f"ポケモン {receiver.pokemon_id}",
                                        E.prevented_coin_damage_error(receiver.pokemon_id, void.implementation.kind))
@@ -1719,7 +1724,7 @@ def prevented_effect_coin(run: AttackRun, owner: int, target: PokemonInPlay) -> 
     決められない。v0.4b の ``prevented_coin_damage`` と同じ形）。"""
     from .kernel import first_void
 
-    void = first_void(run.res, owner, target, Window.BEFORE_EFFECT)
+    void = first_void(run.res, run.incoming(), owner, target, Window.BEFORE_EFFECT)
     if void is not None:
         raise run.res.question("prevented_effect_coin", f"ポケモン {target.pokemon_id}（{void.implementation.kind}）")
 
@@ -2630,7 +2635,7 @@ class BenchDamage(Element):
 
         side = run.player if self.own else 1 - run.player
         targets = self.targets(run)
-        return bool(targets) and all(first_void(run.res, side, pokemon) is not None for pokemon in targets)
+        return bool(targets) and all(first_void(run.res, run.incoming(), side, pokemon) is not None for pokemon in targets)
 
     def has_target(self, run: AttackRun) -> bool:
         return bool(self.targets(run))  # v0.38: 控えポケモンがいなければ、処理の対象がない
@@ -2702,11 +2707,11 @@ class ChosenBenchDamage(Element):
         if self.local_coin is not None:
             from .kernel import first_void
 
-            if all(first_void(run.res, self.side(run), pokemon) is not None for pokemon in bench):
+            if all(first_void(run.res, run.incoming(), self.side(run), pokemon) is not None for pokemon in bench):
                 # v0.56: このコインが決めるのは控えポケモンへのダメージだけで、選べるどの控えもダメージを受けない（見えない壁）。v0.4b と同じ問い（投げるかが決まらない）
                 # v0.84: こおりのはしら（``catalog.ICE_PILLAR``）も同じ（理由の文に、無効にした効果の種類を書く）
-                names = {"invisible_wall": "見えない壁", "ice_pillar": "こおりのはしら"}
-                kinds = sorted({names.get(first_void(run.res, self.side(run), pokemon).definition.name, "ダメージを受けない状態") for pokemon in bench})
+                names = {"invisible_wall": "見えない壁", "ice_pillar": "こおりのはしら", "neutral_shield": "ニュートラルシールド"}  # v0.103: ［ニュートラルシールド］
+                kinds = sorted({names.get(first_void(run.res, run.incoming(), self.side(run), pokemon).definition.name, "ダメージを受けない状態") for pokemon in bench})
                 raise run.res.question("prevented_coin_damage", f"ダメージを受けない控えポケモン {[p.pokemon_id for p in bench]}（{'・'.join(kinds)}）を選ぶダメージだけを決めるコイン")
             if run.flip(1).results[0] is not self.local_coin:
                 return False
@@ -2898,7 +2903,7 @@ class DiscardOpponentEnergy(Element):
                 finals = [run.fs.evaded.get(pokemon.pokemon_id) for pokemon in live]
                 raise run.res.question("evaded_effect_coin", f"ポケモン {[pokemon.pokemon_id for pokemon in live]}",
                                        E.evaded_effect_coin_error(live[0].pokemon_id, finals[0]) if len(live) == 1 and finals[0] is not None else None)
-            if all(first_void(run.res, opponent, pokemon, Window.BEFORE_EFFECT) is not None for pokemon in live):
+            if all(first_void(run.res, run.incoming(), opponent, pokemon, Window.BEFORE_EFFECT) is not None for pokemon in live):
                 raise run.res.question("prevented_effect_coin", f"ポケモン {[pokemon.pokemon_id for pokemon in live]}")
             if run.flip(1).results[0] is not self.local_coin:
                 return False
@@ -2921,7 +2926,7 @@ class DiscardOpponentEnergy(Element):
         if self._voided(run, pokemon) is not None:
             # v0.101: ［KEEP］でトラッシュの効果がなくなるポケモン。コインはこのポケモンへのトラッシュだけを決める（KP2。選ぶと止める。ほかのポケモンを選ぶ答えは止めない）
             return "keep_voided_discard_coin", f"ポケモン {pokemon.pokemon_id}（［KEEP］でなくなるエネルギーカードのトラッシュだけを決めるコイン）"
-        if first_void(run.res, owner, pokemon, Window.BEFORE_EFFECT) is not None:
+        if first_void(run.res, run.incoming(), owner, pokemon, Window.BEFORE_EFFECT) is not None:
             return "prevented_effect_coin", f"ポケモン {pokemon.pokemon_id}（「ワザをうけない」ポケモンのエネルギーカードのトラッシュだけを決めるコイン）"
         if E.evasion_power(run.state, pokemon) is not None and run.fs.reception.get(pokemon.pokemon_id) is not True:
             return "evaded_effect_coin", f"ポケモン {pokemon.pokemon_id}（ダメージの要素で「とうめい」の「おもて」なら、エネルギーカードのトラッシュだけを決めるコインを投げるかが決められない）"
@@ -4726,7 +4731,7 @@ def _counter_transfer_protected(run: AttackRun, target: PokemonInPlay, detail: s
     決まらない（CX1）。「とうめい」は ``reaches`` で効果を受けるときに評価し、受けなければ同じ問いにする（呼ぶ側）。"""
     from .kernel import first_void
 
-    void = first_void(run.res, 1 - run.player, target, Window.BEFORE_EFFECT)
+    void = first_void(run.res, run.incoming(), 1 - run.player, target, Window.BEFORE_EFFECT)
     if void is not None:
         raise run.res.question("counter_transfer_protected", f"ポケモン {target.pokemon_id}（{void.implementation.kind}。{detail}）")
 
@@ -7190,7 +7195,7 @@ class DiscardOpponentTrainers(Element):
 
             if all(run.fs.reception.get(pokemon.pokemon_id) is False for pokemon in targets):
                 raise run.res.question("evaded_effect_coin", f"ポケモン {[pokemon.pokemon_id for pokemon in targets]}")
-            if all(first_void(run.res, opponent, pokemon, Window.BEFORE_EFFECT) is not None for pokemon in targets):
+            if all(first_void(run.res, run.incoming(), opponent, pokemon, Window.BEFORE_EFFECT) is not None for pokemon in targets):
                 # このコインが決めるのは相手のポケモンへの効果だけで、どの対象も「ワザをうけない」状態（HC3。v0.31 のスーパーデストロイと同じ形）
                 raise run.res.question("prevented_effect_coin", f"ポケモン {[pokemon.pokemon_id for pokemon in targets]}")
             if run.flip(1).results[0] is not self.local_coin:
@@ -7482,7 +7487,7 @@ class ChosenBenchCoinDamage(Element):
             raise RuntimeError(f"選んだポケモン {choices} が、相手の控えにいない（エンジンの不具合）")
         from .kernel import first_void
 
-        void = first_void(run.res, 1 - run.player, target)
+        void = first_void(run.res, run.incoming(), 1 - run.player, target)
         if void is not None:
             # このコインが決めるのは、選んだ控えポケモンへのダメージだけで、そのポケモンはダメージを受けない（見えない壁）。v0.4b と同じ問い（投げるかが決まらない）
             raise run.res.question("prevented_coin_damage", f"ダメージを受けない控えポケモン {target.pokemon_id}（見えない壁）へのダメージだけを決めるコイン")
@@ -9480,7 +9485,7 @@ class OpponentPowerSuppression(Element):
         for pokemon in state.players[opponent].in_play():
             if state.is_face_down(pokemon):
                 continue
-            if first_void(run.res, opponent, pokemon, Window.BEFORE_EFFECT) is not None or E.evasion_power(state, pokemon) is not None:
+            if first_void(run.res, run.incoming(), opponent, pokemon, Window.BEFORE_EFFECT) is not None or E.evasion_power(state, pokemon) is not None:
                 raise run.res.question("strange_gas_protected", f"ポケモン {pokemon.pokemon_id}")
         if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
             return False
@@ -9844,7 +9849,7 @@ class TargetDamage(Element):
 
         if run.fs.reception.get(pokemon.pokemon_id) is False:
             return True
-        return first_void(run.res, owner, pokemon, held_by_receiver=self.defender_effects) is not None
+        return first_void(run.res, run.incoming(), owner, pokemon, held_by_receiver=self.defender_effects) is not None
 
     def void_for_all(self, run: AttackRun) -> bool:
         targets = self._targets(run)
@@ -10474,7 +10479,7 @@ def damage_units_difference(run: AttackRun, owner: int, receiver: PokemonInPlay,
     )
 
     res, fs, state = run.res, run.fs, run.state
-    if first_void(res, owner, receiver) is not None:
+    if first_void(res, run.incoming(), owner, receiver) is not None:
         return None
     attacker = run.attacker()
     modifiers = with_stadium_coin(res, fs.frame, OPP, attack_modifiers_of(res, fs.frame, attacker, receiver, OPP))
@@ -10821,7 +10826,7 @@ class FieldPowerSuppression(Element):
                 continue  # うらのカードは全体にはたらく効果ではおもてにしない。特殊能力のないポケモンは、止まるかどうかで結果が変わらない
             received = run.fs.reception.get(pokemon.pokemon_id)
             evasion = received is not True and E.evasion_power(state, pokemon) is not None
-            if received is False or evasion or first_void(run.res, opponent, pokemon, Window.BEFORE_EFFECT) is not None:
+            if received is False or evasion or first_void(run.res, run.incoming(), opponent, pokemon, Window.BEFORE_EFFECT) is not None:
                 raise run.res.question("dark_wave_protected", f"ポケモン {pokemon.pokemon_id}")
 
     def _knocked_out_question(self, run: AttackRun) -> None:

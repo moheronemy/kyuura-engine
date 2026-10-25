@@ -1456,6 +1456,10 @@
     "ES1-021",
     "QSG-030"
   ],
+  "pool_v0_103": [
+    "PR1-005",
+    "PR1-012"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -107732,6 +107736,216 @@
         {
           "page": "1stqsg030",
           "list_number": "030/058"
+        }
+      ]
+    },
+    {
+      "id": "PR1-005",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ミュウ",
+        "en": "Mew"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          151
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ニュートラルシールド",
+              "en": "Neutral Shield"
+            },
+            "text": {
+              "ja": "ミュウは相手の進化ポケモンからの「ワザ」を受けない。「ねむり・マヒ・こんらん」状態のときにはつかえない。",
+              "en": "Prevent all effects of attacks, including damage, done to Mew by Evolved Pokémon. You can't use this power if Mew is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ねんりき",
+              "en": "Psyshock"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-47"
+        ],
+        "pcg_search": [
+          "1stp005"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp005.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp005.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PR1-005",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-47",
+        "pokemon.dex": "pokemontcg:basep-47"
+      },
+      "copies": [
+        {
+          "page": "1stp005",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PR1-012",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ミュウ",
+        "en": "Mew"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          151
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ニュートラルシールド",
+              "en": "Neutral Shield"
+            },
+            "text": {
+              "ja": "ミュウは相手の進化ポケモンからの「ワザ」を受けない。「ねむり・マヒ・こんらん」状態のときにはつかえない。",
+              "en": "Prevent all effects of attacks, including damage, done to Mew by Evolved Pokémon. You can't use this power if Mew is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ねんりき",
+              "en": "Psyshock"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-47"
+        ],
+        "pcg_search": [
+          "1stp012"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp012.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp012.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PR1-005",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-47",
+        "pokemon.dex": "pokemontcg:basep-47"
+      },
+      "copies": [
+        {
+          "page": "1stp012",
+          "list_number": "-/-"
         }
       ]
     }

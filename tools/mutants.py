@@ -117,9 +117,9 @@ MUTANTS: tuple[Mutant, ...] = (
            '        if False:',
            origin='v0.15d'),  # v0.57: 元の行にクチバシティジムのコインの条件が加わったので、同じ誤り（上限を超えても受け付ける）を今の行に入れる。v0.67: 知らない選択・役割の条件（unknown）も加わった
     Mutant('M16', 'ダメージを受けない状態を見ない', R + 'kernel.py',
-           '    void = first_void(res, receiver_player, receiver, held_by_receiver=defender_effects)\n    if void is not None:',
-           '    void = first_void(res, receiver_player, receiver, held_by_receiver=defender_effects)\n    if False:',
-           origin='v0.15d'),  # v0.60: 元の行に「スピードスター」の引数が加わったので、同じ誤り（無効を見ない）を今の行に入れる
+           '    void = first_void(res, incoming, receiver_player, receiver, held_by_receiver=defender_effects)\n    if void is not None:',
+           '    void = first_void(res, incoming, receiver_player, receiver, held_by_receiver=defender_effects)\n    if False:',
+           origin='v0.15d'),  # v0.60: 元の行に「スピードスター」の引数が加わったので、同じ誤り（無効を見ない）を今の行に入れる。v0.103: 発生元の引数（incoming）が加わった
     Mutant('M17', '解決の記録で結果を決める', R + 'kernel.py',
            '    frames = {res.knocked_by[pokemon.pokemon_id] for _, pokemon in knocked(res) if pokemon.pokemon_id in res.knocked_by}',
            '    recorded = {e.pid: e.frame for e in res.trace.of(KnockedOutRecorded)}\n    frames = {recorded[pokemon.pokemon_id] for _, pokemon in knocked(res) if pokemon.pokemon_id in recorded}',

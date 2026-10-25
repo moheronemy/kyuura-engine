@@ -338,6 +338,7 @@ LEAVE_EVENTS = ("retreat", "switch", "forced_switch", "trainer_hand_to_active", 
                 "discard_from_play", "secret_plan_discarded")
 # v0.92: おたがいの場のすべての特殊能力を止める期限のある効果（まきちらせ!ベトベトガス・オールクリアのワザを使っているあいだ・やみのはどう）
 FIELD_POWER_SUPPRESSION_KINDS = ("power_suppression", "attack_power_suppression", "attack_field_power_suppression")
+NEUTRAL_SHIELD_KIND = "neutral_shield"  # v0.103: ［ニュートラルシールド］で無効にしたログの persistent_effect（エンジンの定義から読まず、ここで独立に持つ）
 
 # v0.10: はたらいた「はんげき」より先にあってはならない、ワザのダメージ以外の効果・きぜつ・番の終わり（p.89）
 COUNTER_BARRIERS = (
@@ -1480,7 +1481,9 @@ def log_problems(state) -> list[str]:
             else:
                 window["damage:retaliation" if e.get("retaliation") else "damage:self" if e.get("target") == "self" else "damage:opponent"] += 1
         elif kind == "damage_prevented":
-            if e["target"] in ("opponent_bench", "self_bench"):
+            if e.get("retaliation"):
+                window["prevented:retaliation"] += 1  # v0.103: 返す効果のダメージを無効にした（［ニュートラルシールド］。ワザのダメージの要素の数に入れない）
+            elif e["target"] in ("opponent_bench", "self_bench"):
                 window[f"prevented:bench:{e['pokemon_id']}"] += 1
             else:
                 window[f"prevented:{e['target']}"] += 1
@@ -1625,6 +1628,7 @@ def log_problems(state) -> list[str]:
     # v0.60: ログから組み立てた、はたらいている「まきちらせ!ベトベトガス」（使ったトレーナーのカード → 消える番）。v0.59 から特殊能力を消すが、「とうめい」・はんげきの
     # 確かめはかがくへんかガスしか見ていなかった（v0.59 の対戦では起こらなかった）
     goop_gases: dict[int, int] = {}
+    v103_strange_gases: dict[int, int] = {}  # v0.103: ログから組み立てた、はたらいている「ふしぎなガス」（カード → 消える番）。［ニュートラルシールド］の確かめを飛ばす
     color_types: dict[int, dict] = {}  # v0.88: ［せんすい］の記録（対象のポケモンの番号 → 色・発生源のカード・特殊能力の位置）
     # v0.90: ログから組み立てた、場のポケモンのマーカー・カウンター（番号 → のせた順の {"marker", "color", "turn"}）と、進化・退化で取りのぞくはずのポケモン（番号 → 理由）
     marks: dict[int, list[dict]] = {}
@@ -2255,6 +2259,8 @@ def log_problems(state) -> list[str]:
             if attack_window["ret"] is None:
                 return
             reception = attack_window["ret"]["reception"]
+        if element != DAMAGE_ELEMENT:
+            problems.extend(v103_received(e, pid, element))  # v0.103: ［ニュートラルシールド］（ダメージは v103_problems が 0 も含めて確かめる）
         if reception.get(pid) is False:
             problems.append(f"{e['turn']} 番のワザで「とうめい」により受けないと決まったポケモン {pid} が {element} を受けた（{e['kind']}）")
         elif pid not in reception:
@@ -2423,6 +2429,86 @@ def log_problems(state) -> list[str]:
                 found.append(f"{e['turn']} 番の {kind}（ポケモン {pid}）で、力（ポケモン {resist}）がなければ当てはめていた抵抗力を、影響を受けなかった力として書いていない")
         return found
 
+    def v103_shield(pid: int | None, owner: int | None) -> bool | None:
+        """v0.103: ログから組み立てた今の場で、ポケモン ``pid``（持ち主 ``owner``）自身の［ニュートラルシールド］（``EvolvedOpponentAttackImmunity``）がはたらいているか（場所・
+        特殊状態・かがくへんかガスは ``working_continuous``。エンジンの ``first_void``・``from_evolved_opponent`` を読まない）。おたがいの場の特殊能力を止める期限のある効果
+        （``goop_gases``）・ふしぎなガス・スタンウェーブがはたらく間は、ログからは決めない（None。確かめを飛ばす）。持っていなければ False。"""
+        if pid is None or pid not in in_play or pokemon_owner.get(pid) != owner or pid in face_down_pids:
+            return False
+        if not any(isinstance(state.effects.power_effect(definition.id, power), E.EvolvedOpponentAttackImmunity) for definition, _, power in power_defs(pid)):
+            return False
+        if goop_gases or v103_strange_gases or any(key[0] == pid and info["kind"] == PowersStopped.kind for key, info in alive.items()):
+            return None
+        return bool(working_continuous(pid, E.EvolvedOpponentAttackImmunity))
+
+    def v103_source(e: dict) -> tuple[int, int, bool | None] | None:
+        """v0.103: ログ ``e``（ワザの分類のダメージ・効果・その無効）の発生元（使い手, 個体, 今の姿が進化ポケモンか）。返す効果のダメージ（``retaliation``・今の返す効果の
+        ``effect``）なら返す側、ほかは今のワザを使ったポケモン（まねたワザも使ったポケモン）。今の姿はログから組み立てた場の ``form_def``（場をはなれていればワザの宣言の時点の
+        記録）。ワザの外なら None。"""
+        if attack_window is None:
+            return None
+        ret = attack_window["ret"]
+        if ret is not None and e.get("retaliation"):
+            source, player = ret["pokemon_id"], ret["player"]
+            evolved = form_def(source).is_evolution_pokemon if source in in_play else None
+        else:
+            source, player = attack_window["pokemon_id"], attack_window["player"]
+            evolved = form_def(source).is_evolution_pokemon if source in in_play else attack_window.get("v103_evolved")
+        return player, source, evolved
+
+    def v103_received(e: dict, pid: int, element: str) -> list[str]:
+        """v0.103: 相手の進化ポケモンのワザの要素 ``element`` を、はたらいている［ニュートラルシールド］のポケモン ``pid`` が受けた（無効にしていない）ログがないか。"""
+        found = v103_source(e)
+        if found is None or pid not in in_play:
+            return []
+        player, source, evolved = found
+        owner = pokemon_owner.get(pid)
+        if owner == player or not evolved or (element == DAMAGE_ELEMENT and e.get("ignore_defender_effects")):
+            return []  # 自分のワザ・たねポケモン（記録のない発生元を含む）・受けるポケモン自身の持っている効果を除くワザ（スピードスターなど）
+        if v103_shield(pid, owner):
+            return [f"{e['turn']} 番の相手の進化ポケモン（{source}）のワザの {element}（{e['kind']}）を、はたらいている［ニュートラルシールド］のポケモン {pid} が受けた"]
+        return []
+
+    def v103_problems(e: dict) -> list[str]:
+        """v0.103: ［ニュートラルシールド］で無効にしたログ（``damage_prevented``・``effect_prevented`` の ``neutral_shield``）が、ログから組み立てた場の、受けるポケモン自身の
+        はたらく力・相手の使い手・今の姿が進化ポケモンの発生元（ワザを使ったポケモンか返す側。ログの ``attacker``・``attacker_pokemon_id`` と照らす）であることと、そうなのに
+        ワザのダメージ（0 を含む）を受けたログがないことを確かめる（効果の要素は ``received`` が確かめる）。"""
+        kind = e["kind"]
+        if kind == "attack" and attack_window is not None:
+            # 宣言の時点の今の姿（ワザの途中で場をはなれた発生元の、続く要素の確かめに使う。エンジンが要素の始めに記録するのと別に、ログから求める）
+            source = attack_window["pokemon_id"]
+            attack_window["v103_evolved"] = form_def(source).is_evolution_pokemon if source in in_play else None
+            return []
+        found: list[str] = []
+        if kind in ("damage_prevented", "effect_prevented") and e.get("persistent_effect") == NEUTRAL_SHIELD_KIND:
+            pid, owner = e["pokemon_id"], e["player"]
+            source = v103_source(e)
+            where = f"{e['turn']} 番の［ニュートラルシールド］で無効にした {kind}（ポケモン {pid}）"
+            if source is None:
+                return [f"{where} が、ワザ（返す効果を含む）の処理の中にない"]
+            if e.get("retaliation"):
+                ret = attack_window["ret"]
+                if ret is None or ret["damage_seen"] or e.get("effect") != ret["effect"] or e["pokemon_id"] != attack_window["pokemon_id"]:
+                    found.append(f"{where}: 返す効果（retaliation）のダメージの前に、その返す効果がない・2 回目・受けたのがワザを使ったポケモンではない")
+                else:
+                    ret["damage_seen"] = True
+            player, source_pid, evolved = source
+            if (e.get("attacker"), e.get("attacker_pokemon_id")) != (player, source_pid):
+                found.append(f"{where} の発生元 {(e.get('attacker'), e.get('attacker_pokemon_id'))} が、ログから組み立てた発生元 {(player, source_pid)} と違う")
+            if player == owner:
+                found.append(f"{where} の発生元が、受けるポケモンの持ち主のワザ")
+            if evolved is False:
+                found.append(f"{where} の発生元 {source_pid} の今の姿が、進化ポケモンではない")
+            if top.get(pid) != e.get("source_card") and disguised.get(pid) != e.get("source_card"):
+                found.append(f"{where} の力のもと {e.get('source_card')} が、受けるポケモン自身ではない")
+            if v103_shield(pid, owner) is False:
+                found.append(f"{where} に、ログから組み立てた場ではたらく［ニュートラルシールド］がない")
+            return found
+        if kind == "damage" and attack_window is not None:
+            pid = e.get("pokemon_id", ids.get(e["pokemon"]))
+            found.extend(v103_received(e, pid, DAMAGE_ELEMENT))
+        return found
+
     def v101_problems(e: dict) -> list[str]:
         """v0.101: ［KEEP］でなくなったトラッシュの効果（``energy_discard_voided``）が、ログから組み立てた場ではたらく［KEEP］の持ち主の場の「アンノーン」への、相手が使った
         ワザ・特殊能力・トレーナーの効果のものであることと、その場合に相手の効果でトラッシュしたログ（ワザ・トレーナー・［だつりょくえき］・つけかえで受けずにトラッシュ）が
@@ -2568,6 +2654,10 @@ def log_problems(state) -> list[str]:
             goop_gases[e["trainer_card"]] = e["expires_turn"]
         elif kind == "trainer_effect_removed" and e.get("effect_kind") in FIELD_POWER_SUPPRESSION_KINDS:
             goop_gases.pop(e.get("trainer_card"), None)
+        if kind == "trainer_effect_added" and e["effect_kind"] == E.OPPONENT_POWER_SUPPRESSION:  # v0.103: ふしぎなガス（［ニュートラルシールド］の確かめを飛ばす）
+            v103_strange_gases[e["trainer_card"]] = e["expires_turn"]
+        elif kind == "trainer_effect_removed" and e.get("effect_kind") == E.OPPONENT_POWER_SUPPRESSION:
+            v103_strange_gases.pop(e.get("trainer_card"), None)
         prior = previous  # 1 つ前のイベント（v0.11。「こんじょう」の宣言・コイン・結果の順番）
         if prior is not None and prior["kind"] == "attack" and kind != "once_attack_recorded":
             # v0.44: 場に出てから 1 度しか使えないワザの宣言のすぐあとには、その記録（once_attack_recorded）がある
@@ -2986,6 +3076,7 @@ def log_problems(state) -> list[str]:
         problems.extend(v100_problems(e))  # v0.100: スケッチ・やみのひとみ・ほろびのうた
         problems.extend(v101_problems(e))  # v0.101: ［KEEP］
         problems.extend(v102_problems(e))  # v0.102: ［グリーンシールド］・［ニュートラルダメージ］
+        problems.extend(v103_problems(e))  # v0.103: ［ニュートラルシールド］
         if kind in ("damage", "confusion_damage"):
             # v0.90: のろいマーカーののっているポケモンが弱点の計算をしたワザのダメージは「×4」（ログの weakness_multiplier）。ほかは書かない。こんらんの 20 は、のろいマーカーと
             # 自分の弱点が当てはまるならコインの前に止まる（UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS）ので、弱点の計算をしたこんらんのダメージはない

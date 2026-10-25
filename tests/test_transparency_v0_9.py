@@ -823,7 +823,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                     "あやしいひかり",
                                     # v0.102: トランセル（ES1-003・QSG-003）の「ふしぎなこな」（ConfuseOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
                                     # docs/weakness-resistance-powers-v0.102.md）
-                                    "ふしぎなこな", "ふしぎなこな"]))
+                                    "ふしぎなこな", "ふしぎなこな",
+                                    # v0.103: ミュウ（PR1-005・PR1-012）の「ねんりき」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                    # docs/neutral-shield-attack-origin-v0.103.md）
+                                    "ねんりき", "ねんりき"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

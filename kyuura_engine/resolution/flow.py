@@ -251,6 +251,10 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
     if any(marker.kind in (MARKER_CURSE, MARKER_COLOR) for side in state.players for pokemon in side.in_play() for marker in pokemon.markers):
         # v0.90: のろいマーカー（弱点の「×4」）・色マーカー（タイプ。CM1）。v0.13 の止める関数は、このマーカーで変わる計算と問いを確かめたことがない
         found.append("のろいマーカー・色マーカー")
+    if E.neutral_shield_holders(state):
+        # v0.103: ［ニュートラルシールド］（発生元が相手の進化ポケモンのワザのダメージと効果の要素を無効にする）。v0.13 の止める関数の見積もり（``preview_attack_damage``）は発生元で
+        # 無効にするかを知らない（「ダメージを受けない」状態・バリアーだけを見る）ので、それで確かめない（情報のない経路で黙って無視しない）
+        found.append("ニュートラルシールド")
     return tuple(found)
 
 

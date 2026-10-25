@@ -1979,6 +1979,10 @@ def _after_power_step(state: GameState, use: PowerUse, context: resolution.Conte
         steps = moves + ((reactions.SETTLE_POWER,),) + tuple(steps)
     else:
         resolution.after_power(state, context, knock_outs=effect.may_knock_out, converted=converted)
+        if state.phase in TERMINAL_PHASES:
+            # v0.103: 使用後の処理で対戦が終わった（トレーナーの効果の途中で場に出たゲンガーの［やみのちから］で、相手の場にポケモンがいなくなった）。もどる先のトレーナーは
+            # 対戦を終えるときにトラッシュした（``procedures.finish``）ので、続きの段はない（``reactions.run`` も対戦が終わったら残りを処理しない）
+            return () if defer else None
     # v0.86: 処理のあとの続き（docs/entry-energy-evolution-reactions-v0.86.md 2 章）: 反応の段（あまごい・［うか］のあとの反応）→ もどる先のトレーナーを使い終える（v0.43。
     # v0.85 までは、そのあいだにきぜつ・サイド・バトル場に出す決定が来ることを扱っていなかった。来たら、その決定の続きに持たせる）→ ［おたけび］の「使ったら、自分の番は終わる」
     tail = tuple(steps)

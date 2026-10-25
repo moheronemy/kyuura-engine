@@ -818,6 +818,16 @@ def _mid_check_game_ends(after: GameState, left: GameState, order: tuple[int, in
 
 
 def finish(state: GameState, result: GameResult) -> None:
+    # v0.103（docs/neutral-shield-attack-origin-v0.103.md 9 章）: 効果の途中で対戦が終わった使用中のトレーナー（ポケモン育て屋さんで進化させたゲンガーの［やみのちから］で、相手の場に
+    # ポケモンがいなくなった）を、使い終えたときと同じく持ち主のトラッシュにすててから終える（内側 → 外側の順。ログ ``discard_trainer``）。v0.102 までは使用中のカードを残したまま
+    # 終え、不変条件の違反（内部エラー）で止まっていた。使用中のトレーナーがなければ何もしない（勝ち負けを判定する時点は変えない）
+    while state.trainer_in_use is not None or state.trainer_stack:
+        if state.trainer_in_use is not None:
+            used, state.trainer_in_use = state.trainer_in_use, None
+        else:
+            used, state.trainer_stack = state.trainer_stack[-1], state.trainer_stack[:-1]
+        state.players[used.player].discard.append(used.card)
+        state.add_event("discard_trainer", player=used.player, card=used.card)
     state.result = result
     state.phase = Phase.SUDDEN_DEATH if result.outcome == "sudden_death" else Phase.GAME_OVER
     state.decision = None

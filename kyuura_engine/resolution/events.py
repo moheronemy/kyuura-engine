@@ -82,6 +82,28 @@ class Frame:
         return FRAME_DAMAGE_CLASS[self.kind]
 
 
+@dataclass(frozen=True)
+class Incoming:
+    """v0.103（docs/neutral-shield-attack-origin-v0.103.md 4 章）: 受ける要素の発生元。無効にする効果の判定（``kernel.first_void``）に、受ける個体とは別に明示して渡す
+    （親の枠・今の番のプレイヤーから推測させない）。
+
+    - ``player``: 実際の使い手（ワザを使った・返す効果を持つ・特殊能力を持つポケモンの持ち主。枠の ``Frame.player``）。今の番のプレイヤー・ワザを印刷したカードの持ち主では決めない
+    - ``source_pid``: 発生元の個体（場のポケモンの番号。枠の ``Frame.source_pid``。返す効果なら返す側、特殊能力のダメージならその特殊能力を持つポケモン）
+    - ``damage_class``: 処理の分類（``DamageClass``。宣言したワザと返す効果はどちらもワザの分類、特殊能力のダメージ・こんらんは別の分類。親がワザでも子の特殊能力はワザにしない）
+    - ``attack_key``: 処理しているワザ（``AttackKey``。ワザの分類でなければ、それを起こしたワザ）。発生元の段階は、このワザを印刷したカードからは読まない（借りたワザ）
+
+    子の枠をまだ開いていない事前の判定（返す効果・特殊能力のダメージ）は、これから起こす処理の値で作る（``of`` は開いた枠から作る）。"""
+
+    player: int
+    source_pid: int
+    damage_class: DamageClass
+    attack_key: Any = None
+
+    @classmethod
+    def of(cls, frame: Frame) -> Incoming:
+        return cls(frame.player, frame.source_pid, frame.damage_class, frame.attack_key)
+
+
 @dataclass
 class FrameState:
     """枠ごとの、解決の中だけの値。"""

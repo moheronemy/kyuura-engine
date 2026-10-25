@@ -39390,3 +39390,57 @@ SAME_DATA_CARDS_V0_102: Mapping[str, str] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_shared_entries(_with_powers(_with_attacks(DEFAULT_EFFECTS, V0_102_ATTACKS), V0_102_POWERS), SAME_DATA_CARDS_V0_102)
+
+
+# ---------------------------------------------------------------- v0.103（docs/neutral-shield-attack-origin-v0.103.md）
+# ミュウ（PR1-005・PR1-012）の［ニュートラルシールド］・「ねんりき」。処理に使う文面は kyuura の印刷の文面
+
+NEUTRAL_SHIELD_TEXT = "ミュウは相手の進化ポケモンからの「ワザ」を受けない。「ねむり・マヒ・こんらん」状態のときにはつかえない。"
+PSYSHOCK_TEXT = "コインを投げて「おもて」なら、相手を「マヒ」状態にする。"
+
+
+@dataclass(frozen=True)
+class EvolvedOpponentAttackImmunity(ContinuousPower):
+    """ミュウは相手の進化ポケモンからの「ワザ」を受けない。「ねむり・マヒ・こんらん」状態のときにはつかえない（v0.103。ミュウ（PR1-005・PR1-012）の［ニュートラルシールド］。
+    kyuura の印刷の文面。docs/neutral-shield-attack-origin-v0.103.md 3 章）。
+
+    - 常にはたらく（使うかどうかの選択・宣言・毎番 1 回の記録はない。``UsePokemonPower`` は既存の ``POWER_NOT_DECLARABLE``）。場（バトル場・ベンチ）のどこでもはたらく（日本語の
+      文面にバトル場の限定はない）。このカードがねむり・マヒ・こんらんならはたらかない（「つかえない」。v0.10 のカイリキーの［はんげき］の「つかえない」と同じ読み方）。かがくへんかガス・
+      まきちらせ!ベトベトガス・スタンウェーブなどで消える（解決の基盤の効果の定義 ``catalog.NEUTRAL_SHIELD`` の共通の確かめ）
+    - 文面の「ミュウ」は、この特殊能力を持つ個体自身（v0.10 の「カイリキーが」と同じ読み方）。場のほかのミュウを守らない
+    - 受けないのは、相手の進化ポケモンからのワザの分類のダメージと効果の要素（バリアーと同じ窓）。相手は実際の使い手（ワザを使った・返す効果を持つポケモンの持ち主）で決め、進化ポケモン
+      かは実際にワザを使う・返す個体の、その時点の今の姿（v0.49 の ``form_def``）の段階で決める（借りたワザを印刷したカードの段階は読まない）。特殊能力・こんらん・どく・トレーナーの
+      ダメージと効果、相手プレイヤーへの効果、自分のポケモンのワザ、ワザを使うための条件・支払いは範囲の外（``kernel.first_void`` に発生元 ``events.Incoming`` を渡す共通の処理）
+    """
+
+    implementation_id = "evolved_opponent_attack_immunity"
+    what: ClassVar[str] = "相手の進化ポケモンからのワザを受けない特殊能力"
+
+    def texts(self) -> tuple[str, ...]:
+        return (NEUTRAL_SHIELD_TEXT,)
+
+
+def neutral_shield_holders(state: GameState) -> list[tuple[int, PokemonInPlay]]:
+    """場の、［ニュートラルシールド］（``EvolvedOpponentAttackImmunity``）を今持つポケモン（はたらいているかは見ない。v0.13 の止める関数が知らない役割があるかの確かめに使う。v0.103）。"""
+    return [(owner, pokemon) for owner, side in enumerate(state.players) for pokemon in side.in_play()
+            if any(isinstance(slot.effect, EvolvedOpponentAttackImmunity) for slot in powers_of(state, pokemon))]
+
+
+_NEUTRAL_SHIELD = EvolvedOpponentAttackImmunity()
+
+# v0.103 のワザの登録（id ごとに書き、同じデータの 2 枚は下の SAME_DATA_CARDS_V0_103 で同じ登録の値にまとめる）
+V0_103_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # ミュウ（超・10）。ねんりき = ダメージの目安の 10 → コイン 1 枚 →「おもて」で相手をマヒ（v0.3b のキャタピーの「いとをはく」の p.17 の最新の説明と同じ文面の型）
+    **{AttackKey(card, 0): _printed(ParalyzeOnHeads(), "ねんりき", PSYSHOCK_TEXT) for card in ("PR1-005", "PR1-012")},
+})
+# v0.103 の特殊能力の登録
+V0_103_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
+    **{PowerKey(card, 0): PowerEntry(_NEUTRAL_SHIELD, "ニュートラルシールド", NEUTRAL_SHIELD_TEXT, NEUTRAL_SHIELD_TEXT, _KYUURA_PRINTED_TEXT)
+       for card in ("PR1-005", "PR1-012")},
+})
+# kyuura の同じカードの組（SC-PR1-005）で、日本語の名前・pokemon 欄の対戦に使う値が同じ 1 組（新しい id → 同じデータのカード）。元データの id は消さない
+SAME_DATA_CARDS_V0_103: Mapping[str, str] = MappingProxyType({
+    "PR1-012": "PR1-005",  # ミュウ（月刊コロコロコミックの付録・JR東日本 ポケモンスタンプラリー）
+})
+
+DEFAULT_EFFECTS = _with_shared_entries(_with_powers(_with_attacks(DEFAULT_EFFECTS, V0_103_ATTACKS), V0_103_POWERS), SAME_DATA_CARDS_V0_103)
