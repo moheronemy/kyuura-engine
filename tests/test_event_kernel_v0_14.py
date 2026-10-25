@@ -669,7 +669,10 @@ class CatalogTest(unittest.TestCase):
                            "reduce_own_group_damage_from_type",
                            # v0.99: アンノーンP の［PERFORM］（このカードの「めざめるパワー」のダメージを変える。v0.46 の［きょうぼう］と同じく、ダメージの計算の
                            # ``effects.attack_damage_modifiers`` が、その時点の場と履歴から問い合わせる。窓の中の反応ではない。docs/unown-perform-help-history-v0.99.md 4 章）
-                           "add_active_damage_received_to_named_attack")
+                           "add_active_damage_received_to_named_attack",
+                           # v0.101: アンノーンK の［KEEP］（エネルギーカードをトラッシュする効果がなくなるか。トラッシュする処理が ``effects.energy_discard_void`` で、その時点の場から
+                           # 問い合わせる。窓の中の反応ではない。docs/counter-keep-energy-protection-v0.101.md 4 章）
+                           "void_opponent_energy_discard_on_group")
         # v0.87: フリーザーの［オーロラヴェール］・ダグトリオの［もぐる］は窓の中の反応（要素を無効にする）だが、守るのは持ち主の控え・ベンチにいるこのカードなので、印刷した
         # ポケモンの効果の対応表（``POWER_DEFINITIONS``）ではなく ``catalog.instances`` が受けるポケモンについて作る（v0.84 のこおりのはしらと同じ形）
         built_by_instances = {"own_bench_attack_immunity_while_active": C.AURORA_VEIL, "bench_attack_damage_immunity": C.DIG_UNDER}
@@ -705,6 +708,7 @@ class CatalogTest(unittest.TestCase):
                           "neo2-025@power0",  # v0.97
                           "neo2-044@power0", "neo3-009@power0",  # v0.87
                           "neo3-029@power0",
+                          "neo3-030@power0",  # v0.101
                           "neo4-023@power0",  # v0.87
                           "neo4-046@power0",
                           "neo4-058@power0",  # v0.99

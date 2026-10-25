@@ -2349,6 +2349,51 @@ def log_problems(state) -> list[str]:
             v100_due["sketch"] = v100_due["perish"] = None
         return found
 
+    def keep_holders(owner: int) -> list[int] | None:
+        """v0.101: ログから組み立てた今の場で、プレイヤー ``owner`` の場ではたらいている［KEEP］（``VoidOpponentEnergyDiscardOnGroup``）を持つポケモンの番号（小さい順。場所・
+        かがくへんかガスは ``working_continuous``。エンジンの ``energy_discard_void`` を読まない）。おたがいの場の特殊能力を止める期限のある効果（``goop_gases``）がはたらいて
+        いれば、ログからは決めない（None。確かめを飛ばす）。"""
+        if goop_gases:
+            return None
+        return sorted(pid for pid in in_play if pokemon_owner.get(pid) == owner and pid not in face_down_pids  # うらのカードの力ははたらかない
+                      and working_continuous(pid, E.VoidOpponentEnergyDiscardOnGroup))
+
+    def v101_problems(e: dict) -> list[str]:
+        """v0.101: ［KEEP］でなくなったトラッシュの効果（``energy_discard_voided``）が、ログから組み立てた場ではたらく［KEEP］の持ち主の場の「アンノーン」への、相手が使った
+        ワザ・特殊能力・トレーナーの効果のものであることと、その場合に相手の効果でトラッシュしたログ（ワザ・トレーナー・［だつりょくえき］・つけかえで受けずにトラッシュ）が
+        ないことを確かめる。"""
+        found: list[str] = []
+        kind = e["kind"]
+        if kind == "energy_discard_voided":
+            pid, owner = e["pokemon_id"], e["player"]
+            holders = keep_holders(owner)
+            if pokemon_owner.get(pid) != owner or e["by_player"] != 1 - owner or e["cause"] not in ("attack", "power", "trainer"):
+                found.append(f"{e['turn']} 番の［KEEP］でなくなった効果（ポケモン {pid}）が、持ち主の相手が使ったワザ・特殊能力・トレーナーの効果ではない")
+            elif pid in face_down_pids or form_def(pid).name_group != "アンノーン":
+                found.append(f"{e['turn']} 番の［KEEP］でなくなった効果（ポケモン {pid}）の対象が、今の姿が「アンノーン」のポケモンではない")
+            elif holders is not None and [source[0] for source in e["powers"]] != holders:
+                found.append(f"{e['turn']} 番の［KEEP］でなくなった効果の力 {e['powers']} が、ログから組み立てた持ち主の場のはたらく［KEEP］ {holders} と違う")
+            if pid not in in_play or tuple(e["energy"]) == ():
+                found.append(f"{e['turn']} 番の［KEEP］でなくなった効果（ポケモン {pid}）に、トラッシュされずに残るエネルギーカードがない")
+            return found
+        if kind == "discard_attached_energy":
+            pid, by = e["pokemon_id"], e["attacker"]
+        elif kind == "trainer_discard_energy":
+            pid, by = e["pokemon_id"], e["user"]
+        elif kind == "energy_drain_discard":
+            pid, by = e["attacker_pokemon_id"], e["player"]
+        elif kind == "move_opponent_energy" and e["result"] == "evaded":
+            pid, by = e["pokemon_id"], e["attacker"]
+        else:
+            return found
+        owner = pokemon_owner.get(pid)
+        if owner is None or by == owner or pid in face_down_pids:
+            return found
+        holders = keep_holders(owner)
+        if holders and form_def(pid).name_group == "アンノーン":
+            found.append(f"{e['turn']} 番に、はたらく［KEEP］ {holders} のある場の「アンノーン」（ポケモン {pid}）のエネルギーカードを、相手の効果でトラッシュした（{kind}）")
+        return found
+
     def window_damaged(window: dict) -> bool:
         """今のワザ（attack_window）に、すでにダメージの要素（damage・damage_prevented・ダメージの attack_evaded）があったか（v0.42）。"""
         return bool(window.get("any_damage"))
@@ -2646,7 +2691,8 @@ def log_problems(state) -> list[str]:
             elif element == FORCED_SWITCH_ELEMENT:
                 follows = kind == "forced_switch" and e["old_active_pokemon_id"] == pid
             elif element == ENERGY_DISCARD_ELEMENT:  # v0.31: 相手のエネルギーカードのトラッシュ（スーパーデストロイ・メラメラ）
-                follows = kind == "discard_attached_energy" and e["pokemon_id"] == pid
+                # v0.101: ［KEEP］でトラッシュの効果がなくなった（受けたあと、トラッシュしない）
+                follows = kind in ("discard_attached_energy", "energy_discard_voided") and e["pokemon_id"] == pid
             elif element == ATTACK_LOCK_ELEMENT:  # v0.31: 次の相手の番にワザを使えなくする効果（しっぽをふる）
                 follows = kind == "persistent_effect_added" and e["pokemon_id"] == pid
             elif element == ENERGY_ATTACH_ELEMENT:  # v0.31: 控えポケモンにエネルギーをつける（エナジーボム）
@@ -2833,6 +2879,8 @@ def log_problems(state) -> list[str]:
             received(e, e["pokemon_id"], e["condition"], blocked=replaced.get(e["pokemon_id"]))  # v0.46: 効果を受けて、めんえきで特殊状態にならない
         elif kind == "discard_attached_energy":  # v0.31
             received(e, e["pokemon_id"], ENERGY_DISCARD_ELEMENT)
+        elif kind == "energy_discard_voided" and e["cause"] == "attack":
+            received(e, e["pokemon_id"], ENERGY_DISCARD_ELEMENT)  # v0.101: ［KEEP］でトラッシュの効果がなくなった（要素は受けた）
         elif kind == "attack_attach_energy":
             received(e, e["to_pokemon_id"], ENERGY_ATTACH_ELEMENT)
         elif kind == "special_conditions_removed" and attack_window is not None and e.get("effect") == attack_window["effect"]:
@@ -2868,6 +2916,7 @@ def log_problems(state) -> list[str]:
         if kind == "copy_attack" and attack_window is not None:
             attack_window["copied"] = e["copied"]  # v0.44: 相手のワザを自分のワザとして使った（そのワザの効果のログの effect は copied）
         problems.extend(v100_problems(e))  # v0.100: スケッチ・やみのひとみ・ほろびのうた
+        problems.extend(v101_problems(e))  # v0.101: ［KEEP］
         if kind in ("damage", "confusion_damage"):
             # v0.90: のろいマーカーののっているポケモンが弱点の計算をしたワザのダメージは「×4」（ログの weakness_multiplier）。ほかは書かない。こんらんの 20 は、のろいマーカーと
             # 自分の弱点が当てはまるならコインの前に止まる（UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS）ので、弱点の計算をしたこんらんのダメージはない

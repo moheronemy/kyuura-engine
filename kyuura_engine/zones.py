@@ -943,6 +943,9 @@ def discard_attached_energy_cards(state: GameState, owner: int, pokemon: Pokemon
     ``trainer_discard_energy``（``player`` はカードの持ち主、``user`` はトレーナーを使ったプレイヤー。場のカードとトラッシュは公開の情報なので ``cards`` は公開）。
     ワザの効果のトラッシュ（``discard_energy``・``discard_attached_energy``）とは出どころが違うので、ログを分ける。トラッシュしたカード（ついていた順）を返す。"""
     moved = _attached_energy_cards(state, owner, pokemon, cards)
+    from .effects import require_discard_not_voided
+
+    require_discard_not_voided(state, pokemon, moved, cause="trainer", by_player=user)  # v0.101: ［KEEP］でなくなる効果は呼ぶ側が先に止める（確かめの漏れ）
     returns = _energy_plan(state, pokemon, moved, "trainer", user)  # v0.82: リサイクルエネルギー・エコロジム（相手が使ったトレーナー）
     for uid in moved:
         pokemon.energy.remove(uid)

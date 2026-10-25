@@ -450,6 +450,13 @@ QUESTIONS: dict[str, Question] = {
         Question("turn_history_missing", "UNSUPPORTED_HISTORY_TURN_RECORD_MISSING", ("v0.100",), 10,
                  "前の相手の番のプレイヤーの番ごとの記録（使ったワザ・場にいたカード）がない（v0.99 までの状態の写しなど）。記録がないことを「ワザを使わなかった」「場にいなかった」と読まない"
                  "（エンジンの持つ情報の不足）"),
+        # v0.101（docs/counter-keep-energy-protection-v0.101.md 4 章・8 章）: アンノーンK の［KEEP］（トレーナーの選ぶものの KP1 は effects.KEEP_TARGET_CODE）
+        Question("keep_voided_discard_coin", "UNRESOLVED_KEEP_VOIDED_DISCARD_COIN", ("KP2",), 10,
+                 "アンノーンK の［KEEP］でなくなる「エネルギーカードをトラッシュする効果」だけを決めるコイン（ワザのこの要素のコイン・［だつりょくえき］のコイン）を投げるかは、"
+                 "印刷の文面・kyuura の記録から決められない（投げるかどうかで乱数の続きが変わる。UQ-COIN-IN-NULLIFIED-ELEMENT と同じ形の、別の原因の問い。HC3・AL2 と同じ形）"),
+        Question("keep_detached_energy_discard", "UNRESOLVED_KEEP_DETACHED_ENERGY_DISCARD", ("KP3",), 10,
+                 "［KEEP］がはたらくアンノーンからはがした（つけかえる）エネルギーカードを、つける控えポケモンが受けないのでトラッシュに置くとき、それが「アンノーンについている"
+                 "「エネルギーカード」をトラッシュする効果」に当たるか（当たるならカードをどこに置くか）は、印刷の文面・kyuura の記録から決められない"),
     )
 }
 

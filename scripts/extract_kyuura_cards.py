@@ -2374,6 +2374,12 @@ POOL_V0_100 = [
     "neo3-035",  # ムウマ（やみのひとみ・ほろびのうた）
 ]
 
+# v0.101（docs/counter-keep-energy-protection-v0.101.md）: ソーナンス・アンノーンK の 2 枚（ワザ 2・特殊能力 1）。写しの元・研究の基準は v0.97 と同じ 73a1690
+POOL_V0_101 = [
+    "neo2-031",  # ソーナンス（カウンター）
+    "neo3-030",  # アンノーンK（KEEP・めざめるパワー）
+]
+
 POOLS = [
     ("pool_v0_1", POOL_V0_1),
     ("pool_v0_2b", POOL_V0_2B),
@@ -2480,6 +2486,7 @@ POOLS = [
     ("pool_v0_98", POOL_V0_98),
     ("pool_v0_99", POOL_V0_99),
     ("pool_v0_100", POOL_V0_100),
+    ("pool_v0_101", POOL_V0_101),
 ]
 
 

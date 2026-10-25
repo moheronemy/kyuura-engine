@@ -556,6 +556,8 @@ PUBLIC_EVENTS = frozenset({
     "color_effect_added", "color_effect_removed", "attack_power", "attack_color_chosen", "attack_color_none", "color_change_declined",
     # v0.100: 「スケッチ」で前の相手の番にワザが使われていなかった・「ほろびのうた」の条件の確かめ・ワザの効果による「きぜつ」（どれも場の表の情報と使ったワザ）
     "sketch_none", "knock_out_condition", "effect_knock_out",
+    # v0.101: ［KEEP］でエネルギーカードをトラッシュする効果がなくなった（場のカードなので公開）
+    "energy_discard_voided",
     # v0.86: ［かんでん］のダメージ・［いなびかり］がはたらかなかった（相手の控えなし）・反応の特殊能力を使わなかった・［はしりさる］のコインの結果とはたらかなかった・
     # ダークドレインのポケモンごとのコインの結果・［おたけび］の番の終わり（どれも場・コイン・公開の結果）
     "conductivity", "lightning_burst_skipped", "reaction_power_declined", "bolt_check", "bolt_skipped", "pokemon_coin_results", "power_turn_end",

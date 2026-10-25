@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.100）
+# 実装状況（v0.1〜v0.101）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534`（v0.97 から。v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3819,6 +3819,21 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 338・neo 154・拡張パック以外 184） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistryTest` |
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.101: ソーナンス・アンノーンK の 2 枚と、1 倍の反撃・エネルギーカードのトラッシュの事前の無効化
+
+[counter-keep-energy-protection-v0.101.md](counter-keep-energy-protection-v0.101.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 2 枚の登録（写しの組 pool_v0_101。印刷の文面のまま正規化しない。めざめるパワーは説明文なし。アンノーンK は文字を合わせて 4 枚まで（共通の規定の再利用）） | 実装済み・テスト済み | kyuura 73a1690 の写し・v0.96 の deck_problems | test_counter_keep_energy_protection_v0_101.py `RegistrationTest` |
+| カウンター（v0.45 の型の倍数 1。使ったときは効果だけ。次の相手の番に相手のワザの正の最終ダメージを受けたら持ち主がコイン、「おもて」なら受けた量を返す。HP で上限をつけない。そろってのきぜつは W24） | 実装済み・テスト済み | 印刷の文面・v0.13・v0.45 の返す効果の規定の再利用 | 同 `CounterTest` |
+| まねたワザとしてのカウンター（ゆびをふる・スケッチ） | エンジンの未対応（止める。既存の `UNSUPPORTED_COPIED_ATTACK`） | v0.31 の `SelfRetaliation.copy_problem` | 同 `CounterTest.test_copying_counter_stays_unsupported` |
+| ［KEEP］（常にはたらく。特殊状態の条件なし。持ち主の場の今の姿がアンノーンのポケモンのエネルギーカードを、持ち主の相手が実際に使ったワザ・特殊能力・トレーナーでトラッシュする効果を、トラッシュの前になくす。共通の問い合わせ `energy_discard_void`） | 実装済み・テスト済み | 印刷の文面・v0.82 の原因の記録・v0.96 の名前のグループ | 同 `KeepAttackTest`・`KeepOtherCausesTest`・`KeepTrainerTest`・`KeepPowerAndMoveTest`・`KeepReturnTest` |
+| KP1（トレーナーで守られる対象を選ぶ・どれもそう）・KP2（なくなるトラッシュだけを決めるコイン）・KP3（つけかえで受けずにトラッシュに置く） | 裁定が未解決（止める） | — | 同 |
+| ログの監査（エンジンの答えを読まずに、はたらく［KEEP］・アンノーン・相手の効果を照らし、相手の効果のトラッシュがないことを確かめる） | 実装済み・テスト済み・対戦で確かめた | 6 章 | tests/log_audit.py・同 `AuditTest`・`tools/existing_effect_games.py --batch v0.101` |
+| 未対応の数（全対象 192・neo 86・拡張パック以外 106） | 確かめた | kyuura data/engine_targets.json（73a1690）から今の登録を差し引いた数 | test_catalog_contract.py |
+| 2 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 
 ## v0.100: ドーブル・ムウマの 2 枚と、前の相手の番のワザの記録・ワザの効果による「きぜつ」
 

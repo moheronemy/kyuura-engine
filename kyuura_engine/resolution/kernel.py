@@ -1613,6 +1613,9 @@ def drain_energy_from_damage_source(res: Resolution, fs: FrameState, deferred: D
         raise res.question("energy_drain_attacker_knocked_out", detail)
     if not source.energy:
         raise res.question("energy_drain_no_energy", detail)
+    if E.energy_discard_void(state, source, cause=E.DISCARD_BY_POWER, by_player=instance.owner) is not None:
+        # v0.101: ダメージを与えたアンノーンに［KEEP］がはたらき、このコインが決めるトラッシュの効果はなくなる。投げるかは決まらない（KP2。DR13 と同じく宣言の前に先読みが見つける）
+        raise res.question("keep_voided_discard_coin", f"{detail}（［KEEP］でトラッシュの効果がなくなる）")
     flips = flip_coins(state, instance.owner, 1, source="power", effect=str(instance.power_key), card=instance.card, pokemon_id=instance.pokemon_id)
     heads = flips.results[0] is CoinSide.HEADS
     state.add_event("energy_drain_check", player=instance.owner, pokemon=instance.card, pokemon_id=instance.pokemon_id, power=str(instance.power_key),

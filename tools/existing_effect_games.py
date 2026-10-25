@@ -578,6 +578,12 @@ UNOWN_P, UNOWN_H, NEO_HORSEA = "neo4-058", "neo4-063", "neo1-023"
 V0_100 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_100"])
 V0_100_POKEMON = V0_100
 SMEARGLE, MISDREAVUS, GASTLY_BASE = "neo2-052", "neo3-035", "PMCG1-044"
+# v0.101（docs/counter-keep-energy-protection-v0.101.md）: ソーナンス・アンノーンK の 2 枚（写しの組 pool_v0_101）。ポケモンは TARGETS に加える。ソーナンスは払えれば「カウンター」を使う
+# （``_v101_attack``）。アンノーンK の［KEEP］は常にはたらく（手順は何もしない）。ログから数えるのは ``v101_uses``
+V0_101 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_101"])
+V0_101_POKEMON = V0_101
+WOBBUFFET, UNOWN_K, UNOWN_D = "neo2-031", "neo3-030", "neo2-025"
+DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
            + ("PMCG5-052", "PMCG5-053")  # ワザの選び方を重ね、動きを数えるカード（v0.58: タケシのゴローン・ゴローニャ）
@@ -611,7 +617,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_97_POKEMON  # v0.97: アンノーン 5 枚
            + V0_98_POKEMON  # v0.98: アンノーン 4 枚
            + V0_99_POKEMON  # v0.99: アンノーンP・H とタッツー
-           + V0_100_POKEMON)  # v0.100: ドーブル・ムウマ
+           + V0_100_POKEMON  # v0.100: ドーブル・ムウマ
+           + V0_101_POKEMON)  # v0.101: ソーナンス・アンノーンK
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -1319,6 +1326,12 @@ DECKS = {
     # v0.100: 超・無色。ムウマ（neo3-035。やみのひとみ 超・ほろびのうた 超超超）4 枚と、第1弾のゴース（さいみんガス・みちづれ）・コラッタ。ほろびのうたのために超エネルギーを多くする。
     # ねむりは通常のポケモンチェックのコインのまま（使う回数を増やすために書きかえない）
     "M100": ((MISDREAVUS, 4), (GASTLY_BASE, 3), ("PMCG1-060", 3), (driver.POTION, 2), (SWITCH, 2), (driver.BILL, 2), (PSYCHIC, 30), (WATER, 14)),
+    # v0.101: 超・無色。ソーナンス（neo2-031。カウンター 超・ダメージなし）4 枚と、ダメージを与える要員のポッポ → ピジョン・コラッタ（無色）。ソーナンスは払えればカウンターを使う
+    "C101": ((WOBBUFFET, 4), (PIDGEY, 4), (PIDGEOTTO, 3), ("PMCG1-060", 3), (driver.POTION, 2), (SWITCH, 2), (driver.BILL, 2), (PSYCHIC, 40)),
+    # v0.101: 超・無色。アンノーンK（neo3-030。［KEEP］）3 枚とアンノーンD（neo2-025。［DARK df］）1 枚（「アンノーン」は合わせて 4 枚まで）と、山札から「アンノーン」をベンチに出す
+    # 遺跡の石版 2 種 4 枚。バトル場の要員にポッポ → ピジョン・コラッタ（無色。［KEEP］で守らない「アンノーン」でないポケモン）
+    "K101": ((UNOWN_K, 3), (UNOWN_D, 1), ("neo2-054", 2), ("neo2-057", 2), (PIDGEY, 4), (PIDGEOTTO, 3), ("PMCG1-060", 3), (driver.POTION, 2), (SWITCH, 2),
+             (driver.BILL, 2), (PSYCHIC, 36)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -1502,6 +1515,12 @@ PAIRINGS_V0_99 = (("P99", "T99"), ("H99", "T99"), ("H99", "P99"), ("T99", "K97")
 # M100 対 G61（わるいギャラドスの［ファイナルビーム］）・M100 対 V44（サカキのカイリキーの［こんじょう］）・M100 対 T74（R団のファイヤーの「ふしちょう」・ゴーストの「とうめい」）・
 # S100 対 P31（ピッピ・ピクシーの「ゆびをふる」・ヤドンの「ぼーっとする」）。組・席・seed は先に決めた（seed 0〜3。局を選び直さない）
 PAIRINGS_V0_100 = (("S100", "M100"), ("S100", "H62"), ("M100", "G61"), ("M100", "V44"), ("M100", "T74"), ("S100", "P31"))
+# v0.101: K101 対 W33（はかいこうせん・うずしお。コインのない相手のワザのトラッシュ）・K101 対 C33（はかいでんぱのコイン・ハクリューのはかいこうせん）・K101 対 R45（メラメラの一部だけ
+# なくなるトラッシュ・じりょくせん）・K101 対 U55（エネルギー・リムーブ・超エネルギーリムーブ）・K101 対 K68（キョウのベトベトンの［だつりょくえき］）・K101 対 L82（ヌオーのうずしお・
+# エコロジム・リサイクルエネルギー）・C101 対 K101（新しいカードどうし）・C101 対 P31（ゆびをふるで写すカウンター・スーパーデストロイ）・C101 対 S100（スケッチで写すカウンター）。
+# 組・席・seed は先に決めた（seed 0〜3。局を選び直さない）
+PAIRINGS_V0_101 = (("K101", "W33"), ("K101", "C33"), ("K101", "R45"), ("K101", "U55"), ("K101", "K68"), ("K101", "L82"), ("C101", "K101"), ("C101", "P31"),
+                   ("C101", "S100"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -1518,7 +1537,8 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.84": PAIRINGS_V0_84, "v0.85": PAIRINGS_V0_85, "v0.86": PAIRINGS_V0_86,
            "v0.87": PAIRINGS_V0_87, "v0.88": PAIRINGS_V0_88, "v0.89": PAIRINGS_V0_89, "v0.90": PAIRINGS_V0_90, "v0.91": PAIRINGS_V0_91,
            "v0.92": PAIRINGS_V0_92, "v0.93": PAIRINGS_V0_93, "v0.94": PAIRINGS_V0_94, "v0.95": PAIRINGS_V0_95,
-           "v0.96": PAIRINGS_V0_96, "v0.97": PAIRINGS_V0_97, "v0.98": PAIRINGS_V0_98, "v0.99": PAIRINGS_V0_99, "v0.100": PAIRINGS_V0_100}
+           "v0.96": PAIRINGS_V0_96, "v0.97": PAIRINGS_V0_97, "v0.98": PAIRINGS_V0_98, "v0.99": PAIRINGS_V0_99, "v0.100": PAIRINGS_V0_100,
+           "v0.101": PAIRINGS_V0_101}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -1749,6 +1769,11 @@ V031_STOPS = {
         (_logged_turn_attack(st, st.turn_number - 1) or [None, None, None])[2] is not None),
     "UNRESOLVED_PERISH_SONG_RECEIVED_ATTACK": lambda st, c: "KnockOutIfAsleepAndReceived" in _attack_and_copied_types(st, c) and _v100_night_eyes_unclear(st, c),
     "UNSUPPORTED_COPIED_ATTACK": lambda st, c: _copier(st, c),
+    # v0.101: KP2（［KEEP］でなくなるトラッシュだけを決めるコイン）・KP3（［KEEP］のはたらくアンノーンからはがしたカードを、受けない控えのためにトラッシュする）。場から確かめる
+    # （エンジンの ``energy_discard_void`` を読まない）
+    "UNRESOLVED_KEEP_VOIDED_DISCARD_COIN": lambda st, c: _v101_keep_coin_expected(st, c),
+    "UNRESOLVED_KEEP_DETACHED_ENERGY_DISCARD": lambda st, c: "DamageThenMoveOpponentEnergyToBench" in _attack_and_copied_types(st, c)
+    and _v101_keep_on(st, 1 - c.player, st.players[1 - c.player].active),
     # 試す結果の数が上限（4,096）を超える（れんぞくファイヤーボール・エナジーボム・ほうでん・やまやきで、ついているエネルギーが多いとき）
     "UNSUPPORTED_PREFLIGHT_LIMIT": lambda st, c: len(_attacker(st, c).energy) >= 6,
     # v0.32: なかまをよぶ・ふえる（ベンチに空きがなければ使えない。ワザを使うための条件）
@@ -5940,6 +5965,118 @@ def _v100_attack(state, tried, counts):
     return None
 
 
+def _v101_keep_on(state, owner, pokemon) -> bool:
+    """v0.101: プレイヤー ``owner`` の場に、はたらいている［KEEP］（アンノーンK）があり、場のポケモン ``pokemon`` の今の姿が「アンノーン」か（場から確かめる。かがくへんかガスなどは
+    共通の ``continuous_powers``。エンジンの ``energy_discard_void`` は読まない）。"""
+    if pokemon is None or state.is_face_down(pokemon) or E.form_def(state, pokemon).name_group != "アンノーン":
+        return False
+    return any(o == owner for o, _, _, _ in E.continuous_powers(state, E.VoidOpponentEnergyDiscardOnGroup))
+
+
+def _v101_sample_program(cls, build):
+    """v0.101: 登録表にある ``cls`` の実装の 1 つから作った要素の並び（写したワザの型の名前から、トラッシュだけを決めるコインを持つかを見るため）。"""
+    for key in DEFAULT_EFFECTS_FOR_TOOL.attack_keys():
+        entry = DEFAULT_EFFECTS_FOR_TOOL.attack_entry(key.card_id, key.attack_index)
+        if type(entry.effect) is cls:
+            return tuple(build(entry.effect))
+    return ()
+
+
+def _v101_keep_coin_expected(state, command) -> bool:
+    """v0.101（KP2 の確かめ）: このワザ（写したワザも）が相手のアンノーンのエネルギーカードのトラッシュだけを決めるコインを持ち、相手の場のエネルギーカードのついたアンノーンに
+    ［KEEP］がはたらく。または、ワザを使うアンノーンに自分の［KEEP］がはたらき、相手の対戦ポケモンが［だつりょくえき］を持つ。"""
+    from kyuura_engine.resolution.programs import BUILDERS, DiscardOpponentEnergy
+
+    coin_types = {cls.__name__ for cls, build in BUILDERS.items()
+                  if any(isinstance(element, DiscardOpponentEnergy) and element.local_coin is not None for element in _v101_sample_program(cls, build))}
+    opponent = 1 - command.player
+    effect = _attack_effect(state, command)
+    own = any(isinstance(element, DiscardOpponentEnergy) and element.local_coin is not None for element in BUILDERS.get(type(effect), lambda e: ())(effect))
+    if (own or coin_types & (_attack_and_copied_types(state, command) - {type(effect).__name__})) and any(
+            pokemon.energy and _v101_keep_on(state, opponent, pokemon) for pokemon in state.players[opponent].in_play()):
+        return True
+    defender = state.players[opponent].active
+    return defender is not None and any(isinstance(slot.effect, E.DiscardAttackerEnergyOnDamage) for slot in E.powers_of(state, defender)) \
+        and _v101_keep_on(state, command.player, _attacker(state, command))
+
+
+def _v101_attack(state, tried, counts):
+    """v0.101: ソーナンスは「カウンター」を払えれば使う（ほかにワザがない。ダメージを与えない）。v0.101 のカードのない局では何もしない。この番に拒否されたワザは選ばない。
+    アンノーンK の「めざめるパワー」は既存の手順のまま。"""
+    if "attack" in tried:
+        return None
+    player = state.current_player
+    active = state.players[player].active
+    if active is None or active.conditions.asleep or active.conditions.paralyzed or current_form(state, active).kind != "printed":
+        return None
+    if state.cards[active.card].card_id != WOBBUFFET:
+        return None
+    attack = state.card_def(active.card).attacks[0]
+    if ("attack_index", 0) not in tried and attack_cost_payable(state, active, attack):
+        counts["v101_counter"] += 1
+        return UseAttack(player, 0)
+    return None
+
+
+def v101_uses(state):
+    """v0.101: ログから数えた v0.101 の動き（ソーナンス・アンノーンK のない局では空）。
+
+    - カウンター: ``attack_neo2-031#0``（宣言）・``counter_given``（効果を与えた）・``counter_skipped``（与えなかった）・``counter_coin_heads``・``counter_coin_tails``・
+      ``counter_returned``（返したダメージの回数。``counter_returned_amount`` は基本となる量の合計）・``counter_target_knocked_out``（返す相手がすでに HP 以上）・
+      ``counter_holder_knocked_out``（返したときソーナンスが HP 以上だった）・``counter_expired``（はたらかずに消えた）・``counter_removed_<理由>``
+    - ［KEEP］: ``keep_voided_<原因>``・``keep_voided_<原因>_<ワザ・特殊能力・トレーナーのカード id>``（なくなったトラッシュ）と、なくなった効果のワザの中で続いたほかの処理
+      （``keep_attack_damage``（正のダメージ）・``keep_attack_other_discard``（ほかのポケモンのトラッシュ）・``keep_attack_own_discard``（自分のエネルギーのトラッシュ））"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_101 for uid in state.cards):
+        return counts
+    counter_key = f"{WOBBUFFET}#0"
+    window = None  # 今のワザの {"voided": bool, "events": [...]}
+    windows = []
+    for e in state.log:
+        kind = e["kind"]
+        if kind == "attack":
+            key = f"{e.get('card_id') or state.cards[e['pokemon']].card_id}#{e['attack_index']}"
+            if key == counter_key:
+                counts[f"attack_{key}"] += 1
+            window = {"voided": False, "events": [], "holders": set()}
+            windows.append(window)
+        elif kind in ("turn_end", "turn_start"):
+            window = None
+        elif window is not None:
+            window["events"].append(e)
+        if kind == "persistent_effect_added" and e.get("effect") == counter_key:
+            counts["counter_given"] += 1
+        elif kind == "persistent_effect_skipped" and e.get("effect") == counter_key:
+            counts["counter_skipped"] += 1
+        elif kind == "coin_flip" and e.get("effect") == counter_key and e.get("source") == "attack":
+            counts[f"counter_coin_{e['result']}"] += 1
+        elif kind == "retaliation" and e.get("effect") == counter_key:
+            counts["counter_returned"] += 1
+            counts["counter_returned_amount"] += e["amount"]
+            if window is not None:
+                window["holders"].add(e["pokemon"])
+        elif kind == "knock_out" and window is not None and e.get("pokemon") in window["holders"]:
+            counts["counter_holder_knocked_out"] += 1  # 返したワザのあとのきぜつの処理で、ソーナンスもきぜつした（返すダメージは受けたダメージそのもの）
+        elif kind == "retaliation_skipped" and e.get("effect") == counter_key and e.get("reason") == "knocked_out":
+            counts["counter_target_knocked_out"] += 1
+        elif kind == "persistent_effect_removed" and e.get("persistent_effect") == "retaliation_received_damage_scaled" \
+                and state.cards[e["source_card"]].card_id == WOBBUFFET:
+            counts["counter_expired" if e.get("reason") == "expired" else f"counter_removed_{e.get('reason')}"] += 1
+        elif kind == "energy_discard_voided":
+            source = e.get("effect") or e.get("power") or (state.cards[e["trainer_card"]].card_id if "trainer_card" in e else None)
+            counts[f"keep_voided_{e['cause']}"] += 1
+            counts[f"keep_voided_{e['cause']}_{str(source).split('#')[0].split('@')[0]}"] += 1
+            if window is not None and e["cause"] == "attack":
+                window["voided"] = True
+    for w in windows:
+        if not w["voided"]:
+            continue
+        counts["keep_attack_damage"] += sum(1 for e in w["events"] if e["kind"] == "damage" and e["amount"] > 0)
+        counts["keep_attack_other_discard"] += sum(1 for e in w["events"] if e["kind"] == "discard_attached_energy")
+        counts["keep_attack_own_discard"] += sum(1 for e in w["events"] if e["kind"] == "discard_energy")
+    return +counts
+
+
 def v100_uses(state):
     """v0.100: ログから数えた v0.100 のカードの動き（v0.100 のカードのない局では空）。ワザの宣言の回数と、効果の結果を分けて数える。
 
@@ -7695,6 +7832,9 @@ def make_policy(seen: dict, counts: Counter):
             history = _v100_attack(state, tried, counts)  # v0.100: スケッチ・やみのひとみ・ほろびのうた
             if history is not None:
                 return history
+            history = _v101_attack(state, tried, counts)  # v0.101: カウンター
+            if history is not None:
+                return history
             virtual = _v049_attack(state, tried, counts)  # v0.49: 出どころがいちばん上のカードでないワザ
             if virtual is not None:
                 return virtual
@@ -7883,6 +8023,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v098"] = v098_uses(state)
         result["v099"] = v099_uses(state)
         result["v100"] = v100_uses(state)
+        result["v101"] = v101_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:

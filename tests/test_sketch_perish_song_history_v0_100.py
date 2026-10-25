@@ -185,7 +185,7 @@ class RegistrationTest(unittest.TestCase):
         before = pool_from_extract(read_extract(), registry)
         self.assertEqual(load_card_pool().playable_ids - before.playable_ids, frozenset(V0100))
         self.assertEqual(set(V0100) & set(cards_before(read_extract(), "0.100")), set())
-        self.assertEqual(set(cards_after(read_extract(), "0.99")), set(V0100))
+        self.assertEqual(set(cards_after(read_extract(), "0.99")) & set(cards_before(read_extract(), "0.101")), set(V0100))  # v0.101: 後の版を除く
 
     def test_extract_values(self):
         cards = {c["id"]: c for c in read_extract()["cards"]}
@@ -234,7 +234,12 @@ class RegistrationTest(unittest.TestCase):
             self.assertEqual(len(labels[label]), 1)
         self.assertEqual((QUESTIONS["sketch_presence"].rulings, QUESTIONS["sketch_copied_attack"].rulings, QUESTIONS["perish_song_received_attack"].rulings),
                          (("SK1",), ("SK2",), ("PSG1",)))
-        self.assertEqual(links["counts"], {"engine_unresolved_rulings": 232, "engine_stop_codes": 231, "kyuura_issues": 72})
+        # v0.100 の時点の数（v0.101 で、後の版の停止コードを除いて数える確かめにした。今の総数は test_catalog_contract.py）
+        def introduced(entry):
+            return min(tuple(int(x) for x in r["version"].lstrip("v").rstrip("abcdefg").split(".")) for r in entry["engine_rulings"])
+
+        self.assertEqual(sum(1 for entry in links["stop_codes"].values() if introduced(entry) <= (0, 100)), 231)
+        self.assertEqual(links["counts"]["kyuura_issues"], 72)
         v099 = (ROOT / "docs" / "unown-perform-help-history-v0.99.md").read_text(encoding="utf-8")
         self.assertIn("PF1 は v0.47 の `UNRESOLVED_PLAY_AS_POKEMON_SETUP`", v099)  # 訂正の注記
         self.assertIn("PFM1 `UNRESOLVED_PERFORM_DAMAGE_PLACES`", v099)

@@ -1955,6 +1955,27 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.101: ソーナンス・アンノーンK の 2 枚
+
+[counter-keep-energy-protection-v0.101.md](counter-keep-energy-protection-v0.101.md)。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534` のまま（今回の追加を理由に上げていない）。写しの組 `pool_v0_101`（2 枚）を加え、写しの作り直しの道具で作った
+  （手で直していない）。v0.100 までの 1,183 枚の値・移行の記録（`source_migrations`・`data_migrations`）は変わっていない。2 枚とも `data_gaps` は空。
+- 2 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-25・外部照合なし。記録 1,096 → 1,098）。研究の基準に 2 枚を指す LD-・CC-・CR-・UQ-・エラッタはなく
+  （カードの id を data・docs から文字列で探して確かめた。pcg-search の id はない）、`kyuura_records` は空。カウンター・［KEEP］は印刷の文面（研究の対応表の `adopted_printed_text` に加えた。
+  1,118 → 1,120）。めざめるパワーは説明文がない。`card_verification.json` には加えていない。
+- kyuura data/rule_history.json の `card_lists.poke_body`（MIX-POWER-ERRATA。2002-05-24 の「ポケボディー」の一覧）と docs/rules/errata-history.md の一覧にアンノーンK があるが、後年の分類で、
+  2000.02.14 版の根拠として新しく採っていない（エラッタの `errata` の `cards` ではない。v0.96〜v0.99 のアンノーンと同じ扱い）。
+- 日本語の文面の転記元は nazonobasho.com（ソーナンス）・wiki.pokemonwiki.com（アンノーンK）。この転記・依頼の引用・cards.json と cards.csv の一致を、新しい画像の確認・独立した照合として
+  記録していない。外部照合・カードの画像の照合・公式の書籍の新しい照合はしていない。
+- カウンターの返すダメージの分類・計算・きぜつの扱いは、こうらがえし（v0.13）・クロスカウンター（v0.45。LD-PMCG5-054-ATK0）の既存の根拠と適用範囲の再利用で、ソーナンスの独立した原典照合では
+  ない。
+- 新しい停止コード 3 件（KP1 `UNRESOLVED_KEEP_PROTECTED_TARGET`・KP2 `UNRESOLVED_KEEP_VOIDED_DISCARD_COIN`・KP3 `UNRESOLVED_KEEP_DETACHED_ENERGY_DISCARD`。どれも `not_in_kyuura`）を
+  研究の対応表の `stop_codes` に加えた（停止コード 231 → 234・未解決の裁定 232 → 235）。kyuura の論点の事例のうちエンジンの裁定 id のないもの（`kyuura_cases_without_engine_ruling`）は
+  kyuura と同じまま。
+- 報告事項（kyuura の作業）: KP1・KP2・KP3 の事例がない（KP1 は UQ-TARGET-WITHOUT-EFFECT、KP2 は UQ-COIN-IN-NULLIFIED-ELEMENT と同じ形）。engine_targets.json の 2 枚の
+  `engine_status` を v0.101 の登録で写すと `registered` になる。［KEEP］の「トレーナーカード」にスタジアムを含むか・［エネエネ］のカードの当時の裁定は資料を探す候補（docs 11 章）。
+
 ## v0.100: ドーブル・ムウマの 2 枚
 
 [sketch-perish-song-history-v0.100.md](sketch-perish-song-history-v0.100.md)。

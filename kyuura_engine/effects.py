@@ -10094,8 +10094,10 @@ def return_discarded_energy(state: GameState, plan: Iterable[EnergyReturn]) -> t
 def discard_energy_from_play(state: GameState, holder: PokemonInPlay, cards: Iterable[int], *, cause: str, by_player: int | None = None,
                              log: Callable[[], None] | None = None) -> tuple[EnergyReturn, ...]:
     """``holder`` についているエネルギーカード ``cards``（ついている順）を、それぞれ持ち主のトラッシュの最後に置き（``log`` があれば置いたあとに呼ぶ）、そのあと
-    ``energy_discard_plan`` のとおり手札にもどす（v0.82）。もどしたカードの記録を返す。"""
+    ``energy_discard_plan`` のとおり手札にもどす（v0.82）。もどしたカードの記録を返す。v0.101: ［KEEP］でなくなる効果なら、動かす前に ``RuntimeError``（呼ぶ側が先に
+    ``energy_discard_void`` で確かめる）。"""
     cards = tuple(cards)
+    require_discard_not_voided(state, holder, cards, cause=cause, by_player=by_player)
     plan = energy_discard_plan(state, holder, cards, cause=cause, by_player=by_player)
     for uid in cards:
         holder.energy.remove(uid)
@@ -11849,6 +11851,9 @@ def half_remaining_hp(state: GameState, pokemon: PokemonInPlay, *, round_down: b
 
 CROSS_COUNTER_TEXT = ("次の相手の番、このカードが相手のワザによるダメージを受けた時、(このカードが「きぜつ」するしないにかかわらず、)コインを投げる。「おもて」なら、"
                       "相手に、このカードが受けた{multiplier}倍のダメージを与える。")
+# v0.101: ソーナンス（neo2-031）の「カウンター」（kyuura の印刷の文面。受けたダメージと同じ量。倍数 1 のときだけ受け付ける）
+COUNTER_TEXT = ("次の相手の番、このカードが相手のワザによるダメージを受けたとき(それによって、このカードが「きぜつ」しても)、このカードの持ち主はコインを投げる。「おもて」なら、"
+                "このカードが受けたダメージと同じダメージを相手に与える。(ダメージ以外の効果は与えない。)")
 
 
 @dataclass(frozen=True)
@@ -11856,6 +11861,11 @@ class ReturnReceivedDamageOnHeads(AttackEffect):
     """次の相手の番、このカードが相手のワザによるダメージを受けたとき、（それによってこのカードが「きぜつ」しても、）コインを投げる。「おもて」なら、このカードが受けた
     ダメージの ``multiplier`` 倍のダメージを、相手に与える（v0.45。R団のエビワラー（PMCG5-054）の「クロスカウンター」。処理に使う文面は kyuura の最新の説明
     LD-PMCG5-054-ATK0。印刷の文面は照合だけに使う）。
+
+    v0.101（docs/counter-keep-energy-protection-v0.101.md 3 章）: 倍数 1 はソーナンス（neo2-031）の「カウンター」（kyuura の印刷の文面 ``COUNTER_TEXT``。「このカードの持ち主は
+    コインを投げる」「受けたダメージと同じダメージ」）。同じ ``Retaliation``（倍数 1・コインあり。種類 ``retaliation_received_damage_scaled``）を与え、はたらく時点・コインを投げる
+    プレイヤー・量・きぜつの扱いは下と同じ（既存の処理をそのまま使う。カード専用の経路を作らない）。文面は倍数ごとに 1 つだけ受け付ける（倍数 1 にクロスカウンターの書き方、
+    倍数 2 以上にカウンターの書き方を受け付けない）。倍数は 1 以上の整数（真偽値・0・負数は拒否）
 
     - v0.13 の「こうらがえし」（``ReturnReceivedDamage``。p.89 の「同じタイプのワザ」が「クロスカウンター」）と同じ持続する効果 ``Retaliation``（受けたダメージで決まる
       ``RETALIATION_RECEIVED``）に、倍数（``multiplier``）と、はたらくときのコイン（``on_heads``）を明示した値（種類 ``retaliation_received_damage_scaled``）
@@ -11873,12 +11883,12 @@ class ReturnReceivedDamageOnHeads(AttackEffect):
     implementation_id = "return_received_damage_on_heads"
 
     def __post_init__(self) -> None:
-        if type(self.multiplier) is not int or self.multiplier < 2:
-            raise ValueError(f"受けたダメージにかける数は 2 以上の整数（{self.multiplier!r}）")
+        if type(self.multiplier) is not int or self.multiplier < 1:
+            raise ValueError(f"受けたダメージにかける数は 1 以上の整数（{self.multiplier!r}）")
 
     def check(self, attack: Attack) -> list[str]:
-        return _check_form(attack, "受けたダメージの倍をコインで返すワザ", damage="none") + _check_exact_text(
-            attack, "受けたダメージの倍をコインで返すワザ", (CROSS_COUNTER_TEXT.format(multiplier=self.multiplier),))
+        text = COUNTER_TEXT if self.multiplier == 1 else CROSS_COUNTER_TEXT.format(multiplier=self.multiplier)  # v0.101: 倍数 1 はカウンターの文面だけ
+        return _check_form(attack, "受けたダメージの倍をコインで返すワザ", damage="none") + _check_exact_text(attack, "受けたダメージの倍をコインで返すワザ", (text,))
 
     def retaliation_terms(self) -> tuple[str, None, int, bool]:
         return RETALIATION_RECEIVED, None, self.multiplier, True
@@ -16895,6 +16905,10 @@ class DiscardAttachedEnergyTrainer(TrainerEffect):
       使わない）。どの相手のポケモンも 2 枚より少なければ、使う前に FC1
     - 選ぶのはいつも使ったプレイヤー。はがしたカードは持ち主（相手）のトラッシュ（``zones.discard_attached_energy_cards``。ログ ``trainer_discard_energy``）。カードを数える
       （何個ぶんのエネルギーかではない）。トレーナーの効果なので「ワザをうけない」状態・「とうめい」などワザを防ぐ効果を当てはめない
+    - v0.101（docs/counter-keep-energy-protection-v0.101.md 4 章）: 相手の場の［KEEP］で、使ったプレイヤーのトレーナーがエネルギーカードをトラッシュする効果がなくなるポケモン
+      （``energy_discard_void``）のカードは、候補から黙って除かず、選べるが選ぶと KP1（エネルギー・リムーブはそのカード、超エネルギーリムーブはそのポケモン（2 枚より少なければ
+      今までどおり FC1））。ほかに選べるものがなければ使う前に KP1（相手の場にエネルギーカードがないときの EM1・どれも足りないときの FC1 は今までどおり）。超エネルギーリムーブの
+      自分のエネルギーカードは自分のトレーナーの効果なので当たらない
     """
 
     text: str
@@ -16929,15 +16943,32 @@ class DiscardAttachedEnergyTrainer(TrainerEffect):
         removable = self._removable(state, use)
         return tuple(p.pokemon_id for p in state.players[1 - use.player].in_play() if p not in removable or len(p.energy) < self.opponent_cards)
 
+    def _voided(self, state: GameState, use: TrainerUse) -> tuple[PokemonInPlay, ...]:
+        """v0.101: はがせる相手のポケモンのうち、エネルギーカードがついていて、［KEEP］でこのトレーナー（使ったプレイヤーの効果）のトラッシュする効果がなくなるもの（選ぶと KP1）。"""
+        return tuple(p for p in self._removable(state, use) if p.energy and energy_discard_void(state, p, cause=DISCARD_BY_TRAINER, by_player=use.player) is not None)
+
+    def _pokemon_stops(self, state: GameState, use: TrainerUse) -> tuple[tuple[int, str, str], ...]:
+        """超エネルギーリムーブの段階 2 の、選ぶと止めるポケモンごとの (番号, コード, 理由)（場の並び）。2 枚より少なければ FC1（v0.55）、足りて［KEEP］でなくなるなら KP1（v0.101）。"""
+        short, voided = self._short(state, use), {p.pokemon_id for p in self._voided(state, use)}
+        fc1 = f"{STATED_CARDS_SHORT_REASON}。選んだポケモンにエネルギーカードが {self.opponent_cards} 枚ついていない"
+        return tuple((p.pokemon_id, STATED_CARDS_SHORT_CODE, fc1) if p.pokemon_id in short else (p.pokemon_id, KEEP_TARGET_CODE, KEEP_TARGET_REASON)
+                     for p in state.players[1 - use.player].in_play() if p.pokemon_id in short or p.pokemon_id in voided)
+
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         if self.own_cost and not _attached_cards(state.players[use.player].in_play()):
             raise IllegalActionError("NO_ENERGY_TO_DISCARD", "自分の場のポケモンにエネルギーカードがついていないので、使うための条件（はがしてすてる）を満たせない")
         opponent = state.players[1 - use.player].in_play()
         if self.opponent_cards == 1:
-            if not _attached_cards(self._removable(state, use)):
+            cards = _attached_cards(self._removable(state, use))
+            if not cards:
                 raise UnsupportedError(ENERGY_REMOVAL_WITHOUT_TARGET_CODE, ENERGY_REMOVAL_WITHOUT_TARGET_REASON)
+            if len(_attached_cards(self._voided(state, use))) == len(cards):
+                raise UnsupportedError(KEEP_TARGET_CODE, f"{KEEP_TARGET_REASON}。相手の場のエネルギーカードは、どれも［KEEP］でトラッシュの効果がなくなる")  # v0.101
         elif len(self._short(state, use)) == len(opponent):
             raise UnsupportedError(STATED_CARDS_SHORT_CODE, f"{STATED_CARDS_SHORT_REASON}。相手の場のどのポケモンにも、エネルギーカードが {self.opponent_cards} 枚ついていない")
+        elif len(self._pokemon_stops(state, use)) == len(opponent):
+            raise UnsupportedError(KEEP_TARGET_CODE, f"{KEEP_TARGET_REASON}。エネルギーカードが {self.opponent_cards} 枚ついている相手のポケモンは、どれも［KEEP］でトラッシュの"
+                                                     "効果がなくなる")  # v0.101
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         if self.own_cost:
@@ -16950,11 +16981,17 @@ class DiscardAttachedEnergyTrainer(TrainerEffect):
         opponent = state.players[1 - use.player].in_play()
         if self.opponent_cards == 1:
             push_trainer_decision(state, use, kind=DISCARD_OPPONENT_ENERGY, player=use.player, options=_attached_cards(self._removable(state, use)),
-                                  context=(("stage", 3),))
+                                  context=(("stage", 3),), unresolved_choices=_attached_cards(self._voided(state, use)), unresolved_code=KEEP_TARGET_CODE,
+                                  unresolved_reason=KEEP_TARGET_REASON)  # v0.101: ［KEEP］でなくなるカードは選ぶと KP1（なければ v0.100 までと同じ決定）
             return
+        stops = self._pokemon_stops(state, use)
+        keep = any(code == KEEP_TARGET_CODE for _, code, _ in stops)
+        # v0.101: ［KEEP］で止めるポケモンがあるときだけ、ポケモンごとの理由（``unresolved_detail``）を書く（なければ v0.100 までと同じ決定）
         push_trainer_decision(state, use, kind=SELECT_POKEMON, player=use.player, options=[p.pokemon_id for p in opponent], context=(("stage", 2),),
-                              unresolved_choices=self._short(state, use), unresolved_code=STATED_CARDS_SHORT_CODE,
-                              unresolved_reason=f"{STATED_CARDS_SHORT_REASON}。選んだポケモンにエネルギーカードが {self.opponent_cards} 枚ついていない")
+                              unresolved_choices=self._short(state, use) if not keep else tuple(pid for pid, _, _ in stops),
+                              unresolved_code=STATED_CARDS_SHORT_CODE,
+                              unresolved_reason=f"{STATED_CARDS_SHORT_REASON}。選んだポケモンにエネルギーカードが {self.opponent_cards} 枚ついていない",
+                              unresolved_detail=stops if keep else ())
 
     def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         stage = decision.context_value("stage")
@@ -16988,14 +17025,20 @@ class DiscardAttachedEnergyTrainer(TrainerEffect):
             expected, bounds, kind = _attached_cards(state.players[use.player].in_play()), (self.own_cost, self.own_cost), DISCARD_ENERGY
         elif stage == 2 and self.opponent_cards > 1:
             expected, bounds, kind = tuple(p.pokemon_id for p in opponent), (1, 1), SELECT_POKEMON
-            if tuple(decision.context_value("unresolved_choices", ())) != self._short(state, use):
-                problems.append(f"{what}の選ぶと止める選択 {decision.context_value('unresolved_choices', ())} が、エネルギーカードが足りないポケモン {self._short(state, use)} ではない")
+            stops = self._pokemon_stops(state, use)
+            detail = stops if any(code == KEEP_TARGET_CODE for _, code, _ in stops) else ()
+            if tuple(decision.context_value("unresolved_choices", ())) != tuple(pid for pid, _, _ in stops) \
+                    or tuple(decision.context_value("unresolved_detail", ())) != detail:
+                problems.append(f"{what}の選ぶと止める選択 {decision.context_value('unresolved_choices', ())} が、エネルギーカードが足りない・［KEEP］で効果がなくなるポケモン"
+                                f" {stops} ではない")
         elif stage == 3 and self.opponent_cards == 1:
             expected, bounds, kind = _attached_cards(self._removable(state, use)), (1, 1), DISCARD_OPPONENT_ENERGY
+            if tuple(decision.context_value("unresolved_choices", ())) != _attached_cards(self._voided(state, use)):  # v0.101: KP1
+                problems.append(f"{what}の選ぶと止める選択 {decision.context_value('unresolved_choices', ())} が、［KEEP］で効果がなくなるカードではない")
         elif stage == 3:
             found = state.find_pokemon(decision.context_value("target"))
-            if found is None or found[0] != 1 - use.player or found[1].pokemon_id in self._short(state, use):
-                return problems + [f"{what}のエネルギーカードを選ぶポケモン {decision.context_value('target')} が、カードの足りる相手のポケモンではない"]
+            if found is None or found[0] != 1 - use.player or found[1].pokemon_id in {pid for pid, _, _ in self._pokemon_stops(state, use)}:
+                return problems + [f"{what}のエネルギーカードを選ぶポケモン {decision.context_value('target')} が、カードの足りる（［KEEP］で効果のなくならない）相手のポケモンではない"]
             expected, bounds, kind = tuple(found[1].energy), (self.opponent_cards, self.opponent_cards), DISCARD_OPPONENT_ENERGY
         else:
             return problems + [f"{what}の決定の段階 {stage!r} が登録と合わない"]
@@ -39023,3 +39066,110 @@ V0_100_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_100_ATTACKS)
+
+
+# ---------------------------------------------------------------- v0.101（docs/counter-keep-energy-protection-v0.101.md）。ソーナンス・アンノーンK
+
+KEEP_TEXT = ("このカードが場にいるかぎり、相手の「ワザ・特殊能力・トレーナーカード」が、自分の場の「{group}」についている「エネルギーカード」をトラッシュする効果は、"
+             "すべてなくなる。")
+# KEEP の「相手の「ワザ・特殊能力・トレーナーカード」」に当たる、場からトラッシュに置く原因（``energy_discard_plan`` と同じ分類）。にげる・きぜつ・ルールの処理・エネルギーカード
+# 自身の効果は当たらない（ワザ・特殊能力・トレーナーの効果ではない）。スタジアム（トレーナーカード）は、今の写しでは使ったプレイヤー自身の場のエネルギーだけをトラッシュする
+# （タマムシシティジム）ので答えが変わらず、相手が使ったスタジアムに当たるかは決めない（``energy_discard_void`` が不具合として止める）
+KEEP_CAUSES = frozenset({DISCARD_BY_ATTACK, DISCARD_BY_POWER, DISCARD_BY_TRAINER})
+# KP1: KEEP でトラッシュの効果がなくなるエネルギーカード（ポケモン）を、トレーナーの「はがしてすてる」カードとして選べるか（選んで何も起こらないのか、選べないのか）。どれもそう
+# なら、使えるか（使って何も起こらないのか）。kyuura の UQ-TARGET-WITHOUT-EFFECT（説明の効果が何も起こらない対象を選べるか・使ったことになるか）と同じ形の問い
+KEEP_TARGET_CODE = "UNRESOLVED_KEEP_PROTECTED_TARGET"
+KEEP_TARGET_REASON = (
+    "アンノーンK の［KEEP］で「エネルギーカードをトラッシュする効果」がなくなる相手のアンノーンのエネルギーカードを、トレーナーの「はがしてすてる」カードとして選べるか（選んで"
+    "何も起こらないのか、選べないのか）・どれもそうなときに使えるかは、印刷の文面・kyuura の記録から決められず（kyuura の UQ-TARGET-WITHOUT-EFFECT と同じ形）、選び方・使えるかが"
+    "変わるので扱わない（KP1。候補から黙って除かない）"
+)
+
+
+@dataclass(frozen=True)
+class VoidOpponentEnergyDiscardOnGroup(ContinuousPower):
+    """このカードが場にいるかぎり、相手の「ワザ・特殊能力・トレーナーカード」が、自分の場の「``group``」についている「エネルギーカード」をトラッシュする効果は、すべてなくなる
+    （v0.101。アンノーンK（neo3-030）の［KEEP］。kyuura の印刷の文面。docs 4 章）。
+
+    - 常にはたらく（宣言しない・使った記録を持たない）。場（バトル場・ベンチ）のどこでもはたらく。日本語の文面に特殊状態の条件はない（``blocked_by_status`` は偽）。かがくへんかガス
+      などで消える（``continuous_powers`` の共通の確かめ）。はたらいているかは、トラッシュする効果を処理するたびに今の場から求める（``energy_discard_void``）
+    - なくすのは、この力を持つポケモンの持ち主の場の、今の姿の名前のグループが「``group``」のポケモン（このカード自身・ベンチも）についているエネルギーカードを、持ち主の相手が実際に
+      使ったワザ・特殊能力・トレーナーの効果でトラッシュする効果だけ（原因と使ったプレイヤーは ``energy_discard_plan`` と同じ記録。選ぶプレイヤー・カードの持ち主では決めない）。
+      相手のアンノーン・自分のほかの名前のポケモン・自分の効果・にげる・きぜつ・ルールの処理・ほかの場所へ動かす効果・手札や山札からのトラッシュは変えない
+    - 効果が「なくなる」ので、トラッシュしたことにしない（トラッシュ・戻りのログ・トラッシュした数を残さない。捨ててからもどす処理にしない）。ワザのほかの要素・ダメージは残る
+    - 2 匹以上でも、なくなる効果は 1 回（重ねて何かをするものではない）。ほかの同じ力を止める文面はないので、DF1（同時に多くても 1 つ）を当てはめない
+    """
+
+    group: str = "アンノーン"
+    implementation_id = "void_opponent_energy_discard_on_group"
+    blocked_by_status = False
+    what = "相手の効果が自分の場の名前のグループのポケモンのエネルギーカードをトラッシュする効果をなくす特殊能力"
+
+    def texts(self) -> tuple[str, ...]:
+        return (KEEP_TEXT.format(group=self.group),)
+
+
+@dataclass(frozen=True)
+class EnergyDiscardVoid:
+    """KEEP がなくす、場のポケモンのエネルギーカードをトラッシュする効果（v0.101）。``owner`` はポケモン（とカード）の持ち主、``sources`` ははたらいている力の
+    (持つポケモンの番号, ``PowerKey`` の文字列) の並び（``continuous_powers`` の順。2 つ以上でも効果は 1 回なくなるだけで、どれか 1 つを代表に選ばない）。"""
+
+    owner: int
+    pokemon_id: int
+    sources: tuple[tuple[int, str], ...]
+
+
+def energy_discard_void(state: GameState, pokemon: PokemonInPlay, *, cause: str, by_player: int | None) -> EnergyDiscardVoid | None:
+    """場のポケモン ``pokemon`` についているエネルギーカードを、原因 ``cause``（``DISCARD_CAUSES``）・実際に使ったプレイヤー ``by_player`` の効果でトラッシュする効果が、KEEP
+    （``VoidOpponentEnergyDiscardOnGroup``）でなくなるなら、その記録（v0.101。状態を変えず、乱数を使わない）。トラッシュする前（選ばせる前・コインの前・手札にもどる計画の前）に
+    呼び、実際にトラッシュする処理・選べるもの・先読みが同じ答えを使う。
+
+    - 使ったプレイヤーが持ち主（自分の効果）・None（ルールの処理）、原因がにげる・きぜつ・ルール・エネルギーカード自身の効果なら None（当たらない）
+    - はたらいている力が持ち主の場になければ None（名前は読まない）。あれば、``pokemon`` の今の姿の名前のグループで決める（``in_name_group``。うらのカードは名前が読めないので
+      FD1（``HiddenPropertyRead``）。今の写しでは、うらのカードにエネルギーカードはつかない（つけるときにおもてにする））
+    - 相手が使ったスタジアムの効果で当たるときは、今の写しにない場面なので不具合として止める（``KEEP_CAUSES`` の説明）
+    """
+    if cause not in DISCARD_CAUSES:
+        raise ValueError(f"エネルギーカードを場からトラッシュに置く原因 {cause!r} が {sorted(DISCARD_CAUSES)} にない")
+    located = state.find_pokemon(pokemon.pokemon_id)
+    if located is None or located[1] is not pokemon:
+        raise RuntimeError(f"トラッシュする効果を確かめるポケモン {pokemon.pokemon_id} が場にいない（エンジンの不具合）")
+    owner = located[0]
+    if by_player is None or by_player == owner or (cause not in KEEP_CAUSES and cause != DISCARD_BY_STADIUM):
+        return None
+    sources = tuple((holder.pokemon_id, str(key)) for power_owner, holder, key, effect in continuous_powers(state, VoidOpponentEnergyDiscardOnGroup)
+                    if power_owner == owner and in_name_group(state, pokemon, effect.group))
+    if not sources:
+        return None
+    if cause == DISCARD_BY_STADIUM:
+        raise RuntimeError(f"相手が使ったスタジアムの効果で、［KEEP］のはたらくポケモン {pokemon.pokemon_id} のエネルギーカードをトラッシュしようとした（今の写しにない。エンジンの不具合）")
+    return EnergyDiscardVoid(owner, pokemon.pokemon_id, sources)
+
+
+def note_energy_discard_voided(state: GameState, void: EnergyDiscardVoid, *, cause: str, by_player: int, **source: Any) -> None:
+    """KEEP でトラッシュする効果がなくなったことのログ ``energy_discard_voided``（v0.101。公開）。``energy`` はそのときポケモンについていたエネルギーカード（動かさない）、
+    ``powers`` ははたらいた力、``source`` は効果（``effect``（ワザ）・``power``（特殊能力）・``trainer_card``（トレーナー））。トラッシュ・手札にもどるログは残さない。"""
+    pokemon = state.find_pokemon(void.pokemon_id)[1]
+    state.add_event("energy_discard_voided", player=void.owner, pokemon=pokemon.card, pokemon_id=void.pokemon_id, cause=cause, by_player=by_player,
+                    energy=tuple(pokemon.energy), powers=void.sources, **source)
+
+
+def require_discard_not_voided(state: GameState, pokemon: PokemonInPlay, cards: Iterable[int], *, cause: str, by_player: int | None) -> None:
+    """実際にトラッシュする処理の確かめ（v0.101）: KEEP でなくなる効果のカードをトラッシュしようとしたら ``RuntimeError``（呼ぶ側が先に ``energy_discard_void`` で確かめる。
+    確かめの漏れを黙って通さない）。"""
+    if tuple(cards) and energy_discard_void(state, pokemon, cause=cause, by_player=by_player) is not None:
+        raise RuntimeError(f"［KEEP］でなくなるトラッシュの効果で、ポケモン {pokemon.pokemon_id} のエネルギーカード {tuple(cards)} をトラッシュしようとした（確かめの漏れ。エンジンの不具合）")
+
+
+_KEEP = VoidOpponentEnergyDiscardOnGroup()
+# v0.101 のワザの登録（2）。処理に使う文面は kyuura の印刷の文面（名前・文面は写しの表記のまま）。めざめるパワーは説明文のないワザ（超・10。文面・出典を持たない）
+V0_101_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    AttackKey("neo2-031", 0): _printed(ReturnReceivedDamageOnHeads(1), "カウンター", COUNTER_TEXT),  # ソーナンス（超）
+    AttackKey("neo3-030", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーンK（超・10）
+})
+# v0.101 の特殊能力の登録（1）
+V0_101_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
+    PowerKey("neo3-030", 0): PowerEntry(_KEEP, "KEEP[キープ]", _KEEP.texts()[0], _KEEP.texts()[0], _KYUURA_PRINTED_TEXT),
+})
+
+DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_101_ATTACKS), V0_101_POWERS)

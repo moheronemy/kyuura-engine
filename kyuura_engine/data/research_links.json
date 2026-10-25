@@ -12,8 +12,8 @@
   "card_data_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 232,
-    "engine_stop_codes": 231,
+    "engine_unresolved_rulings": 235,
+    "engine_stop_codes": 234,
     "kyuura_issues": 72
   },
   "stop_codes": {
@@ -2679,6 +2679,39 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_KEEP_PROTECTED_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.101",
+          "document": "docs/counter-keep-energy-protection-v0.101.md",
+          "ruling_id": "KP1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_KEEP_VOIDED_DISCARD_COIN": {
+      "engine_rulings": [
+        {
+          "version": "v0.101",
+          "document": "docs/counter-keep-energy-protection-v0.101.md",
+          "ruling_id": "KP2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_KEEP_DETACHED_ENERGY_DISCARD": {
+      "engine_rulings": [
+        {
+          "version": "v0.101",
+          "document": "docs/counter-keep-energy-protection-v0.101.md",
+          "ruling_id": "KP3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -4438,7 +4471,9 @@
       "neo1-023/attack/0",
       "neo2-052/attack/0",
       "neo3-035/attack/0",
-      "neo3-035/attack/1"
+      "neo3-035/attack/1",
+      "neo2-031/attack/0",
+      "neo3-030/power/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

@@ -2845,7 +2845,11 @@ class DiscardOpponentEnergy(Element):
 
     相手のポケモンへの効果なので、ポケモンごとに「ワザをうけない」状態・「とうめい」を評価する（1 つのワザで 2 匹以上の「とうめい」は T27）。処理の
     対象がいない（エネルギーカードがついていない・このワザで HP 以上になった）ポケモンは飛ばす（p.309）。どのポケモンにもエネルギーカードがなければ、
-    コインも投げない（内容の対象がない。p.309）。決定はポケモンごと（対戦ポケモン → 控えの並びの順）。"""
+    コインも投げない（内容の対象がない。p.309）。決定はポケモンごと（対戦ポケモン → 控えの並びの順）。
+
+    v0.101（docs/counter-keep-energy-protection-v0.101.md 4 章）: ［KEEP］（``E.energy_discard_void``。ワザを実際に使ったプレイヤーの効果として聞く）でトラッシュする効果がなくなる
+    ポケモンは、効果を受けたあと（「とうめい」などの判定のあと）に選ばせずに飛ばし、ログ ``energy_discard_voided`` を残す（手札にもどるかの問いも聞かない）。この要素のコイン
+    （``local_coin``）は、決めるトラッシュがどれもなくなるなら投げるかが決まらない（KP2）。ほかのポケモンへのトラッシュが残れば投げる。選んだ個体（``chosen``）は選ぶと KP2"""
 
     each_bench: bool = False
     local_coin: CoinSide | None = None
@@ -2883,17 +2887,27 @@ class DiscardOpponentEnergy(Element):
                 return False
             from .kernel import first_void
 
-            if all(run.fs.reception.get(pokemon.pokemon_id) is False for pokemon in targets):
+            # v0.101: ［KEEP］でトラッシュの効果がなくなるポケモン（エネルギーカードはある）は、このコインが決めるものがない。どれもそうなら、なくなった効果だけを決めるコインを
+            # 投げるかは決まらない（KP2。UQ-COIN-IN-NULLIFIED-ELEMENT と同じ形）。ほかのポケモンが残れば、そのポケモンについて今までどおり（なくなったポケモンのログは ``_next``）
+            live = [pokemon for pokemon in targets if self._voided(run, pokemon) is None]
+            if not live:
+                raise run.res.question("keep_voided_discard_coin", f"ポケモン {[pokemon.pokemon_id for pokemon in targets]}（［KEEP］でトラッシュの効果がなくなる）")
+            if all(run.fs.reception.get(pokemon.pokemon_id) is False for pokemon in live):
                 # v0.33: 前のダメージの要素で「とうめい」の「おもて」になり、このワザで受けないと決まったポケモンだけへの効果のコイン（はかいでんぱ・
                 # はかいビーム。T19b と同じ問い。v0.31 のスーパーデストロイは前にダメージの要素がないので起こらない）
-                finals = [run.fs.evaded.get(pokemon.pokemon_id) for pokemon in targets]
-                raise run.res.question("evaded_effect_coin", f"ポケモン {[pokemon.pokemon_id for pokemon in targets]}",
-                                       E.evaded_effect_coin_error(targets[0].pokemon_id, finals[0]) if len(targets) == 1 and finals[0] is not None else None)
-            if all(first_void(run.res, opponent, pokemon, Window.BEFORE_EFFECT) is not None for pokemon in targets):
-                raise run.res.question("prevented_effect_coin", f"ポケモン {[pokemon.pokemon_id for pokemon in targets]}")
+                finals = [run.fs.evaded.get(pokemon.pokemon_id) for pokemon in live]
+                raise run.res.question("evaded_effect_coin", f"ポケモン {[pokemon.pokemon_id for pokemon in live]}",
+                                       E.evaded_effect_coin_error(live[0].pokemon_id, finals[0]) if len(live) == 1 and finals[0] is not None else None)
+            if all(first_void(run.res, opponent, pokemon, Window.BEFORE_EFFECT) is not None for pokemon in live):
+                raise run.res.question("prevented_effect_coin", f"ポケモン {[pokemon.pokemon_id for pokemon in live]}")
             if run.flip(1).results[0] is not self.local_coin:
                 return False
         return self._next(run, [pokemon.pokemon_id for pokemon in targets])
+
+    @staticmethod
+    def _voided(run: AttackRun, pokemon: PokemonInPlay) -> E.EnergyDiscardVoid | None:
+        """v0.101: 相手のポケモン ``pokemon`` のエネルギーカードをトラッシュする効果が、［KEEP］でなくなるか（ワザを実際に使ったプレイヤーの効果。``E.energy_discard_void``）。"""
+        return E.energy_discard_void(run.state, pokemon, cause=E.DISCARD_BY_ATTACK, by_player=run.player)
 
     def choice_problem(self, run: AttackRun, owner: int, pokemon: PokemonInPlay) -> tuple[str, str] | None:
         """v0.89: 選ぶ要素（``ChooseTarget``）が、このポケモンを選ぶと決められない場合を聞く（``chosen`` の要素だけ）。コイン（``local_coin``）はこのポケモンへのトラッシュだけを
@@ -2904,6 +2918,9 @@ class DiscardOpponentEnergy(Element):
             return None
         from .kernel import first_void
 
+        if self._voided(run, pokemon) is not None:
+            # v0.101: ［KEEP］でトラッシュの効果がなくなるポケモン。コインはこのポケモンへのトラッシュだけを決める（KP2。選ぶと止める。ほかのポケモンを選ぶ答えは止めない）
+            return "keep_voided_discard_coin", f"ポケモン {pokemon.pokemon_id}（［KEEP］でなくなるエネルギーカードのトラッシュだけを決めるコイン）"
         if first_void(run.res, owner, pokemon, Window.BEFORE_EFFECT) is not None:
             return "prevented_effect_coin", f"ポケモン {pokemon.pokemon_id}（「ワザをうけない」ポケモンのエネルギーカードのトラッシュだけを決めるコイン）"
         if E.evasion_power(run.state, pokemon) is not None and run.fs.reception.get(pokemon.pokemon_id) is not True:
@@ -2921,6 +2938,11 @@ class DiscardOpponentEnergy(Element):
             if run.knocked_out(target) or not self._energy(run, target):
                 continue
             if not reaches(run.res, run.fs, opponent, target, E.ENERGY_DISCARD_ELEMENT):
+                continue
+            void = self._voided(run, target)
+            if void is not None:
+                # v0.101: ［KEEP］でトラッシュする効果がなくなる（選ばせない・トラッシュしない。手札にもどるかの問い（TE2 など）も聞かない）。ほかのポケモンへの効果は続ける
+                E.note_energy_discard_voided(run.state, void, cause=E.DISCARD_BY_ATTACK, by_player=run.player, effect=str(run.key))
                 continue
             options = self._energy(run, target)
             # v0.83: 手札にもどるかが TE2 の答えで変わるカード（エコロジムと［へんしん］のメタモンの無色の特殊エネルギー）は、選べるが選ぶと止める。どれもそうなら止める
@@ -6092,6 +6114,8 @@ class MoveOpponentEnergyToBench(Element):
       （``ENERGY_ATTACH_ELEMENT``。「とうめい」）。つける控えポケモンが受けなければ、はがしたカードは持ち主のトラッシュ（CR-TRANSPARENCY-ENERGY-BOMB と同じ読み方。
       v0.31 の ``MoveOwnEnergyToBench``）。ログ ``move_opponent_energy``（``result`` は ``attached``・``evaded``）。つけたら、つけたときの特殊能力を評価する
       （``effects.after_energy_attached``）
+    - v0.101: はがしてつけかえるのはトラッシュする効果ではないので、［KEEP］のはたらくアンノーンからも動かす。つける控えが受けずにトラッシュに置く場合だけ、KEEP でなくなる効果に
+      当たるかが決まらない（KP3）
     """
 
     phase: ClassVar[Phase] = Phase.EFFECT
@@ -6140,7 +6164,10 @@ class MoveOpponentEnergyToBench(Element):
         destination = next((pokemon for pokemon in p.bench if pokemon.pokemon_id == choices[0]), None)
         if energy not in target.energy or destination is None:
             raise RuntimeError(f"つけかえるカード {energy}・控えポケモン {choices} が正しくない（エンジンの不具合）")
-        returns = E.energy_discard_plan(state, target, (energy,), cause=E.DISCARD_BY_ATTACK, by_player=run.player)  # v0.82: トラッシュに置くときだけ使う
+        # v0.101: ［KEEP］がはたらくアンノーンからはがすとき（はがして別のポケモンにつけるのはトラッシュする効果ではないので、そのまま動かす）、つける控えが受けずにトラッシュに
+        # 置く場合だけが、なくなる効果に当たるかが決まらない（KP3。手札にもどる計画・TE2 も聞かない）
+        void = E.energy_discard_void(state, target, cause=E.DISCARD_BY_ATTACK, by_player=run.player)
+        returns = () if void is not None else E.energy_discard_plan(state, target, (energy,), cause=E.DISCARD_BY_ATTACK, by_player=run.player)  # v0.82: トラッシュに置くときだけ使う
         target.energy.remove(energy)
         base = {"player": opponent, "pokemon": target.card, "pokemon_id": target.pokemon_id, "energy": energy, "to_pokemon_id": destination.pokemon_id,
                 "effect": str(run.key), "attacker": run.player, "attacker_pokemon_id": run.fs.frame.source_pid}
@@ -6149,6 +6176,8 @@ class MoveOpponentEnergyToBench(Element):
             state.add_event("move_opponent_energy", **base, result="attached")
             E.after_energy_attached(state, opponent, destination, energy)
         else:
+            if void is not None:
+                raise run.res.question("keep_detached_energy_discard", f"ポケモン {target.pokemon_id} からはがしたエネルギーカード {energy}（つける控え {destination.pokemon_id} が受けない）")
             p.discard.append(energy)  # 「とうめい」の「おもて」: はがしたカードは持ち主のトラッシュ（CR-TRANSPARENCY-ENERGY-BOMB と同じ読み方）
             state.add_event("move_opponent_energy", **base, result="evaded")
             E.return_discarded_energy(state, returns)  # v0.82: 相手のワザで場からトラッシュに置かれた（エコロジム）

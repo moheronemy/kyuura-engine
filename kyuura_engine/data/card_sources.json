@@ -27925,6 +27925,34 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.100 で加えた（docs/sketch-perish-song-history-v0.100.md）。kyuura data/engine_targets.json（73a1690）の対象。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id で確かめた。pcg-search の id はない）。新しい原典照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない。kyuura の日本語の文面は wiki.pokemonwiki.com の転記（ja_text_source。cards.json と cards.csv の一致は独立した照合に数えない）。やみのひとみ=PutToSleep（超・目安なし。v0.3b のパラスの「キノコのほうし」と同じ説明。ダメージの要素を作らない）。ほろびのうた=KnockOutIfAsleepAndReceived(\"やみのひとみ\")（超超超・目安なし。相手が今ねむりで、前の自分の番にやみのひとみを受けていた（場のポケモンの受けた記録）なら、ダメージによらず「きぜつ」させる。v0.100 の直接のきぜつの共通の処理）"
+    },
+    "neo2-031": {
+      "basis": "kyuura_data",
+      "name_ja": "ソーナンス",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-25",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.101 で加えた（docs/counter-keep-energy-protection-v0.101.md）。kyuura data/engine_targets.json（73a1690）の対象。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id で確かめた。pcg-search の id はない）。新しい原典照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source。依頼で示された引用・cards.json と cards.csv の一致は独立した照合に数えない）。カウンター=ReturnReceivedDamageOnHeads(1)（超・目安なし。v0.45 のクロスカウンターと同じ型の倍数 1。持続する効果 Retaliation（受けたダメージで決まる・倍数 1・はたらくときのコイン）を与え、次の相手の番に相手のワザの正の最終ダメージを受けたとき、持ち主がコインを投げ、「おもて」なら受けたダメージと同じダメージを返す。こうらがえし（v0.13。p.89）・クロスカウンター（v0.45。LD-PMCG5-054-ATK0）の既存の根拠と適用範囲を再利用した（このカードの独立した原典照合ではない）"
+    },
+    "neo3-030": {
+      "basis": "kyuura_data",
+      "name_ja": "アンノーンK",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-25",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.101 で加えた（docs/counter-keep-energy-protection-v0.101.md）。kyuura data/engine_targets.json（73a1690）の対象。めざめるパワー=DamageOnly（説明文のないワザ。超・10。文面・出典を持たない）。ルール文「「アンノーン」はデッキに4枚までしか入れることができません。」は、写しのこのカードの rules_text を根拠に、文字の違うアンノーンを合わせた枚数の上限として当てはめた（v0.96 の deck.deck_problems・CardDefinition.name_group。共通の規定の再利用で、kyuura の CR-UNOWN-DECK-LIMIT-ALL-LETTERS はこのカードを挙げていない。このカードを直接確かめた記録ではない）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id で確かめた。pcg-search の id はない）。kyuura data/rule_history.json の card_lists.poke_body（MIX-POWER-ERRATA。2002-05-24 の Q&A の「ポケボディー」の一覧）と docs/rules/errata-history.md の一覧にこのカードがあるが、後年の分類で、2000.02.14 版の根拠にしていない（エラッタの errata の cards ではない）。kyuura の日本語の文面は wiki.pokemonwiki.com の転記（ja_text_source）。［KEEP］=VoidOpponentEnergyDiscardOnGroup（常にはたらく。特殊状態の条件は日本語の文面にないので持ち込まない。自分の場の今の姿が「アンノーン」のポケモンについているエネルギーカードを、持ち主の相手が実際に使ったワザ・特殊能力・トレーナーの効果でトラッシュする効果を、トラッシュする前になくす（共通の問い合わせ effects.energy_discard_void）。トレーナーで選ばせるときは KP1、なくなる効果だけを決めるコインは KP2、つけかえで受けずにトラッシュに置くときは KP3 で止める）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面（「(Any other effects still happen.)」など）・現代のルール・後年の裁定は持ち込まない"
     }
   }
 }
