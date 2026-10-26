@@ -28240,6 +28240,78 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.104 で加えた（docs/healing-pokemon-v0.104.md）。SI（映画公開記念パック「サザンアイランド」。southern_islands）。やさしいうた=HealBothActivesThenSleep(2)（自分（ワザを使ったポケモン）と相手（相手の対戦ポケモン）からそれぞれ 2 個ずつ（のっている数まで）→ 相手をねむり。控えは含めない。相手が効果を受けなくても自分からはとりのぞく）。英語の欄の「(1 if it only has 1)」は持ち込まないが、同じ結果。れいとうビーム=ParalyzeOnHeads（ダメージの目安の 20 → コイン 1 枚 →「おもて」で相手をマヒ）。レベル（jp_print.level）は kyuura の field_sources で nazonobasho（サザンアイランド）。kyuura の日本語の文面は pcg-search.com の転記。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stmv018・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo2-006": {
+      "basis": "kyuura_data",
+      "name_ja": "トランセル",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.105 で加えた（docs/recovery-evolution-coin-branches-v0.105.md）。neo2（遺跡をこえて...。expansion_pack。発売 2000-07-07。ルールの基準の日より後に出たカードだが、2000.02.14 版のルールで処理する）。かたくなる=ZeroDamageBelowNextTurn(30)（次の相手の番、p.321 の 8 段階のダメージが 20 以下なら 0。30 以上はそのまま。ダメージ以外の効果は受ける。8 段階の計算のダメージはどれも 10 の倍数なので「20以下」は「30 より小さい」と同じ。書き方を zero_damage_below_texts に明示して加えた。計算の前の一律の防護にしない）。からやぶりしんか=CoinHealAllThenEvolveSelfFromDeck(\"トランセル\", \"hatch\")（コイン 1 枚 →「おもて」なら自分のダメージカウンターをすべてとりのぞく → 山札から「トランセル」から進化する進化カードを 1 枚選び出して重ねる（選べるものがあれば必ず 1 枚）→ 山札を見た（山札にカードがあった）ら 1 回切る。「うら」なら何もしない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo4-003": {
+      "basis": "kyuura_data",
+      "name_ja": "ヒマナッツ",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.105 で加えた（docs/recovery-evolution-coin-branches-v0.105.md）。neo4（闇、そして光へ...。expansion_pack。発売 2001-04-20。ルールの基準の日より後に出たカードだが、2000.02.14 版のルールで処理する）。ころがる=DamageOnly（説明文のないワザ。無・10。文面・出典を持たない）。ひざしをあびる=CoinHealAllThenEvolveSelfFromDeck(\"ヒマナッツ\", \"sunbathe\")（からやぶりしんかと同じ処理で、書き方だけが違う（読点の位置・「から進化する」））。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo2-009": {
+      "basis": "kyuura_data",
+      "name_ja": "バタフリー",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.105 で加えた（docs/recovery-evolution-coin-branches-v0.105.md）。neo2（遺跡をこえて...。expansion_pack。発売 2000-07-07。ルールの基準の日より後に出たカードだが、2000.02.14 版のルールで処理する）。ミラクルりんぷん=DamageThenChosenStatusOnHeads(conditions=どく・ねむり・マヒ・こんらん)（ダメージの目安の 20 → コイン 1 枚 →「おもて」なら 4 つから 1 つを選んで相手をその状態に。選ぶ番号は CHOSEN_CONDITIONS のまま）。ハイパーリバース=DefenderEnergyUnitsDamageAndFullDrain(10)（相手の対戦ポケモンについているエネルギーの個数 × 10 が基本となるダメージ（目安なし。カードの枚数ではない。0 個なら 0）→ 相手にダメージを与えたら、与えたダメージ ÷ 10 個を自分からとりのぞく（のっている数まで。とりのぞく前に「とうめい」などを評価する））。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PF3-002": {
+      "basis": "kyuura_data",
+      "name_ja": "セレビィ",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.105 で加えた（docs/recovery-evolution-coin-branches-v0.105.md）。PF3（プレミアムファイル3。premium_file。発売 2000-11-23。ルールの基準の日より後に出たカードだが、2000.02.14 版のルールで処理する）。サイコリーフ=CoinsPerDefenderEnergyBonusAndFullDrain(10)（相手の対戦ポケモンについているエネルギーの個数ぶんコインを投げ、目安の 10 +「おもて」の数 × 10 → 与えたダメージ ÷ 10 個を自分からとりのぞく（のっている数まで。0 個なら投げず 10。とりのぞく前に「とうめい」などを評価する））。レベル（jp_print.level）は kyuura の data_gaps にある欠けで、補っていない。kyuura の日本語の文面は pcg-search.com の転記（neopf3002）。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id neopf3002・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo3-050": {
+      "basis": "kyuura_data",
+      "name_ja": "デリバード",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.105 で加えた（docs/recovery-evolution-coin-branches-v0.105.md）。neo3（めざめる伝説。expansion_pack。発売 2000-11-23。ルールの基準の日より後に出たカードだが、2000.02.14 版のルールで処理する）。プレゼント=ThreeCoinDamageOrOpponentHeal(60, 3, 40)（コイン 3 枚を 1 組で投げ、「おもて」の数で 1 つだけ: 3 枚=相手に 60・2 枚=相手から 3 個（のっている数まで）・1 枚=相手に 40・0 枚=相手からすべて。回復は相手の対戦ポケモンへのワザの効果。回復の分岐にダメージの要素はない）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
     }
   }
 }

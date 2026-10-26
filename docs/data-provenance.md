@@ -1955,6 +1955,25 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.105: 回復・山札からの進化・コインの分岐の 5 枚
+
+[recovery-evolution-coin-branches-v0.105.md](recovery-evolution-coin-branches-v0.105.md)。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534` のまま（今回の追加を理由に上げていない）。写しの組 `pool_v0_105`（5 枚）を加え、写しの作り直しの道具で作った
+  （手で直していない）。v0.104 までの 1,203 枚の値・移行の記録は変わっていない。
+- 5 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-26・外部照合なし。記録 1,116 → 1,121）。研究の基準に 5 枚を指す LD-・CC-・CR-・UQ-・エラッタはなく
+  （カードの id・セレビィの pcg-search の id `neopf3002`・名前・ワザの名前（日本語と英語の欄）で、写し以外の data/ と docs/ を探した。見つかったのはカード・対象の一覧・転記元の写し・商品の一覧と、
+  名前の一致する別のもの・部分の一致）、`kyuura_records` は空。処理に使う文面はどれも印刷の文面（研究の対応表の `adopted_printed_text` に 7 を加えた。1,155 → 1,162。説明文のないヒマナッツの
+  「ころがる」は持たない）。
+- 日本語の文面の転記元: トランセル・バタフリーが nazonobasho.com、ヒマナッツ・デリバードがポケモンWiki、セレビィが pcg-search.com。同じ所との一致を独立した照合に数えず、新しく画像を見たことに
+  していない。セレビィのレベルの欠け（`jp_print.level`）は補っていない。5 枚とも同じカードの組・同じデータの再録群はない。
+- 英語の欄との違い（日本語を採用し、英語で置きかえない。この違いだけで保留にしない）: からやぶりしんか・ひざしをあびるの「Shuffle your deck afterward」（いつも切る。日本語は「山札を見た場合は」）。
+  英語版の別の印刷の文面で、転記の誤りとは決めていない。
+- 一般規定（GR-2000-P309-EVOLUTION-BY-NAME・GR-2000-P310-EVOLUTION・GR-2000-P312-DECK-HAND-DISCARD・GR-2000-P319-HP-AND-DAMAGE・GR-2000-P320-RECOVERY・GR-2000-P321-DAMAGE-ORDER・
+  GR-2000-P321-PREVENTED-ELEMENTS・GR-2000-P309-ATTACK-PROCEDURE）は既存の記録の再利用で、5 枚それぞれの独立した原典照合ではない。新しい停止コードはない（停止コード 234・未解決の裁定 235 のまま）。
+- 報告事項（kyuura の作業）: engine_targets.json の 5 枚の `engine_status` を v0.105 の登録で写すと `registered` になる。英語の欄との違い（切る条件）・ハイパーリバースの目安の欄が null で
+  説明が量を決める書き方を照合の対象にするかは kyuura の判断。
+
 ## v0.104: 回復のワザを持つポケモンの 12 枚
 
 [healing-pokemon-v0.104.md](healing-pokemon-v0.104.md)。

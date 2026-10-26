@@ -1474,6 +1474,13 @@
     "PR1-004",
     "SI-018"
   ],
+  "pool_v0_105": [
+    "neo2-006",
+    "neo4-003",
+    "neo2-009",
+    "PF3-002",
+    "neo3-050"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -109222,6 +109229,466 @@
           "list_number": "003/003"
         }
       ]
+    },
+    {
+      "id": "neo2-006",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "トランセル",
+        "en": "Metapod"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          11
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "キャタピー",
+          "en": "Caterpie"
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かたくなる",
+              "en": "Harden"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "次の相手の番、このカードがダメージを受けるとき、そのダメージが20以下なら、このカードはダメージを受けない。(ダメージ以外の効果は受ける。)",
+              "en": "During your opponent's next turn, whenever 20 or less damage is done to Metapod (after applying Weakness and Resistance), prevent that damage. (Any other effects of attacks still happen)."
+            }
+          },
+          {
+            "name": {
+              "ja": "からやぶりしんか",
+              "en": "Hatch"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、自分にのっているダメージカウンターをすべてとりのぞく。その後、自分の山札から「トランセル」を進化させる「進化カード」を1枚選び出し、このトランセルの上にのせ、進化させる。山札を見た場合は、その山札をよく切る。",
+              "en": "Flip a coin. If heads, remove all damage counters from Metapod. Then, search your deck for a card that evolves from Metapod and attach that card to Metapod. This counts as evolving Metapod. Shuffle your deck afterward."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-006",
+        "pokemontcg": [
+          "neo2-42"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-006-transel/",
+      "jp_print": {
+        "level": 23,
+        "rarity": "◆(U)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-006-transel/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-003",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ヒマナッツ",
+        "en": "Sunkern"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          191
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ころがる",
+              "en": "Rollout"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ひざしをあびる",
+              "en": "Sunbathe"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、自分にのっているダメージカウンターを、すべてとりのぞく。その後、自分の山札から、「ヒマナッツ」から進化する「進化カード」を1枚選び出し、このヒマナッツの上にのせ、進化させる。山札を見た場合は、その山札をよく切る。",
+              "en": "Flip a coin. If heads, remove all damage counters from Sunkern. Search your deck for a card that evolves from Sunkern and attach that card to Sunkern. This counts as evolving Sunkern. Shuffle your deck afterward."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-003",
+        "pokemontcg": [
+          "neo4-83"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%92%E3%83%9E%E3%83%8A%E3%83%83%E3%83%84_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 14,
+        "rarity": "●(C)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%92%E3%83%9E%E3%83%8A%E3%83%83%E3%83%84_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo2-009",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "バタフリー",
+        "en": "Butterfree"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          12
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "トランセル",
+          "en": "Metapod"
+        },
+        "hp": 80,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ミラクルりんぷん",
+              "en": "Magic Dust"
+            },
+            "cost": [
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、「どく・ねむり・マヒ・こんらん」の中から1つを選び、相手をその状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now either Asleep, Confused, Paralyzed, or Poisoned (your choice)."
+            }
+          },
+          {
+            "name": {
+              "ja": "ハイパーリバース",
+              "en": "Hyper Reverse"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": null,
+            "text": {
+              "ja": "相手についている「エネルギー」の数×10のダメージ。相手にダメージを与えたら、相手に与えたぶんのダメージカウンターを、自分からとりのぞく。",
+              "en": "Does 10 damage times the number of Energy attached to the Defending Pokémon. After doing damage, remove a number of damage counters from Butterfree equal to the amount of damage done to the Defending Pokémon (after applying Weakness and Resistance)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-009",
+        "pokemontcg": [
+          "neo2-19"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-009-butterfree/",
+      "jp_print": {
+        "level": 38,
+        "rarity": "★(R)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-009-butterfree/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "PF3-002",
+      "jp_set": "PF3",
+      "category": "pokemon",
+      "name": {
+        "ja": "セレビィ",
+        "en": "Celebi"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          251
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "サイコリーフ",
+              "en": "Psychic Leaf"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "相手についている「エネルギー」の数ぶんコインを投げ、「おもて」の数×10のダメージを追加する。その後、与えたダメージぶんのダメージカウンターを、自分からとりのぞく。",
+              "en": "Flip a coin for each Energy attached to the Defending Pokémon. This attack does 10 damage plus 10 more damage for each heads. Remove a number of damage counters from Celebi equal to the damage done to the Defending Pokémon (after applying Weakness and Resistance). If Celebi has fewer damage counters than that, remove all of them."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo3-16"
+        ],
+        "pcg_search": [
+          "neopf3002"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neopf3002.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "プレミアムファイル3",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neopf3002.php"
+      },
+      "product_group": "premium_file",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:neo3-16",
+        "pokemon.dex": "pokemontcg:neo3-16"
+      },
+      "copies": [
+        {
+          "page": "neopf3002",
+          "list_number": "002/009"
+        }
+      ]
+    },
+    {
+      "id": "neo3-050",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "デリバード",
+        "en": "Delibird"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          225
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "プレゼント",
+              "en": "Present"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "コインを3枚投げる。すべて「おもて」なら、相手に60ダメージ。「おもて」が2枚なら、相手にのっているダメージカウンターを、3個とりのぞく。「おもて」が1枚なら、相手に40ダメージ。すべて「うら」なら、相手にのっているダメージカウンターを、すべてとりのぞく。",
+              "en": "Flip 3 coins. If exactly 1 is heads, this attack does 40 damage. If exactly 2 are heads, remove 3 damage counters from the Defending Pokémon. If the Defending Pokémon has fewer damage counters than that, remove all of them. If all 3 are heads, this attack does 60 damage. If all 3 are tails, remove all damage counters from the Defending Pokémon."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-050",
+        "pokemontcg": [
+          "neo3-5"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%87%E3%83%AA%E3%83%90%E3%83%BC%E3%83%89_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 34,
+        "rarity": "★(R)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%87%E3%83%AA%E3%83%90%E3%83%BC%E3%83%89_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
     }
   ]
 }

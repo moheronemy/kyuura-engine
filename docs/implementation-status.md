@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.104）
+# 実装状況（v0.1〜v0.105）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534`（v0.97 から。v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3819,6 +3819,25 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 338・neo 154・拡張パック以外 184） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistryTest` |
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.105: 回復・山札からの進化・コインの分岐の 5 枚
+
+[recovery-evolution-coin-branches-v0.105.md](recovery-evolution-coin-branches-v0.105.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 5 枚・ワザ 8 の登録（写しの組 pool_v0_105。印刷の文面のまま正規化しない。既存の型 3（ころがる・ミラクルりんぷんは説明の並び・かたくなるはしきい値と結び付いた書き方を明示して追加）・新しい型 4） | 実装済み・テスト済み | kyuura 73a1690 の写し | test_recovery_evolution_coin_branches_v0_105.py `RegistrationTest` |
+| かたくなる（8 段階で 20 以下は 0、30 以上はそのまま。ダメージ以外の効果は受ける） | 実装済み・テスト済み | GR-2000-P321-DAMAGE-ORDER・v0.45 の `ZERO_IF_BELOW`・写しの値は 10 の倍数 | 同 `HardenTest`・`RegistrationTest.test_damage_values_are_counter_units` |
+| 回復のあとの山札からの進化（`EvolveAttackerFromDeck` の `gate`・`required`・`shuffle_if_looked`。1 枚のコインで回復と進化。選べるカードがあれば必ず 1 枚・山札を見た場合だけ 1 回切る・選べるもののない決定（A3）・通常の進化の制限・回復のあとの場で確かめる） | 実装済み・テスト済み | 印刷の文面・GR-2000-P309-EVOLUTION-BY-NAME・GR-2000-P310-EVOLUTION・GR-2000-P312-DECK-HAND-DISCARD・v0.82・v0.84 | 同 `EvolveFromDeckTest` |
+| 見えない山札の中身（宣言の受け付け・相手の観測・決定の有無が、選べるカードの有無で変わらない。DV2・GV1・［れんさしんか］の PW4 は山札を見る前に公開の情報で止める） | 実装済み・テスト済み | v0.84 の A3・`HIDDEN_COUNT_KINDS` | 同 `EvolveFromDeckTest.test_hidden_deck_contents_do_not_leak`・`test_public_questions_do_not_depend_on_the_deck` |
+| ハイパーリバース・サイコリーフ（相手のエネルギーの個数 `DefenderEnergyUnitsTimes`・`Coin(per_opponent_energy)`。与えたダメージ（最終ダメージ）ぶんの回復 `Drain(full, reach)`。0 個・与えなかったら回復なし。ダメージを受けない相手へのコインは v0.4b の問いのまま） | 実装済み・テスト済み | GR-2000-P319-HP-AND-DAMAGE・GR-2000-P320-RECOVERY・v0.83 の個数 | 同 `DrainTest` |
+| プレゼント（3 枚 1 組のコインの「おもて」の数で 1 つの分岐だけ。相手の対戦ポケモンへのダメージか、相手の対戦ポケモンからとりのぞく `HEAL_OPPONENT_ACTIVE`。ダメージだけを防ぐ状態は回復を止めない・バリアーは HC3・「とうめい」は 1 回・ESP は 3 枚を一度に） | 実装済み・テスト済み | GR-2000-P321-PREVENTED-ELEMENTS・v0.34 の `void_coin_question` | 同 `PresentTest` |
+| 発生元（進化したバタフリーのワザはミュウに無効、たねのセレビィ・デリバードは受ける）・コピー（使ったポケモンに名前の条件で重ねられない）・へんしん（進化を禁じる） | 実装済み・テスト済み | v0.103・p.309・v0.49 | 同 `DrainTest`・`PresentTest`・`EvolveFromDeckTest` |
+| 決定の保存と再開・不正な答えの拒否・先読みの 3 つの方法 | 実装済み・テスト済み | 8 章 | 同 `DecisionTest`・`EvolveFromDeckTest.test_the_required_choice_rejects_a_decline` |
+| DV2・GV1・PW4・H1・HC3・v0.4b・GK1・T19b・ES3・G37（既存の未解決。新しい能力で解決しない。プレゼントの G37 と、山札の中身によらない DV2・GV1・PW4 は止めすぎ） | 裁定が未解決（止める） | — | 同 `EvolveFromDeckTest`・`PresentTest` |
+| ログの監査（コイン・分岐・ダメージと回復の数・山札から重ねた進化カード・切る回数をログから、山札を見た場合だけ切ることをやり直しの山札の枚数から照らす）・既存の監査の欠け（やさしいキマワリのひざしをかえす）の直し | 実装済み・テスト済み・対戦で確かめた | 9 章 | tests/log_audit.py の `v105_problems`・tools/existing_effect_games.py の `v105_replay_problems`・同 `AuditTest`・`--batch v0.105` |
+| 未対応の数（全対象 169・neo 78・拡張パック以外 91） | 確かめた | kyuura data/engine_targets.json（73a1690）から今の登録を差し引いた数 | test_catalog_contract.py |
+| 5 枚の外部照合（pcg-search.com・カードの画像）・英語の欄との違い（からやぶりしんか・ひざしをあびるの切る条件） | 原典未確認 | していない（日本語を採用。kyuura への報告事項） | — |
 
 ## v0.104: 回復のワザを持つポケモン 12 枚と、回復の量・対象・とりのぞくかの選択
 

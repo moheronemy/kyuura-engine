@@ -537,7 +537,11 @@ class ExplosionTest(unittest.TestCase):
             return [] if builder is None else [e for e in builder(effect) if isinstance(e, programs.Damage) and e.target == programs.OPP]
 
         twice = [key for key in E.DEFAULT_EFFECTS.attack_keys() if len(opponent_damage_elements(key)) >= 2]
-        self.assertEqual([str(key) for key in twice], ["ES2-017#1", f"{DARK_WEEZING}#0"])
+        # v0.105: デリバードの「プレゼント」は 60 と 40 の 2 つのダメージの要素を持つが、3 枚のコインの「おもて」の数でどちらか 1 つだけを処理する（同じワザで 2 つを受けることはない。
+        # docs/recovery-evolution-coin-branches-v0.105.md 6 章）
+        self.assertEqual([str(key) for key in twice], ["ES2-017#1", f"{DARK_WEEZING}#0", "neo3-050#0"])
+        present = opponent_damage_elements(next(key for key in twice if str(key) == "neo3-050#0"))
+        self.assertEqual([element.gate for element in present], [("coin", 3), ("coin", 1)])
 
     def test_simultaneous_knock_outs_and_prizes(self):
         """ダメージをすべてのせてから、きぜつの処理（p.309）。相手の対戦ポケモンと控え、自分の控えがそろってきぜつし、お互いにサイドを取る（番のプレイヤーから）。"""

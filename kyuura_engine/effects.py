@@ -5412,6 +5412,7 @@ HEAL_OWN_ALL = "own_all"  # ワザを使ったポケモンと自分の控えポ�
 HEAL_BOTH_ALL = "both_all"  # お互いの場のポケモン全員（「お互いの場にいるポケモン全員」）
 HEAL_BOTH_BENCH = "both_bench"  # v0.83: おたがいの控えポケモン全員（やさしいシャワーズの「ヒプノシャワー」）
 HEAL_BOTH_ACTIVE = "both_active"  # v0.104: ワザを使ったポケモンと相手の対戦ポケモン（ラプラス（SI-018）の「やさしいうた」の「自分と相手」。控えは含めない）
+HEAL_OPPONENT_ACTIVE = "opponent_active"  # v0.105: 相手の対戦ポケモンだけ（デリバード（neo3-050）の「プレゼント」の「相手にのっているダメージカウンター」）
 # エリカのクサイハナの「ミラクルかふん」の選べる特殊状態（説明の「ねむり・マヒ・こんらん・どく」の並び。決定 ``select_special_condition`` の番号）
 CHOSEN_CONDITIONS = (SLEEP, PARALYSIS, CONFUSION, POISON)
 _CONDITION_JA = {POISON: "どく", SLEEP: "ねむり", PARALYSIS: "マヒ", CONFUSION: "こんらん"}
@@ -10789,6 +10790,29 @@ def self_deck_evolution_cards(state: GameState, player: int, pokemon: PokemonInP
     return found
 
 
+def self_deck_evolution_open_question(state: GameState, player: int, pokemon: PokemonInPlay, evolves_from: str) -> tuple[str, str] | None:
+    """v0.105（docs/recovery-evolution-coin-branches-v0.105.md 4 章）: 山札から「``evolves_from``」から進化するカードを 1 枚選び出し、場のポケモン ``pokemon`` に必ず重ねる効果
+    （からやぶりしんか・ひざしをあびる。``programs.EvolveAttackerFromDeck`` の ``required``）で、山札を見る前に公開の情報だけで決まる問い（問いの名前, 詳しい理由）。なければ None。
+
+    重ねられるかは通常の進化（``evolution.evolution_block``）と同じ順番で確かめ、カードごとの確かめ（段階）だけを除く。進化を止める特殊能力・進化を禁じるカードの説明・おたがいの
+    最初の番・名前（「○○○○から進化」とポケモンのいちばん上のカードの名前）・その番に場に出した／進化したことで重ねられないなら、問いはない（選べるカードがない）。今の番に退化した
+    （DV2）・サカキの許可だけで重ねられる（GV1）なら、その問い。重ねられるなら、ほかのポケモンの［れんさしんか］の機会が来るか（PW4）。どれも、山札にそのカードがあるかによらず
+    止める（宣言を受け付けるか・止める理由から山札の中身がわからないように。山札のカードと場のポケモンの組で止める任意の効果（たきのぼりしんか・つきのちから）は変えない）。"""
+    if evolution_prevented(state) is not None or state.effects.evolution_forbidden(state, pokemon) is not None or state.turn_number <= 2:
+        return None
+    if state.card_def(pokemon.card).name_ja != evolves_from:
+        return None
+    if devolved_this_turn(state, pokemon):
+        return "evolve_after_devolution", f"場のポケモン {pokemon.pokemon_id}（今の番に退化した。山札を見る前）"
+    if turn_restriction(state, pokemon) is not None:
+        return None
+    if pokemon.current_form_turn >= state.turn_number:
+        return "evolution_permission_from_deck", f"場のポケモン {pokemon.pokemon_id}（トレーナー「サカキ」の許可。山札を見る前）"
+    if chain_evolution_targets(state, player, (pokemon.pokemon_id,)):
+        return "entry_power_during_attack", f"場のポケモン {pokemon.pokemon_id}（重ねるとほかのポケモンの［れんさしんか］の機会が来る。山札を見る前）"
+    return None
+
+
 COIN_CHOOSE_OPPONENT_POKEMON_DAMAGE_TEXT = "コインを投げて「おもて」なら、相手の場にいるポケモンから1匹を選び、(「弱点・抵抗力」に関係なく){damage}ダメージ。"
 # v0.45: カツラのリザードン（PMCG6-032）の「かえんひこう」の書き方（「相手の場のポケモンを1匹選び、「弱点・抵抗力」に関係なく、」。選ぶのは相手の場のポケモン 1 匹で、
 # 弱点・抵抗力を計算しないことは同じ。ダメージの目安の数字はない）
@@ -11535,9 +11559,14 @@ def zero_damage_below_texts(threshold: int) -> tuple[str, ...]:
     - 化石の秘密のゴローン（PMCG3-037。v0.64）「次の相手の番にこのカードが受ける30以下のダメージは0になる。(ダメージ以外の効果はそのまま)。40以上のダメージはそのまま受ける。」
       （「30以下」と「40以上」はダメージカウンターの単位（10）で隣り合い、あいだのダメージはない。「(ダメージ以外の効果はそのまま)」は、計算の結果が 0 でもダメージ以外の
       効果は受けるという ``ZERO_IF_BELOW`` の扱い（v0.45）と同じ）
+    - v0.105: トランセル（neo2-006）「次の相手の番、このカードがダメージを受けるとき、そのダメージが20以下なら、このカードはダメージを受けない。(ダメージ以外の効果は受ける。)」
+      （しきい値 30。「20以下」は ``threshold`` − 10 以下で、8 段階の計算のダメージはどれもダメージカウンターの単位（10）の倍数なので「30 より小さい」と同じ（印刷のダメージ・
+      弱点・抵抗力・変更効果の数がどれも 10 の倍数で、半分にする計算も単位で切り上げ・切りすてる。docs/recovery-evolution-coin-branches-v0.105.md 3 章）。「ダメージを受けない」は
+      その段階のダメージを 0 にすること（計算の前の一律の防護（``PreventDamage``）ではない）で、「(ダメージ以外の効果は受ける。)」は ``ZERO_IF_BELOW`` の扱いと同じ）
     """
     return (f"次の相手の番に受けるダメージが0になる。ただしダメージが{threshold}以上の場合は、そのままダメージをうける。",
-            f"次の相手の番にこのカードが受ける{threshold - 10}以下のダメージは0になる。(ダメージ以外の効果はそのまま)。{threshold}以上のダメージはそのまま受ける。")
+            f"次の相手の番にこのカードが受ける{threshold - 10}以下のダメージは0になる。(ダメージ以外の効果はそのまま)。{threshold}以上のダメージはそのまま受ける。",
+            f"次の相手の番、このカードがダメージを受けるとき、そのダメージが{threshold - 10}以下なら、このカードはダメージを受けない。(ダメージ以外の効果は受ける。)")
 
 
 # ---------------------------------------------------------------- v0.72（docs/status-coins-effect-reuse-v0.72.md）: 拡張パック以外の商品のポケモン 43 枚のうち、既存の型で表せない
@@ -39707,3 +39736,175 @@ SAME_DATA_CARDS_V0_104: Mapping[str, str] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_104_ATTACKS), SAME_DATA_CARDS_V0_104)
+
+
+
+# ---------------------------------------------------------------- v0.105（docs/recovery-evolution-coin-branches-v0.105.md）
+# 回復・山札からの進化・コインの分岐のポケモンの 5 枚（ワザ 8）。処理に使う文面は kyuura の印刷の文面。ころがる（説明文なし。``DAMAGE_ONLY``）・ミラクルりんぷん
+# （``DamageThenChosenStatusOnHeads``）・かたくなる（``ZeroDamageBelowNextTurn``。書き方を ``zero_damage_below_texts`` に明示して加えた）は既存の型、残る 5 つは新しい 4 つの型で、
+# v0.104 の回復（``programs.HealCounters``。相手の対戦ポケモンだけの対象 ``HEAL_OPPONENT_ACTIVE``）・山札から自分を進化させる ``programs.EvolveAttackerFromDeck``（コインの面 ``gate``・
+# 必ず選ぶ ``required``・山札を見た場合だけ切る ``shuffle_if_looked``）・与えたぶんの回復 ``programs.Drain``（受ける前の判定 ``reach``）・相手のエネルギーの個数の値の小さな拡張で表す
+
+# からやぶりしんか（トランセル）・ひざしをあびる（ヒマナッツ）の書き方（``{name}`` は「○○○○から進化」の名前で、ワザを持つカードの名前と同じ）
+EVOLVE_SELF_FROM_DECK_TEXTS = {
+    "hatch": ("コインを投げて「おもて」なら、自分にのっているダメージカウンターをすべてとりのぞく。その後、自分の山札から「{name}」を進化させる「進化カード」を1枚選び出し、"
+              "この{name}の上にのせ、進化させる。山札を見た場合は、その山札をよく切る。"),
+    "sunbathe": ("コインを投げて「おもて」なら、自分にのっているダメージカウンターを、すべてとりのぞく。その後、自分の山札から、「{name}」から進化する「進化カード」を1枚選び出し、"
+                 "この{name}の上にのせ、進化させる。山札を見た場合は、その山札をよく切る。"),
+}
+HYPER_REVERSE_TEXT = "相手についている「エネルギー」の数×{per}のダメージ。相手にダメージを与えたら、相手に与えたぶんのダメージカウンターを、自分からとりのぞく。"
+PSYCHIC_LEAF_TEXT = "相手についている「エネルギー」の数ぶんコインを投げ、「おもて」の数×{per}のダメージを追加する。その後、与えたダメージぶんのダメージカウンターを、自分からとりのぞく。"
+PRESENT_TEXT = ("コインを3枚投げる。すべて「おもて」なら、相手に{all_heads}ダメージ。「おもて」が2枚なら、相手にのっているダメージカウンターを、{two_heads}個とりのぞく。"
+                "「おもて」が1枚なら、相手に{one_heads}ダメージ。すべて「うら」なら、相手にのっているダメージカウンターを、すべてとりのぞく。")
+HARDEN_TEXT = zero_damage_below_texts(30)[2]  # かたくなる（トランセル（neo2-006））の「20以下なら」
+MAGIC_DUST_CONDITIONS = (POISON, SLEEP, PARALYSIS, CONFUSION)  # ミラクルりんぷんの「どく・ねむり・マヒ・こんらん」（説明の並び。選ぶ番号は CHOSEN_CONDITIONS のまま）
+
+
+@dataclass(frozen=True)
+class CoinHealAllThenEvolveSelfFromDeck(AttackEffect):
+    """コインを投げて「おもて」なら、自分にのっているダメージカウンターをすべてとりのぞく。その後、自分の山札から「``evolves_from``」から進化する「進化カード」を 1 枚選び出し、このカード
+    （ワザを使ったポケモン）の上にのせ、進化させる。山札を見た場合は、その山札をよく切る（v0.105。トランセル（neo2-006）の「からやぶりしんか」・ヒマナッツ（neo4-003）の「ひざしをあびる」。
+    ダメージの目安なし）。``wording`` は説明の書き方（``EVOLVE_SELF_FROM_DECK_TEXTS`` のキー）。
+
+    - 要素は ``Coin`` → ``HealCounters(every=True, gate=おもて)`` → ``EvolveAttackerFromDeck(gate=おもて, required=True, shuffle_if_looked=True)``。1 枚のコインで回復と進化を決める
+      （要素ごとに投げ直さない。決定をまたいでも同じ結果）。「うら」なら、回復も、山札を見ることも、切ることもしない
+    - 「その後」は回復できたかを条件にしない（0 個でも進化に進む）。選べるカード・進化したあとの HP（H1）・進化への反応は、回復のあとの場で確かめる
+    - 選べる進化カードがあれば 1 枚を選ぶ（「てよい」がないので選ばない答えはない）。重ねられるかは通常の進化と同じ（p.310。効果による進化でも制限を免除しない）
+    - 山札を見るのは山札にカードがあるとき（v0.82 のあたためると同じ読み方。選べるカードがなくても、さがすので見る）。見たら 1 回だけ切る。山札が 0 枚なら見ないので切らない。
+      山札にカードがあれば、選べるカードがなくても選べるもののない決定を出す（v0.84 の A3。見えない山札の中身で決定の有無を変えない）
+    - 公開の情報だけで決まる問い（DV2・GV1・［れんさしんか］の PW4）は、山札を見る前に、山札の中身によらず止める（``self_deck_evolution_open_question``）
+    """
+
+    evolves_from: str
+    wording: str
+    implementation_id = "coin_heal_all_then_evolve_self_from_deck"
+
+    def __post_init__(self) -> None:
+        if self.wording not in EVOLVE_SELF_FROM_DECK_TEXTS:
+            raise ValueError(f"説明の書き方 {self.wording!r} は {tuple(EVOLVE_SELF_FROM_DECK_TEXTS)} のどれか")
+        if type(self.evolves_from) is not str or not self.evolves_from:
+            raise ValueError(f"「○○○○から進化」の名前 {self.evolves_from!r} が正しくない")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで自分のダメージカウンターをすべてとりのぞき、山札から自分を進化させるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (EVOLVE_SELF_FROM_DECK_TEXTS[self.wording].format(name=self.evolves_from),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        label = _label(state, use)
+        if decision.kind == EVOLUTION_HEAL:
+            # 進化したあとのトキワシティジムの機会（v0.57。決めるのは持ち主）
+            return _decision_form(decision, label, kind=EVOLUTION_HEAL, player=use.player, choices=(0, 1), options=(use.pokemon_id,))
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        options = self_deck_evolution_cards(state, use.player, attacker, evolves_from=self.evolves_from)
+        # 選べるカードがなければ、選べるもののない決定（0〜0 枚。v0.84 の A3。山札の中身で決定の有無を変えない）
+        return _decision_form(decision, label, kind=SEARCH_DECK, player=use.player, choices=(1, 1) if options else (0, 0), options=options)
+
+
+@dataclass(frozen=True)
+class DefenderEnergyUnitsDamageAndFullDrain(AttackEffect):
+    """相手についている「エネルギー」の数 × ``per`` のダメージ。相手にダメージを与えたら、相手に与えたぶんのダメージカウンターを、自分からとりのぞく（v0.105。バタフリー（neo2-009）の
+    「ハイパーリバース」。ダメージの目安なし）。
+
+    - 要素は ``Damage(OPP, DefenderEnergyUnitsTimes(per))`` → ``Drain(full=True, reach=True)``。数えるのは相手の対戦ポケモンについているエネルギーの個数（無色2個エネルギーは 2。カードの
+      枚数ではない。v0.83 の ``all_energy_units``。［おいしげる］で個数が決まらないカードがあれば止める）。0 個なら基本となるダメージは 0（ダメージを与えない。ワザの失敗ではない）
+    - 弱点・抵抗力・プラスパワー・ディフェンダーなどは、そのあとの段階で計算する。とりのぞく数は与えたダメージ（最終ダメージ）÷ 10 個（きゅうけつと同じ）で、のっている数まで
+    - とりのぞく前に「とうめい」などを評価する（``reaches`` の ``heal``。v0.104 の回復と同じ。メガドレイン・きゅうけつの ``Drain`` は評価しないまま変えない）
+    """
+
+    per: int
+    implementation_id = "defender_energy_units_damage_and_full_drain"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "エネルギー 1 個あたりのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手のエネルギーの数のダメージを与え、与えたぶんのダメージカウンターをとりのぞくワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (HYPER_REVERSE_TEXT.format(per=self.per),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        defender = state.players[1 - use.player].active
+        return DamageProfile(opponent=((0 if defender is None else energy_unit_count(state, defender.energy, defender)) * self.per,))
+
+
+@dataclass(frozen=True)
+class CoinsPerDefenderEnergyBonusAndFullDrain(AttackEffect):
+    """相手についている「エネルギー」の数ぶんコインを投げ、「おもて」の数 × ``per`` のダメージを追加する。その後、与えたダメージぶんのダメージカウンターを、自分からとりのぞく（v0.105。
+    セレビィ（PF3-002）の「サイコリーフ」。ダメージの目安「10+」）。
+
+    - 要素は ``Coin(per_opponent_energy=True)`` → ``Damage(OPP, PrintedPlusHeadsOfCoin)`` → ``Drain(full=True, reach=True)``。コインの枚数はエネルギーの個数（v0.83 のミラクルリーフと
+      同じ数え方。0 個なら投げず、基本となるダメージは目安の数字）。「おもて」の数だけを使うので、先読みは「おもて」の数でまとめる（v0.35。実際には 1 枚ずつ投げる）
+    - コインはダメージの量だけを決める（回復の量は与えたダメージで決まり、コインが決める要素ではない）。相手の対戦ポケモンがダメージを受けない状態なら、投げるかが決まらない（v0.4b の問い）
+    - 「その後、与えたダメージぶん」は最終ダメージ ÷ 10 個（のっている数まで。与えなかったら 0）。とりのぞく前に「とうめい」などを評価する（``reaches`` の ``heal``）
+    """
+
+    per: int
+    implementation_id = "coins_per_defender_energy_bonus_and_full_drain"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "「おもて」1 枚あたりの追加のダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手のエネルギーの数ぶんのコインで追加のダメージを与え、与えたぶんのダメージカウンターをとりのぞくワザ"
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(attack, what, (PSYCHIC_LEAF_TEXT.format(per=self.per),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        defender = state.players[1 - use.player].active
+        units = 0 if defender is None else energy_unit_count(state, defender.energy, defender)
+        printed = attack_of(state, use.key).damage
+        return DamageProfile(opponent=tuple(printed + self.per * heads for heads in range(units + 1)))
+
+
+@dataclass(frozen=True)
+class ThreeCoinDamageOrOpponentHeal(AttackEffect):
+    """コインを 3 枚投げ、「おもて」の数で次の 1 つだけ: 3 枚なら相手に ``all_heads`` ダメージ、2 枚なら相手にのっているダメージカウンターを ``two_heads`` 個とりのぞく、1 枚なら相手に
+    ``one_heads`` ダメージ、0 枚なら相手にのっているダメージカウンターをすべてとりのぞく（v0.105。デリバード（neo3-050）の「プレゼント」。ダメージの目安なし）。
+
+    - 要素は ``Coin(count=3)`` → ``Damage(gate=3)`` → ``Damage(gate=1)`` → ``HealCounters(scope=HEAL_OPPONENT_ACTIVE, gate=2)`` → ``HealCounters(every=True, gate=0)``。3 枚を 1 組として
+      投げ、「おもて」の数だけを使う（先読みは数でまとめる）。満たさない要素は処理しない（回復の分岐にダメージの要素はなく、0 ダメージを与えたことにしない）。どれか 1 つだけを処理するので、
+      ダメージの要素を先に並べる（説明の並びと違うが結果は変わらない。ダメージの要素のあいだに回復の要素を置くと、処理しない要素で v0.38 の GK1 の確かめに当たる）
+    - 回復は相手の対戦ポケモンへのワザの効果: 「ワザをうけない」状態なら無効、「とうめい」なら受ける前に評価する。「ダメージを受けない」状態はダメージだけを止め、回復は止めない。
+      コインの前の確かめ（v0.34 の ``void_coin_question``）はダメージと回復をまとめて見て、どれかが有効なら投げる（相手にのっていなくても、回復の要素は無効ではない）
+    """
+
+    all_heads: int
+    two_heads: int
+    one_heads: int
+    implementation_id = "three_coin_damage_or_opponent_heal"
+    opponent_effect_elements = (HEAL_ELEMENT,)
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.all_heads, "「おもて」が 3 枚のときのダメージ")
+        _positive_tens(self.one_heads, "「おもて」が 1 枚のときのダメージ")
+        _positive_count(self.two_heads, "「おもて」が 2 枚のときにとりのぞく数")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "3 枚のコインの「おもて」の数でダメージか相手の回復が決まるワザ"
+        text = PRESENT_TEXT.format(all_heads=self.all_heads, two_heads=self.two_heads, one_heads=self.one_heads)
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (text,))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        # 「おもて」3 枚・1 枚はダメージだけ、2 枚・0 枚は相手へのダメージの要素がない（None）。同時には起こらない
+        return DamageProfile(opponent=(self.all_heads, self.one_heads), outcomes=((self.all_heads, 0), (self.one_heads, 0), (None, 0)))
+
+
+# v0.105 のワザの登録（8。説明文のないころがるは文面・出典を持たない）
+V0_105_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # トランセル（neo2-006）
+    AttackKey("neo2-006", 0): _printed(ZeroDamageBelowNextTurn(30), "かたくなる", HARDEN_TEXT),
+    AttackKey("neo2-006", 1): _printed(CoinHealAllThenEvolveSelfFromDeck("トランセル", "hatch"), "からやぶりしんか",
+                                       EVOLVE_SELF_FROM_DECK_TEXTS["hatch"].format(name="トランセル")),
+    # ヒマナッツ（neo4-003）
+    AttackKey("neo4-003", 0): AttackEntry(DAMAGE_ONLY, "ころがる"),
+    AttackKey("neo4-003", 1): _printed(CoinHealAllThenEvolveSelfFromDeck("ヒマナッツ", "sunbathe"), "ひざしをあびる",
+                                       EVOLVE_SELF_FROM_DECK_TEXTS["sunbathe"].format(name="ヒマナッツ")),
+    # バタフリー（neo2-009）
+    AttackKey("neo2-009", 0): _printed(DamageThenChosenStatusOnHeads(conditions=MAGIC_DUST_CONDITIONS), "ミラクルりんぷん",
+                                       "コインを投げて「おもて」なら、「どく・ねむり・マヒ・こんらん」の中から1つを選び、相手をその状態にする。"),
+    AttackKey("neo2-009", 1): _printed(DefenderEnergyUnitsDamageAndFullDrain(10), "ハイパーリバース", HYPER_REVERSE_TEXT.format(per=10)),
+    # セレビィ（PF3-002）
+    AttackKey("PF3-002", 0): _printed(CoinsPerDefenderEnergyBonusAndFullDrain(10), "サイコリーフ", PSYCHIC_LEAF_TEXT.format(per=10)),
+    # デリバード（neo3-050）
+    AttackKey("neo3-050", 0): _printed(ThreeCoinDamageOrOpponentHeal(60, 3, 40), "プレゼント", PRESENT_TEXT.format(all_heads=60, two_heads=3, one_heads=40)),
+})
+
+DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_105_ATTACKS)

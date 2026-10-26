@@ -603,6 +603,13 @@ BULBASAUR_ES1, BULBASAUR_QSG, BULBASAUR_IP1 = "ES1-001", "QSG-001", "IP1-018"
 DEWGONG_ES2, DEWGONG_QSG, JIGGLYPUFF_COROCORO, JIGGLYPUFF_BOOK, LAPRAS_SI = "ES2-007", "QSG-018", "PR1-002", "PR1-004", "SI-018"
 NEO_ODDISH, NEO_GLOOM, PRN_BELLOSSOM, SEEL_ES2, SWINUB_NEO3 = "neo1-001", "neo1-008", "PRN-043", "ES2-006", "neo3-038"
 BASE_CATERPIE, BASE_DROWZEE, BASE_BELLSPROUT = "PMCG1-002", "PMCG1-045", "PMCG2-005"
+# v0.105（docs/recovery-evolution-coin-branches-v0.105.md）: 回復・山札からの進化・コインの分岐のポケモンの 5 枚（写しの組 pool_v0_105）。ポケモンは TARGETS に加える。ワザは既存の手順のまま
+# 選ぶ（使った数の少ないワザから）。決定（山札から重ねる進化カード）は ``_v105_decision``。ログから数えるのは ``v105_uses``。山札を見た場合だけ切ることは、やり直しの状態の山札の枚数で
+# 照らす（``v105_replay_problems``。監査の ``v105_shuffle``）
+V0_105 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_105"])
+V0_105_POKEMON = V0_105
+METAPOD_NEO2, SUNKERN_NEO4, BUTTERFREE_NEO2, CELEBI_PF3, DELIBIRD_NEO3 = "neo2-006", "neo4-003", "neo2-009", "PF3-002", "neo3-050"
+CATERPIE_NEO2, BUTTERFREE_JUNGLE, SUNFLORA_NEO1, LIGHT_SUNFLORA = "neo2-001", "PMCG2-007", "neo1-013", "neo4-004"
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -641,7 +648,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_101_POKEMON  # v0.101: ソーナンス・アンノーンK
            + V0_102_POKEMON  # v0.102: トランセル・バリヤード
            + V0_103_POKEMON  # v0.103: ミュウ（ニュートラルシールド）
-           + V0_104_POKEMON)  # v0.104: 回復のワザを持つポケモン 12 枚
+           + V0_104_POKEMON  # v0.104: 回復のワザを持つポケモン 12 枚
+           + V0_105_POKEMON)  # v0.105: 回復・山札からの進化・コインの分岐のポケモン 5 枚
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -1372,6 +1380,16 @@ DECKS = {
     # イノムー（neo3-041。ひとやすみ・もうとっしん）3 枚、ヒメグマ（neo2-048。ひっかく・おひるね）4 枚
     "W104": ((SEEL_ES2, 4), (DEWGONG_ES2, 2), (DEWGONG_QSG, 2), (LAPRAS_SI, 3), (SWINUB_NEO3, 4), (PILOSWINE, 3), (TEDDIURSA, 4), (driver.POTION, 2), (SWITCH, 2),
              (driver.BILL, 2), (WATER, 16), (FIGHTING, 16)),
+    # v0.105: 草。キャタピー（neo2-001）→ トランセル（neo2-006。かたくなる・からやぶりしんか）4 枚 → バタフリー（neo2-009。ミラクルりんぷん・ハイパーリバース）2 枚と、名前の同じ別のカードの
+    # バタフリー（PMCG2-007）1 枚（山札から選べる進化カードが 2 種類）、ヒマナッツ（neo4-003。ころがる・ひざしをあびる）4 枚 → キマワリ（neo1-013）1 枚・やさしいキマワリ（neo4-004）1 枚、
+    # セレビィ（PF3-002。サイコリーフ）3 枚。進化カードを少なくして、トランセル・ヒマナッツが場に残る（手札から進化させる元の手順のまま、山札から進化させるワザを使う場面と、山札に
+    # 選べるカードがない場面が起こる）
+    "B105": ((CATERPIE_NEO2, 4), (METAPOD_NEO2, 4), (BUTTERFREE_NEO2, 2), (BUTTERFREE_JUNGLE, 1), (SUNKERN_NEO4, 4), (SUNFLORA_NEO1, 1), (LIGHT_SUNFLORA, 1),
+             (CELEBI_PF3, 3), (driver.POTION, 2), (SWITCH, 2), (driver.BILL, 2), (GRASS, 34)),
+    # v0.105: 無色・水。デリバード（neo3-050。プレゼント 無無）4 枚と、無色2個エネルギー 4 枚（相手のハイパーリバース・サイコリーフで数えるエネルギーの個数がカードの枚数と違う場面）。
+    # ほかはパウワウ（ES2-006）→ ジュゴン（ES2-007）、ミルタンク（neo1-069）、ラプラス（SI-018）（ダメージカウンターののったポケモンにプレゼントの回復が当たる場面）
+    "D105": ((DELIBIRD_NEO3, 4), (SEEL_ES2, 3), (DEWGONG_ES2, 2), (MILTANK, 3), (LAPRAS_SI, 2), (DOUBLE_COLORLESS, 4), (driver.POTION, 2), (SWITCH, 2),
+             (driver.BILL, 2), (WATER, 36)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -1575,6 +1593,11 @@ PAIRINGS_V0_103 = (("M103", "F30"), ("M103", "W45"), ("M103", "C101"), ("M103", 
 # W104 対 C101（ピジョンのオウムがえしで、受けたやさしいうた・オーロラウェーブを出す）・W104 対 M60（化石の秘密のゴース・ゴーストの「とうめい」）。組・席・seed は先に決めた
 # （seed 0〜3。局を選び直さない）
 PAIRINGS_V0_104 = (("G104", "W104"), ("W104", "M103"), ("G104", "M103"), ("W104", "P31"), ("G104", "P31"), ("W104", "C101"), ("W104", "M60"))
+# v0.105: B105 対 D105（新しいカードどうし。無色2個エネルギーのついたポケモンをハイパーリバース・サイコリーフで数える・プレゼントの回復）・B105 対 M103・D105 対 M103（ミュウの
+# ［ニュートラルシールド］と、進化したトランセル・バタフリーのワザ、たねのヒマナッツ・セレビィ・デリバードのワザ）・B105 対 P31・D105 対 P31（ピッピ・ピクシーのゆびをふるで、からやぶりしんか・
+# ひざしをあびる・ハイパーリバース・サイコリーフ・プレゼントを相手のワザとして使う）・D105 対 C101（ピジョンのオウムがえしで受けたプレゼントを出す・ソーナンスのカウンター）・B105 対 M60・
+# D105 対 M60（化石の秘密のゴース・ゴーストの「とうめい」）。組・席・seed は先に決めた（seed 0〜3。局を選び直さない）
+PAIRINGS_V0_105 = (("B105", "D105"), ("B105", "M103"), ("D105", "M103"), ("B105", "P31"), ("D105", "P31"), ("D105", "C101"), ("B105", "M60"), ("D105", "M60"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -1592,7 +1615,8 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.87": PAIRINGS_V0_87, "v0.88": PAIRINGS_V0_88, "v0.89": PAIRINGS_V0_89, "v0.90": PAIRINGS_V0_90, "v0.91": PAIRINGS_V0_91,
            "v0.92": PAIRINGS_V0_92, "v0.93": PAIRINGS_V0_93, "v0.94": PAIRINGS_V0_94, "v0.95": PAIRINGS_V0_95,
            "v0.96": PAIRINGS_V0_96, "v0.97": PAIRINGS_V0_97, "v0.98": PAIRINGS_V0_98, "v0.99": PAIRINGS_V0_99, "v0.100": PAIRINGS_V0_100,
-           "v0.101": PAIRINGS_V0_101, "v0.102": PAIRINGS_V0_102, "v0.103": PAIRINGS_V0_103, "v0.104": PAIRINGS_V0_104}
+           "v0.101": PAIRINGS_V0_101, "v0.102": PAIRINGS_V0_102, "v0.103": PAIRINGS_V0_103, "v0.104": PAIRINGS_V0_104,
+           "v0.105": PAIRINGS_V0_105}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -6386,6 +6410,164 @@ def v104_uses(state):
     return counts
 
 
+def _v105_decision(state, counts):
+    """v0.105 のワザの決定への答え（元の手順より先に答える）: からやぶりしんか・ひざしをあびる（相手のワザとして使ったものも）の山札から重ねる進化カード（SEARCH_DECK）は、選べるものを
+    順に回して 1 枚（選ぶと止めるものは選ばない）。選べるもののない決定は 0 枚。v0.105 のワザの決定でなければ何もしない。"""
+    d = state.decision
+    if d is None or d.resume != "attack" or d.kind != SEARCH_DECK:
+        return None
+    use = d.context_value("use")
+    copied = d.context_value("copied")
+    source = copied if copied else (None if use is None else (use[2], use[3]))
+    if source is None or source[0] not in V0_105:
+        return None
+    entry = state.effects.attack_entry(source[0], source[1])
+    if entry is None or not isinstance(entry.effect, E.CoinHealAllThenEvolveSelfFromDeck):
+        return None
+    seen = counts["v105_search_seen"]
+    counts["v105_search_seen"] += 1
+    blocked = set(d.context_value("unresolved_choices", ()) or ()) | set(d.context_value("entry_power_choices", ()) or ())
+    rotated = list(d.options[seen % len(d.options):]) + list(d.options[:seen % len(d.options)]) if d.options else []
+    candidates = [(o,) for o in rotated if o not in blocked] if d.max_choices else [()]
+    for choices in candidates:
+        if _v052_accepted(state, ResolveDecision(d.player, d.id, choices)):
+            counts[f"v105_search_{len(choices)}"] += 1
+            return ResolveDecision(d.player, d.id, choices)
+    counts["v105_search_no_accepted_answer"] += 1
+    return None
+
+
+def v105_uses(state):
+    """v0.105: ログから数えた 5 枚のワザの動き（v0.105 のカードのない局では空）。
+
+    - ``attack_<id>#<位置>``（宣言したワザ）・``copied_<id>#<位置>``（ほかのワザが相手のワザとして使った v0.105 のワザ）
+    - ``evolve_coin_<面>``（からやぶりしんか・ひざしをあびるのコイン）・``evolve_heal``・``evolve_heal_counters``（「おもて」でとりのぞいた回数・数）・``evolve_to_<カード id>``（山札から重ねた
+      進化カード）・``evolve_none``（選べるカードがない・山札がない）・``evolve_shuffle``（そのワザで切った）・``evolve_by_copier``（相手のワザとして使ったポケモンが進化した）
+    - ``hyper_reverse_base_<量>``・``psychic_leaf_base_<量>``・``present_damage_base_<量>``（相手への基本となるダメージ）・``psychic_leaf_coins_<枚数>``・``drain_<実装>``・
+      ``drain_counters_<実装>``（与えたぶんの回復）・``drain_none_<実装>``（ダメージを与えなかった・のっていない・受けなかった）
+    - ``present_heads_<数>``・``present_heal``・``present_heal_counters``・``present_heal_none``（「おもて」2 枚・0 枚で、相手にのっていない・受けなかった）
+    - ``harden_zero``・``harden_through``（トランセルのかたくなるの持続する効果を計算したダメージで、0 にした・しきい値以上でそのまま受けた）
+    - ``prevented_<要素>``・``evaded_<要素>``（v0.105 のワザの要素を受けなかった。［ニュートラルシールド］など・「とうめい」）"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_105 for uid in state.cards):
+        return counts
+    window = None
+    for e in state.log:
+        kind = e["kind"]
+        if kind == "damage" and not e.get("retaliation"):
+            labels = [str(step[0]) for step in (e.get("steps") or ())[1:]]
+            if any("トランセル（zero_damage_below）" in label for label in labels):
+                counts["harden_zero" if e.get("amount") == 0 else "harden_through"] += 1
+        if kind in ("attack", "turn_end", "game_end", "halted"):
+            if window is not None:
+                _v105_close(window, counts)
+            window = None
+        if kind == "attack":
+            current = e.get("card_id") or state.cards[e["pokemon"]].card_id
+            key = f"{current}#{e['attack_index']}"
+            if current in V0_105:
+                counts[f"attack_{key}"] += 1
+            window = {"key": key, "impl": _v104_impl(state, key) if current in V0_105 else None, "player": e["player"], "copied": False, "heads": 0, "coins": 0,
+                      "drained": False, "healed": False}
+            continue
+        if window is None:
+            continue
+        if kind == "copy_attack" and e["copied"].split("#")[0] in V0_105:
+            counts[f"copied_{e['copied']}"] += 1
+            window["key"], window["impl"], window["copied"] = e["copied"], _v104_impl(state, e["copied"]), True
+            continue
+        impl = window["impl"]
+        if impl is None:
+            continue
+        if kind == "damage" and impl in V105_DAMAGE_IMPLS and not e.get("retaliation") and e.get("steps") and e["player"] != window["player"]:
+            counts[f"{V105_DAMAGE_IMPLS[impl]}_base_{e['steps'][0][1]}"] += 1  # damage のログは effect を持たない
+            continue
+        if e.get("effect") != window["key"]:
+            continue
+        if kind == "coin_flip" and e.get("source") == "attack":
+            window["coins"] += 1
+            window["heads"] += e["result"] == "heads"
+            if impl == "coin_heal_all_then_evolve_self_from_deck":
+                counts[f"evolve_coin_{e['result']}"] += 1
+        elif kind == "esp_redo":
+            window["coins"], window["heads"] = len(e["redone"]), list(e["redone"]).count("heads")
+        elif kind == "attack_heal":
+            window["healed"] = True
+            if impl == "coin_heal_all_then_evolve_self_from_deck":
+                counts["evolve_heal"] += 1
+                counts["evolve_heal_counters"] += e["counters"]
+            elif impl == "three_coin_damage_or_opponent_heal":
+                counts["present_heal"] += 1
+                counts["present_heal_counters"] += e["counters"]
+        elif kind == "evolve":
+            counts[f"evolve_to_{state.cards[e['to_card']].card_id}"] += 1
+            if window["copied"]:
+                counts["evolve_by_copier"] += 1
+        elif kind == "evolve_from_deck_none":
+            counts["evolve_none"] += 1
+        elif kind == "shuffle":
+            counts["evolve_shuffle"] += 1
+        elif kind == "drain_heal":
+            window["drained"] = True
+            counts[f"drain_{impl}"] += 1
+            counts[f"drain_counters_{impl}"] += e["counters"]
+        elif kind in ("effect_prevented", "damage_prevented"):
+            counts[f"prevented_{e.get('element', 'damage')}"] += 1
+        elif kind == "attack_evaded":
+            counts[f"evaded_{e.get('element')}"] += 1
+    if window is not None:
+        _v105_close(window, counts)
+    return counts
+
+
+V105_DAMAGE_IMPLS = {"defender_energy_units_damage_and_full_drain": "hyper_reverse", "coins_per_defender_energy_bonus_and_full_drain": "psychic_leaf",
+                     "three_coin_damage_or_opponent_heal": "present_damage"}
+
+
+def _v105_close(window, counts):
+    """v0.105: 1 回のワザの終わりに数える（サイコリーフのコインの枚数・与えたぶんの回復がなかった・プレゼントの「おもて」の数と回復がなかった）。"""
+    impl = window["impl"]
+    if impl == "coins_per_defender_energy_bonus_and_full_drain":
+        counts[f"psychic_leaf_coins_{window['coins']}"] += 1
+    if impl in ("defender_energy_units_damage_and_full_drain", "coins_per_defender_energy_bonus_and_full_drain") and not window["drained"]:
+        counts[f"drain_none_{impl}"] += 1
+    if impl == "three_coin_damage_or_opponent_heal" and window["coins"] == 3:
+        counts[f"present_heads_{window['heads']}"] += 1
+        if window["heads"] in (0, 2) and not window["healed"]:
+            counts["present_heal_none"] += 1
+
+
+def v105_replay_problems(state, deck_before: dict[int, int]) -> list[str]:
+    """v0.105: からやぶりしんか・ひざしをあびる（相手のワザとして使ったものも）の山札を切る回数を、やり直しの状態で数えたワザの宣言の直前の山札の枚数（``deck_before``。宣言を処理する
+    前のログの長さ → 枚数）と照らす（エンジンの ``EvolveAttackerFromDeck`` を読まない）: コインが「おもて」で山札にカードがあれば、そのワザで 1 回だけ切る（見たので）。「うら」・山札が 0 枚なら
+    切らない。宣言から山札を見るまでのあいだに山札のカードは動かない（コイン・回復だけ）。宣言を受け付けなかった（ログが増えない・attack のない）操作は数えない。"""
+    problems = []
+    log = state.log
+    starts = {}
+    for position, count in deck_before.items():
+        index = next((j for j in range(position, len(log)) if log[j]["kind"] == "attack"), None)
+        if index is not None and all(log[j]["turn"] == log[index]["turn"] for j in range(position, index + 1)):
+            starts[index] = count
+    for index, e in enumerate(log):
+        if e["kind"] != "attack" or index not in starts:
+            continue
+        key = f"{e.get('card_id') or state.cards[e['pokemon']].card_id}#{e['attack_index']}"
+        end = next((j for j in range(index + 1, len(log)) if log[j]["kind"] in ("attack", "turn_end", "game_end", "halted")), len(log))
+        body = log[index + 1:end]
+        copied = next((x["copied"] for x in body if x["kind"] == "copy_attack" and x.get("effect") == key), None)
+        key = copied or key
+        if _v104_impl(state, key) != "coin_heal_all_then_evolve_self_from_deck":
+            continue
+        flips = [x for x in body if x["kind"] == "coin_flip" and x.get("source") == "attack" and x.get("effect") == key]
+        redo = [x for x in body if x["kind"] == "esp_redo" and x.get("effect") == key]
+        result = next(iter(redo[-1]["redone"])) if redo else (flips[0]["result"] if flips else None)
+        shuffles = sum(1 for x in body if x["kind"] == "shuffle" and x.get("effect") == key and x["player"] == e["player"])
+        expected = 1 if result == "heads" and starts[index] > 0 else 0
+        if result is not None and shuffles != expected:
+            problems.append(f"{e['turn']} 番の {key}（コイン {result}・宣言の前の山札 {starts[index]} 枚）で山札を {shuffles} 回切った（{expected} 回のはず）")
+    return problems
+
+
 V104_HEAL_IMPLS = ("coin_choose_own_pokemon_heal_all", "coins_heal_self_times", "heal_all_self_then_self_sleep", "heal_self_without_damage", "optional_heal_self",
                    "heal_both_actives_then_sleep")
 
@@ -8099,7 +8281,8 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = (_v104_decision(state, counts)  # v0.104: あまいみつの選ぶポケモン・プリンのかいふく（v0.104 のカードのない局では何もしない）
+            early = (_v105_decision(state, counts)  # v0.105: 山札から重ねる進化カード（v0.105 のワザでない決定では何もしない）
+                     or _v104_decision(state, counts)  # v0.104: あまいみつの選ぶポケモン・プリンのかいふく（v0.104 のカードのない局では何もしない）
                      or _v098_decision(state, counts)  # v0.98: v0.98 の特殊能力の決定（v0.98 のカードのない局では何もしない）
                      or _v097_decision(state, counts)  # v0.97: v0.97 の特殊能力の決定（v0.97 のカードのない局では何もしない）
                      or _v096_decision(state, counts)  # v0.96: v0.96 の特殊能力・遺跡の石版の決定（v0.96 のカードのない局では何もしない）
@@ -8426,6 +8609,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v102"] = v102_uses(state)
         result["v103"] = v103_uses(state)
         result["v104"] = v104_uses(state)
+        result["v105"] = v105_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
@@ -8442,11 +8626,15 @@ def audit(result, state, commands):
     current = new_game(*(deck_cards(label) for label in result["decks"]), result["seed"])
     watch = any(state.cards[uid].card_id in V0_47 + V0_47_TRAINERS + V0_48 + V0_54_TRAINERS + V0_55_TRAINERS + V0_56_TRAINERS + V0_63_TRAINERS + V0_95 + V0_96
                 + V0_97 for uid in state.cards)  # v0.48: 観測の今有効な値も（v0.54・v0.55: 見る・見せるトレーナー。v0.95: 手札・山札を見るワザ・特殊能力）
+    deck_before: dict[int, int] = {}  # v0.105: ワザの宣言の直前の、ワザを使ったプレイヤーの山札の枚数（宣言を処理する前のログの長さ → 枚数）
     for command in commands:
+        if isinstance(command, UseAttack):
+            deck_before[len(current.log)] = len(current.players[command.player].deck)
         current = apply_command(current, command)
         if watch:
             failures["observation"] += bool(observation_problems(current))  # v0.47: 受け付けた操作ごとに、プレイヤー・観戦者に渡す観測
     failures["replay_mismatch"] += [dict(e) for e in current.log] != [dict(e) for e in state.log]
+    failures["v105_shuffle"] += bool(v105_replay_problems(current, deck_before))
     failures["invariants"] += bool(check_invariants(state))
     failures["log"] += bool(log_problems(state))
     failures["serialization"] += bool(serialization_problems(state))

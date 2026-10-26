@@ -1448,6 +1448,11 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DamageAndSelfDamageThenLockSelf,
     _effects.OptionalHealSelf,
     _effects.HealBothActivesThenSleep,
+    # v0.105（docs/recovery-evolution-coin-branches-v0.105.md。回復のあとの山札からの進化・相手のエネルギーの個数のダメージと与えたぶんの回復・3 枚のコインの分岐）
+    _effects.CoinHealAllThenEvolveSelfFromDeck,
+    _effects.DefenderEnergyUnitsDamageAndFullDrain,
+    _effects.CoinsPerDefenderEnergyBonusAndFullDrain,
+    _effects.ThreeCoinDamageOrOpponentHeal,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

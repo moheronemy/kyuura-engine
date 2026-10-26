@@ -1977,6 +1977,10 @@ class Drain(Element):
     # v0.72: 「取りのぞいてよい」（ゴルバット（ES1-009）・パラセクト（ES1-011）の「きゅうけつ」）。取りのぞくカウンターがあれば、取りのぞくかをワザを使ったプレイヤーが選ぶ
     # （決定 ``OPTIONAL_DRAIN``。0 個なら取りのぞかない（ログ ``drain_heal_declined``）。与えたぶんの一部だけを取りのぞく答えはない）
     optional: bool = False
+    # v0.105（docs/recovery-evolution-coin-branches-v0.105.md 5 章）: とりのぞく前に「とうめい」などを評価する（``reaches`` の ``heal``。v0.104 の ``HealCounters`` と同じ。とりのぞく数が
+    # 0 なら評価しない）。受けなければとりのぞかない（ログ ``drain_heal`` を残さない。判定のログは ``reaches``）。ハイパーリバース・サイコリーフ。v0.104 までの登録（メガドレイン・
+    # やどりぎのタネ・きゅうけつ）は評価しないまま（False。v0.104 の docs 9 章の差は変えない）
+    reach: bool = False
     phase: ClassVar[Phase] = Phase.EFFECT
 
     def decides(self, kind: str) -> bool:
@@ -2017,12 +2021,13 @@ class Drain(Element):
             run.state.add_event("drain_heal_declined", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
                                 dealt=dealt, drain_counters=counters)
 
-    @staticmethod
-    def _remove(run: AttackRun, attacker: PokemonInPlay, dealt: int, counters: int) -> None:
+    def _remove(self, run: AttackRun, attacker: PokemonInPlay, dealt: int, counters: int) -> None:
         state = run.state
         per = state.rules.damage_per_counter
         before = attacker.damage
         removed = min(counters, before // per)
+        if self.reach and removed > 0 and not reaches(run.res, run.fs, run.player, attacker, E.HEAL_ELEMENT):
+            return
         attacker.damage = before - removed * per
         state.add_event("drain_heal", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
                         dealt=dealt, drain_counters=counters, counters=removed, amount=removed * per, damage_before=before,
@@ -4743,8 +4748,8 @@ class HealCounters(Element):
     ダメージカウンターをとりのぞいたら、それ以上の回復はできない」）（v0.41）。
 
     - ``scope``: 対象。``HEAL_SELF``（ワザを使ったポケモン）・``HEAL_OWN_ALL``（自分の場のポケモン全員: バトル場 → ベンチの順）・``HEAL_BOTH_ALL``（ワザを使った
-      プレイヤーの場 → 相手の場の順に、それぞれバトル場 → ベンチ）・v0.104 の ``HEAL_BOTH_ACTIVE``（ワザを使ったポケモン → 相手の対戦ポケモン。やさしいうた）。どの順でも、
-      とりのぞく数は変わらない（ポケモンごとに決まる）。順番はログの並びだけ
+      プレイヤーの場 → 相手の場の順に、それぞれバトル場 → ベンチ）・v0.104 の ``HEAL_BOTH_ACTIVE``（ワザを使ったポケモン → 相手の対戦ポケモン。やさしいうた）・v0.105 の
+      ``HEAL_OPPONENT_ACTIVE``（相手の対戦ポケモンだけ。プレゼント）。どの順でも、とりのぞく数は変わらない（ポケモンごとに決まる）。順番はログの並びだけ
     - とりのぞく数: ``counters``（決まった数）か ``heads_of``（ワザ全体のコインの「おもて」の数。どのポケモンにも同じ数。ポケモンごとに投げ直さない。v0.104 の ``per_heads`` は
       「おもて」1 枚あたりの数（ミルクのみの「おもて」の数 × 2 個））か、v0.104 の ``every``（のっているすべて。おひるね・ねむる。大きな決まった数で表さない）のどれか 1 つ。
       それぞれのっている数まで。0 個のポケモンからはとりのぞかない（効果を受けない。p.309）
@@ -4770,16 +4775,23 @@ class HealCounters(Element):
             raise ValueError("とりのぞく数は counters・heads_of・every のどれか 1 つで決める")
         if type(self.per_heads) is not int or self.per_heads <= 0 or (self.per_heads != 1 and self.heads_of is None):
             raise ValueError(f"「おもて」1 枚あたりの数 {self.per_heads!r} は、heads_of のときだけの正の整数")
-        if self.scope not in (E.HEAL_SELF, E.HEAL_OWN_ALL, E.HEAL_BOTH_ALL, E.HEAL_BOTH_BENCH, E.HEAL_BOTH_ACTIVE):
+        if self.scope not in (E.HEAL_SELF, E.HEAL_OWN_ALL, E.HEAL_BOTH_ALL, E.HEAL_BOTH_BENCH, E.HEAL_BOTH_ACTIVE, E.HEAL_OPPONENT_ACTIVE):
             raise ValueError(f"回復の対象 {self.scope!r} は未定義")
 
     @property
     def opponent_element(self) -> str | None:
-        return E.HEAL_ELEMENT if self.scope in (E.HEAL_BOTH_ALL, E.HEAL_BOTH_BENCH, E.HEAL_BOTH_ACTIVE) else None
+        return E.HEAL_ELEMENT if self.scope in (E.HEAL_BOTH_ALL, E.HEAL_BOTH_BENCH, E.HEAL_BOTH_ACTIVE, E.HEAL_OPPONENT_ACTIVE) else None
+
+    def coin_receiver(self) -> str | None:
+        # v0.105: 相手の対戦ポケモンだけからとりのぞく要素（プレゼントの「おもて」2 枚・0 枚）は、ワザ全体のコインが決める相手の対戦ポケモンへの効果の要素（``void_coin_question``）。
+        # ほかの対象は v0.104 までと同じ（自分・控え・場の全員を含むので、相手の対戦ポケモンの状態で無効と数えない）
+        return "effect" if self.scope == E.HEAL_OPPONENT_ACTIVE else None
 
     def targets(self, run: AttackRun) -> list[tuple[int, PokemonInPlay]]:
         if self.scope == E.HEAL_SELF:
             return [(run.player, run.attacker())]
+        if self.scope == E.HEAL_OPPONENT_ACTIVE:
+            return [(1 - run.player, run.opponent_active())]  # v0.105: 相手の対戦ポケモンだけ（プレゼント）
         if self.scope == E.HEAL_BOTH_ACTIVE:
             # v0.104: 自分（ワザを使ったポケモン）と相手（相手の対戦ポケモン）。控えは含めない（やさしいうた）
             return [(run.player, run.attacker()), (1 - run.player, run.opponent_active())]
@@ -5796,16 +5808,72 @@ class EvolveAttackerFromDeck(Element):
     - トレーナー「サカキ」の許可だけで重ねられるカードがあれば GV1（決定の前に止める）
     - 重ねる前に「とうめい」を評価する（自分への効果。``reaches`` の ``evolve``）。進化は通常の進化と同じ手順（``evolution.place_evolution_card``。山札から。ログ
       ``evolve`` の ``effect``・``source_zone``）。選べるものがない（ログ ``evolve_from_deck_none``）・選ばないときも、そのあと山札を切る（1 回）
+
+    v0.105（docs/recovery-evolution-coin-branches-v0.105.md 4 章。トランセル（neo2-006）の「からやぶりしんか」・ヒマナッツ（neo4-003）の「ひざしをあびる」の「その後、自分の山札から…
+    「進化カード」を1枚選び出し、この…の上にのせ、進化させる。山札を見た場合は、その山札をよく切る。」）。どれも既定ではたきのぼりしんか（v0.44）と同じ:
+
+    - ``gate``: ワザ全体のコインの面（前の回復と同じコイン）。満たさなければ、山札を見ず、切らない（ログもない）
+    - ``required``: 選べるものがあれば 1 枚を選ぶ（決定 ``SEARCH_DECK`` の 1〜1 枚。「てよい」がない）。山札にカードがあって選べるものがなくても、選べるもののない決定（0〜0 枚）を
+      出して答えを待つ（v0.84 の A3。山札の中身で決定の有無を変えない。答えのあとログ ``evolve_from_deck_none``）。山札を見る前に、公開の情報だけで決まる問い（DV2・GV1・
+      ［れんさしんか］の PW4）を、山札の中身によらず確かめる（``effects.self_deck_evolution_open_question``。宣言を受け付けるかから山札の中身がわからないように）。選べるカードが
+      どれも選ぶと止めるもの（H1・場に出たときの特殊能力の PW4）なら、決定を出す前に止める（選べる答えのない決定にしない）。ワザを使ったポケモンがこのワザの中で HP 以上なら、
+      処理の対象がない（ログ ``effect_skipped``）
+    - ``shuffle_if_looked``: 山札を見た（さがすときに山札にカードがあった）ときだけ 1 回切る。山札が 0 枚なら見ないので切らない（v0.82 のあたためると同じ読み方）。選べるカードが
+      なくても、山札にカードがあれば見たので切る
     """
 
     evolves_from: str
+    gate: tuple | None = None  # v0.105
+    required: bool = False  # v0.105
+    shuffle_if_looked: bool = False  # v0.105
     phase: ClassVar[Phase] = Phase.EFFECT
     decision_kind: ClassVar[str] = SEARCH_DECK
 
     def candidates(self, run: AttackRun) -> list[int]:
         return E.self_deck_evolution_cards(run.state, run.player, run.attacker(), evolves_from=self.evolves_from)
 
+    def _none(self, run: AttackRun, attacker: PokemonInPlay) -> None:
+        run.state.add_event("evolve_from_deck_none", player=run.player, pokemon_id=attacker.pokemon_id, effect=str(run.key))
+        if not self.shuffle_if_looked or run.state.players[run.player].deck:
+            shuffle_in_attack(run, self, run.player)
+
+    def _required_run(self, run: AttackRun) -> bool:
+        state = run.state
+        attacker = run.attacker()
+        if run.knocked_out(attacker):
+            state.add_event("effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                            element="evolve", reason=E.EFFECT_TARGET_KNOCKED_OUT)
+            return False
+        if not state.players[run.player].deck:
+            self._none(run, attacker)  # 山札にカードがない: さがすカードがない（見ない）
+            return False
+        question = E.self_deck_evolution_open_question(state, run.player, attacker, self.evolves_from)
+        if question is not None:
+            raise run.res.question(*question)
+        candidates = self.candidates(run)
+        if not candidates:
+            # 山札を見たが、選べるカードがない。選べるもののない決定を出して答えを待つ（v0.84 の A3）。答えのあとに切る
+            run.suspend(kind=SEARCH_DECK, player=run.player, options=(), min_choices=0, max_choices=0)
+            return True
+        blocked = tuple(uid for uid in candidates if attacker.damage >= E.evolution_hp(state, attacker, uid))
+        entry = tuple(uid for uid in candidates if uid not in blocked and E.applicable_entry_power(state, uid, from_hand=False) is not None)
+        if len(blocked) + len(entry) == len(candidates):
+            if entry:
+                raise run.res.question("entry_power_during_attack", f"山札の進化カード {list(entry)}")
+            raise run.res.question("evolution_hp_every_card", f"山札の進化カード {list(blocked)}")
+        extra: tuple = ()
+        if blocked:
+            extra = (("unresolved_choices", blocked), ("unresolved_code", "UNRESOLVED_EVOLUTION_HP"), ("unresolved_reason", E.EVOLUTION_HP_REASON))
+        if entry:
+            extra += (("entry_power_choices", entry),)
+        run.suspend(kind=SEARCH_DECK, player=run.player, options=candidates, min_choices=1, max_choices=1, extra=extra)
+        return True
+
     def run(self, run: AttackRun) -> bool:
+        if self.gate is not None and not run.coin_is(self.gate):
+            return False
+        if self.required:
+            return self._required_run(run)
         state = run.state
         attacker = run.attacker()
         cards = [uid for uid in state.players[run.player].deck if state.card_def(uid).evolves_from == self.evolves_from]
@@ -5817,8 +5885,7 @@ class EvolveAttackerFromDeck(Element):
             raise run.res.question("evolve_after_devolution", f"山札の進化カードと場のポケモン {list(devolved)}")  # v0.50: DV2
         candidates = self.candidates(run)
         if not candidates:
-            state.add_event("evolve_from_deck_none", player=run.player, pokemon_id=attacker.pokemon_id, effect=str(run.key))
-            shuffle_in_attack(run, self, run.player)
+            self._none(run, attacker)
             return False
         blocked = tuple(uid for uid in candidates if attacker.damage >= E.evolution_hp(state, attacker, uid))  # v0.48
         chain = bool(E.chain_evolution_targets(state, run.player, (attacker.pokemon_id,)))  # v0.86: ほかのポケモンの［れんさしんか］の機会が来る（PW4）
@@ -5841,6 +5908,11 @@ class EvolveAttackerFromDeck(Element):
         state = run.state
         attacker = run.attacker()
         if not choices:
+            if self.required:
+                if self.candidates(run):
+                    raise RuntimeError(f"必ず選ぶ山札の進化カードの決定に、0 枚の答え（{run.key}。決定の形の誤り。エンジンの不具合）")
+                self._none(run, attacker)  # 選べるもののない決定の答え（山札は見たので切る）
+                return
             state.add_event("evolve_from_deck_declined", player=run.player, pokemon_id=attacker.pokemon_id, effect=str(run.key))
             shuffle_in_attack(run, self, run.player)
             return
@@ -5861,6 +5933,9 @@ class EvolveAttackerFromDeck(Element):
 
     def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
         blocked = set(decision.context_value("unresolved_choices", ())) | set(decision.context_value("entry_power_choices", ()))
+        if self.required and decision.kind == SEARCH_DECK:
+            # v0.105: 同じカード id の進化カードは、どれを重ねても同じ形の状態（v0.84 のしんかのうたと同じ）
+            return [answer for answer in card_id_answers(run.state, decision, (decision.max_choices,)) if not blocked & set(answer)]
         return [answer for answer in all_answers(decision) if not blocked & set(answer)]
 
 
@@ -7568,6 +7643,18 @@ class PlusDefenderEnergyUnits:
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
         return run.attack.damage + all_energy_units(run.state, run.opponent_active(), run) * self.per
+
+
+@dataclass(frozen=True)
+class DefenderEnergyUnitsTimes:
+    """相手（相手の対戦ポケモン）についている「エネルギー」の数 × ``per``（v0.105。バタフリー（neo2-009）の「ハイパーリバース」。p.321 の 1 段階の基本となるダメージそのもの。目安の
+    数字はない）。エネルギーの個数（``all_energy_units``。無色2個エネルギーは 2）で、v0.50 の ``DefenderEnergyCardsTimes``（カードの枚数）とは別の値。0 個なら 0。"""
+
+    per: int
+    local_coins: ClassVar[int] = 0
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return all_energy_units(run.state, run.opponent_active(), run) * self.per
 
 
 @dataclass(frozen=True)
@@ -11451,4 +11538,27 @@ BUILDERS |= {
     E.OptionalHealSelf: lambda e: (OptionalHealSelf(e.counters),),
     # やさしいうた（ラプラス）: 自分と相手の対戦ポケモンから counters 個ずつとりのぞく → 相手をねむりにする
     E.HealBothActivesThenSleep: lambda e: (HealCounters(e.counters, scope=E.HEAL_BOTH_ACTIVE), Status(SLEEP)),
+}
+
+
+# ---------------------------------------------------------------- v0.105（docs/recovery-evolution-coin-branches-v0.105.md）: 回復のあとの山札からの進化・与えたぶんの回復・コインの分岐
+
+BUILDERS |= {
+    # からやぶりしんか（トランセル）・ひざしをあびる（ヒマナッツ）: コイン →「おもて」なら自分のダメージカウンターをすべてとりのぞく → 山札から自分を進化させる（必ず 1 枚。山札を見たら切る）
+    E.CoinHealAllThenEvolveSelfFromDeck: lambda e: (
+        Coin("coin"), HealCounters(every=True, gate=("coin", HEADS)),
+        EvolveAttackerFromDeck(e.evolves_from, gate=("coin", HEADS), required=True, shuffle_if_looked=True),
+    ),
+    # ハイパーリバース（バタフリー）: 相手のエネルギーの個数 × per → 与えたぶんを自分からとりのぞく（受ける前に判定する）
+    E.DefenderEnergyUnitsDamageAndFullDrain: lambda e: (Damage(OPP, DefenderEnergyUnitsTimes(e.per)), Drain("damage", full=True, reach=True)),
+    # サイコリーフ（セレビィ）: 相手のエネルギーの個数ぶんのコイン → 目安 +「おもて」の数 × per → 与えたぶんを自分からとりのぞく（受ける前に判定する）
+    E.CoinsPerDefenderEnergyBonusAndFullDrain: lambda e: (
+        Coin("coin", per_opponent_energy=True), Damage(OPP, PrintedPlusHeadsOfCoin("coin", e.per)), Drain("damage", full=True, reach=True),
+    ),
+    # プレゼント（デリバード）: コイン 3 枚 →「おもて」の数で 1 つだけ（3: ダメージ・1: ダメージ・2: 相手から決まった数・0: 相手からすべて）。ダメージの要素を先に並べる（1 つだけを
+    # 処理するので並びは結果を変えない。ダメージの要素のあいだにダメージ以外の効果の要素を置くと、処理しない回復の要素で「ダメージを受けたとき」の効果の時点の確かめ（v0.38 の GK1）に当たる）
+    E.ThreeCoinDamageOrOpponentHeal: lambda e: (
+        Coin("coin", count=3), Damage(OPP, Fixed(e.all_heads), gate=("coin", 3)), Damage(OPP, Fixed(e.one_heads), name="one_heads_damage", gate=("coin", 1)),
+        HealCounters(e.two_heads, scope=E.HEAL_OPPONENT_ACTIVE, gate=("coin", 2)), HealCounters(every=True, scope=E.HEAL_OPPONENT_ACTIVE, gate=("coin", 0)),
+    ),
 }
