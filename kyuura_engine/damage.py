@@ -39,7 +39,7 @@ import itertools
 from dataclasses import dataclass
 from typing import Mapping, Sequence
 
-from .cards import CardDefinition
+from .cards import CardDefinition, EnergyType
 from .rules import RuleSet
 
 # 同じ段階に複数の変更効果があるときに、計算の順番を決めるプレイヤー（p.321）。
@@ -90,6 +90,8 @@ class DamageModifier:
       ``amount`` はしきい値。その段階のダメージが ``amount`` より小さければ 0、``amount`` 以上ならそのまま）。v0.46: ``ZERO_IF_AT_LEAST``（``amount`` はしきい値）・
       ``SET_IF_AT_LEAST``（``threshold`` 以上なら ``amount`` にする）・``HALVE_UP``・``HALVE_DOWN``（``amount`` は 2。割る数）
     - ``threshold``（v0.46）: ``SET_IF_AT_LEAST`` のしきい値（ほかの計算では None）
+    - ``attacker_type``（v0.97）: ダメージを与えるポケモンの今有効なタイプがこのタイプのときだけ当てはめる（アンノーンD の［DARK df］の「「悪」ポケモンからダメージを受けるとき」）。
+      色の読み方（VS1 など）ごとの計算（``calculate_attack_damage`` の ``attacker``）で決める。None ならタイプによらない（v0.96 までの変更効果はすべてこれ）
     """
 
     step: int
@@ -98,6 +100,7 @@ class DamageModifier:
     source: int | None = None
     operation: str = ADD
     threshold: int | None = None
+    attacker_type: EnergyType | None = None
 
     def __post_init__(self) -> None:
         if self.step not in DAMAGE_STEP_CHOOSER:
@@ -207,6 +210,10 @@ class DamageCalculation:
     reduced_by: tuple[int | None, ...] = ()  # v0.66: その効果の発生源のカード（減らす量を決めたときだけ。量が 0 でも書く）
     # v0.90: 3 段階で、共通のルールの数（×2）ではない数をかけたとき、その数（のろいマーカーの「×4」）。弱点を計算しなかった・共通のルールの数なら None
     weakness_multiplier: int | None = None
+    # v0.102: 特殊能力（［グリーンシールド］・［ニュートラルダメージ］）で影響を受けなかった弱点・抵抗力の、はたらいた力（(持つポケモンの番号, ``PowerKey`` の文字列) の並び）。
+    # その力がなければ 3・4 段階を計算していたときだけ書く（タイプが合わない・2 段階で終えた・ワザの説明やスタジアムですでに計算しないときは空。``effects.calculate_with_stadium``）
+    weakness_ignored_by: tuple[tuple[int, str], ...] = ()
+    resistance_ignored_by: tuple[tuple[int, str], ...] = ()
 
 
 def calculate_attack_damage(
@@ -233,12 +240,14 @@ def calculate_attack_damage(
     ``resistance``（v0.45）: False なら 4 段階（抵抗力）だけを計算しない（説明に「このワザのダメージは、「抵抗力」の影響を受けない」とあるダメージ。
     タケシのイシツブテの「スパイラルショット」）。弱点（3 段階）とほかの段階は計算する。
     ``weakness``（v0.57）: False なら 3 段階（弱点）だけを計算しない（グレンタウンジムの「「カツラのポケモン」は、「水」ポケモンからダメージを受ける時、「弱点」の影響を
-    受けない」。``effects.calculate_with_stadium``）。抵抗力とほかの段階は計算する。
+    受けない」。``effects.calculate_with_stadium``）。抵抗力とほかの段階は計算する。v0.102: 特殊能力（［グリーンシールド］・［ニュートラルダメージ］）で影響を受けない弱点・
+    抵抗力も、``weakness``・``resistance`` で渡す（受けるポケモンの弱点・抵抗力の性質は変えず、この計算で当てはめるかだけを変える。``effects.weakness_resistance_ignored``）。
     ``reduction``（v0.66）: 5 段階の「好きなだけ小さくしてよい」効果（``REDUCE_CHOICE``。お上品攻撃）で減らす量。その効果があり、2 段階で計算を終えないのに
     渡されていなければ ``DamageReductionRequired``（呼ぶ側が決定で選ばせる）。2 段階の順番の決定は減らす量より先、6〜8 段階の順番の決定は減らす量のあと（減らした
     あとのダメージで比べる）。``REDUCE_CHOICE`` は 5 段階のほかの効果（加算だけ）のあとに当てはめる（docs/optional-trainers-v0.66.md 2.3 節）。
+    v0.97: ``attacker_type`` のある変更効果は、``attacker``（ダメージを与えるポケモンの今有効な値の定義。色の読み方ごと）のタイプが同じときだけ当てはめる（ほかは集めない）。
     """
-    used = tuple(modifiers)
+    used = tuple(m for m in modifiers if m.attacker_type is None or m.attacker_type is attacker.pokemon_type)
     reducers = tuple(m for m in used if m.operation == REDUCE_CHOICE)
     used = tuple(m for m in used if m.operation != REDUCE_CHOICE)
     if reducers and any(m.step == 5 and m.operation != ADD for m in used):
@@ -382,7 +391,7 @@ def _in_order(modifiers: tuple[DamageModifier, ...], orders: Mapping[int, tuple[
     return tuple(result)
 
 
-def calculate_confusion_damage(pokemon: CardDefinition, rules: RuleSet, base: int) -> DamageCalculation:
+def calculate_confusion_damage(pokemon: CardDefinition, rules: RuleSet, base: int, *, weakness: bool = True, resistance: bool = True) -> DamageCalculation:
     """こんらん状態のポケモンのワザがこんらんしたとき（コインが「うら」）、ワザを使ったポケモン自身が受けるダメージ（v0.3c）。
 
     - 基本は 20（p.309 の手順 5「もとのワザの内容に関わらず、ワザを使ったポケモン自身が20ダメージを受けます」）。
@@ -395,14 +404,16 @@ def calculate_confusion_damage(pokemon: CardDefinition, rules: RuleSet, base: in
       ダメージが「ワザによるダメージ」かは原典に書かれていないので、プラスパワー（5 段階）・ディフェンダー（7 段階）などを
       計算するかは決められない（UNRESOLVED）。ワザを使うポケモンにそれらがついているときは、エンジンがコインを投げる前に
       止める（``engine._confusion_damage_problem``）ので、ここには変更効果が来ない。
+    - v0.102: ``weakness``・``resistance`` が False なら、弱点・抵抗力の影響を受けない（［グリーンシールド］・［ニュートラルダメージ］の「ダメージを受ける時」。説明はワザのダメージに
+      限らない。``effects.confusion_damage_calculation``）。性質は変えない。
     """
     steps: list[tuple[str, int]] = [("こんらん", base)]
     amount = base
-    weakness_applied = pokemon.weakness is not None and pokemon.pokemon_type == pokemon.weakness
+    weakness_applied = weakness and pokemon.weakness is not None and pokemon.pokemon_type == pokemon.weakness
     if weakness_applied:
         amount *= rules.weakness_multiplier
         steps.append(("弱点", amount))
-    resistance_applied = pokemon.resistance is not None and pokemon.pokemon_type == pokemon.resistance
+    resistance_applied = resistance and pokemon.resistance is not None and pokemon.pokemon_type == pokemon.resistance
     if resistance_applied:
         amount -= pokemon.resistance_value
         steps.append(("抵抗力", amount))

@@ -269,6 +269,15 @@ def keys_problems(where: str, record: dict, required: set[str], optional: set[st
     return found
 
 
+def _before_correction(earlier, checked: str, correction: dict) -> bool:
+    """照らしたコミット ``checked`` が、kyuura が修正を当てはめた移行の段の前（修正の前の値のコミット）か（v0.97）。連鎖の位置のない古い呼び方（frozenset）では、
+    移行の前のコミットならどれも前（v0.69 の 1 段だけの移行と同じ）。"""
+    if not isinstance(earlier, MigrationChain):
+        return True
+    position, before = earlier.position(checked), earlier.position(correction.get("previous_source") or "")
+    return position is not None and before is not None and position <= before
+
+
 def check_problems(where: str, check, card: dict, commit: str, today: datetime.date, corrections: dict | None = None,
                    earlier: frozenset = frozenset()) -> list[str]:
     if not isinstance(check, dict):
@@ -350,7 +359,7 @@ def check_problems(where: str, check, card: dict, commit: str, today: datetime.d
         # ほかの欄は写しの値（写しの作り直しの検査が、移行の前と同じことを確かめている）。写しのコミットと照らした記録は写しの値と比べる
         correction = (corrections or {}).get((card.get("id"), difference["field"]))
         allowed = {repr(field_value(card, difference["field"]))}
-        if correction and check["kyuura_commit"] in earlier:
+        if correction and check["kyuura_commit"] in earlier and _before_correction(earlier, check["kyuura_commit"], correction):
             allowed.add(repr(correction["before"]))
         if (check["kyuura_commit"] == commit or check["kyuura_commit"] in earlier) and repr(difference["kyuura"]) not in allowed \
                 and field_problem(card, difference["field"]) is None:
@@ -830,28 +839,60 @@ def reprint_problems(where: str, record: dict, card: dict, *, cards: dict, regis
     return found
 
 
-def data_migrations(sources: dict, extract: dict) -> tuple[frozenset, list[str]]:
+class MigrationChain(dict):
+    """移行の前のコミット → 移行の連鎖での位置（0 が最初の段の前。v0.97）。``in`` で移行の前のコミットか（v0.69 までの frozenset と同じ使い方）、``position`` で
+    写しのコミットを含む位置（写しのコミットは段の数）を引く。"""
+
+    def __init__(self, positions: dict[str, int] | None = None, current: str | None = None):
+        super().__init__(positions or {})
+        self.current = current
+
+    def position(self, commit: str) -> int | None:
+        if commit == self.current:
+            return len(self)
+        return self.get(commit)
+
+
+def data_migrations(sources: dict, extract: dict) -> tuple[MigrationChain, list[str]]:
     """v0.69: 写しの元を上げた記録（``data_migrations``）。移行の前のコミットの集まりと、問題の一覧。移行の前のコミットは、写しの書き出しの
-    ``previous_source``（写しの作り直しの検査が、写す欄が修正の欄と出典の記録の欄を除いて同じことを確かめたコミット）と同じでなければならない。"""
+    ``previous_source``（写しの作り直しの検査が、写す欄が修正の欄と出典の記録の欄を除いて同じことを確かめたコミット）と同じでなければならない。
+
+    v0.97: 移行は連鎖（ecb2d69 → 7d3f4ca → 73a1690）。記録の並びの前・あとのコミットと説明の文書が、写しの書き出しの ``source_migrations``（写しの作り直しの検査が、段ごとに
+    写す欄を比べた段）と同じ並びで、最初の段の前が ``previous_source``、段の前がその前の段のあと、最後の段のあとが写しのコミット。過去の段の記録（前・あと・日付）は
+    書き換えない（記録の日付は段の並びの順）。移行の前のコミットは、連鎖での位置といっしょに返す（外部照合の照らしたコミットと、修正の段の前後を比べるため）。"""
     migrations = sources.get("data_migrations", [])
     found = []
+    current = extract["source"]["commit"]
     if not isinstance(migrations, list):
-        return frozenset(), ["data_migrations はリスト"]
-    earlier = set()
+        return MigrationChain(current=current), ["data_migrations はリスト"]
+    positions: dict[str, int] = {}
+    steps = [(s.get("from"), s.get("to"), s.get("document")) for s in extract.get("source_migrations") or ()]
     previous = (extract.get("previous_source") or {}).get("commit")
+    expected_from = previous
+    last_on = None
     for i, migration in enumerate(migrations):
         where = f"data_migrations {i}"
         if not isinstance(migration, dict):
             found.append(f"{where}: 辞書ではない")
             continue
         found.extend(keys_problems(where, migration, {"from", "to", "on", "check", "document"}, {"note"}))
-        if migration.get("to") != extract["source"]["commit"]:
-            found.append(f"{where}: 移行のあとのコミットが写しのコミットではない")
-        if migration.get("from") != previous:
-            found.append(f"{where}: 移行の前のコミットが、写しの書き出しの previous_source（作り直しの検査で比べたコミット）ではない")
+        if migration.get("from") != expected_from:
+            found.append(f"{where}: 移行の前のコミットが、" + ("写しの書き出しの previous_source（作り直しの検査で比べたコミット）ではない" if i == 0
+                                                       else "前の段の移行のあとのコミットではない（移行の連鎖がつながっていない）"))
+        if i >= len(steps) or (migration.get("from"), migration.get("to"), migration.get("document")) != steps[i]:
+            found.append(f"{where}: 移行の前・あと・文書が、写しの書き出しの source_migrations の {i} 番目の段と違う")
+        if i == len(migrations) - 1 and migration.get("to") != current:
+            found.append(f"{where}: 最後の移行のあとのコミットが写しのコミットではない")
+        on = migration.get("on")
+        if not isinstance(on, str) or (last_on is not None and on < last_on):
+            found.append(f"{where}: 移行した日 {on!r} が、前の段の日より前（記録の並びは移行の順）")
+        last_on = on if isinstance(on, str) else last_on
         if isinstance(migration.get("from"), str) and COMMIT.match(migration["from"]):
-            earlier.add(migration["from"])
-    return frozenset(earlier), found
+            positions[migration["from"]] = i
+        expected_from = migration.get("to")
+    if len(migrations) != len(steps):
+        found.append(f"data_migrations の段の数 {len(migrations)} が、写しの書き出しの source_migrations の {len(steps)} と違う")
+    return MigrationChain(positions, current), found
 
 
 def problems(sources: dict | None = None, *, extract: dict | None = None, verification: dict | None = None, registry=None,

@@ -41,6 +41,9 @@ from kyuura_engine.state import (
     CannotAttackWhileSourceActive,
     CannotUseAttack,
 )
+from scripts.extract_kyuura_cards import (
+    KYUURA_COMMIT as SOURCE_COMMIT,  # v0.97: 今の写しの元（73a1690）。下の KYUURA_COMMIT は v0.77 の採用したときのデータのコミット
+)
 from tests.helpers import (
     BILLS_TELEPORTER_NEO1,
     FIGHTING,
@@ -286,7 +289,9 @@ class RegistrationTest(unittest.TestCase):
         new_cards = {c["id"]: c for c in new["cards"]}
         self.assertEqual(set(new_cards) - set(old_cards), cards_after(read_extract(), "0.76"))
         self.assertEqual({k: v for k, v in new_cards.items() if k in old_cards}, old_cards)
-        self.assertEqual(new["source"], old["source"])
+        # v0.97: 写しの元を 7d3f4ca から 73a1690 に上げた（確かめた移行。docs/unown-research-idfnj-v0.97.md 2 章）。写しの元はコミットのほかは変わらない
+        self.assertEqual(old["source"]["commit"], KYUURA_COMMIT)
+        self.assertEqual(new["source"], dict(old["source"], commit=SOURCE_COMMIT))
         for key in old:
             if key.startswith("pool_"):
                 self.assertEqual(new[key], old[key])

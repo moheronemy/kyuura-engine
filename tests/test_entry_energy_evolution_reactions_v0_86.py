@@ -877,7 +877,10 @@ class DocumentTest(unittest.TestCase):
         self.assertTrue(DOC.exists())
         links = json.loads((ROOT / "kyuura_engine" / "data" / "research_links.json").read_text(encoding="utf-8"))
         for code in NEW_CODES:
-            self.assertEqual(links["stop_codes"][code]["kyuura_disposition"], "not_in_kyuura", code)
+            # v0.97: 研究の基準を kyuura 73a1690 に上げた。CV1 は kyuura の論点 UQ-SELF-EXCLUDING-POWER-COPIES の事例と同じ問いだが、kyuura の未解決の一覧（v0.68 までの取り込み）に
+            # CV1 の行がない（docs/unown-research-idfnj-v0.97.md 3 章）
+            expected = "issue_not_in_index" if code == CV1 else "not_in_kyuura"
+            self.assertEqual(links["stop_codes"][code]["kyuura_disposition"], expected, code)
 
 
 if __name__ == "__main__":

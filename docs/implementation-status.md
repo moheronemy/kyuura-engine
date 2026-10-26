@@ -1,6 +1,6 @@
-# 実装状況（v0.1〜v0.96）
+# 実装状況（v0.1〜v0.105）
 
-基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
+基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534`（v0.97 から。v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
 v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果を実装するための構造を整えた版です（[アーキテクチャ](architecture-v0.2a.md)）。v0.2b は、その構造を使ってトレーナーカード 3 枚（マサキ・きずぐすり・ポケモンいれかえ）を実装した版です（[アーキテクチャ](architecture-v0.2b.md)、[原典照合](trainers-v0.2b.md)）。v0.2c は、プラスパワーと、場に残るトレーナー・有効期限・ダメージ計算の段階への効果の適用を加えた版です（[アーキテクチャ](architecture-v0.2c.md)、[原典照合](pluspower-v0.2c.md)）。v0.2d は、コイントスと、コインの結果でダメージが変わるワザ（ドードーの「みだれづき」）を加えた版です（[アーキテクチャ](architecture-v0.2d.md)、[コイントスの規定](coin-rules-v0.2d.md)、[みだれづき](coin-attacks-v0.2d.md)）。v0.2e は、ディフェンダーと、防御側のダメージ変更・相手の番にまたがる有効期限を加えた版です（[アーキテクチャ](architecture-v0.2e.md)、[原典照合](defender-v0.2e.md)）。v0.2f は、ワザで自分に与えるダメージと、同時のきぜつ（両方のプレイヤーのポケモンが 1 つのワザできぜつする）を、ピカチュウの「かじる」「でんげき」とともに加えた版です（[アーキテクチャ](architecture-v0.2f.md)、[自分へのダメージ](self-damage-v0.2f.md)、[同時のきぜつ](simultaneous-ko-v0.2f.md)、[ピカチュウ](pikachu-v0.2f.md)）。v0.3a は、特殊状態の共通基盤と「どく」、番と番のあいだのポケモンチェックを、ビードルの「どくばり」とともに加えた版です（[アーキテクチャ](architecture-v0.3a.md)、[特殊状態](special-conditions-v0.3a.md)、[ポケモンチェック](pokemon-check-v0.3a.md)、[ビードル](weedle-v0.3a.md)）。v0.3b は、ねむり・マヒと、それによるワザ・にげるの制限、ポケモンチェックの 3（ねむりのコイン）・4（マヒの回復）を、キャタピーの「いとをはく」・パラスの「ひっかく」「キノコのほうし」とともに加えた版です（[アーキテクチャ](architecture-v0.3b.md)、[ねむり・マヒ](sleep-paralysis-v0.3b.md)、[ポケモンチェック](pokemon-check-v0.3b.md)、[キャタピー・パラス](cards-v0.3b.md)）。v0.3c は、こんらんと、こんらん状態のポケモンのワザ（コイン・自分への 20 ダメージ）・にげる（コイン・エネルギー・同じ番の再宣言の制限）を、ロコンの「あやしいひかり」とともに加えた版です（[アーキテクチャ](architecture-v0.3c.md)、[こんらん](confusion-v0.3c.md)、[ワザ・ロコン](confusion-attacks-v0.3c.md)、[にげる](retreat-confusion-v0.3c.md)）。v0.3d は、カード・ルールを加えず、特殊状態 4 種類の総合検証・未解決の裁定の再調査・コインの前の検証・進化の準備の調査をした版です（[アーキテクチャ](architecture-v0.3d.md)、[総合検証](special-conditions-audit-v0.3d.md)、[未解決の裁定](unresolved-rulings-v0.3d.md)、[コインの前の検証](effect-preflight-v0.3d.md)、[進化の準備](evolution-readiness-v0.4.md)）。v0.4a は、たねポケモン → 1 進化ポケモンの進化（`EvolvePokemon`）を、パラセクト（パラスから進化）・ジュゴン（パウワウから進化）とともに加えた版です（[アーキテクチャ](architecture-v0.4a.md)、[進化のルール](evolution-rules-v0.4a.md)、[カード](evolution-cards-v0.4a.md)、[状態](evolution-state-v0.4a.md)）。v0.4b は、ワザによる持続する効果（番をまたいで残り、期限・ベンチ・進化・きぜつで消える）を、トランセル（キャタピーから進化）・コクーン（ビードルから進化）の「かたまる」とともに加えた版です（[アーキテクチャ](architecture-v0.4b.md)、[持続する効果](persistent-effects-v0.4b.md)、[かたまる](harden-v0.4b.md)、[ダメージ計算](persistent-damage-v0.4b.md)）。v0.4c は、1 進化ポケモン → 2 進化ポケモンの進化（たね・1 進化・2 進化の 3 枚で構成される 1 匹のポケモン）を、スピアー（コクーンから進化）の「ダブルニードル」「どくばり」とともに加えた版です（[アーキテクチャ](architecture-v0.4c.md)、[2 進化のルール](stage2-evolution-v0.4c.md)、[スピアー](beedrill-v0.4c.md)、[状態](stage2-state-v0.4c.md)）。v0.4d は、ワザの途中で相手プレイヤーの決定を待って同じワザを再開する処理（相手の強制交代）と、ワザが与えたダメージの結果を後の要素に渡して回復する処理を、バタフリー（トランセルから進化する 2 進化）の「ふきとばし」「メガドレイン」とともに加えた版です（[アーキテクチャ](architecture-v0.4d.md)、[強制交代](forced-switch-v0.4d.md)、[与えたダメージと回復](damage-drain-v0.4d.md)、[バタフリー](butterfree-v0.4d.md)）。v0.4e は、カード・ルールを加えず、v0.4a〜v0.4d の総合監査（組み合わせの表・不変条件・ログと書き出しの監査・前の版との比較・負荷・変異）と、見つけた不変条件の検出の漏れの修正、比較と負荷の道具をした版です（[総合監査](integration-audit-v0.4e.md)、[組み合わせの表](interaction-matrix-v0.4e.md)、[互換性](compatibility-v0.4e.md)、[未解決の範囲](unresolved-audit-v0.4e.md)、[アーキテクチャ](architecture-v0.4e.md)、[v0.5 の準備](v0.5-readiness.md)）。v0.5 は、ポケモンパワー（特殊能力）の基盤（`UsePokemonPower`・パワーの登録表）を、フシギバナの「エナジートランス」と、進化元のフシギダネ（やどりぎのタネ）・フシギソウ（つるのむち・どくのこな）とともに加えた版です（[アーキテクチャ](architecture-v0.5.md)、[ポケモンパワーの規定](pokemon-powers-v0.5.md)、[フシギバナ](venusaur-v0.5.md)、[フシギダネ・フシギソウ](bulbasaur-line-v0.5.md)、[エナジートランスの処理](energy-transfer-v0.5.md)、[確かめた結果](v0.5-verification.md)）。v0.6 は、カメックスのポケモンパワー「あまごい」（手札の「水」エネルギーカードを自分の場の「水」ポケモンにつける）とワザ「ハイドロポンプ」、進化元のゼニガメ・カメールを加えた版です（[原典の照合と裁定](rain-dance-v0.6.md)、[アーキテクチャ](architecture-v0.6.md)、[確かめた結果](v0.6-verification.md)）。v0.7 は、フーディンのポケモンパワー「ダメージスワップ」（自分の場のポケモンのダメージカウンターを、きぜつさせない範囲で自分の場の別のポケモンへのせかえる）とワザ「あやしいひかり」、進化元のケーシィ（ねんりき）・ユンゲラー（じこさいせい・ちょうねんりき）を加えた版です（[ダメージスワップの照合と裁定](damage-swap-v0.7.md)、[ケーシィ・ユンゲラー・フーディン](alakazam-line-v0.7.md)、[アーキテクチャ](architecture-v0.7.md)、[確かめた結果](v0.7-verification.md)）。v0.8 は、ベトベトンのポケモンパワー「かがくへんかガス」（常にはたらいていて宣言しない。場にいるかぎり、ほかのすべての特殊能力を使えなくし、その力も消す。ねむり・マヒ・こんらんのときは消える）とワザ「ヘドロこうげき」、進化元のロケット団のベトベター（どくガス・ねばりつく）を加えた版です（[かがくへんかガスの照合と裁定](chemical-gas-v0.8.md)、[ベトベター・ベトベトン](grimer-line-v0.8.md)、[常にはたらく効果](continuous-effects-v0.8.md)、[アーキテクチャ](architecture-v0.8.md)、[確かめた結果](v0.8-verification.md)）。v0.9 は、化石の秘密のゴーストのポケモンパワー「とうめい」（ワザによってダメージや効果を受けるときに自動的にはたらき、コインが「おもて」なら、そのダメージと効果を受けない。ねむり・マヒ・こんらんのときは消える）とワザ「あくむ」、進化元の化石の秘密のゴース（したでなめる・エナジーへんかん）を加えた版です（[とうめいの照合と裁定](transparency-v0.9.md)、[ゴース・ゴースト](haunter-line-v0.9.md)、[自動的にはたらく特殊能力](automatic-powers-v0.9.md)、[アーキテクチャ](architecture-v0.9.md)、[確かめた結果](v0.9-verification.md)）。v0.10 は、カイリキーのポケモンパワー「はんげき」（相手のワザによってダメージを受けたときに自動的にはたらき、それによってきぜつしても、ダメージを与えたポケモンに弱点・抵抗力に関係なく 10 ダメージ。ダメージを受けるとき、すでにねむり・マヒ・こんらんならはたらかない）とワザ「ちきゅうなげ」、進化元のゴーリキー（からてチョップ・じごくぐるま）を加えた版です（[はんげきの照合と裁定](counterattack-v0.10.md)、[ワンリキー・ゴーリキー・カイリキー](machamp-line-v0.10.md)、[ダメージを受けたあとにはたらく特殊能力](post-damage-powers-v0.10.md)、[アーキテクチャ](architecture-v0.10.md)、[確かめた結果](v0.10-verification.md)）。それぞれの状況は [v0.2a の章](#v02a-で加えた構造)・[v0.2b の章](#v02b-で加えたものトレーナー)・[v0.2c の章](#v02c-で加えたものプラスパワー)・[v0.2d の章](#v02d-で加えたものコイントスとみだれづき)・[v0.2e の章](#v02e-で加えたものディフェンダー)・[v0.2f の章](#v02f-で加えたもの自分へのダメージと同時のきぜつ)・[v0.3a の章](#v03a-で加えたもの特殊状態どくポケモンチェック)・[v0.3b の章](#v03b-で加えたものねむりマヒポケモンチェックの-34)・[v0.3c の章](#v03c-で加えたものこんらん)・[v0.3d の章](#v03d-で確かめたこと特殊状態の総合検証未解決の裁定)・[v0.4a の章](#v04a-で加えたもの進化-たねポケモン--1-進化ポケモン)・[v0.4b の章](#v04b-で加えたものワザによる持続する効果とかたまる)・[v0.4c の章](#v04c-で加えたもの2-進化とスピアー)・[v0.4d の章](#v04d-で加えたもの相手の強制交代与えたダメージによる回復バタフリー)・[v0.4e の章](#v04e-で確かめたことv04av04d-の総合監査)・[v0.5 の章](#v05-で加えたものポケモンパワーとフシギバナ)・[v0.6 の章](#v06-で加えたものあまごいとカメックス)・[v0.7 の章](#v07-で加えたものダメージスワップとフーディン)・[v0.8 の章](#v08-で加えたものかがくへんかガスとベトベトン)・[v0.9 の章](#v09-で加えたものとうめいとゴースト)・[v0.10 の章](#v010-で加えたものはんげきとカイリキー)・[v0.11 の章](#v011-で加えたものこんじょうとサカキのカイリキー) にあります。
 
@@ -3819,6 +3819,152 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 338・neo 154・拡張パック以外 184） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistryTest` |
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.105: 回復・山札からの進化・コインの分岐の 5 枚
+
+[recovery-evolution-coin-branches-v0.105.md](recovery-evolution-coin-branches-v0.105.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 5 枚・ワザ 8 の登録（写しの組 pool_v0_105。印刷の文面のまま正規化しない。既存の型 3（ころがる・ミラクルりんぷんは説明の並び・かたくなるはしきい値と結び付いた書き方を明示して追加）・新しい型 4） | 実装済み・テスト済み | kyuura 73a1690 の写し | test_recovery_evolution_coin_branches_v0_105.py `RegistrationTest` |
+| かたくなる（8 段階で 20 以下は 0、30 以上はそのまま。ダメージ以外の効果は受ける） | 実装済み・テスト済み | GR-2000-P321-DAMAGE-ORDER・v0.45 の `ZERO_IF_BELOW`・写しの値は 10 の倍数 | 同 `HardenTest`・`RegistrationTest.test_damage_values_are_counter_units` |
+| 回復のあとの山札からの進化（`EvolveAttackerFromDeck` の `gate`・`required`・`shuffle_if_looked`。1 枚のコインで回復と進化。選べるカードがあれば必ず 1 枚・山札を見た場合だけ 1 回切る・選べるもののない決定（A3）・通常の進化の制限・回復のあとの場で確かめる） | 実装済み・テスト済み | 印刷の文面・GR-2000-P309-EVOLUTION-BY-NAME・GR-2000-P310-EVOLUTION・GR-2000-P312-DECK-HAND-DISCARD・v0.82・v0.84 | 同 `EvolveFromDeckTest` |
+| 見えない山札の中身（宣言の受け付け・相手の観測・決定の有無が、選べるカードの有無で変わらない。DV2・GV1・［れんさしんか］の PW4 は山札を見る前に公開の情報で止める） | 実装済み・テスト済み | v0.84 の A3・`HIDDEN_COUNT_KINDS` | 同 `EvolveFromDeckTest.test_hidden_deck_contents_do_not_leak`・`test_public_questions_do_not_depend_on_the_deck` |
+| ハイパーリバース・サイコリーフ（相手のエネルギーの個数 `DefenderEnergyUnitsTimes`・`Coin(per_opponent_energy)`。与えたダメージ（最終ダメージ）ぶんの回復 `Drain(full, reach)`。0 個・与えなかったら回復なし。ダメージを受けない相手へのコインは v0.4b の問いのまま） | 実装済み・テスト済み | GR-2000-P319-HP-AND-DAMAGE・GR-2000-P320-RECOVERY・v0.83 の個数 | 同 `DrainTest` |
+| プレゼント（3 枚 1 組のコインの「おもて」の数で 1 つの分岐だけ。相手の対戦ポケモンへのダメージか、相手の対戦ポケモンからとりのぞく `HEAL_OPPONENT_ACTIVE`。ダメージだけを防ぐ状態は回復を止めない・バリアーは HC3・「とうめい」は 1 回・ESP は 3 枚を一度に） | 実装済み・テスト済み | GR-2000-P321-PREVENTED-ELEMENTS・v0.34 の `void_coin_question` | 同 `PresentTest` |
+| 発生元（進化したバタフリーのワザはミュウに無効、たねのセレビィ・デリバードは受ける）・コピー（使ったポケモンに名前の条件で重ねられない）・へんしん（進化を禁じる） | 実装済み・テスト済み | v0.103・p.309・v0.49 | 同 `DrainTest`・`PresentTest`・`EvolveFromDeckTest` |
+| 決定の保存と再開・不正な答えの拒否・先読みの 3 つの方法 | 実装済み・テスト済み | 8 章 | 同 `DecisionTest`・`EvolveFromDeckTest.test_the_required_choice_rejects_a_decline` |
+| DV2・GV1・PW4・H1・HC3・v0.4b・GK1・T19b・ES3・G37（既存の未解決。新しい能力で解決しない。プレゼントの G37 と、山札の中身によらない DV2・GV1・PW4 は止めすぎ） | 裁定が未解決（止める） | — | 同 `EvolveFromDeckTest`・`PresentTest` |
+| ログの監査（コイン・分岐・ダメージと回復の数・山札から重ねた進化カード・切る回数をログから、山札を見た場合だけ切ることをやり直しの山札の枚数から照らす）・既存の監査の欠け（やさしいキマワリのひざしをかえす）の直し | 実装済み・テスト済み・対戦で確かめた | 9 章 | tests/log_audit.py の `v105_problems`・tools/existing_effect_games.py の `v105_replay_problems`・同 `AuditTest`・`--batch v0.105` |
+| 未対応の数（全対象 169・neo 78・拡張パック以外 91） | 確かめた | kyuura data/engine_targets.json（73a1690）から今の登録を差し引いた数 | test_catalog_contract.py |
+| 5 枚の外部照合（pcg-search.com・カードの画像）・英語の欄との違い（からやぶりしんか・ひざしをあびるの切る条件） | 原典未確認 | していない（日本語を採用。kyuura への報告事項） | — |
+
+## v0.104: 回復のワザを持つポケモン 12 枚と、回復の量・対象・とりのぞくかの選択
+
+[healing-pokemon-v0.104.md](healing-pokemon-v0.104.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 12 枚・ワザ 24 の登録（写しの組 pool_v0_104。印刷の文面のまま正規化しない。同じデータの 3 組は id ごとに登録し同じ値にまとめる。句点の違う IP1-018 は id の登録で処理の値を同じに。既存の型 11（形だけの検査の型は原文と処理を照らした）・フシギダネのかいふくの書き方 `HEAL_ONE_IF_DAMAGED_TEXTS`・新しい型 7） | 実装済み・テスト済み | kyuura 73a1690 の写し | test_healing_pokemon_v0_104.py `RegistrationTest` |
+| 回復の量・対象（`HealCounters` の `every`・`per_heads`・`HEAL_BOTH_ACTIVE`、`TargetHeal` の `every`・`side`。のっている数まで。0 個は効果を受けず続く要素は処理する。ダメージではない） | 実装済み・テスト済み | GR-2000-P320-RECOVERY・GR-2000-P309-ATTACK-PROCEDURE | 同 `HealAmountTest`・`ReachTest.test_heals_are_not_damage` |
+| あまいみつ（コイン → 自分の場から選ぶ → すべて）・ミルクのみ（コイン 2 枚 →「おもて」×2）・おひるね・ねむる（すべて →（どく・ねむり・マヒ・こんらんの回復）→ 自分をねむり）・やさしいうた（自分 → 相手の対戦ポケモンから 2 個ずつ → 相手をねむり）・フラワーダンス（自分の場の今の姿の名前「キレイハナ」×30）・もうとっしん（80 → 自分に 30 → このワザだけの禁止） | 実装済み・テスト済み | 印刷の文面・v0.41・v0.89・v0.90・v0.40 の要素 | 同 `HealAmountTest`・`ConditionOrderTest`・`FlowerDanceTest`・`HighSpeedChargeTest` |
+| 取り除くかを選ぶ回復（プリンのかいふく。`OptionalHealSelf`・決定 `OPTIONAL_HEAL`・ログ `attack_heal_declined`。のっていなければ決定を出さない。「ダメージを与えたら」の条件はない） | 実装済み・テスト済み | 実装上の読み方（「ことができる」） | 同 `HealAmountTest.test_first_aid_is_optional_and_needs_counters`・`DecisionTest` |
+| 受ける判定（「とうめい」は同じワザで 1 匹 1 回・バリアー・［ニュートラルシールド］は v0.103 の発生元で判定・「ダメージを受けない」状態は止めない。相手が受けなくても自分の回復は残る） | 実装済み・テスト済み | GR-2000-P321-PREVENTED-ELEMENTS・v0.9 の T4・T8・v0.103 | 同 `ReachTest` |
+| 決定の保存と再開・不正な答えの拒否・先読みの 3 つの方法 | 実装済み・テスト済み | 6 章 | 同 `DecisionTest` |
+| T27・HC3・MM1・MM2・FD1・両方の対戦ポケモンのねむりのポケモンチェック・相手のワザとして使うもうとっしん（既存の未解決・未対応。新しい能力で解決しない） | 裁定が未解決・エンジンの未対応（止める） | — | 同 `ReachTest`・`HighSpeedChargeTest` |
+| ログの監査（エンジンの回復の要素を読まずに、宣言の時点のダメージ・特殊状態とこのワザのコインから、対象・数・取り除くかの決定・特殊状態の回復・ねむり・フラワーダンスの数を照らす） | 実装済み・テスト済み・対戦で確かめた | 10 章 | tests/log_audit.py の `v104_problems`・同 `AuditTest`・`tools/existing_effect_games.py --batch v0.104` |
+| 未対応の数（全対象 174・neo 82・拡張パック以外 92） | 確かめた | kyuura data/engine_targets.json（73a1690）から今の登録を差し引いた数 | test_catalog_contract.py |
+| 12 枚の外部照合（pcg-search.com・カードの画像）・英語の欄との違い（フラワーダンス・プリンのかいふく） | 原典未確認 | していない（日本語を採用。kyuura への報告事項） | — |
+
+## v0.103: ミュウの 2 枚と、無効にする効果の判定に渡す発生元
+
+[neutral-shield-attack-origin-v0.103.md](neutral-shield-attack-origin-v0.103.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 2 枚の登録（写しの組 pool_v0_103。印刷の文面のまま正規化しない。同じデータの 1 組は id ごとに登録し同じ値にまとめる。ねんりき=ParalyzeOnHeads（原文と処理を照らした）） | 実装済み・テスト済み | kyuura 73a1690 の写し | test_neutral_shield_attack_origin_v0_103.py `RegistrationTest` |
+| ［ニュートラルシールド］（常にはたらく。場のどこでも。ねむり・マヒ・こんらんではたらかない。持つ個体自身だけ。相手（実際の使い手）の進化ポケモン（実際にワザを使う・返す個体の今の姿）からのワザの分類のダメージと効果の要素を無効にする。特殊能力・こんらん・どく・トレーナー・自分のワザ・支払いは範囲の外） | 実装済み・テスト済み | 印刷の文面・v0.10 の「カイリキーが」「つかえない」・v0.49 の今の姿・v0.31 のバリアーの窓 | 同 `ScopeTest`・`BorrowedAndFormTest`・`OriginClassTest` |
+| 無効にする効果の判定に渡す発生元（`events.Incoming`。`first_void` の必須の引数。実際の処理・コインの役割・先読み・返す効果の予測・JS1・FA1・SS1・BG1・CX1・MG2・DW2・受けた記録・上限なしのコイン・legacy が同じ発生元。子の枠を開く前の判定も、これから起こす処理の発生元） | 実装済み・テスト済み | GR-2000-P321-ATTACK-DAMAGE・`events.FRAME_DAMAGE_CLASS` | 同 `OriginClassTest`・`CoinTest`・`SharedQueryTest` |
+| ワザの途中で場をはなれた発生元（要素を始めたときの今の姿を記録して使う。決定をまたいで要る経路は `UNSUPPORTED_ATTACK_SOURCE_LEFT_PLAY`） | 実装済み・テスト済み（決定をまたぐ経路は今の写しにない） | エリカのハクリューのつれさる | 同 `DecisionAndCopyTest`・`BorrowedAndFormTest` |
+| HC3・v0.4b・TF1・MG2・DW2・SS1・FA1・W24（既存の未解決。新しい能力で解決しない） | 裁定が未解決（止める） | — | 同 `CoinTest`・`BorrowedAndFormTest` |
+| トレーナーの使用中に対戦が終わる（v0.102 までの内部エラー。使用中のカードをトラッシュしてから終える） | 実装済み・テスト済み | 見つけた既存の不具合（9 章） | 同 `GameEndDuringTrainerTest` |
+| ログの監査（エンジンの判定を読まずに、発生元・今の姿・受け手・分類・無効を照らす） | 実装済み・テスト済み・対戦で確かめた | 6 章 | tests/log_audit.py・同 `AuditTest`・`tools/existing_effect_games.py --batch v0.103` |
+| 未対応の数（全対象 186・neo 86・拡張パック以外 100） | 確かめた | kyuura data/engine_targets.json（73a1690）から今の登録を差し引いた数 | test_catalog_contract.py |
+| 2 枚の外部照合（pcg-search.com・カードの画像）・ねんりきの日英の違い（日本語「マヒ」・英語「Confused」） | 原典未確認 | していない（日本語を採用。kyuura への報告事項） | — |
+
+## v0.102: トランセル・バリヤードの 4 枚と、弱点・抵抗力の影響を受けない特殊能力の共通の問い合わせ
+
+[weakness-resistance-powers-v0.102.md](weakness-resistance-powers-v0.102.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 4 枚の登録（写しの組 pool_v0_102。印刷の文面のまま正規化しない。同じデータの 2 組は id ごとに登録し同じ値にまとめる。ふしぎなこな=ConfuseOnHeads・ジャグリング=CoinFlipDamage(4, 10)。キャタピーから進化） | 実装済み・テスト済み | kyuura 73a1690 の写し | test_weakness_resistance_powers_v0_102.py `RegistrationTest` |
+| ［グリーンシールド］（常にはたらく。場のどこでも。発生源のねむり・マヒ・こんらんで消える。持ち主の場の今のタイプが「草」のポケモン（自身も）の弱点だけを当てはめない。抵抗力は当てはめる） | 実装済み・テスト済み | 印刷の文面・v0.46 の常にはたらく特殊能力 | 同 `GreenShieldTest` |
+| ［ニュートラルダメージ］（常にはたらく。ベンチにいるときだけ。特殊状態の条件なし。お互いのバトル場のポケモンの弱点・抵抗力を当てはめない。控えには当てはまらない） | 実装済み・テスト済み | 印刷の文面・v0.46 の常にはたらく特殊能力 | 同 `NeutralDamageTest` |
+| 弱点・抵抗力を当てはめるかの共通の問い合わせ（`weakness_resistance_ignored`・`Receiving`。`calculate_with_stadium` の必須の引数。先読み・返す効果・こんらん・JS1・Z9・上限なしのコイン・決定の不変条件が同じ答え。性質は変えない。除く範囲を運ぶ） | 実装済み・テスト済み | p.321・p.322・v0.57 のスタジアムの 3・4 段階の算術 | 同 `CalculationTest`・`OtherPathsTest` |
+| Z9・JS1・こんらんの問い（既存の未解決。力で量が同じ場面だけ止めない） | 裁定が未解決（止める） | — | 同 `OtherPathsTest` |
+| ログの監査（エンジンの答えを読まずに、はたらく力と弱点・抵抗力の当てはめを照らす。v0.101 の W21 の誤りの修正） | 実装済み・テスト済み・対戦で確かめた | 6 章 | tests/log_audit.py・同 `AuditTest`・`tools/existing_effect_games.py --batch v0.102` |
+| 未対応の数（全対象 188・neo 86・拡張パック以外 102） | 確かめた | kyuura data/engine_targets.json（73a1690）から今の登録を差し引いた数 | test_catalog_contract.py |
+| 4 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
+
+## v0.101: ソーナンス・アンノーンK の 2 枚と、1 倍の反撃・エネルギーカードのトラッシュの事前の無効化
+
+[counter-keep-energy-protection-v0.101.md](counter-keep-energy-protection-v0.101.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 2 枚の登録（写しの組 pool_v0_101。印刷の文面のまま正規化しない。めざめるパワーは説明文なし。アンノーンK は文字を合わせて 4 枚まで（共通の規定の再利用）） | 実装済み・テスト済み | kyuura 73a1690 の写し・v0.96 の deck_problems | test_counter_keep_energy_protection_v0_101.py `RegistrationTest` |
+| カウンター（v0.45 の型の倍数 1。使ったときは効果だけ。次の相手の番に相手のワザの正の最終ダメージを受けたら持ち主がコイン、「おもて」なら受けた量を返す。HP で上限をつけない。そろってのきぜつは W24） | 実装済み・テスト済み | 印刷の文面・v0.13・v0.45 の返す効果の規定の再利用 | 同 `CounterTest` |
+| まねたワザとしてのカウンター（ゆびをふる・スケッチ） | エンジンの未対応（止める。既存の `UNSUPPORTED_COPIED_ATTACK`） | v0.31 の `SelfRetaliation.copy_problem` | 同 `CounterTest.test_copying_counter_stays_unsupported` |
+| ［KEEP］（常にはたらく。特殊状態の条件なし。持ち主の場の今の姿がアンノーンのポケモンのエネルギーカードを、持ち主の相手が実際に使ったワザ・特殊能力・トレーナーでトラッシュする効果を、トラッシュの前になくす。共通の問い合わせ `energy_discard_void`） | 実装済み・テスト済み | 印刷の文面・v0.82 の原因の記録・v0.96 の名前のグループ | 同 `KeepAttackTest`・`KeepOtherCausesTest`・`KeepTrainerTest`・`KeepPowerAndMoveTest`・`KeepReturnTest` |
+| KP1（トレーナーで守られる対象を選ぶ・どれもそう）・KP2（なくなるトラッシュだけを決めるコイン）・KP3（つけかえで受けずにトラッシュに置く） | 裁定が未解決（止める） | — | 同 |
+| ログの監査（エンジンの答えを読まずに、はたらく［KEEP］・アンノーン・相手の効果を照らし、相手の効果のトラッシュがないことを確かめる） | 実装済み・テスト済み・対戦で確かめた | 6 章 | tests/log_audit.py・同 `AuditTest`・`tools/existing_effect_games.py --batch v0.101` |
+| 未対応の数（全対象 192・neo 86・拡張パック以外 106） | 確かめた | kyuura data/engine_targets.json（73a1690）から今の登録を差し引いた数 | test_catalog_contract.py |
+| 2 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
+
+## v0.100: ドーブル・ムウマの 2 枚と、前の相手の番のワザの記録・ワザの効果による「きぜつ」
+
+[sketch-perish-song-history-v0.100.md](sketch-perish-song-history-v0.100.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 2 枚の登録（写しの組 pool_v0_100。印刷の文面のまま正規化しない。やみのひとみは v0.3b の既存の型） | 実装済み・テスト済み | kyuura 73a1690 の写し | test_sketch_perish_song_history_v0_100.py `RegistrationTest` |
+| 略号の訂正（v0.99 の PF1 → PFM1。v0.47 の PF1 と長い停止コードは変えない） | 確かめた | 2.1 節 | 同 `RegistrationTest.test_abbreviations_are_separated` |
+| プレイヤーの番ごとの記録（`TurnAttack`・`TurnField`。宣言・切りかえ・番の最初・場に出たときに作る。スケッチのある対戦だけ。2 つ前の番まで。記録のない状態を「使わなかった」と読まない） | 実装済み・テスト済み | v0.62 の使った時点・p.310 | 同 `TurnHistoryTest`・`MidTurnStateTest` |
+| スケッチ（前の相手の番に相手が使ったワザを、このカードのワザとして新しく処理する。必要なエネルギーはいらない。ほかの条件は免除しない（HC9）。場に出ていなければ失敗。SK1・SK2） | 実装済み・テスト済み | 印刷の文面・p.309・p.323・v0.31・v0.62 | 同 `SketchTest`・`SketchPresenceTest`・`CopyInteractionTest` |
+| やみのひとみ・ほろびのうた（今ねむりで、前の自分の番にやみのひとみを受けていた相手は「きぜつ」する。受けた記録の意味は v0.62 のまま。決まらなければ PSG1） | 実装済み・テスト済み | 印刷の文面・p.309・p.322・v0.62・v0.72 | 同 `NightEyesTest`・`PerishSongTest`・`ReceivedRecordMeaningTest` |
+| ワザの効果による「きぜつ」（ダメージではない。原因を `effect_ko` に残し、決定をまたいで運ぶ。こんじょう・ハチマキ・学習装置の候補にしない） | 実装済み・テスト済み（決定をまたぐ場面はテスト限定） | 6 章・p.323・p.324 | 同 `PerishSongTest`・`EffectKnockOutCauseTest` |
+| 書き出しの形式 26（`turn_history`。形式 1〜25 は記録があると書き出さない）・観測・不変条件 | 実装済み・テスト済み | 7 章 | 同 `TurnHistoryTest`・tests/log_audit.py |
+| ログの監査（前の相手の番のワザ・場に出た番・場にいたカード・受けたやみのひとみの組み立て直しと、スケッチ・ほろびのうたの結果） | 実装済み・対戦で確かめた | 10 章 | tests/log_audit.py・`tools/existing_effect_games.py --batch v0.100` |
+| 未対応の数（全対象 194・neo 88・拡張パック以外 106） | 確かめた | kyuura data/engine_targets.json（73a1690）から今の登録を差し引いた数 | test_catalog_contract.py |
+| 2 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
+
+## v0.99: アンノーンP・H とタッツーの 3 枚と、受けたダメージの場所の履歴
+
+[unown-perform-help-history-v0.99.md](unown-perform-help-history-v0.99.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 3 枚の登録（写しの組 pool_v0_99。印刷の文面のまま正規化しない。アンノーンP・H は文字を合わせて 4 枚まで（共通の規定の再利用）） | 実装済み・テスト済み | kyuura 73a1690 の写し・v0.96 の deck_problems | test_unown_perform_help_history_v0_99.py `RegistrationTest`・`DeckLimitTest` |
+| 受けたダメージの場所の履歴（`AttackReceived.active_damage`。のせた時の場所で分ける。回復・入れ替えで変えない。特殊能力だけが読む対戦でも記録する。場所の分からない記録の写しは推測しない） | 実装済み・テスト済み | v0.62 の履歴・p.319・p.310 | 同 `DamagePlaceHistoryTest` |
+| ［PERFORM］（常にはたらく。このカード自身の今持つ「めざめるパワー」に、前の相手の番にバトル場で受けたダメージを p.321 の 2 段階で加える。こんらんの 20 には加えない。両方の場所で受けていれば PFM1） | 実装済み・テスト済み | 印刷の文面・p.321・p.309・v0.27・v0.46 | 同 `BasicExamplesTest`・`PerformTest` |
+| 「ひれがえし」（前の相手の番にワザによるダメージを受けていれば基本となるダメージに 10。場所を問わない。まねたワザでは使うポケモンの記録） | 実装済み・テスト済み | 印刷の文面・p.321・v0.62 | 同 `BasicExamplesTest`・`PerformTest` |
+| ［HELP］（自分の番ごとに 1 回。このカードと E・L・P が自分のベンチにいるとき。手札をすべて見せずにもどして切り、もどした枚数を引く。手札 0 枚は HD2 の読み方で使える） | 実装済み・テスト済み | 印刷の文面・v0.54・v0.97 | 同 `HelpTest` |
+| 書き出しの形式 25（受けた記録の場所。形式 20〜24 は場所の落ちる記録があると書き出さない）・観測・不変条件 | 実装済み・テスト済み | 6 章 | 同 `DamagePlaceHistoryTest`・tests/log_audit.py |
+| ログの監査（受けたダメージの場所の組み立て直し・［PERFORM］の追加・「ひれがえし」の基本となるダメージ・［HELP］の順番と枚数） | 実装済み・対戦で確かめた | 9 章 | tests/log_audit.py・`tools/existing_effect_games.py --batch v0.99` |
+| 未対応の数（全対象 196・neo 90・拡張パック以外 106） | 確かめた | kyuura data/engine_targets.json（73a1690）から今の登録を差し引いた数 | test_catalog_contract.py |
+| 3 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
+
+## v0.98: アンノーンB・Y・V・G の 4 枚
+
+[unown-bear-yield-vanish-give-v0.98.md](unown-bear-yield-vanish-give-v0.98.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 4 枚の登録（写しの組 pool_v0_98。印刷の文面のまま。［GIVE］の半角のかぎかっこ・「一回」を正規化しない。デッキのアンノーンは文字を合わせて 4 枚まで（共通の規定の再利用）） | 実装済み・テスト済み | kyuura 73a1690 の写し・v0.96 の deck_problems | test_unown_bear_yield_vanish_give_v0_98.py `RegistrationTest`・`DeckLimitTest` |
+| ［BEAR］（自分の番ごとに 1 回。自分の場の今の姿がアンノーンのポケモンのカウンター 1 個をこのカードへ。ダメージではない。残りHPが 10 なら使えない。このカード自身から選ぶのは BE1、どのアンノーンにもカウンターがないのは BE2） | 実装済み・テスト済み | 印刷の文面・GR-2000-P320-COUNTER-MOVE・v0.42 | 同 `BearTest` |
+| ［YIELD］・［GIVE］（自分の番ごとに 1 回。コインの「おもて」で山札の「超」・基本エネルギーカード 1 枚を自分の場のアンノーン・ポケモンにつけて切る。［GIVE］はこのカードと I・V・E が自分のベンチにいるとき。選べるカード・つける先がなければ PW3（コインの前）。山札のレインボーエネルギーは RB2。うらのカードは FD1） | 実装済み・テスト済み | 印刷の文面・v0.85・v0.97 | 同 `YieldTest`・`GiveTest` |
+| ［VANISH］（手札から場に出したときだけ。コインの「おもて」で、このカード以外の自分の場のアンノーンについているカードをすべてトラッシュしてから手札にもどす。きぜつではない。ほかのアンノーンがいないのは VN1。うらのカードは FD1、はなれられないバトル場のポケモンは AL2） | 実装済み・テスト済み | 印刷の文面・v0.43・v0.52・v0.82・v0.93 | 同 `VanishTest` |
+| ベンチの文字の条件の共通の確かめ（`require_bench_letters`。v0.97 の［FIND］・［JOIN］から分けた。動きは同じ） | 実装済み・テスト済み | v0.97 | test_unown_idfnj_powers_v0_97.py `FindJoinTest`・同 `GiveTest` |
+| ログの監査（［BEAR］の移動元・残りHP・移動先、［YIELD］・［GIVE］のコインのあとの付与、［VANISH］のコイン → トラッシュ → 手札にもどす） | 実装済み・対戦で確かめた | 9.2 節・9.3 節 | tests/log_audit.py・`tools/existing_effect_games.py --batch v0.98` |
+| 未対応の数（全対象 199・neo 93・拡張パック以外 106） | 確かめた | kyuura data/engine_targets.json（73a1690）から今の登録を差し引いた数 | test_catalog_contract.py |
+| 4 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
+
+## v0.97: kyuura のアンノーンの調査の取り込みと、アンノーンI・D・F・[N]・[J] の 5 枚
+
+[unown-research-idfnj-v0.97.md](unown-research-idfnj-v0.97.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 写しの元・研究の基準を kyuura 73a1690 に上げる移行（移行の連鎖・段ごとの比べ・カードの画像による修正 `card_image_check` の出どころ・kyuura の論点の事例のうちエンジンの裁定 id のないもの・`issue_not_in_index`） | 実装済み・テスト済み（写しの 1,169 枚の値は変わらない） | kyuura 73a1690 の台帳・研究の記録 | test_unown_research_idfnj_v0_97.py |
+| デッキの規定（I・D・F は訂正されたルール文で上限 4 を持つ。文字を合わせて 4 枚まで） | 実装済み・テスト済み | CR-UNOWN-DECK-LIMIT-ALL-LETTERS・p.308 | test_unown_idfnj_powers_v0_97.py `DeckLimitTest` |
+| ［INCREASE］（手札から場に出したときだけ。ベンチに空きがなければ機会がない。山札の「アンノーン」をちょうど 1 枚ベンチに出して切る。選べるカードがなければ PW3） | 実装済み・テスト済み | 印刷の文面・v0.43・v0.96 | 同 `IncreaseTest` |
+| ［FIND］・［JOIN］（自分の番ごとに 1 回。このカードと決まった文字が自分のベンチにいるとき。山札のトレーナーカード・たねポケモンか進化カードを見せて手札に加えて切る。選べるカードがなければ PW3） | 実装済み・テスト済み | 印刷の文面・v0.43 | 同 `FindJoinTest` |
+| ［DARK df］・［NORMAL df］（持ち主の場のアンノーンが悪・無色のポケモンから受けるワザのダメージ -30。自身は 8 段階・ほかは 6 段階。同じ力の 2 匹以上で読み方が結果を変えれば DF1。特殊能力のダメージは DF2） | 実装済み・テスト済み | CR-UNOWN-DF-…・p.321 | 同 `DarkNormalDfTest` |
+| 効果を除くワザ（スピードスターの SS1 にコードを付けた・ブラッキーの FA1・ヤミカラスは受けるポケモン自身の効果だけを除き SS1 の比べを外した） | 実装済み・テスト済み（ヤミカラスは意図した既存の動きの変化） | v0.60・v0.89・v0.92 | 同 `IgnoredEffectsTest` |
+| ログの監査（［DARK df］・［NORMAL df］の 6・8 段階・［INCREASE］の機会と山札からベンチ・［FIND］・［JOIN］の山札から手札。効果を除くワザで受けるポケモン自身の効果を予想しない（既存の穴）） | 実装済み・対戦で確かめた | 13.2 節・13.3 節 | tests/log_audit.py・`tools/existing_effect_games.py --batch v0.97` |
+| 未対応の数（全対象 203・neo 97・拡張パック以外 106） | 確かめた | kyuura data/engine_targets.json（73a1690）から今の登録を差し引いた数 | test_catalog_contract.py |
+| 5 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（I・D・F のルール文は kyuura が画像で埋めた値） | — |
 
 ## v0.96: アンノーン 7 枚と遺跡の石版 2 枚
 

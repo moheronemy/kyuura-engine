@@ -587,6 +587,15 @@ POOL_KEYS = (
     "pool_v0_94",  # v0.94（入れ替え・帰還のワザのポケモン 13 枚。docs/switch-return-attacks-v0.94.md）
     "pool_v0_95",  # v0.95（手札・山札を見る効果とカードを動かすポケモン 11 枚。docs/private-looks-deck-movement-v0.95.md）
     "pool_v0_96",  # v0.96（アンノーン 7 枚と遺跡の石版 2 枚。docs/unown-family-powers-v0.96.md）
+    "pool_v0_97",  # v0.97（アンノーンI・D・F・[N]・[J] の 5 枚。docs/unown-research-idfnj-v0.97.md）
+    "pool_v0_98",  # v0.98（アンノーンB・Y・V・G の 4 枚。docs/unown-bear-yield-vanish-give-v0.98.md）
+    "pool_v0_99",  # v0.99（アンノーンP・H とタッツーの 3 枚。docs/unown-perform-help-history-v0.99.md）
+    "pool_v0_100",  # v0.100（ドーブル・ムウマの 2 枚。docs/sketch-perish-song-history-v0.100.md）
+    "pool_v0_101",  # v0.101（ソーナンス・アンノーンK の 2 枚。docs/counter-keep-energy-protection-v0.101.md）
+    "pool_v0_102",  # v0.102（トランセル・バリヤードの 4 枚。docs/weakness-resistance-powers-v0.102.md）
+    "pool_v0_103",  # v0.103（ミュウの 2 枚。docs/neutral-shield-attack-origin-v0.103.md）
+    "pool_v0_104",  # v0.104（回復のワザを持つポケモンの 12 枚。docs/healing-pokemon-v0.104.md）
+    "pool_v0_105",  # v0.105（回復・山札からの進化・コインの分岐のポケモンの 5 枚。docs/recovery-evolution-coin-branches-v0.105.md）
 )
 
 

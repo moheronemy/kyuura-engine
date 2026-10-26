@@ -247,8 +247,10 @@ class RegistrationTest(unittest.TestCase):
                 if entry is not None and isinstance(entry.effect, E.EntryPower):
                     holders.append((card_id, definition.stage))
         self.assertTrue(holders)
-        self.assertEqual([c for c, stage in holders if stage == "basic"], ["neo3-010", "PF2-002", "PRN-035"])
-        for card in ("neo3-010", "PF2-002", "PRN-035"):
+        # v0.97: アンノーンI（neo2-023。［INCREASE］。手札から場に出したとき。docs/unown-research-idfnj-v0.97.md 6 章）
+        # v0.98: アンノーンV（neo4-053。［VANISH］。手札から場に出したとき。docs/unown-bear-yield-vanish-give-v0.98.md 5 章）
+        self.assertEqual([c for c, stage in holders if stage == "basic"], ["neo3-010", "PF2-002", "PRN-035", "neo2-023", "neo4-053"])
+        for card in ("neo3-010", "PF2-002", "PRN-035", "neo2-023", "neo4-053"):
             self.assertTrue(E.DEFAULT_EFFECTS.power_entry(card, 0).effect.from_hand_only)
 
     def test_card_sources_and_research_links(self):

@@ -1,7 +1,8 @@
 """カードデータの読み込みと、対応・未対応の分類。
 
 カードデータの由来: kyuura（https://github.com/moheronemy/kyuura）commit
-7d3f4ca76c084774efb4ac6a1d3a943387e183c3 の data/cards.json（v0.69 から。v0.68 までは ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691）。
+73a169063463bbf7bcaa3137d70cbf9721d11534 の data/cards.json（v0.97 から。v0.69〜v0.96 は 7d3f4ca76c084774efb4ac6a1d3a943387e183c3、v0.68 までは
+ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691）。
 過去の原典照合は kyuura_engine/data/card_verification.json（ecb2d69 の写しと照らした履歴）。
 """
 
@@ -65,7 +66,7 @@ from tests.helpers import (
 )
 from tests.release_catalog import cards_after
 
-KYUURA_COMMIT = "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"
+KYUURA_COMMIT = "73a169063463bbf7bcaa3137d70cbf9721d11534"  # v0.97 から（v0.69〜v0.96 は 7d3f4ca76c084774efb4ac6a1d3a943387e183c3）
 # v0.68 までの写しの元。過去の原典照合の記録（card_verification.json。履歴）はこのコミットの写しと照らした
 PREVIOUS_KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
 ROOT = Path(__file__).resolve().parent.parent
@@ -393,7 +394,9 @@ class ProvenanceTest(unittest.TestCase):
         # v0.69: 照合の記録は履歴で書き換えない（ecb2d69 の写しと照らした）。写しの元は 7d3f4ca で、写しの作り直しの検査（previous_copy_problems）が、
         # ecb2d69 にあったカードの写す欄が kyuura の修正の欄と出典の記録の欄を除いて同じことを確かめる
         self.assertEqual(verification["kyuura_commit"], PREVIOUS_KYUURA_COMMIT)
-        self.assertEqual({c["previous_source"] for c in extract["kyuura_corrections"]}, {PREVIOUS_KYUURA_COMMIT})
+        # v0.97: 修正ごとの前の写しの元は、kyuura が当てはめた移行の段の前（v0.69 の段は ecb2d69、v0.97 の段（アンノーンI・D・F のルール文）は 7d3f4ca）
+        self.assertEqual({(c["migration"], c["previous_source"]) for c in extract["kyuura_corrections"]},
+                         {("v0.69", PREVIOUS_KYUURA_COMMIT), ("v0.97", "7d3f4ca76c084774efb4ac6a1d3a943387e183c3")})
         self.assertEqual(extract["source"]["commit"], KYUURA_COMMIT)
         for card_id in extract["pool_v0_1"]:
             record = verification["cards"][card_id]

@@ -1955,6 +1955,205 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.105: 回復・山札からの進化・コインの分岐の 5 枚
+
+[recovery-evolution-coin-branches-v0.105.md](recovery-evolution-coin-branches-v0.105.md)。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534` のまま（今回の追加を理由に上げていない）。写しの組 `pool_v0_105`（5 枚）を加え、写しの作り直しの道具で作った
+  （手で直していない）。v0.104 までの 1,203 枚の値・移行の記録は変わっていない。
+- 5 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-26・外部照合なし。記録 1,116 → 1,121）。研究の基準に 5 枚を指す LD-・CC-・CR-・UQ-・エラッタはなく
+  （カードの id・セレビィの pcg-search の id `neopf3002`・名前・ワザの名前（日本語と英語の欄）で、写し以外の data/ と docs/ を探した。見つかったのはカード・対象の一覧・転記元の写し・商品の一覧と、
+  名前の一致する別のもの・部分の一致）、`kyuura_records` は空。処理に使う文面はどれも印刷の文面（研究の対応表の `adopted_printed_text` に 7 を加えた。1,155 → 1,162。説明文のないヒマナッツの
+  「ころがる」は持たない）。
+- 日本語の文面の転記元: トランセル・バタフリーが nazonobasho.com、ヒマナッツ・デリバードがポケモンWiki、セレビィが pcg-search.com。同じ所との一致を独立した照合に数えず、新しく画像を見たことに
+  していない。セレビィのレベルの欠け（`jp_print.level`）は補っていない。5 枚とも同じカードの組・同じデータの再録群はない。
+- 英語の欄との違い（日本語を採用し、英語で置きかえない。この違いだけで保留にしない）: からやぶりしんか・ひざしをあびるの「Shuffle your deck afterward」（いつも切る。日本語は「山札を見た場合は」）。
+  英語版の別の印刷の文面で、転記の誤りとは決めていない。
+- 一般規定（GR-2000-P309-EVOLUTION-BY-NAME・GR-2000-P310-EVOLUTION・GR-2000-P312-DECK-HAND-DISCARD・GR-2000-P319-HP-AND-DAMAGE・GR-2000-P320-RECOVERY・GR-2000-P321-DAMAGE-ORDER・
+  GR-2000-P321-PREVENTED-ELEMENTS・GR-2000-P309-ATTACK-PROCEDURE）は既存の記録の再利用で、5 枚それぞれの独立した原典照合ではない。新しい停止コードはない（停止コード 234・未解決の裁定 235 のまま）。
+- 報告事項（kyuura の作業）: engine_targets.json の 5 枚の `engine_status` を v0.105 の登録で写すと `registered` になる。英語の欄との違い（切る条件）・ハイパーリバースの目安の欄が null で
+  説明が量を決める書き方を照合の対象にするかは kyuura の判断。
+
+## v0.104: 回復のワザを持つポケモンの 12 枚
+
+[healing-pokemon-v0.104.md](healing-pokemon-v0.104.md)。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534` のまま（今回の追加を理由に上げていない）。写しの組 `pool_v0_104`（12 枚）を加え、写しの作り直しの道具で作った
+  （手で直していない）。v0.103 までの 1,191 枚の値・移行の記録は変わっていない。
+- 12 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-26・外部照合なし。記録 1,104 → 1,116）。研究の基準に 12 枚を指す LD-・CC-・CR-・UQ-・エラッタはなく
+  （カードの id・pcg-search の id・同じカードの組 `SC-ES1-001`・`SC-ES2-007`・`SC-PR1-002`・名前・ワザの名前で、data/sidecar・rule_history・rule_differences・curation を探した。名前の一致は
+  同じ名前の別のカードか部分の一致）、`kyuura_records` は空。処理に使う文面はどれも印刷の文面（研究の対応表の `adopted_printed_text` に 23 を加えた。1,132 → 1,155。説明文のないヒメグマの
+  「ひっかく」は持たない）。
+- 同じカードの組: QSG-001・QSG-018・PR1-004 は日本語の名前・pokemon 欄が ES1-001・ES2-007・PR1-002 と同じ（id ごとに記録し、登録の値は同じ）。IP1-018 は `SC-ES1-001` だが、かいふくの
+  文面の最後に句点がある（ES1-001・QSG-001 にはない）。写しを直さず、文面ごとに登録した（処理の値は同じ）。
+- 日本語の文面の転記元: 8 枚が pcg-search.com、キレイハナ・ミルタンク・ヒメグマが nazonobasho.com、イノムーがポケモンWiki。同じ所との一致を独立した照合に数えず、新しく画像を見たことに
+  していない。データの欠け（フシギダネ・ジュゴンの `pokemon.dex`・`jp_print.level`、プリンの `jp_print.level`）は補っていない。ジュゴンの進化元は kyuura の `field_sources` で pcg-search.com の
+  進化の並び。
+- 英語の欄との違い（日本語を採用し、英語で置きかえない。この違いだけで保留にしない）: フラワーダンスの「cards with Bellossom in their names」（名前に含む）・プリンのかいふくの「Remove 1 damage
+  counter from Jigglypuff.」（選ばない）。どちらも英語版の別の印刷の文面で、転記の誤りとは決めていない。
+- 一般規定（GR-2000-P320-RECOVERY・GR-2000-P309-ATTACK-PROCEDURE・GR-2000-P321-PREVENTED-ELEMENTS）は既存の記録の再利用で、12 枚それぞれの独立した原典照合ではない。新しい停止コードはない
+  （停止コード 234・未解決の裁定 235 のまま）。
+- 報告事項（kyuura の作業）: engine_targets.json の 12 枚の `engine_status` を v0.104 の登録で写すと `registered` になる。英語の欄との違い・IP1-018 の句点を照合の対象にするかは kyuura の判断。
+
+## v0.103: ミュウの 2 枚
+
+[neutral-shield-attack-origin-v0.103.md](neutral-shield-attack-origin-v0.103.md)。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534` のまま（今回の追加を理由に上げていない）。写しの組 `pool_v0_103`（2 枚）を加え、写しの作り直しの道具で作った
+  （手で直していない）。v0.102 までの 1,189 枚の値・移行の記録は変わっていない。2 枚とも `data_gaps` は `jp_print.level`（ほかのカード・名前から補っていない）。
+- 2 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-26・外部照合なし。記録 1,102 → 1,104）。研究の基準に 2 枚を指す LD-・CC-・CR-・UQ-・エラッタはなく
+  （カードの id・pcg-search の id `1stp005`・`1stp012`・同じカードの組 `SC-PR1-005`・特殊能力の名前で探した）、`kyuura_records` は空。処理に使う文面はどれも印刷の文面（研究の対応表の
+  `adopted_printed_text` に 4 を加えた。1,128 → 1,132）。PR1-005/PR1-012 は日本語の名前・pokemon 欄の対戦の値が同じ（id ごとに記録し、登録の値は同じ）。
+- kyuura data/rule_history.json の `card_lists.poke_body`（2002 年の「ポケボディー」の一覧）・docs/rules/errata-history.md・docs/rules/mixed-2002.md は 1stp005・1stp012 を同じ行で挙げ、
+  どちらのプロモかを区別していない（kyuura の注）。後年の分類で、2000.02.14 版の根拠・2 枚それぞれの独立した照合にしていない（エラッタの `errata` の `cards` ではない）。
+- kyuura data/Silver_Bible_structured.md（研究の記録ではない）に特殊能力の名前が当たった。内容を根拠にしていない（ガイドブックの読み直しをしない）。
+- 日本語の文面の転記元は 2 枚とも pcg-search.com。同じ所との一致を独立した照合に数えず、新しく画像を見たことにしていない。外部照合・カードの画像の照合・公式の書籍の新しい照合はしていない。
+- ねんりきの日本語「…相手を「マヒ」状態にする。」と英語の欄（pokemontcg:basep-47）「…is now Confused.」が違う。日本語を採用し（英語で置きかえない）、この違いだけで保留にせず、原典と照合して
+  いないので転記の誤りとも決めていない。採用の記録の論点（`affects_behavior: false`）に書いた。
+- ［ニュートラルシールド］の「ミュウ」「つかえない」・段階・返す効果の分類は、v0.10・v0.49・v0.46・GR-2000-P321-ATTACK-DAMAGE の既存の読み方と根拠の再利用で、2 枚の独立した原典照合では
+  ない。新しい停止コードはない（停止コード 234・未解決の裁定 235 のまま）。
+- 報告事項（kyuura の作業）: engine_targets.json の 2 枚の `engine_status` を v0.103 の登録で写すと `registered` になる。ねんりきの日英の違いを照合の対象にするかは kyuura の判断。
+
+## v0.102: トランセル・バリヤードの 4 枚
+
+[weakness-resistance-powers-v0.102.md](weakness-resistance-powers-v0.102.md)。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534` のまま（今回の追加を理由に上げていない）。写しの組 `pool_v0_102`（4 枚）を加え、写しの作り直しの道具で作った
+  （手で直していない）。v0.101 までの 1,185 枚の値・移行の記録は変わっていない。4 枚とも `data_gaps` は `pokemon.dex`・`jp_print.level`（ほかのカード・名前から補っていない）。
+- 4 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-25・外部照合なし。記録 1,098 → 1,102）。研究の基準に 4 枚を指す LD-・CC-・CR-・UQ-・エラッタはなく
+  （カードの id・pcg-search の id・同じカードの組・特殊能力の名前で探した）、`kyuura_records` は空。処理に使う文面はどれも印刷の文面（研究の対応表の `adopted_printed_text` に 8 を加えた。
+  1,120 → 1,128）。ES1-003/QSG-003・ES1-021/QSG-030 は kyuura の同じカードの組（SC-ES1-003・SC-ES1-021）で、日本語の名前・pokemon 欄の対戦の値が同じ（id ごとに記録し、登録の値は同じ）。
+- `CC-PMCG1-003-P18`（第1弾のトランセルの照合）は、グリーンシールドのトランセルを別のカードと書いている。この照合・LD を、同じ名前という理由で 4 枚に当てはめていない。
+- kyuura data/rule_history.json の `card_lists.poke_body`（2002 年の「ポケボディー」の一覧。外部 id `1stex1003`・`1stex1021`）と docs/rules/errata-history.md の一覧に 2 つの特殊能力が
+  あるが、後年の分類で、2000.02.14 版の根拠・QSG の独立した照合にしていない（エラッタの `errata` の `cards` ではない）。
+- kyuura data/Silver_Bible_structured.md（研究の記録ではない）の［グリーンシールド］の書き方が印刷の文面と違う（語順・「すでに…だったなら、はたらかない」）。エンジンは根拠にしていない
+  （読み直しではない）。処理（ダメージを受ける時点の発生源の特殊状態）とは矛盾しない。
+- 日本語の文面の転記元は 4 枚とも pcg-search.com。同じ所との一致を独立した照合に数えず、新しく画像を見たことにしていない。外部照合・カードの画像の照合・公式の書籍の新しい照合はしていない。
+- 弱点・抵抗力の計算の段階・こんらんのダメージ・JS1・Z9 の扱いは、p.321・p.322・v0.57・v0.37・v0.17b の既存の根拠と適用範囲の再利用で、4 枚の独立した原典照合ではない。新しい停止コードは
+  ない（停止コード 234・未解決の裁定 235 のまま）。
+- 報告事項（kyuura の作業）: engine_targets.json の 4 枚の `engine_status` を v0.102 の登録で写すと `registered` になる。Silver_Bible_structured.md の［グリーンシールド］の書き方を記録に
+  するかは kyuura の判断。
+
+## v0.101: ソーナンス・アンノーンK の 2 枚
+
+[counter-keep-energy-protection-v0.101.md](counter-keep-energy-protection-v0.101.md)。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534` のまま（今回の追加を理由に上げていない）。写しの組 `pool_v0_101`（2 枚）を加え、写しの作り直しの道具で作った
+  （手で直していない）。v0.100 までの 1,183 枚の値・移行の記録（`source_migrations`・`data_migrations`）は変わっていない。2 枚とも `data_gaps` は空。
+- 2 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-25・外部照合なし。記録 1,096 → 1,098）。研究の基準に 2 枚を指す LD-・CC-・CR-・UQ-・エラッタはなく
+  （カードの id を data・docs から文字列で探して確かめた。pcg-search の id はない）、`kyuura_records` は空。カウンター・［KEEP］は印刷の文面（研究の対応表の `adopted_printed_text` に加えた。
+  1,118 → 1,120）。めざめるパワーは説明文がない。`card_verification.json` には加えていない。
+- kyuura data/rule_history.json の `card_lists.poke_body`（MIX-POWER-ERRATA。2002-05-24 の「ポケボディー」の一覧）と docs/rules/errata-history.md の一覧にアンノーンK があるが、後年の分類で、
+  2000.02.14 版の根拠として新しく採っていない（エラッタの `errata` の `cards` ではない。v0.96〜v0.99 のアンノーンと同じ扱い）。
+- 日本語の文面の転記元は nazonobasho.com（ソーナンス）・wiki.pokemonwiki.com（アンノーンK）。この転記・依頼の引用・cards.json と cards.csv の一致を、新しい画像の確認・独立した照合として
+  記録していない。外部照合・カードの画像の照合・公式の書籍の新しい照合はしていない。
+- カウンターの返すダメージの分類・計算・きぜつの扱いは、こうらがえし（v0.13）・クロスカウンター（v0.45。LD-PMCG5-054-ATK0）の既存の根拠と適用範囲の再利用で、ソーナンスの独立した原典照合では
+  ない。
+- 新しい停止コード 3 件（KP1 `UNRESOLVED_KEEP_PROTECTED_TARGET`・KP2 `UNRESOLVED_KEEP_VOIDED_DISCARD_COIN`・KP3 `UNRESOLVED_KEEP_DETACHED_ENERGY_DISCARD`。どれも `not_in_kyuura`）を
+  研究の対応表の `stop_codes` に加えた（停止コード 231 → 234・未解決の裁定 232 → 235）。kyuura の論点の事例のうちエンジンの裁定 id のないもの（`kyuura_cases_without_engine_ruling`）は
+  kyuura と同じまま。
+- 報告事項（kyuura の作業）: KP1・KP2・KP3 の事例がない（KP1 は UQ-TARGET-WITHOUT-EFFECT、KP2 は UQ-COIN-IN-NULLIFIED-ELEMENT と同じ形）。engine_targets.json の 2 枚の
+  `engine_status` を v0.101 の登録で写すと `registered` になる。［KEEP］の「トレーナーカード」にスタジアムを含むか・［エネエネ］のカードの当時の裁定は資料を探す候補（docs 11 章）。
+
+## v0.100: ドーブル・ムウマの 2 枚
+
+[sketch-perish-song-history-v0.100.md](sketch-perish-song-history-v0.100.md)。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534` のまま（今回の追加を理由に上げていない）。写しの組 `pool_v0_100`（2 枚）を加え、写しの作り直しの道具で作った
+  （手で直していない）。v0.99 までの 1,181 枚の値・移行の記録（`source_migrations`・`data_migrations`）は変わっていない。2 枚とも `data_gaps` は空。
+- 2 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-25・外部照合なし）。研究の基準に 2 枚を指す LD-・CC-・CR-・UQ-・エラッタはなく（カードの id で
+  確かめた。pcg-search の id はない）、`kyuura_records` は空。ワザ 3（スケッチ・やみのひとみ・ほろびのうた）は印刷の文面（研究の対応表の `adopted_printed_text` に加えた。1,115 → 1,118）。
+  `card_verification.json` には加えていない。
+- kyuura data/curation/card_differences.json#neo2-052（確度: 確実。日本版はエネルギーだけを不要とし、英語版は使うために必要なことも不要とする）は日英の違いの記録として写しに保ち、処理に
+  使う文面にしていない（最新の説明の記録ではない。研究の対応表の `difference_text` にも入れない）。
+- kyuura data/rule_history.json の RUL-ENERGY-DISCARD-ATTACKS の notes の『トレーナーズ』Vol.9 p.22 の Q&A（2000-12-01。スケッチで第1弾のウインディの「かえんほうしゃ」を使う例）は後年の
+  記録で、2000.02.14 版の裁定として新しく採らない（記録の `cards` は PMCG1-019 で、ドーブルを指さないので `kyuura_records` に入れない）。
+- 日本語の文面の転記元は nazonobasho.com（ドーブル）・wiki.pokemonwiki.com（ムウマ）。この転記・cards.json と cards.csv の一致を、新しい画像の確認・独立した照合として記録していない。
+  外部照合・カードの画像の照合・公式の書籍の新しい照合はしていない。
+- 新しい停止コード 3 件（SK1 `UNRESOLVED_SKETCH_PRESENCE`・SK2 `UNRESOLVED_SKETCH_COPIED_ATTACK`・PSG1 `UNRESOLVED_PERISH_SONG_RECEIVED_ATTACK`。どれも `not_in_kyuura`）を研究の対応表の
+  `stop_codes` に加えた（停止コード 228 → 231・未解決の裁定 229 → 232）。エンジンの情報の不足のコード `UNSUPPORTED_HISTORY_TURN_RECORD_MISSING` は研究上の未解決ではないので加えていない。
+  kyuura の論点の事例のうちエンジンの裁定 id のないもの（`kyuura_cases_without_engine_ruling`）は kyuura と同じまま（2 枚の事例は kyuura にない）。
+- 略号の訂正: v0.99 の停止コード `UNRESOLVED_PERFORM_DAMAGE_PLACES` の略号を、v0.47 の PF1（`UNRESOLVED_PLAY_AS_POKEMON_SETUP`）と重ならない PFM1 に改めた（研究の対応表の `ruling_id`・
+  アンノーンP の採用の記録の注記・下の v0.99 の節の 2 か所。長い停止コード・数は変わらない）。
+- 報告事項（kyuura の作業）: SK1・SK2・PSG1 の論点がない（SK2・PSG1 は UQ-COPIED-ATTACK と同じ形）。engine_targets.json の 2 枚の `engine_status`（`new_effect_needed`）を v0.100 の登録で
+  写すと `registered` になる（docs 11 章）。
+
+## v0.99: アンノーンP・H とタッツーの 3 枚
+
+[unown-perform-help-history-v0.99.md](unown-perform-help-history-v0.99.md)。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534` のまま（今回の追加を理由に上げていない）。写しの組 `pool_v0_99`（3 枚）を加え、写しの作り直しの道具で作った
+  （手で直していない）。v0.98 までの 1,178 枚の値・移行の記録（`source_migrations`・`data_migrations`）は変わっていない。
+- 3 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-25・外部照合なし）。研究の基準に 3 枚を指す LD-・CC-・CR-・UQ-・エラッタはなく（カードの id で
+  確かめた。pcg-search の id はない）、`kyuura_records` は空。特殊能力 2（`power/0`）・タッツーのワザ（`attack/0`）は印刷の文面（研究の対応表の `adopted_printed_text` に加えた）。説明文の
+  ないワザ（めざめるパワー 2）は文面・出典を持たない。`card_verification.json` には加えていない。
+- kyuura data/rule_history.json の `card_lists.poke_body`（MIX-POWER-ERRATA。2002-05-24 の Q&A の「ポケボディー」の一覧）にアンノーンP があるが、後年の分類で、2000.02.14 版の規定としては
+  使わない（エラッタの `errata` の `cards` ではないので `kyuura_records` にも入れない。v0.8 からの扱いと同じ）。
+- デッキの「文字を合わせて 4 枚まで」は、ほかのカードの記録・共通の規定の再利用で、アンノーンP・H を直接確かめた記録ではない（kyuura の CR-UNOWN-DECK-LIMIT-ALL-LETTERS が挙げるのは
+  v0.97 の 5 枚と遺跡の石版）。
+- 日本語の文面の転記元は wiki.pokemonwiki.com（アンノーンP・H）・nazonobasho.com（タッツー）。転記元の「カード名称」の「アンノーン[P]」などの書き方は、写しの名前を変えない（カード名の
+  表記の問題は範囲外）。外部照合・カードの画像の照合・公式の書籍の新しい照合はしていない。
+- 新しい停止コード 1 件（PFM1 `UNRESOLVED_PERFORM_DAMAGE_PLACES`。`not_in_kyuura`）を研究の対応表の `stop_codes` に加えた（停止コード 227 → 228・未解決の裁定 228 → 229）。エンジンの
+  情報の不足のコード `UNSUPPORTED_HISTORY_DAMAGE_PLACE_UNKNOWN` は研究上の未解決ではないので加えていない。kyuura の論点の事例のうちエンジンの裁定 id のないもの
+  （`kyuura_cases_without_engine_ruling`）は kyuura と同じまま（3 枚の事例は kyuura にない）。
+- 報告事項（kyuura の作業）: PFM1 の論点がない。engine_targets.json の 3 枚の `engine_status`（`new_effect_needed`）を v0.99 の登録で写すと `registered` になる（docs 10 章）。
+
+## v0.98: アンノーンB・Y・V・G の 4 枚
+
+[unown-bear-yield-vanish-give-v0.98.md](unown-bear-yield-vanish-give-v0.98.md)。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534` のまま（今回の追加を理由に上げていない）。写しの組 `pool_v0_98`（4 枚）を加え、写しの作り直しの道具で作った
+  （手で直していない）。v0.97 までの 1,174 枚の値・移行の記録（`source_migrations`・`data_migrations`）は変わっていない。
+- 4 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-25・外部照合なし）。研究の基準に 4 枚を指す LD-・CC-・CR-・UQ-・エラッタはなく（カードの id で
+  確かめた。pcg-search の id はない）、`kyuura_records` は空。特殊能力 4 は `power/0` の印刷の文面（研究の対応表の `adopted_printed_text` に加えた）。説明文のないワザ（めざめるパワー 4）は
+  文面・出典を持たない。`card_verification.json` には加えていない。
+- デッキの「文字を合わせて 4 枚まで」・カウンターの移動はダメージではないこと（GR-2000-P320-COUNTER-MOVE）は、ほかのカードの記録・共通の規定の再利用で、この 4 枚を直接確かめた記録では
+  ない（kyuura の CR-UNOWN-DECK-LIMIT-ALL-LETTERS が挙げるのは v0.97 の 5 枚と遺跡の石版）。
+- 日本語の文面の転記元は wiki.pokemonwiki.com（4 枚とも）。転記元の「カード名称」の「アンノーン[B]」などの書き方は、写しの名前（「アンノーンB」）を変えない（カード名の表記の問題は範囲外）。
+  外部照合・カードの画像の照合・公式の書籍の新しい照合はしていない。
+- 新しい停止コード 3 件（BE1 `UNRESOLVED_POWER_COUNTER_MOVE_TO_SAME_POKEMON`・BE2 `UNRESOLVED_POWER_COUNTER_MOVE_WITHOUT_COUNTERS`・VN1 `UNRESOLVED_POWER_RETURN_WITHOUT_TARGET`。どれも
+  `not_in_kyuura`）を研究の対応表の `stop_codes` に加えた（停止コード 224 → 227・未解決の裁定 225 → 228）。kyuura の論点の事例のうちエンジンの裁定 id のないもの（`kyuura_cases_without_engine_ruling`）
+  は kyuura と同じまま（4 枚の事例は kyuura にない）。
+- 報告事項（kyuura の作業）: `UQ-CARD-USE-WITHOUT-TARGET` の事例に［BEAR］（BE2）・［VANISH］（VN1）・［YIELD］・［GIVE］（PW3）がない。BE1 の論点がない。engine_targets.json の 4 枚の
+  `engine_status`（`new_effect_needed`）を v0.98 の登録で写すと `registered` になる（docs 10 章）。
+
+## v0.97: 写しの元・研究の基準を kyuura 73a1690 に上げる移行
+
+[unown-research-idfnj-v0.97.md](unown-research-idfnj-v0.97.md) の 2 章・3 章。
+
+- 写しの元・研究の基準を kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` から `73a169063463bbf7bcaa3137d70cbf9721d11534`（kyuura main の PR #5 のマージ。木は研究のコミット
+  `78d090c329aca58c4b5fbaefa2a1e5c089433b58` と同じ。78d090c 以後の差分はない）に上げた。2 回目の移行なので、移行を連鎖（ecb2d69 → 7d3f4ca → 73a1690。`KYUURA_MIGRATIONS`・写しの
+  `source_migrations`・`card_sources.json` の `data_migrations` の 2 段）にした。v0.69 の段の記録（前・あと・日付・修正）は書き換えていない。
+- 7d3f4ca → 73a1690 の data/cards.json の値の違いは、写しの外のアンノーンI・D・F（neo2-023・025・026）のルール文（null → 全文。kyuura の台帳 `FIX-neo2-023/025/026-RULES-TEXT-JA`、
+  根拠 `card_image_check`・種類 `transcription_omission`）と、出典の記録の欄（notes・D と [N] の jp_en_differences）・`data_gaps`・`corrections` だけ。写しの 1,169 枚の値は変わって
+  いない（写しの `cards` が同じ）。3 件の修正は、台帳の画像の記録（URL・sha256・取得日・カードの識別・確かめた範囲）を写しの `kyuura_corrections` の `evidence` に写して照らす。
+  画像を読んだのは kyuura で、エンジンは画像・公式の書籍を新しく照合していない。2 つのサイトの画像を独立した 2 枚の実物の照合に数えず、CC-・LD- の代わりにもしていない。
+- 研究の対応表: kyuura の論点 71 → 72（新しい UQ-SELF-EXCLUDING-POWER-COPIES）、新しい裁定 5 件（CR-UNOWN-…）、事例を加えた論点 3 件。kyuura の論点の事例のうちエンジンの裁定 id の
+  ないもの 13 件を `kyuura_cases_without_engine_ruling` に結び、CV1 を `issue_not_in_index`（論点はあるが kyuura の未解決の一覧に行がない）にした。採用の記録 7 件の `kyuura_records` を
+  研究の基準のコミットの記録に合わせた（採用したときのデータのコミット・記録した日は変えていない）。
+- 報告事項（kyuura の作業）: CV1（わるいデンリュウの［かんでん］。v0.86）は UQ-SELF-EXCLUDING-POWER-COPIES の事例と同じ問い。kyuura の engine_unresolved_index・engine_refs は v0.68 までの
+  取り込みで、CV1 の行・参照がない。
+
+## v0.97: アンノーンI・D・F・[N]・[J] の 5 枚
+
+[unown-research-idfnj-v0.97.md](unown-research-idfnj-v0.97.md) の 4 章〜。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534`（上の移行）。写しの組 `pool_v0_97`（5 枚）を加え、写しの作り直しの道具で作った（手で直していない）。I・D・F の
+  ルール文は kyuura の訂正（`FIX-neo2-023/025/026-RULES-TEXT-JA`）が当てはまった値で、写しで当てはめ直していない。1,169 枚の記録は変わっていない。
+- 5 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-25・外部照合なし）。`kyuura_records` は研究の基準でカードを指す記録（5 枚とも
+  CR-UNOWN-DECK-LIMIT-ALL-LETTERS。I・F・[J] は UQ-CARD-USE-WITHOUT-TARGET、D・[N] は CR-UNOWN-DF-… の 4 件と UQ-SELF-EXCLUDING-POWER-COPIES、[N] はさらに
+  UQ-NON-ATTACK-DAMAGE-MODIFIERS・UQ-SPEED-STAR-SCOPE）。特殊能力 5 は `power/0` の印刷の文面（研究の対応表の `adopted_printed_text` に加えた）。説明文のないワザ（めざめるパワー 5）は文面・
+  出典を持たない。LD-・CC-・エラッタはない。`card_verification.json` には加えていない。
+- 日本語の文面の転記元は nazonobasho.com（I・D・F。kyuura の id とサイトの番号の違い（D・F）と、D のページの名前の欄の既存の誤記は kyuura の記録のまま）・pcg-search.com（[N]・[J]。同じ
+  サイトとの照合は独立した照合にならない）。外部照合はしていない。画像を読んだのは kyuura で、エンジンは画像・公式の書籍を新しく照合していない（2 つのサイトの画像を独立した 2 枚の実物の
+  照合として数えない）。
+- 新しい停止コード 2 件（DF1 `UNRESOLVED_SELF_EXCLUDING_POWER_COPIES`・DF2 `UNRESOLVED_POWER_DAMAGE_RECEIVED_POWER`。どちらも `issue_not_in_index`）と、SS1 のコード
+  `UNRESOLVED_SPEED_STAR_SCOPE`（`kyuura_index_engine_key` SS1。コードのない問いから移した）を研究の対応表の `stop_codes` に加えた（停止コード 221 → 224・未解決の裁定 223 → 225）。kyuura の論点の
+  事例のうちエンジンの裁定 id のないもの 13 件のエンジンの扱いを、5 枚の登録に合わせた（I・F・[J] の選べるカードがない場面は既存の PW3。`engine_issue_differs`）。
+- 報告事項（kyuura の作業）: PW3 の論点の結び方（`UQ-UP-TO-ZERO-CHOICE`）と、I・F・[J] の事例の論点（`UQ-CARD-USE-WITHOUT-TARGET`）の違い。DF1・DF2・SS1 のコード。ヤミカラスのだましうちの
+  除く範囲（kyuura は決めていない。エンジンは v0.92 の型のとおり受けるポケモン自身の効果だけ）。kyuura の engine_targets.json を v0.97 の登録で写すと 5 枚の `engine_status` が `registered`
+  になる（docs 14 章）。
+
 ## v0.96: アンノーン 7 枚と遺跡の石版 2 枚
 
 [unown-family-powers-v0.96.md](unown-family-powers-v0.96.md)。

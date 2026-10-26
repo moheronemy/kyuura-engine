@@ -1979,6 +1979,10 @@ def _after_power_step(state: GameState, use: PowerUse, context: resolution.Conte
         steps = moves + ((reactions.SETTLE_POWER,),) + tuple(steps)
     else:
         resolution.after_power(state, context, knock_outs=effect.may_knock_out, converted=converted)
+        if state.phase in TERMINAL_PHASES:
+            # v0.103: 使用後の処理で対戦が終わった（トレーナーの効果の途中で場に出たゲンガーの［やみのちから］で、相手の場にポケモンがいなくなった）。もどる先のトレーナーは
+            # 対戦を終えるときにトラッシュした（``procedures.finish``）ので、続きの段はない（``reactions.run`` も対戦が終わったら残りを処理しない）
+            return () if defer else None
     # v0.86: 処理のあとの続き（docs/entry-energy-evolution-reactions-v0.86.md 2 章）: 反応の段（あまごい・［うか］のあとの反応）→ もどる先のトレーナーを使い終える（v0.43。
     # v0.85 までは、そのあいだにきぜつ・サイド・バトル場に出す決定が来ることを扱っていなかった。来たら、その決定の続きに持たせる）→ ［おたけび］の「使ったら、自分の番は終わる」
     tail = tuple(steps)
@@ -3870,7 +3874,9 @@ def _knock_out_power_decision_problems(state: GameState, d) -> list[str]:
     slot = next((slot for slot in powers_of(state, pokemon) if isinstance(power, tuple) and slot.key == PowerKey(*power)), None)
     if slot is None or not isinstance(slot.effect, BeamOnKnockOut):
         return [f"［ファイナルビーム］の決定の特殊能力 {power!r} が、ポケモン {pokemon.pokemon_id} の今持つ［ファイナルビーム］ではない"]
-    if pokemon.damage < max_hp(state, pokemon):
+    # v0.100: ワザの効果で「きぜつ」するポケモン（続きの情報の ``effect_ko``。ダメージによらない）は、HP 以上のダメージを受けていなくてよい
+    effect_ko = {entry[0] for entry in d.context_value("effect_ko", ())}
+    if pokemon.damage < max_hp(state, pokemon) and pokemon.pokemon_id not in effect_ko:
         problems.append(f"［ファイナルビーム］の決定の対象のポケモン {pokemon.pokemon_id} が HP 以上のダメージを受けていない")
     if not slot.effect.is_able(pokemon):
         problems.append(f"［ファイナルビーム］の決定の対象のポケモン {pokemon.pokemon_id} がねむり・マヒ・こんらん（使えない）")
@@ -4284,7 +4290,8 @@ def _history_problems(state: GameState) -> list[str]:
     - 記録の型は ``ATTACK_HISTORY_TYPES``。番は今の番以下で、2 つ前の番より古くない（番の最初に消す）
     - 記録は今の「このカード」のもの（いちばん上のカードが同じで、今の姿になった番より前でない。進化・退化で消す）
     - 使った記録は持ち主の番、受けた記録・ワザ以外で受けた記録は相手の番のもの。受けたワザを使ったのは相手。同じ種類の記録は 1 つの番に 1 つ
-    - 使った記録の宣言したワザ・処理したワザ、受けた記録のワザは、効果の登録表にあるワザ。受けた要素の種類・受けなかった理由は決まったもの"""
+    - 使った記録の宣言したワザ・処理したワザ、受けた記録のワザは、効果の登録表にあるワザ。受けた要素の種類・受けなかった理由は決まったもの
+    - v0.99: 受けた記録のバトル場で受けた分は、合計以下の 10 の倍数（場所の分からない記録の写しは None）"""
     from .effects import ATTACK_ELEMENTS, DAMAGE_ELEMENT
     from .history import KEPT_TURNS, VOID_REASONS, history_needed
     from .state import ATTACK_HISTORY_TYPES, AttackReceived, AttackUsed
@@ -4328,9 +4335,55 @@ def _history_problems(state: GameState) -> list[str]:
                         problems.append(f"{label} の受けた要素・受けなかった理由が決まったものではない")
                     if record.damage and DAMAGE_ELEMENT not in record.reached:
                         problems.append(f"{label} のダメージがあるのに、受けた要素にダメージがない")
+                    # v0.99: 受けた時にバトル場にいた分（None は場所の分からない記録の写し）は、合計以下の 10 の倍数
+                    if record.active_damage is not None and (not 0 <= record.active_damage <= record.damage or record.active_damage % 10):
+                        problems.append(f"{label} のバトル場で受けたダメージが、受けたダメージの合計以下の 10 の倍数ではない")
                 for k in keys:
                     if state.effects.attack_entry(k[0], k[1]) is None:
                         problems.append(f"{label} のワザ {k!r} が効果の登録表にない")
+    return problems + _turn_history_problems(state)
+
+
+def _turn_history_problems(state: GameState) -> list[str]:
+    """v0.100（docs/sketch-perish-song-history-v0.100.md 3 章）: プレイヤーの番ごとの記録（``GameState.turn_history``）の不変条件。
+
+    - プレイヤーの記録を読むワザのカードが対戦になければ空（``history.turn_history_needed``）
+    - 記録の型は ``TURN_HISTORY_TYPES``。番は 1 以上・今の番以下で、2 つ前の番より古くない。番の順
+    - 使ったワザの記録（``TurnAttack``）は番ごとに 1 つ・その番のプレイヤーのもので、宣言したワザ・処理したワザは効果の登録表にあるワザ。ワザを使った場のポケモンの番号は付けた番号
+    - 場にいたカードの記録（``TurnField``）は番ごとに 1 つ・その番でないプレイヤーのもので、カードはその持ち主の重ならない uid。うらのカードの数は 0 以上"""
+    from .history import KEPT_TURNS, turn_history_needed
+    from .state import TURN_HISTORY_TYPES, TurnAttack, TurnField
+
+    if not state.turn_history:
+        return []
+    if not turn_history_needed(state):
+        return ["プレイヤーの記録を読むワザのない対戦で、プレイヤーの番ごとの記録がある"]
+    problems = []
+    seen = set()
+    last = 0
+    for record in state.turn_history:
+        label = f"プレイヤーの番ごとの記録 {record!r}"
+        if type(record) not in TURN_HISTORY_TYPES:
+            problems.append(f"{label} の型がプレイヤーの記録ではない")
+            continue
+        if not (max(1, state.turn_number - KEPT_TURNS) <= record.turn <= state.turn_number) or record.turn < last:
+            problems.append(f"{label} の番が、今の番 {state.turn_number} から 2 つ前までにない・番の順ではない")
+        last = record.turn
+        key = (type(record).__name__, record.turn)
+        if key in seen:
+            problems.append(f"{label} と同じ種類の記録が同じ番にもう 1 つある")
+        seen.add(key)
+        if isinstance(record, TurnAttack):
+            if record.player != turn_owner(state, record.turn) or not 1 <= record.pokemon_id < state.next_pokemon_id:
+                problems.append(f"{label} のプレイヤー・場のポケモンの番号が正しくない")
+            for k in (record.declared,) + (() if record.processed is None else (record.processed,)):
+                if state.effects.attack_entry(k[0], k[1]) is None:
+                    problems.append(f"{label} のワザ {k!r} が効果の登録表にない")
+        elif isinstance(record, TurnField):
+            if record.player != 1 - turn_owner(state, record.turn) or record.face_down < 0 or len(set(record.cards)) != len(record.cards):
+                problems.append(f"{label} のプレイヤー・カード・うらのカードの数が正しくない")
+            if any(uid not in state.cards or state.cards[uid].owner != record.player for uid in record.cards):
+                problems.append(f"{label} のカードが、そのプレイヤーのカードではない")
     return problems
 
 
@@ -5073,6 +5126,7 @@ def _damage_reduction_decision_problems(state: GameState, d, player: int, attack
     from .damage import DamageReductionRequired
     from .effects import (
         OPPONENT_ACTIVE,
+        Receiving,
         attack_damage_modifiers,
         attack_ignores_resistance,
         calculate_with_stadium,
@@ -5102,7 +5156,7 @@ def _damage_reduction_decision_problems(state: GameState, d, player: int, attack
         collected = (*collected, stadium_coin_modifier(state, coin[0]))
     try:
         calculate_with_stadium(state, base, definition_views(state, attacker)[0], definition_views(state, receiver)[0], collected,
-                               weakness_resistance=context.get("weakness_resistance", True), orders=orders,
+                               receiving=Receiving(1 - player, receiver), weakness_resistance=context.get("weakness_resistance", True), orders=orders,
                                resistance=context.get("resistance", True) and attack_ignores_resistance(state, attacker, receiver) is None)
     except DamageReductionRequired as need:
         if tuple(d.options) != need.choices or context.get("value") != need.value:
@@ -5302,7 +5356,7 @@ def _damage_order_decision_problems(state: GameState, d, player: int, attacker: 
     決めるプレイヤー（2・5・6 段階はワザを使うプレイヤー、7・8 段階は受けるポケモンの持ち主。p.321）・選べるもの（並べかえの位置）・選ぶ数を確かめる。"""
     from .damage import DAMAGE_STEP_CHOOSER, DamageOrderRequired, step_orders
     from .effects import calculate_with_stadium
-    from .effects import OPPONENT_ACTIVE, SELF, attack_damage_modifiers, attack_ignores_resistance
+    from .effects import OPPONENT_ACTIVE, SELF, Receiving, attack_damage_modifiers, attack_ignores_resistance
 
     context = dict(d.context)
     step, target, base = context.get("step"), context.get("target"), context.get("base")
@@ -5333,7 +5387,7 @@ def _damage_order_decision_problems(state: GameState, d, player: int, attacker: 
         return [f"順番の決定の {step} 段階の変更効果 {modifiers!r} が、今の場で集めた効果と違う"]
     try:
         calculate_with_stadium(state, base, definition_views(state, attacker)[0], definition_views(state, receiver)[0], collected,
-                                weakness_resistance=context.get("weakness_resistance", True), orders=orders,
+                                receiving=Receiving(owner, receiver), weakness_resistance=context.get("weakness_resistance", True), orders=orders,
                                 resistance=context.get("resistance", True) and attack_ignores_resistance(state, attacker, receiver) is None)
     except DamageOrderRequired as need:
         if need.step == step:

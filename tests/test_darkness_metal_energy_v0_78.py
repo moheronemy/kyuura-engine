@@ -86,6 +86,7 @@ from tests.helpers import (
     WOOPER_NEO1,
     apply_kernel,
     build_test_state,
+    kyuura_records_since_v0_69,
     with_coin_results,
 )
 from tests.log_audit import observation_problems, serialization_problems
@@ -205,7 +206,7 @@ class RegistrationTest(unittest.TestCase):
             with self.subTest(card=card):
                 record = sources[card]
                 self.assertEqual((record["basis"], record["status"], record["external_checks"], record["kyuura_records"], record["kyuura_commit"]),
-                                 ("kyuura_data", "adopted", [], [], "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"))
+                                 ("kyuura_data", "adopted", [], kyuura_records_since_v0_69(card), "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"))  # v0.97: 研究の基準を上げて加わった kyuura の記録（tests/helpers.py の V0_97_KYUURA_RECORDS_ADDED）
                 self.assertNotIn(card, json.dumps(verification))
                 if card in V0_78_ENERGIES:
                     self.assertEqual(record["play_text"], {"energy": "kyuura_printed_text"})

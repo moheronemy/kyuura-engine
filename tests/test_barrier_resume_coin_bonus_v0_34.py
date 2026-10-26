@@ -447,7 +447,11 @@ class BarrierCoinTest(unittest.TestCase):
                                     "CoinBonusDamageThenLeaveLock",
                                     # v0.94: ケンタロスの「ふんだりけったり」（1 枚のコインは追加のダメージと相手が選ぶ入れ替えだけを決める）・わるいドンファンの「すくいなげ」（1 枚のコインは
                                     # 相手を手札にもどすか入れ替えるかだけを決める）。キレイハナの「フローラルスピン」は自分の入れ替えが残るので投げる（docs/switch-return-attacks-v0.94.md 6 章・8 章）
-                                    "CoinBonusDamageElseForceSwitch", "CoinReturnOpponentToHandElseForceSwitch"})
+                                    "CoinBonusDamageElseForceSwitch", "CoinReturnOpponentToHandElseForceSwitch",
+                                    # v0.105: セレビィの「サイコリーフ」（相手のエネルギーの個数ぶんのコインは追加のダメージだけを決める。与えたぶんの回復はコインが決める要素ではない）・
+                                    # デリバードの「プレゼント」（3 枚のコインは相手へのダメージと相手の対戦ポケモンからとりのぞく回復だけを決める。docs/recovery-evolution-coin-branches-v0.105.md
+                                    # 5 章・6 章）
+                                    "CoinsPerDefenderEnergyBonusAndFullDrain", "ThreeCoinDamageOrOpponentHeal"})
         self.assertIn("DamageThenStatusOnHeadsElseSelfSwitch", flipping)
         self.assertIn("CoinBonusOrSelfDamage", flipping)
         self.assertIn("SelfDamageInsteadOnTails", flipping)

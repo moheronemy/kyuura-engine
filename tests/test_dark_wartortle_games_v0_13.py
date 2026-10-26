@@ -41,7 +41,7 @@ from kyuura_engine import (
 from kyuura_engine.decisions import POST_KNOCKOUT_POWER
 from kyuura_engine.rng import copy_rng, rng_fingerprint
 from tests.helpers import (
-    CARD_DATA_COMMIT_SINCE_V0_69,
+    CARD_DATA_COMMIT,
     with_card_data_commit_before_v0_69,
     BILL, DARK_WARTORTLE, DEFENDER, GIOVANNIS_MACHAMP, HAUNTER, MACHAMP, MUK, PLUSPOWER, POTION, ROCKET_SQUIRTLE, ROCKETS_MOLTRES, SEEL,
     SQUIRTLE, STARYU, SWITCH, WATER, coin_events, expand_decklist,
@@ -393,8 +393,8 @@ class GoldenDarkWartortleGameTest(unittest.TestCase):
         self.assertEqual((len(commands), state.turn_number, state.phase), GOLDEN_SHAPE)
         self.assertGreater(observed["shell_triggered"], 0)
         data = full(state)
-        # v0.69: 写しの元を上げた（7d3f4ca）。固定値は変えず、写しの元の 2 か所だけを確かめた移行でもどして比べる（tests/helpers.py）
-        self.assertEqual(data["card_data"]["commit"], CARD_DATA_COMMIT_SINCE_V0_69)
+        # v0.69・v0.97: 写しの元を上げた（7d3f4ca・73a1690）。固定値は変えず、写しの元の 2 か所だけを確かめた移行でもどして比べる（tests/helpers.py）
+        self.assertEqual(data["card_data"]["commit"], CARD_DATA_COMMIT)
         data = with_card_data_commit_before_v0_69(data)
         self.assertEqual(data.pop("effects"), "kyuura-engine-0.13")
         self.assertEqual(hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False).encode()).hexdigest(), GOLDEN_DIGEST)

@@ -36,6 +36,12 @@ v0.69（docs/equivalent-non-pack-cards-v0.69.md 4 章・7 章）: 利用者が�
    拡張パック以外の商品の同じカード（effects.EQUIVALENT_CARDS）の登録（``equivalent_registrations``）は、元のカードの登録と文面・出典が同じで、元のカードの登録が
    ほかの区分にあり、研究の基準のコミットで同じカードの組（same_card_group）にあって印刷の文面が同じ（4g）。
 
+v0.97（docs/unown-research-idfnj-v0.97.md 3 章）: kyuura が調査で立てた・事例を加えた論点のうち、kyuura の未解決の一覧（``engine_unresolved_index``。取り込んだ版までの
+   項目）に行のない停止コード（``kyuura_disposition`` が ``issue_not_in_index``）は、kyuura の論点があり、その停止コードを結んだ事例（下の 9）があり、一覧にコードがない
+   ことを確かめて、停止コードの集合の比べから除く（kyuura に記録がない ``not_in_kyuura`` とは別）。9. kyuura の論点の事例のうちエンジンの裁定 id のないもの
+   （``kyuura_cases_without_engine_ruling``）は、研究の基準のコミットのそのような事例のすべてと同じで、エンジンの扱い（停止コード・コードのない問い・登録していない）が
+   対応表・登録表と合う。
+
 kyuura のデータの写しは作らない（id と、照らした結果だけを使う）。問題があれば終了コード 1。
 
     python3 scripts/check_research_links.py --kyuura ../kyuura
@@ -91,7 +97,11 @@ def issues_in_links(links: dict) -> set[str]:
     found |= {v["kyuura_issue"] for v in links["codeless_questions"].values() if v["kyuura_issue"]}  # v0.31: kyuura に論点がない問いは None
     for section in ("unresolved_without_code", "deferred_card_questions", "implementation_assumptions_with_issue"):
         found |= {v["kyuura_issue"] for v in links[section]}
+    found |= {v["kyuura_issue"] for v in (links.get("kyuura_cases_without_engine_ruling") or {}).get("cases", [])}  # v0.97
     return found
+
+
+ISSUE_NOT_IN_INDEX = "issue_not_in_index"  # v0.97: kyuura に論点はあるが、kyuura の未解決の一覧にこのコードの行がない停止コード
 
 
 def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = None, registry=None) -> list[str]:
@@ -138,6 +148,18 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
             problems.append(f"{code}: kyuura の {key} は {row.get('kyuura_issue')}・{row.get('disposition')}、対応表は "
                             f"{entry['kyuura_issue']}・{entry['kyuura_disposition']}")
     pending |= set(keyed)
+    # v0.97: kyuura に論点はあるが、kyuura の未解決の一覧（取り込んだ版までの項目）にこのコードの行がない停止コード（issue_not_in_index）。論点があり、その停止コードを
+    # 結んだ kyuura の事例（9 の kyuura_cases_without_engine_ruling）があり、一覧にコードがないことを確かめて、比べる集合から除く
+    linked_cases = (links.get("kyuura_cases_without_engine_ruling") or {}).get("cases", [])
+    unindexed = {code: v for code, v in links["stop_codes"].items() if v["kyuura_disposition"] == ISSUE_NOT_IN_INDEX}
+    for code, entry in sorted(unindexed.items()):
+        if code in index:
+            problems.append(f"論点の一覧に行がないとした停止コード {code} が、kyuura の未解決の一覧にある（対応表を直す）")
+        if entry["kyuura_issue"] not in issues:
+            problems.append(f"{code}: 論点の一覧に行がないとした停止コードの論点 {entry['kyuura_issue']} が kyuura にない")
+        if not any(code in (case.get("engine") or {}).get("stop_codes", ()) and case.get("kyuura_issue") == entry["kyuura_issue"] for case in linked_cases):
+            problems.append(f"{code}: 論点 {entry['kyuura_issue']} の、この停止コードに結んだ kyuura の事例（kyuura_cases_without_engine_ruling）がない")
+    pending |= set(unindexed)
     expected = set(links["stop_codes"]) - pending
     if set(index) - pending != expected:
         problems.append(f"停止コードの集合が違う: kyuura だけ {sorted(set(index) - set(links['stop_codes']))}、"
@@ -626,6 +648,83 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
                 problems.append(f"applied_rule_records: 裁定 {record_id} の分類が {ruling.get('status')}（対応表は {entry.get('kyuura_status')}）")
         else:
             problems.append(f"applied_rule_records: {record_id} の種類 {entry.get('kind')!r} は rule_clause か ruling")
+
+    # 9. v0.97: kyuura の論点の事例のうち、エンジンの裁定 id（engine_ruling）を書いていないもの（kyuura の調査で加えた事例）と、エンジンでの扱い
+    problems += unlinked_case_problems(links, issues, registry_)
+    return problems
+
+
+def _registered_targets(registry, card_id: str) -> set[str]:
+    targets = {f"attack/{key.attack_index}" for key in registry.attack_keys() if key.card_id == card_id}
+    targets |= {f"power/{key.power_index}" for key in registry.power_keys() if key.card_id == card_id}
+    if registry.trainer_entry(card_id) is not None:
+        targets.add("trainer")
+    return targets
+
+
+def unlinked_case_problems(links: dict, issues: dict, registry) -> list[str]:
+    """v0.97: kyuura の論点の事例のうちエンジンの裁定 id のないもの（``kyuura_cases_without_engine_ruling``）を、研究の基準のコミットの論点と照らす。
+
+    - 対応表の事例（論点・カード・対象）の集まりが、研究の基準のコミットの、``engine_ruling`` のない事例のすべてと同じ（見落とし・余分がない）
+    - エンジンの扱いはちょうど 1 つ: ``stop_codes``（対応表の stop_codes にある停止コード。そのカードの対象が登録されている。コードの kyuura_issue が事例の論点と違えば
+      ``engine_issue_differs`` を真にする（kyuura への報告事項）。同じなら書かない）・``codeless_question``（codeless_questions にあり、論点が同じ。対象が登録されている）・
+      ``unregistered``（そのカードの対象を登録していない。その場面は起こらない）
+    """
+    problems: list[str] = []
+    section = links.get("kyuura_cases_without_engine_ruling")
+    if section is None:
+        return problems
+    cases = section.get("cases")
+    if not isinstance(cases, list):
+        return ["kyuura_cases_without_engine_ruling の cases はリスト"]
+    actual = set()
+    for issue_id, issue in issues.items():
+        for case in issue.get("cases") or ():
+            if case.get("engine_ruling"):
+                continue
+            target = case.get("target") or {}
+            where = target.get("kind") if target.get("kind") in ("trainer", "energy", "card") else f"{target.get('kind')}/{target.get('index')}"
+            actual.add((issue_id, case.get("card_id"), where))
+    listed = []
+    for i, case in enumerate(cases):
+        where = f"kyuura_cases_without_engine_ruling {i}（{case.get('kyuura_issue')}・{case.get('card_id')}・{case.get('target')}）"
+        allowed = {"kyuura_issue", "card_id", "target", "engine", "engine_issue_differs", "note"}
+        if set(case) - allowed or not {"kyuura_issue", "card_id", "target", "engine"} <= set(case):
+            problems.append(f"{where}: 項目は kyuura_issue・card_id・target・engine（と任意の engine_issue_differs・note）")
+            continue
+        listed.append((case["kyuura_issue"], case["card_id"], case["target"]))
+        engine = case["engine"]
+        registered = case["target"] in _registered_targets(registry, case["card_id"])
+        if not isinstance(engine, dict) or len(engine) != 1:
+            problems.append(f"{where}: エンジンの扱い（engine）は stop_codes・codeless_question・unregistered のちょうど 1 つ")
+            continue
+        differs = False
+        if "stop_codes" in engine:
+            codes = engine["stop_codes"]
+            if not isinstance(codes, list) or not codes or any(code not in links["stop_codes"] for code in codes):
+                problems.append(f"{where}: 停止コード {codes!r} が対応表の stop_codes にない")
+                continue
+            differs = any(links["stop_codes"][code]["kyuura_issue"] != case["kyuura_issue"] for code in codes)
+            if not registered:
+                problems.append(f"{where}: 停止コードで止めるとしたカードの対象が登録されていない")
+        elif "codeless_question" in engine:
+            question = links["codeless_questions"].get(engine["codeless_question"])
+            if question is None or question.get("kyuura_issue") != case["kyuura_issue"]:
+                problems.append(f"{where}: コードのない問い {engine['codeless_question']!r} が対応表にない・論点が違う")
+            if not registered:
+                problems.append(f"{where}: コードのない問いの比べを通すとしたカードの対象が登録されていない")
+        elif engine != {"unregistered": True}:
+            problems.append(f"{where}: エンジンの扱い {engine!r} を扱えない")
+        elif registered:
+            problems.append(f"{where}: 登録していないとしたカードの対象 {case['target']} が登録されている（扱いを書き直す）")
+        if differs and case.get("engine_issue_differs") is not True:
+            problems.append(f"{where}: 停止コードの論点が事例の論点と違うので、engine_issue_differs を真にする（kyuura への報告事項）")
+        if not differs and "engine_issue_differs" in case:
+            problems.append(f"{where}: 停止コードの論点が事例の論点と同じなので、engine_issue_differs を書かない")
+    if len(set(listed)) != len(listed):
+        problems.append("kyuura_cases_without_engine_ruling に同じ事例が重なっている")
+    if set(listed) != actual:
+        problems.append(f"kyuura の論点の、エンジンの裁定 id のない事例が違う: kyuura だけ {sorted(actual - set(listed))}、対応表だけ {sorted(set(listed) - actual)}")
     return problems
 
 

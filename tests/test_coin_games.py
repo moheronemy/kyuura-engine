@@ -26,7 +26,7 @@ from kyuura_engine.effects import DEFAULT_EFFECTS
 from kyuura_engine.rng import copy_rng, rng_fingerprint, rng_from_json, rng_state_to_json
 
 from tests.helpers import (
-    CARD_DATA_COMMIT_SINCE_V0_69,
+    CARD_DATA_COMMIT,
     with_card_data_commit_before_v0_69,
     DODUO, DODUO_DECK, DODUO_TRAINER_DECK, PLUSPOWER, WATER_FIGHTING_DECK, coin_events, trainer_policy_command,
 )
@@ -193,8 +193,8 @@ class GoldenCoinGameTest(unittest.TestCase):
         # 効果の登録表の id（版の名前）は、登録を加えるたびに変わるので、ハッシュに入れずに別に確かめる（v0.2e）。
         # ハッシュの値は、v0.2d のコミット e66390a のエンジンで同じ対戦から計算した値と同じ（対戦の中身は変わっていない）
         data = full(state)
-        # v0.69: 写しの元を上げた（7d3f4ca）。固定値は変えず、写しの元の 2 か所だけを確かめた移行でもどして比べる（tests/helpers.py）
-        self.assertEqual(data["card_data"]["commit"], CARD_DATA_COMMIT_SINCE_V0_69)
+        # v0.69・v0.97: 写しの元を上げた（7d3f4ca・73a1690）。固定値は変えず、写しの元の 2 か所だけを確かめた移行でもどして比べる（tests/helpers.py）
+        self.assertEqual(data["card_data"]["commit"], CARD_DATA_COMMIT)
         data = with_card_data_commit_before_v0_69(data)
         self.assertEqual(data.pop("effects"), DEFAULT_EFFECTS.id)
         text = json.dumps(data, sort_keys=True, ensure_ascii=False)

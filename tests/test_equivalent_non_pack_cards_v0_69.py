@@ -171,8 +171,9 @@ class RecordTest(unittest.TestCase):
         for new, original in E.EQUIVALENT_CARDS.items():
             record = self.sources["cards"][new]
             with self.subTest(card=new):
+                # v0.97: 採用したときのデータのコミットは v0.69 の写しの元（移行の連鎖の v0.69 の段のあと。書き換えない）
                 self.assertEqual((record["basis"], record["status"], record["kyuura_commit"], record["equivalent_to"]),
-                                 (cs.KYUURA_DATA, cs.ADOPTED, EXTRACT["source"]["commit"], original))
+                                 (cs.KYUURA_DATA, cs.ADOPTED, EXTRACT["source_migrations"][0]["to"], original))
                 self.assertEqual(record["external_checks"], [])  # 外部照合はしていない（元のカードの照合を再利用する）
                 self.assertEqual(set(record["play_text"].values()) - {cs.EQUIVALENT}, set())
                 self.assertFalse(set(record) & cs.GUIDEBOOK_KEYS)
@@ -181,8 +182,9 @@ class RecordTest(unittest.TestCase):
 
     def test_old_records_keep_their_commit_and_dates(self):
         """v0.68 までの採用の記録の採用したときのデータのコミット・記録した日は書き換えない（data_migrations で移行を書く）。"""
-        (migration,) = self.sources["data_migrations"]
-        self.assertEqual((migration["from"], migration["to"]), (EXTRACT["previous_source"]["commit"], EXTRACT["source"]["commit"]))
+        # v0.97: 移行は連鎖になった。v0.69 の段（最初の段）の前・あとは書き換えない
+        migration = self.sources["data_migrations"][0]
+        self.assertEqual((migration["from"], migration["to"]), (EXTRACT["previous_source"]["commit"], EXTRACT["source_migrations"][0]["to"]))
         # v0.70 の採用の記録（写しの元 7d3f4ca で採用した。拡張パック以外の商品のポケモン 82 枚）は、移行の前の記録ではない
         v070 = cards_after(read_extract(), '0.69')  # v0.76 の 24 枚も除く。 v0.75 の 15 枚も除く。 v0.71 の再録 78 枚・v0.72 の 43 枚・v0.73 の 18 枚も写しの元 7d3f4ca で採用した
         old = [r for c, r in self.sources["cards"].items() if r.get("basis") == cs.KYUURA_DATA and c not in E.EQUIVALENT_CARDS and c not in v070]

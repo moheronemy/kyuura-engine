@@ -21,7 +21,6 @@ from typing import TYPE_CHECKING
 from . import judge
 from .coins import CoinSide, flip_coins
 from .conditions import CONFUSION_DAMAGE, paralysis_recovery_turn, recover_from_paralysis, recover_from_sleep
-from .damage import calculate_confusion_damage
 from .effects import (
     DARKNESS_BONUS, DARKNESS_RECEIVED_POWER_CODE, PENALTY_DAMAGE, bench_guard_outside_attack_check, darkness_penalties, darkness_received_power_problem,
     energy_received_damage, energy_reduction_log, scram_watch, SCRAM_TIMING_CODE,
@@ -32,11 +31,13 @@ from .effects import (
     pokemon_check_berries, special_energy_effect,
     DISCARD_BY_KNOCK_OUT, energy_discard_plan, return_discarded_energy,
     bench_guard_holders, char_check_targets,
+    confusion_damage_calculation, weakness_resistance_log,
 )
 from .errors import UnsupportedError
 from .persistent import (KNOCK_OUT, USED, received_attack_damage_bonuses, remove_expired_persistent_effects, remove_on_damage, remove_persistent_effects,
                          remove_source_left_effects, remove_turn_start_expired_persistent_effects, require_can_leave)
 from .state import ATTACK_FIELD_POWER_SUPPRESSION, OPPONENT_POWER_SUPPRESSION, POWER_SUPPRESSION, Halt, Phase
+from .history import note_turn_start
 from .history import prune as prune_history
 from .zones import draw_cards, return_expired_set_aside
 
@@ -817,6 +818,16 @@ def _mid_check_game_ends(after: GameState, left: GameState, order: tuple[int, in
 
 
 def finish(state: GameState, result: GameResult) -> None:
+    # v0.103（docs/neutral-shield-attack-origin-v0.103.md 9 章）: 効果の途中で対戦が終わった使用中のトレーナー（ポケモン育て屋さんで進化させたゲンガーの［やみのちから］で、相手の場に
+    # ポケモンがいなくなった）を、使い終えたときと同じく持ち主のトラッシュにすててから終える（内側 → 外側の順。ログ ``discard_trainer``）。v0.102 までは使用中のカードを残したまま
+    # 終え、不変条件の違反（内部エラー）で止まっていた。使用中のトレーナーがなければ何もしない（勝ち負けを判定する時点は変えない）
+    while state.trainer_in_use is not None or state.trainer_stack:
+        if state.trainer_in_use is not None:
+            used, state.trainer_in_use = state.trainer_in_use, None
+        else:
+            used, state.trainer_stack = state.trainer_stack[-1], state.trainer_stack[:-1]
+        state.players[used.player].discard.append(used.card)
+        state.add_event("discard_trainer", player=used.player, card=used.card)
     state.result = result
     state.phase = Phase.SUDDEN_DEATH if result.outcome == "sudden_death" else Phase.GAME_OVER
     state.decision = None
@@ -843,6 +854,7 @@ def begin_turn(state: GameState, player: int) -> None:
     state.add_event("turn_start", player=player)
     remove_turn_start_expired_persistent_effects(state)  # v0.34: 「次の自分の番の始めに消える」持続する効果（「なきつく」）
     prune_history(state)  # v0.62: 2 つ前の番より古いワザの履歴を消す（ログは残さない）
+    note_turn_start(state)  # v0.100: 番でないプレイヤーの場のカード（プレイヤーの記録 ``TurnField``。読むカードのない対戦では何もしない）
     if state.turn_number == 1 and not state.rules.first_player_draws_on_first_turn:
         return
     if not state.players[player].deck:
@@ -1051,9 +1063,11 @@ def confusion_damage_problem(state: GameState, pokemon: PokemonInPlay, attack_st
             "ダメージに、プラスパワー・ディフェンダーの効果を計算するか（こんらんのダメージが「ワザによるダメージ」か）は"
             "『オフィシャルブック2000』（p.257・p.309・p.321・p.322）から決められないので扱わない",
         )
+    owner = state.find_pokemon(pokemon.pokemon_id)[0]
     if cursed_weakness_multiplier(state, pokemon) is not None:
         try:
-            weak = same_for_type_readings(state, (pokemon,), lambda views: calculate_confusion_damage(views[0], state.rules, CONFUSION_DAMAGE).weakness_applied)
+            # v0.102: 弱点の影響を受けない特殊能力がはたらけば、弱点は当てはまらない（同じ計算 ``confusion_damage_calculation``）
+            weak = same_for_type_readings(state, (pokemon,), lambda views: confusion_damage_calculation(state, owner, pokemon, views[0], CONFUSION_DAMAGE).weakness_applied)
         except TypeReadingsDiffer:
             weak = True  # 読み方のどれかで弱点が当てはまる（読み方の違いそのものは、下の確かめが VS1・CE1・CE2・CM1 で止める）
         if weak:
@@ -1066,7 +1080,7 @@ def confusion_damage_problem(state: GameState, pokemon: PokemonInPlay, attack_st
     try:
         # v0.48: 自分のタイプ（色）と自分の弱点・抵抗力（今有効な値。``effects.definition_views``）。［へんしょく］で変えた色の読み方（VS1）で 20 ダメージの計算が
         # 変わるなら、コインを投げる前に止める（こんらん状態のモルフォンでは［へんしょく］の力が消えているので、変えた色が続くかが決まらない）
-        same_for_type_readings(state, (pokemon,), lambda views: calculate_confusion_damage(views[0], state.rules, CONFUSION_DAMAGE))
+        same_for_type_readings(state, (pokemon,), lambda views: confusion_damage_calculation(state, owner, pokemon, views[0], CONFUSION_DAMAGE))
     except TypeReadingsDiffer:
         return shift_duration_error(pokemon, "こんらんしたワザで自分が受ける 20 ダメージの弱点・抵抗力の計算", state=state)
     try:
@@ -1110,7 +1124,8 @@ def confusion_damage(state: GameState, player: int, pokemon: PokemonInPlay, *, e
     ``weakness``・``resistance``・``total_damage``）。``damage`` のログ（ワザによるダメージ）とは種類を分ける。
     きぜつはワザのあとと同じきぜつの判定（解決の基盤の ``flow._finish_attack``）で判定する（サイドは相手が取る。p.323）。
     """
-    calc = calculate_confusion_damage(definition_views(state, pokemon)[0], state.rules, CONFUSION_DAMAGE)  # v0.48: 今有効な値（読み方は宣言の前に確かめた）
+    # v0.48: 今有効な値（読み方は宣言の前に確かめた）。v0.102: 弱点・抵抗力の影響を受けない特殊能力（``effects.confusion_damage_calculation``）
+    calc = confusion_damage_calculation(state, player, pokemon, definition_views(state, pokemon)[0], CONFUSION_DAMAGE)
     pokemon.damage += calc.final
     state.add_event(
         "confusion_damage",
@@ -1123,6 +1138,7 @@ def confusion_damage(state: GameState, player: int, pokemon: PokemonInPlay, *, e
         weakness=calc.weakness_applied,
         resistance=calc.resistance_applied,
         total_damage=pokemon.damage,
+        **weakness_resistance_log(calc),  # v0.102
     )
     remove_on_damage(state, player, pokemon, calc.final)  # v0.60: 「かげぶんしん」はダメージを受けたら消える（こんらんの 20 も「ダメージ」）
 

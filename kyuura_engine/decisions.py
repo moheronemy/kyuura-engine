@@ -344,6 +344,10 @@ SELECT_ATTACHED_TRAINER = "select_attached_trainer"
 # v0.95: わるいヤドキングの［わるぢえ］の「その後、のぞむなら、その山札をよく切る」で、見た山札を切るか。決めるのは特殊能力を使ったプレイヤー。選べるものは山札の持ち主の
 # プレイヤーの番号 1 つで、0 個（切らない）か 1 個（切る）。再開先は "power"
 OPTIONAL_SHUFFLE = "optional_shuffle"
+# v0.104（docs/healing-pokemon-v0.104.md 4.4 節）: プリン（PR1-002・PR1-004）の「かいふく」の「自分についているダメージカウンターを1つ取り除くことができる。」で、取り除くか。決めるのは
+# ワザを使ったプレイヤー。選べるものはワザを使ったポケモンの番号 1 つで、0 個（取り除かない）か 1 個（取り除く）。``context`` の "counters"（取り除く数）。ワザを使ったポケモンに
+# ダメージカウンターがのっていなければ出さない。v0.72 の OPTIONAL_DRAIN（「相手にダメージを与えたら」の条件と与えたダメージを持つ）とは別の種類。再開先は "attack"
+OPTIONAL_HEAL = "optional_heal"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

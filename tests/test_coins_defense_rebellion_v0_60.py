@@ -175,7 +175,9 @@ class CardDataTest(unittest.TestCase):
             self.assertIn(ruling, text)
             self.assertIn(code, text)
         self.assertEqual(QUESTIONS["bench_coin_transparency_order"].code, "UNRESOLVED_BENCH_COIN_TRANSPARENCY_ORDER")
-        self.assertIsNone(QUESTIONS["speed_star_scope"].code)  # 今の写しでは起こらない
+        # v0.96 までは今の写しで起こらない、コードのない問い。v0.97 から、ベンチのアンノーン[N] の［NORMAL df］と「無色」ポケモンが写したスピードスターで起こるので、コードを付けた
+        # （問い・分類は変えていない。docs/unown-research-idfnj-v0.97.md 9 章）
+        self.assertEqual(QUESTIONS["speed_star_scope"].code, "UNRESOLVED_SPEED_STAR_SCOPE")
 
 
 class ThunderstormTest(unittest.TestCase):

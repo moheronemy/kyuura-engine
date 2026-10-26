@@ -70,6 +70,9 @@ class EffectDefinition:
       ``discarded_card``: トラッシュのこのカード、``other_powers``: ほかの特殊能力）
     - ``action``: 処理（``kernel.ACTIONS`` の名前。効果の中身）
     - ``decision_kind``: 任意の効果の決定の種類（v0.13 と同じ）
+    - ``from_evolved_opponent``（v0.103）: 発生元で無効にするかが決まる（ミュウの［ニュートラルシールド］「相手の進化ポケモンからの「ワザ」を受けない」）。受ける要素の発生元
+      （``events.Incoming``）が、ワザの分類で、使い手が受けるポケモンの持ち主の相手で、発生元の個体の今の姿が進化ポケモンのときだけ無効にする（``kernel.first_void``）。
+      ``by_opponent`` の今の番のプレイヤーでの判定は使わない（返す効果の使い手は番のプレイヤーではない）
     """
 
     name: str
@@ -91,6 +94,8 @@ class EffectDefinition:
     active_only: bool = False
     # v0.81: 受けるポケモンの持ち主の相手の番だけ候補になる（はんげきのツメ「相手の番に」）
     opponent_turn_only: bool = False
+    # v0.103: 発生元（実際の使い手・個体の今の姿・処理の分類）で無効にするかが決まる（［ニュートラルシールド］。``kernel.first_void``）
+    from_evolved_opponent: bool = False
 
 
 TRANSPARENCY = EffectDefinition(
@@ -285,6 +290,15 @@ DIG_UNDER = EffectDefinition(
     False, "receiving_element", "void_damage", frozenset({DamageClass.ATTACK}),
 )
 
+# v0.103（docs/neutral-shield-attack-origin-v0.103.md 3 章）: ミュウの［ニュートラルシールド］（「ミュウは相手の進化ポケモンからの「ワザ」を受けない。「ねむり・マヒ・こんらん」状態の
+# ときにはつかえない」）。バリアーと同じ窓（ダメージと効果の要素の前）・同じ処理（``void_attack``）。受けるのはこの特殊能力を持つポケモン自身（``instances`` は受けるポケモンの
+# 特殊能力だけを集める。場のほかのミュウは守らない）。特殊能力なので特殊状態（「つかえない」。今の特殊状態）・ガス・スタンウェーブで消える。どのワザを無効にするかは発生元で決める
+# （``from_evolved_opponent``。``by_opponent`` は使わない）
+NEUTRAL_SHIELD = EffectDefinition(
+    "neutral_shield", Origin.PRINTED_POWER, Mode.CONTINUOUS, Timing.VOID, frozenset({Window.BEFORE_DAMAGE, Window.BEFORE_EFFECT}), BLOCKING_CONDITIONS, "now",
+    True, "receiving_element", "void_attack", frozenset({DamageClass.ATTACK}), from_evolved_opponent=True,
+)
+
 POWER_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (E.AttackImmunityOnHeads, TRANSPARENCY),
     (E.CounterattackDamage, STRIKES_BACK),
@@ -303,6 +317,7 @@ POWER_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (E.CoinDamageBothActivesOnAttackDamage, SHOCK_BLAST),  # v0.87
     (E.PoisonDamageSourceOnAttackDamage, POISON_FLUID),  # v0.87
     (E.BenchNamedFromDeckOnAttackDamage, SPLIT),  # v0.87
+    (E.EvolvedOpponentAttackImmunity, NEUTRAL_SHIELD),  # v0.103
 )
 PERSISTENT_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (PreventDamage, HARDEN),
@@ -350,9 +365,10 @@ def instances(state: GameState, owner: int, pokemon: PokemonInPlay, table=None) 
             continue
         effect_definition = definition_for(implementation, powers)
         if effect_definition is not None:
-            if effect_definition is CRYSTAL_BODY:
+            if effect_definition in (CRYSTAL_BODY, NEUTRAL_SHIELD):
                 # v0.86: 要素を無効にする特殊能力。``first_void`` の結果のログ（``effect_prevented`` の ``persistent_effect``・``source_card``）に、効果のもと（このポケモンのカード）を書く
-                implementation = PowerVoidRecord(pokemon.card, CRYSTAL_BODY.name, implementation)
+                # （v0.103: ［ニュートラルシールド］も）
+                implementation = PowerVoidRecord(pokemon.card, effect_definition.name, implementation)
             found.append(EffectInstance(effect_definition, owner, pokemon.pokemon_id, pokemon.card, slot.key, slot.power, implementation))
     for effect in pokemon.persistent_effects:
         effect_definition = definition_for(effect, persistent)

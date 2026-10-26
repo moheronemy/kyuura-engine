@@ -287,7 +287,17 @@ class ChemicalGasRegistrationTest(unittest.TestCase):
                                                                    # v0.88: エリカのナゾノクサのこうごうせい（常にはたらく。docs/type-energy-colors-v0.88.md 5.4 節）
                                                                    "GD4-001",
                                                                    # v0.96: アンノーンZ の［ZOOM］（常にはたらく。docs/unown-family-powers-v0.96.md 6 章）
-                                                                   "neo4-060"))})
+                                                                   "neo4-060",
+                                                                   # v0.97: アンノーンD の［DARK df］・アンノーン[N] の［NORMAL df］（常にはたらく。docs/unown-research-idfnj-v0.97.md 8 章）
+                                                                   "neo2-025", "PF2-001",
+                                                                   # v0.99: アンノーンP の［PERFORM］（常にはたらく。docs/unown-perform-help-history-v0.99.md 4 章）
+                                                                   "neo4-058",
+                                                                   # v0.101: アンノーンK の［KEEP］（常にはたらく。docs/counter-keep-energy-protection-v0.101.md 4 章）
+                                                                   "neo3-030",
+                                                                   # v0.102: ［グリーンシールド］・［ニュートラルダメージ］（常にはたらく。docs/weakness-resistance-powers-v0.102.md 3 章）
+                                                                   "ES1-003", "QSG-003", "ES1-021", "QSG-030",
+                                                                   # v0.103: ［ニュートラルシールド］（常にはたらく。docs/neutral-shield-attack-origin-v0.103.md 3 章）
+                                                                   "PR1-005", "PR1-012"))})
         self.assertTrue(PowerEffect.declared)
         self.assertEqual((entry.name_ja, entry.text_ja, entry.play_text_ja, entry.source), ("かがくへんかガス", GAS_PRINTED, GAS_LATEST, "P43 p.48"))
         self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.13")  # v0.9 でゴース・ゴースト、v0.10 でゴーリキー・カイリキー、v0.11 でサカキのワンリキー・ゴーリキー・カイリキー、v0.12 で R団のファイヤー、v0.13 で第4弾のゼニガメ・わるいカメールの登録を加えた（かがくへんかガスの登録は同じ）

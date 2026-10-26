@@ -1435,6 +1435,24 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.OpponentDeckTopDiscardIfTrainer,
     _effects.DamageThenMillReturnTypeEnergy,
     _effects.ReturnOpponentAttachedTrainerToDeck,
+    # v0.99（docs/unown-perform-help-history-v0.99.md 4 章。前の相手の番にワザによるダメージを受けていたら追加する）
+    _effects.PlusIfDamagedByAttackLastOpponentTurn,
+    # v0.100（docs/sketch-perish-song-history-v0.100.md。前の相手の番に相手が使ったワザを使う・ねむりで前の自分の番に受けていたら「きぜつ」させる）
+    _effects.UseLastOpponentAttack,
+    _effects.KnockOutIfAsleepAndReceived,
+    # v0.104（docs/healing-pokemon-v0.104.md。回復の量・対象・とりのぞくかの選択と、名前のポケモンの数のダメージ・自分へのダメージとこのワザの禁止）
+    _effects.CoinChooseOwnPokemonHealAll,
+    _effects.OwnNamedPokemonCountDamage,
+    _effects.CoinsHealSelfTimes,
+    _effects.HealAllSelfThenSelfSleep,
+    _effects.DamageAndSelfDamageThenLockSelf,
+    _effects.OptionalHealSelf,
+    _effects.HealBothActivesThenSleep,
+    # v0.105（docs/recovery-evolution-coin-branches-v0.105.md。回復のあとの山札からの進化・相手のエネルギーの個数のダメージと与えたぶんの回復・3 枚のコインの分岐）
+    _effects.CoinHealAllThenEvolveSelfFromDeck,
+    _effects.DefenderEnergyUnitsDamageAndFullDrain,
+    _effects.CoinsPerDefenderEnergyBonusAndFullDrain,
+    _effects.ThreeCoinDamageOrOpponentHeal,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -1713,22 +1731,41 @@ def no_super_potion_pool():
 # 変えない。もどす前の値が今の写しの元でなければ AssertionError（知らない値を黙って置きかえない）
 CARD_DATA_COMMIT_BEFORE_V0_69 = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
 CARD_DATA_COMMIT_SINCE_V0_69 = "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"
+# v0.97（docs/unown-research-idfnj-v0.97.md 2 章）: 写しの元を 7d3f4ca から 73a1690 に上げた。移行は連鎖（ecb2d69 → 7d3f4ca → 73a1690。scripts/extract_kyuura_cards.py の
+# KYUURA_MIGRATIONS と同じ段）で、もどすときも段を 1 つずつさかのぼる（知らない値・段を飛ばした値を黙って置きかえない）
+CARD_DATA_COMMIT_SINCE_V0_97 = "73a169063463bbf7bcaa3137d70cbf9721d11534"
+CARD_DATA_COMMIT = CARD_DATA_COMMIT_SINCE_V0_97  # 今の写しの元
+CARD_DATA_MIGRATIONS = ((CARD_DATA_COMMIT_BEFORE_V0_69, CARD_DATA_COMMIT_SINCE_V0_69), (CARD_DATA_COMMIT_SINCE_V0_69, CARD_DATA_COMMIT_SINCE_V0_97))
+
+
+def with_card_data_commit_at(data: dict, commit: str) -> dict:
+    """state_to_dict の値（の写し）の、写しの元の 2 か所だけを、今の写しの元から移行の連鎖を段ごとにさかのぼって ``commit`` にもどした新しい値（``data`` は変えない。v0.97）。
+    もどす前の値が今の写しの元でなければ、``commit`` が連鎖のコミットでなければ AssertionError。もどした数も確かめる。"""
+    import copy
+
+    chain = [CARD_DATA_MIGRATIONS[0][0], *(after for _, after in CARD_DATA_MIGRATIONS)]
+    assert chain[-1] == CARD_DATA_COMMIT and commit in chain, commit
+    result = copy.deepcopy(data)
+    card_data = result.get("card_data")
+    assert isinstance(card_data, dict) and card_data.get("commit") == CARD_DATA_COMMIT, card_data
+    # 正式な開始（new_game）の状態はログ game_created が 1 つ、盤面を直接作った状態（build_test_state）にはない
+    created = [event for event in result.get("log", []) if event.get("kind") == "game_created"]
+    assert len(created) <= 1 and all(event.get("card_data_commit") == CARD_DATA_COMMIT for event in created), created
+    for before, after in reversed(CARD_DATA_MIGRATIONS):
+        if chain.index(after) <= chain.index(commit):
+            break
+        assert card_data["commit"] == after, (card_data["commit"], after)
+        card_data["commit"] = before
+        for event in created:
+            event["card_data_commit"] = before
+    assert card_data["commit"] == commit
+    return result
 
 
 def with_card_data_commit_before_v0_69(data: dict) -> dict:
-    """state_to_dict の値（の写し）の、写しの元の 2 か所だけを v0.68 までの値にもどした新しい値（``data`` は変えない）。もどした数も確かめる。"""
-    import copy
-
-    result = copy.deepcopy(data)
-    card_data = result.get("card_data")
-    assert isinstance(card_data, dict) and card_data.get("commit") == CARD_DATA_COMMIT_SINCE_V0_69, card_data
-    card_data["commit"] = CARD_DATA_COMMIT_BEFORE_V0_69
-    # 正式な開始（new_game）の状態はログ game_created が 1 つ、盤面を直接作った状態（build_test_state）にはない
-    created = [event for event in result.get("log", []) if event.get("kind") == "game_created"]
-    assert len(created) <= 1 and all(event.get("card_data_commit") == CARD_DATA_COMMIT_SINCE_V0_69 for event in created), created
-    for event in created:
-        event["card_data_commit"] = CARD_DATA_COMMIT_BEFORE_V0_69
-    return result
+    """state_to_dict の値（の写し）の、写しの元の 2 か所だけを v0.68 までの値にもどした新しい値（``data`` は変えない）。もどした数も確かめる。v0.97 から、今の写しの元
+    （73a1690）から移行の連鎖を段ごとにさかのぼる（``with_card_data_commit_at``）。"""
+    return with_card_data_commit_at(data, CARD_DATA_COMMIT_BEFORE_V0_69)
 
 
 # v0.69（docs/equivalent-non-pack-cards-v0.69.md）: 拡張パック以外の商品の、登録したカードと処理に使う欄が同じカード（写しの組 pool_v0_69 のうち登録のある 84 枚。
@@ -1895,9 +1932,22 @@ V0_69_KYUURA_RECORDS_ADDED = {
 }
 
 
+# v0.97（docs/unown-research-idfnj-v0.97.md 3 章）: 研究の基準を kyuura 73a1690 に上げて、採用の記録の kyuura_records に加わった記録（kyuura のアンノーンの調査の裁定・論点の
+# 事例が指すカード）。記録を確かめるテストは、v0.96 までの値にこれを加えた値と比べる（tests/test_unown_research_idfnj_v0_97.py が、同梱の記録と同じことを確かめる）
+V0_97_KYUURA_RECORDS_ADDED = {
+    "PMCG1-066": ("UQ-SPEED-STAR-SCOPE",),
+    "PF1-004": ("UQ-SPEED-STAR-SCOPE",),
+    "PMCG5-066": ("CR-UNOWN-DF-SOURCE-TYPE",),
+    "neo1-094": ("CR-UNOWN-DF-SOURCE-TYPE",),
+    "neo4-046": ("UQ-SELF-EXCLUDING-POWER-COPIES",),
+    "neo2-054": ("CR-UNOWN-DECK-LIMIT-ALL-LETTERS",),
+    "neo2-057": ("CR-UNOWN-DECK-LIMIT-ALL-LETTERS",),
+}
+
+
 def kyuura_records_since_v0_69(card_id: str, before: list | tuple = ()) -> list:
-    """v0.68 までの kyuura_records（``before``）に、v0.69 で加わった記録を加えた値（並びは id の順）。"""
-    return sorted([*before, *V0_69_KYUURA_RECORDS_ADDED.get(card_id, ())])
+    """v0.68 までの kyuura_records（``before``）に、v0.69 で加わった記録を加えた値（並びは id の順）。v0.97 で加わった記録（``V0_97_KYUURA_RECORDS_ADDED``）も加える。"""
+    return sorted([*before, *V0_69_KYUURA_RECORDS_ADDED.get(card_id, ()), *V0_97_KYUURA_RECORDS_ADDED.get(card_id, ())])
 
 
 # v0.69: kyuura の未解決の一覧で論点に結ばれた停止コード（v0.68 までは not_in_kyuura。進化のあとの HP だけは out_of_scope）→ kyuura の論点

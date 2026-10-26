@@ -2,19 +2,19 @@
   "format": "kyuura-engine research links 1",
   "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md kyuura の engine_unresolved_index にまだない停止コード（エンジンが新しく加えたもの）は kyuura_disposition を not_in_kyuura にし、kyuura への報告事項にする（v0.21 の突風・v0.22 のパソコン通信・v0.23 のエネルギー回収・v0.36 の AC6（手順 4 のコインとこんらん）・RD9（山札にもどす効果ときぜつ）・v0.37 の JS1（説明に弱点・抵抗力のない控えへのダメージ）。kyuura に記録ができたら scripts/check_research_links.py が知らせる）。 v0.31 で、コードのない未解決（T27・C34/C35・G40・P19・P32）に停止コードを付けた。kyuura の未解決の一覧はこれらをコードなし（stop_code が null）で挙げているので、kyuura_index_engine_key でその行と照らす（kyuura の一覧にコードが書かれたら scripts/check_research_links.py が知らせる）。 v0.50 で、退化の処理に使う kyuura の規定・裁定（GR-2000-P324-DEVOLUTION・CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION・CR-CHEMICAL-GAS-LEAVES・GR-2000-P323-KNOCKOUT）を applied_rule_records に結び付けた（id の対応だけ。scripts/check_research_links.py が研究の基準のコミットにあることと分類を確かめる）。 v0.51 で、トラッシュのたねポケモンを持ち主のベンチに出す処理に使う kyuura の規定（GR-2000-P309-ATTACK-PROCEDURE・GR-2000-P319-HP-AND-DAMAGE・GR-2000-P320-COUNTER-MOVE）を applied_rule_records に結び付けた（v0.50 と同じく id の対応だけ）。 v0.70 で、拡張パック以外の商品のポケモン 82 枚の説明文のあるワザ 85 を adopted_printed_text に加えた（kyuura データの採用。研究の基準のコミットに、これらのカードを指す LD-・CC-・CR-・UQ-・エラッタはない）。PR1-069 の名前（kyuura の値「？？？」）は、エンジンが写しの作り直しで利用者が示した訂正「ミュウ」を当てはめた（engine_user_corrections。scripts/check_research_links.py はこの訂正の欄だけを訂正のあとの値にして比べる）。",
   "repository": "https://github.com/moheronemy/kyuura",
-  "research_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+  "research_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
   "research_branch": "main",
   "research_files": [
     "data/sidecar/rulings.json",
     "data/sidecar/latest_descriptions.json",
     "data/sidecar/card_checks.json"
   ],
-  "card_data_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+  "card_data_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 223,
-    "engine_stop_codes": 221,
-    "kyuura_issues": 71
+    "engine_unresolved_rulings": 235,
+    "engine_stop_codes": 234,
+    "kyuura_issues": 72
   },
   "stop_codes": {
     "UNRESOLVED_MULLIGAN_COMPENSATION": {
@@ -2209,8 +2209,8 @@
           "ruling_id": "CV1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-SELF-EXCLUDING-POWER-COPIES",
+      "kyuura_disposition": "issue_not_in_index"
     },
     "UNRESOLVED_HOWL_OUTSIDE_OWN_TURN": {
       "engine_rulings": [
@@ -2563,6 +2563,155 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SPEED_STAR_SCOPE": {
+      "engine_rulings": [
+        {
+          "version": "v0.60",
+          "document": "docs/coins-defense-rebellion-v0.60.md",
+          "ruling_id": "SS1"
+        },
+        {
+          "version": "v0.97",
+          "document": "docs/unown-research-idfnj-v0.97.md",
+          "ruling_id": "SS1"
+        }
+      ],
+      "kyuura_issue": "UQ-SPEED-STAR-SCOPE",
+      "kyuura_disposition": "issue",
+      "kyuura_index_engine_key": "SS1"
+    },
+    "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES": {
+      "engine_rulings": [
+        {
+          "version": "v0.97",
+          "document": "docs/unown-research-idfnj-v0.97.md",
+          "ruling_id": "DF1"
+        }
+      ],
+      "kyuura_issue": "UQ-SELF-EXCLUDING-POWER-COPIES",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_POWER_DAMAGE_RECEIVED_POWER": {
+      "engine_rulings": [
+        {
+          "version": "v0.97",
+          "document": "docs/unown-research-idfnj-v0.97.md",
+          "ruling_id": "DF2"
+        }
+      ],
+      "kyuura_issue": "UQ-NON-ATTACK-DAMAGE-MODIFIERS",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_POWER_COUNTER_MOVE_TO_SAME_POKEMON": {
+      "engine_rulings": [
+        {
+          "version": "v0.98",
+          "document": "docs/unown-bear-yield-vanish-give-v0.98.md",
+          "ruling_id": "BE1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POWER_COUNTER_MOVE_WITHOUT_COUNTERS": {
+      "engine_rulings": [
+        {
+          "version": "v0.98",
+          "document": "docs/unown-bear-yield-vanish-give-v0.98.md",
+          "ruling_id": "BE2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POWER_RETURN_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.98",
+          "document": "docs/unown-bear-yield-vanish-give-v0.98.md",
+          "ruling_id": "VN1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_PERFORM_DAMAGE_PLACES": {
+      "engine_rulings": [
+        {
+          "version": "v0.99",
+          "document": "docs/unown-perform-help-history-v0.99.md",
+          "ruling_id": "PFM1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SKETCH_PRESENCE": {
+      "engine_rulings": [
+        {
+          "version": "v0.100",
+          "document": "docs/sketch-perish-song-history-v0.100.md",
+          "ruling_id": "SK1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SKETCH_COPIED_ATTACK": {
+      "engine_rulings": [
+        {
+          "version": "v0.100",
+          "document": "docs/sketch-perish-song-history-v0.100.md",
+          "ruling_id": "SK2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_PERISH_SONG_RECEIVED_ATTACK": {
+      "engine_rulings": [
+        {
+          "version": "v0.100",
+          "document": "docs/sketch-perish-song-history-v0.100.md",
+          "ruling_id": "PSG1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_KEEP_PROTECTED_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.101",
+          "document": "docs/counter-keep-energy-protection-v0.101.md",
+          "ruling_id": "KP1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_KEEP_VOIDED_DISCARD_COIN": {
+      "engine_rulings": [
+        {
+          "version": "v0.101",
+          "document": "docs/counter-keep-energy-protection-v0.101.md",
+          "ruling_id": "KP2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_KEEP_DETACHED_ENERGY_DISCARD": {
+      "engine_rulings": [
+        {
+          "version": "v0.101",
+          "document": "docs/counter-keep-energy-protection-v0.101.md",
+          "ruling_id": "KP3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -2577,18 +2726,6 @@
       "kyuura_issue": "UQ-GUTS-ATTACK-EFFECT",
       "reachable_with_current_cards": false,
       "counted_as_engine_unresolved": false
-    },
-    "speed_star_scope": {
-      "engine_rulings": [
-        {
-          "version": "v0.60",
-          "document": "docs/coins-defense-rebellion-v0.60.md",
-          "ruling_id": "SS1"
-        }
-      ],
-      "kyuura_issue": "UQ-SPEED-STAR-SCOPE",
-      "reachable_with_current_cards": false,
-      "counted_as_engine_unresolved": true
     },
     "earthdrill_copied_use": {
       "engine_rulings": [
@@ -2638,6 +2775,153 @@
       "reachable_with_current_cards": false,
       "counted_as_engine_unresolved": false
     }
+  },
+  "kyuura_cases_without_engine_ruling": {
+    "note": "v0.97: kyuura の論点（UQ-）の事例（cases）のうち、エンジンの裁定 id（engine_ruling）を書いていないもの（kyuura の調査で加えた事例。kyuura の未解決の一覧 engine_unresolved_index は取り込んだ版（v0.68 まで）の項目だけ）と、エンジンでの扱い。stop_codes はエンジンがその場面を止める停止コード（研究の対応表の stop_codes にある。コードの kyuura_issue が事例の論点と違えば engine_issue_differs）、codeless_question はコードのない問い（codeless_questions）、unregistered はエンジンに登録していないカード（その場面は起こらない）。scripts/check_research_links.py が、研究の基準のコミットのそのような事例のすべてと同じことと、エンジンの扱いを確かめる",
+    "cases": [
+      {
+        "kyuura_issue": "UQ-EFFECT-AFTER-NO-DAMAGE",
+        "card_id": "PMCG6-044",
+        "target": "attack/0",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE"
+          ]
+        },
+        "note": "ナツメのヤドンの「ぐうたらこうげき」（たおれこむと同じ最新の説明の文面。エンジンは同じ型で Z23 の停止コードで止める）。v0.69 の研究の基準（7d3f4ca）からある事例"
+      },
+      {
+        "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+        "card_id": "neo2-023",
+        "target": "power/0",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_POWER_ZERO_CARDS"
+          ]
+        },
+        "note": "［INCREASE］で山札に「アンノーン」がない（山札 0 枚を含む）。エンジンは同じ「1枚選び出し」で選ぶカードが 0 枚になる v0.43 の PW3 を使い、使うを選ぶと止める（kyuura の未解決の一覧では PW3 は UQ-UP-TO-ZERO-CHOICE に結ばれている。kyuura への報告事項）",
+        "engine_issue_differs": true
+      },
+      {
+        "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+        "card_id": "neo2-026",
+        "target": "power/0",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_POWER_ZERO_CARDS"
+          ]
+        },
+        "note": "［FIND］で山札に「トレーナーカード」がない。エンジンは v0.43 のしんかのひかりと同じ PW3 で、宣言の前に止める（kyuura への報告事項は上と同じ）",
+        "engine_issue_differs": true
+      },
+      {
+        "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+        "card_id": "PRN-034",
+        "target": "power/0",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_POWER_ZERO_CARDS"
+          ]
+        },
+        "note": "［JOIN］で山札に選べるカードがない。エンジンは PW3 で、宣言の前に止める（kyuura への報告事項は上と同じ）",
+        "engine_issue_differs": true
+      },
+      {
+        "kyuura_issue": "UQ-NON-ATTACK-DAMAGE-MODIFIERS",
+        "card_id": "PF2-001",
+        "target": "power/0",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_POWER_DAMAGE_RECEIVED_POWER"
+          ]
+        },
+        "note": "［NORMAL df］と R団のカビゴンの［わるいねぞう］の 20。当てはめるかどうかで鋼エネルギーを含む最終の量が変われば DF2（受けるアンノーン自身の力・ベンチの力のどちらも）"
+      },
+      {
+        "kyuura_issue": "UQ-SPEED-STAR-SCOPE",
+        "card_id": "PF2-001",
+        "target": "power/0",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_SPEED_STAR_SCOPE"
+          ]
+        },
+        "note": "受けるポケモンでないアンノーン[N] の［NORMAL df］と、「無色」ポケモンが写したスピードスター。v0.97 で SS1 に停止コードを付けた（問い・分類は変えていない）"
+      },
+      {
+        "kyuura_issue": "UQ-SPEED-STAR-SCOPE",
+        "card_id": "PMCG1-066",
+        "target": "attack/1",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_SPEED_STAR_SCOPE"
+          ]
+        },
+        "note": "ピジョンの「オウムがえし」でスピードスターを出す手順案（kyuura の到達性の候補）。エンジンはこのワザでも SS1 の比べを通す（v0.97 から停止コード）"
+      },
+      {
+        "kyuura_issue": "UQ-SPEED-STAR-SCOPE",
+        "card_id": "PF1-004",
+        "target": "attack/1",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_SPEED_STAR_SCOPE"
+          ]
+        },
+        "note": "ヒノアラシのスピードスター（手順案で写されるワザ。SS1 の比べ）"
+      },
+      {
+        "kyuura_issue": "UQ-SELF-EXCLUDING-POWER-COPIES",
+        "card_id": "neo2-025",
+        "target": "power/0",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES"
+          ]
+        },
+        "note": "アンノーンD が 2 匹以上ではたらきうる。どれがはたらくか（1 つもはたらかないか）の読み方で受けるダメージ・要る決定が変われば DF1"
+      },
+      {
+        "kyuura_issue": "UQ-SELF-EXCLUDING-POWER-COPIES",
+        "card_id": "PF2-001",
+        "target": "power/0",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES"
+          ]
+        },
+        "note": "アンノーン[N] が 2 匹以上ではたらきうる（DF1。DARK df と同じ）"
+      },
+      {
+        "kyuura_issue": "UQ-SELF-EXCLUDING-POWER-COPIES",
+        "card_id": "neo2-027",
+        "target": "power/0",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "アンノーンM（エンジンの対象外のカード。ルール文の欠けが残る）"
+      },
+      {
+        "kyuura_issue": "UQ-SELF-EXCLUDING-POWER-COPIES",
+        "card_id": "neo4-046",
+        "target": "power/0",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES"
+          ]
+        },
+        "note": "わるいデンリュウの［かんでん］が 2 匹以上。エンジンは v0.86 から、はたらきうるものが 2 匹以上なら止める（CV1）。kyuura は v0.86 を取り込んでいないので、CV1 を engine_refs・未解決の一覧に結んでいない"
+      },
+      {
+        "kyuura_issue": "UQ-SELF-EXCLUDING-POWER-COPIES",
+        "card_id": "PRN-041",
+        "target": "power/0",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "GR団のミュウツーの［わるいはどう］（エンジンに登録していないカード）"
+      }
+    ]
   },
   "unresolved_without_code": [],
   "deferred_card_questions": [],
@@ -4172,7 +4456,66 @@
       "neo4-050/power/0",
       "neo4-051/power/0",
       "neo4-052/power/0",
-      "neo4-060/power/0"
+      "neo4-060/power/0",
+      "neo2-023/power/0",
+      "neo2-025/power/0",
+      "neo2-026/power/0",
+      "PF2-001/power/0",
+      "PRN-034/power/0",
+      "neo3-032/power/0",
+      "neo3-033/power/0",
+      "neo4-053/power/0",
+      "neo4-062/power/0",
+      "neo4-058/power/0",
+      "neo4-063/power/0",
+      "neo1-023/attack/0",
+      "neo2-052/attack/0",
+      "neo3-035/attack/0",
+      "neo3-035/attack/1",
+      "neo2-031/attack/0",
+      "neo3-030/power/0",
+      "ES1-003/power/0",
+      "ES1-003/attack/0",
+      "QSG-003/power/0",
+      "QSG-003/attack/0",
+      "ES1-021/power/0",
+      "ES1-021/attack/0",
+      "QSG-030/power/0",
+      "QSG-030/attack/0",
+      "PR1-005/power/0",
+      "PR1-005/attack/0",
+      "PR1-012/power/0",
+      "PR1-012/attack/0",
+      "neo1-015/attack/0",
+      "neo1-015/attack/1",
+      "neo1-069/attack/0",
+      "neo1-069/attack/1",
+      "neo2-048/attack/1",
+      "neo3-041/attack/0",
+      "neo3-041/attack/1",
+      "ES1-001/attack/0",
+      "ES1-001/attack/1",
+      "QSG-001/attack/0",
+      "QSG-001/attack/1",
+      "IP1-018/attack/0",
+      "IP1-018/attack/1",
+      "ES2-007/attack/0",
+      "ES2-007/attack/1",
+      "QSG-018/attack/0",
+      "QSG-018/attack/1",
+      "PR1-002/attack/0",
+      "PR1-002/attack/1",
+      "PR1-004/attack/0",
+      "PR1-004/attack/1",
+      "SI-018/attack/0",
+      "SI-018/attack/1",
+      "neo2-006/attack/0",
+      "neo2-006/attack/1",
+      "neo4-003/attack/1",
+      "neo2-009/attack/0",
+      "neo2-009/attack/1",
+      "PF3-002/attack/0",
+      "neo3-050/attack/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

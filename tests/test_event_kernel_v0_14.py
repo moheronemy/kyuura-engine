@@ -663,7 +663,19 @@ class CatalogTest(unittest.TestCase):
                            "type_energy_as_grass",
                            # v0.96: アンノーンZ の［ZOOM］（「にげる」のエネルギーの数。``effects.retreat_cost`` が、その時点の場から問い合わせる。窓の中の反応ではない。
                            # docs/unown-family-powers-v0.96.md 6 章）
-                           "zero_group_retreat_cost_from_bench")
+                           "zero_group_retreat_cost_from_bench",
+                           # v0.97: アンノーンD の［DARK df］・アンノーン[N] の［NORMAL df］（ワザのダメージを変える。v0.46 のなぞのかべ・くつろぐかおりと同じく、ダメージの計算の
+                           # ``effects.attack_damage_modifiers`` が、その時点の場から問い合わせる。窓の中の反応ではない。docs/unown-research-idfnj-v0.97.md 8 章）
+                           "reduce_own_group_damage_from_type",
+                           # v0.99: アンノーンP の［PERFORM］（このカードの「めざめるパワー」のダメージを変える。v0.46 の［きょうぼう］と同じく、ダメージの計算の
+                           # ``effects.attack_damage_modifiers`` が、その時点の場と履歴から問い合わせる。窓の中の反応ではない。docs/unown-perform-help-history-v0.99.md 4 章）
+                           "add_active_damage_received_to_named_attack",
+                           # v0.101: アンノーンK の［KEEP］（エネルギーカードをトラッシュする効果がなくなるか。トラッシュする処理が ``effects.energy_discard_void`` で、その時点の場から
+                           # 問い合わせる。窓の中の反応ではない。docs/counter-keep-energy-protection-v0.101.md 4 章）
+                           "void_opponent_energy_discard_on_group",
+                           # v0.102: ［グリーンシールド］・［ニュートラルダメージ］（弱点・抵抗力を当てはめるか。ダメージの計算が ``effects.weakness_resistance_ignored`` で、その時点の
+                           # 場から問い合わせる。窓の中の反応ではない。docs/weakness-resistance-powers-v0.102.md 4 章）
+                           "ignore_weakness_for_own_type", "ignore_weakness_resistance_for_actives")
         # v0.87: フリーザーの［オーロラヴェール］・ダグトリオの［もぐる］は窓の中の反応（要素を無効にする）だが、守るのは持ち主の控え・ベンチにいるこのカードなので、印刷した
         # ポケモンの効果の対応表（``POWER_DEFINITIONS``）ではなく ``catalog.instances`` が受けるポケモンについて作る（v0.84 のこおりのはしらと同じ形）
         built_by_instances = {"own_bench_attack_immunity_while_active": C.AURORA_VEIL, "bench_attack_damage_immunity": C.DIG_UNDER}
@@ -687,18 +699,24 @@ class CatalogTest(unittest.TestCase):
         self.assertEqual([str(k) for k in DEFAULT_EFFECTS.power_keys()
                           if DEFAULT_EFFECTS.power_entry(k.card_id, k.power_index).effect.implementation_id in outside_windows
                           and k.card_id not in V0_69_POWER_CARDS],
-                         ["ES1-034@power0",  # v0.87
+                         ["ES1-003@power0", "ES1-021@power0",  # v0.102
+                          "ES1-034@power0",  # v0.87
                           "GD4-001@power0",  # v0.88
+                          "PF2-001@power0",  # v0.97
                           "PMCG2-027@power0", "PMCG2-040@power0", "PMCG2-047@power0", "PMCG3-015@power0", "PMCG3-035@power0", "PMCG3-041@power0",
                           "PMCG3-042@power0", "PMCG4-007@power0", "PMCG4-010@power0", "PMCG4-041@power0", "PMCG4-043@power0", "PMCG5-035@power0", "PMCG5-051@power0",
                           "PMCG5-063@power0", "PMCG6-010@power0",
                           "PMCG6-033@power0", "PMCG6-049@power0", "PMCG6-053@power0", "PMCG6-074@power0",
+                          "QSG-003@power0", "QSG-030@power0",  # v0.102
                           "QSG-046@power0",  # v0.87
                           "neo1-014@power0", "neo1-033@power0",
+                          "neo2-025@power0",  # v0.97
                           "neo2-044@power0", "neo3-009@power0",  # v0.87
                           "neo3-029@power0",
+                          "neo3-030@power0",  # v0.101
                           "neo4-023@power0",  # v0.87
                           "neo4-046@power0",
+                          "neo4-058@power0",  # v0.99
                           "neo4-060@power0",  # v0.96
                           "neo4-094@power0"])
 

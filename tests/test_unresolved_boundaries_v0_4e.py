@@ -295,6 +295,19 @@ ALL_CODES = (
     "UNRESOLVED_CLAMPING_JAW_SOURCE_DEVOLVED",  # CJ1（v0.93。同）
     "UNRESOLVED_ENGAGE_EMPTY_HAND",  # EG1（v0.96。tests/test_unown_family_powers_v0_96.py）
     "UNRESOLVED_POWER_DECK_TOP_SHORT",  # OB1（v0.96。同）
+    "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES",  # DF1（v0.97。tests/test_unown_idfnj_powers_v0_97.py）
+    "UNRESOLVED_POWER_DAMAGE_RECEIVED_POWER",  # DF2（v0.97。同）
+    "UNRESOLVED_SPEED_STAR_SCOPE",  # SS1（v0.60 のコードのない問いに v0.97 でコードを付けた。同）
+    "UNRESOLVED_POWER_COUNTER_MOVE_TO_SAME_POKEMON",  # BE1（v0.98。tests/test_unown_bear_yield_vanish_give_v0_98.py）
+    "UNRESOLVED_POWER_COUNTER_MOVE_WITHOUT_COUNTERS",  # BE2（v0.98。同）
+    "UNRESOLVED_POWER_RETURN_WITHOUT_TARGET",  # VN1（v0.98。同）
+    "UNRESOLVED_PERFORM_DAMAGE_PLACES",  # PFM1（v0.99。tests/test_unown_perform_help_history_v0_99.py）
+    "UNRESOLVED_SKETCH_PRESENCE",  # SK1（v0.100。tests/test_sketch_perish_song_history_v0_100.py）
+    "UNRESOLVED_SKETCH_COPIED_ATTACK",  # SK2（v0.100。同）
+    "UNRESOLVED_PERISH_SONG_RECEIVED_ATTACK",  # PSG1（v0.100。同）
+    "UNRESOLVED_KEEP_PROTECTED_TARGET",  # KP1（v0.101。tests/test_counter_keep_energy_protection_v0_101.py）
+    "UNRESOLVED_KEEP_VOIDED_DISCARD_COIN",  # KP2（v0.101。同）
+    "UNRESOLVED_KEEP_DETACHED_ENERGY_DISCARD",  # KP3（v0.101。同）
 )
 TURN = 7
 

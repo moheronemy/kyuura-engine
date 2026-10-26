@@ -71,7 +71,7 @@ from ..effects import (
 from ..persistent import effect_attack_card
 from ..state import RETALIATION_FIXED, Retaliation
 from . import kernel as K
-from .events import FrameKind
+from .events import FRAME_DAMAGE_CLASS, FrameKind, Incoming
 
 if TYPE_CHECKING:
     from .programs import AttackRun, Damage
@@ -216,7 +216,9 @@ def _retaliation(res, run: AttackRun, instance, effect: Retaliation, attacker, u
         return (lambda received: ("skipped",)), 0, 1
     key = AttackKey(effect_attack_card(state, effect), effect.attack_index)
     frame = _Frame(FrameKind.RETALIATION, key)
-    void = K.first_void(res, run.player, attacker) is not None
+    # v0.103: 返す効果の枠（まだ開いていない）の発生元は返す側（効果を持つポケモンとその持ち主。ワザの分類）。実際の処理（``kernel.attack_damage_to_damage_source``）と同じ値で判定する
+    incoming = Incoming(instance.owner, instance.pokemon_id, FRAME_DAMAGE_CLASS[FrameKind.RETALIATION], key)
+    void = K.first_void(res, incoming, run.player, attacker) is not None
     modifiers = K.with_stadium_coin(res, frame, OPPONENT_ACTIVE, K.attack_modifiers_of(res, frame, holder, attacker, OPPONENT_ACTIVE))
 
     def returned(received: int):

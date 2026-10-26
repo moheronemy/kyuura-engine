@@ -48,6 +48,9 @@ from kyuura_engine.effects import AttackKey
 from kyuura_engine.resolution import PREFLIGHT_MODES, programs, v013_checks
 from kyuura_engine.state import AttackBarrier
 from scripts import check_card_sources as cs
+from scripts.extract_kyuura_cards import (
+    V0_69_KYUURA_COMMIT as ADOPTED_COMMIT,  # v0.97: 採用したときのデータのコミット（採用の記録は書き換えない）
+)
 from tests.helpers import (
     ATTACK_TYPES_SINCE_V0_17,
     apply_kernel,
@@ -740,7 +743,7 @@ class RecordTest(unittest.TestCase):
             with self.subTest(card=card_id):
                 record = sources[card_id]
                 self.assertEqual((record["basis"], record["status"], record["kyuura_commit"], record["recorded_on"], record["kyuura_records"], record["issues"]),
-                                 ("kyuura_data", "adopted", EXTRACT["source"]["commit"], "2026-10-19", [], []))
+                                 ("kyuura_data", "adopted", ADOPTED_COMMIT, "2026-10-19", [], []))
                 self.assertEqual(record["external_checks"], [])  # 日本語の文面は pcg-search.com の転記。新しい外部照合はしていない
                 self.assertNotIn("equivalent_to", record)
                 targets = {f"attack/{i}" for i, a in enumerate(CARDS[card_id]["pokemon"]["attacks"]) if a["text"]["ja"] is not None}

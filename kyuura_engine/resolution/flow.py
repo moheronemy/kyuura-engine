@@ -42,6 +42,7 @@ from . import v013_checks
 from .contract import is_contract, program_for
 from .events import FrameKind, Suspended, Trace, Window, WindowOpened
 from ..persistent import RETURN_IN_PLAY_TO_DECK, attack_coin_checks, destiny_bond, leave_lock, remove_on_damage, remove_persistent_effects
+from .kernel import effect_ko_entries, restore_effect_ko
 from .kernel import (DryRunComplete, Resolution, apply_energy_drain, apply_split, capture_post_knockout, check_simultaneous, exp_all_offers, exp_all_options, exp_all_unresolved,
                      focus_band_offers, hp_of, knock_out_beam_problem, knock_out_power_offers, knocked, ko_prevention_offers, scram_restored_question, settle_scram,
                      track_ko)
@@ -250,6 +251,10 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
     if any(marker.kind in (MARKER_CURSE, MARKER_COLOR) for side in state.players for pokemon in side.in_play() for marker in pokemon.markers):
         # v0.90: のろいマーカー（弱点の「×4」）・色マーカー（タイプ。CM1）。v0.13 の止める関数は、このマーカーで変わる計算と問いを確かめたことがない
         found.append("のろいマーカー・色マーカー")
+    if E.neutral_shield_holders(state):
+        # v0.103: ［ニュートラルシールド］（発生元が相手の進化ポケモンのワザのダメージと効果の要素を無効にする）。v0.13 の止める関数の見積もり（``preview_attack_damage``）は発生元で
+        # 無効にするかを知らない（「ダメージを受けない」状態・バリアーだけを見る）ので、それで確かめない（情報のない経路で黙って無視しない）
+        found.append("ニュートラルシールド")
     return tuple(found)
 
 
@@ -442,10 +447,13 @@ def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
     if res.dry_run:
         raise DryRunComplete()
     res.horizon()
+    # v0.100: ワザの効果で「きぜつ」させたポケモン（``kernel.knock_out_by_effect``）を、きぜつの判定の決定の続きの情報で運ぶ（答えのあとのきぜつの処理でも「きぜつ」する）。なければ書かない
+    # （v0.99 までの決定の形は変えない）
+    effect_ko = (("effect_ko", effect_ko_entries(res)),) if res.effect_ko else ()
     if offers:
         owner, pokemon, instance = offers[0]
         cont = codec.KoCheckContinuation(use, (instance.power_key.card_id, instance.power_key.power_index))
-        codec.ko_check_decision(state, cont, player=owner, pokemon_id=pokemon.pokemon_id)
+        codec.ko_check_decision(state, cont, player=owner, pokemon_id=pokemon.pokemon_id, extra=effect_ko)
         res.trace.record(Suspended(codec.KNOCK_OUT, state.decision.kind, owner))
         return
     if beams:
@@ -457,6 +465,7 @@ def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
         problem = knock_out_beam_problem(res, owner, pokemon, instance, source)
         if problem is not None:
             extra += (("unresolved_choices", (pokemon.pokemon_id,)), ("unresolved_code", problem[0]), ("unresolved_reason", problem[1]))
+        extra += effect_ko
         codec.ko_check_decision(state, cont, player=owner, pokemon_id=pokemon.pokemon_id, kind=KNOCK_OUT_POWER, extra=extra)
         res.trace.record(Suspended(codec.KNOCK_OUT, state.decision.kind, owner))
         return
@@ -466,7 +475,7 @@ def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
         # v0.81: 学習装置（つけ替えるかを持ち主に聞く。選ぶと止めるカードは ``unresolved_choices``。つけ替えない（0 個）はいつも答えになる）
         owner, active, holder, attached = exps[0]
         unresolved, code, reason = exp_all_unresolved(state, active, holder)
-        extra = () if not unresolved else (("unresolved_choices", unresolved), ("unresolved_code", code), ("unresolved_reason", reason))
+        extra = (() if not unresolved else (("unresolved_choices", unresolved), ("unresolved_code", code), ("unresolved_reason", reason))) + effect_ko
         codec.exp_all_decision(state, codec.KoCheckContinuation(use, None), player=owner, options=exp_all_options(state, active), tool=attached.card,
                                holder=holder.pokemon_id, source=active.pokemon_id, extra=extra)
         res.trace.record(Suspended(codec.KNOCK_OUT, state.decision.kind, owner))
@@ -1106,6 +1115,7 @@ def _offer_effect(res: Resolution, card_id: str, power_index: int):
 def _resume_ko_check(res: Resolution, decision, cont: codec.KoCheckContinuation, choices) -> None:
     """きぜつの判定の任意の効果（こんじょう）の答えのあと: 宣言と効果の中身（v0.13 の実装の ``prevent``）→ きぜつの処理。"""
     state = res.state
+    restore_effect_ko(res, decision.context_value("effect_ko", ()))  # v0.100: ワザの効果で「きぜつ」させたポケモン（決定の前の解決から運んだ）
     if decision.kind == EXP_ALL_ENERGY:
         _resume_exp_all(res, decision, choices)  # v0.81: 学習装置
         _knock_out_after_attack(res)

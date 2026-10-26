@@ -287,9 +287,16 @@ QUESTIONS: dict[str, Question] = {
                  "「みちづれ」がはたらくワザのあとのきぜつの判定で、きぜつするときに使える特殊能力の候補もある"),
         # v0.60（docs/coins-defense-rebellion-v0.60.md）: 「ワザのダメージを変える常にはたらく特殊能力」で、持っているのが相手の対戦ポケモン以外の相手の場のポケモンのものは、
         # 今の写しにない（［くつろぐかおり］はバトル場にいる限りはたらくので、持っているのは受けるポケモン自身）
-        Question("speed_star_scope", None, ("SS1",), 90,
+        # v0.97（docs/unown-research-idfnj-v0.97.md 9 章）: ベンチのアンノーン[N] の［NORMAL df］（相手の場のほかのポケモンの特殊能力）と、「無色」ポケモンが写したスピードスターで
+        # 起こるようになったので、コードを付けた（問い・分類は変えていない。v0.96 まではコードのない問い）
+        Question("speed_star_scope", "UNRESOLVED_SPEED_STAR_SCOPE", ("SS1",), 90,
                  "タケシのサンドパンの「スピードスター」の「相手の持っている…その他の効果」に、相手の対戦ポケモン自身が持っている効果だけでなく、相手の場のほかのポケモンが"
                  "持っている常にはたらく特殊能力も含むかは、印刷の文面・kyuura の記録から決められず、最終ダメージが変わる"),
+        # v0.97（docs/unown-research-idfnj-v0.97.md 8 章）: ［DARK df］・［NORMAL df］（「自分の場のほかの…がはたらいているとき、この力は、はたらかない」）が 2 匹以上ではたらきうる
+        Question("self_excluding_power_copies", "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES", ("DF1",), 10,
+                 "「自分の場のほかのアンノーン「D」の「DARK df」がはたらいているとき、この力は、はたらかない」の特殊能力（［DARK df］・［NORMAL df］）がはたらきうるカードが自分の場に "
+                 "2 匹以上いるとき、どれがはたらくか・1 つもはたらかないのかは、印刷の文面・kyuura の記録から決められず（多くても 1 つ。CR-UNOWN-DF-AT-MOST-ONE。kyuura の "
+                 "UQ-SELF-EXCLUDING-POWER-COPIES）、読み方で受けるダメージ・要る決定が変わる（uid・場の並び・場に出た順で代表を選ばない）"),
         # v0.89（docs/selected-target-damage-v0.89.md 4.3 節）: ブラッキーの「だましうち」（だれの効果かを書かない「…その他の効果」に関係なく）
         Question("ignored_effects_scope", "UNRESOLVED_IGNORED_EFFECTS_SCOPE", ("FA1",), 10,
                  "ブラッキーの「だましうち」の「「弱点・抵抗力・特殊能力・その他の効果」に関係なく」（「相手の持っている」「そのポケモンの持っている」のない書き方）が、"
@@ -429,6 +436,27 @@ QUESTIONS: dict[str, Question] = {
                  "［にげこむ］で入れ替えたあとに、そのワザの残りのダメージの要素がかわりに出たポケモンに来る並びのワザは、今の写しにない"),
         Question("bench_guard_element", None, ("BG0",), 10,
                  "［ベンチガード］の決定を出せないダメージの要素で、控えポケモンが 10 以上のダメージを受ける（今の写しのワザの要素はどれも出せる）"),
+        # v0.100（docs/sketch-perish-song-history-v0.100.md 8 章）
+        Question("sketch_presence", "UNRESOLVED_SKETCH_PRESENCE", ("SK1",), 10,
+                 "ドーブルの「スケッチ」の「前の相手の番、このカードが場に出ていなければ、このワザは失敗する」が、前の相手の番の途中に場に出たカード・前の相手の番に場にいて、そのあと場を"
+                 "はなれて出し直したカード・前の相手の番がない（先攻の最初の番）ときに失敗するかは、印刷の文面・kyuura の記録から決められない（失敗するか、ワザを使うか・何もしないかが変わる）"),
+        Question("sketch_copied_attack", "UNRESOLVED_SKETCH_COPIED_ATTACK", ("SK2",), 10,
+                 "ドーブルの「スケッチ」の「前の相手の番に、相手のポケモンがワザを使っていたなら、そのワザを」が、相手が使ったワザが相手のワザなどを自分のワザとして使ったもの（宣言したワザと"
+                 "処理したワザが違う）のとき、どちらのワザを指すかは、印刷の文面・kyuura の記録から決められない"),
+        Question("perish_song_received_attack", "UNRESOLVED_PERISH_SONG_RECEIVED_ATTACK", ("PSG1",), 10,
+                 "ムウマの「ほろびのうた」の「前の自分の番に「やみのひとみ」を受けていたなら」が、効果だけを無効にする効果で受けなかった「やみのひとみ」・相手のワザなどを自分のワザとして"
+                 "使った「やみのひとみ」（宣言したワザと処理したワザが違う）を受けていたことになるかは、印刷の文面・kyuura の記録から決められない（今ねむりの相手が「きぜつ」するかが変わる）"),
+        # ルールの問いではなく、エンジンの持つ情報の不足（コードは UNSUPPORTED_…。研究の対応表の停止コードには入れない）
+        Question("turn_history_missing", "UNSUPPORTED_HISTORY_TURN_RECORD_MISSING", ("v0.100",), 10,
+                 "前の相手の番のプレイヤーの番ごとの記録（使ったワザ・場にいたカード）がない（v0.99 までの状態の写しなど）。記録がないことを「ワザを使わなかった」「場にいなかった」と読まない"
+                 "（エンジンの持つ情報の不足）"),
+        # v0.101（docs/counter-keep-energy-protection-v0.101.md 4 章・8 章）: アンノーンK の［KEEP］（トレーナーの選ぶものの KP1 は effects.KEEP_TARGET_CODE）
+        Question("keep_voided_discard_coin", "UNRESOLVED_KEEP_VOIDED_DISCARD_COIN", ("KP2",), 10,
+                 "アンノーンK の［KEEP］でなくなる「エネルギーカードをトラッシュする効果」だけを決めるコイン（ワザのこの要素のコイン・［だつりょくえき］のコイン）を投げるかは、"
+                 "印刷の文面・kyuura の記録から決められない（投げるかどうかで乱数の続きが変わる。UQ-COIN-IN-NULLIFIED-ELEMENT と同じ形の、別の原因の問い。HC3・AL2 と同じ形）"),
+        Question("keep_detached_energy_discard", "UNRESOLVED_KEEP_DETACHED_ENERGY_DISCARD", ("KP3",), 10,
+                 "［KEEP］がはたらくアンノーンからはがした（つけかえる）エネルギーカードを、つける控えポケモンが受けないのでトラッシュに置くとき、それが「アンノーンについている"
+                 "「エネルギーカード」をトラッシュする効果」に当たるか（当たるならカードをどこに置くか）は、印刷の文面・kyuura の記録から決められない"),
     )
 }
 

@@ -693,7 +693,13 @@ class G37Test(unittest.TestCase):
         "SwitchOpponentActiveRequiringBench", "ForceSwitchOnHeadsWithoutDamage", "CoinBonusDamageElseForceSwitch", "OptionalSwitchOpponentThenDamage",
         "DamageThenStatusOnHeadsElseSelfSwitch", "CoinReturnOpponentToHandElseForceSwitch",
         # v0.95: とりさる（相手の場のポケモンについているトレーナーカードを山札にもどす。ついているポケモンへの効果。docs/private-looks-deck-movement-v0.95.md）
-        "ReturnOpponentAttachedTrainerToDeck"]))
+        "ReturnOpponentAttachedTrainerToDeck",
+        # v0.100: ほろびのうた（相手をダメージによらず「きぜつ」させる効果。docs/sketch-perish-song-history-v0.100.md）
+        "KnockOutIfAsleepAndReceived",
+        # v0.104: やさしいうた（相手の対戦ポケモンからとりのぞく効果とねむり。docs/healing-pokemon-v0.104.md）。あまいみつは自分の場から選ぶので、相手に効果を与えない
+        "HealBothActivesThenSleep",
+        # v0.105: プレゼント（「おもて」の数で相手の対戦ポケモンからとりのぞく効果。docs/recovery-evolution-coin-branches-v0.105.md）。ハイパーリバース・サイコリーフの回復は自分からとりのぞく
+        "ThreeCoinDamageOrOpponentHeal"]))
 
 
 class DecisionTest(unittest.TestCase):

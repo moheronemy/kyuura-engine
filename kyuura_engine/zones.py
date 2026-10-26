@@ -35,6 +35,11 @@ def enter_play(state: GameState, uid: int) -> PokemonInPlay:
     goop_gas_entry_check(state, uid, how="enter")  # v0.59: GG1（場に出す前。番号を付ける前）
     pokemon = PokemonInPlay(uid, pokemon_id=state.next_pokemon_id, played_turn=state.turn_number)
     state.next_pokemon_id += 1
+    # v0.100（docs/sketch-perish-song-history-v0.100.md 3 章）: 番でないプレイヤーのポケモンがその番に場に出たら、プレイヤーの記録（``TurnField``）に加える（「スケッチ」の
+    # 「前の相手の番、このカードが場に出ていなければ」。読むカードのない対戦では何もしない）
+    from .history import note_entered
+
+    note_entered(state, state.cards[uid].owner, pokemon)
     return pokemon
 
 
@@ -938,6 +943,9 @@ def discard_attached_energy_cards(state: GameState, owner: int, pokemon: Pokemon
     ``trainer_discard_energy``（``player`` はカードの持ち主、``user`` はトレーナーを使ったプレイヤー。場のカードとトラッシュは公開の情報なので ``cards`` は公開）。
     ワザの効果のトラッシュ（``discard_energy``・``discard_attached_energy``）とは出どころが違うので、ログを分ける。トラッシュしたカード（ついていた順）を返す。"""
     moved = _attached_energy_cards(state, owner, pokemon, cards)
+    from .effects import require_discard_not_voided
+
+    require_discard_not_voided(state, pokemon, moved, cause="trainer", by_player=user)  # v0.101: ［KEEP］でなくなる効果は呼ぶ側が先に止める（確かめの漏れ）
     returns = _energy_plan(state, pokemon, moved, "trainer", user)  # v0.82: リサイクルエネルギー・エコロジム（相手が使ったトレーナー）
     for uid in moved:
         pokemon.energy.remove(uid)
