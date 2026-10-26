@@ -3,7 +3,7 @@
 v0.107 は、ビードル（neo2-002）・クヌギダマ（neo2-005）・リングマ（neo2-051）・コダック（neo4-026）・カスミのシェルダー（GD2-006）・そらをとぶピカチュウ（PR1-018・PR1-042・PR1-063）・
 バタフリー（SI-003）の 9 枚を、ワザ 16 とともに登録する版です。6 つのワザは既存の型（`DAMAGE_ONLY`・`CoinFlipDamage(2, 40)`・`ParalyzeOnHeads`・`SelfDamageOnTails(10)`）、ヘッドプレス・
 からではさむは `DamageAndParalyzeOnHeadsElseFail` の書き方（`PARALYZE_ELSE_FAIL_TEXTS`）、レインボーパウダーは `DamageThenStatusByCoin` の (マヒ, どく) の組だけの書き方
-（`RAINBOW_POWDER_TEXTS`）を明示して加えました。残る 6 つのワザは新しい 4 つの小さな型で、既存の要素（`programs.FailOnTails`・`Damage`・`Status`・`SelfPersistent`・`Coin`・`BenchDamage`）
+（`RAINBOW_POWDER_TEXTS`）を明示して加えました。残る 7 つのワザ（4 つのそらをとぶを含む）は新しい 4 つの小さな型で、既存の要素（`programs.FailOnTails`・`Damage`・`Status`・`SelfPersistent`・`Coin`・`BenchDamage`）
 の組み合わせです: とげでつつく（`FailOnTailsDamageThenPoison`）、とつぜんじばく（`FailOnTailsSelfDestruct`）、4 つのそらをとぶ（`FailOnTailsDamageThenSelfBarrier`。書き方は `FLY_TEXTS`）、
 へんずつう（`DamageThenConfuseOpponentOrSelf`）。新しい要素・値・状態の項目・決定の種類・ログの種類・停止コードはありません。写しの元と研究の基準は v0.97 のまま（kyuura `73a1690`）、
 書き出しの形式は 26 のままです。
