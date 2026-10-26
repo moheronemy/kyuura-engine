@@ -4532,7 +4532,21 @@
       "ES3-027/attack/0",
       "ES3-027/attack/1",
       "QSG-034/attack/0",
-      "QSG-034/attack/1"
+      "QSG-034/attack/1",
+      "neo2-002/attack/0",
+      "neo2-005/attack/0",
+      "neo2-051/attack/0",
+      "neo2-051/attack/1",
+      "neo4-026/attack/1",
+      "GD2-006/attack/1",
+      "PR1-018/attack/0",
+      "PR1-018/attack/1",
+      "PR1-042/attack/0",
+      "PR1-042/attack/1",
+      "PR1-063/attack/0",
+      "PR1-063/attack/1",
+      "SI-003/attack/0",
+      "SI-003/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

@@ -1955,6 +1955,27 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.107: コインによる成否・特殊状態・防護の 9 枚
+
+[coin-failure-status-flight-v0.107.md](coin-failure-status-flight-v0.107.md)。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534` のまま（今回の追加を理由に上げていない）。写しの組 `pool_v0_107`（9 枚）を加え、写しの作り直しの道具で作った
+  （手で直していない）。v0.106 までの 1,219 枚の値・移行の記録は変わっていない。
+- 9 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-26・外部照合なし。記録 1,132 → 1,141）。研究の基準に 9 枚を指す LD-・CC-・CR-・UQ-・エラッタはなく
+  （カードの id・pcg-search の id・同じカードの組 SC-PR1-018・名前・ワザの名前（日本語と英語の欄）で、写し以外の data/ と docs/ を探した。見つかったのはカード・対象の一覧・転記元の写し・
+  商品の一覧・同じカードの組と、名前の一致する別のカードの記録・ガイドブックの既存の転記（読み直し・根拠には使っていない））、`kyuura_records` は空。処理に使う文面はどれも印刷の文面
+  （研究の対応表の `adopted_printed_text` に 14 を加えた。1,179 → 1,193。説明文のないみずかけ・たいあたりは持たない）。
+- 同じカードの組 SC-PR1-018（PR1-018・PR1-063）は、そらをとぶの文面が違い（kyuura の same_card_groups.json の `text_difference` は wording）、日本語の pokemon 欄が一致しないので、同じデータの
+  表（SAME_DATA）に入れず、id ごとの登録と採用の記録を置いた（文面の同じでんきショックの登録の値だけを共有）。4 つのそらをとぶの説明は、それぞれの id の原文のまま。
+- 日本語の文面の転記元: ビードル・クヌギダマ・リングマが nazonobasho.com、コダックがポケモンWiki、ほかの 5 枚が pcg-search.com。同じ所との一致を独立した照合に数えず、新しく画像を見た
+  ことにしていない。プロモ・ジムデッキのレベル・図鑑番号の欠け（`data_gaps`）は補っていない。「そらをとぶピカチュウ」を「ピカチュウ」に正規化していない。
+- 英語の欄との違い（日本語を採用し、英語で置きかえない。この違いだけで保留にしない）: とつぜんじばくの英語は「Flip a coin.」を 2 回書く（日本語は 1 枚のコインの「うら」で失敗）。
+- 一般規定・裁定（p.323 の失敗・GR-2000-P309-ATTACK-PROCEDURE・GR-2000-P321-ATTACK-DAMAGE・GR-2000-P321-PREVENTED-ELEMENTS・GR-2000-P322-PERSISTENT-EFFECTS・CR-EFFECTS-AFTER-KO・
+  CR-STICKY-VS-PREVENTED・CR-GAMBLE-VS-PREVENTED・CR-TRANSPARENCY-NOT-FAILURE）は既存の記録の再利用で、9 枚それぞれの独立した原典照合ではない。新しい停止コードはない（停止コード 234・
+  未解決の裁定 235 のまま）。
+- 報告事項（kyuura の作業）: engine_targets.json の 9 枚の `engine_status` を v0.107 の登録で写すと `registered` になる。とつぜんじばく（neo2-005）の英語の欄の 2 回の「Flip a coin.」は
+  日本語の 1 枚のコインと違う（英語の欄の転記か印刷かは照合していない）。
+
 ## v0.106: 数とコインを組み合わせる 11 枚
 
 [counts-coins-compositions-v0.106.md](counts-coins-compositions-v0.106.md)。

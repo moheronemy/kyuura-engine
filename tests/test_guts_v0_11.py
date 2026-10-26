@@ -699,7 +699,10 @@ class G37Test(unittest.TestCase):
         # v0.104: やさしいうた（相手の対戦ポケモンからとりのぞく効果とねむり。docs/healing-pokemon-v0.104.md）。あまいみつは自分の場から選ぶので、相手に効果を与えない
         "HealBothActivesThenSleep",
         # v0.105: プレゼント（「おもて」の数で相手の対戦ポケモンからとりのぞく効果。docs/recovery-evolution-coin-branches-v0.105.md）。ハイパーリバース・サイコリーフの回復は自分からとりのぞく
-        "ThreeCoinDamageOrOpponentHeal"]))
+        "ThreeCoinDamageOrOpponentHeal",
+        # v0.107: とげでつつく（失敗のコインのあとのどく）・へんずつう（コインの「おもて」で相手のこんらん）。とつぜんじばく・そらをとぶは相手の対戦ポケモンへの効果を持たない（自分への
+        # ダメージ・控えへのダメージ・自分への防護）。docs/coin-failure-status-flight-v0.107.md
+        "FailOnTailsDamageThenPoison", "DamageThenConfuseOpponentOrSelf"]))
 
 
 class DecisionTest(unittest.TestCase):

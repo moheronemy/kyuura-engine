@@ -3246,6 +3246,7 @@ class DamageAndParalyzeOnHeadsElseFail(AttackEffect):
       「ワザをうけない」状態（バリアー）の相手には、コインが決めるダメージとマヒがどちらも無効なので、コインを投げるかが決められない（HC3
       ``UNRESOLVED_PREVENTED_EFFECT_COIN``）
     - ダメージで相手が HP 以上になったら、マヒにしない（p.309・CR-EFFECTS-AFTER-KO）
+    - v0.107: リングマ（neo2-051）の「ヘッドプレス」・カスミのシェルダー（GD2-006）の「からではさむ」の書き方（``PARALYZE_ELSE_FAIL_TEXTS``）
     """
 
     implementation_id = "damage_and_paralyze_on_heads_else_fail"
@@ -3253,9 +3254,18 @@ class DamageAndParalyzeOnHeadsElseFail(AttackEffect):
 
     def check(self, attack: Attack) -> list[str]:
         problems = _check_form(attack, "コインでダメージとマヒ・失敗が決まるワザ", damage="fixed")
-        if attack.text_ja != "コインを投げて「おもて」なら、ダメージとともに相手を「マヒ」状態にする。「うら」なら、このワザは失敗する。":
+        if attack.text_ja not in PARALYZE_ELSE_FAIL_TEXTS:
             problems.append(f"説明 {attack.text_ja!r} が、コイン 1 枚でダメージとマヒ・失敗が決まるワザの説明ではない")
         return problems
+
+
+# v0.33・v0.107: ``DamageAndParalyzeOnHeadsElseFail`` が受け付ける説明（kyuura の印刷の文面）。v0.33 のパルシェンの書き方と、v0.107 のリングマ（neo2-051）の「ヘッドプレス」・
+# カスミのシェルダー（GD2-006）の「からではさむ」の書き方（docs/coin-failure-status-flight-v0.107.md 3 章）。後者はマヒを先に書くが、「うら」ならワザ全体が失敗する（p.323）ので、
+# ダメージとマヒは「おもて」のときだけで、1 枚のコインでダメージ・マヒ・失敗が決まる同じ意味（「うら」でもマヒにする・ダメージを与える読み方にしない）。ほかの書き方は受け付けない
+PARALYZE_ELSE_FAIL_TEXTS = (
+    "コインを投げて「おもて」なら、ダメージとともに相手を「マヒ」状態にする。「うら」なら、このワザは失敗する。",
+    "相手を「マヒ」状態にする。コインを投げて「うら」なら、このワザは失敗する。",
+)
 
 
 @dataclass(frozen=True)
@@ -5616,7 +5626,8 @@ class DamageThenStatusByCoin(AttackEffect):
         split = (f"コインを投げて「おもて」なら、相手を「{_CONDITION_JA[self.heads]}」状態にする。「うら」なら、相手を「{_CONDITION_JA[self.tails]}」状態にする。")
         # v0.93: クサイハナ（neo1-008）の「へんなこな」の「コインを投げ、」の書き方。1 枚のコインの「おもて」でこんらん・「うら」でねむりにする同じ意味（読点の位置の違いだけ）を、
         # この組の全文 1 通りだけ受け付ける（広く読み替えない。docs/active-leave-locks-v0.93.md 3 章）
-        extra = STRANGE_POWDER_COMMA_TEXTS.get((self.heads, self.tails), ())
+        # v0.107: バタフリー（SI-003）の「レインボーパウダー」の書き方（(マヒ, どく) の組だけ。``RAINBOW_POWDER_TEXTS``）
+        extra = STRANGE_POWDER_COMMA_TEXTS.get((self.heads, self.tails), ()) + RAINBOW_POWDER_TEXTS.get((self.heads, self.tails), ())
         return _check_form(attack, "コインで相手の特殊状態が決まるワザ", damage="fixed") + _check_exact_text(attack, "コインで相手の特殊状態が決まるワザ",
                                                                                                    (expected, split, *extra))
 
@@ -5624,6 +5635,12 @@ class DamageThenStatusByCoin(AttackEffect):
 # v0.93: クサイハナ（neo1-008）の「へんなこな」（``DamageThenStatusByCoin`` の (こんらん, ねむり) の組だけの書き方）
 STRANGE_POWDER_COMMA_TEXTS: Mapping[tuple[str, str], tuple[str, ...]] = MappingProxyType({
     (CONFUSION, SLEEP): ("コインを投げ、「おもて」なら相手を「こんらん」状態に、「うら」なら「ねむり」状態にする。",),
+})
+# v0.107（docs/coin-failure-status-flight-v0.107.md 3 章）: バタフリー（SI-003）の「レインボーパウダー」（``DamageThenStatusByCoin`` の (マヒ, どく) の組だけの書き方）。「コインを投げる」の
+# あとに読点がなく、「どく」をかぎかっこで書かないが、1 枚のコインの「おもて」でマヒ・「うら」でどくにする同じ意味（印刷の文面のまま。v0.38 の ``DamageThenPoisonOrParalyze`` の
+# 「おもて」どく・「うら」マヒとは面と特殊状態の対応が逆なので、その型・逆の組 (どく, マヒ) には当てはめない）
+RAINBOW_POWDER_TEXTS: Mapping[tuple[str, str], tuple[str, ...]] = MappingProxyType({
+    (PARALYSIS, POISON): ("コインを投げる「おもて」なら、相手を「マヒ」状態に、「うら」ならどく状態にする。",),
 })
 
 
@@ -40163,3 +40180,152 @@ SAME_DATA_CARDS_V0_106: Mapping[str, str] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_106_ATTACKS), SAME_DATA_CARDS_V0_106)
+
+
+
+# ---------------------------------------------------------------- v0.107（docs/coin-failure-status-flight-v0.107.md）
+# コインによる成否・特殊状態・防護のポケモンの 9 枚（ワザ 16）。処理に使う文面は kyuura の印刷の文面。6 つのワザは既存の型（``DAMAGE_ONLY``・``CoinFlipDamage``・``ParalyzeOnHeads``・
+# ``SelfDamageOnTails``）、ヘッドプレス・からではさむ（``DamageAndParalyzeOnHeadsElseFail``）・レインボーパウダー（``DamageThenStatusByCoin`` の (マヒ, どく)）は書き方を明示して加え、
+# 残る 6 つのワザは新しい 4 つの型で、既存の要素（``programs.FailOnTails``・``Damage``・``Status``・``SelfPersistent``・``Coin``・``BenchDamage``）の組み合わせ
+
+POISON_ELSE_FAIL_TEXT = "相手を「どく」状態にする。コインを投げて「うら」なら、このワザは失敗する。"
+SUDDEN_EXPLOSION_TEXT = ("自分にも{self_damage}ダメージ。おたがいの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ{bench}ダメージ。"
+                         "コインを投げて「うら」なら、このワザは失敗する。")
+# そらをとぶ（そらをとぶピカチュウ（PR1-018・PR1-042・PR1-063）・バタフリー（SI-003））の書き方。どれも 1 枚のコインの「うら」でワザ全体が失敗し、「おもて」なら相手へのダメージのあと、
+# 次の相手の番にワザによるダメージと効果を受けない（``AttackBarrier``）。PR1-018 は防護を先に書くが、「うら」ならワザが失敗する（p.323）ので、防護は「おもて」のときだけ（失敗したのに
+# 防護を得る読み方にしない）。句点・「相手の」の有無・読点を一律に正規化せず、印刷の文面ごとに受け付ける
+FLY_TEXTS = (
+    "次の相手の番に、このカードは相手のワザをうけない。コインを投げて「うら」なら、このワザは失敗する。",  # PR1-018
+    "コインを投げて「うら」ならこのワザは失敗する。「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。",  # PR1-042
+    "コインを投げて「うら」なら、このワザは失敗する。「おもて」なら次の相手の番、このカードは相手のワザによるダメージや効果を受けない。",  # PR1-063
+    "コインを投げて「うら」なら、このワザは失敗する。「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。",  # SI-003
+)
+MIGRAINE_TEXT = "コインを投げて「おもて」なら、相手を「こんらん」状態にする。「うら」なら、自分を「こんらん」状態にする。"
+
+
+@dataclass(frozen=True)
+class FailOnTailsDamageThenPoison(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。相手を「どく」状態にする。コインを投げて「うら」なら、このワザは失敗する（v0.107。ビードル（neo2-002）の
+    「とげでつつく」）。
+
+    - 要素は ``FailOnTails`` → ``Damage(OPP)`` → ``Status(POISON)``。1 枚のコインがワザ全体の成否を決め、「うら」ならダメージもどくもない（p.323 の失敗。ログ ``attack_failed``。
+      ワザは使ったことになる）。「おもて」ならダメージのあとにどく（コインを投げ直さない）。v0.33 のからではさむ（``DamageAndParalyzeOnHeadsElseFail``）と同じ形で、特殊状態だけが違う
+    - コインが決める要素はどれも相手の対戦ポケモンへの要素なので、「ワザをうけない」状態（バリアー）の相手には HC3、「ダメージを受けない」状態（かたまる）の相手には、どくが有効なので
+      投げる（CR-STICKY-VS-PREVENTED と同じ形。``programs.void_coin_question``）。ダメージで相手が HP 以上になったら、どくにしない（p.309・CR-EFFECTS-AFTER-KO）
+    """
+
+    implementation_id = "fail_on_tails_damage_then_poison"
+    opponent_effect_elements = (POISON,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで失敗し、「おもて」ならダメージとどくのワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (POISON_ELSE_FAIL_TEXT,))
+
+
+@dataclass(frozen=True)
+class FailOnTailsSelfDestruct(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。自分にも ``self_damage``。おたがいの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ ``bench_damage``。
+    コインを投げて「うら」なら、このワザは失敗する（v0.107。クヌギダマ（neo2-005）の「とつぜんじばく」）。
+
+    - 要素は ``FailOnTails`` → v0.39 のじばく（``SelfDestruct``。弱点・抵抗力に関係ない書き方）と同じダメージのまとまり（相手 → 自分 → 相手の控え全員 → 自分の控え全員）。
+      「うら」ならワザ全体が失敗し、自分へのダメージ・控えへのダメージも残さない（先に処理して取り消さない）。「おもて」なら、じばくと同じ計算・同じ反応の時点（すべてのダメージの
+      あと。CR-COUNTERATTACK-TIMING）・同時のきぜつ（p.324）
+    - 自分へのダメージはワザによるダメージ（GR-2000-P321-ATTACK-DAMAGE。自分のタイプと自分の弱点・抵抗力）で、残りの HP に関係なく自分をきぜつさせる処理ではない。控えへのダメージは
+      弱点・抵抗力を計算しない（説明。JS1 には当たらない）
+    - コインが決める要素に自分へのダメージ（無効にならない）があるので、相手が「ダメージを受けない」「ワザをうけない」状態でも投げる（``programs.void_coin_question``）
+    """
+
+    self_damage: int
+    bench_damage: int
+    implementation_id = "fail_on_tails_self_destruct"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.self_damage, "自分へのダメージ")
+        _positive_tens(self.bench_damage, "控えポケモンへのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで失敗し、「おもて」なら自分と控えにもダメージを与えるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(
+            attack, what, (SUDDEN_EXPLOSION_TEXT.format(self_damage=self.self_damage, bench=self.bench_damage),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        # 同じコインの「おもて」で相手と自分の両方、「うら」でどちらもない（失敗）。失敗して自分へのダメージだけが残る組・相手にだけ与える組は起こらない
+        printed = attack_of(state, use.key).damage
+        return DamageProfile(opponent=(printed,), self_damage=(self.self_damage,), outcomes=((printed, self.self_damage), (None, 0)))
+
+
+@dataclass(frozen=True)
+class FailOnTailsDamageThenSelfBarrier(AttackEffect):
+    """コインを投げて「うら」なら、このワザは失敗する。「おもて」なら相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。次の相手の番、このカードはワザによるダメージや効果を
+    受けない（v0.107。そらをとぶピカチュウ（PR1-018・PR1-042・PR1-063）・バタフリー（SI-003）の「そらをとぶ」。書き方は ``FLY_TEXTS``）。
+
+    - 要素は ``FailOnTails`` → ``Damage(OPP)`` → ``SelfPersistent(AttackBarrier)``。1 枚のコインがダメージと防護の両方を決める（失敗の判定と防護のために 2 回投げない）。「うら」なら
+      ダメージも防護もない（p.323 の失敗）。v0.34 の ``DamageThenSelfBarrierOnHeads``（こうそくいどう。いつもダメージを与え、そのあとのコインで防護だけを決める）とは別の型
+    - 防護は v0.31 のミュウツーの「バリアー」と同じ持続する効果 ``AttackBarrier``（次の相手の番に、このポケモンへのワザのダメージの要素と効果の要素は無効。ダメージだけを防ぐ状態に
+      しない）。ダメージのあと（反応の窓のあと）に、実際にワザを使ったポケモン（相手のワザとして使ったなら使ったポケモン）に与える。期限・消える条件はバリアーと同じ（次の相手の番の
+      終わり・ベンチにもどる・進化・きぜつ）。今の番の返す効果は防がない（次の相手の番から）
+    - ワザを使ったポケモンが相手の「はんげき」などで HP 以上になったら、防護は与えない（p.309。ログ ``persistent_effect_skipped``）
+    - コインが決める要素に自分への防護（無効にならない）があるので、相手が「ダメージを受けない」「ワザをうけない」状態でも投げる（``programs.void_coin_question``）
+    """
+
+    implementation_id = "fail_on_tails_damage_then_self_barrier"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで失敗し、「おもて」ならダメージと次の相手の番にワザを受けない効果のワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, FLY_TEXTS)
+
+
+@dataclass(frozen=True)
+class DamageThenConfuseOpponentOrSelf(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。コインを投げて「おもて」なら相手を、「うら」なら自分を「こんらん」状態にする（v0.107。コダック（neo4-026）の
+    「へんずつう」）。
+
+    - 要素は ``Damage(OPP)`` → ``Coin`` → ``Status(CONFUSION, gate=おもて)`` → ``Status(CONFUSION, target=SELF, gate=うら)``。ダメージはコインの前で、どちらの面でも与える（「うら」を
+      ワザの失敗にしない。v0.41 の ``CoinDamageAndConfuseElseSelfConfuse``（ナツメのコダック。「うら」なら相手にダメージを与えない）とは別の型）。1 枚のコインがこんらんにする相手を
+      決める（投げ直さない）
+    - コインはダメージの要素のあと（反応の窓のあと。CR-COUNTERATTACK-TIMING）。コインの前に、決める要素ごとに処理の対象を確かめる（``Coin``・``Status.has_target``）: 相手がこのワザの
+      ダメージで HP 以上でも、自分へのこんらんが残るので投げる。自分が相手の「はんげき」などで HP 以上でも、相手へのこんらんが残れば投げる（そのときは相手へのこんらんだけが決める要素
+      なので、「とうめい」で受けないと決まった相手は T19b・「ワザをうけない」相手は HC3）。どちらもいなければ投げない（p.309）
+    - 相手がこんらんを受けない（「ワザをうけない」状態・「とうめい」・ミュウの［ニュートラルシールド］）ときも、自分へのこんらんが残るので投げ、「うら」なら自分はこんらんになる
+    """
+
+    implementation_id = "damage_then_confuse_opponent_or_self"
+    opponent_effect_elements = (CONFUSION,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで相手か自分がこんらんになるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (MIGRAINE_TEXT,))
+
+
+_V0_107_THUNDERSHOCK = _printed(ParalyzeOnHeads(), "でんきショック", "コインを投げて「おもて」なら、相手を「マヒ」状態にする。")
+
+# v0.107 のワザの登録（16。id ごとに書く）。説明文のないみずかけ・たいあたりは文面・出典を持たない。PR1-018 と PR1-063 は同じカードの組（SC-PR1-018）だが、そらをとぶの文面が違うので
+# まとめず（SAME_DATA には入れない）、文面の同じでんきショックの登録だけを共有し、そらをとぶは id ごとの文面で同じ処理の値（``FailOnTailsDamageThenSelfBarrier``）を登録する
+V0_107_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # ビードル（neo2-002）
+    AttackKey("neo2-002", 0): _printed(FailOnTailsDamageThenPoison(), "とげでつつく", POISON_ELSE_FAIL_TEXT),
+    # クヌギダマ（neo2-005）
+    AttackKey("neo2-005", 0): _printed(FailOnTailsSelfDestruct(40, 10), "とつぜんじばく", SUDDEN_EXPLOSION_TEXT.format(self_damage=40, bench=10)),
+    # リングマ（neo2-051）
+    AttackKey("neo2-051", 0): _printed(DamageAndParalyzeOnHeadsElseFail(), "ヘッドプレス", PARALYZE_ELSE_FAIL_TEXTS[1]),
+    AttackKey("neo2-051", 1): _printed(CoinFlipDamage(coins=2, damage_per_heads=40), "ダブルラリアット", "コインを2枚投げ、「おもて」の数×40のダメージ。"),
+    # コダック（neo4-026）
+    AttackKey("neo4-026", 0): AttackEntry(DAMAGE_ONLY, "みずかけ"),
+    AttackKey("neo4-026", 1): _printed(DamageThenConfuseOpponentOrSelf(), "へんずつう", MIGRAINE_TEXT),
+    # カスミのシェルダー（GD2-006）
+    AttackKey("GD2-006", 0): AttackEntry(DAMAGE_ONLY, "たいあたり"),
+    AttackKey("GD2-006", 1): _printed(DamageAndParalyzeOnHeadsElseFail(), "からではさむ", PARALYZE_ELSE_FAIL_TEXTS[1]),
+    # そらをとぶピカチュウ（PR1-018・PR1-063。でんきショックは同じ登録の値）
+    AttackKey("PR1-018", 0): _V0_107_THUNDERSHOCK,
+    AttackKey("PR1-018", 1): _printed(FailOnTailsDamageThenSelfBarrier(), "そらをとぶ", FLY_TEXTS[0]),
+    AttackKey("PR1-063", 0): _V0_107_THUNDERSHOCK,
+    AttackKey("PR1-063", 1): _printed(FailOnTailsDamageThenSelfBarrier(), "そらをとぶ", FLY_TEXTS[2]),
+    # そらをとぶピカチュウ（PR1-042）
+    AttackKey("PR1-042", 0): _printed(SelfDamageOnTails(10), "でんげき", "コインを投げて「うら」なら、自分にも10ダメージ。"),
+    AttackKey("PR1-042", 1): _printed(FailOnTailsDamageThenSelfBarrier(), "そらをとぶ", FLY_TEXTS[1]),
+    # バタフリー（SI-003）
+    AttackKey("SI-003", 0): _printed(FailOnTailsDamageThenSelfBarrier(), "そらをとぶ", FLY_TEXTS[3]),
+    AttackKey("SI-003", 1): _printed(DamageThenStatusByCoin(PARALYSIS, POISON), "レインボーパウダー", RAINBOW_POWDER_TEXTS[(PARALYSIS, POISON)][0]),
+})
+
+DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_107_ATTACKS)

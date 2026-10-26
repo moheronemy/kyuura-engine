@@ -11631,3 +11631,22 @@ BUILDERS |= {
         Coin("coin", count=e.coins), Damage(OPP, PrintedPlusHeadsOfCoin("coin", e.per)), Damage(SELF, HeadsOfCoin("coin", e.self_per), name="self_damage"),
     ),
 }
+
+
+# ---------------------------------------------------------------- v0.107（docs/coin-failure-status-flight-v0.107.md）: コインによる成否・特殊状態・防護（既存の要素の組み合わせ。新しい要素・値はない）
+
+
+BUILDERS |= {
+    # とげでつつく（ビードル）: 失敗のコイン 1 枚（「うら」ならワザ全体が失敗）→ 相手にダメージ → 相手をどく
+    E.FailOnTailsDamageThenPoison: lambda e: (FailOnTails(), Damage(OPP, Printed()), Status(POISON)),
+    # とつぜんじばく（クヌギダマ）: 失敗のコイン 1 枚 → じばく（SelfDestruct の「弱点・抵抗力」に関係ない書き方）と同じダメージのまとまり（相手 → 自分 → 相手の控え全員 → 自分の控え全員）
+    E.FailOnTailsSelfDestruct: lambda e: (
+        FailOnTails(), *BUILDERS[E.SelfDestruct](E.SelfDestruct(e.self_damage, e.bench_damage, weakness_resistance_stated=True)),
+    ),
+    # そらをとぶ（そらをとぶピカチュウ・バタフリー）: 失敗のコイン 1 枚 → 相手にダメージ → 自分に次の相手の番のワザへの防護（AttackBarrier。同じコインの「おもて」。投げ直さない）
+    E.FailOnTailsDamageThenSelfBarrier: lambda e: (FailOnTails(), Damage(OPP, Printed()), SelfPersistent(AttackBarrier.kind)),
+    # へんずつう（コダック）: 相手にダメージ → コイン 1 枚 →「おもて」なら相手、「うら」なら自分をこんらん（ダメージはどちらの面でも与える）
+    E.DamageThenConfuseOpponentOrSelf: lambda e: (
+        Damage(OPP, Printed()), Coin("coin"), Status(CONFUSION, gate=("coin", HEADS)), Status(CONFUSION, target=SELF, gate=("coin", TAILS)),
+    ),
+}

@@ -451,7 +451,12 @@ class BarrierCoinTest(unittest.TestCase):
                                     # v0.105: セレビィの「サイコリーフ」（相手のエネルギーの個数ぶんのコインは追加のダメージだけを決める。与えたぶんの回復はコインが決める要素ではない）・
                                     # デリバードの「プレゼント」（3 枚のコインは相手へのダメージと相手の対戦ポケモンからとりのぞく回復だけを決める。docs/recovery-evolution-coin-branches-v0.105.md
                                     # 5 章・6 章）
-                                    "CoinsPerDefenderEnergyBonusAndFullDrain", "ThreeCoinDamageOrOpponentHeal"})
+                                    "CoinsPerDefenderEnergyBonusAndFullDrain", "ThreeCoinDamageOrOpponentHeal",
+                                    # v0.107: ビードルの「とげでつつく」（失敗のコインのあとは相手へのダメージとどくだけ。からではさむと同じ形）。とつぜんじばく（自分へのダメージ）・そらをとぶ
+                                    # （自分への防護）・へんずつう（自分へのこんらん）は自分への要素が残るので投げる（docs/coin-failure-status-flight-v0.107.md 4 章）
+                                    "FailOnTailsDamageThenPoison"})
+        for name in ("FailOnTailsSelfDestruct", "FailOnTailsDamageThenSelfBarrier", "DamageThenConfuseOpponentOrSelf"):
+            self.assertIn(name, flipping)  # v0.107
         self.assertIn("DamageThenStatusOnHeadsElseSelfSwitch", flipping)
         self.assertIn("CoinBonusOrSelfDamage", flipping)
         self.assertIn("SelfDamageInsteadOnTails", flipping)

@@ -834,6 +834,9 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                     "のしかかり", "れいとうビーム", "オーロラウェーブ", "オーロラウェーブ",
                                     # v0.106: ビリリダマ（ES2-016・QSG-025）の「でんきショック」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
                                     # docs/counts-coins-compositions-v0.106.md）
+                                    "でんきショック", "でんきショック",
+                                    # v0.107: そらをとぶピカチュウ（PR1-018・PR1-063）の「でんきショック」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                    # docs/coin-failure-status-flight-v0.107.md）
                                     "でんきショック", "でんきショック"]))
         for key in keys:
             for confused in (False, True):

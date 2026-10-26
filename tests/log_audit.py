@@ -347,6 +347,11 @@ V105_TYPES = (E.CoinHealAllThenEvolveSelfFromDeck, E.DefenderEnergyUnitsDamageAn
 V106_TYPES = (E.DamagePlusOwnCountersThenSelfDamage, E.CoinsHeadsTableBonusDamage, E.CappedCoinsPerAttachedEnergyCardsDamage, E.DamagePlusOpponentPrizesTaken,
               E.CoinsBonusAndSelfDamagePerHeads, E.DamagePlusPokemonCount)
 V106_COUNT_SCOPES = {("both_in_play", ("ビリリダマ",)), ("own_bench", ("ニドラン♂", "ニドラン♀", "ニドリーノ", "ニドリーナ", "ニドキング", "ニドクイン"))}
+# v0.107: 独立に確かめるワザの型（log_problems の ``v107_problems``）。1 枚の失敗のコインでワザ全体が決まる型（v0.33 のからではさむの型を含む）、ダメージのあとのコインで相手か自分が
+# こんらんになる型、1 枚のコインで (マヒ, どく) のどちらかになる組（v0.41 の型。この組だけを照らす）
+V107_FAIL_TYPES = (E.FailOnTailsDamageThenPoison, E.DamageAndParalyzeOnHeadsElseFail, E.FailOnTailsSelfDestruct, E.FailOnTailsDamageThenSelfBarrier)
+V107_TYPES = (*V107_FAIL_TYPES, E.DamageThenConfuseOpponentOrSelf, E.DamageThenStatusByCoin)
+V107_STATUS_PAIR = (E.PARALYSIS, E.POISON)
 
 # v0.10: はたらいた「はんげき」より先にあってはならない、ワザのダメージ以外の効果・きぜつ・番の終わり（p.89）
 COUNTER_BARRIERS = (
@@ -1642,6 +1647,7 @@ def log_problems(state) -> list[str]:
     v104_window: dict | None = None  # v0.104: 今のワザの回復の確かめ（宣言の時点のダメージ・特殊状態、このワザのコイン・回復・取り除かなかった・受けなかった要素）
     v105_window: dict | None = None  # v0.105: 今のワザの確かめ（宣言の時点のダメージ・相手のエネルギーの個数、このワザのコイン・ダメージ・回復・進化・切る回数・受けなかった要素）
     v106_window: dict | None = None  # v0.106: 今のワザの確かめ（宣言の時点のカウンター・エネルギーカードの枚数・相手が取ったサイド、このワザのコイン・相手と自分へのダメージ）
+    v107_window: dict | None = None  # v0.107: 今のワザの確かめ（宣言の時点の場、このワザのコイン・失敗・ダメージ・特殊状態・防護の並び）
     color_types: dict[int, dict] = {}  # v0.88: ［せんすい］の記録（対象のポケモンの番号 → 色・発生源のカード・特殊能力の位置）
     # v0.90: ログから組み立てた、場のポケモンのマーカー・カウンター（番号 → のせた順の {"marker", "color", "turn"}）と、進化・退化で取りのぞくはずのポケモン（番号 → 理由）
     marks: dict[int, list[dict]] = {}
@@ -2964,6 +2970,166 @@ def log_problems(state) -> list[str]:
                 w["selfs"].append(base)
         return found
 
+    def v107_complete(w: dict) -> list[str]:
+        """v0.107: 1 回のワザの処理が終わったところで、このワザのログの並び（コイン・失敗・ダメージの要素・特殊状態・防護）を、宣言の時点のログから組み立てた場（ワザを使ったポケモン・
+        相手の対戦ポケモン・お互いの控え）と照らす（エンジンの ``FailOnTails``・``Status``・``SelfPersistent``・``void_coin_question`` を読まない）。こんらん・手順 4 のコインで
+        ワザが失敗したら、コインもダメージもない。"""
+        effect = w["effect"]
+        where = f"{w['turn']} 番の {w['key']}（ワザを使ったポケモン {w['pid']}）"
+        seq = w["seq"]
+        if w["interrupted"]:
+            # こんらんの 20 などで HP 以上になったポケモンのきぜつ（ko）は、このワザの要素ではない
+            processed = [x for x in seq if x[0] != "ko"]
+            return [f"{where}: 失敗したワザ（こんらん・手順 4）で、このワザの要素 {processed} を処理した"] if processed else []
+        found: list[str] = []
+        coins = [x[1] for x in seq if x[0] == "coin"]
+        opp = [i for i, x in enumerate(seq) if x[0] in ("damage", "prevented", "evaded") and x[1] == "opp"]
+        statuses = [(x[1], x[2]) for x in seq if x[0] == "status"]
+        kos = {x[1] for x in seq if x[0] == "ko"}
+
+        def blocked(pid, condition) -> bool:
+            # 効果を受けなかった（無効・「とうめい」・特殊状態にならない・［にげこむ］で入れ替えた）か、このワザで HP 以上になった（処理の対象がない）
+            return pid in kos or any(x[0] == "blocked" and x[1] == pid and x[2] in (condition, None) for x in seq)
+
+        if isinstance(effect, V107_FAIL_TYPES):
+            if len(coins) != 1:
+                return [f"{where}: ワザのコインが {coins}（失敗のコインの 1 枚のはず）"]
+            if seq[0][0] != "coin":
+                found.append(f"{where}: 失敗のコインより先に {seq[0]} がある")
+            if coins[0] == "tails":
+                if w["failed"] != 1:
+                    found.append(f"{where}: 「うら」なのに、ワザの失敗（attack_failed の reason coin）が {w['failed']} 回")
+                left = [x for x in seq if x[0] not in ("coin", "failed")]
+                if left:
+                    found.append(f"{where}: 「うら」でワザ全体が失敗したのに、{left} が残った")
+                return found
+            if w["failed"]:
+                found.append(f"{where}: 「おもて」なのにワザが失敗した")
+            if len(opp) != 1:
+                found.append(f"{where}: 相手の対戦ポケモンへのダメージの要素（ダメージ・無効・受けなかった）が {len(opp)} 個（1 個のはず）")
+            if isinstance(effect, (E.FailOnTailsDamageThenPoison, E.DamageAndParalyzeOnHeadsElseFail)):
+                condition = E.POISON if isinstance(effect, E.FailOnTailsDamageThenPoison) else E.PARALYSIS
+                if any(item != (w["opponent"], condition) for item in statuses) or len(statuses) > 1:
+                    found.append(f"{where}: 「おもて」の特殊状態 {statuses} が、相手の対戦ポケモン {w['opponent']} の {condition} の 1 つまでではない")
+                elif not statuses and not blocked(w["opponent"], condition):
+                    found.append(f"{where}: 「おもて」で、受けなかった・HP 以上になった記録がないのに、相手の対戦ポケモンを {condition} にしなかった")
+            elif isinstance(effect, E.FailOnTailsSelfDestruct):
+                damages = [x for x in seq if x[0] in ("damage", "prevented", "evaded")]
+                expected = (["opp", "self"] + ["opp_bench"] * len(w["opp_bench"]) + ["own_bench"] * len(w["own_bench"]))
+                if [x[1] for x in damages] != expected:
+                    found.append(f"{where}: ダメージの要素の並び {[x[1] for x in damages]} が、相手 → 自分 → 相手の控え全員 → 自分の控え全員（{expected}）ではない")
+                elif (damages[1][2] != w["pid"] or sorted(x[2] for x in damages[2:2 + len(w["opp_bench"])]) != sorted(w["opp_bench"])
+                      or sorted(x[2] for x in damages[2 + len(w["opp_bench"]):]) != sorted(w["own_bench"])):
+                    # 控えの中の順番（ベンチの並び）はログから組み立てた場（集まり）では決めないので、それぞれの控えの全員がちょうど 1 回ずつかを照らす
+                    found.append(f"{where}: 自分・控えへのダメージを受けたポケモン {[x[2] for x in damages[1:]]} が、宣言の時点の自分と控え（{w['opp_bench']}・{w['own_bench']}）ではない")
+                for x in damages[1:]:
+                    if x[0] == "damage" and x[3] != (effect.self_damage if x[1] == "self" else effect.bench_damage):
+                        found.append(f"{where}: {x[1]} への基本となるダメージ {x[3]} が {effect.self_damage if x[1] == 'self' else effect.bench_damage} ではない")
+                    if x[0] == "damage" and x[1] != "self" and not x[4]:
+                        found.append(f"{where}: 控えのポケモン {x[2]} へのダメージに、弱点・抵抗力を計算した（「弱点・抵抗力」に関係なく）")
+                if statuses:
+                    found.append(f"{where}: とつぜんじばくで特殊状態 {statuses} にした")
+            else:
+                given = [i for i, x in enumerate(seq) if x[0] in ("barrier", "barrier_skipped")]
+                if len(given) != 1 or seq[given[0]][1] != w["pid"]:
+                    found.append(f"{where}: 「おもて」の防護 {[seq[i] for i in given]} が、実際にワザを使ったポケモン {w['pid']} への 1 つではない")
+                elif opp and given[0] < opp[0]:
+                    found.append(f"{where}: 防護を、相手へのダメージの要素より先に与えた")
+            return found
+        if len(opp) != 1:
+            found.append(f"{where}: 相手の対戦ポケモンへのダメージの要素（ダメージ・無効・受けなかった）が {len(opp)} 個（コインのどちらの面でも 1 個のはず）")
+        if len(coins) > 1:
+            return found + [f"{where}: ワザのコインが {coins}（1 枚まで）"]
+        if coins and opp and seq.index(("coin", coins[0])) < opp[0]:
+            found.append(f"{where}: コインを、相手へのダメージの要素より先に投げた")
+        if w["failed"]:
+            found.append(f"{where}: 失敗の書かれていないワザが失敗した")
+        if isinstance(effect, E.DamageThenConfuseOpponentOrSelf):
+            target = None if not coins else (w["opponent"] if coins[0] == "heads" else w["pid"])
+            if any(item != (target, E.CONFUSION) for item in statuses) or len(statuses) > 1:
+                found.append(f"{where}: コイン {coins} でこんらんにしたポケモン {statuses} が、{'相手' if coins and coins[0] == 'heads' else '自分'}（{target}）の 1 匹までではない")
+            elif coins and not statuses and not blocked(target, E.CONFUSION):
+                found.append(f"{where}: コイン {coins} で、受けなかった・HP 以上になった記録がないのに {target} をこんらんにしなかった")
+            elif not coins and not (w["opponent"] in kos or blocked(w["opponent"], E.CONFUSION)) and w["pid"] not in kos:
+                found.append(f"{where}: 相手と自分のどちらにもこんらんの対象があるのに、コインを投げなかった")
+        else:
+            condition = None if not coins else (V107_STATUS_PAIR[0] if coins[0] == "heads" else V107_STATUS_PAIR[1])
+            if any(item != (w["opponent"], condition) for item in statuses) or len(statuses) > 1:
+                found.append(f"{where}: コイン {coins} の特殊状態 {statuses} が、相手の対戦ポケモンの {condition} の 1 つまでではない")
+            elif coins and not statuses and not blocked(w["opponent"], condition):
+                found.append(f"{where}: コイン {coins} で、受けなかった・HP 以上になった記録がないのに相手を {condition} にしなかった")
+        return found
+
+    def v107_problems(e: dict) -> list[str]:
+        """v0.107: とげでつつく・とつぜんじばく・ヘッドプレス・からではさむ（v0.33 のパルシェンも）・そらをとぶ・へんずつう・レインボーパウダー（相手のワザとして使ったものも）の、コインの枚数と
+        役割（失敗・こんらんの対象・特殊状態）、失敗のあとに残る要素、ダメージの要素の並びと受けたポケモン、特殊状態・防護の対象を、ログから組み立てた場とこのワザのログから独立に確かめる。"""
+        nonlocal v107_window
+        kind = e["kind"]
+        if kind == "attack":
+            v107_window = None
+            if attack_window is None:
+                return []
+            pid, player = attack_window["pokemon_id"], attack_window["player"]
+            bench = {side: [p for p in in_play if pokemon_owner.get(p) == side and p != active_of.get(side)] for side in (0, 1)}
+            v107_window = {"turn": e["turn"], "player": player, "pid": pid, "opponent": active_of.get(1 - player), "key": attack_window["effect"],
+                           "effect": v104_effect(attack_window["effect"]), "opp_bench": bench[1 - player], "own_bench": bench[player], "seq": [], "failed": 0,
+                           "interrupted": False}
+            return []
+        w = v107_window
+        if w is None:
+            return []
+        if kind in ("turn_end", "game_end", "halted"):
+            v107_window = None
+            effect = w["effect"]
+            if kind == "halted" or not isinstance(effect, V107_TYPES):
+                return []
+            if isinstance(effect, E.DamageThenStatusByCoin) and (effect.heads, effect.tails) != V107_STATUS_PAIR:
+                return []
+            return v107_complete(w)
+        key = e.get("effect")
+        if kind == "copy_attack" and key == w["key"]:
+            w["key"], w["effect"] = e["copied"], v104_effect(e["copied"])
+            return []
+        if not isinstance(w["effect"], V107_TYPES):
+            return []
+        mine = key is not None and key == w["key"]
+        seq = w["seq"]
+        if kind == "confusion_damage" or (kind == "attack_failed" and e.get("reason") != "coin"):
+            w["interrupted"] = True
+        elif kind == "attack_failed" and mine:
+            w["failed"] += 1
+            seq.append(("failed",))
+        elif kind == "coin_flip" and e.get("source") == "attack" and mine:
+            seq.append(("coin", e["result"]))
+        elif kind == "esp_redo" and mine:
+            # ナツメのESP の投げ直し: 決定の前に投げたコインのかわりに、やり直した結果だけを使う
+            w["seq"] = seq = [x for x in seq if x[0] != "coin"] + [("coin", side) for side in e["redone"]]
+        elif kind in ("damage", "damage_prevented", "attack_evaded") and not e.get("retaliation") and (kind != "attack_evaded" or e.get("element") == "damage"):
+            receiver = e.get("pokemon_id") if kind != "damage" or e.get("target") else ids.get(e["pokemon"])
+            target = e.get("target")
+            if target is None:
+                target = "self" if receiver == w["pid"] else "opp" if receiver == w["opponent"] else "opp_bench" if pokemon_owner.get(receiver) == 1 - w["player"] else "own_bench"
+            label = {"opponent_active": "opp", "self": "self", "opponent_bench": "opp_bench", "self_bench": "own_bench"}.get(target, target)
+            if kind == "damage":
+                seq.append(("damage", label, receiver, e["steps"][0][1] if e.get("steps") else None, bool(e.get("ignore_weakness_resistance"))))
+            else:
+                seq.append(("prevented" if kind == "damage_prevented" else "evaded", label, receiver))
+        elif kind == "special_condition" and mine:
+            seq.append(("status", e["pokemon_id"], e["condition"]))
+        elif kind in ("effect_prevented", "attack_evaded", "flee_effect_skipped") and mine:
+            seq.append(("blocked", e["pokemon_id"], e.get("element")))
+        elif kind == "special_condition_prevented" and mine:
+            seq.append(("blocked", e["pokemon_id"], e["condition"]))
+        elif kind == "flee" and e.get("pokemon_id") == w["opponent"]:
+            seq.append(("blocked", w["opponent"], None))  # ［にげこむ］: そのワザの残りの「ダメージ以外の効果」を受けない（かわりに出たポケモンにも移さない）
+        elif kind == "persistent_effect_added" and mine and e["persistent_effect"] == AttackBarrier.kind:
+            seq.append(("barrier", e["pokemon_id"]))
+        elif kind == "persistent_effect_skipped" and mine and e["persistent_effect"] == AttackBarrier.kind:
+            seq.append(("barrier_skipped", e["pokemon_id"]))
+        elif kind == "knock_out":
+            seq.append(("ko", ids.get(e["pokemon"])))
+        return []
+
     def v101_problems(e: dict) -> list[str]:
         """v0.101: ［KEEP］でなくなったトラッシュの効果（``energy_discard_voided``）が、ログから組み立てた場ではたらく［KEEP］の持ち主の場の「アンノーン」への、相手が使った
         ワザ・特殊能力・トレーナーの効果のものであることと、その場合に相手の効果でトラッシュしたログ（ワザ・トレーナー・［だつりょくえき］・つけかえで受けずにトラッシュ）が
@@ -3535,6 +3701,7 @@ def log_problems(state) -> list[str]:
         problems.extend(v104_problems(e))  # v0.104: 回復のワザ・フラワーダンス
         problems.extend(v105_problems(e))  # v0.105: 回復のあとの山札からの進化・与えたぶんの回復・プレゼント
         problems.extend(v106_problems(e))  # v0.106: 数とコインの組み合わせ（カウンター・表・カードの枚数・取ったサイド・同じコインの自分へのダメージ・名前の数）
+        problems.extend(v107_problems(e))  # v0.107: 失敗のコインで決まるどく・マヒ・じばく・防護と、ダメージのあとのコインで決まるこんらんの対象・(マヒ, どく)
         if kind in ("damage", "confusion_damage"):
             # v0.90: のろいマーカーののっているポケモンが弱点の計算をしたワザのダメージは「×4」（ログの weakness_multiplier）。ほかは書かない。こんらんの 20 は、のろいマーカーと
             # 自分の弱点が当てはまるならコインの前に止まる（UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS）ので、弱点の計算をしたこんらんのダメージはない

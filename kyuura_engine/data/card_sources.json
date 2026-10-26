@@ -28472,6 +28472,137 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.106 で加えた（docs/counts-coins-compositions-v0.106.md）。QSG（quick_starter_gift。発売 1998-12-04）。ES3-027 と同じデータ（SAME_DATA_CARDS_V0_106。登録の値は同じ・記録は id ごと）。すながくれ・ローリングニードルは ES3-027 と同じ。進化元（サンド）は kyuura の field_sources で pcg-search.com の進化の並び。kyuura の日本語の文面は pcg-search.com の転記。data_gaps（pokemon.dex・jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stqsg034・同じカードの組 SC-ES3-027・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo2-002": {
+      "basis": "kyuura_data",
+      "name_ja": "ビードル",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.107 で加えた（docs/coin-failure-status-flight-v0.107.md）。neo2（遺跡をこえて...。expansion_pack。発売 2000-07-07。ルールの基準の日より後に出たカードだが、2000.02.14 版のルールで処理する）。とげでつつく=FailOnTailsDamageThenPoison（失敗のコイン 1 枚 → 「おもて」なら相手に 20 → 相手をどく。「うら」ならワザ全体の失敗でダメージもどくもない。「ワザをうけない」相手は HC3）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。英語の欄は「おもて」でどく・「うら」で失敗の同じ意味の書き方（日本語を採用）。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前（日本語・英語の欄）で確かめた。名前の一致する別のビードル（PMCG1-004・ES1-004）の記録は別のカード）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo2-005": {
+      "basis": "kyuura_data",
+      "name_ja": "クヌギダマ",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.107 で加えた（docs/coin-failure-status-flight-v0.107.md）。neo2（遺跡をこえて...。expansion_pack。発売 2000-07-07。ルールの基準の日より後に出たカードだが、2000.02.14 版のルールで処理する）。とつぜんじばく=FailOnTailsSelfDestruct(40, 10)（失敗のコイン 1 枚 → 「おもて」なら v0.39 のじばくと同じダメージのまとまり（相手に 40 → 自分に 40（ワザによるダメージ）→ 相手の控え全員 → 自分の控え全員に「弱点・抵抗力」に関係なく 10）。「うら」ならワザ全体の失敗で自分・控えへのダメージも残さない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。英語の欄は「Flip a coin.」を 2 回書く（日本語は 1 枚のコイン。英語で置きかえない。docs 2.1 節）。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前（日本語・英語の欄）で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo2-051": {
+      "basis": "kyuura_data",
+      "name_ja": "リングマ",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.107 で加えた（docs/coin-failure-status-flight-v0.107.md）。neo2（遺跡をこえて...。expansion_pack。発売 2000-07-07。ルールの基準の日より後に出たカードだが、2000.02.14 版のルールで処理する）。ヒメグマから 1 進化（進化元の neo2-048・NIP1-008 は登録済み）。ヘッドプレス=DamageAndParalyzeOnHeadsElseFail（「相手を「マヒ」状態にする。コインを投げて「うら」なら、このワザは失敗する。」を PARALYZE_ELSE_FAIL_TEXTS に明示して加えた。1 枚のコインでダメージ・マヒ・失敗が決まる）。ダブルラリアット=CoinFlipDamage(2, 40)（「おもて」の数 × 40。0 枚は失敗ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前（日本語・英語の欄）で確かめた。わるいリングマ（neo4-096）を挙げる CR-UNOWN-DF-SOURCE-TYPE は別のカード）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo4-026": {
+      "basis": "kyuura_data",
+      "name_ja": "コダック",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.107 で加えた（docs/coin-failure-status-flight-v0.107.md）。neo4（闇、そして光へ...。expansion_pack。発売 2001-04-20。ルールの基準の日より後に出たカードだが、2000.02.14 版のルールで処理する）。みずかけ=DAMAGE_ONLY（説明文なし。文面・出典を持たない）。へんずつう=DamageThenConfuseOpponentOrSelf（相手に 20 → コイン 1 枚 → 「おもて」なら相手、「うら」なら自分をこんらん。ダメージはどちらの面でも与える。ナツメのコダックのこまったねんりきとは別の型）。へんずつうの必要なエネルギーは超・無色（水タイプのカードだが、データのまま。タイプから直さない）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前（日本語・英語の欄）で確かめた。名前の一致する別のコダック（PMCG3-010・PMCG4-019・PR1-076）・ナツメのコダック（PMCG6-036）の記録は別のカード）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "GD2-006": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのシェルダー",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.107 で加えた（docs/coin-failure-status-flight-v0.107.md）。GD2（ポケモンジム第1弾「ハナダシティジム カスミ」。gym_deck。発売 1998-04-26）。たいあたり=DAMAGE_ONLY（説明文なし。文面・出典を持たない）。からではさむ=DamageAndParalyzeOnHeadsElseFail（「相手を「マヒ」状態にする。コインを投げて「うら」なら、このワザは失敗する。」を PARALYZE_ELSE_FAIL_TEXTS に明示して加えた。v0.33 のパルシェンのからではさむと同じ処理）。kyuura の日本語の文面は pcg-search.com の転記。data_gaps（jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stgymd2006・名前・ワザの名前で確かめた。名前の一致するシェルダー（PMCG3-012・ES2-008）の記録は別のカード）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PR1-018": {
+      "basis": "kyuura_data",
+      "name_ja": "そらをとぶピカチュウ",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.107 で加えた（docs/coin-failure-status-flight-v0.107.md）。PR1（プロモ(旧裏)。promo。発売 1997-10-15）。同じカードの組 SC-PR1-018 で、そらをとぶの文面が PR1-063 と違う（kyuura data/same_card_groups.json の text_difference は「そらをとぶを、のちの書き方（「ワザによるダメージや効果を受けない」）に」・wording。データの誤り・最新の説明の記録ではない）ので、SAME_DATA には入れない。でんきショック=ParalyzeOnHeads（PR1-063 と同じ登録の値を共有）。そらをとぶ=FailOnTailsDamageThenSelfBarrier（このカードの原文「次の相手の番に、このカードは相手のワザをうけない。コインを投げて「うら」なら、このワザは失敗する。」。防護を先に書くが、「うら」ならワザ全体が失敗する（p.323）ので、1 枚のコインの「おもて」で 30 と防護（AttackBarrier）、「うら」でどちらもない）。名前を「ピカチュウ」に正規化しない。kyuura の日本語の文面は pcg-search.com の転記。data_gaps（jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stp018・同じカードの組 SC-PR1-018・名前・ワザの名前で確かめた。名前の一致する「ピカチュウ」の記録は別のカード）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PR1-042": {
+      "basis": "kyuura_data",
+      "name_ja": "そらをとぶピカチュウ",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.107 で加えた（docs/coin-failure-status-flight-v0.107.md）。PR1（プロモ(旧裏)。promo。発売 1999-06）。同じカードの組はない。でんげき=SelfDamageOnTails(10)（「コインを投げて「うら」なら、自分にも10ダメージ。」。第1弾のピカチュウのでんげきと同じ全文。型の確かめは形だけなので全文で照らした）。そらをとぶ=FailOnTailsDamageThenSelfBarrier（このカードの原文「コインを投げて「うら」ならこのワザは失敗する。「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。」）。英語の欄はない。kyuura の日本語の文面は pcg-search.com の転記。data_gaps（pokemon.dex・jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stp042・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PR1-063": {
+      "basis": "kyuura_data",
+      "name_ja": "そらをとぶピカチュウ",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.107 で加えた（docs/coin-failure-status-flight-v0.107.md）。PR1（プロモ(旧裏)。promo。発売 1998-11）。PR1-018 と同じカードの組 SC-PR1-018 だが、そらをとぶの文面が違う（SAME_DATA には入れない）。でんきショック=ParalyzeOnHeads（PR1-018 と同じ登録の値を共有）。そらをとぶ=FailOnTailsDamageThenSelfBarrier（このカードの原文「コインを投げて「うら」なら、このワザは失敗する。「おもて」なら次の相手の番、このカードは相手のワザによるダメージや効果を受けない。」）。kyuura の日本語の文面は pcg-search.com の転記。data_gaps（jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stp063・同じカードの組 SC-PR1-018・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "SI-003": {
+      "basis": "kyuura_data",
+      "name_ja": "バタフリー",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.107 で加えた（docs/coin-failure-status-flight-v0.107.md）。SI（映画公開記念パック「サザンアイランド」。southern_islands。発売 1999-07-17）。トランセルから 2 進化（進化元の ES1-003・QSG-003・PMCG1-003・neo2-006 は登録済み）。そらをとぶ=FailOnTailsDamageThenSelfBarrier（このカードの原文「コインを投げて「うら」なら、このワザは失敗する。「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。」）。レインボーパウダー=DamageThenStatusByCoin(マヒ, どく)（「コインを投げる「おもて」なら、相手を「マヒ」状態に、「うら」ならどく状態にする。」を (マヒ, どく) の組だけの書き方 RAINBOW_POWDER_TEXTS として加えた。20 ダメージのあとに 1 枚。「おもて」マヒ・「うら」どく）。kyuura の日本語の文面は pcg-search.com の転記（jp_print.level は kyuura のfield_sources で nazonobasho）。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stmv003・名前・ワザの名前で確かめた。名前の一致する別のバタフリー（PMCG2-007・neo2-009）の記録は別のカード。data/same_card_groups.json の evolves_from_english_agrees の一覧に SI-003 があるが、進化元の英語の欄の一致の記録で、処理の記録ではない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
     }
   }
 }

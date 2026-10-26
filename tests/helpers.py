@@ -1460,6 +1460,11 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.CappedCoinsPerAttachedEnergyCardsDamage,
     _effects.DamagePlusOpponentPrizesTaken,
     _effects.CoinsBonusAndSelfDamagePerHeads,
+    # v0.107（docs/coin-failure-status-flight-v0.107.md。失敗のコインで決まるどく・じばく・防護と、ダメージのあとのコインで相手か自分がこんらん）
+    _effects.FailOnTailsDamageThenPoison,
+    _effects.FailOnTailsSelfDestruct,
+    _effects.FailOnTailsDamageThenSelfBarrier,
+    _effects.DamageThenConfuseOpponentOrSelf,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
