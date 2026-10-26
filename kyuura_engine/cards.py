@@ -596,6 +596,7 @@ POOL_KEYS = (
     "pool_v0_103",  # v0.103（ミュウの 2 枚。docs/neutral-shield-attack-origin-v0.103.md）
     "pool_v0_104",  # v0.104（回復のワザを持つポケモンの 12 枚。docs/healing-pokemon-v0.104.md）
     "pool_v0_105",  # v0.105（回復・山札からの進化・コインの分岐のポケモンの 5 枚。docs/recovery-evolution-coin-branches-v0.105.md）
+    "pool_v0_106",  # v0.106（数とコインを組み合わせるポケモンの 11 枚。docs/counts-coins-compositions-v0.106.md）
 )
 
 

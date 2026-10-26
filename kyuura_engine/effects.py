@@ -4933,6 +4933,11 @@ POKEMON_COUNT_TEXTS = {
     ("own_in_play", ("ニドキング",)): lambda per: (f"自分の場に出ている「ニドキング」の数×{per}のダメージを追加する。",),
     ("own_bench", ("コイル", "レアコイル", "わるいレアコイル")): lambda per: (
         f"自分のベンチにいる「コイル」「レアコイル」「わるいレアコイル」1匹につき、{per}ダメージを追加する。",),
+    # v0.106（docs/counts-coins-compositions-v0.106.md 4 章）: ビリリダマ（ES2-016・QSG-025）の「みんなでスパーク」（お互いの場のバトル場とベンチ。ワザを使ったポケモンも名前が合えば数える）
+    ("both_in_play", ("ビリリダマ",)): lambda per: (f"お互いの場にいる「ビリリダマ」の数×{per}のダメージを追加する。",),
+    # v0.106: ニドリーナ（ES3-002）の「なかまのちから」（自分のベンチだけ。説明の 6 つの名前）
+    ("own_bench", ("ニドラン♂", "ニドラン♀", "ニドリーノ", "ニドリーナ", "ニドキング", "ニドクイン")): lambda per: (
+        f"自分のベンチにいる「ニドラン♂」「ニドラン♀」「ニドリーノ」「ニドリーナ」「ニドキング」「ニドクイン」の数×{per}のダメージを追加する。",),
 }
 
 
@@ -4941,8 +4946,9 @@ class DamagePlusPokemonCount(AttackEffect):
     """ダメージの目安の数字 + 自分の場のポケモンの数 × ``per`` の基本となるダメージ（p.321 の 1 段階。v0.39。プクリンの「ともだちのわ」・ニドクインの「ラブラブ
     アタック」・コイル（PMCG4-026）の「ちょくれつじりょく」）。値 ``programs.PrintedPlusPokemonCount``。
 
-    - ``scope``: ``"own_bench"``（自分のベンチ）・``"own_in_play"``（自分の場（バトル場とベンチ））。``names``: 数えるポケモンの名前（いちばん上のカードの名前の完全
-      一致。None ならすべて）。進化して重なったカードは 1 匹と数える。名前の一部・収録の弾では見ない（「マチスのコイル」は「コイル」ではない）
+    - ``scope``: ``"own_bench"``（自分のベンチ）・``"own_in_play"``（自分の場（バトル場とベンチ））・v0.106 の ``"both_in_play"``（お互いの場。みんなでスパーク）。``names``: 数える
+      ポケモンの名前（いちばん上のカードの名前の完全一致。v0.49 から今の姿の名前。None ならすべて）。進化して重なったカードは 1 匹と数える。名前の一部・収録の弾では見ない
+      （「マチスのコイル」は「コイル」ではない）。範囲と名前の組は ``POKEMON_COUNT_TEXTS`` にあるものだけ（未知の組を受け付けない）
     - 弱点・抵抗力・プラスパワー・ディフェンダーなどは、そのあとの段階で計算する。実際の処理と先読み（どの方法も）は同じ値を使う
     - 説明の名前の一覧に対応していないカードの名前（「わるいレアコイル」）があっても、名前のまま数える（そのカードは場に出ないので、今は数に入らない）
     """
@@ -5967,18 +5973,28 @@ def deck_energy_candidates(state: GameState, player: int, energy_type: EnergyTyp
                   if state.card_def(uid).is_basic_energy and state.card_def(uid).provides is energy_type)
 
 
+# v0.106（docs/counts-coins-compositions-v0.106.md 3 章）: ``DamageThenLockSelf`` の書き方のうち、ワザの名前と結び付けて加えたもの（ワザの名前 → 説明）。カモネギ（neo3-046）の
+# 「ネギでつく」の「…を使うことが出来ない。」（意味は「…を使えない。」と同じ。「出来ない」「できない」「使えない」を一律に置きかえない。名前の違うワザには当てはめない）
+LOCK_SELF_NAMED_TEXTS: Mapping[str, str] = MappingProxyType({
+    "ネギでつく": "次の自分の番、このカードは「ネギでつく」を使うことが出来ない。",
+})
+
+
 @dataclass(frozen=True)
 class DamageThenLockSelf(AttackEffect):
     """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。次の自分の番、このカードはこのワザを使えない（v0.41。ナツメのヤドランの「きあいずつき」）。v0.35 の
     あわあわ（``DamageThenLockSelfOnTails``。コインの「うら」のとき）と同じ持続する効果 ``CannotUseOwnAttack``・要素 ``SelfAttackLock`` で、コインがない
-    （``local_coin=None``。いつも与える）。ワザを使ったポケモンが相手の「はんげき」などで HP 以上なら与えない（p.309）。"""
+    （``local_coin=None``。いつも与える）。ワザを使ったポケモンが相手の「はんげき」などで HP 以上なら与えない（p.309）。
+
+    v0.106: カモネギ（neo3-046）の「ネギでつく」の書き方（``LOCK_SELF_NAMED_TEXTS``。そのワザの名前のときだけ）。"""
 
     implementation_id = "damage_then_lock_self"
 
     def check(self, attack: Attack) -> list[str]:
         expected = f"次の自分の番、このカードは「{attack.name_ja}」を使えない。"
+        named = LOCK_SELF_NAMED_TEXTS.get(attack.name_ja)
         return _check_form(attack, "次の自分の番にそのワザを使えなくなるワザ", damage="fixed") + _check_exact_text(
-            attack, "次の自分の番にそのワザを使えなくなるワザ", (expected,))
+            attack, "次の自分の番にそのワザを使えなくなるワザ", (expected,) if named is None else (expected, named))
 
     def attack_lock_terms(self) -> tuple[type, int | None]:
         from .state import CannotUseOwnAttack
@@ -11563,10 +11579,14 @@ def zero_damage_below_texts(threshold: int) -> tuple[str, ...]:
       （しきい値 30。「20以下」は ``threshold`` − 10 以下で、8 段階の計算のダメージはどれもダメージカウンターの単位（10）の倍数なので「30 より小さい」と同じ（印刷のダメージ・
       弱点・抵抗力・変更効果の数がどれも 10 の倍数で、半分にする計算も単位で切り上げ・切りすてる。docs/recovery-evolution-coin-branches-v0.105.md 3 章）。「ダメージを受けない」は
       その段階のダメージを 0 にすること（計算の前の一律の防護（``PreventDamage``）ではない）で、「(ダメージ以外の効果は受ける。)」は ``ZERO_IF_BELOW`` の扱いと同じ）
+    - v0.106: イシツブテ（ES1-023）「このカードが次の相手の番で受ける20以下のダメージは、0になる。(ダメージ以外の効果はそのまま受ける)」（しきい値 30。v0.105 と同じ考え方で、
+      「20以下」は ``threshold`` − 10 以下。「0になる」はその段階のダメージを 0 にすること、「(ダメージ以外の効果はそのまま受ける)」は ``ZERO_IF_BELOW`` の扱いと同じ。
+      docs/counts-coins-compositions-v0.106.md 3 章）
     """
     return (f"次の相手の番に受けるダメージが0になる。ただしダメージが{threshold}以上の場合は、そのままダメージをうける。",
             f"次の相手の番にこのカードが受ける{threshold - 10}以下のダメージは0になる。(ダメージ以外の効果はそのまま)。{threshold}以上のダメージはそのまま受ける。",
-            f"次の相手の番、このカードがダメージを受けるとき、そのダメージが{threshold - 10}以下なら、このカードはダメージを受けない。(ダメージ以外の効果は受ける。)")
+            f"次の相手の番、このカードがダメージを受けるとき、そのダメージが{threshold - 10}以下なら、このカードはダメージを受けない。(ダメージ以外の効果は受ける。)",
+            f"このカードが次の相手の番で受ける{threshold - 10}以下のダメージは、0になる。(ダメージ以外の効果はそのまま受ける)")
 
 
 # ---------------------------------------------------------------- v0.72（docs/status-coins-effect-reuse-v0.72.md）: 拡張パック以外の商品のポケモン 43 枚のうち、既存の型で表せない
@@ -39908,3 +39928,238 @@ V0_105_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_105_ATTACKS)
+
+
+
+# ---------------------------------------------------------------- v0.106（docs/counts-coins-compositions-v0.106.md）
+# 数とコインを組み合わせるポケモンの 11 枚（ワザ 21）。処理に使う文面は kyuura の印刷の文面。10 のワザは既存の型（``DAMAGE_ONLY``・``ParalyzeOnHeads``・
+# ``ConfuseOnHeadsWithoutDamage``・``CoinFlipDamage``・``PreventDamageOnHeads``）、ネギでつく（``DamageThenLockSelf``）・かたくなる（``ZeroDamageBelowNextTurn``）は書き方をワザの名前・
+# しきい値と結び付けて加え、みんなでスパーク・なかまのちから（``DamagePlusPokemonCount``）は数える範囲と名前の組を ``POKEMON_COUNT_TEXTS`` に加えた。残る 6 つのワザは新しい 5 つの型で、
+# 既存の値（``programs.PlusOwnCounters``・``PrintedPlusHeadsOfCoin``・``HeadsOfCoin``）・要素（``Coin``・``Damage``）と、小さな新しい値（「おもて」の数の表・カードの枚数ぶんの上限つきの
+# コイン・相手が取ったサイドの数）の組み合わせ
+
+RAGING_CHARGE_TEXT = "自分にのっているダメージカウンターの数×{per}ダメージを追加する。その後、自分にも{n}ダメージ。"
+# 「おもて」の数（0 から）→ 追加のダメージの表と、その表の書き方（表と結び付けた完全な一致。表は登録の引数）
+FURY_CUTTER_BONUSES = (0, 10, 20, 40, 80)
+HEADS_TABLE_BONUS_TEXTS: Mapping[tuple[int, ...], str] = MappingProxyType({
+    # ストライク（neo2-008）の「れんぞくぎり」（「3枚なら」だけ「「おもて」が」を書かない。印刷の文面のまま）
+    FURY_CUTTER_BONUSES: "コインを4枚投げる。「おもて」が1枚なら10ダメージ、「おもて」が2枚なら20ダメージ、3枚なら40ダメージ、「おもて」が4枚なら80ダメージを追加する。",
+})
+HYDROCUTTER_TEXT = "自分についている「エネルギーカード」の数ぶんコインを投げ、「おもて」の数×{per}のダメージ。このワザで投げることのできるコインは{cap}枚まで。"
+GRUDGE_TEXT = "相手プレイヤーがすでに取りおえたサイドカードの数×{per}のダメージを追加する。"
+ROLLING_NEEDLE_TEXT = "コインを{coins}枚投げ、「おもて」の数×{per}のダメージを追加する。その後、自分にも「おもて」の数×{self_per}のダメージ。"
+GEODUDE_HARDEN_TEXT = zero_damage_below_texts(30)[3]  # かたくなる（イシツブテ（ES1-023））の「20以下のダメージは、0になる」
+NIDO_FAMILY_NAMES = ("ニドラン♂", "ニドラン♀", "ニドリーノ", "ニドリーナ", "ニドキング", "ニドクイン")  # なかまのちから（ニドリーナ（ES3-002））の説明の 6 つの名前（説明の並び）
+
+
+def prizes_taken(state: GameState, player: int) -> int:
+    """プレイヤー ``player`` がすでに取ったサイドの数（v0.106。ゴースト（ES3-023）の「おんねん」の「相手プレイヤーがすでに取りおえたサイドカードの数」。
+    docs/counts-coins-compositions-v0.106.md 4.5 節）。
+
+    準備で置くサイドの数（``Rules.prize_count``。数を直に書かない）− 今のサイドの枚数。対戦の準備（``engine``）はサイドを ``prize_count`` 枚置き、サイドの枚数を変える処理は、取る処理
+    （きぜつで取る ``take_prize``・マチスの交渉の ``zones.take_prize_by_trainer``）と、同じ枚数をもどして置き直すにせオーキドの発明（``prizes_to_deck`` → ``deck_top_to_prizes``。1 枚の
+    トレーナーの効果の中で枚数は同じ）だけで、サイドを見せる・入れかえる処理（``reveal_prize``・``swap_prize_with_deck_top``・``swap_prize_with_hand``）は枚数を変えない。このため、
+    取った経路（きぜつ・トレーナー）によらず取った数と同じ。カードの中身は読まず、公開の枚数だけを使う（ログを読み直さない。新しい状態の項目を持たない）。"""
+    return state.rules.prize_count - len(state.players[player].prizes)
+
+
+@dataclass(frozen=True)
+class DamagePlusOwnCountersThenSelfDamage(AttackEffect):
+    """ダメージの目安の数字 + 自分にのっているダメージカウンターの数 × ``per`` のダメージ。その後、自分にも ``self_damage`` ダメージ（v0.106。グランブル（neo1-068）の
+    「いかりのとっしん」。ダメージの目安「10+」）。
+
+    - 要素は v0.31 の「いかり」（``programs.PlusOwnCounters``）と v0.10 の「じごくぐるま」の自分へのダメージ（``Damage(SELF, Fixed)``）の組み合わせ。数えるのは相手へのダメージの要素を
+      処理する時点の自分のカウンター（p.321 の 1 段階。最終ダメージに直接足さない）で、あとの自分へのダメージで増えたカウンターから計算し直さない
+    - 自分へのダメージは別のダメージの要素（ワザによる自分へのダメージ。自分のタイプと自分の弱点・抵抗力。v0.3d）。相手がダメージを受けなかった（無効・0）ときも、原文にない条件で
+      省かない（「その後」は順番。v0.47 の「いかりのサンダー」のコインのない形）
+    """
+
+    per: int
+    self_damage: int
+    implementation_id = "damage_plus_own_counters_then_self_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "カウンター 1 個あたりのダメージ")
+        _positive_tens(self.self_damage, "自分へのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "自分のカウンターで追加ダメージを与え、自分にもダメージのワザ"
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(
+            attack, what, (RAGING_CHARGE_TEXT.format(per=self.per, n=self.self_damage),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        printed = attack_of(state, use.key).damage
+        return DamageProfile(opponent=(printed + attacker.damage // state.rules.damage_per_counter * self.per,), self_damage=(self.self_damage,))
+
+
+@dataclass(frozen=True)
+class CoinsHeadsTableBonusDamage(AttackEffect):
+    """コインを ``len(bonuses) - 1`` 枚投げ、「おもて」の数 h のとき ``bonuses[h]`` のダメージを追加する（v0.106。ストライク（neo2-008）の「れんぞくぎり」。目安「10+」。値
+    ``programs.PrintedPlusHeadsTable``）。
+
+    - 基本となるダメージ（p.321 の 1 段階）は目安の数字 + 表の値（れんぞくぎりは「おもて」0〜4 枚で 10・20・30・50・90）。表の値を最終ダメージにしない。「おもて」が 0 枚でも目安の
+      数字のダメージを与える（ワザの失敗ではない）。表は登録の引数で、書き方（``HEADS_TABLE_BONUS_TEXTS``）と結び付ける（解決の側はカードの id を見ない）
+    - コインはダメージの要素の中（ダメージの量だけを決める）。「ダメージを受けない」「ワザをうけない」状態の相手には、投げる前に v0.4b の ``UNRESOLVED_PREVENTED_COIN_DAMAGE``
+      （``Damage.run``）。実際には 1 枚ずつ投げ、結果は「おもて」の数だけを使うので、先読みは「おもて」の数でまとめる（v0.35。``by_heads``。乱数の使い方・ログ・確率は変えない）
+    """
+
+    bonuses: tuple[int, ...]
+    implementation_id = "coins_heads_table_bonus_damage"
+
+    def __post_init__(self) -> None:
+        if type(self.bonuses) is not tuple or self.bonuses not in HEADS_TABLE_BONUS_TEXTS:
+            raise ValueError(f"「おもて」の数の追加のダメージの表 {self.bonuses!r} の書き方がない")
+
+    @property
+    def coins(self) -> int:
+        return len(self.bonuses) - 1
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインの「おもて」の数の表で追加ダメージのワザ"
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(attack, what, (HEADS_TABLE_BONUS_TEXTS[self.bonuses],))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        printed = attack_of(state, use.key).damage
+        return DamageProfile(opponent=tuple(printed + bonus for bonus in self.bonuses))
+
+
+@dataclass(frozen=True)
+class CappedCoinsPerAttachedEnergyCardsDamage(AttackEffect):
+    """自分についている「エネルギーカード」の枚数ぶん（``max_coins`` 枚まで）コインを投げ、「おもて」の数 × ``per`` のダメージ（v0.106。カブトプス（neo2-018）の「ハイドロカッター」。
+    ダメージの目安「40×」。値 ``programs.HeadsTimesAttachedEnergyCards``）。
+
+    - 数えるのはワザを使ったポケモン（相手のワザとして使ったなら使ったポケモン）についているエネルギーカードの枚数（``attached_energy_cards``。v0.50 のサイコウェーブと同じ数え方。
+      無色2個エネルギーは 1 枚。出すエネルギーの個数・色ではない）。コインの枚数はその枚数と ``max_coins`` の小さいほう（「このワザで投げることのできるコインは3枚まで」）。v0.34 の
+      ``CoinsPerAttachedEnergyDamage``（エネルギーの個数ぶん）とは別の型
+    - 0 枚なら投げず、基本となるダメージは 0（ダメージを与えない。ワザの失敗ではない）。必要なエネルギー（闘 1）を払えるかは宣言の確認が決め、ここでは問わない
+    - コインはダメージの要素の中（ダメージの量だけを決める）。「ダメージを受けない」状態の相手には v0.4b の問い（1 枚以上投げるときだけ）。先読みは「おもて」の数でまとめる
+    """
+
+    per: int
+    max_coins: int
+    implementation_id = "capped_coins_per_attached_energy_cards_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "「おもて」1 枚あたりのダメージ")
+        _positive_count(self.max_coins, "投げることのできるコインの枚数の上限")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "自分のエネルギーカードの枚数ぶん（上限つき）のコインでダメージが決まるワザ"
+        problems = _check_form(attack, what, damage="modified", modifier="×")
+        if attack.damage != self.per:
+            problems.append(f"ダメージの目安の数字 {attack.damage} が、登録の「おもて」1 枚あたりのダメージ {self.per} と違う")
+        return problems + _check_exact_text(attack, what, (HYDROCUTTER_TEXT.format(per=self.per, cap=self.max_coins),))
+
+    def coin_count(self, state: GameState, attacker: PokemonInPlay) -> int:
+        """投げるコインの枚数（``attacker`` についているエネルギーカードの枚数と上限の小さいほう）。実際の処理（``programs.HeadsTimesAttachedEnergyCards``）と宣言の前の候補が同じ値を使う。"""
+        return min(attached_energy_cards(state, attacker), self.max_coins)
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        return DamageProfile(opponent=tuple(heads * self.per for heads in range(self.coin_count(state, attacker) + 1)))
+
+
+@dataclass(frozen=True)
+class DamagePlusOpponentPrizesTaken(AttackEffect):
+    """ダメージの目安の数字 + 相手プレイヤーがすでに取ったサイドの数 × ``per`` のダメージ（v0.106。ゴースト（ES3-023）の「おんねん」。目安「20+」。値
+    ``programs.PrintedPlusOpponentPrizesTaken``）。
+
+    - 数えるのは、ワザを使ったプレイヤー（相手のワザとして使ったなら使ったプレイヤー）の相手が取ったサイドの数（``prizes_taken``。きぜつで取った・トレーナーで取ったのどちらも。
+      自分が取った数・残っている数ではない）。ダメージの要素を処理する時点の数（p.321 の 1 段階）。カードの中身は読まない
+    """
+
+    per: int
+    implementation_id = "damage_plus_opponent_prizes_taken"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "サイド 1 枚あたりのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手が取ったサイドの数で追加ダメージのワザ"
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(attack, what, (GRUDGE_TEXT.format(per=self.per),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        printed = attack_of(state, use.key).damage
+        return DamageProfile(opponent=(printed + prizes_taken(state, 1 - use.player) * self.per,))
+
+
+@dataclass(frozen=True)
+class CoinsBonusAndSelfDamagePerHeads(AttackEffect):
+    """コインを ``coins`` 枚投げ、「おもて」の数 × ``per`` のダメージを追加する。その後、自分にも「おもて」の数 × ``self_per`` のダメージ（v0.106。サンドパン（ES3-027・QSG-034）の
+    「ローリングニードル」。目安「40+」）。
+
+    - 要素は ``Coin(count=coins)`` → ``Damage(OPP, PrintedPlusHeadsOfCoin)`` → ``Damage(SELF, HeadsOfCoin)``。``coins`` 枚を 1 組として 1 回だけ投げ（ワザ全体のコイン）、同じ「おもて」の
+      数 h で相手への基本となるダメージ（目安 + ``per`` × h）と自分への基本となるダメージ（``self_per`` × h）を決める（「うら」の数ではない。別のコインを投げない。v0.35 のぜんりょく
+      とっしんと同じ組の形）。h = 0 なら自分への基本となるダメージは 0（ダメージを与えなかった。既存のぜんりょくとっしんの「うら」0 枚と同じ扱い）
+    - コインは自分へのダメージも決めるので、相手が「ダメージを受けない」「ワザをうけない」状態でも投げる（v0.34 の ``void_coin_question``。相手へのダメージだけが無効になり、自分への
+      ダメージは受ける）。先読みは「おもて」の数でまとめ、相手と自分の組を同じコインの結果として試す
+    """
+
+    coins: int
+    per: int
+    self_per: int
+    implementation_id = "coins_bonus_and_self_damage_per_heads"
+
+    def __post_init__(self) -> None:
+        if type(self.coins) is not int or self.coins < 2:
+            raise ValueError(f"コインの枚数は 2 以上の整数（{self.coins!r}）")
+        _positive_tens(self.per, "「おもて」1 枚あたりの追加のダメージ")
+        _positive_tens(self.self_per, "「おもて」1 枚あたりの自分へのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインの「おもて」の数で追加ダメージを与え、自分にも「おもて」の数のダメージのワザ"
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(
+            attack, what, (ROLLING_NEEDLE_TEXT.format(coins=self.coins, per=self.per, self_per=self.self_per),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        printed = attack_of(state, use.key).damage
+        pairs = tuple((printed + self.per * heads, self.self_per * heads) for heads in range(self.coins + 1))
+        return DamageProfile(opponent=tuple(o for o, _ in pairs), self_damage=tuple(s for _, s in pairs), outcomes=pairs)
+
+
+_V0_106_VOLTORB = (
+    _printed(ParalyzeOnHeads(), "でんきショック", "コインを投げて「おもて」なら、相手を「マヒ」状態にする。"),
+    _printed(DamagePlusPokemonCount(per=10, scope="both_in_play", names=("ビリリダマ",)), "みんなでスパーク", "お互いの場にいる「ビリリダマ」の数×10のダメージを追加する。"),
+)
+_V0_106_SANDSLASH = (
+    _printed(PreventDamageOnHeads(), "すながくれ", "コインを投げて「おもて」なら、このカードは次の相手の番にダメージを受けない。(ダメージ以外の効果はそのまま)"),
+    _printed(CoinsBonusAndSelfDamagePerHeads(3, 10, 10), "ローリングニードル", ROLLING_NEEDLE_TEXT.format(coins=3, per=10, self_per=10)),
+)
+
+# v0.106 のワザの登録（21。id ごとに書き、同じデータの 2 組は下の SAME_DATA_CARDS_V0_106 で同じ登録の値にまとめる）。説明文のないたいあたり・きりさく・かぜおこしは文面・出典を持たない
+V0_106_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # グランブル（neo1-068）
+    AttackKey("neo1-068", 0): AttackEntry(DAMAGE_ONLY, "たいあたり"),
+    AttackKey("neo1-068", 1): _printed(DamagePlusOwnCountersThenSelfDamage(10, 20), "いかりのとっしん", RAGING_CHARGE_TEXT.format(per=10, n=20)),
+    # ストライク（neo2-008）
+    AttackKey("neo2-008", 0): _printed(CoinsHeadsTableBonusDamage(FURY_CUTTER_BONUSES), "れんぞくぎり", HEADS_TABLE_BONUS_TEXTS[FURY_CUTTER_BONUSES]),
+    # カブトプス（neo2-018）
+    AttackKey("neo2-018", 0): AttackEntry(DAMAGE_ONLY, "きりさく"),
+    AttackKey("neo2-018", 1): _printed(CappedCoinsPerAttachedEnergyCardsDamage(40, 3), "ハイドロカッター", HYDROCUTTER_TEXT.format(per=40, cap=3)),
+    # カモネギ（neo3-046）
+    AttackKey("neo3-046", 0): AttackEntry(DAMAGE_ONLY, "かぜおこし"),
+    AttackKey("neo3-046", 1): _printed(DamageThenLockSelf(), "ネギでつく", LOCK_SELF_NAMED_TEXTS["ネギでつく"]),
+    # イシツブテ（ES1-023）
+    AttackKey("ES1-023", 0): AttackEntry(DAMAGE_ONLY, "たいあたり"),
+    AttackKey("ES1-023", 1): _printed(ZeroDamageBelowNextTurn(30), "かたくなる", GEODUDE_HARDEN_TEXT),
+    # ビリリダマ（ES2-016・QSG-025）
+    **_v0_75_same_data(("ES2-016", "QSG-025"), _V0_106_VOLTORB),
+    # ニドリーナ（ES3-002）
+    AttackKey("ES3-002", 0): _printed(DamagePlusPokemonCount(per=10, scope="own_bench", names=NIDO_FAMILY_NAMES), "なかまのちから",
+                                      POKEMON_COUNT_TEXTS[("own_bench", NIDO_FAMILY_NAMES)](10)[0]),
+    AttackKey("ES3-002", 1): _printed(CoinFlipDamage(coins=3, damage_per_heads=30), "みだれひっかき", "コインを3枚投げ、「おもて」の数×30のダメージ。"),
+    # ゴースト（ES3-023）
+    AttackKey("ES3-023", 0): _printed(ConfuseOnHeadsWithoutDamage(), "ぶきみなひかり", "コインを投げて「おもて」なら、相手を「こんらん」状態にする。"),
+    AttackKey("ES3-023", 1): _printed(DamagePlusOpponentPrizesTaken(10), "おんねん", GRUDGE_TEXT.format(per=10)),
+    # サンドパン（ES3-027・QSG-034）
+    **_v0_75_same_data(("ES3-027", "QSG-034"), _V0_106_SANDSLASH),
+})
+# kyuura の同じカードの組で、日本語の名前・pokemon 欄の対戦に使う値が同じ 2 組（新しい id → 同じデータのカード）。元データの id は消さない（id・場の番号・持ち主・採用の記録は
+# 同じにしない。登録の値だけを共有する）
+SAME_DATA_CARDS_V0_106: Mapping[str, str] = MappingProxyType({
+    "QSG-025": "ES2-016",  # ビリリダマ（拡張シート第2弾赤版・クイックスターターギフト。SC-ES2-016）
+    "QSG-034": "ES3-027",  # サンドパン（拡張シート第3弾緑版・クイックスターターギフト。SC-ES3-027）
+})
+
+DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_106_ATTACKS), SAME_DATA_CARDS_V0_106)

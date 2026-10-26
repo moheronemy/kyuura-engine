@@ -1453,6 +1453,13 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DefenderEnergyUnitsDamageAndFullDrain,
     _effects.CoinsPerDefenderEnergyBonusAndFullDrain,
     _effects.ThreeCoinDamageOrOpponentHeal,
+    # v0.106（docs/counts-coins-compositions-v0.106.md。自分のカウンターの追加と自分へのダメージ・「おもて」の数の表・カードの枚数ぶんの上限つきのコイン・相手が取ったサイドの数・
+    # 同じコインの追加のダメージと自分へのダメージ）
+    _effects.DamagePlusOwnCountersThenSelfDamage,
+    _effects.CoinsHeadsTableBonusDamage,
+    _effects.CappedCoinsPerAttachedEnergyCardsDamage,
+    _effects.DamagePlusOpponentPrizesTaken,
+    _effects.CoinsBonusAndSelfDamagePerHeads,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

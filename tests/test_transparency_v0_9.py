@@ -831,7 +831,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                     "ねんりき", "ねんりき",
                                     # v0.104: ミルタンク（neo1-069）の「のしかかり」・ラプラス（SI-018）の「れいとうビーム」（ParalyzeOnHeads）・ジュゴン（ES2-007・QSG-018）の
                                     # 「オーロラウェーブ」（ConfuseOnHeads）。既存の型の登録だけなので、同じ T19b で止まる（docs/healing-pokemon-v0.104.md）
-                                    "のしかかり", "れいとうビーム", "オーロラウェーブ", "オーロラウェーブ"]))
+                                    "のしかかり", "れいとうビーム", "オーロラウェーブ", "オーロラウェーブ",
+                                    # v0.106: ビリリダマ（ES2-016・QSG-025）の「でんきショック」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                    # docs/counts-coins-compositions-v0.106.md）
+                                    "でんきショック", "でんきショック"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

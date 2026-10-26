@@ -343,6 +343,10 @@ NEUTRAL_SHIELD_KIND = "neutral_shield"  # v0.103: ［ニュートラルシール
 V104_HEAL_TYPES = (E.HealSelfWithoutDamage, E.CoinsHealSelfTimes, E.HealAllSelfThenSelfSleep, E.HealBothActivesThenSleep, E.OptionalHealSelf, E.CoinChooseOwnPokemonHealAll)
 # v0.105: 独立に確かめるワザの型（log_problems の ``v105_problems``）
 V105_TYPES = (E.CoinHealAllThenEvolveSelfFromDeck, E.DefenderEnergyUnitsDamageAndFullDrain, E.CoinsPerDefenderEnergyBonusAndFullDrain, E.ThreeCoinDamageOrOpponentHeal)
+# v0.106: 独立に確かめるワザの型（log_problems の ``v106_problems``）と、v0.106 で加えた場のポケモンの数の範囲と名前の組（v0.39 の型。この 2 組だけを照らす）
+V106_TYPES = (E.DamagePlusOwnCountersThenSelfDamage, E.CoinsHeadsTableBonusDamage, E.CappedCoinsPerAttachedEnergyCardsDamage, E.DamagePlusOpponentPrizesTaken,
+              E.CoinsBonusAndSelfDamagePerHeads, E.DamagePlusPokemonCount)
+V106_COUNT_SCOPES = {("both_in_play", ("ビリリダマ",)), ("own_bench", ("ニドラン♂", "ニドラン♀", "ニドリーノ", "ニドリーナ", "ニドキング", "ニドクイン"))}
 
 # v0.10: はたらいた「はんげき」より先にあってはならない、ワザのダメージ以外の効果・きぜつ・番の終わり（p.89）
 COUNTER_BARRIERS = (
@@ -1637,6 +1641,7 @@ def log_problems(state) -> list[str]:
     v103_strange_gases: dict[int, int] = {}  # v0.103: ログから組み立てた、はたらいている「ふしぎなガス」（カード → 消える番）。［ニュートラルシールド］の確かめを飛ばす
     v104_window: dict | None = None  # v0.104: 今のワザの回復の確かめ（宣言の時点のダメージ・特殊状態、このワザのコイン・回復・取り除かなかった・受けなかった要素）
     v105_window: dict | None = None  # v0.105: 今のワザの確かめ（宣言の時点のダメージ・相手のエネルギーの個数、このワザのコイン・ダメージ・回復・進化・切る回数・受けなかった要素）
+    v106_window: dict | None = None  # v0.106: 今のワザの確かめ（宣言の時点のカウンター・エネルギーカードの枚数・相手が取ったサイド、このワザのコイン・相手と自分へのダメージ）
     color_types: dict[int, dict] = {}  # v0.88: ［せんすい］の記録（対象のポケモンの番号 → 色・発生源のカード・特殊能力の位置）
     # v0.90: ログから組み立てた、場のポケモンのマーカー・カウンター（番号 → のせた順の {"marker", "color", "turn"}）と、進化・退化で取りのぞくはずのポケモン（番号 → 理由）
     marks: dict[int, list[dict]] = {}
@@ -2842,6 +2847,123 @@ def log_problems(state) -> list[str]:
             w["shuffles"] += 1
         return found
 
+    def v106_complete(w: dict) -> list[str]:
+        """v0.106: 1 回のワザの処理が終わったところで、コインの枚数と共有・相手と自分への基本となるダメージ・その順番を、宣言の時点のログから組み立てた場（ワザを使ったポケモンの
+        ダメージカウンター・ついているエネルギーカードの枚数・相手が取ったサイドの数）と照らす（エンジンの ``PlusOwnCounters``・``PrintedPlusHeadsTable``・
+        ``HeadsTimesAttachedEnergyCards``・``prizes_taken`` を読まない）。こんらん・手順 4 のコインでワザが失敗したら、ダメージはない。"""
+        effect = w["effect"]
+        per = state.rules.damage_per_counter
+        where = f"{w['turn']} 番の {w['key']}（ワザを使ったポケモン {w['pid']}）"
+        if w["interrupted"]:
+            return [f"{where}: 失敗したワザでダメージを与えた"] if w["damages"] or w["selfs"] else []
+        found = []
+        printed = w["printed"]
+        reached = len(w["damages"]) + w["prevented"] + ((w["opponent"], "damage") in w["unreached"])
+        if w["opponent"] is not None and reached != 1:
+            found.append(f"{where}: 相手へのダメージ・無効・受けなかったログが {reached} 個（1 個のはず）")
+        expected = None
+        if isinstance(effect, E.DamagePlusOwnCountersThenSelfDamage):
+            expected = printed + w["damage"].get(w["pid"], 0) // per * effect.per
+        elif isinstance(effect, E.CoinsHeadsTableBonusDamage):
+            if w["flips"] != effect.coins:
+                found.append(f"{where}: コインが {w['flips']} 枚（{effect.coins} 枚のはず）")
+            else:
+                expected = printed + effect.bonuses[w["heads"]]
+        elif isinstance(effect, E.CappedCoinsPerAttachedEnergyCardsDamage):
+            coins = min(w["cards"], effect.max_coins)
+            if w["flips"] != coins:
+                found.append(f"{where}: コインが {w['flips']} 枚（宣言の時点のエネルギーカード {w['cards']} 枚・上限 {effect.max_coins} 枚から {coins} 枚のはず）")
+            expected = w["heads"] * effect.per
+        elif isinstance(effect, E.DamagePlusOpponentPrizesTaken):
+            expected = printed + w["taken"] * effect.per
+        elif isinstance(effect, E.CoinsBonusAndSelfDamagePerHeads):
+            if w["flips"] != effect.coins:
+                found.append(f"{where}: コインが {w['flips']} 枚（{effect.coins} 枚を 1 組で投げる）")
+            expected = printed + w["heads"] * effect.per
+        if expected is not None and any(base != expected for base in w["damages"]):
+            found.append(f"{where}: 相手への基本となるダメージ {w['damages']} が、ログから組み立てた {expected} と違う")
+        if isinstance(effect, (E.DamagePlusOwnCountersThenSelfDamage, E.CoinsBonusAndSelfDamagePerHeads)):
+            own = effect.self_damage if isinstance(effect, E.DamagePlusOwnCountersThenSelfDamage) else w["heads"] * effect.self_per
+            if len(w["selfs"]) + w["self_prevented"] != 1 or any(base != own for base in w["selfs"]):
+                found.append(f"{where}: 自分への基本となるダメージ {w['selfs']}（無効 {w['self_prevented']}）が、{own} の 1 回ではない（相手が受けなくても省かない）")
+        elif w["selfs"]:
+            found.append(f"{where}: 自分へのダメージのないワザで、自分にダメージを与えた（{w['selfs']}）")
+        return found
+
+    def v106_problems(e: dict) -> list[str]:
+        """v0.106: いかりのとっしん・れんぞくぎり・ハイドロカッター・おんねん・ローリングニードル・みんなでスパーク・なかまのちから（相手のワザとして使ったものも）の、コインの枚数と共有・
+        相手と自分への基本となるダメージ・その順番・数えたポケモンの数を、ログから組み立てた場（宣言の時点のカウンター・エネルギーカードの枚数・取ったサイドの数、ダメージの時点の
+        場のポケモンの今の姿の名前）とこのワザのログから独立に確かめる。"""
+        nonlocal v106_window
+        kind = e["kind"]
+        if kind == "attack":
+            v106_window = None
+            if attack_window is None:
+                return []
+            pid, player = attack_window["pokemon_id"], attack_window["player"]
+            opponent = active_of.get(1 - player)
+            v106_window = {"turn": e["turn"], "player": player, "pid": pid, "opponent": opponent, "key": attack_window["effect"], "effect": v104_effect(attack_window["effect"]),
+                           "damage": {p: damage.get(p, 0) for p in (pid, opponent) if p is not None}, "cards": len(energy.get(pid, [])),
+                           "taken": prizes_taken[1 - player] + trainer_prizes[1 - player], "printed": None, "flips": 0, "heads": 0, "damages": [], "prevented": 0,
+                           "selfs": [], "self_prevented": 0, "unreached": set(), "interrupted": False}
+            card, index = _attack_key(attack_window["effect"])
+            v106_window["printed"] = state.definitions[card].attacks[index].damage
+            return []
+        w = v106_window
+        if w is None:
+            return []
+        if kind in ("turn_end", "game_end", "halted"):
+            v106_window = None
+            if kind == "halted" or not isinstance(w["effect"], V106_TYPES):
+                return []
+            if isinstance(w["effect"], E.DamagePlusPokemonCount) and (w["effect"].scope, w["effect"].names) not in V106_COUNT_SCOPES:
+                return []
+            return v106_complete(w)
+        key = e.get("effect")
+        if kind == "copy_attack" and key == w["key"]:
+            w["key"], w["effect"] = e["copied"], v104_effect(e["copied"])
+            card, index = _attack_key(e["copied"])
+            w["printed"] = state.definitions[card].attacks[index].damage
+            return []
+        if not isinstance(w["effect"], V106_TYPES):
+            return []
+        found: list[str] = []
+        mine = key is not None and key == w["key"]
+        effect = w["effect"]
+        if kind in ("confusion_damage", "attack_failed"):
+            w["interrupted"] = True
+        elif kind == "coin_flip" and e.get("source") == "attack" and mine:
+            w["flips"] += 1
+            w["heads"] += e["result"] == "heads"
+        elif kind == "esp_redo" and mine:
+            w["flips"], w["heads"] = len(e["redone"]), list(e["redone"]).count("heads")
+        elif kind == "attack_evaded" and mine and e.get("element") is not None:
+            w["unreached"].add((e["pokemon_id"], e["element"]))
+        elif kind == "damage_prevented" and e.get("pokemon_id") == w["opponent"] and e.get("player") != w["player"]:
+            w["prevented"] += 1
+        elif kind == "damage_prevented" and e.get("pokemon_id") == w["pid"]:
+            w["self_prevented"] += 1
+        elif kind == "damage" and not e.get("retaliation") and e.get("steps"):
+            receiver = ids.get(e["pokemon"])
+            base = e["steps"][0][1]
+            if receiver == w["opponent"] and e["player"] != w["player"]:
+                w["damages"].append(base)  # damage のログは effect を持たない
+                if isinstance(effect, E.DamagePlusPokemonCount) and (effect.scope, effect.names) in V106_COUNT_SCOPES:
+                    if effect.scope == "both_in_play":
+                        scope = [p for p in in_play]
+                    else:
+                        scope = [p for p in in_play if pokemon_owner.get(p) == w["player"] and p != active_of.get(w["player"])]
+                    if not any(p in face_down_pids for p in scope):
+                        count = sum(1 for p in scope if form_def(p).name_ja in effect.names)
+                        if base != w["printed"] + count * effect.per:
+                            found.append(f"{e['turn']} 番の {w['key']} の基本となるダメージ {base} が、ログから組み立てた {effect.scope} の {effect.names} の数 {count} × "
+                                         f"{effect.per} + 目安 {w['printed']} と違う")
+            elif receiver == w["pid"] and e["player"] == w["player"]:
+                if len(w["damages"]) + w["prevented"] + ((w["opponent"], "damage") in w["unreached"]) == 0:
+                    found.append(f"{e['turn']} 番の {w['key']} の自分へのダメージが、相手へのダメージの要素より先にある")
+                w["selfs"].append(base)
+        return found
+
     def v101_problems(e: dict) -> list[str]:
         """v0.101: ［KEEP］でなくなったトラッシュの効果（``energy_discard_voided``）が、ログから組み立てた場ではたらく［KEEP］の持ち主の場の「アンノーン」への、相手が使った
         ワザ・特殊能力・トレーナーの効果のものであることと、その場合に相手の効果でトラッシュしたログ（ワザ・トレーナー・［だつりょくえき］・つけかえで受けずにトラッシュ）が
@@ -3412,6 +3534,7 @@ def log_problems(state) -> list[str]:
         problems.extend(v103_problems(e))  # v0.103: ［ニュートラルシールド］
         problems.extend(v104_problems(e))  # v0.104: 回復のワザ・フラワーダンス
         problems.extend(v105_problems(e))  # v0.105: 回復のあとの山札からの進化・与えたぶんの回復・プレゼント
+        problems.extend(v106_problems(e))  # v0.106: 数とコインの組み合わせ（カウンター・表・カードの枚数・取ったサイド・同じコインの自分へのダメージ・名前の数）
         if kind in ("damage", "confusion_damage"):
             # v0.90: のろいマーカーののっているポケモンが弱点の計算をしたワザのダメージは「×4」（ログの weakness_multiplier）。ほかは書かない。こんらんの 20 は、のろいマーカーと
             # 自分の弱点が当てはまるならコインの前に止まる（UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS）ので、弱点の計算をしたこんらんのダメージはない

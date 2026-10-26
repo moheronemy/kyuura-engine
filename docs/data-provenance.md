@@ -1955,6 +1955,26 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.106: 数とコインを組み合わせる 11 枚
+
+[counts-coins-compositions-v0.106.md](counts-coins-compositions-v0.106.md)。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534` のまま（今回の追加を理由に上げていない）。写しの組 `pool_v0_106`（11 枚）を加え、写しの作り直しの道具で作った
+  （手で直していない）。v0.105 までの 1,208 枚の値・移行の記録は変わっていない。
+- 11 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-26・外部照合なし。記録 1,121 → 1,132）。研究の基準に 11 枚を指す LD-・CC-・CR-・UQ-・エラッタはなく
+  （カードの id・pcg-search の id・同じカードの組 SC-ES2-016・SC-ES3-027・名前・ワザの名前（日本語と英語の欄）で、写し以外の data/ と docs/ を探した。見つかったのはカード・対象の一覧・転記元の
+  写し・商品の一覧・同じカードの組と、名前の一致する別のカードの記録）、`kyuura_records` は空。処理に使う文面はどれも印刷の文面（研究の対応表の `adopted_printed_text` に 17 を加えた。
+  1,162 → 1,179。説明文のないたいあたり 2・きりさく・かぜおこしは持たない）。
+- 同じデータの 2 組（ビリリダマ ES2-016・QSG-025、サンドパン ES3-027・QSG-034）は、日本語の pokemon 欄が組の中で同じで、id ごとに採用の記録を置いた（登録の値だけを共有する）。
+- 日本語の文面の転記元: グランブル・ストライク・カブトプスが nazonobasho.com、カモネギがポケモンWiki、ほかの 7 枚が pcg-search.com。同じ所との一致を独立した照合に数えず、新しく画像を
+  見たことにしていない。拡張シート・クイックスターターギフトの 7 枚の図鑑番号・レベルの欠け（`data_gaps`）は補っていない。
+- 英語の欄との違い（日本語を採用し、英語で置きかえない。この違いだけで保留にしない）: ネギでつくの「(Benching Farfetch'd ends this effect.)」（日本語にない。一般規定で同じ結果）。
+- 一般規定（GR-2000-P309-ATTACK-PROCEDURE・GR-2000-P312-FIELD・GR-2000-P319-HP-AND-DAMAGE・GR-2000-P320-DAMAGE-FIGURE・GR-2000-P321-ATTACK-DAMAGE・GR-2000-P321-DAMAGE-ORDER・
+  GR-2000-P321-PREVENTED-ELEMENTS・GR-2000-P322-PERSISTENT-EFFECTS・GR-2000-P323-KNOCKOUT）は既存の記録の再利用で、11 枚それぞれの独立した原典照合ではない。新しい停止コードはない（停止
+  コード 234・未解決の裁定 235 のまま）。
+- 報告事項（kyuura の作業）: engine_targets.json の 11 枚の `engine_status` を v0.106 の登録で写すと `registered` になる。れんぞくぎりの「3枚なら」の書き方（「「おもて」が」の省略）が印刷の
+  表記か転記の揺れか、UQ-PLAY-AS-POKEMON に neo2-018 のカブトプスを関係するカードとして挙げるかは kyuura の判断。
+
 ## v0.105: 回復・山札からの進化・コインの分岐の 5 枚
 
 [recovery-evolution-coin-branches-v0.105.md](recovery-evolution-coin-branches-v0.105.md)。

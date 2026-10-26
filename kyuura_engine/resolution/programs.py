@@ -11562,3 +11562,72 @@ BUILDERS |= {
         HealCounters(e.two_heads, scope=E.HEAL_OPPONENT_ACTIVE, gate=("coin", 2)), HealCounters(every=True, scope=E.HEAL_OPPONENT_ACTIVE, gate=("coin", 0)),
     ),
 }
+
+
+# ---------------------------------------------------------------- v0.106（docs/counts-coins-compositions-v0.106.md）: 数とコインの組み合わせ（「おもて」の数の表・カードの枚数ぶんの上限つきの
+# コイン・相手が取ったサイドの数・同じコインの追加のダメージと自分へのダメージ）
+
+
+@dataclass(frozen=True)
+class PrintedPlusHeadsTable:
+    """ダメージの目安の数字 + コインを ``len(bonuses) - 1`` 枚投げた「おもて」の数 h の追加のダメージ ``bonuses[h]``（v0.106。ストライク（neo2-008）の「れんぞくぎり」の「コインを4枚
+    投げる。「おもて」が1枚なら10ダメージ、…「おもて」が4枚なら80ダメージを追加する。」。目安 10+ なので 10・20・30・50・90）。p.321 の 1 段階（表の値を最終ダメージにしない）。
+    表は登録の引数（``effects.CoinsHeadsTableBonusDamage``。カードの id を見ない）。コインはダメージの要素の中（ダメージの量だけを決める）で、結果は「おもて」の数だけを使う
+    （``by_heads``。先読みは「おもて」の数でまとめる。実際には 1 枚ずつ投げる。v0.72 の ``PrintedPlusHeadsTimes`` と同じ投げ方）。"""
+
+    bonuses: tuple[int, ...]
+    by_heads: ClassVar[bool] = True
+
+    @property
+    def local_coins(self) -> int:
+        return len(self.bonuses) - 1
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return run.attack.damage + self.bonuses[0 if flips is None else flips.heads]
+
+
+@dataclass(frozen=True)
+class HeadsTimesAttachedEnergyCards:
+    """ワザを使うポケモンについている「エネルギーカード」の枚数ぶん（``max_coins`` 枚まで）コインを投げ、「おもて」の数 × ``per``（v0.106。カブトプス（neo2-018）の
+    「ハイドロカッター」）。数えるのはカードの枚数（``effects.attached_energy_cards``。v0.50 のサイコウェーブと同じ数え方。無色2個エネルギーは 1 枚）で、v0.34 の
+    ``HeadsTimesAttachedEnergy``（出すエネルギーの個数）とは別の値。コインの枚数は枚数と上限の小さいほう（``effects.CappedCoinsPerAttachedEnergyCardsDamage.coin_count`` と同じ値）。
+    0 枚なら投げず 0。コインはダメージの要素の中（ダメージの量だけを決める）で、結果は「おもて」の数だけを使う（``by_heads``）。"""
+
+    per: int
+    max_coins: int
+    by_heads: ClassVar[bool] = True
+
+    def coin_count(self, run: AttackRun) -> int:
+        return min(E.attached_energy_cards(run.state, run.attacker()), self.max_coins)
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return (0 if flips is None else flips.heads) * self.per
+
+
+@dataclass(frozen=True)
+class PrintedPlusOpponentPrizesTaken:
+    """ダメージの目安の数字 + 相手プレイヤーがすでに取ったサイドの数 × ``per``（v0.106。ゴースト（ES3-023）の「おんねん」）。p.321 の 1 段階。相手はワザを使ったプレイヤー
+    （``run.player``。相手のワザとして使ったなら使ったプレイヤー）の相手で、取った数は ``effects.prizes_taken``（準備で置く数 − 今のサイドの枚数。きぜつ・トレーナーで取ったもの。
+    カードの中身は読まない）。"""
+
+    per: int
+    local_coins: ClassVar[int] = 0
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return run.attack.damage + E.prizes_taken(run.state, 1 - run.player) * self.per
+
+
+BUILDERS |= {
+    # いかりのとっしん（グランブル）: 目安 + 自分のカウンターの数 × per（相手へのダメージの時点）→ 自分にも self_damage（別のダメージの要素。相手が受けなくても省かない）
+    E.DamagePlusOwnCountersThenSelfDamage: lambda e: (Damage(OPP, PlusOwnCounters(e.per)), Damage(SELF, Fixed(e.self_damage), name="self_damage")),
+    # れんぞくぎり（ストライク）: コイン（表の長さ − 1 枚）→ 目安 +「おもて」の数の表の値
+    E.CoinsHeadsTableBonusDamage: lambda e: (Damage(OPP, PrintedPlusHeadsTable(e.bonuses)),),
+    # ハイドロカッター（カブトプス）: 自分のエネルギーカードの枚数ぶん（上限つき）のコイン →「おもて」の数 × per
+    E.CappedCoinsPerAttachedEnergyCardsDamage: lambda e: (Damage(OPP, HeadsTimesAttachedEnergyCards(e.per, e.max_coins)),),
+    # おんねん（ゴースト）: 目安 + 相手が取ったサイドの数 × per
+    E.DamagePlusOpponentPrizesTaken: lambda e: (Damage(OPP, PrintedPlusOpponentPrizesTaken(e.per)),),
+    # ローリングニードル（サンドパン）: コイン coins 枚（1 組）→ 目安 +「おもて」の数 × per → 自分にも同じ「おもて」の数 × self_per（同じコインの組。投げ直さない）
+    E.CoinsBonusAndSelfDamagePerHeads: lambda e: (
+        Coin("coin", count=e.coins), Damage(OPP, PrintedPlusHeadsOfCoin("coin", e.per)), Damage(SELF, HeadsOfCoin("coin", e.self_per), name="self_damage"),
+    ),
+}
