@@ -1440,6 +1440,14 @@ ATTACK_TYPES_SINCE_V0_17 = (
     # v0.100（docs/sketch-perish-song-history-v0.100.md。前の相手の番に相手が使ったワザを使う・ねむりで前の自分の番に受けていたら「きぜつ」させる）
     _effects.UseLastOpponentAttack,
     _effects.KnockOutIfAsleepAndReceived,
+    # v0.104（docs/healing-pokemon-v0.104.md。回復の量・対象・とりのぞくかの選択と、名前のポケモンの数のダメージ・自分へのダメージとこのワザの禁止）
+    _effects.CoinChooseOwnPokemonHealAll,
+    _effects.OwnNamedPokemonCountDamage,
+    _effects.CoinsHealSelfTimes,
+    _effects.HealAllSelfThenSelfSleep,
+    _effects.DamageAndSelfDamageThenLockSelf,
+    _effects.OptionalHealSelf,
+    _effects.HealBothActivesThenSleep,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

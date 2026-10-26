@@ -115,7 +115,7 @@ from .decisions import (
     DAMAGE_STEP_ORDER,
     CHALLENGE_BENCH, QUIZ_ANSWER, QUIZ_ATTACK, QUIZ_CARD, SECRET_PLAN_CARD,
     JANKEN_HAND, OPTIONAL_DRAIN, OPTIONAL_DISCARD_ALL, SELECT_MARKER_COUNT,
-    OPTIONAL_SHUFFLE, SELECT_ATTACHED_TRAINER,
+    OPTIONAL_SHUFFLE, SELECT_ATTACHED_TRAINER, OPTIONAL_HEAL,
     SEARCH_DECK_OR_DISCARD, TAKE_LOOKED_POKEMON, SELECT_OPPONENT_PRIZE, TAKE_LOOKED_TRAINER,
     EVOLUTION_SONG_POKEMON,
 )
@@ -5411,6 +5411,7 @@ HEAL_SELF = "self"  # ワザを使ったポケモン（「自分」）
 HEAL_OWN_ALL = "own_all"  # ワザを使ったポケモンと自分の控えポケモン全員（「自分と自分の控えポケモン全員」）
 HEAL_BOTH_ALL = "both_all"  # お互いの場のポケモン全員（「お互いの場にいるポケモン全員」）
 HEAL_BOTH_BENCH = "both_bench"  # v0.83: おたがいの控えポケモン全員（やさしいシャワーズの「ヒプノシャワー」）
+HEAL_BOTH_ACTIVE = "both_active"  # v0.104: ワザを使ったポケモンと相手の対戦ポケモン（ラプラス（SI-018）の「やさしいうた」の「自分と相手」。控えは含めない）
 # エリカのクサイハナの「ミラクルかふん」の選べる特殊状態（説明の「ねむり・マヒ・こんらん・どく」の並び。決定 ``select_special_condition`` の番号）
 CHOSEN_CONDITIONS = (SLEEP, PARALYSIS, CONFUSION, POISON)
 _CONDITION_JA = {POISON: "どく", SLEEP: "ねむり", PARALYSIS: "マヒ", CONFUSION: "こんらん"}
@@ -28917,11 +28918,21 @@ class CoinBonusPerOwnCounter(AttackEffect):
         return DamageProfile(opponent=(attack.damage, attack.damage + attacker.damage // state.rules.damage_per_counter * self.per))
 
 
+# v0.104（docs/healing-pokemon-v0.104.md 3 章）: フシギダネ（ES1-001・QSG-001・IP1-018）の「かいふく」の書き方。1 個のときだけの書き方で、対象（「このカード」= ワザを使ったポケモン）・
+# 数（「それを1つ」）・「のっていれば」（のっていなければとりのぞくものがない。ワザを使うための条件ではない）が「自分にのっているダメージカウンターを、1個とりのぞく。」と同じ意味。
+# ES1-001・QSG-001 は句点がなく、IP1-018 は句点がある（写しの文面のまま。どちらも直さない）
+HEAL_ONE_IF_DAMAGED_TEXTS = (
+    "このカードにダメージカウンターがのっていれば、それを1つ取りのぞく",  # ES1-001・QSG-001
+    "このカードにダメージカウンターがのっていれば、それを1つ取りのぞく。",  # IP1-018
+)
+
+
 @dataclass(frozen=True)
 class HealSelfWithoutDamage(AttackEffect):
     """ダメージの目安の数字はない。自分にのっているダメージカウンターを ``counters`` 個とりのぞく（v0.79。ミニリュウ（neo4-087）の「だっぴ」）。v0.41 の要素
     ``HealCounters``（``HEAL_SELF``。のっている数まで。0 個なら効果を受けない。自分への効果も「とうめい」・「ワザをうけない」状態を評価する）。コインはない（v0.41 の
-    ``CoinHealSelf`` と違う）。使うための条件はない（カウンターが 0 個でも使える）。"""
+    ``CoinHealSelf`` と違う）。使うための条件はない（カウンターが 0 個でも使える）。v0.104: イノムー（neo3-041）の「ひとやすみ」（3 個）、フシギダネの「かいふく」（1 個。
+    ``HEAL_ONE_IF_DAMAGED_TEXTS`` の書き方。「のっていれば」を使うための条件にしない）。"""
 
     counters: int
     implementation_id = "heal_self_without_damage"
@@ -28931,7 +28942,8 @@ class HealSelfWithoutDamage(AttackEffect):
 
     def check(self, attack: Attack) -> list[str]:
         what = "自分のダメージカウンターをとりのぞくワザ"
-        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (f"自分にのっているダメージカウンターを、{self.counters}個とりのぞく。",))
+        accepted = (f"自分にのっているダメージカウンターを、{self.counters}個とりのぞく。",) + (HEAL_ONE_IF_DAMAGED_TEXTS if self.counters == 1 else ())
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, accepted)
 
 
 @dataclass(frozen=True)
@@ -39444,3 +39456,254 @@ SAME_DATA_CARDS_V0_103: Mapping[str, str] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_shared_entries(_with_powers(_with_attacks(DEFAULT_EFFECTS, V0_103_ATTACKS), V0_103_POWERS), SAME_DATA_CARDS_V0_103)
+
+
+# ---------------------------------------------------------------- v0.104（docs/healing-pokemon-v0.104.md）
+# 回復のワザを持つポケモンの 12 枚（ワザ 24）。処理に使う文面は kyuura の印刷の文面。回復の量（決まった数・すべて・「おもて」の数 × 数・とりのぞくかを選ぶ 1 個）と対象（自分・自分の場から
+# 選ぶ 1 匹・おたがいの対戦ポケモン）は、v0.41・v0.89 の要素 ``programs.HealCounters``・``TargetHeal`` の小さな拡張（すべて ``every``・「おもて」の数にかける ``per_heads``・対象
+# ``HEAL_BOTH_ACTIVE``・選ぶ場 ``side``）と、とりのぞくかを選ぶ要素 ``programs.OptionalHealSelf``（決定 ``OPTIONAL_HEAL``）、v0.90 の ``CureOwnConditions`` の受ける判定（``reach``）で
+# 表す。どれも、とりのぞくのはのっている数まで（GR-2000-P320-RECOVERY）で、0 個のポケモンは効果を受けない（とりのぞく処理がない。続く要素はそのまま処理する。p.309）
+
+SWEET_NECTAR_TEXT = "コインを投げて「おもて」なら、自分の場にいるポケモンを1匹選び、そのポケモンにのっているダメージカウンターを、すべてとりのぞく。"
+FLOWER_DANCE_TEXT = "自分の場にいる「{name}」の数×{per}のダメージ。"
+MILK_DRINK_TEXT = "コインを{coins}枚投げ、「おもて」の数×{per}個のダメージカウンターを、自分からとりのぞく。"
+NAP_TIME_TEXT = "自分にのっているダメージカウンターを、すべてとりのぞく。その後、自分を「ねむり」状態にする。"
+REST_TEXT = "自分にのっているダメージカウンターをすべてとりのぞき、自分の「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。その後、自分を「ねむり」状態にする。"
+REST_CURES = (POISON, SLEEP, PARALYSIS, CONFUSION)  # ねむるの「どく・ねむり・マヒ・こんらん」（説明の並び）
+HIGH_SPEED_CHARGE_TEXT = "自分にも{self_damage}ダメージ。次の自分の番、このカードは「{name}」を使うことができない。"
+FIRST_AID_TEXT = "自分についているダメージカウンターを{n}つ取り除くことができる。"
+GENTLE_SONG_TEXT = "自分と相手にのっているダメージカウンターを、それぞれ{n}つずつ、とりのぞく。その後、相手を「ねむり」状態にする。"
+
+
+@dataclass(frozen=True)
+class CoinChooseOwnPokemonHealAll(AttackEffect):
+    """コインを投げて「おもて」なら、自分の場にいるポケモンを 1 匹選び、そのポケモンにのっているダメージカウンターを、すべてとりのぞく（v0.104。キレイハナ（neo1-015）の「あまいみつ」。
+    ダメージの目安なし）。
+
+    - 要素は ``Coin`` → ``ChooseEffectTarget``（自分の場。バトル場 → ベンチ。選ぶのはワザを使ったプレイヤー。「おもて」のときだけ選ぶ。先に選ばない）→ ``TargetHeal(every=True)``。
+      v0.89 の「きずをなめる」と同じ並びで、選べる場と量が違う
+    - 説明に「ダメージカウンターののっている」の条件はないので、自分の場のどのポケモンも選べる（ワザを使ったポケモン・控えも。0 個のポケモンを選んだら、とりのぞくものがなく何もしない）
+    - とりのぞく前に「とうめい」などを評価する（``reaches`` の ``heal``。自分のポケモンでも）。回復は相手のポケモンに当たらないので、相手の状態によらずコインを投げる
+    """
+
+    implementation_id = "coin_choose_own_pokemon_heal_all"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで自分の場のポケモンを選んで、ダメージカウンターをすべてとりのぞくワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (SWEET_NECTAR_TEXT,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return target_decision_problems(state, use, decision, side=TARGET_SIDE_OWN, scope=TARGET_IN_PLAY)
+
+
+@dataclass(frozen=True)
+class OwnNamedPokemonCountDamage(AttackEffect):
+    """自分の場にいる「``names``」の数 × ``per`` のダメージ（v0.104。キレイハナ（neo1-015）の「フラワーダンス」。ダメージの目安「30×」）。値 ``programs.PokemonCountTimes``
+    （v0.40。``SCOPE_OWN_IN_PLAY``）。
+
+    - 数えるのは、ダメージの要素を処理する時点の自分の場（バトル場とベンチ）のポケモンで、今の姿の名前（v0.49 の ``form_def``）が説明の名前と完全に同じもの。ワザを使ったポケモンも
+      名前が合えば数える。相手の場・名前の一部が同じ別の名前（「…のキレイハナ」など）は数えない。0 匹なら 0（p.321 の 1 段階が 0 なので、ダメージを与えない）
+    - 英語版の「cards with Bellossom in their names」（名前に含む）は持ち込まない（日本語の「「キレイハナ」の数」）
+    - 弱点・抵抗力・プラスパワーなどは、そのあとの段階で計算する。実際の処理と先読み（どの方法も）は同じ値を使う
+    """
+
+    names: tuple[str, ...]
+    per: int
+    implementation_id = "own_named_pokemon_count_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "1 匹あたりのダメージ")
+        if type(self.names) is not tuple or len(self.names) != 1 or not all(type(name) is str and name for name in self.names):
+            raise ValueError(f"数えるポケモンの名前 {self.names!r} は 1 つの名前の組")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "自分の場の名前のポケモンの数のダメージのワザ"
+        problems = _check_form(attack, what, damage="modified", modifier="×")
+        if attack.damage != self.per:
+            problems.append(f"ダメージの目安の数字 {attack.damage!r} が 1 匹あたりのダメージ {self.per} と違う")
+        return problems + _check_exact_text(attack, what, (FLOWER_DANCE_TEXT.format(name=self.names[0], per=self.per),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        from .resolution.programs import SCOPE_OWN_IN_PLAY, counted_pokemon
+
+        return DamageProfile(opponent=(len(counted_pokemon(state, use.player, SCOPE_OWN_IN_PLAY, self.names)) * self.per,))
+
+
+@dataclass(frozen=True)
+class CoinsHealSelfTimes(AttackEffect):
+    """コインを ``coins`` 枚投げ、「おもて」の数 × ``per`` 個のダメージカウンターを、自分からとりのぞく（v0.104。ミルタンク（neo1-069）の「ミルクのみ」。ダメージの目安なし）。
+    要素は ``Coin(coins)`` → ``HealCounters(heads_of, per_heads=per)``（v0.41 の「かいふくりんぷん」と同じ「おもて」の数の使い方に、かける数を加えた）。
+
+    - コインはいつも ``coins`` 枚（のっている数・とりのぞける数で枚数を減らさない。0 個でも投げる。自分への効果なので、相手の状態によらない）。先読みは「おもて」の数でまとめる（v0.35）
+    - とりのぞくのはのっている数まで（「おもて」2 枚で 4 個でも、のっているのが 3 個なら 3 個。英語版の「If it has fewer…」は持ち込まないが、GR-2000-P320-RECOVERY で同じ結果）。
+      「おもて」が 0 枚・のっていないなら、とりのぞかない（効果を受けない）
+    """
+
+    coins: int
+    per: int
+    implementation_id = "coins_heal_self_times"
+
+    def __post_init__(self) -> None:
+        _positive_count(self.coins, "コインの枚数")
+        _positive_count(self.per, "「おもて」1 枚あたりのとりのぞく数")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインの「おもて」の数で自分のダメージカウンターをとりのぞくワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (MILK_DRINK_TEXT.format(coins=self.coins, per=self.per),))
+
+
+@dataclass(frozen=True)
+class HealAllSelfThenSelfSleep(AttackEffect):
+    """自分にのっているダメージカウンターをすべてとりのぞき（``cures`` があれば、自分のその特殊状態をすべて回復させ）、その後、自分を「ねむり」状態にする（v0.104。ヒメグマ（neo2-048）の
+    「おひるね」・ジュゴン（ES2-007・QSG-018）の「ねむる」（``cures`` = どく・ねむり・マヒ・こんらん）。ダメージの目安なし）。
+
+    - 要素は ``HealCounters(every=True)`` →（``CureOwnConditions(cures, reach=True)``）→ ``Status(SLEEP, target=SELF)``。全部を大きな数で表さない（``every``）
+    - とりのぞくカウンターがなくても、回復させる特殊状態がなくても、そのあとのねむりは省かない（p.309。「その後」は前の処理ができたかを条件にしない）
+    - 回復させるのは説明が書く特殊状態だけ（v0.90 の ``conditions.cure_conditions``）。マーカー・持続する効果・特殊能力の記録は変えない（完全な初期化にしない）。どく（特殊などくも）は
+      ねむりと重なるので、おひるねでは残る（ねむりの付与で消えない。p.322）。おひるねでこんらん・マヒだったら、ねむりで置きかわる（p.322 の特殊状態の重複）
+    - どの段階も自分への効果なので、受ける前に「とうめい」を評価する（v0.9 の T8。1 つのワザで 1 匹 1 回。v0.13 の T4。回復・特殊状態の回復・ねむりで投げ直さない）
+    """
+
+    cures: tuple[str, ...] = ()
+    implementation_id = "heal_all_self_then_self_sleep"
+
+    def __post_init__(self) -> None:
+        if self.cures not in ((), REST_CURES):
+            raise ValueError(f"回復させる特殊状態 {self.cures!r} の書き方がない（ねむるの {REST_CURES}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "自分のダメージカウンターをすべてとりのぞき、自分をねむり状態にするワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (REST_TEXT if self.cures else NAP_TIME_TEXT,))
+
+
+@dataclass(frozen=True)
+class DamageAndSelfDamageThenLockSelf(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。自分にも ``self_damage`` ダメージ。次の自分の番、このカードはこのワザを使うことができない（v0.104。イノムー（neo3-041）の
+    「もうとっしん」）。要素は ``Damage(OPP)`` → ``Damage(SELF)``（v0.10 の「じごくぐるま」と同じ）→ ``SelfAttackLock(None)``（v0.41 の「きあいずつき」と同じ持続する効果
+    ``CannotUseOwnAttack``。このワザだけ。ほかのワザは使える。v0.78 の ``CannotAttackNextOwnTurn`` ではない）。
+
+    - 相手の「はんげき」などはダメージの要素のあと（p.89）。このカードがこのワザで HP 以上なら、使えなくする効果は与えない（v0.41 と同じ。ログ ``persistent_effect_skipped``）
+    - 相手のワザとして使う（ゆびをふる・オウムがえし）と、使えなくする効果を使ったポケモンのワザの位置で表せないので、既存のエンジンの未対応のまま（``SelfAttackLock.copy_problem``）
+    """
+
+    self_damage: int
+    implementation_id = "damage_and_self_damage_then_lock_self"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.self_damage, "自分へのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "自分にもダメージを与え、次の自分の番にそのワザを使えなくなるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(
+            attack, what, (HIGH_SPEED_CHARGE_TEXT.format(self_damage=self.self_damage, name=attack.name_ja),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        return DamageProfile(opponent=super().damage_profile(state, use).opponent, self_damage=(self.self_damage,))
+
+    def attack_lock_terms(self) -> tuple[type, int | None]:
+        from .state import CannotUseOwnAttack
+
+        return CannotUseOwnAttack, None
+
+
+@dataclass(frozen=True)
+class OptionalHealSelf(AttackEffect):
+    """自分についているダメージカウンターを ``counters`` 個取り除くことができる（v0.104。プリン（PR1-002・PR1-004）の「かいふく」。ダメージの目安なし）。要素
+    ``programs.OptionalHealSelf``。
+
+    - 取り除くかを、ワザを使ったプレイヤーが選ぶ（決定 ``OPTIONAL_HEAL``。選べるものはワザを使ったポケモン 1 つで、0 個は取り除かない（ログ ``attack_heal_declined``）。「ことができる」を
+      取り除くかどうかの選択と読む。実装上の読み方）。のっていなければ選ぶものがないので決定を出さない
+    - 「相手にダメージを与えたら」の条件・与えたダメージはない（v0.72 の「きゅうけつ」の ``Drain`` の ``optional`` とは別。相手にダメージを与える要素もない）。フシギダネの「かいふく」
+      （``HealSelfWithoutDamage``。必ず取りのぞく）とも別
+    - 取り除くを選んだら、受ける前に「とうめい」などを評価する（``reaches`` の ``heal``。選ぶ前には評価しない）
+    """
+
+    counters: int
+    implementation_id = "optional_heal_self"
+
+    def __post_init__(self) -> None:
+        _positive_count(self.counters, "取り除くダメージカウンターの数")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "自分のダメージカウンターを取り除くかを選ぶワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (FIRST_AID_TEXT.format(n=self.counters),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        problems = _decision_form(decision, _label(state, use), kind=OPTIONAL_HEAL, player=use.player, choices=(0, 1), options=(use.pokemon_id,))
+        if decision.context_value("counters") != self.counters:
+            problems.append(f"「{_label(state, use)}」の取り除く数 {decision.context_value('counters')!r} が登録の {self.counters} と違う")
+        found = state.find_pokemon(use.pokemon_id)
+        if found is not None and found[1].damage < state.rules.damage_per_counter:
+            problems.append(f"「{_label(state, use)}」の決定を、ダメージカウンターののっていないポケモン {use.pokemon_id} に出している")
+        return problems
+
+
+@dataclass(frozen=True)
+class HealBothActivesThenSleep(AttackEffect):
+    """自分と相手にのっているダメージカウンターを、それぞれ ``counters`` 個ずつ、とりのぞく。その後、相手を「ねむり」状態にする（v0.104。ラプラス（SI-018）の「やさしいうた」。
+    ダメージの目安なし）。要素は ``HealCounters(counters, scope=HEAL_BOTH_ACTIVE)`` → ``Status(SLEEP)``。
+
+    - 「自分」はワザを使ったポケモン、「相手」は相手の対戦ポケモン（控えは含めない）。それぞれのっている数まで。どちらかが 0 個でも、もう一方からはとりのぞき、そのあとのねむりは省かない
+    - 相手へのとりのぞく効果・ねむりは相手のポケモンへの効果なので、「ワザをうけない」状態（バリアー・［ニュートラルシールド］など）なら無効、「とうめい」なら受ける前に評価する（1 匹 1 回）。
+      相手が受けなくても、自分からとりのぞく効果は有効（GR-2000-P321-PREVENTED-ELEMENTS）。「ダメージを受けない」状態はダメージ以外の効果を止めない
+    - 自分 → 相手の順に処理する（ログの並び）。どちらの順でも結果が同じこと・2 匹とも「とうめい」なら既存の T27 で止めることは docs 4.3 節
+    """
+
+    counters: int
+    implementation_id = "heal_both_actives_then_sleep"
+    opponent_effect_elements = (HEAL_ELEMENT, SLEEP)
+
+    def __post_init__(self) -> None:
+        _positive_count(self.counters, "とりのぞくダメージカウンターの数")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "自分と相手のダメージカウンターをとりのぞき、相手をねむり状態にするワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (GENTLE_SONG_TEXT.format(n=self.counters),))
+
+
+_V0_104_BULBASAUR_POISON = _printed(PoisonWithoutDamage(), "どくのたね", "相手を「どく」状態にする。")
+_V0_104_DEWGONG = (
+    _printed(HealAllSelfThenSelfSleep(REST_CURES), "ねむる", REST_TEXT),
+    _printed(ConfuseOnHeads(), "オーロラウェーブ", "コインを投げて「おもて」なら、相手を「こんらん」状態にする。"),
+)
+_V0_104_JIGGLYPUFF = (
+    _printed(OptionalHealSelf(1), "かいふく", FIRST_AID_TEXT.format(n=1)),
+    _printed(DamageAndSelfDamage(20), "すてみタックル", "自分にも20ダメージ。"),
+)
+
+# v0.104 のワザの登録（24。id ごとに書き、同じデータの 3 組は下の SAME_DATA_CARDS_V0_104 で同じ登録の値にまとめる）。説明文のないひっかくは文面・出典を持たない
+V0_104_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # キレイハナ（neo1-015）
+    AttackKey("neo1-015", 0): _printed(CoinChooseOwnPokemonHealAll(), "あまいみつ", SWEET_NECTAR_TEXT),
+    AttackKey("neo1-015", 1): _printed(OwnNamedPokemonCountDamage(("キレイハナ",), 30), "フラワーダンス", FLOWER_DANCE_TEXT.format(name="キレイハナ", per=30)),
+    # ミルタンク（neo1-069）
+    AttackKey("neo1-069", 0): _printed(CoinsHealSelfTimes(2, 2), "ミルクのみ", MILK_DRINK_TEXT.format(coins=2, per=2)),
+    AttackKey("neo1-069", 1): _printed(ParalyzeOnHeads(), "のしかかり", "コインを投げて「おもて」なら、相手を「マヒ」状態にする。"),
+    # ヒメグマ（neo2-048）
+    AttackKey("neo2-048", 0): AttackEntry(DAMAGE_ONLY, "ひっかく"),
+    AttackKey("neo2-048", 1): _printed(HealAllSelfThenSelfSleep(), "おひるね", NAP_TIME_TEXT),
+    # イノムー（neo3-041）
+    AttackKey("neo3-041", 0): _printed(HealSelfWithoutDamage(3), "ひとやすみ", "自分にのっているダメージカウンターを、3個とりのぞく。"),
+    AttackKey("neo3-041", 1): _printed(DamageAndSelfDamageThenLockSelf(30), "もうとっしん", HIGH_SPEED_CHARGE_TEXT.format(self_damage=30, name="もうとっしん")),
+    # フシギダネ（ES1-001・QSG-001・IP1-018）。IP1-018 のかいふくの文面は最後に句点がある（同じ処理の値・別の文面の登録）
+    **{AttackKey(card, 0): _printed(HealSelfWithoutDamage(1), "かいふく", HEAL_ONE_IF_DAMAGED_TEXTS[0]) for card in ("ES1-001", "QSG-001")},
+    **{AttackKey(card, 1): _V0_104_BULBASAUR_POISON for card in ("ES1-001", "QSG-001")},
+    AttackKey("IP1-018", 0): _printed(HealSelfWithoutDamage(1), "かいふく", HEAL_ONE_IF_DAMAGED_TEXTS[1]),
+    AttackKey("IP1-018", 1): _V0_104_BULBASAUR_POISON,
+    # ジュゴン（ES2-007・QSG-018）
+    **_v0_75_same_data(("ES2-007", "QSG-018"), _V0_104_DEWGONG),
+    # プリン（PR1-002・PR1-004）
+    **_v0_75_same_data(("PR1-002", "PR1-004"), _V0_104_JIGGLYPUFF),
+    # ラプラス（SI-018）
+    AttackKey("SI-018", 0): _printed(HealBothActivesThenSleep(2), "やさしいうた", GENTLE_SONG_TEXT.format(n=2)),
+    AttackKey("SI-018", 1): _printed(ParalyzeOnHeads(), "れいとうビーム", "コインを投げて「おもて」なら、相手を「マヒ」状態にする。"),
+})
+# kyuura の同じカードの組で、日本語の名前・pokemon 欄の対戦に使う値が同じ 3 組（新しい id → 同じデータのカード）。元データの id は消さない。フシギダネの IP1-018 は同じカードの組
+# （SC-ES1-001）だが、かいふくの文面の句点が違うので、まとめずに id の登録を置く（処理の値は同じ）
+SAME_DATA_CARDS_V0_104: Mapping[str, str] = MappingProxyType({
+    "QSG-001": "ES1-001",  # フシギダネ（拡張シート第1弾青版・クイックスターターギフト）
+    "QSG-018": "ES2-007",  # ジュゴン（拡張シート第2弾赤版・クイックスターターギフト）
+    "PR1-004": "PR1-002",  # プリン（月刊コロコロコミックの付録・「すぐわかるポケモンカードの遊びかた」の付録）
+})
+
+DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_104_ATTACKS), SAME_DATA_CARDS_V0_104)

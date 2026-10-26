@@ -108,6 +108,7 @@ from .decisions import (
     SELECT_MARKER_COUNT,
     SELECT_ATTACHED_TRAINER,
     OPTIONAL_SHUFFLE,
+    OPTIONAL_HEAL,
 )
 from .effects import (
     JANKEN_HANDS,
@@ -169,6 +170,7 @@ OPTION_MEANINGS: dict[str, str] = {
     SELECT_MARKER_COUNT: "number",
     SELECT_ATTACHED_TRAINER: "card",  # v0.95: とりさる（相手の場のポケモンについているトレーナーカード。公開）
     OPTIONAL_SHUFFLE: "number",  # v0.95: ［わるぢえ］で見た山札を切るか（山札の持ち主の番号。0 個は切らない）
+    OPTIONAL_HEAL: "pokemon",  # v0.104: プリンの「かいふく」で取り除くか（ワザを使ったポケモンの番号。0 個は取り除かない）
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
 # v0.73: 化石の発掘（山札とトラッシュ）・マスターボール（見た山札の上の 7 枚）も、決めるプレイヤーが自分の山札を見る
@@ -598,7 +600,7 @@ PUBLIC_EVENTS = frozenset({
     "counterattack", "counterattack_skipped", "damage", "damage_prevented", "deck_out", "destiny_bond", "devolve", "devolve_declined", "devolve_none",
     "discard_attached_cards",
     "discard_attached_energy", "discard_attached_trainer", "discard_energy", "discard_energy_failed", "discard_from_deck", "discard_from_hand",
-    "bench_guard", "flee", "flee_declined", "flee_effect_skipped", "ninja_trick", "ninja_trick_declined", "discard_from_play", "discard_hand", "discard_trainer", "disguise", "disguise_removed", "drain_heal", "drain_heal_skipped", "drain_heal_declined", "effect_prevented", "effect_skipped",
+    "bench_guard", "flee", "flee_declined", "flee_effect_skipped", "ninja_trick", "ninja_trick_declined", "discard_from_play", "discard_hand", "discard_trainer", "disguise", "disguise_removed", "drain_heal", "drain_heal_skipped", "drain_heal_declined", "attack_heal_declined", "effect_prevented", "effect_skipped",
     "end_turn_without_attack", "energy_burn", "entry_power_declined", "evade_check", "evolution_permission", "evolve", "evolve_from_deck_declined",
     "evolve_from_deck_none", "forced_switch", "forced_switch_skipped", "game_end", "halted", "janken", "knock_out", "ko_prevented",
     "ko_prevention_declared", "ko_prevention_declined", "ko_prevention_failed", "look_at_deck_top_none", "move_damage_counter", "move_energy",

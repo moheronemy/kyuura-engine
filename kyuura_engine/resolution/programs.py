@@ -42,6 +42,7 @@ from ..decisions import ARRANGE_DECK_TOP, SELECT_DECK_OWNER, SELECT_HAND_CARD, S
 from ..decisions import ENERGY_DRAIN_DISCARD
 from ..decisions import MOVE_ENERGY, OPTIONAL_DRAIN
 from ..decisions import OPTIONAL_DISCARD_ALL
+from ..decisions import OPTIONAL_HEAL
 from ..decisions import DISCARD_TO_DECK, RECOVER_POKEMON, SELECT_DRAW_COUNT, TAKE_LOOKED_CARDS
 from ..decisions import DISCARD_STADIUM, EVOLUTION_SONG_POKEMON
 from ..stadiums import bench_limit
@@ -4742,9 +4743,11 @@ class HealCounters(Element):
     ダメージカウンターをとりのぞいたら、それ以上の回復はできない」）（v0.41）。
 
     - ``scope``: 対象。``HEAL_SELF``（ワザを使ったポケモン）・``HEAL_OWN_ALL``（自分の場のポケモン全員: バトル場 → ベンチの順）・``HEAL_BOTH_ALL``（ワザを使った
-      プレイヤーの場 → 相手の場の順に、それぞれバトル場 → ベンチ）。どの順でも、とりのぞく数は変わらない（ポケモンごとに決まる）。順番はログの並びだけ
-    - とりのぞく数: ``counters``（決まった数）か ``heads_of``（ワザ全体のコインの「おもて」の数。どのポケモンにも同じ数。ポケモンごとに投げ直さない）。それぞれ
-      のっている数まで。0 個のポケモンからはとりのぞかない（効果を受けない。p.309）
+      プレイヤーの場 → 相手の場の順に、それぞれバトル場 → ベンチ）・v0.104 の ``HEAL_BOTH_ACTIVE``（ワザを使ったポケモン → 相手の対戦ポケモン。やさしいうた）。どの順でも、
+      とりのぞく数は変わらない（ポケモンごとに決まる）。順番はログの並びだけ
+    - とりのぞく数: ``counters``（決まった数）か ``heads_of``（ワザ全体のコインの「おもて」の数。どのポケモンにも同じ数。ポケモンごとに投げ直さない。v0.104 の ``per_heads`` は
+      「おもて」1 枚あたりの数（ミルクのみの「おもて」の数 × 2 個））か、v0.104 の ``every``（のっているすべて。おひるね・ねむる。大きな決まった数で表さない）のどれか 1 つ。
+      それぞれのっている数まで。0 個のポケモンからはとりのぞかない（効果を受けない。p.309）
     - ``gate``（ワザ全体のコインの面）・``local_coin``（この要素のコイン。自分への効果だけを決めるので、相手の状態によらず投げる）
     - ワザを使ったポケモン（``HEAL_SELF``）がこのワザの中で HP 以上なら、処理の対象がいないので、コインを投げず、とりのぞかない（v0.31 の ``HealSelfOnHeads`` と同じ。
       ログ ``effect_skipped``）。ほかの対象も、HP 以上のポケモンは飛ばす
@@ -4758,21 +4761,28 @@ class HealCounters(Element):
     scope: str = E.HEAL_SELF
     gate: tuple | None = None
     local_coin: CoinSide | None = None
+    per_heads: int = 1  # v0.104
+    every: bool = False  # v0.104
     phase: ClassVar[Phase] = Phase.EFFECT
 
     def __post_init__(self) -> None:
-        if (self.counters is None) == (self.heads_of is None):
-            raise ValueError("とりのぞく数は counters か heads_of のどちらか一方で決める")
-        if self.scope not in (E.HEAL_SELF, E.HEAL_OWN_ALL, E.HEAL_BOTH_ALL, E.HEAL_BOTH_BENCH):
+        if [self.counters is not None, self.heads_of is not None, self.every].count(True) != 1:
+            raise ValueError("とりのぞく数は counters・heads_of・every のどれか 1 つで決める")
+        if type(self.per_heads) is not int or self.per_heads <= 0 or (self.per_heads != 1 and self.heads_of is None):
+            raise ValueError(f"「おもて」1 枚あたりの数 {self.per_heads!r} は、heads_of のときだけの正の整数")
+        if self.scope not in (E.HEAL_SELF, E.HEAL_OWN_ALL, E.HEAL_BOTH_ALL, E.HEAL_BOTH_BENCH, E.HEAL_BOTH_ACTIVE):
             raise ValueError(f"回復の対象 {self.scope!r} は未定義")
 
     @property
     def opponent_element(self) -> str | None:
-        return E.HEAL_ELEMENT if self.scope in (E.HEAL_BOTH_ALL, E.HEAL_BOTH_BENCH) else None
+        return E.HEAL_ELEMENT if self.scope in (E.HEAL_BOTH_ALL, E.HEAL_BOTH_BENCH, E.HEAL_BOTH_ACTIVE) else None
 
     def targets(self, run: AttackRun) -> list[tuple[int, PokemonInPlay]]:
         if self.scope == E.HEAL_SELF:
             return [(run.player, run.attacker())]
+        if self.scope == E.HEAL_BOTH_ACTIVE:
+            # v0.104: 自分（ワザを使ったポケモン）と相手（相手の対戦ポケモン）。控えは含めない（やさしいうた）
+            return [(run.player, run.attacker()), (1 - run.player, run.opponent_active())]
         if self.scope == E.HEAL_BOTH_BENCH:
             # v0.83: おたがいの控えポケモン全員（やさしいシャワーズの「ヒプノシャワー」。ワザを使ったプレイヤーの控え → 相手の控え。対戦ポケモンは含めない）
             return [(side, pokemon) for side in (run.player, 1 - run.player) for pokemon in run.state.players[side].bench]
@@ -4791,12 +4801,15 @@ class HealCounters(Element):
                 return False
         if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
             return False
-        count = self.counters if self.heads_of is None else run.heads(self.heads_of)
+        if self.every:
+            count = None
+        else:
+            count = self.counters if self.heads_of is None else run.heads(self.heads_of) * self.per_heads
         per = state.rules.damage_per_counter
         for owner, pokemon in self.targets(run):
             if run.knocked_out(pokemon):
                 continue
-            removed = min(count, pokemon.damage // per)
+            removed = pokemon.damage // per if count is None else min(count, pokemon.damage // per)
             if removed <= 0 or not reaches(run.res, run.fs, owner, pokemon, E.HEAL_ELEMENT):
                 continue
             before = pokemon.damage
@@ -9981,16 +9994,26 @@ class TargetHeal(Element):
     - 0 個のポケモンは効果を受けない（GR-2000-P320-RECOVERY）。このワザで HP 以上のポケモン・場をはなれたポケモンは飛ばす（p.309）
     - とりのぞく前に「ワザをうけない」状態・「とうめい」を評価する（``reaches`` の ``heal``。自分のポケモンでも。v0.41 の ``HealCounters`` と同じ）。ログ ``attack_heal``
       （相手のポケモンなら ``attacker`` つき）
-    - 説明に「ダメージカウンターののっている」の条件はないので、選ぶ要素の選べるものは場のポケモンのすべて（v0.85 のあまいかおりの条件を持ち込まない）"""
+    - 説明に「ダメージカウンターののっている」の条件はないので、選ぶ要素の選べるものは場のポケモンのすべて（v0.85 のあまいかおりの条件を持ち込まない）
+    - v0.104: ``every`` なら、のっているすべて（``counters`` の代わり。キレイハナの「あまいみつ」。大きな決まった数で表さない）。``side`` は選ぶ要素と同じ場（自分の場だけから選ぶ
+      ワザ（``TARGET_SIDE_OWN``）は相手のポケモンに効果を与えないので、``opponent_element`` がない）"""
 
-    counters: int
+    counters: int | None = None
     chosen: str = "target"
     gate: tuple | None = None
+    every: bool = False  # v0.104
+    side: str = E.TARGET_SIDE_BOTH  # v0.104
     phase: ClassVar[Phase] = Phase.EFFECT
+
+    def __post_init__(self) -> None:
+        if (self.counters is None) != self.every:
+            raise ValueError("とりのぞく数は counters か every のどちらか一方で決める")
+        if self.side not in E.TARGET_SIDES:
+            raise ValueError(f"選ぶ場 {self.side!r} は未定義")
 
     @property
     def opponent_element(self) -> str | None:
-        return E.HEAL_ELEMENT
+        return None if self.side == E.TARGET_SIDE_OWN else E.HEAL_ELEMENT
 
     def run(self, run: AttackRun) -> bool:
         if self.gate is not None and not run.coin_is(self.gate):
@@ -10004,7 +10027,7 @@ class TargetHeal(Element):
         if run.knocked_out(target):
             return False
         per = state.rules.damage_per_counter
-        removed = min(self.counters, target.damage // per)
+        removed = target.damage // per if self.every else min(self.counters, target.damage // per)
         if removed <= 0 or not reaches(run.res, run.fs, owner, target, E.HEAL_ELEMENT):
             return False
         before = target.damage
@@ -10377,14 +10400,21 @@ class ClearOwnMarkers(Element):
 @dataclass(frozen=True)
 class CureOwnConditions(Element):
     """ワザを使ったポケモン自身を、説明が書く特殊状態（``names``）だけから回復させる（v0.90。かんぜんかいふくの「「どく・こんらん」状態のすべてからも回復させる」。
-    ``conditions.cure_conditions``）。ワザを使ったポケモンがこのワザで HP 以上なら何もしない（p.309）。"""
+    ``conditions.cure_conditions``）。ワザを使ったポケモンがこのワザで HP 以上なら何もしない（p.309）。
+
+    v0.104: ``reach`` なら、回復させる特殊状態があるときだけ、回復させる前に「とうめい」などを評価する（``reaches`` の ``cure``。ジュゴンの「ねむる」。同じワザの前の回復（``HealCounters``）・
+    あとのねむり（``Status``）と同じく、自分への効果の受ける判定を通す。1 匹 1 回で投げ直さない）。v0.90 のかんぜんかいふく（``HealAllCounters`` のあと）は今までどおり評価しない"""
 
     names: tuple[str, ...]
+    reach: bool = False  # v0.104
     phase: ClassVar[Phase] = Phase.EFFECT
 
     def run(self, run: AttackRun) -> bool:
         attacker = run.attacker()
         if run.knocked_out(attacker):
+            return False
+        if self.reach and (not any(name in self.names for name in attacker.conditions.names())
+                           or not reaches(run.res, run.fs, run.player, attacker, E.CURE_ELEMENT)):
             return False
         cure_conditions(run.state, run.player, attacker, self.names, effect=str(run.key))
         return False
@@ -11348,4 +11378,77 @@ BUILDERS |= {
     E.UseLastOpponentAttack: lambda e: (UseLastOpponentAttack(),),
     # ほろびのうた（ムウマ）: 相手が今ねむりで、前の自分の番に attack_name を受けていたなら、相手は「きぜつ」する
     E.KnockOutIfAsleepAndReceived: lambda e: (KnockOutIfAsleepAndReceived(e.attack_name),),
+}
+
+
+# ---------------------------------------------------------------- v0.104（docs/healing-pokemon-v0.104.md）: 回復の量・対象・とりのぞくかの選択
+
+
+@dataclass(frozen=True)
+class OptionalHealSelf(Element):
+    """自分についているダメージカウンターを ``counters`` 個取り除くことができる（v0.104。プリンの「かいふく」。実装 ``effects.OptionalHealSelf``）。
+
+    - ワザを使ったポケモンにダメージカウンターがのっていれば、取り除くかをワザを使ったプレイヤーが選ぶ（決定 ``OPTIONAL_HEAL``。選べるものはワザを使ったポケモンの番号 1 つで、
+      0〜1 個。``context`` の "counters"）。のっていなければ選ぶものがないので出さない。ワザを使ったポケモンがこのワザで HP 以上なら処理の対象がない（``HealCounters`` と同じ
+      ログ ``effect_skipped``）
+    - 取り除くを選んだら、受ける前に「とうめい」などを評価し（``reaches`` の ``heal``）、のっている数まで取り除く（ログ ``attack_heal``）。取り除かないを選んだら、ログ
+      ``attack_heal_declined``（取り除けた数）。「相手にダメージを与えたら」の条件はない（v0.72 の ``Drain`` の ``optional`` とは別）
+    - 答えのあとに続ける要素はない。決定をまたいで運ぶ値は、決定の形の値（取り除く数）と枠の値（``carry``）だけ
+    """
+
+    counters: int
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = OPTIONAL_HEAL
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        attacker = run.attacker()
+        if run.knocked_out(attacker):
+            state.add_event("effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                            element="heal", reason=E.EFFECT_TARGET_KNOCKED_OUT)
+            return False
+        if attacker.damage // state.rules.damage_per_counter <= 0:
+            return False  # 取り除くダメージカウンターがない（選ぶものがない。p.309）
+        run.suspend(kind=OPTIONAL_HEAL, player=run.player, options=(attacker.pokemon_id,), min_choices=0, max_choices=1, carry=True,
+                    extra=(("counters", self.counters),))
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        attacker = run.attacker()
+        if choices and choices != (attacker.pokemon_id,):
+            raise RuntimeError(f"取り除くポケモン {choices} が、ワザを使ったポケモンではない（エンジンの不具合）")
+        per = state.rules.damage_per_counter
+        removed = min(self.counters, attacker.damage // per)
+        if not choices:
+            state.add_event("attack_heal_declined", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                            counters=removed)
+            return
+        if removed <= 0 or not reaches(run.res, run.fs, run.player, attacker, E.HEAL_ELEMENT):
+            return
+        before = attacker.damage
+        attacker.damage = before - removed * per
+        state.add_event("attack_heal", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key), counters=removed,
+                        amount=removed * per, damage_before=before, total_damage=attacker.damage)
+
+
+BUILDERS |= {
+    # あまいみつ（キレイハナ）: コイン →「おもて」なら自分の場のポケモンを 1 匹選ぶ → そのポケモンのダメージカウンターをすべてとりのぞく
+    E.CoinChooseOwnPokemonHealAll: lambda e: (
+        Coin("coin"), ChooseEffectTarget(side=E.TARGET_SIDE_OWN, gate=("coin", HEADS)), TargetHeal(every=True, gate=("coin", HEADS), side=E.TARGET_SIDE_OWN),
+    ),
+    # フラワーダンス（キレイハナ）: 自分の場の、今の姿の名前が names のポケモンの数 × per
+    E.OwnNamedPokemonCountDamage: lambda e: (Damage(OPP, PokemonCountTimes(e.per, SCOPE_OWN_IN_PLAY, e.names)),),
+    # ミルクのみ（ミルタンク）: コイン coins 枚 →「おもて」の数 × per 個を自分からとりのぞく
+    E.CoinsHealSelfTimes: lambda e: (Coin("coin", count=e.coins), HealCounters(heads_of="coin", per_heads=e.per)),
+    # おひるね（ヒメグマ）・ねむる（ジュゴン）: 自分のダメージカウンターをすべてとりのぞく →（説明の特殊状態を回復させる）→ 自分をねむりにする
+    E.HealAllSelfThenSelfSleep: lambda e: (
+        HealCounters(every=True), *((CureOwnConditions(e.cures, reach=True),) if e.cures else ()), Status(SLEEP, target=SELF),
+    ),
+    # もうとっしん（イノムー）: 相手にダメージ → 自分にもダメージ → 次の自分の番、このワザを使えない
+    E.DamageAndSelfDamageThenLockSelf: lambda e: (Damage(OPP, Printed()), Damage(SELF, Fixed(e.self_damage), name="self_damage"), SelfAttackLock(None)),
+    # かいふく（プリン）: 自分のダメージカウンターを counters 個取り除くかを選ぶ
+    E.OptionalHealSelf: lambda e: (OptionalHealSelf(e.counters),),
+    # やさしいうた（ラプラス）: 自分と相手の対戦ポケモンから counters 個ずつとりのぞく → 相手をねむりにする
+    E.HealBothActivesThenSleep: lambda e: (HealCounters(e.counters, scope=E.HEAL_BOTH_ACTIVE), Status(SLEEP)),
 }

@@ -210,7 +210,7 @@ from kyuura_engine.commands import DiscardFromPlay  # noqa: E402
 from kyuura_engine.decisions import (  # noqa: E402
     ARRANGE_DECK_TOP, PEEK_CARD, SELECT_DECK_OWNER, SELECT_HAND_CARD, SELECT_LOOK_COUNT, SELECT_PRIZE_CARD,
     ATTACH_FROM_DECK, ATTACH_FROM_DISCARD, ATTACH_FROM_HAND, BENCH_FROM_DECK, DISCARD_ENERGY, DISCARD_FROM_HAND, DISCARD_TO_DECK_TOP, ENTRY_POWER, FORCED_SWITCH, HAND_TO_DECK,
-    MOVE_ENERGY, MOVE_OPPONENT_ENERGY, RECOVER_POKEMON, ATTACH_TO_BENCH, OPTIONAL_DRAIN,
+    MOVE_ENERGY, MOVE_OPPONENT_ENERGY, RECOVER_POKEMON, ATTACH_TO_BENCH, OPTIONAL_DRAIN, OPTIONAL_HEAL,
     REMOVE_COUNTERS, RETURN_ENERGY, SEARCH_DECK, SELECT_ATTACK, SELECT_COLOR, SELECT_EVOLUTION_CARD, SELECT_POKEMON, SELECT_SPECIAL_CONDITION,
 )
 from kyuura_engine.effects import (  # noqa: E402
@@ -594,6 +594,14 @@ METAPOD_ES1, METAPOD_QSG, MR_MIME_ES1, MR_MIME_QSG = "ES1-003", "QSG-003", "ES1-
 V0_103 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_103"])
 V0_103_POKEMON = V0_103
 MEW_COROCORO, MEW_JR = "PR1-005", "PR1-012"
+# v0.104（docs/healing-pokemon-v0.104.md）: 回復のワザを持つポケモンの 12 枚（写しの組 pool_v0_104。同じデータの 3 組と、同じカードの組で文面の違う IP1-018）。ポケモンは TARGETS に
+# 加える。ワザは既存の手順のまま選ぶ（使った数の少ないワザから）。決定（あまいみつの選ぶポケモン・プリンのかいふくの取り除くか）は ``_v104_decision``。ログから数えるのは ``v104_uses``
+V0_104 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_104"])
+V0_104_POKEMON = V0_104
+BELLOSSOM, MILTANK, TEDDIURSA, PILOSWINE = "neo1-015", "neo1-069", "neo2-048", "neo3-041"
+BULBASAUR_ES1, BULBASAUR_QSG, BULBASAUR_IP1 = "ES1-001", "QSG-001", "IP1-018"
+DEWGONG_ES2, DEWGONG_QSG, JIGGLYPUFF_COROCORO, JIGGLYPUFF_BOOK, LAPRAS_SI = "ES2-007", "QSG-018", "PR1-002", "PR1-004", "SI-018"
+NEO_ODDISH, NEO_GLOOM, PRN_BELLOSSOM, SEEL_ES2, SWINUB_NEO3 = "neo1-001", "neo1-008", "PRN-043", "ES2-006", "neo3-038"
 BASE_CATERPIE, BASE_DROWZEE, BASE_BELLSPROUT = "PMCG1-002", "PMCG1-045", "PMCG2-005"
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
@@ -632,7 +640,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_100_POKEMON  # v0.100: ドーブル・ムウマ
            + V0_101_POKEMON  # v0.101: ソーナンス・アンノーンK
            + V0_102_POKEMON  # v0.102: トランセル・バリヤード
-           + V0_103_POKEMON)  # v0.103: ミュウ（ニュートラルシールド）
+           + V0_103_POKEMON  # v0.103: ミュウ（ニュートラルシールド）
+           + V0_104_POKEMON)  # v0.104: 回復のワザを持つポケモン 12 枚
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -1355,6 +1364,14 @@ DECKS = {
     # v0.103: 超・無色。ミュウ（［ニュートラルシールド］・ねんりき 超）を PR1-005・PR1-012 で 2 枚ずつ（「ミュウ」は合わせて 4 枚）。ほかのたねポケモンは第1弾のスリープ（超）・コラッタ（無色）。
     # 相手の進化ポケモンのワザ（返す効果を含む）をバトル場・ベンチで受けない場面と、たねポケモン・特殊能力・こんらんのダメージは受ける場面
     "M103": ((MEW_COROCORO, 2), (MEW_JR, 2), (BASE_DROWZEE, 4), ("PMCG1-060", 3), (driver.POTION, 2), (SWITCH, 2), (driver.BILL, 2), (PSYCHIC, 43)),
+    # v0.104: 草・無色。ナゾノクサ → クサイハナ（neo1）→ キレイハナ（neo1-015。あまいみつ・フラワーダンス）3 枚と、名前の同じ別のカードのキレイハナ（PRN-043）1 枚（「キレイハナ」は合わせて
+    # 4 枚。フラワーダンスで今の姿の名前で数える）、フシギダネ（ES1-001・QSG-001 を 1 枚ずつ・IP1-018 を 2 枚。合わせて 4 枚）、プリン（PR1-002・PR1-004 を 2 枚ずつ）、ミルタンク 4 枚
+    "G104": ((NEO_ODDISH, 4), (NEO_GLOOM, 3), (BELLOSSOM, 3), (PRN_BELLOSSOM, 1), (BULBASAUR_ES1, 1), (BULBASAUR_QSG, 1), (BULBASAUR_IP1, 2), (JIGGLYPUFF_COROCORO, 2),
+             (JIGGLYPUFF_BOOK, 2), (MILTANK, 4), (driver.POTION, 2), (SWITCH, 2), (driver.BILL, 2), (GRASS, 31)),
+    # v0.104: 水・闘・無色。パウワウ（ES2-006）→ ジュゴン（ES2-007・QSG-018 を 2 枚ずつ。ねむる・オーロラウェーブ）、ラプラス（SI-018。やさしいうた・れいとうビーム）3 枚、ウリムー（neo3-038）→
+    # イノムー（neo3-041。ひとやすみ・もうとっしん）3 枚、ヒメグマ（neo2-048。ひっかく・おひるね）4 枚
+    "W104": ((SEEL_ES2, 4), (DEWGONG_ES2, 2), (DEWGONG_QSG, 2), (LAPRAS_SI, 3), (SWINUB_NEO3, 4), (PILOSWINE, 3), (TEDDIURSA, 4), (driver.POTION, 2), (SWITCH, 2),
+             (driver.BILL, 2), (WATER, 16), (FIGHTING, 16)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -1553,6 +1570,11 @@ PAIRINGS_V0_102 = (("G102", "F30"), ("G102", "R31"), ("G102", "N102"), ("N102", 
 # 山札にもどす）・ふぶき・ラッタ）・M103 対 S87（マチスのマルマインの［ショックボム］（進化ポケモンの特殊能力のダメージ）・コクーン・ダグトリオ・ゲンガー）・M103 対 S48（ベトベトンの
 # ［かがくへんかガス］で力が消える場面）・M103 対 P31（ピッピ・ピクシーのゆびをふる（借りたワザと実際の使い手）・わるいゴルダック）。組・席・seed は先に決めた（seed 0〜3。局を選び直さない）
 PAIRINGS_V0_103 = (("M103", "F30"), ("M103", "W45"), ("M103", "C101"), ("M103", "R52"), ("M103", "S87"), ("M103", "S48"), ("M103", "P31"))
+# v0.104: G104 対 W104（新しいカードどうし）・W104 対 M103（ミュウの［ニュートラルシールド］と、たねのラプラス・進化したジュゴン・イノムーのワザ）・G104 対 M103（進化したキレイハナ・
+# たねのプリン・ミルタンク・フシギダネ）・W104 対 P31・G104 対 P31（ピッピ・ピクシーのゆびをふるで、回復のワザを相手のワザとして使う。もうとっしんは既存の未対応で選ぶと止める）・
+# W104 対 C101（ピジョンのオウムがえしで、受けたやさしいうた・オーロラウェーブを出す）・W104 対 M60（化石の秘密のゴース・ゴーストの「とうめい」）。組・席・seed は先に決めた
+# （seed 0〜3。局を選び直さない）
+PAIRINGS_V0_104 = (("G104", "W104"), ("W104", "M103"), ("G104", "M103"), ("W104", "P31"), ("G104", "P31"), ("W104", "C101"), ("W104", "M60"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -1570,7 +1592,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.87": PAIRINGS_V0_87, "v0.88": PAIRINGS_V0_88, "v0.89": PAIRINGS_V0_89, "v0.90": PAIRINGS_V0_90, "v0.91": PAIRINGS_V0_91,
            "v0.92": PAIRINGS_V0_92, "v0.93": PAIRINGS_V0_93, "v0.94": PAIRINGS_V0_94, "v0.95": PAIRINGS_V0_95,
            "v0.96": PAIRINGS_V0_96, "v0.97": PAIRINGS_V0_97, "v0.98": PAIRINGS_V0_98, "v0.99": PAIRINGS_V0_99, "v0.100": PAIRINGS_V0_100,
-           "v0.101": PAIRINGS_V0_101, "v0.102": PAIRINGS_V0_102, "v0.103": PAIRINGS_V0_103}
+           "v0.101": PAIRINGS_V0_101, "v0.102": PAIRINGS_V0_102, "v0.103": PAIRINGS_V0_103, "v0.104": PAIRINGS_V0_104}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -6233,6 +6255,148 @@ def v103_uses(state):
     return counts
 
 
+def _v104_decision(state, counts):
+    """v0.104 のワザの決定への答え（元の手順より先に答える）: あまいみつの選ぶポケモン（自分の場。選べるものを順に回す。ダメージカウンターののっていないポケモンも順に選ぶ）・プリンの
+    かいふくの取り除くか（対戦の中の 2 回目ごとに取り除かない）・相手の v0.104 のワザを自分のワザとして使うときのワザ（相手がねむりなら、自分をねむりにするワザを選ばない）。受け付ける
+    答えだけを選ぶ。v0.104 のワザの決定（相手のワザとして使ったものも）でなければ何もしない。"""
+    d = state.decision
+    if d is None:
+        return None
+    if d.kind == SELECT_ATTACK and d.context_value("copy_from") in V0_104:
+        # 相手の v0.104 のワザを自分のワザとして使う（ゆびをふる）: 相手の対戦ポケモンがねむりなら、自分をねむりにするワザ（おひるね・ねむる）は選ばない（両方のねむりは、ポケモン
+        # チェックの既知の停止）。ほかは元の手順のまま
+        opponent = state.players[1 - d.player].active
+        source = d.context_value("copy_from")
+        if opponent is None or not opponent.conditions.asleep:
+            return None
+        awake = [i for i in d.options if not isinstance(state.effects.attack_entry(source, i).effect, E.HealAllSelfThenSelfSleep)
+                 and i not in (d.context_value("unsupported_choices", ()) or ()) and i not in (d.context_value("unresolved_choices", ()) or ())]
+        for choice in awake:
+            if _v052_accepted(state, ResolveDecision(d.player, d.id, (choice,))):
+                counts["v104_copied_self_sleep_avoided"] += 1
+                return ResolveDecision(d.player, d.id, (choice,))
+        return None
+    card_id = _v085_source(state, d)
+    if card_id not in V0_104 or d.kind not in (SELECT_POKEMON, OPTIONAL_HEAL):
+        return None
+    key = f"v104_{card_id}_{d.kind}"
+    counts[f"{key}_seen"] += 1
+    seen = counts[f"v104_{d.kind}_seen"]  # 決定の種類ごとに、対戦の中で数える
+    counts[f"v104_{d.kind}_seen"] += 1
+    if d.kind == OPTIONAL_HEAL:
+        candidates = [()] if seen % 2 == 1 else [tuple(d.options), ()]
+    else:
+        blocked = set(d.context_value("unresolved_choices", ()) or ())
+        rotated = list(d.options[seen % len(d.options):]) + list(d.options[:seen % len(d.options)]) if d.options else []
+        candidates = [(o,) for o in rotated if o not in blocked]
+    for choices in candidates:
+        if d.min_choices <= len(choices) <= d.max_choices and _v052_accepted(state, ResolveDecision(d.player, d.id, choices)):
+            counts[f"{key}_{len(choices)}"] += 1
+            return ResolveDecision(d.player, d.id, choices)
+    counts[f"{key}_no_accepted_answer"] += 1
+    return None
+
+
+def v104_uses(state):
+    """v0.104: ログから数えた回復のワザの動き（v0.104 のカードのない局では空）。
+
+    - ``attack_<id>#<位置>``（宣言したワザ。印刷したカードの id ごと）・``copied_<id>#<位置>``（ほかのワザが相手のワザとして使った v0.104 のワザ）
+    - ``heal_<実装>``（attack_heal の回数）・``heal_counters_<実装>``（とりのぞいた数の合計）・``heal_full_<実装>``（のっているすべてをとりのぞいた）・
+      ``heal_other_own``（ワザを使ったポケモンでない自分のポケモンから）・``heal_opponent``（相手のポケモンから）・``heal_none_<実装>``（ワザの処理でとりのぞかなかった。0 個・「うら」・受けなかった）・``heal_declined``（取り除かなかった）
+    - ``milk_heads_<数>``（ミルクのみの「おもて」の数）・``flower_dance_base_<量>``（フラワーダンスの基本となるダメージ）
+    - ``sleep_self``・``sleep_opponent``（v0.104 のワザのねむり）・``cured_<状態>``（ねむるで回復させた特殊状態）・``replaced_by_sleep``（おひるねでねむりに置きかわった）
+    - ``lock_added``・``lock_skipped``（もうとっしんの「使えない」効果）
+    - ``prevented_<要素>``・``evaded_<要素>``・``immune_<状態>``（v0.104 のワザの要素を受けなかった。［ニュートラルシールド］など・「とうめい」・［めんえき］）"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_104 for uid in state.cards):
+        return counts
+    window = None  # 今のワザの {"keys": v0.104 のワザの effect, "impl": 実装, "healed": bool, "declined": bool}
+    for e in state.log:
+        kind = e["kind"]
+        if kind in ("attack", "turn_end", "game_end", "halted"):
+            if window is not None and window["impl"] is not None and not window["healed"] and not window["declined"] and window["impl"] in V104_HEAL_IMPLS:
+                counts[f"heal_none_{window['impl']}"] += 1
+            window = None
+        if kind == "attack":
+            current = e.get("card_id") or state.cards[e["pokemon"]].card_id
+            key = f"{current}#{e['attack_index']}"
+            if current in V0_104:
+                counts[f"attack_{key}"] += 1
+            window = {"key": key, "impl": _v104_impl(state, key) if current in V0_104 else None, "healed": False, "declined": False, "attacker_card": e["pokemon"]}
+            continue
+        if window is None:
+            continue
+        if kind == "copy_attack" and e["copied"].split("#")[0] in V0_104:
+            counts[f"copied_{e['copied']}"] += 1
+            window["key"], window["impl"] = e["copied"], _v104_impl(state, e["copied"])
+            continue
+        if e.get("effect") != window["key"] or window["impl"] is None:
+            if kind == "damage" and window["impl"] == "own_named_pokemon_count_damage" and not e.get("retaliation") and e.get("steps"):
+                counts[f"flower_dance_base_{e['steps'][0][1]}"] += 1
+            if kind == "special_conditions_removed" and e.get("reason") == "replaced" and window["impl"] == "heal_all_self_then_self_sleep":
+                counts["replaced_by_sleep"] += 1  # 置きかえのログは effect を持たない（ねむりにする直前のログ）
+            continue
+        impl = window["impl"]
+        if kind == "attack_heal":
+            window["healed"] = True
+            counts[f"heal_{impl}"] += 1
+            counts[f"heal_counters_{impl}"] += e["counters"]
+            if e["total_damage"] == 0:
+                counts[f"heal_full_{impl}"] += 1
+            if "attacker" in e:
+                counts["heal_opponent"] += 1
+            elif e["pokemon"] != window["attacker_card"]:
+                counts["heal_other_own"] += 1  # ワザを使ったポケモンでない自分のポケモン（あまいみつの控え）
+        elif kind == "attack_heal_declined":
+            window["declined"] = True
+            counts["heal_declined"] += 1
+        elif kind == "special_condition" and e.get("condition") == "sleep":
+            counts["sleep_opponent" if "attacker" in e or impl == "heal_both_actives_then_sleep" else "sleep_self"] += 1
+        elif kind == "special_conditions_removed":
+            if e.get("reason") == "cured":
+                for condition in e["conditions"]:
+                    counts[f"cured_{condition}"] += 1
+        elif kind == "persistent_effect_added" and e.get("persistent_effect") == "cannot_use_own_attack":
+            counts["lock_added"] += 1
+        elif kind == "persistent_effect_skipped":
+            counts["lock_skipped"] += 1
+        elif kind in ("effect_prevented", "damage_prevented"):
+            counts[f"prevented_{e.get('element', 'damage')}"] += 1
+        elif kind == "attack_evaded":
+            counts[f"evaded_{e.get('element')}"] += 1
+        elif kind == "special_condition_prevented":
+            counts[f"immune_{e.get('condition')}"] += 1
+    # ミルクのみの「おもて」の数（ワザごと）
+    window_key, heads = None, None
+    for e in state.log:
+        if e["kind"] == "attack":
+            if heads is not None:
+                counts[f"milk_heads_{heads}"] += 1
+            window_key, heads = f"{e.get('card_id') or state.cards[e['pokemon']].card_id}#{e['attack_index']}", None
+            if window_key == f"{MILTANK}#0":
+                heads = 0
+        elif e["kind"] == "copy_attack" and e["copied"] == f"{MILTANK}#0":
+            window_key, heads = e["copied"], 0
+        elif e["kind"] == "coin_flip" and heads is not None and e.get("effect") == window_key and e.get("source") == "attack":
+            heads += e["result"] == "heads"
+        elif e["kind"] == "esp_redo" and heads is not None and e.get("effect") == window_key:
+            heads = list(e["redone"]).count("heads")
+    if heads is not None:
+        counts[f"milk_heads_{heads}"] += 1
+    return counts
+
+
+V104_HEAL_IMPLS = ("coin_choose_own_pokemon_heal_all", "coins_heal_self_times", "heal_all_self_then_self_sleep", "heal_self_without_damage", "optional_heal_self",
+                   "heal_both_actives_then_sleep")
+
+
+def _v104_impl(state, key: str) -> str | None:
+    """v0.104: ワザ ``key``（カード id#位置）の登録の実装の id（なければ None）。"""
+    card_id, index = key.split("#")
+    entry = state.effects.attack_entry(card_id, int(index))
+    return None if entry is None else entry.effect.implementation_id
+
+
 def v101_uses(state):
     """v0.101: ログから数えた v0.101 の動き（ソーナンス・アンノーンK のない局では空）。
 
@@ -7935,7 +8099,8 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = (_v098_decision(state, counts)  # v0.98: v0.98 の特殊能力の決定（v0.98 のカードのない局では何もしない）
+            early = (_v104_decision(state, counts)  # v0.104: あまいみつの選ぶポケモン・プリンのかいふく（v0.104 のカードのない局では何もしない）
+                     or _v098_decision(state, counts)  # v0.98: v0.98 の特殊能力の決定（v0.98 のカードのない局では何もしない）
                      or _v097_decision(state, counts)  # v0.97: v0.97 の特殊能力の決定（v0.97 のカードのない局では何もしない）
                      or _v096_decision(state, counts)  # v0.96: v0.96 の特殊能力・遺跡の石版の決定（v0.96 のカードのない局では何もしない）
                      or _v095_decision(state, counts)  # v0.95: v0.95 のワザ・特殊能力の決定（v0.95 のカードのない局では何もしない）
@@ -8090,6 +8255,22 @@ def make_policy(seen: dict, counts: Counter):
             if not usable and isinstance(command, UseAttack):
                 counts[f"v044_once_used_end_{card_id}"] += 1
                 return EndTurn(player)
+        if card_id in V0_104 and usable:
+            # v0.104: 相手の対戦ポケモンがねむりのとき、自分をねむりにするワザ（おひるね・ねむる）は選ばない（両方のねむりは、ポケモンチェックの既知の停止
+            # UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER になる。v0.43 のえんかくさいみんと同じ避け方）。ほかに使えるワザがなければ番を終える
+            opponent = state.players[1 - player].active
+            napping = [i for i in usable if isinstance(state.effects.attack_entry(card_id, i).effect, E.HealAllSelfThenSelfSleep)]
+            if opponent is not None and opponent.conditions.asleep:
+                awake = [i for i in usable if i not in napping]
+                if napping:
+                    counts[f"v104_self_sleep_avoided_{card_id}"] += 1
+                    if not awake:
+                        return EndTurn(player)
+                    usable = awake
+            elif napping and (active.conditions.poison is not None or active.conditions.confused):
+                # v0.104: どく・こんらんのときは、自分をねむりにするワザ（ねむるは回復させる。おひるねはどくが残り、こんらんはねむりで置きかわる）を選ぶ
+                counts[f"v104_status_nap_{card_id}"] += 1
+                usable = napping
         if not usable:
             return command
         used = _uses_so_far(state, player, card_id)
@@ -8244,6 +8425,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v101"] = v101_uses(state)
         result["v102"] = v102_uses(state)
         result["v103"] = v103_uses(state)
+        result["v104"] = v104_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:

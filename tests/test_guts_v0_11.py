@@ -695,7 +695,9 @@ class G37Test(unittest.TestCase):
         # v0.95: とりさる（相手の場のポケモンについているトレーナーカードを山札にもどす。ついているポケモンへの効果。docs/private-looks-deck-movement-v0.95.md）
         "ReturnOpponentAttachedTrainerToDeck",
         # v0.100: ほろびのうた（相手をダメージによらず「きぜつ」させる効果。docs/sketch-perish-song-history-v0.100.md）
-        "KnockOutIfAsleepAndReceived"]))
+        "KnockOutIfAsleepAndReceived",
+        # v0.104: やさしいうた（相手の対戦ポケモンからとりのぞく効果とねむり。docs/healing-pokemon-v0.104.md）。あまいみつは自分の場から選ぶので、相手に効果を与えない
+        "HealBothActivesThenSleep"]))
 
 
 class DecisionTest(unittest.TestCase):

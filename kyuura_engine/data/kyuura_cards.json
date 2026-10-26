@@ -1460,6 +1460,20 @@
     "PR1-005",
     "PR1-012"
   ],
+  "pool_v0_104": [
+    "neo1-015",
+    "neo1-069",
+    "neo2-048",
+    "neo3-041",
+    "ES1-001",
+    "QSG-001",
+    "IP1-018",
+    "ES2-007",
+    "QSG-018",
+    "PR1-002",
+    "PR1-004",
+    "SI-018"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -107946,6 +107960,1266 @@
         {
           "page": "1stp012",
           "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "neo1-015",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "キレイハナ",
+        "en": "Bellossom"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          182
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "クサイハナ",
+          "en": "Gloom"
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "あまいみつ",
+              "en": "Sweet Nectar"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、自分の場にいるポケモンを1匹選び、そのポケモンにのっているダメージカウンターを、すべてとりのぞく。",
+              "en": "Flip a coin. If heads, remove all damage counters from 1 of your Pokémon."
+            }
+          },
+          {
+            "name": {
+              "ja": "フラワーダンス",
+              "en": "Flower Dance"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": "×",
+              "display": "30×"
+            },
+            "text": {
+              "ja": "自分の場にいる「キレイハナ」の数×30のダメージ。",
+              "en": "Does 30 damage times the number of cards with Bellossom in their names that you have in play (including this one)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-015",
+        "pokemontcg": [
+          "neo1-3"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-015-kireihana/",
+      "jp_print": {
+        "level": 36,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-015-kireihana/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-069",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ミルタンク",
+        "en": "Miltank"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          241
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 70,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ミルクのみ",
+              "en": "Milk Drink"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを2枚投げ、「おもて」の数×2個のダメージカウンターを、自分からとりのぞく。",
+              "en": "Flip 2 coins. Remove 2 damage counters times the number of heads from Miltank. If it has fewer damage counters than that, remove all of them."
+            }
+          },
+          {
+            "name": {
+              "ja": "のしかかり",
+              "en": "Body Slam"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-069",
+        "pokemontcg": [
+          "neo1-41"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-069-miltank/",
+      "jp_print": {
+        "level": 32,
+        "rarity": "◆(U)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-069-miltank/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo2-048",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ヒメグマ",
+        "en": "Teddiursa"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          216
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひっかく",
+              "en": "Scratch"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "おひるね",
+              "en": "Nap Time"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "自分にのっているダメージカウンターを、すべてとりのぞく。その後、自分を「ねむり」状態にする。",
+              "en": "Remove all damage counters from Teddiursa. Teddiursa is now Asleep."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-048",
+        "pokemontcg": [
+          "neo2-65"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-048-himeguma/",
+      "jp_print": {
+        "level": 12,
+        "rarity": "●(C)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-048-himeguma/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-041",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "イノムー",
+        "en": "Piloswine"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          221
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ウリムー",
+          "en": "Swinub"
+        },
+        "hp": 90,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "lightning",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひとやすみ",
+              "en": "Nap"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "自分にのっているダメージカウンターを、3個とりのぞく。",
+              "en": "Remove 3 damage counters from Piloswine. If it has fewer damage counters than that, remove all of them."
+            }
+          },
+          {
+            "name": {
+              "ja": "もうとっしん",
+              "en": "High-Speed Charge"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 80,
+              "modifier": null,
+              "display": "80"
+            },
+            "text": {
+              "ja": "自分にも30ダメージ。次の自分の番、このカードは「もうとっしん」を使うことができない。",
+              "en": "Piloswine does 30 damage to itself. Piloswine can't use this attack during your next turn."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-041",
+        "pokemontcg": [
+          "neo3-36"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A4%E3%83%8E%E3%83%A0%E3%83%BC_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 41,
+        "rarity": "◆(U)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A4%E3%83%8E%E3%83%A0%E3%83%BC_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "ES1-001",
+      "jp_set": "ES1",
+      "category": "pokemon",
+      "name": {
+        "ja": "フシギダネ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かいふく",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "このカードにダメージカウンターがのっていれば、それを1つ取りのぞく",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "どくのたね",
+              "en": null
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手を「どく」状態にする。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex1001"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex1001.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第1弾(青版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex1001.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES1-001",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex1001",
+          "list_number": "001/036"
+        }
+      ]
+    },
+    {
+      "id": "QSG-001",
+      "jp_set": "QSG",
+      "category": "pokemon",
+      "name": {
+        "ja": "フシギダネ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かいふく",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "このカードにダメージカウンターがのっていれば、それを1つ取りのぞく",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "どくのたね",
+              "en": null
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手を「どく」状態にする。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg001"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg001.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg001.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES1-001",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stqsg001",
+          "list_number": "001/058"
+        }
+      ]
+    },
+    {
+      "id": "IP1-018",
+      "jp_set": "IP1",
+      "category": "pokemon",
+      "name": {
+        "ja": "フシギダネ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かいふく",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "このカードにダメージカウンターがのっていれば、それを1つ取りのぞく。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "どくのたね",
+              "en": null
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手を「どく」状態にする。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stintro1018",
+          "1stintro1029"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stintro1018.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック(フシギダネデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stintro1018.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES1-001",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stintro1018",
+          "list_number": "018/040"
+        },
+        {
+          "page": "1stintro1029",
+          "list_number": "029/040"
+        }
+      ]
+    },
+    {
+      "id": "ES2-007",
+      "jp_set": "ES2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ジュゴン",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "パウワウ",
+          "en": null
+        },
+        "hp": 60,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ねむる",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "自分にのっているダメージカウンターをすべてとりのぞき、自分の「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。その後、自分を「ねむり」状態にする。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "オーロラウェーブ",
+              "en": null
+            },
+            "cost": [
+              "water",
+              "water",
+              "water"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex2007"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex2007.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第2弾(赤版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex2007.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES2-007",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stex2007",
+          "list_number": "007/036"
+        }
+      ]
+    },
+    {
+      "id": "QSG-018",
+      "jp_set": "QSG",
+      "category": "pokemon",
+      "name": {
+        "ja": "ジュゴン",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "パウワウ",
+          "en": null
+        },
+        "hp": 60,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ねむる",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "自分にのっているダメージカウンターをすべてとりのぞき、自分の「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。その後、自分を「ねむり」状態にする。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "オーロラウェーブ",
+              "en": null
+            },
+            "cost": [
+              "water",
+              "water",
+              "water"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg018"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg018.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg018.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES2-007",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stqsg018",
+          "list_number": "018/058"
+        }
+      ]
+    },
+    {
+      "id": "PR1-002",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "プリン",
+        "en": "Jigglypuff"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          39
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かいふく",
+              "en": "First Aid"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分についているダメージカウンターを1つ取り除くことができる。",
+              "en": "Remove 1 damage counter from Jigglypuff."
+            }
+          },
+          {
+            "name": {
+              "ja": "すてみタックル",
+              "en": "Double-edge"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "自分にも20ダメージ。",
+              "en": "Jigglypuff does 20 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-7"
+        ],
+        "pcg_search": [
+          "1stp002"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp002.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [
+          "小学館「月刊コロコロコミック96年11月号」おまけ"
+        ],
+        "source": "https://pcg-search.com/card/1st/1stp002.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PR1-002",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-7",
+        "pokemon.dex": "pokemontcg:basep-7"
+      },
+      "copies": [
+        {
+          "page": "1stp002",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PR1-004",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "プリン",
+        "en": "Jigglypuff"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          39
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かいふく",
+              "en": "First Aid"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分についているダメージカウンターを1つ取り除くことができる。",
+              "en": "Remove 1 damage counter from Jigglypuff."
+            }
+          },
+          {
+            "name": {
+              "ja": "すてみタックル",
+              "en": "Double-edge"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "自分にも20ダメージ。",
+              "en": "Jigglypuff does 20 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-7"
+        ],
+        "pcg_search": [
+          "1stp004"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp004.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [
+          "「すぐわかるポケモンカードの遊びかた」おまけ"
+        ],
+        "source": "https://pcg-search.com/card/1st/1stp004.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PR1-002",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-7",
+        "pokemon.dex": "pokemontcg:basep-7"
+      },
+      "copies": [
+        {
+          "page": "1stp004",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "SI-018",
+      "jp_set": "SI",
+      "category": "pokemon",
+      "name": {
+        "ja": "ラプラス",
+        "en": "Lapras"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          131
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 70,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "やさしいうた",
+              "en": "Gentle Song"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分と相手にのっているダメージカウンターを、それぞれ2つずつ、とりのぞく。その後、相手を「ねむり」状態にする。",
+              "en": "If Lapras has any damage counters on it, remove 2 of them from it (1 if it only has 1). If the Defending Pokémon has any damage counters on it, remove 2 of them from it (1 if it only has 1). The Defending Pokémon is now Asleep."
+            }
+          },
+          {
+            "name": {
+              "ja": "れいとうビーム",
+              "en": "Ice Beam"
+            },
+            "cost": [
+              "water",
+              "water"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "si1-12"
+        ],
+        "pcg_search": [
+          "1stmv018"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stmv018.php",
+      "jp_print": {
+        "level": 30,
+        "rarity": "-",
+        "series": "映画公開記念パック「サザンアイランド」",
+        "remarks": [
+          "トロピカルアイランド 海"
+        ],
+        "source": "https://pcg-search.com/card/1st/1stmv018.php"
+      },
+      "product_group": "southern_islands",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "jp_print.level": "nazonobasho（サザンアイランド）",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:si1-12",
+        "pokemon.dex": "pokemontcg:si1-12"
+      },
+      "copies": [
+        {
+          "page": "1stmv018",
+          "list_number": "003/003"
         }
       ]
     }

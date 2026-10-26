@@ -28061,6 +28061,185 @@
         }
       ],
       "notes": "v0.103 で加えた（docs/neutral-shield-attack-origin-v0.103.md）。PR1（promo。1997-08 JR東日本 ポケモンスタンプラリー）。PR1-005 と同じデータ（SAME_DATA_CARDS_V0_103。登録の値は同じ・記録は id ごと）。［ニュートラルシールド］=EvolvedOpponentAttackImmunity・ねんりき=ParalyzeOnHeads（PR1-005 と同じ）。kyuura data/engine_targets.json（73a1690）の対象（candidate）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stp012・同じカードの組 SC-PR1-005・特殊能力の名前で確かめた）。kyuura data/rule_history.json の card_lists.poke_body（MIX-POWER-ERRATA。2002 年の「ポケボディー」の一覧）と docs/rules/errata-history.md・docs/rules/mixed-2002.md は、外部 id 1stp005・1stp012 を同じ行で挙げ、どちらのプロモかを区別していない（kyuura の記録の注のとおり）。後年の分類なので、2000.02.14 版の根拠・2 枚それぞれの独立した照合にしていない（エラッタの errata の cards ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じ所との一致は独立した照合にならない。data_gaps（jp_print.level）はほかのカード・名前から補っていない（対戦に使う値はある）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない。"
+    },
+    "neo1-015": {
+      "basis": "kyuura_data",
+      "name_ja": "キレイハナ",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.104 で加えた（docs/healing-pokemon-v0.104.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。あまいみつ=CoinChooseOwnPokemonHealAll（コイン 1 枚 →「おもて」なら自分の場（バトル場・ベンチ）から1 匹を選び、のっているダメージカウンターをすべてとりのぞく。先に選ばない。ダメージカウンターののっていないポケモンも選べる。要素 Coin → ChooseEffectTarget → TargetHeal(every)）。フラワーダンス=OwnNamedPokemonCountDamage（自分の場の、今の姿の名前が「キレイハナ」のポケモンの数 × 30。ワザを使ったポケモンも数える。相手の場・名前の一部が同じ別の名前は数えない。値 PokemonCountTimes）。英語の欄の「cards with Bellossom in their names ... (including this one)」（名前に含む）は持ち込まない（日本語の「「キレイハナ」の数」）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo1-069": {
+      "basis": "kyuura_data",
+      "name_ja": "ミルタンク",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.104 で加えた（docs/healing-pokemon-v0.104.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。ミルクのみ=CoinsHealSelfTimes(2, 2)（コインはいつも 2 枚。「おもて」の数 × 2 個を自分からとりのぞく。のっている数まで（GR-2000-P320-RECOVERY）。英語の欄の「If it has fewer damage counters than that, remove all of them.」は持ち込まないが、同じ結果）。のしかかり=ParalyzeOnHeads（ダメージの目安の 20 → コイン 1 枚 →「おもて」で相手をマヒ。v0.3b のキャタピーの「いとをはく」の p.17 の最新の説明と同じ文面の型）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo2-048": {
+      "basis": "kyuura_data",
+      "name_ja": "ヒメグマ",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.104 で加えた（docs/healing-pokemon-v0.104.md）。neo2（遺跡をこえて...。expansion_pack。発売 2000-07-07。ルールの基準の日より後に出たカードだが、2000.02.14 版のルールで処理する）。ひっかく=DamageOnly（説明文のないワザ。無・10。文面・出典を持たない）。おひるね=HealAllSelfThenSelfSleep()（自分のダメージカウンターをすべてとりのぞく → 自分をねむり。とりのぞくものがなくてもねむりは省かない。どくは残る）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo3-041": {
+      "basis": "kyuura_data",
+      "name_ja": "イノムー",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.104 で加えた（docs/healing-pokemon-v0.104.md）。neo3（めざめる伝説。expansion_pack。発売 2000-11-23。ルールの基準の日より後に出たカードだが、2000.02.14 版のルールで処理する）。ひとやすみ=HealSelfWithoutDamage(3)（v0.79 の型。のっている数まで）。もうとっしん=DamageAndSelfDamageThenLockSelf(30)（相手に 80 → 自分にも 30 → 次の自分の番、このカードは「もうとっしん」だけを使えない（持続する効果 CannotUseOwnAttack。v0.41 の「きあいずつき」と同じ。すべてのワザを禁じる CannotAttackNextOwnTurn ではない）。相手のワザとして使うときは既存のエンジンの未対応のまま）。kyuura の日本語の文面は wiki.pokemonwiki.com の転記（ja_text_source）。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES1-001": {
+      "basis": "kyuura_data",
+      "name_ja": "フシギダネ",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.104 で加えた（docs/healing-pokemon-v0.104.md）。ES1（拡張シート 第1弾(青版)。expansion_sheet）。QSG-001 と同じデータ（SAME_DATA_CARDS_V0_104。登録の値は同じ・記録は id ごと）。IP1-018 も同じカードの組（SC-ES1-001）だが、かいふくの文面の句点が違うので登録はまとめない（処理の値は同じ）。かいふく=HealSelfWithoutDamage(1)（文面「このカードにダメージカウンターがのっていれば、それを1つ取りのぞく」は句点がない。effects.HEAL_ONE_IF_DAMAGED_TEXTS の 1 個のときだけの書き方。「のっていれば」はワザを使うための条件にしない（のっていなければ、とりのぞくものがないだけ）。文面を正規化しない）。どくのたね=PoisonWithoutDamage（相手を必ずどく。v0.8 の「どくガス」の p.45 の最新の説明と同じ文面の型）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じ所との一致は独立した照合にならない。data_gaps（pokemon.dex・jp_print.level）はほかのカード・名前から補っていない（対戦に使う値はある）。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stex1001・同じカードの組 SC-ES1-001・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "QSG-001": {
+      "basis": "kyuura_data",
+      "name_ja": "フシギダネ",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.104 で加えた（docs/healing-pokemon-v0.104.md）。QSG（クイックスターターギフト。quick_starter_gift）。ES1-001 と同じデータ（SAME_DATA_CARDS_V0_104。登録の値は同じ・記録は id ごと）。かいふく=HealSelfWithoutDamage(1)（句点のない文面。ES1-001 と同じ）・どくのたね=PoisonWithoutDamage。kyuura の日本語の文面は pcg-search.com の転記。data_gaps（pokemon.dex・jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stqsg001・同じカードの組 SC-ES1-001・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "IP1-018": {
+      "basis": "kyuura_data",
+      "name_ja": "フシギダネ",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.104 で加えた（docs/healing-pokemon-v0.104.md）。IP1（イントロパック(フシギダネデッキ)。intro_pack。pcg-search の 2 つのページ 1stintro1018・1stintro1029 は同じカードの 2 枚）。同じカードの組 SC-ES1-001 で、日本語のpokemon 欄は ES1-001 とかいふくの文面の最後の句点だけが違う（「…それを1つ取りのぞく。」）。共有のために文面を直さず、id の登録（文面はこのカードの写しのまま）を置き、処理の値（HealSelfWithoutDamage(1)・PoisonWithoutDamage）を ES1-001 と同じにした（SAME_DATA_CARDS には入れない）。kyuura の日本語の文面は pcg-search.com の転記。data_gaps（pokemon.dex・jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stintro1018・1stintro1029・同じカードの組 SC-ES1-001・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES2-007": {
+      "basis": "kyuura_data",
+      "name_ja": "ジュゴン",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.104 で加えた（docs/healing-pokemon-v0.104.md）。ES2（拡張シート 第2弾(赤版)。expansion_sheet）。QSG-018 と同じデータ（SAME_DATA_CARDS_V0_104。登録の値は同じ・記録は id ごと）。ねむる=HealAllSelfThenSelfSleep（どく・ねむり・マヒ・こんらん）（自分のダメージカウンターをすべてとりのぞく → 自分の説明の特殊状態を回復させる → 自分をねむり。マーカー・持続する効果は消さない）。オーロラウェーブ=ConfuseOnHeads（ダメージの目安の 30 → コイン 1 枚 →「おもて」で相手をこんらん。v0.3c のロコンの「あやしいひかり」の p.67 の最新の説明と同じ文面の型）。進化元（パウワウ）は kyuura の field_sources で pcg-search.com の進化の並び（data/pcgsearch_page_checks.json）。kyuura の日本語の文面は pcg-search.com の転記。data_gaps（pokemon.dex・jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stex2007・同じカードの組 SC-ES2-007・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "QSG-018": {
+      "basis": "kyuura_data",
+      "name_ja": "ジュゴン",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.104 で加えた（docs/healing-pokemon-v0.104.md）。QSG（クイックスターターギフト。quick_starter_gift）。ES2-007 と同じデータ（SAME_DATA_CARDS_V0_104。登録の値は同じ・記録は id ごと）。ねむる・オーロラウェーブは ES2-007 と同じ。kyuura の日本語の文面は pcg-search.com の転記。data_gaps（pokemon.dex・jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stqsg018・同じカードの組 SC-ES2-007・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PR1-002": {
+      "basis": "kyuura_data",
+      "name_ja": "プリン",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.104 で加えた（docs/healing-pokemon-v0.104.md）。PR1（promo。小学館「月刊コロコロコミック96年11月号」の付録）。PR1-004 と同じデータ（SAME_DATA_CARDS_V0_104。登録の値は同じ・記録は id ごと）。かいふく=OptionalHealSelf(1)（「取り除くことができる」。取り除くかをワザを使ったプレイヤーが選ぶ（決定 OPTIONAL_HEAL）。のっていなければ選ばない。「相手にダメージを与えたら」の条件はない）。英語の欄（pokemontcg:basep-7）の「Remove 1 damage counter from Jigglypuff.」（選ばない）は、英語版の別の印刷の文面で、日本語の「ことができる」を置きかえない。すてみタックル=DamageAndSelfDamage(20)（相手に 40 → 自分にも 20。v0.10 の「じごくぐるま」と同じ型）。kyuura の日本語の文面は pcg-search.com の転記。data_gaps（jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stp002・同じカードの組 SC-PR1-002・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PR1-004": {
+      "basis": "kyuura_data",
+      "name_ja": "プリン",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.104 で加えた（docs/healing-pokemon-v0.104.md）。PR1（promo。「すぐわかるポケモンカードの遊びかた」の付録）。PR1-002 と同じデータ（SAME_DATA_CARDS_V0_104。登録の値は同じ・記録は id ごと）。かいふく・すてみタックルはPR1-002 と同じ。kyuura の日本語の文面は pcg-search.com の転記。data_gaps（jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stp004・同じカードの組 SC-PR1-002・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "SI-018": {
+      "basis": "kyuura_data",
+      "name_ja": "ラプラス",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-26",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.104 で加えた（docs/healing-pokemon-v0.104.md）。SI（映画公開記念パック「サザンアイランド」。southern_islands）。やさしいうた=HealBothActivesThenSleep(2)（自分（ワザを使ったポケモン）と相手（相手の対戦ポケモン）からそれぞれ 2 個ずつ（のっている数まで）→ 相手をねむり。控えは含めない。相手が効果を受けなくても自分からはとりのぞく）。英語の欄の「(1 if it only has 1)」は持ち込まないが、同じ結果。れいとうビーム=ParalyzeOnHeads（ダメージの目安の 20 → コイン 1 枚 →「おもて」で相手をマヒ）。レベル（jp_print.level）は kyuura の field_sources で nazonobasho（サザンアイランド）。kyuura の日本語の文面は pcg-search.com の転記。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stmv018・名前・ワザの名前で確かめた）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
     }
   }
 }

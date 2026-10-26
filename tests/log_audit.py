@@ -339,6 +339,8 @@ LEAVE_EVENTS = ("retreat", "switch", "forced_switch", "trainer_hand_to_active", 
 # v0.92: おたがいの場のすべての特殊能力を止める期限のある効果（まきちらせ!ベトベトガス・オールクリアのワザを使っているあいだ・やみのはどう）
 FIELD_POWER_SUPPRESSION_KINDS = ("power_suppression", "attack_power_suppression", "attack_field_power_suppression")
 NEUTRAL_SHIELD_KIND = "neutral_shield"  # v0.103: ［ニュートラルシールド］で無効にしたログの persistent_effect（エンジンの定義から読まず、ここで独立に持つ）
+# v0.104: 独立に確かめる回復のワザの登録の型（v0.79 のだっぴの型も、同じ確かめを当てはめる）
+V104_HEAL_TYPES = (E.HealSelfWithoutDamage, E.CoinsHealSelfTimes, E.HealAllSelfThenSelfSleep, E.HealBothActivesThenSleep, E.OptionalHealSelf, E.CoinChooseOwnPokemonHealAll)
 
 # v0.10: はたらいた「はんげき」より先にあってはならない、ワザのダメージ以外の効果・きぜつ・番の終わり（p.89）
 COUNTER_BARRIERS = (
@@ -347,6 +349,8 @@ COUNTER_BARRIERS = (
     # v0.31: ダメージ以外の効果（エネルギーのトラッシュ・つける・回復・トレーナーの回収・山札・引く）と、ワザの失敗・効果を受けない状態
     "discard_attached_energy", "attack_heal", "recover_trainer", "attach_energy_from_discard", "attack_attach_energy", "discard_from_deck",
     "draw", "effect_prevented", "effect_skipped", "destiny_bond",
+    # v0.104: 取り除くかを選ぶ回復で取り除かなかった（プリンの「かいふく」）
+    "attack_heal_declined",
     # v0.32: 山札からベンチに出す（なかまをよぶ・ふえる）
     "bench_from_deck", "bench_from_deck_none",
     # v0.34: ワザの効果で自分のポケモンを入れ替える（テレポート）
@@ -1629,6 +1633,7 @@ def log_problems(state) -> list[str]:
     # 確かめはかがくへんかガスしか見ていなかった（v0.59 の対戦では起こらなかった）
     goop_gases: dict[int, int] = {}
     v103_strange_gases: dict[int, int] = {}  # v0.103: ログから組み立てた、はたらいている「ふしぎなガス」（カード → 消える番）。［ニュートラルシールド］の確かめを飛ばす
+    v104_window: dict | None = None  # v0.104: 今のワザの回復の確かめ（宣言の時点のダメージ・特殊状態、このワザのコイン・回復・取り除かなかった・受けなかった要素）
     color_types: dict[int, dict] = {}  # v0.88: ［せんすい］の記録（対象のポケモンの番号 → 色・発生源のカード・特殊能力の位置）
     # v0.90: ログから組み立てた、場のポケモンのマーカー・カウンター（番号 → のせた順の {"marker", "color", "turn"}）と、進化・退化で取りのぞくはずのポケモン（番号 → 理由）
     marks: dict[int, list[dict]] = {}
@@ -2509,6 +2514,162 @@ def log_problems(state) -> list[str]:
             found.extend(v103_received(e, pid, DAMAGE_ELEMENT))
         return found
 
+    def v104_effect(key: str | None):
+        """v0.104: ワザのログの ``effect``（処理したワザ）の登録の実装（なければ None）。"""
+        if key is None:
+            return None
+        entry = state.effects.attack_entry(*_attack_key(key))
+        return None if entry is None else entry.effect
+
+    def v104_heal(w: dict, e: dict, effect) -> list[str]:
+        """v0.104: 回復のワザの ``attack_heal`` の対象と数を、宣言の時点からログで組み立てたダメージ（このログの前の ``damage``）と、このワザのコインのログから求めた数と照らす
+        （エンジンの ``HealCounters``・``TargetHeal``・``OptionalHealSelf`` を読まない）。"""
+        per = state.rules.damage_per_counter
+        pid, key = e["pokemon_id"], e["effect"]
+        have = damage[pid] // per
+        where = f"{e['turn']} 番の {key} の attack_heal（ポケモン {pid}・{e['counters']} 個）"
+        if isinstance(effect, E.HealBothActivesThenSleep):
+            target, expected = pid in (w["pid"], w["opponent"]), min(effect.counters, have)
+            if pid == w["opponent"] and w["damage"].get(w["pid"], 0) >= per and w["pid"] not in [h for h, _ in w["healed"]] \
+                    and (w["pid"], E.HEAL_ELEMENT) not in w["unreached"]:
+                return [f"{where}: 自分（ポケモン {w['pid']}）からとりのぞく前に、相手からとりのぞいた"]
+        elif isinstance(effect, E.CoinChooseOwnPokemonHealAll):
+            target, expected = pokemon_owner.get(pid) == w["player"] and (w["flips"][key], w["heads"][key]) == (1, 1), have
+        elif isinstance(effect, E.CoinsHealSelfTimes):
+            target, expected = pid == w["pid"] and w["flips"][key] == effect.coins, min(effect.per * w["heads"][key], have)
+        elif isinstance(effect, E.HealAllSelfThenSelfSleep):
+            target, expected = pid == w["pid"], have
+        elif isinstance(effect, (E.OptionalHealSelf, E.HealSelfWithoutDamage)):
+            target, expected = pid == w["pid"], min(effect.counters, have)
+        else:
+            return []
+        found = []
+        if not target or e["counters"] != expected or expected <= 0 or e["damage_before"] != damage[pid]:
+            found.append(f"{where} が、そのワザでとりのぞくポケモン・ログから組み立てたダメージ {damage[pid]}・コイン（{w['flips'][key]} 枚・「おもて」{w['heads'][key]}）"
+                         f"の数 {expected} と合わない")
+        if pid in [h for h, _ in w["healed"]] or (pid == w["pid"] and w["declined"]):
+            found.append(f"{where}: 1 回のワザで同じポケモンから 2 回とりのぞいた（取り除かなかったあとを含む）")
+        if isinstance(effect, E.CoinChooseOwnPokemonHealAll) and w["healed"]:
+            found.append(f"{where}: 選んだ 1 匹のほかのポケモンからもとりのぞいた")
+        w["healed"].append((pid, e["counters"]))
+        return found
+
+    def v104_complete(w: dict) -> list[str]:
+        """v0.104: 回復のワザの処理が終わったところ（番の終わり・対戦の終わり）で、宣言の時点の場から決まる回復・取り除くかの決定・特殊状態の回復・ねむりが、受けなかったログ
+        （``attack_evaded``・``effect_prevented``・``special_condition_prevented``）のほかは欠けていないかを確かめる。こんらん・手順 4 のコインでワザが失敗したら、何もとりのぞかない。"""
+        effect = v104_effect(w["copied"] or w["effect"])
+        if not isinstance(effect, V104_HEAL_TYPES):
+            return []
+        per = state.rules.damage_per_counter
+        key = w["copied"] or w["effect"]
+        where = f"{w['turn']} 番の {key}（ワザを使ったポケモン {w['pid']}）"
+        healed = dict(w["healed"])
+        if w["interrupted"]:
+            return [f"{where}: 失敗したワザでとりのぞいた・取り除くかを決めた"] if healed or w["declined"] else []
+        found = []
+
+        def must_heal(pid: int | None, count: int) -> None:
+            if pid is not None and count > 0 and pid not in healed and (pid, E.HEAL_ELEMENT) not in w["unreached"]:
+                found.append(f"{where}: ポケモン {pid}（宣言の時点のダメージ {w['damage'].get(pid)}）から、とりのぞいていない（{count} 個のはず）")
+
+        def must_sleep(pid: int | None) -> None:
+            if pid is not None and pid not in w["slept"] and (pid, E.SLEEP) not in w["unreached"]:
+                found.append(f"{where}: ポケモン {pid} を「ねむり」にしていない（とりのぞけなかったことで省かない）")
+
+        have = w["damage"].get(w["pid"], 0) // per
+        if isinstance(effect, E.HealSelfWithoutDamage):
+            must_heal(w["pid"], min(effect.counters, have))
+        elif isinstance(effect, E.CoinsHealSelfTimes):
+            if w["flips"][key] != effect.coins:
+                found.append(f"{where}: コインが {w['flips'][key]} 枚（いつも {effect.coins} 枚。とりのぞける数で減らさない）")
+            must_heal(w["pid"], min(effect.per * w["heads"][key], have))
+        elif isinstance(effect, E.HealAllSelfThenSelfSleep):
+            must_heal(w["pid"], have)
+            must_sleep(w["pid"])
+            had = ({w["status"]} if w["status"] is not None else set()) | ({E.POISON} if w["poisoned"] else set())
+            missing = (had & set(effect.cures)) - w["cured"]
+            if missing and (w["pid"], E.CURE_ELEMENT) not in w["unreached"]:
+                found.append(f"{where}: 宣言の時点の特殊状態 {sorted(missing)} を回復させていない")
+            if w["cured"] - set(effect.cures):
+                found.append(f"{where}: 説明が書かない特殊状態 {sorted(w['cured'] - set(effect.cures))} を「回復」させた（cured）")
+        elif isinstance(effect, E.HealBothActivesThenSleep):
+            must_heal(w["pid"], min(effect.counters, have))
+            must_heal(w["opponent"], min(effect.counters, w["damage"].get(w["opponent"], 0) // per))
+            must_sleep(w["opponent"])
+            if w["pid"] in w["slept"]:
+                found.append(f"{where}: 自分を「ねむり」にした（相手だけ）")
+        elif isinstance(effect, E.OptionalHealSelf):
+            decided = (w["pid"] in healed) + len(w["declined"]) + ((w["pid"], E.HEAL_ELEMENT) in w["unreached"])
+            if decided != (1 if have > 0 else 0):
+                found.append(f"{where}: 宣言の時点のダメージカウンター {have} 個に対して、取り除いた・取り除かなかった・受けなかったログが {decided} 個")
+        elif isinstance(effect, E.CoinChooseOwnPokemonHealAll) and (w["flips"][key] != 1 or (w["heads"][key] == 0 and healed)):
+            found.append(f"{where}: コイン {w['flips'][key]} 枚・「おもて」{w['heads'][key]} 枚で、とりのぞいたポケモン {sorted(healed)}")
+        return found
+
+    def v104_problems(e: dict) -> list[str]:
+        """v0.104: 回復のワザ（あまいみつ・ミルクのみ・おひるね・ひとやすみ・かいふく・ねむる・やさしいうた。相手のワザとして使ったものも）の、とりのぞいた対象と数・取り除くかの
+        決定・特殊状態の回復・ねむり、フラワーダンスの基本となるダメージを、ログから組み立てた場（宣言の時点のダメージ・特殊状態・今の姿の名前）とこのワザのコインのログから独立に
+        確かめる（エンジンの ``HealCounters``・``TargetHeal``・``OptionalHealSelf``・``counted_pokemon`` を読まない）。"""
+        nonlocal v104_window
+        kind = e["kind"]
+        if kind == "attack":
+            if attack_window is None:
+                return []
+            pid, player = attack_window["pokemon_id"], attack_window["player"]
+            opponent = active_of.get(1 - player)
+            v104_window = {"turn": e["turn"], "player": player, "pid": pid, "opponent": opponent, "effect": attack_window["effect"], "copied": None,
+                           "damage": {p: damage.get(p, 0) for p in (pid, opponent) if p is not None}, "status": exclusive.get(pid), "poisoned": pid in poisoned,
+                           "flips": Counter(), "heads": Counter(), "healed": [], "declined": [], "unreached": set(), "interrupted": False, "cured": set(),
+                           "slept": set(), "counted": False}
+            return []
+        w = v104_window
+        if w is None:
+            return []
+        if kind in ("turn_end", "game_end", "halted"):
+            v104_window = None
+            return [] if kind == "halted" else v104_complete(w)
+        key = e.get("effect")
+        mine = key is not None and key in (w["effect"], w["copied"])
+        found: list[str] = []
+        if kind == "copy_attack" and key == w["effect"]:
+            w["copied"] = e["copied"]
+        elif kind in ("confusion_damage", "attack_failed"):
+            w["interrupted"] = True
+        elif kind == "coin_flip" and e.get("source") == "attack" and mine:
+            w["flips"][key] += 1
+            w["heads"][key] += e["result"] == "heads"
+        elif kind == "esp_redo" and mine:
+            w["flips"][key], w["heads"][key] = len(e["redone"]), list(e["redone"]).count("heads")  # やり直したコインだけを使う
+        elif kind in ("attack_evaded", "effect_prevented", "flee_effect_skipped") and mine and e.get("element") is not None:
+            w["unreached"].add((e["pokemon_id"], e["element"]))
+        elif kind == "special_condition_prevented" and mine:
+            w["unreached"].add((e["pokemon_id"], e["condition"]))
+        elif kind == "attack_heal" and mine:
+            found.extend(v104_heal(w, e, v104_effect(key)))
+        elif kind == "attack_heal_declined":
+            effect = v104_effect(key) if mine else None
+            per = state.rules.damage_per_counter
+            if not isinstance(effect, E.OptionalHealSelf) or e["pokemon_id"] != w["pid"] or damage[w["pid"]] < per \
+                    or e["counters"] != min(effect.counters, damage[w["pid"]] // per) or w["declined"] or w["pid"] in [h for h, _ in w["healed"]]:
+                found.append(f"{e['turn']} 番の attack_heal_declined（ポケモン {e['pokemon_id']}）が、ダメージカウンターののっている使い手の、取り除くかを選ぶワザの 1 回の決定ではない")
+            w["declined"].append(e["pokemon_id"])
+        elif kind == "special_conditions_removed" and mine and e.get("reason") == "cured" and e["pokemon_id"] == w["pid"]:
+            w["cured"].update(e["conditions"])
+        elif kind == "special_condition" and mine and e.get("condition") == E.SLEEP:
+            w["slept"].add(e["pokemon_id"])
+        elif kind == "damage" and not e.get("retaliation") and e["player"] != w["player"] and not w["counted"]:
+            effect = v104_effect(w["copied"] or w["effect"])
+            if isinstance(effect, E.OwnNamedPokemonCountDamage):
+                w["counted"] = True
+                own = [p for p in in_play if pokemon_owner.get(p) == w["player"]]
+                if not any(p in face_down_pids for p in own):
+                    count = sum(1 for p in own if form_def(p).name_ja in effect.names)
+                    base = e["steps"][0][1] if e.get("steps") else None
+                    if base != count * effect.per:
+                        found.append(f"{e['turn']} 番の {w['copied'] or w['effect']} の基本となるダメージ {base} が、ログから組み立てた自分の場の {effect.names} の数 {count} × "
+                                     f"{effect.per} と違う")
+        return found
+
     def v101_problems(e: dict) -> list[str]:
         """v0.101: ［KEEP］でなくなったトラッシュの効果（``energy_discard_voided``）が、ログから組み立てた場ではたらく［KEEP］の持ち主の場の「アンノーン」への、相手が使った
         ワザ・特殊能力・トレーナーの効果のものであることと、その場合に相手の効果でトラッシュしたログ（ワザ・トレーナー・［だつりょくえき］・つけかえで受けずにトラッシュ）が
@@ -3077,6 +3238,7 @@ def log_problems(state) -> list[str]:
         problems.extend(v101_problems(e))  # v0.101: ［KEEP］
         problems.extend(v102_problems(e))  # v0.102: ［グリーンシールド］・［ニュートラルダメージ］
         problems.extend(v103_problems(e))  # v0.103: ［ニュートラルシールド］
+        problems.extend(v104_problems(e))  # v0.104: 回復のワザ・フラワーダンス
         if kind in ("damage", "confusion_damage"):
             # v0.90: のろいマーカーののっているポケモンが弱点の計算をしたワザのダメージは「×4」（ログの weakness_multiplier）。ほかは書かない。こんらんの 20 は、のろいマーカーと
             # 自分の弱点が当てはまるならコインの前に止まる（UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS）ので、弱点の計算をしたこんらんのダメージはない
@@ -5204,6 +5366,12 @@ def log_problems(state) -> list[str]:
             elif isinstance(effect, CoinChooseEitherPokemonHeal):
                 # v0.89: きずをなめる。おたがいの場のポケモンから選んだ 1 匹（自分の場ならワザを使ったポケモンも）。相手のポケモンなら ``attacker`` つき
                 allowed = pid in in_play and (pokemon_owner.get(pid) == attack_window["player"] or e.get("attacker") == attack_window["player"])
+            elif isinstance(effect, E.CoinChooseOwnPokemonHealAll):
+                # v0.104: あまいみつ。自分の場から選んだ 1 匹（ワザを使ったポケモンも。数は v104_problems）
+                allowed = pid in in_play and pokemon_owner.get(pid) == attack_window["player"] and "attacker" not in e
+            elif isinstance(effect, E.HealBothActivesThenSleep):
+                # v0.104: やさしいうた。ワザを使ったポケモンと相手の対戦ポケモン（相手のポケモンなら ``attacker`` つき）
+                allowed = pid == attack_window["pokemon_id"] or (pid == active_of.get(1 - attack_window["player"]) and e.get("attacker") == attack_window["player"])
             elif isinstance(effect, DamageSleepThenHealBothBench):
                 # v0.83: ヒプノシャワー。おたがいの控えポケモン全員（バトル場のポケモンは除く）
                 allowed = pid in in_play and pid != attack_window["pokemon_id"] and pid != active_of.get(1 - attack_window["player"])

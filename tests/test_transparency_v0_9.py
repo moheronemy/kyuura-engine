@@ -685,6 +685,8 @@ EVOLUTIONS = {METAPOD: (CATERPIE,), KAKUNA: (WEEDLE,), DEWGONG: (SEEL,), STARMIE
               "PF2-004": ("ES1-032",),
               # v0.88: ランターン（neo1-040・neo3-026。チョンチー neo1-037 から）・スターミー（neo3-034。ヒトデマンから）
               "neo1-040": ("neo1-037",), "neo3-026": ("neo1-037",), "neo3-034": (STARYU,),
+              # v0.104: ジュゴン（ES2-007・QSG-018。パウワウから）
+              "ES2-007": ("ES2-006",), "QSG-018": ("ES2-006",),
               # v0.89: ライチュウ（ES2-013・QSG-022。ピカチュウから）・ゴーリキー（ES3-028。ワンリキーから）
               "ES2-013": (PIKACHU,), "QSG-022": (PIKACHU,), "ES3-028": (MACHOP,),
               # v0.93: オクタン（neo3-019。テッポウオ neo3-016 から）
@@ -826,7 +828,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                     "ふしぎなこな", "ふしぎなこな",
                                     # v0.103: ミュウ（PR1-005・PR1-012）の「ねんりき」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
                                     # docs/neutral-shield-attack-origin-v0.103.md）
-                                    "ねんりき", "ねんりき"]))
+                                    "ねんりき", "ねんりき",
+                                    # v0.104: ミルタンク（neo1-069）の「のしかかり」・ラプラス（SI-018）の「れいとうビーム」（ParalyzeOnHeads）・ジュゴン（ES2-007・QSG-018）の
+                                    # 「オーロラウェーブ」（ConfuseOnHeads）。既存の型の登録だけなので、同じ T19b で止まる（docs/healing-pokemon-v0.104.md）
+                                    "のしかかり", "れいとうビーム", "オーロラウェーブ", "オーロラウェーブ"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

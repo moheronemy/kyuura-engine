@@ -594,6 +594,7 @@ POOL_KEYS = (
     "pool_v0_101",  # v0.101（ソーナンス・アンノーンK の 2 枚。docs/counter-keep-energy-protection-v0.101.md）
     "pool_v0_102",  # v0.102（トランセル・バリヤードの 4 枚。docs/weakness-resistance-powers-v0.102.md）
     "pool_v0_103",  # v0.103（ミュウの 2 枚。docs/neutral-shield-attack-origin-v0.103.md）
+    "pool_v0_104",  # v0.104（回復のワザを持つポケモンの 12 枚。docs/healing-pokemon-v0.104.md）
 )
 
 

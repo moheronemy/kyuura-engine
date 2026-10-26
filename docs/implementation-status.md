@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.103）
+# 実装状況（v0.1〜v0.104）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534`（v0.97 から。v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3819,6 +3819,23 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 338・neo 154・拡張パック以外 184） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistryTest` |
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.104: 回復のワザを持つポケモン 12 枚と、回復の量・対象・とりのぞくかの選択
+
+[healing-pokemon-v0.104.md](healing-pokemon-v0.104.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 12 枚・ワザ 24 の登録（写しの組 pool_v0_104。印刷の文面のまま正規化しない。同じデータの 3 組は id ごとに登録し同じ値にまとめる。句点の違う IP1-018 は id の登録で処理の値を同じに。既存の型 11（形だけの検査の型は原文と処理を照らした）・フシギダネのかいふくの書き方 `HEAL_ONE_IF_DAMAGED_TEXTS`・新しい型 7） | 実装済み・テスト済み | kyuura 73a1690 の写し | test_healing_pokemon_v0_104.py `RegistrationTest` |
+| 回復の量・対象（`HealCounters` の `every`・`per_heads`・`HEAL_BOTH_ACTIVE`、`TargetHeal` の `every`・`side`。のっている数まで。0 個は効果を受けず続く要素は処理する。ダメージではない） | 実装済み・テスト済み | GR-2000-P320-RECOVERY・GR-2000-P309-ATTACK-PROCEDURE | 同 `HealAmountTest`・`ReachTest.test_heals_are_not_damage` |
+| あまいみつ（コイン → 自分の場から選ぶ → すべて）・ミルクのみ（コイン 2 枚 →「おもて」×2）・おひるね・ねむる（すべて →（どく・ねむり・マヒ・こんらんの回復）→ 自分をねむり）・やさしいうた（自分 → 相手の対戦ポケモンから 2 個ずつ → 相手をねむり）・フラワーダンス（自分の場の今の姿の名前「キレイハナ」×30）・もうとっしん（80 → 自分に 30 → このワザだけの禁止） | 実装済み・テスト済み | 印刷の文面・v0.41・v0.89・v0.90・v0.40 の要素 | 同 `HealAmountTest`・`ConditionOrderTest`・`FlowerDanceTest`・`HighSpeedChargeTest` |
+| 取り除くかを選ぶ回復（プリンのかいふく。`OptionalHealSelf`・決定 `OPTIONAL_HEAL`・ログ `attack_heal_declined`。のっていなければ決定を出さない。「ダメージを与えたら」の条件はない） | 実装済み・テスト済み | 実装上の読み方（「ことができる」） | 同 `HealAmountTest.test_first_aid_is_optional_and_needs_counters`・`DecisionTest` |
+| 受ける判定（「とうめい」は同じワザで 1 匹 1 回・バリアー・［ニュートラルシールド］は v0.103 の発生元で判定・「ダメージを受けない」状態は止めない。相手が受けなくても自分の回復は残る） | 実装済み・テスト済み | GR-2000-P321-PREVENTED-ELEMENTS・v0.9 の T4・T8・v0.103 | 同 `ReachTest` |
+| 決定の保存と再開・不正な答えの拒否・先読みの 3 つの方法 | 実装済み・テスト済み | 6 章 | 同 `DecisionTest` |
+| T27・HC3・MM1・MM2・FD1・両方の対戦ポケモンのねむりのポケモンチェック・相手のワザとして使うもうとっしん（既存の未解決・未対応。新しい能力で解決しない） | 裁定が未解決・エンジンの未対応（止める） | — | 同 `ReachTest`・`HighSpeedChargeTest` |
+| ログの監査（エンジンの回復の要素を読まずに、宣言の時点のダメージ・特殊状態とこのワザのコインから、対象・数・取り除くかの決定・特殊状態の回復・ねむり・フラワーダンスの数を照らす） | 実装済み・テスト済み・対戦で確かめた | 10 章 | tests/log_audit.py の `v104_problems`・同 `AuditTest`・`tools/existing_effect_games.py --batch v0.104` |
+| 未対応の数（全対象 174・neo 82・拡張パック以外 92） | 確かめた | kyuura data/engine_targets.json（73a1690）から今の登録を差し引いた数 | test_catalog_contract.py |
+| 12 枚の外部照合（pcg-search.com・カードの画像）・英語の欄との違い（フラワーダンス・プリンのかいふく） | 原典未確認 | していない（日本語を採用。kyuura への報告事項） | — |
 
 ## v0.103: ミュウの 2 枚と、無効にする効果の判定に渡す発生元
 

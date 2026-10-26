@@ -1955,6 +1955,27 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.104: 回復のワザを持つポケモンの 12 枚
+
+[healing-pokemon-v0.104.md](healing-pokemon-v0.104.md)。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534` のまま（今回の追加を理由に上げていない）。写しの組 `pool_v0_104`（12 枚）を加え、写しの作り直しの道具で作った
+  （手で直していない）。v0.103 までの 1,191 枚の値・移行の記録は変わっていない。
+- 12 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-26・外部照合なし。記録 1,104 → 1,116）。研究の基準に 12 枚を指す LD-・CC-・CR-・UQ-・エラッタはなく
+  （カードの id・pcg-search の id・同じカードの組 `SC-ES1-001`・`SC-ES2-007`・`SC-PR1-002`・名前・ワザの名前で、data/sidecar・rule_history・rule_differences・curation を探した。名前の一致は
+  同じ名前の別のカードか部分の一致）、`kyuura_records` は空。処理に使う文面はどれも印刷の文面（研究の対応表の `adopted_printed_text` に 23 を加えた。1,132 → 1,155。説明文のないヒメグマの
+  「ひっかく」は持たない）。
+- 同じカードの組: QSG-001・QSG-018・PR1-004 は日本語の名前・pokemon 欄が ES1-001・ES2-007・PR1-002 と同じ（id ごとに記録し、登録の値は同じ）。IP1-018 は `SC-ES1-001` だが、かいふくの
+  文面の最後に句点がある（ES1-001・QSG-001 にはない）。写しを直さず、文面ごとに登録した（処理の値は同じ）。
+- 日本語の文面の転記元: 8 枚が pcg-search.com、キレイハナ・ミルタンク・ヒメグマが nazonobasho.com、イノムーがポケモンWiki。同じ所との一致を独立した照合に数えず、新しく画像を見たことに
+  していない。データの欠け（フシギダネ・ジュゴンの `pokemon.dex`・`jp_print.level`、プリンの `jp_print.level`）は補っていない。ジュゴンの進化元は kyuura の `field_sources` で pcg-search.com の
+  進化の並び。
+- 英語の欄との違い（日本語を採用し、英語で置きかえない。この違いだけで保留にしない）: フラワーダンスの「cards with Bellossom in their names」（名前に含む）・プリンのかいふくの「Remove 1 damage
+  counter from Jigglypuff.」（選ばない）。どちらも英語版の別の印刷の文面で、転記の誤りとは決めていない。
+- 一般規定（GR-2000-P320-RECOVERY・GR-2000-P309-ATTACK-PROCEDURE・GR-2000-P321-PREVENTED-ELEMENTS）は既存の記録の再利用で、12 枚それぞれの独立した原典照合ではない。新しい停止コードはない
+  （停止コード 234・未解決の裁定 235 のまま）。
+- 報告事項（kyuura の作業）: engine_targets.json の 12 枚の `engine_status` を v0.104 の登録で写すと `registered` になる。英語の欄との違い・IP1-018 の句点を照合の対象にするかは kyuura の判断。
+
 ## v0.103: ミュウの 2 枚
 
 [neutral-shield-attack-origin-v0.103.md](neutral-shield-attack-origin-v0.103.md)。
