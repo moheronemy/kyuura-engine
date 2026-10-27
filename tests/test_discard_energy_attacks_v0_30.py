@@ -186,7 +186,7 @@ class RegistrationTest(unittest.TestCase):
                 self.assertEqual(pool.get(card_id).powers, ())
         # v0.31 でキュウコン（第1弾）のだいもんじ（同じ印刷の文面。RUL-ENERGY-DISCARD-ATTACKS の範囲）を加えた
         self.assertEqual(sum(isinstance(e.effect, E.DiscardEnergyThenDamage) for e in
-                             (E.DEFAULT_EFFECTS.attack_entry(k.card_id, k.attack_index) for k in E.DEFAULT_EFFECTS.attack_keys())), 11)  # v0.84 で neo4-018 のだいもんじを加えた  # v0.82 で PF1-005 のひのこを加えた  # v0.79 で NIP1-013 のひのこ・neo4-014 のかえんほうしゃを加えた  # v0.69 で PR1-089（ブーバー。PMCG1-020 の登録の写し）を加えた
+                             (E.DEFAULT_EFFECTS.attack_entry(k.card_id, k.attack_index) for k in E.DEFAULT_EFFECTS.attack_keys())), 12)  # v0.108 で neo2-041 のかえんほうしゃを加えた  # v0.84 で neo4-018 のだいもんじを加えた  # v0.82 で PF1-005 のひのこを加えた  # v0.79 で NIP1-013 のひのこ・neo4-014 のかえんほうしゃを加えた  # v0.69 で PR1-089（ブーバー。PMCG1-020 の登録の写し）を加えた
 
     def test_printed_texts_are_kept_for_matching(self):
         """印刷の文面（写し）は照合にだけ使い、処理は最新の説明（RUL-）にしたがう。第1弾の 4 つは同じ印刷の文面。"""

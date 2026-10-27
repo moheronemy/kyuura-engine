@@ -113,6 +113,8 @@
   v0.92・v0.93: 期間を明示した持続する効果（v0.92 の ``"period_retreat_lock"``・``"period_attack_lock"``・``"received_attack_damage_bonus"``、v0.93 の ``"period_leave_lock"``
   （「バトル場をはなれられない」。あるときだけ ``"knockout_exception"``・``"source_left"``）・``"period_attack_coin_check"``（かぶりつく））は、形式 8 の ``persistent_effects`` の
   種類の値と種類ごとの項目を加えただけ（形式は 24 のまま。docs/active-leave-locks-v0.93.md 11 章。前の版の書き出しを読む側は、知らない種類として拒否すること）。
+  v0.108: 期間を明示した持続する効果の種類 ``"dealt_attack_damage_reduction"``（マイナスイオン・あまえる。使うワザのダメージを減らす数 ``"amount"`` を加える）も、同じく種類の値と
+  項目を加えただけ（形式は 26 のまま。v0.107 までの書き出しを読む側は、知らない種類として拒否すること。docs/damage-modifiers-condition-bonuses-v0.108.md 7 章）。
 - 25: 24 の場のポケモンの ``history`` の受けた記録（``"kind": "received"``）に、``active_damage``（受けたダメージ ``damage`` のうち、受けた時に持ち主のバトル場にいた分。場所の
   分からない記録の写しは ``None``）を加えたもの（v0.99。docs/unown-perform-help-history-v0.99.md 6 章）。形式 20〜24 の受けた記録は合計だけなので、場所の分かる 0 より大きい
   ダメージの記録があると ``ValueError``（合計が 0 の記録・場所の分からない記録だけなら形式 20〜24 の書き出しは v0.98 と同じ。形式 24 の受けた記録を読む側は、合計が 0 より大きい
@@ -201,8 +203,8 @@ from .state import (
     StatusImmunityNextTurn,
     PowersStopped,
     BenchProtection,
+    PERIOD_AMOUNT_TYPES,
     PERIOD_EFFECT_TYPES,
-    ReceivedAttackDamageBonus,
     NEXT_TURN_MULTIPLY,
     CannotUseAttack,
     CannotUseOwnAttack,
@@ -309,7 +311,7 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
         data["threshold"] = effect.threshold  # v0.84: 「パルスガード」
     elif isinstance(effect, PERIOD_EFFECT_TYPES):
         # v0.92: 期間を明示した効果（``"period_retreat_lock"``・``"period_attack_lock"``・``"received_attack_damage_bonus"``。v0.93 で ``"period_leave_lock"``・
-        # ``"period_attack_coin_check"`` を加えた）。期間の終わり（null は期限なし）・発生源の場の番号と、
+        # ``"period_attack_coin_check"``、v0.108 で ``"dealt_attack_damage_reduction"`` を加えた）。期間の終わり（null は期限なし）・発生源の場の番号と、
         # あるときだけ発生源がバトル場にいる間だけの印・明記された消える契機、いやなおとは増やす数。種類の値を加えただけで形式は変えない（v0.84・v0.86 と同じ。v0.91 までの書き出しを
         # 読む側は、知らない種類として拒否すること）
         data["end_turn"] = effect.end_turn
@@ -318,8 +320,8 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
             data["while_source_active"] = True
         if effect.ends_on:
             data["ends_on"] = list(effect.ends_on)
-        if isinstance(effect, ReceivedAttackDamageBonus):
-            data["amount"] = effect.amount
+        if isinstance(effect, PERIOD_AMOUNT_TYPES):
+            data["amount"] = effect.amount  # いやなおと・かみくだくの増やす数、v0.108 のマイナスイオン・あまえるの減らす数
         if getattr(effect, "knockout_exception", False):
             data["knockout_exception"] = True  # v0.93: 「バトル場をはなれられない」効果の「(「きぜつ」した場合をのぞく)」（あるときだけ）
         if getattr(effect, "source_left", False):

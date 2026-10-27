@@ -28603,6 +28603,81 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.107 で加えた（docs/coin-failure-status-flight-v0.107.md）。SI（映画公開記念パック「サザンアイランド」。southern_islands。発売 1999-07-17）。トランセルから 2 進化（進化元の ES1-003・QSG-003・PMCG1-003・neo2-006 は登録済み）。そらをとぶ=FailOnTailsDamageThenSelfBarrier（このカードの原文「コインを投げて「うら」なら、このワザは失敗する。「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。」）。レインボーパウダー=DamageThenStatusByCoin(マヒ, どく)（「コインを投げる「おもて」なら、相手を「マヒ」状態に、「うら」ならどく状態にする。」を (マヒ, どく) の組だけの書き方 RAINBOW_POWDER_TEXTS として加えた。20 ダメージのあとに 1 枚。「おもて」マヒ・「うら」どく）。kyuura の日本語の文面は pcg-search.com の転記（jp_print.level は kyuura のfield_sources で nazonobasho）。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stmv003・名前・ワザの名前で確かめた。名前の一致する別のバタフリー（PMCG2-007・neo2-009）の記録は別のカード。data/same_card_groups.json の evolves_from_english_agrees の一覧に SI-003 があるが、進化元の英語の欄の一致の記録で、処理の記録ではない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo2-041": {
+      "basis": "kyuura_data",
+      "name_ja": "ヘルガー",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-27",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.108 で加えた（docs/damage-modifiers-condition-bonuses-v0.108.md）。neo2（遺跡をこえて...。expansion_pack。発売 2000-07-07。ルールの基準の日より後に出たカードだが、2000.02.14 版のルールで処理する）。デルビルから 1 進化（進化元の neo2-039・neo4-081・NIP2X-005・neo2-012 は写しにある）。かみくだく=DamageThenReceivedAttackDamageBonus(20, 1, 2)（相手に 30 → 次の相手の番と次の自分の番に受けるワザのダメージを 8 段階で +20。説明は v0.92 のイワーク（neo1-050）のいやなおとと同じ全文 SCREECH_TEXTS[(20, 1, 2)]。ダメージのある全文として別の型にした）。かえんほうしゃ=DiscardEnergyThenDamage(炎)（既存の型。トラッシュできないときの扱いは「none」（ダメージはなくなる）。印刷の文面は、RUL-ENERGY-DISCARD-ATTACKS（cards は PMCG1-019 だけ。このカードを指さない）が引く最新の説明と同じ文面で、その記録の新しい確かめではない。既存の書き方 DISCARD_ENERGY_THEN_DAMAGE_TEXTS[\"none\"] にあり、「zero」（ダメージは 0 になる）では受け付けない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。英語の欄（かみくだくの「(after applying Weakness and Resistance)」・期間の書き方）は日本語と違う（日本語を採用）。kyuura data/engine_targets.json（73a1690）の対象。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前（日本語・英語の欄）で確かめた。名前の一致する別のヘルガー（neo3-044）の記録はない。rule_history の RUL-ENERGY-DISCARD-ATTACKS は「かえんほうしゃ」などの炎エネルギーのトラッシュの記録だが、cards は PMCG1-019 だけ（このカードの kyuura_records に入れない。v0.82 のマグマラシ PF1-005 と同じ扱い））。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo3-024": {
+      "basis": "kyuura_data",
+      "name_ja": "チョンチー",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-27",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.108 で加えた（docs/damage-modifiers-condition-bonuses-v0.108.md）。neo3（めざめる伝説。expansion_pack。発売 2000-11-23。ルールの基準の日より後に出たカードだが、2000.02.14 版のルールで処理する）。プラスイオン=CoinBonusDamage(10)（既存の型。コイン 1 枚の「おもて」で目安 10 + 10）。マイナスイオン=DamageThenDealtDamageReduction(10)（相手に 10 → 次の相手の番、受けた相手が使うワザによるダメージ（受けるのがだれでも）を 2 段階で -10。持続する効果 DealtAttackDamageReduction。なきつく・なきごえ（「このカード」へのダメージだけ）とは別の型）。マイナスイオンの必要なエネルギーは水（雷タイプのカードだが、データのまま）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。英語の欄のマイナスイオン（「If the Defending Pokémon attacks Chinchou ... any damage done to Chinchou」・「Benching or evolving either Pokémon ends this effect」）は日本語（受けるのがだれでも。発生源の消える契機を書かない）と範囲・消える契機が違う（日本語を採用。英語で置きかえない）。kyuura data/engine_targets.json（73a1690）の対象。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前（日本語・英語の欄）で確かめた。名前の一致する別のチョンチー（neo1-037）の記録もない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo4-088": {
+      "basis": "kyuura_data",
+      "name_ja": "トゲピー",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-27",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.108 で加えた（docs/damage-modifiers-condition-bonuses-v0.108.md）。neo4（闇、そして光へ...。expansion_pack。発売 2001-04-20。ルールの基準の日より後に出たカードだが、2000.02.14 版のルールで処理する）。たね（ベイビィではない）。あまえる=DealtDamageReductionWithoutDamage(10)（ダメージなし。次の相手の番、受けた相手が使うワザによるダメージを 2 段階で -10。括弧の「ダメージ以外の効果はそのまま」を含む全文）。とげたまタックル=DamageAndSelfDamage(10)（既存の型。相手に 20 → 自分に 10）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。kyuura data/engine_targets.json（73a1690）の対象。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前（日本語・英語の欄）で確かめた。名前の一致する別のトゲピー（SI-007・neo1-066・PR1-065・PRN-033）の記録もない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo4-091": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいプクリン",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-27",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.108 で加えた（docs/damage-modifiers-condition-bonuses-v0.108.md）。neo4（闇、そして光へ...。expansion_pack。発売 2001-04-20。ルールの基準の日より後に出たカードだが、2000.02.14 版のルールで処理する）。プリンから 1 進化（進化元のプリンは写しにある）。わるいうた=StatusByCoinWithoutDamage(ねむり, こんらん)（既存の型。2 つの文に分けた書き方を (ねむり, こんらん) の組だけの DARK_SONG_TEXTS として加えた。1 枚のコインの「おもて」でねむり・「うら」でこんらん）。たたきおこす=PlusIfDefenderStatusThenCure((ねむり, こんらん), 20)（宣言の時点の相手がねむりかこんらんなら目安 20 + 20。その後、相手をねむり・こんらんからだけ回復させる（どく・マヒは残す）。回復は相手への効果で、受ける判定を通す）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。kyuura data/engine_targets.json（73a1690）の対象。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前（日本語・英語の欄）で確かめた。名前の近いプクリン（PMCG2-045・ES1-027）を指す LD-・CC-・CR-・UQ- もない（rule_history の殿堂入りの誌面の引用は別の話題））。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES3-001": {
+      "basis": "kyuura_data",
+      "name_ja": "アーボック",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-27",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.108 で加えた（docs/damage-modifiers-condition-bonuses-v0.108.md）。ES3（expansion_sheet。拡張シート 第3弾(緑版)。発売 1998-11-24）。アーボから 1 進化（進化元は kyuura の field_sources で pcg-search.com の進化の並び）。まきつく=ParalyzeOnHeads（既存の型。相手に 20 → コイン 1 枚の「おもて」でマヒ）。もうどく=PlusIfDefenderPoisonedThenPoison(10)（ワザの名前は「もうどく」だが説明は通常のどく。このワザを受ける前から相手がどく（通常・特殊のどちらでも）なら目安 30 + 10。ダメージのあとに通常のどく。特殊などくにしない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）。英語の欄はない。data_gaps（pokemon.dex・jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stex3001・名前・ワザの名前で確かめた。わるいアーボック（PMCG4-008）・アーボック（PMCG3-004）・ベロリンガの「まきつくベロ」の記録は別のカード・別のワザ。kyuura の data/pcgsearch_page_checks.json の 1stex3001 はサイトのページの読み直しの記録（転記との違いなし）で、LD-・CC- ではない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
     }
   }
 }

@@ -1505,6 +1505,13 @@
     "PR1-063",
     "SI-003"
   ],
+  "pool_v0_108": [
+    "neo2-041",
+    "neo3-024",
+    "neo4-088",
+    "neo4-091",
+    "ES3-001"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -111801,6 +111808,512 @@
         {
           "page": "1stmv003",
           "list_number": "003/003"
+        }
+      ]
+    },
+    {
+      "id": "neo2-041",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ヘルガー",
+        "en": "Houndoom"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          229
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "デルビル",
+          "en": "Houndour"
+        },
+        "hp": 70,
+        "types": [
+          "darkness"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かみくだく",
+              "en": "Crunch"
+            },
+            "cost": [
+              "darkness",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "次の相手の番と、次の自分の番、このワザを受けた相手が、ワザによるダメージを受けるとき、そのダメージは「+20」される。",
+              "en": "Until the end of your next turn, if an attack damages the Defending Pokémon (after applying Weakness and Resistance), that attack does 20 more damage to the Defending Pokémon."
+            }
+          },
+          {
+            "name": {
+              "ja": "かえんほうしゃ",
+              "en": "Flamethrower"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "自分についている「炎」エネルギーカードを1枚トラッシュする。トラッシュできないとき、このワザのダメージはなくなる。",
+              "en": "Discard 1 Fire Energy card attached to Houndoom or this attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-041",
+        "pokemontcg": [
+          "neo2-4",
+          "neo2-23"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-041-hellgar/",
+      "jp_print": {
+        "level": 37,
+        "rarity": "★(R)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-041-hellgar/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-024",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "チョンチー",
+        "en": "Chinchou"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          170
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "プラスイオン",
+              "en": "Positive Ion"
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、10ダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 10 damage plus 10 more damage. If tails, this attack does 10 damage."
+            }
+          },
+          {
+            "name": {
+              "ja": "マイナスイオン",
+              "en": "Negative Ion"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "次の相手の番、このワザを受けた相手が使うワザによるダメージは「-10」される。",
+              "en": "If the Defending Pokémon attacks Chinchou during your opponent's next turn, any damage done to Chinchou is reduced by 10 (before applying Weakness and Resistance). (Benching or evolving either Pokémon ends this effect.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-024",
+        "pokemontcg": [
+          "neo3-42"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%81%E3%83%A7%E3%83%B3%E3%83%81%E3%83%BC_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 13,
+        "rarity": "●(C)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%81%E3%83%A7%E3%83%B3%E3%83%81%E3%83%BC_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-088",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "トゲピー",
+        "en": "Togepi"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          175
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "あまえる",
+              "en": "Charm"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "次の相手の番、このワザを受けた相手が使うワザによるダメージは、「-10」される(ダメージ以外の効果はそのまま)。",
+              "en": "If the Defending Pokémon attacks during your opponent's next turn, any damage it does is reduced by 10 (before applying Weakness and Resistance)."
+            }
+          },
+          {
+            "name": {
+              "ja": "とげたまタックル",
+              "en": "Spike Ball Tackle"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "自分にも10ダメージ。",
+              "en": "Togepi does 10 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-088",
+        "pokemontcg": [
+          "neo4-56"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%88%E3%82%B2%E3%83%94%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 13,
+        "rarity": "●(C)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%88%E3%82%B2%E3%83%94%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-091",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいプクリン",
+        "en": "Dark Wigglytuff"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          40
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "プリン",
+          "en": "Jigglypuff"
+        },
+        "hp": 60,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "わるいうた",
+              "en": "Dark Song"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「ねむり」状態にする。「うら」なら、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Asleep. If tails, the Defending Pokémon is now Confused."
+            }
+          },
+          {
+            "name": {
+              "ja": "たたきおこす",
+              "en": "Slap Awake"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "相手が「ねむり」または「こんらん」状態なら、20ダメージを追加する。その後、相手を「ねむり」または「こんらん」状態から回復させる。",
+              "en": "If the Defending Pokémon is Asleep or Confused, this attack does 20 damage plus 20 more damage. Then, the Defending Pokémon is no longer Asleep or Confused."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-091",
+        "pokemontcg": [
+          "neo4-40"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%83%97%E3%82%AF%E3%83%AA%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 24,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%83%97%E3%82%AF%E3%83%AA%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "ES3-001",
+      "jp_set": "ES3",
+      "category": "pokemon",
+      "name": {
+        "ja": "アーボック",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "アーボ",
+          "en": null
+        },
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "まきつく",
+              "en": null
+            },
+            "cost": [
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "もうどく",
+              "en": null
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": "+",
+              "display": "30+"
+            },
+            "text": {
+              "ja": "相手を「どく」状態にする。このワザを受ける前から相手が「どく」状態なら、10ダメージを追加する。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex3001"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex3001.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第3弾(緑版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex3001.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stex3001",
+          "list_number": "001/036"
         }
       ]
     }

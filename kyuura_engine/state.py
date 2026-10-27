@@ -1291,6 +1291,47 @@ class ReceivedAttackDamageBonus:
 
 
 @dataclass(frozen=True)
+class DealtAttackDamageReduction:
+    """ワザによる「持続する効果」（v0.108。docs/damage-modifiers-condition-bonuses-v0.108.md 4 章）のうち、受けたポケモンが使うワザによるダメージを減らす効果。チョンチー（neo3-024）の
+    「マイナスイオン」（「次の相手の番、このワザを受けた相手が使うワザによるダメージは「-10」される。」）と、トゲピー（neo4-088）の「あまえる」（「次の相手の番、このワザを受けた相手が
+    使うワザによるダメージは、「-10」される(ダメージ以外の効果はそのまま)。」）（kyuura の印刷の文面）。
+
+    - 相手に与える効果（``on_opponent``）。期間の項目は ``PeriodRetreatLock`` と同じで、次の相手の番（与えた番 + 1）だけ（``active_turn`` = ``end_turn`` = 与えた番 + 1）
+    - はたらき方: 受けたポケモンが使うワザによるダメージ（相手の対戦ポケモン・控え・自分へのダメージ、返す効果のダメージ。GR-2000-P321-ATTACK-DAMAGE）の、p.321 の 2 段階（ワザを使う
+      ポケモンの持っている「ダメージを変更する効果」）の ``amount`` の減算（``effects.attack_damage_modifiers``）。受ける側の 8 段階の軽減・弱点のあとの減算ではない。だれが受けるかを
+      限らないので、v0.34 の ``ReducedDamageToSource``（なきつく。「このカード」に与えるダメージだけ）・v0.76 の ``ReducedDamageToSourceNextTurn``（なきごえ）とは別の型（部分型にしない。
+      ``persistent.reduced_damage_to_source`` に拾われない）。特殊能力・どく・トレーナーのダメージ・こんらんの 20 は「使うワザによるダメージ」ではないので当てはめない（こんらんの 20 は
+      既存の問い ``UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS``）
+    - 発生源がはなれても消えない（説明に書かれていない）。``ends_on`` は空、``while_source_active`` は偽。受けたポケモンがバトル場をはなれる・進化・退化・きぜつで消えるのは一般の規定
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    end_turn: int | None
+    source_pokemon: int
+    amount: int
+    while_source_active: bool = False
+    ends_on: tuple[str, ...] = ()
+    kind: ClassVar[str] = "dealt_attack_damage_reduction"
+    on_opponent: ClassVar[bool] = True
+
+    def __post_init__(self) -> None:
+        _check_period(self)
+        if type(self.amount) is not int or self.amount <= 0 or self.amount % 10 or self.end_turn is None:
+            raise ValueError(f"使うワザのダメージを減らす効果の数は 10 の倍数の正の数で、期限がある（{self!r}）")
+
+    @property
+    def turns_until_active(self) -> int:
+        return self.active_turn - self.created_turn
+
+    @property
+    def lasting(self) -> bool:
+        return False
+
+
+@dataclass(frozen=True)
 class PeriodLeaveLock:
     """ワザによる「持続する効果」（v0.93。docs/active-leave-locks-v0.93.md 4 章）のうち、期間を明示した「バトル場をはなれられない」効果。キャタピー（ES1-002・QSG-002）の
     「からまるいと」・モンジャラ（ES2-004）の「からみつく」・クサイハナ（neo1-008）の「ねばるみつ」・アリゲイツ（neo1-030）の「くいつく」・わるいアリアドス（neo4-011）の
@@ -1370,8 +1411,10 @@ class PeriodAttackCoinCheck:
 
 
 # v0.92: 期間と消える契機を明示した持続する効果の型（``persistent`` の期間・消える契機の問い合わせ、書き出し、不変条件が共通に読む）。v0.93: バトル場をはなれられない効果・
-# 期間を明示したワザを使うときのコイン
-PERIOD_EFFECT_TYPES = (PeriodRetreatLock, PeriodAttackLock, ReceivedAttackDamageBonus, PeriodLeaveLock, PeriodAttackCoinCheck)
+# 期間を明示したワザを使うときのコイン。v0.108: 使うワザのダメージを減らす効果（マイナスイオン・あまえる）
+PERIOD_EFFECT_TYPES = (PeriodRetreatLock, PeriodAttackLock, ReceivedAttackDamageBonus, PeriodLeaveLock, PeriodAttackCoinCheck, DealtAttackDamageReduction)
+# v0.108: 期間を明示した効果のうち、数（``amount``）を持つ型（書き出し・不変条件・与えたログが数を照らす）
+PERIOD_AMOUNT_TYPES = (ReceivedAttackDamageBonus, DealtAttackDamageReduction)
 
 # ワザによる持続する効果の型（v0.4b。v0.12 で Retaliation、v0.27 で NextTurnAttackDamage、v0.31 で DestinyBond・AttackBarrier・DamageReduction・
 # CannotAttack、v0.34 で ReducedDamageToSource、v0.35 で CannotUseOwnAttack・CannotUseAttack、v0.36 で AttackCoinCheck・CannotRetreat、v0.40 で
@@ -1387,7 +1430,7 @@ PERSISTENT_EFFECT_TYPES = (PreventDamage, PreventAttackDamage, Retaliation, Next
                            StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard,
                            StatusImmunityNextTurn,  # v0.85: しんぴのこな
                            PowersStopped, BenchProtection,  # v0.86: スタンウェーブ・ほのおのまもり
-                           *PERIOD_EFFECT_TYPES)  # v0.92: クモのす・くろいまなざし・にらみつける（ヨーギラス）・いやなおと。v0.93: はなれられない効果・かぶりつく
+                           *PERIOD_EFFECT_TYPES)  # v0.92: クモのす・くろいまなざし・にらみつける（ヨーギラス）・いやなおと。v0.93: はなれられない効果・かぶりつく。v0.108: マイナスイオン・あまえる
 
 
 @dataclass(frozen=True)

@@ -837,7 +837,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                     "でんきショック", "でんきショック",
                                     # v0.107: そらをとぶピカチュウ（PR1-018・PR1-063）の「でんきショック」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
                                     # docs/coin-failure-status-flight-v0.107.md）
-                                    "でんきショック", "でんきショック"]))
+                                    "でんきショック", "でんきショック",
+                                    # v0.108: アーボック（ES3-001）の「まきつく」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                    # docs/damage-modifiers-condition-bonuses-v0.108.md）
+                                    "まきつく"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

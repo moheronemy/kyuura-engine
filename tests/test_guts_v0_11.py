@@ -702,7 +702,11 @@ class G37Test(unittest.TestCase):
         "ThreeCoinDamageOrOpponentHeal",
         # v0.107: とげでつつく（失敗のコインのあとのどく）・へんずつう（コインの「おもて」で相手のこんらん）。とつぜんじばく・そらをとぶは相手の対戦ポケモンへの効果を持たない（自分への
         # ダメージ・控えへのダメージ・自分への防護）。docs/coin-failure-status-flight-v0.107.md
-        "FailOnTailsDamageThenPoison", "DamageThenConfuseOpponentOrSelf"]))
+        "FailOnTailsDamageThenPoison", "DamageThenConfuseOpponentOrSelf",
+        # v0.108: マイナスイオン・あまえる（使うワザのダメージを減らす効果）・かみくだく（受けるワザのダメージを増やす効果）・もうどく（どく）・たたきおこす（相手の特殊状態の回復）。
+        # docs/damage-modifiers-condition-bonuses-v0.108.md
+        "DamageThenDealtDamageReduction", "DealtDamageReductionWithoutDamage", "DamageThenReceivedAttackDamageBonus", "PlusIfDefenderPoisonedThenPoison",
+        "PlusIfDefenderStatusThenCure"]))
 
 
 class DecisionTest(unittest.TestCase):

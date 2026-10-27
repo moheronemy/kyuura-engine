@@ -156,6 +156,7 @@ from .persistent import (
     remove_source_left_effects,
     require_can_leave,
     received_attack_damage_bonuses,
+    dealt_attack_damage_reductions,
     resistance_change,
     retaliation,
     weakness_change,
@@ -764,12 +765,15 @@ TRAINER_RETURN_ELEMENT = "trainer_return"
 # v0.100（docs/sketch-perish-song-history-v0.100.md 5 章）: 相手の対戦ポケモンを、ダメージによらず「きぜつ」させる効果（ムウマの「ほろびのうた」。相手のポケモンへの効果なので「ワザをうけない」
 # 状態・「とうめい」・効果だけを無効にする効果を評価する。ダメージの要素ではない）
 KNOCK_OUT_ELEMENT = "knock_out"
+# v0.108（docs/damage-modifiers-condition-bonuses-v0.108.md 4 章）: 相手に与える「使うワザによるダメージを減らす」効果（チョンチーの「マイナスイオン」・トゲピーの「あまえる」。
+# ``DealtAttackDamageReduction``）。v0.34 のなきつく（``REDUCED_DAMAGE_ELEMENT``。「このカード」へのダメージだけ）とは別の要素
+DEALT_DAMAGE_ELEMENT = "dealt_damage"
 ATTACK_ELEMENTS = (DAMAGE_ELEMENT, FORCED_SWITCH_ELEMENT, POISON, SLEEP, PARALYSIS, CONFUSION, ENERGY_DISCARD_ELEMENT, ATTACK_LOCK_ELEMENT,
                    ENERGY_ATTACH_ELEMENT, REDUCED_DAMAGE_ELEMENT, ATTACK_CHECK_ELEMENT, RETREAT_LOCK_ELEMENT, RETURN_IN_PLAY_TO_DECK_ELEMENT,
                    HEAL_ELEMENT, COUNTERS_ELEMENT, EVOLVE_ELEMENT, RETURN_IN_PLAY_TO_HAND_ELEMENT, ENERGY_MOVE_ELEMENT, WEAKNESS_CHANGE_ELEMENT,
                    RESISTANCE_CHANGE_ELEMENT, MAX_HP_ELEMENT, DEVOLVE_ELEMENT, POWER_LOCK_ELEMENT, ATTACH_LOCK_ELEMENT, WAKE_ELEMENT, TRAINER_DISCARD_ELEMENT,
                    STATUS_GUARD_ELEMENT, BENCH_PROTECTION_ELEMENT, MARKER_ELEMENT, CURE_ELEMENT, DAMAGE_TAKEN_ELEMENT, LEAVE_LOCK_ELEMENT,
-                   TRAINER_RETURN_ELEMENT, KNOCK_OUT_ELEMENT)
+                   TRAINER_RETURN_ELEMENT, KNOCK_OUT_ELEMENT, DEALT_DAMAGE_ELEMENT)
 
 
 def evasion_power(state: GameState, pokemon: PokemonInPlay) -> tuple[PowerKey, AttackImmunityOnHeads] | None:
@@ -5670,8 +5674,18 @@ class StatusByCoinWithoutDamage(AttackEffect):
 
     def check(self, attack: Attack) -> list[str]:
         expected = f"コインを投げて「おもて」なら、相手を「{_CONDITION_JA[self.heads]}」状態に、「うら」なら「{_CONDITION_JA[self.tails]}」状態にする。"
+        # v0.108: わるいプクリン（neo4-091）の「わるいうた」の 2 つの文に分けた書き方（(ねむり, こんらん) の組だけ。``DARK_SONG_TEXTS``）
+        extra = DARK_SONG_TEXTS.get((self.heads, self.tails), ())
         return _check_form(attack, "ダメージを与えずコインで相手の特殊状態が決まるワザ", damage="none") + _check_exact_text(
-            attack, "ダメージを与えずコインで相手の特殊状態が決まるワザ", (expected,))
+            attack, "ダメージを与えずコインで相手の特殊状態が決まるワザ", (expected, *extra))
+
+
+# v0.108（docs/damage-modifiers-condition-bonuses-v0.108.md 3 章）: わるいプクリン（neo4-091）の「わるいうた」（``StatusByCoinWithoutDamage`` の (ねむり, こんらん) の組だけの書き方）。
+# 「おもて」と「うら」を 2 つの文に分けるが、1 枚のコインの「おもて」でねむり・「うら」でこんらんにする同じ意味（v0.84 の ``DamageThenStatusByCoin`` の分けた書き方と同じ形。ダメージの
+# ない型には、この組の全文 1 通りだけを加え、ほかの組・逆の組 (こんらん, ねむり) には当てはめない）
+DARK_SONG_TEXTS: Mapping[tuple[str, str], tuple[str, ...]] = MappingProxyType({
+    (SLEEP, CONFUSION): ("コインを投げて「おもて」なら、相手を「ねむり」状態にする。「うら」なら、相手を「こんらん」状態にする。",),
+})
 
 
 @dataclass(frozen=True)
@@ -6132,6 +6146,14 @@ def attack_damage_modifiers(
             # ``kernel.deal_damage`` が計算の前に止める）。こんらんの 20（``attack`` を渡さない呼び出し）はワザのダメージではないので当てはめない
             for record, amount in trainer_attack_damage_bonuses(state, attacker):
                 modifiers.append(DamageModifier(step=6, amount=amount, label=state.card_def(record.source_card).name_ja, source=record.source_card))
+    if attack is not None:
+        # v0.108: ワザを使うポケモンの持っている、使うワザによるダメージを減らす効果（チョンチーの「マイナスイオン」・トゲピーの「あまえる」。``DealtAttackDamageReduction``）。p.321 の
+        # 2 段階（ワザを使うポケモンの持っている「ダメージを変更する効果」）。だれが受けるかを限らないので、相手の対戦ポケモン・控え（``bench``）・自分へのダメージ・返す効果のダメージ（この
+        # 関数に ``attack`` を渡すワザの分類のダメージ）のどれにも当てはめる。v0.34 の「なきつく」（受けるのが「このカード」のときだけ。上の ``cry``）の条件を持ちこまない。受けるポケモンの
+        # 持っている効果を除く（スピードスター。下の ``defender_held``）ときも、ワザを使うポケモンの効果なので残す。こんらんの 20（``attack`` を渡さない呼び出し）には使わない
+        # （``procedures.confusion_damage_problem`` が止める）
+        for reduction in dealt_attack_damage_reductions(state, attacker):
+            modifiers.append(DamageModifier(step=2, amount=-reduction.amount, label=_persistent_effect_name(state, reduction), source=reduction.source_card))
     if attack is not None and defender_held:
         # v0.60: 「スピードスター」。受けるポケモンの持っている持続する効果（8 段階）は集めない。常にはたらく特殊能力は持ち主で分ける
         defender_owner = state.find_pokemon(defender.pokemon_id)[0]
@@ -40186,7 +40208,7 @@ DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_106_ATT
 # ---------------------------------------------------------------- v0.107（docs/coin-failure-status-flight-v0.107.md）
 # コインによる成否・特殊状態・防護のポケモンの 9 枚（ワザ 16）。処理に使う文面は kyuura の印刷の文面。6 つのワザは既存の型（``DAMAGE_ONLY``・``CoinFlipDamage``・``ParalyzeOnHeads``・
 # ``SelfDamageOnTails``）、ヘッドプレス・からではさむ（``DamageAndParalyzeOnHeadsElseFail``）・レインボーパウダー（``DamageThenStatusByCoin`` の (マヒ, どく)）は書き方を明示して加え、
-# 残る 6 つのワザは新しい 4 つの型で、既存の要素（``programs.FailOnTails``・``Damage``・``Status``・``SelfPersistent``・``Coin``・``BenchDamage``）の組み合わせ
+# 残る 7 つのワザ（4 つのそらをとぶを含む）は新しい 4 つの型で、既存の要素（``programs.FailOnTails``・``Damage``・``Status``・``SelfPersistent``・``Coin``・``BenchDamage``）の組み合わせ
 
 POISON_ELSE_FAIL_TEXT = "相手を「どく」状態にする。コインを投げて「うら」なら、このワザは失敗する。"
 SUDDEN_EXPLOSION_TEXT = ("自分にも{self_damage}ダメージ。おたがいの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ{bench}ダメージ。"
@@ -40329,3 +40351,199 @@ V0_107_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_107_ATTACKS)
+
+
+# ---------------------------------------------------------------- v0.108（docs/damage-modifiers-condition-bonuses-v0.108.md）
+# 持続するダメージの変更・相手の特殊状態を参照するポケモンの 5 枚（ワザ 10）。処理に使う文面は kyuura の印刷の文面。4 つのワザは既存の型（``CoinBonusDamage``・``DamageAndSelfDamage``・
+# ``ParalyzeOnHeads``・``DiscardEnergyThenDamage``）、わるいうたは ``StatusByCoinWithoutDamage`` の (ねむり, こんらん) の組に書き方（``DARK_SONG_TEXTS``）を加え、残る 5 つのワザは新しい
+# 5 つの型で、既存の要素（``programs.Damage``・``Status``・``OpponentDamageTakenBonus``）と新しい要素（``OpponentDealtDamageReduction``・``OpponentStatusCheck``・値 ``PlusIfResult``・
+# ``CureOpponentConditions``）の組み合わせ
+
+# 使うワザによるダメージを減らす効果の書き方（(ダメージの要素があるか, 減らす数) ごと）。マイナスイオンはダメージのあと、あまえるはダメージなし（括弧の「ダメージ以外の効果はそのまま」を
+# 含む全文）。v0.34 のなきつく・v0.76 のなきごえ（「このカード」に与えるダメージ）の書き方を広げない
+DEALT_DAMAGE_REDUCTION_TEXTS: Mapping[tuple[bool, int], tuple[str, ...]] = MappingProxyType({
+    (True, 10): ("次の相手の番、このワザを受けた相手が使うワザによるダメージは「-10」される。",),  # チョンチー（neo3-024）の「マイナスイオン」
+    (False, 10): ("次の相手の番、このワザを受けた相手が使うワザによるダメージは、「-10」される(ダメージ以外の効果はそのまま)。",),  # トゲピー（neo4-088）の「あまえる」
+})
+# もうどく: 相手を通常のどくにし、このワザを受ける前からどくなら追加する（追加の数ごと。ワザの名前は「もうどく」だが、説明は通常のどく。特殊などくにしない）
+POISONED_BONUS_TEXTS: Mapping[int, tuple[str, ...]] = MappingProxyType({
+    10: ("相手を「どく」状態にする。このワザを受ける前から相手が「どく」状態なら、10ダメージを追加する。",),  # アーボック（ES3-001）
+})
+# たたきおこす: 相手がその特殊状態のどれかなら追加し、その後、それらの特殊状態から回復させる（(特殊状態の組, 追加の数) ごと）
+STATUS_BONUS_CURE_TEXTS: Mapping[tuple[tuple[str, ...], int], tuple[str, ...]] = MappingProxyType({
+    ((SLEEP, CONFUSION), 20): ("相手が「ねむり」または「こんらん」状態なら、20ダメージを追加する。その後、相手を「ねむり」または「こんらん」状態から回復させる。",),  # わるいプクリン（neo4-091）
+})
+
+
+def _dealt_reduction_terms(amount: int) -> tuple:
+    from .state import DealtAttackDamageReduction
+
+    return (DealtAttackDamageReduction, 1, 1, False, (), amount)
+
+
+@dataclass(frozen=True)
+class DamageThenDealtDamageReduction(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。次の相手の番、このワザを受けた相手が使うワザによるダメージは「-``amount``」される（v0.108。チョンチー（neo3-024）の
+    「マイナスイオン」）。
+
+    - 要素は ``Damage(OPP)`` → ``OpponentDealtDamageReduction``。効果はダメージのあと、相手に与える効果なので「とうめい」・「ワザをうけない」状態・［ニュートラルシールド］などを
+      評価する（効果だけを受けない相手には与えない）。相手がこのワザのダメージで HP 以上なら与えない（p.309）
+    - 持続する効果は ``state.DealtAttackDamageReduction``（与えた番 + 1 の次の相手の番だけ。受けたポケモンが使うワザによるダメージ（受けるのがだれでも）の p.321 の 2 段階の減算）。
+      v0.34 の ``ReducedDamageToSource``（なきつく。「このカード」へのダメージだけ）とは別の型
+    - 発生源（チョンチー）がはなれても消えない（説明に書かれていない）。受けたポケモンがバトル場をはなれる・進化・退化・きぜつで消える"""
+
+    amount: int
+    implementation_id = "damage_then_dealt_damage_reduction"
+    opponent_effect_elements = (DEALT_DAMAGE_ELEMENT,)
+
+    def __post_init__(self) -> None:
+        if (True, self.amount) not in DEALT_DAMAGE_REDUCTION_TEXTS:
+            raise ValueError(f"ダメージのあとに使うワザのダメージを減らす数 {self.amount!r} を受け付ける文面がない")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "ダメージのあと、次の相手の番に相手が使うワザのダメージを減らすワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, DEALT_DAMAGE_REDUCTION_TEXTS[(True, self.amount)])
+
+    def period_terms(self) -> tuple:
+        """不変条件（``engine._period_effect_problems``）が照らす、与える持続する効果の型と (始まり, 終わり, 発生源がバトル場にいる間だけ, 消える契機, 数)。"""
+        return _dealt_reduction_terms(self.amount)
+
+
+@dataclass(frozen=True)
+class DealtDamageReductionWithoutDamage(AttackEffect):
+    """ダメージの要素のないワザ。次の相手の番、このワザを受けた相手が使うワザによるダメージは、「-``amount``」される(ダメージ以外の効果はそのまま)（v0.108。トゲピー（neo4-088）の
+    「あまえる」）。
+
+    - 要素は ``OpponentDealtDamageReduction`` だけ（ダメージの要素・ログ ``damage`` はない）。持続する効果・はたらき方・消える契機は ``DamageThenDealtDamageReduction`` と同じ
+    - 括弧の「ダメージ以外の効果はそのまま」は、減らすのがダメージだけで、受けたポケモンのワザのダメージ以外の効果（特殊状態・トラッシュなど）を変えないこと（ダメージが 0 になっても、
+      ほかの要素は処理する。p.321 の「ダメージを受けなかった」はダメージ以外の要素を止めない）"""
+
+    amount: int
+    implementation_id = "dealt_damage_reduction_without_damage"
+    opponent_effect_elements = (DEALT_DAMAGE_ELEMENT,)
+
+    def __post_init__(self) -> None:
+        if (False, self.amount) not in DEALT_DAMAGE_REDUCTION_TEXTS:
+            raise ValueError(f"ダメージなしで使うワザのダメージを減らす数 {self.amount!r} を受け付ける文面がない")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "ダメージを与えず、次の相手の番に相手が使うワザのダメージを減らすワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, DEALT_DAMAGE_REDUCTION_TEXTS[(False, self.amount)])
+
+    def period_terms(self) -> tuple:
+        return _dealt_reduction_terms(self.amount)
+
+
+@dataclass(frozen=True)
+class DamageThenReceivedAttackDamageBonus(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。決まった期間、このワザを受けた相手が受けるワザによるダメージを ``amount`` 増やす（v0.108。ヘルガー（neo2-041）の
+    「かみくだく」。説明は v0.92 のイワーク（neo1-050）の「いやなおと」と同じ全文 ``SCREECH_TEXTS[(20, 1, 2)]``）。
+
+    - 要素は ``Damage(OPP)`` → v0.92 の ``OpponentDamageTakenBonus``（持続する効果 ``state.ReceivedAttackDamageBonus``。与えた番 + ``start``〜+ ``end``）。v0.92 の
+      ``ReceivedAttackDamageBonusAttack``（ダメージの目安なし）の形の確かめは変えず、ダメージのある全文として別の型にする
+    - +20 は受ける側の 8 段階の加算で、与えた番 + 1（次の相手の番）と + 2（次の自分の番）にはたらく。このワザの最初のダメージには加えない。2 段階までで 0 以下なら加えない
+    - 相手がこのワザのダメージで HP 以上なら与えない。効果だけを受けない相手（「ワザをうけない」状態・「とうめい」・効果を無効にする効果）にも与えない（相手に与える効果）"""
+
+    amount: int
+    start: int
+    end: int
+    implementation_id = "damage_then_received_attack_damage_bonus"
+    opponent_effect_elements = (DAMAGE_TAKEN_ELEMENT,)
+
+    def __post_init__(self) -> None:
+        if (self.amount, self.start, self.end) not in SCREECH_TEXTS:
+            raise ValueError(f"受けるワザのダメージを増やす期間の組 {(self.amount, self.start, self.end)!r} を受け付ける文面がない")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "ダメージのあと、決まった期間、受けるワザのダメージを増やすワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, SCREECH_TEXTS[(self.amount, self.start, self.end)])
+
+    def period_terms(self) -> tuple:
+        from .state import ReceivedAttackDamageBonus
+
+        return (ReceivedAttackDamageBonus, self.start, self.end, False, (), self.amount)
+
+
+@dataclass(frozen=True)
+class PlusIfDefenderPoisonedThenPoison(AttackEffect):
+    """相手を「どく」状態にする。このワザを受ける前から相手が「どく」状態なら、``bonus`` ダメージを追加する（v0.108。アーボック（ES3-001）の「もうどく」）。
+
+    - ワザの名前は「もうどく」だが、説明は通常のどく（ポケモンチェックのダメージの指定がない）。特殊などく（v0.34。``Status.poison_damage``）にしない
+    - 要素は ``OpponentStatusCheck``（相手の対戦ポケモンがどく状態か。通常・特殊のどちらでも。並びの最初で 1 回だけ）→ ``Damage(OPP, PlusIfResult)``（目安 + 確かめた結果が真なら
+      ``bonus``。p.321 の 1 段階）→ ``Status(POISON)``。新しくどくにしてから確かめない（いつも追加する読み方にしない）。コインはない
+    - 確かめた結果はダメージの前に決まり、キョウ（トレーナー）のどく・途中の反応・決定で相手の状態が変わっても計算し直さない。どくはダメージのあと、相手がこのワザのダメージで HP 以上
+      なら与えない（p.309）。ダメージを与えたかを条件にしない（無効・「とうめい」でダメージを受けなくても、どくの要素は受ける判定で決める）。特殊などくの相手は通常のどくになる（p.322。
+      ``conditions.poison``）"""
+
+    bonus: int
+    implementation_id = "plus_if_defender_poisoned_then_poison"
+    opponent_effect_elements = (POISON,)
+
+    def __post_init__(self) -> None:
+        if self.bonus not in POISONED_BONUS_TEXTS:
+            raise ValueError(f"どくの相手への追加の数 {self.bonus!r} を受け付ける文面がない")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手をどくにし、前からどくなら追加ダメージのワザ"
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(attack, what, POISONED_BONUS_TEXTS[self.bonus])
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        # 宣言のあと、ワザの内容を処理するまでに相手の対戦ポケモンの特殊状態は変わらないので、今の状態で決める（v0.40 の ``DamagePlusIfDefenderDamaged`` と同じ）
+        attack = attack_of(state, use.key)
+        defender = state.players[1 - use.player].active
+        poisoned = defender is not None and defender.conditions.poison is not None
+        return DamageProfile(opponent=(attack.damage + (self.bonus if poisoned else 0),))
+
+
+@dataclass(frozen=True)
+class PlusIfDefenderStatusThenCure(AttackEffect):
+    """相手が ``conditions`` のどれかの状態なら、``bonus`` ダメージを追加する。その後、相手をそれらの状態から回復させる（v0.108。わるいプクリン（neo4-091）の「たたきおこす」の
+    「ねむり」または「こんらん」）。
+
+    - 要素は ``OpponentStatusCheck``（並びの最初で 1 回だけ。どれかの状態なら真）→ ``Damage(OPP, PlusIfResult)``（p.321 の 1 段階）→ ``CureOpponentConditions``。条件を満たさなくても
+      ワザは失敗しない（目安のダメージ）。どく・マヒだけでは追加しない
+    - 回復はダメージのあとの相手への効果（任意ではない。「ダメージを与えたら」の条件はない）。説明が書く状態だけを回復させ、どく・マヒ・ダメージカウンター・マーカー・持続する効果は
+      残す（``conditions.cure_conditions``）。相手がこのワザのダメージで HP 以上なら回復させない。回復させる状態がなければ処理の対象がない（「とうめい」なども評価しない。v0.72 の
+      ``WakeOpponent`` と同じ）。ダメージだけが防がれても、回復の効果は受ける判定で決める（「ワザをうけない」状態・「とうめい」・効果を無効にする効果では回復させない）
+    - 回復で特殊能力がまたはたらき、決められない姿・［ずらかる］の力がもどる状態になるなら止める（``attack_state_stop_after``。宣言の前に先読みが見つける）"""
+
+    conditions: tuple[str, ...]
+    bonus: int
+    implementation_id = "plus_if_defender_status_then_cure"
+    opponent_effect_elements = (CURE_ELEMENT,)
+
+    def __post_init__(self) -> None:
+        if (self.conditions, self.bonus) not in STATUS_BONUS_CURE_TEXTS:
+            raise ValueError(f"特殊状態の組と追加の数 {(self.conditions, self.bonus)!r} を受け付ける文面がない")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の特殊状態で追加ダメージを与え、その特殊状態から回復させるワザ"
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(attack, what, STATUS_BONUS_CURE_TEXTS[(self.conditions, self.bonus)])
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        attack = attack_of(state, use.key)
+        defender = state.players[1 - use.player].active
+        matched = defender is not None and any(name in self.conditions for name in defender.conditions.names())
+        return DamageProfile(opponent=(attack.damage + (self.bonus if matched else 0),))
+
+
+# v0.108 のワザの登録（10。id ごとに書く）。同じデータの組はない
+V0_108_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # ヘルガー（neo2-041）
+    AttackKey("neo2-041", 0): _printed(DamageThenReceivedAttackDamageBonus(20, 1, 2), "かみくだく", SCREECH_TEXTS[(20, 1, 2)][0]),
+    AttackKey("neo2-041", 1): _printed(DiscardEnergyThenDamage(EnergyType.FIRE), "かえんほうしゃ", DISCARD_ENERGY_THEN_DAMAGE_TEXTS["none"][2].format(ja=EnergyType.FIRE.ja)),
+    # チョンチー（neo3-024）
+    AttackKey("neo3-024", 0): _printed(CoinBonusDamage(10), "プラスイオン", "コインを投げて「おもて」なら、10ダメージを追加する。"),
+    AttackKey("neo3-024", 1): _printed(DamageThenDealtDamageReduction(10), "マイナスイオン", DEALT_DAMAGE_REDUCTION_TEXTS[(True, 10)][0]),
+    # トゲピー（neo4-088）
+    AttackKey("neo4-088", 0): _printed(DealtDamageReductionWithoutDamage(10), "あまえる", DEALT_DAMAGE_REDUCTION_TEXTS[(False, 10)][0]),
+    AttackKey("neo4-088", 1): _printed(DamageAndSelfDamage(10), "とげたまタックル", "自分にも10ダメージ。"),
+    # わるいプクリン（neo4-091）
+    AttackKey("neo4-091", 0): _printed(StatusByCoinWithoutDamage(SLEEP, CONFUSION), "わるいうた", DARK_SONG_TEXTS[(SLEEP, CONFUSION)][0]),
+    AttackKey("neo4-091", 1): _printed(PlusIfDefenderStatusThenCure((SLEEP, CONFUSION), 20), "たたきおこす", STATUS_BONUS_CURE_TEXTS[((SLEEP, CONFUSION), 20)][0]),
+    # アーボック（ES3-001）
+    AttackKey("ES3-001", 0): _printed(ParalyzeOnHeads(), "まきつく", "コインを投げて「おもて」なら、相手を「マヒ」状態にする。"),
+    AttackKey("ES3-001", 1): _printed(PlusIfDefenderPoisonedThenPoison(10), "もうどく", POISONED_BONUS_TEXTS[10][0]),
+})
+
+DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_108_ATTACKS)

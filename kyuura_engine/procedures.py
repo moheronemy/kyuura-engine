@@ -34,7 +34,7 @@ from .effects import (
     confusion_damage_calculation, weakness_resistance_log,
 )
 from .errors import UnsupportedError
-from .persistent import (KNOCK_OUT, USED, received_attack_damage_bonuses, remove_expired_persistent_effects, remove_on_damage, remove_persistent_effects,
+from .persistent import (KNOCK_OUT, USED, dealt_attack_damage_reductions, received_attack_damage_bonuses, remove_expired_persistent_effects, remove_on_damage, remove_persistent_effects,
                          remove_source_left_effects, remove_turn_start_expired_persistent_effects, require_can_leave)
 from .state import ATTACK_FIELD_POWER_SUPPRESSION, OPPONENT_POWER_SUPPRESSION, POWER_SUPPRESSION, Halt, Phase
 from .history import note_turn_start
@@ -1111,6 +1111,14 @@ def confusion_damage_problem(state: GameState, pokemon: PokemonInPlay, attack_st
             "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS",
             f"こんらん状態のポケモン {pokemon.pokemon_id} が、ワザによるダメージを受けるとき「+20」される効果（いやなおと）を受けている。こんらんしたワザで自分が受ける 20 ダメージが"
             "「ワザによるダメージ」かは、公式ルール 2000.02.14版（p.309・p.321・p.322）と kyuura の記録から決められないので扱わない（docs/power-suppression-lasting-locks-v0.92.md 6 章）",
+        )
+    if dealt_attack_damage_reductions(state, pokemon):
+        # v0.108: 「マイナスイオン」・「あまえる」の「このワザを受けた相手が使うワザによるダメージは「-10」される」を受けているポケモンのワザがこんらんした。こんらんの 20（自分が受ける）が
+        # 「使うワザによるダメージ」かで -10 が当てはまるかが変わる（ほかの変更効果と同じ問い。新しい問いにしない）
+        return UnsupportedError(
+            "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS",
+            f"こんらん状態のポケモン {pokemon.pokemon_id} が、使うワザによるダメージを「-10」される効果（マイナスイオン・あまえる）を受けている。こんらんしたワザで自分が受ける 20 ダメージが"
+            "「使うワザによるダメージ」かは、公式ルール 2000.02.14版（p.309・p.321・p.322）と kyuura の記録から決められないので扱わない（docs/damage-modifiers-condition-bonuses-v0.108.md 4 章）",
         )
     return None
 

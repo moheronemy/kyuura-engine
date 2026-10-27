@@ -65,6 +65,7 @@ from .state import (
     CannotUseOwnAttack,
     CannotUsePowers,
     DamageReduction,
+    DealtAttackDamageReduction,
     DestinyBond,
     DoubledDamage,
     HalvedDamage,
@@ -595,6 +596,12 @@ def received_attack_damage_bonuses(state: GameState, pokemon: PokemonInPlay) -> 
     """v0.92: 今の番に ``pokemon`` が受けるワザによるダメージを増やす効果（``ReceivedAttackDamageBonus``。いやなおと）のうち、はたらいているもの（受けた順）。重なっていれば
     それぞれがはたらく（p.323「持続する効果は重複することがある」。加算なので順番で結果は変わらない）。"""
     return tuple(e for e in pokemon.persistent_effects if isinstance(e, ReceivedAttackDamageBonus) and period_active(state, e))
+
+
+def dealt_attack_damage_reductions(state: GameState, pokemon: PokemonInPlay) -> tuple[DealtAttackDamageReduction, ...]:
+    """v0.108: 今の番に ``pokemon`` が使うワザによるダメージを減らす効果（``DealtAttackDamageReduction``。マイナスイオン・あまえる）のうち、はたらいているもの（受けた順）。だれが
+    受けるダメージかを限らない（v0.34 の ``reduced_damage_to_source`` は「このカード」へのダメージだけを見る別の問い合わせ）。重なっていればそれぞれがはたらく（p.323。加算）。"""
+    return tuple(e for e in pokemon.persistent_effects if isinstance(e, DealtAttackDamageReduction) and period_active(state, e))
 
 
 def powers_use_prevented(state: GameState, pokemon: PokemonInPlay) -> CannotUsePowers | None:

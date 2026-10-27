@@ -4546,7 +4546,17 @@
       "PR1-063/attack/0",
       "PR1-063/attack/1",
       "SI-003/attack/0",
-      "SI-003/attack/1"
+      "SI-003/attack/1",
+      "neo2-041/attack/0",
+      "neo2-041/attack/1",
+      "neo3-024/attack/0",
+      "neo3-024/attack/1",
+      "neo4-088/attack/0",
+      "neo4-088/attack/1",
+      "neo4-091/attack/0",
+      "neo4-091/attack/1",
+      "ES3-001/attack/0",
+      "ES3-001/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

@@ -1465,6 +1465,12 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.FailOnTailsSelfDestruct,
     _effects.FailOnTailsDamageThenSelfBarrier,
     _effects.DamageThenConfuseOpponentOrSelf,
+    # v0.108（docs/damage-modifiers-condition-bonuses-v0.108.md。使うワザのダメージを減らす効果・ダメージのあとの受けるダメージの増加・相手の特殊状態を参照する追加とどく・回復）
+    _effects.DamageThenDealtDamageReduction,
+    _effects.DealtDamageReductionWithoutDamage,
+    _effects.DamageThenReceivedAttackDamageBonus,
+    _effects.PlusIfDefenderPoisonedThenPoison,
+    _effects.PlusIfDefenderStatusThenCure,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

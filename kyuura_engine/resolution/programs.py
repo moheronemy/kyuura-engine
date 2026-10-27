@@ -56,7 +56,7 @@ from ..state import (
     CannotAttachEnergy, CannotAttackWhileSourceActive, CannotRetreat, CannotUseAttack, CannotUsePowers, CannotUseOwnAttack, DamageReduction, DestinyBond, DoubledDamage, HalvedDamage, NextTurnAttackDamage, PreventAttackDamage, PreventDamage,
     MaxHpSet, ReducedDamageToSource, ReducedDamageToSourceNextTurn, ReflectShield, ResistanceChange, Retaliation, TailsDamageGuard, TrainerTurnEffect, TrainerUseLock, WeaknessChange, ZeroDamageBelow, mark_returned_to_bench,
     OPPONENT_POWER_SUPPRESSION, StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard, StatusImmunityNextTurn, PowersStopped, BenchProtection,
-    ATTACK_FIELD_POWER_SUPPRESSION, ReceivedAttackDamageBonus,
+    ATTACK_FIELD_POWER_SUPPRESSION, ReceivedAttackDamageBonus, DealtAttackDamageReduction,
 )
 from ..state import ATTACK_POWER_SUPPRESSION, BENCH_ATTACK_DAMAGE_PREVENTION, COUNTER_BONE, COUNTER_FOOD, COUNTER_KINDS, MARKER_CHAR, MARKER_COLOR, MARKER_CURSE, MARKER_KINDS, MARKER_LIGHTNING_ROD, MARKER_STICKY, POWER_SUPPRESSION, Marker
 from ..markers import CLEARED as MARKERS_CLEARED
@@ -11648,5 +11648,120 @@ BUILDERS |= {
     # へんずつう（コダック）: 相手にダメージ → コイン 1 枚 →「おもて」なら相手、「うら」なら自分をこんらん（ダメージはどちらの面でも与える）
     E.DamageThenConfuseOpponentOrSelf: lambda e: (
         Damage(OPP, Printed()), Coin("coin"), Status(CONFUSION, gate=("coin", HEADS)), Status(CONFUSION, target=SELF, gate=("coin", TAILS)),
+    ),
+}
+
+
+# ---------------------------------------------------------------- v0.108（docs/damage-modifiers-condition-bonuses-v0.108.md）: 使うワザのダメージを減らす効果・相手の特殊状態の確かめと
+# 追加・相手の特殊状態の回復
+
+
+@dataclass(frozen=True)
+class OpponentDealtDamageReduction(Element):
+    """相手の対戦ポケモン（このワザを受けた相手）に、次の相手の番（与えた番 + 1）だけ、使うワザによるダメージを ``amount`` 減らす効果（``state.DealtAttackDamageReduction``）を与える
+    （v0.108。チョンチーの「マイナスイオン」・トゲピーの「あまえる」）。
+
+    - 相手に与える効果なので「とうめい」・「ワザをうけない」状態・［ニュートラルシールド］など（``reaches``。発生元は実際にワザを使ったポケモン）を評価する。相手がこのワザで HP 以上なら
+      与えない（p.309。こんじょうを使えるなら G37）
+    - 発生源（``source_card``・``source_player``・``source_pokemon``）は実際にワザを使ったポケモン（相手のワザとして使ったなら使ったポケモン）。ログ ``persistent_effect_added`` に
+      ``end_turn``・``source_pokemon``・``amount``
+    - v0.34 の ``OpponentReducedDamage``（なきつく。「このカード」に与えるダメージだけ）とは別の要素・別の持続する効果"""
+
+    amount: int
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.DEALT_DAMAGE_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        opponent = 1 - run.player
+        target = run.opponent_active()
+        if run.knocked_out(target):
+            run.ko_prevention_conflict(target)
+            return False
+        if not reaches(run.res, run.fs, opponent, target, E.DEALT_DAMAGE_ELEMENT):
+            return False
+        attacker = run.attacker()
+        turn = run.state.turn_number
+        effect = DealtAttackDamageReduction(source_card=attacker.card, source_player=run.player, created_turn=turn, active_turn=turn + 1, end_turn=turn + 1,
+                                            source_pokemon=attacker.pokemon_id, amount=self.amount)
+        add_persistent_effect(run.state, opponent, target, effect, attack=str(run.key), amount=self.amount, **period_log_fields(effect))
+        return False
+
+
+@dataclass(frozen=True)
+class OpponentStatusCheck(Element):
+    """相手の対戦ポケモンが ``conditions`` のどれかの状態かを 1 回だけ確かめ、結果を ``name`` で残す（v0.108。アーボックの「もうどく」の「このワザを受ける前から相手が「どく」状態なら」・
+    わるいプクリンの「たたきおこす」の「相手が「ねむり」または「こんらん」状態なら」）。
+
+    - 並びの最初（ワザの内容を処理するとき。こんらんのコイン・手順 4 のコインのあと、ダメージの要素の前）。ダメージの値 ``PlusIfResult`` がこの結果を読む。あとの要素（どく・回復）・
+      キョウのどく・反応・決定で状態が変わっても確かめ直さない（v0.45 の ``SelfStatusCheck`` と同じ形で、確かめるのが相手の対戦ポケモン）
+    - どくは通常のどくと特殊などくのどちらでも（``has_condition``。どくの量ではなく、どく状態か）
+    - 相手への効果ではないので「ワザをうけない」状態・「とうめい」は評価しない（v0.45 の ``FailUnlessOpponentStatus`` と同じ）。相手の対戦ポケモンは、実際にワザを使ったプレイヤーの相手"""
+
+    name: str
+    conditions: tuple[str, ...]
+    phase: ClassVar[Phase] = Phase.NEUTRAL
+
+    def run(self, run: AttackRun) -> bool:
+        target = run.opponent_active()
+        run.fs.results[self.name] = target is not None and any(has_condition(target, condition) for condition in self.conditions)
+        return False
+
+
+@dataclass(frozen=True)
+class PlusIfResult:
+    """ダメージの目安の数字 + （確かめ ``check`` の結果が真なら ``bonus``）（v0.108。もうどく・たたきおこす。p.321 の 1 段階）。確かめの結果は並びの最初で決まり、決定をまたぐときは
+    この値で決めた基本となるダメージを続きの情報（``base``）で運ぶ（確かめ直さない）。"""
+
+    check: str
+    bonus: int
+    local_coins: ClassVar[int] = 0
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return run.attack.damage + (self.bonus if run.fs.results[self.check] else 0)
+
+
+@dataclass(frozen=True)
+class CureOpponentConditions(Element):
+    """相手の対戦ポケモンを、説明が書く特殊状態（``names``）だけから回復させる（v0.108。わるいプクリンの「たたきおこす」の「その後、相手を「ねむり」または「こんらん」状態から回復させる」。
+    ``conditions.cure_conditions``。ログ ``special_conditions_removed`` の ``reason`` ``cured``）。
+
+    - 回復させる状態がなければ処理の対象がないので何もしない（「とうめい」なども評価しない。v0.72 の ``WakeOpponent`` と同じ）。どく・マヒ・ダメージカウンター・マーカー・持続する効果は残す
+    - 相手がこのワザのダメージで HP 以上なら回復させない（p.309。こんじょうを使えるなら G37）
+    - 相手のポケモンへの効果なので、回復させる前に「ワザをうけない」状態・「とうめい」・効果を無効にする効果を評価する（``reaches`` の ``CURE_ELEMENT``。有益な効果でも防ぐ。回復は特殊状態に
+      する効果ではないので［めんえき］・特殊状態にならない効果は見ない）。ダメージだけが無効でも、この要素は受ける判定で決める（「ダメージを与えたら」の条件はない）
+    - v0.90 の ``CureOwnConditions``（自分への要素）の対象・``reach`` の既定は変えない
+    - 回復させたあとの状態が受け付けられない（特殊能力がまたはたらいて決められない姿・［ずらかる］の力がもどる。``effects.attack_state_stop_after``）なら止める（宣言の前に先読みが見つける）。
+      最大HP が下がるのは、ワザのあとのきぜつの判定が扱う"""
+
+    names: tuple[str, ...]
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.CURE_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        owner, target = 1 - run.player, run.opponent_active()
+        if target is None or not any(name in self.names for name in target.conditions.names()):
+            return False
+        if run.knocked_out(target):
+            run.ko_prevention_conflict(target, owner)
+            return False
+        if not reaches(run.res, run.fs, owner, target, E.CURE_ELEMENT):
+            return False
+        before = run.state.peek()
+        cure_conditions(run.state, owner, target, self.names, effect=str(run.key))
+        stop = E.attack_state_stop_after(before, run.state)
+        if stop is not None:
+            raise UnsupportedError(*stop)
+        return False
+
+
+BUILDERS |= {
+    E.DamageThenDealtDamageReduction: lambda e: (Damage(OPP, Printed()), OpponentDealtDamageReduction(e.amount)),
+    E.DealtDamageReductionWithoutDamage: lambda e: (OpponentDealtDamageReduction(e.amount),),
+    E.DamageThenReceivedAttackDamageBonus: lambda e: (Damage(OPP, Printed()), OpponentDamageTakenBonus(e.amount, e.start, e.end)),
+    E.PlusIfDefenderPoisonedThenPoison: lambda e: (
+        OpponentStatusCheck("opponent_status_before", (POISON,)), Damage(OPP, PlusIfResult("opponent_status_before", e.bonus)), Status(POISON),
+    ),
+    E.PlusIfDefenderStatusThenCure: lambda e: (
+        OpponentStatusCheck("opponent_status_before", e.conditions), Damage(OPP, PlusIfResult("opponent_status_before", e.bonus)), CureOpponentConditions(e.conditions),
     ),
 }

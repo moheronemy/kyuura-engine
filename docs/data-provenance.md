@@ -1955,6 +1955,27 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.108: 持続するダメージの変更・特殊状態を参照する 5 枚
+
+[damage-modifiers-condition-bonuses-v0.108.md](damage-modifiers-condition-bonuses-v0.108.md)。
+
+- 写しの元・研究の基準は kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534` のまま（今回の追加を理由に上げていない）。写しの組 `pool_v0_108`（5 枚）を加え、写しの作り直しの道具で作った
+  （手で直していない）。v0.107 までの 1,228 枚の値・移行の記録は変わっていない。
+- 5 枚の採用の記録（`card_sources.json`。`kyuura_commit` 73a1690・記録した日 2026-10-27・外部照合なし。記録 1,141 → 1,146）。研究の基準に 5 枚を指す LD-・CC-・CR-・UQ-・エラッタはなく
+  （カードの id・pcg-search の id 1stex3001・名前・ワザの名前で、写し以外の data/ と docs/ を探した。見つかったのはカード・対象の一覧・転記元の写し・pcg-search のページの読み直し・商品の一覧と、
+  別のカード・別のワザの記録、rule_history の RUL-ENERGY-DISCARD-ATTACKS（cards は PMCG1-019 だけ））、`kyuura_records` は空。処理に使う文面はどれも印刷の文面（研究の対応表の
+  `adopted_printed_text` に 10 を加えた。1,193 → 1,203）。
+- かえんほうしゃ（neo2-041）の印刷の文面は、RUL-ENERGY-DISCARD-ATTACKS が引く最新の説明と同じ文面（v0.82 の既存の書き方 `"none"`）。記録はこのカードを指さないので `kyuura_records` に入れず、
+  記録の新しい確かめにしていない（v0.82 のマグマラシ PF1-005 と同じ扱い）。
+- 日本語の文面の転記元: ヘルガーが nazonobasho.com、チョンチー・トゲピー・わるいプクリンがポケモンWiki、アーボックが pcg-search.com。同じ所との一致を独立した照合に数えず、新しく画像を見たことに
+  していない。アーボックの図鑑番号・レベルの欠け（`data_gaps`）は補っていない。トゲピーは「たね」（ベイビィとして扱わない）。
+- 英語の欄との違い（日本語を採用し、英語で置きかえない。この違いだけで保留にしない）: マイナスイオンの英語は「チョンチーへのダメージだけ」「どちらかがベンチにもどる・進化すると消える」で、
+  日本語（受けた相手が使うワザによるダメージ全体。発生源の消える契機を書かない）と範囲・消える契機が違う。
+- 一般規定・裁定（GR-2000-P321-DAMAGE-ORDER・GR-2000-P321-ATTACK-DAMAGE・GR-2000-P321-PREVENTED-ELEMENTS・GR-2000-P322-PERSISTENT-EFFECTS・p.322 の特殊状態・RUL-ENERGY-DISCARD-ATTACKS・
+  v0.92 のいやなおと）は既存の記録の再利用で、5 枚それぞれの独立した原典照合ではない。新しい停止コードはない（停止コード 234・未解決の裁定 235 のまま）。
+- 報告事項（kyuura の作業）: engine_targets.json の 5 枚の `engine_status` を v0.108 の登録で写すと `registered` になる。マイナスイオン（neo3-024）の英語の欄の範囲・消える契機は日本語と違う
+  （英語の欄の転記か印刷かは照合していない）。かえんほうしゃ（neo2-041）を RUL-ENERGY-DISCARD-ATTACKS の範囲に入れるかは kyuura の判断。
+
 ## v0.107: コインによる成否・特殊状態・防護の 9 枚
 
 [coin-failure-status-flight-v0.107.md](coin-failure-status-flight-v0.107.md)。

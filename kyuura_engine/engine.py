@@ -194,10 +194,10 @@ from .state import (
     MARKER_COLOR,
     Marker,
     PERSISTENT_EFFECT_TYPES,
+    PERIOD_AMOUNT_TYPES,
     PERIOD_EFFECT_TYPES,
     SOURCE_LEAVES_ACTIVE,
     PeriodLeaveLock,
-    ReceivedAttackDamageBonus,
     TRAINER_TURN_EFFECT_KINDS,
     EVOLUTION_BAN,
     OPPONENT_POWER_SUPPRESSION,
@@ -3227,7 +3227,8 @@ def _period_effect_problems(state: GameState, pokemon: PokemonInPlay, effect, wh
     actual = (type(effect), effect.active_turn - effect.created_turn, None if effect.end_turn is None else effect.end_turn - effect.created_turn,
               effect.while_source_active, effect.ends_on)
     logged = (added.get("end_turn"), added.get("source_pokemon"), added.get("while_source_active", False), tuple(added.get("ends_on", ())))
-    if isinstance(effect, ReceivedAttackDamageBonus):
+    if isinstance(effect, PERIOD_AMOUNT_TYPES):
+        # いやなおと・かみくだく（v0.108）の増やす数、マイナスイオン・あまえる（v0.108）の減らす数も登録と照らす
         actual += (effect.amount,)
         logged += (added.get("amount"),)
     if isinstance(effect, PeriodLeaveLock):
@@ -3236,7 +3237,7 @@ def _period_effect_problems(state: GameState, pokemon: PokemonInPlay, effect, wh
         logged += (added.get("knockout_exception", False),)
     if actual not in options:
         problems.append(f"{where} {effect!r} が、効果を与えたワザ {added.get('effect')!r}（登録された実装）の期間・消える契機と合わない")
-    expected_log = (effect.end_turn, effect.source_pokemon, effect.while_source_active, effect.ends_on) + ((effect.amount,) if isinstance(effect, ReceivedAttackDamageBonus) else ())
+    expected_log = (effect.end_turn, effect.source_pokemon, effect.while_source_active, effect.ends_on) + ((effect.amount,) if isinstance(effect, PERIOD_AMOUNT_TYPES) else ())
     if isinstance(effect, PeriodLeaveLock):
         expected_log += (effect.knockout_exception,)
     if logged != expected_log:
