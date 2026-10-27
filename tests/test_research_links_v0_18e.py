@@ -155,7 +155,10 @@ class ResearchLinksTest(unittest.TestCase):
                              # 同じ形だが、kyuura の事例にない）
                              "UNRESOLVED_KEEP_PROTECTED_TARGET", "UNRESOLVED_KEEP_VOIDED_DISCARD_COIN", "UNRESOLVED_KEEP_DETACHED_ENERGY_DISCARD",
                              # v0.109: GO1（docs/timed-damage-guards-v0.109.md 5 章。受けるときのコインで受けないと決める効果の重なり。RF1 と同じ形だが、kyuura の事例にない）
-                             "UNRESOLVED_DAMAGE_GUARD_OVERLAP"})
+                             "UNRESOLVED_DAMAGE_GUARD_OVERLAP",
+                             # v0.110: KS1・KS2（docs/endure-armor-up-v0.110.md 5 章。「きぜつ」しない効果の残りHPを「10」にする時点と、きぜつの判定の効果との順番。FB1・G40 と近い形だが、
+                             # kyuura の事例にない）
+                             "UNRESOLVED_KO_SURVIVAL_TIMING", "UNRESOLVED_KO_SURVIVAL_OVERLAP"})
         # v0.97（docs/unown-research-idfnj-v0.97.md 3 章）: kyuura が調査で立てた UQ-SELF-EXCLUDING-POWER-COPIES の事例にわるいデンリュウ（neo4-046）の［かんでん］があるので、
         # CV1 を論点に結んだ（kyuura は v0.86 を取り込んでいないので、未解決の一覧に CV1 の行はない。kyuura の事例は kyuura_cases_without_engine_ruling で照らす）
         # v0.97 で加えた DF1・DF2 も、kyuura に論点（UQ-SELF-EXCLUDING-POWER-COPIES・UQ-NON-ATTACK-DAMAGE-MODIFIERS）はあるが、未解決の一覧に行がない

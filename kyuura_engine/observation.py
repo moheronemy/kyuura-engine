@@ -654,6 +654,8 @@ PUBLIC_EVENTS = frozenset({
     "leave_prevented", "persistent_effect_source_left",
     # v0.94（docs/switch-return-attacks-v0.94.md 9 章）: 任意の入れ替え（きつねび）で入れ替えなかった（場の表の情報。ワザを使ったプレイヤーの答え）
     "forced_switch_declined",
+    # v0.110（docs/endure-armor-up-v0.110.md 8 章）: こらえる・こうてつかで「きぜつ」しなかった（のっているダメージ・残りHP・効果を与えた番は場の表の情報）
+    "knockout_survived",
 })
 
 

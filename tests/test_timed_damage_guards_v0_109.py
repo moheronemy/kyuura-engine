@@ -262,7 +262,7 @@ class RegistrationTest(unittest.TestCase):
         before = pool_from_extract(read_extract(), registry)
         self.assertEqual(load_card_pool().playable_ids - before.playable_ids, frozenset(V0109))
         self.assertEqual(set(V0109) & set(cards_before(read_extract(), "0.109")), set())
-        self.assertEqual(set(cards_after(read_extract(), "0.108")), set(V0109))
+        self.assertEqual(set(cards_after(read_extract(), "0.108")) & set(cards_before(read_extract(), "0.110")), set(V0109))
 
     def test_adoption_records(self):
         """3 件の採用の記録（kyuura 73a1690・外部照合なし・kyuura の記録なし）。処理に使う文面は説明のある 4 つのワザの印刷の文面だけ（説明のない 2 つは書かない）。"""

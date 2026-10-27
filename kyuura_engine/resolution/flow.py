@@ -30,7 +30,7 @@ from ..effects import (AttackKey, AttackUse, PowerKey, usable_ninja_tricks, atta
                        received_modifiers_log, received_power_damage, retreat_trap_powers, stadium_attack_coin_available, status_at_attack_blocked)
 from ..errors import IllegalActionError, UnsupportedError
 from ..state import AttackEffectGuard, BenchAttackDamageGuard, BenchProtection, GameState, Phase, PowersStopped, StatusImmunityNextTurn, ZeroDamageAtLeast
-from ..state import MARKER_COLOR, MARKER_CURSE, PERIOD_EFFECT_TYPES, PeriodAttackCoinCheck, PeriodLeaveLock, TimedDamageGuard
+from ..state import MARKER_COLOR, MARKER_CURSE, PERIOD_EFFECT_TYPES, KnockOutSurvival, PeriodAttackCoinCheck, PeriodLeaveLock, TimedDamageGuard
 from ..history import close_probe, note_used
 from ..zones import face_up_fields, prize_left, promote_from_bench, return_in_play_to_deck, shuffle_deck
 from ..movement import promotion_spikes_now
@@ -44,8 +44,8 @@ from .events import FrameKind, Suspended, Trace, Window, WindowOpened
 from ..persistent import RETURN_IN_PLAY_TO_DECK, attack_coin_checks, destiny_bond, leave_lock, remove_on_damage, remove_persistent_effects
 from .kernel import effect_ko_entries, restore_effect_ko
 from .kernel import (DryRunComplete, Resolution, apply_energy_drain, apply_split, capture_post_knockout, check_simultaneous, exp_all_offers, exp_all_options, exp_all_unresolved,
-                     focus_band_offers, hp_of, knock_out_beam_problem, knock_out_power_offers, knocked, ko_prevention_offers, scram_restored_question, settle_scram,
-                     track_ko)
+                     focus_band_offers, hp_of, knock_out_beam_problem, knock_out_power_offers, knocked, knockout_survival_candidates, knockout_survival_overlap,
+                     knockout_survivals_of, ko_prevention_offers, scram_restored_question, settle_scram, track_ko)
 from .programs import (
     resume_moves,AttackRun, EspRedoOffer, apply_esp_redo, apply_flee, apply_ninja_trick, decision_index, declare, offer_ninja_trick, program_may_fail, resume_guarded, run_elements,
                        with_stadium_self_damage)
@@ -255,6 +255,10 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
         # v0.109: 受けるときのコインでダメージを防ぐ期限つきの効果（ぬるぬる・かわす・ブリンク。受けるときのコインの両面・GO1・RF1・「うら」で受けなかったあとの Z23）。v0.13 の止める関数の
         # 見積もり（``preview_attack_damage``）は受けるときのコインを知らない（コインで受けなかった場合を試さない）ので、それで確かめない
         found.append("受けるときのコインで防ぐ期限つきの効果")
+    if any(isinstance(effect, KnockOutSurvival) for side in state.players for pokemon in side.in_play() for effect in pokemon.persistent_effects):
+        # v0.110: 残りHPがなくなっても「きぜつ」しない効果（こらえる・こうてつか。きぜつの判定の窓の生存・KS1・KS2・こんらんの 20 の問い）。v0.13 の止める関数は「きぜつ」しない効果を知らない
+        # （HP 以上で「きぜつ」すると見積もる）ので、それで確かめない
+        found.append("残りHPがなくなっても「きぜつ」しない効果")
     if E.neutral_shield_holders(state):
         # v0.103: ［ニュートラルシールド］（発生元が相手の進化ポケモンのワザのダメージと効果の要素を無効にする）。v0.13 の止める関数の見積もり（``preview_attack_damage``）は発生元で
         # 無効にするかを知らない（「ダメージを受けない」状態・バリアーだけを見る）ので、それで確かめない（情報のない経路で黙って無視しない）
@@ -416,6 +420,8 @@ def end_attack_power_suppression(res: Resolution) -> None:
     if not records:
         return
     before = state.peek()
+    # v0.110（KS1）: 「きぜつ」しない効果の候補の最大HPが抑止の終わりで変わるなら、すぐあとに残りHP 10 にする読み方（変わる前の最大HP）と結果が変わる
+    survivors = {pokemon.pokemon_id: max_hp(state, pokemon) for _, pokemon in knocked(res) if knockout_survivals_of(res, pokemon)}
     state.trainer_effects = tuple(r for r in state.trainer_effects if r not in records)
     for record in records:
         state.add_event("trainer_effect_removed", player=record.player, effect_kind=record.kind, trainer_card=record.source_card, card_id=record.card_id,
@@ -423,6 +429,10 @@ def end_attack_power_suppression(res: Resolution) -> None:
     stop = E.attack_state_stop_after(before, state)  # 最大HP が下がるのは、このあとのきぜつの判定がきぜつにする
     if stop is not None:
         raise UnsupportedError(stop[0], f"ワザを使っているあいだの特殊能力の抑止が終わると: {stop[1]}")
+    for pid, hp in survivors.items():
+        found = state.find_pokemon(pid)
+        if found is None or max_hp(state, found[1]) != hp:
+            raise res.question("knockout_survival_timing", f"ポケモン {pid}・ワザを使っているあいだの特殊能力の抑止が終わって最大HPが変わる")
 
 
 def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
@@ -431,6 +441,7 @@ def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
     end_attack_power_suppression(res)  # v0.91: 「このワザを使っているあいだ」の特殊能力の抑止の終わり（きぜつの判定の前）
     settle_scram(res)  # v0.61: ［ずらかる］（ワザの要素のあとに残りHPが「10」になったポケモン。ワザの要素を処理しない経路（こんらん・手順 4 の失敗）も通る）
     res.trace.record(WindowOpened(Window.KO_CHECK, None))
+    _survive_knockouts(res)  # v0.110: こらえる・こうてつか（同時のきぜつ・みちづれ・こんじょうなどの候補は、「きぜつ」しなかった結果で求める）
     check_simultaneous(res)
     bonded = _destiny_bond(res)  # v0.31: 「みちづれ」
     offers = ko_prevention_offers(res)
@@ -485,6 +496,41 @@ def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
         res.trace.record(Suspended(codec.KNOCK_OUT, state.decision.kind, owner))
         return
     _knock_out_after_attack(res)
+
+
+def _survive_knockouts(res: Resolution) -> None:
+    """v0.110（docs/endure-armor-up-v0.110.md 5 章）: きぜつの判定の窓の始め（同時のきぜつ・みちづれ・こんじょう・［ファイナルビーム］・きあいのハチマキ・学習装置の候補を求める前）に、
+    残りHPがなくなっても「きぜつ」しない効果（``state.KnockOutSurvival``。こらえる・こうてつか）の範囲のワザのダメージで HP 以上になったポケモン（``kernel.knockout_survival_candidates``）を
+    「きぜつ」させず、のっているダメージを今有効な最大HP − 残りHP（10）にする（ログ ``knockout_survived``）。
+
+    - ダメージは受けたまま（ワザの ``damage`` のログ・受けた記録・「ダメージを受けたとき」の効果はそのまま）。回復のイベント・反応は起こさない（残りHPを「10」にすることを回復とみなす
+      根拠がない。CR-GUTS-REMAINING-HP でも kyuura は判断していない）。コインも使う選択もない。効果は消えない（期間のうちは、また「きぜつ」しない）
+    - 時点は記録で決まらない（残りHPがなくなったすぐあとか、ワザのあとのきぜつの判定か）。HP 以上になったあとに同じワザの処理がこのポケモンにかかわる場面は、その処理の前に KS1 で止めて
+      いる（``kernel.knockout_survival_timing``）。ここで、同じきぜつの判定の効果がこのポケモンにかかわるなら KS2（``kernel.knockout_survival_overlap``）、［ずらかる］を持つなら（すぐあとの
+      読み方では、ワザの残りの処理の前に山札にもどりうる）KS1 で、状態・乱数・ログを変える前に止める。どちらもなければ、どちらの時点でも結果は同じ
+    - 「きぜつ」しなかったポケモンのきぜつの原因の記録（``knocked_by``・``damage_ko``・``ko_carried``）を消す（このあとの候補・決定の続きの情報に古い記録を残さない）"""
+    state = res.state
+    candidates = knockout_survival_candidates(res)
+    if not candidates:
+        return
+    knockout_survival_overlap(res, candidates)
+    scram = {pokemon.pokemon_id for _, pokemon, _ in E.scram_slots(state)}
+    for _, pokemon, _ in candidates:
+        if pokemon.pokemon_id in scram:
+            raise res.question("knockout_survival_timing", f"ポケモン {pokemon.pokemon_id}・残りHP「10」ではたらく［ずらかる］")
+        if len({e.remaining_hp for e in knockout_survivals_of(res, pokemon)}) != 1:
+            raise RuntimeError(f"ポケモン {pokemon.pokemon_id} の「きぜつ」しない効果の残りHPが 1 つに決まらない（文面の組は 10 だけ。エンジンの不具合）")
+    for owner, pokemon, effects in candidates:
+        pid = pokemon.pokemon_id
+        attacker, attacker_pid = res.damage_ko[pid]
+        remaining = effects[0].remaining_hp
+        before = pokemon.damage
+        pokemon.damage = max(0, max_hp(state, pokemon) - remaining)  # 今有効な最大HP（v0.48。こんじょう・きあいのハチマキと同じ値）
+        state.add_event("knockout_survived", player=owner, pokemon=pokemon.card, pokemon_id=pid, persistent_effect=KnockOutSurvival.kind,
+                        created_turns=tuple(e.created_turn for e in effects), scopes=tuple(e.scope for e in effects), attacker=attacker, attacker_pokemon_id=attacker_pid,
+                        damage_before=before, total_damage=pokemon.damage, remaining_hp=remaining)
+        for record in (res.knocked_by, res.damage_ko, res.ko_carried):
+            record.pop(pid, None)
 
 
 def _focus_band(res: Resolution, owner: int, pokemon, attached, effect) -> None:

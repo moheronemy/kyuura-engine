@@ -40689,3 +40689,65 @@ V0_109_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_109_ATTACKS)
+
+
+# ---------------------------------------------------------------- v0.110（docs/endure-armor-up-v0.110.md）
+# 使うときのコインで、残りHPがなくなっても「きぜつ」しない期間つきの効果を自分に与えるワザのポケモンの 2 枚（ワザ 4）。処理に使う文面は kyuura の印刷の文面。たいあたりは説明文がなく
+# ``DAMAGE_ONLY``、だいばくはつは既存の ``DamageAndSelfDamage``（自分にも 60。型の確かめは形だけなので、文面と反動の数はテストが照らす）、こらえる・こうてつかは新しい型
+# ``SelfKnockOutSurvivalOnHeads``（新しい要素 ``programs.SelfKnockOutSurvival``）。v0.109 の ``TimedDamageGuard``（受けるときのコインでダメージを防ぐ）・v0.4b の ``PreventDamageOnHeads``
+# （「ダメージを受けない」状態）とは意味が違うので使わない
+
+# 残りHPがなくなっても「きぜつ」しない効果の書き方（(与えた番から数えたはたらき始める番, 最後の番, 範囲, 残りHP) ごと）。期間・範囲・残りHPは文面と 1 対 1 で、コインは使うときの 1 枚
+# （日本語の文面。こうてつかの英語の欄の「きぜつ」するときに投げる書き方は採らない）。句読点は写しのまま
+KNOCKOUT_SURVIVAL_TEXTS: Mapping[tuple[int, int, str, int], tuple[str, ...]] = MappingProxyType({
+    # ゴマゾウ（neo1-053）の「こらえる」: 次の相手の番だけ（与えた番 + 1）・相手のワザによるダメージ
+    (1, 1, GUARD_SCOPE_OPPONENT_ATTACK, 10): (
+        "コインを投げて「おもて」なら、次の相手の番、相手のワザによるダメージで、このカードの残りHPがなくなっても、このカードは「きぜつ」しない。その場合、このカードの残りHPは「10」になる。",),
+    # わるいフォレトス（neo4-008）の「こうてつか」: 与えた番から、次の自分の番が終わるまで（与えた番〜与えた番 + 2）・ワザによるダメージ（「相手の」と限らない）
+    (0, 2, GUARD_SCOPE_ATTACK, 10): (
+        "コインを投げて「おもて」なら、次の自分の番が終わるまで、ワザによるダメージで、このカードの残りHPがなくなっても、このカードは「きぜつ」せず、このカードの残りHPは「10」になる。",),
+})
+
+
+@dataclass(frozen=True)
+class SelfKnockOutSurvivalOnHeads(AttackEffect):
+    """ダメージの要素のないワザ。使うときにコインを 1 枚投げ、「おもて」なら、決まった期間、決まった範囲のワザによるダメージでこのカードの残りHPがなくなっても「きぜつ」せず、残りHPが
+    ``remaining_hp`` になる効果を、このワザを使ったポケモン自身に与える（v0.110。ゴマゾウ（neo1-053）の「こらえる」・わるいフォレトス（neo4-008）の「こうてつか」）。
+
+    - 要素は ``programs.SelfKnockOutSurvival`` だけ。コインはワザの説明のコイン（``AttackRun.flip``。ナツメのESPのやり直しを含む）で、「うら」なら何もしない（ワザの失敗ではない。
+      持っている効果も消さない）。効果を持ったあとは、致死のダメージを受けるときにコインを投げない・使うかを選ばない（持続する効果 ``state.KnockOutSurvival``）
+    - 期間（``start``・``end``。与えた番から数える）・範囲・残りHPは文面と結び付けた組（``KNOCKOUT_SURVIVAL_TEXTS``）だけ。取り違えた組・ダメージのあるワザは受け付けない"""
+
+    start: int
+    end: int
+    scope: str
+    remaining_hp: int
+    implementation_id = "self_knockout_survival_on_heads"
+
+    def __post_init__(self) -> None:
+        if (self.start, self.end, self.scope, self.remaining_hp) not in KNOCKOUT_SURVIVAL_TEXTS:
+            raise ValueError(f"「きぜつ」しない効果の期間・範囲・残りHPの組 {(self.start, self.end, self.scope, self.remaining_hp)!r} を受け付ける文面がない")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "使うときのコインで、残りHPがなくなっても「きぜつ」しない期間つきの効果を自分に与えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, KNOCKOUT_SURVIVAL_TEXTS[(self.start, self.end, self.scope, self.remaining_hp)])
+
+    def survival_terms(self) -> tuple:
+        """不変条件（``engine._knockout_survival_problems``）が照らす、与える持続する効果の型と (はたらき始める番, 最後の番, 範囲, 残りHP)（与えた番から数える）。"""
+        from .state import KnockOutSurvival
+
+        return (KnockOutSurvival, self.start, self.end, self.scope, self.remaining_hp)
+
+
+# v0.110 のワザの登録（4。id ごとに書く）。同じデータの組はない
+V0_110_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # ゴマゾウ（neo1-053）
+    AttackKey("neo1-053", 0): AttackEntry(DAMAGE_ONLY, "たいあたり"),
+    AttackKey("neo1-053", 1): _printed(SelfKnockOutSurvivalOnHeads(1, 1, GUARD_SCOPE_OPPONENT_ATTACK, 10), "こらえる",
+                                       KNOCKOUT_SURVIVAL_TEXTS[(1, 1, GUARD_SCOPE_OPPONENT_ATTACK, 10)][0]),
+    # わるいフォレトス（neo4-008）
+    AttackKey("neo4-008", 0): _printed(SelfKnockOutSurvivalOnHeads(0, 2, GUARD_SCOPE_ATTACK, 10), "こうてつか", KNOCKOUT_SURVIVAL_TEXTS[(0, 2, GUARD_SCOPE_ATTACK, 10)][0]),
+    AttackKey("neo4-008", 1): _printed(DamageAndSelfDamage(60), "だいばくはつ", "自分にも60ダメージ。"),
+})
+
+DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_110_ATTACKS)

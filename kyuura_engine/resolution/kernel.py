@@ -54,12 +54,12 @@ from ..effects import (
 )
 from ..conditions import confuse, poison, put_to_sleep
 from ..decisions import KNOCK_OUT_POWER, KO_PREVENTION, REACTION_SWITCH
-from ..persistent import (RETURN_IN_PLAY_TO_DECK, bench_protection, effect_attack_card, expires_at_turn_start, reduced_damage_to_source, reflect_shield, remove_on_damage,
-                          remove_persistent_effects, tails_damage_guard, timed_damage_guards)
+from ..persistent import (RETURN_IN_PLAY_TO_DECK, bench_protection, destiny_bond, effect_attack_card, expires_at_turn_start, knockout_survivals, reduced_damage_to_source,
+                          reflect_shield, remove_on_damage, remove_persistent_effects, tails_damage_guard, timed_damage_guards)
 from ..zones import designate_face_down, return_in_play_to_deck, shuffle_deck
 from ..errors import UnsupportedError
 from .. import effects as E
-from ..state import GUARD_FLIPPER_OPPONENT, GUARD_SCOPE_ATTACK, RETALIATION_FIXED, Retaliation, TimedDamageGuard
+from ..state import GUARD_FLIPPER_OPPONENT, GUARD_SCOPE_ATTACK, RETALIATION_FIXED, KnockOutSurvival, Retaliation, TimedDamageGuard
 from ..history import VOID_ATTACK_BARRIER, VOID_DAMAGE_ONLY, VOID_DODGED, VOID_EFFECT_ONLY, VOID_EVADED, VOID_FLED, VOID_IMMUNE, VOID_REFLECTED, note_received
 
 from . import catalog as C
@@ -289,6 +289,76 @@ def focus_band_timing(res: Resolution, pokemon: PokemonInPlay, what: str) -> Non
     このポケモンにダメージ・効果を与える・与えないを決める）なら止める。"""
     if focus_band_of(res, pokemon) is not None:
         raise res.question("focus_band_timing", f"ポケモン {pokemon.pokemon_id}・{what}")
+
+
+# ---------------------------------------------------------------- 残りHPがなくなっても「きぜつ」しない効果（v0.110。docs/endure-armor-up-v0.110.md 5 章）
+
+
+def knockout_survivals_of(res: Resolution, pokemon: PokemonInPlay, incoming: Incoming | None = None) -> tuple[KnockOutSurvival, ...]:
+    """v0.110: ``pokemon`` が、このワザの処理の中で、はたらいている「残りHPがなくなっても「きぜつ」しない」効果（``state.KnockOutSurvival``。こらえる・こうてつか）の範囲のワザの
+    ダメージで HP 以上になったなら、当てはまる効果。なければ空。
+
+    - HP 以上になったのは、ワザの分類の枠（宣言したワザ・返す効果）のダメージ（``res.damage_ko``。``kernel.deal_damage`` が記録する）。ダメージカウンターの配置・移動・こんらん・
+      特殊能力・どく・トレーナーのダメージ・最大HPの低下で HP 以上になったポケモンは記録がないので当たらない（前から HP 以上だったポケモンが、あとのダメージで記録されることもない）
+    - ワザの効果で「きぜつ」するポケモン（``res.forced``。みちづれ・ほろびのうた）は、ダメージを受けていても当たらない（直接の「きぜつ」は残りHPがなくなったのではない）
+    - 範囲は実際の使い手（HP 以上にした枠のプレイヤー。v0.103 の ``Incoming.player``）で決める: 「相手のワザ」（こらえる）は持ち主の相手、「ワザ」（こうてつか）は自分のワザの自分への
+      ダメージ・返す効果も含む。今の番のプレイヤーでは決めない。``incoming`` を渡すと、HP 以上にした枠ではなく、そのダメージの発生元で範囲を決める（HP 以上のあとのダメージの確かめ）"""
+    located = res.state.find_pokemon(pokemon.pokemon_id)
+    cause = res.damage_ko.get(pokemon.pokemon_id)
+    if located is None or cause is None or pokemon.pokemon_id in res.forced or not knocked_by_hp(res.state, pokemon):
+        return ()
+    owner = located[0]
+    player = cause[0] if incoming is None else incoming.player
+    return tuple(e for e in knockout_survivals(res.state, pokemon) if e.scope == GUARD_SCOPE_ATTACK or player != owner)
+
+
+def knockout_survival_timing(res: Resolution, pokemon: PokemonInPlay, what: str) -> None:
+    """v0.110（KS1。``UNRESOLVED_KO_SURVIVAL_TIMING``）: 残りHPを「10」にする時点（残りHPがなくなったすぐあとか、ワザのあとのきぜつの判定か）は記録で決まらない。HP 以上になったあとに、
+    同じワザの処理がこのポケモンにダメージ・ダメージカウンター・効果を与える（HP 以上なので与えない）・HP 以上かで選べるものが変わる場面では結果が変わるので、状態・乱数・ログを変える前に
+    止める（先読みが宣言の前に見つける）。そのような処理のないワザでは、どちらの時点でも同じなので、きぜつの判定の窓で処理する（``flow._survive_knockouts``）。"""
+    if knockout_survivals_of(res, pokemon):
+        raise res.question("knockout_survival_timing", f"ポケモン {pokemon.pokemon_id}・{what}")
+
+
+def knockout_survival_after_damage(res: Resolution, fs: FrameState, pokemon: PokemonInPlay) -> None:
+    """v0.110: すでにこのワザで HP 以上になった ``pokemon`` が、さらにワザの分類のダメージを受ける。そのダメージも、HP 以上にした効果のどれにも当てはまるなら、どちらの時点でも最後の
+    残りHPは「10」で結果は同じ（ダメージは受けたまま。効果は 1 回で消えない）なので止めない。当てはまらない効果があれば、すぐあとの読み方では残りHP 10 のポケモンがそのダメージで
+    「きぜつ」しうるので KS1。"""
+    effects = knockout_survivals_of(res, pokemon)
+    if effects and set(effects) != set(knockout_survivals_of(res, pokemon, incoming_of(fs))):
+        raise res.question("knockout_survival_timing", f"ポケモン {pokemon.pokemon_id}・HP 以上になったあとに範囲の違うダメージを受ける")
+
+
+def knockout_survival_candidates(res: Resolution) -> list[tuple[int, PokemonInPlay, tuple[KnockOutSurvival, ...]]]:
+    """v0.110: きぜつの判定の窓で、残りHPがなくなっても「きぜつ」しない効果がはたらく候補 (持ち主, ポケモン, 当てはまる効果)（``knockout_survivals_of``）。番の順（解決の ``knocked``）。"""
+    found = []
+    for owner, pokemon in knocked(res):
+        effects = knockout_survivals_of(res, pokemon)
+        if effects:
+            found.append((owner, pokemon, effects))
+            res.trace.record(CandidateFound(Window.KO_CHECK, "knockout_survival", pokemon.pokemon_id, None))
+    return found
+
+
+def knockout_survival_overlap(res: Resolution, candidates) -> None:
+    """v0.110（KS2。``UNRESOLVED_KO_SURVIVAL_OVERLAP``）: 「きぜつ」しない効果の候補のポケモンが、同じきぜつの判定ではたらく効果（こんじょう・［ファイナルビーム］（持つ・ダメージを与える
+    相手）・きあいのハチマキ・学習装置（「きぜつ」する対戦ポケモン）・みちづれ（持つ・「きぜつ」させる相手））にもかかわるなら、残りHPを「10」にする時点（残りHPがなくなったすぐあとなら、
+    ほかの効果ははたらかない）と、きぜつの判定の中の順番が記録で決まらず、結果（コイン・決定・どうぐ・「きぜつ」）が変わるので、状態・乱数・ログを変える前に止める。候補を求めるのに解決の
+    記録を残さない（``record=False``）。かかわらない別のポケモンの効果とは、コインも決定もない「きぜつ」しない効果の順番で結果が変わらないので止めない。"""
+    ids = {pokemon.pokemon_id for _, pokemon, _ in candidates}
+    if not ids:
+        return
+    involved = [f"こんじょう {o[1].pokemon_id}" for o in ko_prevention_offers(res, record=False) if o[1].pokemon_id in ids]
+    involved += [f"ファイナルビーム {b[1].pokemon_id}" for b in knock_out_power_offers(res, record=False) if b[1].pokemon_id in ids or b[3] in ids]
+    involved += [f"きあいのハチマキ {b[1].pokemon_id}" for b in focus_band_offers(res, record=False) if b[1].pokemon_id in ids]
+    involved += [f"学習装置 {e[1].pokemon_id}" for e in exp_all_offers(res, record=False) if e[1].pokemon_id in ids]
+    state = res.state
+    target = state.players[state.current_player].active
+    bonds = [pokemon for owner, pokemon in knocked(res) if owner != state.current_player and destiny_bond(state, pokemon) is not None]
+    if bonds and target is not None and (target.pokemon_id in ids or any(p.pokemon_id in ids for p in bonds)):
+        involved.append(f"みちづれ {[p.pokemon_id for p in bonds]} → {target.pokemon_id}")
+    if involved:
+        raise res.question("knockout_survival_overlap", f"ポケモン {sorted(ids)}（{'・'.join(involved)}）")
 
 
 # ---------------------------------------------------------------- ［ずらかる］（v0.61。docs/reactive-powers-trainer-damage-v0.61.md 4 章）
@@ -919,6 +989,7 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         deferred = receiving(res, fs, receiver_player, receiver, final)
     if final > 0 and receiver.damage >= hp_of(state, receiver):
         focus_band_timing(res, receiver, "HP 以上になったあとにさらにダメージを受ける")  # v0.81（FB1）
+        knockout_survival_after_damage(res, fs, receiver)  # v0.110（KS1。HP 以上にした「きぜつ」しない効果の範囲の外のダメージのときだけ）
     before = receiver.damage
     receiver.damage += final
     fs.applied[receiver.pokemon_id] = final
@@ -1343,6 +1414,7 @@ def trainer_poison_after_damage(res: Resolution, attacker: PokemonInPlay, owner:
     if not records:
         return
     if knocked_by_hp(state, receiver):
+        knockout_survival_timing(res, receiver, f"HP 以上になったあとのトレーナー「{state.card_def(records[0].source_card).name_ja}」のどく")  # v0.110（KS1）
         for instance in C.in_window(state, Window.KO_CHECK, owner, receiver, res.catalog):
             if instance.definition.timing is C.Timing.OFFER and res.ko_prevention_able.get(receiver.pokemon_id) and not C.offer_stopped(state, instance, receiver):
                 raise res.question("ko_prevention_attack_effect", f"ポケモン {receiver.pokemon_id}（トレーナー「{state.card_def(records[0].source_card).name_ja}」のどく）")
@@ -1596,6 +1668,7 @@ def _damage_source(res: Resolution, fs: FrameState, what: str) -> PokemonInPlay:
         raise RuntimeError(f"{what}を与える相手（ダメージを与えたポケモン {fs.frame.source_pid}）が場にいない（エンジンの不具合）")
     if found[1].damage >= hp_of(res.state, found[1]):
         focus_band_timing(res, found[1], f"HP 以上になったあとの{what}")  # v0.81（FB1）
+        knockout_survival_timing(res, found[1], f"HP 以上になったあとの{what}")  # v0.110（KS1）
     return found[1]
 
 
@@ -2152,8 +2225,9 @@ def _counterattack_error(res: Resolution, fs: FrameState):
     return counterattack_double_knockout_error(fs.frame.source_pid, fs.applied[target], target, *power_name_and_page(res.state, fs.origin.power_key))
 
 
-def ko_prevention_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, C.EffectInstance]]:
-    """きぜつの判定の窓: 任意の効果（こんじょう）の候補（v0.13 の ``_ko_prevention_offer`` と同じ答え）。"""
+def ko_prevention_offers(res: Resolution, *, record: bool = True) -> list[tuple[int, PokemonInPlay, C.EffectInstance]]:
+    """きぜつの判定の窓: 任意の効果（こんじょう）の候補（v0.13 の ``_ko_prevention_offer`` と同じ答え）。v0.110: ``record`` が偽なら、解決の記録を残さず、2 つ以上でも問いにしない
+    （「きぜつ」しない効果とかかわるかを確かめるだけ。``knockout_survival_overlap``）。"""
     state = res.state
     offers = []
     for owner, pokemon in knocked(res):
@@ -2169,9 +2243,10 @@ def ko_prevention_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, C.Ef
                 raise RuntimeError(f"任意の効果を持つポケモン {pokemon.pokemon_id} が HP 以上なのに、ダメージを受けたときの写しがない（エンジンの不具合）")
             if able and not C.offer_stopped(state, instance, pokemon):
                 offers.append((owner, pokemon, instance))
-                res.trace.record(CandidateFound(Window.KO_CHECK, instance.name, pokemon.pokemon_id, None))
+                if record:
+                    res.trace.record(CandidateFound(Window.KO_CHECK, instance.name, pokemon.pokemon_id, None))
             break
-    if len(offers) > 1:
+    if len(offers) > 1 and record:
         raise res.question("multiple_ko_prevention", f"{[o[1].pokemon_id for o in offers]}")
     return offers
 
@@ -2218,7 +2293,7 @@ def restore_effect_ko(res: Resolution, entries) -> None:
         res.effect_ko.setdefault(pid, (player, source))
 
 
-def knock_out_power_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, C.EffectInstance, int | None]]:
+def knock_out_power_offers(res: Resolution, *, record: bool = True) -> list[tuple[int, PokemonInPlay, C.EffectInstance, int | None]]:
     """きぜつの判定の窓: 相手のワザによって「きぜつ」する時に使えるダメージを与える特殊能力（［ファイナルビーム］。``KNOCK_OUT_POWER``）の候補 (持ち主, ポケモン, 効果,
     「きぜつ」させたポケモンの番号)（v0.61）。
 
@@ -2245,12 +2320,13 @@ def knock_out_power_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, C.
             if located is None:
                 break
             offers.append((owner, pokemon, instance, cause[1]))
-            res.trace.record(CandidateFound(Window.KO_CHECK, instance.name, pokemon.pokemon_id, None))
+            if record:  # v0.110: 偽なら記録を残さない（``knockout_survival_overlap``）
+                res.trace.record(CandidateFound(Window.KO_CHECK, instance.name, pokemon.pokemon_id, None))
             break
     return offers
 
 
-def focus_band_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, Any, Any]]:
+def focus_band_offers(res: Resolution, *, record: bool = True) -> list[tuple[int, PokemonInPlay, Any, Any]]:
     """v0.81: きぜつの判定の窓で、きあいのハチマキがはたらく候補 (持ち主, ポケモン, ついているカード, 実装)。相手のワザの分類のダメージで HP 以上になった（``res.damage_ko``）
     ポケモンで、きあいのハチマキがついているもの。"""
     found = []
@@ -2258,11 +2334,12 @@ def focus_band_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, Any, An
         band = focus_band_of(res, pokemon)
         if band is not None:
             found.append((owner, pokemon, band[0], band[1]))
-            res.trace.record(CandidateFound(Window.KO_CHECK, "focus_band", pokemon.pokemon_id, None))
+            if record:  # v0.110: 偽なら記録を残さない（``knockout_survival_overlap``）
+                res.trace.record(CandidateFound(Window.KO_CHECK, "focus_band", pokemon.pokemon_id, None))
     return found
 
 
-def exp_all_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, PokemonInPlay, Any]]:
+def exp_all_offers(res: Resolution, *, record: bool = True) -> list[tuple[int, PokemonInPlay, PokemonInPlay, Any]]:
     """v0.81: きぜつの判定の窓で、学習装置を使うかを聞く候補 (持ち主, きぜつする対戦ポケモン, 学習装置をつけたポケモン, ついているカード)。
 
     - 相手の番に（持ち主が番でないプレイヤー）、持ち主の対戦ポケモン（バトル場）が、相手のワザの分類のダメージで HP 以上になった（``res.damage_ko``）
@@ -2284,7 +2361,8 @@ def exp_all_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, PokemonInP
             tool = E.tool_effect_of(state, holder, E.ExpAll)
             if tool is not None:
                 found.append((owner, pokemon, holder, tool[0]))
-                res.trace.record(CandidateFound(Window.KO_CHECK, "exp_all", holder.pokemon_id, None))
+                if record:  # v0.110: 偽なら記録を残さない（``knockout_survival_overlap``）
+                    res.trace.record(CandidateFound(Window.KO_CHECK, "exp_all", holder.pokemon_id, None))
     return found
 
 

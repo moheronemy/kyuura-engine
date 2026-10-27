@@ -639,6 +639,13 @@ V0_109 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read
 V0_109_POKEMON = V0_109
 WOOPER_NEO2, HITMONCHAN_NEO4, KADABRA_ES3 = "neo2-015", "neo4-070", "ES3-019"
 GASTLY_NEO4 = "neo4-048"  # ゴース（neo4。あくむ（超）10）。P109 の「超」のたねポケモン
+# v0.110（docs/endure-armor-up-v0.110.md）: 使うときのコインで、残りHPがなくなっても「きぜつ」しない期間つきの効果を自分に与えるワザのポケモンの 2 枚（写しの組 pool_v0_110）。ポケモンは
+# TARGETS に加える。ワザは既存の手順のまま選ぶ（使った数の少ないワザから。使っていないワザのためにエネルギーをためる手順も v0.38〜と同じ）。v0.110 のワザは新しい決定を出さない（「きぜつ」
+# しない効果は自動で、使うときのコインは決定ではない）。ログから数えるのは ``v110_uses``
+V0_110 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_110"])
+V0_110_POKEMON = V0_110
+PHANPY_NEO1, DARK_FORRETRESS = "neo1-053", "neo4-008"
+PINECO_NEO4, PINECO_NEO2 = "neo4-005", "neo2-005"  # クヌギダマ（neo4。たいあたり（無無）20）・クヌギダマ（neo2。とつぜんじばく（草）40）。わるいフォレトスの進化元
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -682,7 +689,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_106_POKEMON  # v0.106: 数とコインを組み合わせるポケモン 11 枚
            + V0_107_POKEMON  # v0.107: コインによる成否・特殊状態・防護のポケモン 9 枚
            + V0_108_POKEMON  # v0.108: 持続するダメージの変更・相手の特殊状態を参照するポケモン 5 枚
-           + V0_109_POKEMON)  # v0.109: 次の相手の番に受けるときのコインでダメージを防ぐ効果・相手のタイプで決まるダメージのポケモン 3 枚
+           + V0_109_POKEMON  # v0.109: 次の相手の番に受けるときのコインでダメージを防ぐ効果・相手のタイプで決まるダメージのポケモン 3 枚
+           + V0_110_POKEMON)  # v0.110: 使うときのコインで、残りHPがなくなっても「きぜつ」しない期間つきの効果を自分に与えるワザのポケモン 2 枚
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -1469,6 +1477,13 @@ DECKS = {
     # あやしいひかり）4 枚・ゴース（neo4-048。あくむ）4 枚。たねポケモンもすべて「超」ポケモン（抵抗力 超 のコラッタを入れない）なので、同じデッキどうしではサイコパニックの基本となる
     # ダメージが 60 になる
     "P109": ((ABRA, 4), (KADABRA_ES3, 4), (DROWZEE, 4), (GASTLY_NEO4, 4), (driver.POTION, 2), (SWITCH, 2), (driver.BILL, 2), (PSYCHIC, 38)),
+    # v0.110: 闘。ゴマゾウ（neo1-053。たいあたり（無）・こらえる（闘））4 枚と、エビワラー（neo4-070。かわす・マッハストレート）2 枚、マリガンと早いきぜつを減らすワンリキー（PMCG1-053）・
+    # サンド（PMCG1-051）・コラッタ 4 枚ずつ。きあいのハチマキは入れない（「きぜつ」しない効果とハチマキの重なり（KS2）は、ハチマキのある相手のデッキ T81 との組で起こしうる）
+    "F110": ((PHANPY_NEO1, 4), (HITMONCHAN_NEO4, 2), (BASE_MACHOP, 4), (SANDSHREW, 4), (RATTATA, 4), (driver.POTION, 2), (SWITCH, 2), (driver.BILL, 2), (FIGHTING, 36)),
+    # v0.110: 草。クヌギダマ（neo4-005・neo2-005 を 2 枚ずつ）→ わるいフォレトス（neo4-008。こうてつか（無）・だいばくはつ（草草）60・自分にも 60）4 枚と、マリガンと早いきぜつを減らす
+    # フシギダネ（PMCG1-001）・ナゾノクサ（PMCG2-002）・コラッタ 4 枚ずつ
+    "G110": ((PINECO_NEO4, 2), (PINECO_NEO2, 2), (DARK_FORRETRESS, 4), (BULBASAUR, 4), (ODDISH, 4), (RATTATA, 4), (driver.POTION, 2), (SWITCH, 2), (driver.BILL, 2),
+             (GRASS, 34)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -1701,6 +1716,13 @@ PAIRINGS_V0_108 = (("D108", "L108"), ("L108", "G108"), ("G108", "D108"), ("D108"
 # W109 対 Z60（かげぶんしん）・W109 対 G64・P109 対 H92（「うら」が出るまで投げるコインのダメージにも受けるときのコイン）。組・席・seed は先に決めた（seed 0〜3。局を選び直さない）
 PAIRINGS_V0_109 = (("W109", "P109"), ("P109", "P109"), ("W109", "D108"), ("P109", "L108"), ("W109", "G108"), ("W109", "M60"), ("P109", "M60"),
                    ("W109", "P31"), ("P109", "P31"), ("P109", "S83"), ("P109", "M103"), ("W109", "Z60"), ("W109", "G64"), ("P109", "H92"))
+# v0.110: F110 対 G110（こらえるとだいばくはつ・こうてつか）・G110 どうし（だいばくはつで両方の「きぜつ」しない効果。席を入れかえた局は同じ局なので 1 回だけ行う）・F110・G110 対 W45
+# （ゴースのみちづれ（KS2）・わるいカメールのこうらがえし（返す効果のダメージ））・F110・G110 対 T81（相手のきあいのハチマキ・学習装置・はんげきのツメ）・G110 対 V44（サカキのカイリキーの
+# こんじょう）・G110 対 G61（［ファイナルビーム］）・F110・G110 対 P31（ピッピ・ピクシーのゆびをふるで、こらえる・こうてつか・だいばくはつを相手のワザとして使う）・F110 対 G64（「うら」が
+# 出るまで投げるコインのダメージ）・F110 対 Z60（スピードスター・かげぶんしん）・G110 対 P109（あやしいひかりのこんらんの 20・v0.109 のコイン）・F110 対 G108（どくのダメージ）・
+# G110 対 M60（カイリキーの［はんげき］の特殊能力のダメージ）。組・席・seed は先に決めた（seed 0〜3。局を選び直さない）
+PAIRINGS_V0_110 = (("F110", "G110"), ("G110", "G110"), ("F110", "W45"), ("G110", "W45"), ("F110", "T81"), ("G110", "T81"), ("G110", "V44"), ("G110", "G61"),
+                   ("F110", "P31"), ("G110", "P31"), ("F110", "G64"), ("F110", "Z60"), ("G110", "P109"), ("F110", "G108"), ("G110", "M60"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -1720,7 +1742,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.96": PAIRINGS_V0_96, "v0.97": PAIRINGS_V0_97, "v0.98": PAIRINGS_V0_98, "v0.99": PAIRINGS_V0_99, "v0.100": PAIRINGS_V0_100,
            "v0.101": PAIRINGS_V0_101, "v0.102": PAIRINGS_V0_102, "v0.103": PAIRINGS_V0_103, "v0.104": PAIRINGS_V0_104,
            "v0.105": PAIRINGS_V0_105, "v0.106": PAIRINGS_V0_106, "v0.107": PAIRINGS_V0_107,
-           "v0.108": PAIRINGS_V0_108, "v0.109": PAIRINGS_V0_109}
+           "v0.108": PAIRINGS_V0_108, "v0.109": PAIRINGS_V0_109, "v0.110": PAIRINGS_V0_110}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -1923,6 +1945,10 @@ V031_STOPS = {
     # ポケモンもきぜつし勝ち負けが変わる（C18）。どれも場にそのどうぐがついているときだけ
     "UNRESOLVED_KO_PREVENTION_ORDER": lambda st, c: _v081_tools_on(st, (0, 1), ("FocusBand", "ExpAll")),
     "UNRESOLVED_FOCUS_BAND_TIMING": lambda st, c: _v081_tools_on(st, (0, 1), ("FocusBand",)),
+    # v0.110: 残りHPがなくなっても「きぜつ」しない効果（こらえる・こうてつか）の、残りHPを 10 にする時点（KS1）・きぜつの判定の効果との重なり（KS2）。場のどれかのポケモンが、
+    # 今はたらいている効果を持つときだけ（ログから組み立てず、場の持続する効果の期間で確かめる）
+    "UNRESOLVED_KO_SURVIVAL_TIMING": lambda st, c: _v110_survival_on(st),
+    "UNRESOLVED_KO_SURVIVAL_OVERLAP": lambda st, c: _v110_survival_on(st),
     # v0.87: 相手の場の［ショックボム］（受けたワザのダメージで、両方の対戦ポケモンに特殊能力のダメージ。ワザを使ったポケモンもきぜつし勝ち負けが変わる）も
     # v0.99: この組の一覧で、ほかの止める関数より先に聞くので、相手の対戦ポケモンのはたらいている「はんげき」・［わるいねぞう］（v0.10・v0.17b の止める関数が確かめる場面）も含める
     # （T99 対 K97 で、ねむりの R団のカビゴンの［わるいねぞう］で止まった。それまでの組では起こらなかった）
@@ -7052,6 +7078,135 @@ def v109_uses(state):
     return counts
 
 
+def _v110_survival_on(state) -> bool:
+    """v0.110: 場のどれかのポケモンが、今の番にはたらいている「きぜつ」しない効果（種類 knockout_survival。はたらき始める番〜最後の番）を持つか。"""
+    return any(effect.kind == V110_SURVIVAL_KIND and effect.active_turn <= state.turn_number <= effect.end_turn
+               for side in state.players for pokemon in side.in_play() for effect in pokemon.persistent_effects)
+
+
+V110_NAMES = {"たいあたり": "tackle", "こらえる": "endure", "こうてつか": "armor_up", "だいばくはつ": "explosion"}
+V110_SURVIVAL_KIND = "knockout_survival"
+V110_HITS = ("damage", "poison_damage", "confusion_damage", "place_damage_counters", "power_damage", "counterattack", "tool_damage_counters", "move_damage_counters")
+
+
+def v110_uses(state):
+    """v0.110: ログから数えた 2 枚のワザの動き（v0.110 のカードのない局では空）。
+
+    - ``attack_<id>#<位置>``（宣言したワザ）・``copied_<id>#<位置>``（ほかのワザが相手のワザとして使った v0.110 のワザ）・``<名前>_interrupted``（こんらん・手順 4 のコインで失敗）
+    - 使うときのコイン（こらえる・こうてつか）: ``<名前>_coin_<面>``（ESPでやり直したならやり直したあとの面）・``<名前>_given``・``<名前>_not_given``（「うら」）・``<名前>_skipped``
+    - 「きぜつ」しなかった（``knockout_survived``。効果を与えたワザの名前ごと）: ``<名前>_survived``・``<名前>_survived_<own|opponent>_attack``（HP 以上にしたダメージの使い手）・
+      ``<名前>_survived_retaliation``（返す効果のダメージ）・``<名前>_survived_<exact|overkill>``（ちょうど HP・HP を超えるダメージ）・``<名前>_survived_remaining_<残りHP>``・
+      ``<名前>_survived_again``（同じ効果で 2 回目から）・
+      ``survived_two_in_one_attack``（同じワザで 2 匹）
+    - 効果のはたらく番に持つポケモンが受けたダメージ: ``<名前>_nonlethal_damage``（ワザのダメージで HP 以上にならなかった）・``<名前>_knocked_out_<最後に受けたものの種類>``（効果がはたらく
+      番に、効果を持ったまま「きぜつ」した。どく・特殊能力のダメージ・ダメージカウンターなど）
+    - 消えた理由: ``<名前>_removed_<理由>``（``expired`` は期限）
+    - だいばくはつ: ``explosion_damage``・``explosion_opponent_ko``・``explosion_self_damage``・``explosion_self_lethal``・``explosion_self_survived``"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_110 for uid in state.cards):
+        return counts
+    window = None
+    effects = {}  # (持つポケモンの番号, 与えた番) → {"name", "active", "end", "survived"}
+    last_hit = {}  # 場のポケモンの番号 → 最後に受けたダメージ・カウンターのログの種類
+    pids = {}  # いちばん上のカード → 場のポケモンの番号（pokemon_id のないログのため。数えるためだけ）
+    for e in state.log:
+        kind = e["kind"]
+        if e.get("pokemon") is not None and e.get("pokemon_id") is not None:
+            pids[e["pokemon"]] = e["pokemon_id"]
+        pid = e.get("pokemon_id", pids.get(e.get("pokemon")))
+        if kind == "persistent_effect_added" and e.get("persistent_effect") == V110_SURVIVAL_KIND:
+            card_id, index = e["effect"].split("#")
+            name = V110_NAMES.get(state.definitions[card_id].attacks[int(index)].name_ja, "other")
+            effects[(pid, e["turn"])] = {"name": name, "active": e["active_turn"], "end": e["end_turn"], "survived": 0}
+            counts[f"{name}_given"] += 1
+            if window is not None:
+                window["given"] = True
+        elif kind == "persistent_effect_removed" and e.get("persistent_effect") == V110_SURVIVAL_KIND:
+            info = effects.pop((pid, e["created_turn"]), {"name": "other", "active": None, "end": None})
+            counts[f"{info['name']}_removed_{e['reason']}"] += 1
+            if e["reason"] == "knock_out" and info["active"] is not None and info["active"] <= e["turn"] <= info["end"]:
+                counts[f"{info['name']}_knocked_out_{last_hit.get(pid, 'none')}"] += 1
+        elif kind == "persistent_effect_skipped" and e.get("persistent_effect") == V110_SURVIVAL_KIND:
+            card_id, index = e["effect"].split("#")
+            counts[f"{V110_NAMES.get(state.definitions[card_id].attacks[int(index)].name_ja, 'other')}_skipped"] += 1
+        elif kind == "knockout_survived":
+            for created in e["created_turns"]:
+                info = effects.get((pid, created), {"name": "other"})
+                name = info["name"]
+                counts[f"{name}_survived"] += 1
+                counts[f"{name}_survived_{'own' if e['attacker'] == e['player'] else 'opponent'}_attack"] += 1
+                if last_hit.get(pid) == "retaliation":
+                    counts[f"{name}_survived_retaliation"] += 1
+                counts[f"{name}_survived_{'exact' if e['damage_before'] == e['total_damage'] + e['remaining_hp'] else 'overkill'}"] += 1
+                counts[f"{name}_survived_remaining_{e['remaining_hp']}"] += 1
+                if info.get("survived"):
+                    counts[f"{name}_survived_again"] += 1
+                if "survived" in info:
+                    info["survived"] += 1
+            if window is not None:
+                window["survivors"] = window.get("survivors", 0) + 1
+                if window["survivors"] == 2:
+                    counts["survived_two_in_one_attack"] += 1
+                if window.get("name") == "explosion" and e["player"] == window["player"]:
+                    counts["explosion_self_survived"] += 1
+        if kind in V110_HITS:
+            target = e.get("target_pokemon_id", pid) if kind in ("place_damage_counters", "tool_damage_counters", "counterattack") else pid
+            last_hit[target] = "retaliation" if kind == "damage" and e.get("retaliation") else kind
+            live = [info for (holder, _), info in effects.items() if holder == target and info["active"] <= e["turn"] <= info["end"]]
+            if kind == "damage" and live and e["total_damage"] < state.in_play_def(e["pokemon"]).hp:
+                for info in live:
+                    counts[f"{info['name']}_nonlethal_damage"] += 1
+        if window is not None and window["name"] in ("endure", "armor_up") and window.get("coin") is not None and not window.get("counted") \
+                and kind in ("turn_end", "game_end", "halted"):
+            window["counted"] = True
+            counts[f"{window['name']}_coin_{window['coin']}"] += 1
+            if not window.get("given"):
+                counts[f"{window['name']}_not_given"] += 1
+        if kind in ("attack", "turn_end", "game_end", "halted"):
+            window = None
+        if kind == "attack":
+            current = e.get("card_id") or state.cards[e["pokemon"]].card_id
+            key = f"{current}#{e['attack_index']}"
+            name = V110_NAMES.get(state.definitions[current].attacks[e["attack_index"]].name_ja, "other") if current in V0_110 else None
+            if current in V0_110:
+                counts[f"attack_{key}"] += 1
+            window = {"key": key, "name": name, "player": e["player"], "coin": None}
+            continue
+        if window is None:
+            continue
+        if kind == "copy_attack":
+            if e["copied"].split("#")[0] in V0_110:
+                counts[f"copied_{e['copied']}"] += 1
+                card_id, index = e["copied"].split("#")
+                window["name"] = V110_NAMES.get(state.definitions[card_id].attacks[int(index)].name_ja, "other")
+            else:
+                window["name"] = None
+            window["key"] = e["copied"]
+            continue
+        name = window["name"]
+        if name is None:
+            continue
+        if kind in ("confusion_damage", "attack_failed"):
+            counts[f"{name}_interrupted"] += 1
+            window["name"] = None
+            continue
+        if name in ("endure", "armor_up"):
+            if kind == "coin_flip" and e.get("source") == "attack" and e["player"] == window["player"]:
+                window["coin"] = e["result"]
+            elif kind == "esp_redo":
+                window["coin"] = e["redone"][-1]
+        if name == "explosion" and kind == "damage" and not e.get("retaliation"):
+            if e.get("target") == "self":
+                counts["explosion_self_damage"] += 1
+                if e["total_damage"] >= state.in_play_def(e["pokemon"]).hp:
+                    counts["explosion_self_lethal"] += 1
+            elif e.get("target") is None and e["player"] != window["player"]:
+                counts["explosion_damage"] += 1
+                if e["total_damage"] >= state.in_play_def(e["pokemon"]).hp:
+                    counts["explosion_opponent_ko"] += 1
+    return counts
+
+
 def _v107_window(state, key: str, player: int) -> dict:
     """v0.107: 1 回のワザの数える窓（数える名前・コイン・失敗・特殊状態）。v0.107 のカードのワザでなければ名前は None。"""
     card_id, index = key.split("#")
@@ -8975,7 +9130,7 @@ def make_policy(seen: dict, counts: Counter):
             # 使えるワザをどれも 2 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v031_wait_{card_id}"] += 1
             return EndTurn(player)
-        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 + V0_58 + V0_64 + V0_70 + V0_72 + V0_75 + V0_76 + V0_77_POKEMON + V0_79 + V0_82_POKEMON + V0_83 + V0_84_POKEMON + V0_85_POKEMON + V0_86_POKEMON + V0_87_POKEMON + V0_88_POKEMON + V0_89_POKEMON + V0_90_POKEMON + V0_91_POKEMON + V0_92_POKEMON + V0_93_POKEMON + V0_94_POKEMON + V0_95_POKEMON + V0_106_POKEMON + V0_107_POKEMON + V0_108_POKEMON + V0_109_POKEMON and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
+        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 + V0_58 + V0_64 + V0_70 + V0_72 + V0_75 + V0_76 + V0_77_POKEMON + V0_79 + V0_82_POKEMON + V0_83 + V0_84_POKEMON + V0_85_POKEMON + V0_86_POKEMON + V0_87_POKEMON + V0_88_POKEMON + V0_89_POKEMON + V0_90_POKEMON + V0_91_POKEMON + V0_92_POKEMON + V0_93_POKEMON + V0_94_POKEMON + V0_95_POKEMON + V0_106_POKEMON + V0_107_POKEMON + V0_108_POKEMON + V0_109_POKEMON + V0_110_POKEMON and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
             # v0.38: 必要なエネルギーの少ないワザ（でんれい・どくばりタックルなど）を使い続けると、もう一つのワザが使えるようにならない（でんれいは自分を
             # 山札にもどす）。使えるワザをどれも 1 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             # v0.106: 数とコインを組み合わせる 11 枚も同じ手順（すながくれ・かぜおこしなどを使い続けて、ローリングニードル・ネギでつくなどが使えるようにならない。v0.106 のカードの
@@ -9131,6 +9286,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v107"] = v107_uses(state)
         result["v108"] = v108_uses(state)
         result["v109"] = v109_uses(state)
+        result["v110"] = v110_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:

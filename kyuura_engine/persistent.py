@@ -69,6 +69,7 @@ from .state import (
     DestinyBond,
     DoubledDamage,
     HalvedDamage,
+    KnockOutSurvival,
     MaxHpSet,
     NextTurnAttackDamage,
     PeriodAttackCoinCheck,
@@ -184,12 +185,12 @@ def remove_expired_persistent_effects(state: GameState) -> None:
 
 
 def end_turn(effect) -> int | None:
-    """効果がはたらく最後の番（その番の終わりに ``EXPIRED`` で消える。v0.92）。期間を明示した効果（``PERIOD_EFFECT_TYPES``）は ``end_turn``、期限のない効果は None、
-    ほかの型は v0.91 までと同じ ``active_turn``（「なきつく」の次の番の始めに消える型も、はたらく番は ``active_turn``）。"""
+    """効果がはたらく最後の番（その番の終わりに ``EXPIRED`` で消える。v0.92）。期間を明示した効果（``PERIOD_EFFECT_TYPES``）と v0.110 の ``KnockOutSurvival`` は ``end_turn``、
+    期限のない効果は None、ほかの型は v0.91 までと同じ ``active_turn``（「なきつく」の次の番の始めに消える型も、はたらく番は ``active_turn``）。"""
     if lasting(effect):
         return None
-    if isinstance(effect, PERIOD_EFFECT_TYPES):
-        return effect.end_turn
+    if isinstance(effect, (*PERIOD_EFFECT_TYPES, KnockOutSurvival)):
+        return effect.end_turn  # v0.110: 「きぜつ」しない効果（こらえる・こうてつか）も最後の番を持つ
     return effect.active_turn
 
 
@@ -561,6 +562,13 @@ def timed_damage_guards(state: GameState, pokemon: PokemonInPlay) -> tuple[Timed
     """v0.109: ``pokemon`` の今はたらいている、受けるときのコインでダメージを防ぐ期限つきの効果（``TimedDamageGuard``。ぬるぬる・かわす・ブリンク。はたらく番が今の番）。受けた順。
     与えた番の残りにははたらかない。「かげぶんしん」（``tails_damage_guard``）とは別の問い合わせ（互いに拾わない）。"""
     return tuple(e for e in pokemon.persistent_effects if isinstance(e, TimedDamageGuard) and e.active_turn == state.turn_number)
+
+
+def knockout_survivals(state: GameState, pokemon: PokemonInPlay) -> tuple[KnockOutSurvival, ...]:
+    """v0.110: ``pokemon`` の今はたらいている、残りHPがなくなっても「きぜつ」しない効果（``KnockOutSurvival``。こらえる・こうてつか。はたらき始める番〜最後の番が今の番を含む）。
+    受けた順。当てはまるダメージの範囲・原因は呼ぶ側（``resolution.kernel.knockout_survivals_of``）が決める。"""
+    turn = state.turn_number
+    return tuple(e for e in pokemon.persistent_effects if isinstance(e, KnockOutSurvival) and e.active_turn <= turn <= e.end_turn)
 
 
 def remove_on_damage(state: GameState, owner: int, pokemon: PokemonInPlay, amount: int) -> None:

@@ -867,6 +867,48 @@ class TimedDamageGuard:
 
 
 @dataclass(frozen=True)
+class KnockOutSurvival:
+    """ワザによる「持続する効果」（v0.110。docs/endure-armor-up-v0.110.md 4 章）のうち、「…ワザによるダメージで、このカードの残りHPがなくなっても、このカードは「きぜつ」しない（せず）、
+    …残りHPは「10」になる」。ゴマゾウ（neo1-053）の「こらえる」（次の相手の番・相手のワザによるダメージ）・わるいフォレトス（neo4-008）の「こうてつか」（与えた番から次の自分の番が
+    終わるまで・ワザによるダメージ）（kyuura の印刷の文面）。
+
+    - ワザを使ったポケモン自身に与える（``on_opponent`` は偽）。与えるかは使うときのコイン 1 枚（ワザの説明のコイン）で決まり、効果を持ったあとはコインも使う選択もない
+    - 期間: ``active_turn`` からはたらき、``end_turn`` の番の終わりに消える（こらえるは与えた番 + 1 だけ、こうてつかは与えた番〜与えた番 + 2）。ベンチにもどる・場をはなれる・進化・
+      退化・きぜつで消える（一般の規定）。1 回はたらいても消えない（説明に書かれていない）。特殊能力ではないので、かがくへんかガス・持つポケモンの特殊状態では止まらない
+    - ``scope``: 当てはまるダメージの範囲（v0.109 と同じ値。``GUARD_SCOPE_OPPONENT_ATTACK`` は相手のワザ、``GUARD_SCOPE_ATTACK`` はワザ）。ワザの分類（ワザ・返す効果）のダメージで、
+      実際の使い手で決める（``resolution.kernel.knockout_survivals_of``）。ダメージカウンター・特殊能力・どく・こんらん・トレーナーのダメージ・ワザの効果による「きぜつ」は当たらない
+    - ``remaining_hp``: 「きぜつ」しないときの残りHP（10）。ダメージは受けたまま（無効にしない）、のっているダメージを今有効な最大HP − ``remaining_hp`` にする
+      （``resolution.flow._survive_knockouts``。きぜつの判定の窓で処理する。時点で結果が変わるなら KS1・KS2）
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    end_turn: int
+    scope: str
+    remaining_hp: int
+    kind: ClassVar[str] = "knockout_survival"
+    on_opponent: ClassVar[bool] = False
+
+    def __post_init__(self) -> None:
+        ints = (self.source_card, self.source_player, self.created_turn, self.active_turn, self.end_turn, self.remaining_hp)
+        if any(type(value) is not int for value in ints):
+            raise ValueError(f"「きぜつ」しない効果の項目が整数ではない（{self!r}）")
+        if not self.created_turn <= self.active_turn <= self.end_turn or self.scope not in GUARD_SCOPES or self.remaining_hp <= 0 or self.remaining_hp % 10:
+            raise ValueError(f"「きぜつ」しない効果の期間（与えた番 ≤ はたらき始める番 ≤ 最後の番）・範囲・残りHP が正しくない（{self!r}）")
+
+    @property
+    def turns_until_active(self) -> int:
+        """はたらき始める番は与えた番の何番あとか（型ではなく効果ごとの値。不変条件は登録の値と照らす）。"""
+        return self.active_turn - self.created_turn
+
+    def terms(self) -> tuple[int, int, str, int]:
+        """登録の ``survival_terms`` と照らす値（与えた番から数えたはたらき始める番・最後の番、範囲、残りHP）。"""
+        return self.active_turn - self.created_turn, self.end_turn - self.created_turn, self.scope, self.remaining_hp
+
+
+@dataclass(frozen=True)
 class StatusImmunityWhileActive:
     """ワザによる「持続する効果」（v0.84）のうち、やさしいレディアン（neo4-010）の「きらめきタッチ」の「このワザで新しく出てきたポケモンは、バトル場にいるかぎり、
     「どく•ねむり•マヒ•こんらん」状態にならない」（kyuura の印刷の文面。docs/light-powers-evolution-v0.84.md 4 章）。
@@ -1473,6 +1515,7 @@ PERSISTENT_EFFECT_TYPES = (PreventDamage, PreventAttackDamage, Retaliation, Next
                            CannotAttackNextOwnTurn,  # v0.78: CannotAttackNextOwnTurn（メタルスラッシュ。次の自分の番にすべてのワザを使えない）
                            ReflectShield,  # v0.83: ReflectShield（リフレクトシールド）
                            TimedDamageGuard,  # v0.109: ぬるぬる・かわす・ブリンク
+                           KnockOutSurvival,  # v0.110: こらえる・こうてつか
                            # v0.84: きらめきタッチ・こおりのはしら・パルスガード・ひかりのはどう
                            StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard,
                            StatusImmunityNextTurn,  # v0.85: しんぴのこな

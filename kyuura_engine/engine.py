@@ -250,6 +250,7 @@ from .state import (
     MaxHpSet,
     TailsDamageGuard,
     TimedDamageGuard,
+    KnockOutSurvival,
     ResistanceChange,
     TypeShift,
     WeaknessChange,
@@ -2939,6 +2940,8 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.extend(_damage_guard_problems(state, pokemon, effect, where))  # v0.60
         if isinstance(effect, TimedDamageGuard):
             problems.extend(_timed_damage_guard_problems(state, pokemon, effect, where))  # v0.109
+        if isinstance(effect, KnockOutSurvival):
+            problems.extend(_knockout_survival_problems(state, pokemon, effect, where))  # v0.110
         if isinstance(effect, PERIOD_EFFECT_TYPES):
             problems.extend(_period_effect_problems(state, pokemon, effect, where))  # v0.92
         problems.extend(_persistent_effect_log_problems(state, pokemon, effect, where))
@@ -3318,6 +3321,24 @@ def _timed_damage_guard_problems(state: GameState, pokemon: PokemonInPlay, effec
         problems.append(f"{where} {effect!r} が、効果を与えたワザ {added.get('effect')!r}（登録された実装）の効果と合わない")
     if (added.get("prevent_on"), added.get("flipper"), added.get("scope")) != effect.terms():
         problems.append(f"{where} {effect!r} が、与えたログの面・投げる人・範囲と合わない")
+    return problems
+
+
+def _knockout_survival_problems(state: GameState, pokemon: PokemonInPlay, effect: KnockOutSurvival, where: str) -> list[str]:
+    """v0.110: 残りHPがなくなっても「きぜつ」しない効果（``KnockOutSurvival``。こらえる・こうてつか）の期間（与えた番から数えたはたらき始める番・最後の番）・範囲・残りHPが、与えたワザ（ログ
+    ``persistent_effect_added`` の ``effect``。相手のワザとして使ったときは使ったワザ）の登録された実装（``survival_terms``）と、与えたログの値と合うか。自分自身・持ち主の番・バトル場・
+    期限（最後の番の終わり）・消える契機は共通の確かめ（``turns_until_active``・``persistent.end_turn``・``_persistent_effect_log_problems``）が見る。"""
+    added = _persistent_effect_added_event(state, pokemon, effect)
+    if added is None:
+        return []
+    card_id, _, index = str(added.get("effect", "")).partition("#")
+    entry = state.effects.attack_entry(card_id, int(index)) if index.isdigit() else None
+    terms = getattr(entry.effect, "survival_terms", None) if entry is not None else None
+    problems = []
+    if terms is None or terms() != (KnockOutSurvival, *effect.terms()):
+        problems.append(f"{where} {effect!r} が、効果を与えたワザ {added.get('effect')!r}（登録された実装）の効果と合わない")
+    if (added.get("active_turn"), added.get("end_turn"), added.get("scope"), added.get("remaining_hp")) != (effect.active_turn, effect.end_turn, effect.scope, effect.remaining_hp):
+        problems.append(f"{where} {effect!r} が、与えたログの期間・範囲・残りHPと合わない")
     return problems
 
 

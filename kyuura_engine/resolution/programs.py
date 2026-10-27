@@ -56,7 +56,7 @@ from ..state import (
     CannotAttachEnergy, CannotAttackWhileSourceActive, CannotRetreat, CannotUseAttack, CannotUsePowers, CannotUseOwnAttack, DamageReduction, DestinyBond, DoubledDamage, HalvedDamage, NextTurnAttackDamage, PreventAttackDamage, PreventDamage,
     MaxHpSet, ReducedDamageToSource, ReducedDamageToSourceNextTurn, ReflectShield, ResistanceChange, Retaliation, TailsDamageGuard, TrainerTurnEffect, TrainerUseLock, WeaknessChange, ZeroDamageBelow, mark_returned_to_bench,
     OPPONENT_POWER_SUPPRESSION, StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard, StatusImmunityNextTurn, PowersStopped, BenchProtection,
-    ATTACK_FIELD_POWER_SUPPRESSION, ReceivedAttackDamageBonus, DealtAttackDamageReduction, TimedDamageGuard,
+    ATTACK_FIELD_POWER_SUPPRESSION, ReceivedAttackDamageBonus, DealtAttackDamageReduction, TimedDamageGuard, KnockOutSurvival,
 )
 from ..state import ATTACK_POWER_SUPPRESSION, BENCH_ATTACK_DAMAGE_PREVENTION, COUNTER_BONE, COUNTER_FOOD, COUNTER_KINDS, MARKER_CHAR, MARKER_COLOR, MARKER_CURSE, MARKER_KINDS, MARKER_LIGHTNING_ROD, MARKER_STICKY, POWER_SUPPRESSION, Marker
 from ..markers import CLEARED as MARKERS_CLEARED
@@ -323,9 +323,11 @@ class AttackRun:
         if knocked:
             # v0.81（FB1）: きあいのハチマキのついたポケモンが、相手のワザのダメージで HP 以上になったあとに、同じワザの要素の対象になる（すぐあとにコインを投げる読み方では
             # 残りHP 10 で対象になりうる）
-            from .kernel import focus_band_timing
+            from .kernel import focus_band_timing, knockout_survival_timing
 
             focus_band_timing(self.res, pokemon, f"HP 以上になったあとのワザ {self.key} の要素")
+            # v0.110（KS1）: 残りHPがなくなっても「きぜつ」しない効果のポケモンが、HP 以上になったあとに同じワザの要素の対象になる（すぐあとに残りHP 10 にする読み方では対象になりうる）
+            knockout_survival_timing(self.res, pokemon, f"HP 以上になったあとのワザ {self.key} の要素")
         return knocked
 
     def ko_prevention_conflict(self, target: PokemonInPlay, owner: int | None = None) -> None:
@@ -738,6 +740,9 @@ def offer_flee(run: AttackRun, index: int) -> bool:
             continue
         options = tuple(b.pokemon_id for b in p.bench)
         if E.knocked_by_hp(state, pokemon):
+            from .kernel import knockout_survival_timing
+
+            knockout_survival_timing(res, pokemon, "HP 以上になったあとの［にげこむ］")  # v0.110（KS1）: すぐあとに残りHP 10 にする読み方では KD1 に当たらない
             unresolved, code, reason = options, E.KNOCKED_OUT_REACTION_CODE, E.KNOCKED_OUT_REACTION_REASON  # KD1（同じワザのダメージで HP 以上）
         elif own_attack:
             unresolved, code, reason = options, E.FLEE_OWN_ATTACK_CODE, E.FLEE_OWN_ATTACK_REASON
@@ -4726,9 +4731,10 @@ def _counters_changed(run: AttackRun, pokemon: PokemonInPlay, before: int) -> No
     track_ko(run.res, run.fs, pokemon, before)
     hp = E.max_hp(run.state, pokemon)  # v0.48: 今有効な最大HP
     if before >= hp and pokemon.damage != before:
-        from .kernel import focus_band_timing
+        from .kernel import focus_band_timing, knockout_survival_timing
 
         focus_band_timing(run.res, pokemon, "HP 以上になったあとのダメージカウンター")  # v0.81（FB1）
+        knockout_survival_timing(run.res, pokemon, "HP 以上になったあとのダメージカウンター")  # v0.110（KS1）
     if before < hp <= pokemon.damage:
         run.res.ko_prevention_able[pokemon.pokemon_id] = False
 
@@ -11826,4 +11832,45 @@ BUILDERS |= {
     E.SelfTimedDamageGuardWithoutDamage: lambda e: (SelfTimedDamageGuard(e.prevent_on.value, e.flipper, e.scope),),
     E.DamageThenSelfTimedDamageGuard: lambda e: (Damage(OPP, Printed()), SelfTimedDamageGuard(e.prevent_on.value, e.flipper, e.scope)),
     E.DamageSetAgainstType: lambda e: (Damage(OPP, AmountIfDefenderType(e.pokemon_type, e.amount)),),
+}
+
+
+# ---------------------------------------------------------------- v0.110（docs/endure-armor-up-v0.110.md）: 使うときのコインで、残りHPがなくなっても「きぜつ」しない期間つきの効果
+
+
+@dataclass(frozen=True)
+class SelfKnockOutSurvival(Element):
+    """使うときにコインを 1 枚投げ、「おもて」なら、ワザを使ったポケモン自身に、残りHPがなくなっても「きぜつ」しない期間つきの効果（``state.KnockOutSurvival``）を与える（v0.110。
+    ゴマゾウの「こらえる」・わるいフォレトスの「こうてつか」）。
+
+    - コインはワザの説明のコイン（``AttackRun.flip``）。ナツメのESPでやり直したなら、やり直したあとの結果でだけ与える（決定の前に効果を与えない。コインの前にログを残さない）。こんらんの
+      コイン（宣言のあと・ワザの要素の前）とは別。「うら」なら何もしない（ワザの失敗ではない。持っている効果を消さない）
+    - 期間は与えた番から数える（``start``〜``end``）。前の効果が残っていても置きかえずに加える（こうてつかを次の自分の番にもう一度使うと、その番は 2 つがはたらく。どちらも同じ結果）
+    - 自分への効果なので「とうめい」・「ワザをうけない」状態は評価しない。ワザを使ったポケモンがこのワザの中で HP 以上なら、処理の対象がないのでコインも投げない（p.309）
+    - 実際にワザを使ったポケモンに与える（相手のワザとして使ったなら使ったポケモン）"""
+
+    start: int
+    end: int
+    scope: str
+    remaining_hp: int
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def run(self, run: AttackRun) -> bool:
+        attacker = run.attacker()
+        if run.knocked_out(attacker):
+            run.state.add_event("persistent_effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id,
+                                persistent_effect=KnockOutSurvival.kind, effect=str(run.key), reason=E.EFFECT_TARGET_KNOCKED_OUT)
+            return False
+        if run.flip(1).results[0] is not HEADS:
+            return False
+        turn = run.state.turn_number
+        effect = KnockOutSurvival(source_card=attacker.card, source_player=run.player, created_turn=turn, active_turn=turn + self.start, end_turn=turn + self.end,
+                                  scope=self.scope, remaining_hp=self.remaining_hp)
+        add_persistent_effect(run.state, run.player, attacker, effect, attack=str(run.key), end_turn=effect.end_turn, scope=self.scope,
+                              remaining_hp=self.remaining_hp)
+        return False
+
+
+BUILDERS |= {
+    E.SelfKnockOutSurvivalOnHeads: lambda e: (SelfKnockOutSurvival(e.start, e.end, e.scope, e.remaining_hp),),
 }

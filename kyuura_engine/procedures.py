@@ -34,9 +34,9 @@ from .effects import (
     confusion_damage_calculation, weakness_resistance_log,
 )
 from .errors import UnsupportedError
-from .persistent import (KNOCK_OUT, USED, dealt_attack_damage_reductions, received_attack_damage_bonuses, remove_expired_persistent_effects, remove_on_damage, remove_persistent_effects,
+from .persistent import (KNOCK_OUT, USED, dealt_attack_damage_reductions, knockout_survivals, received_attack_damage_bonuses, remove_expired_persistent_effects, remove_on_damage, remove_persistent_effects,
                          remove_source_left_effects, remove_turn_start_expired_persistent_effects, require_can_leave)
-from .state import ATTACK_FIELD_POWER_SUPPRESSION, OPPONENT_POWER_SUPPRESSION, POWER_SUPPRESSION, Halt, Phase
+from .state import ATTACK_FIELD_POWER_SUPPRESSION, GUARD_SCOPE_ATTACK, OPPONENT_POWER_SUPPRESSION, POWER_SUPPRESSION, Halt, Phase
 from .history import note_turn_start
 from .history import prune as prune_history
 from .zones import draw_cards, return_expired_set_aside
@@ -1119,6 +1119,17 @@ def confusion_damage_problem(state: GameState, pokemon: PokemonInPlay, attack_st
             "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS",
             f"こんらん状態のポケモン {pokemon.pokemon_id} が、使うワザによるダメージを「-10」される効果（マイナスイオン・あまえる）を受けている。こんらんしたワザで自分が受ける 20 ダメージが"
             "「使うワザによるダメージ」かは、公式ルール 2000.02.14版（p.309・p.321・p.322）と kyuura の記録から決められないので扱わない（docs/damage-modifiers-condition-bonuses-v0.108.md 4 章）",
+        )
+    survival = [e for e in knockout_survivals(state, pokemon) if e.scope == GUARD_SCOPE_ATTACK]
+    if survival and pokemon.damage + confusion_damage_calculation(state, owner, pokemon, definition_views(state, pokemon)[0], CONFUSION_DAMAGE).final >= max_hp(state, pokemon):
+        # v0.110: 「こうてつか」の「ワザによるダメージで、このカードの残りHPがなくなっても、このカードは「きぜつ」せず」を持つポケモンのワザがこんらんし、自分が受ける 20（弱点・抵抗力の
+        # 計算のあと）で残りHPがなくなる。こんらんの 20 が「ワザによるダメージ」かで「きぜつ」するかが変わる（ほかの効果と同じ問い。新しい問いにしない）。HP 以上にならなければ結果は
+        # 同じなので止めない。「相手のワザによるダメージ」（こらえる）は自分のこんらんの 20 に当たらない
+        return UnsupportedError(
+            "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS",
+            f"こんらん状態のポケモン {pokemon.pokemon_id} が、ワザによるダメージで残りHPがなくなっても「きぜつ」しない効果（こうてつか）を持ち、こんらんしたワザで自分が受ける 20 ダメージで"
+            "残りHPがなくなる。こんらんのダメージが「ワザによるダメージ」かは、公式ルール 2000.02.14版（p.309・p.321・p.322）と kyuura の記録から決められないので扱わない"
+            "（docs/endure-armor-up-v0.110.md 6 章）",
         )
     return None
 

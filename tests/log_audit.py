@@ -376,6 +376,15 @@ V109_GUARD_TEXT_TERMS = {
     "次の相手の番、このカードがワザによるダメージを受ける時、コインを投げて「おもて」なら、このカードはそのダメージを受けない。(ダメージ以外の効果は受ける)":
         ("heads", "unstated", "attack"),
 }
+# v0.110: 残りHPがなくなっても「きぜつ」しない効果（こらえる・こうてつか）。期間・範囲・残りHPは、効果を与えたワザの印刷の文面から読む（エンジンの登録を読まない）:
+# 文面 → (与えた番から数えたはたらき始める番, 最後の番, 範囲（``opponent_attack``・``attack``）, 残りHP)
+V110_SURVIVAL_KIND = "knockout_survival"
+V110_SURVIVAL_TEXT_TERMS = {
+    "コインを投げて「おもて」なら、次の相手の番、相手のワザによるダメージで、このカードの残りHPがなくなっても、このカードは「きぜつ」しない。その場合、このカードの残りHPは「10」になる。":
+        (1, 1, "opponent_attack", 10),
+    "コインを投げて「おもて」なら、次の自分の番が終わるまで、ワザによるダメージで、このカードの残りHPがなくなっても、このカードは「きぜつ」せず、このカードの残りHPは「10」になる。":
+        (0, 2, "attack", 10),
+}
 V109_SET_AGAINST_TYPE = re.compile(r"このワザを受ける相手が「(.+)」ポケモンなら、このワザのダメージは(\d+)になる。")
 
 # v0.10: はたらいた「はんげき」より先にあってはならない、ワザのダメージ以外の効果・きぜつ・番の終わり（p.89）
@@ -1676,6 +1685,8 @@ def log_problems(state) -> list[str]:
     v108_window: dict | None = None  # v0.108: 今のワザの確かめ（宣言の時点の相手の特殊状態、このワザのダメージ・特殊状態・回復・与えた効果の並び）
     v109_guards: dict[int, dict] = {}  # v0.109: ログから組み立てた、受けるときのコインで防ぐ期限つきの効果（持つポケモンの番号 → 与えた番・はたらく番・面・投げる人・範囲・持ち主）
     v109_due: dict | None = None  # v0.109: 直前の受けるときのコインの判定（すぐあとのログで、受けたならそのダメージ・受けなかったならダメージがないことを確かめる）
+    v110_effects: dict[int, list[dict]] = {}  # v0.110: ログから組み立てた、「きぜつ」しない効果（持つポケモンの番号 → 与えた番・はたらく番・最後の番・範囲・残りHP・持ち主）
+    v110_window: dict | None = None  # v0.110: 今のワザの確かめ（処理したワザ・使うときのコイン・与えた数・HP 以上にしたワザのダメージの使い手・「きぜつ」しなかったポケモン）
     color_types: dict[int, dict] = {}  # v0.88: ［せんすい］の記録（対象のポケモンの番号 → 色・発生源のカード・特殊能力の位置）
     # v0.90: ログから組み立てた、場のポケモンのマーカー・カウンター（番号 → のせた順の {"marker", "color", "turn"}）と、進化・退化で取りのぞくはずのポケモン（番号 → 理由）
     marks: dict[int, list[dict]] = {}
@@ -3407,6 +3418,98 @@ def log_problems(state) -> list[str]:
         color = next(t for t in EnergyType if t.ja == matched.group(1))
         return color, int(matched.group(2)), attack.damage
 
+    def v110_problems(e: dict) -> list[str]:
+        """v0.110: 残りHPがなくなっても「きぜつ」しない効果（こらえる・こうてつか）を、エンジンの登録・計算を読まずに確かめる。
+
+        - 期間・範囲・残りHPは、効果を与えたワザ（処理したワザ）の印刷の文面から読む（``V110_SURVIVAL_TEXT_TERMS``）。与えたログは、そのワザを使ったポケモン自身・使ったプレイヤー・与えた番から
+          数えた期間で、すぐ前のそのワザの使うときのコイン（ワザの説明のコイン。ESPでやり直したならやり直した面）が「おもて」。ワザを使ったなら、使うときのコインはちょうど 1 回（やり直しを除く）で、
+          与えたのは「おもて」のときだけ（こんらん・手順 4 で失敗したワザ、ワザを使ったポケモンが HP 以上で与えなかったワザは除く）
+        - 効果はダメージで消えない（理由 ``damaged`` がない）。期限で消えるのは最後の番
+        - ``knockout_survived`` は、そのワザ（の枠）のワザのダメージ（``damage``。返す効果のダメージは返す側のプレイヤーが使い手）でちょうど HP 以上になったポケモンで、そのときはたらく範囲の効果の
+          すべての与えた番・持ち主・残りHPと合い、ワザの効果で「きぜつ」するポケモン（みちづれ・ほろびのうた）ではない。のっているダメージ・残りHP は本体の組み立て（``damage``）が確かめる
+        - 範囲の効果がはたらくポケモンが、そのワザのダメージで HP 以上になったのに、``knockout_survived`` なしに「きぜつ」していない"""
+        nonlocal v110_window
+        found: list[str] = []
+        kind = e["kind"]
+        w = v110_window
+        if kind == "attack":
+            key = f"{_attack_card_id(state, e)}#{e['attack_index']}"
+            v110_window = {"turn": e["turn"], "player": e["player"], "pokemon_id": ids.get(e["pokemon"]), "key": key, "terms": v110_text_terms(key),
+                           "coins": [], "given": 0, "skipped": False, "interrupted": False, "lethal": {}, "survived": set()}
+            return found
+        if kind in ("turn_end", "game_end", "halted"):
+            if w is not None and w["terms"] is not None and not w["interrupted"] and not w["skipped"] \
+                    and (len(w["coins"]) != 1 or w["given"] != (w["coins"] == ["heads"])):
+                found.append(f"{w['turn']} 番の「きぜつ」しない効果のワザ {w['key']} の使うときのコイン {w['coins']} と、与えた効果の数 {w['given']} が合わない（1 枚・「おもて」なら 1 つ）")
+            v110_window = None
+            return found
+        if w is not None:
+            if kind == "copy_attack":
+                w["key"], w["terms"] = e["copied"], v110_text_terms(e["copied"])
+            elif kind in ("confusion_damage", "attack_failed"):
+                w["interrupted"] = True
+            elif kind == "coin_flip" and e.get("source") == "attack" and e["player"] == w["player"]:
+                w["coins"].append(e["result"])
+            elif kind == "esp_redo":
+                count = len(e["redone"])
+                if w["coins"][-2 * count:-count] != list(e["original"]) or w["coins"][-count:] != list(e["redone"]):
+                    found.append(f"{e['turn']} 番のESPのやり直し（{e['original']} → {e['redone']}）が、そのワザのコインのログと合わない")
+                w["coins"] = w["coins"][:-2 * count] + list(e["redone"])
+            elif kind == "persistent_effect_skipped" and e.get("persistent_effect") == V110_SURVIVAL_KIND:
+                w["skipped"] = True
+        if kind == "persistent_effect_added" and e["persistent_effect"] == V110_SURVIVAL_KIND:
+            pid = e["pokemon_id"]
+            terms = None if w is None else w["terms"]
+            if terms is None or w["key"] != e["effect"] or w["pokemon_id"] != pid or e["player"] != w["player"] or e["source_player"] != e["player"] \
+                    or w["coins"][-1:] != ["heads"] or (e["active_turn"], e["end_turn"], e.get("scope"), e.get("remaining_hp")) != (
+                        e["turn"] + terms[0], e["turn"] + terms[1], terms[2], terms[3]):
+                found.append(f"{e['turn']} 番の「きぜつ」しない効果（ポケモン {pid}）が、そのワザを使ったポケモン自身への、使うときのコインの「おもて」の、印刷の文面の期間・範囲・残りHPの"
+                             "効果ではない")
+            else:
+                w["given"] += 1
+            v110_effects.setdefault(pid, []).append({"created": e["turn"], "active": e["active_turn"], "end": e["end_turn"], "scope": e.get("scope"),
+                                                     "remaining": e.get("remaining_hp"), "owner": e["player"]})
+        elif kind == "persistent_effect_removed" and e["persistent_effect"] == V110_SURVIVAL_KIND:
+            held = v110_effects.get(e["pokemon_id"], [])
+            info = next((x for x in held if x["created"] == e["created_turn"]), None)
+            if info is None or e["reason"] == "damaged" or (e["reason"] == "expired" and e["turn"] != info["end"]):
+                found.append(f"{e['turn']} 番に消えた「きぜつ」しない効果（ポケモン {e['pokemon_id']}・理由 {e['reason']}）が、ログから組み立てた効果・期限と合わない")
+            if info is not None:
+                held.remove(info)
+        elif kind == "damage" and w is not None:
+            pid = e.get("pokemon_id", ids.get(e["pokemon"]))
+            hp = max_hp_now(pid) if pid in in_play else None
+            if hp is not None and e["total_damage"] - e["amount"] < hp <= e["total_damage"]:
+                w["lethal"][pid] = 1 - e["player"] if e.get("retaliation") else w["player"]
+        elif kind == "knockout_survived":
+            pid = e["pokemon_id"]
+            applicable = v110_applicable(pid, e["turn"])
+            if w is None or pid not in w["lethal"] or not applicable or sorted(x["created"] for x in applicable) != sorted(e["created_turns"]) \
+                    or any(x["remaining"] != e["remaining_hp"] or x["owner"] != e["player"] for x in applicable) or e["attacker"] != w["lethal"][pid] \
+                    or pid in destiny_knocked or pid in effect_knocked:
+                found.append(f"{e['turn']} 番の「きぜつ」しなかったポケモン {pid} が、そのワザのダメージで HP 以上になった、はたらく範囲の効果を持つポケモンではない（与えた番 {e['created_turns']}）")
+            if w is not None:
+                w["survived"].add(pid)
+        elif kind == "knock_out" and w is not None:
+            pid = ids.get(e["pokemon"])
+            if pid in w["lethal"] and pid not in w["survived"] and v110_applicable(pid, e["turn"]) and pid not in destiny_knocked and pid not in effect_knocked:
+                found.append(f"{e['turn']} 番に、そのワザのダメージで HP 以上になった「きぜつ」しない効果のはたらくポケモン {pid} が、knockout_survived なしにきぜつした")
+        return found
+
+    def v110_applicable(pid: int, turn: int) -> list[dict]:
+        """v0.110: ログから組み立てた、ポケモン ``pid`` の ``turn`` 番にはたらく「きぜつ」しない効果のうち、今のワザで HP 以上にしたダメージの使い手が範囲に入るもの。"""
+        user = None if v110_window is None else v110_window["lethal"].get(pid)
+        return [x for x in v110_effects.get(pid, []) if x["active"] <= turn <= x["end"] and user is not None and (x["scope"] == "attack" or user != x["owner"])]
+
+    def v110_text_terms(key: str | None) -> tuple | None:
+        """v0.110: ワザ ``key`` の印刷の文面から読んだ、「きぜつ」しない効果の (はたらき始める番, 最後の番, 範囲, 残りHP)。その書き方でなければ None（エンジンの登録を読まない）。"""
+        if key is None:
+            return None
+        card_id, index = _attack_key(key)
+        definition = state.definitions.get(card_id)
+        text = definition.attacks[index].text_ja if definition is not None and 0 <= index < len(definition.attacks) else None
+        return V110_SURVIVAL_TEXT_TERMS.get(text)
+
     def v101_problems(e: dict) -> list[str]:
         """v0.101: ［KEEP］でなくなったトラッシュの効果（``energy_discard_voided``）が、ログから組み立てた場ではたらく［KEEP］の持ち主の場の「アンノーン」への、相手が使った
         ワザ・特殊能力・トレーナーの効果のものであることと、その場合に相手の効果でトラッシュしたログ（ワザ・トレーナー・［だつりょくえき］・つけかえで受けずにトラッシュ）が
@@ -3988,6 +4091,7 @@ def log_problems(state) -> list[str]:
         problems.extend(v107_problems(e))  # v0.107: 失敗のコインで決まるどく・マヒ・じばく・防護と、ダメージのあとのコインで決まるこんらんの対象・(マヒ, どく)
         problems.extend(v108_problems(e))  # v0.108: 使うワザのダメージを減らす効果・かみくだく・状態を参照する追加（もうどく・たたきおこす）・わるいうた
         problems.extend(v109_problems(e))  # v0.109: 受けるときのコインで防ぐ期限つきの効果（ぬるぬる・かわす・ブリンク）・サイコパニック
+        problems.extend(v110_problems(e))  # v0.110: 残りHPがなくなっても「きぜつ」しない効果（こらえる・こうてつか）
         if kind in ("damage", "confusion_damage"):
             # v0.90: のろいマーカーののっているポケモンが弱点の計算をしたワザのダメージは「×4」（ログの weakness_multiplier）。ほかは書かない。こんらんの 20 は、のろいマーカーと
             # 自分の弱点が当てはまるならコインの前に止まる（UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS）ので、弱点の計算をしたこんらんのダメージはない
@@ -4455,6 +4559,14 @@ def log_problems(state) -> list[str]:
                 damage[pid] = hp_of(pid) - 10
             if damage[pid] != e["total_damage"]:
                 problems.append(f"{e['turn']} 番の focus_band のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う")
+        elif kind == "knockout_survived":
+            # v0.110: こらえる・こうてつか（きぜつの判定の窓。コインも決定もない）。HP 以上のポケモンを、ログから組み立てた今有効な最大HP − 残りHP にする（効果・範囲・期間は v110_problems）
+            pid = e["pokemon_id"]
+            if pid not in in_play or pokemon_owner.get(pid) != e["player"] or ids.get(e["pokemon"]) != pid or damage[pid] < hp_of(pid) or e["damage_before"] != damage[pid]:
+                problems.append(f"{e['turn']} 番の knockout_survived（ポケモン {pid}）の前のダメージ {e['damage_before']} が、ログから組み立てた HP 以上の場のポケモンのダメージ {damage[pid]} と合わない")
+            damage[pid] = max(0, hp_of(pid) - e["remaining_hp"])
+            if damage[pid] != e["total_damage"]:
+                problems.append(f"{e['turn']} 番の knockout_survived のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]}（残りHP {e['remaining_hp']}）と違う")
         elif kind == "counter_claw":
             # v0.81: はんげきのツメ（持ち主のコインのすぐあと）
             if e["card"] not in tools_on.get(e["pokemon_id"], ()) or not isinstance(_trainer_effect_of(state, e["card"]), CounterClaw) \
@@ -6655,6 +6767,9 @@ def log_problems(state) -> list[str]:
                 info.update(until=float("inf") if e.get("end_turn") is None else e["end_turn"], source_pokemon=e.get("source_pokemon"),
                             source_player=e["source_player"], while_source_active=e.get("while_source_active", False), ends_on=tuple(e.get("ends_on", ())),
                             knockout_exception=e.get("knockout_exception", False), source_left=False)  # v0.93
+            if e["persistent_effect"] == V110_SURVIVAL_KIND:
+                # v0.110: 「きぜつ」しない効果（こらえる・こうてつか）は最後の番（end_turn）まで。期間が印刷の文面と合うかは v110_problems が確かめる
+                alive[effect_key]["until"] = e["end_turn"]
             if e.get("lasting") and (e["persistent_effect"] != AttackCoinCheck.kind or e.get("single_use")):
                 problems.append(f"{e['turn']} 番の期限のない持続する効果（ポケモン {e['pokemon_id']}）が、手順 4 のコインの「1回できえる」でない効果ではない")
             # v0.35: 「きあいだめ」（next_turn_attack_damage_multiplier）・「あわあわ」（cannot_use_own_attack）も次の自分の番
@@ -6663,6 +6778,10 @@ def log_problems(state) -> list[str]:
             offset = (NextTurnAttackDamage.turns_until_active
                       if e["persistent_effect"] in (*NEXT_TURN_DAMAGE_KINDS.values(), CannotUseOwnAttack.kind, CannotAttackNextOwnTurn.kind, PowersStopped.kind)
                       else 0 if e["persistent_effect"] in LASTING_KINDS else 1)
+            if e["persistent_effect"] == V110_SURVIVAL_KIND:
+                # v0.110: はたらき始める番は印刷の文面から読む（こらえるは与えた番 + 1、こうてつかは与えた番。読めなければ合わないものとして下で報告する）
+                survival_terms = v110_text_terms(e["effect"])
+                offset = survival_terms[0] if survival_terms is not None else e["active_turn"] - e["turn"] + 1
             if e["persistent_effect"] in PERIOD_KINDS:
                 # v0.92: 期間は登録のワザの ``period_terms``（始まり・終わりの番の数・発生源の条件・消える契機）。発生源はそのワザを使ったポケモン
                 entry = state.effects.attack_entry(*_attack_key(e["effect"]))
@@ -6728,7 +6847,7 @@ def log_problems(state) -> list[str]:
             if info is not None and e["reason"] == "expired" and e["turn"] != info["until"]:
                 problems.append(f"{e['turn']} 番に、はたらく番 {info['active_turn']} の持続する効果（ポケモン {e['pokemon_id']}）が期限で消えた（早すぎる・遅すぎる）")
             if info is not None and e["reason"] == "expired" and info["until"] != info["active_turn"] and info["kind"] not in PERIOD_KINDS \
-                    and (prior is None or prior["kind"] not in ("turn_start", "persistent_effect_removed")):
+                    and info["kind"] != V110_SURVIVAL_KIND and (prior is None or prior["kind"] not in ("turn_start", "persistent_effect_removed")):
                 problems.append(f"{e['turn']} 番に、番の始めに消える持続する効果（ポケモン {e['pokemon_id']}）が、番の始め（turn_start のすぐあと）以外で消えた")
         if arrange_due is not None and kind != "arrange_deck_top" and prior is arrange_due:
             problems.append(f"{arrange_due['turn']} 番のみらいよちで見たカードのすぐあとに、その並べかえ（arrange_deck_top）がない（{kind}）")
