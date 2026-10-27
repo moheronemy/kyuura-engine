@@ -54,11 +54,12 @@ from ..effects import (
 )
 from ..conditions import confuse, poison, put_to_sleep
 from ..decisions import KNOCK_OUT_POWER, KO_PREVENTION, REACTION_SWITCH
-from ..persistent import RETURN_IN_PLAY_TO_DECK, bench_protection, effect_attack_card, expires_at_turn_start, reduced_damage_to_source, reflect_shield, remove_on_damage, remove_persistent_effects, tails_damage_guard
+from ..persistent import (RETURN_IN_PLAY_TO_DECK, bench_protection, effect_attack_card, expires_at_turn_start, reduced_damage_to_source, reflect_shield, remove_on_damage,
+                          remove_persistent_effects, tails_damage_guard, timed_damage_guards)
 from ..zones import designate_face_down, return_in_play_to_deck, shuffle_deck
 from ..errors import UnsupportedError
 from .. import effects as E
-from ..state import RETALIATION_FIXED, Retaliation
+from ..state import GUARD_FLIPPER_OPPONENT, GUARD_SCOPE_ATTACK, RETALIATION_FIXED, Retaliation, TimedDamageGuard
 from ..history import VOID_ATTACK_BARRIER, VOID_DAMAGE_ONLY, VOID_DODGED, VOID_EFFECT_ONLY, VOID_EVADED, VOID_FLED, VOID_IMMUNE, VOID_REFLECTED, note_received
 
 from . import catalog as C
@@ -768,6 +769,11 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     - 受けるポケモンが「かげぶんしん」の効果（``state.TailsDamageGuard``）を持ち、相手のワザによるダメージ（最終ダメージが 0 より大きい）を受ける時、相手プレイヤー（ワザ・
       返す効果を使うプレイヤー）がコインを 1 枚投げ（``coin_flip`` の ``source`` は ``"persistent_effect"``。ログ ``damage_guard_check``）、「うら」ならそのダメージを
       受けない（``DamageResult.dodged``）。「おもて」ならダメージを受けて、効果は消える（``persistent.remove_on_damage``。理由 ``damaged``。どのダメージでも消える）
+
+    v0.109（docs/timed-damage-guards-v0.109.md 4 章）: 受けるポケモンが、受けるときのコインでダメージを防ぐ期限つきの効果（``state.TimedDamageGuard``。ぬるぬる・かわす・ブリンク）を
+    持ち、その範囲のダメージ（最終ダメージが 0 より大きい）を受ける時、かげぶんしんと同じ位置でコインを投げる（``timed_guard_passes``）。ダメージを受けない面ならそのダメージを受けない
+    （``DamageResult.dodged``・``guard``）。受けるときにコインで受けないと決める効果が 2 つ以上重なれば、どのコインの前にも止める（リフレクトシールドとなら RF1、ほかは GO1。
+    ``timed_guard_overlap``）
     """
     state = res.state
     frame = fs.frame
@@ -874,11 +880,19 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         trainer_self_bonus_question(res, attacker, receiver, base, modifiers, calc.final, weakness_resistance, orders, resistance)
     if calc.final > 0 and defender_effects and receiver_player != frame.player:
         reflect_shield_overlap(res, fs, receiver)
+    if calc.final > 0 and defender_effects:
+        timed_guard_overlap(res, fs, receiver_player, receiver)  # v0.109（GO1）。リフレクトシールドとの重なりは上の RF1
     if calc.final > 0 and defender_effects and not reaches(res, fs, receiver_player, receiver, DAMAGE_ELEMENT, amount=calc.final, amount_private=private_amount):
         fs.evaded[receiver.pokemon_id] = calc.final
         res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
         note_receipt(res, fs, receiver_player, receiver, voided=(DAMAGE_ELEMENT, VOID_EVADED))
         return DamageResult(target, receiver_player, receiver.pokemon_id, False, None, receiver.damage >= hp_of(state, receiver), evaded=True)
+    if calc.final > 0 and defender_effects and not timed_guard_passes(res, fs, receiver_player, receiver, calc.final, private=private_amount):
+        # v0.109: ぬるぬる・かわす・ブリンク。そのダメージだけを受けない（ワザ全体を無効にしない。``fs.evaded`` に入れない。T19b の「受けない」とは別）
+        res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
+        note_receipt(res, fs, receiver_player, receiver, voided=(DAMAGE_ELEMENT, VOID_DODGED))
+        return DamageResult(target, receiver_player, receiver.pokemon_id, False, None, receiver.damage >= hp_of(state, receiver), dodged=True,
+                            guard=TimedDamageGuard.kind)
     if calc.final > 0 and defender_effects and receiver_player != frame.player and not damage_guard_passes(res, fs, receiver_player, receiver, calc.final,
                                                                                                          private=private_amount):
         res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
@@ -1030,6 +1044,79 @@ def damage_guard_passes(res: Resolution, fs: FrameState, owner: int, pokemon: Po
     return received
 
 
+def timed_guards_for(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay) -> tuple[TimedDamageGuard, ...]:
+    """v0.109: 持ち主 ``owner`` の ``pokemon`` が受けるこのダメージの要素（開いた枠 ``fs``）に当たる、受けるときのコインで防ぐ期限つきの効果（今の番にはたらくもの）。
+
+    - 範囲（``TimedDamageGuard.scope``）は発生元（v0.103 の ``Incoming``）で決める: どちらもワザの分類（宣言したワザ・返す効果）のダメージだけ。「相手のワザによる」（ぬるぬる・
+      かわす）は実際の使い手（``Incoming.player``）が持ち主でないもの、「ワザによる」（ブリンク）は使い手を問わない。今の番のプレイヤーでは決めない
+    - 特殊能力のダメージ・こんらん・どく・トレーナー・ダメージカウンターをのせる・移す効果は ``deal_damage`` を通らないので当たらない"""
+    guards = timed_damage_guards(res.state, pokemon)
+    if not guards:
+        return ()
+    incoming = incoming_of(fs)
+    if incoming.damage_class is not DamageClass.ATTACK:
+        return ()
+    return tuple(g for g in guards if g.scope == GUARD_SCOPE_ATTACK or incoming.player != owner)
+
+
+def timed_guard_flipper(guard: TimedDamageGuard, owner: int) -> int:
+    """v0.109: 受けるときのコインで防ぐ期限つきの効果のコインを投げるプレイヤー。説明が「相手プレイヤー」と書く（ぬるぬる）なら持ち主 ``owner`` の相手、「このカードの持ち主」と書く
+    （かわす）なら持ち主。書かない（ブリンク）なら持ち主（記録上の規約: v0.2d の「ワザの説明のコインは、ワザを使うポケモン側のプレイヤーが投げる」を、効果を与えたワザを使った側
+    （持ち主）に当てはめた実装上の扱い。個別の裁定ではない。コインの結果は共通の乱数で決まり、投げる人はログの ``coin_flip``・``timed_damage_guard_check`` の記録だけを変える）。"""
+    return 1 - owner if guard.flipper == GUARD_FLIPPER_OPPONENT else owner
+
+
+def timed_guard_overlap(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay) -> None:
+    """v0.109（GO1）: このダメージの要素（最終ダメージが 0 より大きい。呼ぶ側が確かめる）に当たる受けるときのコインで防ぐ期限つきの効果（``timed_guards_for``）があり、受けるときにコインで
+    受けないと決めるほかの効果（もう 1 つの期限つきの効果・「かげぶんしん」（相手のワザのとき）・はたらいている「とうめい」）も当たるなら、どのコインも投げる前に問い
+    ``damage_guard_overlap``（GO1。``UNRESOLVED_DAMAGE_GUARD_OVERLAP``）で止める。どれを先に投げるか・先のコインのあとに次を投げるか・「かげぶんしん」が消えるかが記録から決まらない
+    （片方を無視する・確率でまとめる・順番を決めて投げる処理にしない）。リフレクトシールドとの重なりは RF1（``reflect_shield_overlap``。この前に確かめる）。状態・乱数・ログを変えない。"""
+    guards = timed_guards_for(res, fs, owner, pokemon)
+    if not guards:
+        return
+    others = ["受けるときのコインで防ぐ期限つきの効果"] * len(guards)
+    if tails_damage_guard(pokemon) is not None and incoming_of(fs).player != owner:
+        others.append("かげぶんしん")
+    if pokemon.pokemon_id in fs.reception or E.evasion_power(res.state, pokemon) is not None:
+        others.append("とうめい")
+    if len(others) > 1:
+        raise res.question("damage_guard_overlap", f"ポケモン {pokemon.pokemon_id}（{'・'.join(others)}）")
+
+
+def timed_guard_passes(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay, final: int, *, private: bool = False) -> bool:
+    """v0.109（docs/timed-damage-guards-v0.109.md 4 章）: 受けるときのコインで防ぐ期限つきの効果（``TimedDamageGuard``）。``pokemon``（持ち主 ``owner``）がこのダメージの要素に当たる効果を
+    持てば（``timed_guards_for``）、投げる人（``timed_guard_flipper``）がコインを 1 枚投げ（``coin_flip`` の ``source`` は ``"persistent_effect"``。ログ ``timed_damage_guard_check``）、
+    効果の面（``prevent_on``）なら False（そのダメージを受けない）、ほかの面なら True（ダメージを受ける。効果は消えない）。当たる効果がなければ True（コインなし）。
+
+    - 「ダメージを受けるとき」は、最終ダメージが 0 より大きいとき（呼ぶ側が確かめる。0 なら「ダメージを受けなかった」（p.319・p.321）ので投げない。かげぶんしん・T21 と同じ読み方）。
+      要素を無効にする効果（かたまる・バリアー）・「とうめい」で受けないと決まったなら、その前に終わっている。お上品攻撃・計算の順番の決定のあとの計算の結果で決める
+    - コインはダメージの要素ごと（かげぶんしん・リフレクトシールドと同じ単位。「とうめい」の 1 匹 1 ワザ 1 回ではない）。効果は消えないので、同じワザのもう 1 つのダメージの要素でも
+      また投げる。決定の前の要素で投げたコインは、決定のあとに投げ直さない（このコインのあとに同じ要素の中の決定はない。バトル場のポケモンだけが持つので［ベンチガード］は当たらない）
+    - 防ぐのはそのダメージの要素だけ（ワザ全体を無効にしない。``fs.evaded`` に入れない（T19b の「受けない」とは別））
+    - ほかの受けるときのコインで受けないと決める効果と重なれば、呼ぶ側がこの前に止める（``timed_guard_overlap``・``reflect_shield_overlap``）。ここで重なっていればエンジンの不具合"""
+    guards = timed_guards_for(res, fs, owner, pokemon)
+    if not guards:
+        return True
+    state = res.state
+    frame = fs.frame
+    incoming = incoming_of(fs)
+    if len(guards) > 1 or (tails_damage_guard(pokemon) is not None and incoming.player != owner) or pokemon.pokemon_id in fs.reception \
+            or (reflect_shield(state, pokemon) is not None and incoming.player != owner):
+        raise RuntimeError(f"ポケモン {pokemon.pokemon_id} に受けるときのコインで受けないと決める効果が重なった（``timed_guard_overlap``・``reflect_shield_overlap`` が先に止めるはず。"
+                           "エンジンの不具合）")
+    guard = guards[0]
+    flipper = timed_guard_flipper(guard, owner)
+    flips = flip_coins(state, flipper, 1, source="persistent_effect", effect=str(frame.attack_key), card=pokemon.card, pokemon_id=pokemon.pokemon_id)
+    result = flips.results[0]
+    received = result.value != guard.prevent_on
+    state.add_event("timed_damage_guard_check", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, flipped_by=flipper,
+                    persistent_effect=guard.kind, source_card=guard.source_card, created_turn=guard.created_turn, prevent_on=guard.prevent_on,
+                    flipper=guard.flipper, scope=guard.scope, effect=str(frame.attack_key), attacker=incoming.player, attacker_pokemon_id=incoming.source_pid,
+                    amount=final, result=result.value, received=received, **({"retaliation": True} if frame.kind is FrameKind.RETALIATION else {}),
+                    **_amount_privacy(private))
+    return received
+
+
 REFLECT_SHIELD_RETURN = C.EffectDefinition(
     "reflect_shield", C.Origin.PERSISTENT_EFFECT, C.Mode.AUTOMATIC, C.Timing.DEFER, frozenset({Window.AFTER_DAMAGE_ELEMENTS}), frozenset(), "now", False,
     "damage_source", "reflect_damage_to_damage_source", frozenset({DamageClass.ATTACK}), True,
@@ -1052,8 +1139,9 @@ def reflect_shield_holds(res: Resolution, fs: FrameState, owner: int, pokemon: P
     shield = reflect_shield(res.state, pokemon)
     if shield is None:
         return False
-    if tails_damage_guard(pokemon) is not None or pokemon.pokemon_id in fs.reception:
-        raise RuntimeError(f"ポケモン {pokemon.pokemon_id} に「リフレクトシールド」と「かげぶんしん」・「とうめい」が重なった（``reflect_shield_overlap`` が先に止めるはず。エンジンの不具合）")
+    if tails_damage_guard(pokemon) is not None or pokemon.pokemon_id in fs.reception or timed_damage_guards(res.state, pokemon):
+        raise RuntimeError(f"ポケモン {pokemon.pokemon_id} に「リフレクトシールド」と「かげぶんしん」・「とうめい」・受けるときのコインで防ぐ期限つきの効果が重なった"
+                           "（``reflect_shield_overlap`` が先に止めるはず。エンジンの不具合）")
     state = res.state
     frame = fs.frame
     flips = flip_coins(state, owner, 1, source="persistent_effect", effect=str(frame.attack_key), card=pokemon.card, pokemon_id=pokemon.pokemon_id)
@@ -1072,12 +1160,17 @@ def reflect_shield_overlap(res: Resolution, fs: FrameState, pokemon: PokemonInPl
     """v0.84（docs/light-powers-evolution-v0.84.md 2 章の A2）: 相手のワザによるダメージ（最終ダメージが 0 より大きい。呼ぶ側が確かめる）を受けるポケモンに、「リフレクトシールド」と、
     受けるときにコインで受けないと決める効果（「かげぶんしん」の ``TailsDamageGuard``・はたらいている「とうめい」）が重なっていれば、どのコインも投げる前に問い
     ``reflect_shield_overlap``（RF1）で止める。どちらかを優先する・片方を無視する形にしない（先のコインの結果で、あとのコインを投げるか・20 を返すかが変わる）。
-    「とうめい」と「かげぶんしん」の重なり（v0.60）・どちらか 1 つだけの場面は、今までどおり。"""
+    「とうめい」と「かげぶんしん」の重なり（v0.60）・どちらか 1 つだけの場面は、今までどおり。
+
+    v0.109: 受けるときのコインで防ぐ期限つきの効果（``TimedDamageGuard``。ぬるぬる・かわす・ブリンク）も、受けるときにコインで受けないと決める効果として数える（同じ問い RF1。
+    リフレクトシールドは相手のワザのダメージだけなので、どの範囲の効果も当たる）。"""
     if reflect_shield(res.state, pokemon) is None:
         return
     others = []
     if tails_damage_guard(pokemon) is not None:
         others.append("かげぶんしん")
+    if timed_damage_guards(res.state, pokemon):
+        others.append("受けるときのコインで防ぐ期限つきの効果")
     if pokemon.pokemon_id in fs.reception or E.evasion_power(res.state, pokemon) is not None:
         others.append("とうめい")
     if others:

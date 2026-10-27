@@ -820,6 +820,52 @@ class ReflectShield:
             raise ValueError(f"与えるダメージ・ワザの位置は整数（{self.amount!r}・{self.attack_index!r}）")
 
 
+# v0.109（docs/timed-damage-guards-v0.109.md 4 章）: 受けるときのコインでダメージを防ぐ期限つきの効果（``TimedDamageGuard``）の値。説明が書く投げる人（``flipper``）と、
+# 防ぐダメージの範囲（``scope``）。コインの面は ``coins.CoinSide`` の値（state.py は coins.py を読み込まないので文字列で持つ）
+GUARD_FLIPPER_OPPONENT = "opponent"  # 「相手プレイヤーはコインを投げる」（効果を持つポケモンの持ち主の相手）
+GUARD_FLIPPER_OWNER = "owner"  # 「このカードの持ち主はコインを投げる」
+GUARD_FLIPPER_UNSTATED = "unstated"  # 投げる人を書かない（「コインを投げて」。実際に投げる人は ``kernel`` が記録上の規約で決める）
+GUARD_FLIPPERS = (GUARD_FLIPPER_OPPONENT, GUARD_FLIPPER_OWNER, GUARD_FLIPPER_UNSTATED)
+GUARD_SCOPE_OPPONENT_ATTACK = "opponent_attack"  # 「相手のワザによるダメージ」
+GUARD_SCOPE_ATTACK = "attack"  # 「ワザによるダメージ」（「相手の」と限らない）
+GUARD_SCOPES = (GUARD_SCOPE_OPPONENT_ATTACK, GUARD_SCOPE_ATTACK)
+GUARD_SIDES = ("heads", "tails")
+
+
+@dataclass(frozen=True)
+class TimedDamageGuard:
+    """ワザによる「持続する効果」（v0.109。docs/timed-damage-guards-v0.109.md 4 章）のうち、「次の相手の番、このカードが…ワザによるダメージを受けるとき、…コインを投げる。
+    「…」なら、このカードはそのダメージを受けない。(ダメージ以外の効果は受ける…)」。ウパー（neo2-015）の「ぬるぬる」・エビワラー（neo4-070）の「かわす」・ユンゲラー（ES3-019）の
+    「ブリンク」（kyuura の印刷の文面）。
+
+    - ワザを使ったポケモン自身に与え、はたらく番は次の相手の番（``created_turn + 1``）だけ。その番の終わりに消える（v0.4b の期限）。ベンチにもどる・場をはなれる・進化・退化・きぜつで
+      消える（一般の規定）。ダメージを受けても消えない（「かげぶんしん」の ``TailsDamageGuard`` と違う。部分型にしない。``persistent.remove_on_damage`` に拾われない）
+    - ``prevent_on``: ダメージを受けない面（``"tails"``・``"heads"``）。``flipper``: 説明が書く投げる人（``GUARD_FLIPPERS``）。``scope``: 防ぐダメージの範囲（``GUARD_SCOPES``）
+    - コインは、範囲のダメージの要素で最終ダメージが 0 より大きいときに、ダメージをのせる直前に投げる（``resolution.kernel.timed_guard_passes``）。効果を与えたときには投げない。
+      防ぐのはそのダメージの要素だけ（ワザ全体を無効にしない）
+    - 特殊能力ではないので、かがくへんかガス・持つポケモンの特殊状態では消えない
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    prevent_on: str
+    flipper: str
+    scope: str
+    kind: ClassVar[str] = "timed_damage_guard"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+
+    def __post_init__(self) -> None:
+        if self.prevent_on not in GUARD_SIDES or self.flipper not in GUARD_FLIPPERS or self.scope not in GUARD_SCOPES:
+            raise ValueError(f"受けるときのコインで防ぐ効果の面・投げる人・範囲が正しくない（{self!r}）")
+
+    def terms(self) -> tuple[str, str, str]:
+        """登録の ``guard_terms`` と照らす値（面・投げる人・範囲）。"""
+        return self.prevent_on, self.flipper, self.scope
+
+
 @dataclass(frozen=True)
 class StatusImmunityWhileActive:
     """ワザによる「持続する効果」（v0.84）のうち、やさしいレディアン（neo4-010）の「きらめきタッチ」の「このワザで新しく出てきたポケモンは、バトル場にいるかぎり、
@@ -1426,6 +1472,7 @@ PERSISTENT_EFFECT_TYPES = (PreventDamage, PreventAttackDamage, Retaliation, Next
                            ReducedDamageToSourceNextTurn,  # v0.76: ReducedDamageToSourceNextTurn（なきごえ。期限が次の相手の番の終わり）
                            CannotAttackNextOwnTurn,  # v0.78: CannotAttackNextOwnTurn（メタルスラッシュ。次の自分の番にすべてのワザを使えない）
                            ReflectShield,  # v0.83: ReflectShield（リフレクトシールド）
+                           TimedDamageGuard,  # v0.109: ぬるぬる・かわす・ブリンク
                            # v0.84: きらめきタッチ・こおりのはしら・パルスガード・ひかりのはどう
                            StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard,
                            StatusImmunityNextTurn,  # v0.85: しんぴのこな

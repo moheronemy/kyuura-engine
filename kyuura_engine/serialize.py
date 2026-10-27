@@ -115,6 +115,8 @@
   種類の値と種類ごとの項目を加えただけ（形式は 24 のまま。docs/active-leave-locks-v0.93.md 11 章。前の版の書き出しを読む側は、知らない種類として拒否すること）。
   v0.108: 期間を明示した持続する効果の種類 ``"dealt_attack_damage_reduction"``（マイナスイオン・あまえる。使うワザのダメージを減らす数 ``"amount"`` を加える）も、同じく種類の値と
   項目を加えただけ（形式は 26 のまま。v0.107 までの書き出しを読む側は、知らない種類として拒否すること。docs/damage-modifiers-condition-bonuses-v0.108.md 7 章）。
+  v0.109: 持続する効果の種類 ``"timed_damage_guard"``（ぬるぬる・かわす・ブリンク。``"prevent_on"``・``"flipper"``・``"scope"`` を加える）も、同じく種類の値と項目を加えただけ（形式は
+  26 のまま。v0.108 までの書き出しを読む側は、知らない種類として拒否すること。docs/timed-damage-guards-v0.109.md 7 章）。
 - 25: 24 の場のポケモンの ``history`` の受けた記録（``"kind": "received"``）に、``active_damage``（受けたダメージ ``damage`` のうち、受けた時に持ち主のバトル場にいた分。場所の
   分からない記録の写しは ``None``）を加えたもの（v0.99。docs/unown-perform-help-history-v0.99.md 6 章）。形式 20〜24 の受けた記録は合計だけなので、場所の分かる 0 より大きい
   ダメージの記録があると ``ValueError``（合計が 0 の記録・場所の分からない記録だけなら形式 20〜24 の書き出しは v0.98 と同じ。形式 24 の受けた記録を読む側は、合計が 0 より大きい
@@ -195,6 +197,7 @@ from .state import (
     DoubledDamage,
     MaxHpSet,
     TailsDamageGuard,
+    TimedDamageGuard,
     ReflectShield,
     StatusImmunityWhileActive,
     ZeroDamageAtLeast,
@@ -304,6 +307,12 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
     elif isinstance(effect, ReflectShield):
         data["attack_index"] = effect.attack_index  # v0.83: 「リフレクトシールド」（相手に与えるダメージ）
         data["amount"] = effect.amount
+    elif isinstance(effect, TimedDamageGuard):
+        # v0.109: 受けるときのコインで防ぐ期限つきの効果（ぬるぬる・かわす・ブリンク）。ダメージを受けない面・説明が書く投げる人・範囲。種類の値と項目を加えただけで形式は変えない
+        # （v0.108 までの書き出しを読む側は、知らない種類として拒否すること）
+        data["prevent_on"] = effect.prevent_on
+        data["flipper"] = effect.flipper
+        data["scope"] = effect.scope
     elif isinstance(effect, StatusImmunityWhileActive):
         data["attack_index"] = effect.attack_index  # v0.84: 「きらめきタッチ」（効果を与えたワザと、それを使ったポケモンのカード）
         data["given_by"] = effect.given_by

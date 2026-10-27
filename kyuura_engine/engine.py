@@ -249,6 +249,7 @@ from .state import (
     StatusImmunityNextTurn,
     MaxHpSet,
     TailsDamageGuard,
+    TimedDamageGuard,
     ResistanceChange,
     TypeShift,
     WeaknessChange,
@@ -2936,6 +2937,8 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.extend(_effective_value_effect_problems(state, pokemon, effect, where))  # v0.48
         if isinstance(effect, TailsDamageGuard):
             problems.extend(_damage_guard_problems(state, pokemon, effect, where))  # v0.60
+        if isinstance(effect, TimedDamageGuard):
+            problems.extend(_timed_damage_guard_problems(state, pokemon, effect, where))  # v0.109
         if isinstance(effect, PERIOD_EFFECT_TYPES):
             problems.extend(_period_effect_problems(state, pokemon, effect, where))  # v0.92
         problems.extend(_persistent_effect_log_problems(state, pokemon, effect, where))
@@ -3298,6 +3301,24 @@ def _damage_guard_problems(state: GameState, pokemon: PokemonInPlay, effect, whe
     if terms is None or terms() is not TailsDamageGuard:
         return [f"{where} {effect!r} が、効果を与えたワザ {added.get('effect')!r}（登録された実装）の効果と合わない"]
     return []
+
+
+def _timed_damage_guard_problems(state: GameState, pokemon: PokemonInPlay, effect: TimedDamageGuard, where: str) -> list[str]:
+    """v0.109: 受けるときのコインでダメージを防ぐ期限つきの効果（``TimedDamageGuard``。ぬるぬる・かわす・ブリンク）の面・投げる人・範囲が、与えたワザ（ログ ``persistent_effect_added`` の
+    ``effect``。相手のワザとして使ったときは使ったワザ）の登録された実装（``guard_terms``: (型, 面, 投げる人, 範囲)）と、与えたログの値と合うか。期間（次の相手の番）・自分自身・
+    消える契機は共通の確かめ（``turns_until_active``・``_persistent_effect_log_problems``）が見る。対応するログがなければ ``_persistent_effect_log_problems`` が見つける。"""
+    added = _persistent_effect_added_event(state, pokemon, effect)
+    if added is None:
+        return []
+    card_id, _, index = str(added.get("effect", "")).partition("#")
+    entry = state.effects.attack_entry(card_id, int(index)) if index.isdigit() else None
+    terms = getattr(entry.effect, "guard_terms", None) if entry is not None else None
+    problems = []
+    if terms is None or terms() != (TimedDamageGuard, *effect.terms()):
+        problems.append(f"{where} {effect!r} が、効果を与えたワザ {added.get('effect')!r}（登録された実装）の効果と合わない")
+    if (added.get("prevent_on"), added.get("flipper"), added.get("scope")) != effect.terms():
+        problems.append(f"{where} {effect!r} が、与えたログの面・投げる人・範囲と合わない")
+    return problems
 
 
 def _type_shift_problems(state: GameState, player: int, pokemon: PokemonInPlay) -> list[str]:

@@ -550,6 +550,7 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
     "attack_evaded": (("amount",), _amount_unless_private),
     "damage_guard_check": (("amount",), _amount_unless_private),
     "reflect_shield_check": (("amount",), _amount_unless_private),
+    "timed_damage_guard_check": (("amount",), _amount_unless_private),  # v0.109: ぬるぬる・かわす・ブリンク（同じ扱い）
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({

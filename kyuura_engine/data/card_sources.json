@@ -28678,6 +28678,49 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.108 で加えた（docs/damage-modifiers-condition-bonuses-v0.108.md）。ES3（expansion_sheet。拡張シート 第3弾(緑版)。発売 1998-11-24）。アーボから 1 進化（進化元は kyuura の field_sources で pcg-search.com の進化の並び）。まきつく=ParalyzeOnHeads（既存の型。相手に 20 → コイン 1 枚の「おもて」でマヒ）。もうどく=PlusIfDefenderPoisonedThenPoison(10)（ワザの名前は「もうどく」だが説明は通常のどく。このワザを受ける前から相手がどく（通常・特殊のどちらでも）なら目安 30 + 10。ダメージのあとに通常のどく。特殊などくにしない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）。英語の欄はない。data_gaps（pokemon.dex・jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stex3001・名前・ワザの名前で確かめた。わるいアーボック（PMCG4-008）・アーボック（PMCG3-004）・ベロリンガの「まきつくベロ」の記録は別のカード・別のワザ。kyuura の data/pcgsearch_page_checks.json の 1stex3001 はサイトのページの読み直しの記録（転記との違いなし）で、LD-・CC- ではない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo2-015": {
+      "basis": "kyuura_data",
+      "name_ja": "ウパー",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-27",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.109 で加えた（docs/timed-damage-guards-v0.109.md）。neo2（遺跡をこえて...。expansion_pack。発売 2000-07-07。ルールの基準の日より後に出たカードだが、2000.02.14 版のルールで処理する）。ぬるぬる=SelfTimedDamageGuardWithoutDamage(うら, 相手プレイヤー, 相手のワザ)（ダメージなし。次の相手の番だけ、相手のワザによるダメージを受けるとき相手プレイヤーがコインを投げ、「うら」ならそのダメージを受けない。ダメージ以外の効果は受ける。コインは使ったときには投げない）。しっぽでたたく=DAMAGE_ONLY（説明文なし。文面・出典を書かない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。英語の欄（Slime）は日本語を置きかえない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前（日本語・英語の欄）で data/・docs/ を確かめた。当たったのはカードの一覧・対象の一覧・転記元の写し・商品の一覧と、名前の同じ別のカードの記録（なし）。data/Silver_Bible_structured.md（研究の記録ではない）の名前の一致は根拠にしていない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo4-070": {
+      "basis": "kyuura_data",
+      "name_ja": "エビワラー",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-27",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.109 で加えた（docs/timed-damage-guards-v0.109.md）。neo4（闇、そして光へ...。expansion_pack。発売 2001-04-20。ルールの基準の日より後に出たカードだが、2000.02.14 版のルールで処理する）。かわす=SelfTimedDamageGuardWithoutDamage(おもて, 持ち主, 相手のワザ)（ダメージなし。次の相手の番だけ、相手のワザによるダメージを受けるときこのカードの持ち主がコインを投げ、「おもて」ならそのダメージを受けない。ダメージ以外の効果は受ける。ぬるぬるとは面・投げる人が違う（確率が同じでも同じ組にしない））。マッハストレート=DAMAGE_ONLY（説明文なし）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。英語の欄（Dodge）は日本語を置きかえない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前（日本語・英語の欄）で data/・docs/ を確かめた。当たったのはカードの一覧・対象の一覧・転記元の写し・商品の一覧と、名前の同じ別のカードの記録（エビワラー（ポケモンカード第1弾）の CC-・R団のエビワラー（PMCG5-054）の LD-・CR-・rule_history の誌面の引用。どれもこのカードを指さない）。data/Silver_Bible_structured.md（研究の記録ではない）の名前の一致は根拠にしていない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES3-019": {
+      "basis": "kyuura_data",
+      "name_ja": "ユンゲラー",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-27",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.109 で加えた（docs/timed-damage-guards-v0.109.md）。ES3（expansion_sheet。拡張シート 第3弾(緑版)。発売 1998-11-24）。ケーシィから 1 進化（進化元は写しにある）。サイコパニック=DamageSetAgainstType(超, 60)（受ける相手の今有効なタイプが「超」なら基本となるダメージ 60、ほかは目安 30。p.321 の 1 段階で、弱点・抵抗力などはそのあと。最終ダメージを 60 にしない）。ブリンク=DamageThenSelfTimedDamageGuard(おもて, 書かない, ワザ)（目安 30 のあと自分に与える。次の相手の番だけ、ワザによるダメージ（「相手の」と限らない）を受けるときコインを投げ、「おもて」ならそのダメージを受けない。投げる人は書かれていないので、v0.2d の記録上の規約で持ち主として記録する（個別の裁定ではない。結果は共通の乱数で決まる））。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）。英語の欄はない。data_gaps（pokemon.dex・jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stex3019・名前・ワザの名前（日本語・英語の欄）で data/・docs/ を確かめた。当たったのはカードの一覧・対象の一覧・転記元の写し・商品の一覧（data/pcgsearch_page_checks.json の 1stex3019 はサイトのページの読み直しの記録で、転記との違いなし。LD-・CC- ではない）と、名前の同じ別のカードの記録（ユンゲラー（ポケモンカード第1弾）の LD-・CC-・CR-・rule_history の会報の引用・ナツメのユンゲラー。どれもこのカードを指さない）。data/Silver_Bible_structured.md（研究の記録ではない）の名前の一致は根拠にしていない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
     }
   }
 }

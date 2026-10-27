@@ -74,6 +74,7 @@
 
 from __future__ import annotations
 
+import re
 from collections import Counter
 from typing import Any
 
@@ -364,6 +365,18 @@ V107_STATUS_PAIR = (E.PARALYSIS, E.POISON)
 V108_TYPES = (E.DamageThenDealtDamageReduction, E.DealtDamageReductionWithoutDamage, E.DamageThenReceivedAttackDamageBonus, E.PlusIfDefenderPoisonedThenPoison,
               E.PlusIfDefenderStatusThenCure, E.StatusByCoinWithoutDamage)
 V108_DARK_SONG_PAIR = (E.SLEEP, E.CONFUSION)
+# v0.109: 受けるときのコインで防ぐ期限つきの効果の種類（エンジンの定義から読まず、ここで独立に持つ）と、印刷の文面ごとの (ダメージを受けない面, 投げる人, 範囲)。投げる人を書かない文面
+# （ブリンク）は "unstated"（監査は、記録上の規約の持ち主が投げたことを確かめる）
+V109_GUARD_KIND = "timed_damage_guard"
+V109_GUARD_TEXT_TERMS = {
+    "次の相手の番、このカードが相手のワザによるダメージを受けるとき、相手プレイヤーはコインを投げる。「うら」なら、このカードはそのダメージを受けない。(ダメージ以外の効果は受ける。)":
+        ("tails", "opponent", "opponent_attack"),
+    "次の相手の番、このカードが相手のワザによるダメージを受けるとき、このカードの持ち主はコインを投げる。「おもて」なら、このカードはそのダメージを受けない。（ダメージ以外の効果は受ける）。":
+        ("heads", "owner", "opponent_attack"),
+    "次の相手の番、このカードがワザによるダメージを受ける時、コインを投げて「おもて」なら、このカードはそのダメージを受けない。(ダメージ以外の効果は受ける)":
+        ("heads", "unstated", "attack"),
+}
+V109_SET_AGAINST_TYPE = re.compile(r"このワザを受ける相手が「(.+)」ポケモンなら、このワザのダメージは(\d+)になる。")
 
 # v0.10: はたらいた「はんげき」より先にあってはならない、ワザのダメージ以外の効果・きぜつ・番の終わり（p.89）
 COUNTER_BARRIERS = (
@@ -1661,6 +1674,8 @@ def log_problems(state) -> list[str]:
     v106_window: dict | None = None  # v0.106: 今のワザの確かめ（宣言の時点のカウンター・エネルギーカードの枚数・相手が取ったサイド、このワザのコイン・相手と自分へのダメージ）
     v107_window: dict | None = None  # v0.107: 今のワザの確かめ（宣言の時点の場、このワザのコイン・失敗・ダメージ・特殊状態・防護の並び）
     v108_window: dict | None = None  # v0.108: 今のワザの確かめ（宣言の時点の相手の特殊状態、このワザのダメージ・特殊状態・回復・与えた効果の並び）
+    v109_guards: dict[int, dict] = {}  # v0.109: ログから組み立てた、受けるときのコインで防ぐ期限つきの効果（持つポケモンの番号 → 与えた番・はたらく番・面・投げる人・範囲・持ち主）
+    v109_due: dict | None = None  # v0.109: 直前の受けるときのコインの判定（すぐあとのログで、受けたならそのダメージ・受けなかったならダメージがないことを確かめる）
     color_types: dict[int, dict] = {}  # v0.88: ［せんすい］の記録（対象のポケモンの番号 → 色・発生源のカード・特殊能力の位置）
     # v0.90: ログから組み立てた、場のポケモンのマーカー・カウンター（番号 → のせた順の {"marker", "color", "turn"}）と、進化・退化で取りのぞくはずのポケモン（番号 → 理由）
     marks: dict[int, list[dict]] = {}
@@ -3162,7 +3177,7 @@ def log_problems(state) -> list[str]:
         found: list[str] = []
         opp = w["opponent"]
         kos = {x[1] for x in seq if x[0] == "ko"}
-        damages = [(i, x) for i, x in enumerate(seq) if x[0] in ("damage", "prevented", "evaded")]
+        damages = [(i, x) for i, x in enumerate(seq) if x[0] in ("damage", "prevented", "evaded", "dodged")]
         opp_damage = [(i, x) for i, x in damages if x[1] == opp]
         statuses = [x for x in seq if x[0] == "status"]
         cured = [x for x in seq if x[0] == "cured"]
@@ -3282,6 +3297,11 @@ def log_problems(state) -> list[str]:
             receiver = e.get("pokemon_id") if kind != "damage" else e.get("pokemon_id", ids.get(e["pokemon"]))
             seq.append(("damage" if kind == "damage" else "prevented" if kind == "damage_prevented" else "evaded", receiver,
                         e["steps"][0][1] if kind == "damage" and e.get("steps") else None))
+        elif not e.get("retaliation") and ((kind in ("damage_guard_check", "timed_damage_guard_check") and not e["received"])
+                                           or (kind == "reflect_shield_check" and e["reflected"])):
+            # v0.109: 受けるときのコインでそのダメージを受けなかった（ぬるぬる・かわす・ブリンク。同じ形のかげぶんしん・リフレクトシールドも）。ダメージの要素の結果で、ログ damage はない
+            # （v0.109 の正式な対戦で、ブリンクの「おもて」で受けなかったたたきおこすを、ダメージの要素がないと誤って報告していた）
+            seq.append(("dodged", e["pokemon_id"], None))
         elif kind == "special_condition" and mine:
             seq.append(("status", e["pokemon_id"], e["condition"], e.get("damage")))
         elif kind == "special_conditions_removed" and mine and e["reason"] == "cured":
@@ -3297,6 +3317,95 @@ def log_problems(state) -> list[str]:
         elif kind == "knock_out":
             seq.append(("ko", ids.get(e["pokemon"])))
         return []
+
+    def v109_problems(e: dict) -> list[str]:
+        """v0.109: 受けるときのコインで防ぐ期限つきの効果（ぬるぬる・かわす・ブリンク）と、相手のタイプで決まる基本となるダメージ（サイコパニック）を、エンジンの登録・計算を読まずに確かめる。
+
+        - 面・投げる人・範囲は、効果を与えたワザ（処理したワザ）の印刷の文面から読む（``V109_GUARD_TEXT_TERMS``）。与えたログは、そのワザを使ったポケモン自身・使ったプレイヤー・次の相手の番
+        - コインの判定（``timed_damage_guard_check``）は、ログから組み立てた効果がはたらく番で、直前の ``coin_flip``（``persistent_effect``）が投げる人・結果と合い、範囲のダメージ（返す効果の
+          ダメージは返す側のプレイヤー）で、受けたかが面と合う。受けたなら、すぐあとにその量のダメージ。受けなかったなら、そのダメージはない
+        - 効果がはたらく番に、範囲の 0 より大きいワザのダメージ（``damage``。受けるポケモンの持っている効果を除くスピードスターなどはのぞく）を受けたなら、すぐ前にそのコインの判定がある
+          （使った番・ほかの番・0 のダメージ・特殊能力・どく・こんらんのダメージには判定がない。効果はダメージを受けても消えない（理由 ``damaged`` で消えない））
+        - サイコパニック: 相手の対戦ポケモンへのダメージの基本となるダメージ（1 段階）は、ログから組み立てた受けるポケモンの今の色の読み方（``type_readings_now``）がどれも文面のタイプなら文面の数、
+          どれも違えば目安の数字（読み方で変わるなら VS1 で止まるはず）"""
+        nonlocal v109_due
+        found: list[str] = []
+        kind = e["kind"]
+        due, v109_due = v109_due, None
+        if due is not None and due["received"] and not (kind == "damage" and e.get("pokemon_id", ids.get(e.get("pokemon"))) == due["pid"]):
+            found.append(f"{due['turn']} 番の受けるときのコインで受けると決まったポケモン {due['pid']} の、すぐあとにダメージ（damage）がない（{kind}）")
+        if kind == "persistent_effect_added" and e["persistent_effect"] == V109_GUARD_KIND:
+            pid = e["pokemon_id"]
+            processed = None if attack_window is None else attack_window.get("copied", attack_window["effect"])
+            terms = (e.get("prevent_on"), e.get("flipper"), e.get("scope"))
+            if v109_text_terms(e["effect"]) != terms or processed != e["effect"] or attack_window["pokemon_id"] != pid \
+                    or e["player"] != attack_window["player"] or e["source_player"] != e["player"] or e["active_turn"] != e["turn"] + 1:
+                found.append(f"{e['turn']} 番の受けるときのコインで防ぐ効果（ポケモン {pid}・{terms}）が、そのワザを使ったポケモン自身への、印刷の文面の面・投げる人・範囲・"
+                             "次の相手の番の効果ではない")
+            if pid in v109_guards:
+                found.append(f"{e['turn']} 番に、ポケモン {pid} の受けるときのコインで防ぐ効果を、前の効果が消える前に重ねた")
+            v109_guards[pid] = {"created": e["turn"], "active": e["active_turn"], "terms": terms, "owner": e["player"]}
+        elif kind == "persistent_effect_removed" and e["persistent_effect"] == V109_GUARD_KIND:
+            guard = v109_guards.pop(e["pokemon_id"], None)
+            if guard is None or guard["created"] != e["created_turn"] or e["reason"] == "damaged" \
+                    or (e["reason"] == "expired" and e["turn"] != guard["active"]):
+                found.append(f"{e['turn']} 番に消えた受けるときのコインで防ぐ効果（ポケモン {e['pokemon_id']}・理由 {e['reason']}）が、ログから組み立てた効果・期限と合わない")
+        elif kind == "timed_damage_guard_check":
+            pid, owner = e["pokemon_id"], e["player"]
+            guard = v109_guards.get(pid)
+            source = None if attack_window is None else (1 - attack_window["player"] if e.get("retaliation") else attack_window["player"])
+            terms = (e.get("prevent_on"), e.get("flipper"), e.get("scope"))
+            flipper = None if guard is None else (1 - owner if guard["terms"][1] == "opponent" else owner)
+            if guard is None or guard["active"] != e["turn"] or guard["created"] != e["created_turn"] or guard["terms"] != terms or guard["owner"] != owner \
+                    or pokemon_owner.get(pid) != owner or source is None or e["attacker"] != source or e["flipped_by"] != flipper or e["amount"] <= 0 \
+                    or (guard["terms"][2] == "opponent_attack" and source == owner):
+                found.append(f"{e['turn']} 番の受けるときのコインの判定（ポケモン {pid}）が、ログから組み立てたはたらく効果・範囲のダメージ・投げる人のものではない")
+            if prior is None or prior["kind"] != "coin_flip" or prior.get("source") != "persistent_effect" or prior["player"] != e["flipped_by"] \
+                    or prior.get("pokemon_id") != pid or prior["result"] != e["result"] or e["received"] != (e["result"] != e.get("prevent_on")):
+                found.append(f"{e['turn']} 番の受けるときのコインの判定（ポケモン {pid}）の直前のコイン・結果・受けたかが合わない")
+            v109_due = {"turn": e["turn"], "pid": pid, "amount": e["amount"], "received": e["received"]}
+        elif kind == "damage":
+            pid = e.get("pokemon_id", ids.get(e["pokemon"]))
+            guard = v109_guards.get(pid)
+            source = None if attack_window is None else (1 - e["player"] if e.get("retaliation") else attack_window["player"])
+            guarded = guard is not None and guard["active"] == e["turn"] and e["amount"] > 0 and not e.get("ignore_defender_effects") \
+                and (guard["terms"][2] == "attack" or source != guard["owner"])
+            if guarded and (due is None or due["pid"] != pid or not due["received"] or due["amount"] != e["amount"]):
+                found.append(f"{e['turn']} 番に、受けるときのコインで防ぐ効果のはたらくポケモン {pid} が、すぐ前の判定（受けた・同じ量）なしに {e['amount']} ダメージを受けた")
+            elif not guarded and due is not None and due["pid"] == pid:
+                found.append(f"{e['turn']} 番に、受けるときのコインの判定のあとのポケモン {pid} のダメージが、はたらく効果の範囲の 0 より大きいダメージではない")
+            if attack_window is not None and not e.get("retaliation") and (e.get("target") or "opponent_active") == "opponent_active":
+                psychic = v109_set_against_type(attack_window.get("copied", attack_window["effect"]))
+                if psychic is not None:
+                    color, amount, printed = psychic
+                    readings = type_readings_now(pid)
+                    expected = amount if all(r is color for r in readings) else printed if all(r is not color for r in readings) else None
+                    base = e["steps"][0][1] if e.get("steps") else None
+                    if expected is None or base != expected:
+                        found.append(f"{e['turn']} 番のサイコパニックの基本となるダメージ {base} が、ログから組み立てた受けるポケモン {pid} の色の読み方 {readings} の値 {expected} と違う")
+        return found
+
+    def v109_text_terms(key: str | None) -> tuple | None:
+        """v0.109: ワザ ``key`` の印刷の文面から読んだ、受けるときのコインで防ぐ効果の (面, 投げる人, 範囲)。その書き方でなければ None（エンジンの登録を読まない）。"""
+        if key is None:
+            return None
+        card_id, index = _attack_key(key)
+        definition = state.definitions.get(card_id)
+        text = definition.attacks[index].text_ja if definition is not None and 0 <= index < len(definition.attacks) else None
+        return V109_GUARD_TEXT_TERMS.get(text)
+
+    def v109_set_against_type(key: str | None) -> tuple | None:
+        """v0.109: ワザ ``key`` の印刷の文面が「このワザを受ける相手が「X」ポケモンなら、このワザのダメージはNになる。」なら (X の色, N, 目安の数字)。そうでなければ None。"""
+        if key is None:
+            return None
+        card_id, index = _attack_key(key)
+        definition = state.definitions.get(card_id)
+        attack = definition.attacks[index] if definition is not None and 0 <= index < len(definition.attacks) else None
+        matched = None if attack is None or attack.text_ja is None else V109_SET_AGAINST_TYPE.fullmatch(attack.text_ja)
+        if matched is None:
+            return None
+        color = next(t for t in EnergyType if t.ja == matched.group(1))
+        return color, int(matched.group(2)), attack.damage
 
     def v101_problems(e: dict) -> list[str]:
         """v0.101: ［KEEP］でなくなったトラッシュの効果（``energy_discard_voided``）が、ログから組み立てた場ではたらく［KEEP］の持ち主の場の「アンノーン」への、相手が使った
@@ -3878,6 +3987,7 @@ def log_problems(state) -> list[str]:
         problems.extend(v106_problems(e))  # v0.106: 数とコインの組み合わせ（カウンター・表・カードの枚数・取ったサイド・同じコインの自分へのダメージ・名前の数）
         problems.extend(v107_problems(e))  # v0.107: 失敗のコインで決まるどく・マヒ・じばく・防護と、ダメージのあとのコインで決まるこんらんの対象・(マヒ, どく)
         problems.extend(v108_problems(e))  # v0.108: 使うワザのダメージを減らす効果・かみくだく・状態を参照する追加（もうどく・たたきおこす）・わるいうた
+        problems.extend(v109_problems(e))  # v0.109: 受けるときのコインで防ぐ期限つきの効果（ぬるぬる・かわす・ブリンク）・サイコパニック
         if kind in ("damage", "confusion_damage"):
             # v0.90: のろいマーカーののっているポケモンが弱点の計算をしたワザのダメージは「×4」（ログの weakness_multiplier）。ほかは書かない。こんらんの 20 は、のろいマーカーと
             # 自分の弱点が当てはまるならコインの前に止まる（UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS）ので、弱点の計算をしたこんらんのダメージはない
@@ -6845,8 +6955,9 @@ def _sees_private(event: dict, viewer) -> bool:
         return False  # v0.63: くすぐりマシーンで置いたカードは、だれも見られない（持ち主も）
     if kind == "prizes_to_deck":
         return viewer is not None and viewer == event["looker"]  # v0.80: にせオーキドの発明（サイドを見たプレイヤーだけ。サイドの持ち主は見ていない）
-    if kind in ("attack_evaded", "damage_guard_check", "reflect_shield_check"):
+    if kind in ("attack_evaded", "damage_guard_check", "reflect_shield_check", "timed_damage_guard_check"):
         # v0.95: 受けなかったダメージの量。基本となるダメージが見た手札の中身で決まるワザ（印 amount_private）なら、見たプレイヤーと手札の持ち主（対戦するプレイヤー）だけ
+        # v0.109: 受けるときのコインで防ぐ期限つきの効果の判定（timed_damage_guard_check）も同じ
         return not event.get("amount_private") or viewer is not None
     return viewer is not None and viewer == event.get("player")
 

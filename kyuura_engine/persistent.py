@@ -85,6 +85,7 @@ from .state import (
     StatusImmunityNextTurn,
     StatusImmunityWhileActive,
     TailsDamageGuard,
+    TimedDamageGuard,
     WeaknessChange,
     ZeroDamageAtLeast,
     ZeroDamageBelow,
@@ -554,6 +555,12 @@ def attack_effect_guard(state: GameState, pokemon: PokemonInPlay) -> AttackEffec
 def tails_damage_guard(pokemon: PokemonInPlay) -> TailsDamageGuard | None:
     """``pokemon`` の「かげぶんしん」の効果（v0.60。``TailsDamageGuard``）。なければ None。与えたときからはたらき、期限はない。"""
     return next((e for e in pokemon.persistent_effects if isinstance(e, TailsDamageGuard)), None)
+
+
+def timed_damage_guards(state: GameState, pokemon: PokemonInPlay) -> tuple[TimedDamageGuard, ...]:
+    """v0.109: ``pokemon`` の今はたらいている、受けるときのコインでダメージを防ぐ期限つきの効果（``TimedDamageGuard``。ぬるぬる・かわす・ブリンク。はたらく番が今の番）。受けた順。
+    与えた番の残りにははたらかない。「かげぶんしん」（``tails_damage_guard``）とは別の問い合わせ（互いに拾わない）。"""
+    return tuple(e for e in pokemon.persistent_effects if isinstance(e, TimedDamageGuard) and e.active_turn == state.turn_number)
 
 
 def remove_on_damage(state: GameState, owner: int, pokemon: PokemonInPlay, amount: int) -> None:

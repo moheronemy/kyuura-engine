@@ -91,7 +91,7 @@ from __future__ import annotations
 
 import itertools
 import re
-from dataclasses import dataclass, field, replace as _dataclass_replace
+from dataclasses import astuple as _dataclass_astuple, dataclass, field, replace as _dataclass_replace
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, Iterable, Mapping, Sequence
 
@@ -172,6 +172,7 @@ from .state import (
     COLOR_ENERGY, COLOR_POKEMON_TYPE, ColorEffect,
     COUNTER_BONE, COUNTER_FOOD, MARKER_CHAR, MARKER_COLOR, MARKER_CURSE, MARKER_LIGHTNING_ROD, MARKER_STICKY,
     ATTACK_FIELD_POWER_SUPPRESSION, SOURCE_LEAVES_ACTIVE,
+    GUARD_FLIPPER_OPPONENT, GUARD_FLIPPER_OWNER, GUARD_FLIPPER_UNSTATED, GUARD_SCOPE_ATTACK, GUARD_SCOPE_OPPONENT_ATTACK,
 )
 from .zones import (
     attach_energy_from_hand, attach_trainer, bench_from_deck, bench_from_discard, discard_attached_cards, discard_from_hand, discard_hand, draw_cards, return_discard_to_hand,
@@ -643,6 +644,14 @@ class DamageResult:
     evaded: bool = False
     dodged: bool = False
     lost: bool = False  # v0.67: 受けるポケモンがうらのカード（マチスの秘策）で、おもてにしたら「たねポケモン」でなくトラッシュした（対象がいない。``amount`` は None）
+    # v0.109: ``dodged`` のうち、受けるときのコインで防ぐ期限つきの効果（``state.TimedDamageGuard``。ぬるぬる・かわす・ブリンク）で受けなかったときの、その効果の種類。かげぶんしん・
+    # リフレクトシールドで受けなかったときは None（v0.108 までの値のまま。決定をまたいで運ぶ値の形も変えない。``carried_values``）
+    guard: str | None = None
+
+    def carried_values(self) -> tuple:
+        """決定をまたいで運ぶ値（v0.87 の続きの情報の ``damage_results``）。v0.109 の ``guard`` は、あるときだけ加える（ないときは v0.108 までと同じ 9 つの値）。"""
+        values = _dataclass_astuple(self)
+        return values if self.guard is not None else values[:-1]
 
     @property
     def dealt(self) -> int:
@@ -846,6 +855,9 @@ def effect_after_no_damage_error(attack: str, result: DamageResult, condition: s
     why = ("「ダメージを受けない」状態で無効" if result.prevented else "「とうめい」で受けなかった" if result.evaded
            else "「かげぶんしん」のコインが「うら」で受けなかった" if result.dodged
            else "うらのカードをおもてにしたら「たねポケモン」でなくトラッシュし、対象がいない（Z23-d）" if result.lost else "最終ダメージが 0")
+    if result.dodged and result.guard is not None:
+        # v0.109: 受けるときのコインで防ぐ期限つきの効果（ぬるぬる・かわす・ブリンク）で受けなかった（同じ問い Z23。かげぶんしんの文は変えない）
+        why = "受けるときのコインで防ぐ期限つきの効果（ぬるぬる・かわす・ブリンク）で受けなかった"
     effect_text = what if what is not None else f"「{ {POISON: 'どく', SLEEP: 'ねむり', PARALYSIS: 'マヒ', CONFUSION: 'こんらん'}[condition]}」状態にする"
     return UnsupportedError(
         "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE",
@@ -40547,3 +40559,133 @@ V0_108_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_108_ATTACKS)
+
+
+# ---------------------------------------------------------------- v0.109（docs/timed-damage-guards-v0.109.md）
+# 次の相手の番に受けるときのコインでダメージを防ぐ効果・相手のタイプで決まる基本となるダメージのポケモンの 3 枚（ワザ 6）。処理に使う文面は kyuura の印刷の文面。しっぽでたたく・マッハストレートは
+# 説明文がなく ``DAMAGE_ONLY``、残る 4 つのワザは新しい 3 つの型で、新しい要素（``programs.SelfTimedDamageGuard``・値 ``AmountIfDefenderType``）と既存の ``Damage`` の組み合わせ
+
+# 受けるときのコインでダメージを防ぐ効果の書き方（(ダメージを受けない面, 投げる人, 範囲) ごと）。面・投げる人・範囲は文面と 1 対 1（確率が同じでも、面・投げる人の違う文面を同じ組にしない）。
+# 句読点・括弧は写しのまま（「(…受ける。)」・「（…受ける）。」・「(…受ける)」）で、一括の正規化をしない
+TIMED_DAMAGE_GUARD_TEXTS: Mapping[tuple[CoinSide, str, str], tuple[str, ...]] = MappingProxyType({
+    # ウパー（neo2-015）の「ぬるぬる」
+    (CoinSide.TAILS, GUARD_FLIPPER_OPPONENT, GUARD_SCOPE_OPPONENT_ATTACK): (
+        "次の相手の番、このカードが相手のワザによるダメージを受けるとき、相手プレイヤーはコインを投げる。「うら」なら、このカードはそのダメージを受けない。(ダメージ以外の効果は受ける。)",),
+    # エビワラー（neo4-070）の「かわす」
+    (CoinSide.HEADS, GUARD_FLIPPER_OWNER, GUARD_SCOPE_OPPONENT_ATTACK): (
+        "次の相手の番、このカードが相手のワザによるダメージを受けるとき、このカードの持ち主はコインを投げる。「おもて」なら、このカードはそのダメージを受けない。（ダメージ以外の効果は受ける）。",),
+    # ユンゲラー（ES3-019）の「ブリンク」（「相手の」と限らない。投げる人を書かない）
+    (CoinSide.HEADS, GUARD_FLIPPER_UNSTATED, GUARD_SCOPE_ATTACK): (
+        "次の相手の番、このカードがワザによるダメージを受ける時、コインを投げて「おもて」なら、このカードはそのダメージを受けない。(ダメージ以外の効果は受ける)",),
+})
+
+
+class _TimedDamageGuardTerms:
+    """受けるときのコインでダメージを防ぐ効果の登録の共通の部分（v0.109）: 値と書き方の組の確かめ・不変条件が照らす値。"""
+
+    prevent_on: CoinSide
+    flipper: str
+    scope: str
+
+    def _check_terms(self) -> None:
+        if (self.prevent_on, self.flipper, self.scope) not in TIMED_DAMAGE_GUARD_TEXTS:
+            raise ValueError(f"受けるときのコインで防ぐ効果の面・投げる人・範囲の組 {(self.prevent_on, self.flipper, self.scope)!r} を受け付ける文面がない")
+
+    def _texts(self) -> tuple[str, ...]:
+        return TIMED_DAMAGE_GUARD_TEXTS[(self.prevent_on, self.flipper, self.scope)]
+
+    def guard_terms(self) -> tuple:
+        """不変条件（``engine._timed_damage_guard_problems``）・ログの監査が照らす、与える持続する効果の型と (面, 投げる人, 範囲)。"""
+        from .state import TimedDamageGuard
+
+        return (TimedDamageGuard, self.prevent_on.value, self.flipper, self.scope)
+
+
+@dataclass(frozen=True)
+class SelfTimedDamageGuardWithoutDamage(_TimedDamageGuardTerms, AttackEffect):
+    """ダメージの要素のないワザ。次の相手の番、このカードがワザによるダメージを受けるとき、コインを投げ、``prevent_on`` ならそのダメージを受けない（ダメージ以外の効果は受ける）（v0.109。
+    ウパー（neo2-015）の「ぬるぬる」（「うら」・相手プレイヤーが投げる・相手のワザ）・エビワラー（neo4-070）の「かわす」（「おもて」・持ち主が投げる・相手のワザ））。
+
+    - 要素は ``programs.SelfTimedDamageGuard`` だけ（ダメージ・コインはない。コインはダメージを受けるときに投げる）。ワザを使ったポケモン自身に持続する効果 ``state.TimedDamageGuard`` を与える
+      （次の相手の番だけ。ダメージを受けても消えない）
+    - 面・投げる人・範囲は文面と結び付けた組（``TIMED_DAMAGE_GUARD_TEXTS``）だけ。ダメージの目安のあるワザ（ブリンク）は ``DamageThenSelfTimedDamageGuard``"""
+
+    prevent_on: CoinSide
+    flipper: str
+    scope: str
+    implementation_id = "self_timed_damage_guard_without_damage"
+
+    def __post_init__(self) -> None:
+        self._check_terms()
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "ダメージを与えず、次の相手の番に受けるダメージを受けるときのコインで防ぐワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, self._texts())
+
+
+@dataclass(frozen=True)
+class DamageThenSelfTimedDamageGuard(_TimedDamageGuardTerms, AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。次の相手の番、このカードがワザによるダメージを受ける時、コインを投げ、``prevent_on`` ならそのダメージを受けない（ダメージ以外の
+    効果は受ける）（v0.109。ユンゲラー（ES3-019）の「ブリンク」（「おもて」・投げる人を書かない・「相手の」と限らないワザによるダメージ））。
+
+    - 要素は ``Damage(OPP)`` → ``programs.SelfTimedDamageGuard``。自分への効果はダメージのあと。相手がダメージを受けたか・HP 以上になったかを条件にしない（ワザを使ったポケモンがこのワザの中で
+      HP 以上なら与えない）
+    - 持続する効果・はたらき方・消える契機は ``SelfTimedDamageGuardWithoutDamage`` と同じ"""
+
+    prevent_on: CoinSide
+    flipper: str
+    scope: str
+    implementation_id = "damage_then_self_timed_damage_guard"
+
+    def __post_init__(self) -> None:
+        self._check_terms()
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "ダメージのあと、次の相手の番に受けるダメージを受けるときのコインで防ぐワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, self._texts())
+
+
+# 相手のタイプで基本となるダメージが決まった数になるワザの書き方（「…倍になる」の v0.45 の ``DamageMultipliedAgainstType`` とは別の文面）
+DAMAGE_SET_AGAINST_TYPE_TEXT = "このワザを受ける相手が「{ja}」ポケモンなら、このワザのダメージは{amount}になる。"
+
+
+@dataclass(frozen=True)
+class DamageSetAgainstType(AttackEffect):
+    """このワザを受ける相手が ``pokemon_type`` のポケモンなら、このワザのダメージは ``amount`` になる（v0.109。ユンゲラー（ES3-019）の「サイコパニック」の「「超」ポケモンなら…60になる」）。
+
+    - 要素は ``Damage(OPP, AmountIfDefenderType(pokemon_type, amount))``: p.321 の 1 段階（基本となるダメージ）を、相手の今有効なタイプが ``pokemon_type`` なら ``amount``、そうでなければ
+      ダメージの目安の数字にする。弱点・抵抗力・プラスパワー・ディフェンダーなどはそのあとの段階で計算する（最終ダメージを ``amount`` に上書きしない）
+    - ``amount`` は文面の数（目安の数字の倍数として求めない）。v0.45 の ``DamageMultipliedAgainstType``（「…倍になる」）の意味・文面の確かめは変えない
+    - タイプは今の姿・今有効な色（［へんしょく］など。読み方で変わるなら VS1）。相手のワザとして使ったときも、実際に受けるポケモンのタイプ"""
+
+    pokemon_type: EnergyType
+    amount: int
+    implementation_id = "damage_set_against_type"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.amount, "相手のタイプで決まるダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手のタイプでダメージが決まった数になるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(
+            attack, what, (DAMAGE_SET_AGAINST_TYPE_TEXT.format(ja=self.pokemon_type.ja, amount=self.amount),))
+
+
+# v0.109 のワザの登録（6。id ごとに書く）。同じデータの組はない
+V0_109_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # ウパー（neo2-015）
+    AttackKey("neo2-015", 0): _printed(SelfTimedDamageGuardWithoutDamage(CoinSide.TAILS, GUARD_FLIPPER_OPPONENT, GUARD_SCOPE_OPPONENT_ATTACK), "ぬるぬる",
+                                       TIMED_DAMAGE_GUARD_TEXTS[(CoinSide.TAILS, GUARD_FLIPPER_OPPONENT, GUARD_SCOPE_OPPONENT_ATTACK)][0]),
+    AttackKey("neo2-015", 1): AttackEntry(DAMAGE_ONLY, "しっぽでたたく"),
+    # エビワラー（neo4-070）
+    AttackKey("neo4-070", 0): _printed(SelfTimedDamageGuardWithoutDamage(CoinSide.HEADS, GUARD_FLIPPER_OWNER, GUARD_SCOPE_OPPONENT_ATTACK), "かわす",
+                                       TIMED_DAMAGE_GUARD_TEXTS[(CoinSide.HEADS, GUARD_FLIPPER_OWNER, GUARD_SCOPE_OPPONENT_ATTACK)][0]),
+    AttackKey("neo4-070", 1): AttackEntry(DAMAGE_ONLY, "マッハストレート"),
+    # ユンゲラー（ES3-019）
+    AttackKey("ES3-019", 0): _printed(DamageSetAgainstType(EnergyType.PSYCHIC, 60), "サイコパニック",
+                                      DAMAGE_SET_AGAINST_TYPE_TEXT.format(ja=EnergyType.PSYCHIC.ja, amount=60)),
+    AttackKey("ES3-019", 1): _printed(DamageThenSelfTimedDamageGuard(CoinSide.HEADS, GUARD_FLIPPER_UNSTATED, GUARD_SCOPE_ATTACK), "ブリンク",
+                                      TIMED_DAMAGE_GUARD_TEXTS[(CoinSide.HEADS, GUARD_FLIPPER_UNSTATED, GUARD_SCOPE_ATTACK)][0]),
+})
+
+DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_109_ATTACKS)

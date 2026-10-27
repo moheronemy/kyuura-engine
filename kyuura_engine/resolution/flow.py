@@ -30,7 +30,7 @@ from ..effects import (AttackKey, AttackUse, PowerKey, usable_ninja_tricks, atta
                        received_modifiers_log, received_power_damage, retreat_trap_powers, stadium_attack_coin_available, status_at_attack_blocked)
 from ..errors import IllegalActionError, UnsupportedError
 from ..state import AttackEffectGuard, BenchAttackDamageGuard, BenchProtection, GameState, Phase, PowersStopped, StatusImmunityNextTurn, ZeroDamageAtLeast
-from ..state import MARKER_COLOR, MARKER_CURSE, PERIOD_EFFECT_TYPES, PeriodAttackCoinCheck, PeriodLeaveLock
+from ..state import MARKER_COLOR, MARKER_CURSE, PERIOD_EFFECT_TYPES, PeriodAttackCoinCheck, PeriodLeaveLock, TimedDamageGuard
 from ..history import close_probe, note_used
 from ..zones import face_up_fields, prize_left, promote_from_bench, return_in_play_to_deck, shuffle_deck
 from ..movement import promotion_spikes_now
@@ -251,6 +251,10 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
     if any(marker.kind in (MARKER_CURSE, MARKER_COLOR) for side in state.players for pokemon in side.in_play() for marker in pokemon.markers):
         # v0.90: のろいマーカー（弱点の「×4」）・色マーカー（タイプ。CM1）。v0.13 の止める関数は、このマーカーで変わる計算と問いを確かめたことがない
         found.append("のろいマーカー・色マーカー")
+    if any(isinstance(effect, TimedDamageGuard) for side in state.players for pokemon in side.in_play() for effect in pokemon.persistent_effects):
+        # v0.109: 受けるときのコインでダメージを防ぐ期限つきの効果（ぬるぬる・かわす・ブリンク。受けるときのコインの両面・GO1・RF1・「うら」で受けなかったあとの Z23）。v0.13 の止める関数の
+        # 見積もり（``preview_attack_damage``）は受けるときのコインを知らない（コインで受けなかった場合を試さない）ので、それで確かめない
+        found.append("受けるときのコインで防ぐ期限つきの効果")
     if E.neutral_shield_holders(state):
         # v0.103: ［ニュートラルシールド］（発生元が相手の進化ポケモンのワザのダメージと効果の要素を無効にする）。v0.13 の止める関数の見積もり（``preview_attack_damage``）は発生元で
         # 無効にするかを知らない（「ダメージを受けない」状態・バリアーだけを見る）ので、それで確かめない（情報のない経路で黙って無視しない）

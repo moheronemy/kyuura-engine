@@ -599,6 +599,7 @@ POOL_KEYS = (
     "pool_v0_106",  # v0.106（数とコインを組み合わせるポケモンの 11 枚。docs/counts-coins-compositions-v0.106.md）
     "pool_v0_107",  # v0.107（コインによる成否・特殊状態・防護のポケモンの 9 枚。docs/coin-failure-status-flight-v0.107.md）
     "pool_v0_108",  # v0.108（持続するダメージの変更・相手の特殊状態を参照するポケモンの 5 枚。docs/damage-modifiers-condition-bonuses-v0.108.md）
+    "pool_v0_109",  # v0.109（次の相手の番に受けるときのコインでダメージを防ぐ効果・相手のタイプで決まるダメージのポケモンの 3 枚。docs/timed-damage-guards-v0.109.md）
 )
 
 

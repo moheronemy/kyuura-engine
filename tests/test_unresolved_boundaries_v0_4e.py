@@ -308,6 +308,7 @@ ALL_CODES = (
     "UNRESOLVED_KEEP_PROTECTED_TARGET",  # KP1（v0.101。tests/test_counter_keep_energy_protection_v0_101.py）
     "UNRESOLVED_KEEP_VOIDED_DISCARD_COIN",  # KP2（v0.101。同）
     "UNRESOLVED_KEEP_DETACHED_ENERGY_DISCARD",  # KP3（v0.101。同）
+    "UNRESOLVED_DAMAGE_GUARD_OVERLAP",  # GO1（v0.109。tests/test_timed_damage_guards_v0_109.py）
 )
 TURN = 7
 

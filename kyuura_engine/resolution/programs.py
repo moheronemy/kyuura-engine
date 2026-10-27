@@ -56,7 +56,7 @@ from ..state import (
     CannotAttachEnergy, CannotAttackWhileSourceActive, CannotRetreat, CannotUseAttack, CannotUsePowers, CannotUseOwnAttack, DamageReduction, DestinyBond, DoubledDamage, HalvedDamage, NextTurnAttackDamage, PreventAttackDamage, PreventDamage,
     MaxHpSet, ReducedDamageToSource, ReducedDamageToSourceNextTurn, ReflectShield, ResistanceChange, Retaliation, TailsDamageGuard, TrainerTurnEffect, TrainerUseLock, WeaknessChange, ZeroDamageBelow, mark_returned_to_bench,
     OPPONENT_POWER_SUPPRESSION, StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard, StatusImmunityNextTurn, PowersStopped, BenchProtection,
-    ATTACK_FIELD_POWER_SUPPRESSION, ReceivedAttackDamageBonus, DealtAttackDamageReduction,
+    ATTACK_FIELD_POWER_SUPPRESSION, ReceivedAttackDamageBonus, DealtAttackDamageReduction, TimedDamageGuard,
 )
 from ..state import ATTACK_POWER_SUPPRESSION, BENCH_ATTACK_DAMAGE_PREVENTION, COUNTER_BONE, COUNTER_FOOD, COUNTER_KINDS, MARKER_CHAR, MARKER_COLOR, MARKER_CURSE, MARKER_KINDS, MARKER_LIGHTNING_ROD, MARKER_STICKY, POWER_SUPPRESSION, Marker
 from ..markers import CLEARED as MARKERS_CLEARED
@@ -415,7 +415,8 @@ class AttackRun:
             # v0.87: 要素のあいだの決定（［ぶんれつ］・［だつりょくえき］など。``boundary`` は次に処理する要素の位置）のあとの要素が、前のダメージの要素の結果を
             # 名前で読む（「ダメージを与えた後、…」の ``after_damage`` など）なら、その結果を運ぶ。読まなければ書かない（v0.86 までの決定の形は変えない）
             used_later = {value for later in self.program[boundary:] for value in _result_names(later)}
-            damage = tuple(sorted((name, tuple(dataclasses.astuple(result))) for name, result in self.fs.results.items()
+            # v0.109: 受けるときのコインで防ぐ期限つきの効果で受けなかった結果だけ、その効果の種類（``DamageResult.guard``）を加える（ほかは v0.108 までと同じ形。``carried_values``）
+            damage = tuple(sorted((name, result.carried_values()) for name, result in self.fs.results.items()
                                   if isinstance(result, E.DamageResult) and name in used_later))
             if damage:
                 extra += (("damage_results", damage),)
@@ -11764,4 +11765,65 @@ BUILDERS |= {
     E.PlusIfDefenderStatusThenCure: lambda e: (
         OpponentStatusCheck("opponent_status_before", e.conditions), Damage(OPP, PlusIfResult("opponent_status_before", e.bonus)), CureOpponentConditions(e.conditions),
     ),
+}
+
+
+# ---------------------------------------------------------------- v0.109（docs/timed-damage-guards-v0.109.md）: 次の相手の番に受けるときのコインでダメージを防ぐ効果・相手のタイプで
+# 決まる基本となるダメージ
+
+
+@dataclass(frozen=True)
+class SelfTimedDamageGuard(Element):
+    """ワザを使ったポケモン自身に、次の相手の番だけ、受けるときのコインでダメージを防ぐ効果（``state.TimedDamageGuard``）を与える（v0.109。ウパーの「ぬるぬる」・エビワラーの「かわす」・
+    ユンゲラーの「ブリンク」）。コインはない（コインはダメージを受けるときに投げる。``kernel.timed_guard_passes``）。
+
+    - 自分への効果なので「とうめい」・「ワザをうけない」状態は評価しない（v0.83 の ``SelfReflectShield`` と同じ）。ワザを使ったポケモンがこのワザの中で HP 以上なら与えない（p.309。返す効果の
+      ダメージなど。ログ ``persistent_effect_skipped``）。相手がダメージを受けたか・HP 以上になったかは条件にしない（ブリンクのダメージのあとでも与える）
+    - 前の効果ははたらく番の終わりに消えている（同じ番に 2 回使うことはない）ので、置きかえずに加える。ログ ``persistent_effect_added`` に面・投げる人・範囲
+    - 実際にワザを使ったポケモンに与える（相手のワザとして使ったなら使ったポケモン）"""
+
+    prevent_on: str
+    flipper: str
+    scope: str
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def run(self, run: AttackRun) -> bool:
+        attacker = run.attacker()
+        if run.knocked_out(attacker):
+            run.state.add_event("persistent_effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id,
+                                persistent_effect=TimedDamageGuard.kind, effect=str(run.key), reason=E.EFFECT_TARGET_KNOCKED_OUT)
+            return False
+        turn = run.state.turn_number
+        effect = TimedDamageGuard(source_card=attacker.card, source_player=run.player, created_turn=turn, active_turn=turn + TimedDamageGuard.turns_until_active,
+                                  prevent_on=self.prevent_on, flipper=self.flipper, scope=self.scope)
+        add_persistent_effect(run.state, run.player, attacker, effect, attack=str(run.key), prevent_on=self.prevent_on, flipper=self.flipper, scope=self.scope)
+        return False
+
+
+@dataclass(frozen=True)
+class AmountIfDefenderType:
+    """相手の対戦ポケモン（ダメージの要素を処理する時点）の今有効なタイプが ``pokemon_type`` なら ``amount``、そうでなければダメージの目安の数字（v0.109。ユンゲラーの「サイコパニック」の
+    「このワザを受ける相手が「超」ポケモンなら、このワザのダメージは60になる」。p.321 の 1 段階。弱点・抵抗力などはそのあとの段階で計算する（最終ダメージを ``amount`` にしない））。
+
+    - タイプは今の姿と今有効な色（``effects.same_for_type_readings``。［へんしょく］など。読み方で結果が変わるなら VS1。v0.45 の ``PrintedTimesIfDefenderType`` と同じ問い合わせ）。
+      印刷されたタイプで決めない。うらのカード（マチスの秘策）は ``Damage.run`` がこの値を求める前におもてにする
+    - 「その数になる」の固定の量で、目安の数字の倍数ではない（v0.45 の「「…」倍になる」の ``PrintedTimesIfDefenderType`` とは別の値。目安と量の組は登録の文面で照らす）"""
+
+    pokemon_type: EnergyType
+    amount: int
+    local_coins: ClassVar[int] = 0
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        defender = run.opponent_active()
+        try:
+            return E.same_for_type_readings(run.state, (defender,),
+                                            lambda views: self.amount if views[0].pokemon_type is self.pokemon_type else run.attack.damage)
+        except E.TypeReadingsDiffer as differ:
+            raise type_question(run.res, differ, f"ワザ {run.key} の相手のタイプで決まるダメージ") from None
+
+
+BUILDERS |= {
+    E.SelfTimedDamageGuardWithoutDamage: lambda e: (SelfTimedDamageGuard(e.prevent_on.value, e.flipper, e.scope),),
+    E.DamageThenSelfTimedDamageGuard: lambda e: (Damage(OPP, Printed()), SelfTimedDamageGuard(e.prevent_on.value, e.flipper, e.scope)),
+    E.DamageSetAgainstType: lambda e: (Damage(OPP, AmountIfDefenderType(e.pokemon_type, e.amount)),),
 }

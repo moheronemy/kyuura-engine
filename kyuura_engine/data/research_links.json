@@ -12,8 +12,8 @@
   "card_data_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 235,
-    "engine_stop_codes": 234,
+    "engine_unresolved_rulings": 236,
+    "engine_stop_codes": 235,
     "kyuura_issues": 72
   },
   "stop_codes": {
@@ -2712,6 +2712,17 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DAMAGE_GUARD_OVERLAP": {
+      "engine_rulings": [
+        {
+          "version": "v0.109",
+          "document": "docs/timed-damage-guards-v0.109.md",
+          "ruling_id": "GO1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -4556,7 +4567,11 @@
       "neo4-091/attack/0",
       "neo4-091/attack/1",
       "ES3-001/attack/0",
-      "ES3-001/attack/1"
+      "ES3-001/attack/1",
+      "neo2-015/attack/0",
+      "neo4-070/attack/0",
+      "ES3-019/attack/0",
+      "ES3-019/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
