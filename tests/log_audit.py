@@ -389,6 +389,9 @@ V109_SET_AGAINST_TYPE = re.compile(r"このワザを受ける相手が「(.+)」
 # v0.111: 場のエネルギーカードの枚数で決まるワザ。数える色・1 枚あたりの数と、ワザを使うための条件は、処理したワザの印刷の文面から読む（エンジンの登録を読まない）
 V111_FIELD_ENERGY_CARDS = re.compile(r"相手の場のポケモンについている「(.+)」エネルギーカードの数×(\d+)のダメージ。")
 V111_EQUAL_ENERGY_CARDS_TEXT = "自分と相手に同じ数のエネルギーカードがついている時だけ、このワザは使える。"
+# v0.112: 自分のエネルギーの数だけのコインで引くワザ・コインでマヒか自分のワザの制限のワザ。色・1 枚あたりの数・面は、処理したワザの印刷の文面から読む（エンジンの登録を読まない）
+V112_COINS_DRAW = re.compile(r"自分についている「(.+)」エネルギーの数だけコインを投げ、「おもて」の数×(\d+)枚のカードを、自分の山札から引く。")
+V112_PARALYZE_ELSE_LOCK_TEXT = "コインを投げて「おもて」なら、相手を「マヒ」状態にする。「うら」なら、次の自分の番、このカードはこのワザを使えない。"
 
 # v0.10: はたらいた「はんげき」より先にあってはならない、ワザのダメージ以外の効果・きぜつ・番の終わり（p.89）
 COUNTER_BARRIERS = (
@@ -1690,6 +1693,8 @@ def log_problems(state) -> list[str]:
     v109_due: dict | None = None  # v0.109: 直前の受けるときのコインの判定（すぐあとのログで、受けたならそのダメージ・受けなかったならダメージがないことを確かめる）
     v110_effects: dict[int, list[dict]] = {}  # v0.110: ログから組み立てた、「きぜつ」しない効果（持つポケモンの番号 → 与えた番・はたらく番・最後の番・範囲・残りHP・持ち主）
     v110_window: dict | None = None  # v0.110: 今のワザの確かめ（処理したワザ・使うときのコイン・与えた数・HP 以上にしたワザのダメージの使い手・「きぜつ」しなかったポケモン）
+    v112_window: dict | None = None  # v0.112: 今のワザの確かめ（処理したワザ・コイン・引いたカード・与えた使えない効果・マヒ・宣言の時点のエネルギーと手札）
+    v112_empty_deck: set[int] = set()  # v0.112: しょくしゅをつかうで「おもて」の数 × N より少なく引いた（山札がなくなった）プレイヤー
     color_types: dict[int, dict] = {}  # v0.88: ［せんすい］の記録（対象のポケモンの番号 → 色・発生源のカード・特殊能力の位置）
     # v0.90: ログから組み立てた、場のポケモンのマーカー・カウンター（番号 → のせた順の {"marker", "color", "turn"}）と、進化・退化で取りのぞくはずのポケモン（番号 → 理由）
     marks: dict[int, list[dict]] = {}
@@ -3547,6 +3552,89 @@ def log_problems(state) -> list[str]:
                                  f"{matched.group(2)} と違う")
         return found
 
+    def v112_problems(e: dict) -> list[str]:
+        """v0.112: 自分のエネルギーの数だけのコインで引くワザ（しょくしゅをつかう）と、コインでマヒか自分のワザの制限のワザ（ふしょくえき）を、エンジンの登録・計算を読まずに確かめる。
+
+        - 「自分についている「X」エネルギーの数だけコインを投げ、「おもて」の数×N枚のカードを、自分の山札から引く。」（処理したワザ）: そのワザのコイン（``coin_flip``。ワザの説明の
+          コイン）の枚数が、ログから組み立てた実際に使ったポケモンについている、印刷が「X」の基本エネルギーカードの枚数（ほかの種類のエネルギーカードがついていなければ「X」エネルギーの
+          個数と同じ。色の決まらないカードで止まる場面・色を変える効果は単体のテストが確かめる）。コインのあとに、ワザを使ったプレイヤーが 1 回だけ引き（``draw``）、引いた枚数は
+          「おもて」の数 × N まで。引いたのは自分のカードで、ログから組み立てた手札にないもの（山札から）。「おもて」の数 × N より少なければ山札がなくなっている（そのプレイヤーが
+          そのあと山札にカードをもどさずに引いたら報告する）
+        - 「コインを投げて「おもて」なら、相手を「マヒ」状態にする。「うら」なら、次の自分の番、このカードはこのワザを使えない。」: そのワザのコインはちょうど 1 枚（ダメージのあと）で、
+          「おもて」なら自分に使えない効果を与えず、「うら」なら相手をマヒにせず、ワザを使ったポケモン自身に、このワザ（同じ位置）を使えない効果を与える（そのポケモンが HP 以上なら
+          与えない）"""
+        nonlocal v112_window
+        found: list[str] = []
+        kind = e["kind"]
+        w = v112_window
+        for player in list(v112_empty_deck):
+            if kind == "draw" and e["player"] == player and e["cards"]:
+                found.append(f"{e['turn']} 番に、しょくしゅをつかうで山札がなくなったはずのプレイヤー {player} が {len(e['cards'])} 枚引いた")
+                v112_empty_deck.discard(player)
+            elif "to_deck" in kind and e.get("player", e.get("owner")) == player or kind in ("mulligan", "shuffle_hand_into_deck"):
+                v112_empty_deck.discard(player)
+        if kind in ("attack", "turn_end", "game_end", "halted") and w is not None:
+            found += v112_close(w)
+            v112_window = w = None
+        if kind == "attack":
+            v112_window = {"key": attack_window["effect"], "player": e["player"], "pokemon_id": ids.get(e["pokemon"]), "coins": [], "draws": [], "locks": [],
+                           "paralysis": 0, "energy": list(energy.get(ids.get(e["pokemon"]), ()))}
+            return found
+        if w is None:
+            return found
+        if kind == "copy_attack":
+            w["key"] = e["copied"]
+        elif kind == "coin_flip" and e.get("source") == "attack" and e.get("effect") == w["key"]:
+            w["coins"].append(e["result"])
+        elif kind == "draw" and e["player"] == w["player"]:
+            w["draws"].append(tuple(e["cards"]))
+            w["hand_at_draw"] = list(hand[e["player"]])
+        elif kind == "special_condition" and e.get("condition") == "paralysis" and e.get("effect") == w["key"]:
+            w["paralysis"] += 1
+        elif kind in ("persistent_effect_added", "persistent_effect_skipped") and e.get("persistent_effect") == CannotUseOwnAttack.kind and e.get("effect") == w["key"]:
+            w["locks"].append((kind, e.get("pokemon_id"), e.get("target_attack_index")))
+        return found
+
+    def v112_close(w: dict) -> list[str]:
+        """v0.112: 1 つのワザの確かめ（ワザの終わり・番の終わりで）。"""
+        found: list[str] = []
+        text = v111_printed_text(w["key"])
+        matched = V112_COINS_DRAW.fullmatch(text or "")
+        if matched is not None:
+            color = next(t for t in EnergyType if t.ja == matched.group(1))
+            per = int(matched.group(2))
+            # 「X」エネルギーの個数: 基本エネルギーカードは印刷の色が「X」なら 1、特殊エネルギーカードは登録の出すエネルギーのうち「X」だけのもの（無色2個エネルギーは 0。色の決まらない
+            # カードではエンジンが止まる）。色を変える効果（［エナジーコンバーター］など）は組み立てない（単体のテストが確かめる）
+            units = sum((1 if state.printed_def(uid).provides is color else 0) if state.printed_def(uid).is_basic_energy
+                        else sum(1 for unit in state.effects.energy_effect(state.printed_def(uid)).units() if unit == frozenset({color}))
+                        for uid in w["energy"])
+            heads = sum(1 for side in w["coins"] if side == "heads")
+            if len(w["coins"]) != units:
+                found.append(f"{w['key']} のコイン {len(w['coins'])} 枚が、ログから組み立てた「{color.ja}」エネルギーの個数 {units}（エネルギーカード {len(w['energy'])} 枚）と違う")
+            if len(w["draws"]) != 1:
+                found.append(f"{w['key']} で引いた回数 {len(w['draws'])} が 1 回ではない")
+            else:
+                drawn = w["draws"][0]
+                if len(drawn) > heads * per:
+                    found.append(f"{w['key']} で引いた {len(drawn)} 枚が、「おもて」の数 {heads} × {per} より多い")
+                if any(owner.get(uid) != w["player"] or uid in w.get("hand_at_draw", ()) for uid in drawn):
+                    found.append(f"{w['key']} で引いたカード {drawn} が、自分の山札のカードではない")
+                if len(drawn) < heads * per:
+                    v112_empty_deck.add(w["player"])
+        if text == V112_PARALYZE_ELSE_LOCK_TEXT:
+            if len(w["coins"]) != 1:
+                found.append(f"{w['key']} のコインが {len(w['coins'])} 枚（1 枚のはず）")
+            else:
+                side = w["coins"][0]
+                added = [x for x in w["locks"] if x[0] == "persistent_effect_added"]
+                if side == "heads" and w["locks"]:
+                    found.append(f"{w['key']} の「おもて」で、自分にワザを使えない効果を与えた")
+                if side == "tails" and w["paralysis"]:
+                    found.append(f"{w['key']} の「うら」で、相手をマヒにした")
+                if side == "tails" and (len(w["locks"]) != 1 or (added and (added[0][1] != w["pokemon_id"] or added[0][2] != _attack_key(w["key"])[1]))):
+                    found.append(f"{w['key']} の「うら」で、ワザを使ったポケモン {w['pokemon_id']} にこのワザを使えない効果を 1 つ与えていない（{w['locks']}）")
+        return found
+
     def v111_printed_text(key: str | None) -> str | None:
         """v0.111: ワザ ``key`` の印刷の文面（読めなければ None。エンジンの登録を読まない）。"""
         if key is None:
@@ -4138,6 +4226,7 @@ def log_problems(state) -> list[str]:
         problems.extend(v109_problems(e))  # v0.109: 受けるときのコインで防ぐ期限つきの効果（ぬるぬる・かわす・ブリンク）・サイコパニック
         problems.extend(v110_problems(e))  # v0.110: 残りHPがなくなっても「きぜつ」しない効果（こらえる・こうてつか）
         problems.extend(v111_problems(e))  # v0.111: 場のエネルギーカードの枚数で決まるワザ（サイコクラッシュ・シンクロウェーブ）
+        problems.extend(v112_problems(e))  # v0.112: 自分のエネルギーの数だけのコインで引くワザ・コインでマヒか自分のワザの制限のワザ
         if kind in ("damage", "confusion_damage"):
             # v0.90: のろいマーカーののっているポケモンが弱点の計算をしたワザのダメージは「×4」（ログの weakness_multiplier）。ほかは書かない。こんらんの 20 は、のろいマーカーと
             # 自分の弱点が当てはまるならコインの前に止まる（UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS）ので、弱点の計算をしたこんらんのダメージはない

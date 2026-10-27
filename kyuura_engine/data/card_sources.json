@@ -28806,6 +28806,36 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.111 で加えた（docs/field-energy-card-counts-v0.111.md）。PR1（プロモ(旧裏)。promo。発売 1999-02-15）。GD6-001 と同じデータ（SAME_DATA_CARDS_V0_111。登録の値は同じ・記録は id ごと）。はたく=DAMAGE_ONLY（説明文なし。文面・出典を書かない）。シンクロウェーブ=DamageRequiringEqualEnergyCards（ワザを使うための条件。実際に使うポケモンと相手の対戦ポケモンについているエネルギーカードの枚数（色・出す個数を見ない。無色2個エネルギー・［エネエネ］のカードも 1 枚）が同じでなければ ENERGY_CARD_COUNTS_DIFFER で使えない。研究上の未解決にしない。v0.83 のやさしいモルフォンの使ってから失敗する文面とは別）。kyuura の日本語の文面は pcg-search.com の転記（data/pcgsearch_page_checks.json の読み直しで違いなし）。英語の欄（Synchronize）は日本語を置きかえない。data_gaps（jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stp060・同じカードの組 SC-PR1-060・名前・ワザの名前（日本語・英語の欄）でdata/・docs/ を確かめた。当たったのはカードの一覧・対象の一覧・転記元の写し・商品の一覧・同じカードの組・pcg-search のページの読み直し・名前の同じ版の一覧（docs/cards/reprints.md など）・docs/sources.md の X51（英語の再録の点検の資料の一覧）と、ガイドブックの既存の転記 data/Silver_Bible_structured.md（研究の記録ではない）の解説の行だけ。転記は根拠にしていない（ガイドブックの読み直しをしない））。Silver_Bible_structured.md のシンクロウェーブの書き方は「自分と相手に同じ枚数の「エネルギーカード」がついていないとき、このワザのダメージはなくなる。」で、印刷の文面（「…ついている時だけ、このワザは使える。」）と挙動が違う（使えるかの条件か、使ってダメージがなくなるか）。研究の記録（LD-）ではないので、処理に使う文面は印刷の文面のままにした（v0.109 のユンゲラーの解説と同じ扱い。kyuura への報告事項）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "SI-016": {
+      "basis": "kyuura_data",
+      "name_ja": "ドククラゲ",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-27",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.112 で加えた（docs/energy-coins-draw-v0.112.md）。SI（映画公開記念パック「サザンアイランド」。southern_islands。発売 1999-07-17）。水タイプ・メノクラゲから 1 進化（進化元は写しにある。対応済みのメノクラゲ PMCG3-011 など）。しょくしゅをつかう=CoinsPerOwnTypedEnergyDraw(水, 2)（ダメージなし。実際に使ったポケモンについている「水」エネルギーの個数（カードの枚数ではない）だけコインを投げ、「おもて」の数 × 2 枚を自分の山札から引く。山札が足りなければ引けるだけ。0 個なら投げず引かない。2 枚で型・登録の値を共有）。どくばり=PoisonOnHeads（相手に目安 20、そのあとコイン 1 枚の「おもて」で通常のどく）。日本語と英語の欄の違い: どくばりの英語の欄は「…is now Paralyzed.」（マヒ）で、日本語の「どく」と違う（kyuura の jp_en_differences に記録がある。英語版での変更とされる・確実・N1・N3・X42）。日本語の通常のどくを採用した。どちらが転記の誤りかを今回原典で照合して確定したのではない。kyuura の日本語の文面は pcg-search.com の転記。データの欠けはない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stmv016・名前・ワザの名前（日本語・英語の欄）で data/・docs/ を確かめた。当たったのはカードの一覧・対象の一覧・転記元の写し・pcg-search のページの読み直し（違いなし）・商品の一覧・日英の違いの一覧（docs/cards/set-differences.md）と、名前の同じ別のカードの記録、ガイドブックの既存の転記 data/Silver_Bible_structured.md（研究の記録ではない。根拠にしていない）の解説の行だけ）。Silver_Bible_structured.md の書き方は「…の数ぶんコインを投げ、…引いて、手札に加える。」などの語の違いだけ（挙動は変わらない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PR1-051": {
+      "basis": "kyuura_data",
+      "name_ja": "オムスター",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-27",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.112 で加えた（docs/energy-coins-draw-v0.112.md）。PR1（プロモ(旧裏)。promo。発売 1999）。水タイプ・オムナイトから 2 進化（進化元は写しにある。対応済みのオムナイト PMCG3-015 など）。しょくしゅをつかう=CoinsPerOwnTypedEnergyDraw(水, 2)（ダメージなし。実際に使ったポケモンについている「水」エネルギーの個数（カードの枚数ではない）だけコインを投げ、「おもて」の数 × 2 枚を自分の山札から引く。山札が足りなければ引けるだけ。0 個なら投げず引かない。2 枚で型・登録の値を共有）。ふしょくえき=DamageParalyzeOnHeadsElseLockSelf（相手に目安 40、そのあと 1 枚のコインの同じ結果で「おもて」なら相手をマヒ、「うら」なら次の自分の番、このカードはこのワザを使えない（CannotUseOwnAttack。もう 1 つのワザは使える）。「うら」でも 40 は残る）。kyuura の日本語の文面は pcg-search.com の転記。data_gaps（pokemon.dex・jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stp051・名前・ワザの名前で data/・docs/ を確かめた。当たったのはカードの一覧・対象の一覧・転記元の写し・pcg-search のページの読み直し（違いなし）・商品の一覧・ポケモン育て屋さんでなにかの化石に 2 進化カードを重ねる既存の記録（PF3。このカードを指さない一般の場面）と、名前の同じ別のカードの記録、ガイドブックの既存の転記 data/Silver_Bible_structured.md（研究の記録ではない。根拠にしていない）の解説の行だけ）。Silver_Bible_structured.md の書き方は「…の数ぶんコインを投げ、…引いて、手札に加える。」などの語の違いだけ（挙動は変わらない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
     }
   }
 }

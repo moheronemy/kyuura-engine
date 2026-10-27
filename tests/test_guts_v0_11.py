@@ -706,7 +706,9 @@ class G37Test(unittest.TestCase):
         # v0.108: マイナスイオン・あまえる（使うワザのダメージを減らす効果）・かみくだく（受けるワザのダメージを増やす効果）・もうどく（どく）・たたきおこす（相手の特殊状態の回復）。
         # docs/damage-modifiers-condition-bonuses-v0.108.md
         "DamageThenDealtDamageReduction", "DealtDamageReductionWithoutDamage", "DamageThenReceivedAttackDamageBonus", "PlusIfDefenderPoisonedThenPoison",
-        "PlusIfDefenderStatusThenCure"]))
+        "PlusIfDefenderStatusThenCure",
+        # v0.112: ふしょくえき（「おもて」で相手をマヒ。「うら」の自分のワザの制限は相手への効果ではない）
+        "DamageParalyzeOnHeadsElseLockSelf"]))
 
 
 class DecisionTest(unittest.TestCase):

@@ -4600,7 +4600,11 @@
       "ES1-022/attack/0",
       "QSG-032/attack/0",
       "GD6-001/attack/1",
-      "PR1-060/attack/1"
+      "PR1-060/attack/1",
+      "SI-016/attack/0",
+      "SI-016/attack/1",
+      "PR1-051/attack/0",
+      "PR1-051/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

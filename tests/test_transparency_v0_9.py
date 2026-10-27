@@ -840,7 +840,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                     "でんきショック", "でんきショック",
                                     # v0.108: アーボック（ES3-001）の「まきつく」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
                                     # docs/damage-modifiers-condition-bonuses-v0.108.md）
-                                    "まきつく"]))
+                                    "まきつく",
+                                    # v0.112: ドククラゲ（SI-016）の「どくばり」（PoisonOnHeads。既存の型の登録だけなので、同じ T19b で止まる。docs/energy-coins-draw-v0.112.md）。
+                                    # オムスター（PR1-051）の「ふしょくえき」は、共有のコインが自分のワザの制限も決めるので止まらない（ここに入らない）
+                                    "どくばり"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

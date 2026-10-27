@@ -1169,7 +1169,14 @@ class Coin(Element):
     count: int = 1
     per_attached: EnergyType | None = None
     per_opponent_energy: bool = False  # v0.83: 相手（相手の対戦ポケモン）についている「エネルギー」の数だけ（ひかるセレビィの「ミラクルリーフ」。エネルギーの個数）
+    # v0.112: ワザを実際に使ったポケモンについている「X」エネルギーの数だけ（ドククラゲ・オムスターの「しょくしゅをつかう」。エネルギーの個数で、``per_attached`` の基本エネルギー
+    # カードの枚数とは別。``typed_units_for`` の数え方と問い）
+    per_own_typed: EnergyType | None = None
     phase: ClassVar[Phase] = Phase.NEUTRAL
+
+    def __post_init__(self) -> None:
+        if sum((self.per_attached is not None, self.per_opponent_energy, self.per_own_typed is not None)) > 1:
+            raise ValueError("コインの枚数の決め方（per_attached・per_opponent_energy・per_own_typed）は 1 つだけ")
 
     def run(self, run: AttackRun) -> bool:
         count = self.count
@@ -1178,6 +1185,8 @@ class Coin(Element):
             count = len(E.attached_basic_energy(run.state, run.attacker(), self.per_attached))
         if self.per_opponent_energy:
             count = all_energy_units(run.state, run.opponent_active(), run)
+        if self.per_own_typed is not None:
+            count = typed_units_for(run, run.attacker(), self.per_own_typed)
         decided = [element for element in run.program if element.coin_dependent(self.name)]
         if count and decided and not any(element.has_target(run) for element in decided):
             # v0.38: このコインが決める要素のどれにも処理の対象がない（フリーザーの「ふぶき」で、自分にも相手にも控えポケモンがいない）。投げない（p.309。
@@ -1196,7 +1205,7 @@ class Coin(Element):
                 raise run.res.question("leave_locked_coin", f"ワザ {run.key} のコインが決める要素 {[type(element).__name__ for element in targeted]} は、どれも"
                                                             "はなれられないポケモンの移動だけ")
             void_coin_question(run, movable)
-        by_heads = self.count > 1 or self.per_attached is not None or self.per_opponent_energy
+        by_heads = self.count > 1 or self.per_attached is not None or self.per_opponent_energy or self.per_own_typed is not None
         if by_heads and any(isinstance(getattr(element, "gate", None), tuple) and element.gate[0] == self.name and isinstance(element.gate[1], CoinSide)
                             for element in run.program):
             # v0.35: 2 枚以上のワザ全体のコインは、あとの要素が「おもて」の数（``coin_is`` の数・``heads``・``heads_of``）だけを使う。1 枚目の面を
@@ -3064,13 +3073,26 @@ class RecoverTrainer(Element):
 @dataclass(frozen=True)
 class Draw(Element):
     """山札からカードを ``count`` 枚引く（v0.31。わるいゴルダックの「だい3のめ」・第4弾のコダックの「めまい」・カスミのコダックの「ちょうのうりょく」）。
-    山札が足りなければ引けるだけ引く（効果で引くときの規定。p.312。v0.2b のマサキと同じ）。"""
+    山札が足りなければ引けるだけ引く（効果で引くときの規定。p.312。v0.2b のマサキと同じ）。
 
-    count: int
+    v0.112: ``heads_of`` はワザ全体のコイン（``Coin``）の名前で、引く枚数はその「おもて」の数 × ``per_heads``（ドククラゲ・オムスターの「しょくしゅをつかう」。``count`` は書かない）。
+    コインをすべて投げて確定したあとの要素なので、ナツメのESPのやり直しの決定の前には引かない。投げなかったコイン（0 枚）は 0 枚。"""
+
+    count: int | None = None
     gate: tuple | None = None
     requires: str | None = None
+    heads_of: str | None = None
+    per_heads: int = 1
     phase: ClassVar[Phase] = Phase.EFFECT
     reads_deck_order: ClassVar[bool] = True  # v0.40: 山札の上から引く
+
+    def __post_init__(self) -> None:
+        if (self.count is None) == (self.heads_of is None):
+            raise ValueError("引く枚数は count・heads_of のどちらか 1 つで決める")
+        if self.count is not None and (type(self.count) is not int or self.count < 0):
+            raise ValueError(f"引く枚数 {self.count!r} は 0 以上の整数")
+        if type(self.per_heads) is not int or self.per_heads < 1 or (self.per_heads != 1 and self.heads_of is None):
+            raise ValueError(f"「おもて」1 枚あたりの枚数 {self.per_heads!r} は、heads_of のときだけの正の整数")
 
     def run(self, run: AttackRun) -> bool:
         if self.gate is not None and not run.coin_is(self.gate):
@@ -3079,7 +3101,8 @@ class Draw(Element):
             discarded = run.fs.results.get(self.requires)
             if discarded is not None and discarded.outcome != "done":
                 return False
-        draw_cards(run.state, run.player, min(self.count, len(run.state.players[run.player].deck)))
+        wanted = self.count if self.heads_of is None else run.heads(self.heads_of) * self.per_heads
+        draw_cards(run.state, run.player, min(wanted, len(run.state.players[run.player].deck)))
         return False
 
 
@@ -11941,4 +11964,18 @@ class EqualEnergyCardsRequired(Element):
 BUILDERS |= {
     E.DamageTimesOpponentFieldEnergyCards: lambda e: (Damage(OPP, OpponentFieldEnergyCardsTimes(e.energy_type, e.per)),),
     E.DamageRequiringEqualEnergyCards: lambda e: (EqualEnergyCardsRequired(), Damage(OPP, Printed())),
+}
+
+
+# ---------------------------------------------------------------- v0.112（docs/energy-coins-draw-v0.112.md）: 水エネルギーの個数によるコインとドロー・コインのマヒと自分のワザの制限
+
+
+BUILDERS |= {
+    # しょくしゅをつかう: 自分の「水」エネルギーの個数だけのワザ全体のコイン（「おもて」の数だけを使う）→ その「おもて」の数 × 2 枚を引く
+    E.CoinsPerOwnTypedEnergyDraw: lambda e: (Coin("coin", per_own_typed=e.energy_type), Draw(heads_of="coin", per_heads=e.per_heads)),
+    # ふしょくえき: ダメージ → 1 枚のワザ全体のコイン →「おもて」なら相手をマヒ・「うら」なら次の自分の番にこのワザを使えない（同じ結果を両方が使う）
+    E.DamageParalyzeOnHeadsElseLockSelf: lambda e: (
+        Damage(OPP, Printed()), Coin("coin"), Status(PARALYSIS, gate=("coin", HEADS), reparalysis_check=True),
+        SelfAttackLock(local_coin=None, gate=("coin", TAILS)),
+    ),
 }

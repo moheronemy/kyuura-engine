@@ -1527,6 +1527,10 @@
     "GD6-001",
     "PR1-060"
   ],
+  "pool_v0_112": [
+    "SI-016",
+    "PR1-051"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -113266,6 +113270,241 @@
       "copies": [
         {
           "page": "1stp060",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "SI-016",
+      "jp_set": "SI",
+      "category": "pokemon",
+      "name": {
+        "ja": "ドククラゲ",
+        "en": "Tentacruel"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          73
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "メノクラゲ",
+          "en": "Tentacool"
+        },
+        "hp": 60,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しょくしゅをつかう",
+              "en": "Tentacle Grip"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分についている「水」エネルギーの数だけコインを投げ、「おもて」の数×2枚のカードを、自分の山札から引く。",
+              "en": "Flip a number of coins equal to the number of Water Energy attached to Tentacruel. For each heads, draw 2 cards."
+            }
+          },
+          {
+            "name": {
+              "ja": "どくばり",
+              "en": "Poison Sting"
+            },
+            "cost": [
+              "water",
+              "water"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "text",
+          "summary": "ワザ どくばり（Poison Sting）の特殊状態",
+          "ja": "「コインを投げて『おもて』なら、相手を『どく』状態にする。」",
+          "en": "「Flip a coin. If heads, the Defending Pokémon is now Paralyzed.」と、マヒになっている。英語版での変更とされる",
+          "confidence": "確実",
+          "sources": [
+            "N1",
+            "N3",
+            "X42"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "si1-10"
+        ],
+        "pcg_search": [
+          "1stmv016"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stmv016.php",
+      "jp_print": {
+        "level": 30,
+        "rarity": "-",
+        "series": "映画公開記念パック「サザンアイランド」",
+        "remarks": [
+          "トロピカルアイランド 海"
+        ],
+        "source": "https://pcg-search.com/card/1st/1stmv016.php"
+      },
+      "product_group": "southern_islands",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "jp_print.level": "nazonobasho（サザンアイランド）",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:si1-10",
+        "pokemon.dex": "pokemontcg:si1-10",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stmv016",
+          "list_number": "001/003"
+        }
+      ]
+    },
+    {
+      "id": "PR1-051",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "オムスター",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "オムナイト",
+          "en": null
+        },
+        "hp": 80,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しょくしゅをつかう",
+              "en": null
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分についている「水」エネルギーの数だけコインを投げ、「おもて」の数×2枚のカードを、自分の山札から引く。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ふしょくえき",
+              "en": null
+            },
+            "cost": [
+              "water",
+              "water",
+              "water"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。「うら」なら、次の自分の番、このカードはこのワザを使えない。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp051"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp051.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(キラ)",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp051.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stp051",
           "list_number": "-/-"
         }
       ]

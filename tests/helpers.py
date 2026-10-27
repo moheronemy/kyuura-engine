@@ -1480,6 +1480,9 @@ ATTACK_TYPES_SINCE_V0_17 = (
     # v0.111（docs/field-energy-card-counts-v0.111.md。相手の場の決まった色のエネルギーカードの枚数・エネルギーカードの枚数が同じときだけ使えるワザ）
     _effects.DamageTimesOpponentFieldEnergyCards,
     _effects.DamageRequiringEqualEnergyCards,
+    # v0.112（docs/energy-coins-draw-v0.112.md。自分の決まった色のエネルギーの個数だけのコインで引く・コインでマヒか自分のワザの制限）
+    _effects.CoinsPerOwnTypedEnergyDraw,
+    _effects.DamageParalyzeOnHeadsElseLockSelf,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

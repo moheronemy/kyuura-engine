@@ -653,6 +653,13 @@ PINECO_NEO4, PINECO_NEO2 = "neo4-005", "neo2-005"  # クヌギダマ（neo4。�
 V0_111 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_111"])
 V0_111_POKEMON = V0_111
 MEWTWO_ES1, MEWTWO_QSG, SABRINAS_ABRA_GD6, SABRINAS_ABRA_PR1 = "ES1-022", "QSG-032", "GD6-001", "PR1-060"
+# v0.112（docs/energy-coins-draw-v0.112.md）: 水エネルギーの個数によるコインとドロー・コインのマヒと自分のワザの制限のポケモンの 2 枚（写しの組 pool_v0_112）。ポケモンは TARGETS に
+# 加える。ワザは既存の手順のまま選ぶ（使った数の少ないワザから。使っていないワザのためにエネルギーをためる手順も v0.38〜と同じ。ただし、この番にふしょくえきを「うら」の制限で拒否された
+# なら待たない）。ふしょくえきの「うら」の制限で使えないワザの拒否（ATTACK_LOCKED）は既存の既知の拒否。v0.112 のワザは新しい決定を出さない。ログから数えるのは ``v112_uses``、
+# 宣言の時点の場（「水」の基本エネルギーカードの枚数・山札の枚数）は ``_v112_attack_observe``
+V0_112 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_112"])
+V0_112_POKEMON = V0_112
+TENTACRUEL_SI, OMASTAR_PR1 = "SI-016", "PR1-051"
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -698,7 +705,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_108_POKEMON  # v0.108: 持続するダメージの変更・相手の特殊状態を参照するポケモン 5 枚
            + V0_109_POKEMON  # v0.109: 次の相手の番に受けるときのコインでダメージを防ぐ効果・相手のタイプで決まるダメージのポケモン 3 枚
            + V0_110_POKEMON  # v0.110: 使うときのコインで、残りHPがなくなっても「きぜつ」しない期間つきの効果を自分に与えるワザのポケモン 2 枚
-           + V0_111_POKEMON)  # v0.111: 場のエネルギーカードの枚数でダメージ・ワザの使用条件が決まるポケモン 4 枚
+           + V0_111_POKEMON  # v0.111: 場のエネルギーカードの枚数でダメージ・ワザの使用条件が決まるポケモン 4 枚
+           + V0_112_POKEMON)  # v0.112: 水エネルギーの個数によるコインとドロー・コインのマヒと自分のワザの制限のポケモン 2 枚
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -1497,6 +1505,14 @@ DECKS = {
     # 「超」ポケモン（同じデッキどうしではサイコクラッシュの数える「超」エネルギーカードが多い）
     "P111": ((MEWTWO_ES1, 2), (MEWTWO_QSG, 2), (SABRINAS_ABRA_GD6, 2), (SABRINAS_ABRA_PR1, 2), (DROWZEE, 4), (GASTLY_NEO4, 4), (DOUBLE_COLORLESS, 2), (driver.POTION, 2),
              (SWITCH, 2), (driver.BILL, 2), (PSYCHIC, 36)),
+    # v0.112: 水。メノクラゲ（PMCG3-011）→ ドククラゲ（SI-016。しょくしゅをつかう（水）・どくばり（水水）20）4 枚と、マリガン・早い負けを減らすゼニガメ・ヒトデマン・コラッタ
+    # 4 枚ずつ。無色2個エネルギー 2 枚（「水」エネルギーの個数に入らない）と、レインボーエネルギー 1 枚（しょくしゅをつかうの数える「水」が決まらない RB1 の境界）
+    "T112": ((TENTACOOL, 4), (TENTACRUEL_SI, 4), (SQUIRTLE, 4), (STARYU, 4), (RATTATA, 4), (DOUBLE_COLORLESS, 2), (RAINBOW_ENERGY, 1), (driver.POTION, 2), (SWITCH, 2),
+             (driver.BILL, 2), (WATER, 31)),
+    # v0.112: 水。なにかの化石 → オムナイト（PMCG3-015）→ オムスター（PR1-051。しょくしゅをつかう（水）・ふしょくえき（水水水）40）を 4 枚ずつ（2 進化まで進めるため）と、マリガン・
+    # 対戦準備のなにかの化石の止まり（PF1）・早い負けを減らすゼニガメ・ヒトデマン・コラッタ 4 枚ずつ
+    "O112": ((MYSTERIOUS_FOSSIL, 4), (OMANYTE, 4), (OMASTAR_PR1, 4), (SQUIRTLE, 4), (STARYU, 4), (RATTATA, 4), (driver.POTION, 2), (SWITCH, 2), (driver.BILL, 2),
+             (WATER, 30)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -1744,6 +1760,12 @@ PAIRINGS_V0_110 = (("F110", "G110"), ("G110", "G110"), ("F110", "W45"), ("G110",
 # 「きぜつ」しない効果）。組・席・seed は先に決めた（seed 0〜3。局を選び直さない）
 PAIRINGS_V0_111 = (("P111", "P111"), ("P111", "P109"), ("P111", "W109"), ("P111", "B98"), ("P111", "R58"), ("P111", "L85"), ("P111", "Z59"), ("P111", "P31"),
                    ("P111", "K65"), ("P111", "G83"), ("P111", "L67"), ("P111", "R88"), ("P111", "M50"), ("P111", "G110"))
+# v0.112: T112 対 O112（2 枚が同じ局に出る）・O112 どうし（ふしょくえきの「うら」の制限。席を入れかえた局は同じ局なので 1 回だけ行う）・T112・O112 対 P31（ピッピ・ピクシーの
+# ゆびをふるで、しょくしゅをつかう（実際に使ったポケモンの「水」の数）・ふしょくえき（相手のワザとして使えない既存の未対応））・O112 対 E31（ミュウツーのバリアーでマヒが無効でも
+# 「うら」の制限は有効）・O112 対 M60（ゴーストの［とうめい］・カイリキーの［はんげき］）・O112 対 K65（変わり身の術）・T112 対 W109（受けるときのコインの効果）・O112 対 T81（相手の
+# きあいのハチマキ・学習装置・はんげきのツメ）。組・席・seed は先に決めた（seed 0〜3。局を選び直さない）
+PAIRINGS_V0_112 = (("T112", "O112"), ("O112", "O112"), ("T112", "P31"), ("O112", "P31"), ("O112", "E31"), ("O112", "M60"), ("O112", "K65"), ("T112", "W109"),
+                   ("O112", "T81"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -1763,7 +1785,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.96": PAIRINGS_V0_96, "v0.97": PAIRINGS_V0_97, "v0.98": PAIRINGS_V0_98, "v0.99": PAIRINGS_V0_99, "v0.100": PAIRINGS_V0_100,
            "v0.101": PAIRINGS_V0_101, "v0.102": PAIRINGS_V0_102, "v0.103": PAIRINGS_V0_103, "v0.104": PAIRINGS_V0_104,
            "v0.105": PAIRINGS_V0_105, "v0.106": PAIRINGS_V0_106, "v0.107": PAIRINGS_V0_107,
-           "v0.108": PAIRINGS_V0_108, "v0.109": PAIRINGS_V0_109, "v0.110": PAIRINGS_V0_110, "v0.111": PAIRINGS_V0_111}
+           "v0.108": PAIRINGS_V0_108, "v0.109": PAIRINGS_V0_109, "v0.110": PAIRINGS_V0_110, "v0.111": PAIRINGS_V0_111, "v0.112": PAIRINGS_V0_112}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -7223,6 +7245,138 @@ def v111_uses(state):
     return counts
 
 
+V112_NAMES = {"しょくしゅをつかう": "tentacle_grip", "どくばり": "poison_sting", "ふしょくえき": "corrosive_acid"}
+
+
+def _v112_water_cards(state, pokemon) -> int:
+    """v0.112: 場のポケモン ``pokemon`` についている、印刷の定義が「水」の基本エネルギーカードの枚数（道具が数えるための値で、エンジンの ``typed_units_for`` を読まない）。"""
+    return sum(1 for uid in pokemon.energy
+               if state.definitions[state.cards[uid].card_id].is_basic_energy and state.definitions[state.cards[uid].card_id].provides is EnergyType.WATER)
+
+
+def _v112_attack_observe(state, seen, counts) -> None:
+    """v0.112: 前に見た場（``seen["v112"]``。番のプレイヤーと、そのときの場から道具が数えた値）のあとに、そのプレイヤーのワザのログ（``attack``。相手のワザとして使ったなら
+    ``copy_attack``）があり、処理したワザがしょくしゅをつかうなら、宣言の時点の場として照らす（拒否されたコマンドはログを残さないので数えない）。
+
+    - ``v112_grip_declared_water_cards_<枚数>``（ワザを使うポケモンの「水」の基本エネルギーカード。ほかの種類のエネルギーカードのないとき、「水」エネルギーの個数と同じ）・
+      ``v112_grip_other_energy``（ほかの種類のエネルギーカードもついていた）
+    - ``v112_grip_draw_checked``・``v112_grip_draw_mismatch``（そのワザのコインの「おもて」の数 × 2 と、宣言の時点の山札の枚数の小さいほうが、引いた枚数と違う。あってはならない）
+
+    v0.112 のカードが番のプレイヤーか相手のバトル場にいないときは何も記録しない（前の版の組の結果は変わらない）。決定のあいだは前の場を残す。"""
+    if state.phase is Phase.DECISION:
+        return
+    previous = seen.pop("v112", None)
+    if previous is not None:
+        index, player, water, others, deck = previous
+        name, key, heads, drawn = None, None, 0, None
+        for e in state.log[index:]:
+            if e["kind"] == "attack" and e["player"] == player:
+                current = e.get("card_id") or state.cards[e["pokemon"]].card_id
+                key = f"{current}#{e['attack_index']}"
+                name = V112_NAMES.get(state.definitions[current].attacks[e["attack_index"]].name_ja) if current in V0_112 else None
+            elif e["kind"] == "copy_attack" and name is None and key is not None:
+                card_id, attack_index = e["copied"].split("#")
+                key = e["copied"]
+                name = V112_NAMES.get(state.definitions[card_id].attacks[int(attack_index)].name_ja) if card_id in V0_112 else None
+            elif e["kind"] == "coin_flip" and name == "tentacle_grip" and e.get("source") == "attack" and e.get("effect") == key and e["result"] == "heads":
+                heads += 1
+            elif e["kind"] == "draw" and name == "tentacle_grip" and e["player"] == player and drawn is None:
+                drawn = len(e["cards"])
+            elif e["kind"] in ("turn_end", "game_end", "halted"):
+                break
+        if name == "tentacle_grip":
+            counts[f"v112_grip_declared_water_cards_{water}"] += 1
+            if others:
+                counts["v112_grip_other_energy"] += 1
+            if drawn is not None:
+                counts["v112_grip_draw_checked"] += 1
+                if drawn != min(2 * heads, deck):
+                    counts["v112_grip_draw_mismatch"] += 1
+    if state.phase is not Phase.MAIN:
+        return
+    player = state.current_player
+    attacker, defender = state.players[player].active, state.players[1 - player].active
+    if attacker is None or not any(p is not None and state.cards[p.card].card_id in V0_112 for p in (attacker, defender)):
+        return
+    water = _v112_water_cards(state, attacker)
+    seen["v112"] = (len(state.log), player, water, len(attacker.energy) - water, len(state.players[player].deck))
+
+
+def v112_uses(state):
+    """v0.112: ログから数えた 2 枚のワザの動き（v0.112 のカードのない局では空）。
+
+    - ``attack_<id>#<位置>``（宣言したワザ）・``copied_<id>#<位置>``（ほかのワザが相手のワザとして使った v0.112 のワザ）・``<名前>_interrupted``（こんらん・手順 4 のコインで失敗）
+    - しょくしゅをつかう: ``tentacle_grip_coins_<N>``（そのワザのコインの枚数）・``tentacle_grip_heads_<H>``・``tentacle_grip_requested``（2H の合計）・``tentacle_grip_drawn``（引いた
+      枚数の合計）・``tentacle_grip_short``（引いた枚数が 2H より少ない。山札が足りない）・``tentacle_grip_no_coins``（N = 0）
+    - どくばり・ふしょくえき: ``<名前>_damage``・``<名前>_coin_<面>``・``poison_sting_poisoned``・``corrosive_acid_paralyzed``・``corrosive_acid_locked``（「うら」で自分に与えた
+      使えない効果）・``corrosive_acid_lock_skipped``"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_112 for uid in state.cards):
+        return counts
+    window = None
+
+    def close(w):
+        if w is not None and w["name"] == "tentacle_grip" and not w.get("closed"):
+            w["closed"] = True
+            counts[f"tentacle_grip_coins_{w['coins']}"] += 1
+            counts[f"tentacle_grip_heads_{w['heads']}"] += 1
+            counts["tentacle_grip_requested"] += 2 * w["heads"]
+            counts["tentacle_grip_drawn"] += w["drawn"] or 0
+            if (w["drawn"] or 0) < 2 * w["heads"]:
+                counts["tentacle_grip_short"] += 1
+            if w["coins"] == 0:
+                counts["tentacle_grip_no_coins"] += 1
+
+    for e in state.log:
+        kind = e["kind"]
+        if kind in ("attack", "turn_end", "game_end", "halted"):
+            close(window)
+            window = None
+        if kind == "attack":
+            current = e.get("card_id") or state.cards[e["pokemon"]].card_id
+            key = f"{current}#{e['attack_index']}"
+            name = V112_NAMES.get(state.definitions[current].attacks[e["attack_index"]].name_ja, "other") if current in V0_112 else None
+            if current in V0_112:
+                counts[f"attack_{key}"] += 1
+            window = {"name": name, "key": key, "player": e["player"], "pokemon_id": e.get("pokemon_id"), "coins": 0, "heads": 0, "drawn": None}
+            continue
+        if window is None:
+            continue
+        if kind == "copy_attack":
+            card_id, index = e["copied"].split("#")
+            window["name"] = V112_NAMES.get(state.definitions[card_id].attacks[int(index)].name_ja, "other") if card_id in V0_112 else None
+            window["key"] = e["copied"]
+            if card_id in V0_112:
+                counts[f"copied_{e['copied']}"] += 1
+            continue
+        name = window["name"]
+        if name is None:
+            continue
+        if kind in ("confusion_damage", "attack_failed"):
+            counts[f"{name}_interrupted"] += 1
+            window["name"] = None
+        elif kind == "coin_flip" and e.get("source") == "attack" and e.get("effect") == window["key"]:
+            if name == "tentacle_grip":
+                window["coins"] += 1
+                window["heads"] += e["result"] == "heads"
+            else:
+                counts[f"{name}_coin_{e['result']}"] += 1
+        elif kind == "draw" and name == "tentacle_grip" and e["player"] == window["player"] and window["drawn"] is None:
+            window["drawn"] = len(e["cards"])
+        elif kind == "damage" and name != "tentacle_grip" and not e.get("retaliation") and (e.get("target") or "opponent_active") == "opponent_active":
+            counts[f"{name}_damage"] += 1
+        elif kind == "special_condition" and name == "poison_sting" and e.get("condition") == "poison":
+            counts["poison_sting_poisoned"] += 1
+        elif kind == "special_condition" and name == "corrosive_acid" and e.get("condition") == "paralysis":
+            counts["corrosive_acid_paralyzed"] += 1
+        elif kind == "persistent_effect_added" and name == "corrosive_acid" and e.get("persistent_effect") == "cannot_use_own_attack":
+            counts["corrosive_acid_locked"] += 1
+        elif kind == "persistent_effect_skipped" and name == "corrosive_acid" and e.get("persistent_effect") == "cannot_use_own_attack":
+            counts["corrosive_acid_lock_skipped"] += 1
+    close(window)
+    return counts
+
+
 V110_NAMES = {"たいあたり": "tackle", "こらえる": "endure", "こうてつか": "armor_up", "だいばくはつ": "explosion"}
 V110_SURVIVAL_KIND = "knockout_survival"
 V110_HITS = ("damage", "poison_damage", "confusion_damage", "place_damage_counters", "power_damage", "counterattack", "tool_damage_counters", "move_damage_counters")
@@ -9284,6 +9438,12 @@ def make_policy(seen: dict, counts: Counter):
             # 拒否された（``tried`` にある）ときは待たない（相手の枚数は待っても変わらないことがあるので、使えるワザを使う）
             counts[f"v111_wait_{card_id}"] += 1
             return EndTurn(player)
+        if card_id in V0_112_POKEMON and all(used[i] >= 1 for i in usable) and any(
+                used[a.index] == 0 and a.index not in usable and ("attack_index", a.index) not in tried for a in attacks):
+            # v0.112: v0.38 と同じ手順（しょくしゅをつかうを使い続けて、どくばり・ふしょくえきが使えるようにならない）。この番にふしょくえきを「うら」の制限で拒否された（``tried``
+            # にある）ときは待たない
+            counts[f"v112_wait_{card_id}"] += 1
+            return EndTurn(player)
         choice = min(usable, key=lambda i: (used[i], -(attacks[i].damage or 0), i))
         chosen = UseAttack(player, choice)
         if chosen != command:
@@ -9310,6 +9470,7 @@ def make_policy(seen: dict, counts: Counter):
         _v048_observe(state, counts)
         _v102_attack_observe(state, seen, counts)  # v0.102: ワザを宣言した時点の［グリーンシールド］・［ニュートラルダメージ］の配置
         _v111_attack_observe(state, seen, counts)  # v0.111: ワザを宣言した時点の場のエネルギーカードの枚数
+        _v112_attack_observe(state, seen, counts)  # v0.112: しょくしゅをつかうの宣言の時点の「水」の基本エネルギーカード・山札の枚数
         # v0.48: この番に、最大HPがのっているダメージ以下に下がる（MH1）ので拒否された手札のカード（進化カード・トレーナー）。この番に拒否がなければ空
         blocked = {marker[1] for marker in tried if isinstance(marker, tuple) and marker[0] == "max_hp_drop_card"}
         if state.phase is Phase.MAIN and (blocked or "trainer_locked" in tried or "evolution_prevented" in tried):
@@ -9372,6 +9533,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
     if state is not None:
         _v102_attack_observe(state, seen, counts)  # v0.102: 最後の番のワザ（このあとに手順が呼ばれない）
         _v111_attack_observe(state, seen, counts)  # v0.111: 同じ
+        _v112_attack_observe(state, seen, counts)  # v0.112: 同じ
     result["outcome"] = outcome
     result["steps"] = len(commands)
     result["observed"] = dict(observed)
@@ -9435,6 +9597,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v109"] = v109_uses(state)
         result["v110"] = v110_uses(state)
         result["v111"] = v111_uses(state)
+        result["v112"] = v112_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:

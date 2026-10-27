@@ -40880,3 +40880,80 @@ SAME_DATA_CARDS_V0_111: Mapping[str, str] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_111_ATTACKS), SAME_DATA_CARDS_V0_111)
+
+
+
+# ---------------------------------------------------------------- v0.112（docs/energy-coins-draw-v0.112.md）
+# 水エネルギーの個数によるコインとドロー・コインのマヒと自分のワザの制限のポケモンの 2 枚（ワザ 4）。処理に使う文面は kyuura の印刷の文面。2 枚の「しょくしゅをつかう」はワザのデータ
+# （英語の欄を除く）が同じなので型・登録の値を共有する（カード全体は HP・段階・もう 1 つのワザが違うので、同じデータの組にしない）
+
+OWN_TYPED_ENERGY_COINS_DRAW_TEXT = "自分についている「{ja}」エネルギーの数だけコインを投げ、「おもて」の数×{per}枚のカードを、自分の山札から引く。"
+PARALYZE_ON_HEADS_ELSE_LOCK_SELF_TEXT = "コインを投げて「おもて」なら、相手を「マヒ」状態にする。「うら」なら、次の自分の番、このカードはこのワザを使えない。"
+
+
+@dataclass(frozen=True)
+class CoinsPerOwnTypedEnergyDraw(AttackEffect):
+    """自分についている「``energy_type``」エネルギーの数だけコインを投げ、「おもて」の数 × ``per_heads`` 枚のカードを自分の山札から引く（v0.112。ドククラゲ（SI-016）・オムスター
+    （PR1-051）の「しょくしゅをつかう」）。ダメージの要素はない。
+
+    - 要素は ``Coin(per_own_typed=energy_type)`` → ``Draw(heads_of=..., per_heads=per_heads)``。コインの枚数は、実際にワザを使ったポケモンの今の「``energy_type``」エネルギーの
+      個数（``programs.typed_units_for``。エネルギーの個数で、基本エネルギーカードの枚数・ほかの色・相手の数ではない。読み方で数が変わるなら既存の問い（TE1・RB1・BZ2・MEC1・CE1・
+      CE2）で止める。「草」でないので［おいしげる］の問いは当てはめない）。0 個なら投げず、引かない（ワザの失敗ではない）
+    - コインはワザの説明のコイン（``AttackRun.flip``。ナツメのESPのやり直しの対象。「おもて」の数だけを使うので、先読みは「おもて」の数でまとめる）。すべて投げて確定してから引く
+    - 引く枚数は「おもて」の数 × ``per_heads`` で、山札が足りなければ引けるだけ引く（p.311・p.312。番の始めに引けない負けにしない）。自分への効果なので、相手の状態によらず投げる
+    - v0.37 の ``DrawOnHeads``（コイン 1 枚で決まった枚数）とは別の型。確かめは色・1 枚あたりの数・ダメージなし・全文を結び付ける"""
+
+    energy_type: EnergyType
+    per_heads: int
+    implementation_id = "coins_per_own_typed_energy_draw"
+
+    def __post_init__(self) -> None:
+        if type(self.per_heads) is not int or self.per_heads < 1:
+            raise ValueError(f"「おもて」1 枚あたりに引く枚数は 1 以上の整数（{self.per_heads!r}）")
+        if not isinstance(self.energy_type, EnergyType) or self.energy_type is EnergyType.COLORLESS:
+            raise ValueError(f"数えるエネルギーの色 {self.energy_type!r} は「無色」以外の色")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "自分のエネルギーの数だけコインを投げて山札から引くワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(
+            attack, what, (OWN_TYPED_ENERGY_COINS_DRAW_TEXT.format(ja=self.energy_type.ja, per=self.per_heads),))
+
+
+@dataclass(frozen=True)
+class DamageParalyzeOnHeadsElseLockSelf(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。そのあとコインを 1 枚投げ、「おもて」なら相手をマヒ状態にし、「うら」なら次の自分の番、このカードはこのワザを
+    使えない（v0.112。オムスター（PR1-051）の「ふしょくえき」）。
+
+    - 要素は ``Damage(OPP)`` → ``Coin`` → ``Status(PARALYSIS, gate=おもて)`` → ``SelfAttackLock(local_coin=None, gate=うら)``。1 枚のワザ全体のコインの同じ結果を両方が使う
+      （要素ごとに投げ直さない。ESPでやり直したならやり直した結果）。「うら」でもダメージは残る（ワザの失敗・自分へのダメージにしない）
+    - 「うら」の効果は v0.35 の「あわあわ」と同じ持続する効果 ``CannotUseOwnAttack``（実際に使ったポケモン自身。次の自分の番だけ、このワザだけ。もう 1 つのワザは使える）
+    - 自分への制限は相手への効果ではないので、相手へのマヒが無効でもコインを投げる（v0.34 の ``void_coin_question``。v0.76 の「きあいいっぱつ」と同じ）
+    - v0.3b の ``ParalyzeOnHeads``（「うら」で何もしない）・v0.31 の ``DamageThenParalyzeOrSelfDamage``（「うら」で自分へのダメージ）とは別の型。確かめは全文を照らす"""
+
+    implementation_id = "damage_paralyze_on_heads_else_lock_self"
+    opponent_effect_elements = (PARALYSIS,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインの「おもて」でマヒ・「うら」で自分がそのワザを使えなくなるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (PARALYZE_ON_HEADS_ELSE_LOCK_SELF_TEXT,))
+
+    def attack_lock_terms(self) -> tuple[type, int | None]:
+        """「うら」で与える持続する効果の型と、使えなくなるワザの位置（自分のこのワザなので None。不変条件が照らす）。"""
+        from .state import CannotUseOwnAttack
+
+        return CannotUseOwnAttack, None
+
+
+# v0.112 のワザの登録（4。id ごとに書く）。2 枚の「しょくしゅをつかう」は同じ登録の値（``_V0_112_TENTACLE_GRIP``）
+_V0_112_TENTACLE_GRIP = _printed(CoinsPerOwnTypedEnergyDraw(EnergyType.WATER, 2), "しょくしゅをつかう",
+                                 OWN_TYPED_ENERGY_COINS_DRAW_TEXT.format(ja=EnergyType.WATER.ja, per=2))
+V0_112_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # ドククラゲ（SI-016）。どくばりは日本語の印刷の文面の通常のどく（英語の欄のマヒは採らない。kyuura の jp_en_differences）
+    AttackKey("SI-016", 0): _V0_112_TENTACLE_GRIP,
+    AttackKey("SI-016", 1): _printed(PoisonOnHeads(), "どくばり", "コインを投げて「おもて」なら、相手を「どく」状態にする。"),
+    # オムスター（PR1-051）
+    AttackKey("PR1-051", 0): _V0_112_TENTACLE_GRIP,
+    AttackKey("PR1-051", 1): _printed(DamageParalyzeOnHeadsElseLockSelf(), "ふしょくえき", PARALYZE_ON_HEADS_ELSE_LOCK_SELF_TEXT),
+})
+
+DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_112_ATTACKS)
