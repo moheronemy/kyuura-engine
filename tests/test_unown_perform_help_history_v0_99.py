@@ -193,7 +193,8 @@ class RegistrationTest(unittest.TestCase):
         for card in V099:
             self.assertNotIn("corrections", cards[card])
         self.assertEqual({c: cards[c]["jp_print"]["level"] for c in V099}, {UP: 13, UH: 16, HORSEA: 22})
-        self.assertEqual(read_extract()["source"]["commit"], "73a169063463bbf7bcaa3137d70cbf9721d11534")  # 写しの元は v0.97 のまま
+        # 写しの元は v0.97 のまま（v0.97 の段のあと。v0.114 で e519b99 に上げた。今の写しの元は tests/test_baby_rules_evolution_v0_114.py）
+        self.assertEqual(next(s for s in read_extract()["source_migrations"] if s["id"] == "v0.97")["to"], "73a169063463bbf7bcaa3137d70cbf9721d11534")
 
     def test_adoption_records_and_research_links(self):
         data = json.loads((ROOT / "kyuura_engine" / "data" / "card_sources.json").read_text(encoding="utf-8"))["cards"]

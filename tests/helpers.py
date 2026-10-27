@@ -1775,8 +1775,11 @@ CARD_DATA_COMMIT_SINCE_V0_69 = "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"
 # v0.97（docs/unown-research-idfnj-v0.97.md 2 章）: 写しの元を 7d3f4ca から 73a1690 に上げた。移行は連鎖（ecb2d69 → 7d3f4ca → 73a1690。scripts/extract_kyuura_cards.py の
 # KYUURA_MIGRATIONS と同じ段）で、もどすときも段を 1 つずつさかのぼる（知らない値・段を飛ばした値を黙って置きかえない）
 CARD_DATA_COMMIT_SINCE_V0_97 = "73a169063463bbf7bcaa3137d70cbf9721d11534"
-CARD_DATA_COMMIT = CARD_DATA_COMMIT_SINCE_V0_97  # 今の写しの元
-CARD_DATA_MIGRATIONS = ((CARD_DATA_COMMIT_BEFORE_V0_69, CARD_DATA_COMMIT_SINCE_V0_69), (CARD_DATA_COMMIT_SINCE_V0_69, CARD_DATA_COMMIT_SINCE_V0_97))
+# v0.114（docs/baby-rules-evolution-v0.114.md 2 章）: 写しの元を 73a1690 から e519b99 に上げた（段 v0.114。前の段の値は変えない）
+CARD_DATA_COMMIT_SINCE_V0_114 = "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
+CARD_DATA_COMMIT = CARD_DATA_COMMIT_SINCE_V0_114  # 今の写しの元
+CARD_DATA_MIGRATIONS = ((CARD_DATA_COMMIT_BEFORE_V0_69, CARD_DATA_COMMIT_SINCE_V0_69), (CARD_DATA_COMMIT_SINCE_V0_69, CARD_DATA_COMMIT_SINCE_V0_97),
+                        (CARD_DATA_COMMIT_SINCE_V0_97, CARD_DATA_COMMIT_SINCE_V0_114))
 
 
 def with_card_data_commit_at(data: dict, commit: str) -> dict:
@@ -1805,7 +1808,7 @@ def with_card_data_commit_at(data: dict, commit: str) -> dict:
 
 def with_card_data_commit_before_v0_69(data: dict) -> dict:
     """state_to_dict の値（の写し）の、写しの元の 2 か所だけを v0.68 までの値にもどした新しい値（``data`` は変えない）。もどした数も確かめる。v0.97 から、今の写しの元
-    （73a1690）から移行の連鎖を段ごとにさかのぼる（``with_card_data_commit_at``）。"""
+    （v0.114 から e519b99）から移行の連鎖を段ごとにさかのぼる（``with_card_data_commit_at``）。"""
     return with_card_data_commit_at(data, CARD_DATA_COMMIT_BEFORE_V0_69)
 
 
@@ -1986,9 +1989,24 @@ V0_97_KYUURA_RECORDS_ADDED = {
 }
 
 
+# v0.114（docs/baby-rules-evolution-v0.114.md 2.3 節）: 研究の基準を kyuura e519b99 に上げて、採用の記録の kyuura_records に加わった記録（kyuura のベイビィの裁定・論点の事例が指す
+# カード）。tests/test_baby_rules_evolution_v0_114.py が、同梱の記録と同じことを確かめる
+V0_114_KYUURA_RECORDS_ADDED = {
+    "PMCG1-086": ("CR-DEVOLUTION-SPRAY-EVOLVED-BABY",),
+    "PR1-005": ("CR-NEUTRAL-SHIELD-EVOLVED-BABY",),
+    "PR1-012": ("CR-NEUTRAL-SHIELD-EVOLVED-BABY",),
+    "neo1-074": ("UQ-NEO-TEXT-BABY-CATEGORIES",),
+    "neo2-056": ("UQ-NEO-TEXT-BABY-CATEGORIES",),
+    "neo3-056": ("UQ-NEO-TEXT-BABY-CATEGORIES",),
+    "NIP1-021": ("UQ-NEO-TEXT-BABY-CATEGORIES",),
+}
+
+
 def kyuura_records_since_v0_69(card_id: str, before: list | tuple = ()) -> list:
-    """v0.68 までの kyuura_records（``before``）に、v0.69 で加わった記録を加えた値（並びは id の順）。v0.97 で加わった記録（``V0_97_KYUURA_RECORDS_ADDED``）も加える。"""
-    return sorted([*before, *V0_69_KYUURA_RECORDS_ADDED.get(card_id, ()), *V0_97_KYUURA_RECORDS_ADDED.get(card_id, ())])
+    """v0.68 までの kyuura_records（``before``）に、v0.69 で加わった記録を加えた値（並びは id の順）。v0.97 で加わった記録（``V0_97_KYUURA_RECORDS_ADDED``）・v0.114 で加わった記録
+    （``V0_114_KYUURA_RECORDS_ADDED``）も加える。"""
+    return sorted([*before, *V0_69_KYUURA_RECORDS_ADDED.get(card_id, ()), *V0_97_KYUURA_RECORDS_ADDED.get(card_id, ()),
+                   *V0_114_KYUURA_RECORDS_ADDED.get(card_id, ())])
 
 
 # v0.69: kyuura の未解決の一覧で論点に結ばれた停止コード（v0.68 までは not_in_kyuura。進化のあとの HP だけは out_of_scope）→ kyuura の論点

@@ -20,6 +20,7 @@ v0.4c 以降の 2 進化ポケモン。v0.11 はサカキのワンリキー・�
   （書き出しの ``engine_user_corrections``。kyuura が当てはめた修正の表 ``KYUURA_CORRECTIONS`` とは別。docs/non-pack-effect-reuse-v0.70.md 3 章）。
 - v0.97 から、写しの元を上げた移行を連鎖（``KYUURA_MIGRATIONS``。ecb2d69 → 7d3f4ca → 73a1690。書き出しの ``source_migrations``）で持ちます。kyuura が当てはめた
   修正は、当てはめた移行の段（``migration``）の前・あとのコミットの値で確かめ、写す欄は段ごとに比べます（docs/unown-research-idfnj-v0.97.md 2 章）。
+- v0.114 で、段 v0.114（73a1690 → e519b99）を加えました（docs/baby-rules-evolution-v0.114.md 2 章）。
 
 使い方::
 
@@ -37,8 +38,10 @@ import sys
 from pathlib import Path
 
 KYUURA_REPOSITORY = "https://github.com/moheronemy/kyuura"
-# v0.97: kyuura main の PR #5 のマージ（木は研究のコミット 78d090c329aca58c4b5fbaefa2a1e5c089433b58 と同じ）。v0.69〜v0.96 は 7d3f4ca（``V0_69_KYUURA_COMMIT``）
-KYUURA_COMMIT = "73a169063463bbf7bcaa3137d70cbf9721d11534"
+# v0.114: kyuura のブランチ claude/baby-data-engine-v0113-handover の固定コミット（ベイビィ 13 枚のルール文・進化先の画像の確認とベイビィのルールの整理。親は 73a1690。
+# kyuura main には未取り込み）。v0.97〜v0.113 は 73a1690（``V0_97_KYUURA_COMMIT``。kyuura main の PR #5 のマージ。木は研究のコミット 78d090c と同じ）、
+# v0.69〜v0.96 は 7d3f4ca（``V0_69_KYUURA_COMMIT``）
+KYUURA_COMMIT = "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
 KYUURA_PATH = "data/cards.json"
 
 # v0.1 の対戦で使うカード（kyuura docs/engine-readiness.md 5章の段階 1 のたねポケモンと基本エネルギー）
@@ -1419,12 +1422,16 @@ POOL_V0_79 = [
 # kyuura の台帳の修正があれば、ここに挙げていなければ書き出さない（知らない修正を黙って受け入れない）
 PREVIOUS_KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"  # v0.68 までの写しの元（移行の連鎖の最初の段の前。採用の記録の採用したときのデータのコミット）
 V0_69_KYUURA_COMMIT = "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"  # v0.69〜v0.96 の写しの元
+V0_97_KYUURA_COMMIT = "73a169063463bbf7bcaa3137d70cbf9721d11534"  # v0.97〜v0.113 の写しの元
 # v0.97（docs/unown-research-idfnj-v0.97.md 2 章）: 写しの元を上げた移行の連鎖。段ごとに、前のコミット（``from``）とあとのコミット（``to``）。最後の段の ``to`` が写しの元、
 # 最初の段の ``from`` が PREVIOUS_KYUURA_COMMIT。過去の段の値は書き換えない（v0.69 の段の ``to`` は 7d3f4ca のまま）。kyuura が当てはめた修正は、当てはめた段（``migration``）の
 # ``from`` の値が ``before``・``to`` の値が ``after`` で、写しの元でも ``after``。写す欄は段ごとに、その段の修正の欄と出典の記録の欄を除いて同じことを確かめる
+# v0.114（docs/baby-rules-evolution-v0.114.md 2 章）: 段 v0.114（73a1690 → e519b99）を加えた。v0.97 の段の ``to`` は、写しの元の定数ではなく 73a1690（``V0_97_KYUURA_COMMIT``）に固定した
+# （写しの元を上げても過去の段の値が変わらないように）
 KYUURA_MIGRATIONS = (
     {"id": "v0.69", "from": PREVIOUS_KYUURA_COMMIT, "to": V0_69_KYUURA_COMMIT, "document": "docs/equivalent-non-pack-cards-v0.69.md"},
-    {"id": "v0.97", "from": V0_69_KYUURA_COMMIT, "to": KYUURA_COMMIT, "document": "docs/unown-research-idfnj-v0.97.md"},
+    {"id": "v0.97", "from": V0_69_KYUURA_COMMIT, "to": V0_97_KYUURA_COMMIT, "document": "docs/unown-research-idfnj-v0.97.md"},
+    {"id": "v0.114", "from": V0_97_KYUURA_COMMIT, "to": KYUURA_COMMIT, "document": "docs/baby-rules-evolution-v0.114.md"},
 )
 KYUURA_CORRECTIONS_PATH = "data/curation/card_corrections.json"
 KYUURA_TARGETS_PATH = "data/engine_targets.json"
@@ -2001,9 +2008,16 @@ def migration_copy_problems(kyuura: Path, source: dict, previous: dict, pool: li
     return problems
 
 
+# v0.114（docs/baby-rules-evolution-v0.114.md 2 章）: kyuura の対象の一覧（engine_targets.json）は、e519b99 で登録表の写しをエンジン v0.113 から作り直したので、v0.69・v0.71 で
+# 選んだカード（mechanically_equivalent・reuse_candidate）はどれも registered になり、選んだときの欄（equivalent_to・nearest_registered）もない。v0.69・v0.71 の選定の記録
+# （写しの equivalent_targets・reprint_targets。値は書き換えない）は、登録表の写しが v0.68 のままだった最後の写しの元 73a1690 の一覧から読む（``TARGET_SELECTION_COMMIT``）。
+# 今の写しの元（KYUURA_COMMIT）の一覧では、選んだカードがどれも registered であることを確かめる（``current_target_status_problems``）
+TARGET_SELECTION_COMMIT = V0_97_KYUURA_COMMIT
+
+
 def equivalent_targets(kyuura: Path) -> list[dict]:
-    """engine_targets.json（KYUURA_COMMIT）の mechanically_equivalent の記録（v0.69。値は書き換えない）。"""
-    data = json.loads(_show(kyuura, KYUURA_COMMIT, KYUURA_TARGETS_PATH).decode("utf-8"))
+    """engine_targets.json（``TARGET_SELECTION_COMMIT``。v0.113 までは KYUURA_COMMIT）の mechanically_equivalent の記録（v0.69。値は書き換えない）。"""
+    data = json.loads(_show(kyuura, TARGET_SELECTION_COMMIT, KYUURA_TARGETS_PATH).decode("utf-8"))
     keys = ("id", "name_ja", "equivalent_to", "product_group", "jp_set", "release_date", "released_after_rule_base", "category", "category_reasons", "play_scope")
     return [{key: card.get(key) for key in keys} for card in data["cards"] if card.get("engine_status") == "mechanically_equivalent"]
 
@@ -2021,9 +2035,9 @@ def equivalent_target_problems(targets: list[dict]) -> list[str]:
 
 
 def reprint_targets(kyuura: Path) -> list[dict]:
-    """engine_targets.json（KYUURA_COMMIT）の、POOL_V0_71 の記録（v0.71。値は書き換えない）。``nearest_registered`` は kyuura が見つけた、登録したカードの中で
-    いちばん近いカードと違う欄（索引。処理が同じことの証拠ではない。エンジンは effects.REPRINT_CARDS と scripts/check_card_sources.py で確かめる）。"""
-    data = json.loads(_show(kyuura, KYUURA_COMMIT, KYUURA_TARGETS_PATH).decode("utf-8"))
+    """engine_targets.json（``TARGET_SELECTION_COMMIT``。v0.113 までは KYUURA_COMMIT）の、POOL_V0_71 の記録（v0.71。値は書き換えない）。``nearest_registered`` は kyuura が
+    見つけた、登録したカードの中でいちばん近いカードと違う欄（索引。処理が同じことの証拠ではない。エンジンは effects.REPRINT_CARDS と scripts/check_card_sources.py で確かめる）。"""
+    data = json.loads(_show(kyuura, TARGET_SELECTION_COMMIT, KYUURA_TARGETS_PATH).decode("utf-8"))
     keys = ("id", "name_ja", "engine_status", "reuse_basis", "nearest_registered", "same_card_group", "product_group", "jp_set", "release_date",
             "released_after_rule_base", "category", "play_scope")
     by_id = {card["id"]: card for card in data["cards"]}
@@ -2042,6 +2056,17 @@ def reprint_target_problems(targets: list[dict]) -> list[str]:
         if t["play_scope"] != "standard":
             problems.append(f"{t['id']}: play_scope が standard ではない")
     return problems
+
+
+def current_target_status_problems(kyuura: Path) -> list[str]:
+    """v0.114: 今の写しの元（KYUURA_COMMIT）の engine_targets.json で、v0.69・v0.71 で選んだカード（POOL_V0_69・POOL_V0_71）がどれも registered（kyuura が写したエンジンの
+    登録表にある）。選定の記録（``TARGET_SELECTION_COMMIT``）と今の一覧の分類の違いを、黙って受け入れない。"""
+    if TARGET_SELECTION_COMMIT == KYUURA_COMMIT:
+        return []
+    data = json.loads(_show(kyuura, KYUURA_COMMIT, KYUURA_TARGETS_PATH).decode("utf-8"))
+    by_id = {card["id"]: card for card in data["cards"]}
+    return [f"{card_id}: 写しの元（{KYUURA_COMMIT[:7]}）の engine_targets.json の engine_status が registered ではない（{(by_id.get(card_id) or {}).get('engine_status')!r}）"
+            for card_id in [*POOL_V0_69, *POOL_V0_71] if (by_id.get(card_id) or {}).get("engine_status") != "registered"]
 
 
 def _copy(card: dict) -> dict:
@@ -2664,8 +2689,8 @@ def build_extract(source: dict, targets: list[dict], reprints: list[dict]) -> di
     extract["kyuura_corrections"] = [dict(correction, applied_in_source=_step(correction)["to"], previous_source=_step(correction)["from"])
                                      for correction in KYUURA_CORRECTIONS]
     extract["engine_user_corrections"] = [dict(correction, source_commit=KYUURA_COMMIT) for correction in ENGINE_USER_CORRECTIONS]
-    extract["equivalent_targets"] = {"path": KYUURA_TARGETS_PATH, "commit": KYUURA_COMMIT, "cards": targets}
-    extract["reprint_targets"] = {"path": KYUURA_TARGETS_PATH, "commit": KYUURA_COMMIT, "cards": reprints}
+    extract["equivalent_targets"] = {"path": KYUURA_TARGETS_PATH, "commit": TARGET_SELECTION_COMMIT, "cards": targets}
+    extract["reprint_targets"] = {"path": KYUURA_TARGETS_PATH, "commit": TARGET_SELECTION_COMMIT, "cards": reprints}
     extract["cards"] = cards
     return extract
 
@@ -2688,7 +2713,7 @@ def main(argv: list[str] | None = None) -> int:
     pool = all_pool_cards() + REFERENCE_ONLY
     problems = (kyuura_correction_problems(args.kyuura, source, previous, pool) + engine_user_correction_problems(args.kyuura, source, pool)
                 + previous_copy_problems(source, previous, pool) + migration_copy_problems(args.kyuura, source, previous, pool)
-                + equivalent_target_problems(targets) + reprint_target_problems(reprints))
+                + equivalent_target_problems(targets) + reprint_target_problems(reprints) + current_target_status_problems(args.kyuura))
     if problems:
         print("kyuura のデータを写しにできない:\n" + "\n".join(problems), file=sys.stderr)
         return 1

@@ -213,8 +213,9 @@ class RegistrationTest(unittest.TestCase):
         links = json.loads((ROOT / "kyuura_engine" / "data" / "research_links.json").read_text(encoding="utf-8"))
         for card in V0103:
             record = sources[card]
+            # v0.114: 研究の基準を e519b99 に上げて、kyuura の CR-NEUTRAL-SHIELD-EVOLVED-BABY がこのカードを指す（採用したときのデータのコミット・記録した日は変えない。tests/helpers.py）
             self.assertEqual((record["basis"], record["status"], record["kyuura_commit"], record["kyuura_records"], record["external_checks"], record["play_text"]),
-                             ("kyuura_data", "adopted", "73a169063463bbf7bcaa3137d70cbf9721d11534", [], [],
+                             ("kyuura_data", "adopted", "73a169063463bbf7bcaa3137d70cbf9721d11534", H.kyuura_records_since_v0_69(card), [],
                               {"power/0": "kyuura_printed_text", "attack/0": "kyuura_printed_text"}))
             (issue,) = record["issues"]
             self.assertEqual((issue["fields"], issue["affects_behavior"]), (["pokemon.attacks[0].text.ja"], False))

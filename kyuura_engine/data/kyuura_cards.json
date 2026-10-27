@@ -3,7 +3,7 @@
   "description": "kyuura の data/cards.json から、kyuura-engine が使うカードの記録を抜き出した写し。カード情報の正本は kyuura。値は書き換えていない。生成: scripts/extract_kyuura_cards.py（手で編集しない）。",
   "source": {
     "repository": "https://github.com/moheronemy/kyuura",
-    "commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+    "commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
     "path": "data/cards.json",
     "schema_version": 3
   },
@@ -1574,6 +1574,13 @@
         "FIX-neo2-025-RULES-TEXT-JA",
         "FIX-neo2-026-RULES-TEXT-JA"
       ]
+    },
+    {
+      "id": "v0.114",
+      "from": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "to": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "document": "docs/baby-rules-evolution-v0.114.md",
+      "corrections": []
     }
   ],
   "kyuura_corrections": [
@@ -1760,7 +1767,7 @@
       "reference_url_role": "利用者が示した補助資料。エンジンは本文を取得していない（ネットワークのプロキシが 403）。サイトの本文を検証した・ルーン文字を解読したとは扱わない",
       "engine_saw_image": false,
       "kyuura_saw_image": false,
-      "source_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534"
+      "source_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
     }
   ],
   "equivalent_targets": {

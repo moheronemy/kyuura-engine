@@ -56,7 +56,10 @@ class TableTest(unittest.TestCase):
         self.assertEqual(len(POOL_V0_69), 96)
         self.assertEqual(set(TABLE), set(POOL_V0_69))
         self.assertFalse(set(E.EQUIVALENT_CARDS) & set(E.EQUIVALENT_BASIC_ENERGY))
-        self.assertEqual(EXTRACT["equivalent_targets"]["commit"], EXTRACT["source"]["commit"])
+        # v0.114: kyuura の対象の一覧（e519b99）は登録表の写しを v0.113 から作り直したので、選定の記録は、登録表の写しが v0.68 のままだった最後の写しの元 73a1690 の一覧から読む
+        # （scripts/extract_kyuura_cards.py の TARGET_SELECTION_COMMIT。v0.113 までは写しの元と同じコミット）
+        self.assertEqual(EXTRACT["equivalent_targets"]["commit"], "73a169063463bbf7bcaa3137d70cbf9721d11534")
+        self.assertEqual(EXTRACT["reprint_targets"]["commit"], EXTRACT["equivalent_targets"]["commit"])
         self.assertEqual([c["id"] for c in EXTRACT["equivalent_targets"]["cards"]], list(POOL_V0_69))
         for card_id in POOL_V0_69:
             with self.subTest(card=card_id):

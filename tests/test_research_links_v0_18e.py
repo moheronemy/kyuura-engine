@@ -63,7 +63,8 @@ class ResearchLinksTest(unittest.TestCase):
         # v0.69: 研究の基準を kyuura 7d3f4ca（v0.68 までのエンジンの記録を取り込んだコミット。kyuura の main）に上げ、写しの元も同じコミットにした
         # （docs/equivalent-non-pack-cards-v0.69.md 7 章）。v0.68 までは研究の基準 3f34908・写しの元 ecb2d69 を分けて持っていた
         # v0.97: 研究の基準と写しの元を kyuura 73a1690（研究 78d090c を取り込んだ main の PR #5 のマージ。木は 78d090c と同じ）に上げた（docs/unown-research-idfnj-v0.97.md 2 章・3 章）
-        self.assertEqual(LINKS["research_commit"], "73a169063463bbf7bcaa3137d70cbf9721d11534")
+        # v0.114: 研究の基準と写しの元を kyuura e519b99（ブランチ claude/baby-data-engine-v0113-handover の固定コミット。親は 73a1690）に上げた（docs/baby-rules-evolution-v0.114.md 2 章）
+        self.assertEqual(LINKS["research_commit"], "e519b99e2adcc6c2cd0998569ae5ee1101de6e89")
         self.assertEqual(LINKS["engine_import_id"], "ENGINE-46A3E2E")
         self.assertEqual(LINKS["card_data_commit"], read_extract()["source"]["commit"])
         self.assertEqual(LINKS["research_commit"], LINKS["card_data_commit"])

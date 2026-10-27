@@ -9,8 +9,8 @@
 | 項目 | 内容 |
 |---|---|
 | 元のリポジトリ | https://github.com/moheronemy/kyuura |
-| 元のコミット | `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。kyuura の main。形式 3 のカードデータ。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`（kyuura docs/engine-readiness.md が「基準にする調査データ」としたコミット。過去の原典照合の記録 card_verification.json はこのコミットの写しと照らした履歴）。下の v0.69 の章） |
-| 研究の基準 | `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。写しの元と同じ。下の v0.69 の章）。v0.68 までは `3f349085645f47d0649a6cacece3680caeae50bf`（2026-10-15 から。ブランチ `claude/cool-ptolemy-5vtgsg`。裁定・論点・最新の説明・照合の記録を照らすコミット。カードの写しは作り直していない。[verified-record-reuse.md](verified-record-reuse.md)）。v0.18a〜v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。[research-alignment-v0.18a.md](research-alignment-v0.18a.md)） |
+| 元のコミット | `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`（v0.114 から。kyuura のブランチ `claude/baby-data-engine-v0113-handover` の固定コミット。下の v0.114 の章。v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`）。それより前は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69〜v0.96。kyuura の main。形式 3 のカードデータ。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`（kyuura docs/engine-readiness.md が「基準にする調査データ」としたコミット。過去の原典照合の記録 card_verification.json はこのコミットの写しと照らした履歴）。下の v0.69 の章） |
+| 研究の基準 | `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`（v0.114 から。写しの元と同じ。v0.97〜v0.113 は 73a1690）。それより前は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69〜v0.96。写しの元と同じ。下の v0.69 の章）。v0.68 までは `3f349085645f47d0649a6cacece3680caeae50bf`（2026-10-15 から。ブランチ `claude/cool-ptolemy-5vtgsg`。裁定・論点・最新の説明・照合の記録を照らすコミット。カードの写しは作り直していない。[verified-record-reuse.md](verified-record-reuse.md)）。v0.18a〜v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。[research-alignment-v0.18a.md](research-alignment-v0.18a.md)） |
 | 元のファイル | `data/cards.json`（schema_version 3。v0.68 までは 2） |
 | 生成 | `scripts/extract_kyuura_cards.py`（`git show <コミット>:data/cards.json` で読むので、kyuura の作業ツリーの状態に左右されない。kyuura は読むだけで変更しない） |
 | 照合の記録 | `kyuura_engine/data/card_verification.json`（このリポジトリの作業記録。2026-10-14 までの『オフィシャルブック2000』との照合。履歴として残し、書き換えない） |
@@ -1954,6 +1954,24 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   `stop_codes` に `not_in_kyuura` で加えた。
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
+
+## v0.114: 写しの元・研究の基準を kyuura e519b99 に上げる移行
+
+[baby-rules-evolution-v0.114.md](baby-rules-evolution-v0.114.md) の 2 章。
+
+- 写しの元・研究の基準を kyuura `73a169063463bbf7bcaa3137d70cbf9721d11534` から `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`（ブランチ `claude/baby-data-engine-v0113-handover` の公開済みの
+  固定コミット。親は 73a1690。kyuura の main には未取り込み）に上げた。移行の連鎖に段 v0.114 を加えた（ecb2d69 → 7d3f4ca → 73a1690 → e519b99。`KYUURA_MIGRATIONS`・写しの
+  `source_migrations`・`card_sources.json` の `data_migrations` の 3 段）。v0.97 の段の `to` は写しの元の定数ではなく 73a1690 に固定した。v0.69・v0.97 の段の記録・採用の記録の採用したときの
+  データのコミット・記録した日・外部照合の確認日・`ENGINE_USER_CORRECTIONS`（PR1-069 の名前）は書き換えていない。
+- 73a1690 → e519b99 の data/cards.json を全 1,377 件で比べ、値が変わったのはベイビィ 13 枚（6 枚のルール文・13 枚の新しい欄 `pokemon.evolves_to`・`notes`・`corrections`・`data_gaps`）だけで、
+  写しの 1,250 枚の値は同じ（写しの `cards` が同じ）。台帳の 19 件の訂正（根拠 `card_image_check`。画像の記録は新しい data/curation/card_image_checks.json の `IMG-`）は、どれも写しの外の
+  カードの訂正で、このコミットでは写しに入れていない。画像を読んだのは kyuura で、エンジンは画像を見ていない。
+- kyuura の対象の一覧（engine_targets.json）は e519b99 で登録表の写しを v0.113 から作り直したので、v0.69・v0.71 の選定の記録（写しの `equivalent_targets`・`reprint_targets`）は 73a1690 の一覧から
+  読む（`TARGET_SELECTION_COMMIT`。値は変わらない）。今の一覧で選んだカードがどれも `registered` であることを確かめる。
+- 研究の対応表: kyuura の論点 72 → 73（新しい UQ-NEO-TEXT-BABY-CATEGORIES）、新しい条項 8・裁定 6、事例を加えた UQ-ATTACK-PRE-DAMAGE-COIN-ORDER。kyuura の論点の事例のうちエンジンの裁定 id の
+  ないもの 7 件を `kyuura_cases_without_engine_ruling` に結び（移行の時点ではベイビィのカードがないので、コードのない問い NB0 と `unregistered`）、採用の記録 7 件の `kyuura_records` を研究の基準の
+  コミットの記録に合わせた（採用したときのデータのコミット・記録した日は変えていない）。`engine_import_id` は変えていない。kyuura の論点の数 73 は、エンジンの停止コード 237・未解決の裁定 238 とは
+  別の数（kyuura の未解決の一覧は v0.68 までの取り込み）。
 
 ## v0.113: 可変枚数のコインと、山札の検索・つける・場全体のトラッシュの 6 枚
 

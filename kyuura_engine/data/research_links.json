@@ -2,19 +2,19 @@
   "format": "kyuura-engine research links 1",
   "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md kyuura の engine_unresolved_index にまだない停止コード（エンジンが新しく加えたもの）は kyuura_disposition を not_in_kyuura にし、kyuura への報告事項にする（v0.21 の突風・v0.22 のパソコン通信・v0.23 のエネルギー回収・v0.36 の AC6（手順 4 のコインとこんらん）・RD9（山札にもどす効果ときぜつ）・v0.37 の JS1（説明に弱点・抵抗力のない控えへのダメージ）。kyuura に記録ができたら scripts/check_research_links.py が知らせる）。 v0.31 で、コードのない未解決（T27・C34/C35・G40・P19・P32）に停止コードを付けた。kyuura の未解決の一覧はこれらをコードなし（stop_code が null）で挙げているので、kyuura_index_engine_key でその行と照らす（kyuura の一覧にコードが書かれたら scripts/check_research_links.py が知らせる）。 v0.50 で、退化の処理に使う kyuura の規定・裁定（GR-2000-P324-DEVOLUTION・CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION・CR-CHEMICAL-GAS-LEAVES・GR-2000-P323-KNOCKOUT）を applied_rule_records に結び付けた（id の対応だけ。scripts/check_research_links.py が研究の基準のコミットにあることと分類を確かめる）。 v0.51 で、トラッシュのたねポケモンを持ち主のベンチに出す処理に使う kyuura の規定（GR-2000-P309-ATTACK-PROCEDURE・GR-2000-P319-HP-AND-DAMAGE・GR-2000-P320-COUNTER-MOVE）を applied_rule_records に結び付けた（v0.50 と同じく id の対応だけ）。 v0.70 で、拡張パック以外の商品のポケモン 82 枚の説明文のあるワザ 85 を adopted_printed_text に加えた（kyuura データの採用。研究の基準のコミットに、これらのカードを指す LD-・CC-・CR-・UQ-・エラッタはない）。PR1-069 の名前（kyuura の値「？？？」）は、エンジンが写しの作り直しで利用者が示した訂正「ミュウ」を当てはめた（engine_user_corrections。scripts/check_research_links.py はこの訂正の欄だけを訂正のあとの値にして比べる）。",
   "repository": "https://github.com/moheronemy/kyuura",
-  "research_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
-  "research_branch": "main",
+  "research_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+  "research_branch": "claude/baby-data-engine-v0113-handover",
   "research_files": [
     "data/sidecar/rulings.json",
     "data/sidecar/latest_descriptions.json",
     "data/sidecar/card_checks.json"
   ],
-  "card_data_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+  "card_data_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
     "engine_unresolved_rulings": 238,
     "engine_stop_codes": 237,
-    "kyuura_issues": 72
+    "kyuura_issues": 73
   },
   "stop_codes": {
     "UNRESOLVED_MULLIGAN_COMPENSATION": {
@@ -2807,6 +2807,18 @@
       "kyuura_issue": "UQ-ESP-REDO",
       "reachable_with_current_cards": false,
       "counted_as_engine_unresolved": false
+    },
+    "neo_text_baby_categories": {
+      "engine_rulings": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "NB0"
+        }
+      ],
+      "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
+      "reachable_with_current_cards": false,
+      "counted_as_engine_unresolved": false
     }
   },
   "kyuura_cases_without_engine_ruling": {
@@ -2953,6 +2965,69 @@
           "unregistered": true
         },
         "note": "GR団のミュウツーの［わるいはどう］（エンジンに登録していないカード）"
+      },
+      {
+        "kyuura_issue": "UQ-ATTACK-PRE-DAMAGE-COIN-ORDER",
+        "card_id": "neo1-042",
+        "target": "card",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "ベイビィポケモンのルールのコインと、手順 4 のほかの効果・手順 5 のこんらん・スタジアムのコインの順番（kyuura が 2026-10-27 に加えた事例。13 枚とも同じルール）。v0.114 の写しの元の移行の時点では、ベイビィ 13 枚を写しに入れていない（対戦に使えない）"
+      },
+      {
+        "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
+        "card_id": "neo1-074",
+        "target": "trainer",
+        "engine": {
+          "codeless_question": "neo_text_baby_categories"
+        },
+        "note": "すごいつりざおの「たねポケモン」にベイビィポケモンカードをふくむか。移行の時点の写しにベイビィのカードがないので、この場面は起こらない（NB0。コードのない問い）"
+      },
+      {
+        "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
+        "card_id": "neo3-049",
+        "target": "attack/0",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "いかく（エンジンに登録していないワザ）"
+      },
+      {
+        "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
+        "card_id": "neo3-056",
+        "target": "trainer",
+        "engine": {
+          "codeless_question": "neo_text_baby_categories"
+        },
+        "note": "ポケモン育て屋夫婦の場の「たねポケモン」「1進化ポケモン」にベイビィ・ベイビィから進化したたねポケモンをふくむか（NB0。移行の時点では起こらない）"
+      },
+      {
+        "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
+        "card_id": "NIP1-021",
+        "target": "trainer",
+        "engine": {
+          "codeless_question": "neo_text_baby_categories"
+        },
+        "note": "イントロパック★neo のマスターボールの「たねポケモン」にベイビィポケモンカードをふくむか（NB0。移行の時点では起こらない）"
+      },
+      {
+        "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
+        "card_id": "neo2-056",
+        "target": "trainer",
+        "engine": {
+          "codeless_question": "neo_text_baby_categories"
+        },
+        "note": "退化スプレーHYPER の「進化カード」に、ベイビィの上のたねポケモンカードをふくむか（NB0。移行の時点では起こらない）"
+      },
+      {
+        "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
+        "card_id": "neo4-038",
+        "target": "attack/0",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "わるいオムスターのげんしのしずく（エンジンに登録していないワザ）"
       }
     ]
   },
