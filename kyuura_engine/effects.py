@@ -40751,3 +40751,132 @@ V0_110_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_110_ATTACKS)
+
+
+# ---------------------------------------------------------------- v0.111（docs/field-energy-card-counts-v0.111.md）
+# 場のエネルギーカードの枚数でダメージ・ワザの使用条件が決まるポケモンの 4 枚（ワザ 8。同じデータの 2 組）。処理に使う文面は kyuura の印刷の文面。ちょうねんりき・はたくは説明文がなく
+# ``DAMAGE_ONLY``。サイコクラッシュは相手の場全体の「超」エネルギーカードの枚数（v0.50 の ``DamageTimesDefenderEnergyCards`` は相手の対戦ポケモン 1 匹の色を問わない枚数で、範囲と色が違う）、
+# シンクロウェーブは枚数が同じことがワザを使うための条件（v0.83 のやさしいモルフォンの ``FailUnlessEqualEnergyCardsDamage`` は使ってから失敗する別の文面）
+
+OPPONENT_FIELD_ENERGY_CARDS_TEXT = "相手の場のポケモンについている「{ja}」エネルギーカードの数×{per}のダメージ。"
+SYNCHRO_WAVE_USE_TEXT = "自分と相手に同じ数のエネルギーカードがついている時だけ、このワザは使える。"
+ENERGY_CARD_COUNTS_DIFFER_CODE = "ENERGY_CARD_COUNTS_DIFFER"  # シンクロウェーブ（ナツメのケーシィ）を使うための条件を満たさない（通常の不正な操作）
+
+
+def field_energy_cards_of_type(state: GameState, owner: int, energy_type: EnergyType) -> int:
+    """v0.111: プレイヤー ``owner`` の場のポケモン（バトル場とベンチ）についている「``energy_type``」エネルギーカードの枚数（その色の基本エネルギーカード。カードの枚数で、出すエネルギーの
+    個数ではない）。カードとしての色が決まらないカード（``field_energy_card_ambiguities``）は数えないので、呼ぶ側が先に問いにする。ついているカードだけを見る（つけているポケモンのタイプで
+    しぼらない。うらのカードの名前・特殊能力を読まない）。状態を変えず、乱数を使わない。"""
+    return sum(len(attached_basic_energy(state, pokemon, energy_type)) for pokemon in state.players[owner].in_play())
+
+
+def field_energy_card_ambiguities(state: GameState, owner: int, energy_type: EnergyType) -> tuple[int, ...]:
+    """v0.111: ``field_energy_cards_of_type`` の数え方で、説明の「「``energy_type``」エネルギーカード」に当たるかが決まらない、プレイヤー ``owner`` の場のカード（場の順・ついている順）:
+    ［へんしん］の読み方で当たりうるカード（TE1）・レインボーエネルギー（RB1）・［エネエネ］でその色になったカード（BZ2）・ミラクルエネルギー（MEC1）・色の変わったカード（CE3）・
+    エナジーバーンでカードの種類と今のエネルギーのタイプで答えが違うカード（エナジートランスの HC10 と同じ形。相手の場には起こらない）。状態を変えず、乱数を使わない。"""
+    found: list[int] = []
+    for pokemon in state.players[owner].in_play():
+        if not pokemon.energy:
+            continue
+        basic = set(attached_basic_energy(state, pokemon, energy_type))
+        cards = (set(ambiguous_rainbow_cards(state, pokemon, energy_type)) | set(converted_energy_cards(state, pokemon, energy_type))
+                 | set(ambiguous_miracle_cards(state, pokemon, energy_type)) | set(color_changed_cards(state, pokemon, energy_type)))
+        if len(energy_type_readings(state, pokemon, energy_type)) > 1:
+            cards |= {uid for uid in pokemon.energy if state.card_def(uid).category == "energy" and uid not in basic}
+        for uid in pokemon.energy:
+            if (pokemon.pokemon_id, uid) in state.energy_burn and (uid in basic) != (state.energy_type_of(pokemon, uid) is energy_type):
+                cards.add(uid)
+        found += [uid for uid in pokemon.energy if uid in cards]
+    return tuple(found)
+
+
+@dataclass(frozen=True)
+class DamageTimesOpponentFieldEnergyCards(AttackEffect):
+    """相手の場のポケモンについている「``energy_type``」エネルギーカードの数 × ``per`` のダメージ（v0.111。ミュウツー（ES1-022・QSG-032）の「サイコクラッシュ」。ダメージの目安「10×」）。
+
+    - 要素は ``Damage(OPP, OpponentFieldEnergyCardsTimes(energy_type, per))``。数えるのは、ワザを実際に使ったプレイヤーの相手の場（バトル場と控え）のポケモンについているその色の
+      エネルギーカードの枚数（``field_energy_cards_of_type``）。枚数 × ``per`` が p.321 の 1 段階（目安の数字を加えない。最終ダメージを固定しない）。0 枚なら 0 で、2 段階までで
+      0 以下なので与えない
+    - 自分の場・手札・山札・トラッシュは数えない。つけているポケモンのタイプでしぼらない。数えるために見る控えにはワザの効果を与えない（「とうめい」・「ワザをうけない」状態を評価しない）
+    - カードとしての色が決まらないカード（TE1・RB1・BZ2・MEC1・CE3）は、既存の問いで止める（数える結果が変わるときだけ。ダメージの要素が無効なら量は使われないので止めない）
+    - v0.50 の ``DamageTimesDefenderEnergyCards``（相手の対戦ポケモン 1 匹・色を問わない）とは範囲と色が違う別の型（そちらの意味・既定は変えない）"""
+
+    energy_type: EnergyType
+    per: int
+    implementation_id = "damage_times_opponent_field_energy_cards"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "相手の場のエネルギーカード 1 枚あたりのダメージ")
+        if self.energy_type is EnergyType.COLORLESS:
+            raise ValueError("「無色」エネルギーカードを数える文面はない")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の場の決まった色のエネルギーカードの枚数でダメージが決まるワザ"
+        problems = _check_form(attack, what, damage="modified", modifier="×")
+        if attack.damage != self.per:
+            problems.append(f"ダメージの目安の数字 {attack.damage} が、登録のエネルギーカード 1 枚あたりのダメージ {self.per} と違う")
+        return problems + _check_exact_text(attack, what, (OPPONENT_FIELD_ENERGY_CARDS_TEXT.format(ja=self.energy_type.ja, per=self.per),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        """基本となるダメージの候補（実際の処理と同じ数え方。色が決まらないカードは、数える・数えないのどちらも候補にする）。"""
+        owner = 1 - use.player
+        count = field_energy_cards_of_type(state, owner, self.energy_type)
+        unknown = len(field_energy_card_ambiguities(state, owner, self.energy_type))
+        return DamageProfile(opponent=tuple((count + extra) * self.per for extra in range(unknown + 1)))
+
+
+def energy_card_counts(state: GameState, attacker: PokemonInPlay) -> tuple[int, int]:
+    """v0.111: (``attacker`` についているエネルギーカードの枚数, その持ち主の相手の対戦ポケモンについているエネルギーカードの枚数)（色・出す個数・タイプは見ない。``attached_energy_cards``。
+    無色2個エネルギーは 1 枚、［エネエネ］で場でエネルギーカードとしてあつかうカードも 1 枚）。相手の対戦ポケモンがいなければ 0。"""
+    owner = state.find_pokemon(attacker.pokemon_id)[0]
+    defender = state.players[1 - owner].active
+    return attached_energy_cards(state, attacker), 0 if defender is None else attached_energy_cards(state, defender)
+
+
+@dataclass(frozen=True)
+class DamageRequiringEqualEnergyCards(AttackEffect):
+    """自分と相手に同じ数のエネルギーカードがついている時だけ、このワザは使える。ダメージの目安の数字ぶんのダメージ（v0.111。ナツメのケーシィ（GD6-001・PR1-060）の「シンクロウェーブ」）。
+
+    - 条件はワザを使うための条件（``usage_problem``。必要なエネルギーの確認のあと・こんらんのコインの前。``ENERGY_CARD_COUNTS_DIFFER``。拒否では状態・乱数・ログを変えない。研究上の
+      未解決にしない）。比べるのは、実際にワザを使うポケモンと相手の対戦ポケモンについているエネルギーカードの枚数（``energy_card_counts``。控え・出す個数・色・タイプは見ない）
+    - 要素は ``EqualEnergyCardsRequired`` → ``Damage(OPP)``。相手のワザとして使うときは要素の ``copy_problem`` が実際に使うポケモンで比べる
+    - v0.83 のやさしいモルフォン（neo4-006）の「シンクロウェーブ」（``FailUnlessEqualEnergyCardsDamage``。「同じ枚数…ついていないとき、このワザは失敗する」）は、使ってから失敗する
+      別の文面で、変えない"""
+
+    implementation_id = "damage_requiring_equal_energy_cards"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "エネルギーカードの枚数が同じときだけ使えるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (SYNCHRO_WAVE_USE_TEXT,))
+
+    def usage_problem(self, state: GameState, attacker: PokemonInPlay) -> IllegalActionError | None:
+        own, theirs = energy_card_counts(state, attacker)
+        if own != theirs:
+            return IllegalActionError(ENERGY_CARD_COUNTS_DIFFER_CODE,
+                                      f"自分（{own} 枚）と相手（{theirs} 枚）に同じ数のエネルギーカードがついていないので、このワザは使えない（ワザの説明）")
+        return None
+
+
+# v0.111 のワザの登録（8。id ごとに書き、同じデータの 2 組は下の SAME_DATA_CARDS_V0_111 で同じ登録の値にまとめる）。説明文のないちょうねんりき・はたくは文面・出典を持たない
+_V0_111_MEWTWO = (
+    _printed(DamageTimesOpponentFieldEnergyCards(EnergyType.PSYCHIC, 10), "サイコクラッシュ", OPPONENT_FIELD_ENERGY_CARDS_TEXT.format(ja=EnergyType.PSYCHIC.ja, per=10)),
+    AttackEntry(DAMAGE_ONLY, "ちょうねんりき"),
+)
+_V0_111_SABRINAS_ABRA = (
+    AttackEntry(DAMAGE_ONLY, "はたく"),
+    _printed(DamageRequiringEqualEnergyCards(), "シンクロウェーブ", SYNCHRO_WAVE_USE_TEXT),
+)
+V0_111_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # ミュウツー（ES1-022・QSG-032）
+    **_v0_75_same_data(("ES1-022", "QSG-032"), _V0_111_MEWTWO),
+    # ナツメのケーシィ（GD6-001・PR1-060）
+    **_v0_75_same_data(("GD6-001", "PR1-060"), _V0_111_SABRINAS_ABRA),
+})
+# kyuura の同じカードの組で、日本語の名前・pokemon 欄の対戦に使う値（英語の欄を除く）が同じ 2 組（新しい id → 組の名前の id）。元データの id は消さない（id・場の番号・持ち主・採用の記録は
+# 同じにしない。登録の値だけを共有する）
+SAME_DATA_CARDS_V0_111: Mapping[str, str] = MappingProxyType({
+    "QSG-032": "ES1-022",  # ミュウツー（拡張シート第1弾青版・クイックスターターギフト。SC-ES1-022）
+    "GD6-001": "PR1-060",  # ナツメのケーシィ（ポケモンジム第3弾ヤマブキシティジム ナツメ・プロモ。SC-PR1-060）
+})
+
+DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_111_ATTACKS), SAME_DATA_CARDS_V0_111)

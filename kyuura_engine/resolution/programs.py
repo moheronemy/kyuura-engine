@@ -11874,3 +11874,71 @@ class SelfKnockOutSurvival(Element):
 BUILDERS |= {
     E.SelfKnockOutSurvivalOnHeads: lambda e: (SelfKnockOutSurvival(e.start, e.end, e.scope, e.remaining_hp),),
 }
+
+
+# ---------------------------------------------------------------- v0.111（docs/field-energy-card-counts-v0.111.md）: 場のエネルギーカードの枚数でダメージ・ワザの使用条件が決まるワザ
+
+
+@dataclass(frozen=True)
+class OpponentFieldEnergyCardsTimes:
+    """ワザを実際に使ったプレイヤーの相手の場（バトル場と控え）のポケモンについている「``energy_type``」エネルギーカードの枚数 × ``per``（v0.111。ミュウツーの「サイコクラッシュ」。
+    p.321 の 1 段階の基本となるダメージそのもの。目安の数字を加えない）。数えるのはダメージの要素を処理する時点（``effects.field_energy_cards_of_type``）。0 枚なら 0。
+
+    - 数えることはワザの効果ではないので、控えの「とうめい」・「ワザをうけない」状態は評価しない（数から除かない）。ダメージを受けるのは相手の対戦ポケモンだけ（``Damage(OPP)``）
+    - カードとしての色が決まらないカード（``effects.field_energy_card_ambiguities``）があれば、そのポケモンごとに既存の問い（TE1・RB1・BZ2・MEC1・CE3。``transform_energy_question`` の
+      カードの色の確かめ。［おいしげる］の「草」の個数の問いは色の枚数に関係しないので聞かない）で止める。ただし、受ける相手の対戦ポケモンにとってこのダメージの要素が無効
+      （``kernel.first_void``。かたまる・バリアー・［ニュートラルシールド］など）なら、量は使われない（計算しない）ので止めずに 0 を返す
+    - 相手のワザとして使ったときも、実際に使ったプレイヤー（``run.player``）の相手の場を数える"""
+
+    energy_type: EnergyType
+    per: int
+    local_coins: ClassVar[int] = 0
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        state = run.state
+        owner = 1 - run.player
+        if E.field_energy_card_ambiguities(state, owner, self.energy_type):
+            from .kernel import first_void
+
+            receiver = run.opponent_active()
+            if receiver is not None and first_void(run.res, run.incoming(), owner, receiver) is not None:
+                return 0  # このダメージの要素は無効（量を計算しない）。色の決まらないカードで結果は変わらない
+            for pokemon in state.players[owner].in_play():
+                if pokemon.energy:
+                    transform_energy_question(run, pokemon, self.energy_type, cards=True, wild=False)
+            remaining = E.field_energy_card_ambiguities(state, owner, self.energy_type)
+            if remaining:
+                # 残るのはエナジーバーンの「炎」だけ（使った番の自分のポケモンにだけ起こるので、相手の場にはない）
+                raise RuntimeError(f"相手の場のカード {list(remaining)} がエナジーバーンで「炎」になっている（使った番の自分のポケモンだけに起こる。エンジンの不具合）")
+        return E.field_energy_cards_of_type(state, owner, self.energy_type) * self.per
+
+
+@dataclass(frozen=True)
+class EqualEnergyCardsRequired(Element):
+    """ワザを使うための条件「自分と相手に同じ数のエネルギーカードがついている時だけ、このワザは使える」（v0.111。ナツメのケーシィの「シンクロウェーブ」）。
+
+    条件はワザの実装の ``usage_problem`` が宣言の前（必要なエネルギーの確認のあと・こんらんのコインの前）に確かめる（``ENERGY_CARD_COUNTS_DIFFER``。状態・乱数・ログを変えない）。
+    この要素は、相手のワザとして使うとき（ピクシー・ピッピの「ゆびをふる」など）の扱い（``copy_problem``。実際に使うポケモンと、その相手の対戦ポケモンで比べる。v0.40 の
+    ``OwnCountersAtLeast`` と同じ扱い: 説明が「使えない」「説明にしたがう」なら選べず、ほかは HC9）だけを持つ。
+
+    宣言のあとは比べ直さない（変わり身の術の「相手がワザを使う時」の入れ替えで相手の対戦ポケモンが変わっても、ワザは宣言のときの条件で使っている。「そのワザのダメージや効果は、
+    入れ替えの後でおこる」）。v0.83 のやさしいモルフォンの ``FailUnlessEqualEnergyCards``（処理の中で比べて失敗する）とは別の要素。"""
+
+    phase: ClassVar[Phase] = Phase.NEUTRAL
+
+    def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
+        defender = run.opponent_active()
+        own, theirs = E.attached_energy_cards(run.state, copier), 0 if defender is None else E.attached_energy_cards(run.state, defender)
+        if own != theirs:
+            return (ILLEGAL if clause in (CANNOT_USE, FOLLOW_TEXT) else UNRESOLVED), \
+                f"自分（{own} 枚）と相手（{theirs} 枚）に同じ数のエネルギーカードがついていない（ワザを使うための条件）"
+        return None
+
+    def run(self, run: AttackRun) -> bool:
+        return False
+
+
+BUILDERS |= {
+    E.DamageTimesOpponentFieldEnergyCards: lambda e: (Damage(OPP, OpponentFieldEnergyCardsTimes(e.energy_type, e.per)),),
+    E.DamageRequiringEqualEnergyCards: lambda e: (EqualEnergyCardsRequired(), Damage(OPP, Printed())),
+}

@@ -646,6 +646,13 @@ V0_110 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read
 V0_110_POKEMON = V0_110
 PHANPY_NEO1, DARK_FORRETRESS = "neo1-053", "neo4-008"
 PINECO_NEO4, PINECO_NEO2 = "neo4-005", "neo2-005"  # クヌギダマ（neo4。たいあたり（無無）20）・クヌギダマ（neo2。とつぜんじばく（草）40）。わるいフォレトスの進化元
+# v0.111（docs/field-energy-card-counts-v0.111.md）: 場のエネルギーカードの枚数でダメージ・ワザの使用条件が決まるポケモンの 4 枚（写しの組 pool_v0_111）。ポケモンは TARGETS に加える。
+# ワザは既存の手順のまま選ぶ（使った数の少ないワザから。使っていないワザのためにエネルギーをためる手順も v0.38〜と同じ。ただし、この番にシンクロウェーブを枚数の違いで拒否されたなら
+# 待たない）。シンクロウェーブの拒否（ENERGY_CARD_COUNTS_DIFFER）は既知の拒否（``V031_STOPS``。場の枚数を道具が別に数えて確かめる）。v0.111 のワザは新しい決定を出さない。ログから数える
+# のは ``v111_uses``、宣言の時点の場は ``_v111_attack_observe``
+V0_111 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_111"])
+V0_111_POKEMON = V0_111
+MEWTWO_ES1, MEWTWO_QSG, SABRINAS_ABRA_GD6, SABRINAS_ABRA_PR1 = "ES1-022", "QSG-032", "GD6-001", "PR1-060"
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -690,7 +697,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_107_POKEMON  # v0.107: コインによる成否・特殊状態・防護のポケモン 9 枚
            + V0_108_POKEMON  # v0.108: 持続するダメージの変更・相手の特殊状態を参照するポケモン 5 枚
            + V0_109_POKEMON  # v0.109: 次の相手の番に受けるときのコインでダメージを防ぐ効果・相手のタイプで決まるダメージのポケモン 3 枚
-           + V0_110_POKEMON)  # v0.110: 使うときのコインで、残りHPがなくなっても「きぜつ」しない期間つきの効果を自分に与えるワザのポケモン 2 枚
+           + V0_110_POKEMON  # v0.110: 使うときのコインで、残りHPがなくなっても「きぜつ」しない期間つきの効果を自分に与えるワザのポケモン 2 枚
+           + V0_111_POKEMON)  # v0.111: 場のエネルギーカードの枚数でダメージ・ワザの使用条件が決まるポケモン 4 枚
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -1484,6 +1492,11 @@ DECKS = {
     # フシギダネ（PMCG1-001）・ナゾノクサ（PMCG2-002）・コラッタ 4 枚ずつ
     "G110": ((PINECO_NEO4, 2), (PINECO_NEO2, 2), (DARK_FORRETRESS, 4), (BULBASAUR, 4), (ODDISH, 4), (RATTATA, 4), (driver.POTION, 2), (SWITCH, 2), (driver.BILL, 2),
              (GRASS, 34)),
+    # v0.111: 超。ミュウツー（ES1-022・QSG-032 を 2 枚ずつ。サイコクラッシュ（超）10×・ちょうねんりき（超超無）50）と、ナツメのケーシィ（GD6-001・PR1-060 を 2 枚ずつ。はたく（無）10・
+    # シンクロウェーブ（超無）40）、マリガンを減らすスリープ（PMCG1-045）・ゴース（neo4-048）4 枚ずつ。無色2個エネルギー 2 枚（シンクロウェーブでは 1 枚と数える）。たねポケモンはすべて
+    # 「超」ポケモン（同じデッキどうしではサイコクラッシュの数える「超」エネルギーカードが多い）
+    "P111": ((MEWTWO_ES1, 2), (MEWTWO_QSG, 2), (SABRINAS_ABRA_GD6, 2), (SABRINAS_ABRA_PR1, 2), (DROWZEE, 4), (GASTLY_NEO4, 4), (DOUBLE_COLORLESS, 2), (driver.POTION, 2),
+             (SWITCH, 2), (driver.BILL, 2), (PSYCHIC, 36)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -1723,6 +1736,14 @@ PAIRINGS_V0_109 = (("W109", "P109"), ("P109", "P109"), ("W109", "D108"), ("P109"
 # G110 対 M60（カイリキーの［はんげき］の特殊能力のダメージ）。組・席・seed は先に決めた（seed 0〜3。局を選び直さない）
 PAIRINGS_V0_110 = (("F110", "G110"), ("G110", "G110"), ("F110", "W45"), ("G110", "W45"), ("F110", "T81"), ("G110", "T81"), ("G110", "V44"), ("G110", "G61"),
                    ("F110", "P31"), ("G110", "P31"), ("F110", "G64"), ("F110", "Z60"), ("G110", "P109"), ("F110", "G108"), ("G110", "M60"))
+# v0.111: P111 どうし（サイコクラッシュの数える相手の「超」エネルギーカードが多い・シンクロウェーブの枚数がそろう。席を入れかえた局は同じ局なので 1 回だけ行う）・P111 対 P109（「超」ポケモンの
+# 弱点 超）・W109（「超」エネルギーカードのない相手で基本となるダメージ 0）・B98（レインボーエネルギー・ミラクルエネルギー。RB1・MEC1）・R58（レインボーエネルギー・無色2個エネルギー・特殊
+# エネルギー）・L85（ミラクルエネルギー・無色2個エネルギー・リサイクルエネルギー・悪・鋼エネルギー）・Z59（［エネエネ］でエネルギーとしてついたカード。BZ2・シンクロウェーブで 1 枚）・P31
+# （ピッピ・ピクシーのゆびをふるで、サイコクラッシュ・シンクロウェーブを相手のワザとして使う）・K65（変わり身の術。宣言のあとの入れ替え）・G83（やさしいモルフォンの使ってから失敗する
+# シンクロウェーブ）・L67（マチスの秘策。場のうらのカード）・R88（色を変える特殊能力・いろいろな色のエネルギー）・M50（ミュウのサイコウェーブ・控えの「とうめい」）・G110（v0.110 の
+# 「きぜつ」しない効果）。組・席・seed は先に決めた（seed 0〜3。局を選び直さない）
+PAIRINGS_V0_111 = (("P111", "P111"), ("P111", "P109"), ("P111", "W109"), ("P111", "B98"), ("P111", "R58"), ("P111", "L85"), ("P111", "Z59"), ("P111", "P31"),
+                   ("P111", "K65"), ("P111", "G83"), ("P111", "L67"), ("P111", "R88"), ("P111", "M50"), ("P111", "G110"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -1742,7 +1763,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.96": PAIRINGS_V0_96, "v0.97": PAIRINGS_V0_97, "v0.98": PAIRINGS_V0_98, "v0.99": PAIRINGS_V0_99, "v0.100": PAIRINGS_V0_100,
            "v0.101": PAIRINGS_V0_101, "v0.102": PAIRINGS_V0_102, "v0.103": PAIRINGS_V0_103, "v0.104": PAIRINGS_V0_104,
            "v0.105": PAIRINGS_V0_105, "v0.106": PAIRINGS_V0_106, "v0.107": PAIRINGS_V0_107,
-           "v0.108": PAIRINGS_V0_108, "v0.109": PAIRINGS_V0_109, "v0.110": PAIRINGS_V0_110}
+           "v0.108": PAIRINGS_V0_108, "v0.109": PAIRINGS_V0_109, "v0.110": PAIRINGS_V0_110, "v0.111": PAIRINGS_V0_111}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -1949,6 +1970,9 @@ V031_STOPS = {
     # 今はたらいている効果を持つときだけ（ログから組み立てず、場の持続する効果の期間で確かめる）
     "UNRESOLVED_KO_SURVIVAL_TIMING": lambda st, c: _v110_survival_on(st),
     "UNRESOLVED_KO_SURVIVAL_OVERLAP": lambda st, c: _v110_survival_on(st),
+    # v0.111: シンクロウェーブを、自分と相手の対戦ポケモンについているカードの枚数が違うときに宣言した（通常の不正な操作。研究上の未解決ではない）。道具が場の枚数を別に数え、違うときだけ
+    # 認める（エンジンの問い合わせを読まない）
+    "ENERGY_CARD_COUNTS_DIFFER": lambda st, c: _v111_counts_differ(st, c),
     # v0.87: 相手の場の［ショックボム］（受けたワザのダメージで、両方の対戦ポケモンに特殊能力のダメージ。ワザを使ったポケモンもきぜつし勝ち負けが変わる）も
     # v0.99: この組の一覧で、ほかの止める関数より先に聞くので、相手の対戦ポケモンのはたらいている「はんげき」・［わるいねぞう］（v0.10・v0.17b の止める関数が確かめる場面）も含める
     # （T99 対 K97 で、ねむりの R団のカビゴンの［わるいねぞう］で止まった。それまでの組では起こらなかった）
@@ -7084,6 +7108,121 @@ def _v110_survival_on(state) -> bool:
                for side in state.players for pokemon in side.in_play() for effect in pokemon.persistent_effects)
 
 
+V111_NAMES = {"サイコクラッシュ": "psycho_crush", "ちょうねんりき": "super_psy", "はたく": "pound", "シンクロウェーブ": "synchro_wave"}
+
+
+def _v111_cards(state, pokemon, psychic_only: bool) -> int:
+    """v0.111: 場のポケモン ``pokemon`` についているカードの枚数（``psychic_only`` なら、印刷の定義が「超」の基本エネルギーカードのものだけ）。道具が数えるための値で、エンジンの問い合わせ
+    （``attached_energy_cards``・``field_energy_cards_of_type``）を読まない。"""
+    if not psychic_only:
+        return len(pokemon.energy)
+    return sum(1 for uid in pokemon.energy
+               if state.definitions[state.cards[uid].card_id].is_basic_energy and state.definitions[state.cards[uid].card_id].provides is EnergyType.PSYCHIC)
+
+
+def _v111_counts_differ(state, command) -> bool:
+    """v0.111: ``command`` を宣言するポケモン（バトル場）と相手の対戦ポケモンについているカードの枚数が違う（相手の対戦ポケモンがいなければ 0 枚）。"""
+    attacker, defender = _attacker(state, command), state.players[1 - command.player].active
+    return attacker is not None and _v111_cards(state, attacker, False) != (0 if defender is None else _v111_cards(state, defender, False))
+
+
+def _v111_attack_observe(state, seen, counts) -> None:
+    """v0.111: 前に見た場（``seen["v111"]``。番のプレイヤーと、そのときの場から道具が数えた枚数）のあとに、そのプレイヤーのワザのログ（``attack``。相手のワザとして使ったなら ``copy_attack``）
+    があり、処理したワザが v0.111 のワザなら、宣言の時点の場として数える。
+
+    - サイコクラッシュ: ``v111_psycho_crush_declared_cards_<枚数>``（相手の場の「超」の基本エネルギーカード）・``v111_psycho_crush_bench_cards``（そのうち控えのカードの合計）・
+      ``v111_psycho_crush_with_bench_cards``（控えにカードのあった宣言）
+    - シンクロウェーブ: ``v111_synchro_wave_declared_equal_<枚数>``（自分と相手の対戦ポケモンのカードの枚数が同じ）・``v111_synchro_wave_declared_unequal``（違う。あってはならない）
+
+    拒否されたコマンドはログを残さないので数えない。v0.111 のカードが番のプレイヤーか相手のバトル場にいないときは何も記録しない（前の版の組の結果は変わらない）。決定のあいだは前の場を
+    残す（ゆびをふるの使うワザを選ぶ決定のあとに ``copy_attack`` がある）。"""
+    if state.phase is Phase.DECISION:
+        return
+    previous = seen.pop("v111", None)
+    if previous is not None:
+        index, player, fields = previous
+        name = None
+        for e in state.log[index:]:
+            if e["kind"] == "attack" and e["player"] == player:
+                current = e.get("card_id") or state.cards[e["pokemon"]].card_id
+                name = V111_NAMES.get(state.definitions[current].attacks[e["attack_index"]].name_ja) if current in V0_111 else None
+            elif e["kind"] == "copy_attack" and name is None:
+                card_id, attack_index = e["copied"].split("#")
+                name = V111_NAMES.get(state.definitions[card_id].attacks[int(attack_index)].name_ja) if card_id in V0_111 else None
+            elif e["kind"] in ("turn_end", "game_end", "halted"):
+                break
+        active_cards, bench_cards, own, theirs = fields
+        if name == "psycho_crush":
+            counts[f"v111_psycho_crush_declared_cards_{active_cards + bench_cards}"] += 1
+            counts["v111_psycho_crush_bench_cards"] += bench_cards
+            if bench_cards:
+                counts["v111_psycho_crush_with_bench_cards"] += 1
+        elif name == "synchro_wave":
+            counts[f"v111_synchro_wave_declared_equal_{own}" if own == theirs else "v111_synchro_wave_declared_unequal"] += 1
+    if state.phase is not Phase.MAIN:
+        return
+    player = state.current_player
+    attacker, defender = state.players[player].active, state.players[1 - player].active
+    if attacker is None or not any(p is not None and state.cards[p.card].card_id in V0_111 for p in (attacker, defender)):
+        return
+    side = state.players[1 - player]
+    active_cards = 0 if defender is None else _v111_cards(state, defender, True)
+    bench_cards = sum(_v111_cards(state, p, True) for p in side.bench)
+    seen["v111"] = (len(state.log), player,
+                    (active_cards, bench_cards, _v111_cards(state, attacker, False), 0 if defender is None else _v111_cards(state, defender, False)))
+
+
+def v111_uses(state):
+    """v0.111: ログから数えた 4 枚のワザの動き（v0.111 のカードのない局では空）。
+
+    - ``attack_<id>#<位置>``（宣言したワザ）・``copied_<id>#<位置>``（ほかのワザが相手のワザとして使った v0.111 のワザ）・``<名前>_interrupted``（こんらん・手順 4 のコインで失敗）
+    - 相手の対戦ポケモンへのダメージ: ``<名前>_damage``・``<名前>_prevented``（無効。damage_prevented）
+    - サイコクラッシュ: ``psycho_crush_base_<基本となるダメージ>``（ログの計算の 1 段階）・``psycho_crush_counted_cards_<基本となるダメージ ÷ 10>``・``psycho_crush_zero_base``
+    - シンクロウェーブ: ``synchro_wave_used``（宣言を受け付けた。拒否は ``observed`` の ``stopped_attack_ENERGY_CARD_COUNTS_DIFFER``）"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_111 for uid in state.cards):
+        return counts
+    window = None
+    for e in state.log:
+        kind = e["kind"]
+        if kind in ("attack", "turn_end", "game_end", "halted"):
+            window = None
+        if kind == "attack":
+            current = e.get("card_id") or state.cards[e["pokemon"]].card_id
+            name = V111_NAMES.get(state.definitions[current].attacks[e["attack_index"]].name_ja, "other") if current in V0_111 else None
+            if current in V0_111:
+                counts[f"attack_{current}#{e['attack_index']}"] += 1
+                if name == "synchro_wave":
+                    counts["synchro_wave_used"] += 1
+            window = {"name": name}
+            continue
+        if window is None:
+            continue
+        if kind == "copy_attack":
+            card_id, index = e["copied"].split("#")
+            window["name"] = V111_NAMES.get(state.definitions[card_id].attacks[int(index)].name_ja, "other") if card_id in V0_111 else None
+            if card_id in V0_111:
+                counts[f"copied_{e['copied']}"] += 1
+            continue
+        name = window["name"]
+        if name is None:
+            continue
+        if kind in ("confusion_damage", "attack_failed"):
+            counts[f"{name}_interrupted"] += 1
+            window["name"] = None
+        elif kind == "damage_prevented":
+            counts[f"{name}_prevented"] += 1
+        elif kind == "damage" and not e.get("retaliation") and (e.get("target") or "opponent_active") == "opponent_active":
+            counts[f"{name}_damage"] += 1
+            if name == "psycho_crush":
+                base = e["steps"][0][1] if e.get("steps") else 0
+                counts[f"psycho_crush_base_{base}"] += 1
+                counts[f"psycho_crush_counted_cards_{base // 10}"] += 1
+                if base == 0:
+                    counts["psycho_crush_zero_base"] += 1
+    return counts
+
+
 V110_NAMES = {"たいあたり": "tackle", "こらえる": "endure", "こうてつか": "armor_up", "だいばくはつ": "explosion"}
 V110_SURVIVAL_KIND = "knockout_survival"
 V110_HITS = ("damage", "poison_damage", "confusion_damage", "place_damage_counters", "power_damage", "counterattack", "tool_damage_counters", "move_damage_counters")
@@ -9139,6 +9278,12 @@ def make_policy(seen: dict, counts: Counter):
             # カードのない局では何もしない）
             counts[f"v038_wait_{card_id}"] += 1  # v0.39〜v0.41 のカードも同じ手順（じばく・メガトンパンチ・ギガスパーク・ひのとりなど）
             return EndTurn(player)
+        if card_id in V0_111_POKEMON and all(used[i] >= 1 for i in usable) and any(
+                used[a.index] == 0 and a.index not in usable and ("attack_index", a.index) not in tried for a in attacks):
+            # v0.111: v0.38 と同じ手順（はたく・サイコクラッシュを使い続けて、シンクロウェーブ・ちょうねんりきが使えるようにならない）。ただし、この番にシンクロウェーブを宣言して枚数の違いで
+            # 拒否された（``tried`` にある）ときは待たない（相手の枚数は待っても変わらないことがあるので、使えるワザを使う）
+            counts[f"v111_wait_{card_id}"] += 1
+            return EndTurn(player)
         choice = min(usable, key=lambda i: (used[i], -(attacks[i].damage or 0), i))
         chosen = UseAttack(player, choice)
         if chosen != command:
@@ -9164,6 +9309,7 @@ def make_policy(seen: dict, counts: Counter):
         _V052_REAL["state"] = state  # v0.52: 手札を隠した写し（view）ではなく、本当の状態で受け付けるかを確かめる
         _v048_observe(state, counts)
         _v102_attack_observe(state, seen, counts)  # v0.102: ワザを宣言した時点の［グリーンシールド］・［ニュートラルダメージ］の配置
+        _v111_attack_observe(state, seen, counts)  # v0.111: ワザを宣言した時点の場のエネルギーカードの枚数
         # v0.48: この番に、最大HPがのっているダメージ以下に下がる（MH1）ので拒否された手札のカード（進化カード・トレーナー）。この番に拒否がなければ空
         blocked = {marker[1] for marker in tried if isinstance(marker, tuple) and marker[0] == "max_hp_drop_card"}
         if state.phase is Phase.MAIN and (blocked or "trainer_locked" in tried or "evolution_prevented" in tried):
@@ -9225,6 +9371,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["error"] = "".join(traceback.format_exception_only(type(error), error))[:500]
     if state is not None:
         _v102_attack_observe(state, seen, counts)  # v0.102: 最後の番のワザ（このあとに手順が呼ばれない）
+        _v111_attack_observe(state, seen, counts)  # v0.111: 同じ
     result["outcome"] = outcome
     result["steps"] = len(commands)
     result["observed"] = dict(observed)
@@ -9287,6 +9434,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v108"] = v108_uses(state)
         result["v109"] = v109_uses(state)
         result["v110"] = v110_uses(state)
+        result["v111"] = v111_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:

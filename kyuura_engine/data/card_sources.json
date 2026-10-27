@@ -28750,6 +28750,62 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.110 で加えた（docs/endure-armor-up-v0.110.md）。neo4（闇、そして光へ...。expansion_pack。発売 2001-04-20。ルールの基準の日より後に出たカードだが、2000.02.14 版のルールで処理する）。草タイプ・クヌギダマから 1 進化（進化元は写しにある。「こうてつか」の名前でも鋼タイプにしない）。こうてつか=SelfKnockOutSurvivalOnHeads(0, 2, ワザ, 10)（ダメージなし。使うときにコインを 1 枚投げ、「おもて」なら自分に、与えた番から次の自分の番が終わるまで、ワザによるダメージ（「相手の」と限らない。自分のワザの自分へのダメージ・返す効果を含む）で残りHPがなくなっても「きぜつ」せず、残りHPが「10」になる持続する効果を与える。「うら」なら何もしない）。だいばくはつ=DamageAndSelfDamage(60)（相手に目安 60、そのあと自分にも 60。控えへのダメージ・自分を直接きぜつさせる指定はない）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。こうてつかの英語の欄（Armor Up）は、致死のダメージを受けるときにコインを投げる書き方で日本語と違う。日本語の使うときのコインを採用し、どちらが転記の誤りかは原典を照合していないので決めない（kyuura への報告事項）。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前（日本語・英語の欄）で data/・docs/ を確かめた。当たったのはカードの一覧・対象の一覧・転記元の写し・カードの一覧の文書と、名前の似た別のカード（フォレトス neo2-044 の［まきびし］・エラッタの属性欄の写しの記述。どれもこのカードを指さない）だけ。pcg-search の id はない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES1-022": {
+      "basis": "kyuura_data",
+      "name_ja": "ミュウツー",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-27",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.111 で加えた（docs/field-energy-card-counts-v0.111.md）。ES1（拡張シート 第1弾(青版)。expansion_sheet。発売 1998-03-23）。QSG-032 と同じデータ（SAME_DATA_CARDS_V0_111。登録の値は同じ・記録は id ごと）。サイコクラッシュ=DamageTimesOpponentFieldEnergyCards(超, 10)（ワザを実際に使ったプレイヤーの相手の場（バトル場と控え）のポケモンについている「超」エネルギーカード（基本エネルギーカード）の枚数 × 10 が p.321 の基本となるダメージ。目安の数字を加えない。0 枚なら 0。控えの防護では数から除かない。色の決まらないカードは既存の問い（TE1・RB1・BZ2・MEC1・CE3）で止める）。ちょうねんりき=DAMAGE_ONLY（説明文なし。文面・出典を書かない）。kyuura の日本語の文面は pcg-search.com の転記。data_gaps（pokemon.dex・jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stex1022・同じカードの組 SC-ES1-022・名前・ワザの名前でdata/・docs/ を確かめた。当たったのはカードの一覧・対象の一覧・転記元の写し・商品の一覧・同じカードの組と、ガイドブックの既存の転記 data/Silver_Bible_structured.md（研究の記録ではない）の解説の行だけ。転記は根拠にしていない（ガイドブックの読み直しをしない））。Silver_Bible_structured.md のサイコクラッシュの書き方は「相手の場にいるポケモンについている」で、印刷の文面と語だけ違う（挙動は変わらない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "QSG-032": {
+      "basis": "kyuura_data",
+      "name_ja": "ミュウツー",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-27",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.111 で加えた（docs/field-energy-card-counts-v0.111.md）。QSG（クイックスターターギフト。quick_starter_gift。発売 1998-12-04）。ES1-022 と同じデータ（SAME_DATA_CARDS_V0_111。登録の値は同じ・記録は id ごと）。サイコクラッシュ・ちょうねんりきは ES1-022 と同じ。kyuura の日本語の文面は pcg-search.com の転記。data_gaps（pokemon.dex・jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stqsg032・同じカードの組 SC-ES1-022・名前・ワザの名前でdata/・docs/ を確かめた。当たったのはカードの一覧・対象の一覧・転記元の写し・商品の一覧・同じカードの組と、ガイドブックの既存の転記 data/Silver_Bible_structured.md（研究の記録ではない）の解説の行だけ。転記は根拠にしていない（ガイドブックの読み直しをしない））。Silver_Bible_structured.md のサイコクラッシュの書き方は「相手の場にいるポケモンについている」で、印刷の文面と語だけ違う（挙動は変わらない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "GD6-001": {
+      "basis": "kyuura_data",
+      "name_ja": "ナツメのケーシィ",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-27",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.111 で加えた（docs/field-energy-card-counts-v0.111.md）。GD6（ポケモンジム第3弾「ヤマブキシティジム ナツメ」。gym_deck。発売 1999-02-26）。PR1-060 と同じデータ（SAME_DATA_CARDS_V0_111。登録の値は同じ・記録は id ごと）。はたく・シンクロウェーブは PR1-060 と同じ。kyuura の日本語の文面は pcg-search.com の転記（data/pcgsearch_page_checks.json の読み直しで違いなし）。英語の欄（Synchronize）は日本語を置きかえない。data_gaps（jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stgymd6001・同じカードの組 SC-PR1-060・名前・ワザの名前（日本語・英語の欄）でdata/・docs/ を確かめた。当たったのはカードの一覧・対象の一覧・転記元の写し・商品の一覧・同じカードの組・pcg-search のページの読み直し・名前の同じ版の一覧（docs/cards/reprints.md など）・docs/sources.md の X51（英語の再録の点検の資料の一覧）と、ガイドブックの既存の転記 data/Silver_Bible_structured.md（研究の記録ではない）の解説の行だけ。転記は根拠にしていない（ガイドブックの読み直しをしない））。Silver_Bible_structured.md のシンクロウェーブの書き方は「自分と相手に同じ枚数の「エネルギーカード」がついていないとき、このワザのダメージはなくなる。」で、印刷の文面（「…ついている時だけ、このワザは使える。」）と挙動が違う（使えるかの条件か、使ってダメージがなくなるか）。研究の記録（LD-）ではないので、処理に使う文面は印刷の文面のままにした（v0.109 のユンゲラーの解説と同じ扱い。kyuura への報告事項）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PR1-060": {
+      "basis": "kyuura_data",
+      "name_ja": "ナツメのケーシィ",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-27",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.111 で加えた（docs/field-energy-card-counts-v0.111.md）。PR1（プロモ(旧裏)。promo。発売 1999-02-15）。GD6-001 と同じデータ（SAME_DATA_CARDS_V0_111。登録の値は同じ・記録は id ごと）。はたく=DAMAGE_ONLY（説明文なし。文面・出典を書かない）。シンクロウェーブ=DamageRequiringEqualEnergyCards（ワザを使うための条件。実際に使うポケモンと相手の対戦ポケモンについているエネルギーカードの枚数（色・出す個数を見ない。無色2個エネルギー・［エネエネ］のカードも 1 枚）が同じでなければ ENERGY_CARD_COUNTS_DIFFER で使えない。研究上の未解決にしない。v0.83 のやさしいモルフォンの使ってから失敗する文面とは別）。kyuura の日本語の文面は pcg-search.com の転記（data/pcgsearch_page_checks.json の読み直しで違いなし）。英語の欄（Synchronize）は日本語を置きかえない。data_gaps（jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stp060・同じカードの組 SC-PR1-060・名前・ワザの名前（日本語・英語の欄）でdata/・docs/ を確かめた。当たったのはカードの一覧・対象の一覧・転記元の写し・商品の一覧・同じカードの組・pcg-search のページの読み直し・名前の同じ版の一覧（docs/cards/reprints.md など）・docs/sources.md の X51（英語の再録の点検の資料の一覧）と、ガイドブックの既存の転記 data/Silver_Bible_structured.md（研究の記録ではない）の解説の行だけ。転記は根拠にしていない（ガイドブックの読み直しをしない））。Silver_Bible_structured.md のシンクロウェーブの書き方は「自分と相手に同じ枚数の「エネルギーカード」がついていないとき、このワザのダメージはなくなる。」で、印刷の文面（「…ついている時だけ、このワザは使える。」）と挙動が違う（使えるかの条件か、使ってダメージがなくなるか）。研究の記録（LD-）ではないので、処理に使う文面は印刷の文面のままにした（v0.109 のユンゲラーの解説と同じ扱い。kyuura への報告事項）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
     }
   }
 }

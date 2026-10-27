@@ -1477,6 +1477,9 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DamageSetAgainstType,
     # v0.110（docs/endure-armor-up-v0.110.md。使うときのコインで、残りHPがなくなっても「きぜつ」しない期間つきの効果を自分に与える）
     _effects.SelfKnockOutSurvivalOnHeads,
+    # v0.111（docs/field-energy-card-counts-v0.111.md。相手の場の決まった色のエネルギーカードの枚数・エネルギーカードの枚数が同じときだけ使えるワザ）
+    _effects.DamageTimesOpponentFieldEnergyCards,
+    _effects.DamageRequiringEqualEnergyCards,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

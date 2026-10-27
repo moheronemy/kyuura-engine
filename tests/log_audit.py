@@ -386,6 +386,9 @@ V110_SURVIVAL_TEXT_TERMS = {
         (0, 2, "attack", 10),
 }
 V109_SET_AGAINST_TYPE = re.compile(r"このワザを受ける相手が「(.+)」ポケモンなら、このワザのダメージは(\d+)になる。")
+# v0.111: 場のエネルギーカードの枚数で決まるワザ。数える色・1 枚あたりの数と、ワザを使うための条件は、処理したワザの印刷の文面から読む（エンジンの登録を読まない）
+V111_FIELD_ENERGY_CARDS = re.compile(r"相手の場のポケモンについている「(.+)」エネルギーカードの数×(\d+)のダメージ。")
+V111_EQUAL_ENERGY_CARDS_TEXT = "自分と相手に同じ数のエネルギーカードがついている時だけ、このワザは使える。"
 
 # v0.10: はたらいた「はんげき」より先にあってはならない、ワザのダメージ以外の効果・きぜつ・番の終わり（p.89）
 COUNTER_BARRIERS = (
@@ -3510,6 +3513,48 @@ def log_problems(state) -> list[str]:
         text = definition.attacks[index].text_ja if definition is not None and 0 <= index < len(definition.attacks) else None
         return V110_SURVIVAL_TEXT_TERMS.get(text)
 
+    def v111_problems(e: dict) -> list[str]:
+        """v0.111: 場のエネルギーカードの枚数で決まるワザ（サイコクラッシュ・シンクロウェーブ）を、エンジンの登録・計算を読まずに確かめる。
+
+        - 「相手の場のポケモンについている「X」エネルギーカードの数×Nのダメージ。」（処理したワザ。相手のワザとして使ったならそのワザ）: 相手の対戦ポケモンへのダメージの基本となるダメージ
+          （1 段階）が、ログから組み立てた、ワザを使ったプレイヤーの相手の場（バトル場と控え）のポケモンについている、印刷が「X」の基本エネルギーカードの枚数 × N（控えの防護では除かない。
+          0 枚なら 0）。色の決まらないカード（レインボーエネルギーなど）で止まる場面は単体のテストが確かめる
+        - 「自分と相手に同じ数のエネルギーカードがついている時だけ、このワザは使える。」: そのワザの宣言（``attack``）・相手のワザとして使った（``copy_attack``）時点で、ログから組み立てた
+          実際に使うポケモンと相手の対戦ポケモンについているカードの枚数が同じ（相手の対戦ポケモンがいなければ 0 枚）"""
+        found: list[str] = []
+        kind = e["kind"]
+        if attack_window is None:
+            return found
+        if kind in ("attack", "copy_attack"):
+            key = attack_window["effect"] if kind == "attack" else e["copied"]
+            if v111_printed_text(key) == V111_EQUAL_ENERGY_CARDS_TEXT:
+                pid, player = attack_window["pokemon_id"], attack_window["player"]
+                defender = active_of.get(1 - player)
+                own, theirs = len(energy.get(pid, ())), len(energy.get(defender, ())) if defender in in_play else 0
+                if own != theirs:
+                    found.append(f"{e['turn']} 番に、ポケモン {pid}（{own} 枚）と相手の対戦ポケモン {defender}（{theirs} 枚）のエネルギーカードの枚数が違うのに {key} を使った")
+        elif kind == "damage" and not e.get("retaliation") and (e.get("target") or "opponent_active") == "opponent_active":
+            key = attack_window.get("copied", attack_window["effect"])
+            matched = V111_FIELD_ENERGY_CARDS.fullmatch(v111_printed_text(key) or "")
+            if matched is not None:
+                color = next(t for t in EnergyType if t.ja == matched.group(1))
+                owner = 1 - attack_window["player"]
+                cards = sum(1 for pid in in_play if pokemon_owner.get(pid) == owner for uid in energy.get(pid, ())
+                            if state.printed_def(uid).is_basic_energy and state.printed_def(uid).provides is color)
+                base = e["steps"][0][1] if e.get("steps") else None
+                if base != cards * int(matched.group(2)):
+                    found.append(f"{e['turn']} 番の {key} の基本となるダメージ {base} が、ログから組み立てた相手の場の「{color.ja}」の基本エネルギーカード {cards} 枚 × "
+                                 f"{matched.group(2)} と違う")
+        return found
+
+    def v111_printed_text(key: str | None) -> str | None:
+        """v0.111: ワザ ``key`` の印刷の文面（読めなければ None。エンジンの登録を読まない）。"""
+        if key is None:
+            return None
+        card_id, index = _attack_key(key)
+        definition = state.definitions.get(card_id)
+        return definition.attacks[index].text_ja if definition is not None and 0 <= index < len(definition.attacks) else None
+
     def v101_problems(e: dict) -> list[str]:
         """v0.101: ［KEEP］でなくなったトラッシュの効果（``energy_discard_voided``）が、ログから組み立てた場ではたらく［KEEP］の持ち主の場の「アンノーン」への、相手が使った
         ワザ・特殊能力・トレーナーの効果のものであることと、その場合に相手の効果でトラッシュしたログ（ワザ・トレーナー・［だつりょくえき］・つけかえで受けずにトラッシュ）が
@@ -4092,6 +4137,7 @@ def log_problems(state) -> list[str]:
         problems.extend(v108_problems(e))  # v0.108: 使うワザのダメージを減らす効果・かみくだく・状態を参照する追加（もうどく・たたきおこす）・わるいうた
         problems.extend(v109_problems(e))  # v0.109: 受けるときのコインで防ぐ期限つきの効果（ぬるぬる・かわす・ブリンク）・サイコパニック
         problems.extend(v110_problems(e))  # v0.110: 残りHPがなくなっても「きぜつ」しない効果（こらえる・こうてつか）
+        problems.extend(v111_problems(e))  # v0.111: 場のエネルギーカードの枚数で決まるワザ（サイコクラッシュ・シンクロウェーブ）
         if kind in ("damage", "confusion_damage"):
             # v0.90: のろいマーカーののっているポケモンが弱点の計算をしたワザのダメージは「×4」（ログの weakness_multiplier）。ほかは書かない。こんらんの 20 は、のろいマーカーと
             # 自分の弱点が当てはまるならコインの前に止まる（UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS）ので、弱点の計算をしたこんらんのダメージはない
@@ -4967,8 +5013,11 @@ def log_problems(state) -> list[str]:
             floor_first = first_min
             # v0.58: トラッシュしたエネルギーの個数（無色2個エネルギーは 1 枚で 2 個。カードの枚数ではない）。登録の特殊エネルギーの実装で数える
             # v0.59: ［エネエネ］でエネルギーとしてついていたカードは、ログの energy_conversion の個数
+            # v0.111: ログから組み立てた場で［きせきのかぜ］（v0.84。どちらかのバトル場で、はたらいているもの）があれば、場の特殊エネルギーカードは「無色」1 個（v0.111 の P111 対 L85 の
+            # 正式な対戦で、無色2個エネルギー 1 枚でにげるエネルギー 1 を払った正しい「にげる」を、2 個と数えて誤って報告していた）
+            wind = any(working_continuous(active_of.get(side), E.MiraculousWind) for side in (0, 1))
             count = sum(converted_units[u] if u in converted_units else
-                        len(state.effects.energy_effect(state.printed_def(u)).units()) if state.printed_def(u).is_special_energy else 1
+                        (1 if wind else len(state.effects.energy_effect(state.printed_def(u)).units())) if state.printed_def(u).is_special_energy else 1
                         for u in e["discarded"])
             last_ok, first_ok = minimum <= count <= maximum, first_min <= count <= first_max
             # v0.81: ふうせんのみ（ログから組み立てたついているどうぐ）。「すべてなくなる」を当てはめる読み方（エンジンの ``RetreatCost.readings``）のどれでも正しい数（CP2 で
@@ -6808,7 +6857,10 @@ def log_problems(state) -> list[str]:
                 effect = None if entry is None else entry.effect
                 expected = getattr(effect, "color_terms", lambda: None)() or getattr(effect, "max_hp_terms", lambda: None)()
                 value = e.get("color") if e["persistent_effect"] != MaxHpSet.kind else e.get("amount")
-                if expected is None or expected[0].kind != e["persistent_effect"] or (e["persistent_effect"] == MaxHpSet.kind and value != expected[1]) \
+                # v0.111: 2 つの効果を与えるワザ（v0.88 のテクスチャーマジック。``color_terms`` は (WeaknessChange, ResistanceChange)）は、どちらの種類でもよい（最初の種類だけと照らして、
+                # 自分の抵抗力を変えた正しい効果を誤って報告していた。v0.111 の P111 対 R88 の正式な対戦で、初めて抵抗力を変える答えを選んだ）
+                kinds = set() if expected is None else {term.kind for term in expected if isinstance(term, type)}
+                if expected is None or e["persistent_effect"] not in kinds or (e["persistent_effect"] == MaxHpSet.kind and value != expected[1]) \
                         or (e["persistent_effect"] != MaxHpSet.kind and (value is None or EnergyType(value) is EnergyType.COLORLESS)):
                     problems.append(f"{e['turn']} 番の期限のない効果 {e['persistent_effect']}（ポケモン {e['pokemon_id']}・{value}）が、登録のワザ {e['effect']} の効果と合わない")
                 on_opponent = e["persistent_effect"] == WeaknessChange.kind
