@@ -40957,3 +40957,378 @@ V0_112_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_112_ATTACKS)
+
+
+
+# ---------------------------------------------------------------- v0.113（docs/variable-coins-search-attachments-v0.113.md）
+# 可変枚数のコインと、山札の検索・つける・場全体のトラッシュのポケモンの 6 枚（ワザ 11）。処理に使う文面は kyuura の印刷の文面。6 枚とも別々に登録し（同じカードの組はない）、
+# 共通の型・値（お互いの場のポケモンの数のコイン ``programs.FIELD_POKEMON`` など）を共有する
+
+SQUAREDANCE_TEXT = ("おたがいの場にいるポケモンの数ぶんコインを投げ、「おもて」の数以下の枚数の「基本エネルギーカード」を自分の山札から選び出し、相手プレイヤーに見せてから、手札に"
+                    "加える。その後、その山札をよく切る。")
+ATTRACT_CURRENT_TEXT = ("コインを{coins}枚投げ、「おもて」の数ぶんの「{ja}」エネルギーカードを自分の山札から選び出し、自分の場の「{ja}」ポケモンそれぞれに、好きなようにつける。"
+                        "その後、その山札をよく切る。")
+COIN_BONUS_ELSE_PARALYZE_TEXT = "コインを投げて「おもて」なら、{bonus}ダメージを追加する。「うら」なら、相手を「マヒ」状態にする。"
+CALL_FOR_FAMILY_OR_FAIL_TEXT = "自分の山札から「{name}」を1枚選び出し、ベンチに出す。その後、その山札をよく切る。(自分のベンチに空きがないとき、このワザは失敗する。)"
+OWN_BENCH_NAMED_COINS_BONUS_TEXT = "自分のベンチの「{name}」の数ぶんコインを投げ、「おもて」の数×{per}のダメージを追加する。"
+DISCARD_THEN_ATTACH_FROM_DISCARD_TEXT = ("自分についている「{discard}」エネルギーカードを1枚トラッシュする。その後、自分のトラッシュに「{attach}」エネルギーカードがあれば、1枚を選び出し、"
+                                         "自分につける。(トラッシュできないとき、このワザは失敗する。)")
+OWN_TYPED_ENERGY_COINS_BONUS_TEXT = "自分についている「{ja}」エネルギーの数ぶんコインを投げ、「おもて」の数×{per}のダメージを追加する。"
+FIELD_ENERGY_DISCARD_COINS_TEXT = "自分の場の「{ja}」エネルギーカードを、好きなだけトラッシュする。その後、トラッシュした枚数ぶんコインを投げ、「おもて」の数×{per}のダメージ。"
+FIELD_POKEMON_COINS_HEADS_TAILS_TEXT = "お互いの場にいるポケモン全員の数だけコインを投げ、相手に「おもて」の数×{per}のダメージ。その後、自分に「うら」の数×{self_per}のダメージ。"
+
+
+def off_field_typed_energy_card(state: GameState, uid: int, energy_type: EnergyType) -> bool:
+    """v0.113: 手札・山札・トラッシュ（場の外）のカード ``uid`` が、説明の「「``energy_type``」エネルギーカード」か。状態を変えず、乱数を使わない。
+
+    - 基本エネルギーカードは印刷のタイプ（``provides``）
+    - 特殊エネルギーカードは、登録した実装の出すエネルギー（``units``）が、どれも ``energy_type`` 1 色のもの（悪エネルギーの印刷の文面「このカードは「悪」エネルギー1個ぶんとして
+      あつかう。」。場にあるかぎりの条件はない）。基本エネルギーカードにはしない（つけたあとも特殊エネルギーカードのまま。悪エネルギーの効果もはたらく）
+    - レインボーエネルギー（どの色にもなる 1 個。RB2。呼ぶ側が先に止める）・ミラクルエネルギー（場にあるかぎり。場の外では色がない。v0.85）・無色の特殊エネルギーは入らない"""
+    definition = state.card_def(uid)
+    if definition.category != "energy":
+        return False
+    if definition.is_basic_energy:
+        return definition.provides is energy_type
+    effect = special_energy_effect(state, uid)
+    if effect is None or getattr(effect, "miracle", False):
+        return False
+    units = effect.units()
+    return bool(units) and all(unit == frozenset({energy_type}) for unit in units)
+
+
+def _coin_heads(decision: PendingDecision, name: str = "coin") -> int | None:
+    """v0.113: 決定の続きの情報で運んだワザ全体のコイン ``name`` の「おもて」の数（なければ None）。"""
+    found = dict(decision.context_value("coins", ())).get(name)
+    return None if found is None else sum(1 for side in found if side == CoinSide.HEADS.value)
+
+
+@dataclass(frozen=True)
+class CoinsPerPokemonInPlaySearchBasicEnergy(AttackEffect):
+    """おたがいの場にいるポケモンの数ぶんコインを投げ、「おもて」の数以下の枚数の「基本エネルギーカード」を自分の山札から選び出し、相手プレイヤーに見せてから、手札に加える。その後、
+    その山札をよく切る（v0.113。ピッピ（neo1-063）の「みんなでおどる」。ダメージの目安なし）。
+
+    - 要素は ``Coin(per_pokemon=programs.FIELD_POKEMON)`` → ``RevealTrainerFromDeck(category="basic_energy", heads_of="coin")``。N はコインの時点のお互いの場のポケモンの数（バトル場と
+      ベンチ。進化して重なったカード・ついているカードを別の 1 匹にしない。うらのカード・場でポケモンとしてあつかうトレーナーも 1 匹で、正体を読まない）
+    - 「以下」なので 0〜H 枚（せいでんきと同じ読み方。公式の個別の裁定ではない）。H = 0 なら選ばず、山札を切る。H が正なら、選べるカードがなくても決定を出す（最大は H のまま）。
+      選んだカードだけを見せて手札に加え、1 回切る。特殊エネルギーカードは「基本エネルギーカード」ではない
+    - 山札から引くのではない（v0.31 の ``Draw`` とは別）。エネルギーアーク（トレーナー。「おもて」の数ちょうど・FC1・0 枚で切らない）とも別の読み方
+    - 自分への効果なので、相手の状態によらずコインを投げる（相手への効果を決めるコインの問い（HC3・T19b）に当たらない）"""
+
+    implementation_id = "coins_per_pokemon_in_play_search_basic_energy"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "お互いの場のポケモンの数のコインで「おもて」の数以下の基本エネルギーカードを山札から手札に加えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (SQUAREDANCE_TEXT,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        heads = _coin_heads(decision)
+        problems = _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=(0, heads or 0),
+                                  options=deck_basic_energy_cards(state, use.player))
+        if not heads:
+            problems.append(f"「{_label(state, use)}」の決定が、「おもて」の数 {heads!r} が正のときの決定ではない")
+        return problems
+
+
+@dataclass(frozen=True)
+class DamageThenCoinsAttachTypedEnergyFromDeck(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。そのあとコインを ``coins`` 枚投げ、「おもて」の数ぶんの「``energy_type``」エネルギーカードを自分の山札から選び出し、自分の場の
+    「``energy_type``」ポケモンそれぞれに、好きなようにつける。その後、その山札をよく切る（v0.113。デンリュウ（neo3-028）の「ゆうでん」。目安「20」）。
+
+    - 要素は ``Damage(OPP)`` → ``Coin(count=coins)`` → ``programs.AttachFromDeckByHeads``。目安の「相手に20ダメージ。」は説明の最初に省略されている（GR-2000-P320-DAMAGE-FIGURE）ので、
+      ダメージが先（GR-2000-P309-ATTACK-PROCEDURE）。コインは検索・つける処理だけを決める自分への効果（相手の状態によらず投げる）
+    - 「おもて」の数ぶん（ちょうど H 枚。英語の欄の may は持ち込まない）。つける先は自分の場（バトル場・ベンチ）の今の色が「``energy_type``」のポケモン。1 匹に何枚でも
+    - H = 0・つけられるポケモンがいない・山札に選べるカードがない（p.309）・足りない（FC1）の扱いは ``AttachFromDeckByHeads`` のとおり。どの場合も山札を 1 回切る"""
+
+    energy_type: EnergyType
+    coins: int
+    implementation_id = "damage_then_coins_attach_typed_energy_from_deck"
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.energy_type, EnergyType) or self.energy_type is EnergyType.COLORLESS:
+            raise ValueError(f"つけるエネルギーカードの色 {self.energy_type!r} は「無色」以外の色")
+        if type(self.coins) is not int or self.coins < 1:
+            raise ValueError(f"コインの枚数は 1 以上の整数（{self.coins!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "ダメージのあとコインの「おもて」の数ぶんの山札のエネルギーカードを自分の場の同じ色のポケモンにつけるワザ"
+        return _check_form(attack, what, damage="fixed", cost_types=(self.energy_type,)) + _check_exact_text(
+            attack, what, (ATTRACT_CURRENT_TEXT.format(coins=self.coins, ja=self.energy_type.ja),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        label = _label(state, use)
+        heads = decision.context_value("heads")
+        if not isinstance(heads, int) or heads != _coin_heads(decision) or not 1 <= heads <= self.coins:
+            return [f"「{label}」の決定の「おもて」の数 {heads!r} が、運んだコインの結果と合わない"]
+        problems = AttackEffect.decision_problems(self, state, use, decision)
+        p = state.players[use.player]
+        if decision.kind == ATTACH_FROM_DECK and decision.context_value("stage") == "card":
+            rainbow = set(rainbow_cards_in(state, p.deck))
+            expected = tuple(sorted(set(deck_energy_candidates(state, use.player, self.energy_type)) | rainbow))
+            usable = len(expected) - len(rainbow)
+            if decision.options != expected or decision.max_choices != heads or decision.min_choices != (heads if usable >= heads else 0) or (0 < usable < heads):
+                problems.append(f"「{label}」のカードの決定（{decision.options}・{decision.min_choices}〜{decision.max_choices}）が、山札の選べるカード {expected} から「おもて」の数 {heads} 枚ではない")
+            return problems
+        if decision.kind == SELECT_POKEMON and decision.context_value("stage") == "target":
+            cards, assigned = tuple(decision.context_value("cards", ())), tuple(decision.context_value("assigned", ()))
+            own = {pokemon.pokemon_id: pokemon for pokemon in p.in_play()}
+            if len(cards) != heads or not len(assigned) < len(cards) or decision.context_value("card") != cards[len(assigned)] or any(card not in p.deck for card in cards):
+                problems.append(f"「{label}」のつける先の決定の続き（カード {cards}・決めたつける先 {assigned}）が正しくない")
+            if not set(assigned) <= set(own) or not decision.options or not set(decision.options) <= set(own) or (decision.min_choices, decision.max_choices) != (1, 1):
+                problems.append(f"「{label}」のつける先 {decision.options} が、自分の場のポケモンから 1 匹ではない")
+            for pid in decision.options:
+                pokemon = own.get(pid)
+                if pokemon is not None and (energy_attach_block(state, pokemon) is not None
+                                            or not (state.is_face_down(pokemon) or self.energy_type in type_readings(state, pokemon))):
+                    problems.append(f"「{label}」のつける先 {pid} が、エネルギーカードをつけられる「{self.energy_type.ja}」ポケモンではない")
+            return problems
+        return problems + [f"「{label}」の決定 {decision.kind}（段階 {decision.context_value('stage')!r}）は、このワザの決定ではない"]
+
+
+@dataclass(frozen=True)
+class CoinBonusOnHeadsElseParalyze(AttackEffect):
+    """コインを投げて「おもて」なら、``bonus`` ダメージを追加する。「うら」なら、相手を「マヒ」状態にする（v0.113。デンリュウ（neo3-028）の「ギガボルト」。目安「40+」）。
+
+    - 要素は ``Coin`` → ``Damage(OPP, PrintedPlusBonus(coin, bonus))`` → ``Status(PARALYSIS, gate=うら)``。1 枚のワザ全体のコインをダメージの計算の前に投げ、同じ結果を両方が使う
+      （「おもて」なら基本となるダメージ 目安 + ``bonus``、「うら」なら目安とマヒ）。v0.8 の ``CoinBonusDamageAndParalyze``（「おもて」で追加してマヒ）とは面の意味が違う別の型
+    - コインは追加のダメージとマヒの両方を決めるので、相手が「ダメージを受けない」状態でも投げる（マヒは有効）。「ワザをうけない」状態なら、どちらも無効なので HC3（v0.34 の
+      ``void_coin_question``）。相手がこのワザで HP 以上なら、「うら」でもマヒにしない（p.309）。マヒの再付与で回復する番が決まらなければ止める（既存の ``reparalysis_check``）"""
+
+    bonus: int
+    implementation_id = "coin_bonus_on_heads_else_paralyze"
+    opponent_effect_elements = (PARALYSIS,)
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.bonus, "「おもて」のときに追加するダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインの「おもて」でダメージを追加し、「うら」でマヒにするワザ"
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(
+            attack, what, (COIN_BONUS_ELSE_PARALYZE_TEXT.format(bonus=self.bonus),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        printed = attack_of(state, use.key).damage
+        return DamageProfile(opponent=(printed, printed + self.bonus))
+
+
+@dataclass(frozen=True)
+class PutNamedBasicFromDeckOntoBenchOrFail(AttackEffect):
+    """自分の山札から「``names``」を 1 枚選び出し、ベンチに出す。その後、その山札をよく切る。(自分のベンチに空きがないとき、このワザは失敗する。)（v0.113。ヤミカラス（neo3-043）の
+    「なかまをよぶ」。ダメージの目安なし）。
+
+    - 要素は ``BenchFromDeck(names, when_full=BENCH_FULL_FAIL)``。選べるのは山札の、名前が ``names`` のどれかと完全に同じたねポケモンのカード（ほかのヤミカラスのカードも。名前の一部では
+      選ばない）。1 枚ちょうど（省略できない）。選べるものがないなら出さずに切る（p.309）
+    - ベンチに空きがないことは、ワザを使ってからの失敗（p.323「12 ワザの失敗」。宣言は受け付け、使ったことになる。山札を見ない・切らない）。v0.32 の ``PutBasicFromDeckOntoBench``
+      （「使えない」。ワザを使うための条件）とは別の型。英語の欄の「Can't use」は持ち込まない
+    - 出したカードは手札を通らない（``zones.bench_from_deck``）。場に出た番は今の番"""
+
+    names: tuple[str, ...]
+    implementation_id = "put_named_basic_from_deck_onto_bench_or_fail"
+
+    def __post_init__(self) -> None:
+        if type(self.names) is not tuple or len(self.names) != 1 or not all(type(name) is str and name for name in self.names):
+            raise ValueError(f"さがすポケモンの名前は 1 つの文字列のタプル（{self.names!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "山札から名前の合うポケモンをベンチに出し、ベンチに空きがなければ失敗するワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (CALL_FOR_FAMILY_OR_FAIL_TEXT.format(name=self.names[0]),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=(1, 1),
+                              options=bench_from_deck_candidates(state, use.player, self.names))
+
+
+@dataclass(frozen=True)
+class CoinsPerOwnBenchNamedBonusDamage(AttackEffect):
+    """自分のベンチの「``names``」の数ぶんコインを投げ、「おもて」の数 × ``per`` のダメージを追加する（v0.113。ヤミカラス（neo3-043）の「むれでつつく」。目安「10+」）。
+
+    - 要素は ``Coin(per_pokemon=(SCOPE_OWN_BENCH, names))`` → ``Damage(OPP, PrintedPlusHeadsOfCoin)``。数えるのはコインの時点の自分のベンチのポケモンのうち、今の姿の名前が ``names`` の
+      どれかと完全に同じもの（自分のバトル場・相手の場・「…のヤミカラス」のような名前の違うポケモンは数えない。名前の読めないうらのカードは既存の FD1）
+    - N = 0 ならコインを投げず、基本となるダメージは目安の数字（ワザの失敗ではない）。コインは相手へのダメージだけを決めるので、相手が「ダメージを受けない」状態なら v0.4b の問い"""
+
+    names: tuple[str, ...]
+    per: int
+    implementation_id = "coins_per_own_bench_named_bonus_damage"
+
+    def __post_init__(self) -> None:
+        if type(self.names) is not tuple or len(self.names) != 1 or not all(type(name) is str and name for name in self.names):
+            raise ValueError(f"数えるポケモンの名前は 1 つの文字列のタプル（{self.names!r}）")
+        _positive_tens(self.per, "「おもて」1 枚あたりの追加のダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "自分のベンチの名前の合うポケモンの数のコインで追加ダメージのワザ"
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(
+            attack, what, (OWN_BENCH_NAMED_COINS_BONUS_TEXT.format(name=self.names[0], per=self.per),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        from .resolution.programs import SCOPE_OWN_BENCH, counted_pokemon
+
+        printed = attack_of(state, use.key).damage
+        count = len(counted_pokemon(state, use.player, SCOPE_OWN_BENCH, self.names))
+        return DamageProfile(opponent=tuple(printed + self.per * heads for heads in range(count + 1)))
+
+
+@dataclass(frozen=True)
+class DiscardEnergyThenDamageThenAttachFromDiscard(AttackEffect):
+    """自分についている「``discard_type``」エネルギーカードを 1 枚トラッシュする。その後、自分のトラッシュに「``attach_type``」エネルギーカードがあれば、1 枚を選び出し、自分につける。
+    (トラッシュできないとき、このワザは失敗する。)（v0.113。ヘルガー（neo3-044）の「ダークフレイム」。目安「20」）。
+
+    - 要素は ``DiscardOwnEnergy(discard_type, count=1, when_lacking=LACKING_FAIL)`` → ``Damage(OPP)`` → ``AttachFromDiscard(attach_type, 1, exact=True, typed_cards=True)``
+    - 順番: トラッシュできないときはワザの失敗（p.323。ダメージも与えない）なので、トラッシュはダメージの前（v0.31 のやきはらう・v0.83 のふしぎなほのお・やきつくすと同じ読み方。
+      トラッシュはワザの効果で、こんらんのコインのあと）。目安の「相手に20ダメージ。」は説明の最初に省略されていて（GR-2000-P320-DAMAGE-FIGURE）、ダメージとそれ以外の効果の両方が
+      あればダメージが先（GR-2000-P309-ATTACK-PROCEDURE）なので、つけるのはダメージのあと（「ダメージを受けたとき」の効果のあと）。つけた悪エネルギーの「+10」は、このワザの 20 には
+      加わらない（ダメージの計算の時点でついていない）
+    - トラッシュに「``attach_type``」エネルギーカードがなければ、つけるのを省く（ワザを使うための条件・失敗にしない）。トラッシュの悪エネルギー（特殊エネルギーカード）は
+      ``off_field_typed_energy_card`` で「「悪」エネルギーカード」とあつかう（基本エネルギーカードにはしない）。レインボーエネルギーは RB2。使い手がこのワザの中で HP 以上・エネルギーカードを
+      つけることができない（クリスタルビーム）ならつけない"""
+
+    discard_type: EnergyType
+    attach_type: EnergyType
+    implementation_id = "discard_energy_then_damage_then_attach_from_discard"
+
+    def __post_init__(self) -> None:
+        for energy_type in (self.discard_type, self.attach_type):
+            if not isinstance(energy_type, EnergyType) or energy_type is EnergyType.COLORLESS:
+                raise ValueError(f"エネルギーカードの色 {energy_type!r} は「無色」以外の色")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "自分のエネルギーカードをトラッシュしてダメージを与え、トラッシュのエネルギーカードを自分につけるワザ"
+        return _check_form(attack, what, damage="fixed", cost_types=(self.discard_type,)) + _check_exact_text(
+            attack, what, (DISCARD_THEN_ATTACH_FROM_DISCARD_TEXT.format(discard=self.discard_type.ja, attach=self.attach_type.ja),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        label = _label(state, use)
+        if decision.kind == DISCARD_ENERGY:
+            return _decision_form(decision, label, kind=DISCARD_ENERGY, player=use.player, choices=(1, 1),
+                                  options=attached_basic_energy(state, attacker, self.discard_type))
+        expected = tuple(uid for uid in state.players[use.player].discard
+                         if off_field_typed_energy_card(state, uid, self.attach_type) and energy_attach_target_allowed(state, uid, attacker))
+        return _decision_form(decision, label, kind=ATTACH_FROM_DISCARD, player=use.player, choices=(1, 1), options=expected)
+
+
+@dataclass(frozen=True)
+class CoinsPerOwnTypedEnergyBonusDamage(AttackEffect):
+    """自分についている「``energy_type``」エネルギーの数ぶんコインを投げ、「おもて」の数 × ``per`` のダメージを追加する（v0.113。ヘルガー（neo3-044）の「くろいキバ」。目安「30+」）。
+
+    - 要素は ``Coin(per_own_typed=energy_type)`` → ``Damage(OPP, PrintedPlusHeadsOfCoin)``。N は実際にワザを使ったポケモンの今の「``energy_type``」エネルギーの個数（v0.112 の
+      ``Coin.per_own_typed``・``programs.typed_units_for``。カードの枚数ではない。悪エネルギー 1 枚は「悪」1 個）。読み方で数が変わるなら既存の問い（TE1・RB1・BZ2・MEC1・CE1・CE2）。
+      「草」でないので［おいしげる］の問いは当てはめない
+    - v0.35 の ``CoinsPerAttachedTypeBonusDamage``（ウォーターパンチ・とげとげMAX。同じ書き方の説明も受け付ける）は、数える個数は同じだが、ほかの色にも［おいしげる］の問いを当てはめる
+      （v0.89 より前の数え方）ので使わない（その型の意味・既定は変えない）"""
+
+    energy_type: EnergyType
+    per: int
+    implementation_id = "coins_per_own_typed_energy_bonus_damage"
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.energy_type, EnergyType) or self.energy_type is EnergyType.COLORLESS:
+            raise ValueError(f"数えるエネルギーの色 {self.energy_type!r} は「無色」以外の色")
+        _positive_tens(self.per, "「おもて」1 枚あたりの追加のダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "自分の決まった色のエネルギーの個数のコインで追加ダメージのワザ"
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(
+            attack, what, (OWN_TYPED_ENERGY_COINS_BONUS_TEXT.format(ja=self.energy_type.ja, per=self.per),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        printed = attack_of(state, use.key).damage
+        count = typed_unit_count(state, attacker, self.energy_type)
+        return DamageProfile(opponent=tuple(printed + self.per * heads for heads in range(count + 1)))
+
+
+@dataclass(frozen=True)
+class DiscardFieldEnergyThenCoinsDamage(AttackEffect):
+    """自分の場の「``energy_type``」エネルギーカードを、好きなだけトラッシュする。その後、トラッシュした枚数ぶんコインを投げ、「おもて」の数 × ``per`` のダメージ（v0.113。わるいバクフーン
+    （neo4-022）の「ファイヤーラッシュ」。目安「40×」）。
+
+    - 要素は ``programs.DiscardFieldEnergyAnyNumber(energy_type)`` → ``Damage(OPP, HeadsOfDiscarded("discard", per))``。範囲は自分の場全体（使い手だけにしない）。N は実際にトラッシュした
+      カードの枚数（エネルギーの個数ではない。控えが「とうめい」で受けなかったカードは数えない。リサイクルエネルギーなどであとから手札にもどっても N は変わらない）
+    - 「おもて」の数 × ``per`` が基本となるダメージ（p.321 の 1 段階。目安の数字を加えない）。H = 0 なら 0（与えなかった。ワザの失敗ではない）
+    - 選べるカードがあるときの 0 枚は HC5（選ぶと止める）。選べるカードがないなら 0 枚で、コインを投げない（p.309）
+    - コインはダメージの要素の中（相手へのダメージの量だけを決める）。相手が「ダメージを受けない」状態なら v0.4b の問い（マチスのエレブーの「ほうでん」と同じ）"""
+
+    energy_type: EnergyType
+    per: int
+    implementation_id = "discard_field_energy_then_coins_damage"
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.energy_type, EnergyType) or self.energy_type is EnergyType.COLORLESS:
+            raise ValueError(f"トラッシュするエネルギーカードの色 {self.energy_type!r} は「無色」以外の色")
+        _positive_tens(self.per, "「おもて」1 枚あたりのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "自分の場のエネルギーカードを好きなだけトラッシュし、その枚数のコインでダメージのワザ"
+        problems = _check_form(attack, what, damage="modified", modifier="×", cost_types=(self.energy_type,))
+        if attack.damage != self.per:
+            problems.append(f"ダメージの目安の数字 {attack.damage} が、登録の「おもて」1 枚あたりのダメージ {self.per} と違う")
+        return problems + _check_exact_text(attack, what, (FIELD_ENERGY_DISCARD_COINS_TEXT.format(ja=self.energy_type.ja, per=self.per),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        count = sum(len(attached_basic_energy(state, pokemon, self.energy_type)) for pokemon in state.players[use.player].in_play())
+        return DamageProfile(opponent=tuple(self.per * heads for heads in range(count + 1)))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        expected = tuple(uid for pokemon in state.players[use.player].in_play() for uid in attached_basic_energy(state, pokemon, self.energy_type))
+        problems = _decision_form(decision, _label(state, use), kind=DISCARD_ENERGY, player=use.player, choices=(0, len(expected)), options=expected)
+        return problems + ([f"「{_label(state, use)}」の決定に選べるカードがない（決定を出さないはず）"] if not expected else [])
+
+
+@dataclass(frozen=True)
+class CoinsPerPokemonInPlayHeadsDamageTailsSelfDamage(AttackEffect):
+    """お互いの場にいるポケモン全員の数だけコインを投げ、相手に「おもて」の数 × ``per`` のダメージ。その後、自分に「うら」の数 × ``self_per`` のダメージ（v0.113。ロケット団のニャース
+    （PR1-078）の「だいぎゃくてん？」。目安なし）。
+
+    - 要素は ``Coin(per_pokemon=programs.FIELD_POKEMON)`` → ``Damage(OPP, HeadsOfCoin)`` → ``Damage(SELF, TailsOfCoin, name="self_damage")``。N 枚を 1 組として 1 回だけ投げ、同じ組の
+      H（相手）と T = N − H（自分）を使う（別々に投げない。v0.35 のぜんりょくとっしんと同じ組の形で、枚数だけがお互いの場のポケモンの数）。目安がないので、固定の目安を足さない
+    - 相手へのダメージ → 自分へのダメージ（「その後」）。自分へのダメージは既存のワザの自分へのダメージの経路（ワザによるダメージ。p.321）。相手へのダメージが無効でも自分へのダメージは
+      残るので、コインは相手の状態によらず投げる（v0.34 の ``void_coin_question``）。先読みは「おもて」の数でまとめ、相手と自分の組を同じ結果として試す"""
+
+    per: int
+    self_per: int
+    implementation_id = "coins_per_pokemon_in_play_heads_damage_tails_self_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "「おもて」1 枚あたりの相手へのダメージ")
+        _positive_tens(self.self_per, "「うら」1 枚あたりの自分へのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "お互いの場のポケモンの数のコインで、「おもて」の数で相手に・「うら」の数で自分にダメージのワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(
+            attack, what, (FIELD_POKEMON_COINS_HEADS_TAILS_TEXT.format(per=self.per, self_per=self.self_per),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        count = sum(len(side.in_play()) for side in state.players)
+        pairs = tuple((self.per * heads, self.self_per * (count - heads)) for heads in range(count + 1))
+        return DamageProfile(opponent=tuple(o for o, _ in pairs), self_damage=tuple(s for _, s in pairs), outcomes=pairs)
+
+
+# v0.113 のワザの登録（11。id ごとに書く。同じカードの組はない）。説明文のないつめできりさくは文面・出典を持たない
+V0_113_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # ピッピ（neo1-063）。おうふくビンタは既存の CoinFlipDamage（コイン 2 枚・「おもて」の数 × 10）
+    AttackKey("neo1-063", 0): _printed(CoinFlipDamage(2, 10), "おうふくビンタ", "コインを2枚投げ、「おもて」の数×10のダメージ。"),
+    AttackKey("neo1-063", 1): _printed(CoinsPerPokemonInPlaySearchBasicEnergy(), "みんなでおどる", SQUAREDANCE_TEXT),
+    # デンリュウ（neo3-028）
+    AttackKey("neo3-028", 0): _printed(DamageThenCoinsAttachTypedEnergyFromDeck(EnergyType.LIGHTNING, 3), "ゆうでん",
+                                       ATTRACT_CURRENT_TEXT.format(coins=3, ja=EnergyType.LIGHTNING.ja)),
+    AttackKey("neo3-028", 1): _printed(CoinBonusOnHeadsElseParalyze(20), "ギガボルト", COIN_BONUS_ELSE_PARALYZE_TEXT.format(bonus=20)),
+    # ヤミカラス（neo3-043）
+    AttackKey("neo3-043", 0): _printed(PutNamedBasicFromDeckOntoBenchOrFail(("ヤミカラス",)), "なかまをよぶ", CALL_FOR_FAMILY_OR_FAIL_TEXT.format(name="ヤミカラス")),
+    AttackKey("neo3-043", 1): _printed(CoinsPerOwnBenchNamedBonusDamage(("ヤミカラス",), 10), "むれでつつく",
+                                       OWN_BENCH_NAMED_COINS_BONUS_TEXT.format(name="ヤミカラス", per=10)),
+    # ヘルガー（neo3-044）
+    AttackKey("neo3-044", 0): _printed(DiscardEnergyThenDamageThenAttachFromDiscard(EnergyType.FIRE, EnergyType.DARKNESS), "ダークフレイム",
+                                       DISCARD_THEN_ATTACH_FROM_DISCARD_TEXT.format(discard=EnergyType.FIRE.ja, attach=EnergyType.DARKNESS.ja)),
+    AttackKey("neo3-044", 1): _printed(CoinsPerOwnTypedEnergyBonusDamage(EnergyType.DARKNESS, 10), "くろいキバ",
+                                       OWN_TYPED_ENERGY_COINS_BONUS_TEXT.format(ja=EnergyType.DARKNESS.ja, per=10)),
+    # わるいバクフーン（neo4-022）
+    AttackKey("neo4-022", 0): AttackEntry(DAMAGE_ONLY, "つめできりさく"),
+    AttackKey("neo4-022", 1): _printed(DiscardFieldEnergyThenCoinsDamage(EnergyType.FIRE, 40), "ファイヤーラッシュ",
+                                       FIELD_ENERGY_DISCARD_COINS_TEXT.format(ja=EnergyType.FIRE.ja, per=40)),
+    # ロケット団のニャース（PR1-078）。目安なし（固定の目安を足さない）
+    AttackKey("PR1-078", 0): _printed(CoinsPerPokemonInPlayHeadsDamageTailsSelfDamage(10, 10), "だいぎゃくてん？",
+                                      FIELD_POKEMON_COINS_HEADS_TAILS_TEXT.format(per=10, self_per=10)),
+})
+
+DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_113_ATTACKS)

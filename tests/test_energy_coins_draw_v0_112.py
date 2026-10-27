@@ -282,7 +282,8 @@ class TentacleGripTest(unittest.TestCase):
 
     def test_esp_redo_draws_once_from_the_final_result(self):
         """ナツメのESPのやり直しは、N 枚をすべて投げ直し、確定した H だけで 1 回引く（決定の前に引かない・山札を見せない）。続きは clone・deepcopy・pickle から同じ。不正な答えは状態・
-        乱数・ログ・決定を変えない。仕組みの確かめ（ESPを持てるナツメのポケモンに、このワザを使えるものは今の写しにない）。"""
+        乱数・ログ・決定を変えない。ESPの関数を差しかえた仕組みの確かめ（v0.113 で訂正: 超の色マーカーのついたドククラゲをベンチに置けば、ナツメのフーディンが［サイコリンク］で
+        このワザを持てる。通常の操作を通る確かめは tests/test_variable_coins_search_attachments_v0_113.py の ``EspRealPathTest``）。"""
         state = board(mon(TENTACRUEL, (W, W, W)), opponent=mon(CHANSEY))
         esp = (state.players[0].active.card,)
         with mock.patch.object(E, "esp_cards", lambda s, pokemon: esp if pokemon.pokemon_id == state.players[0].active.pokemon_id else ()), \

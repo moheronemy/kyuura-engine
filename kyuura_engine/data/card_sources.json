@@ -28836,6 +28836,94 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.112 で加えた（docs/energy-coins-draw-v0.112.md）。PR1（プロモ(旧裏)。promo。発売 1999）。水タイプ・オムナイトから 2 進化（進化元は写しにある。対応済みのオムナイト PMCG3-015 など）。しょくしゅをつかう=CoinsPerOwnTypedEnergyDraw(水, 2)（ダメージなし。実際に使ったポケモンについている「水」エネルギーの個数（カードの枚数ではない）だけコインを投げ、「おもて」の数 × 2 枚を自分の山札から引く。山札が足りなければ引けるだけ。0 個なら投げず引かない。2 枚で型・登録の値を共有）。ふしょくえき=DamageParalyzeOnHeadsElseLockSelf（相手に目安 40、そのあと 1 枚のコインの同じ結果で「おもて」なら相手をマヒ、「うら」なら次の自分の番、このカードはこのワザを使えない（CannotUseOwnAttack。もう 1 つのワザは使える）。「うら」でも 40 は残る）。kyuura の日本語の文面は pcg-search.com の転記。data_gaps（pokemon.dex・jp_print.level）は補っていない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stp051・名前・ワザの名前で data/・docs/ を確かめた。当たったのはカードの一覧・対象の一覧・転記元の写し・pcg-search のページの読み直し（違いなし）・商品の一覧・ポケモン育て屋さんでなにかの化石に 2 進化カードを重ねる既存の記録（PF3。このカードを指さない一般の場面）と、名前の同じ別のカードの記録、ガイドブックの既存の転記 data/Silver_Bible_structured.md（研究の記録ではない。根拠にしていない）の解説の行だけ）。Silver_Bible_structured.md の書き方は「…の数ぶんコインを投げ、…引いて、手札に加える。」などの語の違いだけ（挙動は変わらない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo1-063": {
+      "basis": "kyuura_data",
+      "name_ja": "ピッピ",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.113 で加えた（docs/variable-coins-search-attachments-v0.113.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。無色・たね・HP 50。おうふくビンタ=CoinFlipDamage(2, 10)（既存の型。コイン 2 枚の「おもて」の数 × 10）。みんなでおどる=CoinsPerPokemonInPlaySearchBasicEnergy（ダメージなし。お互いの場のポケモンの数（programs.FIELD_POKEMON。数だけで正体を読まない）のコインを投げ、「おもて」の数以下（0 枚も。v0.85 のせいでんきと同じ読み方。個別の公式の裁定ではない）の基本エネルギーカードを山札から選び、選んだカードだけを見せて手札に加え、1 回切る。H = 0 でも切る。H が正なら選べるカードがなくても決定を出す）。kyuura の日本語の文面は nazonobasho.com の転記。データの欠けはない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前（日本語・英語の欄）で data/・docs/ を確かめた。当たったのはカードの一覧・対象の一覧・転記元の写し・商品の一覧と、名前の同じ別のカードの記録（ピッピ PMCG1-067 の「ゆびをふる」の card_differences など）だけ）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo3-028": {
+      "basis": "kyuura_data",
+      "name_ja": "デンリュウ",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.113 で加えた（docs/variable-coins-search-attachments-v0.113.md）。neo3（めざめる伝説。expansion_pack。発売 2000-11-23。2000.02.14 版のルールで処理する）。雷・モココから 2 進化（進化元は写しにある。対応済みのモココ neo1-041 など）。ゆうでん=DamageThenCoinsAttachTypedEnergyFromDeck(雷, 3)（目安 20 のダメージのあと、コイン 3 枚の「おもて」の数ちょうどの「雷」エネルギーカードを山札から選び、自分の場の今の色が「雷」のポケモンに好きなようにつけ（1 匹に何枚でも）、1 回切る。英語の欄の may は持ち込まない。0 < 山札の枚数 < H は FC1、山札 0 枚は p.309（決定は出す）、つけられるポケモンがいなければコインを投げない）。ギガボルト=CoinBonusOnHeadsElseParalyze(20)（1 枚のコインで「おもて」なら 20 追加、「うら」なら相手をマヒ。v0.8 の CoinBonusDamageAndParalyze とは別の意味）。kyuura の日本語の文面は Pokemon Wiki の転記。データの欠けはない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前（日本語・英語の欄）で data/・docs/ を確かめた。当たったのはカードの一覧・対象の一覧・転記元の写し・商品の一覧と、名前の同じ別のカードの記録（わるいデンリュウ neo4-046 の［かんでん］の UQ-SELF-EXCLUDING-POWER-COPIES など）だけ）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo3-043": {
+      "basis": "kyuura_data",
+      "name_ja": "ヤミカラス",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.113 で加えた（docs/variable-coins-search-attachments-v0.113.md）。neo3（めざめる伝説。expansion_pack。発売 2000-11-23。2000.02.14 版のルールで処理する）。悪・たね・HP 40。なかまをよぶ=PutNamedBasicFromDeckOntoBenchOrFail((ヤミカラス,))（山札の名前が「ヤミカラス」のたねポケモン 1 枚（neo1-055 も）をベンチに出して切る。ベンチに空きがないときはワザを使ってからの失敗（p.323。宣言の拒否にしない。英語の欄の Can't use は持ち込まない）。山札に選べるカードがないのは p.309 で、失敗とは別の理由）。むれでつつく=CoinsPerOwnBenchNamedBonusDamage((ヤミカラス,), 10)（自分のベンチの今の姿の名前が「ヤミカラス」のポケモンの数のコインで、目安 10 + 「おもて」の数 × 10。自分のバトル場・相手の場・名前の違うポケモンは数えない。0 匹なら投げず 10）。kyuura の日本語の文面は Pokemon Wiki の転記。データの欠けはない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前（日本語・英語の欄）で data/・docs/ を確かめた。当たったのはカードの一覧・対象の一覧・転記元の写し・商品の一覧と、名前の同じ別のカードの記録（ヤミカラス neo1-055 の「だましうち」の UQ-SPEED-STAR-SCOPE のメモ、v0.32 の「なかまをよぶ」のカードなど）だけ）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo3-044": {
+      "basis": "kyuura_data",
+      "name_ja": "ヘルガー",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.113 で加えた（docs/variable-coins-search-attachments-v0.113.md）。neo3（めざめる伝説。expansion_pack。発売 2000-11-23。2000.02.14 版のルールで処理する）。悪・デルビルから 1 進化（進化元は写しにある。対応済みのデルビル neo2-039 など）。ダークフレイム=DiscardEnergyThenDamageThenAttachFromDiscard(炎, 悪)（自分の「炎」エネルギーカード 1 枚をワザの効果としてトラッシュ（できなければワザの失敗。ダメージも与えない）→ 目安 20 のダメージ → トラッシュに「悪」エネルギーカード（悪エネルギー。特殊エネルギーカードのまま）があれば 1 枚を自分につける。順番は GR-2000-P320-DAMAGE-FIGURE・GR-2000-P309-ATTACK-PROCEDURE と既存のトラッシュで失敗するワザの読み方で決め、つけた悪エネルギーの +10 はこの 20 に加わらない。RUL-ENERGY-DISCARD-ATTACKS はこのカードの照合の記録ではない（トラッシュがワザの効果である時点の範囲の記録として再利用）。悪エネルギーカードがなければつけるのを省く）。くろいキバ=CoinsPerOwnTypedEnergyBonusDamage(悪, 10)（実際に使ったポケモンの「悪」エネルギーの個数（カードの枚数ではない）のコインで、目安 30 + 「おもて」の数 × 10。Coin.per_own_typed）。kyuura の日本語の文面は Pokemon Wiki の転記。データの欠けはない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前（日本語・英語の欄）で data/・docs/ を確かめた。当たったのはカードの一覧・対象の一覧・転記元の写し・商品の一覧と、名前の同じ別のカードの記録だけ）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo4-022": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいバクフーン",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.113 で加えた（docs/variable-coins-search-attachments-v0.113.md）。neo4（闇、そして光へ...。expansion_pack。発売 2001-04-20。2000.02.14 版のルールで処理する）。炎・わるいマグマラシから 2 進化（進化元は写しにある。対応済みのわるいマグマラシ neo4-020）。つめできりさく=DAMAGE_ONLY（説明文なし。文面・出典を書かない）。ファイヤーラッシュ=DiscardFieldEnergyThenCoinsDamage(炎, 40)（自分の場全体の「炎」エネルギーカードを好きなだけトラッシュし、実際にトラッシュした枚数のコインで「おもて」の数 × 40。選べるカードがあるときの 0 枚は HC5（選ぶと止める）、選べるカードがないなら 0 枚でコインなし。H = 0 は基本となるダメージ 0 で、ワザの失敗ではない）。kyuura の日本語の文面は Pokemon Wiki の転記。データの欠けはない。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・名前・ワザの名前（日本語・英語の欄）で data/・docs/ を確かめた。当たったのはカードの一覧・対象の一覧・転記元の写し・商品の一覧と、名前の同じ別のカードの記録だけ）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PR1-078": {
+      "basis": "kyuura_data",
+      "name_ja": "ロケット団のニャース",
+      "status": "adopted",
+      "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.113 で加えた（docs/variable-coins-search-attachments-v0.113.md）。PR1（プロモ(旧裏)。promo。1999-10-27 の CD「ニャースのパーティ」の付録（kyuura docs/cards/products/promos.md））。無色・たね・HP 40。だいぎゃくてん？=CoinsPerPokemonInPlayHeadsDamageTailsSelfDamage(10, 10)（目安なし。お互いの場のポケモンの数（programs.FIELD_POKEMON。ピッピの「みんなでおどる」と共有）のコインを 1 組投げ、相手に「おもて」の数 × 10、その後、自分に「うら」の数 × 10。固定の目安を足さない。相手へのダメージが無効でも自分へのダメージは残る）。kyuura の日本語の文面は pcg-search.com の転記（同じ転記元との一致を独立した照合にしない）。data_gaps（jp_print.level）は補っていない（kyuura の CC-PMCG6-063-P229 の findings に「ロケット団のニャース（LV.11／HP40。プロモーションカード）」とあるが、別のカードの照合の記録で、このカードを指さない。kyuura への報告事項）。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stp078・名前・ワザの名前（日本語・英語の欄）で data/・docs/ を確かめた。当たったのはカードの一覧・対象の一覧・転記元の写し・商品の一覧と、名前の同じ別のカードの記録（CC-PMCG6-063-P229 の findings のメモ）、ガイドブックの既存の転記 data/Silver_Bible_structured.md（研究の記録ではない。根拠にしていない）の行だけ）。Silver_Bible_structured.md の書き方は「おたがいの場にいるポケモン全員の数ぶんコインを投げ、「おもて」の数×10のダメージを、相手に与える。その後、自分に「うら」の数×10のダメージ。」（ワザの名前は半角の「?」）で、印刷の文面と語だけ違う（挙動は変わらない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
     }
   }
 }

@@ -603,6 +603,7 @@ POOL_KEYS = (
     "pool_v0_110",  # v0.110（使うときのコインで、残りHPがなくなっても「きぜつ」しない期間つきの効果を自分に与えるワザのポケモンの 2 枚。docs/endure-armor-up-v0.110.md）
     "pool_v0_111",  # v0.111（場のエネルギーカードの枚数でダメージ・ワザの使用条件が決まるポケモンの 4 枚。docs/field-energy-card-counts-v0.111.md）
     "pool_v0_112",  # v0.112（水エネルギーの個数によるコインとドロー・コインのマヒと自分のワザの制限のポケモンの 2 枚。docs/energy-coins-draw-v0.112.md）
+    "pool_v0_113",  # v0.113（可変枚数のコインと、山札の検索・つける・場全体のトラッシュのポケモンの 6 枚。docs/variable-coins-search-attachments-v0.113.md）
 )
 
 

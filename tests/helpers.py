@@ -1483,6 +1483,17 @@ ATTACK_TYPES_SINCE_V0_17 = (
     # v0.112（docs/energy-coins-draw-v0.112.md。自分の決まった色のエネルギーの個数だけのコインで引く・コインでマヒか自分のワザの制限）
     _effects.CoinsPerOwnTypedEnergyDraw,
     _effects.DamageParalyzeOnHeadsElseLockSelf,
+    # v0.113（docs/variable-coins-search-attachments-v0.113.md。場のポケモンの数・ベンチの名前・自分の色の個数・トラッシュした枚数のコイン、山札の検索・つける、場全体のトラッシュ、
+    # コインの「おもて」で追加・「うら」でマヒ、ベンチに空きがなければ失敗、トラッシュしてダメージのあとトラッシュからつける）
+    _effects.CoinsPerPokemonInPlaySearchBasicEnergy,
+    _effects.DamageThenCoinsAttachTypedEnergyFromDeck,
+    _effects.CoinBonusOnHeadsElseParalyze,
+    _effects.PutNamedBasicFromDeckOntoBenchOrFail,
+    _effects.CoinsPerOwnBenchNamedBonusDamage,
+    _effects.DiscardEnergyThenDamageThenAttachFromDiscard,
+    _effects.CoinsPerOwnTypedEnergyBonusDamage,
+    _effects.DiscardFieldEnergyThenCoinsDamage,
+    _effects.CoinsPerPokemonInPlayHeadsDamageTailsSelfDamage,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

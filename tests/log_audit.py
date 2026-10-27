@@ -392,6 +392,19 @@ V111_EQUAL_ENERGY_CARDS_TEXT = "自分と相手に同じ数のエネルギーカ
 # v0.112: 自分のエネルギーの数だけのコインで引くワザ・コインでマヒか自分のワザの制限のワザ。色・1 枚あたりの数・面は、処理したワザの印刷の文面から読む（エンジンの登録を読まない）
 V112_COINS_DRAW = re.compile(r"自分についている「(.+)」エネルギーの数だけコインを投げ、「おもて」の数×(\d+)枚のカードを、自分の山札から引く。")
 V112_PARALYZE_ELSE_LOCK_TEXT = "コインを投げて「おもて」なら、相手を「マヒ」状態にする。「うら」なら、次の自分の番、このカードはこのワザを使えない。"
+# v0.113: 可変枚数のコインと、山札の検索・つける・場全体のトラッシュのワザ。数・色・名前・係数は、処理したワザの印刷の文面から読む（エンジンの登録を読まない）
+V113_SQUAREDANCE_TEXT = ("おたがいの場にいるポケモンの数ぶんコインを投げ、「おもて」の数以下の枚数の「基本エネルギーカード」を自分の山札から選び出し、相手プレイヤーに見せてから、"
+                         "手札に加える。その後、その山札をよく切る。")
+V113_ATTRACT = re.compile(r"コインを(\d+)枚投げ、「おもて」の数ぶんの「(.+)」エネルギーカードを自分の山札から選び出し、自分の場の「\2」ポケモンそれぞれに、好きなようにつける。"
+                          r"その後、その山札をよく切る。")
+V113_COIN_BONUS_ELSE_PARALYZE = re.compile(r"コインを投げて「おもて」なら、(\d+)ダメージを追加する。「うら」なら、相手を「マヒ」状態にする。")
+V113_CALL_OR_FAIL = re.compile(r"自分の山札から「(.+)」を1枚選び出し、ベンチに出す。その後、その山札をよく切る。\(自分のベンチに空きがないとき、このワザは失敗する。\)")
+V113_BENCH_NAMED_COINS = re.compile(r"自分のベンチの「(.+)」の数ぶんコインを投げ、「おもて」の数×(\d+)のダメージを追加する。")
+V113_DISCARD_THEN_ATTACH = re.compile(r"自分についている「(.+)」エネルギーカードを1枚トラッシュする。その後、自分のトラッシュに「(.+)」エネルギーカードがあれば、1枚を選び出し、"
+                                      r"自分につける。\(トラッシュできないとき、このワザは失敗する。\)")
+V113_OWN_TYPED_COINS_BONUS = re.compile(r"自分についている「(.+)」エネルギーの数ぶんコインを投げ、「おもて」の数×(\d+)のダメージを追加する。")
+V113_FIELD_DISCARD_COINS = re.compile(r"自分の場の「(.+)」エネルギーカードを、好きなだけトラッシュする。その後、トラッシュした枚数ぶんコインを投げ、「おもて」の数×(\d+)のダメージ。")
+V113_FIELD_COINS_HEADS_TAILS = re.compile(r"お互いの場にいるポケモン全員の数だけコインを投げ、相手に「おもて」の数×(\d+)のダメージ。その後、自分に「うら」の数×(\d+)のダメージ。")
 
 # v0.10: はたらいた「はんげき」より先にあってはならない、ワザのダメージ以外の効果・きぜつ・番の終わり（p.89）
 COUNTER_BARRIERS = (
@@ -1453,7 +1466,8 @@ def log_problems(state) -> list[str]:
             if window["return_in_play_to_deck"] > 2:
                 problems.append(f"1 回のワザで山札にもどす処理が {window['return_in_play_to_deck']} 回")  # v0.52: つれさるでも自分と相手の 2 回まで
             if window["attack_energy_from_deck"] > (window_effect.max_cards if isinstance(window_effect, CoinAttachEnergyFromDeckToSelf)
-                                                     else 6 if isinstance(window_effect, AttachFromDeckUpToNamedCount) else 1):
+                                                     else 6 if isinstance(window_effect, AttachFromDeckUpToNamedCount)
+                                                     else window_effect.coins if isinstance(window_effect, E.DamageThenCoinsAttachTypedEnergyFromDeck) else 1):
                 # v0.41。v0.75: しおまねきは最大 3 枚（1 枚に 1 つの attach_energy_from_deck）
                 problems.append("1 回のワザで山札からエネルギーをつける処理（attach_energy_from_deck・attach_energy_from_deck_none）が多すぎる")
             if isinstance(window_effect, ReturnHandThenRevealBasicEnergy):
@@ -1472,6 +1486,10 @@ def log_problems(state) -> list[str]:
                 # v0.83: みずかき。おたがいのプレイヤーが、それぞれ見た中の基本エネルギーカードを好きなだけ見せて手札に加える（見せない回は deck_top_take_declined）
                 if window["reveal_from_deck_none"]:
                     problems.append(f"みずかきで、見せて手札に加えた処理の回数が合わない {dict(window)}")
+            elif isinstance(window_effect, E.CoinsPerPokemonInPlaySearchBasicEnergy):
+                # v0.113: みんなでおどるは「おもて」の数以下を 1 枚ずつ見せる（reveal_from_deck が何回もあり、0 枚なら reveal_from_deck_declined が 1 回。枚数は v113_problems が確かめる）
+                if window["reveal_from_deck_none"] or (window["reveal_from_deck_declined"] and window["reveal_from_deck"]) or window["reveal_from_deck_declined"] > 1:
+                    problems.append(f"みんなでおどるで、見せて手札に加えた処理の回数が合わない {dict(window)}")
             elif window["reveal_from_deck"] + window["reveal_from_deck_none"] > 1:
                 problems.append("1 回のワザで山札から見せて手札に加える処理（reveal_from_deck・reveal_from_deck_none）が 2 回以上")  # v0.38
             if window["bench_from_deck"] + window["bench_from_deck_none"] > 1 and not (
@@ -1518,8 +1536,9 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番のワザのエネルギーのトラッシュが、そのワザのダメージの要素のあと")
             if position == "after" and not (window["damage:opponent"] + window["prevented:opponent_active"] + window["attack_evaded"]):
                 problems.append(f"{e['turn']} 番のワザのエネルギーのトラッシュが、そのワザの相手へのダメージの要素より前")
-            bench_discard = (isinstance(effect, OptionalDiscardEnergyBonusDamage) and effect.include_bench and e["player"] == attack_event["player"]
-                             and e.get("attacker_pokemon_id") is not None)  # v0.82: ファイヤーバーンの控えのカード（ワザを使ったポケモンの番号を書く）
+            bench_discard = ((isinstance(effect, OptionalDiscardEnergyBonusDamage) and effect.include_bench or isinstance(effect, E.DiscardFieldEnergyThenCoinsDamage))
+                             and e["player"] == attack_event["player"]
+                             and e.get("attacker_pokemon_id") is not None)  # v0.82: ファイヤーバーンの控えのカード（ワザを使ったポケモンの番号を書く）。v0.113: ファイヤーラッシュも
             if (e["player"], e["pokemon"]) != (attack_event["player"], attack_event["pokemon"]) and not bench_discard:
                 problems.append(f"{e['turn']} 番のワザのエネルギーのトラッシュが、ワザを使ったポケモンのものでない")
             elements = _discard_elements(program)
@@ -1615,6 +1634,7 @@ def log_problems(state) -> list[str]:
     effect_knocked: set[int] = set()
     shuffle_due: dict | None = None  # v0.32: 直前の bench_from_deck・bench_from_deck_none（すぐあとに同じプレイヤーの shuffle が続くはず）
     static_attaches: set[int] = set()  # v0.85: せいでんきのつけるログ（続けてつけるあいだは山札を切らない）
+    v113_attaches: set[int] = set()  # v0.113: ゆうでんのつけるログ（つける先の違うポケモンに続けてつけるあいだは山札を切らない）
     discard_entered: dict[int, int] = {}  # v0.51: トラッシュからベンチに出したポケモンの番号 → 出した番（状態の場に出た番と同じはず）
     revive_then_counters: tuple | None = None  # v0.71: ポケモンジム第1弾の元気のかけらで出したポケモン（番号・トレーナーのカード・番）。すぐあとにカウンターをのせる
     # v0.38: 直前の、山札を切らずにもどした return_in_play_to_deck（キョウのポッポの「でんれい」。かわりの対戦ポケモンを出してから山札をさがし、その
@@ -1695,6 +1715,7 @@ def log_problems(state) -> list[str]:
     v110_window: dict | None = None  # v0.110: 今のワザの確かめ（処理したワザ・使うときのコイン・与えた数・HP 以上にしたワザのダメージの使い手・「きぜつ」しなかったポケモン）
     v112_window: dict | None = None  # v0.112: 今のワザの確かめ（処理したワザ・コイン・引いたカード・与えた使えない効果・マヒ・宣言の時点のエネルギーと手札）
     v112_empty_deck: set[int] = set()  # v0.112: しょくしゅをつかうで「おもて」の数 × N より少なく引いた（山札がなくなった）プレイヤー
+    v113_window: dict | None = None  # v0.113: 今のワザの確かめ（処理したワザ・コイン（ESPでやり直した結果）・ワザの中のログ・処理する時点の場）
     color_types: dict[int, dict] = {}  # v0.88: ［せんすい］の記録（対象のポケモンの番号 → 色・発生源のカード・特殊能力の位置）
     # v0.90: ログから組み立てた、場のポケモンのマーカー・カウンター（番号 → のせた順の {"marker", "color", "turn"}）と、進化・退化で取りのぞくはずのポケモン（番号 → 理由）
     marks: dict[int, list[dict]] = {}
@@ -3635,6 +3656,205 @@ def log_problems(state) -> list[str]:
                     found.append(f"{w['key']} の「うら」で、ワザを使ったポケモン {w['pokemon_id']} にこのワザを使えない効果を 1 つ与えていない（{w['locks']}）")
         return found
 
+    def v113_units(cards, color: EnergyType) -> int:
+        """v0.113: ログから組み立てた場のポケモンについているカード ``cards`` の「``color``」エネルギーの個数（基本エネルギーカードは印刷の色が「X」なら 1、特殊エネルギーカードは
+        登録の出すエネルギーのうち「X」だけのもの。色を変える効果は組み立てない。v0.112 の数え方と同じ）。"""
+        return sum((1 if state.printed_def(uid).provides is color else 0) if state.printed_def(uid).is_basic_energy
+                   else sum(1 for unit in state.effects.energy_effect(state.printed_def(uid)).units() if unit == frozenset({color}))
+                   for uid in cards)
+
+    def v113_typed_card(uid: int, color: EnergyType) -> bool:
+        """v0.113: 場の外のカード ``uid`` が「「``color``」エネルギーカード」か（印刷の定義から。基本エネルギーカードは印刷の色、特殊エネルギーカードは出すエネルギーがどれも「X」1 色）。"""
+        definition = state.printed_def(uid)
+        if definition.category != "energy":
+            return False
+        if definition.is_basic_energy:
+            return definition.provides is color
+        units = state.effects.energy_effect(definition).units()
+        return bool(units) and all(unit == frozenset({color}) for unit in units)
+
+    def v113_snapshot(w: dict) -> None:
+        """v0.113: 処理するワザの時点の、ログから組み立てた場（お互いの場のポケモンの数・自分のベンチの名前・使い手のエネルギー・自分の場のエネルギーカード・ベンチの空き）。"""
+        player, pid = w["player"], w["pokemon_id"]
+        own = [p for p in in_play if pokemon_owner.get(p) == player]
+        w["field"] = len(in_play)
+        w["bench"] = [p for p in own if p != active_of.get(player)]
+        w["bench_full"] = len(w["bench"]) >= bench_limit_now()
+        w["own"] = own
+        w["energy_of"] = {p: list(energy.get(p, ())) for p in own}
+        w["attacker_energy"] = list(energy.get(pid, ()))
+
+    def v113_problems(e: dict) -> list[str]:
+        """v0.113: 可変枚数のコインと、山札の検索・つける・場全体のトラッシュのワザを、エンジンの登録・計算を読まずに確かめる（処理したワザの印刷の文面と、ログから組み立てた場・コイン・
+        カードの動き・ダメージの基本となるダメージから）。ESPのやり直しは、やり直した結果だけを使う（``esp_redo`` の前の同じ枚数の最初の結果を除く）。
+
+        - みんなでおどる: コインの枚数がお互いの場のポケモンの数。見せて手札に加えたカード（``reveal_from_deck``）は「おもて」の数以下で、自分の山札の基本エネルギーカード。山札を 1 回切る
+        - ゆうでん: 目安のダメージのあとに、決まった枚数のコイン。つけたカード（``attach_energy_from_deck``・受けなかった ``deck_energy_evaded``）は「おもて」の数ちょうど（つけない理由
+          ``no_candidates``・``no_target``・``no_heads`` のときは 0）で、その色の基本エネルギーカード。つけた先は自分の場のポケモン（色マーカー・色を変えた記録のないものは印刷のタイプが
+          その色）。山札を 1 回切る
+        - ギガボルト: ダメージの前に 1 枚。「おもて」なら基本となるダメージは目安 + 追加でマヒなし、「うら」なら目安でマヒにする（相手が HP 以上・受けないなら与えないことがある）
+        - なかまをよぶ: ベンチに空きがなければワザの失敗（``bench_full``）で、出さない・切らない。空きがあれば、出したのは名前の合うたねポケモン 1 枚か、出さない（``bench_from_deck_none``）。
+          どちらも 1 回切る
+        - むれでつつく: コインの枚数が自分のベンチの名前の合うポケモンの数（うらのカードがあれば確かめない）。基本となるダメージは目安 + 「おもて」の数 × N
+        - ダークフレイム: ダメージの前に使い手から「X」の基本エネルギーカード 1 枚をトラッシュ（できなければ ``attack_failed`` の ``discard`` で、ダメージもつけるのもない）。つけたカードは
+          ダメージのあとで、自分のトラッシュの「Y」エネルギーカード 1 枚まで。基本となるダメージは目安
+        - くろいキバ（同じ書き方の既存のワザも）: コインの枚数が使い手の「X」エネルギーの個数。基本となるダメージは目安 + 「おもて」の数 × N
+        - ファイヤーラッシュ: トラッシュしたカードは自分の場のポケモンの「X」の基本エネルギーカードで、そのあとのコインの枚数がその枚数。基本となるダメージは「おもて」の数 × N
+        - だいぎゃくてん？: コインの枚数がお互いの場のポケモンの数。相手への基本となるダメージは「おもて」の数 × N、そのあとの自分への基本となるダメージは「うら」の数 × M"""
+        nonlocal v113_window
+        found: list[str] = []
+        kind = e["kind"]
+        w = v113_window
+        if kind in ("attack", "turn_end", "game_end", "halted") and w is not None:
+            found += v113_close(w, log_ended=kind in ("game_end", "halted"))
+            v113_window = w = None
+        if kind == "attack":
+            v113_window = w = {"key": attack_window["effect"], "player": e["player"], "pokemon_id": ids.get(e["pokemon"]), "events": [], "coins": [],
+                               "interrupted": False}
+            v113_snapshot(w)
+            return found
+        if w is None:
+            return found
+        if kind == "copy_attack":
+            w.update(key=e["copied"], coins=[], events=[])  # 相手のワザとして使うワザ（ちょうのうりょくなど）自身のコイン・ログは数えない
+            v113_snapshot(w)
+        elif kind in ("confusion_damage",) or (kind == "attack_failed" and e.get("reason") in ("attack_check", "confusion")):
+            w["interrupted"] = True
+        elif kind == "coin_flip" and e.get("source") == "attack" and e.get("effect") == w["key"]:
+            w["coins"].append(e["result"])
+            w["events"].append(("coin", e["result"]))
+        elif kind == "esp_redo" and e.get("effect") == w["key"]:
+            count = len(e["original"])
+            if w["coins"][-2 * count:-count] != list(e["original"]) or w["coins"][-count:] != list(e["redone"]):
+                found.append(f"{e['turn']} 番の {w['key']} のESPのやり直し {e['original']} → {e['redone']} が、そのワザのコインと合わない")
+            del w["coins"][-2 * count:-count]
+        else:
+            w["events"].append((kind, e))
+        return found
+
+    def v113_close(w: dict, *, log_ended: bool) -> list[str]:
+        """v0.113: 1 つのワザの確かめ（ワザの終わり・番の終わりで）。"""
+        found: list[str] = []
+        if w["interrupted"]:
+            return found
+        key, player, text = w["key"], w["player"], v111_printed_text(w["key"]) or ""
+        heads = sum(1 for side in w["coins"] if side == "heads")
+        tails = len(w["coins"]) - heads
+        events = w["events"]
+        damages = [(i, x) for i, (k, x) in enumerate(events) if k == "damage" and not x.get("retaliation")]
+        opponent = [x for _, x in damages if (x.get("target") or "opponent_active") == "opponent_active"]
+        own = [x for _, x in damages if x.get("target") == "self"]
+        first_coin = next((i for i, (k, _) in enumerate(events) if k == "coin"), None)
+        shuffles = [x for k, x in events if k == "shuffle" and x["player"] == player]
+        kinds_seen = [k for k, _ in events]
+        failed = [x.get("reason") for k, x in events if k == "attack_failed"]
+
+        def base(x):
+            return x["steps"][0][1] if x.get("steps") else None
+
+        printed = None
+        card_id, index = _attack_key(key)
+        definition = state.definitions.get(card_id)
+        if definition is not None and 0 <= index < len(definition.attacks):
+            printed = definition.attacks[index].damage
+        if text == V113_SQUAREDANCE_TEXT:
+            revealed = [x["card"] for k, x in events if k == "reveal_from_deck" and x["player"] == player]
+            if len(w["coins"]) != w["field"]:
+                found.append(f"{key} のコイン {len(w['coins'])} 枚が、ログから組み立てたお互いの場のポケモンの数 {w['field']} と違う")
+            if len(revealed) > heads or any(not state.printed_def(uid).is_basic_energy or owner.get(uid) != player for uid in revealed):
+                found.append(f"{key} で見せて手札に加えたカード {revealed} が、「おもて」の数 {heads} 以下の自分の基本エネルギーカードではない")
+            if not log_ended and len(shuffles) != 1:
+                found.append(f"{key} で山札を切った回数 {len(shuffles)} が 1 回ではない")
+        matched = V113_ATTRACT.fullmatch(text)
+        if matched is not None:
+            color = next(t for t in EnergyType if t.ja == matched.group(2))
+            attached = [(x["pokemon_id"], x["card"]) for k, x in events if k in ("attach_energy_from_deck", "deck_energy_evaded") and x["player"] == player]
+            reasons = [x["reason"] for k, x in events if k == "attach_energy_from_deck_none"]
+            if not opponent or first_coin is not None and damages[0][0] > first_coin:
+                found.append(f"{key} で、目安のダメージがコインの前にない")
+            if reasons == ["no_target"]:
+                if w["coins"]:
+                    found.append(f"{key} で、つけられるポケモンがいないのにコインを投げた")
+            elif len(w["coins"]) != int(matched.group(1)):
+                found.append(f"{key} のコイン {len(w['coins'])} 枚が、説明の {matched.group(1)} 枚と違う")
+            expected = 0 if reasons and reasons[0] in ("no_candidates", "no_target", "no_heads") else heads
+            if not log_ended and (len(attached) != expected or (reasons == ["no_heads"] and heads)):
+                found.append(f"{key} でつけたカード {len(attached)} 枚（理由 {reasons}）が、「おもて」の数 {heads} と合わない")
+            for pid, uid in attached:
+                definition = state.printed_def(uid)
+                if not (definition.is_basic_energy and definition.provides is color) or owner.get(uid) != player or pokemon_owner.get(pid) != player:
+                    found.append(f"{key} でつけたカード {uid}・つけた先 {pid} が、自分の山札の「{color.ja}」の基本エネルギーカード・自分の場のポケモンではない")
+                elif pid in top and pid not in shifts and not any(m["marker"] == "color" for m in marks.get(pid, [])) and pid not in face_down_pids \
+                        and state.in_play_def(top[pid]).pokemon_type is not color:
+                    found.append(f"{key} でつけた先 {pid} が「{color.ja}」ポケモンではない")
+            if not log_ended and len(shuffles) != 1:
+                found.append(f"{key} で山札を切った回数 {len(shuffles)} が 1 回ではない")
+        matched = V113_COIN_BONUS_ELSE_PARALYZE.fullmatch(text)
+        if matched is not None and opponent:
+            paralyzed = [x for k, x in events if k == "special_condition" and x.get("condition") == "paralysis" and x.get("effect") == key]
+            if len(w["coins"]) != 1 or first_coin is None or first_coin > damages[0][0]:
+                found.append(f"{key} のコインが、ダメージの前の 1 枚ではない（{w['coins']}）")
+            elif w["coins"][0] == "heads" and (base(opponent[0]) != printed + int(matched.group(1)) or paralyzed):
+                found.append(f"{key} の「おもて」で、基本となるダメージ {base(opponent[0])} が目安 + {matched.group(1)} でない・マヒにした")
+            elif w["coins"][0] == "tails" and base(opponent[0]) != printed:
+                found.append(f"{key} の「うら」で、基本となるダメージ {base(opponent[0])} が目安 {printed} でない")
+        matched = V113_CALL_OR_FAIL.fullmatch(text)
+        if matched is not None:
+            benched = [x["card"] for k, x in events if k == "bench_from_deck" and x["player"] == player]
+            if w["bench_full"]:
+                if failed != ["bench_full"] or benched or shuffles:
+                    found.append(f"{key} で、ベンチに空きがないのにワザの失敗（bench_full）でない・出した・切った（{failed}・{benched}・{len(shuffles)}）")
+            elif failed or len(benched) + kinds_seen.count("bench_from_deck_none") != 1 or any(
+                    state.printed_def(uid).name_ja != matched.group(1) or not state.printed_def(uid).is_basic_pokemon for uid in benched) or (not log_ended and len(shuffles) != 1):
+                found.append(f"{key} で出したカード {benched}（失敗 {failed}・切った回数 {len(shuffles)}）が、名前の合うたねポケモン 1 枚か出さないではない")
+        matched = V113_BENCH_NAMED_COINS.fullmatch(text)
+        if matched is not None and opponent and not any(p in face_down_pids for p in w["bench"]):
+            named = sum(1 for p in w["bench"] if p in top and state.in_play_def(disguised.get(p, top[p])).name_ja == matched.group(1))
+            if len(w["coins"]) != named or base(opponent[0]) != printed + heads * int(matched.group(2)):
+                found.append(f"{key} のコイン {len(w['coins'])} 枚・基本となるダメージ {base(opponent[0])} が、自分のベンチの「{matched.group(1)}」{named} 匹・「おもて」の数 {heads} と合わない")
+        matched = V113_DISCARD_THEN_ATTACH.fullmatch(text)
+        if matched is not None:
+            color, attach = (next(t for t in EnergyType if t.ja == matched.group(i)) for i in (1, 2))
+            discarded = [(i, x) for i, (k, x) in enumerate(events) if k == "discard_energy"]
+            attached = [(i, x) for i, (k, x) in enumerate(events) if k == "attach_energy_from_discard"]
+            if failed == ["discard"]:
+                if discarded or damages or attached or any(state.printed_def(uid).is_basic_energy and state.printed_def(uid).provides is color for uid in w["attacker_energy"]):
+                    found.append(f"{key} でトラッシュできずに失敗したのに、使い手に「{color.ja}」の基本エネルギーカードがある・ダメージ・つけたカードがある")
+            elif not log_ended:
+                if len(discarded) != 1 or not damages or discarded[0][0] > damages[0][0] or discarded[0][1]["pokemon_id"] != w["pokemon_id"] or not (
+                        state.printed_def(discarded[0][1]["energy"]).is_basic_energy and state.printed_def(discarded[0][1]["energy"]).provides is color):
+                    found.append(f"{key} のトラッシュ {[x['energy'] for _, x in discarded]} が、ダメージの前に使い手の「{color.ja}」の基本エネルギーカード 1 枚ではない")
+                if opponent and base(opponent[0]) != printed:
+                    found.append(f"{key} の基本となるダメージ {base(opponent[0])} が目安 {printed} ではない")
+                cards = [uid for _, x in attached for uid in x["cards"]]
+                if len(cards) > 1 or any(not v113_typed_card(uid, attach) or owner.get(uid) != player for uid in cards) or (attached and damages and attached[0][0] < damages[-1][0]):
+                    found.append(f"{key} でつけたカード {cards} が、ダメージのあとの自分のトラッシュの「{attach.ja}」エネルギーカード 1 枚までではない")
+        matched = V113_OWN_TYPED_COINS_BONUS.fullmatch(text)
+        if matched is not None and opponent:
+            color = next(t for t in EnergyType if t.ja == matched.group(1))
+            units = v113_units(w["attacker_energy"], color)
+            if len(w["coins"]) != units or base(opponent[0]) != printed + heads * int(matched.group(2)):
+                found.append(f"{key} のコイン {len(w['coins'])} 枚・基本となるダメージ {base(opponent[0])} が、使い手の「{color.ja}」エネルギーの個数 {units}・「おもて」の数 {heads} と合わない")
+        matched = V113_FIELD_DISCARD_COINS.fullmatch(text)
+        if matched is not None and not log_ended:
+            color = next(t for t in EnergyType if t.ja == matched.group(1))
+            discarded = [x for k, x in events if k == "discard_energy"]
+            if any(pokemon_owner.get(x["pokemon_id"]) != player or x["energy"] not in w["energy_of"].get(x["pokemon_id"], ()) or not (
+                    state.printed_def(x["energy"]).is_basic_energy and state.printed_def(x["energy"]).provides is color) for x in discarded):
+                found.append(f"{key} でトラッシュしたカード {[x['energy'] for x in discarded]} が、自分の場のポケモンの「{color.ja}」の基本エネルギーカードではない")
+            if len(w["coins"]) != len(discarded) or (opponent and base(opponent[0]) != heads * int(matched.group(2))):
+                found.append(f"{key} のコイン {len(w['coins'])} 枚・基本となるダメージ {[base(x) for x in opponent]} が、トラッシュした {len(discarded)} 枚・「おもて」の数 {heads} と合わない")
+        matched = V113_FIELD_COINS_HEADS_TAILS.fullmatch(text)
+        if matched is not None and not log_ended:
+            if len(w["coins"]) != w["field"]:
+                found.append(f"{key} のコイン {len(w['coins'])} 枚が、ログから組み立てたお互いの場のポケモンの数 {w['field']} と違う")
+            if opponent and base(opponent[0]) != heads * int(matched.group(1)):
+                found.append(f"{key} の相手への基本となるダメージ {base(opponent[0])} が「おもて」の数 {heads} × {matched.group(1)} と違う")
+            order = [x.get("target") or "opponent_active" for _, x in damages]
+            if len(own) != 1 or base(own[0]) != tails * int(matched.group(2)) or (opponent and order.index("self") < order.index("opponent_active")):
+                found.append(f"{key} の自分への基本となるダメージ {[base(x) for x in own]} が、相手へのダメージのあとの「うら」の数 {tails} × {matched.group(2)} 1 回ではない")
+        return found
+
     def v111_printed_text(key: str | None) -> str | None:
         """v0.111: ワザ ``key`` の印刷の文面（読めなければ None。エンジンの登録を読まない）。"""
         if key is None:
@@ -3845,6 +4065,10 @@ def log_problems(state) -> list[str]:
             # v0.85: せいでんきは、何枚もつけたあと（同じワザの attach_energy_from_deck が続いたあと）に 1 回だけ切る
             shuffle_due.get("kind") == "attach_energy_from_deck" and kind == "attach_energy_from_deck" and id(shuffle_due) in static_attaches
             and e["player"] == shuffle_due["player"] and e["pokemon_id"] == shuffle_due["pokemon_id"]
+        ) and not (
+            # v0.113: ゆうでんは、つけるカードをすべてつけたあと（同じワザの attach_energy_from_deck・deck_energy_evaded が続いたあと。つける先は違ってよい）に 1 回だけ切る
+            shuffle_due.get("kind") in ("attach_energy_from_deck", "deck_energy_evaded") and kind in ("attach_energy_from_deck", "deck_energy_evaded")
+            and id(shuffle_due) in v113_attaches and e["player"] == shuffle_due["player"] and e.get("effect") == shuffle_due.get("effect")
         ) and shuffle_due is not e:
             due_event, shuffle_due = shuffle_due, None
             if kind != "shuffle" or e["player"] != due_event["player"]:
@@ -4227,6 +4451,7 @@ def log_problems(state) -> list[str]:
         problems.extend(v110_problems(e))  # v0.110: 残りHPがなくなっても「きぜつ」しない効果（こらえる・こうてつか）
         problems.extend(v111_problems(e))  # v0.111: 場のエネルギーカードの枚数で決まるワザ（サイコクラッシュ・シンクロウェーブ）
         problems.extend(v112_problems(e))  # v0.112: 自分のエネルギーの数だけのコインで引くワザ・コインでマヒか自分のワザの制限のワザ
+        problems.extend(v113_problems(e))  # v0.113: 可変枚数のコインと、山札の検索・つける・場全体のトラッシュのワザ
         if kind in ("damage", "confusion_damage"):
             # v0.90: のろいマーカーののっているポケモンが弱点の計算をしたワザのダメージは「×4」（ログの weakness_multiplier）。ほかは書かない。こんらんの 20 は、のろいマーカーと
             # 自分の弱点が当てはまるならコインの前に止まる（UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS）ので、弱点の計算をしたこんらんのダメージはない
@@ -5229,8 +5454,8 @@ def log_problems(state) -> list[str]:
                 kind_ok = definition.is_basic_pokemon or definition.is_evolution_pokemon  # v0.73: マスターボール（見た 7 枚のうちのポケモンのカード）
             elif isinstance(revealer, (SearchTrainerOnHeads, SearchTrainerRequiredOnHeads)):
                 kind_ok = definition.category == "trainer"  # v0.79: ひらめく（SearchTrainerRequiredOnHeads。ちょうど 1 枚）も
-            elif isinstance(revealer, (ReturnHandThenRevealBasicEnergy, RevealBasicEnergyFromDeck, EachPlayerLookTopTakeBasicEnergy)):
-                kind_ok = definition.is_basic_energy  # v0.72: おつきみ（RevealBasicEnergyFromDeck）も基本エネルギーカード
+            elif isinstance(revealer, (ReturnHandThenRevealBasicEnergy, RevealBasicEnergyFromDeck, EachPlayerLookTopTakeBasicEnergy, E.CoinsPerPokemonInPlaySearchBasicEnergy)):
+                kind_ok = definition.is_basic_energy  # v0.72: おつきみ（RevealBasicEnergyFromDeck）も基本エネルギーカード。v0.113: みんなでおどるも
             elif isinstance(revealer, RevealNamedPokemonFromDeckAny):
                 kind_ok = definition.category == "pokemon" and definition.name_ja in revealer.names  # v0.75: くらげのむれ（名前の完全一致）
             elif "power" in e and isinstance(_power_effect(state, e["power"]), E.SearchDeckWithBenchLettersToHand):
@@ -6457,11 +6682,15 @@ def log_problems(state) -> list[str]:
             effect = _effect_of_event(state, e) if attack_window is not None else None
             # v0.82: あたためる（ChooseBenchThenAttachFromDeck）も自分の控えポケモンにつける（控え → カードの順に選ぶ）
             to_bench = isinstance(effect, (AttachEnergyFromDeckToBench, ChooseBenchThenAttachFromDeck)) and kind != "attach_energy_from_deck_none"
+            # v0.113: ゆうでん（DamageThenCoinsAttachTypedEnergyFromDeck）は、自分の場のポケモン（バトル場・ベンチ）に好きなようにつける（「とうめい」で受けなければ deck_energy_evaded）。
+            # つけなかった（attach_energy_from_deck_none）のはワザを使ったポケモンのログ
+            distribute = isinstance(effect, E.DamageThenCoinsAttachTypedEnergyFromDeck)
             if not isinstance(effect, (AttachEnergyFromDeckToSelf, AttachEnergyFromDeckToSelfExactly, CoinAttachEnergyFromDeckToSelf, AttachEnergyFromDeckToBench,
-                                       ChooseBenchThenAttachFromDeck, AttachFromDeckUpToNamedCount)) \
-                    or (kind == "deck_energy_evaded") != (to_bench and kind == "deck_energy_evaded") \
-                    or (pid == attack_window["pokemon_id"]) == to_bench or e["player"] != attack_window["player"] \
-                    or to_bench and (pokemon_owner.get(pid) != e["player"] or pid not in in_play):
+                                       ChooseBenchThenAttachFromDeck, AttachFromDeckUpToNamedCount, E.DamageThenCoinsAttachTypedEnergyFromDeck)) \
+                    or not distribute and ((kind == "deck_energy_evaded") != (to_bench and kind == "deck_energy_evaded") or (pid == attack_window["pokemon_id"]) == to_bench) \
+                    or e["player"] != attack_window["player"] \
+                    or (to_bench or distribute and kind != "attach_energy_from_deck_none") and (pokemon_owner.get(pid) != e["player"] or pid not in in_play) \
+                    or distribute and kind == "attach_energy_from_deck_none" and pid != attack_window["pokemon_id"]:
                 problems.append(f"{e['turn']} 番の {kind}（ポケモン {pid}）が、山札からエネルギーをつけるワザの処理の中にない")
             elif kind == "attach_energy_from_deck":
                 uid = e["card"]
@@ -6477,6 +6706,9 @@ def log_problems(state) -> list[str]:
                 discard[e["player"]].append(uid)
             if isinstance(effect, AttachFromDeckUpToNamedCount) and kind == "attach_energy_from_deck":
                 static_attaches.add(id(e))  # v0.85: せいでんきは何枚もつけてから 1 回だけ切る（続くつけるログのあいだは待ち、最後のあとに shuffle を求める）
+                shuffle_due = e
+            elif isinstance(effect, E.DamageThenCoinsAttachTypedEnergyFromDeck) and kind != "attach_energy_from_deck_none":
+                v113_attaches.add(id(e))  # v0.113: ゆうでんも何枚もつけてから 1 回だけ切る
                 shuffle_due = e
             elif not isinstance(effect, CoinAttachEnergyFromDeckToSelf):
                 shuffle_due = e  # v0.75: しおまねきは山札を切らない（説明に「よく切る」がない）
@@ -6608,9 +6840,12 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番のトラッシュからつけたエネルギー {e['cards']} の枚数・ポケモンが合わない")
             # v0.75: エネルギーきゅうしゅう（AttachDiscardEnergyCardsToSelf）は「エネルギーカード」（特殊エネルギーも）
             any_energy = isinstance(_effect_of_event(state, e) if attack_window is not None else None, AttachDiscardEnergyCardsToSelf)
+            # v0.113: ダークフレイム（DiscardEnergyThenDamageThenAttachFromDiscard）は「「悪」エネルギーカード」（場の外のカードとしての色。悪エネルギーは特殊エネルギーカードのまま。
+            # 色は v113_problems が確かめる）
+            typed = isinstance(_effect_of_event(state, e) if attack_window is not None else None, E.DiscardEnergyThenDamageThenAttachFromDiscard)
             for uid in e["cards"]:
                 definition = state.printed_def(uid)
-                if uid not in discard[e["player"]] or not (definition.category == "energy" if any_energy else definition.is_basic_energy):
+                if uid not in discard[e["player"]] or not (definition.category == "energy" if any_energy or typed else definition.is_basic_energy):
                     problems.append(f"{e['turn']} 番につけたカード {uid} が、ログから組み立てたプレイヤー {e['player']} のトラッシュの基本エネルギーカードにない")
                     continue
                 discard[e["player"]].remove(uid)

@@ -708,7 +708,10 @@ class G37Test(unittest.TestCase):
         "DamageThenDealtDamageReduction", "DealtDamageReductionWithoutDamage", "DamageThenReceivedAttackDamageBonus", "PlusIfDefenderPoisonedThenPoison",
         "PlusIfDefenderStatusThenCure",
         # v0.112: ふしょくえき（「おもて」で相手をマヒ。「うら」の自分のワザの制限は相手への効果ではない）
-        "DamageParalyzeOnHeadsElseLockSelf"]))
+        "DamageParalyzeOnHeadsElseLockSelf",
+        # v0.113: ギガボルト（「うら」で相手をマヒ）。ゆうでん（自分の場につける）・ダークフレイム（自分のトラッシュ・自分につける）・ファイヤーラッシュ（自分の場のトラッシュ）・
+        # だいぎゃくてん？（自分へのダメージ）・みんなでおどる・なかまをよぶは相手の対戦ポケモンへの効果を持たない。docs/variable-coins-search-attachments-v0.113.md
+        "CoinBonusOnHeadsElseParalyze"]))
 
 
 class DecisionTest(unittest.TestCase):

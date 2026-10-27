@@ -92,7 +92,7 @@ class RegistrationTest(unittest.TestCase):
         """engine.py・resolution/ にこのカードの id・実装での分岐を加えていない（既存のトレーナーの登録・決定・ゾーンの関数で扱う）。v0.38 から、見せて
         手札に加えるゾーンの関数 ``reveal_deck_to_hand`` は、ワザの要素（キョウのポッポの「でんれい」。``programs.RevealPokemonFromDeck``）も使う（共通の
         関数。このカードの処理ではない）ので、programs.py のその要素の中だけを許す。v0.44 から、ワザの要素 ``RevealTrainerFromDeck``（ニャースの「ねこのて」）・
-        ``ReturnHandThenRevealEnergy``（_____のラッキーの「ラッキーたまご」）も同じ共通の関数を使うので、その 3 つの要素の中だけを許す（どれも 1 か所）。"""
+        ``ReturnHandThenRevealEnergy``（_____のラッキーの「ラッキーたまご」）も同じ共通の関数を使うので、その 3 つの要素の中だけを許す（どれも 1 か所。v0.113 から ``RevealTrainerFromDeck`` は 2 か所）。"""
         for path in [ROOT / "kyuura_engine" / "engine.py", *(ROOT / "kyuura_engine" / "resolution").glob("*.py")]:
             with self.subTest(path=path.name):
                 text = path.read_text(encoding="utf-8")
@@ -102,15 +102,16 @@ class RegistrationTest(unittest.TestCase):
                 if path.name == "programs.py":
                     # v0.75: カスミのメノクラゲの「くらげのむれ」（``RevealNamedPokemonFromDeck``）も同じ共通の関数を使う
                     # v0.83: やさしいゴルダックの「みずかき」（``EachPlayerLooksTakesBasicEnergy``。見た中の基本エネルギーカードを見せて手札に加える）も同じ共通の関数を使う
-                    elements = ("RevealPokemonFromDeck", "RevealTrainerFromDeck", "ReturnHandThenRevealEnergy", "RevealNamedPokemonFromDeck",
-                                "EachPlayerLooksTakesBasicEnergy")
+                    # v0.113: ``RevealTrainerFromDeck`` は「おもて」の数以下を選ぶ経路（``heads_of``。ピッピの「みんなでおどる」）でも同じ関数を使うので 2 か所
+                    elements = {"RevealPokemonFromDeck": 1, "RevealTrainerFromDeck": 2, "ReturnHandThenRevealEnergy": 1, "RevealNamedPokemonFromDeck": 1,
+                                "EachPlayerLooksTakesBasicEnergy": 1}
                     spans = []
-                    for name in elements:
+                    for name, count in elements.items():
                         start = text.index(f"class {name}(")
                         end = min(i for i in (text.find("\nclass ", start + 1), text.find("BUILDERS: dict", start)) if i > 0)
                         spans.append((start, end))
-                        self.assertEqual(sum(start < use < end for use in uses), 1, name)
-                    self.assertEqual(len(uses), len(elements))
+                        self.assertEqual(sum(start < use < end for use in uses), count, name)
+                    self.assertEqual(len(uses), sum(elements.values()))
                     self.assertTrue(all(any(start < use < end for start, end in spans) for use in uses))
                 else:
                     self.assertEqual(uses, [])

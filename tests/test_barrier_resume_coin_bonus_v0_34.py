@@ -454,9 +454,15 @@ class BarrierCoinTest(unittest.TestCase):
                                     "CoinsPerDefenderEnergyBonusAndFullDrain", "ThreeCoinDamageOrOpponentHeal",
                                     # v0.107: ビードルの「とげでつつく」（失敗のコインのあとは相手へのダメージとどくだけ。からではさむと同じ形）。とつぜんじばく（自分へのダメージ）・そらをとぶ
                                     # （自分への防護）・へんずつう（自分へのこんらん）は自分への要素が残るので投げる（docs/coin-failure-status-flight-v0.107.md 4 章）
-                                    "FailOnTailsDamageThenPoison"})
+                                    "FailOnTailsDamageThenPoison",
+                                    # v0.113: デンリュウの「ギガボルト」（1 枚のコインは追加のダメージと相手のマヒだけを決める）・ヤミカラスの「むれでつつく」・ヘルガーの「くろいキバ」
+                                    # （コインは追加のダメージだけを決める）。みんなでおどる（山札の検索）・ゆうでん（自分の場につける）・だいぎゃくてん？（自分へのダメージ）は自分への要素が
+                                    # 残るので投げる（docs/variable-coins-search-attachments-v0.113.md 3 章）
+                                    "CoinBonusOnHeadsElseParalyze", "CoinsPerOwnBenchNamedBonusDamage", "CoinsPerOwnTypedEnergyBonusDamage"})
         for name in ("FailOnTailsSelfDestruct", "FailOnTailsDamageThenSelfBarrier", "DamageThenConfuseOpponentOrSelf"):
             self.assertIn(name, flipping)  # v0.107
+        for name in ("CoinsPerPokemonInPlaySearchBasicEnergy", "DamageThenCoinsAttachTypedEnergyFromDeck", "CoinsPerPokemonInPlayHeadsDamageTailsSelfDamage"):
+            self.assertIn(name, flipping)  # v0.113
         self.assertIn("DamageThenStatusOnHeadsElseSelfSwitch", flipping)
         self.assertIn("CoinBonusOrSelfDamage", flipping)
         self.assertIn("SelfDamageInsteadOnTails", flipping)
