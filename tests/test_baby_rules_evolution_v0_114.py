@@ -352,9 +352,11 @@ class BabyRegistrationTest(unittest.TestCase):
         uses = set()
         for key, entry in (*registry._attacks.items(), *registry._powers.items(), *registry._trainers.items()):
             card = key if isinstance(key, str) else key.card_id
-            # 要素（resolution/programs.py）が版を読む並び（タイプで山札からベンチに出す・トラッシュからベンチに出す・しんかのうた）は、その要素の項目が版を読む場面のときだけ
+            # 要素（resolution/programs.py）が版を読む並び（タイプで山札からベンチに出す・トラッシュからベンチに出す・しんかのうた）は、その要素の項目が版を読む場面のときだけ。
+            # v0.117: 相手のワザを選んで使えなくする要素（``OpponentAttackLock``）が版を読むのは、相手が「たねポケモン」かを確かめるいかく（``basic_only``）だけ（ドわすれは読まない）
             elements = [element for element in program(entry.effect) if reads(type(element))
-                        and not (isinstance(element, P.BenchFromDeck) and element.pokemon_type is None)]
+                        and not (isinstance(element, P.BenchFromDeck) and element.pokemon_type is None)
+                        and not (isinstance(element, P.OpponentAttackLock) and not element.basic_only)]
             if reads(type(entry.effect)) or elements:
                 uses.add(card)
         self.assertEqual(set(E.TEXT_ERAS), uses)

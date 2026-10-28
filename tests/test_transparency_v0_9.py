@@ -845,7 +845,9 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                     # オムスター（PR1-051）の「ふしょくえき」は、共有のコインが自分のワザの制限も決めるので止まらない（ここに入らない）
                                     "どくばり",
                                     # v0.115: タケシのイワーク（GD1-010）の「しめつける」（ParalyzeOnHeads。既存の型の登録だけ。docs/spread-damage-allocation-v0.115.md）
-                                    "しめつける"]))
+                                    "しめつける",
+                                    # v0.117: ナツメのゴース（GD6-005）の「したでなめる」（ParalyzeOnHeads。既存の型の登録だけ。docs/retreat-return-active-powers-v0.117.md）
+                                    "したでなめる"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

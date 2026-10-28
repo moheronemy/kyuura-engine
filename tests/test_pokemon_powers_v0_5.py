@@ -170,6 +170,8 @@ ALL_POWERS = (# v0.87（docs/movement-damage-reactions-v0.87.md）: ［どくの
               PowerKey("PF2-002", 0), PowerKey("PF2-003", 0),  # v0.96（docs/unown-family-powers-v0.96.md）: ［ENGAGE］・［OBSERVE］
               # v0.86（docs/entry-energy-evolution-reactions-v0.86.md）: ［エナジーしんか］（PF2-005）・［はしりさる］
               PowerKey("PF2-005", 0), PowerKey("PF2-008", 0), PowerKey("PF2-009", 0),
+              # v0.117（docs/retreat-return-active-powers-v0.117.md）: ［でんせつのからだ］（ライコウ・エンテイ・スイクン）
+              PowerKey("PF3-004", 0), PowerKey("PF3-005", 0), PowerKey("PF3-006", 0),
               ENERGY_TRANS, ENERGY_BURN, RAIN_DANCE, BUZZAP, DAMAGE_SWAP, STRIKES_BACK, HEALING_POLLEN, SHIFT, MYSTERIOUS_WALL, PEEK, RETREAT_AID, IMMUNITY,
               CHEMICAL_GAS, COWARDICE, CLAIRVOYANCE, STRANGE_BEHAVIOR, TRANSPARENCY, CURSE, KABUTO_ARMOR, PREHISTORIC_POWER, TRANSFORM, STEP_IN, POLLEN_STENCH,
               STICKY_GOO, SNEAK_ATTACK, ALLERGIC_POLLEN, GATHER_FIRE, FINAL_BEAM, LONG_DISTANCE_HYPNOSIS, MATTER_EXCHANGE, REEL_IN, FRENZY, SINKHOLE, TRICKERY,
@@ -186,10 +188,13 @@ ALL_POWERS = (# v0.87（docs/movement-damage-reactions-v0.87.md）: ［どくの
               PowerKey("QSG-030", 0),  # v0.102: ［ニュートラルダメージ］（ES1-021 と同じデータ）
               PowerKey("QSG-046", 0), PowerKey("QSG-057", 0),  # v0.87: ［マグネット］（QSG-023）・［とおせんぼ］・［オーロラヴェール］（同じデータの組）
               # v0.85: ［おいしげる］・［ファイヤーリチャージ］・［あばれんぼう］
-              PowerKey("neo1-014", 0), PowerKey("neo1-021", 0), PowerKey("neo1-033", 0),
+              PowerKey("neo1-014", 0),
+              PowerKey("neo1-017", 0),  # v0.117: ［きしかいせい］
+              PowerKey("neo1-021", 0), PowerKey("neo1-033", 0),
               PowerKey("neo1-040", 0),  # v0.88: ［すいりょくはつでん］
               PowerKey("neo1-044", 0),  # v0.114（docs/baby-rules-evolution-v0.114.md）: ［わんぱくパンチ］
               PowerKey("neo1-065", 0),  # v0.95: ［みやぶる］
+              PowerKey("neo2-019", 0),  # v0.117: ［かえるのうた］
               # v0.86: ［エナジーしんか］（neo2-049）・［おたけび］・［クリスタルボディ］・［いなびかり］・［タマゴうみ］・［とつぜんかみつく］
               PowerKey("neo2-023", 0), PowerKey("neo2-025", 0), PowerKey("neo2-026", 0),  # v0.97: ［INCREASE］・［DARK df］・［FIND］
               PowerKey("neo2-044", 0),  # v0.87: ［まきびし］（同じ行の下の neo3-009 は v0.87 の［やけのこり］）
@@ -200,6 +205,7 @@ ALL_POWERS = (# v0.87（docs/movement-damage-reactions-v0.87.md）: ［どくの
               PowerKey("neo3-029", 0),
               PowerKey("neo3-030", 0),  # v0.101（docs/counter-keep-energy-protection-v0.101.md）: ［KEEP］
               PowerKey("neo3-032", 0), PowerKey("neo3-033", 0),  # v0.98（docs/unown-bear-yield-vanish-give-v0.98.md）: ［BEAR］・［YIELD］
+              PowerKey("neo3-036", 0),  # v0.117: ［ときわたり］
               PowerKey("neo3-045", 0), PowerKey("neo3-051", 0),  # v0.88: ［でんじりょく］・［エナジーコンバーター］
               PowerKey("neo3-052", 0), PowerKey("neo4-012", 0),
               # v0.84（docs/light-powers-evolution-v0.84.md）: ［おいはらう］・［ふかふかなからだ］・［たすけだす］・［きせきのかぜ］・［おくりもの］
@@ -210,7 +216,9 @@ ALL_POWERS = (# v0.87（docs/movement-damage-reactions-v0.87.md）: ［どくの
               # v0.96: ［LAUGH］・［SEARCH］・［TELL］・［ZOOM］
               PowerKey("neo4-050", 0), PowerKey("neo4-051", 0), PowerKey("neo4-052", 0),
               PowerKey("neo4-053", 0),  # v0.98: ［VANISH］
+              PowerKey("neo4-057", 0),  # v0.117: ［CHASE］
               PowerKey("neo4-058", 0),  # v0.99（docs/unown-perform-help-history-v0.99.md）: ［PERFORM］
+              PowerKey("neo4-059", 0),  # v0.117: ［QUICKEN］
               PowerKey("neo4-060", 0),
               PowerKey("neo4-061", 0),  # v0.95: ［わるぢえ］
               PowerKey("neo4-062", 0),  # v0.98: ［GIVE］
@@ -328,7 +336,7 @@ class PowerRegistryTest(unittest.TestCase):
         # v0.69 は 68（拡張パック以外の商品の同じカードの新しい id 10。tests/helpers.py の V0_69_POWER_CARDS）
         # v0.71 は 74（拡張パック以外の商品の再録のカード 6。tests/helpers.py の V0_71_POWER_CARDS）
         self.assertEqual(tuple(k.card_id for k in DEFAULT_EFFECTS.power_keys() if k not in ALL_POWERS), tuple(sorted(V0_69_POWER_CARDS + V0_71_POWER_CARDS)))
-        self.assertIn("148 powers", repr(DEFAULT_EFFECTS))  # v0.114 で 2 を加えた  # v0.103 で 2 を加えた  # v0.102 で 4 を加えた  # v0.101 で 1 を加えた  # v0.99 で 2 を加えた  # v0.98 で 4 を加えた  # v0.97 で 5 を加えた  # v0.96 で 7 を加えた  # v0.95 で 2 を加えた  # v0.88 で 5 を加えた  # v0.87 で 14 を加えた  # v0.86 で 12 を加えた
+        self.assertIn("156 powers", repr(DEFAULT_EFFECTS))  # v0.117 で 8 を加えた  # v0.114 で 2 を加えた  # v0.103 で 2 を加えた  # v0.102 で 4 を加えた  # v0.101 で 1 を加えた  # v0.99 で 2 を加えた  # v0.98 で 4 を加えた  # v0.97 で 5 を加えた  # v0.96 で 7 を加えた  # v0.95 で 2 を加えた  # v0.88 で 5 を加えた  # v0.87 で 14 を加えた  # v0.86 で 12 を加えた
 
     def test_power_is_not_an_attack(self):
         """ポケモンパワーはワザ（AttackEffect）の一種ではない。識別子もワザ（AttackKey）とは別で、同じカードの同じ位置のワザ

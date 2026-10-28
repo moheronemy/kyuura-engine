@@ -724,7 +724,9 @@ class G37Test(unittest.TestCase):
         # 持たない。docs/energy-movement-attachment-devolution-v0.116.md 6 章
         "CoinsTimesDamageThenConfuseIfAtLeast", "DamageThenStatusOnEnergyAttach", "DamageThenEvolutionLock", "DamageThenSleepOnHeadsElseRetreatLock",
         "CoinMoveOpponentEnergyCardToBenchOrFail", "FailOnTailsMoveOpponentFieldEnergy", "CoinDevolveOpponentEvolvedToDeck", "DamageThenCoinReturnAttachedCardsToHand",
-        "DiscardAllEnergyThenMoveAllSelfCountersToOpponent"]))
+        "DiscardAllEnergyThenMoveAllSelfCountersToOpponent",
+        # v0.117: いかく（ドわすれと同じワザの禁止）・サイキックダメージ（ダメージカウンター）・おいうち（「にげる」ときの持続効果）。docs/retreat-return-active-powers-v0.117.md 4 章・8 章
+        "LockOpponentAttackIfBasic", "CoinsCountersOnOpponent", "DamageThenPursuitOnRetreat"]))
 
 
 class DecisionTest(unittest.TestCase):

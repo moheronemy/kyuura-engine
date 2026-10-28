@@ -168,7 +168,12 @@ class ResearchLinksTest(unittest.TestCase):
                              "UNRESOLVED_DISCARD_UP_TO_ZERO", "UNRESOLVED_CHOSEN_ACTIVE_EXTRA_DAMAGE",
                              # v0.116: AT1（docs/energy-movement-attachment-devolution-v0.116.md 10 章。しこみどく・エナジーショックの「ついたとき」に場のつけ替え・［エネエネ］が当たるか。
                              # v0.59 の CB1 と同じ形の問いだが、kyuura の事例にない）
-                             "UNRESOLVED_ATTACH_TRIGGER_SCOPE"})
+                             "UNRESOLVED_ATTACH_TRIGGER_SCOPE",
+                             # v0.117: RR1・QK1・TW1・TW2・LB1・LB2・VH1・ES4（docs/retreat-return-active-powers-v0.117.md 10 章。にげる時の反応の時点・［QUICKEN］の効果と発生源の力・
+                             # ［ときわたり］の時点と重なり・［でんせつのからだ］のトレーナーの範囲とベトベトガス・ぱっときえるの行き先・場をはなれたESP。どれも kyuura の事例にない）
+                             "UNRESOLVED_RETREAT_REACTION_TIMING", "UNRESOLVED_QUICKEN_EFFECT_SUPPRESSED", "UNRESOLVED_TIME_TRAVEL_TIMING",
+                             "UNRESOLVED_TIME_TRAVEL_OVERLAP", "UNRESOLVED_LEGEND_BODY_TRAINER_TARGET", "UNRESOLVED_LEGEND_BODY_GOOP_GAS",
+                             "UNRESOLVED_VANISH_OTHER_ATTACHED", "UNRESOLVED_ESP_LEFT_BEFORE_COIN"})
         # v0.97（docs/unown-research-idfnj-v0.97.md 3 章）: kyuura が調査で立てた UQ-SELF-EXCLUDING-POWER-COPIES の事例にわるいデンリュウ（neo4-046）の［かんでん］があるので、
         # CV1 を論点に結んだ（kyuura は v0.86 を取り込んでいないので、未解決の一覧に CV1 の行はない。kyuura の事例は kyuura_cases_without_engine_ruling で照らす）
         # v0.97 で加えた DF1・DF2 も、kyuura に論点（UQ-SELF-EXCLUDING-POWER-COPIES・UQ-NON-ATTACK-DAMAGE-MODIFIERS）はあるが、未解決の一覧に行がない

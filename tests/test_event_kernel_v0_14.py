@@ -675,7 +675,12 @@ class CatalogTest(unittest.TestCase):
                            "void_opponent_energy_discard_on_group",
                            # v0.102: ［グリーンシールド］・［ニュートラルダメージ］（弱点・抵抗力を当てはめるか。ダメージの計算が ``effects.weakness_resistance_ignored`` で、その時点の
                            # 場から問い合わせる。窓の中の反応ではない。docs/weakness-resistance-powers-v0.102.md 4 章）
-                           "ignore_weakness_for_own_type", "ignore_weakness_resistance_for_actives")
+                           "ignore_weakness_for_own_type", "ignore_weakness_resistance_for_actives",
+                           # v0.117: ［きしかいせい］・［かえるのうた］（ワザのダメージを変える。ダメージの計算の ``effects.attack_damage_modifiers`` が、その時点の場から問い合わせる）・
+                           # ［CHASE］（「にげる」の事実への反応。``engine._retreat``・``movement`` の段で処理する）・［でんせつのからだ］（トレーナーの効果を受けないか。トレーナーの
+                           # 処理が ``effects.trainer_effect_blocked`` で、その時点の場から問い合わせる）。どれも窓の中の反応ではない。docs/retreat-return-active-powers-v0.117.md 4 章・5 章・8 章
+                           "named_attack_damage_set_while_low_hp", "attack_damage_bonus_with_named_field_count", "counters_on_opponent_retreat_while_active",
+                           "immune_to_trainers_while_active")
         # v0.87: フリーザーの［オーロラヴェール］・ダグトリオの［もぐる］は窓の中の反応（要素を無効にする）だが、守るのは持ち主の控え・ベンチにいるこのカードなので、印刷した
         # ポケモンの効果の対応表（``POWER_DEFINITIONS``）ではなく ``catalog.instances`` が受けるポケモンについて作る（v0.84 のこおりのはしらと同じ形）
         built_by_instances = {"own_bench_attack_immunity_while_active": C.AURORA_VEIL, "bench_attack_damage_immunity": C.DIG_UNDER}
@@ -703,19 +708,22 @@ class CatalogTest(unittest.TestCase):
                           "ES1-034@power0",  # v0.87
                           "GD4-001@power0",  # v0.88
                           "PF2-001@power0",  # v0.97
+                          "PF3-004@power0", "PF3-005@power0", "PF3-006@power0",  # v0.117
                           "PMCG2-027@power0", "PMCG2-040@power0", "PMCG2-047@power0", "PMCG3-015@power0", "PMCG3-035@power0", "PMCG3-041@power0",
                           "PMCG3-042@power0", "PMCG4-007@power0", "PMCG4-010@power0", "PMCG4-041@power0", "PMCG4-043@power0", "PMCG5-035@power0", "PMCG5-051@power0",
                           "PMCG5-063@power0", "PMCG6-010@power0",
                           "PMCG6-033@power0", "PMCG6-049@power0", "PMCG6-053@power0", "PMCG6-074@power0",
                           "QSG-003@power0", "QSG-030@power0",  # v0.102
                           "QSG-046@power0",  # v0.87
-                          "neo1-014@power0", "neo1-033@power0",
+                          "neo1-014@power0", "neo1-017@power0", "neo1-033@power0",  # v0.117: neo1-017
+                          "neo2-019@power0",  # v0.117
                           "neo2-025@power0",  # v0.97
                           "neo2-044@power0", "neo3-009@power0",  # v0.87
                           "neo3-029@power0",
                           "neo3-030@power0",  # v0.101
                           "neo4-023@power0",  # v0.87
                           "neo4-046@power0",
+                          "neo4-057@power0",  # v0.117
                           "neo4-058@power0",  # v0.99
                           "neo4-060@power0",  # v0.96
                           "neo4-094@power0"])

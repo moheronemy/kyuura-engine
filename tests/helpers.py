@@ -1535,6 +1535,14 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.RecoverSpecialEnergyFromDiscard,
     _effects.DamageThenCoinReturnAttachedCardsToHand,
     _effects.DiscardAllEnergyThenMoveAllSelfCountersToOpponent,
+    # v0.117（docs/retreat-return-active-powers-v0.117.md 4 章・7 章・8 章。相手がたねポケモンならワザの禁止・「おもて」の数のダメージカウンター・ダメージのあと自分とエネルギーカードを
+    # 手札に・自分を山札にもどしてからコインでトラッシュの 1 枚を山札に・「うら」の数のエネルギーのトラッシュとダメージ・「にげる」ときのダメージの持続効果）
+    _effects.LockOpponentAttackIfBasic,
+    _effects.CoinsCountersOnOpponent,
+    _effects.DamageThenReturnSelfAndEnergyToHand,
+    _effects.ReturnSelfToDeckThenCoinDiscardCardToDeck,
+    _effects.CoinsDiscardTailsEnergyThenDamage,
+    _effects.DamageThenPursuitOnRetreat,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
