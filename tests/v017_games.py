@@ -28,6 +28,8 @@ from kyuura_engine.effects import retreat_trap_powers, scram_slots  # v0.61
 from kyuura_engine.effects import POKEMON_TOWER_TRAINER_CODE, discard_to_hand_suppressor  # v0.74
 from kyuura_engine.effects import STRANGE_GAS_SCOPE_CODE, retreat_guards, strange_gas_effects  # v0.87
 from kyuura_engine.continuous import attack_field_power_suppressions  # v0.92
+from kyuura_engine import effects as _E  # v0.117
+from kyuura_engine.persistent import retreat_pursuits  # v0.117
 from kyuura_engine.effects import DARK_WAVE_SCOPE_CODE, MEAN_LOOK_SOURCE_FORM_CODE  # v0.92
 from kyuura_engine.persistent import source_bound_effects  # v0.92
 from kyuura_engine.engine import LEAVE_ACTIVE_PREVENTED  # v0.93
@@ -114,6 +116,44 @@ def v061_stop_expected(state, command, code) -> bool:
     if code in ("UNRESOLVED_SCRAM_TIMING", "UNRESOLVED_SCRAM_POWER_RESTORED"):
         return bool(scram_slots(state))
     return isinstance(command, PlayTrainer) and state.cards[command.card].card_id == "PMCG4-055"
+
+
+# v0.117（docs/retreat-return-active-powers-v0.117.md）: ［CHASE］・おいうち（RR1・「にげる」の中で扱えないおいうちのダメージ）、［ときわたり］（TW1・TW2）、［QUICKEN］（QK1）、
+# ［でんせつのからだ］（LB1・LB2・決定を待つあいだのトラッシュ）、ぱっときえる（VH1）、もちさるとESP（ES4）で止まる場面
+V117_CODES = ("UNRESOLVED_RETREAT_REACTION_TIMING", "UNSUPPORTED_PURSUIT_DAMAGE_REACTION", "UNRESOLVED_TIME_TRAVEL_TIMING", "UNRESOLVED_TIME_TRAVEL_OVERLAP",
+              "UNRESOLVED_QUICKEN_EFFECT_SUPPRESSED", "UNRESOLVED_LEGEND_BODY_TRAINER_TARGET", "UNRESOLVED_LEGEND_BODY_GOOP_GAS", "UNSUPPORTED_LEGEND_BODY_PENDING_DISCARD",
+              "UNRESOLVED_VANISH_OTHER_ATTACHED", "UNRESOLVED_ESP_LEFT_BEFORE_COIN")
+
+
+def _v117_holders(state, kind) -> list:
+    return [p for side in state.players for p in side.in_play() if not state.is_face_down(p)
+            and any(isinstance(slot.effect, kind) for slot in _E.powers_of(state, p))]
+
+
+def v117_stop_expected(state, command, code) -> bool:
+    """v0.117: 場から確かめる（エンジンの問い合わせの答えではなく、場のカード・効果の有無で）。RR1・おいうちの未対応は「にげる」で、相手のバトル場に［CHASE］のアンノーンC がいるか、
+    にげるポケモンがおいうちの効果を受けている。TW1・TW2 は場に［ときわたり］のポケモンがいる。QK1 は［QUICKEN］の効果がはたらく番。LB1・決定を待つあいだのトラッシュは場に
+    ［でんせつのからだ］のポケモンがいる（LB2 はさらにまきちらせ!ベトベトガスの効果か、それを使う）。VH1・ES4 はぱっときえる・もちさるで、使うポケモンにエネルギーでないカード・ESPがつく。"""
+    if code in ("UNRESOLVED_RETREAT_REACTION_TIMING", "UNSUPPORTED_PURSUIT_DAMAGE_REACTION"):
+        if not isinstance(command, Retreat):
+            return False
+        active = state.players[command.player].active
+        return bool(_E.retreat_chase_holders(state, command.player) or retreat_pursuits(state, active))
+    if code in ("UNRESOLVED_TIME_TRAVEL_TIMING", "UNRESOLVED_TIME_TRAVEL_OVERLAP"):
+        return bool(_v117_holders(state, _E.ReturnToDeckOnHeadsInsteadOfKnockOut))
+    if code == "UNRESOLVED_QUICKEN_EFFECT_SUPPRESSED":
+        return any(r.kind == "group_attack_immunity" and r.created_turn + 1 == state.turn_number for r in state.trainer_effects)
+    if code in ("UNRESOLVED_LEGEND_BODY_TRAINER_TARGET", "UNSUPPORTED_LEGEND_BODY_PENDING_DISCARD"):
+        return bool(_v117_holders(state, _E.ImmuneToTrainersWhileActive))
+    if code == "UNRESOLVED_LEGEND_BODY_GOOP_GAS":
+        plays_gas = isinstance(command, PlayTrainer) and state.cards[command.card].card_id == "PMCG4-056"
+        return bool(_v117_holders(state, _E.ImmuneToTrainersWhileActive)) and (plays_gas or bool(goop_gas_effects(state)))
+    if not isinstance(command, UseAttack):
+        return False
+    attacker = state.players[command.player].active
+    if code == "UNRESOLVED_VANISH_OTHER_ATTACHED":
+        return bool(attacker.trainers) or any(state.card_def(uid).category != "energy" for uid in attacker.energy)
+    return bool(_E.esp_cards(state, attacker))  # ES4
 
 
 # v0.93（docs/active-leave-locks-v0.93.md）: 「バトル場をはなれられない」効果（にげる・すてるの拒否・AL1〜AL3）・くいつく（JC1・JC2）・かぶりつく（CJ1）で止まる・拒否する場面
@@ -240,6 +280,17 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                 if error.code in V061_CODES and v061_stop_expected(state, command, error.code):
                     # v0.61: ［おとしあな］の時点（SH1）・［ずらかる］の時点（SC1）・力がもどる時（SC2）・バトル場は穴だらけ!のダメージの変更（TD1）。場から確かめる
                     # （［おとしあな］・［ずらかる］を持つポケモンが場にいる、バトル場は穴だらけ!を使う）。同じ操作を繰り返さない
+                    kind = type(command).__name__
+                    observed[f"stopped_{kind}_{error.code}"] += 1
+                    turn_tried.add("retreat" if kind == "Retreat" else ("max_hp_drop_card", command.card) if kind in ("PlayTrainer", "EvolvePokemon")
+                                   else ("attack_index", command.attack_index) if kind == "UseAttack" else ("max_hp_drop_command", command))
+                    if kind == "UseAttack":
+                        turn_tried.add(error.code)
+                    continue
+                if error.code in V117_CODES:
+                    # v0.117: 場から確かめる（``v117_stop_expected``）。同じ操作を繰り返さない
+                    if not v117_stop_expected(state, command, error.code):
+                        raise AssertionError(f"場から確かめると止まらないはずなのに {error.code}: {command}")
                     kind = type(command).__name__
                     observed[f"stopped_{kind}_{error.code}"] += 1
                     turn_tried.add("retreat" if kind == "Retreat" else ("max_hp_drop_card", command.card) if kind in ("PlayTrainer", "EvolvePokemon")

@@ -244,6 +244,7 @@ from kyuura_engine.continuous import goop_gas_effects  # v0.59
 from kyuura_engine.effects import blaine_effects  # v0.59
 from kyuura_engine.effects import DamageThenCoinPerOpponentBench, attack_rebellion_powers, evasion_power  # v0.60
 from kyuura_engine.persistent import tails_damage_guard  # v0.60
+from kyuura_engine.persistent import retreat_pursuits  # v0.117
 from kyuura_engine.decisions import KNOCK_OUT_POWER  # v0.61
 from kyuura_engine.effects import energy_unit_count  # v0.61
 from kyuura_engine.effects import LASTING_RECEIVED_ELEMENTS, REFLECTABLE_RECEIVED_ELEMENTS, used_attack_last_turn  # v0.62
@@ -684,6 +685,11 @@ V0_115_POKEMON = V0_115
 # 答える。ログから数えるのは ``v116_uses``、ワザ・特殊能力の停止は ``V0_116_STOPS``
 V0_116 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_116"])
 V0_116_POKEMON = V0_116
+# v0.117（docs/retreat-return-active-powers-v0.117.md）: 場の移動・にげる時の反応・条件付きの特殊能力のポケモン 13 枚（写しの組 pool_v0_117）。ポケモンは TARGETS に加える（ワザは既存の
+# 手順のまま選ぶ）。［QUICKEN］は ``_v117_step``、［CHASE］・おいうちのある「にげる」は ``_v117_retreat``、ログから数えるのは ``v117_uses``。止まる場面は tests/v017_games.py の
+# ``v117_stop_expected`` が場から確かめる
+V0_117 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_117"])
+V0_117_POKEMON = V0_117
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -734,7 +740,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_113_POKEMON  # v0.113: 可変枚数のコインと、山札の検索・つける・場全体のトラッシュのポケモン 6 枚
            + V0_114_POKEMON  # v0.114: ベイビィポケモン 13 枚
            + V0_115_POKEMON  # v0.115: 場・ベンチへのダメージ、対象ごとのコイン、ダメージの配分のポケモン 13 枚
-           + V0_116_POKEMON)  # v0.116: エネルギーの付け替え・ついた時の効果・付属カードの回収と退化のポケモン 13 枚
+           + V0_116_POKEMON  # v0.116: エネルギーの付け替え・ついた時の効果・付属カードの回収と退化のポケモン 13 枚
+           + V0_117_POKEMON)  # v0.117: 場の移動・にげる時の反応・条件付きの特殊能力のポケモン 13 枚
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -1619,6 +1626,22 @@ DECKS = {
     "C116": (("neo3-001", 4), ("neo3-004", 3), ("neo3-006", 2), ("ES1-024", 3), ("ES3-032", 2), ("QSG-026", 3), ("ES3-020", 3), ("PR1-022", 3),
              (FULL_HEAL_ENERGY, 2), ("neo1-088", 2), (DOUBLE_COLORLESS, 2), (driver.DEFENDER, 2), (SWITCH, 1), (driver.POTION, 1), (driver.BILL, 2), (GRASS, 14),
              (PSYCHIC, 11)),
+    # v0.117: 超。アンノーンC（neo4-057。［CHASE］）・アンノーンQ（neo4-059。［QUICKEN］）2 枚ずつ（「アンノーン」はデッキに 4 枚まで）、セレビィ（neo3-036。サイキックダメージ・［ときわたり］）、
+    # ナツメのゴース（GD6-005。したでなめる・ぱっときえる）とナツメのESP 2 枚（ナツメのゴースのしたでなめるのコイン）。たねポケモンは 12 枚
+    "U117": (("neo4-057", 2), ("neo4-059", 2), ("neo3-036", 4), ("GD6-005", 4), (SABRINAS_ESP, 2), (SWITCH, 2), (driver.POTION, 2), (driver.BILL, 2), (driver.GUST, 2),
+             (PSYCHIC, 38)),
+    # v0.117: 悪・無色。イーブイ（PF2-005）→ ブラッキー（PF2-006。でんこうせっか・おいうち）、ヤミカラス（PRN-001。つつく・おいうち）、エイパム（neo1-067。もちさる・しっぽビンタ）、オドシシ
+    # （neo3-049。いかく・うしろなげ）。おいうちの悪は悪エネルギー 4 枚（neo1-094・PRN-002。同じ名前 4 枚まで。第4弾のレインボーエネルギー 2 枚は「悪」を出さず、ほかの色）。たねポケモンは 14 枚
+    "D117": (("PF2-005", 4), ("PF2-006", 3), ("PRN-001", 4), ("neo1-067", 3), ("neo3-049", 3), (DARKNESS_NEO1, 2), (DARKNESS_PRN, 2), (RAINBOW_ENERGY, 2),
+             (DOUBLE_COLORLESS, 4), (SWITCH, 2), (driver.POTION, 1), (driver.BILL, 2), (driver.DEFENDER, 2), (WATER, 26)),
+    # v0.117: 雷・炎・水。ライコウ（PF3-004）・エンテイ（PF3-005）・スイクン（PF3-006）3 枚ずつ（［でんせつのからだ］。にげるエネルギー 0）とエイパム 2 枚。自分の場のポケモンに使う
+    # トレーナー（突風・ポケモンいれかえ・プラスパワー・ディフェンダー・きずぐすり・ポケモンセンター・エネルギー・リムーブ・なんでもなおし）。たねポケモンは 11 枚
+    "L117": (("PF3-004", 3), ("PF3-005", 3), ("PF3-006", 3), ("neo1-067", 2), (driver.GUST, 2), (SWITCH, 2), (driver.PLUSPOWER, 2), (driver.DEFENDER, 2),
+             (driver.POTION, 2), (POKEMON_CENTER, 1), (ENERGY_REMOVAL, 2), (FULL_HEAL, 1), (driver.BILL, 2), (LIGHTNING, 11), (FIRE, 11), (WATER, 11)),
+    # v0.117: 草・水・無色。ヘラクロス（neo1-017。メガホーン・［きしかいせい］）、ニョロモ（neo2-013）→ ニョロゾ（neo2-016）→ ニョロトノ（neo2-019。おうふくビンタ・［かえるのうた］）と
+    # ニョロトノに届くポケモン育て屋さん 2 枚、エイパム・オドシシ 2 枚ずつ。たねポケモンは 13 枚
+    "N117": (("neo1-017", 3), ("neo2-013", 4), ("neo2-016", 3), ("neo2-019", 2), ("neo1-067", 2), ("neo3-049", 2), (DOUBLE_COLORLESS, 3), (SWITCH, 2),
+             (driver.POTION, 2), (driver.BILL, 2), (driver.POKEMON_BREEDER, 2), (GRASS, 15), (WATER, 18)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -1896,6 +1919,13 @@ PAIRINGS_V0_115 = (("T115", "D115"), ("T115", "R115"), ("T115", "W115"), ("D115"
 # フシギバナ）。組・席・seed は先に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめた seed 50・51 とは別。局を選び直さない）
 PAIRINGS_V0_116 = (("G116", "W116"), ("G116", "P116"), ("G116", "C116"), ("W116", "P116"), ("W116", "C116"), ("P116", "C116"),
                    ("P116", "R58"), ("C116", "R58"), ("W116", "P31"), ("G116", "M60"), ("P116", "M103"), ("W116", "C114"), ("C116", "E50"))
+# v0.117: 4 つの v0.117 のデッキどうしの 6 組（［CHASE］・おいうちと「にげる」、［QUICKEN］の防護、［ときわたり］、［でんせつのからだ］と相手・自分のトレーナー、もちさる・ぱっときえる・
+# メガフレイム・いかく・［きしかいせい］・［かえるのうた］）と、U117 対 G61（わるいダグトリオの［おとしあな］）・D117 対 M87（マグカルゴの［やけのこり］・フォレトスの［まきびし］とおいうち）・
+# L117 対 Z59（まきちらせ!ベトベトガスと［でんせつのからだ］。LB2）・N117 対 S66（ナツメのESP）・L117 対 G61（突風・ディフェンダーなどの相手のトレーナー）・D117 対 P31（ゆびをふるで
+# おいうち・いかくを相手のワザとして使う）・N117 対 M60（相手のゴーストの［とうめい］とおうふくビンタ・メガホーン）。組・席・seed は先に決めた（正式な対戦は seed 0〜3。開発中に手順を
+# 確かめた seed 50・51 とは別。局を選び直さない）
+PAIRINGS_V0_117 = (("U117", "D117"), ("U117", "L117"), ("U117", "N117"), ("D117", "L117"), ("D117", "N117"), ("L117", "N117"),
+                   ("U117", "G61"), ("D117", "M87"), ("L117", "Z59"), ("N117", "S66"), ("L117", "G61"), ("D117", "P31"), ("N117", "M60"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -1917,7 +1947,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.105": PAIRINGS_V0_105, "v0.106": PAIRINGS_V0_106, "v0.107": PAIRINGS_V0_107,
            "v0.108": PAIRINGS_V0_108, "v0.109": PAIRINGS_V0_109, "v0.110": PAIRINGS_V0_110, "v0.111": PAIRINGS_V0_111, "v0.112": PAIRINGS_V0_112,
            "v0.113": PAIRINGS_V0_113, "v0.114": PAIRINGS_V0_114, "v0.115": PAIRINGS_V0_115,
-           "v0.116": PAIRINGS_V0_116}
+           "v0.116": PAIRINGS_V0_116, "v0.117": PAIRINGS_V0_117}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -2178,7 +2208,9 @@ V031_STOPS = {
     # v0.86: スイクンの［クリスタルボディ］（相手のワザのダメージ以外の効果を受けない。特殊状態・ガス・スタンウェーブでは、はたらかない）
     or _v086_crystal_body(st, _defender(st, c))
     # v0.103: ミュウの［ニュートラルシールド］（相手の進化ポケモンからのワザを受けない。ワザを使うポケモンの今の姿で決まる）
-    or _v103_neutral_shield(st, c),
+    or _v103_neutral_shield(st, c)
+    # v0.117: アンノーンQ の［QUICKEN］の「おもて」の効果（次の相手の番、使ったプレイヤーの場の「アンノーン」全員がワザによるダメージや効果を受けない）
+    or bool(E.group_attack_immunities(st, 1 - c.player, _defender(st, c))),
     "UNRESOLVED_DESTINY_BOND_KNOCKOUT": lambda st, c: destiny_bond(st, _defender(st, c)) is not None,  # HC2
     # しっぽをふる。v0.40: すごむ（効果を与えたポケモンがバトル場にいる間）
     "ATTACK_PREVENTED": lambda st, c: (cannot_attack(st, _attacker(st, c)) is not None
@@ -2516,7 +2548,8 @@ def _deck_return_attacks(state, command):
         definition = state.card_def(pokemon.card)
         effect = state.effects.attack_effect(definition.id, definition.attacks[index], definition.attacks)
         if type(effect).__name__ in ("DamageThenReturnSelfToDeckOnHeads", "DamageThenReturnSelfToDeckOnTails",  # v0.41: ひのとり（「うら」）
-                                     "DamageThenReturnSelfToHandOnHeads"):  # v0.44: スターブーメラン（手札にもどす。RD9 と同じ問い）
+                                     "DamageThenReturnSelfToHandOnHeads",  # v0.44: スターブーメラン（手札にもどす。RD9 と同じ問い）
+                                     "DamageThenReturnSelfAndEnergyToHand"):  # v0.117: ぱっときえる（自分とエネルギーカードを手札にもどす。RD9 と同じ問い）
             found.append((definition.id, definition.attacks[index]))
         elif type(effect).__name__ == "DamageThenBubbleJump" and state.players[command.player].bench:
             # v0.84: バブルジャンプ（「おもて」なら手札にもどす。控えがいなければ効果はすべてなくなるので、RD9 にならない）
@@ -3377,7 +3410,7 @@ def _v049_answer(state, command, counts):
     if state.decision is None or not isinstance(command, (ResolveDecision, PromoteActive, TakePrize)) or not _v049_relevant(state):
         return command
     try:
-        apply_command(state, command)
+        apply_command(_v052_real(state), command)
         return command
     except UnsupportedError as error:
         if error.code not in V049_FORM_STOPS:
@@ -3389,7 +3422,7 @@ def _v049_answer(state, command, counts):
             continue
         alternative = ResolveDecision(d.player, d.id, tuple(choices))
         try:
-            apply_command(state, alternative)
+            apply_command(_v052_real(state), alternative)
         except (IllegalActionError, UnsupportedError):
             continue
         counts["v049_answer_alternative"] += 1
@@ -3601,6 +3634,15 @@ def _v051_trainer(state, tried, counts):
 
 
 _V052_REAL: dict = {}  # v0.52: 手順に渡した本当の状態（手札を隠した写しで apply_command を呼ぶと、カードの保存則の不変条件で止まる）
+
+
+def _v052_real(state):
+    """v0.117: 手順の中の確かめ（``apply_command`` を写しの上で試す）に渡された状態が、この手順の呼び出しで作った手札を隠した写し（``_V052_REAL["view"]``。v0.46〜v0.48 の
+    手順）なら本当の状態、ほかは渡した状態のまま。写しで ``apply_command`` を呼ぶと、隠したカードがどこにもないので不変条件で止まる（v0.117 の組で、［でんせつのからだ］で
+    止まったトレーナーを隠した番に、v0.61・v0.66 の手順の確かめが写しを使って内部エラーになった）。写しでなければ動きは変わらない（写しの確かめは、前の版では必ず止まっていた）。"""
+    if state is _V052_REAL.get("view"):
+        return _V052_REAL["state"]
+    return state
 
 
 def _v052_accepted(state, command) -> bool:
@@ -3964,7 +4006,7 @@ def _v057_stadium(state, tried, counts):
         return None
     tried.add(marker)
     try:
-        apply_command(state, command)
+        apply_command(_v052_real(state), command)
     except (IllegalActionError, UnsupportedError) as error:
         counts[f"v057_use_{card_id}_rejected_{error.code}"] += 1
         return None
@@ -3988,7 +4030,7 @@ def _v057_attack(state, command, tried, counts):
         return command
     coined = UseAttack(command.player, command.attack_index, card=command.card, stadium_coin=True)
     try:
-        apply_command(state, coined)
+        apply_command(_v052_real(state), coined)
     except (IllegalActionError, UnsupportedError) as error:
         counts[f"v057_vermilion_rejected_{error.code}"] += 1
         return command
@@ -4116,7 +4158,7 @@ def _v058_retreat(state, tried, counts):
     tried.add(("v058_retreat", state.turn_number))
     command = Retreat(player, (dce[0],), p.bench[0].card)
     try:
-        apply_command(state, command)
+        apply_command(_v052_real(state), command)
     except (IllegalActionError, UnsupportedError) as error:
         counts[f"v058_retreat_dce_rejected_{error.code}"] += 1
         return None
@@ -4136,7 +4178,7 @@ def _v068_retreat(state, tried, counts):
     tried.add(("v068_retreat", state.turn_number))
     command = Retreat(player, (), p.bench[0].card)
     try:
-        apply_command(state, command)
+        apply_command(_v052_real(state), command)
     except (IllegalActionError, UnsupportedError) as error:
         counts[f"v068_doduo_retreat_rejected_{error.code}"] += 1
         return None
@@ -4157,7 +4199,7 @@ def _v059_power(state, tried, counts):
         tried.add(("v059_buzzap", state.turn_number))
         command = UsePokemonPower(player, pokemon.pokemon_id, 0)
         try:
-            apply_command(state, command)
+            apply_command(_v052_real(state), command)
         except (IllegalActionError, UnsupportedError) as error:
             counts[f"v059_buzzap_rejected_{error.code}"] += 1
             return None
@@ -4249,7 +4291,7 @@ def _v059_energy(state, command, tried, counts):
     tried.add(("v059_blaine_attach", state.turn_number))
     attach = AttachEnergy(player, fire[0], targets[0].card, energy2=fire[1])
     try:
-        apply_command(state, attach)
+        apply_command(_v052_real(state), attach)
     except (IllegalActionError, UnsupportedError) as error:
         counts[f"v059_blaine_attach_rejected_{error.code}"] += 1
         return None
@@ -4309,7 +4351,7 @@ def _v065_trainer(state, tried, counts):
     tried.add(("v065_trick", state.turn_number))
     command = PlayTrainer(player, uid)
     try:
-        apply_command(state, command)
+        apply_command(_v052_real(state), command)
     except (IllegalActionError, UnsupportedError) as error:
         counts[f"v065_trick_rejected_{error.code}"] += 1
         return None
@@ -4373,7 +4415,7 @@ def _v066_trainer(state, command, tried, counts):
         tried.add((f"v066_{label}", state.turn_number))
         trainer = PlayTrainer(player, uid)
         try:
-            apply_command(state, trainer)
+            apply_command(_v052_real(state), trainer)
         except (IllegalActionError, UnsupportedError) as error:
             counts[f"v066_{label}_rejected_{error.code}"] += 1
             continue
@@ -4423,7 +4465,7 @@ def _v067_trainer(state, tried, counts):
     tried.add(("v067_plan", state.turn_number))
     trainer = PlayTrainer(player, uid)
     try:
-        apply_command(state, trainer)
+        apply_command(_v052_real(state), trainer)
     except (IllegalActionError, UnsupportedError) as error:
         counts[f"v067_plan_rejected_{error.code}"] += 1
         return None
@@ -4448,7 +4490,7 @@ def _v067_reveal(state, tried, counts):
             tried.add(("v067_retreat", state.turn_number))
             retreat = Retreat(player, tuple(p.active.energy[:1]), p.bench[0].card)
             try:
-                apply_command(state, retreat)
+                apply_command(_v052_real(state), retreat)
             except (IllegalActionError, UnsupportedError) as error:
                 counts[f"v067_retreat_rejected_{error.code}"] += 1
             else:
@@ -4458,7 +4500,7 @@ def _v067_reveal(state, tried, counts):
             tried.add(("v067_attack", state.turn_number))
             attack = UseAttack(player, 0)
             try:
-                apply_command(state, attack)
+                apply_command(_v052_real(state), attack)
             except (IllegalActionError, UnsupportedError) as error:
                 counts[f"v067_attack_rejected_{error.code}"] += 1
             else:
@@ -4477,7 +4519,7 @@ def _v067_reveal(state, tried, counts):
             tried.add(("v067_evolve", q.pokemon_id, state.turn_number))
             command = EvolvePokemon(player, evolution, q.pokemon_id)
             try:
-                apply_command(state, command)
+                apply_command(_v052_real(state), command)
             except (IllegalActionError, UnsupportedError) as error:
                 counts[f"v067_evolve_rejected_{error.code}"] += 1
                 continue
@@ -4505,7 +4547,7 @@ def _v067_fallback(state, tried, counts):
         candidates = [UseAttack(player, i) for i in range(3)] + [EndTurn(player)]
     for command in candidates:
         try:
-            apply_command(state, command)
+            apply_command(_v052_real(state), command)
         except (IllegalActionError, UnsupportedError):
             continue
         counts[f"v067_fallback_{type(command).__name__}"] += 1
@@ -5270,14 +5312,14 @@ def _v085_energy(state, command, tried, counts):
     others = [pk for pk in p.in_play() if not state.is_face_down(pk) and not E.shining_or_light(state, pk)]
     if others and state.turn_number % 3 == 0:
         try:
-            apply_command(state, AttachEnergy(player, miracles[0], others[0].card))
+            apply_command(_v052_real(state), AttachEnergy(player, miracles[0], others[0].card))
             counts["v085_attach_non_light_accepted"] += 1
         except (IllegalActionError, UnsupportedError) as error:
             counts[f"v085_attach_non_light_rejected_{error.code}"] += 1
     for target in targets:
         attach = AttachEnergy(player, miracles[0], target.card)
         try:
-            apply_command(state, attach)
+            apply_command(_v052_real(state), attach)
         except (IllegalActionError, UnsupportedError) as error:
             counts[f"v085_attach_rejected_{error.code}"] += 1
             continue
@@ -5375,7 +5417,7 @@ def _v087_step(state, tried, counts):
             and ("v087_guard", state.turn_number) not in tried:
         tried.add(("v087_guard", state.turn_number))
         try:
-            apply_command(state, Retreat(player, tuple(active.energy), state.players[player].bench[0].card))
+            apply_command(_v052_real(state), Retreat(player, tuple(active.energy), state.players[player].bench[0].card))
             counts["v087_guard_retreat_accepted"] += 1
         except IllegalActionError as error:
             counts[f"v087_guard_retreat_{error.code}"] += 1
@@ -9126,7 +9168,7 @@ def _v061_trainer(state, tried, counts):
     tried.add(("v061_digger", state.turn_number))
     command = PlayTrainer(player, uid)
     try:
-        apply_command(state, command)
+        apply_command(_v052_real(state), command)
     except (IllegalActionError, UnsupportedError) as error:
         counts[f"v061_digger_rejected_{error.code}"] += 1
         return None
@@ -9157,7 +9199,7 @@ def _v061_retreat(state, tried, counts):
         paid.append(uid)
     command = Retreat(player, tuple(paid), p.bench[-1].card)
     try:
-        apply_command(state, command)
+        apply_command(_v052_real(state), command)
     except (IllegalActionError, UnsupportedError) as error:
         counts[f"v061_retreat_rejected_{error.code}"] += 1
         return None
@@ -10419,6 +10461,176 @@ def v114_uses(state):
     return counts
 
 
+# ---------------------------------------------------------------- v0.117（docs/retreat-return-active-powers-v0.117.md 10 章）: 場の移動・にげる時の反応・条件付きの特殊能力
+
+V117_NAMES = {
+    "メガホーン": "megahorn", "もちさる": "take_away", "しっぽビンタ": "tail_slap", "おうふくビンタ": "double_slap", "サイキックダメージ": "psychic_damage",
+    "いかく": "intimidate", "うしろなげ": "back_throw", "めざめるパワー": "hidden_power", "したでなめる": "lick", "ぱっときえる": "vanish",
+    "でんこうせっか": "quick_attack", "おいうち": "pursuit", "ライトニングスパーク": "lightning_spark", "メガフレイム": "mega_flame",
+    "クリスタルウェーブ": "crystal_wave", "つつく": "peck",
+}
+
+
+def _v117_name(state, key: str | None) -> str | None:
+    """v0.117: ワザ ``key``（"カード id#位置"）が v0.117 のワザなら、その集計の名前（ほかは None）。"""
+    if key is None:
+        return None
+    card_id, index = key.split("#")
+    return V117_NAMES.get(state.definitions[card_id].attacks[int(index)].name_ja) if card_id in V0_117 else None
+
+
+def _v117_decision(state, counts):
+    """v0.117 のワザの決定への答え（元の手順より先に答える。処理しているワザが v0.117 のワザでなければ何もしない）。``_v116_decision`` と同じく、選べるものを決定のたびに
+    1 つずつずらして選び、原典で決められない選択（``unresolved_choices``）は選ばない。決まった枚数の決定（メガフレイムの「うら」2 枚ぶんのトラッシュ）は、ずらした並びの前から
+    その枚数（元の手順は 1 枚を選んで拒否された。v0.117 の正式な対戦の 1 回目の L117 対 G61 の seed 1）。受け付ける答えだけを選ぶ。"""
+    d = state.decision
+    if d is None or d.resume != "attack" or d.player != state.current_player:
+        return None
+    use = d.context_value("use")
+    copied = d.context_value("copied")
+    key = f"{copied[0]}#{copied[1]}" if copied else (f"{use[2]}#{use[3]}" if use is not None else None)
+    name = _v117_name(state, key)
+    if name is None:
+        return None
+    blocked = set(d.context_value("unresolved_choices") or ())
+    options = tuple(o for o in d.options if o not in blocked)
+    label = f"v117_{name}_{d.kind}"
+    seen = counts[label]
+    counts[label] += 1
+    shift = seen % len(options) if options else 0
+    rotated = options[shift:] + options[:shift]
+    candidates = [tuple(rotated[:d.min_choices])] if d.min_choices > 1 else []
+    candidates += [(o,) for o in rotated] + [()]
+    for choices in candidates:
+        command = ResolveDecision(d.player, d.id, tuple(choices))
+        if d.min_choices <= len(choices) <= d.max_choices and _v052_accepted(state, command):
+            counts[f"{label}_{len(choices)}"] += 1
+            return command
+    counts[f"{label}_no_accepted_answer"] += 1
+    return None
+
+
+def _v117_step(state, tried, counts):
+    """v0.117: アンノーンQ の［QUICKEN］を、自分の番ごとに場のアンノーンQ のどれか 1 匹で、受け付けるなら使う（この番にほかの個体が使っていれば使わない。v0.117 のカードのない局では
+    何もしない）。"""
+    player = state.current_player
+    for pokemon in state.players[player].in_play():
+        if state.is_face_down(pokemon) or state.cards[pokemon.card].card_id != "neo4-059":
+            continue
+        marker = ("v117_quicken", pokemon.pokemon_id, state.turn_number)
+        if marker in tried:
+            continue
+        tried.add(marker)
+        use = UsePokemonPower(player, pokemon.pokemon_id, 0)
+        if _v052_accepted(state, use):
+            counts["v117_quicken_declared"] += 1
+            return use
+        counts["v117_quicken_not_usable"] += 1
+    return None
+
+
+def _v117_retreat(state, tried, counts):
+    """v0.117: 相手のバトル場に［CHASE］のアンノーンC がいる・自分のバトル場のポケモンがおいうちの効果を受けているとき、「にげる」を宣言する（同じ番に 1 度。1 局にプレイヤーごと 4 回まで）。
+    にげるエネルギーの数のぶん、ついている順にトラッシュする。ねむり・マヒ・「にげる」ことができない効果・エネルギーが足りないときはしない。決まらない場面（RR1）・扱えない処理で
+    止まれば、道具が場から確かめる（tests/v017_games.py の ``v117_stop_expected``）。どちらもないなら何もしないので、前の版の組の結果は変わらない。"""
+    player = state.current_player
+    p = state.players[player]
+    active = p.active
+    if not p.bench or active is None or active.conditions.asleep or active.conditions.paralyzed or cannot_retreat(state, active) is not None:
+        return None
+    if state.card_def(active.card).play_role is not None or "retreat" in tried or ("v117_retreat", state.turn_number) in tried:
+        return None
+    chase = E.retreat_chase_holders(state, player)
+    pursuit = retreat_pursuits(state, active)
+    if not (chase or pursuit) or counts[f"v117_retreat_{player}"] >= 4:
+        return None
+    cost = retreat_cost(state, player)
+    if cost.floor_ambiguous(cost.maximum) or len(active.energy) < cost.maximum:
+        return None
+    tried.add(("v117_retreat", state.turn_number))
+    counts[f"v117_retreat_{player}"] += 1
+    counts["v117_retreat_" + "_".join(name for name, on in (("chase", chase), ("pursuit", pursuit)) if on)] += 1
+    return Retreat(player, tuple(active.energy[:cost.maximum]), p.bench[0].card)
+
+
+def v117_uses(state):
+    """v0.117: ログから数えた 13 枚・18 のワザ・8 の特殊能力の動き（v0.117 のカードのない局では空）。
+
+    - ``attack_<id>#<位置>``（宣言したワザ）・``<名前>_<heads|tails>``（ワザのコイン）
+    - ［CHASE］: ``chase_<heads|tails>``・``chase_counters``・``chase_skipped``。おいうち: ``pursuit_given``・``pursuit_damage_<量>``・``pursuit_knocked_out``・``pursuit_skipped``・
+      ``pursuit_prevented``・``pursuit_removed_<理由>``（にげる以外で消えた・期限）。同じ時点の反応の順番の決定: ``retreat_reaction_order``
+    - ［ときわたり］: ``time_travel_<heads|tails>``。［QUICKEN］: ``quicken_used``・``quicken_heads``・``quicken_prevented_<damage|effect>``
+    - ［でんせつのからだ］: ``legend_body_discard_<枚数>``・``trainer_effect_blocked``
+    - もちさる: ``take_away_returned``・``take_away_recovered``・``take_away_no_discard``。ぱっときえる: ``vanish_returned``。メガフレイム: ``mega_flame_discarded_<枚数>``・
+      ``mega_flame_none``。いかく: ``intimidate_locked``・``intimidate_not_basic``。サイキックダメージ: ``psychic_damage_counters_<数>``
+    - ［きしかいせい］: ``desperation_set``（ダメージの記録の変更効果に 2 段階の 120）。［かえるのうた］: ``frog_song_bonus``"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_117 for uid in state.cards):
+        return counts
+    card = {uid: c.card_id for uid, c in state.cards.items()}
+    current = None
+    for e in state.log:
+        kind = e["kind"]
+        effect = str(e.get("effect") or "")
+        power = str(e.get("power") or "")
+        if kind == "attack":
+            key = f"{card.get(e.get('pokemon'))}#{e.get('attack_index')}" if e.get("attack_index") is not None else None
+            current = _v117_name(state, key) if key is not None and card.get(e.get("pokemon")) in V0_117 else None
+            if current is not None:
+                counts[f"attack_{key}"] += 1
+        elif kind == "turn_end":
+            current = None
+        elif kind == "coin_flip" and e.get("source") == "attack" and current is not None:
+            counts[f"{current}_{e['result']}"] += 1
+        if kind == "chase_check":
+            counts[f"chase_{e['result']}"] += 1
+        elif kind in ("chase_counters", "chase_skipped", "pursuit_skipped", "pursuit_prevented", "trainer_effect_blocked"):
+            counts[kind] += 1
+        elif kind == "persistent_effect_added" and e.get("persistent_effect") == "pursuit_on_retreat":
+            counts["pursuit_given"] += 1
+        elif kind == "persistent_effect_removed" and e.get("persistent_effect") == "pursuit_on_retreat":
+            counts[f"pursuit_removed_{e.get('reason')}"] += 1
+        elif kind == "pursuit_damage":
+            counts[f"pursuit_damage_{e['amount']}"] += 1
+            if e.get("knocked_out"):
+                counts["pursuit_knocked_out"] += 1
+        elif kind == "time_travel":
+            counts[f"time_travel_{e['result']}"] += 1
+        elif kind == "trainer_effect_added" and e.get("effect_kind") == "quicken_used":
+            counts["quicken_used"] += 1
+        elif kind == "trainer_effect_added" and e.get("effect_kind") == "group_attack_immunity":
+            counts["quicken_heads"] += 1
+        elif kind in ("damage_prevented", "effect_prevented") and e.get("persistent_effect") == "group_attack_immunity":
+            counts[f"quicken_prevented_{'damage' if kind == 'damage_prevented' else 'effect'}"] += 1
+        elif kind == "legend_body_discard":
+            counts[f"legend_body_discard_{len(e.get('cards', ()))}"] += 1
+        elif kind == "return_in_play_to_deck" and effect.startswith("neo1-067#0"):
+            counts["take_away_returned"] += 1
+        elif kind == "attack_discard_to_deck" and effect.startswith("neo1-067#0"):
+            counts["take_away_recovered"] += 1
+        elif kind == "return_in_play_to_hand" and effect.startswith("GD6-005#1"):
+            counts["vanish_returned"] += 1
+        elif kind == "discard_energy" and effect.startswith("PF3-005#0"):
+            counts["mega_flame_discarded_card"] += 1
+        elif kind == "discard_energy_failed" and effect.startswith("PF3-005#0"):
+            counts["mega_flame_none"] += 1
+        elif kind == "persistent_effect_added" and effect.startswith("neo3-049#0"):
+            counts["intimidate_locked"] += 1
+        elif kind == "place_damage_counters" and effect.startswith("neo3-036#0"):
+            counts[f"psychic_damage_counters_{e.get('counters')}"] += 1
+        elif kind == "damage" and any(m[0] == 2 for m in e.get("modifiers", ())):
+            sources = {card.get(m[1]) for m in e.get("modifiers", ()) if m[0] == 2}
+            if "neo1-017" in sources:
+                counts["desperation_set"] += 1
+            if "neo2-019" in sources:
+                counts["frog_song_bonus"] += 1
+        elif kind == "decision" and e.get("decision_kind") == "reaction_order":
+            counts["retreat_reaction_order"] += 1
+        if power.startswith(("PF3-004", "PF3-005", "PF3-006")) and kind == "legend_body_discard":
+            counts["legend_body_discard"] += 1
+    return counts
+
+
 def make_policy(seen: dict, counts: Counter):
     """tools/preset_deck_games.py の手順（``checks=True``）に、v0.28〜v0.31 のカードのワザの選び方を重ねる（モジュールの説明）。v0.31 からは、
     v0.31 のカードのワザの決定への答え（``_v031_decision``）と、宣言する特殊能力の使用（``_v031_power``）も重ねる。v0.31 のカードのない局では
@@ -10430,7 +10642,8 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = (_v116_decision(state, counts)  # v0.116: v0.116 のワザの決定（v0.116 のワザでない決定では何もしない）
+            early = (_v117_decision(state, counts)  # v0.117: v0.117 のワザの決定（v0.117 のワザでない決定では何もしない）
+                     or _v116_decision(state, counts)  # v0.116: v0.116 のワザの決定（v0.116 のワザでない決定では何もしない）
                      or _v115_decision(state, counts)  # v0.115: v0.115 のワザの決定（v0.115 のワザでない決定では何もしない）
                      or _v113_decision(state, counts)  # v0.113: v0.113 のワザの決定（v0.113 のワザでない決定では何もしない）
                      or _v105_decision(state, counts)  # v0.105: 山札から重ねる進化カード（v0.105 のワザでない決定では何もしない）
@@ -10545,7 +10758,8 @@ def make_policy(seen: dict, counts: Counter):
                      or _v096_step(state, tried, counts)  # v0.96: ［OBSERVE］・［LAUGH］・［SEARCH］・［TELL］
                      or _v097_step(state, tried, counts)  # v0.97: ［FIND］・［JOIN］
                      or _v098_step(state, tried, counts)  # v0.98: ［BEAR］・［YIELD］・［GIVE］
-                     or _v099_step(state, tried, counts))  # v0.99: ［HELP］
+                     or _v099_step(state, tried, counts)  # v0.99: ［HELP］
+                     or _v117_step(state, tried, counts))  # v0.117: ［QUICKEN］
             if power is not None:
                 return power
             history = _v062_attack(state, tried, counts)  # v0.62: 履歴を読むワザ（ドリルホール・オウムがえし）を使える番に使う
@@ -10563,7 +10777,8 @@ def make_policy(seen: dict, counts: Counter):
             probe = _v093_probe(state, tried, counts) or _v036_retreat_probe(state, tried, counts)  # v0.93・v0.36
             if probe is not None:
                 return probe
-            retreat = (_v096_retreat(state, tried, counts)  # v0.96: ［ZOOM］
+            retreat = (_v117_retreat(state, tried, counts)  # v0.117: ［CHASE］・おいうち
+                       or _v096_retreat(state, tried, counts)  # v0.96: ［ZOOM］
                        or _v046_retreat(state, tried, counts) or _v058_retreat(state, tried, counts) or _v068_retreat(state, tried, counts)  # v0.46・v0.58
                        or _v061_retreat(state, tried, counts))  # v0.61
             if retreat is not None:
@@ -10578,7 +10793,7 @@ def make_policy(seen: dict, counts: Counter):
         attacks = state.card_def(active.card).attacks
         provided = state.energy_types(active)
         usable = [a.index for a in attacks if can_pay_cost(a.cost, provided) and ("attack_index", a.index) not in tried]
-        if card_id in V0_78_POKEMON + V0_79 + V0_82_POKEMON + V0_83 + V0_84_POKEMON + V0_85_POKEMON + V0_86_POKEMON + V0_87_POKEMON + V0_88_POKEMON + V0_89_POKEMON + V0_90_POKEMON + V0_91_POKEMON + V0_92_POKEMON + V0_93_POKEMON + V0_94_POKEMON + V0_95_POKEMON + V0_108_POKEMON + V0_113_POKEMON + V0_115_POKEMON + V0_116_POKEMON:  # v0.116 のポケモンも（ダブル無色・リサイクル・なんでもなおし配合・レインボーエネルギー）。v0.115 のポケモンも（なぎたおすの悪エネルギー・無色2個エネルギー）。v0.113 のポケモンも（くろいキバの悪エネルギー・無色2個エネルギー）。v0.108 のポケモンも（かみくだくの悪エネルギー・無色2個エネルギー）。v0.95・v0.94・v0.93・v0.92（悪・鋼エネルギー）・v0.91・v0.90 のポケモンも（リサイクルエネルギー・無色2個エネルギー）。v0.89 のポケモンも（だましうちの悪エネルギー・無色2個エネルギー）。v0.83 のポケモンも（鋼エネルギー）。v0.79 のポケモンも（C79 は悪・鋼エネルギーを使う）。v0.82 のポケモンも（リサイクルエネルギー）
+        if card_id in V0_78_POKEMON + V0_79 + V0_82_POKEMON + V0_83 + V0_84_POKEMON + V0_85_POKEMON + V0_86_POKEMON + V0_87_POKEMON + V0_88_POKEMON + V0_89_POKEMON + V0_90_POKEMON + V0_91_POKEMON + V0_92_POKEMON + V0_93_POKEMON + V0_94_POKEMON + V0_95_POKEMON + V0_108_POKEMON + V0_113_POKEMON + V0_115_POKEMON + V0_116_POKEMON + V0_117_POKEMON:  # v0.117 のポケモンも（おいうちの悪エネルギー・無色2個エネルギー）。v0.116 のポケモンも（ダブル無色・リサイクル・なんでもなおし配合・レインボーエネルギー）。v0.115 のポケモンも（なぎたおすの悪エネルギー・無色2個エネルギー）。v0.113 のポケモンも（くろいキバの悪エネルギー・無色2個エネルギー）。v0.108 のポケモンも（かみくだくの悪エネルギー・無色2個エネルギー）。v0.95・v0.94・v0.93・v0.92（悪・鋼エネルギー）・v0.91・v0.90 のポケモンも（リサイクルエネルギー・無色2個エネルギー）。v0.89 のポケモンも（だましうちの悪エネルギー・無色2個エネルギー）。v0.83 のポケモンも（鋼エネルギー）。v0.79 のポケモンも（C79 は悪・鋼エネルギーを使う）。v0.82 のポケモンも（リサイクルエネルギー）
             # v0.78: 悪・鋼エネルギー（特殊エネルギー）は ``state.energy_types`` では数えられない（provides がない）ので、エンジンの支払いの問い合わせで払えるかを見る
             # （v0.78 のポケモンだけ。前の版の組の手順は変えない）
             usable = [a.index for a in attacks if attack_cost_payable(state, active, a) and ("attack_index", a.index) not in tried]
@@ -10621,7 +10836,7 @@ def make_policy(seen: dict, counts: Counter):
             # 使えるワザをどれも 2 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v031_wait_{card_id}"] += 1
             return EndTurn(player)
-        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 + V0_58 + V0_64 + V0_70 + V0_72 + V0_75 + V0_76 + V0_77_POKEMON + V0_79 + V0_82_POKEMON + V0_83 + V0_84_POKEMON + V0_85_POKEMON + V0_86_POKEMON + V0_87_POKEMON + V0_88_POKEMON + V0_89_POKEMON + V0_90_POKEMON + V0_91_POKEMON + V0_92_POKEMON + V0_93_POKEMON + V0_94_POKEMON + V0_95_POKEMON + V0_106_POKEMON + V0_107_POKEMON + V0_108_POKEMON + V0_109_POKEMON + V0_110_POKEMON + V0_113_POKEMON + V0_115_POKEMON + V0_116_POKEMON and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
+        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 + V0_58 + V0_64 + V0_70 + V0_72 + V0_75 + V0_76 + V0_77_POKEMON + V0_79 + V0_82_POKEMON + V0_83 + V0_84_POKEMON + V0_85_POKEMON + V0_86_POKEMON + V0_87_POKEMON + V0_88_POKEMON + V0_89_POKEMON + V0_90_POKEMON + V0_91_POKEMON + V0_92_POKEMON + V0_93_POKEMON + V0_94_POKEMON + V0_95_POKEMON + V0_106_POKEMON + V0_107_POKEMON + V0_108_POKEMON + V0_109_POKEMON + V0_110_POKEMON + V0_113_POKEMON + V0_115_POKEMON + V0_116_POKEMON + V0_117_POKEMON and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
             # v0.38: 必要なエネルギーの少ないワザ（でんれい・どくばりタックルなど）を使い続けると、もう一つのワザが使えるようにならない（でんれいは自分を
             # 山札にもどす）。使えるワザをどれも 1 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             # v0.106: 数とコインを組み合わせる 11 枚も同じ手順（すながくれ・かぜおこしなどを使い続けて、ローリングニードル・ネギでつくなどが使えるようにならない。v0.106 のカードの
@@ -10682,6 +10897,7 @@ def make_policy(seen: dict, counts: Counter):
             # v0.47: ［げんしのちから］で進化できない番（この番に EVOLUTION_PREVENTED で拒否された）も、手札の進化カードを見せずに選ばせる
             # v0.48: MH1 で拒否された手札のカードも見せない
             view = state.clone()
+            _V052_REAL["view"] = view  # v0.117: 手順の中の確かめは、この写しでなく本当の状態で（``_v052_real``）
             hand = view.players[state.current_player].hand
             if blocked:
                 hand[:] = [uid for uid in hand if uid not in blocked]
@@ -10806,6 +11022,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v114"] = v114_uses(state)
         result["v115"] = v115_uses(state)
         result["v116"] = v116_uses(state)
+        result["v117"] = v117_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
