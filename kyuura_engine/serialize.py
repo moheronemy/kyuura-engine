@@ -103,7 +103,8 @@
   内部の完全な記録なので、場のポケモンの ``card_id``・``name``・``hp`` は本当のカードの値を書く（プレイヤーに渡すときは観測 ``observation.observe`` を使う）。形式 1〜21 は、
   うらのカードがあると ``ValueError``（なければ形式 1〜21 の書き出しは v0.66 と同じ）。
   v0.86: 持続する効果の種類 ``"powers_stopped"``（わるいモココの「スタンウェーブ」）・``"bench_protection"``（エンテイ PF2-008 の「ほのおのまもり」）は共通の項目だけで、
-  形式 8 から書ける（形式は増やしていない）。反応の続き（決定の ``context`` の ``followup``・``reaction``）は既存の ``decision`` の項目で書く。
+  形式 8 から書ける（形式は増やしていない）。v0.114: ``"bench_powers_stopped"``（ププリンの［じっとみる］。特殊能力で与えた効果。``source_card`` は特殊能力を使ったポケモン）も
+  共通の項目だけ（形式は増やしていない）。反応の続き（決定の ``context`` の ``followup``・``reaction``）は既存の ``decision`` の項目で書く。
 - 23: 22 に、最上位の ``color_effects``（特殊能力で、この番が終わるまで色を変える効果。``{"kind", "player", "source", "source_card", "card_id", "power_index", "target",
   "color", "turn", "left_play"}`` の並び。ランターンの［せんすい］・ポリゴン2の［エナジーコンバーター］）を加えたもの（v0.88。docs/type-energy-colors-v0.88.md 2 章）。形式 1〜22 は、
   その効果があると ``ValueError``（なければ形式 1〜22 の書き出しは v0.87 と同じ）。
@@ -119,7 +120,10 @@
   26 のまま。v0.108 までの書き出しを読む側は、知らない種類として拒否すること。docs/timed-damage-guards-v0.109.md 7 章）。
   v0.110: 持続する効果の種類 ``"knockout_survival"``（こらえる・こうてつか。``"end_turn"``・``"scope"``・``"remaining_hp"`` を加える）も、同じく種類の値と項目を加えただけ（形式は
   26 のまま。v0.109 までの書き出しを読む側は、知らない種類として拒否すること。docs/endure-armor-up-v0.110.md 8 章）。
-- 25: 24 の場のポケモンの ``history`` の受けた記録（``"kind": "received"``）に、``active_damage``（受けたダメージ ``damage`` のうち、受けた時に持ち主のバトル場にいた分。場所の
+  v0.114: 持続する効果の種類 ``"bench_powers_stopped"``（じっとみる。共通の項目だけ）も、同じく種類の値を加えただけ（形式は 26 のまま。v0.113 までの書き出しを読む側は、知らない
+  種類として拒否すること。docs/baby-rules-evolution-v0.114.md 7 章）。ベイビィポケモンの段階・進化先・重なりのいちばん下のベイビィポケモンカードは、カードの id とカードのデータで
+  決まるので、書き出しの項目は変えていない（ブビィの「モクモク」の期限は、既存のトレーナーの効果の ``expires_turn``）。
+- 25:24 の場のポケモンの ``history`` の受けた記録（``"kind": "received"``）に、``active_damage``（受けたダメージ ``damage`` のうち、受けた時に持ち主のバトル場にいた分。場所の
   分からない記録の写しは ``None``）を加えたもの（v0.99。docs/unown-perform-help-history-v0.99.md 6 章）。形式 20〜24 の受けた記録は合計だけなので、場所の分かる 0 より大きい
   ダメージの記録があると ``ValueError``（合計が 0 の記録・場所の分からない記録だけなら形式 20〜24 の書き出しは v0.98 と同じ。形式 24 の受けた記録を読む側は、合計が 0 より大きい
   記録の場所を分からないものとして読み、すべてバトル場・すべてベンチにしないこと）。
@@ -208,6 +212,7 @@ from .state import (
     AttackEffectGuard,
     StatusImmunityNextTurn,
     PowersStopped,
+    BenchPowersStopped,
     BenchProtection,
     PERIOD_AMOUNT_TYPES,
     PERIOD_EFFECT_TYPES,
@@ -346,7 +351,7 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
             data["source_left"] = True  # v0.93: くいつくの発生源が与えたあとにバトル場をはなれた印（あるときだけ）
     elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive, HalvedDamage,
                                          CannotUsePowers, CannotAttachEnergy, TailsDamageGuard, DoubledDamage, BenchAttackDamageGuard, AttackEffectGuard,
-                                         StatusImmunityNextTurn, PowersStopped, BenchProtection)):
+                                         StatusImmunityNextTurn, PowersStopped, BenchProtection, BenchPowersStopped)):
         raise ValueError(f"書き出せない持続する効果 {effect!r}")
     # v0.49（形式 14）: ワザを印刷したカードの id（いちばん上のカードと違うときだけ。状態の書き出しの前に、形式 14 より古い形式では拒否している）
     for name in ("attack_card", "target_attack_card"):

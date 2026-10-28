@@ -51,7 +51,8 @@
     "trainer",
     "energy.kind",
     "energy.provides",
-    "energy.text"
+    "energy.text",
+    "pokemon.evolves_to"
   ],
   "pool_v0_1": [
     "PMCG1-016",
@@ -1539,6 +1540,21 @@
     "neo4-022",
     "PR1-078"
   ],
+  "pool_v0_114": [
+    "neo1-022",
+    "neo1-042",
+    "neo1-044",
+    "neo1-070",
+    "neo2-033",
+    "neo2-050",
+    "neo3-031",
+    "PF2-007",
+    "NIP1X-002",
+    "NIP2X-002",
+    "PRN-012",
+    "PRN-031",
+    "PRN-037"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -1580,7 +1596,27 @@
       "from": "73a169063463bbf7bcaa3137d70cbf9721d11534",
       "to": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
       "document": "docs/baby-rules-evolution-v0.114.md",
-      "corrections": []
+      "corrections": [
+        "FIX-neo1-022-RULES-TEXT-JA",
+        "FIX-neo1-022-EVOLVES-TO",
+        "FIX-neo1-042-RULES-TEXT-JA",
+        "FIX-neo1-042-EVOLVES-TO",
+        "FIX-neo1-044-RULES-TEXT-JA",
+        "FIX-neo1-044-EVOLVES-TO",
+        "FIX-neo1-070-RULES-TEXT-JA",
+        "FIX-neo1-070-EVOLVES-TO",
+        "FIX-neo2-033-RULES-TEXT-JA",
+        "FIX-neo2-033-EVOLVES-TO",
+        "FIX-neo2-050-RULES-TEXT-JA",
+        "FIX-neo2-050-EVOLVES-TO",
+        "FIX-neo3-031-EVOLVES-TO",
+        "FIX-PF2-007-EVOLVES-TO",
+        "FIX-NIP1X-002-EVOLVES-TO",
+        "FIX-NIP2X-002-EVOLVES-TO",
+        "FIX-PRN-012-EVOLVES-TO",
+        "FIX-PRN-031-EVOLVES-TO",
+        "FIX-PRN-037-EVOLVES-TO"
+      ]
     }
   ],
   "kyuura_corrections": [
@@ -1750,6 +1786,550 @@
       "engine_history": "v0.97 で写しの元を 7d3f4ca から上げたときに台帳と照らした（v0.96 までは写しにないカード。ルール文は null だった。kyuura の id は F、サイトの番号は 025）",
       "applied_in_source": "73a169063463bbf7bcaa3137d70cbf9721d11534",
       "previous_source": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"
+    },
+    {
+      "id": "FIX-neo1-022-RULES-TEXT-JA",
+      "card_id": "neo1-022",
+      "field": "pokemon.rules_text.ja",
+      "before": null,
+      "after": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+      "basis": "card_image_check",
+      "kind": "transcription_omission",
+      "migration": "v0.114",
+      "decided_on": "2026-10-27",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-neo1-022",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neo1022.png",
+          "image_sha256": "3545f88194b44895d208688a02d6cfa1c7d55eb4f3a34dddeaaaa2c3963dbece",
+          "accessed_on": "2026-10-27"
+        },
+        {
+          "image_url": "https://nazonobasho.com/wp-content/uploads/2020/12/neo1_B_022_buby_copy.jpg",
+          "image_sha256": "5826d4f70fc9d9d4f33150ce891af858d40a6391d634036969262ac2a61a4411",
+          "accessed_on": "2026-10-27"
+        }
+      ],
+      "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。ルール文は null だった）",
+      "applied_in_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "previous_source": "73a169063463bbf7bcaa3137d70cbf9721d11534"
+    },
+    {
+      "id": "FIX-neo1-022-EVOLVES-TO",
+      "card_id": "neo1-022",
+      "field": "pokemon.evolves_to",
+      "before": null,
+      "after": [
+        "ブーバー"
+      ],
+      "basis": "card_image_check",
+      "kind": "field_added_from_print",
+      "migration": "v0.114",
+      "decided_on": "2026-10-27",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-neo1-022",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neo1022.png",
+          "image_sha256": "3545f88194b44895d208688a02d6cfa1c7d55eb4f3a34dddeaaaa2c3963dbece",
+          "accessed_on": "2026-10-27"
+        },
+        {
+          "image_url": "https://nazonobasho.com/wp-content/uploads/2020/12/neo1_B_022_buby_copy.jpg",
+          "image_sha256": "5826d4f70fc9d9d4f33150ce891af858d40a6391d634036969262ac2a61a4411",
+          "accessed_on": "2026-10-27"
+        }
+      ],
+      "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+      "applied_in_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "previous_source": "73a169063463bbf7bcaa3137d70cbf9721d11534"
+    },
+    {
+      "id": "FIX-neo1-042-RULES-TEXT-JA",
+      "card_id": "neo1-042",
+      "field": "pokemon.rules_text.ja",
+      "before": null,
+      "after": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+      "basis": "card_image_check",
+      "kind": "transcription_omission",
+      "migration": "v0.114",
+      "decided_on": "2026-10-27",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-neo1-042",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neo1042.png",
+          "image_sha256": "6f9c9aeaffa8e2430d911325650c4b79112688606a548ad7b3162cd379d6ed80",
+          "accessed_on": "2026-10-27"
+        },
+        {
+          "image_url": "https://nazonobasho.com/wp-content/uploads/2020/12/neo1_B_042_pichu_copy.jpg",
+          "image_sha256": "23858c62d627cbfa4e2f6480572177fd3e5abbd81507277921bc24618f6648bf",
+          "accessed_on": "2026-10-27"
+        }
+      ],
+      "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。ルール文は null だった）",
+      "applied_in_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "previous_source": "73a169063463bbf7bcaa3137d70cbf9721d11534"
+    },
+    {
+      "id": "FIX-neo1-042-EVOLVES-TO",
+      "card_id": "neo1-042",
+      "field": "pokemon.evolves_to",
+      "before": null,
+      "after": [
+        "ピカチュウ"
+      ],
+      "basis": "card_image_check",
+      "kind": "field_added_from_print",
+      "migration": "v0.114",
+      "decided_on": "2026-10-27",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-neo1-042",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neo1042.png",
+          "image_sha256": "6f9c9aeaffa8e2430d911325650c4b79112688606a548ad7b3162cd379d6ed80",
+          "accessed_on": "2026-10-27"
+        },
+        {
+          "image_url": "https://nazonobasho.com/wp-content/uploads/2020/12/neo1_B_042_pichu_copy.jpg",
+          "image_sha256": "23858c62d627cbfa4e2f6480572177fd3e5abbd81507277921bc24618f6648bf",
+          "accessed_on": "2026-10-27"
+        }
+      ],
+      "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+      "applied_in_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "previous_source": "73a169063463bbf7bcaa3137d70cbf9721d11534"
+    },
+    {
+      "id": "FIX-neo1-044-RULES-TEXT-JA",
+      "card_id": "neo1-044",
+      "field": "pokemon.rules_text.ja",
+      "before": null,
+      "after": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+      "basis": "card_image_check",
+      "kind": "transcription_omission",
+      "migration": "v0.114",
+      "decided_on": "2026-10-27",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-neo1-044",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neo1044.png",
+          "image_sha256": "f891bc837d500fc04ea4b121ffaf54456a24546c1122535ef1c859f47765d15a",
+          "accessed_on": "2026-10-27"
+        },
+        {
+          "image_url": "https://nazonobasho.com/wp-content/uploads/2020/12/neo1_B_044_elekid_copy.jpg",
+          "image_sha256": "7cc15112ef9ecdc23d23aa387ca21f218908967ccdc5540dd4a98924959019e7",
+          "accessed_on": "2026-10-27"
+        }
+      ],
+      "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。ルール文は null だった）",
+      "applied_in_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "previous_source": "73a169063463bbf7bcaa3137d70cbf9721d11534"
+    },
+    {
+      "id": "FIX-neo1-044-EVOLVES-TO",
+      "card_id": "neo1-044",
+      "field": "pokemon.evolves_to",
+      "before": null,
+      "after": [
+        "エレブー"
+      ],
+      "basis": "card_image_check",
+      "kind": "field_added_from_print",
+      "migration": "v0.114",
+      "decided_on": "2026-10-27",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-neo1-044",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neo1044.png",
+          "image_sha256": "f891bc837d500fc04ea4b121ffaf54456a24546c1122535ef1c859f47765d15a",
+          "accessed_on": "2026-10-27"
+        },
+        {
+          "image_url": "https://nazonobasho.com/wp-content/uploads/2020/12/neo1_B_044_elekid_copy.jpg",
+          "image_sha256": "7cc15112ef9ecdc23d23aa387ca21f218908967ccdc5540dd4a98924959019e7",
+          "accessed_on": "2026-10-27"
+        }
+      ],
+      "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+      "applied_in_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "previous_source": "73a169063463bbf7bcaa3137d70cbf9721d11534"
+    },
+    {
+      "id": "FIX-neo1-070-RULES-TEXT-JA",
+      "card_id": "neo1-070",
+      "field": "pokemon.rules_text.ja",
+      "before": null,
+      "after": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+      "basis": "card_image_check",
+      "kind": "transcription_omission",
+      "migration": "v0.114",
+      "decided_on": "2026-10-27",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-neo1-070",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neo1070.png",
+          "image_sha256": "2ce941a3c9c77b62e80a5dc10164d7599a94956fd4e96fe7815b80a8617d1a08",
+          "accessed_on": "2026-10-27"
+        },
+        {
+          "image_url": "https://nazonobasho.com/wp-content/uploads/2020/12/neo1_B_071_Py_copy.jpg",
+          "image_sha256": "ad5b3a35dee203a125a819ea76fee3d9d3951fd3de93b575a85d77725d66337f",
+          "accessed_on": "2026-10-27"
+        }
+      ],
+      "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。ルール文は null だった）",
+      "applied_in_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "previous_source": "73a169063463bbf7bcaa3137d70cbf9721d11534"
+    },
+    {
+      "id": "FIX-neo1-070-EVOLVES-TO",
+      "card_id": "neo1-070",
+      "field": "pokemon.evolves_to",
+      "before": null,
+      "after": [
+        "ピッピ"
+      ],
+      "basis": "card_image_check",
+      "kind": "field_added_from_print",
+      "migration": "v0.114",
+      "decided_on": "2026-10-27",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-neo1-070",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neo1070.png",
+          "image_sha256": "2ce941a3c9c77b62e80a5dc10164d7599a94956fd4e96fe7815b80a8617d1a08",
+          "accessed_on": "2026-10-27"
+        },
+        {
+          "image_url": "https://nazonobasho.com/wp-content/uploads/2020/12/neo1_B_071_Py_copy.jpg",
+          "image_sha256": "ad5b3a35dee203a125a819ea76fee3d9d3951fd3de93b575a85d77725d66337f",
+          "accessed_on": "2026-10-27"
+        }
+      ],
+      "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+      "applied_in_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "previous_source": "73a169063463bbf7bcaa3137d70cbf9721d11534"
+    },
+    {
+      "id": "FIX-neo2-033-RULES-TEXT-JA",
+      "card_id": "neo2-033",
+      "field": "pokemon.rules_text.ja",
+      "before": null,
+      "after": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+      "basis": "card_image_check",
+      "kind": "transcription_omission",
+      "migration": "v0.114",
+      "decided_on": "2026-10-27",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-neo2-033",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neo2033.png",
+          "image_sha256": "ed41e3301955de786e9b656819ec93e0363afbdb52b65e8341dcd1ac406ea1c3",
+          "accessed_on": "2026-10-27"
+        },
+        {
+          "image_url": "https://nazonobasho.com/wp-content/uploads/2021/05/neo2_B_033_balkie_copy.jpg",
+          "image_sha256": "930484e6933cd329bbffe18ab269885347e59bd14492474349e4f866efc8a9cc",
+          "accessed_on": "2026-10-27"
+        }
+      ],
+      "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。ルール文は null だった）",
+      "applied_in_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "previous_source": "73a169063463bbf7bcaa3137d70cbf9721d11534"
+    },
+    {
+      "id": "FIX-neo2-033-EVOLVES-TO",
+      "card_id": "neo2-033",
+      "field": "pokemon.evolves_to",
+      "before": null,
+      "after": [
+        "エビワラー",
+        "サワムラー",
+        "カポエラー"
+      ],
+      "basis": "card_image_check",
+      "kind": "field_added_from_print",
+      "migration": "v0.114",
+      "decided_on": "2026-10-27",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-neo2-033",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neo2033.png",
+          "image_sha256": "ed41e3301955de786e9b656819ec93e0363afbdb52b65e8341dcd1ac406ea1c3",
+          "accessed_on": "2026-10-27"
+        },
+        {
+          "image_url": "https://nazonobasho.com/wp-content/uploads/2021/05/neo2_B_033_balkie_copy.jpg",
+          "image_sha256": "930484e6933cd329bbffe18ab269885347e59bd14492474349e4f866efc8a9cc",
+          "accessed_on": "2026-10-27"
+        }
+      ],
+      "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+      "applied_in_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "previous_source": "73a169063463bbf7bcaa3137d70cbf9721d11534"
+    },
+    {
+      "id": "FIX-neo2-050-RULES-TEXT-JA",
+      "card_id": "neo2-050",
+      "field": "pokemon.rules_text.ja",
+      "before": null,
+      "after": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+      "basis": "card_image_check",
+      "kind": "transcription_omission",
+      "migration": "v0.114",
+      "decided_on": "2026-10-27",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-neo2-050",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neo2050.png",
+          "image_sha256": "d6ca907583590e5bb8e85d97312566383b7a6bdf9140895806e4b5e7ecd79e8e",
+          "accessed_on": "2026-10-27"
+        },
+        {
+          "image_url": "https://nazonobasho.com/wp-content/uploads/2021/05/neo2_B_050_pupurin_copy.jpg",
+          "image_sha256": "a616ac8bef18a3f3fdcc30d37d2448d58e83c48077bd9bc69dba14733b1cf074",
+          "accessed_on": "2026-10-27"
+        }
+      ],
+      "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。ルール文は null だった）",
+      "applied_in_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "previous_source": "73a169063463bbf7bcaa3137d70cbf9721d11534"
+    },
+    {
+      "id": "FIX-neo2-050-EVOLVES-TO",
+      "card_id": "neo2-050",
+      "field": "pokemon.evolves_to",
+      "before": null,
+      "after": [
+        "プリン"
+      ],
+      "basis": "card_image_check",
+      "kind": "field_added_from_print",
+      "migration": "v0.114",
+      "decided_on": "2026-10-27",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-neo2-050",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neo2050.png",
+          "image_sha256": "d6ca907583590e5bb8e85d97312566383b7a6bdf9140895806e4b5e7ecd79e8e",
+          "accessed_on": "2026-10-27"
+        },
+        {
+          "image_url": "https://nazonobasho.com/wp-content/uploads/2021/05/neo2_B_050_pupurin_copy.jpg",
+          "image_sha256": "a616ac8bef18a3f3fdcc30d37d2448d58e83c48077bd9bc69dba14733b1cf074",
+          "accessed_on": "2026-10-27"
+        }
+      ],
+      "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+      "applied_in_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "previous_source": "73a169063463bbf7bcaa3137d70cbf9721d11534"
+    },
+    {
+      "id": "FIX-neo3-031-EVOLVES-TO",
+      "card_id": "neo3-031",
+      "field": "pokemon.evolves_to",
+      "before": null,
+      "after": [
+        "ルージュラ"
+      ],
+      "basis": "card_image_check",
+      "kind": "field_added_from_print",
+      "migration": "v0.114",
+      "decided_on": "2026-10-27",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-neo3-031",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neo3031.png",
+          "image_sha256": "c9a14da75fe6a29b58b8424e8b2b859367dd6dac04817789a5e269fe4f89511c",
+          "accessed_on": "2026-10-27"
+        }
+      ],
+      "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+      "applied_in_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "previous_source": "73a169063463bbf7bcaa3137d70cbf9721d11534"
+    },
+    {
+      "id": "FIX-PF2-007-EVOLVES-TO",
+      "card_id": "PF2-007",
+      "field": "pokemon.evolves_to",
+      "before": null,
+      "after": [
+        "ピカチュウ"
+      ],
+      "basis": "card_image_check",
+      "kind": "field_added_from_print",
+      "migration": "v0.114",
+      "decided_on": "2026-10-27",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-PF2-007",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neopf2007.png",
+          "image_sha256": "2a53ae3c573c6ea2b236cbde61f641d1b56511c71887d6a9765b5636e52f8cb5",
+          "accessed_on": "2026-10-27"
+        }
+      ],
+      "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+      "applied_in_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "previous_source": "73a169063463bbf7bcaa3137d70cbf9721d11534"
+    },
+    {
+      "id": "FIX-NIP1X-002-EVOLVES-TO",
+      "card_id": "NIP1X-002",
+      "field": "pokemon.evolves_to",
+      "before": null,
+      "after": [
+        "ブーバー"
+      ],
+      "basis": "card_image_check",
+      "kind": "field_added_from_print",
+      "migration": "v0.114",
+      "decided_on": "2026-10-27",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-NIP1X-002",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neointro1ex002.png",
+          "image_sha256": "72dea1b1673a0121165377c9494db5178f94999c781939683c56cdaaae42a68d",
+          "accessed_on": "2026-10-27"
+        }
+      ],
+      "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+      "applied_in_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "previous_source": "73a169063463bbf7bcaa3137d70cbf9721d11534"
+    },
+    {
+      "id": "FIX-NIP2X-002-EVOLVES-TO",
+      "card_id": "NIP2X-002",
+      "field": "pokemon.evolves_to",
+      "before": null,
+      "after": [
+        "ピカチュウ"
+      ],
+      "basis": "card_image_check",
+      "kind": "field_added_from_print",
+      "migration": "v0.114",
+      "decided_on": "2026-10-27",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-NIP2X-002",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neointro2ex002.png",
+          "image_sha256": "5e1c9ec797257d91af829125a2eb351e9c31b3fcff266fdc101ffd459b27e53c",
+          "accessed_on": "2026-10-27"
+        }
+      ],
+      "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+      "applied_in_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "previous_source": "73a169063463bbf7bcaa3137d70cbf9721d11534"
+    },
+    {
+      "id": "FIX-PRN-012-EVOLVES-TO",
+      "card_id": "PRN-012",
+      "field": "pokemon.evolves_to",
+      "before": null,
+      "after": [
+        "ピッピ"
+      ],
+      "basis": "card_image_check",
+      "kind": "field_added_from_print",
+      "migration": "v0.114",
+      "decided_on": "2026-10-27",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-PRN-012",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neop012.png",
+          "image_sha256": "82dbf047a10a378c8f8c8495065dfb66df3b83703c9ef012f6a1c1f5c5f1ff88",
+          "accessed_on": "2026-10-27"
+        }
+      ],
+      "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+      "applied_in_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "previous_source": "73a169063463bbf7bcaa3137d70cbf9721d11534"
+    },
+    {
+      "id": "FIX-PRN-031-EVOLVES-TO",
+      "card_id": "PRN-031",
+      "field": "pokemon.evolves_to",
+      "before": null,
+      "after": [
+        "プリン"
+      ],
+      "basis": "card_image_check",
+      "kind": "field_added_from_print",
+      "migration": "v0.114",
+      "decided_on": "2026-10-27",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-PRN-031",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neop031.png",
+          "image_sha256": "1581d95c332ee886fbb14eeff69e0eb3b40929cf7b6147ca0096fadc8a14fa5f",
+          "accessed_on": "2026-10-27"
+        }
+      ],
+      "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+      "applied_in_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "previous_source": "73a169063463bbf7bcaa3137d70cbf9721d11534"
+    },
+    {
+      "id": "FIX-PRN-037-EVOLVES-TO",
+      "card_id": "PRN-037",
+      "field": "pokemon.evolves_to",
+      "before": null,
+      "after": [
+        "ルージュラ"
+      ],
+      "basis": "card_image_check",
+      "kind": "field_added_from_print",
+      "migration": "v0.114",
+      "decided_on": "2026-10-27",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-PRN-037",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neop037.png",
+          "image_sha256": "e7fe9c0073a11d34b07b978e2aa65e7aad72d3eb3d4e1ee52489b88de27bbd69",
+          "accessed_on": "2026-10-27"
+        }
+      ],
+      "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+      "applied_in_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "previous_source": "73a169063463bbf7bcaa3137d70cbf9721d11534"
     }
   ],
   "engine_user_corrections": [
@@ -114107,6 +114687,1300 @@
         {
           "page": "1stp078",
           "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "neo1-022",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ブビィ",
+        "en": "Magby"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          240
+        ],
+        "stage": "baby",
+        "evolves_from": null,
+        "evolves_to": [
+          "ブーバー"
+        ],
+        "hp": 30,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": {
+          "ja": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+          "en": "If this Baby Pokémon is your Active Pokémon and your opponent tries to attack, your opponent flips a coin (before doing anything required in order to use that attack). If tails, your opponent's turn ends without an attack."
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "モクモク",
+              "en": "Sputter"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "次の自分の番の終わりまで、おたがいの場にいるすべてのポケモンは「特殊能力」を使うことができず、その力も消える。",
+              "en": "All Pokémon Powers stop working until the end of your next turn."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "text",
+          "summary": "ワザ Sputter でポケモンパワーを止める範囲",
+          "ja": "「次の自分の番の終わりまで、おたがいの場にいるすべてのポケモンは『特殊能力』を使うことができず、その力も消える。」。二次資料は、使った時点で場に出ているポケモンだけを止める意味だと説明",
+          "en": "「All Pokémon Powers stop working …」とあり、後から出たポケモンも止まるかがあいまい",
+          "confidence": "有力",
+          "sources": [
+            "N1",
+            "X3",
+            "X14"
+          ]
+        }
+      ],
+      "notes": [
+        "訂正（FIX-neo1-022-RULES-TEXT-JA）: 空だった pokemon.rules_text.ja に「「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。」を入れた。根拠: kyuura が、同じカード（拡張パック第1弾「金、銀、新世界へ...」のブビィ）の日本語版のカードの画像を pcg-search.com [N3]・なぞのばしょ [N1] で読み、ルール欄の全文「「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。」を確かめた（2026-10-27。照合の記録 IMG-neo1-022、data/curation/card_image_checks.json）。ほかのベイビィの転記・英語版の文面からは写していない",
+        "訂正（FIX-neo1-022-EVOLVES-TO）: 空だった pokemon.evolves_to に「ブーバー」を入れた。根拠: kyuura が、同じカード（拡張パック第1弾「金、銀、新世界へ...」のブビィ）の日本語版のカードの画像（pcg-search.com [N3]・なぞのばしょ [N1]）で、進化先の欄「ブーバーへ進化」「「ブーバー」を上に重ねて進化させることができます。」を読んだ（2026-10-27。照合の記録 IMG-neo1-022）。同じ名前のほかの版の記録から写していない"
+      ],
+      "source_ids": {
+        "tcgdex": "neo1-022",
+        "pokemontcg": [
+          "neo1-23"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-022-buby/",
+      "jp_print": {
+        "level": 5,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-022-buby/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "corrections": [
+        {
+          "id": "FIX-neo1-022-RULES-TEXT-JA",
+          "field": "pokemon.rules_text.ja",
+          "before": null,
+          "after": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+          "basis": "card_image_check",
+          "decided_on": "2026-10-27"
+        },
+        {
+          "id": "FIX-neo1-022-EVOLVES-TO",
+          "field": "pokemon.evolves_to",
+          "before": null,
+          "after": [
+            "ブーバー"
+          ],
+          "basis": "card_image_check",
+          "decided_on": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "neo1-042",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ピチュー",
+        "en": "Pichu"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          172
+        ],
+        "stage": "baby",
+        "evolves_from": null,
+        "evolves_to": [
+          "ピカチュウ"
+        ],
+        "hp": 30,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": {
+          "ja": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+          "en": "If this Baby Pokémon is your Active Pokémon and your opponent tries to attack, your opponent flips a coin (before doing anything required in order to use that attack). If tails, your opponent's turn ends without an attack."
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "パチパチ",
+              "en": "Zzzap"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "おたがいの場にいる、「特殊能力」を持っているポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ20ダメージ。",
+              "en": "Does 20 damage to each Pokémon in play that has a Pokémon Power. Don't apply Weakness and Resistance."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-neo1-042-RULES-TEXT-JA）: 空だった pokemon.rules_text.ja に「「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。」を入れた。根拠: kyuura が、同じカード（拡張パック第1弾「金、銀、新世界へ...」のピチュー）の日本語版のカードの画像を pcg-search.com [N3]・なぞのばしょ [N1] で読み、ルール欄の全文「「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。」を確かめた（2026-10-27。照合の記録 IMG-neo1-042、data/curation/card_image_checks.json）。ほかのベイビィの転記・英語版の文面からは写していない",
+        "訂正（FIX-neo1-042-EVOLVES-TO）: 空だった pokemon.evolves_to に「ピカチュウ」を入れた。根拠: kyuura が、同じカード（拡張パック第1弾「金、銀、新世界へ...」のピチュー）の日本語版のカードの画像（pcg-search.com [N3]・なぞのばしょ [N1]）で、進化先の欄「ピカチュウへ進化」「「ピカチュウ」を上に重ねて進化させることができます。」を読んだ（2026-10-27。照合の記録 IMG-neo1-042）。同じ名前のほかの版の記録から写していない"
+      ],
+      "source_ids": {
+        "tcgdex": "neo1-042",
+        "pokemontcg": [
+          "neo1-12"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-042-pichu/",
+      "jp_print": {
+        "level": 5,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [
+          "修正版は「パチパチ」の説明文の一部が変更されている",
+          "修正前：おたがいの場にいる、「特殊能力」を持っているポケモン全員に、",
+          "修正後：おたがいの場の「特殊能力」を持っているポケモン全員に、",
+          "修正版は図鑑の説明文の一部が変更されている",
+          "修正前：大人をビリビリさせるほどの電気をはなてる。",
+          "修正後：大人をビリビリさせるほどのでんげきをはなてる。"
+        ],
+        "source": "https://nazonobasho.com/neo01-042-pichu/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "corrections": [
+        {
+          "id": "FIX-neo1-042-RULES-TEXT-JA",
+          "field": "pokemon.rules_text.ja",
+          "before": null,
+          "after": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+          "basis": "card_image_check",
+          "decided_on": "2026-10-27"
+        },
+        {
+          "id": "FIX-neo1-042-EVOLVES-TO",
+          "field": "pokemon.evolves_to",
+          "before": null,
+          "after": [
+            "ピカチュウ"
+          ],
+          "basis": "card_image_check",
+          "decided_on": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "neo1-044",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "エレキッド",
+        "en": "Elekid"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          239
+        ],
+        "stage": "baby",
+        "evolves_from": null,
+        "evolves_to": [
+          "エレブー"
+        ],
+        "hp": 30,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": {
+          "ja": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+          "en": "If this Baby Pokémon is your Active Pokémon and your opponent tries to attack, your opponent flips a coin (before doing anything required in order to use that attack). If tails, your opponent's turn ends without an attack."
+        },
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "わんぱくパンチ",
+              "en": "Playful Punch"
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使え、使ったら自分の番は終わる。コインを投げて「おもて」なら、相手の対戦ポケモンに20のダメージ。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。",
+              "en": "Once during your turn (before your attack), you may flip a coin. If heads, do 20 damage to your opponent's Active Pokémon. (Apply Weakness and Resistance.) Either way, this ends your turn. This power can't be used if Elekid is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": []
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-neo1-044-RULES-TEXT-JA）: 空だった pokemon.rules_text.ja に「「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。」を入れた。根拠: kyuura が、同じカード（拡張パック第1弾「金、銀、新世界へ...」のエレキッド）の日本語版のカードの画像を pcg-search.com [N3]・なぞのばしょ [N1] で読み、ルール欄の全文「「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。」を確かめた（2026-10-27。照合の記録 IMG-neo1-044、data/curation/card_image_checks.json）。ほかのベイビィの転記・英語版の文面からは写していない",
+        "訂正（FIX-neo1-044-EVOLVES-TO）: 空だった pokemon.evolves_to に「エレブー」を入れた。根拠: kyuura が、同じカード（拡張パック第1弾「金、銀、新世界へ...」のエレキッド）の日本語版のカードの画像（pcg-search.com [N3]・なぞのばしょ [N1]）で、進化先の欄「エレブーへ進化」「「エレブー」を上に重ねて進化させることができます。」を読んだ（2026-10-27。照合の記録 IMG-neo1-044）。同じ名前のほかの版の記録から写していない"
+      ],
+      "source_ids": {
+        "tcgdex": "neo1-044",
+        "pokemontcg": [
+          "neo1-22"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-044-elekid/",
+      "jp_print": {
+        "level": 6,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-044-elekid/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "corrections": [
+        {
+          "id": "FIX-neo1-044-RULES-TEXT-JA",
+          "field": "pokemon.rules_text.ja",
+          "before": null,
+          "after": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+          "basis": "card_image_check",
+          "decided_on": "2026-10-27"
+        },
+        {
+          "id": "FIX-neo1-044-EVOLVES-TO",
+          "field": "pokemon.evolves_to",
+          "before": null,
+          "after": [
+            "エレブー"
+          ],
+          "basis": "card_image_check",
+          "decided_on": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "neo1-070",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ピィ",
+        "en": "Cleffa"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          173
+        ],
+        "stage": "baby",
+        "evolves_from": null,
+        "evolves_to": [
+          "ピッピ"
+        ],
+        "hp": 30,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": {
+          "ja": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+          "en": "If this Baby Pokémon is your Active Pokémon and your opponent tries to attack, your opponent flips a coin (before doing anything required in order to use that attack). If tails, your opponent's turn ends without an attack."
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ピピピ",
+              "en": "Eeeeeeek"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分の手札をすべて山札にもどし、その山札をよく切る。その後、山札からカードを7枚引いて、手札にする。",
+              "en": "Shuffle your hand into your deck, then draw 7 cards."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-neo1-070-RULES-TEXT-JA）: 空だった pokemon.rules_text.ja に「「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。」を入れた。根拠: kyuura が、同じカード（拡張パック第1弾「金、銀、新世界へ...」のピィ）の日本語版のカードの画像を pcg-search.com [N3]・なぞのばしょ [N1] で読み、ルール欄の全文「「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。」を確かめた（2026-10-27。照合の記録 IMG-neo1-070、data/curation/card_image_checks.json）。ほかのベイビィの転記・英語版の文面からは写していない",
+        "訂正（FIX-neo1-070-EVOLVES-TO）: 空だった pokemon.evolves_to に「ピッピ」を入れた。根拠: kyuura が、同じカード（拡張パック第1弾「金、銀、新世界へ...」のピィ）の日本語版のカードの画像（pcg-search.com [N3]・なぞのばしょ [N1]）で、進化先の欄「ピッピへ進化」「「ピッピ」を上に重ねて進化させることができます。」を読んだ（2026-10-27。照合の記録 IMG-neo1-070）。同じ名前のほかの版の記録から写していない"
+      ],
+      "source_ids": {
+        "tcgdex": "neo1-070",
+        "pokemontcg": [
+          "neo1-20"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-070-py/",
+      "jp_print": {
+        "level": 6,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-070-py/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "corrections": [
+        {
+          "id": "FIX-neo1-070-RULES-TEXT-JA",
+          "field": "pokemon.rules_text.ja",
+          "before": null,
+          "after": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+          "basis": "card_image_check",
+          "decided_on": "2026-10-27"
+        },
+        {
+          "id": "FIX-neo1-070-EVOLVES-TO",
+          "field": "pokemon.evolves_to",
+          "before": null,
+          "after": [
+            "ピッピ"
+          ],
+          "basis": "card_image_check",
+          "decided_on": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "neo2-033",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "バルキー",
+        "en": "Tyrogue"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          236
+        ],
+        "stage": "baby",
+        "evolves_from": null,
+        "evolves_to": [
+          "エビワラー",
+          "サワムラー",
+          "カポエラー"
+        ],
+        "hp": 30,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": {
+          "ja": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+          "en": "If this Baby Pokémon is your Active Pokémon and your opponent announces an attack, your opponent flips a coin (before doing anything else). If tails, your opponent's turn ends."
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "スマッシュパンチ",
+              "en": "Smash Punch"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、このワザは失敗する。",
+              "en": "Flip a coin. If tails, this attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-neo2-033-RULES-TEXT-JA）: 空だった pokemon.rules_text.ja に「「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。」を入れた。根拠: kyuura が、同じカード（拡張パック第2弾「遺跡をこえて...」のバルキー）の日本語版のカードの画像を pcg-search.com [N3]・なぞのばしょ [N1] で読み、ルール欄の全文「「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。」を確かめた（2026-10-27。照合の記録 IMG-neo2-033、data/curation/card_image_checks.json）。ほかのベイビィの転記・英語版の文面からは写していない",
+        "訂正（FIX-neo2-033-EVOLVES-TO）: 空だった pokemon.evolves_to に「エビワラー・サワムラー・カポエラー」を入れた。根拠: kyuura が、同じカード（拡張パック第2弾「遺跡をこえて...」のバルキー）の日本語版のカードの画像（pcg-search.com [N3]・なぞのばしょ [N1]）で、進化先の欄「エビワラーへ進化」「サワムラーへ進化」「カポエラーへ進化」「「エビワラー」「サワムラー」「カポエラー」のいずれかを上に重ねて進化させることができます。」を読んだ（2026-10-27。照合の記録 IMG-neo2-033）。同じ名前のほかの版の記録から写していない"
+      ],
+      "source_ids": {
+        "tcgdex": "neo2-033",
+        "pokemontcg": [
+          "neo2-66"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-033-balkie/",
+      "jp_print": {
+        "level": 7,
+        "rarity": "●(C)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-033-balkie/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "corrections": [
+        {
+          "id": "FIX-neo2-033-RULES-TEXT-JA",
+          "field": "pokemon.rules_text.ja",
+          "before": null,
+          "after": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+          "basis": "card_image_check",
+          "decided_on": "2026-10-27"
+        },
+        {
+          "id": "FIX-neo2-033-EVOLVES-TO",
+          "field": "pokemon.evolves_to",
+          "before": null,
+          "after": [
+            "エビワラー",
+            "サワムラー",
+            "カポエラー"
+          ],
+          "basis": "card_image_check",
+          "decided_on": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "neo2-050",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ププリン",
+        "en": "Igglybuff"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          174
+        ],
+        "stage": "baby",
+        "evolves_from": null,
+        "evolves_to": [
+          "プリン"
+        ],
+        "hp": 30,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": {
+          "ja": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+          "en": "If this Baby Pokémon is your Active Pokémon and your opponent announces an attack, your opponent flips a coin (before doing anything else). If tails, your opponent's turn ends."
+        },
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "じっとみる",
+              "en": "Gaze"
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使える。相手のベンチの「特殊能力」を持っているポケモンを1匹選ぶ。そのポケモンは、この番が終わるまで、「特殊能力」を使うことができず、その力も消える。（そのポケモンがバトル場に出てきたとき、この効果は消える。）",
+              "en": "Once during your turn (before your attack), choose 1 of your opponent's Benched Pokémon that has a Pokémon Power. That power stops working until the end of this turn. This effect ends if that Pokémon leaves the Bench."
+            }
+          }
+        ],
+        "attacks": []
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-neo2-050-RULES-TEXT-JA）: 空だった pokemon.rules_text.ja に「「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。」を入れた。根拠: kyuura が、同じカード（拡張パック第2弾「遺跡をこえて...」のププリン）の日本語版のカードの画像を pcg-search.com [N3]・なぞのばしょ [N1] で読み、ルール欄の全文「「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。」を確かめた（2026-10-27。照合の記録 IMG-neo2-050、data/curation/card_image_checks.json）。ほかのベイビィの転記・英語版の文面からは写していない",
+        "訂正（FIX-neo2-050-EVOLVES-TO）: 空だった pokemon.evolves_to に「プリン」を入れた。根拠: kyuura が、同じカード（拡張パック第2弾「遺跡をこえて...」のププリン）の日本語版のカードの画像（pcg-search.com [N3]・なぞのばしょ [N1]）で、進化先の欄「プリンへ進化」「「プリン」を上に重ねて進化させることができます。」を読んだ（2026-10-27。照合の記録 IMG-neo2-050）。同じ名前のほかの版の記録から写していない"
+      ],
+      "source_ids": {
+        "tcgdex": "neo2-050",
+        "pokemontcg": [
+          "neo2-40"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-050-pupurin/",
+      "jp_print": {
+        "level": 6,
+        "rarity": "◆(U)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-050-pupurin/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "corrections": [
+        {
+          "id": "FIX-neo2-050-RULES-TEXT-JA",
+          "field": "pokemon.rules_text.ja",
+          "before": null,
+          "after": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+          "basis": "card_image_check",
+          "decided_on": "2026-10-27"
+        },
+        {
+          "id": "FIX-neo2-050-EVOLVES-TO",
+          "field": "pokemon.evolves_to",
+          "before": null,
+          "after": [
+            "プリン"
+          ],
+          "basis": "card_image_check",
+          "decided_on": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "neo3-031",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ムチュール",
+        "en": "Smoochum"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          238
+        ],
+        "stage": "baby",
+        "evolves_from": null,
+        "evolves_to": [
+          "ルージュラ"
+        ],
+        "hp": 30,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": {
+          "ja": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+          "en": "If this Baby Pokémon is your Active Pokémon and your opponent announces an attack, your opponent flips a coin (before doing anything else). If tails, your opponent's turn ends."
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "サイコキッス",
+              "en": "Psykiss"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手の場のポケモンについている「特殊エネルギーカード」を1枚選び、相手の山札にもどす。その後、その山札をよく切る。",
+              "en": "Flip a coin. If heads, choose a Special Energy card attached to 1 of your opponent's Pokémon. Your opponent shuffles that card into his or her deck."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-neo3-031-EVOLVES-TO）: 空だった pokemon.evolves_to に「ルージュラ」を入れた。根拠: kyuura が、同じカード（拡張パック第3弾「めざめる伝説」のムチュール）の日本語版のカードの画像（pcg-search.com [N3]）で、進化先の欄「ルージュラへ進化」「「ルージュラ」を上に重ねて進化させることができます。」を読んだ（2026-10-27。照合の記録 IMG-neo3-031）。同じ名前のほかの版の記録から写していない"
+      ],
+      "source_ids": {
+        "tcgdex": "neo3-031",
+        "pokemontcg": [
+          "neo3-54"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%A0%E3%83%81%E3%83%A5%E3%83%BC%E3%83%AB_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 6,
+        "rarity": "●(C)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%A0%E3%83%81%E3%83%A5%E3%83%BC%E3%83%AB_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "corrections": [
+        {
+          "id": "FIX-neo3-031-EVOLVES-TO",
+          "field": "pokemon.evolves_to",
+          "before": null,
+          "after": [
+            "ルージュラ"
+          ],
+          "basis": "card_image_check",
+          "decided_on": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "PF2-007",
+      "jp_set": "PF2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ピチュー",
+        "en": "Pichu"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          172
+        ],
+        "stage": "baby",
+        "evolves_from": null,
+        "evolves_to": [
+          "ピカチュウ"
+        ],
+        "hp": 30,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": {
+          "ja": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+          "en": null
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "いっしょにあそぼ",
+              "en": "Let's Play!"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分の山札から「ベイビィポケモン」を1枚選び出し、ベンチに出す。その後、その山札をよく切る。(自分のベンチに空きがないとき、このワザは失敗する。)",
+              "en": "Search your deck for a Baby Pokémon card and put it onto your Bench. Shuffle your deck afterward. (You can't use this attack if your Bench is full.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-PF2-007-EVOLVES-TO）: 空だった pokemon.evolves_to に「ピカチュウ」を入れた。根拠: kyuura が、同じカード（neo プレミアムファイル2のピチュー）の日本語版のカードの画像（pcg-search.com [N3]）で、進化先の欄「ピカチュウへ進化」「「ピカチュウ」を上に重ねて進化させることができます。」を読んだ（2026-10-27。照合の記録 IMG-PF2-007）。同じ名前のほかの版の記録から写していない"
+      ],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-35"
+        ],
+        "pcg_search": [
+          "neopf2007"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neopf2007.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "プレミアムファイル2",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neopf2007.php"
+      },
+      "product_group": "premium_file",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash",
+        "pokemon.rules_text.ja": "pcg_search.note",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-35",
+        "pokemon.dex": "pokemontcg:basep-35"
+      },
+      "copies": [
+        {
+          "page": "neopf2007",
+          "list_number": "007/009"
+        }
+      ],
+      "corrections": [
+        {
+          "id": "FIX-PF2-007-EVOLVES-TO",
+          "field": "pokemon.evolves_to",
+          "before": null,
+          "after": [
+            "ピカチュウ"
+          ],
+          "basis": "card_image_check",
+          "decided_on": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "NIP1X-002",
+      "jp_set": "NIP1X",
+      "category": "pokemon",
+      "name": {
+        "ja": "ブビィ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "baby",
+        "evolves_from": null,
+        "evolves_to": [
+          "ブーバー"
+        ],
+        "hp": 30,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": {
+          "ja": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+          "en": null
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "パンチ",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-NIP1X-002-EVOLVES-TO）: 空だった pokemon.evolves_to に「ブーバー」を入れた。根拠: kyuura が、同じカード（イントロパック★neo（チコリータデッキ：拡張カード）のブビィ）の日本語版のカードの画像（pcg-search.com [N3]）で、進化先の欄「ブーバーへ進化」「「ブーバー」を上に重ねて進化させることができます。」を読んだ（2026-10-27。照合の記録 IMG-NIP1X-002）。同じ名前のほかの版の記録から写していない"
+      ],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neointro1ex002"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro1ex002.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(チコリータデッキ：拡張カード)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro1ex002.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash",
+        "pokemon.rules_text.ja": "pcg_search.note"
+      },
+      "copies": [
+        {
+          "page": "neointro1ex002",
+          "list_number": "002/010"
+        }
+      ],
+      "corrections": [
+        {
+          "id": "FIX-NIP1X-002-EVOLVES-TO",
+          "field": "pokemon.evolves_to",
+          "before": null,
+          "after": [
+            "ブーバー"
+          ],
+          "basis": "card_image_check",
+          "decided_on": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "NIP2X-002",
+      "jp_set": "NIP2X",
+      "category": "pokemon",
+      "name": {
+        "ja": "ピチュー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "baby",
+        "evolves_from": null,
+        "evolves_to": [
+          "ピカチュウ"
+        ],
+        "hp": 30,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": {
+          "ja": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+          "en": null
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "はたく",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-NIP2X-002-EVOLVES-TO）: 空だった pokemon.evolves_to に「ピカチュウ」を入れた。根拠: kyuura が、同じカード（イントロパック★neo（ワニノコデッキ：拡張カード）のピチュー）の日本語版のカードの画像（pcg-search.com [N3]）で、進化先の欄「ピカチュウへ進化」「「ピカチュウ」を上に重ねて進化させることができます。」を読んだ（2026-10-27。照合の記録 IMG-NIP2X-002）。同じ名前のほかの版の記録から写していない"
+      ],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neointro2ex002"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro2ex002.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(ワニノコデッキ：拡張カード)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro2ex002.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash",
+        "pokemon.rules_text.ja": "pcg_search.note"
+      },
+      "copies": [
+        {
+          "page": "neointro2ex002",
+          "list_number": "002/010"
+        }
+      ],
+      "corrections": [
+        {
+          "id": "FIX-NIP2X-002-EVOLVES-TO",
+          "field": "pokemon.evolves_to",
+          "before": null,
+          "after": [
+            "ピカチュウ"
+          ],
+          "basis": "card_image_check",
+          "decided_on": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "PRN-012",
+      "jp_set": "PRN",
+      "category": "pokemon",
+      "name": {
+        "ja": "ピィ",
+        "en": "Cleffa"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          173
+        ],
+        "stage": "baby",
+        "evolves_from": null,
+        "evolves_to": [
+          "ピッピ"
+        ],
+        "hp": 30,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": {
+          "ja": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+          "en": null
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ピッピッ",
+              "en": "Eek"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "山札からカードを2枚引いて、手札に加える。",
+              "en": "Draw 2 cards."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-PRN-012-EVOLVES-TO）: 空だった pokemon.evolves_to に「ピッピ」を入れた。根拠: kyuura が、同じカード（プロモ（neo）のピィ）の日本語版のカードの画像（pcg-search.com [N3]）で、進化先の欄「ピッピへ進化」「「ピッピ」を上に重ねて進化させることができます。」を読んだ（2026-10-27。照合の記録 IMG-PRN-012）。同じ名前のほかの版の記録から写していない"
+      ],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-31"
+        ],
+        "pcg_search": [
+          "neop012"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop012.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop012.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash",
+        "pokemon.rules_text.ja": "pcg_search.note",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-31",
+        "pokemon.dex": "pokemontcg:basep-31"
+      },
+      "copies": [
+        {
+          "page": "neop012",
+          "list_number": "-/-"
+        }
+      ],
+      "corrections": [
+        {
+          "id": "FIX-PRN-012-EVOLVES-TO",
+          "field": "pokemon.evolves_to",
+          "before": null,
+          "after": [
+            "ピッピ"
+          ],
+          "basis": "card_image_check",
+          "decided_on": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "PRN-031",
+      "jp_set": "PRN",
+      "category": "pokemon",
+      "name": {
+        "ja": "ププリン",
+        "en": "Igglybuff"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          174
+        ],
+        "stage": "baby",
+        "evolves_from": null,
+        "evolves_to": [
+          "プリン"
+        ],
+        "hp": 30,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": {
+          "ja": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+          "en": null
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "おやすみのうた",
+              "en": "Good Night Song"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手を「ねむり」状態にする。",
+              "en": "The Defending Pokémon is now Asleep."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-PRN-031-EVOLVES-TO）: 空だった pokemon.evolves_to に「プリン」を入れた。根拠: kyuura が、同じカード（プロモ（neo）のププリン）の日本語版のカードの画像（pcg-search.com [N3]）で、進化先の欄「プリンへ進化」「「プリン」を上に重ねて進化させることができます。」を読んだ（2026-10-27。照合の記録 IMG-PRN-031）。同じ名前のほかの版の記録から写していない"
+      ],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-36"
+        ],
+        "pcg_search": [
+          "neop031"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop031.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop031.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash",
+        "pokemon.rules_text.ja": "pcg_search.note",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-36",
+        "pokemon.dex": "pokemontcg:basep-36"
+      },
+      "copies": [
+        {
+          "page": "neop031",
+          "list_number": "-/-"
+        }
+      ],
+      "corrections": [
+        {
+          "id": "FIX-PRN-031-EVOLVES-TO",
+          "field": "pokemon.evolves_to",
+          "before": null,
+          "after": [
+            "プリン"
+          ],
+          "basis": "card_image_check",
+          "decided_on": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "PRN-037",
+      "jp_set": "PRN",
+      "category": "pokemon",
+      "name": {
+        "ja": "ムチュール",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "baby",
+        "evolves_from": null,
+        "evolves_to": [
+          "ルージュラ"
+        ],
+        "hp": 30,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": {
+          "ja": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+          "en": null
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "なげキッス",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手の場のポケモンを1匹選び、そのポケモンに、ダメージカウンターを1個のせる。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-PRN-037-EVOLVES-TO）: 空だった pokemon.evolves_to に「ルージュラ」を入れた。根拠: kyuura が、同じカード（プロモ（neo）のムチュール）の日本語版のカードの画像（pcg-search.com [N3]）で、進化先の欄「ルージュラへ進化」「「ルージュラ」を上に重ねて進化させることができます。」を読んだ（2026-10-27。照合の記録 IMG-PRN-037）。同じ名前のほかの版の記録から写していない"
+      ],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neop037"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop037.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop037.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash",
+        "pokemon.rules_text.ja": "pcg_search.note"
+      },
+      "copies": [
+        {
+          "page": "neop037",
+          "list_number": "-/-"
+        }
+      ],
+      "corrections": [
+        {
+          "id": "FIX-PRN-037-EVOLVES-TO",
+          "field": "pokemon.evolves_to",
+          "before": null,
+          "after": [
+            "ルージュラ"
+          ],
+          "basis": "card_image_check",
+          "decided_on": "2026-10-27"
         }
       ]
     }

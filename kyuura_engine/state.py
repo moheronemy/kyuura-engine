@@ -1225,6 +1225,30 @@ class PowersStopped:
 
 
 @dataclass(frozen=True)
+class BenchPowersStopped:
+    """特殊能力による「持続する効果」（v0.114。docs/baby-rules-evolution-v0.114.md 6 章）のうち、ププリン（neo2-050）の［じっとみる］の「相手のベンチの「特殊能力」を持っている
+    ポケモンを1匹選ぶ。そのポケモンは、この番が終わるまで、「特殊能力」を使うことができず、その力も消える。（そのポケモンがバトル場に出てきたとき、この効果は消える。）」（kyuura の
+    印刷の文面）。
+
+    相手に与える効果（``on_opponent``。``source_card``・``source_player`` は特殊能力を使ったポケモンのいちばん上のカードとそのプレイヤー）。受けるのは選んだ相手のベンチのポケモン
+    （``bench_ok``）。はたらくのは与えた番だけ（``active_turn`` = ``created_turn``。「この番が終わるまで」。その番の終わりに期限で消える）。その間、受けているポケモンの特殊能力は、
+    宣言して使う特殊能力の使用も、常にはたらく・自動的にはたらく特殊能力の力も止まる（「使うことができず、その力も消える」。``PowersStopped`` と同じ範囲。``persistent.powers_stopped``）。
+    受けているポケモンがバトル場に出たら、その時点で消す（説明の「バトル場に出てきたとき、この効果は消える」。理由 ``persistent.ENTERED_ACTIVE``。
+    ``persistent.remove_on_entering_active``）。ほかの消える契機（進化・退化・場をはなれる）は、ほかの持続する効果と同じ。"""
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "bench_powers_stopped"
+    turns_until_active: ClassVar[int] = 0
+    on_opponent: ClassVar[bool] = True
+    from_creation: ClassVar[bool] = True  # 与えた番からはたらく（「この番が終わるまで」）
+    bench_ok: ClassVar[bool] = True  # ベンチのポケモンが受ける（バトル場に出たら消える）
+    bench_only: ClassVar[bool] = True  # バトル場のポケモンには残らない（不変条件）
+
+
+@dataclass(frozen=True)
 class BenchProtection:
     """ワザによる「持続する効果」（v0.86。7 章）のうち、エンテイ（PF2-008）の「ほのおのまもり」の「次の相手の番が終わるまで、自分の控えポケモン全員は、ワザによるダメージや
     効果を受けない。」（kyuura の印刷の文面）。
@@ -1520,6 +1544,7 @@ PERSISTENT_EFFECT_TYPES = (PreventDamage, PreventAttackDamage, Retaliation, Next
                            StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard,
                            StatusImmunityNextTurn,  # v0.85: しんぴのこな
                            PowersStopped, BenchProtection,  # v0.86: スタンウェーブ・ほのおのまもり
+                           BenchPowersStopped,  # v0.114: じっとみる（特殊能力の効果。この番の終わりまで。バトル場に出たら消える）
                            *PERIOD_EFFECT_TYPES)  # v0.92: クモのす・くろいまなざし・にらみつける（ヨーギラス）・いやなおと。v0.93: はなれられない効果・かぶりつく。v0.108: マイナスイオン・あまえる
 
 

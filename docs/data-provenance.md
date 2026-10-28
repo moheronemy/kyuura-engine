@@ -1955,6 +1955,26 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.114: ベイビィポケモン 13 枚
+
+[baby-rules-evolution-v0.114.md](baby-rules-evolution-v0.114.md) の 4 章・11 章。
+
+- 写しの元・研究の基準は kyuura `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`（下の移行の節）。写しの組 `pool_v0_114`（13 枚。ブビィ neo1-022・NIP1X-002、ピチュー neo1-042・PF2-007・
+  NIP2X-002、エレキッド neo1-044、ピィ neo1-070・PRN-012、バルキー neo2-033、ププリン neo2-050・PRN-031、ムチュール neo3-031・PRN-037）を加え、写しの作り直しの道具で作った（手で直していない）。
+  v0.113 までの 1,250 枚の値は変わっていない。PRN-030（カポエラー）など、ほかのカードは加えていない。
+- 13 枚の採用の記録（`card_sources.json`。`kyuura_commit` e519b99・記録した日 2026-10-28・外部照合なし。記録 1,163 → 1,176）。処理に使う文面は、説明文のあるワザ 9・特殊能力 2 とも
+  kyuura の印刷の文面（研究の対応表の `adopted_printed_text` に 11 を加えた。1,228 → 1,239）。パンチ（NIP1X-002）・はたく（NIP2X-002）は説明文がない。13 枚とも kyuura に最新の説明・
+  エラッタ・裁定の記録はない。`kyuura_records` は、13 枚ともベイビィのルールの裁定 3 つ（CR-BABY-RULE-COIN・-COIN-STEP・-NOT-POWER）、neo1-042 に CR-NEUTRAL-SHIELD-EVOLVED-BABY・
+  UQ-ATTACK-PRE-DAMAGE-COIN-ORDER、エレキッド・ププリン（neo2-050）に CR-BABY-WITHOUT-ATTACKS。
+- 段階 baby・進化先（`pokemon.evolves_to`）・ルール文は、写しの明示した欄から読む。進化先は 13 枚とも kyuura の訂正 `FIX-<id>-EVOLVES-TO`（`field_added_from_print`）、neo 第 1〜2 弾の
+  6 枚のルール文は kyuura の訂正 `FIX-<id>-RULES-TEXT-JA`（`transcription_omission`）で、どちらも根拠は kyuura の画像の照合 `IMG-<id>`（data/curation/card_image_checks.json。kyuura が
+  2026-10-27 に読んだ）。画像を見たのは kyuura で、エンジンは画像を見ていない（IMG- は CC-・LD- ではない）。残る 7 枚のルール文は kyuura の既存の転記の値。
+- 日本語の文面の転記元: neo1・neo2 の 6 枚がなぞのばしょ、neo3-031 が Pokemon Wiki、PF2-007・NIP1X-002・NIP2X-002・PRN の 3 枚が pcg-search.com。同じ所との一致を独立した照合に数えず、
+  新しく画像を見たことにしていない。ピチュー（neo1-042）の修正版の説明（なぞのばしょの備考）は意味が同じなので、写しの文面（修正前の版の印刷）を採用した（修正版の欄は kyuura が画像で
+  確かめていない）。データの欠け（`pokemon.dex`・`jp_print.level`）は補っていない。
+- kyuura への報告事項: 13 枚の `engine_status` は今回の登録を写すと `registered`。UQ-NEO-TEXT-BABY-CATEGORIES・UQ-ATTACK-PRE-DAMAGE-COIN-ORDER は kyuura の未解決の一覧に行がない。エンジンの
+  新しい問い BX1・HP2・HV1 は kyuura に対応する記録がない。
+
 ## v0.114: 写しの元・研究の基準を kyuura e519b99 に上げる移行
 
 [baby-rules-evolution-v0.114.md](baby-rules-evolution-v0.114.md) の 2 章。

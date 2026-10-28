@@ -29,7 +29,7 @@ from .. import effects as E
 from ..effects import (AttackKey, AttackUse, PowerKey, usable_ninja_tricks, attach_converted_energy, attack_rebellion_powers, counts_as_knockout, dormant_scram, max_hp,
                        received_modifiers_log, received_power_damage, retreat_trap_powers, stadium_attack_coin_available, status_at_attack_blocked)
 from ..errors import IllegalActionError, UnsupportedError
-from ..state import AttackEffectGuard, BenchAttackDamageGuard, BenchProtection, GameState, Phase, PowersStopped, StatusImmunityNextTurn, ZeroDamageAtLeast
+from ..state import AttackEffectGuard, BenchAttackDamageGuard, BenchPowersStopped, BenchProtection, GameState, Phase, PowersStopped, StatusImmunityNextTurn, ZeroDamageAtLeast
 from ..state import MARKER_COLOR, MARKER_CURSE, PERIOD_EFFECT_TYPES, KnockOutSurvival, PeriodAttackCoinCheck, PeriodLeaveLock, TimedDamageGuard
 from ..history import close_probe, note_used
 from ..zones import face_up_fields, prize_left, promote_from_bench, return_in_play_to_deck, shuffle_deck
@@ -228,8 +228,9 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
            for side in state.players for pokemon in side.in_play() for slot in E.powers_of(state, pokemon)):
         # v0.86: ［はしりさる］（ダメージの要素のあとのコインと山札にもどる）・［クリスタルボディ］（効果の要素を無効にする）。v0.13 の止める関数は知らない
         found.append("はしりさる・クリスタルボディ")
-    if any(isinstance(effect, (PowersStopped, BenchProtection)) for side in state.players for pokemon in side.in_play() for effect in pokemon.persistent_effects):
-        # v0.86: スタンウェーブ（特殊能力を止める）・ほのおのまもり（控えへのワザのダメージと効果を無効にする）。v0.13 の止める関数は知らない
+    if any(isinstance(effect, (PowersStopped, BenchProtection, BenchPowersStopped)) for side in state.players for pokemon in side.in_play()
+           for effect in pokemon.persistent_effects):
+        # v0.86: スタンウェーブ（特殊能力を止める）・ほのおのまもり（控えへのワザのダメージと効果を無効にする）。v0.13 の止める関数は知らない。v0.114: じっとみる
         found.append("v0.86 の持続する効果")
     v087 = (E.CoinDamageBothActivesOnAttackDamage, E.PoisonDamageSourceOnAttackDamage, E.BenchNamedFromDeckOnAttackDamage, E.OwnBenchAttackImmunityWhileActive,
             E.BenchAttackDamageImmunity, E.DamageOnOpponentPromotion, E.MoveTypeEnergyOnBenching, E.DamageOnHandBasicWhileActive)
@@ -259,6 +260,11 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
         # v0.110: 残りHPがなくなっても「きぜつ」しない効果（こらえる・こうてつか。きぜつの判定の窓の生存・KS1・KS2・こんらんの 20 の問い）。v0.13 の止める関数は「きぜつ」しない効果を知らない
         # （HP 以上で「きぜつ」すると見積もる）ので、それで確かめない
         found.append("残りHPがなくなっても「きぜつ」しない効果")
+    if any(E.evolved_from_baby(state, pokemon) or state.card_def(pokemon.card).is_baby_pokemon for side in state.players for pokemon in side.in_play()
+           if not state.is_face_down(pokemon)):
+        # v0.114: 場のベイビィポケモン・ベイビィから進化したポケモン（ワザの前のルールのコイン・場の分類）。v0.13 の止める関数はベイビィのルールのコインと場の分類を知らないので、
+        # それで確かめない
+        found.append("ベイビィポケモン")
     if E.neutral_shield_holders(state):
         # v0.103: ［ニュートラルシールド］（発生元が相手の進化ポケモンのワザのダメージと効果の要素を無効にする）。v0.13 の止める関数の見積もり（``preview_attack_damage``）は発生元で
         # 無効にするかを知らない（「ダメージを受けない」状態・バリアーだけを見る）ので、それで確かめない（情報のない経路で黙って無視しない）
@@ -297,10 +303,16 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
         res.attack_power = True
     use = (player, attacker.pokemon_id, key.card_id, key.attack_index)
     declare(program, res, player, attacker)  # v0.31: 宣言のあと・こんらんのコインの前の確認（トラッシュの時点が決まらないワザ。HC1）
+    baby = baby_rule_holder(res, player)  # v0.114: ワザを受ける側のバトル場のベイビィポケモン（ベイビィポケモンのルール）
     if usable_ninja_tricks(state, 1 - player) and (attack_coin_checks(state, attacker) or attack_rebellion_powers(state, attacker)
-                                                   or attacker.conditions.confused or coin_stadium is not None):
-        # v0.65（NT1）: 変わり身の術の「相手がワザを使う時」の入れ替えと、ワザの要素より先に投げるコイン（手順 4・5・クチバシティジム）の順番が決まらない（コインの前）
+                                                   or attacker.conditions.confused or coin_stadium is not None or baby is not None
+                                                   or E.ninja_trick_baby_candidates(state, 1 - player)):
+        # v0.65（NT1）: 変わり身の術の「相手がワザを使う時」の入れ替えと、ワザの要素より先に投げるコイン（手順 4・5・クチバシティジム）の順番が決まらない（コインの前）。v0.114: ベイビィ
+        # ポケモンのルールのコインも、ワザの要素より先に投げるコイン（入れ替えで控えのベイビィポケモンがバトル場に出うるなら、コインがあるかも順番で変わる）
         raise res.question("ninja_trick_attack_order", f"ポケモン {attacker.pokemon_id} のワザ・変わり身の術 {list(usable_ninja_tricks(state, 1 - player))}")
+    if baby is not None and _baby_rule_failed(res, player, attacker, key, baby, coin_stadium):  # v0.114: GR-2000-P314-BABY-RULE
+        _finish_attack(res, use)
+        return
     if _attack_check_failed(res, player, attacker, key):  # v0.36: p.309 の手順 4（「すなかけ」・「えんまく」など）
         _finish_attack(res, use)
         return
@@ -322,6 +334,46 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
     if offer_ninja_trick(run) or run_elements(run, 0):
         return
     _finish_attack(res, use)
+
+
+BABY_RULE_FAILED = "baby_rule"  # v0.114: ベイビィポケモンのルールのコインの「うら」で失敗したワザ（ログ attack_failed の reason）
+
+
+def baby_rule_holder(res: Resolution, player: int):
+    """v0.114: ワザを使うプレイヤー ``player`` の相手のバトル場のポケモンが、ベイビィポケモンのルールを持つ進化していないベイビィポケモン（``effects.is_baby_in_play``）なら、その
+    ポケモン。なければ None。［へんしん］で相手のベイビィポケモンと同じカードとしてあつかわれるメタモンなら、ベイビィポケモンのルールを持つかが決まらないので止める（BX1。コインの前）。
+    うらのカード（マチスの秘策）は「たねポケモン」としてあつかうので None（本当のカードの段階を読まない。コインの有無から本当のカードを漏らさない）。状態を変えない。"""
+    defender = res.state.players[1 - player].active
+    if defender is None:
+        return None
+    problem = E.transform_baby_question(res.state, defender)
+    if problem is not None:
+        raise problem
+    return defender if E.is_baby_in_play(res.state, defender) else None
+
+
+def _baby_rule_failed(res: Resolution, player: int, attacker, key: AttackKey, baby, coin_stadium: int | None) -> bool:
+    """v0.114（docs/baby-rules-evolution-v0.114.md 5.2 節）: ベイビィポケモンのルール。相手のバトル場にベイビィポケモンがいるので、ワザを使うプレイヤー（``player``）が、宣言（p.309 の手順 3）の
+    あと・ワザの説明の処理の前にコインを 1 枚投げる（GR-2000-P314-BABY-RULE・CR-BABY-RULE-COIN・CR-BABY-RULE-COIN-STEP）。「うら」ならワザは失敗する（ログ ``attack_failed`` の ``reason``
+    ``baby_rule``。説明のダメージ・効果・説明のコインは処理しない。ワザは使ったことになり、番は終わる。GR-2000-P323-ATTACK-FAILURE）で True。
+
+    - ルールは特殊能力ではない（CR-BABY-RULE-NOT-POWER）。特殊能力を止める効果では止まらない。ナツメのESPがやり直す説明のコインではない（``AttackRun.flip`` を通さない。ログ ``coin_flip``
+      の ``source`` は ``baby_rule``）。決定・保存をまたいでも投げ直さない（ワザの要素の前に 1 度だけ投げる）
+    - 宣言の前の確かめ（使えないワザ・エネルギー不足・未対応）で拒否したワザでは投げない（この関数の前に拒否している）
+    - 手順 4 の効果（すなかけなど・［はんこう］）・手順 5 のこんらんのコインとの順番、「うら」のあとに手順 5 などをするかは決まらない（UQ-ATTACK-PRE-DAMAGE-COIN-ORDER。BQ1）。クチバシ
+      シティジムのコインとの順番・失敗したときの自分への 10 は VM1（既存の問い。ワザの失敗の順番）。どちらもコインの前に止める"""
+    state = res.state
+    if attack_coin_checks(state, attacker) or attack_rebellion_powers(state, attacker) or attacker.conditions.confused:
+        raise res.question("baby_rule_coin_order", f"ポケモン {attacker.pokemon_id} のワザ・相手のバトル場のベイビィポケモン {baby.pokemon_id}")
+    if coin_stadium is not None:
+        raise res.question("vermilion_attack_order", f"ポケモン {attacker.pokemon_id}（相手のバトル場のベイビィポケモン {baby.pokemon_id} のルールのコインでワザが失敗しうる）")
+    heads = flip_coins(state, player, 1, source=BABY_RULE_FAILED, effect=str(key), card=baby.card, pokemon_id=baby.pokemon_id).results[0] is CoinSide.HEADS
+    state.add_event("baby_rule_coin", player=player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(key), baby=baby.card,
+                    baby_pokemon_id=baby.pokemon_id, heads=heads)
+    if heads:
+        return False
+    state.add_event("attack_failed", player=player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(key), reason=BABY_RULE_FAILED)
+    return True
 
 
 def _stadium_attack_coin(res: Resolution, player: int, attacker, key: AttackKey, program: tuple, stadium: int) -> tuple:

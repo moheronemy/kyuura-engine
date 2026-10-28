@@ -109,6 +109,7 @@ from .decisions import (
     SELECT_ATTACHED_TRAINER,
     OPTIONAL_SHUFFLE,
     OPTIONAL_HEAL,
+    SELECT_ATTACHED_SPECIAL_ENERGY,
 )
 from .effects import (
     JANKEN_HANDS,
@@ -171,6 +172,7 @@ OPTION_MEANINGS: dict[str, str] = {
     SELECT_ATTACHED_TRAINER: "card",  # v0.95: とりさる（相手の場のポケモンについているトレーナーカード。公開）
     OPTIONAL_SHUFFLE: "number",  # v0.95: ［わるぢえ］で見た山札を切るか（山札の持ち主の番号。0 個は切らない）
     OPTIONAL_HEAL: "pokemon",  # v0.104: プリンの「かいふく」で取り除くか（ワザを使ったポケモンの番号。0 個は取り除かない）
+    SELECT_ATTACHED_SPECIAL_ENERGY: "card",  # v0.114: サイコキッス（相手の場のポケモンについている特殊エネルギーカード。公開）
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
 # v0.73: 化石の発掘（山札とトラッシュ）・マスターボール（見た山札の上の 7 枚）も、決めるプレイヤーが自分の山札を見る
@@ -656,6 +658,9 @@ PUBLIC_EVENTS = frozenset({
     "forced_switch_declined",
     # v0.110（docs/endure-armor-up-v0.110.md 8 章）: こらえる・こうてつかで「きぜつ」しなかった（のっているダメージ・残りHP・効果を与えた番は場の表の情報）
     "knockout_survived",
+    # v0.114（docs/baby-rules-evolution-v0.114.md）: ベイビィポケモンのルールのコインの結果（コインは表の情報）・サイコキッスで相手の山札にもどした、ついている特殊エネルギーカード
+    # （場の公開のカード）
+    "baby_rule_coin", "attached_energy_to_deck",
 })
 
 

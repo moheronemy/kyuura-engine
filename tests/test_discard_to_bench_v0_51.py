@@ -401,10 +401,11 @@ class CommonProcessingTest(unittest.TestCase):
         state = board(mon(HITMONCHAN), discard=(P, RATTATA, RATICATE, MYSTERIOUS_FOSSIL, CLEFAIRY_DOLL, HITMONCHAN), opponent_discard=(MAGIKARP, KADABRA),
                       opponent_bench=FULL_BENCH)
         own = (discard_uid(state, 0, RATTATA), discard_uid(state, 0, HITMONCHAN))
-        self.assertEqual(E.discard_basic_pokemon(state, 0), own)
-        self.assertEqual(E.discard_basic_pokemon(state, 1), (discard_uid(state, 1, MAGIKARP),))
-        self.assertEqual(E.bench_from_discard_candidates(state, (0, 1)), own)
-        self.assertEqual(E.bench_from_discard_candidates(state, (1, 0)), own)
+        # v0.114: 説明の版（v0.51 のカードはどれもネオより前。effects.TEXT_ERAS）を渡す
+        self.assertEqual(E.discard_basic_pokemon(state, 0, E.TEXT_PRE_NEO), own)
+        self.assertEqual(E.discard_basic_pokemon(state, 1, E.TEXT_PRE_NEO), (discard_uid(state, 1, MAGIKARP),))
+        self.assertEqual(E.bench_from_discard_candidates(state, (0, 1), E.TEXT_PRE_NEO), own)
+        self.assertEqual(E.bench_from_discard_candidates(state, (1, 0), E.TEXT_PRE_NEO), own)
         for hp, counters in ((30, 1), (40, 2), (50, 2), (60, 3), (70, 3), (120, 6), (10, 0)):
             with self.subTest(hp=hp):
                 self.assertEqual(E.half_hp_counters(state, hp), counters)

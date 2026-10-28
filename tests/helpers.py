@@ -698,7 +698,8 @@ def uids(state: GameState, player: int, zone: str, card_id: str | None = None) -
 
 
 def basics_in_hand(state: GameState, player: int) -> list[int]:
-    return [u for u in state.players[player].hand if state.card_def(u).is_basic_pokemon]
+    """手札の、対戦準備・ベンチに出せるポケモンのカード（たねポケモンと、v0.114 からベイビィポケモンのカード。p.308・p.309。ベイビィのないデッキでは v0.113 までと同じ）。"""
+    return [u for u in state.players[player].hand if state.card_def(u).is_baby_or_basic_pokemon]
 
 
 def energy_in_hand(state: GameState, player: int) -> list[int]:
@@ -1494,6 +1495,13 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.CoinsPerOwnTypedEnergyBonusDamage,
     _effects.DiscardFieldEnergyThenCoinsDamage,
     _effects.CoinsPerPokemonInPlayHeadsDamageTailsSelfDamage,
+    # v0.114（docs/baby-rules-evolution-v0.114.md 6 章。ベイビィポケモンのワザ。次の自分の番の終わりまでの場の特殊能力の停止・特殊能力を持つポケモン全員へのダメージ・
+    # 相手の特殊エネルギーカードを山札にもどす・山札のベイビィをベンチに・相手の場の選んだポケモンにダメージカウンター）
+    _effects.DamageThenFieldPowerSuppressionUntilOwnNextTurn,
+    _effects.PowerHoldersSpreadDamage,
+    _effects.CoinReturnOpponentSpecialEnergyToDeck,
+    _effects.PutBabyFromDeckOntoBenchOrFail,
+    _effects.PlaceCountersOnChosenOpponentPokemon,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

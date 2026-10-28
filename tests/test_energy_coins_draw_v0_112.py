@@ -214,7 +214,7 @@ class RegistrationTest(unittest.TestCase):
         self.assertIn("jp_en_differences", sources[TENTACRUEL]["notes"])
         self.assertEqual(sorted(k for k in links["latest_descriptions"]["adopted_printed_text"] if k.split("/")[0] in V0112),
                          sorted(f"{card}/attack/{i}" for card in V0112 for i in range(2)))
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (237, 238))
+        H.assert_stop_code_counts_since(self, links, 237, 238)  # v0.114: 総数は tests/test_catalog_contract.py（この版で加えたコードはない）
 
 
 # ---------------------------------------------------------------- 3 章: しょくしゅをつかう

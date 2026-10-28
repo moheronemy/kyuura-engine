@@ -115,7 +115,7 @@ from .decisions import (
     DAMAGE_STEP_ORDER,
     CHALLENGE_BENCH, QUIZ_ANSWER, QUIZ_ATTACK, QUIZ_CARD, SECRET_PLAN_CARD,
     JANKEN_HAND, OPTIONAL_DRAIN, OPTIONAL_DISCARD_ALL, SELECT_MARKER_COUNT,
-    OPTIONAL_SHUFFLE, SELECT_ATTACHED_TRAINER, OPTIONAL_HEAL,
+    OPTIONAL_SHUFFLE, SELECT_ATTACHED_TRAINER, OPTIONAL_HEAL, SELECT_ATTACHED_SPECIAL_ENERGY,
     SEARCH_DECK_OR_DISCARD, TAKE_LOOKED_POKEMON, SELECT_OPPONENT_PRIZE, TAKE_LOOKED_TRAINER,
     EVOLUTION_SONG_POKEMON,
 )
@@ -153,6 +153,7 @@ from .persistent import (
     RETURN_IN_PLAY_TO_HAND,
     remove_on_damage,
     remove_persistent_effects,
+    remove_on_entering_active,
     remove_source_left_effects,
     require_can_leave,
     received_attack_damage_bonuses,
@@ -771,6 +772,7 @@ DAMAGE_TAKEN_ELEMENT = "damage_taken"  # v0.92: 相手に与える「受ける�
 LEAVE_LOCK_ELEMENT = "leave_lock"  # v0.93: 相手に与える「バトル場をはなれられない」効果（からまるいと・からみつく・ねばるみつ・くいつく・どくしばり）
 # v0.95: 相手の場のポケモンについているトレーナーカードを 1 枚、相手の山札にもどす効果（エイパムの「とりさる」。ついているポケモンへの効果なので「ワザをうけない」状態・「とうめい」を評価する）
 TRAINER_RETURN_ELEMENT = "trainer_return"
+ENERGY_RETURN_ELEMENT = "energy_return"  # v0.114: 相手の場のポケモンについている特殊エネルギーカードを相手の山札にもどす（ムチュールの「サイコキッス」）
 # v0.100（docs/sketch-perish-song-history-v0.100.md 5 章）: 相手の対戦ポケモンを、ダメージによらず「きぜつ」させる効果（ムウマの「ほろびのうた」。相手のポケモンへの効果なので「ワザをうけない」
 # 状態・「とうめい」・効果だけを無効にする効果を評価する。ダメージの要素ではない）
 KNOCK_OUT_ELEMENT = "knock_out"
@@ -782,7 +784,7 @@ ATTACK_ELEMENTS = (DAMAGE_ELEMENT, FORCED_SWITCH_ELEMENT, POISON, SLEEP, PARALYS
                    HEAL_ELEMENT, COUNTERS_ELEMENT, EVOLVE_ELEMENT, RETURN_IN_PLAY_TO_HAND_ELEMENT, ENERGY_MOVE_ELEMENT, WEAKNESS_CHANGE_ELEMENT,
                    RESISTANCE_CHANGE_ELEMENT, MAX_HP_ELEMENT, DEVOLVE_ELEMENT, POWER_LOCK_ELEMENT, ATTACH_LOCK_ELEMENT, WAKE_ELEMENT, TRAINER_DISCARD_ELEMENT,
                    STATUS_GUARD_ELEMENT, BENCH_PROTECTION_ELEMENT, MARKER_ELEMENT, CURE_ELEMENT, DAMAGE_TAKEN_ELEMENT, LEAVE_LOCK_ELEMENT,
-                   TRAINER_RETURN_ELEMENT, KNOCK_OUT_ELEMENT, DEALT_DAMAGE_ELEMENT)
+                   TRAINER_RETURN_ELEMENT, KNOCK_OUT_ELEMENT, DEALT_DAMAGE_ELEMENT, ENERGY_RETURN_ELEMENT)
 
 
 def evasion_power(state: GameState, pokemon: PokemonInPlay) -> tuple[PowerKey, AttackImmunityOnHeads] | None:
@@ -3054,15 +3056,29 @@ class DamageAndBenchTypeDamage(AttackEffect):
 # （docs/bench-search-counter-drain-v0.32.md）。処理は解決の基盤の要素の並び（resolution/programs.py の BUILDERS）。処理に使う文面は kyuura の印刷の文面。
 
 
-def bench_from_deck_candidates(state: GameState, player: int, names: tuple[str, ...], pokemon_type: EnergyType | None = None) -> list[int]:
+def bench_from_deck_candidates(state: GameState, player: int, names: tuple[str, ...], pokemon_type: EnergyType | None = None, *,
+                               era: str | None = None) -> list[int]:
     """``player`` の山札のカードのうち、名前（``name_ja``）が ``names`` のどれかと同じたねポケモン（v0.32。uid の小さい順。山札の並びを写さない）。
     同じ名前の別のカード（第2弾のナゾノクサと第4弾のナゾノクサなど）は、どれも選べる（説明は名前で指す）。v0.34: ``pokemon_type`` なら、名前でなく
-    そのタイプのたねポケモン（ガラガラの「たすけをよぶ」。進化カードは選べない）。"""
+    そのタイプのたねポケモン（ガラガラの「たすけをよぶ」。進化カードは選べない）。
+
+    v0.114: タイプで選ぶ説明（``pokemon_type``）は、そのワザの説明の版（``era``。``TEXT_ERAS``）がネオより前なら、そのタイプのベイビィポケモンカードもふくむ（「ポケモン」を選び
+    「進化カードは選べない」。ベイビィポケモンカードはたねポケモンカードと同様。GR-2000-P325-PRE-NEO-BABY）。neo の説明でタイプで選ぶワザは写しにない（エンジンの不具合として止める）。
+    名前で選ぶ説明は今までどおりたねポケモンのカード（ベイビィポケモンに同じ名前のカードは写しにない）。"""
     def matches(definition) -> bool:
         return definition.pokemon_type is pokemon_type if pokemon_type is not None else definition.name_ja in names
 
+    def kind_ok(definition) -> bool:
+        if definition.is_basic_pokemon:
+            return True
+        if pokemon_type is None or not definition.is_baby_pokemon:
+            return False
+        if era != TEXT_PRE_NEO:
+            raise RuntimeError(f"タイプで山札からベンチに出すワザの説明の版 {era!r} で、ベイビィポケモンカード {definition.id} の扱いが決まっていない（エンジンの不具合）")
+        return True
+
     return sorted(uid for uid in state.players[player].deck
-                  if state.card_def(uid).is_basic_pokemon and matches(state.card_def(uid)))
+                  if matches(state.card_def(uid)) and kind_ok(state.card_def(uid)))
 
 
 # v0.75: ``PutBasicFromDeckOntoBench`` が受け付ける、パラス（ES1-010）の「ほうしをとばす」の書き方（名前 1 つ）。v0.32 の「…を1匹さがしてベンチにだす。…よくきる。自分の
@@ -3657,7 +3673,7 @@ class PutTypeBasicFromDeckOntoBench(AttackEffect):
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=(1, 1),
-                              options=bench_from_deck_candidates(state, use.player, (), self.pokemon_type))
+                              options=bench_from_deck_candidates(state, use.player, (), self.pokemon_type, era=text_era(use.key.card_id)))
 
 
 # ---------------------------------------------------------------- v0.35: 可変枚数のコインの先読み・ダメージの計算の順番の決定と合わせて加えた 5 枚
@@ -6613,10 +6629,11 @@ class DiscardFromHandThenRetrieveEnergy(TrainerEffect):
         return problems
 
 
-def _is_pokemon_card(state: GameState, uid: int) -> bool:
-    """v0.24: 「たねポケモン」または「進化カード」（1 進化・2 進化）か。既存のカードの定義（``is_basic_pokemon``・``is_evolution_pokemon``）で決める。"""
+def _is_pokemon_card(state: GameState, uid: int, era: str) -> bool:
+    """v0.24: 「たねポケモン」または「進化カード」（1 進化・2 進化）か。既存のカードの定義（``is_basic_pokemon``・``is_evolution_pokemon``）で決める。v0.114: 説明の版 ``era`` で、
+    ベイビィポケモンカードを「たねポケモン」にふくむか決める（ポケモン交換おじさんはネオより前のカード。GR-2000-P325-PRE-NEO-BABY）。"""
     definition = state.card_def(uid)
-    return definition.is_basic_pokemon or definition.is_evolution_pokemon
+    return definition.is_evolution_pokemon or card_is_basic_in_text_or_stop(definition, era, "ポケモン交換おじさんの「たねポケモン」") if definition.category == "pokemon" else False
 
 
 @dataclass(frozen=True)
@@ -6643,7 +6660,7 @@ class TradePokemonWithDeck(TrainerEffect):
     implementation_id = "trade_pokemon_with_deck"
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
-        if not any(uid != use.card and _is_pokemon_card(state, uid) for uid in state.players[use.player].hand):
+        if not any(uid != use.card and _is_pokemon_card(state, uid, text_era(use.card_id)) for uid in state.players[use.player].hand):
             raise IllegalActionError(
                 "NO_POKEMON_CARD_IN_HAND",
                 "このカードを除く手札に「たねポケモン」・「進化カード」がなく、使うための条件（1 枚選び、相手プレイヤーに見せてから、山札に"
@@ -6651,14 +6668,14 @@ class TradePokemonWithDeck(TrainerEffect):
             )
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
-        options = [uid for uid in state.players[use.player].hand if _is_pokemon_card(state, uid)]
+        options = [uid for uid in state.players[use.player].hand if _is_pokemon_card(state, uid, text_era(use.card_id))]
         push_trainer_decision(state, use, kind=RETURN_TO_DECK, player=use.player, options=options, min_choices=1, max_choices=1)
 
     def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         if decision.kind == RETURN_TO_DECK:
             (returned,) = choices
             return_hand_to_deck(state, use.player, returned)
-            options = sorted(uid for uid in state.players[use.player].deck if _is_pokemon_card(state, uid))
+            options = sorted(uid for uid in state.players[use.player].deck if _is_pokemon_card(state, uid, text_era(use.card_id)))
             push_trainer_decision(
                 state, use, kind=SEARCH_DECK, player=use.player, options=options, context=(("returned", returned),),
                 min_choices=1, max_choices=1,
@@ -6677,9 +6694,9 @@ class TradePokemonWithDeck(TrainerEffect):
         if decision.player != use.player:
             problems.append(f"「ポケモン交換おじさん」の決定を決定するのがプレイヤー {decision.player} で、使ったプレイヤー {use.player} ではない")
         if decision.kind == RETURN_TO_DECK:
-            expected = tuple(uid for uid in p.hand if _is_pokemon_card(state, uid))
+            expected = tuple(uid for uid in p.hand if _is_pokemon_card(state, uid, text_era(use.card_id)))
         elif decision.kind == SEARCH_DECK:
-            expected = tuple(sorted(uid for uid in p.deck if _is_pokemon_card(state, uid)))
+            expected = tuple(sorted(uid for uid in p.deck if _is_pokemon_card(state, uid, text_era(use.card_id))))
             returned = decision.context_value("returned", None)
             since = max((i for i, e in enumerate(state.log) if e["kind"] == "play_trainer" and e["card"] == use.card), default=None)
             logged = None if since is None else next((e["card"] for e in state.log[since:] if e["kind"] == "return_to_deck"), None)
@@ -7139,6 +7156,7 @@ def _switch_active_with_bench(state: GameState, owner: int, pokemon_id: int, *, 
     # ワザによる持続する効果も消える（p.322「通常、「持続する効果」を受けたポケモンがベンチにもどったら…消えてなくなります」。v0.4b）
     remove_persistent_effects(state, owner, old, SWITCH)
     remove_source_left_effects(state, owner, old)  # v0.92: 発生源がバトル場をはなれたら消える効果（くろいまなざし・ヨーギラスのにらみつける）
+    remove_on_entering_active(state, owner, p.active)  # v0.114: バトル場に出てきたら消える効果（じっとみる）
     mark_returned_to_bench(old)  # v0.48: 特殊能力で色を変えた記録に、ベンチにもどったことを残す（VS1）
     discard_on_leaving_active(state, owner, old)  # v0.65: バトル場をはなれた時にトラッシュするついているトレーナー（変わり身の術）
     # v0.87: 入れ替えの事実への反応（ベンチにもどった ``old`` の［やけのこり］・控えから出た ``p.active`` への相手の［まきびし］）を記録する（処理するのは呼ぶ側の流れ。``movement``）
@@ -9428,9 +9446,11 @@ SUMMON_MINIONS_TEXTS = (
 )
 
 
-def deck_basic_pokemon(state: GameState, player: int) -> list[int]:
-    """プレイヤーの山札のたねポケモンのカード（uid の小さい順。山札の並びを決定に写さない）（v0.43）。"""
-    return sorted(uid for uid in state.players[player].deck if state.card_def(uid).is_basic_pokemon)
+def deck_basic_pokemon(state: GameState, player: int, era: str) -> list[int]:
+    """プレイヤーの山札のたねポケモンのカード（uid の小さい順。山札の並びを決定に写さない）（v0.43）。v0.114: 説明の版 ``era`` で、ベイビィポケモンカードをふくむか決める
+    （［てしたをよぶ］はネオより前のカードの「ポケモンカード(進化カード以外)」。GR-2000-P325-PRE-NEO-BABY）。"""
+    return sorted(uid for uid in state.players[player].deck
+                  if state.card_def(uid).category == "pokemon" and card_is_basic_in_text_or_stop(state.card_def(uid), era, "山札のたねポケモン"))
 
 
 @dataclass(frozen=True)
@@ -9458,12 +9478,12 @@ class BenchBasicsFromDeckOnEntry(EntryPower):
 
     def _limit(self, state: GameState, use: PowerUse) -> int:
         space = bench_limit(state, use.player) - len(state.players[use.player].bench)
-        return min(self.max_cards, space, len(deck_basic_pokemon(state, use.player)))
+        return min(self.max_cards, space, len(deck_basic_pokemon(state, use.player, text_era(use.key.card_id))))
 
     def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
         if len(state.players[use.player].bench) >= bench_limit(state, use.player):
             return _power_zero_cards("ベンチに空きがない")
-        if not deck_basic_pokemon(state, use.player):
+        if not deck_basic_pokemon(state, use.player, text_era(use.key.card_id)):
             return _power_zero_cards("山札にたねポケモンがない（山札が 0 枚を含む）")
         return None
 
@@ -9471,13 +9491,13 @@ class BenchBasicsFromDeckOnEntry(EntryPower):
         problem = self.accept_problem(state, use)
         if problem is not None:
             raise RuntimeError(f"てしたをよぶを、止めるはずの場合に使った（{problem.code}。機会の決定の確認の漏れ。エンジンの不具合）")
-        push_power_decision(state, use, kind=BENCH_FROM_DECK, player=use.player, options=deck_basic_pokemon(state, use.player), min_choices=0,
+        push_power_decision(state, use, kind=BENCH_FROM_DECK, player=use.player, options=deck_basic_pokemon(state, use.player, text_era(use.key.card_id)), min_choices=0,
                             max_choices=self._limit(state, use))
 
     def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         if not choices:
             raise _power_zero_cards("ベンチに出すカードを 0 枚選んだ")
-        cards = tuple(uid for uid in deck_basic_pokemon(state, use.player) if uid in choices)
+        cards = tuple(uid for uid in deck_basic_pokemon(state, use.player, text_era(use.key.card_id)) if uid in choices)
         if len(cards) != len(choices) or len(cards) > self._limit(state, use):
             raise RuntimeError(f"てしたをよぶで選んだカード {choices} が、山札の選べるたねポケモンではない・多すぎる（エンジンの不具合）")
         _, user = state.find_pokemon(use.pokemon_id)
@@ -9488,7 +9508,7 @@ class BenchBasicsFromDeckOnEntry(EntryPower):
         shuffle_deck(state, use.player, power=str(use.key))
 
     def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
-        return _power_decision_form(decision, use, kind=BENCH_FROM_DECK, choices=(0, self._limit(state, use)), options=deck_basic_pokemon(state, use.player))
+        return _power_decision_form(decision, use, kind=BENCH_FROM_DECK, choices=(0, self._limit(state, use)), options=deck_basic_pokemon(state, use.player, text_era(use.key.card_id)))
 
 
 @dataclass(frozen=True)
@@ -12552,7 +12572,12 @@ class CapDamageFromBasic(ContinuousPower):
         return (STRANGE_BARRIER_TEXT.format(n=self.threshold, m=self.amount),)
 
     def _modifier(self, state: GameState, holder: PokemonInPlay, label: str, source: PokemonInPlay) -> DamageModifier | None:
-        if not form_def(state, source).is_basic_pokemon:  # v0.49: 今の姿のカードがたねポケモンか（［へんしん］・「ばける」）
+        # v0.49: 今の姿のカードがたねポケモンか（［へんしん］・「ばける」）。v0.114: 場の「たねポケモン」（説明の版で決める。ネオより前の説明では、場のベイビィポケモンはたねポケモンと
+        # 同様、ベイビィから進化したたねポケモンは進化ポケモン。GR-2000-P325-PRE-NEO-BABY・GR-2000-P315-EVOLVED-BABY）
+        basic = field_is_basic_in_text(state, source, text_era(form_def(state, holder).id))
+        if basic is None:
+            raise neo_basic_baby_error(f"ポケモン {holder.pokemon_id} の［{label}］の「たねポケモン」（ダメージを与えるポケモン {source.pokemon_id}）")
+        if not basic:
             return None
         return DamageModifier(step=8, amount=self.amount, label=label, source=holder.card, operation=SET_IF_AT_LEAST, threshold=self.threshold)
 
@@ -13176,8 +13201,9 @@ class ShuffleHandIntoDeckThenDraw(AttackEffect):
             raise ValueError(f"引く枚数は 1 以上（{self.count!r}）")
 
     def check(self, attack: Attack) -> list[str]:
-        text = PSYCHIC_EXCHANGE_TEXT.format(n=self.count)
-        return _check_form(attack, "手札を山札にもどして引くワザ", damage="none") + _check_exact_text(attack, "手札を山札にもどして引くワザ", (text,))
+        # v0.114: ピィ（neo1-070）の「ピピピ」の書き方（「その山札をよく切る」「山札からカードを…引いて」。同じ意味）も受け付ける
+        texts = (PSYCHIC_EXCHANGE_TEXT.format(n=self.count), SHUFFLE_HAND_DRAW_FROM_DECK_TEXT.format(n=self.count))
+        return _check_form(attack, "手札を山札にもどして引くワザ", damage="none") + _check_exact_text(attack, "手札を山札にもどして引くワザ", texts)
 
 
 # ---------------------------------------------------------------- v0.47（docs/fossil-hidden-info-v0.47.md）。なにかの化石・ピッピ人形（ポケモンとして場に出せる
@@ -14733,6 +14759,208 @@ def form_def(state: GameState, pokemon: PokemonInPlay) -> CardDefinition:
     return state.card_def(current_form(state, pokemon).card)
 
 
+# ---------------------------------------------------------------- v0.114（docs/baby-rules-evolution-v0.114.md 5 章）: ベイビィポケモンの場の分類とカードの説明の範囲
+#
+# 印刷の段階（``CardDefinition.stage``）と、場での分類・カードの説明の「たねポケモン」「進化カード」の範囲を分ける。
+# - 場の分類（GR-2000-P313-POKEMON-COMPOSITION・GR-2000-P315-EVOLVED-BABY）: 進化していないベイビィポケモンは「ベイビィポケモン」。ベイビィポケモンの上にたねポケモンカードを重ねた
+#   ポケモンは、場にいるかぎり「進化ポケモン」（印刷の段階は basic のまま）。場をはなれたら、それぞれのカードにもどる（印刷の分類）
+# - カードの説明の範囲（GR-2000-P325-PRE-NEO-BABY）: ネオより前のカードの説明では、ベイビィポケモンカードはたねポケモンカードと同様、場のベイビィポケモンはたねポケモンと同様、
+#   ベイビィを進化させたたねポケモンカードは場にあるかぎり進化カード。neo の説明の「たねポケモン」「進化カード」とだけ書く範囲にベイビィをふくむかは決まらない
+#   （UQ-NEO-TEXT-BABY-CATEGORIES）。「ベイビィポケモン」と並べて書く説明は、書いたとおり（ベイビィをふくむ）
+# 範囲はカードの登録（``TEXT_ERAS``。処理に使う文面の版）で決める。解決の部品はカードの id で分けない
+
+FIELD_BABY, FIELD_BASIC, FIELD_EVOLVED = "baby", "basic", "evolved"
+TEXT_PRE_NEO = "pre_neo"  # ネオより前のカードの説明（GR-2000-P325-PRE-NEO-BABY を当てはめる）
+TEXT_NEO = "neo"  # neo のカードの説明（「たねポケモン」「進化カード」とだけ書く範囲のベイビィは UQ-NEO-TEXT-BABY-CATEGORIES。ネオより前の文面の neo の印刷も、kyuura の事例のとおりこちら）
+NEO_BASIC_BABY_CODE = "UNRESOLVED_NEO_TEXT_BASIC_BABY"
+NEO_BASIC_BABY_REASON = (
+    "neo のカードの説明で「たねポケモン」とだけ書かれているとき、ベイビィポケモン（カード・場のベイビィポケモン）をふくむか、ベイビィから進化したたねポケモンを場の「たねポケモン」・"
+    "「1進化ポケモン」とあつかうかは、2000.02.14 版の公式ルール（p.325 はネオより前のカードの読み方だけを書く）・kyuura の記録から決められない（NB1。UQ-NEO-TEXT-BABY-CATEGORIES）")
+NEO_EVOLUTION_CARD_BABY_CODE = "UNRESOLVED_NEO_TEXT_EVOLUTION_CARD_BABY"
+NEO_EVOLUTION_CARD_BABY_REASON = (
+    "neo のカードの説明で「進化カード」とだけ書かれているとき、ベイビィポケモンを進化させる（させた）たねポケモンカードをふくむかは、2000.02.14 版の公式ルール（p.325 は"
+    "ネオより前のカードの読み方だけを書く）・kyuura の記録から決められない（NB2。UQ-NEO-TEXT-BABY-CATEGORIES）")
+TRANSFORM_BABY_CODE = "UNRESOLVED_TRANSFORM_BABY"
+TRANSFORM_BABY_REASON = (
+    "メタモンの［へんしん］で相手の対戦ポケモンのベイビィポケモンと同じカードとしてあつかわれているとき、メタモンがベイビィポケモン（ベイビィポケモンのルール・場のベイビィポケモンとしての"
+    "あつかい）を持つかは、印刷の文面・kyuura の記録から決められない（BX1。写した特殊能力の TF1 とは別の問い。ベイビィポケモンのルールは特殊能力ではない。CR-BABY-RULE-NOT-POWER）")
+
+
+def evolved_from_baby(state: GameState, pokemon: PokemonInPlay) -> bool:
+    """場のポケモン ``pokemon`` の実際の重なりのいちばん下がベイビィポケモンカードで、その上にカードがある（ベイビィから進化した。v0.114）。うらのカードはいつも偽。"""
+    stack = pokemon.evolution_stack
+    return bool(stack) and not state.is_face_down(pokemon) and state.printed_def(stack[0]).is_baby_pokemon
+
+
+def copied_form(state: GameState, pokemon: PokemonInPlay) -> bool:
+    """今の姿が、いちばん上のカードでないカード（［へんしん］・「ばける」）か（v0.114）。"""
+    return current_form(state, pokemon).card != pokemon.card
+
+
+def field_stage(state: GameState, pokemon: PokemonInPlay) -> str:
+    """場のポケモンの場での分類（v0.114）: ``FIELD_BABY``（進化していないベイビィポケモン）・``FIELD_BASIC``（たねポケモン。ベイビィから進化したものを除く）・``FIELD_EVOLVED``
+    （進化ポケモン: 1 進化・2 進化と、ベイビィから進化したたねポケモン。GR-2000-P315-EVOLVED-BABY）。
+
+    - 今の姿（``form_def``）のカードの印刷の段階で決める（v0.49 の［へんしん］・「ばける」の読み方と同じ）。ベイビィから進化したかは、実際の重なり（``evolved_from_baby``）で、今の姿が
+      いちばん上のカードのときだけ見る（［へんしん］のメタモンは相手の重なりを写さない。もとの個体がベイビィでないのに姿だけでベイビィのルールを写さない）
+    - ［へんしん］でベイビィの姿になったメタモンは ``FIELD_BABY`` を返す（姿の読み方）。ベイビィとたねを分ける処理は ``transform_baby_question`` で、決まらない場面を止める
+    - うらのカード（マチスの秘策）は「たねポケモン」としてあつかう（``FIELD_BASIC``）。場でポケモンとしてあつかうトレーナー（なにかの化石・ピッピ人形）は場での定義のたねポケモン"""
+    form = form_def(state, pokemon)
+    if form.is_evolution_pokemon:
+        return FIELD_EVOLVED
+    if form.is_baby_pokemon:
+        return FIELD_BABY
+    if not copied_form(state, pokemon) and evolved_from_baby(state, pokemon):
+        return FIELD_EVOLVED
+    return FIELD_BASIC
+
+
+def is_evolution_in_play(state: GameState, pokemon: PokemonInPlay) -> bool:
+    """場の「進化ポケモン」か（v0.114。GR-2000-P315-EVOLVED-BABY。1 進化・2 進化と、ベイビィから進化したたねポケモン）。v0.113 までの ``form_def(...).is_evolution_pokemon`` と、
+    ベイビィから進化していないポケモンでは同じ答え。"""
+    return field_stage(state, pokemon) == FIELD_EVOLVED
+
+
+def is_baby_in_play(state: GameState, pokemon: PokemonInPlay) -> bool:
+    """場の進化していないベイビィポケモンか（v0.114。いちばん上の印刷のカードがベイビィポケモンカード。［へんしん］で写した姿・うらのカードは偽。ベイビィの姿のメタモンの扱いは
+    ``transform_baby_question``）。ベイビィポケモンのルール（バトル場にいるかぎり）は、この個体についてだけはたらく。"""
+    return not state.is_face_down(pokemon) and not copied_form(state, pokemon) and state.card_def(pokemon.card).is_baby_pokemon and state.card_def(pokemon.card).baby_rule
+
+
+def transform_baby_question(state: GameState, pokemon: PokemonInPlay) -> UnsupportedError | None:
+    """v0.114（BX1）: ［へんしん］で相手のベイビィポケモンと同じカードとしてあつかわれているメタモンなら、ベイビィとしてあつかうかが決まらないので止める理由。ほかは None。呼ぶ側は、
+    ベイビィかどうかで結果が変わるときだけ使う（ベイビィとたねを分けない処理では止めない）。"""
+    if copied_form(state, pokemon) and form_def(state, pokemon).is_baby_pokemon:
+        return UnsupportedError(TRANSFORM_BABY_CODE, f"ポケモン {pokemon.pokemon_id}: {TRANSFORM_BABY_REASON}")
+    return None
+
+
+def baby_rule_applies(state: GameState, player: int) -> bool:
+    """v0.114: プレイヤー ``player`` がワザを使うとき、相手のバトル場のベイビィポケモンのルールのコインがあるか（相手のバトル場が ``is_baby_in_play``。GR-2000-P314-BABY-RULE）。"""
+    defender = state.players[1 - player].active
+    return defender is not None and is_baby_in_play(state, defender)
+
+
+def ninja_trick_baby_candidates(state: GameState, player: int) -> tuple[int, ...]:
+    """v0.114: プレイヤー ``player``（ワザを受ける側）の控えの、おもての進化していないベイビィポケモン（変わり身の術でバトル場に出うる。出ればベイビィポケモンのルールのコインが
+    あるので、入れ替えとコインの順番で結果が変わる。NT1）。"""
+    return tuple(pokemon.pokemon_id for pokemon in state.players[player].bench if is_baby_in_play(state, pokemon))
+
+
+# v0.114: 説明の「たねポケモン」「進化カード」の範囲を版で読むカードの登録（カード id → 処理に使う文面の版）。処理に使う文面（採用した印刷の文面）の出典のカードの発売が
+# 「ポケモンカード★ネオ」（2000-02-04）より前なら ``TEXT_PRE_NEO``、neo の商品の印刷なら ``TEXT_NEO``（ネオより前と同じ書き方の説明を neo の商品で印刷したもの（イントロパック★neo の
+# マスターボール）も、kyuura の UQ-NEO-TEXT-BABY-CATEGORIES の事例のとおり ``TEXT_NEO``）。登録したカードの処理だけが ``text_era`` を読む（tests が、``text_era`` を読む効果の
+# 登録と、この表のカードが同じことと、カードのデータの商品（``jp_set``）と版が合うことを確かめる）
+TEXT_ERAS: Mapping[str, str] = MappingProxyType({
+    **{card_id: TEXT_PRE_NEO for card_id in (
+        "PMCG1-078",  # 元気のかけら（トラッシュのたねポケモンをベンチに）
+        "PMCG1-084",  # ポケモンの笛（相手のトラッシュのポケモンカード（進化カード以外）を相手のベンチに）
+        "PMCG1-093",  # ポケモン交換おじさん（ポケモンカードか進化カード）
+        "PMCG2-032",  # ガラガラの「たすけをよぶ」（山札の「闘」ポケモン。進化カードは選べない）
+        "PMCG4-053",  # わるいカイリューの力（山札のポケモンカード（進化カード以外））
+        "PMCG4-058",  # たたきつけろ!挑戦状（山札のポケモンカード（進化カード以外））
+        "PMCG5-063",  # エリカのミニリュウの力（「たねポケモン」から受けるダメージ）
+        "PMCG5-073",  # エリカの香水（相手の手札の「たねポケモン」）
+        "PMCG5-092",  # マチス（手札の「たねポケモン」をバトル場に）
+        "PMCG6-051",  # ナツメのスリーパーの「たましいのかえり」（トラッシュの「たねポケモン」）
+        "PR1-039",  # エリカのミニリュウ（プロモ）
+        "GD1-017",  # 元気のかけら（ポケモンジム第1弾の文面）
+        "GD3-021",  # マチス（ポケモンジム第2弾）
+        "GD4-013",  # エリカのミニリュウ（ポケモンジム第2弾）
+        "GD4-018",  # エリカの香水（ポケモンジム第2弾）
+        "GD5-019",  # 元気のかたまり（ポケモンジム第3弾）
+        "GD6-010",  # ナツメのスリーパー（ポケモンジム第3弾）
+        "GD6-023",  # マスターボール（ポケモンジム第3弾）
+        "ES2-034",  # 元気のかたまり（拡張シート第2弾）
+        "ES2-036",  # マスターボール（拡張シート第2弾）
+        "QSG-053",  # ポケモン交換おじさん（クイックスターターギフト）
+        "QSG-058",  # マスターボール（クイックスターターギフト）
+    )},
+    **{card_id: TEXT_NEO for card_id in (
+        "neo2-056",  # 退化スプレーHYPER（「進化ポケモン」の「進化カード」）
+        "neo3-056",  # ポケモン育て屋夫婦（場の「たねポケモン」「1進化ポケモン」）
+        "NIP1-021",  # マスターボール（イントロパック★neo。ネオより前と同じ書き方の説明）
+        "NIP2-022",  # マスターボール（イントロパック★neo）
+        "neo4-090",  # やさしいプクリンの「しんかのうた」（選んだポケモンから進化する「進化カード」）
+    )},
+})
+
+
+def text_era(card_id: str) -> str:
+    """カード ``card_id`` の処理に使う文面の版（``TEXT_PRE_NEO``・``TEXT_NEO``。v0.114。登録の ``TEXT_ERAS``）。ベイビィの範囲を読む処理が登録のないカードで呼ばれたら
+    エンジンの不具合（登録の漏れ。``tests`` が登録の一覧を確かめる）。"""
+    era = TEXT_ERAS.get(card_id)
+    if era is None:
+        raise RuntimeError(f"カード {card_id} の説明の「たねポケモン」「進化カード」の範囲の版（TEXT_ERAS）が登録されていない（エンジンの不具合）")
+    return era
+
+
+def card_is_basic_in_text(definition: CardDefinition, era: str) -> bool | None:
+    """手札・山札・トラッシュ・サイドのカード（印刷の定義）が、カードの説明の「たねポケモン」（たねポケモンカード）に当たるか（v0.114）。True・False か、決まらないなら None
+    （neo の説明のベイビィポケモンカード。NB1）。ネオより前の説明ではベイビィポケモンカードもふくむ（GR-2000-P325-PRE-NEO-BABY）。"""
+    if definition.is_basic_pokemon:
+        return True
+    if definition.is_baby_pokemon:
+        return True if era == TEXT_PRE_NEO else None
+    return False
+
+
+def card_is_evolution_in_text(definition: CardDefinition, era: str) -> bool:
+    """手札・山札・トラッシュのカード（印刷の定義）が、カードの説明の「進化カード」に当たるか（v0.114）。1 進化・2 進化のカード。たねポケモンカードは、場の外ではどの版の説明でも
+    進化カードではない（GR-2000-P325-PRE-NEO-BABY の「場にあるかぎり」。neo の説明のベイビィを進化させるたねポケモンカードは ``baby_evolution_card_in_text``）。"""
+    return definition.is_evolution_pokemon
+
+
+def baby_evolution_card_in_text(era: str) -> bool | None:
+    """v0.114: 場のベイビィポケモンを進化させる（させた）たねポケモンカードが、カードの説明の「進化カード」に当たるか。ネオより前の説明では、場にあるかぎり当たる
+    （GR-2000-P325-PRE-NEO-BABY）。neo の説明では決まらない（None。NB2）。場の外のたねポケモンカードは、ネオより前の説明でも進化カードではない（``card_is_evolution_in_text``）。"""
+    return True if era == TEXT_PRE_NEO else None
+
+
+def deck_baby_evolution_card_in_text(era: str) -> bool | None:
+    """v0.114: 山札・トラッシュ（場の外）の、場のベイビィポケモンから進化するたねポケモンカードが、説明の「（そのポケモンから進化する）進化カード」に当たるか。ネオより前の説明では
+    当たらない（GR-2000-P325-PRE-NEO-BABY は「場にあるかぎり」進化カードとあつかうと書く。場の外のカードは印刷の分類のたねポケモンカード）。neo の説明では決まらない（None。NB2）。"""
+    return False if era == TEXT_PRE_NEO else None
+
+
+def field_is_basic_in_text(state: GameState, pokemon: PokemonInPlay, era: str) -> bool | None:
+    """場のポケモンが、カードの説明の「たねポケモン」に当たるか（v0.114）。たねポケモン（ベイビィから進化していない）は True、進化ポケモン（ベイビィから進化したたねポケモンを
+    ふくむ。GR-2000-P315-EVOLVED-BABY は版によらない一般の規定）は False。場のベイビィポケモンは、ネオより前の説明では True（GR-2000-P325-PRE-NEO-BABY）、neo の説明では None（NB1）。"""
+    stage = field_stage(state, pokemon)
+    if stage == FIELD_BASIC:
+        return True
+    if stage == FIELD_BABY:
+        return True if era == TEXT_PRE_NEO else None
+    return False
+
+
+def top_is_evolution_card_in_text(state: GameState, pokemon: PokemonInPlay, era: str) -> bool | None:
+    """場のポケモンのいちばん上のカード（今の姿がいちばん上のカード）が、カードの説明の「進化カード」に当たるか（v0.114）。1 進化・2 進化のカードは True。ベイビィの上のたねポケモン
+    カードは、ネオより前の説明では True、neo の説明では None（NB2）。ほかは False。"""
+    top = state.card_def(pokemon.card)
+    if top.is_evolution_pokemon:
+        return True
+    if top.is_basic_pokemon and evolved_from_baby(state, pokemon):
+        return baby_evolution_card_in_text(era)
+    return False
+
+
+def card_is_basic_in_text_or_stop(definition: CardDefinition, era: str, detail: str) -> bool:
+    """``card_is_basic_in_text`` の答え。決まらない（neo の説明のベイビィポケモンカード）なら止める（NB1。選べるが選ぶと止める形にできない呼ぶ側だけが使う）。"""
+    found = card_is_basic_in_text(definition, era)
+    if found is None:
+        raise neo_basic_baby_error(f"{detail}（カード {definition.id}）")
+    return found
+
+
+def neo_basic_baby_error(detail: str) -> UnsupportedError:
+    return UnsupportedError(NEO_BASIC_BABY_CODE, f"{detail}: {NEO_BASIC_BABY_REASON}")
+
+
+def neo_evolution_card_baby_error(detail: str) -> UnsupportedError:
+    return UnsupportedError(NEO_EVOLUTION_CARD_BABY_CODE, f"{detail}: {NEO_EVOLUTION_CARD_BABY_REASON}")
+
+
 def attack_of(state: GameState, key: AttackKey) -> Attack:
     """ワザ ``key``（印刷したカードの id と位置）の定義（v0.49）。"""
     return state.definitions[key.card_id].attacks[key.attack_index]
@@ -15379,11 +15607,13 @@ POKEMON_FLUTE_WITHOUT_TARGET_REASON = (
 )
 
 
-def discard_basic_pokemon(state: GameState, player: int) -> tuple[int, ...]:
+def discard_basic_pokemon(state: GameState, player: int, era: str) -> tuple[int, ...]:
     """v0.51: プレイヤー ``player`` のトラッシュの、たねポケモンのカード（トラッシュの並び）。トラッシュにある間のカードの定義（印刷の定義。``state.card_def``）で決めるので、
     進化カード・エネルギーカード・トレーナーカード（なにかの化石・ピッピ人形も、トラッシュではトレーナーカード。v0.47）は入らない。「ポケモンカード」で「進化カードを
-    選ぶことはできない」（元気のかけら・ポケモンの笛）と「たねポケモン」（よみがえらせる）は、どちらもこの集まり（ベイビィポケモンは写しにない。cards.py が拒否する）。"""
-    return tuple(uid for uid in state.players[player].discard if state.card_def(uid).is_basic_pokemon)
+    選ぶことはできない」（元気のかけら・ポケモンの笛）と「たねポケモン」（よみがえらせる）は、どちらもこの集まり。v0.114: 説明の版 ``era`` で、ベイビィポケモンカードをふくむか
+    決める（どれもネオより前のカードで、ふくむ。GR-2000-P325-PRE-NEO-BABY）。"""
+    return tuple(uid for uid in state.players[player].discard
+                 if state.card_def(uid).category == "pokemon" and card_is_basic_in_text_or_stop(state.card_def(uid), era, "トラッシュのたねポケモン"))
 
 
 def bench_has_space(state: GameState, player: int) -> bool:
@@ -15392,10 +15622,10 @@ def bench_has_space(state: GameState, player: int) -> bool:
     return len(state.players[player].bench) < bench_limit(state, player)
 
 
-def bench_from_discard_candidates(state: GameState, players: Iterable[int]) -> tuple[int, ...]:
+def bench_from_discard_candidates(state: GameState, players: Iterable[int], era: str) -> tuple[int, ...]:
     """v0.51: プレイヤー ``players`` の順に、それぞれのトラッシュのたねポケモンのカードのうち、持ち主のベンチに空きがあるもの（持ち主のベンチに出せるもの）。ベンチの空きは
     カードの持ち主の側で確かめる（よみがえらせるで、自分のベンチがいっぱいでも、相手のベンチに空きがあれば相手のトラッシュのカードは選べる）。"""
-    return tuple(uid for player in players if bench_has_space(state, player) for uid in discard_basic_pokemon(state, player))
+    return tuple(uid for player in players if bench_has_space(state, player) for uid in discard_basic_pokemon(state, player, era))
 
 
 def half_hp_counters(state: GameState, hp: int | None) -> int:
@@ -15456,7 +15686,7 @@ class BenchBasicFromEitherDiscard(AttackEffect):
         return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, INVIGORATE_TEXTS)
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
-        options = bench_from_discard_candidates(state, (use.player, 1 - use.player))
+        options = bench_from_discard_candidates(state, (use.player, 1 - use.player), text_era(use.key.card_id))
         return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DISCARD, player=use.player, choices=(1, 1), options=options)
 
 
@@ -15511,13 +15741,13 @@ class _BenchBasicFromDiscardTrainer(TrainerEffect):
         return problems
 
     def candidates(self, state: GameState, use: TrainerUse) -> tuple[int, ...]:
-        return bench_from_discard_candidates(state, (self.from_player(use),))
+        return bench_from_discard_candidates(state, (self.from_player(use),), text_era(use.card_id))
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         owner = self.from_player(use)
         if not self.candidates(state, use):
             code, reason = self.without_target
-            scene = "ベンチに空きがない" if discard_basic_pokemon(state, owner) else "トラッシュにたねポケモンのカードがない"
+            scene = "ベンチに空きがない" if discard_basic_pokemon(state, owner, text_era(use.card_id)) else "トラッシュにたねポケモンのカードがない"
             raise UnsupportedError(code, f"{reason}。プレイヤー {owner} の{scene}")
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
@@ -15625,7 +15855,7 @@ class BenchBasicFromOwnDiscardThenCounters(_BenchBasicFromDiscardTrainer):
         return use.player
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
-        if not discard_basic_pokemon(state, use.player):
+        if not discard_basic_pokemon(state, use.player, text_era(use.card_id)):
             raise IllegalActionError("NO_BASIC_POKEMON_IN_DISCARD", "あなたのトラッシュにたねポケモンカードがないので、このカードは使えない（カードの説明）")
         if not bench_has_space(state, use.player):
             raise IllegalActionError("BENCH_FULL", f"あなたのベンチに空きがない（{bench_limit(state, use.player)} 匹）ので、このカードは使えない（カードの説明）")
@@ -15837,6 +16067,18 @@ NIGHTLY_GARBAGE_RUN_ZERO_REASON = (
 )
 
 
+# v0.114: カードの条件（``CardFilter.babies``）の、ベイビィポケモンカードの扱い
+BABY_AS_BASIC = "as_basic"  # ネオより前の説明（GR-2000-P325-PRE-NEO-BABY）
+BABY_NAMED = "named"  # 説明が「ベイビィポケモン」と並べて書く
+BABY_UNDECIDED = "undecided"  # neo の説明の「たねポケモン」だけ（UQ-NEO-TEXT-BABY-CATEGORIES。NB1）
+BABY_MODES = (BABY_AS_BASIC, BABY_NAMED, BABY_UNDECIDED)
+
+
+def baby_mode(era: str) -> str:
+    """v0.114: 説明が「ベイビィポケモン」を書かないカードの、版（``TEXT_ERAS``）ごとのベイビィポケモンカードの扱い。"""
+    return BABY_AS_BASIC if era == TEXT_PRE_NEO else BABY_UNDECIDED
+
+
 @dataclass(frozen=True)
 class CardFilter:
     """v0.53: トレーナーが山札・トラッシュから選べるカードの種類（説明の言葉と 1 対 1 の、決まった種類だけ。汎用の条件の書き方にしない）。
@@ -15853,6 +16095,10 @@ class CardFilter:
       ``"basic_pokemon"`` のときだけ。``energy_type`` は基本エネルギーカードの色の条件で、ポケモンのタイプの条件ではない（意味のない組み合わせは作るときに ``ValueError``）
     - ``name_group``（v0.96）: 名前のグループ（遺跡の石版の「「アンノーン」」。印刷の定義の ``CardDefinition.name_group``。「アンノーンT」「アンノーン[O]」を含み、名前の完全一致
       ``name`` では決めない）。``kind`` が ``"pokemon"``・``"basic_pokemon"`` のときだけ。``name``・``name_prefix`` とはいっしょに使わない
+    - ``babies``（v0.114）: ベイビィポケモンカードの扱い（説明の版と書き方で、登録が決める）。``BABY_AS_BASIC``（ネオより前の説明。ベイビィポケモンカードはたねポケモンカードと同様。
+      GR-2000-P325-PRE-NEO-BABY）・``BABY_NAMED``（説明が「ベイビィポケモン」と並べて書く）・``BABY_UNDECIDED``（neo の説明の「たねポケモン」だけ。選べるが選ぶと止める NB1。
+      ``undecided``）。``kind`` が ``"pokemon"``（進化カードだけでないもの）・``"basic_pokemon"``・``"pokemon_or_basic_energy"`` で、ほかの条件に合うベイビィポケモンカードがあるのに
+      None なら、登録の漏れ（``RuntimeError``。黙って含める・除くことをしない）
     """
 
     kind: str
@@ -15862,6 +16108,7 @@ class CardFilter:
     name: str | None = None
     pokemon_type: EnergyType | None = None
     name_group: str | None = None
+    babies: str | None = None
 
     def __post_init__(self) -> None:
         # v0.73: どの種類にも当てはまらない条件を黙って無視しない（v0.72 までは ``CardFilter("pokemon", energy_type=…)`` が色を無視していた）
@@ -15875,8 +16122,23 @@ class CardFilter:
             raise ValueError("名前の完全一致（name）と名前の始まり（name_prefix）は、どちらか一方")
         if self.name_group is not None and (self.kind not in ("pokemon", "basic_pokemon") or self.name is not None or self.name_prefix is not None):
             raise ValueError("名前のグループ（name_group）はポケモンのカード（kind pokemon・basic_pokemon）の条件で、name・name_prefix とはいっしょに使わない")
+        if self.babies is not None and (self.babies not in BABY_MODES or self.kind not in ("pokemon", "basic_pokemon", "pokemon_or_basic_energy") or self.evolution_only):
+            raise ValueError(f"babies {self.babies!r} は {BABY_MODES} のどれかで、ベイビィポケモンカードをふくみうる種類（pokemon・basic_pokemon・pokemon_or_basic_energy）だけの条件")
+
+    def _baby_kind(self) -> bool:
+        return self.kind in ("pokemon", "basic_pokemon", "pokemon_or_basic_energy") and not self.evolution_only
+
+    def undecided(self, definition: CardDefinition) -> bool:
+        """v0.114: ``matches`` が真で、ベイビィポケモンカードを説明の「たねポケモン」にふくむかが決まらない（``BABY_UNDECIDED``。選べるが選ぶと止める。NB1）。"""
+        return definition.is_baby_pokemon and self.babies == BABY_UNDECIDED and self.matches(definition)
 
     def matches(self, definition: CardDefinition) -> bool:
+        if definition.is_baby_pokemon and self._baby_kind():
+            # v0.114: ベイビィポケモンカード。ほかの条件（名前・タイプ・グループ）に合えば、登録の扱い（``babies``）で候補にする（決まらないものも候補にし、``undecided`` が印を付ける）
+            ok = self._other_conditions(definition)
+            if ok and self.babies is None:
+                raise RuntimeError(f"カードの条件 {self!r} に、ベイビィポケモンカード（{definition.id}）の扱い（babies）が登録されていない（エンジンの不具合）")
+            return ok
         pokemon = definition.is_basic_pokemon or definition.is_evolution_pokemon
         if self.kind == "any":
             ok = True
@@ -15894,13 +16156,16 @@ class CardFilter:
             ok = definition.category == "energy"  # v0.80: 「エネルギーカード」（基本・特殊。エネルギーチャージ）
         else:
             raise ValueError(f"カードの種類 {self.kind!r} は CardFilter の種類ではない")
+        return ok and self._other_conditions(definition)
+
+    def _other_conditions(self, definition: CardDefinition) -> bool:
         if self.pokemon_type is not None and definition.pokemon_type is not self.pokemon_type:
-            ok = False
+            return False
         if self.name is not None and definition.name_ja != self.name:
-            ok = False
+            return False
         if self.name_group is not None and definition.name_group != self.name_group:
-            ok = False
-        return ok and (self.name_prefix is None or definition.name_ja.startswith(self.name_prefix))
+            return False
+        return self.name_prefix is None or definition.name_ja.startswith(self.name_prefix)
 
 
 def deck_cards_matching(state: GameState, player: int, target: CardFilter) -> tuple[int, ...]:
@@ -16040,7 +16305,9 @@ class SearchDeckTrainer(TrainerEffect):
         return deck_cards_matching(state, use.player, self.target)
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
-        if self.no_basic_in_hand and any(state.card_def(uid).is_basic_pokemon for uid in state.players[use.player].hand):
+        # v0.114: 手札の「たねポケモン」は、山札から選ぶカードと同じ条件（礼儀作法はネオより前のカード。ベイビィポケモンカードもふくむ。GR-2000-P325-PRE-NEO-BABY）
+        if self.no_basic_in_hand and any(uid != use.card and self.target.matches(state.card_def(uid)) and not self.target.undecided(state.card_def(uid))
+                                         for uid in state.players[use.player].hand):
             # v0.55: 手札にある間の印刷の定義のたねポケモン（なにかの化石・ピッピ人形はトレーナーカードなので数えない）。手札から出す前に拒否する
             raise IllegalActionError("BASIC_POKEMON_IN_HAND", "手札に「たねポケモン」があるので、このカードは使えない（「あなたの手札に「たねポケモン」が1枚もない時だけ、使える」）")
         if self.discard_cost:
@@ -17808,9 +18075,11 @@ def _placed_entry_followup(state: GameState, use: TrainerUse, owner: int, placed
     return reactions.Followup(((reactions.SAME, "placed", found, (owner,)), (reactions.TRAINER, use.player, use.card, use.card_id)))
 
 
-def _hand_basics(state: GameState, player: int) -> tuple[int, ...]:
-    """手札のたねポケモンのカード（手札の並び。手札にある間の印刷の定義。なにかの化石・ピッピ人形はトレーナーカード）。"""
-    return tuple(uid for uid in state.players[player].hand if state.card_def(uid).is_basic_pokemon)
+def _hand_basics(state: GameState, player: int, era: str) -> tuple[int, ...]:
+    """手札のたねポケモンのカード（手札の並び。手札にある間の印刷の定義。なにかの化石・ピッピ人形はトレーナーカード）。v0.114: 説明の版 ``era`` で、ベイビィポケモンカードを
+    ふくむか決める（エリカの香水・マチスはネオより前のカード。GR-2000-P325-PRE-NEO-BABY）。"""
+    return tuple(uid for uid in state.players[player].hand
+                 if state.card_def(uid).category == "pokemon" and card_is_basic_in_text_or_stop(state.card_def(uid), era, "手札のたねポケモン"))
 
 
 def _stage_events(state: GameState, use: TrainerUse, kind: str) -> list[dict]:
@@ -17839,7 +18108,7 @@ class LookOpponentHandThenBenchBasics(TrainerEffect):
 
     @staticmethod
     def _options(state: GameState, use: TrainerUse) -> tuple[int, ...]:
-        return _hand_basics(state, 1 - use.player) if bench_has_space(state, 1 - use.player) else ()
+        return _hand_basics(state, 1 - use.player, text_era(use.card_id)) if bench_has_space(state, 1 - use.player) else ()
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         opponent = 1 - use.player
@@ -17911,12 +18180,12 @@ class BenchActiveThenHandBasicToActive(TrainerEffect):
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         if not bench_has_space(state, use.player):
             raise IllegalActionError("BENCH_FULL", "ベンチに空きがないので、このカードは使えない（「(あなたのベンチに空きがない時、このカードは使えない)」）")
-        if not _hand_basics(state, use.player):
+        if not _hand_basics(state, use.player, text_era(use.card_id)):
             raise UnsupportedError(LT_SURGE_WITHOUT_BASIC_CODE, LT_SURGE_WITHOUT_BASIC_REASON)
         require_active_can_leave(state, use.player, "「マチス」を使う")  # v0.93: AL2（バトル場のポケモンをベンチにもどせないなら、手札のたねポケモンも出せない。手札から出す前）
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
-        push_trainer_decision(state, use, kind=HAND_TO_ACTIVE, player=use.player, options=_hand_basics(state, use.player))
+        push_trainer_decision(state, use, kind=HAND_TO_ACTIVE, player=use.player, options=_hand_basics(state, use.player, text_era(use.card_id)))
 
     def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]):
         old, placed = hand_basic_to_active(state, use.player, choices[0], trainer=use.card)
@@ -17933,7 +18202,7 @@ class BenchActiveThenHandBasicToActive(TrainerEffect):
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
         what = f"トレーナー {use.card_id}"
         problems = _decided_by(decision, use.player, what)
-        options = _hand_basics(state, use.player)
+        options = _hand_basics(state, use.player, text_era(use.card_id))
         if decision.kind != HAND_TO_ACTIVE or decision.options != options or (decision.min_choices, decision.max_choices) != (1, 1):
             problems.append(f"{what}の決定 {decision.kind} {decision.options} が、手札のたねポケモン {options} から 1 枚ではない")
         return problems
@@ -19419,8 +19688,8 @@ def stadium_retreat_terms(state: GameState, player: int, active: PokemonInPlay) 
         return ((stadium.card, effect.amount),), ()
     if isinstance(effect, OwnerRetreatReductionStadium) and _owner_named(form_def(state, active).name_ja, effect.owner):
         return (), ((stadium.card, effect.amount),)
-    if isinstance(effect, BasicRetreatIncreaseStadium) and form_def(state, active).stage == "basic":
-        return ((stadium.card, effect.amount),), ()  # v0.81: でこぼこジム（今の姿の段階が「たね」。ベイビィポケモンはこのエンジンでは場に出ない）
+    if isinstance(effect, BasicRetreatIncreaseStadium) and field_stage(state, active) in (FIELD_BABY, FIELD_BASIC):  # v0.114: GR-2000-P315-EVOLVED-BABY
+        return ((stadium.card, effect.amount),), ()  # v0.81: でこぼこジム（今の姿の段階が「たね」。v0.114: 場のベイビィポケモンをふくみ、ベイビィから進化したたねポケモンはふくまない）
     return (), ()
 
 
@@ -19804,7 +20073,7 @@ class CoinBenchOwnerBasicFromDeckStadium(StadiumEffect):
         return [] if ok else ["持ち主の名前・コイン・ベンチに出す"]
 
     def target(self) -> CardFilter:
-        return CardFilter("basic_pokemon", name_prefix=f"{self.owner}の")
+        return CardFilter("basic_pokemon", name_prefix=f"{self.owner}の", babies=BABY_AS_BASIC)  # v0.114: キョウの忍者ジム（ネオより前のカード）
 
     def candidates(self, state: GameState, player: int) -> tuple[int, ...]:
         return deck_cards_matching(state, player, self.target())
@@ -20449,10 +20718,11 @@ class CoinSetAsideOpponentHandElseEndTurn(TrainerEffect):
         return None
 
 
-def challenge_candidates(state: GameState, player: int) -> tuple[int, ...]:
+def challenge_candidates(state: GameState, player: int, era: str) -> tuple[int, ...]:
     """v0.63: たたきつけろ!挑戦状で、プレイヤー ``player`` が山札から選べるカード（山札にある間の印刷の定義がたねポケモンのカード。uid の小さい順。なにかの化石・ピッピ人形は
-    山札ではトレーナーカードなので入らない。進化カード・トレーナー・エネルギーは入らない）。"""
-    return tuple(sorted(uid for uid in state.players[player].deck if state.card_def(uid).is_basic_pokemon))
+    山札ではトレーナーカードなので入らない。進化カード・トレーナー・エネルギーは入らない）。v0.114: 説明の版 ``era`` で、ベイビィポケモンカードを
+    ふくむか決める（挑戦状はネオより前のカード。GR-2000-P325-PRE-NEO-BABY）。"""
+    return tuple(sorted(uid for uid in state.players[player].deck if (state.card_def(uid).category == "pokemon" and card_is_basic_in_text_or_stop(state.card_def(uid), era, "山札のたねポケモン"))))
 
 
 def challenge_room(state: GameState, player: int) -> int:
@@ -20493,7 +20763,7 @@ class ChallengeBenchFromDecks(TrainerEffect):
         _ask_opponent(state, use)
 
     def _offer(self, state: GameState, use: TrainerUse, chooser: int) -> None:
-        candidates = challenge_candidates(state, chooser)
+        candidates = challenge_candidates(state, chooser, text_era(use.card_id))
         room = challenge_room(state, chooser)
         if not candidates or not room:
             state.add_event("challenge_bench_skipped", player=chooser, reason="no_candidates" if not candidates else "bench_full", trainer_card=use.card)
@@ -20555,7 +20825,7 @@ class ChallengeBenchFromDecks(TrainerEffect):
         if decision.kind != CHALLENGE_BENCH or chooser not in (use.player, 1 - use.player):
             return [f"{what}の決定 {decision.kind}（選ぶプレイヤー {chooser!r}）が正しくない"]
         problems = _decided_by(decision, chooser, what)
-        candidates = challenge_candidates(state, chooser)
+        candidates = challenge_candidates(state, chooser, text_era(use.card_id))
         if decision.options != candidates or (decision.min_choices, decision.max_choices) != (0, min(challenge_room(state, chooser), len(candidates))) \
                 or not candidates:
             problems.append(f"{what}の決定 {decision.options} {decision.min_choices}〜{decision.max_choices} が、プレイヤー {chooser} の山札のたねポケモン {candidates} と"
@@ -26581,7 +26851,7 @@ DEFAULT_EFFECTS = EffectRegistry(
         "PMCG3-044": TrainerEntry(SearchDeckTrainer(ENERGY_SEARCH_TEXT, CardFilter("basic_energy"), 1, optional=False, reveal=False),
                                   "エネルギー転送", ENERGY_SEARCH_TEXT, ENERGY_SEARCH_TEXT, _KYUURA_PRINTED_TEXT),
         # モンスターボール: コインの「おもて」なら、山札のたねポケモン・進化カードを 0〜1 枚、見せて手札に加えて切る（「うら」なら何もしない）
-        "PMCG2-048": TrainerEntry(SearchDeckTrainer(POKE_BALL_TEXT, CardFilter("pokemon"), 1, optional=True, reveal=True, coin=True),
+        "PMCG2-048": TrainerEntry(SearchDeckTrainer(POKE_BALL_TEXT, CardFilter("pokemon", babies=BABY_AS_BASIC), 1, optional=True, reveal=True, coin=True),
                                   "モンスターボール", POKE_BALL_TEXT, POKE_BALL_TEXT, _KYUURA_PRINTED_TEXT),
         # ボスのやりかた: 山札の、名前が「わるい」で始まる進化カードを 1 枚、見せて手札に加えて切る（選べなければ ST1）
         "PMCG4-060": TrainerEntry(SearchDeckTrainer(BOSS_WAY_TEXT, CardFilter("pokemon", name_prefix="わるい", evolution_only=True), 1, optional=False, reveal=True),
@@ -26605,7 +26875,7 @@ DEFAULT_EFFECTS = EffectRegistry(
         "PMCG3-047": TrainerEntry(TakeFromDiscardTrainer(RECYCLE_TEXT, CardFilter("any"), 1, TO_DECK_TOP, coin=True),
                                   "リサイクル", RECYCLE_TEXT, RECYCLE_TEXT, _KYUURA_PRINTED_TEXT),
         # 夜の廃品回収: 自分のトラッシュのたねポケモン・進化カード・基本エネルギーカードを最大 3 枚、見せて山札にもどして切る（0 枚・選べるカードがないときは NG1）
-        "PMCG4-057": TrainerEntry(TakeFromDiscardTrainer(NIGHTLY_GARBAGE_RUN_TEXT, CardFilter("pokemon_or_basic_energy"), 3, TO_DECK, zero_undetermined=True),
+        "PMCG4-057": TrainerEntry(TakeFromDiscardTrainer(NIGHTLY_GARBAGE_RUN_TEXT, CardFilter("pokemon_or_basic_energy", babies=BABY_AS_BASIC), 3, TO_DECK, zero_undetermined=True),
                                   "夜の廃品回収", NIGHTLY_GARBAGE_RUN_TEXT, NIGHTLY_GARBAGE_RUN_TEXT, _KYUURA_PRINTED_TEXT),
         # v0.54（docs/hand-deck-trainers-v0.54.md。どれも kyuura の印刷の文面）
         # にせオーキドはかせ: 相手の手札をすべて相手の山札にもどさせ、切ってから 7 枚引かせる（相手の手札 0 枚でも切って引かせる。山札が足りなければ引けるだけ）
@@ -26644,7 +26914,7 @@ DEFAULT_EFFECTS = EffectRegistry(
         "PMCG4-061": TrainerEntry(OpponentHandTrainerToDeck(ROCKETS_SNEAK_ATTACK_TEXT), "ロケット団のおねーさん", ROCKETS_SNEAK_ATTACK_TEXT, ROCKETS_SNEAK_ATTACK_TEXT,
                                   _KYUURA_PRINTED_TEXT),
         # 礼儀作法: 手札にたねポケモンがないときだけ使える。手札を見せ、山札のたねポケモンを 0〜1 枚、見せて手札に加えて切る
-        "PMCG5-082": TrainerEntry(SearchDeckTrainer(GOOD_MANNERS_TEXT, CardFilter("basic_pokemon"), 1, optional=True, reveal=True, no_basic_in_hand=True, reveal_hand=True),
+        "PMCG5-082": TrainerEntry(SearchDeckTrainer(GOOD_MANNERS_TEXT, CardFilter("basic_pokemon", babies=BABY_AS_BASIC), 1, optional=True, reveal=True, no_basic_in_hand=True, reveal_hand=True),
                                   "礼儀作法", GOOD_MANNERS_TEXT, GOOD_MANNERS_TEXT, _KYUURA_PRINTED_TEXT),
         # トラッシュ交換: トラッシュの枚数を数え、すべて山札にもどして切り、数えた枚数を山札の上からトラッシュ
         "PMCG6-077": TrainerEntry(DiscardPileExchange(TRASH_EXCHANGE_TEXT), "トラッシュ交換", TRASH_EXCHANGE_TEXT, TRASH_EXCHANGE_TEXT, _KYUURA_PRINTED_TEXT),
@@ -27629,7 +27899,7 @@ class DiscardEnergyThenBenchBasicFromDiscard(TrainerEffect):
         return [f"文面と登録の「{name}」が合わない" for name, (found, registered) in expected.items() if found != registered]
 
     def candidates(self, state: GameState, use: TrainerUse) -> tuple[int, ...]:
-        return bench_from_discard_candidates(state, (use.player,))
+        return bench_from_discard_candidates(state, (use.player,), text_era(use.card_id))
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         if self.bench_full_unusable and not bench_has_space(state, use.player):
@@ -27641,7 +27911,7 @@ class DiscardEnergyThenBenchBasicFromDiscard(TrainerEffect):
                 f"このカードを除く手札のエネルギーカードが {len(energy)} 枚で、使うための条件（手札からエネルギーカードを{self.discard}枚選んでトラッシュする）を満たせない",
             )
         if not self.candidates(state, use):
-            scene = "ベンチに空きがない" if discard_basic_pokemon(state, use.player) else "トラッシュに「たねポケモン」がない"
+            scene = "ベンチに空きがない" if discard_basic_pokemon(state, use.player, text_era(use.card_id)) else "トラッシュに「たねポケモン」がない"
             raise UnsupportedError(MAX_REVIVE_WITHOUT_TARGET_CODE, f"{MAX_REVIVE_WITHOUT_TARGET_REASON}。{scene}")
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
@@ -27774,9 +28044,22 @@ class LookTopTakePokemonThenShuffle(TrainerEffect):
         deck = state.players[use.player].deck
         if len(deck) < self.look:
             raise UnsupportedError(MASTER_BALL_SHORT_DECK_CODE, f"{MASTER_BALL_SHORT_DECK_REASON}。山札が {len(deck)} 枚")
+        target = self._target(use)
+        if target.babies == BABY_UNDECIDED:
+            # v0.114（NB1）: neo の説明の「たねポケモン」（イントロパック★neo の印刷。UQ-NEO-TEXT-BABY-CATEGORIES の事例）。見る 7 枚にベイビィポケモンカードがあれば、選べるか（選べるカードが
+            # あるか）が決まらない。見る前には分からないので、使ったプレイヤーに見えないカード（山札・サイド）にベイビィポケモンカードがあれば、使う前に止める（見る 7 枚の中身で受け付けるかを
+            # 変えない。使ったプレイヤーが知っているのは、山札とサイドを合わせたカードまで）
+            hidden = (*state.players[use.player].deck, *state.players[use.player].prizes)
+            if any(state.card_def(uid).is_baby_pokemon for uid in hidden):
+                raise neo_basic_baby_error(f"{use.card_id} の見る {self.look} 枚に、ベイビィポケモンカードがありうる（山札・サイド）")
+
+    @staticmethod
+    def _target(use: TrainerUse) -> CardFilter:
+        return CardFilter("pokemon", babies=baby_mode(text_era(use.card_id)))
 
     def candidates(self, state: GameState, use: TrainerUse) -> tuple[int, ...]:
-        return tuple(uid for uid in state.players[use.player].deck[:self.look] if CardFilter("pokemon").matches(state.card_def(uid)))
+        target = self._target(use)
+        return tuple(uid for uid in state.players[use.player].deck[:self.look] if target.matches(state.card_def(uid)))
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         cards = tuple(state.players[use.player].deck[:self.look])
@@ -29450,28 +29733,40 @@ def _trial_stop(state: GameState, use: TrainerUse, apply: Callable[[GameState], 
 class CoinTakeEvolutionOrBasicFromDiscard(TrainerEffect):
     """コインを投げて「おもて」なら「進化カード」を、「うら」なら「たねポケモン」を 1 枚、あなたのトラッシュから選び出し、手札に加える（v0.80。すごいつりざお（neo1-074））。
 
-    - コイン（``source`` ``"trainer"``）→ 結果の種類のカード（トラッシュにある間の印刷の定義。なにかの化石・ピッピ人形はトレーナーカード。ベイビィのカードは写しにない）から
+    - コイン（``source`` ``"trainer"``）→ 結果の種類のカード（トラッシュにある間の印刷の定義。なにかの化石・ピッピ人形はトレーナーカード）から
       ちょうど 1 枚（決定 ``RECOVER_POKEMON``。``context`` の ``"heads"``）→ 手札に加える（``zones.return_discard_to_hand``。ログ ``retrieve_trainer``。公開）
     - トラッシュに、どちらかの結果の種類のカードがなければ SRD1（コインの前）。ポケモンタワーの場では効果がすべて消えるので PT1（使う前）
+    - v0.114: neo の説明の「たねポケモン」にベイビィポケモンカードをふくむかは決まらない（UQ-NEO-TEXT-BABY-CATEGORIES。NB1）。「うら」の決定では、トラッシュのベイビィポケモン
+      カードは選べるが選ぶと止める。「うら」で選べるカードがベイビィポケモンカードだけなら、SRD1 に当たるかが決まらないので、コインの前に止める（トラッシュは公開の情報）。
+      「進化カード」（「おもて」）は場の外では 1 進化・2 進化のカードだけ（たねポケモンカードはふくまない）
     """
 
     text: str
     implementation_id = "coin_take_evolution_or_basic_from_discard"
     HEADS: ClassVar[CardFilter] = CardFilter("pokemon", evolution_only=True)
-    TAILS: ClassVar[CardFilter] = CardFilter("basic_pokemon")
+    TAILS: ClassVar[CardFilter] = CardFilter("basic_pokemon", babies=BABY_UNDECIDED)  # v0.114: neo の説明の「たねポケモン」（ベイビィポケモンカードは NB1）
 
     def check(self, definition: CardDefinition) -> list[str]:
         return _require_v080_text(definition, self.text, self, "「おもて」なら「進化カード」を、「うら」なら「たねポケモン」を1枚、あなたのトラッシュから選び出し、手札に加える")
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         check_tower_trainer(state, use)
-        if not discard_cards_matching(state, use.player, self.HEADS) or not discard_cards_matching(state, use.player, self.TAILS):
+        tails = discard_cards_matching(state, use.player, self.TAILS)
+        if not discard_cards_matching(state, use.player, self.HEADS) or not tails:
             raise UnsupportedError(SUPER_ROD_WITHOUT_TARGET_CODE, SUPER_ROD_WITHOUT_TARGET_REASON)
+        if all(self.TAILS.undecided(state.card_def(uid)) for uid in tails):
+            # v0.114: 「うら」で選べるカードがベイビィポケモンカードだけ（SRD1 に当たるかが NB1 で決まらない）
+            raise neo_basic_baby_error(f"すごいつりざおの「うら」で選べるカードがベイビィポケモンカード {list(tails)} だけ（SRD1 に当たるかが決まらない）")
+
+    def _undecided(self, state: GameState, options: tuple[int, ...]) -> tuple[int, ...]:
+        return tuple(uid for uid in options if self.TAILS.undecided(state.card_def(uid)))
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         heads = _trainer_coin(state, use)
         options = discard_cards_matching(state, use.player, self.HEADS if heads else self.TAILS)
-        push_trainer_decision(state, use, kind=RECOVER_POKEMON, player=use.player, options=options, context=(("heads", int(heads)),))
+        babies = () if heads else self._undecided(state, options)
+        extra = {} if not babies else {"unresolved_choices": babies, "unresolved_code": NEO_BASIC_BABY_CODE, "unresolved_reason": NEO_BASIC_BABY_REASON}
+        push_trainer_decision(state, use, kind=RECOVER_POKEMON, player=use.player, options=options, context=(("heads", int(heads)),), **extra)
 
     def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         (card,) = choices
@@ -29491,6 +29786,9 @@ class CoinTakeEvolutionOrBasicFromDiscard(TrainerEffect):
         expected = discard_cards_matching(state, use.player, self.HEADS if heads else self.TAILS)
         if not expected or decision.options != expected or (decision.min_choices, decision.max_choices) != (1, 1):
             problems.append(f"{what}の決定の選べるもの {decision.options} が、トラッシュの {expected} から 1 枚ではない")
+        babies = () if heads else self._undecided(state, expected)
+        if tuple(decision.context_value("unresolved_choices", ())) != babies:
+            problems.append(f"{what}の決定の選ぶと止める選択 {decision.context_value('unresolved_choices', ())} が、トラッシュのベイビィポケモンカード {babies}（「うら」のとき）ではない")
         return problems
 
 
@@ -29786,7 +30084,7 @@ class EachPlayerReturnDiscardToDeckThenHandLock(TrainerEffect):
 
     - 選ぶのはそれぞれのプレイヤー（使ったプレイヤー → 相手プレイヤーの順。v0.54 の HD1 と同じ実装上の順番。決定 ``DISCARD_TO_DECK``。``context`` の ``"stage"``）。0〜min(``max_count``,
       数) 枚（「のぞむなら」「てよい」なので 0 枚は選ばないこと）。選べるカードがないプレイヤーには決定を出さない。相手プレイヤーの決定は、このカードの ``decision_problems`` だけが許す
-    - 選べるカードは、トラッシュにある間の印刷の定義のたねポケモン・進化カード・基本エネルギーカード（``CardFilter("pokemon_or_basic_energy")``。ベイビィのカードは写しにない。なにかの
+    - 選べるカードは、トラッシュにある間の印刷の定義のベイビィポケモン・たねポケモン・進化カード・基本エネルギーカード（``CardFilter("pokemon_or_basic_energy")``。v0.114: 説明が「ベイビィポケモン」と書くので ``BABY_NAMED``。なにかの
       化石・ピッピ人形はトレーナーカード）。もどしたカードは見せる（``zones.return_discard_to_deck``。公開）
     - 両方が選び終えてから、使ったプレイヤー → 相手の順に、それぞれの山札を切る（0 枚でも切る。v0.54 の HD2 と同じ）→ 使ったプレイヤーに手札から出して使うことの禁止
     """
@@ -29795,7 +30093,7 @@ class EachPlayerReturnDiscardToDeckThenHandLock(TrainerEffect):
     max_count: int = 5
     implementation_id = "each_player_return_discard_to_deck_then_hand_lock"
     refers_to_user_turn = True
-    TARGET: ClassVar[CardFilter] = CardFilter("pokemon_or_basic_energy")
+    TARGET: ClassVar[CardFilter] = CardFilter("pokemon_or_basic_energy", babies=BABY_NAMED)  # v0.114: 「ベイビィポケモン」「たねポケモン」「進化カード」「基本エネルギーカード」
 
     def check(self, definition: CardDefinition) -> list[str]:
         return _require_v080_text(definition, self.text, self, f"から最大{self.max_count}枚を選び出し、相手プレイヤーに見せてから、山札にもどしてよい",
@@ -30118,7 +30416,7 @@ class EachPlayerMayBenchBasicFromDeck(TrainerEffect):
 
     - 選ぶのはそれぞれのプレイヤー（使ったプレイヤー → 相手プレイヤーの順。HD1 と同じ実装上の順番。決定 ``BENCH_FROM_DECK``。``context`` の ``"stage"``・``"searched"``（山札を
       さがしたプレイヤー））。0〜1 枚（0 枚は「のぞむなら」の、出さない）。相手プレイヤーの決定は、このカードの ``decision_problems`` だけが許す
-    - 選べるカードは、山札にある間の印刷の定義のたねポケモン（ベイビィのカードは写しにない。uid の小さい順）。手札を通さずにベンチの最後へ（``zones.bench_from_deck``。場に出た番は
+    - 選べるカードは、山札にある間の印刷の定義のベイビィポケモン・たねポケモン（v0.114: 説明が「ベイビィポケモン」と書くので ``BABY_NAMED``。uid の小さい順）。手札を通さずにベンチの最後へ（``zones.bench_from_deck``。場に出た番は
       今の番。ログ ``trainer_bench_from_deck`` は公開）。まきちらせ!ベトベトガスのはたらく間の特殊能力を持つカードは GG1（選べるが選ぶと止める）
     - ベンチに空きがない（``stadiums.bench_has_room``）プレイヤーは、なにもしない（山札をさがさず、切らない。ログ ``trainer_bench_from_deck_declined`` の理由 ``bench_full``）。空きの
       あるプレイヤーは、選べるカードがない・選ばなかったときも、山札を切る（「その後、それぞれの山札をよく切る」。理由 ``no_target``・``declined`` は山札の中身の情報なので
@@ -30128,7 +30426,7 @@ class EachPlayerMayBenchBasicFromDeck(TrainerEffect):
 
     text: str
     implementation_id = "each_player_may_bench_basic_from_deck"
-    TARGET: ClassVar[CardFilter] = CardFilter("basic_pokemon")
+    TARGET: ClassVar[CardFilter] = CardFilter("basic_pokemon", babies=BABY_NAMED)  # v0.114: 「ベイビィポケモン」または「たねポケモン」
 
     def check(self, definition: CardDefinition) -> list[str]:
         return _require_v080_text(definition, self.text, self, "自分の山札から「ベイビィポケモン」または「たねポケモン」を1匹選びだし、ベンチに出してよい",
@@ -30212,11 +30510,26 @@ class DevolveOneToHandWithBan(TrainerEffect):
       どの入口でも ``evolution_forbidden`` が ``EVOLUTION_PREVENTED`` で拒否する（カードの説明が書いた禁止。ほかの効果で退化したポケモンの DV2 とは別。DV2 は解決していない）
     - 1 匹もいなければ HY1（使う前）。「ばける」のポケモンは選べるが選ぶと止める（DV5。どれもそうなら使う前）。1 枚だけはがすので、途中の重なりの問い（DV1）はない
     - 使い終わって（カードをトラッシュして）から、退化で最大HPがのっているダメージ以下になったポケモンは「きぜつ」する（``may_knock_out``。v0.50 の退化スプレーと同じ）
+    - v0.114: ベイビィポケモンから進化したたねポケモンは、場にいるかぎり「進化ポケモン」（GR-2000-P315-EVOLVED-BABY。一般の規定）なので選べるが、いちばん上のたねポケモンカードを
+      neo の説明の「進化カード」としてはがせるかは決まらない（UQ-NEO-TEXT-BABY-CATEGORIES。NB2）ので、選ぶと止める。上に 1 進化カードがあれば、それをはがす（決まっている）。
+      どの候補も止めるなら使う前に止める
     """
 
     text: str
     implementation_id = "devolve_one_to_hand_with_ban"
     may_knock_out = True
+
+    def _blocked(self, state: GameState, use: TrainerUse, candidates: Iterable[int]) -> dict[int, tuple[str, str]]:
+        """選ぶと止める候補と、その理由（DV5・NB2）。"""
+        era = text_era(use.card_id)
+        found = {}
+        for pid in candidates:
+            pokemon = state.find_pokemon(pid)[1]
+            if devolution_forbidden(state, pokemon):
+                found[pid] = (DEVOLUTION_TARGET_DISGUISED_CODE, DEVOLUTION_TARGET_DISGUISED_REASON)
+            elif top_is_evolution_card_in_text(state, pokemon, era) is None:
+                found[pid] = (NEO_EVOLUTION_CARD_BABY_CODE, f"ポケモン {pid} のいちばん上のたねポケモンカード（ベイビィから進化）: {NEO_EVOLUTION_CARD_BABY_REASON}")
+        return found
 
     def check(self, definition: CardDefinition) -> list[str]:
         return _require_v080_text(definition, self.text, self, "「進化カード」を上から1枚はがして、手札にもどし", "退化させたポケモンを、同じ番に進化させることはできない")
@@ -30234,18 +30547,22 @@ class DevolveOneToHandWithBan(TrainerEffect):
         candidates = self._candidates(state, use.player)
         if not candidates:
             raise UnsupportedError(DEVOLUTION_SPRAY_HYPER_WITHOUT_TARGET_CODE, DEVOLUTION_SPRAY_HYPER_WITHOUT_TARGET_REASON)
-        if len(self._forbidden(state, candidates)) == len(candidates):
-            raise UnsupportedError(DEVOLUTION_TARGET_DISGUISED_CODE, DEVOLUTION_TARGET_DISGUISED_REASON)
+        blocked = self._blocked(state, use, candidates)
+        if len(blocked) == len(candidates):
+            code, reason = blocked[candidates[0]]
+            raise UnsupportedError(code, reason)
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         candidates = self._candidates(state, use.player)
-        push_trainer_decision(state, use, kind=SELECT_POKEMON, player=use.player, options=candidates, unresolved_choices=self._forbidden(state, candidates),
-                              unresolved_code=DEVOLUTION_TARGET_DISGUISED_CODE, unresolved_reason=DEVOLUTION_TARGET_DISGUISED_REASON)
+        blocked = self._blocked(state, use, candidates)
+        push_trainer_decision(state, use, kind=SELECT_POKEMON, player=use.player, options=candidates, unresolved_choices=tuple(blocked),
+                              unresolved_code=DEVOLUTION_TARGET_DISGUISED_CODE, unresolved_reason=DEVOLUTION_TARGET_DISGUISED_REASON,
+                              unresolved_detail=tuple((pid, *problem) for pid, problem in blocked.items()))
 
     def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         (target,) = choices
         pokemon = state.players[use.player].find_by_pokemon_id(target)
-        if pokemon is None or not pokemon.evolution_stack or devolution_forbidden(state, pokemon):
+        if pokemon is None or not pokemon.evolution_stack or target in self._blocked(state, use, (target,)):
             raise RuntimeError(f"退化スプレーHYPER で選んだポケモン {target} から進化カードをはがせない（エンジンの不具合）")
         devolve(state, use.player, pokemon, 1, destination=DEVOLVE_TO_HAND, by_player=use.player, trainer=use.card)
         record = TrainerTurnEffect(kind=EVOLUTION_BAN, player=use.player, source_card=use.card, card_id=use.card_id, created_turn=state.turn_number,
@@ -30256,7 +30573,7 @@ class DevolveOneToHandWithBan(TrainerEffect):
 
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
         candidates = self._candidates(state, use.player)
-        return _select_own_pokemon_problems(decision, use, candidates, "「退化スプレーHYPER」", self._forbidden(state, candidates))
+        return _select_own_pokemon_problems(decision, use, candidates, "「退化スプレーHYPER」", tuple(self._blocked(state, use, candidates)))
 
 
 # --- 6. 当てる・サイド・相手の手札（カツラのクイズ その2・カードめくりゲーム・ポケモン性格判定・ロケット団の暗躍・にせオーキドの発明）
@@ -32944,6 +33261,8 @@ class BreederCoupleSearch(TrainerEffect):
       選べるもののない決定を出して答えを待つ（見えない山札の中身で進み方を変えない）。処理の対象がないので何も手札に加えない（p.309 の読み方。実装上の判断）
     - 選んだカードは見せて手札に加え（``zones.reveal_deck_to_hand``）、最後に山札を 1 回切る（「その後、その山札をよく切る」。すべて「うら」でも切る）
     - サポーターではない（2002 年の「サポーター適用カード」の規定を持ち込まない）
+    - v0.114: neo の説明の場の「たねポケモン」「1進化ポケモン」に、場のベイビィポケモン・ベイビィから進化したたねポケモン（いちばん上がたねポケモンカード）をふくむかは決まらない
+      （UQ-NEO-TEXT-BABY-CATEGORIES。NB1）ので、選べるが選ぶと止める（場は公開の情報）。決まっている候補がなく、止める候補だけなら、UPZ2 に当たるかが決まらないので使う前に止める
     """
 
     implementation_id = "breeder_couple_search"
@@ -32955,17 +33274,36 @@ class BreederCoupleSearch(TrainerEffect):
         return problems
 
     @staticmethod
-    def targets(state: GameState, player: int) -> tuple[int, ...]:
-        return tuple(p.pokemon_id for p in state.players[player].in_play() if state.card_def(p.card).stage in ("basic", "stage1"))
+    def _target_kind(state: GameState, pokemon: PokemonInPlay, era: str) -> bool | None:
+        """場のポケモンが、説明の「たねポケモン」「1進化ポケモン」か（v0.114。決まらないなら None。NB1）。いちばん上の印刷のカードが 1 進化なら「1進化ポケモン」。"""
+        if state.card_def(pokemon.card).is_stage1_pokemon and not copied_form(state, pokemon):
+            return True
+        basic = field_is_basic_in_text(state, pokemon, era)
+        if basic is False and evolved_from_baby(state, pokemon) and state.card_def(pokemon.card).is_basic_pokemon:
+            return None  # ベイビィから進化したたねポケモン（進化ポケモン）が「1進化ポケモン」か
+        return basic
+
+    def targets(self, state: GameState, player: int, use: TrainerUse) -> tuple[int, ...]:
+        era = text_era(use.card_id)
+        return tuple(p.pokemon_id for p in state.players[player].in_play() if self._target_kind(state, p, era) is not False)
+
+    def undecided_targets(self, state: GameState, use: TrainerUse) -> tuple[int, ...]:
+        era = text_era(use.card_id)
+        return tuple(p.pokemon_id for p in state.players[use.player].in_play() if self._target_kind(state, p, era) is None)
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
-        if not self.targets(state, use.player):
+        targets = self.targets(state, use.player, use)
+        if not targets:
             raise UnsupportedError(UP_TO_WITHOUT_TARGET_CODE, f"{UP_TO_WITHOUT_TARGET_REASON}（自分の場に「たねポケモン」「1進化ポケモン」がいない）")
+        if set(targets) == set(self.undecided_targets(state, use)):
+            raise neo_basic_baby_error(f"ポケモン育て屋夫婦で選べるポケモンが、ベイビィポケモン・ベイビィから進化したポケモン {list(targets)} だけ（UPZ2 に当たるかが決まらない）")
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
-        targets = self.targets(state, use.player)
+        targets = self.targets(state, use.player, use)
+        undecided = self.undecided_targets(state, use)
+        extra = {} if not undecided else {"unresolved_choices": undecided, "unresolved_code": NEO_BASIC_BABY_CODE, "unresolved_reason": NEO_BASIC_BABY_REASON}
         push_trainer_decision(state, use, kind=SELECT_POKEMON, player=use.player, options=targets, min_choices=0, max_choices=min(2, len(targets)),
-                              context=(("stage", "pokemon"),))
+                              context=(("stage", "pokemon"),), **extra)
 
     def _next(self, state: GameState, use: TrainerUse, heads: tuple[int, ...], taken: tuple[int, ...]) -> None:
         for index, pid in enumerate(heads):
@@ -33008,8 +33346,10 @@ class BreederCoupleSearch(TrainerEffect):
             return [f"ポケモン育て屋夫婦の決定をするのがプレイヤー {decision.player}（使ったプレイヤー {use.player} のはず）"]
         stage = decision.context_value("stage")
         if stage == "pokemon":
-            targets = self.targets(state, use.player)
+            targets = self.targets(state, use.player, use)
             expected = (SELECT_POKEMON, targets, 0, min(2, len(targets)))
+            if tuple(decision.context_value("unresolved_choices", ())) != self.undecided_targets(state, use):
+                return [f"ポケモン育て屋夫婦の決定の選ぶと止める選択 {decision.context_value('unresolved_choices', ())} が、ベイビィポケモンの候補 {self.undecided_targets(state, use)} ではない"]
         elif stage == "card":
             found = state.find_pokemon(decision.context_value("pokemon"))
             if found is None or found[0] != use.player:
@@ -34829,7 +35169,9 @@ class DamageOnHandBasicWhileActive(ContinuousPower):
     docs 4.3 節）。
 
     - 宣言しない。バトル場にいるとき（``CONTINUOUS_ACTIVE``）。事実: どちらかのプレイヤーが自分の手札からたねポケモンを場に出したこと（ベンチに出す通常の操作・トレーナーの効果で
-      手札から出す（エリカの香水・マチス。マチスはバトル場に直接出す））。山札・トラッシュから出す・進化・入れ替えは当たらない。ベイビィポケモンは対応していない（登録しない）
+      手札から出す（エリカの香水・マチス。マチスはバトル場に直接出す））。山札・トラッシュから出す・進化・入れ替えは当たらない。v0.114: 手札からベンチに出すベイビィポケモンにも
+      はたらく（説明が「ベイビィポケモン」と書く）。手札のたねポケモンカードをベイビィポケモンに重ねる進化が「たねポケモンを出す」に当たるかは決まらない（HP2。
+      ``hot_plate_baby_evolution_error``）
     - 特殊能力によるダメージ（10）。ロケット団の爆発ジムの 20・ダメージカウンターをのせる効果とは別の原因（同じ時点に起これば、番のプレイヤーが順番を決める）
     - うらにして出すカード（マチスの秘策）は、出す時点で「たねポケモン」としてあつかうかが決まらない（HP1）
     """
@@ -34854,6 +35196,21 @@ HOT_PLATE_FACE_DOWN_REASON = (
     "場にはたらいているわるいマグカルゴの［ヒートプレート］（「自分の手札から「ベイビィポケモン」または「たねポケモン」を出すたび」）がある。マチスの秘策で手札のカードをうらにして"
     "ベンチに出すことが、その「出すたび」に当たるか（うらのカードは「たねポケモン」としてあつかわれるが、手札にある間のカードの分類は本当のカードのもの）は決められないので扱わない"
     "（HP1。v0.67 の FD2 と同じ形の別の問い）")
+
+
+HOT_PLATE_BABY_EVOLUTION_CODE = "UNRESOLVED_HOT_PLATE_BABY_EVOLUTION"
+HOT_PLATE_BABY_EVOLUTION_REASON = (
+    "場にはたらいているわるいマグカルゴの［ヒートプレート］（「自分の手札から「ベイビィポケモン」または「たねポケモン」を出すたび」）がある。手札のたねポケモンカードを場のベイビィ"
+    "ポケモンに重ねて進化させること（p.310。neo の説明は進化を「手札から場に出してポケモンを進化させた」とも書く）が、その「たねポケモンを出す」に当たるかは、印刷の文面・"
+    "2000.02.14 版の公式ルール・kyuura の記録から決められないので扱わない（HP2。v0.87 の「進化は手札から出したことではない」は、たねポケモンでない進化カードについての読み方）")
+
+
+def hot_plate_baby_evolution_error(state: GameState, card: int) -> UnsupportedError | None:
+    """v0.114（HP2）: 手札のたねポケモンカード ``card`` をベイビィポケモンに重ねる進化のとき、はたらいている［ヒートプレート］があれば止める理由。ほかは None。"""
+    if not state.card_def(card).is_basic_pokemon or not hot_plates(state):
+        return None
+    holders = [pokemon.pokemon_id for _, pokemon, _, _ in hot_plates(state)]
+    return UnsupportedError(HOT_PLATE_BABY_EVOLUTION_CODE, f"［ヒートプレート］のポケモン {holders}: {HOT_PLATE_BABY_EVOLUTION_REASON}")
 
 
 SHOCK_BLAST_TEXTS = (
@@ -36953,7 +37310,8 @@ class ChooseOpponentPokemonDamageIgnoringHeldEffects(AttackEffect):
 DARK_WAVE_TEXT = "次の相手の番の終わりまで、お互いの場にいるすべてのポケモンは、特殊能力を使うことができず、それらの力も消える。"
 DARK_WAVE_SCOPE_CODE = "UNRESOLVED_DARK_WAVE_NEW_POKEMON"
 DARK_WAVE_SCOPE_REASON = (
-    "ナツメのゲンガーの「やみのはどう」（「次の相手の番の終わりまで、お互いの場にいるすべてのポケモンは、特殊能力を使うことができず、それらの力も消える」）の効果がはたらいている間に、"
+    "ナツメのゲンガーの「やみのはどう」（「次の相手の番の終わりまで、お互いの場にいるすべてのポケモンは、特殊能力を使うことができず、それらの力も消える」。v0.114 からブビィの「モクモク」の"
+    "「次の自分の番の終わりまで」の同じ効果も）の効果がはたらいている間に、"
     "特殊能力を持つポケモンを場に出す・進化させる・退化させるとき、そのポケモンも止まるのか（ワザを使った時点で場にいたポケモンだけか）は、印刷の文面・kyuura の記録から決められないので"
     "扱わない（DW1。まきちらせ!ベトベトガスの GG1・ふしぎなガスの MG1 とは別のカードの問い）")
 DARK_WAVE_PROTECTED_CODE = "UNRESOLVED_DARK_WAVE_PROTECTED_POKEMON"
@@ -38493,7 +38851,7 @@ class SearchDeckWithBenchLettersToHand(PowerEffect):
     - このカードが自分のベンチにいて（``POKEMON_NOT_ON_BENCH``）、自分のベンチのほかのポケモンに、今の姿の名前のグループが「アンノーン」で文字が ``letters`` のそれぞれのポケモンが
       いること（``REQUIRED_BENCH_POKEMON_MISSING``。相手の場・バトル場のポケモンは数えない）。うらのカードは、おもてのポケモンで足りないときだけ読む（読むと FD1）
     - 選べるのは山札の ``target`` のカード（山札にある間の印刷の定義。［FIND］はトレーナーカードのすべて（スタジアム・どうぐ・なにかの化石・ピッピ人形を含む）、［JOIN］はたねポケモン・
-      進化カード（ベイビィポケモンのカードは写しにない。cards.py が拒否する）。uid の小さい順）。1 枚（省略できない）。山札に選べるカードがない（山札 0 枚を含む）ときに使えるかは決まら
+      進化カード（v0.114: 説明が「ベイビィポケモン」と書くので、ベイビィポケモンのカードもふくむ。``BABY_NAMED``）。uid の小さい順）。1 枚（省略できない）。山札に選べるカードがない（山札 0 枚を含む）ときに使えるかは決まら
       ない（kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例。エンジンは v0.43 のしんかのひかりと同じ PW3 で、宣言の前に止める。v0.43 からの既存の検索の特殊能力と同じ扱い）
     - 宣言のあと決定 ``SEARCH_DECK``（使ったプレイヤー。選べるものの数は見せない）→ 見せてから手札に加える（``zones.reveal_deck_to_hand``。ログ ``reveal_from_deck`` の ``card`` は公開）→
       山札を 1 回切る（ログ ``shuffle`` の ``power``）
@@ -38628,7 +38986,7 @@ V0_97_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
     PowerKey("neo2-026", 0): PowerEntry(SearchDeckWithBenchLettersToHand(("I", "N", "D"), CardFilter("trainer"), _FIND), "FIND[ファインド]", _FIND, _FIND,
                                         _KYUURA_PRINTED_TEXT),
     PowerKey("PF2-001", 0): PowerEntry(_NORMAL_DF, "NORMAL df[ノーマル ディーエフ]", _NORMAL_DF.texts()[0], _NORMAL_DF.texts()[0], _KYUURA_PRINTED_TEXT),
-    PowerKey("PRN-034", 0): PowerEntry(SearchDeckWithBenchLettersToHand(("O", "I", "N"), CardFilter("pokemon"), _JOIN), "JOIN[ジョイン]", _JOIN, _JOIN,
+    PowerKey("PRN-034", 0): PowerEntry(SearchDeckWithBenchLettersToHand(("O", "I", "N"), CardFilter("pokemon", babies=BABY_NAMED), _JOIN), "JOIN[ジョイン]", _JOIN, _JOIN,
                                        _KYUURA_PRINTED_TEXT),
 })
 
@@ -41332,3 +41690,343 @@ V0_113_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_113_ATTACKS)
+
+
+# ---------------------------------------------------------------- v0.114（docs/baby-rules-evolution-v0.114.md 6 章）
+# ベイビィポケモン 13 枚（ワザ 11・特殊能力 2）。処理に使う文面は kyuura の印刷の文面（e519b99 の写し。13 枚とも kyuura に最新の説明・エラッタ・裁定の記録はない）。ベイビィポケモンの
+# ルール（ワザの前のコイン）は特殊能力ではなく、カードの登録ではなく解決の流れ（``resolution.flow``）の共通の処理。13 枚は別々に登録する（同じデータのカードの組はない）
+
+SMOKESCREEN_FIELD_TEXT = "次の自分の番の終わりまで、おたがいの場にいるすべてのポケモンは「特殊能力」を使うことができず、その力も消える。"
+POWER_HOLDERS_SPREAD_TEXT = "おたがいの場にいる、「特殊能力」を持っているポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ{amount}ダメージ。"
+SHUFFLE_HAND_DRAW_FROM_DECK_TEXT = "自分の手札をすべて山札にもどし、その山札をよく切る。その後、山札からカードを{n}枚引いて、手札にする。"
+PSYCHIC_KISS_TEXT = "コインを投げて「おもて」なら、相手の場のポケモンについている「特殊エネルギーカード」を1枚選び、相手の山札にもどす。その後、その山札をよく切る。"
+PLAY_TOGETHER_TEXT = "自分の山札から「ベイビィポケモン」を1枚選び出し、ベンチに出す。その後、その山札をよく切る。(自分のベンチに空きがないとき、このワザは失敗する。)"
+BLOW_KISS_TEXT = "相手の場のポケモンを1匹選び、そのポケモンに、ダメージカウンターを{n}個のせる。"
+DRAW_TWO_TEXT = "山札からカードを2枚引いて、手札に加える。"
+SLEEP_ONLY_TEXT = "相手を「ねむり」状態にする。"
+SMASH_PUNCH_TEXT = "コインを投げて「うら」なら、このワザは失敗する。"
+BRATTY_PUNCH_TEXTS = (
+    ("この力は、自分の番ごとに1回使え、使ったら自分の番は終わる。コインを投げて「おもて」なら、相手の対戦ポケモンに20のダメージ。このカードが「ねむり・マヒ・こんらん」状態のとき、"
+     "この力は使えない。"),
+)
+STARE_TEXTS = (
+    ("この力は、自分の番ごとに1回使える。相手のベンチの「特殊能力」を持っているポケモンを1匹選ぶ。そのポケモンは、この番が終わるまで、「特殊能力」を使うことができず、その力も消える。"
+     "（そのポケモンがバトル場に出てきたとき、この効果は消える。）"),
+)
+
+# HV1: 説明の「「特殊能力」を持っているポケモン」に、持っている特殊能力がすべて今「使えず、その力も消え」ているポケモン（かがくへんかガス・まきちらせ!ベトベトガス・ふしぎなガス・
+# やみのはどう・モクモク・スタンウェーブ・じっとみる）をふくむか
+STOPPED_POWER_HOLDER_CODE = "UNRESOLVED_STOPPED_POWER_HOLDER"
+STOPPED_POWER_HOLDER_REASON = (
+    "説明の「「特殊能力」を持っているポケモン」（ピチューの「パチパチ」・ププリンの［じっとみる］）に、持っている特殊能力がすべて、ほかの効果（かがくへんかガス・まきちらせ!ベトベトガス・"
+    "ふしぎなガス・やみのはどう・モクモク・スタンウェーブ・じっとみる）で「使えず、その力も消え」ているポケモンをふくむかは、印刷の文面・2000.02.14 版の公式ルール・kyuura の記録から"
+    "決められないので扱わない（HV1。ダメージを受けるか・選べるかが変わる）")
+
+
+def holds_power(state: GameState, pokemon: PokemonInPlay) -> bool | None:
+    """v0.114: 場のポケモン ``pokemon`` が、説明の「「特殊能力」を持っているポケモン」か。持っている特殊能力（``powers_of``。今の姿。「ばける」のカードの特殊能力をふくむ。［へんしん］の
+    メタモンはメタモン自身の［へんしん］）がなければ偽。どれかが今はたらきうる（ほかの効果で「使えず、その力も消え」ていない。``continuous.power_suppressed``）なら真。持っている特殊能力が
+    すべて、ほかの効果で消えているなら決まらない（None。HV1）。説明の「この力は消える」「使えない」（ねむり・マヒ・こんらん・ベンチ）は、そのカード自身の条件で、特殊能力を持たなく
+    なるのではない（真）。うらのカード（マチスの秘策）は「たねポケモン」としてあつかい、特殊能力を読めないので偽（おもてにしない。全体にはたらく効果のうらのカードの扱い）。"""
+    from .continuous import power_suppressed
+
+    if state.is_face_down(pokemon):
+        return False
+    slots = powers_of(state, pokemon)
+    if not slots:
+        return False
+    if all(power_suppressed(state, slot.power, pokemon) for slot in slots):
+        return None
+    return True
+
+
+def stopped_power_holder_error(pokemon: PokemonInPlay, detail: str) -> UnsupportedError:
+    return UnsupportedError(STOPPED_POWER_HOLDER_CODE, f"ポケモン {pokemon.pokemon_id}（{detail}）: {STOPPED_POWER_HOLDER_REASON}")
+
+
+@dataclass(frozen=True)
+class DamageThenFieldPowerSuppressionUntilOwnNextTurn(DamageThenFieldPowerSuppression):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。次の自分の番の終わりまで、おたがいの場にいるすべてのポケモンは「特殊能力」を使うことができず、その力も消える（v0.114。
+    ブビィ（neo1-022）の「モクモク」。kyuura の印刷の文面。目安「10」）。
+
+    - 要素は v0.92 の「やみのはどう」と同じ ``Damage(OPP)`` → ``FieldPowerSuppression``。止める範囲・問い合わせ・決められない場面（DW1〜DW3・G37）・ベイビィポケモンが使うことは同じで、
+      期限だけが違う: 消える番は与えた番 + 2（次の自分の番の終わり。``field_effect_terms``）。v0.92 の型（次の相手の番の終わり）の全文を受け付けない（別の文面）"""
+
+    implementation_id = "damage_then_field_power_suppression_until_own_next_turn"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "ダメージのあと次の自分の番の終わりまでおたがいの場の特殊能力を止めるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (SMOKESCREEN_FIELD_TEXT,))
+
+    def field_effect_terms(self) -> tuple[str, int]:
+        return (ATTACK_FIELD_POWER_SUPPRESSION, 2)
+
+
+@dataclass(frozen=True)
+class PowerHoldersSpreadDamage(AttackEffect):
+    """おたがいの場にいる、「特殊能力」を持っているポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ ``amount`` ダメージ（v0.114。ピチュー（neo1-042）の「パチパチ」。kyuura の
+    印刷の文面。ダメージの目安の数字はない）。
+
+    - 要素は ``PowerHolderQuestion`` → ``Damage(OPP)`` → ``Damage(SELF)`` → ``BenchDamage``（相手）→ ``BenchDamage(own)``。どれも ``has_power``（受けるポケモンが、その要素を処理する時点で
+      ``holds_power`` が真のときだけ与える）。v0.40 の「みんなでばくはつ」（名前でしぼる）と同じ並び・同じ受けるポケモンの種類（p.320 の (1)〜(4)）。ワザを使ったポケモン自身も、特殊能力を
+      持っていれば受ける（ワザによる自分へのダメージ）
+    - 受けるかが決まらないポケモン（特殊能力がすべてほかの効果で消えている。HV1）が場にいれば、ダメージの前に止める（``PowerHolderQuestion``。先読みが宣言の前に見つける）
+    - うらのカードは特殊能力を読めないので受けない（おもてにしない）"""
+
+    amount: int
+    implementation_id = "power_holders_spread_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.amount, "ダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "おたがいの場の特殊能力を持っているポケモン全員にダメージを与えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (POWER_HOLDERS_SPREAD_TEXT.format(amount=self.amount),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        return DamageProfile(opponent=(0, self.amount), self_damage=(0, self.amount))
+
+
+@dataclass(frozen=True)
+class CoinReturnOpponentSpecialEnergyToDeck(AttackEffect):
+    """コインを投げて「おもて」なら、相手の場のポケモンについている「特殊エネルギーカード」を 1 枚選び、相手の山札にもどす。その後、その山札をよく切る（v0.114。ムチュール（neo3-031）の
+    「サイコキッス」。kyuura の印刷の文面。ダメージの目安の数字はない）。要素 ``ReturnAttachedSpecialEnergyToDeck(local_coin=HEADS)``。
+
+    - 選べるもの: 相手の場のポケモン（バトル場 → ベンチ）についている特殊エネルギーカード（ついている間の定義。［エネエネ］でエネルギーとしてついているカードも特殊エネルギーの種類。
+      v0.83 の「コアブラスト」と同じ読み方）。タケシの保護（相手の使うワザによってははがされない）のポケモンのカードは選べない。選べるカードがなければコインを投げない（内容の対象が
+      ない。p.309。v0.31 のスーパーデストロイと同じ）
+    - 選ぶのはワザを使ったプレイヤー（決定 ``SELECT_ATTACHED_SPECIAL_ENERGY``。ちょうど 1 枚）。選んだカードのついているポケモンの「ワザをうけない」状態・エフェクトガード・「とうめい」を
+      評価する（受けないなら何もしない。切らない）。もどす（``zones.return_attached_energy_to_deck``。トラッシュではない）→ 相手の山札を切る（1 回）
+    - 選べるカードのついているポケモンがどれも「ワザをうけない」状態なら、コインを投げるかが決まらない（v0.4b と同じ問い ``prevented_effect_coin``。コインの前）"""
+
+    implementation_id = "coin_return_opponent_special_energy_to_deck"
+    opponent_effect_elements = (ENERGY_RETURN_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインの「おもて」で相手の特殊エネルギーカードを山札にもどすワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (PSYCHIC_KISS_TEXT,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        label = _label(state, use)
+        problems = _decision_form(decision, label, kind=SELECT_ATTACHED_SPECIAL_ENERGY, player=use.player, choices=(1, 1),
+                                  options=opponent_attached_special_energy_cards(state, use.player))
+        if decision.context_value("owner") != 1 - use.player:
+            problems.append(f"{label} の決定のポケモンの持ち主 {decision.context_value('owner')!r} が相手 {1 - use.player} ではない")
+        if not decision.options:
+            problems.append(f"{label} の決定に選べる特殊エネルギーカードがない（ないならコインを投げず、決定を出さない）")
+        return problems
+
+
+def opponent_attached_special_energy_cards(state: GameState, player: int) -> tuple[int, ...]:
+    """v0.114: プレイヤー ``player`` の相手の場のポケモン（バトル場 → ベンチ）についている特殊エネルギーカード（ついている間の定義。ついている順）。HP 以上のポケモン（処理の対象がない）・
+    タケシの保護（``energy_removal_protected``）のポケモンのカードは除く。"""
+    opponent = 1 - player
+    return tuple(uid for pokemon in state.players[opponent].in_play()
+                 if not knocked_by_hp(state, pokemon) and energy_removal_protected(state, opponent, pokemon, player) is None
+                 for uid in pokemon.energy if state.card_def(uid).is_special_energy)
+
+
+def deck_baby_pokemon(state: GameState, player: int) -> list[int]:
+    """v0.114: ``player`` の山札のベイビィポケモンのカード（uid の小さい順。山札の並びを写さない。説明が「ベイビィポケモン」と書く）。"""
+    return sorted(uid for uid in state.players[player].deck if state.card_def(uid).is_baby_pokemon)
+
+
+@dataclass(frozen=True)
+class PutBabyFromDeckOntoBenchOrFail(AttackEffect):
+    """自分の山札から「ベイビィポケモン」を 1 枚選び出し、ベンチに出す。その後、その山札をよく切る。(自分のベンチに空きがないとき、このワザは失敗する。)（v0.114。ピチュー（PF2-007）の
+    「いっしょにあそぼ」。kyuura の印刷の文面。ダメージの目安なし）。
+
+    - 要素は v0.113 の ``BenchFromDeck(when_full=BENCH_FULL_FAIL)`` に、選べるカードをベイビィポケモンのカード（``deck_baby_pokemon``。名前を問わない）にする ``babies`` を付けたもの。
+      1 枚ちょうど（省略できない）。選べるカードがないなら出さずに切る（p.309）。ベンチに空きがないことは、ワザを使ってからの失敗（p.323。山札を見ない・切らない）
+    - 出したカードは手札を通らない（``zones.bench_from_deck``。場に出た番は今の番）"""
+
+    implementation_id = "put_baby_from_deck_onto_bench_or_fail"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "山札からベイビィポケモンをベンチに出し、ベンチに空きがなければ失敗するワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (PLAY_TOGETHER_TEXT,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=(1, 1), options=deck_baby_pokemon(state, use.player))
+
+
+@dataclass(frozen=True)
+class PlaceCountersOnChosenOpponentPokemon(AttackEffect):
+    """相手の場のポケモンを 1 匹選び、そのポケモンに、ダメージカウンターを ``counters`` 個のせる（v0.114。ムチュール（PRN-037）の「なげキッス」。kyuura の印刷の文面。ダメージの目安なし）。
+
+    - 要素は v0.89 の ``ChooseEffectTarget``（相手の場。バトル場 → ベンチ。ワザを使ったプレイヤーが選ぶ）→ ``TargetCounters``。ダメージカウンターをのせることはワザによるダメージでは
+      ない（GR-2000-P320-COUNTER-MOVE。v0.48 の「ダメージぞうふく」と同じ。ダメージの計算・弱点・抵抗力・「ダメージを受けない」状態・ベンチガードは関係しない）。のせる前に、そのポケモンの
+      「ワザをうけない」状態・エフェクトガード・「とうめい」を評価する（うらのカードはおもてにする）
+    - HP 以上になったら、ワザのあとのきぜつの判定できぜつする"""
+
+    counters: int
+    implementation_id = "place_counters_on_chosen_opponent_pokemon"
+    opponent_effect_elements = (COUNTERS_ELEMENT,)
+
+    def __post_init__(self) -> None:
+        if type(self.counters) is not int or self.counters < 1:
+            raise ValueError(f"のせるダメージカウンターの数は 1 以上（{self.counters!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の場のポケモンを選び、ダメージカウンターをのせるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (BLOW_KISS_TEXT.format(n=self.counters),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return target_decision_problems(state, use, decision, side=TARGET_SIDE_OPPONENT, scope=TARGET_IN_PLAY)
+
+
+@dataclass(frozen=True)
+class CoinDamageOpponentActiveThenEndTurn(PowerEffect):
+    """この力は、自分の番ごとに 1 回使え、使ったら自分の番は終わる。コインを投げて「おもて」なら、相手の対戦ポケモンに ``amount`` のダメージ。このカードがねむり・マヒ・こんらんのとき、
+    この力は使えない（v0.114。エレキッド（neo1-044）の［わんぱくパンチ］。kyuura の印刷の文面）。
+
+    - 宣言して使う。自分の番ごとに 1 回（``once_per_turn``。宣言のときに記録するので「うら」でも使ったことになる）。選ぶものはない。場所は見ない（ベンチでも使える）
+    - コインは使ったプレイヤーが 1 枚（``_power_coin``）。「おもて」なら、その時点の相手のバトル場のポケモンに特殊能力のダメージ（v0.43 の［こっそりかみつく］と同じ処理。ワザによる
+      ダメージの計算・プラスパワー・ディフェンダー・「ダメージを受けない」状態・「とうめい」は関係しない。受けるポケモンの受けるダメージを変える常にはたらく特殊能力・鋼エネルギーは
+      ``received_power_damage``。ログ ``power_damage``）。HP 以上になったら、特殊能力の処理のあとにきぜつする（``may_knock_out``）
+    - 「使ったら自分の番は終わる」: 「おもて」でも「うら」でも、処理のあと（きぜつ・サイド・バトル場に出す決定のあと）に番を終える（v0.86 の［おたけび］と同じ ``ends_turn``。ワザを
+      使ったことにしない）
+    - 説明に「弱点・抵抗力」に関係なく、がないので、受けるポケモンの弱点・抵抗力がこのカードの今の色なら Z9（v0.17b からの問い。``POWER_DAMAGE_WR_CODE``）。もろばバサミ（DB1）・鋼エネルギー
+      との順番（MT1）・ワザでないダメージに当てはめるかが決まらない力（DF2）とあわせて、受け付けるかがコインの結果で変わらないよう、コインの前（宣言の前）に止める。相手のバトル場が
+      うらのカードなら、弱点・抵抗力が読めず結果が変わりうるので、同じく Z9 で止める（おもてにしない）"""
+
+    amount: int = 20
+    implementation_id = "coin_damage_opponent_active_then_end_turn"
+    once_per_turn: ClassVar[bool] = True
+    ends_turn: ClassVar[bool] = True
+    may_knock_out: ClassVar[bool] = True
+
+    def check(self, power: Power) -> list[str]:
+        problems = _check_power_text(power, "コインの「おもて」で相手の対戦ポケモンにダメージを与えて番を終える特殊能力", BRATTY_PUNCH_TEXTS)
+        if self.amount != 20:
+            problems.append(f"説明のダメージは 20（登録は {self.amount}）")
+        return problems
+
+    def damage_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
+        """「おもて」のときのダメージを決められないなら、その理由（Z9・DB1・MT1・DF2）。状態を変えず、乱数を使わない。"""
+        opponent = 1 - use.player
+        target = state.players[opponent].active
+        _, user = state.find_pokemon(use.pokemon_id)
+        if state.is_face_down(target):
+            return UnsupportedError(POWER_DAMAGE_WR_CODE, f"［わんぱくパンチ］→ うらのカードのポケモン {target.pokemon_id}（弱点・抵抗力が読めない）: {POWER_DAMAGE_WR_REASON}")
+        against = {color for reading in weakness_resistance_readings(state, opponent, target) for color in reading[:2]} - {None}
+        if any(color in against for color in type_readings(state, user)):
+            return UnsupportedError(POWER_DAMAGE_WR_CODE, f"ポケモン {user.pokemon_id} の［わんぱくパンチ］→ ポケモン {target.pokemon_id}: {POWER_DAMAGE_WR_REASON}")
+        try:
+            received_power_damage(state, opponent, target, user, self.amount)
+        except UnsupportedError as error:
+            return error
+        return None
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_user_not_asleep_paralyzed_confused(state, use)
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+        problem = self.damage_problem(state, use)
+        if problem is not None:
+            raise problem
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        if _power_coin(state, use) is not CoinSide.HEADS:
+            return
+        opponent = 1 - use.player
+        target = state.players[opponent].active
+        _, user = state.find_pokemon(use.pokemon_id)
+        amount, applied = received_power_damage(state, opponent, target, user, self.amount)
+        target.damage += amount
+        extra = {} if not applied else {"amount_before": self.amount, "received_modifiers": received_modifiers_log(applied)}
+        state.add_event("power_damage", player=use.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key),
+                        target_player=opponent, target=target.card, target_pokemon_id=target.pokemon_id, amount=amount,
+                        total_damage=target.damage, knocked_out=knocked_by_hp(state, target), **extra)
+        remove_on_damage(state, opponent, target, amount)
+
+
+@dataclass(frozen=True)
+class StopOpponentBenchPowersThisTurn(PowerEffect):
+    """この力は、自分の番ごとに 1 回使える。相手のベンチの「特殊能力」を持っているポケモンを 1 匹選ぶ。そのポケモンは、この番が終わるまで、「特殊能力」を使うことができず、その力も消える。
+    （そのポケモンがバトル場に出てきたとき、この効果は消える。）（v0.114。ププリン（neo2-050）の［じっとみる］。kyuura の印刷の文面）。
+
+    - 宣言して使う。自分の番ごとに 1 回（``once_per_turn``）。説明にねむり・マヒ・こんらんの制限はないので、特殊状態でも使える（文面にない制限を加えない）。場所は見ない
+    - 選ぶもの: ``target``（相手のベンチのポケモンで、``holds_power`` が真）。``source``・``energy`` は指定しない。選べないポケモン（自分の場・相手のバトル場・特殊能力を持たない・うらの
+      カード）は拒否する。持っている特殊能力がすべてほかの効果で消えているポケモンは HV1 で止める（選べるかが決まらない）
+    - 効果: 選んだポケモンに持続する効果 ``state.BenchPowersStopped``（与えた番だけ。特殊能力で与えた相手への効果）を与える（ログ ``persistent_effect_added`` の ``effect`` は ``PowerKey``）。
+      その間、そのポケモンの特殊能力は、使用も力も止まる（``persistent.powers_stopped``）。バトル場に出たら、その時点で消す（``persistent.remove_on_entering_active``）。特殊能力の
+      効果なので「ワザをうけない」状態・「とうめい」は関係しない
+    - 与えたあとの状態が受け付けられない（決められない姿・最大HP・［ずらかる］の力がもどる。``state_stop_after``）なら、使う前に止める"""
+
+    implementation_id = "stop_opponent_bench_powers_this_turn"
+    once_per_turn: ClassVar[bool] = True
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "相手のベンチの特殊能力を持っているポケモンの特殊能力をこの番だけ止める特殊能力", STARE_TEXTS)
+
+    def stop_terms(self) -> tuple[type, ...]:
+        from .state import BenchPowersStopped
+
+        return (BenchPowersStopped,)
+
+    def _effect(self, state: GameState, use: PowerUse):
+        from .state import BenchPowersStopped
+
+        _, user = state.find_pokemon(use.pokemon_id)
+        return BenchPowersStopped(source_card=user.card, source_player=use.player, created_turn=state.turn_number, active_turn=state.turn_number)
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        if use.target is None:
+            raise IllegalActionError("POWER_CHOICE_MISSING", "［じっとみる］で選ぶ相手のベンチのポケモン（target）を指定する")
+        if use.source is not None or use.energy is not None:
+            raise IllegalActionError("POWER_CHOICE_NOT_USED", "［じっとみる］は相手のベンチのポケモンを選ぶので、移動元（source）・エネルギー（energy）は指定しない")
+        require_power_not_used(state, use)
+        target = _opponent_pokemon(state, use, use.target, "TARGET")
+        owner = 1 - use.player
+        if state.players[owner].active is target:
+            raise IllegalActionError("TARGET_NOT_ON_BENCH", f"場のポケモン {use.target} は相手のバトル場のポケモン（相手のベンチのポケモンだけ）")
+        held = holds_power(state, target)
+        if held is False:
+            raise IllegalActionError("TARGET_WITHOUT_POWER", f"相手のベンチのポケモン {use.target} は「特殊能力」を持っていない（うらのカードは特殊能力を読めない）")
+        if held is None:
+            raise stopped_power_holder_error(target, "［じっとみる］で選ぶ相手のベンチのポケモン")
+        trial = state.clone()
+        trial_target = trial.find_pokemon(use.target)[1]
+        trial_target.persistent_effects = (*trial_target.persistent_effects, self._effect(trial, use))
+        stop = state_stop_after(state, trial)
+        if stop is not None:
+            raise UnsupportedError(stop[0], f"［じっとみる］でポケモン {use.target} の特殊能力を止めると: {stop[1]}")
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        from .persistent import add_persistent_effect
+
+        owner, target = state.find_pokemon(use.target)
+        add_persistent_effect(state, owner, target, self._effect(state, use), attack=str(use.key))
+
+
+V0_114_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # ブビィ（neo1-022）。モクモク（無）10
+    AttackKey("neo1-022", 0): _printed(DamageThenFieldPowerSuppressionUntilOwnNextTurn(), "モクモク", SMOKESCREEN_FIELD_TEXT),
+    # ピチュー（neo1-042）。パチパチ（無）。目安なし
+    AttackKey("neo1-042", 0): _printed(PowerHoldersSpreadDamage(20), "パチパチ", POWER_HOLDERS_SPREAD_TEXT.format(amount=20)),
+    # ピィ（neo1-070）。ピピピ（無）: v0.46 の ShuffleHandIntoDeckThenDraw（7 枚。「その山札」「山札から」の書き方）
+    AttackKey("neo1-070", 0): _printed(ShuffleHandIntoDeckThenDraw(7), "ピピピ", SHUFFLE_HAND_DRAW_FROM_DECK_TEXT.format(n=7)),
+    # バルキー（neo2-033）。スマッシュパンチ（無）30: v0.31 の FailOnTailsDamage
+    AttackKey("neo2-033", 0): _printed(FailOnTailsDamage(), "スマッシュパンチ", SMASH_PUNCH_TEXT),
+    # ムチュール（neo3-031）。サイコキッス（無）。目安なし
+    AttackKey("neo3-031", 0): _printed(CoinReturnOpponentSpecialEnergyToDeck(), "サイコキッス", PSYCHIC_KISS_TEXT),
+    # ピチュー（PF2-007）。いっしょにあそぼ（無）。目安なし
+    AttackKey("PF2-007", 0): _printed(PutBabyFromDeckOntoBenchOrFail(), "いっしょにあそぼ", PLAY_TOGETHER_TEXT),
+    # ブビィ（NIP1X-002）・ピチュー（NIP2X-002）。説明文のない 10 のワザ（文面・出典を持たない）
+    AttackKey("NIP1X-002", 0): AttackEntry(DAMAGE_ONLY, "パンチ"),
+    AttackKey("NIP2X-002", 0): AttackEntry(DAMAGE_ONLY, "はたく"),
+    # ピィ（PRN-012）。ピッピッ（無）: v0.31 の DrawCardsAttack（2 枚）
+    AttackKey("PRN-012", 0): _printed(DrawCardsAttack(2), "ピッピッ", DRAW_TWO_TEXT),
+    # ププリン（PRN-031）。おやすみのうた（無）: v0.3b の PutToSleep
+    AttackKey("PRN-031", 0): _printed(PutToSleep(), "おやすみのうた", SLEEP_ONLY_TEXT),
+    # ムチュール（PRN-037。水）。なげキッス（無）。目安なし
+    AttackKey("PRN-037", 0): _printed(PlaceCountersOnChosenOpponentPokemon(1), "なげキッス", BLOW_KISS_TEXT.format(n=1)),
+})
+
+V0_114_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
+    PowerKey("neo1-044", 0): PowerEntry(CoinDamageOpponentActiveThenEndTurn(), "わんぱくパンチ", BRATTY_PUNCH_TEXTS[0], BRATTY_PUNCH_TEXTS[0], _KYUURA_PRINTED_TEXT),
+    PowerKey("neo2-050", 0): PowerEntry(StopOpponentBenchPowersThisTurn(), "じっとみる", STARE_TEXTS[0], STARE_TEXTS[0], _KYUURA_PRINTED_TEXT),
+})
+
+DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_114_ATTACKS), V0_114_POWERS)

@@ -394,9 +394,11 @@ class ProvenanceTest(unittest.TestCase):
         # v0.69: 照合の記録は履歴で書き換えない（ecb2d69 の写しと照らした）。写しの元は 7d3f4ca で、写しの作り直しの検査（previous_copy_problems）が、
         # ecb2d69 にあったカードの写す欄が kyuura の修正の欄と出典の記録の欄を除いて同じことを確かめる
         self.assertEqual(verification["kyuura_commit"], PREVIOUS_KYUURA_COMMIT)
-        # v0.97: 修正ごとの前の写しの元は、kyuura が当てはめた移行の段の前（v0.69 の段は ecb2d69、v0.97 の段（アンノーンI・D・F のルール文）は 7d3f4ca）
+        # v0.97: 修正ごとの前の写しの元は、kyuura が当てはめた移行の段の前（v0.69 の段は ecb2d69、v0.97 の段（アンノーンI・D・F のルール文）は 7d3f4ca）。
+        # v0.114: ベイビィ 13 枚のルール文・進化先（kyuura が画像で埋めた。v0.114 の段）は 73a1690（docs/baby-rules-evolution-v0.114.md 4.1 節）
         self.assertEqual({(c["migration"], c["previous_source"]) for c in extract["kyuura_corrections"]},
-                         {("v0.69", PREVIOUS_KYUURA_COMMIT), ("v0.97", "7d3f4ca76c084774efb4ac6a1d3a943387e183c3")})
+                         {("v0.69", PREVIOUS_KYUURA_COMMIT), ("v0.97", "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"),
+                          ("v0.114", "73a169063463bbf7bcaa3137d70cbf9721d11534")})
         self.assertEqual(extract["source"]["commit"], KYUURA_COMMIT)
         for card_id in extract["pool_v0_1"]:
             record = verification["cards"][card_id]

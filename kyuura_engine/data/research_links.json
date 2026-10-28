@@ -12,8 +12,8 @@
   "card_data_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 238,
-    "engine_stop_codes": 237,
+    "engine_unresolved_rulings": 244,
+    "engine_stop_codes": 243,
     "kyuura_issues": 73
   },
   "stop_codes": {
@@ -2745,6 +2745,72 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_BABY_RULE_COIN_ORDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BQ1"
+        }
+      ],
+      "kyuura_issue": "UQ-ATTACK-PRE-DAMAGE-COIN-ORDER",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_NEO_TEXT_BASIC_BABY": {
+      "engine_rulings": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "NB1"
+        }
+      ],
+      "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_NEO_TEXT_EVOLUTION_CARD_BABY": {
+      "engine_rulings": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "NB2"
+        }
+      ],
+      "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_TRANSFORM_BABY": {
+      "engine_rulings": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BX1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_HOT_PLATE_BABY_EVOLUTION": {
+      "engine_rulings": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "HP2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_STOPPED_POWER_HOLDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "HV1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -2805,18 +2871,6 @@
         }
       ],
       "kyuura_issue": "UQ-ESP-REDO",
-      "reachable_with_current_cards": false,
-      "counted_as_engine_unresolved": false
-    },
-    "neo_text_baby_categories": {
-      "engine_rulings": [
-        {
-          "version": "v0.114",
-          "document": "docs/baby-rules-evolution-v0.114.md",
-          "ruling_id": "NB0"
-        }
-      ],
-      "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
       "reachable_with_current_cards": false,
       "counted_as_engine_unresolved": false
     }
@@ -2971,18 +3025,23 @@
         "card_id": "neo1-042",
         "target": "card",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_BABY_RULE_COIN_ORDER",
+            "UNRESOLVED_VERMILION_GYM_ATTACK_ORDER"
+          ]
         },
-        "note": "ベイビィポケモンのルールのコインと、手順 4 のほかの効果・手順 5 のこんらん・スタジアムのコインの順番（kyuura が 2026-10-27 に加えた事例。13 枚とも同じルール）。v0.114 の写しの元の移行の時点では、ベイビィ 13 枚を写しに入れていない（対戦に使えない）"
+        "note": "ベイビィポケモンのルールのコインと、手順 4 のほかの効果（すなかけ・［はんこう］など）・手順 5 のこんらんのコインの順番は BQ1、クチバシシティジムのコインとの順番は既存の VM1 で、どちらもコインの前に止める（kyuura が 2026-10-27 に加えた事例。13 枚とも同じルール。v0.114 でベイビィ 13 枚を対応にした）"
       },
       {
         "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
         "card_id": "neo1-074",
         "target": "trainer",
         "engine": {
-          "codeless_question": "neo_text_baby_categories"
+          "stop_codes": [
+            "UNRESOLVED_NEO_TEXT_BASIC_BABY"
+          ]
         },
-        "note": "すごいつりざおの「たねポケモン」にベイビィポケモンカードをふくむか。移行の時点の写しにベイビィのカードがないので、この場面は起こらない（NB0。コードのない問い）"
+        "note": "すごいつりざおの「うら」の「たねポケモン」にベイビィポケモンカードをふくむか。トラッシュのベイビィポケモンカードは選べるが選ぶと止める（NB1。トラッシュは公開の情報）"
       },
       {
         "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
@@ -2998,27 +3057,33 @@
         "card_id": "neo3-056",
         "target": "trainer",
         "engine": {
-          "codeless_question": "neo_text_baby_categories"
+          "stop_codes": [
+            "UNRESOLVED_NEO_TEXT_BASIC_BABY"
+          ]
         },
-        "note": "ポケモン育て屋夫婦の場の「たねポケモン」「1進化ポケモン」にベイビィ・ベイビィから進化したたねポケモンをふくむか（NB0。移行の時点では起こらない）"
+        "note": "ポケモン育て屋夫婦の場の「たねポケモン」「1進化ポケモン」に、場のベイビィポケモン・ベイビィから進化したたねポケモンをふくむか。選べるが選ぶと止める（NB1。どれもそうなら使う前）"
       },
       {
         "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
         "card_id": "NIP1-021",
         "target": "trainer",
         "engine": {
-          "codeless_question": "neo_text_baby_categories"
+          "stop_codes": [
+            "UNRESOLVED_NEO_TEXT_BASIC_BABY"
+          ]
         },
-        "note": "イントロパック★neo のマスターボールの「たねポケモン」にベイビィポケモンカードをふくむか（NB0。移行の時点では起こらない）"
+        "note": "イントロパック★neo のマスターボールの「たねポケモン」にベイビィポケモンカードをふくむか。見た 7 枚にベイビィポケモンカードがあれば止める（NB1。見たカードは使ったプレイヤーだけに見えるので、選べるが選ぶと止める形にせず、見たあとに止める）"
       },
       {
         "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
         "card_id": "neo2-056",
         "target": "trainer",
         "engine": {
-          "codeless_question": "neo_text_baby_categories"
+          "stop_codes": [
+            "UNRESOLVED_NEO_TEXT_EVOLUTION_CARD_BABY"
+          ]
         },
-        "note": "退化スプレーHYPER の「進化カード」に、ベイビィの上のたねポケモンカードをふくむか（NB0。移行の時点では起こらない）"
+        "note": "退化スプレーHYPER の「進化カード」に、ベイビィの上のたねポケモンカードをふくむか。ベイビィから進化したたねポケモン（場の進化ポケモン）は選べるが選ぶと止める（NB2）"
       },
       {
         "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
@@ -4689,7 +4754,18 @@
       "neo3-044/attack/0",
       "neo3-044/attack/1",
       "neo4-022/attack/1",
-      "PR1-078/attack/0"
+      "PR1-078/attack/0",
+      "neo1-022/attack/0",
+      "neo1-042/attack/0",
+      "neo1-044/power/0",
+      "neo1-070/attack/0",
+      "neo2-033/attack/0",
+      "neo2-050/power/0",
+      "neo3-031/attack/0",
+      "PF2-007/attack/0",
+      "PRN-012/attack/0",
+      "PRN-031/attack/0",
+      "PRN-037/attack/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
@@ -5374,6 +5450,180 @@
         }
       ],
       "use": "再録のカード（effects.REPRINT_CARDS）の、元のカードの記録（最新の説明・エラッタ）を処理に使う文面にした登録: 同じカードの組の再録の版にも、元のカードの最新の説明を当てはめる（カード自体のあいまいな表現・判断のむずかしい表現は最新の説明にしたがう）。再録の版を照合した記録ではない（card_sources.json の reprint_scope が元のカードの記録と、その照合の記録の収録の一覧に再録の版の商品があるかを書く）"
+    },
+    {
+      "kyuura_record": "GR-2000-P308-BABY-SETUP",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R1"
+        }
+      ],
+      "use": "デッキの検査（deck.NO_BASIC_POKEMON）・最初の手札の切り直し・対戦の準備で、ベイビィポケモンカードをたねポケモンカードと同じに数える（CardDefinition.is_baby_or_basic_pokemon。どちらも 1 枚もないときだけ切り直す。バトル場に 1 枚・ベンチに最大 5 枚）"
+    },
+    {
+      "kyuura_record": "GR-2000-P309-BABY-BENCH",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R2"
+        }
+      ],
+      "use": "手札のベイビィポケモンカードを、自分の番にベンチに出せる（engine._play_basic_to_bench。手札から直接バトル場には出さない）"
+    },
+    {
+      "kyuura_record": "GR-2000-P313-POKEMON-COMPOSITION",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R3"
+        }
+      ],
+      "use": "ベイビィポケモンの上にたねポケモンカードを重ねたポケモンの重なり（PokemonInPlay.evolution_stack の最初がベイビィポケモンカード）。場をはなれたら、それぞれのカードにもどる（印刷の分類）"
+    },
+    {
+      "kyuura_record": "GR-2000-P314-BABY-RULE",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R4"
+        }
+      ],
+      "use": "ベイビィポケモンのルール（resolution.flow._baby_rule_failed）: 相手のバトル場に進化していないベイビィポケモンがいるとき、ワザを使うプレイヤーがコインを 1 枚投げ、「うら」ならワザは失敗する"
+    },
+    {
+      "kyuura_record": "GR-2000-P310-BABY-EVOLUTION",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R5"
+        }
+      ],
+      "use": "進化の共通の確かめ（evolution.evolution_block）: 場のベイビィポケモンの進化先（CardDefinition.evolves_to。印刷の名前）と同じ名前のたねポケモンカードを重ねるのも進化（手札から・ワザ・特殊能力で重ねるときも同じ確かめ。その番の最初から場にいた・おたがいの最初の番・同じ番にもう一度の制限も同じ）"
+    },
+    {
+      "kyuura_record": "GR-2000-P315-EVOLVED-BABY",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R6"
+        }
+      ],
+      "use": "場での分類（effects.field_stage・is_evolution_in_play）: ベイビィポケモンから進化したたねポケモンは、場にいるかぎり「進化ポケモン」（印刷の段階は basic のまま）"
+    },
+    {
+      "kyuura_record": "GR-2000-P325-PRE-NEO-BABY",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R7"
+        }
+      ],
+      "use": "カードの説明の範囲（effects.TEXT_ERAS・card_is_basic_in_text・field_is_basic_in_text・top_is_evolution_card_in_text）: ネオより前のカードの説明では、ベイビィポケモンカードはたねポケモンカードと同様、場のベイビィポケモンはたねポケモンと同様、ベイビィを進化させたたねポケモンカードは場にあるかぎり進化カード。neo の説明の「たねポケモン」「進化カード」だけの範囲はUQ-NEO-TEXT-BABY-CATEGORIES（NB1・NB2）で止める"
+    },
+    {
+      "kyuura_record": "CR-BABY-RULE-COIN",
+      "kind": "ruling",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R8"
+        }
+      ],
+      "use": "ワザを使う側のプレイヤーが、ワザを使うたびに 1 枚投げる（ログ coin_flip の source は baby_rule・baby_rule_coin）。「うら」ならワザの失敗（ログ attack_failed の reason は baby_rule。ワザを使ったことになり、番は終わる）"
+    },
+    {
+      "kyuura_record": "CR-BABY-RULE-COIN-STEP",
+      "kind": "ruling",
+      "kyuura_status": "SUPPORTED",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R9"
+        }
+      ],
+      "use": "コインは宣言（手順 3）のあと、ワザの説明の処理の前。宣言の前の確かめで拒否したワザでは投げない。手順 4・5・スタジアムのコインとの順番は BQ1・VM1 で止める"
+    },
+    {
+      "kyuura_record": "CR-BABY-RULE-NOT-POWER",
+      "kind": "ruling",
+      "kyuura_status": "SUPPORTED",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R10"
+        }
+      ],
+      "use": "ベイビィポケモンのルールは特殊能力ではない（かがくへんかガス・モクモクなどでは止まらない。ナツメのESPのやり直しの対象でもない。AttackRun.flip を通さない）"
+    },
+    {
+      "kyuura_record": "CR-BABY-WITHOUT-ATTACKS",
+      "kind": "ruling",
+      "kyuura_status": "SUPPORTED",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R11"
+        }
+      ],
+      "use": "ワザのないベイビィポケモン（エレキッド・ププリン）も対戦に使える（cards.classify_record。メタモンの supplies_attacks ではない）"
+    },
+    {
+      "kyuura_record": "CR-NEUTRAL-SHIELD-EVOLVED-BABY",
+      "kind": "ruling",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R12"
+        }
+      ],
+      "use": "ミュウの［ニュートラルシールド］（相手の進化ポケモンからのワザを受けない）は、ベイビィから進化したたねポケモンのワザを受けない（is_evolution_in_play）。進化していないベイビィのワザは受ける"
+    },
+    {
+      "kyuura_record": "CR-DEVOLUTION-SPRAY-EVOLVED-BABY",
+      "kind": "ruling",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R13"
+        }
+      ],
+      "use": "退化スプレーで、ベイビィの上のたねポケモンカードをはがして捨てられる（退化の共通の処理 evolution.devolve。はがしたカードはたねポケモンカードにもどる）"
+    },
+    {
+      "kyuura_record": "GR-2000-P323-ATTACK-FAILURE",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R14"
+        }
+      ],
+      "use": "ベイビィポケモンのルールのコインの「うら」でワザが失敗しても、そのワザを使ったことになる（使ったワザの記録・1 回だけのワザの記録は宣言のときに置き、番は終わる。v0.2d・v0.36 の p.323「12 ワザの失敗」と同じ処理。kyuura がエンジンの記録を再利用した条項なので、独立した二度目の確認に数えない）"
     }
   ],
   "engine_user_corrections": [

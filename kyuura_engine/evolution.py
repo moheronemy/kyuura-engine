@@ -83,10 +83,23 @@ def evolution_prevented(state: GameState) -> tuple[str, str] | None:
     return "EVOLUTION_PREVENTED", f"場のポケモン {holders} の特殊能力がはたらいているので、全てのポケモンは進化することができない"
 
 
+def evolves_baby(state: GameState, target: PokemonInPlay, definition: CardDefinition) -> bool:
+    """v0.114: たねポケモンカード ``definition`` を、場のポケモン ``target`` に重ねるベイビィからの進化か: ``target`` のいちばん上のカードがベイビィポケモンカードで、その進化先
+    （``CardDefinition.evolves_to``。印刷の名前）に ``definition`` の名前がある（名前の完全一致。GR-2000-P310-BABY-EVOLUTION。「〇〇へ進化」と書かれていない組み合わせでは重ねられない。
+    「タケシの〜」などの別の名前も重ねられない）。進化の制限は見ない（``evolution_block`` が見る）。"""
+    if not definition.is_basic_pokemon:
+        return False
+    current = state.card_def(target.card)
+    return current.is_baby_pokemon and definition.name_ja in current.evolves_to
+
+
 def evolves_directly(state: GameState, target: PokemonInPlay, definition: CardDefinition) -> bool:
     """v0.84: 進化カード ``definition`` が、場のポケモン ``target`` から（1 進化を飛ばさずに）進化するカードか: 「○○○○から進化」が ``target`` のいちばん上のカードの名前と
     同じで（名前の完全一致）、段階がちょうど 1 つ上（たねポケモン → 1 進化、1 進化 → 2 進化）。進化の制限（最初の番・その番に場に出した・進化を止める効果）は見ない
-    （ポケモン育て屋夫婦の「そのポケモンから進化する「進化カード」」をさがすとき。通常の進化の ``evolution_block`` と同じ名前・段階の比べ方）。"""
+    （ポケモン育て屋夫婦の「そのポケモンから進化する「進化カード」」をさがすとき。通常の進化の ``evolution_block`` と同じ名前・段階の比べ方）。
+
+    v0.114: たねポケモンカードは進化カードではないので、ここでは偽（ベイビィからの進化は ``evolves_baby``。説明の「進化カード」にふくむかは説明の版で決める）。ベイビィから進化した
+    たねポケモン（いちばん上がたねポケモンカード）から進化する 1 進化カードは、たねポケモンからの進化と同じ（いちばん上のカードの名前と段階で比べる）。"""
     if definition.category != "pokemon" or not definition.is_evolution_pokemon:
         return False
     current = state.card_def(target.card)
@@ -109,6 +122,10 @@ def evolution_block(state: GameState, target: PokemonInPlay, definition: CardDef
     v0.50: 今の番に退化したポケモン（``devolved_this_turn``）は、ほかの確かめがすべて通ったあとに ``DEVOLVED_THIS_TURN_CODE``（DV2。停止コード）。p.310 の制限
     （``turn_restriction``）・GV1 の印は当てはめない（どちらに当たるかが決まらないため）。呼ぶ側は ``UnsupportedError`` にする（``IllegalActionError`` にしない）。
 
+    v0.114: ``definition`` がたねポケモンカードなら、ベイビィポケモンからの進化（GR-2000-P310-BABY-EVOLUTION）。いちばん上のカードがベイビィポケモンカードで、その進化先
+    （``evolves_to``。印刷の名前の完全一致）に名前があるときだけ重ねられる。そのほかの制限（進化を止める効果・カードの説明の禁止・おたがいの最初の番・その番に場に出した・進化した・
+    退化した）は、進化カードと同じ順番・同じコード（p.310 の項にしたがう）
+
     確かめないもの: 進化したあとの HP がダメージ以下になるか（呼ぶ側。``UNRESOLVED_EVOLUTION_HP``）・カードが対応しているか（呼ぶ側）。状態は変えない。"""
     prevented = evolution_prevented(state)
     if prevented is not None:
@@ -122,7 +139,19 @@ def evolution_block(state: GameState, target: PokemonInPlay, definition: CardDef
         # 番は先攻から交互に進むので、1 番は先攻の、2 番は後攻の最初の番（p.309・p.310）
         return "FIRST_TURN_EVOLUTION", "おたがいのプレイヤーの最初の番には、ポケモンを進化させられない（p.310）"
     current = state.card_def(target.card)
-    if current.name_ja != definition.evolves_from:
+    baby = definition.is_basic_pokemon  # v0.114: ベイビィポケモンの上にたねポケモンカードを重ねる進化（GR-2000-P310-BABY-EVOLUTION）
+    if baby and not current.is_baby_pokemon:
+        return (
+            "EVOLUTION_STAGE_MISMATCH",
+            (f"たねポケモン「{definition.name_ja}」を重ねられるのは、進化先にその名前が書かれたベイビィポケモンだけ。場のポケモン {target.pokemon_id} の「{current.name_ja}」は "
+             f"{current.stage}（p.310・p.324）"),
+        )
+    if baby and definition.name_ja not in current.evolves_to:
+        return (
+            "EVOLUTION_NAME_MISMATCH",
+            f"ベイビィポケモン「{current.name_ja}」の進化先は {list(current.evolves_to)}。「{definition.name_ja}」は重ねられない（p.310・p.324「書かれていない組み合わせでカードを重ねてはいけません」）",
+        )
+    if not baby and current.name_ja != definition.evolves_from:
         return (
             "EVOLUTION_NAME_MISMATCH",
             f"「{definition.name_ja}」は「{definition.evolves_from}」から進化する。場のポケモン {target.pokemon_id} は「{current.name_ja}」",
@@ -135,7 +164,7 @@ def evolution_block(state: GameState, target: PokemonInPlay, definition: CardDef
             return restriction
         if from_deck and target.current_form_turn >= state.turn_number:
             return PERMISSION_FROM_DECK_CODE, PERMISSION_FROM_DECK_REASON  # 許可だけで制限が外れる組（GV1）
-    below_stage = "basic" if definition.is_stage1_pokemon else "stage1"
+    below_stage = "baby" if baby else "basic" if definition.is_stage1_pokemon else "stage1"
     if current.stage != below_stage:
         return (
             "EVOLUTION_STAGE_MISMATCH",
@@ -152,7 +181,7 @@ def place_evolution_card(state: GameState, player: int, target: PokemonInPlay, c
     """手札の進化カード ``card`` を、自分の場のポケモン ``target`` の上に置いて進化させる（p.310 の手順 1〜5）。
 
     1・2. 手札から出して見せ、進化するポケモンの上に置く（下のカードはトラッシュしない。いちばん上のカードの内容がそのポケモンを
-    表す）→ 3. 特殊状態と持続する効果から回復させる（``clear_special_conditions`` と ``remove_persistent_effects`` の ``EVOLVE``。
+    表す。v0.114: ベイビィポケモンの上にたねポケモンカードを重ねる進化も同じ手順。GR-2000-P310-BABY-EVOLUTION）→ 3. 特殊状態と持続する効果から回復させる（``clear_special_conditions`` と ``remove_persistent_effects`` の ``EVOLVE``。
     別々の処理）→ 4. マーカー・カウンター（ダメージカウンター以外）を取りのぞく（v0.90。``markers.remove_markers``）・5. 進化によって引き起こされること（対応カードにない）。
     受け継ぐもの（ダメージカウンター・エネルギー・ついているトレーナー・場のポケモンの番号・場に出た番）は変えない。
 

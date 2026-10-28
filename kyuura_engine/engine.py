@@ -23,7 +23,7 @@ import dataclasses
 import random
 from typing import Callable, Sequence
 
-from .cards import EVOLUTION_STAGES, CardPool, EnergyType, load_card_pool
+from .cards import BABY_STAGE, EVOLUTION_STAGES, CardPool, EnergyType, load_card_pool
 from .conditions import (
     RETREAT,
     clear_special_conditions,
@@ -138,6 +138,7 @@ from .effects import (
     shapeshift_slot,
     current_form,
     form_def,
+    hot_plate_baby_evolution_error,
     FORM_TRANSFORM,
     TRANSFORM_POWER_CODE,
     TRANSFORM_POWER_REASON,
@@ -186,7 +187,8 @@ from .deck import deck_problems
 from .evolution import DEVOLVED_THIS_TURN_CODE, evolution_block, place_evolution_card, skipped_stage1_basic
 from .errors import DeckValidationError, HiddenPropertyRead, IllegalActionError, StateIntegrityError, UnsupportedError
 from .persistent import (DISCARD_FROM_PLAY, KNOCK_OUT, SOURCE_LEFT_ACTIVE, cannot_retreat, effect_attack_card, end_turn, energy_attach_blocked, expires_at_turn_start, lasting, leave_lock,
-                         powers_stopped, powers_use_prevented, remove_persistent_effects, remove_source_left_effects, require_can_leave, require_source_card_present)
+                         powers_stopped, powers_use_prevented, remove_on_entering_active, remove_persistent_effects, remove_source_left_effects, require_can_leave,
+                         require_source_card_present)
 from .rules import RULES_2000_02_14, RuleSet
 from .stadiums import bench_has_room, bench_limit, stadium_in_play
 from .state import (
@@ -209,6 +211,7 @@ from .state import (
     CannotRetreat,
     CannotUsePowers,
     PowersStopped,
+    BenchPowersStopped,
     BenchProtection,
     CannotAttachEnergy,
     EnergyRole,
@@ -355,7 +358,8 @@ def _draw(state: GameState, player: int, count: int) -> None:
 
 
 def _hand_has_basic(state: GameState, player: int) -> bool:
-    return any(state.card_def(uid).is_basic_pokemon for uid in state.players[player].hand)
+    # v0.114: 最初の手札に、ベイビィポケモンカードかたねポケモンカードがあれば切り直さない（GR-2000-P308-BABY-SETUP。ベイビィだけの手札も切り直さない）
+    return any(state.card_def(uid).is_baby_or_basic_pokemon for uid in state.players[player].hand)
 
 
 def _deal_opening_hands(state: GameState) -> None:
@@ -525,7 +529,9 @@ class _OpaqueRead(BaseException):
         self.uid = uid
 
 
-_NONBASIC = "?nonbasic"  # v0.68: 「たねポケモン」でない、とだけ決めたカード（トラッシュしたあとに項目を読まなければ、どのカードでも同じ結果）
+# v0.68: 「たねポケモン」でない、とだけ決めたカード（トラッシュしたあとに項目を読まなければ、どのカードでも同じ結果）。v0.114: マチスの秘策の説明の「たねポケモン」はベイビィ
+# ポケモンカードもふくむ（GR-2000-P325-PRE-NEO-BABY。``zones._secret_plan_keeps``）ので、ベイビィポケモンカードでもないカード
+_NONBASIC = "?nonbasic"
 _UNASSIGNED = "?unassigned"  # v0.68: まだ割り当てていない相手のうらのカード（読めば確かめの不具合）
 
 
@@ -535,7 +541,7 @@ class _OpaqueDefinition(cards_module.CardDefinition):
     def __getattribute__(self, name: str):
         if name.startswith("_") or name in ("id", "__class__"):
             return super().__getattribute__(name)
-        if name == "is_basic_pokemon" and super().__getattribute__("id") == _NONBASIC:
+        if name in ("is_basic_pokemon", "is_baby_pokemon") and super().__getattribute__("id") == _NONBASIC:
             return False
         raise _OpaqueRead(-1)
 
@@ -646,15 +652,16 @@ def _identity_independent(state: GameState, command, context: resolution.Context
     - 試すのは、このコマンドが効果の対象として指定した（おもてにした）相手のうらのカードだけ（指定した順に、``zones.IDENTITY_ORACLE`` が割り当てる）。指定するまでの処理は
       うらのカードを読めない（FD1）ので、どのカードを指定するかは公開の情報で決まる
     - 「たねポケモン」でないカードは、おもてにするとトラッシュする。トラッシュしたあとにほかの項目を読まなければ、どのカードでも同じ結果なので 1 回だけ試し
-      （``_NONBASIC``）、読んだら、たねポケモンでないカードをひとつずつ試す
+      （``_NONBASIC``）、読んだら、たねポケモンでないカードをひとつずつ試す。v0.114: ベイビィポケモンカードは、おもてにしても場に残る（マチスの秘策はネオより前のカード。
+      GR-2000-P325-PRE-NEO-BABY）ので、たねポケモンのカードと同じくひとつずつ試す（``_NONBASIC`` にふくめない）
     - どの割り当てでも受け付けるなら本当の結果を返し、どれかで拒否するなら、試した順で最初に拒否した割り当ての例外の種類とコードで拒否する（理由の文に、割り当てたカードを
       書かない）。試す回数が上限（``_IDENTITY_TRIAL_LIMIT``）を超えるなら ``UNSUPPORTED_SECRET_PLAN_IDENTITIES``。どちらも、試すカードの一覧が公開の情報だけで決まるので、
       本当のカード・デッキの中身によらない"""
     scope = frozenset(uid for uid in state.face_down_cards if state.cards[uid].owner != acting)
     pool = _public_pool(state)
     candidates = _identity_candidates(pool)
-    basics = sorted(card_id for card_id in candidates if pool.get(card_id).is_basic_pokemon)
-    nonbasics = sorted(card_id for card_id in candidates if not pool.get(card_id).is_basic_pokemon)
+    basics = sorted(card_id for card_id in candidates if pool.get(card_id).is_baby_or_basic_pokemon)
+    nonbasics = sorted(card_id for card_id in candidates if not pool.get(card_id).is_baby_or_basic_pokemon)
     trials = 0
     pending: list[tuple[str, ...]] = [()]
     saved_consulted, saved_oracle = _zones.IDENTITY_CONSULTED, _zones.IDENTITY_ORACLE
@@ -1017,7 +1024,8 @@ def _place_starting_pokemon(state: GameState, cmd: PlaceStartingPokemon) -> None
         if uid in play_as_pokemon_in_hand(state, player):
             # v0.47: 手札のなにかの化石・ピッピ人形（手札ではトレーナーカード）を、対戦準備で最初のポケモンとして出せるかは決められない（PF1）
             raise UnsupportedError(PLAY_AS_POKEMON_SETUP_CODE, f"カード {uid}（{state.card_def(uid).name_ja}）: {PLAY_AS_POKEMON_SETUP_REASON}")
-        if not state.card_def(uid).is_basic_pokemon:
+        if not state.card_def(uid).is_baby_or_basic_pokemon:
+            # v0.114: ベイビィポケモンカードも、バトル場・ベンチに出せる（GR-2000-P308-BABY-SETUP）。拒否の文は v0.113 と同じ（拒否するカードは前の版と同じ）
             raise IllegalActionError("NOT_BASIC_POKEMON", f"カード {uid} はたねポケモンではない")
     for uid in chosen:
         p.hand.remove(uid)
@@ -1089,7 +1097,8 @@ def _play_basic_to_bench(state: GameState, cmd: PlayBasicToBench, context: resol
     """手札のたねポケモンをベンチに出す。ベンチは 5 匹まで。1 番に出す数の制限はない（p.309）。"""
     p = _require_turn(state, cmd.player)
     _require_in_hand(state, cmd.player, cmd.card)
-    if not state.card_def(cmd.card).is_basic_pokemon:
+    if not state.card_def(cmd.card).is_baby_or_basic_pokemon:
+        # v0.114: 手札のベイビィポケモンカードも、ベンチの空いている場所に出せる（GR-2000-P309-BABY-BENCH。直接バトル場には出せない）。拒否の文は v0.113 と同じ
         raise IllegalActionError("NOT_BASIC_POKEMON", f"カード {cmd.card} はたねポケモンではない")
     if len(p.bench) >= bench_limit(state, cmd.player):
         # v0.57: 場のスタジアムの「ベンチに出しておける控えポケモンの数」（せまいジム）を当てはめた数（``stadiums.bench_limit``。なければ共通のルールの 5 匹）
@@ -1162,9 +1171,15 @@ def _evolve_pokemon(state: GameState, cmd: EvolvePokemon, context: resolution.Co
     p = _require_turn(state, cmd.player)
     _require_in_hand(state, cmd.player, cmd.card)
     definition = state.card_def(cmd.card)
-    if definition.category != "pokemon" or definition.stage == "basic":
+    if definition.category != "pokemon" or definition.is_baby_pokemon:
         raise IllegalActionError("NOT_EVOLUTION_CARD", f"カード {cmd.card}（{definition.name_ja}）は進化カードではない")
-    if not definition.is_evolution_pokemon or not definition.supported:
+    if definition.is_basic_pokemon:
+        # v0.114: たねポケモンカードは、場のベイビィポケモンの進化先にその名前があるときだけ、その上に重ねられる（GR-2000-P310-BABY-EVOLUTION。p.324「書かれていない組み合わせで
+        # カードを重ねてはいけません」）。ベイビィでない場のポケモン・相手の場・場にいない番号は、今までどおり進化カードではない（NOT_EVOLUTION_CARD）として拒否する
+        located = state.find_pokemon(cmd.target)
+        if located is None or not state.card_def(located[1].card).is_baby_pokemon:
+            raise IllegalActionError("NOT_EVOLUTION_CARD", f"カード {cmd.card}（{definition.name_ja}）は進化カードではない")  # 拒否の文は v0.113 と同じ
+    if not definition.supported:
         reasons = "; ".join(definition.unsupported_reasons) or f"{definition.stage} の進化は未実装"
         raise UnsupportedError("UNSUPPORTED_EVOLUTION", f"進化カード「{definition.name_ja}」は未対応（{reasons}）")
     target = p.find_by_pokemon_id(cmd.target)
@@ -1179,6 +1194,9 @@ def _evolve_pokemon(state: GameState, cmd: EvolvePokemon, context: resolution.Co
         if block[0] == DEVOLVED_THIS_TURN_CODE:
             raise UnsupportedError(*block)  # v0.50: 今の番に退化したポケモン（DV2。ほかの確かめがすべて通ったあと）
         raise IllegalActionError(*block)
+    hot_plate = hot_plate_baby_evolution_error(state, cmd.card)  # v0.114（HP2）: ベイビィポケモンにたねポケモンカードを重ねる進化と［ヒートプレート］
+    if hot_plate is not None:
+        raise hot_plate
     # v0.48: 進化したあとの最大HP（重ねるカードの HP と、そのカードのはたらく常にはたらく特殊能力。``effects.evolution_hp``）。進化すると持続する効果（きょだいか）は
     # 消える。ナツメのゴースの［ガスのからだ］で大きくなっていた最大HPは、ナツメのゴーストに進化するともとにもどる（v0.4a の H1 と同じ問い。進化が原因の場合だけ）
     evolved_hp = evolution_hp(state, target, cmd.card)
@@ -1455,6 +1473,7 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
     # ワザによる持続する効果も消える（p.311「…や、「持続する効果」は、すべて消えてなくなります」・p.322。v0.4b）。特殊状態とは別の処理
     remove_persistent_effects(state, cmd.player, active, RETREAT)
     remove_source_left_effects(state, cmd.player, active)  # v0.92: 発生源がバトル場をはなれたら消える効果（くろいまなざし・ヨーギラスのにらみつける）
+    remove_on_entering_active(state, cmd.player, p.active)  # v0.114: バトル場に出てきたら消える効果（じっとみる）
     mark_returned_to_bench(active)  # v0.48: 特殊能力で色を変えた記録に、ベンチにもどったことを残す（VS1）
     discard_on_leaving_active(state, cmd.player, active)  # v0.65: バトル場をはなれた時にトラッシュするついているトレーナー（変わり身の術）
     balloon = tool_effect_of(state, active, BalloonBerry)
@@ -2508,7 +2527,7 @@ def _evolution_problems(state: GameState, player: int, pokemon: PokemonInPlay, e
     """場のポケモンのカードの重なりと、場に出た番・進化した番（v0.4a。v0.4c で 2 進化まで。p.309・p.310・p.316・p.319・p.324）。
 
     - 重なり（``evolution_stack``）: 整数のタプルで、0〜2 枚（重なったカードは全部で 3 枚まで。p.319 の「1枚のたね
-      ポケモンカードと、1または2枚の進化カードの合計2枚または3枚」。ベイビィ（C・D）は未対応）。重なりの長さで、
+      ポケモンカードと、1または2枚の進化カードの合計2枚または3枚」。v0.114: いちばん下がベイビィポケモンカードなら 4 枚まで（C・D。``_stack_problems``））。重なりの長さで、
       下から順の段階が決まる: たね → 1 進化 → 2 進化。いちばん下はたねポケモン、そこから上の各カードは決まった段階で、
       その「○○○○から進化」の名前がすぐ下のカードの名前（すべての隣り合う 2 枚を確かめる。書かれていない組み合わせで
       重ねない。p.324）
@@ -2539,35 +2558,47 @@ def _evolution_problems(state: GameState, player: int, pokemon: PokemonInPlay, e
     top = state.card_def(pokemon.card)
     problems = _devolution_state_problems(state, player, pokemon, evolve_events)  # v0.50
     if not stack:
-        if not top.is_basic_pokemon:
-            problems.append(f"{where} は進化していないのに、いちばん上のカード {pokemon.card}（{top.name_ja}）がたねポケモンではない")
+        if not top.is_baby_or_basic_pokemon:
+            # v0.114: 進化していないポケモンは、たねポケモンかベイビィポケモン（GR-2000-P313-POKEMON-COMPOSITION）
+            problems.append(f"{where} は進化していないのに、いちばん上のカード {pokemon.card}（{top.name_ja}）がたねポケモンではない（ベイビィポケモンでもない）")
         if evolved is not None:
             problems.append(f"{where} は進化していないのに、進化した番 {evolved} がある")
         if evolve_events is not None and evolve_events.get(pokemon.pokemon_id):
             # v0.50: 退化してたねポケモンにもどったポケモンも、進化・退化のログをさかのぼって確かめる
             problems.extend(_stack_history_problems(state, player, pokemon, (pokemon.card,), evolve_events[pokemon.pokemon_id]))
         return problems
-    if len(stack) > len(EVOLUTION_STAGES) - 1:
-        problems.append(f"{where} に {len(stack) + 1} 枚のカードが重なっている（2 進化までの 3 枚まで。p.319）")
+    # v0.114: いちばん下がベイビィポケモンカードなら、その上のたねポケモンカードの段がひとつ増える（ベイビィ → たね → 1 進化 → 2 進化の 4 枚まで。GR-2000-P313-POKEMON-COMPOSITION）
+    stages = STACK_STAGES if state.card_def(stack[0]).is_baby_pokemon else EVOLUTION_STAGES
+    if len(stack) > len(stages) - 1:
+        problems.append(f"{where} に {len(stack) + 1} 枚のカードが重なっている（2 進化までの {len(stages)} 枚まで。p.319・p.313）")
     chain = (*stack, pokemon.card)
     events = () if evolve_events is None else evolve_events.get(pokemon.pokemon_id, ())
     for position, uid in enumerate(chain):
         definition = state.card_def(uid)
-        if definition.category != "pokemon" or definition.stage not in EVOLUTION_STAGES:
+        if definition.category != "pokemon" or definition.stage not in STACK_STAGES:
             problems.append(
                 f"{where} の重なりが正しくない（{len(chain)} 枚のカードの下から {position + 1} 枚目 {uid}（{definition.name_ja}）が"
                 f" 進化の段階のポケモンのカードではない）"
             )
             continue
         if position == 0:
-            if not definition.is_basic_pokemon:
-                problems.append(f"{where} のいちばん下のカード {uid} がたねポケモンではない")
+            if not definition.is_baby_or_basic_pokemon:
+                problems.append(f"{where} のいちばん下のカード {uid} がたねポケモンではない（ベイビィポケモンでもない）")
             continue
         below = state.card_def(chain[position - 1])
-        if below.category != "pokemon" or below.stage not in EVOLUTION_STAGES:
+        if below.category != "pokemon" or below.stage not in STACK_STAGES:
             continue
-        step = EVOLUTION_STAGES.index(definition.stage) - EVOLUTION_STAGES.index(below.stage)
-        if step == 1:
+        if definition.is_baby_pokemon:
+            problems.append(f"{where} の重なりが正しくない（下から {position + 1} 枚目 {uid} がベイビィポケモンカード。ベイビィポケモンはいちばん下だけ）")
+            continue
+        step = STACK_STAGES.index(definition.stage) - STACK_STAGES.index(below.stage)
+        if below.is_baby_pokemon:
+            # v0.114: ベイビィポケモンの上には、その進化先（印刷の名前）のたねポケモンカードだけ（GR-2000-P310-BABY-EVOLUTION）
+            if not definition.is_basic_pokemon or definition.name_ja not in below.evolves_to:
+                problems.append(
+                    f"{where} のカードの重なりが正しくない（ベイビィポケモン {below.name_ja} の上に {definition.name_ja}。進化先は {list(below.evolves_to)}）"
+                )
+        elif step == 1:  # ベイビィでないポケモンの上のたねポケモンカードは段階の差が 1・2 でないので、v0.113 と同じ下の文で見つける
             if definition.evolves_from != below.name_ja:
                 problems.append(
                     f"{where} のカードの重なりが正しくない（{below.name_ja} の上に {definition.name_ja}。{definition.name_ja} は"
@@ -2732,6 +2763,10 @@ def _evolution_log_problems(state: GameState, player: int, pokemon: PokemonInPla
     return problems
 
 
+# v0.114: 場のポケモンの重なりの、下から順の印刷の段階（いちばん下がベイビィポケモンカードのときだけ "baby" から）
+STACK_STAGES = (BABY_STAGE, *EVOLUTION_STAGES)
+
+
 def _stack_history_problems(state: GameState, player: int, pokemon: PokemonInPlay, chain: tuple, events) -> list[str]:
     """v0.50: 退化したことのあるポケモンの重なり（``chain``。下から順）と、そのポケモンの進化・退化のログ（``events``。古い順）の対応。
 
@@ -2760,7 +2795,7 @@ def _stack_history_problems(state: GameState, player: int, pokemon: PokemonInPla
                         f"{tuple(current)} と対応しない"]
             current.extend(reversed(removed))
     if any(state.decklists) and len(current) != 1:
-        problems.append(f"{where} の進化・退化のログをさかのぼった重なり {tuple(current)} が、場に出たたねポケモン 1 枚ではない")
+        problems.append(f"{where} の進化・退化のログをさかのぼった重なり {tuple(current)} が、場に出たたねポケモン（ベイビィポケモン）1 枚ではない")
     previous_turn, previous_kind = pokemon.played_turn, None
     for event in events:
         turn = event["turn"]
@@ -2944,7 +2979,27 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.extend(_knockout_survival_problems(state, pokemon, effect, where))  # v0.110
         if isinstance(effect, PERIOD_EFFECT_TYPES):
             problems.extend(_period_effect_problems(state, pokemon, effect, where))  # v0.92
+        if isinstance(effect, BenchPowersStopped):
+            problems.extend(_given_by_power_problems(state, p, pokemon, effect, where))  # v0.114
         problems.extend(_persistent_effect_log_problems(state, pokemon, effect, where))
+    return problems
+
+
+def _given_by_power_problems(state: GameState, p: PlayerState, pokemon: PokemonInPlay, effect, where: str) -> list[str]:
+    """v0.114: 特殊能力で与えた持続する効果（［じっとみる］の ``BenchPowersStopped``）の整合。受けているポケモンがバトル場にいない（バトル場に出てきたら消える。
+    ``persistent.remove_on_entering_active``）。与えた特殊能力（ログ ``persistent_effect_added`` の ``effect``。``PowerKey`` の文字列）の登録された実装の ``stop_terms`` が
+    (``BenchPowersStopped``,)。対応するログがなければ ``_persistent_effect_log_problems`` が見つける。"""
+    problems = []
+    if p.active is pokemon:
+        problems.append(f"{where} {effect!r} が、バトル場のポケモンに残っている（バトル場に出てきたとき、この効果は消える）")
+    added = _persistent_effect_added_event(state, pokemon, effect)
+    if added is None:
+        return problems
+    card_id, _, index = str(added.get("effect", "")).partition("@power")
+    entry = state.effects.power_entry(card_id, int(index)) if index.isdigit() else None
+    terms = getattr(entry.effect, "stop_terms", None) if entry is not None else None
+    if terms is None or terms() != (BenchPowersStopped,):
+        problems.append(f"{where} {effect!r} が、効果を与えた特殊能力 {added.get('effect')!r}（登録された実装）の効果と合わない")
     return problems
 
 
@@ -3695,11 +3750,14 @@ def _trainer_effect_problems(state: GameState) -> list[str]:
     added: dict[tuple, dict] = {}
     removed: set[tuple] = set()
     starts = 0
+    # v0.114: 見るログの番の数は、効果の期間（消える番 − 与えた番）のいちばん長いもの + 1（ブビィの「モクモク」は 2（次の自分の番の終わり）なので、今の番・前の番・前の前の番）。
+    # v0.113 までの効果はどれも 1 以下なので、今の番と前の番（v0.56 と同じ）
+    span = max([1, *(record.expires_turn - record.created_turn for record in records if isinstance(record, TrainerTurnEffect))])
     for event in reversed(state.log):
         kind = event["kind"]
         if kind == "turn_start":
             starts += 1
-            if starts >= 2:
+            if starts >= span + 1:
                 break
         elif kind == "trainer_effect_added":
             added.setdefault((event.get("player"), event.get("trainer_card"), event.get("expires_turn")), event)
@@ -4970,8 +5028,9 @@ def _set_aside_problems(state: GameState) -> list[str]:
                 problems.append(f"プレイヤー {group.owner} の {group.kind} のまとまりが 2 つある")
             seen_kinds.add(key)
             if group.kind == SET_ASIDE_FACE_DOWN_BENCH:
-                if any(not state.card_def(uid).is_basic_pokemon for uid in cards):
-                    problems.append(f"うらにしてベンチに出したカード {cards} に、たねポケモンでないカードがある")
+                # v0.114: たたきつけろ!挑戦状はネオより前のカードなので、ベイビィポケモンカードも出せる（GR-2000-P325-PRE-NEO-BABY。``effects.challenge_candidates``）
+                if any(not state.card_def(uid).is_baby_or_basic_pokemon for uid in cards):
+                    problems.append(f"うらにしてベンチに出したカード {cards} に、たねポケモンでないカード（ベイビィポケモンでもない）がある")
                 if len(state.players[group.owner].bench) + len(cards) > _bench_limit_or_default(state, group.owner):
                     problems.append(f"プレイヤー {group.owner} のベンチとうらにして出したカードが、ベンチの上限より多い")
             elif len(cards) != 1 or group.owner != group.user or not _quiz_card_accepted(state, group.card_id, cards[0]):

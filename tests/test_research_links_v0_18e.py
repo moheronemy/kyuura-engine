@@ -159,11 +159,16 @@ class ResearchLinksTest(unittest.TestCase):
                              "UNRESOLVED_DAMAGE_GUARD_OVERLAP",
                              # v0.110: KS1・KS2（docs/endure-armor-up-v0.110.md 5 章。「きぜつ」しない効果の残りHPを「10」にする時点と、きぜつの判定の効果との順番。FB1・G40 と近い形だが、
                              # kyuura の事例にない）
-                             "UNRESOLVED_KO_SURVIVAL_TIMING", "UNRESOLVED_KO_SURVIVAL_OVERLAP"})
+                             "UNRESOLVED_KO_SURVIVAL_TIMING", "UNRESOLVED_KO_SURVIVAL_OVERLAP",
+                             # v0.114: BX1・HP2・HV1（docs/baby-rules-evolution-v0.114.md 10 章。ベイビィの姿のメタモン・［ヒートプレート］とベイビィの進化・特殊能力の消えたポケモンの
+                             # 「特殊能力」を持っているか。kyuura の事例にない）
+                             "UNRESOLVED_TRANSFORM_BABY", "UNRESOLVED_HOT_PLATE_BABY_EVOLUTION", "UNRESOLVED_STOPPED_POWER_HOLDER"})
         # v0.97（docs/unown-research-idfnj-v0.97.md 3 章）: kyuura が調査で立てた UQ-SELF-EXCLUDING-POWER-COPIES の事例にわるいデンリュウ（neo4-046）の［かんでん］があるので、
         # CV1 を論点に結んだ（kyuura は v0.86 を取り込んでいないので、未解決の一覧に CV1 の行はない。kyuura の事例は kyuura_cases_without_engine_ruling で照らす）
         # v0.97 で加えた DF1・DF2 も、kyuura に論点（UQ-SELF-EXCLUDING-POWER-COPIES・UQ-NON-ATTACK-DAMAGE-MODIFIERS）はあるが、未解決の一覧に行がない
-        self.assertEqual(unindexed, {"UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES", "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES", "UNRESOLVED_POWER_DAMAGE_RECEIVED_POWER"})
+        # v0.114: BQ1（UQ-ATTACK-PRE-DAMAGE-COIN-ORDER のベイビィの事例）・NB1・NB2（UQ-NEO-TEXT-BABY-CATEGORIES）も、kyuura に論点と事例はあるが、未解決の一覧に行がない
+        self.assertEqual(unindexed, {"UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES", "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES", "UNRESOLVED_POWER_DAMAGE_RECEIVED_POWER",
+                                     "UNRESOLVED_BABY_RULE_COIN_ORDER", "UNRESOLVED_NEO_TEXT_BASIC_BABY", "UNRESOLVED_NEO_TEXT_EVOLUTION_CARD_BABY"})
         # v0.31〜v0.68 は、kyuura の一覧でコードのない行を指していた停止コード 8 件（T27・C34/C35・G40・P19・P32・Z9・DR8・DR13）に kyuura_index_engine_key を
         # 書いていた。v0.69 で kyuura が停止コードを書いたので外した（scripts/check_research_links.py が、kyuura の一覧のコードで照らす）
         # v0.97: SS1（v0.60 のコードのない問い。kyuura の一覧ではコードのない行）にコードを付けたので、その行を指す（v0.31 と同じ形）

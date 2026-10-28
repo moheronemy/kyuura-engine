@@ -480,7 +480,9 @@ def from_evolved_opponent(res: Resolution, incoming: Incoming, owner: int) -> bo
       しない（親の枠がワザでも、子の分類で決める）
     - 相手: 実際の使い手（``incoming.player``）が ``owner`` でない（今の番のプレイヤーで決めない。返す効果の使い手は番でないプレイヤー）
     - 進化ポケモン: 発生元の個体の、その時点の今の姿（``effects.form_def``。v0.49。［へんしん］・「ばける」を含む）が 1 進化・2 進化のポケモン（``CardDefinition.is_evolution_pokemon``）。
-      処理しているワザを印刷したカード（借りたワザの ``AttackKey.card_id``）・名前・進化の重なりの長さでは決めない（``source_evolved``）"""
+      処理しているワザを印刷したカード（借りたワザの ``AttackKey.card_id``）・名前・進化の重なりの長さでは決めない（``source_evolved``）。v0.114: ベイビィポケモンから進化したたねポケモンも
+      場にいるかぎり進化ポケモン（``effects.is_evolution_in_play``。印刷の段階ではなく場の分類。GR-2000-P315-EVOLVED-BABY・CR-NEUTRAL-SHIELD-EVOLVED-BABY）。進化していないベイビィポケモンは
+      進化ポケモンではない"""
     if incoming.damage_class is not DamageClass.ATTACK or incoming.player == owner:
         return False
     return source_evolved(res, incoming)
@@ -501,7 +503,7 @@ def source_evolved(res: Resolution, incoming: Incoming) -> bool:
     if found is not None:
         if found[0] != incoming.player:
             raise RuntimeError(f"発生元のポケモン {incoming.source_pid} の持ち主 {found[0]} が、使い手 {incoming.player} と違う（エンジンの不具合）")
-        return E.form_def(state, found[1]).is_evolution_pokemon
+        return E.is_evolution_in_play(state, found[1])  # v0.114: 場の進化ポケモン（ベイビィから進化したたねポケモンをふくむ。GR-2000-P315-EVOLVED-BABY・CR-NEUTRAL-SHIELD-EVOLVED-BABY）
     recorded = res.source_forms.get(incoming.source_pid)
     if recorded is None:
         raise UnsupportedError(SOURCE_LEFT_CODE, f"ポケモン {incoming.source_pid}・ワザ {incoming.attack_key}: {SOURCE_LEFT_REASON}")
@@ -512,7 +514,7 @@ def note_source_form(res: Resolution, frame: Frame) -> None:
     """v0.103: ワザの要素を始めるとき（``programs.run_elements``）、枠の発生元が場にいれば、その今の姿が進化ポケモンかを記録する（``Resolution.source_forms``。状態を変えない）。"""
     found = res.state.find_pokemon(frame.source_pid)
     if found is not None and found[0] == frame.player:
-        res.source_forms[frame.source_pid] = E.form_def(res.state, found[1]).is_evolution_pokemon
+        res.source_forms[frame.source_pid] = E.is_evolution_in_play(res.state, found[1])  # v0.114: 場の分類（source_evolved と同じ問い合わせ）
 
 
 def incoming_of(fs: FrameState) -> Incoming:

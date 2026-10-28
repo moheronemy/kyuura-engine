@@ -19,19 +19,19 @@ class CatalogContractTest(unittest.TestCase):
     def test_current_catalog_totals(self):
         pool = load_card_pool()
         extract = read_extract()
-        self.assertEqual(len(extract["cards"]), 1250)
-        self.assertEqual(len(pool.playable_ids), 1250)
+        self.assertEqual(len(extract["cards"]), 1263)
+        self.assertEqual(len(pool.playable_ids), 1263)
         self.assertEqual(pool.playable_ids, frozenset(
             card.id for card in pool.definitions.values() if card.supported))
         self.assertEqual(
             Counter(pool.get(card).category for card in pool.playable_ids),
-            {"pokemon": 951, "trainer": 262, "energy": 37},
+            {"pokemon": 964, "trainer": 262, "energy": 37},
         )
         registry = DEFAULT_EFFECTS
         self.assertEqual(
             (len(registry.attack_keys()), len(registry.power_keys()),
              len(registry.trainer_ids()), len(registry.energy_ids())),
-            (1589, 146, 262, 19),
+            (1600, 148, 262, 19),
         )
         self.assertEqual(
             sum(registry.trainer_entry(card).effect.is_stadium
@@ -45,10 +45,12 @@ class CatalogContractTest(unittest.TestCase):
 
         pool = load_card_pool()
         names = {pool.get(card).name_ja for card in pool.playable_ids if pool.get(card).category == "pokemon"}
-        self.assertEqual(len(names), 471)
+        self.assertEqual(len(names), 478)
         candidates = engine._identity_candidates(pool)
         basics = [card for card in candidates if pool.get(card).category == "pokemon" and pool.get(card).stage == "basic"]
-        self.assertEqual((len(candidates), len(basics)), (1036, 492))
+        babies = [card for card in candidates if pool.get(card).category == "pokemon" and pool.get(card).stage == "baby"]
+        # v0.114: おもてにしても場に残るのは、たねポケモンとベイビィポケモンのカード（マチスの秘策はネオより前のカード。1 枚あたりの試す数は 505 + 1 で上限以下）
+        self.assertEqual((len(candidates), len(basics), len(babies)), (1049, 492, 13))
         self.assertEqual(engine._IDENTITY_TRIAL_LIMIT, 512)
 
     def test_current_research_totals(self):
@@ -57,9 +59,9 @@ class CatalogContractTest(unittest.TestCase):
         self.assertEqual(
             (links["counts"]["engine_stop_codes"],
              links["counts"]["engine_unresolved_rulings"]),
-            (237, 238),
+            (243, 244),
         )
-        self.assertEqual(len(links["latest_descriptions"]["adopted_printed_text"]), 1228)
+        self.assertEqual(len(links["latest_descriptions"]["adopted_printed_text"]), 1239)
         self.assertEqual(links["counts"]["kyuura_issues"], 73)
 
     def test_current_format_and_audit_agree(self):
@@ -94,7 +96,7 @@ class CatalogContractTest(unittest.TestCase):
         self.assertLessEqual(playable, ids)
         self.assertLessEqual(pmcg, playable)
         self.assertEqual((len(ids - playable), len(neo - playable),
-                          len(non_pack - playable)), (127, 57, 70))
+                          len(non_pack - playable)), (114, 50, 64))
 
 
 class ReleaseCohortTest(unittest.TestCase):

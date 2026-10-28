@@ -325,7 +325,7 @@ class RegistrationTest(unittest.TestCase):
         self.assertIn("CC-PMCG6-063-P229", sources[ROCKET_MEOWTH]["notes"])
         self.assertEqual(sorted(k for k in links["latest_descriptions"]["adopted_printed_text"] if k.split("/")[0] in V0113),
                          sorted(f"{card}/attack/{i}" for card in V0113 for i in texts[card]))
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (237, 238))
+        H.assert_stop_code_counts_since(self, links, 237, 238)  # v0.114: 総数は tests/test_catalog_contract.py（この版で加えたコードはない）
 
 
 # ---------------------------------------------------------------- 3 章: コインの枚数の生成元と結果の共有

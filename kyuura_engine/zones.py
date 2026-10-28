@@ -81,7 +81,8 @@ def reveal_face_down(state: GameState, owner: int, pokemon: PokemonInPlay, *, ca
     なかったなら、そのカードと、それについているすべてのカードをトラッシュする)」）。
 
     - 「たねポケモン」かは本当のカード（印刷の定義 ``printed_def``）の種類と段階で決める。なにかの化石・ピッピ人形はトレーナーカード（場に出す前の分類）なので
-      「たねポケモン」ではない（うらのあいだの「たねポケモン」としてのあつかいとは別）
+      「たねポケモン」ではない（うらのあいだの「たねポケモン」としてのあつかいとは別）。v0.114: ベイビィポケモンカードは「たねポケモン」（マチスの秘策はネオより前のカード。
+      GR-2000-P325-PRE-NEO-BABY）。おもてにしたベイビィポケモンは、そのまま場に残る
     - おもてにすることは場に出すことではない（場に出たときの特殊能力の機会・場に出た番・場のポケモンの番号は変えない）
     - トラッシュはきぜつではない（サイドは取られない。ログ ``knock_out`` ではない。きぜつしたときの特殊能力はない）。うらのあいだは、ダメージ・特殊状態・持続する
       効果・重なり・のせたカードはない（不変条件）ので、置くのはカードだけ。ついているトレーナーはつけたプレイヤーのトラッシュ（きぜつと同じ）。空いたバトル場は呼ぶ側
@@ -99,7 +100,7 @@ def reveal_face_down(state: GameState, owner: int, pokemon: PokemonInPlay, *, ca
     extra = {} if by_player is None else {"by_player": by_player}
     state.add_event("secret_plan_revealed", player=owner, pokemon_id=pokemon.pokemon_id, card=pokemon.card, card_id=state.cards[pokemon.card].card_id,
                     cause=cause, **extra)
-    if state.printed_def(pokemon.card).is_basic_pokemon:
+    if _secret_plan_keeps(state, pokemon.card):
         return pokemon
     if pokemon.evolution_stack or pokemon.disguise is not None or pokemon.persistent_effects or pokemon.damage:
         raise RuntimeError(f"うらのカード {pokemon.pokemon_id} に、重なり・のせたカード・持続する効果・ダメージがある（エンジンの不具合）")
@@ -122,6 +123,14 @@ def reveal_face_down(state: GameState, owner: int, pokemon: PokemonInPlay, *, ca
     return None
 
 
+def _secret_plan_keeps(state: GameState, card: int) -> bool:
+    """v0.114: おもてにしたうらのカードの本当のカード（印刷の定義）が、マチスの秘策の説明の「たねポケモン」か（そのまま場に残る）。マチスの秘策はネオより前のカードなので、
+    ベイビィポケモンカードもふくむ（GR-2000-P325-PRE-NEO-BABY。``effects.card_is_basic_in_text`` の ``TEXT_PRE_NEO``）。なにかの化石・ピッピ人形はトレーナーカード。"""
+    from .effects import TEXT_PRE_NEO, card_is_basic_in_text
+
+    return card_is_basic_in_text(state.printed_def(card), TEXT_PRE_NEO) is True
+
+
 def designate_face_down(state: GameState, owner: int, pokemon: PokemonInPlay, *, by_player: int | None, cause: str,
                         can_lose: bool) -> PokemonInPlay | None:
     """効果の対象として指定された場のポケモン ``pokemon`` がうらのカード（v0.67）なら、おもてにする（「そのカードが「ダメージや効果」を受ける時も、そのカードを
@@ -138,7 +147,7 @@ def designate_face_down(state: GameState, owner: int, pokemon: PokemonInPlay, *,
         IDENTITY_CONSULTED.append(owner)
     if IDENTITY_ORACLE is not None:
         IDENTITY_ORACLE.assign(state, pokemon.card)
-    if not state.printed_def(pokemon.card).is_basic_pokemon and not can_lose:
+    if not _secret_plan_keeps(state, pokemon.card) and not can_lose:
         raise UnsupportedError(SECRET_PLAN_LOST_TARGET_CODE,
                                f"うらにしてベンチに出したカード（場のポケモン {pokemon.pokemon_id}）を効果の対象にした。おもてにしたカードをトラッシュしたあとの、この効果の残りの処理を"
                                "扱えない（エンジンの未対応）")
@@ -154,7 +163,8 @@ def bench_from_deck(state: GameState, player: int, card: int) -> PokemonInPlay:
     ないなら、確認の漏れなので ``RuntimeError``（状態を変える前）。出した場のポケモンを返す。
     """
     p = state.players[player]
-    if card not in p.deck or state.cards[card].owner != player or not state.card_def(card).is_basic_pokemon or len(p.bench) >= bench_limit(state, player):
+    if card not in p.deck or state.cards[card].owner != player or not state.card_def(card).is_baby_or_basic_pokemon or len(p.bench) >= bench_limit(state, player):
+        # v0.114: どのカードを出してよいか（説明の「たねポケモン」の範囲・ベイビィポケモン）は呼ぶ側が決める。ここは場に出せるカードの種類（たね・ベイビィ）だけを確かめる
         raise RuntimeError(f"プレイヤー {player} の山札のカード {card} をベンチに出せない（確認の漏れ。エンジンの不具合）")
     p.deck.remove(card)
     pokemon = enter_play(state, card)
@@ -180,7 +190,7 @@ def bench_from_discard(state: GameState, card: int, *, counters: int = 0) -> Pok
     """
     owner = state.cards[card].owner if card in state.cards else None
     p = None if owner is None else state.players[owner]
-    if p is None or card not in p.discard or not state.card_def(card).is_basic_pokemon or len(p.bench) >= bench_limit(state, owner) or counters < 0:
+    if p is None or card not in p.discard or not state.card_def(card).is_baby_or_basic_pokemon or len(p.bench) >= bench_limit(state, owner) or counters < 0:
         raise RuntimeError(f"トラッシュのカード {card}（持ち主 {owner}）を持ち主のベンチに出せない（確認の漏れ。エンジンの不具合）")
     p.discard.remove(card)
     pokemon = enter_play(state, card)
@@ -273,7 +283,8 @@ def return_basic_to_hand(state: GameState, player: int, pokemon: PokemonInPlay, 
     すてる。」。docs/field-return-v0.52.md 3 章）。
 
     - 手札にもどすのは、重なりのいちばん下のカード（たねポケモンのカード。場のなにかの化石・ピッピ人形なら、そのトレーナーカード）だけ。進化していなければ
-      いちばん上のカード
+      いちばん上のカード。v0.114: ベイビィから進化したポケモンは、いちばん下のベイビィポケモンカード（ポケモン回収はネオより前のカードで、ベイビィポケモンカードはたねポケモン
+      カードと同様、その上のたねポケモンカードは場にあるかぎり進化カード。GR-2000-P325-PRE-NEO-BABY）。その上のたねポケモンカードはトラッシュに置く
     - トラッシュに置くのは、重なった進化カード（いちばん下より上の ``PokemonInPlay.cards()``。v0.49 の「ばける」でのせた進化カード（``disguise``）も進化カード
       なので含める）とエネルギーカード（ついている順）。ダメージカウンター・特殊状態はカードではないので、どこにも置かずになくなる（p.322。場をはなれた）
     - ついているトレーナーカード（プラスパワー・ディフェンダー）は説明に書かれていないので、ここでは扱わない（呼ぶ側が SU1 で止める。ついていたら ``RuntimeError``）
@@ -410,6 +421,9 @@ def promote_from_bench(state: GameState, player: int, pokemon_id: int, *, effect
     p.active = p.bench.pop(index)
     extra = {} if effect is None else {"effect": effect}
     state.add_event("promote_active", player=player, pokemon=p.active.card, **extra)
+    from .persistent import remove_on_entering_active
+
+    remove_on_entering_active(state, player, p.active)  # v0.114: バトル場に出てきたら消える効果（じっとみる）
     return p.active
 
 
@@ -1015,6 +1029,21 @@ def return_attached_trainer_to_deck(state: GameState, owner: int, pokemon: Pokem
     state.add_event("attached_trainer_to_deck", player=owner, card=card, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, effect=effect, chooser=chooser)
 
 
+def return_attached_energy_to_deck(state: GameState, owner: int, pokemon: PokemonInPlay, card: int, *, effect: str, chooser: int) -> None:
+    """プレイヤー ``owner`` の場のポケモン ``pokemon`` についているエネルギーカード ``card`` を、同じ uid のまま ``owner`` の山札（一番下）にもどす（v0.114。ムチュールの「サイコキッス」の
+    「相手の場のポケモンについている「特殊エネルギーカード」を1枚選び、相手の山札にもどす」。選んだのはワザを使ったプレイヤー ``chooser``）。ポケモン・ほかのついているカードは動かさない
+    （場をはなれるのはそのカードだけ）。トラッシュではない（トラッシュされたときの効果・リサイクルエネルギーの手札にもどる効果はない）。このあと同じ効果の中で山札を切るので、もどす位置は
+    実装上の仮定（v0.95 の ``return_attached_trainer_to_deck`` と同じ。結果は変わらない）。
+
+    ついているエネルギーは場の公開のカードなので、ログ ``attached_energy_to_deck`` の ``card`` は公開（``player`` はカードとポケモンの持ち主、``chooser`` は選んだプレイヤー）。エネルギー
+    としての役割（［エネエネ］）の記録は、ついていないカードの記録として、コマンドの終わりに消える（``engine``）。ついていない・持ち主が違うなら ``RuntimeError``（状態を変える前）。"""
+    if card not in pokemon.energy or state.cards[card].owner != owner:
+        raise RuntimeError(f"プレイヤー {owner} のポケモン {pokemon.pokemon_id} についているエネルギーカード {card} を山札にもどせない（確認の漏れ。エンジンの不具合）")
+    pokemon.energy.remove(card)
+    state.players[owner].deck.append(card)
+    state.add_event("attached_energy_to_deck", player=owner, card=card, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, effect=effect, chooser=chooser)
+
+
 def take_looked_deck_cards(state: GameState, player: int, looked: int, cards: tuple[int, ...], *, trainer: int) -> tuple[tuple[int, ...], tuple[int, ...]]:
     """自分の山札の上から見たカード（``look_at_deck_top`` の ``cards``。山札の上から順）のうち、``cards`` を手札に加え、残りをトラッシュする（v0.55。カスミのいかりの
     「その中から2枚を選んで手札に加え、残りをトラッシュする」）。見た部分より下の山札の並びは変えない（切らない）。手札に加えたカードは使ったプレイヤーだけが見る
@@ -1067,7 +1096,7 @@ def hand_to_bench_by_effect(state: GameState, owner: int, cards: tuple[int, ...]
     番号・場に出た番は今の番。その番には進化できない）。1 枚ごとにログ ``trainer_bench_from_hand``（``player``（持ち主）・``card``・``pokemon_id``・``chooser``・``trainer_card``。
     場に出たカードなので公開）。出してよいか（たねポケモン・手札にある・ベンチの空き）の確認は呼ぶ側。漏れていれば ``RuntimeError``（状態を変える前）。"""
     p = state.players[owner]
-    if len(set(cards)) != len(cards) or any(uid not in p.hand or state.cards[uid].owner != owner or not state.card_def(uid).is_basic_pokemon for uid in cards) \
+    if len(set(cards)) != len(cards) or any(uid not in p.hand or state.cards[uid].owner != owner or not state.card_def(uid).is_baby_or_basic_pokemon for uid in cards) \
             or len(p.bench) + len(cards) > bench_limit(state, owner):
         raise RuntimeError(f"プレイヤー {owner} の手札のカード {cards} をベンチに出せない（確認の漏れ。エンジンの不具合）")
     placed = []
@@ -1088,7 +1117,7 @@ def hand_basic_to_active(state: GameState, player: int, card: int, *, trainer: i
     ポケモンがいる）の漏れは ``RuntimeError``（状態を変える前）。(ベンチにもどったポケモン, 出したポケモン) を返す。"""
     p = state.players[player]
     old = p.active
-    if old is None or card not in p.hand or state.cards[card].owner != player or not state.card_def(card).is_basic_pokemon or len(p.bench) >= bench_limit(state, player):
+    if old is None or card not in p.hand or state.cards[card].owner != player or not state.card_def(card).is_baby_or_basic_pokemon or len(p.bench) >= bench_limit(state, player):
         raise RuntimeError(f"プレイヤー {player} の手札のカード {card} をバトル場に出せない（確認の漏れ。エンジンの不具合）")
     _require_can_leave(state, player, old)  # v0.93
     p.hand.remove(card)

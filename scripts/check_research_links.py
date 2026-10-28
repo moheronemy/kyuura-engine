@@ -659,6 +659,9 @@ def _registered_targets(registry, card_id: str) -> set[str]:
     targets |= {f"power/{key.power_index}" for key in registry.power_keys() if key.card_id == card_id}
     if registry.trainer_entry(card_id) is not None:
         targets.add("trainer")
+    if targets:
+        # v0.114: カードそのものの事例（``card``。ベイビィポケモンのルールのような、ワザ・特殊能力・トレーナーの登録でないカードの規定）は、カードの登録があれば登録した対象とする
+        targets.add("card")
     return targets
 
 

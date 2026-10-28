@@ -711,7 +711,10 @@ class G37Test(unittest.TestCase):
         "DamageParalyzeOnHeadsElseLockSelf",
         # v0.113: ギガボルト（「うら」で相手をマヒ）。ゆうでん（自分の場につける）・ダークフレイム（自分のトラッシュ・自分につける）・ファイヤーラッシュ（自分の場のトラッシュ）・
         # だいぎゃくてん？（自分へのダメージ）・みんなでおどる・なかまをよぶは相手の対戦ポケモンへの効果を持たない。docs/variable-coins-search-attachments-v0.113.md
-        "CoinBonusOnHeadsElseParalyze"]))
+        "CoinBonusOnHeadsElseParalyze",
+        # v0.114: モクモク（場の特殊能力の停止。やみのはどうと同じ）・サイコキッス（相手の特殊エネルギーカードを山札に）・なげキッス（相手の場の選んだポケモンにダメージカウンター）。
+        # パチパチ（ダメージだけ）・いっしょにあそぼ（自分のベンチ）は相手の対戦ポケモンへの効果を持たない。docs/baby-rules-evolution-v0.114.md 6 章
+        "DamageThenFieldPowerSuppressionUntilOwnNextTurn", "CoinReturnOpponentSpecialEnergyToDeck", "PlaceCountersOnChosenOpponentPokemon"]))
 
 
 class DecisionTest(unittest.TestCase):

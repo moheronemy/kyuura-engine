@@ -139,7 +139,8 @@ class RegistrationTest(unittest.TestCase):
         self.assertEqual(effect(UI), E.BenchNameGroupFromDeckOnEntry("アンノーン"))
         self.assertTrue(isinstance(effect(UI), E.EntryPower) and effect(UI).from_hand_only)
         self.assertEqual((effect(UF).letters, effect(UF).target), (("I", "N", "D"), E.CardFilter("trainer")))
-        self.assertEqual((effect(UJ).letters, effect(UJ).target), (("O", "I", "N"), E.CardFilter("pokemon")))
+        # v0.114: ［JOIN］の説明は「ベイビィポケモン」と並べて書くので、ベイビィポケモンカードもふくむ（docs/baby-rules-evolution-v0.114.md 5.4 節）
+        self.assertEqual((effect(UJ).letters, effect(UJ).target), (("O", "I", "N"), E.CardFilter("pokemon", babies=E.BABY_NAMED)))
         self.assertTrue(type(effect(UF)).once_per_turn and type(effect(UJ)).once_per_turn)
         self.assertEqual((effect(UD).attacker_type, effect(UD).letter, effect(UD).amount), (E.EnergyType.DARKNESS, "D", 30))
         self.assertEqual((effect(UN).attacker_type, effect(UN).letter, effect(UN).amount), (E.EnergyType.COLORLESS, "N", 30))

@@ -669,6 +669,11 @@ V0_113_POKEMON = V0_113
 CLEFAIRY_NEO1, AMPHAROS_NEO3, MURKROW_NEO3, HOUNDOOM_NEO3, DARK_TYPHLOSION_NEO4, ROCKETS_MEOWTH_PR1 = V0_113
 MAREEP_NEO1, FLAAFFY_NEO1, HOUNDOUR_NEO2, CYNDAQUIL_NEO4, DARK_QUILAVA_NEO4, MURKROW_NEO1 = "neo1-038", "neo1-041", "neo2-039", "neo4-016", "neo4-020", "neo1-055"
 DARKNESS_PRN, DARKNESS_NIP2X = "PRN-002", "NIP2X-010"
+# v0.114（docs/baby-rules-evolution-v0.114.md）: ベイビィポケモン 13 枚（写しの組 pool_v0_114）。ポケモンは TARGETS に加える（ワザは既存の手順のまま。ワザのないエレキッド・ププリンは
+# 番を終える）。対戦準備・ベンチに出す手順（tests/helpers.py の ``basics_in_hand``）はベイビィポケモンのカードもたねポケモンと同じに出す（ベイビィのないデッキでは前の版と同じ）。
+# ベイビィの進化（手札のたねポケモンカードを重ねる）は ``_v114_evolve``、［じっとみる］・［わんぱくパンチ］は ``_v114_power``、ログから数えるのは ``v114_uses``、ワザの停止は ``V0_114_STOPS``
+V0_114 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_114"])
+V0_114_POKEMON = V0_114
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -716,7 +721,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_110_POKEMON  # v0.110: 使うときのコインで、残りHPがなくなっても「きぜつ」しない期間つきの効果を自分に与えるワザのポケモン 2 枚
            + V0_111_POKEMON  # v0.111: 場のエネルギーカードの枚数でダメージ・ワザの使用条件が決まるポケモン 4 枚
            + V0_112_POKEMON  # v0.112: 水エネルギーの個数によるコインとドロー・コインのマヒと自分のワザの制限のポケモン 2 枚
-           + V0_113_POKEMON)  # v0.113: 可変枚数のコインと、山札の検索・つける・場全体のトラッシュのポケモン 6 枚
+           + V0_113_POKEMON  # v0.113: 可変枚数のコインと、山札の検索・つける・場全体のトラッシュのポケモン 6 枚
+           + V0_114_POKEMON)  # v0.114: ベイビィポケモン 13 枚
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -1540,6 +1546,22 @@ DECKS = {
     # ヒトカゲ 4 枚（ファイヤーラッシュは自分の場全体からトラッシュする）。エコロジム 2 枚（自分のワザのトラッシュでは手札にもどさない）
     "T113": ((CYNDAQUIL_NEO4, 4), (DARK_QUILAVA_NEO4, 4), (DARK_TYPHLOSION_NEO4, 4), (CHARMANDER, 4), ("neo1-086", 2), (driver.POTION, 2), (SWITCH, 2),
              (driver.BILL, 2), (FIRE, 36)),
+    # v0.114: 雷。ピチュー（neo1-042。パチパチ・PF2-007。いっしょにあそぼ）2 枚ずつ・エレキッド（neo1-044。［わんぱくパンチ］。ワザなし）4 枚と、進化先のピカチュウ（PMCG1-035）・
+    # エレブー（PMCG1-041）4 枚ずつ。相手のサイコキッスで山札にもどる無色2個エネルギー 2 枚
+    "L114": (("neo1-042", 2), ("PF2-007", 2), ("neo1-044", 4), (PIKACHU, 4), ("PMCG1-041", 4), (DOUBLE_COLORLESS, 2), (driver.POTION, 2), (SWITCH, 2),
+             (driver.BILL, 2), (LIGHTNING, 36)),
+    # v0.114: 無色。ピィ（neo1-070。ピピピ・PRN-012。ピッピッ）2 枚ずつ・ププリン（neo2-050。［じっとみる］。ワザなし・PRN-031。おやすみのうた）2 枚ずつと、進化先のピッピ（PMCG1-067）・
+    # プリン（PMCG2-035）4 枚ずつ
+    "C114": (("neo1-070", 2), ("PRN-012", 2), ("neo2-050", 2), ("PRN-031", 2), ("PMCG1-067", 4), ("PMCG2-035", 4), (DOUBLE_COLORLESS, 2), (driver.POTION, 2),
+             (SWITCH, 2), (driver.BILL, 2), (WATER, 18), (FIGHTING, 18)),
+    # v0.114: 炎・闘。ブビィ（neo1-022。モクモク・NIP1X-002。パンチ）2 枚ずつ・バルキー（neo2-033。スマッシュパンチ）4 枚と、進化先のブーバー（PMCG1-020）4 枚・エビワラー（PMCG1-058）・
+    # サワムラー（PMCG3-039）2 枚ずつ
+    "F114": (("neo1-022", 2), ("NIP1X-002", 2), ("neo2-033", 4), ("PMCG1-020", 4), ("PMCG1-058", 2), ("PMCG3-039", 2), (DOUBLE_COLORLESS, 2), (driver.POTION, 2),
+             (SWITCH, 2), (driver.BILL, 2), (FIRE, 18), (FIGHTING, 18)),
+    # v0.114: 超・水。ムチュール（neo3-031。サイコキッス・PRN-037（水）。なげキッス）2 枚ずつと、進化先のルージュラ（PMCG1-048）4 枚、ピチュー（NIP2X-002。はたく）2 枚・
+    # ミュウ（PR1-005。［ニュートラルシールド］。相手のベイビィから進化したポケモンのワザを受けない）2 枚・コラッタ 4 枚
+    "P114": (("neo3-031", 2), ("PRN-037", 2), ("PMCG1-048", 4), ("NIP2X-002", 2), ("PR1-005", 2), (RATTATA, 4), (DOUBLE_COLORLESS, 2), (driver.POTION, 2),
+             (SWITCH, 2), (driver.BILL, 2), (PSYCHIC, 24), (WATER, 12)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -1798,6 +1820,12 @@ PAIRINGS_V0_112 = (("T112", "O112"), ("O112", "O112"), ("T112", "P31"), ("O112",
 # D113 対 T81（相手のきあいのハチマキ・学習装置・はんげきのツメ）。組・席・seed は先に決めた（seed 0〜3。局を選び直さない）
 PAIRINGS_V0_113 = (("P113", "L113"), ("P113", "D113"), ("P113", "T113"), ("L113", "D113"), ("L113", "T113"), ("D113", "T113"), ("P113", "P31"), ("D113", "P31"),
                    ("L113", "E31"), ("T113", "M60"), ("D113", "T81"))
+# v0.114: 4 つのベイビィのデッキどうし（6 組）と、L114 対 D49（メタモンの［へんしん］でベイビィの姿になる BX1・思い出させる）・C114 対 M103（ミュウの［ニュートラルシールド］と
+# ベイビィから進化したポケモン）・F114 対 M50（ミュウのたいかビーム・退化スプレーでベイビィの上のたねポケモンカードをはがす）・P114 対 L67（マチスの秘策のうらのカードの試すカードに
+# ベイビィ）・L114 対 M87（［ヒートプレート］・爆発ジムとベンチに出すベイビィ。ベイビィの進化は HP2 なので手順が使わない）・L114 対 K65（変わり身の術とベイビィのルールのコイン。NT1）・
+# C114 対 P31（ピッピ・ピクシーのゆびをふるで、ベイビィのワザを相手のワザとして使う）。組・席・seed は先に決めた（seed 0〜3。局を選び直さない）
+PAIRINGS_V0_114 = (("L114", "C114"), ("L114", "F114"), ("L114", "P114"), ("C114", "F114"), ("C114", "P114"), ("F114", "P114"), ("L114", "D49"), ("C114", "M103"),
+                   ("F114", "M50"), ("P114", "L67"), ("L114", "M87"), ("L114", "K65"), ("C114", "P31"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -1818,7 +1846,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.101": PAIRINGS_V0_101, "v0.102": PAIRINGS_V0_102, "v0.103": PAIRINGS_V0_103, "v0.104": PAIRINGS_V0_104,
            "v0.105": PAIRINGS_V0_105, "v0.106": PAIRINGS_V0_106, "v0.107": PAIRINGS_V0_107,
            "v0.108": PAIRINGS_V0_108, "v0.109": PAIRINGS_V0_109, "v0.110": PAIRINGS_V0_110, "v0.111": PAIRINGS_V0_111, "v0.112": PAIRINGS_V0_112,
-           "v0.113": PAIRINGS_V0_113}
+           "v0.113": PAIRINGS_V0_113, "v0.114": PAIRINGS_V0_114}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -2008,7 +2036,7 @@ def _v103_neutral_shield(state, command) -> bool:
     attacker = _attacker(state, command)
     if not any(_v086_power_working(state, pokemon, effects.EvolvedOpponentAttackImmunity) for pokemon in state.players[1 - command.player].in_play()):
         return False
-    return effects.form_def(state, attacker).is_evolution_pokemon
+    return effects.is_evolution_in_play(state, attacker)  # v0.114: ベイビィから進化したたねポケモンも進化ポケモン（GR-2000-P315-EVOLVED-BABY）
 
 
 def _v086_power_working(state, pokemon, kind) -> bool:
@@ -2067,7 +2095,8 @@ V031_STOPS = {
         1 for q in st.players[1 - c.player].in_play() if st.is_face_down(q)) >= 2,
     # v0.49: ［へんしん］のメタモンが、タイプのエネルギーの数を数える・トラッシュするワザを使う（どの色としても数えるかが決まらない。TE1）
     "UNRESOLVED_TRANSFORM_ENERGY_COUNT": lambda st, c: any_color_energy(st, _attacker(st, c)),
-    "UNRESOLVED_DISCARD_ENERGY_TIMING": lambda st, c: _attacker(st, c).conditions.confused,  # HC1
+    # HC1。v0.114: 相手のバトル場のベイビィポケモンのルールのコイン（宣言のあと・説明の処理の前）も、トラッシュの時点が決まらないワザのコイン
+    "UNRESOLVED_DISCARD_ENERGY_TIMING": lambda st, c: _attacker(st, c).conditions.confused or E.baby_rule_applies(st, c.player),
     # HC4（第4弾のコダック・v0.34 のシャワーズの「みずでっぽう」）
     "UNRESOLVED_EXTRA_ENERGY_COLORLESS": lambda st, c: "ExtraEnergyDamageMixed" in _attack_and_copied_types(st, c),  # v0.62: オウムがえしで出すワザも
     # HC3。v0.80: 相手の対戦ポケモンについているエフェクトガード（効果の要素だけを受けない。ダメージの要素も無効なら同じ問い）
@@ -2215,6 +2244,10 @@ V031_STOPS = {
     "UNRESOLVED_COLOR_EFFECT_CONTINUATION": lambda st, c: any(color_effect_status(st, r) == "ambiguous" for r in st.color_effects),
     "UNRESOLVED_COLOR_REPLACEMENT_ORDER": lambda st, c: _v088_color_layer_on(st),
     "UNRESOLVED_COLOR_CHANGED_ENERGY_CARD": lambda st, c: _v088_color_layer_on(st),
+    # v0.114: ベイビィポケモンのルールのコインと手順 4・5（BQ1）・ベイビィの姿のメタモン（BX1）・特殊能力の消えたポケモン（HV1）。関数は下の V0_114_STOPS（場から確かめる）
+    "UNRESOLVED_BABY_RULE_COIN_ORDER": lambda st, c: V0_114_STOPS["UNRESOLVED_BABY_RULE_COIN_ORDER"](st, c),
+    "UNRESOLVED_TRANSFORM_BABY": lambda st, c: V0_114_STOPS["UNRESOLVED_TRANSFORM_BABY"](st, c),
+    "UNRESOLVED_STOPPED_POWER_HOLDER": lambda st, c: V0_114_STOPS["UNRESOLVED_STOPPED_POWER_HOLDER"](st, c),
 }
 
 
@@ -3463,7 +3496,8 @@ def _v051_trainer(state, tried, counts):
         return None
     hand = state.players[player].hand
     for card_id, owner, label in ((REVIVE, player, "revive"), (POKEMON_FLUTE, 1 - player, "flute")):
-        if (f"v051_{label}", state.turn_number) in tried or not bench_from_discard_candidates(state, (owner,)):
+        # v0.114: 出せるカードは、そのトレーナーの説明の版の「たねポケモン」（どちらもネオより前のカード。ベイビィポケモンカードをふくむ。effects.TEXT_ERAS）
+        if (f"v051_{label}", state.turn_number) in tried or not bench_from_discard_candidates(state, (owner,), E.text_era(card_id)):
             continue
         if label == "flute" and state.turn_number % 2:
             continue
@@ -9576,6 +9610,171 @@ def _v031_power(state, tried, counts):
     return None
 
 
+# ---------------------------------------------------------------- v0.114（docs/baby-rules-evolution-v0.114.md）: ベイビィポケモン 13 枚の手順と数え方
+
+
+def _v114_baby_targets(state, player):
+    """v0.114: 自分の場の、今の番に進化させてよい（おたがいの最初の番でない・その番の最初から場にいた・うらでない・進化を禁じる効果がない）進化していないベイビィポケモンと、
+    手札の、その進化先の名前のたねポケモンカードの組（(場のポケモン, 手札のカード)。場の並び → 手札の並び）。進化できるかの確かめはエンジン（ここは拒否を起こさないための見分け）。"""
+    p = state.players[player]
+    if state.turn_number <= 2:
+        return []
+    found = []
+    for pokemon in p.in_play():
+        if state.is_face_down(pokemon) or not E.is_baby_in_play(state, pokemon) or pokemon.current_form_turn >= state.turn_number:
+            continue
+        if E.evolution_preventers(state) or E.evolution_forbidden(state, pokemon) is not None:
+            continue
+        names = state.card_def(pokemon.card).evolves_to
+        found.extend((pokemon, uid) for uid in p.hand if state.card_def(uid).is_basic_pokemon and state.card_def(uid).name_ja in names)
+    return found
+
+
+def _v114_evolve(state, tried, counts):
+    """v0.114: 手札のたねポケモンカードで、自分の場のベイビィポケモンを進化させる（GR-2000-P310-BABY-EVOLUTION。1 番に 1 匹ずつ。手順がそのカードをベンチに出す前にも使う）。
+    ［ヒートプレート］がはたらいているときは使わない（HP2。単体のテストだけ）。進化したあとの HP がのっているダメージ以下になる組（H1）も使わない。拒否を起こさない。"""
+    player = state.current_player
+    if E.hot_plates(state):
+        if ("v114_hot_plate", state.turn_number) not in tried and _v114_baby_targets(state, player):
+            tried.add(("v114_hot_plate", state.turn_number))
+            counts["v114_evolve_skipped_hot_plate"] += 1
+        return None
+    for pokemon, card in _v114_baby_targets(state, player):
+        if ("max_hp_drop_card", card) in tried or E.evolution_hp(state, pokemon, card) <= pokemon.damage:
+            continue
+        counts["v114_evolve_baby_" + ("active" if pokemon is state.players[player].active else "bench")] += 1
+        return EvolvePokemon(player, card, pokemon.pokemon_id)
+    return None
+
+
+def _v114_power(state, command, tried, counts):
+    """v0.114: ププリン（neo2-050）の［じっとみる］（この番にまだ使っておらず、力が止まっていなくて、相手のベンチに「特殊能力」を持っているポケモン（決まっているもの）がいれば、その
+    いちばん前）と、エレキッド（neo1-044）の［わんぱくパンチ］（手順が番を終えるとき。ねむり・マヒ・こんらんでなく、この番にまだ使っておらず、力が止まっていなくて、コインの前に
+    止める理由（Z9・DB1・MT1・DF2）がないとき。使ったら番が終わる）。拒否を起こさない。"""
+    from kyuura_engine.continuous import power_suppressed
+    from kyuura_engine.persistent import powers_use_prevented
+
+    player = state.current_player
+    p = state.players[player]
+    for pokemon in p.in_play():
+        if state.is_face_down(pokemon):
+            continue
+        card_id = state.cards[pokemon.card].card_id
+        if card_id not in ("neo2-050", "neo1-044") or (pokemon.pokemon_id, 0) in state.power_uses_this_turn:
+            continue
+        definition = state.card_def(pokemon.card)
+        if power_suppressed(state, definition.powers[0], pokemon) or powers_use_prevented(state, pokemon) is not None:
+            continue
+        use = E.PowerUse(player, pokemon.pokemon_id, E_PowerKey(card_id, 0))
+        if card_id == "neo2-050":
+            targets = [b for b in state.players[1 - player].bench if E.holds_power(state, b) is True]
+            if ("v114_stare", pokemon.pokemon_id, state.turn_number) in tried or not targets:
+                continue
+            tried.add(("v114_stare", pokemon.pokemon_id, state.turn_number))
+            counts["v114_power_stare"] += 1
+            return UsePokemonPower(player, pokemon.pokemon_id, 0, target=targets[0].pokemon_id)
+        if not isinstance(command, EndTurn):
+            continue
+        conditions = pokemon.conditions
+        if conditions.asleep or conditions.paralyzed or conditions.confused:
+            continue
+        effect = state.effects.power_effect(card_id, definition.powers[0])
+        problem = effect.damage_problem(state, use)
+        if problem is not None:
+            counts[f"v114_bratty_punch_skipped_{problem.code}"] += 1
+            continue
+        counts["v114_power_bratty_punch"] += 1
+        return UsePokemonPower(player, pokemon.pokemon_id, 0)
+    return None
+
+
+def _v114_rule_stop(state, command) -> bool:
+    """v0.114（BQ1）: 相手のバトル場の進化していないベイビィポケモンのルールのコインと、手順 4・5 のコイン（すなかけなど・［はんこう］・こんらん）の順番。場から確かめる。"""
+    from kyuura_engine.resolution.flow import attack_rebellion_powers as rebellion
+
+    defender = state.players[1 - command.player].active
+    attacker = _attacker(state, command)
+    return (defender is not None and E.is_baby_in_play(state, defender)
+            and (attacker.conditions.confused or bool(attack_coin_checks(state, attacker)) or bool(rebellion(state, attacker))))
+
+
+V0_114_STOPS = {
+    "UNRESOLVED_BABY_RULE_COIN_ORDER": _v114_rule_stop,
+    # BX1: ［へんしん］で相手のベイビィポケモンと同じカードとしてあつかわれているメタモンに、ワザを使う
+    "UNRESOLVED_TRANSFORM_BABY": lambda st, c: E.transform_baby_question(st, st.players[1 - c.player].active) is not None,
+    # HV1: 「特殊能力」を持っているポケモンにダメージを与えるワザ（パチパチ）で、特殊能力がすべてほかの効果で消えているポケモンが場にいる
+    "UNRESOLVED_STOPPED_POWER_HOLDER": lambda st, c: any(E.holds_power(st, pk) is None for side in st.players for pk in side.in_play()),
+}
+
+
+def v114_uses(state):
+    """v0.114: ログから数えたベイビィポケモンのルール・進化・13 枚のワザ・特殊能力の動き（v0.114 のカードのない局では空）。
+
+    - ``attack_<id>#<位置>``（宣言したベイビィのワザ）・``copied_<id>#<位置>``（ほかのワザが相手のワザとして使ったベイビィのワザ）・``power_<id>``（宣言した特殊能力）
+    - ベイビィポケモンのルール: ``baby_rule_coin``・``baby_rule_heads``・``baby_rule_tails``・``baby_rule_failed``（「うら」でワザの失敗）・``baby_rule_defender_<id>``（コインのもとのベイビィ）
+    - 場に出す・進化: ``setup_baby_active``・``setup_baby_bench``（対戦準備）・``bench_baby``（手札からベンチ）・``evolve_baby_<進化前>_<進化後>``・``devolve_to_baby``（退化でベイビィにもどる）
+    - モクモク: ``smokescreen_field_suppression``（期限 + 2）。パチパチ: ``pachipachi_damage_<受けるポケモンの種類>``。サイコキッス: ``psychic_kiss_heads``・``psychic_kiss_returned``
+    - いっしょにあそぼ: ``play_together_benched``・``play_together_none``・``play_together_failed_bench_full``。なげキッス: ``blow_kiss_counters_<active|bench>``
+    - ［わんぱくパンチ］: ``bratty_punch_heads``・``bratty_punch_tails``・``bratty_punch_knock_out``。［じっとみる］: ``stare_added``・``stare_removed_<理由>``"""
+    counts = Counter()
+    babies = {"neo1-022", "neo1-042", "neo1-044", "neo1-070", "neo2-033", "neo2-050", "neo3-031", "PF2-007", "NIP1X-002", "NIP2X-002", "PRN-012", "PRN-031", "PRN-037"}
+    if not any(state.cards[uid].card_id in babies for uid in state.cards):
+        return counts
+
+    def cid(uid):
+        return state.cards[uid].card_id if uid in state.cards else None
+
+    for e in state.log:
+        kind = e["kind"]
+        effect = str(e.get("effect", ""))
+        if kind == "attack" and cid(e["pokemon"]) in babies:
+            counts[f"attack_{cid(e['pokemon'])}#{e['attack_index']}"] += 1
+        elif kind == "copy_attack" and effect.split("#")[0] in babies:
+            counts[f"copied_{effect}"] += 1
+        elif kind == "pokemon_power" and cid(e["pokemon"]) in babies:
+            counts[f"power_{cid(e['pokemon'])}"] += 1
+        elif kind == "baby_rule_coin":
+            counts["baby_rule_coin"] += 1
+            counts["baby_rule_heads" if e["heads"] else "baby_rule_tails"] += 1
+            counts[f"baby_rule_defender_{cid(e['baby'])}"] += 1
+        elif kind == "attack_failed" and e.get("reason") == "baby_rule":
+            counts["baby_rule_failed"] += 1
+        elif kind == "attack_failed" and e.get("reason") == "bench_full" and effect.startswith("PF2-007"):
+            counts["play_together_failed_bench_full"] += 1
+        elif kind == "place_starting_pokemon":
+            counts["setup_baby_active"] += int(cid(e.get("active")) in babies)
+            counts["setup_baby_bench"] += sum(1 for uid in e.get("bench", ()) if cid(uid) in babies)
+        elif kind == "play_to_bench" and cid(e.get("card")) in babies:
+            counts["bench_baby"] += 1
+        elif kind == "evolve" and e.get("from_card_id") in babies:
+            counts[f"evolve_baby_{e['from_card_id']}_{e['to_card_id']}"] += 1
+        elif kind == "devolve" and e.get("to_card_id") in babies:
+            counts["devolve_to_baby"] += 1
+        elif kind == "trainer_effect_added" and e.get("card_id") == "neo1-022":
+            counts["smokescreen_field_suppression"] += 1
+        elif kind == "damage" and effect.startswith("neo1-042"):
+            counts[f"pachipachi_damage_{e.get('target', 'opponent_active')}"] += 1
+        elif kind == "coin_flip" and e.get("source") == "attack" and effect.startswith("neo3-031") and e.get("result") == "heads":
+            counts["psychic_kiss_heads"] += 1
+        elif kind == "attached_energy_to_deck":
+            counts["psychic_kiss_returned"] += 1
+        elif kind == "bench_from_deck" and effect.startswith("PF2-007"):
+            counts["play_together_benched"] += 1
+        elif kind == "bench_from_deck_none" and effect.startswith("PF2-007"):
+            counts["play_together_none"] += 1
+        elif kind == "place_damage_counters" and effect.startswith("PRN-037"):
+            counts["blow_kiss_counters"] += 1
+        elif kind == "coin_flip" and e.get("source") == "power" and effect.startswith("neo1-044"):
+            counts["bratty_punch_" + e["result"]] += 1
+        elif kind == "power_damage" and str(e.get("power", "")).startswith("neo1-044") and e.get("knocked_out"):
+            counts["bratty_punch_knock_out"] += 1
+        elif kind == "persistent_effect_added" and e.get("persistent_effect") == "bench_powers_stopped":
+            counts["stare_added"] += 1
+        elif kind == "persistent_effect_removed" and e.get("persistent_effect") == "bench_powers_stopped":
+            counts[f"stare_removed_{e.get('reason')}"] += 1
+    return counts
+
+
 def make_policy(seen: dict, counts: Counter):
     """tools/preset_deck_games.py の手順（``checks=True``）に、v0.28〜v0.31 のカードのワザの選び方を重ねる（モジュールの説明）。v0.31 からは、
     v0.31 のカードのワザの決定への答え（``_v031_decision``）と、宣言する特殊能力の使用（``_v031_power``）も重ねる。v0.31 のカードのない局では
@@ -9638,6 +9837,11 @@ def make_policy(seen: dict, counts: Counter):
             plan = _v067_trainer(state, tried, counts)
             if plan is not None:
                 return plan
+        if state.phase is Phase.MAIN and type(command).__name__ in ("PlayBasicToBench", "UseAttack", "EndTurn"):
+            # v0.114: 手札のたねポケモンカードでベイビィポケモンを進化させる（手順がそのカードをベンチに出す前・ワザ・番の終わりの前。ベイビィのないデッキでは何もしない）
+            evolve = _v114_evolve(state, tried, counts)
+            if evolve is not None:
+                return evolve
         if state.phase is Phase.MAIN and type(command).__name__ == "PlayBasicToBench":
             # v0.56: マチス（手札のたねポケモンをバトル場に出す）は、手順がたねポケモンをベンチに出す前に使う（出したあとの手札にたねポケモンが残らず、LS1 ばかりになる）
             surge = _v056_trainer(state, tried, counts, only=(LT_SURGE_TRAINER,))
@@ -9660,7 +9864,8 @@ def make_policy(seen: dict, counts: Counter):
             return (_v031_decision(state, counts) or _v039_decision(state, counts) or _v040_decision(state, counts) or _v041_decision(state, counts)
                     or _v042_decision(state, counts) or command)
         if state.phase is Phase.MAIN and isinstance(command, (UseAttack, EndTurn)):
-            power = (_v031_power(state, tried, counts) or _v042_power(state, tried, counts) or _v043_power(state, tried, counts)
+            power = (_v114_power(state, command, tried, counts)  # v0.114: ［じっとみる］・［わんぱくパンチ］（ベイビィのないデッキでは何もしない）
+                     or _v031_power(state, tried, counts) or _v042_power(state, tried, counts) or _v043_power(state, tried, counts)
                      or _v044_power(state, tried, counts) or _v044_trainer(state, tried, counts)
                      or _v047_power(state, tried, counts) or _v047_trainer(state, tried, counts)  # v0.47
                      or _v048_power(state, tried, counts)  # v0.48
@@ -9947,6 +10152,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v111"] = v111_uses(state)
         result["v112"] = v112_uses(state)
         result["v113"] = v113_uses(state)
+        result["v114"] = v114_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:

@@ -56,6 +56,7 @@ from .state import (
     AttackCoinCheck,
     AttackEffectGuard,
     BenchAttackDamageGuard,
+    BenchPowersStopped,
     BenchProtection,
     CannotAttachEnergy,
     CannotAttack,
@@ -115,8 +116,10 @@ DAMAGED = "damaged"
 CURED = "cured"
 # v0.92: 説明が「このカード…がバトル場をはなれたとき、この効果は消える」と書く効果の発生源が、バトル場をはなれた（``remove_source_left_effects``）
 SOURCE_LEFT_ACTIVE = "source_left_active"
+# v0.114: 説明が「そのポケモンがバトル場に出てきたとき、この効果は消える」と書く効果を受けているポケモンが、バトル場に出た（［じっとみる］。``remove_on_entering_active``）
+ENTERED_ACTIVE = "entered_active"
 REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT, FORCED_SWITCH, RETURN_IN_PLAY_TO_DECK, USED, RETURN_IN_PLAY_TO_HAND, DISCARD_FROM_PLAY,
-                   REPLACED, DEVOLVE, DAMAGED, CURED, SOURCE_LEFT_ACTIVE)
+                   REPLACED, DEVOLVE, DAMAGED, CURED, SOURCE_LEFT_ACTIVE, ENTERED_ACTIVE)
 
 
 def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, effect, *, attack: str, **extra) -> None:
@@ -204,6 +207,14 @@ def period_active(state: GameState, effect) -> bool:
         active = state.players[effect.source_player].active
         return active is not None and active.pokemon_id == effect.source_pokemon
     return True
+
+
+def remove_on_entering_active(state: GameState, owner: int, pokemon: PokemonInPlay) -> None:
+    """v0.114: プレイヤー ``owner`` のベンチのポケモン ``pokemon`` がバトル場に出た（入れ替え・にげる・ワザの入れ替え・きぜつのあとなどに出す）。説明が「そのポケモンがバトル場に
+    出てきたとき、この効果は消える」と書く効果（``BenchPowersStopped``。［じっとみる］）を理由 ``ENTERED_ACTIVE`` で消す。ベンチからバトル場に動かすすべての処理が、動かしたすぐあとに
+    呼ぶ（状態だけを変え、乱数を使わない）。"""
+    found = tuple(e for e in pokemon.persistent_effects if getattr(e, "bench_only", False))
+    remove_persistent_effects(state, owner, pokemon, ENTERED_ACTIVE, found)
 
 
 def remove_source_left_effects(state: GameState, owner: int, pokemon: PokemonInPlay) -> None:
@@ -628,12 +639,13 @@ def powers_use_prevented(state: GameState, pokemon: PokemonInPlay) -> CannotUseP
     return None
 
 
-def powers_stopped(state: GameState, pokemon: PokemonInPlay) -> PowersStopped | None:
+def powers_stopped(state: GameState, pokemon: PokemonInPlay) -> PowersStopped | BenchPowersStopped | None:
     """今 ``pokemon`` の特殊能力が「使うことができず、その効果も消え」ている効果（v0.86。``PowersStopped``。わるいモココの「スタンウェーブ」を受けた）がはたらいているなら、
     その効果。はたらくのは与えた番から、効果を与えたプレイヤーの次の番（``active_turn``）の終わりまで。宣言して使う特殊能力の使用も、常にはたらく・自動的にはたらく特殊能力の
-    力も止める（``continuous.power_suppressed`` の ``holder``・``continuous._suppressor``・``catalog.stopped``）。"""
+    力も止める（``continuous.power_suppressed`` の ``holder``・``continuous._suppressor``・``catalog.stopped``）。v0.114: ［じっとみる］の ``BenchPowersStopped``（与えた番だけ）も
+    同じ範囲で止める。"""
     for effect in pokemon.persistent_effects:
-        if isinstance(effect, PowersStopped) and effect.created_turn <= state.turn_number <= effect.active_turn:
+        if isinstance(effect, (PowersStopped, BenchPowersStopped)) and effect.created_turn <= state.turn_number <= effect.active_turn:
             return effect
     return None
 

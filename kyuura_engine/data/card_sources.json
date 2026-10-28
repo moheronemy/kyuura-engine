@@ -28945,6 +28945,240 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.113 で加えた（docs/variable-coins-search-attachments-v0.113.md）。PR1（プロモ(旧裏)。promo。1999-10-27 の CD「ニャースのパーティ」の付録（kyuura docs/cards/products/promos.md））。無色・たね・HP 40。だいぎゃくてん？=CoinsPerPokemonInPlayHeadsDamageTailsSelfDamage(10, 10)（目安なし。お互いの場のポケモンの数（programs.FIELD_POKEMON。ピッピの「みんなでおどる」と共有）のコインを 1 組投げ、相手に「おもて」の数 × 10、その後、自分に「うら」の数 × 10。固定の目安を足さない。相手へのダメージが無効でも自分へのダメージは残る）。kyuura の日本語の文面は pcg-search.com の転記（同じ転記元との一致を独立した照合にしない）。data_gaps（jp_print.level）は補っていない（kyuura の CC-PMCG6-063-P229 の findings に「ロケット団のニャース（LV.11／HP40。プロモーションカード）」とあるが、別のカードの照合の記録で、このカードを指さない。kyuura への報告事項）。kyuura data/engine_targets.json（73a1690）の対象（candidate・new_effect_needed）。kyuura の研究の基準（73a1690）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（カードの id・pcg-search の id 1stp078・名前・ワザの名前（日本語・英語の欄）で data/・docs/ を確かめた。当たったのはカードの一覧・対象の一覧・転記元の写し・商品の一覧と、名前の同じ別のカードの記録（CC-PMCG6-063-P229 の findings のメモ）、ガイドブックの既存の転記 data/Silver_Bible_structured.md（研究の記録ではない。根拠にしていない）の行だけ）。Silver_Bible_structured.md の書き方は「おたがいの場にいるポケモン全員の数ぶんコインを投げ、「おもて」の数×10のダメージを、相手に与える。その後、自分に「うら」の数×10のダメージ。」（ワザの名前は半角の「?」）で、印刷の文面と語だけ違う（挙動は変わらない）。新しい外部照合はしていない（外部照合なし。カードの画像・公式ガイドブックは読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo1-022": {
+      "basis": "kyuura_data",
+      "name_ja": "ブビィ",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [
+        "CR-BABY-RULE-COIN",
+        "CR-BABY-RULE-COIN-STEP",
+        "CR-BABY-RULE-NOT-POWER"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.114 で加えた（docs/baby-rules-evolution-v0.114.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。2000.02.14 版のルールで処理する。炎・ベイビィポケモン（HP30・弱点なし・抵抗力なし・にげる 0）。ベイビィポケモンのルール（相手のバトル場にいるとき、ワザを使う相手プレイヤーがワザの説明の処理の前にコインを投げ、「うら」ならワザは失敗する。GR-2000-P314-BABY-RULE）は特殊能力ではなく解決の流れの共通の処理（カードの登録ではない）。モクモク=DamageThenFieldPowerSuppressionUntilOwnNextTurn（目安 10 のダメージのあと、次の自分の番の終わりまで、おたがいの場のポケモン全員の特殊能力の使用と力を止める。v0.92 のやみのはどうと同じ要素で消える番だけが違う（与えた番 + 2）。DW1〜DW3・G37 は同じ問い）。ルール文（pokemon.rules_text.ja）は kyuura の訂正 FIX-neo1-022-RULES-TEXT-JA（transcription_omission。kyuura の画像の照合 IMG-neo1-022）で写しに入った。進化先（pokemon.evolves_to）は kyuura の訂正 FIX-neo1-022-EVOLVES-TO（field_added_from_print。kyuura の画像の照合 IMG-neo1-022）で写しに入った（印刷の名前のとおり。推測しない）。kyuura の日本語の文面はなぞのばしょの転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（ベイビィポケモンのルール・進化の一般の規定と論点の事例。カードの id・名前・ワザ・特殊能力の名前で data/・docs/ を確かめた）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。画像を読んだのは kyuura の照合の記録 IMG-（data/curation/card_image_checks.json。kyuura が 2026-10-27 に読んだ。エンジンは画像を見ていない。IMG- は CC-・LD- ではない））。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo1-042": {
+      "basis": "kyuura_data",
+      "name_ja": "ピチュー",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [
+        "CR-BABY-RULE-COIN",
+        "CR-BABY-RULE-COIN-STEP",
+        "CR-BABY-RULE-NOT-POWER",
+        "CR-NEUTRAL-SHIELD-EVOLVED-BABY",
+        "UQ-ATTACK-PRE-DAMAGE-COIN-ORDER"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.114 で加えた（docs/baby-rules-evolution-v0.114.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。2000.02.14 版のルールで処理する。雷・ベイビィポケモン（HP30・弱点なし・抵抗力なし・にげる 0）。ベイビィポケモンのルール（相手のバトル場にいるとき、ワザを使う相手プレイヤーがワザの説明の処理の前にコインを投げ、「うら」ならワザは失敗する。GR-2000-P314-BABY-RULE）は特殊能力ではなく解決の流れの共通の処理（カードの登録ではない）。パチパチ=PowerHoldersSpreadDamage(20)（おたがいの場の「特殊能力」を持っているポケモン全員に、弱点・抵抗力に関係なく 20。ワザを使ったポケモン自身も持っていれば受ける。特殊能力がすべてほかの効果で消えているポケモンがいれば HV1 で止める。うらのカードは受けない）。kyuura の jp_print.remarks（なぞのばしょの備考）に「修正版」の説明（「おたがいの場の「特殊能力」を持っているポケモン全員に、」）がある。意味は同じ（受けるポケモンが変わらない）なので、写しの文面（修正前の版の印刷。kyuura の IMG-neo1-042 の画像も修正前の版）を採用した。修正版のルール欄・進化先の欄は kyuura が画像で確かめていない（採用の根拠と画像の確認を分けて書く）。ルール文（pokemon.rules_text.ja）は kyuura の訂正 FIX-neo1-042-RULES-TEXT-JA（transcription_omission。kyuura の画像の照合 IMG-neo1-042）で写しに入った。進化先（pokemon.evolves_to）は kyuura の訂正 FIX-neo1-042-EVOLVES-TO（field_added_from_print。kyuura の画像の照合 IMG-neo1-042）で写しに入った（印刷の名前のとおり。推測しない）。kyuura の日本語の文面はなぞのばしょの転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（ベイビィポケモンのルール・進化の一般の規定と論点の事例。カードの id・名前・ワザ・特殊能力の名前で data/・docs/ を確かめた）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。画像を読んだのは kyuura の照合の記録 IMG-（data/curation/card_image_checks.json。kyuura が 2026-10-27 に読んだ。エンジンは画像を見ていない。IMG- は CC-・LD- ではない））。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo1-044": {
+      "basis": "kyuura_data",
+      "name_ja": "エレキッド",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [
+        "CR-BABY-RULE-COIN",
+        "CR-BABY-RULE-COIN-STEP",
+        "CR-BABY-RULE-NOT-POWER",
+        "CR-BABY-WITHOUT-ATTACKS"
+      ],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.114 で加えた（docs/baby-rules-evolution-v0.114.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。2000.02.14 版のルールで処理する。雷・ベイビィポケモン（HP30・弱点なし・抵抗力なし・にげる 0）。ベイビィポケモンのルール（相手のバトル場にいるとき、ワザを使う相手プレイヤーがワザの説明の処理の前にコインを投げ、「うら」ならワザは失敗する。GR-2000-P314-BABY-RULE）は特殊能力ではなく解決の流れの共通の処理（カードの登録ではない）。ワザはない（CR-BABY-WITHOUT-ATTACKS。ワザのないベイビィポケモンとして対応。メタモンの supplies_attacks ではない）。［わんぱくパンチ］=CoinDamageOpponentActiveThenEndTurn(20)（自分の番ごとに 1 回。ねむり・マヒ・こんらんでは使えない。コインの「おもて」で相手の対戦ポケモンに特殊能力のダメージ 20。「おもて」でも「うら」でも使ったら番を終える。説明に「弱点・抵抗力」に関係なく、がないので Z9 を当てはめ、DB1・MT1・DF2 とあわせてコインの前に止める）。ルール文（pokemon.rules_text.ja）は kyuura の訂正 FIX-neo1-044-RULES-TEXT-JA（transcription_omission。kyuura の画像の照合 IMG-neo1-044）で写しに入った。進化先（pokemon.evolves_to）は kyuura の訂正 FIX-neo1-044-EVOLVES-TO（field_added_from_print。kyuura の画像の照合 IMG-neo1-044）で写しに入った（印刷の名前のとおり。推測しない）。kyuura の日本語の文面はなぞのばしょの転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（ベイビィポケモンのルール・進化の一般の規定と論点の事例。カードの id・名前・ワザ・特殊能力の名前で data/・docs/ を確かめた）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。画像を読んだのは kyuura の照合の記録 IMG-（data/curation/card_image_checks.json。kyuura が 2026-10-27 に読んだ。エンジンは画像を見ていない。IMG- は CC-・LD- ではない））。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo1-070": {
+      "basis": "kyuura_data",
+      "name_ja": "ピィ",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [
+        "CR-BABY-RULE-COIN",
+        "CR-BABY-RULE-COIN-STEP",
+        "CR-BABY-RULE-NOT-POWER"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.114 で加えた（docs/baby-rules-evolution-v0.114.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。2000.02.14 版のルールで処理する。無色・ベイビィポケモン（HP30・弱点なし・抵抗力なし・にげる 0）。ベイビィポケモンのルール（相手のバトル場にいるとき、ワザを使う相手プレイヤーがワザの説明の処理の前にコインを投げ、「うら」ならワザは失敗する。GR-2000-P314-BABY-RULE）は特殊能力ではなく解決の流れの共通の処理（カードの登録ではない）。ピピピ=ShuffleHandIntoDeckThenDraw(7)（v0.46 の型。手札をすべて山札にもどして切り、7 枚引く。「その山札」「山札から」の書き方を 1 つの文面として受け付けた）。ルール文（pokemon.rules_text.ja）は kyuura の訂正 FIX-neo1-070-RULES-TEXT-JA（transcription_omission。kyuura の画像の照合 IMG-neo1-070）で写しに入った。進化先（pokemon.evolves_to）は kyuura の訂正 FIX-neo1-070-EVOLVES-TO（field_added_from_print。kyuura の画像の照合 IMG-neo1-070）で写しに入った（印刷の名前のとおり。推測しない）。kyuura の日本語の文面はなぞのばしょの転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（ベイビィポケモンのルール・進化の一般の規定と論点の事例。カードの id・名前・ワザ・特殊能力の名前で data/・docs/ を確かめた）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。画像を読んだのは kyuura の照合の記録 IMG-（data/curation/card_image_checks.json。kyuura が 2026-10-27 に読んだ。エンジンは画像を見ていない。IMG- は CC-・LD- ではない））。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo2-033": {
+      "basis": "kyuura_data",
+      "name_ja": "バルキー",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [
+        "CR-BABY-RULE-COIN",
+        "CR-BABY-RULE-COIN-STEP",
+        "CR-BABY-RULE-NOT-POWER"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.114 で加えた（docs/baby-rules-evolution-v0.114.md）。neo2（遺跡をこえて...。expansion_pack。発売 2000-07-07）。2000.02.14 版のルールで処理する。闘・ベイビィポケモン（HP30・弱点なし・抵抗力なし・にげる 0）。ベイビィポケモンのルール（相手のバトル場にいるとき、ワザを使う相手プレイヤーがワザの説明の処理の前にコインを投げ、「うら」ならワザは失敗する。GR-2000-P314-BABY-RULE）は特殊能力ではなく解決の流れの共通の処理（カードの登録ではない）。スマッシュパンチ=FailOnTailsDamage（v0.31 の型。コインの「うら」でワザの失敗、「おもて」で目安 30）。進化先のカポエラー（PRN-030）は写しにない（v0.114 では加えない）。ルール文（pokemon.rules_text.ja）は kyuura の訂正 FIX-neo2-033-RULES-TEXT-JA（transcription_omission。kyuura の画像の照合 IMG-neo2-033）で写しに入った。進化先（pokemon.evolves_to）は kyuura の訂正 FIX-neo2-033-EVOLVES-TO（field_added_from_print。kyuura の画像の照合 IMG-neo2-033）で写しに入った（印刷の名前のとおり。推測しない）。kyuura の日本語の文面はなぞのばしょの転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（ベイビィポケモンのルール・進化の一般の規定と論点の事例。カードの id・名前・ワザ・特殊能力の名前で data/・docs/ を確かめた）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。画像を読んだのは kyuura の照合の記録 IMG-（data/curation/card_image_checks.json。kyuura が 2026-10-27 に読んだ。エンジンは画像を見ていない。IMG- は CC-・LD- ではない））。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo2-050": {
+      "basis": "kyuura_data",
+      "name_ja": "ププリン",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [
+        "CR-BABY-RULE-COIN",
+        "CR-BABY-RULE-COIN-STEP",
+        "CR-BABY-RULE-NOT-POWER",
+        "CR-BABY-WITHOUT-ATTACKS"
+      ],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.114 で加えた（docs/baby-rules-evolution-v0.114.md）。neo2（遺跡をこえて...。expansion_pack。発売 2000-07-07）。2000.02.14 版のルールで処理する。無色・ベイビィポケモン（HP30・弱点なし・抵抗力なし・にげる 0）。ベイビィポケモンのルール（相手のバトル場にいるとき、ワザを使う相手プレイヤーがワザの説明の処理の前にコインを投げ、「うら」ならワザは失敗する。GR-2000-P314-BABY-RULE）は特殊能力ではなく解決の流れの共通の処理（カードの登録ではない）。ワザはない（CR-BABY-WITHOUT-ATTACKS）。［じっとみる］=StopOpponentBenchPowersThisTurn（自分の番ごとに 1 回。説明に特殊状態の制限はない。相手のベンチの「特殊能力」を持っているポケモンを 1 匹選び、この番が終わるまで特殊能力の使用と力を止める（state.BenchPowersStopped）。バトル場に出たらその時点で消える。特殊能力がすべてほかの効果で消えているポケモンは HV1）。ルール文（pokemon.rules_text.ja）は kyuura の訂正 FIX-neo2-050-RULES-TEXT-JA（transcription_omission。kyuura の画像の照合 IMG-neo2-050）で写しに入った。進化先（pokemon.evolves_to）は kyuura の訂正 FIX-neo2-050-EVOLVES-TO（field_added_from_print。kyuura の画像の照合 IMG-neo2-050）で写しに入った（印刷の名前のとおり。推測しない）。kyuura の日本語の文面はなぞのばしょの転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（ベイビィポケモンのルール・進化の一般の規定と論点の事例。カードの id・名前・ワザ・特殊能力の名前で data/・docs/ を確かめた）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。画像を読んだのは kyuura の照合の記録 IMG-（data/curation/card_image_checks.json。kyuura が 2026-10-27 に読んだ。エンジンは画像を見ていない。IMG- は CC-・LD- ではない））。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo3-031": {
+      "basis": "kyuura_data",
+      "name_ja": "ムチュール",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [
+        "CR-BABY-RULE-COIN",
+        "CR-BABY-RULE-COIN-STEP",
+        "CR-BABY-RULE-NOT-POWER"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.114 で加えた（docs/baby-rules-evolution-v0.114.md）。neo3（めざめる伝説。expansion_pack。発売 2000-11-23）。2000.02.14 版のルールで処理する。超・ベイビィポケモン（HP30・弱点なし・抵抗力なし・にげる 0）。ベイビィポケモンのルール（相手のバトル場にいるとき、ワザを使う相手プレイヤーがワザの説明の処理の前にコインを投げ、「うら」ならワザは失敗する。GR-2000-P314-BABY-RULE）は特殊能力ではなく解決の流れの共通の処理（カードの登録ではない）。サイコキッス=CoinReturnOpponentSpecialEnergyToDeck（コインの「おもて」で、相手の場のポケモンについている特殊エネルギーカード（ついている間の定義）を 1 枚選び、相手の山札にもどして切る。選べるカードがなければコインを投げない。トラッシュではない）。ルール文（pokemon.rules_text.ja）は kyuura の転記の値（e519b99 の写しのまま。訂正はない）。進化先（pokemon.evolves_to）は kyuura の訂正 FIX-neo3-031-EVOLVES-TO（field_added_from_print。kyuura の画像の照合 IMG-neo3-031）で写しに入った（印刷の名前のとおり。推測しない）。kyuura の日本語の文面は Pokemon Wiki の転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（ベイビィポケモンのルール・進化の一般の規定と論点の事例。カードの id・名前・ワザ・特殊能力の名前で data/・docs/ を確かめた）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。画像を読んだのは kyuura の照合の記録 IMG-（data/curation/card_image_checks.json。kyuura が 2026-10-27 に読んだ。エンジンは画像を見ていない。IMG- は CC-・LD- ではない））。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PF2-007": {
+      "basis": "kyuura_data",
+      "name_ja": "ピチュー",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [
+        "CR-BABY-RULE-COIN",
+        "CR-BABY-RULE-COIN-STEP",
+        "CR-BABY-RULE-NOT-POWER"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.114 で加えた（docs/baby-rules-evolution-v0.114.md）。PF2（プレミアムファイル2。premium_file。2000-07-08）。2000.02.14 版のルールで処理する。雷・ベイビィポケモン（HP30・弱点なし・抵抗力なし・にげる 0）。ベイビィポケモンのルール（相手のバトル場にいるとき、ワザを使う相手プレイヤーがワザの説明の処理の前にコインを投げ、「うら」ならワザは失敗する。GR-2000-P314-BABY-RULE）は特殊能力ではなく解決の流れの共通の処理（カードの登録ではない）。いっしょにあそぼ=PutBabyFromDeckOntoBenchOrFail（山札の「ベイビィポケモン」のカードを 1 枚ベンチに出して切る。ベンチに空きがなければワザの失敗。v0.113 のなかまをよぶと同じ要素で、選べるカードをベイビィポケモンのカードにする）。データの欠け jp_print.level は処理に使わない。ルール文（pokemon.rules_text.ja）は kyuura の転記の値（e519b99 の写しのまま。訂正はない）。進化先（pokemon.evolves_to）は kyuura の訂正 FIX-PF2-007-EVOLVES-TO（field_added_from_print。kyuura の画像の照合 IMG-PF2-007）で写しに入った（印刷の名前のとおり。推測しない）。kyuura の日本語の文面は pcg-search.com の転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（ベイビィポケモンのルール・進化の一般の規定と論点の事例。カードの id・名前・ワザ・特殊能力の名前で data/・docs/ を確かめた）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。画像を読んだのは kyuura の照合の記録 IMG-（data/curation/card_image_checks.json。kyuura が 2026-10-27 に読んだ。エンジンは画像を見ていない。IMG- は CC-・LD- ではない））。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "NIP1X-002": {
+      "basis": "kyuura_data",
+      "name_ja": "ブビィ",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [
+        "CR-BABY-RULE-COIN",
+        "CR-BABY-RULE-COIN-STEP",
+        "CR-BABY-RULE-NOT-POWER"
+      ],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.114 で加えた（docs/baby-rules-evolution-v0.114.md）。NIP1X（イントロパック★neo（チコリータデッキ：拡張カード）。intro_pack。2001-04-06）。2000.02.14 版のルールで処理する。炎・ベイビィポケモン（HP30・弱点なし・抵抗力なし・にげる 0）。ベイビィポケモンのルール（相手のバトル場にいるとき、ワザを使う相手プレイヤーがワザの説明の処理の前にコインを投げ、「うら」ならワザは失敗する。GR-2000-P314-BABY-RULE）は特殊能力ではなく解決の流れの共通の処理（カードの登録ではない）。パンチ=DAMAGE_ONLY（説明文なし。文面・出典を書かない）。データの欠け pokemon.dex・jp_print.level は処理に使わない。ルール文（pokemon.rules_text.ja）は kyuura の転記の値（e519b99 の写しのまま。訂正はない）。進化先（pokemon.evolves_to）は kyuura の訂正 FIX-NIP1X-002-EVOLVES-TO（field_added_from_print。kyuura の画像の照合 IMG-NIP1X-002）で写しに入った（印刷の名前のとおり。推測しない）。kyuura の日本語の文面は pcg-search.com の転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（ベイビィポケモンのルール・進化の一般の規定と論点の事例。カードの id・名前・ワザ・特殊能力の名前で data/・docs/ を確かめた）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。画像を読んだのは kyuura の照合の記録 IMG-（data/curation/card_image_checks.json。kyuura が 2026-10-27 に読んだ。エンジンは画像を見ていない。IMG- は CC-・LD- ではない））。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "NIP2X-002": {
+      "basis": "kyuura_data",
+      "name_ja": "ピチュー",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [
+        "CR-BABY-RULE-COIN",
+        "CR-BABY-RULE-COIN-STEP",
+        "CR-BABY-RULE-NOT-POWER"
+      ],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.114 で加えた（docs/baby-rules-evolution-v0.114.md）。NIP2X（イントロパック★neo（ワニノコデッキ：拡張カード）。intro_pack。2001-04-06）。2000.02.14 版のルールで処理する。雷・ベイビィポケモン（HP30・弱点なし・抵抗力なし・にげる 0）。ベイビィポケモンのルール（相手のバトル場にいるとき、ワザを使う相手プレイヤーがワザの説明の処理の前にコインを投げ、「うら」ならワザは失敗する。GR-2000-P314-BABY-RULE）は特殊能力ではなく解決の流れの共通の処理（カードの登録ではない）。はたく=DAMAGE_ONLY（説明文なし。文面・出典を書かない）。データの欠け pokemon.dex・jp_print.level は処理に使わない。ルール文（pokemon.rules_text.ja）は kyuura の転記の値（e519b99 の写しのまま。訂正はない）。進化先（pokemon.evolves_to）は kyuura の訂正 FIX-NIP2X-002-EVOLVES-TO（field_added_from_print。kyuura の画像の照合 IMG-NIP2X-002）で写しに入った（印刷の名前のとおり。推測しない）。kyuura の日本語の文面は pcg-search.com の転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（ベイビィポケモンのルール・進化の一般の規定と論点の事例。カードの id・名前・ワザ・特殊能力の名前で data/・docs/ を確かめた）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。画像を読んだのは kyuura の照合の記録 IMG-（data/curation/card_image_checks.json。kyuura が 2026-10-27 に読んだ。エンジンは画像を見ていない。IMG- は CC-・LD- ではない））。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PRN-012": {
+      "basis": "kyuura_data",
+      "name_ja": "ピィ",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [
+        "CR-BABY-RULE-COIN",
+        "CR-BABY-RULE-COIN-STEP",
+        "CR-BABY-RULE-NOT-POWER"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.114 で加えた（docs/baby-rules-evolution-v0.114.md）。PRN（プロモ（neo）。promo）。2000.02.14 版のルールで処理する。無色・ベイビィポケモン（HP30・弱点なし・抵抗力なし・にげる 0）。ベイビィポケモンのルール（相手のバトル場にいるとき、ワザを使う相手プレイヤーがワザの説明の処理の前にコインを投げ、「うら」ならワザは失敗する。GR-2000-P314-BABY-RULE）は特殊能力ではなく解決の流れの共通の処理（カードの登録ではない）。ピッピッ=DrawCardsAttack(2)（v0.31 の型。山札から 2 枚引く）。データの欠け jp_print.level は処理に使わない。ルール文（pokemon.rules_text.ja）は kyuura の転記の値（e519b99 の写しのまま。訂正はない）。進化先（pokemon.evolves_to）は kyuura の訂正 FIX-PRN-012-EVOLVES-TO（field_added_from_print。kyuura の画像の照合 IMG-PRN-012）で写しに入った（印刷の名前のとおり。推測しない）。kyuura の日本語の文面は pcg-search.com の転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（ベイビィポケモンのルール・進化の一般の規定と論点の事例。カードの id・名前・ワザ・特殊能力の名前で data/・docs/ を確かめた）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。画像を読んだのは kyuura の照合の記録 IMG-（data/curation/card_image_checks.json。kyuura が 2026-10-27 に読んだ。エンジンは画像を見ていない。IMG- は CC-・LD- ではない））。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PRN-031": {
+      "basis": "kyuura_data",
+      "name_ja": "ププリン",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [
+        "CR-BABY-RULE-COIN",
+        "CR-BABY-RULE-COIN-STEP",
+        "CR-BABY-RULE-NOT-POWER"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.114 で加えた（docs/baby-rules-evolution-v0.114.md）。PRN（プロモ（neo）。promo）。2000.02.14 版のルールで処理する。無色・ベイビィポケモン（HP30・弱点なし・抵抗力なし・にげる 0）。ベイビィポケモンのルール（相手のバトル場にいるとき、ワザを使う相手プレイヤーがワザの説明の処理の前にコインを投げ、「うら」ならワザは失敗する。GR-2000-P314-BABY-RULE）は特殊能力ではなく解決の流れの共通の処理（カードの登録ではない）。おやすみのうた=PutToSleep（v0.3b の型。相手をねむりにする。ダメージの要素はない）。データの欠け jp_print.level は処理に使わない。ルール文（pokemon.rules_text.ja）は kyuura の転記の値（e519b99 の写しのまま。訂正はない）。進化先（pokemon.evolves_to）は kyuura の訂正 FIX-PRN-031-EVOLVES-TO（field_added_from_print。kyuura の画像の照合 IMG-PRN-031）で写しに入った（印刷の名前のとおり。推測しない）。kyuura の日本語の文面は pcg-search.com の転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（ベイビィポケモンのルール・進化の一般の規定と論点の事例。カードの id・名前・ワザ・特殊能力の名前で data/・docs/ を確かめた）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。画像を読んだのは kyuura の照合の記録 IMG-（data/curation/card_image_checks.json。kyuura が 2026-10-27 に読んだ。エンジンは画像を見ていない。IMG- は CC-・LD- ではない））。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PRN-037": {
+      "basis": "kyuura_data",
+      "name_ja": "ムチュール",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [
+        "CR-BABY-RULE-COIN",
+        "CR-BABY-RULE-COIN-STEP",
+        "CR-BABY-RULE-NOT-POWER"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.114 で加えた（docs/baby-rules-evolution-v0.114.md）。PRN（プロモ（neo）。promo）。2000.02.14 版のルールで処理する。水・ベイビィポケモン（HP30・弱点なし・抵抗力なし・にげる 0）。ベイビィポケモンのルール（相手のバトル場にいるとき、ワザを使う相手プレイヤーがワザの説明の処理の前にコインを投げ、「うら」ならワザは失敗する。GR-2000-P314-BABY-RULE）は特殊能力ではなく解決の流れの共通の処理（カードの登録ではない）。なげキッス=PlaceCountersOnChosenOpponentPokemon(1)（相手の場のポケモンを 1 匹選び、ダメージカウンターを 1 個のせる。ワザによるダメージではない。v0.89 の選んだ個体の要素）。タイプは水（neo3-031 の超と違う。写しの値）。データの欠け pokemon.dex・jp_print.level は処理に使わない。ルール文（pokemon.rules_text.ja）は kyuura の転記の値（e519b99 の写しのまま。訂正はない）。進化先（pokemon.evolves_to）は kyuura の訂正 FIX-PRN-037-EVOLVES-TO（field_added_from_print。kyuura の画像の照合 IMG-PRN-037）で写しに入った（印刷の名前のとおり。推測しない）。kyuura の日本語の文面は pcg-search.com の転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（ベイビィポケモンのルール・進化の一般の規定と論点の事例。カードの id・名前・ワザ・特殊能力の名前で data/・docs/ を確かめた）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。画像を読んだのは kyuura の照合の記録 IMG-（data/curation/card_image_checks.json。kyuura が 2026-10-27 に読んだ。エンジンは画像を見ていない。IMG- は CC-・LD- ではない））。英語版の文面・現代のルール・後年の裁定は持ち込まない"
     }
   }
 }

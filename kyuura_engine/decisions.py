@@ -348,6 +348,11 @@ OPTIONAL_SHUFFLE = "optional_shuffle"
 # ワザを使ったプレイヤー。選べるものはワザを使ったポケモンの番号 1 つで、0 個（取り除かない）か 1 個（取り除く）。``context`` の "counters"（取り除く数）。ワザを使ったポケモンに
 # ダメージカウンターがのっていなければ出さない。v0.72 の OPTIONAL_DRAIN（「相手にダメージを与えたら」の条件と与えたダメージを持つ）とは別の種類。再開先は "attack"
 OPTIONAL_HEAL = "optional_heal"
+# v0.114（docs/baby-rules-evolution-v0.114.md 6 章）: ムチュール（neo3-031）の「サイコキッス」の「相手の場のポケモンについている「特殊エネルギーカード」を1枚選び、相手の山札にもどす」で、
+# もどすカード。決めるのはワザを使ったプレイヤー。選べるものは相手の場のポケモン（バトル場 → ベンチの並び）についている特殊エネルギーカード（ついている間の定義。場の公開のカード）の
+# uid（ついている順）で 1 枚。``context`` の ``"owner"`` はカードとポケモンの持ち主（相手）。v0.95 の SELECT_ATTACHED_TRAINER（トレーナーカード）とは選ぶカードが違うので別の種類。
+# 再開先は "attack"
+SELECT_ATTACHED_SPECIAL_ENERGY = "select_attached_special_energy"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 
