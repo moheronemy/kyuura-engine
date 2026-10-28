@@ -35,6 +35,8 @@ from kyuura_engine.effects import (CLAMPING_JAW_SOURCE_DEVOLVED_CODE, JAW_CLAMP_
                                    LEAVE_LOCK_KNOCKOUT_CODE, LEAVE_LOCK_NO_EFFECT_CODE, LEAVE_LOCK_SCRAM_CODE)
 from kyuura_engine.state import PeriodAttackCoinCheck, PeriodLeaveLock  # v0.93
 from kyuura_engine.persistent import cannot_retreat, powers_use_prevented
+from kyuura_engine.effects import ATTACH_TRIGGER_ORDER_CODE, ATTACH_TRIGGER_SCOPE_CODE  # v0.116
+from kyuura_engine.persistent import attach_status_triggers, evolution_lock  # v0.116
 from tests.helpers import GIOVANNIS_MACHAMP, HAUNTER, MACHAMP, MUK, ROCKETS_MOLTRES
 from tests.test_alakazam_games_v0_7 import POWER_REJECTIONS
 from tests.test_blastoise_games_v0_6 import R13
@@ -297,6 +299,14 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                         observed[f"stopped_power_{error.code}"] += 1
                         turn_tried.add(("max_hp_drop_command", command))
                         continue
+                    if error.code in (ATTACH_TRIGGER_SCOPE_CODE, ATTACH_TRIGGER_ORDER_CODE, "UNRESOLVED_REPARALYSIS_RECOVERY_TURN") and any(
+                            attach_status_triggers(state, pk) for pl in state.players for pk in pl.in_play()):
+                        # v0.116: しこみどく・エナジーショックの効果がはたらいているポケモンに、エナジートランスなどでつけ替える（AT1）・山札やトラッシュからつける特殊能力で、マヒと
+                        # ［ほのおでかいふく］が同じ時点にはたらく（エンジンの未対応）・あまごいなどでマヒ状態のポケモンにつけ、再びマヒになる（v0.3b の問い）。場から確かめる。
+                        # この番はその使用をくり返さない
+                        observed[f"stopped_power_{error.code}"] += 1
+                        turn_tried.add(("max_hp_drop_command", command))
+                        continue
                     if error.code == "POWER_USE_PREVENTED" and powers_use_prevented(state, state.find_pokemon(command.pokemon)[1]) is not None:
                         # v0.59: 「ショックアイ」を受けたポケモン。この番はその使用をくり返さない
                         observed["stopped_power_POWER_USE_PREVENTED"] += 1
@@ -381,6 +391,15 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                     observed["stopped_trainer_TRAINER_PREVENTED"] += 1
                     turn_tried.add("trainer_locked")
                     continue
+                if isinstance(command, AttachEnergy) and error.code == "UNRESOLVED_REPARALYSIS_RECOVERY_TURN":
+                    # v0.116: エナジーショックの効果がはたらいているマヒ状態のポケモンにつける（ついたことで再びマヒ状態になる効果を受け、回復する番が変わる。v0.3b の問い）。
+                    # 場から確かめる（つける先がマヒ状態で、マヒの、ついた時に発動する持続効果がはたらいている）。この番はつけない
+                    target = next((pk for pl in state.players for pk in pl.in_play() if pk.card == command.target), None)
+                    if target is None or not target.conditions.paralyzed or not any(effect.condition == "paralysis" for effect in attach_status_triggers(state, target)):
+                        raise AssertionError(f"マヒの、ついた時に発動する効果がはたらいていないのに {error.code}: {command}")
+                    observed[f"stopped_attach_{error.code}"] += 1
+                    turn_tried.add("attach_blocked")
+                    continue
                 if isinstance(command, AttachEnergy) and error.code in V059_ATTACH_CODES:
                     # v0.59: クリスタルビームでエネルギーカードをつけることができないポケモン（ENERGY_ATTACH_PREVENTED）・カツラの 1 枚目のあとの 2 枚目（BL1）。
                     # 場から確かめる（受けているポケモン・この番のカツラの効果）。この番はつけない
@@ -396,6 +415,13 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                         raise
                     observed[f"stopped_attach_{error.code}"] += 1
                     turn_tried.add("attach_blocked")
+                    continue
+                if isinstance(command, EvolvePokemon) and error.code == "EVOLUTION_PREVENTED" and not evolution_preventers(state) and evolution_lock(
+                        state, state.find_pokemon(command.target)[1]) is not None:
+                    # v0.116: やみのしょくしゅの効果を受けたポケモン（次の相手の番、手札・トレーナーの効果で進化させることができない）。場から確かめる。この番はそのカードを使わない
+                    # （ほかのポケモンへの進化は止めない）
+                    observed["stopped_evolve_EVOLUTION_PREVENTED_lock"] += 1
+                    turn_tried.add(("max_hp_drop_card", command.card))
                     continue
                 if isinstance(command, EvolvePokemon) and error.code == "EVOLUTION_PREVENTED":
                     # v0.47: はたらいている［げんしのちから］（プテラ）。場から確かめる（重ねる前に拒否）

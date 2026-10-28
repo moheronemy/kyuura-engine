@@ -679,6 +679,11 @@ V0_114_POKEMON = V0_114
 # ワザの停止は ``V0_115_STOPS``
 V0_115 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_115"])
 V0_115_POKEMON = V0_115
+# v0.116（docs/energy-movement-attachment-devolution-v0.116.md）: エネルギーの付け替え・ついた時の効果・付属カードの回収と退化のポケモン 13 枚（写しの組 pool_v0_116）。ポケモンは TARGETS に
+# 加える（ワザは既存の手順のまま選ぶ）。v0.116 のワザの決定（選ぶ控え・はがすカード・つけるポケモン・退化させるポケモン・ベンチに出すカード・手札に加えるカード）は ``_v116_decision`` が
+# 答える。ログから数えるのは ``v116_uses``、ワザ・特殊能力の停止は ``V0_116_STOPS``
+V0_116 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_116"])
+V0_116_POKEMON = V0_116
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -728,7 +733,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_112_POKEMON  # v0.112: 水エネルギーの個数によるコインとドロー・コインのマヒと自分のワザの制限のポケモン 2 枚
            + V0_113_POKEMON  # v0.113: 可変枚数のコインと、山札の検索・つける・場全体のトラッシュのポケモン 6 枚
            + V0_114_POKEMON  # v0.114: ベイビィポケモン 13 枚
-           + V0_115_POKEMON)  # v0.115: 場・ベンチへのダメージ、対象ごとのコイン、ダメージの配分のポケモン 13 枚
+           + V0_115_POKEMON  # v0.115: 場・ベンチへのダメージ、対象ごとのコイン、ダメージの配分のポケモン 13 枚
+           + V0_116_POKEMON)  # v0.116: エネルギーの付け替え・ついた時の効果・付属カードの回収と退化のポケモン 13 枚
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -1590,6 +1596,29 @@ DECKS = {
     # たねポケモンは 10 枚
     "E115": (("PMCG2-037", 4), ("neo4-067", 3), (PIKACHU, 4), ("neo2-021", 3), (RATTATA, 2), (DOUBLE_COLORLESS, 2), (driver.POTION, 1), (SWITCH, 1), (driver.BILL, 2),
              (PSYCHIC, 18), (LIGHTNING, 20)),
+    # v0.116: 草・無色。ハネッコ（neo1-005。はねる・ふえる）4 枚、レディバ（neo1-003）→ レディアン（neo1-010。バトンタッチ。付け替える先の「草」の控えが多い）、マダツボミ（ES3-005）→
+    # ウツドン（ES3-006。さいせい・ようかい）、ポッポ（ES1-024）→ ピジョン（ES3-032。ツイスター・そらをとぶ）。相手のエナジーショック・しこみどくの効果を受けたあとに手札からつける
+    # なんでもなおし配合エネルギー 2 枚（同じ時点の反応の順番）・ツイスターでもどる自分のきあいのハチマキ・ディフェンダー 2 枚ずつ。たねポケモンは 15 枚
+    "G116": (("neo1-005", 4), ("neo1-003", 4), ("neo1-010", 3), ("ES3-005", 4), ("ES3-006", 3), ("ES1-024", 3), ("ES3-032", 3), (FULL_HEAL_ENERGY, 2),
+             ("neo1-088", 2), (driver.DEFENDER, 2), (SWITCH, 1), (driver.POTION, 1), (driver.BILL, 2), (GRASS, 26)),
+    # v0.116: 水・草。ニョロモ（neo2-013）→ ニョロゾ（neo2-016。はらだいこ・みずでっぽう）、なにかの化石 → わるいオムナイト（neo4-035）→ わるいオムスター（neo4-038。げんしのしずく・
+    # やみのしょくしゅ）、ズバット（neo3-001）→ ゴルバット（neo3-004）→ クロバット（neo3-006。しこみどく・クロスアタック）・コラッタ。なんでもなおし配合エネルギー 2 枚・レインボー
+    # エネルギー 1 枚（エナジーコントロールの RB3）・ツイスターでもどるディフェンダー 2 枚。たねポケモンは 10 枚・なにかの化石は 3 枚（手札にたねポケモンがなく化石だけのときの対戦準備は PF1 で止まるので、たねポケモンを多く）
+    "W116": (("neo2-013", 4), ("neo2-016", 3), (MYSTERIOUS_FOSSIL, 3), ("neo4-035", 3), ("neo4-038", 2), ("neo3-001", 4), ("neo3-004", 3), ("neo3-006", 2),
+             (RATTATA, 2), (FULL_HEAL_ENERGY, 2), (RAINBOW_ENERGY, 1), (driver.DEFENDER, 2), (SWITCH, 1), (driver.POTION, 1), (driver.BILL, 2), (WATER, 15),
+             (GRASS, 10)),
+    # v0.116: 超。ネイティ（neo2-022）→ ネイティオ（neo2-024。エナジーサイクル・ちょうねんりき）、ゴース（neo4-048）→ わるいゴースト（neo4-055。よびもどす・とりかこむ）、ケーシィ → ユンゲラー
+    # （ES3-020・QSG-027。エナジーさいせい・エナジーショック）→ フーディン（PR1-055。サイコパニック・トランスダメージ）、ミュウツー（PR1-022。エナジーコントロール・テレキネシス）。
+    # エナジーさいせいで手札にもどす特殊エネルギーカード（ダブル無色エネルギー 3 枚・リサイクルエネルギー 2 枚）。フーディンに届くようにポケモン育て屋さん 2 枚・ツイスターでもどる
+    # ディフェンダー 2 枚。たねポケモンは 14 枚
+    "P116": (("neo2-022", 4), ("neo2-024", 3), (GASTLY_NEO4, 4), ("neo4-055", 3), ("QSG-026", 2), ("ES1-020", 2), ("ES3-020", 2), ("QSG-027", 2), ("PR1-055", 3),
+             ("PR1-022", 2), (DOUBLE_COLORLESS, 3), (RECYCLE_ENERGY, 2), (driver.POKEMON_BREEDER, 2), (driver.DEFENDER, 2), (SWITCH, 1), (driver.POTION, 1),
+             (driver.BILL, 2), (PSYCHIC, 20)),
+    # v0.116: 草・超・無色。ズバット → ゴルバット → クロバット（しこみどく）・ポッポ（ES1-024）→ ピジョン（ES3-032）・ケーシィ → ユンゲラー（ES3-020。エナジーショック）・ミュウツー（PR1-022）。
+    # 相手の場のエネルギーを動かすワザを受ける自分のなんでもなおし配合エネルギー 2 枚・きあいのハチマキ・ディフェンダー 2 枚ずつ。たねポケモンは 13 枚
+    "C116": (("neo3-001", 4), ("neo3-004", 3), ("neo3-006", 2), ("ES1-024", 3), ("ES3-032", 2), ("QSG-026", 3), ("ES3-020", 3), ("PR1-022", 3),
+             (FULL_HEAL_ENERGY, 2), ("neo1-088", 2), (DOUBLE_COLORLESS, 2), (driver.DEFENDER, 2), (SWITCH, 1), (driver.POTION, 1), (driver.BILL, 2), (GRASS, 14),
+             (PSYCHIC, 11)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -1860,6 +1889,13 @@ PAIRINGS_V0_114 = (("L114", "C114"), ("L114", "F114"), ("L114", "P114"), ("C114"
 # （正式な対戦は seed 0〜3。開発中に手順を確かめた seed 50・51 とは別。局を選び直さない）
 PAIRINGS_V0_115 = (("T115", "D115"), ("T115", "R115"), ("T115", "W115"), ("D115", "R115"), ("D115", "E115"), ("R115", "W115"), ("R115", "E115"), ("W115", "E115"),
                    ("T115", "F97"), ("W115", "R65"), ("E115", "M60"), ("D115", "P31"), ("R115", "M103"))
+# v0.116: 4 つの v0.116 のデッキどうしの 6 組（ついた時の効果を受けたポケモンへの、手札・ワザ・はらだいこの山札からのエネルギーのつけ方、バトンタッチ・エナジーサイクル・エナジーコントロールの
+# 付け替え、げんしのしずく・さいせいの退化、ツイスターの付属カード）と、P116・C116 対 R58（相手のカメックスの［あまごい］・フシギバナの［エナジートランス］で効果を受けたポケモンに
+# つける・つけ替える。AT1）・W116 対 P31（ピッピ・ピクシーのゆびをふるで、はらだいこ・げんしのしずく・やみのしょくしゅを相手のワザとして使う）・G116 対 M60（相手のゴーストの［とうめい］と
+# ツイスター・ようかい）・P116 対 M103（ミュウの［ニュートラルシールド］と進化ポケモンのワザ）・W116 対 C114（ベイビィから進化したポケモンへのげんしのしずく。NB2）・C116 対 E50（退化スプレー・
+# フシギバナ）。組・席・seed は先に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめた seed 50・51 とは別。局を選び直さない）
+PAIRINGS_V0_116 = (("G116", "W116"), ("G116", "P116"), ("G116", "C116"), ("W116", "P116"), ("W116", "C116"), ("P116", "C116"),
+                   ("P116", "R58"), ("C116", "R58"), ("W116", "P31"), ("G116", "M60"), ("P116", "M103"), ("W116", "C114"), ("C116", "E50"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -1880,7 +1916,8 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.101": PAIRINGS_V0_101, "v0.102": PAIRINGS_V0_102, "v0.103": PAIRINGS_V0_103, "v0.104": PAIRINGS_V0_104,
            "v0.105": PAIRINGS_V0_105, "v0.106": PAIRINGS_V0_106, "v0.107": PAIRINGS_V0_107,
            "v0.108": PAIRINGS_V0_108, "v0.109": PAIRINGS_V0_109, "v0.110": PAIRINGS_V0_110, "v0.111": PAIRINGS_V0_111, "v0.112": PAIRINGS_V0_112,
-           "v0.113": PAIRINGS_V0_113, "v0.114": PAIRINGS_V0_114, "v0.115": PAIRINGS_V0_115}
+           "v0.113": PAIRINGS_V0_113, "v0.114": PAIRINGS_V0_114, "v0.115": PAIRINGS_V0_115,
+           "v0.116": PAIRINGS_V0_116}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -2187,8 +2224,11 @@ V031_STOPS = {
     "UNRESOLVED_OPPONENT_POKEMON_COUNTERS": lambda st, c: (("DamagePlusDefenderCounters" in _attack_and_copied_types(st, c))
                                                            and any(p.damage for p in st.players[1 - c.player].bench)),
     # v0.34: どくどく（相手が受けるダメージの違うどく状態。TP3（v0.3a の 15））
+    # v0.116: キョウのコクーンの「どくどくえき」（SpecialPoisonOnHeadsWithoutDamage。v0.44）も（C116 対 E50 の開発中の局で、退化スプレーでもどったキョウのコクーンが、通常のどくの
+    # 相手に使って初めて起こった。エンジンは正しく止め、この確かめの一覧に型がなかった）
     "UNRESOLVED_SPECIAL_POISON_OVERWRITE": lambda st, c: (type(_attack_effect(st, c)).__name__ in ("DamageAndSpecialPoison",
-                                                                                              "DamageThenSpecialPoisonOnHeads")  # v0.39 のどくどくガス
+                                                                                              "DamageThenSpecialPoisonOnHeads",  # v0.39 のどくどくガス
+                                                                                              "SpecialPoisonOnHeadsWithoutDamage")
                                                           and _defender(st, c).conditions.poison is not None
                                                           and _defender(st, c).conditions.poison.damage != _attack_effect(st, c).poison_damage),
     # v0.35: あわあわ（自分）・ドわすれ（相手が選んだワザ）で、この番は使えないワザ（ワザを使うための条件と同じく宣言の前に拒否する）
@@ -2231,7 +2271,9 @@ V031_STOPS = {
     "UNRESOLVED_COUNTER_TRANSFER_PROTECTED": lambda st, c: _counter_transfer_protected(st, c),
     # v0.44: ラッキーたまご（自分のワザ・相手のワザとして使うワザ）で、「うら」のとき手札が 2 枚より少ない（FC1。山札にもどすカードが足りない）
     # v0.46: かくさんソーラービーム（相手の控えポケモン 2 匹）で、相手の控えが 1 匹（FC1）
-    "UNRESOLVED_STATED_CARDS_SHORT": lambda st, c: _hand_return_short(st, c) or _exact_bench_short(st, c) or _surprise_short(st, c) or _v113_attract_short(st, c),
+    # v0.116: はらだいこ（山札の基本エネルギーカードが 1 枚）
+    "UNRESOLVED_STATED_CARDS_SHORT": lambda st, c: (_hand_return_short(st, c) or _exact_bench_short(st, c) or _surprise_short(st, c) or _v113_attract_short(st, c)
+                                                    or _v116_belly_drum_short(st, c)),
     # v0.113: ゆうでんの山札のレインボーエネルギー（「雷」エネルギーカードが「おもて」の数より少ないとき、それを選ばないと足りない）・ダークフレイムのトラッシュのレインボーエネルギー
     # （RB2）。道具が山札・トラッシュのカードを別に数えて確かめる
     "UNRESOLVED_RAINBOW_ATTACH_AS_TYPE": lambda st, c: _v113_attract_short(st, c, rainbow=True) or _v113_discard_rainbow(st, c) or _v113_static_rainbow(st, c),
@@ -2250,7 +2292,11 @@ V031_STOPS = {
     # 止まる。止まらない場合は場から確かめられないので、止まったときに読み方が 2 つあるポケモンがいることだけを確かめる）
     "UNRESOLVED_SHIFT_COLOR_DURATION": lambda st, c: any(len(type_readings(st, p)) > 1 for pl in st.players for p in pl.in_play()),
     # v0.50: たいかビーム（自分のワザ・相手のワザとして使うワザ）で、自分・相手の場の進化ポケモンがどれも「ばける」でのせたカードのポケモン（DV5）
-    "UNRESOLVED_DEVOLUTION_TARGET_DISGUISED": lambda st, c: _all_devolution_targets_disguised(st, c),
+    # v0.116: げんしのしずく（相手の場の進化ポケモンがどれも「ばける」かベイビィから進化したたねポケモン）・さいせい（「ばける」の自分）
+    "UNRESOLVED_DEVOLUTION_TARGET_DISGUISED": lambda st, c: (_all_devolution_targets_disguised(st, c) or _v116_primal_drop_stopped(st, c)
+                                                             or _v116_regenerate_disguised(st, c)),
+    # v0.116（NB2）: げんしのしずくで、相手の場の進化ポケモンがどれもベイビィから進化したたねポケモンか「ばける」（候補の最初がベイビィから進化したたねポケモン）
+    "UNRESOLVED_NEO_TEXT_EVOLUTION_CARD_BABY": lambda st, c: _v116_primal_drop_stopped(st, c),
     # v0.48: テクスチャー1（相手の対戦ポケモンに弱点がない）・テクスチャー2（自分に抵抗力がない）。相手のワザとして使うワザなら、相手の対戦ポケモンのワザのどれか（PG1）
     "UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE": lambda st, c: _conversion_absent(st, c),
     # v0.56: カスミの +20 がはたらくワザを使うポケモンが、自分にもダメージを与えるワザを使う（+20 を当てはめるかで結果が変わるときだけ止まる。MS1）
@@ -2286,6 +2332,10 @@ V031_STOPS = {
     "UNRESOLVED_STOPPED_POWER_HOLDER": lambda st, c: V0_114_STOPS["UNRESOLVED_STOPPED_POWER_HOLDER"](st, c),
     # v0.115: いしなだれを、相手に控えがいないときに使う（選べるのが目安のダメージを受けた相手の対戦ポケモンだけ。SLD1）。関数は下の V0_115_STOPS（場から確かめる）
     "UNRESOLVED_CHOSEN_ACTIVE_EXTRA_DAMAGE": lambda st, c: V0_115_STOPS["UNRESOLVED_CHOSEN_ACTIVE_EXTRA_DAMAGE"](st, c),
+    # v0.116: しこみどく・エナジーショックの効果を受けたポケモンへのワザの付け替え（AT1）・はらだいこなどでつけるときのマヒと［ほのおでかいふく］（エンジンの未対応）。関数は下の
+    # V0_116_STOPS（場から確かめる）
+    "UNRESOLVED_ATTACH_TRIGGER_SCOPE": lambda st, c: V0_116_STOPS["UNRESOLVED_ATTACH_TRIGGER_SCOPE"](st, c),
+    "UNSUPPORTED_ATTACH_TRIGGER_ORDER": lambda st, c: V0_116_STOPS["UNSUPPORTED_ATTACH_TRIGGER_ORDER"](st, c),
 }
 
 
@@ -2402,7 +2452,10 @@ def _counter_transfer_protected(state, command):
         definition = state.card_def(pokemon.card)
         names.add(type(state.effects.attack_effect(definition.id, definition.attacks[index], definition.attacks)).__name__)
     protected = attack_barrier(state, defender) is not None or working_evasion_power(state, defender.pokemon_id) is not None
-    return bool(names & {"MoveOwnCountersToOpponent", "SwapCountersOnHeads"}) and protected
+    # v0.116: 相手の対戦ポケモンの［ニュートラルシールド］（進化ポケモンのワザを受けない。P116 対 M103 の開発中の局で、フーディンのトランスダメージで初めて起こった）
+    protected = protected or _v086_power_working(state, defender, E.EvolvedOpponentAttackImmunity) and E.is_evolution_in_play(state, attacker)
+    # v0.116: トランスダメージ（自分のダメージカウンターをすべて相手にのせかえる）も
+    return bool(names & {"MoveOwnCountersToOpponent", "SwapCountersOnHeads", "DiscardAllEnergyThenMoveAllSelfCountersToOpponent"}) and protected
 
 
 def _damage_trigger_before_later_damage(state, command):
@@ -10039,6 +10092,265 @@ def v115_uses(state):
     return counts
 
 
+# ---------------------------------------------------------------- v0.116（docs/energy-movement-attachment-devolution-v0.116.md 9 章）: エネルギーの付け替え・ついた時の効果・付属カードの回収と退化
+
+V116_NAMES = {
+    "はねる": "splash", "ふえる": "multiply", "バトンタッチ": "baton_pass", "はらだいこ": "belly_drum", "みずでっぽう": "water_gun", "エナジーサイクル": "energy_cycle",
+    "ちょうねんりき": "super_psy", "しこみどく": "poison_seed", "クロスアタック": "cross_attack", "げんしのしずく": "primal_drop", "やみのしょくしゅ": "dark_tentacle",
+    "よびもどす": "call_back", "とりかこむ": "surround", "さいせい": "regenerate", "ようかい": "dissolve", "エナジーさいせい": "energy_recycle", "エナジーショック": "energy_shock",
+    "ツイスター": "twister", "そらをとぶ": "fly", "エナジーコントロール": "energy_control", "テレキネシス": "telekinesis", "サイコパニック": "psychic_panic",
+    "トランスダメージ": "trans_damage",
+}
+# エネルギーカードがついたログ（つけたカードの項目）。ついた時に発動する持続効果がはたらいたときに、どの入口でついたかを数える（``v116_uses``）
+V116_ATTACH_EVENTS = {"attach_energy": ("energy", "energy2"), "attach_energy_from_deck": ("card",), "attach_energy_from_discard": ("cards",),
+                      "attach_energy_from_hand": ("cards",), "power_attach_from_deck": ("card",), "power_attach_from_discard": ("cards",),
+                      "attack_attach_energy": ("energy",), "move_opponent_energy": ("energy",), "power_attach_energy": ("energy",)}
+V116_ONE_COIN = ("energy_cycle", "primal_drop", "surround", "twister", "fly", "energy_control", "dissolve")  # コイン 1 枚のワザ（「おもて」「うら」を数える）
+
+
+def _v116_name(state, key: str | None) -> str | None:
+    """v0.116: ワザ ``key``（"カード id#位置"）が v0.116 のワザなら、その集計の名前（ほかは None）。"""
+    if key is None:
+        return None
+    card_id, index = key.split("#")
+    return V116_NAMES.get(state.definitions[card_id].attacks[int(index)].name_ja) if card_id in V0_116 else None
+
+
+def _v116_decision(state, counts):
+    """v0.116 のワザの決定への答え（元の手順より先に答える。処理しているワザが v0.116 のワザでなければ何もしない）。選べるものを決定のたびに 1 つずつずらして選び（選ぶ控え・はがす
+    カード・つけるポケモン・退化させるポケモン・ベンチに出すカード・手札に加えるカードが偏らない）、原典で決められない選択（``unresolved_choices``。バトンタッチの FD1・VS1、
+    エナジーコントロールの RB3、げんしのしずくの DV5・NB2）は選ばない。決まった枚数の決定（はらだいこの 2 枚）は、ずらした並びの前からその枚数。受け付ける答えだけを選ぶ。"""
+    d = state.decision
+    if d is None or d.resume != "attack" or d.player != state.current_player:
+        return None
+    use = d.context_value("use")
+    copied = d.context_value("copied")
+    key = f"{copied[0]}#{copied[1]}" if copied else (f"{use[2]}#{use[3]}" if use is not None else None)
+    name = _v116_name(state, key)
+    if name is None:
+        return None
+    blocked = set(d.context_value("unresolved_choices") or ())
+    options = tuple(o for o in d.options if o not in blocked)
+    label = f"v116_{name}_{d.kind}"
+    seen = counts[label]
+    counts[label] += 1
+    shift = seen % len(options) if options else 0
+    rotated = options[shift:] + options[:shift]
+    candidates = [tuple(rotated[:d.min_choices])] if d.min_choices > 1 else []
+    candidates += [(o,) for o in rotated] + [()]
+    for choices in candidates:
+        command = ResolveDecision(d.player, d.id, tuple(choices))
+        if d.min_choices <= len(choices) <= d.max_choices and _v052_accepted(state, command):
+            counts[f"{label}_{len(choices)}"] += 1
+            return command
+    counts[f"{label}_no_accepted_answer"] += 1
+    return None
+
+
+def _v116_belly_drum_short(state, command) -> bool:
+    """v0.116（FC1）: はらだいこ（相手のワザとして使うものも）を、自分の山札の基本エネルギーカードが 1 枚（2 枚に足りない・0 枚ではない）のときに宣言した。道具が山札を数える
+    （エンジンの問い合わせを読まない。のせるダメージカウンターで HP 以上になるなら山札を見ないので止まらない）。"""
+    if "SelfCountersThenAttachBasicEnergyFromDeck" not in _attack_and_copied_types(state, command):
+        return False
+    return sum(1 for uid in state.players[command.player].deck if state.card_def(uid).is_basic_energy) == 1
+
+
+def _v116_primal_drop_stopped(state, command) -> bool:
+    """v0.116（NB2・DV5）: げんしのしずく（相手のワザとして使うものも）を、相手の場の進化ポケモン（重なりのあるポケモン）がどれも、ベイビィから進化したたねポケモン（いちばん上が
+    進化カードでない）か「ばける」のポケモンのときに宣言した（「おもて」で選べる候補がどれも止まる）。"""
+    if "CoinDevolveOpponentEvolvedToDeck" not in _attack_and_copied_types(state, command):
+        return False
+    candidates = [p for p in state.players[1 - command.player].in_play() if p.evolution_stack]
+    return bool(candidates) and all(devolution_forbidden(state, p) or not state.card_def(p.card).is_evolution_pokemon for p in candidates)
+
+
+def _v116_regenerate_disguised(state, command) -> bool:
+    """v0.116（DV5）: さいせい（相手のワザとして使うものも）を、「ばける」でカードをのせた自分が使う。"""
+    return "HealAllThenRegressToBasic" in _attack_and_copied_types(state, command) and devolution_forbidden(state, _attacker(state, command))
+
+
+def _v116_trigger_holder(state, command=None) -> bool:
+    """v0.116: 今の番にはたらく、ついた時に発動するワザの持続効果（しこみどく・エナジーショック）を受けているポケモンが場にいる（AT1・反応の順番の未対応の停止を場から確かめる）。"""
+    return any(E.attach_status_triggers(state, p) for pl in state.players for p in pl.in_play())
+
+
+V0_116_STOPS = {
+    # AT1: しこみどく・エナジーショックの効果がはたらいているポケモンへの、場のエネルギーのつけ替え・［エネエネ］（場から確かめる）
+    "UNRESOLVED_ATTACH_TRIGGER_SCOPE": _v116_trigger_holder,
+    # 手札からつける通常の操作・あまごいでない入口で、効果を受けたポケモンにつき、マヒの持続効果と［ほのおでかいふく］が同じ時点にはたらく（エンジンの未対応）
+    "UNSUPPORTED_ATTACH_TRIGGER_ORDER": _v116_trigger_holder,
+}
+
+
+def v116_uses(state):
+    """v0.116: ログから数えた 13 枚・25 のワザの動き（v0.116 のカードのない局では空）。
+
+    - ``attack_<id>#<位置>``（宣言したワザ）・``copied_<id>#<位置>``（ほかのワザが相手のワザとして使った v0.116 のワザ）・``attack_failed_<理由>``・``<名前>_<heads|tails>``（コイン 1 枚の
+      ワザ）・``esp_redo``
+    - ついた時の持続効果（しこみどく・エナジーショック）: ``attach_status_given_<特殊状態>``・``attach_status_triggered_<特殊状態>``・``attach_status_route_<ついたログ>``・
+      ``attach_status_after_<直前のログ>``（同じ時点のほかの反応との順番）・``attach_status_second_in_turn``（同じ番・同じポケモンの 2 度目）・``attach_status_removed_<理由>``
+    - やみのしょくしゅ: ``evolution_lock_given``・``evolution_lock_removed_<理由>``・``evolution_while_locked_<attack|power>``（効果がはたらく番の、効果を受けたポケモンの進化。
+      ワザ・特殊能力の効果の進化だけのはず。``<hand|trainer>`` が出たら誤り）
+    - バトンタッチ: ``baton_pass_moved_<枚数>``・``baton_pass_switched``・``baton_pass_<no_target|effect_target_knocked_out>``・``baton_pass_evaded``
+    - はらだいこ: ``belly_drum_attached_<枚数>``・``belly_drum_none_<理由>``・``belly_drum_knocked_out``。ふえる: ``multiply_benched``
+    - エナジーサイクル・エナジーコントロール: ``<名前>_moved_<attached|evaded>``・``energy_cycle_special``（特殊エネルギーカード）・``energy_control_same_pokemon``・
+      ``energy_control_other_pokemon``
+    - げんしのしずく: ``primal_drop_devolved``・``primal_drop_none``。さいせい: ``regenerate_healed``・``regenerate_devolved_<枚数>``・``regenerate_energy_<枚数>``
+    - よびもどす: ``call_back_benched``・``call_back_baby``・``call_back_none``・``call_back_knocked_out``（のせたカウンターで HP 以上）。とりかこむ: ``surround_sleep``・
+      ``surround_retreat_lock``
+    - ツイスター: ``twister_returned``・``twister_energy_<枚数>``・``twister_trainers_<枚数>``・``twister_other_owner``（持ち主が受けたポケモンの持ち主でないカード）。
+      エナジーさいせい: ``energy_recycle_recovered``。そらをとぶ: ``fly_barrier``
+    - クロスアタック: ``cross_attack_heads_<数>``・``cross_attack_confused``。トランスダメージ: ``trans_damage_discarded_<枚数>``・``trans_damage_counters_<数>``"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_116 for uid in state.cards):
+        return counts
+    window = None
+    triggered: Counter = Counter()
+    locked: dict[int, int] = {}  # やみのしょくしゅの効果を受けたポケモンの番号 → 効果がはたらく番
+    route: dict[int, str] = {}  # ついたカード → ついたログ
+    previous = None
+
+    def close(w):
+        if w is None or w.get("closed"):
+            return
+        w["closed"] = True
+        name = w["name"]
+        if name in V116_ONE_COIN and w["coins"]:
+            counts[f"{name}_{w['coins'][0]}"] += 1
+        if name == "cross_attack" and w["coins"]:
+            counts[f"cross_attack_heads_{sum(1 for side in w['coins'] if side == 'heads')}"] += 1
+        if name == "baton_pass" and w["switched"]:
+            counts[f"baton_pass_moved_{w['moved']}"] += 1
+        if name == "belly_drum" and w["attached"]:
+            counts[f"belly_drum_attached_{w['attached']}"] += 1
+        if name == "regenerate" and w["healed"] is not None:
+            counts[f"regenerate_energy_{w['discarded']}"] += 1
+        if name == "trans_damage" and w["discarded"]:
+            counts[f"trans_damage_discarded_{w['discarded']}"] += 1
+
+    for e in state.log:
+        kind = e["kind"]
+        effect = str(e.get("effect", ""))
+        for field in V116_ATTACH_EVENTS.get(kind, ()):
+            value = e.get(field)
+            for uid in (value if isinstance(value, (tuple, list)) else (value,)):
+                if uid is not None:
+                    route[uid] = kind
+        if kind == "persistent_effect_added" and e.get("persistent_effect") == "status_on_energy_attach":
+            counts[f"attach_status_given_{e.get('condition')}"] += 1
+        elif kind == "persistent_effect_removed" and e.get("persistent_effect") == "status_on_energy_attach":
+            counts[f"attach_status_removed_{e.get('reason')}"] += 1
+        elif kind == "attach_status_triggered":
+            counts[f"attach_status_triggered_{e['condition']}"] += 1
+            counts[f"attach_status_route_{route.get(e['energy'], 'unknown')}"] += 1
+            counts[f"attach_status_after_{previous}"] += 1
+            counts[f"attach_status_card_{state.cards[e['energy']].card_id}"] += 1  # ついたカード（なんでもなおし配合エネルギーなら、同じ時点の反応の順番）
+            triggered[(e["turn"], e["pokemon_id"])] += 1
+            if triggered[(e["turn"], e["pokemon_id"])] == 2:
+                counts["attach_status_second_in_turn"] += 1
+        elif kind == "persistent_effect_added" and e.get("persistent_effect") == "evolution_lock":
+            counts["evolution_lock_given"] += 1
+            locked[e["pokemon_id"]] = e["active_turn"]
+        elif kind == "persistent_effect_removed" and e.get("persistent_effect") == "evolution_lock":
+            counts[f"evolution_lock_removed_{e.get('reason')}"] += 1
+            locked.pop(e["pokemon_id"], None)
+        elif kind == "evolve" and locked.get(e.get("pokemon_id")) == e["turn"]:
+            way = "attack" if e.get("effect") else "power" if e.get("power") else "trainer" if e.get("trainer_card") else "hand"
+            counts[f"evolution_while_locked_{way}"] += 1
+        previous = kind
+        if kind in ("attack", "turn_end", "game_end", "halted"):
+            close(window)
+            window = None
+        if kind == "attack":
+            current = e.get("card_id") or state.cards[e["pokemon"]].card_id
+            key = f"{current}#{e['attack_index']}"
+            name = _v116_name(state, key)
+            if name is not None:
+                counts[f"attack_{key}"] += 1
+                window = {"key": key, "name": name, "coins": [], "moved": 0, "switched": False, "attached": 0, "healed": None, "discarded": 0, "player": e["player"]}
+            continue
+        if kind == "copy_attack":
+            close(window)
+            name = _v116_name(state, e["copied"])
+            window = None
+            if name is not None:
+                counts[f"copied_{e['copied']}"] += 1
+                window = {"key": e["copied"], "name": name, "coins": [], "moved": 0, "switched": False, "attached": 0, "healed": None, "discarded": 0,
+                          "player": e["player"]}
+            continue
+        if window is None or effect != window["key"]:
+            continue
+        name = window["name"]
+        if kind == "coin_flip" and e.get("source") == "attack":
+            window["coins"].append(e["result"])
+        elif kind == "esp_redo":
+            counts["esp_redo"] += 1
+            first, last = len(e["original"]), len(e["redone"])
+            del window["coins"][-(first + last):-last]
+        elif kind == "attack_failed":
+            counts[f"attack_failed_{e.get('reason')}"] += 1
+        elif kind == "attack_attach_energy" and name == "baton_pass":
+            window["moved"] += 1
+        elif kind == "switch" and name == "baton_pass":
+            window["switched"] = True
+            counts["baton_pass_switched"] += 1
+        elif kind == "effect_skipped" and e.get("element") == "baton_pass":
+            counts[f"baton_pass_{e.get('reason')}"] += 1
+        elif kind == "effect_skipped" and e.get("element") == "attach_from_deck":
+            counts["belly_drum_knocked_out"] += 1
+        elif kind == "discard_energy" and name == "baton_pass" and e.get("reason") == "evaded":
+            counts["baton_pass_evaded"] += 1
+        elif kind == "attach_energy_from_deck" and name == "belly_drum":
+            window["attached"] += 1
+        elif kind == "attach_energy_from_deck_none" and name == "belly_drum":
+            counts[f"belly_drum_none_{e.get('reason')}"] += 1
+        elif kind == "bench_from_deck" and name == "multiply":
+            counts["multiply_benched"] += 1
+        elif kind == "move_opponent_energy" and name in ("energy_cycle", "energy_control"):
+            counts[f"{name}_moved_{e.get('result')}"] += 1
+            if name == "energy_cycle" and not state.card_def(e["energy"]).is_basic_energy:
+                counts["energy_cycle_special"] += 1
+            if name == "energy_control":
+                counts["energy_control_same_pokemon" if e["pokemon_id"] == e["to_pokemon_id"] else "energy_control_other_pokemon"] += 1
+        elif kind == "devolve" and name == "primal_drop":
+            counts["primal_drop_devolved"] += 1
+        elif kind == "devolve_none" and name == "primal_drop":
+            counts["primal_drop_none"] += 1
+        elif kind == "remove_all_damage_counters" and name == "regenerate":
+            window["healed"] = e["counters"]
+            counts["regenerate_healed"] += 1
+        elif kind == "devolve" and name == "regenerate":
+            counts[f"regenerate_devolved_{len(e['removed'])}"] += 1
+        elif kind == "discard_energy" and name in ("regenerate", "trans_damage"):
+            window["discarded"] += 1
+        elif kind == "bench_from_discard" and name == "call_back":
+            counts["call_back_benched"] += 1
+            if state.card_def(e["card"]).is_baby_pokemon:
+                counts["call_back_baby"] += 1
+            if e.get("damage", 0) >= state.card_def(e["card"]).hp:
+                counts["call_back_knocked_out"] += 1
+        elif kind == "bench_from_discard_none" and name == "call_back":
+            counts["call_back_none"] += 1
+        elif kind == "special_condition" and name in ("cross_attack", "surround"):
+            counts["cross_attack_confused" if name == "cross_attack" else "surround_sleep"] += 1
+        elif kind == "persistent_effect_added" and name == "surround":
+            counts["surround_retreat_lock"] += 1
+        elif kind == "persistent_effect_added" and name == "fly":
+            counts["fly_barrier"] += 1
+        elif kind == "attached_cards_to_hand" and name == "twister":
+            counts["twister_returned"] += 1
+            counts[f"twister_energy_{len(e['energy'])}"] += 1
+            counts[f"twister_trainers_{len(e['trainers'])}"] += 1
+            if any(owner != e["player"] for owner in e["owners"]):
+                counts["twister_other_owner"] += 1
+        elif kind == "recover_energy" and name == "energy_recycle":
+            counts["energy_recycle_recovered"] += 1
+        elif kind == "place_damage_counters" and name == "trans_damage":
+            counts[f"trans_damage_counters_{e['counters']}"] += 1
+    close(window)
+    return counts
+
+
 def v114_uses(state):
     """v0.114: ログから数えたベイビィポケモンのルール・進化・13 枚のワザ・特殊能力の動き（v0.114 のカードのない局では空）。
 
@@ -10118,7 +10430,8 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = (_v115_decision(state, counts)  # v0.115: v0.115 のワザの決定（v0.115 のワザでない決定では何もしない）
+            early = (_v116_decision(state, counts)  # v0.116: v0.116 のワザの決定（v0.116 のワザでない決定では何もしない）
+                     or _v115_decision(state, counts)  # v0.115: v0.115 のワザの決定（v0.115 のワザでない決定では何もしない）
                      or _v113_decision(state, counts)  # v0.113: v0.113 のワザの決定（v0.113 のワザでない決定では何もしない）
                      or _v105_decision(state, counts)  # v0.105: 山札から重ねる進化カード（v0.105 のワザでない決定では何もしない）
                      or _v104_decision(state, counts)  # v0.104: あまいみつの選ぶポケモン・プリンのかいふく（v0.104 のカードのない局では何もしない）
@@ -10265,7 +10578,7 @@ def make_policy(seen: dict, counts: Counter):
         attacks = state.card_def(active.card).attacks
         provided = state.energy_types(active)
         usable = [a.index for a in attacks if can_pay_cost(a.cost, provided) and ("attack_index", a.index) not in tried]
-        if card_id in V0_78_POKEMON + V0_79 + V0_82_POKEMON + V0_83 + V0_84_POKEMON + V0_85_POKEMON + V0_86_POKEMON + V0_87_POKEMON + V0_88_POKEMON + V0_89_POKEMON + V0_90_POKEMON + V0_91_POKEMON + V0_92_POKEMON + V0_93_POKEMON + V0_94_POKEMON + V0_95_POKEMON + V0_108_POKEMON + V0_113_POKEMON + V0_115_POKEMON:  # v0.115 のポケモンも（なぎたおすの悪エネルギー・無色2個エネルギー）。v0.113 のポケモンも（くろいキバの悪エネルギー・無色2個エネルギー）。v0.108 のポケモンも（かみくだくの悪エネルギー・無色2個エネルギー）。v0.95・v0.94・v0.93・v0.92（悪・鋼エネルギー）・v0.91・v0.90 のポケモンも（リサイクルエネルギー・無色2個エネルギー）。v0.89 のポケモンも（だましうちの悪エネルギー・無色2個エネルギー）。v0.83 のポケモンも（鋼エネルギー）。v0.79 のポケモンも（C79 は悪・鋼エネルギーを使う）。v0.82 のポケモンも（リサイクルエネルギー）
+        if card_id in V0_78_POKEMON + V0_79 + V0_82_POKEMON + V0_83 + V0_84_POKEMON + V0_85_POKEMON + V0_86_POKEMON + V0_87_POKEMON + V0_88_POKEMON + V0_89_POKEMON + V0_90_POKEMON + V0_91_POKEMON + V0_92_POKEMON + V0_93_POKEMON + V0_94_POKEMON + V0_95_POKEMON + V0_108_POKEMON + V0_113_POKEMON + V0_115_POKEMON + V0_116_POKEMON:  # v0.116 のポケモンも（ダブル無色・リサイクル・なんでもなおし配合・レインボーエネルギー）。v0.115 のポケモンも（なぎたおすの悪エネルギー・無色2個エネルギー）。v0.113 のポケモンも（くろいキバの悪エネルギー・無色2個エネルギー）。v0.108 のポケモンも（かみくだくの悪エネルギー・無色2個エネルギー）。v0.95・v0.94・v0.93・v0.92（悪・鋼エネルギー）・v0.91・v0.90 のポケモンも（リサイクルエネルギー・無色2個エネルギー）。v0.89 のポケモンも（だましうちの悪エネルギー・無色2個エネルギー）。v0.83 のポケモンも（鋼エネルギー）。v0.79 のポケモンも（C79 は悪・鋼エネルギーを使う）。v0.82 のポケモンも（リサイクルエネルギー）
             # v0.78: 悪・鋼エネルギー（特殊エネルギー）は ``state.energy_types`` では数えられない（provides がない）ので、エンジンの支払いの問い合わせで払えるかを見る
             # （v0.78 のポケモンだけ。前の版の組の手順は変えない）
             usable = [a.index for a in attacks if attack_cost_payable(state, active, a) and ("attack_index", a.index) not in tried]
@@ -10308,7 +10621,7 @@ def make_policy(seen: dict, counts: Counter):
             # 使えるワザをどれも 2 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v031_wait_{card_id}"] += 1
             return EndTurn(player)
-        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 + V0_58 + V0_64 + V0_70 + V0_72 + V0_75 + V0_76 + V0_77_POKEMON + V0_79 + V0_82_POKEMON + V0_83 + V0_84_POKEMON + V0_85_POKEMON + V0_86_POKEMON + V0_87_POKEMON + V0_88_POKEMON + V0_89_POKEMON + V0_90_POKEMON + V0_91_POKEMON + V0_92_POKEMON + V0_93_POKEMON + V0_94_POKEMON + V0_95_POKEMON + V0_106_POKEMON + V0_107_POKEMON + V0_108_POKEMON + V0_109_POKEMON + V0_110_POKEMON + V0_113_POKEMON + V0_115_POKEMON and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
+        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 + V0_58 + V0_64 + V0_70 + V0_72 + V0_75 + V0_76 + V0_77_POKEMON + V0_79 + V0_82_POKEMON + V0_83 + V0_84_POKEMON + V0_85_POKEMON + V0_86_POKEMON + V0_87_POKEMON + V0_88_POKEMON + V0_89_POKEMON + V0_90_POKEMON + V0_91_POKEMON + V0_92_POKEMON + V0_93_POKEMON + V0_94_POKEMON + V0_95_POKEMON + V0_106_POKEMON + V0_107_POKEMON + V0_108_POKEMON + V0_109_POKEMON + V0_110_POKEMON + V0_113_POKEMON + V0_115_POKEMON + V0_116_POKEMON and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
             # v0.38: 必要なエネルギーの少ないワザ（でんれい・どくばりタックルなど）を使い続けると、もう一つのワザが使えるようにならない（でんれいは自分を
             # 山札にもどす）。使えるワザをどれも 1 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             # v0.106: 数とコインを組み合わせる 11 枚も同じ手順（すながくれ・かぜおこしなどを使い続けて、ローリングニードル・ネギでつくなどが使えるようにならない。v0.106 のカードの
@@ -10317,6 +10630,8 @@ def make_policy(seen: dict, counts: Counter):
             # カードのない局では何もしない）
             # v0.115: 場・ベンチへのダメージ・配分の 13 枚も同じ手順（たたきつける・しめつけるなどを使い続けて、なぎたおす・ちていいどうなどが使えるようにならない。v0.115 のカードの
             # ない局では何もしない）
+            # v0.116: 13 枚も同じ手順（さいせい・トランスダメージはエネルギーカードをすべてトラッシュするので、ようかい・サイコパニックなどを使えるようにためる。v0.116 のカードのない局では
+            # 何もしない）
             counts[f"v038_wait_{card_id}"] += 1  # v0.39〜v0.41 のカードも同じ手順（じばく・メガトンパンチ・ギガスパーク・ひのとりなど）
             return EndTurn(player)
         if card_id in V0_111_POKEMON and all(used[i] >= 1 for i in usable) and any(
@@ -10490,6 +10805,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v113"] = v113_uses(state)
         result["v114"] = v114_uses(state)
         result["v115"] = v115_uses(state)
+        result["v116"] = v116_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
