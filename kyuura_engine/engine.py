@@ -508,9 +508,19 @@ def _apply_checked(state: GameState, command, context: resolution.Context | None
 
 
 # v0.68（docs/final-pmcg-cards-v0.68.md 5 章）: 受け付けるかを確かめる処理の回数の上限。ありうるカードは公開の情報（対応しているカードの一覧）から作るので、指定された相手の
-# うらのカードが 1 枚なら上限の中におさまり、2 枚以上なら超える（超えたら、受け付けるかを本当のカードによらないものにできないので受け付けない。エンジンの未対応）
+# うらのカードが 1 枚なら上限の中におさまり、2 枚以上なら超える（超えたら、受け付けるかを本当のカードによらないものにできないので受け付けない。エンジンの未対応）。
+# v0.117（docs/retreat-return-active-powers-v0.117.md 2 章）: 1 枚の確かめはカードの一覧の大きさで回数が決まり、v0.116 で 512 回（この上限ちょうど）になったので、この上限は
+# 2 枚目の割り当てが要るコマンドだけに使う。1 枚だけを指定するコマンドの回数は ``_single_identity_budget``
 _IDENTITY_TRIAL_LIMIT = 512
 SECRET_PLAN_IDENTITIES_CODE = "UNSUPPORTED_SECRET_PLAN_IDENTITIES"
+
+
+def _single_identity_budget(basics, nonbasics) -> int:
+    """v0.117: 相手のうらのカードを 1 枚だけ指定するコマンドを確かめる回数（``_identity_independent`` の分岐の作りから決まる数。公開の情報だけで決まる）。
+
+    割り当てのない最初の実行 1 回（指定したところで ``_NeedBranch``）→ たね・ベイビィポケモンの代表ごとに 1 回と「たねポケモンでない」の代表（``_NONBASIC``）1 回 → その実行が
+    ほかの項目を読んだ（``_OpaqueRead``）ときだけ、たねポケモンでない代表ごとに 1 回。2 枚目を指定した実行は、ここに数えない（``_IDENTITY_TRIAL_LIMIT`` の範囲）。"""
+    return 1 + len(basics) + 1 + len(nonbasics)
 
 
 def _acting_player(state: GameState, command) -> int | None:
@@ -658,13 +668,18 @@ def _identity_independent(state: GameState, command, context: resolution.Context
       GR-2000-P325-PRE-NEO-BABY）ので、たねポケモンのカードと同じくひとつずつ試す（``_NONBASIC`` にふくめない）
     - どの割り当てでも受け付けるなら本当の結果を返し、どれかで拒否するなら、試した順で最初に拒否した割り当ての例外の種類とコードで拒否する（理由の文に、割り当てたカードを
       書かない）。試す回数が上限（``_IDENTITY_TRIAL_LIMIT``）を超えるなら ``UNSUPPORTED_SECRET_PLAN_IDENTITIES``。どちらも、試すカードの一覧が公開の情報だけで決まるので、
-      本当のカード・デッキの中身によらない"""
+      本当のカード・デッキの中身によらない
+    - v0.117: 上限 ``_IDENTITY_TRIAL_LIMIT`` は、2 枚目の割り当てが要る（割り当てたカードのある実行が、もう 1 枚を指定した）コマンドだけに、それまでの回数もふくめて使う
+      （v0.68 からの範囲と試す順は変えない）。1 枚だけを指定するコマンドは、ありうるカードのすべてを ``_single_identity_budget`` の回数で確かめる（場のうらのカードの枚数では
+      決めない。その回数を超えるのは分岐の作りに合わないので、エンジンの不具合）"""
     scope = frozenset(uid for uid in state.face_down_cards if state.cards[uid].owner != acting)
     pool = _public_pool(state)
     candidates = _identity_candidates(pool)
     basics = sorted(card_id for card_id in candidates if pool.get(card_id).is_baby_or_basic_pokemon)
     nonbasics = sorted(card_id for card_id in candidates if not pool.get(card_id).is_baby_or_basic_pokemon)
     trials = 0
+    single_budget = _single_identity_budget(basics, nonbasics)
+    several = False  # v0.117: 2 枚目の割り当てが要る実行があった
     pending: list[tuple[str, ...]] = [()]
     saved_consulted, saved_oracle = _zones.IDENTITY_CONSULTED, _zones.IDENTITY_ORACLE
     _zones.IDENTITY_CONSULTED = []  # 確かめのあいだは記録しない（置きかえた状態の処理が、もう一度確かめない）
@@ -672,16 +687,19 @@ def _identity_independent(state: GameState, command, context: resolution.Context
         while pending:
             script = pending.pop(0)
             trials += 1
-            if trials > _IDENTITY_TRIAL_LIMIT:
+            if several and trials > _IDENTITY_TRIAL_LIMIT:
                 raise UnsupportedError(SECRET_PLAN_IDENTITIES_CODE,
                                        "相手のうらのカードを 2 枚以上、効果の対象にするコマンドは、受け付けるかを本当のカードによらないものにできない（試す回数が上限を超える。"
                                        "エンジンの未対応）")
+            if not several and trials > single_budget:
+                raise RuntimeError(f"うらのカードを 1 枚だけ指定するコマンドの確かめが、分岐の作りから決まる {single_budget} 回を超えた（エンジンの不具合）")
             oracle = _IdentityOracle(scope, script)
             _zones.IDENTITY_ORACLE = oracle
             trial = _identity_trial_state(state, scope)
             try:
                 _apply_once(trial, command, context and _context(trial, context.preflight, context.catalog), verify=False)
             except _NeedBranch:
+                several = several or bool(script)  # 割り当てたカードのある実行が、もう 1 枚を指定した
                 pending[0:0] = [script + (card_id,) for card_id in (*basics, _NONBASIC)]
             except _OpaqueRead:
                 position = script.index(_NONBASIC) if _NONBASIC in script else None
