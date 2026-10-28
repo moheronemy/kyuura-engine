@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.114）
+# 実装状況（v0.1〜v0.115）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`（v0.114 から。v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3818,6 +3818,24 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 338・neo 154・拡張パック以外 184） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistryTest` |
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.115: 場・ベンチへのダメージ、対象ごとのコイン、ダメージの配分
+
+[spread-damage-allocation-v0.115.md](spread-damage-allocation-v0.115.md)。写しの元・研究の基準は kyuura e519b99 のまま（データの移行はない）。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 13 枚・ワザ 22 の登録（写しの組 pool_v0_115。印刷の文面のまま。ロケットずつき・ころがるは `DAMAGE_ONLY`、7 つは既存の型、13 は新しい型。ES3-029 の「抵抗カ」は写しのまま） | 実装済み・テスト済み・対戦で確かめた | kyuura e519b99 の写し | test_spread_damage_allocation_v0_115.py `RegistrationTest` |
+| 複数の対象へのダメージ（受けるポケモンごとの量 `value_for`・タイプでしぼる `exclude_type`・エネルギーカードでしぼる `energy_cards`。しょうげきは・すなあらし・サイコスプラッシュ・ばくれつしんか） | 実装済み・テスト済み・対戦で確かめた | 印刷の文面・p.320 | 同 `ShockWaveTest`・`SandstormTest`・`PsychoSplashTest`・`ExplosiveEvolutionTest` |
+| 対象ごとのコイン（なぎたおす。相手の控え → 自分の控えに 1 匹 1 枚、面と個体を対応させる。自分の控えのアンノーンの［DARK df］も当てはめる） | 実装済み・テスト済み・対戦で確かめた | 印刷の文面・CR-UNOWN-DF-SOURCE-TYPE（SA-R1） | 同 `MowDownTest` |
+| ダメージの配分（決定 `ALLOCATE_DAMAGE`。得た単位をすべて配り、同じポケモンへの単位は 1 回のダメージに合算。ウォーターボム・がんせきくだき・ロックブラスト） | 実装済み・テスト済み・対戦で確かめた | 印刷の文面 | 同 `AllocationTest` |
+| 条件つきで続けて投げるコイン（`ContinueOnHeads`。びっくりサンダーの T・HT・HH）と、そのナツメのESPのやり直し（まとまりを投げ終えたあとに 1 回だけ聞き、最初から投げ直す） | 実装済み・テスト済み・対戦で確かめた（ESPのやり直しは、直接作った盤面に通常の操作でESPをつけた単体のテストだけ） | 印刷の文面・v0.66 | 同 `SurpriseThunderTest` |
+| やまくだき・ぶんなげる・ちていいどう・いしなだれ・しめつける・だんがんタックルなど | 実装済み・テスト済み・対戦で確かめた | 印刷の文面 | 同 `MountainSmashTest`・`HurlTest`・`EarthMoveTest`・`RockSlideTest`・`BindTest`・`CopiedUseTest` |
+| ロックブラストの選べるのに 0 枚（RKB1）・いしなだれで相手の対戦ポケモンを選ぶ（SLD1） | 裁定が未解決（選べるが選ぶと止める。SLD1 は控えがいなければ宣言の前に止める） | — | 同 `AllocationTest`・`RockSlideTest` |
+| 先読みの上限を超える場面（ESPのあるなぎたおすでおたがいの控え 6 匹以上・タケシのサイドンのいるなぎたおすで多くの控え・印刷の違う闘エネルギーカードが多くついたロックブラスト） | エンジンの未対応（`UNSUPPORTED_PREFLIGHT_LIMIT`。上限は増やしていない） | docs 5.2 節の実測 | 同 `SurpriseThunderTest`・`MowDownTest`・`AllocationTest` |
+| ログの監査（22 のワザの処理を、印刷の文面とログから組み立てた場・コイン・カードの動きで照らす） | 実装済み・テスト済み・対戦で確かめた | 8 章 | tests/log_audit.py の `v115_problems`・`--batch v0.115` |
+| 未対応の数（全対象 101・neo 42・拡張パック以外 59） | 確かめた | kyuura data/engine_targets.json（e519b99）から今の登録を差し引いた数 | test_catalog_contract.py |
+| 13 枚の外部照合（pcg-search.com）・カードの画像 | 原典未確認（エンジンは画像を見ていない） | していない | — |
 
 ## v0.114: ベイビィポケモン 13 枚・ベイビィの共通のルール・ベイビィからの進化
 

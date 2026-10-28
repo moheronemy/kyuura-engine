@@ -115,7 +115,7 @@ from .decisions import (
     DAMAGE_STEP_ORDER,
     CHALLENGE_BENCH, QUIZ_ANSWER, QUIZ_ATTACK, QUIZ_CARD, SECRET_PLAN_CARD,
     JANKEN_HAND, OPTIONAL_DRAIN, OPTIONAL_DISCARD_ALL, SELECT_MARKER_COUNT,
-    OPTIONAL_SHUFFLE, SELECT_ATTACHED_TRAINER, OPTIONAL_HEAL, SELECT_ATTACHED_SPECIAL_ENERGY,
+    OPTIONAL_SHUFFLE, SELECT_ATTACHED_TRAINER, OPTIONAL_HEAL, SELECT_ATTACHED_SPECIAL_ENERGY, ALLOCATE_DAMAGE,
     SEARCH_DECK_OR_DISCARD, TAKE_LOOKED_POKEMON, SELECT_OPPONENT_PRIZE, TAKE_LOOKED_TRAINER,
     EVOLUTION_SONG_POKEMON,
 )
@@ -12070,8 +12070,9 @@ class DamageIgnoringResistance(AttackEffect):
     implementation_id = "damage_ignoring_resistance"
 
     def check(self, attack: Attack) -> list[str]:
+        # v0.115: ゴローン（neo3-039）の「がんせきおとし」の書き方（ROCK_FALL_RESISTANCE_TEXT。抵抗力だけを計算しない同じ意味）の全文 1 通りだけを加えた（広く読み替えない）
         return _check_form(attack, "抵抗力の影響を受けないワザ", damage="fixed") + _check_exact_text(
-            attack, "抵抗力の影響を受けないワザ", ("このワザのダメージは、「抵抗力」の影響を受けない。",))
+            attack, "抵抗力の影響を受けないワザ", ("このワザのダメージは、「抵抗力」の影響を受けない。", ROCK_FALL_RESISTANCE_TEXT))
 
 
 OPPONENT_DECK_TOP_TEXT = ("コインを投げて「おもて」なら、相手の山札の一番上のカードを見る。そのカードが「トレーナーカード」なら、そのカードをトラッシュする。それ以外なら、"
@@ -42030,3 +42031,481 @@ V0_114_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_114_ATTACKS), V0_114_POWERS)
+
+
+# ---------------------------------------------------------------- v0.115（docs/spread-damage-allocation-v0.115.md 6 章）
+# 場・ベンチへのダメージ、対象ごとのコイン、ダメージの配分のポケモン 13 枚（ワザ 22。特殊能力はない）。処理に使う文面は kyuura の印刷の文面（e519b99 の写し。13 枚とも kyuura に最新の説明・
+# エラッタの記録はない。バンギラス（neo2-042）は裁定 CR-UNOWN-DF-SOURCE-TYPE の関連するカード）。13 枚は別々に登録する（同じデータのカードの組はない）
+
+SHOCK_WAVE_TEXT = ("コインを投げて「おもて」なら、相手の場のポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ{amount}ダメージ。その後、相手を相手の控えポケモンと入れ替える。"
+                   "入れ替わるポケモンは、相手が選ぶ。(相手に控えがいないとき、入れ替えはおこらない。)")
+SURPRISE_THUNDER_TEXT = ("コインを投げて「おもて」なら、もう1枚コインを投げる。2枚目のコインが「おもて」なら、相手の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ{heads}ダメージ。"
+                         "2枚目のコインが「うら」なら、相手の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ{tails}ダメージ。")
+SANDSTORM_TEXT = "おたがいの場の「{excluded}」ポケモン以外のポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ{amount}ダメージ。"
+MOW_DOWN_TEXT = "おたがいの控えポケモン全員に対して、1枚ずつコインを投げ、「おもて」が出たポケモンに、「弱点・抵抗力」に関係なく、{amount}ダメージ。(コインを投げるのは、相手側から。)"
+# v0.115: ゴローン（neo3-039）の「がんせきおとし」の書き方（「このワザは、相手の「抵抗力」に関係なく、ダメージを与える。」。弱点は計算し、抵抗力だけを計算しない同じ意味）。v0.95 の
+# マインドショックの「このワザは、相手の「弱点・抵抗力」に関係なく、ダメージを与える。」と同じ形の、抵抗力だけの全文 1 通り（広く読み替えない）
+ROCK_FALL_RESISTANCE_TEXT = "このワザは、相手の「抵抗力」に関係なく、ダメージを与える。"
+PSYCHO_SPLASH_TEXT = "相手の場の「エネルギーカード」をつけているポケモン全員に、それぞれがつけている「エネルギーカード」の枚数×{per}のダメージを、「弱点・抵抗力」に関係なく与える。"
+EXPLOSIVE_EVOLUTION_TEXT = ("コインを投げて「おもて」なら、相手の場のポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ{amount}ダメージ。その後、自分の山札から「{card}」を1枚選び出し、"
+                            "この{base}の上にのせ、進化させる。山札を見た場合は、その山札をよく切る。")
+MOUNTAIN_SMASH_TEXT = ("自分についている「{ja}」エネルギーカードの枚数ぶんコインを投げ、「おもて」の数×{per}のダメージ。その後、「おもて」の数ぶんのカードを、相手の山札の上から"
+                       "トラッシュする。")
+HURL_TEXT = ("相手に控えポケモンがいるとき、このワザのダメージは「{reduced}」になる。その場合、相手の控えポケモンを1匹選び、そのポケモンにも、「弱点・抵抗力」に関係なく、"
+             "{bench}ダメージ。")
+EARTH_MOVE_TEXT = ("相手の控えポケモンから最大{n}匹を選び、それぞれに(「弱点・抵抗力」に関係なく){bench}ダメージ。このワザを使ったポケモンは、次の自分の番にワザを使えない。")
+WATER_BOMB_TEXT = ("ワザに必要なエネルギーよりも多く「{ja}」エネルギーがついている時、多い「{ja}」エネルギー1つにつき{per}ダメージを、相手の控えポケモンに好きなようにわりふって与える。"
+                   "(控えへのダメージ追加は{max_extra}つぶんまで。また、控えへのダメージは「弱点・抵抗力」の影響を受けない)")
+# v0.115: ゴローン（ES3-029）の「がんせきくだき」は、kyuura の写しで「抵抗カ」（カタカナの「カ」）。写しを直さず、この書き方をそのまま受け付ける（kyuura への報告事項。v0.79 のサンドの
+# 「スピードスター」の「抵抗カ」と同じ扱い。「抵抗力」の書き方は写しにないので受け付ける文に加えない）
+ROCK_SMASH_TEXT = "コインを{coins}枚投げ、「おもて」の数×{per}のダメージを、相手の控えポケモンに好きなようにわりふって与える。(控えへのダメージは「弱点・抵抗カ」の影響を受けない)"
+ROCK_BLAST_TEXT = ("自分についている「{ja}」エネルギーカードを最大{n}枚トラッシュして、トラッシュした数ぶん、相手の場のポケモンを選ぶ。(同じポケモンを2回以上選んでもよい)。その後、選んだ"
+                   "ポケモンのそれぞれに、それが選ばれた回数×{per}のダメージを、「弱点・抵抗力」に関係なく与える。")
+ROCK_SLIDE_TEXT = "相手のポケモンを1匹選び、そのポケモンにも、「弱点・抵抗力」に関係なく、{amount}ダメージ。"
+
+# RKB1・SLD1（新しい停止コード。kyuura の未解決の一覧に同じ形の論点がある RKB1 と、kyuura に対応する記録がない SLD1。docs 10 章）
+CHOSEN_ACTIVE_EXTRA_DAMAGE_CODE = "UNRESOLVED_CHOSEN_ACTIVE_EXTRA_DAMAGE"
+
+
+def damage_allocations(units: int, slots: int) -> tuple[tuple[int, ...], ...]:
+    """v0.115（docs 4.3 節）: ``units`` 単位を ``slots`` 匹に配るすべての配分（各ポケモンの単位の数の組。合計はちょうど ``units``。並びは、はじめのポケモンに多い組から（辞書順の大きい順））。
+    配分だけの数は C(units + slots − 1, slots − 1)（5 単位を 6 匹なら 252 通り。0〜5 単位の配分全体では 462 通り。1 単位ずつ選ぶ並びの 6 の 5 乗 = 7,776 通りではない）。配分の決定
+    （``ALLOCATE_DAMAGE``）の選べるものはこの表の位置で、決定の確かめ（``allocation_decision_problems``）と配る要素（``programs.AllocateDamage``）が同じ表を使う。"""
+    if type(units) is not int or units < 0 or type(slots) is not int or slots < 1:
+        raise ValueError(f"配分の単位の数 {units!r}・配る先の数 {slots!r}")
+    if slots == 1:
+        return ((units,),)
+    return tuple((first, *rest) for first in range(units, -1, -1) for rest in damage_allocations(units - first, slots - 1))
+
+
+def allocation_decision_problems(state: GameState, use: AttackUse, decision: PendingDecision, *, scope: str, per: int, max_units: int) -> list[str]:
+    """v0.115: 配分の決定（``ALLOCATE_DAMAGE``）の形。決めるのはワザを使ったプレイヤー、ちょうど 1 つ。続きの情報の配る先が今の相手の場（``scope``）のポケモンの並び、単位の数が 1〜``max_units``、
+    1 単位のダメージが ``per``、表が ``damage_allocations`` の表（合計がちょうど単位の数）と同じで、選べるものが表の位置。"""
+    label = _label(state, use)
+    allocation, table = decision.context_value("allocation"), decision.context_value("table")
+    if allocation is None or table is None:
+        return [f"「{label}」の配分の決定に、配る先・配分の表（allocation・table）がない"]
+    ids, units, unit_damage = allocation
+    expected_ids = tuple(pokemon.pokemon_id for _, pokemon in target_candidates(state, use.player, TARGET_SIDE_OPPONENT, scope))
+    problems = []
+    if tuple(ids) != expected_ids or not expected_ids:
+        problems.append(f"「{label}」の配分の配る先 {tuple(ids)} が、相手の場のポケモン {expected_ids} と合わない")
+    if type(units) is not int or not 1 <= units <= max_units:
+        problems.append(f"「{label}」の配分の単位の数 {units!r} が 1〜{max_units} ではない")
+        return problems
+    if unit_damage != per:
+        problems.append(f"「{label}」の 1 単位のダメージ {unit_damage!r} が {per} ではない")
+    rows = damage_allocations(units, len(ids)) if ids else ()
+    if tuple(tuple(row) for row in table) != rows:
+        problems.append(f"「{label}」の配分の表が、{units} 単位を {len(ids)} 匹に配るすべての配分（合計がちょうど {units}）ではない")
+    return problems + _decision_form(decision, label, kind=ALLOCATE_DAMAGE, player=use.player, choices=(1, 1), options=range(len(rows)))
+
+
+@dataclass(frozen=True)
+class CoinSpreadDamageThenOpponentSwitch(AttackEffect):
+    """コインを投げて「おもて」なら、相手の場のポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ ``amount`` ダメージ。その後、相手を相手の控えポケモンと入れ替える。入れ替わるポケモンは、
+    相手が選ぶ（相手に控えがいないとき、入れ替えはおこらない）（v0.115。ヤンヤンマ（neo2-011）の「しょうげきは」。kyuura の印刷の文面。ダメージの目安なし）。
+
+    - 要素は ``Coin`` → ``Damage(OPP, 弱点・抵抗力なし, gate=おもて)`` → ``BenchDamage(gate=おもて)`` → ``ForceSwitch(gate=おもて)``。1 枚のコインでダメージと入れ替えの両方を決める（「うら」なら
+      入れ替えだけを起こさない。要素ごとに投げ直さない）。ダメージのまとまり（相手の対戦ポケモン → 控え）のあとに入れ替え（「その後」は、ダメージを与えたことを条件にしない。Z23 の
+      「ダメージを与えた後」の文面ではない）。相手の対戦ポケモンがこのダメージで HP 以上なら入れ替えない（p.309。v0.4d と同じ）
+    - コインの前の確かめは既存の要素のまま（``has_target``・``void_coin_question``。控えのいる相手なら入れ替えが有効な要素なので投げる）"""
+
+    amount: int
+    implementation_id = "coin_spread_damage_then_opponent_switch"
+    opponent_effect_elements = (FORCED_SWITCH_ELEMENT,)
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.amount, "ダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインの「おもて」で相手の場のポケモン全員にダメージを与え、相手が選ぶ控えと入れ替えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (SHOCK_WAVE_TEXT.format(amount=self.amount),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        return DamageProfile(opponent=(0, self.amount))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return forced_switch_decision_problems(state, use, decision)
+
+
+@dataclass(frozen=True)
+class DamageThenChainedCoinsBenchDamage(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。コインを投げて「おもて」なら、もう 1 枚コインを投げる。2 枚目のコインが「おもて」なら、相手の控えポケモン全員にも、「弱点・
+    抵抗力」に関係なく、それぞれ ``heads_heads``、「うら」なら ``heads_tails`` ダメージ（v0.115。わるいライチュウ（neo2-021）の「びっくりサンダー」。kyuura の印刷の文面。目安「30」）。
+
+    - 要素は ``Damage(OPP)`` → ``ChainedCoinsBenchDamage``。コインは条件つきで続けて投げるまとまり（面の並び T・HT・HH。投げる枚数 1・2・2。1 枚目が「うら」なら 2 枚目を投げない。
+      ``AttackRun.flip_chain``）。控えがいなければ投げない（p.309）、控えがどれもダメージを受けないなら v0.56 と同じ問い
+    - ナツメのESPのやり直し（［サイコリンク］で、超の色マーカーのあるわるいライチュウのワザを使うナツメのフーディン）は、まとまりを投げ終えたあとに 1 回だけ聞き、やり直すならまとまりを最初から
+      投げ直す（枚数は面で変わりうる。相手の対戦ポケモンへの 30 はやり直さない）。docs 5 章"""
+
+    heads_heads: int
+    heads_tails: int
+    implementation_id = "damage_then_chained_coins_bench_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.heads_heads, "2 枚目の「おもて」の控えへのダメージ")
+        _positive_tens(self.heads_tails, "2 枚目の「うら」の控えへのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "続けて投げるコインで相手の控え全員へのダメージが決まるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(
+            attack, what, (SURPRISE_THUNDER_TEXT.format(heads=self.heads_heads, tails=self.heads_tails),))
+
+
+@dataclass(frozen=True)
+class SpreadDamageExceptType(AttackEffect):
+    """おたがいの場の「``excluded``」ポケモン以外のポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ ``amount`` ダメージ（v0.115。サナギラス（neo2-036）の「すなあらし」。kyuura の印刷の
+    文面。ダメージの目安なし）。
+
+    - 要素は ``Damage(OPP)`` → ``Damage(SELF)`` → ``BenchDamage``（相手）→ ``BenchDamage(own)``。どれも ``exclude_type``（受けるポケモンの、この要素を処理する時点の今有効なタイプが
+      ``excluded`` でないときだけ与える。``programs.not_of_type``）。v0.40 の「みんなでばくはつ」・v0.114 の「パチパチ」と同じ並び（p.320 の (1)〜(4)）。バトル場も控えも対象
+    - ワザを実際に使ったポケモン自身も、今のタイプが ``excluded`` でなければ受ける（相手のワザとして使った・色マーカーでタイプが変わったなど。ワザによる自分へのダメージ）
+    - タイプの読み方（VS1・CE1・CE2・CM1）で受けるかが変われば止める（どちらか 1 つを選ばない）。うらのカードはタイプを読めないので FD1（おもてにしない）"""
+
+    excluded: EnergyType
+    amount: int
+    implementation_id = "spread_damage_except_type"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.amount, "ダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "おたがいの場の決まったタイプ以外のポケモン全員にダメージを与えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (SANDSTORM_TEXT.format(excluded=self.excluded.ja, amount=self.amount),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        return DamageProfile(opponent=(0, self.amount), self_damage=(0, self.amount))
+
+
+@dataclass(frozen=True)
+class DamageThenCoinPerBothBenches(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。おたがいの控えポケモン全員に対して、1 枚ずつコインを投げ、「おもて」が出たポケモンに、「弱点・抵抗力」に関係なく、``amount``
+    ダメージ（コインを投げるのは、相手側から）（v0.115。バンギラス（neo2-042）の「なぎたおす」。kyuura の印刷の文面。目安「50」）。
+
+    - 要素は ``Damage(OPP)`` → ``CoinPerBenchPokemon``。コインは相手の控えの並び → 自分の控えの並びの順に 1 匹 1 枚（面と個体の対応を持つ。「おもて」の数でまとめない）。「相手側から」は
+      対象の側の順番で、投げるのはワザを使ったプレイヤー（v0.2d の規約。相手プレイヤーに投げさせる説明ではない。実装上の読み方）
+    - 自分の控えポケモンへのダメージにも、受ける側の［DARK df］・［NORMAL df］を当てはめる（ダメージを与えるのは今のタイプが「悪」のバンギラス。CR-UNOWN-DF-SOURCE-TYPE。持ち主を限らない）。
+      名前の「わるい」では決めない（わるいバンギラスは闘タイプ）
+    - 「とうめい」がはたらいているポケモンのあとに対象がいれば TS1。ナツメのESPでやり直すと、同じ対象の並びに同じ枚数を投げ直す"""
+
+    amount: int
+    implementation_id = "damage_then_coin_per_both_benches"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.amount, "控えポケモンへのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "おたがいの控えポケモンそれぞれにコインを投げてダメージを与えるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (MOW_DOWN_TEXT.format(amount=self.amount),))
+
+
+@dataclass(frozen=True)
+class EnergyCardsSpreadDamage(AttackEffect):
+    """相手の場の「エネルギーカード」をつけているポケモン全員に、それぞれがつけている「エネルギーカード」の枚数 × ``per`` のダメージを、「弱点・抵抗力」に関係なく与える（v0.115。
+    わるいエーフィ（neo4-067）の「サイコスプラッシュ」。kyuura の印刷の文面。ダメージの目安なし）。
+
+    - 要素は ``Damage(OPP, energy_cards=True)`` → ``BenchDamage(energy_cards=True)``。基本となるダメージは受けるポケモンごとの枚数（``programs.EnergyCardsOfReceiver``。その個体がつけている
+      カードの枚数。相手の対戦ポケモンの枚数を控えに使い回さない）。数えるのはカードの枚数（無色2個エネルギーも［エネエネ］のカードも 1 枚。エネルギーの個数ではない）。0 枚のポケモンは
+      説明の対象ではない（受けない）
+    - 「エネルギーカードをつけているか」は場の公開の情報（うらのカードもおもてにせずに数え、ダメージを受ける時におもてにする）。v0.114 の HV1（特殊能力を持っているかの問い）とは別"""
+
+    per: int
+    implementation_id = "energy_cards_spread_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "エネルギーカード 1 枚あたりのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の場のエネルギーカードをつけているポケモン全員に、そのカードの枚数のダメージを与えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (PSYCHO_SPLASH_TEXT.format(per=self.per),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        defender = state.players[1 - use.player].active
+        cards = 0 if defender is None else attached_energy_cards(state, defender)
+        return DamageProfile(opponent=(cards * self.per,) if cards else ())
+
+
+@dataclass(frozen=True)
+class CoinSpreadDamageThenEvolveNamedFromDeck(AttackEffect):
+    """コインを投げて「おもて」なら、相手の場のポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ ``amount`` ダメージ。その後、自分の山札から「``card_name``」を 1 枚選び出し、この
+    ``evolves_from`` の上にのせ、進化させる。山札を見た場合は、その山札をよく切る（v0.115。わるいサナギラス（neo4-076）の「ばくれつしんか」。kyuura の印刷の文面。ダメージの目安なし）。
+
+    - 要素は ``Coin`` → ``Damage(OPP, gate=おもて)`` → ``BenchDamage(gate=おもて)`` → ``EvolveAttackerFromDeck(gate=おもて, required=True, shuffle_if_looked=True, card_name)``。「うら」なら
+      ダメージも、山札を見ることも、切ることもしない。「その後」はダメージを与えたことを条件にしない
+    - 選べるのは名前が ``card_name`` の進化カードで、ワザを実際に使ったポケモンに今重ねられるもの（通常の進化と同じ制限。``effects.self_deck_evolution_cards`` の ``name``）。説明が明示した
+      カードの名前なので、v0.114 の NB2（「進化カード」とだけ書く範囲）で止めない。相手のワザとして使ったポケモンには、名前の合う進化カードを重ねられないので選べるものがない（選べるもののない
+      決定。v0.84 の A3）。進化したあとの HP（H1）・場に出たときの特殊能力（PW4）・DV2・GV1・山札の中身の扱いは v0.105 の ``required`` と同じ"""
+
+    amount: int
+    card_name: str
+    evolves_from: str
+    implementation_id = "coin_spread_damage_then_evolve_named_from_deck"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.amount, "ダメージ")
+        if not all(type(name) is str and name for name in (self.card_name, self.evolves_from)):
+            raise ValueError(f"進化カードの名前 {self.card_name!r}・進化元の名前 {self.evolves_from!r} が正しくない")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインの「おもて」で相手の場のポケモン全員にダメージを与え、山札の名前の合うカードで自分を進化させるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(
+            attack, what, (EXPLOSIVE_EVOLUTION_TEXT.format(amount=self.amount, card=self.card_name, base=self.evolves_from),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        return DamageProfile(opponent=(0, self.amount))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        label = _label(state, use)
+        if decision.kind == EVOLUTION_HEAL:
+            return _decision_form(decision, label, kind=EVOLUTION_HEAL, player=use.player, choices=(0, 1), options=(use.pokemon_id,))
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        options = self_deck_evolution_cards(state, use.player, attacker, evolves_from=self.evolves_from, name=self.card_name)
+        return _decision_form(decision, label, kind=SEARCH_DECK, player=use.player, choices=(1, 1) if options else (0, 0), options=options)
+
+
+@dataclass(frozen=True)
+class CoinsPerOwnEnergyCardsDamageThenMillOpponent(AttackEffect):
+    """自分についている「``energy_type``」エネルギーカードの枚数ぶんコインを投げ、「おもて」の数 × ``per`` のダメージ。その後、「おもて」の数ぶんのカードを、相手の山札の上からトラッシュする
+    （v0.115。わるいバンギラス（neo4-079）の「やまくだき」。kyuura の印刷の文面。目安「20×」）。
+
+    - 要素は ``Coin(per_attached)`` → ``Damage(OPP, HeadsOfCoin)`` → ``MillOpponentDeck(heads_of)``。コインの枚数はワザを実際に使ったポケモンについているその色の基本エネルギーカードの
+      枚数（エネルギーの個数ではない。v0.31 の ``per_attached``。色の問い TE1・RB1・BZ2・MEC1・CE3）。同じ確定した「おもて」の数 H でダメージ（20H）と相手の山札のトラッシュ（H 枚）を
+      決める。ダメージが無効でもトラッシュは残る（コインを投げる）。相手の HP を超えるからといって H を小さくしない
+    - 0 枚なら 0 枚のコイン・0 ダメージ・トラッシュなし（文面にない失敗を足さない）。相手の山札が H より少ないときは HC6（先読みが宣言の前に見つける）"""
+
+    energy_type: EnergyType
+    per: int
+    implementation_id = "coins_per_own_energy_cards_damage_then_mill_opponent"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "「おもて」1 枚あたりのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "自分のエネルギーカードの枚数ぶんのコインで、ダメージと相手の山札のトラッシュを決めるワザ"
+        return _check_form(attack, what, damage="modified", modifier="×") + _check_exact_text(
+            attack, what, (MOUNTAIN_SMASH_TEXT.format(ja=self.energy_type.ja, per=self.per),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        cards = len(attached_basic_energy(state, attacker, self.energy_type))
+        return DamageProfile(opponent=tuple(self.per * heads for heads in range(cards + 1)))
+
+
+@dataclass(frozen=True)
+class ReducedDamageThenChosenBenchDamage(AttackEffect):
+    """相手に控えポケモンがいるとき、このワザのダメージは「``reduced``」になる。その場合、相手の控えポケモンを 1 匹選び、そのポケモンにも、「弱点・抵抗力」に関係なく、``bench_damage``
+    ダメージ（v0.115。わるいバンギラス（neo4-079）の「ぶんなげる」。kyuura の印刷の文面。目安「50」）。
+
+    - 要素は ``Damage(OPP, AmountIfOpponentBench)`` → ``ChosenBenchDamage(コインなし)``。控えがいれば相手の対戦ポケモンへの基本となるダメージは ``reduced``（目安 + 控えへのダメージではない。
+      50 + 30 にしない）、いなければ目安。選ぶのはワザを使ったプレイヤー（1 匹。1 匹でも決定を出す）。選んだ控えは決定のあとも続きの情報で同じ"""
+
+    reduced: int
+    bench_damage: int
+    implementation_id = "reduced_damage_then_chosen_bench_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.reduced, "控えがいるときの相手の対戦ポケモンへのダメージ")
+        _positive_tens(self.bench_damage, "控えポケモンへのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手に控えがいるとダメージが変わり、控えを 1 匹選んでダメージを与えるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (HURL_TEXT.format(reduced=self.reduced, bench=self.bench_damage),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        printed = super().damage_profile(state, use).opponent
+        return DamageProfile(opponent=(self.reduced,) if state.players[1 - use.player].bench else printed)
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        bench = state.players[1 - use.player].bench
+        return _decision_form(decision, _label(state, use), kind=SELECT_POKEMON, player=use.player, choices=(1, 1), options=(p.pokemon_id for p in bench))
+
+
+@dataclass(frozen=True)
+class ChosenBenchTargetsThenSelfCannotAttack(AttackEffect):
+    """相手の控えポケモンから最大 ``max_targets`` 匹を選び、それぞれに（「弱点・抵抗力」に関係なく）``bench_damage`` ダメージ。このワザを使ったポケモンは、次の自分の番にワザを使えない
+    （v0.115。タケシのイワーク（GD1-010）の「ちていいどう」。kyuura の印刷の文面。ダメージの目安なし）。
+
+    - 要素は ``ChosenBenchDamages``（v0.39 のギガスパークと同じ。異なる控えを 1〜``max_targets`` 匹。それぞれ 1 回ずつ。同じポケモンを 2 回選べない）→ ``SelfCannotAttack``（v0.78 の
+      「メタルスラッシュ」と同じ ``CannotAttackNextOwnTurn``。すべてのワザ。合計 20 の配分でも、同じワザだけの禁止でもない）。禁止はワザを実際に使ったポケモンに与える
+    - 控えがいるときに 0 匹を選べるかは、同じ文面（「相手の控えポケモンから最大N匹を選び」）の GS1（答えのときに止め、決定は待ったまま。1 匹以上を選び直せる）。選んだ控えがダメージを
+      受けない（見えない壁など）なら、その控えへのダメージがないだけ（選ぶことはできる）。控えがいなければ選ばず、禁止だけを与える"""
+
+    max_targets: int
+    bench_damage: int
+    implementation_id = "chosen_bench_targets_then_self_cannot_attack"
+
+    def __post_init__(self) -> None:
+        if type(self.max_targets) is not int or self.max_targets < 2:
+            raise ValueError(f"選ぶ数の最大は 2 以上（{self.max_targets!r}）")
+        _positive_tens(self.bench_damage, "控えポケモンへのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の控えを何匹か選んでダメージを与え、次の自分の番にワザを使えなくなるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (EARTH_MOVE_TEXT.format(n=self.max_targets, bench=self.bench_damage),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        bench = state.players[1 - use.player].bench
+        return _decision_form(decision, _label(state, use), kind=SELECT_POKEMON, player=use.player, choices=(0, min(self.max_targets, len(bench))),
+                              options=(p.pokemon_id for p in bench))
+
+
+@dataclass(frozen=True)
+class DamageThenAllocateExtraEnergyToBench(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。ワザに必要なエネルギーよりも多く「``energy_type``」エネルギーがついている時、多い「``energy_type``」エネルギー 1 つにつき
+    ``per`` ダメージを、相手の控えポケモンに好きなようにわりふって与える（控えへのダメージ追加は ``max_extra`` つぶんまで。控えへのダメージは「弱点・抵抗力」の影響を受けない）（v0.115。
+    シードラ（ES3-016）の「ウォーターボム」。kyuura の印刷の文面。目安「20」）。
+
+    - 要素は ``Damage(OPP)`` → ``AllocateDamage(ExtraTypedUnits)``。単位は多いエネルギーの個数（カードの枚数ではない。サイコスプラッシュのカードの枚数とは別）。控えがいなければ・多い
+      エネルギーが 0 なら配らない。得た単位はすべて配る（配分の決定 ``ALLOCATE_DAMAGE``。同じポケモンへの単位は合算）"""
+
+    energy_type: EnergyType
+    per: int
+    max_extra: int
+    implementation_id = "damage_then_allocate_extra_energy_to_bench"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "多いエネルギー 1 つあたりのダメージ")
+        if type(self.max_extra) is not int or self.max_extra < 1:
+            raise ValueError(f"多いエネルギーの上限は 1 以上（{self.max_extra!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "多いエネルギーの数のダメージを相手の控えに配るワザ"
+        problems = _check_form(attack, what, damage="fixed", cost_types=(self.energy_type,))
+        if any(t is EnergyType.COLORLESS for t in attack.cost):
+            problems.append("必要なエネルギーに無色がまざるワザ（多いエネルギーの数え方が HC4 で決まらない）は、この型で登録しない")
+        return problems + _check_exact_text(attack, what, (WATER_BOMB_TEXT.format(ja=self.energy_type.ja, per=self.per, max_extra=self.max_extra),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return allocation_decision_problems(state, use, decision, scope=TARGET_BENCH, per=self.per, max_units=self.max_extra)
+
+
+@dataclass(frozen=True)
+class DamageThenCoinsAllocateToBench(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。コインを ``coins`` 枚投げ、「おもて」の数 × ``per`` のダメージを、相手の控えポケモンに好きなようにわりふって与える（控えへの
+    ダメージは「弱点・抵抗力」の影響を受けない）（v0.115。ゴローン（ES3-029）の「がんせきくだき」。kyuura の印刷の文面（「抵抗カ」の書き方のまま。kyuura への報告事項）。目安「30」）。
+
+    - 要素は ``Damage(OPP)`` → ``AllocateDamage(CoinHeadsUnits)``。コインは配る要素の中で、配る先が決まってから投げ（控えがいなければ投げない。控えがどれもダメージを受けないなら v0.56 と
+      同じ問い）、投げてから配分を決める（コインの前に配分を固定しない）。単位は確定した「おもて」の数（ナツメのESPでやり直したらやり直した数）"""
+
+    coins: int
+    per: int
+    implementation_id = "damage_then_coins_allocate_to_bench"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "「おもて」1 枚あたりのダメージ")
+        if type(self.coins) is not int or self.coins < 1:
+            raise ValueError(f"コインの枚数は 1 以上（{self.coins!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインの「おもて」の数のダメージを相手の控えに配るワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (ROCK_SMASH_TEXT.format(coins=self.coins, per=self.per),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return allocation_decision_problems(state, use, decision, scope=TARGET_BENCH, per=self.per, max_units=self.coins)
+
+
+@dataclass(frozen=True)
+class DiscardEnergyUpToThenAllocateToOpponentPokemon(AttackEffect):
+    """自分についている「``energy_type``」エネルギーカードを最大 ``max_cards`` 枚トラッシュして、トラッシュした数ぶん、相手の場のポケモンを選ぶ（同じポケモンを 2 回以上選んでもよい）。
+    その後、選んだポケモンのそれぞれに、それが選ばれた回数 × ``per`` のダメージを、「弱点・抵抗力」に関係なく与える（v0.115。ゴローニャ（PR1-054）の「ロックブラスト」。kyuura の印刷の文面。
+    ダメージの目安なし）。
+
+    - 要素は ``DiscardOwnEnergyUpTo`` → ``AllocateDamage(DiscardedUnits, scope=相手の場)``。実際にトラッシュした枚数 N の単位を、相手の場のポケモン（バトル場 → ベンチ）に配る（選ばれた回数の
+      組。同じポケモンの回数は合算し、そのポケモンに 1 回だけ 20 × 回数を与える。1 回ずつ別の 20 にしない）。ちていいどうの異なる 2 匹とは別の表し方
+    - 選べるカードがあるときの 0 枚は RKB1（kyuura の UQ-UP-TO-ZERO-CHOICE と同じ形。選べるが選ぶと止める）。トラッシュはリサイクルエネルギー・エコロジムの処理を通す"""
+
+    energy_type: EnergyType
+    max_cards: int
+    per: int
+    implementation_id = "discard_energy_up_to_then_allocate_to_opponent_pokemon"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "選ばれた 1 回あたりのダメージ")
+        if type(self.max_cards) is not int or self.max_cards < 1:
+            raise ValueError(f"トラッシュする枚数の最大は 1 以上（{self.max_cards!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "エネルギーカードをトラッシュした数ぶん相手の場のポケモンを選び、回数のダメージを与えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(
+            attack, what, (ROCK_BLAST_TEXT.format(ja=self.energy_type.ja, n=self.max_cards, per=self.per),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        cards = min(self.max_cards, len(attached_basic_energy(state, attacker, self.energy_type)))
+        return DamageProfile(opponent=tuple(self.per * count for count in range(cards + 1)))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        if decision.kind == ALLOCATE_DAMAGE:
+            return allocation_decision_problems(state, use, decision, scope=TARGET_IN_PLAY, per=self.per, max_units=self.max_cards)
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        options = attached_basic_energy(state, attacker, self.energy_type)
+        return _decision_form(decision, _label(state, use), kind=DISCARD_ENERGY, player=use.player, choices=(0, min(self.max_cards, len(options))), options=options)
+
+
+@dataclass(frozen=True)
+class DamageThenChosenOpponentPokemonDamage(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。相手のポケモンを 1 匹選び、そのポケモンにも、「弱点・抵抗力」に関係なく、``amount`` ダメージ（v0.115。イシツブテ（NIP1X-004）の
+    「いしなだれ」。kyuura の印刷の文面。目安「10」）。
+
+    - 要素は ``Damage(OPP)`` → ``ChooseTarget(相手の場)`` → ``AlsoTargetDamage``。選べるのは相手の場のポケモン（控えだけにしない）。相手の対戦ポケモンを選んだときの扱い（目安の 10 と
+      別の 10 か、合わせた 1 つのダメージか。選べるか自体も）は決められない（SLD1。選べるが選ぶと止める）。控えを選んだら、そのポケモンに 10（p.320 の (2)）"""
+
+    amount: int
+    implementation_id = "damage_then_chosen_opponent_pokemon_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.amount, "選んだポケモンへのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手のポケモンを 1 匹選び、そのポケモンにもダメージを与えるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (ROCK_SLIDE_TEXT.format(amount=self.amount),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return target_decision_problems(state, use, decision, side=TARGET_SIDE_OPPONENT, scope=TARGET_IN_PLAY)
+
+
+# v0.115 のワザの登録（22。id ごとに書く。同じデータのカードの組はない）。説明文のないロケットずつき・ころがるは文面・出典を持たない
+V0_115_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # ヤンヤンマ（neo2-011）。スピードスターは既存の DamageIgnoringDefenderEffects（v0.60。目安 30。SS1・FA1 は解決済みにしない）
+    AttackKey("neo2-011", 0): _printed(CoinSpreadDamageThenOpponentSwitch(10), "しょうげきは", SHOCK_WAVE_TEXT.format(amount=10)),
+    AttackKey("neo2-011", 1): _printed(DamageIgnoringDefenderEffects(), "スピードスター", SWIFT_TEXT),
+    # わるいライチュウ（neo2-021）
+    AttackKey("neo2-021", 0): _printed(DamageThenChainedCoinsBenchDamage(20, 10), "びっくりサンダー", SURPRISE_THUNDER_TEXT.format(heads=20, tails=10)),
+    # サナギラス（neo2-036）
+    AttackKey("neo2-036", 0): AttackEntry(DAMAGE_ONLY, "ロケットずつき"),
+    AttackKey("neo2-036", 1): _printed(SpreadDamageExceptType(EnergyType.FIGHTING, 10), "すなあらし", SANDSTORM_TEXT.format(excluded=EnergyType.FIGHTING.ja, amount=10)),
+    # バンギラス（neo2-042。悪）。たたきつけるは既存の CoinFlipDamage（2 枚・「おもて」の数 × 30）
+    AttackKey("neo2-042", 0): _printed(CoinFlipDamage(2, 30), "たたきつける", "コインを2枚投げ、「おもて」の数×30のダメージ。"),
+    AttackKey("neo2-042", 1): _printed(DamageThenCoinPerBothBenches(30), "なぎたおす", MOW_DOWN_TEXT.format(amount=30)),
+    # ゴローン（neo3-039）。じしんは既存の DamageAndOwnBenchDamage（10）、がんせきおとしは既存の DamageIgnoringResistance（v0.115 から「このワザは、…に関係なく、ダメージを与える。」の書き方も）
+    AttackKey("neo3-039", 0): _printed(DamageAndOwnBenchDamage(10), "じしん", "自分の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。"),
+    AttackKey("neo3-039", 1): _printed(DamageIgnoringResistance(), "がんせきおとし", ROCK_FALL_RESISTANCE_TEXT),
+    # わるいエーフィ（neo4-067）。つめをだすは既存の CoinBonusDamage（10）
+    AttackKey("neo4-067", 0): _printed(CoinBonusDamage(10), "つめをだす", "コインを投げて「おもて」なら、10ダメージを追加する。"),
+    AttackKey("neo4-067", 1): _printed(EnergyCardsSpreadDamage(10), "サイコスプラッシュ", PSYCHO_SPLASH_TEXT.format(per=10)),
+    # わるいサナギラス（neo4-076）。だんがんタックルは既存の DamageAndSelfDamageThenLockSelf（自分に 10・次の自分の番にこのワザだけ使えない）
+    AttackKey("neo4-076", 0): _printed(DamageAndSelfDamageThenLockSelf(10), "だんがんタックル", HIGH_SPEED_CHARGE_TEXT.format(self_damage=10, name="だんがんタックル")),
+    AttackKey("neo4-076", 1): _printed(CoinSpreadDamageThenEvolveNamedFromDeck(10, "わるいバンギラス", "わるいサナギラス"), "ばくれつしんか",
+                                       EXPLOSIVE_EVOLUTION_TEXT.format(amount=10, card="わるいバンギラス", base="わるいサナギラス")),
+    # わるいバンギラス（neo4-079。闘）
+    AttackKey("neo4-079", 0): _printed(CoinsPerOwnEnergyCardsDamageThenMillOpponent(EnergyType.FIGHTING, 20), "やまくだき",
+                                       MOUNTAIN_SMASH_TEXT.format(ja=EnergyType.FIGHTING.ja, per=20)),
+    AttackKey("neo4-079", 1): _printed(ReducedDamageThenChosenBenchDamage(30, 30), "ぶんなげる", HURL_TEXT.format(reduced=30, bench=30)),
+    # タケシのイワーク（GD1-010）。しめつけるは既存の ParalyzeOnHeads（目安 20 → コインの「おもて」でマヒ）
+    AttackKey("GD1-010", 0): _printed(ParalyzeOnHeads(), "しめつける", PARALYZE_HEADS_TEXT),
+    AttackKey("GD1-010", 1): _printed(ChosenBenchTargetsThenSelfCannotAttack(2, 20), "ちていいどう", EARTH_MOVE_TEXT.format(n=2, bench=20)),
+    # シードラ（ES3-016）
+    AttackKey("ES3-016", 0): _printed(DamageThenAllocateExtraEnergyToBench(EnergyType.WATER, 10, 2), "ウォーターボム",
+                                      WATER_BOMB_TEXT.format(ja=EnergyType.WATER.ja, per=10, max_extra=2)),
+    # ゴローン（ES3-029）
+    AttackKey("ES3-029", 0): _printed(DamageThenCoinsAllocateToBench(2, 10), "がんせきくだき", ROCK_SMASH_TEXT.format(coins=2, per=10)),
+    # ゴローニャ（PR1-054）
+    AttackKey("PR1-054", 0): AttackEntry(DAMAGE_ONLY, "ころがる"),
+    AttackKey("PR1-054", 1): _printed(DiscardEnergyUpToThenAllocateToOpponentPokemon(EnergyType.FIGHTING, 5, 20), "ロックブラスト",
+                                      ROCK_BLAST_TEXT.format(ja=EnergyType.FIGHTING.ja, n=5, per=20)),
+    # イシツブテ（NIP1X-004）
+    AttackKey("NIP1X-004", 0): _printed(DamageThenChosenOpponentPokemonDamage(10), "いしなだれ", ROCK_SLIDE_TEXT.format(amount=10)),
+})
+
+DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_115_ATTACKS)

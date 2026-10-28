@@ -1555,6 +1555,21 @@
     "PRN-031",
     "PRN-037"
   ],
+  "pool_v0_115": [
+    "neo2-011",
+    "neo2-021",
+    "neo2-036",
+    "neo2-042",
+    "neo3-039",
+    "neo4-067",
+    "neo4-076",
+    "neo4-079",
+    "GD1-010",
+    "ES3-016",
+    "ES3-029",
+    "PR1-054",
+    "NIP1X-004"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -115981,6 +115996,1306 @@
           ],
           "basis": "card_image_check",
           "decided_on": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "neo2-011",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ヤンヤンマ",
+        "en": "Yanma"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          193
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しょうげきは",
+              "en": "Shockwave"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手の場のポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。その後、相手を相手の控えポケモンと入れ替える。入れ替わるポケモンは、相手が選ぶ。(相手に控えがいないとき、入れ替えはおこらない。)",
+              "en": "Flip a coin. If heads, this attack does 10 damage to each of your opponent's Pokémon. Don't apply Weakness and Resistance. Then, if your opponent has any Benched Pokémon, he or she chooses 1 of them and switches it with the Defending Pokémon."
+            }
+          },
+          {
+            "name": {
+              "ja": "スピードスター",
+              "en": "Swift"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "このワザのダメージは、相手の持っている「弱点・抵抗力・特殊能力・その他の効果」の影響を受けない。",
+              "en": "This attack's damage isn't affected by Weakness, Resistance, Pokémon Powers, or any other effects on the Defending Pokémon."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-011",
+        "pokemontcg": [
+          "neo2-17",
+          "neo2-36"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-011-yanyanma/",
+      "jp_print": {
+        "level": 32,
+        "rarity": "★(R)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-011-yanyanma/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo2-021",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいライチュウ",
+        "en": "Dark Raichu"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          26
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ピカチュウ",
+          "en": "Pikachu"
+        },
+        "hp": 70,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "びっくりサンダー",
+              "en": "Surprise Thunder"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、もう1枚コインを投げる。2枚目のコインが「おもて」なら、相手の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ20ダメージ。2枚目のコインが「うら」なら、相手の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+              "en": "Flip a coin. If heads, flip another coin. If the second coin is heads, this attack does 20 damage to each of your opponent's Benched Pokémon. If the second coin is tails, this attack does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "placement",
+          "summary": "収録先と登場順",
+          "ja": "「遺跡をこえて...」（2000年7月）で登場",
+          "en": "Team Rocket（2000年4月）のシークレットカード（83/82）として先に登場",
+          "confidence": "有力",
+          "sources": [
+            "X27"
+          ]
+        }
+      ],
+      "notes": [
+        "英語版は Team Rocket（2000年4月）のシークレットカードが先。日本ではこの弾で登場"
+      ],
+      "source_ids": {
+        "tcgdex": "neo2-021",
+        "pokemontcg": [
+          "base5-83"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-021-warui-raichu/",
+      "jp_print": {
+        "level": 31,
+        "rarity": "☆(R)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-021-warui-raichu/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo2-036",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "サナギラス",
+        "en": "Pupitar"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          247
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ヨーギラス",
+          "en": "Larvitar"
+        },
+        "hp": 70,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "lightning",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ロケットずつき",
+              "en": "Skull Bash"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "すなあらし",
+              "en": "Dust Devil"
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "おたがいの場の「闘」ポケモン以外のポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+              "en": "Does 10 damage to each non-Fighting Pokémon in play. Don't apply Weakness and Resistance."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-036",
+        "pokemontcg": [
+          "neo2-45"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-036-sanagiras/",
+      "jp_print": {
+        "level": 32,
+        "rarity": "◆(U)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-036-sanagiras/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo2-042",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "バンギラス",
+        "en": "Tyranitar"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          248
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "サナギラス",
+          "en": "Pupitar"
+        },
+        "hp": 100,
+        "types": [
+          "darkness"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たたきつける",
+              "en": "Slam"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": "×",
+              "display": "30×"
+            },
+            "text": {
+              "ja": "コインを2枚投げ、「おもて」の数×30のダメージ。",
+              "en": "Flip 2 coins. This attack does 30 damage times the number of heads."
+            }
+          },
+          {
+            "name": {
+              "ja": "なぎたおす",
+              "en": "Trample"
+            },
+            "cost": [
+              "darkness",
+              "darkness",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "おたがいの控えポケモン全員に対して、1枚ずつコインを投げ、「おもて」が出たポケモンに、「弱点・抵抗力」に関係なく、30ダメージ。(コインを投げるのは、相手側から。)",
+              "en": "For each Benched Pokémon in play (yours and your opponent's), flip a coin. If heads, this attack does 30 damage to that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-042",
+        "pokemontcg": [
+          "neo2-12",
+          "neo2-31"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-042-bangiras/",
+      "jp_print": {
+        "level": 54,
+        "rarity": "★(R)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-042-bangiras/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-039",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ゴローン",
+        "en": "Graveler"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          75
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "イシツブテ",
+          "en": "Geodude"
+        },
+        "hp": 70,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "じしん",
+              "en": "Earthquake"
+            },
+            "cost": [
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "自分の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+              "en": "Does 10 damage to each of your own Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "がんせきおとし",
+              "en": "Rock Tumble"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "このワザは、相手の「抵抗力」に関係なく、ダメージを与える。",
+              "en": "Don't apply Resistance."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-039",
+        "pokemontcg": [
+          "neo3-30"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B4%E3%83%AD%E3%83%BC%E3%83%B3_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 32,
+        "rarity": "◆(U)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B4%E3%83%AD%E3%83%BC%E3%83%B3_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-067",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいエーフィ",
+        "en": "Dark Espeon"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          196
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "イーブイ",
+          "en": "Eevee"
+        },
+        "hp": 60,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "つめをだす",
+              "en": "Gouge"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、10ダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 10 damage plus 10 more damage; if tails, this attack does 10 damage."
+            }
+          },
+          {
+            "name": {
+              "ja": "サイコスプラッシュ",
+              "en": "Psysplash"
+            },
+            "cost": [
+              "psychic",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": null,
+            "text": {
+              "ja": "相手の場の「エネルギーカード」をつけているポケモン全員に、それぞれがつけている「エネルギーカード」の枚数×10のダメージを、「弱点・抵抗力」に関係なく与える。",
+              "en": "Does 10 damage to each of your opponent's Pokémon for each Energy card attached to that Pokémon. Don't apply Weakness and Resistance."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-067",
+        "pokemontcg": [
+          "neo4-4"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%82%A8%E3%83%BC%E3%83%95%E3%82%A3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 32,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%82%A8%E3%83%BC%E3%83%95%E3%82%A3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-076",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいサナギラス",
+        "en": "Dark Pupitar"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          247
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ヨーギラス",
+          "en": "Larvitar"
+        },
+        "hp": 60,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "lightning",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "だんがんタックル",
+              "en": "Rock Tackle"
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "自分にも10ダメージ。次の自分の番、このカードは「だんがんタックル」を使うことができない。",
+              "en": "Dark Pupitar does 10 damage to itself. Dark Pupitar can't use this attack during your next turn."
+            }
+          },
+          {
+            "name": {
+              "ja": "ばくれつしんか",
+              "en": "Explosive Evolution"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手の場のポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。その後、自分の山札から「わるいバンギラス」を1枚選び出し、このわるいサナギラスの上にのせ、進化させる。山札を見た場合は、その山札をよく切る。",
+              "en": "Flip a coin. If heads, this attack does 10 damage to each of your opponent's Pokémon. Don't apply Weakness and Resistance. Then, search your deck for an Evolution card named Dark Tyranitar and put it on Dark Pupitar. (This counts as evolving Dark Pupitar.) Shuffle your deck afterward."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-076",
+        "pokemontcg": [
+          "neo4-38"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%82%B5%E3%83%8A%E3%82%AE%E3%83%A9%E3%82%B9_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 26,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%82%B5%E3%83%8A%E3%82%AE%E3%83%A9%E3%82%B9_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-079",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいバンギラス",
+        "en": "Dark Tyranitar"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          248
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "わるいサナギラス",
+          "en": "Dark Pupitar"
+        },
+        "hp": 90,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "lightning",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "やまくだき",
+              "en": "Mountain Smasher"
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "自分についている「闘」エネルギーカードの枚数ぶんコインを投げ、「おもて」の数×20のダメージ。その後、「おもて」の数ぶんのカードを、相手の山札の上からトラッシュする。",
+              "en": "Flip a number of coins equal to the number of Fighting Energy cards attached to Dark Tyranitar. This attack does 20 damage times the number of heads. Then, for each heads, discard the top card from your opponent's deck."
+            }
+          },
+          {
+            "name": {
+              "ja": "ぶんなげる",
+              "en": "Fling Away"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "相手に控えポケモンがいるとき、このワザのダメージは「30」になる。その場合、相手の控えポケモンを1匹選び、そのポケモンにも、「弱点・抵抗力」に関係なく、30ダメージ。",
+              "en": "If your opponent has any Benched Pokémon, this attack does 30 damage instead of 50 and choose 1 of those Benched Pokémon. This attack does 30 damage to that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-079",
+        "pokemontcg": [
+          "neo4-11"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%83%90%E3%83%B3%E3%82%AE%E3%83%A9%E3%82%B9_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 47,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%83%90%E3%83%B3%E3%82%AE%E3%83%A9%E3%82%B9_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "GD1-010",
+      "jp_set": "GD1",
+      "category": "pokemon",
+      "name": {
+        "ja": "タケシのイワーク",
+        "en": "Brock's Onix"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          95
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 70,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しめつける",
+              "en": "Bind"
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          },
+          {
+            "name": {
+              "ja": "ちていいどう",
+              "en": "Tunneling"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 3,
+            "damage": null,
+            "text": {
+              "ja": "相手の控えポケモンから最大2匹を選び、それぞれに(「弱点・抵抗力」に関係なく)20ダメージ。このワザを使ったポケモンは、次の自分の番にワザを使えない。",
+              "en": "If your opponent has any Benched Pokémon, choose up to 2 of them. This attack does 20 damage to each of them. (Don't apply Weakness and Resistance for Benched Pokémon.) Brock's Onix can't attack during your next turn."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-21"
+        ],
+        "pcg_search": [
+          "1stgymd1010"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd1010.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第1弾「ニビシティジム タケシ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd1010.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-21",
+        "pokemon.dex": "pokemontcg:gym1-21"
+      },
+      "copies": [
+        {
+          "page": "1stgymd1010",
+          "list_number": "010/025"
+        }
+      ]
+    },
+    {
+      "id": "ES3-016",
+      "jp_set": "ES3",
+      "category": "pokemon",
+      "name": {
+        "ja": "シードラ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "タッツー",
+          "en": null
+        },
+        "hp": 70,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ウォーターボム",
+              "en": null
+            },
+            "cost": [
+              "water",
+              "water"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー1つにつき10ダメージを、相手の控えポケモンに好きなようにわりふって与える。(控えへのダメージ追加は2つぶんまで。また、控えへのダメージは「弱点・抵抗力」の影響を受けない)",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex3016"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex3016.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第3弾(緑版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex3016.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stex3016",
+          "list_number": "016/036"
+        }
+      ]
+    },
+    {
+      "id": "ES3-029",
+      "jp_set": "ES3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ゴローン",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "イシツブテ",
+          "en": null
+        },
+        "hp": 60,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "がんせきくだき",
+              "en": null
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを2枚投げ、「おもて」の数×10のダメージを、相手の控えポケモンに好きなようにわりふって与える。(控えへのダメージは「弱点・抵抗カ」の影響を受けない)",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex3029"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex3029.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第3弾(緑版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex3029.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stex3029",
+          "list_number": "029/036"
+        }
+      ]
+    },
+    {
+      "id": "PR1-054",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ゴローニャ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "ゴローン",
+          "en": null
+        },
+        "hp": 80,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ころがる",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ロックブラスト",
+              "en": null
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 3,
+            "damage": null,
+            "text": {
+              "ja": "自分についている「闘」エネルギーカードを最大5枚トラッシュして、トラッシュした数ぶん、相手の場のポケモンを選ぶ。(同じポケモンを2回以上選んでもよい)。その後、選んだポケモンのそれぞれに、それが選ばれた回数×20のダメージを、「弱点・抵抗力」に関係なく与える。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp054"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp054.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(キラ)",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp054.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stp054",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "NIP1X-004",
+      "jp_set": "NIP1X",
+      "category": "pokemon",
+      "name": {
+        "ja": "イシツブテ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "いしなだれ",
+              "en": null
+            },
+            "cost": [
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "相手のポケモンを1匹選び、そのポケモンにも、「弱点・抵抗力」に関係なく、10ダメージ。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neointro1ex004"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro1ex004.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(チコリータデッキ：拡張カード)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro1ex004.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "neointro1ex004",
+          "list_number": "004/010"
         }
       ]
     }

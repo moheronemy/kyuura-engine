@@ -843,7 +843,9 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                     "まきつく",
                                     # v0.112: ドククラゲ（SI-016）の「どくばり」（PoisonOnHeads。既存の型の登録だけなので、同じ T19b で止まる。docs/energy-coins-draw-v0.112.md）。
                                     # オムスター（PR1-051）の「ふしょくえき」は、共有のコインが自分のワザの制限も決めるので止まらない（ここに入らない）
-                                    "どくばり"]))
+                                    "どくばり",
+                                    # v0.115: タケシのイワーク（GD1-010）の「しめつける」（ParalyzeOnHeads。既存の型の登録だけ。docs/spread-damage-allocation-v0.115.md）
+                                    "しめつける"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}
@@ -857,7 +859,7 @@ class EvadedEffectCoinTest(unittest.TestCase):
                         self.assertIsNone(working_evasion_power(state, state.players[1].active.pokemon_id))
                         self.assertEqual(power_coins(apply_command(state, UseAttack(0, key.attack_index)).log), [])
                         continue
-                    if key.card_id in ("PMCG5-050", "ES2-026", "ES2-024", "QSG-037", "neo1-052", "ES2-020", "QSG-033", "ES3-028"):  # v0.72: イワークの「しめつける」10 も最終ダメージが 0。v0.77: グライガー（闘）の「どくばり」10 も。v0.79: サンド（闘）の「どくばり」10 も。v0.89: ゴーリキー（ES3-028。闘）の「じごくづき」20 も
+                    if key.card_id in ("PMCG5-050", "ES2-026", "ES2-024", "QSG-037", "neo1-052", "ES2-020", "QSG-033", "ES3-028", "GD1-010"):  # v0.72: イワークの「しめつける」10 も最終ダメージが 0。v0.77: グライガー（闘）の「どくばり」10 も。v0.79: サンド（闘）の「どくばり」10 も。v0.89: ゴーリキー（ES3-028。闘）の「じごくづき」20 も。v0.115: タケシのイワーク（GD1-010。闘）の「しめつける」20 も
                         # v0.60: タケシのサンドパン（闘）の「とげボール」30 は、ゴースト（抵抗力 闘 -30）への最終ダメージが 0 なので「ダメージを受けなかった」（T21）。
                         # 「とうめい」はダメージの要素ではたらかず、受けないと決まっていないので、そのあとのどくのコインを投げる（T19b に当たらない。「おもて」なら、
                         # どくの要素を受ける前に「とうめい」のコインを投げる）。v0.70: サワムラー（闘）の「まわしげり」30 も同じ（マヒのコイン）

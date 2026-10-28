@@ -162,7 +162,10 @@ class ResearchLinksTest(unittest.TestCase):
                              "UNRESOLVED_KO_SURVIVAL_TIMING", "UNRESOLVED_KO_SURVIVAL_OVERLAP",
                              # v0.114: BX1・HP2・HV1（docs/baby-rules-evolution-v0.114.md 10 章。ベイビィの姿のメタモン・［ヒートプレート］とベイビィの進化・特殊能力の消えたポケモンの
                              # 「特殊能力」を持っているか。kyuura の事例にない）
-                             "UNRESOLVED_TRANSFORM_BABY", "UNRESOLVED_HOT_PLATE_BABY_EVOLUTION", "UNRESOLVED_STOPPED_POWER_HOLDER"})
+                             "UNRESOLVED_TRANSFORM_BABY", "UNRESOLVED_HOT_PLATE_BABY_EVOLUTION", "UNRESOLVED_STOPPED_POWER_HOLDER",
+                             # v0.115: RKB1・SLD1（docs/spread-damage-allocation-v0.115.md 10 章。ロックブラストの「最大5枚トラッシュ」の 0 枚は UQ-UP-TO-ZERO-CHOICE と同じ形だが、
+                             # kyuura の事例にない。いしなだれで相手の対戦ポケモンを選ぶ扱いは kyuura に対応する記録がない）
+                             "UNRESOLVED_DISCARD_UP_TO_ZERO", "UNRESOLVED_CHOSEN_ACTIVE_EXTRA_DAMAGE"})
         # v0.97（docs/unown-research-idfnj-v0.97.md 3 章）: kyuura が調査で立てた UQ-SELF-EXCLUDING-POWER-COPIES の事例にわるいデンリュウ（neo4-046）の［かんでん］があるので、
         # CV1 を論点に結んだ（kyuura は v0.86 を取り込んでいないので、未解決の一覧に CV1 の行はない。kyuura の事例は kyuura_cases_without_engine_ruling で照らす）
         # v0.97 で加えた DF1・DF2 も、kyuura に論点（UQ-SELF-EXCLUDING-POWER-COPIES・UQ-NON-ATTACK-DAMAGE-MODIFIERS）はあるが、未解決の一覧に行がない

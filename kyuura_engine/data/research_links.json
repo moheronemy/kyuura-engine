@@ -12,8 +12,8 @@
   "card_data_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 244,
-    "engine_stop_codes": 243,
+    "engine_unresolved_rulings": 246,
+    "engine_stop_codes": 245,
     "kyuura_issues": 73
   },
   "stop_codes": {
@@ -2811,6 +2811,28 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DISCARD_UP_TO_ZERO": {
+      "engine_rulings": [
+        {
+          "version": "v0.115",
+          "document": "docs/spread-damage-allocation-v0.115.md",
+          "ruling_id": "RKB1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_CHOSEN_ACTIVE_EXTRA_DAMAGE": {
+      "engine_rulings": [
+        {
+          "version": "v0.115",
+          "document": "docs/spread-damage-allocation-v0.115.md",
+          "ruling_id": "SLD1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -4765,7 +4787,27 @@
       "PF2-007/attack/0",
       "PRN-012/attack/0",
       "PRN-031/attack/0",
-      "PRN-037/attack/0"
+      "PRN-037/attack/0",
+      "neo2-011/attack/0",
+      "neo2-011/attack/1",
+      "neo2-021/attack/0",
+      "neo2-036/attack/1",
+      "neo2-042/attack/0",
+      "neo2-042/attack/1",
+      "neo3-039/attack/0",
+      "neo3-039/attack/1",
+      "neo4-067/attack/0",
+      "neo4-067/attack/1",
+      "neo4-076/attack/0",
+      "neo4-076/attack/1",
+      "neo4-079/attack/0",
+      "neo4-079/attack/1",
+      "GD1-010/attack/0",
+      "GD1-010/attack/1",
+      "ES3-016/attack/0",
+      "ES3-029/attack/0",
+      "PR1-054/attack/1",
+      "NIP1X-004/attack/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
@@ -5624,6 +5666,19 @@
         }
       ],
       "use": "ベイビィポケモンのルールのコインの「うら」でワザが失敗しても、そのワザを使ったことになる（使ったワザの記録・1 回だけのワザの記録は宣言のときに置き、番は終わる。v0.2d・v0.36 の p.323「12 ワザの失敗」と同じ処理。kyuura がエンジンの記録を再利用した条項なので、独立した二度目の確認に数えない）"
+    },
+    {
+      "kyuura_record": "CR-UNOWN-DF-SOURCE-TYPE",
+      "kind": "ruling",
+      "kyuura_status": "SUPPORTED",
+      "engine": [
+        {
+          "version": "v0.115",
+          "document": "docs/spread-damage-allocation-v0.115.md",
+          "ruling_id": "SA-R1"
+        }
+      ],
+      "use": "バンギラス（悪）の「なぎたおす」が自分の控えのアンノーンに与えるダメージにも、その場の［DARK df］を当てはめる（ダメージを与えるポケモンの今のタイプで決め、持ち主を限らない。名前の「わるい」では決めないので、わるいバンギラス（闘）のワザには当てはめない）。当てはめる処理は v0.97 の ReduceOwnGroupDamageFromType のまま（v0.115 で変えていない）"
     }
   ],
   "engine_user_corrections": [

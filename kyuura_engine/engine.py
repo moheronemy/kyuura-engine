@@ -5278,9 +5278,19 @@ def _esp_redo_decision_problems(state: GameState, d, player: int, attacker: Poke
     esp = d.context_value("esp")
     if d.player != player or tuple(d.options) != (1,) or (d.min_choices, d.max_choices) != (0, 1):
         return [f"ESPのやり直しの決定の形（決める {d.player}・選べるもの {d.options}・{d.min_choices}〜{d.max_choices}）が正しくない"]
-    if not (isinstance(esp, tuple) and len(esp) == 6):
+    if not (isinstance(esp, tuple) and (len(esp) == 6 or (len(esp) == 7 and isinstance(esp[6], tuple) and len(esp[6]) == 2 and esp[6][0] == "chain"))):
         return [f"ESPのやり直しの続きの情報 {esp!r} が正しくない"]
-    _index, count, _by_heads, flipper, original, cards = esp
+    _index, count, _by_heads, flipper, original, cards = esp[:6]
+    if len(esp) == 7:
+        # v0.115: 条件つきで続けて投げるコインのまとまり（びっくりサンダー）。最初の結果は、そのまとまりを最後まで投げた面の並び（T・HT・HH）で、「おもて」の数でまとめない
+        from .resolution.programs import ContinueOnHeads
+
+        try:
+            complete = ContinueOnHeads(esp[6][1]).complete(tuple(CoinSide(side) for side in original))
+        except (TypeError, ValueError):
+            complete = False
+        if not complete or _by_heads:
+            return [f"ESPのやり直しの最初の結果 {original!r} が、続けて投げるコインのまとまり {esp[6]!r} を最後まで投げた並びではない"]
     if tuple(cards) != esp_cards(state, attacker) or not cards:
         return [f"ESPのやり直しのカード {cards!r} が、ワザを使ったポケモンについているESP {esp_cards(state, attacker)} と違う"]
     if type(count) is not int or count < 1 or len(original) != count or flipper not in (0, 1):

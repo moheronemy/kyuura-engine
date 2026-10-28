@@ -714,7 +714,10 @@ class G37Test(unittest.TestCase):
         "CoinBonusOnHeadsElseParalyze",
         # v0.114: モクモク（場の特殊能力の停止。やみのはどうと同じ）・サイコキッス（相手の特殊エネルギーカードを山札に）・なげキッス（相手の場の選んだポケモンにダメージカウンター）。
         # パチパチ（ダメージだけ）・いっしょにあそぼ（自分のベンチ）は相手の対戦ポケモンへの効果を持たない。docs/baby-rules-evolution-v0.114.md 6 章
-        "DamageThenFieldPowerSuppressionUntilOwnNextTurn", "CoinReturnOpponentSpecialEnergyToDeck", "PlaceCountersOnChosenOpponentPokemon"]))
+        "DamageThenFieldPowerSuppressionUntilOwnNextTurn", "CoinReturnOpponentSpecialEnergyToDeck", "PlaceCountersOnChosenOpponentPokemon",
+        # v0.115: しょうげきは（「おもて」でダメージのあとに相手が選ぶ控えと入れ替え）。ほかの 12 の型（ダメージ・控えへのダメージ・配分・自分の禁止・自分の進化・相手の山札）は相手の対戦
+        # ポケモンへの効果を持たない。docs/spread-damage-allocation-v0.115.md 6 章
+        "CoinSpreadDamageThenOpponentSwitch"]))
 
 
 class DecisionTest(unittest.TestCase):

@@ -29179,6 +29179,197 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.114 で加えた（docs/baby-rules-evolution-v0.114.md）。PRN（プロモ（neo）。promo）。2000.02.14 版のルールで処理する。水・ベイビィポケモン（HP30・弱点なし・抵抗力なし・にげる 0）。ベイビィポケモンのルール（相手のバトル場にいるとき、ワザを使う相手プレイヤーがワザの説明の処理の前にコインを投げ、「うら」ならワザは失敗する。GR-2000-P314-BABY-RULE）は特殊能力ではなく解決の流れの共通の処理（カードの登録ではない）。なげキッス=PlaceCountersOnChosenOpponentPokemon(1)（相手の場のポケモンを 1 匹選び、ダメージカウンターを 1 個のせる。ワザによるダメージではない。v0.89 の選んだ個体の要素）。タイプは水（neo3-031 の超と違う。写しの値）。データの欠け pokemon.dex・jp_print.level は処理に使わない。ルール文（pokemon.rules_text.ja）は kyuura の転記の値（e519b99 の写しのまま。訂正はない）。進化先（pokemon.evolves_to）は kyuura の訂正 FIX-PRN-037-EVOLVES-TO（field_added_from_print。kyuura の画像の照合 IMG-PRN-037）で写しに入った（印刷の名前のとおり。推測しない）。kyuura の日本語の文面は pcg-search.com の転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（ベイビィポケモンのルール・進化の一般の規定と論点の事例。カードの id・名前・ワザ・特殊能力の名前で data/・docs/ を確かめた）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。画像を読んだのは kyuura の照合の記録 IMG-（data/curation/card_image_checks.json。kyuura が 2026-10-27 に読んだ。エンジンは画像を見ていない。IMG- は CC-・LD- ではない））。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo2-011": {
+      "basis": "kyuura_data",
+      "name_ja": "ヤンヤンマ",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.115 で加えた（docs/spread-damage-allocation-v0.115.md）。neo2（遺跡をこえて...。expansion_pack）。2000.02.14 版のルールで処理する。草・たね（HP60）。しょうげきは=CoinSpreadDamageThenOpponentSwitch(10)（v0.115 の型。コインの「おもて」で相手の場の全員に弱点・抵抗力に関係なく 10 → 相手が選ぶ控えと入れ替え。「うら」なら入れ替えもしない）。スピードスター=DamageIgnoringDefenderEffects（v0.60 の型。目安 30。SS1・FA1 は解決済みにしない）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はなぞのばしょの転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。v0.114 で kyuura がベイビィ 13 枚の画像を確かめたことは、このカードの照合ではない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo2-021": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいライチュウ",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.115 で加えた（docs/spread-damage-allocation-v0.115.md）。neo2（遺跡をこえて...。expansion_pack）。2000.02.14 版のルールで処理する。雷・1 進化（ピカチュウから。HP70）。びっくりサンダー=DamageThenChainedCoinsBenchDamage(20, 10)（v0.115 の型。目安 30 → 条件つきで続けて投げるコイン（T・HT・HH）で相手の控え全員に 0・10・20。ナツメのESPのやり直しはまとまりのあとに 1 回だけ聞き、最初から投げ直す）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はなぞのばしょの転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。v0.114 で kyuura がベイビィ 13 枚の画像を確かめたことは、このカードの照合ではない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo2-036": {
+      "basis": "kyuura_data",
+      "name_ja": "サナギラス",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.115 で加えた（docs/spread-damage-allocation-v0.115.md）。neo2（遺跡をこえて...。expansion_pack）。2000.02.14 版のルールで処理する。闘・1 進化（ヨーギラスから。HP70）。ロケットずつき=DAMAGE_ONLY（説明文なし。文面・出典を書かない）。すなあらし=SpreadDamageExceptType(闘, 10)（v0.115 の型。おたがいの場の今のタイプが闘でないポケモン全員に弱点・抵抗力に関係なく 10）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はなぞのばしょの転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。v0.114 で kyuura がベイビィ 13 枚の画像を確かめたことは、このカードの照合ではない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo2-042": {
+      "basis": "kyuura_data",
+      "name_ja": "バンギラス",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [
+        "CR-UNOWN-DF-SOURCE-TYPE"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.115 で加えた（docs/spread-damage-allocation-v0.115.md）。neo2（遺跡をこえて...。expansion_pack）。2000.02.14 版のルールで処理する。悪・2 進化（サナギラスから。HP100）。たたきつける=CoinFlipDamage(2, 30)。なぎたおす=DamageThenCoinPerBothBenches(30)（v0.115 の型。目安 50 → おたがいの控え全員に相手側から 1 枚ずつ（面と個体の対応を持つ）→「おもて」の控えに弱点・抵抗力に関係なく 30）。kyuura の裁定 CR-UNOWN-DF-SOURCE-TYPE（SUPPORTED）の関連するカード（自分の控えのアンノーンへのなぎたおすのダメージにも［DARK df］を当てはめる。タイプで決め、名前の「わるい」では決めない）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はなぞのばしょの転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。v0.114 で kyuura がベイビィ 13 枚の画像を確かめたことは、このカードの照合ではない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo3-039": {
+      "basis": "kyuura_data",
+      "name_ja": "ゴローン",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.115 で加えた（docs/spread-damage-allocation-v0.115.md）。neo3（めざめる伝説。expansion_pack）。2000.02.14 版のルールで処理する。闘・1 進化（イシツブテから。HP70）。じしん=DamageAndOwnBenchDamage(10)。がんせきおとし=DamageIgnoringResistance（v0.45 の型。v0.115 から「このワザは、相手の「抵抗力」に関係なく、ダメージを与える。」の全文 1 通りも受け付ける。弱点は計算する）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はPokemon Wikiの転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。v0.114 で kyuura がベイビィ 13 枚の画像を確かめたことは、このカードの照合ではない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo4-067": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいエーフィ",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.115 で加えた（docs/spread-damage-allocation-v0.115.md）。neo4（闇、そして光へ...。expansion_pack）。2000.02.14 版のルールで処理する。超・1 進化（イーブイから。HP60）。つめをだす=CoinBonusDamage(10)。サイコスプラッシュ=EnergyCardsSpreadDamage(10)（v0.115 の型。相手の場のエネルギーカードをつけているポケモン全員に、その個体のカードの枚数 × 10。エネルギーの個数ではない）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はPokemon Wikiの転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。v0.114 で kyuura がベイビィ 13 枚の画像を確かめたことは、このカードの照合ではない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo4-076": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいサナギラス",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.115 で加えた（docs/spread-damage-allocation-v0.115.md）。neo4（闇、そして光へ...。expansion_pack）。2000.02.14 版のルールで処理する。闘・1 進化（ヨーギラスから。HP60）。だんがんタックル=DamageAndSelfDamageThenLockSelf(10)（v0.104 の型）。ばくれつしんか=CoinSpreadDamageThenEvolveNamedFromDeck(10, わるいバンギラス, わるいサナギラス)（v0.115 の型。コインの「おもて」で相手の場の全員に 10 → 山札の「わるいバンギラス」を必ず重ねる。「うら」なら山札を見ない。見たら切る）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はPokemon Wikiの転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。v0.114 で kyuura がベイビィ 13 枚の画像を確かめたことは、このカードの照合ではない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo4-079": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいバンギラス",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.115 で加えた（docs/spread-damage-allocation-v0.115.md）。neo4（闇、そして光へ...。expansion_pack）。2000.02.14 版のルールで処理する。闘・2 進化（わるいサナギラスから。HP90。名前に「わるい」がつくが悪タイプではない）。やまくだき=CoinsPerOwnEnergyCardsDamageThenMillOpponent(闘, 20)（v0.115 の型。闘エネルギーカードの枚数のコイン → 20H → 相手の山札の上から H 枚）。ぶんなげる=ReducedDamageThenChosenBenchDamage(30, 30)（v0.115 の型。控えがいれば相手の対戦ポケモンに 30 と選んだ控えに 30、いなければ 50）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はPokemon Wikiの転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。v0.114 で kyuura がベイビィ 13 枚の画像を確かめたことは、このカードの照合ではない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "GD1-010": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのイワーク",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.115 で加えた（docs/spread-damage-allocation-v0.115.md）。GD1（ポケモンジム第1弾「ニビシティジム タケシ」）。2000.02.14 版のルールで処理する。闘・たね（HP70）。しめつける=ParalyzeOnHeads（v0.3b の型。目安 20 → コインの「おもて」でマヒ）。ちていいどう=ChosenBenchTargetsThenSelfCannotAttack(2, 20)（v0.115 の型。相手の控えから最大 2 匹を選び各 20（0 匹は GS1）→ 次の自分の番にワザ（すべて）を使えない）。データの欠け jp_print.level は処理に使わない。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はpcg-search.comの転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。v0.114 で kyuura がベイビィ 13 枚の画像を確かめたことは、このカードの照合ではない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES3-016": {
+      "basis": "kyuura_data",
+      "name_ja": "シードラ",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.115 で加えた（docs/spread-damage-allocation-v0.115.md）。ES3（拡張シート 第3弾(緑版)。expansion_sheet）。2000.02.14 版のルールで処理する。水・1 進化（タッツーから。HP70）。ウォーターボム=DamageThenAllocateExtraEnergyToBench(水, 10, 2)（v0.115 の型。目安 20 → 多い水エネルギーの個数（2 つまで）× 10 を相手の控えに配る。得た分をすべて配る）。データの欠け pokemon.dex・jp_print.level は処理に使わない。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はpcg-search.comの転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。v0.114 で kyuura がベイビィ 13 枚の画像を確かめたことは、このカードの照合ではない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES3-029": {
+      "basis": "kyuura_data",
+      "name_ja": "ゴローン",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.115 で加えた（docs/spread-damage-allocation-v0.115.md）。ES3（拡張シート 第3弾(緑版)。expansion_sheet）。2000.02.14 版のルールで処理する。闘・1 進化（イシツブテから。HP60）。がんせきくだき=DamageThenCoinsAllocateToBench(2, 10)（v0.115 の型。目安 30 → コイン 2 枚の「おもて」の数 × 10 を相手の控えに配る）。kyuura の写しの説明は「弱点・抵抗カ」（カタカナの「カ」）の書き方で、写しを直さずにこの書き方を受け付けた（処理に影響しない転記の違い。kyuura への報告事項。docs 11 章）。データの欠け pokemon.dex・jp_print.level は処理に使わない。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はpcg-search.comの転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。v0.114 で kyuura がベイビィ 13 枚の画像を確かめたことは、このカードの照合ではない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PR1-054": {
+      "basis": "kyuura_data",
+      "name_ja": "ゴローニャ",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.115 で加えた（docs/spread-damage-allocation-v0.115.md）。PR1（プロモ(旧裏)。promo）。2000.02.14 版のルールで処理する。闘・2 進化（ゴローンから。HP80）。ころがる=DAMAGE_ONLY（説明文なし。文面・出典を書かない）。ロックブラスト=DiscardEnergyUpToThenAllocateToOpponentPokemon(闘, 5, 20)（v0.115 の型。闘エネルギーカードを最大 5 枚トラッシュ（0 枚は RKB1）→ トラッシュした数の単位を相手の場に配り、選ばれた回数 × 20）。データの欠け pokemon.dex・jp_print.level は処理に使わない。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はpcg-search.comの転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。v0.114 で kyuura がベイビィ 13 枚の画像を確かめたことは、このカードの照合ではない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "NIP1X-004": {
+      "basis": "kyuura_data",
+      "name_ja": "イシツブテ",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-28",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.115 で加えた（docs/spread-damage-allocation-v0.115.md）。NIP1X（イントロパック★neo(チコリータデッキ：拡張カード)。intro_pack）。2000.02.14 版のルールで処理する。闘・たね（HP50）。いしなだれ=DamageThenChosenOpponentPokemonDamage(10)（v0.115 の型。目安 10 → 相手の場のポケモンを 1 匹選び、そのポケモンにも 10。相手の対戦ポケモンを選んだときの扱いは SLD1 で止める）。データの欠け pokemon.dex・jp_print.level は処理に使わない。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はpcg-search.comの転記。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない。v0.114 で kyuura がベイビィ 13 枚の画像を確かめたことは、このカードの照合ではない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
     }
   }
 }

@@ -12,6 +12,7 @@ import importlib.util
 import json
 import pathlib
 import pickle
+import re
 import subprocess
 import unittest
 from collections import Counter
@@ -39,6 +40,7 @@ from scripts import check_card_sources as cs
 from tests import helpers as H
 from tests import test_variable_coins_search_attachments_v0_113 as V113
 from tests.helpers import apply_kernel
+from tests.release_catalog import cards_after
 from tests.test_neo_trainer_components_v0_80 import audited, new_events
 from tests.test_unown_family_powers_v0_96 import snap
 
@@ -105,7 +107,10 @@ class MigrationTest(unittest.TestCase):
                           (V097, V0114, "2026-10-28", "docs/baby-rules-evolution-v0.114.md")])
         self.assertEqual(cs.data_migrations(sources, read_extract())[1], [])
         # 採用したときのデータのコミットは書き換えない（v0.113 までの 1,163 件。過去の原典照合のカードの記録 4 件はコミットなし）
-        old = {card: record for card, record in sources["cards"].items() if card not in BABIES}
+        # （v0.115 から、v0.114 のあとに足したカードの記録も除く。v0.113 のあとの写しのカードで切る）
+        later = cards_after(read_extract(), "0.113")
+        self.assertTrue(set(BABIES) <= later)
+        old = {card: record for card, record in sources["cards"].items() if card not in later}
         self.assertEqual(Counter(r.get("kyuura_commit") for r in old.values()), {ECB: 378, V069: 700, V097: 81, None: 4})
 
     @needs_history
@@ -712,10 +717,11 @@ class DocumentTest(unittest.TestCase):
         for card in BABIES:
             self.assertIn(card, text)
         status = (ROOT / "docs" / "implementation-status.md").read_text(encoding="utf-8")
-        self.assertIn("# 実装状況（v0.1〜v0.114）", status)
+        # v0.115: 題の範囲と README の「今のエンジンの版」は版を上げるたびに変わるので、v0.114 以後の範囲であることと、v0.114 の項（0.114.0）が残っていることを確かめる
+        self.assertGreaterEqual(int(re.search(r"^# 実装状況（v0\.1〜v0\.(\d+)）", status, re.MULTILINE).group(1)), 114)
         self.assertIn("## v0.114: ベイビィポケモン 13 枚・ベイビィの共通のルール・ベイビィからの進化", status)
         self.assertNotIn("\n- ベイビィポケモン\n", status)  # 未実装の一覧から除いた
-        self.assertIn("v0.114（今のエンジンの版。`kyuura_engine` の版は 0.114.0）", (ROOT / "README.md").read_text(encoding="utf-8"))
+        self.assertRegex((ROOT / "README.md").read_text(encoding="utf-8"), r"\n- v0\.114（(今のエンジンの版。)?`kyuura_engine` の版は 0\.114\.0）: ベイビィポケモン 13 枚")
         self.assertIn("### v0.114: ベイビィポケモン 13 枚", (ROOT / "docs" / "rules-2000-02-14.md").read_text(encoding="utf-8"))
         self.assertIn("## v0.114: ベイビィポケモン 13 枚", (ROOT / "docs" / "data-provenance.md").read_text(encoding="utf-8"))
 

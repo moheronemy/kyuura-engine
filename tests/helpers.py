@@ -1502,6 +1502,22 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.CoinReturnOpponentSpecialEnergyToDeck,
     _effects.PutBabyFromDeckOntoBenchOrFail,
     _effects.PlaceCountersOnChosenOpponentPokemon,
+    # v0.115（docs/spread-damage-allocation-v0.115.md 6 章。場・ベンチへのダメージ、対象ごとのコイン、ダメージの配分。コインの「おもて」で相手の場の全員と入れ替え・続けて投げるコインの
+    # 控えへのダメージ・タイプ以外の全員・おたがいの控えごとのコイン・受けるポケモンごとのエネルギーカードの枚数・コインの「おもて」で全員と山札からの進化・エネルギーカードの枚数のコインと
+    # 相手の山札・控えがいると変わるダメージと選んだ控え・最大 2 匹と次の番の禁止・多いエネルギーの配分・コインの配分・トラッシュした数の配分・選んだ相手のポケモンにも）
+    _effects.CoinSpreadDamageThenOpponentSwitch,
+    _effects.DamageThenChainedCoinsBenchDamage,
+    _effects.SpreadDamageExceptType,
+    _effects.DamageThenCoinPerBothBenches,
+    _effects.EnergyCardsSpreadDamage,
+    _effects.CoinSpreadDamageThenEvolveNamedFromDeck,
+    _effects.CoinsPerOwnEnergyCardsDamageThenMillOpponent,
+    _effects.ReducedDamageThenChosenBenchDamage,
+    _effects.ChosenBenchTargetsThenSelfCannotAttack,
+    _effects.DamageThenAllocateExtraEnergyToBench,
+    _effects.DamageThenCoinsAllocateToBench,
+    _effects.DiscardEnergyUpToThenAllocateToOpponentPokemon,
+    _effects.DamageThenChosenOpponentPokemonDamage,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

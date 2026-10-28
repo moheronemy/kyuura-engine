@@ -353,6 +353,10 @@ OPTIONAL_HEAL = "optional_heal"
 # uid（ついている順）で 1 枚。``context`` の ``"owner"`` はカードとポケモンの持ち主（相手）。v0.95 の SELECT_ATTACHED_TRAINER（トレーナーカード）とは選ぶカードが違うので別の種類。
 # 再開先は "attack"
 SELECT_ATTACHED_SPECIAL_ENERGY = "select_attached_special_energy"
+# v0.115（docs/spread-damage-allocation-v0.115.md 4.3 節）: シードラの「ウォーターボム」・ゴローンの「がんせきくだき」・ゴローニャの「ロックブラスト」の、得たダメージの単位を相手の場の
+# ポケモンに配る配分（得た分をすべて配る。同じポケモンに配った単位は合算する）。決めるのはワザを使ったプレイヤーで、選べるものは ``context`` の ``"table"``（配る先のポケモン（``"allocation"``
+# の番号の並び）ごとの単位の数の組の並び。合計はちょうど得た単位の数）の位置。ちょうど 1 つ。重ならない選択の並びで回数を表さない（決定の答えの重複の拒否は変えない）。再開先は "attack"
+ALLOCATE_DAMAGE = "allocate_damage"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

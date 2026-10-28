@@ -110,6 +110,7 @@ from .decisions import (
     OPTIONAL_SHUFFLE,
     OPTIONAL_HEAL,
     SELECT_ATTACHED_SPECIAL_ENERGY,
+    ALLOCATE_DAMAGE,
 )
 from .effects import (
     JANKEN_HANDS,
@@ -173,6 +174,7 @@ OPTION_MEANINGS: dict[str, str] = {
     OPTIONAL_SHUFFLE: "number",  # v0.95: ［わるぢえ］で見た山札を切るか（山札の持ち主の番号。0 個は切らない）
     OPTIONAL_HEAL: "pokemon",  # v0.104: プリンの「かいふく」で取り除くか（ワザを使ったポケモンの番号。0 個は取り除かない）
     SELECT_ATTACHED_SPECIAL_ENERGY: "card",  # v0.114: サイコキッス（相手の場のポケモンについている特殊エネルギーカード。公開）
+    ALLOCATE_DAMAGE: "number",  # v0.115: ウォーターボム・がんせきくだき・ロックブラストの配分（``context`` の ``"table"`` の位置。配る先・単位の数は場とコイン・トラッシュの公開の情報）
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
 # v0.73: 化石の発掘（山札とトラッシュ）・マスターボール（見た山札の上の 7 枚）も、決めるプレイヤーが自分の山札を見る
@@ -566,6 +568,8 @@ PUBLIC_EVENTS = frozenset({
     # v0.86: ［かんでん］のダメージ・［いなびかり］がはたらかなかった（相手の控えなし）・反応の特殊能力を使わなかった・［はしりさる］のコインの結果とはたらかなかった・
     # ダークドレインのポケモンごとのコインの結果・［おたけび］の番の終わり（どれも場・コイン・公開の結果）
     "conductivity", "lightning_burst_skipped", "reaction_power_declined", "bolt_check", "bolt_skipped", "pokemon_coin_results", "power_turn_end",
+    # v0.115: びっくりサンダーの続けて投げたコインの面の並びと控えへの量・ダメージの配分（どれもコイン・場の公開の情報）
+    "chained_coin_results", "damage_allocated",
     # v0.87: 場の移動・ダメージへの反応（どれも場・コインの公開の情報）
     "spikes_damage", "hot_plate_damage", "movement_damage_skipped", "magma_pool", "magma_pool_none", "shock_blast_check", "shock_blast_damage",
     "shock_blast_skipped", "poison_fluid", "poison_fluid_skipped", "split_skipped", "split_declined",
