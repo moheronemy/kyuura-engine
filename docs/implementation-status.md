@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.115）
+# 実装状況（v0.1〜v0.116）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`（v0.114 から。v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3818,6 +3818,23 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 338・neo 154・拡張パック以外 184） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistryTest` |
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.116: エネルギーの付け替え・ついた時の効果・付属カードの回収と退化
+
+[energy-movement-attachment-devolution-v0.116.md](energy-movement-attachment-devolution-v0.116.md)。写しの元・研究の基準は kyuura e519b99 のまま（データの移行はない）。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 13 枚・ワザ 25 の登録（写しの組 pool_v0_116。印刷の文面のまま。はねる・ちょうねんりきは `DAMAGE_ONLY`、6 つは既存の型、17 は新しい 14 の型。ユンゲラー ES3-020・QSG-027 は登録の値を共有） | 実装済み・テスト済み・対戦で確かめた | kyuura e519b99 の写し | test_energy_movement_attachment_devolution_v0_116.py `RegistrationTest` |
+| ついた時に発動する持続効果（しこみどく・エナジーショック。`StatusOnEnergyAttach`。次の相手の番、手札・山札・トラッシュから新しくついたカードごとにどく・マヒ） | 実装済み・テスト済み・対戦で確かめた | 印刷の文面 | 同 `AttachTriggerTest`・`AttachRoutesTest` |
+| 同じ時点の反応の順番（なんでもなおし配合エネルギー・［ほのおでかいふく］とマヒ。番のプレイヤーが決める） | 実装済み・テスト済み（対戦では手札からの順番の決定の場面だけ） | GR-2000-P325-SAME-TIMING | 同 `AttachOrderTest` |
+| 場のつけ替え・［エネエネ］が「ついたとき」に当たるか（AT1）・手札からでない経路のマヒと［ほのおでかいふく］（`UNSUPPORTED_ATTACH_TRIGGER_ORDER`） | 裁定が未解決（AT1）・エンジンの未対応（順番） | — | 同 `AttachRoutesTest`・`AttachOrderTest` |
+| 手札・トレーナーの効果の進化の禁止（やみのしょくしゅ。`EvolutionLock`。ワザ・特殊能力の効果の進化は止めない） | 実装済み・テスト済み・対戦で確かめた（対戦では効果を与えて消えるまで。はたらく番の進化の試みは単体のテストだけ） | 印刷の文面 | 同 `DarkTentacleTest` |
+| エネルギーの付け替え（バトンタッチ・エナジーサイクル・エナジーコントロール）・付属カードを持ち主の手札に（ツイスター） | 実装済み・テスト済み・対戦で確かめた | 印刷の文面・CR-TRANSPARENCY-ENERGY-BOMB（T36）・CR-ENERGY-TRANS-NOT-ATTACHMENT | 同 `BatonPassTest`・`EnergyCycleTest`・`EnergyControlTest`・`TwisterTest` |
+| 退化（げんしのしずくは相手の山札へ・さいせいはたねポケモンへ）・よびもどす・はらだいこ・トランスダメージ・エナジーさいせい・クロスアタックなど | 実装済み・テスト済み・対戦で確かめた | 印刷の文面・GR-2000-P320-COUNTER-MOVE・NB1・NB2・DV5・FC1・HC1・CX1 | 同 `PrimalDropTest`・`RegenerateTest`・`CallBackTest`・`BellyDrumTest`・`TransDamageTest`・`SimpleAttacksTest`・`EspAndPsychoLinkTest` |
+| ログの監査（25 のワザの処理を、印刷の文面とログから組み立てた場・コイン・カードの動きで照らす） | 実装済み・テスト済み・対戦で確かめた | 8 章 | tests/log_audit.py の `v116_problems`・`--batch v0.116` |
+| 未対応の数（全対象 88・neo 35・拡張パック以外 53） | 確かめた | kyuura data/engine_targets.json（e519b99）から今の登録を差し引いた数 | test_catalog_contract.py |
+| 13 枚の外部照合（pcg-search.com）・カードの画像 | 原典未確認（エンジンは画像を見ていない） | していない | — |
 
 ## v0.115: 場・ベンチへのダメージ、対象ごとのコイン、ダメージの配分
 
