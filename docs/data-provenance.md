@@ -1955,6 +1955,26 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.117: 場の移動・にげる時の反応・条件付きの特殊能力の 13 枚
+
+[retreat-return-active-powers-v0.117.md](retreat-return-active-powers-v0.117.md) の 3 章・11 章。
+
+- 写しの元・研究の基準は v0.116 と同じ kyuura `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`（データの移行はない）。写しの組 `pool_v0_117`（13 枚。ヘラクロス neo1-017・エイパム neo1-067・
+  ニョロトノ neo2-019・セレビィ neo3-036・オドシシ neo3-049・アンノーンC neo4-057・アンノーンQ neo4-059・ナツメのゴース GD6-005・ブラッキー PF2-006・ライコウ PF3-004・エンテイ PF3-005・
+  スイクン PF3-006・ヤミカラス PRN-001）を加え、写しの作り直しの道具で作った（手で直していない）。v0.116 までの 1,289 枚の値は変わっていない。同じカードの組はない。
+- 13 枚の採用の記録（`card_sources.json`。`kyuura_commit` e519b99・記録した日 2026-10-29・外部照合なし。記録 1,202 → 1,215）。処理に使う文面は、説明文のあるワザ 15 と特殊能力 8 が kyuura の
+  印刷の文面（研究の対応表の `adopted_printed_text` に 23 を加えた。1,282 → 1,305）。めざめるパワー（neo4-057・neo4-059）・つつく（PRN-001）は説明文がない。13 枚とも kyuura に最新の説明・
+  エラッタの記録はない。`kyuura_records` は、オドシシ（neo3-049）が UQ-NEO-TEXT-BABY-CATEGORIES（いかくの事例）、残る 12 枚はなし（カードの id・pcg-search の id の完全一致の検索。一般の規定・
+  名前による言及がないという意味ではない）。
+- 日本語の文面の転記元: neo1・neo2 の 3 枚がなぞのばしょ、neo3・neo4 の 4 枚が Pokemon Wiki、GD6-005・PF2-006・PF3-004・PF3-005・PF3-006・PRN-001 が pcg-search.com。同じ所との一致を
+  独立した照合に数えず、新しく画像を見たことにしていない（エンジンは画像を見ていない）。データの欠け（GD6-005・PF2-006・PF3-004・PF3-005・PF3-006 の `jp_print.level`、PRN-001 の
+  `pokemon.dex`・`jp_print.level`）は補っていない。アンノーンC・Q のルール文は写しの `rules_text` にある。
+- おいうち（PF2-006・PRN-001）は説明文が同じで目安が違い、［でんせつのからだ］（PF3-004・PF3-005・PF3-006）は説明文が同じ。登録の値を共有し、カードの記録・同じ名前の上限は分けた。
+- 2002 年の公式 Q&A のポケボディーの分類は、今回の処理の根拠にしていない（宣言するか・常にはたらくかは印刷の文面と既存の同じ形の処理で決めた）。後年の分類と答えが同じかは確かめていない。
+- kyuura への報告事項: 13 枚の `engine_status` は今回の登録を写すと `registered`。エンジンの新しい問い RR1・QK1・TW1・TW2・LB1・LB2・VH1・ES4 は kyuura に対応する記録がない。
+  UQ-NEO-TEXT-BABY-CATEGORIES の事例 neo3-049 を研究の対応表でエンジンの NB1 に結んだ（kyuura の記録の `engine_refs` は変えていない。kyuura は変えていない）。
+  `UNSUPPORTED_PURSUIT_DAMAGE_REACTION`・`UNSUPPORTED_LEGEND_BODY_PENDING_DISCARD` はエンジンの制限で研究の論点ではない。
+
 ## v0.116: エネルギーの付け替え・ついた時の効果・付属カードの回収と退化の 13 枚
 
 [energy-movement-attachment-devolution-v0.116.md](energy-movement-attachment-devolution-v0.116.md) の 2 章・11 章。
