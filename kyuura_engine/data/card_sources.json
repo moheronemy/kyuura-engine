@@ -29564,6 +29564,200 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.116 で加えた（docs/energy-movement-attachment-devolution-v0.116.md）。PR1（プロモ(旧裏)。promo）。2000.02.14 版のルールで処理する。超・2 進化（ユンゲラーから。HP90）。サイコパニック=DamageSetAgainstType(超, 60)（既存の型。受けるポケモンの今のタイプが超なら基本となるダメージ 60）。トランスダメージ=DiscardAllEnergyThenMoveAllSelfCountersToOpponent()（v0.116 の型。自分のエネルギーカードをすべてトラッシュ（使うための条件か効果かは HC1。炎の RUL-ENERGY-DISCARD-ATTACKS を広げない）→ 自分のダメージカウンターをすべて相手にのせかえる（ダメージではない。GR-2000-P320-COUNTER-MOVE。受けない相手は CX1））。データの欠け jp_print.level は処理に使わず、補っていない。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はpcg-search.comの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo1-017": {
+      "basis": "kyuura_data",
+      "name_ja": "ヘラクロス",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-29",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.117 で加えた（docs/retreat-return-active-powers-v0.117.md）。neo1（金、銀、新世界へ...。expansion_pack）。2000.02.14 版のルールで処理する。草・たね（HP60）。メガホーン=FailOnTailsDamage()（既存の型。「うら」なら失敗）。きしかいせい=NamedAttackDamageSetWhileLowHp(メガホーン, 120, 20)（v0.117 の型。宣言しない。残りHP 20 以下で、このカードが使うメガホーンのダメージを p.321 の 2 段階で 120 にする（60 を加えるのではない）。ねむり・マヒ・こんらんで使えない）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はなぞのばしょの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前・特殊能力の名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定（2002 年の Q&A のポケボディーの分類をふくむ）は持ち込まない"
+    },
+    "neo1-067": {
+      "basis": "kyuura_data",
+      "name_ja": "エイパム",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-29",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.117 で加えた（docs/retreat-return-active-powers-v0.117.md）。neo1（金、銀、新世界へ...。expansion_pack）。2000.02.14 版のルールで処理する。無色・たね（HP40）。もちさる=ReturnSelfToDeckThenCoinDiscardCardToDeck()（v0.117 の型。自分と自分についているすべてのカードを山札にもどしてからコイン、「おもて」ならトラッシュのカード 1 枚を山札に、最後に山札を切る。使ったポケモンが場にいなくなってもコイン・選ぶ・切ることは続ける。ESPといっしょに場をはなれてからのコインは ES4）。しっぽビンタ=CoinFlipDamage(2, 10)（既存の型）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はなぞのばしょの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前・特殊能力の名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定（2002 年の Q&A のポケボディーの分類をふくむ）は持ち込まない"
+    },
+    "neo2-019": {
+      "basis": "kyuura_data",
+      "name_ja": "ニョロトノ",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-29",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.117 で加えた（docs/retreat-return-active-powers-v0.117.md）。neo2（遺跡をこえて...。expansion_pack）。2000.02.14 版のルールで処理する。水・2 進化（ニョロゾから。HP100）。おうふくビンタ=CoinFlipDamage(2, 40)（既存の型）。かえるのうた=AttackDamageBonusWithNamedFieldCount((ニョロモ, ニョロゾ, ニョロボン, ニョロトノ), 3, 40)（v0.117 の型。宣言しない。おたがいの場の今の姿の名前が 4 つのどれかのポケモンが合計 3 匹以上なら、このカードがワザで与えるダメージに p.321 の 2 段階で +40。持ち主の名前のついた名前・重なった下のカードは数えない。うらのカードの名前で答えが変わるときだけ FD1。ねむり・マヒ・こんらんで使えない）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はなぞのばしょの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前・特殊能力の名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定（2002 年の Q&A のポケボディーの分類をふくむ）は持ち込まない"
+    },
+    "neo3-036": {
+      "basis": "kyuura_data",
+      "name_ja": "セレビィ",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-29",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.117 で加えた（docs/retreat-return-active-powers-v0.117.md）。neo3（めざめる伝説。expansion_pack）。2000.02.14 版のルールで処理する。超・たね（HP50）。サイキックダメージ=CoinsCountersOnOpponent(3)（v0.117 の型。コイン 3 枚の「おもて」の数ぶんのダメージカウンターを相手にのせる。ダメージではない）。ときわたり=ReturnToDeckOnHeadsInsteadOfKnockOut()（v0.117 の型。自動的にはたらく。相手のワザの分類のダメージで残りHPがなくなったとき（場所は問わない）、受けたときにねむり・マヒ・こんらんでなければ、持ち主のコインの「おもて」できぜつせず、自分とついているすべてのカードを山札にもどして切る。時点は TW1、同じきぜつの判定の効果との重なりは TW2）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はポケモンWikiの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前・特殊能力の名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定（2002 年の Q&A のポケボディーの分類をふくむ）は持ち込まない"
+    },
+    "neo3-049": {
+      "basis": "kyuura_data",
+      "name_ja": "オドシシ",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-29",
+      "kyuura_records": [
+        "UQ-NEO-TEXT-BABY-CATEGORIES"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.117 で加えた（docs/retreat-return-active-powers-v0.117.md）。neo3（めざめる伝説。expansion_pack）。2000.02.14 版のルールで処理する。無色・たね（HP60）。いかく=LockOpponentAttackIfBasic()（v0.117 の型。相手が説明の「たねポケモン」なら、相手のワザを 1 つ選んで次の相手の番に使えなくする。neo の説明なので、進化していないベイビィポケモンをふくむかは NB1（UQ-NEO-TEXT-BABY-CATEGORIES の事例））。うしろなげ=DamageThenCoinOwnBenchDamage(10)（既存の型。「うら」で自分の控え 1 匹に弱点・抵抗力なしの 10）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はポケモンWikiの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前・特殊能力の名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定（2002 年の Q&A のポケボディーの分類をふくむ）は持ち込まない"
+    },
+    "neo4-057": {
+      "basis": "kyuura_data",
+      "name_ja": "アンノーンC",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-29",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.117 で加えた（docs/retreat-return-active-powers-v0.117.md）。neo4（闇、そして光へ...。expansion_pack）。2000.02.14 版のルールで処理する。超・たね（HP40）。ルール文「「アンノーン」はデッキに4枚までしか入れることができません。」（v0.96 の名前のグループの規定）。めざめるパワー=DAMAGE_ONLY（説明文なし。文面・出典を書かない）。CHASE[チェイス]=CountersOnOpponentRetreatWhileActive(1)（v0.117 の型。宣言しない。このカードがバトル場にいるあいだ、相手の対戦ポケモンが「にげる」とき（宣言した「にげる」だけ）、このカードの持ち主のコインの「おもて」で、にげたポケモンにダメージカウンターを 1 個のせる。特殊状態の条件はない。こんらんの「にげる」は RR1）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はポケモンWikiの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前・特殊能力の名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定（2002 年の Q&A のポケボディーの分類をふくむ）は持ち込まない"
+    },
+    "neo4-059": {
+      "basis": "kyuura_data",
+      "name_ja": "アンノーンQ",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-29",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.117 で加えた（docs/retreat-return-active-powers-v0.117.md）。neo4（闇、そして光へ...。expansion_pack）。2000.02.14 版のルールで処理する。超・たね（HP40）。ルール文「「アンノーン」はデッキに4枚までしか入れることができません。」（v0.96 の名前のグループの規定）。めざめるパワー=DAMAGE_ONLY（説明文なし。文面・出典を書かない）。QUICKEN[クイックン]=CoinGroupAttackImmunityNextTurn(Q, QUICKEN)（v0.117 の型。自分の番ごとに 1 回。この番にほかのアンノーンQ の個体が使っていれば使えない（「うら」・場をはなれたあとも使った記録は残る）。「おもて」なら次の相手の番、自分の場の今の姿の「アンノーン」全員がワザによるダメージや効果を受けない（プレイヤーの記録。使ったアンノーンQ の力が消えていれば QK1））。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はポケモンWikiの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前・特殊能力の名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定（2002 年の Q&A のポケボディーの分類をふくむ）は持ち込まない"
+    },
+    "GD6-005": {
+      "basis": "kyuura_data",
+      "name_ja": "ナツメのゴース",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-29",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.117 で加えた（docs/retreat-return-active-powers-v0.117.md）。GD6（gym_deck）。2000.02.14 版のルールで処理する。超・たね（HP30）。したでなめる=ParalyzeOnHeads()（既存の型）。ぱっときえる=DamageThenReturnSelfAndEnergyToHand()（v0.117 の型。目安 30 → 自分（重なったポケモンのカード）と自分についているすべてのエネルギーカードを持ち主の手札にもどす。きぜつではない。トラッシュを通さない。エネルギーカードでないカードがついていれば行き先が決まらない PK1）。データの欠け jp_print.level は処理に使わない。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はpcg-search.comの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前・特殊能力の名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定（2002 年の Q&A のポケボディーの分類をふくむ）は持ち込まない"
+    },
+    "PF2-006": {
+      "basis": "kyuura_data",
+      "name_ja": "ブラッキー",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-29",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.117 で加えた（docs/retreat-return-active-powers-v0.117.md）。PF2（premium_file）。2000.02.14 版のルールで処理する。悪・1 進化（イーブイから。HP70）。でんこうせっか=CoinBonusDamage(20)（既存の型）。おいうち=DamageThenPursuitOnRetreat(10)（v0.117 の型。目安 30 → 次の相手の番、受けた相手が「にげる」とき（宣言した「にげる」の入れ替えのあと。効果は入れ替えの前に写す）、効果を与えたワザによるダメージ（ワザの分類。弱点・抵抗力なし。量は 10 を基本となるダメージにした共通の計算）。バトル場とベンチで量が違う・こんらんの「にげる」は RR1、「にげる」の中で扱えない受けるときの効果はエンジンの未対応）。データの欠け jp_print.level は処理に使わない。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はpcg-search.comの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前・特殊能力の名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定（2002 年の Q&A のポケボディーの分類をふくむ）は持ち込まない"
+    },
+    "PF3-004": {
+      "basis": "kyuura_data",
+      "name_ja": "ライコウ",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-29",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.117 で加えた（docs/retreat-return-active-powers-v0.117.md）。PF3（premium_file）。2000.02.14 版のルールで処理する。雷・たね（HP60）。ライトニングスパーク=DamageThenCoinBenchDamage(20)（既存の型。「おもて」で選んだ相手の控え 1 匹に弱点・抵抗力なしの 20）。でんせつのからだ=ImmuneToTrainersWhileActive()（v0.117 の型。ライコウ・エンテイ・スイクンで同じ実装の値。バトル場で力がはたらくあいだ、スタジアムでないトレーナーカードの効果を受けない（効果を受けないポケモンを対象にするトレーナーの答え・使うことは LB1、一部だけが止まる効果は残りを続ける、まきちらせ!ベトベトガスとの重なりは LB2）。ついているトレーナーカードはコマンドの終わりにトラッシュする。特殊状態の条件はない）。データの欠け jp_print.level は処理に使わない。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はpcg-search.comの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前・特殊能力の名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定（2002 年の Q&A のポケボディーの分類をふくむ）は持ち込まない"
+    },
+    "PF3-005": {
+      "basis": "kyuura_data",
+      "name_ja": "エンテイ",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-29",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.117 で加えた（docs/retreat-return-active-powers-v0.117.md）。PF3（premium_file）。2000.02.14 版のルールで処理する。炎・たね（HP60）。メガフレイム=CoinsDiscardTailsEnergyThenDamage(炎, 2)（v0.117 の型。コイン 2 枚の「うら」の数ぶんの炎エネルギーカードをトラッシュ。足りなければ 1 枚もトラッシュせずダメージはなくなる（v0.82 のヒートフレイムと同じ読み方））。でんせつのからだ=ImmuneToTrainersWhileActive()（v0.117 の型。ライコウ・エンテイ・スイクンで同じ実装の値。バトル場で力がはたらくあいだ、スタジアムでないトレーナーカードの効果を受けない（効果を受けないポケモンを対象にするトレーナーの答え・使うことは LB1、一部だけが止まる効果は残りを続ける、まきちらせ!ベトベトガスとの重なりは LB2）。ついているトレーナーカードはコマンドの終わりにトラッシュする。特殊状態の条件はない）。データの欠け jp_print.level は処理に使わない。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はpcg-search.comの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前・特殊能力の名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定（2002 年の Q&A のポケボディーの分類をふくむ）は持ち込まない"
+    },
+    "PF3-006": {
+      "basis": "kyuura_data",
+      "name_ja": "スイクン",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-29",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.117 で加えた（docs/retreat-return-active-powers-v0.117.md）。PF3（premium_file）。2000.02.14 版のルールで処理する。水・たね（HP60）。クリスタルウェーブ=CoinBonusDamageElseForceSwitch(10)（既存の型。v0.117 で PF3-006 の書き方の全文 1 通りを受け付ける文に加えた。1 枚のコインで「おもて」なら +10、「うら」なら相手が選ぶ控えと入れ替え。控えがいなければ入れ替えだけがなくなる）。でんせつのからだ=ImmuneToTrainersWhileActive()（v0.117 の型。ライコウ・エンテイ・スイクンで同じ実装の値。バトル場で力がはたらくあいだ、スタジアムでないトレーナーカードの効果を受けない（効果を受けないポケモンを対象にするトレーナーの答え・使うことは LB1、一部だけが止まる効果は残りを続ける、まきちらせ!ベトベトガスとの重なりは LB2）。ついているトレーナーカードはコマンドの終わりにトラッシュする。特殊状態の条件はない）。データの欠け jp_print.level は処理に使わない。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はpcg-search.comの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前・特殊能力の名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定（2002 年の Q&A のポケボディーの分類をふくむ）は持ち込まない"
+    },
+    "PRN-001": {
+      "basis": "kyuura_data",
+      "name_ja": "ヤミカラス",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-29",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.117 で加えた（docs/retreat-return-active-powers-v0.117.md）。PRN（promo）。2000.02.14 版のルールで処理する。悪・たね（HP60）。つつく=DAMAGE_ONLY（説明文なし。文面・出典を書かない）。おいうち=DamageThenPursuitOnRetreat(10)（v0.117 の型。目安 20。効果はブラッキー（PF2-006）と同じ）。データの欠け pokemon.dex・jp_print.level は処理に使わない。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はpcg-search.comの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id・名前・ワザの名前・特殊能力の名前で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定（2002 年の Q&A のポケボディーの分類をふくむ）は持ち込まない"
     }
   }
 }

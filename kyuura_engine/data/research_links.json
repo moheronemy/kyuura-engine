@@ -12,8 +12,8 @@
   "card_data_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 247,
-    "engine_stop_codes": 246,
+    "engine_unresolved_rulings": 255,
+    "engine_stop_codes": 254,
     "kyuura_issues": 73
   },
   "stop_codes": {
@@ -2844,6 +2844,94 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_RETREAT_REACTION_TIMING": {
+      "engine_rulings": [
+        {
+          "version": "v0.117",
+          "document": "docs/retreat-return-active-powers-v0.117.md",
+          "ruling_id": "RR1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_QUICKEN_EFFECT_SUPPRESSED": {
+      "engine_rulings": [
+        {
+          "version": "v0.117",
+          "document": "docs/retreat-return-active-powers-v0.117.md",
+          "ruling_id": "QK1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TIME_TRAVEL_TIMING": {
+      "engine_rulings": [
+        {
+          "version": "v0.117",
+          "document": "docs/retreat-return-active-powers-v0.117.md",
+          "ruling_id": "TW1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TIME_TRAVEL_OVERLAP": {
+      "engine_rulings": [
+        {
+          "version": "v0.117",
+          "document": "docs/retreat-return-active-powers-v0.117.md",
+          "ruling_id": "TW2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_LEGEND_BODY_TRAINER_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.117",
+          "document": "docs/retreat-return-active-powers-v0.117.md",
+          "ruling_id": "LB1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_LEGEND_BODY_GOOP_GAS": {
+      "engine_rulings": [
+        {
+          "version": "v0.117",
+          "document": "docs/retreat-return-active-powers-v0.117.md",
+          "ruling_id": "LB2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_VANISH_OTHER_ATTACHED": {
+      "engine_rulings": [
+        {
+          "version": "v0.117",
+          "document": "docs/retreat-return-active-powers-v0.117.md",
+          "ruling_id": "VH1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ESP_LEFT_BEFORE_COIN": {
+      "engine_rulings": [
+        {
+          "version": "v0.117",
+          "document": "docs/retreat-return-active-powers-v0.117.md",
+          "ruling_id": "ES4"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -3081,9 +3169,11 @@
         "card_id": "neo3-049",
         "target": "attack/0",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_NEO_TEXT_BASIC_BABY"
+          ]
         },
-        "note": "いかく（エンジンに登録していないワザ）"
+        "note": "オドシシのいかくの「相手が「たねポケモン」なら」に、場の進化していないベイビィポケモンをふくむか（v0.117 で登録した。相手の対戦ポケモンが場のベイビィポケモンなら宣言の前に止める（NB1）。ベイビィから進化したたねポケモンは場の進化ポケモンなので当たらない）"
       },
       {
         "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
@@ -4843,7 +4933,30 @@
       "PR1-022/attack/0",
       "PR1-022/attack/1",
       "PR1-055/attack/0",
-      "PR1-055/attack/1"
+      "PR1-055/attack/1",
+      "neo1-017/attack/0",
+      "neo1-017/power/0",
+      "neo1-067/attack/0",
+      "neo1-067/attack/1",
+      "neo2-019/attack/0",
+      "neo2-019/power/0",
+      "neo3-036/attack/0",
+      "neo3-036/power/0",
+      "neo3-049/attack/0",
+      "neo3-049/attack/1",
+      "neo4-057/power/0",
+      "neo4-059/power/0",
+      "GD6-005/attack/0",
+      "GD6-005/attack/1",
+      "PF2-006/attack/0",
+      "PF2-006/attack/1",
+      "PF3-004/attack/0",
+      "PF3-004/power/0",
+      "PF3-005/attack/0",
+      "PF3-005/power/0",
+      "PF3-006/attack/0",
+      "PF3-006/power/0",
+      "PRN-001/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
