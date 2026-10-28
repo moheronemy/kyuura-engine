@@ -649,6 +649,7 @@ POOL_KEYS = (
     "pool_v0_113",  # v0.113（可変枚数のコインと、山札の検索・つける・場全体のトラッシュのポケモンの 6 枚。docs/variable-coins-search-attachments-v0.113.md）
     "pool_v0_114",  # v0.114（ベイビィポケモン 13 枚。docs/baby-rules-evolution-v0.114.md）
     "pool_v0_115",  # v0.115（場・ベンチへのダメージ、対象ごとのコイン、ダメージの配分のポケモン 13 枚。docs/spread-damage-allocation-v0.115.md）
+    "pool_v0_116",  # v0.116（エネルギーの付け替え・ついた時に発動するワザの持続効果・付属カードの回収と退化のポケモン 13 枚。docs/energy-movement-attachment-devolution-v0.116.md）
 )
 
 
