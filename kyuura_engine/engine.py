@@ -5229,6 +5229,14 @@ def _esp_redo_decision_problems(state: GameState, d, player: int, attacker: Poke
     flips = [e for e in _events_since_turn_start(state) if e["kind"] == "coin_flip"][:count]  # 新しい順
     if tuple(e.get("result") for e in reversed(flips)) != tuple(original) or any(e.get("player") != flipper or e.get("source") != "attack" for e in flips):
         return [f"ESPのやり直しの最初の結果 {original!r} が、今の番の最後のワザのコイン {[e.get('result') for e in reversed(flips)]} と違う"]
+    # v0.114: 運んだ入れ替えの結果（(名前, 入れ替えて出た控えポケモンの番号)）は、ワザを受けるプレイヤーの場のポケモンで、このワザの入れ替えのログ（forced_switch）の新しい対戦ポケモン
+    switched = d.context_value("switched_results", ())
+    entered = {e.get("new_active_pokemon_id") for e in _events_since_turn_start(state) if e["kind"] == "forced_switch" and e.get("attacker") == player}
+    for entry in switched:
+        if not (isinstance(entry, tuple) and len(entry) == 2 and isinstance(entry[0], str) and type(entry[1]) is int):
+            return [f"ESPのやり直しの続きの情報の入れ替えの結果 {entry!r} が (名前, 番号) ではない"]
+        if state.players[1 - player].find_by_pokemon_id(entry[1]) is None or entry[1] not in entered:
+            return [f"ESPのやり直しの続きの情報の入れ替えの結果 {entry!r} が、この番に入れ替えて出た相手の場のポケモンではない"]
     return []
 
 

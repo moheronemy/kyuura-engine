@@ -202,6 +202,7 @@ class AttackRun:
             return flips
         if self.esp_done:
             raise self.res.question("esp_separate_coin_tosses", f"ポケモン {attacker.pokemon_id}・ワザ {self.key}")
+        self._esp_carry_check()
         self.esp_done = True
         problem = E.esp_redo_problem(self.state, attacker, cards, flipper, self.player)
         if self.res.dry_run:
@@ -211,6 +212,17 @@ class AttackRun:
                 return flips
             return self._esp_reflip(count, by_heads, flipper, cards, flips)
         raise EspRedoOffer(count, by_heads, flipper, flips, cards, problem)
+
+    def _esp_carry_check(self) -> None:
+        """v0.114: ナツメのESPのやり直しの決定のあとにもう一度処理する要素（とそのあと）が名前で読む前の要素の結果のうち、続きの情報で運ぶ種類（トラッシュ・ダメージ・入れ替えの結果。
+        先に選んだ対象・色はどの決定でも運ぶ。``suspend``）でないものがあれば、黙って省かずに ``UNSUPPORTED_ESP_CONTINUATION``（エンジンの未対応。先読みが宣言の前に見つける）。
+        今の写しの並びでは起こらない（docs/baby-rules-evolution-v0.114.md 3 章の探索）。"""
+        later = _read_names(self.program[self.index:])
+        missing = sorted(name for name, result in self.fs.results.items()
+                         if name in later and not isinstance(result, (Discarded, E.DamageResult, ChosenTarget, ChosenColor)) and type(result) is not int)
+        if missing:
+            raise UnsupportedError("UNSUPPORTED_ESP_CONTINUATION",
+                                   f"ナツメのESPのやり直しのあとの要素が読む前の要素の結果 {missing} を、続きの情報で運べない（エンジンの未対応）")
 
     def _esp_reflip(self, count: int, by_heads: bool, flipper: int, cards: tuple[int, ...], original) -> CoinFlips:
         """v0.66: ナツメのESPで、説明文のコイントスをすべて投げ直す（同じ枚数・同じプレイヤー。最初の結果は使わない）。ログ ``esp_redo``（最初の結果・やり直した結果）。"""
@@ -275,6 +287,8 @@ class AttackRun:
             self.fs.results[name] = E.DamageResult(*values)  # v0.87
         for name, cards, outcome in carried.get("discarded_results", ()):
             self.fs.results[name] = Discarded(tuple(cards), outcome)  # v0.113: ESPのやり直しのあとの要素が読むトラッシュの結果
+        for name, pokemon_id in carried.get("switched_results", ()):
+            self.fs.results[name] = int(pokemon_id)  # v0.114: ESPのやり直しのあとの要素が読む入れ替えの結果（入れ替えて出た控えポケモンの番号）
         frame = dict(carried.get("frame", ()))
         for pid, value in frame.get("reception", ()):
             self.fs.reception[pid] = bool(value)
@@ -439,6 +453,12 @@ class AttackRun:
                                   if isinstance(result, E.DamageResult) and name in used_later))
             if damage:
                 extra += (("damage_results", damage),)
+            # v0.114（docs/baby-rules-evolution-v0.114.md 3 章）: 入れ替えの結果（``ForceSwitch`` の、入れ替えて出た控えポケモンの番号）も運ぶ。v0.113 までは運ばず、わるいアリアドスの
+            # 「からめとる」（入れ替え → この要素のコインで新しく出てきたポケモンをマヒ）を［サイコリンク］で使ったナツメのフーディンのESPの答えのあとに、マヒの要素が入れ替えなかったと
+            # 読んで、黙ってマヒを省いていた（``Status.after_switch``）。入れ替え・コインは処理し直さない（運んだ値を読むだけ）
+            switched = tuple(sorted((name, result) for name, result in self.fs.results.items() if type(result) is int and name in used_later))
+            if switched:
+                extra += (("switched_results", switched),)
         if carry:
             frame = (
                 ("reception", tuple(sorted((pid, int(value)) for pid, value in self.fs.reception.items()))),
@@ -1646,6 +1666,21 @@ def _result_names(element: Element) -> set[str]:
             value = getattr(holder, field.name)
             if isinstance(value, str):
                 found.add(value)
+    return found
+
+
+def _read_names(elements) -> set[str]:
+    """v0.114: 要素の並び（とその基本となるダメージの値）が、前の要素の結果として名前で読むもの。``_result_names`` から、要素自身が書く結果の名前の項目（``name``）を
+    除いたもの（ESPの続きの情報で運べない結果を見つける確かめに使う。運ぶ値を決めるのは ``_result_names``）。"""
+    found: set[str] = set()
+    for element in elements:
+        for holder in (element, getattr(element, "base", None)):
+            if holder is None or not dataclasses.is_dataclass(holder):
+                continue
+            for field in dataclasses.fields(holder):
+                value = getattr(holder, field.name)
+                if isinstance(value, str) and not (holder is element and field.name == "name"):
+                    found.add(value)
     return found
 
 
