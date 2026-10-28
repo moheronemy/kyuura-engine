@@ -151,7 +151,8 @@ class RegistrationTest(unittest.TestCase):
     def test_pool_and_registrations(self):
         extract = read_extract()
         self.assertEqual(tuple(extract["pool_v0_115"]), V0115)
-        self.assertEqual(cards_after(extract, "0.114"), set(V0115))
+        # v0.116: あとの版の写しの組を除いて切り出す（cards_after は、あとのすべての組をふくむ）
+        self.assertEqual(cards_after(extract, "0.114") - cards_after(extract, "0.115"), set(V0115))
         self.assertTrue(set(V0115).isdisjoint(cards_before(extract, "0.115")))
         pool = load_card_pool()
         self.assertEqual({c for c in V0115 if not pool.get(c).supported}, set())

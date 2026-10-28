@@ -1518,6 +1518,23 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DamageThenCoinsAllocateToBench,
     _effects.DiscardEnergyUpToThenAllocateToOpponentPokemon,
     _effects.DamageThenChosenOpponentPokemonDamage,
+    # v0.116（docs/energy-movement-attachment-devolution-v0.116.md 6 章。コインの「おもて」の数のダメージとこんらん・ついた時に発動するどく・マヒの持続効果・手札とトレーナーの進化の禁止・
+    # 「おもて」でねむり「うら」でにげるの禁止・エネルギーの付け替えと入れ替え・自分へのカウンターと山札の基本エネルギー・相手の対戦ポケモンから控えへの付け替え・相手の場の付け替え・
+    # 相手の山札への退化・相手のトラッシュから相手のベンチ・回復とたねポケモンへの退化・トラッシュの特殊エネルギー・付属カードを手札に・エネルギーのトラッシュとカウンターののせかえ）
+    _effects.CoinsTimesDamageThenConfuseIfAtLeast,
+    _effects.DamageThenStatusOnEnergyAttach,
+    _effects.DamageThenEvolutionLock,
+    _effects.DamageThenSleepOnHeadsElseRetreatLock,
+    _effects.DamageThenMoveAllEnergyToTypeBenchThenSwitch,
+    _effects.SelfCountersThenAttachBasicEnergyFromDeck,
+    _effects.CoinMoveOpponentEnergyCardToBenchOrFail,
+    _effects.FailOnTailsMoveOpponentFieldEnergy,
+    _effects.CoinDevolveOpponentEvolvedToDeck,
+    _effects.BenchBabyOrBasicFromOpponentDiscardOrFail,
+    _effects.HealAllThenRegressToBasic,
+    _effects.RecoverSpecialEnergyFromDiscard,
+    _effects.DamageThenCoinReturnAttachedCardsToHand,
+    _effects.DiscardAllEnergyThenMoveAllSelfCountersToOpponent,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

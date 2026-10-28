@@ -230,7 +230,8 @@ class RegistrationTest(unittest.TestCase):
         texts = {card: DEFAULT_EFFECTS.attack_entry(card, index).text_ja for card, index in FLIERS}
         self.assertEqual(texts, {FLYING_18: FLY_18, FLYING_42: FLY_42, FLYING_63: FLY_63, BUTTERFREE: FLY_SI})
         self.assertEqual(len(set(texts.values())), 4)
-        self.assertEqual(E.FLY_TEXTS, (FLY_18, FLY_42, FLY_63, FLY_SI))
+        # v0.116: ピジョン（ES3-032）の書き方を受け付ける文のあとに加えた（docs/energy-movement-attachment-devolution-v0.116.md 2.2 節）。v0.107 の 4 つは変えない
+        self.assertEqual(E.FLY_TEXTS[:4], (FLY_18, FLY_42, FLY_63, FLY_SI))
         for table in (E.SAME_DATA_CARDS_V0_104, E.SAME_DATA_CARDS_V0_106):
             self.assertFalse(set(V0107) & (set(table) | set(table.values())))
         for card in (WEEDLE, PINECO, URSARING, PSYDUCK, SHELLDER, BUTTERFREE):

@@ -717,7 +717,14 @@ class G37Test(unittest.TestCase):
         "DamageThenFieldPowerSuppressionUntilOwnNextTurn", "CoinReturnOpponentSpecialEnergyToDeck", "PlaceCountersOnChosenOpponentPokemon",
         # v0.115: しょうげきは（「おもて」でダメージのあとに相手が選ぶ控えと入れ替え）。ほかの 12 の型（ダメージ・控えへのダメージ・配分・自分の禁止・自分の進化・相手の山札）は相手の対戦
         # ポケモンへの効果を持たない。docs/spread-damage-allocation-v0.115.md 6 章
-        "CoinSpreadDamageThenOpponentSwitch"]))
+        "CoinSpreadDamageThenOpponentSwitch",
+        # v0.116: クロスアタック（こんらん）・しこみどく・エナジーショック（ついた時に発動するどく・マヒの持続効果）・やみのしょくしゅ（進化の禁止）・とりかこむ（ねむりか、にげるの禁止）・
+        # エナジーサイクル・エナジーコントロール（相手の場のエネルギーの付け替え）・げんしのしずく（相手の場の進化ポケモンの退化）・ツイスター（付属カードを手札に）・トランスダメージ（相手に
+        # ダメージカウンターをのせかえる）。バトンタッチ・はらだいこ・よびもどす・さいせい・エナジーさいせいは、自分・自分の場・相手のトラッシュとベンチへの効果で、相手の対戦ポケモンへの効果を
+        # 持たない。docs/energy-movement-attachment-devolution-v0.116.md 6 章
+        "CoinsTimesDamageThenConfuseIfAtLeast", "DamageThenStatusOnEnergyAttach", "DamageThenEvolutionLock", "DamageThenSleepOnHeadsElseRetreatLock",
+        "CoinMoveOpponentEnergyCardToBenchOrFail", "FailOnTailsMoveOpponentFieldEnergy", "CoinDevolveOpponentEvolvedToDeck", "DamageThenCoinReturnAttachedCardsToHand",
+        "DiscardAllEnergyThenMoveAllSelfCountersToOpponent"]))
 
 
 class DecisionTest(unittest.TestCase):

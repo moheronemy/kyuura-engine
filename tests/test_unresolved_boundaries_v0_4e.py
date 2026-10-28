@@ -319,6 +319,7 @@ ALL_CODES = (
     "UNRESOLVED_STOPPED_POWER_HOLDER",  # HV1（v0.114。同）
     "UNRESOLVED_DISCARD_UP_TO_ZERO",  # RKB1（v0.115。tests/test_spread_damage_allocation_v0_115.py）
     "UNRESOLVED_CHOSEN_ACTIVE_EXTRA_DAMAGE",  # SLD1（v0.115。同）
+    "UNRESOLVED_ATTACH_TRIGGER_SCOPE",  # AT1（v0.116。tests/test_energy_movement_attachment_devolution_v0_116.py）
 )
 TURN = 7
 

@@ -458,9 +458,16 @@ class BarrierCoinTest(unittest.TestCase):
                                     # v0.113: デンリュウの「ギガボルト」（1 枚のコインは追加のダメージと相手のマヒだけを決める）・ヤミカラスの「むれでつつく」・ヘルガーの「くろいキバ」
                                     # （コインは追加のダメージだけを決める）。みんなでおどる（山札の検索）・ゆうでん（自分の場につける）・だいぎゃくてん？（自分へのダメージ）は自分への要素が
                                     # 残るので投げる（docs/variable-coins-search-attachments-v0.113.md 3 章）
-                                    "CoinBonusOnHeadsElseParalyze", "CoinsPerOwnBenchNamedBonusDamage", "CoinsPerOwnTypedEnergyBonusDamage"})
+                                    "CoinBonusOnHeadsElseParalyze", "CoinsPerOwnBenchNamedBonusDamage", "CoinsPerOwnTypedEnergyBonusDamage",
+                                    # v0.116: クロバットの「クロスアタック」（4 枚のコインは相手へのダメージとこんらんだけを決める。サンダーニードルと同じ形）・わるいゴーストの「とりかこむ」
+                                    # （1 枚のコインは相手のねむりか「にげる」の禁止だけを決める）・ネイティオの「エナジーサイクル」（1 枚のコインは相手の対戦ポケモンからのつけ替えだけを決める）。
+                                    # げんしのしずく（相手の控えも選べる）・エナジーコントロール（相手の場のどのポケモンからでも）は投げる。げんしのしずくで選べるのが相手の対戦ポケモンだけなら、
+                                    # 要素がコインの前に問う（docs/energy-movement-attachment-devolution-v0.116.md 6 章）
+                                    "CoinsTimesDamageThenConfuseIfAtLeast", "DamageThenSleepOnHeadsElseRetreatLock", "CoinMoveOpponentEnergyCardToBenchOrFail"})
         for name in ("FailOnTailsSelfDestruct", "FailOnTailsDamageThenSelfBarrier", "DamageThenConfuseOpponentOrSelf"):
             self.assertIn(name, flipping)  # v0.107
+        for name in ("CoinDevolveOpponentEvolvedToDeck", "FailOnTailsMoveOpponentFieldEnergy"):
+            self.assertIn(name, flipping)  # v0.116
         for name in ("CoinsPerPokemonInPlaySearchBasicEnergy", "DamageThenCoinsAttachTypedEnergyFromDeck", "CoinsPerPokemonInPlayHeadsDamageTailsSelfDamage"):
             self.assertIn(name, flipping)  # v0.113
         self.assertIn("DamageThenStatusOnHeadsElseSelfSwitch", flipping)
