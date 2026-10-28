@@ -1214,6 +1214,34 @@ class StatusOnEnergyAttach:
 
 
 @dataclass(frozen=True)
+class PursuitOnRetreat:
+    """ワザによる「持続する効果」（v0.117。docs/retreat-return-active-powers-v0.117.md 3 章）のうち、ブラッキー（PF2-006）・ヤミカラス（PRN-001）の「おいうち」の「次の相手の番、
+    このワザを受けた相手が「にげる」とき、「弱点・抵抗力」に関係なく、10ダメージ。」（kyuura の印刷の文面）。
+
+    相手に与える効果（``on_opponent``）。はたらく番は次の相手の番（``created_turn + 1``）で、その番の間、受けているポケモンが「にげる」たびに（入れ替えが成り立ったとき）、効果を与えた
+    ワザ（``attack``。``AttackKey`` の文字列）によるダメージ（ワザの分類。弱点・抵抗力なし。量は ``amount`` を基本となるダメージにした計算）を受ける。「にげる」でベンチにもどると、
+    ほかの持続する効果と同じくこの効果は消える（p.311・p.322）ので、エンジンは「にげる」の入れ替えの前に効果を写して、反応として処理する（``engine._retreat``）。効果による入れ替え
+    （ポケモンいれかえ・突風・ふきとばし）・きぜつのあとに出すことは「にげる」ではない（p.325）。消える契機はほかの持続する効果と同じ（期限・ベンチにもどる・進化・退化・きぜつ・
+    山札や手札にもどる）。"""
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    amount: int
+    attack: str
+    kind: ClassVar[str] = "pursuit_on_retreat"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = True
+
+    def __post_init__(self) -> None:
+        if type(self.amount) is not int or self.amount <= 0 or self.amount % 10:
+            raise ValueError(f"「にげる」ときのダメージ {self.amount!r} は 10 の倍数の正の数")
+        if type(self.attack) is not str or "#" not in self.attack:
+            raise ValueError(f"効果を与えたワザ {self.attack!r} は AttackKey の文字列")
+
+
+@dataclass(frozen=True)
 class EvolutionLock:
     """ワザによる「持続する効果」（v0.116。docs 6 章）のうち、わるいオムスター（neo4-038）の「やみのしょくしゅ」の「次の相手の番、相手プレイヤーはこのワザを受けた相手を進化させることが
     出来ない。(「ワザ・特殊能力」による進化はできる)。このワザを受けた相手がバトル場をはなれたとき、この効果は消える。」（kyuura の印刷の文面）。
@@ -1597,6 +1625,7 @@ PERSISTENT_EFFECT_TYPES = (PreventDamage, PreventAttackDamage, Retaliation, Next
                            PowersStopped, BenchProtection,  # v0.86: スタンウェーブ・ほのおのまもり
                            BenchPowersStopped,  # v0.114: じっとみる（特殊能力の効果。この番の終わりまで。バトル場に出たら消える）
                            StatusOnEnergyAttach, EvolutionLock,  # v0.116: しこみどく・エナジーショック・やみのしょくしゅ（次の相手の番）
+                           PursuitOnRetreat,  # v0.117: おいうち（次の相手の番に「にげる」とき）
                            *PERIOD_EFFECT_TYPES)  # v0.92: クモのす・くろいまなざし・にらみつける（ヨーギラス）・いやなおと。v0.93: はなれられない効果・かぶりつく。v0.108: マイナスイオン・あまえる
 
 
@@ -1646,8 +1675,16 @@ ATTACK_POWER_SUPPRESSION = "attack_power_suppression"
 # その場の番号、``card_id``・``attack_index`` はワザを印刷したカードとワザの位置（ワザの出どころ）。``expires_turn`` は与えた番 + 1。オールクリアの ``ATTACK_POWER_SUPPRESSION``（ワザの
 # 処理のあとに消える）とは期限が違う別の種類。まきちらせ!ベトベトガス（``POWER_SUPPRESSION``。トレーナー）とも出どころが違う
 ATTACK_FIELD_POWER_SUPPRESSION = "attack_field_power_suppression"
+# v0.117（docs/retreat-return-active-powers-v0.117.md 6 章）: アンノーンQ（neo4-059）の［QUICKEN］（特殊能力の効果）。``player`` は使ったプレイヤー、``source_card`` は使ったポケモンの
+# いちばん上のカード、``card_id`` は特殊能力を印刷したカード、``pokemon_id`` は使ったポケモンの場の番号。``QUICKEN_USED`` は使った記録（コインの前に加える。「うら」でも残す。使った番の
+# 終わりに消える。「この番に、すでに自分の場のほかのアンノーン「Q」の「QUICKEN」を使っていたなら」の確かめ。使ったポケモンが場をはなれても消さない）。``GROUP_ATTACK_IMMUNITY`` は
+# 「おもて」の効果（次の相手の番、自分の場の「アンノーン」全員は、ワザによるダメージや効果を受けない。はたらくのは与えた番 + 1 の番だけで、その番の終わりに消える。受けるポケモンは
+# はたらく時点の場の今の姿で決める）
+QUICKEN_USED = "quicken_used"
+GROUP_ATTACK_IMMUNITY = "group_attack_immunity"
+POWER_TURN_EFFECT_KINDS = (QUICKEN_USED, GROUP_ATTACK_IMMUNITY)
 TRAINER_TURN_EFFECT_KINDS = (ATTACK_DAMAGE_BONUS, POISON_ON_ATTACK_DAMAGE, BENCH_ATTACK_DAMAGE_PREVENTION, POWER_SUPPRESSION, FIRE_DOUBLE_ATTACH, EVOLUTION_BAN,
-                             OPPONENT_POWER_SUPPRESSION, ATTACK_POWER_SUPPRESSION, ATTACK_FIELD_POWER_SUPPRESSION)
+                             OPPONENT_POWER_SUPPRESSION, ATTACK_POWER_SUPPRESSION, ATTACK_FIELD_POWER_SUPPRESSION, *POWER_TURN_EFFECT_KINDS)
 
 
 @dataclass(frozen=True)

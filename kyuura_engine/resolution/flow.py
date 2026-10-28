@@ -45,7 +45,7 @@ from ..persistent import RETURN_IN_PLAY_TO_DECK, attack_coin_checks, destiny_bon
 from .kernel import effect_ko_entries, restore_effect_ko
 from .kernel import (DryRunComplete, Resolution, apply_energy_drain, apply_split, capture_post_knockout, check_simultaneous, exp_all_offers, exp_all_options, exp_all_unresolved,
                      focus_band_offers, hp_of, knock_out_beam_problem, knock_out_power_offers, knocked, knockout_survival_candidates, knockout_survival_overlap,
-                     knockout_survivals_of, ko_prevention_offers, scram_restored_question, settle_scram, track_ko)
+                     knockout_survivals_of, ko_prevention_offers, scram_restored_question, settle_scram, time_travel_due, track_ko)
 from .programs import (
     resume_moves,AttackRun, EspRedoOffer, apply_esp_redo, apply_flee, apply_ninja_trick, decision_index, declare, offer_ninja_trick, program_may_fail, resume_guarded, run_elements,
                        with_stadium_self_damage)
@@ -493,6 +493,7 @@ def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
     end_attack_power_suppression(res)  # v0.91: 「このワザを使っているあいだ」の特殊能力の抑止の終わり（きぜつの判定の前）
     settle_scram(res)  # v0.61: ［ずらかる］（ワザの要素のあとに残りHPが「10」になったポケモン。ワザの要素を処理しない経路（こんらん・手順 4 の失敗）も通る）
     res.trace.record(WindowOpened(Window.KO_CHECK, None))
+    _time_travel(res)  # v0.117: ［ときわたり］（きぜつのかわりにコインで山札にもどる。ほかのきぜつの判定の効果とかかわるなら TW2）
     _survive_knockouts(res)  # v0.110: こらえる・こうてつか（同時のきぜつ・みちづれ・こんじょうなどの候補は、「きぜつ」しなかった結果で求める）
     check_simultaneous(res)
     bonded = _destiny_bond(res)  # v0.31: 「みちづれ」
@@ -583,6 +584,58 @@ def _survive_knockouts(res: Resolution) -> None:
                         damage_before=before, total_damage=pokemon.damage, remaining_hp=remaining)
         for record in (res.knocked_by, res.damage_ko, res.ko_carried):
             record.pop(pid, None)
+
+
+def _time_travel(res: Resolution) -> None:
+    """v0.117（docs/retreat-return-active-powers-v0.117.md 7 章）: きぜつの判定の窓の始め（こらえる・こうてつか・同時のきぜつ・みちづれ・こんじょうなどの候補を求める前）に、［ときわたり］の
+    候補（``kernel.time_travel_due``。相手のワザの分類のダメージで HP 以上・受けたときに特殊状態でない・今力が消えていない。場所は問わない）の持ち主がコインを 1 枚投げる（``source="power"``。
+    ログ ``time_travel``）。「おもて」なら、きぜつの処理をせず（サイドは取られない）、重なったカード・ついているカードをすべて持ち主の山札にもどし（``zones.return_in_play_to_deck`` の
+    ``power``）、持続する効果を消し、山札を切る（先読みでは切らない）。きぜつの原因の記録を消す（このあとの候補に残さない）。「うら」なら今までどおりきぜつする。
+
+    - 止める場面（状態・乱数・ログを変える前）: 候補が 2 匹以上（コインと山札を切る順番。TW2）・同じポケモンが同じきぜつの判定の効果（こらえる・こうてつか・こんじょう・［ファイナル
+      ビーム］・きあいのハチマキ・学習装置・みちづれ）にかかわる（TW2）・持ち主の番（自分のワザの中の返す効果のダメージ。すぐあとの読み方ではワザの途中で場をはなれる。TW1）・
+      ［ずらかる］を持つ（TW1）。HP 以上になったあとに同じワザの処理がかかわる場面は、その処理の前に TW1 で止めている（``kernel.time_travel_timing``）"""
+    state = res.state
+    found = []
+    for owner, pokemon in knocked(res):
+        instance = time_travel_due(res, owner, pokemon)
+        if instance is not None:
+            found.append((owner, pokemon, instance))
+    if not found:
+        return
+    if len(found) > 1:
+        raise res.question("time_travel_overlap", f"［ときわたり］のポケモン {[p.pokemon_id for _, p, _ in found]}")
+    owner, pokemon, instance = found[0]
+    pid = pokemon.pokemon_id
+    if owner == state.current_player:
+        raise res.question("time_travel_timing", f"ポケモン {pid}・自分のワザの中の返す効果のダメージ")
+    if any(p is pokemon for _, p, _ in E.scram_slots(state)):
+        raise res.question("time_travel_timing", f"ポケモン {pid}・［ずらかる］")
+    involved = ["こらえる・こうてつか"] if knockout_survivals_of(res, pokemon) else []
+    involved += [f"こんじょう {o[1].pokemon_id}" for o in ko_prevention_offers(res, record=False) if o[1].pokemon_id == pid]
+    involved += [f"ファイナルビーム {b[1].pokemon_id}" for b in knock_out_power_offers(res, record=False) if b[1].pokemon_id == pid or b[3] == pid]
+    involved += [f"きあいのハチマキ {b[1].pokemon_id}" for b in focus_band_offers(res, record=False) if b[1].pokemon_id == pid]
+    involved += [f"学習装置 {e[1].pokemon_id}" for e in exp_all_offers(res, record=False) if e[1].pokemon_id == pid]
+    target = state.players[state.current_player].active
+    bonds = [p for o, p in knocked(res) if o != state.current_player and destiny_bond(state, p) is not None]
+    if bonds and target is not None and (target.pokemon_id == pid or any(p.pokemon_id == pid for p in bonds)):
+        involved.append(f"みちづれ {[p.pokemon_id for p in bonds]}")
+    if involved:
+        raise res.question("time_travel_overlap", f"ポケモン {pid}（{' / '.join(involved)}）")
+    key = str(instance.power_key)
+    attacker, attacker_pid = res.damage_ko[pid]
+    flips = flip_coins(state, owner, 1, source="power", effect=key, card=pokemon.card, pokemon_id=pid)
+    heads = flips.results[0] is CoinSide.HEADS
+    state.add_event("time_travel", player=owner, pokemon=pokemon.card, pokemon_id=pid, power=key, result=flips.results[0].value, attacker=attacker,
+                    attacker_pokemon_id=attacker_pid)
+    if not heads:
+        return
+    return_in_play_to_deck(state, owner, pokemon, power=key)
+    remove_persistent_effects(state, owner, pokemon, RETURN_IN_PLAY_TO_DECK)
+    if not res.dry_run:
+        shuffle_deck(state, owner, power=key)
+    for record in (res.knocked_by, res.damage_ko, res.ko_carried, res.ko_prevention_able):
+        record.pop(pid, None)
 
 
 def _focus_band(res: Resolution, owner: int, pokemon, attached, effect) -> None:

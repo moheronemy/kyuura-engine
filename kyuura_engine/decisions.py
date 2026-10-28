@@ -448,10 +448,26 @@ def push_trainer_decision(
     ``UnsupportedError(unresolved_code, unresolved_reason)``）。
     """
     entries = [("use", (use.player, use.card, use.card_id))]
+    options = tuple(options)
     unresolved = tuple(unresolved_choices)
+    detail = tuple(tuple(item) for item in unresolved_detail)
+    # v0.117（docs/retreat-return-active-powers-v0.117.md 5 章）: ［でんせつのからだ］で「トレーナーカード」の効果を受けないポケモン・そのポケモンについているカードは、選べるが選ぶと止める
+    # （LB1。選べるものの意味が場のポケモン・カードの決定だけ。決定を出す時点で、コイン・山札の中身の前に決める）。止める選択（``unresolved_choices``）に加え、選択ごとの理由
+    # （``unresolved_detail``）を LB1 にし、加えた選択を ``legend_body_choices`` に書く（不変条件がトレーナーの実装の決定の形を確かめるときは、その選択を除いた形で比べる）
+    from .effects import (
+        LEGEND_BODY_TARGET_CODE,
+        LEGEND_BODY_TARGET_REASON,
+        legend_body_option_stops,
+        trainer_card_effect,
+    )
+
+    stops = tuple(o for o in legend_body_option_stops(state, kind, options) if o not in unresolved) if trainer_card_effect(state, use.card) else ()
+    if stops:
+        entries.append(("legend_body_choices", stops))
+        detail += tuple((o, LEGEND_BODY_TARGET_CODE, LEGEND_BODY_TARGET_REASON) for o in stops)
+        unresolved += stops
     if unresolved:
         entries += [("unresolved_choices", unresolved), ("unresolved_code", unresolved_code), ("unresolved_reason", unresolved_reason)]
-    detail = tuple(tuple(item) for item in unresolved_detail)
     if detail:
         # v0.49: 選ぶと止める選択ごとの (選択, コード, 理由)。選択によって止める理由が違うとき（「ばける」の候補）だけ書く。``check_choices`` が優先して使う
         if not {item[0] for item in detail} <= set(unresolved):

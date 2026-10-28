@@ -18,6 +18,12 @@
 - ``(HOT_PLATE, 持ち主, ポケモンの番号, 発生源, 1)``: ［ヒートプレート］（同じまとめ方）
 - ``(MAGMA, 持ち主, ポケモンの番号, カード id, 特殊能力の位置, つけ替える先の番号, 1)``: ［やけのこり］
 - ``(MINEFIELD, 持ち主, ポケモンの番号, スタジアムカード, 1)``: ロケット団の爆発ジム（［ヒートプレート］と同じ時点のときだけ反応として扱う。ほかは v0.57 のまま ``bench_entry_damage``）
+
+v0.117（docs/retreat-return-active-powers-v0.117.md 3 章・4 章）: 「にげる」の事実への反応（にげたポケモンが受ける。どれも「にげる」の入れ替えのあと、ベンチにもどったポケモンに）:
+
+- ``(CHASE, にげたプレイヤー, にげたポケモンの番号, 持ち主, 持つポケモンの番号, カード id, 特殊能力の位置, 1)``: 相手のバトル場のアンノーンC の［CHASE］（持ち主のコイン → ダメージカウンター）
+- ``(PURSUIT, にげたプレイヤー, にげたポケモンの番号, 効果を与えたカード, 効果を与えたプレイヤー, 与えた番, 量, ワザ, 1)``: にげたポケモンが受けていた「おいうち」の効果（入れ替えの前に写した
+  ``PursuitOnRetreat``。入れ替えでベンチにもどると消えるので、効果の値を記述に持つ）
 """
 
 from __future__ import annotations
@@ -38,8 +44,10 @@ HOT_PLATE = "hot_plate"
 MAGMA = "magma_pool"
 MINEFIELD = "minefield"
 SINKHOLE = "sinkhole"
-KINDS = (SPIKES, HOT_PLATE, MAGMA, MINEFIELD, SINKHOLE)
-DAMAGING = (SPIKES, HOT_PLATE, MINEFIELD, SINKHOLE)
+CHASE = "chase"  # v0.117: ［CHASE］
+PURSUIT = "pursuit"  # v0.117: おいうち
+KINDS = (SPIKES, HOT_PLATE, MAGMA, MINEFIELD, SINKHOLE, CHASE, PURSUIT)
+DAMAGING = (SPIKES, HOT_PLATE, MINEFIELD, SINKHOLE, CHASE, PURSUIT)
 
 
 # ---------------------------------------------------------------- 事実を記録する
@@ -93,6 +101,13 @@ def note_from_hand(state: GameState, owner: int, pokemon: PokemonInPlay, *, mine
     return True
 
 
+def note_retreat(state: GameState, owner: int, new: PokemonInPlay, reactions: tuple) -> tuple:
+    """v0.117: 「にげる」の事実への反応（［CHASE］・おいうち・同じ時点の［おとしあな］）の段を加え、まだ処理していない段を返す（入れ替えの事実への反応 ``note_switch`` がないとき。
+    ある場合は呼ぶ側がその段に加える）。"""
+    _push(state, list(reactions), (owner, new.pokemon_id))
+    return take(state)
+
+
 def take(state: GameState) -> tuple:
     """まだ処理していない反応の段を返し、状態から除く（処理するのは呼ぶ側）。"""
     steps = state.pending_moves
@@ -135,6 +150,13 @@ def still_working(state: GameState, reaction: tuple) -> int | None:
         return int(found is not None and found[0].card == reaction[3])
     if kind == SINKHOLE:
         return int(bool(E.retreat_trap_powers(state, reaction[1])))
+    if kind == CHASE:
+        holder = _locate(state, reaction[3], reaction[4])
+        if holder is None:
+            return None
+        return int(any(found[1] is holder and found[2] == E.PowerKey(reaction[5], reaction[6]) for found in E.retreat_chase_holders(state, reaction[1])))
+    if kind == PURSUIT:
+        return 1  # 効果は入れ替えの前に写した（受けたポケモンが場にいるかぎり、はたらく）
     holder = _locate(state, reaction[1], reaction[2])
     if holder is None or state.players[reaction[1]].active is not target:
         return None
@@ -237,6 +259,68 @@ def sinkhole_damage(state: GameState, reaction: tuple) -> None:
         E.remove_on_damage(state, player, retreated, amount)
 
 
+def chase_counters(state: GameState, reaction: tuple) -> None:
+    """v0.117: ［CHASE］: 特殊能力を持つポケモンの持ち主がコインを 1 枚投げ（``source="power"``。ログ ``chase_check``）、「おもて」なら、にげたポケモン（ベンチにもどった）にダメージカウンターを
+    のせる（ダメージではない。弱点・抵抗力・鋼エネルギー・受けるダメージを変える効果・「ダメージを受けたとき」の効果は当てはめない。ログ ``chase_counters``）。にげたポケモンがすでに
+    HP 以上なら、コインのあと、のせない（処理の対象がない。ログ ``chase_skipped``）。"""
+    _, player, pid, owner, holder_pid, card_id, index, _ = reaction
+    retreated = _locate(state, player, pid)
+    holder = _locate(state, owner, holder_pid)
+    key = E.PowerKey(card_id, index)
+    slot = next(s for s in E.powers_of(state, holder) if s.key == key)
+    flips = flip_coins(state, owner, 1, source="power", effect=str(key), card=holder.card, pokemon_id=holder.pokemon_id)
+    state.add_event("chase_check", player=owner, pokemon=holder.card, pokemon_id=holder.pokemon_id, power=str(key), target_player=player, target_pokemon_id=pid,
+                    result=flips.results[0].value)
+    if flips.results[0] is not CoinSide.HEADS:
+        return
+    if retreated is None or E.knocked_by_hp(state, retreated):
+        state.add_event("chase_skipped", player=owner, pokemon=holder.card, pokemon_id=holder.pokemon_id, power=str(key), target_player=player, target_pokemon_id=pid,
+                        reason=E.EFFECT_TARGET_KNOCKED_OUT)
+        return
+    counters = slot.effect.counters
+    per = state.rules.damage_per_counter
+    before = retreated.damage
+    retreated.damage = before + counters * per
+    state.add_event("chase_counters", player=owner, pokemon=holder.card, pokemon_id=holder.pokemon_id, power=str(key), target_player=player, target=retreated.card,
+                    target_pokemon_id=pid, counters=counters, amount=counters * per, damage_before=before, total_damage=retreated.damage,
+                    knocked_out=E.knocked_by_hp(state, retreated))
+
+
+def pursuit_effect(reaction: tuple):
+    """v0.117: おいうちの反応の記述から、入れ替えの前に写した効果（``PursuitOnRetreat``）を作り直す。"""
+    from .state import PursuitOnRetreat
+
+    _, _, _, source_card, source_player, created_turn, amount, attack, _ = reaction
+    return PursuitOnRetreat(source_card=source_card, source_player=source_player, created_turn=created_turn,
+                            active_turn=created_turn + PursuitOnRetreat.turns_until_active, amount=amount, attack=attack)
+
+
+def pursuit_damage(state: GameState, reaction: tuple) -> None:
+    """v0.117: おいうち: にげたポケモン（ベンチにもどった）に、効果を与えたワザによるダメージ（ワザの分類。弱点・抵抗力なし。``kernel.pursuit_amount``）。受けるときの効果を「にげる」の
+    中で処理できないなら止める（``kernel.pursuit_problems``。にげる前にも確かめている）。すでに HP 以上なら処理の対象がない（ログ ``pursuit_skipped``）。無効にする効果があれば
+    のせない（ログ ``pursuit_prevented``）。ログ ``pursuit_damage``（公開）。"""
+    from .resolution.kernel import pursuit_amount, pursuit_problems
+
+    _, player, pid, source_card, source_player, _, amount, attack, _ = reaction
+    retreated = _locate(state, player, pid)
+    base = {"player": source_player, "pokemon": source_card, "attack": attack, "target_player": player, "target_pokemon_id": pid}
+    if retreated is None or E.knocked_by_hp(state, retreated):
+        state.add_event("pursuit_skipped", **base, reason=E.EFFECT_TARGET_KNOCKED_OUT)
+        return
+    effect = pursuit_effect(reaction)
+    final, void = pursuit_amount(state, player, retreated, effect, bench=state.players[player].active is not retreated)
+    if void is not None:
+        state.add_event("pursuit_prevented", **base, target=retreated.card, prevented_by=void)
+        return
+    pursuit_problems(state, player, retreated, final)
+    before = retreated.damage
+    retreated.damage = before + final
+    state.add_event("pursuit_damage", **base, target=retreated.card, amount=final, amount_before=amount, damage_before=before, total_damage=retreated.damage,
+                    knocked_out=E.knocked_by_hp(state, retreated))
+    if final > 0:
+        E.remove_on_damage(state, player, retreated, final)
+
+
 class MagmaChoice:
     """［やけのこり］でつけ替えるカードを持ち主に選ばせる（候補が 2 枚以上。選ぶと止めるカードは ``unresolved``）。"""
 
@@ -301,5 +385,5 @@ def promotion_spikes_now(state: GameState, owner: int, promoted: PokemonInPlay, 
     return True
 
 
-__all__ = ["DAMAGING", "KINDS", "MagmaChoice", "damaging", "magma_choice", "magma_move", "note_from_hand", "note_switch", "power_damage", "promotion_spikes_now",
-           "still_working", "take"]
+__all__ = ["DAMAGING", "KINDS", "MagmaChoice", "chase_counters", "damaging", "magma_choice", "magma_move", "note_from_hand", "note_retreat", "note_switch", "power_damage",
+           "promotion_spikes_now", "pursuit_damage", "still_working", "take"]

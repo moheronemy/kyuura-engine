@@ -491,6 +491,12 @@ def process(state: GameState, reaction: tuple, after: tuple) -> tuple:
     if kind == M.SINKHOLE:
         M.sinkhole_damage(state, reaction)  # v0.87: ほかの反応と同じ時点の［おとしあな］
         return after
+    if kind == M.CHASE:
+        M.chase_counters(state, reaction)  # v0.117: ［CHASE］
+        return after
+    if kind == M.PURSUIT:
+        M.pursuit_damage(state, reaction)  # v0.117: おいうち
+        return after
     if kind == M.MAGMA:
         choice = M.magma_choice(state, reaction)  # v0.87: ［やけのこり］
         if choice is None:

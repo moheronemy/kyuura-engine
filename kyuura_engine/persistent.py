@@ -80,6 +80,7 @@ from .state import (
     PeriodRetreatLock,
     PowersStopped,
     PreventDamage,
+    PursuitOnRetreat,
     ReceivedAttackDamageBonus,
     ReducedDamageToSource,
     ReflectShield,
@@ -671,6 +672,12 @@ def attach_status_triggers(state: GameState, pokemon: PokemonInPlay) -> tuple[St
     """v0.116（docs/energy-movement-attachment-devolution-v0.116.md 4 章）: 今の番に、``pokemon`` にエネルギーカードがついたときにはたらく効果（``StatusOnEnergyAttach``。しこみどく・
     エナジーショック）。はたらくのは次の相手の番（``active_turn``）だけ。受けた順。状態を変えず、乱数を使わない。"""
     return tuple(effect for effect in pokemon.persistent_effects if isinstance(effect, StatusOnEnergyAttach) and effect.active_turn == state.turn_number)
+
+
+def retreat_pursuits(state: GameState, pokemon: PokemonInPlay) -> tuple[PursuitOnRetreat, ...]:
+    """v0.117（docs/retreat-return-active-powers-v0.117.md 3 章）: 今の番に、``pokemon`` が「にげる」ときにはたらく効果（``PursuitOnRetreat``。おいうち。受けた順）。「にげる」の入れ替えで
+    ベンチにもどると消えるので、``engine._retreat`` が入れ替えの前に写す。"""
+    return tuple(effect for effect in pokemon.persistent_effects if isinstance(effect, PursuitOnRetreat) and effect.active_turn == state.turn_number)
 
 
 def evolution_lock(state: GameState, pokemon: PokemonInPlay) -> EvolutionLock | None:

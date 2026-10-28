@@ -572,6 +572,10 @@ PUBLIC_EVENTS = frozenset({
     "chained_coin_results", "damage_allocated",
     # v0.116: ついた時に発動するワザの持続効果がはたらいた（つけたカード・特殊状態）・ツイスターで手札にもどした、ついていたカード（どれも場の公開の情報）
     "attach_status_triggered", "attached_cards_to_hand",
+    # v0.117: ［CHASE］のコインの結果・のせたダメージカウンター・のせなかった、おいうちのダメージ・与えなかった・無効にした、［ときわたり］のコインの結果、［でんせつのからだ］でトラッシュした
+    # ついているトレーナーカード・トレーナーの効果を受けなかったポケモン（どれも場・コイン・公開の情報）
+    "chase_check", "chase_counters", "chase_skipped", "pursuit_damage", "pursuit_skipped", "pursuit_prevented", "time_travel", "legend_body_discard",
+    "trainer_effect_blocked",
     # v0.87: 場の移動・ダメージへの反応（どれも場・コインの公開の情報）
     "spikes_damage", "hot_plate_damage", "movement_damage_skipped", "magma_pool", "magma_pool_none", "shock_blast_check", "shock_blast_damage",
     "shock_blast_skipped", "poison_fluid", "poison_fluid_skipped", "split_skipped", "split_declined",

@@ -208,6 +208,7 @@ from .state import (
     TimedDamageGuard,
     KnockOutSurvival,
     StatusOnEnergyAttach,
+    PursuitOnRetreat,
     EvolutionLock,
     ReflectShield,
     StatusImmunityWhileActive,
@@ -334,6 +335,10 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
     elif isinstance(effect, StatusOnEnergyAttach):
         # v0.116: エネルギーカードがついたときになる特殊状態と、効果を与えたワザ（AttackKey の文字列）。種類の値と項目を加えただけで形式は変えない
         data["condition"] = effect.condition
+        data["attack"] = effect.attack
+    elif isinstance(effect, PursuitOnRetreat):
+        # v0.117: おいうちの「にげる」ときのダメージの量と、効果を与えたワザ（AttackKey の文字列）。種類の値と項目を加えただけで形式は変えない
+        data["amount"] = effect.amount
         data["attack"] = effect.attack
     elif isinstance(effect, StatusImmunityWhileActive):
         data["attack_index"] = effect.attack_index  # v0.84: 「きらめきタッチ」（効果を与えたワザと、それを使ったポケモンのカード）

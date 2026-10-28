@@ -281,6 +281,8 @@ def focus_band_of(res: Resolution, pokemon: PokemonInPlay):
     located = res.state.find_pokemon(pokemon.pokemon_id)
     if cause is None or located is None or cause[0] == located[0]:
         return None
+    if E.trainer_immunity(res.state, pokemon) is not None:
+        return None  # v0.117: ［でんせつのからだ］のバトル場のポケモンは、ついているトレーナーカードの効果を受けない（コマンドの終わりにトラッシュするまでのあいだ）
     return E.tool_effect_of(res.state, pokemon, E.FocusBand)
 
 
@@ -318,6 +320,37 @@ def knockout_survival_timing(res: Resolution, pokemon: PokemonInPlay, what: str)
     止める（先読みが宣言の前に見つける）。そのような処理のないワザでは、どちらの時点でも同じなので、きぜつの判定の窓で処理する（``flow._survive_knockouts``）。"""
     if knockout_survivals_of(res, pokemon):
         raise res.question("knockout_survival_timing", f"ポケモン {pokemon.pokemon_id}・{what}")
+    time_travel_timing(res, pokemon, what)  # v0.117（TW1）: 同じ場面で［ときわたり］がはたらく候補なら、山札にもどる時点が同じく決まらない
+
+
+def time_travel_instance(res: Resolution, owner: int, pokemon: PokemonInPlay) -> C.EffectInstance | None:
+    """v0.117: ``pokemon`` が今持つ［ときわたり］（``catalog.TIME_TRAVEL``。きぜつの判定の窓の ``Timing.KO_RETURN``）。なければ None。"""
+    for instance in C.in_window(res.state, Window.KO_CHECK, owner, pokemon, res.catalog):
+        if instance.definition.timing is C.Timing.KO_RETURN:
+            return instance
+    return None
+
+
+def time_travel_due(res: Resolution, owner: int, pokemon: PokemonInPlay) -> C.EffectInstance | None:
+    """v0.117: ``pokemon``（持ち主 ``owner``）の［ときわたり］が、このワザの処理ではたらく候補か: 相手のワザの分類の枠のダメージで HP 以上になった（``res.damage_ko`` の原因の枠の
+    プレイヤーが持ち主でない。どく・ダメージカウンター・特殊能力のダメージ・ワザの効果の「きぜつ」は当たらない）・ダメージを受けたときにねむり・マヒ・こんらんでなかった（受けたときの写し
+    ``ko_prevention_able``）・今、力が消えていない。当たれば効果、当たらなければ None。"""
+    pid = pokemon.pokemon_id
+    cause = res.damage_ko.get(pid)
+    if cause is None or cause[0] == owner or pid in res.forced or pid in res.effect_ko or not knocked_by_hp(res.state, pokemon):
+        return None
+    instance = time_travel_instance(res, owner, pokemon)
+    if instance is None or not res.ko_prevention_able.get(pid) or C.stopped(res.state, instance):
+        return None
+    return instance
+
+
+def time_travel_timing(res: Resolution, pokemon: PokemonInPlay, what: str) -> None:
+    """v0.117（TW1）: ［ときわたり］で山札にもどるのが、残りHPがなくなったすぐあとか、きぜつの判定の時かは決まらない。HP 以上になったあとに同じワザの処理がこのポケモンにかかわる場面
+    （KS1 と同じ呼ぶところ）では結果が変わるので止める。"""
+    found = res.state.find_pokemon(pokemon.pokemon_id)
+    if found is not None and time_travel_due(res, found[0], pokemon) is not None:
+        raise res.question("time_travel_timing", f"ポケモン {pokemon.pokemon_id}・{what}")
 
 
 def knockout_survival_after_damage(res: Resolution, fs: FrameState, pokemon: PokemonInPlay) -> None:
@@ -327,6 +360,7 @@ def knockout_survival_after_damage(res: Resolution, fs: FrameState, pokemon: Pok
     effects = knockout_survivals_of(res, pokemon)
     if effects and set(effects) != set(knockout_survivals_of(res, pokemon, incoming_of(fs))):
         raise res.question("knockout_survival_timing", f"ポケモン {pokemon.pokemon_id}・HP 以上になったあとに範囲の違うダメージを受ける")
+    time_travel_timing(res, pokemon, "HP 以上になったあとにさらにダメージを受ける")  # v0.117（TW1）
 
 
 def knockout_survival_candidates(res: Resolution) -> list[tuple[int, PokemonInPlay, tuple[KnockOutSurvival, ...]]]:
@@ -462,13 +496,17 @@ def first_void(res: Resolution, incoming: Incoming, owner: int, pokemon: Pokemon
     はたらいているときに ``from_evolved_opponent`` で判定する。ほかの効果の判定は v0.102 までと同じ（エフェクトガードなどの「相手の」は今の番のプレイヤーで判定したまま）。"""
     protective_flame_scope(res, owner, pokemon)
     for instance in C.in_window(res.state, window, owner, pokemon, res.catalog):
-        if not held_by_receiver and instance.definition.origin is not C.Origin.TRAINER_EFFECT and instance.pokemon_id == pokemon.pokemon_id:
+        if not held_by_receiver and instance.definition.origin not in (C.Origin.TRAINER_EFFECT, C.Origin.POWER_EFFECT) and instance.pokemon_id == pokemon.pokemon_id:
             continue
         if instance.definition.by_opponent and instance.definition.timing is C.Timing.VOID and owner == res.state.current_player:
             continue  # v0.80: 「相手のワザによる」（エフェクトガード）。受けるポケモンの持ち主のワザ（自分のワザの自分への効果）には当てはめない
         if instance.definition.timing is C.Timing.VOID and C.working(res.state, instance, pokemon):
             if instance.definition.from_evolved_opponent and not from_evolved_opponent(res, incoming, owner):
                 continue  # v0.103: 発生元が相手の進化ポケモンのワザでない（自分のワザ・たねポケモン・特殊能力・こんらん）
+            if instance.definition is C.QUICKEN:
+                stopped = E.quicken_suppressed_question(res.state, instance.implementation)  # v0.117（QK1）
+                if stopped is not None:
+                    raise res.question("quicken_suppressed", f"ポケモン {pokemon.pokemon_id}・{stopped}")
             return instance
     return None
 
@@ -1512,8 +1550,9 @@ def receiving(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPla
                 res.flee_offers.append((owner, pokemon.pokemon_id, key.card_id, key.power_index, int(frame.kind is FrameKind.RETALIATION)))
                 res.trace.record(CandidateFound(Window.DAMAGE_RECEIVING, definition.name, pokemon.pokemon_id, frame.id))
             continue
-        if definition.timing is C.Timing.OFFER:
-            # v0.13 と同じく、受けるたびに写しを書きかえる（同じポケモンが 1 つのコマンドで 2 回受けることは今の対応カードでは起こらない）
+        if definition.timing in (C.Timing.OFFER, C.Timing.KO_RETURN):
+            # v0.13 と同じく、受けるたびに写しを書きかえる（同じポケモンが 1 つのコマンドで 2 回受けることは今の対応カードでは起こらない）。v0.117: ［ときわたり］も同じ写し
+            # （ダメージを受けたとき、すでにねむり・マヒ・こんらんだったか）
             res.ko_prevention_able[pokemon.pokemon_id] = not C.blocked_by_status(instance, pokemon)
             res.trace.record(CandidateFound(Window.DAMAGE_RECEIVING, definition.name, pokemon.pokemon_id, frame.id))
             continue
@@ -2377,6 +2416,10 @@ def exp_all_options(state: GameState, pokemon: PokemonInPlay) -> tuple[int, ...]
 def exp_all_unresolved(state: GameState, active: PokemonInPlay, holder: PokemonInPlay) -> tuple[tuple[int, ...], str | None, str | None]:
     """v0.81: 学習装置の決定のうち、選ぶと止めるカード・停止コード・理由（つけ替える先がクリスタルビームの効果を受けている（CB1）・レインボーエネルギー（RB3））。"""
     options = exp_all_options(state, active)
+    if E.trainer_immunity(state, active) is not None:
+        # v0.117（LB1）: きぜつする対戦ポケモンが［でんせつのからだ］で「トレーナーカード」の効果を受けない。そのエネルギーカードを学習装置でつけ替えられるかは決まらない（つけ替えない答えは
+        # いつも選べる）
+        return options, E.LEGEND_BODY_TARGET_CODE, E.LEGEND_BODY_TARGET_REASON
     if E.energy_attach_block(state, holder) is not None:
         error = E.attach_block_scope_error(holder, "学習装置のつけ替え")
         return options, error.code, error.message
@@ -2450,3 +2493,81 @@ def capture_post_knockout(res: Resolution, knocked: list[tuple[int, PokemonInPla
     if len(candidates) > 1:
         raise res.question("multiple_post_knockout", f"{candidates}")
     return tuple(candidates)
+
+
+# ---------------------------------------------------------------- v0.117: おいうちのダメージ（docs/retreat-return-active-powers-v0.117.md 3 章）
+
+
+def pursuit_source(state: GameState, effect) -> tuple[int, PokemonInPlay] | None:
+    """v0.117: おいうちの効果（``PursuitOnRetreat``）を与えたポケモン（効果を与えたプレイヤーの場の、重なったカードに ``source_card`` をふくむポケモン。進化しても同じ個体）。いなければ None。"""
+    for pokemon in state.players[effect.source_player].in_play():
+        if effect.source_card in pokemon.cards():
+            return effect.source_player, pokemon
+    return None
+
+
+def _pursuit_key(effect) -> AttackKey:
+    card_id, _, index = effect.attack.partition("#")
+    return AttackKey(card_id, int(index))
+
+
+def pursuit_amount(state: GameState, owner: int, receiver: PokemonInPlay, effect, *, bench: bool) -> tuple[int, str | None]:
+    """v0.117: おいうちの効果 ``effect`` で、持ち主 ``owner`` の ``receiver`` が「にげる」ときに受ける最終ダメージと、無効にした効果の名前（無効でなければ None）。状態を変えない。
+
+    - 効果を与えたワザ（``effect.attack``）によるダメージ（ワザの分類。発生元は効果を与えたポケモン ``pursuit_source``・実際の使い手は効果を与えたプレイヤー）。基本となるダメージは
+      ``effect.amount``。弱点・抵抗力は計算しない（「「弱点・抵抗力」に関係なく」）。ワザを使ったポケモン・受けるポケモン・場の「ダメージを変更する効果」（p.321 の 2・5〜8 段階）と
+      スタジアムは、ワザのダメージと同じ共通の計算（``attack_damage_modifiers``・``calculate_with_stadium``。``bench`` は受けるポケモンが控えか）
+    - 受けるポケモンのダメージの要素を無効にする効果（「ダメージを受けない」状態・見えない壁・［ニュートラルシールド］など）は ``first_void``（発生元をワザの分類で渡す）
+    - 発生元が場にいない（ワザを使ったポケモンを効果のあとで場から探せない）なら、発生元の効果を計算できないので止める（エンジンの未対応）。計算の順番の決定・減らす量の決定が要るときも
+      決定を出せないので止める。色の読み方で答えが変わるなら VS1"""
+    found = pursuit_source(state, effect)
+    if found is None:
+        raise UnsupportedError(E.PURSUIT_UNSUPPORTED_CODE, f"おいうちの効果を与えたポケモン（カード {effect.source_card}）が場にいない。ワザを使ったポケモンの効果をふくむダメージの"
+                               "計算をできない（エンジンの未対応）")
+    source = found[1]
+    key = _pursuit_key(effect)
+    res = Resolution(state)
+    void = first_void(res, Incoming(effect.source_player, source.pokemon_id, DamageClass.ATTACK, key), owner, receiver, Window.BEFORE_DAMAGE)
+    if void is not None:
+        return 0, void.name
+    modifiers = E.attack_damage_modifiers(state, source, receiver, attack=key, bench=bench)
+    receiving = E.receiving_of(state, receiver)
+    try:
+        final = E.same_for_type_readings(state, (source, receiver), lambda views: E.calculate_with_stadium(
+            state, effect.amount, views[0], views[1], modifiers, receiving=receiving, weakness_resistance=False).final)
+    except (DamageOrderRequired, DamageReductionRequired):
+        raise UnsupportedError(E.PURSUIT_UNSUPPORTED_CODE, f"おいうちのダメージ（ポケモン {receiver.pokemon_id}）の計算に、順番・減らす量の決定が要る（「にげる」の中で決定を出すのは"
+                               "エンジンの未対応）") from None
+    except E.TypeReadingsDiffer as differ:
+        raise E.shift_duration_error(differ.pokemons[0], f"おいうちのダメージの計算（ポケモン {receiver.pokemon_id}）", state=state) from None
+    return final, None
+
+
+def pursuit_problems(state: GameState, owner: int, receiver: PokemonInPlay, final: int, worst_before: int | None = None) -> None:
+    """v0.117: おいうちのダメージ ``final`` を ``receiver`` に与えるときに、「にげる」の処理の中で扱えない（エンジンの未対応）共通の処理があれば止める（状態を変える前）。
+
+    - 受けるときにコインで受けるかを決める効果（「とうめい」など。``Timing.REPLACE``）・「ダメージを受けたとき」の効果（はんげき・返す効果・［はしりさる］など。受けたときの窓の候補）
+    - HP 以上になりうる（``worst_before`` は、同じ時点のほかの反応のあとにのりうるダメージ）とき、きぜつの判定の窓の効果（こんじょう・［ときわたり］・［ファイナルビーム］など）・
+      こらえる・こうてつか・きあいのハチマキ（「にげる」のあとの場の整理は、ワザのきぜつの判定の窓を通らない）
+    - 控えのポケモンへのダメージの［ベンチガード］（v0.65 の ``bench_guard_outside_attack_check``）"""
+    if final <= 0:
+        return
+    for window in (Window.BEFORE_DAMAGE, Window.DAMAGE_RECEIVING):
+        for instance in C.in_window(state, window, owner, receiver):
+            definition = instance.definition
+            reacts = definition.timing is C.Timing.REPLACE if window is Window.BEFORE_DAMAGE else (
+                definition.timing is C.Timing.DEFER or (definition.timing is C.Timing.OFFER and definition.decision_kind == REACTION_SWITCH))
+            if reacts and C.working(state, instance, receiver) and (DamageClass.ATTACK in definition.trigger_classes or not definition.trigger_classes):
+                raise UnsupportedError(E.PURSUIT_UNSUPPORTED_CODE, f"おいうちのダメージを受けるポケモン {receiver.pokemon_id} の「{definition.name}」（受けるときの効果）を、「にげる」の中で"
+                                       "処理するのはエンジンの未対応")
+    before = receiver.damage if worst_before is None else worst_before
+    if before + final >= E.max_hp(state, receiver):
+        effects = [i.definition.name for i in C.in_window(state, Window.KO_CHECK, owner, receiver)]
+        effects += ["knockout_survival"] if knockout_survivals(state, receiver) else []
+        effects += ["focus_band"] if E.tool_effect_of(state, receiver, E.FocusBand) is not None else []
+        effects += [str(slot.key) for slot in E.powers_of(state, receiver) if isinstance(slot.effect, E.ReturnToDeckOnHeadsInsteadOfKnockOut)]
+        if effects:
+            raise UnsupportedError(E.PURSUIT_UNSUPPORTED_CODE, f"おいうちのダメージで HP 以上になりうるポケモン {receiver.pokemon_id} の、きぜつの判定の効果 {effects} を「にげる」の中で"
+                                   "処理するのはエンジンの未対応")
+    if state.players[owner].active is not receiver:
+        E.bench_guard_outside_attack_check(state, owner, receiver, final)

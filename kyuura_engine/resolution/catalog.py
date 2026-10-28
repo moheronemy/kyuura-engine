@@ -35,6 +35,9 @@ class Origin(str, Enum):
     PRINTED_POWER = "printed_power"  # いちばん上のカードの特殊能力（p.310）
     PERSISTENT_EFFECT = "persistent_effect"  # ワザによる持続する効果（PokemonInPlay.persistent_effects）
     TRAINER_EFFECT = "trainer_effect"  # v0.56: トレーナーを使ったプレイヤーに与えた期限のある効果（GameState.trainer_effects。見えない壁）
+    # v0.117: 特殊能力で使ったプレイヤーに与えた期限のある効果（GameState.trainer_effects の ``GROUP_ATTACK_IMMUNITY``。［QUICKEN］）。特殊能力そのものではないので、特殊状態・ガスでは
+    # 判定しない（使ったアンノーンQ の力が消えているときは QK1。``kernel.first_void``）
+    POWER_EFFECT = "power_effect"
 
 
 class Mode(str, Enum):
@@ -49,6 +52,8 @@ class Timing(str, Enum):
     DEFER = "defer"  # 受けたときに候補になり、ダメージの要素のあとの窓で処理する（p.89）
     OFFER = "offer"  # 決められた窓で、プレイヤーに決定で使うかを聞く
     QUERY = "query"  # 求められたときに今の状態から答える（かがくへんかガス）
+    # v0.117: ダメージを受けるときに特殊状態を写し、きぜつの判定の窓で、きぜつのかわりにはたらく（コインで山札にもどる。［ときわたり］。``flow._time_travel``）
+    KO_RETURN = "ko_return"
 
 
 BLOCKING_CONDITIONS = frozenset({"sleep", "paralysis", "confusion"})
@@ -260,6 +265,19 @@ PROTECTIVE_FLAME = EffectDefinition(
     "protective_flame", Origin.PERSISTENT_EFFECT, Mode.AUTOMATIC, Timing.VOID, frozenset({Window.BEFORE_DAMAGE, Window.BEFORE_EFFECT}), frozenset(), "now",
     False, "receiving_element", "void_attack", frozenset({DamageClass.ATTACK}), True,
 )
+# v0.117（docs/retreat-return-active-powers-v0.117.md 6 章）: ［QUICKEN］の「次の相手の番、自分の場の「アンノーン」全員は、ワザによるダメージや効果を受けない」。ほのおのまもりと同じ窓・同じ処理
+# （ワザのダメージの要素・効果の要素の前に無効にする）。効果は使ったプレイヤーの記録（``TrainerTurnEffect`` の ``GROUP_ATTACK_IMMUNITY``）で、受けるポケモンは問い合わせの時点の場の今の姿の
+# 名前のグループで決める（``effects.group_attack_immunities``）。説明は「相手の」と書かないが、はたらく番は次の相手の番なので、受けるのは相手のワザ
+QUICKEN = EffectDefinition(
+    "quicken", Origin.POWER_EFFECT, Mode.AUTOMATIC, Timing.VOID, frozenset({Window.BEFORE_DAMAGE, Window.BEFORE_EFFECT}), frozenset(), "now", False,
+    "receiving_element", "void_attack", frozenset({DamageClass.ATTACK}), True,
+)
+# v0.117（7 章）: ［ときわたり］。こんじょうと同じく、相手のワザのダメージを受けるときの特殊状態（「すでに」）を写し（``ko_prevention_able``）、きぜつの判定の窓で、きぜつのかわりに
+# 持ち主のコインで山札にもどる（自動的にはたらく。使うかを聞かない。``flow._time_travel``）。場所の条件はない
+TIME_TRAVEL = EffectDefinition(
+    "time_travel", Origin.PRINTED_POWER, Mode.AUTOMATIC, Timing.KO_RETURN, frozenset({Window.DAMAGE_RECEIVING, Window.KO_CHECK}),
+    BLOCKING_CONDITIONS, "on_damage", True, "self", "coin_return_to_deck", frozenset({DamageClass.ATTACK}), True,
+)
 
 # v0.87（docs/movement-damage-reactions-v0.87.md 5 章）: マチスのマルマインの［ショックボム］。はんげきと同じ窓（受けたときに候補にし、そのワザのダメージの要素のあと・ダメージ以外の
 # 効果の前に処理する）。かならずはたらく（特殊状態の条件はない）。バトル場で（``active_only``）、ワザの分類のダメージ（自分のワザを含む。``by_opponent`` は偽）
@@ -304,6 +322,7 @@ POWER_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (E.CounterattackDamage, STRIKES_BACK),
     (E.CounterattackDamageWhileAsleep, RESTLESS_SLEEP),  # v0.17b（CounterattackDamage の部分型。型の並びの順は関係しない。definition_for）
     (E.PreventKnockOutOnHeads, GUTS),
+    (E.ReturnToDeckOnHeadsInsteadOfKnockOut, TIME_TRAVEL),  # v0.117
     (E.ReturnToHandOnKnockOut, REBIRTH),
     (E.SuppressOtherPowers, CHEMICAL_GAS),
     (E.ConfuseDamageSourceOnHeads, DEFENSIVE_POLLEN),  # v0.42
@@ -401,6 +420,13 @@ def instances(state: GameState, owner: int, pokemon: PokemonInPlay, table=None) 
     claw = E.tool_effect_of(state, pokemon, E.CounterClaw)
     if claw is not None:
         found.append(EffectInstance(COUNTER_CLAW, owner, pokemon.pokemon_id, pokemon.card, implementation=claw))
+    # v0.117: ［QUICKEN］（使ったプレイヤーの記録。受けるポケモンが今、持ち主の場の「アンノーン」なら）
+    for record in E.group_attack_immunities(state, owner, pokemon):
+        found.append(EffectInstance(QUICKEN, owner, pokemon.pokemon_id, pokemon.card, implementation=record))
+    if E.trainer_immunity(state, pokemon) is not None:
+        # v0.117（docs 5 章）: ［でんせつのからだ］で「トレーナーカード」の効果を受けないポケモンには、ついているトレーナーカードの効果（エフェクトガード・はんげきのツメ）・トレーナーで
+        # 与えた効果（見えない壁）は当てはまらない（コマンドの終わりにトラッシュするまでのあいだ。バトル場なので見えない壁は当たらない）
+        found = [i for i in found if i.definition.origin is not Origin.TRAINER_EFFECT]
     return tuple(found)
 
 

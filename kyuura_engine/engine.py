@@ -181,6 +181,20 @@ from .effects import (
     scram_slots,
     scram_unsettled,
     scram_working,
+    RETREAT_REACTION_TIMING_CODE,
+    RETREAT_REACTION_TIMING_REASON,
+    retreat_chase_holders,
+    CoinGroupAttackImmunityNextTurn,
+    legend_body_changed,
+    legend_body_error,
+    legend_body_option_stops,
+    LEGEND_BODY_TARGET_CODE,
+    legend_body_footprints,
+    legend_body_goop_gas_problem,
+    legend_body_holders,
+    legend_body_pending_problem,
+    settle_legend_body,
+    trainer_card_effect,
 )
 from .continuous import goop_gas_effects, power_suppressed, suppressors_of
 from .deck import deck_problems
@@ -188,7 +202,7 @@ from .evolution import DEVOLVED_THIS_TURN_CODE, evolution_block, place_evolution
 from .errors import DeckValidationError, HiddenPropertyRead, IllegalActionError, StateIntegrityError, UnsupportedError
 from .persistent import (DISCARD_FROM_PLAY, KNOCK_OUT, SOURCE_LEFT_ACTIVE, cannot_retreat, effect_attack_card, end_turn, energy_attach_blocked, expires_at_turn_start, lasting, leave_lock,
                          powers_stopped, powers_use_prevented, remove_on_entering_active, remove_persistent_effects, remove_source_left_effects, require_can_leave,
-                         require_source_card_present)
+                         require_source_card_present, retreat_pursuits)
 from .rules import RULES_2000_02_14, RuleSet
 from .stadiums import bench_has_room, bench_limit, stadium_in_play
 from .state import (
@@ -201,6 +215,9 @@ from .state import (
     SOURCE_LEAVES_ACTIVE,
     PeriodLeaveLock,
     TRAINER_TURN_EFFECT_KINDS,
+    POWER_TURN_EFFECT_KINDS,
+    QUICKEN_USED,
+    PursuitOnRetreat,
     EVOLUTION_BAN,
     OPPONENT_POWER_SUPPRESSION,
     ATTACK_POWER_SUPPRESSION,
@@ -760,6 +777,16 @@ def _apply_once(state: GameState, command, context: resolution.Context | None, *
             raise UnsupportedError(*pending)
         if new.decision is None:
             settle_miracle_energy(new)
+        # v0.117（docs/retreat-return-active-powers-v0.117.md 5 章）: ［でんせつのからだ］。まきちらせ!ベトベトガスと同じ時にかかわるなら LB2。決定を待つあいだにトラッシュするカードが
+        # あればエンジンの未対応。なければコマンドの終わりに、バトル場で力がはたらくポケモンについているトレーナーカードをトラッシュする（読み取りの問い合わせの中ではトラッシュしない）
+        circular = legend_body_goop_gas_problem(new)
+        if circular is not None:
+            raise UnsupportedError(*circular)
+        pending = legend_body_pending_problem(new)
+        if pending is not None:
+            raise UnsupportedError(*pending)
+        if new.decision is None:
+            settle_legend_body(new)
     # v0.49（docs/virtual-attacks-transformation-v0.49.md 5 章・7 章）: このコマンドで、決められない姿（TF1・TF2・DG1。``effects.form_problems``）が新しくできたら、
     # このコマンドを受け付けない。決定への答え・対戦準備の最後（ポケモンを表にする）で、どの答えでもできるなら、その前の状態で対戦を止める（``Phase.HALTED``。
     # 答えのない決定を残さない）
@@ -789,7 +816,7 @@ def _apply_once(state: GameState, command, context: resolution.Context | None, *
         if not (new.decision is not None and new.decision.resume == "attack") and scram_unsettled(new):
             raise RuntimeError(f"残りHPが「10」で［ずらかる］の力がはたらくポケモン {scram_unsettled(new)} が残っている（確かめる時点がない経路。エンジンの不具合）")
     if (new.trainer_in_use is not None and new.decision is not None and isinstance(command, (PlayTrainer, ResolveDecision))
-            and new.effects.trainer_entry(new.cards[new.trainer_in_use.card].card_id).effect.changes_field):
+            and (new.effects.trainer_entry(new.cards[new.trainer_in_use.card].card_id).effect.changes_field or legend_body_holders(new))):
         # v0.49（docs 7 章）: トレーナーの効果の途中の決定（入れ替える・進化させるトレーナーなど）で、どの答えの続きも受け付けられない状態（決められない姿・MH1）
         # になるなら、このコマンド（使う・前の段階の答え）を受け付けない。答えのない決定を、使用中のトレーナーを残したまま止めない
         dead_end = _trainer_dead_end(state, new, context)
@@ -1000,6 +1027,10 @@ def _trainer_dead_end(before: GameState, after: GameState, context: resolution.C
             if stop is None and scram_restored(before, trial):
                 error = scram_restored_error(scram_restored(before, trial))  # v0.61（SC2）
                 stop = (error.code, error.message)
+            if stop is None:
+                # v0.117（docs/retreat-return-active-powers-v0.117.md 5 章）: ［でんせつのからだ］の LB2・決定を待つあいだのトラッシュは、コマンドの終わり（``_apply_once``）で止めるので、
+                # 答えの続きの確かめでも同じに数える（まきちらせ!ベトベトガスのあいだに、ポケモンいれかえで控えの［でんせつのからだ］のポケモンしか出せないなど）
+                stop = legend_body_goop_gas_problem(trial) or (legend_body_pending_problem(trial) if trial.decision is not None else None)
             if stop is not None:
                 found.append(stop)
                 continue
@@ -1453,6 +1484,12 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
     # v0.61（docs/reactive-powers-trainer-damage-v0.61.md 3 章）: 相手の［おとしあな］。こんらん状態の「にげる」と、入れ替えの前か後かで受けるダメージが変わる場合は SH1、
     # 2 つ以上の［おとしあな］の途中で［ずらかる］の残りHPが「10」を通る場合は SC1。どれもエネルギーのトラッシュ・コインの前に止める
     _sinkhole_check(state, cmd.player, active, index)
+    # v0.117（docs/retreat-return-active-powers-v0.117.md 3 章・4 章）: 相手のバトル場の［CHASE］と、にげるポケモンが受けている「おいうち」の効果。「にげる」の入れ替えでベンチにもどると
+    # 持続する効果は消えるので、ここで写す（反応はこの値で処理する）。決まらない場面（RR1）・扱えない処理は、エネルギーのトラッシュ・コインの前に止める
+    chases = retreat_chase_holders(state, cmd.player)
+    pursuits = retreat_pursuits(state, active)
+    if chases or pursuits:
+        _retreat_reaction_check(state, cmd.player, active, index, chases, pursuits)
     if cost.zeroed and active.conditions.confused:
         # v0.81（BB1）: ふうせんのみの「「にげる」とき、このカードをトラッシュする」が、こんらんのコインの「うら」で失敗した「にげる」にも当てはまるかは決まらない。
         # コインの結果で受け付けるかを変えないよう、エネルギーのトラッシュ・コインの前に止める
@@ -1503,10 +1540,19 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
     # 反応があれば、相手の［おとしあな］も同じ時点の反応として扱い（順番は番のプレイヤー）、そのあと場を整える（きぜつ・交代・同じ番）。なければ v0.86 までと同じ
     movement.note_switch(state, cmd.player, active, p.active)
     moves = movement.take(state)
-    if moves:
-        if retreat_trap_powers(state, cmd.player):
+    # v0.117: 「にげる」の事実への反応（［CHASE］・おいうち）。入れ替えの事実への反応・相手の［おとしあな］と同じ時点の反応として、番のプレイヤー（にげたプレイヤー）が順番を決める
+    # （GR-2000-P325-SAME-TIMING）。なければ v0.116 までと同じ
+    retreat_reactions = tuple((movement.CHASE, cmd.player, active.pokemon_id, owner, holder.pokemon_id, key.card_id, key.power_index, 1)
+                              for owner, holder, key, _ in chases)
+    retreat_reactions += tuple((movement.PURSUIT, cmd.player, active.pokemon_id, effect.source_card, effect.source_player, effect.created_turn, effect.amount,
+                                effect.attack, 1) for effect in pursuits)
+    if moves or retreat_reactions:
+        sinkhole = ((reactions.SINKHOLE, cmd.player, active.pokemon_id, 1),) if retreat_trap_powers(state, cmd.player) else ()
+        if moves:
             first = moves[0]
-            moves = ((first[0], first[1], first[2] + ((reactions.SINKHOLE, cmd.player, active.pokemon_id, 1),), first[3]),) + moves[1:]
+            moves = ((first[0], first[1], first[2] + sinkhole + retreat_reactions, first[3]),) + moves[1:]
+        else:
+            moves = movement.note_retreat(state, cmd.player, p.active, sinkhole + retreat_reactions)
         reactions.run(state, moves + ((reactions.SETTLE_RETREAT, cmd.player, active.pokemon_id),), context, _REACTION_HOOKS)
         return
     resolution.after_retreat(state, context, cmd.player, active)  # v0.61: 相手の［おとしあな］（入れ替えのあと。きぜつ・交代・同じ番）
@@ -1544,6 +1590,38 @@ def _sinkhole_check(state: GameState, player: int, active: PokemonInPlay, index:
             remaining = max_hp(trial, pokemon) - pokemon.damage
             if any(remaining - amount * k == slot.effect.remaining_hp for k in range(1, len(traps))):
                 raise UnsupportedError(SCRAM_TIMING_CODE, f"ポケモン {active.pokemon_id}・［おとしあな］{len(traps)} つ: {SCRAM_TIMING_REASON}")
+
+
+def _retreat_reaction_check(state: GameState, player: int, active: PokemonInPlay, index: int, chases, pursuits) -> None:
+    """v0.117（docs/retreat-return-active-powers-v0.117.md 3 章）: 「にげる」の前に、相手の［CHASE］・にげるポケモンが受けている「おいうち」で決められない場面・扱えない処理を確かめる
+    （状態・乱数・ログを変えない）。
+
+    - RR1: にげるポケモンがこんらん状態（コインの「うら」で失敗した「にげる」にも当たるかが決まらない）・おいうちのダメージが入れ替えの前（バトル場）と後（ベンチ）で違う
+      （受ける効果・ダメージを変える効果の場所の条件）。［CHASE］のダメージカウンターは場所で変わらない
+    - おいうちのダメージの処理のうち「にげる」の中で扱えないもの（受けるときのコイン・「ダメージを受けたとき」の効果・HP 以上になりうるときのきぜつの判定の効果・［ベンチガード］）は
+      ``kernel.pursuit_problems``（エンジンの未対応）。HP 以上になりうるかは、同じ時点の［CHASE］のカウンターがすべて先にのる場合で数える"""
+    from .resolution.kernel import pursuit_amount, pursuit_problems
+
+    if active.conditions.confused:
+        raise UnsupportedError(RETREAT_REACTION_TIMING_CODE, f"こんらん状態のポケモン {active.pokemon_id} の「にげる」（［CHASE］・おいうち）: {RETREAT_REACTION_TIMING_REASON}")
+    if not pursuits:
+        return
+    trial = state.clone()
+    tp = trial.players[player]
+    moved = tp.active
+    tp.active, tp.bench[index] = tp.bench[index], moved
+    clear_special_conditions(trial, player, moved, RETREAT)
+    remove_persistent_effects(trial, player, moved, RETREAT)
+    remove_source_left_effects(trial, player, moved)
+    chase_most = sum(effect.counters for _, _, _, effect in chases) * state.rules.damage_per_counter
+    worst = moved.damage + chase_most
+    for effect in pursuits:
+        before, _ = pursuit_amount(state, player, active, effect, bench=False)
+        after, _ = pursuit_amount(trial, player, moved, effect, bench=True)
+        if before != after:
+            raise UnsupportedError(RETREAT_REACTION_TIMING_CODE, f"ポケモン {active.pokemon_id} の「おいうち」のダメージ（バトル場 {before}・ベンチ {after}）: {RETREAT_REACTION_TIMING_REASON}")
+        pursuit_problems(trial, player, moved, after, worst)
+        worst += after
 
 
 def _retreat_max_hp_drop_check(state: GameState, player: int, discard: tuple[int, ...], index: int) -> None:
@@ -1658,8 +1736,21 @@ def _start_trainer_use(state: GameState, use: TrainerUse, effect, context: resol
 
 def _resolve_trainer(state: GameState, effect, use: TrainerUse, context: resolution.Context) -> None:
     """トレーナーの説明にしたがう（p.310 の手順 3・4）。決定を出したら止まり、出さなければ使い終える（v0.57 で ``_play_trainer`` から分けた。動きは同じ）。"""
+    before = legend_body_footprints(state)
     outcome = effect.resolve(state, use)
+    _legend_body_guard(state, before, use)
     _after_trainer_step(state, effect, use, outcome, context)
+
+
+def _legend_body_guard(state: GameState, before: dict, use: TrainerUse) -> None:
+    """v0.117（docs/retreat-return-active-powers-v0.117.md 5 章）: トレーナーの処理の 1 段（``resolve``・``resume``）の前に［でんせつのからだ］で「トレーナーカード」の効果を受けなかった
+    ポケモン（``before``）が、その段で変わった（場所・ダメージ・特殊状態・ついているカード・重なったカード・持続する効果）なら LB1 で止める（このコマンドを受け付けない。状態・乱数・ログは
+    もどる）。一部だけが止まる効果は、その実装が先に除いている（``legend_body_skip``）。選ぶ決定は、出す時点で選べるが選ぶと止める（``push_trainer_decision``）。"""
+    if not before or not trainer_card_effect(state, use.card):
+        return
+    changed = legend_body_changed(state, before)
+    if changed:
+        raise legend_body_error(f"トレーナー {use.card_id} の効果がポケモン {changed} に及ぶ")
 
 
 def _after_trainer_step(state: GameState, effect, use: TrainerUse, outcome, context: resolution.Context) -> None:
@@ -1848,7 +1939,9 @@ def _resume_trainer(state: GameState, decision, choices: tuple[int, ...], contex
         pay_stadium_trainer_cost(state, player, tuple(choices), decision.context_value("stadium_cost"))
         _resolve_trainer(state, entry.effect, use, context)
         return
+    before = legend_body_footprints(state)
     outcome = entry.effect.resume(state, use, decision, choices)
+    _legend_body_guard(state, before, use)
     _after_trainer_step(state, entry.effect, use, outcome, context)
 
 
@@ -2988,8 +3081,8 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
         if isinstance(effect, (CannotUseOwnAttack, CannotUseAttack)):
             problems.extend(_attack_lock_problems(state, pokemon, effect, where))  # v0.35
         if isinstance(effect, (AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive, CannotUsePowers, CannotAttachEnergy, PowersStopped, BenchProtection,
-                               StatusOnEnergyAttach, EvolutionLock)):
-            problems.extend(_given_by_attack_problems(state, pokemon, effect, where))  # v0.36（v0.40: すごむ。v0.59: ショックアイ・クリスタルビーム。v0.116: しこみどく・やみのしょくしゅ）
+                               StatusOnEnergyAttach, EvolutionLock, PursuitOnRetreat)):
+            problems.extend(_given_by_attack_problems(state, pokemon, effect, where))  # v0.36（v0.40: すごむ。v0.59: ショックアイ・クリスタルビーム。v0.116: しこみどく・やみのしょくしゅ。v0.117: おいうち）
         if isinstance(effect, (WeaknessChange, ResistanceChange, MaxHpSet)):
             problems.extend(_effective_value_effect_problems(state, pokemon, effect, where))  # v0.48
         if isinstance(effect, TailsDamageGuard):
@@ -3286,6 +3379,12 @@ def _given_by_attack_problems(state: GameState, pokemon: PokemonInPlay, effect, 
     elif isinstance(effect, EvolutionLock):
         terms = getattr(entry.effect, "evolution_lock_terms", None) if entry is not None else None  # v0.116: やみのしょくしゅ
         expected = (EvolutionLock,)
+    elif isinstance(effect, PursuitOnRetreat):
+        # v0.117: おいうち。登録された実装の ``pursuit_terms`` は (型, 量)。効果の ``attack`` は与えたワザ（ログの ``effect``）と同じ
+        terms = getattr(entry.effect, "pursuit_terms", None) if entry is not None else None
+        expected = (PursuitOnRetreat, effect.amount)
+        if effect.attack != added.get("effect") or added.get("amount") != effect.amount:
+            return [f"{where} {effect!r} の効果を与えたワザ・量が、ログ persistent_effect_added と合わない"]
     else:
         terms = getattr(entry.effect, "retreat_lock_terms", None) if entry is not None else None
         expected = CannotRetreat
@@ -3747,6 +3846,27 @@ def _trainer_effect_problems(state: GameState) -> list[str]:
             card = state.cards.get(record.source_card)
             if card is None or card.owner != record.player:
                 problems.append(f"{where} のワザを使ったポケモンのカード {record.source_card!r} が、ワザを使ったプレイヤーのカードではない")
+            if not record.created_turn <= state.turn_number <= record.expires_turn:
+                problems.append(f"{where} が、与えた番 {record.created_turn}〜消える番 {record.expires_turn} の外の今の番 {state.turn_number} に残っている")
+            keys.append((record.player, record.source_card, record.expires_turn))
+            continue
+        if record.kind in POWER_TURN_EFFECT_KINDS:
+            # v0.117: 特殊能力で与えた効果（［QUICKEN］）。登録は ``card_id`` のカードの特殊能力の ``CoinGroupAttackImmunityNextTurn``。``source_card``・``pokemon_id`` は使ったポケモンの
+            # いちばん上のカードと場の番号（場をはなれても消えないので、今の場所は確かめない）。使った記録は使った番だけ、「おもて」の効果は与えた番 + 1 の番の終わりまで
+            definition = state.definitions.get(record.card_id)
+            powered = definition is not None and any(isinstance(state.effects.power_effect(definition.id, power), CoinGroupAttackImmunityNextTurn)
+                                                     for power in definition.powers)
+            if not powered:
+                problems.append(f"{where} のカードに、使った記録を残す特殊能力（［QUICKEN］）が登録されていない")
+            if record.attack_index is not None or type(record.pokemon_id) is not int:
+                problems.append(f"{where} のワザの位置 {record.attack_index!r}・使ったポケモンの番号 {record.pokemon_id!r} が正しくない")
+            if record.expires_turn != record.created_turn + (0 if record.kind == QUICKEN_USED else 1):
+                problems.append(f"{where} を与えた番 {record.created_turn}・消える番 {record.expires_turn} が、効果の期間と合わない")
+            if state.first_player in PLAYERS and turn_owner(state, record.created_turn) != record.player:
+                problems.append(f"{where} を与えた番 {record.created_turn} が、使ったプレイヤーの番ではない")
+            card = state.cards.get(record.source_card)
+            if card is None or card.owner != record.player:
+                problems.append(f"{where} の使ったポケモンのカード {record.source_card!r} が、使ったプレイヤーのカードではない")
             if not record.created_turn <= state.turn_number <= record.expires_turn:
                 problems.append(f"{where} が、与えた番 {record.created_turn}〜消える番 {record.expires_turn} の外の今の番 {state.turn_number} に残っている")
             keys.append((record.player, record.source_card, record.expires_turn))
@@ -4983,6 +5103,14 @@ def _decision_problems(state: GameState) -> list[str]:
         problems.extend(reactions.answer_problems(state, d))  # v0.86
     # 選べるもののうち原典で扱いを決められないもの（v0.2b）: 選べるものの中にあり、残りで答えられる
     unresolved = d.context_value("unresolved_choices", ())
+    legend = tuple(d.context_value("legend_body_choices", ()))
+    if legend:
+        # v0.117（LB1）: ［でんせつのからだ］で選ぶと止める選択は、トレーナーの決定で、止める選択と選択ごとの理由（LB1）にあり、効果を受けないポケモン・そのカードと合う
+        own = tuple(o for o in unresolved if o not in legend)
+        detail = {item[0]: item[1] for item in d.context_value("unresolved_detail", ())}
+        if (d.resume != "trainer" or not set(legend) <= set(unresolved) or any(detail.get(o) != LEGEND_BODY_TARGET_CODE for o in legend)
+                or legend != legend_body_option_stops(state, d.kind, tuple(o for o in d.options if o not in own))):
+            problems.append(f"決定 {d.kind} の［でんせつのからだ］で選ぶと止める選択 {legend} が、効果を受けないポケモンとそのカード・止める理由と合わない")
     if unresolved:
         if not set(unresolved) <= set(d.options):
             problems.append(f"扱いを決められない選択 {unresolved} が、選べるもの {d.options} にない")
@@ -5737,6 +5865,23 @@ def _trainer_problems(state: GameState) -> list[str]:
         problems.append(f"トレーナーの決定の続きのカード {card_id} が効果の登録表にない")
         return problems
     if not problems:
-        # 効果ごとの決定の形（決定するプレイヤー・種類・選ぶ数・選べるもの。v0.4e。ワザの決定の decision_problems と同じ考え方）
-        problems.extend(entry.effect.decision_problems(state, TrainerUse(player, card, card_id), d))
+        # 効果ごとの決定の形（決定するプレイヤー・種類・選ぶ数・選べるもの。v0.4e。ワザの決定の decision_problems と同じ考え方）。v0.117: ［でんせつのからだ］で加えた止める選択
+        # （``legend_body_choices``）は除いた形で比べる（トレーナーの実装は効果を受けないポケモンを知らない）
+        problems.extend(entry.effect.decision_problems(state, TrainerUse(player, card, card_id), _without_legend_body_choices(d)))
     return problems
+
+
+def _without_legend_body_choices(d):
+    """v0.117: 決定 ``d`` の続きの情報から、［でんせつのからだ］で加えた止める選択（``legend_body_choices``・その選択の ``unresolved_detail``）を除いた決定（``push_trainer_decision`` が加える
+    前の形）。加えていなければ ``d`` のまま。"""
+    legend = tuple(d.context_value("legend_body_choices", ()))
+    if not legend:
+        return d
+    own = tuple(o for o in d.context_value("unresolved_choices", ()) if o not in legend)
+    detail = tuple(item for item in d.context_value("unresolved_detail", ()) if item[0] not in legend)
+    context = tuple(item for item in d.context if item[0] not in ("legend_body_choices", "unresolved_choices", "unresolved_code", "unresolved_reason", "unresolved_detail"))
+    if own:
+        context += (("unresolved_choices", own), ("unresolved_code", d.context_value("unresolved_code")), ("unresolved_reason", d.context_value("unresolved_reason")))
+    if detail:
+        context += (("unresolved_detail", detail),)
+    return dataclasses.replace(d, context=context)
