@@ -570,6 +570,8 @@ PUBLIC_EVENTS = frozenset({
     "conductivity", "lightning_burst_skipped", "reaction_power_declined", "bolt_check", "bolt_skipped", "pokemon_coin_results", "power_turn_end",
     # v0.115: びっくりサンダーの続けて投げたコインの面の並びと控えへの量・ダメージの配分（どれもコイン・場の公開の情報）
     "chained_coin_results", "damage_allocated",
+    # v0.116: ついた時に発動するワザの持続効果がはたらいた（つけたカード・特殊状態）・ツイスターで手札にもどした、ついていたカード（どれも場の公開の情報）
+    "attach_status_triggered", "attached_cards_to_hand",
     # v0.87: 場の移動・ダメージへの反応（どれも場・コインの公開の情報）
     "spikes_damage", "hot_plate_damage", "movement_damage_skipped", "magma_pool", "magma_pool_none", "shock_blast_check", "shock_blast_damage",
     "shock_blast_skipped", "poison_fluid", "poison_fluid_skipped", "split_skipped", "split_declined",

@@ -120,6 +120,8 @@
   26 のまま。v0.108 までの書き出しを読む側は、知らない種類として拒否すること。docs/timed-damage-guards-v0.109.md 7 章）。
   v0.110: 持続する効果の種類 ``"knockout_survival"``（こらえる・こうてつか。``"end_turn"``・``"scope"``・``"remaining_hp"`` を加える）も、同じく種類の値と項目を加えただけ（形式は
   26 のまま。v0.109 までの書き出しを読む側は、知らない種類として拒否すること。docs/endure-armor-up-v0.110.md 8 章）。
+  v0.116: 持続する効果の種類 ``"status_on_energy_attach"``（しこみどく・エナジーショック。``"condition"``・``"attack"`` を加える）・``"evolution_lock"``（やみのしょくしゅ。共通の項目だけ）も、
+  同じく種類の値と項目を加えただけ（形式は 26 のまま。v0.115 までの書き出しを読む側は、知らない種類として拒否すること。docs/energy-movement-attachment-devolution-v0.116.md 8 章）。
   v0.114: 持続する効果の種類 ``"bench_powers_stopped"``（じっとみる。共通の項目だけ）も、同じく種類の値を加えただけ（形式は 26 のまま。v0.113 までの書き出しを読む側は、知らない
   種類として拒否すること。docs/baby-rules-evolution-v0.114.md 7 章）。ベイビィポケモンの段階・進化先・重なりのいちばん下のベイビィポケモンカードは、カードの id とカードのデータで
   決まるので、書き出しの項目は変えていない（ブビィの「モクモク」の期限は、既存のトレーナーの効果の ``expires_turn``）。
@@ -205,6 +207,8 @@ from .state import (
     TailsDamageGuard,
     TimedDamageGuard,
     KnockOutSurvival,
+    StatusOnEnergyAttach,
+    EvolutionLock,
     ReflectShield,
     StatusImmunityWhileActive,
     ZeroDamageAtLeast,
@@ -327,6 +331,10 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
         data["end_turn"] = effect.end_turn
         data["scope"] = effect.scope
         data["remaining_hp"] = effect.remaining_hp
+    elif isinstance(effect, StatusOnEnergyAttach):
+        # v0.116: エネルギーカードがついたときになる特殊状態と、効果を与えたワザ（AttackKey の文字列）。種類の値と項目を加えただけで形式は変えない
+        data["condition"] = effect.condition
+        data["attack"] = effect.attack
     elif isinstance(effect, StatusImmunityWhileActive):
         data["attack_index"] = effect.attack_index  # v0.84: 「きらめきタッチ」（効果を与えたワザと、それを使ったポケモンのカード）
         data["given_by"] = effect.given_by
@@ -351,7 +359,7 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
             data["source_left"] = True  # v0.93: くいつくの発生源が与えたあとにバトル場をはなれた印（あるときだけ）
     elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive, HalvedDamage,
                                          CannotUsePowers, CannotAttachEnergy, TailsDamageGuard, DoubledDamage, BenchAttackDamageGuard, AttackEffectGuard,
-                                         StatusImmunityNextTurn, PowersStopped, BenchProtection, BenchPowersStopped)):
+                                         StatusImmunityNextTurn, PowersStopped, BenchProtection, BenchPowersStopped, EvolutionLock)):
         raise ValueError(f"書き出せない持続する効果 {effect!r}")
     # v0.49（形式 14）: ワザを印刷したカードの id（いちばん上のカードと違うときだけ。状態の書き出しの前に、形式 14 より古い形式では拒否している）
     for name in ("attack_card", "target_attack_card"):

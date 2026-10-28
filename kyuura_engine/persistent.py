@@ -69,6 +69,7 @@ from .state import (
     DealtAttackDamageReduction,
     DestinyBond,
     DoubledDamage,
+    EvolutionLock,
     HalvedDamage,
     KnockOutSurvival,
     MaxHpSet,
@@ -86,6 +87,7 @@ from .state import (
     Retaliation,
     StatusImmunityNextTurn,
     StatusImmunityWhileActive,
+    StatusOnEnergyAttach,
     TailsDamageGuard,
     TimedDamageGuard,
     WeaknessChange,
@@ -663,3 +665,15 @@ def energy_attach_blocked(state: GameState, pokemon: PokemonInPlay) -> CannotAtt
     """今の番に ``pokemon`` にエネルギーカードをつけることができない効果（v0.59。``CannotAttachEnergy``。「クリスタルビーム」の「おもて」）がはたらいているなら、
     その効果。はたらくのは次の相手の番だけ。"""
     return _active(state, pokemon, CannotAttachEnergy)
+
+
+def attach_status_triggers(state: GameState, pokemon: PokemonInPlay) -> tuple[StatusOnEnergyAttach, ...]:
+    """v0.116（docs/energy-movement-attachment-devolution-v0.116.md 4 章）: 今の番に、``pokemon`` にエネルギーカードがついたときにはたらく効果（``StatusOnEnergyAttach``。しこみどく・
+    エナジーショック）。はたらくのは次の相手の番（``active_turn``）だけ。受けた順。状態を変えず、乱数を使わない。"""
+    return tuple(effect for effect in pokemon.persistent_effects if isinstance(effect, StatusOnEnergyAttach) and effect.active_turn == state.turn_number)
+
+
+def evolution_lock(state: GameState, pokemon: PokemonInPlay) -> EvolutionLock | None:
+    """v0.116（docs 6 章）: 今の番に ``pokemon`` を手札・トレーナーの効果で進化させられない効果（``EvolutionLock``。やみのしょくしゅ）がはたらいているなら、その効果。はたらくのは
+    次の相手の番だけ。ワザ・特殊能力の効果による進化は止めない（呼ぶ側の ``effects.evolution_forbidden`` の ``by_effect``）。"""
+    return _active(state, pokemon, EvolutionLock)

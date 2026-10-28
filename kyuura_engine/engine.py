@@ -260,6 +260,8 @@ from .state import (
     freeze_mapping,
     mark_returned_to_bench,
     turn_owner,
+    EvolutionLock,
+    StatusOnEnergyAttach,
 )
 from .zones import DISGUISE_REVERT, attach_energy_from_hand, designate_face_down, discard_from_play, draw_cards, enter_play, place_stadium, remove_disguise, reveal_face_down, shuffle_deck
 from . import zones as _zones
@@ -2967,8 +2969,9 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.extend(_next_turn_attack_damage_problems(state, pokemon, effect, where))  # v0.27
         if isinstance(effect, (CannotUseOwnAttack, CannotUseAttack)):
             problems.extend(_attack_lock_problems(state, pokemon, effect, where))  # v0.35
-        if isinstance(effect, (AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive, CannotUsePowers, CannotAttachEnergy, PowersStopped, BenchProtection)):
-            problems.extend(_given_by_attack_problems(state, pokemon, effect, where))  # v0.36（v0.40: すごむ。v0.59: ショックアイ・クリスタルビーム）
+        if isinstance(effect, (AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive, CannotUsePowers, CannotAttachEnergy, PowersStopped, BenchProtection,
+                               StatusOnEnergyAttach, EvolutionLock)):
+            problems.extend(_given_by_attack_problems(state, pokemon, effect, where))  # v0.36（v0.40: すごむ。v0.59: ショックアイ・クリスタルビーム。v0.116: しこみどく・やみのしょくしゅ）
         if isinstance(effect, (WeaknessChange, ResistanceChange, MaxHpSet)):
             problems.extend(_effective_value_effect_problems(state, pokemon, effect, where))  # v0.48
         if isinstance(effect, TailsDamageGuard):
@@ -3256,6 +3259,15 @@ def _given_by_attack_problems(state: GameState, pokemon: PokemonInPlay, effect, 
     elif isinstance(effect, BenchProtection):
         terms = getattr(entry.effect, "protection_terms", None) if entry is not None else None  # v0.86: ほのおのまもり
         expected = (BenchProtection,)
+    elif isinstance(effect, StatusOnEnergyAttach):
+        # v0.116: しこみどく・エナジーショック。登録された実装の ``attach_status_terms`` は (型, 特殊状態)。効果の ``attack`` は与えたワザ（ログの ``effect``）と同じ
+        terms = getattr(entry.effect, "attach_status_terms", None) if entry is not None else None
+        expected = (StatusOnEnergyAttach, effect.condition)
+        if effect.attack != added.get("effect") or added.get("condition") != effect.condition:
+            return [f"{where} {effect!r} の効果を与えたワザ・特殊状態が、ログ persistent_effect_added と合わない"]
+    elif isinstance(effect, EvolutionLock):
+        terms = getattr(entry.effect, "evolution_lock_terms", None) if entry is not None else None  # v0.116: やみのしょくしゅ
+        expected = (EvolutionLock,)
     else:
         terms = getattr(entry.effect, "retreat_lock_terms", None) if entry is not None else None
         expected = CannotRetreat

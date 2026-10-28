@@ -12,8 +12,8 @@
   "card_data_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 246,
-    "engine_stop_codes": 245,
+    "engine_unresolved_rulings": 247,
+    "engine_stop_codes": 246,
     "kyuura_issues": 73
   },
   "stop_codes": {
@@ -2833,6 +2833,17 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ATTACH_TRIGGER_SCOPE": {
+      "engine_rulings": [
+        {
+          "version": "v0.116",
+          "document": "docs/energy-movement-attachment-devolution-v0.116.md",
+          "ruling_id": "AT1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -3112,9 +3123,11 @@
         "card_id": "neo4-038",
         "target": "attack/0",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_NEO_TEXT_EVOLUTION_CARD_BABY"
+          ]
         },
-        "note": "わるいオムスターのげんしのしずく（エンジンに登録していないワザ）"
+        "note": "わるいオムスターのげんしのしずくの相手の場の「進化ポケモン」の「進化カード」に、ベイビィの上のたねポケモンカードをふくむか（v0.116 で登録した。退化スプレーHYPER と同じ）。ベイビィから進化したたねポケモン（場の進化ポケモン）は選べるが選ぶと止める（NB2。どれもそうならコインのあとに止める）"
       }
     ]
   },
@@ -4807,7 +4820,30 @@
       "ES3-016/attack/0",
       "ES3-029/attack/0",
       "PR1-054/attack/1",
-      "NIP1X-004/attack/0"
+      "NIP1X-004/attack/0",
+      "neo1-005/attack/1",
+      "neo1-010/attack/0",
+      "neo2-016/attack/0",
+      "neo2-016/attack/1",
+      "neo2-024/attack/0",
+      "neo3-006/attack/0",
+      "neo3-006/attack/1",
+      "neo4-038/attack/0",
+      "neo4-038/attack/1",
+      "neo4-055/attack/0",
+      "neo4-055/attack/1",
+      "ES3-006/attack/0",
+      "ES3-006/attack/1",
+      "ES3-020/attack/0",
+      "ES3-020/attack/1",
+      "ES3-032/attack/0",
+      "ES3-032/attack/1",
+      "QSG-027/attack/0",
+      "QSG-027/attack/1",
+      "PR1-022/attack/0",
+      "PR1-022/attack/1",
+      "PR1-055/attack/0",
+      "PR1-055/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

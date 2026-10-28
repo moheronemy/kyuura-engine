@@ -259,6 +259,7 @@ def magma_choice(state: GameState, reaction: tuple) -> MagmaChoice | int | None:
         raise ambiguous[0][1]
     if E.energy_attach_block(state, target) is not None:
         raise E.attach_block_scope_error(target, "［やけのこり］でつけ替える先")  # v0.59 の CB1（つけ替えがクリスタルビームの「つける」に当たるか）
+    E.attach_trigger_move_check(state, target, "［やけのこり］でつけ替える先")  # v0.116: AT1（つけ替える先はベンチから出た新しい対戦ポケモンなので、今の写しでは起こらない）
     options = tuple(definite) + tuple(uid for uid, _ in ambiguous)
     if len(options) == 1:
         return options[0]

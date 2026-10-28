@@ -1180,6 +1180,57 @@ class CannotAttachEnergy:
     on_opponent: ClassVar[bool] = True
 
 
+# v0.116: エネルギーカードがついたときに受けているポケモンがなる特殊状態（``StatusOnEnergyAttach.condition``。conditions.POISON・PARALYSIS と同じ値。state.py は conditions.py を読み込まない）
+ATTACH_STATUS_CONDITIONS = ("poison", "paralysis")
+
+
+@dataclass(frozen=True)
+class StatusOnEnergyAttach:
+    """ワザによる「持続する効果」（v0.116。docs/energy-movement-attachment-devolution-v0.116.md 4 章）のうち、クロバット（neo3-006）の「しこみどく」の「次の相手の番、このワザを受けた
+    相手に「エネルギーカード」がついたとき、相手は「どく」状態になる。」と、ユンゲラー（ES3-020・QSG-027）の「エナジーショック」の「このワザを受けた相手は、次の相手の番、エネルギー
+    カードがついた時、「マヒ」状態になる。」（kyuura の印刷の文面）。
+
+    相手に与える効果（``on_opponent``。``CannotAttachEnergy`` と同じ）。はたらく番は次の相手の番（``created_turn + 1``）で、その番の間、受けているポケモンにエネルギーカードがつくたびに
+    （1 枚ごと）、受けているポケモンを ``condition``（どく・マヒ）の状態にする。ワザを受けたときにはどく・マヒにしない。1 度はたらいても消えない（文面に「1回」・「効果は消える」はない。
+    同じ番の 2 枚目でもはたらく）。``attack`` は効果を与えたワザ（``AttackKey`` の文字列。特殊状態のログの ``effect``）。消える契機はほかの持続する効果と同じ（期限・ベンチにもどる・
+    進化・退化・きぜつ・山札や手札にもどる）。つくことへの反応は ``reactions`` の ``ATTACH_STATUS``（手札からつける通常の操作・あまごい）と ``effects.energy_attached_by_effect``（ほかの
+    経路）が処理し、場のつけ替え・［エネエネ］は AT1 で止める（docs 4 章）。"""
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    condition: str
+    attack: str
+    kind: ClassVar[str] = "status_on_energy_attach"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = True
+
+    def __post_init__(self) -> None:
+        if self.condition not in ATTACH_STATUS_CONDITIONS:
+            raise ValueError(f"エネルギーカードがついたときの特殊状態 {self.condition!r} は {ATTACH_STATUS_CONDITIONS} のどれか")
+        if type(self.attack) is not str or "#" not in self.attack:
+            raise ValueError(f"効果を与えたワザ {self.attack!r} は AttackKey の文字列")
+
+
+@dataclass(frozen=True)
+class EvolutionLock:
+    """ワザによる「持続する効果」（v0.116。docs 6 章）のうち、わるいオムスター（neo4-038）の「やみのしょくしゅ」の「次の相手の番、相手プレイヤーはこのワザを受けた相手を進化させることが
+    出来ない。(「ワザ・特殊能力」による進化はできる)。このワザを受けた相手がバトル場をはなれたとき、この効果は消える。」（kyuura の印刷の文面）。
+
+    相手に与える効果（``on_opponent``）。はたらく番は次の相手の番（``created_turn + 1``）で、その番の間、受けているポケモンを、手札から重ねる通常の操作・トレーナーの効果（ポケモン育て屋さん）
+    で進化させられない。ワザ・特殊能力の効果による進化は止めない（``effects.evolution_forbidden`` の ``by_effect``）。「バトル場をはなれたとき、この効果は消える」は受けているポケモン自身が
+    はなれることで、ほかの持続する効果の消える契機（ベンチにもどる・きぜつ・手札や山札にもどる）と同じ。進化・退化でも消える（p.310・p.324）。"""
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "evolution_lock"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = True
+
+
 @dataclass(frozen=True)
 class DoubledDamage:
     """ワザによる「持続する効果」（v0.75）のうち、キングラー（ES3-014）の「もろばバサミ」の「次の相手の番、このカードが受けるダメージは2倍になる。」（kyuura の印刷の
@@ -1545,6 +1596,7 @@ PERSISTENT_EFFECT_TYPES = (PreventDamage, PreventAttackDamage, Retaliation, Next
                            StatusImmunityNextTurn,  # v0.85: しんぴのこな
                            PowersStopped, BenchProtection,  # v0.86: スタンウェーブ・ほのおのまもり
                            BenchPowersStopped,  # v0.114: じっとみる（特殊能力の効果。この番の終わりまで。バトル場に出たら消える）
+                           StatusOnEnergyAttach, EvolutionLock,  # v0.116: しこみどく・エナジーショック・やみのしょくしゅ（次の相手の番）
                            *PERIOD_EFFECT_TYPES)  # v0.92: クモのす・くろいまなざし・にらみつける（ヨーギラス）・いやなおと。v0.93: はなれられない効果・かぶりつく。v0.108: マイナスイオン・あまえる
 
 

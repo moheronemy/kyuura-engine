@@ -981,6 +981,29 @@ def return_attached_energy_to_hand(state: GameState, owner: int, pokemon: Pokemo
     return moved
 
 
+def return_attached_cards_to_hand(state: GameState, owner: int, pokemon: PokemonInPlay, energy: tuple[int, ...], trainers: tuple[int, ...], *, effect: str,
+                                  by_player: int) -> None:
+    """プレイヤー ``owner`` の場のポケモン ``pokemon`` についているエネルギーカード ``energy`` とトレーナーカード ``trainers`` を、それぞれのカードの持ち主の手札にもどす（v0.116。ピジョンの
+    「ツイスター」。ワザを使ったのは ``by_player``）。ポケモン自身・重なったカード・ほかのついているカードは動かさない（場をはなれるのはそのカードだけ）。トラッシュ・山札を通さない
+    （リサイクルエネルギー・エコロジムに当たらない）。ついているカードは場の公開のカードなので、ログ ``attached_cards_to_hand``（``energy``・``trainers``・``owners``）は公開。ついていないカード・
+    同じカードを 2 回渡したなら ``RuntimeError``（状態を変える前）。"""
+    attached = {entry.card: entry for entry in pokemon.trainers}
+    if (not any(x is pokemon for x in state.players[owner].in_play()) or len(set(energy)) != len(energy) or len(set(trainers)) != len(trainers)
+            or any(uid not in pokemon.energy for uid in energy) or any(card not in attached for card in trainers)):
+        raise RuntimeError(f"プレイヤー {owner} のポケモン {pokemon.pokemon_id} についているカード {energy}・{trainers} を手札にもどせない（確認の漏れ。エンジンの不具合）")
+    owners = []
+    for uid in energy:
+        pokemon.energy.remove(uid)
+        state.players[state.cards[uid].owner].hand.append(uid)
+        owners.append(state.cards[uid].owner)
+    for card in trainers:
+        pokemon.trainers.remove(attached[card])
+        state.players[state.cards[card].owner].hand.append(card)
+        owners.append(state.cards[card].owner)
+    state.add_event("attached_cards_to_hand", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, energy=tuple(energy), trainers=tuple(trainers),
+                    owners=tuple(owners), effect=effect, by_player=by_player)
+
+
 def move_attached_energy(state: GameState, owner: int, source: PokemonInPlay, target: PokemonInPlay, *, trainer: int) -> tuple[int, ...]:
     """トレーナーの効果で、自分（``owner``）の場のポケモン ``source`` についているエネルギーカードをすべて、自分の場の別のポケモン ``target`` に、ついていた順のまま
     つけなおす（v0.55。ナツメの「それについているエネルギーカードをすべてはがす。そして、はがしたエネルギーカードすべてを、…別の「ナツメのポケモン」1匹につけなおす」）。

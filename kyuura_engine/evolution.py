@@ -132,7 +132,8 @@ def evolution_block(state: GameState, target: PokemonInPlay, definition: CardDef
         return prevented
     # v0.49: カードの説明が進化を禁じている（メタモンの［へんしん］の「このカードに進化カードをつけることはできない」・タケシのキュウコンの「ばける」の「(ただし
     # 「進化・退化」はできない)」）。どの入口（手札・山札から重ねるワザと特殊能力）でも同じ。``EffectRegistry.evolution_forbidden``
-    forbidden = state.effects.evolution_forbidden(state, target)
+    # v0.116: 山札から重ねる効果（``from_deck``）はワザ・特殊能力による進化（やみのしょくしゅの効果は「(「ワザ・特殊能力」による進化はできる)」なので止めない）
+    forbidden = state.effects.evolution_forbidden(state, target, by_effect=from_deck)
     if forbidden is not None:
         return forbidden
     if state.turn_number <= 2:
@@ -261,7 +262,8 @@ def skipped_stage1_basic(definition: CardDefinition) -> str | None:
 
 DEVOLVE_TO_HAND = "hand"  # はがした進化カードを持ち主の手札にもどす（ミュウの「たいかビーム」）
 DEVOLVE_TO_DISCARD = "discard"  # はがした進化カードを持ち主のトラッシュにすてる（退化スプレー）
-DEVOLVE_DESTINATIONS = (DEVOLVE_TO_HAND, DEVOLVE_TO_DISCARD)
+DEVOLVE_TO_DECK = "deck"  # v0.116: はがした進化カードを持ち主の山札にもどす（わるいオムスターの「げんしのしずく」。切るのは呼ぶ側）
+DEVOLVE_DESTINATIONS = (DEVOLVE_TO_HAND, DEVOLVE_TO_DISCARD, DEVOLVE_TO_DECK)
 
 
 def retag_power_uses(state: GameState, target: PokemonInPlay) -> None:
@@ -320,7 +322,7 @@ def devolve(state: GameState, owner: int, target: PokemonInPlay, count: int, *, 
     if not target.evolution_stack:
         target.evolved_turn = None
     target.devolved_turn = state.turn_number
-    (p.hand if destination == DEVOLVE_TO_HAND else p.discard).extend(removed)
+    (p.hand if destination == DEVOLVE_TO_HAND else p.deck if destination == DEVOLVE_TO_DECK else p.discard).extend(removed)  # v0.116: 山札（切るのは呼ぶ側）
     extra = {"effect": effect} if effect is not None else {"trainer_card": trainer}
     state.add_event(
         "devolve",
