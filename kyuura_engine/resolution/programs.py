@@ -104,7 +104,8 @@ class EspRedoOffer(Exception):
     """v0.66: ナツメのESPのやり直しの決定を出す（``AttackRun.flip`` が、ワザの説明文のコインを投げた直後・結果を使う前に投げる）。``run_elements`` が受け取って
     決定（``ESP_REDO``）を出し、答えのあとに同じ要素をもう一度処理する（``esp_preset``）。"""
 
-    def __init__(self, count: int, by_heads: bool, flipper: int, flips, cards: tuple[int, ...], problem, chain: ContinueOnHeads | None = None):
+    def __init__(self, count: int, by_heads: bool, flipper: int, flips, cards: tuple[int, ...], problem, chain: ContinueOnHeads | None = None,
+                 until_tails: bool = False):
         super().__init__(f"ナツメのESPのやり直し（{count} 枚）")
         self.count = count
         self.by_heads = by_heads
@@ -114,6 +115,8 @@ class EspRedoOffer(Exception):
         self.problem = problem
         # v0.115: 条件つきで続けて投げるコインのまとまり（``AttackRun.flip_chain``。びっくりサンダー）。やり直すなら、同じまとまりを最初から投げ直す（枚数は面で変わりうる）
         self.chain = chain
+        # v0.118: 「うら」が出るまで投げるコインのまとまり（``AttackRun.flip_until_tails``。れんぞくいしなげ・まるもうけ）。やり直すなら、最初から「うら」が出るまで投げ直す
+        self.until_tails = until_tails
 
 
 class Phase(str, Enum):
@@ -131,6 +134,17 @@ TAILS = CoinSide.TAILS
 # やり直さなかった（決定の前の面の並びを使う）・やり直した（まとまりを最初から投げ直す）
 ESP_CHAIN_KEPT = "chain_kept"
 ESP_CHAIN_REDO = "chain_redo"
+# v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 2 章）: 同じく、「うら」が出るまで投げるコインのまとまり（``AttackRun.flip_until_tails``）をもう一度処理するときの印。
+# 続きの情報の ``esp`` の 7 つめの値は ``ESP_UNTIL_TAILS``（v0.115 の ``("chain", 枚数)`` と同じ位置。v0.117 までの 6 つの値の形は変えない）
+ESP_UNTIL_KEPT = "until_kept"
+ESP_UNTIL_REDO = "until_redo"
+ESP_UNTIL_TAILS = ("until", "tails")
+
+
+def until_tails_complete(results) -> bool:
+    """v0.118: ``results`` が、「うら」が出るまで投げ終えた面の並び（「おもて」が 0 枚以上続いたあとに「うら」1 枚）か。"""
+    results = tuple(CoinSide(side) for side in results)
+    return bool(results) and results[-1] is TAILS and all(side is HEADS for side in results[:-1])
 
 
 @dataclass(frozen=True)
@@ -292,6 +306,53 @@ class AttackRun:
         枚数は違いうる）。"""
         attacker = self.attacker()
         redone = self._chain_flips(chain, flipper)
+        self.state.add_event("esp_redo", player=self.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(self.key), cards=tuple(cards),
+                             original=tuple(side.value for side in original.results), redone=tuple(side.value for side in redone.results))
+        return redone
+
+    def flip_until_tails(self, classes) -> CoinFlips:
+        """v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 2 章）: 「うら」が出るまでコインを投げ続け、面の並び（最後の 1 枚が「うら」）を返す（``coins.flip_until_tails``。
+        ``classes`` は先読みの「おもて」の数の組を返す関数。実際の対戦の投げ方・乱数・ログは v0.64 と同じ）。
+
+        ナツメのESPのやり直しは、「うら」が出るまでの一まとまりを投げ終えたあとに 1 回だけ聞く（「ワザの説明文に書かれているすべてのコイントス」はこのまとまりの全部。v0.115 の
+        ``flip_chain`` と同じ形）。やり直すなら、最初から「うら」が出るまで投げ直す（最初の並びの長さにそろえない。枚数は最初と違いうる）。決定の前の並びは使わず、あとの処理には
+        最後の並びだけを渡す。v0.117 までは、ESPのついたポケモンがこのコインを投げると内部エラーにしていた（「今の写しでは起こらない」という前提が誤りで、［サイコリンク］と超の色マーカーで
+        届く。docs 2 章）。"""
+        attacker = self.attacker()
+        flipper = self.player
+        if self.esp_preset is not None:
+            preset, results = self.esp_preset
+            if preset not in (ESP_UNTIL_KEPT, ESP_UNTIL_REDO) or len(self.state.log) != self.element_log or not until_tails_complete(results):
+                raise RuntimeError("ナツメのESPのやり直しのあとの要素が、決定の前と違うコイン・ログの処理をした（エンジンの不具合）")
+            self.esp_preset = None
+            if preset == ESP_UNTIL_KEPT:
+                return CoinFlips(tuple(CoinSide(side) for side in results))
+            return self._esp_rerun(classes, flipper, E.esp_cards(self.state, attacker), CoinFlips(tuple(CoinSide(side) for side in results)))
+        flips = self._until_flips(classes, flipper)
+        cards = E.esp_cards(self.state, attacker)
+        if not cards:
+            return flips
+        if self.esp_done:
+            raise self.res.question("esp_separate_coin_tosses", f"ポケモン {attacker.pokemon_id}・ワザ {self.key}")
+        self._esp_carry_check()
+        self.esp_done = True
+        problem = E.esp_redo_problem(self.state, attacker, cards, flipper, self.player)
+        if self.res.dry_run:
+            # 先読み: やり直さない・やり直す（止める選択は試さない）の両方を試す。やり直すなら、最初から「うら」が出るまで投げ直す（最初と最後の「おもて」の数は、どちらも組の代表で試す）
+            answers = [()] + ([] if problem is not None else [(1,)])
+            if not self.res.oracle.choose(answers):
+                return flips
+            return self._esp_rerun(classes, flipper, cards, flips)
+        raise EspRedoOffer(len(flips.results), False, flipper, flips, cards, problem, until_tails=True)
+
+    def _until_flips(self, classes, flipper: int) -> CoinFlips:
+        attacker = self.attacker()
+        return flip_until_tails(self.state, flipper, source="attack", effect=str(self.key), card=attacker.card, pokemon_id=attacker.pokemon_id, classes=classes)
+
+    def _esp_rerun(self, classes, flipper: int, cards: tuple[int, ...], original) -> CoinFlips:
+        """v0.118: ナツメのESPで、「うら」が出るまで投げるコインを最初から投げ直す（同じプレイヤー。最初の結果は使わない）。ログ ``esp_redo``（最初の並び・やり直した並び。枚数は違いうる）。"""
+        attacker = self.attacker()
+        redone = self._until_flips(classes, flipper)
         self.state.add_event("esp_redo", player=self.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(self.key), cards=tuple(cards),
                              original=tuple(side.value for side in original.results), redone=tuple(side.value for side in redone.results))
         return redone
@@ -671,6 +732,8 @@ def suspend_esp_redo(run: AttackRun, index: int, offer: EspRedoOffer) -> None:
     esp = (index, offer.count, offer.by_heads, offer.flipper, tuple(side.value for side in offer.flips.results), tuple(offer.cards))
     if offer.chain is not None:
         esp += (("chain", offer.chain.coins),)  # v0.115: 条件つきで続けて投げるコインのまとまり（最大の枚数）。v0.114 までの 6 つの値の形は変えない
+    elif offer.until_tails:
+        esp += (ESP_UNTIL_TAILS,)  # v0.118: 「うら」が出るまで投げるコインのまとまり（枚数は最初の並びの長さ。やり直しの枚数は決まらない）
     unresolved = _unresolved_extra((1,), *offer.problem) if offer.problem is not None else ()
     run.suspend(kind=ESP_REDO, player=run.player, options=(1,), min_choices=0, max_choices=1, carry=True, extra=(("esp", esp),) + unresolved)
 
@@ -690,6 +753,15 @@ def apply_esp_redo(run: AttackRun, esp: tuple, choices: tuple[int, ...]) -> int:
                                 cards=tuple(cards), original=tuple(original))
         run.esp_done = True
         run.esp_preset = (ESP_CHAIN_REDO if choices else ESP_CHAIN_KEPT, flips.results)
+        return index
+    if len(esp) == 7 and tuple(esp[6]) == ESP_UNTIL_TAILS:
+        # v0.118: 「うら」が出るまで投げるコインのまとまり。やり直すなら、もう一度処理する要素が最初から「うら」が出るまで投げ直す（ログ ``esp_redo`` もそこで残す。先読みの「おもて」の数の組は
+        # その要素だけが求められるので、ここでは投げない）
+        if not choices:
+            run.state.add_event("esp_redo_declined", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                                cards=tuple(cards), original=tuple(original))
+        run.esp_done = True
+        run.esp_preset = (ESP_UNTIL_REDO if choices else ESP_UNTIL_KEPT, flips.results)
         return index
     if esp[6:]:
         raise RuntimeError(f"ナツメのESPの続きの情報 {esp!r} の形が正しくない（エンジンの不具合）")
@@ -1057,13 +1129,11 @@ class HeadsUntilTails:
         return self.fixed + self.per * heads
 
     def flip_until_tails(self, run: AttackRun, element: Damage) -> CoinFlips:
+        """v0.118: ナツメのESPのやり直しは ``AttackRun.flip_until_tails``（「うら」が出るまでの一まとまりのあとに聞き、やり直すなら最初から投げ直す）。v0.117 までは、ESPのついた
+        ポケモンがこのワザを使うと内部エラーにしていた（［サイコリンク］と超の色マーカーで届く。docs/unbounded-coins-heal-allocation-v0.118.md 2 章）。先読みの組は、最初と
+        やり直しのどちらのコインでも、この要素の今の場から求める（ESPの決定のあいだに場は変わらない）。"""
         from .unbounded import head_classes
 
-        attacker = run.attacker()
-        if E.esp_cards(run.state, attacker):
-            # v0.66: ナツメのESPのやり直しは ``AttackRun.flip`` のコインだけで聞く。「うら」が出るまで投げるコインを「ナツメのポケモン」が使う場面は今の写しでは起こらない
-            # （黙ってやり直しを聞かない処理にしない。docs/optional-trainers-v0.66.md 9.5 節）
-            raise RuntimeError(f"ナツメのESPのついたポケモン {attacker.pokemon_id} が「うら」が出るまで投げるコインのワザを使った（v0.66 では起こらない組み合わせ。エンジンの不具合）")
         found: list = []
 
         def classes():
@@ -1071,8 +1141,7 @@ class HeadsUntilTails:
                 found.append(head_classes(run, element, self.per))
             return found[0]
 
-        return flip_until_tails(run.state, run.player, source="attack", effect=str(run.key), card=attacker.card, pokemon_id=attacker.pokemon_id,
-                                classes=classes)
+        return run.flip_until_tails(classes)
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
         return self.damage_for(flips.heads)

@@ -5436,10 +5436,20 @@ def _esp_redo_decision_problems(state: GameState, d, player: int, attacker: Poke
     esp = d.context_value("esp")
     if d.player != player or tuple(d.options) != (1,) or (d.min_choices, d.max_choices) != (0, 1):
         return [f"ESPのやり直しの決定の形（決める {d.player}・選べるもの {d.options}・{d.min_choices}〜{d.max_choices}）が正しくない"]
-    if not (isinstance(esp, tuple) and (len(esp) == 6 or (len(esp) == 7 and isinstance(esp[6], tuple) and len(esp[6]) == 2 and esp[6][0] == "chain"))):
+    from .resolution.programs import ESP_UNTIL_TAILS, until_tails_complete
+
+    if not (isinstance(esp, tuple) and (len(esp) == 6 or (len(esp) == 7 and isinstance(esp[6], tuple) and len(esp[6]) == 2 and esp[6][0] in ("chain", "until")))):
         return [f"ESPのやり直しの続きの情報 {esp!r} が正しくない"]
     _index, count, _by_heads, flipper, original, cards = esp[:6]
-    if len(esp) == 7:
+    if len(esp) == 7 and esp[6][0] == "until":
+        # v0.118: 「うら」が出るまで投げるコインのまとまり（れんぞくいしなげ・まるもうけ）。最初の結果は「おもて」が 0 枚以上続いたあとに「うら」1 枚の並びで、「おもて」の数でまとめない
+        try:
+            complete = tuple(esp[6]) == ESP_UNTIL_TAILS and until_tails_complete(original)
+        except (TypeError, ValueError):
+            complete = False
+        if not complete or _by_heads:
+            return [f"ESPのやり直しの最初の結果 {original!r} が、「うら」が出るまで投げたコインの並び（{esp[6]!r}）ではない"]
+    elif len(esp) == 7:
         # v0.115: 条件つきで続けて投げるコインのまとまり（びっくりサンダー）。最初の結果は、そのまとまりを最後まで投げた面の並び（T・HT・HH）で、「おもて」の数でまとめない
         from .resolution.programs import ContinueOnHeads
 

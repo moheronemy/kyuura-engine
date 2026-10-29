@@ -385,14 +385,24 @@ class EspTest(unittest.TestCase):
         restored = pickle.loads(pickle.dumps(before))
         self.assertEqual(snapshot(answer(restored, (1,), coins=[H])), snapshot(answer(before, (1,), coins=[H])))
 
-    def test_until_tails_coins_with_esp_stop_as_engine_bug(self):
-        """「うら」が出るまで投げるコイン（v0.64 のれんぞくいしなげ）を、ESPのついたポケモンが使う場面は今の写しでは起こらない（「ナツメのポケモン」が
-        れんぞくいしなげを使えない）。盤面を直接作って起こすと、やり直しを黙って聞かない処理にせず、内部エラーで止める（docs 9.5 節）。"""
+    def test_until_tails_coins_with_esp_ask_after_the_whole_run(self):
+        """「うら」が出るまで投げるコイン（v0.64 のれんぞくいしなげ）と、ESP。v0.117 までは「今の写しでは起こらない」として内部エラー（RuntimeError）で止めていたが、前提が誤りで、
+        ［サイコリンク］と超の色マーカーで通常の操作から届く（v0.118 の A0。docs/unbounded-coins-heal-allocation-v0.118.md 2 章。実際の経路は tests/test_esp_until_tails_v0_118.py）。
+        ここでは v0.66 の直接作った盤面（ナツメのポケモンでないイシツブテにESP）で、「うら」が出るまでの一まとまりのあとに 1 回だけ聞き、ナツメのポケモンでないので、やり直すは
+        選ぶと ES3 で止め、やり直さないは最初の結果で処理することを確かめる（黙ってやり直しを聞かない処理にしない）。"""
         state = board(active=mon(FOSSIL_GEODUDE, (F, F), trainers=[(SABRINAS_ESP, TURN)]))
-        snap = snapshot(state)
-        with self.assertRaises(RuntimeError):
-            attack(state, 0)
-        self.assertEqual(snapshot(state), snap)
+        before = snapshot(state)
+        asked = attack(state, 0, coins=[H, H, T])
+        self.assertEqual(snapshot(state), before)
+        self.assertEqual(asked.decision.kind, ESP_REDO)
+        self.assertEqual(asked.decision.context_value("esp")[4:], (("heads", "heads", "tails"), (asked.players[0].active.trainers[0].card,), ("until", "tails")))
+        self.assertEqual(asked.decision.context_value("unresolved_choices"), (1,))
+        self.assertEqual(asked.decision.context_value("unresolved_code"), ESP_HOLDER_CODE)
+        self.assertEqual(asked.players[1].active.damage, 0)
+        with self.assertRaises(UnsupportedError):
+            answer(asked, (1,))
+        kept = answer(asked, ())
+        self.assertEqual(events(kept, "damage")[-1]["amount"], 20)
 
     def test_discarded_at_end_of_own_turn(self):
         state = self.attached(mon(SABRINAS_VENONAT, (P, G)))
