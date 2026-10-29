@@ -83,9 +83,15 @@ class Poison:
     どく状態にしたポケモン（発生源）は持たない。発生源が場をはなれても、変化しても、受けた特殊状態は
     消えたり変化したりしない（p.322）ので、処理に使わないため。どく状態は重ならない（p.322）ので、
     1 匹のポケモンに 1 つだけ。
+
+    - ``multiplier``（v0.119。docs/damage-reactions-poison-sleep-v0.119.md 5 章）: ポケモンチェックでのせる「どく」によるダメージカウンターの数にかける数（ツボツボの「どくどくエキス」の
+      「このワザによって「どく」状態になったポケモンは、ポケモンチェックのときにのせる「どく」によるダメージカウンターの数が、2倍になる」）。``damage`` の固定の量（特殊などくの 20）とは
+      別の性質として持つ（通常の 10 を 2 倍にした 20 と、固定の 20 は、ほかのどくの量を変える効果・鋼エネルギーとの合わせ方で結果が変わりうる）。通常のどく・固定の量の特殊などくは 1。
+      書き出しは形式 27 だけが表せる（1 でなければ形式 1〜26 は ``ValueError``）
     """
 
     damage: int = 10
+    multiplier: int = 1
 
 
 @dataclass(frozen=True)
@@ -194,6 +200,35 @@ class PreventDamage:
     # v0.79: 防ぐのがワザによるダメージだけか（``PreventAttackDamage``）。「ダメージを受けない」（かたまる）は、トレーナーのダメージも防ぐ（v0.61。p.235 の解説の記録）
     attack_only: ClassVar[bool] = False
     on_opponent: ClassVar[bool] = False  # 相手に与える効果か（v0.31。v0.30 までの効果はどれも自分自身）
+
+
+@dataclass(frozen=True)
+class SecretePoison:
+    """v0.119（docs/damage-reactions-poison-sleep-v0.119.md 6 章）: コクーン（neo2-007）の「どくをだす」の持続する効果（「次の相手の番、このカードが相手のワザによるダメージを受けたとき
+    (それによって、このカードが「きぜつ」しても)、相手を「どく」状態にし、相手の控えポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。」）。
+
+    - ワザを使ったポケモン自身に与える（``Retaliation`` と同じく、効果を受けている場のポケモンが持つ）。``source_card``・``source_player``・``created_turn``・``active_turn``（次の相手の番）は
+      ``PreventDamage`` と同じ。``attack_index``・``attack_card`` は効果を与えたワザ（``Retaliation`` と同じ）。``amount`` は控えポケモンへのダメージの基本となるダメージ（10）
+    - はたらくのは ``active_turn`` の間に、このポケモンが相手のワザによるダメージ（最終ダメージが 0 より大きい）を受けたとき（``resolution.catalog.SECRETE_POISON``。ワザの分類。返す効果の
+      ダメージもワザの分類）。処理はダメージの要素のあとの窓（``kernel.poison_and_bench_damage_to_opponent``）で、このポケモンが HP 以上でも処理する。効果は特殊能力ではなく、効果を
+      与えたワザの効果（ワザの分類の発生元。かがくへんかガスでは消えない）
+    - ベンチに戻ったら・場をはなれたら・進化したら消え、一度消えたら復活しない（p.322）"""
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    attack_index: int
+    amount: int = 10
+    attack_card: str | None = None
+    kind: ClassVar[str] = "secrete_poison"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+
+    def __post_init__(self) -> None:
+        _check_attack_card(self.attack_card)
+        if type(self.amount) is not int or self.amount <= 0 or self.amount % 10:
+            raise ValueError(f"控えポケモンへのダメージは 10 の倍数の正の数（{self.amount!r}）")
 
 
 # Retaliation の与えるダメージの決め方（v0.13）。名前は書き出し・ログに出る種類（kind）と対応する
@@ -1654,6 +1689,7 @@ PERSISTENT_EFFECT_TYPES = (PreventDamage, PreventAttackDamage, Retaliation, Next
                            StatusOnEnergyAttach, EvolutionLock,  # v0.116: しこみどく・エナジーショック・やみのしょくしゅ（次の相手の番）
                            PursuitOnRetreat,  # v0.117: おいうち（次の相手の番に「にげる」とき）
                            RetreatCostIncrease,  # v0.118: しめつづける（次の相手の番に「にげる」ときに必要なエネルギーが多くなる）
+                           SecretePoison,  # v0.119: どくをだす（次の相手の番に相手のワザのダメージを受けたとき）
                            *PERIOD_EFFECT_TYPES)  # v0.92: クモのす・くろいまなざし・にらみつける（ヨーギラス）・いやなおと。v0.93: はなれられない効果・かぶりつく。v0.108: マイナスイオン・あまえる
 
 
@@ -1715,8 +1751,70 @@ GROUP_ATTACK_IMMUNITY = "group_attack_immunity"
 # カード。使った番の終わりに消える。「この番に、すでに自分の場のほかのアンノーン「X」の「XXXXX」を使っていたなら」の確かめ（ほかの個体だけ。同じ個体の使用制限に広げない）
 GROUP_ATTACK_POWER_USED = "group_attack_power_used"
 POWER_TURN_EFFECT_KINDS = (QUICKEN_USED, GROUP_ATTACK_IMMUNITY, GROUP_ATTACK_POWER_USED)
+@dataclass(frozen=True)
+class PoisonMist:
+    """v0.119（docs/damage-reactions-poison-sleep-v0.119.md 5 章）: マタドガス（ES3-007）の［ポイズンミスト］の「おもて」の効果（「次の自分の番の始めまで、「どく」状態になったポケモンが
+    ポケモンチェックで受ける「どく」のダメージは、20ダメージになる。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えず、その効果も消える」）。
+
+    - ``player``: 使ったプレイヤー。``pokemon_id``・``source_card``: 使ったポケモンの場の番号といちばん上のカード。``card_id``・``power_index``: 特殊能力を印刷したカードと位置
+    - ``created_turn``: 使った番。消えるのは使ったプレイヤーの次の番の始め（``created_turn`` + 2 の番の始め。``procedures.begin_turn``）。それまでのポケモンチェック（使った番のあと・
+      相手の番のあと）ではたらく。使ったポケモンが「ねむり・マヒ・こんらん」状態になったら消える（``conditions``）
+    - ``poisoned_before``: 「おもて」の効果を与えたときにどく状態だった場のポケモンの番号（お互いの場）。そのあと、どく状態でなかったポケモンが新しくどく状態になったら除く
+      （``conditions.poison``）。「どく」状態になったポケモン」が、使う前からどく状態だったポケモンをふくむかは決まらない（PO2）ので、比べるために持つ
+    - ``interrupted``: 与えたあと、使ったポケモンが場にいない・その特殊能力が消えている（かがくへんかガス・退化など）コマンドの終わりがあった（``effects.poison_mist_upkeep``）。そのあと
+      効果が続くかは決まらない（PO3）
+    書き出しは形式 27 だけが表せる（空でなければ形式 1〜26 は ``ValueError``）。"""
+
+    player: int
+    pokemon_id: int
+    source_card: int
+    card_id: str
+    power_index: int
+    created_turn: int
+    poisoned_before: tuple[int, ...] = ()
+    interrupted: bool = False
+
+
+REPLACEMENT_PENDING = "pending"  # ワザの要素で、相手の対戦ポケモンがこのワザで HP 以上になった（きぜつの判定の前）
+REPLACEMENT_KNOCKED = "knocked"  # そのポケモンがこのワザのあとのきぜつの処理で「きぜつ」した（かわりに出す対戦ポケモンを待つ）
+REPLACEMENT_STATUSES = (REPLACEMENT_PENDING, REPLACEMENT_KNOCKED)
+
+
+@dataclass(frozen=True)
+class ReplacementPoison:
+    """v0.119（docs/damage-reactions-poison-sleep-v0.119.md 6 章）: マタドガス（ES3-007）の「ガスばくはつ」の「このワザによって相手が「きぜつ」したなら、そのかわりに出てくる対戦ポケモンを「どく」状態に
+    する」の、まだ与えていない効果。
+
+    - ``player``: かわりの対戦ポケモンを出すプレイヤー（ワザを受けたポケモンの持ち主）。``knocked_pokemon_id``: このワザを受けた相手の対戦ポケモンの場の番号
+    - ``card_id``・``attack_index``: ワザの出どころ。``attacker_player``・``attacker_pokemon_id``・``attacker_card``: 実際にワザを使ったプレイヤー・ポケモン（場の番号・いちばん上のカード）。
+      ``attacker_evolved``: ワザを使ったときの使い手が場の進化ポケモンか（与えるときに使い手が場をはなれていれば、［ニュートラルシールド］などの発生元の判定に使う）
+    - ``created_turn``: ワザを使った番。``status``: ``REPLACEMENT_PENDING``（このワザで HP 以上になった。きぜつの判定で「きぜつ」しなかったら消す）か ``REPLACEMENT_KNOCKED``（「きぜつ」した。
+      ``player`` が次に控えからバトル場に出したポケモンにどくを与えて消す。勝ち負けが決まったら消す）
+    状態の値なので、きぜつの判定・サイド・ふしちょう・バトル場に出す決定をまたいでも同じ記録で 1 回だけ処理する。書き出しは形式 27 だけが表せる。"""
+
+    player: int
+    knocked_pokemon_id: int
+    card_id: str
+    attack_index: int
+    attacker_player: int
+    attacker_pokemon_id: int
+    attacker_card: int
+    attacker_evolved: bool
+    created_turn: int
+    status: str = REPLACEMENT_PENDING
+
+    def __post_init__(self) -> None:
+        if self.status not in REPLACEMENT_STATUSES:
+            raise ValueError(f"かわりの対戦ポケモンへの効果の状態 {self.status!r} は未定義")
+
+
+# v0.119（docs/damage-reactions-poison-sleep-v0.119.md 9 章）: ヒトデマン（ES3-017）の「なぞのこうせん」（ワザの効果）: 「次の相手の番、自分の場の「水」ポケモンは「弱点」の影響を受けない。」。
+# ``player`` はワザを使ったプレイヤー（効果を受ける場の持ち主）、``source_card``・``pokemon_id`` は実際にワザを使ったポケモンのいちばん上のカードと場の番号、``card_id``・``attack_index`` は
+# ワザの出どころ。はたらくのは与えた番 + 1 の番だけで、その番の終わりに消える（``expires_turn`` は与えた番 + 1）。受けるポケモンは、ダメージを受ける時の場の今の姿のタイプで決める
+ATTACK_FIELD_WEAKNESS_IMMUNITY = "attack_field_weakness_immunity"
 TRAINER_TURN_EFFECT_KINDS = (ATTACK_DAMAGE_BONUS, POISON_ON_ATTACK_DAMAGE, BENCH_ATTACK_DAMAGE_PREVENTION, POWER_SUPPRESSION, FIRE_DOUBLE_ATTACH, EVOLUTION_BAN,
-                             OPPONENT_POWER_SUPPRESSION, ATTACK_POWER_SUPPRESSION, ATTACK_FIELD_POWER_SUPPRESSION, *POWER_TURN_EFFECT_KINDS)
+                             OPPONENT_POWER_SUPPRESSION, ATTACK_POWER_SUPPRESSION, ATTACK_FIELD_POWER_SUPPRESSION, *POWER_TURN_EFFECT_KINDS,
+                             ATTACK_FIELD_WEAKNESS_IMMUNITY)
 
 
 @dataclass(frozen=True)
@@ -2242,6 +2340,12 @@ class GameState:
     # （``AttackEffect.reads_turn_history``。「スケッチ」）のカードが対戦にあるときだけ記録する（``history.turn_history_needed``。ないときは空のまま）。番の最初に、2 つ前の番より
     # 古い記録を消す。書き出しは形式 26 だけが表せる（空でなければ形式 1〜25 は ``ValueError``）。v0.99 までの状態の写し（pickle）は項目がなく、この既定値（空）になる
     turn_history: tuple[Any, ...] = ()
+    # v0.119（docs/damage-reactions-poison-sleep-v0.119.md 5 章）: ［ポイズンミスト］の「おもて」の効果（``PoisonMist`` の並び。与えた順）。使ったプレイヤーの次の番の始めに消す。
+    # 書き出しは形式 27 だけが表せる（空でなければ形式 1〜26 は ``ValueError``）。v0.118 までの状態の写し（pickle）は項目がなく、この既定値（空）になる
+    poison_mists: tuple[Any, ...] = ()
+    # v0.119（docs 6 章）: 「ガスばくはつ」の、かわりに出てくる対戦ポケモンへのどく（``ReplacementPoison`` の並び）。ワザの要素で加え、きぜつの処理・バトル場に出す処理で消す。書き出しは形式 27
+    # だけが表せる（空でなければ形式 1〜26 は ``ValueError``）。v0.118 までの状態の写し（pickle）は項目がなく、この既定値（空）になる
+    replacement_poisons: tuple[Any, ...] = ()
     # v0.87（docs/movement-damage-reactions-v0.87.md 3 章）: 場の移動（控え → バトル場・バトル場 → ベンチ・手札からの登場）の事実への、まだ処理していない反応の段（``movement``。
     # ``reactions`` の ``("same", …)`` の段の並び）。事実を起こした処理の流れが、同じコマンドの中で処理する（ワザの要素のあいだ・トレーナー・特殊能力を使い終える前・にげるのあと・
     # バトル場に出したあと）。コマンドの終わり・決定を待つ間は空（決定をまたぐ続きは決定の ``context`` に移す）。書き出さない（不変条件 ``engine._pending_moves_problems``）

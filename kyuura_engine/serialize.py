@@ -1,6 +1,6 @@
 """ゲーム状態を JSON にできる辞書にする（画面やほかの言語に渡すため・テストで比べるため）。
 
-形式は 26 あります（``format_version``）。
+形式は 27 あります（``format_version``）。
 
 - 1（既定）: v0.1 と同じ形。v0.1 の固定値のテストと互換性の参照データは、この形で比べる。
 - 2: 1 に次を加えたもの（v0.2a）。``format_version``、``effects``（効果の登録表の id）、
@@ -133,6 +133,15 @@
   と、番でないプレイヤーの場にいたカード ``{"kind": "turn_field", "turn", "player", "cards", "face_down"}``）を加えたもの（v0.100。docs/sketch-perish-song-history-v0.100.md 7 章）。
   ドーブルの「スケッチ」のカードがある対戦だけが記録を持つ。形式 1〜25 は、記録があると ``ValueError``（なければ形式 1〜25 の書き出しは v0.99 と同じ）。形式 25 までの書き出しを
   読む側は、記録がないことを「前の番にワザを使わなかった」と読まないこと（記録していない）。
+- 27: 26 に、場のポケモンの特殊状態のどくの ``multiplier``（ポケモンチェックでのせる「どく」によるダメージカウンターの数にかける数。ツボツボの「どくどくエキス」の 2。1 なら書かない）と、
+  最上位の ``poison_mists``（マタドガスの［ポイズンミスト］の「おもて」の効果。``{"player", "pokemon_id", "source_card", "card_id", "power_index", "created_turn", "poisoned_before",
+  "interrupted"}`` の並び）と、最上位の ``replacement_poisons``（マタドガスの「ガスばくはつ」の、かわりに出てくる対戦ポケモンへのまだ与えていないどく。``{"player", "knocked_pokemon_id",
+  "card_id", "attack_index", "attacker_player", "attacker_pokemon_id", "attacker_card", "attacker_evolved", "created_turn", "status"}`` の並び。きぜつの判定・サイド・ふしちょう・バトル場に
+  出す決定を待つ間だけある。docs 6 章）を加えたもの（v0.119。docs/damage-reactions-poison-sleep-v0.119.md 5 章）。どくの量の性質（固定の量と、ダメージカウンターの数にかける数）は意味が
+  違うので、かける数を固定の量に直して古い形式に書かない: 形式 1〜26 は、かける数が 1 でないどく・［ポイズンミスト］の効果・「ガスばくはつ」のまだ与えていないどくがあると ``ValueError``
+  （なければ形式 1〜26 の書き出しは v0.118 と同じ）。
+  v0.119 の［シェルアーマー］を使うかの決定（``damage_option``）・ほかの新しい決定・持続する効果の種類は、これまでと同じく種類の値と項目を加えただけ（形式は変えない。知らない種類は
+  読む側が拒否すること）
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -232,12 +241,13 @@ from .state import (
     ReducedDamageToSource,
     ResistanceChange,
     Retaliation,
+    SecretePoison,
     TurnAttack,
     TurnField,
     WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -246,6 +256,8 @@ def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
     data: dict[str, Any] = {}
     if conditions.poison is not None:
         data["poison"] = {"damage": conditions.poison.damage}
+        if conditions.poison.multiplier != 1:
+            data["poison"]["multiplier"] = conditions.poison.multiplier  # v0.119（形式 27。``state_to_dict`` が形式 1〜26 で拒否する）
     if isinstance(conditions.exclusive, Asleep):
         data["sleep"] = {}
     elif isinstance(conditions.exclusive, Paralyzed):
@@ -341,6 +353,11 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
         # v0.117: おいうちの「にげる」ときのダメージの量と、効果を与えたワザ（AttackKey の文字列）。種類の値と項目を加えただけで形式は変えない
         data["amount"] = effect.amount
         data["attack"] = effect.attack
+    elif isinstance(effect, SecretePoison):
+        # v0.119: どくをだすの控えポケモンへのダメージの量と、効果を与えたワザの位置（``"secrete_poison"``）。種類の値と項目を加えただけで形式は変えない（v0.118 までの書き出しを読む側は、
+        # 知らない種類として拒否すること）
+        data["attack_index"] = effect.attack_index
+        data["amount"] = effect.amount
     elif isinstance(effect, RetreatCostIncrease):
         # v0.118: しめつづけるの「にげる」ときに増やすエネルギーの数と、効果を与えたワザ（AttackKey の文字列）。種類の値（``"retreat_cost_increase"``）と項目を加えただけで形式は変えない
         # （v0.117 までの書き出しを読む側は、知らない種類として拒否すること）
@@ -581,6 +598,11 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         raise ValueError(f"形式 {format_version} は、場のポケモンの受けた記録の、ダメージを受けた場所（バトル場・ベンチ）を表せない（format_version=25 を使う）")
     if format_version < 26 and state.turn_history:
         raise ValueError(f"形式 {format_version} は、プレイヤーの番ごとの記録（使ったワザ・場にいたカード）を表せない（format_version=26 を使う）")
+    if format_version < 27 and (state.poison_mists or any(pokemon.conditions.poison is not None and pokemon.conditions.poison.multiplier != 1
+                                                          for p in state.players for pokemon in p.in_play())):
+        raise ValueError(f"形式 {format_version} は、ダメージカウンターの数を倍にするどく・［ポイズンミスト］の効果を表せない（format_version=27 を使う）")
+    if format_version < 27 and state.replacement_poisons:
+        raise ValueError(f"形式 {format_version} は、「ガスばくはつ」のかわりに出てくる対戦ポケモンへのまだ与えていないどくを表せない（format_version=27 を使う）")
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
     if format_version == 1 and state.decision is not None and state.decision.resume == "attack":
@@ -728,7 +750,23 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         ]  # v0.88
     if format_version >= 26:
         data["turn_history"] = [turn_record(record) for record in state.turn_history]  # v0.100
+    if format_version >= 27:
+        data["poison_mists"] = [poison_mist_record(state, record) for record in state.poison_mists]  # v0.119
+        data["replacement_poisons"] = [replacement_poison_record(record) for record in state.replacement_poisons]  # v0.119
     return data
+
+
+def replacement_poison_record(record) -> dict[str, Any]:
+    """v0.119: 「ガスばくはつ」のまだ与えていないどく 1 つ（``state.ReplacementPoison``）。観測も同じ形を使う（どれも表の情報）。"""
+    return {"player": record.player, "knocked_pokemon_id": record.knocked_pokemon_id, "card_id": record.card_id, "attack_index": record.attack_index,
+            "attacker_player": record.attacker_player, "attacker_pokemon_id": record.attacker_pokemon_id, "attacker_card": record.attacker_card,
+            "attacker_evolved": record.attacker_evolved, "created_turn": record.created_turn, "status": record.status}
+
+
+def poison_mist_record(state: GameState, record) -> dict[str, Any]:
+    """v0.119: ［ポイズンミスト］の効果 1 つ（``state.PoisonMist``）。観測も同じ形を使う（どれも表の情報）。"""
+    return {"player": record.player, "pokemon_id": record.pokemon_id, "source_card": record.source_card, "card_id": record.card_id, "power_index": record.power_index,
+            "created_turn": record.created_turn, "poisoned_before": list(record.poisoned_before), "interrupted": record.interrupted}
 
 
 def turn_record(record) -> dict[str, Any]:

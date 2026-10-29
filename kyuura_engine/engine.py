@@ -72,6 +72,7 @@ from .decisions import (
     DAMAGE_REDUCTION,
     ESP_REDO,
     OPTIONAL_COIN,
+    DAMAGE_OPTION,
     SECRET_PLAN_CARD,
     DECISION_PHASES,
     ENTRY_POWER,
@@ -128,6 +129,7 @@ from .effects import (
     offer_entry_power,
     forced_entry_check, miracle_pending_problem, settle_miracle_energy, energy_attach_target_check, wild_growth_ambiguities, wild_growth_error,
     settle_color_effects,
+    poison_mist_upkeep,
     ko_prevention_power,
     retreat_cost,
     powers_of,
@@ -193,6 +195,8 @@ from .effects import (
     LEGEND_BODY_TARGET_CODE,
     legend_body_footprints,
     legend_body_goop_gas_problem,
+    scare_cycle_problem,
+    scared_by,
     legend_body_holders,
     legend_body_pending_problem,
     settle_legend_body,
@@ -226,6 +230,7 @@ from .state import (
     OPPONENT_POWER_SUPPRESSION,
     ATTACK_POWER_SUPPRESSION,
     ATTACK_FIELD_POWER_SUPPRESSION,
+    ATTACK_FIELD_WEAKNESS_IMMUNITY,
     TrainerTurnEffect,
     AttackCoinCheck,
     CannotAttackWhileSourceActive,
@@ -244,6 +249,7 @@ from .state import (
     NextTurnAttackDamage,
     ReducedDamageToSource,
     Retaliation,
+    SecretePoison,
     TERMINAL_PHASES,
     SET_ASIDE_FACE_DOWN_BENCH,
     SET_ASIDE_HAND,
@@ -773,6 +779,9 @@ def _apply_once(state: GameState, command, context: resolution.Context | None, *
     if new.color_effects:
         # v0.88（docs/type-energy-colors-v0.88.md 2 章）: ［せんすい］の対象が場にいなくなった記録を消し、［エナジーコンバーター］のカードが場をはなれたら印を付ける
         settle_color_effects(new)
+    if new.poison_mists:
+        # v0.119（docs/damage-reactions-poison-sleep-v0.119.md 5 章）: ［ポイズンミスト］を使ったポケモンが場にいない・特殊能力が消えている記録に、そのことを書く（PO3 の比べ）
+        poison_mist_upkeep(new)
     if order_stop is None and new.phase not in (Phase.HALTED, Phase.GAME_OVER):
         # v0.85（docs/entry-powers-energy-lifecycle-v0.85.md 5 章）: つけているポケモンが「ひかる」「やさしい」でなくなったミラクルエネルギーをトラッシュする（コマンドの終わり。
         # 効果の途中の決定を待つ間に起こるのはエンジンの未対応。［きせきのかぜ］がはたらいていれば動かさず、MEW1 の決められない状態として受け付けない）
@@ -784,6 +793,9 @@ def _apply_once(state: GameState, command, context: resolution.Context | None, *
         # v0.117（docs/retreat-return-active-powers-v0.117.md 5 章）: ［でんせつのからだ］。まきちらせ!ベトベトガスと同じ時にかかわるなら LB2。決定を待つあいだにトラッシュするカードが
         # あればエンジンの未対応。なければコマンドの終わりに、バトル場で力がはたらくポケモンについているトレーナーカードをトラッシュする（読み取りの問い合わせの中ではトラッシュしない）
         circular = legend_body_goop_gas_problem(new)
+        if circular is not None:
+            raise UnsupportedError(*circular)
+        circular = scare_cycle_problem(new)  # v0.119（IA1）: ［いあつ］と相手のベイビィポケモンの「モクモク」の循環（LB2 と同じ位置）
         if circular is not None:
             raise UnsupportedError(*circular)
         pending = legend_body_pending_problem(new)
@@ -2047,6 +2059,13 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower, context: resoluti
             "POWER_SUPPRESSED",
             f"場のポケモン {user.pokemon_id} は、相手のワザ（スタンウェーブ）の効果で特殊能力を使うことができず、その効果も消えている",
         )
+    scared = scared_by(state, cmd.player, user)
+    if scared:
+        # v0.119: 相手の［いあつ］（相手の場の「ベイビィポケモン」全員は「ワザ・特殊能力」を使うことができず、それらの効果もすべて消える）。かがくへんかガスと同じコード
+        raise IllegalActionError(
+            "POWER_SUPPRESSED",
+            f"場のポケモン {user.pokemon_id}（ベイビィポケモン）は、相手の［いあつ］（ポケモン {scared[0][0]}）で特殊能力「{power.name_ja}」を使うことができず、その効果も消えている",
+        )
     if power_suppressed(state, power, user):
         # v0.92: ワザで与えた期限のある抑止（ナツメのゲンガーの「やみのはどう」・オールクリアのワザを使っているあいだ）と、相手の場だけの「ふしぎなガス」（v0.87。使用の宣言を
         # 拒否していなかった。docs/power-suppression-lasting-locks-v0.92.md 8 章）。``continuous.power_suppressed`` の答えで、かがくへんかガス・まきちらせ!ベトベトガスと同じコード
@@ -2597,6 +2616,8 @@ def check_invariants(state: GameState) -> list[str]:
     problems.extend(_trainer_effect_problems(state))  # v0.56
     problems.extend(_energy_role_problems(state))  # v0.59
     problems.extend(_color_effect_problems(state))  # v0.88
+    problems.extend(_poison_mist_problems(state))  # v0.119
+    problems.extend(_replacement_poison_problems(state))  # v0.119
     problems.extend(_history_problems(state))  # v0.62
     problems.extend(_set_aside_problems(state))  # v0.63
     problems.extend(_face_up_prize_problems(state))  # v0.63
@@ -2975,6 +2996,9 @@ def _condition_problems(state: GameState, player: int, p: PlayerState, pokemon: 
     poison = conditions.poison
     if poison is not None and (not isinstance(poison, Poison) or type(poison.damage) is not int or poison.damage <= 0 or poison.damage % 10):
         problems.append(f"ポケモン {pokemon.pokemon_id} のどく状態 {poison!r} が正しくない（ダメージは 10 の倍数の正の数）")
+    elif poison is not None and (type(poison.multiplier) is not int or poison.multiplier < 1 or (poison.multiplier != 1 and poison.damage != 10)):
+        # v0.119: ダメージカウンターの数にかける数（「どくどくエキス」）は 1 以上の整数。決まった量の特殊などくとかける数を両方持つどくを与える効果はない
+        problems.append(f"ポケモン {pokemon.pokemon_id} のどく状態 {poison!r} のかける数が正しくない（1 以上の整数。1 でなければダメージは通常の 10）")
     problems.extend(_retreat_failure_problems(state, player, pokemon))
     exclusive = conditions.exclusive
     if exclusive is not None and type(exclusive) not in (Asleep, Paralyzed, Confused):
@@ -3087,6 +3111,8 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.append(f"{where} {effect!r} が、はたらく最後の番 {end_turn(effect)} の終わりを過ぎて残っている")
         if isinstance(effect, Retaliation):
             problems.extend(_retaliation_problems(state, pokemon, effect, where))  # v0.12
+        if isinstance(effect, SecretePoison):
+            problems.extend(_secrete_poison_problems(state, pokemon, effect, where))  # v0.119
         if isinstance(effect, NextTurnAttackDamage):
             problems.extend(_next_turn_attack_damage_problems(state, pokemon, effect, where))  # v0.27
         if isinstance(effect, (CannotUseOwnAttack, CannotUseAttack)):
@@ -3143,6 +3169,23 @@ def _retaliation_problems(state: GameState, pokemon: PokemonInPlay, effect: Reta
     terms = getattr(entry.effect, "retaliation_terms", None) if entry is not None else None
     # v0.45: 倍数・コインの条件のある効果（「クロスカウンター」）は (決め方, 量, 倍数, コインの条件)。``Retaliation.terms``
     if terms is None or terms() != effect.terms():
+        return [f"{where} {effect!r} が、カード {definition.id} の {effect.attack_index} 番目のワザ（登録された実装）の効果と合わない"]
+    return []
+
+
+def _secrete_poison_problems(state: GameState, pokemon: PokemonInPlay, effect, where: str) -> list[str]:
+    """v0.119: 「どくをだす」の持続する効果の、ワザの位置と控えポケモンへのダメージの量が、効果を与えたワザ（``attack_card`` のカード。なければこのポケモンのカード）の登録された実装の
+    ``secrete_poison_terms``（量）と合うか。"""
+    if type(effect.attack_index) is not int:
+        return [f"{where} {effect!r} のワザの位置が整数ではない"]
+    definition = _effect_attack_definition(state, effect)
+    if definition is None:
+        return [f"{where} {effect!r} のワザを印刷したカード {effect.attack_card!r} が正しくない（この対戦のカードでない・効果を与えたポケモンのカードと同じなら書かない）"]
+    if not 0 <= effect.attack_index < len(definition.attacks):
+        return [f"{where} {effect!r} のワザの位置が、カード {definition.id} のワザではない"]
+    entry = state.effects.attack_entry(definition.id, effect.attack_index)
+    terms = getattr(entry.effect, "secrete_poison_terms", None) if entry is not None else None
+    if terms is None or terms() != effect.amount:
         return [f"{where} {effect!r} が、カード {definition.id} の {effect.attack_index} 番目のワザ（登録された実装）の効果と合わない"]
     return []
 
@@ -3831,9 +3874,10 @@ def _trainer_effect_problems(state: GameState) -> list[str]:
                 problems.append(f"{where} のワザを使ったポケモンのカード {record.source_card!r} が、ワザを使ったプレイヤーのカードではない")
             keys.append((record.player, record.source_card, record.expires_turn))
             continue
-        if record.kind == ATTACK_FIELD_POWER_SUPPRESSION:
+        if record.kind in (ATTACK_FIELD_POWER_SUPPRESSION, ATTACK_FIELD_WEAKNESS_IMMUNITY):
             # v0.92: ワザで与えた効果（ナツメのゲンガーの「やみのはどう」）。登録はワザ（``card_id``・``attack_index``）の ``field_effect_terms()``。``source_card``・``pokemon_id`` は
             # 実際にワザを使ったポケモンのいちばん上のカードと場の番号（与えたあとに場をはなれても消えないので、今の場所は確かめない）。与えた番〜消える番（与えた番 + 1）
+            # v0.119: ヒトデマンの「なぞのこうせん」（``ATTACK_FIELD_WEAKNESS_IMMUNITY``）も同じ形（効果を受けるのはワザを使ったプレイヤーの場。はたらくのは与えた番 + 1 の番だけ）
             attack = state.effects.attack_entry(record.card_id, record.attack_index) if type(record.attack_index) is int else None
             terms = attack.effect.field_effect_terms() if attack is not None and hasattr(attack.effect, "field_effect_terms") else None
             if terms is None or terms[0] != record.kind or record.expires_turn != record.created_turn + terms[1]:
@@ -3938,7 +3982,8 @@ def _trainer_effect_problems(state: GameState) -> list[str]:
         event = added.get((record.player, record.source_card, record.expires_turn)) if isinstance(record, TrainerTurnEffect) else None
         if event is not None and (event.get("effect_kind"), event.get("card_id")) != (record.kind, record.card_id):
             problems.append(f"プレイヤー {record.player} のトレーナーの効果 {record!r} が、与えたログ {event!r} と合わない")
-        elif event is not None and record.kind == ATTACK_FIELD_POWER_SUPPRESSION and (event.get("pokemon_id"), event.get("attack_index")) != (record.pokemon_id, record.attack_index):
+        elif event is not None and record.kind in (ATTACK_FIELD_POWER_SUPPRESSION, ATTACK_FIELD_WEAKNESS_IMMUNITY) and (
+                event.get("pokemon_id"), event.get("attack_index")) != (record.pokemon_id, record.attack_index):
             problems.append(f"プレイヤー {record.player} のワザの効果 {record!r} の実際に使ったポケモン・ワザの位置が、与えたログ {event!r} と合わない")  # v0.92
     return problems
 
@@ -4685,6 +4730,112 @@ def _energy_role_problems(state: GameState) -> list[str]:
     return problems
 
 
+def _poison_mist_problems(state: GameState) -> list[str]:
+    """v0.119（docs/damage-reactions-poison-sleep-v0.119.md 5 章）: ［ポイズンミスト］の効果の記録（``GameState.poison_mists``）。
+
+    - ``PoisonMist`` の値のタプル。プレイヤーは 0・1、使った番は使ったプレイヤーの番で、今の番は使った番〜使った番 + 1（使ったプレイヤーの次の番の始めに消すので残らない）
+    - 印刷したカードの ``power_index`` 番目の特殊能力の登録が ``CoinPoisonMistUntilNextTurn``。発生源のカードは使ったプレイヤーのカード
+    - 使う前からどく状態だったポケモンの番号は重ならない整数の並び。1 匹のポケモンが 2 つ以上の記録を同じ番に与えない（自分の番ごとに 1 回）。発生源が場にいれば、
+      ねむり・マヒ・こんらん状態ではない（なったら記録を消す）
+    - ログとの対応: 与えた（``poison_mist_added``）がまだ消していない（``poison_mist_removed``）記録と同じ。発生源が場にいないか特殊能力が消えていれば、``interrupted`` が真（コマンドの
+      終わりに書く）。エンジンは記録をログから決めない"""
+    from .effects import CoinPoisonMistUntilNextTurn, poison_mist_working
+    from .state import PoisonMist
+
+    records = state.poison_mists
+    if not isinstance(records, tuple) or any(type(r) is not PoisonMist for r in records):
+        return [f"［ポイズンミスト］の記録 {records!r} が PoisonMist の値のタプルではない"]
+    problems: list[str] = []
+    keys = set()
+    for record in records:
+        where = f"［ポイズンミスト］の記録 {record!r}"
+        if record.player not in PLAYERS or type(record.created_turn) is not int or not record.created_turn <= state.turn_number <= record.created_turn + 1:
+            problems.append(f"{where} のプレイヤー・使った番が正しくない（今の番 {state.turn_number}）")
+            continue
+        if state.first_player in PLAYERS and turn_owner(state, record.created_turn) != record.player:
+            problems.append(f"{where} を使った番が、使ったプレイヤーの番ではない")
+        definition = state.definitions.get(record.card_id)
+        powers = definition.powers if definition is not None else ()
+        if type(record.power_index) is not int or not 0 <= record.power_index < len(powers) or not isinstance(
+                state.effects.power_effect(definition.id, powers[record.power_index]), CoinPoisonMistUntilNextTurn):
+            problems.append(f"{where} の特殊能力が［ポイズンミスト］の実装ではない")
+        card = state.cards.get(record.source_card)
+        if card is None or card.owner != record.player:
+            problems.append(f"{where} の発生源のカードが、使ったプレイヤーのカードではない")
+        if not isinstance(record.poisoned_before, tuple) or any(type(pid) is not int for pid in record.poisoned_before) or len(set(record.poisoned_before)) != len(
+                record.poisoned_before):
+            problems.append(f"{where} の使う前からどく状態だったポケモンの番号が、重ならない整数の並びではない")
+        located = state.find_pokemon(record.pokemon_id)
+        if located is not None and (located[1].conditions.asleep or located[1].conditions.paralyzed or located[1].conditions.confused):
+            problems.append(f"{where} の発生源がねむり・マヒ・こんらん状態なのに、記録が残っている（その効果も消える）")
+        if not record.interrupted and state.decision is None and not poison_mist_working(state, record):
+            problems.append(f"{where} の発生源が場にいない・特殊能力が消えているのに、そのことが書かれていない")
+        key = (record.pokemon_id, record.created_turn)
+        if key in keys:
+            problems.append(f"{where} と同じポケモン・同じ番の記録がある")
+        keys.add(key)
+    added: list = []
+    removed: list = []
+    starts = 0
+    for event in reversed(state.log):  # 記録が残りうるのは今の番と前の番に与えたものだけ（前の前の番の始めまでのログを見る）
+        if event["kind"] == "turn_start":
+            starts += 1
+            if starts > 2:
+                break
+        elif event["kind"] == "poison_mist_added":
+            added.append((event.get("player"), event.get("pokemon_id"), event.get("created_turn")))
+        elif event["kind"] == "poison_mist_removed":
+            removed.append((event.get("player"), event.get("pokemon_id"), event.get("created_turn")))
+    live = [key for key in added if key not in removed and key[2] is not None and key[2] + 2 > state.turn_number]
+    if sorted(live) != sorted((r.player, r.pokemon_id, r.created_turn) for r in records):
+        problems.append(f"［ポイズンミスト］の記録 {[(r.player, r.pokemon_id, r.created_turn) for r in records]} が、ログで与えてまだ消していない効果 {live} と違う")
+    return problems
+
+
+def _replacement_poison_problems(state: GameState) -> list[str]:
+    """v0.119（docs/damage-reactions-poison-sleep-v0.119.md 6 章）: 「ガスばくはつ」のまだ与えていないどくの記録（``GameState.replacement_poisons``）。
+
+    - ``ReplacementPoison`` の値のタプル。決定を待っていないコマンドの境目には残らない（きぜつの判定・サイド・ふしちょう・バトル場に出す決定の間だけ。勝ち負けが決まれば消す）
+    - プレイヤーは 0・1 で、ワザを使ったプレイヤーの相手。ワザを使った番は今の番。プレイヤーごとに多くても 1 つ。ワザの出どころの登録が ``DamageAndSelfDamageThenPoisonReplacement``
+    - ``REPLACEMENT_PENDING``: このワザで HP 以上になったポケモンがまだ場にいる（きぜつの判定の決定を待つ）。``REPLACEMENT_KNOCKED``: そのポケモンは場にいない（「きぜつ」した）
+      で、持ち主のバトル場はまだ空き（かわりのポケモンを出したら与えて消す）
+    - ログとの対応: ``replacement_poison_pending`` があり、そのあとに与えた・消したログ（``replacement_poison``・``replacement_poison_removed``）がない"""
+    from .effects import DamageAndSelfDamageThenPoisonReplacement
+    from .state import REPLACEMENT_KNOCKED, REPLACEMENT_PENDING, ReplacementPoison
+
+    records = state.replacement_poisons
+    if not isinstance(records, tuple) or any(type(r) is not ReplacementPoison for r in records):
+        return [f"「ガスばくはつ」の記録 {records!r} が ReplacementPoison の値のタプルではない"]
+    if not records:
+        return []
+    problems: list[str] = []
+    if state.decision is None:
+        problems.append(f"「ガスばくはつ」の記録 {records!r} が、決定を待っていないコマンドの境目に残っている")
+    if len({r.player for r in records}) != len(records):
+        problems.append(f"「ガスばくはつ」の記録 {records!r} に、同じプレイヤーの記録が 2 つ以上ある")
+    for record in records:
+        where = f"「ガスばくはつ」の記録 {record!r}"
+        if record.player not in PLAYERS or record.attacker_player != 1 - record.player or record.created_turn != state.turn_number:
+            problems.append(f"{where} のプレイヤー・ワザを使ったプレイヤー・番が正しくない（今の番 {state.turn_number}）")
+            continue
+        definition = state.definitions.get(record.card_id)
+        attacks = definition.attacks if definition is not None else ()
+        if type(record.attack_index) is not int or not 0 <= record.attack_index < len(attacks) or not isinstance(
+                state.effects.attack_effect(definition.id, attacks[record.attack_index], attacks), DamageAndSelfDamageThenPoisonReplacement):
+            problems.append(f"{where} のワザが「ガスばくはつ」の実装ではない")
+        located = state.find_pokemon(record.knocked_pokemon_id)
+        if record.status == REPLACEMENT_PENDING and (located is None or located[0] != record.player):
+            problems.append(f"{where} は「きぜつ」を決める前なのに、そのポケモンが持ち主の場にいない")
+        if record.status == REPLACEMENT_KNOCKED and (located is not None or state.players[record.player].active is not None):
+            problems.append(f"{where} は「きぜつ」したあとなのに、そのポケモンが場にいる・持ち主のバトル場にポケモンがいる")
+        pending = [i for i, e in enumerate(state.log) if e["kind"] == "replacement_poison_pending" and e.get("pokemon_id") == record.knocked_pokemon_id]
+        closed = [i for i, e in enumerate(state.log) if e["kind"] in ("replacement_poison", "replacement_poison_removed")
+                  and e.get("knocked_pokemon_id", e.get("pokemon_id")) == record.knocked_pokemon_id]
+        if not pending or (closed and closed[-1] > pending[-1]):
+            problems.append(f"{where} が、ログで与えてまだ与えていない・消していない効果と違う")
+    return problems
+
+
 def _color_effect_problems(state: GameState) -> list[str]:
     """v0.88（docs/type-energy-colors-v0.88.md 2 章）: 特殊能力で色を変える効果の記録（``GameState.color_effects``。［せんすい］・［エナジーコンバーター］）。
 
@@ -5144,8 +5295,9 @@ def _decision_problems(state: GameState) -> list[str]:
         # v0.86: 反応の特殊能力の使う機会（REACTION_POWER。RB1・MEC1・DV2 で使うと止める場合）も、使わない（0 個）がいつも答えになる
         # v0.88: 「変えてよい」色の決定（SELECT_COLOR の選ぶ数 0〜1。テクスチャー2・テクスチャーマジックの抵抗力。抵抗力のないポケモンが相手のワザとして使うと色を選ぶと PG1）も、
         # 変えない（0 個）がいつも答えになる
+        # v0.119: ［シェルアーマー］を使うか（DAMAGE_OPTION）も、使わない（0 個）がいつも答えになる
         no_choice_answers = d.kind in (ENTRY_POWER, EVOLUTION_HEAL, USE_DISCARD_TRAINER, KNOCK_OUT_POWER, EXP_ALL_ENERGY, NINJA_TRICK, REACTION_SWITCH, BENCH_GUARD, ESP_REDO,
-                                       SECRET_PLAN_CARD, reactions.REACTION_POWER) or (d.kind == ACCEPT_REQUEST and d.context_value("chaos") is not None) \
+                                       SECRET_PLAN_CARD, reactions.REACTION_POWER, DAMAGE_OPTION) or (d.kind == ACCEPT_REQUEST and d.context_value("chaos") is not None) \
             or (d.kind == SELECT_COLOR and d.resume == "attack" and d.min_choices == 0) \
             or (d.kind == FORCED_SWITCH and d.resume == "attack" and d.min_choices == 0) \
             or (d.kind == ACCEPT_REQUEST and d.resume == "power" and d.min_choices == 0) \
@@ -5273,7 +5425,8 @@ def _knockout_bookkeeping(event) -> bool:
     return (kind == "persistent_effect_removed" and event.get("reason") in (KNOCK_OUT, SOURCE_LEFT_ACTIVE)) \
         or kind == "persistent_effect_source_left" \
         or (kind == "energy_returned_to_hand" and event.get("cause") == "knock_out") \
-        or (kind == "color_effect_removed" and event.get("reason") == "target_gone")
+        or (kind == "color_effect_removed" and event.get("reason") == "target_gone") \
+        or kind == "poison_mist_interrupted"  # v0.119: きぜつで場をはなれた［ポイズンミスト］の発生源の中断を、コマンドの終わり（effects.poison_mist_upkeep）に書いた
 
 
 def _prize_queue_problems(state: GameState, queue: tuple[int, ...]) -> list[str]:
@@ -5382,6 +5535,9 @@ def _attack_decision_problems(state: GameState, d) -> list[str]:
     if d.kind == DAMAGE_REDUCTION:
         # v0.66: お上品攻撃の減らす量の決定も、どのワザのダメージの要素も出しうる
         return problems + _damage_reduction_decision_problems(state, d, player, attacker)
+    if d.kind == DAMAGE_OPTION:
+        # v0.119: 受けるポケモンの使うかを選ぶ効果（［シェルアーマー］）の決定も、どのワザのダメージの要素も出しうる
+        return problems + _damage_option_decision_problems(state, d, player, attacker)
     if d.kind == ESP_REDO:
         # v0.66: ナツメのESPのやり直しの決定も、説明文のコインを投げるどのワザも出しうる
         return problems + _esp_redo_decision_problems(state, d, player, attacker)
@@ -5408,6 +5564,70 @@ def _with_attack_power(state: GameState, context: dict, attacker: PokemonInPlay,
         extra = group_attack_power_modifier(state, attacker, tuple(group_power))
         collected += () if extra is None else (extra,)
     return collected
+
+
+def _damage_option_decision_problems(state: GameState, d, player: int, attacker: PokemonInPlay) -> list[str]:
+    """v0.119（docs/damage-reactions-poison-sleep-v0.119.md 3 章）: 受けるポケモンの 8 段階の使うかを選ぶ効果（［シェルアーマー］）の決定（``DAMAGE_OPTION``）。決めるのは受けるポケモンの
+    持ち主、選べるものは受けるポケモンの番号 1 つ（0〜1 個）。受けるポケモンは、相手の対戦ポケモン・自分（ダメージの要素の ``target``）か、控えポケモンへのダメージの運ぶ並び
+    （``bench_guard``）の最初のダメージの控えポケモン。続きの情報の基本となるダメージ・前に選んだ順番・減らす量から今の場で計算し直すと、選べる使うかを選ぶ効果の決定が要り
+    （``damage.DamageOptionRequired`` の ``OPTION_OFFER``）、効果・8 段階の前のダメージ・使わないときの最終ダメージが続きの情報と同じ。"""
+    from .damage import OPTION_OFFER, DamageOptionRequired
+    from .effects import (
+        BENCH_TARGETS,
+        OPPONENT_ACTIVE,
+        SELF,
+        Receiving,
+        attack_damage_modifiers,
+        attack_ignores_resistance,
+        calculate_with_stadium,
+        stadium_coin_modifier,
+    )
+
+    context = dict(d.context)
+    carried = context.get("bench_guard")
+    if carried is not None:
+        if not (isinstance(carried, tuple) and len(carried) == 3 and carried[0] and len(carried[0][0]) >= 4):
+            return [f"使うかを選ぶ効果の決定の運ぶ並び {carried!r} が正しくない"]
+        target, pid, base, wr = carried[0][0][:4]
+        located = state.find_pokemon(pid)
+        if target not in BENCH_TARGETS or located is None or not any(p is located[1] for p in state.players[located[0]].bench):
+            return [f"使うかを選ぶ効果の決定の受けるポケモン {pid!r} が控えにいない"]
+        owner, receiver = located
+        weakness_resistance, resistance, orders, reduction = bool(wr), True, {}, None
+    else:
+        target, base = context.get("target"), context.get("base")
+        if target not in (OPPONENT_ACTIVE, SELF) or type(base) is not int:
+            return [f"使うかを選ぶ効果の決定の続きの情報（受けるポケモン {target!r}・基本となるダメージ {base!r}）が正しくない"]
+        owner, receiver = (1 - player, state.players[1 - player].active) if target == OPPONENT_ACTIVE else (player, attacker)
+        if receiver is None or receiver.pokemon_id != context.get("receiver"):
+            return [f"使うかを選ぶ効果の決定の受けるポケモン {context.get('receiver')!r} が、場の {target} ではない"]
+        weakness_resistance, resistance = context.get("weakness_resistance", True), context.get("resistance", True)
+        orders = {k: tuple(v) for k, v in context.get("orders", ())}
+        reduction = context.get("reduction")
+    if d.player != owner or (d.min_choices, d.max_choices) != (0, 1) or d.options != (receiver.pokemon_id,):
+        return [(f"使うかを選ぶ効果の決定（決める {d.player}・選ぶ数 {(d.min_choices, d.max_choices)}・選べるもの {d.options}）が、受けるポケモン {receiver.pokemon_id} の持ち主 {owner} の"
+                 "0〜1 個の決定ではない")]
+    copied = context.get("copied")
+    use = d.context_value("use")
+    key = AttackKey(*copied) if copied is not None else AttackKey(use[2], use[3])
+    collected = attack_damage_modifiers(state, attacker, receiver, attack=key, bench=target in BENCH_TARGETS, attack_status=frozenset(context.get("attack_status", ())))
+    collected = _with_attack_power(state, context, attacker, key, target, collected)
+    coin = context.get("stadium_coin")
+    if coin is not None and coin[1] and target == OPPONENT_ACTIVE:
+        collected = (*collected, stadium_coin_modifier(state, coin[0]))
+    try:
+        calculate_with_stadium(state, base, definition_views(state, attacker)[0], definition_views(state, receiver)[0], collected,
+                               receiving=Receiving(owner, receiver), weakness_resistance=weakness_resistance, orders=orders, reduction=reduction,
+                               resistance=resistance and attack_ignores_resistance(state, attacker, receiver) is None)
+    except DamageOptionRequired as need:
+        option = need.modifiers[0]
+        if (need.reason != OPTION_OFFER or context.get("option") != (need.step, option.source, option.amount) or context.get("value") != need.value
+                or tuple(context.get("finals", ())) != tuple(sorted(need.finals))):
+            return [f"使うかを選ぶ効果の決定の効果 {context.get('option')!r}（ダメージ {context.get('value')!r}）が、今の場の計算の {need.reason}・{option.label}（{need.value}）と違う"]
+        return []
+    except Exception as error:  # noqa: BLE001  順番・減らす量の決定は、使うかの決定より先に決まっている。計算し直せない理由は何でも不変条件の違反として返す
+        return [f"使うかを選ぶ効果の決定の続きの情報で計算し直せない（{error}）"]
+    return ["使うかを選ぶ効果の決定の続きの情報で計算し直すと、使うかの決定が要らない"]
 
 
 def _damage_reduction_decision_problems(state: GameState, d, player: int, attacker: PokemonInPlay) -> list[str]:
@@ -5713,10 +5933,12 @@ def _damage_order_decision_problems(state: GameState, d, player: int, attacker: 
     at_step = tuple(m for m in collected if m.step == step)
     if tuple((m.label, m.source, m.operation, m.amount) for m in at_step) != modifiers:
         return [f"順番の決定の {step} 段階の変更効果 {modifiers!r} が、今の場で集めた効果と違う"]
+    optional = context.get("optional")  # v0.119: 決めた使うかを選ぶ効果の答え（8 段階の順番の決定は使うかのあと）
     try:
         calculate_with_stadium(state, base, definition_views(state, attacker)[0], definition_views(state, receiver)[0], collected,
                                 receiving=Receiving(owner, receiver), weakness_resistance=context.get("weakness_resistance", True), orders=orders,
-                                resistance=context.get("resistance", True) and attack_ignores_resistance(state, attacker, receiver) is None)
+                                resistance=context.get("resistance", True) and attack_ignores_resistance(state, attacker, receiver) is None,
+                                reduction=context.get("reduction"), optional_used=None if optional is None else bool(optional))
     except DamageOrderRequired as need:
         if need.step == step:
             return []

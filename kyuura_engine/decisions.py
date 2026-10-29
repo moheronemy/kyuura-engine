@@ -370,6 +370,11 @@ STADIUM_FROM_DISCARD = "stadium_from_discard"
 # v0.118: カイリュー（PR1-043）の［トランスポート］の「その後、自分の手札からカードを1枚選び、山札の上に置く」で、山札の上に置く手札のカード（引いたカードも選べる）。決めるのは特殊能力を
 # 使ったプレイヤー。選べるものは手札のカード（手札の並び）で 1 枚。手札の中身・選べる数は相手に見せない（観測の ``HIDDEN_COUNT_KINDS``）。再開先は "power"
 DECK_TOP_FROM_HAND = "deck_top_from_hand"
+# v0.119（docs/damage-reactions-poison-sleep-v0.119.md 3 章）: カスミのパルシェン（GD2-007）の［シェルアーマー］の「この力は、このカードがワザによるダメージを受けるたびに、1回使える。このカードが
+# 受けるダメージを「-10」する。」を、そのダメージで使うか（p.321 の 8 段階。ダメージの計算が 8 段階に来たとき）。決めるのはダメージを受けるポケモンの持ち主。選べるものは受けるポケモンの
+# 番号 1 つ（1 個: 使う・0 個: 使わない）。``context`` は順番の決定と同じ形の続きの情報と ``"option"``（(段階, 発生源のカード, 数)）・``"value"``（8 段階の前のダメージ）・``"finals"``
+# （使わないときの最終ダメージ）。控えポケモンへのダメージの要素では ``"bench_guard"``（運ぶ並び）。再開先は "attack"
+DAMAGE_OPTION = "damage_option"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

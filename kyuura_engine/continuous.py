@@ -39,9 +39,12 @@ def _suppressor(state: GameState, pokemon: PokemonInPlay) -> tuple[SuppressOther
     from .effects import powers_of
     from .persistent import powers_stopped
 
+    found = tuple(slot.effect for slot in powers_of(state, pokemon) if isinstance(slot.effect, SuppressOtherPowers))
+    if not found:
+        return ()  # v0.119: 消す特殊能力を持たないポケモンの止まる効果は読まない（［いあつ］の問い合わせが、ほかのポケモンの［じっとみる］の発生源を読んで循環しない）
     if powers_stopped(state, pokemon) is not None:
         return ()  # v0.86: スタンウェーブを受けたポケモンの特殊能力（かがくへんかガスも）は「その効果も消える」
-    return tuple(slot.effect for slot in powers_of(state, pokemon) if isinstance(slot.effect, SuppressOtherPowers))
+    return found
 
 
 def working_power_suppressors(state: GameState) -> tuple[int, ...]:
@@ -114,14 +117,27 @@ def power_suppressed(state: GameState, power: Power, holder: PokemonInPlay | Non
 
     v0.87: ドガースの「ふしぎなガス」（``effects.strange_gas_effects``。相手プレイヤーが与えた ``OPPONENT_POWER_SUPPRESSION``）がはたらいているプレイヤーの場のポケモンの特殊能力も
     消えている。止まるのはその側だけなので、特殊能力の持ち主（``holder`` の持ち主か ``owner``）が要る。ふしぎなガスがはたらいているのに、どちらも渡さない問い合わせは
-    エンジンの不具合（RuntimeError。持ち主を推測しない）。"""
+    エンジンの不具合（RuntimeError。持ち主を推測しない）。
+
+    v0.119: ``holder`` が相手の［いあつ］で「ワザ・特殊能力」を使えず、その効果も消えているベイビィポケモン（``effects.scared_by``）なら消えている。"""
+    return power_suppressed_except(state, power, holder, owner=owner)
+
+
+def power_suppressed_except(state: GameState, power: Power, holder: PokemonInPlay | None = None, *, owner: int | None = None,
+                            ignore: tuple[TrainerTurnEffect, ...] = ()) -> bool:
+    """``power_suppressed`` の本体（v0.119）。``ignore`` の「おたがいの場の特殊能力を止める」ワザの効果（``ATTACK_FIELD_POWER_SUPPRESSION``）は数えない（［いあつ］の循環の確かめ IA1 だけが渡す。
+    ``effects.scare_cycle_problem``）。"""
     if holder is not None:
+        from .effects import scared_by
         from .persistent import powers_stopped
 
         if powers_stopped(state, holder) is not None:
             return True
+        found = state.find_pokemon(holder.pokemon_id)
+        if found is not None and scared_by(state, found[0], holder):
+            return True  # v0.119: ［いあつ］
     # v0.91: オールクリアのワザを使っているあいだ。v0.92: やみのはどう（``field_powers_suppressed``）
-    if field_powers_suppressed(state) or suppressors_of(state, power):
+    if goop_gas_effects(state) or attack_power_suppressions(state) or any(r not in ignore for r in attack_field_power_suppressions(state)) or suppressors_of(state, power):
         return True
     if any(r.kind == OPPONENT_POWER_SUPPRESSION for r in state.trainer_effects):
         from .effects import strange_gas_effects
@@ -139,6 +155,19 @@ def power_suppressed(state: GameState, power: Power, holder: PokemonInPlay | Non
             raise RuntimeError("ふしぎなガスがはたらいている場で、特殊能力の持ち主を渡さない問い合わせ（エンジンの不具合）")
         return bool(strange_gas_effects(state, side))
     return False
+
+
+def scaring_powers(state: GameState, baby_owner: int) -> tuple[tuple[int, str], ...]:
+    """v0.119: プレイヤー ``baby_owner`` の場のベイビィポケモンに当たる、相手の今はたらいている［いあつ］（``effects.ScareOpponentBabies``。相手のバトル場のポケモンの。ねむり・マヒ・こんらんでない。
+    力が消えていない）の (持つポケモンの番号, ``PowerKey`` の文字列) の並び。状態を変えない。［いあつ］を持つポケモンはベイビィポケモンではないので、その力が消えているかの問い合わせは
+    ここにもどらない（循環しない）。"""
+    from .effects import ScareOpponentBabies, powers_of
+
+    holder = state.players[1 - baby_owner].active
+    if holder is None or state.is_face_down(holder):
+        return ()
+    return tuple((holder.pokemon_id, str(slot.key)) for slot in powers_of(state, holder)
+                 if isinstance(slot.effect, ScareOpponentBabies) and slot.effect.status_allows(holder) and not power_suppressed(state, slot.power, holder))
 
 
 def power_suppressors(state: GameState, pokemon_id: int, power_index: int = 0) -> tuple[int, ...]:

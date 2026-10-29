@@ -650,8 +650,35 @@ def powers_stopped(state: GameState, pokemon: PokemonInPlay) -> PowersStopped | 
     同じ範囲で止める。"""
     for effect in pokemon.persistent_effects:
         if isinstance(effect, (PowersStopped, BenchPowersStopped)) and effect.created_turn <= state.turn_number <= effect.active_turn:
+            if isinstance(effect, BenchPowersStopped) and _scared_source(state, effect):
+                continue  # v0.119: ［じっとみる］を使ったベイビィポケモンが相手の［いあつ］を受けている（「それらの効果もすべて消える」。記録は消さない）
             return effect
     return None
+
+
+# v0.119: 今問い合わせている、ベイビィポケモンの発生源（(状態, プレイヤー, カード)）。問い合わせの中で同じ発生源にもどったら循環（IA1）
+_SCARE_SOURCES_IN_PROGRESS: set = set()
+
+
+def _scared_source(state: GameState, effect) -> bool:
+    """v0.119: 特殊能力で与えた持続する効果 ``effect`` の発生源（``source_card`` がいちばん上のカードの、``source_player`` の場のポケモン）が、今、相手の［いあつ］を受けているベイビィポケモンか。
+
+    ［いあつ］がはたらくかは、その力を消すもの（かがくへんかガス）がはたらくかによる。そのかがくへんかガスを持つポケモンが、このベイビィポケモンの効果（［じっとみる］）を受けていると、
+    答えが自分にもどる（どちらが消えるかで、もう一方が消えるかが変わる）。計算の順番で片方を勝たせず、IA1 で止める（``effects.SCARE_CYCLE_CODE``。モクモクの循環と同じ問い）。"""
+    from .effects import SCARE_CYCLE_CODE, SCARE_CYCLE_REASON, scared_by
+    from .errors import UnsupportedError
+
+    key = (id(state), effect.source_player, effect.source_card)
+    if key in _SCARE_SOURCES_IN_PROGRESS:
+        raise UnsupportedError(SCARE_CYCLE_CODE, f"{SCARE_CYCLE_REASON}。ベイビィポケモンの特殊能力の効果 {effect.kind}（カード {effect.source_card}）")
+    _SCARE_SOURCES_IN_PROGRESS.add(key)
+    try:
+        for pokemon in state.players[effect.source_player].in_play():
+            if pokemon.card == effect.source_card:
+                return bool(scared_by(state, effect.source_player, pokemon))
+        return False
+    finally:
+        _SCARE_SOURCES_IN_PROGRESS.discard(key)
 
 
 def bench_protection(state: GameState, pokemon: PokemonInPlay) -> BenchProtection | None:

@@ -19,6 +19,7 @@ from .effects import (
     attack_cost_problem,
     find_attack_option,
     form_def,
+    scared_by,
 )
 from .errors import IllegalActionError, StateIntegrityError, UnsupportedError
 from .persistent import attack_locked, cannot_attack, cannot_attack_while_source_active
@@ -109,6 +110,9 @@ def attack_request(state: GameState, cmd: UseAttack) -> AttackRequest:
         # 今バトル場にいるときだけ。「しっぽをふる」と同じ場所・同じコード（宣言の前・エネルギーの確認より前）
         raise IllegalActionError("ATTACK_PREVENTED", f"バトル場のポケモン {attacker.pokemon_id} は、効果を与えたポケモンがバトル場にいる間、この番はワザを使えない"
                                  "（相手のワザの効果）")
+    if scared_by(state, cmd.player, attacker):
+        # v0.119（docs/damage-reactions-poison-sleep-v0.119.md 7 章）: 相手の［いあつ］を受けているベイビィポケモンは「ワザ」を使うことができない（「しっぽをふる」と同じ場所・同じコード）
+        raise IllegalActionError("ATTACK_PREVENTED", f"バトル場のポケモン {attacker.pokemon_id} は、相手の［いあつ］で「ワザ」を使うことができない（ベイビィポケモン）")
     if attack_locked(state, attacker, option.key) is not None:
         # v0.35: カスミのニョロモの「あわあわ」（自分）・「ドわすれ」（相手が選んだワザ）で、この番はこのワザを使えない。ほかのワザは使える。
         # 「しっぽをふる」と同じ場所（宣言の前・エネルギーの確認より前）。v0.49: ワザは ``AttackKey`` で探す（出どころによらない。「メガバーン」）

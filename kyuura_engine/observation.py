@@ -115,13 +115,14 @@ from .decisions import (
     OPTIONAL_COIN,
     STADIUM_FROM_DISCARD,
     DECK_TOP_FROM_HAND,
+    DAMAGE_OPTION,
 )
 from .effects import (
     JANKEN_HANDS,
     COLORS, attack_of, available_attacks, current_form, hand_revealed_by, max_hp, powers_of, resistance_of, type_readings, type_shift_determined, weakness_of,
     attached_units, card_color_readings,
 )
-from .serialize import history_record, turn_record
+from .serialize import history_record, poison_mist_record, replacement_poison_record, turn_record
 from .state import GameState, PokemonInPlay
 
 VIEWERS = (0, 1, None)
@@ -184,6 +185,7 @@ OPTION_MEANINGS: dict[str, str] = {
     OPTIONAL_COIN: "number",  # v0.118: エアロウイングでコインを投げるか（1 個: 投げる・0 個: 投げない）
     STADIUM_FROM_DISCARD: "card",  # v0.118: ［じくうへんかん］で場に出すトラッシュのスタジアムカード（公開）
     DECK_TOP_FROM_HAND: "card",  # v0.118: ［トランスポート］で山札の上に置く手札のカード（決めるプレイヤーの手札。選べる数も相手に見せない）
+    DAMAGE_OPTION: "pokemon",  # v0.119: ［シェルアーマー］を使うか（1 個: 使う・0 個: 使わない。選べるものはダメージを受けるポケモン。公開）
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
 # v0.73: 化石の発掘（山札とトラッシュ）・マスターボール（見た山札の上の 7 枚）も、決めるプレイヤーが自分の山札を見る
@@ -476,6 +478,10 @@ def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
         # v0.100（docs/sketch-perish-song-history-v0.100.md 7 章）: プレイヤーの番ごとの記録（使ったワザ・番でないプレイヤーの場にいたカード）。どちらも両方のプレイヤーが見た
         # 表の情報（うらのカードは数だけで、uid を書かない）。書き出しの形式 26 と同じ形
         "turn_history": [turn_record(record) for record in state.turn_history],
+        # v0.119（docs/damage-reactions-poison-sleep-v0.119.md 5 章・6 章）: ［ポイズンミスト］の効果と、「ガスばくはつ」のかわりに出てくる対戦ポケモンへのまだ与えていないどく（どちらも場・
+        # コインの表の情報。書き出しの形式 27 と同じ形）
+        "poison_mists": [poison_mist_record(state, record) for record in state.poison_mists],
+        "replacement_poisons": [replacement_poison_record(record) for record in state.replacement_poisons],
         "decision": _decision(state, viewer),
         "result": None if state.result is None else {"outcome": state.result.outcome, "winner": state.result.winner},
     }
@@ -685,6 +691,10 @@ PUBLIC_EVENTS = frozenset({
     # v0.114（docs/baby-rules-evolution-v0.114.md）: ベイビィポケモンのルールのコインの結果（コインは表の情報）・サイコキッスで相手の山札にもどした、ついている特殊エネルギーカード
     # （場の公開のカード）
     "baby_rule_coin", "attached_energy_to_deck",
+    # v0.119（docs/damage-reactions-poison-sleep-v0.119.md）: ［ポイズンミスト］の効果の始まり・中断・終わり、「どくをだす」の効果がはたらいた・はたらかなかった、「ガスばくはつ」のかわりに
+    # 出てくる対戦ポケモンへのどくの予定・きぜつ・どく・取りのぞき、［アレルギーほうし］で起こらなかったトラッシュのカードへの効果（どれも場・トラッシュ・コインの公開の情報）
+    "poison_mist_added", "poison_mist_interrupted", "poison_mist_removed", "secrete_poison", "secrete_poison_skipped", "replacement_poison_pending",
+    "replacement_poison_knocked", "replacement_poison", "replacement_poison_removed", "discard_protected",
 })
 
 

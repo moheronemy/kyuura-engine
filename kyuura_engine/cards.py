@@ -652,6 +652,7 @@ POOL_KEYS = (
     "pool_v0_116",  # v0.116（エネルギーの付け替え・ついた時に発動するワザの持続効果・付属カードの回収と退化のポケモン 13 枚。docs/energy-movement-attachment-devolution-v0.116.md）
     "pool_v0_117",  # v0.117（場の移動・にげる時の反応・条件付きの特殊能力のポケモン 13 枚。docs/retreat-return-active-powers-v0.117.md）
     "pool_v0_118",  # v0.118（上限なしコイン・攻撃時の能力・回復の配分のポケモン 9 枚。docs/unbounded-coins-heal-allocation-v0.118.md）
+    "pool_v0_119",  # v0.119（受けるダメージの選択・どくとねむり・場の効果のポケモン 11 枚。docs/damage-reactions-poison-sleep-v0.119.md）
 )
 
 

@@ -1611,6 +1611,19 @@
     "PR1-043",
     "PF3-008"
   ],
+  "pool_v0_119": [
+    "neo2-007",
+    "neo3-005",
+    "neo3-040",
+    "neo4-002",
+    "neo4-039",
+    "neo4-066",
+    "GD2-007",
+    "ES3-007",
+    "ES3-017",
+    "PRN-036",
+    "PR1-068"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -120914,6 +120927,1066 @@
         {
           "page": "neopf3008",
           "list_number": "008/009"
+        }
+      ]
+    },
+    {
+      "id": "neo2-007",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "コクーン",
+        "en": "Kakuna"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          14
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ビードル",
+          "en": "Weedle"
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "どくをだす",
+              "en": "Secrete Poison"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "次の相手の番、このカードが相手のワザによるダメージを受けたとき(それによって、このカードが「きぜつ」しても)、相手を「どく」状態にし、相手の控えポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+              "en": "During your opponent's next turn, whenever your opponent's attack damages Kakuna (even if Kakuna is Knocked Out), your opponent's Active Pokémon is now Poisoned and Kakuna does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-007",
+        "pokemontcg": [
+          "neo2-41"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-007-cocoon/",
+      "jp_print": {
+        "level": 22,
+        "rarity": "◆(U)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-007-cocoon/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-005",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "パラセクト",
+        "en": "Parasect"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          47
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "パラス",
+          "en": "Paras"
+        },
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "アレルギーほうし",
+              "en": "Allergic Pollen"
+            },
+            "text": {
+              "ja": "このカードが場にいるかぎり、おたがいのトラッシュにあるすべてのカードは、ポケモンの「ワザ・特殊能力」による効果を受けない。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は、はたらかない。",
+              "en": "As long as Parasect is in play, cards in any player's discard piles are not affected by attacks or Pokémon Powers. This power stops working if Parasect becomes Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ねむりバサミ",
+              "en": "Sleep Pinchers"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「ねむり」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Asleep."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-005",
+        "pokemontcg": [
+          "neo3-35"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%91%E3%83%A9%E3%82%BB%E3%82%AF%E3%83%88_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 30,
+        "rarity": "◆(U)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%91%E3%83%A9%E3%82%BB%E3%82%AF%E3%83%88_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-040",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ツボツボ",
+        "en": "Shuckle"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          213
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "かたいから",
+              "en": "Hard Shell"
+            },
+            "text": {
+              "ja": "このカードがワザによって受ける「40」以下のダメージは、すべて「10」になる(ダメージ以外の効果はそのまま)。このカードが「ねむり・マヒ・こんらん」状態のとき、この力ははたらかない。",
+              "en": "Whenever an attack (including your own) does 40 or less damage to Shuckle (after applying Weakness and Resistance), reduce that damage to 10. (Any other effects of attacks still happen.) This power stops working while Shuckle is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "どくどくエキス",
+              "en": "Toxic Saliva"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。このワザによって「どく」状態になったポケモンは、ポケモンチェックのときにのせる「どく」によるダメージカウンターの数が、2倍になる。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned. It now takes 20 Poison damage instead of 10 after each player's turn (even if it was already Poisoned)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-040",
+        "pokemontcg": [
+          "neo3-51"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%84%E3%83%9C%E3%83%84%E3%83%9C_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 28,
+        "rarity": "◆(U)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%84%E3%83%9C%E3%83%84%E3%83%9C_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-002",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "レディバ",
+        "en": "Ledyba"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          165
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "スピードスター",
+              "en": "Swift"
+            },
+            "cost": [
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "このワザは、相手の「弱点・抵抗力・その他の効果」に関係なく、ダメージを与える。",
+              "en": "This attack's damage isn't affected by Weakness, Resistance, Pokémon Powers, or any other effects on the Defending Pokémon."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-002",
+        "pokemontcg": [
+          "neo4-71"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AC%E3%83%87%E3%82%A3%E3%83%90_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 18,
+        "rarity": "●(C)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AC%E3%83%87%E3%82%A3%E3%83%90_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-039",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいオーダイル",
+        "en": "Dark Feraligatr"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          160
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "わるいアリゲイツ",
+          "en": "Dark Croconaw"
+        },
+        "hp": 80,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "いあつ",
+              "en": "Scare"
+            },
+            "text": {
+              "ja": "この力は、このカードがバトル場にいるかぎり、はたらく。相手の場の「ベイビィポケモン」全員は、「ワザ・特殊能力」を使うことができず、それらの効果もすべて消える。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は、はたらかない。",
+              "en": "As long as Dark Feraligatr is your Active Pokémon, all of your opponent's Baby Pokémon Powers stop working and your opponent's Baby Pokémon can't attack. This power stops working while Dark Feraligatr is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "はかいのいちげき",
+              "en": "Crushing Blow"
+            },
+            "cost": [
+              "water",
+              "water",
+              "water"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手についている「エネルギーカード」を1枚トラッシュする。",
+              "en": "If the Defending Pokémon has any Energy cards attached to it, flip a coin. If heads, choose 1 of those cards and discard it."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-039",
+        "pokemontcg": [
+          "neo4-5"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%82%AA%E3%83%BC%E3%83%80%E3%82%A4%E3%83%AB_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 44,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%82%AA%E3%83%BC%E3%83%80%E3%82%A4%E3%83%AB_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-066",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいゲンガー",
+        "en": "Dark Gengar"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          94
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "わるいゴースト",
+          "en": "Dark Haunter"
+        },
+        "hp": 70,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ふかいねむり",
+              "en": "Deep Sleep"
+            },
+            "text": {
+              "ja": "この力は、このカードが場にいるかぎり、はたらく。「ねむり」状態のポケモンは、ポケモンチェックのときに投げるコインの枚数が2枚になり、すべて「おもて」が出ないと、「ねむり」状態から回復できない。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は、はたらかない。",
+              "en": "As long as any Dark Gengar are in play, a player flips 2 coins for each of his or her Pokémon that is Asleep at the end of each turn. If either of them is tails, that Pokémon is still Asleep. This power stops working if Dark Gengar is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひきずりこむ",
+              "en": "Pull In"
+            },
+            "cost": [
+              "psychic",
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "相手を「ねむり」状態にする。のぞむなら、ダメージと効果を与える前に、相手の控えポケモンを1匹選び、相手と入れ替えてよい。",
+              "en": "If your opponent has any Benched Pokémon, you may choose 1 of them and switch it with the Defending Pokémon (before doing damage or other effects of this attack). Either way, the Defending Pokémon is now Asleep."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-066",
+        "pokemontcg": [
+          "neo4-6"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%82%B2%E3%83%B3%E3%82%AC%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 32,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%82%B2%E3%83%B3%E3%82%AC%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "GD2-007",
+      "jp_set": "GD2",
+      "category": "pokemon",
+      "name": {
+        "ja": "カスミのパルシェン",
+        "en": "Misty's Cloyster"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          91
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "カスミのシェルダー",
+          "en": "Misty's Shellder"
+        },
+        "hp": 70,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "シェルアーマー",
+              "en": "Shell Armor"
+            },
+            "text": {
+              "ja": "この力は、このカードがワザによるダメージを受けるたびに、1回使える。このカードが受けるダメージを「-10」する。ダメージを受ける時にこのカードが「ねむリ・マヒ・こんらん」状態だったなら、この力は使えない。",
+              "en": "You may reduce all damage done by attacks to Misty's Cloyster by 10 (after applying Weakness and Resistance). (Any other effects of attacks still happen). This power can't be used if Misty's Cloyster is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "トリプルキャノン",
+              "en": "Triple Cannon"
+            },
+            "cost": [
+              "water",
+              "water",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "コインを3枚投げて「おもて」の数×20のダメージ。",
+              "en": "Flip 3 coins. This attack does 20 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-29"
+        ],
+        "pcg_search": [
+          "1stgymd2007"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd2007.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第1弾「ハナダシティジム カスミ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd2007.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-29",
+        "pokemon.dex": "pokemontcg:gym1-29",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stgymd2007",
+          "list_number": "007/024"
+        }
+      ]
+    },
+    {
+      "id": "ES3-007",
+      "jp_set": "ES3",
+      "category": "pokemon",
+      "name": {
+        "ja": "マタドガス",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ドガース",
+          "en": null
+        },
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ポイズンミスト",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使える。コインを投げて「おもて」なら、次の自分の番の始めまで、「どく」状態になったポケモンがポケモンチェックで受ける「どく」のダメージは、20ダメージになる。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えず、その効果も消える。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ガスばくはつ",
+              "en": null
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "自分にも30ダメージ。このワザによって相手が「きぜつ」したなら、そのかわりに出てくる対戦ポケモンを「どく」状態にする。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex3007"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex3007.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第3弾(緑版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex3007.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stex3007",
+          "list_number": "007/036"
+        }
+      ]
+    },
+    {
+      "id": "ES3-017",
+      "jp_set": "ES3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ヒトデマン",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "なぞのこうせん",
+              "en": null
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "次の相手の番、自分の場の「水」ポケモンは「弱点」の影響を受けない。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "かいてんアタック",
+              "en": null
+            },
+            "cost": [
+              "water",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex3017"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex3017.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第3弾(緑版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex3017.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex3017",
+          "list_number": "017/036"
+        }
+      ]
+    },
+    {
+      "id": "PRN-036",
+      "jp_set": "PRN",
+      "category": "pokemon",
+      "name": {
+        "ja": "ムウマ",
+        "en": "Misdreavus"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          200
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "いたみわけ",
+              "en": "Pain Split"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分にのっているダメージカウンターと同じ数のダメージカウンターを、相手にのせる。",
+              "en": "Put 1 damage counter on the Defending Pokémon for each damage counter on Misdreavus."
+            }
+          },
+          {
+            "name": {
+              "ja": "あやしいひかり",
+              "en": "Confuse Ray"
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-39"
+        ],
+        "pcg_search": [
+          "neop036"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop036.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop036.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-39",
+        "pokemon.dex": "pokemontcg:basep-39"
+      },
+      "copies": [
+        {
+          "page": "neop036",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PR1-068",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "サカキのニドキング",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "サカキのニドリーノ",
+          "en": null
+        },
+        "hp": 100,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "めいれい",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、自分の「サカキのニドラン♂」、「サカキのニドリーノ」がワザを使う時、使える。そのワザによるダメージは、「+10」される。このカード以外の「サカキのニドキング」が「めいれい」の力を使っている時、この力は使えない。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "じひびき",
+              "en": null
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "このワザを受けた相手は、次の相手の番に「にげる」ことができない。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp068"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp068.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp068.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stp068",
+          "list_number": "-/-"
         }
       ]
     }

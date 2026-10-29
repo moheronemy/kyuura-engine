@@ -12,8 +12,8 @@
   "card_data_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 260,
-    "engine_stop_codes": 259,
+    "engine_unresolved_rulings": 270,
+    "engine_stop_codes": 269,
     "kyuura_issues": 73
   },
   "stop_codes": {
@@ -2987,6 +2987,116 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SHELL_ARMOR_TIMING": {
+      "engine_rulings": [
+        {
+          "version": "v0.119",
+          "document": "docs/damage-reactions-poison-sleep-v0.119.md",
+          "ruling_id": "AM1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_HARD_SHELL_NONPOSITIVE": {
+      "engine_rulings": [
+        {
+          "version": "v0.119",
+          "document": "docs/damage-reactions-poison-sleep-v0.119.md",
+          "ruling_id": "HS1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POISON_CHANGE_ORDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.119",
+          "document": "docs/damage-reactions-poison-sleep-v0.119.md",
+          "ruling_id": "PO1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POISON_MIST_EARLIER_POISON": {
+      "engine_rulings": [
+        {
+          "version": "v0.119",
+          "document": "docs/damage-reactions-poison-sleep-v0.119.md",
+          "ruling_id": "PO2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POISON_MIST_SOURCE": {
+      "engine_rulings": [
+        {
+          "version": "v0.119",
+          "document": "docs/damage-reactions-poison-sleep-v0.119.md",
+          "ruling_id": "PO3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SECRETE_POISON_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.119",
+          "document": "docs/damage-reactions-poison-sleep-v0.119.md",
+          "ruling_id": "PX1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SCARE_SUPPRESSION_CYCLE": {
+      "engine_rulings": [
+        {
+          "version": "v0.119",
+          "document": "docs/damage-reactions-poison-sleep-v0.119.md",
+          "ruling_id": "IA1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DISCARD_PROTECTED_COIN": {
+      "engine_rulings": [
+        {
+          "version": "v0.119",
+          "document": "docs/damage-reactions-poison-sleep-v0.119.md",
+          "ruling_id": "AP1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DISCARD_PROTECTED_POWER_USE": {
+      "engine_rulings": [
+        {
+          "version": "v0.119",
+          "document": "docs/damage-reactions-poison-sleep-v0.119.md",
+          "ruling_id": "AP2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_COMMAND_DAMAGE_SCOPE": {
+      "engine_rulings": [
+        {
+          "version": "v0.119",
+          "document": "docs/damage-reactions-poison-sleep-v0.119.md",
+          "ruling_id": "MD1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -5025,7 +5135,26 @@
       "PR1-025/attack/1",
       "PR1-043/attack/0",
       "PR1-043/power/0",
-      "PF3-008/attack/0"
+      "PF3-008/attack/0",
+      "neo2-007/attack/0",
+      "neo3-005/attack/0",
+      "neo3-005/power/0",
+      "neo3-040/attack/0",
+      "neo3-040/power/0",
+      "neo4-002/attack/0",
+      "neo4-039/attack/0",
+      "neo4-039/power/0",
+      "neo4-066/attack/0",
+      "neo4-066/power/0",
+      "GD2-007/attack/0",
+      "GD2-007/power/0",
+      "ES3-007/attack/0",
+      "ES3-007/power/0",
+      "ES3-017/attack/0",
+      "PRN-036/attack/0",
+      "PRN-036/attack/1",
+      "PR1-068/attack/0",
+      "PR1-068/power/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

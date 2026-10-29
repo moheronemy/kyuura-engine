@@ -22,7 +22,7 @@ from .. import effects as E
 from ..continuous import field_powers_suppressed, suppressors_of
 from ..persistent import powers_stopped, powers_use_prevented
 from ..decisions import BENCH_GUARD, KNOCK_OUT_POWER, KO_PREVENTION, POST_KNOCKOUT_POWER, REACTION_SWITCH, SPLIT_FROM_DECK
-from ..state import AttackBarrier, AttackEffectGuard, BenchAttackDamageGuard, BenchProtection, PreventDamage, Retaliation
+from ..state import AttackBarrier, AttackEffectGuard, BenchAttackDamageGuard, BenchProtection, PreventDamage, Retaliation, SecretePoison
 
 from .events import DamageClass, Window
 
@@ -179,6 +179,13 @@ ENERGY_DRAIN = EffectDefinition(
 RETALIATION = EffectDefinition(
     "retaliation", Origin.PERSISTENT_EFFECT, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
     frozenset(), "now", False, "damage_source", "attack_damage_to_damage_source", frozenset({DamageClass.ATTACK}), True,
+)
+# v0.119（docs/damage-reactions-poison-sleep-v0.119.md 6 章）: コクーンの「どくをだす」（ワザで自分に与えた持続する効果。``state.SecretePoison``）。返す効果と同じ窓・同じ分類（相手のワザの分類の
+# ダメージで、受けたら候補。きぜつしても処理する。特殊能力ではないので特殊状態・かがくへんかガスでは消えない）。処理は相手の対戦ポケモンのどくと相手の控え全員へのダメージ
+# （``kernel.poison_and_bench_damage_to_opponent``）。対象はダメージを与えたポケモンではなく、効果を持つポケモンの持ち主の相手の場（``opponent_side``）
+SECRETE_POISON = EffectDefinition(
+    "secrete_poison", Origin.PERSISTENT_EFFECT, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
+    frozenset(), "now", False, "opponent_side", "poison_and_bench_damage_to_opponent", frozenset({DamageClass.ATTACK}), True,
 )
 # v0.56: 見えない壁（「次の相手の番が終わるまで、あなたの控えポケモンは、ワザによるダメージを受けない。(ダメージ以外の効果はそのまま)」）。使ったプレイヤーの、ダメージを
 # 受ける時点の控えポケモンへのワザのダメージの要素を無効にする（「かたまる」と同じく計算しない。p.321）。効果の要素は無効にしない（BEFORE_EFFECT の窓に入れない）。
@@ -341,6 +348,7 @@ POWER_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
 PERSISTENT_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (PreventDamage, HARDEN),
     (Retaliation, RETALIATION),
+    (SecretePoison, SECRETE_POISON),  # v0.119
     (AttackBarrier, BARRIER),  # v0.31
     (AttackEffectGuard, LIGHT_PULSE),  # v0.84
     (BenchProtection, PROTECTIVE_FLAME),  # v0.86
@@ -457,6 +465,8 @@ def stopped(state: GameState, instance: EffectInstance) -> bool:
     found = state.find_pokemon(instance.pokemon_id)
     if found is not None and powers_stopped(state, found[1]) is not None:
         return True  # v0.86: スタンウェーブを受けたポケモンの特殊能力（「使うことができず、その効果も消える」）
+    if found is not None and E.scared_by(state, found[0], found[1]):
+        return True  # v0.119: 相手の［いあつ］を受けているベイビィポケモンの特殊能力（``continuous.power_suppressed`` と同じ問い合わせ）
     # v0.87: ふしぎなガス（相手プレイヤーが与えた効果。この効果の持ち主の側だけ）
     # v0.91: オールクリアのワザを使っているあいだ。v0.92: やみのはどう（``continuous.field_powers_suppressed``）
     return (field_powers_suppressed(state) or bool(suppressors_of(state, instance.power))
