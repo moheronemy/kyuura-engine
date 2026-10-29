@@ -29874,7 +29874,7 @@
       },
       "external_checks": [],
       "issues": [],
-      "notes": "v0.118 で加えた（docs/unbounded-coins-heal-allocation-v0.118.md）。PR1（プロモ(旧裏)。promo）。2000.02.14 版のルールで処理する。無色・2 進化（ミニリュウ → ハクリューから。HP90）。マッハひこう=FailOnTailsDamage（既存の型。v0.118 から PR1-043 の「コインを投げ「うら」なら」の書き方の全文 1 通りも受け付ける）。トランスポート=DrawThenPutHandCardOnDeckTop（v0.118 の型。自分の番ごとに 1 回・ねむり・マヒ・こんらんで使えない。1 枚引いてから手札の 1 枚を見せずに山札の上に置く。英語の欄の If you do は持ち込まない。山札も手札も 0 枚なら TP1）。データの欠け jp_print.level は処理に使わない。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はpcg-search.comの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+      "notes": "v0.118 で加えた（docs/unbounded-coins-heal-allocation-v0.118.md）。PR1（プロモ(旧裏)。promo）。2000.02.14 版のルールで処理する。無色・2 進化（ミニリュウ → ハクリューから。HP90）。マッハひこう=FailOnTailsDamage（既存の型。v0.118 から PR1-043 の「コインを投げ「うら」なら」の書き方の全文 1 通りも受け付ける）。トランスポート=DrawThenPutHandCardOnDeckTop（v0.118 の型。自分の番ごとに 1 回・ねむり・マヒ・こんらんで使えない。1 枚引いてから手札の 1 枚を見せずに山札の上に置く。英語の欄の If you do は持ち込まない。山札も手札も 0 枚なら TN1）。データの欠け jp_print.level は処理に使わない。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はpcg-search.comの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
     },
     "PF3-008": {
       "basis": "kyuura_data",

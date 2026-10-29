@@ -2982,7 +2982,7 @@
         {
           "version": "v0.118",
           "document": "docs/unbounded-coins-heal-allocation-v0.118.md",
-          "ruling_id": "TP1"
+          "ruling_id": "TN1"
         }
       ],
       "kyuura_issue": null,

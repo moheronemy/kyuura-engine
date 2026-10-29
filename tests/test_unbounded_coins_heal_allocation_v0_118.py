@@ -270,7 +270,7 @@ class RegistrationTest(unittest.TestCase):
         self.assertEqual(len(texts), 14)
         self.assertLessEqual(set(texts), set(links["latest_descriptions"]["adopted_printed_text"]))
         for code, ruling in (("UNRESOLVED_HEAL_UP_TO_ZERO", "HZ1"), ("UNRESOLVED_GROUP_POWER_COIN_ORDER", "XP1"), ("UNRESOLVED_TIME_SHIFT_WITHOUT_TARGET", "SX1"),
-                             ("UNRESOLVED_STADIUM_REUSE_AFTER_RETURN", "SX2"), ("UNRESOLVED_TRANSPORT_WITHOUT_CARDS", "TP1")):
+                             ("UNRESOLVED_STADIUM_REUSE_AFTER_RETURN", "SX2"), ("UNRESOLVED_TRANSPORT_WITHOUT_CARDS", "TN1")):
             with self.subTest(code=code):
                 self.assertEqual(links["stop_codes"][code], {"engine_rulings": [{"version": "v0.118", "document": "docs/unbounded-coins-heal-allocation-v0.118.md",
                                                                                    "ruling_id": ruling}], "kyuura_issue": None, "kyuura_disposition": "not_in_kyuura"})
@@ -802,7 +802,7 @@ class TransportTest(unittest.TestCase):
         self.assertNotIn("card", theirs)
 
     def test_empty_deck_and_empty_hand(self):
-        """山札が 0 枚でも手札があれば、引かずに 1 枚を山札の上に置く。山札も手札も 0 枚なら TP1（使う前に止める）。ねむり・マヒ・こんらんなら使えない。番ごとに 1 回。"""
+        """山札が 0 枚でも手札があれば、引かずに 1 枚を山札の上に置く。山札も手札も 0 枚なら TN1（使う前に止める）。ねむり・マヒ・こんらんなら使えない。番ごとに 1 回。"""
         empty_deck = board(mon(DRAGONITE, (W,)), hand=(W,), deck=[])
         asked = power(empty_deck, empty_deck.players[0].active.pokemon_id)
         self.assertEqual(len(new_events(empty_deck, asked, "draw")[0]["cards"]), 0)
@@ -932,7 +932,7 @@ class DocumentTest(unittest.TestCase):
         import re
 
         text = DOC.read_text(encoding="utf-8")
-        for word in ("A0", "HZ1", "XP1", "SX1", "SX2", "TP1", "UNRESOLVED_HEAL_UP_TO_ZERO", "UNRESOLVED_GROUP_POWER_COIN_ORDER", "UNRESOLVED_TIME_SHIFT_WITHOUT_TARGET",
+        for word in ("A0", "HZ1", "XP1", "SX1", "SX2", "TN1", "UNRESOLVED_HEAL_UP_TO_ZERO", "UNRESOLVED_GROUP_POWER_COIN_ORDER", "UNRESOLVED_TIME_SHIFT_WITHOUT_TARGET",
                      "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN", "UNRESOLVED_TRANSPORT_WITHOUT_CARDS", "_mark_branch_questions", "bonus_classes", "draw_classes", "0.118.0",
                      "GR-2000-P321-DAMAGE-ORDER", "GR-2000-P320-RECOVERY", "UQ-UP-TO-ZERO-CHOICE", "UQ-CARD-USE-WITHOUT-TARGET", "UQ-STATED-COUNT-SHORT", "裁定調査待ち",
                      "1,311", "(66, 24, 42)", "496", "84 組", "7,056", "4,096", "## 13. 検証", "lockstep", "単体のテストだけ",

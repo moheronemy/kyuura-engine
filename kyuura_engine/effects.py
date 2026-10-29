@@ -43937,11 +43937,11 @@ STADIUM_REUSE_AFTER_RETURN_CODE = "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN"
 STADIUM_REUSE_AFTER_RETURN_REASON = (
     "この番に使った「自分の番ごとに1回」のスタジアムカードが、場をはなれたあと［じくうへんかん］で同じ番に場にもどったとき、もう一度使えるか（回数をカードで数えるか、場に出た"
     "スタジアムごとに数えるか）は、印刷の文面・kyuura の記録から決められないので扱わない（SX2。同じ名前の別のカードに入れかわった RS1 とは別の問い）")
-# TP1: ［トランスポート］を、自分の山札も手札も 0 枚のときに使えるか
+# TN1: ［トランスポート］を、自分の山札も手札も 0 枚のときに使えるか
 TRANSPORT_WITHOUT_CARDS_CODE = "UNRESOLVED_TRANSPORT_WITHOUT_CARDS"
 TRANSPORT_WITHOUT_CARDS_REASON = (
     "［トランスポート］の「自分の山札からカードを1枚引いて、手札に加える。その後、自分の手札からカードを1枚選び、山札の上に置く」を、自分の山札も手札も 0 枚（引くカードも、選ぶカードも"
-    "ない）のときに使えるかは、印刷の文面・kyuura の記録から決められないので扱わない（TP1。kyuura の UQ-CARD-USE-WITHOUT-TARGET と同じ形の、別の特殊能力の問い。山札が 0 枚でも手札があれば、"
+    "ない）のときに使えるかは、印刷の文面・kyuura の記録から決められないので扱わない（TN1。kyuura の UQ-CARD-USE-WITHOUT-TARGET と同じ形の、別の特殊能力の問い。山札が 0 枚でも手札があれば、"
     "引かずに 1 枚を山札の上に置く）")
 
 
@@ -44361,7 +44361,7 @@ class DrawThenPutHandCardOnDeckTop(PowerEffect):
     - 処理は説明の順: 山札から 1 枚引く（``zones.draw_cards``。山札が 0 枚なら引けるだけ = 0 枚。効果で山札がなくなっても負けにしない）→ 引いたあとの手札から 1 枚を選び（決定
       ``DECK_TOP_FROM_HAND``。引いたカードも選べる）、見せずに山札の一番上に置く（``zones.put_hand_card_on_deck_top``。山札は切らない）。英語の欄の「If you do」（引いたら）は日本語にない
       条件なので持ち込まない（山札が 0 枚でも、手札があれば 1 枚を山札の上に置く）
-    - 山札も手札も 0 枚なら TP1（使う前に止める）
+    - 山札も手札も 0 枚なら TN1（使う前に止める）
     - 引いたカード・選んだカード・選べる数は相手に見せない（ログ ``draw``・``hand_to_deck_top`` の ``card`` は持ち主だけ。決定は ``HIDDEN_COUNT_KINDS``）。決定を保存して答えても、引くのは
       宣言のときの 1 回だけ（``resume`` は置くだけ）"""
 

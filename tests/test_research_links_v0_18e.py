@@ -174,7 +174,7 @@ class ResearchLinksTest(unittest.TestCase):
                              "UNRESOLVED_RETREAT_REACTION_TIMING", "UNRESOLVED_QUICKEN_EFFECT_SUPPRESSED", "UNRESOLVED_TIME_TRAVEL_TIMING",
                              "UNRESOLVED_TIME_TRAVEL_OVERLAP", "UNRESOLVED_LEGEND_BODY_TRAINER_TARGET", "UNRESOLVED_LEGEND_BODY_GOOP_GAS",
                              "UNRESOLVED_VANISH_OTHER_ATTACHED", "UNRESOLVED_ESP_LEFT_BEFORE_COIN",
-                             # v0.118: HZ1・XP1・SX1・SX2・TP1（docs/unbounded-coins-heal-allocation-v0.118.md 10 章）
+                             # v0.118: HZ1・XP1・SX1・SX2・TN1（docs/unbounded-coins-heal-allocation-v0.118.md 10 章）
                              "UNRESOLVED_HEAL_UP_TO_ZERO", "UNRESOLVED_GROUP_POWER_COIN_ORDER", "UNRESOLVED_TIME_SHIFT_WITHOUT_TARGET",
                              "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN", "UNRESOLVED_TRANSPORT_WITHOUT_CARDS"})
         # v0.97（docs/unown-research-idfnj-v0.97.md 3 章）: kyuura が調査で立てた UQ-SELF-EXCLUDING-POWER-COPIES の事例にわるいデンリュウ（neo4-046）の［かんでん］があるので、
