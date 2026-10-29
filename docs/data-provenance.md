@@ -1955,6 +1955,23 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.118: 上限なしコイン・攻撃時の能力・回復の配分の 9 枚
+
+[unbounded-coins-heal-allocation-v0.118.md](unbounded-coins-heal-allocation-v0.118.md) の 3 章・12 章。
+
+- 写しの元・研究の基準は v0.117 と同じ kyuura `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`（データの移行はない）。写しの組 `pool_v0_118`（9 枚。わるいオクタン neo4-037・わるいナッシー neo4-056・
+  アンノーンX neo4-065・わるいポリゴン2 neo4-097・フシギソウ SI-008・ラフレシア SI-011・ニャース PR1-025・カイリュー PR1-043・ルギア PF3-008）を加え、写しの作り直しの道具で作った（手で直していない）。
+  v0.117 までの 1,302 枚の値は変わっていない。同じカードの組はない。
+- 9 枚の採用の記録（`card_sources.json`。`kyuura_commit` e519b99・記録した日 2026-10-29・外部照合なし。記録 1,215 → 1,224）。処理に使う文面は、説明文のあるワザ 11 と特殊能力 3 が kyuura の
+  印刷の文面（研究の対応表の `adopted_printed_text` に 14 を加えた。1,305 → 1,319）。めざめるパワー（neo4-065）・はっぱカッター（SI-008）・ひっかく（PR1-025）は説明文がない。9 枚とも kyuura に
+  最新の説明・エラッタ・LD-・CC-・CR-・UQ- の記録はない（`kyuura_records` なし。カードの id・pcg-search の id の完全一致の検索。一般の規定・名前による言及がないという意味ではない）。
+- 日本語の文面の転記元: neo4 の 4 枚が Pokemon Wiki、SI・PR1・PF3 の 5 枚が pcg-search.com。同じ所との一致を独立した照合に数えず、新しく画像を見たことにしていない。データの欠け（PR1-025 の
+  `pokemon.dex`・`jp_print.level`、PR1-043・PF3-008 の `jp_print.level`）は補っていない。アンノーンX の特殊能力の名前は写しの `XXXXX[?????]` のまま、ルール文（4 枚まで）は写しの `rules_text` にある。
+- 対象外: ひかるバンギラス（neo4-082）・怪電波マシーン（neo4-108）・ファイヤー（ES2-005・QSG-055）は UQ-STATED-COUNT-SHORT の裁定調査待ち（記録・データの訂正・保留の記録は加えていない）。
+- kyuura への報告事項: 9 枚の `engine_status` は今回の登録を写すと `registered`。エンジンの新しい問い HZ1・XP1・SX1・SX2・TN1 は kyuura に対応する記録がない（HZ1 は UQ-UP-TO-ZERO-CHOICE、
+  SX1・TN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形の別のカードの問い）。v0.66 の「ナツメのESPと「うら」が出るまでのコインは起こらない」はエンジンの前提の誤りで、研究の論点ではない（kyuura は
+  変えていない）。
+
 ## v0.117: 場の移動・にげる時の反応・条件付きの特殊能力の 13 枚
 
 [retreat-return-active-powers-v0.117.md](retreat-return-active-powers-v0.117.md) の 3 章・11 章。
