@@ -1096,6 +1096,21 @@ def _attack_entry_args(state, key: str) -> tuple:
 
 # v0.117: おいうちの文面（量は数字。v117_problems が効果の量と照らす）
 V117_PURSUIT = re.compile(r"次の相手の番、このワザを受けた相手が「にげる」とき、「弱点・抵抗力」に関係なく、(\d+)ダメージ。")
+# v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 11 章）: 監査が読む印刷の文面（kyuura の日本語。エンジンの登録・計算を読まない）
+V118_WINDFALL = re.compile(r"「うら」が出るまでコインを投げつづけ、その間に出た「おもて」の数だけ、カードを引く。")
+V118_INK = re.compile(r"ワザに必要な｢エネルギー｣よりも多く｢エネルギー｣がついているとき、多い「エネルギー」1個につき、(\d+)ダメージを追加する。ダメージ追加は(\d+)個ぶんまで。")
+V118_CONSTRICT = re.compile(r"コインを投げて「おもて」なら、相手を「マヒ」状態にする。「うら」なら、次の相手の番、このワザを受けた相手は、「にげる」ときに必要な「エネルギー」が、(\d+)個ぶん"
+                            r"多くなる。")
+V118_DARK_MAX = re.compile(r"相手の場のポケモン全員についている「エネルギー」の数ぶんコインを投げ、「おもて」の数×(\d+)のダメージ。")
+V118_AROMA = re.compile(r"お互いのプレイヤーは、それぞれコインを投げる。「おもて」を出したプレイヤーは、自分の場のポケモンにのっているダメージカウンターを、最大(\d+)つとりのぞく。"
+                        r"\(合計が\d+つ以下なら、2匹以上のポケモンから、とりのぞいてもよい\)")
+V118_BLISS = re.compile(r"コインを投げて「おもて」なら、自分の控えポケモンを1匹選び、そのポケモンにのっているダメージカウンター最大(\d+)つと、自分にのっているダメージカウンター最大(\d+)つを、"
+                        r"それぞれ、とりのぞく。")
+V118_AERO = re.compile(r"のぞむなら、コインを投げてよい。コインを投げて「おもて」なら、このワザのダメージは「(\d+)」になる。「うら」なら、このワザは失敗する。")
+V118_X_POWER = re.compile(r"この力は、自分の場の「(.+)」が「(.+)」を使うとき、使うことができる。「うら」が出るまでコインを投げつづけ、その間に出た「おもて」の数×(\d+)のダメージを、その「\2」の"
+                          r"ダメージに追加する。この番に、すでに自分の場のほかの.+の「(.+)」を使っていたなら、この力を使うことはできない。")
+V118_TIME_SHIFT = "コインを投げて「おもて」なら、自分のトラッシュから「スタジアムカード」を1枚選び出し、場に出す(すでに場にある「スタジアムカード」は、トラッシュする)。"
+V118_TRANSPORT = "自分の山札からカードを1枚引いて、手札に加える。その後、自分の手札からカードを1枚選び、山札の上に置く。"
 
 
 def _effect_of_key(state, key: str | None):
@@ -1228,6 +1243,12 @@ def _follows_declaration(state, key: str, player: int, pid: int, e: dict) -> boo
         return kind == "coin_flip" and e["source"] == "power" and e.get("effect") == key and e["player"] == player and e.get("pokemon_id") == pid
     if isinstance(effect, E.StopOpponentBenchPowersThisTurn):
         return kind == "persistent_effect_added" and e.get("effect") == key and e["player"] == 1 - player and e.get("persistent_effect") == "bench_powers_stopped"
+    # v0.118: ［じくうへんかん］は持ち主のコイン、［トランスポート］は使ったプレイヤーの 1 枚までのドロー（山札が 0 枚なら 0 枚のドロー。そのあとの決定・山札の上に置く処理は
+    # hand_to_deck_top の分岐が確かめる）
+    if isinstance(effect, E.CoinPutStadiumFromDiscard):
+        return kind == "coin_flip" and e["source"] == "power" and e.get("effect") == key and e["player"] == player and e.get("pokemon_id") == pid
+    if isinstance(effect, E.DrawThenPutHandCardOnDeckTop):
+        return kind == "draw" and e["player"] == player and len(e["cards"]) <= 1
     return False
 
 
@@ -1347,6 +1368,15 @@ def _power_coin_follows(state, coin: dict, e: dict) -> bool:
         # v0.98: ［VANISH］。「おもて」なら選んだアンノーンについているカードのトラッシュ（discard_attached_cards。そのあいだに決定がある）。「うら」なら何もしない
         mine = kind in ("discard_attached_cards", "return_in_play_to_hand") and e.get("power") == coin["effect"]
         return (kind == "discard_attached_cards" and mine and e["player"] == coin["player"]) if coin["result"] == "heads" else not mine
+    if isinstance(effect, E.CoinPutStadiumFromDiscard):
+        # v0.118: ［じくうへんかん］。「おもて」ならトラッシュのスタジアムを場に出す（stadium_placed の power・from_zone discard。そのあいだに決定がある）。「うら」なら何もしない
+        placed = kind == "stadium_placed" and e.get("power") == coin["effect"]
+        return (placed and e["player"] == coin["player"] and e.get("from_zone") == "discard") if coin["result"] == "heads" else not placed
+    if isinstance(effect, E.CoinsUntilTailsBonusToGroupAttack):
+        # v0.118: ［XXXXX］（ワザの中の特殊能力のコイン）。「おもて」なら同じ特殊能力の次のコイン、「うら」ならすぐあとに数えた結果（group_attack_power_coins。「おもて」の数）
+        if coin["result"] == "heads":
+            return kind == "coin_flip" and e["source"] == "power" and e.get("effect") == coin["effect"] and e["number"] == coin["number"] + 1 and e["player"] == coin["player"]
+        return kind == "group_attack_power_coins" and e.get("power") == coin["effect"] and e.get("heads") == coin["number"] - 1
     return kind in ("evade_check", "ko_prevented", "ko_prevention_failed")
 
 
@@ -1829,6 +1859,8 @@ def log_problems(state) -> list[str]:
     # （場のポケモンの番号 → 与えた番・はたらく番・ワザ・量）・［ときわたり］の「おもて」「うら」のポケモン（その番）・［QUICKEN］の効果（使ったプレイヤー, 与えた番））
     v117: dict = {"prev": None, "retreat": None, "legend_due": [], "take_away": None, "window": None, "pursuits": {}, "tt_heads": set(), "tt_tails": set(),
                   "quickens": []}
+    # v0.118: v118_problems の記録（今のワザ・［XXXXX］を使った (番, プレイヤー)・［トランスポート］の引いたあと・1 つ前のログ）
+    v118: dict = {"window": None, "x_used": set(), "transport": None, "prev": None}
     color_types: dict[int, dict] = {}  # v0.88: ［せんすい］の記録（対象のポケモンの番号 → 色・発生源のカード・特殊能力の位置）
     # v0.90: ログから組み立てた、場のポケモンのマーカー・カウンター（番号 → のせた順の {"marker", "color", "turn"}）と、進化・退化で取りのぞくはずのポケモン（番号 → 理由）
     marks: dict[int, list[dict]] = {}
@@ -2391,6 +2423,10 @@ def log_problems(state) -> list[str]:
             steps_for_continuous = [step for step in steps if str(step[0]) != f"2 {power[0]}"]
         else:
             steps_for_continuous = steps
+        group = attack_window.get("group_power") if not e.get("retaliation") else None
+        if group is not None and e.get("target", "opponent_active") == "opponent_active":
+            # v0.118: ワザといっしょに使った［XXXXX］の 2・6 段階の追加（相手の対戦ポケモンへのダメージだけ）。量・段階は v118_close が確かめる
+            steps_for_continuous = [step for step in steps_for_continuous if str(step[0]).partition(" ")[2] != f"［{group}］"]
         recorded = [(i, step) for i, step in enumerate(steps) if step in steps_for_continuous and _v046_rank(str(step[0]).partition(" ")[2])]
         if any(by_label[label][:5] != x[:5] for label, x in zip(labels, expected)) or sorted(str(step[0]) for _, step in recorded) != sorted(labels):
             return found + [f"{where} の記録 {[step[0] for _, step in recorded]} が、当てはまる効果 {sorted(by_label)} と合わない"]
@@ -4393,6 +4429,249 @@ def log_problems(state) -> list[str]:
                 found.append(f"{key} の効果を与えた相手 {target} が、場の「たねポケモン」ではない")
         return found
 
+    def v118_problems(e: dict) -> list[str]:
+        """v0.118: 上限なしコイン・攻撃時の能力・回復の配分を、エンジンの登録・計算を読まずに確かめる（印刷の文面・ログから組み立てた場・コインから）。ログ ``e`` の組み立て直しの前に
+        呼ぶ（ログから組み立てた場は ``e`` の前の場）。ワザごとの確かめは ``v118_close``（ワザの終わり・番の終わり）。
+
+        - ［XXXXX］: ``group_attack_power`` は、ワザを使ったプレイヤーの場の、文面が［XXXXX］のポケモン（いちばん上のカードの特殊能力）で、ワザを使うポケモンの今の姿の名前が文面の
+          名前のグループ・ワザの名前が文面のワザ。同じ番・同じプレイヤーで 1 回まで。そのあと、その特殊能力のコイン（持ち主の。「うら」まで）と ``group_attack_power_coins``
+          （「おもて」の数・文面の数 × 「おもて」の数・使い手がワザを使うポケモンなら 2 段階、ほかなら 6 段階）。ダメージの記録の変更（modifiers）はその段階・量で 1 つ（0 なら ない）
+        - ［トランスポート］: 宣言のすぐあとの 1 枚までのドロー（_follows_declaration）のあとに、使ったプレイヤーの ``hand_to_deck_top``（ログから組み立てた手札のカード）。
+          ［じくうへんかん］: 「おもて」のあとの ``stadium_placed``（from_zone discard）は、使ったプレイヤーのトラッシュのスタジアムカード（場のスタジアムとの置きかえは本体の分岐）"""
+        found: list[str] = []
+        kind = e["kind"]
+        turn = e["turn"]
+        st = v118
+        prev = st["prev"]
+        st["prev"] = e
+        w = st["window"]
+        if w is not None and kind in ("attack", "turn_end", "game_end", "halted"):
+            found += v118_close(w, ended=kind in ("game_end", "halted"))
+            st["window"] = w = None
+        transport = st["transport"]
+        if transport is not None:
+            st["transport"] = None
+            if kind != "hand_to_deck_top" or e["player"] != transport["player"] or e.get("power") != transport["power"]:
+                found.append(f"{transport['turn']} 番の［トランスポート］（{transport['power']}）で引いたあとに、手札の 1 枚を山札の上に置く処理（hand_to_deck_top）がない（{kind}）")
+        if kind == "draw" and prev is not None and prev["kind"] == "pokemon_power":
+            # 宣言のすぐあとのドロー（_follows_declaration）。そのすぐあとに山札の上に置く処理を待つ
+            defs = [(card, index, power) for card, index, power in power_defs(prev["pokemon_id"]) if power.name_ja == prev["power"]]
+            if defs and V118_TRANSPORT in (defs[0][2].text_ja or ""):
+                st["transport"] = {"turn": turn, "player": prev["player"], "power": f"{defs[0][0].id}@power{defs[0][1]}"}
+        if kind == "hand_to_deck_top":
+            if transport is None:
+                found.append(f"{turn} 番の hand_to_deck_top（カード {e.get('card')}）が、［トランスポート］で引いたすぐあとではない")
+            if owner.get(e["card"]) != e["player"] or e["card"] not in hand[e["player"]]:
+                found.append(f"{turn} 番に山札の上に置いたカード {e['card']} が、ログから組み立てたプレイヤー {e['player']} の手札にない")
+        if kind == "stadium_placed" and e.get("from_zone") == "discard":
+            if prev is None or prev["kind"] != "coin_flip" or prev.get("source") != "power" or prev.get("effect") != e.get("power") or prev["result"] != "heads" \
+                    or prev["player"] != e["player"]:
+                found.append(f"{turn} 番にトラッシュから出したスタジアム {e['card']} が、［じくうへんかん］の持ち主の「おもて」のすぐあとではない")
+            else:
+                defs = [power for _, _, power in power_defs(prev["pokemon_id"])]
+                if not any(V118_TIME_SHIFT in (power.text_ja or "") for power in defs):
+                    found.append(f"{turn} 番にトラッシュからスタジアム {e['card']} を出した特殊能力（ポケモン {prev['pokemon_id']}）の文面が［じくうへんかん］ではない")
+            if e["card"] not in discard[e["player"]] or owner.get(e["card"]) != e["player"] or "stadium" not in state.printed_def(e["card"]).trainer_kinds:
+                found.append(f"{turn} 番にトラッシュから出したスタジアム {e['card']} が、ログから組み立てたプレイヤー {e['player']} のトラッシュのスタジアムカードではない")
+        if kind == "group_attack_power":
+            holder, attacker = e["pokemon_id"], e.get("attacker_pokemon_id")
+            powers = [power for _, _, power in power_defs(holder) if power.name_ja == e["power"]]
+            matched = V118_X_POWER.fullmatch(powers[0].text_ja or "") if powers else None
+            attack_name = None
+            if attack_window is not None:
+                card_id, index = _attack_key(attack_window["effect"])
+                definition = state.definitions.get(card_id)
+                attack_name = definition.attacks[index].name_ja if definition is not None and 0 <= index < len(definition.attacks) else None
+            if matched is None or w is None or attacker != w["pid"] or pokemon_owner.get(holder) != w["player"] or holder not in in_play \
+                    or form_def(attacker).name_group != matched.group(1) or attack_name != matched.group(2) or (turn, w["player"]) in st["x_used"]:
+                found.append(f"{turn} 番の［XXXXX］の宣言（ポケモン {holder}・ワザを使うポケモン {attacker}）が、ワザを使ったプレイヤーの場の文面の特殊能力で、今の姿の名前が"
+                             f"「アンノーン」のポケモンの「めざめるパワー」の宣言といっしょの、その番の 1 回目ではない")
+            st["x_used"].add((turn, e["player"]))
+            if attack_window is not None:
+                attack_window["group_power"] = e["power"]  # ダメージの段階の記録の確かめ（continuous_damage_problems）から除く
+            if w is not None:
+                w["x"] = {"holder": holder, "card": top.get(holder), "name": e["power"], "per": int(matched.group(3)) if matched else None, "coins": [], "result": None,
+                          "step": 2 if holder == attacker else 6}
+        if w is None:
+            if kind == "attack":
+                st["window"] = {"key": attack_window["effect"], "player": e["player"], "pid": ids.get(e["pokemon"]), "coins": [], "events": [],
+                                "opp_active": active_of.get(1 - e["player"]), "x": None,
+                                "damage": {pid: damage.get(pid, 0) for pid in in_play}, "owners": {pid: pokemon_owner.get(pid) for pid in in_play},
+                                "units": {pid: v105_units(pid) for pid in in_play}, "hand_at_draw": None, "deck_empty_at": None}
+            return found
+        if kind == "copy_attack":
+            w.update(key=e["copied"], coins=[], events=[])
+        elif kind == "coin_flip" and e.get("source") == "attack" and e.get("effect") == w["key"]:
+            w["coins"].append((e["player"], e["result"], e.get("until")))
+        elif kind == "esp_redo" and e.get("effect") == w["key"]:
+            first, last = len(e["original"]), len(e["redone"])
+            del w["coins"][-(first + last):-last]
+        elif kind == "coin_flip" and e.get("source") == "power" and w["x"] is not None and e.get("pokemon_id") == w["x"]["holder"]:
+            w["x"]["coins"].append((e["player"], e["result"], e.get("until")))
+        elif kind == "group_attack_power_coins":
+            x = w["x"]
+            if x is None or e["pokemon_id"] != x["holder"]:
+                found.append(f"{turn} 番の［XXXXX］のコインの結果（ポケモン {e['pokemon_id']}）が、そのワザの宣言といっしょの［XXXXX］のものではない")
+            else:
+                coins = x["coins"]
+                heads = sum(1 for _, side, _ in coins if side == "heads")
+                owner_ = pokemon_owner.get(x["holder"])
+                if not coins or [side for _, side, _ in coins] != ["heads"] * heads + ["tails"] or any(player != owner_ or until != "tails" for player, _, until in coins) \
+                        or e["heads"] != heads or x["per"] is None or e["amount"] != heads * x["per"] or e["step"] != x["step"]:
+                    found.append(f"{turn} 番の［XXXXX］のコイン {[side for _, side, _ in coins]}・「おもて」の数 {e['heads']}・量 {e['amount']}・段階 {e['step']} が、持ち主の"
+                                 f"「うら」が出るまでのコイン・文面の数 × 「おもて」の数・段階 {x['step']}（使い手がワザを使うポケモンなら 2、ほかは 6）と合わない")
+                x["result"] = (heads, e["amount"])
+        else:
+            if kind == "draw" and e["player"] == w["player"]:
+                w["hand_at_draw"] = list(hand[e["player"]])
+            w["events"].append((kind, e))
+        return found
+
+    def v118_close(w: dict, *, ended: bool) -> list[str]:
+        """v0.118: 1 つのワザの確かめ（ワザの終わり・番の終わりで）。こんらんでワザが失敗したら、ワザの要素はない（確かめない）。
+
+        - まるもうけ: コインは「うら」が出るまで（「おもて」の並びと最後の「うら」1 枚）。そのあとワザを使ったプレイヤーが 1 回だけ引き、引いた枚数は「おもて」の数まで（少なければ
+          山札がなくなった。そのプレイヤーがそのあと山札にカードをもどさずに引いたら報告する。v0.112 と同じ）
+        - スミでっぽう: 基本となるダメージは、目安に、ついている「エネルギー」の個数（色を問わない。無色2個エネルギーは 2 個）からワザに必要な数を引いた数（文面の上限まで）× 文面の量
+        - しめつづける: ダメージのあとのコインはちょうど 1 枚（相手がきぜつしたなら投げない）。「おもて」なら相手の対戦ポケモンがマヒ・「にげる」エネルギーの効果なし、「うら」なら
+          マヒなし・相手の対戦ポケモンに次の番だけはたらく「にげる」エネルギーを文面の数ふやす効果（retreat_cost_increase）
+        - わるわるMAX: コインの枚数は、ログから組み立てた相手の場のポケモン全員についている「エネルギー」の個数。基本となるダメージは「おもて」の数 × 文面の量（0 枚なら 0。失敗ではない）
+        - ふしぎなかおり: コインはワザを使ったプレイヤー → 相手の順に、自分の場にダメージカウンターがあるプレイヤーだけ 1 枚ずつ。とりのぞくのは「おもて」を出したプレイヤーの場だけ、
+          合計が文面の数まで・1 匹からはのっている数まで。ワザを使ったプレイヤーのぶんが先。「おもて」でとりのぞけるのに、とりのぞいた・受けなかったログがなければ報告する（HZ1）
+        - ごくらくかふん: コインは 1 枚（控えがいなく、自分にもカウンターがなければ投げない）。「おもて」なら、とりのぞくのは自分の場の、控え 1 匹（文面の数まで）とワザを使った
+          ポケモン（文面の数まで）だけ（控え → 自分の順）。「うら」ならとりのぞかない
+        - エアロウイング: のぞむならの答えのログ（optional_coin_chosen・optional_coin_declined）がちょうど 1 つ。投げないならコインなし・基本となるダメージは目安。投げるならコイン
+          1 枚で、「おもて」なら基本となるダメージは文面の数、「うら」ならワザの失敗（ダメージなし）"""
+        found: list[str] = []
+        key = w["key"]
+        text = v111_printed_text(key) or ""
+        events = w["events"]
+        kinds = [k for k, _ in events]
+        if "confusion_damage" in kinds:
+            return found
+        coins = w["coins"]
+        sides = [side for _, side, _ in coins]
+        heads = sides.count("heads")
+        card_id, index = _attack_key(key)
+        definition = state.definitions.get(card_id)
+        printed = definition.attacks[index] if definition is not None and 0 <= index < len(definition.attacks) else None
+        opp = 1 - w["player"]
+        base_steps = [dict(x["steps"]).get("1 基本となる計算") for k, x in events if k == "damage" and x.get("pokemon") is not None
+                      and ids.get(x["pokemon"]) == w["opp_active"]]
+        x = w["x"]
+        if x is not None:
+            damages = [ev for k, ev in events if k == "damage" and ids.get(ev.get("pokemon")) == w["opp_active"]]
+            mods = [tuple(m) for ev in damages for m in ev.get("modifiers", ()) if m[1] == x["card"] and m[0] == x["step"]]
+            label = f"{x['step']} ［{x['name']}］"
+            if x["result"] is None and not ended and "attack_failed" not in kinds:
+                found.append(f"{key} といっしょに使った［XXXXX］の、コインの結果（group_attack_power_coins）がない")
+            elif x["result"] is not None and damages:
+                amount = x["result"][1]
+                steps = [tuple(step) for step in damages[0].get("steps") or ()]
+                added = [steps[i][1] - steps[i - 1][1] for i in range(1, len(steps)) if str(steps[i][0]) == label]
+                if mods != ([(x["step"], x["card"], amount)] if amount else []) or added != ([amount] if amount else []):
+                    found.append(f"{key} のダメージの記録の変更 {mods}・段階の記録の追加 {added} が、［XXXXX］の段階 {x['step']}・量 {amount} と合わない")
+        if V118_WINDFALL.fullmatch(text):
+            draws = [ev for k, ev in events if k == "draw" and ev["player"] == w["player"]]
+            if sides != ["heads"] * heads + ["tails"] or any(player != w["player"] or until != "tails" for player, _, until in coins):
+                found.append(f"{key} のコイン {sides} が、ワザを使ったプレイヤーの「うら」が出るまでのコイン（「おもて」の並びと最後の「うら」）ではない")
+            if len(draws) != 1 and not ended:
+                found.append(f"{key} で引いた回数 {len(draws)} が 1 回ではない")
+            elif draws:
+                drawn = tuple(draws[0]["cards"])
+                if len(drawn) > heads or any(owner.get(uid) != w["player"] or uid in (w["hand_at_draw"] or ()) for uid in drawn):
+                    found.append(f"{key} で引いた {len(drawn)} 枚 {drawn} が、「おもて」の数 {heads} より多い・自分の山札のカードではない")
+                if len(drawn) < heads:
+                    v112_empty_deck.add(w["player"])
+        matched = V118_INK.fullmatch(text)
+        if matched is not None and printed is not None and w["units"].get(w["pid"]) is not None and base_steps:
+            per, cap = int(matched.group(1)), int(matched.group(2))
+            extra = min(cap, max(0, w["units"][w["pid"]] - len(printed.cost)))
+            expected = (printed.damage or 0) + per * extra
+            if base_steps[0] != expected:
+                found.append(f"{key} の基本となるダメージ {base_steps[0]} が、目安 {printed.damage} + 多い「エネルギー」{extra} 個 × {per}（個数 {w['units'][w['pid']]}・必要な数 "
+                             f"{len(printed.cost)}・上限 {cap}）と違う")
+        matched = V118_CONSTRICT.fullmatch(text)
+        if matched is not None and not ended:
+            target = w["opp_active"]
+            paralyzed = [ev for k, ev in events if k == "special_condition" and ev.get("condition") == "paralysis" and ev.get("effect") == key]
+            increases = [ev for k, ev in events if k == "persistent_effect_added" and ev.get("persistent_effect") == "retreat_cost_increase"]
+            knocked = any(k == "knock_out" and ev.get("pokemon") is not None and ids.get(ev["pokemon"]) == target for k, ev in events)
+            if len(coins) > 1 or (not coins and not knocked) or any(player != w["player"] for player, _, _ in coins):
+                found.append(f"{key} のコイン {sides} が、ワザを使ったプレイヤーの 1 枚ではない")
+            elif coins and sides[0] == "heads" and increases:
+                found.append(f"{key} の「おもて」で、「にげる」エネルギーをふやす効果を与えた")
+            elif coins and sides[0] == "tails" and (paralyzed or len(increases) > 1 or (not increases and "effect_prevented" not in kinds)
+                                                   or any(ev["pokemon_id"] != target or ev.get("amount") != int(matched.group(1)) or ev["active_turn"] != ev["turn"] + 1
+                                                          or ev.get("effect") != key for ev in increases)):
+                found.append(f"{key} の「うら」の効果 {[(ev['pokemon_id'], ev.get('amount'), ev['active_turn']) for ev in increases]}・マヒ {len(paralyzed)} が、相手の対戦ポケモン"
+                             f" {target} への、次の番の「にげる」エネルギー +{matched.group(1)}（マヒなし）ではない")
+        matched = V118_DARK_MAX.fullmatch(text)
+        if matched is not None and "attack_failed" not in kinds:
+            units = [w["units"].get(pid) for pid, owner_ in w["owners"].items() if owner_ == opp]
+            if None not in units and len(coins) != sum(units):
+                found.append(f"{key} のコイン {len(coins)} 枚が、ログから組み立てた相手の場のポケモン全員の「エネルギー」の個数 {sum(units)}（{units}）と違う")
+            if base_steps and base_steps[0] != heads * int(matched.group(1)):
+                found.append(f"{key} の基本となるダメージ {base_steps[0]} が、「おもて」の数 {heads} × {matched.group(1)} と違う")
+        heals = [ev for k, ev in events if k == "attack_heal" and ev.get("effect") == key]
+        matched = V118_AROMA.fullmatch(text)
+        if matched is not None and not ended:
+            limit = int(matched.group(1))
+            per = state.rules.damage_per_counter
+            hurt = {player: any(d >= per for pid, d in w["damage"].items() if w["owners"][pid] == player) for player in (w["player"], opp)}
+            flippers = [player for player in (w["player"], opp) if hurt[player]]
+            if [player for player, _, _ in coins] != flippers:
+                found.append(f"{key} のコインを投げたプレイヤー {[player for player, _, _ in coins]} が、自分の場にダメージカウンターのあるプレイヤー（ワザを使ったプレイヤー → 相手）"
+                             f" {flippers} と違う")
+            result = {player: side for player, side, _ in coins}
+            order = [ev["player"] for ev in heals]
+            if order != sorted(order, key=lambda player: player != w["player"]):
+                found.append(f"{key} でとりのぞいた順 {order} が、ワザを使ったプレイヤーのぶん → 相手のぶんではない")
+            prevented = {ev.get("player") for k, ev in events if k == "effect_prevented"}
+            for player in (w["player"], opp):
+                mine = [ev for ev in heals if ev["player"] == player]
+                total = sum(ev["counters"] for ev in mine)
+                if result.get(player) != "heads" and mine:
+                    found.append(f"{key} で、「おもて」を出していないプレイヤー {player} の場からとりのぞいた")
+                if total > limit or any(ev["counters"] * per > w["damage"].get(ev["pokemon_id"], 0) or w["owners"].get(ev["pokemon_id"]) != player for ev in mine) \
+                        or len({ev["pokemon_id"] for ev in mine}) != len(mine):
+                    found.append(f"{key} でプレイヤー {player} の場からとりのぞいた {[(ev['pokemon_id'], ev['counters']) for ev in mine]} が、合計 {limit} つまで・のっている数まで"
+                                 "・自分の場のポケモンごとに 1 回ではない")
+                if result.get(player) == "heads" and not mine and player not in prevented:
+                    found.append(f"{key} で「おもて」を出したプレイヤー {player} が、とりのぞけるのに 1 つもとりのぞいていない（HZ1 の 0 個の組を選んだ）")
+        matched = V118_BLISS.fullmatch(text)
+        if matched is not None and not ended:
+            bench_cap, self_cap = int(matched.group(1)), int(matched.group(2))
+            per = state.rules.damage_per_counter
+            bench = [pid for pid, owner_ in w["owners"].items() if owner_ == w["player"] and pid != w["pid"]]
+            healable = bool(bench) or w["damage"].get(w["pid"], 0) >= per
+            if len(coins) != (1 if healable else 0) or any(player != w["player"] for player, _, _ in coins):
+                found.append(f"{key} のコイン {sides} が、ワザを使ったプレイヤーの 1 枚（控えがいなく、自分にもカウンターがなければ 0 枚）ではない")
+            targets = [ev["pokemon_id"] for ev in heals]
+            others = [pid for pid in targets if pid != w["pid"]]
+            if (sides[:1] != ["heads"] and heals) or len(others) > 1 or any(pid not in bench for pid in others) or len(set(targets)) != len(targets) \
+                    or (w["pid"] in targets and targets[-1] != w["pid"]) \
+                    or any(ev["counters"] > (self_cap if ev["pokemon_id"] == w["pid"] else bench_cap) or ev["counters"] * per > w["damage"].get(ev["pokemon_id"], 0)
+                           or ev["player"] != w["player"] for ev in heals):
+                found.append(f"{key} でとりのぞいた {[(ev['pokemon_id'], ev['counters']) for ev in heals]}（コイン {sides}）が、「おもて」のときの、控え 1 匹から {bench_cap} つまで → "
+                             f"自分から {self_cap} つまでではない")
+        matched = V118_AERO.fullmatch(text)
+        if matched is not None and not ended:
+            answers = [k for k in kinds if k in ("optional_coin_chosen", "optional_coin_declined")]
+            failed = [ev for k, ev in events if k == "attack_failed"]
+            if len(answers) != 1:
+                found.append(f"{key} の、のぞむならコインを投げるかの答え {answers} が 1 つではない")
+            elif answers[0] == "optional_coin_declined" and (coins or (base_steps and base_steps[0] != (printed.damage if printed else None))):
+                found.append(f"{key} で投げないと答えたのに、コイン {sides}・基本となるダメージ {base_steps} が目安と違う")
+            elif answers[0] == "optional_coin_chosen":
+                if len(coins) != 1:
+                    found.append(f"{key} で投げると答えたのに、コインが {len(coins)} 枚")
+                elif sides[0] == "heads" and (failed or (base_steps and base_steps[0] != int(matched.group(1)))):
+                    found.append(f"{key} の「おもて」の基本となるダメージ {base_steps} が、文面の「{matched.group(1)}」ではない")
+                elif sides[0] == "tails" and (not failed or failed[0].get("reason") != "coin" or base_steps):
+                    found.append(f"{key} の「うら」で、ワザが失敗していない（ダメージ {base_steps}）")
+        return found
+
     def v116_close(w: dict, *, log_ended: bool) -> list[str]:
         """v0.116: 1 つのワザの確かめ（ワザの終わり・番の終わりで）。"""
         found: list[str] = []
@@ -5345,6 +5624,7 @@ def log_problems(state) -> list[str]:
         problems.extend(v115_problems(e))  # v0.115: 場・ベンチへのダメージ、対象ごとのコイン、ダメージの配分
         problems.extend(v116_problems(e))  # v0.116: エネルギーの付け替え・ついた時の効果・付属カードの回収と退化
         problems.extend(v117_problems(e))  # v0.117: 場の移動・にげる時の反応・条件付きの特殊能力
+        problems.extend(v118_problems(e))  # v0.118: 上限なしコイン・攻撃時の能力・回復の配分
         if kind in ("damage", "confusion_damage"):
             # v0.90: のろいマーカーののっているポケモンが弱点の計算をしたワザのダメージは「×4」（ログの weakness_multiplier）。ほかは書かない。こんらんの 20 は、のろいマーカーと
             # 自分の弱点が当てはまるならコインの前に止まる（UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS）ので、弱点の計算をしたこんらんのダメージはない
@@ -6240,7 +6520,10 @@ def log_problems(state) -> list[str]:
                     stadium_terms.append((stadium_zone[0], stadium_effect.amount))  # v0.81: でこぼこジム（今の姿の段階が「たね」）
             # v0.90: ログから組み立てたベトベトマーカー（のっていれば決まって 1 増やす。［ねんちゃくえき］と同じ増やす数）
             marker_terms = (("sticky", 1),) if any(m["marker"] == "sticky" for m in marks.get(pid, [])) else ()
-            plus = sum(x[2] for x in increases) + sum(a for _, a in stadium_terms if a > 0) + sum(a for _, a in marker_terms)
+            # v0.118: ログから組み立てた、はたらく番のしめつづけるの効果（retreat_cost_increase。(ワザ, 量)。決まって増やす）
+            effect_terms = tuple(sorted((info["effect"], info["amount"]) for (effect_pid, _, _), info in alive.items()
+                                        if effect_pid == pid and info["kind"] == "retreat_cost_increase" and info["active_turn"] == e["turn"]))
+            plus = sum(x[2] for x in increases) + sum(a for _, a in stadium_terms if a > 0) + sum(a for _, a in marker_terms) + sum(a for _, a in effect_terms)
             forced = -sum(a for _, a in stadium_terms if a < 0)
             optional = sum(x[2] for x in reductions)
             maximum = max(0, printed + plus - forced)
@@ -6266,7 +6549,7 @@ def log_problems(state) -> list[str]:
                                   for key, eff, _ in working_continuous(hpid, E.ZeroGroupRetreatCostFromBench) if form_def(pid).name_group == eff.group)
             if zeroed or power_zeroed:
                 readings = RetreatCost(printed, tuple(increases), tuple(reductions), tuple((c, a) for c, a in stadium_terms if a > 0),
-                                       tuple((c, -a) for c, a in stadium_terms if a < 0), zeroed, marker_terms, tuple(power_zeroed))
+                                       tuple((c, -a) for c, a in stadium_terms if a < 0), zeroed, marker_terms, tuple(power_zeroed), effect_terms)
                 last_ok = first_ok = all(low <= count <= high for low, high in readings.readings)
                 minimum, maximum = readings.minimum, readings.maximum
             if tuple(e.get("retreat_cost_zeroed", ())) != zeroed:
@@ -6278,9 +6561,11 @@ def log_problems(state) -> list[str]:
                                 f"（印刷 {printed}・増やす {increases}・少なくできる {reductions}。CP2 の下限 {floor_first}）にない")
             if tuple(tuple(x) for x in e.get("retreat_cost_markers", ())) != marker_terms:
                 problems.append(f"{e['turn']} 番の{kind}のマーカーのにげるエネルギーの記録 {e.get('retreat_cost_markers')} が、ログから組み立てた {marker_terms} と違う")
+            if tuple(sorted(tuple(x) for x in e.get("retreat_cost_effects", ()))) != effect_terms:
+                problems.append(f"{e['turn']} 番の{kind}のワザの効果のにげるエネルギーの記録 {e.get('retreat_cost_effects')} が、ログから組み立てた {effect_terms} と違う")
             if tuple(tuple(x) for x in e.get("retreat_cost_stadium", ())) != tuple(stadium_terms):
                 problems.append(f"{e['turn']} 番の{kind}のスタジアムのにげるエネルギーの記録 {e.get('retreat_cost_stadium')} が、ログから組み立てた {stadium_terms} と違う")
-            if increases or reductions or stadium_terms or zeroed or marker_terms or power_zeroed:
+            if increases or reductions or stadium_terms or zeroed or marker_terms or power_zeroed or effect_terms:
                 if (tuple(e.get("retreat_cost", ())), e.get("retreat_cost_printed"), sorted(tuple(x) for x in e.get("retreat_cost_increases", ())),
                         sorted(tuple(x) for x in e.get("retreat_cost_reductions", ()))) != ((minimum, maximum), printed, increases, reductions):
                     problems.append(f"{e['turn']} 番の{kind}のにげるエネルギーの記録が、ログから組み立てた範囲 {minimum}〜{maximum}・{increases}・{reductions} と違う")
@@ -6576,6 +6861,11 @@ def log_problems(state) -> list[str]:
                 shuffle_due, exchange_due = e, (e["player"], effect.draw, e["turn"])
             elif isinstance(effect, E.ReturnHandThenDrawSameWithBenchLetters):
                 shuffle_due, exchange_due = e, (e["player"], len(e["cards"]), e["turn"], "exact")
+        elif kind == "hand_to_deck_top":
+            # v0.118: ［トランスポート］。使ったプレイヤーの手札の 1 枚を、見せずに山札の上に置く（切らない。山札は組み立て直さない。直前のドローとの並びは v118_problems）
+            if not isinstance(_power_effect(state, e.get("power")), E.DrawThenPutHandCardOnDeckTop):
+                problems.append(f"{e['turn']} 番の hand_to_deck_top（カード {e.get('card')}）が、［トランスポート］の処理のものではない")
+            from_hand(e, e["player"], e["card"])
         elif kind == "hand_return_declined":
             # v0.96: ［ENGAGE］で手札をもどさなかった（手札・山札は変わらない）
             if not isinstance(_power_effect(state, e.get("power")), E.EachPlayerMayReturnHandThenDrawOnEntry):
@@ -6934,6 +7224,12 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番の［QUICKEN］の記録 {e['effect_kind']}（ポケモン {e.get('pokemon_id')}・{e['expires_turn']} 番まで）が、使ったプレイヤーの番の、"
                                 "文面の期間のものではない（同じ番のほかのアンノーンQ の使用のあと）")
             trainer_effects_log[(e["player"], e["trainer_card"], e["expires_turn"])] = e
+        elif kind == "trainer_effect_added" and e.get("effect_kind") == "group_attack_power_used":
+            # v0.118: ［XXXXX］の使った記録（特殊能力で与えた記録。``trainer_card`` は使ったポケモンのいちばん上のカード）。そのワザの宣言といっしょの group_attack_power のすぐあとで、
+            # 使った番の終わりまで
+            if prior is None or prior["kind"] != "group_attack_power" or prior.get("pokemon_id") != e.get("pokemon_id") or e["player"] != turn_player                     or e["expires_turn"] != e["turn"] or not isinstance(_power_effect(state, e.get("power")), E.CoinsUntilTailsBonusToGroupAttack)                     or (e["player"], e["trainer_card"], e["expires_turn"]) in trainer_effects_log:
+                problems.append(f"{e['turn']} 番の［XXXXX］の使った記録（ポケモン {e.get('pokemon_id')}・{e['expires_turn']} 番まで）が、宣言のすぐあとの、その番の終わりまでのものではない")
+            trainer_effects_log[(e["player"], e["trainer_card"], e["expires_turn"])] = e
         elif kind in ("request_answered", "trainer_effect_added"):
             # v0.56: 相手の答え（マチスの交渉・カスミのわがまま）・期限のある効果を与えた（カスミ・キョウ・見えない壁）。使っている最中のそのトレーナーの処理
             user = trainer_user(e["trainer_card"])
@@ -6989,11 +7285,19 @@ def log_problems(state) -> list[str]:
             # v0.57: 使っている最中のスタジアムカード（play_trainer のすぐあと）を、トラッシュせずに両方の場の境界線上に出す。前のスタジアムはすぐあとに持ち主のトラッシュ
             card = e["card"]
             entry = state.effects.trainer_entry(state.cards[card].card_id) if card in state.cards else None
-            if using_trainer.get(e["player"]) != card or entry is None or not entry.effect.is_stadium or prior is None \
+            if e.get("from_zone") == "discard":
+                # v0.118: ［じくうへんかん］。持ち主のトラッシュのスタジアムカードを、トレーナーとして使わずに直接場に出す（どれを・誰のコインのあとかは v118_problems）
+                if entry is None or not entry.effect.is_stadium or owner.get(card) != e["player"] or card not in discard[e["player"]] \
+                        or e.get("replaces") != (None if stadium_zone is None else stadium_zone[0]):
+                    problems.append(f"{e['turn']} 番にトラッシュから出したスタジアム {card} が、持ち主のトラッシュのスタジアムカード（前のスタジアム {stadium_zone}）ではない")
+                elif card in discard[e["player"]]:
+                    discard[e["player"]].remove(card)
+            elif using_trainer.get(e["player"]) != card or entry is None or not entry.effect.is_stadium or prior is None \
                     or prior["kind"] != "play_trainer" or prior["card"] != card or owner.get(card) != e["player"] \
                     or e.get("replaces") != (None if stadium_zone is None else stadium_zone[0]):
                 problems.append(f"{e['turn']} 番に場に出したスタジアム {card} が、使っている最中のスタジアムカード（前のスタジアム {stadium_zone}）ではない")
-            using_trainer[e["player"]] = None
+            if e.get("from_zone") != "discard":
+                using_trainer[e["player"]] = None
             stadium_due = stadium_zone
             stadium_zone = (card, e["player"])
             if stadium_due is not None:
@@ -7590,6 +7894,13 @@ def log_problems(state) -> list[str]:
             elif isinstance(effect, DamageSleepThenHealBothBench):
                 # v0.83: ヒプノシャワー。おたがいの控えポケモン全員（バトル場のポケモンは除く）
                 allowed = pid in in_play and pid != attack_window["pokemon_id"] and pid != active_of.get(1 - attack_window["player"])
+            elif isinstance(effect, E.EachPlayerCoinHealOwnField):
+                # v0.118: ふしぎなかおり。「おもて」を出したプレイヤーの場のポケモン（相手のポケモンなら ``attacker`` つき。コイン・合計・順は v118_problems）
+                allowed = pid in in_play and (("attacker" not in e and pokemon_owner.get(pid) == attack_window["player"])
+                                              or (e.get("attacker") == attack_window["player"] and pokemon_owner.get(pid) == 1 - attack_window["player"]))
+            elif isinstance(effect, E.CoinHealChosenBenchAndSelf):
+                # v0.118: ごくらくかふん。自分の控え 1 匹とワザを使ったポケモン（数・順は v118_problems）
+                allowed = pid in in_play and pokemon_owner.get(pid) == attack_window["player"] and "attacker" not in e
             else:
                 allowed = attack_window is not None and pid == attack_window["pokemon_id"]
             per = state.rules.damage_per_counter

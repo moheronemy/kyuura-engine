@@ -690,6 +690,12 @@ V0_116_POKEMON = V0_116
 # ``v117_stop_expected`` が場から確かめる
 V0_117 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_117"])
 V0_117_POKEMON = V0_117
+# v0.118（docs/unbounded-coins-heal-allocation-v0.118.md）: 上限なしコイン・攻撃時の能力・回復の配分のポケモン 9 枚（写しの組 pool_v0_118）。ポケモンは TARGETS に加える（ワザは既存の
+# 手順のまま選ぶ）。ワザの決定（とりのぞく数の配分・選ぶ控え・のぞむならのコイン）は ``_v118_decision``、特殊能力の決定（トラッシュのスタジアム・山札の上に置く手札）は
+# ``_v118_power_decision``、［トランスポート］・［じくうへんかん］は ``_v118_step``、［XXXXX］（ワザの宣言といっしょ）は ``_v118_attack``、ログから数えるのは ``v118_uses``。止まる場面は
+# tests/v017_games.py の ``v118_stop_expected`` が場から確かめる
+V0_118 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_118"])
+V0_118_POKEMON = V0_118
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -741,7 +747,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_114_POKEMON  # v0.114: ベイビィポケモン 13 枚
            + V0_115_POKEMON  # v0.115: 場・ベンチへのダメージ、対象ごとのコイン、ダメージの配分のポケモン 13 枚
            + V0_116_POKEMON  # v0.116: エネルギーの付け替え・ついた時の効果・付属カードの回収と退化のポケモン 13 枚
-           + V0_117_POKEMON)  # v0.117: 場の移動・にげる時の反応・条件付きの特殊能力のポケモン 13 枚
+           + V0_117_POKEMON  # v0.117: 場の移動・にげる時の反応・条件付きの特殊能力のポケモン 13 枚
+           + V0_118_POKEMON)  # v0.118: 上限なしコイン・攻撃時の能力・回復の配分のポケモン 9 枚
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -1642,6 +1649,22 @@ DECKS = {
     # ニョロトノに届くポケモン育て屋さん 2 枚、エイパム・オドシシ 2 枚ずつ。たねポケモンは 13 枚
     "N117": (("neo1-017", 3), ("neo2-013", 4), ("neo2-016", 3), ("neo2-019", 2), ("neo1-067", 2), ("neo3-049", 2), (DOUBLE_COLORLESS, 3), (SWITCH, 2),
              (driver.POTION, 2), (driver.BILL, 2), (driver.POKEMON_BREEDER, 2), (GRASS, 15), (WATER, 18)),
+    # v0.118: 超・無色。アンノーンX（neo4-065。めざめるパワー・［XXXXX］）4 枚（「アンノーン」はデッキに 4 枚まで）、タマタマ（neo4-049）→ わるいナッシー（neo4-056。トリプルずつき・
+    # わるわるMAX）、ルギア（PF3-008。エアロウイング）。たねポケモンは 10 枚
+    "X118": (("neo4-065", 4), ("neo4-049", 4), ("neo4-056", 3), ("PF3-008", 2), (DOUBLE_COLORLESS, 3), (SWITCH, 2), (driver.POTION, 2), (driver.BILL, 2),
+             (PSYCHIC, 38)),
+    # v0.118: 草・無色。フシギダネ（PMCG1-001）→ フシギソウ（SI-008。ふしぎなかおり・はっぱカッター）、ナゾノクサ（neo1-001）→ クサイハナ（neo1-008）→ ラフレシア（SI-011。ごくらくかふん・
+    # さいあくかふん）とラフレシアに届くポケモン育て屋さん 2 枚、ニャース（PR1-025。ひっかく・まるもうけ）。たねポケモンは 11 枚
+    "G118": (("PMCG1-001", 4), ("SI-008", 3), ("neo1-001", 4), ("neo1-008", 3), ("SI-011", 2), ("PR1-025", 3), (driver.POKEMON_BREEDER, 2), (SWITCH, 1),
+             (driver.BILL, 2), (GRASS, 36)),
+    # v0.118: 水・無色。テッポウオ（neo4-030）→ わるいオクタン（neo4-037。スミでっぽう・しめつづける）、ミニリュウ（PMCG1-065）→ ハクリュー（PMCG1-069）→ カイリュー（PR1-043。マッハひこう・
+    # ［トランスポート］）とカイリューに届くポケモン育て屋さん 2 枚、ニャース 2 枚。スミでっぽうの多いエネルギーに無色2個エネルギー。たねポケモンは 10 枚
+    "W118": (("neo4-030", 4), ("neo4-037", 3), ("PMCG1-065", 4), ("PMCG1-069", 3), ("PR1-043", 2), ("PR1-025", 2), (DOUBLE_COLORLESS, 3),
+             (driver.POKEMON_BREEDER, 2), (SWITCH, 2), (driver.BILL, 2), (WATER, 33)),
+    # v0.118: 無色・超・水。ポリゴン（neo4-086）→ わるいポリゴン2（neo4-097。まるまるアタック・［じくうへんかん］）と、トラッシュにたまるスタジアム（せまいジム・ラッキースタジアム・
+    # でこぼこジム 2 枚ずつ。同じ名前 4 枚まで）、ニャース 4 枚・ルギア 2 枚。たねポケモンは 10 枚
+    "S118": (("neo4-086", 4), ("neo4-097", 3), ("PR1-025", 4), ("PF3-008", 2), (NARROW_GYM, 2), ("PRN-015", 2), ("neo4-110", 2), (DOUBLE_COLORLESS, 4),
+             (driver.BILL, 2), (SWITCH, 1), (PSYCHIC, 17), (WATER, 17)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -1926,6 +1949,13 @@ PAIRINGS_V0_116 = (("G116", "W116"), ("G116", "P116"), ("G116", "C116"), ("W116"
 # 確かめた seed 50・51 とは別。局を選び直さない）
 PAIRINGS_V0_117 = (("U117", "D117"), ("U117", "L117"), ("U117", "N117"), ("D117", "L117"), ("D117", "N117"), ("L117", "N117"),
                    ("U117", "G61"), ("D117", "M87"), ("L117", "Z59"), ("N117", "S66"), ("L117", "G61"), ("D117", "P31"), ("N117", "M60"))
+# v0.118: 4 つの v0.118 のデッキどうしの 6 組（［XXXXX］といっしょのめざめるパワー・わるわるMAX・エアロウイング、ふしぎなかおり・ごくらくかふん（相手の場の回復をふくむ）・まるもうけ、
+# スミでっぽう・しめつづけるの「にげる」・マッハひこう・［トランスポート］、［じくうへんかん］とスタジアム）と、X118 対 Z59（まきちらせ!ベトベトガスと［XXXXX］）・G118 対 M60（相手のゴーストの
+# ［とうめい］とふしぎなかおり）・G118 対 P31（ゆびをふるで、ふしぎなかおり・ごくらくかふん・まるもうけを相手のワザとして使う）・W118 対 P31（同じく、スミでっぽう・しめつづける・マッハひこう）・
+# S118 対 T74（ポケモンタワー・エネルギースタジアムを［じくうへんかん］でトラッシュから出す）・S118 対 L57（v0.57 のスタジアムどうしの置きかえ）。組・席・seed は先に決めた（正式な対戦は
+# seed 0〜3。開発中に手順を確かめた seed 50・51 とは別。局を選び直さない）
+PAIRINGS_V0_118 = (("X118", "G118"), ("X118", "W118"), ("X118", "S118"), ("G118", "W118"), ("G118", "S118"), ("W118", "S118"),
+                   ("X118", "Z59"), ("G118", "M60"), ("G118", "P31"), ("W118", "P31"), ("S118", "T74"), ("S118", "L57"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -1947,7 +1977,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.105": PAIRINGS_V0_105, "v0.106": PAIRINGS_V0_106, "v0.107": PAIRINGS_V0_107,
            "v0.108": PAIRINGS_V0_108, "v0.109": PAIRINGS_V0_109, "v0.110": PAIRINGS_V0_110, "v0.111": PAIRINGS_V0_111, "v0.112": PAIRINGS_V0_112,
            "v0.113": PAIRINGS_V0_113, "v0.114": PAIRINGS_V0_114, "v0.115": PAIRINGS_V0_115,
-           "v0.116": PAIRINGS_V0_116, "v0.117": PAIRINGS_V0_117}
+           "v0.116": PAIRINGS_V0_116, "v0.117": PAIRINGS_V0_117, "v0.118": PAIRINGS_V0_118}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -10631,6 +10661,230 @@ def v117_uses(state):
     return counts
 
 
+# ---------------------------------------------------------------- v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 11 章）: 上限なしコイン・攻撃時の能力・回復の配分
+
+V118_NAMES = {
+    "スミでっぽう": "ink_shot", "しめつづける": "constrict", "トリプルずつき": "triple_headbutt", "わるわるMAX": "dark_max", "めざめるパワー": "hidden_power",
+    "まるまるアタック": "rolling_attack", "ふしぎなかおり": "wonder_aroma", "はっぱカッター": "razor_leaf", "ごくらくかふん": "bliss_pollen",
+    "さいあくかふん": "worst_pollen", "ひっかく": "scratch", "まるもうけ": "windfall", "マッハひこう": "mach_flight", "エアロウイング": "aero_wing",
+}
+V118_X, V118_PORYGON2, V118_DRAGONITE = "neo4-065", "neo4-097", "PR1-043"
+
+
+def _v118_name(state, key: str | None) -> str | None:
+    """v0.118: ワザ ``key``（"カード id#位置"）が v0.118 のワザなら、その集計の名前（ほかは None）。"""
+    if key is None:
+        return None
+    card_id, index = key.split("#")
+    return V118_NAMES.get(state.definitions[card_id].attacks[int(index)].name_ja) if card_id in V0_118 else None
+
+
+def _v118_decision(state, counts):
+    """v0.118 のワザの決定への答え（元の手順より先に答える。処理しているワザが v0.118 のワザでなければ何もしない）。ふしぎなかおりの配分は、「おもて」を出したプレイヤーがそれぞれ答える
+    （相手プレイヤーの決定にも答える）。選べるものを決定のたびに 1 つずつずらして選び、原典で決められない選択（``unresolved_choices``。HZ1 の 0 個の組・先読みで問いに当たった組）は
+    選ばない。のぞむならのコイン（エアロウイング）は、局の中で投げる・投げないを交互に答える（最初は投げる）。受け付ける答えだけを選ぶ。"""
+    d = state.decision
+    if d is None or d.resume != "attack":
+        return None
+    use = d.context_value("use")
+    copied = d.context_value("copied")
+    key = f"{copied[0]}#{copied[1]}" if copied else (f"{use[2]}#{use[3]}" if use is not None else None)
+    name = _v118_name(state, key)
+    if name is None:
+        return None
+    blocked = set(d.context_value("unresolved_choices") or ())
+    options = tuple(o for o in d.options if o not in blocked)
+    label = f"v118_{name}_{d.kind}"
+    seen = counts[label]
+    counts[label] += 1
+    if blocked:
+        counts[f"{label}_blocked_{d.context_value('unresolved_code')}"] += 1
+    shift = seen % len(options) if options else 0
+    rotated = options[shift:] + options[:shift]
+    candidates = [(o,) for o in rotated] + [()]
+    if d.min_choices == 0 and seen % 2 == 1:
+        candidates = [()] + [(o,) for o in rotated]
+    for choices in candidates:
+        command = ResolveDecision(d.player, d.id, tuple(choices))
+        if d.min_choices <= len(choices) <= d.max_choices and _v052_accepted(state, command):
+            counts[f"{label}_{len(choices)}"] += 1
+            return command
+    counts[f"{label}_no_accepted_answer"] += 1
+    return None
+
+
+def _v118_power_decision(state, counts):
+    """v0.118 の特殊能力の決定への答え: ［じくうへんかん］のトラッシュのスタジアムカード・［トランスポート］の山札の上に置く手札（選べるものを決定のたびに 1 つずつずらす）。"""
+    d = state.decision
+    if d is None or d.resume != "power":
+        return None
+    use = d.context_value("use")
+    if use is None or use[2] not in (V118_PORYGON2, V118_DRAGONITE):
+        return None
+    label = f"v118_{use[2]}_{d.kind}"
+    seen = counts[label]
+    counts[label] += 1
+    rotated = list(d.options[seen % len(d.options):]) + list(d.options[:seen % len(d.options)]) if d.options else []
+    for choice in rotated:
+        command = ResolveDecision(d.player, d.id, (choice,))
+        if _v052_accepted(state, command):
+            counts[f"{label}_answered"] += 1
+            return command
+    counts[f"{label}_no_accepted_answer"] += 1
+    return None
+
+
+def _v118_step(state, tried, counts):
+    """v0.118: ［トランスポート］（カイリュー）・［じくうへんかん］（わるいポリゴン2）を、自分の番ごとに 1 匹につき 1 回、受け付けるなら使う。［じくうへんかん］は自分のトラッシュに
+    スタジアムカードがあるときだけ試す（ないときは SX1 で止まる。使う前に場から確かめるのは手順で、エンジンの問い合わせではない）。v0.118 のカードのない局では何もしない。"""
+    player = state.current_player
+    p = state.players[player]
+    for pokemon in p.in_play():
+        if state.is_face_down(pokemon):
+            continue
+        card_id = state.cards[pokemon.card].card_id
+        if card_id not in (V118_PORYGON2, V118_DRAGONITE):
+            continue
+        marker = ("v118_power", pokemon.pokemon_id, state.turn_number)
+        if marker in tried:
+            continue
+        tried.add(marker)
+        name = "time_shift" if card_id == V118_PORYGON2 else "transport"
+        if card_id == V118_PORYGON2 and not any("stadium" in state.card_def(uid).trainer_kinds for uid in p.discard):
+            counts["v118_time_shift_no_stadium"] += 1
+            continue
+        use = UsePokemonPower(player, pokemon.pokemon_id, 0)
+        if _v052_accepted(state, use):
+            counts[f"v118_{name}_declared"] += 1
+            return use
+        counts[f"v118_{name}_not_usable"] += 1
+    return None
+
+
+def _v118_attack(state, command, tried, counts):
+    """v0.118: 自分の場の「アンノーン」が「めざめるパワー」を使うとき、場のアンノーンX の［XXXXX］をいっしょに使う（受け付けるなら）。宣言ごとに、使わない → ベンチのX → ワザを使う
+    X 自身の順に回す（いなければ次）。ほかのコマンドはそのまま。"""
+    if not isinstance(command, UseAttack) or command.attack_power or command.card is not None or command.with_power is not None:
+        return command
+    active = state.players[command.player].active
+    if active is None or state.is_face_down(active):
+        return command
+    form = state.card_def(current_form(state, active).card)
+    attacks = form.attacks
+    if form.name_group != "アンノーン" or not (0 <= command.attack_index < len(attacks)) or attacks[command.attack_index].name_ja != "めざめるパワー":
+        return command
+    holders = [pk for pk in state.players[command.player].in_play() if not state.is_face_down(pk) and state.cards[pk.card].card_id == V118_X]
+    if not holders:
+        return command  # 場にアンノーンX がいなければ何もしない（前の版の組の手順・集計は変わらない）
+    bench = [pk for pk in holders if pk is not active]
+    seen = counts["v118_x_seen"]
+    counts["v118_x_seen"] += 1
+    order = (None, bench[0] if bench else None, active if active in holders else None)  # 位置 0 は使わない
+    for position in ((seen + i) % 3 for i in range(3)):
+        holder = order[position]
+        if position == 0:
+            counts["v118_x_not_used"] += 1
+            return command
+        if holder is None:
+            continue
+        with_power = dataclasses.replace(command, with_power=holder.pokemon_id)
+        if _v052_accepted(state, with_power):
+            counts["v118_x_used_" + ("self" if holder is active else "bench")] += 1
+            return with_power
+        counts["v118_x_not_accepted"] += 1
+    return command
+
+
+def v118_uses(state):
+    """v0.118: ログから数えた 9 枚・14 のワザ・3 つの特殊能力の動き（v0.118 のカードのない局では空）。
+
+    - ``attack_<id>#<位置>``（宣言したワザ）・``<名前>_<heads|tails>``（ワザのコイン）
+    - まるもうけ: ``windfall_drew_<枚数>``・``windfall_short``（「おもて」の数より山札が少なかった）。［XXXXX］: ``x_power_<self|bench>``・``x_power_heads_<数>``（「おもて」の数）
+    - ふしぎなかおり・ごくらくかふん: ``heal_<own|opponent>_<個数>``（1 つのワザの中で、そのプレイヤーがとりのぞいた合計）・``heal_two_targets``（2 匹以上から）・
+      ``heal_prevented``（受けない）。しめつづける: ``retreat_cost_given``・``retreat_paid_more``（効果がはたらく番に、増えた数で「にげる」）
+    - エアロウイング: ``aero_<chosen|declined>``。［トランスポート］: ``transport_used``・``transport_drawn_<枚数>``。［じくうへんかん］: ``time_shift_<heads|tails>``・
+      ``time_shift_placed``・``time_shift_replaced``（前のスタジアムをトラッシュした）・``time_shift_narrow``（せまいジムの場に出た時の決定）"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_118 for uid in state.cards):
+        return counts
+    card = {uid: c.card_id for uid, c in state.cards.items()}
+    current = None
+    healed: Counter = Counter()
+    heal_targets: dict = {}
+    power = None
+    attacker_player = windfall_heads = 0
+
+    def close():
+        for (player, side), total in healed.items():
+            counts[f"heal_{side}_{total}"] += 1
+            if len(heal_targets[(player, side)]) >= 2:
+                counts["heal_two_targets"] += 1
+        healed.clear()
+        heal_targets.clear()
+
+    for e in state.log:
+        kind = e["kind"]
+        if kind in ("attack", "turn_end"):
+            close()
+        if kind == "attack":
+            key = f"{card.get(e.get('pokemon'))}#{e.get('attack_index')}" if e.get("attack_index") is not None else None
+            current = _v118_name(state, key) if key is not None and card.get(e.get("pokemon")) in V0_118 else None
+            attacker_player = e["player"]
+            if current is not None:
+                counts[f"attack_{key}"] += 1
+        elif kind == "turn_end":
+            current = None
+        elif kind == "coin_flip" and e.get("source") == "attack" and current is not None:
+            counts[f"{current}_{e['result']}"] += 1
+        if kind == "pokemon_power":
+            power = card.get(e.get("pokemon"))
+            if power == V118_DRAGONITE:
+                counts["transport_used"] += 1
+        elif kind in ("attack", "play_trainer", "attach_energy", "evolve", "retreat", "turn_start", "turn_end"):
+            power = None
+        if kind == "attack":
+            windfall_heads = 0
+        elif kind == "coin_flip" and e.get("source") == "attack" and current == "windfall" and e["result"] == "heads":
+            windfall_heads += 1
+        elif kind == "esp_redo" and current == "windfall":
+            windfall_heads = 0  # ナツメのESPのやり直し（最後の結果だけを使う）
+        if kind == "draw" and power == V118_DRAGONITE:
+            counts[f"transport_drawn_{len(e.get('cards', ()))}"] += 1
+            power = None
+        elif kind == "draw" and current == "windfall" and e["player"] == attacker_player:
+            counts[f"windfall_drew_{len(e.get('cards', ()))}"] += 1
+            if windfall_heads > len(e.get("cards", ())):
+                counts["windfall_short"] += 1
+        elif kind == "coin_flip" and e.get("source") == "power" and power == V118_PORYGON2:
+            counts[f"time_shift_{e['result']}"] += 1
+        elif kind == "stadium_placed" and e.get("from_zone") == "discard":
+            counts["time_shift_placed"] += 1
+            if e.get("replaces") is not None:
+                counts["time_shift_replaced"] += 1
+        elif kind == "decision" and e.get("decision_kind") == "stadium_return_bench" and power == V118_PORYGON2:
+            counts["time_shift_narrow"] += 1
+        elif kind == "group_attack_power":
+            counts["x_power_" + ("self" if e.get("pokemon_id") == e.get("attacker_pokemon_id") else "bench")] += 1
+        elif kind == "group_attack_power_coins":
+            counts[f"x_power_heads_{e.get('heads')}"] += 1
+        elif kind == "attack_heal" and current in ("wonder_aroma", "bliss_pollen"):
+            side = "own" if e["player"] == attacker_player else "opponent"
+            healed[(e["player"], side)] += e.get("counters", 0)
+            heal_targets.setdefault((e["player"], side), set()).add(e.get("pokemon_id"))
+        elif kind == "effect_prevented" and current in ("wonder_aroma",):
+            counts["heal_prevented"] += 1
+        elif kind == "persistent_effect_added" and e.get("persistent_effect") == "retreat_cost_increase":
+            counts["retreat_cost_given"] += 1
+        elif kind == "retreat" and e.get("retreat_cost_effects"):
+            counts["retreat_paid_more"] += 1
+        elif kind == "optional_coin_chosen":
+            counts["aero_chosen"] += 1
+        elif kind == "optional_coin_declined":
+            counts["aero_declined"] += 1
+    close()
+    return counts
+
+
 def make_policy(seen: dict, counts: Counter):
     """tools/preset_deck_games.py の手順（``checks=True``）に、v0.28〜v0.31 のカードのワザの選び方を重ねる（モジュールの説明）。v0.31 からは、
     v0.31 のカードのワザの決定への答え（``_v031_decision``）と、宣言する特殊能力の使用（``_v031_power``）も重ねる。v0.31 のカードのない局では
@@ -10642,7 +10896,9 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = (_v117_decision(state, counts)  # v0.117: v0.117 のワザの決定（v0.117 のワザでない決定では何もしない）
+            early = (_v118_decision(state, counts)  # v0.118: v0.118 のワザの決定（相手プレイヤーの配分もふくむ。v0.118 のワザでない決定では何もしない）
+                     or _v118_power_decision(state, counts)  # v0.118: ［じくうへんかん］・［トランスポート］の決定
+                     or _v117_decision(state, counts)  # v0.117: v0.117 のワザの決定（v0.117 のワザでない決定では何もしない）
                      or _v116_decision(state, counts)  # v0.116: v0.116 のワザの決定（v0.116 のワザでない決定では何もしない）
                      or _v115_decision(state, counts)  # v0.115: v0.115 のワザの決定（v0.115 のワザでない決定では何もしない）
                      or _v113_decision(state, counts)  # v0.113: v0.113 のワザの決定（v0.113 のワザでない決定では何もしない）
@@ -10759,7 +11015,8 @@ def make_policy(seen: dict, counts: Counter):
                      or _v097_step(state, tried, counts)  # v0.97: ［FIND］・［JOIN］
                      or _v098_step(state, tried, counts)  # v0.98: ［BEAR］・［YIELD］・［GIVE］
                      or _v099_step(state, tried, counts)  # v0.99: ［HELP］
-                     or _v117_step(state, tried, counts))  # v0.117: ［QUICKEN］
+                     or _v117_step(state, tried, counts)  # v0.117: ［QUICKEN］
+                     or _v118_step(state, tried, counts))  # v0.118: ［トランスポート］・［じくうへんかん］
             if power is not None:
                 return power
             history = _v062_attack(state, tried, counts)  # v0.62: 履歴を読むワザ（ドリルホール・オウムがえし）を使える番に使う
@@ -10793,7 +11050,7 @@ def make_policy(seen: dict, counts: Counter):
         attacks = state.card_def(active.card).attacks
         provided = state.energy_types(active)
         usable = [a.index for a in attacks if can_pay_cost(a.cost, provided) and ("attack_index", a.index) not in tried]
-        if card_id in V0_78_POKEMON + V0_79 + V0_82_POKEMON + V0_83 + V0_84_POKEMON + V0_85_POKEMON + V0_86_POKEMON + V0_87_POKEMON + V0_88_POKEMON + V0_89_POKEMON + V0_90_POKEMON + V0_91_POKEMON + V0_92_POKEMON + V0_93_POKEMON + V0_94_POKEMON + V0_95_POKEMON + V0_108_POKEMON + V0_113_POKEMON + V0_115_POKEMON + V0_116_POKEMON + V0_117_POKEMON:  # v0.117 のポケモンも（おいうちの悪エネルギー・無色2個エネルギー）。v0.116 のポケモンも（ダブル無色・リサイクル・なんでもなおし配合・レインボーエネルギー）。v0.115 のポケモンも（なぎたおすの悪エネルギー・無色2個エネルギー）。v0.113 のポケモンも（くろいキバの悪エネルギー・無色2個エネルギー）。v0.108 のポケモンも（かみくだくの悪エネルギー・無色2個エネルギー）。v0.95・v0.94・v0.93・v0.92（悪・鋼エネルギー）・v0.91・v0.90 のポケモンも（リサイクルエネルギー・無色2個エネルギー）。v0.89 のポケモンも（だましうちの悪エネルギー・無色2個エネルギー）。v0.83 のポケモンも（鋼エネルギー）。v0.79 のポケモンも（C79 は悪・鋼エネルギーを使う）。v0.82 のポケモンも（リサイクルエネルギー）
+        if card_id in V0_78_POKEMON + V0_79 + V0_82_POKEMON + V0_83 + V0_84_POKEMON + V0_85_POKEMON + V0_86_POKEMON + V0_87_POKEMON + V0_88_POKEMON + V0_89_POKEMON + V0_90_POKEMON + V0_91_POKEMON + V0_92_POKEMON + V0_93_POKEMON + V0_94_POKEMON + V0_95_POKEMON + V0_108_POKEMON + V0_113_POKEMON + V0_115_POKEMON + V0_116_POKEMON + V0_117_POKEMON + V0_118_POKEMON:  # v0.118 のポケモンも（無色2個エネルギー）。v0.117 のポケモンも（おいうちの悪エネルギー・無色2個エネルギー）。v0.116 のポケモンも（ダブル無色・リサイクル・なんでもなおし配合・レインボーエネルギー）。v0.115 のポケモンも（なぎたおすの悪エネルギー・無色2個エネルギー）。v0.113 のポケモンも（くろいキバの悪エネルギー・無色2個エネルギー）。v0.108 のポケモンも（かみくだくの悪エネルギー・無色2個エネルギー）。v0.95・v0.94・v0.93・v0.92（悪・鋼エネルギー）・v0.91・v0.90 のポケモンも（リサイクルエネルギー・無色2個エネルギー）。v0.89 のポケモンも（だましうちの悪エネルギー・無色2個エネルギー）。v0.83 のポケモンも（鋼エネルギー）。v0.79 のポケモンも（C79 は悪・鋼エネルギーを使う）。v0.82 のポケモンも（リサイクルエネルギー）
             # v0.78: 悪・鋼エネルギー（特殊エネルギー）は ``state.energy_types`` では数えられない（provides がない）ので、エンジンの支払いの問い合わせで払えるかを見る
             # （v0.78 のポケモンだけ。前の版の組の手順は変えない）
             usable = [a.index for a in attacks if attack_cost_payable(state, active, a) and ("attack_index", a.index) not in tried]
@@ -10836,7 +11093,7 @@ def make_policy(seen: dict, counts: Counter):
             # 使えるワザをどれも 2 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v031_wait_{card_id}"] += 1
             return EndTurn(player)
-        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 + V0_58 + V0_64 + V0_70 + V0_72 + V0_75 + V0_76 + V0_77_POKEMON + V0_79 + V0_82_POKEMON + V0_83 + V0_84_POKEMON + V0_85_POKEMON + V0_86_POKEMON + V0_87_POKEMON + V0_88_POKEMON + V0_89_POKEMON + V0_90_POKEMON + V0_91_POKEMON + V0_92_POKEMON + V0_93_POKEMON + V0_94_POKEMON + V0_95_POKEMON + V0_106_POKEMON + V0_107_POKEMON + V0_108_POKEMON + V0_109_POKEMON + V0_110_POKEMON + V0_113_POKEMON + V0_115_POKEMON + V0_116_POKEMON + V0_117_POKEMON and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
+        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 + V0_58 + V0_64 + V0_70 + V0_72 + V0_75 + V0_76 + V0_77_POKEMON + V0_79 + V0_82_POKEMON + V0_83 + V0_84_POKEMON + V0_85_POKEMON + V0_86_POKEMON + V0_87_POKEMON + V0_88_POKEMON + V0_89_POKEMON + V0_90_POKEMON + V0_91_POKEMON + V0_92_POKEMON + V0_93_POKEMON + V0_94_POKEMON + V0_95_POKEMON + V0_106_POKEMON + V0_107_POKEMON + V0_108_POKEMON + V0_109_POKEMON + V0_110_POKEMON + V0_113_POKEMON + V0_115_POKEMON + V0_116_POKEMON + V0_117_POKEMON + V0_118_POKEMON and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
             # v0.38: 必要なエネルギーの少ないワザ（でんれい・どくばりタックルなど）を使い続けると、もう一つのワザが使えるようにならない（でんれいは自分を
             # 山札にもどす）。使えるワザをどれも 1 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             # v0.106: 数とコインを組み合わせる 11 枚も同じ手順（すながくれ・かぜおこしなどを使い続けて、ローリングニードル・ネギでつくなどが使えるようにならない。v0.106 のカードの
@@ -10920,6 +11177,7 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.MAIN:
             command = _v057_attack(state, command, tried, counts)  # v0.57: クチバシティジムのコイン
             command = _v088_attack(state, command, tried, counts)  # v0.88: ［すいりょくはつでん］（ワザの宣言といっしょ）
+            command = _v118_attack(state, command, tried, counts)  # v0.118: ［XXXXX］（ワザの宣言といっしょ）
         return command
 
     return policy
@@ -11023,6 +11281,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v115"] = v115_uses(state)
         result["v116"] = v116_uses(state)
         result["v117"] = v117_uses(state)
+        result["v118"] = v118_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
