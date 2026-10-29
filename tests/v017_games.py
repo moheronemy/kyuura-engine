@@ -65,7 +65,8 @@ def full(state):
 
 # v0.49（docs/virtual-attacks-transformation-v0.49.md）: 姿が変わりうるカードがあるときに、操作を受け付けない理由のコード
 V049_FORM_CODES = ("UNRESOLVED_TRANSFORM_COPIED_POWER", "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER", "UNRESOLVED_SHAPESHIFT_SUPPRESSED",
-                   "UNRESOLVED_SHAPESHIFT_ENTRY_POWER", "UNRESOLVED_SHAPESHIFT_AGAIN", MAX_HP_DROP_CODE)
+                   "UNRESOLVED_SHAPESHIFT_ENTRY_POWER", "UNRESOLVED_SHAPESHIFT_AGAIN", MAX_HP_DROP_CODE,
+                   "UNRESOLVED_TRANSFORM_REVIVED_BASIC")  # v0.120: TF3（入れ替えで、たねポケモンとしてあつかう進化カードが［へんしん］の写す相手になる）
 FORM_CARDS = ("PMCG3-042", "PMCG5-019")  # メタモン（［へんしん］）・タケシのキュウコン（「ばける」）
 
 
@@ -549,7 +550,17 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                     continue
                 if isinstance(command, EvolvePokemon):
                     stage2 = state.card_def(command.card).is_stage2_pokemon
-                    if error.code in (STAGE2_REJECTIONS if stage2 else EVOLUTION_REJECTIONS):
+                    # v0.120: 場から確かめる。たねポケモンとしてあつかって出した進化カード（復活）に 2 進化カードを試す（その番に出した PLAYED_THIS_TURN・おたがいの最初の番の
+                    # FIRST_TURN_EVOLUTION）・この番に進化したポケモン（ベイビィから進化したたねポケモン）に 1 進化カードを試す（EVOLVED_THIS_TURN）。どれも v0.119 までのデッキでは
+                    # 起こらない組み合わせ
+                    target = state.find_pokemon(command.target)
+                    revived = target is not None and target[1].basic_entry is not None
+                    revived_now = revived and target[1].played_turn == state.turn_number
+                    evolved_now = target is not None and target[1].evolved_turn == state.turn_number
+                    v120_expected = ((error.code == "PLAYED_THIS_TURN" and stage2 and revived_now)
+                                     or (error.code == "FIRST_TURN_EVOLUTION" and stage2 and revived and state.turn_number <= 2)
+                                     or (error.code == "EVOLVED_THIS_TURN" and not stage2 and evolved_now))
+                    if error.code in (STAGE2_REJECTIONS if stage2 else EVOLUTION_REJECTIONS) or v120_expected:
                         observed[f"rejected_{'evolve2' if stage2 else 'evolve'}_{error.code}"] += 1
                         turn_tried.add("evolve2" if stage2 else "evolve")
                         continue

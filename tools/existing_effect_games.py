@@ -437,7 +437,8 @@ V0_56_TRAINERS = (ERIKAS_PERFUME, LT_SURGE_TRAINER, ROCKETS_TRAP, ROCKET_GRUNT, 
                   INVISIBLE_WALL, ROCKETS_EXPERIMENT)
 # 決められない姿・MH1 で拒否される操作のコード（v0.49。場から確かめてから別の操作を続ける）
 V049_FORM_STOPS = ("UNRESOLVED_TRANSFORM_COPIED_POWER", "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER", "UNRESOLVED_SHAPESHIFT_SUPPRESSED",
-                   "UNRESOLVED_MAX_HP_DROP")
+                   "UNRESOLVED_MAX_HP_DROP",
+                   "UNRESOLVED_TRANSFORM_REVIVED_BASIC")  # v0.120: TF3（［へんしん］で写す相手が、たねポケモンとしてあつかう進化カード）
 # v0.70（docs/non-pack-effect-reuse-v0.70.md）: 拡張パック以外の商品のポケモン 82 枚（写しの組 pool_v0_70。既存の効果の型の登録と、ダメージのない型 2 つ）。TARGETS に加え、
 # 使っていないワザを選ぶ手順・エネルギーをためる手順を重ねる（v0.70 のカードのないデッキでは何もしない）
 V0_70 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_70"])
@@ -701,6 +702,13 @@ V0_118_POKEMON = V0_118
 # いっしょ）は ``_v119_attack``、ログから数えるのは ``v119_uses``。止まる場面は tests/v017_games.py の ``v119_stop_expected`` が場から確かめる
 V0_119 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_119"])
 V0_119_POKEMON = V0_119
+# v0.120（docs/fossil-basic-virtual-attacks-v0.120.md）: 化石の復活と仮想ワザの供給の 11 枚（写しの組 pool_v0_120。ポケモン 10・トレーナー 1）。ポケモンは TARGETS に加える（ワザは既存の
+# 手順のまま選び、許可で使えるワザ（［げんしのきおく］・［にんぎょうつかい］・［ものまね］）は v0.49 の ``_v049_attack`` が支払うポケモンで払えるかを見て使う）。ワザ・特殊能力・たまごの化石の
+# 決定は ``_v120_decision``、［なかまのふっかつ］・［かせきのふっかつ］は ``_v120_step``、たまごの化石は ``_v120_trainer``、ログから数えるのは ``v120_uses``。止まる場面は
+# tests/v017_games.py の ``v120_stop_expected`` と、この道具の止まる理由の表が場から確かめる
+V0_120 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_120"])
+V0_120_TRAINERS = ("neo2-055",)
+V0_120_POKEMON = tuple(card for card in V0_120 if card not in V0_120_TRAINERS)
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -754,7 +762,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_116_POKEMON  # v0.116: エネルギーの付け替え・ついた時の効果・付属カードの回収と退化のポケモン 13 枚
            + V0_117_POKEMON  # v0.117: 場の移動・にげる時の反応・条件付きの特殊能力のポケモン 13 枚
            + V0_118_POKEMON  # v0.118: 上限なしコイン・攻撃時の能力・回復の配分のポケモン 9 枚
-           + V0_119_POKEMON)  # v0.119: 受けるダメージの選択・どくとねむり・場の効果のポケモン 11 枚
+           + V0_119_POKEMON  # v0.119: 受けるダメージの選択・どくとねむり・場の効果のポケモン 11 枚
+           + V0_120_POKEMON)  # v0.120: 化石の復活と仮想ワザの供給のポケモン 10 枚
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -1688,6 +1697,22 @@ DECKS = {
     # レディバ・ツボツボはこのデッキに入れない。開発中の seed 50〜52 で確かめた）
     "G119": (("PMCG6-004", 4), ("PMCG6-013", 4), ("PR1-068", 4), (driver.POKEMON_BREEDER, 4), (DOUBLE_COLORLESS, 4), (driver.BILL, 4),
              (driver.PROFESSOR_OAK, 2), (driver.COMPUTER_SEARCH, 2), (driver.POKEMON_TRADER, 2), (GRASS, 30)),
+    # v0.120: 闘・水。カブト（neo2-014。ちからをあわせる・［なかまのふっかつ］）・オムナイト（neo2-032。しめつける・［かせきのふっかつ］）・プテラ（neo3-042。そらをとぶ・［げんしのきおく］）と、
+    # たまごの化石 4 枚、復活したカブト・オムナイトから進化するカブトプス（neo2-018）・オムスター（neo2-035）。たねポケモンはウソッキー（PF3-001。たたきつける・［ものまね］）・ミュウ（PR1-021。
+    # はたく・サイコデュープ）・タッツー（ES3-015）。なにかの化石は入れない（対戦準備の PF1 を避ける。化石の進化カードは復活の 3 つの経路だけで場に出す）
+    "F120": (("PF3-001", 4), ("PR1-021", 3), ("ES3-015", 3), ("neo2-014", 4), ("neo2-032", 4), ("neo3-042", 3), ("neo2-018", 2), ("neo2-035", 2),
+             ("neo2-055", 4), (driver.BILL, 4), (driver.POTION, 2), (SWITCH, 2), (FIGHTING, 11), (WATER, 9), (PSYCHIC, 3)),
+    # v0.120: 無色・超・雷。トゲピー（PR1-065。なきつく・ゆびをふる）→ トゲチック（neo1-071。おおきくゆびをふる・そらをとぶ）、ミュウ（PR1-021）、ウソッキー（PF3-001）と、ピチュー（neo1-042）→
+    # ピカチュウ（PMCG1-035）→ ライチュウ（PMCG1-038。ベイビィから進化したポケモン）。無色2個エネルギー 4 枚
+    "T120": (("PR1-065", 4), ("neo1-071", 3), ("PR1-021", 3), ("PF3-001", 2), ("neo1-042", 2), ("PMCG1-035", 3), ("PMCG1-038", 2), (DOUBLE_COLORLESS, 4),
+             (driver.BILL, 4), (driver.POTION, 2), (SWITCH, 2), (PSYCHIC, 10), (LIGHTNING, 10), (FIGHTING, 9)),
+    # v0.120: 超・水。スリープ（PMCG1-045）→ スリーパー（ES3-025。マインドショック・［にんぎょうつかい］）とピッピ人形 2 枚、タッツー（ES3-015）→ シードラ（ES3-016）→ キングドラ（neo3-020。
+    # りゅうのいでんし・たつまき）と 2 進化に届くポケモン育て屋さん 2 枚、ミュウ（PR1-021）。ピッピ人形があるので、対戦準備の PF1 で止まる局がありうる（既知の停止）
+    "S120": (("PMCG1-045", 4), ("ES3-025", 3), (CLEFAIRY_DOLL, 2), ("ES3-015", 4), ("ES3-016", 3), ("neo3-020", 2), ("PR1-021", 2), (driver.POKEMON_BREEDER, 2),
+             (driver.BILL, 4), (driver.POTION, 2), (SWITCH, 2), (PSYCHIC, 14), (WATER, 16)),
+    # v0.120: 草。ハネッコ（neo1-005・neo2-004）→ ポポッコ（neo1-012・neo3-003）→ ワタッコ（neo3-007。しんかのほうし・ソーラービーム）と、ピカチュウ（PMCG1-035）
+    "J120": (("neo1-005", 3), ("neo2-004", 1), ("neo1-012", 2), ("neo3-003", 2), ("neo3-007", 3), ("PMCG1-035", 2), (driver.BILL, 4), (driver.POTION, 2), (SWITCH, 2),
+             (GRASS, 32), (LIGHTNING, 7)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -1986,6 +2011,12 @@ PAIRINGS_V0_118 = (("X118", "G118"), ("X118", "W118"), ("X118", "S118"), ("G118"
 # とは別。局を選び直さない）
 PAIRINGS_V0_119 = (("P119", "D119"), ("P119", "W119"), ("P119", "G119"), ("D119", "W119"), ("D119", "G119"), ("W119", "G119"),
                    ("D119", "F114"), ("D119", "L114"), ("W119", "T74"), ("W119", "M85"), ("W119", "F75"), ("P119", "P31"))
+# v0.120: 4 つの v0.120 のデッキどうしの 6 組（復活と場でのたねのあつかい・たまごの化石・ゆびをふる・おおきくゆびをふる・サイコデュープ・りゅうのいでんし・たつまき・しんかのほうし・
+# ちからをあわせる・［げんしのきおく］・［にんぎょうつかい］・［ものまね］）と、F120 対 M103（相手のミュウの［ニュートラルシールド］と、復活したたね・その上に進化したポケモンのワザ）・F120 対 M50
+# （たいかビーム・退化スプレーと復活したカードの上に進化したポケモン。FE1）・F120 対 L114（相手のベイビィから進化したポケモンと［げんしのきおく］）・F120 対 D49（相手のメタモンの［へんしん］と
+# 復活したたね。TF3）。組・席・seed は正式な対戦の前に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめる seed 60〜63 とは別。局を選び直さない）
+PAIRINGS_V0_120 = (("F120", "T120"), ("F120", "S120"), ("F120", "J120"), ("T120", "S120"), ("T120", "J120"), ("S120", "J120"),
+                   ("F120", "M103"), ("F120", "M50"), ("F120", "L114"), ("F120", "D49"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -2008,7 +2039,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.108": PAIRINGS_V0_108, "v0.109": PAIRINGS_V0_109, "v0.110": PAIRINGS_V0_110, "v0.111": PAIRINGS_V0_111, "v0.112": PAIRINGS_V0_112,
            "v0.113": PAIRINGS_V0_113, "v0.114": PAIRINGS_V0_114, "v0.115": PAIRINGS_V0_115,
            "v0.116": PAIRINGS_V0_116, "v0.117": PAIRINGS_V0_117, "v0.118": PAIRINGS_V0_118,
-           "v0.119": PAIRINGS_V0_119}
+           "v0.119": PAIRINGS_V0_119, "v0.120": PAIRINGS_V0_120}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -2095,7 +2126,8 @@ def _copier(state, command):
     definition = _attack_definition(state, command)
     effect = state.effects.attack_effect(definition.id, definition.attacks[command.attack_index], definition.attacks)
     # v0.100: スケッチ（前の相手の番のワザを自分のワザとして使う。HC9・UNSUPPORTED_COPIED_ATTACK）も
-    return type(effect).__name__ in ("CopyOpponentAttackEffect", "ThreeCoinPsychicPower", "UseLastOpponentAttack")
+    return type(effect).__name__ in ("CopyOpponentAttackEffect", "ThreeCoinPsychicPower", "UseLastOpponentAttack",
+                                     "CopyAttackFromSource")  # v0.120: ゆびをふる・おおきくゆびをふる・サイコデュープ・りゅうのいでんし（HC9・PE2・UNSUPPORTED_COPIED_ATTACK）
 
 
 def _v119_recover_by_heads_short(state, command) -> bool:
@@ -2131,6 +2163,13 @@ def _attack_and_copied_types(state, command):
             definition = state.definitions[option.card_id]
             effect = state.effects.attack_effect(definition.id, definition.attacks[option.attack_index], definition.attacks)
             names.add(type(effect).__name__)
+    copier = _attack_effect(state, command)
+    if isinstance(copier, E.CopyAttackFromSource) and copier.source != E.COPY_FROM_DEFENDER:
+        # v0.120: おおきくゆびをふる・サイコデュープ（相手の場のポケモンのワザ）・りゅうのいでんし（自分の進化前のカードのワザ）は、その範囲の選べるワザの型も（宣言の前の先読みは
+        # 選び方のすべてを試す）。ゆびをふるは上の相手の対戦ポケモンのワザと同じ
+        for key, _problem in E.copy_source_entries(state, command.player, _attacker(state, command), copier.source):
+            definition = state.definitions[key.card_id]
+            names.add(type(state.effects.attack_effect(definition.id, definition.attacks[key.attack_index], definition.attacks)).__name__)
     return names
 
 
@@ -2230,7 +2269,24 @@ def _v091_marked(st, player, kind):
     return [any(m.kind == kind for m in p.markers) for p in st.players[player].in_play() if not st.is_face_down(p)]
 
 
+def _v120_permission_in_play(state) -> bool:
+    """v0.120: 許可で使えるワザ（VP1）を与えうる特殊能力（［げんしのきおく］・［にんぎょうつかい］・［ものまね］）を持つポケモンが場にいる（場から確かめる。はたらいているかは見ない）。"""
+    kinds = (E.PreEvolutionAttacksForEvolvedActives, E.DollUsesHolderAttacks, E.UseDefenderAttacks)
+    return any(isinstance(slot.effect, kinds) for side in state.players for p in side.in_play() if not state.is_face_down(p) for slot in E.powers_of(state, p))
+
+
 V031_STOPS = {
+    # v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 10 章）: 2 進化ポケモンの進化前のいちばん下のカードのワザ（PE1）・りゅうのいでんしで選ぶワザの条件（PE2）・許可で使えるワザを
+    # 「持っているワザ」として選ぶ（VP1）・ESPのコピー先のコイン（EC1）。どれも場から確かめる
+    "UNRESOLVED_PRE_EVOLUTION_ATTACK_STAGE": lambda st, c: len(_attacker(st, c).evolution_stack) >= 2,
+    "UNRESOLVED_PRE_EVOLUTION_ATTACK_CONDITIONS": lambda st, c: "CopyAttackFromSource" in _attack_and_copied_types(st, c) and bool(_attacker(st, c).evolution_stack),
+    "UNRESOLVED_PERMITTED_ATTACK_HELD": lambda st, c: _v120_permission_in_play(st),
+    "UNRESOLVED_ESP_COPIED_ATTACK_COINS": lambda st, c: bool(E.esp_cards(st, _attacker(st, c))),
+    "UNRESOLVED_REVIVED_BASIC_DEVOLVED": lambda st, c: any(p.basic_entry is not None and p.evolution_stack for side in st.players for p in side.in_play()),
+    # v0.120: 既存の MH1（v0.48）。［へんしん］のメタモンが、写す相手（相手の対戦ポケモン）をきぜつさせると、メタモンの最大HPが印刷の HP にもどり、のっているダメージ以下になる。
+    # F120 対 D49 で初めて届いた（ワザの前に場から確かめる: ワザを使うのがはたらく［へんしん］のメタモンで、のっているダメージがメタモンの印刷の HP 以上）
+    "UNRESOLVED_MAX_HP_DROP": lambda st, c: st.cards[_attacker(st, c).card].card_id == DITTO and E.transform_defender(st, _attacker(st, c)) is not None
+    and _attacker(st, c).damage >= st.card_def(_attacker(st, c).card).hp,
     # v0.92（docs/power-suppression-lasting-locks-v0.92.md 8 章）: やみのはどうで、相手の場にワザの効果を受けない特殊能力のポケモン（DW2）・HP 以上になるポケモンのきぜつの時の
     # 特殊能力（DW3）。どれもワザがやみのはどう（相手のワザとして使うものも）のときだけ
     "UNRESOLVED_DARK_WAVE_PROTECTED_POKEMON": lambda st, c: "DamageThenFieldPowerSuppression" in _attack_and_copied_types(st, c),
@@ -2384,6 +2440,8 @@ V031_STOPS = {
     # v0.116: はらだいこ（山札の基本エネルギーカードが 1 枚）
     "UNRESOLVED_STATED_CARDS_SHORT": lambda st, c: (_hand_return_short(st, c) or _exact_bench_short(st, c) or _surprise_short(st, c) or _v113_attract_short(st, c)
                                                     or _v116_belly_drum_short(st, c)
+                                                    # v0.120: たつまき（相手のエネルギーカードが 1 枚で、「おもて」2 枚ぶんを選べないことがある）
+                                                    or _v120_twister_short(st, c)
                                                     # v0.119: おにびあつめ（v0.75。W119 対 F75 で初めて起こった）。トラッシュの「炎」の基本エネルギーカードが 1 枚以上でコインの枚数より少ない
                                                     or _v119_recover_by_heads_short(st, c)),
     # v0.113: ゆうでんの山札のレインボーエネルギー（「雷」エネルギーカードが「おもて」の数より少ないとき、それを選ばないと足りない）・ダークフレイムのトラッシュのレインボーエネルギー
@@ -3577,7 +3635,8 @@ def _v049_attack(state, tried, counts):
             continue
         if attack_locked(state, active, option.key) is not None:
             continue
-        if not attack_cost_payable(state, active, state.definitions[option.card_id].attacks[option.attack_index]):
+        payer = active if option.payer is None else state.find_pokemon(option.payer)[1]  # v0.120: ［にんぎょうつかい］はスリーパーが払う
+        if not attack_cost_payable(state, payer, state.definitions[option.card_id].attacks[option.attack_index]):
             continue
         candidates.append(option)
     if not candidates:
@@ -11109,6 +11168,266 @@ def v119_uses(state):
     return counts
 
 
+# ---------------------------------------------------------------- v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 11 章）: 化石の復活と仮想ワザの供給
+
+V120_NAMES = {
+    "おおきくゆびをふる": "super_metronome", "そらをとぶ": "fly", "ちからをあわせる": "work_together", "しめつける": "bind", "しんかのほうし": "evolutionary_spore",
+    "ソーラービーム": "solarbeam", "りゅうのいでんし": "genetic_memory", "たつまき": "twister", "マインドショック": "mind_shock", "はたく": "pound",
+    "サイコデュープ": "psycho_dupe", "なきつく": "snivel", "ゆびをふる": "metronome", "たたきつける": "slam",
+}
+V120_REVIVE_HOLDERS = ("neo2-014", "neo2-032")  # ［なかまのふっかつ］・［かせきのふっかつ］
+V120_EGG = "neo2-055"
+V120_DECISION_KINDS = ("revive_source", "bench_from_deck_or_hand")
+
+
+def _v120_name(state, key: str | None) -> str | None:
+    """v0.120: ワザ ``key``（"カード id#位置"）が v0.120 のワザなら、その集計の名前（ほかは None）。"""
+    if key is None:
+        return None
+    card_id, index = key.split("#")
+    return V120_NAMES.get(state.definitions[card_id].attacks[int(index)].name_ja) if card_id in V0_120_POKEMON else None
+
+
+def _v120_first(state, d, counts, label, *, all_options=False):
+    """v0.120: 選ぶと止める選択を除いた選べるものから答える（局の中で順に回す）。``all_options`` なら、止めない選べるものをすべて選ぶ（しんかのほうしの選ぶポケモン）。受け付ける答えだけ。"""
+    blocked = set(d.context_value("unresolved_choices") or ()) | set(d.context_value("unsupported_choices") or ()) | set(d.context_value("entry_power_choices") or ())
+    options = tuple(o for o in d.options if o not in blocked)
+    seen = counts[label]
+    counts[label] += 1
+    if all_options:
+        candidates = [options] if options else []
+    else:
+        size = max(d.min_choices, 1) if options else 0
+        shift = seen % len(options) if options else 0
+        rotated = options[shift:] + options[:shift]
+        candidates = [tuple(rotated[:size])] if size <= len(rotated) and size > 0 else []
+        candidates += [tuple((o,) + tuple(x for x in rotated if x != o)[:size - 1]) for o in rotated[1:]] if size > 0 else []
+    if d.min_choices == 0:
+        candidates.append(())
+    for choices in candidates:
+        command = ResolveDecision(d.player, d.id, tuple(choices))
+        if d.min_choices <= len(choices) <= d.max_choices and _v052_accepted(state, command):
+            counts[f"{label}_{len(choices)}"] += 1
+            return command
+    counts[f"{label}_no_accepted_answer"] += 1
+    return None
+
+
+def _v120_decision(state, counts):
+    """v0.120 の決定への答え（元の手順より先に答える）。v0.120 のカードのない局では何もしない。
+
+    - たまごの化石: 手札から選ぶか山札を見るか（``revive_source``）は、手札から選べるときは 1 回ごとに 手札・山札 を交互に。ベンチに出すカード（``select_evolution_card``・
+      ``bench_from_deck_or_hand``）は止めない選べるものから順に
+    - ［なかまのふっかつ］・［かせきのふっかつ］のベンチに出すカード（``bench_from_deck``）: 止めない選べるものから順に
+    - v0.120 のワザの決定: ワザを選ぶ（ゆびをふる・おおきくゆびをふる・サイコデュープ・りゅうのいでんし）は止めない選べるものから順に。しんかのほうしの選ぶポケモンは止めないものをすべて、
+      進化カードは止めないものから順に。たつまきのトラッシュするカードは「おもて」の数を、止めないものから
+    """
+    d = state.decision
+    if d is None or not any(state.cards[uid].card_id in V0_120 for uid in state.cards):
+        return None
+    if d.resume == "trainer":
+        use = d.context_value("use")
+        if use is None or use[2] != V120_EGG:
+            return None
+        if d.kind == "revive_source":
+            seen = counts["v120_egg_source_seen"]
+            counts["v120_egg_source_seen"] += 1
+            order = [(0,), (1,)] if seen % 2 == 0 else [(1,), (0,)]
+            for choices in order:
+                command = ResolveDecision(d.player, d.id, choices)
+                if choices[0] in d.options and _v052_accepted(state, command):
+                    counts["v120_egg_source_" + ("hand" if choices == (0,) else "deck")] += 1
+                    return command
+            counts["v120_egg_source_no_accepted_answer"] += 1
+            return None
+        return _v120_first(state, d, counts, f"v120_egg_{d.kind}")
+    if d.resume == "power":
+        use = d.context_value("use")
+        if use is None or d.kind != "bench_from_deck" or use[2] not in V120_REVIVE_HOLDERS:
+            return None
+        return _v120_first(state, d, counts, "v120_revive_bench_from_deck")
+    if d.resume != "attack":
+        return None
+    use = d.context_value("use")
+    copied = d.context_value("copied")
+    key = f"{copied[0]}#{copied[1]}" if copied else (f"{use[2]}#{use[3]}" if use is not None else None)
+    name = _v120_name(state, key)
+    if name is None:
+        return None
+    if name == "evolutionary_spore" and d.kind == "select_pokemon":
+        return _v120_first(state, d, counts, "v120_spore_targets", all_options=True)
+    return _v120_first(state, d, counts, f"v120_{name}_{d.kind}")
+
+
+def _v120_step(state, tried, counts):
+    """v0.120: ［なかまのふっかつ］・［かせきのふっかつ］を、自分の番ごとに 1 匹につき 1 回、受け付けるなら使う（使えない理由（ベンチに空きがない・特殊状態）は数える）。"""
+    player = state.current_player
+    for pokemon in state.players[player].in_play():
+        if state.is_face_down(pokemon) or state.cards[pokemon.card].card_id not in V120_REVIVE_HOLDERS:
+            continue
+        marker = ("v120_power", pokemon.pokemon_id, state.turn_number)
+        if marker in tried:
+            continue
+        tried.add(marker)
+        use = UsePokemonPower(player, pokemon.pokemon_id, 0)
+        if _v052_accepted(state, use):
+            counts[f"v120_revive_declared_{state.cards[pokemon.card].card_id}"] += 1
+            return use
+        counts["v120_revive_not_usable"] += 1
+    return _v120_retreat_to_doll(state, tried, counts)
+
+
+def _v120_retreat_to_doll(state, tried, counts):
+    """v0.120: 自分の場に、エネルギーで「マインドショック」を払える［にんぎょうつかい］のスリーパー（ES3-025）と、ベンチのピッピ人形があり、バトル場がピッピ人形でないなら、番ごとに
+    1 回、バトル場のポケモンをにがしてピッピ人形を出す（受け付けるときだけ。ついているエネルギーの前から、にげるエネルギーの数だけトラッシュ）。ピッピ人形がバトル場で
+    スリーパーのワザを使う（スリーパーが払う）場面を対戦に作る。"""
+    player = state.current_player
+    p = state.players[player]
+    marker = ("v120_doll_retreat", state.turn_number)
+    if marker in tried or p.active is None or state.cards[p.active.card].card_id == CLEFAIRY_DOLL:
+        return None
+    doll = next((b for b in p.bench if state.cards[b.card].card_id == CLEFAIRY_DOLL), None)
+    hypnos = [q for q in p.in_play() if state.cards[q.card].card_id == "ES3-025"]
+    if doll is None or not any(attack_cost_payable(state, q, state.card_def(q.card).attacks[0]) for q in hypnos):
+        return None
+    tried.add(marker)
+    if state.is_face_down(p.active) or p.active.conditions.asleep or p.active.conditions.paralyzed:
+        return None
+    try:
+        cost = retreat_cost(state, player).maximum
+    except UnsupportedError:
+        return None  # バトル場がなにかの化石（PF2）
+    if len(p.active.energy) < cost:
+        return None
+    command = Retreat(player, tuple(p.active.energy[:cost]), doll.card)
+    if not _v052_accepted(state, command):
+        counts["v120_doll_retreat_rejected"] += 1
+        return None
+    counts["v120_doll_retreat"] += 1
+    tried.add(("v047_discard", doll.pokemon_id))  # この番は、v0.47 の手順がバトル場に出したピッピ人形をすてない（スリーパーのワザを使う）
+    return command
+
+
+def _v120_trainer(state, tried, counts):
+    """v0.120: 手札のたまごの化石を、1 番に 1 回まで、受け付けるなら使う（ベンチに空きがないなど、使えない理由は数える）。"""
+    player = state.current_player
+    marker = ("v120_egg", state.turn_number)
+    if marker in tried:
+        return None
+    for uid in state.players[player].hand:
+        if state.cards[uid].card_id != V120_EGG:
+            continue
+        tried.add(marker)
+        play = PlayTrainer(player, uid)
+        real = _V052_REAL.get("state")
+        try:
+            apply_command(real if real is not None and real.turn_number == state.turn_number and real.decision == state.decision else state, play)
+        except (IllegalActionError, UnsupportedError) as error:
+            counts[f"v120_egg_not_playable_{error.code}"] += 1
+            return None
+        counts["v120_egg_played"] += 1
+        return play
+    return None
+
+
+def _v120_setup(state, command, counts):
+    """v0.120: 対戦準備でバトル場に出すたねポケモン（元の手順は手札の最初のたねポケモン）が、決められない姿（v0.49 の TF1・TF2、v0.120 の TF3。相手のバトル場のポケモンを写す
+    メタモン）で拒否されるなら、受け付けられる別のたねポケモンをバトル場に出す（ベンチは元の手順のまま、出すポケモンを除く）。どれも拒否されるなら元の操作（エンジンが拒否する）。
+    F120 対 D49（相手のバトル場のウソッキーの［ものまね］を写す TF1）で初めて起こった。v0.119 までの組では拒否がないので、何もしない。"""
+    if state.phase is not Phase.SETUP_PLACEMENT or type(command).__name__ != "PlaceStartingPokemon":
+        return command
+    try:
+        apply_command(state, command)
+        return command
+    except UnsupportedError as error:
+        if error.code not in V049_FORM_STOPS:
+            return command
+        counts[f"v120_setup_stopped_{error.code}"] += 1
+    basics = [uid for uid in state.players[command.player].hand if state.card_def(uid).is_basic_pokemon and uid != command.active]
+    for active in basics:
+        alternative = type(command)(command.player, active, tuple(uid for uid in command.bench if uid != active))
+        try:
+            apply_command(state, alternative)
+        except (IllegalActionError, UnsupportedError):
+            continue
+        counts["v120_setup_alternative"] += 1
+        return alternative
+    return command
+
+
+def _v120_twister_short(state, command) -> bool:
+    """v0.120: たつまき（``CoinsDiscardOpponentEnergyElseFail``。相手のワザとして使うときも）を、相手の対戦ポケモンについているエネルギーカードが 1 枚以上・コインの枚数より少ないときに
+    宣言した（「おもて」の数ぶんを選べないことがある。FC1）。道具が場のカードを数える（タケシの保護は数えない。今のデッキにない）。"""
+    if "CoinsDiscardOpponentEnergyElseFail" not in _attack_and_copied_types(state, command):
+        return False
+    defender = state.players[1 - command.player].active
+    count = sum(1 for uid in defender.energy if state.card_def(uid).category == "energy")
+    return 1 <= count < 2
+
+
+def v120_uses(state):
+    """v0.120: ログから数えた 11 枚・15 のワザ・5 つの特殊能力の動き（v0.120 のカードのない局では空）。
+
+    - ``attack_<id>#<位置>``（宣言した v0.120 のワザ）・``route_<prehistoric|puppet|mimic>``（許可で使ったワザ。``payer`` のあるものは ``puppet_paid``）
+    - ``copy_<範囲>``（ワザを選んで自分のワザとして使った。``copy_source``）・``psycho_dupe_copied``（サイコデュープ）・``metronome_tails``（コインの「うら」で選ばなかった）
+    - 復活: ``revived_<power|trainer>_<deck|hand>``（``bench_as_basic``）・``revive_none_<理由>``・``egg_looked``（たまごの化石で山札を見た）・``evolved_on_revived``（たねとしてあつかう
+      進化カードの上に進化した）・``revived_attacked``（たねとしてあつかうポケモンがワザを宣言した）
+    - しんかのほうし: ``spore_targets_<数>``・``spore_evolved``・``spore_none``。たつまき: ``twister_failed``・``twister_discarded``。ちからをあわせる: ``work_together_<基本となるダメージ>``
+    """
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_120 for uid in state.cards):
+        return counts
+    card = {uid: c.card_id for uid, c in state.cards.items()}
+    revived: set[int] = set()  # たねとしてあつかう進化カード（いちばん上のあいだ）
+    current = current_key = None
+    for e in state.log:
+        kind = e["kind"]
+        if kind == "attack":
+            pokemon_card = e.get("card", e.get("pokemon"))
+            key = f"{card.get(pokemon_card)}#{e.get('attack_index')}" if e.get("attack_index") is not None else None
+            current = _v120_name(state, key) if key is not None and card.get(pokemon_card) in V0_120_POKEMON else None
+            current_key = key if current is not None else None
+            if current is not None:
+                counts[f"attack_{key}"] += 1
+            if e.get("route") in ("prehistoric", "puppet", "mimic"):
+                counts[f"route_{e['route']}"] += 1
+                if e.get("payer") is not None:
+                    counts["puppet_paid"] += 1
+            if e.get("pokemon") in revived:
+                counts["revived_attacked"] += 1
+        elif kind == "turn_end":
+            current = None
+        elif kind == "coin_flip" and e.get("source") == "attack" and current is not None and e.get("effect") == current_key:
+            counts[f"{current}_{e['result']}"] += 1  # このワザのコインだけ（選んで使ったワザのコインは数えない）
+        if kind == "copy_attack" and e.get("copy_source"):
+            counts[f"copy_{e['copy_source']}"] += 1
+            if e.get("effect") == "PR1-021#1":
+                counts["psycho_dupe_copied"] += 1
+        if kind == "bench_as_basic":
+            counts[f"revived_{'trainer' if e.get('trainer_card') is not None else 'power'}_{e.get('zone')}"] += 1
+            revived.add(e.get("card"))
+        if kind == "revive_none":
+            counts[f"revive_none_{e.get('reason')}"] += 1
+        if kind == "look_at_deck":
+            counts["egg_looked"] += 1
+        if kind == "evolve" and e.get("from_card") in revived:
+            counts["evolved_on_revived"] += 1
+            revived.discard(e.get("from_card"))
+        if kind == "evolve_targets":
+            counts[f"spore_targets_{len(e.get('targets', ()))}"] += 1
+        if kind == "evolve" and current == "evolutionary_spore":
+            counts["spore_evolved"] += 1
+        if kind == "evolve_from_deck_none" and current == "evolutionary_spore":
+            counts["spore_none"] += 1
+        if kind == "attack_failed" and current == "twister":
+            counts["twister_failed"] += 1
+        if kind == "discard_attached_energy" and current == "twister":
+            counts["twister_discarded"] += 1
+        if kind == "damage" and current == "work_together":
+            counts[f"work_together_{dict(e.get('steps', ())).get('1 基本となる計算')}"] += 1
+    return counts
+
+
 def make_policy(seen: dict, counts: Counter):
     """tools/preset_deck_games.py の手順（``checks=True``）に、v0.28〜v0.31 のカードのワザの選び方を重ねる（モジュールの説明）。v0.31 からは、
     v0.31 のカードのワザの決定への答え（``_v031_decision``）と、宣言する特殊能力の使用（``_v031_power``）も重ねる。v0.31 のカードのない局では
@@ -11120,7 +11439,8 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = (_v119_decision(state, counts)  # v0.119: ［シェルアーマー］を使うか・ひきずりこむの任意の入れ替え（v0.119 のワザでない決定では何もしない）
+            early = (_v120_decision(state, counts)  # v0.120: たまごの化石・復活・ワザを選ぶ・しんかのほうし・たつまきの決定（v0.120 のカードのない局では何もしない）
+                     or _v119_decision(state, counts)  # v0.119: ［シェルアーマー］を使うか・ひきずりこむの任意の入れ替え（v0.119 のワザでない決定では何もしない）
                      or _v118_decision(state, counts)  # v0.118: v0.118 のワザの決定（相手プレイヤーの配分もふくむ。v0.118 のワザでない決定では何もしない）
                      or _v118_power_decision(state, counts)  # v0.118: ［じくうへんかん］・［トランスポート］の決定
                      or _v117_decision(state, counts)  # v0.117: v0.117 のワザの決定（v0.117 のワザでない決定では何もしない）
@@ -11242,7 +11562,9 @@ def make_policy(seen: dict, counts: Counter):
                      or _v099_step(state, tried, counts)  # v0.99: ［HELP］
                      or _v117_step(state, tried, counts)  # v0.117: ［QUICKEN］
                      or _v118_step(state, tried, counts)  # v0.118: ［トランスポート］・［じくうへんかん］
-                     or _v119_step(state, tried, counts))  # v0.119: ［ポイズンミスト］
+                     or _v119_step(state, tried, counts)  # v0.119: ［ポイズンミスト］
+                     or _v120_trainer(state, tried, counts)  # v0.120: たまごの化石
+                     or _v120_step(state, tried, counts))  # v0.120: ［なかまのふっかつ］・［かせきのふっかつ］
             if power is not None:
                 return power
             history = _v062_attack(state, tried, counts)  # v0.62: 履歴を読むワザ（ドリルホール・オウムがえし）を使える番に使う
@@ -11289,6 +11611,15 @@ def make_policy(seen: dict, counts: Counter):
             if not usable and isinstance(command, UseAttack):
                 counts[f"v050_form_unpayable_end_{card_id}"] += 1
                 return EndTurn(player)
+        if card_id in V0_120_POKEMON:
+            # v0.120: サイコデュープ（必要なエネルギーを合わせて照らすワザ）は、合わせた必要なエネルギーを払える相手のワザがないときは選ばない（ワザを使うための条件。エンジンの
+            # ``usage_problem`` を、宣言の前に道具が同じ問い合わせで確かめる）
+            unusable = [i for i in usable if state.effects.attack_effect(card_id, attacks[i], attacks).usage_problem(state, active) is not None]
+            if unusable:
+                counts[f"v120_unusable_{card_id}"] += 1
+                usable = [i for i in usable if i not in unusable]
+                if not usable and isinstance(command, UseAttack):
+                    return EndTurn(player)
         if card_id in V0_44:
             # v0.44: 場に出てから 1 度しか使えないワザで、このポケモンがもう使ったもの（場のポケモンの記録）は選ばない
             usable = [i for i in usable if (active.card, i) not in active.attacks_used_once]
@@ -11400,6 +11731,7 @@ def make_policy(seen: dict, counts: Counter):
             counts["v048_max_hp_drop_end_turn"] += 1
             return EndTurn(state.current_player)
         command = _v049_answer(state, command, counts)  # v0.49: 決められない姿・MH1 で拒否される決定の答えを避ける
+        command = _v120_setup(state, command, counts)  # v0.120: 決められない姿で拒否される対戦準備のバトル場のポケモンを避ける
         if state.phase is Phase.MAIN:
             command = _v057_attack(state, command, tried, counts)  # v0.57: クチバシティジムのコイン
             command = _v088_attack(state, command, tried, counts)  # v0.88: ［すいりょくはつでん］（ワザの宣言といっしょ）
@@ -11429,6 +11761,12 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
     except (IllegalActionError, UnsupportedError) as error:
         state, observed = seen.get("state"), Counter()
         outcome = "unexpected_rejection"
+        if error.code in V049_FORM_STOPS and state is not None and state.phase is Phase.SETUP_PLACEMENT:
+            # v0.120: 対戦準備でバトル場に出せるたねポケモンが、どれも決められない姿になる（手札のたねポケモンがメタモンだけで、相手のバトル場のポケモンの特殊能力を写す TF1 など）。
+            # エンジンは出す操作を受け付けないので、対戦はその前の状態で止まる（v0.49 からの既存の止め方。``_v120_setup`` が別のたねポケモンを試したあと。F120 対 D49 で初めて
+            # 起こった）。停止の理由のコードを数える
+            outcome = "setup_stopped"
+            result["halt_code"] = error.code
         result["error"] = f"{error.code}: {error}"[:500]
     except Exception as error:  # noqa: BLE001  内部エラーも集計から落とさない
         state, observed = seen.get("state"), Counter()
@@ -11510,6 +11848,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v117"] = v117_uses(state)
         result["v118"] = v118_uses(state)
         result["v119"] = v119_uses(state)
+        result["v120"] = v120_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
@@ -11521,6 +11860,12 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
 def audit(result, state, commands):
     """監査の失敗の数（失敗がなければ空）。やり直しと監査は、終わりまで進んだ局（通常の勝敗・サドンデス・停止）だけ。"""
     failures = Counter()
+    if state is not None and result["outcome"] == "setup_stopped":
+        # v0.120: 対戦準備で止まった局（受け付けた操作は対戦準備だけで、操作の並びは残らない）は、止まる前の状態の不変条件・ログ・保存だけを確かめる
+        failures["invariants"] += bool(check_invariants(state))
+        failures["log"] += bool(log_problems(state))
+        failures["serialization"] += bool(serialization_problems(state))
+        return {k: v for k, v in failures.items() if v}
     if state is None or result["outcome"] not in ("game_over", "sudden_death", "halted"):
         return {"not_audited": 1}
     current = new_game(*(deck_cards(label) for label in result["decks"]), result["seed"])

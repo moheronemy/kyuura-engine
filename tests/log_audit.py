@@ -490,6 +490,7 @@ POKEMON_FIELDS_SINCE = {
     "pokemon_id": 2, "trainers": 4, "special_conditions": 5, "retreat_failed_turn": 6, "evolution_stack": 7, "played_turn": 7,
     "evolved_turn": 7, "persistent_effects": 8, "attacks_used_once": 11, "evolution_permission_turn": 11, "type_shift": 13, "disguise": 14,
     "devolved_turn": 15, "history": 20, "markers": 24,
+    "basic_entry": 28,  # v0.120: 進化元を重ねずに出し、場ではたねポケモンとしてあつかう進化カードの事実（ないポケモンは書かない）
 }
 TOP_FIELDS_SINCE = {
     "format_version": 2, "effects": 2, "next_pokemon_id": 2, "next_decision_id": 2, "decision": 2, "trainer_in_use": 3,
@@ -499,7 +500,7 @@ TOP_FIELDS_SINCE = {
     "turn_history": 26,  # v0.100: プレイヤーの番ごとの記録（使ったワザ・番でないプレイヤーの場にいたカード）
     "poison_mists": 27, "replacement_poisons": 27,  # v0.119: ［ポイズンミスト］の効果・「ガスばくはつ」のまだ与えていないどく
 }
-LATEST_FORMAT = 27
+LATEST_FORMAT = 28
 # v0.99: 形式 25 で、場のポケモンの履歴の受けた記録（``"kind": "received"``）に加わった項目（ダメージを受けた場所）
 RECEIVED_FIELDS_SINCE = {"active_damage": 25}
 
@@ -606,6 +607,8 @@ def required_format(state) -> tuple[int, bool]:
     if (state.poison_mists or state.replacement_poisons
             or any(pokemon.conditions.poison is not None and pokemon.conditions.poison.multiplier != 1 for pokemon in in_play)):
         needed = max(needed, 27)  # v0.119: カウンターの数を倍にするどく・［ポイズンミスト］の効果・「ガスばくはつ」のまだ与えていないどく
+    if any(pokemon.basic_entry is not None for pokemon in in_play):
+        needed = max(needed, 28)  # v0.120: たねポケモンとしてあつかう進化カードの事実
     d = state.decision
     not_v0_1 = d is not None and (
         d.context_value("then") is not None or d.resume in ("attack", "knock_out", "post_knockout", "power")  # v0.42: 特殊能力の途中の決定
@@ -1131,6 +1134,22 @@ V119_PULL_IN = "相手を「ねむり」状態にする。のぞむなら、ダ�
 V119_COMMAND = re.compile(r"この力は、自分の「(.+)」、「(.+)」がワザを使う時、使える。そのワザによるダメージは、「\+(\d+)」される。")
 V119_ALLERGY = "おたがいのトラッシュにあるすべてのカードは、ポケモンの「ワザ・特殊能力」による効果を受けない。"
 V119_BEAM = re.compile(r"次の相手の番、自分の場の「(.)」ポケモンは「弱点」の影響を受けない。")
+# v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 12 章）: 監査が読む印刷の文面（kyuura の日本語。エンジンの登録・計算を読まない）
+V120_COPY_DEFENDER = "相手のワザを1つ選び"
+V120_COPY_FIELD = ("相手の場にいるポケモンのワザを1つ選び", "相手の場のポケモンのワザから1つを選び")
+V120_COPY_PRE_EVOLUTION = "自分が進化する前に持っていたワザを1つ選び"
+V120_COPY_COIN = "コインを投げて「おもて」なら、"
+V120_COMBINED = re.compile(r"「(.+)」に必要なエネルギーに加えて、そのワザに必要なエネルギーがこのカードについていない限り")
+V120_PREHISTORIC = "進化する前に持っていたワザを1つ選び、そのポケモンのワザとして使うことができる"
+V120_PUPPET = re.compile(r"自分のバトル場にいる「(.+?)」は、このカードが持っているワザを使ってよい")
+V120_MIMIC = "このカードは、バトル場にいるかぎり、相手の対戦ポケモンの持っているワザを使うことができる。"
+V120_TWISTER = re.compile(r"コインを(\d+)枚投げ、「おもて」の数ぶんの「エネルギーカード」を、相手からトラッシュする。すべて「うら」なら、このワザは失敗する。")
+V120_WORK_TOGETHER = re.compile(r"コインを投げて「おもて」なら、自分のベンチの((?:「[^」]+」)+)の数×(\d+)のダメージを追加する。")
+V120_SPORE = re.compile(r"自分の場の((?:「[^」]+」)+)を好きなだけ選ぶ。その後、自分の山札から、選んだポケモンから進化する「進化カード」を、それぞれ1枚ずつ選びだし、それぞれのポケモンの上に"
+                        r"のせ、進化させる。山札を見た場合は、その山札をよく切る。")
+V120_REVIVE = re.compile(r"この力は、自分の番ごとに1回使える。コインを投げて「おもて」なら、自分の山札から.+を1枚選び出し、ベンチに出す。その後、その山札をよく切る。")
+V120_EGG = "「なにかの化石」を進化させる「進化カード」を1枚選び出し、ベンチに出す。山札を見た場合は、その山札をよく切る。"
+V120_DOUBLE_COLORLESS = "無色2個エネルギー"
 
 
 def _effect_of_key(state, key: str | None):
@@ -1172,6 +1191,9 @@ def _follows_declaration(state, key: str, player: int, pid: int, e: dict) -> boo
         return kind == "coin_flip" and e["source"] == "power" and e.get("effect") == key and e["player"] == player and e.get("pokemon_id") == pid
     if isinstance(effect, E.CoinPoisonMistUntilNextTurn):
         # v0.119: ［ポイズンミスト］は持ち主のコイン（「おもて」なら poison_mist_added。v119_problems が量・期間・使う前のどくを確かめる）
+        return kind == "coin_flip" and e["source"] == "power" and e.get("effect") == key and e["player"] == player and e.get("pokemon_id") == pid
+    if isinstance(effect, E.CoinReviveFromDeck):
+        # v0.120: ［なかまのふっかつ］・［かせきのふっかつ］は持ち主のコイン（「おもて」なら bench_as_basic・revive_none。v120_problems が出したカード・山札を切ることを確かめる）
         return kind == "coin_flip" and e["source"] == "power" and e.get("effect") == key and e["player"] == player and e.get("pokemon_id") == pid
     if isinstance(effect, SearchEvolutionCardToHand):
         return kind == "reveal_from_deck" and e.get("power") == key and e["player"] == player
@@ -1363,6 +1385,11 @@ def _power_coin_follows(state, coin: dict, e: dict) -> bool:
     if isinstance(effect, E.CoinDamageBothActivesOnAttackDamage):
         # v0.87: ［ショックボム］。持ち主のコインのすぐあとに判定（shock_blast_check）。「うら」ならそのあとにお互いの対戦ポケモンへのダメージ（shock_blast_damage）
         return kind == "shock_blast_check" and e["power"] == coin["effect"] and e["player"] == coin["player"] and e["result"] == coin["result"]
+    if isinstance(effect, E.CoinReviveFromDeck):
+        # v0.120: ［なかまのふっかつ］・［かせきのふっかつ］。「おもて」なら山札からたねとしてあつかう進化カードを出す（bench_as_basic）か出せない（revive_none。そのあいだに決定が
+        # ある。山札が 0 枚なら決定なし）。「うら」なら何もしない
+        mine = kind in ("bench_as_basic", "revive_none") and e.get("power") == coin["effect"]
+        return mine if coin["result"] == "heads" else not mine
     if isinstance(effect, E.CoinBenchNamedFromDeck):
         # v0.87: ［マグネット］。「おもて」なら山札からベンチに出す（bench_from_deck）か出さない（bench_from_deck_declined。そのあいだに決定がある）。「うら」なら何もしない
         mine = kind in ("bench_from_deck", "bench_from_deck_declined") and e.get("power") == coin["effect"]
@@ -1596,8 +1623,9 @@ def log_problems(state) -> list[str]:
                          "discard_attached_cards",
                          # v0.41（v0.48 のダメージぞうふくは、相手の場のポケモンごとに 1 回。下で確かめる）
                          *(() if isinstance(window_effect, PlaceCountersOnDamagedOpponentPokemon) else ("place_damage_counters",)), "swap_damage_counters",
-                         # v0.42
-                         "return_energy_to_hand", "evolve", "evolve_from_deck_none", "switch_declined", "power_confusion",
+                         # v0.42（v0.120 のしんかのほうしは、選んだポケモンごとに 1 回。v120_problems で確かめる）
+                         "return_energy_to_hand", *(() if isinstance(window_effect, E.EvolveChosenNamedFromDeck) else ("evolve", "evolve_from_deck_none")),
+                         "switch_declined", "power_confusion",
                          "power_confusion_skipped",
                          # v0.46
                          "attach_energy_from_hand",
@@ -1759,6 +1787,7 @@ def log_problems(state) -> list[str]:
     # v0.23: 使っている最中のトレーナーの使うための条件でトラッシュした手札（discard_from_hand から discard_trainer まで）
     trainer_discarded: dict[int, tuple[int, ...]] = {0: (), 1: ()}
     using_trainer: dict[int, int | None] = {0: None, 1: None}  # v0.25: 使っている最中のトレーナー（play_trainer から discard_trainer まで）
+    egg_looked: dict[int, bool] = {}  # v0.120: たまごの化石を使っている最中に、使ったプレイヤーが山札を見たか（見た場合だけ山札を切る）
     howl_milled: dict[int, tuple[str, set[int]]] = {}  # v0.86: ［おたけび］で今トラッシュしたカード（プレイヤーごと。power_attach_from_discard で確かめる）
     outer_trainers: dict[int, list] = {}  # v0.58: 内側のカードを使っている間の外側のトレーナー（サイキックコントロール。プレイヤーごとに積む）
     attached_this_turn = 0  # この番の、手札からつける通常の操作（attach_energy）でつけた枚数（v0.6。v0.59 からカツラの 2 枚を 2 と数える）
@@ -1891,6 +1920,9 @@ def log_problems(state) -> list[str]:
     # v0.119: v119_problems の記録（今のワザ・［ポイズンミスト］の記録（(プレイヤー, 番号, 番) → 使う前のどく・中断）・どくのかける数（番号 → 数）・「どくをだす」の効果（番号 → 与えた番・
     # ワザ）・「ガスばくはつ」の予定（プレイヤー → 状態）・「なぞのこうせん」の効果・1 つ前のログ）
     v119: dict = {"window": None, "mists": {}, "mult": {}, "secrete": {}, "gas": {}, "beams": [], "prev": None, "secrete_due": None, "sleep_coins": []}
+    # v0.120: v120_problems の記録（今のワザ・進化の重なり（いちばん上のカードの uid → (場のポケモンの番号, 下のカードの並び)）・たねポケモンとしてあつかって出したカード（uid →
+    # (場のポケモンの番号, 出した番)）・復活の特殊能力を使った (番, 番号)・使っている最中のたまごの化石）
+    v120: dict = {"window": None, "below": {}, "revived": {}, "power_used": set(), "egg": None}
     color_types: dict[int, dict] = {}  # v0.88: ［せんすい］の記録（対象のポケモンの番号 → 色・発生源のカード・特殊能力の位置）
     # v0.90: ログから組み立てた、場のポケモンのマーカー・カウンター（番号 → のせた順の {"marker", "color", "turn"}）と、進化・退化で取りのぞくはずのポケモン（番号 → 理由）
     marks: dict[int, list[dict]] = {}
@@ -4619,6 +4651,258 @@ def log_problems(state) -> list[str]:
         """v0.119: ログから組み立てた今の場で、［アレルギーほうし］がはたらいているポケモンの番号（場のどこでも）。"""
         return sorted(pid for pid in in_play if v119_working(pid, V119_ALLERGY))
 
+    def v120_below(uid: int | None) -> tuple[int, ...]:
+        """v0.120: ログから組み立てた場の、いちばん上のカード ``uid`` の下に重なっているカード（下から順）。場に出なおしたカードの古い記録（番号が違う）は使わない。"""
+        found = v120["below"].get(uid)
+        return found[1] if found is not None and found[0] == ids.get(uid) else ()
+
+    def v120_attack_keys(pid: int | None) -> set[str]:
+        """v0.120: ログから組み立てた場のポケモン ``pid`` の今の姿のカード（「ばける」・［へんしん］を含む。``form_def``）の印刷のワザ（"カード id#位置"）。"""
+        if pid is None or pid not in in_play:
+            return set()
+        definition = form_def(pid)
+        return {f"{definition.id}#{index}" for index in range(len(definition.attacks))}
+
+    def v120_payable(pid: int | None, costs) -> bool | None:
+        """v0.120: ログから組み立てた場のポケモン ``pid`` についているエネルギーカードで、必要なエネルギーの並び ``costs`` を合わせて払えるか。基本エネルギーカードと無色2個エネルギー
+        だけで決める（ほかの特殊エネルギーがついていれば None。確かめない）。"""
+        provided: list = []
+        for uid in energy.get(pid, []):
+            definition = state.card_def(uid)
+            if definition.category != "energy":
+                continue
+            if definition.provides is not None:
+                provided.append(definition.provides)
+            elif definition.name_ja == V120_DOUBLE_COLORLESS:
+                provided += [EnergyType.COLORLESS, EnergyType.COLORLESS]
+            else:
+                return None
+        need = Counter(energy_type for cost in costs for energy_type in cost)
+        if transform_target(pid) is not None:
+            return len(provided) >= sum(need.values())  # ［へんしん］: エネルギーカードは、どの色のエネルギーとしても使える
+        have = Counter(provided)
+        for energy_type, count in need.items():
+            if energy_type is EnergyType.COLORLESS:
+                continue
+            if have[energy_type] < count:
+                return False
+            have[energy_type] -= count
+        return sum(have.values()) >= need[EnergyType.COLORLESS]
+
+    def v120_bench_count(player: int) -> int:
+        return sum(1 for q in in_play if pokemon_owner.get(q) == player) - (1 if active_of.get(player) in in_play else 0)
+
+    def v120_close(w: dict, *, ended: bool) -> list[str]:
+        """v0.120: 1 回のワザ（``w``）の終わりに、コインで決まる選ぶワザ・たつまき・しんかのほうしの全体を確かめる。"""
+        found: list[str] = []
+        text = v111_printed_text(w["declared"]) or ""
+        if text.startswith(V120_COPY_COIN) and any(part in text for part in (V120_COPY_DEFENDER, *V120_COPY_FIELD)):
+            coins = w["coins"].get(w["declared"], [])
+            if w["copy"] is not None and coins != ["heads"]:
+                found.append(f"{w['turn']} 番のワザ {w['declared']} が、コインの「おもて」1 回（{coins}）のあとでないのにワザを選んで使った")
+        twister = V120_TWISTER.fullmatch(v111_printed_text(w["key"]) or "")
+        if twister is not None and not w["confused_failed"]:
+            coins = w["coins"].get(w["key"], [])
+            heads = coins.count("heads")
+            discarded = sum(1 for kind, e in w["events"] if kind == "discard_attached_energy" and e.get("effect") == w["key"])
+            hit = any(kind == "damage" and e.get("player") == 1 - w["player"] for kind, e in w["events"])
+            failed = any(kind == "attack_failed" for kind, _ in w["events"])
+            if coins and len(coins) != int(twister.group(1)):
+                found.append(f"{w['turn']} 番のたつまき（{w['key']}）のコイン {coins} が、文面の {twister.group(1)} 枚ではない")
+            if coins and not heads and (hit or not failed or discarded):
+                found.append(f"{w['turn']} 番のたつまき（{w['key']}）がすべて「うら」なのに、失敗していない・ダメージ・トラッシュがある")
+            skipped = any(kind in ("knock_out", "effect_prevented", "damage_prevented", "energy_discard_voided", "attack_evaded") for kind, _ in w["events"])
+            if heads and discarded not in (heads, 0) or (heads and not discarded and not skipped and w["opp_energy"] >= heads):
+                found.append(f"{w['turn']} 番のたつまき（{w['key']}）でトラッシュした相手のエネルギーカード {discarded} 枚が、「おもて」の数 {heads} ではない")
+        spore = V120_SPORE.fullmatch(v111_printed_text(w["key"]) or "")
+        if spore is not None and not w["confused_failed"]:
+            names = set(re.findall(r"「([^」]+)」", spore.group(1)))
+            targets = next((tuple(e.get("targets", ())) for kind, e in w["events"] if kind == "evolve_targets" and e.get("effect") == w["key"]), None)
+            order = [kind for kind, e in w["events"] if e.get("effect") == w["key"] and kind in ("evolve", "evolve_from_deck_none", "shuffle")]
+            evolved = [e for kind, e in w["events"] if kind == "evolve" and e.get("effect") == w["key"]]
+            shuffles = order.count("shuffle")
+            if targets is not None and (len(set(targets)) != len(targets) or any(pid not in w["spore_candidates"] for pid in targets)):
+                found.append(f"{w['turn']} 番のしんかのほうしの選んだポケモン {targets} が、自分の場の「{'」「'.join(sorted(names))}」（{sorted(w['spore_candidates'])}）から重ならずに選んだものではない")
+            if len({e["pokemon_id"] for e in evolved}) != len(evolved) or any(e["pokemon_id"] not in (targets or ()) or e.get("source_zone") != "deck" for e in evolved):
+                found.append(f"{w['turn']} 番のしんかのほうしの進化 {[e['pokemon_id'] for e in evolved]} が、選んだポケモン {targets} それぞれに山札から 1 回ずつではない")
+            if shuffles > 1 or (evolved and shuffles != 1) or (not targets and shuffles) or ("shuffle" in order and "evolve" in order[order.index("shuffle"):]):
+                found.append(f"{w['turn']} 番のしんかのほうしの山札を切ったログ {order} が、山札を見たあと・すべての進化のあとの 1 回ではない")
+        return found
+
+    def v120_problems(e: dict) -> list[str]:
+        """v0.120: 化石の復活と仮想ワザの供給を、エンジンの登録・計算を読まずに確かめる（印刷の文面・ログから組み立てた場・コインから）。ログ ``e`` の組み立て直しの前に呼ぶ。
+
+        - ワザを選んで自分のワザとして使うワザ（copy_attack の copy_source）: 選んだワザが、文面の範囲（相手の対戦ポケモン・相手の場のポケモン・すぐ下の進化前のカード）の今の姿の
+          印刷のワザ。コインを投げる文面は「おもて」1 回のあとだけ。必要なエネルギーを合わせる文面（サイコデュープ）は、両方のワザに必要なエネルギーをワザを使うポケモンのエネルギーで払える
+        - 許可で使うワザ（attack の route）: ［ものまね］はバトル場のウソッキー自身の力で、相手の対戦ポケモン（provider）の今の姿のワザ。［げんしのきおく］ははたらく力のポケモン
+          （grantors）があり、バトル場の進化ポケモンのすぐ下のカードのワザ。［にんぎょうつかい］はバトル場の文面の名前のポケモンが、はたらく力のスリーパー（grantors・provider・payer が同じ）の
+          今のカードのワザを使い、必要なエネルギーをスリーパーが払う。ほかの持ち方は payer を書かない（ワザを使うポケモンが払う）
+        - ［なかまのふっかつ］・［かせきのふっかつ］: 同じポケモンが同じ番に 2 回使わない。ねむり・マヒ・こんらん・ベンチに空きがないときは使わない
+        - たまごの化石: ベンチに空きがあるときだけ。「うら」なら山札を見ない・出さない・切らない。山札を見た場合だけ 1 回切る。山札から出したなら山札を見ている。出すのは 1 枚まで
+        - たねポケモンとしてあつかって出したポケモン: 出した番には進化しない。進化は印刷のカードの名前から（進化カードの「〜から進化」が出したカードの名前）。退化でそのカードがまた
+          いちばん上になる（FE1）ログはない（エンジンが止める）
+        - たつまき: コインは文面の枚数。すべて「うら」なら失敗（ダメージ・トラッシュなし）。トラッシュしたなら「おもて」の数（足りない場合はエンジンが止める FC1）
+        - ちからをあわせる: 相手の対戦ポケモンへのダメージの基本となる計算が、印刷のダメージ +（「おもて」なら）自分のベンチの文面の名前（完全に同じ）の数 × 文面の数
+        - しんかのほうし: 選んだポケモンは自分の場の文面の名前（重ならない）。進化は選んだポケモンそれぞれに山札から 1 回まで。山札を切るのは進化のあとの 1 回（選ばなければ切らない）"""
+        found: list[str] = []
+        kind = e["kind"]
+        turn = e["turn"]
+        st = v120
+        w = st["window"]
+        if w is not None and kind in ("attack", "turn_end", "game_end", "halted"):
+            found += v120_close(w, ended=kind in ("game_end", "halted"))
+            st["window"] = w = None
+        if kind == "attack":
+            pid = ids.get(e["pokemon"])
+            player = e["player"]
+            opp = active_of.get(1 - player)
+            key = attack_window["effect"] if attack_window is not None else None
+            st["window"] = w = {"key": key, "declared": key, "player": player, "pid": pid, "turn": turn, "coins": {}, "copy": None, "events": [],
+                                "confused_failed": False, "opp_energy": sum(1 for uid in energy.get(opp, []) if state.card_def(uid).category == "energy"),
+                                "spore_candidates": set()}
+            route = e.get("route")
+            card = e.get("card")
+            attack_costs = [state.definitions[e["card_id"]].attacks[e["attack_index"]].cost] if route in ("prehistoric", "puppet", "mimic") else []
+            if route == "mimic":
+                if tuple(e.get("grantors", ())) != (pid,) or v119_power_text(pid, V120_MIMIC) is None or not is_active(pid) or pid in exclusive \
+                        or e.get("provider") != opp or f"{e['card_id']}#{e['attack_index']}" not in v120_attack_keys(opp) or "payer" in e:
+                    found.append(f"{turn} 番の［ものまね］のワザ（ポケモン {pid}・{e['card_id']}#{e['attack_index']}）が、バトル場の力のポケモン自身の、相手の対戦ポケモン {opp} のワザではない")
+            elif route == "prehistoric":
+                below = v120_below(e["pokemon"])
+                grantors = tuple(e.get("grantors", ()))
+                if not grantors or any(not v119_working(g, V120_PREHISTORIC) for g in grantors) or not is_active(pid) or not below or card != below[-1] or "payer" in e:
+                    found.append(f"{turn} 番の［げんしのきおく］のワザ（ポケモン {pid}・カード {card}）が、はたらく力 {grantors} のある、バトル場の進化ポケモンのすぐ下のカード {below[-1:]} "
+                                 "のワザではない")
+            elif route == "puppet":
+                grantors = tuple(e.get("grantors", ()))
+                payer = e.get("payer")
+                doll_names = {power[1].group(1) for power in (v119_power_text(g, V120_PUPPET) for g in grantors) if power is not None}
+                if not grantors or any(not v119_working(g, V120_PUPPET) or pokemon_owner.get(g) != player for g in grantors) or not is_active(pid) \
+                        or form_def(pid).name_ja not in doll_names or payer != e.get("provider") or payer not in grantors or card != top.get(payer):
+                    found.append(f"{turn} 番の［にんぎょうつかい］のワザ（ポケモン {pid}・カード {card}・払う {payer}）が、はたらく力のスリーパー {grantors} の今のカードのワザを、バトル場の"
+                                 "文面の名前のポケモンが使い、スリーパーが払うものではない")
+                if v120_payable(payer, attack_costs) is False:
+                    found.append(f"{turn} 番の［にんぎょうつかい］のワザ（ポケモン {pid}）の必要なエネルギーを、払うポケモン {payer} のエネルギーで払えない")
+            elif "payer" in e:
+                found.append(f"{turn} 番のワザ（ポケモン {pid}・持ち方 {route}）に、［にんぎょうつかい］でない払うポケモン {e['payer']} がある")
+            if route in ("prehistoric", "mimic") and v120_payable(pid, attack_costs) is False:
+                found.append(f"{turn} 番の許可で使うワザ（ポケモン {pid}・持ち方 {route}）の必要なエネルギーを、ワザを使うポケモンのエネルギーで払えない")
+            spore = V120_SPORE.fullmatch(v111_printed_text(key) or "")
+            if spore is not None:
+                names = set(re.findall(r"「([^」]+)」", spore.group(1)))
+                w["spore_candidates"] = {q for q in in_play if pokemon_owner.get(q) == player and form_def(q).name_ja in names}
+            work = V120_WORK_TOGETHER.fullmatch(v111_printed_text(key) or "")
+            if work is not None:
+                names = set(re.findall(r"「([^」]+)」", work.group(1)))
+                w["work"] = (int(work.group(2)), sum(1 for q in in_play if pokemon_owner.get(q) == player and not is_active(q) and form_def(q).name_ja in names))
+        elif w is not None:
+            w["events"].append((kind, e))
+            if kind == "coin_flip" and e.get("source") == "attack":
+                w["coins"].setdefault(e.get("effect"), []).append(e["result"])
+            elif kind == "confused_failed" or (kind == "attack_failed" and e.get("reason") in ("confusion", "attack_check")):
+                w["confused_failed"] = True
+            elif kind == "copy_attack" and "copy_source" in e:
+                text = v111_printed_text(e.get("effect")) or ""
+                player = w["player"]
+                source = ("defender" if V120_COPY_DEFENDER in text else "opponent_field" if any(part in text for part in V120_COPY_FIELD)
+                          else "pre_evolution" if V120_COPY_PRE_EVOLUTION in text else None)
+                if source == "defender":
+                    candidates = v120_attack_keys(active_of.get(1 - player))
+                elif source == "opponent_field":
+                    candidates = {key for q in in_play if pokemon_owner.get(q) == 1 - player for key in v120_attack_keys(q)}
+                elif source == "pre_evolution":
+                    below = v120_below(top.get(w["pid"]))
+                    definition = state.in_play_def(below[-1]) if below else None
+                    candidates = {f"{definition.id}#{index}" for index in range(len(definition.attacks))} if definition is not None else set()
+                else:
+                    candidates = set()
+                if source != e["copy_source"] or e.get("copied") not in candidates:
+                    found.append(f"{turn} 番にワザ {e.get('effect')} で選んだワザ {e.get('copied')}（{e['copy_source']}）が、文面の範囲（{source}）の今の姿のワザ {sorted(candidates)} ではない")
+                combined = V120_COMBINED.search(text)
+                if combined is not None:
+                    own = state.definitions[_attack_key(e["effect"])[0]].attacks[_attack_key(e["effect"])[1]].cost
+                    copied_id, copied_index = _attack_key(e.get("copied", ""))
+                    copied_def = state.definitions.get(copied_id)
+                    if copied_def is not None and 0 <= copied_index < len(copied_def.attacks) and v120_payable(w["pid"], [own, copied_def.attacks[copied_index].cost]) is False:
+                        found.append(f"{turn} 番のワザ {e.get('effect')}（{combined.group(1)}）で選んだワザ {e.get('copied')} の必要なエネルギーを、このワザの必要なエネルギーと合わせて払えない")
+                w["copy"] = e
+                w["key"] = e.get("copied")
+                work = V120_WORK_TOGETHER.fullmatch(v111_printed_text(w["key"]) or "")
+                if work is not None:
+                    names = set(re.findall(r"「([^」]+)」", work.group(1)))
+                    w["work"] = (int(work.group(2)), sum(1 for q in in_play if pokemon_owner.get(q) == player and not is_active(q) and form_def(q).name_ja in names))
+                spore = V120_SPORE.fullmatch(v111_printed_text(w["key"]) or "")
+                if spore is not None:
+                    names = set(re.findall(r"「([^」]+)」", spore.group(1)))
+                    w["spore_candidates"] = {q for q in in_play if pokemon_owner.get(q) == player and form_def(q).name_ja in names}
+            elif kind == "damage" and "work" in w and e.get("player") == 1 - w["player"] and e.get("steps") and not w.get("work_checked"):
+                w["work_checked"] = True
+                per, count = w["work"]
+                coins = w["coins"].get(w["key"], [])
+                card_id, index = _attack_key(w["key"])
+                printed = state.definitions[card_id].attacks[index].damage or 0
+                expected = printed + (per * count if coins == ["heads"] else 0)
+                base = dict(tuple(step) for step in e["steps"]).get("1 基本となる計算")
+                if len(coins) != 1 or base != expected:
+                    found.append(f"{turn} 番のちからをあわせるの基本となるダメージ {base}（コイン {coins}）が、印刷の {printed} + 自分のベンチの文面の名前の数 {count} × {per} と合わない")
+        # 復活の特殊能力
+        if kind == "pokemon_power" and e.get("pokemon") in state.cards:
+            definition = state.in_play_def(e["pokemon"])
+            index = e.get("power_index", 0)
+            text = definition.powers[index].text_ja if 0 <= index < len(definition.powers) else ""
+            if V120_REVIVE.match(text or ""):
+                pid = e.get("pokemon_id")
+                marker = (turn, pid)
+                if marker in st["power_used"] or pid in exclusive or v120_bench_count(e["player"]) >= bench_limit_now() or pokemon_owner.get(pid) != e["player"] \
+                        or e["player"] != turn_player:
+                    found.append(f"{turn} 番の復活の特殊能力（ポケモン {pid}）が、番ごとに 1 回・ねむり・マヒ・こんらんでない・ベンチに空きがあるときではない")
+                st["power_used"].add(marker)
+        # たまごの化石
+        egg = st["egg"]
+        if kind == "play_trainer" and V120_EGG in (state.card_def(e["card"]).trainer_text_ja or ""):
+            if v120_bench_count(e["player"]) >= bench_limit_now():
+                found.append(f"{turn} 番のたまごの化石（{e['card']}）を、ベンチに空きがないときに使った")
+            st["egg"] = egg = {"player": e["player"], "card": e["card"], "coin": None, "looked": False, "shuffles": 0, "placed": [], "turn": turn}
+        elif egg is not None:
+            if kind == "coin_flip" and e.get("source") == "trainer" and e.get("card") == egg["card"]:
+                egg["coin"] = e["result"]
+            elif kind == "look_at_deck" and e.get("trainer_card") == egg["card"]:
+                if egg["coin"] != "heads":
+                    found.append(f"{turn} 番のたまごの化石で、コインの「おもて」のあとでないのに山札を見た")
+                egg["looked"] = True
+            elif kind == "shuffle" and e.get("player") == egg["player"] and set(e) <= {"kind", "turn", "player"}:
+                egg["shuffles"] += 1
+            elif kind == "bench_as_basic" and e.get("trainer_card") == egg["card"]:
+                egg["placed"].append(e)
+                if e.get("zone") == "deck" and not egg["looked"]:
+                    found.append(f"{turn} 番のたまごの化石で、山札を見ずに山札のカード {e['card']} を出した")
+            elif kind == "discard_trainer" and e.get("card") == egg["card"]:
+                if (egg["coin"] != "heads" and (egg["looked"] or egg["placed"] or egg["shuffles"])) or egg["shuffles"] != (1 if egg["looked"] else 0) or len(egg["placed"]) > 1:
+                    found.append(f"{egg['turn']} 番のたまごの化石（コイン {egg['coin']}・山札を見た {egg['looked']}・切った {egg['shuffles']} 回・出した {len(egg['placed'])} 枚）が、"
+                                 "「おもて」なら 1 枚まで出し、山札を見た場合だけ 1 回切るものではない")
+                st["egg"] = None
+        # たねポケモンとしてあつかって出したポケモン・進化の重なり
+        if kind == "bench_as_basic":
+            st["revived"][e["card"]] = (e["to_pokemon_id"], turn)
+            st["below"][e["card"]] = (e["to_pokemon_id"], ())
+        elif kind == "evolve":
+            pid = ids.get(e["from_card"])
+            revived = st["revived"].get(e["from_card"])
+            if revived is not None and revived[0] == pid:
+                if revived[1] == turn:
+                    found.append(f"{turn} 番に、この番にたねポケモンとしてあつかって出したポケモン {pid} を進化させた")
+                if state.printed_def(e["to_card"]).evolves_from != state.printed_def(e["from_card"]).name_ja:
+                    found.append(f"{turn} 番にたねポケモンとしてあつかうポケモン {pid} の上に重ねたカード {e['to_card']} が、印刷のカードの名前から進化するカードではない")
+            st["below"][e["to_card"]] = (pid, v120_below(e["from_card"]) + (e["from_card"],))
+        elif kind == "devolve":
+            pid = e.get("pokemon_id")
+            chain = v120_below(e["from_card"])
+            revived = st["revived"].get(e["to_card"])
+            if revived is not None and revived[0] == pid and chain and chain[0] == e["to_card"]:
+                found.append(f"{turn} 番の退化で、たねポケモンとしてあつかったカード {e['to_card']} がまたいちばん上になった（FE1。エンジンが止める）")
+            st["below"][e["to_card"]] = (pid, chain[:chain.index(e["to_card"])] if e["to_card"] in chain else ())
+        return found
+
     def v119_problems(e: dict) -> list[str]:
         """v0.119: 受けるダメージの選択・どくとねむり・場の効果を、エンジンの登録・計算を読まずに確かめる（印刷の文面・ログから組み立てた場・コインから）。ログ ``e`` の組み立て直しの前に
         呼ぶ（ログから組み立てた場は ``e`` の前の場）。
@@ -5977,6 +6261,7 @@ def log_problems(state) -> list[str]:
         problems.extend(v117_problems(e))  # v0.117: 場の移動・にげる時の反応・条件付きの特殊能力
         problems.extend(v118_problems(e))  # v0.118: 上限なしコイン・攻撃時の能力・回復の配分
         problems.extend(v119_problems(e))  # v0.119: 受けるダメージの選択・どくとねむり・場の効果
+        problems.extend(v120_problems(e))  # v0.120: 化石の復活と仮想ワザの供給
         if kind in ("damage", "confusion_damage"):
             # v0.90: のろいマーカーののっているポケモンが弱点の計算をしたワザのダメージは「×4」（ログの weakness_multiplier）。ほかは書かない。こんらんの 20 は、のろいマーカーと
             # 自分の弱点が当てはまるならコインの前に止まる（UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS）ので、弱点の計算をしたこんらんのダメージはない
@@ -6101,15 +6386,18 @@ def log_problems(state) -> list[str]:
                 else:
                     # v0.44: たきのぼりしんか（EvolveSelfFromDeck。ワザを使ったポケモン自身を、説明の名前から進化するカードで進化させる）
                     # v0.84: しんかのうた（EachPlayerEvolutionSong）は、おたがいのプレイヤーが自分のポケモンを自分の山札のカードで進化させる
+                    # v0.120: しんかのほうし（EvolveChosenNamedFromDeck。選んだ自分のポケモンごとに、山札のそのポケモンから進化するカードを重ねる）
                     valid = _same_attack(attack_window, e) and (
                         (e["player"] == attack_window["player"] and isinstance(_effect_of_event(state, e), (EvolveFromDeckOnHeads, EvolveSelfFromDeck,
                                                                                                            E.CoinHealAllThenEvolveSelfFromDeck,
-                                                                                                           E.CoinSpreadDamageThenEvolveNamedFromDeck)))
+                                                                                                           E.CoinSpreadDamageThenEvolveNamedFromDeck,
+                                                                                                           E.EvolveChosenNamedFromDeck)))
                         or isinstance(_effect_of_event(state, e), EachPlayerEvolutionSong))
                 if not valid or owner.get(uid) != e["player"] \
                         or uid in hand[e["player"]] or uid in discard[e["player"]] or uid in ids or pokemon_owner.get(e["pokemon_id"]) != e["player"]:
                     problems.append(f"{e['turn']} 番に山札から重ねた進化カード {uid} が、そのワザ（山札から進化させるワザ）の処理・山札のカードではない")
-                shuffle_due = e
+                if "power" in e or not isinstance(_effect_of_event(state, e), E.EvolveChosenNamedFromDeck):
+                    shuffle_due = e  # v0.120: しんかのほうしは、選んだポケモンをすべて処理したあとに 1 回だけ切る（v120_problems）
             else:
                 from_hand(e, e["player"], e["to_card"])
             ids[e["to_card"]] = e["pokemon_id"]
@@ -7862,6 +8150,7 @@ def log_problems(state) -> list[str]:
             if stadium_zone is None or stadium_zone[0] != e["stadium_card"] or damage[pid] != e["total_damage"] or damage[pid] < 0:
                 problems.append(f"{e['turn']} 番のトキワシティジムのとりのぞき（ポケモン {pid}）が、場のスタジアム・ログから組み立てたダメージ {damage[pid]} と合わない")
         elif kind == "discard_trainer":
+            egg_looked.pop(e["player"], None)  # v0.120
             here = next(i for i in range(len(log) - 1, -1, -1) if log[i] is e)
             start = next((i for i in range(here, -1, -1) if log[i]["kind"] == "play_trainer" and log[i]["card"] == e["card"]), None)
             if start is not None:
@@ -7928,6 +8217,38 @@ def log_problems(state) -> list[str]:
                 discard[owner[uid]].append(uid)
             if active_of.get(e["player"]) == pid:
                 active_of[e["player"]] = None
+        elif kind == "bench_as_basic":
+            # v0.120: ［なかまのふっかつ］・［かせきのふっかつ］・たまごの化石。持ち主の山札・手札の進化カードを、進化元を重ねずにベンチに出す（場ではたねポケモンとしてあつかう）。
+            # 出せるカードは、印刷の文面の名前（「カブト」）・「なにかの化石」から進化する進化カード（エンジンの登録の名前を読まず、説明の文から決める）
+            uid, zone = e["card"], e["zone"]
+            definition = state.printed_def(uid)
+            power = e.get("power")
+            if power is not None:
+                printed = state.definitions[power.partition("@power")[0]].powers[int(power.partition("@power")[2])].text_ja
+                fits = definition.is_evolution_pokemon and zone == "deck" and (
+                    ("「なにかの化石」を進化させる「進化カード」" in printed and definition.evolves_from == "なにかの化石")
+                    or ("「カブト」を1枚選び出し" in printed and definition.name_ja == "カブト"))
+                fits = fits and pokemon_owner.get(e["pokemon_id"]) == e["player"] and e["player"] == turn_player
+            else:
+                trainer = e.get("trainer_card")
+                fits = (trainer is not None and using_trainer.get(e["player"]) == trainer and definition.is_evolution_pokemon and definition.evolves_from == "なにかの化石"
+                        and "「なにかの化石」を進化させる「進化カード」" in (state.card_def(trainer).trainer_text_ja or ""))
+            if zone == "hand":
+                from_hand(e, e["player"], uid)
+            elif uid in hand[e["player"]] or uid in discard[e["player"]]:
+                fits = False
+            if not fits or owner.get(uid) != e["player"] or uid in ids:
+                problems.append(f"{e['turn']} 番にたねポケモンとしてあつかって出したカード {uid}（{zone}）が、その効果で出せるカードではない")
+            enter(uid)
+            if ids[uid] != e["to_pokemon_id"]:
+                problems.append(f"{e['turn']} 番にたねポケモンとしてあつかって出したカード {uid} の場のポケモンの番号 {e['to_pokemon_id']} が、ログの順番の番号 {ids[uid]} と違う")
+            if power is not None or egg_looked.get(e["player"]):
+                shuffle_due = e  # 特殊能力は「その後、その山札をよく切る」、たまごの化石は「山札を見た場合は」
+        elif kind == "revive_none":
+            if e.get("reason") == "no_card" and (e.get("power") is not None or egg_looked.get(e["player"])):
+                shuffle_due = e  # 山札を見たが、出せるカードがなかった（山札を切る）
+        elif kind == "look_at_deck" and e.get("trainer_card") is not None:
+            egg_looked[e["player"]] = True  # v0.120: たまごの化石で山札を見た
         elif kind == "play_trainer_as_pokemon":
             # v0.47: なにかの化石・ピッピ人形。使っている最中のこのカード（play_trainer のすぐあと）を、トラッシュせずにベンチにポケモンとして出す
             card = e["card"]
@@ -8421,9 +8742,10 @@ def log_problems(state) -> list[str]:
                         or prior["kind"] != "coin_flip" or prior.get("effect") != e["power"] or prior["result"] != "heads":
                     problems.append(f"{e['turn']} 番の evolve_from_deck_none（特殊能力 {e['power']}）が、［うか］の「おもて」のすぐあとにない")
             elif not _same_attack(attack_window, e) or not isinstance(_effect_of_event(state, e), (EvolveFromDeckOnHeads, EvolveSelfFromDeck,
-                                                                                                    EachPlayerEvolutionSong, E.CoinHealAllThenEvolveSelfFromDeck)):
+                                                                                                    EachPlayerEvolutionSong, E.CoinHealAllThenEvolveSelfFromDeck,
+                                                                                                    E.EvolveChosenNamedFromDeck)):  # v0.120
                 problems.append(f"{e['turn']} 番の evolve_from_deck_none が、山札から進化させるワザの処理の中にない")
-            if "power" in e or not isinstance(_effect_of_event(state, e), E.CoinHealAllThenEvolveSelfFromDeck):
+            if "power" in e or not isinstance(_effect_of_event(state, e), (E.CoinHealAllThenEvolveSelfFromDeck, E.EvolveChosenNamedFromDeck)):
                 shuffle_due = e
             # v0.105: からやぶりしんか・ひざしをあびるは「山札を見た場合は」切る（山札が 0 枚なら切らない）。ログは山札の枚数を持たないので、切るかはここでは求めない（切る回数は
             # v105_problems、山札の枚数との対応は tools/existing_effect_games.py の v105_replay_problems が照らす）
@@ -9384,7 +9706,9 @@ def observation_problems(state) -> list[str]:
                                       "return_to_deck", "select_evolution_card", "attach_from_hand", "hand_to_active", "discard_from_hand",
                                       "opponent_hand_to_deck", "opponent_hand_to_bench",
                                       "take_looked_cards",  # v0.83: 見た山札の上のカードから選ぶ決定（docs/shining-gentle-pokemon-v0.83.md 3.1）
-                                      "split_from_deck")  # v0.88: v0.87 の［ぶんれつ］（観測の HIDDEN_COUNT_KINDS にあり、監査の一覧から漏れていた）
+                                      "split_from_deck",  # v0.88: v0.87 の［ぶんれつ］（観測の HIDDEN_COUNT_KINDS にあり、監査の一覧から漏れていた）
+                                      # v0.120: たまごの化石の手札・山札の選択（手札に出せるカードがあるかを漏らす）と、手札・山札から出すカード
+                                      "revive_source", "bench_from_deck_or_hand")
             if viewer != d.player and ("options" in dv or (dv != {"kind": d.kind, "player": d.player} if hidden_count else dv.get("option_count") != len(d.options))):
                 problems.append(f"観測（{viewer}）に、ほかのプレイヤー {d.player} の決定の選べるもの（の数）がある")
             if viewer == d.player and OPTION_MEANINGS[d.kind] == "card":
