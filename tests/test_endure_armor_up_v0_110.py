@@ -609,7 +609,8 @@ class CopyAndStateTest(unittest.TestCase):
         (written,) = [e for e in data["players"][0]["active"]["persistent_effects"] if e["effect"] == SURVIVAL]
         self.assertEqual({k: written[k] for k in ("effect", "created_turn", "active_turn", "end_turn", "scope", "remaining_hp", "source_card_id")},
                          {"effect": SURVIVAL, "created_turn": TURN, "active_turn": TURN, "end_turn": TURN + 2, "scope": "attack", "remaining_hp": 10, "source_card_id": FORRETRESS})
-        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (26, 26))
+        self.assertIn(26, FORMAT_VERSIONS)  # この版で形式を上げていない。今の最新の形式は tests/test_catalog_contract.py（docs/testing.md）
+        self.assertEqual(max(FORMAT_VERSIONS), LATEST_FORMAT)
         with self.assertRaises(ValueError):
             state_to_dict(given, format_version=7)
         expected = attack(given, 0)

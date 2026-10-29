@@ -875,7 +875,7 @@ class DecisionTest(unittest.TestCase):
                 apply_kernel(asked, ResolveDecision(player, asked.decision.id, choices))
             self.assertEqual(snap(asked), before)
         self.assertEqual(max(FORMAT_VERSIONS), LATEST_FORMAT)
-        self.assertEqual(LATEST_FORMAT, 26)
+        self.assertIn(26, FORMAT_VERSIONS)  # この版で形式を上げていない。今の最新の形式は tests/test_catalog_contract.py（docs/testing.md）
 
     def test_preflight_methods_agree(self):
         """先読みの方法（derived・derived_full・legacy）は同じ結果（新しい型は v0.13 の止める関数の確かめた型ではないので、legacy でもすべての結果を試す）。上限は変えていない。"""

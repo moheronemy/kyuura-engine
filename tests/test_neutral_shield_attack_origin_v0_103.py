@@ -223,7 +223,7 @@ class RegistrationTest(unittest.TestCase):
                 self.assertIn(target, links["latest_descriptions"]["adopted_printed_text"])
 
     def test_no_new_codes_or_format(self):
-        self.assertEqual(max(FORMAT_VERSIONS), 26)  # 力は今の場から求める。新しい状態・書き出しの形式は加えない
+        self.assertIn(26, FORMAT_VERSIONS)  # 力は今の場から求める。新しい状態・書き出しの形式は加えない。今の最新の形式は tests/test_catalog_contract.py（docs/testing.md）
         self.assertFalse([q for q in QUESTIONS.values() if q.code and ("NEUTRAL_SHIELD" in q.code or "EVOLVED" in q.code)])
         self.assertTrue(K.SOURCE_LEFT_CODE.startswith("UNSUPPORTED_"))  # エンジンの情報の不足（研究上の未解決ではない）
 

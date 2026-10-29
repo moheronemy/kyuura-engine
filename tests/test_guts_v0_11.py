@@ -728,7 +728,10 @@ class G37Test(unittest.TestCase):
         # v0.117: いかく（ドわすれと同じワザの禁止）・サイキックダメージ（ダメージカウンター）・おいうち（「にげる」ときの持続効果）。docs/retreat-return-active-powers-v0.117.md 4 章・8 章
         "LockOpponentAttackIfBasic", "CoinsCountersOnOpponent", "DamageThenPursuitOnRetreat",
         # v0.118: しめつづける（マヒ・「にげる」エネルギーを増やす持続効果）・ふしぎなかおり（相手の場の回復）。docs/unbounded-coins-heal-allocation-v0.118.md 6 章・7 章
-        "DamageThenParalyzeOnHeadsElseRetreatCost", "EachPlayerCoinHealOwnField"]))
+        "DamageThenParalyzeOnHeadsElseRetreatCost", "EachPlayerCoinHealOwnField",
+        # v0.119: いたみわけ（ダメージカウンター）・どくどくエキス（どく）・ひきずりこむ（ダメージの前の入れ替えとねむり）。なぞのこうせん（自分の場）・どくをだす（次の相手の番の反応）・
+        # ガスばくはつ（かわりに出てくる対戦ポケモンのどく。出したときに評価する）は、ワザの要素として相手の対戦ポケモンへの効果を持たない。docs/damage-reactions-poison-sleep-v0.119.md
+        "PlaceOwnCounterCountOnOpponent", "ToxicPoisonOnHeadsWithoutDamage", "OptionalSwitchOpponentThenDamageAndSleep"]))
 
 
 class DecisionTest(unittest.TestCase):

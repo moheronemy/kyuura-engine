@@ -410,7 +410,8 @@ class CorrosiveAcidTest(unittest.TestCase):
         """新しい状態の項目はない（形式 26 のまま）。clone・deepcopy・pickle から同じ結果。不変条件は登録の ``attack_lock_terms`` と照らす（位置を取り違えた効果を見つける）。"""
         from kyuura_engine.engine import check_invariants
 
-        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (26, 26))
+        self.assertIn(26, FORMAT_VERSIONS)  # この版で形式を上げていない。今の最新の形式は tests/test_catalog_contract.py（docs/testing.md）
+        self.assertEqual(max(FORMAT_VERSIONS), LATEST_FORMAT)
         state = board(mon(OMASTAR, (W, W, W)), opponent=mon(CHANSEY))
         expected = attack(state, 1, TL)
         for other in (state.clone(), copy.deepcopy(state), pickle.loads(pickle.dumps(state))):

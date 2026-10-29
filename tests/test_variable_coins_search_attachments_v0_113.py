@@ -863,7 +863,8 @@ class SaveAndFormatTest(unittest.TestCase):
         決定の ``context`` の値で、形式 26 で書き出せ（書き出し・観測・不変条件の確かめが通る）、clone・deepcopy・pickle から同じ答えで同じ続きになる（各テストの ``same_answers``）。"""
         from kyuura_engine.serialize import state_to_dict
 
-        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (26, 26))
+        self.assertIn(26, FORMAT_VERSIONS)  # この版で形式を上げていない。今の最新の形式は tests/test_catalog_contract.py（docs/testing.md）
+        self.assertEqual(max(FORMAT_VERSIONS), LATEST_FORMAT)
         state = board(mon(AMPHAROS, (L,)), bench=(mon(H.PIKACHU),), opponent=mon(CHANSEY), deck=[L, L, L, W])
         card = attack(state, 0, HD, HD, TL)
         target = answer(card, card.decision.options[:2])

@@ -504,7 +504,8 @@ class DecisionAndPreflightTest(unittest.TestCase):
         self.assertEqual({k: written[k] for k in ("effect", "created_turn", "active_turn", "prevent_on", "flipper", "scope", "source_card_id")},
                          {"effect": GUARD, "created_turn": TURN, "active_turn": TURN + 1, "prevent_on": "heads", "flipper": "unstated", "scope": "attack",
                           "source_card_id": KADABRA})
-        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (26, 26))
+        self.assertIn(26, FORMAT_VERSIONS)  # この版で形式を上げていない。今の最新の形式は tests/test_catalog_contract.py（docs/testing.md）
+        self.assertEqual(max(FORMAT_VERSIONS), LATEST_FORMAT)
         with self.assertRaises(ValueError):
             state_to_dict(given, format_version=7)
         expected = attack(given, 0, HD)

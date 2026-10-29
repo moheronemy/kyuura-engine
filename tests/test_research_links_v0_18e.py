@@ -176,7 +176,12 @@ class ResearchLinksTest(unittest.TestCase):
                              "UNRESOLVED_VANISH_OTHER_ATTACHED", "UNRESOLVED_ESP_LEFT_BEFORE_COIN",
                              # v0.118: HZ1・XP1・SX1・SX2・TN1（docs/unbounded-coins-heal-allocation-v0.118.md 10 章）
                              "UNRESOLVED_HEAL_UP_TO_ZERO", "UNRESOLVED_GROUP_POWER_COIN_ORDER", "UNRESOLVED_TIME_SHIFT_WITHOUT_TARGET",
-                             "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN", "UNRESOLVED_TRANSPORT_WITHOUT_CARDS"})
+                             "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN", "UNRESOLVED_TRANSPORT_WITHOUT_CARDS",
+                             # v0.119: AM1・HS1・PO1・PO2・PO3・PX1・IA1・AP1・AP2・MD1（docs/damage-reactions-poison-sleep-v0.119.md 10 章。どれも kyuura に対応する記録がない）
+                             "UNRESOLVED_SHELL_ARMOR_TIMING", "UNRESOLVED_HARD_SHELL_NONPOSITIVE", "UNRESOLVED_POISON_CHANGE_ORDER",
+                             "UNRESOLVED_POISON_MIST_EARLIER_POISON", "UNRESOLVED_POISON_MIST_SOURCE", "UNRESOLVED_SECRETE_POISON_TARGET",
+                             "UNRESOLVED_SCARE_SUPPRESSION_CYCLE", "UNRESOLVED_DISCARD_PROTECTED_COIN", "UNRESOLVED_DISCARD_PROTECTED_POWER_USE",
+                             "UNRESOLVED_COMMAND_DAMAGE_SCOPE"})
         # v0.97（docs/unown-research-idfnj-v0.97.md 3 章）: kyuura が調査で立てた UQ-SELF-EXCLUDING-POWER-COPIES の事例にわるいデンリュウ（neo4-046）の［かんでん］があるので、
         # CV1 を論点に結んだ（kyuura は v0.86 を取り込んでいないので、未解決の一覧に CV1 の行はない。kyuura の事例は kyuura_cases_without_engine_ruling で照らす）
         # v0.97 で加えた DF1・DF2 も、kyuura に論点（UQ-SELF-EXCLUDING-POWER-COPIES・UQ-NON-ATTACK-DAMAGE-MODIFIERS）はあるが、未解決の一覧に行がない

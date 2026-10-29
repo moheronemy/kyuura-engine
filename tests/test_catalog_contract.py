@@ -19,19 +19,19 @@ class CatalogContractTest(unittest.TestCase):
     def test_current_catalog_totals(self):
         pool = load_card_pool()
         extract = read_extract()
-        self.assertEqual(len(extract["cards"]), 1311)
-        self.assertEqual(len(pool.playable_ids), 1311)
+        self.assertEqual(len(extract["cards"]), 1322)
+        self.assertEqual(len(pool.playable_ids), 1322)
         self.assertEqual(pool.playable_ids, frozenset(
             card.id for card in pool.definitions.values() if card.supported))
         self.assertEqual(
             Counter(pool.get(card).category for card in pool.playable_ids),
-            {"pokemon": 1012, "trainer": 262, "energy": 37},
+            {"pokemon": 1023, "trainer": 262, "energy": 37},
         )
         registry = DEFAULT_EFFECTS
         self.assertEqual(
             (len(registry.attack_keys()), len(registry.power_keys()),
              len(registry.trainer_ids()), len(registry.energy_ids())),
-            (1679, 159, 262, 19),
+            (1692, 166, 262, 19),
         )
         self.assertEqual(
             sum(registry.trainer_entry(card).effect.is_stadium
@@ -45,7 +45,7 @@ class CatalogContractTest(unittest.TestCase):
 
         pool = load_card_pool()
         names = {pool.get(card).name_ja for card in pool.playable_ids if pool.get(card).category == "pokemon"}
-        self.assertEqual(len(names), 496)
+        self.assertEqual(len(names), 499)
         candidates = engine._identity_candidates(pool)
         basics = [card for card in candidates if pool.get(card).category == "pokemon" and pool.get(card).stage == "basic"]
         babies = [card for card in candidates if pool.get(card).category == "pokemon" and pool.get(card).stage == "baby"]
@@ -54,8 +54,9 @@ class CatalogContractTest(unittest.TestCase):
         # 497 + 13 + 1 = 511（上限 512 は変えない。全候補は 1,074）。v0.117: たね 11 枚（ヘラクロス・エイパム・セレビィ・オドシシ・アンノーンC・アンノーンQ・ナツメのゴース・
         # ライコウ・エンテイ・スイクン・ヤミカラス）を加えて 508 + 13 + 1 = 522 に、割り当てのない最初の実行 1 を加えた 523 回。1 枚だけを指定するコマンドは、この回数（公開のカードの一覧で
         # 決まる ``_single_identity_budget``）ですべて確かめる（A0。上限 512 は 2 枚目の割り当てが要るコマンドだけに使う。全候補は 1,087）。v0.118: たね 3 枚（アンノーンX・ニャース PR1-025・
-        # ルギア PF3-008）を加えて 511 + 13 + 1 = 525 に、最初の実行 1 を加えた 526 回（v0.117 の 1 枚だけの確かめのまま。全候補は 9 枚とも処理の違うカードで 1,096）
-        self.assertEqual((len(candidates), len(basics), len(babies)), (1096, 511, 13))
+        # ルギア PF3-008）を加えて 511 + 13 + 1 = 525 に、最初の実行 1 を加えた 526 回（v0.117 の 1 枚だけの確かめのまま。全候補は 9 枚とも処理の違うカードで 1,096）。v0.119: たね 4 枚
+        # （ツボツボ・レディバ・ヒトデマン ES3-017・ムウマ PRN-036）を加えて 515 + 13 + 1 = 529 に、最初の実行 1 を加えた 530 回（全候補は 11 枚とも処理の違うカードで 1,107）
+        self.assertEqual((len(candidates), len(basics), len(babies)), (1107, 515, 13))
         self.assertEqual(engine._IDENTITY_TRIAL_LIMIT, 512)
 
     def test_current_research_totals(self):
@@ -64,15 +65,15 @@ class CatalogContractTest(unittest.TestCase):
         self.assertEqual(
             (links["counts"]["engine_stop_codes"],
              links["counts"]["engine_unresolved_rulings"]),
-            (259, 260),
+            (269, 270),
         )
-        self.assertEqual(len(links["latest_descriptions"]["adopted_printed_text"]), 1319)
+        self.assertEqual(len(links["latest_descriptions"]["adopted_printed_text"]), 1338)
         self.assertEqual(links["counts"]["kyuura_issues"], 73)
 
     def test_current_format_and_audit_agree(self):
         # Keep the audit's independently maintained schema check. Deriving its
         # version from the serializer would hide missing audit field coverage.
-        self.assertEqual(LATEST_FORMAT, 26)
+        self.assertEqual(LATEST_FORMAT, 27)
         self.assertEqual(FORMAT_VERSIONS, tuple(range(1, LATEST_FORMAT + 1)))
 
     def test_target_universe_and_current_unsupported_totals(self):
@@ -101,7 +102,7 @@ class CatalogContractTest(unittest.TestCase):
         self.assertLessEqual(playable, ids)
         self.assertLessEqual(pmcg, playable)
         self.assertEqual((len(ids - playable), len(neo - playable),
-                          len(non_pack - playable)), (66, 24, 42))
+                          len(non_pack - playable)), (55, 18, 37))
 
 
 class ReleaseCohortTest(unittest.TestCase):

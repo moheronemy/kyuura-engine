@@ -895,7 +895,8 @@ class OtherAttacksTest(unittest.TestCase):
 class SaveAndObservationTest(unittest.TestCase):
     def test_format_unchanged_and_public_logs(self):
         """保存の形式は 26 のまま（新しい持続する効果・プレイヤーの記録の種類は ``effect``・``kind`` と項目を書く。形式を上げない）。新しいログは公開。"""
-        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (26, 26))
+        self.assertIn(26, FORMAT_VERSIONS)  # この版で形式を上げていない。今の最新の形式は tests/test_catalog_contract.py（docs/testing.md）
+        self.assertEqual(max(FORMAT_VERSIONS), LATEST_FORMAT)
         self.assertTrue({"chase_check", "chase_counters", "chase_skipped", "pursuit_damage", "pursuit_skipped", "pursuit_prevented", "time_travel",
                          "legend_body_discard", "trainer_effect_blocked"} <= PUBLIC_EVENTS)
 

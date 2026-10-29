@@ -43,7 +43,7 @@ from kyuura_engine.serialize import FORMAT_VERSIONS, state_to_dict
 from kyuura_engine.state import EnergyRole
 from tests import helpers as H
 from tests.helpers import apply_kernel, with_coin_results
-from tests.log_audit import LATEST_FORMAT, log_problems
+from tests.log_audit import LATEST_FORMAT, _project, log_problems
 from tests.release_catalog import cards_after, cards_before
 from tests.test_counter_keep_energy_protection_v0_101 import attack
 from tests.test_counts_coins_compositions_v0_106 import placed_face_down
@@ -407,12 +407,13 @@ class CopyAndStateTest(unittest.TestCase):
 
     def test_serialization_and_copies(self):
         """新しい状態の項目はない（形式は 26 のまま）。clone・deepcopy・pickle から同じ結果。"""
-        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (26, 26))
+        self.assertIn(26, FORMAT_VERSIONS)  # この版で形式を上げていない。今の最新の形式は tests/test_catalog_contract.py（docs/testing.md）
+        self.assertEqual(max(FORMAT_VERSIONS), LATEST_FORMAT)
         state = board(mon(MEWTWO, (PS,)), opponent=mon(ONIX, (PS,)), opponent_bench=(mon(RATTATA, (PS, PS)),))
         expected = attack(state, 0)
         for other in (state.clone(), copy.deepcopy(state), pickle.loads(pickle.dumps(state))):
             self.assertEqual(snap(attack(other, 0)), snap(expected))
-        self.assertEqual(state_to_dict(expected, format_version=26), state_to_dict(expected, format_version=max(FORMAT_VERSIONS)))
+        self.assertEqual(state_to_dict(expected, format_version=26), _project(state_to_dict(expected, format_version=max(FORMAT_VERSIONS)), 26))
 
     def test_preflight_modes_agree(self):
         """先読みは 3 つの方法で同じ結果（v0.13 の止める関数はこれらの盤面で知らない選択・役割がなく、legacy への切りかえを要しない）。上限は変えていない。"""

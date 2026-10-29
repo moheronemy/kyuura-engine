@@ -736,7 +736,8 @@ class BabyAndShieldTest(unittest.TestCase):
 
 class SaveAndObservationTest(unittest.TestCase):
     def test_format_unchanged_and_public_logs(self):
-        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (26, 26))
+        self.assertIn(26, FORMAT_VERSIONS)  # この版で形式を上げていない。今の最新の形式は tests/test_catalog_contract.py（docs/testing.md）
+        self.assertEqual(max(FORMAT_VERSIONS), LATEST_FORMAT)
         self.assertTrue({"chained_coin_results", "damage_allocated"} <= PUBLIC_EVENTS)
         state = board(mon(SEADRA_ES3, (W, W, W, W)), opponent=mon(H.CHANSEY), opponent_bench=(H.RATTATA, H.PIKACHU))
         asked = attack(state, 0)

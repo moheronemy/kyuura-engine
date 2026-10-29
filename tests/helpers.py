@@ -1552,6 +1552,14 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.CoinHealChosenBenchAndSelf,
     _effects.CoinsUntilTailsDraw,
     _effects.OptionalCoinSetDamageElseFail,
+    # v0.119（docs/damage-reactions-poison-sleep-v0.119.md 5 章〜9 章。自分のカウンターと同じ数を相手にのせる・次の相手の番の自分の場のタイプの弱点なし・カウンターの数を倍にするどく・
+    # のぞむならの入れ替えのあとのダメージとねむり・次の相手の番のどくと相手の控え全員へのダメージの反応・自分へのダメージとかわりに出てくる対戦ポケモンのどく）
+    _effects.PlaceOwnCounterCountOnOpponent,
+    _effects.DamageThenOwnTypeWeaknessImmunityNextTurn,
+    _effects.ToxicPoisonOnHeadsWithoutDamage,
+    _effects.OptionalSwitchOpponentThenDamageAndSleep,
+    _effects.SecretePoisonNextTurn,
+    _effects.DamageAndSelfDamageThenPoisonReplacement,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

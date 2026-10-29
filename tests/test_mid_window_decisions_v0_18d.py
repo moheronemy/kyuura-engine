@@ -82,11 +82,14 @@ class DesignAssumptionTest(unittest.TestCase):
         # v0.87（docs/movement-damage-reactions-v0.87.md 5 章）: マチスのマルマインの［ショックボム］（``power_damage_both_actives_on_tails``）・コクーンの［どくのたいえき］（``poison_damage_source``）は
         # 決定を出さない。ドガースの［ぶんれつ］（``split_from_deck``）は使うかを持ち主が決める（定義の ``decision_kind`` は ``SPLIT_FROM_DECK``）が、処理は決定の口を直接使わず、
         # ``kernel.SplitRequest`` を投げ、窓を開いた ``programs.fire_or_suspend`` が次の要素の位置（"boundary"）を続きの情報にして決定を出す（［だつりょくえき］と同じ持ち方。案 B）
+        # v0.119（docs/damage-reactions-poison-sleep-v0.119.md 6.1 節）: コクーンの「どくをだす」（持続する効果。``poison_and_bench_damage_to_opponent``）を同じ窓に加えた。相手の対戦
+        # ポケモンのどくと控えへのダメージで、決定を出さない（読み方で対象が変わるときは PX1 で止める）ので、この文書の前提は変わらない
         self.assertEqual(sorted(d.name for d in definitions), ["bolt", "defensive_pollen", "energy_drain", "fluffy_wool", "poison_fluid", "restless_sleep", "retaliation",
-                                                               "shock_blast", "split", "strikes_back"])
+                                                               "secrete_poison", "shock_blast", "split", "strikes_back"])
         self.assertTrue(all(d.decision_kind is None for d in definitions if d.name != "split"))
         self.assertEqual(C.SPLIT.decision_kind, "split_from_deck")
         self.assertEqual(sorted(kernel.ACTIONS), ["attack_damage_to_damage_source", "bolt_return_on_heads", "counters_to_damage_source_on_heads", "drain_energy_from_damage_source",
+                                                  "poison_and_bench_damage_to_opponent",  # v0.119
                                                   "poison_damage_source",  # v0.87
                                                   "power_confusion_to_damage_source",
                                                   "power_damage_both_actives_on_tails",  # v0.87

@@ -610,7 +610,7 @@ class DecisionTest(unittest.TestCase):
             self.assertEqual(coins_of(nectar, done), [])
             self.assertLessEqual(len(new_events(nectar, done, "attack_heal")), 1)
         self.assertEqual(max(FORMAT_VERSIONS), LATEST_FORMAT)
-        self.assertEqual(LATEST_FORMAT, 26)
+        self.assertIn(26, FORMAT_VERSIONS)  # この版で形式を上げていない。今の最新の形式は tests/test_catalog_contract.py（docs/testing.md）
 
     def test_milk_drink_keeps_the_same_coins_across_a_decision(self):
         """ミルクのみの 2 枚のコインは、決定をまたいでも同じ組を使う（投げ直さない）。盤面は直接作った（ナツメのESP はふつう「ナツメのポケモン」につけるので、つけたミルタンクでは

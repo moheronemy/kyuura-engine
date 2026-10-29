@@ -848,7 +848,8 @@ class DecisionAndRecordTest(unittest.TestCase):
                          {"effect": DealtAttackDamageReduction.kind, "created_turn": TURN, "active_turn": TURN + 1, "end_turn": TURN + 1, "amount": 10,
                           "source_pokemon": done.players[0].active.pokemon_id, "source_card_id": CHINCHOU})
         self.assertNotIn("while_source_active", written)
-        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (26, 26))
+        self.assertIn(26, FORMAT_VERSIONS)  # この版で形式を上げていない。今の最新の形式は tests/test_catalog_contract.py（docs/testing.md）
+        self.assertEqual(max(FORMAT_VERSIONS), LATEST_FORMAT)
         with self.assertRaises(ValueError):
             state_to_dict(done, format_version=7)
         for other in (done.clone(), copy.deepcopy(done), pickle.loads(pickle.dumps(done))):

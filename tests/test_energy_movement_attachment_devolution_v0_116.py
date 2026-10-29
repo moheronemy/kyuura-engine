@@ -822,7 +822,8 @@ class EspAndPsychoLinkTest(unittest.TestCase):
 class SaveAndObservationTest(unittest.TestCase):
     def test_format_unchanged_and_public_logs(self):
         """保存の形式は 26 のまま（新しい持続する効果の種類は ``effect`` と項目を書く。形式を上げない）。新しいログは公開（場・トラッシュ・手札にもどすカードは公開の情報）。"""
-        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (26, 26))
+        self.assertIn(26, FORMAT_VERSIONS)  # この版で形式を上げていない。今の最新の形式は tests/test_catalog_contract.py（docs/testing.md）
+        self.assertEqual(max(FORMAT_VERSIONS), LATEST_FORMAT)
         self.assertTrue({"attach_status_triggered", "attached_cards_to_hand"} <= PUBLIC_EVENTS)
         after = shocked(condition="poison")
         written = state_to_dict(after, format_version=26)
