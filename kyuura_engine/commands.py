@@ -95,6 +95,10 @@ class UseAttack:
     # 使うとき、使える」）を使うか（ワザの宣言といっしょに選ぶ）。False（既定。v0.87 までの形。辞書には書かない）なら使わない。ワザを使うポケモンがそのワザといっしょに使える
     # 特殊能力を持たない・使えない状態なら、状態を変えずに拒否する
     attack_power: bool = False
+    # v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 5 章）: ワザといっしょに使う、自分の場のポケモンの特殊能力（アンノーンX neo4-065 の［XXXXX］の「この力は、自分の場の「アンノーン」が
+    # 「めざめるパワー」を使うとき、使うことができる」）を持つポケモンの場の番号（ワザを使うポケモン自身でもよい）。None（既定。v0.117 までの形。辞書には書かない）なら使わない。
+    # ``attack_power``（ワザを使うポケモン自身の［すいりょくはつでん］）とは別の項目。使えない・使えない状態なら、状態を変えずに拒否する
+    with_power: int | None = None
 
 
 @dataclass(frozen=True)
@@ -325,7 +329,7 @@ def check_command_fields(command) -> None:
 
 
 # v0.49: v0.48 までの形を変えないため、既定の値（None）のときは辞書に書かない項目（``UseAttack.card``・``UsePokemonPower.card``）
-_OMITTED_WHEN_NONE: dict[type, tuple[str, ...]] = {UseAttack: ("card",), UsePokemonPower: ("card",), AttachEnergy: ("energy2",)}  # v0.59: AttachEnergy.energy2
+_OMITTED_WHEN_NONE: dict[type, tuple[str, ...]] = {UseAttack: ("card", "with_power"), UsePokemonPower: ("card",), AttachEnergy: ("energy2",)}  # v0.59: AttachEnergy.energy2。v0.118: with_power
 # v0.57: 同じく、既定の値（False）のときは辞書に書かない項目（``UseAttack.stadium_coin``。v0.56 までの形を変えない）
 _OMITTED_WHEN_FALSE: dict[type, tuple[str, ...]] = {UseAttack: ("stadium_coin", "attack_power")}  # v0.88: attack_power
 

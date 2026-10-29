@@ -267,6 +267,12 @@ def _require_unit(value: int, unit: int, what: str) -> None:
 
 def _pipeline_bound(lists: list[list], resistance: int, saturation: int, readings: int, weakness: int, unit: int) -> tuple[int, int]:
     """1 つのダメージの計算（変更効果の並び ``lists`` のどれか）の (周期 P（「おもて」の枚数）, B（ダメージの単位）)（docs 3.2 節）。"""
+    period, bound, _ = _pipeline_terms(lists, resistance, saturation, readings, weakness, unit)
+    return period, bound
+
+
+def _pipeline_terms(lists: list[list], resistance: int, saturation: int, readings: int, weakness: int, unit: int) -> tuple[int, int, tuple[int, int]]:
+    """``_pipeline_bound`` の (P, B) と、v0.118 の追加の境界に要る (かける数の積 K, しきい値・加える数・抵抗力の和 T)。"""
     halvings = 0
     multiplier = weakness
     total = resistance + saturation + unit
@@ -292,4 +298,97 @@ def _pipeline_bound(lists: list[list], resistance: int, saturation: int, reading
     _require_unit(resistance, unit, "抵抗力の数")
     period = 2 ** halvings
     bound = 3 * multiplier * period * period * total if multi else period * total
-    return period, bound
+    return period, bound, (multiplier, total)
+
+
+def bonus_classes(run: AttackRun, element: Damage, per: int, step: int, label: str, source: int) -> HeadClasses:
+    """v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 4 章）: ワザといっしょに使った特殊能力（アンノーンX の［XXXXX］）の「うら」が出るまで投げるコインの「おもて」の数の組。
+    「おもて」の数 h は、ワザの要素 ``element``（``Damage(OPP, Printed())``）の相手の対戦ポケモンへのダメージに、p.321 の ``step`` 段階の加算 ``per × h``（``label``・``source``）として入る
+    （基本となるダメージ（1 段階）ではない。h = 0 なら加えない。実際の処理と同じ ``kernel.attack_modifiers_of``・``compute_damage`` で key を求める）。状態を変えず、乱数を使わない。
+
+    有限の根拠（3.2 節の延長）: ``step`` より前の段階の値は h によらない定数 v（|v| ≤ K ×（目安の数字 + T）。K はかける数の積、T は 3.2 節の和）。h の加算のあとの計算は 3.2 節の計算の
+    一部なので、v を和に加えた T' = T + K ×（目安 + T）で求めた B' 以上の加算（per × h ≥ B'）では、どの道も一定か「P 枚ごとに同じ数だけ増える」。代表は h = 0 〜 ⌈B' / per⌉ + P − 1 の
+    key で尽くせる。キーは最終ダメージを受けるポケモンの残りの HP で飽和させ、2 段階で終えたか・順番の決定・色の読み方・返す効果の計算の結果を分ける（基本となるダメージの飽和だけで
+    追加量を丸めない）。お上品攻撃（5 段階で減らす量を選ぶ）といっしょの場は、加算の段階と選ぶ量の関係をこの根拠で扱っていないので、推測せずに止める（エンジンの未対応）。"""
+    try:
+        key, bound, period = _bonus_key_and_bound(run, element, per, step, label, source)
+    except UnsupportedBoard as reason:
+        raise run.res.question("unbounded_coin_preflight", str(reason)) from None
+    representatives: dict[Any, int] = {}
+    for heads in range(bound + period):
+        representatives.setdefault(key(heads), heads)
+    return HeadClasses(tuple(representatives.values()), tuple(representatives), bound, period, key)
+
+
+def _bonus_key_and_bound(run: AttackRun, element: Damage, per: int, step: int, label: str, source: int) -> tuple[Callable[[int], Any], int, int]:
+    from ..damage import DamageModifier
+    from .programs import OPP, Printed
+
+    if not isinstance(element.base, Printed) or step not in (2, 6):
+        raise RuntimeError(f"ワザといっしょに使った特殊能力の追加の要素 {element!r}・段階 {step} を、この組で扱わない（エンジンの不具合）")
+    if (element.target != OPP or element.gate is not None or element.local_gate is not None or element.requires is not None or element.names is not None
+            or not element.weakness_resistance or not element.resistance or not element.defender_effects):
+        raise RuntimeError("ワザといっしょに使った特殊能力の追加を受けるダメージの要素は、相手の対戦ポケモンへの、項目が既定のものだけ（エンジンの不具合）")
+    res = run.res
+    state = res.state
+    unit = state.rules.damage_per_counter
+    if per % unit or per <= 0:
+        raise UnsupportedBoard(f"「おもて」1 枚あたりの追加 {per} がダメージカウンターの単位の倍数ではない")
+    printed = run.attack.damage
+    if type(printed) is not int or printed < 0 or printed % unit:
+        raise UnsupportedBoard(f"ワザのダメージの目安 {printed!r} が 0 以上のダメージカウンターの単位の倍数ではない")
+    frame = run.fs.frame
+    attacker = run.attacker()
+    owner = 1 - run.player
+    receiver = run.opponent_active()
+    modifiers = K.with_stadium_coin(res, frame, OPPONENT_ACTIVE, K.attack_modifiers_of(res, frame, attacker, receiver, OPPONENT_ACTIVE))
+    if any(m.operation == REDUCE_CHOICE for m in modifiers):
+        raise UnsupportedBoard("お上品攻撃（5 段階で減らす量を選ぶ）と、ワザといっしょに使った特殊能力の「おもて」の数の加算がいっしょにある")
+    remaining = max_hp(state, receiver) - receiver.damage
+    _require_unit(remaining, unit, "受けるポケモンの残りの HP")
+
+    returns: list[Callable[[int], Any]] = []
+    saturation = remaining
+    periods = 1
+    for instance in K.deferred_receivers(res, frame, owner, receiver):
+        effect = instance.implementation
+        if not isinstance(effect, Retaliation):
+            continue  # はんげき・わるいねぞう・ぼうぎょかふん: 量は受けたダメージによらない（受けたかどうか（d > 0）だけで決まる）
+        returned, needed, period = _retaliation(res, run, instance, effect, attacker, unit)
+        returns.append(returned)
+        saturation = max(saturation, needed)
+        periods *= period
+
+    receiver_views = definition_views(state, receiver)
+    readings = len(definition_views(state, attacker)) * len(receiver_views)
+    resistance = max((view.resistance_value or 0) for view in receiver_views)
+    weakness = _weakness_multiplier(state, receiver_views)
+
+    def bonus(heads: int) -> list:
+        return [DamageModifier(step=step, amount=per * heads, label=label, source=source)] if heads > 0 else []
+
+    lists = [modifiers + bonus(1)]  # 加算そのものを数に入れる（同じ段階のほかの加算でない効果との順番の決定を数える）
+    _, _, (multiplier, total) = _pipeline_terms(lists, resistance, saturation, readings, weakness, unit)
+    offset = multiplier * (printed + total)  # ``step`` より前の段階の値の大きさの上限（v）
+    period, bound = _pipeline_bound(lists, resistance + offset, saturation, readings, weakness, unit)
+    period *= periods
+
+    def key(heads: int):
+        with_bonus = modifiers + bonus(heads)
+
+        def tree(orders: dict[int, tuple[int, ...]]):
+            try:
+                calc = K.compute_damage(state, attacker, receiver, printed, with_bonus, orders=orders or None)
+            except TypeReadingsDiffer:
+                return ("readings",)
+            except DamageOrderRequired as need:
+                return ("order", need.step, tuple(tree({**orders, need.step: order}) for order in step_orders(len(need.modifiers))))
+            except DamageReductionRequired:
+                raise RuntimeError("お上品攻撃の減らす量の決定（前で止めた。エンジンの不具合）") from None
+            final = calc.final
+            returned = tuple(g(final) for g in returns) if final > 0 else ()
+            return ("final", min(final, remaining), calc.stopped_after_step_2, returned)
+
+        return tree({})
+
+    return key, max(0, -(-bound // per)), period

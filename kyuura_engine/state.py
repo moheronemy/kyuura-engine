@@ -1214,6 +1214,33 @@ class StatusOnEnergyAttach:
 
 
 @dataclass(frozen=True)
+class RetreatCostIncrease:
+    """ワザによる「持続する効果」（v0.118。docs/unbounded-coins-heal-allocation-v0.118.md 6 章）のうち、わるいオクタン（neo4-037）の「しめつづける」の「「うら」なら、次の相手の番、
+    このワザを受けた相手は、「にげる」ときに必要な「エネルギー」が、1個ぶん多くなる。」（kyuura の印刷の文面）。
+
+    相手に与える効果（``on_opponent``）。はたらく番は次の相手の番（``created_turn + 1``）で、その番の間、受けているポケモンが「にげる」ときにトラッシュするエネルギーの数（``effects.retreat_cost``）を
+    ``amount`` 個ぶん決まって増やす（選べない。［ねんちゃくえき］・ベトベトマーカーと同じ増やす数として当てはめる）。``attack`` は効果を与えたワザ（``AttackKey`` の文字列）。「にげる」を
+    止めない（``CannotRetreat`` とは別の効果）。効果による入れ替え（ポケモンいれかえ・突風など）はエネルギーをトラッシュしないので関係しない。消える契機はほかの持続する効果と同じ
+    （期限・ベンチにもどる・進化・退化・きぜつ・山札や手札にもどる）。"""
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    amount: int
+    attack: str
+    kind: ClassVar[str] = "retreat_cost_increase"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = True
+
+    def __post_init__(self) -> None:
+        if type(self.amount) is not int or self.amount <= 0:
+            raise ValueError(f"「にげる」ときに増やすエネルギーの数 {self.amount!r} は正の整数")
+        if type(self.attack) is not str or "#" not in self.attack:
+            raise ValueError(f"効果を与えたワザ {self.attack!r} は AttackKey の文字列")
+
+
+@dataclass(frozen=True)
 class PursuitOnRetreat:
     """ワザによる「持続する効果」（v0.117。docs/retreat-return-active-powers-v0.117.md 3 章）のうち、ブラッキー（PF2-006）・ヤミカラス（PRN-001）の「おいうち」の「次の相手の番、
     このワザを受けた相手が「にげる」とき、「弱点・抵抗力」に関係なく、10ダメージ。」（kyuura の印刷の文面）。
@@ -1626,6 +1653,7 @@ PERSISTENT_EFFECT_TYPES = (PreventDamage, PreventAttackDamage, Retaliation, Next
                            BenchPowersStopped,  # v0.114: じっとみる（特殊能力の効果。この番の終わりまで。バトル場に出たら消える）
                            StatusOnEnergyAttach, EvolutionLock,  # v0.116: しこみどく・エナジーショック・やみのしょくしゅ（次の相手の番）
                            PursuitOnRetreat,  # v0.117: おいうち（次の相手の番に「にげる」とき）
+                           RetreatCostIncrease,  # v0.118: しめつづける（次の相手の番に「にげる」ときに必要なエネルギーが多くなる）
                            *PERIOD_EFFECT_TYPES)  # v0.92: クモのす・くろいまなざし・にらみつける（ヨーギラス）・いやなおと。v0.93: はなれられない効果・かぶりつく。v0.108: マイナスイオン・あまえる
 
 
@@ -1682,7 +1710,11 @@ ATTACK_FIELD_POWER_SUPPRESSION = "attack_field_power_suppression"
 # はたらく時点の場の今の姿で決める）
 QUICKEN_USED = "quicken_used"
 GROUP_ATTACK_IMMUNITY = "group_attack_immunity"
-POWER_TURN_EFFECT_KINDS = (QUICKEN_USED, GROUP_ATTACK_IMMUNITY)
+# v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 5 章）: アンノーンX（neo4-065）の［XXXXX］を、ワザ（「めざめるパワー」）といっしょに使った記録（``UseAttack.with_power``）。
+# ``player`` は使ったプレイヤー、``source_card``・``pokemon_id`` は特殊能力を持つポケモン（ワザを使ったポケモンとは限らない）のいちばん上のカードと場の番号、``card_id`` は特殊能力を印刷した
+# カード。使った番の終わりに消える。「この番に、すでに自分の場のほかのアンノーン「X」の「XXXXX」を使っていたなら」の確かめ（ほかの個体だけ。同じ個体の使用制限に広げない）
+GROUP_ATTACK_POWER_USED = "group_attack_power_used"
+POWER_TURN_EFFECT_KINDS = (QUICKEN_USED, GROUP_ATTACK_IMMUNITY, GROUP_ATTACK_POWER_USED)
 TRAINER_TURN_EFFECT_KINDS = (ATTACK_DAMAGE_BONUS, POISON_ON_ATTACK_DAMAGE, BENCH_ATTACK_DAMAGE_PREVENTION, POWER_SUPPRESSION, FIRE_DOUBLE_ATTACH, EVOLUTION_BAN,
                              OPPONENT_POWER_SUPPRESSION, ATTACK_POWER_SUPPRESSION, ATTACK_FIELD_POWER_SUPPRESSION, *POWER_TURN_EFFECT_KINDS)
 

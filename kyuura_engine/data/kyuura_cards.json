@@ -1600,6 +1600,17 @@
     "PF3-006",
     "PRN-001"
   ],
+  "pool_v0_118": [
+    "neo4-037",
+    "neo4-056",
+    "neo4-065",
+    "neo4-097",
+    "SI-008",
+    "SI-011",
+    "PR1-025",
+    "PR1-043",
+    "PF3-008"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -119965,6 +119976,944 @@
         {
           "page": "neop001",
           "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "neo4-037",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいオクタン",
+        "en": "Dark Octillery"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          224
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "テッポウオ",
+          "en": "Remoraid"
+        },
+        "hp": 60,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "スミでっぽう",
+              "en": "Ink Blast"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "ワザに必要な｢エネルギー｣よりも多く｢エネルギー｣がついているとき、多い「エネルギー」1個につき、10ダメージを追加する。ダメージ追加は2個ぶんまで。",
+              "en": "This attack does 20 damage plus 10 more damage for each Energy attached to Dark Octillery but not used to pay for this attack's Energy cost. You can't add more than 20 damage in this way."
+            }
+          },
+          {
+            "name": {
+              "ja": "しめつづける",
+              "en": "Tentacle Wrap"
+            },
+            "cost": [
+              "water",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。「うら」なら、次の相手の番、このワザを受けた相手は、「にげる」ときに必要な「エネルギー」が、1個ぶん多くなる。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed. If tails, during your opponent's next turn, your opponent pays Colorless more to retreat the Defending Pokémon."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-037",
+        "pokemontcg": [
+          "neo4-62"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%82%AA%E3%82%AF%E3%82%BF%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 30,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%82%AA%E3%82%AF%E3%82%BF%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-056",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいナッシー",
+        "en": "Dark Exeggutor"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          103
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "タマタマ",
+          "en": "Exeggcute"
+        },
+        "hp": 60,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "トリプルずつき",
+              "en": "Triple Headbutt"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "コインを3枚投げ、「おもて」の数×10のダメージ。",
+              "en": "Flip 3 coins. This attack does 10 damage times the number of heads."
+            }
+          },
+          {
+            "name": {
+              "ja": "わるわるMAX",
+              "en": "MAX Burst"
+            },
+            "cost": [
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "相手の場のポケモン全員についている「エネルギー」の数ぶんコインを投げ、「おもて」の数×20のダメージ。",
+              "en": "Flip a number of coins equal to the number of Energy cards attached to your opponent's Pokémon. This attack does 20 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-056",
+        "pokemontcg": [
+          "neo4-33"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%83%8A%E3%83%83%E3%82%B7%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 25,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%83%8A%E3%83%83%E3%82%B7%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-065",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "アンノーンX",
+        "en": "Unown [X]"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          201
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "en": "You may have up to 4 Basic Pokémon cards in your deck with Unown in their names."
+        },
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "XXXXX[?????]",
+              "en": "[XXXXX]"
+            },
+            "text": {
+              "ja": "この力は、自分の場の「アンノーン」が「めざめるパワー」を使うとき、使うことができる。「うら」が出るまでコインを投げつづけ、その間に出た「おもて」の数×10のダメージを、その「めざめるパワー」のダメージに追加する。この番に、すでに自分の場のほかのアンノーン「X」の「XXXXX」を使っていたなら、この力を使うことはできない。",
+              "en": "Whenever 1 of your Pokémon with Unown in its name uses its Hidden Power attack, flip a coin until you get tails. That attack does 10 more damage for each heads. If you have more than 1 Unown [X] in play, use only 1 [XXXXX] each turn."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "めざめるパワー",
+              "en": "Hidden Power"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-065",
+        "pokemontcg": [
+          "neo4-30"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A2%E3%83%B3%E3%83%8E%E3%83%BC%E3%83%B3X_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 22,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A2%E3%83%B3%E3%83%8E%E3%83%BC%E3%83%B3X_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-097",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいポリゴン2",
+        "en": "Dark Porygon2"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          233
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ポリゴン",
+          "en": "Porygon"
+        },
+        "hp": 60,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "じくうへんかん",
+              "en": "Spatial Distortion"
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使うことができる。コインを投げて「おもて」なら、自分のトラッシュから「スタジアムカード」を1枚選び出し、場に出す(すでに場にある「スタジアムカード」は、トラッシュする)。このカードが「ねむり・マヒ・こんらん」状態のとき、この力を使うことはできない。",
+              "en": "Once during your turn (before your attack), you may flip a coin. If heads, choose a Stadium card from your discard pile and put it into play. (If there's already a Stadium card in play, discard it.) This power can't be used if Dark Porygon2 is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "まるまるアタック",
+              "en": "Curve Attack"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージを受けない(ダメージ以外の効果は受ける)。",
+              "en": "Flip a coin. If heads, prevent all damage done by attacks to Dark Porygon2 during your opponent's next turn. (Any other effects of attacks still happen.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-097",
+        "pokemontcg": [
+          "neo4-8"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%83%9D%E3%83%AA%E3%82%B4%E3%83%B32_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 28,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%83%9D%E3%83%AA%E3%82%B4%E3%83%B32_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "SI-008",
+      "jp_set": "SI",
+      "category": "pokemon",
+      "name": {
+        "ja": "フシギソウ",
+        "en": "Ivysaur"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          2
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "フシギダネ",
+          "en": "Bulbasaur"
+        },
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ふしぎなかおり",
+              "en": "Strange Scent"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "お互いのプレイヤーは、それぞれコインを投げる。「おもて」を出したプレイヤーは、自分の場のポケモンにのっているダメージカウンターを、最大3つとりのぞく。(合計が3つ以下なら、2匹以上のポケモンから、とりのぞいてもよい)",
+              "en": "Each player flips a coin. Each player who gets heads chooses a total of 3 damage counters from among his or her Pokémon and removes them. (If the player's Pokémon have fewer total damage counters than that, he or she removes all of them.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "はっぱカッター",
+              "en": "Razor Leaf"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "si1-5"
+        ],
+        "pcg_search": [
+          "1stmv008"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stmv008.php",
+      "jp_print": {
+        "level": 23,
+        "rarity": "-",
+        "series": "映画公開記念パック「サザンアイランド」",
+        "remarks": [
+          "レインボーアイランド 川辺"
+        ],
+        "source": "https://pcg-search.com/card/1st/1stmv008.php"
+      },
+      "product_group": "southern_islands",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "jp_print.level": "nazonobasho（サザンアイランド）",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:si1-5",
+        "pokemon.dex": "pokemontcg:si1-5",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stmv008",
+          "list_number": "002/003"
+        }
+      ]
+    },
+    {
+      "id": "SI-011",
+      "jp_set": "SI",
+      "category": "pokemon",
+      "name": {
+        "ja": "ラフレシア",
+        "en": "Vileplume"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          45
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "クサイハナ",
+          "en": "Gloom"
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ごくらくかふん",
+              "en": "Paradise Pollen"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、自分の控えポケモンを1匹選び、そのポケモンにのっているダメージカウンター最大2つと、自分にのっているダメージカウンター最大2つを、それぞれ、とりのぞく。",
+              "en": "Flip a coin. If heads, remove 2 damage counters from Vileplume (1 if it only has 1). Then, if you have any Benched Pokémon with damage counters on them, choose 1 of them and remove 2 damage counters from it (1 if it only has 1)."
+            }
+          },
+          {
+            "name": {
+              "ja": "さいあくかふん",
+              "en": "Horrid Pollen"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態に、「うら」なら「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed. If tails, the Defending Pokémon is now Confused."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "si1-17"
+        ],
+        "pcg_search": [
+          "1stmv011"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stmv011.php",
+      "jp_print": {
+        "level": 30,
+        "rarity": "-(キラ)",
+        "series": "映画公開記念パック「サザンアイランド」",
+        "remarks": [
+          "トロピカルアイランド ジャングル"
+        ],
+        "source": "https://pcg-search.com/card/1st/1stmv011.php"
+      },
+      "product_group": "southern_islands",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "jp_print.level": "nazonobasho（サザンアイランド）",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:si1-17",
+        "pokemon.dex": "pokemontcg:si1-17",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stmv011",
+          "list_number": "002/003"
+        }
+      ]
+    },
+    {
+      "id": "PR1-025",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ニャース",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひっかく",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "まるもうけ",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "「うら」が出るまでコインを投げつづけ、その間に出た「おもて」の数だけ、カードを引く。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp025"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp025.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp025.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stp025",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PR1-043",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "カイリュー",
+        "en": "Dragonite"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          149
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "ハクリュー",
+          "en": "Dragonair"
+        },
+        "hp": 90,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "トランスポート",
+              "en": "Special Delivery"
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使える。自分の山札からカードを1枚引いて、手札に加える。その後、自分の手札からカードを1枚選び、山札の上に置く。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": "Once during your turn (before your attack), you may draw a card. If you do, choose a card from your hand and put it on top of your deck. This power can't be used if Dragonite is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "マッハひこう",
+              "en": "Supersonic Flight"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 60,
+              "modifier": null,
+              "display": "60"
+            },
+            "text": {
+              "ja": "コインを投げ「うら」なら、このワザは失敗する。",
+              "en": "Flip a coin. If tails, this attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-5"
+        ],
+        "pcg_search": [
+          "1stp043"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp043.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp043.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-5",
+        "pokemon.dex": "pokemontcg:basep-5",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stp043",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PF3-008",
+      "jp_set": "PF3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ルギア",
+        "en": "Lugia"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          249
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 90,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "エアロウイング",
+              "en": "Aerowing"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "のぞむなら、コインを投げてよい。コインを投げて「おもて」なら、このワザのダメージは「80」になる。「うら」なら、このワザは失敗する。",
+              "en": "You may flip a coin. If heads, this attack does 80 damage. If tails, this attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo3-20"
+        ],
+        "pcg_search": [
+          "neopf3008"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neopf3008.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プレミアムファイル3",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neopf3008.php"
+      },
+      "product_group": "premium_file",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:neo3-20",
+        "pokemon.dex": "pokemontcg:neo3-20"
+      },
+      "copies": [
+        {
+          "page": "neopf3008",
+          "list_number": "008/009"
         }
       ]
     }

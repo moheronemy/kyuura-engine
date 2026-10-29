@@ -12,8 +12,8 @@
   "card_data_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 255,
-    "engine_stop_codes": 254,
+    "engine_unresolved_rulings": 260,
+    "engine_stop_codes": 259,
     "kyuura_issues": 73
   },
   "stop_codes": {
@@ -2932,6 +2932,61 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_HEAL_UP_TO_ZERO": {
+      "engine_rulings": [
+        {
+          "version": "v0.118",
+          "document": "docs/unbounded-coins-heal-allocation-v0.118.md",
+          "ruling_id": "HZ1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_GROUP_POWER_COIN_ORDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.118",
+          "document": "docs/unbounded-coins-heal-allocation-v0.118.md",
+          "ruling_id": "XP1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TIME_SHIFT_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.118",
+          "document": "docs/unbounded-coins-heal-allocation-v0.118.md",
+          "ruling_id": "SX1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN": {
+      "engine_rulings": [
+        {
+          "version": "v0.118",
+          "document": "docs/unbounded-coins-heal-allocation-v0.118.md",
+          "ruling_id": "SX2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TRANSPORT_WITHOUT_CARDS": {
+      "engine_rulings": [
+        {
+          "version": "v0.118",
+          "document": "docs/unbounded-coins-heal-allocation-v0.118.md",
+          "ruling_id": "TP1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -4956,7 +5011,21 @@
       "PF3-005/power/0",
       "PF3-006/attack/0",
       "PF3-006/power/0",
-      "PRN-001/attack/1"
+      "PRN-001/attack/1",
+      "neo4-037/attack/0",
+      "neo4-037/attack/1",
+      "neo4-056/attack/0",
+      "neo4-056/attack/1",
+      "neo4-065/power/0",
+      "neo4-097/attack/0",
+      "neo4-097/power/0",
+      "SI-008/attack/0",
+      "SI-011/attack/0",
+      "SI-011/attack/1",
+      "PR1-025/attack/1",
+      "PR1-043/attack/0",
+      "PR1-043/power/0",
+      "PF3-008/attack/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

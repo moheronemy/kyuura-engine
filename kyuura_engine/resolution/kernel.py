@@ -147,6 +147,10 @@ class Resolution:
         # v0.88: このワザといっしょに使った特殊能力（ランターンの［すいりょくはつでん］。使ったら真）。ワザの宣言で決め（``flow._attack_body``）、決定をまたぐときは続きの情報の
         # ``attack_power`` で運ぶ。相手の対戦ポケモンへのワザのダメージの要素に 2 段階の追加（``attack_modifiers_of``）
         self.attack_power: bool = False
+        # v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 5 章）: このワザといっしょに使った、自分の場のポケモンの［XXXXX］（アンノーンX。``UseAttack.with_power``）。(発生源の番号,
+        # 発生源のカード, 特殊能力を印刷したカード id, 位置, 「おもて」の数（まだ投げていなければ None）)。宣言で決め、コインはワザのダメージの要素で投げる（``programs.Damage``）。
+        # 決定をまたぐときは続きの情報の ``group_power`` で運ぶ。相手の対戦ポケモンへのそのワザのダメージに 2 段階か 6 段階の追加（``attack_modifiers_of``）
+        self.group_power: tuple | None = None
         # v0.61: ［ずらかる］（``effects.ReturnToDeckAtRemainingHp``）。``dormant`` はコマンドの始めに、残りHPが「10」で力が消えていた場のポケモンの番号（SC2 の比べのもと。
         # 渡さなければ、この解決を作った時点の状態から求める。コマンドの途中で作る解決（特殊能力・トレーナー・にげるのあと）は、コマンドの入口の状態から求めて渡す）。
         # ``scram_touched`` は、この解決のダメージで、力がはたらいたまま残りHPが「10」になった場のポケモンの番号（ダメージの処理のまとまりの途中で「10」を通ったか。SC1）
@@ -690,6 +694,11 @@ def attack_modifiers_of(res: Resolution, frame, attacker: PokemonInPlay, receive
     if res.attack_power and target == OPPONENT_ACTIVE and frame.kind is FrameKind.ATTACK:
         # v0.88: ワザといっしょに使った特殊能力（［すいりょくはつでん］。p.321 の 2 段階。ワザを使うポケモンの効果）
         extra = E.attack_power_modifier(res.state, attacker, frame.attack_key)
+        if extra is not None:
+            modifiers.append(extra)
+    if res.group_power is not None and target == OPPONENT_ACTIVE and frame.kind is FrameKind.ATTACK:
+        # v0.118: ワザといっしょに使った自分の場のポケモンの［XXXXX］（発生源がワザを使うポケモンなら 2 段階、ほかのポケモンなら 6 段階。「おもて」が決まってから）
+        extra = E.group_attack_power_modifier(res.state, attacker, res.group_power)
         if extra is not None:
             modifiers.append(extra)
     return modifiers

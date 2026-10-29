@@ -111,6 +111,10 @@ from .decisions import (
     OPTIONAL_HEAL,
     SELECT_ATTACHED_SPECIAL_ENERGY,
     ALLOCATE_DAMAGE,
+    HEAL_ALLOCATION,
+    OPTIONAL_COIN,
+    STADIUM_FROM_DISCARD,
+    DECK_TOP_FROM_HAND,
 )
 from .effects import (
     JANKEN_HANDS,
@@ -175,6 +179,11 @@ OPTION_MEANINGS: dict[str, str] = {
     OPTIONAL_HEAL: "pokemon",  # v0.104: プリンの「かいふく」で取り除くか（ワザを使ったポケモンの番号。0 個は取り除かない）
     SELECT_ATTACHED_SPECIAL_ENERGY: "card",  # v0.114: サイコキッス（相手の場のポケモンについている特殊エネルギーカード。公開）
     ALLOCATE_DAMAGE: "number",  # v0.115: ウォーターボム・がんせきくだき・ロックブラストの配分（``context`` の ``"table"`` の位置。配る先・単位の数は場とコイン・トラッシュの公開の情報）
+    # v0.118: ふしぎなかおり・ごくらくかふんのとりのぞく数の配分（``context`` の ``"table"`` の位置。とりのぞく先・のっているカウンターの数は場の公開の情報）
+    HEAL_ALLOCATION: "number",
+    OPTIONAL_COIN: "number",  # v0.118: エアロウイングでコインを投げるか（1 個: 投げる・0 個: 投げない）
+    STADIUM_FROM_DISCARD: "card",  # v0.118: ［じくうへんかん］で場に出すトラッシュのスタジアムカード（公開）
+    DECK_TOP_FROM_HAND: "card",  # v0.118: ［トランスポート］で山札の上に置く手札のカード（決めるプレイヤーの手札。選べる数も相手に見せない）
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
 # v0.73: 化石の発掘（山札とトラッシュ）・マスターボール（見た山札の上の 7 枚）も、決めるプレイヤーが自分の山札を見る
@@ -204,7 +213,9 @@ HIDDEN_COUNT_KINDS = frozenset({SPLIT_FROM_DECK, CHALLENGE_BENCH, QUIZ_CARD, QUI
                                 # カスミのいかり（v0.55。見た 7 枚から 2 枚）・ひかるミュウの「フラッシュサーチ」の数も、決めるプレイヤーでない人に見せなくなる（意図した変更）
                                 TAKE_LOOKED_CARDS,
                                 # v0.84: しんかのうたの進化させるポケモンの決定（選ぶと止めるポケモン（``unresolved_choices``）が山札の中身で決まる）
-                                EVOLUTION_SONG_POKEMON})
+                                EVOLUTION_SONG_POKEMON,
+                                # v0.118: ［トランスポート］で山札の上に置く手札のカード（引いたあとの手札の中身・選べる数を、決めるプレイヤーでない人に見せない）
+                                DECK_TOP_FROM_HAND})
 # v0.63: 選べるものがサイドの位置（決めるプレイヤーのサイド）の決定。おもてのサイド（ロケット団参上!）の位置には、カードの id を添える
 PRIZE_POSITION_KINDS = frozenset({TAKE_PRIZE, SELECT_PRIZE_CARD})
 # v0.55: 決めるプレイヤーが効果で見た相手の手札のカードを選べるものにする決定（ロケット団のおねーさん）。選べるもののカードは、決めるプレイヤーに見える（相手の手札を
@@ -520,6 +531,7 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
     "take_prize": (("card",), _only_player),
     "search_deck": (("card",), _only_player),  # 見せる指示がない（v0.22 の CS14）
     "hand_to_deck": (("cards",), _only_player),  # 見せずに山札にもどす（v0.44・v0.46・v0.47）
+    "hand_to_deck_top": (("card",), _only_player),  # v0.118: ［トランスポート］で見せずに山札の上に置く手札のカード
     "look_at_card": (("card",), _looked_card),  # v0.47 の［スパイ］・おどろかす
     "look_at_deck_top": (("cards",), _only_player),  # v0.47 のみらいよち（見る）
     "arrange_deck_top": (("cards",), _only_player),  # v0.47 のみらいよち（もどす並び）
@@ -576,6 +588,8 @@ PUBLIC_EVENTS = frozenset({
     # ついているトレーナーカード・トレーナーの効果を受けなかったポケモン（どれも場・コイン・公開の情報）
     "chase_check", "chase_counters", "chase_skipped", "pursuit_damage", "pursuit_skipped", "pursuit_prevented", "time_travel", "legend_body_discard",
     "trainer_effect_blocked",
+    # v0.118: ワザといっしょに使った［XXXXX］の宣言・コインの結果と追加、エアロウイングで投げる・投げないの答え（どれも場・コインの公開の情報）
+    "group_attack_power", "group_attack_power_coins", "optional_coin_chosen", "optional_coin_declined",
     # v0.87: 場の移動・ダメージへの反応（どれも場・コインの公開の情報）
     "spikes_damage", "hot_plate_damage", "movement_damage_skipped", "magma_pool", "magma_pool_none", "shock_blast_check", "shock_blast_damage",
     "shock_blast_skipped", "poison_fluid", "poison_fluid_skipped", "split_skipped", "split_declined",

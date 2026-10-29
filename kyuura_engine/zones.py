@@ -625,6 +625,18 @@ def look_at_hand(state: GameState, viewer: int, owner: int, *, trainer: int | No
     return cards
 
 
+def put_hand_card_on_deck_top(state: GameState, player: int, card: int, *, power: str) -> None:
+    """プレイヤー ``player`` の手札のカード ``card`` を、同じ uid のまま山札の一番上に置く（v0.118。カイリュー（PR1-043）の［トランスポート］の「その後、自分の手札からカードを1枚選び、
+    山札の上に置く」）。山札は切らない（説明にない）。見せない: ログ ``hand_to_deck_top`` の ``card`` は持ち主だけに見える（``player``・``power`` は公開）。手札にない・持ち主が違うなら
+    ``RuntimeError``（状態を変える前）。"""
+    p = state.players[player]
+    if card not in p.hand or state.cards[card].owner != player:
+        raise RuntimeError(f"プレイヤー {player} の手札のカード {card} を山札の上に置けない（確認の漏れ。エンジンの不具合）")
+    p.hand.remove(card)
+    p.deck.insert(0, card)
+    state.add_event("hand_to_deck_top", player=player, card=card, power=power)
+
+
 def put_discard_on_deck_top(state: GameState, owner: int, card: int, *, effect: str | None = None, trainer: int | None = None, chooser: int) -> None:
     """プレイヤー ``owner`` のトラッシュのカード ``card`` を、同じ uid のまま ``owner`` の山札の一番上にのせる（v0.44。カツラのマンキーの「わるいいたずら」の
     「相手のトラッシュからカードを1枚選び出し、相手の山札の上にのせる」。選ぶのはワザを使ったプレイヤー ``chooser``）。山札は切らない（説明にない）。
@@ -1219,6 +1231,29 @@ def place_stadium(state: GameState, player: int, card: int) -> StadiumInPlay | N
     state.trainer_in_use = None
     state.stadium = StadiumInPlay(owner=player, card=card, placed_turn=state.turn_number)
     state.add_event("stadium_placed", player=player, card=card, replaces=None if old is None else old.card)
+    if old is not None:
+        discard_stadium(state, old, reason="replaced", by_card=card)
+    return old
+
+
+def place_stadium_from_discard(state: GameState, player: int, card: int, *, power: str) -> StadiumInPlay | None:
+    """プレイヤー ``player`` のトラッシュのスタジアムカード ``card`` を、同じ uid のまま場（両方の場の境界線上）に出す（v0.118。わるいポリゴン2（neo4-097）の［じくうへんかん］の「自分の
+    トラッシュから「スタジアムカード」を1枚選び出し、場に出す(すでに場にある「スタジアムカード」は、トラッシュする)」。docs/unbounded-coins-heal-allocation-v0.118.md 8 章）。
+
+    - 手札からトレーナーカードを使うこと（``place_stadium``。使用中のトレーナー）ではない。トレーナーの使用の禁止（［アレルギーかふん］）・錯乱ジムのコインは関係しない
+    - 順番は ``place_stadium`` と同じ: 新しいスタジアムを場に出す（ログ ``stadium_placed``。``power`` は特殊能力、``from_zone`` は ``discard``。``replaces`` は古いスタジアムのカード）→
+      古いスタジアムを持ち主のトラッシュにすてる（ログ ``stadium_discarded``。理由 ``replaced``）。同じ名前のスタジアムも別のカード（2000.02.14 版に同じ名前の制限はない。v0.57）
+    トラッシュにない・持ち主が違う・スタジアムでないなら、確認の漏れなので ``RuntimeError``（状態を変える前）。トラッシュにすてた古いスタジアムを返す（なければ None）。"""
+    p = state.players[player]
+    if card not in p.discard or state.cards[card].owner != player:
+        raise RuntimeError(f"プレイヤー {player} のトラッシュのカード {card} を場に出せない（確認の漏れ。エンジンの不具合）")
+    entry = state.effects.trainer_entry(state.cards[card].card_id)
+    if entry is None or not entry.effect.is_stadium:
+        raise RuntimeError(f"トラッシュのカード {card} はスタジアムカードではない（確認の漏れ。エンジンの不具合）")
+    old = state.stadium
+    p.discard.remove(card)
+    state.stadium = StadiumInPlay(owner=player, card=card, placed_turn=state.turn_number)
+    state.add_event("stadium_placed", player=player, card=card, replaces=None if old is None else old.card, power=power, from_zone="discard")
     if old is not None:
         discard_stadium(state, old, reason="replaced", by_card=card)
     return old

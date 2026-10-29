@@ -209,6 +209,7 @@ from .state import (
     KnockOutSurvival,
     StatusOnEnergyAttach,
     PursuitOnRetreat,
+    RetreatCostIncrease,
     EvolutionLock,
     ReflectShield,
     StatusImmunityWhileActive,
@@ -338,6 +339,11 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
         data["attack"] = effect.attack
     elif isinstance(effect, PursuitOnRetreat):
         # v0.117: おいうちの「にげる」ときのダメージの量と、効果を与えたワザ（AttackKey の文字列）。種類の値と項目を加えただけで形式は変えない
+        data["amount"] = effect.amount
+        data["attack"] = effect.attack
+    elif isinstance(effect, RetreatCostIncrease):
+        # v0.118: しめつづけるの「にげる」ときに増やすエネルギーの数と、効果を与えたワザ（AttackKey の文字列）。種類の値（``"retreat_cost_increase"``）と項目を加えただけで形式は変えない
+        # （v0.117 までの書き出しを読む側は、知らない種類として拒否すること）
         data["amount"] = effect.amount
         data["attack"] = effect.attack
     elif isinstance(effect, StatusImmunityWhileActive):

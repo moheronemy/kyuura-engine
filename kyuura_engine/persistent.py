@@ -86,6 +86,7 @@ from .state import (
     ReflectShield,
     ResistanceChange,
     Retaliation,
+    RetreatCostIncrease,
     StatusImmunityNextTurn,
     StatusImmunityWhileActive,
     StatusOnEnergyAttach,
@@ -672,6 +673,11 @@ def attach_status_triggers(state: GameState, pokemon: PokemonInPlay) -> tuple[St
     """v0.116（docs/energy-movement-attachment-devolution-v0.116.md 4 章）: 今の番に、``pokemon`` にエネルギーカードがついたときにはたらく効果（``StatusOnEnergyAttach``。しこみどく・
     エナジーショック）。はたらくのは次の相手の番（``active_turn``）だけ。受けた順。状態を変えず、乱数を使わない。"""
     return tuple(effect for effect in pokemon.persistent_effects if isinstance(effect, StatusOnEnergyAttach) and effect.active_turn == state.turn_number)
+
+
+def retreat_cost_increases(state: GameState, pokemon: PokemonInPlay) -> tuple[RetreatCostIncrease, ...]:
+    """v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 6 章）: 今の番に、``pokemon`` の「にげる」ときに必要なエネルギーを増やす効果（``RetreatCostIncrease``。しめつづける。受けた順）。"""
+    return tuple(effect for effect in pokemon.persistent_effects if isinstance(effect, RetreatCostIncrease) and effect.active_turn == state.turn_number)
 
 
 def retreat_pursuits(state: GameState, pokemon: PokemonInPlay) -> tuple[PursuitOnRetreat, ...]:
