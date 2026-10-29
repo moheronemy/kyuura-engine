@@ -203,7 +203,9 @@ class RegistrationTest(unittest.TestCase):
                                                         "split_from_deck",
                                                         # v0.118: ［トランスポート］で山札の上に置く手札のカード（選べるものの数が手札の枚数をこえて、引いたカードを漏らしうる。
                                                         # docs/unbounded-coins-heal-allocation-v0.118.md 8 章）
-                                                        "deck_top_from_hand"}))
+                                                        "deck_top_from_hand",
+                                                    # v0.120: たまごの化石の手札・山札の選択と、山札・手札から出すカード（docs/fossil-basic-virtual-attacks-v0.120.md 7.2 節）
+                                                    "revive_source", "bench_from_deck_or_hand"}))
         for event in ("set_aside_hand", "set_aside_returned", "face_down_bench", "challenge_bench_skipped", "quiz_card_set"):
             self.assertIn(event, PRIVATE_FIELDS)
         for event in ("prizes_revealed", "face_down_revealed", "quiz_hint", "quiz_answer", "quiz_reveal"):

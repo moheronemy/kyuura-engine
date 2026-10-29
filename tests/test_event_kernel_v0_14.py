@@ -686,7 +686,10 @@ class CatalogTest(unittest.TestCase):
                            # ［ふかいねむり］（ねむりのコインの数。ポケモンチェックが ``effects.sleep_check_coins`` で問い合わせる）・［アレルギーほうし］（トラッシュのカードを
                            # 動かす処理が ``effects.discard_protection`` で問い合わせる）。docs/damage-reactions-poison-sleep-v0.119.md 3 章・7 章・8 章
                            "optional_reduce_attack_damage_received", "set_small_attack_damage_received", "scare_opponent_babies", "sleep_check_coins",
-                           "discard_pile_immunity_to_pokemon_effects")
+                           "discard_pile_immunity_to_pokemon_effects",
+                           # v0.120: ［げんしのきおく］・［にんぎょうつかい］・［ものまね］（許可で使えるワザ。ワザの宣言の確かめと今持つワザの問い合わせ ``effects.available_attacks`` が、
+                           # その時点の場から問い合わせる。窓の中の反応ではない）。docs/fossil-basic-virtual-attacks-v0.120.md 4 章
+                           "pre_evolution_attacks_for_evolved_actives", "doll_uses_holder_attacks", "use_defender_attacks")
         # v0.87: フリーザーの［オーロラヴェール］・ダグトリオの［もぐる］は窓の中の反応（要素を無効にする）だが、守るのは持ち主の控え・ベンチにいるこのカードなので、印刷した
         # ポケモンの効果の対応表（``POWER_DEFINITIONS``）ではなく ``catalog.instances`` が受けるポケモンについて作る（v0.84 のこおりのはしらと同じ形）
         built_by_instances = {"own_bench_attack_immunity_while_active": C.AURORA_VEIL, "bench_attack_damage_immunity": C.DIG_UNDER}
@@ -712,9 +715,11 @@ class CatalogTest(unittest.TestCase):
                           and k.card_id not in V0_69_POWER_CARDS],
                          ["ES1-003@power0", "ES1-021@power0",  # v0.102
                           "ES1-034@power0",  # v0.87
+                          "ES3-025@power0",  # v0.120
                           "GD2-007@power0",  # v0.119
                           "GD4-001@power0",  # v0.88
                           "PF2-001@power0",  # v0.97
+                          "PF3-001@power0",  # v0.120
                           "PF3-004@power0", "PF3-005@power0", "PF3-006@power0",  # v0.117
                           "PMCG2-027@power0", "PMCG2-040@power0", "PMCG2-047@power0", "PMCG3-015@power0", "PMCG3-035@power0", "PMCG3-041@power0",
                           "PMCG3-042@power0", "PMCG4-007@power0", "PMCG4-010@power0", "PMCG4-041@power0", "PMCG4-043@power0", "PMCG5-035@power0", "PMCG5-051@power0",
@@ -731,6 +736,7 @@ class CatalogTest(unittest.TestCase):
                           "neo3-029@power0",
                           "neo3-030@power0",  # v0.101
                           "neo3-040@power0",  # v0.119
+                          "neo3-042@power0",  # v0.120
                           "neo4-023@power0",  # v0.87
                           "neo4-039@power0",  # v0.119
                           "neo4-046@power0",

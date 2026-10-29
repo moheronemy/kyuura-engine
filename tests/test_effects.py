@@ -283,6 +283,10 @@ V0_118_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["
 # docs/damage-reactions-poison-sleep-v0.119.md）
 V0_119_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_119"] and c["category"] == "pokemon"
                     for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.120: 化石の復活と仮想ワザの供給の 10 枚（ポケモン）のワザ 15 のうち、説明文のある 13（ワタッコのソーラービーム・ミュウのはたくは説明文がない。kyuura の印刷の文面。
+# docs/fossil-basic-virtual-attacks-v0.120.md）
+V0_120_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_120"] and c["category"] == "pokemon"
+                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
 
 
 
@@ -435,7 +439,7 @@ class DefaultRegistryTest(unittest.TestCase):
                                     + V0_35_WITH_TEXT + V0_36_WITH_TEXT + V0_37_WITH_TEXT + V0_38_WITH_TEXT
                                     + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT + V0_42_WITH_TEXT + V0_43_WITH_TEXT
                                 + V0_44_WITH_TEXT + V0_45_WITH_TEXT + V0_46_WITH_TEXT + V0_47_WITH_TEXT + V0_48_WITH_TEXT
-                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT + V0_52_WITH_TEXT + V0_58_WITH_TEXT + V0_59_WITH_TEXT + V0_60_WITH_TEXT + V0_61_WITH_TEXT + V0_62_WITH_TEXT + V0_64_WITH_TEXT + V0_65_WITH_TEXT + V0_68_WITH_TEXT + V0_70_WITH_TEXT + V0_72_WITH_TEXT + V0_75_WITH_TEXT + V0_76_WITH_TEXT + V0_77_WITH_TEXT + V0_78_WITH_TEXT + V0_79_WITH_TEXT + V0_82_WITH_TEXT + V0_83_WITH_TEXT + V0_84_WITH_TEXT + V0_85_WITH_TEXT + V0_86_WITH_TEXT + V0_87_WITH_TEXT + V0_88_WITH_TEXT + V0_89_WITH_TEXT + V0_90_WITH_TEXT + V0_91_WITH_TEXT + V0_92_WITH_TEXT + V0_93_WITH_TEXT + V0_94_WITH_TEXT + V0_95_WITH_TEXT + V0_99_WITH_TEXT + V0_100_WITH_TEXT + V0_101_WITH_TEXT + V0_102_WITH_TEXT + V0_103_WITH_TEXT + V0_104_WITH_TEXT + V0_105_WITH_TEXT + V0_106_WITH_TEXT + V0_107_WITH_TEXT + V0_108_WITH_TEXT + V0_109_WITH_TEXT + V0_110_WITH_TEXT + V0_111_WITH_TEXT + V0_112_WITH_TEXT + V0_113_WITH_TEXT + V0_114_WITH_TEXT + V0_115_WITH_TEXT + V0_116_WITH_TEXT + V0_117_WITH_TEXT + V0_118_WITH_TEXT + V0_119_WITH_TEXT)
+                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT + V0_52_WITH_TEXT + V0_58_WITH_TEXT + V0_59_WITH_TEXT + V0_60_WITH_TEXT + V0_61_WITH_TEXT + V0_62_WITH_TEXT + V0_64_WITH_TEXT + V0_65_WITH_TEXT + V0_68_WITH_TEXT + V0_70_WITH_TEXT + V0_72_WITH_TEXT + V0_75_WITH_TEXT + V0_76_WITH_TEXT + V0_77_WITH_TEXT + V0_78_WITH_TEXT + V0_79_WITH_TEXT + V0_82_WITH_TEXT + V0_83_WITH_TEXT + V0_84_WITH_TEXT + V0_85_WITH_TEXT + V0_86_WITH_TEXT + V0_87_WITH_TEXT + V0_88_WITH_TEXT + V0_89_WITH_TEXT + V0_90_WITH_TEXT + V0_91_WITH_TEXT + V0_92_WITH_TEXT + V0_93_WITH_TEXT + V0_94_WITH_TEXT + V0_95_WITH_TEXT + V0_99_WITH_TEXT + V0_100_WITH_TEXT + V0_101_WITH_TEXT + V0_102_WITH_TEXT + V0_103_WITH_TEXT + V0_104_WITH_TEXT + V0_105_WITH_TEXT + V0_106_WITH_TEXT + V0_107_WITH_TEXT + V0_108_WITH_TEXT + V0_109_WITH_TEXT + V0_110_WITH_TEXT + V0_111_WITH_TEXT + V0_112_WITH_TEXT + V0_113_WITH_TEXT + V0_114_WITH_TEXT + V0_115_WITH_TEXT + V0_116_WITH_TEXT + V0_117_WITH_TEXT + V0_118_WITH_TEXT + V0_119_WITH_TEXT + V0_120_WITH_TEXT)
         # v0.69: 拡張パック以外の商品の同じカード（effects.EQUIVALENT_CARDS）の新しい id には、元のカードと同じ登録（説明文のあるワザも同じ）がある
         expected = expected + [AttackKey(new, key.attack_index) for new, original in EQUIVALENT_CARDS.items() for key in expected if key.card_id == original]
         # v0.71: 拡張パック以外の商品の再録のカード（effects.REPRINT_CARDS）の新しい id にも、元のカードの説明文のあるワザの登録がある（照合する文面はこの版の印刷の文面）
@@ -688,7 +692,9 @@ class RegistryImmutabilityTest(unittest.TestCase):
                                        *(PowerKey(card, 0) for card in ("neo4-065", "neo4-097", "PR1-043")),
                                        # v0.119: ［アレルギーほうし］・［かたいから］・［いあつ］・［ふかいねむり］・［シェルアーマー］・［ポイズンミスト］・［めいれい］
                                        # （docs/damage-reactions-poison-sleep-v0.119.md）
-                                       *(PowerKey(card, 0) for card in ("neo3-005", "neo3-040", "neo4-039", "neo4-066", "GD2-007", "ES3-007", "PR1-068"))))))
+                                       *(PowerKey(card, 0) for card in ("neo3-005", "neo3-040", "neo4-039", "neo4-066", "GD2-007", "ES3-007", "PR1-068")),
+                                       # v0.120: ［なかまのふっかつ］・［かせきのふっかつ］・［げんしのきおく］・［にんぎょうつかい］・［ものまね］（docs/fossil-basic-virtual-attacks-v0.120.md）
+                                       *(PowerKey(card, 0) for card in ("neo2-014", "neo2-032", "neo3-042", "ES3-025", "PF3-001"))))))
 
 
 if __name__ == "__main__":

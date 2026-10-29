@@ -36,6 +36,7 @@ from kyuura_engine.rules import RULES_2000_02_14
 from kyuura_engine.stadiums import bench_limit  # v0.57
 from kyuura_engine.state import (
     ASLEEP,
+    BasicEntry,
     COUNTER_KINDS,
     Marker,
     AttachedTrainer,
@@ -837,6 +838,10 @@ def build_test_state(
         poison = Poison(spec["poison"]) if "poison" in spec else None
         if poison is not None or exclusive is not None:
             result.conditions = SpecialConditions(poison=poison, exclusive=exclusive)
+        if spec.get("basic_entry"):
+            # v0.120: 進化元を重ねずに出し、場ではたねポケモンとしてあつかう進化カード（``BasicEntry``）。重なりがあれば、いちばん下のカードを出したカードとする（その上に進化した）。
+            # 出した効果は "test"・出した番は場に出た番・山札から
+            result.basic_entry = BasicEntry(stack[0] if stack else result.card, "test", result.card, "deck", result.played_turn)
         for entry in spec.get("markers", ()):
             # v0.90: マーカー・カウンター（ログはあとで置く）
             kind, color = (entry, None) if isinstance(entry, str) else entry
@@ -1560,6 +1565,12 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.OptionalSwitchOpponentThenDamageAndSleep,
     _effects.SecretePoisonNextTurn,
     _effects.DamageAndSelfDamageThenPoisonReplacement,
+    # v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 5 章・7 章。ワザを選んで自分のワザとして使う・コインでベンチの名前の数のダメージの追加・選んだポケモンを山札の進化カードで進化・
+    # すべて「うら」で失敗し「おもて」の数の相手のエネルギーカードのトラッシュ）
+    _effects.CopyAttackFromSource,
+    _effects.CoinBonusPerOwnBenchNamed,
+    _effects.EvolveChosenNamedFromDeck,
+    _effects.CoinsDiscardOpponentEnergyElseFail,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -2395,6 +2406,7 @@ V0_83_CARDS = V0_83_POKEMON
 
 # v0.84（docs/light-powers-evolution-v0.84.md）: やさしいポケモン 12 枚・ポケモン育て屋夫婦
 BREEDER_COUPLE = "neo3-056"  # ポケモン育て屋夫婦（トレーナー。最大 2 匹にコイン 1 枚ずつ。「おもて」のポケモンから進化するカードを山札からさがす）
+FOSSIL_EGG = "neo2-055"  # v0.120: たまごの化石（トレーナー。コインの「おもて」で山札・手札の「なにかの化石」を進化させる進化カードを、たねポケモンとしてあつかってベンチに出す）
 LIGHT_LEDIAN, LIGHT_NINETALES, LIGHT_ARCANINE, LIGHT_DEWGONG = "neo4-010", "neo4-018", "neo4-021", "neo4-033"
 LIGHT_AZUMARILL, LIGHT_PILOSWINE, LIGHT_JOLTEON, LIGHT_MACHOKE = "neo4-040", "neo4-041", "neo4-043", "neo4-074"
 LIGHT_MACHAMP, LIGHT_WIGGLYTUFF, LIGHT_DRAGONITE, LIGHT_TOGETIC = "neo4-077", "neo4-090", "neo4-094", "neo4-095"

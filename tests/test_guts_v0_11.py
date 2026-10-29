@@ -731,7 +731,10 @@ class G37Test(unittest.TestCase):
         "DamageThenParalyzeOnHeadsElseRetreatCost", "EachPlayerCoinHealOwnField",
         # v0.119: いたみわけ（ダメージカウンター）・どくどくエキス（どく）・ひきずりこむ（ダメージの前の入れ替えとねむり）。なぞのこうせん（自分の場）・どくをだす（次の相手の番の反応）・
         # ガスばくはつ（かわりに出てくる対戦ポケモンのどく。出したときに評価する）は、ワザの要素として相手の対戦ポケモンへの効果を持たない。docs/damage-reactions-poison-sleep-v0.119.md
-        "PlaceOwnCounterCountOnOpponent", "ToxicPoisonOnHeadsWithoutDamage", "OptionalSwitchOpponentThenDamageAndSleep"]))
+        "PlaceOwnCounterCountOnOpponent", "ToxicPoisonOnHeadsWithoutDamage", "OptionalSwitchOpponentThenDamageAndSleep",
+        # v0.120: たつまき（「おもて」の数の相手のエネルギーカードのトラッシュ）。ワザを選んで自分のワザとして使うワザ（CopyAttackFromSource）は、選んだワザの要素で効果を与える
+        # （v0.31 の CopyOpponentAttackEffect と同じく宣言しない）。docs/fossil-basic-virtual-attacks-v0.120.md
+        "CoinsDiscardOpponentEnergyElseFail"]))
 
 
 class DecisionTest(unittest.TestCase):

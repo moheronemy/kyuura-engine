@@ -562,7 +562,9 @@ class PoisonMistTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             state_to_dict(toxic, format_version=26)
         self.assertEqual(observe(misted, 1)["poison_mists"], written)
-        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (27, 27))
+        # v0.120: 今の最新の形式は tests/test_catalog_contract.py（docs/testing.md）。ここは形式 27 があり、最新が監査の形式と同じことを確かめる
+        self.assertIn(27, FORMAT_VERSIONS)
+        self.assertEqual(max(FORMAT_VERSIONS), LATEST_FORMAT)
 
 
 # ---------------------------------------------------------------- 7 章: ［ふかいねむり］・ひきずりこむ・［いあつ］
