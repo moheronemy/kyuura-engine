@@ -30051,6 +30051,168 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.119 で加えた（docs/damage-reactions-poison-sleep-v0.119.md）。PR1（プロモ(旧裏)。promo）。2000.02.14 版のルールで処理する。草・2 進化（サカキのニドリーノから。HP100）。じひびき=DamageThenRetreatLock（既存の型。目安 50）。［めいれい］=CommandBonusToNamedAttackers（v0.119 の型。ワザの宣言といっしょに使う。自分の「サカキのニドラン♂」「サカキのニドリーノ」のワザのダメージ +10。6 段階）。PMCG6-021（ロケット団の別の商品のサカキのニドキング）の記録は別のカードの記録で当てはめない。データの欠け pokemon.dex・jp_print.level は処理に使わない。kyuura data/pcgsearch_page_checks.json の pcg-search のページの確認（弱点・抵抗力・にげる・進化の並び。転記の違いなし）は同じ転記元の確認で、独立した照合に数えない。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はpcg-search.comの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo1-071": {
+      "basis": "kyuura_data",
+      "name_ja": "トゲチック",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.120 で加えた（docs/fossil-basic-virtual-attacks-v0.120.md）。neo1（金、銀、新世界へ...。expansion_pack）。2000.02.14 版のルールで処理する。無色・1 進化（トゲピーから。HP60）。おおきくゆびをふる=CopyAttackFromSource（v0.120 の型。コインの「おもて」のあと、相手の場にいるポケモンの持っているワザを 1 つ選び、必要なエネルギーなしで自分のワザとして使う。説明が条件を書かないので、選んだワザの条件がたりないときは既存の HC9）。そらをとぶ=FailOnTailsDamageThenSelfBarrier（既存の型。「相手のワザによる」の書き方。目安 30）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はなぞのばしょの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo2-014": {
+      "basis": "kyuura_data",
+      "name_ja": "カブト",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.120 で加えた（docs/fossil-basic-virtual-attacks-v0.120.md）。neo2（遺跡をこえて...。expansion_pack）。2000.02.14 版のルールで処理する。水・1 進化（なにかの化石から。HP50）。ちからをあわせる=CoinBonusPerOwnBenchNamed（v0.120 の型。コインの「おもて」で自分のベンチの「オムナイト」「オムスター」「カブト」「カブトプス」「プテラ」の数 × 10 を追加。目安 10+）。［なかまのふっかつ］=CoinReviveFromDeck（v0.120 の型。自分の番ごとに 1 回・コインの「おもて」で山札の「カブト」を、進化元を重ねずにベンチに出し、場ではたねポケモンとしてあつかう）。進化元の「なにかの化石」はトレーナー（PMCG3-046。登録済み）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はなぞのばしょの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo2-032": {
+      "basis": "kyuura_data",
+      "name_ja": "オムナイト",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.120 で加えた（docs/fossil-basic-virtual-attacks-v0.120.md）。neo2（遺跡をこえて...。expansion_pack）。2000.02.14 版のルールで処理する。闘・1 進化（なにかの化石から。HP50）。しめつける=ParalyzeOnHeads（既存の型。目安 10）。［かせきのふっかつ］=CoinReviveFromDeck（v0.120 の型。自分の番ごとに 1 回・コインの「おもて」で山札の「なにかの化石」を進化させる進化カードを、進化元を重ねずにベンチに出し、場ではたねポケモンとしてあつかう）。進化元の「なにかの化石」はトレーナー（PMCG3-046。登録済み）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はなぞのばしょの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo2-055": {
+      "basis": "kyuura_data",
+      "name_ja": "たまごの化石",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.120 で加えた（docs/fossil-basic-virtual-attacks-v0.120.md）。neo2（遺跡をこえて...。expansion_pack）。2000.02.14 版のルールで処理する。トレーナー。FossilEggRevive（v0.120 の型。ベンチに空きがないと使えない。コインの「おもて」で、手札から選ぶか山札を見るかを決め、「なにかの化石」を進化させる進化カードを進化元を重ねずにベンチに出し、場ではたねポケモンとしてあつかう。山札を見たときだけ切る）。データの欠け jp_print.level（トレーナー）は処理に使わない。kyuura data/curation/trainers.json の記録は名前・英語版との対応で、処理の根拠ではない。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はなぞのばしょの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo3-007": {
+      "basis": "kyuura_data",
+      "name_ja": "ワタッコ",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.120 で加えた（docs/fossil-basic-virtual-attacks-v0.120.md）。neo3（めざめる伝説。expansion_pack）。2000.02.14 版のルールで処理する。草・2 進化（ポポッコから。HP70）。しんかのほうし=EvolveChosenNamedFromDeck（v0.120 の型。自分の場の「ハネッコ」「ポポッコ」を好きなだけ選び（0 匹は既存の HC5）、それぞれに山札の進化カードを重ねる。山札を見たときだけ切る）。ソーラービームは説明のないワザ（DAMAGE_ONLY）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はポケモンWikiの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo3-020": {
+      "basis": "kyuura_data",
+      "name_ja": "キングドラ",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.120 で加えた（docs/fossil-basic-virtual-attacks-v0.120.md）。neo3（めざめる伝説。expansion_pack）。2000.02.14 版のルールで処理する。水・2 進化（シードラから。HP90）。りゅうのいでんし=CopyAttackFromSource（v0.120 の型。実際に重なっている進化前のカードのワザを 1 つ選び、必要なエネルギーなしで自分のワザとして使う。いちばん下のカードのワザは PE1、条件がたりないときは PE2）。たつまき=CoinsDiscardOpponentEnergyElseFail（v0.120 の型。コイン 2 枚。すべて「うら」なら失敗。「おもて」の数の相手のエネルギーカードをトラッシュ。目安 50。足りないときは既存の FC1）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はポケモンWikiの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo3-042": {
+      "basis": "kyuura_data",
+      "name_ja": "プテラ",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.120 で加えた（docs/fossil-basic-virtual-attacks-v0.120.md）。neo3（めざめる伝説。expansion_pack）。2000.02.14 版のルールで処理する。闘・1 進化（なにかの化石から。HP60）。そらをとぶ=FailOnTailsDamageThenSelfBarrier（既存の型。「ワザによる」の書き方。目安 30）。［げんしのきおく］=PreEvolutionAttacksForEvolvedActives（v0.120 の型。常にはたらく許可。おたがいの対戦ポケモンが場の分類で進化ポケモンなら、実際に重なっている進化前のカードのワザを、そのポケモンのエネルギーで払って使える）。kyuura data/rule_history.json の card_lists.poke_body（MIX-POWER-ERRATA。2002-05-24 の Q&A の「ポケボディー」の一覧）はこのカードの特殊能力を挙げるが、後年の分類で、2000.02.14 版の規定としては使わない（エラッタの errata の cards ではない）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はポケモンWikiの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "ES3-025": {
+      "basis": "kyuura_data",
+      "name_ja": "スリーパー",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.120 で加えた（docs/fossil-basic-virtual-attacks-v0.120.md）。ES3（拡張シート 第3弾(緑版)。expansion_sheet）。2000.02.14 版のルールで処理する。超・1 進化（スリープから。HP60）。マインドショック=DamageIgnoringWeaknessResistance（既存の型。目安 30）。［にんぎょうつかい］=DollUsesHolderAttacks（v0.120 の型。常にはたらく許可。自分のバトル場の「ピッピ人形」が、このカードの持っているワザを、このカードについているエネルギーで必要なエネルギーを満たして使える。特殊状態による禁止の文はない）。データの欠け pokemon.dex・jp_print.level は処理に使わない。kyuura data/pcgsearch_page_checks.json のpcg-search のページの確認は同じ転記元の確認で、独立した照合に数えない。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はpcg-search.comの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PR1-021": {
+      "basis": "kyuura_data",
+      "name_ja": "ミュウ",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.120 で加えた（docs/fossil-basic-virtual-attacks-v0.120.md）。PR1（プロモ(旧裏)。promo）。2000.02.14 版のルールで処理する。超・たね（HP50）。はたくは説明のないワザ（DAMAGE_ONLY。目安 10）。サイコデュープ=CopyAttackFromSource（v0.120 の型。相手の場のポケモンの持っているワザを 1 つ選び自分のワザとして使う。「サイコデュープ」の超 1 個と選んだワザの必要なエネルギーを合わせて 1 つの支払いとして照らし、ほかに必要な条件は実際に使うこのカードでみたす）。ほかのミュウ（PMCG3 系・PR1 の別のカード）の記録は別のカードの記録で当てはめない。データの欠け pokemon.dex・jp_print.level は処理に使わない。kyuura data/pcgsearch_page_checks.json の pcg-search のページの確認は同じ転記元の確認で、独立した照合に数えない。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はpcg-search.comの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PR1-065": {
+      "basis": "kyuura_data",
+      "name_ja": "トゲピー",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.120 で加えた（docs/fossil-basic-virtual-attacks-v0.120.md）。PR1（プロモ(旧裏)。promo）。2000.02.14 版のルールで処理する。無色・たね（HP30）。なきつく=ReduceDamageToSelfNextOpponentTurn（既存の型。受けた相手がこのカードに与えるダメージを次の相手の番に -20）。ゆびをふる=CopyAttackFromSource（v0.120 の型。コインの「おもて」のあと、相手の対戦ポケモンの持っているワザを 1 つ選び、必要なエネルギーなしで自分のワザとして使う。条件がたりないときは既存の HC9）。データの欠け jp_print.level は処理に使わない。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はpcg-search.comの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "PF3-001": {
+      "basis": "kyuura_data",
+      "name_ja": "ウソッキー",
+      "status": "adopted",
+      "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.120 で加えた（docs/fossil-basic-virtual-attacks-v0.120.md）。PF3（プレミアムファイル3。premium_file）。2000.02.14 版のルールで処理する。闘・たね（HP60）。たたきつける=CoinFlipDamage（既存の型。2 枚 × 20）。［ものまね］=UseDefenderAttacks（v0.120 の型。常にはたらく許可。バトル場にいて、ねむり・マヒ・こんらんでないとき、相手の対戦ポケモンの持っているワザを、このカードのエネルギーで払って使える）。データの欠け jp_print.level は処理に使わない。kyuura data/rule_history.json の card_lists.poke_body（MIX-POWER-ERRATA。2002-05-24 の Q&A の「ポケボディー」の一覧）はこのカードの特殊能力を挙げるが、後年の分類で、2000.02.14 版の規定としては使わない（エラッタの errata の cards ではない）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はpcg-search.comの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
     }
   }
 }

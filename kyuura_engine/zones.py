@@ -172,6 +172,27 @@ def bench_from_deck(state: GameState, player: int, card: int) -> PokemonInPlay:
     return pokemon
 
 
+def bench_as_basic(state: GameState, player: int, card: int, *, zone: str, source: str, source_card: int) -> PokemonInPlay:
+    """v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 6 章）: 自分の山札（``zone`` が ``"deck"``）・手札（``"hand"``）の進化カード ``card`` を、進化元を重ねずに、同じ uid のまま
+    自分のベンチの最後に出し、場では「たねポケモン」としてあつかう（``PokemonInPlay.basic_entry``。［なかまのふっかつ］・［かせきのふっかつ］・たまごの化石）。場のポケモンの番号・
+    場に出た番は手札から出すたねポケモンと同じ ``enter_play``（その番には進化できない）。印刷の段階・進化元は変えない。
+
+    出してよいか（名前・決定・ベンチの空き）の確認とログは呼ぶ側。カードがその場所にない・持ち主が違う・進化カードでない・ベンチに空きがないなら、確認の漏れなので ``RuntimeError``
+    （状態を変える前）。山札の残りの並びは変えない（切るのは呼ぶ側）。出した場のポケモンを返す。"""
+    from .state import BasicEntry
+
+    p = state.players[player]
+    pile = p.deck if zone == "deck" else p.hand if zone == "hand" else None
+    if pile is None or card not in pile or state.cards[card].owner != player or not state.card_def(card).is_evolution_pokemon or len(p.bench) >= bench_limit(state, player):
+        raise RuntimeError(f"プレイヤー {player} の{zone}のカード {card} を、たねポケモンとしてあつかう進化カードとしてベンチに出せない（確認の漏れ。エンジンの不具合）")
+    entry = BasicEntry(card, source, source_card, zone, state.turn_number)
+    pile.remove(card)
+    pokemon = enter_play(state, card)
+    pokemon.basic_entry = entry
+    p.bench.append(pokemon)
+    return pokemon
+
+
 def bench_from_discard(state: GameState, card: int, *, counters: int = 0) -> PokemonInPlay:
     """トラッシュのたねポケモンのカード ``card`` を、同じ uid のまま、手札・山札を通さずに持ち主のベンチの最後に出す（v0.51。ナツメのスリーパーの「よみがえらせる」・
     元気のかけら・ポケモンの笛。docs/discard-to-bench-v0.51.md 3 章）。

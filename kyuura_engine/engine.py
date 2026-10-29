@@ -2702,9 +2702,17 @@ def _evolution_problems(state: GameState, player: int, pokemon: PokemonInPlay, e
         return []  # 未知のカードはカードの保存則のほうで数える
     top = state.card_def(pokemon.card)
     problems = _devolution_state_problems(state, player, pokemon, evolve_events)  # v0.50
+    entry = pokemon.basic_entry
+    if entry is not None:
+        # v0.120: 進化元を重ねずに出してたねポケモンとしてあつかう進化カード（``BasicEntry``）は、重なりのいちばん下（重なりがなければいちばん上）のカードで、進化カード
+        bottom = stack[0] if stack else pokemon.card
+        if entry.card != bottom or not state.card_def(entry.card).is_evolution_pokemon or entry.zone not in ("deck", "hand"):
+            problems.append(f"{where} のたねポケモンとしてあつかう進化カード {entry.card} が、重なりのいちばん下の進化カード（{bottom}）ではない")
+        if entry.turn != pokemon.played_turn:
+            problems.append(f"{where} のたねポケモンとしてあつかう進化カードを出した番 {entry.turn} が、場に出た番 {pokemon.played_turn} と違う")
     if not stack:
-        if not top.is_baby_or_basic_pokemon:
-            # v0.114: 進化していないポケモンは、たねポケモンかベイビィポケモン（GR-2000-P313-POKEMON-COMPOSITION）
+        if not top.is_baby_or_basic_pokemon and not (entry is not None and entry.card == pokemon.card):
+            # v0.114: 進化していないポケモンは、たねポケモンかベイビィポケモン（GR-2000-P313-POKEMON-COMPOSITION）。v0.120: たねポケモンとしてあつかう進化カードを除く
             problems.append(f"{where} は進化していないのに、いちばん上のカード {pokemon.card}（{top.name_ja}）がたねポケモンではない（ベイビィポケモンでもない）")
         if evolved is not None:
             problems.append(f"{where} は進化していないのに、進化した番 {evolved} がある")
@@ -2727,8 +2735,8 @@ def _evolution_problems(state: GameState, player: int, pokemon: PokemonInPlay, e
             )
             continue
         if position == 0:
-            if not definition.is_baby_or_basic_pokemon:
-                problems.append(f"{where} のいちばん下のカード {uid} がたねポケモンではない（ベイビィポケモンでもない）")
+            if not definition.is_baby_or_basic_pokemon and not (entry is not None and entry.card == uid):
+                problems.append(f"{where} のいちばん下のカード {uid} がたねポケモンではない（ベイビィポケモンでもない。v0.120: たねポケモンとしてあつかう進化カードでもない）")
             continue
         below = state.card_def(chain[position - 1])
         if below.category != "pokemon" or below.stage not in STACK_STAGES:

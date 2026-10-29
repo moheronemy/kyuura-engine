@@ -300,6 +300,10 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
         # v0.49: ワザの出どころがワザを使うポケモンのいちばん上のカードでない（［へんしん］・「ばける」・［サイコリンク］・「思い出させる」）。ワザを印刷したカード
         # （``card``・``card_id``）・持ち方（``route``）・［サイコリンク］で供給したポケモン（``provider``）を書く。どれも表のカード（公開の情報）。ふつうのワザは v0.48 と同じ形
         extra = {"provider": option.provider} if option.provider is not None else {}
+        if option.payer is not None:
+            extra["payer"] = option.payer  # v0.120: 必要なエネルギーを満たしたポケモン（［にんぎょうつかい］のスリーパー）
+        if option.grantors:
+            extra["grantors"] = tuple(option.grantors)  # v0.120: 許可を与えた特殊能力を持つポケモン（［げんしのきおく］・［にんぎょうつかい］・［ものまね］）
         state.add_event("attack", player=player, pokemon=attacker.card, attack=attack.name_ja, attack_index=key.attack_index, card=option.card,
                         card_id=key.card_id, route=option.route, **extra)
     # v0.46: 「ワザが使われた時、すでに…」の特殊状態（エリカのフシギソウの［くつろぐかおり］）を宣言（p.309 の手順 3）の時点で写す。手順 4・5・ワザの要素で特殊状態が

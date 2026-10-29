@@ -46,7 +46,7 @@ from ..decisions import OPTIONAL_HEAL
 from ..decisions import DISCARD_TO_DECK, RECOVER_POKEMON, SELECT_DRAW_COUNT, TAKE_LOOKED_CARDS
 from ..decisions import DISCARD_STADIUM, EVOLUTION_SONG_POKEMON
 from ..stadiums import bench_limit
-from ..errors import UnsupportedError
+from ..errors import SECRET_PLAN_HIDDEN_CODE, IllegalActionError, UnsupportedError
 from ..evolution import DEVOLVE_TO_DECK, DEVOLVE_TO_DISCARD, DEVOLVE_TO_HAND, devolve, evolution_block, place_evolution_card
 from ..persistent import (RETURN_IN_PLAY_TO_DECK, RETURN_IN_PLAY_TO_HAND, add_persistent_effect, leave_lock, max_hp_set, remove_on_entering_active,
                           remove_persistent_effects, remove_source_left_effects, replace_persistent_effect, require_can_leave)
@@ -3950,6 +3950,403 @@ def copy_status(run: AttackRun, definition, attack, clause: str | None) -> tuple
     return None
 
 
+@dataclass(frozen=True)
+class CopyChosenAttack(CopyOpponentAttack):
+    """v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 5 章）: ワザを 1 つ選び、それを自分のワザとして使う（実装 ``effects.CopyAttackFromSource``）。v0.31 の ``CopyOpponentAttack`` と
+    同じく、選んだワザの要素の並びを、このワザの枠の中で、ワザを使ったポケモンのワザとして処理する（``run.redirect``。弱点・抵抗力・「このカード」はワザを使ったポケモン）。
+
+    - ``source``: 選べるワザの範囲（``E.copy_source_entries``。相手の対戦ポケモン・相手の場にいるポケモン・自分が進化する前に持っていたワザ）。決定の続きの情報は ``copy_source`` と
+      ``copy_attacks``（(カードの id, 位置) の並び。選べるものは並びの位置）
+    - ``cost``: ``E.COPY_COST_COMBINED`` なら、宣言したワザの必要なエネルギーに選んだワザの必要なエネルギーを合わせて、ワザを使うポケモンのエネルギーで照らす（別々にではない。
+      ``E.combined_cost_attack``）。払えないワザは選べない（説明が「使えない」とする）。エネルギーはトラッシュしない
+    - 選んだワザの条件（``copy_status``）: 説明が「使えない」とする（``ILLEGAL``）ワザは選べない。決まらない（``UNRESOLVED``）ワザは選べるが選ぶと止める（``condition_code``。相手のワザは
+      HC9、自分の進化前のワザは PE2）。範囲のワザの止める理由（VS1・VP1・PE1）も選ぶと止める（選択ごとの理由 ``unresolved_detail``）。エンジンが対応していないワザは選べるが選ぶと止める
+    - コインで選ぶワザ（``gate``）は、コインのあとに選ぶ（ESPのやり直しで確定する前に候補を確かめない。再開ではコインを投げ直さない）。選べるワザがなければ、処理の対象がないので何も
+      しない（p.309。``has_target`` も偽で、コインは投げない）。止めないワザが 1 つもなければ、宣言の前に止める
+    """
+
+    source: str = E.COPY_FROM_DEFENDER
+    cost: str = E.COPY_COST_EXEMPT
+    condition_code: str = "UNRESOLVED_COPIED_ATTACK"
+
+    def entries(self, run: AttackRun) -> list[tuple[E.AttackKey, tuple[str, str] | None]]:
+        return E.copy_source_entries(run.state, run.player, run.attacker(), self.source)
+
+    def has_target(self, run: AttackRun) -> bool:
+        return bool(self.entries(run))
+
+    def choice_status(self, run: AttackRun, key: E.AttackKey, held: tuple[str, str] | None) -> tuple[str, str, str | None] | None:
+        """選んだワザ ``key`` の (種類, 理由, 止めるコード)。選べて止めないなら None。種類は ``ILLEGAL``（選べない）・``UNRESOLVED``（選ぶと止める）・``UNSUPPORTED``。"""
+        definition = run.state.definitions[key.card_id]
+        attack = definition.attacks[key.attack_index]
+        status = copy_status(run, definition, attack, self.clause)
+        if status is not None:
+            return status[0], status[1], self.condition_code if status[0] == UNRESOLVED else None
+        if self.cost == E.COPY_COST_COMBINED:
+            combined = E.combined_cost_attack(run.attack, attack)
+            problem = E.attack_cost_problem(run.state, run.attacker(), combined)
+            if problem is not None:
+                return UNRESOLVED, problem.message, problem.code
+            if not E.attack_cost_payable(run.state, run.attacker(), combined):
+                return ILLEGAL, f"「{run.attack.name_ja}」に必要なエネルギーに加えて、「{attack.name_ja}」に必要なエネルギーがついていない", None
+        if held is not None:
+            return UNRESOLVED, held[1], held[0]
+        return None
+
+    def choices(self, run: AttackRun, entries) -> tuple[list[int], dict[int, tuple[str, str]], set[int]]:
+        """選べるもの（並びの位置。選べないワザを除く）・選ぶと止めるもの {位置: (コード, 理由)}・エンジンが対応していないもの。"""
+        options: list[int] = []
+        stops: dict[int, tuple[str, str]] = {}
+        unsupported: set[int] = set()
+        for i, (key, held) in enumerate(entries):
+            status = self.choice_status(run, key, held)
+            if status is not None and status[0] == ILLEGAL:
+                continue
+            options.append(i)
+            if status is None:
+                continue
+            name = E.attack_of(run.state, key).name_ja
+            if status[0] == UNSUPPORTED:
+                unsupported.add(i)
+            else:
+                stops[i] = (status[2], f"「{name}」: {status[1]}")
+        return options, stops, unsupported
+
+    def run(self, run: AttackRun) -> bool:
+        if self.gate is not None and not run.coin_is(self.gate):
+            return False
+        entries = self.entries(run)
+        if not entries:
+            return False
+        options, stops, unsupported = self.choices(run, entries)
+        detail = "・".join(f"{reason}（{code}）" for code, reason in stops.values())
+        if not [i for i in options if i not in stops and i not in unsupported]:
+            if not options:
+                # 選べるワザがない（どれも説明が「使えない」とする）。宣言の前の確かめ（``combined_copy_usage_problem``）が拒否するので、ここには来ない
+                raise RuntimeError(f"ワザを選ぶワザ {run.declared} で、選べるワザがない（宣言の前の確かめの漏れ。エンジンの不具合）")
+            if unsupported and not stops:
+                raise run.res.question("copied_attack_unsupported", f"範囲 {self.source}（{len(unsupported)} のワザが未対応）")
+            code = stops[min(stops)][0]
+            if code == "UNRESOLVED_COPIED_ATTACK":
+                raise run.res.question("copied_attack", f"範囲 {self.source}（{detail}）")
+            raise UnsupportedError(code, f"選べるワザがどれも選ぶと止めるもの（範囲 {self.source}。{detail}）")
+        extra: tuple = (("copy_source", self.source), ("copy_attacks", tuple((key.card_id, key.attack_index) for key, _ in entries)))
+        if stops:
+            first = stops[min(stops)]
+            extra += (("unresolved_choices", tuple(sorted(stops))), ("unresolved_code", first[0]), ("unresolved_reason", f"選ぶワザの処理が決められない（{detail}）"),
+                      ("unresolved_detail", tuple((i, code, reason) for i, (code, reason) in sorted(stops.items()))))
+        if unsupported:
+            extra += (("unsupported_choices", tuple(sorted(unsupported))),)
+        run.suspend(kind=SELECT_ATTACK, player=run.player, options=options, extra=extra)
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        card_id, index = run.carried["copy_attacks"][choices[0]]
+        key = E.AttackKey(card_id, index)
+        held = dict(self.entries(run)).get(key)
+        status = self.choice_status(run, key, held)
+        definition = run.state.definitions[card_id]
+        attack = definition.attacks[index]
+        if status is not None:
+            code = "UNSUPPORTED_COPIED_ATTACK" if status[0] == UNSUPPORTED else (status[2] or "UNRESOLVED_COPIED_ATTACK")
+            raise UnsupportedError(code, f"ワザ「{attack.name_ja}」を自分のワザとして使えない（{status[1]}）")
+        effect = run.state.effects.attack_effect(definition.id, attack, definition.attacks)
+        attacker = run.attacker()
+        run.state.add_event("copy_attack", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.declared),
+                            copied=str(key), copied_attack=attack.name_ja, copy_source=self.source)
+        run.redirect = (key, attack, BUILDERS[type(effect)](effect))
+
+
+def combined_copy_usage_problem(state: GameState, attacker: PokemonInPlay, effect) -> Exception | None:
+    """v0.120: 必要なエネルギーを合わせるワザ（ミュウの「サイコデュープ」。``E.CopyAttackFromSource`` の ``COPY_COST_COMBINED``）を宣言できるか（ワザを使うための条件。``checks.attack_request``
+    の ``usage_problem``）。選べるワザ（合わせた必要なエネルギーを払え、説明が使えないとしないもの）が 1 つもなければ使えない（「…ついていない限り、「サイコデュープ」は使えない」「ほかに
+    必要な条件…が満たせない時にも使えない」）。払えるワザがなければ ``INSUFFICIENT_ENERGY``、払えても条件をみたすワザがなければ ``COPIED_ATTACK_CONDITIONS``。状態は変えない
+    （確かめのための複製の上で、要素の ``choice_status`` を使う）。"""
+    located = state.find_pokemon(attacker.pokemon_id)
+    if located is None:
+        return None
+    owner = located[0]
+    probe = state.peek()
+    user = probe.find_pokemon(attacker.pokemon_id)[1]
+    key = next((option.key for option in E.available_attacks(state, attacker)
+                if state.effects.attack_effect(option.card_id, E.attack_of(state, option.key), state.definitions[option.card_id].attacks) == effect), None)
+    if key is None:
+        return None
+    attack = E.attack_of(state, key)
+    res = Resolution(probe)
+    fs = res.open_frame(FrameKind.ATTACK, parent=None, player=owner, source_pid=user.pokemon_id, attack_key=key)
+    element = CopyChosenAttack(effect.clause, source=effect.source, cost=effect.cost)
+    run = AttackRun(res, fs, (element,), attack)
+    entries = element.entries(run)
+    statuses = [element.choice_status(run, entry_key, held) for entry_key, held in entries]
+    if any(status is None or status[0] != ILLEGAL for status in statuses):
+        return None
+    payable = [entry_key for (entry_key, _), status in zip(entries, statuses, strict=True)
+               if E.attack_cost_payable(state, attacker, E.combined_cost_attack(attack, E.attack_of(state, entry_key)))]
+    if not payable:
+        return IllegalActionError("INSUFFICIENT_ENERGY", f"ワザ「{attack.name_ja}」: 必要なエネルギーに加えて選べるワザに必要なエネルギーがついていない（選べるワザ {len(entries)}）")
+    return IllegalActionError("COPIED_ATTACK_CONDITIONS", f"ワザ「{attack.name_ja}」: 必要なエネルギーを払える相手のワザ {[str(k) for k in payable]} は、どれもほかに必要な条件を満たせない")
+
+
+# ---------------------------------------------------------------- v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 7 章）
+
+
+@dataclass(frozen=True)
+class HeadsPlusPokemonCount:
+    """v0.120: ダメージの目安の数字 +（コインが「おもて」なら）数えた場のポケモンの数 × ``per``（カブト（neo2-014）の「ちからをあわせる」）。p.321 の 1 段階。コインはダメージの要素の中で、
+    ダメージの量だけを決める（v0.79 の ``HeadsPlusOwnCounters`` と同じ。受けるポケモンがダメージを受けない状態なら投げるかが決まらない v0.4b の問い）。「うら」・数が 0 なら目安の数字。
+    数えるのはダメージの要素を処理する時点（``counted_pokemon``。今の姿の名前の完全一致。名前の読めないうらのカードは FD1）。"""
+
+    per: int
+    scope: str
+    names: tuple[str, ...] | None = None
+    local_coins: ClassVar[int] = 1
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        if flips.results[0] is not HEADS:
+            return run.attack.damage
+        return run.attack.damage + len(counted_pokemon(run.state, run.player, self.scope, self.names)) * self.per
+
+
+@dataclass(frozen=True)
+class FailOnAllTails(Element):
+    """v0.120: コインを ``count`` 枚投げ、すべて「うら」ならワザは失敗する（キングドラの「たつまき」の「すべて「うら」なら、このワザは失敗する」。p.323「12 ワザの失敗」）。結果はワザ全体の
+    コイン ``name`` として、あとの要素（トラッシュの枚数 ``heads_of``）も使う（投げ直さない）。v0.31 の ``FailOnTails``（1 つでも「うら」なら失敗）とは失敗の条件が違う。コインの前に、
+    残りの要素を ``void_coin_question`` で確かめる（``FailOnTails`` と同じ）。"""
+
+    name: str = "coin"
+    count: int = 2
+    phase: ClassVar[Phase] = Phase.NEUTRAL
+
+    def run(self, run: AttackRun) -> bool:
+        index = next((i for i, element in enumerate(run.program) if element is self), None)
+        if index is None:
+            raise RuntimeError("ワザの失敗のコインの要素が、処理している要素の並びにない（エンジンの不具合）")
+        void_coin_question(run, [element for element in run.program[index + 1:] if not element.after_failure])
+        flips = run.flip(self.count, by_heads=True)  # 「おもて」の数（0 なら失敗）だけを使う
+        run.fs.coins[self.name] = flips
+        if flips.heads == 0:
+            run.fail("coin")
+        return False
+
+
+@dataclass(frozen=True)
+class DiscardOpponentEnergyByHeads(DiscardOpponentEnergy):
+    """v0.120: ワザ全体のコイン ``heads_of`` の「おもて」の数ぶんの「エネルギーカード」を、相手（相手の対戦ポケモン）からトラッシュする（キングドラの「たつまき」）。選ぶのはワザを使った
+    プレイヤー（決定 ``DISCARD_OPPONENT_ENERGY``。ちょうど「おもて」の数。ついている順にトラッシュ）。v0.31 の ``DiscardOpponentEnergy``（1 枚ずつ）の確かめ（タケシの保護・［KEEP］・
+    「ワザをうけない」・「とうめい」・リサイクルエネルギーなど）を使う。
+
+    - 「おもて」が 0 なら何もしない（ワザは前の要素で失敗している）。相手がこのワザで HP 以上・エネルギーカードがついていない（タケシの保護を含む）なら、処理の対象がない（p.309）
+    - ついているエネルギーカードが 1 枚以上で「おもて」の数より少ないときは、選べるだけ選ぶとは決まらない（FC1。``stated_cards_short``。v0.75 の「おにびあつめ」と同じ。min で丸めない）
+    """
+
+    heads_of: str = "coin"
+
+    def has_target(self, run: AttackRun) -> bool:
+        target = run.opponent_active()
+        return target is not None and not run.knocked_out(target) and bool(self._energy(run, target))
+
+    def run(self, run: AttackRun) -> bool:
+        heads = run.heads(self.heads_of)
+        opponent = 1 - run.player
+        target = run.opponent_active()
+        if not heads or target is None or run.knocked_out(target):
+            if heads and target is not None:
+                run.ko_prevention_conflict(target, opponent)
+            return False
+        if not self._energy(run, target) or not reaches(run.res, run.fs, opponent, target, E.ENERGY_DISCARD_ELEMENT):
+            return False
+        void = self._voided(run, target)
+        if void is not None:
+            E.note_energy_discard_voided(run.state, void, cause=E.DISCARD_BY_ATTACK, by_player=run.player, effect=str(run.key))
+            return False
+        options = self._energy(run, target)
+        if len(options) < heads:
+            raise run.res.question("stated_cards_short", f"相手のエネルギーカード {len(options)} 枚（「おもて」の数 {heads}）")
+        problems = {uid: E.energy_discard_problem(run.state, target, uid, cause=E.DISCARD_BY_ATTACK, by_player=run.player) for uid in options}
+        blocked = tuple(uid for uid in options if problems[uid] is not None)
+        if len(options) - len(blocked) < heads:
+            raise UnsupportedError(*problems[blocked[0]])
+        code, reason = problems[blocked[0]] if blocked else (None, None)
+        run.suspend(kind=DISCARD_OPPONENT_ENERGY, player=run.player, options=options, min_choices=heads, max_choices=heads,
+                    extra=(("target", target.pokemon_id),) + _unresolved_extra(blocked, code, reason), carry=True)
+        return True
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        blocked = set(decision.context_value("unresolved_choices", ()))
+        return [answer for answer in combinations_answers(decision, (decision.min_choices,)) if not blocked & set(answer)]
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        opponent = 1 - run.player
+        found = run.state.find_pokemon(run.carried["target"])
+        if found is None or found[0] != opponent or len(choices) != run.heads(self.heads_of) or any(uid not in found[1].energy for uid in choices):
+            raise RuntimeError(f"トラッシュに選んだカード {choices} が、相手の対戦ポケモンについている「おもて」の数のカードではない（エンジンの不具合）")
+        target = found[1]
+        attacker = run.attacker()
+        for energy in tuple(uid for uid in target.energy if uid in choices):
+            E.discard_energy_from_play(
+                run.state, target, (energy,), cause=E.DISCARD_BY_ATTACK, by_player=run.player,
+                log=lambda energy=energy: run.state.add_event("discard_attached_energy", player=opponent, pokemon=target.card, pokemon_id=target.pokemon_id,
+                                                              energy=energy, effect=str(run.key), attacker=run.player, attacker_pokemon_id=attacker.pokemon_id))
+
+
+@dataclass(frozen=True)
+class EvolveChosenFromDeck(Element):
+    """v0.120: 自分の場の「``names``」を好きなだけ選ぶ。その後、自分の山札から、選んだポケモンから進化する「進化カード」を、それぞれ 1 枚ずつ選びだし、それぞれのポケモンの上にのせ、
+    進化させる。山札を見た場合は、その山札をよく切る（ワタッコ（neo3-007）の「しんかのほうし」。実装 ``effects.EvolveChosenNamedFromDeck``）。
+
+    - 段階 1: 自分の場（バトル場 → ベンチ）の、今の姿の名前が ``names`` のどれかのポケモンを選ぶ（決定 ``SELECT_POKEMON``。0〜その数。ワザを使ったポケモン自身も選べる）。いなければ処理の
+      対象がない（p.309。ログ ``evolve_from_deck_none``）。「好きなだけ」（「のぞむなら」がない）の 0 匹は、v0.31 の HC5 と同じ問い（答えのときに止める。v0.42 のようせいのきせきと同じ扱い）。
+      山札を見る前に公開の情報だけで決まる問い（DV2・GV1・［れんさしんか］の PW4。``effects.self_deck_evolution_open_question``）のあるポケモンは、選べるが選ぶと止める。名前の読めない
+      うらのカードは FD1（選べるが選ぶと止める）
+    - 段階 2: 選んだポケモンごとに（場の並びの順）、山札にカードがあれば山札を見て、そのポケモンに今重ねられる進化カード（``effects.self_deck_evolution_cards``。通常の進化と同じ制限）を
+      1 枚選ぶ（決定 ``SEARCH_DECK``。選べるカードがあれば 1〜1 枚、なければ選べるもののない決定。v0.84 の A3）。選んだらそのまま重ねて進化させる（重ねる前に「とうめい」を評価する。
+      トキワシティジムの機会があれば答えてから次へ）。重ねたカードは山札をはなれるので、同じカードを 2 匹に使わない。進化したあとの HP がダメージ以下になるカード（H1）・場に出たときの
+      特殊能力を持つカード（PW4）は選べるが選ぶと止める
+    - 最後に、山札を見たときだけ 1 回切る（山札が 0 枚なら見ない）。決定をまたぐ続きの情報は、まだ処理していない選んだポケモン（``spore_targets``）・山札を見たか（``spore_looked``）
+    """
+
+    names: tuple[str, ...]
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def decides(self, kind: str) -> bool:
+        return kind in (SELECT_POKEMON, SEARCH_DECK, EVOLUTION_HEAL)
+
+    def _chosen_stops(self, run: AttackRun, pokemon: PokemonInPlay) -> tuple[str, str] | None:
+        question = E.self_deck_evolution_open_question(run.state, run.player, pokemon, run.state.card_def(pokemon.card).name_ja)
+        if question is None:
+            return None
+        found = QUESTIONS[question[0]]
+        return found.code, f"{found.message}（{'・'.join(found.rulings)}。{question[1]}）"
+
+    def _targets(self, run: AttackRun) -> tuple[list[int], dict[int, tuple[str, str]]]:
+        targets: list[int] = []
+        stops: dict[int, tuple[str, str]] = {}
+        for pokemon in run.state.players[run.player].in_play():
+            if run.state.is_face_down(pokemon):
+                targets.append(pokemon.pokemon_id)
+                stops[pokemon.pokemon_id] = (SECRET_PLAN_HIDDEN_CODE, f"うらのカード（場のポケモン {pokemon.pokemon_id}）の名前は読めない（FD1）")
+                continue
+            if E.form_def(run.state, pokemon).name_ja not in self.names:
+                continue
+            targets.append(pokemon.pokemon_id)
+            stop = self._chosen_stops(run, pokemon)
+            if stop is not None:
+                stops[pokemon.pokemon_id] = stop
+        return targets, stops
+
+    def run(self, run: AttackRun) -> bool:
+        targets, stops = self._targets(run)
+        if not targets:
+            run.state.add_event("evolve_from_deck_none", player=run.player, pokemon_id=run.fs.frame.source_pid, effect=str(run.key))
+            return False
+        if len(stops) == len(targets):
+            code, reason = stops[targets[0]]
+            raise UnsupportedError(code, f"選べるポケモンがどれも選ぶと止めるもの（{reason}）")
+        blocked = tuple(pid for pid in targets if pid in stops)
+        extra: tuple = ()
+        if blocked:
+            extra = (("unresolved_choices", blocked), ("unresolved_code", stops[blocked[0]][0]), ("unresolved_reason", stops[blocked[0]][1]),
+                     ("unresolved_detail", tuple((pid, *stops[pid]) for pid in blocked)))
+        run.suspend(kind=SELECT_POKEMON, player=run.player, options=targets, min_choices=0, max_choices=len(targets), extra=extra)
+        return True
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        if decision.kind == SELECT_POKEMON:
+            blocked = set(decision.context_value("unresolved_choices", ()))
+            return [answer for answer in combinations_answers(decision, range(1, decision.max_choices + 1)) if not blocked & set(answer)]  # 0 匹は答えのときに止める（HC5）
+        blocked = set(decision.context_value("unresolved_choices", ())) | set(decision.context_value("entry_power_choices", ()))
+        if decision.kind == SEARCH_DECK:
+            return [answer for answer in card_id_answers(run.state, decision, (decision.max_choices,)) if not blocked & set(answer)]
+        return [answer for answer in all_answers(decision) if not blocked & set(answer)]
+
+    def _next(self, run: AttackRun, remaining: tuple[int, ...], looked: bool) -> bool:
+        """選んだポケモン ``remaining`` の順に、山札を見て進化カードを選ぶ決定を出す（出したら True）。すべて終えたら、見たときだけ山札を切る。"""
+        state = run.state
+        while remaining:
+            pid, remaining = remaining[0], remaining[1:]
+            found = state.find_pokemon(pid)
+            if found is None or found[0] != run.player:
+                continue
+            target = found[1]
+            if not state.players[run.player].deck:
+                state.add_event("evolve_from_deck_none", player=run.player, pokemon_id=pid, effect=str(run.key))
+                continue
+            looked = True
+            extra: tuple = (("spore_target", pid), ("spore_targets", remaining), ("spore_looked", 1))
+            candidates = E.self_deck_evolution_cards(state, run.player, target)
+            if not candidates:
+                run.suspend(kind=SEARCH_DECK, player=run.player, options=(), min_choices=0, max_choices=0, extra=extra)
+                return True
+            blocked = tuple(uid for uid in candidates if target.damage >= E.evolution_hp(state, target, uid))
+            entry = tuple(uid for uid in candidates if uid not in blocked and E.applicable_entry_power(state, uid, from_hand=False) is not None)
+            if len(blocked) + len(entry) == len(candidates):
+                if entry:
+                    raise run.res.question("entry_power_during_attack", f"山札の進化カード {list(entry)}")
+                raise run.res.question("evolution_hp_every_card", f"山札の進化カード {list(blocked)}")
+            if blocked:
+                extra += (("unresolved_choices", blocked), ("unresolved_code", "UNRESOLVED_EVOLUTION_HP"), ("unresolved_reason", E.EVOLUTION_HP_REASON))
+            if entry:
+                extra += (("entry_power_choices", entry),)
+            run.suspend(kind=SEARCH_DECK, player=run.player, options=candidates, min_choices=1, max_choices=1, extra=extra)
+            return True
+        if looked:
+            shuffle_in_attack(run, self, run.player)
+        return False
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        if decision.kind == SELECT_POKEMON:
+            if not choices:
+                raise UnsupportedError(
+                    "UNRESOLVED_DISCARD_ANY_NUMBER_ZERO",
+                    "「好きなだけ選ぶ」（「のぞむなら」がない）で 0 匹を選べるかは決められないので扱わない（HC5。v0.42 のようせいのきせきと同じ）。1 匹以上を選ぶ",
+                )
+            order = [p.pokemon_id for p in state.players[run.player].in_play()]
+            chosen = tuple(sorted(choices, key=order.index))
+            state.add_event("evolve_targets", player=run.player, pokemon_id=run.fs.frame.source_pid, effect=str(run.key), targets=chosen)
+            self._next(run, chosen, False)
+            return
+        remaining = tuple(run.carried.get("spore_targets", ()))
+        if decision.kind == EVOLUTION_HEAL:
+            found = state.find_pokemon(decision.context_value("heal_pokemon"))
+            if found is None:
+                raise RuntimeError(f"トキワシティジムの決定のポケモン {decision.context_value('heal_pokemon')} が場にいない（エンジンの不具合）")
+            E.apply_evolution_heal(state, found[0], found[1], decision.context_value("heal_stadium"), bool(choices))
+            self._next(run, remaining, True)
+            return
+        pid = run.carried["spore_target"]
+        found = state.find_pokemon(pid)
+        if found is None or found[0] != run.player:
+            raise RuntimeError(f"しんかのほうしの選んだポケモン {pid} が場にいない（エンジンの不具合）")
+        target = found[1]
+        if not choices:
+            if E.self_deck_evolution_cards(state, run.player, target):
+                raise RuntimeError(f"必ず選ぶ山札の進化カードの決定に、0 枚の答え（{run.key}。決定の形の誤り。エンジンの不具合）")
+            state.add_event("evolve_from_deck_none", player=run.player, pokemon_id=pid, effect=str(run.key))
+            self._next(run, remaining, True)
+            return
+        card = choices[0]
+        if card not in E.self_deck_evolution_cards(state, run.player, target):
+            raise RuntimeError(f"しんかのほうしで選んだカード {choices} が、ポケモン {pid} に重ねられる山札の進化カードではない（エンジンの不具合）")
+        if card in decision.context_value("entry_power_choices", ()):
+            question = QUESTIONS["entry_power_during_attack"]
+            raise UnsupportedError(question.code, f"{question.message}（PW4。山札の進化カード {card}）")
+        if reaches(run.res, run.fs, run.player, target, E.EVOLVE_ELEMENT):
+            before_name = E.form_def(state, target).name_ja
+            place_evolution_card(state, run.player, target, card, effect=str(run.key))
+            terms = E.evolution_heal_terms(state, target, before_name)
+            if terms is not None:
+                stadium, _, one = terms
+                extra: tuple = (("heal_stadium", stadium.card), ("heal_pokemon", target.pokemon_id), ("spore_targets", remaining), ("spore_looked", 1))
+                if one:
+                    extra += (("unresolved_choices", (target.pokemon_id,)), ("unresolved_code", E.VIRIDIAN_GYM_ONE_COUNTER_CODE),
+                              ("unresolved_reason", E.VIRIDIAN_GYM_ONE_COUNTER_REASON))
+                run.suspend(kind=EVOLUTION_HEAL, player=run.player, options=(target.pokemon_id,), min_choices=0, max_choices=1, extra=extra)
+                return
+        self._next(run, remaining, True)
+
+
 # ---------------------------------------------------------------- v0.32: 山札からベンチに出す・ダメージカウンターでダメージが決まる
 # （docs/bench-search-counter-drain-v0.32.md）
 
@@ -7440,10 +7837,20 @@ class DevolveChosenPokemon(Element):
         forbidden = tuple(pid for pid in options if E.devolution_forbidden(state, state.find_pokemon(pid)[1]))
         if len(forbidden) == len(options):
             raise run.res.question("devolution_target_disguised", f"ポケモン {list(forbidden)}")
+        # v0.120（FE1）: はがすとたねポケモンとしてあつかった進化カードがまたいちばん上になるポケモンは、選べるが選ぶと止める（ないときは v0.119 までの決定の形）
+        revived = {pid: problem for pid in options if pid not in forbidden
+                   for problem in (E.revived_devolve_problem(state, state.find_pokemon(pid)[1], 1),) if problem is not None}
+        if len(forbidden) + len(revived) == len(options):
+            raise UnsupportedError(*revived[next(iter(revived))])
         extra: tuple = ()
         if forbidden:
             extra = (("unresolved_choices", forbidden), ("unresolved_code", E.DEVOLUTION_TARGET_DISGUISED_CODE),
                      ("unresolved_reason", E.DEVOLUTION_TARGET_DISGUISED_REASON))
+        if revived:
+            stops = {**{pid: (E.DEVOLUTION_TARGET_DISGUISED_CODE, E.DEVOLUTION_TARGET_DISGUISED_REASON) for pid in forbidden}, **revived}
+            first = stops[min(stops, key=options.index)]
+            extra = (("unresolved_choices", tuple(pid for pid in options if pid in stops)), ("unresolved_code", first[0]), ("unresolved_reason", first[1]),
+                     ("unresolved_detail", tuple((pid, *stops[pid]) for pid in options if pid in stops)))
         run.suspend(kind=SELECT_POKEMON, player=run.player, options=options, extra=extra)
         return True
 
@@ -9646,6 +10053,10 @@ BUILDERS: dict[type, Any] = {
     E.DamagePlusDefenderEnergy: lambda e: (Damage(OPP, PlusDefenderEnergy(e.per)),),
     E.DamagePlusOwnCounters: lambda e: (Damage(OPP, PlusOwnCounters(e.per)),),
     E.CopyOpponentAttackEffect: lambda e: (CopyOpponentAttack(e.clause),),
+    # v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 5 章）: ワザを選んで自分のワザとして使う（コインのあとに選ぶ・範囲・必要なエネルギー・条件）
+    E.CopyAttackFromSource: lambda e: ((Coin("coin"),) if e.coin else ()) + (
+        CopyChosenAttack(e.clause, gate=("coin", HEADS) if e.coin else None, source=e.source, cost=e.cost,
+                         condition_code=E.PRE_EVOLUTION_CONDITION_CODE if e.source == E.COPY_FROM_PRE_EVOLUTION else "UNRESOLVED_COPIED_ATTACK"),),
     E.ReduceDamageNextTurn: lambda e: (SelfPersistent(DamageReduction.kind, amount=e.amount),),
     E.DiscardFireThenMillOpponent: lambda e: (
         DiscardOwnEnergy(EnergyType.FIRE, any_number=True, deck_limit=True, when_lacking=LACKING_CONDITION, timing=TIMING_UNRESOLVED),
@@ -9690,6 +10101,10 @@ BUILDERS: dict[type, Any] = {
     ),
     E.DrawCardsAttack: lambda e: (Draw(e.count),),
     E.ExtraEnergyDamageMixed: lambda e: (Damage(OPP, ExtraEnergyMixed(e.energy_type, e.per_energy, e.max_extra)),),
+    # v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 7 章）
+    E.CoinBonusPerOwnBenchNamed: lambda e: (Damage(OPP, HeadsPlusPokemonCount(e.per, SCOPE_OWN_BENCH, e.names)),),
+    E.EvolveChosenNamedFromDeck: lambda e: (EvolveChosenFromDeck(e.names),),
+    E.CoinsDiscardOpponentEnergyElseFail: lambda e: (FailOnAllTails("coin", e.coins), Damage(OPP, Printed()), DiscardOpponentEnergyByHeads(heads_of="coin")),
     E.ThreeCoinPsychicPower: lambda e: (
         Coin("coin", count=3), Damage(OPP, Fixed(20), gate=("coin", 2)), Draw(1, gate=("coin", 1)), CopyOpponentAttack(gate=("coin", 3)),
     ),

@@ -127,11 +127,15 @@ def attack_request(state: GameState, cmd: UseAttack) -> AttackRequest:
         # 宣言のときに記録する。ログから数えない）。エネルギーの確認の前（説明が使えないとするワザなので、必要なエネルギーがあっても使えない）
         raise IllegalActionError("ATTACK_ALREADY_USED", f"バトル場のポケモン {attacker.pokemon_id} は、ワザ「{attack.name_ja}」を場に出てからもう使った"
                                  "（場に出てから1回しか使えない）")
-    cost_problem = attack_cost_problem(state, attacker, attack)  # v0.58: TE2（［へんしん］のメタモンの無色の特殊エネルギー。ほかの確認がすべて通ったあとに止める）
-    if cost_problem is None and not attack_cost_payable(state, attacker, attack):
+    # v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 4 章）: 必要なエネルギー（通常のコスト）を満たすポケモン（``AttackOption.payer``。［にんぎょうつかい］はスリーパー。ほかはワザを使う
+    # ポケモン）。説明が書くほかの支払い・使うための条件（``usage_problem``・ワザの要素）はワザを使うポケモンのまま
+    payer = attacker if option.payer is None else state.find_pokemon(option.payer)[1]
+    cost_problem = attack_cost_problem(state, payer, attack)  # v0.58: TE2（［へんしん］のメタモンの無色の特殊エネルギー。ほかの確認がすべて通ったあとに止める）
+    if cost_problem is None and not attack_cost_payable(state, payer, attack):
         # v0.49: 必要なエネルギーはどのワザの出どころでも同じに確かめる（［へんしん］のメタモンはエネルギーカードをどの色としても払える。``effects.attack_cost_payable``）
         # v0.58: 出すエネルギーの個数と色で払う（無色2個エネルギー・レインボーエネルギー）
-        raise IllegalActionError("INSUFFICIENT_ENERGY", f"ワザ「{attack.name_ja}」に必要なエネルギーが足りない")
+        who = "" if payer is attacker else f"（支払うポケモン {payer.pokemon_id}）"
+        raise IllegalActionError("INSUFFICIENT_ENERGY", f"ワザ「{attack.name_ja}」に必要なエネルギーが足りない{who}")
     problem = effect.usage_problem(state, attacker)  # v0.31: 説明が書くワザを使うための条件（「ぼーっとする」）
     if problem is not None:
         raise problem

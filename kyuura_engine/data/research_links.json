@@ -12,8 +12,8 @@
   "card_data_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 271,
-    "engine_stop_codes": 270,
+    "engine_unresolved_rulings": 277,
+    "engine_stop_codes": 276,
     "kyuura_issues": 73
   },
   "stop_codes": {
@@ -3108,6 +3108,72 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_PRE_EVOLUTION_ATTACK_STAGE": {
+      "engine_rulings": [
+        {
+          "version": "v0.120",
+          "document": "docs/fossil-basic-virtual-attacks-v0.120.md",
+          "ruling_id": "PE1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_PRE_EVOLUTION_ATTACK_CONDITIONS": {
+      "engine_rulings": [
+        {
+          "version": "v0.120",
+          "document": "docs/fossil-basic-virtual-attacks-v0.120.md",
+          "ruling_id": "PE2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_PERMITTED_ATTACK_HELD": {
+      "engine_rulings": [
+        {
+          "version": "v0.120",
+          "document": "docs/fossil-basic-virtual-attacks-v0.120.md",
+          "ruling_id": "VP1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_REVIVED_BASIC_DEVOLVED": {
+      "engine_rulings": [
+        {
+          "version": "v0.120",
+          "document": "docs/fossil-basic-virtual-attacks-v0.120.md",
+          "ruling_id": "FE1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_REVIVE_HAND_BASIC_ENTRY": {
+      "engine_rulings": [
+        {
+          "version": "v0.120",
+          "document": "docs/fossil-basic-virtual-attacks-v0.120.md",
+          "ruling_id": "FE2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TRANSFORM_REVIVED_BASIC": {
+      "engine_rulings": [
+        {
+          "version": "v0.120",
+          "document": "docs/fossil-basic-virtual-attacks-v0.120.md",
+          "ruling_id": "TF3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -5165,7 +5231,25 @@
       "PRN-036/attack/0",
       "PRN-036/attack/1",
       "PR1-068/attack/0",
-      "PR1-068/power/0"
+      "PR1-068/power/0",
+      "neo1-071/attack/0",
+      "neo1-071/attack/1",
+      "neo2-014/attack/0",
+      "neo2-014/power/0",
+      "neo2-032/attack/0",
+      "neo2-032/power/0",
+      "neo3-007/attack/0",
+      "neo3-020/attack/0",
+      "neo3-020/attack/1",
+      "neo3-042/attack/0",
+      "neo3-042/power/0",
+      "ES3-025/attack/0",
+      "ES3-025/power/0",
+      "PR1-021/attack/1",
+      "PR1-065/attack/0",
+      "PR1-065/attack/1",
+      "PF3-001/attack/0",
+      "PF3-001/power/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

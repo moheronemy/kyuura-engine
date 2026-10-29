@@ -375,6 +375,13 @@ DECK_TOP_FROM_HAND = "deck_top_from_hand"
 # 番号 1 つ（1 個: 使う・0 個: 使わない）。``context`` は順番の決定と同じ形の続きの情報と ``"option"``（(段階, 発生源のカード, 数)）・``"value"``（8 段階の前のダメージ）・``"finals"``
 # （使わないときの最終ダメージ）。控えポケモンへのダメージの要素では ``"bench_guard"``（運ぶ並び）。再開先は "attack"
 DAMAGE_OPTION = "damage_option"
+# v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 7 章）: たまごの化石の「あなたの山札、またはあなたの手札から、…選び出し」で、山札を見るか手札から選ぶか。決めるのは使ったプレイヤー。
+# 選べるものは 0（手札から選ぶ。手札に選べるカードがあるときだけ）・1（山札を見る。山札にカードがあるときだけ）で 1 つ。山札を見ないで手札から選べば、山札を切らない。手札の中身・選べる数は
+# 相手に見せない（観測の ``HIDDEN_COUNT_KINDS``）。再開先は "trainer"
+REVIVE_SOURCE = "revive_source"
+# v0.120: たまごの化石で山札を見たあと、ベンチに出す「なにかの化石」を進化させる進化カード（山札・手札のカード。uid）。決めるのは使ったプレイヤー。選べるカードがあれば 1 枚、なければ
+# 選べるもののない決定（0 枚。山札の中身で決定の有無を変えない）。選べるもの・数は相手に見せない。再開先は "trainer"
+BENCH_FROM_DECK_OR_HAND = "bench_from_deck_or_hand"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

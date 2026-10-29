@@ -106,7 +106,7 @@ from .damage import (
 from .decisions import (
     ATTACH_FROM_DECK, ATTACH_FROM_DISCARD, ATTACH_FROM_HAND, ATTACH_TO_BENCH, BENCH_FROM_DECK, DISCARD_ENERGY, DISCARD_FROM_HAND, DISCARD_OPPONENT_ENERGY, ENTRY_POWER, FORCED_SWITCH,
     DISCARD_TO_DECK_TOP, HAND_TO_DECK, MOVE_ENERGY, MOVE_OPPONENT_ENERGY, RECOVER_ENERGY, RECOVER_POKEMON, RECOVER_TRAINER, REMOVE_COUNTERS, RETRIEVE_ENERGY, RETURN_ENERGY,
-    RETURN_TO_DECK, SEARCH_DECK, SELECT_ATTACK,
+    RETURN_TO_DECK, SEARCH_DECK, SELECT_ATTACK, BENCH_FROM_DECK_OR_HAND, REVIVE_SOURCE,
     SELECT_EVOLUTION_CARD, SELECT_OPPONENT_ATTACK, SELECT_POKEMON, SELECT_SPECIAL_CONDITION, push_power_decision,
     ARRANGE_DECK_TOP, PEEK_CARD, SELECT_DECK_OWNER, SELECT_HAND_CARD, SELECT_LOOK_COUNT, SELECT_PRIZE_CARD,
     SELECT_COLOR, SELECT_DEVOLVE_COUNT, BENCH_FROM_DISCARD, DISCARD_TO_DECK, SELECT_DRAW_COUNT, push_trainer_decision,
@@ -14946,6 +14946,13 @@ def evolved_from_baby(state: GameState, pokemon: PokemonInPlay) -> bool:
     return bool(stack) and not state.is_face_down(pokemon) and state.printed_def(stack[0]).is_baby_pokemon
 
 
+def treated_as_basic(state: GameState, pokemon: PokemonInPlay) -> bool:
+    """v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 6 章）: 場のポケモン ``pokemon`` が、進化元を重ねずに出した進化カード（``PokemonInPlay.basic_entry``）を今のいちばん上のカードとし、
+    場では「たねポケモン」としてあつかわれるか。今の姿がいちばん上のカード（［へんしん］・「ばける」でない）のときだけ。"""
+    entry = pokemon.basic_entry
+    return entry is not None and entry.card == pokemon.card and not copied_form(state, pokemon)
+
+
 def copied_form(state: GameState, pokemon: PokemonInPlay) -> bool:
     """今の姿が、いちばん上のカードでないカード（［へんしん］・「ばける」）か（v0.114）。"""
     return current_form(state, pokemon).card != pokemon.card
@@ -14958,10 +14965,12 @@ def field_stage(state: GameState, pokemon: PokemonInPlay) -> str:
     - 今の姿（``form_def``）のカードの印刷の段階で決める（v0.49 の［へんしん］・「ばける」の読み方と同じ）。ベイビィから進化したかは、実際の重なり（``evolved_from_baby``）で、今の姿が
       いちばん上のカードのときだけ見る（［へんしん］のメタモンは相手の重なりを写さない。もとの個体がベイビィでないのに姿だけでベイビィのルールを写さない）
     - ［へんしん］でベイビィの姿になったメタモンは ``FIELD_BABY`` を返す（姿の読み方）。ベイビィとたねを分ける処理は ``transform_baby_question`` で、決まらない場面を止める
-    - うらのカード（マチスの秘策）は「たねポケモン」としてあつかう（``FIELD_BASIC``）。場でポケモンとしてあつかうトレーナー（なにかの化石・ピッピ人形）は場での定義のたねポケモン"""
+    - うらのカード（マチスの秘策）は「たねポケモン」としてあつかう（``FIELD_BASIC``）。場でポケモンとしてあつかうトレーナー（なにかの化石・ピッピ人形）は場での定義のたねポケモン
+    - v0.120: 進化カードを進化元を重ねずに出し、場ではたねポケモンとしてあつかう個体（［なかまのふっかつ］・［かせきのふっかつ］・たまごの化石。``treated_as_basic``）は、そのカードが
+      いちばん上のあいだ ``FIELD_BASIC``（下にカードのない進化カードを、ほかの理由で進化ポケモンとしない。その上に進化したら、いちばん上の進化カードで ``FIELD_EVOLVED``）"""
     form = form_def(state, pokemon)
     if form.is_evolution_pokemon:
-        return FIELD_EVOLVED
+        return FIELD_BASIC if treated_as_basic(state, pokemon) else FIELD_EVOLVED
     if form.is_baby_pokemon:
         return FIELD_BABY
     if not copied_form(state, pokemon) and evolved_from_baby(state, pokemon):
@@ -15230,6 +15239,13 @@ def link_types(state: GameState, owner: int, pokemon: PokemonInPlay) -> tuple[En
 ROUTE_FORM = "form"  # 今の姿のカードのワザ
 ROUTE_RECALL = "recall"  # 「思い出させる」で使う進化前のワザ
 ROUTE_LINK = "psylink"  # ［サイコリンク］で持つ、自分の場の「超」ポケモンのワザ
+# v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 4 章）: 「使ってよい」「使うことができる」と書く許可で使えるワザ（持っているものとする［サイコリンク］とは別）
+ROUTE_PREHISTORIC = "prehistoric"  # ［げんしのきおく］で使う、場の進化ポケモンの進化前のカードのワザ
+ROUTE_PUPPET = "puppet"  # ［にんぎょうつかい］で、自分のバトル場の「ピッピ人形」が使う、スリーパーの持っているワザ
+ROUTE_MIMIC = "mimic"  # ［ものまね］で使う、相手の対戦ポケモンの持っているワザ
+# v0.120: 許可で使えるワザの持ち方。ほかの効果（ゆびをふる・ちょうのうりょく・サイコデュープ・［ものまね］など）が「持っているワザ」「相手のワザ」として選べるかは決まらない
+# （``held_attack_keys`` の VP1）。「思い出させる」の記録は使ったプレイヤーの番だけなので、相手の番の選ぶ効果には今までも現れない
+PERMISSION_ROUTES = frozenset({ROUTE_RECALL, ROUTE_PREHISTORIC, ROUTE_PUPPET, ROUTE_MIMIC})
 
 
 @dataclass(frozen=True)
@@ -15237,8 +15253,13 @@ class AttackOption:
     """場のポケモンが今持つワザの 1 つ（v0.49。``available_attacks``）。
 
     - ``card``: そのワザを印刷したカードの uid（ワザの出どころ。``UseAttack.card``）。``card_id``・``attack_index``: 登録の ``AttackKey``（ワザの同一性）
-    - ``route``: 持ち方（``ROUTE_FORM``・``ROUTE_RECALL``・``ROUTE_LINK``）。``provider``: ［サイコリンク］でワザを供給する場のポケモンの番号
-    - ``problem``: そのワザを選ぶと止める理由 (コード, 理由の文)（読み方で持つかが変わる VS1・「思い出させる」の RC2〜RC4・1 回しか使えないワザの VA1）。None なら止めない
+    - ``route``: 持ち方（``ROUTE_FORM``・``ROUTE_RECALL``・``ROUTE_LINK``、v0.120 の ``ROUTE_PREHISTORIC``・``ROUTE_PUPPET``・``ROUTE_MIMIC``）。``provider``: ワザを供給する場の
+      ポケモン（［サイコリンク］の「超」ポケモン・［にんぎょうつかい］のスリーパー・［ものまね］の相手の対戦ポケモン）の番号。供給元で、必要なエネルギーを払うポケモンとは限らない
+    - ``problem``: そのワザを選ぶと止める理由 (コード, 理由の文)（読み方で持つかが変わる VS1・「思い出させる」の RC2〜RC4・1 回しか使えないワザの VA1・v0.120 の PE1・VP1）。None なら止めない
+    - v0.120: ``payer``: 必要なエネルギー（ワザの通常のコスト）を、ついているエネルギーで満たすポケモンの番号。None ならワザを使うポケモン自身（v0.119 までのすべての持ち方）。
+      ［にんぎょうつかい］ではスリーパー（「そのワザに必要なエネルギーがこのカードについていなければならない」）。説明が書くほかの支払い（このカードのエネルギーのトラッシュなど）・
+      ワザの処理（タイプ・ダメージ・「このカード」）はワザを使うポケモン。``grantors``: 許可を与える特殊能力を持つ場のポケモンの番号（［げんしのきおく］のプテラ・［にんぎょうつかい］の
+      スリーパー・［ものまね］のウソッキー。2 匹以上が同じワザを許可しても 1 つの選択）
     """
 
     card: int
@@ -15247,6 +15268,8 @@ class AttackOption:
     route: str = ROUTE_FORM
     provider: int | None = None
     problem: tuple[str, str] | None = None
+    payer: int | None = None
+    grantors: tuple[int, ...] = ()
 
     @property
     def key(self) -> AttackKey:
@@ -15282,7 +15305,8 @@ RECALL_FORM_REASON = (
 
 def available_attacks(state: GameState, pokemon: PokemonInPlay) -> tuple[AttackOption, ...]:
     """場のポケモン ``pokemon`` が今持つワザ（v0.49。公開の問い合わせ。並びは今の姿のカードのワザ → 「思い出させる」で使える進化前のワザ（すぐ下のカードから）→
-    ［サイコリンク］で持つワザ（供給するポケモンをバトル場 → ベンチの順に））。
+    ［サイコリンク］で持つワザ（供給するポケモンをバトル場 → ベンチの順に）→ v0.120 の［げんしのきおく］・［にんぎょうつかい］・［ものまね］で使えるワザ）。v0.120: 同じカードの同じワザは
+    1 つ（``_distinct_options``）。ベンチのポケモンには、バトル場でだけはたらく許可（［げんしのきおく］・［ものまね］・［にんぎょうつかい］）のワザはない。
 
     持っていても使えるとは限らない（必要なエネルギー・使えない効果・説明の条件は ``checks.attack_request`` が確かめる）。選ぶと止めるワザは ``problem`` に理由がある。
     ワザは印刷したカードの uid と ``AttackKey`` で識別する。状態を変えず、乱数を使わない。場にいないポケモンなら空。"""
@@ -15296,7 +15320,9 @@ def available_attacks(state: GameState, pokemon: PokemonInPlay) -> tuple[AttackO
     if state.players[owner].active is pokemon:
         options += _recall_options(state, owner, pokemon, form)
     options += _link_options(state, owner, pokemon, form)
-    return tuple(options)
+    # v0.120: 許可で使えるワザ（［げんしのきおく］・［にんぎょうつかい］・［ものまね］）。並びは今までの持ち方のあと。同じカードの同じワザは 1 つ（``_distinct_options``）
+    options += _prehistoric_options(state, owner, pokemon, form) + _puppet_options(state, owner, pokemon, form) + _mimic_options(state, owner, pokemon, form, 0)
+    return _distinct_options(options)
 
 
 def _attack_option(state: GameState, form: Form, card: int, card_id: str, index: int, route: str, provider: int | None,
@@ -15358,6 +15384,191 @@ def _link_options(state: GameState, owner: int, pokemon: PokemonInPlay, form: Fo
     return options
 
 
+# ---------------------------------------------------------------- v0.120: 許可で使えるワザ（docs/fossil-basic-virtual-attacks-v0.120.md 4 章）
+
+PREHISTORIC_MEMORY_TEXT = (
+    "この力は、このカードが場にいるかぎり、はたらく。おたがいの対戦ポケモンが、それぞれワザを使うとき、そのポケモンが「進化ポケモン」なら、進化する前に持っていたワザを1つ選び、"
+    "そのポケモンのワザとして使うことができる(そのワザに必要な「エネルギー」がそのポケモンについていないときは、使うことができない)。このカードが「ねむり・マヒ・こんらん」状態のとき、"
+    "この力は、はたらかない。"
+)
+PUPPET_MASTER_TEXT = (
+    "自分のバトル場にいる「{doll}」は、このカードが持っているワザを使ってよい。ただし、そのワザに必要なエネルギーがこのカードについていなければならない。"
+    "(「{doll}」には、ワザに必要なエネルギーがついていなくてもかまわない)"
+)
+MIMIC_TEXT = (
+    "このカードは、バトル場にいるかぎり、相手の対戦ポケモンの持っているワザを使うことができる。そのワザに必要な「エネルギー」がこのカードについていないときや、このカードが"
+    "「ねむり・マヒ・こんらん」状態のとき、この力を使うことはできない。"
+)
+PRE_EVOLUTION_STAGE_CODE = "UNRESOLVED_PRE_EVOLUTION_ATTACK_STAGE"
+PRE_EVOLUTION_STAGE_REASON = (
+    "2 進化ポケモン（実際に 2 枚のカードの上に重なったポケモン）の「進化する前に持っていたワザ」（キングドラの「りゅうのいでんし」・プテラの［げんしのきおく］）に、すぐ下のカードのワザの"
+    "ほか、いちばん下のカードのワザも入るかは、印刷の文面・kyuura の記録から決められない（PE1。すぐ下のカードのワザは、最後に進化する前に持っていたワザなので使える。「思い出させる」の"
+    "RC2 と同じ形の、別のカードの問い）"
+)
+PERMITTED_ATTACK_CODE = "UNRESOLVED_PERMITTED_ATTACK_HELD"
+PERMITTED_ATTACK_REASON = (
+    "ほかのカードの許可で「使ってよい」「使うことができる」ワザ（［げんしのきおく］の進化前のワザ・［にんぎょうつかい］でピッピ人形が使うスリーパーのワザ・［ものまね］で使う相手の"
+    "ワザ・「思い出させる」の進化前のワザ）が、そのポケモンの「持っているワザ」・「相手のワザ」・「相手の場にいるポケモンのワザ」として、ほかの効果（ゆびをふる・ちょうのうりょく・"
+    "サイコデュープ・［ものまね］・ドわすれなど）で選べるかは、印刷の文面・kyuura の記録から決められない（VP1。持っているものとする［サイコリンク］のワザは選べる）"
+)
+
+
+@dataclass(frozen=True)
+class PreEvolutionAttacksForEvolvedActives(ContinuousPower):
+    """この力は、このカードが場にいるかぎり、はたらく。おたがいの対戦ポケモンが、それぞれワザを使うとき、そのポケモンが「進化ポケモン」なら、進化する前に持っていたワザを 1 つ選び、
+    そのポケモンのワザとして使うことができる（必要なエネルギーがそのポケモンについていないときは使えない）。ねむり・マヒ・こんらんのとき、はたらかない（v0.120。プテラ（neo3-042）の
+    ［げんしのきおく］。kyuura の印刷の文面。docs 4 章）。
+
+    - 常にはたらく許可（宣言しない。使う回数の制限はない）。場のどこにいてもはたらき、ねむり・マヒ・こんらん・かがくへんかガスで消える（共通の確かめ）。2 匹以上がはたらいても同じワザは
+      1 つの選択（``AttackOption.grantors``）
+    - 対象は、おたがいのバトル場のポケモンのうち、場の分類（``field_stage``）が「進化ポケモン」のもの（ベイビィから進化したたねポケモンはふくむ。復活してたねポケモンとしてあつかう
+      進化カードはふくまない）。使えるのは、実際に重なっている進化前のカードに印刷されたワザ（``recall_stack_attacks``。ポケモン育て屋さんで飛ばした進化カード・進化する前に許可で
+      持っていたワザは補わない）。すぐ下のカードより下のカードのワザは PE1
+    - そのポケモンのワザとして使う（ワザを宣言するポケモン・必要なエネルギーを払うポケモン・ワザの処理はそのポケモン。``ROUTE_PREHISTORIC``）
+    """
+
+    implementation_id = "pre_evolution_attacks_for_evolved_actives"
+    what: ClassVar[str] = "進化ポケモンの対戦ポケモンが進化前のワザを使える特殊能力"
+
+    def texts(self) -> tuple[str, ...]:
+        return (PREHISTORIC_MEMORY_TEXT,)
+
+
+@dataclass(frozen=True)
+class DollUsesHolderAttacks(ContinuousPower):
+    """自分のバトル場にいる「``doll``」は、このカードが持っているワザを使ってよい。ただし、そのワザに必要なエネルギーがこのカードについていなければならない（「``doll``」には
+    ついていなくてもかまわない）（v0.120。スリーパー（ES3-025）の［にんぎょうつかい］。kyuura の印刷の文面。docs 4 章）。
+
+    - 常にはたらく許可（宣言しない）。場のどこにいてもはたらく（人形がバトル場にいるので、このカードはベンチ）。説明にねむり・マヒ・こんらんで使えない・消えるという文はない
+      （``blocked_by_status`` は偽。ほかの特殊能力の文を写さない）。かがくへんかガスで消えるのは特殊能力の共通の規定
+    - ワザを使うのは自分のバトル場の、今の名前が「``doll``」のポケモン（ワザの処理・タイプ・ダメージ・「このカード」・説明が書くほかの支払いは人形）。必要なエネルギー（通常の
+      コスト）は、このカードについているエネルギーで満たす（``AttackOption.payer``。人形のエネルギーで不足を補わない）。同じ印刷のスリーパーが 2 匹いれば、印刷したカードの uid
+      （``UseAttack.card``）ごとに別の支払い元として選べる
+    - 使えるワザは、このカードの持っているワザ（今の姿のカードのワザ。許可で使えるワザはふくまない。人形がバトル場にいるのでこのカードはベンチにいて、ベンチのポケモンに許可の
+      ワザはない）
+    """
+
+    doll: str = "ピッピ人形"
+    implementation_id = "doll_uses_holder_attacks"
+    blocked_by_status: ClassVar[bool] = False
+    what: ClassVar[str] = "ピッピ人形がこのカードのワザを使える特殊能力"
+
+    def texts(self) -> tuple[str, ...]:
+        return (PUPPET_MASTER_TEXT.format(doll=self.doll),)
+
+
+@dataclass(frozen=True)
+class UseDefenderAttacks(ContinuousPower):
+    """このカードは、バトル場にいるかぎり、相手の対戦ポケモンの持っているワザを使うことができる。そのワザに必要なエネルギーがこのカードについていないときや、ねむり・マヒ・こんらんの
+    とき、この力を使うことはできない（v0.120。ウソッキー（PF3-001）の［ものまね］。kyuura の印刷の文面。docs 4 章）。
+
+    - 常にはたらく許可（ワザの宣言のときに使える。宣言する特殊能力にしない）。バトル場にいて、ねむり・マヒ・こんらんでなく、かがくへんかガスで消えていないとき
+    - 使えるのは、相手の対戦ポケモンの持っているワザ（今の姿のカードのワザと［サイコリンク］で持つワザ）。相手の対戦ポケモンが許可で使えるワザは VP1（選ぶと止める）。必要なエネルギーは
+      このカードで満たす（借りるワザのコストだけ。このカードのたたきつけるの無色 2 個を足さない）。この力が消えても、このカードの印刷のワザは今までどおり使える
+    """
+
+    implementation_id = "use_defender_attacks"
+    location: ClassVar[str] = CONTINUOUS_ACTIVE
+    what: ClassVar[str] = "相手の対戦ポケモンのワザを使える特殊能力"
+
+    def texts(self) -> tuple[str, ...]:
+        return (MIMIC_TEXT,)
+
+
+def working_power_slots(state: GameState, owner: int, pokemon: PokemonInPlay, effect_type: type) -> list[PowerSlot]:
+    """v0.120: 場のポケモン ``pokemon``（持ち主 ``owner``）が今持つ、型 ``effect_type`` の常にはたらく特殊能力のうち、はたらいているもの（場所・特殊状態・かがくへんかガス。
+    ``link_types`` と同じ確かめ）。"""
+    # continuous.py は effects.py を読み込むので、使うときに読み込む
+    from .continuous import power_suppressed
+
+    return [slot for slot in powers_of(state, pokemon) if isinstance(slot.effect, effect_type) and slot.effect.located(state, owner, pokemon)
+            and slot.effect.status_allows(pokemon) and not power_suppressed(state, slot.power, pokemon)]
+
+
+def _held_options(state: GameState, owner: int, pokemon: PokemonInPlay, form: Form) -> list[AttackOption]:
+    """v0.120: ``pokemon`` の「持っているワザ」（今の姿のカードのワザと、持っているものとする［サイコリンク］のワザ）。許可で使えるワザ（``PERMISSION_ROUTES``）を入れない。"""
+    definition = state.card_def(form.card)
+    options = [_attack_option(state, form, form.card, definition.id, attack.index, ROUTE_FORM, None, None) for attack in definition.attacks]
+    return options + _link_options(state, owner, pokemon, form)
+
+
+def _prehistoric_options(state: GameState, owner: int, pokemon: PokemonInPlay, form: Form) -> list[AttackOption]:
+    """v0.120: ［げんしのきおく］で、バトル場の進化ポケモン ``pokemon`` が使える進化前のワザ（実際の重なり。すぐ下のカードより下は PE1）。"""
+    if state.players[owner].active is not pokemon or not pokemon.evolution_stack or not is_evolution_in_play(state, pokemon):
+        return []
+    grantors = tuple(holder.pokemon_id for side in (0, 1) for holder in state.players[side].in_play()
+                     if working_power_slots(state, side, holder, PreEvolutionAttacksForEvolvedActives))
+    if not grantors:
+        return []
+    immediate = pokemon.evolution_stack[-1]
+    options = []
+    for uid, index in recall_stack_attacks(state, pokemon):
+        problem = None if uid == immediate else (PRE_EVOLUTION_STAGE_CODE, PRE_EVOLUTION_STAGE_REASON)
+        option = _attack_option(state, form, uid, state.cards[uid].card_id, index, ROUTE_PREHISTORIC, None, problem)
+        options.append(_dataclass_replace(option, grantors=grantors))
+    return options
+
+
+def _puppet_options(state: GameState, owner: int, pokemon: PokemonInPlay, form: Form) -> list[AttackOption]:
+    """v0.120: ［にんぎょうつかい］で、自分のバトル場の「ピッピ人形」 ``pokemon`` が使える、はたらいている［にんぎょうつかい］を持つ自分の場のポケモンの持っているワザ（供給するポケモンの
+    今の姿のカードのワザ。支払い元はそのポケモン）。"""
+    if state.players[owner].active is not pokemon:
+        return []
+    options = []
+    for supplier in state.players[owner].in_play():
+        if supplier is pokemon:
+            continue
+        slots = [slot for slot in working_power_slots(state, owner, supplier, DollUsesHolderAttacks) if form_def(state, pokemon).name_ja == slot.effect.doll]
+        if not slots:
+            continue
+        for held in _held_options(state, owner, supplier, current_form(state, supplier)):
+            option = _attack_option(state, form, held.card, held.card_id, held.attack_index, ROUTE_PUPPET, supplier.pokemon_id, held.problem)
+            options.append(_dataclass_replace(option, payer=supplier.pokemon_id, grantors=(supplier.pokemon_id,)))
+    return options
+
+
+def _mimic_options(state: GameState, owner: int, pokemon: PokemonInPlay, form: Form, depth: int) -> list[AttackOption]:
+    """v0.120: ［ものまね］で、バトル場の ``pokemon`` が使える相手の対戦ポケモンのワザ。持っているワザはそのまま、相手の対戦ポケモンが許可で使えるワザは VP1（選ぶと止める）。
+    ``depth`` が 0 のときだけ相手の許可のワザを数える（相手の［ものまね］の数えるワザは、こちらの持っているワザだけ。許可が互いをたどり続けない有限の列挙）。"""
+    if state.players[owner].active is not pokemon or not working_power_slots(state, owner, pokemon, UseDefenderAttacks):
+        return []
+    target = state.players[1 - owner].active
+    if target is None or state.is_face_down(target):
+        return []
+    target_form = current_form(state, target)
+    found = [(held, held.problem) for held in _held_options(state, 1 - owner, target, target_form)]
+    if depth == 0:
+        found += [(permitted, permitted.problem or (PERMITTED_ATTACK_CODE, PERMITTED_ATTACK_REASON))
+                  for permitted in _permission_options(state, 1 - owner, target, target_form, depth + 1)]
+    options = []
+    for source, problem in found:
+        option = _attack_option(state, form, source.card, source.card_id, source.attack_index, ROUTE_MIMIC, target.pokemon_id, problem)
+        options.append(_dataclass_replace(option, grantors=(pokemon.pokemon_id,)))
+    return options
+
+
+def _permission_options(state: GameState, owner: int, pokemon: PokemonInPlay, form: Form, depth: int) -> list[AttackOption]:
+    """v0.120: 許可で使えるワザ（「思い出させる」・［げんしのきおく］・［にんぎょうつかい］・［ものまね］）。"""
+    options: list[AttackOption] = []
+    if state.players[owner].active is pokemon:
+        options += _recall_options(state, owner, pokemon, form)
+    options += _prehistoric_options(state, owner, pokemon, form)
+    options += _puppet_options(state, owner, pokemon, form)
+    options += _mimic_options(state, owner, pokemon, form, depth)
+    return options
+
+
+def _distinct_options(options: list[AttackOption]) -> tuple[AttackOption, ...]:
+    """v0.120: 印刷したカードと位置（``UseAttack.card``・``attack_index``）ごとに 1 つ。同じカードの同じワザを 2 つの持ち方が与えるときは、止める理由のないものを先に、なければ前のものを
+    残す（同じ支払い元のワザの重複。違うカードの同じ ``AttackKey``（2 匹のスリーパー）は別の選択）。"""
+    kept: dict[tuple[int, int], AttackOption] = {}
+    for option in options:
+        place = (option.card, option.attack_index)
+        if place not in kept or (kept[place].problem is not None and option.problem is None):
+            kept[place] = option
+    return tuple(kept.values())
+
+
 def find_attack_option(state: GameState, pokemon: PokemonInPlay, card: int | None, attack_index: int) -> AttackOption | None:
     """``UseAttack`` の (印刷したカード, 位置) に当たる、``pokemon`` が今持つワザ（v0.49）。``card`` が None なら今の姿のカードのワザ（v0.48 までの ``UseAttack``）。
     なければ None。"""
@@ -15376,12 +15587,17 @@ def held_attack_keys(state: GameState, pokemon: PokemonInPlay) -> tuple[list[tup
     - 同じワザ（同じカードの同じ位置）を 2 匹以上が供給するときは 1 つ（選ぶのはワザで、出どころではない）
     - 2 つめの値は、持つかが読み方で変わるワザ（［へんしょく］の VS1。供給するすべての出どころで変わるときだけ）の (コード, 理由の文)。ほかの止める理由（VA1・
       RC2〜RC4）は、そのポケモンがワザを使うときの理由なので、ここでは持つワザとして数える
+    - v0.120: 許可で使えるワザ（``PERMISSION_ROUTES``。［げんしのきおく］・［にんぎょうつかい］・［ものまね］・「思い出させる」）は、「持っているワザ」に入るかが決まらないので VP1
+      （ほかの持ち方で持つ同じワザがあれば、そちらで選べる）。「思い出させる」の記録は使ったプレイヤーのその番だけなので、相手の番の選ぶ効果には今までも現れない
     - 返す真偽値は、並びがいちばん上のカードのワザの並び（v0.48 までの選べるもの）と同じか（同じなら決定の形を v0.48 と同じにする）
     """
     order: list[AttackKey] = []
     problems: dict[AttackKey, tuple[str, str] | None] = {}
     for option in available_attacks(state, pokemon):
         problem = option.problem if option.problem is not None and option.problem[0] in TYPE_READING_CODES else None
+        if option.route in PERMISSION_ROUTES:
+            # v0.120: 許可で使えるワザ（［げんしのきおく］・［にんぎょうつかい］・［ものまね］・「思い出させる」）が「持っているワザ」に入るかは決まらない（VP1。選ぶと止める）
+            problem = (PERMITTED_ATTACK_CODE, PERMITTED_ATTACK_REASON)
         if option.key not in problems:
             order.append(option.key)
             problems[option.key] = problem
@@ -15390,6 +15606,140 @@ def held_attack_keys(state: GameState, pokemon: PokemonInPlay) -> tuple[list[tup
     top = state.cards[pokemon.card].card_id
     legacy = order == [AttackKey(top, attack.index) for attack in state.card_def(pokemon.card).attacks]
     return [(key, problems[key]) for key in order], legacy
+
+
+# ---------------------------------------------------------------- v0.120: ワザを選んで自分のワザとして使うワザ（docs/fossil-basic-virtual-attacks-v0.120.md 5 章）
+
+COPY_FROM_DEFENDER = "defender"  # 相手の対戦ポケモンのワザ（トゲピーの「ゆびをふる」。v0.31 の CopyOpponentAttackEffect と同じ範囲）
+COPY_FROM_OPPONENT_FIELD = "opponent_field"  # 相手の場にいるポケモンのワザ（トゲチックの「おおきくゆびをふる」・ミュウの「サイコデュープ」）
+COPY_FROM_PRE_EVOLUTION = "pre_evolution"  # 自分が進化する前に持っていたワザ（キングドラの「りゅうのいでんし」）
+COPY_SOURCES = (COPY_FROM_DEFENDER, COPY_FROM_OPPONENT_FIELD, COPY_FROM_PRE_EVOLUTION)
+COPY_COST_EXEMPT = "exempt"  # 選んだワザに必要なエネルギーはいらない（このワザの必要なエネルギーだけ）
+COPY_COST_COMBINED = "combined"  # このワザの必要なエネルギーに加えて、選んだワザに必要なエネルギーが要る（合わせて 1 つの支払いとして照らす）
+PRE_EVOLUTION_CONDITION_CODE = "UNRESOLVED_PRE_EVOLUTION_ATTACK_CONDITIONS"
+PRE_EVOLUTION_CONDITION_REASON = (
+    "「自分が進化する前に持っていたワザを1つ選び、自分のワザとして使う」（キングドラの「りゅうのいでんし」。必要なエネルギーがいらないことだけを書く）で、選んだワザの説明が書く使うための"
+    "条件・トラッシュなどをみたさないときに、そのワザを選べるか・どう処理するかは、印刷の文面・kyuura の記録から決められない（PE2。相手のワザを自分のワザとして使う HC9 と同じ形の、"
+    "自分の進化前のワザの問い）"
+)
+# (範囲, コインを投げるか, 必要なエネルギー, 説明の条件) → 印刷の文面（kyuura の写しの日本語。全文 1 通りずつ。広く読み替えない）
+COPY_ATTACK_TEXTS: Mapping[tuple[str, bool, str, str | None], str] = MappingProxyType({
+    (COPY_FROM_DEFENDER, True, COPY_COST_EXEMPT, None):
+        "コインを投げて「おもて」なら、相手のワザを1つ選び、それを、自分が持っているワザとして使う。(そのワザに必要なエネルギーがついていなくてもかまわない)",  # トゲピー PR1-065
+    (COPY_FROM_OPPONENT_FIELD, True, COPY_COST_EXEMPT, None):
+        "コインを投げて「おもて」なら、相手の場にいるポケモンのワザを1つ選び、それを自分が持っているワザとして使う。(そのワザに必要なエネルギーがついていなくても、かまわない)",  # トゲチック neo1-071
+    (COPY_FROM_OPPONENT_FIELD, False, COPY_COST_COMBINED, "cannot_use"):
+        "相手の場のポケモンのワザから1つを選び、それを自分のワザとして使う。「サイコデュープ」に必要なエネルギーに加えて、そのワザに必要なエネルギーがこのカードについていない限り、"
+        "「サイコデュープ」は使えない。また、ほかに必要な条件(エネルギーカードをはがしてすてるなど)が満たせない時にも使えない。",  # ミュウ PR1-021
+    (COPY_FROM_PRE_EVOLUTION, False, COPY_COST_EXEMPT, None):
+        "自分が進化する前に持っていたワザを1つ選び、自分のワザとして使う(そのワザに必要な「エネルギー」が、自分についていなくても、使うことができる)。",  # キングドラ neo3-020
+})
+
+
+def field_held_attack_keys(state: GameState, player: int) -> list[tuple[AttackKey, tuple[str, str] | None]]:
+    """v0.120: プレイヤー ``player`` の場にいるポケモン（バトル場 → ベンチの順）が持っているワザを、ワザ（``AttackKey``）ごとに 1 つにまとめた並び（「相手の場にいるポケモンのワザ」）。
+    ポケモンごとの答えは ``held_attack_keys``（許可で使えるワザは VP1・持つかが読み方で変わるワザは VS1）。同じワザを 2 匹以上が持てば、どれかが止める理由なしに持てば止めない。
+    ベンチのポケモンには、バトル場でだけはたらく許可のワザはない（``available_attacks``）。うらのカード（マチスの秘策）のワザは読めない（FD1。``HiddenPropertyRead``）。"""
+    order: list[AttackKey] = []
+    problems: dict[AttackKey, tuple[str, str] | None] = {}
+    for pokemon in state.players[player].in_play():
+        entries, _ = held_attack_keys(state, pokemon)
+        for key, problem in entries:
+            if key not in problems:
+                order.append(key)
+                problems[key] = problem
+            elif problem is None:
+                problems[key] = None
+    return [(key, problems[key]) for key in order]
+
+
+def pre_evolution_attack_keys(state: GameState, pokemon: PokemonInPlay) -> list[tuple[AttackKey, tuple[str, str] | None]]:
+    """v0.120: 場のポケモン ``pokemon`` が「進化する前に持っていたワザ」（実際に重なっている進化前のカードの印刷のワザ。すぐ下のカードから）。すぐ下のカードより下のカードのワザは PE1
+    （選ぶと止める）。重なりのないポケモン（進化していない・［へんしん］・「ばける」の姿だけの進化ポケモン）は空。ポケモン育て屋さんで飛ばした進化カード・進化する前に許可で使えたワザは
+    補わない。"""
+    if not pokemon.evolution_stack:
+        return []
+    immediate = pokemon.evolution_stack[-1]
+    found: dict[AttackKey, tuple[str, str] | None] = {}
+    for uid, index in recall_stack_attacks(state, pokemon):
+        key = AttackKey(state.cards[uid].card_id, index)
+        problem = None if uid == immediate else (PRE_EVOLUTION_STAGE_CODE, PRE_EVOLUTION_STAGE_REASON)
+        if key not in found or problem is None:
+            found[key] = problem
+    return list(found.items())
+
+
+def copy_source_entries(state: GameState, player: int, user: PokemonInPlay, source: str) -> list[tuple[AttackKey, tuple[str, str] | None]]:
+    """v0.120: ワザを選んで自分のワザとして使うワザ（``CopyAttackFromSource``）の、選べるワザの並び（範囲 ``source``）。"""
+    if source == COPY_FROM_DEFENDER:
+        target = state.players[1 - player].active
+        return [] if target is None else held_attack_keys(state, target)[0]
+    if source == COPY_FROM_OPPONENT_FIELD:
+        return field_held_attack_keys(state, 1 - player)
+    if source == COPY_FROM_PRE_EVOLUTION:
+        return pre_evolution_attack_keys(state, user)
+    raise ValueError(f"選ぶワザの範囲 {source!r} は {COPY_SOURCES} のどれか")
+
+
+def combined_cost_attack(base: Attack, chosen: Attack) -> Attack:
+    """v0.120: このワザ ``base`` の必要なエネルギーに加えて、選んだワザ ``chosen`` の必要なエネルギー（合わせた 1 つの支払い）。``attack_cost_payable``・``attack_cost_problem`` に渡す
+    確かめのための値（エネルギーをトラッシュしない。状態に持たない）。"""
+    return _dataclass_replace(chosen, cost=tuple(base.cost) + tuple(chosen.cost), name_ja=f"{base.name_ja}（{chosen.name_ja}）")
+
+
+@dataclass(frozen=True)
+class CopyAttackFromSource(AttackEffect):
+    """ワザを 1 つ選び、それを自分のワザとして使う（v0.120。トゲピー（PR1-065）の「ゆびをふる」・トゲチック（neo1-071）の「おおきくゆびをふる」・ミュウ（PR1-021）の「サイコデュープ」・
+    キングドラ（neo3-020）の「りゅうのいでんし」。kyuura の印刷の文面。docs 5 章）。要素は ``resolution.programs.CopyChosenAttack``。
+
+    - ``source``: 選べるワザの範囲（``COPY_SOURCES``）。``coin``: 先にコインを 1 枚投げ、確定した「おもて」のあとに選ぶ（「うら」は選ばない。ワザの失敗にしない）
+    - ``cost``: ``COPY_COST_EXEMPT``（選んだワザに必要なエネルギーはいらない）・``COPY_COST_COMBINED``（このワザの必要なエネルギーに加えて、選んだワザに必要なエネルギーが要る。別々にでは
+      なく合わせた 1 つの支払いとして、ワザを使うポケモンのエネルギーで照らす。エネルギーはトラッシュしない）
+    - ``clause``: 説明の条件（``cannot_use``: 「ほかに必要な条件…が満たせない時にも使えない」。None: 書いていない）。選んだワザの条件は、実際にワザを使うポケモンでみたす
+    - 範囲・コイン・支払い・条件の組と全文は ``COPY_ATTACK_TEXTS``（未知の組・書き方は受け付けない）
+    """
+
+    source: str
+    coin: bool
+    cost: str = COPY_COST_EXEMPT
+    clause: str | None = None
+    implementation_id = "copy_attack_from_source"
+
+    def __post_init__(self) -> None:
+        if (self.source, self.coin, self.cost, self.clause) not in COPY_ATTACK_TEXTS:
+            raise ValueError(f"ワザを選んで自分のワザとして使う組 {(self.source, self.coin, self.cost, self.clause)!r} の書き方がない")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "ワザを選んで自分のワザとして使うワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (COPY_ATTACK_TEXTS[(self.source, self.coin, self.cost, self.clause)],))
+
+    def usage_problem(self, state: GameState, attacker: PokemonInPlay) -> Exception | None:
+        if self.cost != COPY_COST_COMBINED:
+            return None
+        from .resolution.programs import combined_copy_usage_problem
+
+        return combined_copy_usage_problem(state, attacker, self)
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        copied = decision.context_value("copied")
+        if copied is not None:
+            return copy_decision_problems(state, use, decision)
+        problems = []
+        if decision.kind != SELECT_ATTACK or decision.player != use.player or (decision.min_choices, decision.max_choices) != (1, 1):
+            problems.append(f"ワザを選ぶ決定の形 {decision.kind}・{decision.player}・{decision.min_choices}〜{decision.max_choices} が正しくない")
+        located = state.find_pokemon(use.pokemon_id)
+        if located is None:
+            return problems + [f"ワザを選ぶポケモン {use.pokemon_id} が場にいない"]
+        entries = copy_source_entries(state, use.player, located[1], self.source)
+        keys = [(key.card_id, key.attack_index) for key, _ in entries]
+        if decision.context_value("copy_source") != self.source or [tuple(key) for key in decision.context_value("copy_attacks", ())] != keys:
+            problems.append(f"ワザを選ぶ決定の範囲 {decision.context_value('copy_source')!r}・ワザの並び {decision.context_value('copy_attacks')!r} が、今の {self.source}・{keys} ではない")
+        if not decision.options or any(not 0 <= index < len(entries) for index in decision.options):
+            problems.append(f"ワザを選ぶ決定の選べるもの {decision.options} が、範囲のワザではない")
+        held = [i for i, (_, problem) in enumerate(entries) if problem is not None and i in decision.options]
+        if not set(held) <= set(decision.context_value("unresolved_choices", ())):
+            problems.append(f"止める理由のあるワザ {held} が、選ぶと止めるものにない")
+        return problems
 
 
 # ---------------------------------------------------------------- ばける
@@ -15638,8 +15988,13 @@ class DevolveChosenPokemon(AttackEffect):
         options = devolution_candidates(state, (use.player, 1 - use.player))
         problems = _decision_form(decision, label, kind=SELECT_POKEMON, player=use.player, choices=(1, 1), options=options)
         forbidden = tuple(pid for pid in options if devolution_forbidden(state, state.find_pokemon(pid)[1]))
-        if tuple(decision.context_value("unresolved_choices", ())) != forbidden:
-            problems.append(f"「{label}」の決定の、選ぶと止める選択 {decision.context_value('unresolved_choices', ())} が {forbidden}（DV5）ではない")
+        # v0.120（FE1）: はがすとたねポケモンとしてあつかった進化カードがまたいちばん上になるポケモンも、選べるが選ぶと止める（理由は選択ごと）
+        revived = tuple(pid for pid in options if pid not in forbidden and revived_devolve_problem(state, state.find_pokemon(pid)[1], 1) is not None)
+        expected = tuple(pid for pid in options if pid in forbidden or pid in revived)
+        if tuple(decision.context_value("unresolved_choices", ())) != expected:
+            problems.append(f"「{label}」の決定の、選ぶと止める選択 {decision.context_value('unresolved_choices', ())} が {expected}（DV5・FE1）ではない")
+        if revived and {item[0] for item in decision.context_value("unresolved_detail", ())} != set(expected):
+            problems.append(f"「{label}」の決定の選択ごとの止める理由 {decision.context_value('unresolved_detail', ())} が {expected} の理由ではない")
         return problems
 
 
@@ -15650,10 +16005,15 @@ def devolve_count_problems(state: GameState, player: int, pokemon_id: int, card:
     trial = state.clone()
     pokemon = trial.find_pokemon(pokemon_id)[1]
     results = []  # はがした枚数 k（1 から）ごとの (きぜつするか, カウントされるか)
-    for _ in range(len(pokemon.evolution_stack)):
+    revived: dict[int, tuple[str, str]] = {}
+    for count in range(1, len(pokemon.evolution_stack) + 1):
+        problem = revived_devolve_problem(state, state.find_pokemon(pokemon_id)[1], count)
+        if problem is not None:
+            revived[count] = problem  # v0.120: FE1（たねポケモンとしてあつかった進化カードがまたいちばん上になる。いちばん下なので、すべてはがすときだけ）
+            break
         devolve(trial, player, pokemon, 1, destination=DEVOLVE_TO_DISCARD, by_player=player, trainer=card)
         results.append((knocked_by_hp(trial, pokemon), counts_as_knockout(trial, pokemon)))
-    problems = {}
+    problems = dict(revived)
     for count in range(2, len(results) + 1):
         first = next((k for k in range(count - 1) if results[k][0]), None)
         if first is None:
@@ -15709,10 +16069,13 @@ class DevolveOwnPokemon(TrainerEffect):
             if pokemon is None or not pokemon.evolution_stack or devolution_forbidden(state, pokemon):
                 raise RuntimeError(f"退化スプレーで選んだポケモン {target} から進化カードをはがせない（決定の確認の漏れ。エンジンの不具合）")
             stops = devolve_count_problems(state, use.player, target, use.card)
+            # v0.120: 止める選択が FE1（たねとしてあつかった進化カードがまたいちばん上になる）だけなら、決定のコード・理由もその選択のもの（DV1 のときは v0.50 からのまま）
+            first = next(iter(stops.values()), None)
+            code, reason = first if first is not None and first[0] != DEVOLUTION_INTERMEDIATE_KNOCKOUT_CODE else (
+                DEVOLUTION_INTERMEDIATE_KNOCKOUT_CODE, DEVOLUTION_INTERMEDIATE_KNOCKOUT_REASON)
             push_trainer_decision(state, use, kind=SELECT_DEVOLVE_COUNT, player=use.player, options=range(len(pokemon.evolution_stack) + 1),
-                                  context=(("target", target),), unresolved_choices=tuple(stops),
-                                  unresolved_code=DEVOLUTION_INTERMEDIATE_KNOCKOUT_CODE, unresolved_reason=DEVOLUTION_INTERMEDIATE_KNOCKOUT_REASON,
-                                  unresolved_detail=tuple((count, code, reason) for count, (code, reason) in stops.items()))
+                                  context=(("target", target),), unresolved_choices=tuple(stops), unresolved_code=code, unresolved_reason=reason,
+                                  unresolved_detail=tuple((count, stop_code, stop_reason) for count, (stop_code, stop_reason) in stops.items()))
             return
         (count,) = choices
         target = decision.context_value("target")
@@ -18900,6 +19263,7 @@ def form_problems(state: GameState) -> list[tuple[str, str]]:
     - TF1: ［へんしん］がはたらいているメタモンの相手の対戦ポケモンのカードに、常にはたらく・自動的にはたらく・きぜつするとき・きぜつしたときの特殊能力がある（写した
       特殊能力を持つかで、処理が続けて変わる）。宣言して使う特殊能力だけなら、この状態になってよい（使うときに止める）
     - TF2: ［へんしん］がはたらいているメタモンの相手の対戦ポケモンが、「ばける」でのせたカードのポケモンとしてあつかわれている・ポケモンとして出したトレーナーカード
+    - TF3（v0.120）: 同じく、相手の対戦ポケモンが、進化元を重ねずに出してたねポケモンとしてあつかう進化カード（``treated_as_basic``）
     - DG1: 「ばける」でのせたカードのあるポケモンの「ばける」が、かがくへんかガスで消えている
     並びはプレイヤー 0 → 1、バトル場 → ベンチ。状態を変えず、乱数を使わない。"""
     from .continuous import power_suppressed  # continuous.py は effects.py を読み込むので、使うときに読み込む
@@ -18940,6 +19304,10 @@ def form_problems(state: GameState) -> list[tuple[str, str]]:
             where = f"プレイヤー {owner} のポケモン {pokemon.pokemon_id} の［へんしん］（相手の対戦ポケモン {defender.pokemon_id}）"
             if defender.disguise is not None or state.card_def(defender.card).play_role is not None:
                 problems.append((TRANSFORM_TARGET_CODE, f"{where}: {TRANSFORM_TARGET_REASON}"))
+                continue
+            if treated_as_basic(state, defender):
+                # v0.120（TF3。docs/fossil-basic-virtual-attacks-v0.120.md 6 章）: 写す相手が、進化元を重ねずに出してたねポケモンとしてあつかう進化カード
+                problems.append((TRANSFORM_REVIVED_CODE, f"{where}: {TRANSFORM_REVIVED_REASON}"))
                 continue
             copied = [slot for slot in card_power_slots(state, defender.card) if _copied_power_needs_stop(slot.effect)]
             if copied:
@@ -30724,6 +31092,8 @@ class DevolveOneToHandWithBan(TrainerEffect):
                 found[pid] = (DEVOLUTION_TARGET_DISGUISED_CODE, DEVOLUTION_TARGET_DISGUISED_REASON)
             elif top_is_evolution_card_in_text(state, pokemon, era) is None:
                 found[pid] = (NEO_EVOLUTION_CARD_BABY_CODE, f"ポケモン {pid} のいちばん上のたねポケモンカード（ベイビィから進化）: {NEO_EVOLUTION_CARD_BABY_REASON}")
+            elif revived_devolve_problem(state, pokemon, 1) is not None:
+                found[pid] = revived_devolve_problem(state, pokemon, 1)  # v0.120: FE1
         return found
 
     def check(self, definition: CardDefinition) -> list[str]:
@@ -43051,6 +43421,8 @@ def opponent_devolve_stops(state: GameState, era: str, candidates: Iterable[int]
             found[pid] = (DEVOLUTION_TARGET_DISGUISED_CODE, f"ポケモン {pid}: {DEVOLUTION_TARGET_DISGUISED_REASON}")
         elif top_is_evolution_card_in_text(state, pokemon, era) is None:
             found[pid] = (NEO_EVOLUTION_CARD_BABY_CODE, f"ポケモン {pid} のいちばん上のたねポケモンカード（ベイビィから進化）: {NEO_EVOLUTION_CARD_BABY_REASON}")
+        elif revived_devolve_problem(state, pokemon, 1) is not None:
+            found[pid] = revived_devolve_problem(state, pokemon, 1)  # v0.120: FE1
     return found
 
 
@@ -45244,3 +45616,426 @@ V0_119_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_119_ATTACKS), V0_119_POWERS)
+
+
+# ---------------------------------------------------------------- v0.120（docs/fossil-basic-virtual-attacks-v0.120.md）
+
+# v0.120: 11 枚の写しの印刷の文面（処理に使う文面。kyuura data/cards.json。11 枚を指す最新の説明・エラッタ・裁定の記録はない）
+FOSSIL_NAME = "なにかの化石"
+WORK_TOGETHER_TEXTS: Mapping[tuple[int, tuple[str, ...]], str] = MappingProxyType({
+    (10, ("オムナイト", "オムスター", "カブト", "カブトプス", "プテラ")):
+        "コインを投げて「おもて」なら、自分のベンチの「オムナイト」「オムスター」「カブト」「カブトプス」「プテラ」の数×10のダメージを追加する。",  # カブト neo2-014
+})
+EVOLUTIONARY_SPORE_TEXTS: Mapping[tuple[str, ...], str] = MappingProxyType({
+    ("ハネッコ", "ポポッコ"):
+        "自分の場の「ハネッコ」「ポポッコ」を好きなだけ選ぶ。その後、自分の山札から、選んだポケモンから進化する「進化カード」を、それぞれ1枚ずつ選びだし、それぞれのポケモンの上にのせ、"
+        "進化させる。山札を見た場合は、その山札をよく切る。",  # ワタッコ neo3-007
+})
+TWISTER_TEXTS: Mapping[int, str] = MappingProxyType({
+    2: "コインを2枚投げ、「おもて」の数ぶんの「エネルギーカード」を、相手からトラッシュする。すべて「うら」なら、このワザは失敗する。",  # キングドラ neo3-020
+})
+REVIVE_POWER_TEXT = (
+    "この力は、自分の番ごとに1回使える。コインを投げて「おもて」なら、自分の山札から{what}を1枚選び出し、ベンチに出す。その後、その山札をよく切る。(この力によって場に出した{placed}は、"
+    "「たねポケモン」としてあつかわれる。)このカードが「ねむり・マヒ・こんらん」状態のときや、自分のベンチに空きがないとき、この力は使えない。"
+)
+FOSSIL_EGG_TEXT = (
+    "コインを投げて「おもて」なら、あなたの山札、またはあなたの手札から、「なにかの化石」を進化させる「進化カード」を1枚選び出し、ベンチに出す。山札を見た場合は、その山札をよく切る。\n"
+    "このカードによって場に出した「進化カード」は、「たねポケモン」としてあつかわれる。\n(あなたのベンチに空きがないとき、このカードは使えない。)"
+)
+REVIVE_NAMED = "named"  # 山札の、名前が完全に同じカード（［なかまのふっかつ］の「カブト」）
+REVIVE_FOSSIL = "fossil"  # 山札（・手札）の、「なにかの化石」を進化させる進化カード（［かせきのふっかつ］・たまごの化石）
+REVIVE_HAND_BASIC_CODE = "UNRESOLVED_REVIVE_HAND_BASIC_ENTRY"
+REVIVE_HAND_BASIC_REASON = (
+    "たまごの化石で手札から出す進化カード（場では「たねポケモン」としてあつかう）が、［ヒートプレート］の「自分の手札から「ベイビィポケモン」または「たねポケモン」を出すたび」に当たるか"
+    "（出すときのカードの分類は印刷の進化カードで、たねポケモンとしてあつかうのは場に出したあと）は、印刷の文面・kyuura の記録から決められない（FE2。爆発ジムは「「たねポケモン」の"
+    "カードをベンチに出す時」で、カードの分類なので当たらない）"
+)
+REVIVED_DEVOLVE_CODE = "UNRESOLVED_REVIVED_BASIC_DEVOLVED"
+REVIVED_DEVOLVE_REASON = (
+    "進化元を重ねずに出して「たねポケモン」としてあつかった進化カード（［なかまのふっかつ］・［かせきのふっかつ］・たまごの化石）の上に進化したポケモンが、退化してそのカードが"
+    "またいちばん上になるとき、たねポケモンとしてのあつかいが続くか（下にカードのない進化カードを進化ポケモンとするか）は、印刷の文面・kyuura の記録から決められない（FE1）"
+)
+TRANSFORM_REVIVED_CODE = "UNRESOLVED_TRANSFORM_REVIVED_BASIC"
+TRANSFORM_REVIVED_REASON = (
+    "［へんしん］で同じカードとしてあつかう相手の対戦ポケモンが、進化元を重ねずに出して「たねポケモン」としてあつかう進化カードである。同じにあつかうのが印刷の進化カードか、場での"
+    "たねポケモンとしてのあつかいかは、印刷の文面・kyuura の記録から決められない（TF3。ポケモンとして出したトレーナーの TF2 と同じ形の、別の場面の問い）"
+)
+
+
+def revived_devolve_problem(state: GameState, pokemon: PokemonInPlay, count: int) -> tuple[str, str] | None:
+    """v0.120（FE1）: 場のポケモン ``pokemon`` から進化カードを上から ``count`` 枚はがすと、進化元を重ねずに出してたねポケモンとしてあつかった進化カード（``basic_entry``）がまたいちばん上に
+    なるなら、止める理由 (コード, 理由)。ならなければ None。"""
+    entry = pokemon.basic_entry
+    chain = (*pokemon.evolution_stack, pokemon.card)
+    if entry is None or not 1 <= count < len(chain) or chain[-count - 1] != entry.card:
+        return None
+    return REVIVED_DEVOLVE_CODE, f"場のポケモン {pokemon.pokemon_id}（カード {entry.card}）: {REVIVED_DEVOLVE_REASON}"
+
+
+def revival_deck_cards(state: GameState, player: int, target: str, name: str | None = None) -> list[int]:
+    """v0.120: 山札の、復活でベンチに出せるカード（uid の小さい順。山札の並びを決定に写さない）。``REVIVE_NAMED`` なら名前が ``name`` と完全に同じポケモンのカード（「わるいカブト」などの
+    別の名前は入らない）、``REVIVE_FOSSIL`` なら「なにかの化石」から進化する（印刷の「○○○○から進化」）進化カード。対応していないカードは入れない。"""
+    return [uid for uid in sorted(state.players[player].deck) if _revivable(state.card_def(uid), target, name)]
+
+
+def revival_hand_cards(state: GameState, player: int, *, exclude: int | None = None) -> list[int]:
+    """v0.120: 手札の、「なにかの化石」を進化させる進化カード（手札の並び。たまごの化石。使っているこのカードは手札にない）。"""
+    return [uid for uid in state.players[player].hand if uid != exclude and _revivable(state.card_def(uid), REVIVE_FOSSIL, None)]
+
+
+def _revivable(definition: CardDefinition, target: str, name: str | None) -> bool:
+    if definition.category != "pokemon" or not definition.supported:
+        return False
+    if target == REVIVE_NAMED:
+        return definition.name_ja == name
+    return definition.is_evolution_pokemon and definition.evolves_from == FOSSIL_NAME
+
+
+def revival_stops(state: GameState, cards: Iterable[int], *, from_hand: bool) -> dict[int, tuple[str, str]]:
+    """v0.120: 復活でベンチに出すと止めるカードと、その (コード, 理由)。場に出すときの共通の確かめ（GG1・MG1・DW1。``goop_gas_entry_check``）と、手札から出すときの
+    ［ヒートプレート］（FE2。``from_hand``）。"""
+    stops: dict[int, tuple[str, str]] = {}
+    for uid in cards:
+        try:
+            goop_gas_entry_check(state, uid, how="enter")
+        except UnsupportedError as error:
+            stops[uid] = (error.code, error.message)
+            continue
+        if from_hand and hot_plates(state):
+            stops[uid] = (REVIVE_HAND_BASIC_CODE, f"カード {uid}: {REVIVE_HAND_BASIC_REASON}")
+    return stops
+
+
+def bench_revived(state: GameState, player: int, card: int, *, zone: str, source: str, source_card: int, by: dict[str, Any]) -> PokemonInPlay:
+    """v0.120: 復活のカード ``card`` を、たねポケモンとしてあつかう進化カードとしてベンチに出す（``zones.bench_as_basic``）。ログ ``bench_as_basic``（公開。場に出たカード・出した場所・
+    出した効果）。山札から出す経路の「場に出た時」の特殊能力は ``placed_entry_power_guard`` が確かめる（今の写しの対象のカードにはない）。"""
+    from .zones import bench_as_basic
+
+    placed_entry_power_guard(state, card, from_hand=zone == "hand")
+    pokemon = bench_as_basic(state, player, card, zone=zone, source=source, source_card=source_card)
+    state.add_event("bench_as_basic", player=player, card=card, card_id=state.cards[card].card_id, to_pokemon_id=pokemon.pokemon_id, zone=zone, source=source,
+                    source_card=source_card, **by)
+    return pokemon
+
+
+@dataclass(frozen=True)
+class CoinBonusPerOwnBenchNamed(AttackEffect):
+    """コインを投げて「おもて」なら、自分のベンチの「``names``」の数 × ``per`` のダメージを追加する（v0.120。カブト（neo2-014）の「ちからをあわせる」。kyuura の印刷の文面。docs 7 章）。
+
+    - 値 ``programs.HeadsPlusPokemonCount``（p.321 の 1 段階）。「うら」なら目安の数字ぶん（0 にしない）。コインはダメージの量だけを決める（「ダメージを受けない」相手には v0.4b の問い）
+    - 数えるのは自分のベンチのポケモンで、今の姿の名前が ``names`` のどれかと完全に同じもの（``programs.counted_pokemon``。重なったカード・「…のカブト」などの別の名前・バトル場は
+      数えない。名前の読めないうらのカードは既存の FD1）。数えるのはダメージの要素を処理する時点
+    """
+
+    per: int
+    names: tuple[str, ...]
+    implementation_id = "coin_bonus_per_own_bench_named"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "1 匹あたりのダメージ")
+        if (self.per, self.names) not in WORK_TOGETHER_TEXTS:
+            raise ValueError(f"数える名前と量 {(self.per, self.names)!r} の書き方がない")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインでベンチの名前の数のダメージを追加するワザ"
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(attack, what, (WORK_TOGETHER_TEXTS[(self.per, self.names)],))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        from .resolution.programs import SCOPE_OWN_BENCH, counted_pokemon
+
+        attack = attack_of(state, use.key)
+        return DamageProfile(opponent=(attack.damage, attack.damage + len(counted_pokemon(state, use.player, SCOPE_OWN_BENCH, self.names)) * self.per))
+
+
+@dataclass(frozen=True)
+class EvolveChosenNamedFromDeck(AttackEffect):
+    """自分の場の「``names``」を好きなだけ選ぶ。その後、自分の山札から、選んだポケモンから進化する「進化カード」を、それぞれ 1 枚ずつ選びだし、それぞれのポケモンの上にのせ、進化させる。
+    山札を見た場合は、その山札をよく切る（v0.120。ワタッコ（neo3-007）の「しんかのほうし」。kyuura の印刷の文面。docs 7 章）。要素は ``programs.EvolveChosenFromDeck``。"""
+
+    names: tuple[str, ...]
+    implementation_id = "evolve_chosen_named_from_deck"
+
+    def __post_init__(self) -> None:
+        if self.names not in EVOLUTIONARY_SPORE_TEXTS:
+            raise ValueError(f"選ぶポケモンの名前 {self.names!r} の書き方がない")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "選んだ自分のポケモンを山札の進化カードで進化させるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (EVOLUTIONARY_SPORE_TEXTS[self.names],))
+
+
+@dataclass(frozen=True)
+class CoinsDiscardOpponentEnergyElseFail(AttackEffect):
+    """コインを ``coins`` 枚投げ、「おもて」の数ぶんの「エネルギーカード」を、相手からトラッシュする。すべて「うら」なら、このワザは失敗する（v0.120。キングドラ（neo3-020）の「たつまき」。
+    kyuura の印刷の文面。目安 50。docs 7 章）。
+
+    - 要素は ``programs.FailOnAllTails``（1 つのまとまりのコイン。すべて「うら」ならワザの失敗）→ ``Damage(OPP)`` → ``programs.DiscardOpponentEnergyByHeads``（同じコインの「おもて」の数）。
+      ダメージとトラッシュのためにコインを投げ直さない
+    - トラッシュするのは相手の対戦ポケモンについているエネルギーカードで、選ぶのはワザを使ったプレイヤー（v0.31 からの「相手から…トラッシュする」と同じ）。「おもて」の数より少ないとき
+      （1 枚以上）は、選べるだけ選ぶとは決まらない（FC1。``stated_cards_short``。min で丸めない）。0 枚なら処理の対象がない（p.309）
+    """
+
+    coins: int = 2
+    implementation_id = "coins_discard_opponent_energy_else_fail"
+    opponent_effect_elements = (ENERGY_DISCARD_ELEMENT,)
+
+    def __post_init__(self) -> None:
+        if self.coins not in TWISTER_TEXTS:
+            raise ValueError(f"コインの枚数 {self.coins!r} の書き方がない")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインの「おもて」の数のエネルギーカードを相手からトラッシュし、すべて「うら」なら失敗するワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (TWISTER_TEXTS[self.coins],))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        attack = attack_of(state, use.key)
+        return DamageProfile(opponent=(0, attack.damage))
+
+
+@dataclass(frozen=True)
+class CoinReviveFromDeck(PowerEffect):
+    """この力は、自分の番ごとに 1 回使える。コインを投げて「おもて」なら、自分の山札から（「``name``」・「なにかの化石」を進化させる進化カード）を 1 枚選び出し、ベンチに出す。その後、
+    その山札をよく切る（この力によって場に出したカードは「たねポケモン」としてあつかわれる）。ねむり・マヒ・こんらんのときや、ベンチに空きがないとき、この力は使えない（v0.120。カブト
+    （neo2-014）の［なかまのふっかつ］・オムナイト（neo2-032）の［かせきのふっかつ］。kyuura の印刷の文面。docs 7 章）。
+
+    - 宣言して使う（``once_per_turn``。場のポケモンごと。宣言のときに記録し、「うら」でも使ったことになる。出したカードは新しい場のポケモンで、別に数える）。ねむり・マヒ・こんらん・ベンチに
+      空きがない（``BENCH_FULL``）なら宣言の前に拒否する
+    - 「おもて」なら、山札にカードがあれば山札を見て、選べるカード（``revival_deck_cards``）があれば 1 枚を選ぶ決定（``BENCH_FROM_DECK``。1〜1 枚）、なければ選べるもののない決定（0 枚）を
+      出す（見えない山札の中身で、決定の有無・選ぶ数の境界を変えない。v0.84 の A3）。山札が 0 枚（公開の情報）なら見ないので、決定を出さず切らない（ログ ``revive_none``）
+    - 選んだカードは、進化元を重ねずにベンチに出し、場ではたねポケモンとしてあつかう（``zones.bench_as_basic``。``BasicEntry``）。山札から出すので［ヒートプレート］・爆発ジムに当たらない。
+      見たあとは、選んだか・選べるカードがあったかによらず山札を切る
+    """
+
+    target: str
+    name: str | None = None
+    implementation_id = "coin_revive_from_deck"
+    once_per_turn: ClassVar[bool] = True
+
+    def __post_init__(self) -> None:
+        if (self.target, self.name) not in ((REVIVE_NAMED, "カブト"), (REVIVE_FOSSIL, None)):
+            raise ValueError(f"復活の対象 {(self.target, self.name)!r} の書き方がない")
+
+    def texts(self) -> tuple[str, ...]:
+        if self.target == REVIVE_NAMED:
+            return (REVIVE_POWER_TEXT.format(what=f"「{self.name}」", placed=f"「{self.name}」"),)
+        return (REVIVE_POWER_TEXT.format(what="「なにかの化石」を進化させる「進化カード」", placed="「進化カード」"),)
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "コインで山札のカードを、たねポケモンとしてあつかう進化カードとしてベンチに出す特殊能力", self.texts())
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_user_not_asleep_paralyzed_confused(state, use)
+        require_power_not_used(state, use)
+        if not bench_has_room(state, use.player):
+            raise IllegalActionError("BENCH_FULL", "自分のベンチに空きがないので、この特殊能力は使えない")
+        if any(value is not None for value in (use.energy, use.source, use.target)):
+            raise IllegalActionError("POWER_CHOICE_NOT_USED", "この特殊能力は選ばせるもの（energy・source・target）を使わない")
+
+    def _options(self, state: GameState, use: PowerUse) -> list[int]:
+        return revival_deck_cards(state, use.player, self.target, self.name)
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        _, user = state.find_pokemon(use.pokemon_id)
+        flips = flip_coins(state, use.player, 1, source="power", effect=str(use.key), card=user.card, pokemon_id=user.pokemon_id)
+        if flips.results[0] is not CoinSide.HEADS:
+            return
+        if not state.players[use.player].deck:
+            state.add_event("revive_none", player=use.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key), reason="deck_empty")
+            return
+        options = self._options(state, use)
+        stops = revival_stops(state, options, from_hand=False)
+        if options and len(stops) == len(options):
+            code, reason = stops[options[0]]
+            raise UnsupportedError(code, f"山札の選べるカードがどれも、ベンチに出すと止めるもの（{reason}）")
+        blocked = tuple(uid for uid in options if uid in stops)
+        extra = {} if not blocked else {"unresolved_choices": blocked, "unresolved_code": stops[blocked[0]][0], "unresolved_reason": stops[blocked[0]][1],
+                                        "unresolved_detail": tuple((uid, *stops[uid]) for uid in blocked)}
+        push_power_decision(state, use, kind=BENCH_FROM_DECK, player=use.player, options=options, min_choices=1 if options else 0,
+                            max_choices=1 if options else 0, **extra)
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        _, user = state.find_pokemon(use.pokemon_id)
+        if not choices:
+            if self._options(state, use):
+                raise RuntimeError(f"復活の山札の決定に、選べるカードがあるのに 0 枚の答え（{use.key}。決定の形の誤り。エンジンの不具合）")
+            state.add_event("revive_none", player=use.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key), reason="no_card")
+        else:
+            if choices[0] not in self._options(state, use):
+                raise RuntimeError(f"復活で選んだカード {choices} が、山札の選べるカードではない（エンジンの不具合）")
+            bench_revived(state, use.player, choices[0], zone="deck", source=str(use.key), source_card=user.card,
+                          by={"pokemon": user.card, "pokemon_id": user.pokemon_id, "power": str(use.key)})
+        shuffle_deck(state, use.player, power=str(use.key))
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        options = self._options(state, use)
+        stops = revival_stops(state, options, from_hand=False)
+        return _power_decision_form(decision, use, kind=BENCH_FROM_DECK, choices=(1, 1) if options else (0, 0), options=options,
+                                    unresolved=tuple(uid for uid in options if uid in stops))
+
+
+@dataclass(frozen=True)
+class FossilEggRevive(TrainerEffect):
+    """コインを投げて「おもて」なら、あなたの山札、またはあなたの手札から、「なにかの化石」を進化させる「進化カード」を 1 枚選び出し、ベンチに出す。山札を見た場合は、その山札をよく切る。
+    このカードによって場に出した「進化カード」は、「たねポケモン」としてあつかわれる。（ベンチに空きがないとき、このカードは使えない）（v0.120。たまごの化石（neo2-055）。kyuura の印刷の
+    文面。docs 7 章）。
+
+    - ベンチに空きがなければ使えない（``BENCH_FULL``。手札から出す前）。コインは使ったプレイヤーが 1 枚。「うら」なら何もしない
+    - 「おもて」: 山札にカードがあれば、手札から選ぶ（0。手札に選べるカードがあるときだけ）か山札を見る（1）かを決める（``REVIVE_SOURCE``。1 つ）。手札だけを選ぶのに山札を見ない・切らない。
+      山札が 0 枚（公開）なら、手札の選べるカードを選ぶ決定（``SELECT_EVOLUTION_CARD``。なければ何もしない）
+    - 山札を見たら、山札と手札の選べるカードから 1 枚を選ぶ（``BENCH_FROM_DECK_OR_HAND``。選べるカードがなければ選べるもののない決定。見えない山札の中身で決定の有無を変えない）。
+      見てから手札のカードを選んでも、見たので山札を切る
+    - 出したカードは、進化元を重ねずにベンチに出し、場ではたねポケモンとしてあつかう（``zones.bench_as_basic``）。手札から出すカードは、［ヒートプレート］がはたらいていれば FE2（選ぶと止める）。
+      爆発ジム（「「たねポケモン」のカード」）には当たらない。手札から出した時の特殊能力の機会は既存の入口（``_placed_entry_followup``。今の写しの対象のカードにはない）
+    - どの決定も選べるもの・数を相手に見せない（観測の ``HIDDEN_COUNT_KINDS``）
+    """
+
+    text: str
+    implementation_id = "fossil_egg_revive"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = _require_text(definition, self.text, self)
+        if not problems and self.text != FOSSIL_EGG_TEXT:
+            problems.append("文面と登録の処理（コイン・山札か手札の「なにかの化石」を進化させる進化カード・たねポケモンとしてあつかう・ベンチの空き）が合わない")
+        return problems
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        if not bench_has_room(state, use.player):
+            raise IllegalActionError("BENCH_FULL", "自分のベンチに空きがないので、このカードは使えない")
+
+    def _hand(self, state: GameState, use: TrainerUse) -> list[int]:
+        return revival_hand_cards(state, use.player, exclude=use.card)
+
+    @staticmethod
+    def _hand_source_stop(state: GameState, hand: list[int]) -> dict[str, Any]:
+        """手札から選ぶ（``REVIVE_SOURCE`` の 0）と、手札のどのカードも選ぶと止める（FE2・GG1 など）なら、0 を選ぶと止める選択にする（理由は最初のカードのもの）。"""
+        stops = revival_stops(state, hand, from_hand=True)
+        if not hand or len(stops) < len(hand):
+            return {}
+        code, reason = stops[hand[0]]
+        return {"unresolved_choices": (0,), "unresolved_code": code, "unresolved_reason": reason}
+
+    def _push_cards(self, state: GameState, use: TrainerUse, kind: str, options: list[int], hand: Iterable[int]) -> None:
+        hand = set(hand)
+        stops = {**revival_stops(state, [uid for uid in options if uid not in hand], from_hand=False),
+                 **revival_stops(state, [uid for uid in options if uid in hand], from_hand=True)}
+        blocked = tuple(uid for uid in options if uid in stops)
+        extra = {} if not blocked else {"unresolved_choices": blocked, "unresolved_code": stops[blocked[0]][0], "unresolved_reason": stops[blocked[0]][1],
+                                        "unresolved_detail": tuple((uid, *stops[uid]) for uid in blocked)}
+        push_trainer_decision(state, use, kind=kind, player=use.player, options=options, min_choices=1 if options else 0, max_choices=1 if options else 0,
+                              context=(("stage", kind),), **extra)
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        if not _trainer_coin(state, use):
+            return
+        hand = self._hand(state, use)
+        if state.players[use.player].deck:
+            options = ([0] if hand else []) + [1]
+            push_trainer_decision(state, use, kind=REVIVE_SOURCE, player=use.player, options=options, context=(("stage", REVIVE_SOURCE),), **self._hand_source_stop(state, hand))
+            return
+        if not hand:
+            state.add_event("revive_none", player=use.player, trainer_card=use.card, reason="deck_empty")
+            return
+        self._push_cards(state, use, SELECT_EVOLUTION_CARD, hand, hand)
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]):
+        hand = self._hand(state, use)
+        if decision.kind == REVIVE_SOURCE:
+            if choices == (0,):
+                self._push_cards(state, use, SELECT_EVOLUTION_CARD, hand, hand)
+            else:
+                state.add_event("look_at_deck", player=use.player, trainer_card=use.card, owner=use.player)
+                self._push_cards(state, use, BENCH_FROM_DECK_OR_HAND, revival_deck_cards(state, use.player, REVIVE_FOSSIL) + hand, hand)
+            return None
+        looked = decision.kind == BENCH_FROM_DECK_OR_HAND
+        followup = None
+        if not choices:
+            if decision.options:
+                raise RuntimeError(f"たまごの化石の決定に、選べるカードがあるのに 0 枚の答え（{decision.kind}。決定の形の誤り。エンジンの不具合）")
+            state.add_event("revive_none", player=use.player, trainer_card=use.card, reason="no_card")
+        else:
+            card = choices[0]
+            zone = "hand" if card in hand else "deck"
+            if card not in decision.options or (zone == "deck" and not looked):
+                raise RuntimeError(f"たまごの化石で選んだカード {choices} が、選べるカードではない（エンジンの不具合）")
+            pokemon = bench_revived(state, use.player, card, zone=zone, source=use.card_id, source_card=use.card, by={"trainer_card": use.card})
+            if zone == "hand":
+                followup = _placed_entry_followup(state, use, use.player, (pokemon,))
+        if looked:
+            shuffle_deck(state, use.player)
+        return followup
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        if decision.player != use.player:
+            return [f"たまごの化石の決定をするのがプレイヤー {decision.player}（使ったプレイヤー {use.player} のはず）"]
+        hand = self._hand(state, use)
+        if decision.kind == REVIVE_SOURCE:
+            expected = (([0] if hand else []) + [1], 1, 1)
+            if not state.players[use.player].deck:
+                return ["たまごの化石の山札を見るかの決定が、山札が 0 枚のときに出ている"]
+            stop = self._hand_source_stop(state, hand).get("unresolved_choices", ())
+            if tuple(decision.context_value("unresolved_choices", ())) != stop:
+                return [f"たまごの化石の手札・山札の決定の、選ぶと止める選択 {decision.context_value('unresolved_choices', ())} が {stop} ではない"]
+        elif decision.kind == SELECT_EVOLUTION_CARD:
+            expected = (hand, 1 if hand else 0, 1 if hand else 0)
+        elif decision.kind == BENCH_FROM_DECK_OR_HAND:
+            options = revival_deck_cards(state, use.player, REVIVE_FOSSIL) + hand
+            expected = (options, 1 if options else 0, 1 if options else 0)
+        else:
+            return [f"たまごの化石の決定の種類 {decision.kind!r} が正しくない"]
+        if (list(decision.options), decision.min_choices, decision.max_choices) != expected:
+            return [f"たまごの化石の決定の形 {(decision.options, decision.min_choices, decision.max_choices)} が {expected} ではない"]
+        return []
+
+
+# カブト（neo2-014）など v0.120 のワザの登録（15。id ごとに書く。同じカードの組はない）。説明文のないソーラービーム・はたくは文面・出典を持たない
+V0_120_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # トゲチック（neo1-071）。そらをとぶは既存の FailOnTailsDamageThenSelfBarrier（「相手のワザによる」の書き方。ES3-032 と同じ全文）
+    AttackKey("neo1-071", 0): _printed(CopyAttackFromSource(COPY_FROM_OPPONENT_FIELD, True), "おおきくゆびをふる",
+                                       COPY_ATTACK_TEXTS[(COPY_FROM_OPPONENT_FIELD, True, COPY_COST_EXEMPT, None)]),
+    AttackKey("neo1-071", 1): _printed(FailOnTailsDamageThenSelfBarrier(), "そらをとぶ", FLY_TEXTS[4]),
+    # カブト（neo2-014）
+    AttackKey("neo2-014", 0): _printed(CoinBonusPerOwnBenchNamed(10, ("オムナイト", "オムスター", "カブト", "カブトプス", "プテラ")), "ちからをあわせる",
+                                       WORK_TOGETHER_TEXTS[(10, ("オムナイト", "オムスター", "カブト", "カブトプス", "プテラ"))]),
+    # オムナイト（neo2-032）。しめつけるは既存の ParalyzeOnHeads
+    AttackKey("neo2-032", 0): _printed(ParalyzeOnHeads(), "しめつける", "コインを投げて「おもて」なら、相手を「マヒ」状態にする。"),
+    # ワタッコ（neo3-007）。ソーラービームは説明のないワザ
+    AttackKey("neo3-007", 0): _printed(EvolveChosenNamedFromDeck(("ハネッコ", "ポポッコ")), "しんかのほうし", EVOLUTIONARY_SPORE_TEXTS[("ハネッコ", "ポポッコ")]),
+    AttackKey("neo3-007", 1): AttackEntry(DAMAGE_ONLY, "ソーラービーム"),
+    # キングドラ（neo3-020）
+    AttackKey("neo3-020", 0): _printed(CopyAttackFromSource(COPY_FROM_PRE_EVOLUTION, False), "りゅうのいでんし",
+                                       COPY_ATTACK_TEXTS[(COPY_FROM_PRE_EVOLUTION, False, COPY_COST_EXEMPT, None)]),
+    AttackKey("neo3-020", 1): _printed(CoinsDiscardOpponentEnergyElseFail(2), "たつまき", TWISTER_TEXTS[2]),
+    # プテラ（neo3-042）。そらをとぶは既存の FailOnTailsDamageThenSelfBarrier（「ワザによる」の書き方。SI-003 と同じ全文）
+    AttackKey("neo3-042", 0): _printed(FailOnTailsDamageThenSelfBarrier(), "そらをとぶ", FLY_TEXTS[3]),
+    # スリーパー（ES3-025）。マインドショックは既存の DamageIgnoringWeaknessResistance
+    AttackKey("ES3-025", 0): _printed(DamageIgnoringWeaknessResistance(), "マインドショック", "このワザのダメージは、相手の「弱点・抵抗力」の影響を受けない。"),
+    # ミュウ（PR1-021）。はたくは説明のないワザ
+    AttackKey("PR1-021", 0): AttackEntry(DAMAGE_ONLY, "はたく"),
+    AttackKey("PR1-021", 1): _printed(CopyAttackFromSource(COPY_FROM_OPPONENT_FIELD, False, COPY_COST_COMBINED, "cannot_use"), "サイコデュープ",
+                                      COPY_ATTACK_TEXTS[(COPY_FROM_OPPONENT_FIELD, False, COPY_COST_COMBINED, "cannot_use")]),
+    # トゲピー（PR1-065）。なきつくは既存の ReduceDamageToSelfNextOpponentTurn（受けた相手がこのカードに与えるダメージを次の相手の番に「-20」。GROWL_TEXTS の 3 つめの書き方）
+    AttackKey("PR1-065", 0): _printed(ReduceDamageToSelfNextOpponentTurn(20), "なきつく", GROWL_TEXTS[2].format(n=20)),
+    AttackKey("PR1-065", 1): _printed(CopyAttackFromSource(COPY_FROM_DEFENDER, True), "ゆびをふる", COPY_ATTACK_TEXTS[(COPY_FROM_DEFENDER, True, COPY_COST_EXEMPT, None)]),
+    # ウソッキー（PF3-001）。たたきつけるは既存の CoinFlipDamage（2 枚 × 20）
+    AttackKey("PF3-001", 0): _printed(CoinFlipDamage(2, 20), "たたきつける", "コインを2枚投げ、「おもて」の数×20のダメージ。"),
+})
+
+_REVIVE_FRIENDS = CoinReviveFromDeck(REVIVE_NAMED, "カブト")
+_REVIVE_FOSSIL = CoinReviveFromDeck(REVIVE_FOSSIL)
+_PREHISTORIC_MEMORY = PreEvolutionAttacksForEvolvedActives()
+_PUPPET_MASTER = DollUsesHolderAttacks()
+_MIMIC = UseDefenderAttacks()
+
+V0_120_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
+    PowerKey("neo2-014", 0): PowerEntry(_REVIVE_FRIENDS, "なかまのふっかつ", _REVIVE_FRIENDS.texts()[0], _REVIVE_FRIENDS.texts()[0], _KYUURA_PRINTED_TEXT),
+    PowerKey("neo2-032", 0): PowerEntry(_REVIVE_FOSSIL, "かせきのふっかつ", _REVIVE_FOSSIL.texts()[0], _REVIVE_FOSSIL.texts()[0], _KYUURA_PRINTED_TEXT),
+    PowerKey("neo3-042", 0): PowerEntry(_PREHISTORIC_MEMORY, "げんしのきおく", PREHISTORIC_MEMORY_TEXT, PREHISTORIC_MEMORY_TEXT, _KYUURA_PRINTED_TEXT),
+    PowerKey("ES3-025", 0): PowerEntry(_PUPPET_MASTER, "にんぎょうつかい", _PUPPET_MASTER.texts()[0], _PUPPET_MASTER.texts()[0], _KYUURA_PRINTED_TEXT),
+    PowerKey("PF3-001", 0): PowerEntry(_MIMIC, "ものまね", MIMIC_TEXT, MIMIC_TEXT, _KYUURA_PRINTED_TEXT),
+})
+
+V0_120_TRAINERS: Mapping[str, TrainerEntry] = MappingProxyType({
+    "neo2-055": TrainerEntry(FossilEggRevive(FOSSIL_EGG_TEXT), "たまごの化石", FOSSIL_EGG_TEXT, FOSSIL_EGG_TEXT, _KYUURA_PRINTED_TEXT),
+})
+
+DEFAULT_EFFECTS = _with_trainers(_with_powers(_with_attacks(DEFAULT_EFFECTS, V0_120_ATTACKS), V0_120_POWERS), V0_120_TRAINERS)

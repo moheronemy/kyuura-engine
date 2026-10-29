@@ -1997,6 +1997,36 @@ ASLEEP = Asleep()
 CONFUSED = Confused()
 
 
+BASIC_ENTRY_ZONES = ("deck", "hand")
+
+
+@dataclass(frozen=True)
+class BasicEntry:
+    """v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 6 章）: 進化カードを、進化元を重ねずにベンチに出し、場では「たねポケモン」としてあつかう事実（カブトの［なかまのふっかつ］・
+    オムナイトの［かせきのふっかつ］・たまごの化石の「（…出した「進化カード」は、「たねポケモン」としてあつかわれる。）」）。
+
+    場のポケモンに持つ事実で、印刷のカードの段階・進化元は変えない（山札・手札・対戦準備・デッキの枚数は印刷の分類）。場の分類（``effects.field_stage``）だけが、いちばん上のカードが
+    ``card`` のときにこれを読む。ベンチ・バトル場の移動、出した効果の特殊能力が消える・発生源が場をはなれることでは消えない（持続する効果 ``persistent_effects`` とは別に持つ）。進化しても
+    残り（元の出し方を判断する情報）、場をはなれたら場のポケモンごとなくなる。
+
+    - ``card``: たねポケモンとしてあつかう進化カードの uid（出したカード）
+    - ``source``: 出した効果（特殊能力なら ``PowerKey`` の文字列、トレーナーならカードの id）
+    - ``source_card``: 出した効果のカードの uid（特殊能力を印刷したカード・使ったトレーナーカード）
+    - ``zone``: 出したカードがあった場所（``"deck"``・``"hand"``）
+    - ``turn``: 出した番
+    """
+
+    card: int
+    source: str
+    source_card: int
+    zone: str
+    turn: int
+
+    def __post_init__(self) -> None:
+        if self.zone not in BASIC_ENTRY_ZONES:
+            raise ValueError(f"たねポケモンとしてあつかう進化カードを出した場所 {self.zone!r} は {BASIC_ENTRY_ZONES} のどれか")
+
+
 @dataclass
 class PokemonInPlay:
     """場にいるポケモン（1 匹）。ポケモンのカード（進化していれば重なった 2 枚。v0.4a）と、ついているカード。
@@ -2078,6 +2108,8 @@ class PokemonInPlay:
     history: tuple[Any, ...] = ()
     # v0.90（docs/markers-counters-v0.90.md 3 章）: のっているマーカー・ダメージカウンター以外のカウンター（``Marker`` のタプル。のせた順）。``markers.py`` の関数で変える
     markers: tuple[Marker, ...] = ()
+    # v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 6 章）: 進化カードを進化元を重ねずに出し、場では「たねポケモン」としてあつかう事実（``BasicEntry``）。なければ None
+    basic_entry: BasicEntry | None = None
 
     @property
     def current_form_turn(self) -> int:
@@ -2113,6 +2145,7 @@ class PokemonInPlay:
             self.devolved_turn,
             self.history,
             self.markers,
+            self.basic_entry,
         )
 
 

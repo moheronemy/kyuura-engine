@@ -25,6 +25,8 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from .decisions import (
+    BENCH_FROM_DECK_OR_HAND,
+    REVIVE_SOURCE,
     ARRANGE_DECK_TOP,
     ATTACH_FROM_DECK,
     ATTACH_FROM_DISCARD,
@@ -122,7 +124,7 @@ from .effects import (
     COLORS, attack_of, available_attacks, current_form, hand_revealed_by, max_hp, powers_of, resistance_of, type_readings, type_shift_determined, weakness_of,
     attached_units, card_color_readings,
 )
-from .serialize import history_record, poison_mist_record, replacement_poison_record, turn_record
+from .serialize import basic_entry_record, history_record, poison_mist_record, replacement_poison_record, turn_record
 from .state import GameState, PokemonInPlay
 
 VIEWERS = (0, 1, None)
@@ -186,13 +188,16 @@ OPTION_MEANINGS: dict[str, str] = {
     STADIUM_FROM_DISCARD: "card",  # v0.118: ［じくうへんかん］で場に出すトラッシュのスタジアムカード（公開）
     DECK_TOP_FROM_HAND: "card",  # v0.118: ［トランスポート］で山札の上に置く手札のカード（決めるプレイヤーの手札。選べる数も相手に見せない）
     DAMAGE_OPTION: "pokemon",  # v0.119: ［シェルアーマー］を使うか（1 個: 使う・0 個: 使わない。選べるものはダメージを受けるポケモン。公開）
+    REVIVE_SOURCE: "number",  # v0.120: たまごの化石で手札から選ぶ（0）か山札を見る（1）か（選べるもの・数は決めるプレイヤーだけに見せる）
+    BENCH_FROM_DECK_OR_HAND: "card",  # v0.120: たまごの化石で山札を見たあとにベンチに出す山札・手札の進化カード（決めるプレイヤーだけに見せる）
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
 # v0.73: 化石の発掘（山札とトラッシュ）・マスターボール（見た山札の上の 7 枚）も、決めるプレイヤーが自分の山札を見る
 # v0.88: ［ぶんれつ］で出す山札のカード（SPLIT_FROM_DECK。決めるプレイヤーが自分の山札をさがす）も。v0.87 は入れておらず、決めるプレイヤーの観測の選べるものに、見えないカードの uid が
 # あることになっていた（docs/type-energy-colors-v0.88.md 1 章）
 DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK, ARRANGE_DECK_TOP, TAKE_LOOKED_CARDS, CHALLENGE_BENCH, SEARCH_DECK_OR_DISCARD,
-                                  TAKE_LOOKED_POKEMON, TAKE_LOOKED_TRAINER, SPLIT_FROM_DECK})
+                                  TAKE_LOOKED_POKEMON, TAKE_LOOKED_TRAINER, SPLIT_FROM_DECK,
+                                  BENCH_FROM_DECK_OR_HAND})  # v0.120: たまごの化石で山札を見たあとに選ぶカード（山札と手札）
 # v0.63: 決めるプレイヤーでない人に、選ぶ数・選べるものの数を見せない決定（たたきつけろ!挑戦状の山札から選ぶ決定は山札のたねポケモンの数、カツラのクイズ その3の置く
 # カード・伝えるワザの決定は手札のポケモンの数・置いたカードのワザの数を漏らすため。種類と決めるプレイヤーだけを見せる）
 # v0.73: 化石の発掘（山札とトラッシュの「なにかの化石」）・マスターボール（見た 7 枚のうちのポケモン）も、選べるものの数が山札の中身を漏らすので見せない
@@ -217,7 +222,9 @@ HIDDEN_COUNT_KINDS = frozenset({SPLIT_FROM_DECK, CHALLENGE_BENCH, QUIZ_CARD, QUI
                                 # v0.84: しんかのうたの進化させるポケモンの決定（選ぶと止めるポケモン（``unresolved_choices``）が山札の中身で決まる）
                                 EVOLUTION_SONG_POKEMON,
                                 # v0.118: ［トランスポート］で山札の上に置く手札のカード（引いたあとの手札の中身・選べる数を、決めるプレイヤーでない人に見せない）
-                                DECK_TOP_FROM_HAND})
+                                DECK_TOP_FROM_HAND,
+                                # v0.120: たまごの化石の、手札から選ぶか山札を見るか（手札に選べるカードがあるかを漏らす）・山札を見たあとの山札と手札のカード
+                                REVIVE_SOURCE, BENCH_FROM_DECK_OR_HAND})
 # v0.63: 選べるものがサイドの位置（決めるプレイヤーのサイド）の決定。おもてのサイド（ロケット団参上!）の位置には、カードの id を添える
 PRIZE_POSITION_KINDS = frozenset({TAKE_PRIZE, SELECT_PRIZE_CARD})
 # v0.55: 決めるプレイヤーが効果で見た相手の手札のカードを選べるものにする決定（ロケット団のおねーさん）。選べるもののカードは、決めるプレイヤーに見える（相手の手札を
@@ -310,9 +317,13 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay) -> dict[str, Any]:
         # v0.62（docs/history-attacks-v0.62.md 9 章）: ワザの履歴（使ったワザ・受けたワザと受けた結果・ワザ以外で受けたこと）。どれも表の情報（使った・受けたワザ、場のダメージと
         # 効果）で、見えないカードを含まない。書き出しの最新の形式と同じ形（v0.99: 形式 25 の受けた記録の、ダメージを受けた場所 ``active_damage``。場所は場の表の情報）
         "history": [history_record(record) for record in pokemon.history],
+        # v0.120: 進化元を重ねずに出し、場ではたねポケモンとしてあつかう進化カードの事実（場の表の情報。書き出しの最新の形式と同じ形。ないときは None）
+        "basic_entry": None if pokemon.basic_entry is None else basic_entry_record(state, pokemon.basic_entry),
         "attacks": [
             {**_card(state, option.card), "attack_index": option.attack_index, "name_ja": attack_of(state, option.key).name_ja, "route": option.route,
-             "provider": option.provider, "problem": None if option.problem is None else option.problem[0]}
+             "provider": option.provider, "problem": None if option.problem is None else option.problem[0],
+             # v0.120: 必要なエネルギーを満たすポケモン（［にんぎょうつかい］のスリーパー）・許可を与える特殊能力を持つポケモン。どちらも場の表の情報。ないときは書かない（v0.119 までの形）
+             **({"payer": option.payer} if option.payer is not None else {}), **({"grantors": list(option.grantors)} if option.grantors else {})}
             for option in available_attacks(state, pokemon)
         ],
         "powers": [{**_card(state, slot.card), "power_index": slot.key.power_index, "name_ja": slot.power.name_ja} for slot in powers_of(state, pokemon)],
@@ -576,6 +587,9 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
+    # v0.120: 進化元を重ねずにベンチに出したたねポケモンとしてあつかう進化カード（場に出たカード・出した場所・効果）・復活で出すカードがなかった（山札が 0 枚・選べるカードがなかった）・
+    # しんかのほうしで選んだポケモン・たまごの化石で山札を見たこと（見たカードは書かない。どれも場・公開の情報）
+    "bench_as_basic", "revive_none", "evolve_targets", "look_at_deck",
     # v0.88: 色を変える効果の追加・消去（［せんすい］・［エナジーコンバーター］）・ワザといっしょに使った特殊能力（［すいりょくはつでん］）・ワザで選んだ色・色を選べなかった・
     # テクスチャーで色を変えなかった（どれも場・公開の選択）
     "color_effect_added", "color_effect_removed", "attack_power", "attack_color_chosen", "attack_color_none", "color_change_declined",

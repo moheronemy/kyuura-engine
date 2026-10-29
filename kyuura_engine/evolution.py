@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .conditions import DEVOLVE, EVOLVE, clear_special_conditions
+from .errors import UnsupportedError
 from .history import clear_history
 from .markers import remove_markers
 from .persistent import remove_persistent_effects
@@ -311,7 +312,16 @@ def devolve(state: GameState, owner: int, target: PokemonInPlay, count: int, *, 
     chain = (*target.evolution_stack, target.card)
     removed = tuple(reversed(chain[-count:]))
     # effects.py は evolution.py を読み込むので、使うときに読み込む
-    from .effects import goop_gas_entry_check, lock_source_form_check
+    from .effects import (
+        goop_gas_entry_check,
+        lock_source_form_check,
+        revived_devolve_problem,
+    )
+
+    revived = revived_devolve_problem(state, target, count)
+    if revived is not None:
+        # v0.120（FE1。docs/fossil-basic-virtual-attacks-v0.120.md 6 章）: たねポケモンとしてあつかった進化カードがまたいちばん上になる（状態を変える前。呼ぶ側の選ぶと止める選択の最後の確かめ）
+        raise UnsupportedError(*revived)
 
     goop_gas_entry_check(state, chain[-count - 1], how="devolve")  # v0.59: GG1（状態を変える前）
     lock_source_form_check(state, owner, target, how="devolve")  # v0.92: ML2（状態を変える前）

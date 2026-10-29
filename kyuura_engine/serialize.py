@@ -142,6 +142,11 @@
   （なければ形式 1〜26 の書き出しは v0.118 と同じ）。
   v0.119 の［シェルアーマー］を使うかの決定（``damage_option``）・ほかの新しい決定・持続する効果の種類は、これまでと同じく種類の値と項目を加えただけ（形式は変えない。知らない種類は
   読む側が拒否すること）
+- 28: 27 に、場のポケモンの ``basic_entry``（進化カードを進化元を重ねずにベンチに出し、場ではたねポケモンとしてあつかう事実。カブトの［なかまのふっかつ］・オムナイトの［かせきのふっかつ］・
+  たまごの化石。``{"card", "card_id", "source", "source_card", "source_card_id", "zone", "turn"}``。ないポケモンは書かない）を加えたもの（v0.120。docs/fossil-basic-virtual-attacks-v0.120.md
+  6 章・8 章）。印刷の段階からは分からない場の分類なので、古い形式に黙って落とさない: 形式 1〜27 は、この事実のあるポケモンがいると ``ValueError``（いなければ形式 1〜27 の書き出しは
+  v0.119 と同じ）。v0.120 の新しい決定（``revive_source``・``bench_from_deck_or_hand``）・ワザの途中の決定の続きの情報（ESPのやり直しを聞いたワザ ``esp_asked``・ワザを選ぶ範囲
+  ``copy_source``）は、これまでと同じく種類の値と項目を加えただけ（知らない種類・項目は読む側が拒否すること）
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -247,7 +252,7 @@ from .state import (
     WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -488,7 +493,15 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay | None, format_version: in
         data["history"] = [history_record(record, format_version) for record in pokemon.history]  # v0.62（v0.99: 形式 25 から受けた記録の場所）
     if format_version >= 24:
         data["markers"] = [marker_record(state, marker) for marker in pokemon.markers]  # v0.90
+    if format_version >= 28 and pokemon.basic_entry is not None:
+        data["basic_entry"] = basic_entry_record(state, pokemon.basic_entry)  # v0.120（なければ書かない）
     return data
+
+
+def basic_entry_record(state: GameState, entry) -> dict[str, Any]:
+    """v0.120: 進化元を重ねずに出し、場ではたねポケモンとしてあつかう進化カードの事実（``state.BasicEntry``）。"""
+    return {"card": entry.card, "card_id": state.cards[entry.card].card_id, "source": entry.source, "source_card": entry.source_card,
+            "source_card_id": state.cards[entry.source_card].card_id, "zone": entry.zone, "turn": entry.turn}
 
 
 def marker_record(state: GameState, marker) -> dict[str, Any]:
@@ -603,6 +616,8 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         raise ValueError(f"形式 {format_version} は、ダメージカウンターの数を倍にするどく・［ポイズンミスト］の効果を表せない（format_version=27 を使う）")
     if format_version < 27 and state.replacement_poisons:
         raise ValueError(f"形式 {format_version} は、「ガスばくはつ」のかわりに出てくる対戦ポケモンへのまだ与えていないどくを表せない（format_version=27 を使う）")
+    if format_version < 28 and any(pokemon.basic_entry is not None for p in state.players for pokemon in p.in_play()):
+        raise ValueError(f"形式 {format_version} は、進化元を重ねずに出して場ではたねポケモンとしてあつかう進化カードを表せない（format_version=28 を使う）")
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
     if format_version == 1 and state.decision is not None and state.decision.resume == "attack":
