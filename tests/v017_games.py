@@ -16,7 +16,7 @@ from __future__ import annotations
 from collections import Counter
 from typing import Callable
 
-from kyuura_engine.commands import RemoveDisguise  # v0.49
+from kyuura_engine.commands import PromoteActive, RemoveDisguise  # v0.49・v0.119
 from kyuura_engine import (
     AttachEnergy, EvolvePokemon, IllegalActionError, PlayTrainer, Retreat, UnsupportedError, UseAttack, UsePokemonPower, apply_command, check_invariants,
     new_game, state_to_dict,
@@ -156,6 +156,38 @@ def v117_stop_expected(state, command, code) -> bool:
     return bool(_E.esp_cards(state, attacker))  # ES4
 
 
+# v0.119（docs/damage-reactions-poison-sleep-v0.119.md）: ［シェルアーマー］（AM1・返す効果のダメージの中の決定の未対応）・［かたいから］（HS1）・どくの量（PO1〜PO3）・「どくをだす」（PX1）・
+# ［いあつ］（IA1・ベイビィポケモンの特殊能力の使用）・［アレルギーほうし］（AP1・AP2）・［めいれい］（MD1）で止まる場面
+V119_CODES = ("UNRESOLVED_SHELL_ARMOR_TIMING", "UNSUPPORTED_DAMAGE_OPTION_ELEMENT", "UNRESOLVED_HARD_SHELL_NONPOSITIVE", "UNRESOLVED_POISON_CHANGE_ORDER",
+              "UNRESOLVED_POISON_MIST_EARLIER_POISON", "UNRESOLVED_POISON_MIST_SOURCE", "UNRESOLVED_SECRETE_POISON_TARGET", "UNRESOLVED_SCARE_SUPPRESSION_CYCLE",
+              "UNRESOLVED_DISCARD_PROTECTED_COIN", "UNRESOLVED_DISCARD_PROTECTED_POWER_USE", "UNRESOLVED_COMMAND_DAMAGE_SCOPE")
+
+
+def v119_stop_expected(state, command, code) -> bool:
+    """v0.119: 場から確かめる（エンジンの問い合わせの答えではなく、場のカード・効果の有無で）。AM1・返す効果のダメージの中の決定は場に［シェルアーマー］のポケモン、HS1 は［かたいから］の
+    ポケモンがいる。PO1〜PO3 はかける数のどく・［ポイズンミスト］の効果がある。PX1 は「どくをだす」の効果を持つポケモンがいる。IA1 は［いあつ］のポケモンと、ワザで与えた「おたがいの場の
+    特殊能力を止める」効果か、それを与えるワザの宣言。AP1 は［アレルギーほうし］のポケモンが場にいるワザ、AP2 は特殊能力の使用。MD1 は［めいれい］をいっしょに使うワザ。"""
+    def holders(kind) -> list:
+        return [p for side in state.players for p in side.in_play() if not state.is_face_down(p)
+                and any(isinstance(slot.effect, kind) for slot in _E.powers_of(state, p))]
+
+    if code in ("UNRESOLVED_SHELL_ARMOR_TIMING", "UNSUPPORTED_DAMAGE_OPTION_ELEMENT"):
+        return bool(holders(_E.OptionalReduceAttackDamageReceived))
+    if code == "UNRESOLVED_HARD_SHELL_NONPOSITIVE":
+        return bool(holders(_E.SetSmallAttackDamageReceived))
+    if code in ("UNRESOLVED_POISON_CHANGE_ORDER", "UNRESOLVED_POISON_MIST_EARLIER_POISON", "UNRESOLVED_POISON_MIST_SOURCE"):
+        return bool(state.poison_mists) or any(p.conditions.poison is not None and p.conditions.poison.multiplier != 1 for side in state.players for p in side.in_play())
+    if code == "UNRESOLVED_SECRETE_POISON_TARGET":
+        return any(e.kind == "secrete_poison" for side in state.players for p in side.in_play() for e in p.persistent_effects)
+    if code == "UNRESOLVED_SCARE_SUPPRESSION_CYCLE":
+        return bool(holders(_E.ScareOpponentBabies)) and (bool(attack_field_power_suppressions(state)) or isinstance(command, UseAttack))
+    if code == "UNRESOLVED_DISCARD_PROTECTED_COIN":
+        return isinstance(command, UseAttack) and bool(holders(_E.DiscardPileImmunityToPokemonEffects))
+    if code == "UNRESOLVED_DISCARD_PROTECTED_POWER_USE":
+        return isinstance(command, UsePokemonPower) and bool(holders(_E.DiscardPileImmunityToPokemonEffects))
+    return isinstance(command, UseAttack) and command.with_power is not None  # MD1
+
+
 # v0.93（docs/active-leave-locks-v0.93.md）: 「バトル場をはなれられない」効果（にげる・すてるの拒否・AL1〜AL3）・くいつく（JC1・JC2）・かぶりつく（CJ1）で止まる・拒否する場面
 V093_LEAVE_CODES = (LEAVE_ACTIVE_PREVENTED, LEAVE_LOCK_KNOCKOUT_CODE, LEAVE_LOCK_NO_EFFECT_CODE, LEAVE_LOCK_SCRAM_CODE, JAW_CLAMP_SOURCE_RETURNED_CODE,
                     JAW_CLAMP_SOURCE_EVOLVED_CODE, CLAMPING_JAW_SOURCE_DEVOLVED_CODE)
@@ -287,6 +319,35 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                     if kind == "UseAttack":
                         turn_tried.add(error.code)
                     continue
+                if error.code in V119_CODES or (error.code == "POWER_SUPPRESSED" and isinstance(command, UsePokemonPower)
+                                                and state.find_pokemon(command.pokemon) is not None
+                                                and _E.scared_by(state, command.player, state.find_pokemon(command.pokemon)[1])):
+                    # v0.119: 場から確かめる（``v119_stop_expected``。［いあつ］で使えないベイビィポケモンの特殊能力も）。同じ操作を繰り返さない
+                    if error.code != "POWER_SUPPRESSED" and not v119_stop_expected(state, command, error.code):
+                        raise AssertionError(f"場から確かめると止まらないはずなのに {error.code}: {command}")
+                    kind = type(command).__name__
+                    observed[f"stopped_{kind}_{error.code}"] += 1
+                    if kind == "PromoteActive":
+                        # IA1 になるポケモン（［いあつ］のポケモン）をバトル場に出す答え。ほかの控えを順に試す（手順の答えを変える。出せる控えがなければ止める）
+                        accepted = None
+                        for other in state.players[command.player].bench:
+                            if other.card == command.pokemon:
+                                continue
+                            try:
+                                accepted = (PromoteActive(command.player, other.card), apply_command(state, PromoteActive(command.player, other.card)))
+                                break
+                            except (IllegalActionError, UnsupportedError):
+                                continue
+                        if accepted is None:
+                            raise AssertionError(f"{error.code} で、バトル場に出せる控えがない: {command}")
+                        command, new = accepted
+                        observed["v119_promote_other"] += 1
+                        break
+                    turn_tried.add("retreat" if kind == "Retreat" else ("max_hp_drop_card", command.card) if kind in ("PlayTrainer", "EvolvePokemon")
+                                   else ("attack_index", command.attack_index) if kind == "UseAttack" else ("max_hp_drop_command", command))
+                    if kind == "UseAttack":
+                        turn_tried.add(error.code)
+                    continue
                 if error.code in V117_CODES:
                     # v0.117: 場から確かめる（``v117_stop_expected``）。同じ操作を繰り返さない
                     if not v117_stop_expected(state, command, error.code):
@@ -375,7 +436,10 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                     continue
                 if isinstance(command, UseAttack) and error.code == RETALIATION_STOP:
                     target = state.players[1 - state.current_player].active
-                    if not retaliation_on(state, target):
+                    # v0.119: 「どくをだす」（相手のワザのダメージを受けたときの、相手の控え全員へのダメージ）も、ワザによるきぜつと同時かの同じ問い（W24・S37）。場から確かめる
+                    # （今の番にはたらく効果を持つ。効果の値と番だけを見る）
+                    secrete = target is not None and any(e.kind == "secrete_poison" and e.created_turn + 1 == state.turn_number for e in target.persistent_effects)
+                    if not retaliation_on(state, target) and not secrete:
                         raise AssertionError(f"ダメージを返す効果がはたらいていないのに {RETALIATION_STOP}: {command}")
                     observed[f"stopped_attack_{RETALIATION_STOP}"] += 1
                     turn_tried.update({"retaliation_double", ("attack_index", command.attack_index)})

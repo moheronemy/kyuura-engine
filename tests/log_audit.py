@@ -280,7 +280,7 @@ from kyuura_engine.effects import (
     HealEachDamagedPokemonTrainer, HealOwnerPokemonThenDiscardHand, LookTopTakeRestDiscardTrainer, MoveAllEnergyBetweenOwnerPokemon, OpponentHandTrainerToDeck,
     ReturnBasicEnergyToHandTrainer, SwitchBothActivesTrainer,
 )
-from kyuura_engine.damage import ADD, HALVE_DOWN, HALVE_UP, MULTIPLY, SET, SET_IF_AT_LEAST, ZERO_IF_AT_LEAST
+from kyuura_engine.damage import ADD, HALVE_DOWN, HALVE_UP, MULTIPLY, SET, SET_IF_AT_LEAST, SET_IF_AT_MOST, ZERO_IF_AT_LEAST
 from kyuura_engine.evolution import skipped_stage1_basic
 from kyuura_engine.resolution.programs import (
     BUILDERS, Damage, DiscardOwnEnergy, MoveOneEnergyToBench, MoveOwnEnergyToBench, OptionalDiscardBenchDamage, ReturnOwnEnergyToHand,
@@ -497,8 +497,9 @@ TOP_FIELDS_SINCE = {
     "trainer_effects": 16, "stadium": 17, "stadium_uses_this_turn": 17, "trainer_stack": 18, "energy_roles": 19, "set_aside": 21, "face_up_prizes": 21, "face_down_cards": 22,
     "color_effects": 23,
     "turn_history": 26,  # v0.100: プレイヤーの番ごとの記録（使ったワザ・番でないプレイヤーの場にいたカード）
+    "poison_mists": 27, "replacement_poisons": 27,  # v0.119: ［ポイズンミスト］の効果・「ガスばくはつ」のまだ与えていないどく
 }
-LATEST_FORMAT = 26
+LATEST_FORMAT = 27
 # v0.99: 形式 25 で、場のポケモンの履歴の受けた記録（``"kind": "received"``）に加わった項目（ダメージを受けた場所）
 RECEIVED_FIELDS_SINCE = {"active_damage": 25}
 
@@ -602,6 +603,9 @@ def required_format(state) -> tuple[int, bool]:
         needed = max(needed, 25)  # v0.99: 受けた場所の分かる 0 より大きいダメージの受けた記録（形式 24 までは合計だけ）
     if state.turn_history:
         needed = max(needed, 26)  # v0.100: プレイヤーの番ごとの記録（「スケッチ」の対戦だけ）
+    if (state.poison_mists or state.replacement_poisons
+            or any(pokemon.conditions.poison is not None and pokemon.conditions.poison.multiplier != 1 for pokemon in in_play)):
+        needed = max(needed, 27)  # v0.119: カウンターの数を倍にするどく・［ポイズンミスト］の効果・「ガスばくはつ」のまだ与えていないどく
     d = state.decision
     not_v0_1 = d is not None and (
         d.context_value("then") is not None or d.resume in ("attack", "knock_out", "post_knockout", "power")  # v0.42: 特殊能力の途中の決定
@@ -1111,6 +1115,22 @@ V118_X_POWER = re.compile(r"この力は、自分の場の「(.+)」が「(.+)�
                           r"ダメージに追加する。この番に、すでに自分の場のほかの.+の「(.+)」を使っていたなら、この力を使うことはできない。")
 V118_TIME_SHIFT = "コインを投げて「おもて」なら、自分のトラッシュから「スタジアムカード」を1枚選び出し、場に出す(すでに場にある「スタジアムカード」は、トラッシュする)。"
 V118_TRANSPORT = "自分の山札からカードを1枚引いて、手札に加える。その後、自分の手札からカードを1枚選び、山札の上に置く。"
+# v0.119（docs/damage-reactions-poison-sleep-v0.119.md 11 章）: 監査が読む印刷の文面（kyuura の日本語。エンジンの登録・計算を読まない）
+V119_HARD_SHELL = re.compile(r"このカードがワザによって受ける「(\d+)」以下のダメージは、すべて「(\d+)」になる\(ダメージ以外の効果はそのまま\)。")
+V119_SHELL_ARMOR = re.compile(r"この力は、このカードがワザによるダメージを受けるたびに、1回使える。このカードが受けるダメージを「-(\d+)」する。")
+V119_TOXIC = re.compile(r"コインを投げて「おもて」なら、相手を「どく」状態にする。このワザによって「どく」状態になったポケモンは、ポケモンチェックのときにのせる「どく」による"
+                        r"ダメージカウンターの数が、(\d+)倍になる。")
+V119_POISON_MIST = re.compile(r"この力は、自分の番ごとに1回使える。コインを投げて「おもて」なら、次の自分の番の始めまで、「どく」状態になったポケモンがポケモンチェックで受ける"
+                              r"「どく」のダメージは、(\d+)ダメージになる。")
+V119_DEEP_SLEEP = re.compile(r"「ねむり」状態のポケモンは、ポケモンチェックのときに投げるコインの枚数が(\d+)枚になり、すべて「おもて」が出ないと、「ねむり」状態から回復できない。")
+V119_SECRETE = re.compile(r"次の相手の番、このカードが相手のワザによるダメージを受けたとき\(それによって、このカードが「きぜつ」しても\)、相手を「どく」状態にし、相手の控えポケモン全員に、"
+                          r"「弱点・抵抗力」に関係なく、それぞれ(\d+)ダメージ。")
+V119_GAS = re.compile(r"自分にも(\d+)ダメージ。このワザによって相手が「きぜつ」したなら、そのかわりに出てくる対戦ポケモンを「どく」状態にする。")
+V119_PAIN_SPLIT = "自分にのっているダメージカウンターと同じ数のダメージカウンターを、相手にのせる。"
+V119_PULL_IN = "相手を「ねむり」状態にする。のぞむなら、ダメージと効果を与える前に、相手の控えポケモンを1匹選び、相手と入れ替えてよい。"
+V119_COMMAND = re.compile(r"この力は、自分の「(.+)」、「(.+)」がワザを使う時、使える。そのワザによるダメージは、「\+(\d+)」される。")
+V119_ALLERGY = "おたがいのトラッシュにあるすべてのカードは、ポケモンの「ワザ・特殊能力」による効果を受けない。"
+V119_BEAM = re.compile(r"次の相手の番、自分の場の「(.)」ポケモンは「弱点」の影響を受けない。")
 
 
 def _effect_of_key(state, key: str | None):
@@ -1149,6 +1169,9 @@ def _follows_declaration(state, key: str, player: int, pid: int, e: dict) -> boo
     # こっそりかみつくの特殊能力のダメージ・つりあげるのトラッシュから手札に加える処理（加えるものがないなら recover_pokemon_none）・てしたをよぶの山札からベンチに
     # 出す処理（つける・つけかえるもの（ほのおをもらう・ようぶんきゅうしゅう・エナジーチャージ）は move_energy の分岐が確かめる）
     if isinstance(effect, CoinConditionOnEitherActive):
+        return kind == "coin_flip" and e["source"] == "power" and e.get("effect") == key and e["player"] == player and e.get("pokemon_id") == pid
+    if isinstance(effect, E.CoinPoisonMistUntilNextTurn):
+        # v0.119: ［ポイズンミスト］は持ち主のコイン（「おもて」なら poison_mist_added。v119_problems が量・期間・使う前のどくを確かめる）
         return kind == "coin_flip" and e["source"] == "power" and e.get("effect") == key and e["player"] == player and e.get("pokemon_id") == pid
     if isinstance(effect, SearchEvolutionCardToHand):
         return kind == "reveal_from_deck" and e.get("power") == key and e["player"] == player
@@ -1260,6 +1283,10 @@ def _power_coin_follows(state, coin: dict, e: dict) -> bool:
     kind = e["kind"]
     if isinstance(effect, ConfuseDamageSourceOnHeads):
         return kind == "power_confusion" and e["power"] == coin["effect"] and e["result"] == coin["result"]
+    if isinstance(effect, E.CoinPoisonMistUntilNextTurn):
+        # v0.119: ［ポイズンミスト］。「おもて」なら、すぐあとに使ったポケモンの効果（poison_mist_added）。「うら」なら何もしない
+        mine = kind == "poison_mist_added" and e.get("power") == coin["effect"]
+        return (mine and e["player"] == coin["player"] and e.get("pokemon_id") == coin.get("pokemon_id")) if coin["result"] == "heads" else not mine
     if isinstance(effect, HealOwnPokemonOnHeads):
         return (kind == "power_heal" and e.get("power") == coin["effect"]) if coin["result"] == "heads" else kind != "power_heal"
     if isinstance(effect, SwitchOpponentOnHeads):
@@ -1861,6 +1888,9 @@ def log_problems(state) -> list[str]:
                   "quickens": []}
     # v0.118: v118_problems の記録（今のワザ・［XXXXX］を使った (番, プレイヤー)・［トランスポート］の引いたあと・1 つ前のログ）
     v118: dict = {"window": None, "x_used": set(), "transport": None, "prev": None}
+    # v0.119: v119_problems の記録（今のワザ・［ポイズンミスト］の記録（(プレイヤー, 番号, 番) → 使う前のどく・中断）・どくのかける数（番号 → 数）・「どくをだす」の効果（番号 → 与えた番・
+    # ワザ）・「ガスばくはつ」の予定（プレイヤー → 状態）・「なぞのこうせん」の効果・1 つ前のログ）
+    v119: dict = {"window": None, "mists": {}, "mult": {}, "secrete": {}, "gas": {}, "beams": [], "prev": None, "secrete_due": None, "sleep_coins": []}
     color_types: dict[int, dict] = {}  # v0.88: ［せんすい］の記録（対象のポケモンの番号 → 色・発生源のカード・特殊能力の位置）
     # v0.90: ログから組み立てた、場のポケモンのマーカー・カウンター（番号 → のせた順の {"marker", "color", "turn"}）と、進化・退化で取りのぞくはずのポケモン（番号 → 理由）
     marks: dict[int, list[dict]] = {}
@@ -1914,6 +1944,8 @@ def log_problems(state) -> list[str]:
                     return None  # v0.84: ［たすけだす］は、このポケモンがベンチにいるときだけ使える
                 if effect.discard_to_hand_only and tower_in_play():
                     return None  # v0.74: ポケモンタワーで効果が消える（使う機会を出さない）
+                if effect.discard_to_hand_only and v119_protectors():
+                    return None  # v0.119: ［アレルギーほうし］でトラッシュのカードが効果を受けない（使っても同じなので、使う機会を出さない。ログ discard_protected）
                 holder = pokemon_owner.get(ids.get(uid))
                 if isinstance(effect, E.BenchNameGroupFromDeckOnEntry) \
                         and sum(1 for q in in_play if pokemon_owner.get(q) == holder) - (1 if active_of.get(holder) in in_play else 0) >= bench_limit_now():
@@ -2360,6 +2392,13 @@ def log_problems(state) -> list[str]:
                     expected.append((2, label, ADD, None, effect.amount, source))
                 elif isinstance(effect, HalveDamageReceived) and pid == receiver_pid:
                     expected.append((8, label, HALVE_DOWN, None, 2, source))  # v0.47: ［カブトアーマー］
+                elif pid == receiver_pid and V119_HARD_SHELL.fullmatch(power.text_ja.split("このカードが「ねむり")[0] if power.text_ja else ""):
+                    # v0.119: ［かたいから］（8 段階。1 以上しきい値以下を、その数にする。文面の数）
+                    matched = V119_HARD_SHELL.fullmatch(power.text_ja.split("このカードが「ねむり")[0])
+                    expected.append((8, label, SET_IF_AT_MOST, int(matched.group(1)), int(matched.group(2)), source))
+                elif pid == receiver_pid and power.text_ja and V119_SHELL_ARMOR.match(power.text_ja):
+                    # v0.119: ［シェルアーマー］（8 段階の「-その数」。受けるポケモンの持ち主が使うかを選ぶ。使ったかはログの damage_option で照らす（continuous_damage_problems））
+                    expected.append((8, label, "optional", None, -int(V119_SHELL_ARMOR.match(power.text_ja).group(1)), source))
                 elif isinstance(effect, E.ReduceOwnGroupDamageFromType) and copies[(pokemon_owner.get(pid), effect)] == 1 \
                         and pokemon_owner.get(pid) == pokemon_owner.get(receiver_pid) and form_def(receiver_pid).name_group == effect.group \
                         and type_readings_now(attacker_pid)[0] is effect.attacker_type:
@@ -2410,9 +2449,20 @@ def log_problems(state) -> list[str]:
         expected = [x for x in continuous_expected(attacker_pid, receiver_pid, attack_window.get("status_at_attack"),
                                                    held_excluded=bool(e.get("ignore_defender_effects")))  # v0.97
                     if not ended_early or x[0] <= 2]
+        # v0.119: ［シェルアーマー］（使うかを選ぶ 8 段階の「-その数」）。はたらく力があれば、計算が 2 段階で終わらない限りログに damage_option（段階・発生源のカード・数・使ったか）が
+        # ちょうど 1 つあり、使ったときだけ段階の記録がある（使わない計算の最終ダメージが 0 以下で選ぶ必要がないときはエンジンが聞かない。そのときは damage_option がない）
+        optional = [x for x in expected if x[2] == "optional"]
+        offered = [tuple(m) for m in e.get("damage_option", ())]
+        option_problems = []
+        if len(optional) > 1 or len(offered) > 1 or (offered and not optional):
+            option_problems.append(f"{e['turn']} 番のポケモン {receiver_pid} のダメージの damage_option {offered} が、はたらく［シェルアーマー］ {[x[1] for x in optional]} と合わない")
+        elif optional and offered and offered[0][:3] != (8, optional[0][5], optional[0][4]):
+            option_problems.append(f"{e['turn']} 番のポケモン {receiver_pid} のダメージの damage_option {offered} が、［シェルアーマー］の段階・発生源・文面の数と合わない")
+        used = bool(offered and offered[0][3])
+        expected = [(x[0], x[1], ADD, None, x[4], x[5]) if x[2] == "optional" else x for x in expected if x[2] != "optional" or used]
         by_label = {f"{x[0]} {x[1]}": x for x in expected}
         labels = [f"{x[0]} {x[1]}" for x in expected]  # v0.92: 期間の重なる同じ名前の「いやなおと」は、同じ記録が 2 つある
-        found = []
+        found = list(option_problems)  # v0.119
         power = attack_window.get("attack_power") if not e.get("retaliation") else None
         if power is not None and e.get("target", "opponent_active") == "opponent_active":
             # v0.88: ワザといっしょに使った特殊能力（［すいりょくはつでん］）の 2 段階の追加は、相手の対戦ポケモンへのダメージだけ。追加は 1 個につき登録の数の倍数（多い
@@ -2436,6 +2486,7 @@ def log_problems(state) -> list[str]:
             per = state.rules.damage_per_counter
             value = (0 if before >= amount else before) if operation == ZERO_IF_AT_LEAST else \
                 (amount if before >= threshold else before) if operation == SET_IF_AT_LEAST else \
+                (amount if 1 <= before <= threshold else before) if operation == SET_IF_AT_MOST else \
                 before if before <= 0 and operation in (HALVE_UP, HALVE_DOWN) else \
                 ((before // per + 1) // 2 * per) if operation == HALVE_UP else (before // per // 2 * per) if operation == HALVE_DOWN else \
                 before * amount if operation == MULTIPLY else amount if operation == SET else before + amount
@@ -2444,6 +2495,9 @@ def log_problems(state) -> list[str]:
         applied = [by_label[str(step[0])] for _, step in recorded]
         zero = sorted((x[0], x[5], x[4]) for x in applied if x[2] == ZERO_IF_AT_LEAST)
         capped = sorted((x[0], x[5], x[3], x[4]) for x in applied if x[2] == SET_IF_AT_LEAST)
+        capped_small = sorted((x[0], x[5], x[3], x[4]) for x in applied if x[2] == SET_IF_AT_MOST)  # v0.119: ［かたいから］
+        if sorted(tuple(m) for m in e.get("damage_set_if_at_most", ())) != capped_small:
+            found.append(f"{where} の damage_set_if_at_most {e.get('damage_set_if_at_most')} が、記録した［かたいから］ {capped_small} と合わない")
         halved = sorted((x[0], x[5], "up" if x[2] == HALVE_UP else "down") for x in applied if x[2] in (HALVE_UP, HALVE_DOWN))
         if sorted(tuple(m) for m in e.get("damage_zero_at_least", ())) != zero \
                 or sorted(tuple(m) for m in e.get("damage_set_if_at_least", ())) != capped \
@@ -2668,7 +2722,8 @@ def log_problems(state) -> list[str]:
             return []
         found: list[str] = []
         pid = e.get("pokemon_id", ids.get(e["pokemon"]))
-        logged_w = sorted(source[0] for source in e.get("weakness_ignored_by_powers", ()))
+        # v0.119: ワザで与えた期限のある効果（「なぞのこうせん」）の記録は (ワザを使ったポケモンの番号, ワザ) で、特殊能力の記録と分ける（v119_problems が確かめる）
+        logged_w = sorted(source[0] for source in e.get("weakness_ignored_by_powers", ()) if "#" not in str(source[1]))
         logged_r = sorted(source[0] for source in e.get("resistance_ignored_by_powers", ()))
         if e.get("ignore_weakness_resistance") or e.get("ignore_defender_effects"):
             if logged_w or logged_r:
@@ -4473,7 +4528,10 @@ def log_problems(state) -> list[str]:
                     found.append(f"{turn} 番にトラッシュからスタジアム {e['card']} を出した特殊能力（ポケモン {prev['pokemon_id']}）の文面が［じくうへんかん］ではない")
             if e["card"] not in discard[e["player"]] or owner.get(e["card"]) != e["player"] or "stadium" not in state.printed_def(e["card"]).trainer_kinds:
                 found.append(f"{turn} 番にトラッシュから出したスタジアム {e['card']} が、ログから組み立てたプレイヤー {e['player']} のトラッシュのスタジアムカードではない")
-        if kind == "group_attack_power":
+        if kind == "group_attack_power" and any(V119_COMMAND.match(power.text_ja or "") for _, _, power in power_defs(e["pokemon_id"]) if power.name_ja == e["power"]):
+            if attack_window is not None:
+                attack_window["group_power"] = e["power"]  # v0.119: ［めいれい］（v119_problems が確かめる。ダメージの段階の記録の確かめから除く）
+        elif kind == "group_attack_power":
             holder, attacker = e["pokemon_id"], e.get("attacker_pokemon_id")
             powers = [power for _, _, power in power_defs(holder) if power.name_ja == e["power"]]
             matched = V118_X_POWER.fullmatch(powers[0].text_ja or "") if powers else None
@@ -4525,6 +4583,291 @@ def log_problems(state) -> list[str]:
             if kind == "draw" and e["player"] == w["player"]:
                 w["hand_at_draw"] = list(hand[e["player"]])
             w["events"].append((kind, e))
+        return found
+
+    def v119_poison_expected(pid: int) -> int:
+        """v0.119: ログから組み立てた、ポケモン ``pid`` がポケモンチェックの「どく」で受けるダメージ（鋼エネルギーの前）。どくの量（通常 10・特殊などくの量）× ダメージカウンターの数にかける数
+        （「どくどくエキス」の文面の数）。はたらいている［ポイズンミスト］（中断していない・使う前からどく状態だった記録に入っていない）があれば、その文面の数。順番・使う前のどく・中断で
+        量が変わる場合はエンジンが止める（PO1〜PO3）ので、ここに来るのは決まる場合だけ（決まらない組は v119_problems が報告する）。"""
+        base = poisoned.get(pid, 10)
+        mult = v119["mult"].get(pid, 1)
+        amount = (base // 10) * mult * 10
+        live = [m for m in v119["mists"].values() if not m["interrupted"] and pid not in m["before"]]
+        return live[0]["amount"] if live else amount
+
+    def v119_power_text(pid: int | None, pattern) -> object | None:
+        """v0.119: ログから組み立てた今の場の、ポケモン ``pid`` が今持つ特殊能力のうち、文面が ``pattern``（正規表現・部分の文字列）に当たるものの (PowerKey の文字列, 一致)。"""
+        if pid is None or pid not in in_play:
+            return None
+        for definition, index, power in power_defs(pid):
+            text = power.text_ja or ""
+            matched = pattern.search(text) if hasattr(pattern, "search") else (pattern if pattern in text else None)
+            if matched:
+                return f"{definition.id}@power{index}", matched
+        return None
+
+    def v119_working(pid: int, pattern) -> bool:
+        """v0.119: ポケモン ``pid`` の文面が ``pattern`` の特殊能力が、ログから組み立てた今の場ではたらいているか（ねむり・マヒ・こんらん・かがくへんかガス。場所は文面ごとに呼ぶ側）。"""
+        found = v119_power_text(pid, pattern)
+        if found is None or pid in exclusive:
+            return False
+        definition = state.in_play_def(top[pid])
+        power = next((pw for i, pw in enumerate(definition.powers) if f"{definition.id}@power{i}" == found[0]), None)
+        return power is None or not [g for _, g in working_gases() if g.suppresses(power)]
+
+    def v119_protectors() -> list[int]:
+        """v0.119: ログから組み立てた今の場で、［アレルギーほうし］がはたらいているポケモンの番号（場のどこでも）。"""
+        return sorted(pid for pid in in_play if v119_working(pid, V119_ALLERGY))
+
+    def v119_problems(e: dict) -> list[str]:
+        """v0.119: 受けるダメージの選択・どくとねむり・場の効果を、エンジンの登録・計算を読まずに確かめる（印刷の文面・ログから組み立てた場・コインから）。ログ ``e`` の組み立て直しの前に
+        呼ぶ（ログから組み立てた場は ``e`` の前の場）。
+
+        - どく: 「どくどくエキス」のどく（special_condition の multiplier）は文面の数で、そのワザのコインの「おもて」のあと。ポケモンチェックのどくのダメージは v119_poison_expected
+          （どくの量 × かける数、はたらく［ポイズンミスト］なら文面の数）で、poison_damage の multiplier・poison_mists がそれと合う。かける数と［ポイズンミスト］が同時に当たる・使う前からの
+          どく・中断した記録で量が変わる場合は、ログにあってはならない（エンジンが止める）
+        - ［ポイズンミスト］: poison_mist_added は宣言した持ち主のコインの「おもて」のすぐあと（_power_coin_follows）で、文面の数・使った番・消える番（使った番 + 2）・使う前からどく状態
+          だったポケモン（ログから組み立てた）。同じポケモンが同じ番に 2 回使わない。中断（poison_mist_interrupted）は使ったポケモンが場にいないときだけ・1 回。消すのは使った番 + 2 の
+          番の始め（expired）か、使ったポケモンがねむり・マヒ・こんらんになったとき（status）
+        - ねむり: ポケモンチェックのねむりのコインの枚数は、はたらく［ふかいねむり］（場のどこか）があれば文面の数、なければ 1。すべて「おもて」のときだけ回復する
+        - 「どくをだす」: 効果を与えたのはそのワザの処理の中で、はたらくのは次の相手の番。secrete_poison は、効果を持つポケモンが相手のワザのダメージ（0 より大きい）を受けたあとの、
+          そのワザの中だけ。そのあと、相手の対戦ポケモン（ワザを使ったポケモン）のどく（HP 以上なら secrete_poison_skipped）と、相手の控え全員への弱点・抵抗力に関係ない文面の数の
+          ダメージ（secrete_poison の印）
+        - 「ガスばくはつ」: 予定（replacement_poison_pending）は、そのワザで相手の対戦ポケモンが HP 以上のとき。きぜつしたら replacement_poison_knocked、しなければ消す。そのプレイヤーが
+          次に控えからバトル場に出したポケモン（promote_active のすぐあと）に replacement_poison と、そのワザのどく。勝ち負けが決まれば消す（game_over）
+        - ［アレルギーほうし］: はたらく力があるあいだ、ワザ・特殊能力でトラッシュのカードを動かすログ（recover_energy・recover_trainer・attach_energy_from_discard・bench_from_discard・
+          put_discard_on_deck_top・each_player_recover・each_player_discard_to_deck・milled_to_hand・power_attach_from_discard・recover_pokemon・return_to_hand・トラッシュからの stadium_placed・
+          空でない attack_discard_to_deck）はない。discard_protected の protected_by はログから組み立てたはたらく力
+        - いたみわけ: のせたカウンターの数は、ワザを使ったポケモンにのっているダメージカウンターの数（ログから組み立てた。0 ならのせない）
+        - ひきずりこむ: 入れ替えはダメージの前（forced_switch の effect）・ワザを使ったプレイヤーが選ぶ。ダメージを受けた今の相手の対戦ポケモンがねむりになる（HP 以上でなければ）
+        - ［めいれい］: group_attack_power は、ワザを使ったプレイヤーの場の文面の特殊能力で、ワザを使うポケモンの今の姿の名前が文面の名前のどちらか。相手の対戦ポケモンへのダメージの
+          6 段階に文面の数の追加（modifiers）がちょうど 1 つ
+        - 「なぞのこうせん」: はたらく番（与えた番 + 1）に、与えたプレイヤーの場の、今のタイプが文面のタイプのポケモンが受けたダメージは弱点なしで、weakness_ignored_by_powers に
+          (ワザを使ったポケモンの番号, ワザ) がある。ほかのダメージにはない"""
+        found: list[str] = []
+        kind = e["kind"]
+        turn = e["turn"]
+        st = v119
+        prev = st["prev"]
+        st["prev"] = e
+        w = st["window"]
+        if w is not None and kind in ("attack", "turn_end", "game_end", "halted"):
+            found += v119_close(w, ended=kind in ("game_end", "halted"))
+            st["window"] = w = None
+        if kind == "attack":
+            st["window"] = w = {"key": attack_window["effect"] if attack_window is not None else None, "player": e["player"], "pid": ids.get(e["pokemon"]),
+                                "events": [], "counters": damage.get(ids.get(e["pokemon"]), 0) // state.rules.damage_per_counter, "command": None,
+                                "opp_active": active_of.get(1 - e["player"]), "coins": []}
+        elif w is not None:
+            if kind == "copy_attack":
+                w.update(key=e["copied"], events=[])
+            elif kind == "coin_flip" and e.get("source") == "attack":
+                w["coins"].append(e["result"])
+            w["events"].append((kind, e))
+        # どく
+        if kind == "special_condition" and e.get("condition") == "poison":
+            mult = e.get("multiplier", 1)
+            if mult != 1:
+                text = v111_printed_text(e.get("effect")) or ""
+                matched = V119_TOXIC.fullmatch(text)
+                if matched is None or int(matched.group(1)) != mult or w is None or not w["coins"] or w["coins"][-1] != "heads":
+                    found.append(f"{turn} 番のどく（ポケモン {e['pokemon_id']}）のかける数 {mult} が、コインの「おもて」のあとの「どくどくエキス」の文面の数ではない")
+            if not e.get("already"):
+                for mist in st["mists"].values():
+                    mist["before"].discard(e["pokemon_id"])
+            st["mult"][e["pokemon_id"]] = mult
+        if kind == "special_conditions_removed" and "poison" in e.get("conditions", ()):
+            st["mult"].pop(e["pokemon_id"], None)
+        if kind == "knock_out":
+            gone = ids.get(e.get("pokemon"))
+            st["mult"].pop(gone, None)
+        if kind == "poison_damage":
+            pid = e["pokemon_id"]
+            mult = st["mult"].get(pid, 1)
+            live = [m for m in st["mists"].values() if pid not in m["before"] and not m["interrupted"]]
+            early = [m for m in st["mists"].values() if pid in m["before"]]
+            unsure = [m for m in st["mists"].values() if m["interrupted"] and pid not in m["before"]]
+            base = (poisoned.get(pid, 10) // 10) * mult * 10
+            if (live and (mult != 1 or poisoned.get(pid, 10) not in (10, live[0]["amount"]))) or (early and not live and base != early[0]["amount"]) \
+                    or (unsure and not live and base != unsure[0]["amount"]):
+                found.append(f"{turn} 番のポケモン {pid} のどくのダメージ（かける数 {mult}・［ポイズンミスト］ {[m['pid'] for m in live]}・使う前から {[m['pid'] for m in early]}・"
+                             f"中断 {[m['pid'] for m in unsure]}）は、当てはめ方で量が変わるのに止まっていない")
+            if pid in poisoned and v119_poison_expected(pid) != e.get("amount_before", e["amount"]):
+                # どくの量（鋼エネルギーの前）。v0.34 からの本体の poison_damage の分岐（量の確かめ）は、その前の damage・poison_damage の分岐に当たって届いていなかったので、ここで確かめる
+                found.append(f"{turn} 番のポケモン {pid} のどくのダメージ {e['amount']}（鋼エネルギーの前 {e.get('amount_before', e['amount'])}）が、ログから組み立てたどくの量 "
+                             f"{v119_poison_expected(pid)} と違う")
+            if e.get("multiplier", 1) != mult or sorted(e.get("poison_mists", ())) != sorted(m["pid"] for m in live):
+                found.append(f"{turn} 番のポケモン {pid} のどくのダメージの multiplier {e.get('multiplier')}・poison_mists {e.get('poison_mists')} が、ログから組み立てた {mult}・"
+                             f"{sorted(m['pid'] for m in live)} と合わない")
+        # ［ポイズンミスト］
+        if kind == "poison_mist_added":
+            found_power = v119_power_text(e["pokemon_id"], V119_POISON_MIST)
+            key = (e["player"], e["pokemon_id"], e["created_turn"])
+            if found_power is None or found_power[0] != e.get("power") or int(found_power[1].group(1)) != e.get("amount") or e["created_turn"] != turn \
+                    or e.get("expires_turn") != turn + 2 or pokemon_owner.get(e["pokemon_id"]) != e["player"] or e["player"] != turn_player or key in st["mists"] \
+                    or sorted(e.get("poisoned_before", ())) != sorted(pid for pid in poisoned if pid in in_play):
+                found.append(f"{turn} 番の［ポイズンミスト］の効果（ポケモン {e['pokemon_id']}）が、文面の数・使った番・消える番・使う前からどく状態のポケモンと合わない")
+            st["mists"][key] = {"pid": e["pokemon_id"], "amount": e.get("amount"), "before": set(e.get("poisoned_before", ())), "interrupted": False, "turn": turn}
+        elif kind == "poison_mist_interrupted":
+            mist = st["mists"].get((e["player"], e["pokemon_id"], e["created_turn"]))
+            if mist is None or mist["interrupted"] or (e["pokemon_id"] in in_play and v119_power_text(e["pokemon_id"], V119_POISON_MIST) is not None
+                                                        and not [g for _, g in working_gases()]):
+                found.append(f"{turn} 番の［ポイズンミスト］の中断（ポケモン {e['pokemon_id']}）が、使ったポケモンが場にいない・力が消えたときの 1 回ではない")
+            else:
+                mist["interrupted"] = True
+        elif kind == "poison_mist_removed":
+            mist = st["mists"].pop((e["player"], e["pokemon_id"], e["created_turn"]), None)
+            if mist is None or (e.get("reason") == "expired" and turn != e["created_turn"] + 2) \
+                    or (e.get("reason") == "special_condition" and (prev is None or prev["kind"] != "special_condition" or prev.get("pokemon_id") != e["pokemon_id"]
+                                                                    or prev.get("condition") not in ("sleep", "paralysis", "confusion"))) \
+                    or e.get("reason") not in ("expired", "special_condition"):
+                found.append(f"{turn} 番に消した［ポイズンミスト］の効果（ポケモン {e['pokemon_id']}・{e.get('reason')}）が、使った番 + 2 の番の始め・使ったポケモンの特殊状態と合わない")
+        # ねむりのコイン
+        if kind == "coin_flip" and e.get("source") == "pokemon_check" and e.get("effect") == "sleep":
+            st["sleep_coins"].append(e["result"])
+        if kind == "sleep_check":
+            coins = st["sleep_coins"]
+            st["sleep_coins"] = []
+            holders = [pid for pid in in_play if v119_working(pid, V119_DEEP_SLEEP)]
+            count = int(v119_power_text(holders[0], V119_DEEP_SLEEP)[1].group(1)) if holders else 1
+            recovered = all(side == "heads" for side in coins)
+            if len(coins) != count or bool(e.get("recovered")) != recovered or e.get("coins", 1) != count:
+                found.append(f"{turn} 番のねむりのコイン {coins}・回復 {e.get('recovered')} が、はたらく［ふかいねむり］ {holders} の枚数 {count}・すべて「おもて」で回復と合わない")
+        # 「どくをだす」
+        if kind == "persistent_effect_added" and e.get("persistent_effect") == "secrete_poison":
+            text = v111_printed_text(e.get("effect")) or ""
+            if V119_SECRETE.fullmatch(text) is None or w is None or e["pokemon_id"] != w["pid"]:
+                found.append(f"{turn} 番の「どくをだす」の効果（ポケモン {e['pokemon_id']}）が、文面のワザを使ったポケモン自身へのものではない")
+            st["secrete"][e["pokemon_id"]] = {"turn": turn, "key": e.get("effect"), "amount": int(V119_SECRETE.fullmatch(text).group(1)) if V119_SECRETE.fullmatch(text) else None}
+        if kind == "secrete_poison":
+            info = st["secrete"].get(e["pokemon_id"])
+            if info is None or turn != info["turn"] + 1 or w is None or e.get("attacker") != w["player"] or w["player"] == pokemon_owner.get(e["pokemon_id"]) \
+                    or e.get("received_damage", 0) <= 0:
+                found.append(f"{turn} 番の「どくをだす」（ポケモン {e['pokemon_id']}）が、次の相手の番の相手のワザのダメージを受けたあとではない")
+            st["secrete_due"] = {"pid": e["pokemon_id"], "key": e.get("effect"), "amount": info["amount"] if info else None, "attacker": e.get("attacker_pokemon_id"),
+                                 "player": e.get("attacker"), "bench": sorted(pid for pid in in_play if pokemon_owner.get(pid) == e.get("attacker") and not is_active(pid)),
+                                 "hit": [], "poisoned": False, "turn": turn}
+        elif st["secrete_due"] is not None:
+            due = st["secrete_due"]
+            if kind == "special_condition" and e.get("condition") == "poison" and e.get("effect") == due["key"]:
+                if e["pokemon_id"] != due["attacker"]:
+                    found.append(f"{turn} 番の「どくをだす」のどく（ポケモン {e['pokemon_id']}）が、ワザを使ったポケモン {due['attacker']} ではない")
+                due["poisoned"] = True
+            elif kind == "damage" and e.get("secrete_poison"):
+                pid = e.get("pokemon_id", ids.get(e.get("pokemon")))
+                steps = [tuple(step) for step in e.get("steps") or ()]
+                if pid not in due["bench"] or pid in due["hit"] or e.get("weakness") or e.get("resistance") or (steps and steps[0][1] != due["amount"]):
+                    found.append(f"{turn} 番の「どくをだす」のダメージ（ポケモン {pid}・{steps[:1]}）が、相手の控えへの弱点・抵抗力に関係ない文面の数の 1 回ではない")
+                due["hit"].append(pid)
+            elif kind not in ("secrete_poison_skipped", "special_condition_prevented", "effect_prevented", "damage_prevented", "knockout_survived"):
+                if sorted(due["hit"]) != due["bench"] and kind not in ("damage",):
+                    found.append(f"{due['turn']} 番の「どくをだす」のダメージを受けた控え {sorted(due['hit'])} が、相手の控え全員 {due['bench']} ではない")
+                st["secrete_due"] = None
+        # 「ガスばくはつ」
+        if kind == "replacement_poison_pending":
+            text = v111_printed_text(e.get("effect")) or ""
+            if V119_GAS.fullmatch(text) is None or w is None or e["player"] != 1 - w["player"] or e["pokemon_id"] != w["opp_active"] or e["player"] in st["gas"]:
+                found.append(f"{turn} 番の「ガスばくはつ」の予定（ポケモン {e['pokemon_id']}）が、そのワザの相手の対戦ポケモンのものではない")
+            st["gas"][e["player"]] = {"pid": e["pokemon_id"], "key": e.get("effect"), "status": "pending", "turn": turn}
+        elif kind == "replacement_poison_knocked":
+            info = st["gas"].get(e["player"])
+            if info is None or info["status"] != "pending" or info["pid"] != e["pokemon_id"]:
+                found.append(f"{turn} 番の「ガスばくはつ」のきぜつ（ポケモン {e['pokemon_id']}）が、予定と合わない")
+            else:
+                info["status"] = "knocked"
+        elif kind == "replacement_poison_removed":
+            info = st["gas"].pop(e["player"], None)
+            if info is None or e.get("reason") not in ("not_knocked_out", "game_over") or (e.get("reason") == "not_knocked_out") != (info["status"] == "pending"):
+                found.append(f"{turn} 番に消した「ガスばくはつ」の予定（ポケモン {e['pokemon_id']}・{e.get('reason')}）が、予定の状態と合わない")
+        elif kind == "replacement_poison":
+            info = st["gas"].pop(e["player"], None)
+            if info is None or info["status"] != "knocked" or prev is None or prev["kind"] != "promote_active" or prev["player"] != e["player"] \
+                    or e["knocked_pokemon_id"] != info["pid"]:
+                found.append(f"{turn} 番の「ガスばくはつ」のどく（ポケモン {e['pokemon_id']}）が、きぜつしたポケモンのかわりに出したポケモンのすぐあとではない")
+            st["gas_due"] = {"pid": e["pokemon_id"], "key": e.get("effect")}
+        elif kind == "promote_active" and st["gas"].get(e["player"], {}).get("status") == "knocked":
+            st["gas_promote_due"] = e["player"]
+        elif st.get("gas_promote_due") is not None:
+            if kind != "replacement_poison":
+                found.append(f"{turn} 番に「ガスばくはつ」できぜつしたポケモンのかわりに出したポケモンに、replacement_poison がない（{kind}）")
+            st["gas_promote_due"] = None
+        if kind == "replacement_poison":
+            st["gas_promote_due"] = None
+        # ［アレルギーほうし］
+        protectors = v119_protectors()
+        if kind == "discard_protected" and ([pid for pid, _ in e.get("protected_by", ())] != protectors or not protectors):
+            found.append(f"{turn} 番の discard_protected の力 {e.get('protected_by')} が、ログから組み立てたはたらく［アレルギーほうし］ {protectors} と合わない")
+        moved = kind in ("recover_energy", "recover_trainer", "attach_energy_from_discard", "bench_from_discard", "each_player_recover", "milled_to_hand",
+                         "power_attach_from_discard", "recover_pokemon", "return_to_hand") and (e.get("effect") is not None or e.get("power") is not None)
+        moved = moved or (kind in ("put_discard_on_deck_top", "attack_discard_to_deck", "each_player_discard_to_deck") and e.get("effect") is not None
+                          and e.get("cards", (e.get("card"),)) not in ((), [], (None,)))
+        moved = moved or (kind == "stadium_placed" and e.get("from_zone") == "discard" and e.get("power") is not None)
+        if moved and kind == "bench_from_discard" and e.get("trainer_card") is not None:
+            moved = False
+        if moved and protectors:
+            found.append(f"{turn} 番の {kind}（ワザ・特殊能力でトラッシュのカードを動かした）が、はたらく［アレルギーほうし］ {protectors} のあいだにある")
+        # 「なぞのこうせん」の弱点
+        if kind == "damage" and attack_window is not None:
+            pid = e.get("pokemon_id", ids.get(e.get("pokemon")))
+            sources = sorted(tuple(source) for source in e.get("weakness_ignored_by_powers", ()) if "#" in str(source[1]))
+            expected = []
+            attacker = None if e.get("retaliation") else attack_window.get("pokemon_id")
+            attacker_colors = type_readings_now(attacker) if attacker in in_play else ()
+            # 弱点を当てはめていたはずの組だけ（与えるポケモンの今の色が受けるポケモンの今の弱点。エンジンも、そのときだけ記録を書く）
+            if pid in in_play and attacker_colors and attacker_colors[0] is not None and attacker_colors[0] is weakness_now(pid):
+                colors = [c.value for c in type_readings_now(pid) if c is not None]
+                for beam in st["beams"]:
+                    if beam["player"] == pokemon_owner.get(pid) and turn == beam["turn"] + 1 and beam["type"] is not None and colors \
+                            and EnergyType(colors[0]).ja == beam["type"]:
+                        expected.append((beam["pid"], beam["key"]))
+            if not e.get("ignore_weakness_resistance") and not e.get("ignore_defender_effects") and not e.get("stopped_after_step_2") \
+                    and (sources != sorted(expected) or (expected and e.get("weakness"))):
+                found.append(f"{turn} 番のダメージ（ポケモン {pid}）の弱点 {e.get('weakness')}・ワザの効果の記録 {sources} が、「なぞのこうせん」の効果 {sorted(expected)} と合わない")
+        # ［めいれい］
+        if kind == "group_attack_power":
+            matched = v119_power_text(e["pokemon_id"], V119_COMMAND)
+            if matched is not None:
+                names = (matched[1].group(1), matched[1].group(2))
+                attacker = e.get("attacker_pokemon_id")
+                if w is None or attacker != w["pid"] or pokemon_owner.get(e["pokemon_id"]) != w["player"] or form_def(attacker).name_ja not in names \
+                        or e["pokemon_id"] == attacker:
+                    found.append(f"{turn} 番の［めいれい］（ポケモン {e['pokemon_id']}・ワザを使うポケモン {attacker}）が、ワザを使ったプレイヤーの場の文面の力で、今の姿の名前が {names} の"
+                                 "ポケモンのワザといっしょではない")
+                if w is not None:
+                    w["command"] = {"card": top.get(e["pokemon_id"]), "amount": int(matched[1].group(3)), "label": f"6 ［{e['power']}］"}
+        return found
+
+    def v119_close(w: dict, *, ended: bool) -> list[str]:
+        """v0.119: 1 つのワザの確かめ（ワザの終わり・番の終わりで）。こんらんでワザが失敗したら確かめない。いたみわけ・ひきずりこむ・［めいれい］・「ガスばくはつ」の予定。"""
+        found: list[str] = []
+        key = w["key"]
+        text = v111_printed_text(key) or ""
+        events = w["events"]
+        kinds = [k for k, _ in events]
+        if "confusion_damage" in kinds or "attack_failed" in kinds:
+            return found
+        if text == V119_PAIN_SPLIT:
+            placed = [x for k, x in events if k == "place_damage_counters" and x.get("effect") == key]
+            prevented = [x for k, x in events if k in ("effect_prevented", "effect_skipped", "attack_evaded")]
+            if w["counters"] == 0 and placed:
+                found.append(f"{key} で、ダメージカウンターがのっていないのに相手にのせた")
+            if w["counters"] > 0 and not prevented and not ended and (len(placed) != 1 or placed[0].get("counters") != w["counters"] or placed[0].get("player") != 1 - w["player"]):
+                found.append(f"{key} でのせた {[x.get('counters') for x in placed]} が、ワザを使ったポケモンのカウンターの数 {w['counters']} の相手への 1 回ではない")
+        if text == V119_PULL_IN:
+            switches = [i for i, (k, x) in enumerate(events) if k in ("forced_switch", "forced_switch_declined") and x.get("effect") == key]
+            damages = [i for i, (k, x) in enumerate(events) if k in ("damage", "damage_prevented", "attack_evaded")]
+            if switches and damages and switches[0] > damages[0]:
+                found.append(f"{key} の入れ替え（のぞむなら）が、ダメージのあとにある")
+        command = w["command"]
+        if command is not None:
+            damages = [x for k, x in events if k == "damage" and (x.get("target") or "opponent_active") == "opponent_active" and not x.get("retaliation")]
+            for x in damages[:1]:
+                steps = [tuple(step) for step in x.get("steps") or ()]
+                if any(str(step[0])[:2] in ("6 ", "7 ", "8 ") for step in steps) or (steps and not str(steps[-1][0])[:2] in ("1 ", "2 ")):
+                    added = [steps[i][1] - steps[i - 1][1] for i in range(1, len(steps)) if str(steps[i][0]) == command["label"]]
+                    mods = [tuple(m) for m in x.get("modifiers", ()) if m[1] == command["card"]]
+                    if added != [command["amount"]] or mods != [(6, command["card"], command["amount"])]:
+                        found.append(f"{key} の［めいれい］の追加 {added}・記録 {mods} が、6 段階の文面の数 {command['amount']} と合わない")
         return found
 
     def v118_close(w: dict, *, ended: bool) -> list[str]:
@@ -5339,6 +5682,14 @@ def log_problems(state) -> list[str]:
                     problems.append(f"{e['turn']} 番の「ふしちょう」の答え（カード {e['card']}）のプレイヤー・特殊能力が、きぜつしたカードの持ち主・特殊能力と違う")
             rebirth_answered = e
             batch_answered = True
+        elif kind == "discard_protected" and e.get("card") is not None:
+            # v0.119: ［アレルギーほうし］で、きぜつしたカードの「ふしちょう」（トラッシュから手札に加える）は、サイド・勝ち負けのあとの窓で機会を出さない（答えを待つ記録から除く。
+            # はたらくかはその窓の場で決める。力は v119_problems が照らす）
+            match = next((r for r in rebirth_pending if r["card"] == e["card"] and r["power"] == e.get("power")), None)
+            if match is None or match["blocked"] is not None or not v119_protectors():
+                problems.append(f"{e['turn']} 番の discard_protected（カード {e['card']}）が、直前のきぜつの使える「ふしちょう」の機会ではない")
+            else:
+                rebirth_pending.remove(match)
         elif rebirth_pending and kind not in ("knock_out", "persistent_effect_removed", "take_prize"):
             if kind != "game_end":
                 for r in rebirth_pending:
@@ -5625,6 +5976,7 @@ def log_problems(state) -> list[str]:
         problems.extend(v116_problems(e))  # v0.116: エネルギーの付け替え・ついた時の効果・付属カードの回収と退化
         problems.extend(v117_problems(e))  # v0.117: 場の移動・にげる時の反応・条件付きの特殊能力
         problems.extend(v118_problems(e))  # v0.118: 上限なしコイン・攻撃時の能力・回復の配分
+        problems.extend(v119_problems(e))  # v0.119: 受けるダメージの選択・どくとねむり・場の効果
         if kind in ("damage", "confusion_damage"):
             # v0.90: のろいマーカーののっているポケモンが弱点の計算をしたワザのダメージは「×4」（ログの weakness_multiplier）。ほかは書かない。こんらんの 20 は、のろいマーカーと
             # 自分の弱点が当てはまるならコインの前に止まる（UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS）ので、弱点の計算をしたこんらんのダメージはない
@@ -6372,9 +6724,11 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番の char_damage のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う")
         elif kind == "poison_damage":
             # v0.34: ポケモンチェックのどくのダメージは、そのポケモンのどくの量（通常 10・特殊などくはその量。p.322・p.323）
+            # v0.119: この分岐は、前の damage・poison_damage の分岐に当たって届かない（v0.34 から）。量の確かめは v119_problems がする
             # 盤面を直接作ったテスト（build_test_state）は、どく状態にしたログがないので、ログで組み立てたどくだけを確かめる
-            if e["pokemon_id"] in poisoned and poisoned[e["pokemon_id"]] != e.get("amount_before", e["amount"]):  # v0.78: 鋼エネルギー（NIP1X-010）で減らす前の量
-                problems.append(f"{e['turn']} 番のポケモン {e['pokemon_id']} のどくのダメージ {e['amount']} が、ログから組み立てたどくの量 {poisoned.get(e['pokemon_id'])} と違う")
+            if e["pokemon_id"] in poisoned and v119_poison_expected(e["pokemon_id"]) != e.get("amount_before", e["amount"]):  # v0.78: 鋼エネルギー（NIP1X-010）で減らす前の量
+                # v0.119: ダメージカウンターの数を倍にするどく・［ポイズンミスト］も、ログから組み立てた量（v119_poison_expected）
+                problems.append(f"{e['turn']} 番のポケモン {e['pokemon_id']} のどくのダメージ {e['amount']} が、ログから組み立てたどくの量 {v119_poison_expected(e['pokemon_id'])} と違う")
         elif kind == "energy_conversion":
             # v0.59: ［エネエネ］できぜつしたマルマインのカード（直前のきぜつの to_energy）を、使ったプレイヤーの場のほかのポケモンにエネルギーとしてつける
             kept = pending_conversion.pop(e["card"], None)
@@ -7205,6 +7559,16 @@ def log_problems(state) -> list[str]:
                     or e.get("pokemon_id") != attack_window["pokemon_id"] or (e["player"], e["trainer_card"], e["expires_turn"]) in trainer_effects_log:
                 problems.append(f"{e['turn']} 番の「やみのはどう」の効果が、そのワザの処理の中の、ワザを使ったポケモンの、次の相手の番の終わりまでのものではない")
             trainer_effects_log[(e["player"], e["trainer_card"], e["expires_turn"])] = e
+        elif kind == "trainer_effect_added" and e.get("effect_kind") == "attack_field_weakness_immunity":
+            # v0.119: ヒトデマンの「なぞのこうせん」（自分の場の文面のタイプのポケモンが、次の相手の番に弱点の影響を受けない）。そのワザの処理の中で、ワザを使ったプレイヤーに、消える番は
+            # 与えた番 + 1。``trainer_card``・``pokemon_id`` はワザを使ったポケモン。文面は印刷の日本語で照らす（エンジンの登録を読まない）
+            text = state.definitions[e["card_id"]].attacks[e["attack_index"]].text_ja if e.get("card_id") in state.definitions else None
+            if not _same_attack(attack_window, e) or e["player"] != attack_window["player"] or e["expires_turn"] != e["turn"] + 1 or V119_BEAM.fullmatch(text or "") is None \
+                    or e.get("pokemon_id") != attack_window["pokemon_id"] or (e["player"], e["trainer_card"], e["expires_turn"]) in trainer_effects_log:
+                problems.append(f"{e['turn']} 番の「なぞのこうせん」の効果が、そのワザの処理の中の、ワザを使ったポケモンの、次の相手の番の終わりまでのものではない")
+            trainer_effects_log[(e["player"], e["trainer_card"], e["expires_turn"])] = e
+            v119["beams"].append({"player": e["player"], "turn": e["turn"], "pid": e.get("pokemon_id"), "key": e.get("effect"),
+                                  "type": V119_BEAM.fullmatch(text or "").group(1) if V119_BEAM.fullmatch(text or "") else None})
         elif kind == "trainer_effect_added" and e.get("effect_kind") == "opponent_power_suppression":
             # v0.87: ドガースの「ふしぎなガス」（ワザで与えた効果。相手の場の特殊能力を、次の相手の番の終わりまで止める）。そのワザの処理の中で、ワザを使ったプレイヤーに、
             # 登録のワザの位置で、消える番は与えた番 + 1。``trainer_card`` はワザを使ったポケモンのカード
@@ -7975,6 +8339,17 @@ def log_problems(state) -> list[str]:
                         or e["total_damage"] != hp - effect.remaining or e["amount"] != e["counters"] * state.rules.damage_per_counter or e["counters"] <= 0:
                     problems.append(f"{e['turn']} 番の place_damage_counters（ポケモン {pid}）が、残り HP を {effect.remaining} にするライフダウンの処理と合わない")
                 damage[pid] += e["amount"]
+                continue
+            if v111_printed_text(attack_window.get("copied") or attack_window["effect"]) == V119_PAIN_SPLIT:
+                # v0.119: いたみわけ（ワザを使ったポケモンにのっているダメージカウンターと同じ数を、相手の対戦ポケモンにのせる。数は v119_close も確かめる）
+                own = attack_window["pokemon_id"]
+                if pid not in in_play or not is_active(pid) or pokemon_owner.get(pid) != e["player"] or e["player"] == attack_window["player"] \
+                        or e["damage_before"] != damage[pid] or e["counters"] != damage.get(own, 0) // state.rules.damage_per_counter \
+                        or e["amount"] != e["counters"] * state.rules.damage_per_counter:
+                    problems.append(f"{e['turn']} 番の place_damage_counters（ポケモン {pid}）が、ワザを使ったポケモンのカウンターと同じ数を相手の対戦ポケモンにのせる処理と合わない")
+                damage[pid] += e["amount"]
+                if damage[pid] != e["total_damage"]:
+                    problems.append(f"{e['turn']} 番の place_damage_counters のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う")
                 continue
             if not isinstance(effect, (MoveOwnCountersToOpponent, E.DiscardAllEnergyThenMoveAllSelfCountersToOpponent)) or pid not in in_play \
                     or pokemon_owner.get(pid) != e["player"] or e["player"] == attack_window["player"] or e["damage_before"] != damage[pid] \
