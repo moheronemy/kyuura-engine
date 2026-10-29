@@ -198,7 +198,9 @@ class AttackRun:
         self.index = 0  # v0.65: 処理している要素の位置（``run_elements``。ダメージの要素の中の決定（［ベンチガード］）の続きの情報の "element"）
         # v0.66: ナツメのESPのやり直しの決定のあとに、もう一度処理する要素が使うコインの結果（(枚数, 採った結果)）。``flip`` が投げずに返す
         self.esp_preset: tuple[int, tuple] | None = None
-        self.esp_done = False  # v0.66: このワザで、ESPのやり直しを聞いた（説明文のコイントスを投げた）
+        # v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 2 章）: このワザで、ナツメのESPのやり直しを聞いた（説明文のコイントスを投げた）要素の並びのワザ（``key``）。v0.66〜v0.119 は
+        # 真偽値（``esp_done``）で、どのワザの説明文のコインかを区別せず、決定をまたいで運ばなかった。続きの情報 ``esp_asked`` で運ぶ（``suspend``・``restore``）
+        self.esp_asked: tuple[E.AttackKey, ...] = ()
         self.element_log = 0  # v0.66: 処理している要素を始めたときのログの長さ（もう一度処理する要素が、コインの前にログを残していないか）
 
     @property
@@ -249,11 +251,7 @@ class AttackRun:
         cards = E.esp_cards(self.state, attacker)
         if not cards or count == 0:
             return flips
-        if self.esp_done:
-            raise self.res.question("esp_separate_coin_tosses", f"ポケモン {attacker.pokemon_id}・ワザ {self.key}")
-        self._esp_carry_check()
-        self.esp_done = True
-        problem = E.esp_redo_problem(self.state, attacker, cards, flipper, self.player)
+        problem = self._esp_begin(attacker, cards, flipper)
         if self.res.dry_run:
             # 先読み: やり直さない・やり直す（止める選択は試さない）の両方を試す。やり直すなら、同じ枚数を投げ直す
             answers = [()] + ([] if problem is not None else [(1,)])
@@ -282,11 +280,7 @@ class AttackRun:
         cards = E.esp_cards(self.state, attacker)
         if not cards:
             return flips
-        if self.esp_done:
-            raise self.res.question("esp_separate_coin_tosses", f"ポケモン {attacker.pokemon_id}・ワザ {self.key}")
-        self._esp_carry_check()
-        self.esp_done = True
-        problem = E.esp_redo_problem(self.state, attacker, cards, flipper, self.player)
+        problem = self._esp_begin(attacker, cards, flipper)
         if self.res.dry_run:
             # 先読み: やり直さない・やり直す（止める選択は試さない）の両方を試す。やり直すなら、同じまとまりを最初から投げ直す
             answers = [()] + ([] if problem is not None else [(1,)])
@@ -335,11 +329,7 @@ class AttackRun:
         cards = E.esp_cards(self.state, attacker)
         if not cards:
             return flips
-        if self.esp_done:
-            raise self.res.question("esp_separate_coin_tosses", f"ポケモン {attacker.pokemon_id}・ワザ {self.key}")
-        self._esp_carry_check()
-        self.esp_done = True
-        problem = E.esp_redo_problem(self.state, attacker, cards, flipper, self.player)
+        problem = self._esp_begin(attacker, cards, flipper)
         if self.res.dry_run:
             # 先読み: やり直さない・やり直す（止める選択は試さない）の両方を試す。やり直すなら、最初から「うら」が出るまで投げ直す（最初と最後の「おもて」の数は、どちらも組の代表で試す）
             answers = [()] + ([] if problem is not None else [(1,)])
@@ -370,12 +360,8 @@ class AttackRun:
         cards = E.esp_cards(self.state, attacker)
         if not cards:
             return flips
-        if self.esp_done:
-            raise self.res.question("esp_separate_coin_tosses", f"ポケモン {attacker.pokemon_id}・ワザ {self.key}")
-        self._esp_carry_check()
-        self.esp_done = True
         flipper = next(player for player in players if player != self.player)
-        problem = E.esp_redo_problem(self.state, attacker, cards, flipper, self.player)
+        problem = self._esp_begin(attacker, cards, flipper)
         if problem is None:
             raise RuntimeError("相手プレイヤーのコインを含むコイントスのやり直しに、止める理由がない（エンジンの不具合）")
         if self.res.dry_run:
@@ -405,6 +391,30 @@ class AttackRun:
         if missing:
             raise UnsupportedError("UNSUPPORTED_ESP_CONTINUATION",
                                    f"ナツメのESPのやり直しのあとの要素が読む前の要素の結果 {missing} を、続きの情報で運べない（エンジンの未対応）")
+
+    def _esp_begin(self, attacker: PokemonInPlay, cards: tuple[int, ...], flipper: int) -> tuple[str, str] | None:
+        """v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 2 章）: 説明文のコインを投げたあと、ナツメのESPのやり直しを聞く前の確かめ。聞いたことを記録し、やり直すを選ぶと止める
+        理由 (コード, 理由の文) を返す（止めなければ None）。
+
+        - 同じワザ（要素の並び）の説明文のコイントスで 2 回目に聞く: ES0（コードのない問い。今の写しのワザは、どれも説明文のコイントスを 1 回にまとめて投げる）
+        - 宣言したワザの説明文のコインで聞いたあとに、そのワザが自分のワザとして使う別のワザ（ちょうのうりょくの「おもて」3 枚・ゆびをふるの「おもて」のあとに選んだワザ）の説明文の
+          コインを投げた: そのコインが「そのワザの説明文に書かれているすべてのコイントス」に入るか（入るなら 2 回目のやり直しになるか）は決まらないので、やり直すは選ぶと止める
+          （EC1。``E.ESP_COPIED_COINS_CODE``）。やり直さないは、どの読み方でも答えになる（「のぞむなら」）。v0.119 までは、ここを今の写しでは起こらない ES0 として内部エラーにしていた
+        - それ以外は v0.66 の ES1〜ES3（``E.esp_redo_problem``）
+        """
+        if self.key in self.esp_asked:
+            raise self.res.question("esp_separate_coin_tosses", f"ポケモン {attacker.pokemon_id}・ワザ {self.key}")
+        earlier = self.esp_asked
+        self._esp_carry_check()
+        self.esp_mark()
+        if earlier:
+            return E.ESP_COPIED_COINS_CODE, f"{E.ESP_COPIED_COINS_REASON}（先に聞いたワザ {'・'.join(str(key) for key in earlier)}・このワザ {self.key}）"
+        return E.esp_redo_problem(self.state, attacker, cards, flipper, self.player)
+
+    def esp_mark(self) -> None:
+        """v0.120: 処理している要素の並びのワザ（``key``）で、ナツメのESPのやり直しを聞いたことを記録する（``esp_asked``）。"""
+        if self.key not in self.esp_asked:
+            self.esp_asked += (self.key,)
 
     def _esp_reflip(self, count: int, by_heads: bool, flipper: int, cards: tuple[int, ...], original) -> CoinFlips:
         """v0.66: ナツメのESPで、説明文のコイントスをすべて投げ直す（同じ枚数・同じプレイヤー。最初の結果は使わない）。ログ ``esp_redo``（最初の結果・やり直した結果）。"""
@@ -475,6 +485,7 @@ class AttackRun:
             self.fs.results[name] = Discarded(tuple(cards), outcome)  # v0.113: ESPのやり直しのあとの要素が読むトラッシュの結果
         for name, pokemon_id in carried.get("switched_results", ()):
             self.fs.results[name] = int(pokemon_id)  # v0.114: ESPのやり直しのあとの要素が読む入れ替えの結果（入れ替えて出た控えポケモンの番号）
+        self.esp_asked = tuple(E.AttackKey(*key) for key in carried.get("esp_asked", ()))  # v0.120
         frame = dict(carried.get("frame", ()))
         for pid, value in frame.get("reception", ()):
             self.fs.reception[pid] = bool(value)
@@ -621,6 +632,11 @@ class AttackRun:
         if self.res.group_power is not None:
             # v0.118: ワザといっしょに使った自分の場のポケモンの［XXXXX］（発生源・特殊能力・「おもて」の数）。使っていなければ書かない（v0.117 までの決定の形は変えない）
             extra += (("group_power", self.res.group_power),)
+        if self.esp_asked and kind != ESP_REDO:
+            # v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 2 章）: このワザでナツメのESPのやり直しを聞いた要素の並びのワザ。聞いていなければ書かない（v0.119 までの決定の形は
+            # 変えない）。v0.119 までは運ばず、ちょうのうりょくのコインで聞いたあとのワザを選ぶ決定をまたぐと聞いたことを忘れ、先読み（ES0 の内部エラー）と実際の処理（もう一度の
+            # やり直しを聞く）が食い違っていた。ESPのやり直しの決定は、答えのあとに処理している並びのワザを記録し直す（``apply_esp_redo``）ので書かない
+            extra += (("esp_asked", tuple((key.card_id, key.attack_index) for key in self.esp_asked)),)
         boundary = dict(extra).get("boundary")
         if boundary is not None:
             # v0.87: 要素のあいだの決定（［ぶんれつ］・［だつりょくえき］など。``boundary`` は次に処理する要素の位置）のあとの要素が、前のダメージの要素の結果を
@@ -802,7 +818,7 @@ def apply_esp_redo(run: AttackRun, esp: tuple, choices: tuple[int, ...]) -> int:
         if not choices:
             run.state.add_event("esp_redo_declined", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
                                 cards=tuple(cards), original=tuple(original))
-        run.esp_done = True
+        run.esp_mark()
         run.esp_preset = (ESP_CHAIN_REDO if choices else ESP_CHAIN_KEPT, flips.results)
         return index
     if len(esp) == 7 and tuple(esp[6]) == ESP_UNTIL_TAILS:
@@ -811,7 +827,7 @@ def apply_esp_redo(run: AttackRun, esp: tuple, choices: tuple[int, ...]) -> int:
         if not choices:
             run.state.add_event("esp_redo_declined", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
                                 cards=tuple(cards), original=tuple(original))
-        run.esp_done = True
+        run.esp_mark()
         run.esp_preset = (ESP_UNTIL_REDO if choices else ESP_UNTIL_KEPT, flips.results)
         return index
     if len(esp) == 7 and esp[6][0] == "players":
@@ -820,7 +836,7 @@ def apply_esp_redo(run: AttackRun, esp: tuple, choices: tuple[int, ...]) -> int:
             raise RuntimeError("相手プレイヤーのコインを含むコイントスのやり直しを処理しようとした（ES1 で止める選択。エンジンの不具合）")
         run.state.add_event("esp_redo_declined", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
                             cards=tuple(cards), original=tuple(original))
-        run.esp_done = True
+        run.esp_mark()
         run.esp_preset = (count, flips.results)
         return index
     if esp[6:]:
@@ -830,7 +846,7 @@ def apply_esp_redo(run: AttackRun, esp: tuple, choices: tuple[int, ...]) -> int:
     else:
         run.state.add_event("esp_redo_declined", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
                             cards=tuple(cards), original=tuple(original))
-    run.esp_done = True
+    run.esp_mark()
     run.esp_preset = (count, flips.results)
     return index
 

@@ -181,7 +181,9 @@ class ResearchLinksTest(unittest.TestCase):
                              "UNRESOLVED_SHELL_ARMOR_TIMING", "UNRESOLVED_HARD_SHELL_NONPOSITIVE", "UNRESOLVED_POISON_CHANGE_ORDER",
                              "UNRESOLVED_POISON_MIST_EARLIER_POISON", "UNRESOLVED_POISON_MIST_SOURCE", "UNRESOLVED_SECRETE_POISON_TARGET",
                              "UNRESOLVED_SCARE_SUPPRESSION_CYCLE", "UNRESOLVED_DISCARD_PROTECTED_COIN", "UNRESOLVED_DISCARD_PROTECTED_POWER_USE",
-                             "UNRESOLVED_COMMAND_DAMAGE_SCOPE"})
+                             "UNRESOLVED_COMMAND_DAMAGE_SCOPE",
+                             # v0.120: EC1（docs/fossil-basic-virtual-attacks-v0.120.md 2 章。kyuura の UQ-ESP-REDO の ES0 は同じワザの 2 回のコイントスで、別の問い）
+                             "UNRESOLVED_ESP_COPIED_ATTACK_COINS"})
         # v0.97（docs/unown-research-idfnj-v0.97.md 3 章）: kyuura が調査で立てた UQ-SELF-EXCLUDING-POWER-COPIES の事例にわるいデンリュウ（neo4-046）の［かんでん］があるので、
         # CV1 を論点に結んだ（kyuura は v0.86 を取り込んでいないので、未解決の一覧に CV1 の行はない。kyuura の事例は kyuura_cases_without_engine_ruling で照らす）
         # v0.97 で加えた DF1・DF2 も、kyuura に論点（UQ-SELF-EXCLUDING-POWER-COPIES・UQ-NON-ATTACK-DAMAGE-MODIFIERS）はあるが、未解決の一覧に行がない

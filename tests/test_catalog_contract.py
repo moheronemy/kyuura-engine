@@ -65,7 +65,7 @@ class CatalogContractTest(unittest.TestCase):
         self.assertEqual(
             (links["counts"]["engine_stop_codes"],
              links["counts"]["engine_unresolved_rulings"]),
-            (269, 270),
+            (270, 271),
         )
         self.assertEqual(len(links["latest_descriptions"]["adopted_printed_text"]), 1338)
         self.assertEqual(links["counts"]["kyuura_issues"], 73)

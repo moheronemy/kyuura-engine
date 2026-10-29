@@ -5682,7 +5682,7 @@ def _esp_redo_decision_problems(state: GameState, d, player: int, attacker: Poke
     """v0.66（docs/optional-trainers-v0.66.md 3 章）: ナツメのESPのやり直しの決定（``ESP_REDO``）。決めるのはワザを使ったプレイヤー、選べるものは (1,)・0〜1 個。続きの情報の
     ``esp`` の ESP のカードが、ワザを使ったポケモンについているESPと同じで、最初の結果の枚数が投げた枚数と同じ。今の番のログの最後のコインの結果（``coin_flip``）が、最初の
     結果と同じ並び。"""
-    from .effects import esp_cards
+    from .effects import ESP_COPIED_COINS_CODE, esp_cards
 
     esp = d.context_value("esp")
     if d.player != player or tuple(d.options) != (1,) or (d.min_choices, d.max_choices) != (0, 1):
@@ -5734,6 +5734,9 @@ def _esp_redo_decision_problems(state: GameState, d, player: int, attacker: Poke
             return [f"ESPのやり直しの続きの情報の入れ替えの結果 {entry!r} が (名前, 番号) ではない"]
         if state.players[1 - player].find_by_pokemon_id(entry[1]) is None or entry[1] not in entered:
             return [f"ESPのやり直しの続きの情報の入れ替えの結果 {entry!r} が、この番に入れ替えて出た相手の場のポケモンではない"]
+    # v0.120: コピー先のワザのコイン（EC1）は、自分のワザとして使った別のワザ（``copied``）の要素の並びの中で聞き、やり直すは選ぶと止める
+    if d.context_value("unresolved_code") == ESP_COPIED_COINS_CODE and (d.context_value("copied") is None or tuple(d.context_value("unresolved_choices", ())) != (1,)):
+        return [f"ESPのやり直しの EC1（{ESP_COPIED_COINS_CODE}）が、自分のワザとして使った別のワザの中の、やり直すを選ぶと止める決定ではない"]
     return []
 
 

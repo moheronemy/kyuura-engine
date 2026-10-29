@@ -12,8 +12,8 @@
   "card_data_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 270,
-    "engine_stop_codes": 269,
+    "engine_unresolved_rulings": 271,
+    "engine_stop_codes": 270,
     "kyuura_issues": 73
   },
   "stop_codes": {
@@ -3093,6 +3093,17 @@
           "version": "v0.119",
           "document": "docs/damage-reactions-poison-sleep-v0.119.md",
           "ruling_id": "MD1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ESP_COPIED_ATTACK_COINS": {
+      "engine_rulings": [
+        {
+          "version": "v0.120",
+          "document": "docs/fossil-basic-virtual-attacks-v0.120.md",
+          "ruling_id": "EC1"
         }
       ],
       "kyuura_issue": null,
