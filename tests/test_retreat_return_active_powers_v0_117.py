@@ -203,7 +203,8 @@ class RegistrationTest(unittest.TestCase):
 
         new = (E.LockOpponentAttackIfBasic, E.CoinsCountersOnOpponent, E.DamageThenReturnSelfAndEnergyToHand, E.ReturnSelfToDeckThenCoinDiscardCardToDeck,
                E.CoinsDiscardTailsEnergyThenDamage, E.DamageThenPursuitOnRetreat)
-        self.assertEqual(H.ATTACK_TYPES_SINCE_V0_17[-len(new):], new)
+        start = H.ATTACK_TYPES_SINCE_V0_17.index(new[0])
+        self.assertEqual(H.ATTACK_TYPES_SINCE_V0_17[start:start + len(new)], new)  # v0.118 から、あとの版の型が続く
         for cls in new:
             with self.subTest(cls=cls.__name__):
                 self.assertIn(cls, P.BUILDERS)

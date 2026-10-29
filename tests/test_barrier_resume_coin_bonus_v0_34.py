@@ -463,7 +463,10 @@ class BarrierCoinTest(unittest.TestCase):
                                     # （1 枚のコインは相手のねむりか「にげる」の禁止だけを決める）・ネイティオの「エナジーサイクル」（1 枚のコインは相手の対戦ポケモンからのつけ替えだけを決める）。
                                     # げんしのしずく（相手の控えも選べる）・エナジーコントロール（相手の場のどのポケモンからでも）は投げる。げんしのしずくで選べるのが相手の対戦ポケモンだけなら、
                                     # 要素がコインの前に問う（docs/energy-movement-attachment-devolution-v0.116.md 6 章）
-                                    "CoinsTimesDamageThenConfuseIfAtLeast", "DamageThenSleepOnHeadsElseRetreatLock", "CoinMoveOpponentEnergyCardToBenchOrFail"})
+                                    "CoinsTimesDamageThenConfuseIfAtLeast", "DamageThenSleepOnHeadsElseRetreatLock", "CoinMoveOpponentEnergyCardToBenchOrFail",
+                                # v0.118: わるいオクタンの「しめつづける」（1 枚のコインは相手のマヒと「にげる」エネルギーを増やす効果だけを決める。
+                                # docs/unbounded-coins-heal-allocation-v0.118.md 6 章）
+                                "DamageThenParalyzeOnHeadsElseRetreatCost"})
         for name in ("FailOnTailsSelfDestruct", "FailOnTailsDamageThenSelfBarrier", "DamageThenConfuseOpponentOrSelf"):
             self.assertIn(name, flipping)  # v0.107
         for name in ("CoinDevolveOpponentEvolvedToDeck", "FailOnTailsMoveOpponentFieldEnergy"):

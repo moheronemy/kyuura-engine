@@ -726,7 +726,9 @@ class G37Test(unittest.TestCase):
         "CoinMoveOpponentEnergyCardToBenchOrFail", "FailOnTailsMoveOpponentFieldEnergy", "CoinDevolveOpponentEvolvedToDeck", "DamageThenCoinReturnAttachedCardsToHand",
         "DiscardAllEnergyThenMoveAllSelfCountersToOpponent",
         # v0.117: いかく（ドわすれと同じワザの禁止）・サイキックダメージ（ダメージカウンター）・おいうち（「にげる」ときの持続効果）。docs/retreat-return-active-powers-v0.117.md 4 章・8 章
-        "LockOpponentAttackIfBasic", "CoinsCountersOnOpponent", "DamageThenPursuitOnRetreat"]))
+        "LockOpponentAttackIfBasic", "CoinsCountersOnOpponent", "DamageThenPursuitOnRetreat",
+        # v0.118: しめつづける（マヒ・「にげる」エネルギーを増やす持続効果）・ふしぎなかおり（相手の場の回復）。docs/unbounded-coins-heal-allocation-v0.118.md 6 章・7 章
+        "DamageThenParalyzeOnHeadsElseRetreatCost", "EachPlayerCoinHealOwnField"]))
 
 
 class DecisionTest(unittest.TestCase):

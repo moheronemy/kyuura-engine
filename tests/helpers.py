@@ -1543,6 +1543,15 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.ReturnSelfToDeckThenCoinDiscardCardToDeck,
     _effects.CoinsDiscardTailsEnergyThenDamage,
     _effects.DamageThenPursuitOnRetreat,
+    # v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 4 章・6 章・7 章・8 章。色を問わない多いエネルギーの追加・マヒか「にげる」エネルギーの持続効果・相手の場のエネルギーの
+    # 数のコイン・お互いのコインと自分の場の配分の回復・選んだ控えと自分の回復・「うら」が出るまでのコインで引く・のぞむならのコインでダメージを決めるか失敗）
+    _effects.ExtraEnergyUnitsDamage,
+    _effects.DamageThenParalyzeOnHeadsElseRetreatCost,
+    _effects.CoinsPerOpponentFieldEnergyDamage,
+    _effects.EachPlayerCoinHealOwnField,
+    _effects.CoinHealChosenBenchAndSelf,
+    _effects.CoinsUntilTailsDraw,
+    _effects.OptionalCoinSetDamageElseFail,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

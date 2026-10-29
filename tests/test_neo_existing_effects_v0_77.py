@@ -552,7 +552,9 @@ class SecretPlanAndQuizTest(unittest.TestCase):
         self.assertEqual(new, set(V0_77_CARDS) - set(SAME_DATA))
         basics = [c for c in candidates if pool.get(c).is_basic_pokemon]
         self.assertEqual(engine_module._IDENTITY_TRIAL_LIMIT, 512)
-        self.assertLessEqual(1 + len(basics) + 1, engine_module._IDENTITY_TRIAL_LIMIT)
+        # v0.118: 1 枚を指定するコマンドの試す回数は、v0.117 から上限 512 ではなく分岐の作りから決まる回数（``_single_identity_budget``。たねが 511 枚になり、
+        # 1 + 511 + 1 = 513 が 512 を超えた。その回数どおりに確かめることは tests/test_secret_plan_single_identity_v0_117.py）。上限 512 は 2 枚目の割り当てが要るコマンドだけ
+        self.assertLessEqual(1 + len(basics) + 1, engine_module._single_identity_budget(basics, [c for c in candidates if c not in basics]))
 
     def test_quiz_names(self):
         extract = read_extract()

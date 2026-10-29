@@ -812,7 +812,9 @@ class SecretPlanCandidatesTest(unittest.TestCase):
         v072 = cards_after(EXTRACT, '0.71')  # v0.76 の 24 枚も除く。 v0.72: 試すカードの数は固定しない（v0.72 の 43 枚・v0.73 の 18 枚・v0.74 の 13 枚を除いて比べる）
         self.assertEqual((len(set(candidates) - v072), len(set(basics) - v072)), (572, 245))
         self.assertEqual(engine_module._IDENTITY_TRIAL_LIMIT, 512)
-        self.assertLessEqual(1 + len(basics) + 1, engine_module._IDENTITY_TRIAL_LIMIT)
+        # v0.118: 1 枚を指定するコマンドの試す回数は、v0.117 から上限 512 ではなく分岐の作りから決まる回数（``_single_identity_budget``。たねが 511 枚になり、
+        # 1 + 511 + 1 = 513 が 512 を超えた。その回数どおりに確かめることは tests/test_secret_plan_single_identity_v0_117.py）。上限 512 は 2 枚目の割り当てが要るコマンドだけ
+        self.assertLessEqual(1 + len(basics) + 1, engine_module._single_identity_budget(basics, [c for c in candidates if c not in basics]))
         self.assertEqual(len(set(candidates) & set(POOL_V0_71)), 45)  # 同じデータの 33 枚は 1 枚で代表する
 
 

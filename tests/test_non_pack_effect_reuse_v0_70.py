@@ -780,7 +780,9 @@ class SecretPlanCandidatesTest(unittest.TestCase):
         self.assertEqual(len(set(basics) - v072), 245)  # v0.71 で再録のたねポケモン 4（v0.70 の時点は 241）
         self.assertEqual(engine_module._IDENTITY_TRIAL_LIMIT, 512)
         # 1 枚を指定するコマンドの試す回数: 割り当てる前 1 回 + たねポケモン + 「たねポケモンでない」1（v0.70 は 243、v0.71 は 247。トラッシュしたあとに項目を読まなければ）
-        self.assertLessEqual(1 + len(basics) + 1, engine_module._IDENTITY_TRIAL_LIMIT)
+        # v0.118: 1 枚を指定するコマンドの試す回数は、v0.117 から上限 512 ではなく分岐の作りから決まる回数（``_single_identity_budget``。たねが 511 枚になり、
+        # 1 + 511 + 1 = 513 が 512 を超えた。その回数どおりに確かめることは tests/test_secret_plan_single_identity_v0_117.py）。上限 512 は 2 枚目の割り当てが要るコマンドだけ
+        self.assertLessEqual(1 + len(basics) + 1, engine_module._single_identity_budget(basics, [c for c in candidates if c not in basics]))
 
 
 # ---------------------------------------------------------------- 正式な対戦開始からの対戦
