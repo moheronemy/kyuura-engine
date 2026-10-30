@@ -725,6 +725,12 @@ V122_M, V122_U, V122_A, V122_W = "neo2-027", "neo2-028", "neo2-030", "neo4-064"
 V122_RAICHU, V122_OMANYTE, V122_KABUTO, V122_AERODACTYL, V122_OMANYTE3 = "GD3-003", "ES2-011", "ES2-028", "ES2-029", "ES3-018"
 V122_CAPOEIRA, V122_IVYSAUR, V122_VENUSAUR, V122_FEAROW = "PRN-030", "PRN-039", "PRN-040", "PRN-045"
 V122_POWER_HOLDERS = (V122_U, V122_W, V122_OMANYTE, V122_KABUTO, V122_OMANYTE3)
+# v0.123（docs/arcanine-name-migration-v0.123.md 9 章）: ウィンディ系の 3 枚（写しの組 pool_v0_123。どれもポケモン）。TARGETS に加える（ワザは既存の手順のまま選び、いかりのほのお・ほのおのあらしの
+# 炎エネルギーカードを選ぶ決定も元の手順のまま答える。新しい手順は加えていない）。ログから数えるのは ``v123_uses``（名前を直した登録済みの 2 枚のワザも数える）
+V0_123 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_123"])
+V0_123_POKEMON = V0_123
+V123_RENAMED = (ARCANINE, BLAINES_ARCANINE)  # 段 v0.123 で名前を直した登録済みのカード（第1弾のウィンディ・カツラのウィンディ）
+V123_RAGE_FLAMES = "PR1-016#1"
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -781,7 +787,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_119_POKEMON  # v0.119: 受けるダメージの選択・どくとねむり・場の効果のポケモン 11 枚
            + V0_120_POKEMON  # v0.120: 化石の復活と仮想ワザの供給のポケモン 10 枚
            + V0_121_POKEMON  # v0.121: 手札からの登場とワザの使用条件のポケモン 7 枚
-           + V0_122_POKEMON)  # v0.122: アンノーンの併用・化石の進化履歴・退却時の反応のポケモン 13 枚
+           + V0_122_POKEMON  # v0.122: アンノーンの併用・化石の進化履歴・退却時の反応のポケモン 13 枚
+           + V0_123_POKEMON)  # v0.123: ウィンディ系の 3 枚
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -1759,6 +1766,13 @@ DECKS = {
     "B122": (("PMCG1-001", 4), ("PRN-039", 3), ("PRN-040", 2), ("PRN-030", 3), (driver.BILL, 4), (driver.POTION, 2), (SWITCH, 2), (GRASS, 26), (FIGHTING, 14)),
     # v0.122: 雷・無色。マチスのピカチュウ（GD3-001）→ マチスのライチュウ（GD3-003。メガトンパンチ・10まんボルト）、オニスズメ（PMCG2-034）→ わるいオニドリル（PRN-045。たかくとぶ・ドリルダイブ）
     "L122": (("GD3-001", 4), ("GD3-003", 3), ("PMCG2-034", 4), ("PRN-045", 3), (driver.BILL, 4), (driver.POTION, 2), (SWITCH, 2), (DOUBLE_COLORLESS, 2), (LIGHTNING, 36)),
+    # v0.123: 炎。ガーディ（PMCG1-018）→ ウィンディ 4 枚（プロモ PR1-016 2 枚・イントロパック IP2-032 1 枚・第1弾 PMCG1-019 1 枚。印刷の名前が同じ「ウィンディ」なので合わせて 4 枚まで）、
+    # ポニータ（PMCG1-016）
+    "W123": ((GROWLITHE, 4), ("PR1-016", 2), ("IP2-032", 1), (ARCANINE, 1), ("PMCG1-016", 4), (driver.BILL, 4), (driver.POTION, 2), (SWITCH, 2), (FIRE, 40)),
+    # v0.123: 炎。カツラのガーディ 4 枚（PMCG6-027 2 枚・GD5-005 2 枚）→ カツラのウィンディ 4 枚（ポケモンジム第3弾 GD5-007 2 枚・闇からの挑戦 PMCG6-034 2 枚。「カツラのウィンディ」で
+    # 合わせて 4 枚まで。「ウィンディ」とは別の名前）、カツラのヒトカゲ（PMCG6-025）→ カツラのリザード（PMCG6-029）
+    "K123": ((BLAINES_GROWLITHE, 2), ("GD5-005", 2), ("GD5-007", 2), (BLAINES_ARCANINE, 2), (BLAINES_CHARMANDER, 4), (BLAINES_CHARMELEON, 2),
+             (driver.BILL, 4), (driver.POTION, 2), (SWITCH, 2), (FIRE, 38)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -2073,6 +2087,11 @@ PAIRINGS_V0_122 = (("A122", "U122"), ("A122", "W122"), ("U122", "W122"), ("F122"
                    ("A122", "C121"), ("U122", "M78"))
 PAIRINGS_V0_121 = (("C121", "H121"), ("C121", "U121"), ("C121", "Y121"), ("H121", "U121"), ("H121", "Y121"), ("U121", "Y121"),
                    ("C121", "L114"), ("H121", "M87"), ("C121", "T74"))
+# v0.123: W123 対 K123（ウィンディ 3 枚の 3 つのワザとカツラのウィンディ 2 枚。「ウィンディ」と「カツラのウィンディ」の別のデッキ）・W123 対 P31（ピクシー・ピッピのゆびをふるで、相手のワザとして
+# 使うでんこうせっか・いかりのほのお。炎エネルギーカードのない使い手はいかりのほのおを選べない）・W123 対 E82（相手の場のエコロジム・リサイクルエネルギーと、自分のワザでトラッシュする炎エネルギー
+# カード）・K123 対 F30（v0.30 のデッキの第1弾のウィンディ（名前を直した PMCG1-019）と、ほのおのあらし）。組・席・seed は正式な対戦の前に決めた（正式な対戦は seed 0〜3。開発中に手順を
+# 確かめる seed 90〜93 とは別。局を選び直さない）
+PAIRINGS_V0_123 = (("W123", "K123"), ("W123", "P31"), ("W123", "E82"), ("K123", "F30"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -2095,7 +2114,8 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.108": PAIRINGS_V0_108, "v0.109": PAIRINGS_V0_109, "v0.110": PAIRINGS_V0_110, "v0.111": PAIRINGS_V0_111, "v0.112": PAIRINGS_V0_112,
            "v0.113": PAIRINGS_V0_113, "v0.114": PAIRINGS_V0_114, "v0.115": PAIRINGS_V0_115,
            "v0.116": PAIRINGS_V0_116, "v0.117": PAIRINGS_V0_117, "v0.118": PAIRINGS_V0_118,
-           "v0.119": PAIRINGS_V0_119, "v0.120": PAIRINGS_V0_120, "v0.121": PAIRINGS_V0_121, "v0.122": PAIRINGS_V0_122}
+           "v0.119": PAIRINGS_V0_119, "v0.120": PAIRINGS_V0_120, "v0.121": PAIRINGS_V0_121, "v0.122": PAIRINGS_V0_122,
+           "v0.123": PAIRINGS_V0_123}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -11718,6 +11738,87 @@ def _v122_decision(state, counts):
     return _v120_first(state, d, counts, f"v122_{key}_{d.kind}")
 
 
+def _v123_decision(state, counts):
+    """v0.123: v0.123 のカードのワザ（相手のワザとして使ったときもふくむ）の決定への答え。トラッシュするエネルギーカード（いかりのほのお 2 枚・ほのおのあらし 3 枚。ちょうどの枚数の決定）は、
+    選べるもののうち前から決定の数だけ選ぶ（v0.31 の ``_v031_decision`` と同じ答え方。元の手順は 1 つだけ選ぶ）。原典で決められない選択・未対応の選択は選ばない。ほかの決定は元の手順に任せる。"""
+    d = state.decision
+    if d is None or d.resume != "attack" or d.kind != DISCARD_ENERGY:
+        return None
+    use = d.context_value("use")
+    copied = d.context_value("copied")
+    card = copied[0] if copied else (use[2] if use is not None else None)
+    if card not in V0_123:
+        return None
+    blocked = set(d.context_value("unresolved_choices", ())) | set(d.context_value("unsupported_choices", ()))
+    options = [o for o in d.options if o not in blocked]
+    counts[f"v123_{card}_discard_{d.min_choices}"] += 1
+    return ResolveDecision(d.player, d.id, tuple(options[:d.min_choices]))
+
+
+def v123_uses(state):
+    """v0.123: ログから数えた 3 枚・5 のワザと、名前を直した登録済みの 2 枚のワザの動き（v0.123 のカードのない局では空）。
+
+    - ``attack_<id>#<位置>``（v0.123 のカード自身が宣言したワザ）・``renamed_attack_<id>#<位置>``（PMCG1-019・PMCG6-034 が宣言したワザ）・``copied_<id>#<位置>``（相手のワザとして使った
+      v0.123 のワザ。ゆびをふるなど）・``confused_<id>#<位置>``（こんらんの「うら」でワザが起きなかった）
+    - ``rage_discard_<枚数>``（いかりのほのおでトラッシュした炎エネルギーカード）・``rage_base_<量>``・``rage_counters_<数>``（相手の対戦ポケモンへのダメージの基本となる計算と、
+      そこから目安 40 を引いた 10 ごとの数。宣言のときのダメージカウンターの数との一致はログの監査 v123_problems が確かめる）・``rage_no_damage``（トラッシュのあと相手へのダメージの記録がない）
+    - ``firestorm_discard_<枚数>``（ほのおのあらし）・``self_damage_<id>#<位置>_<量>``（ヒートタックル・とっしん）・``quick_heads``・``quick_tails``（でんこうせっか）
+    """
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_123 for uid in state.cards):
+        return counts
+    card = {uid: c.card_id for uid, c in state.cards.items()}
+    window = None
+
+    def close(w):
+        if w is None or w["key"] is None:
+            return
+        if w["key"] == V123_RAGE_FLAMES and w["discards"]:
+            counts[f"rage_discard_{w['discards']}"] += 1
+            if w["base"] is None:
+                counts["rage_no_damage"] += 1
+            else:
+                counts[f"rage_base_{w['base']}"] += 1
+                counts[f"rage_counters_{(w['base'] - 40) // 10}"] += 1
+        if w["key"].endswith("#1") and w["key"].split("#")[0] in ("GD5-007", BLAINES_ARCANINE) and w["discards"]:
+            counts[f"firestorm_discard_{w['discards']}"] += 1
+
+    for e in state.log:
+        kind = e["kind"]
+        if kind in ("attack", "turn_end", "game_end", "halted"):
+            close(window)
+            window = None
+        if kind == "attack":
+            pokemon_card = e.get("card", e.get("pokemon"))
+            key = f"{card.get(pokemon_card)}#{e.get('attack_index')}"
+            if card.get(pokemon_card) in V0_123_POKEMON:
+                counts[f"attack_{key}"] += 1
+            elif card.get(pokemon_card) in V123_RENAMED:
+                counts[f"renamed_attack_{key}"] += 1
+            window = {"key": key, "discards": 0, "base": None}
+            continue
+        if window is None:
+            continue
+        if kind == "copy_attack":
+            window = {"key": e["copied"], "discards": 0, "base": None}
+            if e["copied"].split("#")[0] in V0_123_POKEMON:
+                counts[f"copied_{e['copied']}"] += 1
+            continue
+        key = window["key"]
+        if kind == "confusion_damage" and key.split("#")[0] in V0_123_POKEMON:
+            counts[f"confused_{key}"] += 1
+        if kind == "discard_energy" and e.get("effect") == key:
+            window["discards"] += 1
+        if kind == "damage" and e.get("target") == "self" and e.get("effect") == key and key.split("#")[0] in V0_123_POKEMON + V123_RENAMED:
+            counts[f"self_damage_{key}_{e['amount']}"] += 1
+        if kind == "damage" and e.get("target", "opponent_active") == "opponent_active" and not e.get("retaliation") and window["base"] is None:
+            window["base"] = dict(e["steps"]).get("1 基本となる計算")
+        if kind == "coin_flip" and e.get("source") == "attack" and e.get("effect") == "PR1-016#0":
+            counts[f"quick_{e['result']}"] += 1
+    close(window)
+    return counts
+
+
 def v122_uses(state):
     """v0.122: ログから数えた 13 枚・17 のワザ・8 の特殊能力の動き（v0.122 のカードのない局では空）。
 
@@ -11923,7 +12024,8 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = (_v122_decision(state, counts)  # v0.122: v0.122 の特殊能力・反応・ワザの決定（v0.122 のカードのない局では何もしない）
+            early = (_v123_decision(state, counts)  # v0.123: いかりのほのお・ほのおのあらしの炎エネルギーカードのトラッシュ（v0.123 のカードのワザでない決定では何もしない）
+                     or _v122_decision(state, counts)  # v0.122: v0.122 の特殊能力・反応・ワザの決定（v0.122 のカードのない局では何もしない）
                      or _v121_decision(state, counts)  # v0.121: v0.121 のワザ・トレーナーの決定（v0.121 のカードのない局では何もしない）
                      or _v120_decision(state, counts)  # v0.120: たまごの化石・復活・ワザを選ぶ・しんかのほうし・たつまきの決定（v0.120 のカードのない局では何もしない）
                      or _v119_decision(state, counts)  # v0.119: ［シェルアーマー］を使うか・ひきずりこむの任意の入れ替え（v0.119 のワザでない決定では何もしない）
@@ -12342,6 +12444,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v120"] = v120_uses(state)
         result["v121"] = v121_uses(state)
         result["v122"] = v122_uses(state)
+        result["v123"] = v123_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:

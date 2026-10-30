@@ -1137,6 +1137,8 @@ V122_ANGER = re.compile(r"この力は、自分の場の「(.+)」が「(.+)」�
                         r"このカード以外の\1「(.)」が「(.+)」を使っているとき、この力は使えない。")
 # v0.122: ［UNDO］・［WANT］の使える条件（「自分のベンチに、このカードとアンノーン「N」「D」「O」がいるとき」。［WANT］は半角の「｢｣」）
 V122_BENCH_LETTERS = re.compile(r"この力は、自分のベンチに、このカードとアンノーン((?:[「｢].[」｣])+)がいるとき")
+# v0.123（docs/arcanine-name-migration-v0.123.md 11 章）: いかりのほのお（PR1-016）の印刷の文面（kyuura の日本語。文末に句点がない。エンジンの登録・計算を読まない）
+V123_RAGE_FLAMES = re.compile(r"このカードについている「(.)」エネルギーカードを(\d+)枚はがして捨てなければこのワザは使えない。自分にのっているダメージカウンター×(\d+)のダメージを追加する")
 V119_ALLERGY = "おたがいのトラッシュにあるすべてのカードは、ポケモンの「ワザ・特殊能力」による効果を受けない。"
 V119_BEAM = re.compile(r"次の相手の番、自分の場の「(.)」ポケモンは「弱点」の影響を受けない。")
 # v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 12 章）: 監査が読む印刷の文面（kyuura の日本語。エンジンの登録・計算を読まない）
@@ -1960,6 +1962,8 @@ def log_problems(state) -> list[str]:
     v120: dict = {"window": None, "below": {}, "revived": {}, "power_used": set(), "egg": None}
     # v0.122: 今のワザの確かめ・「にげる」の直後の［つるでひっぱる］・その番にはたらいた［つるでひっぱる］・［げんしのゆめ］の効果・［かせきか］で選んだポケモン
     v122: dict = {"window": None, "retreat": None, "vine_used": set(), "vine_due": None, "dream": [], "fossilize": None, "prev": None}
+    # v0.123: 今のワザの確かめ（宣言したポケモン・宣言のときについていたエネルギーカードとダメージカウンター）
+    v123: dict = {"window": None}
     color_types: dict[int, dict] = {}  # v0.88: ［せんすい］の記録（対象のポケモンの番号 → 色・発生源のカード・特殊能力の位置）
     # v0.90: ログから組み立てた、場のポケモンのマーカー・カウンター（番号 → のせた順の {"marker", "color", "turn"}）と、進化・退化で取りのぞくはずのポケモン（番号 → 理由）
     marks: dict[int, list[dict]] = {}
@@ -5045,6 +5049,62 @@ def log_problems(state) -> list[str]:
         st["prev"] = e
         return found
 
+    def v123_close(w: dict) -> list[str]:
+        """v0.123: いかりのほのお（印刷の文面が ``V123_RAGE_FLAMES`` のワザ。相手のワザとして使ったときも、使ったポケモンで数える）の 1 回の確かめ（ワザの終わり・番の終わりで）。
+        こんらんなどでワザが起きなかった窓は確かめない。
+
+        - トラッシュは、文面の色の基本エネルギーカードを文面の枚数ちょうど。どれも宣言のときに、ワザを使ったポケモンについていたカード（重ならない）。ダメージの前
+        - 相手の対戦ポケモンへのダメージの基本となる計算（p.321 の 1 段階）は、ダメージの目安の数字 + 宣言のときのワザを使ったポケモンのダメージカウンターの数 × 文面の数"""
+        found: list[str] = []
+        card_id, index = _attack_key(w["key"])
+        definition = state.definitions.get(card_id)
+        attack = definition.attacks[index] if definition is not None and 0 <= index < len(definition.attacks) else None
+        match = V123_RAGE_FLAMES.fullmatch(attack.text_ja or "") if attack is not None else None
+        events = w["events"]
+        kinds = [x["kind"] for x in events]
+        if match is None or "confusion_damage" in kinds or "attack_failed" in kinds:
+            return found
+        color, count, per = match.group(1), int(match.group(2)), int(match.group(3))
+        discards = [x for x in events if x["kind"] == "discard_energy" and x.get("effect") == w["key"]]
+        cards = [x["energy"] for x in discards]
+        printed = [state.printed_def(c) for c in cards if c in state.cards]
+        if (len(cards) != count or len(set(cards)) != len(cards) or not set(cards) <= set(w["energy"]) or len(printed) != len(cards)
+                or not all(d.category == "energy" and d.is_basic_energy and d.provides is not None and d.provides.ja == color for d in printed)
+                or any(x.get("pokemon_id", w["pid"]) != w["pid"] for x in discards)):
+            found.append(f"{w['turn']} 番の {w['key']} でトラッシュしたカード {cards} が、宣言のときにワザを使ったポケモン {w['pid']} についていた「{color}」の基本エネルギーカード "
+                         f"{count} 枚ではない（ついていたカード {w['energy']}）")
+        opp_damage = [x for x in events if x["kind"] == "damage" and x.get("target", "opponent_active") == "opponent_active" and not x.get("retaliation")]
+        if opp_damage:
+            base = dict(opp_damage[0]["steps"]).get("1 基本となる計算")
+            expected = attack.damage + w["counters"] * per
+            if base != expected:
+                found.append(f"{w['turn']} 番の {w['key']} の基本となるダメージ {base} が、目安 {attack.damage} + ダメージカウンター {w['counters']} 個 × {per} = {expected} ではない")
+            if discards and events.index(discards[-1]) > events.index(opp_damage[0]):
+                found.append(f"{w['turn']} 番の {w['key']} のトラッシュが、ダメージのあとにある（ワザの効果。ダメージの前）")
+        return found
+
+    def v123_problems(e: dict) -> list[str]:
+        """v0.123: いかりのほのおを、エンジンの登録・計算を読まずに確かめる（印刷の文面・ログから組み立てた場から）。ログ ``e`` の組み立て直しの前に呼ぶ。窓はワザの宣言ごとに開き、
+        相手のワザとして使ったとき（copy_attack）は写したワザで確かめる（``v123_close``）。"""
+        found: list[str] = []
+        kind = e["kind"]
+        st = v123
+        w = st["window"]
+        if w is not None and kind in ("attack", "turn_end", "game_end", "halted"):
+            found += v123_close(w)
+            st["window"] = w = None
+        if kind == "attack":
+            pokemon_card = e.get("card", e.get("pokemon"))
+            pid = ids.get(e["pokemon"])
+            if pokemon_card in state.cards and pid is not None and e.get("attack_index") is not None:
+                st["window"] = {"key": f"{state.cards[pokemon_card].card_id}#{e['attack_index']}", "turn": e["turn"], "pid": pid, "energy": list(energy.get(pid, ())),
+                                "counters": damage.get(pid, 0) // state.rules.damage_per_counter, "events": []}
+        elif w is not None:
+            if kind == "copy_attack":
+                w["key"] = e["copied"]
+            w["events"].append(e)
+        return found
+
     def v121_problems(e: dict) -> list[str]:
         """v0.121: v0.121 のワザ・トレーナーを、エンジンの登録・計算を読まずに確かめる（印刷の文面・ログから組み立てた場・コインから）。ログ ``e`` の組み立て直しの前に呼ぶ。
 
@@ -6632,6 +6692,7 @@ def log_problems(state) -> list[str]:
         problems.extend(v120_problems(e))  # v0.120: 化石の復活と仮想ワザの供給
         problems.extend(v121_problems(e))  # v0.121: 手札からの登場とワザの使用条件
         problems.extend(v122_problems(e))  # v0.122: アンノーンの併用・化石の進化履歴・退却時の反応
+        problems.extend(v123_problems(e))  # v0.123: いかりのほのお
         if kind in ("damage", "confusion_damage"):
             # v0.90: のろいマーカーののっているポケモンが弱点の計算をしたワザのダメージは「×4」（ログの weakness_multiplier）。ほかは書かない。こんらんの 20 は、のろいマーカーと
             # 自分の弱点が当てはまるならコインの前に止まる（UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS）ので、弱点の計算をしたこんらんのダメージはない
