@@ -3,7 +3,7 @@
   "description": "kyuura の data/cards.json から、kyuura-engine が使うカードの記録を抜き出した写し。カード情報の正本は kyuura。値は書き換えていない。生成: scripts/extract_kyuura_cards.py（手で編集しない）。",
   "source": {
     "repository": "https://github.com/moheronemy/kyuura",
-    "commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+    "commit": "74b3ceb883dd815495d13b9987433fb14b36e44d",
     "path": "data/cards.json",
     "schema_version": 3
   },
@@ -1746,6 +1746,16 @@
         "FIX-PRN-040-EVOLVES-FROM",
         "FIX-PRN-045-EVOLVES-FROM"
       ]
+    },
+    {
+      "id": "v0.123",
+      "from": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "to": "74b3ceb883dd815495d13b9987433fb14b36e44d",
+      "document": "docs/arcanine-name-migration-v0.123.md",
+      "corrections": [
+        "FIX-PMCG1-019-NAME-JA",
+        "FIX-PMCG6-034-NAME-JA"
+      ]
     }
   ],
   "kyuura_corrections": [
@@ -2815,6 +2825,59 @@
       "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
       "applied_in_source": "2fe0bc042ce187d191843819262f8036abbb343d",
       "previous_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
+    },
+    {
+      "id": "FIX-PMCG1-019-NAME-JA",
+      "card_id": "PMCG1-019",
+      "field": "name.ja",
+      "before": "ウインディ",
+      "after": "ウィンディ",
+      "basis": "card_image_check",
+      "kind": "generated_value_error",
+      "migration": "v0.123",
+      "decided_on": "2026-10-30",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-PMCG1-019",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/1st/1st1020.png",
+          "image_sha256": "b456d34b9eec7c77344f226b67fc704bdc1f63dbe049eb499249aaca5da4b592",
+          "accessed_on": "2026-10-30"
+        },
+        {
+          "image_url": "https://nazonobasho.com/wp-content/uploads/2020/10/pmcg01-020-windie-copy.jpg",
+          "image_sha256": "dba3840f6ced857e8fc81b5b8bcb5ab202e1fe2f9e63f982f8f3b4d290075de3",
+          "accessed_on": "2026-10-30"
+        }
+      ],
+      "engine_history": "v0.30 から写しにあるカード（登録済み）。v0.122 までは「ウインディ」で、採用の記録の外部照合（2026-10-15）の pcg-search.com の見出しとの違いを kyuura への報告事項にしていた",
+      "applied_in_source": "74b3ceb883dd815495d13b9987433fb14b36e44d",
+      "previous_source": "2fe0bc042ce187d191843819262f8036abbb343d"
+    },
+    {
+      "id": "FIX-PMCG6-034-NAME-JA",
+      "card_id": "PMCG6-034",
+      "field": "name.ja",
+      "before": "カツラのウインディ",
+      "after": "カツラのウィンディ",
+      "basis": "card_image_check",
+      "kind": "generated_value_error",
+      "migration": "v0.123",
+      "decided_on": "2026-10-30",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-PMCG6-034",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/1st/1stgym2031.png",
+          "image_sha256": "784f1f7b6875c56a7be2070f0286d0c4fa26875177be659d01608d6965339220",
+          "accessed_on": "2026-10-30"
+        }
+      ],
+      "engine_history": "v0.31 から写しにあるカード（登録済み）。v0.122 までは「カツラのウインディ」で、採用の記録の外部照合（2026-10-15）の pcg-search.com の見出しとの違いを kyuura への報告事項にしていた",
+      "applied_in_source": "74b3ceb883dd815495d13b9987433fb14b36e44d",
+      "previous_source": "2fe0bc042ce187d191843819262f8036abbb343d"
     }
   ],
   "engine_user_corrections": [
@@ -2832,7 +2895,7 @@
       "reference_url_role": "利用者が示した補助資料。エンジンは本文を取得していない（ネットワークのプロキシが 403）。サイトの本文を検証した・ルーン文字を解読したとは扱わない",
       "engine_saw_image": false,
       "kyuura_saw_image": false,
-      "source_commit": "2fe0bc042ce187d191843819262f8036abbb343d"
+      "source_commit": "74b3ceb883dd815495d13b9987433fb14b36e44d"
     }
   ],
   "equivalent_targets": {
@@ -13444,7 +13507,7 @@
       "jp_set": "PMCG1",
       "category": "pokemon",
       "name": {
-        "ja": "ウインディ",
+        "ja": "ウィンディ",
         "en": "Arcanine"
       },
       "name_ja_confidence": "有力",
@@ -13521,7 +13584,9 @@
       "trainer": null,
       "energy": null,
       "jp_en_differences": [],
-      "notes": [],
+      "notes": [
+        "訂正（FIX-PMCG1-019-NAME-JA）: name.ja を「ウインディ」から「ウィンディ」に直した。根拠: kyuura が、同じカード（第1弾 拡張パックのウィンディ（LV.45・HP100））の日本語版のカードの画像で、名前の「ウ」のすぐあとの「ィ」が小さい字（「ウィンディ」）であることを確かめた（2026-10-30。照合の記録 IMG-PMCG1-019）。種の名前・ほかの版・英語版からは決めていない"
+      ],
       "source_ids": {
         "tcgdex": "PMCG1-019",
         "pokemontcg": [
@@ -13543,7 +13608,17 @@
       "product_group": "expansion_pack",
       "play_scope": "standard",
       "data_gaps": [],
-      "same_card_group": null
+      "same_card_group": null,
+      "corrections": [
+        {
+          "id": "FIX-PMCG1-019-NAME-JA",
+          "field": "name.ja",
+          "before": "ウインディ",
+          "after": "ウィンディ",
+          "basis": "card_image_check",
+          "decided_on": "2026-10-30"
+        }
+      ]
     },
     {
       "id": "PMCG1-020",
@@ -15695,7 +15770,7 @@
       "jp_set": "PMCG6",
       "category": "pokemon",
       "name": {
-        "ja": "カツラのウインディ",
+        "ja": "カツラのウィンディ",
         "en": "Blaine's Arcanine"
       },
       "name_ja_confidence": "有力",
@@ -15772,7 +15847,9 @@
       "trainer": null,
       "energy": null,
       "jp_en_differences": [],
-      "notes": [],
+      "notes": [
+        "訂正（FIX-PMCG6-034-NAME-JA）: name.ja を「カツラのウインディ」から「カツラのウィンディ」に直した。根拠: kyuura が、同じカード（ジム拡張第2弾「闇からの挑戦」のカツラのウィンディ（LV.42・HP90））の日本語版のカードの画像で、名前の「ウ」のすぐあとの「ィ」が小さい字（「カツラのウィンディ」）であることを確かめた（2026-10-30。照合の記録 IMG-PMCG6-034）。種の名前・ほかの版・英語版からは決めていない"
+      ],
       "source_ids": {
         "tcgdex": "PMCG6-034",
         "pokemontcg": [
@@ -15791,7 +15868,17 @@
       "product_group": "expansion_pack",
       "play_scope": "standard",
       "data_gaps": [],
-      "same_card_group": "SC-GD5-007"
+      "same_card_group": "SC-GD5-007",
+      "corrections": [
+        {
+          "id": "FIX-PMCG6-034-NAME-JA",
+          "field": "name.ja",
+          "before": "カツラのウインディ",
+          "after": "カツラのウィンディ",
+          "basis": "card_image_check",
+          "decided_on": "2026-10-30"
+        }
+      ]
     },
     {
       "id": "PMCG6-041",

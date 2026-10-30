@@ -2,19 +2,19 @@
   "format": "kyuura-engine research links 1",
   "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md kyuura の engine_unresolved_index にまだない停止コード（エンジンが新しく加えたもの）は kyuura_disposition を not_in_kyuura にし、kyuura への報告事項にする（v0.21 の突風・v0.22 のパソコン通信・v0.23 のエネルギー回収・v0.36 の AC6（手順 4 のコインとこんらん）・RD9（山札にもどす効果ときぜつ）・v0.37 の JS1（説明に弱点・抵抗力のない控えへのダメージ）。kyuura に記録ができたら scripts/check_research_links.py が知らせる）。 v0.31 で、コードのない未解決（T27・C34/C35・G40・P19・P32）に停止コードを付けた。kyuura の未解決の一覧はこれらをコードなし（stop_code が null）で挙げているので、kyuura_index_engine_key でその行と照らす（kyuura の一覧にコードが書かれたら scripts/check_research_links.py が知らせる）。 v0.50 で、退化の処理に使う kyuura の規定・裁定（GR-2000-P324-DEVOLUTION・CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION・CR-CHEMICAL-GAS-LEAVES・GR-2000-P323-KNOCKOUT）を applied_rule_records に結び付けた（id の対応だけ。scripts/check_research_links.py が研究の基準のコミットにあることと分類を確かめる）。 v0.51 で、トラッシュのたねポケモンを持ち主のベンチに出す処理に使う kyuura の規定（GR-2000-P309-ATTACK-PROCEDURE・GR-2000-P319-HP-AND-DAMAGE・GR-2000-P320-COUNTER-MOVE）を applied_rule_records に結び付けた（v0.50 と同じく id の対応だけ）。 v0.70 で、拡張パック以外の商品のポケモン 82 枚の説明文のあるワザ 85 を adopted_printed_text に加えた（kyuura データの採用。研究の基準のコミットに、これらのカードを指す LD-・CC-・CR-・UQ-・エラッタはない）。PR1-069 の名前（kyuura の値「？？？」）は、エンジンが写しの作り直しで利用者が示した訂正「ミュウ」を当てはめた（engine_user_corrections。scripts/check_research_links.py はこの訂正の欄だけを訂正のあとの値にして比べる）。",
   "repository": "https://github.com/moheronemy/kyuura",
-  "research_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
-  "research_branch": "claude/neo2-fossil-type-cost-checks",
+  "research_commit": "74b3ceb883dd815495d13b9987433fb14b36e44d",
+  "research_branch": "claude/v0122-names-text-trainer-procedures",
   "research_files": [
     "data/sidecar/rulings.json",
     "data/sidecar/latest_descriptions.json",
     "data/sidecar/card_checks.json"
   ],
-  "card_data_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+  "card_data_commit": "74b3ceb883dd815495d13b9987433fb14b36e44d",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
     "engine_unresolved_rulings": 293,
     "engine_stop_codes": 292,
-    "kyuura_issues": 74
+    "kyuura_issues": 79
   },
   "stop_codes": {
     "UNRESOLVED_MULLIGAN_COMPENSATION": {
@@ -3415,7 +3415,7 @@
     }
   },
   "kyuura_cases_without_engine_ruling": {
-    "note": "v0.97: kyuura の論点（UQ-）の事例（cases）のうち、エンジンの裁定 id（engine_ruling）を書いていないもの（kyuura の調査で加えた事例。kyuura の未解決の一覧 engine_unresolved_index は取り込んだ版（v0.68 まで）の項目だけ）と、エンジンでの扱い。stop_codes はエンジンがその場面を止める停止コード（研究の対応表の stop_codes にある。コードの kyuura_issue が事例の論点と違えば engine_issue_differs）、codeless_question はコードのない問い（codeless_questions）、unregistered はエンジンに登録していないカード（その場面は起こらない）。scripts/check_research_links.py が、研究の基準のコミットのそのような事例のすべてと同じことと、エンジンの扱いを確かめる",
+    "note": "v0.97: kyuura の論点（UQ-）の事例（cases）のうち、エンジンの裁定 id（engine_ruling）を書いていないもの（kyuura の調査で加えた事例。kyuura の未解決の一覧 engine_unresolved_index は取り込んだ版（v0.68 まで）の項目だけ）と、エンジンでの扱い。stop_codes はエンジンがその場面を止める停止コード（研究の対応表の stop_codes にある。コードの kyuura_issue が事例の論点と違えば engine_issue_differs）、codeless_question はコードのない問い（codeless_questions）、unregistered はエンジンに登録していないカード（その場面は起こらない）。scripts/check_research_links.py が、研究の基準のコミットのそのような事例のすべてと同じことと、エンジンの扱いを確かめる。v0.123: requires_unregistered は、登録したカードの事例で、その場面が同じ論点の事例の、登録していない別のカード（挙げた id のどれか）があるときだけ起こるもの（そのカードはデッキに入れられないので、その場面は起こらない。答えを決めたのではない）",
     "cases": [
       {
         "kyuura_issue": "UQ-EFFECT-AFTER-NO-DAMAGE",
@@ -3687,6 +3687,268 @@
         },
         "note": "なきごえ（最新の説明）。v0.121 で登録し、IP1-040 と同じく、受けた相手の特殊能力のダメージを GN1、控えのこのカードへのワザのダメージを v0.34 の NK5（kyuura では UQ-REDUCED-DAMAGE-BENCH-TARGET）で止める",
         "engine_issue_differs": true
+      },
+      {
+        "kyuura_issue": "UQ-BILINGUAL-NAME-GLOSS",
+        "card_id": "PR1-077",
+        "target": "card",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "ナッシー[Exeggutor]（エンジンに登録していないカード。英語の括弧書きが名前の一部かが決まらないので登録しない）（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-BILINGUAL-NAME-GLOSS",
+        "card_id": "PR1-075",
+        "target": "card",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "ナッシー[Exeggutor]（エンジンに登録していないカード。PR1-077 と同じ。印刷の画像は kyuura も読んでいない）（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-BILINGUAL-NAME-GLOSS",
+        "card_id": "PMCG2-012",
+        "target": "card",
+        "engine": {
+          "requires_unregistered": [
+            "PR1-075",
+            "PR1-077"
+          ]
+        },
+        "note": "ナッシー（ジャングル。登録済み）と、ナッシー[Exeggutor] を同じ名前として数えるか。ナッシー[Exeggutor] は登録していないのでデッキに入れられず、この数え方は起こらない。エンジンは別名の表を加えていない（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-BILINGUAL-NAME-GLOSS",
+        "card_id": "SI-013",
+        "target": "card",
+        "engine": {
+          "requires_unregistered": [
+            "PR1-075",
+            "PR1-077"
+          ]
+        },
+        "note": "ナッシー（サザンアイランド。登録済み）。PMCG2-012 と同じ（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-BILINGUAL-NAME-GLOSS",
+        "card_id": "neo1-090",
+        "target": "trainer",
+        "engine": {
+          "requires_unregistered": [
+            "PR1-075",
+            "PR1-077"
+          ]
+        },
+        "note": "スロットゲーム（登録済み）の「同じ名前のカード」に、ナッシーとナッシー[Exeggutor] が当たるか。ナッシー[Exeggutor] は山札に入らないので起こらない（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-BILINGUAL-NAME-GLOSS",
+        "card_id": "PMCG6-082",
+        "target": "trainer",
+        "engine": {
+          "requires_unregistered": [
+            "PR1-075",
+            "PR1-077"
+          ]
+        },
+        "note": "カツラのクイズ その3（登録済み）の答えの名前。置いたカードがナッシー[Exeggutor] になる場面は起こらない（クイズの候補の名前は登録したカードの名前で、ナッシー[Exeggutor] はない）（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-CHAOS-GYM-BORROWED-TURN",
+        "card_id": "PR1-027",
+        "target": "trainer",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "とりかえっこプリーズ（エンジンに登録していないカード）を錯乱ジムでかわりに使うときの「あなた」「相手」（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-FLASH-FACE-UP-DECK",
+        "card_id": "ES2-035",
+        "target": "trainer",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "フラッシュ（エンジンに登録していないカード。おもての山札の状態と公開の範囲を持たない）（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-FLASH-FACE-UP-DECK",
+        "card_id": "neo1-049",
+        "target": "power/0",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "ヤドキングの［ちえくらべ］（エンジンに登録していないカード）で山札の上におくカードの向き（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-FLASH-FACE-UP-DECK",
+        "card_id": "ES3-035",
+        "target": "trainer",
+        "engine": {
+          "requires_unregistered": [
+            "ES2-035",
+            "neo1-049"
+          ]
+        },
+        "note": "ポケモン再転送（登録済み）で、おもてのカードの上に置くカードの向き。エンジンの山札におもてのカードはない（フラッシュ・ちえくらべを登録していない）ので起こらない（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-FLASH-FACE-UP-DECK",
+        "card_id": "PMCG1-082",
+        "target": "trainer",
+        "engine": {
+          "requires_unregistered": [
+            "ES2-035",
+            "neo1-049"
+          ]
+        },
+        "note": "ポケモン図鑑 HANDY505（登録済み）で、おもてのカードをふくむ山札の上を並べ替えてもどす向き。ES3-035 と同じく起こらない（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-FLASH-FACE-UP-DECK",
+        "card_id": "neo4-112",
+        "target": "trainer",
+        "engine": {
+          "requires_unregistered": [
+            "ES2-035",
+            "neo1-049"
+          ]
+        },
+        "note": "ラジオとう（登録済み）で、おもてのカードを見たときの向き。ES3-035 と同じく起こらない（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-MIND-GAMES-OPTIONAL",
+        "card_id": "neo1-049",
+        "target": "power/0",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "［ちえくらべ］を使うかを選べるか（エンジンに登録していないカード。CR-MIND-GAMES-SCOPE は適用範囲だけを決めた）（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-MIND-GAMES-TRAINER-STEP",
+        "card_id": "neo1-049",
+        "target": "power/0",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "［ちえくらべ］のコインを、トレーナーを使う手順のどこで投げるか（エンジンに登録していないカード）（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-MIND-GAMES-TRAINER-STEP",
+        "card_id": "PMCG1-091",
+        "target": "trainer",
+        "engine": {
+          "requires_unregistered": [
+            "neo1-049"
+          ]
+        },
+        "note": "ピッピ人形（登録済み）をポケモンとして出すことが［ちえくらべ］の「手札から出して使う」に当たるか。［ちえくらべ］を登録していないので起こらない（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-MIND-GAMES-TRAINER-STEP",
+        "card_id": "PMCG3-046",
+        "target": "trainer",
+        "engine": {
+          "requires_unregistered": [
+            "neo1-049"
+          ]
+        },
+        "note": "なにかの化石（登録済み）。PMCG1-091 と同じ（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-MIND-GAMES-TRAINER-STEP",
+        "card_id": "PMCG5-087",
+        "target": "trainer",
+        "engine": {
+          "requires_unregistered": [
+            "neo1-049"
+          ]
+        },
+        "note": "錯乱ジム（登録済み）のコインと［ちえくらべ］のコインの順番。［ちえくらべ］を登録していないので起こらない（エンジンの錯乱ジムの処理の順番は、この論点の答えではない）（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-MIND-GAMES-TRAINER-STEP",
+        "card_id": "PMCG5-094",
+        "target": "trainer",
+        "engine": {
+          "requires_unregistered": [
+            "neo1-049"
+          ]
+        },
+        "note": "リムーブ禁止ジム（登録済み）でエネルギー・リムーブのために手札からトラッシュしたあとの［ちえくらべ］。起こらない（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-MIND-GAMES-TRAINER-STEP",
+        "card_id": "neo1-085",
+        "target": "trainer",
+        "engine": {
+          "requires_unregistered": [
+            "neo1-049"
+          ]
+        },
+        "note": "マダツボミのとう（登録済み）を、ほかのスタジアムがあるときに出したあとの［ちえくらべ］。起こらない（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-MIND-GAMES-TRAINER-STEP",
+        "card_id": "neo1-088",
+        "target": "trainer",
+        "engine": {
+          "requires_unregistered": [
+            "neo1-049"
+          ]
+        },
+        "note": "きあいのハチマキ（登録済み。ポケモンのどうぐ）をつけるときの［ちえくらべ］。起こらない（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-MIND-GAMES-TRAINER-STEP",
+        "card_id": "neo1-092",
+        "target": "trainer",
+        "engine": {
+          "requires_unregistered": [
+            "neo1-049"
+          ]
+        },
+        "note": "超エネルギー回収（登録済み）の使うための条件（手札から 2 枚トラッシュ）のあとの［ちえくらべ］。起こらない（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-STATED-COUNT-SHORT",
+        "card_id": "ES2-035",
+        "target": "trainer",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "フラッシュ（エンジンに登録していないカード）で、山札が 5 枚より少ないプレイヤーがいるとき（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-SWAP-PLEASE-OWNERSHIP",
+        "card_id": "PR1-027",
+        "target": "trainer",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "とりかえっこプリーズ（エンジンに登録していないカード。カードの持ち主と、今持っているプレイヤーを分けて持たない）（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-SWAP-PLEASE-OWNERSHIP",
+        "card_id": "neo1-049",
+        "target": "power/0",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "交換で受け取ったトレーナーカードへの［ちえくらべ］（エンジンに登録していないカード）（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-SWAP-PLEASE-OWNERSHIP",
+        "card_id": "PMCG5-087",
+        "target": "trainer",
+        "engine": {
+          "requires_unregistered": [
+            "PR1-027"
+          ]
+        },
+        "note": "交換で受け取ったトレーナーカードを錯乱ジム（登録済み）で使えなかったときの「持ち主のトラッシュ」。とりかえっこプリーズを登録していないので、持ち主と持っているプレイヤーは違わない（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
       }
     ]
   },

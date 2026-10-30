@@ -42,6 +42,10 @@ v0.97（docs/unown-research-idfnj-v0.97.md 3 章）: kyuura が調査で立て�
    （``kyuura_cases_without_engine_ruling``）は、研究の基準のコミットのそのような事例のすべてと同じで、エンジンの扱い（停止コード・コードのない問い・登録していない）が
    対応表・登録表と合う。
 
+v0.123（docs/arcanine-name-migration-v0.123.md 2 章）: 9 のエンジンの扱いに ``requires_unregistered`` を加えた。登録したカードの事例で、その場面が同じ論点の事例の別のカード
+   （エンジンに登録していないカード。ちえくらべ・フラッシュ・とりかえっこプリーズ・ナッシー[Exeggutor]）があるときだけ起こるもの。挙げたカードがどれも登録されておらず、同じ論点の事例の
+   カードで、事例のカードそのものではないことを確かめる。
+
 kyuura のデータの写しは作らない（id と、照らした結果だけを使う）。問題があれば終了コード 1。
 
     python3 scripts/check_research_links.py --kyuura ../kyuura
@@ -671,7 +675,8 @@ def unlinked_case_problems(links: dict, issues: dict, registry) -> list[str]:
     - 対応表の事例（論点・カード・対象）の集まりが、研究の基準のコミットの、``engine_ruling`` のない事例のすべてと同じ（見落とし・余分がない）
     - エンジンの扱いはちょうど 1 つ: ``stop_codes``（対応表の stop_codes にある停止コード。そのカードの対象が登録されている。コードの kyuura_issue が事例の論点と違えば
       ``engine_issue_differs`` を真にする（kyuura への報告事項）。同じなら書かない）・``codeless_question``（codeless_questions にあり、論点が同じ。対象が登録されている）・
-      ``unregistered``（そのカードの対象を登録していない。その場面は起こらない）
+      ``unregistered``（そのカードの対象を登録していない。その場面は起こらない）・``requires_unregistered``（v0.123。対象は登録されているが、その場面は、同じ論点の事例の、
+      登録していない別のカード（挙げた id のどれか）があるときだけ起こる。デッキに入れられないので、その場面は起こらない）
     """
     problems: list[str] = []
     section = links.get("kyuura_cases_without_engine_ruling")
@@ -681,6 +686,7 @@ def unlinked_case_problems(links: dict, issues: dict, registry) -> list[str]:
     if not isinstance(cases, list):
         return ["kyuura_cases_without_engine_ruling の cases はリスト"]
     actual = set()
+    case_cards = {issue_id: {case.get("card_id") for case in issue.get("cases") or ()} for issue_id, issue in issues.items()}  # v0.123
     for issue_id, issue in issues.items():
         for case in issue.get("cases") or ():
             if case.get("engine_ruling"):
@@ -699,7 +705,7 @@ def unlinked_case_problems(links: dict, issues: dict, registry) -> list[str]:
         engine = case["engine"]
         registered = case["target"] in _registered_targets(registry, case["card_id"])
         if not isinstance(engine, dict) or len(engine) != 1:
-            problems.append(f"{where}: エンジンの扱い（engine）は stop_codes・codeless_question・unregistered のちょうど 1 つ")
+            problems.append(f"{where}: エンジンの扱い（engine）は stop_codes・codeless_question・unregistered・requires_unregistered のちょうど 1 つ")
             continue
         differs = False
         if "stop_codes" in engine:
@@ -716,6 +722,20 @@ def unlinked_case_problems(links: dict, issues: dict, registry) -> list[str]:
                 problems.append(f"{where}: コードのない問い {engine['codeless_question']!r} が対応表にない・論点が違う")
             if not registered:
                 problems.append(f"{where}: コードのない問いの比べを通すとしたカードの対象が登録されていない")
+        elif "requires_unregistered" in engine:
+            # v0.123: 場面に要る別のカードは、同じ論点の事例のカードで、どれもエンジンに登録していない（事例のカードそのものではない）。事例の対象は登録されている
+            required = engine["requires_unregistered"]
+            if (not isinstance(required, list) or not required or len(set(required)) != len(required)
+                    or any(not isinstance(card, str) or card == case["card_id"] for card in required)):
+                problems.append(f"{where}: requires_unregistered は、事例のカードと違うカードの id の重ならないリスト")
+                continue
+            for card in required:
+                if card not in case_cards.get(case["kyuura_issue"], ()):
+                    problems.append(f"{where}: 場面に要るとしたカード {card} が、論点 {case['kyuura_issue']} の事例のカードではない")
+                if _registered_targets(registry, card):
+                    problems.append(f"{where}: 場面に要るとしたカード {card} が登録されている（扱いを書き直す）")
+            if not registered:
+                problems.append(f"{where}: 登録していない別のカードを要るとしたカードの対象 {case['target']} が登録されていない（unregistered にする）")
         elif engine != {"unregistered": True}:
             problems.append(f"{where}: エンジンの扱い {engine!r} を扱えない")
         elif registered:

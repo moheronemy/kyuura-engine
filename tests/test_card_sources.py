@@ -102,6 +102,7 @@ from tests.helpers import (
     V0_79_CARDS,
     V0_80_CARDS,
     V0_81_CARDS, V0_82_CARDS, V0_83_CARDS, V0_84_CARDS, V0_85_CARDS, V0_86_CARDS, V0_87_CARDS, V0_88_CARDS,
+    kyuura_records_since_v0_69,
 )
 from tests.release_catalog import cards_after
 
@@ -328,7 +329,8 @@ class ShippedRecordTest(unittest.TestCase):
             with self.subTest(card=card_id):
                 self.assertEqual((record["basis"], record["status"], record["kyuura_commit"]), (cs.KYUURA_DATA, cs.ADOPTED, ADOPTED_COMMIT))
                 # 炎エネルギーをトラッシュするワザの文面は kyuura のエラッタ（RUL-）。第4弾ロケット団のポニータは印刷の文面（記録の文と違う）
-                self.assertEqual(record["kyuura_records"], [] if card_id == "PMCG4-013" else [RUL])
+                # v0.123: 研究の基準を 74b3ceb に上げて、ウィンディ（PMCG1-019）に名前の裁定 CR-ARCANINE-PRINTED-NAMES が加わった（tests/helpers.py の V0_123_KYUURA_RECORDS_ADDED）
+                self.assertEqual(record["kyuura_records"], kyuura_records_since_v0_69(card_id, [] if card_id == "PMCG4-013" else [RUL]))
                 self.assertLessEqual(set(record["play_text"].values()), {cs.PRINTED_TEXT, RUL})
                 [check] = record["external_checks"]
                 self.assertEqual(check["checked_on"], "2026-10-15")

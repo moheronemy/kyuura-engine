@@ -1,7 +1,7 @@
 """カードデータの読み込みと、対応・未対応の分類。
 
 カードデータの由来: kyuura（https://github.com/moheronemy/kyuura）commit
-2fe0bc042ce187d191843819262f8036abbb343d の data/cards.json（v0.121 から。v0.114〜v0.120 は e519b99e2adcc6c2cd0998569ae5ee1101de6e89、v0.97〜v0.113 は 73a169063463bbf7bcaa3137d70cbf9721d11534、v0.69〜v0.96 は
+74b3ceb883dd815495d13b9987433fb14b36e44d の data/cards.json（v0.123 から。v0.121〜v0.122 は 2fe0bc042ce187d191843819262f8036abbb343d、v0.114〜v0.120 は e519b99e2adcc6c2cd0998569ae5ee1101de6e89、v0.97〜v0.113 は 73a169063463bbf7bcaa3137d70cbf9721d11534、v0.69〜v0.96 は
 7d3f4ca76c084774efb4ac6a1d3a943387e183c3、v0.68 までは ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691）。
 過去の原典照合は kyuura_engine/data/card_verification.json（ecb2d69 の写しと照らした履歴）。
 """
@@ -67,7 +67,7 @@ from tests.helpers import (
 )
 from tests.release_catalog import cards_after
 
-KYUURA_COMMIT = "2fe0bc042ce187d191843819262f8036abbb343d"  # v0.121 から（v0.114〜v0.120 は e519b99、v0.97〜v0.113 は 73a1690、v0.69〜v0.96 は 7d3f4ca76c084774efb4ac6a1d3a943387e183c3）
+KYUURA_COMMIT = "74b3ceb883dd815495d13b9987433fb14b36e44d"  # v0.123 から（v0.121〜v0.122 は 2fe0bc0、v0.114〜v0.120 は e519b99、v0.97〜v0.113 は 73a1690、v0.69〜v0.96 は 7d3f4ca76c084774efb4ac6a1d3a943387e183c3）
 # v0.68 までの写しの元。過去の原典照合の記録（card_verification.json。履歴）はこのコミットの写しと照らした
 PREVIOUS_KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
 ROOT = Path(__file__).resolve().parent.parent
@@ -401,9 +401,11 @@ class ProvenanceTest(unittest.TestCase):
         # v0.97: 修正ごとの前の写しの元は、kyuura が当てはめた移行の段の前（v0.69 の段は ecb2d69、v0.97 の段（アンノーンI・D・F のルール文）は 7d3f4ca）。
         # v0.114: ベイビィ 13 枚のルール文・進化先（kyuura が画像で埋めた。v0.114 の段）は 73a1690（docs/baby-rules-evolution-v0.114.md 4.1 節）
         # v0.121: ボロのつりざおの効果文（kyuura が画像で直した。v0.121 の段）は e519b99（docs/hand-bench-attack-conditions-v0.121.md 3 章）
+        # v0.123: ウィンディ 2 枚の名前（kyuura が画像で直した生成の値の誤り。v0.123 の段）は 2fe0bc0（docs/arcanine-name-migration-v0.123.md 2 章）
         self.assertEqual({(c["migration"], c["previous_source"]) for c in extract["kyuura_corrections"]},
                          {("v0.69", PREVIOUS_KYUURA_COMMIT), ("v0.97", "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"),
-                          ("v0.114", "73a169063463bbf7bcaa3137d70cbf9721d11534"), ("v0.121", "e519b99e2adcc6c2cd0998569ae5ee1101de6e89")})
+                          ("v0.114", "73a169063463bbf7bcaa3137d70cbf9721d11534"), ("v0.121", "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"),
+                          ("v0.123", "2fe0bc042ce187d191843819262f8036abbb343d")})
         self.assertEqual(extract["source"]["commit"], KYUURA_COMMIT)
         for card_id in extract["pool_v0_1"]:
             record = verification["cards"][card_id]

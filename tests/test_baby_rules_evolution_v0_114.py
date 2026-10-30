@@ -121,7 +121,18 @@ class MigrationTest(unittest.TestCase):
         before = json.loads(subprocess.check_output(["git", "-C", str(ROOT), "show", f"{V0113}:kyuura_engine/data/kyuura_cards.json"]))
         now = {card["id"]: card for card in read_extract()["cards"]}
         self.assertEqual(len(before["cards"]), 1250)
+        # v0.123: 段 v0.123 で kyuura が直したウィンディ 2 枚の名前（docs/arcanine-name-migration-v0.123.md 2 章）は、その欄と、付随する notes・corrections だけが違う
+        renamed = {c["card_id"]: c for c in read_extract()["kyuura_corrections"] if c["migration"] == "v0.123"}
+        self.assertEqual({card: (c["field"], c["before"], c["after"]) for card, c in renamed.items()},
+                         {"PMCG1-019": ("name.ja", "ウインディ", "ウィンディ"), "PMCG6-034": ("name.ja", "カツラのウインディ", "カツラのウィンディ")})
         for card in before["cards"]:
+            if card["id"] in renamed:
+                fix = renamed[card["id"]]
+                self.assertEqual((card["name"]["ja"], now[card["id"]]["name"]), (fix["before"], {**card["name"], "ja": fix["after"]}), card["id"])
+                self.assertEqual([x["id"] for x in now[card["id"]]["corrections"]], [fix["id"]])
+                self.assertEqual({k: v for k, v in now[card["id"]].items() if k not in ("name", "notes", "corrections")},
+                                 {k: v for k, v in card.items() if k not in ("name", "notes", "corrections")}, card["id"])
+                continue
             self.assertEqual(now[card["id"]], card, card["id"])
         self.assertEqual((before["equivalent_targets"], before["reprint_targets"]), (read_extract()["equivalent_targets"], read_extract()["reprint_targets"]))
 

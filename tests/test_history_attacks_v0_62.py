@@ -236,9 +236,12 @@ class CorrectionTest(unittest.TestCase):
         # v0.122: 写しに入れた 13 枚のうち、段 v0.121 で kyuura がカードの画像で直した 12 枚（アンノーンM・U・A のルール文・8 枚の進化元・PRN-030 の段階。アンノーンW には訂正がない。
         # docs/unown-fossil-retreat-reactions-v0.122.md 2.1 節）
         v122 = set(self.data["pool_v0_122"]) - {"neo4-064"}
-        self.assertEqual({c["card_id"] for c in self.data["kyuura_corrections"]}, corrected | unown | babies | old_rod | v122)
+        # v0.123: kyuura がカードの画像で直したウィンディ 2 枚の名前（台帳 FIX-PMCG1-019-NAME-JA・FIX-PMCG6-034-NAME-JA。生成の値の誤り。v0.123 の移行の段。
+        # docs/arcanine-name-migration-v0.123.md 2 章）
+        arcanine = {"PMCG1-019", "PMCG6-034"}
+        self.assertEqual({c["card_id"] for c in self.data["kyuura_corrections"]}, corrected | unown | babies | old_rod | v122 | arcanine)
         self.assertEqual({c["id"] for c in self.data["cards"] if c.get("corrections")},
-                         corrected | (unown & {c["id"] for c in self.data["cards"]}) | babies | old_rod | v122)
+                         corrected | (unown & {c["id"] for c in self.data["cards"]}) | babies | old_rod | v122 | arcanine)
 
     @unittest.skipUnless((KYUURA / ".git").exists(), "../kyuura がない")
     def test_correction_sources_check_and_tampering(self):

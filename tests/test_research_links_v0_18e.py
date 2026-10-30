@@ -65,7 +65,8 @@ class ResearchLinksTest(unittest.TestCase):
         # v0.97: 研究の基準と写しの元を kyuura 73a1690（研究 78d090c を取り込んだ main の PR #5 のマージ。木は 78d090c と同じ）に上げた（docs/unown-research-idfnj-v0.97.md 2 章・3 章）
         # v0.114: 研究の基準と写しの元を kyuura e519b99（ブランチ claude/baby-data-engine-v0113-handover の固定コミット。親は 73a1690）に上げた（docs/baby-rules-evolution-v0.114.md 2 章）
         # v0.121: 研究の基準と写しの元を kyuura 2fe0bc0（ブランチ claude/neo2-fossil-type-cost-checks の固定コミット。親は 7b03fd9、研究 c932625 を含む）に上げた（docs/hand-bench-attack-conditions-v0.121.md 3 章）
-        self.assertEqual(LINKS["research_commit"], "2fe0bc042ce187d191843819262f8036abbb343d")
+        # v0.123: 研究の基準と写しの元を kyuura 74b3ceb（ブランチ claude/v0122-names-text-trainer-procedures の固定コミット。親は aceb98b、基点 2fe0bc0）に上げた（docs/arcanine-name-migration-v0.123.md 2 章）
+        self.assertEqual(LINKS["research_commit"], "74b3ceb883dd815495d13b9987433fb14b36e44d")
         self.assertEqual(LINKS["engine_import_id"], "ENGINE-46A3E2E")
         self.assertEqual(LINKS["card_data_commit"], read_extract()["source"]["commit"])
         self.assertEqual(LINKS["research_commit"], LINKS["card_data_commit"])
@@ -252,7 +253,13 @@ class ResearchLinksTest(unittest.TestCase):
         issues |= {v["kyuura_issue"] for v in LINKS["codeless_questions"].values() if v["kyuura_issue"]}
         for section in ("unresolved_without_code", "deferred_card_questions", "implementation_assumptions_with_issue"):
             issues |= {v["kyuura_issue"] for v in LINKS[section]}
-        self.assertEqual(len(issues), LINKS["counts"]["kyuura_issues"])
+        # v0.123: kyuura 74b3ceb の新しい論点 5 件（UQ-BILINGUAL-NAME-GLOSS・UQ-MIND-GAMES-OPTIONAL・UQ-MIND-GAMES-TRAINER-STEP・UQ-FLASH-FACE-UP-DECK・UQ-SWAP-PLEASE-OWNERSHIP）は、
+        # 事例のカードを登録していない（または場面に要るカードを登録していない）ので停止コードがなく、事例の対応（kyuura_cases_without_engine_ruling）にだけある
+        # （scripts/check_research_links.py の issues_in_links と同じ数え方。v0.97 から）
+        cases = {v["kyuura_issue"] for v in LINKS["kyuura_cases_without_engine_ruling"]["cases"]}
+        self.assertEqual(cases - issues, {"UQ-BILINGUAL-NAME-GLOSS", "UQ-MIND-GAMES-OPTIONAL", "UQ-MIND-GAMES-TRAINER-STEP", "UQ-FLASH-FACE-UP-DECK",
+                                          "UQ-SWAP-PLEASE-OWNERSHIP"})
+        self.assertEqual(len(issues | cases), LINKS["counts"]["kyuura_issues"])
         self.assertTrue(all(i.startswith("UQ-") for i in issues))
 
     def test_engine_ruling_ids_appear_in_their_documents(self):
