@@ -12,8 +12,8 @@
   "card_data_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 277,
-    "engine_stop_codes": 276,
+    "engine_unresolved_rulings": 278,
+    "engine_stop_codes": 277,
     "kyuura_issues": 73
   },
   "stop_codes": {
@@ -3170,6 +3170,17 @@
           "version": "v0.120",
           "document": "docs/fossil-basic-virtual-attacks-v0.120.md",
           "ruling_id": "TF3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_GROWL_NON_ATTACK_DAMAGE": {
+      "engine_rulings": [
+        {
+          "version": "v0.121",
+          "document": "docs/hand-bench-attack-conditions-v0.121.md",
+          "ruling_id": "GN1"
         }
       ],
       "kyuura_issue": null,

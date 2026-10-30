@@ -13103,10 +13103,11 @@ def received_power_damage(state: GameState, owner: int, receiver: PokemonInPlay,
     growl = reduced_damage_to_source(state, source)
     if amount > 0 and growl is not None and not expires_at_turn_start(growl) and growl.source_card == receiver.card:
         # v0.76: 「なきごえ」（説明は「…このカードにダメージを与える時」で、ワザに限らない）を受けたポケモンが、はたらく番に、効果を与えたポケモンに特殊能力のダメージを
-        # 与える。はたらく番は受けたポケモンの持ち主の番で、その番にこのポケモンが与えうる特殊能力のダメージ（はんげき・わるいねぞう・ファイナルビームは相手のワザの
-        # ダメージ、こっそりかみつくは進化で効果が消える）は、今の対応カードでは起こらない（docs/persistent-attack-modifiers-v0.76.md 4 章）。黙って減らさずに続けないよう、
-        # 起こったらエンジンの不具合として止める
-        raise RuntimeError(f"「なきごえ」を受けたポケモン {source.pokemon_id} が、効果を与えたポケモン {receiver.pokemon_id} に特殊能力のダメージを与える（到達しない場面。エンジンの不具合）")
+        # 与える。v0.76 は、はたらく番（受けたポケモンの持ち主の番）にこのポケモンが与えうる特殊能力のダメージは今の対応カードでは起こらないとして、内部エラーにしていた
+        # v0.121（GN1。docs/hand-bench-attack-conditions-v0.121.md 2 章）: v0.114 のエレキッドの［わんぱくパンチ］（自分の番に使う。相手の対戦ポケモンに特殊能力のダメージ）で
+        # 起こる。ワザ以外のダメージを減らすかは記録で決まらず、受けるダメージが変わるので止める（呼ぶ側は状態を変える前に聞く）
+        raise UnsupportedError(GROWL_NON_ATTACK_DAMAGE_CODE,
+                               f"「なきごえ」を受けたポケモン {source.pokemon_id} → 効果を与えたポケモン {receiver.pokemon_id} への特殊能力のダメージ {amount}: {GROWL_NON_ATTACK_DAMAGE_REASON}")
     applied = []
     for holder_owner, holder, key, effect in continuous_powers(state):
         if holder is not receiver:
@@ -19391,6 +19392,13 @@ SCRAM_RESTORED_REASON = (
     "（はたらくか）は、印刷の文面・kyuura の記録から決められない（SC2）"
 )
 # DB1（v0.75）: 「もろばバサミ」の「次の相手の番、このカードが受けるダメージは2倍になる。」を、ワザでないダメージ（特殊能力のダメージ）に当てはめるか
+# GN1（v0.121。docs/hand-bench-attack-conditions-v0.121.md 2 章）: 「なきごえ」（「このワザを受けた相手は、…このカードにダメージを与える時、そのダメージが「-10」される」）を受けた
+# ポケモンが、はたらく番に、効果を与えたポケモンへワザ以外のダメージを与える。控えのこのカードへのワザのダメージは v0.34 の NK5（別の問い。そのまま）
+GROWL_NON_ATTACK_DAMAGE_CODE = "UNRESOLVED_GROWL_NON_ATTACK_DAMAGE"
+GROWL_NON_ATTACK_DAMAGE_REASON = (
+    "「なきごえ」の「このワザを受けた相手は、…このカードにダメージを与える時、そのダメージが「-10」される」がワザ以外（特殊能力）のダメージにも当てはまるかは、"
+    "記録から決められない（GN1。説明はワザのダメージに限らないが、p.321 の計算の順番はワザによるダメージの計算。減らすかどうかで受けるダメージが変わる）"
+)
 DOUBLED_POWER_DAMAGE_CODE = "UNRESOLVED_DOUBLED_DAMAGE_POWER_DAMAGE"
 DOUBLED_POWER_DAMAGE_REASON = (
     "「もろばバサミ」の「次の相手の番、このカードが受けるダメージは2倍になる。」を、特殊能力のダメージ（ワザによるダメージではない。p.321「8」）に当てはめるかは、"
@@ -29287,6 +29295,7 @@ class ReduceDamageToSelfNextOpponentTurn(AttackEffect):
     - 相手に与える効果なので「とうめい」・「ワザをうけない」状態を評価する（v0.34 と同じ要素 ``OpponentReducedDamage``）。「ダメージを受けない」状態は効果を止めない
     - 効果を与えたポケモンが控えにいるときの、控えへのダメージに当てはめるかは、v0.34 の NK5 と同じ確かめで止める（説明の書き方は違うが、控えのこのカードへのダメージに
       当てはめるかは記録で決まらない。docs 4 章）
+    - 受けた相手がはたらく番にこのカードへ与える特殊能力のダメージは、v0.121 から GN1 で止める（``received_power_damage``。v0.120 までは到達しないとして内部エラー）
     """
 
     amount: int
@@ -42483,7 +42492,8 @@ class CoinDamageOpponentActiveThenEndTurn(PowerEffect):
       使ったことにしない）
     - 説明に「弱点・抵抗力」に関係なく、がないので、受けるポケモンの弱点・抵抗力がこのカードの今の色なら Z9（v0.17b からの問い。``POWER_DAMAGE_WR_CODE``）。もろばバサミ（DB1）・鋼エネルギー
       との順番（MT1）・ワザでないダメージに当てはめるかが決まらない力（DF2）とあわせて、受け付けるかがコインの結果で変わらないよう、コインの前（宣言の前）に止める。相手のバトル場が
-      うらのカードなら、弱点・抵抗力が読めず結果が変わりうるので、同じく Z9 で止める（おもてにしない）"""
+      うらのカードなら、弱点・抵抗力が読めず結果が変わりうるので、同じく Z9 で止める（おもてにしない）
+    - v0.121: このカードが「なきごえ」を受けていて、相手のバトル場が効果を与えたポケモンなら、特殊能力のダメージを減らすかが決まらない（GN1。``received_power_damage``）。同じく宣言の前に止める"""
 
     amount: int = 20
     implementation_id = "coin_damage_opponent_active_then_end_turn"
@@ -42498,7 +42508,7 @@ class CoinDamageOpponentActiveThenEndTurn(PowerEffect):
         return problems
 
     def damage_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
-        """「おもて」のときのダメージを決められないなら、その理由（Z9・DB1・MT1・DF2）。状態を変えず、乱数を使わない。"""
+        """「おもて」のときのダメージを決められないなら、その理由（Z9・DB1・GN1・MT1・DF2）。状態を変えず、乱数を使わない。"""
         opponent = 1 - use.player
         target = state.players[opponent].active
         _, user = state.find_pokemon(use.pokemon_id)

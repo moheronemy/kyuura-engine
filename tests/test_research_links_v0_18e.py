@@ -186,7 +186,9 @@ class ResearchLinksTest(unittest.TestCase):
                              "UNRESOLVED_ESP_COPIED_ATTACK_COINS",
                              # v0.120: PE1・PE2・VP1・FE1・FE2・TF3（docs/fossil-basic-virtual-attacks-v0.120.md 10 章。どれも kyuura に対応する記録がない）
                              "UNRESOLVED_PRE_EVOLUTION_ATTACK_STAGE", "UNRESOLVED_PRE_EVOLUTION_ATTACK_CONDITIONS", "UNRESOLVED_PERMITTED_ATTACK_HELD",
-                             "UNRESOLVED_REVIVED_BASIC_DEVOLVED", "UNRESOLVED_REVIVE_HAND_BASIC_ENTRY", "UNRESOLVED_TRANSFORM_REVIVED_BASIC"})
+                             "UNRESOLVED_REVIVED_BASIC_DEVOLVED", "UNRESOLVED_REVIVE_HAND_BASIC_ENTRY", "UNRESOLVED_TRANSFORM_REVIVED_BASIC",
+                             # v0.121: GN1（docs/hand-bench-attack-conditions-v0.121.md 2 章。研究の基準 e519b99 の kyuura に対応する記録がない）
+                             "UNRESOLVED_GROWL_NON_ATTACK_DAMAGE"})
         # v0.97（docs/unown-research-idfnj-v0.97.md 3 章）: kyuura が調査で立てた UQ-SELF-EXCLUDING-POWER-COPIES の事例にわるいデンリュウ（neo4-046）の［かんでん］があるので、
         # CV1 を論点に結んだ（kyuura は v0.86 を取り込んでいないので、未解決の一覧に CV1 の行はない。kyuura の事例は kyuura_cases_without_engine_ruling で照らす）
         # v0.97 で加えた DF1・DF2 も、kyuura に論点（UQ-SELF-EXCLUDING-POWER-COPIES・UQ-NON-ATTACK-DAMAGE-MODIFIERS）はあるが、未解決の一覧に行がない
