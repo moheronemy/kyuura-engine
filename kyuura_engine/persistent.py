@@ -74,6 +74,7 @@ from .state import (
     KnockOutSurvival,
     MaxHpSet,
     NextTurnAttackDamage,
+    NextTurnFailureWaiver,
     PeriodAttackCoinCheck,
     PeriodAttackLock,
     PeriodLeaveLock,
@@ -122,8 +123,11 @@ CURED = "cured"
 SOURCE_LEFT_ACTIVE = "source_left_active"
 # v0.114: 説明が「そのポケモンがバトル場に出てきたとき、この効果は消える」と書く効果を受けているポケモンが、バトル場に出た（［じっとみる］。``remove_on_entering_active``）
 ENTERED_ACTIVE = "entered_active"
+# v0.121: 説明が「このワザを受けた相手がバトル場をはなれたら、この効果は消える」と書く、ワザを使ったポケモン自身が持つ効果（「ロックオン」）の、失効を決める受けた相手がバトル場をはなれた
+# （``remove_source_left_effects``）。効果を与えたポケモン（発生源）がはなれた ``SOURCE_LEFT_ACTIVE`` とは別の理由
+TARGET_LEFT_ACTIVE = "target_left_active"
 REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT, FORCED_SWITCH, RETURN_IN_PLAY_TO_DECK, USED, RETURN_IN_PLAY_TO_HAND, DISCARD_FROM_PLAY,
-                   REPLACED, DEVOLVE, DAMAGED, CURED, SOURCE_LEFT_ACTIVE, ENTERED_ACTIVE)
+                   REPLACED, DEVOLVE, DAMAGED, CURED, SOURCE_LEFT_ACTIVE, ENTERED_ACTIVE, TARGET_LEFT_ACTIVE)
 
 
 def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, effect, *, attack: str, **extra) -> None:
@@ -233,6 +237,11 @@ def remove_source_left_effects(state: GameState, owner: int, pokemon: PokemonInP
                           and e.source_player == owner and e.source_pokemon == pokemon.pokemon_id)
             remove_persistent_effects(state, side, holder, SOURCE_LEFT_ACTIVE, found)
             _mark_source_left(state, side, holder, owner, pokemon)
+            # v0.121（docs/hand-bench-attack-conditions-v0.121.md 8 章）: 「ロックオン」の「このワザを受けた相手がバトル場をはなれたら、この効果は消える」。効果を持つのはワザを使ったポケモンで、
+            # 失効を決める参照先（受けた相手の場の番号）がはなれたら消す（もどっても復活しない）
+            waivers = tuple(e for e in holder.persistent_effects
+                            if isinstance(e, NextTurnFailureWaiver) and e.target_player == owner and e.target_pokemon == pokemon.pokemon_id)
+            remove_persistent_effects(state, side, holder, TARGET_LEFT_ACTIVE, waivers)
 
 
 def _mark_source_left(state: GameState, side: int, holder: PokemonInPlay, owner: int, pokemon: PokemonInPlay) -> None:

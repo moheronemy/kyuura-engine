@@ -654,6 +654,7 @@ POOL_KEYS = (
     "pool_v0_118",  # v0.118（上限なしコイン・攻撃時の能力・回復の配分のポケモン 9 枚。docs/unbounded-coins-heal-allocation-v0.118.md）
     "pool_v0_119",  # v0.119（受けるダメージの選択・どくとねむり・場の効果のポケモン 11 枚。docs/damage-reactions-poison-sleep-v0.119.md）
     "pool_v0_120",  # v0.120（化石の復活と仮想ワザの供給のポケモン 10 枚・トレーナー 1 枚。docs/fossil-basic-virtual-attacks-v0.120.md）
+    "pool_v0_121",  # v0.121（手札からの登場とワザの使用条件のポケモン 7 枚・トレーナー 2 枚。docs/hand-bench-attack-conditions-v0.121.md）
 )
 
 

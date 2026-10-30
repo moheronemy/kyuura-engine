@@ -247,6 +247,7 @@ from .state import (
     ResistanceChange,
     Retaliation,
     SecretePoison,
+    NextTurnFailureWaiver,
     TurnAttack,
     TurnField,
     WeaknessChange,
@@ -358,6 +359,13 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
         # v0.117: おいうちの「にげる」ときのダメージの量と、効果を与えたワザ（AttackKey の文字列）。種類の値と項目を加えただけで形式は変えない
         data["amount"] = effect.amount
         data["attack"] = effect.attack
+    elif isinstance(effect, NextTurnFailureWaiver):
+        # v0.121: ロックオン（``"next_turn_failure_waiver"``）の効果を与えたワザ・失敗しなくなるワザの位置と、失効を決める受けた相手（プレイヤー・場の番号）。種類の値と項目を加えただけで
+        # 形式は変えない（v0.92 の期間を明示した効果と同じ。v0.120 までの書き出しを読む側は、知らない種類として拒否すること）
+        data["attack_index"] = effect.attack_index
+        data["target_attack_index"] = effect.target_attack_index
+        data["target_player"] = effect.target_player
+        data["target_pokemon"] = effect.target_pokemon
     elif isinstance(effect, SecretePoison):
         # v0.119: どくをだすの控えポケモンへのダメージの量と、効果を与えたワザの位置（``"secrete_poison"``）。種類の値と項目を加えただけで形式は変えない（v0.118 までの書き出しを読む側は、
         # 知らない種類として拒否すること）

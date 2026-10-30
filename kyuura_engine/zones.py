@@ -1146,11 +1146,18 @@ def deck_top_to_discard(state: GameState, player: int, count: int, *, trainer: i
 # ---------------------------------------------------------------- v0.56（docs/trainer-decisions-turn-effects-v0.56.md 4 章）。どれも同じ uid・同じ持ち主のまま動かす
 
 
-def hand_to_bench_by_effect(state: GameState, owner: int, cards: tuple[int, ...], *, chooser: int, trainer: int) -> tuple[PokemonInPlay, ...]:
+def hand_to_bench_by_effect(state: GameState, owner: int, cards: tuple[int, ...], *, chooser: int, trainer: int | None = None, effect: str | None = None,
+                            attacker: int | None = None, attacker_pokemon_id: int | None = None) -> tuple[PokemonInPlay, ...]:
     """プレイヤー ``owner`` の手札のたねポケモンのカード ``cards`` を、並びの順に ``owner`` のベンチの最後に出す（v0.56。エリカの香水の「相手の手札から「たねポケモン」を
     好きなだけ選び、相手のベンチに出させてよい」。選ぶのは使ったプレイヤー ``chooser``）。場のポケモンは手札から出すときと同じ ``enter_play`` で作る（新しい場のポケモンの
     番号・場に出た番は今の番。その番には進化できない）。1 枚ごとにログ ``trainer_bench_from_hand``（``player``（持ち主）・``card``・``pokemon_id``・``chooser``・``trainer_card``。
-    場に出たカードなので公開）。出してよいか（たねポケモン・手札にある・ベンチの空き）の確認は呼ぶ側。漏れていれば ``RuntimeError``（状態を変える前）。"""
+    場に出たカードなので公開）。出してよいか（たねポケモン・手札にある・ベンチの空き）の確認は呼ぶ側。漏れていれば ``RuntimeError``（状態を変える前）。
+
+    v0.121: ワザの効果（わるいヘルガーの「ぶきみなとおぼえ」・わるいリングマの「ちょうはつ」）は、``trainer`` のかわりに ``effect``（ワザ。``AttackKey`` の文字列）・``attacker``（ワザを使った
+    プレイヤー）・``attacker_pokemon_id`` を渡す（ちょうど一つの出どころ。トレーナーのログの形は v0.120 と同じ）。ログは ``attack_bench_from_hand``（``player``（持ち主）・``card``・
+    ``pokemon_id``・``chooser``・``effect``・``attacker``・``attacker_pokemon_id``。公開）。"""
+    if (trainer is None) == (effect is None) or (effect is not None and (attacker is None or attacker_pokemon_id is None)):
+        raise RuntimeError("手札からベンチに出す効果の出どころ（トレーナーかワザ）がちょうど一つではない（エンジンの不具合）")
     p = state.players[owner]
     if len(set(cards)) != len(cards) or any(uid not in p.hand or state.cards[uid].owner != owner or not state.card_def(uid).is_baby_or_basic_pokemon for uid in cards) \
             or len(p.bench) + len(cards) > bench_limit(state, owner):
@@ -1160,7 +1167,11 @@ def hand_to_bench_by_effect(state: GameState, owner: int, cards: tuple[int, ...]
         p.hand.remove(uid)
         pokemon = enter_play(state, uid)
         p.bench.append(pokemon)
-        state.add_event("trainer_bench_from_hand", player=owner, card=uid, pokemon_id=pokemon.pokemon_id, chooser=chooser, trainer_card=trainer)
+        if trainer is not None:
+            state.add_event("trainer_bench_from_hand", player=owner, card=uid, pokemon_id=pokemon.pokemon_id, chooser=chooser, trainer_card=trainer)
+        else:
+            state.add_event("attack_bench_from_hand", player=owner, card=uid, pokemon_id=pokemon.pokemon_id, chooser=chooser, effect=effect, attacker=attacker,
+                            attacker_pokemon_id=attacker_pokemon_id)
         placed.append(pokemon)
     return tuple(placed)
 

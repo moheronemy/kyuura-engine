@@ -206,7 +206,7 @@ from .continuous import goop_gas_effects, power_suppressed, suppressors_of
 from .deck import deck_problems
 from .evolution import DEVOLVED_THIS_TURN_CODE, evolution_block, place_evolution_card, skipped_stage1_basic
 from .errors import DeckValidationError, HiddenPropertyRead, IllegalActionError, StateIntegrityError, UnsupportedError
-from .persistent import (DISCARD_FROM_PLAY, KNOCK_OUT, SOURCE_LEFT_ACTIVE, cannot_retreat, effect_attack_card, end_turn, energy_attach_blocked, expires_at_turn_start, lasting, leave_lock,
+from .persistent import (DISCARD_FROM_PLAY, KNOCK_OUT, SOURCE_LEFT_ACTIVE, TARGET_LEFT_ACTIVE, cannot_retreat, effect_attack_card, end_turn, energy_attach_blocked, expires_at_turn_start, lasting, leave_lock,
                          powers_stopped, powers_use_prevented, remove_on_entering_active, remove_persistent_effects, remove_source_left_effects, require_can_leave,
                          require_source_card_present, retreat_pursuits)
 from .rules import RULES_2000_02_14, RuleSet
@@ -5430,7 +5430,8 @@ def _knockout_bookkeeping(event) -> bool:
     v0.92: きぜつで発生源がバトル場をはなれて消えた、相手のポケモンの持続する効果（くろいまなざし。理由 ``source_left_active``）も。v0.93: きぜつで発生源がはなれた印を
     付けた記録（くいつく。``persistent_effect_source_left``）も。"""
     kind = event["kind"]
-    return (kind == "persistent_effect_removed" and event.get("reason") in (KNOCK_OUT, SOURCE_LEFT_ACTIVE)) \
+    # v0.121: きぜつでロックオンを受けた相手がバトル場をはなれて消えた、ワザを使ったポケモンの効果（理由 ``target_left_active``）も
+    return (kind == "persistent_effect_removed" and event.get("reason") in (KNOCK_OUT, SOURCE_LEFT_ACTIVE, TARGET_LEFT_ACTIVE)) \
         or kind == "persistent_effect_source_left" \
         or (kind == "energy_returned_to_hand" and event.get("cause") == "knock_out") \
         or (kind == "color_effect_removed" and event.get("reason") == "target_gone") \

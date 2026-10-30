@@ -54,9 +54,10 @@ def require_turn(state: GameState, player: Any) -> PlayerState:
     return state.players[player]
 
 
-def require_not_asleep_or_paralyzed(pokemon: PokemonInPlay, what: str) -> None:
-    """ねむり状態・マヒ状態のバトル場のポケモンは、ワザを使えず、「にげる」を宣言できない（p.309・p.311・p.322。v0.3b）。"""
-    if pokemon.conditions.asleep:
+def require_not_asleep_or_paralyzed(pokemon: PokemonInPlay, what: str, *, asleep_ok: bool = False) -> None:
+    """ねむり状態・マヒ状態のバトル場のポケモンは、ワザを使えず、「にげる」を宣言できない（p.309・p.311・p.322。v0.3b）。v0.121: ``asleep_ok`` なら、ねむり状態の禁止だけを免除する
+    （ねむり状態でも使えるワザ。マヒは今までどおり拒否する）。"""
+    if pokemon.conditions.asleep and not asleep_ok:
         raise IllegalActionError("POKEMON_ASLEEP", f"バトル場のポケモン {pokemon.pokemon_id} はねむり状態なので、{what}")
     if pokemon.conditions.paralyzed:
         raise IllegalActionError("POKEMON_PARALYZED", f"バトル場のポケモン {pokemon.pokemon_id} はマヒ状態なので、{what}")
@@ -85,6 +86,13 @@ class AttackRequest:
     option: AttackOption | None = None  # v0.49: 選んだワザの出どころ（印刷したカード・持ち方・供給するポケモン）
 
 
+def _usable_while_asleep(state: GameState, card_id: str, index: int) -> bool:
+    """v0.121: カード ``card_id`` の ``index`` 番目のワザの登録が、ねむり状態でも宣言できるワザか（登録がない・データと合わないなら偽）。"""
+    definition = state.definitions[card_id]
+    effect = state.effects.attack_effect(card_id, definition.attacks[index], definition.attacks)
+    return effect is not None and effect.usable_while_asleep
+
+
 def attack_request(state: GameState, cmd: UseAttack) -> AttackRequest:
     """ワザを使えるかの確認（p.309 の手順 1・2。v0.13 の ``engine._use_attack`` の前半と同じ順番・同じコード）。
 
@@ -101,7 +109,10 @@ def attack_request(state: GameState, cmd: UseAttack) -> AttackRequest:
         where = "" if cmd.card is None else f"（カード {cmd.card!r} の）"
         raise IllegalActionError("INVALID_ATTACK", f"{name} に{where} {cmd.attack_index!r} 番目のワザはない")
     attacker_def = state.definitions[option.card_id]
-    require_not_asleep_or_paralyzed(attacker, "ワザを使うことができない（p.309・p.322）")
+    # v0.121（docs/hand-bench-attack-conditions-v0.121.md 6 章）: ねむり状態でも宣言できるワザ（登録の性質 ``usable_while_asleep``。ヤドランの「おおいびき」。CR-SLOWBRO-SNORE-WHILE-ASLEEP）だけ、
+    # ねむりの禁止を免除する（同じ位置。マヒ・ほかのワザ・ほかの拒否の順番は変えない）。ほかのカードのワザとしての使用は、ほかの確かめのあとに SQ1（``option.problem``）で止める
+    asleep_ok = attacker.conditions.asleep and _usable_while_asleep(state, option.card_id, option.attack_index)
+    require_not_asleep_or_paralyzed(attacker, "ワザを使うことができない（p.309・p.322）", asleep_ok=asleep_ok)
     if cannot_attack(state, attacker) is not None:
         # v0.31: イーブイの「しっぽをふる」を受けた（次の相手の番にワザをつかえない）。ねむり・マヒと同じ場所（宣言の前・エネルギーの確認より前）
         raise IllegalActionError("ATTACK_PREVENTED", f"バトル場のポケモン {attacker.pokemon_id} は、この番はワザを使えない（相手のワザの効果）")

@@ -1637,6 +1637,17 @@
     "PR1-065",
     "PF3-001"
   ],
+  "pool_v0_121": [
+    "neo2-043",
+    "neo3-053",
+    "neo4-229",
+    "neo4-096",
+    "ES3-021",
+    "PR1-073",
+    "PR1-001",
+    "PR1-003",
+    "PR1-017"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -1705,7 +1716,9 @@
       "from": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
       "to": "2fe0bc042ce187d191843819262f8036abbb343d",
       "document": "docs/hand-bench-attack-conditions-v0.121.md",
-      "corrections": []
+      "corrections": [
+        "FIX-neo3-053-TRAINER-TEXT-JA"
+      ]
     }
   ],
   "kyuura_corrections": [
@@ -2419,6 +2432,30 @@
       "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
       "applied_in_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
       "previous_source": "73a169063463bbf7bcaa3137d70cbf9721d11534"
+    },
+    {
+      "id": "FIX-neo3-053-TRAINER-TEXT-JA",
+      "card_id": "neo3-053",
+      "field": "trainer.text.ja",
+      "before": "コインを2枚投げ、すべて「おもて」なら「ポケモンのカード」を、すべて「うら」なら「トレーナーカード」をあなたのトラッシュから選び出し、相手プレイヤーに見せてから、手札に加える。",
+      "after": "コインを2枚投げ、すべて「おもて」なら「ポケモンのカード」を、すべて「うら」なら「トレーナーカード」を、あなたのトラッシュから1枚選び出し、相手プレイヤーに見せてから、手札に加える。",
+      "basis": "card_image_check",
+      "kind": "transcription_error",
+      "migration": "v0.121",
+      "decided_on": "2026-10-30",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-neo3-053",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neo3053.png",
+          "image_sha256": "6f191d61a0d8113c6b07adffa934b87b34b305e0435fc8e3207cb4c2ff737c85",
+          "accessed_on": "2026-10-30"
+        }
+      ],
+      "engine_history": "v0.121 で写しの元を e519b99 から上げたときに台帳・画像の照合の記録と照らし、登録のコミットでカードを写しに入れた（v0.120 までは写しにないカード）",
+      "applied_in_source": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "previous_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
     }
   ],
   "engine_user_corrections": [
@@ -123033,6 +123070,840 @@
         {
           "page": "neopf3001",
           "list_number": "001/009"
+        }
+      ]
+    },
+    {
+      "id": "neo2-043",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "コイル",
+        "en": "Magnemite"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          81
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "metal"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "grass",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ロックオン",
+              "en": "Lock-on"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "次の自分の番、このカードが使う「でんじほう」で投げるコインが「うら」でも、「でんじほう」は失敗しない。(このワザを受けた相手がバトル場をはなれたら、この効果は消える。)",
+              "en": "During your next turn, treat any tails flipped when using Magnemite's Electric Bolt attack as if they were heads. (Benching or evolving either Pokémon ends this effect.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "でんじほう",
+              "en": "Electric Bolt"
+            },
+            "cost": [
+              "lightning",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "相手を「マヒ」状態にする。コインを2枚投げて、1枚でも「うら」なら、このワザは失敗する。",
+              "en": "Flip 2 coins. If both are heads, the Defending Pokémon is now Paralyzed. If either of them is tails, this attack does nothing (not even damage)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-043",
+        "pokemontcg": [
+          "neo2-7",
+          "neo2-26"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-043-coil/",
+      "jp_print": {
+        "level": 16,
+        "rarity": "★(R)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-043-coil/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-053",
+      "jp_set": "neo3",
+      "category": "trainer",
+      "name": {
+        "ja": "ボロのつりざお",
+        "en": "Old Rod"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "コインを2枚投げ、すべて「おもて」なら「ポケモンのカード」を、すべて「うら」なら「トレーナーカード」を、あなたのトラッシュから1枚選び出し、相手プレイヤーに見せてから、手札に加える。",
+          "en": "Flip 2 coins. If both are heads, put a Baby Pokémon, Basic Pokémon, or Evolution card from your discard pile into your hand. If both are tails, put a Trainer card from your discard pile into your hand."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-neo3-053-TRAINER-TEXT-JA）: trainer.text.ja を「コインを2枚投げ、すべて「おもて」なら「ポケモンのカード」を、すべて「うら」なら「トレーナーカード」をあなたのトラッシュから選び出し、相手プレイヤーに見せてから、手札に加える。」から「コインを2枚投げ、すべて「おもて」なら「ポケモンのカード」を、すべて「うら」なら「トレーナーカード」を、あなたのトラッシュから1枚選び出し、相手プレイヤーに見せてから、手札に加える。」に直した。根拠: kyuura が、同じカード（第3弾「めざめる伝説」のボロのつりざお）の日本語版のカードの画像（pcg-search.com [N3]）で、説明の全文「コインを2枚投げ、すべて「おもて」なら「ポケモンのカード」を、すべて「うら」なら「トレーナーカード」を、あなたのトラッシュから1枚選び出し、相手プレイヤーに見せてから、手札に加える。」を読んだ（2026-10-30。照合の記録 IMG-neo3-053）。転記（ポケモンWiki）は「を、」の読点と「1枚」を落としていた。英語版の文面からは補っていない"
+      ],
+      "source_ids": {
+        "tcgdex": "neo3-053",
+        "pokemontcg": [
+          "neo3-64"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9C%E3%83%AD%E3%81%AE%E3%81%A4%E3%82%8A%E3%81%96%E3%81%8A_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9C%E3%83%AD%E3%81%AE%E3%81%A4%E3%82%8A%E3%81%96%E3%81%8A_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.series"
+      ],
+      "same_card_group": null,
+      "corrections": [
+        {
+          "id": "FIX-neo3-053-TRAINER-TEXT-JA",
+          "field": "trainer.text.ja",
+          "before": "コインを2枚投げ、すべて「おもて」なら「ポケモンのカード」を、すべて「うら」なら「トレーナーカード」をあなたのトラッシュから選び出し、相手プレイヤーに見せてから、手札に加える。",
+          "after": "コインを2枚投げ、すべて「おもて」なら「ポケモンのカード」を、すべて「うら」なら「トレーナーカード」を、あなたのトラッシュから1枚選び出し、相手プレイヤーに見せてから、手札に加える。",
+          "basis": "card_image_check",
+          "decided_on": "2026-10-30"
+        }
+      ]
+    },
+    {
+      "id": "neo4-229",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいヘルガー",
+        "en": "Dark Houndoom"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          229
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "デルビル",
+          "en": "Houndour"
+        },
+        "hp": 60,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ぶきみなとおぼえ",
+              "en": "Eerie Howl"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手プレイヤーの手札を見る。その中にある「たねポケモン」または「ベイビィポケモン」を1枚選び、相手のベンチに出す。その後、そのポケモンを相手と入れ替える。(相手のベンチに空きがないとき、このワザは失敗する。)",
+              "en": "If your opponent's Bench isn't full, look at his or her hand. If your opponent has any Baby Pokémon or Basic Pokémon there, choose 1 of them and put it on his or her Bench. Then, switch it with the Defending Pokémon."
+            }
+          },
+          {
+            "name": {
+              "ja": "じごくのほのお",
+              "en": "Dark Fire"
+            },
+            "cost": [
+              "fire",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": "+",
+              "display": "30+"
+            },
+            "text": {
+              "ja": "自分に「悪」エネルギーカードがついていれば、それを1枚トラッシュし、20ダメージを追加する。(自分に「悪」エネルギーカードがついていないとき、この効果はなくなる。)",
+              "en": "If there are any Darkness Energy cards attached to Dark Houndoom, discard 1 of them and this attack does 30 damage plus 20 more damage (plus 10 more damage for the Darkness Energy you discarded). If there aren't any, this attack does 30 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-229",
+        "pokemontcg": [
+          "neo4-7"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%83%98%E3%83%AB%E3%82%AC%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 32,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%83%98%E3%83%AB%E3%82%AC%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-096",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいリングマ",
+        "en": "Dark Ursaring"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          217
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ヒメグマ",
+          "en": "Teddiursa"
+        },
+        "hp": 60,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ちょうはつ",
+              "en": "Provoke"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "おたがいのプレイヤーは、それぞれ、相手のプレイヤーの手札を見る。その後、それぞれ、のぞむなら、相手の手札にある「ベイビィポケモン」と「たねポケモン」を、相手のベンチの空きぶん、好きなだけ選び、相手のベンチに出してよい。",
+              "en": "Look at your opponent's hand. If he or she has any Baby Pokémon and/or Basic Pokémon there, you may put any number of them onto your opponent's Bench (as long as there's room). Then, your opponent looks at your hand. If you have any Baby Pokémon and/or Basic Pokémon there, your opponent may put any number of them onto your Bench (as long as there's room)."
+            }
+          },
+          {
+            "name": {
+              "ja": "だいらんとう",
+              "en": "Battle Frenzy"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "おたがいの場のポケモン全員に対して、1枚ずつコインを投げ、「おもて」が出たポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ20ダメージ。",
+              "en": "For each Pokémon in play (yours and your opponent's), flip a coin. For each heads, this attack does 20 damage to that Pokémon. Don't apply Weakness and Resistance for this attack."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-096",
+        "pokemontcg": [
+          "neo4-21"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%83%AA%E3%83%B3%E3%82%B0%E3%83%9E_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 28,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%8F%E3%82%8B%E3%81%84%E3%83%AA%E3%83%B3%E3%82%B0%E3%83%9E_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "ES3-021",
+      "jp_set": "ES3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ヤドラン",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ヤドン",
+          "en": null
+        },
+        "hp": 90,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "おおあくび",
+              "en": null
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分と相手を、それぞれ「ねむり」状態にする。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "おおいびき",
+              "en": null
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "このワザは、このカードが「ねむり」状態の時だけ、使える。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex3021"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex3021.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第3弾(緑版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex3021.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stex3021",
+          "list_number": "021/036"
+        }
+      ]
+    },
+    {
+      "id": "PR1-073",
+      "jp_set": "PR1",
+      "category": "trainer",
+      "name": {
+        "ja": "カスミのてあて",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "ラプラスにのっているダメージカウンターを最大3個とりのぞいてよい。(ダメージをとりのぞけるのは、1匹だけ)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "カードの補足欄（扱いの表示）: (このカードは、ポケモンカード公式大会では使えません。)"
+      ],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp073"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp073.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp073.php"
+      },
+      "product_group": "promo",
+      "play_scope": "not_for_official_tournaments",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stp073",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PR1-001",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ピカチュウ",
+        "en": "Pikachu"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          25
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "なきごえ",
+              "en": "Growl"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "次の相手の番でうけるダメージを10へらすことができる。",
+              "en": "If the Defending Pokémon attacks Pikachu during your opponent's next turn, any damage done by the attack is reduced by 10 (after applying Weakness and Resistance). (Benching either Pokémon ends this effect.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "でんきショック",
+              "en": "Thundershock"
+            },
+            "cost": [
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-1"
+        ],
+        "pcg_search": [
+          "1stp001"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp001.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [
+          "小学館「月刊コロコロコミック96年11月号」おまけ"
+        ],
+        "source": "https://pcg-search.com/card/1st/1stp001.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PR1-001",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-1",
+        "pokemon.dex": "pokemontcg:basep-1"
+      },
+      "copies": [
+        {
+          "page": "1stp001",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PR1-003",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ピカチュウ",
+        "en": "Pikachu"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          25
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "なきごえ",
+              "en": "Growl"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "次の相手の番でうけるダメージを10へらすことができる。",
+              "en": "If the Defending Pokémon attacks Pikachu during your opponent's next turn, any damage done by the attack is reduced by 10 (after applying Weakness and Resistance). (Benching either Pokémon ends this effect.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "でんきショック",
+              "en": "Thundershock"
+            },
+            "cost": [
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-1"
+        ],
+        "pcg_search": [
+          "1stp003"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp003.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [
+          "「すぐわかるポケモンカードの遊びかた」おまけ"
+        ],
+        "source": "https://pcg-search.com/card/1st/1stp003.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PR1-001",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-1",
+        "pokemon.dex": "pokemontcg:basep-1"
+      },
+      "copies": [
+        {
+          "page": "1stp003",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PR1-017",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ピカチュウ",
+        "en": "Pikachu"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          25
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "なきごえ",
+              "en": "Growl"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "次の相手の番でうけるダメージを10へらすことができる。",
+              "en": "If the Defending Pokémon attacks Pikachu during your opponent's next turn, any damage done by the attack is reduced by 10 (after applying Weakness and Resistance). (Benching either Pokémon ends this effect.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "でんきショック",
+              "en": "Thundershock"
+            },
+            "cost": [
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-1"
+        ],
+        "pcg_search": [
+          "1stp017"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp017.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp017.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PR1-001",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-1",
+        "pokemon.dex": "pokemontcg:basep-1"
+      },
+      "copies": [
+        {
+          "page": "1stp017",
+          "list_number": "-/-"
         }
       ]
     }

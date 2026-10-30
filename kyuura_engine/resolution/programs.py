@@ -43,6 +43,7 @@ from ..decisions import ENERGY_DRAIN_DISCARD
 from ..decisions import MOVE_ENERGY, OPTIONAL_DRAIN
 from ..decisions import OPTIONAL_DISCARD_ALL
 from ..decisions import OPTIONAL_HEAL
+from ..decisions import OPPONENT_HAND_TO_BENCH
 from ..decisions import DISCARD_TO_DECK, RECOVER_POKEMON, SELECT_DRAW_COUNT, TAKE_LOOKED_CARDS
 from ..decisions import DISCARD_STADIUM, EVOLUTION_SONG_POKEMON
 from ..stadiums import bench_limit
@@ -75,6 +76,7 @@ from ..zones import (
     take_deck_top,
 )
 from ..zones import discard_stadium, look_at_card
+from ..zones import hand_to_bench_by_effect
 from ..zones import look_at_hand, opponent_hand_card_to_deck, return_attached_energy_to_deck, return_attached_trainer_to_deck
 from ..zones import return_attached_cards_to_hand
 
@@ -1593,6 +1595,9 @@ class FailOnTails(Element):
 
     name: str = "coin"
     count: int = 1
+    # v0.121（docs/hand-bench-attack-conditions-v0.121.md 8 章）: ワザを使ったポケモンに、このワザのコインの「うら」でワザが失敗しなくなる効果（コイルの「ロックオン」。``E.failure_waiver``）が
+    # はたらいていれば、コインは実際に投げ、「うら」でも失敗しない（「うら」を書きかえない。ログ ``attack_failure_waived``）
+    waiver: bool = False
     phase: ClassVar[Phase] = Phase.NEUTRAL
 
     def run(self, run: AttackRun) -> bool:
@@ -1605,7 +1610,13 @@ class FailOnTails(Element):
         flips = run.flip(self.count, by_heads=True)  # v0.35: すべて「おもて」か（「おもて」の数が枚数か）だけを使う
         run.fs.coins[self.name] = flips
         if any(side is TAILS for side in flips.results):
-            run.fail("coin")
+            waiver = E.failure_waiver(run.state, run.attacker(), run.key) if self.waiver else None
+            if waiver is None:
+                run.fail("coin")
+            else:
+                attacker = run.attacker()
+                run.state.add_event("attack_failure_waived", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                                    persistent_effect=waiver.kind, target_pokemon=waiver.target_pokemon)
         return False
 
 
@@ -2324,29 +2335,8 @@ class ForceSwitch(Element):
             run.state.add_event("forced_switch_declined", player=opponent, attacker=run.player, attacker_pokemon_id=run.fs.frame.source_pid, effect=str(run.key),
                                 pokemon=old.card, pokemon_id=old.pokemon_id)
             return
-        index = next(i for i, pokemon in enumerate(p.bench) if pokemon.pokemon_id == choices[0])
-        require_can_leave(run.state, opponent, old)  # v0.93: 決定を出す前に確かめた（``run``）
-        p.active, p.bench[index] = p.bench[index], old
-        M.note_switch(run.state, opponent, old, p.active)  # v0.87: 入れ替えの事実（相手の［やけのこり］。次の要素の前に処理する）
-        extra = {"chosen_by": "attacker"} if self.chooser == "attacker" else {}  # v0.31: かどわかす（ふきとばしのログの形は v0.30 と同じ）
-        run.state.add_event(
-            "forced_switch",
-            player=opponent,
-            attacker=run.player,
-            attacker_pokemon_id=run.fs.frame.source_pid,
-            effect=str(run.key),
-            old_active=old.card,
-            new_active=p.active.card,
-            old_active_pokemon_id=old.pokemon_id,
-            new_active_pokemon_id=p.active.pokemon_id,
-            **extra,
-        )
-        clear_special_conditions(run.state, opponent, old, FORCED_SWITCH_REASON)
-        remove_persistent_effects(run.state, opponent, old, FORCED_SWITCH_REASON)
-        remove_source_left_effects(run.state, opponent, old)  # v0.92: 発生源がバトル場をはなれたら消える効果
-        remove_on_entering_active(run.state, opponent, p.active)  # v0.114: バトル場に出てきたら消える効果（じっとみる）
-        mark_returned_to_bench(old)  # v0.48: 特殊能力で色を変えた記録に、ベンチにもどったことを残す（VS1）
-        E.discard_on_leaving_active(run.state, opponent, old)  # v0.65: バトル場をはなれた時にトラッシュするついているトレーナー（変わり身の術）
+        # v0.121: 入れ替えの共通の部分を ``swap_opponent_active`` に分けた（ぶきみなとおぼえと共通。ログ・処理の順番は v0.120 と同じ）
+        swap_opponent_active(run, opponent, old, choices[0], chosen_by="attacker" if self.chooser == "attacker" else None)
         run.fs.results[self.name] = p.active.pokemon_id  # v0.45: 入れ替えて出た控えポケモン
 
     @staticmethod
@@ -15047,4 +15037,349 @@ BUILDERS |= {
     E.OptionalSwitchOpponentThenDamageAndSleep: lambda e: (ForceSwitch(chooser="attacker", optional=True, carry=True), Damage(OPP, Printed()), Status(SLEEP)),
     # どくどくエキス: コイン →「おもて」なら相手をどく（ダメージカウンターの数を multiplier 倍にする性質のどく）
     E.ToxicPoisonOnHeadsWithoutDamage: lambda e: (Status(POISON, local_coin=HEADS, poison_multiplier=e.multiplier),),
+}
+
+
+
+# ---------------------------------------------------------------- v0.121（docs/hand-bench-attack-conditions-v0.121.md）: ねむりのときだけのワザ・失敗しなくなる効果・場のポケモン全員のコイン・
+# 相手の手札から場へ出すワザ
+
+
+@dataclass(frozen=True)
+class FailUnlessAsleep(Element):
+    """ワザを使ったポケモンが「ねむり」状態ではないとき、このワザは失敗する（v0.121。ヤドランの「おおいびき」の最新の説明。``effects.FailUnlessAsleepDamage``。docs 6 章）。
+
+    - 説明を処理する p.309 の手順 6 の最初の要素（こんらんのコインはその前の手順 5。CR-SLOWBRO-SNORE-ONLY-THIS-ATTACK）。ねむり状態なら何もしない（目を覚まさない）。でなければ失敗
+      （ログ ``attack_failed`` の ``reason`` ``not_asleep``。ワザは使ったことになり番は終わる。CR-SLOWBRO-SNORE-AWAKE-FAILS）
+    - 相手のワザとして使う（写す）ときは、「このカード」がだれかが決まらない（UQ-COPIED-ATTACK。HC9）"""
+
+    phase: ClassVar[Phase] = Phase.NEUTRAL
+
+    def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
+        return UNRESOLVED, "「このカードが「ねむり」状態ではないとき、このワザは失敗する」の「このカード」が、写したポケモンか元のカードかが決まらない（UQ-COPIED-ATTACK）"
+
+    def run(self, run: AttackRun) -> bool:
+        if not run.attacker().conditions.asleep:
+            run.fail("not_asleep")
+        return False
+
+
+@dataclass(frozen=True)
+class SelfFailureWaiver(Element):
+    """自分に「次の自分の番、このカードが使う「``target_name``」で投げるコインが「うら」でも失敗しない。(このワザを受けた相手がバトル場をはなれたら、この効果は消える。)」の持続する効果
+    （``state.NextTurnFailureWaiver``）を与える（v0.121。コイルの「ロックオン」。docs 8 章）。
+
+    - 効果を持つのはワザを使ったポケモン自身。失効を決める参照先は、このワザを受けた相手（今の相手の対戦ポケモンの場の番号）。失敗しなくなるワザは同じカードの ``target_name`` のワザの位置
+    - 受けた相手がワザの効果の要素を受けない状態（「ワザをうけない」状態・バリアー・［クリスタルボディ］・［ニュートラルシールド］などの ``first_void``、「とうめい」）なら、相手への効果として
+      評価するかが決まらない（LO1。問い ``lock_on_protected_target``。コインを投げない）
+    - 相手のワザとして使う（写す）効果は表せない（番をまたぐ効果をワザの位置で記録する。v0.12 の返す効果と同じ ``UNSUPPORTED``）"""
+
+    target_name: str
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
+        return UNSUPPORTED, "番をまたぐ効果を、効果を持つポケモンのカードのワザの位置で記録するので、相手のワザとして使った効果を表せない（v0.12 の返す効果と同じ）"
+
+    def run(self, run: AttackRun) -> bool:
+        from ..state import NextTurnFailureWaiver
+        from .kernel import first_void
+
+        state = run.state
+        attacker = run.attacker()
+        defender = run.opponent_active()
+        opponent = 1 - run.player
+        if first_void(run.res, run.incoming(), opponent, defender, Window.BEFORE_EFFECT) is not None or E.evasion_power(state, defender) is not None:
+            raise run.res.question("lock_on_protected_target", f"ポケモン {defender.pokemon_id}（ワザ {run.key} を受けた相手）")
+        attacks = state.definitions[run.key.card_id].attacks
+        target = next(attack.index for attack in attacks if attack.name_ja == self.target_name)
+        effect = NextTurnFailureWaiver(source_card=attacker.card, source_player=run.player, created_turn=state.turn_number, active_turn=state.turn_number + 2,
+                                       attack_index=run.key.attack_index, target_attack_index=target, target_player=opponent,
+                                       target_pokemon=defender.pokemon_id, attack_card=effect_attack_card_of(run, attacker))
+        add_persistent_effect(state, run.player, attacker, effect, attack=str(run.key), target_attack_index=target, target_player=opponent,
+                              target_pokemon=defender.pokemon_id)
+        return False
+
+
+@dataclass(frozen=True)
+class DiscardTypeCardForBonus(DiscardOwnEnergy):
+    """自分に「``energy_type``」エネルギーカードがついていれば、それを 1 枚トラッシュする（v0.121。わるいヘルガーの「じごくのほのお」の前半。追加のダメージは次の ``Damage`` の
+    ``PlusPerDiscarded``。``effects.DiscardTypeEnergyCardForBonus``。docs 8 章）。
+
+    - 選べるものは、ついているカードのうち、カードとしての種類・タイプがその色のもの（``effects.attached_typed_energy_cards``。悪エネルギー）。1 枚でも決定を出す（v0.7 の K2 と同じ）。
+      ついていなければトラッシュせず、追加の効果だけがなくなる（``LACKING_SKIP``。ワザの失敗・0 ダメージにしない）。レインボーエネルギーなどの問いは ``transform_energy_question``
+    - トラッシュするカードに、ついたまま計算すれば相手の対戦ポケモンへのこのワザのダメージを変える効果（悪エネルギーの「+10」）があり、そのダメージの要素が無効でなければ、当てはめるか
+      （トラッシュとダメージの計算の順番）が決まらない（DK1。問い ``discarded_energy_damage_bonus``。トラッシュする前）"""
+
+    def _candidates(self, run: AttackRun, pokemon: PokemonInPlay | None = None) -> list[int]:
+        pokemon = run.attacker() if pokemon is None else pokemon
+        transform_energy_question(run, pokemon, self.energy_type, cards=True)
+        return E.attached_typed_energy_cards(run.state, pokemon, self.energy_type)
+
+    def _discard(self, run: AttackRun, cards: tuple[int, ...]) -> None:
+        from .kernel import first_void
+
+        attacker = run.attacker()
+        defender = run.opponent_active()
+        if defender is not None and not run.knocked_out(defender) and first_void(run.res, run.incoming(), 1 - run.player, defender) is None:
+            for card in cards:
+                if E.discarded_card_damage_bonus(run.state, attacker, card, defender):
+                    raise run.res.question("discarded_energy_damage_bonus", f"ワザ {run.key} でトラッシュするカード {card}")
+        super()._discard(run, cards)
+
+
+@dataclass(frozen=True)
+class CoinPerPokemonInPlay(Element):
+    """おたがいの場のポケモン全員に対して、1 枚ずつコインを投げ、「おもて」が出たポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ ``amount`` ダメージ（v0.121。わるいリングマの
+    「だいらんとう」。``effects.CoinPerPokemonInPlayDamage``。docs 8 章）。
+
+    - 対象はこの要素を処理する時点の、相手のバトル場 → 相手のベンチの並び → 自分のバトル場（ワザを使ったポケモン自身）→ 自分のベンチの並び（実装上の順番。記録の裁定ではない。v0.115 の
+      ``CoinPerBenchPokemon`` と同じ形に、バトル場の 2 匹を加えた）。コインは 1 匹 1 枚、この並びの順に 1 回の ``flip`` で投げ、``i`` 枚目は ``i`` 番目のポケモンのもの（面と個体の対応を
+      持つ。「おもて」の数でまとめない。ナツメのESPのやり直しは同じ並びに同じ枚数を投げ直す）。結果はログ ``pokemon_coin_results``
+    - すべて投げてから、「おもて」のポケモンに並びの順でダメージ（相手のバトル場は ``OPPONENT_ACTIVE``、相手の控えは ``OPPONENT_BENCH``、自分は ``SELF``、自分の控えは ``SELF_BENCH``。
+      弱点・抵抗力なし）。控えへのダメージは［ベンチガード］の決定を出しうる。「ダメージを受けたとき」の反応・きぜつは、既存のダメージの要素のあとの窓・ワザのあとの判定
+    - 「とうめい」がはたらいているポケモンのあとに対象がいれば TS1、対象がみなダメージの要素を無効にする状態なら投げるかが決まらない（v0.115 と同じ問い）"""
+
+    amount: int
+    name: str = "pokemon_coins"
+    phase: ClassVar[Phase] = Phase.DAMAGE
+    guards_bench: ClassVar[bool] = True
+
+    def __post_init__(self) -> None:
+        if type(self.amount) is not int or self.amount <= 0 or self.amount % 10:
+            raise ValueError(f"ダメージは 10 の倍数の正の数（{self.amount!r}）")
+
+    def targets(self, run: AttackRun) -> list[tuple[str, int, PokemonInPlay]]:
+        state = run.state
+        opponent = 1 - run.player
+        found: list[tuple[str, int, PokemonInPlay]] = []
+        if state.players[opponent].active is not None:
+            found.append((E.OPPONENT_ACTIVE, opponent, state.players[opponent].active))
+        found += [(E.OPPONENT_BENCH, opponent, p) for p in state.players[opponent].bench]
+        found.append((E.SELF, run.player, run.attacker()))
+        found += [(E.SELF_BENCH, run.player, p) for p in state.players[run.player].bench]
+        return found
+
+    def run(self, run: AttackRun) -> bool:
+        from .kernel import first_void
+
+        state = run.state
+        targets = self.targets(run)
+        if any(E.evasion_power(state, pokemon) is not None for _, _, pokemon in targets[:-1]):
+            raise run.res.question("bench_coin_transparency_order", f"おたがいの場のポケモン {[p.pokemon_id for _, _, p in targets]}")
+        if all(first_void(run.res, run.incoming(), owner, pokemon) is not None for _, owner, pokemon in targets):
+            raise run.res.question("prevented_coin_damage", f"ダメージを受けない場のポケモン {[p.pokemon_id for _, _, p in targets]} へのダメージだけを決めるコイン")
+        flips = run.flip(len(targets))
+        run.fs.coins[self.name] = flips
+        attacker = run.attacker()
+        state.add_event("pokemon_coin_results", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                        targets=tuple(p.pokemon_id for _, _, p in targets), owners=tuple(owner for _, owner, _ in targets),
+                        results=tuple(face.value for face in flips.results))
+        entries = [(kind, pokemon.pokemon_id, self.amount, False) for (kind, _, pokemon), face in zip(targets, flips.results) if face is HEADS]
+        return guarded_damages(run, self, entries)
+
+
+def attack_hand_bench_reaction(state: GameState, owner: int) -> str | None:
+    """v0.121（HB1）: プレイヤー ``owner`` の手札のたね・ベイビィポケモンをワザの効果でベンチに出すとき、手札から出したことへの場の反応・特殊能力を止める効果の範囲がかかわるなら、その名前
+    （公開の情報だけで決める。手札の中身によらない）。なければ None。状態を変えない。"""
+    from ..continuous import goop_gas_effects
+
+    if E.hot_plates(state):
+        return "［ヒートプレート］"
+    if E.stadium_of(state, E.BenchEntryDamageStadium) is not None:
+        return "ロケット団の爆発ジム"
+    if goop_gas_effects(state) or E.strange_gas_effects(state, owner) or any(r.kind == E.ATTACK_FIELD_POWER_SUPPRESSION for r in state.trainer_effects):
+        return "特殊能力を止める効果"
+    return None
+
+
+def hand_entry_power_cards(state: GameState, cards) -> tuple[int, ...]:
+    """v0.121（HB1）: 手札のカード ``cards`` のうち、場に出たときに使える特殊能力（``EntryPower``）を持つもの（ワザの途中に手札から出したときの機会と時点が決まらない。選べるが選ぶと止める）。"""
+    return tuple(uid for uid in cards if E.entry_power(state, uid) is not None)
+
+
+def _hand_bench_reaction_question(run: AttackRun, owners) -> None:
+    state = run.state
+    for owner in owners:
+        p = state.players[owner]
+        if not p.hand or len(p.bench) >= bench_limit(state, owner):
+            continue
+        found = attack_hand_bench_reaction(state, owner)
+        if found is not None:
+            raise run.res.question("attack_hand_bench_reaction", f"{found}（プレイヤー {owner} の手札からベンチに出しうる。ワザ {run.key}）")
+
+
+def place_from_hand_in_attack(run: AttackRun, owner: int, cards: tuple[int, ...], chooser: int) -> tuple[PokemonInPlay, ...]:
+    """v0.121: プレイヤー ``owner`` の手札のカード ``cards``（手札の並びの順）を、ワザの効果で ``owner`` のベンチの最後に出す（``zones.hand_to_bench_by_effect`` の ``effect``。ログ
+    ``attack_bench_from_hand``。選ぶ人は ``chooser``）。出したポケモン（場の番号の個体）を返す。場に出たときの特殊能力を持つカードは、呼ぶ側が選べるが選ぶと止める選択にしている。"""
+    attacker = run.attacker()
+    return hand_to_bench_by_effect(run.state, owner, cards, chooser=chooser, effect=str(run.key), attacker=run.player, attacker_pokemon_id=attacker.pokemon_id)
+
+
+@dataclass(frozen=True)
+class OpponentHandToBenchThenSwitch(Element):
+    """相手プレイヤーの手札を見る。その中にある「たねポケモン」または「ベイビィポケモン」を 1 枚選び、相手のベンチに出す。その後、そのポケモンを相手と入れ替える。(相手のベンチに空きが
+    ないとき、このワザは失敗する。)（v0.121。わるいヘルガーの「ぶきみなとおぼえ」。``effects.BenchOpponentHandBasicThenSwitchOrFail``。docs 7 章）。
+
+    - 相手のベンチに空きがなければ、手札を見る前にワザの失敗（ログ ``attack_failed`` の ``reason`` ``opponent_bench_full``。中身を得ない）
+    - 手札から出したことへの場の反応・特殊能力を止める効果がかかわるなら HB1（見る前。公開の情報と手札の枚数だけで決め、手札の中身で宣言の受け付けを変えない）
+    - 見る（``zones.look_at_hand``。ログの ``cards`` は見たプレイヤーと持ち主だけ）→ 候補（``effects.hand_baby_or_basic``。手札の並び）がなければ何もしない（p.309。ログ
+      ``attack_bench_from_hand_none``）→ 選ぶ（決定 ``OPPONENT_HAND_TO_BENCH``。ワザを使ったプレイヤー。ちょうど 1 枚。場に出たときの特殊能力を持つカードは選べるが選ぶと止める（HB1））
+    - 出す（``place_from_hand_in_attack``。持ち主・出すベンチは相手）→ 出したその個体（場の番号）を相手の対戦ポケモンと入れ替える。相手の対戦ポケモンが「バトル場をはなれられない」・
+      効果の要素を受けないなら入れ替えない（``ForceSwitch`` と同じ確かめ。発生元は ``run.incoming``）。出した個体がベンチにいなければ、ベンチの別のポケモンにすりかえない"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = OPPONENT_HAND_TO_BENCH
+    opponent_element: ClassVar[str] = E.FORCED_SWITCH_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        opponent = 1 - run.player
+        if len(state.players[opponent].bench) >= bench_limit(state, opponent):
+            run.fail("opponent_bench_full")
+            return False
+        _hand_bench_reaction_question(run, (opponent,))
+        look_at_hand(state, run.player, opponent, effect=str(run.key))
+        candidates = E.hand_baby_or_basic(state, opponent)
+        if not candidates:
+            attacker = run.attacker()
+            state.add_event("attack_bench_from_hand_none", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key), owner=opponent)
+            return False
+        stops = () if run.res.dry_run else hand_entry_power_cards(state, candidates)
+        run.suspend(kind=OPPONENT_HAND_TO_BENCH, player=run.player, options=candidates,
+                    extra=(("owner", opponent),) + _unresolved_extra(stops, E.ATTACK_HAND_BENCH_REACTION_CODE, E.ATTACK_HAND_BENCH_REACTION_REASON))
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        opponent = 1 - run.player
+        if decision.context_value("owner") != opponent or len(choices) != 1 or choices[0] not in E.hand_baby_or_basic(state, opponent):
+            raise RuntimeError(f"ぶきみなとおぼえで選んだカード {choices} が、相手の手札のたね・ベイビィポケモンではない（エンジンの不具合）")
+        if len(state.players[opponent].bench) >= bench_limit(state, opponent):
+            raise RuntimeError("ぶきみなとおぼえの決定のあとに、相手のベンチの空きがなくなった（エンジンの不具合）")
+        (placed,) = place_from_hand_in_attack(run, opponent, choices, run.player)
+        p = state.players[opponent]
+        old = p.active
+        if not any(pokemon is placed for pokemon in p.bench):
+            ForceSwitch._skip(run, old, E.NO_BENCH)
+            return
+        if _leave_prevented(run, opponent, old, E.LEAVE_FORCED_SWITCH, None):
+            return
+        if not reaches(run.res, run.fs, opponent, old, E.FORCED_SWITCH_ELEMENT):
+            return
+        swap_opponent_active(run, opponent, old, placed.pokemon_id, chosen_by="effect")
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        return [(option,) for option in decision.options]  # 先読みでは場に出たときの特殊能力の止める選択を付けない（手札の中身で宣言の受け付けを変えない）
+
+
+@dataclass(frozen=True)
+class EachPlayerHandToBench(Element):
+    """おたがいのプレイヤーは、それぞれ、相手のプレイヤーの手札を見る。その後、それぞれ、のぞむなら、相手の手札にある「ベイビィポケモン」と「たねポケモン」を、相手のベンチの空きぶん、
+    好きなだけ選び、相手のベンチに出してよい（v0.121。わるいリングマの「ちょうはつ」。``effects.EachPlayerBenchesOpponentHandBasics``。docs 7 章）。
+
+    - 手札から出したことへの場の反応・特殊能力を止める効果がかかわるなら HB1（見る前。どちらかのベンチに出しうるとき。公開の情報と手札の枚数だけで決める）
+    - 見る: ワザを使ったプレイヤーが相手の手札を、そのあと相手がワザを使ったプレイヤーの手札を（実装上の順番。それぞれ ``zones.look_at_hand``）。片方の手札が 0 枚・ベンチに空きが
+      ないときも、もう片方の見る・選ぶを省かない
+    - 選ぶ: 1 段目はワザを使ったプレイヤーが相手の手札から、2 段目は相手がワザを使ったプレイヤーの手札から（決定 ``OPPONENT_HAND_TO_BENCH``。続きの情報 ``owner``・``stage``。0〜min(空き, 数) 枚。
+      0 枚は「のぞむなら」の出さないこと。選べるカードがない・空きがない段は決定を出さない（ログ ``attack_bench_from_hand_none``））。場に出たときの特殊能力を持つカードは選べるが選ぶと止める
+      （HB1）。選んだカードを手札の並びの順に、カードの持ち主のベンチに出す（``place_from_hand_in_attack``）
+    - 選ぶ順番（番のプレイヤーから）は実装上の順番。2 つの選択は別の手札・別のベンチで、選んだカードが同じなら結果は順番によらない（出したカードは公開。手札は永久に公開しない）"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = OPPONENT_HAND_TO_BENCH
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        opponent = 1 - run.player
+        _hand_bench_reaction_question(run, (opponent, run.player))
+        look_at_hand(state, run.player, opponent, effect=str(run.key))
+        look_at_hand(state, opponent, run.player, effect=str(run.key))
+        return self._stage(run, 1)
+
+    def _stage(self, run: AttackRun, stage: int) -> bool:
+        state = run.state
+        while stage <= 2:
+            chooser = run.player if stage == 1 else 1 - run.player
+            owner = 1 - chooser
+            candidates = E.hand_baby_or_basic(state, owner)
+            space = bench_limit(state, owner) - len(state.players[owner].bench)
+            if candidates and space > 0:
+                stops = () if run.res.dry_run else hand_entry_power_cards(state, candidates)
+                run.suspend(kind=OPPONENT_HAND_TO_BENCH, player=chooser, options=candidates, min_choices=0, max_choices=min(space, len(candidates)),
+                            extra=(("owner", owner), ("stage", stage)) + _unresolved_extra(stops, E.ATTACK_HAND_BENCH_REACTION_CODE, E.ATTACK_HAND_BENCH_REACTION_REASON))
+                return True
+            attacker = run.attacker()
+            state.add_event("attack_bench_from_hand_none", player=chooser, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key), owner=owner)
+            stage += 1
+        return False
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        stage = decision.context_value("stage")
+        owner = decision.context_value("owner")
+        chooser = run.player if stage == 1 else 1 - run.player
+        if stage not in (1, 2) or owner != 1 - chooser or decision.player != chooser or any(c not in E.hand_baby_or_basic(state, owner) for c in choices) \
+                or len(state.players[owner].bench) + len(choices) > bench_limit(state, owner):
+            raise RuntimeError(f"ちょうはつの決定（段 {stage!r}・持ち主 {owner!r}）の答え {choices} が、相手の手札のたね・ベイビィポケモンを空きの数までではない（エンジンの不具合）")
+        if choices:
+            ordered = tuple(uid for uid in state.players[owner].hand if uid in set(choices))
+            place_from_hand_in_attack(run, owner, ordered, chooser)
+        else:
+            attacker = run.attacker()
+            state.add_event("attack_bench_from_hand_declined", player=chooser, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key), owner=owner)
+        self._stage(run, stage + 1)
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        return [()]  # 先読みでは出さない答えだけを試す（出したあとに当たる問いはなく、手札の中身で宣言の受け付けを変えない）
+
+
+def swap_opponent_active(run: AttackRun, opponent: int, old: PokemonInPlay, new_pid: int, *, chosen_by: str | None) -> None:
+    """v0.121: ワザの効果で、相手（``opponent``）のバトル場のポケモン ``old`` と、相手の控えの ``new_pid`` を入れ替える（``ForceSwitch.resume`` から分けた共通の部分。移動・ログ
+    ``forced_switch``・特殊状態と持続する効果の消去・発生源がはなれた効果・バトル場に出たら消える効果・ベンチにもどった印・バトル場をはなれた時のトラッシュ）。確かめ（はなれられない・
+    効果を受けない）は呼ぶ側。"""
+    p = run.state.players[opponent]
+    index = next(i for i, pokemon in enumerate(p.bench) if pokemon.pokemon_id == new_pid)
+    require_can_leave(run.state, opponent, old)  # v0.93: 決定を出す前に確かめた（``run``）
+    p.active, p.bench[index] = p.bench[index], old
+    M.note_switch(run.state, opponent, old, p.active)  # v0.87: 入れ替えの事実（相手の［やけのこり］。次の要素の前に処理する）
+    extra = {} if chosen_by is None else {"chosen_by": chosen_by}  # v0.31: かどわかす（ふきとばしのログの形は v0.30 と同じ）。v0.121: ぶきみなとおぼえは "effect"
+    run.state.add_event(
+        "forced_switch",
+        player=opponent,
+        attacker=run.player,
+        attacker_pokemon_id=run.fs.frame.source_pid,
+        effect=str(run.key),
+        old_active=old.card,
+        new_active=p.active.card,
+        old_active_pokemon_id=old.pokemon_id,
+        new_active_pokemon_id=p.active.pokemon_id,
+        **extra,
+    )
+    clear_special_conditions(run.state, opponent, old, FORCED_SWITCH_REASON)
+    remove_persistent_effects(run.state, opponent, old, FORCED_SWITCH_REASON)
+    remove_source_left_effects(run.state, opponent, old)  # v0.92: 発生源がバトル場をはなれたら消える効果
+    remove_on_entering_active(run.state, opponent, p.active)  # v0.114: バトル場に出てきたら消える効果（じっとみる）
+    mark_returned_to_bench(old)  # v0.48: 特殊能力で色を変えた記録に、ベンチにもどったことを残す（VS1）
+    E.discard_on_leaving_active(run.state, opponent, old)  # v0.65: バトル場をはなれた時にトラッシュするついているトレーナー（変わり身の術）
+
+
+BUILDERS |= {
+    # おおあくび: 自分 → 相手を、それぞれ特殊状態にする（ダメージを与えたことを条件にしない）
+    E.StatusSelfAndOpponent: lambda e: (Status(e.condition, target=SELF), Status(e.condition)),
+    # おおいびき: ねむり状態でなければ失敗 → ダメージ（目安）
+    E.FailUnlessAsleepDamage: lambda e: (FailUnlessAsleep(), Damage(OPP, Printed())),
+    # でんじほう: コイン（1 枚でも「うら」なら失敗。ロックオンの効果があれば失敗しない）→ ダメージ（目安）→ マヒ
+    E.CoinsFailThenDamageParalyze: lambda e: (FailOnTails(count=e.coins, waiver=True), Damage(OPP, Printed()), Status(PARALYSIS, reparalysis_check=True)),
+    # ロックオン: 自分に次の自分の番の「target_name のコインの「うら」で失敗しない」効果（受けた相手がバトル場をはなれたら消える）
+    E.WaiveTailsFailureNextTurn: lambda e: (SelfFailureWaiver(e.target_name),),
+    # じごくのほのお: ついている色のエネルギーカードを 1 枚トラッシュ（なければ追加の効果だけがなくなる）→ ダメージ（目安 + トラッシュした枚数 × per）
+    E.DiscardTypeEnergyCardForBonus: lambda e: (
+        DiscardTypeCardForBonus(e.energy_type, count=1, when_lacking=LACKING_SKIP), Damage(OPP, PlusPerDiscarded("discard", e.per)),
+    ),
+    # だいらんとう: おたがいの場のポケモン全員に 1 枚ずつコイン →「おもて」のポケモンに弱点・抵抗力なしで amount
+    E.CoinPerPokemonInPlayDamage: lambda e: (CoinPerPokemonInPlay(e.amount),),
+    # ぶきみなとおぼえ: 相手のベンチに空きがなければ失敗 → 相手の手札を見る → たね・ベイビィを 1 枚相手のベンチに出す → そのポケモンを相手と入れ替える
+    E.BenchOpponentHandBasicThenSwitchOrFail: lambda e: (OpponentHandToBenchThenSwitch(),),
+    # ちょうはつ: おたがいに相手の手札を見る → それぞれ、のぞむなら相手の手札のたね・ベイビィを相手のベンチの空きぶん出す
+    E.EachPlayerBenchesOpponentHandBasics: lambda e: (EachPlayerHandToBench(),),
 }

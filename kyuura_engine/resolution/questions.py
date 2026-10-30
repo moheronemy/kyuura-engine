@@ -423,6 +423,17 @@ QUESTIONS: dict[str, Question] = {
         Question("reaction_condition_changed", "UNRESOLVED_REACTION_CONDITION_CHANGED", ("RA2",), 10,
                  "同じ時点に起こる反応のうち、先に処理した反応で場が変わり、あとの反応の特殊能力がはたらくかが事実の時点と変わるとき、どちらの時点の状態で決めるかは、"
                  "記録から決められない"),
+        # v0.121（docs/hand-bench-attack-conditions-v0.121.md 10 章）: ロックオンを受けた相手の防護（LO1）・じごくのほのおでトラッシュする悪エネルギーの「+10」（DK1）・ワザの効果で手札から
+        # ベンチに出したときの反応と特殊能力を止める効果の範囲（HB1）
+        Question("lock_on_protected_target", "UNRESOLVED_LOCK_ON_PROTECTED_TARGET", ("LO1",), 10,
+                 "「ロックオン」の効果はワザを使ったポケモン自身が持つが、失効を「このワザを受けた相手」で決める。受けた相手がワザの効果を受けない状態のとき、この効果がはたらくか"
+                 "（相手への効果として評価するか）は、印刷の文面・kyuura の記録から決められない"),
+        Question("discarded_energy_damage_bonus", "UNRESOLVED_DISCARDED_ENERGY_DAMAGE_BONUS", ("DK1",), 10,
+                 "「じごくのほのお」でトラッシュする悪エネルギーの「+10」をこのワザのダメージに当てはめるか（説明の順のトラッシュのあとに計算するか、ダメージの処理が先（p.309）か）は、"
+                 "日本語の印刷の文面・kyuura の記録から決められない（英語版の文面は根拠にしない）"),
+        Question("attack_hand_bench_reaction", "UNRESOLVED_ATTACK_HAND_BENCH_REACTION", ("HB1",), 10,
+                 "ワザの効果で手札のたね・ベイビィポケモンをベンチに出したときの、手札から出したことへの反応（［ヒートプレート］・爆発ジム・場に出したときの特殊能力）と特殊能力を止める"
+                 "効果の範囲を、ワザの処理の途中に処理するか・だれが出したことになるかは、印刷の文面・kyuura の記録から決められない"),
         Question("power_damage_prevented", "UNRESOLVED_POWER_DAMAGE_PREVENTED", ("SB1",), 10,
                  "マチスのマルマインの［ショックボム］の特殊能力のダメージを、「ダメージを受けない」状態（「かたまる」など。説明はワザによるダメージを書く）のポケモンが受けるかは、"
                  "印刷の文面・kyuura の記録から決められない（トレーナーのダメージの p.235 の解説の記録は特殊能力のダメージを書かない）"),

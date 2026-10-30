@@ -30227,6 +30227,166 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.120 で加えた（docs/fossil-basic-virtual-attacks-v0.120.md）。PF3（プレミアムファイル3。premium_file）。2000.02.14 版のルールで処理する。闘・たね（HP60）。たたきつける=CoinFlipDamage（既存の型。2 枚 × 20）。［ものまね］=UseDefenderAttacks（v0.120 の型。常にはたらく許可。バトル場にいて、ねむり・マヒ・こんらんでないとき、相手の対戦ポケモンの持っているワザを、このカードのエネルギーで払って使える）。データの欠け jp_print.level は処理に使わない。kyuura data/rule_history.json の card_lists.poke_body（MIX-POWER-ERRATA。2002-05-24 の Q&A の「ポケボディー」の一覧）はこのカードの特殊能力を挙げるが、後年の分類で、2000.02.14 版の規定としては使わない（エラッタの errata の cards ではない）。処理に使う文面は kyuura の印刷の文面（kyuura に最新の説明・エラッタの記録はない）。kyuura の日本語の文面はpcg-search.comの転記（同じ転記元との一致を独立した照合に数えない）。kyuura data/engine_targets.json（e519b99）の対象。kyuura の研究の基準（e519b99）でこのカードを指す記録は kyuura_records のとおり（カードの id・pcg-search の id で data/・docs/ を確かめた。一般の規定・文章の中の言及がないという意味ではない）。新しい外部照合はしていない（外部照合なし。エンジンはカードの画像・公式ガイドブックを読んでいない）。英語版の文面・現代のルール・後年の裁定は持ち込まない"
+    },
+    "neo2-043": {
+      "basis": "kyuura_data",
+      "name_ja": "コイル",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.121 で加えた（docs/hand-bench-attack-conditions-v0.121.md）。ワザ: ロックオン=WaiveTailsFailureNextTurn、でんじほう=CoinsFailThenDamageParalyze（処理に使う文面は kyuura の印刷の文面）。日本語の文面の転記元はなぞのばしょ。外部照合なし（カードの画像は読んでいない）"
+    },
+    "neo3-053": {
+      "basis": "kyuura_data",
+      "name_ja": "ボロのつりざお",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [
+        "CR-BORO-ROD-COIN-RESULTS",
+        "CR-BORO-ROD-POKEMON-CARDS",
+        "UQ-CARD-USE-WITHOUT-TARGET"
+      ],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.121 で加えた（docs/hand-bench-attack-conditions-v0.121.md）。トレーナー: CoinsTakePokemonOrTrainerFromDiscard。処理に使う文面は kyuura の印刷の文面で、kyuura の訂正 FIX-neo3-053-TRAINER-TEXT-JA（kyuura がカードの画像 IMG-neo3-053 で確かめた。エンジンは画像を見ていない）のあとの値。CR-BORO-ROD-COIN-RESULTS・CR-BORO-ROD-POKEMON-CARDS（p.313 は kyuura の既存の転記の再利用）にしたがう。トラッシュに選べるカードがないときは OR1（UQ-CARD-USE-WITHOUT-TARGET）。`jp_print.series` の欠けは補っていない"
+    },
+    "neo4-229": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいヘルガー",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.121 で加えた（docs/hand-bench-attack-conditions-v0.121.md）。ワザ: ぶきみなとおぼえ=BenchOpponentHandBasicThenSwitchOrFail、じごくのほのお=DiscardTypeEnergyCardForBonus（処理に使う文面は kyuura の印刷の文面。英語の欄の括弧の追加量は根拠にしない。DK1）。日本語の文面の転記元は Pokemon Wiki。外部照合なし"
+    },
+    "neo4-096": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいリングマ",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [
+        "CR-UNOWN-DF-SOURCE-TYPE"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.121 で加えた（docs/hand-bench-attack-conditions-v0.121.md）。ワザ: ちょうはつ=EachPlayerBenchesOpponentHandBasics、だいらんとう=CoinPerPokemonInPlayDamage（処理に使う文面は kyuura の印刷の文面）。CR-UNOWN-DF-SOURCE-TYPE（SUPPORTED）にしたがう。日本語の文面の転記元は Pokemon Wiki。外部照合なし"
+    },
+    "ES3-021": {
+      "basis": "kyuura_data",
+      "name_ja": "ヤドラン",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [
+        "CC-ES3-021-P156",
+        "CR-SLOWBRO-SNORE-AWAKE-FAILS",
+        "CR-SLOWBRO-SNORE-ONLY-THIS-ATTACK",
+        "CR-SLOWBRO-SNORE-WHILE-ASLEEP",
+        "LD-ES3-021-ATK1",
+        "UQ-COPIED-ATTACK"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "LD-ES3-021-ATK1"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.121 で加えた（docs/hand-bench-attack-conditions-v0.121.md）。ワザ: おおあくび=StatusSelfAndOpponent（kyuura の印刷の文面）、おおいびき=FailUnlessAsleepDamage（処理に使う文面は kyuura の最新の説明 LD-ES3-021-ATK1。p.156。印刷の文面は照合だけに使う）。CR-SLOWBRO-SNORE-WHILE-ASLEEP・CR-SLOWBRO-SNORE-AWAKE-FAILS（CONFIRMED）・CR-SLOWBRO-SNORE-ONLY-THIS-ATTACK（SUPPORTED）にしたがう。写すときは UQ-COPIED-ATTACK（HC9・SQ1）。kyuura の CC-ES3-021-P156 は kyuura が p.156 の図版と照合した記録（エンジンは画像を見ていない）。`pokemon.dex`・`jp_print.level` の欠けは補っていない（kyuura の訂正の候補のレベル 35 は使わない）"
+    },
+    "PR1-073": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのてあて",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.121 で加えた（docs/hand-bench-attack-conditions-v0.121.md）。トレーナー: HealNamedPokemonUpTo（今の名前がちょうど「ラプラス」の 1 匹から最大 3 個。処理に使う文面は kyuura の印刷の文面）。本文は「自分の」と限らないので、相手の場のラプラスは選ぶと止める（MQ1）。自分の場にダメージカウンターののったラプラスがいなければ MQ2。日本語の文面の転記元は pcg-search.com（同じサイトでの日本語の欄の照合は独立した照合にならない）。外部照合なし"
+    },
+    "PR1-001": {
+      "basis": "kyuura_data",
+      "name_ja": "ピカチュウ",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [
+        "CR-PIKACHU-GROWL-LATEST",
+        "CR-PIKACHU-GROWL-OPPONENT-EFFECT",
+        "LD-PR1-001-ATK0"
+      ],
+      "play_text": {
+        "attack/0": "LD-PR1-001-ATK0",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.121 で加えた（docs/hand-bench-attack-conditions-v0.121.md）。ワザ: なきごえ=ReduceDamageToSelfNextOpponentTurn(10, latest=最新の説明)（処理に使う文面は kyuura の最新の説明 LD-PR1-001-ATK0。p.127。kyuura は見出しの配布で当てはめた（heading_listing）。印刷の文面（古い書き方）は照合だけに使い、最新の説明の全文と量の組だけを受け付ける）、でんきショック=ParalyzeOnHeads（kyuura の印刷の文面）。CR-PIKACHU-GROWL-LATEST（CONFIRMED）・CR-PIKACHU-GROWL-OPPONENT-EFFECT（SUPPORTED）にしたがう。3 枚の pokemon のデータは同じ（同じカードの組 SC-PR1-001。IP1-040 は文面が違う）。`jp_print.level` の欠けは補っていない（kyuura の訂正の候補のレベル 16 は使わない）。日本語の文面の転記元は pcg-search.com。外部照合なし"
+    },
+    "PR1-003": {
+      "basis": "kyuura_data",
+      "name_ja": "ピカチュウ",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [
+        "CC-PR1-003-P127",
+        "CR-PIKACHU-GROWL-LATEST",
+        "CR-PIKACHU-GROWL-OPPONENT-EFFECT",
+        "LD-PR1-003-ATK0",
+        "UQ-GROWL-NON-ATTACK-DAMAGE"
+      ],
+      "play_text": {
+        "attack/0": "LD-PR1-003-ATK0",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.121 で加えた（docs/hand-bench-attack-conditions-v0.121.md）。ワザ: なきごえ=ReduceDamageToSelfNextOpponentTurn(10, latest=最新の説明)（処理に使う文面は kyuura の最新の説明 LD-PR1-003-ATK0。p.127。kyuura はp.127 の図版で照合した（figure。kyuura の CC-PR1-003-P127）。印刷の文面（古い書き方）は照合だけに使い、最新の説明の全文と量の組だけを受け付ける）、でんきショック=ParalyzeOnHeads（kyuura の印刷の文面）。CR-PIKACHU-GROWL-LATEST（CONFIRMED）・CR-PIKACHU-GROWL-OPPONENT-EFFECT（SUPPORTED）にしたがう。3 枚の pokemon のデータは同じ（同じカードの組 SC-PR1-001。IP1-040 は文面が違う）。`jp_print.level` の欠けは補っていない（kyuura の訂正の候補のレベル 16 は使わない）。日本語の文面の転記元は pcg-search.com。外部照合なし"
+    },
+    "PR1-017": {
+      "basis": "kyuura_data",
+      "name_ja": "ピカチュウ",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [
+        "CR-PIKACHU-GROWL-LATEST",
+        "CR-PIKACHU-GROWL-OPPONENT-EFFECT",
+        "LD-PR1-017-ATK0"
+      ],
+      "play_text": {
+        "attack/0": "LD-PR1-017-ATK0",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.121 で加えた（docs/hand-bench-attack-conditions-v0.121.md）。ワザ: なきごえ=ReduceDamageToSelfNextOpponentTurn(10, latest=最新の説明)（処理に使う文面は kyuura の最新の説明 LD-PR1-017-ATK0。p.127。kyuura は見出しの配布で当てはめた（heading_listing。配布の特定は推論で、独立した画像の照合にしない）。印刷の文面（古い書き方）は照合だけに使い、最新の説明の全文と量の組だけを受け付ける）、でんきショック=ParalyzeOnHeads（kyuura の印刷の文面）。CR-PIKACHU-GROWL-LATEST（CONFIRMED）・CR-PIKACHU-GROWL-OPPONENT-EFFECT（SUPPORTED）にしたがう。3 枚の pokemon のデータは同じ（同じカードの組 SC-PR1-001。IP1-040 は文面が違う）。`jp_print.level` の欠けは補っていない（kyuura の訂正の候補のレベル 16 は使わない）。日本語の文面の転記元は pcg-search.com。外部照合なし"
     }
   }
 }

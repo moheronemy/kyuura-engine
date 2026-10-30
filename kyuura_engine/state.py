@@ -231,6 +231,39 @@ class SecretePoison:
             raise ValueError(f"控えポケモンへのダメージは 10 の倍数の正の数（{self.amount!r}）")
 
 
+@dataclass(frozen=True)
+class NextTurnFailureWaiver:
+    """v0.121（docs/hand-bench-attack-conditions-v0.121.md 8 章）: コイル（neo2-043）の「ロックオン」の持続する効果（「次の自分の番、このカードが使う「でんじほう」で投げるコインが
+    「うら」でも、「でんじほう」は失敗しない。(このワザを受けた相手がバトル場をはなれたら、この効果は消える。)」。kyuura の印刷の文面）。
+
+    - 効果を持つのはワザを使ったポケモン自身（``NextTurnAttackDamage`` と同じ。``source_card``・``source_player`` はそのポケモンのカードとプレイヤー）。``active_turn`` は次の自分の番
+      （``created_turn + 2``）で、その番の終わりに消える。ベンチに戻ったら・場をはなれたら・進化したら消え、一度消えたら復活しない（p.322）
+    - ``attack_index`` は効果を与えたワザ（ロックオン）、``target_attack_index`` は失敗しなくなるワザ（でんじほう）の位置（同じカードの。``attack_card`` があればそのカードのワザ）。名前ではなく
+      位置で持つ（ほかのポケモンの同じ名前のワザ・このカードのほかのワザには当てはめない）
+    - ``target_player``・``target_pokemon`` は「このワザを受けた相手」（効果を与えたときの相手の対戦ポケモンの場の番号）。効果を持つのではなく、失効を決める参照先: そのポケモンが
+      バトル場をはなれた時点で消す（``persistent.remove_source_left_effects``。同じポケモンがもどっても復活しない。同じ位置に出た別のポケモンを指さない）
+    - コインは実際に投げる。「うら」をおもてに書きかえない（ワザの失敗だけをしない。``programs.FailOnTails`` の ``waiver``）"""
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    attack_index: int
+    target_attack_index: int
+    target_player: int
+    target_pokemon: int
+    attack_card: str | None = None
+    kind: ClassVar[str] = "next_turn_failure_waiver"
+    turns_until_active: ClassVar[int] = 2  # 次の自分の番
+    on_opponent: ClassVar[bool] = False
+
+    def __post_init__(self) -> None:
+        _check_attack_card(self.attack_card)
+        values = (self.attack_index, self.target_attack_index, self.target_player, self.target_pokemon)
+        if any(type(value) is not int for value in values) or self.attack_index == self.target_attack_index or self.target_player == self.source_player:
+            raise ValueError(f"失敗しなくなる効果の項目が正しくない（{self!r}）")
+
+
 # Retaliation の与えるダメージの決め方（v0.13）。名前は書き出し・ログに出る種類（kind）と対応する
 RETALIATION_FIXED = "fixed"  # 決まった量（v0.12 の「ほのおのかべ」の 10）
 RETALIATION_RECEIVED = "received_damage"  # 受けたダメージと同じ（v0.13 の「こうらがえし」）
@@ -1681,6 +1714,7 @@ PERSISTENT_EFFECT_TYPES = (PreventDamage, PreventAttackDamage, Retaliation, Next
                            ReflectShield,  # v0.83: ReflectShield（リフレクトシールド）
                            TimedDamageGuard,  # v0.109: ぬるぬる・かわす・ブリンク
                            KnockOutSurvival,  # v0.110: こらえる・こうてつか
+                           NextTurnFailureWaiver,  # v0.121: ロックオン（次の自分の番、でんじほうのコインの「うら」で失敗しない）
                            # v0.84: きらめきタッチ・こおりのはしら・パルスガード・ひかりのはどう
                            StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard,
                            StatusImmunityNextTurn,  # v0.85: しんぴのこな

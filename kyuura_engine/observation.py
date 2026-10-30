@@ -677,6 +677,8 @@ PUBLIC_EVENTS = frozenset({
     "looked_to_discard",
     # v0.56: 相手の手札からベンチに出させた・手札から直接バトル場に出した（場は公開）・相手の答え・期限のある効果・トレーナーの効果で番が終わった
     "trainer_bench_from_hand", "trainer_hand_to_active", "request_answered", "trainer_effect_added", "trainer_effect_removed", "trainer_turn_end",
+    # v0.121: ワザで相手の手札からベンチに出した・出さなかった・出せるカードがなかった（場・選ばなかったことは公開）・ロックオンで「うら」でも失敗しなかった（コインは公開）
+    "attack_bench_from_hand", "attack_bench_from_hand_declined", "attack_bench_from_hand_none", "attack_failure_waived",
     # v0.57: スタジアム（場に出す・トラッシュ・効果を使う・場のカードを動かす・ダメージ・コイン・錯乱ジムのコインと答え。場・トラッシュ・コインは公開の情報）
     "stadium_placed", "stadium_discarded", "stadium_discard_energy", "stadium_return_energy", "stadium_used", "stadium_damage", "evolution_heal",
     "evolution_heal_declined", "stadium_attack_coin", "chaos_check", "chaos_answered", "chaos_not_borrowable",

@@ -12,8 +12,8 @@
   "card_data_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 278,
-    "engine_stop_codes": 277,
+    "engine_unresolved_rulings": 285,
+    "engine_stop_codes": 284,
     "kyuura_issues": 74
   },
   "stop_codes": {
@@ -3185,6 +3185,83 @@
       ],
       "kyuura_issue": "UQ-GROWL-NON-ATTACK-DAMAGE",
       "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_VIRTUAL_ASLEEP_ONLY_ATTACK": {
+      "engine_rulings": [
+        {
+          "version": "v0.121",
+          "document": "docs/hand-bench-attack-conditions-v0.121.md",
+          "ruling_id": "SQ1"
+        }
+      ],
+      "kyuura_issue": "UQ-COPIED-ATTACK",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_LOCK_ON_PROTECTED_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.121",
+          "document": "docs/hand-bench-attack-conditions-v0.121.md",
+          "ruling_id": "LO1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DISCARDED_ENERGY_DAMAGE_BONUS": {
+      "engine_rulings": [
+        {
+          "version": "v0.121",
+          "document": "docs/hand-bench-attack-conditions-v0.121.md",
+          "ruling_id": "DK1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ATTACK_HAND_BENCH_REACTION": {
+      "engine_rulings": [
+        {
+          "version": "v0.121",
+          "document": "docs/hand-bench-attack-conditions-v0.121.md",
+          "ruling_id": "HB1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_OLD_ROD_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.121",
+          "document": "docs/hand-bench-attack-conditions-v0.121.md",
+          "ruling_id": "OR1"
+        }
+      ],
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_MISTYS_CARE_OPPONENT_LAPRAS": {
+      "engine_rulings": [
+        {
+          "version": "v0.121",
+          "document": "docs/hand-bench-attack-conditions-v0.121.md",
+          "ruling_id": "MQ1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MISTYS_CARE_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.121",
+          "document": "docs/hand-bench-attack-conditions-v0.121.md",
+          "ruling_id": "MQ2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -3477,18 +3554,23 @@
         "card_id": "neo3-053",
         "target": "trainer",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_OLD_ROD_WITHOUT_TARGET"
+          ]
         },
-        "note": "ボロのつりざおで、トラッシュに選べるカードがないときに使えるか・コインを投げるか（kyuura が 2026-10-30 に加えた事例）。v0.121 の写しの元の移行の時点では、ボロのつりざおを写しに入れていない（対戦に使えない）"
+        "note": "ボロのつりざおで、トラッシュに選べるカードがないときに使えるか・コインを投げるか（kyuura が 2026-10-30 に加えた事例）。v0.121 で登録し、トラッシュに「ポケモンのカード」か「トレーナーカード」のどちらか（または両方）がないとき、コインの前に OR1 で止める（すごいつりざおの SRD1 と同じ形。都合のよい面だけを選ばない）"
       },
       {
         "kyuura_issue": "UQ-COPIED-ATTACK",
         "card_id": "ES3-021",
         "target": "attack/1",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_COPIED_ATTACK",
+            "UNRESOLVED_VIRTUAL_ASLEEP_ONLY_ATTACK"
+          ]
         },
-        "note": "ほかのカードのワザとしておおいびき（ねむり状態のときだけ）を使うときの「このカード」と使い手のねむり状態（kyuura が 2026-10-30 に加えた事例）。移行の時点では、ヤドラン（ES3-021）を写しに入れていない"
+        "note": "ほかのカードのワザとしておおいびき（ねむり状態でないとき失敗する）を使うときの「このカード」と使い手のねむり状態（kyuura が 2026-10-30 に加えた事例）。v0.121 で登録し、ゆびをふる・ちょうのうりょくなどで写すときは HC9（選ぶと止める）、［へんしん］・［サイコリンク］・許可で使うワザなどほかのカードのワザとして持つときは SQ1（選ぶと止める）"
       },
       {
         "kyuura_issue": "UQ-GROWL-NON-ATTACK-DAMAGE",
@@ -3508,9 +3590,13 @@
         "card_id": "PR1-003",
         "target": "attack/0",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_GROWL_NON_ATTACK_DAMAGE",
+            "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET"
+          ]
         },
-        "note": "なきごえ（最新の説明）。移行の時点では、ピカチュウ PR1-003 を写しに入れていない"
+        "note": "なきごえ（最新の説明）。v0.121 で登録し、IP1-040 と同じく、受けた相手の特殊能力のダメージを GN1、控えのこのカードへのワザのダメージを v0.34 の NK5（kyuura では UQ-REDUCED-DAMAGE-BENCH-TARGET）で止める",
+        "engine_issue_differs": true
       }
     ]
   },
@@ -3893,19 +3979,18 @@
       "PMCG2-006/attack/1": "LD-PMCG2-006-ATK1",
       "PMCG3-012/attack/1": "LD-PMCG3-012-ATK1",
       "PMCG3-022/attack/0": "LD-PMCG3-022-ATK0",
-      "IP1-040/attack/0": "LD-IP1-040-ATK0"
+      "IP1-040/attack/0": "LD-IP1-040-ATK0",
+      "PR1-001/attack/0": "LD-PR1-001-ATK0",
+      "PR1-003/attack/0": "LD-PR1-003-ATK0",
+      "PR1-017/attack/0": "LD-PR1-017-ATK0",
+      "ES3-021/attack/1": "LD-ES3-021-ATK1"
     },
     "registered_without_kyuura_record": [
       "PMCG5-033/power/0",
       "GD3-009/power/0",
       "ES1-005/power/0"
     ],
-    "kyuura_records_not_registered": [
-      "LD-ES3-021-ATK1",
-      "LD-PR1-001-ATK0",
-      "LD-PR1-003-ATK0",
-      "LD-PR1-017-ATK0"
-    ],
+    "kyuura_records_not_registered": [],
     "note": "登録した最新の説明（play_text_ja）を持つワザ・特殊能力（カード id/種類/位置）と kyuura の記録の対応。registered は kyuura の最新の説明（LD-）の id。recorded_in_card_checks は、印刷の文面と同じ最新の説明を kyuura が照合の記録（CC-）に書いたもの（照合した欄の文面、またはデータの誤りの資料の値がエンジンの最新の説明と同じ。kyuura は文面が同じ最新の説明を LD- にしない）。card_checks_without_text は、照合の記録はあるが、ワザの文面を照合した欄に入れていないもの（ドードーのみだれづき。図版の版が決まらない）。registered_without_kyuura_record は kyuura に記録のない登録（2026-10-15 の kyuura の取り込みのあとは空になった。v0.27 でストライクの「つるぎのまい」（PMCG2-017/attack/0。p.56・p.321。2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（「2倍」）だけで、最新の説明（「「60」になる」）の LD- はない）を加えた。v0.28 で、既存の効果の型の登録だけで加えたラプラス（PMCG3-022。p.116）・スターミー（PMCG1-026。p.112）・カイロス（PMCG2-018。p.58）・タマタマ（PMCG2-006。p.49）・プリン（PMCG2-035。p.225）・ラッキー（PMCG1-068。p.235）・スリープ（PMCG1-045。p.164）・シェルダー（PMCG3-012。p.103）の説明文のあるワザ 13 を加えた（2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（cards.json）だけで、LD-・CC- はない）。kyuura への報告事項）。文面の一致は scripts/check_research_links.py が kyuura の研究の基準のコミットで確かめる。adopted_printed_text（2026-10-15 からの方針。docs/card-data-policy.md）は、kyuura データの採用（kyuura_engine/data/card_sources.json）で、処理に使う文面を kyuura の印刷の文面（data/cards.json）にした登録（研究の基準のコミットに、その対象の LD- がないもの。LD- があれば registered に挙げ、最新の説明にしたがう）。エンジンが原典と照合した記録ではない（registered_without_kyuura_record とは別）。v0.29 で、既存の効果の型で加えたポケモン 14 枚の説明文のあるワザ 14 を加えた。errata_text（v0.30）は、kyuura のエラッタの記録（ERR-・TXT-・RUL-。data/rule_history.json の errata）を処理に使う文面にした登録（登録の出典がその id。文面は記録の notes の引用と同じ）。記録の cards にないカードに記録の範囲として当てはめるものは errata_scope に、当てはめる文（scope_quote）・処理に使う文面（play_text_quote）・印刷の文面（printed_text。記録が挙げるカードのワザと同じ）・対象を書く。v0.30 で、エネルギーをトラッシュしてダメージを与えるワザ 4（ヒトカゲの「ひのこ」・リザード／ウインディ／ブーバーの「かえんほうしゃ」）をerrata_text に、ウインディの「とっしん」・第4弾のポニータの「ひのこ」を adopted_printed_text に加えた。difference_text（v0.31）は、処理に使う文面を kyuura の data/curation/card_differences.json の記録（確度: 確実）の最新の説明にした登録（LD- はない。kyuura への報告事項）。v0.31 でピッピの「ゆびをふる」、v0.42 でカイリューの［かけつける］（PMCG3-043/power/0）を加えた。user_corrected_text（v0.68）は、利用者が示した修正（scripts/extract_kyuura_cards.py の USER_PROVIDED_CORRECTIONS。kyuura の記録ではない）を当てはめた写しの説明文を処理に使う文面にした登録（ガルーラの「こどものおつかい」。研究の基準のコミットの kyuura の文面は修正の前の値のまま。kyuura への報告事項）。engine_simplified_text（v0.68）は、エンジンの簡略化した仕様を処理に使う文面にした登録（イマクニ？のドードー。公式の裁定・エラッタではない）",
     "recorded_in_card_checks": {
       "PMCG1-002/attack/0": "CC-PMCG1-002-P17",
@@ -5305,7 +5390,17 @@
       "PR1-065/attack/0",
       "PR1-065/attack/1",
       "PF3-001/attack/0",
-      "PF3-001/power/0"
+      "PF3-001/power/0",
+      "neo2-043/attack/0",
+      "neo2-043/attack/1",
+      "neo4-229/attack/0",
+      "neo4-229/attack/1",
+      "neo4-096/attack/0",
+      "neo4-096/attack/1",
+      "ES3-021/attack/0",
+      "PR1-001/attack/1",
+      "PR1-003/attack/1",
+      "PR1-017/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
