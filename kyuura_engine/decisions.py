@@ -348,6 +348,40 @@ OPTIONAL_SHUFFLE = "optional_shuffle"
 # ワザを使ったプレイヤー。選べるものはワザを使ったポケモンの番号 1 つで、0 個（取り除かない）か 1 個（取り除く）。``context`` の "counters"（取り除く数）。ワザを使ったポケモンに
 # ダメージカウンターがのっていなければ出さない。v0.72 の OPTIONAL_DRAIN（「相手にダメージを与えたら」の条件と与えたダメージを持つ）とは別の種類。再開先は "attack"
 OPTIONAL_HEAL = "optional_heal"
+# v0.114（docs/baby-rules-evolution-v0.114.md 6 章）: ムチュール（neo3-031）の「サイコキッス」の「相手の場のポケモンについている「特殊エネルギーカード」を1枚選び、相手の山札にもどす」で、
+# もどすカード。決めるのはワザを使ったプレイヤー。選べるものは相手の場のポケモン（バトル場 → ベンチの並び）についている特殊エネルギーカード（ついている間の定義。場の公開のカード）の
+# uid（ついている順）で 1 枚。``context`` の ``"owner"`` はカードとポケモンの持ち主（相手）。v0.95 の SELECT_ATTACHED_TRAINER（トレーナーカード）とは選ぶカードが違うので別の種類。
+# 再開先は "attack"
+SELECT_ATTACHED_SPECIAL_ENERGY = "select_attached_special_energy"
+# v0.115（docs/spread-damage-allocation-v0.115.md 4.3 節）: シードラの「ウォーターボム」・ゴローンの「がんせきくだき」・ゴローニャの「ロックブラスト」の、得たダメージの単位を相手の場の
+# ポケモンに配る配分（得た分をすべて配る。同じポケモンに配った単位は合算する）。決めるのはワザを使ったプレイヤーで、選べるものは ``context`` の ``"table"``（配る先のポケモン（``"allocation"``
+# の番号の並び）ごとの単位の数の組の並び。合計はちょうど得た単位の数）の位置。ちょうど 1 つ。重ならない選択の並びで回数を表さない（決定の答えの重複の拒否は変えない）。再開先は "attack"
+ALLOCATE_DAMAGE = "allocate_damage"
+# v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 7 章）: フシギソウ（SI-008）の「ふしぎなかおり」の「自分の場のポケモンにのっているダメージカウンターを、最大3つとりのぞく」・ラフレシア
+# （SI-011）の「ごくらくかふん」の「そのポケモンにのっているダメージカウンター最大2つと、自分にのっているダメージカウンター最大2つを、それぞれ、とりのぞく」の、とりのぞく数の配分。
+# 決めるのはとりのぞくポケモンの持ち主（ふしぎなかおりは「おもて」を出したプレイヤーごと、ごくらくかふんはワザを使ったプレイヤー）。選べるものは ``context`` の ``"table"``（とりのぞく先
+# （``"heal"`` の番号の並び）ごとの数の組の並び）の位置。ちょうど 1 つ。0 の組（とりのぞけるのに 0 を選ぶ）は選べるが選ぶと止める（HZ1）。再開先は "attack"
+HEAL_ALLOCATION = "heal_allocation"
+# v0.118: ルギア（PF3-008）の「エアロウイング」の「のぞむなら、コインを投げてよい」。決めるのはワザを使ったプレイヤー。選べるものは (1,)（1 個: 投げる・0 個: 投げない）。再開先は "attack"
+OPTIONAL_COIN = "optional_coin"
+# v0.118: わるいポリゴン2（neo4-097）の［じくうへんかん］の「自分のトラッシュから「スタジアムカード」を1枚選び出し、場に出す」で、場に出すカード。決めるのは特殊能力を使ったプレイヤー。
+# 選べるものは自分のトラッシュのスタジアムカード（トラッシュの並び。公開のカード）で 1 枚。再開先は "power"
+STADIUM_FROM_DISCARD = "stadium_from_discard"
+# v0.118: カイリュー（PR1-043）の［トランスポート］の「その後、自分の手札からカードを1枚選び、山札の上に置く」で、山札の上に置く手札のカード（引いたカードも選べる）。決めるのは特殊能力を
+# 使ったプレイヤー。選べるものは手札のカード（手札の並び）で 1 枚。手札の中身・選べる数は相手に見せない（観測の ``HIDDEN_COUNT_KINDS``）。再開先は "power"
+DECK_TOP_FROM_HAND = "deck_top_from_hand"
+# v0.119（docs/damage-reactions-poison-sleep-v0.119.md 3 章）: カスミのパルシェン（GD2-007）の［シェルアーマー］の「この力は、このカードがワザによるダメージを受けるたびに、1回使える。このカードが
+# 受けるダメージを「-10」する。」を、そのダメージで使うか（p.321 の 8 段階。ダメージの計算が 8 段階に来たとき）。決めるのはダメージを受けるポケモンの持ち主。選べるものは受けるポケモンの
+# 番号 1 つ（1 個: 使う・0 個: 使わない）。``context`` は順番の決定と同じ形の続きの情報と ``"option"``（(段階, 発生源のカード, 数)）・``"value"``（8 段階の前のダメージ）・``"finals"``
+# （使わないときの最終ダメージ）。控えポケモンへのダメージの要素では ``"bench_guard"``（運ぶ並び）。再開先は "attack"
+DAMAGE_OPTION = "damage_option"
+# v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 7 章）: たまごの化石の「あなたの山札、またはあなたの手札から、…選び出し」で、山札を見るか手札から選ぶか。決めるのは使ったプレイヤー。
+# 選べるものは 0（手札から選ぶ。手札に選べるカードがあるときだけ）・1（山札を見る。山札にカードがあるときだけ）で 1 つ。山札を見ないで手札から選べば、山札を切らない。手札の中身・選べる数は
+# 相手に見せない（観測の ``HIDDEN_COUNT_KINDS``）。再開先は "trainer"
+REVIVE_SOURCE = "revive_source"
+# v0.120: たまごの化石で山札を見たあと、ベンチに出す「なにかの化石」を進化させる進化カード（山札・手札のカード。uid）。決めるのは使ったプレイヤー。選べるカードがあれば 1 枚、なければ
+# 選べるもののない決定（0 枚。山札の中身で決定の有無を変えない）。選べるもの・数は相手に見せない。再開先は "trainer"
+BENCH_FROM_DECK_OR_HAND = "bench_from_deck_or_hand"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 
@@ -439,10 +473,26 @@ def push_trainer_decision(
     ``UnsupportedError(unresolved_code, unresolved_reason)``）。
     """
     entries = [("use", (use.player, use.card, use.card_id))]
+    options = tuple(options)
     unresolved = tuple(unresolved_choices)
+    detail = tuple(tuple(item) for item in unresolved_detail)
+    # v0.117（docs/retreat-return-active-powers-v0.117.md 5 章）: ［でんせつのからだ］で「トレーナーカード」の効果を受けないポケモン・そのポケモンについているカードは、選べるが選ぶと止める
+    # （LB1。選べるものの意味が場のポケモン・カードの決定だけ。決定を出す時点で、コイン・山札の中身の前に決める）。止める選択（``unresolved_choices``）に加え、選択ごとの理由
+    # （``unresolved_detail``）を LB1 にし、加えた選択を ``legend_body_choices`` に書く（不変条件がトレーナーの実装の決定の形を確かめるときは、その選択を除いた形で比べる）
+    from .effects import (
+        LEGEND_BODY_TARGET_CODE,
+        LEGEND_BODY_TARGET_REASON,
+        legend_body_option_stops,
+        trainer_card_effect,
+    )
+
+    stops = tuple(o for o in legend_body_option_stops(state, kind, options) if o not in unresolved) if trainer_card_effect(state, use.card) else ()
+    if stops:
+        entries.append(("legend_body_choices", stops))
+        detail += tuple((o, LEGEND_BODY_TARGET_CODE, LEGEND_BODY_TARGET_REASON) for o in stops)
+        unresolved += stops
     if unresolved:
         entries += [("unresolved_choices", unresolved), ("unresolved_code", unresolved_code), ("unresolved_reason", unresolved_reason)]
-    detail = tuple(tuple(item) for item in unresolved_detail)
     if detail:
         # v0.49: 選ぶと止める選択ごとの (選択, コード, 理由)。選択によって止める理由が違うとき（「ばける」の候補）だけ書く。``check_choices`` が優先して使う
         if not {item[0] for item in detail} <= set(unresolved):

@@ -20,6 +20,8 @@ v0.4c 以降の 2 進化ポケモン。v0.11 はサカキのワンリキー・�
   （書き出しの ``engine_user_corrections``。kyuura が当てはめた修正の表 ``KYUURA_CORRECTIONS`` とは別。docs/non-pack-effect-reuse-v0.70.md 3 章）。
 - v0.97 から、写しの元を上げた移行を連鎖（``KYUURA_MIGRATIONS``。ecb2d69 → 7d3f4ca → 73a1690。書き出しの ``source_migrations``）で持ちます。kyuura が当てはめた
   修正は、当てはめた移行の段（``migration``）の前・あとのコミットの値で確かめ、写す欄は段ごとに比べます（docs/unown-research-idfnj-v0.97.md 2 章）。
+- v0.114 で、段 v0.114（73a1690 → e519b99）を加えました（docs/baby-rules-evolution-v0.114.md 2 章）。
+- v0.121 で、段 v0.121（e519b99 → 2fe0bc0）を加えました（docs/hand-bench-attack-conditions-v0.121.md 3 章）。
 
 使い方::
 
@@ -37,8 +39,10 @@ import sys
 from pathlib import Path
 
 KYUURA_REPOSITORY = "https://github.com/moheronemy/kyuura"
-# v0.97: kyuura main の PR #5 のマージ（木は研究のコミット 78d090c329aca58c4b5fbaefa2a1e5c089433b58 と同じ）。v0.69〜v0.96 は 7d3f4ca（``V0_69_KYUURA_COMMIT``）
-KYUURA_COMMIT = "73a169063463bbf7bcaa3137d70cbf9721d11534"
+# v0.121: kyuura のブランチ claude/neo2-fossil-type-cost-checks の固定コミット（次の便のカードの文面と進化データの研究 c932625 と、neo2 の化石 4 枚のタイプ・必要なエネルギーの
+# 画像の確認。kyuura main には未取り込み）。v0.114〜v0.120 は e519b99（``V0_114_KYUURA_COMMIT``。ブランチ claude/baby-data-engine-v0113-handover の固定コミット）、
+# v0.97〜v0.113 は 73a1690（``V0_97_KYUURA_COMMIT``。kyuura main の PR #5 のマージ。木は研究のコミット 78d090c と同じ）、v0.69〜v0.96 は 7d3f4ca（``V0_69_KYUURA_COMMIT``）
+KYUURA_COMMIT = "2fe0bc042ce187d191843819262f8036abbb343d"
 KYUURA_PATH = "data/cards.json"
 
 # v0.1 の対戦で使うカード（kyuura docs/engine-readiness.md 5章の段階 1 のたねポケモンと基本エネルギー）
@@ -1419,12 +1423,19 @@ POOL_V0_79 = [
 # kyuura の台帳の修正があれば、ここに挙げていなければ書き出さない（知らない修正を黙って受け入れない）
 PREVIOUS_KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"  # v0.68 までの写しの元（移行の連鎖の最初の段の前。採用の記録の採用したときのデータのコミット）
 V0_69_KYUURA_COMMIT = "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"  # v0.69〜v0.96 の写しの元
+V0_97_KYUURA_COMMIT = "73a169063463bbf7bcaa3137d70cbf9721d11534"  # v0.97〜v0.113 の写しの元
+V0_114_KYUURA_COMMIT = "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"  # v0.114〜v0.120 の写しの元
 # v0.97（docs/unown-research-idfnj-v0.97.md 2 章）: 写しの元を上げた移行の連鎖。段ごとに、前のコミット（``from``）とあとのコミット（``to``）。最後の段の ``to`` が写しの元、
 # 最初の段の ``from`` が PREVIOUS_KYUURA_COMMIT。過去の段の値は書き換えない（v0.69 の段の ``to`` は 7d3f4ca のまま）。kyuura が当てはめた修正は、当てはめた段（``migration``）の
 # ``from`` の値が ``before``・``to`` の値が ``after`` で、写しの元でも ``after``。写す欄は段ごとに、その段の修正の欄と出典の記録の欄を除いて同じことを確かめる
+# v0.114（docs/baby-rules-evolution-v0.114.md 2 章）: 段 v0.114（73a1690 → e519b99）を加えた。v0.97 の段の ``to`` は、写しの元の定数ではなく 73a1690（``V0_97_KYUURA_COMMIT``）に固定した
+# （写しの元を上げても過去の段の値が変わらないように）
+# v0.121（docs/hand-bench-attack-conditions-v0.121.md 3 章）: 段 v0.121（e519b99 → 2fe0bc0）を加えた。v0.114 の段の ``to`` は、同じ理由で e519b99（``V0_114_KYUURA_COMMIT``）に固定した
 KYUURA_MIGRATIONS = (
     {"id": "v0.69", "from": PREVIOUS_KYUURA_COMMIT, "to": V0_69_KYUURA_COMMIT, "document": "docs/equivalent-non-pack-cards-v0.69.md"},
-    {"id": "v0.97", "from": V0_69_KYUURA_COMMIT, "to": KYUURA_COMMIT, "document": "docs/unown-research-idfnj-v0.97.md"},
+    {"id": "v0.97", "from": V0_69_KYUURA_COMMIT, "to": V0_97_KYUURA_COMMIT, "document": "docs/unown-research-idfnj-v0.97.md"},
+    {"id": "v0.114", "from": V0_97_KYUURA_COMMIT, "to": V0_114_KYUURA_COMMIT, "document": "docs/baby-rules-evolution-v0.114.md"},
+    {"id": "v0.121", "from": V0_114_KYUURA_COMMIT, "to": KYUURA_COMMIT, "document": "docs/hand-bench-attack-conditions-v0.121.md"},
 )
 KYUURA_CORRECTIONS_PATH = "data/curation/card_corrections.json"
 KYUURA_TARGETS_PATH = "data/engine_targets.json"
@@ -1564,12 +1575,425 @@ KYUURA_CORRECTIONS = [
         ],
         "engine_history": "v0.97 で写しの元を 7d3f4ca から上げたときに台帳と照らした（v0.96 までは写しにないカード。ルール文は null だった。kyuura の id は F、サイトの番号は 025）",
     },
+    # v0.114（docs/baby-rules-evolution-v0.114.md 4 章）: ベイビィ 13 枚のルール文の欠け 6 件（種類 ``transcription_omission``）と進化先の欄 13 件（新しい欄 ``pokemon.evolves_to``。種類
+    # ``field_added_from_print``）。kyuura がカードの画像（pcg-search.com・なぞのばしょ）で読んだ（根拠 ``card_image_check``。2026-10-27）。画像の記録は kyuura の
+    # data/curation/card_image_checks.json の照合の記録（``image_check`` の IMG-）で、台帳の訂正は ``evidence`` を持たない。``evidence`` はその照合の記録の画像の URL・sha256・取得日の写しで、
+    # 書き出すたびに照合の記録と照らす。画像を見たのは kyuura で、エンジンは画像・公式の書籍を見ていない。照合の記録（IMG-）を CC-・LD- に置きかえない
+    {
+        "id": "FIX-neo1-022-RULES-TEXT-JA",
+        "card_id": "neo1-022",
+        "field": "pokemon.rules_text.ja",
+        "before": None,
+        "after": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+        "basis": "card_image_check",
+        "kind": "transcription_omission",
+        "migration": "v0.114",
+        "decided_on": "2026-10-27",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-neo1-022",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neo1022.png",
+             "image_sha256": "3545f88194b44895d208688a02d6cfa1c7d55eb4f3a34dddeaaaa2c3963dbece", "accessed_on": "2026-10-27"},
+            {"image_url": "https://nazonobasho.com/wp-content/uploads/2020/12/neo1_B_022_buby_copy.jpg",
+             "image_sha256": "5826d4f70fc9d9d4f33150ce891af858d40a6391d634036969262ac2a61a4411", "accessed_on": "2026-10-27"},
+        ],
+        "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。ルール文は null だった）",
+    },
+    {
+        "id": "FIX-neo1-022-EVOLVES-TO",
+        "card_id": "neo1-022",
+        "field": "pokemon.evolves_to",
+        "before": None,
+        "after": ["ブーバー"],
+        "basis": "card_image_check",
+        "kind": "field_added_from_print",
+        "migration": "v0.114",
+        "decided_on": "2026-10-27",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-neo1-022",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neo1022.png",
+             "image_sha256": "3545f88194b44895d208688a02d6cfa1c7d55eb4f3a34dddeaaaa2c3963dbece", "accessed_on": "2026-10-27"},
+            {"image_url": "https://nazonobasho.com/wp-content/uploads/2020/12/neo1_B_022_buby_copy.jpg",
+             "image_sha256": "5826d4f70fc9d9d4f33150ce891af858d40a6391d634036969262ac2a61a4411", "accessed_on": "2026-10-27"},
+        ],
+        "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+    },
+    {
+        "id": "FIX-neo1-042-RULES-TEXT-JA",
+        "card_id": "neo1-042",
+        "field": "pokemon.rules_text.ja",
+        "before": None,
+        "after": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+        "basis": "card_image_check",
+        "kind": "transcription_omission",
+        "migration": "v0.114",
+        "decided_on": "2026-10-27",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-neo1-042",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neo1042.png",
+             "image_sha256": "6f9c9aeaffa8e2430d911325650c4b79112688606a548ad7b3162cd379d6ed80", "accessed_on": "2026-10-27"},
+            {"image_url": "https://nazonobasho.com/wp-content/uploads/2020/12/neo1_B_042_pichu_copy.jpg",
+             "image_sha256": "23858c62d627cbfa4e2f6480572177fd3e5abbd81507277921bc24618f6648bf", "accessed_on": "2026-10-27"},
+        ],
+        "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。ルール文は null だった）",
+    },
+    {
+        "id": "FIX-neo1-042-EVOLVES-TO",
+        "card_id": "neo1-042",
+        "field": "pokemon.evolves_to",
+        "before": None,
+        "after": ["ピカチュウ"],
+        "basis": "card_image_check",
+        "kind": "field_added_from_print",
+        "migration": "v0.114",
+        "decided_on": "2026-10-27",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-neo1-042",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neo1042.png",
+             "image_sha256": "6f9c9aeaffa8e2430d911325650c4b79112688606a548ad7b3162cd379d6ed80", "accessed_on": "2026-10-27"},
+            {"image_url": "https://nazonobasho.com/wp-content/uploads/2020/12/neo1_B_042_pichu_copy.jpg",
+             "image_sha256": "23858c62d627cbfa4e2f6480572177fd3e5abbd81507277921bc24618f6648bf", "accessed_on": "2026-10-27"},
+        ],
+        "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+    },
+    {
+        "id": "FIX-neo1-044-RULES-TEXT-JA",
+        "card_id": "neo1-044",
+        "field": "pokemon.rules_text.ja",
+        "before": None,
+        "after": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+        "basis": "card_image_check",
+        "kind": "transcription_omission",
+        "migration": "v0.114",
+        "decided_on": "2026-10-27",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-neo1-044",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neo1044.png",
+             "image_sha256": "f891bc837d500fc04ea4b121ffaf54456a24546c1122535ef1c859f47765d15a", "accessed_on": "2026-10-27"},
+            {"image_url": "https://nazonobasho.com/wp-content/uploads/2020/12/neo1_B_044_elekid_copy.jpg",
+             "image_sha256": "7cc15112ef9ecdc23d23aa387ca21f218908967ccdc5540dd4a98924959019e7", "accessed_on": "2026-10-27"},
+        ],
+        "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。ルール文は null だった）",
+    },
+    {
+        "id": "FIX-neo1-044-EVOLVES-TO",
+        "card_id": "neo1-044",
+        "field": "pokemon.evolves_to",
+        "before": None,
+        "after": ["エレブー"],
+        "basis": "card_image_check",
+        "kind": "field_added_from_print",
+        "migration": "v0.114",
+        "decided_on": "2026-10-27",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-neo1-044",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neo1044.png",
+             "image_sha256": "f891bc837d500fc04ea4b121ffaf54456a24546c1122535ef1c859f47765d15a", "accessed_on": "2026-10-27"},
+            {"image_url": "https://nazonobasho.com/wp-content/uploads/2020/12/neo1_B_044_elekid_copy.jpg",
+             "image_sha256": "7cc15112ef9ecdc23d23aa387ca21f218908967ccdc5540dd4a98924959019e7", "accessed_on": "2026-10-27"},
+        ],
+        "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+    },
+    {
+        "id": "FIX-neo1-070-RULES-TEXT-JA",
+        "card_id": "neo1-070",
+        "field": "pokemon.rules_text.ja",
+        "before": None,
+        "after": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+        "basis": "card_image_check",
+        "kind": "transcription_omission",
+        "migration": "v0.114",
+        "decided_on": "2026-10-27",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-neo1-070",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neo1070.png",
+             "image_sha256": "2ce941a3c9c77b62e80a5dc10164d7599a94956fd4e96fe7815b80a8617d1a08", "accessed_on": "2026-10-27"},
+            {"image_url": "https://nazonobasho.com/wp-content/uploads/2020/12/neo1_B_071_Py_copy.jpg",
+             "image_sha256": "ad5b3a35dee203a125a819ea76fee3d9d3951fd3de93b575a85d77725d66337f", "accessed_on": "2026-10-27"},
+        ],
+        "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。ルール文は null だった）",
+    },
+    {
+        "id": "FIX-neo1-070-EVOLVES-TO",
+        "card_id": "neo1-070",
+        "field": "pokemon.evolves_to",
+        "before": None,
+        "after": ["ピッピ"],
+        "basis": "card_image_check",
+        "kind": "field_added_from_print",
+        "migration": "v0.114",
+        "decided_on": "2026-10-27",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-neo1-070",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neo1070.png",
+             "image_sha256": "2ce941a3c9c77b62e80a5dc10164d7599a94956fd4e96fe7815b80a8617d1a08", "accessed_on": "2026-10-27"},
+            {"image_url": "https://nazonobasho.com/wp-content/uploads/2020/12/neo1_B_071_Py_copy.jpg",
+             "image_sha256": "ad5b3a35dee203a125a819ea76fee3d9d3951fd3de93b575a85d77725d66337f", "accessed_on": "2026-10-27"},
+        ],
+        "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+    },
+    {
+        "id": "FIX-neo2-033-RULES-TEXT-JA",
+        "card_id": "neo2-033",
+        "field": "pokemon.rules_text.ja",
+        "before": None,
+        "after": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+        "basis": "card_image_check",
+        "kind": "transcription_omission",
+        "migration": "v0.114",
+        "decided_on": "2026-10-27",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-neo2-033",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neo2033.png",
+             "image_sha256": "ed41e3301955de786e9b656819ec93e0363afbdb52b65e8341dcd1ac406ea1c3", "accessed_on": "2026-10-27"},
+            {"image_url": "https://nazonobasho.com/wp-content/uploads/2021/05/neo2_B_033_balkie_copy.jpg",
+             "image_sha256": "930484e6933cd329bbffe18ab269885347e59bd14492474349e4f866efc8a9cc", "accessed_on": "2026-10-27"},
+        ],
+        "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。ルール文は null だった）",
+    },
+    {
+        "id": "FIX-neo2-033-EVOLVES-TO",
+        "card_id": "neo2-033",
+        "field": "pokemon.evolves_to",
+        "before": None,
+        "after": ["エビワラー", "サワムラー", "カポエラー"],
+        "basis": "card_image_check",
+        "kind": "field_added_from_print",
+        "migration": "v0.114",
+        "decided_on": "2026-10-27",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-neo2-033",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neo2033.png",
+             "image_sha256": "ed41e3301955de786e9b656819ec93e0363afbdb52b65e8341dcd1ac406ea1c3", "accessed_on": "2026-10-27"},
+            {"image_url": "https://nazonobasho.com/wp-content/uploads/2021/05/neo2_B_033_balkie_copy.jpg",
+             "image_sha256": "930484e6933cd329bbffe18ab269885347e59bd14492474349e4f866efc8a9cc", "accessed_on": "2026-10-27"},
+        ],
+        "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+    },
+    {
+        "id": "FIX-neo2-050-RULES-TEXT-JA",
+        "card_id": "neo2-050",
+        "field": "pokemon.rules_text.ja",
+        "before": None,
+        "after": "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。",
+        "basis": "card_image_check",
+        "kind": "transcription_omission",
+        "migration": "v0.114",
+        "decided_on": "2026-10-27",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-neo2-050",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neo2050.png",
+             "image_sha256": "d6ca907583590e5bb8e85d97312566383b7a6bdf9140895806e4b5e7ecd79e8e", "accessed_on": "2026-10-27"},
+            {"image_url": "https://nazonobasho.com/wp-content/uploads/2021/05/neo2_B_050_pupurin_copy.jpg",
+             "image_sha256": "a616ac8bef18a3f3fdcc30d37d2448d58e83c48077bd9bc69dba14733b1cf074", "accessed_on": "2026-10-27"},
+        ],
+        "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。ルール文は null だった）",
+    },
+    {
+        "id": "FIX-neo2-050-EVOLVES-TO",
+        "card_id": "neo2-050",
+        "field": "pokemon.evolves_to",
+        "before": None,
+        "after": ["プリン"],
+        "basis": "card_image_check",
+        "kind": "field_added_from_print",
+        "migration": "v0.114",
+        "decided_on": "2026-10-27",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-neo2-050",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neo2050.png",
+             "image_sha256": "d6ca907583590e5bb8e85d97312566383b7a6bdf9140895806e4b5e7ecd79e8e", "accessed_on": "2026-10-27"},
+            {"image_url": "https://nazonobasho.com/wp-content/uploads/2021/05/neo2_B_050_pupurin_copy.jpg",
+             "image_sha256": "a616ac8bef18a3f3fdcc30d37d2448d58e83c48077bd9bc69dba14733b1cf074", "accessed_on": "2026-10-27"},
+        ],
+        "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+    },
+    {
+        "id": "FIX-neo3-031-EVOLVES-TO",
+        "card_id": "neo3-031",
+        "field": "pokemon.evolves_to",
+        "before": None,
+        "after": ["ルージュラ"],
+        "basis": "card_image_check",
+        "kind": "field_added_from_print",
+        "migration": "v0.114",
+        "decided_on": "2026-10-27",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-neo3-031",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neo3031.png",
+             "image_sha256": "c9a14da75fe6a29b58b8424e8b2b859367dd6dac04817789a5e269fe4f89511c", "accessed_on": "2026-10-27"},
+        ],
+        "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+    },
+    {
+        "id": "FIX-PF2-007-EVOLVES-TO",
+        "card_id": "PF2-007",
+        "field": "pokemon.evolves_to",
+        "before": None,
+        "after": ["ピカチュウ"],
+        "basis": "card_image_check",
+        "kind": "field_added_from_print",
+        "migration": "v0.114",
+        "decided_on": "2026-10-27",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-PF2-007",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neopf2007.png",
+             "image_sha256": "2a53ae3c573c6ea2b236cbde61f641d1b56511c71887d6a9765b5636e52f8cb5", "accessed_on": "2026-10-27"},
+        ],
+        "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+    },
+    {
+        "id": "FIX-NIP1X-002-EVOLVES-TO",
+        "card_id": "NIP1X-002",
+        "field": "pokemon.evolves_to",
+        "before": None,
+        "after": ["ブーバー"],
+        "basis": "card_image_check",
+        "kind": "field_added_from_print",
+        "migration": "v0.114",
+        "decided_on": "2026-10-27",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-NIP1X-002",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neointro1ex002.png",
+             "image_sha256": "72dea1b1673a0121165377c9494db5178f94999c781939683c56cdaaae42a68d", "accessed_on": "2026-10-27"},
+        ],
+        "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+    },
+    {
+        "id": "FIX-NIP2X-002-EVOLVES-TO",
+        "card_id": "NIP2X-002",
+        "field": "pokemon.evolves_to",
+        "before": None,
+        "after": ["ピカチュウ"],
+        "basis": "card_image_check",
+        "kind": "field_added_from_print",
+        "migration": "v0.114",
+        "decided_on": "2026-10-27",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-NIP2X-002",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neointro2ex002.png",
+             "image_sha256": "5e1c9ec797257d91af829125a2eb351e9c31b3fcff266fdc101ffd459b27e53c", "accessed_on": "2026-10-27"},
+        ],
+        "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+    },
+    {
+        "id": "FIX-PRN-012-EVOLVES-TO",
+        "card_id": "PRN-012",
+        "field": "pokemon.evolves_to",
+        "before": None,
+        "after": ["ピッピ"],
+        "basis": "card_image_check",
+        "kind": "field_added_from_print",
+        "migration": "v0.114",
+        "decided_on": "2026-10-27",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-PRN-012",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neop012.png",
+             "image_sha256": "82dbf047a10a378c8f8c8495065dfb66df3b83703c9ef012f6a1c1f5c5f1ff88", "accessed_on": "2026-10-27"},
+        ],
+        "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+    },
+    {
+        "id": "FIX-PRN-031-EVOLVES-TO",
+        "card_id": "PRN-031",
+        "field": "pokemon.evolves_to",
+        "before": None,
+        "after": ["プリン"],
+        "basis": "card_image_check",
+        "kind": "field_added_from_print",
+        "migration": "v0.114",
+        "decided_on": "2026-10-27",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-PRN-031",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neop031.png",
+             "image_sha256": "1581d95c332ee886fbb14eeff69e0eb3b40929cf7b6147ca0096fadc8a14fa5f", "accessed_on": "2026-10-27"},
+        ],
+        "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+    },
+    {
+        "id": "FIX-PRN-037-EVOLVES-TO",
+        "card_id": "PRN-037",
+        "field": "pokemon.evolves_to",
+        "before": None,
+        "after": ["ルージュラ"],
+        "basis": "card_image_check",
+        "kind": "field_added_from_print",
+        "migration": "v0.114",
+        "decided_on": "2026-10-27",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-PRN-037",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neop037.png",
+             "image_sha256": "e7fe9c0073a11d34b07b978e2aa65e7aad72d3eb3d4e1ee52489b88de27bbd69", "accessed_on": "2026-10-27"},
+        ],
+        "engine_history": "v0.114 で写しの元を 73a1690 から上げたときに台帳・画像の照合の記録と照らした（v0.113 までは写しにないカード。進化先の欄 pokemon.evolves_to は 73a1690 の記録にない）",
+    },
+    # v0.121（docs/hand-bench-attack-conditions-v0.121.md 3 章・4 章）: 段 v0.121 で kyuura が当てはめた 13 件の訂正のうち、写しの組のカード（ボロのつりざお）のもの。残る 12 件のカードは
+    # 写しに入れていない（移行の件数を合わせるためにプールへ加えない）
+    {
+        "id": "FIX-neo3-053-TRAINER-TEXT-JA",
+        "card_id": "neo3-053",
+        "field": "trainer.text.ja",
+        "before": "コインを2枚投げ、すべて「おもて」なら「ポケモンのカード」を、すべて「うら」なら「トレーナーカード」をあなたのトラッシュから選び出し、相手プレイヤーに見せてから、手札に加える。",
+        "after": "コインを2枚投げ、すべて「おもて」なら「ポケモンのカード」を、すべて「うら」なら「トレーナーカード」を、あなたのトラッシュから1枚選び出し、相手プレイヤーに見せてから、手札に加える。",
+        "basis": "card_image_check",
+        "kind": "transcription_error",
+        "migration": "v0.121",
+        "decided_on": "2026-10-30",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-neo3-053",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neo3053.png",
+             "image_sha256": "6f191d61a0d8113c6b07adffa934b87b34b305e0435fc8e3207cb4c2ff737c85", "accessed_on": "2026-10-30"},
+        ],
+        "engine_history": "v0.121 で写しの元を e519b99 から上げたときに台帳・画像の照合の記録と照らし、登録のコミットでカードを写しに入れた（v0.120 までは写しにないカード）",
+    },
 ]
 # 前の写しの元と比べるときに、変わってよい欄（出典の記録。エンジンは使わない）。ほかの欄は修正の欄を除いて同じでなければ書き出さない
 PROVENANCE_FIELDS = ("notes", "ja_text_source", "source_ids", "jp_en_differences")
 # v0.97: 欠けていた欄を埋める修正（種類 ``transcription_omission``）では、欠けている欄の一覧（``data_gaps``）から、ちょうどその欄だけが消えてよい（ほかの欠けは変わらない）
 OMISSION_KIND = "transcription_omission"
-CORRECTION_KINDS = ("transcription_error", OMISSION_KIND)
+# v0.114: 前の写しの元になかった欄を、印刷の値で加える修正（ベイビィの ``pokemon.evolves_to``）。段の前のコミットではその欄がない（または null）、あとのコミットで ``after``。``data_gaps`` は変えない
+ADDED_FIELD_KIND = "field_added_from_print"
+CORRECTION_KINDS = ("transcription_error", OMISSION_KIND, ADDED_FIELD_KIND)
+KYUURA_IMAGE_CHECKS_PATH = "data/curation/card_image_checks.json"  # v0.114: kyuura の画像の照合の記録（IMG-）
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 _DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
@@ -1664,6 +2088,7 @@ FIELDS_USED_BY_ENGINE = [
     "energy.kind",
     "energy.provides",
     "energy.text",  # v0.58: 特殊エネルギーの説明（登録した実装との照合に使う）
+    "pokemon.evolves_to",  # v0.114: ベイビィの進化先（日本語名の配列。印刷の順。ベイビィの記録にだけある。docs/baby-rules-evolution-v0.114.md 4 章）
 ]
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -1697,6 +2122,20 @@ def get_field(card: dict, field: str):
     value = card
     for step in _path(field):
         value = value[step]
+    return value
+
+
+_ABSENT = object()
+
+
+def field_or_absent(card: dict, field: str):
+    """v0.114: 欄の値。途中の欄・その欄がなければ ``_ABSENT``（前の写しの元になかった欄を加える修正のため）。"""
+    value = card
+    for step in _path(field):
+        if (isinstance(value, dict) and step in value) or (isinstance(value, list) and isinstance(step, int) and step < len(value)):
+            value = value[step]
+        else:
+            return _ABSENT
     return value
 
 
@@ -1761,7 +2200,35 @@ def _ledger(kyuura: Path, commit: str) -> dict:
         return {}  # 台帳のないコミット（v0.68 までの写しの元）
 
 
-def card_image_check_problems(label: str, c: dict, entry: dict, card_ids_with_checks: set[tuple[str, str]], previous_ledger: dict) -> list[str]:
+def _image_checks(kyuura: Path, commit: str) -> dict:
+    """v0.114: kyuura の画像の照合の記録（data/curation/card_image_checks.json の ``checks``。id → 記録）。ファイルのないコミット（73a1690 まで）は空。"""
+    try:
+        return {r["id"]: r for r in json.loads(_show(kyuura, commit, KYUURA_IMAGE_CHECKS_PATH).decode("utf-8"))["checks"]}
+    except subprocess.CalledProcessError:
+        return {}
+
+
+def image_check_record_problems(label: str, c: dict, record: dict | None, image_check) -> list[str]:
+    """v0.114: 台帳の訂正が画像の照合の記録（``image_check`` の IMG-）を指すとき、その記録が kyuura の画像の照合で、このカード・この訂正・この欄の値を書き、カードの識別がある。
+    照合した日は決めた日。画像の URL・sha256・取得日は ``card_image_check_problems`` が写しの記録の ``evidence`` と照らす。問題の一覧。"""
+    if record is None:
+        return [f"{label}: 画像の照合の記録 {image_check!r} が kyuura の {KYUURA_IMAGE_CHECKS_PATH} にない"]
+    problems = []
+    if (record.get("card_id"), record.get("kind"), record.get("checked_by")) != (c["card_id"], "card_image_check", "kyuura"):
+        problems.append(f"{label}: 画像の照合の記録 {record.get('id')} のカード・種類・照合した者が、このカード・card_image_check・kyuura ではない")
+    if record.get("checked_on") != c.get("decided_on"):
+        problems.append(f"{label}: 画像の照合の記録の照合した日 {record.get('checked_on')!r} が、決めた日 {c.get('decided_on')!r} ではない")
+    if c["id"] not in (record.get("corrections") or ()):
+        problems.append(f"{label}: 画像の照合の記録 {record.get('id')} の corrections に、この訂正がない")
+    if (record.get("print_values") or {}).get(c["field"], _ABSENT) != c["after"]:
+        problems.append(f"{label}: 画像の照合の記録の印刷の値（print_values）が、訂正のあとの値 {c['after']!r} ではない")
+    if not isinstance(record.get("identification"), str) or not record["identification"].strip():
+        problems.append(f"{label}: 画像の照合の記録にカードの識別（identification）がない")
+    return problems
+
+
+def card_image_check_problems(label: str, c: dict, entry: dict, card_ids_with_checks: set[tuple[str, str]], previous_ledger: dict,
+                              image_checks: dict | None = None) -> list[str]:
     """v0.97: kyuura がカードの画像で確かめた修正（根拠 ``card_image_check``）の出どころ。台帳に、画像の URL（https）・sha256（64 桁）・取得日（決めた日まで）・カードの識別・
     確かめた範囲・エラッタでないことの記録があり、写しの記録の画像（``evidence``）が台帳の画像と同じで、kyuura が画像を見た・エンジンは見ていない。kyuura の照合の記録（CC-）・
     最新の説明（LD-）・修正のコミットを書かない（作らない）。修正はその段で入った（段の前のコミットの台帳にない）。問題の一覧。"""
@@ -1777,10 +2244,20 @@ def card_image_check_problems(label: str, c: dict, entry: dict, card_ids_with_ch
     decided = entry.get("decided_on")
     if not isinstance(decided, str) or not _DATE.fullmatch(decided) or decided != c.get("decided_on"):
         problems.append(f"{label}: 台帳の決めた日 {decided!r} が写しの記録 {c.get('decided_on')!r} と違う")
+    # v0.114: 画像の照合の記録（IMG-）を指す訂正は、カードの識別と画像を、その記録が持つ（台帳の訂正は image_check で指す。写しの記録の image_check も同じ id）
+    record = None
+    if "image_check" in entry or "image_check" in c:
+        if entry.get("image_check") != c.get("image_check"):
+            problems.append(f"{label}: 台帳の画像の照合の記録 {entry.get('image_check')!r} が写しの記録 {c.get('image_check')!r} と違う")
+        record = (image_checks or {}).get(entry.get("image_check"))
+        problems.extend(image_check_record_problems(label, c, record, entry.get("image_check")))
+        if record is None:
+            return problems
     for key in ("identification", "scope", "not_errata", "source_of_error", "basis_detail"):
-        if not isinstance(entry.get(key), str) or not entry[key].strip():
+        value = record.get(key) if record is not None and key == "identification" else entry.get(key)
+        if not isinstance(value, str) or not value.strip():
             problems.append(f"{label}: 台帳に {key}（カードの識別・確かめた範囲・エラッタでないこと・誤りの出どころ・根拠の説明）がない")
-    evidence = entry.get("evidence")
+    evidence = entry.get("evidence") if record is None else record.get("images")
     if not isinstance(evidence, list) or not evidence:
         return [*problems, f"{label}: 台帳に画像の記録（evidence）がない"]
     recorded = set()
@@ -1801,7 +2278,7 @@ def card_image_check_problems(label: str, c: dict, entry: dict, card_ids_with_ch
         recorded.add((url, digest, accessed))
     ours = {(x.get("image_url"), x.get("image_sha256"), x.get("accessed_on")) for x in c.get("evidence") or ()}
     if ours != recorded or len(ours) != len(c.get("evidence") or ()):
-        problems.append(f"{label}: 写しの記録の画像（evidence）が台帳の画像（URL・sha256・取得日）と違う")
+        problems.append(f"{label}: 写しの記録の画像（evidence）が台帳の画像（URL・sha256・取得日）と違う")  # 文は v0.113 と同じ
     if c["id"] in previous_ledger:
         problems.append(f"{label}: 修正が、当てはめた段の前のコミットの台帳にすでにある（段 {c.get('migration')} で入った修正ではない）")
     return problems
@@ -1819,6 +2296,7 @@ def kyuura_correction_problems(kyuura: Path, source: dict, previous: dict, pool:
     current = {card["id"]: card for card in source["cards"]}
     snapshots = {commit: {card["id"]: card for card in data["cards"]} for commit, data in migration_snapshots(kyuura, source, previous).items()}
     checks = None
+    image_checks = None
     known = set()
     for c in KYUURA_CORRECTIONS:
         label = f"{c['card_id']} の {c['field']}（{c['id']}）"
@@ -1843,11 +2321,22 @@ def kyuura_correction_problems(kyuura: Path, source: dict, previous: dict, pool:
             continue
         if not any(x.get("id") == c["id"] and all(x.get(k) == c[k] for k in ("field", "before", "after", "basis")) for x in card.get("corrections") or ()):
             problems.append(f"{label}: カードの記録の corrections に同じ修正がない")
-        if get_field(card, c["field"]) != c["after"]:
+        if field_or_absent(card, c["field"]) != c["after"]:
             problems.append(f"{label}: 写しの元（{KYUURA_COMMIT[:7]}）の値が {c['after']!r} ではない（修正が当てはまっていない）")
-        if c["card_id"] not in new or get_field(new[c["card_id"]], c["field"]) != c["after"]:
+        if c["card_id"] not in new or field_or_absent(new[c["card_id"]], c["field"]) != c["after"]:
             problems.append(f"{label}: 移行の段 {step['id']} のあと（{step['to'][:7]}）の値が {c['after']!r} ではない")
-        if c["card_id"] in old and get_field(old[c["card_id"]], c["field"]) != c["before"]:
+        if c.get("kind") == ADDED_FIELD_KIND:
+            # v0.114: 段の前にその欄がない（または null）。前の値は null と書く。ほかの欠けている欄（data_gaps）は変えない（同じ段の欠けの修正の欄を除く）
+            if c["before"] is not None or (c["card_id"] in old and field_or_absent(old[c["card_id"]], c["field"]) not in (_ABSENT, None)):
+                problems.append(f"{label}: 欄を加える修正なのに、前の値が null でない・移行の段 {step['id']} の前の写しの元（{step['from'][:7]}）にその欄の値がある")
+            omitted = {x["field"] for x in KYUURA_CORRECTIONS if x.get("kind") == OMISSION_KIND and x["card_id"] == c["card_id"] and x.get("migration") == c.get("migration")}
+            gaps_before = (old.get(c["card_id"]) or {}).get("data_gaps")
+            gaps_after = (new.get(c["card_id"]) or {}).get("data_gaps")
+            if c["card_id"] in old and [g for g in gaps_before or () if g not in omitted] != list(gaps_after or ()):
+                problems.append(f"{label}: 欄を加える修正で、ほかの欠けている欄（data_gaps）が変わった")
+        elif c["card_id"] in old and field_or_absent(old[c["card_id"]], c["field"]) is _ABSENT:
+            problems.append(f"{label}: 移行の段 {step['id']} の前の写しの元（{step['from'][:7]}）にこの欄がない（欄を加える修正 {ADDED_FIELD_KIND} ではない）")
+        elif c["card_id"] in old and get_field(old[c["card_id"]], c["field"]) != c["before"]:
             problems.append(f"{label}: 移行の段 {step['id']} の前の写しの元（{step['from'][:7]}）の値が {c['before']!r} ではない")
         if c["card_id"] not in old and c["basis"] != "kyuura_existing_record":
             problems.append(f"{label}: 移行の段 {step['id']} の前の写しの元（{step['from'][:7]}）にカードがない")
@@ -1873,7 +2362,9 @@ def kyuura_correction_problems(kyuura: Path, source: dict, previous: dict, pool:
             if checks is None:
                 checks = _records(json.loads(_show(kyuura, KYUURA_COMMIT, "data/sidecar/card_checks.json").decode("utf-8")))
             checked = {(r.get("card_id"), field) for r in checks if isinstance(r, dict) for field in (r.get("checked_fields") or {})}
-            problems.extend(card_image_check_problems(label, c, entry, checked, _ledger(kyuura, step["from"])))
+            if image_checks is None:
+                image_checks = _image_checks(kyuura, KYUURA_COMMIT)
+            problems.extend(card_image_check_problems(label, c, entry, checked, _ledger(kyuura, step["from"]), image_checks))
         elif c["basis"] == "user_provided":
             if entry.get("kyuura_saw_image") is not False or c.get("kyuura_saw_image") is not False or c.get("engine_saw_image") is not False:
                 problems.append(f"{label}: 利用者が示した訂正は、kyuura もエンジンも画像を見ていない（kyuura_saw_image・engine_saw_image は False）")
@@ -2001,9 +2492,16 @@ def migration_copy_problems(kyuura: Path, source: dict, previous: dict, pool: li
     return problems
 
 
+# v0.114（docs/baby-rules-evolution-v0.114.md 2 章）: kyuura の対象の一覧（engine_targets.json）は、e519b99 で登録表の写しをエンジン v0.113 から作り直したので、v0.69・v0.71 で
+# 選んだカード（mechanically_equivalent・reuse_candidate）はどれも registered になり、選んだときの欄（equivalent_to・nearest_registered）もない。v0.69・v0.71 の選定の記録
+# （写しの equivalent_targets・reprint_targets。値は書き換えない）は、登録表の写しが v0.68 のままだった最後の写しの元 73a1690 の一覧から読む（``TARGET_SELECTION_COMMIT``）。
+# 今の写しの元（KYUURA_COMMIT）の一覧では、選んだカードがどれも registered であることを確かめる（``current_target_status_problems``）
+TARGET_SELECTION_COMMIT = V0_97_KYUURA_COMMIT
+
+
 def equivalent_targets(kyuura: Path) -> list[dict]:
-    """engine_targets.json（KYUURA_COMMIT）の mechanically_equivalent の記録（v0.69。値は書き換えない）。"""
-    data = json.loads(_show(kyuura, KYUURA_COMMIT, KYUURA_TARGETS_PATH).decode("utf-8"))
+    """engine_targets.json（``TARGET_SELECTION_COMMIT``。v0.113 までは KYUURA_COMMIT）の mechanically_equivalent の記録（v0.69。値は書き換えない）。"""
+    data = json.loads(_show(kyuura, TARGET_SELECTION_COMMIT, KYUURA_TARGETS_PATH).decode("utf-8"))
     keys = ("id", "name_ja", "equivalent_to", "product_group", "jp_set", "release_date", "released_after_rule_base", "category", "category_reasons", "play_scope")
     return [{key: card.get(key) for key in keys} for card in data["cards"] if card.get("engine_status") == "mechanically_equivalent"]
 
@@ -2021,9 +2519,9 @@ def equivalent_target_problems(targets: list[dict]) -> list[str]:
 
 
 def reprint_targets(kyuura: Path) -> list[dict]:
-    """engine_targets.json（KYUURA_COMMIT）の、POOL_V0_71 の記録（v0.71。値は書き換えない）。``nearest_registered`` は kyuura が見つけた、登録したカードの中で
-    いちばん近いカードと違う欄（索引。処理が同じことの証拠ではない。エンジンは effects.REPRINT_CARDS と scripts/check_card_sources.py で確かめる）。"""
-    data = json.loads(_show(kyuura, KYUURA_COMMIT, KYUURA_TARGETS_PATH).decode("utf-8"))
+    """engine_targets.json（``TARGET_SELECTION_COMMIT``。v0.113 までは KYUURA_COMMIT）の、POOL_V0_71 の記録（v0.71。値は書き換えない）。``nearest_registered`` は kyuura が
+    見つけた、登録したカードの中でいちばん近いカードと違う欄（索引。処理が同じことの証拠ではない。エンジンは effects.REPRINT_CARDS と scripts/check_card_sources.py で確かめる）。"""
+    data = json.loads(_show(kyuura, TARGET_SELECTION_COMMIT, KYUURA_TARGETS_PATH).decode("utf-8"))
     keys = ("id", "name_ja", "engine_status", "reuse_basis", "nearest_registered", "same_card_group", "product_group", "jp_set", "release_date",
             "released_after_rule_base", "category", "play_scope")
     by_id = {card["id"]: card for card in data["cards"]}
@@ -2042,6 +2540,17 @@ def reprint_target_problems(targets: list[dict]) -> list[str]:
         if t["play_scope"] != "standard":
             problems.append(f"{t['id']}: play_scope が standard ではない")
     return problems
+
+
+def current_target_status_problems(kyuura: Path) -> list[str]:
+    """v0.114: 今の写しの元（KYUURA_COMMIT）の engine_targets.json で、v0.69・v0.71 で選んだカード（POOL_V0_69・POOL_V0_71）がどれも registered（kyuura が写したエンジンの
+    登録表にある）。選定の記録（``TARGET_SELECTION_COMMIT``）と今の一覧の分類の違いを、黙って受け入れない。"""
+    if TARGET_SELECTION_COMMIT == KYUURA_COMMIT:
+        return []
+    data = json.loads(_show(kyuura, KYUURA_COMMIT, KYUURA_TARGETS_PATH).decode("utf-8"))
+    by_id = {card["id"]: card for card in data["cards"]}
+    return [f"{card_id}: 写しの元（{KYUURA_COMMIT[:7]}）の engine_targets.json の engine_status が registered ではない（{(by_id.get(card_id) or {}).get('engine_status')!r}）"
+            for card_id in [*POOL_V0_69, *POOL_V0_71] if (by_id.get(card_id) or {}).get("engine_status") != "registered"]
 
 
 def _copy(card: dict) -> dict:
@@ -2419,6 +2928,217 @@ POOL_V0_105 = [
     "neo3-050",  # デリバード（プレゼント）
 ]
 
+# v0.106（docs/counts-coins-compositions-v0.106.md）: 数とコインを組み合わせるポケモンの 11 枚（ワザ 21）。写しの元・研究の基準は v0.97 と同じ 73a1690
+POOL_V0_106 = [
+    "neo1-068",  # グランブル（たいあたり・いかりのとっしん）
+    "neo2-008",  # ストライク（れんぞくぎり）
+    "neo2-018",  # カブトプス（きりさく・ハイドロカッター）
+    "neo3-046",  # カモネギ（かぜおこし・ネギでつく）
+    "ES1-023",  # イシツブテ（たいあたり・かたくなる）
+    "ES2-016",  # ビリリダマ（でんきショック・みんなでスパーク）
+    "QSG-025",  # ビリリダマ（ES2-016 と同じデータ）
+    "ES3-002",  # ニドリーナ（なかまのちから・みだれひっかき）
+    "ES3-023",  # ゴースト（ぶきみなひかり・おんねん）
+    "ES3-027",  # サンドパン（すながくれ・ローリングニードル）
+    "QSG-034",  # サンドパン（ES3-027 と同じデータ）
+]
+
+# v0.107（docs/coin-failure-status-flight-v0.107.md）: コインによる成否・特殊状態・防護のポケモンの 9 枚（ワザ 16）。写しの元・研究の基準は v0.97 と同じ 73a1690
+POOL_V0_107 = [
+    "neo2-002",  # ビードル（とげでつつく）
+    "neo2-005",  # クヌギダマ（とつぜんじばく）
+    "neo2-051",  # リングマ（ヘッドプレス・ダブルラリアット）
+    "neo4-026",  # コダック（みずかけ・へんずつう）
+    "GD2-006",  # カスミのシェルダー（たいあたり・からではさむ）
+    "PR1-018",  # そらをとぶピカチュウ（でんきショック・そらをとぶ）
+    "PR1-042",  # そらをとぶピカチュウ（でんげき・そらをとぶ）
+    "PR1-063",  # そらをとぶピカチュウ（PR1-018 と同じカードの組。そらをとぶの文面が違う）
+    "SI-003",  # バタフリー（そらをとぶ・レインボーパウダー）
+]
+
+# v0.108（docs/damage-modifiers-condition-bonuses-v0.108.md）: 持続するダメージの変更・相手の特殊状態を参照するポケモンの 5 枚（ワザ 10）。写しの元・研究の基準は v0.97 と同じ 73a1690
+POOL_V0_108 = [
+    "neo2-041",  # ヘルガー（かみくだく・かえんほうしゃ）
+    "neo3-024",  # チョンチー（プラスイオン・マイナスイオン）
+    "neo4-088",  # トゲピー（あまえる・とげたまタックル）
+    "neo4-091",  # わるいプクリン（わるいうた・たたきおこす）
+    "ES3-001",  # アーボック（まきつく・もうどく）
+]
+
+# v0.109（docs/timed-damage-guards-v0.109.md）: 次の相手の番の被ダメージ時のコインで防ぐ効果と、相手のタイプで基本となるダメージが決まるワザのポケモンの 3 枚（ワザ 6）。
+# 写しの元・研究の基準は v0.97 と同じ 73a1690
+POOL_V0_109 = [
+    "neo2-015",  # ウパー（ぬるぬる・しっぽでたたく）
+    "neo4-070",  # エビワラー（かわす・マッハストレート）
+    "ES3-019",  # ユンゲラー（サイコパニック・ブリンク）
+]
+
+# v0.110（docs/endure-armor-up-v0.110.md）: 使うときのコインで、残りHPがなくなっても「きぜつ」しない期間つきの効果を自分に与えるワザのポケモンの 2 枚（ワザ 4）。
+# 写しの元・研究の基準は v0.97 と同じ 73a1690
+POOL_V0_110 = [
+    "neo1-053",  # ゴマゾウ（たいあたり・こらえる）
+    "neo4-008",  # わるいフォレトス（こうてつか・だいばくはつ）
+]
+
+# v0.111（docs/field-energy-card-counts-v0.111.md）: 場のエネルギーカードの枚数でダメージ・ワザの使用条件が決まるポケモンの 4 枚（ワザ 8。同じデータの 2 組）。
+# 写しの元・研究の基準は v0.97 と同じ 73a1690
+POOL_V0_111 = [
+    "ES1-022",  # ミュウツー（サイコクラッシュ・ちょうねんりき。SC-ES1-022）
+    "QSG-032",  # ミュウツー（同じデータ。SC-ES1-022）
+    "GD6-001",  # ナツメのケーシィ（はたく・シンクロウェーブ。SC-PR1-060）
+    "PR1-060",  # ナツメのケーシィ（同じデータ。SC-PR1-060）
+]
+
+# v0.112（docs/energy-coins-draw-v0.112.md）: 水エネルギーの個数によるコインとドロー・コインのマヒと自分のワザの制限のポケモンの 2 枚（ワザ 4）。
+# 写しの元・研究の基準は v0.97 と同じ 73a1690
+POOL_V0_112 = [
+    "SI-016",  # ドククラゲ（しょくしゅをつかう・どくばり）
+    "PR1-051",  # オムスター（しょくしゅをつかう・ふしょくえき）
+]
+
+# v0.113（docs/variable-coins-search-attachments-v0.113.md）: 可変枚数のコインと、山札の検索・つける・場全体のトラッシュのポケモンの 6 枚（ワザ 11）。
+# 写しの元・研究の基準は v0.97 と同じ 73a1690
+POOL_V0_113 = [
+    "neo1-063",  # ピッピ（おうふくビンタ・みんなでおどる）
+    "neo3-028",  # デンリュウ（ゆうでん・ギガボルト）
+    "neo3-043",  # ヤミカラス（なかまをよぶ・むれでつつく）
+    "neo3-044",  # ヘルガー（ダークフレイム・くろいキバ）
+    "neo4-022",  # わるいバクフーン（つめできりさく・ファイヤーラッシュ）
+    "PR1-078",  # ロケット団のニャース（だいぎゃくてん？）
+]
+
+# v0.114（docs/baby-rules-evolution-v0.114.md）: ベイビィポケモン 13 枚（ワザ 11・特殊能力 2）。写しの元・研究の基準は e519b99。6 枚のルール文と 13 枚の進化先は kyuura の訂正
+# （FIX-<id>-RULES-TEXT-JA・FIX-<id>-EVOLVES-TO。根拠 card_image_check）が当てはまった値
+POOL_V0_114 = [
+    "neo1-022",  # ブビィ（モクモク）
+    "neo1-042",  # ピチュー（パチパチ）
+    "neo1-044",  # エレキッド（［わんぱくパンチ］。ワザなし）
+    "neo1-070",  # ピィ（ピピピ）
+    "neo2-033",  # バルキー（スマッシュパンチ）
+    "neo2-050",  # ププリン（［じっとみる］。ワザなし）
+    "neo3-031",  # ムチュール（サイコキッス）
+    "PF2-007",  # ピチュー（いっしょにあそぼ）
+    "NIP1X-002",  # ブビィ（パンチ）
+    "NIP2X-002",  # ピチュー（はたく）
+    "PRN-012",  # ピィ（ピッピッ）
+    "PRN-031",  # ププリン（おやすみのうた）
+    "PRN-037",  # ムチュール（なげキッス。水）
+]
+
+# v0.115（docs/spread-damage-allocation-v0.115.md）: 場・ベンチへのダメージ、対象ごとのコイン、ダメージの配分のポケモン 13 枚（ワザ 22）。写しの元・研究の基準は v0.114 と同じ e519b99
+# （追加の移行はない）
+POOL_V0_115 = [
+    "neo2-011",  # ヤンヤンマ（しょうげきは・スピードスター）
+    "neo2-021",  # わるいライチュウ（びっくりサンダー）
+    "neo2-036",  # サナギラス（ロケットずつき・すなあらし）
+    "neo2-042",  # バンギラス（たたきつける・なぎたおす。悪）
+    "neo3-039",  # ゴローン（じしん・がんせきおとし）
+    "neo4-067",  # わるいエーフィ（つめをだす・サイコスプラッシュ）
+    "neo4-076",  # わるいサナギラス（だんがんタックル・ばくれつしんか）
+    "neo4-079",  # わるいバンギラス（やまくだき・ぶんなげる。闘）
+    "GD1-010",  # タケシのイワーク（しめつける・ちていいどう）
+    "ES3-016",  # シードラ（ウォーターボム）
+    "ES3-029",  # ゴローン（がんせきくだき。写しは「抵抗カ」）
+    "PR1-054",  # ゴローニャ（ころがる・ロックブラスト）
+    "NIP1X-004",  # イシツブテ（いしなだれ）
+]
+
+# v0.116（docs/energy-movement-attachment-devolution-v0.116.md）: エネルギーの付け替え・ついた時に発動するワザの持続効果・付属カードの回収と退化のポケモン 13 枚（ワザ 25）。
+# 写しの元・研究の基準は v0.114 と同じ e519b99（追加の移行はない）。ユンゲラー ES3-020・QSG-027 は kyuura の同じカードの組 SC-ES3-020（id ごとに登録する）
+POOL_V0_116 = [
+    "neo1-005",  # ハネッコ（はねる・ふえる）
+    "neo1-010",  # レディアン（バトンタッチ）
+    "neo2-016",  # ニョロゾ（はらだいこ・みずでっぽう）
+    "neo2-024",  # ネイティオ（エナジーサイクル・ちょうねんりき）
+    "neo3-006",  # クロバット（しこみどく・クロスアタック）
+    "neo4-038",  # わるいオムスター（げんしのしずく・やみのしょくしゅ）
+    "neo4-055",  # わるいゴースト（よびもどす・とりかこむ）
+    "ES3-006",  # ウツドン（さいせい・ようかい）
+    "ES3-020",  # ユンゲラー（エナジーさいせい・エナジーショック。SC-ES3-020）
+    "ES3-032",  # ピジョン（ツイスター・そらをとぶ）
+    "QSG-027",  # ユンゲラー（同じデータ。SC-ES3-020）
+    "PR1-022",  # ミュウツー（エナジーコントロール・テレキネシス）
+    "PR1-055",  # フーディン（サイコパニック・トランスダメージ）
+]
+
+# v0.117（docs/retreat-return-active-powers-v0.117.md）: 場の移動・にげる時の反応・条件付きの特殊能力のポケモン 13 枚（ワザ 18・特殊能力 8）。同じカードの組はない
+POOL_V0_117 = [
+    "neo1-017",  # ヘラクロス（メガホーン・［きしかいせい］）
+    "neo1-067",  # エイパム（もちさる・しっぽビンタ）
+    "neo2-019",  # ニョロトノ（おうふくビンタ・［かえるのうた］）
+    "neo3-036",  # セレビィ（サイキックダメージ・［ときわたり］）
+    "neo3-049",  # オドシシ（いかく・うしろなげ）
+    "neo4-057",  # アンノーンC（めざめるパワー・［CHASE］）
+    "neo4-059",  # アンノーンQ（めざめるパワー・［QUICKEN］）
+    "GD6-005",  # ナツメのゴース（したでなめる・ぱっときえる）
+    "PF2-006",  # ブラッキー（でんこうせっか・おいうち）
+    "PF3-004",  # ライコウ（ライトニングスパーク・［でんせつのからだ］）
+    "PF3-005",  # エンテイ（メガフレイム・［でんせつのからだ］）
+    "PF3-006",  # スイクン（クリスタルウェーブ・［でんせつのからだ］）
+    "PRN-001",  # ヤミカラス（つつく・おいうち）
+]
+
+# v0.118（docs/unbounded-coins-heal-allocation-v0.118.md）: 上限なしコイン・攻撃時の能力・回復の配分のポケモン 9 枚（ワザ 14・特殊能力 3）。同じカードの組はない。
+# 写しの元・研究の基準は v0.117 と同じ e519b99（追加の移行はない）
+POOL_V0_118 = [
+    "neo4-037",  # わるいオクタン（スミでっぽう・しめつづける）
+    "neo4-056",  # わるいナッシー（トリプルずつき・わるわるMAX）
+    "neo4-065",  # アンノーンX（めざめるパワー・［XXXXX］）
+    "neo4-097",  # わるいポリゴン2（まるまるアタック・［じくうへんかん］）
+    "SI-008",  # フシギソウ（ふしぎなかおり・はっぱカッター）
+    "SI-011",  # ラフレシア（ごくらくかふん・さいあくかふん）
+    "PR1-025",  # ニャース（ひっかく・まるもうけ）
+    "PR1-043",  # カイリュー（マッハひこう・［トランスポート］）
+    "PF3-008",  # ルギア（エアロウイング）
+]
+
+# v0.119（docs/damage-reactions-poison-sleep-v0.119.md）: 受けるダメージの選択・どくとねむり・場の効果のポケモン 11 枚（ワザ 13・特殊能力 7）。同じカードの組はない。
+# プクリン（ES1-027）は「ふくらむ」の文面の確認待ちで、この版の対象から分けた（写しに入れない）。写しの元・研究の基準は v0.118 と同じ e519b99（追加の移行はない）
+POOL_V0_119 = [
+    "neo2-007",  # コクーン（どくをだす）
+    "neo3-005",  # パラセクト（ねむりバサミ・［アレルギーほうし］）
+    "neo3-040",  # ツボツボ（どくどくエキス・［かたいから］）
+    "neo4-002",  # レディバ（スピードスター）
+    "neo4-039",  # わるいオーダイル（はかいのいちげき・［いあつ］）
+    "neo4-066",  # わるいゲンガー（ひきずりこむ・［ふかいねむり］）
+    "GD2-007",  # カスミのパルシェン（トリプルキャノン・［シェルアーマー］）
+    "ES3-007",  # マタドガス（ガスばくはつ・［ポイズンミスト］）
+    "ES3-017",  # ヒトデマン（なぞのこうせん・かいてんアタック）
+    "PRN-036",  # ムウマ（いたみわけ・あやしいひかり）
+    "PR1-068",  # サカキのニドキング（じひびき・［めいれい］）
+]
+
+# v0.120（docs/fossil-basic-virtual-attacks-v0.120.md）: 化石の復活と仮想ワザの供給の 11 枚（ポケモン 10・トレーナー 1。ワザ 15・特殊能力 5）。同じカードの組はない。メタモン（ES2-032）の
+# ［すごいへんしん］は変身の対象との参照と解除を扱う別のまとまりに分け、この版の対象にしない（写しに入れない）。写しの元・研究の基準は v0.119 と同じ e519b99（追加の移行はない）
+POOL_V0_120 = [
+    "neo1-071",  # トゲチック（おおきくゆびをふる・そらをとぶ）
+    "neo2-014",  # カブト（ちからをあわせる・［なかまのふっかつ］）
+    "neo2-032",  # オムナイト（しめつける・［かせきのふっかつ］）
+    "neo2-055",  # たまごの化石
+    "neo3-007",  # ワタッコ（しんかのほうし・ソーラービーム）
+    "neo3-020",  # キングドラ（りゅうのいでんし・たつまき）
+    "neo3-042",  # プテラ（そらをとぶ・［げんしのきおく］）
+    "ES3-025",  # スリーパー（マインドショック・［にんぎょうつかい］）
+    "PR1-021",  # ミュウ（はたく・サイコデュープ）
+    "PR1-065",  # トゲピー（なきつく・ゆびをふる）
+    "PF3-001",  # ウソッキー（たたきつける・［ものまね］）
+]
+
+# v0.121（docs/hand-bench-attack-conditions-v0.121.md）: 手札からの登場とワザの使用条件の 9 枚（ポケモン 7・トレーナー 2。ワザ 14。特殊能力はない）。写しの元・研究の基準は 2fe0bc0（段 v0.121 の
+# 移行。移行のコミットではこの組を写しに入れていない）。ボロのつりざおの効果文は kyuura の訂正 FIX-neo3-053-TRAINER-TEXT-JA のあとの値。ピカチュウ 3 枚の pokemon のデータは同じ（同じカードの
+# 組 SC-PR1-001。IP1-040 は文面が違う）。段階・進化元を確かめた残りの 12 枚（アンノーン M・U・A など）は、データが揃ったが効果を実装していないので入れない
+POOL_V0_121 = [
+    "neo2-043",  # コイル（ロックオン・でんじほう）
+    "neo3-053",  # ボロのつりざお
+    "neo4-229",  # わるいヘルガー（ぶきみなとおぼえ・じごくのほのお）
+    "neo4-096",  # わるいリングマ（ちょうはつ・だいらんとう）
+    "ES3-021",  # ヤドラン（おおあくび・おおいびき）
+    "PR1-073",  # カスミのてあて
+    "PR1-001",  # ピカチュウ（なきごえ・でんきショック）
+    "PR1-003",  # ピカチュウ（同上）
+    "PR1-017",  # ピカチュウ（同上）
+]
+
 POOLS = [
     ("pool_v0_1", POOL_V0_1),
     ("pool_v0_2b", POOL_V0_2B),
@@ -2530,6 +3250,22 @@ POOLS = [
     ("pool_v0_103", POOL_V0_103),
     ("pool_v0_104", POOL_V0_104),
     ("pool_v0_105", POOL_V0_105),
+    ("pool_v0_106", POOL_V0_106),
+    ("pool_v0_107", POOL_V0_107),
+    ("pool_v0_108", POOL_V0_108),
+    ("pool_v0_109", POOL_V0_109),
+    ("pool_v0_110", POOL_V0_110),
+    ("pool_v0_111", POOL_V0_111),
+    ("pool_v0_112", POOL_V0_112),
+    ("pool_v0_113", POOL_V0_113),
+    ("pool_v0_114", POOL_V0_114),
+    ("pool_v0_115", POOL_V0_115),
+    ("pool_v0_116", POOL_V0_116),
+    ("pool_v0_117", POOL_V0_117),
+    ("pool_v0_118", POOL_V0_118),
+    ("pool_v0_119", POOL_V0_119),
+    ("pool_v0_120", POOL_V0_120),
+    ("pool_v0_121", POOL_V0_121),
 ]
 
 
@@ -2577,8 +3313,8 @@ def build_extract(source: dict, targets: list[dict], reprints: list[dict]) -> di
     extract["kyuura_corrections"] = [dict(correction, applied_in_source=_step(correction)["to"], previous_source=_step(correction)["from"])
                                      for correction in KYUURA_CORRECTIONS]
     extract["engine_user_corrections"] = [dict(correction, source_commit=KYUURA_COMMIT) for correction in ENGINE_USER_CORRECTIONS]
-    extract["equivalent_targets"] = {"path": KYUURA_TARGETS_PATH, "commit": KYUURA_COMMIT, "cards": targets}
-    extract["reprint_targets"] = {"path": KYUURA_TARGETS_PATH, "commit": KYUURA_COMMIT, "cards": reprints}
+    extract["equivalent_targets"] = {"path": KYUURA_TARGETS_PATH, "commit": TARGET_SELECTION_COMMIT, "cards": targets}
+    extract["reprint_targets"] = {"path": KYUURA_TARGETS_PATH, "commit": TARGET_SELECTION_COMMIT, "cards": reprints}
     extract["cards"] = cards
     return extract
 
@@ -2601,7 +3337,7 @@ def main(argv: list[str] | None = None) -> int:
     pool = all_pool_cards() + REFERENCE_ONLY
     problems = (kyuura_correction_problems(args.kyuura, source, previous, pool) + engine_user_correction_problems(args.kyuura, source, pool)
                 + previous_copy_problems(source, previous, pool) + migration_copy_problems(args.kyuura, source, previous, pool)
-                + equivalent_target_problems(targets) + reprint_target_problems(reprints))
+                + equivalent_target_problems(targets) + reprint_target_problems(reprints) + current_target_status_problems(args.kyuura))
     if problems:
         print("kyuura のデータを写しにできない:\n" + "\n".join(problems), file=sys.stderr)
         return 1

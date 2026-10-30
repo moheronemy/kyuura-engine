@@ -817,7 +817,9 @@ class SecretPlanCandidatesTest(unittest.TestCase):
         basics = [c for c in candidates if pool.get(c).is_basic_pokemon]
         self.assertEqual(engine_module._IDENTITY_TRIAL_LIMIT, 512)
         # 1 枚を指定するコマンドの試す回数: 割り当てる前 1 回 + たねポケモン + 「たねポケモンでない」1（トラッシュしたあとに項目を読まなければ）
-        self.assertLessEqual(1 + len(basics) + 1, engine_module._IDENTITY_TRIAL_LIMIT)
+        # v0.118: 1 枚を指定するコマンドの試す回数は、v0.117 から上限 512 ではなく分岐の作りから決まる回数（``_single_identity_budget``。たねが 511 枚になり、
+        # 1 + 511 + 1 = 513 が 512 を超えた。その回数どおりに確かめることは tests/test_secret_plan_single_identity_v0_117.py）。上限 512 は 2 枚目の割り当てが要るコマンドだけ
+        self.assertLessEqual(1 + len(basics) + 1, engine_module._single_identity_budget(basics, [c for c in candidates if c not in basics]))
 
 
 class QuizNamesTest(unittest.TestCase):
@@ -827,7 +829,7 @@ class QuizNamesTest(unittest.TestCase):
         state = build_test_state([{"active": "PMCG1-018"}, {"active": "PMCG1-018"}])
         names = E.quiz_answer_names(state)
         self.assertEqual(len(names), len(set(names)))
-        earlier = {CARDS[c]["name"]["ja"] for c in CARDS if c not in POOL_V0_72 and c not in EXTRACT["pool_v0_77"] and c not in EXTRACT["pool_v0_78"] and c not in EXTRACT["pool_v0_79"] and c not in EXTRACT["pool_v0_82"] and c not in EXTRACT["pool_v0_83"] and c not in EXTRACT["pool_v0_84"] and c not in EXTRACT["pool_v0_85"] and c not in EXTRACT["pool_v0_86"] and CARDS[c]["category"] == "pokemon"}  # v0.79 のテッポウオ（neo3-016）・v0.77 のテッポウオ（neo4-030）・v0.78 のエアームド（neo1-058・NIP1X-005）はあとの版
+        earlier = {CARDS[c]["name"]["ja"] for c in CARDS if c not in POOL_V0_72 and c not in EXTRACT["pool_v0_77"] and c not in EXTRACT["pool_v0_78"] and c not in EXTRACT["pool_v0_79"] and c not in EXTRACT["pool_v0_82"] and c not in EXTRACT["pool_v0_83"] and c not in EXTRACT["pool_v0_84"] and c not in EXTRACT["pool_v0_85"] and c not in EXTRACT["pool_v0_86"] and c not in EXTRACT["pool_v0_118"] and CARDS[c]["category"] == "pokemon"}  # v0.79 のテッポウオ（neo3-016）・v0.77 のテッポウオ（neo4-030）・v0.78 のエアームド（neo1-058・NIP1X-005）・v0.118 のルギア（PF3-008）はあとの版
         new = sorted({CARDS[c]["name"]["ja"] for c in POOL_V0_72} - earlier)
         self.assertEqual(new, ["エアームド", "テッポウオ", "ルギア"])
         for name in new:

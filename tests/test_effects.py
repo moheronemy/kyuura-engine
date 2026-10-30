@@ -230,6 +230,67 @@ V0_104_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["
 # docs/recovery-evolution-coin-branches-v0.105.md）
 V0_105_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_105"] and c["category"] == "pokemon"
                     for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.106: 数とコインを組み合わせるポケモンの 11 枚のワザ 21 のうち、説明文のある 17（グランブル・イシツブテの「たいあたり」、カブトプスの「きりさく」、カモネギの「かぜおこし」は
+# 説明文がない。kyuura の印刷の文面。docs/counts-coins-compositions-v0.106.md）
+V0_106_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_106"] and c["category"] == "pokemon"
+                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.107: コインによる成否・特殊状態・防護のポケモンの 9 枚のワザ 16 のうち、説明文のある 14（コダックの「みずかけ」・カスミのシェルダーの「たいあたり」は説明文がない。kyuura の
+# 印刷の文面。docs/coin-failure-status-flight-v0.107.md）
+V0_107_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_107"] and c["category"] == "pokemon"
+                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.108: 持続するダメージの変更・相手の特殊状態を参照するポケモンの 5 枚のワザ 10（どれも説明文がある。kyuura の印刷の文面。docs/damage-modifiers-condition-bonuses-v0.108.md）
+V0_108_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_108"] and c["category"] == "pokemon"
+                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.109: 期限つきの被ダメージ時のコインとサイコパニックの 3 枚のワザ 6 のうち、説明文のある 4（ぬるぬる・かわす・サイコパニック・ブリンク。kyuura の印刷の文面。しっぽでたたく・マッハストレートは
+# 説明文がない。docs/timed-damage-guards-v0.109.md）
+V0_109_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_109"] and c["category"] == "pokemon"
+                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.110: こらえる・こうてつかと、期間つきのきぜつ回避の 2 枚のワザ 4 のうち、説明文のある 3（こらえる・こうてつか・だいばくはつ。kyuura の印刷の文面。たいあたりは説明文がない。
+# docs/endure-armor-up-v0.110.md）
+V0_110_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_110"] and c["category"] == "pokemon"
+                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.111: 場のエネルギーカードの枚数でダメージ・ワザの使用条件が決まる 4 枚のワザ 8 のうち、説明文のある 4（サイコクラッシュ・シンクロウェーブ。kyuura の印刷の文面。ちょうねんりき・
+# はたくは説明文がない。docs/field-energy-card-counts-v0.111.md）
+V0_111_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_111"] and c["category"] == "pokemon"
+                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.112: 水エネルギーの個数によるコインとドロー・コインのマヒと自分のワザの制限の 2 枚のワザ 4（どれも説明文がある。kyuura の印刷の文面。docs/energy-coins-draw-v0.112.md）
+V0_112_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_112"] and c["category"] == "pokemon"
+                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.113: 可変枚数のコインと、山札の検索・つける・場全体のトラッシュの 6 枚のワザ 11 のうち、説明文のある 10（わるいバクフーンのつめできりさくは説明文がない。kyuura の印刷の文面。
+# docs/variable-coins-search-attachments-v0.113.md）
+V0_113_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_113"] and c["category"] == "pokemon"
+                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.114: ベイビィポケモン 13 枚のワザ 11 のうち、説明文のある 9（パンチ・はたくは説明文がない。kyuura の印刷の文面。docs/baby-rules-evolution-v0.114.md）
+V0_114_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_114"] and c["category"] == "pokemon"
+                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.115: 場・ベンチへのダメージ、対象ごとのコイン、ダメージの配分の 13 枚のワザ 22 のうち、説明文のある 20（ロケットずつき・ころがるは説明文がない。kyuura の印刷の文面。
+# docs/spread-damage-allocation-v0.115.md）
+V0_115_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_115"] and c["category"] == "pokemon"
+                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.116: エネルギーの付け替え・ついた時の効果・付属カードの回収と退化の 13 枚のワザ 25 のうち、説明文のある 23（はねる・ちょうねんりきは説明文がない。kyuura の印刷の文面。
+# docs/energy-movement-attachment-devolution-v0.116.md）
+V0_116_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_116"] and c["category"] == "pokemon"
+                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.117: 場の移動・にげる時の反応・条件付きの特殊能力の 13 枚のワザ 18 のうち、説明文のある 15（めざめるパワー 2・つつくは説明文がない。kyuura の印刷の文面。
+# docs/retreat-return-active-powers-v0.117.md）
+V0_117_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_117"] and c["category"] == "pokemon"
+                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.118: 上限なしコイン・攻撃時の能力・回復の配分の 9 枚のワザ 14 のうち、説明文のある 11（アンノーンX のめざめるパワー・はっぱカッター・ひっかくは説明文がない。kyuura の印刷の文面。
+# docs/unbounded-coins-heal-allocation-v0.118.md）
+V0_118_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_118"] and c["category"] == "pokemon"
+                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.119: 受けるダメージの選択・どくとねむり・場の効果の 11 枚のワザ 13 のうち、説明文のある 12（ヒトデマン ES3-017 のかいてんアタックは説明文がない。kyuura の印刷の文面。
+# docs/damage-reactions-poison-sleep-v0.119.md）
+V0_119_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_119"] and c["category"] == "pokemon"
+                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.120: 化石の復活と仮想ワザの供給の 10 枚（ポケモン）のワザ 15 のうち、説明文のある 13（ワタッコのソーラービーム・ミュウのはたくは説明文がない。kyuura の印刷の文面。
+# docs/fossil-basic-virtual-attacks-v0.120.md）
+V0_120_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_120"] and c["category"] == "pokemon"
+                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.121: 手札からの登場とワザの使用条件の 7 枚（ポケモン）のワザ 14（どれも説明文がある。なきごえ 3・おおいびきは kyuura の最新の説明、ほかは印刷の文面。
+# docs/hand-bench-attack-conditions-v0.121.md）
+V0_121_WITH_TEXT = [AttackKey(c["id"], i) for c in _TEXT_EXTRACT["cards"] if c["id"] in _TEXT_EXTRACT["pool_v0_121"] and c["category"] == "pokemon"
+                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
 
 
 
@@ -382,7 +443,7 @@ class DefaultRegistryTest(unittest.TestCase):
                                     + V0_35_WITH_TEXT + V0_36_WITH_TEXT + V0_37_WITH_TEXT + V0_38_WITH_TEXT
                                     + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT + V0_42_WITH_TEXT + V0_43_WITH_TEXT
                                 + V0_44_WITH_TEXT + V0_45_WITH_TEXT + V0_46_WITH_TEXT + V0_47_WITH_TEXT + V0_48_WITH_TEXT
-                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT + V0_52_WITH_TEXT + V0_58_WITH_TEXT + V0_59_WITH_TEXT + V0_60_WITH_TEXT + V0_61_WITH_TEXT + V0_62_WITH_TEXT + V0_64_WITH_TEXT + V0_65_WITH_TEXT + V0_68_WITH_TEXT + V0_70_WITH_TEXT + V0_72_WITH_TEXT + V0_75_WITH_TEXT + V0_76_WITH_TEXT + V0_77_WITH_TEXT + V0_78_WITH_TEXT + V0_79_WITH_TEXT + V0_82_WITH_TEXT + V0_83_WITH_TEXT + V0_84_WITH_TEXT + V0_85_WITH_TEXT + V0_86_WITH_TEXT + V0_87_WITH_TEXT + V0_88_WITH_TEXT + V0_89_WITH_TEXT + V0_90_WITH_TEXT + V0_91_WITH_TEXT + V0_92_WITH_TEXT + V0_93_WITH_TEXT + V0_94_WITH_TEXT + V0_95_WITH_TEXT + V0_99_WITH_TEXT + V0_100_WITH_TEXT + V0_101_WITH_TEXT + V0_102_WITH_TEXT + V0_103_WITH_TEXT + V0_104_WITH_TEXT + V0_105_WITH_TEXT)
+                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT + V0_52_WITH_TEXT + V0_58_WITH_TEXT + V0_59_WITH_TEXT + V0_60_WITH_TEXT + V0_61_WITH_TEXT + V0_62_WITH_TEXT + V0_64_WITH_TEXT + V0_65_WITH_TEXT + V0_68_WITH_TEXT + V0_70_WITH_TEXT + V0_72_WITH_TEXT + V0_75_WITH_TEXT + V0_76_WITH_TEXT + V0_77_WITH_TEXT + V0_78_WITH_TEXT + V0_79_WITH_TEXT + V0_82_WITH_TEXT + V0_83_WITH_TEXT + V0_84_WITH_TEXT + V0_85_WITH_TEXT + V0_86_WITH_TEXT + V0_87_WITH_TEXT + V0_88_WITH_TEXT + V0_89_WITH_TEXT + V0_90_WITH_TEXT + V0_91_WITH_TEXT + V0_92_WITH_TEXT + V0_93_WITH_TEXT + V0_94_WITH_TEXT + V0_95_WITH_TEXT + V0_99_WITH_TEXT + V0_100_WITH_TEXT + V0_101_WITH_TEXT + V0_102_WITH_TEXT + V0_103_WITH_TEXT + V0_104_WITH_TEXT + V0_105_WITH_TEXT + V0_106_WITH_TEXT + V0_107_WITH_TEXT + V0_108_WITH_TEXT + V0_109_WITH_TEXT + V0_110_WITH_TEXT + V0_111_WITH_TEXT + V0_112_WITH_TEXT + V0_113_WITH_TEXT + V0_114_WITH_TEXT + V0_115_WITH_TEXT + V0_116_WITH_TEXT + V0_117_WITH_TEXT + V0_118_WITH_TEXT + V0_119_WITH_TEXT + V0_120_WITH_TEXT + V0_121_WITH_TEXT)
         # v0.69: 拡張パック以外の商品の同じカード（effects.EQUIVALENT_CARDS）の新しい id には、元のカードと同じ登録（説明文のあるワザも同じ）がある
         expected = expected + [AttackKey(new, key.attack_index) for new, original in EQUIVALENT_CARDS.items() for key in expected if key.card_id == original]
         # v0.71: 拡張パック以外の商品の再録のカード（effects.REPRINT_CARDS）の新しい id にも、元のカードの説明文のあるワザの登録がある（照合する文面はこの版の印刷の文面）
@@ -626,7 +687,18 @@ class RegistryImmutabilityTest(unittest.TestCase):
                                        # v0.102: ［グリーンシールド］2・［ニュートラルダメージ］2（docs/weakness-resistance-powers-v0.102.md）
                                        *(PowerKey(card, 0) for card in ("ES1-003", "QSG-003", "ES1-021", "QSG-030")),
                                        # v0.103: ［ニュートラルシールド］2（docs/neutral-shield-attack-origin-v0.103.md）
-                                       *(PowerKey(card, 0) for card in ("PR1-005", "PR1-012"))))))
+                                       *(PowerKey(card, 0) for card in ("PR1-005", "PR1-012")),
+                                       # v0.114: ベイビィポケモンの特殊能力 2（エレキッドの［わんぱくパンチ］・ププリンの［じっとみる］。docs/baby-rules-evolution-v0.114.md）
+                                       *(PowerKey(card, 0) for card in ("neo1-044", "neo2-050")),
+                                       # v0.117: ［きしかいせい］・［かえるのうた］・［ときわたり］・［CHASE］・［QUICKEN］・［でんせつのからだ］3（docs/retreat-return-active-powers-v0.117.md）
+                                       *(PowerKey(card, 0) for card in ("neo1-017", "neo2-019", "neo3-036", "neo4-057", "neo4-059", "PF3-004", "PF3-005", "PF3-006")),
+                                       # v0.118: ［XXXXX］・［じくうへんかん］・［トランスポート］（docs/unbounded-coins-heal-allocation-v0.118.md）
+                                       *(PowerKey(card, 0) for card in ("neo4-065", "neo4-097", "PR1-043")),
+                                       # v0.119: ［アレルギーほうし］・［かたいから］・［いあつ］・［ふかいねむり］・［シェルアーマー］・［ポイズンミスト］・［めいれい］
+                                       # （docs/damage-reactions-poison-sleep-v0.119.md）
+                                       *(PowerKey(card, 0) for card in ("neo3-005", "neo3-040", "neo4-039", "neo4-066", "GD2-007", "ES3-007", "PR1-068")),
+                                       # v0.120: ［なかまのふっかつ］・［かせきのふっかつ］・［げんしのきおく］・［にんぎょうつかい］・［ものまね］（docs/fossil-basic-virtual-attacks-v0.120.md）
+                                       *(PowerKey(card, 0) for card in ("neo2-014", "neo2-032", "neo3-042", "ES3-025", "PF3-001"))))))
 
 
 if __name__ == "__main__":

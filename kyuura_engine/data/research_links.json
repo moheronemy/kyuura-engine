@@ -2,19 +2,19 @@
   "format": "kyuura-engine research links 1",
   "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md kyuura の engine_unresolved_index にまだない停止コード（エンジンが新しく加えたもの）は kyuura_disposition を not_in_kyuura にし、kyuura への報告事項にする（v0.21 の突風・v0.22 のパソコン通信・v0.23 のエネルギー回収・v0.36 の AC6（手順 4 のコインとこんらん）・RD9（山札にもどす効果ときぜつ）・v0.37 の JS1（説明に弱点・抵抗力のない控えへのダメージ）。kyuura に記録ができたら scripts/check_research_links.py が知らせる）。 v0.31 で、コードのない未解決（T27・C34/C35・G40・P19・P32）に停止コードを付けた。kyuura の未解決の一覧はこれらをコードなし（stop_code が null）で挙げているので、kyuura_index_engine_key でその行と照らす（kyuura の一覧にコードが書かれたら scripts/check_research_links.py が知らせる）。 v0.50 で、退化の処理に使う kyuura の規定・裁定（GR-2000-P324-DEVOLUTION・CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION・CR-CHEMICAL-GAS-LEAVES・GR-2000-P323-KNOCKOUT）を applied_rule_records に結び付けた（id の対応だけ。scripts/check_research_links.py が研究の基準のコミットにあることと分類を確かめる）。 v0.51 で、トラッシュのたねポケモンを持ち主のベンチに出す処理に使う kyuura の規定（GR-2000-P309-ATTACK-PROCEDURE・GR-2000-P319-HP-AND-DAMAGE・GR-2000-P320-COUNTER-MOVE）を applied_rule_records に結び付けた（v0.50 と同じく id の対応だけ）。 v0.70 で、拡張パック以外の商品のポケモン 82 枚の説明文のあるワザ 85 を adopted_printed_text に加えた（kyuura データの採用。研究の基準のコミットに、これらのカードを指す LD-・CC-・CR-・UQ-・エラッタはない）。PR1-069 の名前（kyuura の値「？？？」）は、エンジンが写しの作り直しで利用者が示した訂正「ミュウ」を当てはめた（engine_user_corrections。scripts/check_research_links.py はこの訂正の欄だけを訂正のあとの値にして比べる）。",
   "repository": "https://github.com/moheronemy/kyuura",
-  "research_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
-  "research_branch": "main",
+  "research_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+  "research_branch": "claude/neo2-fossil-type-cost-checks",
   "research_files": [
     "data/sidecar/rulings.json",
     "data/sidecar/latest_descriptions.json",
     "data/sidecar/card_checks.json"
   ],
-  "card_data_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
+  "card_data_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 235,
-    "engine_stop_codes": 234,
-    "kyuura_issues": 72
+    "engine_unresolved_rulings": 285,
+    "engine_stop_codes": 284,
+    "kyuura_issues": 74
   },
   "stop_codes": {
     "UNRESOLVED_MULLIGAN_COMPENSATION": {
@@ -2712,6 +2712,556 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DAMAGE_GUARD_OVERLAP": {
+      "engine_rulings": [
+        {
+          "version": "v0.109",
+          "document": "docs/timed-damage-guards-v0.109.md",
+          "ruling_id": "GO1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_KO_SURVIVAL_TIMING": {
+      "engine_rulings": [
+        {
+          "version": "v0.110",
+          "document": "docs/endure-armor-up-v0.110.md",
+          "ruling_id": "KS1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_KO_SURVIVAL_OVERLAP": {
+      "engine_rulings": [
+        {
+          "version": "v0.110",
+          "document": "docs/endure-armor-up-v0.110.md",
+          "ruling_id": "KS2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_BABY_RULE_COIN_ORDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BQ1"
+        }
+      ],
+      "kyuura_issue": "UQ-ATTACK-PRE-DAMAGE-COIN-ORDER",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_NEO_TEXT_BASIC_BABY": {
+      "engine_rulings": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "NB1"
+        }
+      ],
+      "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_NEO_TEXT_EVOLUTION_CARD_BABY": {
+      "engine_rulings": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "NB2"
+        }
+      ],
+      "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_TRANSFORM_BABY": {
+      "engine_rulings": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BX1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_HOT_PLATE_BABY_EVOLUTION": {
+      "engine_rulings": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "HP2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_STOPPED_POWER_HOLDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "HV1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DISCARD_UP_TO_ZERO": {
+      "engine_rulings": [
+        {
+          "version": "v0.115",
+          "document": "docs/spread-damage-allocation-v0.115.md",
+          "ruling_id": "RKB1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_CHOSEN_ACTIVE_EXTRA_DAMAGE": {
+      "engine_rulings": [
+        {
+          "version": "v0.115",
+          "document": "docs/spread-damage-allocation-v0.115.md",
+          "ruling_id": "SLD1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ATTACH_TRIGGER_SCOPE": {
+      "engine_rulings": [
+        {
+          "version": "v0.116",
+          "document": "docs/energy-movement-attachment-devolution-v0.116.md",
+          "ruling_id": "AT1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_RETREAT_REACTION_TIMING": {
+      "engine_rulings": [
+        {
+          "version": "v0.117",
+          "document": "docs/retreat-return-active-powers-v0.117.md",
+          "ruling_id": "RR1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_QUICKEN_EFFECT_SUPPRESSED": {
+      "engine_rulings": [
+        {
+          "version": "v0.117",
+          "document": "docs/retreat-return-active-powers-v0.117.md",
+          "ruling_id": "QK1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TIME_TRAVEL_TIMING": {
+      "engine_rulings": [
+        {
+          "version": "v0.117",
+          "document": "docs/retreat-return-active-powers-v0.117.md",
+          "ruling_id": "TW1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TIME_TRAVEL_OVERLAP": {
+      "engine_rulings": [
+        {
+          "version": "v0.117",
+          "document": "docs/retreat-return-active-powers-v0.117.md",
+          "ruling_id": "TW2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_LEGEND_BODY_TRAINER_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.117",
+          "document": "docs/retreat-return-active-powers-v0.117.md",
+          "ruling_id": "LB1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_LEGEND_BODY_GOOP_GAS": {
+      "engine_rulings": [
+        {
+          "version": "v0.117",
+          "document": "docs/retreat-return-active-powers-v0.117.md",
+          "ruling_id": "LB2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_VANISH_OTHER_ATTACHED": {
+      "engine_rulings": [
+        {
+          "version": "v0.117",
+          "document": "docs/retreat-return-active-powers-v0.117.md",
+          "ruling_id": "VH1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ESP_LEFT_BEFORE_COIN": {
+      "engine_rulings": [
+        {
+          "version": "v0.117",
+          "document": "docs/retreat-return-active-powers-v0.117.md",
+          "ruling_id": "ES4"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_HEAL_UP_TO_ZERO": {
+      "engine_rulings": [
+        {
+          "version": "v0.118",
+          "document": "docs/unbounded-coins-heal-allocation-v0.118.md",
+          "ruling_id": "HZ1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_GROUP_POWER_COIN_ORDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.118",
+          "document": "docs/unbounded-coins-heal-allocation-v0.118.md",
+          "ruling_id": "XP1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TIME_SHIFT_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.118",
+          "document": "docs/unbounded-coins-heal-allocation-v0.118.md",
+          "ruling_id": "SX1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN": {
+      "engine_rulings": [
+        {
+          "version": "v0.118",
+          "document": "docs/unbounded-coins-heal-allocation-v0.118.md",
+          "ruling_id": "SX2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TRANSPORT_WITHOUT_CARDS": {
+      "engine_rulings": [
+        {
+          "version": "v0.118",
+          "document": "docs/unbounded-coins-heal-allocation-v0.118.md",
+          "ruling_id": "TN1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SHELL_ARMOR_TIMING": {
+      "engine_rulings": [
+        {
+          "version": "v0.119",
+          "document": "docs/damage-reactions-poison-sleep-v0.119.md",
+          "ruling_id": "AM1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_HARD_SHELL_NONPOSITIVE": {
+      "engine_rulings": [
+        {
+          "version": "v0.119",
+          "document": "docs/damage-reactions-poison-sleep-v0.119.md",
+          "ruling_id": "HS1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POISON_CHANGE_ORDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.119",
+          "document": "docs/damage-reactions-poison-sleep-v0.119.md",
+          "ruling_id": "PO1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POISON_MIST_EARLIER_POISON": {
+      "engine_rulings": [
+        {
+          "version": "v0.119",
+          "document": "docs/damage-reactions-poison-sleep-v0.119.md",
+          "ruling_id": "PO2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POISON_MIST_SOURCE": {
+      "engine_rulings": [
+        {
+          "version": "v0.119",
+          "document": "docs/damage-reactions-poison-sleep-v0.119.md",
+          "ruling_id": "PO3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SECRETE_POISON_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.119",
+          "document": "docs/damage-reactions-poison-sleep-v0.119.md",
+          "ruling_id": "PX1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SCARE_SUPPRESSION_CYCLE": {
+      "engine_rulings": [
+        {
+          "version": "v0.119",
+          "document": "docs/damage-reactions-poison-sleep-v0.119.md",
+          "ruling_id": "IA1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DISCARD_PROTECTED_COIN": {
+      "engine_rulings": [
+        {
+          "version": "v0.119",
+          "document": "docs/damage-reactions-poison-sleep-v0.119.md",
+          "ruling_id": "AP1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DISCARD_PROTECTED_POWER_USE": {
+      "engine_rulings": [
+        {
+          "version": "v0.119",
+          "document": "docs/damage-reactions-poison-sleep-v0.119.md",
+          "ruling_id": "AP2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_COMMAND_DAMAGE_SCOPE": {
+      "engine_rulings": [
+        {
+          "version": "v0.119",
+          "document": "docs/damage-reactions-poison-sleep-v0.119.md",
+          "ruling_id": "MD1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ESP_COPIED_ATTACK_COINS": {
+      "engine_rulings": [
+        {
+          "version": "v0.120",
+          "document": "docs/fossil-basic-virtual-attacks-v0.120.md",
+          "ruling_id": "EC1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_PRE_EVOLUTION_ATTACK_STAGE": {
+      "engine_rulings": [
+        {
+          "version": "v0.120",
+          "document": "docs/fossil-basic-virtual-attacks-v0.120.md",
+          "ruling_id": "PE1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_PRE_EVOLUTION_ATTACK_CONDITIONS": {
+      "engine_rulings": [
+        {
+          "version": "v0.120",
+          "document": "docs/fossil-basic-virtual-attacks-v0.120.md",
+          "ruling_id": "PE2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_PERMITTED_ATTACK_HELD": {
+      "engine_rulings": [
+        {
+          "version": "v0.120",
+          "document": "docs/fossil-basic-virtual-attacks-v0.120.md",
+          "ruling_id": "VP1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_REVIVED_BASIC_DEVOLVED": {
+      "engine_rulings": [
+        {
+          "version": "v0.120",
+          "document": "docs/fossil-basic-virtual-attacks-v0.120.md",
+          "ruling_id": "FE1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_REVIVE_HAND_BASIC_ENTRY": {
+      "engine_rulings": [
+        {
+          "version": "v0.120",
+          "document": "docs/fossil-basic-virtual-attacks-v0.120.md",
+          "ruling_id": "FE2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TRANSFORM_REVIVED_BASIC": {
+      "engine_rulings": [
+        {
+          "version": "v0.120",
+          "document": "docs/fossil-basic-virtual-attacks-v0.120.md",
+          "ruling_id": "TF3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_GROWL_NON_ATTACK_DAMAGE": {
+      "engine_rulings": [
+        {
+          "version": "v0.121",
+          "document": "docs/hand-bench-attack-conditions-v0.121.md",
+          "ruling_id": "GN1"
+        }
+      ],
+      "kyuura_issue": "UQ-GROWL-NON-ATTACK-DAMAGE",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_VIRTUAL_ASLEEP_ONLY_ATTACK": {
+      "engine_rulings": [
+        {
+          "version": "v0.121",
+          "document": "docs/hand-bench-attack-conditions-v0.121.md",
+          "ruling_id": "SQ1"
+        }
+      ],
+      "kyuura_issue": "UQ-COPIED-ATTACK",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_LOCK_ON_PROTECTED_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.121",
+          "document": "docs/hand-bench-attack-conditions-v0.121.md",
+          "ruling_id": "LO1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DISCARDED_ENERGY_DAMAGE_BONUS": {
+      "engine_rulings": [
+        {
+          "version": "v0.121",
+          "document": "docs/hand-bench-attack-conditions-v0.121.md",
+          "ruling_id": "DK1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ATTACK_HAND_BENCH_REACTION": {
+      "engine_rulings": [
+        {
+          "version": "v0.121",
+          "document": "docs/hand-bench-attack-conditions-v0.121.md",
+          "ruling_id": "HB1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_OLD_ROD_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.121",
+          "document": "docs/hand-bench-attack-conditions-v0.121.md",
+          "ruling_id": "OR1"
+        }
+      ],
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_MISTYS_CARE_OPPONENT_LAPRAS": {
+      "engine_rulings": [
+        {
+          "version": "v0.121",
+          "document": "docs/hand-bench-attack-conditions-v0.121.md",
+          "ruling_id": "MQ1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MISTYS_CARE_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.121",
+          "document": "docs/hand-bench-attack-conditions-v0.121.md",
+          "ruling_id": "MQ2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -2920,6 +3470,133 @@
           "unregistered": true
         },
         "note": "GR団のミュウツーの［わるいはどう］（エンジンに登録していないカード）"
+      },
+      {
+        "kyuura_issue": "UQ-ATTACK-PRE-DAMAGE-COIN-ORDER",
+        "card_id": "neo1-042",
+        "target": "card",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_BABY_RULE_COIN_ORDER",
+            "UNRESOLVED_VERMILION_GYM_ATTACK_ORDER"
+          ]
+        },
+        "note": "ベイビィポケモンのルールのコインと、手順 4 のほかの効果（すなかけ・［はんこう］など）・手順 5 のこんらんのコインの順番は BQ1、クチバシシティジムのコインとの順番は既存の VM1 で、どちらもコインの前に止める（kyuura が 2026-10-27 に加えた事例。13 枚とも同じルール。v0.114 でベイビィ 13 枚を対応にした）"
+      },
+      {
+        "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
+        "card_id": "neo1-074",
+        "target": "trainer",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_NEO_TEXT_BASIC_BABY"
+          ]
+        },
+        "note": "すごいつりざおの「うら」の「たねポケモン」にベイビィポケモンカードをふくむか。トラッシュのベイビィポケモンカードは選べるが選ぶと止める（NB1。トラッシュは公開の情報）"
+      },
+      {
+        "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
+        "card_id": "neo3-049",
+        "target": "attack/0",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_NEO_TEXT_BASIC_BABY"
+          ]
+        },
+        "note": "オドシシのいかくの「相手が「たねポケモン」なら」に、場の進化していないベイビィポケモンをふくむか（v0.117 で登録した。相手の対戦ポケモンが場のベイビィポケモンなら宣言の前に止める（NB1）。ベイビィから進化したたねポケモンは場の進化ポケモンなので当たらない）"
+      },
+      {
+        "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
+        "card_id": "neo3-056",
+        "target": "trainer",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_NEO_TEXT_BASIC_BABY"
+          ]
+        },
+        "note": "ポケモン育て屋夫婦の場の「たねポケモン」「1進化ポケモン」に、場のベイビィポケモン・ベイビィから進化したたねポケモンをふくむか。選べるが選ぶと止める（NB1。どれもそうなら使う前）"
+      },
+      {
+        "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
+        "card_id": "NIP1-021",
+        "target": "trainer",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_NEO_TEXT_BASIC_BABY"
+          ]
+        },
+        "note": "イントロパック★neo のマスターボールの「たねポケモン」にベイビィポケモンカードをふくむか。見た 7 枚にベイビィポケモンカードがあれば止める（NB1。見たカードは使ったプレイヤーだけに見えるので、選べるが選ぶと止める形にせず、見たあとに止める）"
+      },
+      {
+        "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
+        "card_id": "neo2-056",
+        "target": "trainer",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_NEO_TEXT_EVOLUTION_CARD_BABY"
+          ]
+        },
+        "note": "退化スプレーHYPER の「進化カード」に、ベイビィの上のたねポケモンカードをふくむか。ベイビィから進化したたねポケモン（場の進化ポケモン）は選べるが選ぶと止める（NB2）"
+      },
+      {
+        "kyuura_issue": "UQ-NEO-TEXT-BABY-CATEGORIES",
+        "card_id": "neo4-038",
+        "target": "attack/0",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_NEO_TEXT_EVOLUTION_CARD_BABY"
+          ]
+        },
+        "note": "わるいオムスターのげんしのしずくの相手の場の「進化ポケモン」の「進化カード」に、ベイビィの上のたねポケモンカードをふくむか（v0.116 で登録した。退化スプレーHYPER と同じ）。ベイビィから進化したたねポケモン（場の進化ポケモン）は選べるが選ぶと止める（NB2。どれもそうならコインのあとに止める）"
+      },
+      {
+        "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+        "card_id": "neo3-053",
+        "target": "trainer",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_OLD_ROD_WITHOUT_TARGET"
+          ]
+        },
+        "note": "ボロのつりざおで、トラッシュに選べるカードがないときに使えるか・コインを投げるか（kyuura が 2026-10-30 に加えた事例）。v0.121 で登録し、トラッシュに「ポケモンのカード」か「トレーナーカード」のどちらか（または両方）がないとき、コインの前に OR1 で止める（すごいつりざおの SRD1 と同じ形。都合のよい面だけを選ばない）"
+      },
+      {
+        "kyuura_issue": "UQ-COPIED-ATTACK",
+        "card_id": "ES3-021",
+        "target": "attack/1",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_COPIED_ATTACK",
+            "UNRESOLVED_VIRTUAL_ASLEEP_ONLY_ATTACK"
+          ]
+        },
+        "note": "ほかのカードのワザとしておおいびき（ねむり状態でないとき失敗する）を使うときの「このカード」と使い手のねむり状態（kyuura が 2026-10-30 に加えた事例）。v0.121 で登録し、ゆびをふる・ちょうのうりょくなどで写すときは HC9（選ぶと止める）、［へんしん］・［サイコリンク］・許可で使うワザなどほかのカードのワザとして持つときは SQ1（選ぶと止める）"
+      },
+      {
+        "kyuura_issue": "UQ-GROWL-NON-ATTACK-DAMAGE",
+        "card_id": "IP1-040",
+        "target": "attack/0",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_GROWL_NON_ATTACK_DAMAGE",
+            "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET"
+          ]
+        },
+        "engine_issue_differs": true,
+        "note": "なきごえ（v0.76 から登録）を受けた相手が、次の相手の番にワザ以外でこのカードに与えるダメージ・ベンチのこのカードに与えるダメージ。エンジンは、特殊能力のダメージ（エレキッドの［わんぱくパンチ］で起こる）を v0.121 の GN1 で、控えのこのカードへのワザのダメージを v0.34 の NK5（kyuura では UQ-REDUCED-DAMAGE-BENCH-TARGET に結ばれている）で止める。控えのこのカードへの特殊能力のダメージは今の対応カードでは起こらない（相手の場のポケモンを選ぶ［こっそりかみつく］・［とつぜんかみつく］は、進化で効果が消えたポケモンが使う）"
+      },
+      {
+        "kyuura_issue": "UQ-GROWL-NON-ATTACK-DAMAGE",
+        "card_id": "PR1-003",
+        "target": "attack/0",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_GROWL_NON_ATTACK_DAMAGE",
+            "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET"
+          ]
+        },
+        "note": "なきごえ（最新の説明）。v0.121 で登録し、IP1-040 と同じく、受けた相手の特殊能力のダメージを GN1、控えのこのカードへのワザのダメージを v0.34 の NK5（kyuura では UQ-REDUCED-DAMAGE-BENCH-TARGET）で止める",
+        "engine_issue_differs": true
       }
     ]
   },
@@ -3301,7 +3978,12 @@
       "PMCG1-068/attack/0": "LD-PMCG1-068-ATK0",
       "PMCG2-006/attack/1": "LD-PMCG2-006-ATK1",
       "PMCG3-012/attack/1": "LD-PMCG3-012-ATK1",
-      "PMCG3-022/attack/0": "LD-PMCG3-022-ATK0"
+      "PMCG3-022/attack/0": "LD-PMCG3-022-ATK0",
+      "IP1-040/attack/0": "LD-IP1-040-ATK0",
+      "PR1-001/attack/0": "LD-PR1-001-ATK0",
+      "PR1-003/attack/0": "LD-PR1-003-ATK0",
+      "PR1-017/attack/0": "LD-PR1-017-ATK0",
+      "ES3-021/attack/1": "LD-ES3-021-ATK1"
     },
     "registered_without_kyuura_record": [
       "PMCG5-033/power/0",
@@ -4002,7 +4684,6 @@
       "ES2-006/attack/1",
       "QSG-017/attack/0",
       "QSG-017/attack/1",
-      "IP1-040/attack/0",
       "IP1-040/attack/1",
       "PF1-001/attack/0",
       "PR1-006/attack/1",
@@ -4515,7 +5196,211 @@
       "neo2-009/attack/0",
       "neo2-009/attack/1",
       "PF3-002/attack/0",
-      "neo3-050/attack/0"
+      "neo3-050/attack/0",
+      "neo1-068/attack/1",
+      "neo2-008/attack/0",
+      "neo2-018/attack/1",
+      "neo3-046/attack/1",
+      "ES1-023/attack/1",
+      "ES2-016/attack/0",
+      "ES2-016/attack/1",
+      "QSG-025/attack/0",
+      "QSG-025/attack/1",
+      "ES3-002/attack/0",
+      "ES3-002/attack/1",
+      "ES3-023/attack/0",
+      "ES3-023/attack/1",
+      "ES3-027/attack/0",
+      "ES3-027/attack/1",
+      "QSG-034/attack/0",
+      "QSG-034/attack/1",
+      "neo2-002/attack/0",
+      "neo2-005/attack/0",
+      "neo2-051/attack/0",
+      "neo2-051/attack/1",
+      "neo4-026/attack/1",
+      "GD2-006/attack/1",
+      "PR1-018/attack/0",
+      "PR1-018/attack/1",
+      "PR1-042/attack/0",
+      "PR1-042/attack/1",
+      "PR1-063/attack/0",
+      "PR1-063/attack/1",
+      "SI-003/attack/0",
+      "SI-003/attack/1",
+      "neo2-041/attack/0",
+      "neo2-041/attack/1",
+      "neo3-024/attack/0",
+      "neo3-024/attack/1",
+      "neo4-088/attack/0",
+      "neo4-088/attack/1",
+      "neo4-091/attack/0",
+      "neo4-091/attack/1",
+      "ES3-001/attack/0",
+      "ES3-001/attack/1",
+      "neo2-015/attack/0",
+      "neo4-070/attack/0",
+      "ES3-019/attack/0",
+      "ES3-019/attack/1",
+      "neo1-053/attack/1",
+      "neo4-008/attack/0",
+      "neo4-008/attack/1",
+      "ES1-022/attack/0",
+      "QSG-032/attack/0",
+      "GD6-001/attack/1",
+      "PR1-060/attack/1",
+      "SI-016/attack/0",
+      "SI-016/attack/1",
+      "PR1-051/attack/0",
+      "PR1-051/attack/1",
+      "neo1-063/attack/0",
+      "neo1-063/attack/1",
+      "neo3-028/attack/0",
+      "neo3-028/attack/1",
+      "neo3-043/attack/0",
+      "neo3-043/attack/1",
+      "neo3-044/attack/0",
+      "neo3-044/attack/1",
+      "neo4-022/attack/1",
+      "PR1-078/attack/0",
+      "neo1-022/attack/0",
+      "neo1-042/attack/0",
+      "neo1-044/power/0",
+      "neo1-070/attack/0",
+      "neo2-033/attack/0",
+      "neo2-050/power/0",
+      "neo3-031/attack/0",
+      "PF2-007/attack/0",
+      "PRN-012/attack/0",
+      "PRN-031/attack/0",
+      "PRN-037/attack/0",
+      "neo2-011/attack/0",
+      "neo2-011/attack/1",
+      "neo2-021/attack/0",
+      "neo2-036/attack/1",
+      "neo2-042/attack/0",
+      "neo2-042/attack/1",
+      "neo3-039/attack/0",
+      "neo3-039/attack/1",
+      "neo4-067/attack/0",
+      "neo4-067/attack/1",
+      "neo4-076/attack/0",
+      "neo4-076/attack/1",
+      "neo4-079/attack/0",
+      "neo4-079/attack/1",
+      "GD1-010/attack/0",
+      "GD1-010/attack/1",
+      "ES3-016/attack/0",
+      "ES3-029/attack/0",
+      "PR1-054/attack/1",
+      "NIP1X-004/attack/0",
+      "neo1-005/attack/1",
+      "neo1-010/attack/0",
+      "neo2-016/attack/0",
+      "neo2-016/attack/1",
+      "neo2-024/attack/0",
+      "neo3-006/attack/0",
+      "neo3-006/attack/1",
+      "neo4-038/attack/0",
+      "neo4-038/attack/1",
+      "neo4-055/attack/0",
+      "neo4-055/attack/1",
+      "ES3-006/attack/0",
+      "ES3-006/attack/1",
+      "ES3-020/attack/0",
+      "ES3-020/attack/1",
+      "ES3-032/attack/0",
+      "ES3-032/attack/1",
+      "QSG-027/attack/0",
+      "QSG-027/attack/1",
+      "PR1-022/attack/0",
+      "PR1-022/attack/1",
+      "PR1-055/attack/0",
+      "PR1-055/attack/1",
+      "neo1-017/attack/0",
+      "neo1-017/power/0",
+      "neo1-067/attack/0",
+      "neo1-067/attack/1",
+      "neo2-019/attack/0",
+      "neo2-019/power/0",
+      "neo3-036/attack/0",
+      "neo3-036/power/0",
+      "neo3-049/attack/0",
+      "neo3-049/attack/1",
+      "neo4-057/power/0",
+      "neo4-059/power/0",
+      "GD6-005/attack/0",
+      "GD6-005/attack/1",
+      "PF2-006/attack/0",
+      "PF2-006/attack/1",
+      "PF3-004/attack/0",
+      "PF3-004/power/0",
+      "PF3-005/attack/0",
+      "PF3-005/power/0",
+      "PF3-006/attack/0",
+      "PF3-006/power/0",
+      "PRN-001/attack/1",
+      "neo4-037/attack/0",
+      "neo4-037/attack/1",
+      "neo4-056/attack/0",
+      "neo4-056/attack/1",
+      "neo4-065/power/0",
+      "neo4-097/attack/0",
+      "neo4-097/power/0",
+      "SI-008/attack/0",
+      "SI-011/attack/0",
+      "SI-011/attack/1",
+      "PR1-025/attack/1",
+      "PR1-043/attack/0",
+      "PR1-043/power/0",
+      "PF3-008/attack/0",
+      "neo2-007/attack/0",
+      "neo3-005/attack/0",
+      "neo3-005/power/0",
+      "neo3-040/attack/0",
+      "neo3-040/power/0",
+      "neo4-002/attack/0",
+      "neo4-039/attack/0",
+      "neo4-039/power/0",
+      "neo4-066/attack/0",
+      "neo4-066/power/0",
+      "GD2-007/attack/0",
+      "GD2-007/power/0",
+      "ES3-007/attack/0",
+      "ES3-007/power/0",
+      "ES3-017/attack/0",
+      "PRN-036/attack/0",
+      "PRN-036/attack/1",
+      "PR1-068/attack/0",
+      "PR1-068/power/0",
+      "neo1-071/attack/0",
+      "neo1-071/attack/1",
+      "neo2-014/attack/0",
+      "neo2-014/power/0",
+      "neo2-032/attack/0",
+      "neo2-032/power/0",
+      "neo3-007/attack/0",
+      "neo3-020/attack/0",
+      "neo3-020/attack/1",
+      "neo3-042/attack/0",
+      "neo3-042/power/0",
+      "ES3-025/attack/0",
+      "ES3-025/power/0",
+      "PR1-021/attack/1",
+      "PR1-065/attack/0",
+      "PR1-065/attack/1",
+      "PF3-001/attack/0",
+      "PF3-001/power/0",
+      "neo2-043/attack/0",
+      "neo2-043/attack/1",
+      "neo4-229/attack/0",
+      "neo4-229/attack/1",
+      "neo4-096/attack/0",
+      "neo4-096/attack/1",
+      "ES3-021/attack/0",
+      "PR1-001/attack/1",
+      "PR1-003/attack/1",
+      "PR1-017/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
@@ -4941,6 +5826,15 @@
       ],
       "PMCG5-048": [
         "CC-PMCG5-048-P200"
+      ],
+      "ES3-021": [
+        "CC-ES3-021-P156"
+      ],
+      "IP1-040": [
+        "CC-IP1-040-P127"
+      ],
+      "PR1-003": [
+        "CC-PR1-003-P127"
       ]
     },
     "engine_verified_without_kyuura_record": [],
@@ -5200,6 +6094,193 @@
         }
       ],
       "use": "再録のカード（effects.REPRINT_CARDS）の、元のカードの記録（最新の説明・エラッタ）を処理に使う文面にした登録: 同じカードの組の再録の版にも、元のカードの最新の説明を当てはめる（カード自体のあいまいな表現・判断のむずかしい表現は最新の説明にしたがう）。再録の版を照合した記録ではない（card_sources.json の reprint_scope が元のカードの記録と、その照合の記録の収録の一覧に再録の版の商品があるかを書く）"
+    },
+    {
+      "kyuura_record": "GR-2000-P308-BABY-SETUP",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R1"
+        }
+      ],
+      "use": "デッキの検査（deck.NO_BASIC_POKEMON）・最初の手札の切り直し・対戦の準備で、ベイビィポケモンカードをたねポケモンカードと同じに数える（CardDefinition.is_baby_or_basic_pokemon。どちらも 1 枚もないときだけ切り直す。バトル場に 1 枚・ベンチに最大 5 枚）"
+    },
+    {
+      "kyuura_record": "GR-2000-P309-BABY-BENCH",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R2"
+        }
+      ],
+      "use": "手札のベイビィポケモンカードを、自分の番にベンチに出せる（engine._play_basic_to_bench。手札から直接バトル場には出さない）"
+    },
+    {
+      "kyuura_record": "GR-2000-P313-POKEMON-COMPOSITION",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R3"
+        }
+      ],
+      "use": "ベイビィポケモンの上にたねポケモンカードを重ねたポケモンの重なり（PokemonInPlay.evolution_stack の最初がベイビィポケモンカード）。場をはなれたら、それぞれのカードにもどる（印刷の分類）"
+    },
+    {
+      "kyuura_record": "GR-2000-P314-BABY-RULE",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R4"
+        }
+      ],
+      "use": "ベイビィポケモンのルール（resolution.flow._baby_rule_failed）: 相手のバトル場に進化していないベイビィポケモンがいるとき、ワザを使うプレイヤーがコインを 1 枚投げ、「うら」ならワザは失敗する"
+    },
+    {
+      "kyuura_record": "GR-2000-P310-BABY-EVOLUTION",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R5"
+        }
+      ],
+      "use": "進化の共通の確かめ（evolution.evolution_block）: 場のベイビィポケモンの進化先（CardDefinition.evolves_to。印刷の名前）と同じ名前のたねポケモンカードを重ねるのも進化（手札から・ワザ・特殊能力で重ねるときも同じ確かめ。その番の最初から場にいた・おたがいの最初の番・同じ番にもう一度の制限も同じ）"
+    },
+    {
+      "kyuura_record": "GR-2000-P315-EVOLVED-BABY",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R6"
+        }
+      ],
+      "use": "場での分類（effects.field_stage・is_evolution_in_play）: ベイビィポケモンから進化したたねポケモンは、場にいるかぎり「進化ポケモン」（印刷の段階は basic のまま）"
+    },
+    {
+      "kyuura_record": "GR-2000-P325-PRE-NEO-BABY",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R7"
+        }
+      ],
+      "use": "カードの説明の範囲（effects.TEXT_ERAS・card_is_basic_in_text・field_is_basic_in_text・top_is_evolution_card_in_text）: ネオより前のカードの説明では、ベイビィポケモンカードはたねポケモンカードと同様、場のベイビィポケモンはたねポケモンと同様、ベイビィを進化させたたねポケモンカードは場にあるかぎり進化カード。neo の説明の「たねポケモン」「進化カード」だけの範囲はUQ-NEO-TEXT-BABY-CATEGORIES（NB1・NB2）で止める"
+    },
+    {
+      "kyuura_record": "CR-BABY-RULE-COIN",
+      "kind": "ruling",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R8"
+        }
+      ],
+      "use": "ワザを使う側のプレイヤーが、ワザを使うたびに 1 枚投げる（ログ coin_flip の source は baby_rule・baby_rule_coin）。「うら」ならワザの失敗（ログ attack_failed の reason は baby_rule。ワザを使ったことになり、番は終わる）"
+    },
+    {
+      "kyuura_record": "CR-BABY-RULE-COIN-STEP",
+      "kind": "ruling",
+      "kyuura_status": "SUPPORTED",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R9"
+        }
+      ],
+      "use": "コインは宣言（手順 3）のあと、ワザの説明の処理の前。宣言の前の確かめで拒否したワザでは投げない。手順 4・5・スタジアムのコインとの順番は BQ1・VM1 で止める"
+    },
+    {
+      "kyuura_record": "CR-BABY-RULE-NOT-POWER",
+      "kind": "ruling",
+      "kyuura_status": "SUPPORTED",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R10"
+        }
+      ],
+      "use": "ベイビィポケモンのルールは特殊能力ではない（かがくへんかガス・モクモクなどでは止まらない。ナツメのESPのやり直しの対象でもない。AttackRun.flip を通さない）"
+    },
+    {
+      "kyuura_record": "CR-BABY-WITHOUT-ATTACKS",
+      "kind": "ruling",
+      "kyuura_status": "SUPPORTED",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R11"
+        }
+      ],
+      "use": "ワザのないベイビィポケモン（エレキッド・ププリン）も対戦に使える（cards.classify_record。メタモンの supplies_attacks ではない）"
+    },
+    {
+      "kyuura_record": "CR-NEUTRAL-SHIELD-EVOLVED-BABY",
+      "kind": "ruling",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R12"
+        }
+      ],
+      "use": "ミュウの［ニュートラルシールド］（相手の進化ポケモンからのワザを受けない）は、ベイビィから進化したたねポケモンのワザを受けない（is_evolution_in_play）。進化していないベイビィのワザは受ける"
+    },
+    {
+      "kyuura_record": "CR-DEVOLUTION-SPRAY-EVOLVED-BABY",
+      "kind": "ruling",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R13"
+        }
+      ],
+      "use": "退化スプレーで、ベイビィの上のたねポケモンカードをはがして捨てられる（退化の共通の処理 evolution.devolve。はがしたカードはたねポケモンカードにもどる）"
+    },
+    {
+      "kyuura_record": "GR-2000-P323-ATTACK-FAILURE",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.114",
+          "document": "docs/baby-rules-evolution-v0.114.md",
+          "ruling_id": "BY-R14"
+        }
+      ],
+      "use": "ベイビィポケモンのルールのコインの「うら」でワザが失敗しても、そのワザを使ったことになる（使ったワザの記録・1 回だけのワザの記録は宣言のときに置き、番は終わる。v0.2d・v0.36 の p.323「12 ワザの失敗」と同じ処理。kyuura がエンジンの記録を再利用した条項なので、独立した二度目の確認に数えない）"
+    },
+    {
+      "kyuura_record": "CR-UNOWN-DF-SOURCE-TYPE",
+      "kind": "ruling",
+      "kyuura_status": "SUPPORTED",
+      "engine": [
+        {
+          "version": "v0.115",
+          "document": "docs/spread-damage-allocation-v0.115.md",
+          "ruling_id": "SA-R1"
+        }
+      ],
+      "use": "バンギラス（悪）の「なぎたおす」が自分の控えのアンノーンに与えるダメージにも、その場の［DARK df］を当てはめる（ダメージを与えるポケモンの今のタイプで決め、持ち主を限らない。名前の「わるい」では決めないので、わるいバンギラス（闘）のワザには当てはめない）。当てはめる処理は v0.97 の ReduceOwnGroupDamageFromType のまま（v0.115 で変えていない）"
     }
   ],
   "engine_user_corrections": [

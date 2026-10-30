@@ -118,13 +118,26 @@ def _end_color_effects(state: GameState, owner: int, pokemon: PokemonInPlay, eff
                         target=record.target, color=record.color.value, reason="special_condition", effect=effect)
 
 
+def _end_poison_mists(state: GameState, owner: int, pokemon: PokemonInPlay, effect: str) -> None:
+    """v0.119（docs/damage-reactions-poison-sleep-v0.119.md 5 章）: マタドガスの［ポイズンミスト］の「このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えず、その効果も消える」。
+    ねむり・マヒ・こんらんにする 3 つの関数が、特殊状態を付けたあとに呼ぶ（［めんえき］で防いだら呼ばない。どくでは呼ばない）。``pokemon`` が使った［ポイズンミスト］の効果
+    （``GameState.poison_mists``）を消す（ログ ``poison_mist_removed`` の ``reason`` ``special_condition``）。回復しても戻らない（記録を消すので）。"""
+    removed = [m for m in state.poison_mists if m.pokemon_id == pokemon.pokemon_id]
+    if not removed:
+        return
+    state.poison_mists = tuple(m for m in state.poison_mists if m.pokemon_id != pokemon.pokemon_id)
+    for record in removed:
+        state.add_event("poison_mist_removed", player=record.player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, created_turn=record.created_turn,
+                        reason="special_condition", effect=effect)
+
+
 def _require_active(state: GameState, owner: int, pokemon: PokemonInPlay, condition: str) -> None:
     # ベンチのポケモンは特殊状態にならない（p.322）ので、バトル場のポケモンでなければエンジンの不具合として止める
     if state.players[owner].active is not pokemon:
         raise RuntimeError(f"バトル場にいないポケモン {pokemon.pokemon_id} を {condition} 状態にしようとした（エンジンの不具合。p.322）")
 
 
-def poison(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: str, damage: int = NORMAL_POISON.damage) -> None:
+def poison(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: str, damage: int = NORMAL_POISON.damage, multiplier: int = 1) -> None:
     """``owner`` の対戦ポケモン ``pokemon`` を、どく状態にする（p.322）。``damage`` はポケモンチェックで受けるダメージ（通常のどくは 10）。
 
     - もうどく状態なら、二重のどく状態にはならない（p.322「どく状態が積み重なることはありません」）。
@@ -136,19 +149,31 @@ def poison(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: str,
       呼ぶ側（解決の基盤の ``Status``）がこの関数を呼ぶ前に止める。ここでは、受けるダメージが同じなら状態は変わらない（``already``）。
     - どくはほかの特殊状態と重複する（p.322）ので、ねむり・マヒはそのまま（v0.3b）。
     - ``effect``: どく状態にした効果の識別子（ワザなら ``AttackKey`` の文字列）。ログにだけ残す。
+    - ``multiplier``（v0.119）: ポケモンチェックでのせる「どく」によるダメージカウンターの数にかける数（「どくどくエキス」の 2。``Poison.multiplier``）。1 でなければ特殊などく（量を変える
+      性質のあるどく）としてあつかい、受けるダメージ・かける数のどちらかが違うどく状態からの上書きは、``damage`` と同じく呼ぶ側が先に止める（TP3）。ログ ``special_condition`` に
+      ``multiplier``（1 なら書かない。v0.118 までのログの形は変えない）
+    - v0.119: どく状態でなかったポケモンが新しくどく状態になったら、［ポイズンミスト］の効果の「使う前からどく状態だった」の記録（``PoisonMist.poisoned_before``）から除く。すでにどく状態
+      だったポケモンは除かない（上書き・二重にならないどくは「新しくどく状態になった」かが決まらない。PO2 の比べに残す）
     """
     _require_active(state, owner, pokemon, POISON)
     if damage <= 0 or damage % 10:
         raise ValueError(f"どくで受けるダメージ {damage} は 10 の正の倍数")
-    if _prevented(state, owner, pokemon, POISON, effect, damage=damage):
+    if type(multiplier) is not int or multiplier < 1:
+        raise ValueError(f"どくのダメージカウンターの数にかける数 {multiplier!r} は 1 以上の整数")
+    multiplied = {"multiplier": multiplier} if multiplier != 1 else {}
+    if _prevented(state, owner, pokemon, POISON, effect, damage=damage, **multiplied):
         return  # v0.46: ［めんえき］（特殊などくの上書きの確かめより先。防がれるなら状態は変わらない）
     current = pokemon.conditions.poison
-    if damage != NORMAL_POISON.damage and current is not None and current.damage != damage:
-        raise RuntimeError("受けるダメージの違うどく状態から特殊などく状態にする扱いは決まらない（v0.3a の #15。呼ぶ側が先に止める）")
+    normal = damage == NORMAL_POISON.damage and multiplier == 1
+    if not normal and current is not None and (current.damage, current.multiplier) != (damage, multiplier):
+        raise RuntimeError("受けるダメージ・かける数の違うどく状態から特殊などく状態にする扱いは決まらない（v0.3a の #15。呼ぶ側が先に止める）")
     already = current is not None
-    poisoned = NORMAL_POISON if damage == NORMAL_POISON.damage else Poison(damage=damage)
+    poisoned = NORMAL_POISON if normal else Poison(damage=damage, multiplier=multiplier)
     pokemon.conditions = replace(pokemon.conditions, poison=poisoned)
-    _log_applied(state, owner, pokemon, POISON, effect, already, damage=poisoned.damage)
+    if not already and any(pokemon.pokemon_id in mist.poisoned_before for mist in state.poison_mists):
+        state.poison_mists = tuple(replace(mist, poisoned_before=tuple(pid for pid in mist.poisoned_before if pid != pokemon.pokemon_id))
+                                   for mist in state.poison_mists)
+    _log_applied(state, owner, pokemon, POISON, effect, already, damage=poisoned.damage, **({"multiplier": poisoned.multiplier} if poisoned.multiplier != 1 else {}))
 
 
 def put_to_sleep(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: str) -> None:
@@ -167,6 +192,7 @@ def put_to_sleep(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect
     _log_applied(state, owner, pokemon, SLEEP, effect, already)
     _end_disguise(state, owner, pokemon, effect)
     _end_color_effects(state, owner, pokemon, effect)  # v0.88
+    _end_poison_mists(state, owner, pokemon, effect)  # v0.119
 
 
 def confuse(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: str) -> None:
@@ -186,6 +212,7 @@ def confuse(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: str
     _log_applied(state, owner, pokemon, CONFUSION, effect, already)
     _end_disguise(state, owner, pokemon, effect)
     _end_color_effects(state, owner, pokemon, effect)  # v0.88
+    _end_poison_mists(state, owner, pokemon, effect)  # v0.119
 
 
 def paralysis_recovery_turn(state: GameState, owner: int, turn: int) -> int:
@@ -253,6 +280,7 @@ def paralyze(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: st
     )
     _end_disguise(state, owner, pokemon, effect)
     _end_color_effects(state, owner, pokemon, effect)  # v0.88
+    _end_poison_mists(state, owner, pokemon, effect)  # v0.119
 
 
 def recover_from_sleep(state: GameState, owner: int, pokemon: PokemonInPlay) -> None:

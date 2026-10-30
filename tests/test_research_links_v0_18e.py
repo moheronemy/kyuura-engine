@@ -63,7 +63,9 @@ class ResearchLinksTest(unittest.TestCase):
         # v0.69: 研究の基準を kyuura 7d3f4ca（v0.68 までのエンジンの記録を取り込んだコミット。kyuura の main）に上げ、写しの元も同じコミットにした
         # （docs/equivalent-non-pack-cards-v0.69.md 7 章）。v0.68 までは研究の基準 3f34908・写しの元 ecb2d69 を分けて持っていた
         # v0.97: 研究の基準と写しの元を kyuura 73a1690（研究 78d090c を取り込んだ main の PR #5 のマージ。木は 78d090c と同じ）に上げた（docs/unown-research-idfnj-v0.97.md 2 章・3 章）
-        self.assertEqual(LINKS["research_commit"], "73a169063463bbf7bcaa3137d70cbf9721d11534")
+        # v0.114: 研究の基準と写しの元を kyuura e519b99（ブランチ claude/baby-data-engine-v0113-handover の固定コミット。親は 73a1690）に上げた（docs/baby-rules-evolution-v0.114.md 2 章）
+        # v0.121: 研究の基準と写しの元を kyuura 2fe0bc0（ブランチ claude/neo2-fossil-type-cost-checks の固定コミット。親は 7b03fd9、研究 c932625 を含む）に上げた（docs/hand-bench-attack-conditions-v0.121.md 3 章）
+        self.assertEqual(LINKS["research_commit"], "2fe0bc042ce187d191843819262f8036abbb343d")
         self.assertEqual(LINKS["engine_import_id"], "ENGINE-46A3E2E")
         self.assertEqual(LINKS["card_data_commit"], read_extract()["source"]["commit"])
         self.assertEqual(LINKS["research_commit"], LINKS["card_data_commit"])
@@ -153,11 +155,52 @@ class ResearchLinksTest(unittest.TestCase):
                              "UNRESOLVED_SKETCH_PRESENCE", "UNRESOLVED_SKETCH_COPIED_ATTACK", "UNRESOLVED_PERISH_SONG_RECEIVED_ATTACK",
                              # v0.101: KP1・KP2・KP3（docs/counter-keep-energy-protection-v0.101.md 8 章。KP1 は UQ-TARGET-WITHOUT-EFFECT、KP2 は UQ-COIN-IN-NULLIFIED-ELEMENT と
                              # 同じ形だが、kyuura の事例にない）
-                             "UNRESOLVED_KEEP_PROTECTED_TARGET", "UNRESOLVED_KEEP_VOIDED_DISCARD_COIN", "UNRESOLVED_KEEP_DETACHED_ENERGY_DISCARD"})
+                             "UNRESOLVED_KEEP_PROTECTED_TARGET", "UNRESOLVED_KEEP_VOIDED_DISCARD_COIN", "UNRESOLVED_KEEP_DETACHED_ENERGY_DISCARD",
+                             # v0.109: GO1（docs/timed-damage-guards-v0.109.md 5 章。受けるときのコインで受けないと決める効果の重なり。RF1 と同じ形だが、kyuura の事例にない）
+                             "UNRESOLVED_DAMAGE_GUARD_OVERLAP",
+                             # v0.110: KS1・KS2（docs/endure-armor-up-v0.110.md 5 章。「きぜつ」しない効果の残りHPを「10」にする時点と、きぜつの判定の効果との順番。FB1・G40 と近い形だが、
+                             # kyuura の事例にない）
+                             "UNRESOLVED_KO_SURVIVAL_TIMING", "UNRESOLVED_KO_SURVIVAL_OVERLAP",
+                             # v0.114: BX1・HP2・HV1（docs/baby-rules-evolution-v0.114.md 10 章。ベイビィの姿のメタモン・［ヒートプレート］とベイビィの進化・特殊能力の消えたポケモンの
+                             # 「特殊能力」を持っているか。kyuura の事例にない）
+                             "UNRESOLVED_TRANSFORM_BABY", "UNRESOLVED_HOT_PLATE_BABY_EVOLUTION", "UNRESOLVED_STOPPED_POWER_HOLDER",
+                             # v0.115: RKB1・SLD1（docs/spread-damage-allocation-v0.115.md 10 章。ロックブラストの「最大5枚トラッシュ」の 0 枚は UQ-UP-TO-ZERO-CHOICE と同じ形だが、
+                             # kyuura の事例にない。いしなだれで相手の対戦ポケモンを選ぶ扱いは kyuura に対応する記録がない）
+                             "UNRESOLVED_DISCARD_UP_TO_ZERO", "UNRESOLVED_CHOSEN_ACTIVE_EXTRA_DAMAGE",
+                             # v0.116: AT1（docs/energy-movement-attachment-devolution-v0.116.md 10 章。しこみどく・エナジーショックの「ついたとき」に場のつけ替え・［エネエネ］が当たるか。
+                             # v0.59 の CB1 と同じ形の問いだが、kyuura の事例にない）
+                             "UNRESOLVED_ATTACH_TRIGGER_SCOPE",
+                             # v0.117: RR1・QK1・TW1・TW2・LB1・LB2・VH1・ES4（docs/retreat-return-active-powers-v0.117.md 10 章。にげる時の反応の時点・［QUICKEN］の効果と発生源の力・
+                             # ［ときわたり］の時点と重なり・［でんせつのからだ］のトレーナーの範囲とベトベトガス・ぱっときえるの行き先・場をはなれたESP。どれも kyuura の事例にない）
+                             "UNRESOLVED_RETREAT_REACTION_TIMING", "UNRESOLVED_QUICKEN_EFFECT_SUPPRESSED", "UNRESOLVED_TIME_TRAVEL_TIMING",
+                             "UNRESOLVED_TIME_TRAVEL_OVERLAP", "UNRESOLVED_LEGEND_BODY_TRAINER_TARGET", "UNRESOLVED_LEGEND_BODY_GOOP_GAS",
+                             "UNRESOLVED_VANISH_OTHER_ATTACHED", "UNRESOLVED_ESP_LEFT_BEFORE_COIN",
+                             # v0.118: HZ1・XP1・SX1・SX2・TN1（docs/unbounded-coins-heal-allocation-v0.118.md 10 章）
+                             "UNRESOLVED_HEAL_UP_TO_ZERO", "UNRESOLVED_GROUP_POWER_COIN_ORDER", "UNRESOLVED_TIME_SHIFT_WITHOUT_TARGET",
+                             "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN", "UNRESOLVED_TRANSPORT_WITHOUT_CARDS",
+                             # v0.119: AM1・HS1・PO1・PO2・PO3・PX1・IA1・AP1・AP2・MD1（docs/damage-reactions-poison-sleep-v0.119.md 10 章。どれも kyuura に対応する記録がない）
+                             "UNRESOLVED_SHELL_ARMOR_TIMING", "UNRESOLVED_HARD_SHELL_NONPOSITIVE", "UNRESOLVED_POISON_CHANGE_ORDER",
+                             "UNRESOLVED_POISON_MIST_EARLIER_POISON", "UNRESOLVED_POISON_MIST_SOURCE", "UNRESOLVED_SECRETE_POISON_TARGET",
+                             "UNRESOLVED_SCARE_SUPPRESSION_CYCLE", "UNRESOLVED_DISCARD_PROTECTED_COIN", "UNRESOLVED_DISCARD_PROTECTED_POWER_USE",
+                             "UNRESOLVED_COMMAND_DAMAGE_SCOPE",
+                             # v0.120: EC1（docs/fossil-basic-virtual-attacks-v0.120.md 2 章。kyuura の UQ-ESP-REDO の ES0 は同じワザの 2 回のコイントスで、別の問い）
+                             "UNRESOLVED_ESP_COPIED_ATTACK_COINS",
+                             # v0.120: PE1・PE2・VP1・FE1・FE2・TF3（docs/fossil-basic-virtual-attacks-v0.120.md 10 章。どれも kyuura に対応する記録がない）
+                             "UNRESOLVED_PRE_EVOLUTION_ATTACK_STAGE", "UNRESOLVED_PRE_EVOLUTION_ATTACK_CONDITIONS", "UNRESOLVED_PERMITTED_ATTACK_HELD",
+                             "UNRESOLVED_REVIVED_BASIC_DEVOLVED", "UNRESOLVED_REVIVE_HAND_BASIC_ENTRY", "UNRESOLVED_TRANSFORM_REVIVED_BASIC",
+                             # v0.121: LO1・DK1・HB1・MQ1・MQ2（docs/hand-bench-attack-conditions-v0.121.md 10 章。どれも kyuura に対応する記録がない）
+                             "UNRESOLVED_LOCK_ON_PROTECTED_TARGET", "UNRESOLVED_DISCARDED_ENERGY_DAMAGE_BONUS", "UNRESOLVED_ATTACK_HAND_BENCH_REACTION",
+                             "UNRESOLVED_MISTYS_CARE_OPPONENT_LAPRAS", "UNRESOLVED_MISTYS_CARE_WITHOUT_TARGET"})
         # v0.97（docs/unown-research-idfnj-v0.97.md 3 章）: kyuura が調査で立てた UQ-SELF-EXCLUDING-POWER-COPIES の事例にわるいデンリュウ（neo4-046）の［かんでん］があるので、
         # CV1 を論点に結んだ（kyuura は v0.86 を取り込んでいないので、未解決の一覧に CV1 の行はない。kyuura の事例は kyuura_cases_without_engine_ruling で照らす）
         # v0.97 で加えた DF1・DF2 も、kyuura に論点（UQ-SELF-EXCLUDING-POWER-COPIES・UQ-NON-ATTACK-DAMAGE-MODIFIERS）はあるが、未解決の一覧に行がない
-        self.assertEqual(unindexed, {"UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES", "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES", "UNRESOLVED_POWER_DAMAGE_RECEIVED_POWER"})
+        # v0.114: BQ1（UQ-ATTACK-PRE-DAMAGE-COIN-ORDER のベイビィの事例）・NB1・NB2（UQ-NEO-TEXT-BABY-CATEGORIES）も、kyuura に論点と事例はあるが、未解決の一覧に行がない
+        # v0.121: GN1（A0 では kyuura に記録がなく not_in_kyuura。研究の基準を 2fe0bc0 に上げて、kyuura の UQ-GROWL-NON-ATTACK-DAMAGE と IP1-040 の事例に結んだ。未解決の一覧に行はない）
+        self.assertEqual(unindexed, {"UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES", "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES", "UNRESOLVED_POWER_DAMAGE_RECEIVED_POWER",
+                                     "UNRESOLVED_BABY_RULE_COIN_ORDER", "UNRESOLVED_NEO_TEXT_BASIC_BABY", "UNRESOLVED_NEO_TEXT_EVOLUTION_CARD_BABY",
+                                     "UNRESOLVED_GROWL_NON_ATTACK_DAMAGE",
+                                     # v0.121: SQ1（UQ-COPIED-ATTACK の ES3-021 の事例）・OR1（UQ-CARD-USE-WITHOUT-TARGET の neo3-053 の事例）も、kyuura に論点と事例はあるが一覧に行がない
+                                     "UNRESOLVED_VIRTUAL_ASLEEP_ONLY_ATTACK", "UNRESOLVED_OLD_ROD_WITHOUT_TARGET"})
         # v0.31〜v0.68 は、kyuura の一覧でコードのない行を指していた停止コード 8 件（T27・C34/C35・G40・P19・P32・Z9・DR8・DR13）に kyuura_index_engine_key を
         # 書いていた。v0.69 で kyuura が停止コードを書いたので外した（scripts/check_research_links.py が、kyuura の一覧のコードで照らす）
         # v0.97: SS1（v0.60 のコードのない問い。kyuura の一覧ではコードのない行）にコードを付けたので、その行を指す（v0.31 と同じ形）

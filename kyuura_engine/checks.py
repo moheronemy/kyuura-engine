@@ -19,6 +19,7 @@ from .effects import (
     attack_cost_problem,
     find_attack_option,
     form_def,
+    scared_by,
 )
 from .errors import IllegalActionError, StateIntegrityError, UnsupportedError
 from .persistent import attack_locked, cannot_attack, cannot_attack_while_source_active
@@ -53,9 +54,10 @@ def require_turn(state: GameState, player: Any) -> PlayerState:
     return state.players[player]
 
 
-def require_not_asleep_or_paralyzed(pokemon: PokemonInPlay, what: str) -> None:
-    """ねむり状態・マヒ状態のバトル場のポケモンは、ワザを使えず、「にげる」を宣言できない（p.309・p.311・p.322。v0.3b）。"""
-    if pokemon.conditions.asleep:
+def require_not_asleep_or_paralyzed(pokemon: PokemonInPlay, what: str, *, asleep_ok: bool = False) -> None:
+    """ねむり状態・マヒ状態のバトル場のポケモンは、ワザを使えず、「にげる」を宣言できない（p.309・p.311・p.322。v0.3b）。v0.121: ``asleep_ok`` なら、ねむり状態の禁止だけを免除する
+    （ねむり状態でも使えるワザ。マヒは今までどおり拒否する）。"""
+    if pokemon.conditions.asleep and not asleep_ok:
         raise IllegalActionError("POKEMON_ASLEEP", f"バトル場のポケモン {pokemon.pokemon_id} はねむり状態なので、{what}")
     if pokemon.conditions.paralyzed:
         raise IllegalActionError("POKEMON_PARALYZED", f"バトル場のポケモン {pokemon.pokemon_id} はマヒ状態なので、{what}")
@@ -84,6 +86,13 @@ class AttackRequest:
     option: AttackOption | None = None  # v0.49: 選んだワザの出どころ（印刷したカード・持ち方・供給するポケモン）
 
 
+def _usable_while_asleep(state: GameState, card_id: str, index: int) -> bool:
+    """v0.121: カード ``card_id`` の ``index`` 番目のワザの登録が、ねむり状態でも宣言できるワザか（登録がない・データと合わないなら偽）。"""
+    definition = state.definitions[card_id]
+    effect = state.effects.attack_effect(card_id, definition.attacks[index], definition.attacks)
+    return effect is not None and effect.usable_while_asleep
+
+
 def attack_request(state: GameState, cmd: UseAttack) -> AttackRequest:
     """ワザを使えるかの確認（p.309 の手順 1・2。v0.13 の ``engine._use_attack`` の前半と同じ順番・同じコード）。
 
@@ -100,7 +109,10 @@ def attack_request(state: GameState, cmd: UseAttack) -> AttackRequest:
         where = "" if cmd.card is None else f"（カード {cmd.card!r} の）"
         raise IllegalActionError("INVALID_ATTACK", f"{name} に{where} {cmd.attack_index!r} 番目のワザはない")
     attacker_def = state.definitions[option.card_id]
-    require_not_asleep_or_paralyzed(attacker, "ワザを使うことができない（p.309・p.322）")
+    # v0.121（docs/hand-bench-attack-conditions-v0.121.md 6 章）: ねむり状態でも宣言できるワザ（登録の性質 ``usable_while_asleep``。ヤドランの「おおいびき」。CR-SLOWBRO-SNORE-WHILE-ASLEEP）だけ、
+    # ねむりの禁止を免除する（同じ位置。マヒ・ほかのワザ・ほかの拒否の順番は変えない）。ほかのカードのワザとしての使用は、ほかの確かめのあとに SQ1（``option.problem``）で止める
+    asleep_ok = attacker.conditions.asleep and _usable_while_asleep(state, option.card_id, option.attack_index)
+    require_not_asleep_or_paralyzed(attacker, "ワザを使うことができない（p.309・p.322）", asleep_ok=asleep_ok)
     if cannot_attack(state, attacker) is not None:
         # v0.31: イーブイの「しっぽをふる」を受けた（次の相手の番にワザをつかえない）。ねむり・マヒと同じ場所（宣言の前・エネルギーの確認より前）
         raise IllegalActionError("ATTACK_PREVENTED", f"バトル場のポケモン {attacker.pokemon_id} は、この番はワザを使えない（相手のワザの効果）")
@@ -109,6 +121,9 @@ def attack_request(state: GameState, cmd: UseAttack) -> AttackRequest:
         # 今バトル場にいるときだけ。「しっぽをふる」と同じ場所・同じコード（宣言の前・エネルギーの確認より前）
         raise IllegalActionError("ATTACK_PREVENTED", f"バトル場のポケモン {attacker.pokemon_id} は、効果を与えたポケモンがバトル場にいる間、この番はワザを使えない"
                                  "（相手のワザの効果）")
+    if scared_by(state, cmd.player, attacker):
+        # v0.119（docs/damage-reactions-poison-sleep-v0.119.md 7 章）: 相手の［いあつ］を受けているベイビィポケモンは「ワザ」を使うことができない（「しっぽをふる」と同じ場所・同じコード）
+        raise IllegalActionError("ATTACK_PREVENTED", f"バトル場のポケモン {attacker.pokemon_id} は、相手の［いあつ］で「ワザ」を使うことができない（ベイビィポケモン）")
     if attack_locked(state, attacker, option.key) is not None:
         # v0.35: カスミのニョロモの「あわあわ」（自分）・「ドわすれ」（相手が選んだワザ）で、この番はこのワザを使えない。ほかのワザは使える。
         # 「しっぽをふる」と同じ場所（宣言の前・エネルギーの確認より前）。v0.49: ワザは ``AttackKey`` で探す（出どころによらない。「メガバーン」）
@@ -123,11 +138,15 @@ def attack_request(state: GameState, cmd: UseAttack) -> AttackRequest:
         # 宣言のときに記録する。ログから数えない）。エネルギーの確認の前（説明が使えないとするワザなので、必要なエネルギーがあっても使えない）
         raise IllegalActionError("ATTACK_ALREADY_USED", f"バトル場のポケモン {attacker.pokemon_id} は、ワザ「{attack.name_ja}」を場に出てからもう使った"
                                  "（場に出てから1回しか使えない）")
-    cost_problem = attack_cost_problem(state, attacker, attack)  # v0.58: TE2（［へんしん］のメタモンの無色の特殊エネルギー。ほかの確認がすべて通ったあとに止める）
-    if cost_problem is None and not attack_cost_payable(state, attacker, attack):
+    # v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 4 章）: 必要なエネルギー（通常のコスト）を満たすポケモン（``AttackOption.payer``。［にんぎょうつかい］はスリーパー。ほかはワザを使う
+    # ポケモン）。説明が書くほかの支払い・使うための条件（``usage_problem``・ワザの要素）はワザを使うポケモンのまま
+    payer = attacker if option.payer is None else state.find_pokemon(option.payer)[1]
+    cost_problem = attack_cost_problem(state, payer, attack)  # v0.58: TE2（［へんしん］のメタモンの無色の特殊エネルギー。ほかの確認がすべて通ったあとに止める）
+    if cost_problem is None and not attack_cost_payable(state, payer, attack):
         # v0.49: 必要なエネルギーはどのワザの出どころでも同じに確かめる（［へんしん］のメタモンはエネルギーカードをどの色としても払える。``effects.attack_cost_payable``）
         # v0.58: 出すエネルギーの個数と色で払う（無色2個エネルギー・レインボーエネルギー）
-        raise IllegalActionError("INSUFFICIENT_ENERGY", f"ワザ「{attack.name_ja}」に必要なエネルギーが足りない")
+        who = "" if payer is attacker else f"（支払うポケモン {payer.pokemon_id}）"
+        raise IllegalActionError("INSUFFICIENT_ENERGY", f"ワザ「{attack.name_ja}」に必要なエネルギーが足りない{who}")
     problem = effect.usage_problem(state, attacker)  # v0.31: 説明が書くワザを使うための条件（「ぼーっとする」）
     if problem is not None:
         raise problem

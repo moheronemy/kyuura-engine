@@ -213,8 +213,9 @@ class RegistrationTest(unittest.TestCase):
         links = json.loads((ROOT / "kyuura_engine" / "data" / "research_links.json").read_text(encoding="utf-8"))
         for card in V0103:
             record = sources[card]
+            # v0.114: 研究の基準を e519b99 に上げて、kyuura の CR-NEUTRAL-SHIELD-EVOLVED-BABY がこのカードを指す（採用したときのデータのコミット・記録した日は変えない。tests/helpers.py）
             self.assertEqual((record["basis"], record["status"], record["kyuura_commit"], record["kyuura_records"], record["external_checks"], record["play_text"]),
-                             ("kyuura_data", "adopted", "73a169063463bbf7bcaa3137d70cbf9721d11534", [], [],
+                             ("kyuura_data", "adopted", "73a169063463bbf7bcaa3137d70cbf9721d11534", H.kyuura_records_since_v0_69(card), [],
                               {"power/0": "kyuura_printed_text", "attack/0": "kyuura_printed_text"}))
             (issue,) = record["issues"]
             self.assertEqual((issue["fields"], issue["affects_behavior"]), (["pokemon.attacks[0].text.ja"], False))
@@ -222,7 +223,7 @@ class RegistrationTest(unittest.TestCase):
                 self.assertIn(target, links["latest_descriptions"]["adopted_printed_text"])
 
     def test_no_new_codes_or_format(self):
-        self.assertEqual(max(FORMAT_VERSIONS), 26)  # 力は今の場から求める。新しい状態・書き出しの形式は加えない
+        self.assertIn(26, FORMAT_VERSIONS)  # 力は今の場から求める。新しい状態・書き出しの形式は加えない。今の最新の形式は tests/test_catalog_contract.py（docs/testing.md）
         self.assertFalse([q for q in QUESTIONS.values() if q.code and ("NEUTRAL_SHIELD" in q.code or "EVOLVED" in q.code)])
         self.assertTrue(K.SOURCE_LEFT_CODE.startswith("UNSUPPORTED_"))  # エンジンの情報の不足（研究上の未解決ではない）
 

@@ -67,6 +67,9 @@ LIGHTNING_BURST = "lightning_burst"  # いなびかり
 CONDUCTIVITY = "conductivity"  # かんでん
 CHAIN_EVOLUTION = "chain_evolution"  # れんさしんか
 ENTRY = "entry"  # 場に出たときに使える特殊能力の機会（v0.43 の ``offer_entry_power``）
+# v0.116（docs/energy-movement-attachment-devolution-v0.116.md 4 章）: ついた時に発動するワザの持続効果（しこみどく・エナジーショック。``StatusOnEnergyAttach``）。記述は
+# (ATTACH_STATUS, 持ち主, 番号, つけたカード, 効果の発生源のカード, 効果を与えた番, 特殊状態, はたらいていたか)。効果は持続する効果の値（発生源のカード・与えた番・特殊状態）で探す
+ATTACH_STATUS = "attach_status"
 
 # RA1: 同じ時点の反応のうち、先の反応で HP 以上になったポケモンがあるときに、残りの反応を処理する（きぜつの判定の時点が決まらない）
 REACTION_AFTER_KNOCKOUT_CODE = "UNRESOLVED_REACTION_AFTER_KNOCKOUT"
@@ -250,6 +253,9 @@ def collect_attach(state: GameState, actor: int, target_owner: int, target: Poke
                 pre = int(any(pre_status))
                 working = int(not pre and not _stopped(state, target, slot, declared=False))
                 found.append((LIGHTNING_BURST, target_owner, target.pokemon_id, slot.card, slot.key.power_index, card, pre, working))
+    # v0.116: ついた時に発動するワザの持続効果（受けた順。つけたのがどちらのプレイヤーでも、つけたカードが手札からでも、受けているポケモンにエネルギーカードがついたこと）
+    for effect in E.attach_status_triggers(state, target):
+        found.append((ATTACH_STATUS, target_owner, target.pokemon_id, card, effect.source_card, effect.created_turn, effect.condition, 1))
     # かんでん（相手プレイヤーが手札からつけたら。発生源は ``actor`` の相手の場のわるいデンリュウ）
     sources = []
     for holder in state.players[1 - actor].in_play():
@@ -270,7 +276,8 @@ def attach_steps(state: GameState, actor: int, owner: int, target: PokemonInPlay
     （どのカードも反応が 1 つ以下で、v0.86 の反応（［エナジーしんか］・［いなびかり］・［かんでん］）がない）なら None（呼ぶ側が v0.85 までの処理をする。ログ・乱数を変えない）。
     つけたときの効果・［かんでん］で HP 以上になりうるなら、最後につける操作のあとのきぜつの処理（``SETTLE_ENERGY``）。"""
     found = [(card, collect_attach(state, actor, owner, target, card, pre_status)) for card in cards]
-    new_kinds = {ENERGY_EVOLUTION, LIGHTNING_BURST, CONDUCTIVITY}
+    # v0.116: ついた時に発動するワザの持続効果（ATTACH_STATUS）は v0.85 までの処理（``engine._attach_energy`` の 1 枚ずつの処理）にないので、1 つだけでもここで処理する
+    new_kinds = {ENERGY_EVOLUTION, LIGHTNING_BURST, CONDUCTIVITY, ATTACH_STATUS}
     if not any(r[0] in new_kinds for _, rs in found for r in rs) and all(len(rs) <= 1 for _, rs in found):
         return None
     steps: tuple = tuple((SAME, "attached", rs, (owner, target.pokemon_id, card)) for card, rs in found if rs)
@@ -345,6 +352,13 @@ def _still_working(state: GameState, reaction: tuple) -> int | None:
         if pokemon is None:
             return None
         return 1
+    if kind == ATTACH_STATUS:
+        # v0.116: 受けているポケモンが場をはなれたら、反応はなくなる。場にいて、先の反応（［エナジーしんか］の進化など）で効果が消えたなら、はたらいていない（集めた時と変われば RA2）
+        _, owner, pid, _card, source_card, created_turn, condition, _ = reaction
+        holder = _locate(state, owner, pid)
+        if holder is None:
+            return None
+        return int(_attach_status_effect(state, holder, source_card, created_turn, condition) is not None)
     if kind == CONDUCTIVITY:
         _, src_owner, src_pid, power_card, index, target_owner, target_pid, card, _ = reaction
         holder = _locate(state, src_owner, src_pid)
@@ -373,8 +387,14 @@ def _knocked(state: GameState) -> list[int]:
     return [p.pokemon_id for side in state.players for p in side.in_play() if not state.is_face_down(p) and E.knocked_by_hp(state, p)]
 
 
-# 決定を出さず、すぐに場を変える反応（先に処理すると、あとの反応がはたらくかを変えうる。RA2 の比べ）
-_IMMEDIATE = (ENERGY, HEAL, CONDUCTIVITY)
+# 決定を出さず、すぐに場を変える反応（先に処理すると、あとの反応がはたらくかを変えうる。RA2 の比べ）。v0.116: ついた時に発動するワザの持続効果（マヒは［ほのおでかいふく］を止める）
+_IMMEDIATE = (ENERGY, HEAL, CONDUCTIVITY, ATTACH_STATUS)
+
+
+def _attach_status_effect(state: GameState, holder: PokemonInPlay, source_card: int, created_turn: int, condition: str):
+    """v0.116: ``holder`` が今受けている、ついた時に発動するワザの持続効果のうち、発生源のカード・与えた番・特殊状態が同じもの（今の番にはたらくもの）。なければ None。"""
+    return next((effect for effect in E.attach_status_triggers(state, holder)
+                 if (effect.source_card, effect.created_turn, effect.condition) == (source_card, created_turn, condition)), None)
 
 
 def _revives(state: GameState, reaction: tuple, dead: list[tuple]) -> bool:
@@ -447,6 +467,11 @@ def process(state: GameState, reaction: tuple, after: tuple) -> tuple:
     if kind == CONDUCTIVITY:
         _conductivity(state, reaction)
         return after
+    if kind == ATTACH_STATUS:
+        _, owner, pid, card, source_card, created_turn, condition, _ = reaction
+        holder = _locate(state, owner, pid)
+        E.apply_attach_status(state, owner, holder, _attach_status_effect(state, holder, source_card, created_turn, condition), card)  # v0.116
+        return after
     if kind == LIGHTNING_BURST:
         return _lightning_burst(state, reaction, after)
     if kind in (ENERGY_EVOLUTION, CHAIN_EVOLUTION):
@@ -465,6 +490,12 @@ def process(state: GameState, reaction: tuple, after: tuple) -> tuple:
         return after
     if kind == M.SINKHOLE:
         M.sinkhole_damage(state, reaction)  # v0.87: ほかの反応と同じ時点の［おとしあな］
+        return after
+    if kind == M.CHASE:
+        M.chase_counters(state, reaction)  # v0.117: ［CHASE］
+        return after
+    if kind == M.PURSUIT:
+        M.pursuit_damage(state, reaction)  # v0.117: おいうち
         return after
     if kind == M.MAGMA:
         choice = M.magma_choice(state, reaction)  # v0.87: ［やけのこり］

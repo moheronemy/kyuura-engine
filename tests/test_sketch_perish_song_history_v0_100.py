@@ -198,7 +198,8 @@ class RegistrationTest(unittest.TestCase):
         self.assertIn("pokemonwiki.com", cards[MISDREAVUS]["ja_text_source"])
         # 日英の違いの記録（確度: 確実）は写しに残る（処理に使う文面にしない）
         self.assertEqual([d["summary"] for d in cards[SMEARGLE]["jp_en_differences"]], ["ワザ スケッチ（Sketch）でコピーしたワザの条件"])
-        self.assertEqual(read_extract()["source"]["commit"], "73a169063463bbf7bcaa3137d70cbf9721d11534")  # 写しの元は v0.97 のまま
+        # 写しの元は v0.97 のまま（v0.97 の段のあと。v0.114 で e519b99 に上げた。今の写しの元は tests/test_baby_rules_evolution_v0_114.py）
+        self.assertEqual(next(s for s in read_extract()["source_migrations"] if s["id"] == "v0.97")["to"], "73a169063463bbf7bcaa3137d70cbf9721d11534")
 
     def test_adoption_records_and_research_links(self):
         data = json.loads((ROOT / "kyuura_engine" / "data" / "card_sources.json").read_text(encoding="utf-8"))["cards"]
@@ -239,7 +240,14 @@ class RegistrationTest(unittest.TestCase):
             return min(tuple(int(x) for x in r["version"].lstrip("v").rstrip("abcdefg").split(".")) for r in entry["engine_rulings"])
 
         self.assertEqual(sum(1 for entry in links["stop_codes"].values() if introduced(entry) <= (0, 100)), 231)
-        self.assertEqual(links["counts"]["kyuura_issues"], 72)
+        # v0.114: kyuura の論点は 73（UQ-NEO-TEXT-BABY-CATEGORIES）。v0.100 の時点の数は、v0.100 までの版の記録が結ぶ論点で数える（今の総数は test_catalog_contract.py）
+        def linked(entry_filter):
+            issues = {v["kyuura_issue"] for section in ("stop_codes", "codeless_questions") for v in links[section].values() if v["kyuura_issue"] and entry_filter(v)}
+            for section in ("unresolved_without_code", "deferred_card_questions", "implementation_assumptions_with_issue"):
+                issues |= {v["kyuura_issue"] for v in links[section] if entry_filter(v)}
+            return issues
+
+        self.assertEqual(len(linked(lambda entry: introduced(entry) <= (0, 100))), 72)
         v099 = (ROOT / "docs" / "unown-perform-help-history-v0.99.md").read_text(encoding="utf-8")
         self.assertIn("PF1 は v0.47 の `UNRESOLVED_PLAY_AS_POKEMON_SETUP`", v099)  # 訂正の注記
         self.assertIn("PFM1 `UNRESOLVED_PERFORM_DAMAGE_PLACES`", v099)

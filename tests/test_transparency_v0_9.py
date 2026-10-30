@@ -672,6 +672,8 @@ class ChemicalGasTest(unittest.TestCase):
 
 # 「ダメージ → ワザを使う側のコイン → 相手を特殊状態にする」ワザ（T19b。UNRESOLVED_EVADED_EFFECT_COIN）
 EFFECT_COIN_TYPES = (PoisonOnHeads, ParalyzeOnHeads, ConfuseOnHeads)
+# v0.120: なにかの化石から進化する進化カードで、化石の復活（進化元を重ねずに出し、場ではたねポケモンとしてあつかう）で場に出すもの（オムナイト neo2-032。docs/fossil-basic-virtual-attacks-v0.120.md 6 章）
+REVIVED = ("neo2-032",)
 EVOLUTIONS = {METAPOD: (CATERPIE,), KAKUNA: (WEEDLE,), DEWGONG: (SEEL,), STARMIE: (STARYU,), **EVOLVED_FROM,  # v0.28: スターミー
               "PMCG1-034": ("PMCG1-031",), "PMCG2-011": ("PMCG2-005",),  # v0.32: ギャラドス（コイキングから）・ウツドン（マダツボミから）
               "PMCG3-016": ("PMCG4-019",),  # v0.33: 化石の秘密のゴルダック（第4弾のコダックから）
@@ -831,21 +833,47 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                     "ねんりき", "ねんりき",
                                     # v0.104: ミルタンク（neo1-069）の「のしかかり」・ラプラス（SI-018）の「れいとうビーム」（ParalyzeOnHeads）・ジュゴン（ES2-007・QSG-018）の
                                     # 「オーロラウェーブ」（ConfuseOnHeads）。既存の型の登録だけなので、同じ T19b で止まる（docs/healing-pokemon-v0.104.md）
-                                    "のしかかり", "れいとうビーム", "オーロラウェーブ", "オーロラウェーブ"]))
+                                    "のしかかり", "れいとうビーム", "オーロラウェーブ", "オーロラウェーブ",
+                                    # v0.106: ビリリダマ（ES2-016・QSG-025）の「でんきショック」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                    # docs/counts-coins-compositions-v0.106.md）
+                                    "でんきショック", "でんきショック",
+                                    # v0.107: そらをとぶピカチュウ（PR1-018・PR1-063）の「でんきショック」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                    # docs/coin-failure-status-flight-v0.107.md）
+                                    "でんきショック", "でんきショック",
+                                    # v0.108: アーボック（ES3-001）の「まきつく」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                    # docs/damage-modifiers-condition-bonuses-v0.108.md）
+                                    "まきつく",
+                                    # v0.112: ドククラゲ（SI-016）の「どくばり」（PoisonOnHeads。既存の型の登録だけなので、同じ T19b で止まる。docs/energy-coins-draw-v0.112.md）。
+                                    # オムスター（PR1-051）の「ふしょくえき」は、共有のコインが自分のワザの制限も決めるので止まらない（ここに入らない）
+                                    "どくばり",
+                                    # v0.115: タケシのイワーク（GD1-010）の「しめつける」（ParalyzeOnHeads。既存の型の登録だけ。docs/spread-damage-allocation-v0.115.md）
+                                    "しめつける",
+                                    # v0.117: ナツメのゴース（GD6-005）の「したでなめる」（ParalyzeOnHeads。既存の型の登録だけ。docs/retreat-return-active-powers-v0.117.md）
+                                    "したでなめる",
+                                    # v0.119: ムウマ（PRN-036）の「あやしいひかり」（ConfuseOnHeads。既存の型の登録だけ。docs/damage-reactions-poison-sleep-v0.119.md 2 章）
+                                    "あやしいひかり",
+                                    # v0.120: オムナイト（neo2-032）の「しめつける」（ParalyzeOnHeads。既存の型の登録だけ。docs/fossil-basic-virtual-attacks-v0.120.md 3 章）
+                                    "しめつける",
+                                    # v0.121: ピカチュウ（PR1-001・PR1-003・PR1-017）の「でんきショック」（ParalyzeOnHeads。既存の型の登録だけ。docs/hand-bench-attack-conditions-v0.121.md 4 章）
+                                    "でんきショック", "でんきショック", "でんきショック"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}
                 if key.card_id in EVOLUTIONS:
                     attacker["evolved_from"] = list(EVOLUTIONS[key.card_id])
+                if key.card_id in REVIVED:
+                    attacker["basic_entry"] = True  # v0.120: 化石の復活で進化元を重ねずに出した進化カード（場ではたね）
                 state = board(attacker)
-                before, fingerprint, log = written(state), rng_fingerprint(state.rng), state.log
+                # v0.120: 進化元を重ねずに出した進化カードは形式 9 で表せない（形式 28 の ``basic_entry``）ので、その盤面だけ形式 28 の書き出しで照らす
+                write = (lambda s: state_to_dict(s, format_version=28)) if key.card_id in REVIVED else written
+                before, fingerprint, log = write(state), rng_fingerprint(state.rng), state.log
                 with self.subTest(key=str(key), confused=confused):
                     if key.card_id == MUK and not confused:
                         # ベトベトン自身のかがくへんかガスで「とうめい」の力が消えている（T14）ので止めない（ChemicalGasTest）
                         self.assertIsNone(working_evasion_power(state, state.players[1].active.pokemon_id))
                         self.assertEqual(power_coins(apply_command(state, UseAttack(0, key.attack_index)).log), [])
                         continue
-                    if key.card_id in ("PMCG5-050", "ES2-026", "ES2-024", "QSG-037", "neo1-052", "ES2-020", "QSG-033", "ES3-028"):  # v0.72: イワークの「しめつける」10 も最終ダメージが 0。v0.77: グライガー（闘）の「どくばり」10 も。v0.79: サンド（闘）の「どくばり」10 も。v0.89: ゴーリキー（ES3-028。闘）の「じごくづき」20 も
+                    if key.card_id in ("PMCG5-050", "ES2-026", "ES2-024", "QSG-037", "neo1-052", "ES2-020", "QSG-033", "ES3-028", "GD1-010", "neo2-032"):  # v0.72: イワークの「しめつける」10 も最終ダメージが 0。v0.77: グライガー（闘）の「どくばり」10 も。v0.79: サンド（闘）の「どくばり」10 も。v0.89: ゴーリキー（ES3-028。闘）の「じごくづき」20 も。v0.115: タケシのイワーク（GD1-010。闘）の「しめつける」20 も。v0.120: オムナイト（neo2-032。写しのタイプは闘）の「しめつける」10 も
                         # v0.60: タケシのサンドパン（闘）の「とげボール」30 は、ゴースト（抵抗力 闘 -30）への最終ダメージが 0 なので「ダメージを受けなかった」（T21）。
                         # 「とうめい」はダメージの要素ではたらかず、受けないと決まっていないので、そのあとのどくのコインを投げる（T19b に当たらない。「おもて」なら、
                         # どくの要素を受ける前に「とうめい」のコインを投げる）。v0.70: サワムラー（闘）の「まわしげり」30 も同じ（マヒのコイン）
@@ -855,7 +883,7 @@ class EvadedEffectCoinTest(unittest.TestCase):
                     with self.assertRaises(UnsupportedError) as ctx:
                         apply_command(state, UseAttack(0, key.attack_index))
                     self.assertEqual(ctx.exception.code, "UNRESOLVED_EVADED_EFFECT_COIN")
-                    self.assertEqual((written(state), rng_fingerprint(state.rng)), (before, fingerprint))
+                    self.assertEqual((write(state), rng_fingerprint(state.rng)), (before, fingerprint))
                     self.assertIs(state.log, log)
 
 

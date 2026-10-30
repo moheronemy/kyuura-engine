@@ -297,7 +297,16 @@ class ChemicalGasRegistrationTest(unittest.TestCase):
                                                                    # v0.102: ［グリーンシールド］・［ニュートラルダメージ］（常にはたらく。docs/weakness-resistance-powers-v0.102.md 3 章）
                                                                    "ES1-003", "QSG-003", "ES1-021", "QSG-030",
                                                                    # v0.103: ［ニュートラルシールド］（常にはたらく。docs/neutral-shield-attack-origin-v0.103.md 3 章）
-                                                                   "PR1-005", "PR1-012"))})
+                                                                   "PR1-005", "PR1-012",
+                                                                   # v0.117: ［きしかいせい］・［かえるのうた］・［CHASE］・［でんせつのからだ］（常にはたらく）・［ときわたり］（自動的に
+                                                                   # はたらく）。docs/retreat-return-active-powers-v0.117.md 3.3 節。［QUICKEN］は宣言して使う
+                                                                   "neo1-017", "neo2-019", "neo4-057", "PF3-004", "PF3-005", "PF3-006", "neo3-036",
+                                                                   # v0.119: ［アレルギーほうし］・［かたいから］・［いあつ］・［ふかいねむり］（常にはたらく）・［シェルアーマー］（ダメージを
+                                                                   # 受ける時に使うかを選ぶ）。docs/damage-reactions-poison-sleep-v0.119.md 3 章・7 章・8 章。［ポイズンミスト］・［めいれい］は宣言して使う
+                                                                   "neo3-005", "neo3-040", "neo4-039", "neo4-066", "GD2-007",
+                                                                   # v0.120: ［げんしのきおく］・［にんぎょうつかい］・［ものまね］（常にはたらく許可）。docs/fossil-basic-virtual-attacks-v0.120.md 4 章。
+                                                                   # ［なかまのふっかつ］・［かせきのふっかつ］は宣言して使う
+                                                                   "neo3-042", "ES3-025", "PF3-001"))})
         self.assertTrue(PowerEffect.declared)
         self.assertEqual((entry.name_ja, entry.text_ja, entry.play_text_ja, entry.source), ("かがくへんかガス", GAS_PRINTED, GAS_LATEST, "P43 p.48"))
         self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.13")  # v0.9 でゴース・ゴースト、v0.10 でゴーリキー・カイリキー、v0.11 でサカキのワンリキー・ゴーリキー・カイリキー、v0.12 で R団のファイヤー、v0.13 で第4弾のゼニガメ・わるいカメールの登録を加えた（かがくへんかガスの登録は同じ）

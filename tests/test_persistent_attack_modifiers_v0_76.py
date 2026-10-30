@@ -190,7 +190,10 @@ class RegistrationTest(unittest.TestCase):
                     self.assertEqual(entry.effect.check(attack_def), [])
                     self.assertEqual(entry.effect.card_problems(attack_def, definition.attacks), [])
                     count += 1
-                    if attack_def.text_ja is not None:
+                    if (card_id, index) == ("IP1-040", 0):
+                        # v0.121: kyuura の最新の説明 LD-IP1-040-ATK0 を処理に使う文面にした（印刷の文面の照合・型・量は v0.76 のまま。docs/hand-bench-attack-conditions-v0.121.md 3.4 節）
+                        self.assertEqual((entry.text_ja, entry.play_text_ja, entry.source), (attack_def.text_ja, E.GROWL_LATEST_TEXT, "LD-IP1-040-ATK0"))
+                    elif attack_def.text_ja is not None:
                         self.assertEqual((entry.text_ja, entry.play_text_ja, entry.source), (attack_def.text_ja, attack_def.text_ja, "kyuura data/cards.json"))
         self.assertEqual(count, 48)
         kinds = {(c, i): type(registry.attack_entry(c, i).effect) for c in V0_76_POKEMON for i in range(2)}
@@ -298,7 +301,8 @@ class RegistrationTest(unittest.TestCase):
                 for index, attack_def in enumerate(pool.get(card).attacks):
                     key = f"attack/{index}"
                     self.assertEqual(key in record["play_text"], attack_def.text_ja is not None)
-                    self.assertEqual(f"{card}/{key}" in adopted, attack_def.text_ja is not None)
+                    # v0.121: IP1-040 のなきごえは研究の対応表の registered（LD-IP1-040-ATK0）に移した
+                    self.assertEqual(f"{card}/{key}" in adopted, attack_def.text_ja is not None and (card, index) != ("IP1-040", 0))
 
     def test_state_type_and_expiry_are_explicit(self):
         """なきごえの状態は「なきつく」の部分型で、種類と期限だけが違う（「次の相手の番」= はたらく番の終わり）。なきつくの期限は変えない。"""

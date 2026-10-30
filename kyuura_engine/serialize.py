@@ -1,6 +1,6 @@
 """ゲーム状態を JSON にできる辞書にする（画面やほかの言語に渡すため・テストで比べるため）。
 
-形式は 26 あります（``format_version``）。
+形式は 27 あります（``format_version``）。
 
 - 1（既定）: v0.1 と同じ形。v0.1 の固定値のテストと互換性の参照データは、この形で比べる。
 - 2: 1 に次を加えたもの（v0.2a）。``format_version``、``effects``（効果の登録表の id）、
@@ -103,7 +103,8 @@
   内部の完全な記録なので、場のポケモンの ``card_id``・``name``・``hp`` は本当のカードの値を書く（プレイヤーに渡すときは観測 ``observation.observe`` を使う）。形式 1〜21 は、
   うらのカードがあると ``ValueError``（なければ形式 1〜21 の書き出しは v0.66 と同じ）。
   v0.86: 持続する効果の種類 ``"powers_stopped"``（わるいモココの「スタンウェーブ」）・``"bench_protection"``（エンテイ PF2-008 の「ほのおのまもり」）は共通の項目だけで、
-  形式 8 から書ける（形式は増やしていない）。反応の続き（決定の ``context`` の ``followup``・``reaction``）は既存の ``decision`` の項目で書く。
+  形式 8 から書ける（形式は増やしていない）。v0.114: ``"bench_powers_stopped"``（ププリンの［じっとみる］。特殊能力で与えた効果。``source_card`` は特殊能力を使ったポケモン）も
+  共通の項目だけ（形式は増やしていない）。反応の続き（決定の ``context`` の ``followup``・``reaction``）は既存の ``decision`` の項目で書く。
 - 23: 22 に、最上位の ``color_effects``（特殊能力で、この番が終わるまで色を変える効果。``{"kind", "player", "source", "source_card", "card_id", "power_index", "target",
   "color", "turn", "left_play"}`` の並び。ランターンの［せんすい］・ポリゴン2の［エナジーコンバーター］）を加えたもの（v0.88。docs/type-energy-colors-v0.88.md 2 章）。形式 1〜22 は、
   その効果があると ``ValueError``（なければ形式 1〜22 の書き出しは v0.87 と同じ）。
@@ -113,7 +114,18 @@
   v0.92・v0.93: 期間を明示した持続する効果（v0.92 の ``"period_retreat_lock"``・``"period_attack_lock"``・``"received_attack_damage_bonus"``、v0.93 の ``"period_leave_lock"``
   （「バトル場をはなれられない」。あるときだけ ``"knockout_exception"``・``"source_left"``）・``"period_attack_coin_check"``（かぶりつく））は、形式 8 の ``persistent_effects`` の
   種類の値と種類ごとの項目を加えただけ（形式は 24 のまま。docs/active-leave-locks-v0.93.md 11 章。前の版の書き出しを読む側は、知らない種類として拒否すること）。
-- 25: 24 の場のポケモンの ``history`` の受けた記録（``"kind": "received"``）に、``active_damage``（受けたダメージ ``damage`` のうち、受けた時に持ち主のバトル場にいた分。場所の
+  v0.108: 期間を明示した持続する効果の種類 ``"dealt_attack_damage_reduction"``（マイナスイオン・あまえる。使うワザのダメージを減らす数 ``"amount"`` を加える）も、同じく種類の値と
+  項目を加えただけ（形式は 26 のまま。v0.107 までの書き出しを読む側は、知らない種類として拒否すること。docs/damage-modifiers-condition-bonuses-v0.108.md 7 章）。
+  v0.109: 持続する効果の種類 ``"timed_damage_guard"``（ぬるぬる・かわす・ブリンク。``"prevent_on"``・``"flipper"``・``"scope"`` を加える）も、同じく種類の値と項目を加えただけ（形式は
+  26 のまま。v0.108 までの書き出しを読む側は、知らない種類として拒否すること。docs/timed-damage-guards-v0.109.md 7 章）。
+  v0.110: 持続する効果の種類 ``"knockout_survival"``（こらえる・こうてつか。``"end_turn"``・``"scope"``・``"remaining_hp"`` を加える）も、同じく種類の値と項目を加えただけ（形式は
+  26 のまま。v0.109 までの書き出しを読む側は、知らない種類として拒否すること。docs/endure-armor-up-v0.110.md 8 章）。
+  v0.116: 持続する効果の種類 ``"status_on_energy_attach"``（しこみどく・エナジーショック。``"condition"``・``"attack"`` を加える）・``"evolution_lock"``（やみのしょくしゅ。共通の項目だけ）も、
+  同じく種類の値と項目を加えただけ（形式は 26 のまま。v0.115 までの書き出しを読む側は、知らない種類として拒否すること。docs/energy-movement-attachment-devolution-v0.116.md 8 章）。
+  v0.114: 持続する効果の種類 ``"bench_powers_stopped"``（じっとみる。共通の項目だけ）も、同じく種類の値を加えただけ（形式は 26 のまま。v0.113 までの書き出しを読む側は、知らない
+  種類として拒否すること。docs/baby-rules-evolution-v0.114.md 7 章）。ベイビィポケモンの段階・進化先・重なりのいちばん下のベイビィポケモンカードは、カードの id とカードのデータで
+  決まるので、書き出しの項目は変えていない（ブビィの「モクモク」の期限は、既存のトレーナーの効果の ``expires_turn``）。
+- 25:24 の場のポケモンの ``history`` の受けた記録（``"kind": "received"``）に、``active_damage``（受けたダメージ ``damage`` のうち、受けた時に持ち主のバトル場にいた分。場所の
   分からない記録の写しは ``None``）を加えたもの（v0.99。docs/unown-perform-help-history-v0.99.md 6 章）。形式 20〜24 の受けた記録は合計だけなので、場所の分かる 0 より大きい
   ダメージの記録があると ``ValueError``（合計が 0 の記録・場所の分からない記録だけなら形式 20〜24 の書き出しは v0.98 と同じ。形式 24 の受けた記録を読む側は、合計が 0 より大きい
   記録の場所を分からないものとして読み、すべてバトル場・すべてベンチにしないこと）。
@@ -121,6 +133,20 @@
   と、番でないプレイヤーの場にいたカード ``{"kind": "turn_field", "turn", "player", "cards", "face_down"}``）を加えたもの（v0.100。docs/sketch-perish-song-history-v0.100.md 7 章）。
   ドーブルの「スケッチ」のカードがある対戦だけが記録を持つ。形式 1〜25 は、記録があると ``ValueError``（なければ形式 1〜25 の書き出しは v0.99 と同じ）。形式 25 までの書き出しを
   読む側は、記録がないことを「前の番にワザを使わなかった」と読まないこと（記録していない）。
+- 27: 26 に、場のポケモンの特殊状態のどくの ``multiplier``（ポケモンチェックでのせる「どく」によるダメージカウンターの数にかける数。ツボツボの「どくどくエキス」の 2。1 なら書かない）と、
+  最上位の ``poison_mists``（マタドガスの［ポイズンミスト］の「おもて」の効果。``{"player", "pokemon_id", "source_card", "card_id", "power_index", "created_turn", "poisoned_before",
+  "interrupted"}`` の並び）と、最上位の ``replacement_poisons``（マタドガスの「ガスばくはつ」の、かわりに出てくる対戦ポケモンへのまだ与えていないどく。``{"player", "knocked_pokemon_id",
+  "card_id", "attack_index", "attacker_player", "attacker_pokemon_id", "attacker_card", "attacker_evolved", "created_turn", "status"}`` の並び。きぜつの判定・サイド・ふしちょう・バトル場に
+  出す決定を待つ間だけある。docs 6 章）を加えたもの（v0.119。docs/damage-reactions-poison-sleep-v0.119.md 5 章）。どくの量の性質（固定の量と、ダメージカウンターの数にかける数）は意味が
+  違うので、かける数を固定の量に直して古い形式に書かない: 形式 1〜26 は、かける数が 1 でないどく・［ポイズンミスト］の効果・「ガスばくはつ」のまだ与えていないどくがあると ``ValueError``
+  （なければ形式 1〜26 の書き出しは v0.118 と同じ）。
+  v0.119 の［シェルアーマー］を使うかの決定（``damage_option``）・ほかの新しい決定・持続する効果の種類は、これまでと同じく種類の値と項目を加えただけ（形式は変えない。知らない種類は
+  読む側が拒否すること）
+- 28: 27 に、場のポケモンの ``basic_entry``（進化カードを進化元を重ねずにベンチに出し、場ではたねポケモンとしてあつかう事実。カブトの［なかまのふっかつ］・オムナイトの［かせきのふっかつ］・
+  たまごの化石。``{"card", "card_id", "source", "source_card", "source_card_id", "zone", "turn"}``。ないポケモンは書かない）を加えたもの（v0.120。docs/fossil-basic-virtual-attacks-v0.120.md
+  6 章・8 章）。印刷の段階からは分からない場の分類なので、古い形式に黙って落とさない: 形式 1〜27 は、この事実のあるポケモンがいると ``ValueError``（いなければ形式 1〜27 の書き出しは
+  v0.119 と同じ）。v0.120 の新しい決定（``revive_source``・``bench_from_deck_or_hand``）・ワザの途中の決定の続きの情報（ESPのやり直しを聞いたワザ ``esp_asked``・ワザを選ぶ範囲
+  ``copy_source``）は、これまでと同じく種類の値と項目を加えただけ（知らない種類・項目は読む側が拒否すること）
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -193,6 +219,12 @@ from .state import (
     DoubledDamage,
     MaxHpSet,
     TailsDamageGuard,
+    TimedDamageGuard,
+    KnockOutSurvival,
+    StatusOnEnergyAttach,
+    PursuitOnRetreat,
+    RetreatCostIncrease,
+    EvolutionLock,
     ReflectShield,
     StatusImmunityWhileActive,
     ZeroDamageAtLeast,
@@ -200,9 +232,10 @@ from .state import (
     AttackEffectGuard,
     StatusImmunityNextTurn,
     PowersStopped,
+    BenchPowersStopped,
     BenchProtection,
+    PERIOD_AMOUNT_TYPES,
     PERIOD_EFFECT_TYPES,
-    ReceivedAttackDamageBonus,
     NEXT_TURN_MULTIPLY,
     CannotUseAttack,
     CannotUseOwnAttack,
@@ -213,12 +246,14 @@ from .state import (
     ReducedDamageToSource,
     ResistanceChange,
     Retaliation,
+    SecretePoison,
+    NextTurnFailureWaiver,
     TurnAttack,
     TurnField,
     WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -227,6 +262,8 @@ def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
     data: dict[str, Any] = {}
     if conditions.poison is not None:
         data["poison"] = {"damage": conditions.poison.damage}
+        if conditions.poison.multiplier != 1:
+            data["poison"]["multiplier"] = conditions.poison.multiplier  # v0.119（形式 27。``state_to_dict`` が形式 1〜26 で拒否する）
     if isinstance(conditions.exclusive, Asleep):
         data["sleep"] = {}
     elif isinstance(conditions.exclusive, Paralyzed):
@@ -302,6 +339,43 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
     elif isinstance(effect, ReflectShield):
         data["attack_index"] = effect.attack_index  # v0.83: 「リフレクトシールド」（相手に与えるダメージ）
         data["amount"] = effect.amount
+    elif isinstance(effect, TimedDamageGuard):
+        # v0.109: 受けるときのコインで防ぐ期限つきの効果（ぬるぬる・かわす・ブリンク）。ダメージを受けない面・説明が書く投げる人・範囲。種類の値と項目を加えただけで形式は変えない
+        # （v0.108 までの書き出しを読む側は、知らない種類として拒否すること）
+        data["prevent_on"] = effect.prevent_on
+        data["flipper"] = effect.flipper
+        data["scope"] = effect.scope
+    elif isinstance(effect, KnockOutSurvival):
+        # v0.110: 残りHPがなくなっても「きぜつ」しない効果（こらえる・こうてつか）。最後の番・範囲・「きぜつ」しないときの残りHP。種類の値と項目を加えただけで形式は変えない
+        # （v0.109 までの書き出しを読む側は、知らない種類として拒否すること）
+        data["end_turn"] = effect.end_turn
+        data["scope"] = effect.scope
+        data["remaining_hp"] = effect.remaining_hp
+    elif isinstance(effect, StatusOnEnergyAttach):
+        # v0.116: エネルギーカードがついたときになる特殊状態と、効果を与えたワザ（AttackKey の文字列）。種類の値と項目を加えただけで形式は変えない
+        data["condition"] = effect.condition
+        data["attack"] = effect.attack
+    elif isinstance(effect, PursuitOnRetreat):
+        # v0.117: おいうちの「にげる」ときのダメージの量と、効果を与えたワザ（AttackKey の文字列）。種類の値と項目を加えただけで形式は変えない
+        data["amount"] = effect.amount
+        data["attack"] = effect.attack
+    elif isinstance(effect, NextTurnFailureWaiver):
+        # v0.121: ロックオン（``"next_turn_failure_waiver"``）の効果を与えたワザ・失敗しなくなるワザの位置と、失効を決める受けた相手（プレイヤー・場の番号）。種類の値と項目を加えただけで
+        # 形式は変えない（v0.92 の期間を明示した効果と同じ。v0.120 までの書き出しを読む側は、知らない種類として拒否すること）
+        data["attack_index"] = effect.attack_index
+        data["target_attack_index"] = effect.target_attack_index
+        data["target_player"] = effect.target_player
+        data["target_pokemon"] = effect.target_pokemon
+    elif isinstance(effect, SecretePoison):
+        # v0.119: どくをだすの控えポケモンへのダメージの量と、効果を与えたワザの位置（``"secrete_poison"``）。種類の値と項目を加えただけで形式は変えない（v0.118 までの書き出しを読む側は、
+        # 知らない種類として拒否すること）
+        data["attack_index"] = effect.attack_index
+        data["amount"] = effect.amount
+    elif isinstance(effect, RetreatCostIncrease):
+        # v0.118: しめつづけるの「にげる」ときに増やすエネルギーの数と、効果を与えたワザ（AttackKey の文字列）。種類の値（``"retreat_cost_increase"``）と項目を加えただけで形式は変えない
+        # （v0.117 までの書き出しを読む側は、知らない種類として拒否すること）
+        data["amount"] = effect.amount
+        data["attack"] = effect.attack
     elif isinstance(effect, StatusImmunityWhileActive):
         data["attack_index"] = effect.attack_index  # v0.84: 「きらめきタッチ」（効果を与えたワザと、それを使ったポケモンのカード）
         data["given_by"] = effect.given_by
@@ -309,7 +383,7 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
         data["threshold"] = effect.threshold  # v0.84: 「パルスガード」
     elif isinstance(effect, PERIOD_EFFECT_TYPES):
         # v0.92: 期間を明示した効果（``"period_retreat_lock"``・``"period_attack_lock"``・``"received_attack_damage_bonus"``。v0.93 で ``"period_leave_lock"``・
-        # ``"period_attack_coin_check"`` を加えた）。期間の終わり（null は期限なし）・発生源の場の番号と、
+        # ``"period_attack_coin_check"``、v0.108 で ``"dealt_attack_damage_reduction"`` を加えた）。期間の終わり（null は期限なし）・発生源の場の番号と、
         # あるときだけ発生源がバトル場にいる間だけの印・明記された消える契機、いやなおとは増やす数。種類の値を加えただけで形式は変えない（v0.84・v0.86 と同じ。v0.91 までの書き出しを
         # 読む側は、知らない種類として拒否すること）
         data["end_turn"] = effect.end_turn
@@ -318,15 +392,15 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
             data["while_source_active"] = True
         if effect.ends_on:
             data["ends_on"] = list(effect.ends_on)
-        if isinstance(effect, ReceivedAttackDamageBonus):
-            data["amount"] = effect.amount
+        if isinstance(effect, PERIOD_AMOUNT_TYPES):
+            data["amount"] = effect.amount  # いやなおと・かみくだくの増やす数、v0.108 のマイナスイオン・あまえるの減らす数
         if getattr(effect, "knockout_exception", False):
             data["knockout_exception"] = True  # v0.93: 「バトル場をはなれられない」効果の「(「きぜつ」した場合をのぞく)」（あるときだけ）
         if getattr(effect, "source_left", False):
             data["source_left"] = True  # v0.93: くいつくの発生源が与えたあとにバトル場をはなれた印（あるときだけ）
     elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive, HalvedDamage,
                                          CannotUsePowers, CannotAttachEnergy, TailsDamageGuard, DoubledDamage, BenchAttackDamageGuard, AttackEffectGuard,
-                                         StatusImmunityNextTurn, PowersStopped, BenchProtection)):
+                                         StatusImmunityNextTurn, PowersStopped, BenchProtection, BenchPowersStopped, EvolutionLock)):
         raise ValueError(f"書き出せない持続する効果 {effect!r}")
     # v0.49（形式 14）: ワザを印刷したカードの id（いちばん上のカードと違うときだけ。状態の書き出しの前に、形式 14 より古い形式では拒否している）
     for name in ("attack_card", "target_attack_card"):
@@ -427,7 +501,15 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay | None, format_version: in
         data["history"] = [history_record(record, format_version) for record in pokemon.history]  # v0.62（v0.99: 形式 25 から受けた記録の場所）
     if format_version >= 24:
         data["markers"] = [marker_record(state, marker) for marker in pokemon.markers]  # v0.90
+    if format_version >= 28 and pokemon.basic_entry is not None:
+        data["basic_entry"] = basic_entry_record(state, pokemon.basic_entry)  # v0.120（なければ書かない）
     return data
+
+
+def basic_entry_record(state: GameState, entry) -> dict[str, Any]:
+    """v0.120: 進化元を重ねずに出し、場ではたねポケモンとしてあつかう進化カードの事実（``state.BasicEntry``）。"""
+    return {"card": entry.card, "card_id": state.cards[entry.card].card_id, "source": entry.source, "source_card": entry.source_card,
+            "source_card_id": state.cards[entry.source_card].card_id, "zone": entry.zone, "turn": entry.turn}
 
 
 def marker_record(state: GameState, marker) -> dict[str, Any]:
@@ -537,6 +619,13 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         raise ValueError(f"形式 {format_version} は、場のポケモンの受けた記録の、ダメージを受けた場所（バトル場・ベンチ）を表せない（format_version=25 を使う）")
     if format_version < 26 and state.turn_history:
         raise ValueError(f"形式 {format_version} は、プレイヤーの番ごとの記録（使ったワザ・場にいたカード）を表せない（format_version=26 を使う）")
+    if format_version < 27 and (state.poison_mists or any(pokemon.conditions.poison is not None and pokemon.conditions.poison.multiplier != 1
+                                                          for p in state.players for pokemon in p.in_play())):
+        raise ValueError(f"形式 {format_version} は、ダメージカウンターの数を倍にするどく・［ポイズンミスト］の効果を表せない（format_version=27 を使う）")
+    if format_version < 27 and state.replacement_poisons:
+        raise ValueError(f"形式 {format_version} は、「ガスばくはつ」のかわりに出てくる対戦ポケモンへのまだ与えていないどくを表せない（format_version=27 を使う）")
+    if format_version < 28 and any(pokemon.basic_entry is not None for p in state.players for pokemon in p.in_play()):
+        raise ValueError(f"形式 {format_version} は、進化元を重ねずに出して場ではたねポケモンとしてあつかう進化カードを表せない（format_version=28 を使う）")
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
     if format_version == 1 and state.decision is not None and state.decision.resume == "attack":
@@ -684,7 +773,23 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         ]  # v0.88
     if format_version >= 26:
         data["turn_history"] = [turn_record(record) for record in state.turn_history]  # v0.100
+    if format_version >= 27:
+        data["poison_mists"] = [poison_mist_record(state, record) for record in state.poison_mists]  # v0.119
+        data["replacement_poisons"] = [replacement_poison_record(record) for record in state.replacement_poisons]  # v0.119
     return data
+
+
+def replacement_poison_record(record) -> dict[str, Any]:
+    """v0.119: 「ガスばくはつ」のまだ与えていないどく 1 つ（``state.ReplacementPoison``）。観測も同じ形を使う（どれも表の情報）。"""
+    return {"player": record.player, "knocked_pokemon_id": record.knocked_pokemon_id, "card_id": record.card_id, "attack_index": record.attack_index,
+            "attacker_player": record.attacker_player, "attacker_pokemon_id": record.attacker_pokemon_id, "attacker_card": record.attacker_card,
+            "attacker_evolved": record.attacker_evolved, "created_turn": record.created_turn, "status": record.status}
+
+
+def poison_mist_record(state: GameState, record) -> dict[str, Any]:
+    """v0.119: ［ポイズンミスト］の効果 1 つ（``state.PoisonMist``）。観測も同じ形を使う（どれも表の情報）。"""
+    return {"player": record.player, "pokemon_id": record.pokemon_id, "source_card": record.source_card, "card_id": record.card_id, "power_index": record.power_index,
+            "created_turn": record.created_turn, "poisoned_before": list(record.poisoned_before), "interrupted": record.interrupted}
 
 
 def turn_record(record) -> dict[str, Any]:

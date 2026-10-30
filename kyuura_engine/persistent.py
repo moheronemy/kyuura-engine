@@ -56,6 +56,7 @@ from .state import (
     AttackCoinCheck,
     AttackEffectGuard,
     BenchAttackDamageGuard,
+    BenchPowersStopped,
     BenchProtection,
     CannotAttachEnergy,
     CannotAttack,
@@ -65,25 +66,33 @@ from .state import (
     CannotUseOwnAttack,
     CannotUsePowers,
     DamageReduction,
+    DealtAttackDamageReduction,
     DestinyBond,
     DoubledDamage,
+    EvolutionLock,
     HalvedDamage,
+    KnockOutSurvival,
     MaxHpSet,
     NextTurnAttackDamage,
+    NextTurnFailureWaiver,
     PeriodAttackCoinCheck,
     PeriodAttackLock,
     PeriodLeaveLock,
     PeriodRetreatLock,
     PowersStopped,
     PreventDamage,
+    PursuitOnRetreat,
     ReceivedAttackDamageBonus,
     ReducedDamageToSource,
     ReflectShield,
     ResistanceChange,
     Retaliation,
+    RetreatCostIncrease,
     StatusImmunityNextTurn,
     StatusImmunityWhileActive,
+    StatusOnEnergyAttach,
     TailsDamageGuard,
+    TimedDamageGuard,
     WeaknessChange,
     ZeroDamageAtLeast,
     ZeroDamageBelow,
@@ -112,8 +121,13 @@ DAMAGED = "damaged"
 CURED = "cured"
 # v0.92: 説明が「このカード…がバトル場をはなれたとき、この効果は消える」と書く効果の発生源が、バトル場をはなれた（``remove_source_left_effects``）
 SOURCE_LEFT_ACTIVE = "source_left_active"
+# v0.114: 説明が「そのポケモンがバトル場に出てきたとき、この効果は消える」と書く効果を受けているポケモンが、バトル場に出た（［じっとみる］。``remove_on_entering_active``）
+ENTERED_ACTIVE = "entered_active"
+# v0.121: 説明が「このワザを受けた相手がバトル場をはなれたら、この効果は消える」と書く、ワザを使ったポケモン自身が持つ効果（「ロックオン」）の、失効を決める受けた相手がバトル場をはなれた
+# （``remove_source_left_effects``）。効果を与えたポケモン（発生源）がはなれた ``SOURCE_LEFT_ACTIVE`` とは別の理由
+TARGET_LEFT_ACTIVE = "target_left_active"
 REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT, FORCED_SWITCH, RETURN_IN_PLAY_TO_DECK, USED, RETURN_IN_PLAY_TO_HAND, DISCARD_FROM_PLAY,
-                   REPLACED, DEVOLVE, DAMAGED, CURED, SOURCE_LEFT_ACTIVE)
+                   REPLACED, DEVOLVE, DAMAGED, CURED, SOURCE_LEFT_ACTIVE, ENTERED_ACTIVE, TARGET_LEFT_ACTIVE)
 
 
 def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, effect, *, attack: str, **extra) -> None:
@@ -182,12 +196,12 @@ def remove_expired_persistent_effects(state: GameState) -> None:
 
 
 def end_turn(effect) -> int | None:
-    """効果がはたらく最後の番（その番の終わりに ``EXPIRED`` で消える。v0.92）。期間を明示した効果（``PERIOD_EFFECT_TYPES``）は ``end_turn``、期限のない効果は None、
-    ほかの型は v0.91 までと同じ ``active_turn``（「なきつく」の次の番の始めに消える型も、はたらく番は ``active_turn``）。"""
+    """効果がはたらく最後の番（その番の終わりに ``EXPIRED`` で消える。v0.92）。期間を明示した効果（``PERIOD_EFFECT_TYPES``）と v0.110 の ``KnockOutSurvival`` は ``end_turn``、
+    期限のない効果は None、ほかの型は v0.91 までと同じ ``active_turn``（「なきつく」の次の番の始めに消える型も、はたらく番は ``active_turn``）。"""
     if lasting(effect):
         return None
-    if isinstance(effect, PERIOD_EFFECT_TYPES):
-        return effect.end_turn
+    if isinstance(effect, (*PERIOD_EFFECT_TYPES, KnockOutSurvival)):
+        return effect.end_turn  # v0.110: 「きぜつ」しない効果（こらえる・こうてつか）も最後の番を持つ
     return effect.active_turn
 
 
@@ -203,6 +217,14 @@ def period_active(state: GameState, effect) -> bool:
     return True
 
 
+def remove_on_entering_active(state: GameState, owner: int, pokemon: PokemonInPlay) -> None:
+    """v0.114: プレイヤー ``owner`` のベンチのポケモン ``pokemon`` がバトル場に出た（入れ替え・にげる・ワザの入れ替え・きぜつのあとなどに出す）。説明が「そのポケモンがバトル場に
+    出てきたとき、この効果は消える」と書く効果（``BenchPowersStopped``。［じっとみる］）を理由 ``ENTERED_ACTIVE`` で消す。ベンチからバトル場に動かすすべての処理が、動かしたすぐあとに
+    呼ぶ（状態だけを変え、乱数を使わない）。"""
+    found = tuple(e for e in pokemon.persistent_effects if getattr(e, "bench_only", False))
+    remove_persistent_effects(state, owner, pokemon, ENTERED_ACTIVE, found)
+
+
 def remove_source_left_effects(state: GameState, owner: int, pokemon: PokemonInPlay) -> None:
     """v0.92: プレイヤー ``owner`` の場のポケモン ``pokemon`` がバトル場をはなれた（ベンチにもどる・きぜつ・山札や手札にもどる・トラッシュ）。説明が「このカード…がバトル場を
     はなれたとき、この効果は消える」と書く効果（``ends_on`` の ``SOURCE_LEAVES_ACTIVE``）のうち、発生源がこのポケモンのものを、受けているポケモン（おたがいの場）から理由
@@ -215,6 +237,11 @@ def remove_source_left_effects(state: GameState, owner: int, pokemon: PokemonInP
                           and e.source_player == owner and e.source_pokemon == pokemon.pokemon_id)
             remove_persistent_effects(state, side, holder, SOURCE_LEFT_ACTIVE, found)
             _mark_source_left(state, side, holder, owner, pokemon)
+            # v0.121（docs/hand-bench-attack-conditions-v0.121.md 8 章）: 「ロックオン」の「このワザを受けた相手がバトル場をはなれたら、この効果は消える」。効果を持つのはワザを使ったポケモンで、
+            # 失効を決める参照先（受けた相手の場の番号）がはなれたら消す（もどっても復活しない）
+            waivers = tuple(e for e in holder.persistent_effects
+                            if isinstance(e, NextTurnFailureWaiver) and e.target_player == owner and e.target_pokemon == pokemon.pokemon_id)
+            remove_persistent_effects(state, side, holder, TARGET_LEFT_ACTIVE, waivers)
 
 
 def _mark_source_left(state: GameState, side: int, holder: PokemonInPlay, owner: int, pokemon: PokemonInPlay) -> None:
@@ -555,6 +582,19 @@ def tails_damage_guard(pokemon: PokemonInPlay) -> TailsDamageGuard | None:
     return next((e for e in pokemon.persistent_effects if isinstance(e, TailsDamageGuard)), None)
 
 
+def timed_damage_guards(state: GameState, pokemon: PokemonInPlay) -> tuple[TimedDamageGuard, ...]:
+    """v0.109: ``pokemon`` の今はたらいている、受けるときのコインでダメージを防ぐ期限つきの効果（``TimedDamageGuard``。ぬるぬる・かわす・ブリンク。はたらく番が今の番）。受けた順。
+    与えた番の残りにははたらかない。「かげぶんしん」（``tails_damage_guard``）とは別の問い合わせ（互いに拾わない）。"""
+    return tuple(e for e in pokemon.persistent_effects if isinstance(e, TimedDamageGuard) and e.active_turn == state.turn_number)
+
+
+def knockout_survivals(state: GameState, pokemon: PokemonInPlay) -> tuple[KnockOutSurvival, ...]:
+    """v0.110: ``pokemon`` の今はたらいている、残りHPがなくなっても「きぜつ」しない効果（``KnockOutSurvival``。こらえる・こうてつか。はたらき始める番〜最後の番が今の番を含む）。
+    受けた順。当てはまるダメージの範囲・原因は呼ぶ側（``resolution.kernel.knockout_survivals_of``）が決める。"""
+    turn = state.turn_number
+    return tuple(e for e in pokemon.persistent_effects if isinstance(e, KnockOutSurvival) and e.active_turn <= turn <= e.end_turn)
+
+
 def remove_on_damage(state: GameState, owner: int, pokemon: PokemonInPlay, amount: int) -> None:
     """``pokemon`` が実際にダメージを受けた（``amount`` が 0 より大きい）ときに消える持続する効果（v0.60。「かげぶんしん」の「このカードがダメージを受けるか…この効果は
     消える」）を、理由 ``damaged`` で消す。ダメージをのせるすべての処理（ワザ・特殊能力・こんらん・どく・特殊エネルギー・スタジアムのダメージ）が、のせたすぐあとに呼ぶ。
@@ -597,6 +637,12 @@ def received_attack_damage_bonuses(state: GameState, pokemon: PokemonInPlay) -> 
     return tuple(e for e in pokemon.persistent_effects if isinstance(e, ReceivedAttackDamageBonus) and period_active(state, e))
 
 
+def dealt_attack_damage_reductions(state: GameState, pokemon: PokemonInPlay) -> tuple[DealtAttackDamageReduction, ...]:
+    """v0.108: 今の番に ``pokemon`` が使うワザによるダメージを減らす効果（``DealtAttackDamageReduction``。マイナスイオン・あまえる）のうち、はたらいているもの（受けた順）。だれが
+    受けるダメージかを限らない（v0.34 の ``reduced_damage_to_source`` は「このカード」へのダメージだけを見る別の問い合わせ）。重なっていればそれぞれがはたらく（p.323。加算）。"""
+    return tuple(e for e in pokemon.persistent_effects if isinstance(e, DealtAttackDamageReduction) and period_active(state, e))
+
+
 def powers_use_prevented(state: GameState, pokemon: PokemonInPlay) -> CannotUsePowers | None:
     """今 ``pokemon`` が特殊能力を使うことができない効果（v0.59。``CannotUsePowers``。「ショックアイ」を受けた）がはたらいているなら、その効果。はたらくのは
     与えた番から次の相手の番（``active_turn``）の終わりまで（「次の相手の番の終わりまで」）。宣言して使う特殊能力の使用だけを止める（呼ぶ側が決める）。"""
@@ -606,14 +652,42 @@ def powers_use_prevented(state: GameState, pokemon: PokemonInPlay) -> CannotUseP
     return None
 
 
-def powers_stopped(state: GameState, pokemon: PokemonInPlay) -> PowersStopped | None:
+def powers_stopped(state: GameState, pokemon: PokemonInPlay) -> PowersStopped | BenchPowersStopped | None:
     """今 ``pokemon`` の特殊能力が「使うことができず、その効果も消え」ている効果（v0.86。``PowersStopped``。わるいモココの「スタンウェーブ」を受けた）がはたらいているなら、
     その効果。はたらくのは与えた番から、効果を与えたプレイヤーの次の番（``active_turn``）の終わりまで。宣言して使う特殊能力の使用も、常にはたらく・自動的にはたらく特殊能力の
-    力も止める（``continuous.power_suppressed`` の ``holder``・``continuous._suppressor``・``catalog.stopped``）。"""
+    力も止める（``continuous.power_suppressed`` の ``holder``・``continuous._suppressor``・``catalog.stopped``）。v0.114: ［じっとみる］の ``BenchPowersStopped``（与えた番だけ）も
+    同じ範囲で止める。"""
     for effect in pokemon.persistent_effects:
-        if isinstance(effect, PowersStopped) and effect.created_turn <= state.turn_number <= effect.active_turn:
+        if isinstance(effect, (PowersStopped, BenchPowersStopped)) and effect.created_turn <= state.turn_number <= effect.active_turn:
+            if isinstance(effect, BenchPowersStopped) and _scared_source(state, effect):
+                continue  # v0.119: ［じっとみる］を使ったベイビィポケモンが相手の［いあつ］を受けている（「それらの効果もすべて消える」。記録は消さない）
             return effect
     return None
+
+
+# v0.119: 今問い合わせている、ベイビィポケモンの発生源（(状態, プレイヤー, カード)）。問い合わせの中で同じ発生源にもどったら循環（IA1）
+_SCARE_SOURCES_IN_PROGRESS: set = set()
+
+
+def _scared_source(state: GameState, effect) -> bool:
+    """v0.119: 特殊能力で与えた持続する効果 ``effect`` の発生源（``source_card`` がいちばん上のカードの、``source_player`` の場のポケモン）が、今、相手の［いあつ］を受けているベイビィポケモンか。
+
+    ［いあつ］がはたらくかは、その力を消すもの（かがくへんかガス）がはたらくかによる。そのかがくへんかガスを持つポケモンが、このベイビィポケモンの効果（［じっとみる］）を受けていると、
+    答えが自分にもどる（どちらが消えるかで、もう一方が消えるかが変わる）。計算の順番で片方を勝たせず、IA1 で止める（``effects.SCARE_CYCLE_CODE``。モクモクの循環と同じ問い）。"""
+    from .effects import SCARE_CYCLE_CODE, SCARE_CYCLE_REASON, scared_by
+    from .errors import UnsupportedError
+
+    key = (id(state), effect.source_player, effect.source_card)
+    if key in _SCARE_SOURCES_IN_PROGRESS:
+        raise UnsupportedError(SCARE_CYCLE_CODE, f"{SCARE_CYCLE_REASON}。ベイビィポケモンの特殊能力の効果 {effect.kind}（カード {effect.source_card}）")
+    _SCARE_SOURCES_IN_PROGRESS.add(key)
+    try:
+        for pokemon in state.players[effect.source_player].in_play():
+            if pokemon.card == effect.source_card:
+                return bool(scared_by(state, effect.source_player, pokemon))
+        return False
+    finally:
+        _SCARE_SOURCES_IN_PROGRESS.discard(key)
 
 
 def bench_protection(state: GameState, pokemon: PokemonInPlay) -> BenchProtection | None:
@@ -629,3 +703,26 @@ def energy_attach_blocked(state: GameState, pokemon: PokemonInPlay) -> CannotAtt
     """今の番に ``pokemon`` にエネルギーカードをつけることができない効果（v0.59。``CannotAttachEnergy``。「クリスタルビーム」の「おもて」）がはたらいているなら、
     その効果。はたらくのは次の相手の番だけ。"""
     return _active(state, pokemon, CannotAttachEnergy)
+
+
+def attach_status_triggers(state: GameState, pokemon: PokemonInPlay) -> tuple[StatusOnEnergyAttach, ...]:
+    """v0.116（docs/energy-movement-attachment-devolution-v0.116.md 4 章）: 今の番に、``pokemon`` にエネルギーカードがついたときにはたらく効果（``StatusOnEnergyAttach``。しこみどく・
+    エナジーショック）。はたらくのは次の相手の番（``active_turn``）だけ。受けた順。状態を変えず、乱数を使わない。"""
+    return tuple(effect for effect in pokemon.persistent_effects if isinstance(effect, StatusOnEnergyAttach) and effect.active_turn == state.turn_number)
+
+
+def retreat_cost_increases(state: GameState, pokemon: PokemonInPlay) -> tuple[RetreatCostIncrease, ...]:
+    """v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 6 章）: 今の番に、``pokemon`` の「にげる」ときに必要なエネルギーを増やす効果（``RetreatCostIncrease``。しめつづける。受けた順）。"""
+    return tuple(effect for effect in pokemon.persistent_effects if isinstance(effect, RetreatCostIncrease) and effect.active_turn == state.turn_number)
+
+
+def retreat_pursuits(state: GameState, pokemon: PokemonInPlay) -> tuple[PursuitOnRetreat, ...]:
+    """v0.117（docs/retreat-return-active-powers-v0.117.md 3 章）: 今の番に、``pokemon`` が「にげる」ときにはたらく効果（``PursuitOnRetreat``。おいうち。受けた順）。「にげる」の入れ替えで
+    ベンチにもどると消えるので、``engine._retreat`` が入れ替えの前に写す。"""
+    return tuple(effect for effect in pokemon.persistent_effects if isinstance(effect, PursuitOnRetreat) and effect.active_turn == state.turn_number)
+
+
+def evolution_lock(state: GameState, pokemon: PokemonInPlay) -> EvolutionLock | None:
+    """v0.116（docs 6 章）: 今の番に ``pokemon`` を手札・トレーナーの効果で進化させられない効果（``EvolutionLock``。やみのしょくしゅ）がはたらいているなら、その効果。はたらくのは
+    次の相手の番だけ。ワザ・特殊能力の効果による進化は止めない（呼ぶ側の ``effects.evolution_forbidden`` の ``by_effect``）。"""
+    return _active(state, pokemon, EvolutionLock)

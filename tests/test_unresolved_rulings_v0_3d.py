@@ -171,8 +171,9 @@ class ConfusionDamageModifiersTest(unittest.TestCase):
                         coinciding.add((definition.id, pluspowers, defenders))
         # v0.77: グライガー（neo1-052。闘・抵抗力 闘 -30。kyuura データの採用）もプテラと同じ組で結果が同じ（止める範囲はこの組だけ必要より広い。v0.3c のまま）
         # v0.79: グライガー（neo4-071。闘・抵抗力 闘 -30）も同じ組
-        self.assertEqual(coinciding, {(card, p, d) for card in ("PMCG3-041", "neo1-052", "neo4-071") for p in range(2) for d in range(3)}
-                         - {("PMCG3-041", 0, 0), ("neo1-052", 0, 0), ("neo4-071", 0, 0)})
+        # v0.120: プテラ（neo3-042。闘・抵抗力 闘 -30）も同じ組
+        self.assertEqual(coinciding, {(card, p, d) for card in ("PMCG3-041", "neo1-052", "neo4-071", "neo3-042") for p in range(2) for d in range(3)}
+                         - {("PMCG3-041", 0, 0), ("neo1-052", 0, 0), ("neo4-071", 0, 0), ("neo3-042", 0, 0)})
         # 自分のタイプを弱点に持つポケモン（v0.7 の超のポケモン・v0.18c のナツメのヤドン（超・弱点 超。p.155）・v0.28 のスリープ（超・弱点 超。
         # p.164）・v0.31 のミュウツー（PMCG1-050）・化石の秘密のヤドン（PMCG3-027）（どちらも超・弱点 超。kyuura データの採用。採用の記録の
         # カードデータ）・v0.32 のルージュラ（PMCG1-048。超・弱点 超。kyuura データの採用）・v0.37 のナツメのスリープ（PMCG6-045。超・弱点 超。kyuura
@@ -227,14 +228,30 @@ class ConfusionDamageModifiersTest(unittest.TestCase):
                        # v0.102: バリヤード 2 枚（ES1-021・QSG-030。超・弱点 超。kyuura データの採用）は 40（カードの定義だけの計算。場の［ニュートラルダメージ］は当てはめていない）
                        "ES1-021", "QSG-030",
                        # v0.103: ミュウ 2 枚（PR1-005・PR1-012。超・弱点 超。kyuura データの採用）は 40（カードの定義だけの計算。こんらんは自分のワザで受けるので［ニュートラルシールド］は関係しない）
-                       "PR1-005", "PR1-012"})
+                       "PR1-005", "PR1-012",
+                       # v0.109: ユンゲラー ES3-019（超・弱点 超。kyuura データの採用）は 40
+                       "ES3-019",
+                       # v0.111: ミュウツー 2 枚（ES1-022・QSG-032）・ナツメのケーシィ 2 枚（GD6-001・PR1-060。どれも超・弱点 超。kyuura データの採用）は 40
+                       "ES1-022", "QSG-032", "GD6-001", "PR1-060",
+                       # v0.115: わるいエーフィ neo4-067（超・弱点 超。kyuura データの採用）は 40
+                       "neo4-067",
+                       # v0.116: ネイティオ neo2-024・ユンゲラー 2 枚（ES3-020・QSG-027）・ミュウツー PR1-022・フーディン PR1-055（どれも超・弱点 超。kyuura データの採用）は 40
+                       "neo2-024", "ES3-020", "QSG-027", "PR1-022", "PR1-055",
+                       # v0.117: セレビィ neo3-036・アンノーンC neo4-057・アンノーンQ neo4-059（どれも超・弱点 超。kyuura データの採用）は 40
+                       "neo3-036", "neo4-057", "neo4-059",
+                       # v0.118: わるいナッシー neo4-056・アンノーンX neo4-065・ルギア PF3-008（どれも超・弱点 超。kyuura データの採用）は 40
+                       "neo4-056", "neo4-065", "PF3-008",
+                       # v0.120: スリーパー ES3-025・ミュウ PR1-021（どれも超・弱点 超。kyuura データの採用）は 40
+                       "ES3-025", "PR1-021",
+                       # v0.121: ヤドラン ES3-021（超・弱点 超。kyuura データの採用）は 40
+                       "ES3-021"})
         # v0.47: スリーパー（PMCG3-032。超・弱点 超。kyuura データの採用）は 40、プテラ（PMCG3-041。闘・抵抗力 闘）は 0
         # v0.49: ナツメのフーディン（PMCG6-053。超・弱点 超。kyuura データの採用）は 40。メタモン（PMCG3-042。無色・弱点 闘）・タケシのキュウコン（PMCG5-019。炎・弱点 水）は 20
         # （印刷の定義で確かめる。［へんしん］・「ばける」の今の姿のこんらんの 20 は、今有効なタイプ・弱点・抵抗力で計算する。docs/virtual-attacks-transformation-v0.49.md）
         # v0.50: ミュウ（PMCG3-033。超・弱点 超。kyuura データの採用）は 40
         # v0.51: ナツメのスリーパー（PMCG6-051。超・弱点 超。kyuura データの採用）は 40
         zeroed = {d.id for d in pokemon if calculate_confusion_damage(d, RULES_2000_02_14, 20).final == 0}
-        self.assertEqual(zeroed, {"PMCG3-041", "neo1-052", "neo4-071"})  # v0.77: グライガー（neo1-052。闘・抵抗力 闘）は 0。v0.79: neo4-071 も
+        self.assertEqual(zeroed, {"PMCG3-041", "neo1-052", "neo4-071", "neo3-042"})  # v0.77: グライガー（neo1-052。闘・抵抗力 闘）は 0。v0.79: neo4-071 も。v0.120: プテラ neo3-042 も
         self.assertTrue(all(calculate_confusion_damage(d, RULES_2000_02_14, 20).final == 20 for d in pokemon if d.id not in doubled | zeroed))
 
 

@@ -675,7 +675,21 @@ class CatalogTest(unittest.TestCase):
                            "void_opponent_energy_discard_on_group",
                            # v0.102: ［グリーンシールド］・［ニュートラルダメージ］（弱点・抵抗力を当てはめるか。ダメージの計算が ``effects.weakness_resistance_ignored`` で、その時点の
                            # 場から問い合わせる。窓の中の反応ではない。docs/weakness-resistance-powers-v0.102.md 4 章）
-                           "ignore_weakness_for_own_type", "ignore_weakness_resistance_for_actives")
+                           "ignore_weakness_for_own_type", "ignore_weakness_resistance_for_actives",
+                           # v0.117: ［きしかいせい］・［かえるのうた］（ワザのダメージを変える。ダメージの計算の ``effects.attack_damage_modifiers`` が、その時点の場から問い合わせる）・
+                           # ［CHASE］（「にげる」の事実への反応。``engine._retreat``・``movement`` の段で処理する）・［でんせつのからだ］（トレーナーの効果を受けないか。トレーナーの
+                           # 処理が ``effects.trainer_effect_blocked`` で、その時点の場から問い合わせる）。どれも窓の中の反応ではない。docs/retreat-return-active-powers-v0.117.md 4 章・5 章・8 章
+                           "named_attack_damage_set_while_low_hp", "attack_damage_bonus_with_named_field_count", "counters_on_opponent_retreat_while_active",
+                           "immune_to_trainers_while_active",
+                           # v0.119: ［シェルアーマー］・［かたいから］（受けるダメージを変える 8 段階の効果。ダメージの計算が、その時点の場から問い合わせる。［シェルアーマー］の
+                           # 使うかの決定はダメージの計算の選べる要素で、窓の中の反応ではない）・［いあつ］（ベイビィポケモンの効果を消す。``effects.scared_by`` が問い合わせる）・
+                           # ［ふかいねむり］（ねむりのコインの数。ポケモンチェックが ``effects.sleep_check_coins`` で問い合わせる）・［アレルギーほうし］（トラッシュのカードを
+                           # 動かす処理が ``effects.discard_protection`` で問い合わせる）。docs/damage-reactions-poison-sleep-v0.119.md 3 章・7 章・8 章
+                           "optional_reduce_attack_damage_received", "set_small_attack_damage_received", "scare_opponent_babies", "sleep_check_coins",
+                           "discard_pile_immunity_to_pokemon_effects",
+                           # v0.120: ［げんしのきおく］・［にんぎょうつかい］・［ものまね］（許可で使えるワザ。ワザの宣言の確かめと今持つワザの問い合わせ ``effects.available_attacks`` が、
+                           # その時点の場から問い合わせる。窓の中の反応ではない）。docs/fossil-basic-virtual-attacks-v0.120.md 4 章
+                           "pre_evolution_attacks_for_evolved_actives", "doll_uses_holder_attacks", "use_defender_attacks")
         # v0.87: フリーザーの［オーロラヴェール］・ダグトリオの［もぐる］は窓の中の反応（要素を無効にする）だが、守るのは持ち主の控え・ベンチにいるこのカードなので、印刷した
         # ポケモンの効果の対応表（``POWER_DEFINITIONS``）ではなく ``catalog.instances`` が受けるポケモンについて作る（v0.84 のこおりのはしらと同じ形）
         built_by_instances = {"own_bench_attack_immunity_while_active": C.AURORA_VEIL, "bench_attack_damage_immunity": C.DIG_UNDER}
@@ -701,23 +715,35 @@ class CatalogTest(unittest.TestCase):
                           and k.card_id not in V0_69_POWER_CARDS],
                          ["ES1-003@power0", "ES1-021@power0",  # v0.102
                           "ES1-034@power0",  # v0.87
+                          "ES3-025@power0",  # v0.120
+                          "GD2-007@power0",  # v0.119
                           "GD4-001@power0",  # v0.88
                           "PF2-001@power0",  # v0.97
+                          "PF3-001@power0",  # v0.120
+                          "PF3-004@power0", "PF3-005@power0", "PF3-006@power0",  # v0.117
                           "PMCG2-027@power0", "PMCG2-040@power0", "PMCG2-047@power0", "PMCG3-015@power0", "PMCG3-035@power0", "PMCG3-041@power0",
                           "PMCG3-042@power0", "PMCG4-007@power0", "PMCG4-010@power0", "PMCG4-041@power0", "PMCG4-043@power0", "PMCG5-035@power0", "PMCG5-051@power0",
                           "PMCG5-063@power0", "PMCG6-010@power0",
                           "PMCG6-033@power0", "PMCG6-049@power0", "PMCG6-053@power0", "PMCG6-074@power0",
                           "QSG-003@power0", "QSG-030@power0",  # v0.102
                           "QSG-046@power0",  # v0.87
-                          "neo1-014@power0", "neo1-033@power0",
+                          "neo1-014@power0", "neo1-017@power0", "neo1-033@power0",  # v0.117: neo1-017
+                          "neo2-019@power0",  # v0.117
                           "neo2-025@power0",  # v0.97
-                          "neo2-044@power0", "neo3-009@power0",  # v0.87
+                          "neo2-044@power0",  # v0.87
+                          "neo3-005@power0",  # v0.119
+                          "neo3-009@power0",  # v0.87
                           "neo3-029@power0",
                           "neo3-030@power0",  # v0.101
+                          "neo3-040@power0",  # v0.119
+                          "neo3-042@power0",  # v0.120
                           "neo4-023@power0",  # v0.87
+                          "neo4-039@power0",  # v0.119
                           "neo4-046@power0",
+                          "neo4-057@power0",  # v0.117
                           "neo4-058@power0",  # v0.99
                           "neo4-060@power0",  # v0.96
+                          "neo4-066@power0",  # v0.119
                           "neo4-094@power0"])
 
 

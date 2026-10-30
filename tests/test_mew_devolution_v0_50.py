@@ -997,12 +997,12 @@ class CommonDevolveTest(unittest.TestCase):
     """退化の共通の処理 ``evolution.devolve``（たいかビーム・退化スプレーで共通。通常の進化の逆再生・「ばける」をもどす処理は使わない）の前提の確かめ。"""
 
     def test_rejects_calls_outside_its_contract(self):
-        """行き先は手札かトラッシュ、枚数は 1〜重なっている進化カードの数、「ばける」のポケモンは不可、ワザの効果かトレーナーの効果のどちらか一方。どれも状態を変える前に
-        例外（呼ぶ側の確認の漏れ。エンジンの不具合）。"""
+        """行き先は手札かトラッシュ（v0.116 から、わるいオムスターの「げんしのしずく」の山札も。``DEVOLVE_DESTINATIONS``）、枚数は 1〜重なっている進化カードの数、「ばける」のポケモンは
+        不可、ワザの効果かトレーナーの効果のどちらか一方。どれも状態を変える前に例外（呼ぶ側の確認の漏れ。エンジンの不具合）。"""
         state = board(mon(SABRINAS_ALAKAZAM, (P,)))
         alakazam = state.players[0].active
         calls = (
-            dict(count=1, destination="deck", effect="x"),
+            dict(count=1, destination="prizes", effect="x"),  # v0.116: 山札（"deck"）は行き先になったので、どの行き先でもない値で確かめる
             dict(count=0, destination=DEVOLVE_TO_HAND, effect="x"),
             dict(count=3, destination=DEVOLVE_TO_HAND, effect="x"),
             dict(count=1, destination=DEVOLVE_TO_HAND),

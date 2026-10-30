@@ -212,7 +212,7 @@ class RegistrationTest(unittest.TestCase):
                     audited(self, after)
 
     def test_no_new_codes_or_format(self):
-        self.assertEqual(max(FORMAT_VERSIONS), 26)  # 力は今の場から求める。新しい状態・書き出しの形式は加えない
+        self.assertIn(26, FORMAT_VERSIONS)  # 力は今の場から求める。新しい状態・書き出しの形式は加えない。今の最新の形式は tests/test_catalog_contract.py（docs/testing.md）
         self.assertFalse([q for q in QUESTIONS.values() if q.code and ("WEAKNESS_RESISTANCE_POWER" in q.code or "GREEN_SHIELD" in q.code or "NEUTRAL" in q.code)])
 
     def test_powers_are_not_declared(self):

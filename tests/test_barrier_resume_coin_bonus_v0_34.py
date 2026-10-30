@@ -451,7 +451,31 @@ class BarrierCoinTest(unittest.TestCase):
                                     # v0.105: セレビィの「サイコリーフ」（相手のエネルギーの個数ぶんのコインは追加のダメージだけを決める。与えたぶんの回復はコインが決める要素ではない）・
                                     # デリバードの「プレゼント」（3 枚のコインは相手へのダメージと相手の対戦ポケモンからとりのぞく回復だけを決める。docs/recovery-evolution-coin-branches-v0.105.md
                                     # 5 章・6 章）
-                                    "CoinsPerDefenderEnergyBonusAndFullDrain", "ThreeCoinDamageOrOpponentHeal"})
+                                    "CoinsPerDefenderEnergyBonusAndFullDrain", "ThreeCoinDamageOrOpponentHeal",
+                                    # v0.107: ビードルの「とげでつつく」（失敗のコインのあとは相手へのダメージとどくだけ。からではさむと同じ形）。とつぜんじばく（自分へのダメージ）・そらをとぶ
+                                    # （自分への防護）・へんずつう（自分へのこんらん）は自分への要素が残るので投げる（docs/coin-failure-status-flight-v0.107.md 4 章）
+                                    "FailOnTailsDamageThenPoison",
+                                    # v0.113: デンリュウの「ギガボルト」（1 枚のコインは追加のダメージと相手のマヒだけを決める）・ヤミカラスの「むれでつつく」・ヘルガーの「くろいキバ」
+                                    # （コインは追加のダメージだけを決める）。みんなでおどる（山札の検索）・ゆうでん（自分の場につける）・だいぎゃくてん？（自分へのダメージ）は自分への要素が
+                                    # 残るので投げる（docs/variable-coins-search-attachments-v0.113.md 3 章）
+                                    "CoinBonusOnHeadsElseParalyze", "CoinsPerOwnBenchNamedBonusDamage", "CoinsPerOwnTypedEnergyBonusDamage",
+                                    # v0.116: クロバットの「クロスアタック」（4 枚のコインは相手へのダメージとこんらんだけを決める。サンダーニードルと同じ形）・わるいゴーストの「とりかこむ」
+                                    # （1 枚のコインは相手のねむりか「にげる」の禁止だけを決める）・ネイティオの「エナジーサイクル」（1 枚のコインは相手の対戦ポケモンからのつけ替えだけを決める）。
+                                    # げんしのしずく（相手の控えも選べる）・エナジーコントロール（相手の場のどのポケモンからでも）は投げる。げんしのしずくで選べるのが相手の対戦ポケモンだけなら、
+                                    # 要素がコインの前に問う（docs/energy-movement-attachment-devolution-v0.116.md 6 章）
+                                    "CoinsTimesDamageThenConfuseIfAtLeast", "DamageThenSleepOnHeadsElseRetreatLock", "CoinMoveOpponentEnergyCardToBenchOrFail",
+                                # v0.118: わるいオクタンの「しめつづける」（1 枚のコインは相手のマヒと「にげる」エネルギーを増やす効果だけを決める。
+                                # docs/unbounded-coins-heal-allocation-v0.118.md 6 章）
+                                "DamageThenParalyzeOnHeadsElseRetreatCost",
+                                # v0.121: コイルの「でんじほう」（失敗のコイン 2 枚のあとは相手へのダメージとマヒだけ。からではさむと同じ形。ロックオンで「うら」でも失敗しないときも、
+                                # コインのあとの要素は同じ。docs/hand-bench-attack-conditions-v0.121.md 8.2 節）
+                                "CoinsFailThenDamageParalyze"})
+        for name in ("FailOnTailsSelfDestruct", "FailOnTailsDamageThenSelfBarrier", "DamageThenConfuseOpponentOrSelf"):
+            self.assertIn(name, flipping)  # v0.107
+        for name in ("CoinDevolveOpponentEvolvedToDeck", "FailOnTailsMoveOpponentFieldEnergy"):
+            self.assertIn(name, flipping)  # v0.116
+        for name in ("CoinsPerPokemonInPlaySearchBasicEnergy", "DamageThenCoinsAttachTypedEnergyFromDeck", "CoinsPerPokemonInPlayHeadsDamageTailsSelfDamage"):
+            self.assertIn(name, flipping)  # v0.113
         self.assertIn("DamageThenStatusOnHeadsElseSelfSwitch", flipping)
         self.assertIn("CoinBonusOrSelfDamage", flipping)
         self.assertIn("SelfDamageInsteadOnTails", flipping)

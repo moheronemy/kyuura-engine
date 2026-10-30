@@ -22,7 +22,9 @@ from tests.release_catalog import cards_after
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 KYUURA = ROOT.parent / "kyuura"
 DOC = ROOT / "docs" / "unown-research-idfnj-v0.97.md"
-ECB, V069, NOW = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691", "7d3f4ca76c084774efb4ac6a1d3a943387e183c3", "73a169063463bbf7bcaa3137d70cbf9721d11534"
+ECB, V069, V097 = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691", "7d3f4ca76c084774efb4ac6a1d3a943387e183c3", "73a169063463bbf7bcaa3137d70cbf9721d11534"
+# v0.114: 写しの元を e519b99 に上げた（段 v0.114）。v0.97 の段のあとは 73a1690 のまま。今の写しの元は同梱の写しのコミット（移行の連鎖の最後の段のあと）
+CURRENT = read_extract()["source"]["commit"]
 UNOWN_RULES = {"neo2-023": "FIX-neo2-023-RULES-TEXT-JA", "neo2-025": "FIX-neo2-025-RULES-TEXT-JA", "neo2-026": "FIX-neo2-026-RULES-TEXT-JA"}
 RULE_TEXT = "「アンノーン」はデッキに4枚までしか入れることができません。"
 OLD_CORRECTIONS = ("FIX-PMCG2-041-ATK0-NAME", "FIX-PMCG2-041-LEVEL", "FIX-PMCG2-046-ATK0-TEXT", "FIX-GD6-010-ATK1-DAMAGE", "FIX-SI-010-ATK1-NAME")
@@ -51,19 +53,22 @@ class MigrationChainTest(unittest.TestCase):
     def test_pinned_commits_and_chain(self):
         module = extract_module()
         extract = read_extract()
-        self.assertEqual((module.KYUURA_COMMIT, module.V0_69_KYUURA_COMMIT, module.PREVIOUS_KYUURA_COMMIT), (NOW, V069, ECB))
+        self.assertEqual((module.V0_97_KYUURA_COMMIT, module.V0_69_KYUURA_COMMIT, module.PREVIOUS_KYUURA_COMMIT), (V097, V069, ECB))
         self.assertEqual(module.migration_problems(), [])
-        self.assertEqual([(s["id"], s["from"], s["to"]) for s in extract["source_migrations"]], [("v0.69", ECB, V069), ("v0.97", V069, NOW)])
-        self.assertEqual([s["corrections"] for s in extract["source_migrations"]], [list(OLD_CORRECTIONS), list(UNOWN_RULES.values())])
-        self.assertEqual((extract["source"]["commit"], extract["previous_source"]["commit"]), (NOW, ECB))
+        # v0.114: 段を加えても、v0.97 までの 2 段（前・あと・修正）は書き換えない。今の写しの元は最後の段のあと
+        steps = extract["source_migrations"]
+        self.assertEqual([(s["id"], s["from"], s["to"]) for s in steps[:2]], [("v0.69", ECB, V069), ("v0.97", V069, V097)])
+        self.assertEqual([s["corrections"] for s in steps[:2]], [list(OLD_CORRECTIONS), list(UNOWN_RULES.values())])
+        self.assertEqual((steps[-1]["to"], module.KYUURA_COMMIT, extract["previous_source"]["commit"]), (CURRENT, CURRENT, ECB))
         links = json.loads((ROOT / "kyuura_engine" / "data" / "research_links.json").read_text(encoding="utf-8"))
-        self.assertEqual((links["research_commit"], links["card_data_commit"], links["counts"]["kyuura_issues"]), (NOW, NOW, 72))
+        # 研究の基準と写しの元は同じコミット（今の kyuura の論点の数は tests/test_catalog_contract.py）
+        self.assertEqual((links["research_commit"], links["card_data_commit"]), (CURRENT, CURRENT))
 
     def test_old_steps_and_records_are_not_rewritten(self):
         sources = cs.load_sources()
-        first, second = sources["data_migrations"]
+        first, second = sources["data_migrations"][:2]  # v0.114: 3 段目を加えた（2 段目までは書き換えない）
         self.assertEqual((first["from"], first["to"], first["on"], first["document"]), (ECB, V069, "2026-10-19", "docs/equivalent-non-pack-cards-v0.69.md"))
-        self.assertEqual((second["from"], second["to"], second["on"], second["document"]), (V069, NOW, "2026-10-25", "docs/unown-research-idfnj-v0.97.md"))
+        self.assertEqual((second["from"], second["to"], second["on"], second["document"]), (V069, V097, "2026-10-25", "docs/unown-research-idfnj-v0.97.md"))
         # v0.96 までの採用の記録の採用したときのデータのコミットは、v0.68 までの 378 件が ecb2d69、v0.69〜v0.96 の 700 件が 7d3f4ca（過去の原典照合のカードの記録 4 件はコミットなし）
         # v0.98: v0.97 から後の版で加えた採用の記録は、今の写しの元（73a1690）で採用したもの（``cards_after`` で切り出す。後続の組を列挙しない）
         old = {card: r for card, r in sources["cards"].items() if card not in cards_after(read_extract(), "0.96")}
@@ -85,24 +90,24 @@ class MigrationChainTest(unittest.TestCase):
             return cs.data_migrations(changed, extract)[1]
 
         self.assertTrue(any("つながっていない" in p for p in broken(lambda m: m[1].update({"from": ECB}))))  # 段を飛ばす
-        self.assertTrue(any("source_migrations" in p for p in broken(lambda m: m[0].update({"to": NOW}))))  # 過去の段のあとだけを今の値にする
+        self.assertTrue(any("source_migrations" in p for p in broken(lambda m: m[0].update({"to": CURRENT}))))  # 過去の段のあとだけを今の値にする
         self.assertTrue(any("段の数" in p for p in broken(lambda m: m.pop())))  # 2 段目がない
         self.assertTrue(any("前の段の日より前" in p for p in broken(lambda m: m[1].update({"on": "2026-10-18"}))))
         self.assertTrue(any("previous_source" in p for p in broken(lambda m: m.reverse())))
         chain, _ = cs.data_migrations(sources, extract)
-        self.assertEqual((chain.position(ECB), chain.position(V069), chain.position(NOW)), (0, 1, 2))
+        self.assertEqual((chain.position(ECB), chain.position(V069), chain.position(V097)), (0, 1, 2))
         # 外部照合の照らしたコミットが修正の段の前なら、修正の前の値でもよい（v0.69 の段の修正は ecb2d69 の照合だけ。v0.97 の段の修正は 7d3f4ca の照合も前）
         self.assertTrue(cs._before_correction(chain, ECB, {"previous_source": ECB}))
         self.assertFalse(cs._before_correction(chain, V069, {"previous_source": ECB}))
         self.assertTrue(cs._before_correction(chain, V069, {"previous_source": V069}))
-        self.assertFalse(cs._before_correction(chain, NOW, {"previous_source": V069}))
+        self.assertFalse(cs._before_correction(chain, V097, {"previous_source": V069}))
 
     def test_card_data_commit_helper_walks_back_one_step_at_a_time(self):
-        data = {"card_data": {"commit": NOW}, "log": [{"kind": "game_created", "card_data_commit": NOW}]}
+        data = {"card_data": {"commit": CURRENT}, "log": [{"kind": "game_created", "card_data_commit": CURRENT}]}
         self.assertEqual(H.with_card_data_commit_at(data, V069)["card_data"]["commit"], V069)
         back = H.with_card_data_commit_before_v0_69(data)
         self.assertEqual((back["card_data"]["commit"], back["log"][0]["card_data_commit"]), (ECB, ECB))
-        self.assertEqual(data["card_data"]["commit"], NOW)  # 渡した値は変えない
+        self.assertEqual(data["card_data"]["commit"], CURRENT)  # 渡した値は変えない
         with self.assertRaises(AssertionError):
             H.with_card_data_commit_before_v0_69({"card_data": {"commit": V069}, "log": []})  # 今の写しの元でない値は置きかえない
         with self.assertRaises(AssertionError):
@@ -120,7 +125,7 @@ class UnownRulesCorrectionTest(unittest.TestCase):
             with self.subTest(card=card):
                 self.assertEqual((c["id"], c["field"], c["before"], c["after"], c["basis"], c["kind"], c["migration"]),
                                  (UNOWN_RULES[card], "pokemon.rules_text.ja", None, RULE_TEXT, "card_image_check", "transcription_omission", "v0.97"))
-                self.assertEqual((c["kyuura_saw_image"], c["engine_saw_image"], c["applied_in_source"], c["previous_source"]), (True, False, NOW, V069))
+                self.assertEqual((c["kyuura_saw_image"], c["engine_saw_image"], c["applied_in_source"], c["previous_source"]), (True, False, V097, V069))
                 self.assertEqual(len(c["evidence"]), 2)  # pcg-search.com・なぞのばしょの画像（独立した 2 枚の実物の照合とは数えない）
                 self.assertTrue(all(e["image_url"].startswith("https://") and len(e["image_sha256"]) == 64 and e["accessed_on"] == "2026-10-24" for e in c["evidence"]))
                 for key in ("record", "commit", "kyuura_record"):
@@ -174,10 +179,10 @@ class UnownRulesCorrectionTest(unittest.TestCase):
         finally:
             module.KYUURA_CORRECTIONS[:] = original
         self.assertEqual(module.migration_copy_problems(KYUURA, source, previous, ["neo2-023", "neo2-025", "neo2-026"]), [])
-        # 移行の連鎖の段の値を、今の値に書き換えると止まる（過去の段のあとだけを 73a1690 にする）
+        # 移行の連鎖の段の値を、今の値に書き換えると止まる（過去の段のあとだけを今の写しの元にする）
         steps = module.KYUURA_MIGRATIONS
         try:
-            module.KYUURA_MIGRATIONS = ({**steps[0], "to": NOW}, steps[1])
+            module.KYUURA_MIGRATIONS = ({**steps[0], "to": CURRENT}, *steps[1:])
             self.assertTrue(module.migration_problems())
         finally:
             module.KYUURA_MIGRATIONS = steps
@@ -191,9 +196,13 @@ class ResearchCasesTest(unittest.TestCase):
 
     def test_cases_and_unindexed_codes(self):
         cases = self.links["kyuura_cases_without_engine_ruling"]["cases"]
-        self.assertEqual(len(cases), 13)
-        self.assertEqual(Counter(c["kyuura_issue"] for c in cases), {"UQ-EFFECT-AFTER-NO-DAMAGE": 1, "UQ-CARD-USE-WITHOUT-TARGET": 3, "UQ-NON-ATTACK-DAMAGE-MODIFIERS": 1,
-                                                                   "UQ-SPEED-STAR-SCOPE": 3, "UQ-SELF-EXCLUDING-POWER-COPIES": 5})
+        # v0.114 で、研究の基準 e519b99 のベイビィの事例 7 件を加えた（tests/test_baby_rules_evolution_v0_114.py）。v0.97 の 13 件の論点ごとの数は変わらない
+        # v0.121 で、研究の基準 2fe0bc0 の事例 4 件を加えた（ボロのつりざおの UQ-CARD-USE-WITHOUT-TARGET を含む。tests/test_hand_bench_attack_conditions_v0_121.py）。v0.97 の 13 件で数える
+        expected = {"UQ-EFFECT-AFTER-NO-DAMAGE": 1, "UQ-CARD-USE-WITHOUT-TARGET": 3, "UQ-NON-ATTACK-DAMAGE-MODIFIERS": 1, "UQ-SPEED-STAR-SCOPE": 3,
+                    "UQ-SELF-EXCLUDING-POWER-COPIES": 5}
+        counts = Counter(c["kyuura_issue"] for c in cases if c["card_id"] != "neo3-053")
+        self.assertEqual({issue: counts[issue] for issue in expected}, expected)
+        self.assertEqual(sum(expected.values()), 13)
         cv1 = self.links["stop_codes"]["UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES"]
         self.assertEqual((cv1["kyuura_issue"], cv1["kyuura_disposition"]), ("UQ-SELF-EXCLUDING-POWER-COPIES", "issue_not_in_index"))
         case = next(c for c in cases if c["card_id"] == "neo4-046")

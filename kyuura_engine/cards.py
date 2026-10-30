@@ -6,8 +6,8 @@
 読み込むときに、各カード・各ワザが対戦で使えるかを分類します（``supported`` と理由）。分類は、
 データの値ではなく、エンジンが実装しているかで決めます。
 
-- エンジンの中心部分で扱える形か（たねポケモンと 1 進化ポケモン（v0.4a）・2 進化ポケモン（v0.4c）・タイプ 1 つ・弱点 ×2
-  など。ベイビィは未実装）
+- エンジンの中心部分で扱える形か（たねポケモンと 1 進化ポケモン（v0.4a）・2 進化ポケモン（v0.4c）・ベイビィポケモン（v0.114）・タイプ 1 つ・弱点 ×2
+  など）
 - ワザ・トレーナー・ポケモンパワー（特殊能力。v0.5）の効果の実装が、効果の登録表（``effects.EffectRegistry``）に登録されて
   いるか。ポケモンパワーを持つカードは、すべてのパワーが登録されているときだけ使える（パワーを持つカードを一括で対応にしない）
 
@@ -93,8 +93,12 @@ class Power:
 
 
 # 進化の重なりの、下から順の段階（v0.4c。p.316・p.319 の「たねポケモンカード」+「進化カード」+「進化カード」）。
-# いちばん下はたねポケモン、その上は 1 進化、その上は 2 進化。ベイビィ（p.319 の C・D）は未対応
+# いちばん下はたねポケモン、その上は 1 進化、その上は 2 進化。v0.114 から、いちばん下にベイビィポケモンカードがあってもよい（その上にたねポケモンカード。GR-2000-P310-BABY-EVOLUTION・
+# GR-2000-P313-POKEMON-COMPOSITION。重なりの確かめは ``engine._stack_problems``）。この並びは、たねポケモンから上の印刷の段階
 EVOLUTION_STAGES = ("basic", "stage1", "stage2")
+BABY_STAGE = "baby"  # v0.114: ベイビィポケモンカードの印刷の段階（kyuura の pokemon.stage）
+# v0.114（docs/baby-rules-evolution-v0.114.md 4 章）: ベイビィポケモンのルールの印刷の文（13 枚とも同じ。kyuura の pokemon.rules_text.ja。GR-2000-P314-BABY-RULE・CR-BABY-RULE-COIN）
+BABY_RULE_TEXT = "「ベイビィポケモン」がバトル場にいるかぎり、相手プレイヤーは、ワザを使うときにコインを投げて、「うら」なら、そのワザは失敗します。"
 
 
 @dataclass(frozen=True)
@@ -106,7 +110,7 @@ class CardDefinition:
     supported: bool
     unsupported_reasons: tuple[str, ...]
     # ポケモン
-    stage: str | None = None  # "basic"（たね）・"stage1"（1 進化。v0.4a）・"stage2"（2 進化。v0.4c）。"baby" は未対応
+    stage: str | None = None  # "basic"（たね）・"stage1"（1 進化。v0.4a）・"stage2"（2 進化。v0.4c）・"baby"（ベイビィ。v0.114）。印刷の段階で、場の分類とは別
     evolves_from: str | None = None  # 進化カードの「○○○○から進化」の名前（kyuura の pokemon.evolves_from.ja。v0.4a）
     # 2 進化カードだけ（v0.25）: 「○○○○から進化」の名前（``evolves_from``）の 1 進化カードが、同じ写しのカードのデータで
     # 「△△から進化」とする名前（重複を除き、並べたもの）。1 進化を飛ばして 2 進化させる効果（ポケモン育て屋さん）で、正しい系統の
@@ -151,11 +155,28 @@ class CardDefinition:
     # v0.90（docs/markers-counters-v0.90.md 5 章）: 弱点の計算でかける数（p.321 の 3 段階）。印刷の定義はいつも None（共通のルールの ``RuleSet.weakness_multiplier``）。のろいマーカーの
     # のっている場のポケモンの今有効な値の定義（``effects.definition_views``）だけが、「×2」ではなく「×4」の 4 を持つ（全体のルールは変えない）
     weakness_multiplier: int | None = None
+    # v0.114（docs/baby-rules-evolution-v0.114.md 4 章）: ベイビィポケモンカードの進化先（kyuura の pokemon.evolves_to。日本語名の並び。印刷の順で、順番に処理の意味はない）。
+    # この名前のたねポケモンカードを、場のこのベイビィポケモンの上に重ねて進化させられる（GR-2000-P310-BABY-EVOLUTION。名前の完全一致）。ベイビィ以外はいつも ()
+    evolves_to: tuple[str, ...] = ()
+    # v0.114: ベイビィポケモンのルール（GR-2000-P314-BABY-RULE）を印刷したカードか（ルール文が ``BABY_RULE_TEXT``）。特殊能力ではない（CR-BABY-RULE-NOT-POWER）
+    baby_rule: bool = False
 
     @property
     def is_basic_pokemon(self) -> bool:
-        # ベイビィポケモンも対戦準備ではたねポケモンと同様に扱う（p.308）が、ベイビィは v0.1 では未対応
+        """印刷の段階がたねポケモンのカード（印刷の分類。ベイビィポケモンカードは含まない）。場の分類（ベイビィから進化したたねポケモンは「進化ポケモン」。GR-2000-P315-EVOLVED-BABY）・
+        カードの説明の「たねポケモン」の範囲（GR-2000-P325-PRE-NEO-BABY・UQ-NEO-TEXT-BABY-CATEGORIES）は ``effects`` の問い合わせで決める（v0.114）。"""
         return self.category == "pokemon" and self.stage == "basic"
+
+    @property
+    def is_baby_pokemon(self) -> bool:
+        """印刷の段階がベイビィポケモンのカード（v0.114）。"""
+        return self.category == "pokemon" and self.stage == BABY_STAGE
+
+    @property
+    def is_baby_or_basic_pokemon(self) -> bool:
+        """ベイビィポケモンカードかたねポケモンカード（v0.114。公式ルールのデッキ・最初の手札・対戦準備・手札からベンチに出す規定の「ベイビィポケモンカードまたはたねポケモンカード」。
+        GR-2000-P308-BABY-SETUP・GR-2000-P309-BABY-BENCH）。カードの説明の「たねポケモン」の範囲には使わない（``effects.card_is_basic_in_text``）。"""
+        return self.is_basic_pokemon or self.is_baby_pokemon
 
     @property
     def is_stage1_pokemon(self) -> bool:
@@ -341,13 +362,26 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
     pokemon = record["pokemon"]
     reasons = []
     evolves_from = (pokemon.get("evolves_from") or {}).get("ja")
+    evolves_to: tuple[str, ...] = ()
     if pokemon["stage"] in ("stage1", "stage2"):
         # 1 進化（v0.4a）・2 進化（v0.4c）。「○○○○から進化」の名前がなければ、何に重ねるか決まらない（p.309・p.324）。
         # 2 進化の段階だからといって一括で対応にはしない（ワザの登録・ポケモンパワーなど、ほかの条件はカードごと）
         if not evolves_from:
             reasons.append(f"{'1' if pokemon['stage'] == 'stage1' else '2'} 進化なのに進化元の名前がない")
+    elif pokemon["stage"] == BABY_STAGE:
+        # v0.114: ベイビィポケモン。進化先（kyuura の pokemon.evolves_to。日本語名の配列）が確かめた値でなければ、何を重ねられるか決まらない（null は未確認。推測で埋めない。
+        # 名前・英語の名前・進化の知識から補わない）。進化元はない（null）
+        raw = pokemon.get("evolves_to")
+        if not isinstance(raw, list) or not raw or not all(isinstance(name, str) and name and name.strip() == name for name in raw) or len(set(raw)) != len(raw):
+            reasons.append(f"ベイビィポケモンの進化先 {raw!r} が確かめた名前の並びではない（未確認の null・空の並びは扱わない）")
+        else:
+            evolves_to = tuple(raw)
+        if evolves_from:
+            reasons.append("ベイビィポケモンに進化元の名前がある")
     elif pokemon["stage"] != "basic":
-        reasons.append(f"{pokemon['stage']}（ベイビィなど）は未実装")
+        reasons.append(f"{pokemon['stage']}（未知の段階）は未実装")
+    if pokemon["stage"] != BABY_STAGE and pokemon.get("evolves_to") is not None:
+        reasons.append("ベイビィポケモン以外のカードに進化先（pokemon.evolves_to）がある")
     # ポケモンパワー（v0.5）: 1 つずつ、効果の登録表に実装があり、データと合うか（説明文の有無・名前では決めない）
     powers = tuple(_annotate_power(record["id"], _parse_power(i, w), effects) for i, w in enumerate(pokemon["powers"]))
     for power in powers:
@@ -355,13 +389,19 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
             reasons.append(f"ポケモンパワー「{power.name_ja}」: {power.unsupported_reason}")
     deck_limit = None
     group_rule = None
+    baby_rule = False
     if pokemon.get("rules_text") is not None:
         rules_ja = pokemon["rules_text"].get("ja")
-        deck_limit = _deck_limit_rule(record["name"].get("ja") or "", rules_ja)
-        if deck_limit is None:
-            group_rule = _deck_group_rule(record["name"].get("ja") or "", rules_ja)  # v0.96
-        if deck_limit is None and group_rule is None:
-            reasons.append("ルール文のあるポケモンは未実装")
+        if pokemon["stage"] == BABY_STAGE and rules_ja == BABY_RULE_TEXT:
+            baby_rule = True  # v0.114: ベイビィポケモンのルール（GR-2000-P314-BABY-RULE。特殊能力ではない。CR-BABY-RULE-NOT-POWER）
+        else:
+            deck_limit = _deck_limit_rule(record["name"].get("ja") or "", rules_ja)
+            if deck_limit is None:
+                group_rule = _deck_group_rule(record["name"].get("ja") or "", rules_ja)  # v0.96
+            if deck_limit is None and group_rule is None:
+                reasons.append("ルール文のあるポケモンは未実装")
+    if pokemon["stage"] == BABY_STAGE and not baby_rule:
+        reasons.append("ベイビィポケモンのルール文が、ベイビィポケモンのルール（GR-2000-P314-BABY-RULE）の印刷の文ではない")
     if len(pokemon["types"]) != 1:
         reasons.append("タイプが 1 つではない")
     if pokemon["hp"] % 10 != 0:
@@ -386,9 +426,10 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
         resistance_value = r["value"]
     parsed = tuple(_parse_attack(i, a) for i, a in enumerate(pokemon["attacks"]))
     attacks = tuple(_annotate_attack(record["id"], attack, effects, parsed) for attack in parsed)
-    if not attacks and not any(power.supported and getattr(effects.power_effect(record["id"], power), "supplies_attacks", False) for power in powers):
+    if not attacks and not baby_rule and not any(power.supported and getattr(effects.power_effect(record["id"], power), "supplies_attacks", False) for power in powers):
         # v0.49: ワザのないポケモンは、今の姿のワザを持たせる特殊能力（メタモンの［へんしん］。``PowerEffect.supplies_attacks``）が登録されているときだけ対応にする
-        # （写しでワザのないポケモンはメタモンだけ）
+        # （写しでワザのないポケモンはメタモンだけ）。v0.114: ワザのないベイビィポケモン（エレキッド・ププリン）は、ワザがないままデッキに入れて使える（CR-BABY-WITHOUT-ATTACKS）。
+        # ワザを供給する特殊能力として扱わない。特殊能力は、ほかのポケモンと同じく、すべて登録されているときだけ対応（上の ``powers`` の理由）
         reasons.append("ワザがない")
     for attack in attacks:
         if not attack.supported:
@@ -408,6 +449,8 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
         attacks=attacks,
         powers=powers,
         deck_limit=deck_limit,
+        evolves_to=evolves_to,
+        baby_rule=baby_rule,
         name_group=None if group_rule is None else group_rule[0],
         name_letter=None if group_rule is None else group_rule[1],
         deck_group_limit=None if group_rule is None else group_rule[2],
@@ -596,6 +639,22 @@ POOL_KEYS = (
     "pool_v0_103",  # v0.103（ミュウの 2 枚。docs/neutral-shield-attack-origin-v0.103.md）
     "pool_v0_104",  # v0.104（回復のワザを持つポケモンの 12 枚。docs/healing-pokemon-v0.104.md）
     "pool_v0_105",  # v0.105（回復・山札からの進化・コインの分岐のポケモンの 5 枚。docs/recovery-evolution-coin-branches-v0.105.md）
+    "pool_v0_106",  # v0.106（数とコインを組み合わせるポケモンの 11 枚。docs/counts-coins-compositions-v0.106.md）
+    "pool_v0_107",  # v0.107（コインによる成否・特殊状態・防護のポケモンの 9 枚。docs/coin-failure-status-flight-v0.107.md）
+    "pool_v0_108",  # v0.108（持続するダメージの変更・相手の特殊状態を参照するポケモンの 5 枚。docs/damage-modifiers-condition-bonuses-v0.108.md）
+    "pool_v0_109",  # v0.109（次の相手の番に受けるときのコインでダメージを防ぐ効果・相手のタイプで決まるダメージのポケモンの 3 枚。docs/timed-damage-guards-v0.109.md）
+    "pool_v0_110",  # v0.110（使うときのコインで、残りHPがなくなっても「きぜつ」しない期間つきの効果を自分に与えるワザのポケモンの 2 枚。docs/endure-armor-up-v0.110.md）
+    "pool_v0_111",  # v0.111（場のエネルギーカードの枚数でダメージ・ワザの使用条件が決まるポケモンの 4 枚。docs/field-energy-card-counts-v0.111.md）
+    "pool_v0_112",  # v0.112（水エネルギーの個数によるコインとドロー・コインのマヒと自分のワザの制限のポケモンの 2 枚。docs/energy-coins-draw-v0.112.md）
+    "pool_v0_113",  # v0.113（可変枚数のコインと、山札の検索・つける・場全体のトラッシュのポケモンの 6 枚。docs/variable-coins-search-attachments-v0.113.md）
+    "pool_v0_114",  # v0.114（ベイビィポケモン 13 枚。docs/baby-rules-evolution-v0.114.md）
+    "pool_v0_115",  # v0.115（場・ベンチへのダメージ、対象ごとのコイン、ダメージの配分のポケモン 13 枚。docs/spread-damage-allocation-v0.115.md）
+    "pool_v0_116",  # v0.116（エネルギーの付け替え・ついた時に発動するワザの持続効果・付属カードの回収と退化のポケモン 13 枚。docs/energy-movement-attachment-devolution-v0.116.md）
+    "pool_v0_117",  # v0.117（場の移動・にげる時の反応・条件付きの特殊能力のポケモン 13 枚。docs/retreat-return-active-powers-v0.117.md）
+    "pool_v0_118",  # v0.118（上限なしコイン・攻撃時の能力・回復の配分のポケモン 9 枚。docs/unbounded-coins-heal-allocation-v0.118.md）
+    "pool_v0_119",  # v0.119（受けるダメージの選択・どくとねむり・場の効果のポケモン 11 枚。docs/damage-reactions-poison-sleep-v0.119.md）
+    "pool_v0_120",  # v0.120（化石の復活と仮想ワザの供給のポケモン 10 枚・トレーナー 1 枚。docs/fossil-basic-virtual-attacks-v0.120.md）
+    "pool_v0_121",  # v0.121（手札からの登場とワザの使用条件のポケモン 7 枚・トレーナー 2 枚。docs/hand-bench-attack-conditions-v0.121.md）
 )
 
 

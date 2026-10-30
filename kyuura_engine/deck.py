@@ -76,8 +76,9 @@ def deck_problems(cards: Sequence[str], pool: CardPool | None = None, rules: Rul
         if count > limit:
             problems.append(f"TOO_MANY_GROUP_COPIES: 「{group}」のカードが合わせて {count} 枚（カードのルール文で、デッキに {limit} 枚まで）")
 
-    # たねポケモン（ベイビィポケモン）を必ず入れる（p.308）
-    if not any(pool.get(c).is_basic_pokemon for c in known):
+    # たねポケモン（ベイビィポケモン）を必ず入れる（p.308）。v0.114: ベイビィポケモンカードだけのデッキもよい（GR-2000-P308-BABY-SETUP の「ベイビィポケモンカードまたはたねポケモン
+    # カード」。同じ名前の 4 枚の制限は、版ごとではなく名前で数える）
+    if not any(pool.get(c).is_baby_or_basic_pokemon for c in known):
         problems.append("NO_BASIC_POKEMON: たねポケモンが入っていない")
     return problems
 

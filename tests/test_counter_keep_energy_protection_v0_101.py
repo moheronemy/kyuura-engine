@@ -205,7 +205,7 @@ class RegistrationTest(unittest.TestCase):
         self.assertEqual((QUESTIONS["keep_voided_discard_coin"].code, QUESTIONS["keep_voided_discard_coin"].rulings), (KP2, ("KP2",)))
         self.assertEqual((QUESTIONS["keep_detached_energy_discard"].code, QUESTIONS["keep_detached_energy_discard"].rulings), (KP3, ("KP3",)))
         self.assertEqual(E.KEEP_TARGET_CODE, KP1)
-        self.assertEqual(max(FORMAT_VERSIONS), 26)  # 新しい状態・書き出しの形式は加えない（KEEP は今の場から、カウンターは既存の Retaliation で表す）
+        self.assertIn(26, FORMAT_VERSIONS)  # 新しい状態・書き出しの形式は加えない（KEEP は今の場から、カウンターは既存の Retaliation で表す）。今の最新の形式は tests/test_catalog_contract.py（docs/testing.md）
 
 
 # ---------------------------------------------------------------- 3 章: カウンター

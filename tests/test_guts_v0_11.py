@@ -699,7 +699,44 @@ class G37Test(unittest.TestCase):
         # v0.104: やさしいうた（相手の対戦ポケモンからとりのぞく効果とねむり。docs/healing-pokemon-v0.104.md）。あまいみつは自分の場から選ぶので、相手に効果を与えない
         "HealBothActivesThenSleep",
         # v0.105: プレゼント（「おもて」の数で相手の対戦ポケモンからとりのぞく効果。docs/recovery-evolution-coin-branches-v0.105.md）。ハイパーリバース・サイコリーフの回復は自分からとりのぞく
-        "ThreeCoinDamageOrOpponentHeal"]))
+        "ThreeCoinDamageOrOpponentHeal",
+        # v0.107: とげでつつく（失敗のコインのあとのどく）・へんずつう（コインの「おもて」で相手のこんらん）。とつぜんじばく・そらをとぶは相手の対戦ポケモンへの効果を持たない（自分への
+        # ダメージ・控えへのダメージ・自分への防護）。docs/coin-failure-status-flight-v0.107.md
+        "FailOnTailsDamageThenPoison", "DamageThenConfuseOpponentOrSelf",
+        # v0.108: マイナスイオン・あまえる（使うワザのダメージを減らす効果）・かみくだく（受けるワザのダメージを増やす効果）・もうどく（どく）・たたきおこす（相手の特殊状態の回復）。
+        # docs/damage-modifiers-condition-bonuses-v0.108.md
+        "DamageThenDealtDamageReduction", "DealtDamageReductionWithoutDamage", "DamageThenReceivedAttackDamageBonus", "PlusIfDefenderPoisonedThenPoison",
+        "PlusIfDefenderStatusThenCure",
+        # v0.112: ふしょくえき（「おもて」で相手をマヒ。「うら」の自分のワザの制限は相手への効果ではない）
+        "DamageParalyzeOnHeadsElseLockSelf",
+        # v0.113: ギガボルト（「うら」で相手をマヒ）。ゆうでん（自分の場につける）・ダークフレイム（自分のトラッシュ・自分につける）・ファイヤーラッシュ（自分の場のトラッシュ）・
+        # だいぎゃくてん？（自分へのダメージ）・みんなでおどる・なかまをよぶは相手の対戦ポケモンへの効果を持たない。docs/variable-coins-search-attachments-v0.113.md
+        "CoinBonusOnHeadsElseParalyze",
+        # v0.114: モクモク（場の特殊能力の停止。やみのはどうと同じ）・サイコキッス（相手の特殊エネルギーカードを山札に）・なげキッス（相手の場の選んだポケモンにダメージカウンター）。
+        # パチパチ（ダメージだけ）・いっしょにあそぼ（自分のベンチ）は相手の対戦ポケモンへの効果を持たない。docs/baby-rules-evolution-v0.114.md 6 章
+        "DamageThenFieldPowerSuppressionUntilOwnNextTurn", "CoinReturnOpponentSpecialEnergyToDeck", "PlaceCountersOnChosenOpponentPokemon",
+        # v0.115: しょうげきは（「おもて」でダメージのあとに相手が選ぶ控えと入れ替え）。ほかの 12 の型（ダメージ・控えへのダメージ・配分・自分の禁止・自分の進化・相手の山札）は相手の対戦
+        # ポケモンへの効果を持たない。docs/spread-damage-allocation-v0.115.md 6 章
+        "CoinSpreadDamageThenOpponentSwitch",
+        # v0.116: クロスアタック（こんらん）・しこみどく・エナジーショック（ついた時に発動するどく・マヒの持続効果）・やみのしょくしゅ（進化の禁止）・とりかこむ（ねむりか、にげるの禁止）・
+        # エナジーサイクル・エナジーコントロール（相手の場のエネルギーの付け替え）・げんしのしずく（相手の場の進化ポケモンの退化）・ツイスター（付属カードを手札に）・トランスダメージ（相手に
+        # ダメージカウンターをのせかえる）。バトンタッチ・はらだいこ・よびもどす・さいせい・エナジーさいせいは、自分・自分の場・相手のトラッシュとベンチへの効果で、相手の対戦ポケモンへの効果を
+        # 持たない。docs/energy-movement-attachment-devolution-v0.116.md 6 章
+        "CoinsTimesDamageThenConfuseIfAtLeast", "DamageThenStatusOnEnergyAttach", "DamageThenEvolutionLock", "DamageThenSleepOnHeadsElseRetreatLock",
+        "CoinMoveOpponentEnergyCardToBenchOrFail", "FailOnTailsMoveOpponentFieldEnergy", "CoinDevolveOpponentEvolvedToDeck", "DamageThenCoinReturnAttachedCardsToHand",
+        "DiscardAllEnergyThenMoveAllSelfCountersToOpponent",
+        # v0.117: いかく（ドわすれと同じワザの禁止）・サイキックダメージ（ダメージカウンター）・おいうち（「にげる」ときの持続効果）。docs/retreat-return-active-powers-v0.117.md 4 章・8 章
+        "LockOpponentAttackIfBasic", "CoinsCountersOnOpponent", "DamageThenPursuitOnRetreat",
+        # v0.118: しめつづける（マヒ・「にげる」エネルギーを増やす持続効果）・ふしぎなかおり（相手の場の回復）。docs/unbounded-coins-heal-allocation-v0.118.md 6 章・7 章
+        "DamageThenParalyzeOnHeadsElseRetreatCost", "EachPlayerCoinHealOwnField",
+        # v0.119: いたみわけ（ダメージカウンター）・どくどくエキス（どく）・ひきずりこむ（ダメージの前の入れ替えとねむり）。なぞのこうせん（自分の場）・どくをだす（次の相手の番の反応）・
+        # ガスばくはつ（かわりに出てくる対戦ポケモンのどく。出したときに評価する）は、ワザの要素として相手の対戦ポケモンへの効果を持たない。docs/damage-reactions-poison-sleep-v0.119.md
+        "PlaceOwnCounterCountOnOpponent", "ToxicPoisonOnHeadsWithoutDamage", "OptionalSwitchOpponentThenDamageAndSleep",
+        # v0.120: たつまき（「おもて」の数の相手のエネルギーカードのトラッシュ）。ワザを選んで自分のワザとして使うワザ（CopyAttackFromSource）は、選んだワザの要素で効果を与える
+        # （v0.31 の CopyOpponentAttackEffect と同じく宣言しない）。docs/fossil-basic-virtual-attacks-v0.120.md
+        "CoinsDiscardOpponentEnergyElseFail",
+        # v0.121: ぶきみなとおぼえ（入れ替え）・でんじほう（マヒ）・おおあくび（ねむり）は相手に与える効果の要素を宣言する。docs/hand-bench-attack-conditions-v0.121.md
+        "BenchOpponentHandBasicThenSwitchOrFail", "CoinsFailThenDamageParalyze", "StatusSelfAndOpponent"]))
 
 
 class DecisionTest(unittest.TestCase):

@@ -23,14 +23,14 @@ from .. import judge
 from .. import procedures as PR
 from ..checks import PLAYERS, attack_request, require_turn
 from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack
-from ..decisions import BENCH_GUARD, ENERGY_DRAIN_DISCARD, ESP_REDO, EXP_ALL_ENERGY, KNOCK_OUT_POWER, NINJA_TRICK, PROMOTE_ACTIVE, REACTION_SWITCH, SPLIT_FROM_DECK, TAKE_PRIZE
+from ..decisions import BENCH_GUARD, DAMAGE_OPTION, ENERGY_DRAIN_DISCARD, ESP_REDO, EXP_ALL_ENERGY, KNOCK_OUT_POWER, NINJA_TRICK, PROMOTE_ACTIVE, REACTION_SWITCH, SPLIT_FROM_DECK, TAKE_PRIZE
 from ..coins import CoinSide, flip_coins
 from .. import effects as E
 from ..effects import (AttackKey, AttackUse, PowerKey, usable_ninja_tricks, attach_converted_energy, attack_rebellion_powers, counts_as_knockout, dormant_scram, max_hp,
                        received_modifiers_log, received_power_damage, retreat_trap_powers, stadium_attack_coin_available, status_at_attack_blocked)
 from ..errors import IllegalActionError, UnsupportedError
-from ..state import AttackEffectGuard, BenchAttackDamageGuard, BenchProtection, GameState, Phase, PowersStopped, StatusImmunityNextTurn, ZeroDamageAtLeast
-from ..state import MARKER_COLOR, MARKER_CURSE, PERIOD_EFFECT_TYPES, PeriodAttackCoinCheck, PeriodLeaveLock
+from ..state import AttackEffectGuard, BenchAttackDamageGuard, BenchPowersStopped, BenchProtection, GameState, Phase, PowersStopped, StatusImmunityNextTurn, ZeroDamageAtLeast
+from ..state import MARKER_COLOR, MARKER_CURSE, PERIOD_EFFECT_TYPES, KnockOutSurvival, PeriodAttackCoinCheck, PeriodLeaveLock, SecretePoison, TimedDamageGuard
 from ..history import close_probe, note_used
 from ..zones import face_up_fields, prize_left, promote_from_bench, return_in_play_to_deck, shuffle_deck
 from ..movement import promotion_spikes_now
@@ -44,8 +44,8 @@ from .events import FrameKind, Suspended, Trace, Window, WindowOpened
 from ..persistent import RETURN_IN_PLAY_TO_DECK, attack_coin_checks, destiny_bond, leave_lock, remove_on_damage, remove_persistent_effects
 from .kernel import effect_ko_entries, restore_effect_ko
 from .kernel import (DryRunComplete, Resolution, apply_energy_drain, apply_split, capture_post_knockout, check_simultaneous, exp_all_offers, exp_all_options, exp_all_unresolved,
-                     focus_band_offers, hp_of, knock_out_beam_problem, knock_out_power_offers, knocked, ko_prevention_offers, scram_restored_question, settle_scram,
-                     track_ko)
+                     focus_band_offers, hp_of, knock_out_beam_problem, knock_out_power_offers, knocked, knockout_survival_candidates, knockout_survival_overlap,
+                     knockout_survivals_of, ko_prevention_offers, scram_restored_question, settle_scram, time_travel_due, track_ko)
 from .programs import (
     resume_moves,AttackRun, EspRedoOffer, apply_esp_redo, apply_flee, apply_ninja_trick, decision_index, declare, offer_ninja_trick, program_may_fail, resume_guarded, run_elements,
                        with_stadium_self_damage)
@@ -138,15 +138,22 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
         E.attack_power_check(state, attacker, key)
         if is_contract(program):
             raise UnsupportedError("UNSUPPORTED_ATTACK", "v0.13 の約束で書いたワザの実装では、ワザといっしょに使う特殊能力を扱わない（エンジンの未対応）")
+    if cmd.with_power is not None:
+        # v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 5 章）: ワザといっしょに、自分の場のポケモンの［XXXXX］を使うことを選んだ。使えないなら、状態を変える前に拒否する
+        E.group_attack_power_check(state, cmd.player, attacker, key, cmd.with_power)
+        if is_contract(program):
+            raise UnsupportedError("UNSUPPORTED_ATTACK", "v0.13 の約束で書いたワザの実装では、ワザといっしょに使うほかのポケモンの特殊能力を扱わない（エンジンの未対応）")
 
     def body(res: Resolution) -> None:
-        _attack_body(res, cmd.player, res.state.find_pokemon(pid)[1], key, attack, program, once, option, coin_stadium, cmd.attack_power)
+        _attack_body(res, cmd.player, res.state.find_pokemon(pid)[1], key, attack, program, once, option, coin_stadium, cmd.attack_power, cmd.with_power)
 
     # v0.67（docs/secret-plan-preflight-v0.67.md 8 章）: v0.13 の止める関数（``v013_checks``）が知らない選択・役割がある盤面。ワザの型が ``VERIFIED`` でも、それらの安全の
     # 根拠にならないので、v0.13 の止める関数で確かめる経路（上限を超えたあとのフォールバック・比べる方法 legacy・v0.13 の約束の実装）を使わない
     unknown = legacy_unknown_features(state, attacker)
     if cmd.attack_power:
         unknown = (*unknown, "ワザといっしょに使う特殊能力")  # v0.88: v0.13 の止める関数は［すいりょくはつでん］の追加を知らない
+    if cmd.with_power is not None:
+        unknown = (*unknown, "ワザといっしょに使うほかのポケモンの特殊能力")  # v0.118: v0.13 の止める関数は［XXXXX］のコインと追加を知らない
 
     def on_limit() -> None:
         """先読みで試す結果の数が上限を超えた（途中までの結果は使わない）。v0.13 の止める関数で確かめたワザの実装なら、それで確かめる
@@ -228,8 +235,9 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
            for side in state.players for pokemon in side.in_play() for slot in E.powers_of(state, pokemon)):
         # v0.86: ［はしりさる］（ダメージの要素のあとのコインと山札にもどる）・［クリスタルボディ］（効果の要素を無効にする）。v0.13 の止める関数は知らない
         found.append("はしりさる・クリスタルボディ")
-    if any(isinstance(effect, (PowersStopped, BenchProtection)) for side in state.players for pokemon in side.in_play() for effect in pokemon.persistent_effects):
-        # v0.86: スタンウェーブ（特殊能力を止める）・ほのおのまもり（控えへのワザのダメージと効果を無効にする）。v0.13 の止める関数は知らない
+    if any(isinstance(effect, (PowersStopped, BenchProtection, BenchPowersStopped)) for side in state.players for pokemon in side.in_play()
+           for effect in pokemon.persistent_effects):
+        # v0.86: スタンウェーブ（特殊能力を止める）・ほのおのまもり（控えへのワザのダメージと効果を無効にする）。v0.13 の止める関数は知らない。v0.114: じっとみる
         found.append("v0.86 の持続する効果")
     v087 = (E.CoinDamageBothActivesOnAttackDamage, E.PoisonDamageSourceOnAttackDamage, E.BenchNamedFromDeckOnAttackDamage, E.OwnBenchAttackImmunityWhileActive,
             E.BenchAttackDamageImmunity, E.DamageOnOpponentPromotion, E.MoveTypeEnergyOnBenching, E.DamageOnHandBasicWhileActive)
@@ -241,6 +249,18 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
         found.append("ふしぎなガス")  # v0.87: 相手の場の特殊能力だけを止める効果（v0.13 の止める関数は知らない）
     if any(r.kind == E.ATTACK_FIELD_POWER_SUPPRESSION for r in state.trainer_effects):
         found.append("やみのはどう")  # v0.92: ワザで与えた、おたがいの場の特殊能力を止める効果（v0.13 の止める関数は知らない）
+    if E.optional_damage_power_holders(state):
+        # v0.119: ［シェルアーマー］（ワザによるダメージを受けるたびに、受けるポケモンの持ち主が使うかを選ぶ）。v0.13 の止める関数の見積もり（``preview_attack_damage``）は使わない計算だけを
+        # 見るので、それで確かめない
+        found.append("シェルアーマー")
+    if any(r.kind == E.ATTACK_FIELD_WEAKNESS_IMMUNITY for r in state.trainer_effects):
+        found.append("なぞのこうせん")  # v0.119: ワザで与えた、自分の場のタイプのポケモンの弱点の影響を受けない効果（v0.13 の止める関数は確かめたことがない）
+    if E.continuous_powers(state, E.SetSmallAttackDamageReceived):
+        found.append("かたいから")  # v0.119: 受ける 40 以下のダメージを 10 にする（0 以下に当てはめるかの HS1 を v0.13 の止める関数は知らない）
+    if E.discard_protection(state):
+        found.append("アレルギーほうし")  # v0.119: トラッシュのカードを動かす要素が起こらない・そのコインの AP1（v0.13 の止める関数は知らない）
+    if any(isinstance(effect, SecretePoison) for side in state.players for pokemon in side.in_play() for effect in pokemon.persistent_effects):
+        found.append("どくをだす")  # v0.119: 相手のワザのダメージを受けたときの、どくと控え全員へのダメージの反応（PX1 を v0.13 の止める関数は知らない）
     v093 = (PeriodLeaveLock, PeriodAttackCoinCheck)
     if any(isinstance(effect, PERIOD_EFFECT_TYPES) and not isinstance(effect, v093) for side in state.players for pokemon in side.in_play() for effect in pokemon.persistent_effects):
         # v0.92: 期間を明示した持続する効果（いやなおとの 8 段階の +20・発生源がはなれたら消える禁止）。v0.13 の止める関数は知らない
@@ -251,6 +271,19 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
     if any(marker.kind in (MARKER_CURSE, MARKER_COLOR) for side in state.players for pokemon in side.in_play() for marker in pokemon.markers):
         # v0.90: のろいマーカー（弱点の「×4」）・色マーカー（タイプ。CM1）。v0.13 の止める関数は、このマーカーで変わる計算と問いを確かめたことがない
         found.append("のろいマーカー・色マーカー")
+    if any(isinstance(effect, TimedDamageGuard) for side in state.players for pokemon in side.in_play() for effect in pokemon.persistent_effects):
+        # v0.109: 受けるときのコインでダメージを防ぐ期限つきの効果（ぬるぬる・かわす・ブリンク。受けるときのコインの両面・GO1・RF1・「うら」で受けなかったあとの Z23）。v0.13 の止める関数の
+        # 見積もり（``preview_attack_damage``）は受けるときのコインを知らない（コインで受けなかった場合を試さない）ので、それで確かめない
+        found.append("受けるときのコインで防ぐ期限つきの効果")
+    if any(isinstance(effect, KnockOutSurvival) for side in state.players for pokemon in side.in_play() for effect in pokemon.persistent_effects):
+        # v0.110: 残りHPがなくなっても「きぜつ」しない効果（こらえる・こうてつか。きぜつの判定の窓の生存・KS1・KS2・こんらんの 20 の問い）。v0.13 の止める関数は「きぜつ」しない効果を知らない
+        # （HP 以上で「きぜつ」すると見積もる）ので、それで確かめない
+        found.append("残りHPがなくなっても「きぜつ」しない効果")
+    if any(E.evolved_from_baby(state, pokemon) or state.card_def(pokemon.card).is_baby_pokemon for side in state.players for pokemon in side.in_play()
+           if not state.is_face_down(pokemon)):
+        # v0.114: 場のベイビィポケモン・ベイビィから進化したポケモン（ワザの前のルールのコイン・場の分類）。v0.13 の止める関数はベイビィのルールのコインと場の分類を知らないので、
+        # それで確かめない
+        found.append("ベイビィポケモン")
     if E.neutral_shield_holders(state):
         # v0.103: ［ニュートラルシールド］（発生元が相手の進化ポケモンのワザのダメージと効果の要素を無効にする）。v0.13 の止める関数の見積もり（``preview_attack_damage``）は発生元で
         # 無効にするかを知らない（「ダメージを受けない」状態・バリアーだけを見る）ので、それで確かめない（情報のない経路で黙って無視しない）
@@ -259,7 +292,7 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
 
 
 def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack, program, once: bool = False, option=None,
-                 coin_stadium: int | None = None, attack_power: bool = False) -> None:
+                 coin_stadium: int | None = None, attack_power: bool = False, with_power: int | None = None) -> None:
     state = res.state
     if option is None or option.card == attacker.card:
         state.add_event("attack", player=player, pokemon=attacker.card, attack=attack.name_ja, attack_index=key.attack_index)
@@ -267,6 +300,10 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
         # v0.49: ワザの出どころがワザを使うポケモンのいちばん上のカードでない（［へんしん］・「ばける」・［サイコリンク］・「思い出させる」）。ワザを印刷したカード
         # （``card``・``card_id``）・持ち方（``route``）・［サイコリンク］で供給したポケモン（``provider``）を書く。どれも表のカード（公開の情報）。ふつうのワザは v0.48 と同じ形
         extra = {"provider": option.provider} if option.provider is not None else {}
+        if option.payer is not None:
+            extra["payer"] = option.payer  # v0.120: 必要なエネルギーを満たしたポケモン（［にんぎょうつかい］のスリーパー）
+        if option.grantors:
+            extra["grantors"] = tuple(option.grantors)  # v0.120: 許可を与えた特殊能力を持つポケモン（［げんしのきおく］・［にんぎょうつかい］・［ものまね］）
         state.add_event("attack", player=player, pokemon=attacker.card, attack=attack.name_ja, attack_index=key.attack_index, card=option.card,
                         card_id=key.card_id, route=option.route, **extra)
     # v0.46: 「ワザが使われた時、すでに…」の特殊状態（エリカのフシギソウの［くつろぐかおり］）を宣言（p.309 の手順 3）の時点で写す。手順 4・5・ワザの要素で特殊状態が
@@ -287,12 +324,27 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
         state.add_event("attack_power", player=player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, power=slot.power.name_ja,
                         power_index=slot.key.power_index, card=slot.card, effect=str(key))
         res.attack_power = True
+    if with_power is not None:
+        _declare_group_power(res, player, attacker, key, with_power, coin_stadium, program)
     use = (player, attacker.pokemon_id, key.card_id, key.attack_index)
     declare(program, res, player, attacker)  # v0.31: 宣言のあと・こんらんのコインの前の確認（トラッシュの時点が決まらないワザ。HC1）
+    baby = baby_rule_holder(res, player)  # v0.114: ワザを受ける側のバトル場のベイビィポケモン（ベイビィポケモンのルール）
+    # v0.119: ワザといっしょに使う特殊能力のうち、コインで追加を決めるもの（［XXXXX］）だけが XP1・NT1 の時点の問いにかかわる（［めいれい］の決まった量の追加はコインを投げない）
+    power_coins = res.group_power is not None and res.group_power[4] is None
+    if power_coins and (attack_coin_checks(state, attacker) or attack_rebellion_powers(state, attacker) or attacker.conditions.confused
+                        or coin_stadium is not None or baby is not None):
+        # v0.118（XP1）: ［XXXXX］のコインと、ワザの要素より先に投げるコイン（手順 4・5・ベイビィポケモンのルール・クチバシティジム）の順番、ワザが失敗したときに使ったことになるかが
+        # 決まらない（コインの前。使わない答え（with_power なしの同じワザ）は止めない）
+        raise res.question("group_power_coin_order", f"ポケモン {attacker.pokemon_id} のワザ {key}・［XXXXX］を持つポケモン {with_power}")
     if usable_ninja_tricks(state, 1 - player) and (attack_coin_checks(state, attacker) or attack_rebellion_powers(state, attacker)
-                                                   or attacker.conditions.confused or coin_stadium is not None):
-        # v0.65（NT1）: 変わり身の術の「相手がワザを使う時」の入れ替えと、ワザの要素より先に投げるコイン（手順 4・5・クチバシティジム）の順番が決まらない（コインの前）
+                                                   or attacker.conditions.confused or coin_stadium is not None or baby is not None
+                                                   or power_coins or E.ninja_trick_baby_candidates(state, 1 - player)):
+        # v0.65（NT1）: 変わり身の術の「相手がワザを使う時」の入れ替えと、ワザの要素より先に投げるコイン（手順 4・5・クチバシティジム）の順番が決まらない（コインの前）。v0.114: ベイビィ
+        # ポケモンのルールのコインも、ワザの要素より先に投げるコイン（入れ替えで控えのベイビィポケモンがバトル場に出うるなら、コインがあるかも順番で変わる）
         raise res.question("ninja_trick_attack_order", f"ポケモン {attacker.pokemon_id} のワザ・変わり身の術 {list(usable_ninja_tricks(state, 1 - player))}")
+    if baby is not None and _baby_rule_failed(res, player, attacker, key, baby, coin_stadium):  # v0.114: GR-2000-P314-BABY-RULE
+        _finish_attack(res, use)
+        return
     if _attack_check_failed(res, player, attacker, key):  # v0.36: p.309 の手順 4（「すなかけ」・「えんまく」など）
         _finish_attack(res, use)
         return
@@ -314,6 +366,76 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
     if offer_ninja_trick(run) or run_elements(run, 0):
         return
     _finish_attack(res, use)
+
+
+BABY_RULE_FAILED = "baby_rule"  # v0.114: ベイビィポケモンのルールのコインの「うら」で失敗したワザ（ログ attack_failed の reason）
+
+
+def _declare_group_power(res: Resolution, player: int, attacker, key: AttackKey, holder_id: int, coin_stadium: int | None, program: tuple = ()) -> None:
+    """v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 5 章）: ワザといっしょに使う自分の場のポケモンの［XXXXX］の宣言（p.311 の手順 1。ワザの宣言と同じ時点。宣言の前に確かめた）。
+    ログ ``group_attack_power``（公開）と、使った記録（プレイヤーの記録 ``GROUP_ATTACK_POWER_USED``。使った番の終わりに消える。「この番に、すでに…ほかのアンノーン「X」の…」の確かめ）を
+    残し、``Resolution.group_power`` に発生源と特殊能力を置く（コインはワザのダメージの要素で投げる。``programs.group_power_coins``）。"""
+    from ..state import GROUP_ATTACK_POWER_USED, TrainerTurnEffect
+
+    state = res.state
+    holder, slot = E.group_attack_power_check(state, player, attacker, key, holder_id)
+    effect = slot.effect
+    if not effect.uses_coins:
+        # v0.119（MD1）: 決まった量の追加（［めいれい］の「そのワザによるダメージは、「+10」される」）を、相手の対戦ポケモン以外へのダメージの要素（控え・自分）のあるワザといっしょに使う。
+        # 「そのワザによるダメージ」の範囲が決まらない（宣言の前。使わない同じワザは受け付ける）
+        from .programs import OPP
+        from .programs import Phase as ElementPhase
+
+        others = [type(element).__name__ for element in program if getattr(element, "phase", None) is ElementPhase.DAMAGE and getattr(element, "target", None) != OPP]
+        if others:
+            raise res.question("command_damage_scope", f"ポケモン {attacker.pokemon_id} のワザ {key}・ほかのダメージの要素 {others}・特殊能力を持つポケモン {holder_id}")
+    state.add_event("group_attack_power", player=player, pokemon=holder.card, pokemon_id=holder.pokemon_id, power=slot.power.name_ja, power_index=slot.key.power_index,
+                    card=slot.card, card_id=slot.key.card_id, attacker=attacker.card, attacker_pokemon_id=attacker.pokemon_id, effect=str(key))
+    if effect.records_turn_use:
+        record = TrainerTurnEffect(kind=GROUP_ATTACK_POWER_USED, player=player, source_card=holder.card, card_id=slot.key.card_id, created_turn=state.turn_number,
+                                   expires_turn=state.turn_number, pokemon_id=holder.pokemon_id)
+        state.trainer_effects = state.trainer_effects + (record,)
+        state.add_event("trainer_effect_added", player=player, effect_kind=GROUP_ATTACK_POWER_USED, trainer_card=holder.card, card_id=slot.key.card_id,
+                        expires_turn=state.turn_number, pokemon_id=holder.pokemon_id, power=str(slot.key))
+    # v0.119: 「おもて」の数（コインで決める追加は投げるまで None。決まった量の追加は 0。``effects.group_attack_power_modifier`` が実装ごとに量を求める）
+    res.group_power = (holder.pokemon_id, holder.card, slot.key.card_id, slot.key.power_index, None if effect.uses_coins else 0)
+
+
+def baby_rule_holder(res: Resolution, player: int):
+    """v0.114: ワザを使うプレイヤー ``player`` の相手のバトル場のポケモンが、ベイビィポケモンのルールを持つ進化していないベイビィポケモン（``effects.is_baby_in_play``）なら、その
+    ポケモン。なければ None。［へんしん］で相手のベイビィポケモンと同じカードとしてあつかわれるメタモンなら、ベイビィポケモンのルールを持つかが決まらないので止める（BX1。コインの前）。
+    うらのカード（マチスの秘策）は「たねポケモン」としてあつかうので None（本当のカードの段階を読まない。コインの有無から本当のカードを漏らさない）。状態を変えない。"""
+    defender = res.state.players[1 - player].active
+    if defender is None:
+        return None
+    problem = E.transform_baby_question(res.state, defender)
+    if problem is not None:
+        raise problem
+    return defender if E.is_baby_in_play(res.state, defender) else None
+
+
+def _baby_rule_failed(res: Resolution, player: int, attacker, key: AttackKey, baby, coin_stadium: int | None) -> bool:
+    """v0.114（docs/baby-rules-evolution-v0.114.md 5.2 節）: ベイビィポケモンのルール。相手のバトル場にベイビィポケモンがいるので、ワザを使うプレイヤー（``player``）が、宣言（p.309 の手順 3）の
+    あと・ワザの説明の処理の前にコインを 1 枚投げる（GR-2000-P314-BABY-RULE・CR-BABY-RULE-COIN・CR-BABY-RULE-COIN-STEP）。「うら」ならワザは失敗する（ログ ``attack_failed`` の ``reason``
+    ``baby_rule``。説明のダメージ・効果・説明のコインは処理しない。ワザは使ったことになり、番は終わる。GR-2000-P323-ATTACK-FAILURE）で True。
+
+    - ルールは特殊能力ではない（CR-BABY-RULE-NOT-POWER）。特殊能力を止める効果では止まらない。ナツメのESPがやり直す説明のコインではない（``AttackRun.flip`` を通さない。ログ ``coin_flip``
+      の ``source`` は ``baby_rule``）。決定・保存をまたいでも投げ直さない（ワザの要素の前に 1 度だけ投げる）
+    - 宣言の前の確かめ（使えないワザ・エネルギー不足・未対応）で拒否したワザでは投げない（この関数の前に拒否している）
+    - 手順 4 の効果（すなかけなど・［はんこう］）・手順 5 のこんらんのコインとの順番、「うら」のあとに手順 5 などをするかは決まらない（UQ-ATTACK-PRE-DAMAGE-COIN-ORDER。BQ1）。クチバシ
+      シティジムのコインとの順番・失敗したときの自分への 10 は VM1（既存の問い。ワザの失敗の順番）。どちらもコインの前に止める"""
+    state = res.state
+    if attack_coin_checks(state, attacker) or attack_rebellion_powers(state, attacker) or attacker.conditions.confused:
+        raise res.question("baby_rule_coin_order", f"ポケモン {attacker.pokemon_id} のワザ・相手のバトル場のベイビィポケモン {baby.pokemon_id}")
+    if coin_stadium is not None:
+        raise res.question("vermilion_attack_order", f"ポケモン {attacker.pokemon_id}（相手のバトル場のベイビィポケモン {baby.pokemon_id} のルールのコインでワザが失敗しうる）")
+    heads = flip_coins(state, player, 1, source=BABY_RULE_FAILED, effect=str(key), card=baby.card, pokemon_id=baby.pokemon_id).results[0] is CoinSide.HEADS
+    state.add_event("baby_rule_coin", player=player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(key), baby=baby.card,
+                    baby_pokemon_id=baby.pokemon_id, heads=heads)
+    if heads:
+        return False
+    state.add_event("attack_failed", player=player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(key), reason=BABY_RULE_FAILED)
+    return True
 
 
 def _stadium_attack_coin(res: Resolution, player: int, attacker, key: AttackKey, program: tuple, stadium: int) -> tuple:
@@ -411,7 +533,10 @@ def end_attack_power_suppression(res: Resolution) -> None:
     records = attack_power_suppressions(state)
     if not records:
         return
+    E.poison_mist_upkeep(state)  # v0.119: 抑止のあいだに［ポイズンミスト］の特殊能力が消えていたこと（PO3）を、抑止を消す前に書く
     before = state.peek()
+    # v0.110（KS1）: 「きぜつ」しない効果の候補の最大HPが抑止の終わりで変わるなら、すぐあとに残りHP 10 にする読み方（変わる前の最大HP）と結果が変わる
+    survivors = {pokemon.pokemon_id: max_hp(state, pokemon) for _, pokemon in knocked(res) if knockout_survivals_of(res, pokemon)}
     state.trainer_effects = tuple(r for r in state.trainer_effects if r not in records)
     for record in records:
         state.add_event("trainer_effect_removed", player=record.player, effect_kind=record.kind, trainer_card=record.source_card, card_id=record.card_id,
@@ -419,6 +544,10 @@ def end_attack_power_suppression(res: Resolution) -> None:
     stop = E.attack_state_stop_after(before, state)  # 最大HP が下がるのは、このあとのきぜつの判定がきぜつにする
     if stop is not None:
         raise UnsupportedError(stop[0], f"ワザを使っているあいだの特殊能力の抑止が終わると: {stop[1]}")
+    for pid, hp in survivors.items():
+        found = state.find_pokemon(pid)
+        if found is None or max_hp(state, found[1]) != hp:
+            raise res.question("knockout_survival_timing", f"ポケモン {pid}・ワザを使っているあいだの特殊能力の抑止が終わって最大HPが変わる")
 
 
 def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
@@ -427,6 +556,8 @@ def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
     end_attack_power_suppression(res)  # v0.91: 「このワザを使っているあいだ」の特殊能力の抑止の終わり（きぜつの判定の前）
     settle_scram(res)  # v0.61: ［ずらかる］（ワザの要素のあとに残りHPが「10」になったポケモン。ワザの要素を処理しない経路（こんらん・手順 4 の失敗）も通る）
     res.trace.record(WindowOpened(Window.KO_CHECK, None))
+    _time_travel(res)  # v0.117: ［ときわたり］（きぜつのかわりにコインで山札にもどる。ほかのきぜつの判定の効果とかかわるなら TW2）
+    _survive_knockouts(res)  # v0.110: こらえる・こうてつか（同時のきぜつ・みちづれ・こんじょうなどの候補は、「きぜつ」しなかった結果で求める）
     check_simultaneous(res)
     bonded = _destiny_bond(res)  # v0.31: 「みちづれ」
     offers = ko_prevention_offers(res)
@@ -481,6 +612,93 @@ def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
         res.trace.record(Suspended(codec.KNOCK_OUT, state.decision.kind, owner))
         return
     _knock_out_after_attack(res)
+
+
+def _survive_knockouts(res: Resolution) -> None:
+    """v0.110（docs/endure-armor-up-v0.110.md 5 章）: きぜつの判定の窓の始め（同時のきぜつ・みちづれ・こんじょう・［ファイナルビーム］・きあいのハチマキ・学習装置の候補を求める前）に、
+    残りHPがなくなっても「きぜつ」しない効果（``state.KnockOutSurvival``。こらえる・こうてつか）の範囲のワザのダメージで HP 以上になったポケモン（``kernel.knockout_survival_candidates``）を
+    「きぜつ」させず、のっているダメージを今有効な最大HP − 残りHP（10）にする（ログ ``knockout_survived``）。
+
+    - ダメージは受けたまま（ワザの ``damage`` のログ・受けた記録・「ダメージを受けたとき」の効果はそのまま）。回復のイベント・反応は起こさない（残りHPを「10」にすることを回復とみなす
+      根拠がない。CR-GUTS-REMAINING-HP でも kyuura は判断していない）。コインも使う選択もない。効果は消えない（期間のうちは、また「きぜつ」しない）
+    - 時点は記録で決まらない（残りHPがなくなったすぐあとか、ワザのあとのきぜつの判定か）。HP 以上になったあとに同じワザの処理がこのポケモンにかかわる場面は、その処理の前に KS1 で止めて
+      いる（``kernel.knockout_survival_timing``）。ここで、同じきぜつの判定の効果がこのポケモンにかかわるなら KS2（``kernel.knockout_survival_overlap``）、［ずらかる］を持つなら（すぐあとの
+      読み方では、ワザの残りの処理の前に山札にもどりうる）KS1 で、状態・乱数・ログを変える前に止める。どちらもなければ、どちらの時点でも結果は同じ
+    - 「きぜつ」しなかったポケモンのきぜつの原因の記録（``knocked_by``・``damage_ko``・``ko_carried``）を消す（このあとの候補・決定の続きの情報に古い記録を残さない）"""
+    state = res.state
+    candidates = knockout_survival_candidates(res)
+    if not candidates:
+        return
+    knockout_survival_overlap(res, candidates)
+    scram = {pokemon.pokemon_id for _, pokemon, _ in E.scram_slots(state)}
+    for _, pokemon, _ in candidates:
+        if pokemon.pokemon_id in scram:
+            raise res.question("knockout_survival_timing", f"ポケモン {pokemon.pokemon_id}・残りHP「10」ではたらく［ずらかる］")
+        if len({e.remaining_hp for e in knockout_survivals_of(res, pokemon)}) != 1:
+            raise RuntimeError(f"ポケモン {pokemon.pokemon_id} の「きぜつ」しない効果の残りHPが 1 つに決まらない（文面の組は 10 だけ。エンジンの不具合）")
+    for owner, pokemon, effects in candidates:
+        pid = pokemon.pokemon_id
+        attacker, attacker_pid = res.damage_ko[pid]
+        remaining = effects[0].remaining_hp
+        before = pokemon.damage
+        pokemon.damage = max(0, max_hp(state, pokemon) - remaining)  # 今有効な最大HP（v0.48。こんじょう・きあいのハチマキと同じ値）
+        state.add_event("knockout_survived", player=owner, pokemon=pokemon.card, pokemon_id=pid, persistent_effect=KnockOutSurvival.kind,
+                        created_turns=tuple(e.created_turn for e in effects), scopes=tuple(e.scope for e in effects), attacker=attacker, attacker_pokemon_id=attacker_pid,
+                        damage_before=before, total_damage=pokemon.damage, remaining_hp=remaining)
+        for record in (res.knocked_by, res.damage_ko, res.ko_carried):
+            record.pop(pid, None)
+
+
+def _time_travel(res: Resolution) -> None:
+    """v0.117（docs/retreat-return-active-powers-v0.117.md 7 章）: きぜつの判定の窓の始め（こらえる・こうてつか・同時のきぜつ・みちづれ・こんじょうなどの候補を求める前）に、［ときわたり］の
+    候補（``kernel.time_travel_due``。相手のワザの分類のダメージで HP 以上・受けたときに特殊状態でない・今力が消えていない。場所は問わない）の持ち主がコインを 1 枚投げる（``source="power"``。
+    ログ ``time_travel``）。「おもて」なら、きぜつの処理をせず（サイドは取られない）、重なったカード・ついているカードをすべて持ち主の山札にもどし（``zones.return_in_play_to_deck`` の
+    ``power``）、持続する効果を消し、山札を切る（先読みでは切らない）。きぜつの原因の記録を消す（このあとの候補に残さない）。「うら」なら今までどおりきぜつする。
+
+    - 止める場面（状態・乱数・ログを変える前）: 候補が 2 匹以上（コインと山札を切る順番。TW2）・同じポケモンが同じきぜつの判定の効果（こらえる・こうてつか・こんじょう・［ファイナル
+      ビーム］・きあいのハチマキ・学習装置・みちづれ）にかかわる（TW2）・持ち主の番（自分のワザの中の返す効果のダメージ。すぐあとの読み方ではワザの途中で場をはなれる。TW1）・
+      ［ずらかる］を持つ（TW1）。HP 以上になったあとに同じワザの処理がかかわる場面は、その処理の前に TW1 で止めている（``kernel.time_travel_timing``）"""
+    state = res.state
+    found = []
+    for owner, pokemon in knocked(res):
+        instance = time_travel_due(res, owner, pokemon)
+        if instance is not None:
+            found.append((owner, pokemon, instance))
+    if not found:
+        return
+    if len(found) > 1:
+        raise res.question("time_travel_overlap", f"［ときわたり］のポケモン {[p.pokemon_id for _, p, _ in found]}")
+    owner, pokemon, instance = found[0]
+    pid = pokemon.pokemon_id
+    if owner == state.current_player:
+        raise res.question("time_travel_timing", f"ポケモン {pid}・自分のワザの中の返す効果のダメージ")
+    if any(p is pokemon for _, p, _ in E.scram_slots(state)):
+        raise res.question("time_travel_timing", f"ポケモン {pid}・［ずらかる］")
+    involved = ["こらえる・こうてつか"] if knockout_survivals_of(res, pokemon) else []
+    involved += [f"こんじょう {o[1].pokemon_id}" for o in ko_prevention_offers(res, record=False) if o[1].pokemon_id == pid]
+    involved += [f"ファイナルビーム {b[1].pokemon_id}" for b in knock_out_power_offers(res, record=False) if b[1].pokemon_id == pid or b[3] == pid]
+    involved += [f"きあいのハチマキ {b[1].pokemon_id}" for b in focus_band_offers(res, record=False) if b[1].pokemon_id == pid]
+    involved += [f"学習装置 {e[1].pokemon_id}" for e in exp_all_offers(res, record=False) if e[1].pokemon_id == pid]
+    target = state.players[state.current_player].active
+    bonds = [p for o, p in knocked(res) if o != state.current_player and destiny_bond(state, p) is not None]
+    if bonds and target is not None and (target.pokemon_id == pid or any(p.pokemon_id == pid for p in bonds)):
+        involved.append(f"みちづれ {[p.pokemon_id for p in bonds]}")
+    if involved:
+        raise res.question("time_travel_overlap", f"ポケモン {pid}（{' / '.join(involved)}）")
+    key = str(instance.power_key)
+    attacker, attacker_pid = res.damage_ko[pid]
+    flips = flip_coins(state, owner, 1, source="power", effect=key, card=pokemon.card, pokemon_id=pid)
+    heads = flips.results[0] is CoinSide.HEADS
+    state.add_event("time_travel", player=owner, pokemon=pokemon.card, pokemon_id=pid, power=key, result=flips.results[0].value, attacker=attacker,
+                    attacker_pokemon_id=attacker_pid)
+    if not heads:
+        return
+    return_in_play_to_deck(state, owner, pokemon, power=key)
+    remove_persistent_effects(state, owner, pokemon, RETURN_IN_PLAY_TO_DECK)
+    if not res.dry_run:
+        shuffle_deck(state, owner, power=key)
+    for record in (res.knocked_by, res.damage_ko, res.ko_carried, res.ko_prevention_able):
+        record.pop(pid, None)
 
 
 def _focus_band(res: Resolution, owner: int, pokemon, attached, effect) -> None:
@@ -554,6 +772,7 @@ def _destiny_bond(res: Resolution) -> bool:
 def _knock_out_after_attack(res: Resolution) -> None:
     state = res.state
     gone = knocked(res)
+    settle_replacement_poisons(state, gone)  # v0.119: 「ガスばくはつ」の記録（このワザで「きぜつ」したポケモンだけ残す）
     candidates = capture_post_knockout(res, gone)
     _after_knockouts(res, _knock_out_all(state, gone, simultaneous=len(gone) > 1), None, candidates)
 
@@ -575,6 +794,56 @@ def _leave_lock_knockout_error(state: GameState, gone) -> UnsupportedError | Non
         if lock is not None:
             return UnsupportedError(E.LEAVE_LOCK_KNOCKOUT_CODE, f"ポケモン {pokemon.pokemon_id}（{lock.kind}・与えた番 {lock.created_turn}）: {E.LEAVE_LOCK_KNOCKOUT_REASON}")
     return None
+
+
+def settle_replacement_poisons(state: GameState, gone) -> None:
+    """v0.119（docs/damage-reactions-poison-sleep-v0.119.md 6 章）: ワザのあとのきぜつの処理の前に、「ガスばくはつ」の記録（``state.ReplacementPoison``）のうち、ワザで HP 以上になったポケモンが
+    このきぜつの処理で「きぜつ」するものを ``REPLACEMENT_KNOCKED`` にし（ログ ``replacement_poison_knocked``）、きぜつの判定で「きぜつ」しなかった（こんじょうなど）ものを消す（ログ
+    ``replacement_poison_removed`` の ``reason`` ``not_knocked_out``）。"""
+    from dataclasses import replace
+
+    from ..state import REPLACEMENT_KNOCKED, REPLACEMENT_PENDING
+
+    if not state.replacement_poisons:
+        return
+    knocked_ids = {pokemon.pokemon_id for _, pokemon in gone}
+    kept = []
+    for record in state.replacement_poisons:
+        if record.status != REPLACEMENT_PENDING:
+            kept.append(record)
+        elif record.knocked_pokemon_id in knocked_ids:
+            kept.append(replace(record, status=REPLACEMENT_KNOCKED))
+            state.add_event("replacement_poison_knocked", player=record.player, pokemon_id=record.knocked_pokemon_id, effect=str(AttackKey(record.card_id, record.attack_index)))
+        else:
+            state.add_event("replacement_poison_removed", player=record.player, pokemon_id=record.knocked_pokemon_id,
+                            effect=str(AttackKey(record.card_id, record.attack_index)), reason="not_knocked_out")
+    state.replacement_poisons = tuple(kept)
+
+
+def apply_replacement_poison(res: Resolution, owner: int, promoted) -> None:
+    """v0.119（docs 6 章）: プレイヤー ``owner`` が控えからバトル場に出したポケモン ``promoted`` が、「ガスばくはつ」で「きぜつ」したポケモンのかわりに出てくる対戦ポケモンなら、そのワザの効果として
+    「どく」状態にし、記録を消す（ログ ``replacement_poison``）。効果を受けるかは、そのワザの枠（ワザの分類。使い手はワザを使ったプレイヤー、発生元はワザを使ったポケモン。場をはなれていれば
+    記録したワザを使ったときの姿）で ``reaches``（「ワザをうけない」状態・「とうめい」・［ニュートラルシールド］など）を評価する。［めんえき］は ``conditions.poison``。"""
+    from ..conditions import poison
+    from ..state import REPLACEMENT_KNOCKED
+    from .events import FrameKind
+    from .kernel import reaches
+
+    state = res.state
+    records = [r for r in state.replacement_poisons if r.player == owner and r.status == REPLACEMENT_KNOCKED]
+    if not records:
+        return
+    if len(records) > 1:
+        raise RuntimeError(f"プレイヤー {owner} のかわりの対戦ポケモンへのどくの記録が 2 つ以上ある（1 つのワザで相手の対戦ポケモンは 1 匹。エンジンの不具合）")
+    record = records[0]
+    state.replacement_poisons = tuple(r for r in state.replacement_poisons if r is not record)
+    key = AttackKey(record.card_id, record.attack_index)
+    state.add_event("replacement_poison", player=owner, pokemon=promoted.card, pokemon_id=promoted.pokemon_id, knocked_pokemon_id=record.knocked_pokemon_id,
+                    effect=str(key), attacker=record.attacker_player, attacker_pokemon_id=record.attacker_pokemon_id)
+    res.source_forms.setdefault(record.attacker_pokemon_id, record.attacker_evolved)
+    fs = res.open_frame(FrameKind.ATTACK, parent=None, player=record.attacker_player, source_pid=record.attacker_pokemon_id, attack_key=key)
+    if reaches(res, fs, owner, promoted, E.POISON):
+        poison(state, owner, promoted, effect=str(key))
 
 
 def _knock_out_all(state: GameState, gone, **how) -> list[int]:
@@ -618,6 +887,11 @@ def _next_prize_or_judge(res: Resolution, queue: tuple, then, post_knockout: tup
         cannot_field_active=[state.players[p].active is None and not state.players[p].bench for p in PLAYERS],
     )
     if result is not None:
+        for record in state.replacement_poisons:
+            # v0.119: 勝ち負けが決まったら、かわりに出てくる対戦ポケモンはいない（架空の対象を作らない）
+            state.add_event("replacement_poison_removed", player=record.player, pokemon_id=record.knocked_pokemon_id,
+                            effect=str(AttackKey(record.card_id, record.attack_index)), reason="game_over")
+        state.replacement_poisons = ()
         PR.finish(state, result)
         return
     if post_knockout:
@@ -635,6 +909,13 @@ def _offer_post_knockout(res: Resolution, post_knockout: tuple, then) -> None:
     owner, card, card_id, power_index = post_knockout[0]
     if card not in state.players[owner].discard:
         raise RuntimeError(f"候補のカード {card} が持ち主 {owner} のトラッシュにない（エンジンの不具合）")
+    implementation, _ = _offer_effect(res, card_id, power_index)
+    if getattr(implementation, "discard_cards_effect", None) == E.DISCARD_EFFECT_WHOLE and E.discard_protection(state):
+        # v0.119: ［アレルギーほうし］で、トラッシュのこのカードが効果を受けない（使っても状態は同じなので機会を出さない。v0.74 のポケモンタワーと同じ扱い）。はたらくかは、この窓
+        # （きぜつの処理・サイド・勝ち負けのあと）の場で決める。いっしょにきぜつしたパラセクトはもう場にいない
+        E.log_discard_protected(state, owner, power=str(PowerKey(card_id, power_index)), card=card)
+        _promotions_after_judge(res, then)
+        return
     codec.post_knockout_decision(state, owner, card, codec.AftermathContinuation(codec.POST_KNOCKOUT, (), then, (), (card_id, power_index)))
     res.trace.record(Suspended(codec.POST_KNOCKOUT, state.decision.kind, owner))
 
@@ -1088,8 +1369,9 @@ def _resume_attack(res: Resolution, decision, cont: codec.AttackContinuation, ch
         raise RuntimeError(f"決定 {decision.kind} の続きの要素の位置 {index!r} が、その決定を出す要素ではない（エンジンの不具合）")
     run.index = index
     try:
-        if decision.kind == BENCH_GUARD:
-            resume_guarded(run, program[index], decision, choices)  # v0.65: ダメージの要素の中の［ベンチガード］の決定
+        if decision.kind == BENCH_GUARD or (decision.kind == DAMAGE_OPTION and "bench_guard" in carried):
+            # v0.65: ダメージの要素の中の［ベンチガード］の決定。v0.119: 控えポケモンへのダメージの［シェルアーマー］を使うかの決定（同じ続きの情報）
+            resume_guarded(run, program[index], decision, choices)
         else:
             program[index].resume(run, decision, choices)
     except EspRedoOffer:
@@ -1205,6 +1487,7 @@ def _resume_take_prize(res: Resolution, decision, cont: codec.AftermathContinuat
 def _resume_promote(res: Resolution, decision, cont: codec.AftermathContinuation, choices) -> None:
     state = res.state
     promoted = promote_from_bench(state, decision.player, choices[0])  # v0.38: ワザの効果で場をはなれたあとの交代と共通（動き・ログは v0.37 と同じ）
+    apply_replacement_poison(res, decision.player, promoted)  # v0.119: 「ガスばくはつ」で「きぜつ」したポケモンのかわりに出てくる対戦ポケモンをどく（［まきびし］の前）
     # v0.87（docs/movement-damage-reactions-v0.87.md 4.1 節）: 控えから出たポケモンへの相手の［まきびし］（その相手の番の中だけ。ポケモンチェックのあとの交代はどちらの番でもない）。
     # 同じ時点のほかの反応はない（もどったポケモンがいない）。HP 以上になったら、きぜつの処理をもう一度して、同じ続きに進む（そのあとの交代も同じ続き）
     if cont.then != NEXT_TURN and promotion_spikes_now(state, decision.player, promoted):

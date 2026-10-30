@@ -164,7 +164,9 @@ class RegistrationTest(unittest.TestCase):
         self.assertTrue(new_names <= names)
         candidates = engine._identity_candidates(pool)
         basics = [c for c in candidates if pool.get(c).category == "pokemon" and pool.get(c).stage == "basic"]
-        self.assertLessEqual(1 + len(basics) + 1, engine._IDENTITY_TRIAL_LIMIT)  # 1 枚を指定するコマンドの試す回数（今の総数は tests/test_catalog_contract.py）
+        # v0.118: 1 枚を指定するコマンドの試す回数は、v0.117 から上限 512 ではなく分岐の作りから決まる回数（``_single_identity_budget``。たねが 511 枚になり、
+        # 1 + 511 + 1 = 513 が 512 を超えた。その回数どおりに確かめることは tests/test_secret_plan_single_identity_v0_117.py）。上限 512 は 2 枚目の割り当てが要るコマンドだけ
+        self.assertLessEqual(1 + len(basics) + 1, engine._single_identity_budget(basics, [c for c in candidates if c not in basics]))
 
     def test_new_public_events_and_decisions(self):
         for kind in ("conductivity", "lightning_burst_skipped", "reaction_power_declined", "bolt_check", "bolt_skipped", "pokemon_coin_results",

@@ -32,7 +32,7 @@ from ..cards import EnergyType
 from ..coins import CoinFlips, CoinSide, flip_coins, flip_until_tails
 from ..conditions import CONFUSION, CURED, PARALYSIS, POISON, SLEEP, clear_special_conditions, confuse, cure_conditions, paralysis_problem, paralyze, poison, put_to_sleep, wake_up
 from ..conditions import FORCED_SWITCH as FORCED_SWITCH_REASON
-from ..damage import DAMAGE_STEP_CHOOSER, DamageOrderRequired, DamageReductionRequired, step_orders
+from ..damage import DAMAGE_STEP_CHOOSER, DamageOptionRequired, DamageOrderRequired, DamageReductionRequired, step_orders
 from ..decisions import (
     ATTACH_FROM_DECK, ATTACH_FROM_DISCARD, ATTACH_FROM_HAND, ATTACH_TO_BENCH, BENCH_FROM_DECK, DAMAGE_STEP_ORDER, DISCARD_ENERGY, DISCARD_OPPONENT_ENERGY,
     DISCARD_TO_DECK_TOP, FORCED_SWITCH, HAND_TO_DECK, MOVE_OPPONENT_ENERGY, RECOVER_ENERGY, RECOVER_TRAINER, REMOVE_COUNTERS, RETURN_ENERGY, SEARCH_DECK, SELECT_ATTACK,
@@ -43,20 +43,22 @@ from ..decisions import ENERGY_DRAIN_DISCARD
 from ..decisions import MOVE_ENERGY, OPTIONAL_DRAIN
 from ..decisions import OPTIONAL_DISCARD_ALL
 from ..decisions import OPTIONAL_HEAL
+from ..decisions import OPPONENT_HAND_TO_BENCH
 from ..decisions import DISCARD_TO_DECK, RECOVER_POKEMON, SELECT_DRAW_COUNT, TAKE_LOOKED_CARDS
 from ..decisions import DISCARD_STADIUM, EVOLUTION_SONG_POKEMON
 from ..stadiums import bench_limit
-from ..errors import UnsupportedError
-from ..evolution import DEVOLVE_TO_HAND, devolve, evolution_block, place_evolution_card
-from ..persistent import (RETURN_IN_PLAY_TO_DECK, RETURN_IN_PLAY_TO_HAND, add_persistent_effect, leave_lock, max_hp_set, remove_persistent_effects,
-                          remove_source_left_effects, replace_persistent_effect, require_can_leave)
+from ..errors import SECRET_PLAN_HIDDEN_CODE, IllegalActionError, UnsupportedError
+from ..evolution import DEVOLVE_TO_DECK, DEVOLVE_TO_DISCARD, DEVOLVE_TO_HAND, devolve, evolution_block, place_evolution_card
+from ..persistent import (RETURN_IN_PLAY_TO_DECK, RETURN_IN_PLAY_TO_HAND, add_persistent_effect, leave_lock, max_hp_set, remove_on_entering_active,
+                          remove_persistent_effects, remove_source_left_effects, replace_persistent_effect, require_can_leave)
 from ..persistent import CURED as PERSISTENT_CURED
 from ..state import (
     NEXT_TURN_MULTIPLY, NEXT_TURN_SET, RETALIATION_FIXED, RETALIATION_RECEIVED, AttackBarrier, AttackCoinCheck, CannotAttack, CannotAttackNextOwnTurn,
     CannotAttachEnergy, CannotAttackWhileSourceActive, CannotRetreat, CannotUseAttack, CannotUsePowers, CannotUseOwnAttack, DamageReduction, DestinyBond, DoubledDamage, HalvedDamage, NextTurnAttackDamage, PreventAttackDamage, PreventDamage,
     MaxHpSet, ReducedDamageToSource, ReducedDamageToSourceNextTurn, ReflectShield, ResistanceChange, Retaliation, TailsDamageGuard, TrainerTurnEffect, TrainerUseLock, WeaknessChange, ZeroDamageBelow, mark_returned_to_bench,
     OPPONENT_POWER_SUPPRESSION, StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard, StatusImmunityNextTurn, PowersStopped, BenchProtection,
-    ATTACK_FIELD_POWER_SUPPRESSION, ReceivedAttackDamageBonus,
+    ATTACK_FIELD_POWER_SUPPRESSION, ReceivedAttackDamageBonus, DealtAttackDamageReduction, TimedDamageGuard, KnockOutSurvival,
+    EvolutionLock, StatusOnEnergyAttach, PursuitOnRetreat,
 )
 from ..state import ATTACK_POWER_SUPPRESSION, BENCH_ATTACK_DAMAGE_PREVENTION, COUNTER_BONE, COUNTER_FOOD, COUNTER_KINDS, MARKER_CHAR, MARKER_COLOR, MARKER_CURSE, MARKER_KINDS, MARKER_LIGHTNING_ROD, MARKER_STICKY, POWER_SUPPRESSION, Marker
 from ..markers import CLEARED as MARKERS_CLEARED
@@ -64,7 +66,9 @@ from ..markers import REPLACED as MARKERS_REPLACED
 from ..markers import USED as MARKERS_USED
 from ..markers import add_marker, has_marker, marker_count, remove_markers, replace_marker
 from ..decisions import SELECT_MARKER_COUNT
-from ..decisions import OPPONENT_HAND_TO_DECK, SELECT_ATTACHED_TRAINER
+from ..decisions import OPPONENT_HAND_TO_DECK, SELECT_ATTACHED_SPECIAL_ENERGY, SELECT_ATTACHED_TRAINER
+from ..decisions import ALLOCATE_DAMAGE
+from ..decisions import HEAL_ALLOCATION, OPTIONAL_COIN
 from ..history import note_processed
 from ..zones import (
     attach_energy_from_hand, attach_from_deck, attach_from_discard, bench_from_deck, bench_from_discard, discard_attached_cards, discard_from_deck, draw_cards, promote_from_bench, put_discard_on_deck_top,
@@ -72,14 +76,16 @@ from ..zones import (
     take_deck_top,
 )
 from ..zones import discard_stadium, look_at_card
-from ..zones import look_at_hand, opponent_hand_card_to_deck, return_attached_trainer_to_deck
+from ..zones import hand_to_bench_by_effect
+from ..zones import look_at_hand, opponent_hand_card_to_deck, return_attached_energy_to_deck, return_attached_trainer_to_deck
+from ..zones import return_attached_cards_to_hand
 
 from . import catalog as C
 from . import codec
 from .events import ElementStarted, FrameKind, Incoming, KnockedOutRecorded, Suspended, Window
 from .kernel import IGNORE_HELD, IGNORE_RECEIVER_HELD, IGNORE_UNSTATED, BenchGuardRequest, EnergyDrainRequest, Resolution, SplitRequest, check_simultaneous, knocked_out, deal_damage, fire_pending, reaches, settle_scram, track_ko, type_question, weakness_resistance_matters
 from .kernel import effect_ko_entries, knock_out_by_effect, note_source_form, restore_effect_ko
-from ..decisions import BENCH_GUARD, DAMAGE_REDUCTION, ESP_REDO, KO_PREVENTION, NINJA_TRICK, REACTION_SWITCH
+from ..decisions import BENCH_GUARD, DAMAGE_OPTION, DAMAGE_REDUCTION, ESP_REDO, KO_PREVENTION, NINJA_TRICK, REACTION_SWITCH
 from ..decisions import MAGMA_POOL_ENERGY, REACTION_ORDER, SPLIT_FROM_DECK
 from .. import movement as M
 from .questions import QUESTIONS, OpenQuestion, pick, to_error
@@ -101,7 +107,8 @@ class EspRedoOffer(Exception):
     """v0.66: ナツメのESPのやり直しの決定を出す（``AttackRun.flip`` が、ワザの説明文のコインを投げた直後・結果を使う前に投げる）。``run_elements`` が受け取って
     決定（``ESP_REDO``）を出し、答えのあとに同じ要素をもう一度処理する（``esp_preset``）。"""
 
-    def __init__(self, count: int, by_heads: bool, flipper: int, flips, cards: tuple[int, ...], problem):
+    def __init__(self, count: int, by_heads: bool, flipper: int, flips, cards: tuple[int, ...], problem, chain: ContinueOnHeads | None = None,
+                 until_tails: bool = False, players: tuple[int, ...] = ()):
         super().__init__(f"ナツメのESPのやり直し（{count} 枚）")
         self.count = count
         self.by_heads = by_heads
@@ -109,6 +116,12 @@ class EspRedoOffer(Exception):
         self.flips = flips
         self.cards = cards
         self.problem = problem
+        # v0.115: 条件つきで続けて投げるコインのまとまり（``AttackRun.flip_chain``。びっくりサンダー）。やり直すなら、同じまとまりを最初から投げ直す（枚数は面で変わりうる）
+        self.chain = chain
+        # v0.118: 「うら」が出るまで投げるコインのまとまり（``AttackRun.flip_until_tails``。れんぞくいしなげ・まるもうけ）。やり直すなら、最初から「うら」が出るまで投げ直す
+        self.until_tails = until_tails
+        # v0.118: お互いのプレイヤーが 1 枚ずつ投げる 1 つのコイントス（``AttackRun.flip_each``。ふしぎなかおり）の、投げたプレイヤーの並び（相手のコインを含むので、やり直すは ES1）
+        self.players = players
 
 
 class Phase(str, Enum):
@@ -122,6 +135,44 @@ OPP = E.OPPONENT_ACTIVE
 SELF = E.SELF
 HEADS = CoinSide.HEADS
 TAILS = CoinSide.TAILS
+# v0.115: ナツメのESPのやり直しの決定のあとに、条件つきで続けて投げるコインのまとまり（``AttackRun.flip_chain``）をもう一度処理するときの ``esp_preset`` の印（枚数のかわり）。
+# やり直さなかった（決定の前の面の並びを使う）・やり直した（まとまりを最初から投げ直す）
+ESP_CHAIN_KEPT = "chain_kept"
+ESP_CHAIN_REDO = "chain_redo"
+# v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 2 章）: 同じく、「うら」が出るまで投げるコインのまとまり（``AttackRun.flip_until_tails``）をもう一度処理するときの印。
+# 続きの情報の ``esp`` の 7 つめの値は ``ESP_UNTIL_TAILS``（v0.115 の ``("chain", 枚数)`` と同じ位置。v0.117 までの 6 つの値の形は変えない）
+ESP_UNTIL_KEPT = "until_kept"
+ESP_UNTIL_REDO = "until_redo"
+ESP_UNTIL_TAILS = ("until", "tails")
+
+
+def until_tails_complete(results) -> bool:
+    """v0.118: ``results`` が、「うら」が出るまで投げ終えた面の並び（「おもて」が 0 枚以上続いたあとに「うら」1 枚）か。"""
+    results = tuple(CoinSide(side) for side in results)
+    return bool(results) and results[-1] is TAILS and all(side is HEADS for side in results[:-1])
+
+
+@dataclass(frozen=True)
+class ContinueOnHeads:
+    """v0.115（docs/spread-damage-allocation-v0.115.md 5 章）: 条件つきで続けて投げるコインのまとまり。1 枚ずつ、最大 ``coins`` 枚まで、前の面が「おもて」の間だけ次の 1 枚を投げる
+    （わるいライチュウの「びっくりサンダー」の「コインを投げて「おもて」なら、もう1枚コインを投げる」。「うら」が出たら、そのあとは投げない）。2 枚ならありうる面の並びは T・HT・HH の
+    3 つで、投げる枚数は 1・2・2（いつも 2 枚投げて余った面を捨てる投げ方にしない）。"""
+
+    coins: int = 2
+
+    def __post_init__(self) -> None:
+        if type(self.coins) is not int or self.coins < 2:
+            raise ValueError(f"続けて投げるコインの最大の枚数は 2 以上（{self.coins!r}）")
+
+    def next_count(self, results: tuple[CoinSide, ...]) -> int:
+        """ここまでの面 ``results`` のあとに投げる枚数（0 ならまとまりは終わり）。"""
+        if len(results) >= self.coins or (results and results[-1] is TAILS):
+            return 0
+        return 1
+
+    def complete(self, results: tuple[CoinSide, ...]) -> bool:
+        """``results`` が、このまとまりを最後まで投げた面の並びか（途中の並び・投げすぎた並びは偽）。"""
+        return bool(results) and all(self.next_count(results[:i]) == 1 for i in range(len(results))) and self.next_count(results) == 0
 APPLY_CONDITION = {POISON: poison, SLEEP: put_to_sleep, PARALYSIS: paralyze, CONFUSION: confuse}
 
 
@@ -149,7 +200,9 @@ class AttackRun:
         self.index = 0  # v0.65: 処理している要素の位置（``run_elements``。ダメージの要素の中の決定（［ベンチガード］）の続きの情報の "element"）
         # v0.66: ナツメのESPのやり直しの決定のあとに、もう一度処理する要素が使うコインの結果（(枚数, 採った結果)）。``flip`` が投げずに返す
         self.esp_preset: tuple[int, tuple] | None = None
-        self.esp_done = False  # v0.66: このワザで、ESPのやり直しを聞いた（説明文のコイントスを投げた）
+        # v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 2 章）: このワザで、ナツメのESPのやり直しを聞いた（説明文のコイントスを投げた）要素の並びのワザ（``key``）。v0.66〜v0.119 は
+        # 真偽値（``esp_done``）で、どのワザの説明文のコインかを区別せず、決定をまたいで運ばなかった。続きの情報 ``esp_asked`` で運ぶ（``suspend``・``restore``）
+        self.esp_asked: tuple[E.AttackKey, ...] = ()
         self.element_log = 0  # v0.66: 処理している要素を始めたときのログの長さ（もう一度処理する要素が、コインの前にログを残していないか）
 
     @property
@@ -200,10 +253,7 @@ class AttackRun:
         cards = E.esp_cards(self.state, attacker)
         if not cards or count == 0:
             return flips
-        if self.esp_done:
-            raise self.res.question("esp_separate_coin_tosses", f"ポケモン {attacker.pokemon_id}・ワザ {self.key}")
-        self.esp_done = True
-        problem = E.esp_redo_problem(self.state, attacker, cards, flipper, self.player)
+        problem = self._esp_begin(attacker, cards, flipper)
         if self.res.dry_run:
             # 先読み: やり直さない・やり直す（止める選択は試さない）の両方を試す。やり直すなら、同じ枚数を投げ直す
             answers = [()] + ([] if problem is not None else [(1,)])
@@ -211,6 +261,162 @@ class AttackRun:
                 return flips
             return self._esp_reflip(count, by_heads, flipper, cards, flips)
         raise EspRedoOffer(count, by_heads, flipper, flips, cards, problem)
+
+    def flip_chain(self, chain: ContinueOnHeads, *, player: int | None = None) -> CoinFlips:
+        """v0.115（docs/spread-damage-allocation-v0.115.md 5 章）: 条件つきで続けて投げるコインのまとまり ``chain``（前の面で次に投げる枚数が決まる）を投げ、面の並びを返す。1 枚ごとの
+        ``coin_flip`` は、その時点で投げる 1 枚（``count`` は 1）。結果は「おもて」の数でまとめない（面の並びで処理が変わる）。
+
+        ナツメのESPのやり直しは、まとまりを投げ終えたあとに 1 回だけ聞く（「ワザの説明文のコイントスをすべてやり直す」の「すべて」はこのまとまりの全部）。やり直すなら、同じまとまりを
+        最初から投げ直す（最初の 1 枚だけを投げ直さない・最初の並びの長さにそろえない。面で枚数が変わりうる）。決定の前の面の並びは使わず、あとの要素には最後の並びだけを渡す。"""
+        attacker = self.attacker()
+        flipper = self.player if player is None else player
+        if self.esp_preset is not None:
+            preset, results = self.esp_preset
+            if preset not in (ESP_CHAIN_KEPT, ESP_CHAIN_REDO) or len(self.state.log) != self.element_log or not chain.complete(tuple(results)):
+                raise RuntimeError("ナツメのESPのやり直しのあとの要素が、決定の前と違うコイン・ログの処理をした（エンジンの不具合）")
+            self.esp_preset = None
+            if preset == ESP_CHAIN_KEPT:
+                return CoinFlips(tuple(results))
+            return self._esp_rechain(chain, flipper, E.esp_cards(self.state, attacker), CoinFlips(tuple(results)))
+        flips = self._chain_flips(chain, flipper)
+        cards = E.esp_cards(self.state, attacker)
+        if not cards:
+            return flips
+        problem = self._esp_begin(attacker, cards, flipper)
+        if self.res.dry_run:
+            # 先読み: やり直さない・やり直す（止める選択は試さない）の両方を試す。やり直すなら、同じまとまりを最初から投げ直す
+            answers = [()] + ([] if problem is not None else [(1,)])
+            if not self.res.oracle.choose(answers):
+                return flips
+            return self._esp_rechain(chain, flipper, cards, flips)
+        raise EspRedoOffer(len(flips.results), False, flipper, flips, cards, problem, chain=chain)
+
+    def _chain_flips(self, chain: ContinueOnHeads, flipper: int) -> CoinFlips:
+        attacker = self.attacker()
+        results: tuple[CoinSide, ...] = ()
+        while True:
+            count = chain.next_count(results)
+            if not count:
+                return CoinFlips(results)
+            results += flip_coins(self.state, flipper, count, source="attack", effect=str(self.key), card=attacker.card, pokemon_id=attacker.pokemon_id).results
+
+    def _esp_rechain(self, chain: ContinueOnHeads, flipper: int, cards: tuple[int, ...], original) -> CoinFlips:
+        """v0.115: ナツメのESPで、条件つきで続けて投げるコインのまとまりを最初から投げ直す（同じプレイヤー。最初の結果は使わない）。ログ ``esp_redo``（最初の並び・やり直した並び。
+        枚数は違いうる）。"""
+        attacker = self.attacker()
+        redone = self._chain_flips(chain, flipper)
+        self.state.add_event("esp_redo", player=self.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(self.key), cards=tuple(cards),
+                             original=tuple(side.value for side in original.results), redone=tuple(side.value for side in redone.results))
+        return redone
+
+    def flip_until_tails(self, classes) -> CoinFlips:
+        """v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 2 章）: 「うら」が出るまでコインを投げ続け、面の並び（最後の 1 枚が「うら」）を返す（``coins.flip_until_tails``。
+        ``classes`` は先読みの「おもて」の数の組を返す関数。実際の対戦の投げ方・乱数・ログは v0.64 と同じ）。
+
+        ナツメのESPのやり直しは、「うら」が出るまでの一まとまりを投げ終えたあとに 1 回だけ聞く（「ワザの説明文に書かれているすべてのコイントス」はこのまとまりの全部。v0.115 の
+        ``flip_chain`` と同じ形）。やり直すなら、最初から「うら」が出るまで投げ直す（最初の並びの長さにそろえない。枚数は最初と違いうる）。決定の前の並びは使わず、あとの処理には
+        最後の並びだけを渡す。v0.117 までは、ESPのついたポケモンがこのコインを投げると内部エラーにしていた（「今の写しでは起こらない」という前提が誤りで、［サイコリンク］と超の色マーカーで
+        届く。docs 2 章）。"""
+        attacker = self.attacker()
+        flipper = self.player
+        if self.esp_preset is not None:
+            preset, results = self.esp_preset
+            if preset not in (ESP_UNTIL_KEPT, ESP_UNTIL_REDO) or len(self.state.log) != self.element_log or not until_tails_complete(results):
+                raise RuntimeError("ナツメのESPのやり直しのあとの要素が、決定の前と違うコイン・ログの処理をした（エンジンの不具合）")
+            self.esp_preset = None
+            if preset == ESP_UNTIL_KEPT:
+                return CoinFlips(tuple(CoinSide(side) for side in results))
+            return self._esp_rerun(classes, flipper, E.esp_cards(self.state, attacker), CoinFlips(tuple(CoinSide(side) for side in results)))
+        flips = self._until_flips(classes, flipper)
+        cards = E.esp_cards(self.state, attacker)
+        if not cards:
+            return flips
+        problem = self._esp_begin(attacker, cards, flipper)
+        if self.res.dry_run:
+            # 先読み: やり直さない・やり直す（止める選択は試さない）の両方を試す。やり直すなら、最初から「うら」が出るまで投げ直す（最初と最後の「おもて」の数は、どちらも組の代表で試す）
+            answers = [()] + ([] if problem is not None else [(1,)])
+            if not self.res.oracle.choose(answers):
+                return flips
+            return self._esp_rerun(classes, flipper, cards, flips)
+        raise EspRedoOffer(len(flips.results), False, flipper, flips, cards, problem, until_tails=True)
+
+    def flip_each(self, players: tuple[int, ...]) -> CoinFlips:
+        """v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 7 章）: プレイヤー ``players`` が順に 1 枚ずつ投げる、説明の 1 つのコイントス（ふしぎなかおりの「お互いのプレイヤーは、それぞれ
+        コインを投げる」）。結果は投げた順の面の並び（1 人だけなら ``flip(1, player=...)`` と同じ）。
+
+        ナツメのESPのやり直しは、まとまりを投げ終えたあとに 1 回だけ聞く。まとまりに相手プレイヤーのコインがあるので、やり直すは選べるが選ぶと止める（ES1。``esp_redo_problem``）。
+        決定の続きの情報の ``esp`` の 7 つめは ``("players", 並び)``。決定のあとは最初の並びを使う。2 回に分けたコイントス（ES0）にはしない。"""
+        if len(players) == 1:
+            return self.flip(1, player=players[0])
+        attacker = self.attacker()
+        if self.esp_preset is not None:
+            preset_count, results = self.esp_preset
+            if preset_count != len(players) or len(self.state.log) != self.element_log:
+                raise RuntimeError("ナツメのESPのやり直しのあとの要素が、決定の前と違うコイン・ログの処理をした（エンジンの不具合）")
+            self.esp_preset = None
+            return CoinFlips(tuple(CoinSide(side) for side in results))
+        results: tuple[CoinSide, ...] = ()
+        for player in players:
+            results += flip_coins(self.state, player, 1, source="attack", effect=str(self.key), card=attacker.card, pokemon_id=attacker.pokemon_id).results
+        flips = CoinFlips(results)
+        cards = E.esp_cards(self.state, attacker)
+        if not cards:
+            return flips
+        flipper = next(player for player in players if player != self.player)
+        problem = self._esp_begin(attacker, cards, flipper)
+        if problem is None:
+            raise RuntimeError("相手プレイヤーのコインを含むコイントスのやり直しに、止める理由がない（エンジンの不具合）")
+        if self.res.dry_run:
+            self.res.oracle.choose([()])  # 先読み: やり直さない（やり直すは選ぶと止める選択なので試さない）
+            return flips
+        raise EspRedoOffer(len(players), False, flipper, flips, cards, problem, players=tuple(players))
+
+    def _until_flips(self, classes, flipper: int) -> CoinFlips:
+        attacker = self.attacker()
+        return flip_until_tails(self.state, flipper, source="attack", effect=str(self.key), card=attacker.card, pokemon_id=attacker.pokemon_id, classes=classes)
+
+    def _esp_rerun(self, classes, flipper: int, cards: tuple[int, ...], original) -> CoinFlips:
+        """v0.118: ナツメのESPで、「うら」が出るまで投げるコインを最初から投げ直す（同じプレイヤー。最初の結果は使わない）。ログ ``esp_redo``（最初の並び・やり直した並び。枚数は違いうる）。"""
+        attacker = self.attacker()
+        redone = self._until_flips(classes, flipper)
+        self.state.add_event("esp_redo", player=self.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(self.key), cards=tuple(cards),
+                             original=tuple(side.value for side in original.results), redone=tuple(side.value for side in redone.results))
+        return redone
+
+    def _esp_carry_check(self) -> None:
+        """v0.114: ナツメのESPのやり直しの決定のあとにもう一度処理する要素（とそのあと）が名前で読む前の要素の結果のうち、続きの情報で運ぶ種類（トラッシュ・ダメージ・入れ替えの結果。
+        先に選んだ対象・色はどの決定でも運ぶ。``suspend``）でないものがあれば、黙って省かずに ``UNSUPPORTED_ESP_CONTINUATION``（エンジンの未対応。先読みが宣言の前に見つける）。
+        今の写しの並びでは起こらない（docs/baby-rules-evolution-v0.114.md 3 章の探索）。"""
+        later = _read_names(self.program[self.index:])
+        missing = sorted(name for name, result in self.fs.results.items()
+                         if name in later and not isinstance(result, (Discarded, E.DamageResult, ChosenTarget, ChosenColor, ChosenOption)) and type(result) is not int)
+        if missing:
+            raise UnsupportedError("UNSUPPORTED_ESP_CONTINUATION",
+                                   f"ナツメのESPのやり直しのあとの要素が読む前の要素の結果 {missing} を、続きの情報で運べない（エンジンの未対応）")
+
+    def _esp_begin(self, attacker: PokemonInPlay, cards: tuple[int, ...], flipper: int) -> tuple[str, str] | None:
+        """v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 2 章）: 説明文のコインを投げたあと、ナツメのESPのやり直しを聞く前の確かめ。聞いたことを記録し、やり直すを選ぶと止める
+        理由 (コード, 理由の文) を返す（止めなければ None）。
+
+        - 同じワザ（要素の並び）の説明文のコイントスで 2 回目に聞く: ES0（コードのない問い。今の写しのワザは、どれも説明文のコイントスを 1 回にまとめて投げる）
+        - 宣言したワザの説明文のコインで聞いたあとに、そのワザが自分のワザとして使う別のワザ（ちょうのうりょくの「おもて」3 枚・ゆびをふるの「おもて」のあとに選んだワザ）の説明文の
+          コインを投げた: そのコインが「そのワザの説明文に書かれているすべてのコイントス」に入るか（入るなら 2 回目のやり直しになるか）は決まらないので、やり直すは選ぶと止める
+          （EC1。``E.ESP_COPIED_COINS_CODE``）。やり直さないは、どの読み方でも答えになる（「のぞむなら」）。v0.119 までは、ここを今の写しでは起こらない ES0 として内部エラーにしていた
+        - それ以外は v0.66 の ES1〜ES3（``E.esp_redo_problem``）
+        """
+        if self.key in self.esp_asked:
+            raise self.res.question("esp_separate_coin_tosses", f"ポケモン {attacker.pokemon_id}・ワザ {self.key}")
+        earlier = self.esp_asked
+        self._esp_carry_check()
+        self.esp_mark()
+        if earlier:
+            return E.ESP_COPIED_COINS_CODE, f"{E.ESP_COPIED_COINS_REASON}（先に聞いたワザ {'・'.join(str(key) for key in earlier)}・このワザ {self.key}）"
+        return E.esp_redo_problem(self.state, attacker, cards, flipper, self.player)
+
+    def esp_mark(self) -> None:
+        """v0.120: 処理している要素の並びのワザ（``key``）で、ナツメのESPのやり直しを聞いたことを記録する（``esp_asked``）。"""
+        if self.key not in self.esp_asked:
+            self.esp_asked += (self.key,)
 
     def _esp_reflip(self, count: int, by_heads: bool, flipper: int, cards: tuple[int, ...], original) -> CoinFlips:
         """v0.66: ナツメのESPで、説明文のコイントスをすべて投げ直す（同じ枚数・同じプレイヤー。最初の結果は使わない）。ログ ``esp_redo``（最初の結果・やり直した結果）。"""
@@ -271,8 +477,17 @@ class AttackRun:
             self.fs.results[entry[0]] = ChosenTarget(entry[1], entry[2] if len(entry) > 2 else None)
         for name, color in carried.get("chosen_colors", ()):
             self.fs.results[name] = ChosenColor(None if color is None else EnergyType(color))  # v0.88
+        for name, chosen in carried.get("chosen_options", ()):
+            self.fs.results[name] = ChosenOption(bool(chosen))  # v0.118
+        group_power = carried.get("group_power")
+        self.res.group_power = None if group_power is None else tuple(group_power)  # v0.118
         for name, values in carried.get("damage_results", ()):
             self.fs.results[name] = E.DamageResult(*values)  # v0.87
+        for name, cards, outcome in carried.get("discarded_results", ()):
+            self.fs.results[name] = Discarded(tuple(cards), outcome)  # v0.113: ESPのやり直しのあとの要素が読むトラッシュの結果
+        for name, pokemon_id in carried.get("switched_results", ()):
+            self.fs.results[name] = int(pokemon_id)  # v0.114: ESPのやり直しのあとの要素が読む入れ替えの結果（入れ替えて出た控えポケモンの番号）
+        self.esp_asked = tuple(E.AttackKey(*key) for key in carried.get("esp_asked", ()))  # v0.120
         frame = dict(carried.get("frame", ()))
         for pid, value in frame.get("reception", ()):
             self.fs.reception[pid] = bool(value)
@@ -323,9 +538,11 @@ class AttackRun:
         if knocked:
             # v0.81（FB1）: きあいのハチマキのついたポケモンが、相手のワザのダメージで HP 以上になったあとに、同じワザの要素の対象になる（すぐあとにコインを投げる読み方では
             # 残りHP 10 で対象になりうる）
-            from .kernel import focus_band_timing
+            from .kernel import focus_band_timing, knockout_survival_timing
 
             focus_band_timing(self.res, pokemon, f"HP 以上になったあとのワザ {self.key} の要素")
+            # v0.110（KS1）: 残りHPがなくなっても「きぜつ」しない効果のポケモンが、HP 以上になったあとに同じワザの要素の対象になる（すぐあとに残りHP 10 にする読み方では対象になりうる）
+            knockout_survival_timing(self.res, pokemon, f"HP 以上になったあとのワザ {self.key} の要素")
         return knocked
 
     def ko_prevention_conflict(self, target: PokemonInPlay, owner: int | None = None) -> None:
@@ -410,15 +627,49 @@ class AttackRun:
         if colors:
             # v0.88: 先に選んだ色（コアストリーム・レインボーウェーブ。``ChooseColor``）。あとのダメージの要素が順番の決定などで止まっても、選び直さない
             extra += (("chosen_colors", colors),)
+        chosen_options = tuple(sorted((name, int(result.chosen)) for name, result in self.fs.results.items() if isinstance(result, ChosenOption)))
+        if chosen_options:
+            # v0.118: 「のぞむなら」の決定の答え（エアロウイングの投げる・投げない。``OptionalCoin``）。あとの決定（ナツメのESPのやり直しなど）をまたいでも選び直さない
+            extra += (("chosen_options", chosen_options),)
+        if self.res.group_power is not None:
+            # v0.118: ワザといっしょに使った自分の場のポケモンの［XXXXX］（発生源・特殊能力・「おもて」の数）。使っていなければ書かない（v0.117 までの決定の形は変えない）
+            extra += (("group_power", self.res.group_power),)
+        if self.esp_asked and kind != ESP_REDO:
+            # v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 2 章）: このワザでナツメのESPのやり直しを聞いた要素の並びのワザ。聞いていなければ書かない（v0.119 までの決定の形は
+            # 変えない）。v0.119 までは運ばず、ちょうのうりょくのコインで聞いたあとのワザを選ぶ決定をまたぐと聞いたことを忘れ、先読み（ES0 の内部エラー）と実際の処理（もう一度の
+            # やり直しを聞く）が食い違っていた。ESPのやり直しの決定は、答えのあとに処理している並びのワザを記録し直す（``apply_esp_redo``）ので書かない
+            extra += (("esp_asked", tuple((key.card_id, key.attack_index) for key in self.esp_asked)),)
         boundary = dict(extra).get("boundary")
         if boundary is not None:
             # v0.87: 要素のあいだの決定（［ぶんれつ］・［だつりょくえき］など。``boundary`` は次に処理する要素の位置）のあとの要素が、前のダメージの要素の結果を
             # 名前で読む（「ダメージを与えた後、…」の ``after_damage`` など）なら、その結果を運ぶ。読まなければ書かない（v0.86 までの決定の形は変えない）
             used_later = {value for later in self.program[boundary:] for value in _result_names(later)}
-            damage = tuple(sorted((name, tuple(dataclasses.astuple(result))) for name, result in self.fs.results.items()
+            # v0.109: 受けるときのコインで防ぐ期限つきの効果で受けなかった結果だけ、その効果の種類（``DamageResult.guard``）を加える（ほかは v0.108 までと同じ形。``carried_values``）
+            damage = tuple(sorted((name, result.carried_values()) for name, result in self.fs.results.items()
                                   if isinstance(result, E.DamageResult) and name in used_later))
             if damage:
                 extra += (("damage_results", damage),)
+        esp = dict(extra).get("esp")
+        if esp is not None:
+            # v0.113: ナツメのESPのやり直しのあとにもう一度処理する要素（とそのあと）が、前の要素の結果を名前で読むなら、その結果を運ぶ（読まなければ書かない。v0.112 までの決定の形は
+            # 変えない）。トラッシュの結果（わるいバクフーンの「ファイヤーラッシュ」・マチスのエレブーの「ほうでん」の、トラッシュした枚数だけ投げるダメージの要素のコイン）は
+            # ``discarded_results``（トラッシュしたカード・扱い）、ダメージの結果（キョウのドガースの「くもがくれガス」の「ダメージを与えた後」）は境目の決定と同じ ``damage_results``。
+            # v0.112 までは運ばず、［サイコリンク］でこれらのワザを使ったナツメのフーディンのESPの答えで内部エラー（``KeyError``）になっていた。ほかの種類の結果（入れ替えた控えの番号など）は運ばない
+            used_later = {value for later in self.program[esp[0]:] for value in _result_names(later)}
+            discarded = tuple(sorted((name, tuple(result.cards), result.outcome) for name, result in self.fs.results.items()
+                                     if isinstance(result, Discarded) and name in used_later))
+            if discarded:
+                extra += (("discarded_results", discarded),)
+            damage = tuple(sorted((name, result.carried_values()) for name, result in self.fs.results.items()
+                                  if isinstance(result, E.DamageResult) and name in used_later))
+            if damage:
+                extra += (("damage_results", damage),)
+            # v0.114（docs/baby-rules-evolution-v0.114.md 3 章）: 入れ替えの結果（``ForceSwitch`` の、入れ替えて出た控えポケモンの番号）も運ぶ。v0.113 までは運ばず、わるいアリアドスの
+            # 「からめとる」（入れ替え → この要素のコインで新しく出てきたポケモンをマヒ）を［サイコリンク］で使ったナツメのフーディンのESPの答えのあとに、マヒの要素が入れ替えなかったと
+            # 読んで、黙ってマヒを省いていた（``Status.after_switch``）。入れ替え・コインは処理し直さない（運んだ値を読むだけ）
+            switched = tuple(sorted((name, result) for name, result in self.fs.results.items() if type(result) is int and name in used_later))
+            if switched:
+                extra += (("switched_results", switched),)
         if carry:
             frame = (
                 ("reception", tuple(sorted((pid, int(value)) for pid, value in self.fs.reception.items()))),
@@ -546,6 +797,12 @@ def suspend_esp_redo(run: AttackRun, index: int, offer: EspRedoOffer) -> None:
     if run.esp_preset is not None:
         raise RuntimeError("ナツメのESPのやり直しの決定を待つ間に、もう一度決定を出そうとした（エンジンの不具合）")
     esp = (index, offer.count, offer.by_heads, offer.flipper, tuple(side.value for side in offer.flips.results), tuple(offer.cards))
+    if offer.chain is not None:
+        esp += (("chain", offer.chain.coins),)  # v0.115: 条件つきで続けて投げるコインのまとまり（最大の枚数）。v0.114 までの 6 つの値の形は変えない
+    elif offer.until_tails:
+        esp += (ESP_UNTIL_TAILS,)  # v0.118: 「うら」が出るまで投げるコインのまとまり（枚数は最初の並びの長さ。やり直しの枚数は決まらない）
+    elif offer.players:
+        esp += (("players", tuple(offer.players)),)  # v0.118: お互いのプレイヤーが 1 枚ずつ投げる 1 つのコイントス（投げた順のプレイヤー）
     unresolved = _unresolved_extra((1,), *offer.problem) if offer.problem is not None else ()
     run.suspend(kind=ESP_REDO, player=run.player, options=(1,), min_choices=0, max_choices=1, carry=True, extra=(("esp", esp),) + unresolved)
 
@@ -555,15 +812,43 @@ def apply_esp_redo(run: AttackRun, esp: tuple, choices: tuple[int, ...]) -> int:
     もう一度処理する要素の位置を返す。"""
     from ..coins import CoinFlips
 
-    index, count, by_heads, flipper, original, cards = esp
+    index, count, by_heads, flipper, original, cards = esp[:6]
     flips = CoinFlips(tuple(CoinSide(side) for side in original))
     attacker = run.attacker()
+    if len(esp) == 7 and esp[6][0] == "chain":
+        # v0.115: 条件つきで続けて投げるコインのまとまり。やり直すなら、もう一度処理する要素が同じまとまりを最初から投げ直す（ログ ``esp_redo`` もそこで残す。枚数は面で変わりうる）
+        if not choices:
+            run.state.add_event("esp_redo_declined", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                                cards=tuple(cards), original=tuple(original))
+        run.esp_mark()
+        run.esp_preset = (ESP_CHAIN_REDO if choices else ESP_CHAIN_KEPT, flips.results)
+        return index
+    if len(esp) == 7 and tuple(esp[6]) == ESP_UNTIL_TAILS:
+        # v0.118: 「うら」が出るまで投げるコインのまとまり。やり直すなら、もう一度処理する要素が最初から「うら」が出るまで投げ直す（ログ ``esp_redo`` もそこで残す。先読みの「おもて」の数の組は
+        # その要素だけが求められるので、ここでは投げない）
+        if not choices:
+            run.state.add_event("esp_redo_declined", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                                cards=tuple(cards), original=tuple(original))
+        run.esp_mark()
+        run.esp_preset = (ESP_UNTIL_REDO if choices else ESP_UNTIL_KEPT, flips.results)
+        return index
+    if len(esp) == 7 and esp[6][0] == "players":
+        # v0.118: お互いのプレイヤーが 1 枚ずつ投げる 1 つのコイントス。相手プレイヤーのコインを含むので、やり直すは選ぶと止める（ES1。答えの確かめで止まる）
+        if choices:
+            raise RuntimeError("相手プレイヤーのコインを含むコイントスのやり直しを処理しようとした（ES1 で止める選択。エンジンの不具合）")
+        run.state.add_event("esp_redo_declined", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                            cards=tuple(cards), original=tuple(original))
+        run.esp_mark()
+        run.esp_preset = (count, flips.results)
+        return index
+    if esp[6:]:
+        raise RuntimeError(f"ナツメのESPの続きの情報 {esp!r} の形が正しくない（エンジンの不具合）")
     if choices:
         flips = run._esp_reflip(count, by_heads, flipper, tuple(cards), flips)
     else:
         run.state.add_event("esp_redo_declined", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
                             cards=tuple(cards), original=tuple(original))
-    run.esp_done = True
+    run.esp_mark()
     run.esp_preset = (count, flips.results)
     return index
 
@@ -737,6 +1022,9 @@ def offer_flee(run: AttackRun, index: int) -> bool:
             continue
         options = tuple(b.pokemon_id for b in p.bench)
         if E.knocked_by_hp(state, pokemon):
+            from .kernel import knockout_survival_timing
+
+            knockout_survival_timing(res, pokemon, "HP 以上になったあとの［にげこむ］")  # v0.110（KS1）: すぐあとに残りHP 10 にする読み方では KD1 に当たらない
             unresolved, code, reason = options, E.KNOCKED_OUT_REACTION_CODE, E.KNOCKED_OUT_REACTION_REASON  # KD1（同じワザのダメージで HP 以上）
         elif own_attack:
             unresolved, code, reason = options, E.FLEE_OWN_ATTACK_CODE, E.FLEE_OWN_ATTACK_REASON
@@ -773,18 +1061,33 @@ def ninja_trick_leave_question(run: AttackRun, pokemon: PokemonInPlay) -> None:
         raise run.res.question("ninja_trick_leaves_play", f"ポケモン {pokemon.pokemon_id}（変わり身の術 {list(tricks)}）")
 
 
-def guarded_damages(run: AttackRun, element: Element, entries, after: Any = None, record: bool = False) -> bool:
+def guarded_damages(run: AttackRun, element: Element, entries, after: Any = None, record: bool = False, *, guard: tuple[int, ...] | None = None,
+                    optional: bool | None = None) -> bool:
     """控えポケモンへのダメージを順に与える（``entries`` は (受けるもの, ポケモンの番号, 基本となるダメージ, 弱点・抵抗力を計算するか) の並び）。［ベンチガード］の決定が要るときは、
     残りの並び（今のダメージを含む）・要素の続き（``after``）を続きの情報で運び、決定を出して True を返す（``resume_guarded`` で続ける）。``record`` なら、要素の結果に
-    最後のダメージの結果を置く。"""
+    最後のダメージの結果を置く。
+
+    v0.119: 受ける控えポケモンの 8 段階の使うかを選ぶ効果（［シェルアーマー］。``damage.DamageOptionRequired``）も、同じ形で決定（``DAMAGE_OPTION``。決めるのは受けるポケモンの持ち主）を
+    出す（p.321 の計算の中なので［ベンチガード］の決定より先）。``guard``・``optional`` は運んだ並びの最初のダメージの答え（決めた答えは、そのダメージのあとの［ベンチガード］の決定の
+    続きにも運ぶ）。先読みでは、使う・使わないの両方を試す。"""
     entries = tuple(tuple(entry) for entry in entries)
     for i, entry in enumerate(entries):
         kind, pid, base, wr = entry[:4]
+        first_guard, first_optional = (guard, optional) if i == 0 else (None, None)
         try:
-            result = deal_damage(run.res, run.fs, kind, base, pokemon_id=pid, weakness_resistance=bool(wr), guard_suspend=True, **_ignored_effects(entry))
+            result = deal_damage(run.res, run.fs, kind, base, pokemon_id=pid, weakness_resistance=bool(wr), guard=first_guard, guard_suspend=True,
+                                 optional=first_optional, optional_decision=True, **_ignored_effects(entry))
         except BenchGuardRequest as request:
+            chosen = (("optional", int(first_optional)),) if first_optional is not None else ()
             run.suspend(kind=BENCH_GUARD, player=request.owner, options=list(request.options), min_choices=0, max_choices=request.max_choices, carry=True,
-                        extra=(("element", run.index), ("bench_guard", (entries[i:], after, int(record)))) + request.extra())
+                        extra=(("element", run.index), ("bench_guard", (entries[i:], after, int(record)))) + chosen + request.extra())
+            return True
+        except DamageOptionRequired as need:
+            if run.res.dry_run:
+                return guarded_damages(run, element, entries[i:], after, record, optional=run.res.oracle.choose([False, True]))
+            owner, receiver = run.state.find_pokemon(pid)
+            run.suspend(kind=DAMAGE_OPTION, player=owner, options=(receiver.pokemon_id,), min_choices=0, max_choices=1, carry=True,
+                        extra=(("element", run.index), ("bench_guard", (entries[i:], after, int(record))), *_option_extra(need)))
             return True
         if record:
             run.fs.results[element.name] = result
@@ -793,16 +1096,23 @@ def guarded_damages(run: AttackRun, element: Element, entries, after: Any = None
 
 def resume_guarded(run: AttackRun, element: Element, decision: PendingDecision, choices: tuple[int, ...]) -> None:
     """［ベンチガード］の答えのあと: 運んだ並びの最初のダメージを答えで与え（計算をやり直す。「とうめい」の結果は続きの情報。コインは投げ直さない）、残りを続け、要素の続き
-    （``Element.after_guarded``）を処理する。"""
+    （``Element.after_guarded``）を処理する。v0.119: 使うかを選ぶ効果の決定（``DAMAGE_OPTION``）の答えのあとも同じ（最初のダメージに答えを渡す。そのあとの［ベンチガード］の決定は
+    もう一度出しうる）。"""
     entries, after, record = run.carried["bench_guard"]
-    kind, pid, base, wr = entries[0][:4]
-    result = deal_damage(run.res, run.fs, kind, base, pokemon_id=pid, weakness_resistance=bool(wr), guard=tuple(choices), guard_suspend=True,
-                         **_ignored_effects(entries[0]))
-    if record:
-        run.fs.results[element.name] = result
-    if guarded_damages(run, element, entries[1:], after, bool(record)):
+    if decision.kind == DAMAGE_OPTION:
+        guard, optional = None, bool(choices)
+    else:
+        carried = run.carried.get("optional")
+        guard, optional = tuple(choices), (None if carried is None else bool(carried))
+    if guarded_damages(run, element, entries, after, bool(record), guard=guard, optional=optional):
         return
     element.after_guarded(run, after)
+
+
+def _option_extra(need: DamageOptionRequired) -> tuple:
+    """v0.119: 使うかを選ぶ効果の決定（``DAMAGE_OPTION``）の続きの情報の、効果 (段階, 発生源のカード, 数)・8 段階の前のダメージ・使わないときの最終ダメージ。"""
+    option = need.modifiers[0]
+    return (("option", (need.step, option.source, option.amount)), ("value", need.value), ("finals", tuple(sorted(need.finals))))
 
 
 def _ignored_effects(entry: tuple) -> dict:
@@ -919,13 +1229,11 @@ class HeadsUntilTails:
         return self.fixed + self.per * heads
 
     def flip_until_tails(self, run: AttackRun, element: Damage) -> CoinFlips:
+        """v0.118: ナツメのESPのやり直しは ``AttackRun.flip_until_tails``（「うら」が出るまでの一まとまりのあとに聞き、やり直すなら最初から投げ直す）。v0.117 までは、ESPのついた
+        ポケモンがこのワザを使うと内部エラーにしていた（［サイコリンク］と超の色マーカーで届く。docs/unbounded-coins-heal-allocation-v0.118.md 2 章）。先読みの組は、最初と
+        やり直しのどちらのコインでも、この要素の今の場から求める（ESPの決定のあいだに場は変わらない）。"""
         from .unbounded import head_classes
 
-        attacker = run.attacker()
-        if E.esp_cards(run.state, attacker):
-            # v0.66: ナツメのESPのやり直しは ``AttackRun.flip`` のコインだけで聞く。「うら」が出るまで投げるコインを「ナツメのポケモン」が使う場面は今の写しでは起こらない
-            # （黙ってやり直しを聞かない処理にしない。docs/optional-trainers-v0.66.md 9.5 節）
-            raise RuntimeError(f"ナツメのESPのついたポケモン {attacker.pokemon_id} が「うら」が出るまで投げるコインのワザを使った（v0.66 では起こらない組み合わせ。エンジンの不具合）")
         found: list = []
 
         def classes():
@@ -933,8 +1241,7 @@ class HeadsUntilTails:
                 found.append(head_classes(run, element, self.per))
             return found[0]
 
-        return flip_until_tails(run.state, run.player, source="attack", effect=str(run.key), card=attacker.card, pokemon_id=attacker.pokemon_id,
-                                classes=classes)
+        return run.flip_until_tails(classes)
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
         return self.damage_for(flips.heads)
@@ -1062,7 +1369,7 @@ class Element:
 
     def decides(self, kind: str) -> bool:
         """決定の種類 ``kind`` を出す要素か（再開する要素を決定の種類から探す。v0.16b から要素が答える）。v0.65: 控えポケモンへのダメージの要素は［ベンチガード］の決定も出す。"""
-        return (self.decision_kind is not None and self.decision_kind == kind) or (kind == BENCH_GUARD and self.guards_bench)
+        return (self.decision_kind is not None and self.decision_kind == kind) or (kind in (BENCH_GUARD, DAMAGE_OPTION) and self.guards_bench)
 
     # v0.65: 控えポケモンへのダメージを ``guarded_damages`` で与える要素（［ベンチガード］の決定を出して続けられる）
     guards_bench: ClassVar[bool] = False
@@ -1107,6 +1414,11 @@ class Element:
         ほか（ワザを使ったポケモン自身・控え・山札・手札への要素）は None: 相手の対戦ポケモンの「ダメージを受けない」「ワザをうけない」状態で無効に
         ならない。コインで処理が決まる要素を相手の対戦ポケモンに与える要素を加えたら、上書きする（tests が並びの要素の型を確かめる）。"""
         return None
+
+    def discard_protected(self, run: AttackRun) -> bool:
+        """v0.119（docs 8 章）: この要素が、トラッシュにあるカードを動かすことだけで、今［アレルギーほうし］がはたらいている（トラッシュのカードが効果を受けない）か。``Coin`` は、決める
+        要素の処理の対象のあるものがどれもそう（または ``leave_blocked``）で、そのうち 1 つ以上がこれなら、投げる前に AP1 にする。既定は偽（トラッシュのカードを動かす要素だけが上書きする）。"""
+        return False
 
     def leave_blocked(self, run: AttackRun) -> bool:
         """v0.94（docs/switch-return-attacks-v0.94.md 6 章）: ワザ全体のコインが決めるこの要素が、「バトル場をはなれられない」ポケモンをバトル場からはなれさせることだけか
@@ -1163,7 +1475,24 @@ class Coin(Element):
     count: int = 1
     per_attached: EnergyType | None = None
     per_opponent_energy: bool = False  # v0.83: 相手（相手の対戦ポケモン）についている「エネルギー」の数だけ（ひかるセレビィの「ミラクルリーフ」。エネルギーの個数）
+    # v0.112: ワザを実際に使ったポケモンについている「X」エネルギーの数だけ（ドククラゲ・オムスターの「しょくしゅをつかう」。エネルギーの個数で、``per_attached`` の基本エネルギー
+    # カードの枚数とは別。``typed_units_for`` の数え方と問い）
+    per_own_typed: EnergyType | None = None
+    # v0.113: 場のポケモンの数だけ（(範囲, 名前)。``counted_pokemon`` の範囲（``SCOPE_*``）と名前（None なら名前でしぼらない））。数えるのはこのコインの要素を処理する時点の場
+    # （バトル場とベンチの場のポケモン。進化して重なったカード・ついているカードを別の 1 匹にしない）。ピッピの「みんなでおどる」・ロケット団のニャースの「だいぎゃくてん？」は
+    # お互いの場（``FIELD_POKEMON``。数だけを使うので、うらのカード・場でポケモンとしてあつかうトレーナーも 1 匹で、正体を読まない）、ヤミカラスの「むれでつつく」は自分のベンチの
+    # 「ヤミカラス」（今の姿の名前の完全一致。名前の読めないうらのカードがあれば既存の FD1）
+    per_pokemon: tuple[str, tuple[str, ...] | None] | None = None
     phase: ClassVar[Phase] = Phase.NEUTRAL
+
+    def __post_init__(self) -> None:
+        if sum((self.per_attached is not None, self.per_opponent_energy, self.per_own_typed is not None, self.per_pokemon is not None)) > 1:
+            raise ValueError("コインの枚数の決め方（per_attached・per_opponent_energy・per_own_typed・per_pokemon）は 1 つだけ")
+        if self.per_pokemon is not None:
+            scope, names = self.per_pokemon
+            if scope not in (SCOPE_OWN_BENCH, SCOPE_OWN_IN_PLAY, SCOPE_BOTH_IN_PLAY) or not (
+                    names is None or (type(names) is tuple and names and all(type(name) is str and name for name in names))):
+                raise ValueError(f"場のポケモンの数え方 {self.per_pokemon!r} は (範囲, 名前のタプルか None)")
 
     def run(self, run: AttackRun) -> bool:
         count = self.count
@@ -1172,6 +1501,10 @@ class Coin(Element):
             count = len(E.attached_basic_energy(run.state, run.attacker(), self.per_attached))
         if self.per_opponent_energy:
             count = all_energy_units(run.state, run.opponent_active(), run)
+        if self.per_own_typed is not None:
+            count = typed_units_for(run, run.attacker(), self.per_own_typed)
+        if self.per_pokemon is not None:
+            count = len(counted_pokemon(run.state, run.player, *self.per_pokemon))
         decided = [element for element in run.program if element.coin_dependent(self.name)]
         if count and decided and not any(element.has_target(run) for element in decided):
             # v0.38: このコインが決める要素のどれにも処理の対象がない（フリーザーの「ふぶき」で、自分にも相手にも控えポケモンがいない）。投げない（p.309。
@@ -1185,12 +1518,18 @@ class Coin(Element):
             # v0.94（docs/switch-return-attacks-v0.94.md 6 章）: 「バトル場をはなれられない」ポケモンを動かすだけの要素（``leave_blocked``。その部分は起こらない）は、コインの結果で
             # 場を変えない。決める要素がどれもそうなら、投げるかが決まらない（AL2。v0.93 のやみのこえの ``has_target`` の確かめを、コインの側にまとめた）。ほかに有効な要素が
             # あれば投げ、その要素だけを無効の判定にかける（追加のダメージ・相手の特殊状態・自分の入れ替えを、移動が起こらないことで捨てない）
-            movable = [element for element in targeted if not element.leave_blocked(run)]
+            movable = [element for element in targeted if not element.leave_blocked(run) and not element.discard_protected(run)]
             if targeted and not movable:
+                protected = [type(element).__name__ for element in targeted if element.discard_protected(run)]
+                if protected:
+                    # v0.119（AP1。docs 8 章）: ［アレルギーほうし］でトラッシュのカードが効果を受けない要素だけ（処理の対象がないと読むか、効果を受けないだけと読むかで、投げるかが変わる）
+                    raise run.res.question("discard_protected_coin", f"ワザ {run.key} のコインが決める要素 {protected}・［アレルギーほうし］ "
+                                                                     f"{list(E.discard_protection(run.state))}")
                 raise run.res.question("leave_locked_coin", f"ワザ {run.key} のコインが決める要素 {[type(element).__name__ for element in targeted]} は、どれも"
                                                             "はなれられないポケモンの移動だけ")
             void_coin_question(run, movable)
-        by_heads = self.count > 1 or self.per_attached is not None or self.per_opponent_energy
+        by_heads = (self.count > 1 or self.per_attached is not None or self.per_opponent_energy or self.per_own_typed is not None
+                    or self.per_pokemon is not None)
         if by_heads and any(isinstance(getattr(element, "gate", None), tuple) and element.gate[0] == self.name and isinstance(element.gate[1], CoinSide)
                             for element in run.program):
             # v0.35: 2 枚以上のワザ全体のコインは、あとの要素が「おもて」の数（``coin_is`` の数・``heads``・``heads_of``）だけを使う。1 枚目の面を
@@ -1256,6 +1595,9 @@ class FailOnTails(Element):
 
     name: str = "coin"
     count: int = 1
+    # v0.121（docs/hand-bench-attack-conditions-v0.121.md 8 章）: ワザを使ったポケモンに、このワザのコインの「うら」でワザが失敗しなくなる効果（コイルの「ロックオン」。``E.failure_waiver``）が
+    # はたらいていれば、コインは実際に投げ、「うら」でも失敗しない（「うら」を書きかえない。ログ ``attack_failure_waived``）
+    waiver: bool = False
     phase: ClassVar[Phase] = Phase.NEUTRAL
 
     def run(self, run: AttackRun) -> bool:
@@ -1268,7 +1610,13 @@ class FailOnTails(Element):
         flips = run.flip(self.count, by_heads=True)  # v0.35: すべて「おもて」か（「おもて」の数が枚数か）だけを使う
         run.fs.coins[self.name] = flips
         if any(side is TAILS for side in flips.results):
-            run.fail("coin")
+            waiver = E.failure_waiver(run.state, run.attacker(), run.key) if self.waiver else None
+            if waiver is None:
+                run.fail("coin")
+            else:
+                attacker = run.attacker()
+                run.state.add_event("attack_failure_waived", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                                    persistent_effect=waiver.kind, target_pokemon=waiver.target_pokemon)
         return False
 
 
@@ -1313,27 +1661,42 @@ class Damage(Element):
     # v0.91: 受けるポケモンに種類 ``marker`` のマーカーがのっているときだけ与える（エレブーの「かみなりショック」の「「ひらいしんマーカー」をのせているすべてのポケモンに、それぞれ
     # 20ダメージ」の、相手の対戦ポケモンと自分へのダメージ）。この要素を処理する時点の場で見る。None ならマーカーを見ない
     marker: str | None = None
+    # v0.114: 受けるポケモンが、この要素を処理する時点で「特殊能力」を持っている（``effects.holds_power``）ときだけ与える（ピチューの「パチパチ」。うらのカードは持たないので、おもてにしない）
+    has_power: bool = False
+    # v0.115: 受けるポケモンの今有効なタイプがこれでないときだけ与える（サナギラスの「すなあらし」の「おたがいの場の「闘」ポケモン以外のポケモン全員に」の、相手の対戦ポケモンと自分への
+    # ダメージ。この要素を処理する時点のタイプ。読み方（VS1 ほか）で変われば止め、うらのカードはタイプを読めない（FD1）。``not_of_type``）。None ならタイプを見ない
+    exclude_type: EnergyType | None = None
+    # v0.115: 受けるポケモンが、この要素を処理する時点で「エネルギーカード」をつけているときだけ与える（わるいエーフィの「サイコスプラッシュ」。0 枚のポケモンは説明の対象ではない）
+    energy_cards: bool = False
     phase: ClassVar[Phase] = Phase.DAMAGE
 
     def coin_receiver(self) -> str | None:
         return "damage" if self.target == OPP else None
 
     def has_target(self, run: AttackRun) -> bool:
-        if self.names is None and self.color_filter is None and self.marker is None:
+        if (self.names is None and self.color_filter is None and self.marker is None and not self.has_power and self.exclude_type is None
+                and not self.energy_cards):
             return True
         _, receiver = receiver_of_target(run, self.target)
         if receiver is None:
             return False
         if self.marker is not None and not has_marker(receiver, self.marker):
             return False  # v0.91（うらのカードにはマーカーがないので、おもてにしない）
+        if self.has_power and not holds_power_now(run, receiver):
+            return False  # v0.114
+        if self.energy_cards and not E.attached_energy_cards(run.state, receiver):
+            return False  # v0.115（ついているカードは場の公開の情報。うらのカードもおもてにせずに数える）
+        if self.exclude_type is not None and not not_of_type(run, receiver, self.exclude_type):
+            return False  # v0.115
         if self.color_filter is not None and not color_filter_hit(run, receiver, self.color_filter):
             return False
         return self.names is None or E.form_def(run.state, receiver).name_ja in self.names  # v0.49: 今の姿の名前（［へんしん］・「ばける」）
 
     def decides(self, kind: str) -> bool:
         # v0.35: 同じ段階の変更効果の計算の順番の決定（``DAMAGE_STEP_ORDER``）。並びの中にダメージの要素が 2 つ以上あっても、続きの情報の
-        # ``element``（要素の位置）で区別する（``flow._resume_attack``）。v0.66: お上品攻撃の減らす量の決定（``DAMAGE_REDUCTION``）も
-        return kind in (DAMAGE_STEP_ORDER, DAMAGE_REDUCTION)
+        # ``element``（要素の位置）で区別する（``flow._resume_attack``）。v0.66: お上品攻撃の減らす量の決定（``DAMAGE_REDUCTION``）も。v0.119: 受けるポケモンの使うかを選ぶ
+        # 効果（［シェルアーマー］）の決定（``DAMAGE_OPTION``）も
+        return kind in (DAMAGE_STEP_ORDER, DAMAGE_REDUCTION, DAMAGE_OPTION)
 
     def run(self, run: AttackRun) -> bool:
         if self.gate is not None and not run.coin_is(self.gate):
@@ -1380,19 +1743,23 @@ class Damage(Element):
             if designate(run.res, run.fs, 1 - run.player, run.opponent_active(), "damage") is None:
                 run.fs.results[self.name] = E.DamageResult(OPP, 1 - run.player, run.opponent_active().pokemon_id, False, None, False, lost=True)
                 return False
-        base = 0 if zero else self.base.value(run, flips)
+        if self.target == OPP and run.res.group_power is not None and run.res.group_power[4] is None and run.fs.frame.kind is FrameKind.ATTACK:
+            group_power_coins(run, self)  # v0.118: ワザといっしょに使った［XXXXX］のコイン（相手の対戦ポケモンへのダメージの要素で投げる）
+        value_for = getattr(self.base, "value_for", None)  # v0.115: 受けるポケモンごとの基本となるダメージ（サイコスプラッシュ）
+        base = 0 if zero else (value_for(run, receiver_of_target(run, self.target)[1]) if value_for is not None else self.base.value(run, flips))
         return self._deal(run, base, {})
 
-    def _deal(self, run: AttackRun, base: int, orders: dict[int, tuple[int, ...]], reduction: int | None = None) -> bool:
+    def _deal(self, run: AttackRun, base: int, orders: dict[int, tuple[int, ...]], reduction: int | None = None, optional: bool | None = None) -> bool:
         """基本となるダメージ ``base`` を与える。同じ段階の変更効果の計算の順番によって結果が変わるなら、順番の決定を出して止まる（v0.35）。v0.66: お上品攻撃
-        （5 段階で好きなだけ小さくしてよい）の減らす量がまだ決まっていなければ、減らす量の決定を出して止まる（``reduction`` は決めた量）。"""
+        （5 段階で好きなだけ小さくしてよい）の減らす量がまだ決まっていなければ、減らす量の決定を出して止まる（``reduction`` は決めた量）。v0.119: 受けるポケモンの 8 段階の使うかを
+        選ぶ効果（［シェルアーマー］）を使うかがまだ決まっていなければ、受けるポケモンの持ち主に決定を出して止まる（``optional`` は決めた答え）。"""
         try:
             run.fs.results[self.name] = deal_damage(run.res, run.fs, self.target, base, weakness_resistance=self.weakness_resistance,
                                                     orders=orders or None, order_decision=True, resistance=self.resistance,
                                                     defender_effects=self.defender_effects, reduction=reduction,
-                                                    private_amount=getattr(self.base, "private", False))
+                                                    private_amount=getattr(self.base, "private", False), optional=optional, optional_decision=True)
         except DamageOrderRequired as need:
-            suspend_step_order(run, self, need, base, orders, reduction)
+            suspend_step_order(run, self, need, base, orders, reduction, optional)
             return True
         except DamageReductionRequired as need:
             if run.res.dry_run:
@@ -1400,14 +1767,23 @@ class Damage(Element):
                 return self._deal(run, base, orders, run.res.oracle.choose(reduction_answers(run, self, base, orders, need)))
             suspend_damage_reduction(run, self, need, base, orders)
             return True
+        except DamageOptionRequired as need:
+            if run.res.dry_run:
+                return self._deal(run, base, orders, reduction, run.res.oracle.choose([False, True]))  # v0.119: 先読みは使う・使わないの両方を試す
+            suspend_damage_option(run, self, need, base, orders, reduction)
+            return True
         return False
 
     def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        optional = None
         if decision.kind == DAMAGE_REDUCTION:
             base, orders, reduction = resume_damage_reduction(run, self, decision, choices)
+        elif decision.kind == DAMAGE_OPTION:
+            base, orders, reduction, optional = resume_damage_option(run, self, decision, choices)
         else:
             base, orders, reduction = resume_step_order(run, self, decision, choices)
-        self._deal(run, base, orders, reduction)
+            optional = carried_optional(run)
+        self._deal(run, base, orders, reduction, optional)
 
 
 @dataclass(frozen=True)
@@ -1444,12 +1820,14 @@ def program_may_fail(program: tuple) -> bool:
     """並びに、ワザを失敗させうる要素（コインで失敗する・条件で失敗する・トラッシュできなければ失敗する）があるか（v0.57。クチバシティジムの VM1）。"""
     # v0.93: 相手に控えがいないときの失敗（からめとる。``FailWithoutOpponentBench``）も数える
     # v0.100: 「スケッチ」（このカードが前の相手の番に場に出ていなければ失敗する。``UseLastOpponentAttack``）も数える
+    # v0.113: ベンチに空きがないときの失敗（ヤミカラスの「なかまをよぶ」。``BenchFromDeck.when_full``）も数える
     return any(isinstance(element, (FailOnTails, FailUnlessOpponentStatus, FailWithoutOpponentBench, UseLastOpponentAttack))
-               or (isinstance(element, DiscardOwnEnergy) and element.when_lacking == LACKING_FAIL) for element in program)
+               or (isinstance(element, DiscardOwnEnergy) and element.when_lacking == LACKING_FAIL)
+               or (isinstance(element, BenchFromDeck) and element.when_full == BENCH_FULL_FAIL) for element in program)
 
 
 def suspend_step_order(run: AttackRun, element: Element, need: DamageOrderRequired, base: int, orders: dict[int, tuple[int, ...]],
-                       reduction: int | None = None) -> None:
+                       reduction: int | None = None, optional: bool | None = None) -> None:
     """同じ段階の変更効果の計算の順番によって結果が変わる（v0.35。``damage.DamageOrderRequired``）。``DAMAGE_STEP_CHOOSER`` のプレイヤー（2・5・6 段階は
     ワザを使うプレイヤー、7・8 段階はダメージを受けるポケモンの持ち主。p.321）に、順番の決定（``DAMAGE_STEP_ORDER``）を出して止まる。
 
@@ -1476,6 +1854,8 @@ def suspend_step_order(run: AttackRun, element: Element, need: DamageOrderRequir
     resistance = (("resistance", False),) if getattr(element, "resistance", True) is False else ()
     # v0.66: お上品攻撃で決めた減らす量（6〜8 段階の順番の決定は減らす量のあと）。決めていなければ書かない（v0.65 までの決定の形は変えない）
     reduced = (("reduction", reduction),) if reduction is not None else ()
+    # v0.119: 決めた使うかを選ぶ効果の答え（8 段階の順番の決定は使うかのあと）。決めていなければ書かない（v0.118 までの決定の形は変えない）
+    reduced += (("optional", int(optional)),) if optional is not None else ()
     run.suspend(kind=DAMAGE_STEP_ORDER, player=chooser, options=tuple(range(len(permutations))),
                 extra=(("element", index), ("base", base), ("orders", tuple(sorted(orders.items()))), ("step", need.step), ("target", target),
                        ("receiver", receiver.pokemon_id), ("weakness_resistance", getattr(element, "weakness_resistance", True)),
@@ -1500,7 +1880,7 @@ def _uncarried_results_used_later(run: AttackRun, element: Element, index: int) 
     選んだ相手の対戦ポケモンへのダメージ・ひかるライチュウの「サンダースコール」の相手の対戦ポケモンへのダメージが順番・お上品攻撃の決定を出せず、エンジンの未対応で止まっていた）。"""
     used_later = {value for later in run.program[index + 1:] for value in _result_names(later)}
     return any(name in used_later for name, value in run.fs.results.items()
-               if name != getattr(element, "name", None) and not isinstance(value, (ChosenTarget, ChosenColor)))
+               if name != getattr(element, "name", None) and not isinstance(value, (ChosenTarget, ChosenColor, ChosenOption)))  # v0.118: ChosenOption も運ぶ
 
 
 def element_target(run: AttackRun, element: Element) -> str:
@@ -1524,9 +1904,11 @@ def reduction_answers(run: AttackRun, element: Element, base: int, orders: dict[
         try:
             calc = compute_damage(state, attacker, receiver, base, modifiers, weakness_resistance=element.weakness_resistance, orders=orders or None,
                                   resistance=element.resistance, reduction=amount)
-            key = ("final", calc.final, calc.stopped_after_step_2)
+            key = ("final", calc.final, calc.stopped_after_step_2, calc.nonpositive_alternative)
         except DamageOrderRequired as order:
             key = ("order", amount, order.step)  # 順番の決定が要る量は、まとめずに試す
+        except DamageOptionRequired:
+            key = ("option", amount)  # v0.119: 受けるポケモンの使うかを選ぶ効果の決定が要る量も、まとめずに試す
         seen.setdefault(key, amount)
     return list(seen.values())
 
@@ -1561,6 +1943,44 @@ def resume_damage_reduction(run: AttackRun, element: Element, decision: PendingD
         raise RuntimeError("減らす量の決定を待つ間に、ダメージを受けるポケモンが変わった（エンジンの不具合）")
     orders = {int(k): tuple(v) for k, v in carried.get("orders", ())}
     return carried["base"], orders, choices[0]
+
+
+def suspend_damage_option(run: AttackRun, element: Element, need: DamageOptionRequired, base: int, orders: dict[int, tuple[int, ...]], reduction: int | None) -> None:
+    """v0.119（docs/damage-reactions-poison-sleep-v0.119.md 3 章）: 受けるポケモンの 8 段階の使うかを選ぶ効果（［シェルアーマー］）の決定（``DAMAGE_OPTION``）を、受けるポケモンの持ち主に
+    出して止まる。選べるものは受けるポケモンの番号 1 つ（1 個: 使う・0 個: 使わない）。続きの情報は順番の決定と同じ形（要素の位置・基本となるダメージ（コインを投げ直さない）・前に選んだ
+    段階の順番・決めた減らす量・受けるポケモン）と、効果・8 段階の前のダメージ・使わないときの最終ダメージ。ダメージはまだ与えていない。前の要素がダメージを与えた並び・前の要素の
+    結果をあとの要素が使う並びでは、決定をまたいで運べないので、エンジンの未対応として止める。"""
+    index = next((i for i, candidate in enumerate(run.program) if candidate is element), None)
+    if index is None:
+        raise RuntimeError("使うかを選ぶ効果の決定を出すダメージの要素が、処理している要素の並びにない（エンジンの不具合）")
+    if run.fs.applied or run.fs.evaded or _uncarried_results_used_later(run, element, index):
+        raise run.res.question("damage_option_element", f"ポケモン {run.fs.frame.source_pid}（前の要素の結果を決定のあとに運べない）")
+    target = element_target(run, element)
+    owner, receiver = receiver_of_target(run, target)
+    resistance = (("resistance", False),) if getattr(element, "resistance", True) is False else ()
+    reduced = (("reduction", reduction),) if reduction is not None else ()
+    run.suspend(kind=DAMAGE_OPTION, player=owner, options=(receiver.pokemon_id,), min_choices=0, max_choices=1,
+                extra=(("element", index), ("base", base), ("orders", tuple(sorted(orders.items()))), ("target", target), ("receiver", receiver.pokemon_id),
+                       ("weakness_resistance", getattr(element, "weakness_resistance", True)), *resistance, *reduced, *_option_extra(need)),
+                carry=True)
+
+
+def resume_damage_option(run: AttackRun, element: Element, decision: PendingDecision, choices: tuple[int, ...]) -> tuple[int, dict, int | None, bool]:
+    """v0.119: 使うかを選ぶ効果の決定の答えのあと: 続きの情報の基本となるダメージ・段階の順番・減らす量と、使うか（1 個なら使う）を返す（コインを投げ直さない）。"""
+    carried = run.carried
+    if decision.kind != DAMAGE_OPTION or len(choices) > 1 or not set(choices) <= set(decision.options):
+        raise RuntimeError(f"使うかを選ぶ効果の決定の答え {choices!r} が、選べるものではない（エンジンの不具合）")
+    _, receiver = receiver_of_target(run, element_target(run, element))
+    if receiver.pokemon_id != carried["receiver"]:
+        raise RuntimeError("使うかを選ぶ効果の決定を待つ間に、ダメージを受けるポケモンが変わった（エンジンの不具合）")
+    orders = {int(k): tuple(v) for k, v in carried.get("orders", ())}
+    return carried["base"], orders, carried.get("reduction"), bool(choices)
+
+
+def carried_optional(run: AttackRun) -> bool | None:
+    """v0.119: 続きの情報で運んだ、使うかを選ぶ効果の答え（順番の決定の続き。決めていなければ None）。"""
+    value = run.carried.get("optional")
+    return None if value is None else bool(value)
 
 
 def resume_step_order(run: AttackRun, element: Element, decision: PendingDecision, choices: tuple[int, ...]) -> tuple[int, dict[int, tuple[int, ...]]]:
@@ -1602,6 +2022,21 @@ def _result_names(element: Element) -> set[str]:
     return found
 
 
+def _read_names(elements) -> set[str]:
+    """v0.114: 要素の並び（とその基本となるダメージの値）が、前の要素の結果として名前で読むもの。``_result_names`` から、要素自身が書く結果の名前の項目（``name``）を
+    除いたもの（ESPの続きの情報で運べない結果を見つける確かめに使う。運ぶ値を決めるのは ``_result_names``）。"""
+    found: set[str] = set()
+    for element in elements:
+        for holder in (element, getattr(element, "base", None)):
+            if holder is None or not dataclasses.is_dataclass(holder):
+                continue
+            for field in dataclasses.fields(holder):
+                value = getattr(holder, field.name)
+                if isinstance(value, str) and not (holder is element and field.name == "name"):
+                    found.add(value)
+    return found
+
+
 def local_coins(base: Any, run: AttackRun) -> int:
     """基本となるダメージ ``base`` が、ダメージの要素の中で投げるコインの枚数（v0.31 から、数が状態で決まるもの（``coin_count``）もある）。"""
     count = getattr(base, "coin_count", None)
@@ -1627,6 +2062,8 @@ class Status(Element):
     after_damage: str | None = None
     otherwise: str | None = None  # v0.34: この要素のコインが ``local_coin`` の面でないときの特殊状態（ドガースの「くさいガス」の「うら」のこんらん）
     poison_damage: int | None = None  # v0.34: 特殊などく（ニドキングの「どくどく」。どくのダメージの量。p.322「どく状態にかかるもの」）
+    # v0.119: どくのダメージカウンターの数にかける数（ツボツボの「どくどくエキス」の 2。``state.Poison.multiplier``）。1 なら通常のどく（``poison_damage`` がなければ）
+    poison_multiplier: int = 1
     # v0.45: 入れ替えの要素（``ForceSwitch``）の名前。入れ替えたとき（その結果があるとき）だけ、新しい相手の対戦ポケモンに与える（キョウのベトベターの「ベトベトハンド」）。
     # 入れ替えなかったら与えない（入れ替える前のポケモンに与えない）
     after_switch: str | None = None
@@ -1687,17 +2124,25 @@ class Status(Element):
             problem = paralysis_problem(run.state, owner, target)
             if problem is not None:
                 raise run.res.question("reparalysis_recovery_turn", problem.code, error=problem)
-        if self.poison_damage is not None and not immune:
+        special = self.poison_damage is not None or self.poison_multiplier != 1
+        if special and not immune:
+            # v0.119: どくの性質は (受けるダメージ, ダメージカウンターの数にかける数)。かける数だけが違うどく（「どくどくエキス」の 2 倍）も、受けるダメージの違うどくと同じ問い
             current = target.conditions.poison
-            if target.pokemon_id in run.res.trainer_poisoned and current is not None and current.damage != self.poison_damage:
+            wanted = (10 if self.poison_damage is None else self.poison_damage, self.poison_multiplier)
+            differs = current is not None and (current.damage, current.multiplier) != wanted
+            shown = ""
+            if differs:
+                shown = (f"どくのダメージ {current.damage} → {wanted[0]}" if (current.multiplier, wanted[1]) == (1, 1)
+                         else f"どくのダメージ {current.damage}・かける数 {current.multiplier} → {wanted[0]}・{wanted[1]}")
+            if target.pokemon_id in run.res.trainer_poisoned and differs:
                 # v0.56（KG1）: このワザのダメージで、トレーナー「キョウ」の効果がどく状態にしたポケモンを、ワザの効果が受けるダメージの違うどく状態にする（キョウの
                 # どくどくガス）。キョウの効果とワザの効果の順番が決まらない（ワザの効果が先なら p.322 の特殊などく → 通常のどく、キョウの効果が先なら v0.3a の 15）。
                 # v0.3a の 15 の問い（TP3）より先に聞く
-                raise run.res.question("trainer_poison_order", f"ポケモン {target.pokemon_id}（どくのダメージ {current.damage} → {self.poison_damage}）")
-            if current is not None and current.damage != self.poison_damage:
+                raise run.res.question("trainer_poison_order", f"ポケモン {target.pokemon_id}（{shown}）")
+            if differs:
                 # v0.34: どく状態のポケモンが、どくのダメージの違う特殊などくを受ける（p.322 は特殊などく → 通常のどくの向きだけを書く。
                 # v0.3a の 15。「とうめい」のコインより先に聞く。先読みがすべての結果を試すので、どちらでも宣言の前に止まる）
-                raise run.res.question("special_poison_overwrite", f"ポケモン {target.pokemon_id}（どくのダメージ {current.damage} → {self.poison_damage}）")
+                raise run.res.question("special_poison_overwrite", f"ポケモン {target.pokemon_id}（{shown}）")
         if self.local_coin is not None:
             if run.fs.reception.get(target.pokemon_id) is False:
                 final = run.fs.evaded.get(target.pokemon_id)
@@ -1713,8 +2158,8 @@ class Status(Element):
             condition = self.condition
         if not reaches(run.res, run.fs, owner, target, condition):
             return False
-        if condition == POISON and self.poison_damage is not None:
-            poison(run.state, owner, target, effect=str(run.key), damage=self.poison_damage)
+        if condition == POISON and (self.poison_damage is not None or self.poison_multiplier != 1):
+            poison(run.state, owner, target, effect=str(run.key), damage=10 if self.poison_damage is None else self.poison_damage, multiplier=self.poison_multiplier)
             return False
         APPLY_CONDITION[condition](run.state, owner, target, effect=str(run.key))
         return False
@@ -1890,28 +2335,8 @@ class ForceSwitch(Element):
             run.state.add_event("forced_switch_declined", player=opponent, attacker=run.player, attacker_pokemon_id=run.fs.frame.source_pid, effect=str(run.key),
                                 pokemon=old.card, pokemon_id=old.pokemon_id)
             return
-        index = next(i for i, pokemon in enumerate(p.bench) if pokemon.pokemon_id == choices[0])
-        require_can_leave(run.state, opponent, old)  # v0.93: 決定を出す前に確かめた（``run``）
-        p.active, p.bench[index] = p.bench[index], old
-        M.note_switch(run.state, opponent, old, p.active)  # v0.87: 入れ替えの事実（相手の［やけのこり］。次の要素の前に処理する）
-        extra = {"chosen_by": "attacker"} if self.chooser == "attacker" else {}  # v0.31: かどわかす（ふきとばしのログの形は v0.30 と同じ）
-        run.state.add_event(
-            "forced_switch",
-            player=opponent,
-            attacker=run.player,
-            attacker_pokemon_id=run.fs.frame.source_pid,
-            effect=str(run.key),
-            old_active=old.card,
-            new_active=p.active.card,
-            old_active_pokemon_id=old.pokemon_id,
-            new_active_pokemon_id=p.active.pokemon_id,
-            **extra,
-        )
-        clear_special_conditions(run.state, opponent, old, FORCED_SWITCH_REASON)
-        remove_persistent_effects(run.state, opponent, old, FORCED_SWITCH_REASON)
-        remove_source_left_effects(run.state, opponent, old)  # v0.92: 発生源がバトル場をはなれたら消える効果
-        mark_returned_to_bench(old)  # v0.48: 特殊能力で色を変えた記録に、ベンチにもどったことを残す（VS1）
-        E.discard_on_leaving_active(run.state, opponent, old)  # v0.65: バトル場をはなれた時にトラッシュするついているトレーナー（変わり身の術）
+        # v0.121: 入れ替えの共通の部分を ``swap_opponent_active`` に分けた（ぶきみなとおぼえと共通。ログ・処理の順番は v0.120 と同じ）
+        swap_opponent_active(run, opponent, old, choices[0], chosen_by="attacker" if self.chooser == "attacker" else None)
         run.fs.results[self.name] = p.active.pokemon_id  # v0.45: 入れ替えて出た控えポケモン
 
     @staticmethod
@@ -2163,6 +2588,8 @@ class DiscardOwnEnergy(Element):
     count: int | None = 1
     heads_of: str | None = None
     any_number: bool = False
+    # v0.117: トラッシュする数はそのコインの「うら」の数（コインの枚数 −「おもて」の数。エンテイの「メガフレイム」）。``heads_of`` と同じく、投げなかったコインは 0
+    tails_of: str | None = None
     gate: tuple | None = None
     local_coin: CoinSide | None = None
     name: str = "discard"
@@ -2180,7 +2607,7 @@ class DiscardOwnEnergy(Element):
     def decides(self, kind: str) -> bool:
         # v0.82: ついているものをすべてトラッシュする（``count`` が None。決定なし）要素は決定を出さない（ファイヤーの「ハイパーフレイム」は、「おもて」の 1 枚を選ぶ要素と
         # 「うら」のすべての要素が並ぶ。再開する要素を決定の種類で探すときに、決定を出す要素だけを数える）
-        if self.count is None and self.heads_of is None and not self.any_number and not self.excess_over_cost:
+        if self.count is None and self.heads_of is None and self.tails_of is None and not self.any_number and not self.excess_over_cost:
             return False
         return super().decides(kind)
 
@@ -2197,11 +2624,18 @@ class DiscardOwnEnergy(Element):
             return max(0, len(self._candidates(run)) - required)
         if self.heads_of is not None:
             return run.heads(self.heads_of)
+        if self.tails_of is not None:
+            coins = run.fs.coins[self.tails_of]
+            return len(coins.results) - coins.heads
         return self.count
 
     def on_declare(self, res: Resolution, player: int, attacker: PokemonInPlay) -> None:
         if self.timing == TIMING_UNRESOLVED and attacker.conditions.confused:
             raise res.question("discard_energy_timing", f"ポケモン {attacker.pokemon_id}")
+        if self.timing == TIMING_UNRESOLVED and E.baby_rule_applies(res.state, player):
+            # v0.114: 相手のバトル場のベイビィポケモンのルールのコイン（宣言のあと・説明の処理の前）。トラッシュがワザを使うための条件（宣言のとき）か効果（コインのあと）かで、
+            # 「うら」でトラッシュするかが変わる（HC1 と同じ問い。CR-BABY-RULE-COIN-STEP の notes の「トラッシュしないと使えない」とベイビィのコインの前後）
+            raise res.question("discard_energy_timing", f"ポケモン {attacker.pokemon_id}（相手のバトル場のベイビィポケモンのルールのコイン）")
 
     def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
         need = self.copy_need if self.copy_need is not None else (1 if self.any_number else self.count)
@@ -2337,6 +2771,18 @@ class HealAllCounters(Element):
         return False
 
 
+def attached_in_attack(run: AttackRun, owner: int, pokemon: PokemonInPlay, cards, *, moved: bool = False) -> None:
+    """v0.116（docs/energy-movement-attachment-devolution-v0.116.md 4 章）: ワザの効果で、場のポケモン ``pokemon``（持ち主 ``owner``）にエネルギーカード ``cards`` がついたあと（カードを
+    動かしてログを残したあと）の反応を 1 枚ずつ処理する（``effects.energy_attached_by_effect``。［ほのおでかいふく］と、ついた時に発動するワザの持続効果）。``moved`` は場のほかの
+    ポケモンからのつけ替え。止める理由（AT1・反応の順番の未対応）は問いにする（先読みが宣言の前に見つける）。v0.115 までの ``effects.after_energy_attached`` の呼び出しを置きかえた
+    （持続効果のないポケモンでは同じ処理）。"""
+    for card in cards:
+        problem = E.attach_trigger_problem(run.state, pokemon, card, moved=moved, how=f"ワザ {run.key}")
+        if problem is not None:
+            raise run.res.question("attach_trigger_scope" if problem[0] == E.ATTACH_TRIGGER_SCOPE_CODE else "attach_trigger_order", problem[1])
+        E.energy_attached_by_effect(run.state, owner, pokemon, card, moved=moved, how=f"ワザ {run.key}")
+
+
 def suppressed_discard_to_hand(run: AttackRun) -> bool:
     """v0.74: 場のポケモンタワーで、ワザの「トラッシュからカードを取り出して手札に加える」要素の効果が消えるなら、ログ ``discard_to_hand_suppressed`` を残して True。
     相手のワザとして使った（まねた）ワザ・再録の登録も同じ要素なので、同じに当てはまる。実際の処理と先読み（状態の複製）で同じ問い合わせ。"""
@@ -2345,6 +2791,24 @@ def suppressed_discard_to_hand(run: AttackRun) -> bool:
         return False
     E.log_discard_to_hand_suppressed(run.state, run.player, tower, effect=str(run.key))
     return True
+
+
+def protected_discard(run: AttackRun, element: str) -> bool:
+    """v0.119（docs 8 章）: ［アレルギーほうし］がはたらいていて、ワザの要素 ``element`` の「トラッシュにあるカードを動かす」効果が起こらないなら、ログ ``discard_protected`` を残して True。
+    要素が処理される時点の場で問い合わせる（宣言のときの場ではない。同じワザの前の要素で発生源がきぜつ・特殊状態になれば、その時点から変わる）。相手のワザとして使った（まねた）ワザ・
+    再録の登録も同じ要素なので、同じに当てはまる。実際の処理と先読み（状態の複製）で同じ問い合わせ。ポケモンタワーの ``suppressed_discard_to_hand`` のあとに呼ぶ（両方なら、タワーのログ
+    だけ）。"""
+    if not E.discard_protection(run.state):
+        return False
+    attacker = run.state.find_pokemon(run.fs.frame.source_pid)
+    source = {} if attacker is None else {"pokemon": attacker[1].card, "pokemon_id": attacker[1].pokemon_id}
+    E.log_discard_protected(run.state, run.player, effect=str(run.key), element=element, **source)
+    return True
+
+
+def _discard_protected(self, run: AttackRun) -> bool:
+    """v0.119: トラッシュのカードを動かす要素の ``Element.discard_protected``（はたらいている［アレルギーほうし］があるか）。"""
+    return bool(E.discard_protection(run.state))
 
 
 @dataclass(frozen=True)
@@ -2359,9 +2823,13 @@ class RecoverEnergy(Element):
     def _candidates(run: AttackRun) -> list[int]:
         return [uid for uid in run.state.players[run.player].discard if run.state.card_def(uid).category == "energy"]
 
+    discard_protected = _discard_protected
+
     def run(self, run: AttackRun) -> bool:
         if suppressed_discard_to_hand(run):
             return False  # v0.74: ポケモンタワーで、この要素（トラッシュから手札に加える）の効果が消える。次の要素（自分へのダメージ）はそのまま
+        if protected_discard(run, "recover_energy"):
+            return False  # v0.119: ［アレルギーほうし］。次の要素はそのまま
         candidates = self._candidates(run)
         if not candidates:
             return False  # 選べるものがない。手札に加えるものはなく、次の要素へ（H5）
@@ -2596,6 +3064,8 @@ class BenchDamage(Element):
     requires: str | None = None  # v0.85: トラッシュの要素の名前。トラッシュできなかったら（「このワザのダメージは、すべてなくなる」。かえんぐるま）何もしない
     color_filter: tuple[str, str] | None = None  # v0.88: ``Damage.color_filter`` と同じ（コアストリーム・レインボーウェーブ）
     marker: str | None = None  # v0.91: ``Damage.marker`` と同じ（かみなりショック。マーカーのない控え・うらのカードは受けない）
+    has_power: bool = False  # v0.114: ``Damage.has_power`` と同じ（パチパチ。特殊能力を持っていない控え・うらのカードは受けない）
+    energy_cards: bool = False  # v0.115: ``Damage.energy_cards`` と同じ（サイコスプラッシュ。エネルギーカードをつけていない控えは受けない）
     phase: ClassVar[Phase] = Phase.DAMAGE
     guards_bench: ClassVar[bool] = True  # v0.65
 
@@ -2604,6 +3074,10 @@ class BenchDamage(Element):
         bench = run.state.players[side].bench
         if self.marker is not None:
             bench = [p for p in bench if has_marker(p, self.marker)]
+        if self.has_power:
+            bench = [p for p in bench if holds_power_now(run, p)]
+        if self.energy_cards:
+            bench = [p for p in bench if E.attached_energy_cards(run.state, p)]
         named = [p for p in bench if self.names is None or E.form_def(run.state, p).name_ja in self.names]  # v0.49: 今の姿の名前
         if self.color_filter is not None:
             named = [p for p in named if color_filter_hit(run, p, self.color_filter)]  # v0.88
@@ -2657,6 +3131,11 @@ class BenchDamage(Element):
             raise RuntimeError("控えポケモンへのダメージの量を、要素の中のコインで決めるワザはない（エンジンの不具合）")
         targets = self.targets(run)
         kind = E.SELF_BENCH if self.own else E.OPPONENT_BENCH
+        value_for = getattr(self.base, "value_for", None)  # v0.115: 受けるポケモンごとの基本となるダメージ（サイコスプラッシュ。控えごとに数える）
+        if value_for is not None:
+            if self.weakness_resistance is None:
+                raise RuntimeError("受けるポケモンごとの基本となるダメージで、弱点・抵抗力を書いていない控えへのダメージはない（エンジンの不具合）")
+            return guarded_damages(run, self, [(kind, target.pokemon_id, value_for(run, target), bool(self.weakness_resistance)) for target in targets])
         if self.weakness_resistance is None:
             differs = [p.pokemon_id for p in targets
                        if weakness_resistance_matters(run.res, run.fs, kind, self.base.value(run, None), p.pokemon_id)]
@@ -3028,6 +3507,7 @@ class RecoverTrainer(Element):
     requires: str | None = None
     phase: ClassVar[Phase] = Phase.EFFECT
     decision_kind: ClassVar[str] = RECOVER_TRAINER
+    discard_protected = _discard_protected
 
     @staticmethod
     def _candidates(run: AttackRun) -> list[int]:
@@ -3040,6 +3520,8 @@ class RecoverTrainer(Element):
                 return False
         if suppressed_discard_to_hand(run):
             return False  # v0.74: ポケモンタワー（エネルギーのトラッシュはすんでいて、取り消さない）
+        if protected_discard(run, "recover_trainer"):
+            return False  # v0.119: ［アレルギーほうし］（エネルギーのトラッシュは取り消さない）
         candidates = self._candidates(run)
         if not candidates:
             return False
@@ -3058,13 +3540,26 @@ class RecoverTrainer(Element):
 @dataclass(frozen=True)
 class Draw(Element):
     """山札からカードを ``count`` 枚引く（v0.31。わるいゴルダックの「だい3のめ」・第4弾のコダックの「めまい」・カスミのコダックの「ちょうのうりょく」）。
-    山札が足りなければ引けるだけ引く（効果で引くときの規定。p.312。v0.2b のマサキと同じ）。"""
+    山札が足りなければ引けるだけ引く（効果で引くときの規定。p.312。v0.2b のマサキと同じ）。
 
-    count: int
+    v0.112: ``heads_of`` はワザ全体のコイン（``Coin``）の名前で、引く枚数はその「おもて」の数 × ``per_heads``（ドククラゲ・オムスターの「しょくしゅをつかう」。``count`` は書かない）。
+    コインをすべて投げて確定したあとの要素なので、ナツメのESPのやり直しの決定の前には引かない。投げなかったコイン（0 枚）は 0 枚。"""
+
+    count: int | None = None
     gate: tuple | None = None
     requires: str | None = None
+    heads_of: str | None = None
+    per_heads: int = 1
     phase: ClassVar[Phase] = Phase.EFFECT
     reads_deck_order: ClassVar[bool] = True  # v0.40: 山札の上から引く
+
+    def __post_init__(self) -> None:
+        if (self.count is None) == (self.heads_of is None):
+            raise ValueError("引く枚数は count・heads_of のどちらか 1 つで決める")
+        if self.count is not None and (type(self.count) is not int or self.count < 0):
+            raise ValueError(f"引く枚数 {self.count!r} は 0 以上の整数")
+        if type(self.per_heads) is not int or self.per_heads < 1 or (self.per_heads != 1 and self.heads_of is None):
+            raise ValueError(f"「おもて」1 枚あたりの枚数 {self.per_heads!r} は、heads_of のときだけの正の整数")
 
     def run(self, run: AttackRun) -> bool:
         if self.gate is not None and not run.coin_is(self.gate):
@@ -3073,7 +3568,8 @@ class Draw(Element):
             discarded = run.fs.results.get(self.requires)
             if discarded is not None and discarded.outcome != "done":
                 return False
-        draw_cards(run.state, run.player, min(self.count, len(run.state.players[run.player].deck)))
+        wanted = self.count if self.heads_of is None else run.heads(self.heads_of) * self.per_heads
+        draw_cards(run.state, run.player, min(wanted, len(run.state.players[run.player].deck)))
         return False
 
 
@@ -3096,8 +3592,18 @@ class AttachFromDiscard(Element):
     max_cards: int
     # v0.45: ちょうど ``max_cards`` 枚（R団のサンダーの「プラズマ」の「あれば、1枚取り出して」。0 枚は選べない）。v0.31 の「たいでん」は「最大2枚」（0 枚は HC7）
     exact: bool = False
+    # v0.113: 選べるカードを、場の外のカードとしての種類・色で決める（``effects.off_field_typed_energy_card``。その色の基本エネルギーカードと、出すエネルギーがどれもその色 1 色の特殊エネルギー
+    # カード（悪エネルギーの「このカードは「悪」エネルギー1個ぶんとしてあつかう。」）。特殊エネルギーを基本エネルギーカードにはしない）。ヘルガー（neo3-044）の「ダークフレイム」の
+    # 「自分のトラッシュに「悪」エネルギーカードがあれば」（「悪」の基本エネルギーカードはない）。偽（既定）なら、その色の基本エネルギーカードだけ（v0.31〜v0.112 と同じ）。レインボー
+    # エネルギーはどちらも RB2、ミラクルエネルギー（場の外では色がない。v0.85）はどちらも選べない
+    typed_cards: bool = False
     phase: ClassVar[Phase] = Phase.EFFECT
     decision_kind: ClassVar[str] = ATTACH_FROM_DISCARD
+    discard_protected = _discard_protected
+
+    def __post_init__(self) -> None:
+        if self.typed_cards and (self.energy_type is None or self.energy_type is EnergyType.COLORLESS):
+            raise ValueError("場の外の種類・色で選ぶ（typed_cards）のは、「無色」以外の色のエネルギーカード")
 
     def _candidates(self, run: AttackRun) -> list[int]:
         if self.energy_type is None:
@@ -3107,6 +3613,9 @@ class AttachFromDiscard(Element):
             return [uid for uid in run.state.players[run.player].discard if run.state.card_def(uid).category == "energy"
                     and E.energy_attach_target_allowed(run.state, uid, run.attacker())]
         rainbow_attach_question(run, run.state.players[run.player].discard, self.energy_type)  # v0.58: RB2
+        if self.typed_cards:
+            return [uid for uid in run.state.players[run.player].discard if E.off_field_typed_energy_card(run.state, uid, self.energy_type)
+                    and E.energy_attach_target_allowed(run.state, uid, run.attacker())]
         return [uid for uid in run.state.players[run.player].discard
                 if run.state.card_def(uid).is_basic_energy and run.state.card_def(uid).provides is self.energy_type]
 
@@ -3120,6 +3629,8 @@ class AttachFromDiscard(Element):
             return False
         if attach_prevented(run, attacker, "attach_from_discard"):
             return False
+        if protected_discard(run, "attach_from_discard"):
+            return False  # v0.119: ［アレルギーほうし］（つけるカードを決めないので、RB2 にも当たらない）
         candidates = self._candidates(run)
         if not candidates:
             return False
@@ -3149,7 +3660,7 @@ class AttachFromDiscard(Element):
         run.state.add_event("attach_energy_from_discard", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id,
                             effect=str(run.key), cards=cards)
         for uid in cards:
-            E.after_energy_attached(run.state, run.player, attacker, uid)
+            attached_in_attack(run, run.player, attacker, (uid,))
 
     def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
         return combinations_answers(decision, range(1, decision.max_choices + 1))  # 0 枚は答えのときに止める（HC7）
@@ -3208,7 +3719,7 @@ class MoveOwnEnergyToBench(Element):
             target.energy.append(energy)
             state.add_event("attack_attach_energy", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
                             energy=energy, to_pokemon_id=target.pokemon_id)
-            E.after_energy_attached(state, run.player, target, energy)
+            attached_in_attack(run, run.player, target, (energy,), moved=True)
         else:
             state.players[run.player].discard.append(energy)  # 「とうめい」の「おもて」: エネルギーカードはトラッシュ（CR-TRANSPARENCY-ENERGY-BOMB）
             state.add_event("discard_energy", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
@@ -3242,19 +3753,29 @@ class MillOwnDeck(Element):
 @dataclass(frozen=True)
 class MillOpponentDeck(Element):
     """トラッシュの要素 ``from_discard`` でトラッシュしたのと同じ枚数のカードを相手の山札の上から取り、相手のトラッシュにすてる（v0.31。ファイヤーの
-    「やまやき」）。枚数が相手の山札より多い答えは、トラッシュの要素の答えのときに止めている（HC6）。"""
+    「やまやき」）。枚数が相手の山札より多い答えは、トラッシュの要素の答えのときに止めている（HC6）。
+
+    v0.115（docs/spread-damage-allocation-v0.115.md 6 章）: ``heads_of`` なら、ワザ全体のコインの「おもて」の数だけ（わるいバンギラスの「やまくだき」の「その後、「おもて」の数ぶんの
+    カードを、相手の山札の上からトラッシュする」。ダメージと同じ確定したコインの結果。ダメージが無効でもトラッシュする）。相手の山札がその数より少なければ HC6（``deck_short``。山札の
+    上から決まった枚数をトラッシュする効果で足りない場合。コインのあとに分かるので、先読みがコインのすべての結果を試して宣言の前に止める）。相手のポケモンへの効果ではない"""
 
     from_discard: str = "discard"
+    heads_of: str | None = None
     phase: ClassVar[Phase] = Phase.EFFECT
     reads_deck_order: ClassVar[bool] = True  # v0.40: 相手の山札の上からトラッシュする
 
     def run(self, run: AttackRun) -> bool:
-        discarded = run.fs.results.get(self.from_discard)
-        count = 0 if discarded is None else len(discarded.cards)
+        if self.heads_of is not None:
+            count = run.heads(self.heads_of)
+        else:
+            discarded = run.fs.results.get(self.from_discard)
+            count = 0 if discarded is None else len(discarded.cards)
         if count == 0:
             return False
         opponent = 1 - run.player
         if len(run.state.players[opponent].deck) < count:
+            if self.heads_of is not None:
+                raise run.res.question("deck_short", f"相手の山札 {len(run.state.players[opponent].deck)} 枚から {count} 枚（「おもて」の数）")
             raise RuntimeError(f"相手の山札が {count} 枚ない（答えのときに止めるはず。エンジンの不具合）")
         cards = discard_from_deck(run.state, opponent, count)
         attacker = run.attacker()
@@ -3419,6 +3940,403 @@ def copy_status(run: AttackRun, definition, attack, clause: str | None) -> tuple
     return None
 
 
+@dataclass(frozen=True)
+class CopyChosenAttack(CopyOpponentAttack):
+    """v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 5 章）: ワザを 1 つ選び、それを自分のワザとして使う（実装 ``effects.CopyAttackFromSource``）。v0.31 の ``CopyOpponentAttack`` と
+    同じく、選んだワザの要素の並びを、このワザの枠の中で、ワザを使ったポケモンのワザとして処理する（``run.redirect``。弱点・抵抗力・「このカード」はワザを使ったポケモン）。
+
+    - ``source``: 選べるワザの範囲（``E.copy_source_entries``。相手の対戦ポケモン・相手の場にいるポケモン・自分が進化する前に持っていたワザ）。決定の続きの情報は ``copy_source`` と
+      ``copy_attacks``（(カードの id, 位置) の並び。選べるものは並びの位置）
+    - ``cost``: ``E.COPY_COST_COMBINED`` なら、宣言したワザの必要なエネルギーに選んだワザの必要なエネルギーを合わせて、ワザを使うポケモンのエネルギーで照らす（別々にではない。
+      ``E.combined_cost_attack``）。払えないワザは選べない（説明が「使えない」とする）。エネルギーはトラッシュしない
+    - 選んだワザの条件（``copy_status``）: 説明が「使えない」とする（``ILLEGAL``）ワザは選べない。決まらない（``UNRESOLVED``）ワザは選べるが選ぶと止める（``condition_code``。相手のワザは
+      HC9、自分の進化前のワザは PE2）。範囲のワザの止める理由（VS1・VP1・PE1）も選ぶと止める（選択ごとの理由 ``unresolved_detail``）。エンジンが対応していないワザは選べるが選ぶと止める
+    - コインで選ぶワザ（``gate``）は、コインのあとに選ぶ（ESPのやり直しで確定する前に候補を確かめない。再開ではコインを投げ直さない）。選べるワザがなければ、処理の対象がないので何も
+      しない（p.309。``has_target`` も偽で、コインは投げない）。止めないワザが 1 つもなければ、宣言の前に止める
+    """
+
+    source: str = E.COPY_FROM_DEFENDER
+    cost: str = E.COPY_COST_EXEMPT
+    condition_code: str = "UNRESOLVED_COPIED_ATTACK"
+
+    def entries(self, run: AttackRun) -> list[tuple[E.AttackKey, tuple[str, str] | None]]:
+        return E.copy_source_entries(run.state, run.player, run.attacker(), self.source)
+
+    def has_target(self, run: AttackRun) -> bool:
+        return bool(self.entries(run))
+
+    def choice_status(self, run: AttackRun, key: E.AttackKey, held: tuple[str, str] | None) -> tuple[str, str, str | None] | None:
+        """選んだワザ ``key`` の (種類, 理由, 止めるコード)。選べて止めないなら None。種類は ``ILLEGAL``（選べない）・``UNRESOLVED``（選ぶと止める）・``UNSUPPORTED``。"""
+        definition = run.state.definitions[key.card_id]
+        attack = definition.attacks[key.attack_index]
+        status = copy_status(run, definition, attack, self.clause)
+        if status is not None:
+            return status[0], status[1], self.condition_code if status[0] == UNRESOLVED else None
+        if self.cost == E.COPY_COST_COMBINED:
+            combined = E.combined_cost_attack(run.attack, attack)
+            problem = E.attack_cost_problem(run.state, run.attacker(), combined)
+            if problem is not None:
+                return UNRESOLVED, problem.message, problem.code
+            if not E.attack_cost_payable(run.state, run.attacker(), combined):
+                return ILLEGAL, f"「{run.attack.name_ja}」に必要なエネルギーに加えて、「{attack.name_ja}」に必要なエネルギーがついていない", None
+        if held is not None:
+            return UNRESOLVED, held[1], held[0]
+        return None
+
+    def choices(self, run: AttackRun, entries) -> tuple[list[int], dict[int, tuple[str, str]], set[int]]:
+        """選べるもの（並びの位置。選べないワザを除く）・選ぶと止めるもの {位置: (コード, 理由)}・エンジンが対応していないもの。"""
+        options: list[int] = []
+        stops: dict[int, tuple[str, str]] = {}
+        unsupported: set[int] = set()
+        for i, (key, held) in enumerate(entries):
+            status = self.choice_status(run, key, held)
+            if status is not None and status[0] == ILLEGAL:
+                continue
+            options.append(i)
+            if status is None:
+                continue
+            name = E.attack_of(run.state, key).name_ja
+            if status[0] == UNSUPPORTED:
+                unsupported.add(i)
+            else:
+                stops[i] = (status[2], f"「{name}」: {status[1]}")
+        return options, stops, unsupported
+
+    def run(self, run: AttackRun) -> bool:
+        if self.gate is not None and not run.coin_is(self.gate):
+            return False
+        entries = self.entries(run)
+        if not entries:
+            return False
+        options, stops, unsupported = self.choices(run, entries)
+        detail = "・".join(f"{reason}（{code}）" for code, reason in stops.values())
+        if not [i for i in options if i not in stops and i not in unsupported]:
+            if not options:
+                # 選べるワザがない（どれも説明が「使えない」とする）。宣言の前の確かめ（``combined_copy_usage_problem``）が拒否するので、ここには来ない
+                raise RuntimeError(f"ワザを選ぶワザ {run.declared} で、選べるワザがない（宣言の前の確かめの漏れ。エンジンの不具合）")
+            if unsupported and not stops:
+                raise run.res.question("copied_attack_unsupported", f"範囲 {self.source}（{len(unsupported)} のワザが未対応）")
+            code = stops[min(stops)][0]
+            if code == "UNRESOLVED_COPIED_ATTACK":
+                raise run.res.question("copied_attack", f"範囲 {self.source}（{detail}）")
+            raise UnsupportedError(code, f"選べるワザがどれも選ぶと止めるもの（範囲 {self.source}。{detail}）")
+        extra: tuple = (("copy_source", self.source), ("copy_attacks", tuple((key.card_id, key.attack_index) for key, _ in entries)))
+        if stops:
+            first = stops[min(stops)]
+            extra += (("unresolved_choices", tuple(sorted(stops))), ("unresolved_code", first[0]), ("unresolved_reason", f"選ぶワザの処理が決められない（{detail}）"),
+                      ("unresolved_detail", tuple((i, code, reason) for i, (code, reason) in sorted(stops.items()))))
+        if unsupported:
+            extra += (("unsupported_choices", tuple(sorted(unsupported))),)
+        run.suspend(kind=SELECT_ATTACK, player=run.player, options=options, extra=extra)
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        card_id, index = run.carried["copy_attacks"][choices[0]]
+        key = E.AttackKey(card_id, index)
+        held = dict(self.entries(run)).get(key)
+        status = self.choice_status(run, key, held)
+        definition = run.state.definitions[card_id]
+        attack = definition.attacks[index]
+        if status is not None:
+            code = "UNSUPPORTED_COPIED_ATTACK" if status[0] == UNSUPPORTED else (status[2] or "UNRESOLVED_COPIED_ATTACK")
+            raise UnsupportedError(code, f"ワザ「{attack.name_ja}」を自分のワザとして使えない（{status[1]}）")
+        effect = run.state.effects.attack_effect(definition.id, attack, definition.attacks)
+        attacker = run.attacker()
+        run.state.add_event("copy_attack", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.declared),
+                            copied=str(key), copied_attack=attack.name_ja, copy_source=self.source)
+        run.redirect = (key, attack, BUILDERS[type(effect)](effect))
+
+
+def combined_copy_usage_problem(state: GameState, attacker: PokemonInPlay, effect) -> Exception | None:
+    """v0.120: 必要なエネルギーを合わせるワザ（ミュウの「サイコデュープ」。``E.CopyAttackFromSource`` の ``COPY_COST_COMBINED``）を宣言できるか（ワザを使うための条件。``checks.attack_request``
+    の ``usage_problem``）。選べるワザ（合わせた必要なエネルギーを払え、説明が使えないとしないもの）が 1 つもなければ使えない（「…ついていない限り、「サイコデュープ」は使えない」「ほかに
+    必要な条件…が満たせない時にも使えない」）。払えるワザがなければ ``INSUFFICIENT_ENERGY``、払えても条件をみたすワザがなければ ``COPIED_ATTACK_CONDITIONS``。状態は変えない
+    （確かめのための複製の上で、要素の ``choice_status`` を使う）。"""
+    located = state.find_pokemon(attacker.pokemon_id)
+    if located is None:
+        return None
+    owner = located[0]
+    probe = state.peek()
+    user = probe.find_pokemon(attacker.pokemon_id)[1]
+    key = next((option.key for option in E.available_attacks(state, attacker)
+                if state.effects.attack_effect(option.card_id, E.attack_of(state, option.key), state.definitions[option.card_id].attacks) == effect), None)
+    if key is None:
+        return None
+    attack = E.attack_of(state, key)
+    res = Resolution(probe)
+    fs = res.open_frame(FrameKind.ATTACK, parent=None, player=owner, source_pid=user.pokemon_id, attack_key=key)
+    element = CopyChosenAttack(effect.clause, source=effect.source, cost=effect.cost)
+    run = AttackRun(res, fs, (element,), attack)
+    entries = element.entries(run)
+    statuses = [element.choice_status(run, entry_key, held) for entry_key, held in entries]
+    if any(status is None or status[0] != ILLEGAL for status in statuses):
+        return None
+    payable = [entry_key for (entry_key, _), status in zip(entries, statuses, strict=True)
+               if E.attack_cost_payable(state, attacker, E.combined_cost_attack(attack, E.attack_of(state, entry_key)))]
+    if not payable:
+        return IllegalActionError("INSUFFICIENT_ENERGY", f"ワザ「{attack.name_ja}」: 必要なエネルギーに加えて選べるワザに必要なエネルギーがついていない（選べるワザ {len(entries)}）")
+    return IllegalActionError("COPIED_ATTACK_CONDITIONS", f"ワザ「{attack.name_ja}」: 必要なエネルギーを払える相手のワザ {[str(k) for k in payable]} は、どれもほかに必要な条件を満たせない")
+
+
+# ---------------------------------------------------------------- v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 7 章）
+
+
+@dataclass(frozen=True)
+class HeadsPlusPokemonCount:
+    """v0.120: ダメージの目安の数字 +（コインが「おもて」なら）数えた場のポケモンの数 × ``per``（カブト（neo2-014）の「ちからをあわせる」）。p.321 の 1 段階。コインはダメージの要素の中で、
+    ダメージの量だけを決める（v0.79 の ``HeadsPlusOwnCounters`` と同じ。受けるポケモンがダメージを受けない状態なら投げるかが決まらない v0.4b の問い）。「うら」・数が 0 なら目安の数字。
+    数えるのはダメージの要素を処理する時点（``counted_pokemon``。今の姿の名前の完全一致。名前の読めないうらのカードは FD1）。"""
+
+    per: int
+    scope: str
+    names: tuple[str, ...] | None = None
+    local_coins: ClassVar[int] = 1
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        if flips.results[0] is not HEADS:
+            return run.attack.damage
+        return run.attack.damage + len(counted_pokemon(run.state, run.player, self.scope, self.names)) * self.per
+
+
+@dataclass(frozen=True)
+class FailOnAllTails(Element):
+    """v0.120: コインを ``count`` 枚投げ、すべて「うら」ならワザは失敗する（キングドラの「たつまき」の「すべて「うら」なら、このワザは失敗する」。p.323「12 ワザの失敗」）。結果はワザ全体の
+    コイン ``name`` として、あとの要素（トラッシュの枚数 ``heads_of``）も使う（投げ直さない）。v0.31 の ``FailOnTails``（1 つでも「うら」なら失敗）とは失敗の条件が違う。コインの前に、
+    残りの要素を ``void_coin_question`` で確かめる（``FailOnTails`` と同じ）。"""
+
+    name: str = "coin"
+    count: int = 2
+    phase: ClassVar[Phase] = Phase.NEUTRAL
+
+    def run(self, run: AttackRun) -> bool:
+        index = next((i for i, element in enumerate(run.program) if element is self), None)
+        if index is None:
+            raise RuntimeError("ワザの失敗のコインの要素が、処理している要素の並びにない（エンジンの不具合）")
+        void_coin_question(run, [element for element in run.program[index + 1:] if not element.after_failure])
+        flips = run.flip(self.count, by_heads=True)  # 「おもて」の数（0 なら失敗）だけを使う
+        run.fs.coins[self.name] = flips
+        if flips.heads == 0:
+            run.fail("coin")
+        return False
+
+
+@dataclass(frozen=True)
+class DiscardOpponentEnergyByHeads(DiscardOpponentEnergy):
+    """v0.120: ワザ全体のコイン ``heads_of`` の「おもて」の数ぶんの「エネルギーカード」を、相手（相手の対戦ポケモン）からトラッシュする（キングドラの「たつまき」）。選ぶのはワザを使った
+    プレイヤー（決定 ``DISCARD_OPPONENT_ENERGY``。ちょうど「おもて」の数。ついている順にトラッシュ）。v0.31 の ``DiscardOpponentEnergy``（1 枚ずつ）の確かめ（タケシの保護・［KEEP］・
+    「ワザをうけない」・「とうめい」・リサイクルエネルギーなど）を使う。
+
+    - 「おもて」が 0 なら何もしない（ワザは前の要素で失敗している）。相手がこのワザで HP 以上・エネルギーカードがついていない（タケシの保護を含む）なら、処理の対象がない（p.309）
+    - ついているエネルギーカードが 1 枚以上で「おもて」の数より少ないときは、選べるだけ選ぶとは決まらない（FC1。``stated_cards_short``。v0.75 の「おにびあつめ」と同じ。min で丸めない）
+    """
+
+    heads_of: str = "coin"
+
+    def has_target(self, run: AttackRun) -> bool:
+        target = run.opponent_active()
+        return target is not None and not run.knocked_out(target) and bool(self._energy(run, target))
+
+    def run(self, run: AttackRun) -> bool:
+        heads = run.heads(self.heads_of)
+        opponent = 1 - run.player
+        target = run.opponent_active()
+        if not heads or target is None or run.knocked_out(target):
+            if heads and target is not None:
+                run.ko_prevention_conflict(target, opponent)
+            return False
+        if not self._energy(run, target) or not reaches(run.res, run.fs, opponent, target, E.ENERGY_DISCARD_ELEMENT):
+            return False
+        void = self._voided(run, target)
+        if void is not None:
+            E.note_energy_discard_voided(run.state, void, cause=E.DISCARD_BY_ATTACK, by_player=run.player, effect=str(run.key))
+            return False
+        options = self._energy(run, target)
+        if len(options) < heads:
+            raise run.res.question("stated_cards_short", f"相手のエネルギーカード {len(options)} 枚（「おもて」の数 {heads}）")
+        problems = {uid: E.energy_discard_problem(run.state, target, uid, cause=E.DISCARD_BY_ATTACK, by_player=run.player) for uid in options}
+        blocked = tuple(uid for uid in options if problems[uid] is not None)
+        if len(options) - len(blocked) < heads:
+            raise UnsupportedError(*problems[blocked[0]])
+        code, reason = problems[blocked[0]] if blocked else (None, None)
+        run.suspend(kind=DISCARD_OPPONENT_ENERGY, player=run.player, options=options, min_choices=heads, max_choices=heads,
+                    extra=(("target", target.pokemon_id),) + _unresolved_extra(blocked, code, reason), carry=True)
+        return True
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        blocked = set(decision.context_value("unresolved_choices", ()))
+        return [answer for answer in combinations_answers(decision, (decision.min_choices,)) if not blocked & set(answer)]
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        opponent = 1 - run.player
+        found = run.state.find_pokemon(run.carried["target"])
+        if found is None or found[0] != opponent or len(choices) != run.heads(self.heads_of) or any(uid not in found[1].energy for uid in choices):
+            raise RuntimeError(f"トラッシュに選んだカード {choices} が、相手の対戦ポケモンについている「おもて」の数のカードではない（エンジンの不具合）")
+        target = found[1]
+        attacker = run.attacker()
+        for energy in tuple(uid for uid in target.energy if uid in choices):
+            E.discard_energy_from_play(
+                run.state, target, (energy,), cause=E.DISCARD_BY_ATTACK, by_player=run.player,
+                log=lambda energy=energy: run.state.add_event("discard_attached_energy", player=opponent, pokemon=target.card, pokemon_id=target.pokemon_id,
+                                                              energy=energy, effect=str(run.key), attacker=run.player, attacker_pokemon_id=attacker.pokemon_id))
+
+
+@dataclass(frozen=True)
+class EvolveChosenFromDeck(Element):
+    """v0.120: 自分の場の「``names``」を好きなだけ選ぶ。その後、自分の山札から、選んだポケモンから進化する「進化カード」を、それぞれ 1 枚ずつ選びだし、それぞれのポケモンの上にのせ、
+    進化させる。山札を見た場合は、その山札をよく切る（ワタッコ（neo3-007）の「しんかのほうし」。実装 ``effects.EvolveChosenNamedFromDeck``）。
+
+    - 段階 1: 自分の場（バトル場 → ベンチ）の、今の姿の名前が ``names`` のどれかのポケモンを選ぶ（決定 ``SELECT_POKEMON``。0〜その数。ワザを使ったポケモン自身も選べる）。いなければ処理の
+      対象がない（p.309。ログ ``evolve_from_deck_none``）。「好きなだけ」（「のぞむなら」がない）の 0 匹は、v0.31 の HC5 と同じ問い（答えのときに止める。v0.42 のようせいのきせきと同じ扱い）。
+      山札を見る前に公開の情報だけで決まる問い（DV2・GV1・［れんさしんか］の PW4。``effects.self_deck_evolution_open_question``）のあるポケモンは、選べるが選ぶと止める。名前の読めない
+      うらのカードは FD1（選べるが選ぶと止める）
+    - 段階 2: 選んだポケモンごとに（場の並びの順）、山札にカードがあれば山札を見て、そのポケモンに今重ねられる進化カード（``effects.self_deck_evolution_cards``。通常の進化と同じ制限）を
+      1 枚選ぶ（決定 ``SEARCH_DECK``。選べるカードがあれば 1〜1 枚、なければ選べるもののない決定。v0.84 の A3）。選んだらそのまま重ねて進化させる（重ねる前に「とうめい」を評価する。
+      トキワシティジムの機会があれば答えてから次へ）。重ねたカードは山札をはなれるので、同じカードを 2 匹に使わない。進化したあとの HP がダメージ以下になるカード（H1）・場に出たときの
+      特殊能力を持つカード（PW4）は選べるが選ぶと止める
+    - 最後に、山札を見たときだけ 1 回切る（山札が 0 枚なら見ない）。決定をまたぐ続きの情報は、まだ処理していない選んだポケモン（``spore_targets``）・山札を見たか（``spore_looked``）
+    """
+
+    names: tuple[str, ...]
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def decides(self, kind: str) -> bool:
+        return kind in (SELECT_POKEMON, SEARCH_DECK, EVOLUTION_HEAL)
+
+    def _chosen_stops(self, run: AttackRun, pokemon: PokemonInPlay) -> tuple[str, str] | None:
+        question = E.self_deck_evolution_open_question(run.state, run.player, pokemon, run.state.card_def(pokemon.card).name_ja)
+        if question is None:
+            return None
+        found = QUESTIONS[question[0]]
+        return found.code, f"{found.message}（{'・'.join(found.rulings)}。{question[1]}）"
+
+    def _targets(self, run: AttackRun) -> tuple[list[int], dict[int, tuple[str, str]]]:
+        targets: list[int] = []
+        stops: dict[int, tuple[str, str]] = {}
+        for pokemon in run.state.players[run.player].in_play():
+            if run.state.is_face_down(pokemon):
+                targets.append(pokemon.pokemon_id)
+                stops[pokemon.pokemon_id] = (SECRET_PLAN_HIDDEN_CODE, f"うらのカード（場のポケモン {pokemon.pokemon_id}）の名前は読めない（FD1）")
+                continue
+            if E.form_def(run.state, pokemon).name_ja not in self.names:
+                continue
+            targets.append(pokemon.pokemon_id)
+            stop = self._chosen_stops(run, pokemon)
+            if stop is not None:
+                stops[pokemon.pokemon_id] = stop
+        return targets, stops
+
+    def run(self, run: AttackRun) -> bool:
+        targets, stops = self._targets(run)
+        if not targets:
+            run.state.add_event("evolve_from_deck_none", player=run.player, pokemon_id=run.fs.frame.source_pid, effect=str(run.key))
+            return False
+        if len(stops) == len(targets):
+            code, reason = stops[targets[0]]
+            raise UnsupportedError(code, f"選べるポケモンがどれも選ぶと止めるもの（{reason}）")
+        blocked = tuple(pid for pid in targets if pid in stops)
+        extra: tuple = ()
+        if blocked:
+            extra = (("unresolved_choices", blocked), ("unresolved_code", stops[blocked[0]][0]), ("unresolved_reason", stops[blocked[0]][1]),
+                     ("unresolved_detail", tuple((pid, *stops[pid]) for pid in blocked)))
+        run.suspend(kind=SELECT_POKEMON, player=run.player, options=targets, min_choices=0, max_choices=len(targets), extra=extra)
+        return True
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        if decision.kind == SELECT_POKEMON:
+            blocked = set(decision.context_value("unresolved_choices", ()))
+            return [answer for answer in combinations_answers(decision, range(1, decision.max_choices + 1)) if not blocked & set(answer)]  # 0 匹は答えのときに止める（HC5）
+        blocked = set(decision.context_value("unresolved_choices", ())) | set(decision.context_value("entry_power_choices", ()))
+        if decision.kind == SEARCH_DECK:
+            return [answer for answer in card_id_answers(run.state, decision, (decision.max_choices,)) if not blocked & set(answer)]
+        return [answer for answer in all_answers(decision) if not blocked & set(answer)]
+
+    def _next(self, run: AttackRun, remaining: tuple[int, ...], looked: bool) -> bool:
+        """選んだポケモン ``remaining`` の順に、山札を見て進化カードを選ぶ決定を出す（出したら True）。すべて終えたら、見たときだけ山札を切る。"""
+        state = run.state
+        while remaining:
+            pid, remaining = remaining[0], remaining[1:]
+            found = state.find_pokemon(pid)
+            if found is None or found[0] != run.player:
+                continue
+            target = found[1]
+            if not state.players[run.player].deck:
+                state.add_event("evolve_from_deck_none", player=run.player, pokemon_id=pid, effect=str(run.key))
+                continue
+            looked = True
+            extra: tuple = (("spore_target", pid), ("spore_targets", remaining), ("spore_looked", 1))
+            candidates = E.self_deck_evolution_cards(state, run.player, target)
+            if not candidates:
+                run.suspend(kind=SEARCH_DECK, player=run.player, options=(), min_choices=0, max_choices=0, extra=extra)
+                return True
+            blocked = tuple(uid for uid in candidates if target.damage >= E.evolution_hp(state, target, uid))
+            entry = tuple(uid for uid in candidates if uid not in blocked and E.applicable_entry_power(state, uid, from_hand=False) is not None)
+            if len(blocked) + len(entry) == len(candidates):
+                if entry:
+                    raise run.res.question("entry_power_during_attack", f"山札の進化カード {list(entry)}")
+                raise run.res.question("evolution_hp_every_card", f"山札の進化カード {list(blocked)}")
+            if blocked:
+                extra += (("unresolved_choices", blocked), ("unresolved_code", "UNRESOLVED_EVOLUTION_HP"), ("unresolved_reason", E.EVOLUTION_HP_REASON))
+            if entry:
+                extra += (("entry_power_choices", entry),)
+            run.suspend(kind=SEARCH_DECK, player=run.player, options=candidates, min_choices=1, max_choices=1, extra=extra)
+            return True
+        if looked:
+            shuffle_in_attack(run, self, run.player)
+        return False
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        if decision.kind == SELECT_POKEMON:
+            if not choices:
+                raise UnsupportedError(
+                    "UNRESOLVED_DISCARD_ANY_NUMBER_ZERO",
+                    "「好きなだけ選ぶ」（「のぞむなら」がない）で 0 匹を選べるかは決められないので扱わない（HC5。v0.42 のようせいのきせきと同じ）。1 匹以上を選ぶ",
+                )
+            order = [p.pokemon_id for p in state.players[run.player].in_play()]
+            chosen = tuple(sorted(choices, key=order.index))
+            state.add_event("evolve_targets", player=run.player, pokemon_id=run.fs.frame.source_pid, effect=str(run.key), targets=chosen)
+            self._next(run, chosen, False)
+            return
+        remaining = tuple(run.carried.get("spore_targets", ()))
+        if decision.kind == EVOLUTION_HEAL:
+            found = state.find_pokemon(decision.context_value("heal_pokemon"))
+            if found is None:
+                raise RuntimeError(f"トキワシティジムの決定のポケモン {decision.context_value('heal_pokemon')} が場にいない（エンジンの不具合）")
+            E.apply_evolution_heal(state, found[0], found[1], decision.context_value("heal_stadium"), bool(choices))
+            self._next(run, remaining, True)
+            return
+        pid = run.carried["spore_target"]
+        found = state.find_pokemon(pid)
+        if found is None or found[0] != run.player:
+            raise RuntimeError(f"しんかのほうしの選んだポケモン {pid} が場にいない（エンジンの不具合）")
+        target = found[1]
+        if not choices:
+            if E.self_deck_evolution_cards(state, run.player, target):
+                raise RuntimeError(f"必ず選ぶ山札の進化カードの決定に、0 枚の答え（{run.key}。決定の形の誤り。エンジンの不具合）")
+            state.add_event("evolve_from_deck_none", player=run.player, pokemon_id=pid, effect=str(run.key))
+            self._next(run, remaining, True)
+            return
+        card = choices[0]
+        if card not in E.self_deck_evolution_cards(state, run.player, target):
+            raise RuntimeError(f"しんかのほうしで選んだカード {choices} が、ポケモン {pid} に重ねられる山札の進化カードではない（エンジンの不具合）")
+        if card in decision.context_value("entry_power_choices", ()):
+            question = QUESTIONS["entry_power_during_attack"]
+            raise UnsupportedError(question.code, f"{question.message}（PW4。山札の進化カード {card}）")
+        if reaches(run.res, run.fs, run.player, target, E.EVOLVE_ELEMENT):
+            before_name = E.form_def(state, target).name_ja
+            place_evolution_card(state, run.player, target, card, effect=str(run.key))
+            terms = E.evolution_heal_terms(state, target, before_name)
+            if terms is not None:
+                stadium, _, one = terms
+                extra: tuple = (("heal_stadium", stadium.card), ("heal_pokemon", target.pokemon_id), ("spore_targets", remaining), ("spore_looked", 1))
+                if one:
+                    extra += (("unresolved_choices", (target.pokemon_id,)), ("unresolved_code", E.VIRIDIAN_GYM_ONE_COUNTER_CODE),
+                              ("unresolved_reason", E.VIRIDIAN_GYM_ONE_COUNTER_REASON))
+                run.suspend(kind=EVOLUTION_HEAL, player=run.player, options=(target.pokemon_id,), min_choices=0, max_choices=1, extra=extra)
+                return
+        self._next(run, remaining, True)
+
+
 # ---------------------------------------------------------------- v0.32: 山札からベンチに出す・ダメージカウンターでダメージが決まる
 # （docs/bench-search-counter-drain-v0.32.md）
 
@@ -3477,22 +4395,44 @@ class BenchFromDeck(Element):
     owner: str | None = None
     optional: bool = False  # v0.45: 「出してよい」（0〜1 匹。0 匹ならログ ``bench_from_deck_declined``。そのあと山札を切る）
     local_coin: CoinSide | None = None  # v0.45: この要素のコイン（「コインを投げて「おもて」なら」）。その面でなければ何もしない（山札を切らない）
+    # v0.113: ベンチに空きがないときの扱い。``BENCH_FULL_ILLEGAL``（既定。ワザを使うための条件。宣言の前に ``BENCH_FULL`` で拒否する。v0.32 の「なかまをよぶ」）・``BENCH_FULL_FAIL``
+    # （ワザを使ってからの失敗。ヤミカラス（neo3-043）の「なかまをよぶ」の「(自分のベンチに空きがないとき、このワザは失敗する。)」。p.323「12 ワザの失敗」。ログ ``attack_failed`` の
+    # ``reason`` は ``bench_full``。山札を見ず・切らない）。山札に選べるカードがない（処理の対象がない。p.309）のとは別の理由
+    when_full: str = "illegal"
+    # v0.114: 名前でなく「ベイビィポケモン」（山札のベイビィポケモンのカード。``effects.deck_baby_pokemon``）で選ぶ（ピチューの「いっしょにあそぼ」）
+    babies: bool = False
     phase: ClassVar[Phase] = Phase.EFFECT
     decision_kind: ClassVar[str] = BENCH_FROM_DECK
 
+    def __post_init__(self) -> None:
+        if self.when_full not in (BENCH_FULL_ILLEGAL, BENCH_FULL_FAIL):
+            raise ValueError(f"ベンチに空きがないときの扱い {self.when_full!r} は {(BENCH_FULL_ILLEGAL, BENCH_FULL_FAIL)} のどれか")
+        if self.babies and (self.names or self.pokemon_type is not None or self.owner is not None):
+            raise ValueError("ベイビィポケモンで選ぶ要素は、名前・タイプ・持ち主の名前で選ばない")
+
     def candidates(self, run: AttackRun) -> list[int]:
+        if self.babies:
+            return E.deck_baby_pokemon(run.state, run.player)
         if self.owner is not None:
             return E.deck_owner_basic_pokemon(run.state, run.player, self.owner)
-        return E.bench_from_deck_candidates(run.state, run.player, self.names, self.pokemon_type)
+        era = E.text_era(run.key.card_id) if self.pokemon_type is not None else None  # v0.114: タイプで選ぶ説明の版（ベイビィポケモンカードの扱い）
+        return E.bench_from_deck_candidates(run.state, run.player, self.names, self.pokemon_type, era=era)
 
     def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
         if len(run.state.players[run.player].bench) >= bench_limit(run.state, run.player):
+            if self.when_full == BENCH_FULL_FAIL:
+                # v0.113: 説明がベンチに空きがないときの処理（失敗）を書いている（DiscardOwnEnergy の LACKING_FAIL と同じ扱い）。ピクシーの「ほかに必要な条件…がたりないときには
+                # 使えない」に当たるかは決められない
+                return None if clause != CANNOT_USE else (UNRESOLVED, "自分のベンチに空きがない（使うワザの説明は失敗とする。ほかに必要な条件に当たるか決められない）")
             return (ILLEGAL if clause in (CANNOT_USE, FOLLOW_TEXT) else UNRESOLVED), "自分のベンチに空きがない（ワザを使うための条件）"
         return None
 
     def run(self, run: AttackRun) -> bool:
         state = run.state
         if len(state.players[run.player].bench) >= bench_limit(state, run.player):
+            if self.when_full == BENCH_FULL_FAIL:
+                run.fail("bench_full")  # v0.113: ワザの失敗（使ったことになる。山札を見ない・切らない）
+                return False
             raise RuntimeError(f"ベンチに空きがないのに、ワザ {run.key} の山札からベンチに出す処理に来た（使うための条件の確認の漏れ。エンジンの不具合）")
         if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
             return False  # v0.45: 自分の山札への効果なので、相手の状態によらず投げる。「うら」なら何もしない（山札を切らない）
@@ -3502,6 +4442,8 @@ class BenchFromDeck(Element):
             extra = {} if self.pokemon_type is None else {"pokemon_type": self.pokemon_type.value}  # v0.34: タイプで選ぶとき
             if self.owner is not None:
                 extra["owner"] = self.owner  # v0.45: 「(owner)のポケモン」で選ぶとき
+            if self.babies:
+                extra["babies"] = True  # v0.114: ベイビィポケモンで選ぶとき
             state.add_event("bench_from_deck_none", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
                             names=self.names, **extra)
             self._shuffle(run)
@@ -3538,6 +4480,11 @@ class BenchFromDeck(Element):
                 raise RuntimeError("山札を切る要素のあとに要素がある（先読みで切った並びを使えない。エンジンの不具合）")
             return
         shuffle_deck(run.state, run.player)
+
+
+# v0.113: ``BenchFromDeck.when_full`` の値
+BENCH_FULL_ILLEGAL = "illegal"
+BENCH_FULL_FAIL = "fail"
 
 
 # ---------------------------------------------------------------- v0.34（docs/barrier-resume-coin-bonus-v0.34.md）
@@ -3719,6 +4666,9 @@ class OpponentAttackLock(Element):
     # 受けないと決まった相手・「ワザをうけない」相手には、効果だけを決めるコインなので T19b・HC3（v0.36 の ``OpponentAttackCheck`` と同じ）。「うら」なら選ばず、効果も
     # 与えない（ワザの失敗ではない）。コインは選ぶ前で、決定をまたいで投げ直さない（決定のあとは ``resume`` だけ）
     local_coin: CoinSide | None = None
+    # v0.117: 「相手が「たねポケモン」なら」（オドシシの「いかく」）。相手の対戦ポケモンが説明の「たねポケモン」（``effects.field_is_basic_in_text``。ワザを印刷したカードの説明の版）で
+    # なければ選ばず、効果を与えない（処理の対象がない。p.309）。決まらない（neo の説明の場のベイビィポケモン）なら NB1
+    basic_only: bool = False
     phase: ClassVar[Phase] = Phase.EFFECT
     decision_kind: ClassVar[str] = SELECT_OPPONENT_ATTACK
     opponent_element: ClassVar[str] = E.ATTACK_LOCK_ELEMENT
@@ -3735,6 +4685,12 @@ class OpponentAttackLock(Element):
         if run.knocked_out(target):
             run.ko_prevention_conflict(target)
             return False
+        if self.basic_only:
+            basic = E.field_is_basic_in_text(run.state, target, E.text_era(run.key.card_id))
+            if basic is None:
+                raise E.neo_basic_baby_error(f"ポケモン {target.pokemon_id}（ワザ {run.key} の「相手が「たねポケモン」なら」）")
+            if not basic:
+                return False
         if self.local_coin is not None:
             if not E.held_attack_keys(run.state, target)[0]:
                 return False  # v0.76: 選ぶワザがない（処理の対象がない。p.309）。コインを投げない
@@ -4725,9 +5681,10 @@ def _counters_changed(run: AttackRun, pokemon: PokemonInPlay, before: int) -> No
     track_ko(run.res, run.fs, pokemon, before)
     hp = E.max_hp(run.state, pokemon)  # v0.48: 今有効な最大HP
     if before >= hp and pokemon.damage != before:
-        from .kernel import focus_band_timing
+        from .kernel import focus_band_timing, knockout_survival_timing
 
         focus_band_timing(run.res, pokemon, "HP 以上になったあとのダメージカウンター")  # v0.81（FB1）
+        knockout_survival_timing(run.res, pokemon, "HP 以上になったあとのダメージカウンター")  # v0.110（KS1）
     if before < hp <= pokemon.damage:
         run.res.ko_prevention_able[pokemon.pokemon_id] = False
 
@@ -5075,7 +6032,7 @@ class AttachFromDeck(Element):
             attach_from_deck(state, run.player, card, attacker)
             state.add_event("attach_energy_from_deck", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key), card=card)
         for card in cards:
-            E.after_energy_attached(state, run.player, attacker, card)
+            attached_in_attack(run, run.player, attacker, (card,))
         if self.shuffle:
             shuffle_in_attack(run, self, run.player)
 
@@ -5167,7 +6124,7 @@ class AttachFromDeckToBench(Element):
         if reaches(run.res, run.fs, run.player, target, E.ENERGY_ATTACH_ELEMENT):
             attach_from_deck(state, run.player, card, target)
             state.add_event("attach_energy_from_deck", player=run.player, pokemon=target.card, pokemon_id=target.pokemon_id, effect=str(run.key), card=card)
-            E.after_energy_attached(state, run.player, target, card)
+            attached_in_attack(run, run.player, target, (card,))
         else:
             state.players[run.player].deck.remove(card)
             state.players[run.player].discard.append(card)  # 「とうめい」の「おもて」: カードは持ち主のトラッシュ（CR-TRANSPARENCY-ENERGY-BOMB と同じ読み方）
@@ -5208,7 +6165,7 @@ class AttachFromDeckToBench(Element):
         if reaches(run.res, run.fs, run.player, target, E.ENERGY_ATTACH_ELEMENT):
             attach_from_deck(state, run.player, card, target)
             state.add_event("attach_energy_from_deck", player=run.player, pokemon=target.card, pokemon_id=target.pokemon_id, effect=str(run.key), card=card)
-            E.after_energy_attached(state, run.player, target, card)
+            attached_in_attack(run, run.player, target, (card,))
         else:
             state.players[run.player].deck.remove(card)
             state.players[run.player].discard.append(card)  # 「とうめい」の「おもて」: カードは持ち主のトラッシュ（CR-TRANSPARENCY-ENERGY-BOMB と同じ読み方）
@@ -5308,10 +6265,14 @@ class RecoverEnergyByHeads(Element):
     def has_target(self, run: AttackRun) -> bool:
         return E.discard_to_hand_suppressor(run.state) is None and bool(self.candidates(run))
 
+    discard_protected = _discard_protected
+
     def run(self, run: AttackRun) -> bool:
         if suppressed_discard_to_hand(run):
             return False  # v0.74: ポケモンタワーで、この要素の効果が消える
         heads = run.heads(self.heads_of)
+        if heads and protected_discard(run, "recover_energy"):
+            return False  # v0.119: ［アレルギーほうし］（選べるカードがあればコインの前に AP1 で止まるので、ここに来るのはコインのあとに力がはたらきはじめたときだけ）
         candidates = self.candidates(run)
         if not heads or not candidates:
             return False
@@ -5419,6 +6380,8 @@ class ReturnOwnEnergyToHand(DiscardOwnEnergy):
         if self.timing == TIMING_UNRESOLVED and attacker.conditions.confused:
             # 問いの文は v0.31 の「はがしてすてる」のもの（変えない）。手札にもどすワザでも同じ問いであることを、ここで書き足す
             raise res.question("discard_energy_timing", f"ポケモン {attacker.pokemon_id}。「はがして手札にもどす」と書かれたワザも同じ問い")
+        if self.timing == TIMING_UNRESOLVED and E.baby_rule_applies(res.state, player):
+            raise res.question("discard_energy_timing", f"ポケモン {attacker.pokemon_id}（相手のバトル場のベイビィポケモンのルールのコイン）。「はがして手札にもどす」と書かれたワザも同じ問い")
 
     def _discard(self, run: AttackRun, cards: tuple[int, ...]) -> None:
         state = run.state
@@ -5716,8 +6679,17 @@ class RevealTrainerFromDeck(Element):
     # v0.79: 「手札に加える」（「てよい」がない。ヤドキング（SI-014）の「ひらめく」）。選べるカードがあれば、ちょうど 1 枚（0 枚の答えはない）。選べるカードがない（山札に
     # トレーナーカードがない・山札が 0 枚）なら、処理の対象がないので加えずに山札を切る（p.309。v0.75 の「もえあがる」（``AttachFromDeck`` の ``ZERO_REQUIRED``）と同じ読み方）
     required: bool = False
+    # v0.113: 選ぶ枚数はワザ全体のコイン ``heads_of`` の「おもて」の数 H 以下（ピッピの「みんなでおどる」の「「おもて」の数以下の枚数の「基本エネルギーカード」を自分の山札から選び出し、
+    # 相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。」）。0〜H 枚（「以下」なので 0 枚も。v0.85 のせいでんきと同じ読み方）。H = 0 なら選ぶカードがないので決定を
+    # 出さず、山札を 1 回切る（説明の最後の「その後、その山札をよく切る」。せいでんきの数 0 と同じ）。H が正なら、選べるカードがなくても決定を出して答えを待つ（最大の枚数は H のまま。
+    # 選べるカードの数で小さくしない。山札の中身で進み方を変えない。v0.84 の A3）。``local_coin``・``required`` とはいっしょに使わない
+    heads_of: str | None = None
     phase: ClassVar[Phase] = Phase.EFFECT
     decision_kind: ClassVar[str] = SEARCH_DECK
+
+    def __post_init__(self) -> None:
+        if self.heads_of is not None and (self.local_coin is not None or self.required):
+            raise ValueError("「おもて」の数以下を選ぶ（heads_of）ときは、この要素のコイン（local_coin）・ちょうど 1 枚（required）を使わない")
 
     def candidates(self, run: AttackRun) -> list[int]:
         if self.category == "trainer":
@@ -5727,6 +6699,13 @@ class RevealTrainerFromDeck(Element):
         raise RuntimeError(f"山札から選ぶカードの種類 {self.category!r} が正しくない（エンジンの不具合）")
 
     def run(self, run: AttackRun) -> bool:
+        if self.heads_of is not None:
+            heads = run.heads(self.heads_of)
+            if not heads:
+                shuffle_in_attack(run, self, run.player)  # v0.113: 「おもて」が 0（コインを投げなかったときを含む）。選ぶカードはなく、山札は切る
+                return False
+            run.suspend(kind=SEARCH_DECK, player=run.player, options=self.candidates(run), min_choices=0, max_choices=heads)
+            return True
         if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
             return False
         candidates = self.candidates(run)
@@ -5740,6 +6719,16 @@ class RevealTrainerFromDeck(Element):
     def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         if self.required and not choices:
             raise RuntimeError("「手札に加える」（ちょうど 1 枚）の決定に、0 枚の答えが来た（決定の確認の漏れ。エンジンの不具合）")
+        if self.heads_of is not None:
+            candidates = self.candidates(run)
+            if len(set(choices)) != len(choices) or len(choices) > run.heads(self.heads_of) or any(card not in candidates for card in choices):
+                raise RuntimeError(f"選んだカード {choices} が、山札の選べるカード（{self.category}）の「おもて」の数以下ではない（エンジンの不具合）")
+            for card in sorted(choices):  # v0.113: 選んだカードだけを見せて手札に加える（山札の uid の小さい順。選んだ順によらない）
+                reveal_deck_to_hand(run.state, run.player, card, effect=str(run.key))
+            if not choices:
+                run.state.add_event("reveal_from_deck_declined", player=run.player, pokemon_id=run.fs.frame.source_pid, effect=str(run.key), category=self.category)
+            shuffle_in_attack(run, self, run.player)
+            return
         if choices:
             if choices[0] not in self.candidates(run):
                 raise RuntimeError(f"選んだカード {choices} が、山札の選べるカード（{self.category}）ではない（エンジンの不具合）")
@@ -5749,6 +6738,9 @@ class RevealTrainerFromDeck(Element):
         shuffle_in_attack(run, self, run.player)
 
     def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        if self.heads_of is not None:
+            # v0.113: 0〜min(H, 選べるものの数) 枚のすべての枚数を、同じカード id の写しを区別せずに試す（せいでんきと同じまとめ方。意味の違う枚数・カード id の組は省かない）
+            return card_id_answers(run.state, decision, range(min(decision.max_choices, len(decision.options)) + 1))
         return card_id_answers(run.state, decision, (1,) if self.required else (0, 1))
 
 
@@ -5768,6 +6760,9 @@ class ReturnAttackerToHand(Element):
     """
 
     local_coin: CoinSide | None = HEADS
+    # v0.117: 「自分と、自分についているすべてのエネルギーカードを、持ち主の手札にもどす」（ナツメのゴースの「ぱっときえる」）。もどすのは重なったポケモンのカードとエネルギーカード。
+    # エネルギーカードでないついているカード（トレーナーカード・エネルギーとしてついているポケモンのカード）があれば、その行き先が決まらないので止める（VH1。もどす前）
+    energy_only: bool = False
     phase: ClassVar[Phase] = Phase.EFFECT
 
     def has_target(self, run: AttackRun) -> bool:
@@ -5779,6 +6774,10 @@ class ReturnAttackerToHand(Element):
         if run.knocked_out(attacker):
             run.ko_prevention_conflict(attacker, run.player)
             return False
+        if self.energy_only:
+            others = tuple(t.card for t in attacker.trainers) + tuple(uid for uid in attacker.energy if state.card_def(uid).category != "energy")
+            if others:
+                raise UnsupportedError(E.VANISH_OTHER_ATTACHED_CODE, f"ポケモン {attacker.pokemon_id}・カード {list(others)}: {E.VANISH_OTHER_ATTACHED_REASON}")
         if _leave_prevented(run, run.player, attacker, E.LEAVE_TO_HAND, self.local_coin):
             return False  # v0.93
         if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
@@ -5826,11 +6825,14 @@ class EvolveAttackerFromDeck(Element):
     gate: tuple | None = None  # v0.105
     required: bool = False  # v0.105
     shuffle_if_looked: bool = False  # v0.105
+    # v0.115: 選べるのはカードの名前がこれと同じ進化カードだけ（わるいサナギラスの「ばくれつしんか」の「自分の山札から「わるいバンギラス」を1枚選び出し、このわるいサナギラスの上にのせ、
+    # 進化させる」。名前の完全一致。重ねられるかは通常の進化と同じ（``effects.self_deck_evolution_cards`` の ``name``）。説明が「進化カード」と書かないので NB2 の範囲ではない）
+    card_name: str | None = None
     phase: ClassVar[Phase] = Phase.EFFECT
     decision_kind: ClassVar[str] = SEARCH_DECK
 
     def candidates(self, run: AttackRun) -> list[int]:
-        return E.self_deck_evolution_cards(run.state, run.player, run.attacker(), evolves_from=self.evolves_from)
+        return E.self_deck_evolution_cards(run.state, run.player, run.attacker(), evolves_from=self.evolves_from, name=self.card_name)
 
     def _none(self, run: AttackRun, attacker: PokemonInPlay) -> None:
         run.state.add_event("evolve_from_deck_none", player=run.player, pokemon_id=attacker.pokemon_id, effect=str(run.key))
@@ -5876,7 +6878,8 @@ class EvolveAttackerFromDeck(Element):
             return self._required_run(run)
         state = run.state
         attacker = run.attacker()
-        cards = [uid for uid in state.players[run.player].deck if state.card_def(uid).evolves_from == self.evolves_from]
+        cards = [uid for uid in state.players[run.player].deck if state.card_def(uid).evolves_from == self.evolves_from
+                 and (self.card_name is None or state.card_def(uid).name_ja == self.card_name)]
         permitted = E.deck_evolution_permission_pairs(state, run.player, (attacker.pokemon_id,), cards)
         if permitted:
             raise run.res.question("evolution_permission_from_deck", f"山札の進化カードと場のポケモン {list(permitted)}")
@@ -5953,13 +6956,21 @@ class OpponentDiscardToDeckTop(Element):
     phase: ClassVar[Phase] = Phase.EFFECT
     decision_kind: ClassVar[str] = DISCARD_TO_DECK_TOP
 
+    discard_protected = _discard_protected
+
     def has_target(self, run: AttackRun) -> bool:
         return bool(run.state.players[1 - run.player].discard)
 
     def run(self, run: AttackRun) -> bool:
         if not self.has_target(run):
             return False
+        if self.local_coin is not None and self.discard_protected(run):
+            # v0.119（AP1）: このコインが決めるのは、効果を受けない相手のトラッシュのカードを動かすことだけ（処理の対象がないと読めば投げない）
+            raise run.res.question("discard_protected_coin", f"ワザ {run.key} の相手のトラッシュのカードを山札の上にのせる要素・［アレルギーほうし］ "
+                                                             f"{list(E.discard_protection(run.state))}")
         if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
+            return False
+        if protected_discard(run, "discard_to_deck_top"):
             return False
         run.suspend(kind=DISCARD_TO_DECK_TOP, player=run.player, options=list(run.state.players[1 - run.player].discard))
         return True
@@ -6209,15 +7220,38 @@ class MoveOpponentEnergyToBench(Element):
       （``effects.after_energy_attached``）
     - v0.101: はがしてつけかえるのはトラッシュする効果ではないので、［KEEP］のはたらくアンノーンからも動かす。つける控えが受けずにトラッシュに置く場合だけ、KEEP でなくなる効果に
       当たるかが決まらない（KP3）
+    - v0.116（docs/energy-movement-attachment-devolution-v0.116.md 5 章）: ``any_card`` は、はがすカードが相手の対戦ポケモンについている「エネルギーカード」（特殊エネルギーカードを
+      ふくむ。ネイティオの「エナジーサイクル」。基本エネルギーカードに限らないので RB3 の問いはない）。``gate`` はワザ全体のコインの面（エナジーサイクルの「おもて」）。どちらも既定の値で
+      v0.115 までと同じ（じりょくせん）
     """
 
+    any_card: bool = False
+    gate: tuple | None = None
     phase: ClassVar[Phase] = Phase.EFFECT
     opponent_element: ClassVar[str] = E.ENERGY_MOVE_ELEMENT
 
     def decides(self, kind: str) -> bool:
         return kind in (MOVE_OPPONENT_ENERGY, SELECT_POKEMON)
 
+    def coin_receiver(self) -> str | None:
+        return "effect"  # v0.116: ワザ全体のコインが決める相手の対戦ポケモンへの効果（``void_coin_question``。``gate`` があるときだけ聞かれる）
+
+    def _energies(self, run: AttackRun, target: PokemonInPlay) -> list[int]:
+        """はがせるカード（ついている順）。v0.116: ``any_card`` ならついているエネルギーカードすべて。"""
+        return list(target.energy) if self.any_card else E.opponent_active_basic_energy(run.state, run.player)
+
+    def has_target(self, run: AttackRun) -> bool:
+        """v0.116: ワザ全体のコインが決める処理の対象があるか（相手の対戦ポケモンがこのワザで HP 以上でなく、控えがいて、はがせるカードがある。p.309）。"""
+        opponent = 1 - run.player
+        p = run.state.players[opponent]
+        target = p.active
+        if target is None or run.knocked_out(target) or not p.bench or E.energy_removal_protected(run.state, opponent, target, run.player) is not None:
+            return False
+        return bool(self._energies(run, target))
+
     def run(self, run: AttackRun) -> bool:
+        if self.gate is not None and not run.coin_is(self.gate):
+            return False
         opponent = 1 - run.player
         p = run.state.players[opponent]
         target = p.active
@@ -6228,11 +7262,11 @@ class MoveOpponentEnergyToBench(Element):
             return False  # 「相手に控えがいない時、この効果はない」（はがさない）
         if E.energy_removal_protected(run.state, opponent, target, run.player) is not None:
             return False  # v0.59: タケシの保護（相手の使うワザによってははがされない）。はがせるカードがない
-        rainbow = E.rainbow_cards_attached(run.state, [target])
+        rainbow = () if self.any_card else E.rainbow_cards_attached(run.state, [target])
         if rainbow:
             # v0.58（RB3）: 相手の対戦ポケモンのレインボーエネルギーが、説明の「基本エネルギーカード」として選べるかが決まらない
             raise run.res.question("rainbow_basic_energy_card", f"相手の対戦ポケモン {target.pokemon_id} のレインボーエネルギー {rainbow}")
-        energies = E.opponent_active_basic_energy(run.state, run.player)
+        energies = self._energies(run, target)
         if not energies:
             return False
         if not reaches(run.res, run.fs, opponent, target, E.ENERGY_MOVE_ELEMENT):
@@ -6248,8 +7282,8 @@ class MoveOpponentEnergyToBench(Element):
         if target is None or target.pokemon_id != run.carried.get("target"):
             raise RuntimeError(f"はがす相手の対戦ポケモン {run.carried.get('target')} が相手のバトル場にいない（エンジンの不具合）")
         if decision.kind == MOVE_OPPONENT_ENERGY:
-            if choices[0] not in E.opponent_active_basic_energy(state, run.player):
-                raise RuntimeError(f"はがすカード {choices} が、相手の対戦ポケモンの基本エネルギーカードではない（エンジンの不具合）")
+            if choices[0] not in self._energies(run, target):
+                raise RuntimeError(f"はがすカード {choices} が、相手の対戦ポケモンのはがせるエネルギーカードではない（エンジンの不具合）")
             run.suspend(kind=SELECT_POKEMON, player=run.player, options=[pokemon.pokemon_id for pokemon in p.bench],
                         extra=(("target", target.pokemon_id), ("energy", choices[0])), carry=True)
             return
@@ -6267,7 +7301,7 @@ class MoveOpponentEnergyToBench(Element):
         if reaches(run.res, run.fs, opponent, destination, E.ENERGY_ATTACH_ELEMENT):
             destination.energy.append(energy)
             state.add_event("move_opponent_energy", **base, result="attached")
-            E.after_energy_attached(state, opponent, destination, energy)
+            attached_in_attack(run, opponent, destination, (energy,), moved=True)
         else:
             if void is not None:
                 raise run.res.question("keep_detached_energy_discard", f"ポケモン {target.pokemon_id} からはがしたエネルギーカード {energy}（つける控え {destination.pokemon_id} が受けない）")
@@ -6371,7 +7405,7 @@ class AttachFromHand(Element):
         run.state.add_event("attach_energy_from_hand", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
                             cards=cards)
         for uid in cards:
-            E.after_energy_attached(run.state, run.player, attacker, uid)
+            attached_in_attack(run, run.player, attacker, (uid,))
 
     def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
         return card_id_answers(run.state, decision, range(1, decision.max_choices + 1))  # 0 枚は答えのときに止める（HC7）
@@ -6793,10 +7827,20 @@ class DevolveChosenPokemon(Element):
         forbidden = tuple(pid for pid in options if E.devolution_forbidden(state, state.find_pokemon(pid)[1]))
         if len(forbidden) == len(options):
             raise run.res.question("devolution_target_disguised", f"ポケモン {list(forbidden)}")
+        # v0.120（FE1）: はがすとたねポケモンとしてあつかった進化カードがまたいちばん上になるポケモンは、選べるが選ぶと止める（ないときは v0.119 までの決定の形）
+        revived = {pid: problem for pid in options if pid not in forbidden
+                   for problem in (E.revived_devolve_problem(state, state.find_pokemon(pid)[1], 1),) if problem is not None}
+        if len(forbidden) + len(revived) == len(options):
+            raise UnsupportedError(*revived[next(iter(revived))])
         extra: tuple = ()
         if forbidden:
             extra = (("unresolved_choices", forbidden), ("unresolved_code", E.DEVOLUTION_TARGET_DISGUISED_CODE),
                      ("unresolved_reason", E.DEVOLUTION_TARGET_DISGUISED_REASON))
+        if revived:
+            stops = {**{pid: (E.DEVOLUTION_TARGET_DISGUISED_CODE, E.DEVOLUTION_TARGET_DISGUISED_REASON) for pid in forbidden}, **revived}
+            first = stops[min(stops, key=options.index)]
+            extra = (("unresolved_choices", tuple(pid for pid in options if pid in stops)), ("unresolved_code", first[0]), ("unresolved_reason", first[1]),
+                     ("unresolved_detail", tuple((pid, *stops[pid]) for pid in options if pid in stops)))
         run.suspend(kind=SELECT_POKEMON, player=run.player, options=options, extra=extra)
         return True
 
@@ -6855,10 +7899,14 @@ class BenchFromEitherDiscard(Element):
     decision_kind: ClassVar[str] = BENCH_FROM_DISCARD
     opponent_element: ClassVar[str] = E.COUNTERS_ELEMENT
 
+    discard_protected = _discard_protected
+
     def candidates(self, run: AttackRun) -> tuple[int, ...]:
-        return E.bench_from_discard_candidates(run.state, (run.player, 1 - run.player))
+        return E.bench_from_discard_candidates(run.state, (run.player, 1 - run.player), E.text_era(run.key.card_id))
 
     def run(self, run: AttackRun) -> bool:
+        if protected_discard(run, "bench_from_discard"):
+            return False  # v0.119: ［アレルギーほうし］（ベンチに出さないので、カウンターものせない）
         candidates = self.candidates(run)
         if not candidates:
             attacker = run.attacker()
@@ -7233,7 +8281,7 @@ class MoveOneEnergyToBench(Element):
             target.energy.append(energy)
             state.add_event("attack_attach_energy", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
                             energy=energy, to_pokemon_id=target.pokemon_id)
-            E.after_energy_attached(state, run.player, target, energy)
+            attached_in_attack(run, run.player, target, (energy,), moved=True)
         else:
             state.players[run.player].discard.append(energy)
             state.add_event("discard_energy", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
@@ -7847,10 +8895,15 @@ class EachPlayerRecoversFromDiscard(EachPlayerStep):
     def decides(self, kind: str) -> bool:
         return kind == self.decision_kind
 
+    discard_protected = _discard_protected
+
     def start(self, run: AttackRun) -> bool:
         if self.destination == "hand" and suppressed_discard_to_hand(run):
             return True
-        return self.local_coin is not None and run.flip(1).results[0] is not self.local_coin
+        if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
+            return True
+        # v0.119: ［アレルギーほうし］（おたがいのぶんとも選ばない。コインは、選べるカードがなくても投げる今までの読み方のまま（どちらの読み方でも投げるので AP1 に当たらない））
+        return protected_discard(run, "each_player_recover")
 
     def options(self, run: AttackRun, player: int) -> tuple[int, ...]:
         state = run.state
@@ -8193,7 +9246,7 @@ class AttachFromHandToChosen(Element):
             attach_energy_from_hand(state, run.player, uid, target)
         state.add_event("attach_energy_from_hand", player=run.player, pokemon=target.card, pokemon_id=target.pokemon_id, effect=str(run.key), cards=ordered)
         for uid in ordered:
-            E.after_energy_attached(state, run.player, target, uid)
+            attached_in_attack(run, run.player, target, (uid,))
 
     def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
         if decision.kind == ATTACH_FROM_HAND:
@@ -8334,15 +9387,8 @@ class ReturnOwnBenchToDeck(Element):
         shuffle_in_attack(run, self, run.player)
 
 
-def discard_baby_or_basic(state: GameState, player: int) -> tuple[int, ...]:
-    """v0.84: プレイヤーのトラッシュの「ベイビィポケモン」または「たねポケモン」のカード（トラッシュの並び。トラッシュにある間の印刷の分類で決める。なにかの化石・ピッピ人形は
-    トラッシュではトレーナーカードなので入らない（v0.47））。ベイビィポケモンは対応していない（デッキに入らない）ので、今の対戦では起こらない。"""
-    found = []
-    for uid in state.players[player].discard:
-        definition = state.card_def(uid)
-        if definition.category == "pokemon" and (definition.stage == "baby" or definition.is_basic_pokemon):
-            found.append(uid)
-    return tuple(found)
+# v0.84 の関数。v0.116 で effects.py に移した（わるいゴーストの「よびもどす」の決定の確かめも同じ選べるものを使う。中身は変えていない）
+discard_baby_or_basic = E.discard_baby_or_basic
 
 
 @dataclass(frozen=True)
@@ -8365,6 +9411,8 @@ class BenchBabyOrBasicFromOwnDiscard(Element):
         if len(state.players[run.player].bench) >= bench_limit(state, run.player):
             run.fail("bench_full")
             return False
+        if protected_discard(run, "bench_from_discard"):
+            return False  # v0.119: ［アレルギーほうし］（ワザの失敗の条件はトラッシュのカードへの効果ではないので、先に見る）
         candidates = discard_baby_or_basic(state, run.player)
         if not candidates:
             attacker = run.attacker()
@@ -8476,7 +9524,7 @@ class BubbleJump(Element):
             target.energy.append(uid)
             state.add_event("attack_attach_energy", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
                             energy=uid, to_pokemon_id=target.pokemon_id)
-            E.after_energy_attached(state, run.player, target, uid)
+            attached_in_attack(run, run.player, target, (uid,), moved=True)
         if _leave_prevented(run, run.player, attacker, E.LEAVE_TO_HAND, None):
             return  # v0.93: つけ替えた（その部分は起こる）が、自分を手札にもどす部分は起こらない
         ninja_trick_leave_question(run, attacker)
@@ -8525,6 +9573,15 @@ class OpponentMayDraw(EachPlayerDraws):
 
     def run(self, run: AttackRun) -> bool:
         return self._offer(run, 1)
+
+
+def baby_evolution_cards_possible(state: GameState, owner: int, pokemon: PokemonInPlay) -> bool:
+    """v0.114: ``owner`` の山札・サイド（持ち主に見えないカード）に、場のベイビィポケモン ``pokemon`` の進化先（印刷の名前）のたねポケモンカードがあるか。"""
+    current = state.card_def(pokemon.card)
+    if state.is_face_down(pokemon) or not current.is_baby_pokemon:
+        return False
+    hidden = (*state.players[owner].deck, *state.players[owner].prizes)
+    return any(state.card_def(uid).is_basic_pokemon and state.card_def(uid).name_ja in current.evolves_to for uid in hidden)
 
 
 def evolution_song_cards(state: GameState, owner: int, pokemon: PokemonInPlay) -> tuple[int, ...]:
@@ -8577,6 +9634,11 @@ class EachPlayerEvolvesFromDeck(EachPlayerStep):
             # v0.86: 進化させると、そのプレイヤーのほかのポケモンの［れんさしんか］の機会が来る（ワザの最中の宣言。PW4）
             question = QUESTIONS["entry_power_during_attack"]
             return question.code, f"{question.message}（PW4。［れんさしんか］の機会が来るポケモン {pokemon.pokemon_id}）"
+        baby = baby_evolution_cards_possible(state, owner, pokemon) and E.deck_baby_evolution_card_in_text(E.text_era(run.key.card_id)) is None
+        if baby:
+            # v0.114（NB2）: 選んだベイビィポケモンから進化する、山札の進化先のたねポケモンカードを、neo の説明の「進化カード」にふくむかは決まらない（UQ-NEO-TEXT-BABY-CATEGORIES）。
+            # 山札の中身で受け付けるかを変えないよう、持ち主に見えないカード（山札・サイド）に進化先のたねポケモンカードがあれば、ポケモンを選ぶと止める
+            return E.NEO_EVOLUTION_CARD_BABY_CODE, f"ポケモン {pokemon.pokemon_id}（山札・サイドの進化先のたねポケモンカード）: {E.NEO_EVOLUTION_CARD_BABY_REASON}"
         cards = evolution_song_cards(state, owner, pokemon)
         blocked = [card for card in cards if card in self._blocked_cards(run, owner, pokemon, cards)]
         if cards and len(blocked) == len(cards):
@@ -8700,10 +9762,16 @@ class PrintedByDefenderStage:
     local_coins: ClassVar[int] = 0
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
-        stage = E.form_def(run.state, run.opponent_active()).stage
-        if stage == "baby":
+        # v0.114: 場の分類（``effects.field_stage``）。ベイビィから進化したたねポケモンは「進化ポケモン」（GR-2000-P315-EVOLVED-BABY）なので目安の数字。［へんしん］でベイビィの姿の
+        # メタモンは、ベイビィとたねのどちらかで量が変わるので BX1
+        defender = run.opponent_active()
+        stage = E.field_stage(run.state, defender)
+        if stage == E.FIELD_BABY:
+            problem = E.transform_baby_question(run.state, defender)
+            if problem is not None:
+                raise problem
             return self.baby
-        if stage == "basic":
+        if stage == E.FIELD_BASIC:
             return self.basic
         return run.attack.damage
 
@@ -8841,7 +9909,8 @@ class ReturnDiscardTypeToDeck(Element):
 
     def run(self, run: AttackRun) -> bool:
         state = run.state
-        cards = tuple(discard_type_energy_cards(run, self.energy_type))
+        # v0.119: ［アレルギーほうし］なら、もどさない（0 枚のときと同じに、山札は切る。ダメージの目安の枚数を数えることは効果ではないので変わらない）
+        cards = () if protected_discard(run, "discard_to_deck") else tuple(discard_type_energy_cards(run, self.energy_type))
         p = state.players[run.player]
         for uid in cards:
             p.discard.remove(uid)
@@ -8903,7 +9972,7 @@ class AttachFromDeckUpToNamedCount(Element):
             attach_from_deck(state, run.player, card, attacker)
             state.add_event("attach_energy_from_deck", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key), card=card)
         for card in cards:
-            E.after_energy_attached(state, run.player, attacker, card)
+            attached_in_attack(run, run.player, attacker, (card,))
         shuffle_in_attack(run, self, run.player)
 
     def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
@@ -8974,6 +10043,10 @@ BUILDERS: dict[type, Any] = {
     E.DamagePlusDefenderEnergy: lambda e: (Damage(OPP, PlusDefenderEnergy(e.per)),),
     E.DamagePlusOwnCounters: lambda e: (Damage(OPP, PlusOwnCounters(e.per)),),
     E.CopyOpponentAttackEffect: lambda e: (CopyOpponentAttack(e.clause),),
+    # v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 5 章）: ワザを選んで自分のワザとして使う（コインのあとに選ぶ・範囲・必要なエネルギー・条件）
+    E.CopyAttackFromSource: lambda e: ((Coin("coin"),) if e.coin else ()) + (
+        CopyChosenAttack(e.clause, gate=("coin", HEADS) if e.coin else None, source=e.source, cost=e.cost,
+                         condition_code=E.PRE_EVOLUTION_CONDITION_CODE if e.source == E.COPY_FROM_PRE_EVOLUTION else "UNRESOLVED_COPIED_ATTACK"),),
     E.ReduceDamageNextTurn: lambda e: (SelfPersistent(DamageReduction.kind, amount=e.amount),),
     E.DiscardFireThenMillOpponent: lambda e: (
         DiscardOwnEnergy(EnergyType.FIRE, any_number=True, deck_limit=True, when_lacking=LACKING_CONDITION, timing=TIMING_UNRESOLVED),
@@ -9018,6 +10091,10 @@ BUILDERS: dict[type, Any] = {
     ),
     E.DrawCardsAttack: lambda e: (Draw(e.count),),
     E.ExtraEnergyDamageMixed: lambda e: (Damage(OPP, ExtraEnergyMixed(e.energy_type, e.per_energy, e.max_extra)),),
+    # v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 7 章）
+    E.CoinBonusPerOwnBenchNamed: lambda e: (Damage(OPP, HeadsPlusPokemonCount(e.per, SCOPE_OWN_BENCH, e.names)),),
+    E.EvolveChosenNamedFromDeck: lambda e: (EvolveChosenFromDeck(e.names),),
+    E.CoinsDiscardOpponentEnergyElseFail: lambda e: (FailOnAllTails("coin", e.coins), Damage(OPP, Printed()), DiscardOpponentEnergyByHeads(heads_of="coin")),
     E.ThreeCoinPsychicPower: lambda e: (
         Coin("coin", count=3), Damage(OPP, Fixed(20), gate=("coin", 2)), Draw(1, gate=("coin", 1)), CopyOpponentAttack(gate=("coin", 3)),
     ),
@@ -9928,7 +11005,7 @@ class TargetDamage(Element):
             raise TypeError(f"選ぶ前に読み方で比べる選んだ個体へのダメージの基本は Fixed だけ（{type(self.base).__name__}）")
 
     def decides(self, kind: str) -> bool:
-        return kind in (DAMAGE_STEP_ORDER, DAMAGE_REDUCTION) or super().decides(kind)
+        return kind in (DAMAGE_STEP_ORDER, DAMAGE_REDUCTION, DAMAGE_OPTION) or super().decides(kind)
 
     def coin_receiver(self) -> str | None:
         # 相手の場のポケモンから選ぶダメージは、受けるポケモンがみな無効なら無効（``void_coin_question`` の控えの要素と同じ扱い。``void_for_all``）
@@ -10045,19 +11122,25 @@ class TargetDamage(Element):
             raise run.res.question("bench_damage_weakness_resistance", f"控えのポケモン {pokemon.pokemon_id}")
         return self._deal(run, kind, pokemon, base, {})
 
-    def _deal(self, run: AttackRun, kind: str, pokemon: PokemonInPlay, base: int, orders: dict[int, tuple[int, ...]], reduction: int | None = None) -> bool:
+    def _deal(self, run: AttackRun, kind: str, pokemon: PokemonInPlay, base: int, orders: dict[int, tuple[int, ...]], reduction: int | None = None,
+              optional: bool | None = None) -> bool:
         if kind in (OPP, SELF):
             try:
                 run.fs.results[self.name] = deal_damage(run.res, run.fs, kind, base, weakness_resistance=self.weakness_resistance, orders=orders or None,
                                                         order_decision=True, resistance=self.resistance, defender_effects=self.defender_effects,
-                                                        reduction=reduction, ignore_scope=self.ignore_scope)
+                                                        reduction=reduction, ignore_scope=self.ignore_scope, optional=optional, optional_decision=True)
             except DamageOrderRequired as need:
-                suspend_step_order(run, self, need, base, orders, reduction)
+                suspend_step_order(run, self, need, base, orders, reduction, optional)
                 return True
             except DamageReductionRequired as need:
                 if run.res.dry_run:
                     return self._deal(run, kind, pokemon, base, orders, run.res.oracle.choose(reduction_answers(run, self, base, orders, need)))
                 suspend_damage_reduction(run, self, need, base, orders)
+                return True
+            except DamageOptionRequired as need:
+                if run.res.dry_run:
+                    return self._deal(run, kind, pokemon, base, orders, reduction, run.res.oracle.choose([False, True]))  # v0.119
+                suspend_damage_option(run, self, need, base, orders, reduction)
                 return True
             return False
         entry = (kind, pokemon.pokemon_id, base, self.weakness_resistance) + (() if self.defender_effects else (self.ignore_scope,))
@@ -10067,11 +11150,15 @@ class TargetDamage(Element):
         located = self.locate(run)
         if located is None or located[0] not in (OPP, SELF):
             raise RuntimeError("順番・減らす量の決定を待つ間に、選んだ個体が対戦ポケモンでなくなった（エンジンの不具合）")
+        optional = None
         if decision.kind == DAMAGE_REDUCTION:
             base, orders, reduction = resume_damage_reduction(run, self, decision, choices)
+        elif decision.kind == DAMAGE_OPTION:
+            base, orders, reduction, optional = resume_damage_option(run, self, decision, choices)  # v0.119
         else:
             base, orders, reduction = resume_step_order(run, self, decision, choices)
-        self._deal(run, located[0], located[2], base, orders, reduction)
+            optional = carried_optional(run)
+        self._deal(run, located[0], located[2], base, orders, reduction, optional)
 
 
 @dataclass(frozen=True)
@@ -10603,8 +11690,8 @@ def damage_units_difference(run: AttackRun, owner: int, receiver: PokemonInPlay,
     try:
         separate = (compute_damage(state, attacker, receiver, first, modifiers).final, compute_damage(state, attacker, receiver, second, modifiers).final)
         combined = compute_damage(state, attacker, receiver, first + second, modifiers).final
-    except (DamageOrderRequired, DamageReductionRequired):
-        return "計算に決定（同じ段階の順番・お上品攻撃の減らす量）が要る"
+    except (DamageOrderRequired, DamageReductionRequired, DamageOptionRequired):
+        return "計算に決定（同じ段階の順番・お上品攻撃の減らす量・受けるポケモンの使うかを選ぶ効果）が要る"
     except E.TypeReadingsDiffer as differ:
         raise type_question(res, differ, f"ワザ {run.key} の相手の対戦ポケモンへのダメージ") from None
     if sum(max(value, 0) for value in separate) != max(combined, 0):
@@ -10924,14 +12011,19 @@ class FieldPowerSuppression(Element):
     - 加えたあとの状態が受け付けられない（決められない姿・［ずらかる］の力がもどる。``effects.attack_state_stop_after``）なら止める。最大HP が下がるのはワザのあとのきぜつの判定で扱う
     - これがワザの最後の要素なので、ワザの出どころが特殊能力でも、処理を続けるかの問い（オールクリアの ZC2）はない"""
 
+    turns: int = 1  # v0.114: 消える番は与えた番 + ``turns``（やみのはどうは 1（次の相手の番の終わり）、ブビィの「モクモク」は 2（次の自分の番の終わり））
     phase: ClassVar[Phase] = Phase.EFFECT
     opponent_element: ClassVar[str] = E.POWER_LOCK_ELEMENT
+
+    def __post_init__(self) -> None:
+        if self.turns not in (1, 2):
+            raise ValueError(f"おたがいの場の特殊能力を止める期間 {self.turns!r} は 1（次の相手の番）か 2（次の自分の番）")
 
     def record(self, run: AttackRun) -> TrainerTurnEffect:
         turn = run.state.turn_number
         attacker = run.attacker()
         return TrainerTurnEffect(kind=ATTACK_FIELD_POWER_SUPPRESSION, player=run.player, source_card=attacker.card, card_id=run.key.card_id, created_turn=turn,
-                                 expires_turn=turn + 1, pokemon_id=attacker.pokemon_id, attack_index=run.key.attack_index)
+                                 expires_turn=turn + self.turns, pokemon_id=attacker.pokemon_id, attack_index=run.key.attack_index)
 
     def _protected_question(self, run: AttackRun) -> None:
         from .kernel import first_void
@@ -11210,6 +12302,8 @@ class ReturnMilledTypeEnergy(Element):
             raise RuntimeError(f"ワザ {run.key} で、手札に加える前にトラッシュの要素 {self.mill} の結果がない（エンジンの不具合）")
         if suppressed_discard_to_hand(run):
             return False
+        if protected_discard(run, "milled_to_hand"):
+            return False  # v0.119: ［アレルギーほうし］（山札からトラッシュすることは残る。加えるカードを決めないので FV1 にも当たらない）
         state = run.state
         returned = milled_type_energy(run, milled.cards, self.energy_type)
         if any(uid not in state.players[run.player].discard for uid in returned):
@@ -11561,4 +12655,2731 @@ BUILDERS |= {
         Coin("coin", count=3), Damage(OPP, Fixed(e.all_heads), gate=("coin", 3)), Damage(OPP, Fixed(e.one_heads), name="one_heads_damage", gate=("coin", 1)),
         HealCounters(e.two_heads, scope=E.HEAL_OPPONENT_ACTIVE, gate=("coin", 2)), HealCounters(every=True, scope=E.HEAL_OPPONENT_ACTIVE, gate=("coin", 0)),
     ),
+}
+
+
+# ---------------------------------------------------------------- v0.106（docs/counts-coins-compositions-v0.106.md）: 数とコインの組み合わせ（「おもて」の数の表・カードの枚数ぶんの上限つきの
+# コイン・相手が取ったサイドの数・同じコインの追加のダメージと自分へのダメージ）
+
+
+@dataclass(frozen=True)
+class PrintedPlusHeadsTable:
+    """ダメージの目安の数字 + コインを ``len(bonuses) - 1`` 枚投げた「おもて」の数 h の追加のダメージ ``bonuses[h]``（v0.106。ストライク（neo2-008）の「れんぞくぎり」の「コインを4枚
+    投げる。「おもて」が1枚なら10ダメージ、…「おもて」が4枚なら80ダメージを追加する。」。目安 10+ なので 10・20・30・50・90）。p.321 の 1 段階（表の値を最終ダメージにしない）。
+    表は登録の引数（``effects.CoinsHeadsTableBonusDamage``。カードの id を見ない）。コインはダメージの要素の中（ダメージの量だけを決める）で、結果は「おもて」の数だけを使う
+    （``by_heads``。先読みは「おもて」の数でまとめる。実際には 1 枚ずつ投げる。v0.72 の ``PrintedPlusHeadsTimes`` と同じ投げ方）。"""
+
+    bonuses: tuple[int, ...]
+    by_heads: ClassVar[bool] = True
+
+    @property
+    def local_coins(self) -> int:
+        return len(self.bonuses) - 1
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return run.attack.damage + self.bonuses[0 if flips is None else flips.heads]
+
+
+@dataclass(frozen=True)
+class HeadsTimesAttachedEnergyCards:
+    """ワザを使うポケモンについている「エネルギーカード」の枚数ぶん（``max_coins`` 枚まで）コインを投げ、「おもて」の数 × ``per``（v0.106。カブトプス（neo2-018）の
+    「ハイドロカッター」）。数えるのはカードの枚数（``effects.attached_energy_cards``。v0.50 のサイコウェーブと同じ数え方。無色2個エネルギーは 1 枚）で、v0.34 の
+    ``HeadsTimesAttachedEnergy``（出すエネルギーの個数）とは別の値。コインの枚数は枚数と上限の小さいほう（``effects.CappedCoinsPerAttachedEnergyCardsDamage.coin_count`` と同じ値）。
+    0 枚なら投げず 0。コインはダメージの要素の中（ダメージの量だけを決める）で、結果は「おもて」の数だけを使う（``by_heads``）。"""
+
+    per: int
+    max_coins: int
+    by_heads: ClassVar[bool] = True
+
+    def coin_count(self, run: AttackRun) -> int:
+        return min(E.attached_energy_cards(run.state, run.attacker()), self.max_coins)
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return (0 if flips is None else flips.heads) * self.per
+
+
+@dataclass(frozen=True)
+class PrintedPlusOpponentPrizesTaken:
+    """ダメージの目安の数字 + 相手プレイヤーがすでに取ったサイドの数 × ``per``（v0.106。ゴースト（ES3-023）の「おんねん」）。p.321 の 1 段階。相手はワザを使ったプレイヤー
+    （``run.player``。相手のワザとして使ったなら使ったプレイヤー）の相手で、取った数は ``effects.prizes_taken``（準備で置く数 − 今のサイドの枚数。きぜつ・トレーナーで取ったもの。
+    カードの中身は読まない）。"""
+
+    per: int
+    local_coins: ClassVar[int] = 0
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return run.attack.damage + E.prizes_taken(run.state, 1 - run.player) * self.per
+
+
+BUILDERS |= {
+    # いかりのとっしん（グランブル）: 目安 + 自分のカウンターの数 × per（相手へのダメージの時点）→ 自分にも self_damage（別のダメージの要素。相手が受けなくても省かない）
+    E.DamagePlusOwnCountersThenSelfDamage: lambda e: (Damage(OPP, PlusOwnCounters(e.per)), Damage(SELF, Fixed(e.self_damage), name="self_damage")),
+    # れんぞくぎり（ストライク）: コイン（表の長さ − 1 枚）→ 目安 +「おもて」の数の表の値
+    E.CoinsHeadsTableBonusDamage: lambda e: (Damage(OPP, PrintedPlusHeadsTable(e.bonuses)),),
+    # ハイドロカッター（カブトプス）: 自分のエネルギーカードの枚数ぶん（上限つき）のコイン →「おもて」の数 × per
+    E.CappedCoinsPerAttachedEnergyCardsDamage: lambda e: (Damage(OPP, HeadsTimesAttachedEnergyCards(e.per, e.max_coins)),),
+    # おんねん（ゴースト）: 目安 + 相手が取ったサイドの数 × per
+    E.DamagePlusOpponentPrizesTaken: lambda e: (Damage(OPP, PrintedPlusOpponentPrizesTaken(e.per)),),
+    # ローリングニードル（サンドパン）: コイン coins 枚（1 組）→ 目安 +「おもて」の数 × per → 自分にも同じ「おもて」の数 × self_per（同じコインの組。投げ直さない）
+    E.CoinsBonusAndSelfDamagePerHeads: lambda e: (
+        Coin("coin", count=e.coins), Damage(OPP, PrintedPlusHeadsOfCoin("coin", e.per)), Damage(SELF, HeadsOfCoin("coin", e.self_per), name="self_damage"),
+    ),
+}
+
+
+# ---------------------------------------------------------------- v0.107（docs/coin-failure-status-flight-v0.107.md）: コインによる成否・特殊状態・防護（既存の要素の組み合わせ。新しい要素・値はない）
+
+
+BUILDERS |= {
+    # とげでつつく（ビードル）: 失敗のコイン 1 枚（「うら」ならワザ全体が失敗）→ 相手にダメージ → 相手をどく
+    E.FailOnTailsDamageThenPoison: lambda e: (FailOnTails(), Damage(OPP, Printed()), Status(POISON)),
+    # とつぜんじばく（クヌギダマ）: 失敗のコイン 1 枚 → じばく（SelfDestruct の「弱点・抵抗力」に関係ない書き方）と同じダメージのまとまり（相手 → 自分 → 相手の控え全員 → 自分の控え全員）
+    E.FailOnTailsSelfDestruct: lambda e: (
+        FailOnTails(), *BUILDERS[E.SelfDestruct](E.SelfDestruct(e.self_damage, e.bench_damage, weakness_resistance_stated=True)),
+    ),
+    # そらをとぶ（そらをとぶピカチュウ・バタフリー）: 失敗のコイン 1 枚 → 相手にダメージ → 自分に次の相手の番のワザへの防護（AttackBarrier。同じコインの「おもて」。投げ直さない）
+    E.FailOnTailsDamageThenSelfBarrier: lambda e: (FailOnTails(), Damage(OPP, Printed()), SelfPersistent(AttackBarrier.kind)),
+    # へんずつう（コダック）: 相手にダメージ → コイン 1 枚 →「おもて」なら相手、「うら」なら自分をこんらん（ダメージはどちらの面でも与える）
+    E.DamageThenConfuseOpponentOrSelf: lambda e: (
+        Damage(OPP, Printed()), Coin("coin"), Status(CONFUSION, gate=("coin", HEADS)), Status(CONFUSION, target=SELF, gate=("coin", TAILS)),
+    ),
+}
+
+
+# ---------------------------------------------------------------- v0.108（docs/damage-modifiers-condition-bonuses-v0.108.md）: 使うワザのダメージを減らす効果・相手の特殊状態の確かめと
+# 追加・相手の特殊状態の回復
+
+
+@dataclass(frozen=True)
+class OpponentDealtDamageReduction(Element):
+    """相手の対戦ポケモン（このワザを受けた相手）に、次の相手の番（与えた番 + 1）だけ、使うワザによるダメージを ``amount`` 減らす効果（``state.DealtAttackDamageReduction``）を与える
+    （v0.108。チョンチーの「マイナスイオン」・トゲピーの「あまえる」）。
+
+    - 相手に与える効果なので「とうめい」・「ワザをうけない」状態・［ニュートラルシールド］など（``reaches``。発生元は実際にワザを使ったポケモン）を評価する。相手がこのワザで HP 以上なら
+      与えない（p.309。こんじょうを使えるなら G37）
+    - 発生源（``source_card``・``source_player``・``source_pokemon``）は実際にワザを使ったポケモン（相手のワザとして使ったなら使ったポケモン）。ログ ``persistent_effect_added`` に
+      ``end_turn``・``source_pokemon``・``amount``
+    - v0.34 の ``OpponentReducedDamage``（なきつく。「このカード」に与えるダメージだけ）とは別の要素・別の持続する効果"""
+
+    amount: int
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.DEALT_DAMAGE_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        opponent = 1 - run.player
+        target = run.opponent_active()
+        if run.knocked_out(target):
+            run.ko_prevention_conflict(target)
+            return False
+        if not reaches(run.res, run.fs, opponent, target, E.DEALT_DAMAGE_ELEMENT):
+            return False
+        attacker = run.attacker()
+        turn = run.state.turn_number
+        effect = DealtAttackDamageReduction(source_card=attacker.card, source_player=run.player, created_turn=turn, active_turn=turn + 1, end_turn=turn + 1,
+                                            source_pokemon=attacker.pokemon_id, amount=self.amount)
+        add_persistent_effect(run.state, opponent, target, effect, attack=str(run.key), amount=self.amount, **period_log_fields(effect))
+        return False
+
+
+@dataclass(frozen=True)
+class OpponentStatusCheck(Element):
+    """相手の対戦ポケモンが ``conditions`` のどれかの状態かを 1 回だけ確かめ、結果を ``name`` で残す（v0.108。アーボックの「もうどく」の「このワザを受ける前から相手が「どく」状態なら」・
+    わるいプクリンの「たたきおこす」の「相手が「ねむり」または「こんらん」状態なら」）。
+
+    - 並びの最初（ワザの内容を処理するとき。こんらんのコイン・手順 4 のコインのあと、ダメージの要素の前）。ダメージの値 ``PlusIfResult`` がこの結果を読む。あとの要素（どく・回復）・
+      キョウのどく・反応・決定で状態が変わっても確かめ直さない（v0.45 の ``SelfStatusCheck`` と同じ形で、確かめるのが相手の対戦ポケモン）
+    - どくは通常のどくと特殊などくのどちらでも（``has_condition``。どくの量ではなく、どく状態か）
+    - 相手への効果ではないので「ワザをうけない」状態・「とうめい」は評価しない（v0.45 の ``FailUnlessOpponentStatus`` と同じ）。相手の対戦ポケモンは、実際にワザを使ったプレイヤーの相手"""
+
+    name: str
+    conditions: tuple[str, ...]
+    phase: ClassVar[Phase] = Phase.NEUTRAL
+
+    def run(self, run: AttackRun) -> bool:
+        target = run.opponent_active()
+        run.fs.results[self.name] = target is not None and any(has_condition(target, condition) for condition in self.conditions)
+        return False
+
+
+@dataclass(frozen=True)
+class PlusIfResult:
+    """ダメージの目安の数字 + （確かめ ``check`` の結果が真なら ``bonus``）（v0.108。もうどく・たたきおこす。p.321 の 1 段階）。確かめの結果は並びの最初で決まり、決定をまたぐときは
+    この値で決めた基本となるダメージを続きの情報（``base``）で運ぶ（確かめ直さない）。"""
+
+    check: str
+    bonus: int
+    local_coins: ClassVar[int] = 0
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return run.attack.damage + (self.bonus if run.fs.results[self.check] else 0)
+
+
+@dataclass(frozen=True)
+class CureOpponentConditions(Element):
+    """相手の対戦ポケモンを、説明が書く特殊状態（``names``）だけから回復させる（v0.108。わるいプクリンの「たたきおこす」の「その後、相手を「ねむり」または「こんらん」状態から回復させる」。
+    ``conditions.cure_conditions``。ログ ``special_conditions_removed`` の ``reason`` ``cured``）。
+
+    - 回復させる状態がなければ処理の対象がないので何もしない（「とうめい」なども評価しない。v0.72 の ``WakeOpponent`` と同じ）。どく・マヒ・ダメージカウンター・マーカー・持続する効果は残す
+    - 相手がこのワザのダメージで HP 以上なら回復させない（p.309。こんじょうを使えるなら G37）
+    - 相手のポケモンへの効果なので、回復させる前に「ワザをうけない」状態・「とうめい」・効果を無効にする効果を評価する（``reaches`` の ``CURE_ELEMENT``。有益な効果でも防ぐ。回復は特殊状態に
+      する効果ではないので［めんえき］・特殊状態にならない効果は見ない）。ダメージだけが無効でも、この要素は受ける判定で決める（「ダメージを与えたら」の条件はない）
+    - v0.90 の ``CureOwnConditions``（自分への要素）の対象・``reach`` の既定は変えない
+    - 回復させたあとの状態が受け付けられない（特殊能力がまたはたらいて決められない姿・［ずらかる］の力がもどる。``effects.attack_state_stop_after``）なら止める（宣言の前に先読みが見つける）。
+      最大HP が下がるのは、ワザのあとのきぜつの判定が扱う"""
+
+    names: tuple[str, ...]
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.CURE_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        owner, target = 1 - run.player, run.opponent_active()
+        if target is None or not any(name in self.names for name in target.conditions.names()):
+            return False
+        if run.knocked_out(target):
+            run.ko_prevention_conflict(target, owner)
+            return False
+        if not reaches(run.res, run.fs, owner, target, E.CURE_ELEMENT):
+            return False
+        before = run.state.peek()
+        cure_conditions(run.state, owner, target, self.names, effect=str(run.key))
+        stop = E.attack_state_stop_after(before, run.state)
+        if stop is not None:
+            raise UnsupportedError(*stop)
+        return False
+
+
+BUILDERS |= {
+    E.DamageThenDealtDamageReduction: lambda e: (Damage(OPP, Printed()), OpponentDealtDamageReduction(e.amount)),
+    E.DealtDamageReductionWithoutDamage: lambda e: (OpponentDealtDamageReduction(e.amount),),
+    E.DamageThenReceivedAttackDamageBonus: lambda e: (Damage(OPP, Printed()), OpponentDamageTakenBonus(e.amount, e.start, e.end)),
+    E.PlusIfDefenderPoisonedThenPoison: lambda e: (
+        OpponentStatusCheck("opponent_status_before", (POISON,)), Damage(OPP, PlusIfResult("opponent_status_before", e.bonus)), Status(POISON),
+    ),
+    E.PlusIfDefenderStatusThenCure: lambda e: (
+        OpponentStatusCheck("opponent_status_before", e.conditions), Damage(OPP, PlusIfResult("opponent_status_before", e.bonus)), CureOpponentConditions(e.conditions),
+    ),
+}
+
+
+# ---------------------------------------------------------------- v0.109（docs/timed-damage-guards-v0.109.md）: 次の相手の番に受けるときのコインでダメージを防ぐ効果・相手のタイプで
+# 決まる基本となるダメージ
+
+
+@dataclass(frozen=True)
+class SelfTimedDamageGuard(Element):
+    """ワザを使ったポケモン自身に、次の相手の番だけ、受けるときのコインでダメージを防ぐ効果（``state.TimedDamageGuard``）を与える（v0.109。ウパーの「ぬるぬる」・エビワラーの「かわす」・
+    ユンゲラーの「ブリンク」）。コインはない（コインはダメージを受けるときに投げる。``kernel.timed_guard_passes``）。
+
+    - 自分への効果なので「とうめい」・「ワザをうけない」状態は評価しない（v0.83 の ``SelfReflectShield`` と同じ）。ワザを使ったポケモンがこのワザの中で HP 以上なら与えない（p.309。返す効果の
+      ダメージなど。ログ ``persistent_effect_skipped``）。相手がダメージを受けたか・HP 以上になったかは条件にしない（ブリンクのダメージのあとでも与える）
+    - 前の効果ははたらく番の終わりに消えている（同じ番に 2 回使うことはない）ので、置きかえずに加える。ログ ``persistent_effect_added`` に面・投げる人・範囲
+    - 実際にワザを使ったポケモンに与える（相手のワザとして使ったなら使ったポケモン）"""
+
+    prevent_on: str
+    flipper: str
+    scope: str
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def run(self, run: AttackRun) -> bool:
+        attacker = run.attacker()
+        if run.knocked_out(attacker):
+            run.state.add_event("persistent_effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id,
+                                persistent_effect=TimedDamageGuard.kind, effect=str(run.key), reason=E.EFFECT_TARGET_KNOCKED_OUT)
+            return False
+        turn = run.state.turn_number
+        effect = TimedDamageGuard(source_card=attacker.card, source_player=run.player, created_turn=turn, active_turn=turn + TimedDamageGuard.turns_until_active,
+                                  prevent_on=self.prevent_on, flipper=self.flipper, scope=self.scope)
+        add_persistent_effect(run.state, run.player, attacker, effect, attack=str(run.key), prevent_on=self.prevent_on, flipper=self.flipper, scope=self.scope)
+        return False
+
+
+@dataclass(frozen=True)
+class AmountIfDefenderType:
+    """相手の対戦ポケモン（ダメージの要素を処理する時点）の今有効なタイプが ``pokemon_type`` なら ``amount``、そうでなければダメージの目安の数字（v0.109。ユンゲラーの「サイコパニック」の
+    「このワザを受ける相手が「超」ポケモンなら、このワザのダメージは60になる」。p.321 の 1 段階。弱点・抵抗力などはそのあとの段階で計算する（最終ダメージを ``amount`` にしない））。
+
+    - タイプは今の姿と今有効な色（``effects.same_for_type_readings``。［へんしょく］など。読み方で結果が変わるなら VS1。v0.45 の ``PrintedTimesIfDefenderType`` と同じ問い合わせ）。
+      印刷されたタイプで決めない。うらのカード（マチスの秘策）は ``Damage.run`` がこの値を求める前におもてにする
+    - 「その数になる」の固定の量で、目安の数字の倍数ではない（v0.45 の「「…」倍になる」の ``PrintedTimesIfDefenderType`` とは別の値。目安と量の組は登録の文面で照らす）"""
+
+    pokemon_type: EnergyType
+    amount: int
+    local_coins: ClassVar[int] = 0
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        defender = run.opponent_active()
+        try:
+            return E.same_for_type_readings(run.state, (defender,),
+                                            lambda views: self.amount if views[0].pokemon_type is self.pokemon_type else run.attack.damage)
+        except E.TypeReadingsDiffer as differ:
+            raise type_question(run.res, differ, f"ワザ {run.key} の相手のタイプで決まるダメージ") from None
+
+
+BUILDERS |= {
+    E.SelfTimedDamageGuardWithoutDamage: lambda e: (SelfTimedDamageGuard(e.prevent_on.value, e.flipper, e.scope),),
+    E.DamageThenSelfTimedDamageGuard: lambda e: (Damage(OPP, Printed()), SelfTimedDamageGuard(e.prevent_on.value, e.flipper, e.scope)),
+    E.DamageSetAgainstType: lambda e: (Damage(OPP, AmountIfDefenderType(e.pokemon_type, e.amount)),),
+}
+
+
+# ---------------------------------------------------------------- v0.110（docs/endure-armor-up-v0.110.md）: 使うときのコインで、残りHPがなくなっても「きぜつ」しない期間つきの効果
+
+
+@dataclass(frozen=True)
+class SelfKnockOutSurvival(Element):
+    """使うときにコインを 1 枚投げ、「おもて」なら、ワザを使ったポケモン自身に、残りHPがなくなっても「きぜつ」しない期間つきの効果（``state.KnockOutSurvival``）を与える（v0.110。
+    ゴマゾウの「こらえる」・わるいフォレトスの「こうてつか」）。
+
+    - コインはワザの説明のコイン（``AttackRun.flip``）。ナツメのESPでやり直したなら、やり直したあとの結果でだけ与える（決定の前に効果を与えない。コインの前にログを残さない）。こんらんの
+      コイン（宣言のあと・ワザの要素の前）とは別。「うら」なら何もしない（ワザの失敗ではない。持っている効果を消さない）
+    - 期間は与えた番から数える（``start``〜``end``）。前の効果が残っていても置きかえずに加える（こうてつかを次の自分の番にもう一度使うと、その番は 2 つがはたらく。どちらも同じ結果）
+    - 自分への効果なので「とうめい」・「ワザをうけない」状態は評価しない。ワザを使ったポケモンがこのワザの中で HP 以上なら、処理の対象がないのでコインも投げない（p.309）
+    - 実際にワザを使ったポケモンに与える（相手のワザとして使ったなら使ったポケモン）"""
+
+    start: int
+    end: int
+    scope: str
+    remaining_hp: int
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def run(self, run: AttackRun) -> bool:
+        attacker = run.attacker()
+        if run.knocked_out(attacker):
+            run.state.add_event("persistent_effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id,
+                                persistent_effect=KnockOutSurvival.kind, effect=str(run.key), reason=E.EFFECT_TARGET_KNOCKED_OUT)
+            return False
+        if run.flip(1).results[0] is not HEADS:
+            return False
+        turn = run.state.turn_number
+        effect = KnockOutSurvival(source_card=attacker.card, source_player=run.player, created_turn=turn, active_turn=turn + self.start, end_turn=turn + self.end,
+                                  scope=self.scope, remaining_hp=self.remaining_hp)
+        add_persistent_effect(run.state, run.player, attacker, effect, attack=str(run.key), end_turn=effect.end_turn, scope=self.scope,
+                              remaining_hp=self.remaining_hp)
+        return False
+
+
+BUILDERS |= {
+    E.SelfKnockOutSurvivalOnHeads: lambda e: (SelfKnockOutSurvival(e.start, e.end, e.scope, e.remaining_hp),),
+}
+
+
+# ---------------------------------------------------------------- v0.111（docs/field-energy-card-counts-v0.111.md）: 場のエネルギーカードの枚数でダメージ・ワザの使用条件が決まるワザ
+
+
+@dataclass(frozen=True)
+class OpponentFieldEnergyCardsTimes:
+    """ワザを実際に使ったプレイヤーの相手の場（バトル場と控え）のポケモンについている「``energy_type``」エネルギーカードの枚数 × ``per``（v0.111。ミュウツーの「サイコクラッシュ」。
+    p.321 の 1 段階の基本となるダメージそのもの。目安の数字を加えない）。数えるのはダメージの要素を処理する時点（``effects.field_energy_cards_of_type``）。0 枚なら 0。
+
+    - 数えることはワザの効果ではないので、控えの「とうめい」・「ワザをうけない」状態は評価しない（数から除かない）。ダメージを受けるのは相手の対戦ポケモンだけ（``Damage(OPP)``）
+    - カードとしての色が決まらないカード（``effects.field_energy_card_ambiguities``）があれば、そのポケモンごとに既存の問い（TE1・RB1・BZ2・MEC1・CE3。``transform_energy_question`` の
+      カードの色の確かめ。［おいしげる］の「草」の個数の問いは色の枚数に関係しないので聞かない）で止める。ただし、受ける相手の対戦ポケモンにとってこのダメージの要素が無効
+      （``kernel.first_void``。かたまる・バリアー・［ニュートラルシールド］など）なら、量は使われない（計算しない）ので止めずに 0 を返す
+    - 相手のワザとして使ったときも、実際に使ったプレイヤー（``run.player``）の相手の場を数える"""
+
+    energy_type: EnergyType
+    per: int
+    local_coins: ClassVar[int] = 0
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        state = run.state
+        owner = 1 - run.player
+        if E.field_energy_card_ambiguities(state, owner, self.energy_type):
+            from .kernel import first_void
+
+            receiver = run.opponent_active()
+            if receiver is not None and first_void(run.res, run.incoming(), owner, receiver) is not None:
+                return 0  # このダメージの要素は無効（量を計算しない）。色の決まらないカードで結果は変わらない
+            for pokemon in state.players[owner].in_play():
+                if pokemon.energy:
+                    transform_energy_question(run, pokemon, self.energy_type, cards=True, wild=False)
+            remaining = E.field_energy_card_ambiguities(state, owner, self.energy_type)
+            if remaining:
+                # 残るのはエナジーバーンの「炎」だけ（使った番の自分のポケモンにだけ起こるので、相手の場にはない）
+                raise RuntimeError(f"相手の場のカード {list(remaining)} がエナジーバーンで「炎」になっている（使った番の自分のポケモンだけに起こる。エンジンの不具合）")
+        return E.field_energy_cards_of_type(state, owner, self.energy_type) * self.per
+
+
+@dataclass(frozen=True)
+class EqualEnergyCardsRequired(Element):
+    """ワザを使うための条件「自分と相手に同じ数のエネルギーカードがついている時だけ、このワザは使える」（v0.111。ナツメのケーシィの「シンクロウェーブ」）。
+
+    条件はワザの実装の ``usage_problem`` が宣言の前（必要なエネルギーの確認のあと・こんらんのコインの前）に確かめる（``ENERGY_CARD_COUNTS_DIFFER``。状態・乱数・ログを変えない）。
+    この要素は、相手のワザとして使うとき（ピクシー・ピッピの「ゆびをふる」など）の扱い（``copy_problem``。実際に使うポケモンと、その相手の対戦ポケモンで比べる。v0.40 の
+    ``OwnCountersAtLeast`` と同じ扱い: 説明が「使えない」「説明にしたがう」なら選べず、ほかは HC9）だけを持つ。
+
+    宣言のあとは比べ直さない（変わり身の術の「相手がワザを使う時」の入れ替えで相手の対戦ポケモンが変わっても、ワザは宣言のときの条件で使っている。「そのワザのダメージや効果は、
+    入れ替えの後でおこる」）。v0.83 のやさしいモルフォンの ``FailUnlessEqualEnergyCards``（処理の中で比べて失敗する）とは別の要素。"""
+
+    phase: ClassVar[Phase] = Phase.NEUTRAL
+
+    def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
+        defender = run.opponent_active()
+        own, theirs = E.attached_energy_cards(run.state, copier), 0 if defender is None else E.attached_energy_cards(run.state, defender)
+        if own != theirs:
+            return (ILLEGAL if clause in (CANNOT_USE, FOLLOW_TEXT) else UNRESOLVED), \
+                f"自分（{own} 枚）と相手（{theirs} 枚）に同じ数のエネルギーカードがついていない（ワザを使うための条件）"
+        return None
+
+    def run(self, run: AttackRun) -> bool:
+        return False
+
+
+BUILDERS |= {
+    E.DamageTimesOpponentFieldEnergyCards: lambda e: (Damage(OPP, OpponentFieldEnergyCardsTimes(e.energy_type, e.per)),),
+    E.DamageRequiringEqualEnergyCards: lambda e: (EqualEnergyCardsRequired(), Damage(OPP, Printed())),
+}
+
+
+# ---------------------------------------------------------------- v0.112（docs/energy-coins-draw-v0.112.md）: 水エネルギーの個数によるコインとドロー・コインのマヒと自分のワザの制限
+
+
+BUILDERS |= {
+    # しょくしゅをつかう: 自分の「水」エネルギーの個数だけのワザ全体のコイン（「おもて」の数だけを使う）→ その「おもて」の数 × 2 枚を引く
+    E.CoinsPerOwnTypedEnergyDraw: lambda e: (Coin("coin", per_own_typed=e.energy_type), Draw(heads_of="coin", per_heads=e.per_heads)),
+    # ふしょくえき: ダメージ → 1 枚のワザ全体のコイン →「おもて」なら相手をマヒ・「うら」なら次の自分の番にこのワザを使えない（同じ結果を両方が使う）
+    E.DamageParalyzeOnHeadsElseLockSelf: lambda e: (
+        Damage(OPP, Printed()), Coin("coin"), Status(PARALYSIS, gate=("coin", HEADS), reparalysis_check=True),
+        SelfAttackLock(local_coin=None, gate=("coin", TAILS)),
+    ),
+}
+
+
+# ---------------------------------------------------------------- v0.113（docs/variable-coins-search-attachments-v0.113.md）: 可変枚数のコインと、山札の検索・つける・場全体のトラッシュ
+
+
+# v0.113: お互いの場にいるポケモンの数（``Coin.per_pokemon``。ピッピの「みんなでおどる」とロケット団のニャースの「だいぎゃくてん？」で共有する。数だけを使い、名前でしぼらない）
+FIELD_POKEMON = (SCOPE_BOTH_IN_PLAY, None)
+
+
+@dataclass(frozen=True)
+class AttachFromDeckByHeads(Element):
+    """ワザ全体のコイン ``heads_of`` の「おもて」の数ぶんの ``energy_type`` エネルギーカードを自分の山札から選び出し、自分の場の ``energy_type`` ポケモンそれぞれに、好きなように
+    つける。その後、その山札をよく切る（v0.113。デンリュウ（neo3-028）の「ゆうでん」。kyuura の日本語の印刷の文面。英語の欄の「may」（0 枚・任意）は持ち込まない）。
+
+    - 選ぶ枚数は「おもて」の数 H ちょうど（「おもて」の数ぶん。ピッピの「みんなでおどる」の「以下」とは別）。選ぶのはワザを使ったプレイヤー: カード（決定 ``ATTACH_FROM_DECK``。
+      ``context`` の ``"stage"`` は ``"card"``。山札の ``energy_type`` の基本エネルギーカード（uid の小さい順）から H 枚）→ 選んだカード 1 枚ずつ（山札の uid の小さい順）につける
+      ポケモン（決定 ``SELECT_POKEMON``。``"stage"`` は ``"target"``・``"cards"`` は選んだカード・``"assigned"`` はそれまでに決めたつける先・``"card"`` は今つける先を決めるカード）。
+      1 匹に 2 枚以上をつけてもよい（「好きなように」）。決める間、カードは山札にある（つけるのは、すべてのつける先を決めたあと。1 回だけ切る）
+    - つけられるポケモンは自分の場（バトル場 → ベンチ）の、今有効な色（``effects.type_readings``）が ``energy_type`` のポケモン（名前・印刷のタイプで固定しない）。エネルギーカードを
+      つけることができない（クリスタルビーム）・このワザの中で HP 以上になった（相手の［はんげき］など。p.309）ポケモンは選べない。色の読み方で ``energy_type`` かが決まらない（VS1・
+      CE1・CE2・CM1）ポケモン、うらのカード（マチスの秘策。タイプが読めない。FD1）は、選べるが選ぶと止める（``unresolved_detail``）。止めないつけ先がなければ、その理由で止める
+    - H = 0（投げなかったときを含む）・つけられるポケモンがいないなら、選ぶカードはない（ログ ``attach_energy_from_deck_none`` の ``reason`` は ``no_heads``・``no_target``。
+      どちらも公開の情報）。つけられるポケモンの有無は公開の情報なので、いなければコインも投げない（v0.38 の ``has_target``。山札の中身では決めない）
+    - 山札の選べるカードの数 c: c ≧ H ならちょうど H 枚。c = 0 なら選び出す内容の対象がない（p.309）が、山札の中身で進み方を変えないよう、決定を出して答え（0 枚）を待つ（v0.84 の
+      A3。ログ ``attach_energy_from_deck_none`` の ``reason`` ``no_candidates``）。0 < c < H は FC1（説明の枚数より少ない。kyuura の UQ-STATED-COUNT-SHORT。止める）。山札の
+      レインボーエネルギーは RB2（選べるが選ぶと止める。それを選ばないと H 枚にならないなら止める）
+    - どの場合も、そのあと山札を 1 回切る（説明の最後の「その後、その山札をよく切る」。v0.85 のせいでんき・v0.75 のエナジーサポートと同じ読み方。エネルギーアーク（トレーナー）の
+      「おもて」0 枚で切らない読み方は移さない）。ワザの失敗ではない
+    - つけるのはワザの効果なので、つける先の「とうめい」を評価する（``reaches``。受けないなら、カードは持ち主のトラッシュ。v0.75 のエナジーサポートと同じ読み方。ログ
+      ``deck_energy_evaded``）。山札から直接つける（``zones.attach_from_deck``。ログ ``attach_energy_from_deck`` は公開。手札からつける通常の操作・特殊能力でつけた枚数に数えない）。
+      つけたあと ``effects.after_energy_attached``
+    """
+
+    energy_type: EnergyType
+    heads_of: str
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = ATTACH_FROM_DECK
+
+    def decides(self, kind: str) -> bool:
+        return kind in (ATTACH_FROM_DECK, SELECT_POKEMON)
+
+    def cards(self, run: AttackRun) -> tuple[tuple[int, ...], tuple[int, ...]]:
+        """(山札の選べるカード, そのうちの選ぶと止めるレインボーエネルギー)。山札にあるあいだの印刷の定義で決める（uid の小さい順）。"""
+        rainbow = tuple(sorted(E.rainbow_cards_in(run.state, run.state.players[run.player].deck)))
+        return tuple(sorted(set(E.deck_energy_candidates(run.state, run.player, self.energy_type)) | set(rainbow))), rainbow
+
+    def targets(self, run: AttackRun) -> tuple[tuple[int, ...], tuple[tuple[int, str, str], ...]]:
+        """(つけられる自分の場のポケモン（バトル場 → ベンチ）, そのうちの選ぶと止めるもの (番号, コード, 理由))。状態・乱数・問いの記録を変えない。"""
+        from ..errors import HiddenPropertyRead
+        from .kernel import COLOR_QUESTIONS
+
+        options: list[int] = []
+        stops: list[tuple[int, str, str]] = []
+        for pokemon in run.state.players[run.player].in_play():
+            if E.energy_attach_block(run.state, pokemon) is not None or run.knocked_out(pokemon):
+                continue
+            if run.state.is_face_down(pokemon):
+                hidden = HiddenPropertyRead("pokemon_type")
+                options.append(pokemon.pokemon_id)
+                stops.append((pokemon.pokemon_id, hidden.code, hidden.message))
+                continue
+            matches = {reading is self.energy_type for reading in E.type_readings(run.state, pokemon)}
+            if True not in matches:
+                continue
+            options.append(pokemon.pokemon_id)
+            if len(matches) > 1:
+                cause = E.type_reading_cause(run.state, pokemon)
+                question = QUESTIONS[COLOR_QUESTIONS[cause] if cause in ("ce1", "ce2", "cm1") else "shift_color_duration"]
+                stops.append((pokemon.pokemon_id, question.code, f"ポケモン {pokemon.pokemon_id} が「{self.energy_type.ja}」ポケモンか: {question.message}"))
+        return tuple(options), tuple(stops)
+
+    def has_target(self, run: AttackRun) -> bool:
+        return bool(self.targets(run)[0])
+
+    def run(self, run: AttackRun) -> bool:
+        heads = run.heads(self.heads_of)
+        targets, stops = self.targets(run)
+        if not heads or not targets:
+            self._none(run, "no_target" if not targets else "no_heads")  # つけられるポケモンがいなければコインも投げていない（v0.38）
+            return False
+        if len(stops) == len(targets):
+            raise UnsupportedError(stops[0][1], stops[0][2])  # 止めないつけ先がない（FD1・VS1 など。答えのない決定を出さない）
+        cards, rainbow = self.cards(run)
+        usable = len(cards) - len(rainbow)
+        if usable < heads:
+            if rainbow:
+                rainbow_attach_question(run, rainbow, self.energy_type)  # RB2（レインボーエネルギーを選ばないと H 枚にならない）
+            if usable:
+                raise run.res.question("stated_cards_short", f"山札の「{self.energy_type.ja}」エネルギーカード {usable} 枚（「おもて」の数 {heads}）")
+        low = heads if usable >= heads else 0
+        extra = (("stage", "card"), ("heads", heads)) + _unresolved_extra(rainbow, E.RAINBOW_ATTACH_CODE, E.RAINBOW_ATTACH_REASON.format(type=self.energy_type.ja))
+        run.suspend(kind=ATTACH_FROM_DECK, player=run.player, options=cards, min_choices=low, max_choices=heads, carry=True, extra=extra)
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        heads = run.carried["heads"]
+        if decision.kind == ATTACH_FROM_DECK:
+            cards, rainbow = self.cards(run)
+            wanted = heads if len(cards) - len(rainbow) >= heads else 0
+            if len(set(choices)) != len(choices) or any(card not in cards or card in rainbow for card in choices) or len(choices) != wanted:
+                raise RuntimeError(f"つけるカード {choices} が、山札の「{self.energy_type.ja}」エネルギーカードの「おもて」の数 {heads} 枚ではない（エンジンの不具合）")
+            if not choices:
+                self._none(run, "no_candidates")
+                return
+            self._ask_target(run, tuple(card for card in cards if card in choices), (), heads)
+            return
+        chosen = tuple(run.carried["cards"])
+        assigned = tuple(run.carried["assigned"]) + tuple(choices)
+        targets, stops = self.targets(run)
+        if (len(choices) != 1 or choices[0] not in targets or choices[0] in {stop[0] for stop in stops}
+                or any(card not in run.state.players[run.player].deck for card in chosen)):
+            raise RuntimeError(f"つける先 {choices}・カード {chosen} が正しくない（エンジンの不具合）")
+        if len(assigned) < len(chosen):
+            self._ask_target(run, chosen, assigned, heads)
+            return
+        self._attach(run, chosen, assigned)
+
+    def _ask_target(self, run: AttackRun, chosen: tuple[int, ...], assigned: tuple[int, ...], heads: int) -> None:
+        targets, stops = self.targets(run)
+        extra: tuple = (("stage", "target"), ("heads", heads), ("cards", chosen), ("assigned", assigned), ("card", chosen[len(assigned)]))
+        if stops:
+            extra += (("unresolved_choices", tuple(stop[0] for stop in stops)), ("unresolved_code", stops[0][1]), ("unresolved_reason", stops[0][2]),
+                      ("unresolved_detail", stops))
+        run.suspend(kind=SELECT_POKEMON, player=run.player, options=targets, carry=True, extra=extra)
+
+    def _attach(self, run: AttackRun, chosen: tuple[int, ...], assigned: tuple[int, ...]) -> None:
+        state = run.state
+        for card, pid in zip(chosen, assigned):
+            target = state.find_pokemon(pid)[1]
+            if reaches(run.res, run.fs, run.player, target, E.ENERGY_ATTACH_ELEMENT):
+                attach_from_deck(state, run.player, card, target)
+                state.add_event("attach_energy_from_deck", player=run.player, pokemon=target.card, pokemon_id=target.pokemon_id, effect=str(run.key), card=card)
+                attached_in_attack(run, run.player, target, (card,))
+            else:
+                state.players[run.player].deck.remove(card)
+                state.players[run.player].discard.append(card)  # 「とうめい」の「おもて」: カードは持ち主のトラッシュ（エナジーサポートと同じ読み方）
+                state.add_event("deck_energy_evaded", player=run.player, pokemon=target.card, pokemon_id=target.pokemon_id, effect=str(run.key), card=card)
+        shuffle_in_attack(run, self, run.player)
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        stopped = set(decision.context_value("unresolved_choices", ()))
+        if decision.kind == ATTACH_FROM_DECK:
+            # 同じカード id の基本エネルギーカードは、どれをつけても同じ形の状態（v0.46 の AttachFromHand と同じまとめ方）。選ぶと止めるレインボーエネルギーは試さない
+            return [answer for answer in card_id_answers(run.state, decision, (decision.min_choices,)) if not stopped & set(answer)]
+        return [answer for answer in all_answers(decision) if not stopped & set(answer)]
+
+    def _none(self, run: AttackRun, reason: str) -> None:
+        attacker = run.attacker()
+        run.state.add_event("attach_energy_from_deck_none", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                            energy_type=self.energy_type.value, reason=reason)
+        shuffle_in_attack(run, self, run.player)
+
+
+@dataclass(frozen=True)
+class DiscardFieldEnergyAnyNumber(OptionalDiscardForBonus):
+    """自分の場の ``energy_type`` エネルギーカードを、好きなだけトラッシュする（v0.113。わるいバクフーン（neo4-022）の「ファイヤーラッシュ」の前半。結果は ``Discarded``（実際にトラッシュした
+    カード）。あとのダメージの要素 ``HeadsOfDiscarded`` がその枚数だけコインを投げる）。
+
+    - 範囲は自分の場のポケモン全員（ワザを使ったポケモン → ベンチの順。v0.82 の ``OptionalDiscardForBonus`` の ``include_bench``）。数えるのはカード（その色の基本エネルギーカード。
+      エネルギーの個数ではない）。ポケモンごとの色の問い（TE1・RB1・BZ2・MEC1・CE3）・控えへのワザの効果の「ワザをうけない」状態・「とうめい」の評価・リサイクルエネルギーとエコロジムの
+      処理（原因はワザ、実際に使ったのは自分。``effects.discard_energy_from_play``）は ``OptionalDiscardForBonus`` と同じ
+    - 選べるカードがあるとき 0 枚を選べるか（「のぞむなら」のない「好きなだけ」）は決められない（v0.31 の HC5。選べるが選ぶと止める。答えのときに止め、決定は待ったまま。先読みは試さない）。
+      1 枚以上は選べる。選べるカードがないなら、トラッシュする対象がない（p.309。決定を出さない。0 枚をトラッシュした扱いで、コインを投げない）。どちらもワザの失敗ではない
+    """
+
+    include_bench: bool = True
+    max_cards: int | None = None
+
+    def __post_init__(self) -> None:
+        if not self.include_bench or self.max_cards is not None:
+            raise ValueError("自分の場の「好きなだけ」のトラッシュは、ベンチを含み、上限がない")
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        return [answer for answer in super().dry_choices(run, decision) if answer]  # 0 枚は答えのときに止める（HC5）
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if not choices:
+            raise UnsupportedError(
+                "UNRESOLVED_DISCARD_ANY_NUMBER_ZERO",
+                f"「自分の場の「{self.energy_type.ja}」エネルギーカードを、好きなだけトラッシュする」で、選べるカードがあるときに 0 枚を選べるかは決められないので扱わない（HC5）。"
+                "1 枚以上を選ぶ",
+            )
+        super().resume(run, decision, choices)
+
+
+BUILDERS |= {
+    # みんなでおどる: お互いの場のポケモンの数のワザ全体のコイン →「おもて」の数以下の基本エネルギーカードを山札から見せて手札に → 山札を切る
+    E.CoinsPerPokemonInPlaySearchBasicEnergy: lambda e: (
+        Coin("coin", per_pokemon=FIELD_POKEMON), RevealTrainerFromDeck(local_coin=None, category="basic_energy", heads_of="coin"),
+    ),
+    # ゆうでん: ダメージ（目安。説明の最初に省略されている）→ コイン coins 枚（1 組）→「おもて」の数ぶんの「雷」エネルギーカードを山札から自分の場の「雷」ポケモンに好きなように → 切る
+    E.DamageThenCoinsAttachTypedEnergyFromDeck: lambda e: (
+        Damage(OPP, Printed()), Coin("coin", count=e.coins), AttachFromDeckByHeads(e.energy_type, "coin"),
+    ),
+    # ギガボルト: コイン 1 枚（ダメージの計算の前）→ 目安 +「おもて」なら bonus → 「うら」なら相手をマヒ（同じ結果を両方が使う）
+    E.CoinBonusOnHeadsElseParalyze: lambda e: (
+        Coin("coin"), Damage(OPP, PrintedPlusBonus("coin", e.bonus)), Status(PARALYSIS, gate=("coin", TAILS), reparalysis_check=True),
+    ),
+    # なかまをよぶ: 山札の名前の合うたねポケモン 1 匹をベンチに → 切る。ベンチに空きがなければワザの失敗
+    E.PutNamedBasicFromDeckOntoBenchOrFail: lambda e: (BenchFromDeck(e.names, when_full=BENCH_FULL_FAIL),),
+    # むれでつつく: 自分のベンチの名前の合うポケモンの数のワザ全体のコイン → 目安 +「おもて」の数 × per
+    E.CoinsPerOwnBenchNamedBonusDamage: lambda e: (
+        Coin("coin", per_pokemon=(SCOPE_OWN_BENCH, e.names)), Damage(OPP, PrintedPlusHeadsOfCoin("coin", e.per)),
+    ),
+    # ダークフレイム: 自分の「炎」エネルギーカード 1 枚をトラッシュ（できなければワザの失敗）→ ダメージ（目安）→ トラッシュに「悪」エネルギーカードがあれば 1 枚を自分に
+    E.DiscardEnergyThenDamageThenAttachFromDiscard: lambda e: (
+        DiscardOwnEnergy(e.discard_type, count=1, when_lacking=LACKING_FAIL), Damage(OPP, Printed()),
+        AttachFromDiscard(e.attach_type, 1, exact=True, typed_cards=True),
+    ),
+    # くろいキバ: 実際に使ったポケモンの「悪」エネルギーの個数のワザ全体のコイン → 目安 +「おもて」の数 × per
+    E.CoinsPerOwnTypedEnergyBonusDamage: lambda e: (
+        Coin("coin", per_own_typed=e.energy_type), Damage(OPP, PrintedPlusHeadsOfCoin("coin", e.per)),
+    ),
+    # ファイヤーラッシュ: 自分の場の「炎」エネルギーカードを好きなだけトラッシュ → トラッシュした枚数のコイン（ダメージの要素の中）→「おもて」の数 × per
+    E.DiscardFieldEnergyThenCoinsDamage: lambda e: (
+        DiscardFieldEnergyAnyNumber(e.energy_type), Damage(OPP, HeadsOfDiscarded("discard", e.per)),
+    ),
+    # だいぎゃくてん？: お互いの場のポケモンの数のワザ全体のコイン（1 組）→ 相手に「おもて」の数 × per → 自分に「うら」の数 × self_per（同じ組。投げ直さない）
+    E.CoinsPerPokemonInPlayHeadsDamageTailsSelfDamage: lambda e: (
+        Coin("coin", per_pokemon=FIELD_POKEMON), Damage(OPP, HeadsOfCoin("coin", e.per)), Damage(SELF, TailsOfCoin("coin", e.self_per), name="self_damage"),
+    ),
+}
+
+
+# ---------------------------------------------------------------- v0.114（docs/baby-rules-evolution-v0.114.md 6 章）: ベイビィポケモン 13 枚のワザ
+
+
+@dataclass(frozen=True)
+class PowerHolderQuestion(Element):
+    """v0.114（HV1）: 説明の「「特殊能力」を持っているポケモン」を受けるポケモンにするダメージ（ピチューの「パチパチ」）の前に、受けるかが決まらないポケモン（持っている特殊能力がすべて
+    ほかの効果で消えている。``effects.holds_power`` が None）がおたがいの場にいれば止める（ダメージの要素の前。先読みが宣言の前に見つける）。状態を変えない。"""
+
+    phase: ClassVar[Phase] = Phase.DAMAGE
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        undecided = [pokemon.pokemon_id for owner in (run.player, 1 - run.player) for pokemon in state.players[owner].in_play() if E.holds_power(state, pokemon) is None]
+        if undecided:
+            raise run.res.question("stopped_power_holder", f"ポケモン {undecided}（特殊能力がすべてほかの効果で消えている）")
+        return False
+
+
+def holds_power_now(run: AttackRun, pokemon: PokemonInPlay) -> bool:
+    """v0.114: ``Damage``・``BenchDamage`` の ``has_power``（要素を処理する時点で、受けるポケモンが「特殊能力」を持っているか）。決まらない（HV1）なら止める（``PowerHolderQuestion`` が
+    先に止めるので、ワザの途中で決まらなくなったときだけ）。"""
+    held = E.holds_power(run.state, pokemon)
+    if held is None:
+        raise run.res.question("stopped_power_holder", f"ポケモン {pokemon.pokemon_id}（特殊能力がすべてほかの効果で消えている）")
+    return held
+
+
+@dataclass(frozen=True)
+class TargetCounters(Element):
+    """先に選んだ個体（``ChooseEffectTarget`` の ``chosen``）に、ダメージカウンターを ``counters`` 個のせる（v0.114。ムチュールの「なげキッス」）。
+
+    - ダメージカウンターをのせることはワザによるダメージではない（v0.48 の ``PlaceCountersOnDamagedOpponents`` と同じ。GR-2000-P320-COUNTER-MOVE）。ダメージの計算をせず、「ダメージを受けない」
+      状態でものせ、「ダメージを受けたとき」の効果ははたらかない
+    - のせる前に、そのポケモンの「ワザをうけない」状態・エフェクトガード・「とうめい」を評価する（``reaches`` の ``damage_counters``。うらのカードはおもてにする。受けないなら何もしない）。
+      選んだ個体が場をはなれていれば何もしない
+    - ログは v0.41 の ``place_damage_counters``。HP 以上になったら、ワザのあとのきぜつの判定でまとめてきぜつする（``_counters_changed``）"""
+
+    counters: int = 1
+    chosen: str = "target"
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.COUNTERS_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        found = chosen_pokemon(run, self.chosen)
+        if not found:
+            return False
+        state = run.state
+        target = found[0]
+        owner = state.find_pokemon(target.pokemon_id)[0]
+        if not reaches(run.res, run.fs, owner, target, E.COUNTERS_ELEMENT):
+            return False
+        per = state.rules.damage_per_counter
+        before = target.damage
+        target.damage = before + self.counters * per
+        state.add_event("place_damage_counters", player=owner, pokemon=target.card, pokemon_id=target.pokemon_id, effect=str(run.key),
+                        counters=self.counters, amount=self.counters * per, damage_before=before, total_damage=target.damage, attacker=run.player,
+                        attacker_pokemon_id=run.fs.frame.source_pid)
+        _counters_changed(run, target, before)
+        return False
+
+
+@dataclass(frozen=True)
+class ReturnAttachedSpecialEnergyToDeck(Element):
+    """コインを投げて ``local_coin`` の面なら、相手の場のポケモンについている「特殊エネルギーカード」を 1 枚選び、相手の山札にもどす。その後、その山札をよく切る（v0.114。ムチュールの
+    「サイコキッス」）。v0.95 の ``ReturnAttachedTrainerToDeck``（とりさる）と同じ形で、選ぶカードとコインが違う。
+
+    - 選べるもの: ``effects.opponent_attached_special_energy_cards``（相手の場のポケモン（バトル場 → ベンチ）についている特殊エネルギーカード。ついている間の定義。HP 以上のポケモン・
+      タケシの保護のポケモンのカードは除く）。なければコインを投げず何もしない（内容の対象がない。p.309。v0.31 のスーパーデストロイと同じ）
+    - コインはこの要素の 1 枚（ナツメのESPがやり直せる説明のコイン。``run.flip``）。選べるカードのついているポケモンがどれも「ワザをうけない」状態（効果の要素を無効にする効果）なら、
+      投げるかが決まらない（``prevented_effect_coin``。コインの前）
+    - 選ぶのはワザを使ったプレイヤー（決定 ``SELECT_ATTACHED_SPECIAL_ENERGY``。ちょうど 1 枚。1 枚でも決定を出す）。選んだあと、そのカードのついているポケモンの「ワザをうけない」状態・
+      エフェクトガード・「とうめい」を評価する（``reaches``。受けないなら何もしない。切らない）→ もどす（``zones.return_attached_energy_to_deck``）→ 相手の山札を切る（1 回）
+    - もどしたあとの場は、v0.95 と同じ確かめ（``_raise_state_stop``）にかける。先読みでは切らない（``shuffle_in_attack``）"""
+
+    local_coin: CoinSide | None = None
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = SELECT_ATTACHED_SPECIAL_ENERGY
+    opponent_element: ClassVar[str] = E.ENERGY_RETURN_ELEMENT
+
+    def _options(self, run: AttackRun) -> tuple[int, ...]:
+        return E.opponent_attached_special_energy_cards(run.state, run.player)
+
+    def run(self, run: AttackRun) -> bool:
+        options = self._options(run)
+        if not options:
+            return False
+        state = run.state
+        opponent = 1 - run.player
+        if self.local_coin is not None:
+            from .kernel import first_void
+
+            holders = [pokemon for pokemon in state.players[opponent].in_play() if any(uid in pokemon.energy for uid in options)]
+            if all(first_void(run.res, run.incoming(), opponent, pokemon, Window.BEFORE_EFFECT) is not None for pokemon in holders):
+                raise run.res.question("prevented_effect_coin", f"ポケモン {[pokemon.pokemon_id for pokemon in holders]}")
+            if run.flip(1).results[0] is not self.local_coin:
+                return False
+        run.suspend(kind=SELECT_ATTACHED_SPECIAL_ENERGY, player=run.player, options=options, extra=(("owner", opponent),))
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        opponent = decision.context_value("owner")
+        holder = next((pokemon for pokemon in state.players[1 - run.player].in_play() if len(choices) == 1 and choices[0] in pokemon.energy), None)
+        if opponent != 1 - run.player or holder is None or choices[0] not in self._options(run):
+            raise RuntimeError(f"サイコキッスの決定 {decision.kind}・答え {choices} が、相手のポケモンについている特殊エネルギーカードではない（エンジンの不具合）")
+        before = state.peek()
+        if not reaches(run.res, run.fs, opponent, holder, E.ENERGY_RETURN_ELEMENT):
+            return
+        return_attached_energy_to_deck(state, opponent, holder, choices[0], effect=str(run.key), chooser=run.player)
+        shuffle_in_attack(run, self, opponent)
+        _raise_state_stop(before, state)
+
+
+BUILDERS |= {
+    # モクモク: ダメージ（目安）→ おたがいの場の特殊能力を止める（消える番は与えた番 + 2。やみのはどうと同じ要素）
+    E.DamageThenFieldPowerSuppressionUntilOwnNextTurn: lambda e: (Damage(OPP, Printed()), FieldPowerSuppression(e.field_effect_terms()[1])),
+    # パチパチ: 受けるかが決まらないポケモンがいれば止める → 特殊能力を持っているポケモン（相手の対戦ポケモン → 自分 → 相手の控え → 自分の控え）にそれぞれ amount（弱点・抵抗力に関係なく）
+    E.PowerHoldersSpreadDamage: lambda e: (
+        PowerHolderQuestion(),
+        Damage(OPP, Fixed(e.amount), weakness_resistance=False, name="power_holder_damage", has_power=True),
+        Damage(SELF, Fixed(e.amount), weakness_resistance=False, name="self_damage", has_power=True),
+        BenchDamage(Fixed(e.amount), weakness_resistance=False, has_power=True),
+        BenchDamage(Fixed(e.amount), weakness_resistance=False, has_power=True, own=True, name="own_bench_damage"),
+    ),
+    # サイコキッス: この要素のコイン →「おもて」なら相手の場の特殊エネルギーカードを 1 枚選び、相手の山札にもどす → 切る
+    E.CoinReturnOpponentSpecialEnergyToDeck: lambda e: (ReturnAttachedSpecialEnergyToDeck(local_coin=HEADS),),
+    # いっしょにあそぼ: 山札のベイビィポケモン 1 匹をベンチに → 切る。ベンチに空きがなければワザの失敗
+    E.PutBabyFromDeckOntoBenchOrFail: lambda e: (BenchFromDeck((), when_full=BENCH_FULL_FAIL, babies=True),),
+    # なげキッス: 相手の場のポケモンを 1 匹選ぶ → そのポケモンにダメージカウンターを counters 個
+    E.PlaceCountersOnChosenOpponentPokemon: lambda e: (ChooseEffectTarget(side=E.TARGET_SIDE_OPPONENT, scope=E.TARGET_IN_PLAY), TargetCounters(e.counters)),
+}
+
+
+# ---------------------------------------------------------------- v0.115（docs/spread-damage-allocation-v0.115.md 4〜6 章）: 場・ベンチへのダメージ、対象ごとのコイン、ダメージの配分
+
+
+def not_of_type(run: AttackRun, pokemon: PokemonInPlay, excluded: EnergyType) -> bool:
+    """v0.115: 場のポケモン ``pokemon`` の今有効なタイプ（色）が ``excluded`` でないか（サナギラスの「すなあらし」の「「闘」ポケモン以外」）。タイプはこの要素を処理する時点の今の姿の
+    今有効な色（``effects.type_readings``。色マーカー・［へんしょく］・［せんすい］）。読み方（VS1・CE1・CE2・CM1）で答えが変われば止める（``type_question``。どちらか 1 つを選んで続け
+    ない）。うらのカード（マチスの秘策）はタイプを読めない（FD1。おもてにしない）。場での役割のポケモン（なにかの化石など。タイプなし）は「闘」ポケモンではない。"""
+    try:
+        return E.same_for_type_readings(run.state, [pokemon], lambda views: views[0].pokemon_type is not excluded)
+    except E.TypeReadingsDiffer as differ:
+        raise type_question(run.res, differ, f"ワザ {run.key} のダメージを受けるポケモン（「{excluded.ja}」ポケモン以外）") from None
+
+
+@dataclass(frozen=True)
+class EnergyCardsOfReceiver:
+    """受けるポケモンが（そのダメージの要素を処理する時点で）つけている「エネルギーカード」の枚数 × ``per``（v0.115。わるいエーフィの「サイコスプラッシュ」の「それぞれがつけている
+    「エネルギーカード」の枚数×10」。p.321 の 1 段階）。受けるポケモンごとに数える（``value_for``。``Damage``・``BenchDamage`` が受けるポケモンを渡す。相手の対戦ポケモンの枚数を控えに
+    使い回さない）。数えるのはカードの枚数（``effects.attached_energy_cards``。無色2個エネルギーも［エネエネ］でエネルギーとしてついているカードも 1 枚。エネルギーの個数ではない）。"""
+
+    per: int
+    local_coins: ClassVar[int] = 0
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        raise RuntimeError("受けるポケモンごとの基本となるダメージは value_for で求める（エンジンの不具合）")
+
+    def value_for(self, run: AttackRun, receiver: PokemonInPlay) -> int:
+        return E.attached_energy_cards(run.state, receiver) * self.per
+
+
+@dataclass(frozen=True)
+class AmountIfOpponentBench:
+    """相手に控えポケモンがいるとき ``amount``、いなければダメージの目安の数字（v0.115。わるいバンギラスの「ぶんなげる」の「相手に控えポケモンがいるとき、このワザのダメージは「30」に
+    なる」。p.321 の 1 段階。目安から引く数ではない）。控えがいるかは、このダメージの要素を処理する時点の相手の場で決める（あとの控えへのダメージと同じ時点の場）。"""
+
+    amount: int
+    local_coins: ClassVar[int] = 0
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return self.amount if run.state.players[1 - run.player].bench else run.attack.damage
+
+
+@dataclass(frozen=True)
+class ChainedCoinsBenchDamage(Element):
+    """コインを投げて「おもて」なら、もう 1 枚コインを投げる。2 枚目が「おもて」なら相手の控えポケモン全員にも ``amounts[0]``、「うら」なら ``amounts[1]``（どちらも「弱点・抵抗力」に
+    関係なく。v0.115。わるいライチュウの「びっくりサンダー」の、相手の対戦ポケモンへの目安のダメージのあとの部分）。
+
+    - コインは条件つきで続けて投げるまとまり（``AttackRun.flip_chain`` の ``ContinueOnHeads(2)``）。面の並びは T（1 枚。控えへのダメージなし）・HT（2 枚。``amounts[1]``）・HH（2 枚。
+      ``amounts[0]``）。1 枚目が「うら」なら 2 枚目を投げない。結果はワザ全体のコインの記録 ``fs.coins[name]`` とログ ``chained_coin_results``（面の並びと控えへの量）に残す
+    - 受けるのは、この要素を処理する時点の相手の控えの並び。控えがいなければ処理の対象がないのでコインを投げない（p.309。v0.38 の ``has_target`` と同じ読み方）。控えがいて、どれも
+      ダメージの要素を無効にする状態（見えない壁など）なら、投げるかが決まらない（v0.56 と同じ問い ``prevented_coin_damage``。コインの前に止める）
+    - ナツメのESPのやり直しは、まとまりを投げ終えたあとに 1 回だけ聞き、やり直すならまとまりを最初から投げ直す（決定のあとはこの要素だけをもう一度処理する。前の要素の相手の対戦
+      ポケモンへのダメージはやり直さない。最後の並びだけで量を決める）。控えへのダメージは［ベンチガード］の決定を出しうる（``guarded_damages``）"""
+
+    amounts: tuple[int, int]
+    chain: ContinueOnHeads = ContinueOnHeads(2)
+    name: str = "bench_damage"
+    phase: ClassVar[Phase] = Phase.DAMAGE
+    guards_bench: ClassVar[bool] = True
+
+    def __post_init__(self) -> None:
+        if (len(self.amounts) != 2 or any(type(a) is not int or a <= 0 or a % 10 for a in self.amounts)) or self.chain.coins != 2:
+            raise ValueError(f"続けて投げる 2 枚のコインの控えへのダメージ {self.amounts!r} は、2 枚目の「おもて」・「うら」の 10 の倍数の正の数")
+
+    def coin_receiver(self) -> str | None:
+        return "bench"
+
+    def targets(self, run: AttackRun) -> list[PokemonInPlay]:
+        return list(run.state.players[1 - run.player].bench)
+
+    def has_target(self, run: AttackRun) -> bool:
+        return bool(self.targets(run))
+
+    def void_for_all(self, run: AttackRun) -> bool:
+        from .kernel import first_void
+
+        targets = self.targets(run)
+        return bool(targets) and all(first_void(run.res, run.incoming(), 1 - run.player, pokemon) is not None for pokemon in targets)
+
+    def amount_for(self, results: tuple[CoinSide, ...]) -> int:
+        """面の並び（``chain`` を最後まで投げた並び）の控えへのダメージ（T なら 0）。"""
+        if len(results) < 2:
+            return 0
+        return self.amounts[0] if results[1] is HEADS else self.amounts[1]
+
+    def run(self, run: AttackRun) -> bool:
+        targets = self.targets(run)
+        if not targets:
+            run.fs.coins[self.name] = CoinFlips(())
+            return False
+        if self.void_for_all(run):
+            raise run.res.question("prevented_coin_damage", f"ダメージを受けない控えポケモン {[p.pokemon_id for p in targets]} へのダメージだけを決める、続けて投げるコイン")
+        flips = run.flip_chain(self.chain)
+        run.fs.coins[self.name] = flips
+        amount = self.amount_for(flips.results)
+        attacker = run.attacker()
+        run.state.add_event("chained_coin_results", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                            results=tuple(side.value for side in flips.results), amount=amount, targets=tuple(p.pokemon_id for p in targets))
+        if not amount:
+            return False
+        return guarded_damages(run, self, [(E.OPPONENT_BENCH, pokemon.pokemon_id, amount, False) for pokemon in targets])
+
+
+@dataclass(frozen=True)
+class CoinPerBenchPokemon(Element):
+    """おたがいの控えポケモン全員に対して、1 枚ずつコインを投げ、「おもて」が出たポケモンに、「弱点・抵抗力」に関係なく、``amount`` ダメージ（コインを投げるのは、相手側から）（v0.115。
+    バンギラスの「なぎたおす」の、相手の対戦ポケモンへの目安のダメージのあとの部分）。
+
+    - 対象はこの要素を処理する時点の、相手の控えの並び → 自分の控えの並び（「相手側から」は対象の側の順番。コインを投げるのは、ワザを使ったプレイヤー（v0.2d の「その効果を使っている側」。
+      相手プレイヤーに投げさせる説明ではない））。コインは 1 匹 1 枚、この並びの順に 1 回の ``flip`` で投げ、``i`` 枚目は ``i`` 番目の控えのもの（「おもて」の数でまとめない。どの控えかが
+      要る。HT と TH は違う結果。先読みは 2 の控えの数乗通りを試す）。結果はログ ``pokemon_coin_results``（``targets``・``owners``・``results``）
+    - すべて投げてから、「おもて」の控えに並びの順でダメージ（相手の控えは ``OPPONENT_BENCH``、自分の控えは ``SELF_BENCH``。弱点・抵抗力なし。ワザを使ったポケモン自身は受けない）。
+      控えへのダメージは［ベンチガード］の決定を出しうる（残りの並びを運ぶ。コインは投げ直さず、対象も変えない）
+    - 「とうめい」がはたらいているポケモンのあとに対象がいれば、コインの投げ方（すべて投げてからか、1 匹ずつか）で乱数の割り当てが変わるので TS1（v0.60 と同じ問い）。2 匹以上は T27。
+      受けるときのコインを本文のコインとひとまとめにしない（ナツメのESPのやり直しは本文のコインだけ。``AttackRun.flip``）
+    - 対象がいなければ投げない（p.309）。対象がみなダメージの要素を無効にする状態なら、投げるかが決まらない（v0.56 と同じ問い）。ナツメのESPでやり直すと、同じ並びの対象に同じ枚数を
+      投げ直す（面と対象の対応を保つ）"""
+
+    amount: int
+    name: str = "bench_coins"
+    phase: ClassVar[Phase] = Phase.DAMAGE
+    guards_bench: ClassVar[bool] = True
+
+    def __post_init__(self) -> None:
+        if type(self.amount) is not int or self.amount <= 0 or self.amount % 10:
+            raise ValueError(f"控えポケモンへのダメージは 10 の倍数の正の数（{self.amount!r}）")
+
+    def targets(self, run: AttackRun) -> list[tuple[int, PokemonInPlay]]:
+        opponent = 1 - run.player
+        return ([(opponent, p) for p in run.state.players[opponent].bench] + [(run.player, p) for p in run.state.players[run.player].bench])
+
+    def has_target(self, run: AttackRun) -> bool:
+        return bool(self.targets(run))
+
+    def run(self, run: AttackRun) -> bool:
+        from .kernel import first_void
+
+        state = run.state
+        targets = self.targets(run)
+        if not targets:
+            run.fs.coins[self.name] = CoinFlips(())
+            return False
+        if any(E.evasion_power(state, pokemon) is not None for _, pokemon in targets[:-1]):
+            raise run.res.question("bench_coin_transparency_order", f"おたがいの控えのポケモン {[p.pokemon_id for _, p in targets]}")
+        if all(first_void(run.res, run.incoming(), owner, pokemon) is not None for owner, pokemon in targets):
+            raise run.res.question("prevented_coin_damage", f"ダメージを受けない控えポケモン {[p.pokemon_id for _, p in targets]} へのダメージだけを決めるコイン")
+        flips = run.flip(len(targets))
+        run.fs.coins[self.name] = flips
+        attacker = run.attacker()
+        state.add_event("pokemon_coin_results", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                        targets=tuple(p.pokemon_id for _, p in targets), owners=tuple(owner for owner, _ in targets),
+                        results=tuple(face.value for face in flips.results))
+        entries = [(E.SELF_BENCH if owner == run.player else E.OPPONENT_BENCH, pokemon.pokemon_id, self.amount, False)
+                   for (owner, pokemon), face in zip(targets, flips.results) if face is HEADS]
+        return guarded_damages(run, self, entries)
+
+
+@dataclass(frozen=True)
+class ExtraTypedUnits:
+    """配る単位: ワザに必要なエネルギーよりも多くついている ``energy_type`` エネルギーの数（``max_extra`` つぶんまで。v0.115。シードラの「ウォーターボム」の「多い「水」エネルギー1つにつき」）。
+    数えるのはワザを実際に使ったポケモンについている、その色のエネルギーの個数（v0.88 の ``typed_unit_count``。カードの枚数ではない）から、使ったワザの必要なエネルギーの数（記号の数）を
+    引いた数（v0.4c の ``ExtraEnergy`` と同じ読み方。色の問いは TE1・RB1・BZ2・MEC1・CE1・CE2）。"""
+
+    energy_type: EnergyType
+    max_extra: int
+
+    def count(self, run: AttackRun) -> int:
+        attacker = run.attacker()
+        transform_energy_question(run, attacker, self.energy_type, cards=False)
+        if any(t is EnergyType.COLORLESS for t in run.attack.cost):
+            raise RuntimeError("必要なエネルギーに無色がまざるワザの多いエネルギーの数え方（HC4）は、配分の単位に使わない（エンジンの不具合）")
+        return min(max(0, E.typed_unit_count(run.state, attacker, self.energy_type) - len(run.attack.cost)), self.max_extra)
+
+
+@dataclass(frozen=True)
+class CoinHeadsUnits:
+    """配る単位: この要素でコインを ``coins`` 枚投げた「おもて」の数（v0.115。ゴローンの「がんせきくだき」の「コインを2枚投げ、「おもて」の数×10のダメージを、…わりふって与える」）。
+    結果は「おもて」の数だけを使う（先読みは「おもて」の数でまとめる）。配る先が決まってから投げ、投げてから配分を決める（配分を先に固定しない）。"""
+
+    coins: int
+
+
+@dataclass(frozen=True)
+class DiscardedUnits:
+    """配る単位: トラッシュの要素 ``discard`` で実際にトラッシュしたカードの枚数（v0.115。ゴローニャの「ロックブラスト」の「トラッシュした数ぶん、相手の場のポケモンを選ぶ」）。"""
+
+    discard: str
+
+    def count(self, run: AttackRun) -> int:
+        discarded = run.fs.results.get(self.discard)
+        return 0 if discarded is None else len(discarded.cards)
+
+
+@dataclass(frozen=True)
+class AllocateDamage(Element):
+    """得た単位（``units``）× ``per`` のダメージを、相手の場（``scope``: 控えだけ ``TARGET_BENCH``・対戦ポケモンと控え ``TARGET_IN_PLAY``）のポケモンに、ワザを使ったプレイヤーが選んだ配分で、
+    「弱点・抵抗力」に関係なく与える（v0.115。シードラの「ウォーターボム」・ゴローンの「がんせきくだき」・ゴローニャの「ロックブラスト」。docs 4.3 節）。
+
+    - 配分は、選べるポケモン（バトル場 → ベンチの並び。``effects.target_candidates``）ごとの単位の数の組で、合計はちょうど得た単位の数（対象があれば得た分をすべて配る。「好きなように」を
+      合計を減らすことと読まない）。1 匹に集めても、分けてもよい。同じポケモンに配った単位は合算し、そのポケモンに 1 回だけ ``per`` × 単位の数のダメージを与える（1 単位ずつ別のダメージに
+      しない。ディフェンダー・受けるときのコイン・「ダメージを受けたとき」の効果の回数が変わる）。ロックブラストの「同じポケモンを2回以上選んでもよい」は、同じポケモンへの単位の数で表す
+    - 決定 ``ALLOCATE_DAMAGE``（ちょうど 1 つ。選べるものは配分の表 ``table`` の位置。表と配る先の番号・単位の数・1 単位のダメージを続きの情報 ``allocation`` に置く。答えのときに、今の場の
+      配る先・表と照らす）。配る先が 1 匹でも出す。単位の数が 0・配る先がなければ決定を出さない（処理の対象がない。p.309）。先読みはすべての配分を試す
+    - 単位をこの要素のコインで決める（``CoinHeadsUnits``）なら、配る先がいなければ投げず、配る先がどれもダメージの要素を無効にする状態なら投げるかが決まらない（v0.56 と同じ問い）。
+      ナツメのESPのやり直しはそのコインだけ（決定のあとはこの要素をもう一度処理し、配分はやり直したあとの単位で決める）
+    - 与える順は配る先の並び（相手の対戦ポケモン → 控え）。相手の対戦ポケモンは p.320 の (1)、控えは (2)。控えへのダメージは［ベンチガード］の決定を出しうる（``guarded_damages``）。結果は
+      ログ ``damage_allocated``（配る先・単位の数・1 単位のダメージ）と、最後のダメージの結果（``fs.results[name]``）"""
+
+    units: Any
+    per: int
+    scope: str = E.TARGET_BENCH
+    name: str = "allocated_damage"
+    phase: ClassVar[Phase] = Phase.DAMAGE
+    guards_bench: ClassVar[bool] = True
+    decision_kind: ClassVar[str] = ALLOCATE_DAMAGE
+
+    def __post_init__(self) -> None:
+        if self.scope not in (E.TARGET_BENCH, E.TARGET_IN_PLAY):
+            raise ValueError(f"配る先の範囲 {self.scope!r} は相手の控え・相手の場")
+        if type(self.per) is not int or self.per <= 0 or self.per % 10:
+            raise ValueError(f"1 単位のダメージは 10 の倍数の正の数（{self.per!r}）")
+
+    def candidates(self, run: AttackRun) -> list[tuple[int, PokemonInPlay]]:
+        return E.target_candidates(run.state, run.player, E.TARGET_SIDE_OPPONENT, self.scope)
+
+    def coin_receiver(self) -> str | None:
+        return "bench" if isinstance(self.units, CoinHeadsUnits) else None
+
+    def has_target(self, run: AttackRun) -> bool:
+        return bool(self.candidates(run))
+
+    def void_for_all(self, run: AttackRun) -> bool:
+        from .kernel import first_void
+
+        targets = self.candidates(run)
+        return bool(targets) and all(first_void(run.res, run.incoming(), owner, pokemon) is not None for owner, pokemon in targets)
+
+    def run(self, run: AttackRun) -> bool:
+        targets = self.candidates(run)
+        if isinstance(self.units, CoinHeadsUnits):
+            if not targets:
+                run.fs.coins[self.name] = CoinFlips(())
+                return False
+            if self.void_for_all(run):
+                raise run.res.question("prevented_coin_damage", f"ダメージを受けないポケモン {[p.pokemon_id for _, p in targets]} に配るダメージだけを決めるコイン")
+            flips = run.flip(self.units.coins, by_heads=True)
+            run.fs.coins[self.name] = flips
+            units = flips.heads
+        else:
+            units = self.units.count(run)
+        if not units or not targets:
+            return False
+        ids = tuple(pokemon.pokemon_id for _, pokemon in targets)
+        table = E.damage_allocations(units, len(ids))
+        run.suspend(kind=ALLOCATE_DAMAGE, player=run.player, options=tuple(range(len(table))), carry=True,
+                    extra=(("allocation", (ids, units, self.per)), ("table", table)))
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if decision.kind != ALLOCATE_DAMAGE:
+            raise RuntimeError(f"配分の要素の決定 {decision.kind} は扱わない（エンジンの不具合）")
+        ids, units, per = run.carried["allocation"]
+        table = tuple(tuple(row) for row in run.carried["table"])
+        targets = self.candidates(run)
+        if (tuple(pokemon.pokemon_id for _, pokemon in targets) != tuple(ids) or table != E.damage_allocations(units, len(ids)) or per != self.per
+                or len(choices) != 1 or not 0 <= choices[0] < len(table)):
+            raise RuntimeError(f"配分の決定の答え {choices}・配る先 {ids} が、今の場・表と合わない（エンジンの不具合）")
+        counts = table[choices[0]]
+        attacker = run.attacker()
+        run.state.add_event("damage_allocated", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                            targets=tuple(ids), counts=tuple(counts), per=per, units=units)
+        entries = [(target_kind(run, owner, pokemon), pokemon.pokemon_id, per * count, False) for (owner, pokemon), count in zip(targets, counts) if count]
+        guarded_damages(run, self, entries, record=True)
+
+
+UP_TO_DISCARD_ZERO_CODE = "UNRESOLVED_DISCARD_UP_TO_ZERO"
+
+
+@dataclass(frozen=True)
+class DiscardOwnEnergyUpTo(OptionalDiscardForBonus):
+    """自分についている ``energy_type`` エネルギーカードを最大 ``max_cards`` 枚トラッシュする（v0.115。ゴローニャの「ロックブラスト」の前半。「のぞむなら」のない「最大」）。結果は
+    ``Discarded``（実際にトラッシュしたカード。あとの ``AllocateDamage`` の ``DiscardedUnits`` がその枚数を数える）。
+
+    - 範囲はワザを実際に使ったポケモン（写して使えば写したポケモン）。数えるのはカード（その色の基本エネルギーカード。色の問い TE1・RB1・BZ2・MEC1・CE3）。場からトラッシュに置くので、
+      リサイクルエネルギー・エコロジムの処理（原因はワザ、実際に使ったのは自分）を通す（v0.82 の ``OptionalDiscardForBonus`` と同じ）
+    - 選べるカードがあるとき 0 枚を選べるかは決められない（kyuura の UQ-UP-TO-ZERO-CHOICE と同じ形の問い。「好きなだけ」の HC5・トラッシュからつける HC7・控えを選ぶ GS1 とは別の文面の問いで、
+      それらの答えで決めない。RKB1）。選べるが選ぶと止める（答えのときに止め、決定は待ったまま。先読みは試さない）。1 枚以上は選べる。選べるカードがないなら、トラッシュする対象がない
+      （p.309。決定を出さない。0 枚をトラッシュした扱いで、あとのポケモンを選ばない）。どれもワザの失敗ではない"""
+
+    include_bench: bool = False
+    max_cards: int | None = 5
+
+    def __post_init__(self) -> None:
+        if self.include_bench or type(self.max_cards) is not int or self.max_cards < 1:
+            raise ValueError("「最大」のトラッシュは、ワザを使ったポケモンについているカードで、上限がある")
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        return [answer for answer in super().dry_choices(run, decision) if answer]  # 0 枚は答えのときに止める（RKB1）
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if not choices:
+            raise UnsupportedError(
+                UP_TO_DISCARD_ZERO_CODE,
+                f"「自分についている「{self.energy_type.ja}」エネルギーカードを最大{self.max_cards}枚トラッシュして」（「のぞむなら」「てよい」のない「最大」）で、選べるカードがあるときに"
+                "0 枚を選べるかは、印刷の文面・kyuura の記録から決められないので扱わない（RKB1。kyuura の UQ-UP-TO-ZERO-CHOICE と同じ形の問い）。1 枚以上を選ぶ",
+            )
+        super().resume(run, decision, choices)
+
+
+@dataclass(frozen=True)
+class AlsoTargetDamage(TargetDamage):
+    """先に選んだ相手のポケモン（``ChooseTarget`` の ``chosen``）にも ``base`` のダメージ（v0.115。イシツブテ（NIP1X-004）の「いしなだれ」の「相手のポケモンを1匹選び、そのポケモンにも、
+    「弱点・抵抗力」に関係なく、10ダメージ」。相手の対戦ポケモンへの目安のダメージのあと）。
+
+    - 選べるのは相手の場のポケモン（バトル場 → ベンチ）。選べるものを控えだけにしない（説明は「相手のポケモン」）
+    - 相手の対戦ポケモンを選んだとき、目安のダメージを受けたポケモンに「にも」のダメージを別の 10 として与えるか、目安と合わせた 1 つのダメージとするか（選べるか自体も）は、印刷の文面・
+      kyuura の記録から決められない（SLD1。弱点・抵抗力・ディフェンダー・受けるときのコイン・「ダメージを受けたとき」の効果の回数で結果が変わる）。相手の対戦ポケモンは、選べるが選ぶと
+      止める（``choice_problem``。控えは選べる）。控えがいなければ選べるのは相手の対戦ポケモンだけなので、選ぶ前に止める（先読みが宣言の前に見つける）。ロックブラストの選ばれた回数の
+      合算と同じとみなさない"""
+
+    def choice_problem(self, run: AttackRun, owner: int, pokemon: PokemonInPlay) -> tuple[str, str] | None:
+        if owner != run.player and run.state.players[owner].active is pokemon:
+            return "chosen_active_extra_damage", f"相手の対戦ポケモン {pokemon.pokemon_id}（ワザ {run.key} の目安のダメージを受けたポケモン）"
+        return super().choice_problem(run, owner, pokemon)
+
+
+BUILDERS |= {
+    # しょうげきは: コイン 1 枚 →「おもて」なら相手の場のポケモン全員に amount（弱点・抵抗力に関係なく。バトル場 → 控え）→ その後、相手が選ぶ控えと入れ替える（「おもて」のときだけ）
+    E.CoinSpreadDamageThenOpponentSwitch: lambda e: (
+        Coin("coin"), Damage(OPP, Fixed(e.amount), weakness_resistance=False, gate=("coin", HEADS)), BenchDamage(Fixed(e.amount), gate=("coin", HEADS)),
+        ForceSwitch(gate=("coin", HEADS)),
+    ),
+    # びっくりサンダー: ダメージ（目安）→ 条件つきで続けて投げる 2 枚のコイン → 相手の控え全員にも（HH・HT の量。弱点・抵抗力に関係なく）
+    E.DamageThenChainedCoinsBenchDamage: lambda e: (Damage(OPP, Printed()), ChainedCoinsBenchDamage((e.heads_heads, e.heads_tails))),
+    # すなあらし: おたがいの場の、今のタイプが excluded でないポケモン全員に amount（弱点・抵抗力に関係なく。相手の対戦ポケモン → 自分 → 相手の控え → 自分の控え。みんなでばくはつと同じ並び）
+    E.SpreadDamageExceptType: lambda e: (
+        Damage(OPP, Fixed(e.amount), weakness_resistance=False, name="spread_damage", exclude_type=e.excluded),
+        Damage(SELF, Fixed(e.amount), weakness_resistance=False, name="self_damage", exclude_type=e.excluded),
+        BenchDamage(Fixed(e.amount), exclude_type=e.excluded),
+        BenchDamage(Fixed(e.amount), exclude_type=e.excluded, own=True, name="own_bench_damage"),
+    ),
+    # なぎたおす: ダメージ（目安）→ おたがいの控え全員に 1 枚ずつ（相手側から）→「おもて」の控えに amount（弱点・抵抗力に関係なく）
+    E.DamageThenCoinPerBothBenches: lambda e: (Damage(OPP, Printed()), CoinPerBenchPokemon(e.amount)),
+    # サイコスプラッシュ: 相手の場のエネルギーカードをつけているポケモン全員に、それぞれのカードの枚数 × per（弱点・抵抗力に関係なく。バトル場 → 控え）
+    E.EnergyCardsSpreadDamage: lambda e: (
+        Damage(OPP, EnergyCardsOfReceiver(e.per), weakness_resistance=False, energy_cards=True),
+        BenchDamage(EnergyCardsOfReceiver(e.per), energy_cards=True),
+    ),
+    # ばくれつしんか: コイン 1 枚 →「おもて」なら相手の場のポケモン全員に amount → その後、山札の名前の合う進化カードを必ず自分に重ねる（「おもて」のときだけ。見たら切る）
+    E.CoinSpreadDamageThenEvolveNamedFromDeck: lambda e: (
+        Coin("coin"), Damage(OPP, Fixed(e.amount), weakness_resistance=False, gate=("coin", HEADS)), BenchDamage(Fixed(e.amount), gate=("coin", HEADS)),
+        EvolveAttackerFromDeck(e.evolves_from, gate=("coin", HEADS), required=True, shuffle_if_looked=True, card_name=e.card_name),
+    ),
+    # やまくだき: 自分についている energy_type エネルギーカードの枚数のワザ全体のコイン →「おもて」の数 × per → その後、「おもて」の数ぶん相手の山札の上からトラッシュ（同じコイン）
+    E.CoinsPerOwnEnergyCardsDamageThenMillOpponent: lambda e: (
+        Coin("coin", per_attached=e.energy_type), Damage(OPP, HeadsOfCoin("coin", e.per)), MillOpponentDeck(heads_of="coin"),
+    ),
+    # ぶんなげる: 相手に控えがいれば reduced、いなければ目安 → 控えがいれば 1 匹を選んでそのポケモンにも bench_damage（弱点・抵抗力に関係なく）
+    E.ReducedDamageThenChosenBenchDamage: lambda e: (
+        Damage(OPP, AmountIfOpponentBench(e.reduced)), ChosenBenchDamage(Fixed(e.bench_damage), local_coin=None, weakness_resistance=False),
+    ),
+    # ちていいどう: 相手の控えから最大 max_targets 匹を選び、それぞれに bench_damage（0 匹は GS1）→ 次の自分の番、使ったポケモンはワザを使えない（すべてのワザ）
+    E.ChosenBenchTargetsThenSelfCannotAttack: lambda e: (ChosenBenchDamages(Fixed(e.bench_damage), e.max_targets), SelfCannotAttack()),
+    # ウォーターボム: ダメージ（目安）→ 多い energy_type エネルギー（max_extra まで）の数 × per を相手の控えに配る
+    E.DamageThenAllocateExtraEnergyToBench: lambda e: (
+        Damage(OPP, Printed()), AllocateDamage(ExtraTypedUnits(e.energy_type, e.max_extra), e.per),
+    ),
+    # がんせきくだき: ダメージ（目安）→ この要素のコイン coins 枚の「おもて」の数 × per を相手の控えに配る
+    E.DamageThenCoinsAllocateToBench: lambda e: (Damage(OPP, Printed()), AllocateDamage(CoinHeadsUnits(e.coins), e.per)),
+    # ロックブラスト: 自分の energy_type エネルギーカードを最大 max_cards 枚トラッシュ（0 枚は RKB1）→ トラッシュした枚数ぶん、相手の場のポケモンに per ずつ配る（同じポケモンは回数を合算）
+    E.DiscardEnergyUpToThenAllocateToOpponentPokemon: lambda e: (
+        DiscardOwnEnergyUpTo(e.energy_type, max_cards=e.max_cards), AllocateDamage(DiscardedUnits("discard"), e.per, scope=E.TARGET_IN_PLAY),
+    ),
+    # いしなだれ: ダメージ（目安）→ 相手の場のポケモンを 1 匹選ぶ（相手の対戦ポケモンは SLD1 で選ぶと止める）→ そのポケモンにも amount（弱点・抵抗力に関係なく）
+    E.DamageThenChosenOpponentPokemonDamage: lambda e: (
+        Damage(OPP, Printed()), ChooseTarget(side=E.TARGET_SIDE_OPPONENT, scope=E.TARGET_IN_PLAY), AlsoTargetDamage(Fixed(e.amount)),
+    ),
+}
+
+
+
+# ---------------------------------------------------------------- v0.116（docs/energy-movement-attachment-devolution-v0.116.md）
+
+
+@dataclass(frozen=True)
+class OpponentAttachStatusTrigger(Element):
+    """相手の対戦ポケモン（このワザを受けた相手）に、次の相手の番にエネルギーカードがついたら ``condition``（どく・マヒ）になる持続する効果（``StatusOnEnergyAttach``）を与える（v0.116。
+    クロバットの「しこみどく」・ユンゲラーの「エナジーショック」。docs 4 章）。ワザを受けたときにはどく・マヒにしない。
+
+    - ダメージの要素のあとに、受けた相手が効果の要素（``ATTACH_STATUS_ELEMENT``）を受けるかを ``reaches`` で決める（「ワザをうけない」状態・エフェクトガード・「とうめい」・
+      ［ニュートラルシールド］。ダメージだけを受けない状態（かたまる）なら効果は受ける）。このワザで HP 以上なら処理の対象がない（p.309。こんじょうは G37）
+    - 効果の ``source_card`` はワザを実際に使ったポケモンのいちばん上のカード（発生源を場の位置で探さない。効果のはたらき方は発生源の場所によらない）"""
+
+    condition: str
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.ATTACH_STATUS_ELEMENT
+
+    def has_target(self, run: AttackRun) -> bool:
+        return not run.knocked_out(run.opponent_active())
+
+    def run(self, run: AttackRun) -> bool:
+        opponent = 1 - run.player
+        target = run.opponent_active()
+        if run.knocked_out(target):
+            run.ko_prevention_conflict(target)
+            return False
+        if not reaches(run.res, run.fs, opponent, target, E.ATTACH_STATUS_ELEMENT):
+            return False
+        attacker = run.attacker()
+        turn = run.state.turn_number
+        effect = StatusOnEnergyAttach(source_card=attacker.card, source_player=run.player, created_turn=turn, active_turn=turn + StatusOnEnergyAttach.turns_until_active,
+                                      condition=self.condition, attack=str(run.key))
+        add_persistent_effect(run.state, opponent, target, effect, attack=str(run.key), condition=self.condition)
+        return False
+
+
+@dataclass(frozen=True)
+class OpponentEvolutionLock(OpponentRetreatLock):
+    """次の相手の番、相手プレイヤーはこのワザを受けた相手（相手の対戦ポケモン）を、手札・トレーナーの効果で進化させることができない（v0.116。わるいオムスターの「やみのしょくしゅ」。
+    持続する効果 ``EvolutionLock``）。v0.41 の ``OpponentRetreatLock`` と同じ形（対象が HP 以上なら与えない・「とうめい」・「ワザをうけない」状態の評価）で、与える効果だけが違う。"""
+
+    opponent_element: ClassVar[str] = E.EVOLUTION_LOCK_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        return _opponent_lock(self, run, EvolutionLock, E.EVOLUTION_LOCK_ELEMENT)
+
+
+@dataclass(frozen=True)
+class BatonPass(Element):
+    """自分のベンチにいる「``energy_type``」ポケモンを 1 匹選ぶ。自分についている「エネルギーカード」をすべてはがし、選んだポケモンに付け替えてから、選んだポケモンを自分と入れ替える
+    （v0.116。レディアンの「バトンタッチ」。``effects.DamageThenMoveAllEnergyToTypeBenchThenSwitch``。docs 5 章）。
+
+    - 選ぶのはワザを使ったプレイヤー（決定 ``SELECT_POKEMON``。``effects.baton_pass_targets``。今のタイプ。VS1 などで決まらない・うらのカードは選べるが選ぶと止める。どれもそうなら止める）。
+      選べる控えがいなければ、付け替えも入れ替えもしない（p.309。ログ ``effect_skipped`` の ``no_target``）
+    - 付け替え: ワザを実際に使ったポケモンについているエネルギーカードを、ついている順に 1 枚ずつ、選んだポケモンに付け替える（ログ ``attack_attach_energy``。同じ uid のまま。手札・
+      トラッシュを通さない）。1 枚ごとの反応（``attached_in_attack``。［ほのおでかいふく］など）。選んだポケモンが受けない（「とうめい」）なら、はがしたカードは持ち主のトラッシュ（T36 と
+      同じ読み方。原因は自分のワザ。リサイクルエネルギーの処理を通す）
+    - すべて付け替えてから入れ替える（``effects._switch_active_with_bench``。効果の入れ替えで「にげる」ではない）。「バトル場をはなれられない」なら入れ替える部分は起こらない（v0.93）
+    - ワザを使ったポケモンがこのワザで HP 以上（相手の「はんげき」など）なら処理の対象がない（p.309。ログ ``effect_skipped``）"""
+
+    energy_type: EnergyType
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = SELECT_POKEMON
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        attacker = run.attacker()
+        if run.knocked_out(attacker):
+            run.ko_prevention_conflict(attacker, run.player)
+            state.add_event("effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                            element="baton_pass", reason=E.EFFECT_TARGET_KNOCKED_OUT)
+            return False
+        options, stops = E.baton_pass_targets(state, run.player, self.energy_type)
+        if not options:
+            state.add_event("effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                            element="baton_pass", reason="no_target")
+            return False
+        if len(stops) == len(options):
+            raise UnsupportedError(stops[0][1], stops[0][2])  # 止めない選べる控えがない（FD1・VS1 など。答えのない決定を出さない）
+        extra: tuple = ()
+        if stops:
+            extra = (("unresolved_choices", tuple(stop[0] for stop in stops)), ("unresolved_code", stops[0][1]), ("unresolved_reason", stops[0][2]),
+                     ("unresolved_detail", stops))
+        run.suspend(kind=SELECT_POKEMON, player=run.player, options=options, carry=True, extra=extra)
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        attacker = run.attacker()
+        options, stops = E.baton_pass_targets(state, run.player, self.energy_type)
+        if len(choices) != 1 or choices[0] not in options or choices[0] in {stop[0] for stop in stops}:
+            raise RuntimeError(f"バトンタッチで選んだポケモン {choices} が、選べる自分の控え {options} ではない（エンジンの不具合）")
+        target = next(pokemon for pokemon in state.players[run.player].bench if pokemon.pokemon_id == choices[0])
+        cards = tuple(attacker.energy)
+        if cards and reaches(run.res, run.fs, run.player, target, E.ENERGY_ATTACH_ELEMENT):
+            for uid in cards:
+                attacker.energy.remove(uid)
+                target.energy.append(uid)
+                state.add_event("attack_attach_energy", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                                energy=uid, to_pokemon_id=target.pokemon_id)
+                attached_in_attack(run, run.player, target, (uid,), moved=True)
+        elif cards:
+            E.discard_energy_from_play(
+                state, attacker, cards, cause=E.DISCARD_BY_ATTACK, by_player=run.player,
+                log=lambda: [state.add_event("discard_energy", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                                             energy=uid, reason="evaded", to_pokemon_id=target.pokemon_id) for uid in cards])
+        if _leave_prevented(run, run.player, attacker, E.LEAVE_SWITCH, None):
+            return  # 付け替えた（その部分は起こる）が、入れ替える部分は起こらない
+        if state.players[run.player].active is not attacker:
+            raise RuntimeError(f"バトンタッチを使ったポケモン {attacker.pokemon_id} がバトル場にいない（エンジンの不具合）")
+        E._switch_active_with_bench(state, run.player, target.pokemon_id, effect=str(run.key))
+
+
+@dataclass(frozen=True)
+class SelfCounters(Element):
+    """ワザを使ったポケモン自身にダメージカウンターを ``counters`` 個のせる（v0.116。ニョロゾの「はらだいこ」の前半）。ワザのダメージではない（ダメージの計算・弱点・抵抗力・防御・
+    「ダメージを受けたとき」の効果は関係しない。GR-2000-P320-COUNTER-MOVE と同じく「ダメージを受けた」ことにならない）。自分への効果なので相手の状態によらない。ログ
+    ``place_damage_counters``。のせて HP 以上になったら、ワザのあとのきぜつの判定（``_counters_changed``。こんじょうは使えない）。"""
+
+    counters: int
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        attacker = run.attacker()
+        per = state.rules.damage_per_counter
+        before = attacker.damage
+        attacker.damage = before + self.counters * per
+        state.add_event("place_damage_counters", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                        counters=self.counters, amount=self.counters * per, damage_before=before, total_damage=attacker.damage, attacker=run.player,
+                        attacker_pokemon_id=run.fs.frame.source_pid)
+        _counters_changed(run, attacker, before)
+        return False
+
+
+@dataclass(frozen=True)
+class AttachBasicEnergyFromDeckToSelf(Element):
+    """自分の山札から「基本エネルギーカード」を ``cards`` 枚選び出し、自分（ワザを使ったポケモン）につけ、その山札をよく切る（v0.116。ニョロゾの「はらだいこ」の後半）。
+
+    - ワザを使ったポケモンがこのワザで HP 以上（前の要素のダメージカウンターなど）なら処理の対象がないので、山札を見ない・つけない・切らない（p.309。ログ ``effect_skipped``）。
+      エネルギーカードをつけることができない（クリスタルビーム。公開の情報）なら、つけないで山札を切る（v0.59 の ``AttachFromDeck`` と同じ。ログ ``attach_energy_from_deck_none``）
+    - 山札の基本エネルギーカード（どのタイプでも。``effects.deck_basic_energy_cards``）が c 枚: c ≧ ``cards`` ならちょうど ``cards`` 枚を選ぶ（決定 ``ATTACH_FROM_DECK``）。c = 0 なら選べる
+      もののない決定（v0.84 の A3。山札の中身で決定の有無を変えない）。0 < c < ``cards`` は FC1（v0.113 の「ゆうでん」と同じ）。選べるものの数は決めるプレイヤーだけに見える
+    - つけるのは山札から直接（``zones.attach_from_deck``。ログ ``attach_energy_from_deck``。手札からつける操作・あまごいの回数に数えない）。すべてつけてから 1 枚ずつ反応
+      （``attached_in_attack``。ついた時に発動する相手のワザの持続効果も）。どの場合も最後に山札を 1 回切る"""
+
+    cards: int
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = ATTACH_FROM_DECK
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        attacker = run.attacker()
+        if run.knocked_out(attacker):
+            run.ko_prevention_conflict(attacker, run.player)
+            state.add_event("effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                            element="attach_from_deck", reason=E.EFFECT_TARGET_KNOCKED_OUT)
+            return False
+        if E.energy_attach_block(state, attacker) is not None:
+            self._none(run, attacker, "attach_prevented")
+            return False
+        options = E.deck_basic_energy_cards(state, run.player)
+        if 0 < len(options) < self.cards:
+            raise run.res.question("stated_cards_short", f"山札の基本エネルギーカード {len(options)} 枚（{self.cards} 枚を選び出す）")
+        count = self.cards if len(options) >= self.cards else 0
+        run.suspend(kind=ATTACH_FROM_DECK, player=run.player, options=options, min_choices=count, max_choices=count, carry=True)
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        attacker = run.attacker()
+        options = E.deck_basic_energy_cards(state, run.player)
+        wanted = self.cards if len(options) >= self.cards else 0
+        if len(set(choices)) != len(choices) or any(card not in options for card in choices) or len(choices) != wanted:
+            raise RuntimeError(f"つけるカード {choices} が、山札の基本エネルギーカードの {wanted} 枚ではない（エンジンの不具合）")
+        if not choices:
+            self._none(run, attacker, "no_candidates")
+            return
+        cards = tuple(uid for uid in options if uid in choices)  # 山札の uid の小さい順につける（選んだ順によらない）
+        for card in cards:
+            attach_from_deck(state, run.player, card, attacker)
+            state.add_event("attach_energy_from_deck", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key), card=card)
+        attached_in_attack(run, run.player, attacker, cards)
+        shuffle_in_attack(run, self, run.player)
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        # 同じカード id の基本エネルギーカードは、どれをつけても同じ形の状態（v0.46 の AttachFromHand と同じまとめ方）
+        return card_id_answers(run.state, decision, (decision.min_choices,))
+
+    def _none(self, run: AttackRun, attacker: PokemonInPlay, reason: str) -> None:
+        run.state.add_event("attach_energy_from_deck_none", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                            energy_type=None, reason=reason)
+        shuffle_in_attack(run, self, run.player)
+
+
+@dataclass(frozen=True)
+class MoveOpponentFieldEnergy(Element):
+    """相手の場のエネルギーカード（特殊エネルギー以外）を 1 枚選んではがす。その後、相手の場のポケモンを 1 匹選び、はがしたエネルギーをそのポケモンにつける（v0.116。ミュウツーの
+    「エナジーコントロール」の、失敗のコインのあと。``effects.FailOnTailsMoveOpponentFieldEnergy``。docs 5 章）。
+
+    - 選ぶのはワザを使ったプレイヤー: はがすカード（決定 ``MOVE_OPPONENT_ENERGY``。``context`` の ``"stage"`` は ``"energy"``。``effects.opponent_field_energy_options``。場のレインボー
+      エネルギーは RB3 で選べるが選ぶと止める）→ はがす前に、そのカードのついているポケモンが効果の要素（``ENERGY_MOVE_ELEMENT``）を受けるかを ``reaches`` で決める（受けなければ何もしない）
+      → つけるポケモン（決定 ``SELECT_POKEMON``。``"stage"`` は ``"target"``。相手の場のポケモン。はがしたポケモン自身も選べる）。2 つの決定のあいだ、カードはついたまま
+    - つけるポケモンが受けない（``ENERGY_ATTACH_ELEMENT``。「とうめい」）なら、はがしたカードは持ち主のトラッシュ（T36 と同じ読み方。KEEP でなくなる効果なら v0.101 の KP3）。手札からつける
+      操作ではない（つけたときの特殊エネルギーの効果は起こらない）。ついたカードへの反応は ``attached_in_attack``（つけ替え）
+    - 相手の場にエネルギーカードがなければ処理の対象がない（p.309）"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.ENERGY_MOVE_ELEMENT  # 宣言（G37 の理由の文）。受けるかは、はがすポケモン・つけるポケモンごとに ``reaches`` で決める
+
+    def decides(self, kind: str) -> bool:
+        return kind in (MOVE_OPPONENT_ENERGY, SELECT_POKEMON)
+
+    def has_target(self, run: AttackRun) -> bool:
+        return bool(E.opponent_field_energy_options(run.state, run.player)[0])
+
+    def run(self, run: AttackRun) -> bool:
+        options, rainbow = E.opponent_field_energy_options(run.state, run.player)
+        if not options:
+            return False
+        if len(rainbow) == len(options):
+            raise run.res.question("rainbow_basic_energy_card", f"相手の場のレインボーエネルギー {list(rainbow)}（エナジーコントロールの「特殊エネルギー以外」）")
+        extra = (("stage", "energy"),) + _unresolved_extra(rainbow, E.RAINBOW_BASIC_CODE, E.RAINBOW_BASIC_REASON)
+        run.suspend(kind=MOVE_OPPONENT_ENERGY, player=run.player, options=options, carry=True, extra=extra)
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        opponent = 1 - run.player
+        p = state.players[opponent]
+        if run.carried.get("stage") == "energy":
+            options, rainbow = E.opponent_field_energy_options(state, run.player)
+            if len(choices) != 1 or choices[0] not in options or choices[0] in rainbow:
+                raise RuntimeError(f"はがすカード {choices} が、相手の場の選べるエネルギーカードではない（エンジンの不具合）")
+            source = next(pokemon for pokemon in p.in_play() if choices[0] in pokemon.energy)
+            if not reaches(run.res, run.fs, opponent, source, E.ENERGY_MOVE_ELEMENT):
+                return  # はがすポケモンが効果を受けない（「ワザをうけない」状態・「とうめい」）。はがさない
+            run.suspend(kind=SELECT_POKEMON, player=run.player, options=[pokemon.pokemon_id for pokemon in p.in_play()], carry=True,
+                        extra=(("stage", "target"), ("energy", choices[0]), ("source", source.pokemon_id)))
+            return
+        energy = run.carried["energy"]
+        source = next((pokemon for pokemon in p.in_play() if pokemon.pokemon_id == run.carried.get("source")), None)
+        destination = next((pokemon for pokemon in p.in_play() if pokemon.pokemon_id == choices[0]), None)
+        if source is None or energy not in source.energy or destination is None or len(choices) != 1:
+            raise RuntimeError(f"つけ替えるカード {energy}・はがすポケモン {run.carried.get('source')}・つけるポケモン {choices} が正しくない（エンジンの不具合）")
+        void = E.energy_discard_void(state, source, cause=E.DISCARD_BY_ATTACK, by_player=run.player)
+        returns = () if void is not None else E.energy_discard_plan(state, source, (energy,), cause=E.DISCARD_BY_ATTACK, by_player=run.player)  # トラッシュに置くときだけ使う
+        source.energy.remove(energy)
+        base = {"player": opponent, "pokemon": source.card, "pokemon_id": source.pokemon_id, "energy": energy, "to_pokemon_id": destination.pokemon_id,
+                "effect": str(run.key), "attacker": run.player, "attacker_pokemon_id": run.fs.frame.source_pid}
+        if reaches(run.res, run.fs, opponent, destination, E.ENERGY_ATTACH_ELEMENT):
+            destination.energy.append(energy)
+            state.add_event("move_opponent_energy", **base, result="attached")
+            attached_in_attack(run, opponent, destination, (energy,), moved=True)
+        else:
+            if void is not None:
+                raise run.res.question("keep_detached_energy_discard", f"ポケモン {source.pokemon_id} からはがしたエネルギーカード {energy}（つけるポケモン {destination.pokemon_id} が受けない）")
+            p.discard.append(energy)
+            state.add_event("move_opponent_energy", **base, result="evaded")
+            E.return_discarded_energy(state, returns)
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        stopped = set(decision.context_value("unresolved_choices", ()))
+        return [answer for answer in all_answers(decision) if not stopped & set(answer)]
+
+
+def _single_effect_target_question(run: AttackRun, candidates: tuple[int, ...]) -> None:
+    """v0.116: コインが決める、相手の場のポケモンを選ぶ効果の要素で、選べるのが相手の対戦ポケモン 1 匹だけなら、効果だけを決めるコインの問い（T19b・HC3。``effect_coin_questions``）。
+    控えも選べるなら、選んだあとに ``reaches`` で決める（投げる）。"""
+    active = run.opponent_active()
+    if active is not None and candidates == (active.pokemon_id,):
+        effect_coin_questions(run, 1 - run.player, active)
+
+
+@dataclass(frozen=True)
+class DevolveOpponentToDeck(Element):
+    """相手の場の「進化ポケモン」を 1 匹選ぶ。その後、そのポケモンにのっている「進化カード」を 1 枚はがし、そのポケモンを退化させる。はがした「進化カード」は、相手の山札にもどし、その
+    山札をよく切る（v0.116。わるいオムスターの「げんしのしずく」の「おもて」。``effects.CoinDevolveOpponentEvolvedToDeck``。docs 6 章）。
+
+    - 選ぶのはワザを使ったプレイヤー（決定 ``SELECT_POKEMON``。``effects.opponent_evolved_targets``。相手の場だけ）。いなければコインを投げない（p.309。``has_target``）。選べるのが相手の
+      対戦ポケモンだけで、それが効果の要素を受けないなら、コインの前に T19b・HC3。「ばける」（DV5）・ベイビィから進化したたねポケモン（NB2）は選べるが選ぶと止める（どれもそうなら止める）
+    - はがす前に ``reaches``（``DEVOLVE_ELEMENT``）。はがすのは実際の重なりのいちばん上 1 枚（``evolution.devolve`` の ``DEVOLVE_TO_DECK``。持ち主の山札）→ 最大HPが下がったきぜつの原因
+      （``_hp_dropped_in_attack``）→ その山札を切る（``shuffle_in_attack``。受けなかったときは切らない）"""
+
+    gate: tuple | None = None
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = SELECT_POKEMON
+    opponent_element: ClassVar[str] = E.DEVOLVE_ELEMENT  # v0.50 の ``DevolveChosenPokemon`` と同じ宣言（G37 の理由の文）
+
+    def has_target(self, run: AttackRun) -> bool:
+        options = E.opponent_evolved_targets(run.state, run.player)
+        if options:
+            _single_effect_target_question(run, options)
+        return bool(options)
+
+    def run(self, run: AttackRun) -> bool:
+        if self.gate is not None and not run.coin_is(self.gate):
+            return False
+        state = run.state
+        options = E.opponent_evolved_targets(state, run.player)
+        if not options:
+            state.add_event("devolve_none", player=run.player, pokemon_id=run.fs.frame.source_pid, effect=str(run.key))
+            return False
+        stops = E.opponent_devolve_stops(state, E.text_era(run.key.card_id), options)
+        if len(stops) == len(options):
+            raise UnsupportedError(*stops[options[0]])  # 止めない選べるポケモンがない（答えのない決定を出さない）
+        extra: tuple = ()
+        if stops:
+            extra = (("unresolved_choices", tuple(stops)), ("unresolved_code", stops[next(iter(stops))][0]), ("unresolved_reason", stops[next(iter(stops))][1]),
+                     ("unresolved_detail", tuple((pid, *problem) for pid, problem in stops.items())))
+        run.suspend(kind=SELECT_POKEMON, player=run.player, options=options, carry=True, extra=extra)
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        options = E.opponent_evolved_targets(state, run.player)
+        if len(choices) != 1 or choices[0] not in options or choices[0] in E.opponent_devolve_stops(state, E.text_era(run.key.card_id), options):
+            raise RuntimeError(f"げんしのしずくで選んだポケモン {choices} が、選べる相手の進化ポケモンではない（エンジンの不具合）")
+        owner, target = state.find_pokemon(choices[0])
+        if not reaches(run.res, run.fs, owner, target, E.DEVOLVE_ELEMENT):
+            return
+        devolve(state, owner, target, 1, destination=DEVOLVE_TO_DECK, by_player=run.player, effect=str(run.key))
+        _hp_dropped_in_attack(run)
+        shuffle_in_attack(run, self, owner)
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        blocked = set(decision.context_value("unresolved_choices", ()))
+        return [answer for answer in all_answers(decision) if not blocked & set(answer)]
+
+
+@dataclass(frozen=True)
+class BenchFromOpponentDiscard(Element):
+    """相手のトラッシュから「ベイビィポケモン」または「たねポケモン」を 1 枚選び出す。その後、そのカードにダメージカウンターを ``counters`` 個のせ、相手のベンチに出す。(相手のベンチに
+    空きがないとき、このワザは失敗する。)（v0.116。わるいゴーストの「よびもどす」。``effects.BenchBabyOrBasicFromOpponentDiscardOrFail``。docs 6 章）。
+
+    - 相手のベンチに空きがない（``stadiums.bench_limit``）ならワザの失敗（ログ ``attack_failed`` の ``reason`` ``opponent_bench_full``。選ばない）。空きがあり、選べるカードがなければ何もしない
+      （p.309。ログ ``bench_from_discard_none``）
+    - 選ぶのはワザを使ったプレイヤー（決定 ``BENCH_FROM_DISCARD``。``effects.discard_baby_or_basic`` の相手のトラッシュ。1 枚。省略できない）。カードの持ち主・出すベンチは相手
+    - ``zones.bench_from_discard`` の ``counters``（ベンチに出す前にのせる。元気のかけらと同じ）。ログ ``bench_from_discard`` の ``counters``・``damage``。出したあとのダメージ・ワザの
+      効果ではないので「とうめい」などは評価しない。のせたカウンターで HP 以上なら、ワザのあとのきぜつの判定（``_counters_changed``）。場に出たときの特殊能力は v0.51 の
+      ``effects.discard_entry_power_guard``"""
+
+    counters: int
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = BENCH_FROM_DISCARD
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        opponent = 1 - run.player
+        if len(state.players[opponent].bench) >= bench_limit(state, opponent):
+            run.fail("opponent_bench_full")
+            return False
+        if protected_discard(run, "bench_from_discard"):
+            return False  # v0.119: ［アレルギーほうし］（カウンターをのせることもベンチに出すことも起こらない）
+        candidates = E.discard_baby_or_basic(state, opponent)
+        if not candidates:
+            attacker = run.attacker()
+            state.add_event("bench_from_discard_none", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key))
+            return False
+        run.suspend(kind=BENCH_FROM_DISCARD, player=run.player, options=candidates)
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        opponent = 1 - run.player
+        if len(choices) != 1 or choices[0] not in E.discard_baby_or_basic(state, opponent):
+            raise RuntimeError(f"よびもどすで選んだカード {choices} が、相手のトラッシュのたね・ベイビィポケモンのカードではない（エンジンの不具合）")
+        card = choices[0]
+        E.discard_entry_power_guard(state, card)
+        pokemon = bench_from_discard(state, card, counters=self.counters)
+        attacker = run.attacker()
+        E.log_bench_from_discard(state, pokemon, by_player=run.player, counters=self.counters,
+                                 source={"pokemon": attacker.card, "pokemon_id": attacker.pokemon_id, "effect": str(run.key)})
+        if self.counters:
+            _counters_changed(run, pokemon, 0)
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        return card_id_answers(run.state, decision, (1,))
+
+
+@dataclass(frozen=True)
+class RegressToBasic(Element):
+    """自分についている「進化カード」と「エネルギーカード」をすべてトラッシュして、「たねポケモン」にもどる（v0.116。ウツドンの「さいせい」の後半。前の ``HealAllCounters`` のあと。
+    ``effects.HealAllThenRegressToBasic``。docs 6 章）。
+
+    - 「進化カード」「たねポケモン」は処理に使う文面の版（``effects.text_era``）で、実際の重なり（ベイビィをふくむ）から読む: いちばん下のカードの上のカードがどれも「進化カード」で、
+      いちばん下のカードが「たねポケモン」に当たるときだけ処理する（neo の説明でベイビィが関わり決まらないなら NB1・NB2 で止める。ES3 はネオより前の説明なので決まる）
+    - 重なりのカードを上からすべて持ち主のトラッシュに置く（``evolution.devolve`` の ``DEVOLVE_TO_DISCARD``。退化の共通の処理）→ ついているエネルギーカードをすべてトラッシュする（原因は
+      自分のワザ。``effects.discard_energy_from_play``。ログ ``discard_energy``）。ついているトレーナーカードは残す。重なりがなければエネルギーカードだけ。「ばける」のポケモンは DV5
+    - ワザを使ったポケモンがこのワザで HP 以上なら処理の対象がない（p.309）"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        attacker = run.attacker()
+        if run.knocked_out(attacker):
+            run.ko_prevention_conflict(attacker, run.player)
+            state.add_event("effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                            element="regress_to_basic", reason=E.EFFECT_TARGET_KNOCKED_OUT)
+            return False
+        if attacker.evolution_stack:
+            if E.devolution_forbidden(state, attacker):
+                raise run.res.question("devolution_target_disguised", f"ポケモン {attacker.pokemon_id}（さいせいの「進化カード」）")
+            era = E.text_era(run.key.card_id)
+            chain = (*attacker.evolution_stack, attacker.card)
+            for uid in chain[1:]:
+                definition = state.card_def(uid)
+                if not definition.is_evolution_pokemon and definition.is_basic_pokemon and E.baby_evolution_card_in_text(era) is None:
+                    raise UnsupportedError(E.NEO_EVOLUTION_CARD_BABY_CODE, f"ポケモン {attacker.pokemon_id} のたねポケモンカード {uid}（ベイビィから進化）: {E.NEO_EVOLUTION_CARD_BABY_REASON}")
+            if E.card_is_basic_in_text(state.card_def(chain[0]), era) is None:
+                raise E.neo_basic_baby_error(f"ポケモン {attacker.pokemon_id} のいちばん下のベイビィポケモンカード {chain[0]}（「たねポケモン」にもどる）")
+            devolve(state, run.player, attacker, len(attacker.evolution_stack), destination=DEVOLVE_TO_DISCARD, by_player=run.player, effect=str(run.key))
+            _hp_dropped_in_attack(run)
+        cards = tuple(attacker.energy)
+        if cards:
+            E.discard_energy_from_play(
+                state, attacker, cards, cause=E.DISCARD_BY_ATTACK, by_player=run.player,
+                log=lambda: [state.add_event("discard_energy", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                                             energy=uid) for uid in cards])
+        return False
+
+
+@dataclass(frozen=True)
+class RecoverSpecialEnergy(Element):
+    """自分のトラッシュから「特殊エネルギーカード」を 1 枚選び出し、手札に加える（v0.116。ユンゲラーの「エナジーさいせい」）。
+
+    - 選べるのはトラッシュの特殊エネルギーカード（``effects.discard_special_energy``。トラッシュにある間の定義。色・出すエネルギーで選ばない）。1 枚ちょうど（決定 ``RECOVER_ENERGY``）。
+      なければ処理の対象がないので何もしない（p.309。v0.31 の ``RecoverTrainer`` と同じ H5 の読み方）
+    - 場のポケモンタワーで、この要素（トラッシュから手札に加える）の効果が消える（v0.74 の ``suppressed_discard_to_hand``。トレーナーの使用の問い PT1 は持ち込まない）"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = RECOVER_ENERGY
+
+    def run(self, run: AttackRun) -> bool:
+        if suppressed_discard_to_hand(run):
+            return False
+        if protected_discard(run, "recover_energy"):
+            return False  # v0.119: ［アレルギーほうし］
+        candidates = E.discard_special_energy(run.state, run.player)
+        if not candidates:
+            return False
+        run.suspend(kind=RECOVER_ENERGY, player=run.player, options=candidates)
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if len(choices) != 1 or choices[0] not in E.discard_special_energy(run.state, run.player):
+            raise RuntimeError(f"手札に加えるカード {choices} が、ワザを使ったプレイヤーのトラッシュの特殊エネルギーカードではない（エンジンの不具合）")
+        return_discard_to_hand(run.state, run.player, tuple(choices))
+        attacker = run.attacker()
+        run.state.add_event("recover_energy", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key), cards=tuple(choices))
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        return card_id_answers(run.state, decision, (1,))
+
+
+@dataclass(frozen=True)
+class ReturnAttachedCardsToHand(Element):
+    """相手が「きぜつ」しなかったなら、コインを投げる。「おもて」なら、このワザを受けた相手についているすべてのエネルギーカードとトレーナーカードを、持ち主の手札にもどす（v0.116。ピジョンの
+    「ツイスター」の、目安のダメージのあと。``effects.DamageThenCoinReturnAttachedCardsToHand``。docs 5 章）。
+
+    - 相手の対戦ポケモンがこのワザで HP 以上（きぜつする）なら、コインを投げない（p.309。こんじょうは G37・残りHP 10 の効果は KS1。``knocked_out``）。もどすカードがない（``effects.
+      returned_attached_cards``。タケシの保護のエネルギーカードは除く）ならコインを投げない（実装上の読み方。v0.31 のスーパーデストロイと同じ）
+    - コインはこの要素のコイン（効果だけを決める）。前に「とうめい」で受けないと決まった・効果の要素を受けない状態なら T19b・HC3（``effect_coin_questions``）。「おもて」なら ``reaches``
+      （``ATTACHED_RETURN_ELEMENT``）→ ``zones.return_attached_cards_to_hand``（カードごとの持ち主の手札。トラッシュを通さない。ログ ``attached_cards_to_hand``）"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.ATTACHED_RETURN_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        opponent = 1 - run.player
+        target = run.opponent_active()
+        if target is None:
+            return False
+        if run.knocked_out(target):
+            run.ko_prevention_conflict(target)
+            return False
+        energy, trainers = E.returned_attached_cards(state, opponent, target, run.player)
+        if not energy and not trainers:
+            return False
+        effect_coin_questions(run, opponent, target)
+        if run.flip(1).results[0] is not HEADS:
+            return False
+        if not reaches(run.res, run.fs, opponent, target, E.ATTACHED_RETURN_ELEMENT):
+            return False
+        energy, trainers = E.returned_attached_cards(state, opponent, target, run.player)
+        return_attached_cards_to_hand(state, opponent, target, energy, trainers, effect=str(run.key), by_player=run.player)
+        return False
+
+
+@dataclass(frozen=True)
+class MoveAllSelfCountersToOpponent(Element):
+    """自分（ワザを実際に使ったポケモン）にのっているすべてのダメージカウンターを、相手（相手の対戦ポケモン）にのせかえる（v0.116。フーディンの「トランスダメージ」の後半。
+    ``effects.DiscardAllEnergyThenMoveAllSelfCountersToOpponent``。docs 6 章）。
+
+    - のせかえる数は、この要素を処理する時点で自分にのっているダメージカウンターの数（控えから集めない。v0.41 の ``ShiftCountersToOpponent`` の 1 つずつとは別）。0 個なら何もしない
+    - ダメージカウンターの移動はダメージではない（GR-2000-P320-COUNTER-MOVE。弱点・抵抗力・プラスパワー・ディフェンダー・ダメージの軽減を計算せず、「ダメージを受けない」状態でものせる。
+      「ダメージを受けたとき」の効果ははたらかない）。のせたカウンターで HP 以上なら、ワザのあとのきぜつの判定（こんじょうは使えない。``_counters_changed``）
+    - 相手がのせる効果を受けない（「ワザをうけない」状態）なら、自分の側をとりのぞく前に CX1。とりのぞく前に自分の「とうめい」を評価する（v0.41 と同じ。受けなければ何もしない）。相手の
+      「とうめい」はのせるときに評価し、受けなければ CX1（先読みが宣言の前に見つける）"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.COUNTERS_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        per = state.rules.damage_per_counter
+        opponent = 1 - run.player
+        target = run.opponent_active()
+        attacker = run.attacker()
+        if run.knocked_out(target):
+            raise RuntimeError(f"ワザ {run.key} の相手の対戦ポケモンが、ダメージカウンターをのせる前に HP 以上（このワザにダメージの要素はない。エンジンの不具合）")
+        counters = attacker.damage // per
+        if not counters or run.knocked_out(attacker):
+            return False
+        _counter_transfer_protected(run, target, "のせかえる")
+        if not reaches(run.res, run.fs, run.player, attacker, E.HEAL_ELEMENT):
+            return False
+        before_self = attacker.damage
+        attacker.damage = before_self - counters * per
+        state.add_event("attack_heal", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                        counters=counters, amount=counters * per, damage_before=before_self, total_damage=attacker.damage)
+        if not reaches(run.res, run.fs, opponent, target, E.COUNTERS_ELEMENT):
+            raise run.res.question("counter_transfer_protected", f"ポケモン {target.pokemon_id}（「とうめい」。のせかえる）")
+        before = target.damage
+        target.damage = before + counters * per
+        state.add_event("place_damage_counters", player=opponent, pokemon=target.card, pokemon_id=target.pokemon_id, effect=str(run.key),
+                        counters=counters, amount=counters * per, damage_before=before, total_damage=target.damage, attacker=run.player,
+                        attacker_pokemon_id=run.fs.frame.source_pid)
+        _counters_changed(run, target, before)
+        return False
+
+
+BUILDERS |= {
+    # クロスアタック: ワザ全体のコイン coins 枚 →「おもて」の数 × per → 同じ「おもて」の数が at_least 以上ならこんらん（ダメージと状態で別のコインを投げない）
+    E.CoinsTimesDamageThenConfuseIfAtLeast: lambda e: (
+        Coin("coin", count=e.coins), Damage(OPP, HeadsOfCoin("coin", e.per)), Status(CONFUSION, gate=("coin", AtLeast(e.at_least))),
+    ),
+    # しこみどく・エナジーショック: ダメージ（目安）→ 次の相手の番にエネルギーカードがついたら condition（今すぐ特殊状態にしない）
+    E.DamageThenStatusOnEnergyAttach: lambda e: (Damage(OPP, Printed()), OpponentAttachStatusTrigger(e.condition)),
+    # やみのしょくしゅ: ダメージ（目安）→ 次の相手の番、手札・トレーナーで進化させられない（ワザ・特殊能力の進化は止めない）
+    E.DamageThenEvolutionLock: lambda e: (Damage(OPP, Printed()), OpponentEvolutionLock()),
+    # とりかこむ: ダメージ（目安）→ コイン 1 枚 →「おもて」ならねむり、「うら」なら次の相手の番の「にげる」の禁止（どちらか一方）
+    E.DamageThenSleepOnHeadsElseRetreatLock: lambda e: (
+        Damage(OPP, Printed()), Coin("coin"), Status(SLEEP, gate=("coin", HEADS)), OpponentRetreatLock(gate=("coin", TAILS)),
+    ),
+    # バトンタッチ: ダメージ（目安）→ 自分の控えの energy_type ポケモンを選ぶ → 自分のエネルギーカードをすべて付け替えてから入れ替える
+    E.DamageThenMoveAllEnergyToTypeBenchThenSwitch: lambda e: (Damage(OPP, Printed()), BatonPass(e.energy_type)),
+    # はらだいこ: 自分にダメージカウンター counters 個 → 山札の基本エネルギーカード cards 枚を自分につけ、山札を切る
+    E.SelfCountersThenAttachBasicEnergyFromDeck: lambda e: (SelfCounters(e.counters), AttachBasicEnergyFromDeckToSelf(e.cards)),
+    # エナジーサイクル: 相手に控えがいなければ失敗 → コイン →「おもて」なら相手の対戦ポケモンのエネルギーカード（特殊もふくむ）1 枚を相手の控えにつけ替える
+    E.CoinMoveOpponentEnergyCardToBenchOrFail: lambda e: (
+        FailWithoutOpponentBench(), Coin("coin"), MoveOpponentEnergyToBench(any_card=True, gate=("coin", HEADS)),
+    ),
+    # エナジーコントロール: コイン（「うら」なら失敗）→ 相手の場の基本エネルギーカード 1 枚をはがし、相手の場のポケモン 1 匹につける
+    E.FailOnTailsMoveOpponentFieldEnergy: lambda e: (FailOnTails(), MoveOpponentFieldEnergy()),
+    # げんしのしずく: コイン →「おもて」なら相手の場の進化ポケモンを選び、いちばん上の進化カードを相手の山札にもどして退化させ、山札を切る
+    E.CoinDevolveOpponentEvolvedToDeck: lambda e: (Coin("coin"), DevolveOpponentToDeck(gate=("coin", HEADS))),
+    # よびもどす: 相手のベンチに空きがなければ失敗 → 相手のトラッシュのたね・ベイビィを選び、カウンター counters 個をのせた状態で相手のベンチに出す
+    E.BenchBabyOrBasicFromOpponentDiscardOrFail: lambda e: (BenchFromOpponentDiscard(e.counters),),
+    # さいせい: ダメージカウンターをすべてとりのぞく → 進化カードとエネルギーカードをすべてトラッシュしてたねポケモンにもどる
+    E.HealAllThenRegressToBasic: lambda e: (HealAllCounters(), RegressToBasic()),
+    # エナジーさいせい: トラッシュの特殊エネルギーカード 1 枚を手札に加える
+    E.RecoverSpecialEnergyFromDiscard: lambda e: (RecoverSpecialEnergy(),),
+    # ツイスター: ダメージ（目安）→ 相手がきぜつしなければコイン →「おもて」なら相手についているエネルギーカードとトレーナーカードを持ち主の手札にもどす
+    E.DamageThenCoinReturnAttachedCardsToHand: lambda e: (Damage(OPP, Printed()), ReturnAttachedCardsToHand()),
+    # トランスダメージ: 自分のエネルギーカードをすべてトラッシュ（使うための条件か効果かは HC1）→ 自分のダメージカウンターをすべて相手にのせかえる
+    E.DiscardAllEnergyThenMoveAllSelfCountersToOpponent: lambda e: (
+        DiscardOwnEnergy(None, count=None, when_lacking=LACKING_CANNOT_USE, timing=TIMING_UNRESOLVED), MoveAllSelfCountersToOpponent(),
+    ),
+}
+
+
+# ---------------------------------------------------------------- v0.117（docs/retreat-return-active-powers-v0.117.md）
+
+
+@dataclass(frozen=True)
+class OpponentCountersByHeads(Element):
+    """コインを ``coins`` 枚投げ、「おもて」の数ぶんのダメージカウンターを、相手の対戦ポケモンにのせる（v0.117。セレビィの「サイキックダメージ」。``effects.CoinsCountersOnOpponent``）。
+
+    - 相手がこのワザの中で HP 以上なら処理の対象がない（コインを投げない。p.309）。コインは効果だけを決めるので、「とうめい」で受けないと決まった相手・「ワザをうけない」相手には T19b・HC3
+      （``effect_coin_questions``）。コインはワザの説明のコイン（``AttackRun.flip``。ナツメのESPのやり直しを含む。「おもて」の数でまとめる）
+    - 「おもて」が 1 枚以上なら、のせる前に効果の要素（``COUNTERS_ELEMENT``）を受けるかを ``reaches`` で決め（うらのカードはおもてにする）、v0.41 の ``place_damage_counters`` のログで
+      のせる（``_counters_changed``。ダメージではないので、こんじょうは使えない）。0 枚なら何もしない"""
+
+    coins: int = 3
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.COUNTERS_ELEMENT
+
+    def has_target(self, run: AttackRun) -> bool:
+        return not run.knocked_out(run.opponent_active())
+
+    def run(self, run: AttackRun) -> bool:
+        opponent = 1 - run.player
+        target = run.opponent_active()
+        if run.knocked_out(target):
+            run.ko_prevention_conflict(target)
+            return False
+        effect_coin_questions(run, opponent, target)
+        heads = run.flip(self.coins, by_heads=True).heads
+        if not heads:
+            return False
+        if not reaches(run.res, run.fs, opponent, target, E.COUNTERS_ELEMENT):
+            return False
+        state = run.state
+        per = state.rules.damage_per_counter
+        before = target.damage
+        target.damage = before + heads * per
+        state.add_event("place_damage_counters", player=opponent, pokemon=target.card, pokemon_id=target.pokemon_id, effect=str(run.key),
+                        counters=heads, amount=heads * per, damage_before=before, total_damage=target.damage, attacker=run.player,
+                        attacker_pokemon_id=run.fs.frame.source_pid)
+        _counters_changed(run, target, before)
+        return False
+
+
+def _returned_attacker_card(run: AttackRun) -> int:
+    """v0.117: このワザの効果で場をはなれた（山札にもどった）ワザを使ったポケモンの、はなれる前のいちばん上のカード（このワザのログ ``return_in_play_to_deck`` の ``pokemon``）。"""
+    pid = run.fs.frame.source_pid
+    for event in reversed(run.state.log):
+        if event["kind"] == "return_in_play_to_deck" and event.get("pokemon_id") == pid and event.get("effect") == str(run.key):
+            return event["pokemon"]
+    raise RuntimeError(f"ワザ {run.key} を使ったポケモン {pid} が場にいないのに、このワザで山札にもどしたログがない（エンジンの不具合）")
+
+
+@dataclass(frozen=True)
+class CoinDiscardCardToDeckThenShuffle(Element):
+    """コインを投げて「おもて」なら、自分のトラッシュからカードを 1 枚選び出し、山札にもどす。その後、その山札をよく切る（v0.117。エイパムの「もちさる」の後半。前の要素
+    ``ReturnSelfToDeck`` が自分を山札にもどしたあと。``effects.ReturnSelfToDeckThenCoinDiscardCardToDeck``）。
+
+    - ワザを使ったポケモンがもう場にいなくても、コイン・選ぶ・切ることは続ける。場にいない（山札にもどった）ときのコインのログの ``card``・``pokemon_id`` は、もどしたポケモン（このワザの
+      ``return_in_play_to_deck`` のいちばん上のカード）。「バトル場をはなれられない」で場に残ったときは今までどおり ``AttackRun.flip``（ナツメのESPのやり直しを含む）
+    - 宣言のとき、ワザを使うポケモンにナツメのESPがつき、山札にもどる（はなれられない効果を受けていない）なら ES4（ESPといっしょに場をはなれたあとのコイン。docs 7 章）
+    - 「おもて」でトラッシュにカードがあれば、決定 ``DISCARD_TO_DECK``（ちょうど 1 枚。選べるものはトラッシュの並び。公開）。答えのカードを山札（一番下。このあと切る）に置き（ログ
+      ``attack_discard_to_deck``）、山札を切る。「うら」・トラッシュにカードがないときも、山札を 1 回切る"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = DISCARD_TO_DECK
+
+    def on_declare(self, res: Resolution, player: int, attacker: PokemonInPlay) -> None:
+        cards = E.esp_cards(res.state, attacker)
+        if cards and leave_lock(res.state, player, attacker) is None:
+            raise UnsupportedError(E.ESP_LEFT_BEFORE_COIN_CODE, f"ポケモン {attacker.pokemon_id}・ナツメのESP {list(cards)}: {E.ESP_LEFT_BEFORE_COIN_REASON}")
+
+    def _source(self, run: AttackRun) -> tuple[int, int]:
+        found = run.state.find_pokemon(run.fs.frame.source_pid)
+        if found is not None:
+            return found[1].card, found[1].pokemon_id
+        return _returned_attacker_card(run), run.fs.frame.source_pid
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        if state.find_pokemon(run.fs.frame.source_pid) is not None:
+            side = run.flip(1).results[0]
+        else:
+            card, pid = self._source(run)
+            side = flip_coins(state, run.player, 1, source="attack", effect=str(run.key), card=card, pokemon_id=pid).results[0]
+        discard = tuple(state.players[run.player].discard)
+        if side is HEADS and discard and protected_discard(run, "discard_to_deck"):
+            discard = ()  # v0.119: ［アレルギーほうし］（トラッシュにカードがないときと同じに、コインは投げていて、山札は切る。どちらの読み方でも投げるので AP1 に当たらない）
+        if side is not HEADS or not discard:
+            shuffle_in_attack(run, self, run.player)
+            return False
+        run.suspend(kind=DISCARD_TO_DECK, player=run.player, options=discard, min_choices=1, max_choices=1)
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        p = state.players[run.player]
+        if len(choices) != 1 or choices[0] not in p.discard or choices[0] not in decision.options:
+            raise RuntimeError(f"「もちさる」で選んだカード {choices} が、自分のトラッシュのカードではない（エンジンの不具合）")
+        card, pid = self._source(run)
+        p.discard.remove(choices[0])
+        p.deck.append(choices[0])
+        state.add_event("attack_discard_to_deck", player=run.player, pokemon=card, pokemon_id=pid, effect=str(run.key), cards=(choices[0],))
+        shuffle_in_attack(run, self, run.player)
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        return card_id_answers(run.state, decision, range(1, 2))
+
+
+@dataclass(frozen=True)
+class OpponentPursuitOnRetreat(Element):
+    """相手の対戦ポケモン（このワザを受けた相手）に、次の相手の番に「にげる」とき ``amount`` ダメージを受ける持続する効果（``PursuitOnRetreat``）を与える（v0.117。「おいうち」。docs 3 章）。
+    v0.116 の ``OpponentAttachStatusTrigger`` と同じ形（ダメージの要素のあと・``reaches`` の効果の要素・このワザで HP 以上なら与えない・発生源は実際に使ったポケモンのいちばん上のカード）。"""
+
+    amount: int = 10
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.RETREAT_PURSUIT_ELEMENT
+
+    def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
+        return UNSUPPORTED, "番をまたぐ効果を、効果を与えたポケモンのカードのワザで記録するので、相手のワザとして使った効果を表せない"
+
+    def has_target(self, run: AttackRun) -> bool:
+        return not run.knocked_out(run.opponent_active())
+
+    def run(self, run: AttackRun) -> bool:
+        opponent = 1 - run.player
+        target = run.opponent_active()
+        if run.knocked_out(target):
+            run.ko_prevention_conflict(target)
+            return False
+        if not reaches(run.res, run.fs, opponent, target, E.RETREAT_PURSUIT_ELEMENT):
+            return False
+        attacker = run.attacker()
+        turn = run.state.turn_number
+        effect = PursuitOnRetreat(source_card=attacker.card, source_player=run.player, created_turn=turn, active_turn=turn + PursuitOnRetreat.turns_until_active,
+                                  amount=self.amount, attack=str(run.key))
+        add_persistent_effect(run.state, opponent, target, effect, attack=str(run.key), amount=self.amount)
+        return False
+
+
+BUILDERS |= {
+    # いかく: 相手が「たねポケモン」なら（NB1）、相手のワザを 1 つ選び、次の相手の番に使えなくする
+    E.LockOpponentAttackIfBasic: lambda e: (OpponentAttackLock(basic_only=True),),
+    # サイキックダメージ: コイン coins 枚の「おもて」の数ぶんのダメージカウンターを相手にのせる（ダメージではない）
+    E.CoinsCountersOnOpponent: lambda e: (OpponentCountersByHeads(e.coins),),
+    # ぱっときえる: ダメージ（目安）→ 自分と自分についているエネルギーカードを持ち主の手札にもどす（ほかのカードがついていれば VH1）
+    E.DamageThenReturnSelfAndEnergyToHand: lambda e: (Damage(OPP, Printed()), ReturnAttackerToHand(local_coin=None, energy_only=True)),
+    # もちさる: 自分と自分についているカードを山札にもどす（切らない）→ コイン →「おもて」ならトラッシュのカード 1 枚を山札に → 山札を切る
+    E.ReturnSelfToDeckThenCoinDiscardCardToDeck: lambda e: (ReturnSelfToDeck(local_coin=None, after_damage=None, shuffle=False), CoinDiscardCardToDeckThenShuffle()),
+    # メガフレイム: コイン coins 枚 →「うら」の数ぶんの energy_type エネルギーカードをトラッシュ（足りなければダメージはなくなる）→ ダメージ（目安）
+    E.CoinsDiscardTailsEnergyThenDamage: lambda e: (
+        Coin("coin", count=e.coins), DiscardOwnEnergy(e.energy_type, tails_of="coin", when_lacking=LACKING_NONE, copy_need=e.coins),
+        Damage(OPP, Printed(), requires="discard"),
+    ),
+    # おいうち: ダメージ（目安）→ 次の相手の番に「にげる」とき amount ダメージの持続する効果
+    E.DamageThenPursuitOnRetreat: lambda e: (Damage(OPP, Printed()), OpponentPursuitOnRetreat(e.amount)),
+}
+
+
+# ---------------------------------------------------------------- v0.118（docs/unbounded-coins-heal-allocation-v0.118.md）
+
+
+@dataclass(frozen=True)
+class ExtraUnits:
+    """ダメージの目安の数字 +「ワザに必要な「エネルギー」よりも多く「エネルギー」がついているとき、多い「エネルギー」1 個につき ``per``（``max_extra`` 個ぶんまで）」（v0.118。わるいオクタンの
+    「スミでっぽう」。``effects.ExtraEnergyUnitsDamage``）。数えるのはワザを実際に使ったポケモンについている「エネルギー」の個数（色を問わない。``all_energy_units``）で、多い数はワザに必要な
+    エネルギーの記号の数を引いた数（0 より小さくしない）。色の読み方の問いは数える個数を変えないので当てはめず、［おいしげる］で個数が決まらないときだけ止める。"""
+
+    per: int
+    max_extra: int
+    local_coins: ClassVar[int] = 0
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        units = all_energy_units(run.state, run.attacker(), run)
+        return run.attack.damage + min(max(0, units - len(run.attack.cost)), self.max_extra) * self.per
+
+
+@dataclass(frozen=True)
+class HeadsTimesOpponentFieldEnergy:
+    """相手の場のポケモン全員についている「エネルギー」の数だけコインを投げ、「おもて」の数 × ``per``（v0.118。わるいナッシーの「わるわるMAX」。``effects.CoinsPerOpponentFieldEnergyDamage``）。
+    数えるのは、このダメージの要素を処理する時点の相手の場（バトル場・ベンチ）のポケモンすべてについている「エネルギー」の個数（``all_energy_units``。［おいしげる］で個数が決まらなければ止める）。
+    コインはダメージの要素の中（ダメージの量だけを決める）。0 個なら投げず 0。"""
+
+    per: int
+    by_heads: ClassVar[bool] = True  # 「おもて」の数だけを使う（先読みは「おもて」の数でまとめる。v0.35）
+
+    def coin_count(self, run: AttackRun) -> int:
+        return sum(all_energy_units(run.state, pokemon, run) for pokemon in run.state.players[1 - run.player].in_play())
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return (0 if flips is None else flips.heads) * self.per
+
+
+@dataclass(frozen=True)
+class OpponentRetreatCostIncrease(Element):
+    """相手の対戦ポケモン（このワザを受けた相手）に、次の相手の番に「にげる」ときに必要な「エネルギー」が ``amount`` 個ぶん多くなる持続する効果（``RetreatCostIncrease``）を与える（v0.118。
+    わるいオクタンの「しめつづける」の「うら」）。相手に与える効果なので「ワザをうけない」状態・「とうめい」を評価する（効果の要素 ``RETREAT_COST_ELEMENT``）。このワザで HP 以上なら
+    処理の対象がない（p.309）。``gate`` はワザ全体のコインの面。"""
+
+    amount: int = 1
+    gate: tuple | None = None
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.RETREAT_COST_ELEMENT
+
+    def coin_receiver(self) -> str | None:
+        return "effect"  # ワザ全体のコインが決める相手の対戦ポケモンへの効果（``void_coin_question``）
+
+    def has_target(self, run: AttackRun) -> bool:
+        return not run.knocked_out(run.opponent_active())
+
+    def run(self, run: AttackRun) -> bool:
+        if self.gate is not None and not run.coin_is(self.gate):
+            return False
+        opponent = 1 - run.player
+        target = run.opponent_active()
+        if run.knocked_out(target):
+            run.ko_prevention_conflict(target)
+            return False
+        if not reaches(run.res, run.fs, opponent, target, E.RETREAT_COST_ELEMENT):
+            return False
+        from ..state import RetreatCostIncrease
+
+        attacker = run.attacker()
+        turn = run.state.turn_number
+        effect = RetreatCostIncrease(source_card=attacker.card, source_player=run.player, created_turn=turn, active_turn=turn + RetreatCostIncrease.turns_until_active,
+                                     amount=self.amount, attack=str(run.key))
+        add_persistent_effect(run.state, opponent, target, effect, attack=str(run.key), amount=self.amount)
+        return False
+
+
+def draw_classes(deck_size: int):
+    """v0.118: 「うら」が出るまで投げるコインの「おもて」の数 h のうち、引く枚数 ``min(h, deck_size)`` だけを使う要素（まるもうけ）の組（``unbounded.HeadClasses``）。h = 0〜``deck_size`` は
+    それぞれ別の組、``deck_size`` 以上はどれも山札をすべて引くので 1 つの組（代表は ``deck_size``）。"""
+    from .unbounded import HeadClasses
+
+    representatives = tuple(range(deck_size + 1))
+    return HeadClasses(representatives, representatives, deck_size, 1, lambda heads: min(heads, deck_size))
+
+
+@dataclass(frozen=True)
+class DrawUntilTails(Element):
+    """「うら」が出るまでコインを投げつづけ、その間に出た「おもて」の数だけ、カードを引く（v0.118。ニャースの「まるもうけ」。``effects.CoinsUntilTailsDraw``）。
+
+    - コインはワザの説明のコイン（``AttackRun.flip_until_tails``。実際の対戦では上限なく 1 枚ずつ。ナツメのESPのやり直しは一まとまりのあとに 1 回だけ。A0）。山札が 0 枚でも投げる（v0.112 の
+      しょくしゅをつかうと同じ。引く効果を処理の対象がないことにしない）
+    - 引くのは ``min(「おもて」の数, 山札の枚数)``（``zones.draw_cards``。引けるだけ。効果で山札がなくなっても負けにしない）。ログ ``draw``（引いたカードは持ち主だけ）
+    - 先読みは ``draw_classes``（山札の枚数 + 1 の組の代表）。「おもて」の数は引く枚数にだけ使う"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    reads_deck_order: ClassVar[bool] = True
+
+    def run(self, run: AttackRun) -> bool:
+        deck = run.state.players[run.player].deck
+        size = len(deck)
+        flips = run.flip_until_tails(lambda: draw_classes(size))
+        draw_cards(run.state, run.player, min(flips.heads, len(deck)))
+        return False
+
+
+@dataclass(frozen=True)
+class CoinEachPlayer(Element):
+    """お互いのプレイヤーが、それぞれコインを 1 枚投げる（v0.118。フシギソウの「ふしぎなかおり」の「お互いのプレイヤーは、それぞれコインを投げる」）。投げるのはワザを使ったプレイヤー → 相手
+    プレイヤーの順（実装上の順番。説明の 1 つのコイントスを 2 人で投げる。``AttackRun.flip_each``）。結果は ``names``（(ワザを使ったプレイヤーのコイン, 相手プレイヤーのコイン)）のワザ全体の
+    コイン（1 枚ずつ）。
+
+    - そのプレイヤーのコインが決める要素（``gate`` の名前）のどれにも処理の対象がなければ、そのプレイヤーは投げない（p.309。v0.38 の ``Coin`` と同じ読み方。投げなかったコインの面はどちらでもない）
+    - 決める要素の処理の対象がどれも効果を受けない状態（「ワザをうけない」状態など）なら、投げるかが決められない（v0.34 の HC3 と同じ問い）"""
+
+    names: tuple[str, str] = ("coin", "coin_opponent")
+    phase: ClassVar[Phase] = Phase.NEUTRAL
+
+    def run(self, run: AttackRun) -> bool:
+        flippers: list[tuple[int, str]] = []
+        for player, name in zip((run.player, 1 - run.player), self.names):
+            run.fs.coins[name] = CoinFlips(())
+            decided = [element for element in run.program if element.coin_dependent(name)]
+            targeted = [element for element in decided if element.has_target(run)]
+            if decided and not targeted:
+                continue
+            if targeted and all(getattr(element, "void_for_all", lambda run: False)(run) for element in targeted):
+                raise run.res.question("prevented_effect_coin", f"プレイヤー {player} のコインが決める要素 {[type(e).__name__ for e in targeted]} の対象が、どれも効果を受けない")
+            flippers.append((player, name))
+        if not flippers:
+            return False
+        flips = run.flip_each(tuple(player for player, _ in flippers))
+        for (_, name), side in zip(flippers, flips.results):
+            run.fs.coins[name] = CoinFlips((side,))
+        return False
+
+
+HEAL_SIDE_OWN, HEAL_SIDE_OPPONENT = "own", "opponent"
+
+
+@dataclass(frozen=True)
+class AllocateHeal(Element):
+    """とりのぞくダメージカウンターの数を、とりのぞく先に配分して、とりのぞく（v0.118。ふしぎなかおり・ごくらくかふん。docs 7 章）。
+
+    - とりのぞく先: ``chosen`` がなければ ``side`` の場（バトル場 → ベンチ）のポケモン、``chosen`` があれば先に選んだ自分の控えポケモン（``ChooseEffectTarget``。いなければなし）とワザを使った
+      ポケモン（説明の順）。そのうちカウンターののっているものだけ（このワザで HP 以上のポケモンは飛ばす）。どれにもなければ決定を出さない（処理の対象がない。p.309）
+    - 上限: ``total``（合計の上限。ふしぎなかおりの「最大3つ」）か ``each``（先ごとの上限。ごくらくかふんの「最大2つと、…最大2つを、それぞれ」）のちょうど一方。1 匹からはのっている数まで
+    - 決定 ``HEAL_ALLOCATION``（決めるのは先の持ち主。表は ``effects.heal_allocations``。続きの情報の ``heal``・``table``・``heal_side``・``element``）。とりのぞけるのに 0 個を選ぶ組は選べるが
+      選ぶと止める（HZ1。``effects.heal_zero_rows``）
+    - 宣言の前の先読みは、表のはじめの組（0 でない）だけを試す。ほかの組の続き（コイン・決定・きぜつの判定まで）は、実際に決定を出すときに試し、問いに当たる組を選ぶと止める（v0.94 の
+      ``_mark_branch_questions``。2 人の配分の直積を先読みの上限にのせず、1 つずつ順に扱う）
+    - とりのぞく前に、先ごとに「ワザをうけない」状態・「とうめい」を評価する（``reaches`` の ``heal``。受けなければ、その先からはとりのぞかない。ほかの先は続ける）。ログ ``attack_heal``"""
+
+    side: str = HEAL_SIDE_OWN
+    total: int | None = None
+    each: int | None = None
+    chosen: str | None = None
+    gate: tuple | None = None
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = HEAL_ALLOCATION
+
+    def __post_init__(self) -> None:
+        if (self.total is None) == (self.each is None):
+            raise ValueError("とりのぞく数の上限は total・each のちょうど一方")
+        if self.side not in (HEAL_SIDE_OWN, HEAL_SIDE_OPPONENT) or (self.chosen is not None and (self.side != HEAL_SIDE_OWN or self.each is None)):
+            raise ValueError(f"とりのぞく先の指定 {(self.side, self.chosen, self.total, self.each)!r} が正しくない")
+
+    @property
+    def opponent_element(self) -> str | None:
+        return E.HEAL_ELEMENT if self.side == HEAL_SIDE_OPPONENT else None
+
+    def owner(self, run: AttackRun) -> int:
+        return run.player if self.side == HEAL_SIDE_OWN else 1 - run.player
+
+    def targets(self, run: AttackRun) -> list[tuple[PokemonInPlay, int]]:
+        """とりのぞく先と、その上限（カウンターののっているものだけ）。"""
+        if self.chosen is not None:
+            pokemon = [*chosen_pokemon(run, self.chosen, run.player), run.attacker()]
+        else:
+            pokemon = list(run.state.players[self.owner(run)].in_play())
+        per = run.state.rules.damage_per_counter
+        limit = self.total if self.total is not None else self.each
+        found = []
+        for target in pokemon:
+            cap = 0 if run.knocked_out(target) else min(limit, target.damage // per)
+            if cap > 0:
+                found.append((target, cap))
+        return found
+
+    def has_target(self, run: AttackRun) -> bool:
+        if self.chosen is not None:
+            # 選ぶ前（ワザ全体のコインの前）: 自分の控えを選べるか、自分にカウンターがある
+            attacker = run.attacker()
+            return bool(run.state.players[run.player].bench) or (not run.knocked_out(attacker) and attacker.damage >= run.state.rules.damage_per_counter)
+        return bool(self.targets(run))
+
+    def void_for_all(self, run: AttackRun) -> bool:
+        if self.chosen is not None:
+            return False
+        from .kernel import first_void
+
+        owner = self.owner(run)
+        targets = self.targets(run)
+        return bool(targets) and all(first_void(run.res, run.incoming(), owner, target, Window.BEFORE_EFFECT) is not None for target, _ in targets)
+
+    def run(self, run: AttackRun) -> bool:
+        if self.gate is not None and not run.coin_is(self.gate):
+            return False
+        targets = self.targets(run)
+        if not targets:
+            return False
+        caps = tuple(cap for _, cap in targets)
+        table = E.heal_allocations(caps, self.total)
+        zeros = E.heal_zero_rows(table, caps, self.total)
+        index = next((i for i, element in enumerate(run.program) if element is self), None)
+        if index is None:
+            raise RuntimeError("とりのぞく数の配分の要素が、処理している要素の並びにない（エンジンの不具合）")
+        heal = (tuple(target.pokemon_id for target, _ in targets), caps, self.total, self.each)
+        extra = (("element", index), ("heal", heal), ("table", table), ("heal_side", self.side)) + _unresolved_extra(zeros, E.HEAL_UP_TO_ZERO_CODE, E.HEAL_UP_TO_ZERO_REASON)
+        run.suspend(kind=HEAL_ALLOCATION, player=self.owner(run), options=tuple(range(len(table))), carry=True, extra=extra)
+        if not run.res.dry_run:
+            first = next(i for i in range(len(table)) if i not in zeros)
+            others = tuple(i for i in range(len(table)) if i not in zeros and i != first)
+            if others:
+                _mark_branch_questions(run, others)
+        return True
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        blocked = set(decision.context_value("unresolved_choices", ()))
+        return [(next(option for option in decision.options if option not in blocked),)]  # はじめの組だけ（ほかは決定を出すときに試す）
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        pids, caps, _, _ = decision.context_value("heal")
+        row = tuple(decision.context_value("table"))[choices[0]]
+        owner = decision.player
+        per = state.rules.damage_per_counter
+        for pid, cap, amount in zip(pids, caps, row):
+            if amount <= 0:
+                continue
+            if amount > cap:
+                raise RuntimeError(f"とりのぞく数 {amount} が上限 {cap} より多い（表の誤り。エンジンの不具合）")
+            target = state.players[owner].find_by_pokemon_id(pid)
+            if target is None or run.knocked_out(target):
+                continue
+            removed = min(amount, target.damage // per)
+            if removed <= 0 or not reaches(run.res, run.fs, owner, target, E.HEAL_ELEMENT):
+                continue
+            before = target.damage
+            target.damage = before - removed * per
+            extra = {} if owner == run.player else {"attacker": run.player}
+            state.add_event("attack_heal", player=owner, pokemon=target.card, pokemon_id=target.pokemon_id, effect=str(run.key), counters=removed,
+                            amount=removed * per, damage_before=before, total_damage=target.damage, **extra)
+
+
+@dataclass(frozen=True)
+class ChosenOption:
+    """v0.118: 「のぞむなら」の決定で選んだ答え（``OptionalCoin``。投げると選んだなら真）。``fs.results`` に置き、決定をまたぐときは続きの情報の ``chosen_options`` で運ぶ（``AttackRun.suspend``）。
+    ナツメのESPのやり直しのあとの要素も、運んだ答えを読む（選び直さない）。"""
+
+    chosen: bool
+
+
+@dataclass(frozen=True)
+class OptionalCoin(Element):
+    """のぞむなら、コインを投げてよい（v0.118。ルギアの「エアロウイング」）。決定 ``OPTIONAL_COIN``（選べるものは (1,)。0 個: 投げない・1 個: 投げる）。答えは ``ChosenOption``（あとの要素が読む）。
+
+    - 宣言の前の先読みは投げない答えだけを試す。投げる答えの続き（コイン・ナツメのESP・ダメージ・きぜつの判定まで）は、実際に決定を出すときに試し、問いに当たれば投げるを選ぶと止める
+      （v0.94 の ``_mark_branch_questions``。投げたときだけ止まる盤面で、投げない答えまで宣言の前に拒否しない）
+    - ログ ``optional_coin_chosen``・``optional_coin_declined``（公開）"""
+
+    name: str = "choice"
+    phase: ClassVar[Phase] = Phase.NEUTRAL
+    decision_kind: ClassVar[str] = OPTIONAL_COIN
+
+    def run(self, run: AttackRun) -> bool:
+        run.suspend(kind=OPTIONAL_COIN, player=run.player, options=(1,), min_choices=0, max_choices=1, carry=True)
+        if not run.res.dry_run:
+            _mark_branch_questions(run, (1,))
+        return True
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        return [()]  # 投げない答えだけ（投げる答えは決定を出すときに試す）
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        attacker = run.attacker()
+        chosen = bool(choices)
+        run.fs.results[self.name] = ChosenOption(chosen)
+        run.state.add_event("optional_coin_chosen" if chosen else "optional_coin_declined", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id,
+                            effect=str(run.key))
+
+
+@dataclass(frozen=True)
+class ChosenCoinFailOnTails(Element):
+    """「のぞむなら」の決定（``choice``）で投げると選んだときだけ、コインを 1 枚投げ、「うら」ならワザは失敗する（v0.118。エアロウイング。p.323「12 ワザの失敗」）。結果はワザ全体のコイン ``name``
+    （投げなかったなら面はどちらでもない）。コインの前に、残りの要素が相手の状態で無効かを ``void_coin_question`` で確かめる（v0.34 の ``FailOnTails`` と同じ）。コインはワザの説明のコイン
+    （ナツメのESPのやり直しを含む ``AttackRun.flip``。やり直しのあとは、運んだ答えを読む）。"""
+
+    choice: str = "choice"
+    name: str = "coin"
+    phase: ClassVar[Phase] = Phase.NEUTRAL
+
+    def run(self, run: AttackRun) -> bool:
+        picked = run.fs.results.get(self.choice)
+        if picked is None:
+            raise RuntimeError(f"「のぞむなら」の答え {self.choice!r} がない（要素の並びの誤り。エンジンの不具合）")
+        if not picked.chosen:
+            run.fs.coins[self.name] = CoinFlips(())
+            return False
+        index = next((i for i, element in enumerate(run.program) if element is self), None)
+        if index is None:
+            raise RuntimeError("ワザの失敗のコインの要素が、処理している要素の並びにない（エンジンの不具合）")
+        void_coin_question(run, [element for element in run.program[index + 1:] if not element.after_failure])
+        flips = run.flip(1, by_heads=True)
+        run.fs.coins[self.name] = flips
+        if flips.results[0] is TAILS:
+            run.fail("coin")
+        return False
+
+
+@dataclass(frozen=True)
+class SetOnHeads:
+    """ワザ全体のコイン ``coin`` が「おもて」なら「``amount``」、そうでなければ（投げなかった）ダメージの目安の数字（v0.118。エアロウイングの「このワザのダメージは「80」になる」。p.321 の
+    1 段階の値。目安に追加しない。「うら」はワザの失敗で、この値を使わない）。"""
+
+    coin: str
+    amount: int
+    local_coins: ClassVar[int] = 0
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return self.amount if run.coin_is((self.coin, HEADS)) else run.attack.damage
+
+
+def group_power_coins(run: AttackRun, element: Damage) -> None:
+    """v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 5 章）: ワザといっしょに使った自分の場のポケモンの［XXXXX］（``Resolution.group_power``）のコインを、そのワザの相手の対戦ポケモンへの
+    ダメージの要素で投げる（「うら」が出るまで。投げるのは使ったプレイヤー。``source="power"``。ワザの説明のコインではないので、ナツメのESPのやり直しの対象ではない）。
+
+    - 受けるポケモンがダメージを受けない状態なら、コインはダメージの量だけを決めるので、投げるかが決められない（v0.4b の問い）
+    - 先読みは ``unbounded.bonus_classes``（追加の段階で key を求めた「おもて」の数の組）の代表だけを試す。実際の対戦のコイン・ログ・追加は実際の数
+    - 投げたら「おもて」の数を ``Resolution.group_power`` に置き（決定をまたいでも続きの情報で運び、投げ直さない）、ログ ``group_attack_power_coins``（公開。追加の量と段階）"""
+    from ..effects import PowerKey
+    from .kernel import first_void
+    from .unbounded import bonus_classes
+
+    res = run.res
+    state = run.state
+    holder_id, holder_card, card_id, power_index, heads = res.group_power
+    if heads is not None:
+        return
+    owner, receiver = 1 - run.player, run.opponent_active()
+    void = first_void(res, run.incoming(), owner, receiver)
+    if void is not None:
+        raise res.question("prevented_coin_damage", f"ポケモン {receiver.pokemon_id}（［XXXXX］のコイン）", E.prevented_coin_damage_error(receiver.pokemon_id, void.implementation.kind))
+    definition = state.definitions[card_id]
+    effect = state.effects.power_effect(definition.id, definition.powers[power_index])
+    step = 2 if holder_id == run.attacker().pokemon_id else 6
+    label = f"［{definition.powers[power_index].name_ja}］"
+    found: list = []
+
+    def classes():
+        if not found:
+            found.append(bonus_classes(run, element, effect.per, step, label, holder_card))
+        return found[0]
+
+    key = PowerKey(card_id, power_index)
+    flips = flip_until_tails(state, run.player, source="power", effect=str(key), card=holder_card, pokemon_id=holder_id, classes=classes)
+    res.group_power = (holder_id, holder_card, card_id, power_index, flips.heads)
+    state.add_event("group_attack_power_coins", player=run.player, pokemon=holder_card, pokemon_id=holder_id, power=str(key), effect=str(run.key), heads=flips.heads,
+                    amount=flips.heads * effect.per, step=step, attacker_pokemon_id=run.attacker().pokemon_id)
+
+
+BUILDERS |= {
+    # スミでっぽう: 目安 + 多い「エネルギー」（色を問わない個数）1 個につき per（max_extra 個まで）
+    E.ExtraEnergyUnitsDamage: lambda e: (Damage(OPP, ExtraUnits(e.per, e.max_extra)),),
+    # しめつづける: ダメージ（目安）→ コイン 1 枚 →「おもて」でマヒ・「うら」で次の相手の番の「にげる」エネルギー +amount
+    E.DamageThenParalyzeOnHeadsElseRetreatCost: lambda e: (
+        Damage(OPP, Printed()), Coin("coin"), Status(PARALYSIS, gate=("coin", HEADS), reparalysis_check=True), OpponentRetreatCostIncrease(e.amount, gate=("coin", TAILS)),
+    ),
+    # わるわるMAX: 相手の場のポケモン全員の「エネルギー」の数だけコイン →「おもて」の数 × per
+    E.CoinsPerOpponentFieldEnergyDamage: lambda e: (Damage(OPP, HeadsTimesOpponentFieldEnergy(e.per)),),
+    # ふしぎなかおり: お互いのコイン（使ったプレイヤー → 相手）→「おもて」のプレイヤーごとに自分の場から合計 counters まで（使ったプレイヤー → 相手の順に配分）
+    E.EachPlayerCoinHealOwnField: lambda e: (
+        CoinEachPlayer(), AllocateHeal(HEAL_SIDE_OWN, total=e.counters, gate=("coin", HEADS)),
+        AllocateHeal(HEAL_SIDE_OPPONENT, total=e.counters, gate=("coin_opponent", HEADS)),
+    ),
+    # ごくらくかふん: コイン →「おもて」なら自分の控えを 1 匹選ぶ → 選んだ控えと自分から、それぞれ counters まで
+    E.CoinHealChosenBenchAndSelf: lambda e: (
+        Coin("coin"), ChooseEffectTarget(side=E.TARGET_SIDE_OWN, scope=E.TARGET_BENCH, name="bench", gate=("coin", HEADS)),
+        AllocateHeal(HEAL_SIDE_OWN, each=e.counters, chosen="bench", gate=("coin", HEADS)),
+    ),
+    # まるもうけ: 「うら」が出るまでコイン →「おもて」の数だけ引く（引けるだけ）
+    E.CoinsUntilTailsDraw: lambda e: (DrawUntilTails(),),
+    # エアロウイング: のぞむならコイン →「うら」で失敗 →「おもて」ならダメージ amount（投げなければ目安）
+    E.OptionalCoinSetDamageElseFail: lambda e: (OptionalCoin("choice"), ChosenCoinFailOnTails("choice", "coin"), Damage(OPP, SetOnHeads("coin", e.amount))),
+}
+
+
+# ---------------------------------------------------------------- v0.119（docs/damage-reactions-poison-sleep-v0.119.md）
+
+
+@dataclass(frozen=True)
+class OwnCounterCountOnOpponent(Element):
+    """自分（ワザを実際に使ったポケモン）にのっているダメージカウンターと同じ数のダメージカウンターを、相手の対戦ポケモンにのせる（v0.119。ムウマの「いたみわけ」。
+    ``effects.PlaceOwnCounterCountOnOpponent``）。
+
+    - 数は、この要素を処理する時点で自分にのっている数（自分からはとりのぞかない）。0 個なら何もしない（ログを残さない。相手の「とうめい」も評価しない）
+    - のせる前に効果の要素（``COUNTERS_ELEMENT``）を受けるかを ``reaches`` で決め（「ワザをうけない」状態・エフェクトガード・「とうめい」。うらのカードはおもてにする）、v0.41 の
+      ``place_damage_counters`` のログでのせる（``_counters_changed``。ダメージではないので、弱点・抵抗力・鋼エネルギー・はんげき・こんじょうは関係しない）"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.COUNTERS_ELEMENT
+
+    def has_target(self, run: AttackRun) -> bool:
+        return not run.knocked_out(run.opponent_active())
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        opponent = 1 - run.player
+        target = run.opponent_active()
+        if run.knocked_out(target):
+            run.ko_prevention_conflict(target)
+            return False
+        per = state.rules.damage_per_counter
+        counters = run.attacker().damage // per
+        if not counters:
+            return False
+        if not reaches(run.res, run.fs, opponent, target, E.COUNTERS_ELEMENT):
+            return False
+        before = target.damage
+        target.damage = before + counters * per
+        state.add_event("place_damage_counters", player=opponent, pokemon=target.card, pokemon_id=target.pokemon_id, effect=str(run.key),
+                        counters=counters, amount=counters * per, damage_before=before, total_damage=target.damage, attacker=run.player,
+                        attacker_pokemon_id=run.fs.frame.source_pid)
+        _counters_changed(run, target, before)
+        return False
+
+
+@dataclass(frozen=True)
+class FieldWeaknessImmunity(Element):
+    """v0.119: 次の相手の番、自分の場の「水」ポケモンは「弱点」の影響を受けない（ヒトデマンの「なぞのこうせん」）。プレイヤーに与える期限のある効果
+    （``ATTACK_FIELD_WEAKNESS_IMMUNITY``。``player`` はワザを使ったプレイヤー、``source_card``・``pokemon_id`` は実際にワザを使ったポケモン、``card_id``・``attack_index`` はワザの出どころ、
+    消える番は与えた番 + 1）を加える。ログ ``trainer_effect_added``。
+
+    - 自分の場に与える効果なので、相手の防護（「ワザをうけない」・「とうめい」）は関係しない。タイプ（「水」）は登録の実装が持ち、記録に写さない（受けるポケモンはダメージを受ける時の
+      今の姿で決める。``effects.field_weakness_immunities``）"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def run(self, run: AttackRun) -> bool:
+        from ..state import ATTACK_FIELD_WEAKNESS_IMMUNITY
+
+        state = run.state
+        turn = state.turn_number
+        attacker = run.attacker()
+        record = TrainerTurnEffect(kind=ATTACK_FIELD_WEAKNESS_IMMUNITY, player=run.player, source_card=attacker.card, card_id=run.key.card_id, created_turn=turn,
+                                   expires_turn=turn + 1, pokemon_id=attacker.pokemon_id, attack_index=run.key.attack_index)
+        if any(r.kind == ATTACK_FIELD_WEAKNESS_IMMUNITY and r.player == run.player and r.created_turn == turn for r in state.trainer_effects):
+            raise RuntimeError(f"プレイヤー {run.player} の「なぞのこうせん」の効果が、与えた番 {turn} にすでにある（1 番に使えるワザは 1 つ。エンジンの不具合）")
+        state.trainer_effects = state.trainer_effects + (record,)
+        state.add_event("trainer_effect_added", player=run.player, effect_kind=ATTACK_FIELD_WEAKNESS_IMMUNITY, trainer_card=record.source_card, card_id=record.card_id,
+                        expires_turn=record.expires_turn, attack_index=record.attack_index, pokemon_id=record.pokemon_id, effect=str(run.key))
+        return False
+
+
+@dataclass(frozen=True)
+class SelfSecretePoison(Element):
+    """v0.119: 自分に「次の相手の番、相手のワザのダメージを受けたら、相手をどくにし、相手の控え全員に ``amount``」の持続する効果（コクーンの「どくをだす」。``state.SecretePoison``）を
+    与える（v0.12 の ``SelfRetaliation`` と同じ形。自分への効果なので「とうめい」は評価しない。HP 以上なら与えない）。"""
+
+    amount: int = 10
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
+        return UNSUPPORTED, "番をまたぐ効果を、効果を持つポケモンのカードのワザの位置で記録するので、相手のワザとして使った効果を表せない（v0.12 の返す効果と同じ）"
+
+    def run(self, run: AttackRun) -> bool:
+        from ..state import SecretePoison
+
+        attacker = run.attacker()
+        effect = SecretePoison(source_card=attacker.card, source_player=run.player, created_turn=run.state.turn_number, active_turn=run.state.turn_number + 1,
+                               attack_index=run.key.attack_index, amount=self.amount, attack_card=effect_attack_card_of(run, attacker))
+        if run.knocked_out(attacker):
+            run.state.add_event("persistent_effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id,
+                                persistent_effect=effect.kind, effect=str(run.key), reason=E.EFFECT_TARGET_KNOCKED_OUT)
+            return False
+        add_persistent_effect(run.state, run.player, attacker, effect, attack=str(run.key))
+        return False
+
+
+@dataclass(frozen=True)
+class ReplacementPoisonOnKnockOut(Element):
+    """v0.119（docs/damage-reactions-poison-sleep-v0.119.md 6 章）: 「このワザによって相手が「きぜつ」したなら、そのかわりに出てくる対戦ポケモンを「どく」状態にする」（マタドガスの「ガスばくはつ」）。
+    相手の対戦ポケモンがこのワザで HP 以上なら、記録（``state.ReplacementPoison``。``REPLACEMENT_PENDING``）を状態に置く（ログ ``replacement_poison_pending``）。「きぜつ」したかは、このワザの
+    あとのきぜつの処理で決める（``flow.settle_replacement_poisons``）。どくを与えるのは、持ち主がかわりのポケモンをバトル場に出したとき（``flow.apply_replacement_poison``）。HP 以上でなければ
+    何もしない（ポケモンチェックなどほかの原因で「きぜつ」しても対象ではない）。"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def run(self, run: AttackRun) -> bool:
+        from ..state import ReplacementPoison
+
+        state = run.state
+        opponent = 1 - run.player
+        target = run.opponent_active()
+        if target is None or run.state.is_face_down(target) or not E.knocked_by_hp(state, target):
+            return False
+        attacker = run.attacker()
+        if any(r.knocked_pokemon_id == target.pokemon_id for r in state.replacement_poisons):
+            raise RuntimeError(f"ポケモン {target.pokemon_id} のかわりのポケモンへのどくの記録がすでにある（1 つのワザで 1 回。エンジンの不具合）")
+        record = ReplacementPoison(player=opponent, knocked_pokemon_id=target.pokemon_id, card_id=run.key.card_id, attack_index=run.key.attack_index,
+                                   attacker_player=run.player, attacker_pokemon_id=attacker.pokemon_id, attacker_card=attacker.card,
+                                   attacker_evolved=E.is_evolution_in_play(state, attacker), created_turn=state.turn_number)
+        state.replacement_poisons = state.replacement_poisons + (record,)
+        state.add_event("replacement_poison_pending", player=opponent, pokemon=target.card, pokemon_id=target.pokemon_id, effect=str(run.key), attacker=run.player,
+                        attacker_pokemon_id=attacker.pokemon_id)
+        return False
+
+
+BUILDERS |= {
+    # ガスばくはつ: ダメージ（目安）→ 自分にも self_damage → このワザで相手が HP 以上なら、かわりに出てくる対戦ポケモンへのどくの記録
+    E.DamageAndSelfDamageThenPoisonReplacement: lambda e: (
+        Damage(OPP, Printed()), Damage(SELF, Fixed(e.self_damage), name="self_damage"), ReplacementPoisonOnKnockOut(),
+    ),
+    # どくをだす: 自分に次の相手の番の「相手のワザのダメージを受けたら、相手をどく・相手の控え全員に amount」の持続する効果
+    E.SecretePoisonNextTurn: lambda e: (SelfSecretePoison(e.amount),),
+    # いたみわけ: 自分にのっているダメージカウンターと同じ数を相手の対戦ポケモンにのせる（自分からはとりのぞかない）
+    E.PlaceOwnCounterCountOnOpponent: lambda e: (OwnCounterCountOnOpponent(),),
+    # なぞのこうせん: ダメージ（目安）→ 次の相手の番、自分の場の pokemon_type のポケモンは弱点の影響を受けない
+    E.DamageThenOwnTypeWeaknessImmunityNextTurn: lambda e: (Damage(OPP, Printed()), FieldWeaknessImmunity()),
+    # ひきずりこむ: のぞむなら入れ替え（ワザを使ったプレイヤーが選ぶ）→ ダメージ（目安。今の相手の対戦ポケモン）→ ねむり（コインなし）
+    E.OptionalSwitchOpponentThenDamageAndSleep: lambda e: (ForceSwitch(chooser="attacker", optional=True, carry=True), Damage(OPP, Printed()), Status(SLEEP)),
+    # どくどくエキス: コイン →「おもて」なら相手をどく（ダメージカウンターの数を multiplier 倍にする性質のどく）
+    E.ToxicPoisonOnHeadsWithoutDamage: lambda e: (Status(POISON, local_coin=HEADS, poison_multiplier=e.multiplier),),
+}
+
+
+
+# ---------------------------------------------------------------- v0.121（docs/hand-bench-attack-conditions-v0.121.md）: ねむりのときだけのワザ・失敗しなくなる効果・場のポケモン全員のコイン・
+# 相手の手札から場へ出すワザ
+
+
+@dataclass(frozen=True)
+class FailUnlessAsleep(Element):
+    """ワザを使ったポケモンが「ねむり」状態ではないとき、このワザは失敗する（v0.121。ヤドランの「おおいびき」の最新の説明。``effects.FailUnlessAsleepDamage``。docs 6 章）。
+
+    - 説明を処理する p.309 の手順 6 の最初の要素（こんらんのコインはその前の手順 5。CR-SLOWBRO-SNORE-ONLY-THIS-ATTACK）。ねむり状態なら何もしない（目を覚まさない）。でなければ失敗
+      （ログ ``attack_failed`` の ``reason`` ``not_asleep``。ワザは使ったことになり番は終わる。CR-SLOWBRO-SNORE-AWAKE-FAILS）
+    - 相手のワザとして使う（写す）ときは、「このカード」がだれかが決まらない（UQ-COPIED-ATTACK。HC9）"""
+
+    phase: ClassVar[Phase] = Phase.NEUTRAL
+
+    def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
+        return UNRESOLVED, "「このカードが「ねむり」状態ではないとき、このワザは失敗する」の「このカード」が、写したポケモンか元のカードかが決まらない（UQ-COPIED-ATTACK）"
+
+    def run(self, run: AttackRun) -> bool:
+        if not run.attacker().conditions.asleep:
+            run.fail("not_asleep")
+        return False
+
+
+@dataclass(frozen=True)
+class SelfFailureWaiver(Element):
+    """自分に「次の自分の番、このカードが使う「``target_name``」で投げるコインが「うら」でも失敗しない。(このワザを受けた相手がバトル場をはなれたら、この効果は消える。)」の持続する効果
+    （``state.NextTurnFailureWaiver``）を与える（v0.121。コイルの「ロックオン」。docs 8 章）。
+
+    - 効果を持つのはワザを使ったポケモン自身。失効を決める参照先は、このワザを受けた相手（今の相手の対戦ポケモンの場の番号）。失敗しなくなるワザは同じカードの ``target_name`` のワザの位置
+    - 受けた相手がワザの効果の要素を受けない状態（「ワザをうけない」状態・バリアー・［クリスタルボディ］・［ニュートラルシールド］などの ``first_void``、「とうめい」）なら、相手への効果として
+      評価するかが決まらない（LO1。問い ``lock_on_protected_target``。コインを投げない）
+    - 相手のワザとして使う（写す）効果は表せない（番をまたぐ効果をワザの位置で記録する。v0.12 の返す効果と同じ ``UNSUPPORTED``）"""
+
+    target_name: str
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
+        return UNSUPPORTED, "番をまたぐ効果を、効果を持つポケモンのカードのワザの位置で記録するので、相手のワザとして使った効果を表せない（v0.12 の返す効果と同じ）"
+
+    def run(self, run: AttackRun) -> bool:
+        from ..state import NextTurnFailureWaiver
+        from .kernel import first_void
+
+        state = run.state
+        attacker = run.attacker()
+        defender = run.opponent_active()
+        opponent = 1 - run.player
+        if first_void(run.res, run.incoming(), opponent, defender, Window.BEFORE_EFFECT) is not None or E.evasion_power(state, defender) is not None:
+            raise run.res.question("lock_on_protected_target", f"ポケモン {defender.pokemon_id}（ワザ {run.key} を受けた相手）")
+        attacks = state.definitions[run.key.card_id].attacks
+        target = next(attack.index for attack in attacks if attack.name_ja == self.target_name)
+        effect = NextTurnFailureWaiver(source_card=attacker.card, source_player=run.player, created_turn=state.turn_number, active_turn=state.turn_number + 2,
+                                       attack_index=run.key.attack_index, target_attack_index=target, target_player=opponent,
+                                       target_pokemon=defender.pokemon_id, attack_card=effect_attack_card_of(run, attacker))
+        add_persistent_effect(state, run.player, attacker, effect, attack=str(run.key), target_attack_index=target, target_player=opponent,
+                              target_pokemon=defender.pokemon_id)
+        return False
+
+
+@dataclass(frozen=True)
+class DiscardTypeCardForBonus(DiscardOwnEnergy):
+    """自分に「``energy_type``」エネルギーカードがついていれば、それを 1 枚トラッシュする（v0.121。わるいヘルガーの「じごくのほのお」の前半。追加のダメージは次の ``Damage`` の
+    ``PlusPerDiscarded``。``effects.DiscardTypeEnergyCardForBonus``。docs 8 章）。
+
+    - 選べるものは、ついているカードのうち、カードとしての種類・タイプがその色のもの（``effects.attached_typed_energy_cards``。悪エネルギー）。1 枚でも決定を出す（v0.7 の K2 と同じ）。
+      ついていなければトラッシュせず、追加の効果だけがなくなる（``LACKING_SKIP``。ワザの失敗・0 ダメージにしない）。レインボーエネルギーなどの問いは ``transform_energy_question``
+    - トラッシュするカードに、ついたまま計算すれば相手の対戦ポケモンへのこのワザのダメージを変える効果（悪エネルギーの「+10」）があり、そのダメージの要素が無効でなければ、当てはめるか
+      （トラッシュとダメージの計算の順番）が決まらない（DK1。問い ``discarded_energy_damage_bonus``。トラッシュする前）"""
+
+    def _candidates(self, run: AttackRun, pokemon: PokemonInPlay | None = None) -> list[int]:
+        pokemon = run.attacker() if pokemon is None else pokemon
+        transform_energy_question(run, pokemon, self.energy_type, cards=True)
+        return E.attached_typed_energy_cards(run.state, pokemon, self.energy_type)
+
+    def _discard(self, run: AttackRun, cards: tuple[int, ...]) -> None:
+        from .kernel import first_void
+
+        attacker = run.attacker()
+        defender = run.opponent_active()
+        if defender is not None and not run.knocked_out(defender) and first_void(run.res, run.incoming(), 1 - run.player, defender) is None:
+            for card in cards:
+                if E.discarded_card_damage_bonus(run.state, attacker, card, defender):
+                    raise run.res.question("discarded_energy_damage_bonus", f"ワザ {run.key} でトラッシュするカード {card}")
+        super()._discard(run, cards)
+
+
+@dataclass(frozen=True)
+class CoinPerPokemonInPlay(Element):
+    """おたがいの場のポケモン全員に対して、1 枚ずつコインを投げ、「おもて」が出たポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ ``amount`` ダメージ（v0.121。わるいリングマの
+    「だいらんとう」。``effects.CoinPerPokemonInPlayDamage``。docs 8 章）。
+
+    - 対象はこの要素を処理する時点の、相手のバトル場 → 相手のベンチの並び → 自分のバトル場（ワザを使ったポケモン自身）→ 自分のベンチの並び（実装上の順番。記録の裁定ではない。v0.115 の
+      ``CoinPerBenchPokemon`` と同じ形に、バトル場の 2 匹を加えた）。コインは 1 匹 1 枚、この並びの順に 1 回の ``flip`` で投げ、``i`` 枚目は ``i`` 番目のポケモンのもの（面と個体の対応を
+      持つ。「おもて」の数でまとめない。ナツメのESPのやり直しは同じ並びに同じ枚数を投げ直す）。結果はログ ``pokemon_coin_results``
+    - すべて投げてから、「おもて」のポケモンに並びの順でダメージ（相手のバトル場は ``OPPONENT_ACTIVE``、相手の控えは ``OPPONENT_BENCH``、自分は ``SELF``、自分の控えは ``SELF_BENCH``。
+      弱点・抵抗力なし）。控えへのダメージは［ベンチガード］の決定を出しうる。「ダメージを受けたとき」の反応・きぜつは、既存のダメージの要素のあとの窓・ワザのあとの判定
+    - 「とうめい」がはたらいているポケモンのあとに対象がいれば TS1、対象がみなダメージの要素を無効にする状態なら投げるかが決まらない（v0.115 と同じ問い）"""
+
+    amount: int
+    name: str = "pokemon_coins"
+    phase: ClassVar[Phase] = Phase.DAMAGE
+    guards_bench: ClassVar[bool] = True
+
+    def __post_init__(self) -> None:
+        if type(self.amount) is not int or self.amount <= 0 or self.amount % 10:
+            raise ValueError(f"ダメージは 10 の倍数の正の数（{self.amount!r}）")
+
+    def targets(self, run: AttackRun) -> list[tuple[str, int, PokemonInPlay]]:
+        state = run.state
+        opponent = 1 - run.player
+        found: list[tuple[str, int, PokemonInPlay]] = []
+        if state.players[opponent].active is not None:
+            found.append((E.OPPONENT_ACTIVE, opponent, state.players[opponent].active))
+        found += [(E.OPPONENT_BENCH, opponent, p) for p in state.players[opponent].bench]
+        found.append((E.SELF, run.player, run.attacker()))
+        found += [(E.SELF_BENCH, run.player, p) for p in state.players[run.player].bench]
+        return found
+
+    def run(self, run: AttackRun) -> bool:
+        from .kernel import first_void
+
+        state = run.state
+        targets = self.targets(run)
+        if any(E.evasion_power(state, pokemon) is not None for _, _, pokemon in targets[:-1]):
+            raise run.res.question("bench_coin_transparency_order", f"おたがいの場のポケモン {[p.pokemon_id for _, _, p in targets]}")
+        if all(first_void(run.res, run.incoming(), owner, pokemon) is not None for _, owner, pokemon in targets):
+            raise run.res.question("prevented_coin_damage", f"ダメージを受けない場のポケモン {[p.pokemon_id for _, _, p in targets]} へのダメージだけを決めるコイン")
+        flips = run.flip(len(targets))
+        run.fs.coins[self.name] = flips
+        attacker = run.attacker()
+        state.add_event("pokemon_coin_results", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                        targets=tuple(p.pokemon_id for _, _, p in targets), owners=tuple(owner for _, owner, _ in targets),
+                        results=tuple(face.value for face in flips.results))
+        entries = [(kind, pokemon.pokemon_id, self.amount, False) for (kind, _, pokemon), face in zip(targets, flips.results) if face is HEADS]
+        return guarded_damages(run, self, entries)
+
+
+def attack_hand_bench_reaction(state: GameState, owner: int) -> str | None:
+    """v0.121（HB1）: プレイヤー ``owner`` の手札のたね・ベイビィポケモンをワザの効果でベンチに出すとき、手札から出したことへの場の反応・特殊能力を止める効果の範囲がかかわるなら、その名前
+    （公開の情報だけで決める。手札の中身によらない）。なければ None。状態を変えない。"""
+    from ..continuous import goop_gas_effects
+
+    if E.hot_plates(state):
+        return "［ヒートプレート］"
+    if E.stadium_of(state, E.BenchEntryDamageStadium) is not None:
+        return "ロケット団の爆発ジム"
+    if goop_gas_effects(state) or E.strange_gas_effects(state, owner) or any(r.kind == E.ATTACK_FIELD_POWER_SUPPRESSION for r in state.trainer_effects):
+        return "特殊能力を止める効果"
+    return None
+
+
+def hand_entry_power_cards(state: GameState, cards) -> tuple[int, ...]:
+    """v0.121（HB1）: 手札のカード ``cards`` のうち、場に出たときに使える特殊能力（``EntryPower``）を持つもの（ワザの途中に手札から出したときの機会と時点が決まらない。選べるが選ぶと止める）。"""
+    return tuple(uid for uid in cards if E.entry_power(state, uid) is not None)
+
+
+def _hand_bench_reaction_question(run: AttackRun, owners) -> None:
+    state = run.state
+    for owner in owners:
+        p = state.players[owner]
+        if not p.hand or len(p.bench) >= bench_limit(state, owner):
+            continue
+        found = attack_hand_bench_reaction(state, owner)
+        if found is not None:
+            raise run.res.question("attack_hand_bench_reaction", f"{found}（プレイヤー {owner} の手札からベンチに出しうる。ワザ {run.key}）")
+
+
+def place_from_hand_in_attack(run: AttackRun, owner: int, cards: tuple[int, ...], chooser: int) -> tuple[PokemonInPlay, ...]:
+    """v0.121: プレイヤー ``owner`` の手札のカード ``cards``（手札の並びの順）を、ワザの効果で ``owner`` のベンチの最後に出す（``zones.hand_to_bench_by_effect`` の ``effect``。ログ
+    ``attack_bench_from_hand``。選ぶ人は ``chooser``）。出したポケモン（場の番号の個体）を返す。場に出たときの特殊能力を持つカードは、呼ぶ側が選べるが選ぶと止める選択にしている。"""
+    attacker = run.attacker()
+    return hand_to_bench_by_effect(run.state, owner, cards, chooser=chooser, effect=str(run.key), attacker=run.player, attacker_pokemon_id=attacker.pokemon_id)
+
+
+@dataclass(frozen=True)
+class OpponentHandToBenchThenSwitch(Element):
+    """相手プレイヤーの手札を見る。その中にある「たねポケモン」または「ベイビィポケモン」を 1 枚選び、相手のベンチに出す。その後、そのポケモンを相手と入れ替える。(相手のベンチに空きが
+    ないとき、このワザは失敗する。)（v0.121。わるいヘルガーの「ぶきみなとおぼえ」。``effects.BenchOpponentHandBasicThenSwitchOrFail``。docs 7 章）。
+
+    - 相手のベンチに空きがなければ、手札を見る前にワザの失敗（ログ ``attack_failed`` の ``reason`` ``opponent_bench_full``。中身を得ない）
+    - 手札から出したことへの場の反応・特殊能力を止める効果がかかわるなら HB1（見る前。公開の情報と手札の枚数だけで決め、手札の中身で宣言の受け付けを変えない）
+    - 見る（``zones.look_at_hand``。ログの ``cards`` は見たプレイヤーと持ち主だけ）→ 候補（``effects.hand_baby_or_basic``。手札の並び）がなければ何もしない（p.309。ログ
+      ``attack_bench_from_hand_none``）→ 選ぶ（決定 ``OPPONENT_HAND_TO_BENCH``。ワザを使ったプレイヤー。ちょうど 1 枚。場に出たときの特殊能力を持つカードは選べるが選ぶと止める（HB1））
+    - 出す（``place_from_hand_in_attack``。持ち主・出すベンチは相手）→ 出したその個体（場の番号）を相手の対戦ポケモンと入れ替える。相手の対戦ポケモンが「バトル場をはなれられない」・
+      効果の要素を受けないなら入れ替えない（``ForceSwitch`` と同じ確かめ。発生元は ``run.incoming``）。出した個体がベンチにいなければ、ベンチの別のポケモンにすりかえない"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = OPPONENT_HAND_TO_BENCH
+    opponent_element: ClassVar[str] = E.FORCED_SWITCH_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        opponent = 1 - run.player
+        if len(state.players[opponent].bench) >= bench_limit(state, opponent):
+            run.fail("opponent_bench_full")
+            return False
+        _hand_bench_reaction_question(run, (opponent,))
+        look_at_hand(state, run.player, opponent, effect=str(run.key))
+        candidates = E.hand_baby_or_basic(state, opponent)
+        if not candidates:
+            attacker = run.attacker()
+            state.add_event("attack_bench_from_hand_none", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key), owner=opponent)
+            return False
+        stops = () if run.res.dry_run else hand_entry_power_cards(state, candidates)
+        run.suspend(kind=OPPONENT_HAND_TO_BENCH, player=run.player, options=candidates,
+                    extra=(("owner", opponent),) + _unresolved_extra(stops, E.ATTACK_HAND_BENCH_REACTION_CODE, E.ATTACK_HAND_BENCH_REACTION_REASON))
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        opponent = 1 - run.player
+        if decision.context_value("owner") != opponent or len(choices) != 1 or choices[0] not in E.hand_baby_or_basic(state, opponent):
+            raise RuntimeError(f"ぶきみなとおぼえで選んだカード {choices} が、相手の手札のたね・ベイビィポケモンではない（エンジンの不具合）")
+        if len(state.players[opponent].bench) >= bench_limit(state, opponent):
+            raise RuntimeError("ぶきみなとおぼえの決定のあとに、相手のベンチの空きがなくなった（エンジンの不具合）")
+        (placed,) = place_from_hand_in_attack(run, opponent, choices, run.player)
+        p = state.players[opponent]
+        old = p.active
+        if not any(pokemon is placed for pokemon in p.bench):
+            ForceSwitch._skip(run, old, E.NO_BENCH)
+            return
+        if _leave_prevented(run, opponent, old, E.LEAVE_FORCED_SWITCH, None):
+            return
+        if not reaches(run.res, run.fs, opponent, old, E.FORCED_SWITCH_ELEMENT):
+            return
+        swap_opponent_active(run, opponent, old, placed.pokemon_id, chosen_by="effect")
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        return [(option,) for option in decision.options]  # 先読みでは場に出たときの特殊能力の止める選択を付けない（手札の中身で宣言の受け付けを変えない）
+
+
+@dataclass(frozen=True)
+class EachPlayerHandToBench(Element):
+    """おたがいのプレイヤーは、それぞれ、相手のプレイヤーの手札を見る。その後、それぞれ、のぞむなら、相手の手札にある「ベイビィポケモン」と「たねポケモン」を、相手のベンチの空きぶん、
+    好きなだけ選び、相手のベンチに出してよい（v0.121。わるいリングマの「ちょうはつ」。``effects.EachPlayerBenchesOpponentHandBasics``。docs 7 章）。
+
+    - 手札から出したことへの場の反応・特殊能力を止める効果がかかわるなら HB1（見る前。どちらかのベンチに出しうるとき。公開の情報と手札の枚数だけで決める）
+    - 見る: ワザを使ったプレイヤーが相手の手札を、そのあと相手がワザを使ったプレイヤーの手札を（実装上の順番。それぞれ ``zones.look_at_hand``）。片方の手札が 0 枚・ベンチに空きが
+      ないときも、もう片方の見る・選ぶを省かない
+    - 選ぶ: 1 段目はワザを使ったプレイヤーが相手の手札から、2 段目は相手がワザを使ったプレイヤーの手札から（決定 ``OPPONENT_HAND_TO_BENCH``。続きの情報 ``owner``・``stage``。0〜min(空き, 数) 枚。
+      0 枚は「のぞむなら」の出さないこと。選べるカードがない・空きがない段は決定を出さない（ログ ``attack_bench_from_hand_none``））。場に出たときの特殊能力を持つカードは選べるが選ぶと止める
+      （HB1）。選んだカードを手札の並びの順に、カードの持ち主のベンチに出す（``place_from_hand_in_attack``）
+    - 選ぶ順番（番のプレイヤーから）は実装上の順番。2 つの選択は別の手札・別のベンチで、選んだカードが同じなら結果は順番によらない（出したカードは公開。手札は永久に公開しない）"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = OPPONENT_HAND_TO_BENCH
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        opponent = 1 - run.player
+        _hand_bench_reaction_question(run, (opponent, run.player))
+        look_at_hand(state, run.player, opponent, effect=str(run.key))
+        look_at_hand(state, opponent, run.player, effect=str(run.key))
+        return self._stage(run, 1)
+
+    def _stage(self, run: AttackRun, stage: int) -> bool:
+        state = run.state
+        while stage <= 2:
+            chooser = run.player if stage == 1 else 1 - run.player
+            owner = 1 - chooser
+            candidates = E.hand_baby_or_basic(state, owner)
+            space = bench_limit(state, owner) - len(state.players[owner].bench)
+            if candidates and space > 0:
+                stops = () if run.res.dry_run else hand_entry_power_cards(state, candidates)
+                run.suspend(kind=OPPONENT_HAND_TO_BENCH, player=chooser, options=candidates, min_choices=0, max_choices=min(space, len(candidates)),
+                            extra=(("owner", owner), ("stage", stage)) + _unresolved_extra(stops, E.ATTACK_HAND_BENCH_REACTION_CODE, E.ATTACK_HAND_BENCH_REACTION_REASON))
+                return True
+            attacker = run.attacker()
+            state.add_event("attack_bench_from_hand_none", player=chooser, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key), owner=owner)
+            stage += 1
+        return False
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        stage = decision.context_value("stage")
+        owner = decision.context_value("owner")
+        chooser = run.player if stage == 1 else 1 - run.player
+        if stage not in (1, 2) or owner != 1 - chooser or decision.player != chooser or any(c not in E.hand_baby_or_basic(state, owner) for c in choices) \
+                or len(state.players[owner].bench) + len(choices) > bench_limit(state, owner):
+            raise RuntimeError(f"ちょうはつの決定（段 {stage!r}・持ち主 {owner!r}）の答え {choices} が、相手の手札のたね・ベイビィポケモンを空きの数までではない（エンジンの不具合）")
+        if choices:
+            ordered = tuple(uid for uid in state.players[owner].hand if uid in set(choices))
+            place_from_hand_in_attack(run, owner, ordered, chooser)
+        else:
+            attacker = run.attacker()
+            state.add_event("attack_bench_from_hand_declined", player=chooser, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key), owner=owner)
+        self._stage(run, stage + 1)
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        return [()]  # 先読みでは出さない答えだけを試す（出したあとに当たる問いはなく、手札の中身で宣言の受け付けを変えない）
+
+
+def swap_opponent_active(run: AttackRun, opponent: int, old: PokemonInPlay, new_pid: int, *, chosen_by: str | None) -> None:
+    """v0.121: ワザの効果で、相手（``opponent``）のバトル場のポケモン ``old`` と、相手の控えの ``new_pid`` を入れ替える（``ForceSwitch.resume`` から分けた共通の部分。移動・ログ
+    ``forced_switch``・特殊状態と持続する効果の消去・発生源がはなれた効果・バトル場に出たら消える効果・ベンチにもどった印・バトル場をはなれた時のトラッシュ）。確かめ（はなれられない・
+    効果を受けない）は呼ぶ側。"""
+    p = run.state.players[opponent]
+    index = next(i for i, pokemon in enumerate(p.bench) if pokemon.pokemon_id == new_pid)
+    require_can_leave(run.state, opponent, old)  # v0.93: 決定を出す前に確かめた（``run``）
+    p.active, p.bench[index] = p.bench[index], old
+    M.note_switch(run.state, opponent, old, p.active)  # v0.87: 入れ替えの事実（相手の［やけのこり］。次の要素の前に処理する）
+    extra = {} if chosen_by is None else {"chosen_by": chosen_by}  # v0.31: かどわかす（ふきとばしのログの形は v0.30 と同じ）。v0.121: ぶきみなとおぼえは "effect"
+    run.state.add_event(
+        "forced_switch",
+        player=opponent,
+        attacker=run.player,
+        attacker_pokemon_id=run.fs.frame.source_pid,
+        effect=str(run.key),
+        old_active=old.card,
+        new_active=p.active.card,
+        old_active_pokemon_id=old.pokemon_id,
+        new_active_pokemon_id=p.active.pokemon_id,
+        **extra,
+    )
+    clear_special_conditions(run.state, opponent, old, FORCED_SWITCH_REASON)
+    remove_persistent_effects(run.state, opponent, old, FORCED_SWITCH_REASON)
+    remove_source_left_effects(run.state, opponent, old)  # v0.92: 発生源がバトル場をはなれたら消える効果
+    remove_on_entering_active(run.state, opponent, p.active)  # v0.114: バトル場に出てきたら消える効果（じっとみる）
+    mark_returned_to_bench(old)  # v0.48: 特殊能力で色を変えた記録に、ベンチにもどったことを残す（VS1）
+    E.discard_on_leaving_active(run.state, opponent, old)  # v0.65: バトル場をはなれた時にトラッシュするついているトレーナー（変わり身の術）
+
+
+BUILDERS |= {
+    # おおあくび: 自分 → 相手を、それぞれ特殊状態にする（ダメージを与えたことを条件にしない）
+    E.StatusSelfAndOpponent: lambda e: (Status(e.condition, target=SELF), Status(e.condition)),
+    # おおいびき: ねむり状態でなければ失敗 → ダメージ（目安）
+    E.FailUnlessAsleepDamage: lambda e: (FailUnlessAsleep(), Damage(OPP, Printed())),
+    # でんじほう: コイン（1 枚でも「うら」なら失敗。ロックオンの効果があれば失敗しない）→ ダメージ（目安）→ マヒ
+    E.CoinsFailThenDamageParalyze: lambda e: (FailOnTails(count=e.coins, waiver=True), Damage(OPP, Printed()), Status(PARALYSIS, reparalysis_check=True)),
+    # ロックオン: 自分に次の自分の番の「target_name のコインの「うら」で失敗しない」効果（受けた相手がバトル場をはなれたら消える）
+    E.WaiveTailsFailureNextTurn: lambda e: (SelfFailureWaiver(e.target_name),),
+    # じごくのほのお: ついている色のエネルギーカードを 1 枚トラッシュ（なければ追加の効果だけがなくなる）→ ダメージ（目安 + トラッシュした枚数 × per）
+    E.DiscardTypeEnergyCardForBonus: lambda e: (
+        DiscardTypeCardForBonus(e.energy_type, count=1, when_lacking=LACKING_SKIP), Damage(OPP, PlusPerDiscarded("discard", e.per)),
+    ),
+    # だいらんとう: おたがいの場のポケモン全員に 1 枚ずつコイン →「おもて」のポケモンに弱点・抵抗力なしで amount
+    E.CoinPerPokemonInPlayDamage: lambda e: (CoinPerPokemonInPlay(e.amount),),
+    # ぶきみなとおぼえ: 相手のベンチに空きがなければ失敗 → 相手の手札を見る → たね・ベイビィを 1 枚相手のベンチに出す → そのポケモンを相手と入れ替える
+    E.BenchOpponentHandBasicThenSwitchOrFail: lambda e: (OpponentHandToBenchThenSwitch(),),
+    # ちょうはつ: おたがいに相手の手札を見る → それぞれ、のぞむなら相手の手札のたね・ベイビィを相手のベンチの空きぶん出す
+    E.EachPlayerBenchesOpponentHandBasics: lambda e: (EachPlayerHandToBench(),),
 }

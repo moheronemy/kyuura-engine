@@ -36,6 +36,7 @@ from kyuura_engine.rules import RULES_2000_02_14
 from kyuura_engine.stadiums import bench_limit  # v0.57
 from kyuura_engine.state import (
     ASLEEP,
+    BasicEntry,
     COUNTER_KINDS,
     Marker,
     AttachedTrainer,
@@ -698,7 +699,8 @@ def uids(state: GameState, player: int, zone: str, card_id: str | None = None) -
 
 
 def basics_in_hand(state: GameState, player: int) -> list[int]:
-    return [u for u in state.players[player].hand if state.card_def(u).is_basic_pokemon]
+    """手札の、対戦準備・ベンチに出せるポケモンのカード（たねポケモンと、v0.114 からベイビィポケモンのカード。p.308・p.309。ベイビィのないデッキでは v0.113 までと同じ）。"""
+    return [u for u in state.players[player].hand if state.card_def(u).is_baby_or_basic_pokemon]
 
 
 def energy_in_hand(state: GameState, player: int) -> list[int]:
@@ -836,6 +838,10 @@ def build_test_state(
         poison = Poison(spec["poison"]) if "poison" in spec else None
         if poison is not None or exclusive is not None:
             result.conditions = SpecialConditions(poison=poison, exclusive=exclusive)
+        if spec.get("basic_entry"):
+            # v0.120: 進化元を重ねずに出し、場ではたねポケモンとしてあつかう進化カード（``BasicEntry``）。重なりがあれば、いちばん下のカードを出したカードとする（その上に進化した）。
+            # 出した効果は "test"・出した番は場に出た番・山札から
+            result.basic_entry = BasicEntry(stack[0] if stack else result.card, "test", result.card, "deck", result.played_turn)
         for entry in spec.get("markers", ()):
             # v0.90: マーカー・カウンター（ログはあとで置く）
             kind, color = (entry, None) if isinstance(entry, str) else entry
@@ -1453,6 +1459,128 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DefenderEnergyUnitsDamageAndFullDrain,
     _effects.CoinsPerDefenderEnergyBonusAndFullDrain,
     _effects.ThreeCoinDamageOrOpponentHeal,
+    # v0.106（docs/counts-coins-compositions-v0.106.md。自分のカウンターの追加と自分へのダメージ・「おもて」の数の表・カードの枚数ぶんの上限つきのコイン・相手が取ったサイドの数・
+    # 同じコインの追加のダメージと自分へのダメージ）
+    _effects.DamagePlusOwnCountersThenSelfDamage,
+    _effects.CoinsHeadsTableBonusDamage,
+    _effects.CappedCoinsPerAttachedEnergyCardsDamage,
+    _effects.DamagePlusOpponentPrizesTaken,
+    _effects.CoinsBonusAndSelfDamagePerHeads,
+    # v0.107（docs/coin-failure-status-flight-v0.107.md。失敗のコインで決まるどく・じばく・防護と、ダメージのあとのコインで相手か自分がこんらん）
+    _effects.FailOnTailsDamageThenPoison,
+    _effects.FailOnTailsSelfDestruct,
+    _effects.FailOnTailsDamageThenSelfBarrier,
+    _effects.DamageThenConfuseOpponentOrSelf,
+    # v0.108（docs/damage-modifiers-condition-bonuses-v0.108.md。使うワザのダメージを減らす効果・ダメージのあとの受けるダメージの増加・相手の特殊状態を参照する追加とどく・回復）
+    _effects.DamageThenDealtDamageReduction,
+    _effects.DealtDamageReductionWithoutDamage,
+    _effects.DamageThenReceivedAttackDamageBonus,
+    _effects.PlusIfDefenderPoisonedThenPoison,
+    _effects.PlusIfDefenderStatusThenCure,
+    # v0.109（docs/timed-damage-guards-v0.109.md。次の相手の番に受けるときのコインでダメージを防ぐ効果・相手のタイプで決まる基本となるダメージ）
+    _effects.SelfTimedDamageGuardWithoutDamage,
+    _effects.DamageThenSelfTimedDamageGuard,
+    _effects.DamageSetAgainstType,
+    # v0.110（docs/endure-armor-up-v0.110.md。使うときのコインで、残りHPがなくなっても「きぜつ」しない期間つきの効果を自分に与える）
+    _effects.SelfKnockOutSurvivalOnHeads,
+    # v0.111（docs/field-energy-card-counts-v0.111.md。相手の場の決まった色のエネルギーカードの枚数・エネルギーカードの枚数が同じときだけ使えるワザ）
+    _effects.DamageTimesOpponentFieldEnergyCards,
+    _effects.DamageRequiringEqualEnergyCards,
+    # v0.112（docs/energy-coins-draw-v0.112.md。自分の決まった色のエネルギーの個数だけのコインで引く・コインでマヒか自分のワザの制限）
+    _effects.CoinsPerOwnTypedEnergyDraw,
+    _effects.DamageParalyzeOnHeadsElseLockSelf,
+    # v0.113（docs/variable-coins-search-attachments-v0.113.md。場のポケモンの数・ベンチの名前・自分の色の個数・トラッシュした枚数のコイン、山札の検索・つける、場全体のトラッシュ、
+    # コインの「おもて」で追加・「うら」でマヒ、ベンチに空きがなければ失敗、トラッシュしてダメージのあとトラッシュからつける）
+    _effects.CoinsPerPokemonInPlaySearchBasicEnergy,
+    _effects.DamageThenCoinsAttachTypedEnergyFromDeck,
+    _effects.CoinBonusOnHeadsElseParalyze,
+    _effects.PutNamedBasicFromDeckOntoBenchOrFail,
+    _effects.CoinsPerOwnBenchNamedBonusDamage,
+    _effects.DiscardEnergyThenDamageThenAttachFromDiscard,
+    _effects.CoinsPerOwnTypedEnergyBonusDamage,
+    _effects.DiscardFieldEnergyThenCoinsDamage,
+    _effects.CoinsPerPokemonInPlayHeadsDamageTailsSelfDamage,
+    # v0.114（docs/baby-rules-evolution-v0.114.md 6 章。ベイビィポケモンのワザ。次の自分の番の終わりまでの場の特殊能力の停止・特殊能力を持つポケモン全員へのダメージ・
+    # 相手の特殊エネルギーカードを山札にもどす・山札のベイビィをベンチに・相手の場の選んだポケモンにダメージカウンター）
+    _effects.DamageThenFieldPowerSuppressionUntilOwnNextTurn,
+    _effects.PowerHoldersSpreadDamage,
+    _effects.CoinReturnOpponentSpecialEnergyToDeck,
+    _effects.PutBabyFromDeckOntoBenchOrFail,
+    _effects.PlaceCountersOnChosenOpponentPokemon,
+    # v0.115（docs/spread-damage-allocation-v0.115.md 6 章。場・ベンチへのダメージ、対象ごとのコイン、ダメージの配分。コインの「おもて」で相手の場の全員と入れ替え・続けて投げるコインの
+    # 控えへのダメージ・タイプ以外の全員・おたがいの控えごとのコイン・受けるポケモンごとのエネルギーカードの枚数・コインの「おもて」で全員と山札からの進化・エネルギーカードの枚数のコインと
+    # 相手の山札・控えがいると変わるダメージと選んだ控え・最大 2 匹と次の番の禁止・多いエネルギーの配分・コインの配分・トラッシュした数の配分・選んだ相手のポケモンにも）
+    _effects.CoinSpreadDamageThenOpponentSwitch,
+    _effects.DamageThenChainedCoinsBenchDamage,
+    _effects.SpreadDamageExceptType,
+    _effects.DamageThenCoinPerBothBenches,
+    _effects.EnergyCardsSpreadDamage,
+    _effects.CoinSpreadDamageThenEvolveNamedFromDeck,
+    _effects.CoinsPerOwnEnergyCardsDamageThenMillOpponent,
+    _effects.ReducedDamageThenChosenBenchDamage,
+    _effects.ChosenBenchTargetsThenSelfCannotAttack,
+    _effects.DamageThenAllocateExtraEnergyToBench,
+    _effects.DamageThenCoinsAllocateToBench,
+    _effects.DiscardEnergyUpToThenAllocateToOpponentPokemon,
+    _effects.DamageThenChosenOpponentPokemonDamage,
+    # v0.116（docs/energy-movement-attachment-devolution-v0.116.md 6 章。コインの「おもて」の数のダメージとこんらん・ついた時に発動するどく・マヒの持続効果・手札とトレーナーの進化の禁止・
+    # 「おもて」でねむり「うら」でにげるの禁止・エネルギーの付け替えと入れ替え・自分へのカウンターと山札の基本エネルギー・相手の対戦ポケモンから控えへの付け替え・相手の場の付け替え・
+    # 相手の山札への退化・相手のトラッシュから相手のベンチ・回復とたねポケモンへの退化・トラッシュの特殊エネルギー・付属カードを手札に・エネルギーのトラッシュとカウンターののせかえ）
+    _effects.CoinsTimesDamageThenConfuseIfAtLeast,
+    _effects.DamageThenStatusOnEnergyAttach,
+    _effects.DamageThenEvolutionLock,
+    _effects.DamageThenSleepOnHeadsElseRetreatLock,
+    _effects.DamageThenMoveAllEnergyToTypeBenchThenSwitch,
+    _effects.SelfCountersThenAttachBasicEnergyFromDeck,
+    _effects.CoinMoveOpponentEnergyCardToBenchOrFail,
+    _effects.FailOnTailsMoveOpponentFieldEnergy,
+    _effects.CoinDevolveOpponentEvolvedToDeck,
+    _effects.BenchBabyOrBasicFromOpponentDiscardOrFail,
+    _effects.HealAllThenRegressToBasic,
+    _effects.RecoverSpecialEnergyFromDiscard,
+    _effects.DamageThenCoinReturnAttachedCardsToHand,
+    _effects.DiscardAllEnergyThenMoveAllSelfCountersToOpponent,
+    # v0.117（docs/retreat-return-active-powers-v0.117.md 4 章・7 章・8 章。相手がたねポケモンならワザの禁止・「おもて」の数のダメージカウンター・ダメージのあと自分とエネルギーカードを
+    # 手札に・自分を山札にもどしてからコインでトラッシュの 1 枚を山札に・「うら」の数のエネルギーのトラッシュとダメージ・「にげる」ときのダメージの持続効果）
+    _effects.LockOpponentAttackIfBasic,
+    _effects.CoinsCountersOnOpponent,
+    _effects.DamageThenReturnSelfAndEnergyToHand,
+    _effects.ReturnSelfToDeckThenCoinDiscardCardToDeck,
+    _effects.CoinsDiscardTailsEnergyThenDamage,
+    _effects.DamageThenPursuitOnRetreat,
+    # v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 4 章・6 章・7 章・8 章。色を問わない多いエネルギーの追加・マヒか「にげる」エネルギーの持続効果・相手の場のエネルギーの
+    # 数のコイン・お互いのコインと自分の場の配分の回復・選んだ控えと自分の回復・「うら」が出るまでのコインで引く・のぞむならのコインでダメージを決めるか失敗）
+    _effects.ExtraEnergyUnitsDamage,
+    _effects.DamageThenParalyzeOnHeadsElseRetreatCost,
+    _effects.CoinsPerOpponentFieldEnergyDamage,
+    _effects.EachPlayerCoinHealOwnField,
+    _effects.CoinHealChosenBenchAndSelf,
+    _effects.CoinsUntilTailsDraw,
+    _effects.OptionalCoinSetDamageElseFail,
+    # v0.119（docs/damage-reactions-poison-sleep-v0.119.md 5 章〜9 章。自分のカウンターと同じ数を相手にのせる・次の相手の番の自分の場のタイプの弱点なし・カウンターの数を倍にするどく・
+    # のぞむならの入れ替えのあとのダメージとねむり・次の相手の番のどくと相手の控え全員へのダメージの反応・自分へのダメージとかわりに出てくる対戦ポケモンのどく）
+    _effects.PlaceOwnCounterCountOnOpponent,
+    _effects.DamageThenOwnTypeWeaknessImmunityNextTurn,
+    _effects.ToxicPoisonOnHeadsWithoutDamage,
+    _effects.OptionalSwitchOpponentThenDamageAndSleep,
+    _effects.SecretePoisonNextTurn,
+    _effects.DamageAndSelfDamageThenPoisonReplacement,
+    # v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 5 章・7 章。ワザを選んで自分のワザとして使う・コインでベンチの名前の数のダメージの追加・選んだポケモンを山札の進化カードで進化・
+    # すべて「うら」で失敗し「おもて」の数の相手のエネルギーカードのトラッシュ）
+    _effects.CopyAttackFromSource,
+    _effects.CoinBonusPerOwnBenchNamed,
+    _effects.EvolveChosenNamedFromDeck,
+    _effects.CoinsDiscardOpponentEnergyElseFail,
+    # v0.121（docs/hand-bench-attack-conditions-v0.121.md 6 章〜8 章。自分と相手を特殊状態・ねむり状態でないとき失敗・コインで失敗しダメージとマヒ・次の自分の番のコインの「うら」で
+    # 失敗しない・色のエネルギーカードをトラッシュしてダメージの追加・場のポケモン全員のコイン・相手の手札から相手のベンチに出して入れ替え・おたがいに相手の手札から相手のベンチに出す）
+    _effects.StatusSelfAndOpponent,
+    _effects.FailUnlessAsleepDamage,
+    _effects.CoinsFailThenDamageParalyze,
+    _effects.WaiveTailsFailureNextTurn,
+    _effects.DiscardTypeEnergyCardForBonus,
+    _effects.CoinPerPokemonInPlayDamage,
+    _effects.BenchOpponentHandBasicThenSwitchOrFail,
+    _effects.EachPlayerBenchesOpponentHandBasics,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -1734,8 +1862,13 @@ CARD_DATA_COMMIT_SINCE_V0_69 = "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"
 # v0.97（docs/unown-research-idfnj-v0.97.md 2 章）: 写しの元を 7d3f4ca から 73a1690 に上げた。移行は連鎖（ecb2d69 → 7d3f4ca → 73a1690。scripts/extract_kyuura_cards.py の
 # KYUURA_MIGRATIONS と同じ段）で、もどすときも段を 1 つずつさかのぼる（知らない値・段を飛ばした値を黙って置きかえない）
 CARD_DATA_COMMIT_SINCE_V0_97 = "73a169063463bbf7bcaa3137d70cbf9721d11534"
-CARD_DATA_COMMIT = CARD_DATA_COMMIT_SINCE_V0_97  # 今の写しの元
-CARD_DATA_MIGRATIONS = ((CARD_DATA_COMMIT_BEFORE_V0_69, CARD_DATA_COMMIT_SINCE_V0_69), (CARD_DATA_COMMIT_SINCE_V0_69, CARD_DATA_COMMIT_SINCE_V0_97))
+# v0.114（docs/baby-rules-evolution-v0.114.md 2 章）: 写しの元を 73a1690 から e519b99 に上げた（段 v0.114。前の段の値は変えない）
+CARD_DATA_COMMIT_SINCE_V0_114 = "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
+# v0.121（docs/hand-bench-attack-conditions-v0.121.md 3 章）: 写しの元を e519b99 から 2fe0bc0 に上げた（段 v0.121。前の段の値は変えない）
+CARD_DATA_COMMIT_SINCE_V0_121 = "2fe0bc042ce187d191843819262f8036abbb343d"
+CARD_DATA_COMMIT = CARD_DATA_COMMIT_SINCE_V0_121  # 今の写しの元
+CARD_DATA_MIGRATIONS = ((CARD_DATA_COMMIT_BEFORE_V0_69, CARD_DATA_COMMIT_SINCE_V0_69), (CARD_DATA_COMMIT_SINCE_V0_69, CARD_DATA_COMMIT_SINCE_V0_97),
+                        (CARD_DATA_COMMIT_SINCE_V0_97, CARD_DATA_COMMIT_SINCE_V0_114), (CARD_DATA_COMMIT_SINCE_V0_114, CARD_DATA_COMMIT_SINCE_V0_121))
 
 
 def with_card_data_commit_at(data: dict, commit: str) -> dict:
@@ -1764,7 +1897,7 @@ def with_card_data_commit_at(data: dict, commit: str) -> dict:
 
 def with_card_data_commit_before_v0_69(data: dict) -> dict:
     """state_to_dict の値（の写し）の、写しの元の 2 か所だけを v0.68 までの値にもどした新しい値（``data`` は変えない）。もどした数も確かめる。v0.97 から、今の写しの元
-    （73a1690）から移行の連鎖を段ごとにさかのぼる（``with_card_data_commit_at``）。"""
+    （v0.114 から e519b99、v0.121 から 2fe0bc0）から移行の連鎖を段ごとにさかのぼる（``with_card_data_commit_at``）。"""
     return with_card_data_commit_at(data, CARD_DATA_COMMIT_BEFORE_V0_69)
 
 
@@ -1945,9 +2078,29 @@ V0_97_KYUURA_RECORDS_ADDED = {
 }
 
 
+# v0.114（docs/baby-rules-evolution-v0.114.md 2.3 節）: 研究の基準を kyuura e519b99 に上げて、採用の記録の kyuura_records に加わった記録（kyuura のベイビィの裁定・論点の事例が指す
+# カード）。tests/test_baby_rules_evolution_v0_114.py が、同梱の記録と同じことを確かめる
+V0_114_KYUURA_RECORDS_ADDED = {
+    "PMCG1-086": ("CR-DEVOLUTION-SPRAY-EVOLVED-BABY",),
+    "PR1-005": ("CR-NEUTRAL-SHIELD-EVOLVED-BABY",),
+    "PR1-012": ("CR-NEUTRAL-SHIELD-EVOLVED-BABY",),
+    "neo1-074": ("UQ-NEO-TEXT-BABY-CATEGORIES",),
+    "neo2-056": ("UQ-NEO-TEXT-BABY-CATEGORIES",),
+    "neo3-056": ("UQ-NEO-TEXT-BABY-CATEGORIES",),
+    "NIP1-021": ("UQ-NEO-TEXT-BABY-CATEGORIES",),
+}
+# v0.121（docs/hand-bench-attack-conditions-v0.121.md 3.4 節）: 研究の基準を kyuura 2fe0bc0 に上げて、採用の記録の kyuura_records に加わった記録（kyuura がピカチュウ IP1-040 の印刷を
+# 画像と p.127 の図版で照合した記録・最新の説明・裁定・論点）。tests/test_hand_bench_attack_conditions_v0_121.py が、同梱の記録と同じことを確かめる
+V0_121_KYUURA_RECORDS_ADDED = {
+    "IP1-040": ("CC-IP1-040-P127", "CR-PIKACHU-GROWL-LATEST", "CR-PIKACHU-GROWL-OPPONENT-EFFECT", "LD-IP1-040-ATK0", "UQ-GROWL-NON-ATTACK-DAMAGE"),
+}
+
+
 def kyuura_records_since_v0_69(card_id: str, before: list | tuple = ()) -> list:
-    """v0.68 までの kyuura_records（``before``）に、v0.69 で加わった記録を加えた値（並びは id の順）。v0.97 で加わった記録（``V0_97_KYUURA_RECORDS_ADDED``）も加える。"""
-    return sorted([*before, *V0_69_KYUURA_RECORDS_ADDED.get(card_id, ()), *V0_97_KYUURA_RECORDS_ADDED.get(card_id, ())])
+    """v0.68 までの kyuura_records（``before``）に、v0.69 で加わった記録を加えた値（並びは id の順）。v0.97 で加わった記録（``V0_97_KYUURA_RECORDS_ADDED``）・v0.114 で加わった記録
+    （``V0_114_KYUURA_RECORDS_ADDED``）・v0.121 で加わった記録（``V0_121_KYUURA_RECORDS_ADDED``）も加える。"""
+    return sorted([*before, *V0_69_KYUURA_RECORDS_ADDED.get(card_id, ()), *V0_97_KYUURA_RECORDS_ADDED.get(card_id, ()),
+                   *V0_114_KYUURA_RECORDS_ADDED.get(card_id, ()), *V0_121_KYUURA_RECORDS_ADDED.get(card_id, ())])
 
 
 # v0.69: kyuura の未解決の一覧で論点に結ばれた停止コード（v0.68 までは not_in_kyuura。進化のあとの HP だけは out_of_scope）→ kyuura の論点
@@ -2270,6 +2423,7 @@ V0_83_CARDS = V0_83_POKEMON
 
 # v0.84（docs/light-powers-evolution-v0.84.md）: やさしいポケモン 12 枚・ポケモン育て屋夫婦
 BREEDER_COUPLE = "neo3-056"  # ポケモン育て屋夫婦（トレーナー。最大 2 匹にコイン 1 枚ずつ。「おもて」のポケモンから進化するカードを山札からさがす）
+FOSSIL_EGG = "neo2-055"  # v0.120: たまごの化石（トレーナー。コインの「おもて」で山札・手札の「なにかの化石」を進化させる進化カードを、たねポケモンとしてあつかってベンチに出す）
 LIGHT_LEDIAN, LIGHT_NINETALES, LIGHT_ARCANINE, LIGHT_DEWGONG = "neo4-010", "neo4-018", "neo4-021", "neo4-033"
 LIGHT_AZUMARILL, LIGHT_PILOSWINE, LIGHT_JOLTEON, LIGHT_MACHOKE = "neo4-040", "neo4-041", "neo4-043", "neo4-074"
 LIGHT_MACHAMP, LIGHT_WIGGLYTUFF, LIGHT_DRAGONITE, LIGHT_TOGETIC = "neo4-077", "neo4-090", "neo4-094", "neo4-095"

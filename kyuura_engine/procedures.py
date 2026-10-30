@@ -29,14 +29,15 @@ from .effects import (
     TypeReadingsDiffer, attack_damage_modifiers, confusion_power_modifiers, cursed_weakness_multiplier, definition_views, max_hp, poison_received_power_problem,
     same_for_type_readings, shift_duration_error, MAX_HP_DROP_CODE, state_stop_after, stadium_attack_damage_modifiers,
     pokemon_check_berries, special_energy_effect,
+    poison_check_amount, remove_expired_poison_mists, sleep_check_coins,
     DISCARD_BY_KNOCK_OUT, energy_discard_plan, return_discarded_energy,
     bench_guard_holders, char_check_targets,
     confusion_damage_calculation, weakness_resistance_log,
 )
 from .errors import UnsupportedError
-from .persistent import (KNOCK_OUT, USED, received_attack_damage_bonuses, remove_expired_persistent_effects, remove_on_damage, remove_persistent_effects,
+from .persistent import (KNOCK_OUT, USED, dealt_attack_damage_reductions, knockout_survivals, received_attack_damage_bonuses, remove_expired_persistent_effects, remove_on_damage, remove_persistent_effects,
                          remove_source_left_effects, remove_turn_start_expired_persistent_effects, require_can_leave)
-from .state import ATTACK_FIELD_POWER_SUPPRESSION, OPPONENT_POWER_SUPPRESSION, POWER_SUPPRESSION, Halt, Phase
+from .state import ATTACK_FIELD_POWER_SUPPRESSION, GUARD_SCOPE_ATTACK, OPPONENT_POWER_SUPPRESSION, POWER_SUPPRESSION, Halt, Phase
 from .history import note_turn_start
 from .history import prune as prune_history
 from .zones import draw_cards, return_expired_set_aside
@@ -228,8 +229,10 @@ def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | 
             effect.consume(state, owner, pokemon, attached)
     poisoned = [state.find_pokemon(pid) for pid in poisoned_ids]  # 1 のあと（きのみで回復したあと）にどく状態のポケモン
     for owner, pokemon in poisoned:
-        printed = pokemon.conditions.poison.damage
-        amount, cards = energy_received_damage(state, pokemon, printed)  # v0.78: 鋼エネルギー（NIP1X-010）
+        # v0.119: どくの量は共通の問い合わせ（どく状態の性質・［ポイズンミスト］・鋼エネルギー（v0.78。NIP1X-010））。決まらない場合は、ダメージを与える前の確かめ（``_pokemon_check_plan``）で
+        # 止めた（同じ状態で求め直す）
+        found = poison_check_amount(state, owner, pokemon)
+        amount = found.amount
         pokemon.damage += amount
         state.add_event(
             "poison_damage",
@@ -238,7 +241,8 @@ def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | 
             pokemon_id=pokemon.pokemon_id,
             amount=amount,
             total_damage=pokemon.damage,
-            **energy_reduction_log(printed, amount, cards),
+            **energy_reduction_log(found.before_metal, amount, found.cards),
+            **_poison_change_log(pokemon, found),
         )
         remove_on_damage(state, owner, pokemon, amount)  # v0.60: 「かげぶんしん」はダメージを受けたら消える（どくのダメージも「ダメージ」）
     return [
@@ -247,6 +251,17 @@ def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | 
         for pokemon in state.players[owner].in_play()
         if knocked_by_hp(state, pokemon)
     ]
+
+
+def _poison_change_log(pokemon: PokemonInPlay, found) -> dict:
+    """v0.119: ログ ``poison_damage`` に加える、どくの量を変えた性質・効果（どく状態のダメージカウンターの数にかける数 ``multiplier``・当てはめた［ポイズンミスト］の発生源の場の番号
+    ``poison_mists``）。どちらもなければ空（v0.118 までのログの形は変えない）。"""
+    extra: dict = {}
+    if found.multiplier != 1:
+        extra["multiplier"] = found.multiplier
+    if found.mists:
+        extra["poison_mists"] = found.mists
+    return extra
 
 
 def _pokemon_check_plan(state: GameState, order: tuple[int, int], char_damages: tuple[tuple[int, int], ...] = ()) -> Halt | list[int]:
@@ -264,11 +279,18 @@ def _pokemon_check_plan(state: GameState, order: tuple[int, int], char_damages: 
     canonical = readings[0]  # 悪エネルギーが先（実際の処理の順番。どの読み方でも結果が同じことを確かめた）
     after_one = canonical.state
     poisoned_ids = [p.pokemon_id for o in order for p in after_one.players[o].in_play() if p.conditions.poison is not None]
+    amounts = {}
     for pid in poisoned_ids:
-        # v0.47（KA1）: 受けるダメージを変える常にはたらく特殊能力（カブトアーマー）を、どくのダメージに当てはめるかは決められない。当てはめると量が変わるなら、
-        # ダメージを与える前に対戦を止める。v0.81a: 1 のあと（きのみで回復したあと。かがくへんかガスがもどるなど）の場で判断する
+        # v0.119（PO1〜PO3）: どくの量を変える効果の合わせ方・［ポイズンミスト］の当てはまり方で量が変わるなら、ダメージを与える前に対戦を止める（1 のあとの場で判断する）
         owner, pokemon = after_one.find_pokemon(pid)
-        problem = poison_received_power_problem(after_one, owner, pokemon, pokemon.conditions.poison.damage)
+        try:
+            amounts[pid] = poison_check_amount(after_one, owner, pokemon)
+        except UnsupportedError as error:
+            return Halt(code=error.code, message=error.message, references=("GR-2000-P322-SPECIAL-CONDITIONS", "GR-2000-P323-POKEMON-CHECK",
+                                                                            "docs/damage-reactions-poison-sleep-v0.119.md 5 章"))
+        # v0.47（KA1）: 受けるダメージを変える常にはたらく特殊能力（カブトアーマー）を、どくのダメージに当てはめるかは決められない。当てはめると量が変わるなら、
+        # ダメージを与える前に対戦を止める。v0.81a: 1 のあと（きのみで回復したあと。かがくへんかガスがもどるなど）の場で判断する。v0.119: 量は鋼エネルギーの前のどくの量（共通の問い合わせ）
+        problem = poison_received_power_problem(after_one, owner, pokemon, amounts[pid].before_metal)
         if problem is not None:
             return Halt(code=POISON_RECEIVED_POWER.code, message=f"{problem}。{POISON_RECEIVED_POWER.message}", references=POISON_RECEIVED_POWER.references)
     if canonical.penalties or canonical.chars:  # v0.91: くろこげマーカーのダメージで 1 のあとに HP 以上になるポケモンも
@@ -281,7 +303,7 @@ def _pokemon_check_plan(state: GameState, order: tuple[int, int], char_damages: 
     track = _StepTrack(canonical.track)
     for pid in poisoned_ids:
         owner, pokemon = after_two.find_pokemon(pid)
-        pokemon.damage += energy_received_damage(after_two, pokemon, pokemon.conditions.poison.damage)[0]  # v0.78: 鋼エネルギー（NIP1X-010）
+        pokemon.damage += amounts[pid].amount  # v0.78: 鋼エネルギー（NIP1X-010）。v0.119: 共通の問い合わせの量（1 のあとの場で求めた。2 の中で量を変える効果は変わらない）
         track.record(after_two, order)
     for owner in order:
         for pokemon in after_two.players[owner].in_play():
@@ -729,10 +751,12 @@ def _mid_check_view(state: GameState, order: tuple[int, int], keep: frozenset[in
                 poison = pokemon.conditions.poison
                 if poison is None:
                     received = None
-                elif poison_received_power_problem(state, owner, pokemon, poison.damage) is not None:
-                    received = POISON_RECEIVED_POWER.code
                 else:
-                    received = energy_received_damage(state, pokemon, poison.damage)[0]
+                    found = poison_check_amount(state, owner, pokemon)  # v0.119: 共通の問い合わせ（PO1〜PO3 で止まるなら、その停止コード）
+                    if poison_received_power_problem(state, owner, pokemon, found.before_metal) is not None:
+                        received = POISON_RECEIVED_POWER.code
+                    else:
+                        received = found.amount
                 final = pokemon.damage + (received if isinstance(received, int) else 0)
                 hp = max_hp(state, pokemon)
                 knocked = final >= hp
@@ -853,6 +877,7 @@ def begin_turn(state: GameState, player: int) -> None:
     state.phase = Phase.MAIN
     state.add_event("turn_start", player=player)
     remove_turn_start_expired_persistent_effects(state)  # v0.34: 「次の自分の番の始めに消える」持続する効果（「なきつく」）
+    remove_expired_poison_mists(state)  # v0.119: ［ポイズンミスト］の「次の自分の番の始めまで」
     prune_history(state)  # v0.62: 2 つ前の番より古いワザの履歴を消す（ログは残さない）
     note_turn_start(state)  # v0.100: 番でないプレイヤーの場のカード（プレイヤーの記録 ``TurnField``。読むカードのない対戦では何もしない）
     if state.turn_number == 1 and not state.rules.first_player_draws_on_first_turn:
@@ -955,14 +980,18 @@ def pokemon_check_sleep_and_paralysis(state: GameState) -> None:
                              references=references))
             return
     for owner, pokemon in asleep:
-        flips = flip_coins(state, owner, 1, source="pokemon_check", effect="sleep", card=pokemon.card, pokemon_id=pokemon.pokemon_id)
-        recovered = flips.results[0] is CoinSide.HEADS
+        # v0.119（docs/damage-reactions-poison-sleep-v0.119.md 7 章）: ［ふかいねむり］がはたらいていれば、コインの枚数を変え、すべて「おもて」のときだけ回復する（投げる直前の場で決める
+        # 共通の問い合わせ ``sleep_check_coins``）。1 枚のときのログの形は v0.118 までと同じ
+        count, sources = sleep_check_coins(state)
+        flips = flip_coins(state, owner, count, source="pokemon_check", effect="sleep", card=pokemon.card, pokemon_id=pokemon.pokemon_id)
+        recovered = all(face is CoinSide.HEADS for face in flips.results)
+        coins = {"result": flips.results[0].value} if count == 1 else {"results": tuple(face.value for face in flips.results), "coins": count, "deep_sleep": sources}
         state.add_event(
             "sleep_check",
             player=owner,
             pokemon=pokemon.card,
             pokemon_id=pokemon.pokemon_id,
-            result=flips.results[0].value,
+            **coins,
             recovered=recovered,
         )
         if recovered:
@@ -1111,6 +1140,25 @@ def confusion_damage_problem(state: GameState, pokemon: PokemonInPlay, attack_st
             "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS",
             f"こんらん状態のポケモン {pokemon.pokemon_id} が、ワザによるダメージを受けるとき「+20」される効果（いやなおと）を受けている。こんらんしたワザで自分が受ける 20 ダメージが"
             "「ワザによるダメージ」かは、公式ルール 2000.02.14版（p.309・p.321・p.322）と kyuura の記録から決められないので扱わない（docs/power-suppression-lasting-locks-v0.92.md 6 章）",
+        )
+    if dealt_attack_damage_reductions(state, pokemon):
+        # v0.108: 「マイナスイオン」・「あまえる」の「このワザを受けた相手が使うワザによるダメージは「-10」される」を受けているポケモンのワザがこんらんした。こんらんの 20（自分が受ける）が
+        # 「使うワザによるダメージ」かで -10 が当てはまるかが変わる（ほかの変更効果と同じ問い。新しい問いにしない）
+        return UnsupportedError(
+            "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS",
+            f"こんらん状態のポケモン {pokemon.pokemon_id} が、使うワザによるダメージを「-10」される効果（マイナスイオン・あまえる）を受けている。こんらんしたワザで自分が受ける 20 ダメージが"
+            "「使うワザによるダメージ」かは、公式ルール 2000.02.14版（p.309・p.321・p.322）と kyuura の記録から決められないので扱わない（docs/damage-modifiers-condition-bonuses-v0.108.md 4 章）",
+        )
+    survival = [e for e in knockout_survivals(state, pokemon) if e.scope == GUARD_SCOPE_ATTACK]
+    if survival and pokemon.damage + confusion_damage_calculation(state, owner, pokemon, definition_views(state, pokemon)[0], CONFUSION_DAMAGE).final >= max_hp(state, pokemon):
+        # v0.110: 「こうてつか」の「ワザによるダメージで、このカードの残りHPがなくなっても、このカードは「きぜつ」せず」を持つポケモンのワザがこんらんし、自分が受ける 20（弱点・抵抗力の
+        # 計算のあと）で残りHPがなくなる。こんらんの 20 が「ワザによるダメージ」かで「きぜつ」するかが変わる（ほかの効果と同じ問い。新しい問いにしない）。HP 以上にならなければ結果は
+        # 同じなので止めない。「相手のワザによるダメージ」（こらえる）は自分のこんらんの 20 に当たらない
+        return UnsupportedError(
+            "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS",
+            f"こんらん状態のポケモン {pokemon.pokemon_id} が、ワザによるダメージで残りHPがなくなっても「きぜつ」しない効果（こうてつか）を持ち、こんらんしたワザで自分が受ける 20 ダメージで"
+            "残りHPがなくなる。こんらんのダメージが「ワザによるダメージ」かは、公式ルール 2000.02.14版（p.309・p.321・p.322）と kyuura の記録から決められないので扱わない"
+            "（docs/endure-armor-up-v0.110.md 6 章）",
         )
     return None
 
