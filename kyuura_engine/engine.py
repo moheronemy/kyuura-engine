@@ -187,7 +187,11 @@ from .effects import (
     RETREAT_REACTION_TIMING_CODE,
     RETREAT_REACTION_TIMING_REASON,
     retreat_chase_holders,
+    retreat_vine_pulls,
+    VINE_PULL_TIMING_CODE,
+    VINE_PULL_TIMING_REASON,
     CoinGroupAttackImmunityNextTurn,
+    CoinFossilAttackBonusThisTurn,
     CoinsUntilTailsBonusToGroupAttack,
     legend_body_changed,
     legend_body_error,
@@ -222,6 +226,7 @@ from .state import (
     PeriodLeaveLock,
     TRAINER_TURN_EFFECT_KINDS,
     POWER_TURN_EFFECT_KINDS,
+    FOSSIL_ATTACK_BONUS,
     QUICKEN_USED,
     GROUP_ATTACK_POWER_USED,
     PursuitOnRetreat,
@@ -235,6 +240,7 @@ from .state import (
     AttackCoinCheck,
     CannotAttackWhileSourceActive,
     CannotRetreat,
+    CannotRetreatNextOwnTurn,
     CannotUsePowers,
     PowersStopped,
     BenchPowersStopped,
@@ -1506,6 +1512,9 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
     pursuits = retreat_pursuits(state, active)
     if chases or pursuits:
         _retreat_reaction_check(state, cmd.player, active, index, chases, pursuits)
+    # v0.122（docs/unown-fossil-retreat-reactions-v0.122.md 5 章）: にげるポケモン自身の［つるでひっぱる］。「にげる」とき（入れ替えの前）とベンチにもどったとき（入れ替えのあと）で、はたらくかが
+    # 違えば VL1（エネルギーのトラッシュ・コインの前）
+    _vine_pull_timing_check(state, cmd.player, active, index, discard)
     if cost.zeroed and active.conditions.confused:
         # v0.81（BB1）: ふうせんのみの「「にげる」とき、このカードをトラッシュする」が、こんらんのコインの「うら」で失敗した「にげる」にも当てはまるかは決まらない。
         # コインの結果で受け付けるかを変えないよう、エネルギーのトラッシュ・コインの前に止める
@@ -1564,6 +1573,10 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
                               for owner, holder, key, _ in chases)
     retreat_reactions += tuple((movement.PURSUIT, cmd.player, active.pokemon_id, effect.source_card, effect.source_player, effect.created_turn, effect.amount,
                                 effect.attack, 1) for effect in pursuits)
+    if state.players[1 - cmd.player].bench:
+        # v0.122: ベンチにもどったこのカードの［つるでひっぱる］（相手に控えがいなければ、はたらかないので反応にしない）。同じ「にげる」の反応の段で、番のプレイヤーが順番を決める
+        retreat_reactions += tuple((movement.VINE_PULL, cmd.player, active.pokemon_id, slot.card, slot.key.power_index, 1)
+                                   for slot in retreat_vine_pulls(state, cmd.player, active))
     if moves or retreat_reactions:
         sinkhole = ((reactions.SINKHOLE, cmd.player, active.pokemon_id, 1),) if retreat_trap_powers(state, cmd.player) else ()
         if moves:
@@ -1640,6 +1653,28 @@ def _retreat_reaction_check(state: GameState, player: int, active: PokemonInPlay
             raise UnsupportedError(RETREAT_REACTION_TIMING_CODE, f"ポケモン {active.pokemon_id} の「おいうち」のダメージ（バトル場 {before}・ベンチ {after}）: {RETREAT_REACTION_TIMING_REASON}")
         pursuit_problems(trial, player, moved, after, worst)
         worst += after
+
+
+def _vine_pull_timing_check(state: GameState, player: int, active: PokemonInPlay, index: int, discard: tuple[int, ...]) -> None:
+    """v0.122（VL1）: にげるポケモン ``active`` の［つるでひっぱる］がはたらくかを、「にげる」とき（入れ替えの前の今の場）と、ベンチにもどったとき（複製の上でエネルギーをトラッシュして
+    入れ替え、特殊状態・持続する効果・発生源のはなれた効果を消した場）で比べ、違えば止める（状態・乱数・ログを変えない）。相手に控えがいなければ、どちらでもはたらかないので比べない。"""
+    if not state.players[1 - player].bench:
+        return
+    before = bool(retreat_vine_pulls(state, player, active))
+    trial = state.clone()
+    tp = trial.players[player]
+    moved = tp.active
+    for uid in discard:
+        moved.energy.remove(uid)
+        tp.discard.append(uid)
+    tp.active, tp.bench[index] = tp.bench[index], moved
+    clear_special_conditions(trial, player, moved, RETREAT)
+    remove_persistent_effects(trial, player, moved, RETREAT)
+    remove_source_left_effects(trial, player, moved)
+    remove_on_entering_active(trial, player, tp.active)
+    after = bool(retreat_vine_pulls(trial, player, moved))
+    if before != after:
+        raise UnsupportedError(VINE_PULL_TIMING_CODE, f"ポケモン {active.pokemon_id} の「にげる」（入れ替えの前 {before}・入れ替えのあと {after}）: {VINE_PULL_TIMING_REASON}")
 
 
 def _retreat_max_hp_drop_check(state: GameState, player: int, discard: tuple[int, ...], index: int) -> None:
@@ -3455,7 +3490,8 @@ def _given_by_attack_problems(state: GameState, pokemon: PokemonInPlay, effect, 
             return [f"{where} {effect!r} の効果を与えたワザ・数が、ログ persistent_effect_added と合わない"]
     else:
         terms = getattr(entry.effect, "retreat_lock_terms", None) if entry is not None else None
-        expected = CannotRetreat
+        # v0.122: 自分に与える次の自分の番の「にげる」の禁止（ドリルダイブ。``CannotRetreatNextOwnTurn``）は、その型を返す実装だけ
+        expected = CannotRetreatNextOwnTurn if isinstance(effect, CannotRetreatNextOwnTurn) else CannotRetreat
     if (terms is None or terms() != expected or added.get("single_use", False) != getattr(effect, "single_use", False)
             or added.get("lasting", False) != getattr(effect, "lasting", False)):
         return [f"{where} {effect!r} が、効果を与えたワザ {added.get('effect')!r}（登録された実装）の効果と合わない"]
@@ -3880,7 +3916,7 @@ def _trainer_effect_problems(state: GameState) -> list[str]:
             card = state.cards.get(record.source_card)
             if card is None or card.owner != record.player:
                 problems.append(f"{where} のワザを使ったポケモンのカード {record.source_card!r} が、ワザを使ったプレイヤーのカードではない")
-            keys.append((record.player, record.source_card, record.expires_turn))
+            keys.append(_turn_effect_key(record.player, record.source_card, record.expires_turn, record.kind, record.pokemon_id))
             continue
         if record.kind in (ATTACK_FIELD_POWER_SUPPRESSION, ATTACK_FIELD_WEAKNESS_IMMUNITY):
             # v0.92: ワザで与えた効果（ナツメのゲンガーの「やみのはどう」）。登録はワザ（``card_id``・``attack_index``）の ``field_effect_terms()``。``source_card``・``pokemon_id`` は
@@ -3899,7 +3935,7 @@ def _trainer_effect_problems(state: GameState) -> list[str]:
                 problems.append(f"{where} のワザを使ったポケモンのカード {record.source_card!r} が、ワザを使ったプレイヤーのカードではない")
             if not record.created_turn <= state.turn_number <= record.expires_turn:
                 problems.append(f"{where} が、与えた番 {record.created_turn}〜消える番 {record.expires_turn} の外の今の番 {state.turn_number} に残っている")
-            keys.append((record.player, record.source_card, record.expires_turn))
+            keys.append(_turn_effect_key(record.player, record.source_card, record.expires_turn, record.kind, record.pokemon_id))
             continue
         if record.kind == OPPONENT_POWER_SUPPRESSION:
             # v0.87: ワザで与えた効果（ドガースの「ふしぎなガス」）。登録はワザ（``card_id``・``attack_index``）の ``field_effect_terms()``。``source_card`` はワザを使った
@@ -3917,20 +3953,22 @@ def _trainer_effect_problems(state: GameState) -> list[str]:
                 problems.append(f"{where} のワザを使ったポケモンのカード {record.source_card!r} が、ワザを使ったプレイヤーのカードではない")
             if not record.created_turn <= state.turn_number <= record.expires_turn:
                 problems.append(f"{where} が、与えた番 {record.created_turn}〜消える番 {record.expires_turn} の外の今の番 {state.turn_number} に残っている")
-            keys.append((record.player, record.source_card, record.expires_turn))
+            keys.append(_turn_effect_key(record.player, record.source_card, record.expires_turn, record.kind, record.pokemon_id))
             continue
         if record.kind in POWER_TURN_EFFECT_KINDS:
             # v0.117: 特殊能力で与えた効果（［QUICKEN］）。登録は ``card_id`` のカードの特殊能力の ``CoinGroupAttackImmunityNextTurn``。``source_card``・``pokemon_id`` は使ったポケモンの
             # いちばん上のカードと場の番号（場をはなれても消えないので、今の場所は確かめない）。使った記録は使った番だけ、「おもて」の効果は与えた番 + 1 の番の終わりまで
             # v0.118: ［XXXXX］をワザといっしょに使った記録（``GROUP_ATTACK_POWER_USED``。使った番だけ）は ``CoinsUntilTailsBonusToGroupAttack``
             definition = state.definitions.get(record.card_id)
-            power_type = CoinsUntilTailsBonusToGroupAttack if record.kind == GROUP_ATTACK_POWER_USED else CoinGroupAttackImmunityNextTurn
+            # v0.122: ［げんしのゆめ］の「おもて」の効果（``FOSSIL_ATTACK_BONUS``。使った番だけ）は ``CoinFossilAttackBonusThisTurn``
+            power_type = {GROUP_ATTACK_POWER_USED: CoinsUntilTailsBonusToGroupAttack, FOSSIL_ATTACK_BONUS: CoinFossilAttackBonusThisTurn}.get(
+                record.kind, CoinGroupAttackImmunityNextTurn)
             powered = definition is not None and any(isinstance(state.effects.power_effect(definition.id, power), power_type) for power in definition.powers)
             if not powered:
-                problems.append(f"{where} のカードに、使った記録を残す特殊能力（［QUICKEN］・［XXXXX］）が登録されていない")
+                problems.append(f"{where} のカードに、使った記録を残す特殊能力（［QUICKEN］・［XXXXX］・［げんしのゆめ］）が登録されていない")
             if record.attack_index is not None or type(record.pokemon_id) is not int:
                 problems.append(f"{where} のワザの位置 {record.attack_index!r}・使ったポケモンの番号 {record.pokemon_id!r} が正しくない")
-            if record.expires_turn != record.created_turn + (0 if record.kind in (QUICKEN_USED, GROUP_ATTACK_POWER_USED) else 1):
+            if record.expires_turn != record.created_turn + (0 if record.kind in (QUICKEN_USED, GROUP_ATTACK_POWER_USED, FOSSIL_ATTACK_BONUS) else 1):
                 problems.append(f"{where} を与えた番 {record.created_turn}・消える番 {record.expires_turn} が、効果の期間と合わない")
             if state.first_player in PLAYERS and turn_owner(state, record.created_turn) != record.player:
                 problems.append(f"{where} を与えた番 {record.created_turn} が、使ったプレイヤーの番ではない")
@@ -3939,7 +3977,7 @@ def _trainer_effect_problems(state: GameState) -> list[str]:
                 problems.append(f"{where} の使ったポケモンのカード {record.source_card!r} が、使ったプレイヤーのカードではない")
             if not record.created_turn <= state.turn_number <= record.expires_turn:
                 problems.append(f"{where} が、与えた番 {record.created_turn}〜消える番 {record.expires_turn} の外の今の番 {state.turn_number} に残っている")
-            keys.append((record.player, record.source_card, record.expires_turn))
+            keys.append(_turn_effect_key(record.player, record.source_card, record.expires_turn, record.kind, record.pokemon_id))
             continue
         if record.attack_index is not None:
             problems.append(f"{where} にワザの位置 {record.attack_index!r} がある（ワザで与えた効果だけ）")
@@ -3955,7 +3993,7 @@ def _trainer_effect_problems(state: GameState) -> list[str]:
             card = state.cards.get(record.source_card)
             if type(record.pokemon_id) is not int or card is None or card.card_id != record.card_id:
                 problems.append(f"{where} の退化させたポケモン {record.pokemon_id!r}・使ったカード {record.source_card!r} が正しくない")
-            keys.append((record.player, record.source_card, record.expires_turn))
+            keys.append(_turn_effect_key(record.player, record.source_card, record.expires_turn, record.kind, record.pokemon_id))
             continue
         if record.pokemon_id is not None:
             problems.append(f"{where} にポケモンの番号 {record.pokemon_id!r} がある（退化スプレーHYPER の禁止だけ）")
@@ -3964,8 +4002,10 @@ def _trainer_effect_problems(state: GameState) -> list[str]:
         card = state.cards.get(record.source_card)
         if card is None or card.card_id != record.card_id or card.owner != record.player:
             problems.append(f"{where} の使ったトレーナーのカード {record.source_card!r} が、使ったプレイヤーのそのカードではない")
-        keys.append((record.player, record.source_card, record.expires_turn))
+        keys.append(_turn_effect_key(record.player, record.source_card, record.expires_turn, record.kind, record.pokemon_id))
     if len(set(keys)) != len(keys):
+        # v0.122: 特殊能力の効果は使ったポケモンの番号でも分ける（［げんしのゆめ］を使ったオムナイトのカードが、同じ番に［かせきか］で手札にもどり、別のなにかの化石に重ねられて
+        # もう一度使うと、同じカード・同じ消える番の記録が 2 つになる）
         problems.append(f"同じカードで与えた期限のあるトレーナーの効果が重なっている {keys}")
     added: dict[tuple, dict] = {}
     removed: set[tuple] = set()
@@ -3980,20 +4020,28 @@ def _trainer_effect_problems(state: GameState) -> list[str]:
             if starts >= span + 1:
                 break
         elif kind == "trainer_effect_added":
-            added.setdefault((event.get("player"), event.get("trainer_card"), event.get("expires_turn")), event)
+            added.setdefault(_turn_effect_key(event.get("player"), event.get("trainer_card"), event.get("expires_turn"), event.get("effect_kind"), event.get("pokemon_id")),
+                             event)
         elif kind == "trainer_effect_removed":
             removed.add((event.get("player"), event.get("trainer_card"), event.get("expires_turn")))
-    live = {key for key in added if key not in removed and key[2] >= state.turn_number}
+    # 消したログは使ったポケモンの番号を書かない（特殊能力の効果は期限でだけ消え、同じカード・同じ消える番の記録はいっしょに消える）
+    live = {key for key in added if key[:3] not in removed and key[2] >= state.turn_number}
     if live != set(keys):
         problems.append(f"期限のあるトレーナーの効果 {sorted(keys)} が、ログで与えてまだ消していない効果 {sorted(live)} と違う")
     for record in records:
-        event = added.get((record.player, record.source_card, record.expires_turn)) if isinstance(record, TrainerTurnEffect) else None
+        event = added.get(_turn_effect_key(record.player, record.source_card, record.expires_turn, record.kind, record.pokemon_id)) \
+            if isinstance(record, TrainerTurnEffect) else None
         if event is not None and (event.get("effect_kind"), event.get("card_id")) != (record.kind, record.card_id):
             problems.append(f"プレイヤー {record.player} のトレーナーの効果 {record!r} が、与えたログ {event!r} と合わない")
         elif event is not None and record.kind in (ATTACK_FIELD_POWER_SUPPRESSION, ATTACK_FIELD_WEAKNESS_IMMUNITY) and (
                 event.get("pokemon_id"), event.get("attack_index")) != (record.pokemon_id, record.attack_index):
             problems.append(f"プレイヤー {record.player} のワザの効果 {record!r} の実際に使ったポケモン・ワザの位置が、与えたログ {event!r} と合わない")  # v0.92
     return problems
+
+
+def _turn_effect_key(player, source_card, expires_turn, kind, pokemon_id) -> tuple:
+    """v0.122: 期限のある効果（``TrainerTurnEffect``）を区別する組（プレイヤー・与えたカード・消える番。特殊能力の効果（``POWER_TURN_EFFECT_KINDS``）は使ったポケモンの番号も）。"""
+    return (player, source_card, expires_turn, pokemon_id if kind in POWER_TURN_EFFECT_KINDS else None)
 
 
 def _once_attack_problems(state: GameState, player: int, pokemon: PokemonInPlay) -> list[str]:
@@ -5569,8 +5617,9 @@ def _with_attack_power(state: GameState, context: dict, attacker: PokemonInPlay,
         extra = attack_power_modifier(state, attacker, key)
         collected += () if extra is None else (extra,)
     group_power = context.get("group_power")
-    if group_power is not None:
-        extra = group_attack_power_modifier(state, attacker, tuple(group_power))
+    entries = [tuple(entry) for entry in context.get("group_powers", ())] or ([] if group_power is None else [tuple(group_power)])  # v0.122: 2 つ以上の力
+    for entry in entries:
+        extra = group_attack_power_modifier(state, attacker, entry)
         collected += () if extra is None else (extra,)
     return collected
 

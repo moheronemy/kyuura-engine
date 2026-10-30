@@ -30387,6 +30387,197 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.121 で加えた（docs/hand-bench-attack-conditions-v0.121.md）。ワザ: なきごえ=ReduceDamageToSelfNextOpponentTurn(10, latest=最新の説明)（処理に使う文面は kyuura の最新の説明 LD-PR1-017-ATK0。p.127。kyuura は見出しの配布で当てはめた（heading_listing。配布の特定は推論で、独立した画像の照合にしない）。印刷の文面（古い書き方）は照合だけに使い、最新の説明の全文と量の組だけを受け付ける）、でんきショック=ParalyzeOnHeads（kyuura の印刷の文面）。CR-PIKACHU-GROWL-LATEST（CONFIRMED）・CR-PIKACHU-GROWL-OPPONENT-EFFECT（SUPPORTED）にしたがう。3 枚の pokemon のデータは同じ（同じカードの組 SC-PR1-001。IP1-040 は文面が違う）。`jp_print.level` の欠けは補っていない（kyuura の訂正の候補のレベル 16 は使わない）。日本語の文面の転記元は pcg-search.com。外部照合なし"
+    },
+    "neo2-027": {
+      "basis": "kyuura_data",
+      "name_ja": "アンノーンM",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [
+        "CR-UNOWN-DF-AT-MOST-ONE",
+        "CR-UNOWN-DF-PROTECTS-OWN-UNOWN",
+        "UQ-SELF-EXCLUDING-POWER-COPIES"
+      ],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。METAL df[メタル ディーエフ]=ReduceOwnGroupDamageFromType(EnergyType.METAL, \"M\", \"METAL df\")（v0.97 の［DARK df］と同じ型・同じ文面の書き方。DF1・DF2 の問い合わせを再利用）。ルール文「「アンノーン」はデッキに4枚までしか入れることができません。」は v0.96 の名前のグループの枚数の規定（文字を問わず合わせて 4 枚）。めざめるパワー=DAMAGE_ONLY（説明文なし。文面・出典を書かない）。kyuura の CR-UNOWN-DF-PROTECTS-OWN-UNOWN・CR-UNOWN-DF-AT-MOST-ONE は related_cards にこのカードを挙げるが、どちらもアンノーンM を調査の対象外と書くので、M 自身の独立した裁定として引かない（印刷の文面・一般の規定・D/N と同じ処理として採用。docs 3 章）。UQ-SELF-EXCLUDING-POWER-COPIES の事例（2 匹以上の M は DF1）。ルール文は kyuura の訂正 FIX-neo2-027-RULES-TEXT-JA のあとの値。日本語の文面の転記元はなぞのばしょ。外部照合なし（カードの画像は読んでいない）"
+    },
+    "neo2-028": {
+      "basis": "kyuura_data",
+      "name_ja": "アンノーンU",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。UNDO[アンドゥ]=ReturnActiveToHandWithBenchLetters((\"N\", \"D\", \"O\"))。ルール文「「アンノーン」はデッキに4枚までしか入れることができません。」は v0.96 の名前のグループの枚数の規定（文字を問わず合わせて 4 枚）。めざめるパワー=DAMAGE_ONLY（説明文なし。文面・出典を書かない）。ルール文は kyuura の訂正 FIX-neo2-028-RULES-TEXT-JA のあとの値。日本語の文面の転記元はなぞのばしょ。外部照合なし（カードの画像は読んでいない）"
+    },
+    "neo2-030": {
+      "basis": "kyuura_data",
+      "name_ja": "アンノーンA",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。ANGER[アンガー]=CounterBonusToGroupAttack(\"A\", \"ANGER\")（ワザといっしょに使う力。UseAttack.with_power・with_powers。［XXXXX］といっしょに使える）。ルール文「「アンノーン」はデッキに4枚までしか入れることができません。」は v0.96 の名前のグループの枚数の規定（文字を問わず合わせて 4 枚）。めざめるパワー=DAMAGE_ONLY（説明文なし。文面・出典を書かない）。ルール文は kyuura の訂正 FIX-neo2-030-RULES-TEXT-JA のあとの値。日本語の文面の転記元はなぞのばしょ。外部照合なし（カードの画像は読んでいない）"
+    },
+    "neo4-064": {
+      "basis": "kyuura_data",
+      "name_ja": "アンノーンW",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。WANT[ウォント]=CoinRecoverTrainerWithBenchLetters((\"A\", \"N\", \"T\"))（文面の半角の「｢｣」・「一回」「一枚」は写しのまま）。ルール文「「アンノーン」はデッキに4枚までしか入れることができません。」は v0.96 の名前のグループの枚数の規定（文字を問わず合わせて 4 枚）。めざめるパワー=DAMAGE_ONLY（説明文なし。文面・出典を書かない）。日本語の文面の転記元はポケモンWiki。外部照合なし（カードの画像は読んでいない）"
+    },
+    "GD3-003": {
+      "basis": "kyuura_data",
+      "name_ja": "マチスのライチュウ",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。メガトンパンチ=DAMAGE_ONLY（説明文なし）。10まんボルト=DiscardAllEnergyCardsThenDamageZeroIfLacking（すべてのエネルギーカードをワザの効果としてトラッシュ。0 枚なら基本となるダメージ 0）。進化元「マチスのピカチュウ」は kyuura の訂正 FIX-GD3-003-EVOLVES-FROM のあとの値（kyuura の台帳の after の英語名は null で、カードの記録・写しの値は \"Lt. Surge's Pikachu\"。エンジンの使わない英語名だけの違いなので論点にしない。kyuura への報告事項。docs 12 章）。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（カードの画像は読んでいない）"
+    },
+    "ES2-011": {
+      "basis": "kyuura_data",
+      "name_ja": "オムナイト",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。ころがりタックル=DAMAGE_ONLY（説明文なし）。げんしのゆめ=CoinFossilAttackBonusThisTurn（「なにかの化石」から進化したポケモンは effects.fossil_evolution。読み方で答えが変われば FE3）。進化元は kyuura の訂正 FIX-ES2-011-EVOLVES-FROM のあとの値。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（カードの画像は読んでいない）"
+    },
+    "ES2-028": {
+      "basis": "kyuura_data",
+      "name_ja": "カブト",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。するどいツメ=CoinBonusDamage(30)。かせきか=ChooseFossilEvolvedThenCoinDevolveAll（選んでからコイン。「おもて」なら重なっている進化カードをすべて手札にもどす退化）。進化元は kyuura の訂正 FIX-ES2-028-EVOLVES-FROM のあとの値。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（カードの画像は読んでいない）"
+    },
+    "ES2-029": {
+      "basis": "kyuura_data",
+      "name_ja": "プテラ",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。ちょうおんぱ=ConfuseOnHeadsWithoutDamage。きりもみアタック=DamageAndSelfDamageIgnoringWeaknessResistance(10)（自分への 10 は弱点・抵抗力なし。v0.10 の DamageAndSelfDamage の既定は変えない）。進化元は kyuura の訂正 FIX-ES2-029-EVOLVES-FROM のあとの値。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（カードの画像は読んでいない）"
+    },
+    "ES3-018": {
+      "basis": "kyuura_data",
+      "name_ja": "オムナイト",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。なみのり=DAMAGE_ONLY（説明文なし）。かせきのみちびき=CoinRecoverNamedFromDiscard（名前が「なにかの化石」とちょうど同じカード）。進化元は kyuura の訂正 FIX-ES3-018-EVOLVES-FROM のあとの値。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（カードの画像は読んでいない）"
+    },
+    "PRN-030": {
+      "basis": "kyuura_data",
+      "name_ja": "カポエラー",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。れんぞくキック=CoinsUntilTailsDamage(20)。こうそくスピン=DamageThenSwitchBothActives（フォレトス neo2-044 と同じ全文）。段階「たね」は kyuura の訂正 FIX-PRN-030-STAGE のあとの値（印刷の進化元はない。バルキーからの進化はベイビィ側の evolves_to と場の進化の規定）。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（カードの画像は読んでいない）"
+    },
+    "PRN-039": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいフシギソウ",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。みだれうち=OpponentChoosesRepeatedTargetsDamage(3, 10)（相手プレイヤーが選ぶ配分。ALLOCATE_DAMAGE）。つるでひっぱる=SwitchOpponentOnRetreat（成功した「にげる」の反応。宣言しない）。進化元は kyuura の訂正 FIX-PRN-039-EVOLVES-FROM のあとの値。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（カードの画像は読んでいない）"
+    },
+    "PRN-040": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいフシギバナ",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。いやなかふん=DamageThenPoisonAndStatusByTwoCoins（同じ 2 枚のコインの組。どのときもどく）。進化元は kyuura の訂正 FIX-PRN-040-EVOLVES-FROM のあとの値。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（カードの画像は読んでいない）"
+    },
+    "PRN-045": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいオニドリル",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。たかくとぶ=SetNextTurnAttackDamage(1, \"ドリルダイブ\", 80, target_text=ドリルダイブの全文)（p.321 の 2 段階で 80 にする）。ドリルダイブ=DamageThenSelfCannotAttackOrRetreat（次の自分の番、ワザ（すべて）と「にげる」を禁止）。進化元は kyuura の訂正 FIX-PRN-045-EVOLVES-FROM のあとの値。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（カードの画像は読んでいない）"
     }
   }
 }

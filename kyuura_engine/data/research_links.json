@@ -12,8 +12,8 @@
   "card_data_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 285,
-    "engine_stop_codes": 284,
+    "engine_unresolved_rulings": 293,
+    "engine_stop_codes": 292,
     "kyuura_issues": 74
   },
   "stop_codes": {
@@ -3262,6 +3262,94 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_FOSSIL_EVOLVED_READING": {
+      "engine_rulings": [
+        {
+          "version": "v0.122",
+          "document": "docs/unown-fossil-retreat-reactions-v0.122.md",
+          "ruling_id": "FE3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_PRIMAL_DREAM_SUPPRESSED": {
+      "engine_rulings": [
+        {
+          "version": "v0.122",
+          "document": "docs/unown-fossil-retreat-reactions-v0.122.md",
+          "ruling_id": "PM1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_PRIMAL_DREAM_DAMAGE_STEP": {
+      "engine_rulings": [
+        {
+          "version": "v0.122",
+          "document": "docs/unown-fossil-retreat-reactions-v0.122.md",
+          "ruling_id": "PM2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_WANT_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.122",
+          "document": "docs/unown-fossil-retreat-reactions-v0.122.md",
+          "ruling_id": "WT1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_FOSSIL_GUIDE_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.122",
+          "document": "docs/unown-fossil-retreat-reactions-v0.122.md",
+          "ruling_id": "GU1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_FOSSILIZE_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.122",
+          "document": "docs/unown-fossil-retreat-reactions-v0.122.md",
+          "ruling_id": "FS1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POKEMON_TOWER_POWER_WITHOUT_EFFECT": {
+      "engine_rulings": [
+        {
+          "version": "v0.122",
+          "document": "docs/unown-fossil-retreat-reactions-v0.122.md",
+          "ruling_id": "PW5"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_VINE_PULL_TIMING": {
+      "engine_rulings": [
+        {
+          "version": "v0.122",
+          "document": "docs/unown-fossil-retreat-reactions-v0.122.md",
+          "ruling_id": "VL1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -3447,9 +3535,11 @@
         "card_id": "neo2-027",
         "target": "power/0",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES"
+          ]
         },
-        "note": "アンノーンM（エンジンの対象外のカード。ルール文の欠けが残る）"
+        "note": "アンノーンM の［METAL df］が 2 匹以上ではたらきうる（v0.122 で登録。v0.97 の［DARK df］・［NORMAL df］と同じ型で、読み方で受けるダメージ・要る決定が変わるときだけ DF1 で止める。kyuura の記録はアンノーンM を調査の対象外と書くので、M 自身の裁定として引かない）"
       },
       {
         "kyuura_issue": "UQ-SELF-EXCLUDING-POWER-COPIES",
@@ -5400,7 +5490,25 @@
       "ES3-021/attack/0",
       "PR1-001/attack/1",
       "PR1-003/attack/1",
-      "PR1-017/attack/1"
+      "PR1-017/attack/1",
+      "neo2-027/power/0",
+      "neo2-028/power/0",
+      "neo2-030/power/0",
+      "neo4-064/power/0",
+      "GD3-003/attack/1",
+      "ES2-011/power/0",
+      "ES2-028/attack/0",
+      "ES2-028/power/0",
+      "ES2-029/attack/0",
+      "ES2-029/attack/1",
+      "ES3-018/power/0",
+      "PRN-030/attack/0",
+      "PRN-030/attack/1",
+      "PRN-039/attack/0",
+      "PRN-039/power/0",
+      "PRN-040/attack/0",
+      "PRN-045/attack/0",
+      "PRN-045/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

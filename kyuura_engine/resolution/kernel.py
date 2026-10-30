@@ -150,8 +150,10 @@ class Resolution:
         self.attack_power: bool = False
         # v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 5 章）: このワザといっしょに使った、自分の場のポケモンの［XXXXX］（アンノーンX。``UseAttack.with_power``）。(発生源の番号,
         # 発生源のカード, 特殊能力を印刷したカード id, 位置, 「おもて」の数（まだ投げていなければ None）)。宣言で決め、コインはワザのダメージの要素で投げる（``programs.Damage``）。
-        # 決定をまたぐときは続きの情報の ``group_power`` で運ぶ。相手の対戦ポケモンへのそのワザのダメージに 2 段階か 6 段階の追加（``attack_modifiers_of``）
-        self.group_power: tuple | None = None
+        # 決定をまたぐときは続きの情報の ``group_power`` で運ぶ。相手の対戦ポケモンへのそのワザのダメージに 2 段階か 6 段階の追加（``attack_modifiers_of``）。
+        # v0.122（docs/unown-fossil-retreat-reactions-v0.122.md 3 章）: 2 つ以上の力をいっしょに使える（［ANGER］と［XXXXX］）ので、宣言の順の並び（使っていなければ空）。5 つめの値は
+        # 実装ごと（「おもて」の数・数えたダメージカウンターの数・決まった量なら 0。まだ決まっていなければ None）。1 つなら続きの情報の ``group_power``、2 つ以上なら ``group_powers`` で運ぶ
+        self.group_powers: tuple[tuple, ...] = ()
         # v0.61: ［ずらかる］（``effects.ReturnToDeckAtRemainingHp``）。``dormant`` はコマンドの始めに、残りHPが「10」で力が消えていた場のポケモンの番号（SC2 の比べのもと。
         # 渡さなければ、この解決を作った時点の状態から求める。コマンドの途中で作る解決（特殊能力・トレーナー・にげるのあと）は、コマンドの入口の状態から求めて渡す）。
         # ``scram_touched`` は、この解決のダメージで、力がはたらいたまま残りHPが「10」になった場のポケモンの番号（ダメージの処理のまとまりの途中で「10」を通ったか。SC1）
@@ -710,12 +712,48 @@ def attack_modifiers_of(res: Resolution, frame, attacker: PokemonInPlay, receive
         extra = E.attack_power_modifier(res.state, attacker, frame.attack_key)
         if extra is not None:
             modifiers.append(extra)
-    if res.group_power is not None and target == OPPONENT_ACTIVE and frame.kind is FrameKind.ATTACK:
-        # v0.118: ワザといっしょに使った自分の場のポケモンの［XXXXX］（発生源がワザを使うポケモンなら 2 段階、ほかのポケモンなら 6 段階。「おもて」が決まってから）
-        extra = E.group_attack_power_modifier(res.state, attacker, res.group_power)
-        if extra is not None:
-            modifiers.append(extra)
+    if res.group_powers and target == OPPONENT_ACTIVE and frame.kind is FrameKind.ATTACK:
+        # v0.118: ワザといっしょに使った自分の場のポケモンの［XXXXX］（発生源がワザを使うポケモンなら 2 段階、ほかのポケモンなら 6 段階。「おもて」が決まってから）。v0.122: 宣言の順に
+        # それぞれ加える（［ANGER］は数えたダメージカウンターの数が決まってから）
+        for entry in res.group_powers:
+            extra = E.group_attack_power_modifier(res.state, attacker, entry)
+            if extra is not None:
+                modifiers.append(extra)
     return modifiers
+
+
+def primal_dream_questions(res: Resolution, frame, attacker: PokemonInPlay, receiver: PokemonInPlay, target: str, base: int, modifiers: list,
+                           weakness_resistance: bool, resistance: bool, orders, reduction) -> None:
+    """v0.122（docs/unown-fossil-retreat-reactions-v0.122.md 4 章）: ［げんしのゆめ］の効果がはたらく番の、ワザの分類の相手へのダメージ（``effects.attack_damage_modifiers`` が 6 段階の追加を
+    加える範囲。控え・自分へのダメージは除く）の計算の前の問い。ワザを使うポケモンが当たるかが決まらない（FE3）・使ったポケモンが場にいて力が消えている（PM1）・使ったポケモン自身がワザを
+    使い、追加を 2 段階にしたときと 6 段階のときで計算の結果が変わる（PM2）。状態を変えず、乱数を使わない。"""
+    from dataclasses import replace
+
+    state = res.state
+    if frame.attack_key is None or target in BENCH_TARGETS or receiver is attacker or not E.fossil_attack_bonuses(state):
+        return
+    problem = E.fossil_attack_bonus_problem(state, attacker)
+    if problem is not None:
+        key = "fossil_evolved_reading" if problem.code == E.FOSSIL_EVOLVED_READING_CODE else "primal_dream_suppressed"
+        raise res.question(key, f"ポケモン {attacker.pokemon_id} のワザ {frame.attack_key} → ポケモン {receiver.pokemon_id}", problem)
+    own = [record for record, _ in E.fossil_attack_bonuses(state) if record.pokemon_id == attacker.pokemon_id]
+    if not own or E.fossil_evolution(state, attacker)[0] != E.FOSSIL_EVOLVED_YES:
+        return
+    label = f"［{E.PRIMAL_DREAM_NAME}］"
+    sources = {record.source_card for record in own}
+    moved = [replace(m, step=2) if m.label == label and m.step == 6 and m.source in sources else m for m in modifiers]
+
+    def outcome(mods):
+        try:
+            calc = compute_damage(state, attacker, receiver, base, mods, weakness_resistance=weakness_resistance, orders=orders, resistance=resistance,
+                                  reduction=reduction)
+        except (TypeReadingsDiffer, DamageOrderRequired, DamageReductionRequired, DamageOptionRequired) as error:
+            return ("raised", type(error).__name__)  # 順番の決定・減らす量の決定などの要求は、2 つの段階で同じか（種類）だけを比べる
+        return ("final", calc.final, calc.stopped_after_step_2)
+
+    if outcome(modifiers) != outcome(moved):
+        raise res.question("primal_dream_damage_step", f"ポケモン {attacker.pokemon_id} のワザ {frame.attack_key} → ポケモン {receiver.pokemon_id}（6 段階 {outcome(modifiers)}・"
+                                                       f"2 段階 {outcome(moved)}）")
 
 
 def with_stadium_coin(res: Resolution, frame, target: str, modifiers: list) -> list:
@@ -995,6 +1033,7 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         if copies is not None:
             raise res.question("self_excluding_power_copies", copies)
     modifiers = with_stadium_coin(res, frame, target, base_modifiers)
+    primal_dream_questions(res, frame, attacker, receiver, target, base, modifiers, weakness_resistance, resistance, orders, reduction)  # v0.122: FE3・PM1・PM2
     if frame.kind is FrameKind.RETALIATION:
         calming_retaliation_question(res, fs, attacker, receiver, base, target, weakness_resistance, resistance)
     while True:

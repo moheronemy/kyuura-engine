@@ -497,6 +497,8 @@ def process(state: GameState, reaction: tuple, after: tuple) -> tuple:
     if kind == M.PURSUIT:
         M.pursuit_damage(state, reaction)  # v0.117: おいうち
         return after
+    if kind == M.VINE_PULL:
+        return _vine_pull(state, reaction, after)  # v0.122: ［つるでひっぱる］
     if kind == M.MAGMA:
         choice = M.magma_choice(state, reaction)  # v0.87: ［やけのこり］
         if choice is None:
@@ -550,6 +552,36 @@ def _lightning_burst(state: GameState, reaction: tuple, after: tuple) -> tuple:
         extra = (("unresolved_choices", tuple(s[0] for s in stops)), ("unresolved_detail", tuple(stops)))
     push_decision(state, kind=SELECT_POKEMON, player=opponent, options=[p.pokemon_id for p in state.players[opponent].bench], resume=RESUME,
                   context=((REACTION, ("burst", reaction)),) + extra)
+    return after
+
+
+def _vine_pull(state: GameState, reaction: tuple, after: tuple) -> tuple:
+    """v0.122（docs/unown-fossil-retreat-reactions-v0.122.md 5 章）: ［つるでひっぱる］。成功した「にげる」でベンチにもどったこのカードの力が、かならずはたらく（ログ ``pokemon_power`` の
+    ``forced``・``on_retreat``。自分の番ごとに 1 回の記録 ``power_uses_this_turn``）。相手に控えがいなければ、はたらかない（記録しない。ログ ``vine_pull_skipped``）。相手の対戦ポケモンが
+    「バトル場をはなれられない」なら入れ替える部分は起こらない。いれば相手プレイヤーが控えを選ぶ（決定 ``SELECT_POKEMON``。再開先 ``"reaction"``。［いなびかり］と同じ形）。選ぶと受け付け
+    られない状態になる控えは選べるが選ぶと止める。"""
+    _, owner, pid, power_card, index, _ = reaction
+    holder = _locate(state, owner, pid)
+    slot = _slot(state, holder, power_card, index)
+    opponent = 1 - owner
+    if not state.players[opponent].bench:
+        state.add_event("vine_pull_skipped", player=owner, pokemon=holder.card, pokemon_id=pid, power=str(slot.key), reason="no_bench")
+        return after
+    use = E.PowerUse(owner, pid, slot.key, card=slot.card)
+    state.power_uses_this_turn = state.power_uses_this_turn + (E.power_use_record(state, use),)
+    extra_log = {} if slot.card == holder.card else {"card": slot.card}
+    state.add_event("pokemon_power", player=owner, pokemon=holder.card, pokemon_id=pid, power=slot.power.name_ja, power_index=index, forced=True, on_retreat=True,
+                    **extra_log)
+    lock = E.active_leave_lock(state, opponent)
+    if lock is not None:
+        E.note_leave_prevented(state, opponent, state.players[opponent].active, lock, E.LEAVE_SWITCH, power=str(slot.key))
+        return after
+    stops = E.switch_choice_stops(state, opponent)
+    extra: tuple = ()
+    if stops:
+        extra = (("unresolved_choices", tuple(s[0] for s in stops)), ("unresolved_detail", tuple(stops)))
+    push_decision(state, kind=SELECT_POKEMON, player=opponent, options=[p.pokemon_id for p in state.players[opponent].bench], resume=RESUME,
+                  context=((REACTION, ("vine", reaction)),) + extra)
     return after
 
 
@@ -622,6 +654,12 @@ def answer(state: GameState, decision, choices: tuple[int, ...]) -> tuple:
         key = str(slot.key) if slot is not None else str(E.PowerKey(state.cards[reaction[3]].card_id, reaction[4]))
         E._switch_active_with_bench(state, opponent, choices[0], power=key)
         return ()
+    if tag == "vine":
+        # v0.122: ［つるでひっぱる］の入れ替え（相手プレイヤーが選んだ控え）。入れ替えの事実への反応（相手の新しい対戦ポケモンへの［まきびし］など）は、待っている反応の前に処理する
+        owner, pid = reaction[1], reaction[2]
+        key = str(E.PowerKey(state.cards[reaction[3]].card_id, reaction[4]))
+        E._switch_active_with_bench(state, 1 - owner, choices[0], power=key)
+        return M.take(state)
     if tag == "use":
         return _answer_use(state, reaction, choices)
     if tag == "magma":
@@ -709,6 +747,12 @@ def answer_problems(state: GameState, decision) -> list[str]:
         expected = tuple(p.pokemon_id for p in state.players[1 - owner].bench)
         if decision.kind != SELECT_POKEMON or decision.player != 1 - owner or decision.options != expected:
             return [f"［いなびかり］の決定 {decision.kind} {decision.options} を選ぶのが相手プレイヤー {1 - owner} の控え {expected} ではない"]
+        return []
+    if tag == "vine":
+        # v0.122: ［つるでひっぱる］（選ぶのは相手プレイヤー。選べるものは相手の控え。1 匹）
+        expected = tuple(p.pokemon_id for p in state.players[1 - owner].bench)
+        if decision.kind != SELECT_POKEMON or decision.player != 1 - owner or decision.options != expected or (decision.min_choices, decision.max_choices) != (1, 1):
+            return [f"［つるでひっぱる］の決定 {decision.kind} {decision.options} を選ぶのが相手プレイヤー {1 - owner} の控え {expected} から 1 匹ではない"]
         return []
     if tag == "magma":
         # v0.87: ［やけのこり］でつけ替えるカード（決めるのは持ち主。選べるものは今のつけ替えられるカード。1 枚）

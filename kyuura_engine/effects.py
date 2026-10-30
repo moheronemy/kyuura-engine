@@ -6218,6 +6218,10 @@ def attack_damage_modifiers(
             # ``kernel.deal_damage`` が計算の前に止める）。こんらんの 20（``attack`` を渡さない呼び出し）はワザのダメージではないので当てはめない
             for record, amount in () if attacker.pokemon_id in immune else trainer_attack_damage_bonuses(state, attacker):
                 modifiers.append(DamageModifier(step=6, amount=amount, label=state.card_def(record.source_card).name_ja, source=record.source_card))
+            # v0.122: オムナイトの［げんしのゆめ］の「「なにかの化石」から進化したポケモンのワザが相手に与えるダメージは、この番だけ「+10」される。(控えポケモンへのダメージは、そのまま)」。
+            # 特殊能力で使ったプレイヤーに与えた効果で、ワザを使うポケモン・受けるポケモンの持っている効果ではないので 6 段階（カスミのトレーナーと同じ）。控え（``bench``）・自分へのダメージ・
+            # こんらんの 20 には当てはめない。当たるかが決まらない・使った個体の段階の問いは ``kernel.deal_damage`` が計算の前に止める（FE3・PM1・PM2）
+            modifiers.extend(fossil_attack_bonus_modifiers(state, attacker))
     if attack is not None:
         # v0.108: ワザを使うポケモンの持っている、使うワザによるダメージを減らす効果（チョンチーの「マイナスイオン」・トゲピーの「あまえる」。``DealtAttackDamageReduction``）。p.321 の
         # 2 段階（ワザを使うポケモンの持っている「ダメージを変更する効果」）。だれが受けるかを限らないので、相手の対戦ポケモン・控え（``bench``）・自分へのダメージ・返す効果のダメージ（この
@@ -16004,7 +16008,7 @@ class DevolveChosenPokemon(AttackEffect):
         return problems
 
 
-def devolve_count_problems(state: GameState, player: int, pokemon_id: int, card: int) -> dict[int, tuple[str, str]]:
+def devolve_count_problems(state: GameState, player: int, pokemon_id: int, card: int | None, *, power: str | None = None) -> dict[int, tuple[str, str]]:
     """v0.50: 退化スプレーで場のポケモン ``pokemon_id`` からはがす枚数ごとの、選ぶと止める理由（DV1）。状態の複製の上で 1 枚ずつはがして（``evolution.devolve``）、途中の
     重なりで HP がのっているダメージ以下になるかを、今有効な最大HP（``max_hp``。［ガスのからだ］・かがくへんかガスを含む）で求める。最後の重なりでも同じカウントのされ方で
     きぜつするなら、どちらで判定しても結果は同じなので止めない。状態は変えない。"""
@@ -16017,7 +16021,7 @@ def devolve_count_problems(state: GameState, player: int, pokemon_id: int, card:
         if problem is not None:
             revived[count] = problem  # v0.120: FE1（たねポケモンとしてあつかった進化カードがまたいちばん上になる。いちばん下なので、すべてはがすときだけ）
             break
-        devolve(trial, player, pokemon, 1, destination=DEVOLVE_TO_DISCARD, by_player=player, trainer=card)
+        devolve(trial, player, pokemon, 1, destination=DEVOLVE_TO_DISCARD, by_player=player, trainer=card, power=power)  # v0.122: 特殊能力（［かせきか］）も
         results.append((knocked_by_hp(trial, pokemon), counts_as_knockout(trial, pokemon)))
     problems = dict(revived)
     for count in range(2, len(results) + 1):
@@ -42704,9 +42708,11 @@ def damage_allocations(units: int, slots: int) -> tuple[tuple[int, ...], ...]:
     return tuple((first, *rest) for first in range(units, -1, -1) for rest in damage_allocations(units - first, slots - 1))
 
 
-def allocation_decision_problems(state: GameState, use: AttackUse, decision: PendingDecision, *, scope: str, per: int, max_units: int) -> list[str]:
+def allocation_decision_problems(state: GameState, use: AttackUse, decision: PendingDecision, *, scope: str, per: int, max_units: int,
+                                 chooser: int | None = None) -> list[str]:
     """v0.115: 配分の決定（``ALLOCATE_DAMAGE``）の形。決めるのはワザを使ったプレイヤー、ちょうど 1 つ。続きの情報の配る先が今の相手の場（``scope``）のポケモンの並び、単位の数が 1〜``max_units``、
-    1 単位のダメージが ``per``、表が ``damage_allocations`` の表（合計がちょうど単位の数）と同じで、選べるものが表の位置。"""
+    1 単位のダメージが ``per``、表が ``damage_allocations`` の表（合計がちょうど単位の数）と同じで、選べるものが表の位置。v0.122: ``chooser`` は決めるプレイヤー（みだれうちは相手プレイヤー。
+    None ならワザを使ったプレイヤー）。"""
     label = _label(state, use)
     allocation, table = decision.context_value("allocation"), decision.context_value("table")
     if allocation is None or table is None:
@@ -42724,7 +42730,7 @@ def allocation_decision_problems(state: GameState, use: AttackUse, decision: Pen
     rows = damage_allocations(units, len(ids)) if ids else ()
     if tuple(tuple(row) for row in table) != rows:
         problems.append(f"「{label}」の配分の表が、{units} 単位を {len(ids)} 匹に配るすべての配分（合計がちょうど {units}）ではない")
-    return problems + _decision_form(decision, label, kind=ALLOCATE_DAMAGE, player=use.player, choices=(1, 1), options=range(len(rows)))
+    return problems + _decision_form(decision, label, kind=ALLOCATE_DAMAGE, player=use.player if chooser is None else chooser, choices=(1, 1), options=range(len(rows)))
 
 
 @dataclass(frozen=True)
@@ -44641,10 +44647,16 @@ class AttackDeclaredPower(PowerEffect):
     - ``uses_coins``: 追加の量を「うら」が出るまでのコインで決めるか（［XXXXX］。偽なら決まった量 ``fixed_bonus``）。``records_turn_use``: 使った記録（``GROUP_ATTACK_POWER_USED``）を残すか
     - 追加する段階は、発生源がワザを使うポケモンなら p.321 の 2 段階、ほかのポケモンなら 6 段階（GR-2000-P321-DAMAGE-ORDER の持ち主の区別。``attack_declared_power_modifier``）。相手の対戦
       ポケモンへの、そのワザのダメージの要素だけ（``kernel.attack_modifiers_of``）
-    発生源の力が消えている（かがくへんかガスなど）・使えない（ショックアイなど）なら使えない（共通の問い合わせ）。説明にない特殊状態の条件は加えない。``UsePokemonPower`` では使えない。"""
+    発生源の力が消えている（かがくへんかガスなど）・使えない（ショックアイなど）なら使えない（共通の問い合わせ）。説明にない特殊状態の条件は加えない。``UsePokemonPower`` では使えない。
+
+    v0.122（docs/unown-fossil-retreat-reactions-v0.122.md 3 章）: 1 つのワザの宣言で 2 つ以上の力をいっしょに使える（``UseAttack.with_powers``）。いっしょに使えないのは、同じ力
+    （``exclusive_key`` の同じ力。2 匹の［XXXXX］・2 匹の［ANGER］・2 匹の［めいれい］）だけで、違う力（［ANGER］と［XXXXX］）は互いを止めない。追加の量は、続きの情報の 5 つめの値
+    （「おもて」の数・数えたダメージカウンターの数・決まった量なら 0。まだ決まっていなければ None）から実装ごとに求める（``bonus_amount``）。``counts_holder_counters`` は、量を発生源に
+    のっているダメージカウンターの数で決める（［ANGER］。そのワザの相手の対戦ポケモンへのダメージの要素の前に数える。``programs.declared_power_amounts``）"""
 
     uses_coins: ClassVar[bool] = False
     records_turn_use: ClassVar[bool] = False
+    counts_holder_counters: ClassVar[bool] = False  # v0.122: ［ANGER］
 
     def usable_for(self, state: GameState, attacker: PokemonInPlay, key: AttackKey) -> str | None:
         raise NotImplementedError
@@ -44654,6 +44666,18 @@ class AttackDeclaredPower(PowerEffect):
 
     def fixed_bonus(self) -> int:
         raise NotImplementedError(f"{self.implementation_id}: 決まった量の追加ではない（コインで決める）")
+
+    def exclusive_key(self) -> tuple:
+        """v0.122: 1 つのワザの宣言でいっしょに使えない同じ力の識別（同じ値の力を 2 つ指すと拒否する。``group_attack_powers_check``）。"""
+        raise NotImplementedError
+
+    def concurrent_use_problem(self, holder_id: int, other_id: int) -> IllegalActionError:
+        """v0.122: 同じ力（``exclusive_key``）を持つほかの個体 ``other_id`` を、同じ宣言でいっしょに指したときの拒否。"""
+        raise NotImplementedError
+
+    def bonus_amount(self, value: int) -> int:
+        """v0.122: 続きの情報の 5 つめの値（決まったもの）から、追加の量。"""
+        return self.fixed_bonus()
 
     def check_usable(self, state: GameState, use: PowerUse) -> None:
         raise IllegalActionError("POWER_NOT_USABLE_NOW", f"特殊能力 {use.key} は、ワザの宣言といっしょに使う（UseAttack の with_power）")
@@ -44717,6 +44741,18 @@ class CoinsUntilTailsBonusToGroupAttack(AttackDeclaredPower):
                                       f"この番に、自分の場のほかの{self.group}「{self.letter}」（ポケモン {others[0].pokemon_id}）の「{self.power_name}」をもう使ったので、使えない")
         return None
 
+    def exclusive_key(self) -> tuple:
+        return ("coins_until_tails", self.group, self.letter, self.power_name)
+
+    def concurrent_use_problem(self, holder_id: int, other_id: int) -> IllegalActionError:
+        # v0.122: 同じ宣言で 2 匹の［XXXXX］を指す。力は 1 つずつ使うので、あとの力を使うときには、すでにほかの個体の力を使っている（実装上の読み方。docs 3 章）
+        return IllegalActionError("POWER_ALREADY_USED",
+                                  f"同じワザの宣言で、自分の場のほかの{self.group}「{self.letter}」（ポケモン {other_id}）の「{self.power_name}」もいっしょに使っているので、"
+                                  f"ポケモン {holder_id} の力は使えない（この番に、すでに使っていた）")
+
+    def bonus_amount(self, value: int) -> int:
+        return value * self.per
+
 
 COMMAND_TEXT = ("この力は、自分の{names}がワザを使う時、使える。そのワザによるダメージは、「+{amount}」される。このカード以外の「{holder}」が「{power}」の力を使っている時、この力は使えない。")
 # v0.119: ［めいれい］を、相手の対戦ポケモン以外へのダメージの要素（控え・自分）のあるワザといっしょに使う（「そのワザによるダメージ」の範囲が決まらない。今の写しのサカキのニドラン♂・
@@ -44736,8 +44772,9 @@ class CommandBonusToNamedAttackers(AttackDeclaredPower):
       の今の姿の名前が ``names`` のどれか（完全一致。名前のグループ・通常名のニドラン♂・ニドリーノ・サカキのニドキング自身・相手のポケモンはふくまない）。発生源と使い手は別のポケモン
     - 追加は決まった量（コインを投げない）。発生源はワザを使うポケモンでないので p.321 の 6 段階（ほかのポケモンの効果。弱点・抵抗力のあと）。2 段階までで計算を終えたダメージ（「おもて」0 枚の
       にどげりなど）・ダメージの要素のない要素には加えない（ダメージを作らない）
-    - 「このカード以外の…が…使っている時、この力は使えない」: 1 つのワザの宣言で使える ``with_power`` は 1 つなので、2 匹のサカキのニドキングがいっしょに使って +20 にすることはない。
-      番ごとの使用の記録・同じ番の別のワザでの使用の制限は書かれていないので持たない（［XXXXX］の「この番に、すでに…」の記録を写さない）。XP1（コインの時点）は当てはまらない
+    - 「このカード以外の…が…使っている時、この力は使えない」: 2 匹のサカキのニドキングがいっしょに使って +20 にすることはない（v0.122 から 1 つの宣言で 2 つ以上の力を指せるので、
+      同じ力を 2 つ指す宣言は ``concurrent_use_problem`` で拒否する）。番ごとの使用の記録・同じ番の別のワザでの使用の制限は書かれていないので持たない（［XXXXX］の「この番に、すでに…」の
+      記録を写さない）。XP1（コインの時点）は当てはまらない
     - 説明に特殊状態の条件はない（加えない）。かがくへんかガスなどで消えている・使えない効果を受けているなら使えない（共通の確かめ）
     - 相手の対戦ポケモン以外へのダメージの要素のあるワザといっしょに使う宣言は MD1（「そのワザによるダメージ」の範囲が決まらない。今の写しでは起こらない）"""
 
@@ -44768,6 +44805,14 @@ class CommandBonusToNamedAttackers(AttackDeclaredPower):
     def fixed_bonus(self) -> int:
         return self.amount
 
+    def exclusive_key(self) -> tuple:
+        return ("named_attackers", self.holder_name, self.power_name)
+
+    def concurrent_use_problem(self, holder_id: int, other_id: int) -> IllegalActionError:
+        # v0.122: 1 つの宣言で 2 匹の［めいれい］を指す（「このカード以外の…が…使っている時、この力は使えない」。v0.119 は 1 つの宣言で指せる力が 1 つだった）
+        return IllegalActionError("POWER_ALREADY_USED",
+                                  f"このカード以外の「{self.holder_name}」（ポケモン {other_id}）が「{self.power_name}」の力を使っているので、ポケモン {holder_id} の力は使えない")
+
 
 def group_attack_power_slot(state: GameState, holder: PokemonInPlay) -> PowerSlot | None:
     """v0.118: ``holder`` が今持つ、ワザといっしょに使う特殊能力（v0.119 から ``AttackDeclaredPower``。［XXXXX］・［めいれい］）。なければ None。"""
@@ -44781,6 +44826,32 @@ def group_attack_power_uses(state: GameState, player: int) -> tuple[TrainerTurnE
     from .state import GROUP_ATTACK_POWER_USED
 
     return tuple(r for r in state.trainer_effects if r.kind == GROUP_ATTACK_POWER_USED and r.player == player and r.created_turn == state.turn_number)
+
+
+def declared_power_holders(with_power: int | None, with_powers: tuple[int, ...]) -> tuple[int, ...]:
+    """v0.122（docs/unown-fossil-retreat-reactions-v0.122.md 3 章）: ``UseAttack`` の ``with_power``（v0.118 の 1 つの指定）と ``with_powers``（v0.122 の並び）から、ワザといっしょに使う力を持つ
+    ポケモンの場の番号の並び。併記・同じ番号の重なりは ``IllegalActionError``（状態を変える前）。どちらもなければ空。"""
+    if with_power is not None and with_powers:
+        raise IllegalActionError("BAD_COMMAND", f"UseAttack の with_power（{with_power}）と with_powers（{list(with_powers)}）は、どちらか一方で指す")
+    holders = tuple(with_powers) if with_powers else (() if with_power is None else (with_power,))
+    if len(set(holders)) != len(holders):
+        raise IllegalActionError("DUPLICATE_POWER", f"ワザといっしょに使う力を持つポケモン {list(holders)} に、同じポケモンを 2 回指している")
+    return holders
+
+
+def group_attack_powers_check(state: GameState, player: int, attacker: PokemonInPlay, key: AttackKey, holders: tuple[int, ...]) -> tuple[tuple[PokemonInPlay, PowerSlot], ...]:
+    """v0.122: ワザ ``key`` といっしょに、場の番号 ``holders`` のポケモンの力を並びの順に使うことを選んだときの確かめ（状態を変えない）。1 つずつ v0.118 の確かめ（``group_attack_power_check``）を
+    し、同じ力（``exclusive_key``）を 2 つ指していれば、あとの力を ``concurrent_use_problem`` で拒否する（違う力どうしは互いを止めない）。"""
+    found = []
+    seen: dict[tuple, int] = {}
+    for holder_id in holders:
+        holder, slot = group_attack_power_check(state, player, attacker, key, holder_id)
+        exclusive = slot.effect.exclusive_key()
+        if exclusive in seen:
+            raise slot.effect.concurrent_use_problem(holder_id, seen[exclusive])
+        seen[exclusive] = holder_id
+        found.append((holder, slot))
+    return tuple(found)
 
 
 def group_attack_power_check(state: GameState, player: int, attacker: PokemonInPlay, key: AttackKey, holder_id: int) -> tuple[PokemonInPlay, PowerSlot]:
@@ -44821,14 +44892,22 @@ def _same_group_power(state: GameState, card_id: str, effect: CoinsUntilTailsBon
     return False
 
 
+def declared_power_effect(state: GameState, carried: tuple) -> AttackDeclaredPower:
+    """v0.122: 続きの情報の 1 つ（(発生源の番号, 発生源のカード, 特殊能力を印刷したカード id, 位置, 値)）の、ワザといっしょに使った力の実装。"""
+    _, _, card_id, power_index, _ = carried
+    definition = state.definitions[card_id]
+    return state.effects.power_effect(definition.id, definition.powers[power_index])
+
+
 def group_attack_power_modifier(state: GameState, attacker: PokemonInPlay, carried: tuple) -> DamageModifier | None:
     """v0.118: ワザといっしょに使った［XXXXX］の追加（続きの情報の (発生源の番号, 発生源のカード, 特殊能力を印刷したカード id, 位置, 「おもて」の数)）。発生源がワザを使ったポケモンなら
-    p.321 の 2 段階、ほかのポケモンなら 6 段階（``CoinsUntilTailsBonusToGroupAttack``）。「おもて」がまだ決まっていない・0 なら None。"""
-    holder_id, holder_card, card_id, power_index, heads = carried
+    p.321 の 2 段階、ほかのポケモンなら 6 段階（``CoinsUntilTailsBonusToGroupAttack``）。「おもて」がまだ決まっていない・0 なら None。v0.122: 5 つめの値は実装ごとの値（「おもて」の数・
+    数えたダメージカウンターの数（［ANGER］）・決まった量なら 0）で、量は ``AttackDeclaredPower.bonus_amount``。まだ決まっていなければ None。"""
+    holder_id, holder_card, card_id, power_index, value = carried
     definition = state.definitions[card_id]
     effect = state.effects.power_effect(definition.id, definition.powers[power_index])
-    # v0.119: 決まった量の追加（［めいれい］。コインはない。続きの情報の「おもて」の数は 0）。コインで決める追加（［XXXXX］）は「おもて」の数 × per
-    amount = effect.fixed_bonus() if not effect.uses_coins else (0 if heads is None else heads * effect.per)
+    # v0.119: 決まった量の追加（［めいれい］。コインはない。続きの情報の「おもて」の数は 0）。コインで決める追加（［XXXXX］）は「おもて」の数 × per。v0.122: ［ANGER］は数えたカウンターの数 × per
+    amount = 0 if value is None else effect.bonus_amount(value)
     if amount <= 0:
         return None
     step = 2 if holder_id == attacker.pokemon_id else 6
@@ -46533,3 +46612,704 @@ V0_121_TRAINERS: Mapping[str, TrainerEntry] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_trainers(_with_attacks(DEFAULT_EFFECTS, V0_121_ATTACKS), V0_121_TRAINERS)
+
+
+# ---------------------------------------------------------------- v0.122（docs/unown-fossil-retreat-reactions-v0.122.md）: アンノーンの併用・化石の進化履歴・退却時の反応の 13 枚
+#
+# 処理に使う文面は kyuura 2fe0bc0 の印刷の文面（13 枚を指す最新の説明・エラッタはない。アンノーンM は CR-UNOWN-DF-PROTECTS-OWN-UNOWN・CR-UNOWN-DF-AT-MOST-ONE の related_cards と
+# UQ-SELF-EXCLUDING-POWER-COPIES の事例だが、どの記録もアンノーンM を調査の対象外と書くので、M 自身の独立した裁定として引かない）。名前・文面は写しの表記のまま（［WANT］の半角の
+# 「｢A｣｢N｣｢T｣」・「一回」「一枚」も）
+
+ANGER_TEXT = ("この力は、自分の場の「{group}」が「{attack}」を使うとき、使える。その「{attack}」のダメージに、このカードにのっているダメージカウンターの数×{per}のダメージを追加する。"
+              "このカード以外の{group}「{letter}」が「{power}」を使っているとき、この力は使えない。")
+UNDO_TEXT = ("この力は、自分のベンチに、このカードとアンノーン「{letters}」がいるとき、自分の番ごとに1回使える。自分のバトル場のポケモンと、そのポケモンについているすべてのカードを、"
+             "自分の手札にもどす。")
+WANT_TEXT = ("この力は、自分のベンチに、このカードとアンノーン｢{letters}｣がいるとき、自分の番ごとに一回使うことができる。コインを投げて「おもて」なら、自分のトラッシュから"
+             "「トレーナーカード」を一枚選び出し、相手プレイヤーに見せてから、手札に加える。")
+PRIMAL_DREAM_TEXT = ("この力は、自分の番ごとに1回使える。コインを投げて「おもて」なら、「{fossil}」から進化したポケモンのワザが相手に与えるダメージは、この番だけ「+{amount}」される。"
+                     "(控えポケモンへのダメージは、そのまま)")
+FOSSILIZE_TEXT = ("この力は、自分の番ごとに1回使える。自分の場にいる「{fossil}」から進化したポケモンを、1匹選ぶ。その後、コインを投げて「おもて」なら、選んだポケモンにのっている"
+                  "すべての進化カードを手札にもどす。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。")
+FOSSIL_GUIDE_TEXT = ("この力は、自分の番ごとに1回使える。コインを投げて「おもて」なら、自分のトラッシュから「{fossil}」を1枚選び出し、手札に加える。このカードが「ねむり・マヒ・こんらん」"
+                     "状態の時、この力は使えない。")
+VINE_PULL_TEXT = ("この力は、自分の番ごとに1回、このカードが「にげる」とき、はたらく。このカードがベンチにもどったとき、相手の対戦ポケモンを相手の控えポケモンと入れ替える。"
+                  "入れ替えるポケモンは相手プレイヤーが選ぶ。相手に控えがいないとき、この力は、はたらかない。")
+THUNDERBOLT_ZERO_TEXT = "自分についているエネルギーカードを、すべてトラッシュする。(トラッシュできない時、このワザのダメージは0になる)"
+SPIN_ATTACK_SELF_TEXT = "自分にも、「弱点・抵抗力」に関係なく、{self_damage}ダメージ。"
+RANDOM_STRIKE_TEXT = ("相手の場のポケモンを、相手プレイヤーが、{units}回選ぶ(同じポケモンを2回以上選んでもよい)。その後、選ばれたポケモンそれぞれに、選ばれた数×{per}のダメージを、"
+                      "「弱点・抵抗力」に関係なく与える。")
+NASTY_POLLEN_TEXT = ("コインを2枚投げる。「おもて」が1枚なら相手を「どく」と「ねむり」状態に、すべて「おもて」なら相手を「どく」と「こんらん」状態に、すべて「うら」なら相手を「どく」と"
+                     "「マヒ」状態にする。")
+DRILL_DIVE_TEXT = "次の自分の番、このカードはワザを使うことができず、「にげる」こともできない。"
+
+# v0.122 の新しい停止（どれも研究上の未解決。kyuura の未解決の一覧にない新しい問い。docs 10 章）
+# FE3: 「「なにかの化石」から進化したポケモン」に、場のポケモンが当たるか（直前の進化元・重なりの根元・今の姿の印刷の進化元・印刷の系統の読み方で答えが変わる）
+FOSSIL_EVOLVED_READING_CODE = "UNRESOLVED_FOSSIL_EVOLVED_READING"
+FOSSIL_EVOLVED_READING_REASON = (
+    "「「なにかの化石」から進化したポケモン」（オムナイト ES2-011 の［げんしのゆめ］・カブト ES2-028 の［かせきか］）に、この場のポケモンが当たるかは、直前の進化元（実際に重なった下のカード）・"
+    "重なりの根元・今の姿のカードの印刷の進化元・印刷の系統のどれで決めるかによって答えが変わり、印刷の文面・2000.02.14 版の公式ルール・kyuura の記録から決められないので扱わない（FE3。"
+    "なにかの化石に直接重ねた 1 進化（どの読み方でも当たる）と、化石とかかわりのないポケモン（どの読み方でも当たらない）は止めない。v0.120 の FE1 とは別の問い）")
+# PM1: ［げんしのゆめ］の効果がはたらく番に、使ったオムナイトが場にいて、その特殊能力が消えている（v0.117 の QK1 と同じ形の、別の効果の問い）
+PRIMAL_DREAM_SUPPRESSED_CODE = "UNRESOLVED_PRIMAL_DREAM_SUPPRESSED"
+PRIMAL_DREAM_SUPPRESSED_REASON = (
+    "オムナイトの［げんしのゆめ］の「この番だけ「+10」される」が、その番に使ったオムナイトの特殊能力が消えている（かがくへんかガス・スタンウェーブなど）あいだも続くかは、印刷の文面"
+    "（効果が消える契機を書かない）・kyuura の記録から決められない（PM1。［QUICKEN］の QK1 と同じ形の、別の効果の問い。答えを写さない）")
+# PM2: ［げんしのゆめ］を使ったポケモン自身がワザを使うとき、追加が p.321 の 2 段階（ワザを使うポケモンの持っている効果）か 6 段階（それ以外の効果）かで受けるダメージが変わる
+PRIMAL_DREAM_DAMAGE_STEP_CODE = "UNRESOLVED_PRIMAL_DREAM_DAMAGE_STEP"
+PRIMAL_DREAM_DAMAGE_STEP_REASON = (
+    "［げんしのゆめ］を使ったポケモン自身がワザを使うとき、使ったあとに残る「この番だけ「+10」」が、p.321 の 2 段階（ワザを使うポケモンの持っている効果）と 6 段階（それ以外の効果）の"
+    "どちらに当たるかは、ワザといっしょに使う力（［XXXXX］）・トレーナーの効果（カスミ）の段階の扱いからは決まらず、印刷の文面・kyuura の記録から決められない。段階で受けるダメージが"
+    "変わるときだけ扱わない（PM2。ほかのポケモンが使った効果は 6 段階）")
+# WT1・GU1・FS1: 対象がないときに使えるか（kyuura の UQ-CARD-USE-WITHOUT-TARGET と同じ形の、別の特殊能力の問い。v0.121 の OR1・v0.118 の SX1 の答えを流用しない）
+WANT_WITHOUT_TARGET_CODE = "UNRESOLVED_WANT_WITHOUT_TARGET"
+WANT_WITHOUT_TARGET_REASON = (
+    "アンノーンW の［WANT］を、自分のトラッシュに「トレーナーカード」がないときに使えるか（コインだけを投げて使い終われるか）は、印刷の文面・kyuura の記録から決められないので扱わない"
+    "（WT1。kyuura の UQ-CARD-USE-WITHOUT-TARGET と同じ形の、別の特殊能力の問い。ボロのつりざおの OR1 の答えを流用しない。コインの前）")
+FOSSIL_GUIDE_WITHOUT_TARGET_CODE = "UNRESOLVED_FOSSIL_GUIDE_WITHOUT_TARGET"
+FOSSIL_GUIDE_WITHOUT_TARGET_REASON = (
+    "オムナイト ES3-018 の［かせきのみちびき］を、自分のトラッシュに「なにかの化石」がないときに使えるか（コインだけを投げて使い終われるか）は、印刷の文面・kyuura の記録から決められないので"
+    "扱わない（GU1。kyuura の UQ-CARD-USE-WITHOUT-TARGET と同じ形の、別の特殊能力の問い。コインの前）")
+FOSSILIZE_WITHOUT_TARGET_CODE = "UNRESOLVED_FOSSILIZE_WITHOUT_TARGET"
+FOSSILIZE_WITHOUT_TARGET_REASON = (
+    "カブト ES2-028 の［かせきか］を、自分の場に「なにかの化石」から進化したポケモンがいないときに使えるか（選ぶものがないまま使い終われるか）は、印刷の文面・kyuura の記録から"
+    "決められないので扱わない（FS1。kyuura の UQ-CARD-USE-WITHOUT-TARGET と同じ形の、別の特殊能力の問い。選ぶ前・コインの前）")
+# PW5: 効果がすべて「トラッシュからカードを取り出して手札に加える」効果の宣言する特殊能力を、ポケモンタワーの場で使えるか（v0.74 の PT1（トレーナー）と同じ形の、別の効果の問い）
+TOWER_POWER_WITHOUT_EFFECT_CODE = "UNRESOLVED_POKEMON_TOWER_POWER_WITHOUT_EFFECT"
+TOWER_POWER_WITHOUT_EFFECT_REASON = (
+    "場のポケモンタワーで「トラッシュからカードを取り出して手札に加える」効果が消え、効果がすべて消える宣言して使う特殊能力（［WANT］・［かせきのみちびき］）を、使えるか（コインだけを"
+    "投げて使い終われるか）は、2000.02.14 版の公式ルール・印刷の文面・kyuura の記録から決められないので扱わない（PW5。トレーナーの PT1 と同じ形の、別の効果の問い。コインの前）")
+# VL1: ［つるでひっぱる］がはたらくかが、「にげる」とき（バトル場にいて、入れ替えの前）と、ベンチにもどったとき（入れ替えのあと）で違う
+VINE_PULL_TIMING_CODE = "UNRESOLVED_VINE_PULL_TIMING"
+VINE_PULL_TIMING_REASON = (
+    "わるいフシギソウの［つるでひっぱる］（「このカードが「にげる」とき、はたらく。このカードがベンチにもどったとき、…入れ替える」）がはたらくか（特殊能力が消えているか）を、「にげる」とき"
+    "（入れ替えの前）と、ベンチにもどったとき（入れ替えのあと。持続する効果・バトル場の条件が変わる）のどちらで決めるかは、印刷の文面・2000.02.14 版の公式ルール・kyuura の記録から"
+    "決められず、どちらかでだけはたらくときは扱わない（VL1。［CHASE］・おいうちの RR1 と同じ形の、別のカードの問い。エネルギーのトラッシュ・コインの前）")
+
+FOSSIL_EVOLVED_YES, FOSSIL_EVOLVED_NO, FOSSIL_EVOLVED_UNDECIDED = "yes", "no", "undecided"
+PRIMAL_DREAM_NAME = "げんしのゆめ"
+
+
+def _is_fossil_card(state: GameState, uid: int) -> bool:
+    definition = state.card_def(uid)
+    return definition.play_role == "fossil" and definition.name_ja == FOSSIL_NAME
+
+
+def _printed_lineage_from_fossil(state: GameState, definition: CardDefinition, depth: int = 0) -> bool:
+    """印刷の系統（進化元の名前を、対応しているカードの印刷の進化元でたどる）が「なにかの化石」に届くか（2 進化までの段の数でたどる）。"""
+    if definition.category != "pokemon" or not definition.is_evolution_pokemon or definition.evolves_from is None or depth > 2:
+        return False
+    if definition.evolves_from == FOSSIL_NAME:
+        return True
+    parents = [d for d in state.definitions.values() if d.category == "pokemon" and d.name_ja == definition.evolves_from]
+    return any(_printed_lineage_from_fossil(state, parent, depth + 1) for parent in parents)
+
+
+def fossil_evolution(state: GameState, pokemon: PokemonInPlay) -> tuple[str, str | None]:
+    """v0.122（docs/unown-fossil-retreat-reactions-v0.122.md 4 章）: 場のポケモン ``pokemon`` が「「なにかの化石」から進化したポケモン」に当たるか。(``FOSSIL_EVOLVED_YES``・``NO``・``UNDECIDED``,
+    決まらないときの場面の文)。状態を変えず、乱数を使わない。
+
+    4 つの読み方で答えを求め、すべて同じならその答え、違えば決まらない（FE3）:
+    - 直前の進化元: 実際に重なっている、いちばん上のカードのすぐ下のカードが「なにかの化石」（場でポケモンとしてあつかうトレーナーカード）
+    - 重なりの根元: 重なりのいちばん下のカードが「なにかの化石」
+    - 今の姿の印刷: 今の姿のカード（［へんしん］・「ばける」の姿をふくむ）の印刷の進化元が「なにかの化石」
+    - 印刷の系統: 今の姿のカードの印刷の進化元をたどると「なにかの化石」に届く
+    なにかの化石に直接重ねた 1 進化（化石 → カブト）はどの読み方でも当たり、化石とかかわりのないポケモンはどの読み方でも当たらない。化石 → カブト → カブトプス・復活で出したカブト
+    （``basic_entry``。下に化石がない）・それに重ねたカブトプス・ほかの系統から化石の系統の姿になった個体は、読み方で答えが変わる。存在しない化石のカード・架空の uid を下に足さない。
+    うらのカード（マチスの秘策）は、場ではたねポケモンとしてあつかい、重なりもないので当たらない（正体を読まない）"""
+    if state.is_face_down(pokemon):
+        return FOSSIL_EVOLVED_NO, None
+    stack = pokemon.evolution_stack
+    form = form_def(state, pokemon)
+    readings = {
+        "直前の進化元": bool(stack) and _is_fossil_card(state, stack[-1]),
+        "重なりの根元": bool(stack) and _is_fossil_card(state, stack[0]),
+        "今の姿の印刷の進化元": form.category == "pokemon" and form.is_evolution_pokemon and form.evolves_from == FOSSIL_NAME,
+        "印刷の系統": _printed_lineage_from_fossil(state, form),
+    }
+    values = set(readings.values())
+    if values == {True}:
+        return FOSSIL_EVOLVED_YES, None
+    if values == {False}:
+        return FOSSIL_EVOLVED_NO, None
+    detail = "・".join(f"{name}{'で当たる' if value else 'では当たらない'}" for name, value in readings.items())
+    return FOSSIL_EVOLVED_UNDECIDED, f"場のポケモン {pokemon.pokemon_id}（{form.name_ja}。{detail}）"
+
+
+def fossil_evolution_error(detail: str) -> UnsupportedError:
+    return UnsupportedError(FOSSIL_EVOLVED_READING_CODE, f"{detail}: {FOSSIL_EVOLVED_READING_REASON}")
+
+
+@dataclass(frozen=True)
+class CounterBonusToGroupAttack(AttackDeclaredPower):
+    """この力は、自分の場の「``group``」が「``attack_name``」を使うとき、使える。その「``attack_name``」のダメージに、このカードにのっているダメージカウンターの数 × ``per`` のダメージを
+    追加する。このカード以外の``group``「``letter``」が「``power_name``」を使っているとき、この力は使えない（v0.122。アンノーンA（neo2-030）の［ANGER］。kyuura の印刷の文面。docs 3 章）。
+
+    - 「使える」ので、使うかを持ち主が選ぶ。使う時点はワザの宣言といっしょ（``UseAttack.with_power``・``with_powers``。v0.118 の［XXXXX］と同じ入口。いっしょに［XXXXX］も使える）
+    - 使えるのは、ワザを実際に使うポケモン（使い手）の今の姿の名前のグループが「``group``」で、使うワザの名前が「``attack_name``」のとき（［XXXXX］と同じ ``usable_for``。ワザだけを借りた
+      アンノーンでないポケモンは当たらない）。力を持つポケモン（このカード）は自分の場のポケモンで、使い手自身でもよい
+    - 追加の量は、このカード（力を持つ個体。ワザを使う個体ではない）にのっているダメージカウンターの数 × ``per``。数えるのは、そのワザの相手の対戦ポケモンへのダメージの要素の前
+      （``programs.declared_power_amounts``。宣言からその要素までに、のっている数を変える処理は「めざめるパワー」にない）。0 個なら追加は 0 で、使うことを不正にしない
+    - 追加の段階は［XXXXX］と同じ（このカードがワザを使うポケモンなら p.321 の 2 段階、ほかのポケモンなら 6 段階）。相手の対戦ポケモンへの、そのワザのダメージだけ
+    - 「このカード以外の…が…使っているとき」: 1 つの宣言で 2 匹の［ANGER］を指すと拒否する（``concurrent_use_problem``）。番ごとの使用の記録は持たない（［XXXXX］の「この番に、すでに…」
+      の記録を写さない。UQ-SELF-EXCLUDING-POWER-COPIES はこの書き方を対象外とする）。説明に特殊状態の条件はない（加えない）。力が消えている・使えないは共通の確かめ
+    - コインはない（XP1・NT1 にかかわらない）。［XXXXX］とのあいだの順番で結果は変わらない（どちらも加算。同じ段階の加算でない効果との順番は既存の順番の決定）"""
+
+    letter: str
+    power_name: str
+    group: str = "アンノーン"
+    attack_name: str = "めざめるパワー"
+    per: int = 10
+    implementation_id = "counter_bonus_to_group_attack"
+    with_group_attack: ClassVar[bool] = True
+    counts_holder_counters: ClassVar[bool] = True
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "ダメージカウンター 1 個あたりの追加のダメージ")
+
+    def texts(self) -> tuple[str, ...]:
+        return (ANGER_TEXT.format(group=self.group, attack=self.attack_name, per=self.per, letter=self.letter, power=self.power_name),)
+
+    def check(self, power: Power) -> list[str]:
+        problems = _check_power_text(power, "名前のグループのポケモンが名前の決まったワザを使うときこのカードのダメージカウンターの数でダメージを追加する特殊能力", self.texts())
+        if power.name_ja.split("[")[0] != self.power_name:
+            problems.append(f"特殊能力の名前 {power.name_ja!r} が、説明の「{self.power_name}」と合わない")
+        return problems
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        raise IllegalActionError("POWER_NOT_USABLE_NOW", f"特殊能力 {use.key} は、「{self.group}」が「{self.attack_name}」を使うときに、ワザの宣言といっしょに使う（UseAttack の with_power）")
+
+    def usable_for(self, state: GameState, attacker: PokemonInPlay, key: AttackKey) -> str | None:
+        if not in_name_group(state, attacker, self.group) or attack_of(state, key).name_ja != self.attack_name:
+            return f"自分の場の「{self.group}」が「{self.attack_name}」を使うときだけ使える"
+        return None
+
+    def exclusive_key(self) -> tuple:
+        return ("holder_counters", self.group, self.letter, self.power_name)
+
+    def concurrent_use_problem(self, holder_id: int, other_id: int) -> IllegalActionError:
+        return IllegalActionError("POWER_ALREADY_USED",
+                                  f"このカード以外の{self.group}「{self.letter}」（ポケモン {other_id}）が「{self.power_name}」を使っているので、ポケモン {holder_id} の力は使えない")
+
+    def bonus_amount(self, value: int) -> int:
+        return value * self.per
+
+
+@dataclass(frozen=True)
+class ReturnActiveToHandWithBenchLetters(PowerEffect):
+    """この力は、自分のベンチに、このカードとアンノーン「``letters``」がいるとき、自分の番ごとに 1 回使える。自分のバトル場のポケモンと、そのポケモンについているすべてのカードを、自分の
+    手札にもどす（v0.122。アンノーンU（neo2-028）の［UNDO］。kyuura の印刷の文面。docs 3 章）。
+
+    - 宣言して使う。自分の番ごとに 1 回（``once_per_turn``）。このカードが自分のベンチにいて、ほかのベンチのポケモンに文字 ``letters`` のアンノーンがそろうこと（``require_bench_letters``。
+      v0.97 の［FIND］と同じ）。説明にねむり・マヒ・こんらんの条件はない（加えない）。力が消えている・使えないは共通の確かめ
+    - 自分のバトル場のポケモンと、重なったカード・ついているカードをすべて手札にもどす（``zones.return_in_play_to_hand`` の ``power``。きぜつ・ダメージではない。サイドは取られない。
+      トラッシュからの回収ではないので、ポケモンタワー・［アレルギーほうし］は関係しない）。持続する効果は消える。特殊能力の処理のあとに、勝ち負けの判定とバトル場に出す決定
+      （``resolution.after_power``。［おくびょう］と同じ）
+    - バトル場のポケモンが「バトル場をはなれられない」なら使う前に止める（v0.93 の AL2）。もどしたあとに受け付けられない状態（MH1・決められない姿・SC2）になるなら使う前に止める"""
+
+    letters: tuple[str, ...]
+    group: str = "アンノーン"
+    implementation_id = "return_active_to_hand_with_bench_letters"
+    once_per_turn: ClassVar[bool] = True
+
+    def text(self) -> str:
+        return UNDO_TEXT.format(letters="」「".join(self.letters))
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "自分のベンチに名前のグループの決まった文字がそろっているとき、自分のバトル場のポケモンを手札にもどす特殊能力", (self.text(),))
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+        require_bench_letters(state, use, self.letters, self.group)
+        require_active_can_leave(state, use.player, "［UNDO］を使う")  # v0.93: AL2
+        trial = state.clone()
+        active = trial.players[use.player].active
+        return_in_play_to_hand(trial, use.player, active, power=str(use.key))
+        remove_persistent_effects(trial, use.player, active, RETURN_IN_PLAY_TO_HAND)
+        stop = state_stop_after(state, trial)
+        if stop is not None:
+            raise UnsupportedError(*stop)
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        active = state.players[use.player].active
+        return_in_play_to_hand(state, use.player, active, power=str(use.key))
+        remove_persistent_effects(state, use.player, active, RETURN_IN_PLAY_TO_HAND)
+
+
+def _require_discard_to_hand_power(state: GameState, use: PowerUse) -> None:
+    """v0.122: 効果がすべてトラッシュから手札に加える効果の宣言する特殊能力（［WANT］・［かせきのみちびき］）の、コインの前の共通の確かめ（ポケモンタワーの PW5・［アレルギーほうし］の AP2）。"""
+    if discard_to_hand_suppressor(state) is not None:
+        raise UnsupportedError(TOWER_POWER_WITHOUT_EFFECT_CODE, f"{TOWER_POWER_WITHOUT_EFFECT_REASON}。特殊能力 {use.key}")
+    require_discard_not_protected(state, use)
+
+
+def _recover_from_discard(state: GameState, use: PowerUse, card: int, *, reveal: bool) -> None:
+    """v0.122: 特殊能力でトラッシュのカードを手札に加える（ログ ``power_recover_from_discard``。トラッシュは公開の情報なので ``card`` も公開。``revealed`` は相手に見せたか）。"""
+    return_discard_to_hand(state, use.player, (card,))
+    _, user = state.find_pokemon(use.pokemon_id)
+    state.add_event("power_recover_from_discard", player=use.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key), card=card,
+                    card_id=state.cards[card].card_id, revealed=reveal)
+
+
+@dataclass(frozen=True)
+class CoinRecoverTrainerWithBenchLetters(PowerEffect):
+    """この力は、自分のベンチに、このカードとアンノーン「``letters``」がいるとき、自分の番ごとに 1 回使うことができる。コインを投げて「おもて」なら、自分のトラッシュから「トレーナー
+    カード」を 1 枚選び出し、相手プレイヤーに見せてから、手札に加える（v0.122。アンノーンW（neo4-064）の［WANT］。kyuura の印刷の文面（半角の「｢｣」・「一回」「一枚」は写しのまま）。
+    docs 3 章）。
+
+    - 宣言して使う。自分の番ごとに 1 回（コインの「うら」でも使ったことになる）。このカードがベンチにいて、ほかのベンチのポケモンに文字 ``letters`` のアンノーンがそろうこと
+      （``require_bench_letters``）。説明に特殊状態の条件はない。力が消えている・使えないは共通の確かめ
+    - トラッシュに「トレーナーカード」（印刷の分類。スタジアム・なにかの化石・ピッピ人形もふくむ）がなければ WT1（コインの前）。場のポケモンタワーでは効果がすべて消えるので PW5、
+      ［アレルギーほうし］がはたらいていれば AP2（どれもコインの前）
+    - 「おもて」: トラッシュのトレーナーカードを 1 枚選び（決定 ``RECOVER_TRAINER``。トラッシュの並び。公開）、見せてから手札に加える（ログ ``power_recover_from_discard`` の ``revealed``）"""
+
+    letters: tuple[str, ...]
+    group: str = "アンノーン"
+    implementation_id = "coin_recover_trainer_with_bench_letters"
+    once_per_turn: ClassVar[bool] = True
+    discard_to_hand_only: ClassVar[bool] = True
+    discard_cards_effect: ClassVar[str | None] = DISCARD_EFFECT_WHOLE
+
+    def text(self) -> str:
+        return WANT_TEXT.format(letters="｣｢".join(self.letters))
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "自分のベンチに名前のグループの決まった文字がそろっているとき、コインでトラッシュのトレーナーカードを手札に加える特殊能力", (self.text(),))
+
+    def options(self, state: GameState, use: PowerUse) -> tuple[int, ...]:
+        return discard_cards_matching(state, use.player, CardFilter("trainer"))
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+        require_bench_letters(state, use, self.letters, self.group)
+        if not self.options(state, use):
+            raise UnsupportedError(WANT_WITHOUT_TARGET_CODE, WANT_WITHOUT_TARGET_REASON)
+        _require_discard_to_hand_power(state, use)
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        if _power_coin(state, use) is not CoinSide.HEADS:
+            return
+        push_power_decision(state, use, kind=RECOVER_TRAINER, player=use.player, options=self.options(state, use))
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if choices[0] not in self.options(state, use):
+            raise RuntimeError(f"［WANT］で選んだカード {choices} が、トラッシュのトレーナーカードではない（エンジンの不具合）")
+        _recover_from_discard(state, use, choices[0], reveal=True)
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        return _power_decision_form(decision, use, kind=RECOVER_TRAINER, choices=(1, 1), options=self.options(state, use))
+
+
+@dataclass(frozen=True)
+class CoinRecoverNamedFromDiscard(PowerEffect):
+    """この力は、自分の番ごとに 1 回使える。コインを投げて「おもて」なら、自分のトラッシュから「``name``」を 1 枚選び出し、手札に加える。このカードがねむり・マヒ・こんらんの時、この力は
+    使えない（v0.122。オムナイト（ES3-018）の［かせきのみちびき］。kyuura の印刷の文面。docs 4 章）。
+
+    - 宣言して使う。自分の番ごとに 1 回（「うら」でも使ったことになる）。ねむり・マヒ・こんらんで使えない。力が消えている・使えないは共通の確かめ
+    - 選べるのは、トラッシュの名前が「``name``」とちょうど同じカード（印刷の定義。なにかの化石はトレーナーカード。名前の一部・ほかの化石（ひみつのコハク・ふしぎなこうら）・場でたねとして
+      あつかう進化カードを入れない）。なければ GU1。ポケモンタワーは PW5、［アレルギーほうし］は AP2（どれもコインの前）
+    - 「おもて」: 1 枚選び（決定 ``RECOVER_TRAINER``。公開）、手札に加える（説明に「見せてから」はない。トラッシュは公開の情報。ログ ``power_recover_from_discard``）"""
+
+    name: str = FOSSIL_NAME
+    implementation_id = "coin_recover_named_from_discard"
+    once_per_turn: ClassVar[bool] = True
+    discard_to_hand_only: ClassVar[bool] = True
+    discard_cards_effect: ClassVar[str | None] = DISCARD_EFFECT_WHOLE
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "コインでトラッシュの名前の決まったカードを手札に加える特殊能力", (FOSSIL_GUIDE_TEXT.format(fossil=self.name),))
+
+    def options(self, state: GameState, use: PowerUse) -> tuple[int, ...]:
+        return tuple(uid for uid in state.players[use.player].discard if state.card_def(uid).name_ja == self.name)
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_user_not_asleep_paralyzed_confused(state, use)
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+        if not self.options(state, use):
+            raise UnsupportedError(FOSSIL_GUIDE_WITHOUT_TARGET_CODE, FOSSIL_GUIDE_WITHOUT_TARGET_REASON)
+        _require_discard_to_hand_power(state, use)
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        if _power_coin(state, use) is not CoinSide.HEADS:
+            return
+        push_power_decision(state, use, kind=RECOVER_TRAINER, player=use.player, options=self.options(state, use))
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if choices[0] not in self.options(state, use):
+            raise RuntimeError(f"［かせきのみちびき］で選んだカード {choices} が、トラッシュの「{self.name}」ではない（エンジンの不具合）")
+        _recover_from_discard(state, use, choices[0], reveal=False)
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        return _power_decision_form(decision, use, kind=RECOVER_TRAINER, choices=(1, 1), options=self.options(state, use))
+
+
+@dataclass(frozen=True)
+class CoinFossilAttackBonusThisTurn(PowerEffect):
+    """この力は、自分の番ごとに 1 回使える。コインを投げて「おもて」なら、「なにかの化石」から進化したポケモンのワザが相手に与えるダメージは、この番だけ「+``amount``」される。（控え
+    ポケモンへのダメージは、そのまま）（v0.122。オムナイト（ES2-011）の［げんしのゆめ］。kyuura の印刷の文面。docs 4 章）。
+
+    - 宣言して使う。場のポケモンごとに自分の番に 1 回（``once_per_turn``。「うら」でも使ったことになる。2 匹のオムナイトはそれぞれ使え、場全体で 1 回にしない）。説明にねむり・マヒ・
+      こんらん・場所の条件はない（加えない）。力が消えている・使えないは共通の確かめ
+    - 「おもて」: プレイヤーの記録 ``FOSSIL_ATTACK_BONUS``（使った番だけ。使ったポケモンの番号・いちばん上のカード）を加える（ログ ``trainer_effect_added``）。重なれば、それぞれの記録が
+      +``amount``（加算）
+    - 当てはめるのは、その番に、ワザを使うポケモン（ダメージを計算する時点の場で ``fossil_evolution`` が当たる）のワザのダメージのうち、相手（ワザを使うポケモンの相手の対戦ポケモン）への
+      もの（``attack_damage_modifiers``。控え・自分へのダメージ・こんらんの 20 には当てはめない）。本文は「自分の」と書かないので、ワザを使うポケモンの持ち主を限らない（カスミのトレーナーと
+      同じ読み方）。当たるかが読み方で変わるポケモン（FE3）のワザのダメージは計算の前に止める（``kernel.deal_damage``）
+    - 段階: ほかのポケモンが使った効果は p.321 の 6 段階（ワザを使うポケモンの持っている効果でも、受けるポケモンの持っている効果でもない。カスミのトレーナーと同じ）。使ったポケモン自身が
+      ワザを使うときは 2 段階か 6 段階かが決まらず、段階で受けるダメージが変わるなら PM2（変わらなければ 6 段階で計算する）
+    - 使ったあとに、使ったポケモンが場をはなれる・進化しても効果は消えない（説明は消える契機を書かない。［QUICKEN］と同じ読み方）。使ったポケモンが場にいて特殊能力が消えているときは PM1"""
+
+    amount: int = 10
+    fossil: str = FOSSIL_NAME
+    implementation_id = "coin_fossil_attack_bonus_this_turn"
+    once_per_turn: ClassVar[bool] = True
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.amount, "追加のダメージ")
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "コインでこの番だけ化石から進化したポケモンのワザのダメージを追加する特殊能力",
+                                 (PRIMAL_DREAM_TEXT.format(fossil=self.fossil, amount=self.amount),))
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        from .state import FOSSIL_ATTACK_BONUS
+
+        if _power_coin(state, use) is not CoinSide.HEADS:
+            return
+        _, user = state.find_pokemon(use.pokemon_id)
+        _add_power_turn_effect(state, use, user, FOSSIL_ATTACK_BONUS, state.turn_number)
+
+
+def fossil_attack_bonuses(state: GameState) -> tuple[tuple[TrainerTurnEffect, CoinFossilAttackBonusThisTurn], ...]:
+    """v0.122: 今の番にはたらいている［げんしのゆめ］の効果（``FOSSIL_ATTACK_BONUS``。使った番だけ）と、その登録の実装（使った順）。"""
+    from .state import FOSSIL_ATTACK_BONUS
+
+    found = []
+    for record in state.trainer_effects:
+        if record.kind != FOSSIL_ATTACK_BONUS or record.created_turn != state.turn_number:
+            continue
+        definition = state.definitions[record.card_id]
+        effect = next((state.effects.power_effect(definition.id, power) for power in definition.powers
+                       if isinstance(state.effects.power_effect(definition.id, power), CoinFossilAttackBonusThisTurn)), None)
+        if effect is not None:
+            found.append((record, effect))
+    return tuple(found)
+
+
+def fossil_attack_bonus_modifiers(state: GameState, attacker: PokemonInPlay) -> tuple[DamageModifier, ...]:
+    """v0.122: ワザを使うポケモン ``attacker`` のワザの、相手の対戦ポケモンへのダメージに加える［げんしのゆめ］の追加（6 段階。当たるかは ``fossil_evolution``。決まらないなら加えない。
+    止めるのは ``fossil_attack_bonus_problem``）。状態を変えない。"""
+    bonuses = fossil_attack_bonuses(state)
+    if not bonuses or fossil_evolution(state, attacker)[0] != FOSSIL_EVOLVED_YES:
+        return ()
+    return tuple(DamageModifier(step=6, amount=effect.amount, label=f"［{PRIMAL_DREAM_NAME}］", source=record.source_card) for record, effect in bonuses)
+
+
+def fossil_attack_bonus_problem(state: GameState, attacker: PokemonInPlay) -> UnsupportedError | None:
+    """v0.122: ［げんしのゆめ］の効果がはたらく番の、ワザを使うポケモン ``attacker`` の相手の対戦ポケモンへのダメージで止める問い（FE3・PM1）。段階の問い（PM2）は計算を比べるので
+    ``kernel`` が求める。なければ None。状態を変えない。"""
+    from .continuous import power_suppressed
+    from .persistent import powers_stopped
+
+    bonuses = fossil_attack_bonuses(state)
+    if not bonuses:
+        return None
+    answer, detail = fossil_evolution(state, attacker)
+    if answer == FOSSIL_EVOLVED_UNDECIDED:
+        return fossil_evolution_error(f"［げんしのゆめ］の効果がはたらく番の、{detail}のワザ")
+    if answer != FOSSIL_EVOLVED_YES:
+        return None
+    for record, _ in bonuses:
+        found = state.find_pokemon(record.pokemon_id)
+        if found is None:
+            continue  # 使ったポケモンが場をはなれても効果は続く（説明は消える契機を書かない）
+        for slot in powers_of(state, found[1]):
+            if isinstance(slot.effect, CoinFossilAttackBonusThisTurn) and (power_suppressed(state, slot.power, found[1]) or powers_stopped(state, found[1]) is not None):
+                return UnsupportedError(PRIMAL_DREAM_SUPPRESSED_CODE, f"使ったポケモン {record.pokemon_id}（{slot.key}）の特殊能力が消えている: {PRIMAL_DREAM_SUPPRESSED_REASON}")
+    return None
+
+
+@dataclass(frozen=True)
+class ChooseFossilEvolvedThenCoinDevolveAll(PowerEffect):
+    """この力は、自分の番ごとに 1 回使える。自分の場にいる「なにかの化石」から進化したポケモンを、1 匹選ぶ。その後、コインを投げて「おもて」なら、選んだポケモンにのっているすべての進化
+    カードを手札にもどす。このカードがねむり・マヒ・こんらんの時、この力は使えない（v0.122。カブト（ES2-028）の［かせきか］。kyuura の印刷の文面。docs 4 章）。
+
+    - 宣言して使う。自分の番ごとに 1 回（「うら」でも使ったことになる）。ねむり・マヒ・こんらんで使えない。力が消えている・使えないは共通の確かめ
+    - 先に選ぶ（決定 ``SELECT_POKEMON``。使ったプレイヤー。1 匹）。選べるのは自分の場（バトル場 → ベンチ）の ``fossil_evolution`` が当たるか決まらないポケモン。決まらないポケモンは選べるが
+      選ぶと止める（FE3）。「ばける」の重なり（DV5）・途中の重なりできぜつするかで結果が変わる（DV1）も選ぶと止める。どれも当たらなければ FS1、選べるものがどれも止まるならその理由で、
+      選ぶ前に止める
+    - そのあとコイン（選択をコインのあとにしない）。「おもて」: 選んだポケモンに重なっている進化カード（いちばん下のなにかの化石の上のカード）をすべて、持ち主の手札にもどす
+      （``evolution.devolve`` の ``power``。1 枚だけの退化・山札・トラッシュへの移動にしない）。ダメージカウンター・ついているカードは残り、特殊状態・持続する効果は消える。残るなにかの
+      化石の最大HPがのっているダメージ以下なら、特殊能力の処理のあとのきぜつの判定（``may_knock_out``。なにかの化石のきぜつの数・サイドの規定は既存の処理）"""
+
+    implementation_id = "choose_fossil_evolved_then_coin_devolve_all"
+    once_per_turn: ClassVar[bool] = True
+    may_knock_out: ClassVar[bool] = True
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "化石から進化した自分のポケモンを選び、コインで進化カードをすべて手札にもどす特殊能力", (FOSSILIZE_TEXT.format(fossil=FOSSIL_NAME),))
+
+    def candidates(self, state: GameState, player: int) -> tuple[tuple[int, ...], dict[int, tuple[str, str]]]:
+        """(選べるポケモンの番号, 選ぶと止める番号ごとの (コード, 理由))。状態を変えない。"""
+        options: list[int] = []
+        stops: dict[int, tuple[str, str]] = {}
+        for pokemon in state.players[player].in_play():
+            answer, detail = fossil_evolution(state, pokemon)
+            if answer == FOSSIL_EVOLVED_NO:
+                continue
+            options.append(pokemon.pokemon_id)
+            if answer == FOSSIL_EVOLVED_UNDECIDED:
+                error = fossil_evolution_error(detail)
+                stops[pokemon.pokemon_id] = (error.code, error.message)
+            elif devolution_forbidden(state, pokemon):
+                stops[pokemon.pokemon_id] = (DEVOLUTION_TARGET_DISGUISED_CODE, DEVOLUTION_TARGET_DISGUISED_REASON)
+            else:
+                count = len(pokemon.evolution_stack)
+                problem = devolve_count_problems(state, player, pokemon.pokemon_id, None, power="［かせきか］").get(count)
+                if problem is not None:
+                    stops[pokemon.pokemon_id] = problem
+        return tuple(options), stops
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_user_not_asleep_paralyzed_confused(state, use)
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+        options, stops = self.candidates(state, use.player)
+        if not options:
+            raise UnsupportedError(FOSSILIZE_WITHOUT_TARGET_CODE, FOSSILIZE_WITHOUT_TARGET_REASON)
+        if len(stops) == len(options):
+            raise UnsupportedError(*stops[options[0]])
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        options, stops = self.candidates(state, use.player)
+        detail = tuple((pid, *stops[pid]) for pid in options if pid in stops)
+        extra = {} if not detail else {"unresolved_choices": tuple(item[0] for item in detail), "unresolved_code": detail[0][1],
+                                        "unresolved_reason": detail[0][2], "unresolved_detail": detail}
+        push_power_decision(state, use, kind=SELECT_POKEMON, player=use.player, options=options, **extra)
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        (target,) = choices
+        options, stops = self.candidates(state, use.player)
+        if target not in options or target in stops:
+            raise RuntimeError(f"［かせきか］で選んだポケモン {target} が、選べるポケモンではない（エンジンの不具合）")
+        _, user = state.find_pokemon(use.pokemon_id)
+        state.add_event("fossilize_target", player=use.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key), target_pokemon_id=target)
+        if _power_coin(state, use) is not CoinSide.HEADS:
+            return
+        _, pokemon = state.find_pokemon(target)
+        devolve(state, use.player, pokemon, len(pokemon.evolution_stack), destination=DEVOLVE_TO_HAND, by_player=use.player, power=str(use.key))
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        options, stops = self.candidates(state, use.player)
+        return _power_decision_form(decision, use, kind=SELECT_POKEMON, choices=(1, 1), options=options, unresolved=tuple(pid for pid in options if pid in stops))
+
+
+@dataclass(frozen=True)
+class SwitchOpponentOnRetreat(TriggeredPower):
+    """この力は、自分の番ごとに 1 回、このカードが「にげる」とき、はたらく。このカードがベンチにもどったとき、相手の対戦ポケモンを相手の控えポケモンと入れ替える。入れ替えるポケモンは
+    相手プレイヤーが選ぶ。相手に控えがいないとき、この力は、はたらかない（v0.122。わるいフシギソウ（PRN-039）の［つるでひっぱる］。kyuura の印刷の文面。docs 5 章）。
+
+    - 宣言しない（``UsePokemonPower`` では使えない）。成功した「にげる」でこのカードがベンチにもどった事実への反応（``movement.VINE_PULL``。``engine._retreat`` が［CHASE］・おいうちと
+      同じ「にげる」の反応の段に入れる。入れ替え・こんらんで失敗した「にげる」・ポケモンいれかえでは起こらない）。同じ時点のほかの反応との順番は番のプレイヤーが決める（RA1・RA2 は既存）
+    - はたらくか（力が消えていないか）は、「にげる」とき（入れ替えの前）とベンチにもどったとき（入れ替えのあと）の両方で確かめ、違えば VL1（エネルギーのトラッシュ・コインの前）。説明に
+      特殊状態の条件はない（加えない）
+    - 自分の番ごとに 1 回（はたらいたら使った記録 ``power_uses_this_turn``。相手に控えがいなくて、はたらかなかったときは記録しない）
+    - 相手プレイヤーが相手の控えを選び（決定 ``SELECT_POKEMON``。再開先 ``"reaction"``）、相手の対戦ポケモンと入れ替える（「にげる」ではない。［いなびかり］と同じ入れ替えの処理）。
+      相手の対戦ポケモンが「バトル場をはなれられない」なら入れ替える部分は起こらない。選ぶと受け付けられない状態になる控えは選べるが選ぶと止める"""
+
+    implementation_id = "switch_opponent_on_retreat"
+    declared: ClassVar[bool] = False
+    forced: ClassVar[bool] = True  # v0.86 の［いなびかり］と同じく、かならずはたらく反応（ログ pokemon_power の forced）
+    once_per_turn: ClassVar[bool] = True  # はたらいたら ``power_uses_this_turn`` に記録する（宣言はしない）
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "「にげる」でベンチにもどったとき、相手が選ぶ控えと相手の対戦ポケモンを入れ替える特殊能力", (VINE_PULL_TEXT,))
+
+
+def retreat_vine_pulls(state: GameState, player: int, pokemon: PokemonInPlay) -> tuple[PowerSlot, ...]:
+    """v0.122: プレイヤー ``player`` の ``pokemon`` が今持つ、はたらく［つるでひっぱる］（力が消えていない・この番にまだはたらいていない。うらのカードは持たない）。状態を変えない。"""
+    from .continuous import power_suppressed
+    from .persistent import powers_stopped
+
+    if state.is_face_down(pokemon):
+        return ()
+    found = []
+    for slot in powers_of(state, pokemon):
+        if not isinstance(slot.effect, SwitchOpponentOnRetreat):
+            continue
+        if power_suppressed(state, slot.power, pokemon) or powers_stopped(state, pokemon) is not None:
+            continue
+        if power_use_record(state, PowerUse(player, pokemon.pokemon_id, slot.key, card=slot.card)) in state.power_uses_this_turn:
+            continue
+        found.append(slot)
+    return tuple(found)
+
+
+@dataclass(frozen=True)
+class DiscardAllEnergyCardsThenDamageZeroIfLacking(AttackEffect):
+    """自分についているエネルギーカードを、すべてトラッシュする。（トラッシュできない時、このワザのダメージは 0 になる）（v0.122。マチスのライチュウ（GD3-003）の「10まんボルト」。kyuura の
+    印刷の文面。docs 6 章）。要素 ``DiscardOwnEnergy(None, count=None, when_lacking=LACKING_ZERO, timing=TIMING_EFFECT)`` → ``Damage(OPP, Printed(), requires="discard")``。
+
+    - トラッシュするのは、ワザを実際に使ったポケモンについている、種類を問わないエネルギーカードすべて（選ばない。決定なし）。説明がトラッシュできないときの処理を書くので、トラッシュは
+      ワザの効果（こんらんのコイン・ベイビィのルールのコインのあと、ダメージの前。HC1 は当たらない。v0.71 のほのおのうずと同じ時点）。リサイクルエネルギー・エコロジムは原因（ワザ）を通す
+    - 「トラッシュできない時」は、ついているエネルギーカードが 0 枚のとき。このワザのダメージは 0 になる（基本となるダメージを 0 にして計算する。ダメージの要素はなくならず、
+      p.321 の 2 段階（ワザを使うポケモンの持っている効果）までは計算に入る。2 段階までに 0 以下なら p.321 のとおり計算を終え「ダメージを与えなかった」ので、プラスパワーなど
+      5 段階以降の効果は加わらない。ダメージの要素がなくなる「ダメージは与えられない」の書き方（``LACKING_NONE``）とは別）
+    - v0.82 の「ダメージのあとにすべて捨てる」10まんボルト（IP1-003・PR1-062。``DamageThenDiscardAllEnergyCards``）とは文面も時点も違う（その型に文面を加えない）"""
+
+    implementation_id = "discard_all_energy_cards_then_damage_zero_if_lacking"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "エネルギーカードをすべてトラッシュしてダメージを与えるワザ（トラッシュできなければダメージは 0）"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (THUNDERBOLT_ZERO_TEXT,))
+
+
+@dataclass(frozen=True)
+class DamageAndSelfDamageIgnoringWeaknessResistance(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。自分にも、「弱点・抵抗力」に関係なく、``self_damage`` ダメージ（v0.122。プテラ（ES2-029）の「きりもみアタック」。kyuura の
+    印刷の文面。docs 6 章）。要素 ``Damage(OPP, Printed())`` → ``Damage(SELF, Fixed(self_damage), weakness_resistance=False)``。
+
+    - v0.10 の「じごくぐるま」（``DamageAndSelfDamage``。自分へのダメージも弱点・抵抗力を計算する）の既定を変えない別の型。自分へのダメージは弱点・抵抗力だけを計算しない（プラスパワー・
+      ディフェンダー・鋼エネルギーなどほかの段階の効果は既存の計算のまま）。相手の「はんげき」・おたがいのきぜつの判定は既存の処理"""
+
+    self_damage: int
+    implementation_id = "damage_and_self_damage_ignoring_weakness_resistance"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.self_damage, "自分へのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "自分にも弱点・抵抗力に関係なくダメージを与えるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (SPIN_ATTACK_SELF_TEXT.format(self_damage=self.self_damage),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        return DamageProfile(opponent=super().damage_profile(state, use).opponent, self_damage=(self.self_damage,))
+
+
+@dataclass(frozen=True)
+class OpponentChoosesRepeatedTargetsDamage(AttackEffect):
+    """ダメージの目安のないワザ。相手の場のポケモンを、相手プレイヤーが ``units`` 回選ぶ（同じポケモンを 2 回以上選んでもよい）。その後、選ばれたポケモンそれぞれに、選ばれた数 × ``per`` の
+    ダメージを、「弱点・抵抗力」に関係なく与える（v0.122。わるいフシギソウ（PRN-039）の「みだれうち」。kyuura の印刷の文面。docs 5 章）。
+
+    - 要素は v0.115 の ``AllocateDamage``（決まった単位の数 ``units``・1 単位 ``per``・相手の場（バトル場 → ベンチ）。選ぶのは相手プレイヤー ``chooser=CHOOSER_OPPONENT``）。ワザを使う
+      プレイヤーと選ぶ人を分ける（相手のワザとして使っても、選ぶのはワザを実際に使ったプレイヤーの相手）
+    - 3 回の選択は、ポケモンごとの選ばれた数の配分（合計がちょうど ``units``）として 1 回の決定で答える（同じ配分・同じ公開の情報）。同じポケモンの数は合算し、1 回の ``per`` × 数のダメージ
+      （3 回の 10 として受ける効果・反応を 3 回起こさない）。防ぐ効果を受けているポケモンも選べる（選択肢から消さない）。受ける判定・無効・反応・きぜつは既存のダメージの処理"""
+
+    units: int
+    per: int
+    implementation_id = "opponent_chooses_repeated_targets_damage"
+
+    def __post_init__(self) -> None:
+        _positive_count(self.units, "選ぶ回数")
+        _positive_tens(self.per, "1 回あたりのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手プレイヤーが選んだ回数の配分のダメージを与えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (RANDOM_STRIKE_TEXT.format(units=self.units, per=self.per),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return allocation_decision_problems(state, use, decision, scope=TARGET_IN_PLAY, per=self.per, max_units=self.units, chooser=1 - use.player)
+
+
+@dataclass(frozen=True)
+class DamageThenPoisonAndStatusByTwoCoins(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。コインを 2 枚投げる。「おもて」が 1 枚なら相手を「どく」と「ねむり」状態に、すべて「おもて」なら「どく」と「こんらん」状態に、
+    すべて「うら」なら「どく」と「マヒ」状態にする（v0.122。わるいフシギバナ（PRN-040）の「いやなかふん」。kyuura の印刷の文面。docs 6 章）。
+
+    - 要素は ``Damage(OPP)`` → ``Coin("coins", 2)`` → ``Status(POISON)`` → ``Status(SLEEP, gate=1)``・``Status(CONFUSION, gate=2)``・``Status(PARALYSIS, gate=0)``。同じ 2 枚のコインで組を
+      決め（要素ごとに投げ直さない。ナツメのESPでやり直せば、やり直した最後の組）、どのときもどくにする。状態だけのワザ・3 枚のコインにしない
+    - どくとほかの状態の共存・置きかえ・免疫・防ぐ効果は既存の ``Status`` の処理。相手がこのワザのダメージで HP 以上なら投げない（p.309）"""
+
+    implementation_id = "damage_then_poison_and_status_by_two_coins"
+    opponent_effect_elements = (POISON, SLEEP, CONFUSION, PARALYSIS)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "ダメージのあと 2 枚のコインの組でどくとほかの状態にするワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (NASTY_POLLEN_TEXT,))
+
+
+@dataclass(frozen=True)
+class DamageThenSelfCannotAttackOrRetreat(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。次の自分の番、このカードはワザを使うことができず、「にげる」こともできない（v0.122。わるいオニドリル（PRN-045）の
+    「ドリルダイブ」。kyuura の印刷の文面。docs 6 章）。要素 ``Damage(OPP)`` → ``SelfCannotAttack()`` → ``SelfCannotRetreat()``。
+
+    - 自分自身に 2 つの持続する効果を与える（v0.78 の ``CannotAttackNextOwnTurn``（すべてのワザ）と、``CannotRetreatNextOwnTurn``（「にげる」だけ）。どちらもはたらく番は与えた番 + 2・
+      その番の終わりに消える・ベンチにもどる・進化・きぜつで消える）。特定のワザだけ・相手側・使った番だけの禁止にしない
+    - 相手へのダメージを防がれても与える（説明は「ダメージを与えた後」と書かない）。このカードがこのワザで HP 以上なら与えない（p.309）。相手のワザとして使えば、使ったポケモンに与える
+    - 入れ替え（ポケモンいれかえなど）は「にげる」ではないので止めない（p.325）"""
+
+    implementation_id = "damage_then_self_cannot_attack_or_retreat"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "次の自分の番にワザもにげるもできなくなるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (DRILL_DIVE_TEXT,))
+
+    def retreat_lock_terms(self) -> type:
+        from .state import CannotRetreatNextOwnTurn
+
+        return CannotRetreatNextOwnTurn
+
+
+_A_POWER = CounterBonusToGroupAttack("A", "ANGER")
+_METAL_DF = ReduceOwnGroupDamageFromType(EnergyType.METAL, "M", "METAL df")
+_UNDO = ReturnActiveToHandWithBenchLetters(("N", "D", "O"))
+_WANT = CoinRecoverTrainerWithBenchLetters(("A", "N", "T"))
+_PRIMAL_DREAM = CoinFossilAttackBonusThisTurn()
+_FOSSIL_GUIDE = CoinRecoverNamedFromDiscard()
+_FOSSILIZE = ChooseFossilEvolvedThenCoinDevolveAll()
+_VINE_PULL = SwitchOpponentOnRetreat()
+_PRIMAL_DREAM_PLAY_TEXT = PRIMAL_DREAM_TEXT.format(fossil=FOSSIL_NAME, amount=10)
+_FOSSILIZE_PLAY_TEXT = FOSSILIZE_TEXT.format(fossil=FOSSIL_NAME)
+_FOSSIL_GUIDE_PLAY_TEXT = FOSSIL_GUIDE_TEXT.format(fossil=FOSSIL_NAME)
+
+# v0.122 のワザの登録（17）。説明文のない 7 つ（めざめるパワー 4・メガトンパンチ・ころがりタックル・なみのり）は文面・出典を持たない
+V0_122_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    AttackKey("neo2-027", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーンM（超・10）
+    AttackKey("neo2-028", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーンU（超・10）
+    AttackKey("neo2-030", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーンA（超・10）
+    AttackKey("neo4-064", 0): AttackEntry(DAMAGE_ONLY, "めざめるパワー"),  # アンノーンW（超・10）
+    # マチスのライチュウ（GD3-003）。メガトンパンチ（雷雷）30・10まんボルト（雷雷雷雷）100
+    AttackKey("GD3-003", 0): AttackEntry(DAMAGE_ONLY, "メガトンパンチ"),
+    AttackKey("GD3-003", 1): _printed(DiscardAllEnergyCardsThenDamageZeroIfLacking(), "10まんボルト", THUNDERBOLT_ZERO_TEXT),
+    # オムナイト（ES2-011）。ころがりタックル（無無）20
+    AttackKey("ES2-011", 0): AttackEntry(DAMAGE_ONLY, "ころがりタックル"),
+    # カブト（ES2-028）。するどいツメは既存の CoinBonusDamage（10+。「おもて」で 30 を追加）
+    AttackKey("ES2-028", 0): _printed(CoinBonusDamage(30), "するどいツメ", "コインを投げて「おもて」なら、30ダメージを追加する。"),
+    # プテラ（ES2-029）。ちょうおんぱは既存の ConfuseOnHeadsWithoutDamage（目安なし）
+    AttackKey("ES2-029", 0): _printed(ConfuseOnHeadsWithoutDamage(), "ちょうおんぱ", "コインを投げて「おもて」なら、相手を「こんらん」状態にする。"),
+    AttackKey("ES2-029", 1): _printed(DamageAndSelfDamageIgnoringWeaknessResistance(10), "きりもみアタック", SPIN_ATTACK_SELF_TEXT.format(self_damage=10)),
+    # オムナイト（ES3-018）。なみのり（水水）30
+    AttackKey("ES3-018", 0): AttackEntry(DAMAGE_ONLY, "なみのり"),
+    # カポエラー（PRN-030）。れんぞくキックは既存の CoinsUntilTailsDamage(20)、こうそくスピンは既存の DamageThenSwitchBothActives（フォレトス neo2-044 と同じ全文）
+    AttackKey("PRN-030", 0): _printed(CoinsUntilTailsDamage(20), "れんぞくキック", "「うら」が出るまでコインを投げつづけ、その間に出た「おもて」の数×20のダメージ。"),
+    AttackKey("PRN-030", 1): _printed(DamageThenSwitchBothActives(), "こうそくスピン", RAPID_SPIN_TEXT),
+    # わるいフシギソウ（PRN-039）
+    AttackKey("PRN-039", 0): _printed(OpponentChoosesRepeatedTargetsDamage(3, 10), "みだれうち", RANDOM_STRIKE_TEXT.format(units=3, per=10)),
+    # わるいフシギバナ（PRN-040）
+    AttackKey("PRN-040", 0): _printed(DamageThenPoisonAndStatusByTwoCoins(), "いやなかふん", NASTY_POLLEN_TEXT),
+    # わるいオニドリル（PRN-045）。たかくとぶは既存の SetNextTurnAttackDamage（変わるワザ「ドリルダイブ」の説明の全文 target_text。p.321 の 2 段階で 80 にする）
+    AttackKey("PRN-045", 0): _printed(SetNextTurnAttackDamage(1, "ドリルダイブ", 80, target_text=DRILL_DIVE_TEXT), "たかくとぶ",
+                                      "次の自分の番、このカードが使う「ドリルダイブ」のダメージは「80」になる。"),
+    AttackKey("PRN-045", 1): _printed(DamageThenSelfCannotAttackOrRetreat(), "ドリルダイブ", DRILL_DIVE_TEXT),
+})
+
+# v0.122 の特殊能力の登録（8）。名前・文面は写しの表記のまま
+V0_122_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
+    PowerKey("neo2-027", 0): PowerEntry(_METAL_DF, "METAL df[メタル ディーエフ]", _METAL_DF.texts()[0], _METAL_DF.texts()[0], _KYUURA_PRINTED_TEXT),
+    PowerKey("neo2-028", 0): PowerEntry(_UNDO, "UNDO[アンドゥ]", _UNDO.text(), _UNDO.text(), _KYUURA_PRINTED_TEXT),
+    PowerKey("neo2-030", 0): PowerEntry(_A_POWER, "ANGER[アンガー]", _A_POWER.texts()[0], _A_POWER.texts()[0], _KYUURA_PRINTED_TEXT),
+    PowerKey("neo4-064", 0): PowerEntry(_WANT, "WANT[ウォント]", _WANT.text(), _WANT.text(), _KYUURA_PRINTED_TEXT),
+    PowerKey("ES2-011", 0): PowerEntry(_PRIMAL_DREAM, "げんしのゆめ", _PRIMAL_DREAM_PLAY_TEXT, _PRIMAL_DREAM_PLAY_TEXT, _KYUURA_PRINTED_TEXT),
+    PowerKey("ES2-028", 0): PowerEntry(_FOSSILIZE, "かせきか", _FOSSILIZE_PLAY_TEXT, _FOSSILIZE_PLAY_TEXT, _KYUURA_PRINTED_TEXT),
+    PowerKey("ES3-018", 0): PowerEntry(_FOSSIL_GUIDE, "かせきのみちびき", _FOSSIL_GUIDE_PLAY_TEXT, _FOSSIL_GUIDE_PLAY_TEXT, _KYUURA_PRINTED_TEXT),
+    PowerKey("PRN-039", 0): PowerEntry(_VINE_PULL, "つるでひっぱる", VINE_PULL_TEXT, VINE_PULL_TEXT, _KYUURA_PRINTED_TEXT),
+})
+
+DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_122_ATTACKS), V0_122_POWERS)

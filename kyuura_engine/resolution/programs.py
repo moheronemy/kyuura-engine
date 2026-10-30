@@ -53,7 +53,7 @@ from ..persistent import (RETURN_IN_PLAY_TO_DECK, RETURN_IN_PLAY_TO_HAND, add_pe
                           remove_persistent_effects, remove_source_left_effects, replace_persistent_effect, require_can_leave)
 from ..persistent import CURED as PERSISTENT_CURED
 from ..state import (
-    NEXT_TURN_MULTIPLY, NEXT_TURN_SET, RETALIATION_FIXED, RETALIATION_RECEIVED, AttackBarrier, AttackCoinCheck, CannotAttack, CannotAttackNextOwnTurn,
+    NEXT_TURN_MULTIPLY, NEXT_TURN_SET, RETALIATION_FIXED, RETALIATION_RECEIVED, AttackBarrier, AttackCoinCheck, CannotAttack, CannotAttackNextOwnTurn, CannotRetreatNextOwnTurn,
     CannotAttachEnergy, CannotAttackWhileSourceActive, CannotRetreat, CannotUseAttack, CannotUsePowers, CannotUseOwnAttack, DamageReduction, DestinyBond, DoubledDamage, HalvedDamage, NextTurnAttackDamage, PreventAttackDamage, PreventDamage,
     MaxHpSet, ReducedDamageToSource, ReducedDamageToSourceNextTurn, ReflectShield, ResistanceChange, Retaliation, TailsDamageGuard, TrainerTurnEffect, TrainerUseLock, WeaknessChange, ZeroDamageBelow, mark_returned_to_bench,
     OPPONENT_POWER_SUPPRESSION, StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard, StatusImmunityNextTurn, PowersStopped, BenchProtection,
@@ -480,7 +480,9 @@ class AttackRun:
         for name, chosen in carried.get("chosen_options", ()):
             self.fs.results[name] = ChosenOption(bool(chosen))  # v0.118
         group_power = carried.get("group_power")
-        self.res.group_power = None if group_power is None else tuple(group_power)  # v0.118
+        # v0.118。v0.122: 2 つ以上の力は ``group_powers``（宣言の順）。1 つなら v0.121 までと同じ ``group_power``
+        self.res.group_powers = (tuple(tuple(entry) for entry in carried["group_powers"]) if "group_powers" in carried
+                                 else (() if group_power is None else (tuple(group_power),)))
         for name, values in carried.get("damage_results", ()):
             self.fs.results[name] = E.DamageResult(*values)  # v0.87
         for name, cards, outcome in carried.get("discarded_results", ()):
@@ -631,9 +633,12 @@ class AttackRun:
         if chosen_options:
             # v0.118: 「のぞむなら」の決定の答え（エアロウイングの投げる・投げない。``OptionalCoin``）。あとの決定（ナツメのESPのやり直しなど）をまたいでも選び直さない
             extra += (("chosen_options", chosen_options),)
-        if self.res.group_power is not None:
+        if len(self.res.group_powers) == 1:
             # v0.118: ワザといっしょに使った自分の場のポケモンの［XXXXX］（発生源・特殊能力・「おもて」の数）。使っていなければ書かない（v0.117 までの決定の形は変えない）
-            extra += (("group_power", self.res.group_power),)
+            extra += (("group_power", self.res.group_powers[0]),)
+        elif self.res.group_powers:
+            # v0.122: 2 つ以上の力（［ANGER］と［XXXXX］）は宣言の順の並び。1 つのときの形（``group_power``）は v0.121 までと同じ
+            extra += (("group_powers", self.res.group_powers),)
         if self.esp_asked and kind != ESP_REDO:
             # v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 2 章）: このワザでナツメのESPのやり直しを聞いた要素の並びのワザ。聞いていなければ書かない（v0.119 までの決定の形は
             # 変えない）。v0.119 までは運ばず、ちょうのうりょくのコインで聞いたあとのワザを選ぶ決定をまたぐと聞いたことを忘れ、先読み（ES0 の内部エラー）と実際の処理（もう一度の
@@ -1743,8 +1748,9 @@ class Damage(Element):
             if designate(run.res, run.fs, 1 - run.player, run.opponent_active(), "damage") is None:
                 run.fs.results[self.name] = E.DamageResult(OPP, 1 - run.player, run.opponent_active().pokemon_id, False, None, False, lost=True)
                 return False
-        if self.target == OPP and run.res.group_power is not None and run.res.group_power[4] is None and run.fs.frame.kind is FrameKind.ATTACK:
-            group_power_coins(run, self)  # v0.118: ワザといっしょに使った［XXXXX］のコイン（相手の対戦ポケモンへのダメージの要素で投げる）
+        if self.target == OPP and any(entry[4] is None for entry in run.res.group_powers) and run.fs.frame.kind is FrameKind.ATTACK:
+            # v0.118: ワザといっしょに使った［XXXXX］のコイン（相手の対戦ポケモンへのダメージの要素で投げる）。v0.122: ［ANGER］のダメージカウンターもここで数える（コインより先）
+            declared_power_amounts(run, self)
         value_for = getattr(self.base, "value_for", None)  # v0.115: 受けるポケモンごとの基本となるダメージ（サイコスプラッシュ）
         base = 0 if zero else (value_for(run, receiver_of_target(run, self.target)[1]) if value_for is not None else self.base.value(run, flips))
         return self._deal(run, base, {})
@@ -8381,6 +8387,29 @@ class SelfCannotAttack(Element):
         return False
 
 
+@dataclass(frozen=True)
+class SelfCannotRetreat(Element):
+    """次の自分の番、ワザを使ったポケモンは「にげる」ことができない（v0.122。わるいオニドリルの「ドリルダイブ」。持続する効果 ``CannotRetreatNextOwnTurn``）。v0.78 の ``SelfCannotAttack`` と
+    同じく、ワザを使ったポケモンへの効果（「とうめい」を評価しない）。このワザの中で HP 以上になっていれば与えない（p.309）。相手のワザとして使っても使ったポケモンに与える。"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
+        return None  # 効果はワザの位置を記録しないので、相手のワザとして使っても使ったポケモンに与えられる
+
+    def run(self, run: AttackRun) -> bool:
+        attacker = run.attacker()
+        if run.knocked_out(attacker):
+            run.state.add_event("persistent_effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id,
+                                persistent_effect=CannotRetreatNextOwnTurn.kind, effect=str(run.key), reason=E.EFFECT_TARGET_KNOCKED_OUT)
+            return False
+        turn = run.state.turn_number
+        effect = CannotRetreatNextOwnTurn(source_card=attacker.card, source_player=run.player, created_turn=turn,
+                                          active_turn=turn + CannotRetreatNextOwnTurn.turns_until_active)
+        add_persistent_effect(run.state, run.player, attacker, effect, attack=str(run.key))
+        return False
+
+
 # ---------------------------------------------------------------- v0.82（docs/energy-discard-return-v0.82.md）
 
 
@@ -13593,6 +13622,20 @@ class DiscardedUnits:
 
 
 @dataclass(frozen=True)
+class FixedUnits:
+    """配る単位: 決まった数（v0.122。わるいフシギソウの「みだれうち」の「相手プレイヤーが、3回選ぶ」）。"""
+
+    units: int
+
+    def count(self, run: AttackRun) -> int:
+        return self.units
+
+
+CHOOSER_ATTACKER = "attacker"  # v0.122: 配分を選ぶのはワザを使ったプレイヤー（v0.115 からの既定）
+CHOOSER_OPPONENT = "opponent"  # v0.122: 配分を選ぶのはワザを使ったプレイヤーの相手（みだれうち）
+
+
+@dataclass(frozen=True)
 class AllocateDamage(Element):
     """得た単位（``units``）× ``per`` のダメージを、相手の場（``scope``: 控えだけ ``TARGET_BENCH``・対戦ポケモンと控え ``TARGET_IN_PLAY``）のポケモンに、ワザを使ったプレイヤーが選んだ配分で、
     「弱点・抵抗力」に関係なく与える（v0.115。シードラの「ウォーターボム」・ゴローンの「がんせきくだき」・ゴローニャの「ロックブラスト」。docs 4.3 節）。
@@ -13611,6 +13654,9 @@ class AllocateDamage(Element):
     per: int
     scope: str = E.TARGET_BENCH
     name: str = "allocated_damage"
+    # v0.122（docs/unown-fossil-retreat-reactions-v0.122.md 5 章）: 配分を選ぶプレイヤー（``CHOOSER_OPPONENT`` はワザを使ったプレイヤーの相手。みだれうち）。ダメージを与えるのはワザを使った
+    # ポケモンのまま（弱点・抵抗力に関係なく。受ける判定・無効・反応は同じ）。ログ ``damage_allocated`` には相手が選んだときだけ ``chooser`` を書く（v0.121 までの形を変えない）
+    chooser: str = CHOOSER_ATTACKER
     phase: ClassVar[Phase] = Phase.DAMAGE
     guards_bench: ClassVar[bool] = True
     decision_kind: ClassVar[str] = ALLOCATE_DAMAGE
@@ -13618,6 +13664,8 @@ class AllocateDamage(Element):
     def __post_init__(self) -> None:
         if self.scope not in (E.TARGET_BENCH, E.TARGET_IN_PLAY):
             raise ValueError(f"配る先の範囲 {self.scope!r} は相手の控え・相手の場")
+        if self.chooser not in (CHOOSER_ATTACKER, CHOOSER_OPPONENT):
+            raise ValueError(f"配分を選ぶプレイヤー {self.chooser!r} は {CHOOSER_ATTACKER} か {CHOOSER_OPPONENT}")
         if type(self.per) is not int or self.per <= 0 or self.per % 10:
             raise ValueError(f"1 単位のダメージは 10 の倍数の正の数（{self.per!r}）")
 
@@ -13653,7 +13701,8 @@ class AllocateDamage(Element):
             return False
         ids = tuple(pokemon.pokemon_id for _, pokemon in targets)
         table = E.damage_allocations(units, len(ids))
-        run.suspend(kind=ALLOCATE_DAMAGE, player=run.player, options=tuple(range(len(table))), carry=True,
+        chooser = run.player if self.chooser == CHOOSER_ATTACKER else 1 - run.player
+        run.suspend(kind=ALLOCATE_DAMAGE, player=chooser, options=tuple(range(len(table))), carry=True,
                     extra=(("allocation", (ids, units, self.per)), ("table", table)))
         return True
 
@@ -13668,8 +13717,9 @@ class AllocateDamage(Element):
             raise RuntimeError(f"配分の決定の答え {choices}・配る先 {ids} が、今の場・表と合わない（エンジンの不具合）")
         counts = table[choices[0]]
         attacker = run.attacker()
+        extra = {} if self.chooser == CHOOSER_ATTACKER else {"chooser": 1 - run.player}  # v0.122
         run.state.add_event("damage_allocated", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
-                            targets=tuple(ids), counts=tuple(counts), per=per, units=units)
+                            targets=tuple(ids), counts=tuple(counts), per=per, units=units, **extra)
         entries = [(target_kind(run, owner, pokemon), pokemon.pokemon_id, per * count, False) for (owner, pokemon), count in zip(targets, counts) if count]
         guarded_damages(run, self, entries, record=True)
 
@@ -14837,42 +14887,63 @@ class SetOnHeads:
         return self.amount if run.coin_is((self.coin, HEADS)) else run.attack.damage
 
 
-def group_power_coins(run: AttackRun, element: Damage) -> None:
-    """v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 5 章）: ワザといっしょに使った自分の場のポケモンの［XXXXX］（``Resolution.group_power``）のコインを、そのワザの相手の対戦ポケモンへの
+def declared_power_amounts(run: AttackRun, element: Damage) -> None:
+    """v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 5 章）: ワザといっしょに使った自分の場のポケモンの［XXXXX］（``Resolution.group_powers``）のコインを、そのワザの相手の対戦ポケモンへの
     ダメージの要素で投げる（「うら」が出るまで。投げるのは使ったプレイヤー。``source="power"``。ワザの説明のコインではないので、ナツメのESPのやり直しの対象ではない）。
 
     - 受けるポケモンがダメージを受けない状態なら、コインはダメージの量だけを決めるので、投げるかが決められない（v0.4b の問い）
     - 先読みは ``unbounded.bonus_classes``（追加の段階で key を求めた「おもて」の数の組）の代表だけを試す。実際の対戦のコイン・ログ・追加は実際の数
-    - 投げたら「おもて」の数を ``Resolution.group_power`` に置き（決定をまたいでも続きの情報で運び、投げ直さない）、ログ ``group_attack_power_coins``（公開。追加の量と段階）"""
+    - 投げたら「おもて」の数を ``Resolution.group_powers`` に置き（決定をまたいでも続きの情報で運び、投げ直さない）、ログ ``group_attack_power_coins``（公開。追加の量と段階）
+
+    v0.122（docs/unown-fossil-retreat-reactions-v0.122.md 3 章）: 2 つ以上の力を宣言の順に処理する（前の力の値を上書きしない）。のっているダメージカウンターの数で決める力（［ANGER］）を
+    先に数え（この要素を処理する時点の、力を持つ個体のダメージカウンター。コインはない。ログ ``group_attack_power_counters``）、そのあとコインの力を投げる（コインの力の「おもて」の数の組は、
+    数えた追加を含めて求める）。ダメージを受けない状態の相手でも、カウンターを数えることは結果を変えないので止めない"""
     from ..effects import PowerKey
     from .kernel import first_void
     from .unbounded import bonus_classes
 
     res = run.res
     state = run.state
-    holder_id, holder_card, card_id, power_index, heads = res.group_power
-    if heads is not None:
-        return
-    owner, receiver = 1 - run.player, run.opponent_active()
-    void = first_void(res, run.incoming(), owner, receiver)
-    if void is not None:
-        raise res.question("prevented_coin_damage", f"ポケモン {receiver.pokemon_id}（［XXXXX］のコイン）", E.prevented_coin_damage_error(receiver.pokemon_id, void.implementation.kind))
-    definition = state.definitions[card_id]
-    effect = state.effects.power_effect(definition.id, definition.powers[power_index])
-    step = 2 if holder_id == run.attacker().pokemon_id else 6
-    label = f"［{definition.powers[power_index].name_ja}］"
-    found: list = []
+    attacker = run.attacker()
+    entries = list(res.group_powers)
+    for index, (holder_id, holder_card, card_id, power_index, value) in enumerate(entries):
+        effect = E.declared_power_effect(state, entries[index])
+        if value is not None or not effect.counts_holder_counters:
+            continue
+        found = state.find_pokemon(holder_id)
+        if found is None:
+            # 宣言のあと、相手の対戦ポケモンへのダメージの要素の前に、力を持つ個体が場をはなれる処理はない（「めざめるパワー」は説明のないワザ。今の写しでは起こらない）
+            raise RuntimeError(f"ワザといっしょに使った力を持つポケモン {holder_id} が、ダメージの要素の前に場にいない（エンジンの不具合）")
+        counters = found[1].damage // state.rules.damage_per_counter
+        entries[index] = (holder_id, holder_card, card_id, power_index, counters)
+        res.group_powers = tuple(entries)
+        state.add_event("group_attack_power_counters", player=run.player, pokemon=holder_card, pokemon_id=holder_id, power=str(PowerKey(card_id, power_index)),
+                        effect=str(run.key), counters=counters, amount=effect.bonus_amount(counters), step=2 if holder_id == attacker.pokemon_id else 6,
+                        attacker_pokemon_id=attacker.pokemon_id)
+    for index, (holder_id, holder_card, card_id, power_index, heads) in enumerate(entries):
+        effect = E.declared_power_effect(state, entries[index])
+        if heads is not None or not effect.uses_coins:
+            continue
+        owner, receiver = 1 - run.player, run.opponent_active()
+        void = first_void(res, run.incoming(), owner, receiver)
+        if void is not None:
+            raise res.question("prevented_coin_damage", f"ポケモン {receiver.pokemon_id}（［XXXXX］のコイン）", E.prevented_coin_damage_error(receiver.pokemon_id, void.implementation.kind))
+        definition = state.definitions[card_id]
+        step = 2 if holder_id == attacker.pokemon_id else 6
+        label = f"［{definition.powers[power_index].name_ja}］"
+        found_classes: list = []
 
-    def classes():
-        if not found:
-            found.append(bonus_classes(run, element, effect.per, step, label, holder_card))
-        return found[0]
+        def classes(per=effect.per, step=step, label=label, holder_card=holder_card, found_classes=found_classes):
+            if not found_classes:
+                found_classes.append(bonus_classes(run, element, per, step, label, holder_card))
+            return found_classes[0]
 
-    key = PowerKey(card_id, power_index)
-    flips = flip_until_tails(state, run.player, source="power", effect=str(key), card=holder_card, pokemon_id=holder_id, classes=classes)
-    res.group_power = (holder_id, holder_card, card_id, power_index, flips.heads)
-    state.add_event("group_attack_power_coins", player=run.player, pokemon=holder_card, pokemon_id=holder_id, power=str(key), effect=str(run.key), heads=flips.heads,
-                    amount=flips.heads * effect.per, step=step, attacker_pokemon_id=run.attacker().pokemon_id)
+        key = PowerKey(card_id, power_index)
+        flips = flip_until_tails(state, run.player, source="power", effect=str(key), card=holder_card, pokemon_id=holder_id, classes=classes)
+        entries[index] = (holder_id, holder_card, card_id, power_index, flips.heads)
+        res.group_powers = tuple(entries)
+        state.add_event("group_attack_power_coins", player=run.player, pokemon=holder_card, pokemon_id=holder_id, power=str(key), effect=str(run.key), heads=flips.heads,
+                        amount=flips.heads * effect.per, step=step, attacker_pokemon_id=attacker.pokemon_id)
 
 
 BUILDERS |= {
@@ -15382,4 +15453,26 @@ BUILDERS |= {
     E.BenchOpponentHandBasicThenSwitchOrFail: lambda e: (OpponentHandToBenchThenSwitch(),),
     # ちょうはつ: おたがいに相手の手札を見る → それぞれ、のぞむなら相手の手札のたね・ベイビィを相手のベンチの空きぶん出す
     E.EachPlayerBenchesOpponentHandBasics: lambda e: (EachPlayerHandToBench(),),
+}
+
+
+# v0.122（docs/unown-fossil-retreat-reactions-v0.122.md）: 10まんボルト（GD3-003）・きりもみアタック・みだれうち・いやなかふん・ドリルダイブ
+BUILDERS |= {
+    # 10まんボルト: 自分についているエネルギーカードをすべてトラッシュ（ワザの効果。決定なし。0 枚ならトラッシュできない）→ ダメージ（トラッシュできなければ基本となるダメージ 0）
+    E.DiscardAllEnergyCardsThenDamageZeroIfLacking: lambda e: (
+        DiscardOwnEnergy(None, count=None, when_lacking=LACKING_ZERO, timing=TIMING_EFFECT), Damage(OPP, Printed(), requires="discard"),
+    ),
+    # きりもみアタック: 相手へのダメージ → 自分へのダメージ（弱点・抵抗力だけを計算しない）
+    E.DamageAndSelfDamageIgnoringWeaknessResistance: lambda e: (
+        Damage(OPP, Printed()), Damage(SELF, Fixed(e.self_damage), name="self_damage", weakness_resistance=False),
+    ),
+    # みだれうち: 相手プレイヤーが相手の場のポケモンに units 単位を配る（同じポケモンの単位は合算した 1 回のダメージ。弱点・抵抗力に関係なく）
+    E.OpponentChoosesRepeatedTargetsDamage: lambda e: (AllocateDamage(FixedUnits(e.units), e.per, scope=E.TARGET_IN_PLAY, chooser=CHOOSER_OPPONENT),),
+    # いやなかふん: ダメージ → 2 枚のコイン → どく → 「おもて」1 枚ならねむり・2 枚ならこんらん・0 枚ならマヒ（同じコインの組）
+    E.DamageThenPoisonAndStatusByTwoCoins: lambda e: (
+        Damage(OPP, Printed()), Coin("coins", count=2), Status(POISON), Status(SLEEP, gate=("coins", Exactly(1))),
+        Status(CONFUSION, gate=("coins", Exactly(2))), Status(PARALYSIS, gate=("coins", Exactly(0)), reparalysis_check=True),
+    ),
+    # ドリルダイブ: ダメージ → 次の自分の番、ワザ（すべて）を使えない → 「にげる」ことができない（どちらも自分に与える持続する効果）
+    E.DamageThenSelfCannotAttackOrRetreat: lambda e: (Damage(OPP, Printed()), SelfCannotAttack(), SelfCannotRetreat()),
 }

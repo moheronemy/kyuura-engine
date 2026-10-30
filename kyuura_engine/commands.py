@@ -99,6 +99,10 @@ class UseAttack:
     # 「めざめるパワー」を使うとき、使うことができる」）を持つポケモンの場の番号（ワザを使うポケモン自身でもよい）。None（既定。v0.117 までの形。辞書には書かない）なら使わない。
     # ``attack_power``（ワザを使うポケモン自身の［すいりょくはつでん］）とは別の項目。使えない・使えない状態なら、状態を変えずに拒否する
     with_power: int | None = None
+    # v0.122（docs/unown-fossil-retreat-reactions-v0.122.md 3 章）: ワザといっしょに使う、自分の場のポケモンの特殊能力を 2 つ以上いっしょに指すときの、持つポケモンの場の番号の並び
+    # （アンノーンA の［ANGER］とアンノーンX の［XXXXX］を同じ「めざめるパワー」で使う）。空（既定。v0.121 までの形。辞書には書かない）なら ``with_power`` のとおり。``with_power`` との併記・
+    # 同じ番号の重なりは、状態を変えずに拒否する（``effects.declared_power_holders``）。並びの順に宣言し、確かめる
+    with_powers: tuple[int, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -332,6 +336,8 @@ def check_command_fields(command) -> None:
 _OMITTED_WHEN_NONE: dict[type, tuple[str, ...]] = {UseAttack: ("card", "with_power"), UsePokemonPower: ("card",), AttachEnergy: ("energy2",)}  # v0.59: AttachEnergy.energy2。v0.118: with_power
 # v0.57: 同じく、既定の値（False）のときは辞書に書かない項目（``UseAttack.stadium_coin``。v0.56 までの形を変えない）
 _OMITTED_WHEN_FALSE: dict[type, tuple[str, ...]] = {UseAttack: ("stadium_coin", "attack_power")}  # v0.88: attack_power
+# v0.122: 同じく、既定の値（空のタプル）のときは辞書に書かない項目（``UseAttack.with_powers``。v0.121 までの形を変えない）
+_OMITTED_WHEN_EMPTY: dict[type, tuple[str, ...]] = {UseAttack: ("with_powers",)}
 
 
 def command_to_dict(command) -> dict:
@@ -341,6 +347,9 @@ def command_to_dict(command) -> dict:
             del data[name]
     for name in _OMITTED_WHEN_FALSE.get(type(command), ()):
         if data[name] is False:
+            del data[name]
+    for name in _OMITTED_WHEN_EMPTY.get(type(command), ()):
+        if data[name] == ():
             del data[name]
     for key, value in data.items():
         if isinstance(value, tuple):

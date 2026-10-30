@@ -24,6 +24,11 @@ v0.117（docs/retreat-return-active-powers-v0.117.md 3 章・4 章）: 「にげ
 - ``(CHASE, にげたプレイヤー, にげたポケモンの番号, 持ち主, 持つポケモンの番号, カード id, 特殊能力の位置, 1)``: 相手のバトル場のアンノーンC の［CHASE］（持ち主のコイン → ダメージカウンター）
 - ``(PURSUIT, にげたプレイヤー, にげたポケモンの番号, 効果を与えたカード, 効果を与えたプレイヤー, 与えた番, 量, ワザ, 1)``: にげたポケモンが受けていた「おいうち」の効果（入れ替えの前に写した
   ``PursuitOnRetreat``。入れ替えでベンチにもどると消えるので、効果の値を記述に持つ）
+
+v0.122（docs/unown-fossil-retreat-reactions-v0.122.md 5 章）: にげたポケモン自身の特殊能力の反応:
+
+- ``(VINE_PULL, にげたプレイヤー, にげたポケモンの番号, 特殊能力を印刷したカード, 特殊能力の位置, 1)``: わるいフシギソウの［つるでひっぱる］（ベンチにもどったこのカードの力。相手プレイヤーが選ぶ
+  相手の控えと、相手の対戦ポケモンを入れ替える。処理は ``reactions``）
 """
 
 from __future__ import annotations
@@ -46,7 +51,8 @@ MINEFIELD = "minefield"
 SINKHOLE = "sinkhole"
 CHASE = "chase"  # v0.117: ［CHASE］
 PURSUIT = "pursuit"  # v0.117: おいうち
-KINDS = (SPIKES, HOT_PLATE, MAGMA, MINEFIELD, SINKHOLE, CHASE, PURSUIT)
+VINE_PULL = "vine_pull"  # v0.122: ［つるでひっぱる］
+KINDS = (SPIKES, HOT_PLATE, MAGMA, MINEFIELD, SINKHOLE, CHASE, PURSUIT, VINE_PULL)
 DAMAGING = (SPIKES, HOT_PLATE, MINEFIELD, SINKHOLE, CHASE, PURSUIT)
 
 
@@ -157,6 +163,12 @@ def still_working(state: GameState, reaction: tuple) -> int | None:
         return int(any(found[1] is holder and found[2] == E.PowerKey(reaction[5], reaction[6]) for found in E.retreat_chase_holders(state, reaction[1])))
     if kind == PURSUIT:
         return 1  # 効果は入れ替えの前に写した（受けたポケモンが場にいるかぎり、はたらく）
+    if kind == VINE_PULL:
+        # v0.122: ベンチにもどったこのカードが今持つ［つるでひっぱる］がはたらくか（力が消えていない・この番にまだはたらいていない）。場をはなれた・進化して力がないなら反応はなくなる
+        holder = _locate(state, reaction[1], reaction[2])
+        if holder is None or not any(slot.card == reaction[3] and slot.key.power_index == reaction[4] for slot in E.powers_of(state, holder)):
+            return None
+        return int(any(slot.card == reaction[3] and slot.key.power_index == reaction[4] for slot in E.retreat_vine_pulls(state, reaction[1], holder)))
     holder = _locate(state, reaction[1], reaction[2])
     if holder is None or state.players[reaction[1]].active is not target:
         return None

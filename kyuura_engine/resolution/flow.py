@@ -138,22 +138,25 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
         E.attack_power_check(state, attacker, key)
         if is_contract(program):
             raise UnsupportedError("UNSUPPORTED_ATTACK", "v0.13 の約束で書いたワザの実装では、ワザといっしょに使う特殊能力を扱わない（エンジンの未対応）")
-    if cmd.with_power is not None:
-        # v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 5 章）: ワザといっしょに、自分の場のポケモンの［XXXXX］を使うことを選んだ。使えないなら、状態を変える前に拒否する
-        E.group_attack_power_check(state, cmd.player, attacker, key, cmd.with_power)
+    # v0.122（docs/unown-fossil-retreat-reactions-v0.122.md 3 章）: ``with_power``（1 つ）と ``with_powers``（2 つ以上もいっしょに指せる並び）。併記・重なりは状態を変える前に拒否する
+    holders = E.declared_power_holders(cmd.with_power, cmd.with_powers)
+    if holders:
+        # v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 5 章）: ワザといっしょに、自分の場のポケモンの［XXXXX］を使うことを選んだ。使えないなら、状態を変える前に拒否する。
+        # v0.122: 並びの力をすべて確かめる（同じ力を 2 つ指す宣言は拒否。違う力（［ANGER］と［XXXXX］）はいっしょに使える）
+        E.group_attack_powers_check(state, cmd.player, attacker, key, holders)
         if is_contract(program):
             raise UnsupportedError("UNSUPPORTED_ATTACK", "v0.13 の約束で書いたワザの実装では、ワザといっしょに使うほかのポケモンの特殊能力を扱わない（エンジンの未対応）")
 
     def body(res: Resolution) -> None:
-        _attack_body(res, cmd.player, res.state.find_pokemon(pid)[1], key, attack, program, once, option, coin_stadium, cmd.attack_power, cmd.with_power)
+        _attack_body(res, cmd.player, res.state.find_pokemon(pid)[1], key, attack, program, once, option, coin_stadium, cmd.attack_power, holders)
 
     # v0.67（docs/secret-plan-preflight-v0.67.md 8 章）: v0.13 の止める関数（``v013_checks``）が知らない選択・役割がある盤面。ワザの型が ``VERIFIED`` でも、それらの安全の
     # 根拠にならないので、v0.13 の止める関数で確かめる経路（上限を超えたあとのフォールバック・比べる方法 legacy・v0.13 の約束の実装）を使わない
     unknown = legacy_unknown_features(state, attacker)
     if cmd.attack_power:
         unknown = (*unknown, "ワザといっしょに使う特殊能力")  # v0.88: v0.13 の止める関数は［すいりょくはつでん］の追加を知らない
-    if cmd.with_power is not None:
-        unknown = (*unknown, "ワザといっしょに使うほかのポケモンの特殊能力")  # v0.118: v0.13 の止める関数は［XXXXX］のコインと追加を知らない
+    if holders:
+        unknown = (*unknown, "ワザといっしょに使うほかのポケモンの特殊能力")  # v0.118: v0.13 の止める関数は［XXXXX］のコインと追加を知らない（v0.122:［ANGER］も）
 
     def on_limit() -> None:
         """先読みで試す結果の数が上限を超えた（途中までの結果は使わない）。v0.13 の止める関数で確かめたワザの実装なら、それで確かめる
@@ -284,6 +287,9 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
         # v0.114: 場のベイビィポケモン・ベイビィから進化したポケモン（ワザの前のルールのコイン・場の分類）。v0.13 の止める関数はベイビィのルールのコインと場の分類を知らないので、
         # それで確かめない
         found.append("ベイビィポケモン")
+    if E.fossil_attack_bonuses(state):
+        # v0.122: ［げんしのゆめ］の効果（6 段階の追加・FE3・PM1・PM2）。v0.13 の止める関数の見積もりは当たるかの読み方・段階の問いを知らないので、それで確かめない
+        found.append("げんしのゆめ")
     if E.neutral_shield_holders(state):
         # v0.103: ［ニュートラルシールド］（発生元が相手の進化ポケモンのワザのダメージと効果の要素を無効にする）。v0.13 の止める関数の見積もり（``preview_attack_damage``）は発生元で
         # 無効にするかを知らない（「ダメージを受けない」状態・バリアーだけを見る）ので、それで確かめない（情報のない経路で黙って無視しない）
@@ -292,7 +298,7 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
 
 
 def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack, program, once: bool = False, option=None,
-                 coin_stadium: int | None = None, attack_power: bool = False, with_power: int | None = None) -> None:
+                 coin_stadium: int | None = None, attack_power: bool = False, holders: tuple[int, ...] = ()) -> None:
     state = res.state
     if option is None or option.card == attacker.card:
         state.add_event("attack", player=player, pokemon=attacker.card, attack=attack.name_ja, attack_index=key.attack_index)
@@ -324,18 +330,19 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
         state.add_event("attack_power", player=player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, power=slot.power.name_ja,
                         power_index=slot.key.power_index, card=slot.card, effect=str(key))
         res.attack_power = True
-    if with_power is not None:
-        _declare_group_power(res, player, attacker, key, with_power, coin_stadium, program)
+    for holder_id in holders:
+        _declare_group_power(res, player, attacker, key, holder_id, coin_stadium, program)  # v0.122: 並びの順に宣言する
     use = (player, attacker.pokemon_id, key.card_id, key.attack_index)
     declare(program, res, player, attacker)  # v0.31: 宣言のあと・こんらんのコインの前の確認（トラッシュの時点が決まらないワザ。HC1）
     baby = baby_rule_holder(res, player)  # v0.114: ワザを受ける側のバトル場のベイビィポケモン（ベイビィポケモンのルール）
-    # v0.119: ワザといっしょに使う特殊能力のうち、コインで追加を決めるもの（［XXXXX］）だけが XP1・NT1 の時点の問いにかかわる（［めいれい］の決まった量の追加はコインを投げない）
-    power_coins = res.group_power is not None and res.group_power[4] is None
+    # v0.119: ワザといっしょに使う特殊能力のうち、コインで追加を決めるもの（［XXXXX］）だけが XP1・NT1 の時点の問いにかかわる（［めいれい］の決まった量の追加はコインを投げない）。
+    # v0.122: ［ANGER］（のっているダメージカウンターの数）もコインを投げないので、かかわらない
+    power_coins = any(entry[4] is None and E.declared_power_effect(state, entry).uses_coins for entry in res.group_powers)
     if power_coins and (attack_coin_checks(state, attacker) or attack_rebellion_powers(state, attacker) or attacker.conditions.confused
                         or coin_stadium is not None or baby is not None):
         # v0.118（XP1）: ［XXXXX］のコインと、ワザの要素より先に投げるコイン（手順 4・5・ベイビィポケモンのルール・クチバシティジム）の順番、ワザが失敗したときに使ったことになるかが
         # 決まらない（コインの前。使わない答え（with_power なしの同じワザ）は止めない）
-        raise res.question("group_power_coin_order", f"ポケモン {attacker.pokemon_id} のワザ {key}・［XXXXX］を持つポケモン {with_power}")
+        raise res.question("group_power_coin_order", f"ポケモン {attacker.pokemon_id} のワザ {key}・［XXXXX］を持つポケモン {list(holders)}")
     if usable_ninja_tricks(state, 1 - player) and (attack_coin_checks(state, attacker) or attack_rebellion_powers(state, attacker)
                                                    or attacker.conditions.confused or coin_stadium is not None or baby is not None
                                                    or power_coins or E.ninja_trick_baby_candidates(state, 1 - player)):
@@ -374,13 +381,13 @@ BABY_RULE_FAILED = "baby_rule"  # v0.114: ベイビィポケモンのルール�
 def _declare_group_power(res: Resolution, player: int, attacker, key: AttackKey, holder_id: int, coin_stadium: int | None, program: tuple = ()) -> None:
     """v0.118（docs/unbounded-coins-heal-allocation-v0.118.md 5 章）: ワザといっしょに使う自分の場のポケモンの［XXXXX］の宣言（p.311 の手順 1。ワザの宣言と同じ時点。宣言の前に確かめた）。
     ログ ``group_attack_power``（公開）と、使った記録（プレイヤーの記録 ``GROUP_ATTACK_POWER_USED``。使った番の終わりに消える。「この番に、すでに…ほかのアンノーン「X」の…」の確かめ）を
-    残し、``Resolution.group_power`` に発生源と特殊能力を置く（コインはワザのダメージの要素で投げる。``programs.group_power_coins``）。"""
+    残し、``Resolution.group_powers`` に発生源と特殊能力を加える（コインはワザのダメージの要素で投げる。``programs.declared_power_amounts``。v0.122 から並び）。"""
     from ..state import GROUP_ATTACK_POWER_USED, TrainerTurnEffect
 
     state = res.state
     holder, slot = E.group_attack_power_check(state, player, attacker, key, holder_id)
     effect = slot.effect
-    if not effect.uses_coins:
+    if not effect.uses_coins and not effect.counts_holder_counters:
         # v0.119（MD1）: 決まった量の追加（［めいれい］の「そのワザによるダメージは、「+10」される」）を、相手の対戦ポケモン以外へのダメージの要素（控え・自分）のあるワザといっしょに使う。
         # 「そのワザによるダメージ」の範囲が決まらない（宣言の前。使わない同じワザは受け付ける）
         from .programs import OPP
@@ -397,8 +404,10 @@ def _declare_group_power(res: Resolution, player: int, attacker, key: AttackKey,
         state.trainer_effects = state.trainer_effects + (record,)
         state.add_event("trainer_effect_added", player=player, effect_kind=GROUP_ATTACK_POWER_USED, trainer_card=holder.card, card_id=slot.key.card_id,
                         expires_turn=state.turn_number, pokemon_id=holder.pokemon_id, power=str(slot.key))
-    # v0.119: 「おもて」の数（コインで決める追加は投げるまで None。決まった量の追加は 0。``effects.group_attack_power_modifier`` が実装ごとに量を求める）
-    res.group_power = (holder.pokemon_id, holder.card, slot.key.card_id, slot.key.power_index, None if effect.uses_coins else 0)
+    # v0.119: 「おもて」の数（コインで決める追加は投げるまで None。決まった量の追加は 0。``effects.group_attack_power_modifier`` が実装ごとに量を求める）。v0.122: のっているダメージカウンターの
+    # 数で決める追加（［ANGER］）も数えるまで None（相手の対戦ポケモンへのダメージの要素の前に数える）。2 つ以上の力は宣言の順に並べる（前の力を上書きしない）
+    pending = effect.uses_coins or effect.counts_holder_counters
+    res.group_powers = res.group_powers + ((holder.pokemon_id, holder.card, slot.key.card_id, slot.key.power_index, None if pending else 0),)
 
 
 def baby_rule_holder(res: Resolution, player: int):
