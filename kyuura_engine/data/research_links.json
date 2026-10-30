@@ -2,19 +2,19 @@
   "format": "kyuura-engine research links 1",
   "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md kyuura の engine_unresolved_index にまだない停止コード（エンジンが新しく加えたもの）は kyuura_disposition を not_in_kyuura にし、kyuura への報告事項にする（v0.21 の突風・v0.22 のパソコン通信・v0.23 のエネルギー回収・v0.36 の AC6（手順 4 のコインとこんらん）・RD9（山札にもどす効果ときぜつ）・v0.37 の JS1（説明に弱点・抵抗力のない控えへのダメージ）。kyuura に記録ができたら scripts/check_research_links.py が知らせる）。 v0.31 で、コードのない未解決（T27・C34/C35・G40・P19・P32）に停止コードを付けた。kyuura の未解決の一覧はこれらをコードなし（stop_code が null）で挙げているので、kyuura_index_engine_key でその行と照らす（kyuura の一覧にコードが書かれたら scripts/check_research_links.py が知らせる）。 v0.50 で、退化の処理に使う kyuura の規定・裁定（GR-2000-P324-DEVOLUTION・CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION・CR-CHEMICAL-GAS-LEAVES・GR-2000-P323-KNOCKOUT）を applied_rule_records に結び付けた（id の対応だけ。scripts/check_research_links.py が研究の基準のコミットにあることと分類を確かめる）。 v0.51 で、トラッシュのたねポケモンを持ち主のベンチに出す処理に使う kyuura の規定（GR-2000-P309-ATTACK-PROCEDURE・GR-2000-P319-HP-AND-DAMAGE・GR-2000-P320-COUNTER-MOVE）を applied_rule_records に結び付けた（v0.50 と同じく id の対応だけ）。 v0.70 で、拡張パック以外の商品のポケモン 82 枚の説明文のあるワザ 85 を adopted_printed_text に加えた（kyuura データの採用。研究の基準のコミットに、これらのカードを指す LD-・CC-・CR-・UQ-・エラッタはない）。PR1-069 の名前（kyuura の値「？？？」）は、エンジンが写しの作り直しで利用者が示した訂正「ミュウ」を当てはめた（engine_user_corrections。scripts/check_research_links.py はこの訂正の欄だけを訂正のあとの値にして比べる）。",
   "repository": "https://github.com/moheronemy/kyuura",
-  "research_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
-  "research_branch": "claude/baby-data-engine-v0113-handover",
+  "research_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+  "research_branch": "claude/neo2-fossil-type-cost-checks",
   "research_files": [
     "data/sidecar/rulings.json",
     "data/sidecar/latest_descriptions.json",
     "data/sidecar/card_checks.json"
   ],
-  "card_data_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+  "card_data_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
     "engine_unresolved_rulings": 278,
     "engine_stop_codes": 277,
-    "kyuura_issues": 73
+    "kyuura_issues": 74
   },
   "stop_codes": {
     "UNRESOLVED_MULLIGAN_COMPENSATION": {
@@ -3183,8 +3183,8 @@
           "ruling_id": "GN1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-GROWL-NON-ATTACK-DAMAGE",
+      "kyuura_disposition": "issue_not_in_index"
     }
   },
   "codeless_questions": {
@@ -3471,6 +3471,46 @@
           ]
         },
         "note": "わるいオムスターのげんしのしずくの相手の場の「進化ポケモン」の「進化カード」に、ベイビィの上のたねポケモンカードをふくむか（v0.116 で登録した。退化スプレーHYPER と同じ）。ベイビィから進化したたねポケモン（場の進化ポケモン）は選べるが選ぶと止める（NB2。どれもそうならコインのあとに止める）"
+      },
+      {
+        "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+        "card_id": "neo3-053",
+        "target": "trainer",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "ボロのつりざおで、トラッシュに選べるカードがないときに使えるか・コインを投げるか（kyuura が 2026-10-30 に加えた事例）。v0.121 の写しの元の移行の時点では、ボロのつりざおを写しに入れていない（対戦に使えない）"
+      },
+      {
+        "kyuura_issue": "UQ-COPIED-ATTACK",
+        "card_id": "ES3-021",
+        "target": "attack/1",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "ほかのカードのワザとしておおいびき（ねむり状態のときだけ）を使うときの「このカード」と使い手のねむり状態（kyuura が 2026-10-30 に加えた事例）。移行の時点では、ヤドラン（ES3-021）を写しに入れていない"
+      },
+      {
+        "kyuura_issue": "UQ-GROWL-NON-ATTACK-DAMAGE",
+        "card_id": "IP1-040",
+        "target": "attack/0",
+        "engine": {
+          "stop_codes": [
+            "UNRESOLVED_GROWL_NON_ATTACK_DAMAGE",
+            "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET"
+          ]
+        },
+        "engine_issue_differs": true,
+        "note": "なきごえ（v0.76 から登録）を受けた相手が、次の相手の番にワザ以外でこのカードに与えるダメージ・ベンチのこのカードに与えるダメージ。エンジンは、特殊能力のダメージ（エレキッドの［わんぱくパンチ］で起こる）を v0.121 の GN1 で、控えのこのカードへのワザのダメージを v0.34 の NK5（kyuura では UQ-REDUCED-DAMAGE-BENCH-TARGET に結ばれている）で止める。控えのこのカードへの特殊能力のダメージは今の対応カードでは起こらない（相手の場のポケモンを選ぶ［こっそりかみつく］・［とつぜんかみつく］は、進化で効果が消えたポケモンが使う）"
+      },
+      {
+        "kyuura_issue": "UQ-GROWL-NON-ATTACK-DAMAGE",
+        "card_id": "PR1-003",
+        "target": "attack/0",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "なきごえ（最新の説明）。移行の時点では、ピカチュウ PR1-003 を写しに入れていない"
       }
     ]
   },
@@ -3852,14 +3892,20 @@
       "PMCG1-068/attack/0": "LD-PMCG1-068-ATK0",
       "PMCG2-006/attack/1": "LD-PMCG2-006-ATK1",
       "PMCG3-012/attack/1": "LD-PMCG3-012-ATK1",
-      "PMCG3-022/attack/0": "LD-PMCG3-022-ATK0"
+      "PMCG3-022/attack/0": "LD-PMCG3-022-ATK0",
+      "IP1-040/attack/0": "LD-IP1-040-ATK0"
     },
     "registered_without_kyuura_record": [
       "PMCG5-033/power/0",
       "GD3-009/power/0",
       "ES1-005/power/0"
     ],
-    "kyuura_records_not_registered": [],
+    "kyuura_records_not_registered": [
+      "LD-ES3-021-ATK1",
+      "LD-PR1-001-ATK0",
+      "LD-PR1-003-ATK0",
+      "LD-PR1-017-ATK0"
+    ],
     "note": "登録した最新の説明（play_text_ja）を持つワザ・特殊能力（カード id/種類/位置）と kyuura の記録の対応。registered は kyuura の最新の説明（LD-）の id。recorded_in_card_checks は、印刷の文面と同じ最新の説明を kyuura が照合の記録（CC-）に書いたもの（照合した欄の文面、またはデータの誤りの資料の値がエンジンの最新の説明と同じ。kyuura は文面が同じ最新の説明を LD- にしない）。card_checks_without_text は、照合の記録はあるが、ワザの文面を照合した欄に入れていないもの（ドードーのみだれづき。図版の版が決まらない）。registered_without_kyuura_record は kyuura に記録のない登録（2026-10-15 の kyuura の取り込みのあとは空になった。v0.27 でストライクの「つるぎのまい」（PMCG2-017/attack/0。p.56・p.321。2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（「2倍」）だけで、最新の説明（「「60」になる」）の LD- はない）を加えた。v0.28 で、既存の効果の型の登録だけで加えたラプラス（PMCG3-022。p.116）・スターミー（PMCG1-026。p.112）・カイロス（PMCG2-018。p.58）・タマタマ（PMCG2-006。p.49）・プリン（PMCG2-035。p.225）・ラッキー（PMCG1-068。p.235）・スリープ（PMCG1-045。p.164）・シェルダー（PMCG3-012。p.103）の説明文のあるワザ 13 を加えた（2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（cards.json）だけで、LD-・CC- はない）。kyuura への報告事項）。文面の一致は scripts/check_research_links.py が kyuura の研究の基準のコミットで確かめる。adopted_printed_text（2026-10-15 からの方針。docs/card-data-policy.md）は、kyuura データの採用（kyuura_engine/data/card_sources.json）で、処理に使う文面を kyuura の印刷の文面（data/cards.json）にした登録（研究の基準のコミットに、その対象の LD- がないもの。LD- があれば registered に挙げ、最新の説明にしたがう）。エンジンが原典と照合した記録ではない（registered_without_kyuura_record とは別）。v0.29 で、既存の効果の型で加えたポケモン 14 枚の説明文のあるワザ 14 を加えた。errata_text（v0.30）は、kyuura のエラッタの記録（ERR-・TXT-・RUL-。data/rule_history.json の errata）を処理に使う文面にした登録（登録の出典がその id。文面は記録の notes の引用と同じ）。記録の cards にないカードに記録の範囲として当てはめるものは errata_scope に、当てはめる文（scope_quote）・処理に使う文面（play_text_quote）・印刷の文面（printed_text。記録が挙げるカードのワザと同じ）・対象を書く。v0.30 で、エネルギーをトラッシュしてダメージを与えるワザ 4（ヒトカゲの「ひのこ」・リザード／ウインディ／ブーバーの「かえんほうしゃ」）をerrata_text に、ウインディの「とっしん」・第4弾のポニータの「ひのこ」を adopted_printed_text に加えた。difference_text（v0.31）は、処理に使う文面を kyuura の data/curation/card_differences.json の記録（確度: 確実）の最新の説明にした登録（LD- はない。kyuura への報告事項）。v0.31 でピッピの「ゆびをふる」、v0.42 でカイリューの［かけつける］（PMCG3-043/power/0）を加えた。user_corrected_text（v0.68）は、利用者が示した修正（scripts/extract_kyuura_cards.py の USER_PROVIDED_CORRECTIONS。kyuura の記録ではない）を当てはめた写しの説明文を処理に使う文面にした登録（ガルーラの「こどものおつかい」。研究の基準のコミットの kyuura の文面は修正の前の値のまま。kyuura への報告事項）。engine_simplified_text（v0.68）は、エンジンの簡略化した仕様を処理に使う文面にした登録（イマクニ？のドードー。公式の裁定・エラッタではない）",
     "recorded_in_card_checks": {
       "PMCG1-002/attack/0": "CC-PMCG1-002-P17",
@@ -4553,7 +4599,6 @@
       "ES2-006/attack/1",
       "QSG-017/attack/0",
       "QSG-017/attack/1",
-      "IP1-040/attack/0",
       "IP1-040/attack/1",
       "PF1-001/attack/0",
       "PR1-006/attack/1",
@@ -5686,6 +5731,15 @@
       ],
       "PMCG5-048": [
         "CC-PMCG5-048-P200"
+      ],
+      "ES3-021": [
+        "CC-ES3-021-P156"
+      ],
+      "IP1-040": [
+        "CC-IP1-040-P127"
+      ],
+      "PR1-003": [
+        "CC-PR1-003-P127"
       ]
     },
     "engine_verified_without_kyuura_record": [],

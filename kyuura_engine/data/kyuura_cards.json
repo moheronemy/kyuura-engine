@@ -3,7 +3,7 @@
   "description": "kyuura の data/cards.json から、kyuura-engine が使うカードの記録を抜き出した写し。カード情報の正本は kyuura。値は書き換えていない。生成: scripts/extract_kyuura_cards.py（手で編集しない）。",
   "source": {
     "repository": "https://github.com/moheronemy/kyuura",
-    "commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+    "commit": "2fe0bc042ce187d191843819262f8036abbb343d",
     "path": "data/cards.json",
     "schema_version": 3
   },
@@ -1699,6 +1699,13 @@
         "FIX-PRN-031-EVOLVES-TO",
         "FIX-PRN-037-EVOLVES-TO"
       ]
+    },
+    {
+      "id": "v0.121",
+      "from": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "to": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "document": "docs/hand-bench-attack-conditions-v0.121.md",
+      "corrections": []
     }
   ],
   "kyuura_corrections": [
@@ -2429,7 +2436,7 @@
       "reference_url_role": "利用者が示した補助資料。エンジンは本文を取得していない（ネットワークのプロキシが 403）。サイトの本文を検証した・ルーン文字を解読したとは扱わない",
       "engine_saw_image": false,
       "kyuura_saw_image": false,
-      "source_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
+      "source_commit": "2fe0bc042ce187d191843819262f8036abbb343d"
     }
   ],
   "equivalent_targets": {

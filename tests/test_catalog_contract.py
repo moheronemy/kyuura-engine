@@ -69,8 +69,8 @@ class CatalogContractTest(unittest.TestCase):
              links["counts"]["engine_unresolved_rulings"]),
             (277, 278),
         )
-        self.assertEqual(len(links["latest_descriptions"]["adopted_printed_text"]), 1356)
-        self.assertEqual(links["counts"]["kyuura_issues"], 73)
+        self.assertEqual(len(links["latest_descriptions"]["adopted_printed_text"]), 1355)
+        self.assertEqual(links["counts"]["kyuura_issues"], 74)
 
     def test_current_format_and_audit_agree(self):
         # Keep the audit's independently maintained schema check. Deriving its

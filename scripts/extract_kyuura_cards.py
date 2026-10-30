@@ -21,6 +21,7 @@ v0.4c 以降の 2 進化ポケモン。v0.11 はサカキのワンリキー・�
 - v0.97 から、写しの元を上げた移行を連鎖（``KYUURA_MIGRATIONS``。ecb2d69 → 7d3f4ca → 73a1690。書き出しの ``source_migrations``）で持ちます。kyuura が当てはめた
   修正は、当てはめた移行の段（``migration``）の前・あとのコミットの値で確かめ、写す欄は段ごとに比べます（docs/unown-research-idfnj-v0.97.md 2 章）。
 - v0.114 で、段 v0.114（73a1690 → e519b99）を加えました（docs/baby-rules-evolution-v0.114.md 2 章）。
+- v0.121 で、段 v0.121（e519b99 → 2fe0bc0）を加えました（docs/hand-bench-attack-conditions-v0.121.md 3 章）。
 
 使い方::
 
@@ -38,10 +39,10 @@ import sys
 from pathlib import Path
 
 KYUURA_REPOSITORY = "https://github.com/moheronemy/kyuura"
-# v0.114: kyuura のブランチ claude/baby-data-engine-v0113-handover の固定コミット（ベイビィ 13 枚のルール文・進化先の画像の確認とベイビィのルールの整理。親は 73a1690。
-# kyuura main には未取り込み）。v0.97〜v0.113 は 73a1690（``V0_97_KYUURA_COMMIT``。kyuura main の PR #5 のマージ。木は研究のコミット 78d090c と同じ）、
-# v0.69〜v0.96 は 7d3f4ca（``V0_69_KYUURA_COMMIT``）
-KYUURA_COMMIT = "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
+# v0.121: kyuura のブランチ claude/neo2-fossil-type-cost-checks の固定コミット（次の便のカードの文面と進化データの研究 c932625 と、neo2 の化石 4 枚のタイプ・必要なエネルギーの
+# 画像の確認。kyuura main には未取り込み）。v0.114〜v0.120 は e519b99（``V0_114_KYUURA_COMMIT``。ブランチ claude/baby-data-engine-v0113-handover の固定コミット）、
+# v0.97〜v0.113 は 73a1690（``V0_97_KYUURA_COMMIT``。kyuura main の PR #5 のマージ。木は研究のコミット 78d090c と同じ）、v0.69〜v0.96 は 7d3f4ca（``V0_69_KYUURA_COMMIT``）
+KYUURA_COMMIT = "2fe0bc042ce187d191843819262f8036abbb343d"
 KYUURA_PATH = "data/cards.json"
 
 # v0.1 の対戦で使うカード（kyuura docs/engine-readiness.md 5章の段階 1 のたねポケモンと基本エネルギー）
@@ -1423,15 +1424,18 @@ POOL_V0_79 = [
 PREVIOUS_KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"  # v0.68 までの写しの元（移行の連鎖の最初の段の前。採用の記録の採用したときのデータのコミット）
 V0_69_KYUURA_COMMIT = "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"  # v0.69〜v0.96 の写しの元
 V0_97_KYUURA_COMMIT = "73a169063463bbf7bcaa3137d70cbf9721d11534"  # v0.97〜v0.113 の写しの元
+V0_114_KYUURA_COMMIT = "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"  # v0.114〜v0.120 の写しの元
 # v0.97（docs/unown-research-idfnj-v0.97.md 2 章）: 写しの元を上げた移行の連鎖。段ごとに、前のコミット（``from``）とあとのコミット（``to``）。最後の段の ``to`` が写しの元、
 # 最初の段の ``from`` が PREVIOUS_KYUURA_COMMIT。過去の段の値は書き換えない（v0.69 の段の ``to`` は 7d3f4ca のまま）。kyuura が当てはめた修正は、当てはめた段（``migration``）の
 # ``from`` の値が ``before``・``to`` の値が ``after`` で、写しの元でも ``after``。写す欄は段ごとに、その段の修正の欄と出典の記録の欄を除いて同じことを確かめる
 # v0.114（docs/baby-rules-evolution-v0.114.md 2 章）: 段 v0.114（73a1690 → e519b99）を加えた。v0.97 の段の ``to`` は、写しの元の定数ではなく 73a1690（``V0_97_KYUURA_COMMIT``）に固定した
 # （写しの元を上げても過去の段の値が変わらないように）
+# v0.121（docs/hand-bench-attack-conditions-v0.121.md 3 章）: 段 v0.121（e519b99 → 2fe0bc0）を加えた。v0.114 の段の ``to`` は、同じ理由で e519b99（``V0_114_KYUURA_COMMIT``）に固定した
 KYUURA_MIGRATIONS = (
     {"id": "v0.69", "from": PREVIOUS_KYUURA_COMMIT, "to": V0_69_KYUURA_COMMIT, "document": "docs/equivalent-non-pack-cards-v0.69.md"},
     {"id": "v0.97", "from": V0_69_KYUURA_COMMIT, "to": V0_97_KYUURA_COMMIT, "document": "docs/unown-research-idfnj-v0.97.md"},
-    {"id": "v0.114", "from": V0_97_KYUURA_COMMIT, "to": KYUURA_COMMIT, "document": "docs/baby-rules-evolution-v0.114.md"},
+    {"id": "v0.114", "from": V0_97_KYUURA_COMMIT, "to": V0_114_KYUURA_COMMIT, "document": "docs/baby-rules-evolution-v0.114.md"},
+    {"id": "v0.121", "from": V0_114_KYUURA_COMMIT, "to": KYUURA_COMMIT, "document": "docs/hand-bench-attack-conditions-v0.121.md"},
 )
 KYUURA_CORRECTIONS_PATH = "data/curation/card_corrections.json"
 KYUURA_TARGETS_PATH = "data/engine_targets.json"

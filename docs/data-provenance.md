@@ -1972,6 +1972,23 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   SX1・TN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形の別のカードの問い）。v0.66 の「ナツメのESPと「うら」が出るまでのコインは起こらない」はエンジンの前提の誤りで、研究の論点ではない（kyuura は
   変えていない）。
 
+## v0.121: 写しの元・研究の基準を kyuura 2fe0bc0 に上げる移行
+
+[hand-bench-attack-conditions-v0.121.md](hand-bench-attack-conditions-v0.121.md) の 3 章。
+
+- 写しの元・研究の基準を kyuura `e519b99e2adcc6c2cd0998569ae5ee1101de6e89` から `2fe0bc042ce187d191843819262f8036abbb343d`（ブランチ `claude/neo2-fossil-type-cost-checks`。次の便のカードの
+  文面と進化データの研究 `c932625` を含む。kyuura main には未取り込み）に上げた。移行の連鎖に段 v0.121 を加え、v0.114 の段のあとを e519b99 に固定した（過去の段・採用したときのデータのコミット・
+  記録した日・外部照合・`ENGINE_USER_CORRECTIONS` は書き換えていない）。採用の記録の `data_migrations` に 4 段目。
+- `data/cards.json` で値が変わったのは写しの外の 13 枚（ボロのつりざおの効果文、アンノーン M・U・A のルール文、8 枚の進化元、PRN-030 の段階。kyuura の台帳の 13 件の訂正。根拠は kyuura の
+  カードの画像の照合）。写しの 1,333 枚の値は同じ。`c932625` → `2fe0bc0` のカード本体の変更は 0（化石 4 枚の画像の照合の記録が加わった）。
+- 研究の記録: 最新の説明 5・書籍の照合 3・裁定 7・論点 1（UQ-GROWL-NON-ATTACK-DAMAGE）が加わった。kyuura の論点 73 → 74（エンジンの停止コード・未解決の裁定とは別の数）。新しい事例 4 件を
+  `kyuura_cases_without_engine_ruling` に結んだ（3 件は移行の時点で写しにないカード、IP1-040 は GN1・NK5）。
+- ピカチュウ IP1-040 のなきごえ: kyuura の新しい LD-IP1-040-ATK0 にしたがい、処理に使う文面を最新の説明にした（型・挙動は v0.76 のまま。印刷の文面との違いは語順と「時／とき」だけ）。採用の
+  記録の `play_text`・`kyuura_records`（5 件）を合わせ、研究の対応表の `adopted_printed_text` から `registered` に移した（1,356 → 1,355）。
+- kyuura への報告事項: GN1（なきごえを受けたポケモンの特殊能力のダメージ。エレキッドの［わんぱくパンチ］で起こる）は kyuura の UQ-GROWL-NON-ATTACK-DAMAGE の「ワザ以外のダメージ」に当たる
+  （kyuura の事例の注記は、受けた相手が次の相手の番にワザ以外でダメージを与えるカードを調べていない）。控えのこのカードへのワザのダメージは、エンジンでは v0.34 の NK5
+  （UQ-REDUCED-DAMAGE-BENCH-TARGET）で止めている。kyuura の登録表の写しは v0.113 のまま（`engine_status` を次版の候補の正本にしていない）。
+
 ## v0.120: 化石の復活と仮想ワザの供給の 11 枚
 
 [fossil-basic-virtual-attacks-v0.120.md](fossil-basic-virtual-attacks-v0.120.md) の 3 章・12 章。

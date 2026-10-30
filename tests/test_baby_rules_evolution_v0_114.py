@@ -80,28 +80,30 @@ class MigrationTest(unittest.TestCase):
 
     def test_chain_and_fixed_old_steps(self):
         module = extract_module()
-        self.assertEqual((module.KYUURA_COMMIT, module.V0_97_KYUURA_COMMIT, module.V0_69_KYUURA_COMMIT, module.PREVIOUS_KYUURA_COMMIT), (V0114, V097, V069, ECB))
+        # v0.121: 段 v0.121（e519b99 → 2fe0bc0）を加えた。v0.114 の段のあとは V0_114_KYUURA_COMMIT（e519b99）に固定した。今の写しの元は最後の段のあと
+        self.assertEqual((module.V0_114_KYUURA_COMMIT, module.V0_97_KYUURA_COMMIT, module.V0_69_KYUURA_COMMIT, module.PREVIOUS_KYUURA_COMMIT), (V0114, V097, V069, ECB))
         self.assertEqual(module.migration_problems(), [])
-        self.assertEqual([(s["id"], s["from"], s["to"], s["document"]) for s in module.KYUURA_MIGRATIONS],
+        self.assertEqual([(s["id"], s["from"], s["to"], s["document"]) for s in module.KYUURA_MIGRATIONS[:3]],
                          [("v0.69", ECB, V069, "docs/equivalent-non-pack-cards-v0.69.md"), ("v0.97", V069, V097, "docs/unown-research-idfnj-v0.97.md"),
                           ("v0.114", V097, V0114, "docs/baby-rules-evolution-v0.114.md")])
         extract = read_extract()
         self.assertEqual([(s["id"], s["from"], s["to"]) for s in extract["source_migrations"]], [(s["id"], s["from"], s["to"]) for s in module.KYUURA_MIGRATIONS])
-        self.assertEqual((extract["source"]["commit"], extract["previous_source"]["commit"]), (V0114, ECB))
+        self.assertEqual((extract["source"]["commit"], extract["previous_source"]["commit"]), (module.KYUURA_MIGRATIONS[-1]["to"], ECB))
+        self.assertEqual(module.KYUURA_COMMIT, module.KYUURA_MIGRATIONS[-1]["to"])
         # v0.97 の段のあとを写しの元の定数にもどすと、写しの元を上げたときに過去の段のあとまで変わる（連鎖が切れて止まる）
         steps = module.KYUURA_MIGRATIONS
         try:
-            module.KYUURA_MIGRATIONS = (steps[0], {**steps[1], "to": module.KYUURA_COMMIT}, steps[2])
+            module.KYUURA_MIGRATIONS = (steps[0], {**steps[1], "to": module.KYUURA_COMMIT}, *steps[2:])
             self.assertTrue(any("その前の段のあと" in p for p in module.migration_problems()))
         finally:
             module.KYUURA_MIGRATIONS = steps
         # 利用者が示した PR1-069 の名前の訂正は、今の写しの元でも同じ値（kyuura はまだ直していない）
         self.assertEqual([(c["card_id"], c["field"], c["before"], c["after"], c["source_commit"]) for c in extract["engine_user_corrections"]],
-                         [("PR1-069", "name.ja", "？？？", "ミュウ", V0114)])
+                         [("PR1-069", "name.ja", "？？？", "ミュウ", module.KYUURA_COMMIT)])
 
     def test_adoption_records_are_not_rewritten(self):
         sources = cs.load_sources()
-        migrations = sources["data_migrations"]
+        migrations = sources["data_migrations"][:3]  # v0.121: 4 段目を加えた（3 段目までは書き換えない）
         self.assertEqual([(m["from"], m["to"], m["on"], m["document"]) for m in migrations],
                          [(ECB, V069, "2026-10-19", "docs/equivalent-non-pack-cards-v0.69.md"), (V069, V097, "2026-10-25", "docs/unown-research-idfnj-v0.97.md"),
                           (V097, V0114, "2026-10-28", "docs/baby-rules-evolution-v0.114.md")])
@@ -125,8 +127,8 @@ class MigrationTest(unittest.TestCase):
 
     def test_research_links(self):
         links = json.loads(LINKS_PATH.read_text(encoding="utf-8"))
-        self.assertEqual((links["research_commit"], links["card_data_commit"], links["research_branch"], links["engine_import_id"]),
-                         (V0114, V0114, "claude/baby-data-engine-v0113-handover", "ENGINE-46A3E2E"))
+        # v0.121: 研究の基準と写しの元を 2fe0bc0 に上げた（今の値は tests/test_research_links_v0_18e.py）。v0.114 で結んだ事例・採用の記録の id は残る
+        self.assertEqual((links["research_commit"], links["card_data_commit"], links["engine_import_id"]), (read_extract()["source"]["commit"],) * 2 + ("ENGINE-46A3E2E",))
         cases = [c for c in links["kyuura_cases_without_engine_ruling"]["cases"]
                  if c["kyuura_issue"] == "UQ-NEO-TEXT-BABY-CATEGORIES" or (c["kyuura_issue"], c["card_id"]) == ("UQ-ATTACK-PRE-DAMAGE-COIN-ORDER", "neo1-042")]
         self.assertEqual(sorted((c["kyuura_issue"], c["card_id"], c["target"]) for c in cases),

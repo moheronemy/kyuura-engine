@@ -64,7 +64,8 @@ class ResearchLinksTest(unittest.TestCase):
         # （docs/equivalent-non-pack-cards-v0.69.md 7 章）。v0.68 までは研究の基準 3f34908・写しの元 ecb2d69 を分けて持っていた
         # v0.97: 研究の基準と写しの元を kyuura 73a1690（研究 78d090c を取り込んだ main の PR #5 のマージ。木は 78d090c と同じ）に上げた（docs/unown-research-idfnj-v0.97.md 2 章・3 章）
         # v0.114: 研究の基準と写しの元を kyuura e519b99（ブランチ claude/baby-data-engine-v0113-handover の固定コミット。親は 73a1690）に上げた（docs/baby-rules-evolution-v0.114.md 2 章）
-        self.assertEqual(LINKS["research_commit"], "e519b99e2adcc6c2cd0998569ae5ee1101de6e89")
+        # v0.121: 研究の基準と写しの元を kyuura 2fe0bc0（ブランチ claude/neo2-fossil-type-cost-checks の固定コミット。親は 7b03fd9、研究 c932625 を含む）に上げた（docs/hand-bench-attack-conditions-v0.121.md 3 章）
+        self.assertEqual(LINKS["research_commit"], "2fe0bc042ce187d191843819262f8036abbb343d")
         self.assertEqual(LINKS["engine_import_id"], "ENGINE-46A3E2E")
         self.assertEqual(LINKS["card_data_commit"], read_extract()["source"]["commit"])
         self.assertEqual(LINKS["research_commit"], LINKS["card_data_commit"])
@@ -186,15 +187,15 @@ class ResearchLinksTest(unittest.TestCase):
                              "UNRESOLVED_ESP_COPIED_ATTACK_COINS",
                              # v0.120: PE1・PE2・VP1・FE1・FE2・TF3（docs/fossil-basic-virtual-attacks-v0.120.md 10 章。どれも kyuura に対応する記録がない）
                              "UNRESOLVED_PRE_EVOLUTION_ATTACK_STAGE", "UNRESOLVED_PRE_EVOLUTION_ATTACK_CONDITIONS", "UNRESOLVED_PERMITTED_ATTACK_HELD",
-                             "UNRESOLVED_REVIVED_BASIC_DEVOLVED", "UNRESOLVED_REVIVE_HAND_BASIC_ENTRY", "UNRESOLVED_TRANSFORM_REVIVED_BASIC",
-                             # v0.121: GN1（docs/hand-bench-attack-conditions-v0.121.md 2 章。研究の基準 e519b99 の kyuura に対応する記録がない）
-                             "UNRESOLVED_GROWL_NON_ATTACK_DAMAGE"})
+                             "UNRESOLVED_REVIVED_BASIC_DEVOLVED", "UNRESOLVED_REVIVE_HAND_BASIC_ENTRY", "UNRESOLVED_TRANSFORM_REVIVED_BASIC"})
         # v0.97（docs/unown-research-idfnj-v0.97.md 3 章）: kyuura が調査で立てた UQ-SELF-EXCLUDING-POWER-COPIES の事例にわるいデンリュウ（neo4-046）の［かんでん］があるので、
         # CV1 を論点に結んだ（kyuura は v0.86 を取り込んでいないので、未解決の一覧に CV1 の行はない。kyuura の事例は kyuura_cases_without_engine_ruling で照らす）
         # v0.97 で加えた DF1・DF2 も、kyuura に論点（UQ-SELF-EXCLUDING-POWER-COPIES・UQ-NON-ATTACK-DAMAGE-MODIFIERS）はあるが、未解決の一覧に行がない
         # v0.114: BQ1（UQ-ATTACK-PRE-DAMAGE-COIN-ORDER のベイビィの事例）・NB1・NB2（UQ-NEO-TEXT-BABY-CATEGORIES）も、kyuura に論点と事例はあるが、未解決の一覧に行がない
+        # v0.121: GN1（A0 では kyuura に記録がなく not_in_kyuura。研究の基準を 2fe0bc0 に上げて、kyuura の UQ-GROWL-NON-ATTACK-DAMAGE と IP1-040 の事例に結んだ。未解決の一覧に行はない）
         self.assertEqual(unindexed, {"UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES", "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES", "UNRESOLVED_POWER_DAMAGE_RECEIVED_POWER",
-                                     "UNRESOLVED_BABY_RULE_COIN_ORDER", "UNRESOLVED_NEO_TEXT_BASIC_BABY", "UNRESOLVED_NEO_TEXT_EVOLUTION_CARD_BABY"})
+                                     "UNRESOLVED_BABY_RULE_COIN_ORDER", "UNRESOLVED_NEO_TEXT_BASIC_BABY", "UNRESOLVED_NEO_TEXT_EVOLUTION_CARD_BABY",
+                                     "UNRESOLVED_GROWL_NON_ATTACK_DAMAGE"})
         # v0.31〜v0.68 は、kyuura の一覧でコードのない行を指していた停止コード 8 件（T27・C34/C35・G40・P19・P32・Z9・DR8・DR13）に kyuura_index_engine_key を
         # 書いていた。v0.69 で kyuura が停止コードを書いたので外した（scripts/check_research_links.py が、kyuura の一覧のコードで照らす）
         # v0.97: SS1（v0.60 のコードのない問い。kyuura の一覧ではコードのない行）にコードを付けたので、その行を指す（v0.31 と同じ形）

@@ -31,6 +31,14 @@
       "check": "scripts/extract_kyuura_cards.py の migration_copy_problems・previous_copy_problems・kyuura_correction_problems（移行の段ごとに、写す欄が、その段で kyuura が当てはめた修正の欄と出典の記録の欄を除いて同じ。修正は段の前の値・あとの値・台帳・カードの記録・根拠で確かめる）",
       "document": "docs/baby-rules-evolution-v0.114.md",
       "note": "v0.114 で写しの元を 73a1690 から e519b99（kyuura のブランチ claude/baby-data-engine-v0113-handover の固定コミット。親は 73a1690。kyuura main には未取り込み）に上げた。v0.69・v0.97 の段（ecb2d69 → 7d3f4ca → 73a1690）は書き換えない（v0.97 の段のあとは 73a1690 に固定）。v0.113 までの採用の記録の kyuura_commit（ecb2d69・7d3f4ca・73a1690）・記録した日・外部照合の確認日と照らしたコミットは書き換えない（採用し直した・照合し直したことにしない）。この段で値が変わったのは、写しの外のベイビィ 13 枚（ルール文 6 件・進化先 13 件の kyuura の台帳の訂正と notes・corrections・data_gaps）だけで、写しの 1,250 枚の値は同じ。kyuura_records は、研究の基準のコミットを e519b99 に上げたので、そのコミットでカードを指す kyuura の記録の id に合わせた（記録を読み直したのではなく、id の対応を直した）"
+    },
+    {
+      "from": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
+      "to": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "on": "2026-10-30",
+      "check": "scripts/extract_kyuura_cards.py の migration_copy_problems・previous_copy_problems・kyuura_correction_problems（移行の段ごとに、写す欄が、その段で kyuura が当てはめた修正の欄と出典の記録の欄を除いて同じ。修正は段の前の値・あとの値・台帳・カードの記録・根拠で確かめる）",
+      "document": "docs/hand-bench-attack-conditions-v0.121.md",
+      "note": "v0.121 で写しの元を e519b99 から 2fe0bc0（kyuura のブランチ claude/neo2-fossil-type-cost-checks の固定コミット。次の便のカードの文面と進化データの研究 c932625 と、neo2 の化石 4 枚のタイプ・必要なエネルギーの画像の確認。kyuura main には未取り込み）に上げた。v0.69・v0.97・v0.114 の段（ecb2d69 → 7d3f4ca → 73a1690 → e519b99）は書き換えない（v0.114 の段のあとは e519b99 に固定）。v0.120 までの採用の記録の kyuura_commit（ecb2d69・7d3f4ca・73a1690・e519b99）・記録した日・外部照合の確認日と照らしたコミットは書き換えない（採用し直した・照合し直したことにしない）。この段で値が変わったのは、写しの外の 13 枚（ボロのつりざおの効果文、アンノーン M・U・A のルール文、8 枚の進化元、PRN-030 の段階の kyuura の台帳の訂正と notes・corrections・data_gaps・field_sources）だけで、写しの 1,333 枚の値は同じ。kyuura_records は、研究の基準のコミットを 2fe0bc0 に上げたので、そのコミットでカードを指す kyuura の記録の id に合わせた（記録を読み直したのではなく、id の対応を直した。ピカチュウ IP1-040 の 5 件）。IP1-040 のなきごえの処理に使う文面は、kyuura の新しい最新の説明 LD-IP1-040-ATK0 にした（採用の記録の play_text。型・量・挙動は v0.76 のまま）"
     }
   ],
   "cards": {
@@ -22602,14 +22610,20 @@
       "status": "adopted",
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-20",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "CC-IP1-040-P127",
+        "CR-PIKACHU-GROWL-LATEST",
+        "CR-PIKACHU-GROWL-OPPONENT-EFFECT",
+        "LD-IP1-040-ATK0",
+        "UQ-GROWL-NON-ATTACK-DAMAGE"
+      ],
       "play_text": {
-        "attack/0": "kyuura_printed_text",
+        "attack/0": "LD-IP1-040-ATK0",
         "attack/1": "kyuura_printed_text"
       },
       "external_checks": [],
       "issues": [],
-      "notes": "v0.76 で加えた（docs/persistent-attack-modifiers-v0.76.md）。IP1（intro_pack。発売 1999-07-30）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。同じデータの組 SC-PR1-001。ワザ: なきごえ=ReduceDamageToSelfNextOpponentTurn、でんきショック=ParalyzeOnHeads（処理に使う文面は kyuura の印刷の文面）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stintro1040（040/040））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。kyuura の同じカードの組 SC-PR1-001 では、PR1-001・PR1-003・PR1-017 と文面が違う（text: different。equivalent_to_first: false）。この版の印刷の文面で登録した（PR1-001 などは対象外）"
+      "notes": "v0.76 で加えた（docs/persistent-attack-modifiers-v0.76.md）。IP1（intro_pack。発売 1999-07-30）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。同じデータの組 SC-PR1-001。ワザ: なきごえ=ReduceDamageToSelfNextOpponentTurn、でんきショック=ParalyzeOnHeads（処理に使う文面は kyuura の印刷の文面）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stintro1040（040/040））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。kyuura の同じカードの組 SC-PR1-001 では、PR1-001・PR1-003・PR1-017 と文面が違う（text: different。equivalent_to_first: false）。この版の印刷の文面で登録した（PR1-001 などは対象外）。v0.121（docs/hand-bench-attack-conditions-v0.121.md 3 章）: 研究の基準を kyuura 2fe0bc0 に上げ、kyuura がこのカードの印刷を画像と『オフィシャルブック2000』p.127 の図版で照合した記録（CC-IP1-040-P127・最新の説明 LD-IP1-040-ATK0・裁定 CR-PIKACHU-GROWL-LATEST（CONFIRMED）・CR-PIKACHU-GROWL-OPPONENT-EFFECT（SUPPORTED）・論点 UQ-GROWL-NON-ATTACK-DAMAGE）がこのカードを指すので kyuura_records に加え、なきごえの処理に使う文面を最新の説明にした（印刷の文面との違いは語順と「時／とき」だけ。エンジンはこの記録の画像・書籍を見ていない。採用したときのデータのコミット・記録した日は変えていない）"
     },
     "PF1-001": {
       "basis": "kyuura_data",

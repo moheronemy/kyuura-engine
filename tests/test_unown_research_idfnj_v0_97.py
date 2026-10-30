@@ -197,9 +197,10 @@ class ResearchCasesTest(unittest.TestCase):
     def test_cases_and_unindexed_codes(self):
         cases = self.links["kyuura_cases_without_engine_ruling"]["cases"]
         # v0.114 で、研究の基準 e519b99 のベイビィの事例 7 件を加えた（tests/test_baby_rules_evolution_v0_114.py）。v0.97 の 13 件の論点ごとの数は変わらない
+        # v0.121 で、研究の基準 2fe0bc0 の事例 4 件を加えた（ボロのつりざおの UQ-CARD-USE-WITHOUT-TARGET を含む。tests/test_hand_bench_attack_conditions_v0_121.py）。v0.97 の 13 件で数える
         expected = {"UQ-EFFECT-AFTER-NO-DAMAGE": 1, "UQ-CARD-USE-WITHOUT-TARGET": 3, "UQ-NON-ATTACK-DAMAGE-MODIFIERS": 1, "UQ-SPEED-STAR-SCOPE": 3,
                     "UQ-SELF-EXCLUDING-POWER-COPIES": 5}
-        counts = Counter(c["kyuura_issue"] for c in cases)
+        counts = Counter(c["kyuura_issue"] for c in cases if c["card_id"] != "neo3-053")
         self.assertEqual({issue: counts[issue] for issue in expected}, expected)
         self.assertEqual(sum(expected.values()), 13)
         cv1 = self.links["stop_codes"]["UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES"]

@@ -29282,6 +29282,9 @@ GROWL_TEXTS = (
     "このワザを受けた相手は、次の相手の番でこのカードにダメージを与える時、そのダメージが「-{n}」される。",  # ドードー（ES1-028・QSG-041）・ピカチュウ（IP1-040）
     "次の相手の番、このワザを受けた相手がこのカードに与えるダメージは「-{n}」される。",  # パウワウ（ES2-006・QSG-017）・チコリータ（PF1-001）
 )
+# v0.121（docs/hand-bench-attack-conditions-v0.121.md 3 章・5 章）: ピカチュウ（LV.16／HP60）の「なきごえ」の最新の説明（『オフィシャルブック2000』p.127 の 2 つの欄の「ワザ」欄。
+# kyuura LD-IP1-040-ATK0・LD-PR1-001-ATK0・LD-PR1-003-ATK0・LD-PR1-017-ATK0。CR-PIKACHU-GROWL-LATEST）。処理に使う文面（印刷の文面の照合には使わない）
+GROWL_LATEST_TEXT = "次の相手の番、このワザを受けた相手は、このカードにダメージを与えるとき、そのダメージが「-10」される。"
 
 
 @dataclass(frozen=True)
@@ -29454,7 +29457,9 @@ V0_76_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
         _printed(ReduceDamageToSelfNextOpponentTurn(10), "なきごえ", GROWL_TEXTS[2].format(n=10)),
         _printed(ParalyzeOnHeads(), "れいとうビーム", _PARALYZE_ON_HEADS_TEXT),
     )),
-    AttackKey("IP1-040", 0): _printed(ReduceDamageToSelfNextOpponentTurn(10), "なきごえ", GROWL_TEXTS[1].format(n=10)),
+    # v0.121: 処理に使う文面を kyuura の最新の説明 LD-IP1-040-ATK0 にした（印刷の文面は語順と「時／とき」だけが違う。meaning_change: none_apparent。型・量は v0.76 のまま）
+    AttackKey("IP1-040", 0): AttackEntry(ReduceDamageToSelfNextOpponentTurn(10), "なきごえ", text_ja=GROWL_TEXTS[1].format(n=10), play_text_ja=GROWL_LATEST_TEXT,
+                                         source="LD-IP1-040-ATK0"),
     AttackKey("IP1-040", 1): _printed(ParalyzeOnHeads(), "でんきショック", _PARALYZE_ON_HEADS_TEXT),
     AttackKey("PF1-001", 0): _printed(ReduceDamageToSelfNextOpponentTurn(10), "なきごえ", GROWL_TEXTS[2].format(n=10)),
     AttackKey("PF1-001", 1): AttackEntry(DAMAGE_ONLY, "はっぱカッター"),
