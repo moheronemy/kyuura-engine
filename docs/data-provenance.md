@@ -1972,6 +1972,27 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   SX1・TN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形の別のカードの問い）。v0.66 の「ナツメのESPと「うら」が出るまでのコインは起こらない」はエンジンの前提の誤りで、研究の論点ではない（kyuura は
   変えていない）。
 
+## v0.122: アンノーンの併用・化石の進化履歴・退却時の反応の 13 枚
+
+[unown-fossil-retreat-reactions-v0.122.md](unown-fossil-retreat-reactions-v0.122.md) の 2 章・12 章。写しの元・研究の基準は kyuura 2fe0bc0 のまま（移行の段を加えていない）。
+
+- 写しの組 `pool_v0_122`（13 枚。アンノーンM neo2-027・U neo2-028・A neo2-030・W neo4-064、マチスのライチュウ GD3-003、オムナイト ES2-011・ES3-018、カブト ES2-028、プテラ ES2-029、
+  カポエラー PRN-030、わるいフシギソウ PRN-039、わるいフシギバナ PRN-040、わるいオニドリル PRN-045）を加え、写しの作り直しの道具で作った（手で直していない）。段 v0.121 で kyuura が
+  当てはめた訂正のうち 12 枚のもの（アンノーン M・U・A のルール文、8 枚の進化元、PRN-030 の段階。kyuura がカードの画像で確かめた）を `KYUURA_CORRECTIONS`（段 v0.121）に加えた。
+  v0.121 までの 1,342 枚の値は変わっていない。
+- 道具の確かめを狭く広げた: GD3-003 の台帳の `after` の英語名が null でカードの記録が `"Lt. Surge's Pikachu"` の違い（日本語は同じ。`card_record_after`・`kyuura_inconsistency`）、
+  画像の照合の `print_values` の `.ja` の欄、同じ段で画像の照合が確かめた欄の `data_gaps` からの削除（GD3-003 の段階・PRN-030 の進化元。値は変わらない）。
+- 13 枚の採用の記録（`kyuura_commit` 2fe0bc0・記録した日 2026-10-30・外部照合なし。記録 1,255 → 1,268）。処理に使う文面は、説明文のあるワザ 10 と特殊能力 8 が kyuura の印刷の文面
+  （研究の対応表の `adopted_printed_text` 1,365 → 1,383）。説明文のない 7 つのワザは文面・出典を書いていない。`kyuura_records` は研究の基準のコミットでカードを指す記録とちょうど同じ
+  （アンノーンM だけが CR-UNOWN-DF-AT-MOST-ONE・CR-UNOWN-DF-PROTECTS-OWN-UNOWN・UQ-SELF-EXCLUDING-POWER-COPIES）。
+- アンノーンM: CR-UNOWN-DF-* の 2 件は主な対象が D・N で、M を `related_cards` に挙げつつ調査の対象外と書くので、M 自身の独立した裁定として引いていない（印刷の文面・一般の規定・D/N と
+  同じ処理として採用）。UQ-SELF-EXCLUDING-POWER-COPIES の M の事例は既存の DF1 に結んだ。
+- kyuura の画像の照合（IMG-）は kyuura の記録として再利用し、エンジン自身の原典の確認に数えていない。エンジンは外部照合・カードの画像・ガイドブックの読み直しをしていない。
+- 対象外: kyuura の写しの外に残る 22 枚（neo 3・それ以外 19）。登録・保留の記録は加えていない。
+- kyuura への報告事項: 13 枚の `engine_status` は今回の登録を写すと `registered`。FIX-GD3-003-EVOLVES-FROM の台帳とカードの記録の英語名の違い。段 v0.121 で訂正の欄ではないが画像の照合で
+  `data_gaps` から消えた欄（GD3-003 の段階・PRN-030 の進化元）。エンジンの新しい問い FE3・PM1・PM2・WT1・GU1・FS1・PW5・VL1 は kyuura に対応する記録がない（WT1・GU1・FS1 は
+  UQ-CARD-USE-WITHOUT-TARGET と同じ形、PW5 は PT1 と同じ形の別の問い）。
+
 ## v0.121: 手札からの登場とワザの使用条件の 9 枚
 
 [hand-bench-attack-conditions-v0.121.md](hand-bench-attack-conditions-v0.121.md) の 4 章・12 章（移行は上の節と 3 章）。
