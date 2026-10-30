@@ -469,7 +469,10 @@ class BarrierCoinTest(unittest.TestCase):
                                 "DamageThenParalyzeOnHeadsElseRetreatCost",
                                 # v0.121: コイルの「でんじほう」（失敗のコイン 2 枚のあとは相手へのダメージとマヒだけ。からではさむと同じ形。ロックオンで「うら」でも失敗しないときも、
                                 # コインのあとの要素は同じ。docs/hand-bench-attack-conditions-v0.121.md 8.2 節）
-                                "CoinsFailThenDamageParalyze"})
+                                "CoinsFailThenDamageParalyze",
+                                # v0.122: わるいフシギバナの「いやなかふん」（ダメージのあとの 2 枚のコインは相手のねむり・こんらん・マヒだけを決める。どくはコインによらない。
+                                # オーロラウェーブと同じ形。docs/unown-fossil-retreat-reactions-v0.122.md 6 章）
+                                "DamageThenPoisonAndStatusByTwoCoins"})
         for name in ("FailOnTailsSelfDestruct", "FailOnTailsDamageThenSelfBarrier", "DamageThenConfuseOpponentOrSelf"):
             self.assertIn(name, flipping)  # v0.107
         for name in ("CoinDevolveOpponentEvolvedToDeck", "FailOnTailsMoveOpponentFieldEnergy"):

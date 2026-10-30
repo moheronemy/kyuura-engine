@@ -302,7 +302,8 @@ class BabyRegistrationTest(unittest.TestCase):
         self.assertEqual(pool.get(SMOOCHUM_P).pokemon_type, EnergyType.WATER)  # PRN-037 は水（写しの値）
         self.assertEqual([pool.get(card).attacks for card in (ELEKID, IGGLY)], [(), ()])  # CR-BABY-WITHOUT-ATTACKS（ワザのないベイビィ）
         self.assertFalse(any(getattr(pool.get(card).powers[0], "kind", None) is None for card in (ELEKID, IGGLY)))
-        self.assertNotIn("PRN-030", pool.playable_ids)  # カポエラー（PRN-030）は加えていない
+        # カポエラー（PRN-030）は v0.114 では加えていない（v0.122 で加えた。docs/unown-fossil-retreat-reactions-v0.122.md 2 章）
+        self.assertIn("PRN-030", cards_after(read_extract(), "0.114"))
 
     def test_registrations_and_records(self):
         expected = {

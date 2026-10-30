@@ -233,8 +233,12 @@ class CorrectionTest(unittest.TestCase):
         babies = set(self.data["pool_v0_114"])
         # v0.121: kyuura がカードの画像で直したボロのつりざおの効果文（台帳 FIX-neo3-053-TRAINER-TEXT-JA。v0.121 の移行の段。docs/hand-bench-attack-conditions-v0.121.md 3.1 節）
         old_rod = {"neo3-053"}
-        self.assertEqual({c["card_id"] for c in self.data["kyuura_corrections"]}, corrected | unown | babies | old_rod)
-        self.assertEqual({c["id"] for c in self.data["cards"] if c.get("corrections")}, corrected | (unown & {c["id"] for c in self.data["cards"]}) | babies | old_rod)
+        # v0.122: 写しに入れた 13 枚のうち、段 v0.121 で kyuura がカードの画像で直した 12 枚（アンノーンM・U・A のルール文・8 枚の進化元・PRN-030 の段階。アンノーンW には訂正がない。
+        # docs/unown-fossil-retreat-reactions-v0.122.md 2.1 節）
+        v122 = set(self.data["pool_v0_122"]) - {"neo4-064"}
+        self.assertEqual({c["card_id"] for c in self.data["kyuura_corrections"]}, corrected | unown | babies | old_rod | v122)
+        self.assertEqual({c["id"] for c in self.data["cards"] if c.get("corrections")},
+                         corrected | (unown & {c["id"] for c in self.data["cards"]}) | babies | old_rod | v122)
 
     @unittest.skipUnless((KYUURA / ".git").exists(), "../kyuura がない")
     def test_correction_sources_check_and_tampering(self):

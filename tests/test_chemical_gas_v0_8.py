@@ -306,7 +306,11 @@ class ChemicalGasRegistrationTest(unittest.TestCase):
                                                                    "neo3-005", "neo3-040", "neo4-039", "neo4-066", "GD2-007",
                                                                    # v0.120: ［げんしのきおく］・［にんぎょうつかい］・［ものまね］（常にはたらく許可）。docs/fossil-basic-virtual-attacks-v0.120.md 4 章。
                                                                    # ［なかまのふっかつ］・［かせきのふっかつ］は宣言して使う
-                                                                   "neo3-042", "ES3-025", "PF3-001"))})
+                                                                   "neo3-042", "ES3-025", "PF3-001",
+                                                                   # v0.122: アンノーンM の［METAL df］（常にはたらく）・わるいフシギソウの［つるでひっぱる］（「にげる」でベンチにもどったときの
+                                                                   # 反応）。docs/unown-fossil-retreat-reactions-v0.122.md 3.4 節・5.1 節。［ANGER］・［UNDO］・［WANT］・［げんしのゆめ］・
+                                                                   # ［かせきか］・［かせきのみちびき］は宣言して使う
+                                                                   "neo2-027", "PRN-039"))})
         self.assertTrue(PowerEffect.declared)
         self.assertEqual((entry.name_ja, entry.text_ja, entry.play_text_ja, entry.source), ("かがくへんかガス", GAS_PRINTED, GAS_LATEST, "P43 p.48"))
         self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.13")  # v0.9 でゴース・ゴースト、v0.10 でゴーリキー・カイリキー、v0.11 でサカキのワンリキー・ゴーリキー・カイリキー、v0.12 で R団のファイヤー、v0.13 で第4弾のゼニガメ・わるいカメールの登録を加えた（かがくへんかガスの登録は同じ）

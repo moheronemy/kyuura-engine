@@ -736,7 +736,10 @@ class G37Test(unittest.TestCase):
         # （v0.31 の CopyOpponentAttackEffect と同じく宣言しない）。docs/fossil-basic-virtual-attacks-v0.120.md
         "CoinsDiscardOpponentEnergyElseFail",
         # v0.121: ぶきみなとおぼえ（入れ替え）・でんじほう（マヒ）・おおあくび（ねむり）は相手に与える効果の要素を宣言する。docs/hand-bench-attack-conditions-v0.121.md
-        "BenchOpponentHandBasicThenSwitchOrFail", "CoinsFailThenDamageParalyze", "StatusSelfAndOpponent"]))
+        "BenchOpponentHandBasicThenSwitchOrFail", "CoinsFailThenDamageParalyze", "StatusSelfAndOpponent",
+        # v0.122: いやなかふん（どく・ねむり・こんらん・マヒ）。みだれうち（相手の場への配分のダメージ）・10まんボルト・きりもみアタック・ドリルダイブ（自分への効果）は相手の対戦ポケモンへの
+        # 効果を持たない。docs/unown-fossil-retreat-reactions-v0.122.md 6 章
+        "DamageThenPoisonAndStatusByTwoCoins"]))
 
 
 class DecisionTest(unittest.TestCase):
