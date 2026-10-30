@@ -19,19 +19,19 @@ class CatalogContractTest(unittest.TestCase):
     def test_current_catalog_totals(self):
         pool = load_card_pool()
         extract = read_extract()
-        self.assertEqual(len(extract["cards"]), 1342)
-        self.assertEqual(len(pool.playable_ids), 1342)
+        self.assertEqual(len(extract["cards"]), 1355)
+        self.assertEqual(len(pool.playable_ids), 1355)
         self.assertEqual(pool.playable_ids, frozenset(
             card.id for card in pool.definitions.values() if card.supported))
         self.assertEqual(
             Counter(pool.get(card).category for card in pool.playable_ids),
-            {"pokemon": 1040, "trainer": 265, "energy": 37},
+            {"pokemon": 1053, "trainer": 265, "energy": 37},
         )
         registry = DEFAULT_EFFECTS
         self.assertEqual(
             (len(registry.attack_keys()), len(registry.power_keys()),
              len(registry.trainer_ids()), len(registry.energy_ids())),
-            (1721, 171, 265, 19),
+            (1738, 179, 265, 19),
         )
         self.assertEqual(
             sum(registry.trainer_entry(card).effect.is_stadium
@@ -45,7 +45,7 @@ class CatalogContractTest(unittest.TestCase):
 
         pool = load_card_pool()
         names = {pool.get(card).name_ja for card in pool.playable_ids if pool.get(card).category == "pokemon"}
-        self.assertEqual(len(names), 502)
+        self.assertEqual(len(names), 509)
         candidates = engine._identity_candidates(pool)
         basics = [card for card in candidates if pool.get(card).category == "pokemon" and pool.get(card).stage == "basic"]
         babies = [card for card in candidates if pool.get(card).category == "pokemon" and pool.get(card).stage == "baby"]
@@ -58,8 +58,9 @@ class CatalogContractTest(unittest.TestCase):
         # （ツボツボ・レディバ・ヒトデマン ES3-017・ムウマ PRN-036）を加えて 515 + 13 + 1 = 529 に、最初の実行 1 を加えた 530 回（全候補は 11 枚とも処理の違うカードで 1,107）。v0.120: たね 3 枚
         # （ミュウ PR1-021・トゲピー PR1-065・ウソッキー PF3-001）を加えて 518 + 13 + 1 = 532 に、最初の実行 1 を加えた 533 回（全候補は 11 枚とも処理の違うカードで 1,118。たねとして
         # あつかって出す化石の進化カードは、山札・手札では印刷の分類の進化カード）。v0.121: たね 4 枚（コイル neo2-043・ピカチュウ PR1-001・PR1-003・PR1-017。3 枚のピカチュウは処理に使う
-        # 文面の出典が別の最新の説明なので、それぞれの候補）を加えて 522 + 13 + 1 = 536 に、最初の実行 1 を加えた 537 回（全候補は 9 枚とも処理の違うカードで 1,127）
-        self.assertEqual((len(candidates), len(basics), len(babies)), (1127, 522, 13))
+        # 文面の出典が別の最新の説明なので、それぞれの候補）を加えて 522 + 13 + 1 = 536 に、最初の実行 1 を加えた 537 回（全候補は 9 枚とも処理の違うカードで 1,127）。v0.122: たね 5 枚
+        # （アンノーンM・U・A・W・カポエラー PRN-030）を加えて 527 + 13 + 1 = 541 に、最初の実行 1 を加えた 542 回（全候補は 13 枚とも処理の違うカードで 1,140）
+        self.assertEqual((len(candidates), len(basics), len(babies)), (1140, 527, 13))
         self.assertEqual(engine._IDENTITY_TRIAL_LIMIT, 512)
 
     def test_current_research_totals(self):
@@ -68,9 +69,9 @@ class CatalogContractTest(unittest.TestCase):
         self.assertEqual(
             (links["counts"]["engine_stop_codes"],
              links["counts"]["engine_unresolved_rulings"]),
-            (284, 285),
+            (292, 293),
         )
-        self.assertEqual(len(links["latest_descriptions"]["adopted_printed_text"]), 1365)
+        self.assertEqual(len(links["latest_descriptions"]["adopted_printed_text"]), 1383)
         self.assertEqual(links["counts"]["kyuura_issues"], 74)
 
     def test_current_format_and_audit_agree(self):
@@ -105,7 +106,7 @@ class CatalogContractTest(unittest.TestCase):
         self.assertLessEqual(playable, ids)
         self.assertLessEqual(pmcg, playable)
         self.assertEqual((len(ids - playable), len(neo - playable),
-                          len(non_pack - playable)), (35, 7, 28))
+                          len(non_pack - playable)), (22, 3, 19))
 
 
 class ReleaseCohortTest(unittest.TestCase):

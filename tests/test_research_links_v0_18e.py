@@ -190,7 +190,12 @@ class ResearchLinksTest(unittest.TestCase):
                              "UNRESOLVED_REVIVED_BASIC_DEVOLVED", "UNRESOLVED_REVIVE_HAND_BASIC_ENTRY", "UNRESOLVED_TRANSFORM_REVIVED_BASIC",
                              # v0.121: LO1・DK1・HB1・MQ1・MQ2（docs/hand-bench-attack-conditions-v0.121.md 10 章。どれも kyuura に対応する記録がない）
                              "UNRESOLVED_LOCK_ON_PROTECTED_TARGET", "UNRESOLVED_DISCARDED_ENERGY_DAMAGE_BONUS", "UNRESOLVED_ATTACK_HAND_BENCH_REACTION",
-                             "UNRESOLVED_MISTYS_CARE_OPPONENT_LAPRAS", "UNRESOLVED_MISTYS_CARE_WITHOUT_TARGET"})
+                             "UNRESOLVED_MISTYS_CARE_OPPONENT_LAPRAS", "UNRESOLVED_MISTYS_CARE_WITHOUT_TARGET",
+                             # v0.122: FE3・PM1・PM2・WT1・GU1・FS1・PW5・VL1（docs/unown-fossil-retreat-reactions-v0.122.md 10 章。どれも kyuura に対応する記録がない。WT1・GU1・FS1 は
+                             # UQ-CARD-USE-WITHOUT-TARGET と同じ形だが、kyuura に 3 枚の事例はない）
+                             "UNRESOLVED_FOSSIL_EVOLVED_READING", "UNRESOLVED_PRIMAL_DREAM_SUPPRESSED", "UNRESOLVED_PRIMAL_DREAM_DAMAGE_STEP",
+                             "UNRESOLVED_WANT_WITHOUT_TARGET", "UNRESOLVED_FOSSIL_GUIDE_WITHOUT_TARGET", "UNRESOLVED_FOSSILIZE_WITHOUT_TARGET",
+                             "UNRESOLVED_POKEMON_TOWER_POWER_WITHOUT_EFFECT", "UNRESOLVED_VINE_PULL_TIMING"})
         # v0.97（docs/unown-research-idfnj-v0.97.md 3 章）: kyuura が調査で立てた UQ-SELF-EXCLUDING-POWER-COPIES の事例にわるいデンリュウ（neo4-046）の［かんでん］があるので、
         # CV1 を論点に結んだ（kyuura は v0.86 を取り込んでいないので、未解決の一覧に CV1 の行はない。kyuura の事例は kyuura_cases_without_engine_ruling で照らす）
         # v0.97 で加えた DF1・DF2 も、kyuura に論点（UQ-SELF-EXCLUDING-POWER-COPIES・UQ-NON-ATTACK-DAMAGE-MODIFIERS）はあるが、未解決の一覧に行がない

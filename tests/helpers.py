@@ -1581,6 +1581,13 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.CoinPerPokemonInPlayDamage,
     _effects.BenchOpponentHandBasicThenSwitchOrFail,
     _effects.EachPlayerBenchesOpponentHandBasics,
+    # v0.122（docs/unown-fossil-retreat-reactions-v0.122.md 6 章）: すべてのエネルギーカードをトラッシュして足りなければ 0・自分にも弱点・抵抗力なしのダメージ・相手プレイヤーが選ぶ配分・
+    # 2 枚のコインの組のどくと特殊状態・次の自分の番のワザとにげるの禁止
+    _effects.DiscardAllEnergyCardsThenDamageZeroIfLacking,
+    _effects.DamageAndSelfDamageIgnoringWeaknessResistance,
+    _effects.OpponentChoosesRepeatedTargetsDamage,
+    _effects.DamageThenPoisonAndStatusByTwoCoins,
+    _effects.DamageThenSelfCannotAttackOrRetreat,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

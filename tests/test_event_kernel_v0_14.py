@@ -689,7 +689,10 @@ class CatalogTest(unittest.TestCase):
                            "discard_pile_immunity_to_pokemon_effects",
                            # v0.120: ［げんしのきおく］・［にんぎょうつかい］・［ものまね］（許可で使えるワザ。ワザの宣言の確かめと今持つワザの問い合わせ ``effects.available_attacks`` が、
                            # その時点の場から問い合わせる。窓の中の反応ではない）。docs/fossil-basic-virtual-attacks-v0.120.md 4 章
-                           "pre_evolution_attacks_for_evolved_actives", "doll_uses_holder_attacks", "use_defender_attacks")
+                           "pre_evolution_attacks_for_evolved_actives", "doll_uses_holder_attacks", "use_defender_attacks",
+                           # v0.122: ［つるでひっぱる］（成功した「にげる」の事実への反応。``engine._retreat``・``movement`` の段で処理する。窓の中の反応ではない）。［METAL df］は v0.97 の
+                           # ``reduce_own_group_damage_from_type`` のまま（ダメージの計算が問い合わせる）。docs/unown-fossil-retreat-reactions-v0.122.md 3 章・5 章
+                           "switch_opponent_on_retreat")
         # v0.87: フリーザーの［オーロラヴェール］・ダグトリオの［もぐる］は窓の中の反応（要素を無効にする）だが、守るのは持ち主の控え・ベンチにいるこのカードなので、印刷した
         # ポケモンの効果の対応表（``POWER_DEFINITIONS``）ではなく ``catalog.instances`` が受けるポケモンについて作る（v0.84 のこおりのはしらと同じ形）
         built_by_instances = {"own_bench_attack_immunity_while_active": C.AURORA_VEIL, "bench_attack_damage_immunity": C.DIG_UNDER}
@@ -725,11 +728,13 @@ class CatalogTest(unittest.TestCase):
                           "PMCG3-042@power0", "PMCG4-007@power0", "PMCG4-010@power0", "PMCG4-041@power0", "PMCG4-043@power0", "PMCG5-035@power0", "PMCG5-051@power0",
                           "PMCG5-063@power0", "PMCG6-010@power0",
                           "PMCG6-033@power0", "PMCG6-049@power0", "PMCG6-053@power0", "PMCG6-074@power0",
+                          "PRN-039@power0",  # v0.122
                           "QSG-003@power0", "QSG-030@power0",  # v0.102
                           "QSG-046@power0",  # v0.87
                           "neo1-014@power0", "neo1-017@power0", "neo1-033@power0",  # v0.117: neo1-017
                           "neo2-019@power0",  # v0.117
                           "neo2-025@power0",  # v0.97
+                          "neo2-027@power0",  # v0.122
                           "neo2-044@power0",  # v0.87
                           "neo3-005@power0",  # v0.119
                           "neo3-009@power0",  # v0.87

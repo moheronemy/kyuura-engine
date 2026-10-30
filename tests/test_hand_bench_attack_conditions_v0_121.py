@@ -168,7 +168,11 @@ class MigrationTest(unittest.TestCase):
                                                                                                     ("v0.121", V0114, NOW)])
         extract = read_extract()
         self.assertEqual(extract["source"]["commit"], NOW)
-        self.assertEqual([c["id"] for c in extract["kyuura_corrections"] if c["migration"] == "v0.121"], ["FIX-neo3-053-TRAINER-TEXT-JA"])
+        # v0.121 の写しの組までのカードの、段 v0.121 の訂正（v0.122 から、段 v0.121 で訂正された 12 枚を写しに入れたので、その訂正は v0.122 の組のカードのもの）
+        from tests.release_catalog import cards_after
+
+        later = cards_after(extract, "0.121")
+        self.assertEqual([c["id"] for c in extract["kyuura_corrections"] if c["migration"] == "v0.121" and c["card_id"] not in later], ["FIX-neo3-053-TRAINER-TEXT-JA"])
         sources = cs.load_sources()
         last = sources["data_migrations"][-1]
         self.assertEqual((last["from"], last["to"], last["on"], last["document"]), (V0114, NOW, "2026-10-30", "docs/hand-bench-attack-conditions-v0.121.md"))
@@ -195,7 +199,10 @@ class MigrationTest(unittest.TestCase):
         changed = {c["id"] for c in new["cards"] if c != before[c["id"]]}
         self.assertEqual(changed, CHANGED_13)
         self.assertEqual([c["id"] for c in mid["cards"] if c != {x["id"]: x for x in new["cards"]}[c["id"]]], [])
-        extract_ids = {c["id"] for c in read_extract()["cards"]} - set(V0121)
+        from tests.release_catalog import cards_after
+
+        extract = read_extract()
+        extract_ids = {c["id"] for c in extract["cards"]} - set(V0121) - cards_after(extract, "0.121")  # v0.121 の時点の写し（v0.122 から 12 枚を写しに入れた）
         self.assertEqual(changed & extract_ids, set())
         self.assertEqual(len(new["cards"]), 1377)
 
@@ -262,10 +269,13 @@ class RegistrationTest(unittest.TestCase):
     def test_removing_the_registrations_restores_the_previous_catalog(self):
         """今回の登録だけを外すと 1,333 枚にもどる（ほかのカードは失われない）。"""
         registry = E.DEFAULT_EFFECTS.without_attacks("test-without-v0121", list(E.V0_121_ATTACKS)).without_trainers("test-without-v0121-trainers", list(E.V0_121_TRAINERS))
-        pool = pool_from_extract(read_extract(), registry)
+        from tests.release_catalog import cards_after
+
+        extract = read_extract()
+        pool = pool_from_extract(extract, registry)
         full = load_card_pool()
         self.assertEqual(full.playable_ids - pool.playable_ids, frozenset(V0121))
-        self.assertEqual(len(pool.playable_ids), 1333)
+        self.assertEqual(len(pool.playable_ids - cards_after(extract, "0.121")), 1333)  # v0.122 からの組を除いた、v0.121 の時点の数
 
 
 class GrowlTest(unittest.TestCase):
