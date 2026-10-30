@@ -1663,6 +1663,11 @@
     "PRN-040",
     "PRN-045"
   ],
+  "pool_v0_123": [
+    "GD5-007",
+    "IP2-032",
+    "PR1-016"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -125852,6 +125857,338 @@
           },
           "basis": "card_image_check",
           "decided_on": "2026-10-30"
+        }
+      ]
+    },
+    {
+      "id": "GD5-007",
+      "jp_set": "GD5",
+      "category": "pokemon",
+      "name": {
+        "ja": "カツラのウィンディ",
+        "en": "Blaine's Arcanine"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          59
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "カツラのガーディ",
+          "en": "Blaine's Growlithe"
+        },
+        "hp": 90,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ヒートタックル",
+              "en": "Heat Tackle"
+            },
+            "cost": [
+              "fire",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "自分にも10ダメージ。",
+              "en": "Blaine's Arcanine does 10 damage to itself."
+            }
+          },
+          {
+            "name": {
+              "ja": "ほのおのあらし",
+              "en": "Firestorm"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 120,
+              "modifier": null,
+              "display": "120"
+            },
+            "text": {
+              "ja": "自分についている「炎」エネルギーカードを3枚トラッシュしなければ、このワザは使えない。",
+              "en": "Discard 3 Fire Energy cards attached to Blaine's Arcanine in order to use this attack."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym2-1"
+        ],
+        "pcg_search": [
+          "1stgymd5007"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd5007.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "ポケモンジム第3弾「グレンタウンジム カツラ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd5007.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-GD5-007",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym2-1",
+        "pokemon.dex": "pokemontcg:gym2-1",
+        "pokemon.evolves_from": "same_card:PMCG6-034"
+      },
+      "copies": [
+        {
+          "page": "1stgymd5007",
+          "list_number": "007/025"
+        }
+      ]
+    },
+    {
+      "id": "IP2-032",
+      "jp_set": "IP2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ウィンディ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ガーディ",
+          "en": null
+        },
+        "hp": 70,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "とっしん",
+              "en": null
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "自分にも20ダメージ。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stintro2032"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stintro2032.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック(ゼニガメデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stintro2032.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stintro2032",
+          "list_number": "032/040"
+        }
+      ]
+    },
+    {
+      "id": "PR1-016",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ウィンディ",
+        "en": "Arcanine"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          59
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ガーディ",
+          "en": "Growlithe"
+        },
+        "hp": 70,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "でんこうせっか",
+              "en": "Quick Attack"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、20ダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 10 damage plus 20 more damage; if tails, this attack does 10 damage."
+            }
+          },
+          {
+            "name": {
+              "ja": "いかりのほのお",
+              "en": "Flames of Rage"
+            },
+            "cost": [
+              "fire",
+              "fire"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 40,
+              "modifier": "+",
+              "display": "40+"
+            },
+            "text": {
+              "ja": "このカードについている「炎」エネルギーカードを2枚はがして捨てなければこのワザは使えない。自分にのっているダメージカウンター×10のダメージを追加する",
+              "en": "Discard 2 Fire Energy cards attached to Arcanine in order to use this attack. This attack does 40 damage plus 10 more damage for each damage counter on Arcanine."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-6"
+        ],
+        "pcg_search": [
+          "1stp016"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp016.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp016.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-6",
+        "pokemon.dex": "pokemontcg:basep-6",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stp016",
+          "list_number": "-/-"
         }
       ]
     }

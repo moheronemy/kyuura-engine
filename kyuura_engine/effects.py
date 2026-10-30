@@ -47313,3 +47313,72 @@ V0_122_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_122_ATTACKS), V0_122_POWERS)
+
+
+# ---------------------------------------------------------------- v0.123: 名前の訂正の移行とウィンディ 3 枚（docs/arcanine-name-migration-v0.123.md）
+
+# v0.123: プロモのウィンディ（PR1-016）の「いかりのほのお」の印刷の文面（kyuura の印刷の文面。文末に句点がない。印刷のまま照らす）
+RAGE_FLAMES_TEXT = "このカードについている「{ja}」エネルギーカードを{count}枚はがして捨てなければこのワザは使えない。自分にのっているダメージカウンター×{per}のダメージを追加する"
+
+
+@dataclass(frozen=True)
+class DiscardEnergyBeforeDamagePlusOwnCounters(AttackEffect):
+    """このカードについている ``energy_type`` のエネルギーカードを ``count`` 枚はがして捨てなければこのワザは使えない。自分にのっているダメージカウンター × ``per`` のダメージを
+    追加する（v0.123。プロモのウィンディ（PR1-016）の「いかりのほのお」。kyuura の印刷の文面。docs/arcanine-name-migration-v0.123.md 5 章）。要素は既存の
+    ``DiscardOwnEnergy(energy_type, count, when_lacking=LACKING_CANNOT_USE, timing=TIMING_EFFECT)`` → ``Damage(OPP, PlusOwnCounters(per), requires="discard")``。
+
+    - トラッシュの時点は、v0.31 のカツラのウィンディの「ほのおのあらし」（``DiscardEnergyBeforeDamage(FIRE, 3, "effect", "cannot_use")``）と同じ読み方: 炎エネルギーカードをトラッシュして
+      ダメージを与えるワザなので、kyuura の RUL-ENERGY-DISCARD-ATTACKS の範囲（「炎エネルギーカードをトラッシュするタイプのワザ（「かえんほうしゃ」など）は、すべて同じ処理」）として
+      ワザの効果（こんらんのコインのあと・ダメージの前）。記録の最新の説明（ダメージはなくなる）は元の文面が違うので処理に使う文面にせず、印刷の「使えない」のまま（失敗・基本 0・ダメージなしに
+      変えない）。炎だけを受け付ける（ほかの色の時点は記録の範囲の外）
+    - トラッシュするのはカードの枚数（``count``）で、エネルギーの個数で数えない。選ぶのはワザを使ったプレイヤー（決定 ``discard_energy``。ちょうど ``count`` 枚）。選べるものは
+      ``DiscardOwnEnergy`` と同じ（ついている順の「炎」エネルギーカード。レインボーエネルギー・色を変える効果の問い RB1・TE1 はそのまま止める）
+    - 追加のダメージは、ダメージを計算するときの、ワザを使ったポケモン（今の姿）のダメージカウンターの数 × ``per``（p.321 の 1 段階の基本となるダメージ。弱点・抵抗力などはそのあと）。
+      HP の上限・印刷の HP で数を固定しない。相手のワザとして使う・写したワザでは、使ったポケモンのエネルギーとカウンター（``DiscardOwnEnergy`` の ``copy_problem`` の既存の判定）
+    - 全文（``RAGE_FLAMES_TEXT``）と色・枚数・1 個あたりの数を結びつけて照らす（形だけの ``DamagePlusOwnCounters`` で登録しない）
+    """
+
+    energy_type: EnergyType
+    count: int
+    per: int
+    implementation_id = "discard_energy_before_damage_plus_own_counters"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "エネルギーカードを捨てなければ使えない、自分のダメージカウンターで追加ダメージのワザ"
+        problems = _check_form(attack, what, damage="modified", modifier="+", cost_types=(self.energy_type,))
+        if self.energy_type is not EnergyType.FIRE:
+            problems.append("炎エネルギーカードのワザでないのに、トラッシュの時点を RUL-ENERGY-DISCARD-ATTACKS の範囲（効果）にしている")
+        usable = sum(1 for t in attack.cost if t is self.energy_type)
+        if not 1 <= self.count <= usable:
+            problems.append(f"捨てる {self.count} 枚が、1 枚から必要なエネルギーで必ずついている枚数 {usable} までではない")
+        if type(self.per) is not int or self.per <= 0 or self.per % 10:
+            problems.append(f"ダメージカウンター 1 個あたりの追加 {self.per!r} が 10 の倍数の正の数ではない")
+        return problems + _check_exact_text(attack, what, (RAGE_FLAMES_TEXT.format(ja=self.energy_type.ja, count=self.count, per=self.per),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        return _decision_form(decision, _label(state, use), kind=DISCARD_ENERGY, player=use.player, choices=(self.count, self.count),
+                              options=_attached_energy_cards(state, attacker, self.energy_type))
+
+
+# v0.123 のワザの登録（5）。GD5-007 は PMCG6-034 と処理に使う欄が id のほかすべて同じ（kyuura の同じカードの組 SC-GD5-007）なので、id ごとに PMCG6-034 と同じ登録を書き、
+# 下の ``SAME_DATA_CARDS_V0_123`` で同じ登録の値にまとめる（ほのおのあらしのトラッシュの時点は v0.31 の RUL-ENERGY-DISCARD-ATTACKS の範囲の読み方の再利用。新しい裁定ではない）
+V0_123_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # カツラのウィンディ（GD5-007）。ヒートタックル（炎無無）40・自分にも 10、ほのおのあらし（炎炎炎炎）120・炎 3 枚（トラッシュできなければ使えない）
+    AttackKey("GD5-007", 0): _printed(DamageAndSelfDamage(10), "ヒートタックル", "自分にも10ダメージ。"),
+    AttackKey("GD5-007", 1): _printed(DiscardEnergyBeforeDamage(EnergyType.FIRE, 3, "effect", "cannot_use"), "ほのおのあらし",
+                                      "自分についている「炎」エネルギーカードを3枚トラッシュしなければ、このワザは使えない。"),
+    # ウィンディ（IP2-032）。とっしん（炎炎無）50・自分にも 20（第1弾 PMCG1-019 のとっしん（炎炎無無）80・自分にも 30 とは別の数値）
+    AttackKey("IP2-032", 0): _printed(DamageAndSelfDamage(20), "とっしん", "自分にも20ダメージ。"),
+    # ウィンディ（PR1-016）。でんこうせっか（無無）10+・「おもて」で 20 を追加、いかりのほのお（炎炎）40+・炎 2 枚を捨てなければ使えない・自分のカウンター × 10 を追加
+    AttackKey("PR1-016", 0): _printed(CoinBonusDamage(20), "でんこうせっか", "コインを投げて「おもて」なら、20ダメージを追加する。"),
+    AttackKey("PR1-016", 1): _printed(DiscardEnergyBeforeDamagePlusOwnCounters(EnergyType.FIRE, 2, 10), "いかりのほのお",
+                                      RAGE_FLAMES_TEXT.format(ja="炎", count=2, per=10)),
+})
+
+# v0.123: 同じデータのカード（新しい id → 登録済みの元のカード）。v0.70 の ``_with_shared_entries`` で、id ごとに書いた登録が元のカードの登録と同じことを確かめてから同じ値にまとめる
+SAME_DATA_CARDS_V0_123: Mapping[str, str] = MappingProxyType({
+    "GD5-007": "PMCG6-034",  # カツラのウィンディ（SC-GD5-007）
+})
+
+DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_123_ATTACKS), SAME_DATA_CARDS_V0_123)

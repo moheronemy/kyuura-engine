@@ -15476,3 +15476,12 @@ BUILDERS |= {
     # ドリルダイブ: ダメージ → 次の自分の番、ワザ（すべて）を使えない → 「にげる」ことができない（どちらも自分に与える持続する効果）
     E.DamageThenSelfCannotAttackOrRetreat: lambda e: (Damage(OPP, Printed()), SelfCannotAttack(), SelfCannotRetreat()),
 }
+
+
+# v0.123（docs/arcanine-name-migration-v0.123.md 5 章）: いかりのほのお（PR1-016）。既存の要素の新しい組み合わせ
+BUILDERS |= {
+    # いかりのほのお: 自分の「炎」エネルギーカードを count 枚トラッシュ（ワザの効果。足りなければ使えない）→ ダメージ（目安 + 自分のダメージカウンターの数 × per）
+    E.DiscardEnergyBeforeDamagePlusOwnCounters: lambda e: (
+        DiscardOwnEnergy(e.energy_type, count=e.count, when_lacking=LACKING_CANNOT_USE, timing=TIMING_EFFECT), Damage(OPP, PlusOwnCounters(e.per), requires="discard"),
+    ),
+}

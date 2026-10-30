@@ -30616,6 +30616,56 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。たかくとぶ=SetNextTurnAttackDamage(1, \"ドリルダイブ\", 80, target_text=ドリルダイブの全文)（p.321 の 2 段階で 80 にする）。ドリルダイブ=DamageThenSelfCannotAttackOrRetreat（次の自分の番、ワザ（すべて）と「にげる」を禁止）。進化元は kyuura の訂正 FIX-PRN-045-EVOLVES-FROM のあとの値。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（カードの画像は読んでいない）"
+    },
+    "GD5-007": {
+      "basis": "kyuura_data",
+      "name_ja": "カツラのウィンディ",
+      "status": "adopted",
+      "kyuura_commit": "74b3ceb883dd815495d13b9987433fb14b36e44d",
+      "recorded_on": "2026-10-31",
+      "kyuura_records": [
+        "CR-ARCANINE-PRINTED-NAMES"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.123 で加えた（docs/arcanine-name-migration-v0.123.md）。GD5（gym_deck。ポケモンジム第3弾「グレンタウンジム カツラ」）。名前の訂正の移行（段 v0.123）のあと、処理に使う欄が PMCG6-034 と id のほかすべて同じ（kyuura の同じカードの組 SC-GD5-007。SAME_DATA_CARDS_V0_123 で同じ登録の値にまとめる。id ごとの登録・この採用の記録は持つ）。ワザ: ヒートタックル=DamageAndSelfDamage(10)、ほのおのあらし=DiscardEnergyBeforeDamage（炎 3 枚。トラッシュの時点は v0.31 の PMCG6-034 と同じ RUL-ENERGY-DISCARD-ATTACKS の範囲の読み方（ワザの効果）。トラッシュできなければ使えない（印刷の文面）。新しい公式の裁定・原典の確認ではない）。名前の数え方は CR-ARCANINE-PRINTED-NAMES（「カツラのウィンディ」は PMCG6-034 と合わせて 4 枚まで。「ウィンディ」とは別の名前）。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（エンジンはカードの画像を読んでいない。名前は kyuura の画像の照合 IMG-GD5-007 の再利用）。欠けているレベルは補っていない"
+    },
+    "IP2-032": {
+      "basis": "kyuura_data",
+      "name_ja": "ウィンディ",
+      "status": "adopted",
+      "kyuura_commit": "74b3ceb883dd815495d13b9987433fb14b36e44d",
+      "recorded_on": "2026-10-31",
+      "kyuura_records": [
+        "CR-ARCANINE-PRINTED-NAMES"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.123 で加えた（docs/arcanine-name-migration-v0.123.md）。IP2（intro_pack。イントロパック ゼニガメデッキ）。ワザ: とっしん（炎炎無）50・自分にも 20 = DamageAndSelfDamage(20)（第1弾 PMCG1-019 のとっしん 80・自分にも 30 とは別の数値）。名前の数え方は CR-ARCANINE-PRINTED-NAMES（「ウィンディ」は PMCG1-019・PR1-016 と合わせて 4 枚まで）。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（エンジンはカードの画像を読んでいない。名前は kyuura の画像の照合 IMG-IP2-032 の再利用）。欠けている図鑑番号・レベルは補っていない"
+    },
+    "PR1-016": {
+      "basis": "kyuura_data",
+      "name_ja": "ウィンディ",
+      "status": "adopted",
+      "kyuura_commit": "74b3ceb883dd815495d13b9987433fb14b36e44d",
+      "recorded_on": "2026-10-31",
+      "kyuura_records": [
+        "CR-ARCANINE-PRINTED-NAMES"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.123 で加えた（docs/arcanine-name-migration-v0.123.md）。PR1（promo）。ワザ: でんこうせっか（無無）10+・「おもて」で 20 を追加 = CoinBonusDamage(20)、いかりのほのお（炎炎）40+ = DiscardEnergyBeforeDamagePlusOwnCounters（炎エネルギーカード 2 枚を捨てなければ使えない・自分のダメージカウンター × 10 を追加。v0.123 の新しい型で、既存の要素 DiscardOwnEnergy と PlusOwnCounters の組み合わせ。トラッシュの時点は PMCG6-034 のほのおのあらしと同じ RUL-ENERGY-DISCARD-ATTACKS の範囲の読み方。印刷の文面の文末に句点がない（印刷のまま））。名前の数え方は CR-ARCANINE-PRINTED-NAMES。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（エンジンはカードの画像を読んでいない。名前は kyuura の画像の照合 IMG-PR1-016 の再利用）。欠けているレベルは補っていない"
     }
   }
 }

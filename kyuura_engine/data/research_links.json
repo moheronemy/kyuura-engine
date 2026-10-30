@@ -5770,7 +5770,12 @@
       "PRN-039/power/0",
       "PRN-040/attack/0",
       "PRN-045/attack/0",
-      "PRN-045/attack/1"
+      "PRN-045/attack/1",
+      "GD5-007/attack/0",
+      "GD5-007/attack/1",
+      "IP2-032/attack/0",
+      "PR1-016/attack/0",
+      "PR1-016/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
