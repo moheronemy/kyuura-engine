@@ -466,7 +466,10 @@ class BarrierCoinTest(unittest.TestCase):
                                     "CoinsTimesDamageThenConfuseIfAtLeast", "DamageThenSleepOnHeadsElseRetreatLock", "CoinMoveOpponentEnergyCardToBenchOrFail",
                                 # v0.118: わるいオクタンの「しめつづける」（1 枚のコインは相手のマヒと「にげる」エネルギーを増やす効果だけを決める。
                                 # docs/unbounded-coins-heal-allocation-v0.118.md 6 章）
-                                "DamageThenParalyzeOnHeadsElseRetreatCost"})
+                                "DamageThenParalyzeOnHeadsElseRetreatCost",
+                                # v0.121: コイルの「でんじほう」（失敗のコイン 2 枚のあとは相手へのダメージとマヒだけ。からではさむと同じ形。ロックオンで「うら」でも失敗しないときも、
+                                # コインのあとの要素は同じ。docs/hand-bench-attack-conditions-v0.121.md 8.2 節）
+                                "CoinsFailThenDamageParalyze"})
         for name in ("FailOnTailsSelfDestruct", "FailOnTailsDamageThenSelfBarrier", "DamageThenConfuseOpponentOrSelf"):
             self.assertIn(name, flipping)  # v0.107
         for name in ("CoinDevolveOpponentEvolvedToDeck", "FailOnTailsMoveOpponentFieldEnergy"):
