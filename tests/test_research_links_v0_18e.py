@@ -187,7 +187,10 @@ class ResearchLinksTest(unittest.TestCase):
                              "UNRESOLVED_ESP_COPIED_ATTACK_COINS",
                              # v0.120: PE1・PE2・VP1・FE1・FE2・TF3（docs/fossil-basic-virtual-attacks-v0.120.md 10 章。どれも kyuura に対応する記録がない）
                              "UNRESOLVED_PRE_EVOLUTION_ATTACK_STAGE", "UNRESOLVED_PRE_EVOLUTION_ATTACK_CONDITIONS", "UNRESOLVED_PERMITTED_ATTACK_HELD",
-                             "UNRESOLVED_REVIVED_BASIC_DEVOLVED", "UNRESOLVED_REVIVE_HAND_BASIC_ENTRY", "UNRESOLVED_TRANSFORM_REVIVED_BASIC"})
+                             "UNRESOLVED_REVIVED_BASIC_DEVOLVED", "UNRESOLVED_REVIVE_HAND_BASIC_ENTRY", "UNRESOLVED_TRANSFORM_REVIVED_BASIC",
+                             # v0.121: LO1・DK1・HB1・MQ1・MQ2（docs/hand-bench-attack-conditions-v0.121.md 10 章。どれも kyuura に対応する記録がない）
+                             "UNRESOLVED_LOCK_ON_PROTECTED_TARGET", "UNRESOLVED_DISCARDED_ENERGY_DAMAGE_BONUS", "UNRESOLVED_ATTACK_HAND_BENCH_REACTION",
+                             "UNRESOLVED_MISTYS_CARE_OPPONENT_LAPRAS", "UNRESOLVED_MISTYS_CARE_WITHOUT_TARGET"})
         # v0.97（docs/unown-research-idfnj-v0.97.md 3 章）: kyuura が調査で立てた UQ-SELF-EXCLUDING-POWER-COPIES の事例にわるいデンリュウ（neo4-046）の［かんでん］があるので、
         # CV1 を論点に結んだ（kyuura は v0.86 を取り込んでいないので、未解決の一覧に CV1 の行はない。kyuura の事例は kyuura_cases_without_engine_ruling で照らす）
         # v0.97 で加えた DF1・DF2 も、kyuura に論点（UQ-SELF-EXCLUDING-POWER-COPIES・UQ-NON-ATTACK-DAMAGE-MODIFIERS）はあるが、未解決の一覧に行がない
@@ -195,7 +198,9 @@ class ResearchLinksTest(unittest.TestCase):
         # v0.121: GN1（A0 では kyuura に記録がなく not_in_kyuura。研究の基準を 2fe0bc0 に上げて、kyuura の UQ-GROWL-NON-ATTACK-DAMAGE と IP1-040 の事例に結んだ。未解決の一覧に行はない）
         self.assertEqual(unindexed, {"UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES", "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES", "UNRESOLVED_POWER_DAMAGE_RECEIVED_POWER",
                                      "UNRESOLVED_BABY_RULE_COIN_ORDER", "UNRESOLVED_NEO_TEXT_BASIC_BABY", "UNRESOLVED_NEO_TEXT_EVOLUTION_CARD_BABY",
-                                     "UNRESOLVED_GROWL_NON_ATTACK_DAMAGE"})
+                                     "UNRESOLVED_GROWL_NON_ATTACK_DAMAGE",
+                                     # v0.121: SQ1（UQ-COPIED-ATTACK の ES3-021 の事例）・OR1（UQ-CARD-USE-WITHOUT-TARGET の neo3-053 の事例）も、kyuura に論点と事例はあるが一覧に行がない
+                                     "UNRESOLVED_VIRTUAL_ASLEEP_ONLY_ATTACK", "UNRESOLVED_OLD_ROD_WITHOUT_TARGET"})
         # v0.31〜v0.68 は、kyuura の一覧でコードのない行を指していた停止コード 8 件（T27・C34/C35・G40・P19・P32・Z9・DR8・DR13）に kyuura_index_engine_key を
         # 書いていた。v0.69 で kyuura が停止コードを書いたので外した（scripts/check_research_links.py が、kyuura の一覧のコードで照らす）
         # v0.97: SS1（v0.60 のコードのない問い。kyuura の一覧ではコードのない行）にコードを付けたので、その行を指す（v0.31 と同じ形）

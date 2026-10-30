@@ -1571,6 +1571,16 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.CoinBonusPerOwnBenchNamed,
     _effects.EvolveChosenNamedFromDeck,
     _effects.CoinsDiscardOpponentEnergyElseFail,
+    # v0.121（docs/hand-bench-attack-conditions-v0.121.md 6 章〜8 章。自分と相手を特殊状態・ねむり状態でないとき失敗・コインで失敗しダメージとマヒ・次の自分の番のコインの「うら」で
+    # 失敗しない・色のエネルギーカードをトラッシュしてダメージの追加・場のポケモン全員のコイン・相手の手札から相手のベンチに出して入れ替え・おたがいに相手の手札から相手のベンチに出す）
+    _effects.StatusSelfAndOpponent,
+    _effects.FailUnlessAsleepDamage,
+    _effects.CoinsFailThenDamageParalyze,
+    _effects.WaiveTailsFailureNextTurn,
+    _effects.DiscardTypeEnergyCardForBonus,
+    _effects.CoinPerPokemonInPlayDamage,
+    _effects.BenchOpponentHandBasicThenSwitchOrFail,
+    _effects.EachPlayerBenchesOpponentHandBasics,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

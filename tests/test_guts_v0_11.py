@@ -734,7 +734,9 @@ class G37Test(unittest.TestCase):
         "PlaceOwnCounterCountOnOpponent", "ToxicPoisonOnHeadsWithoutDamage", "OptionalSwitchOpponentThenDamageAndSleep",
         # v0.120: たつまき（「おもて」の数の相手のエネルギーカードのトラッシュ）。ワザを選んで自分のワザとして使うワザ（CopyAttackFromSource）は、選んだワザの要素で効果を与える
         # （v0.31 の CopyOpponentAttackEffect と同じく宣言しない）。docs/fossil-basic-virtual-attacks-v0.120.md
-        "CoinsDiscardOpponentEnergyElseFail"]))
+        "CoinsDiscardOpponentEnergyElseFail",
+        # v0.121: ぶきみなとおぼえ（入れ替え）・でんじほう（マヒ）・おおあくび（ねむり）は相手に与える効果の要素を宣言する。docs/hand-bench-attack-conditions-v0.121.md
+        "BenchOpponentHandBasicThenSwitchOrFail", "CoinsFailThenDamageParalyze", "StatusSelfAndOpponent"]))
 
 
 class DecisionTest(unittest.TestCase):

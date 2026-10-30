@@ -853,7 +853,9 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                     # v0.119: ムウマ（PRN-036）の「あやしいひかり」（ConfuseOnHeads。既存の型の登録だけ。docs/damage-reactions-poison-sleep-v0.119.md 2 章）
                                     "あやしいひかり",
                                     # v0.120: オムナイト（neo2-032）の「しめつける」（ParalyzeOnHeads。既存の型の登録だけ。docs/fossil-basic-virtual-attacks-v0.120.md 3 章）
-                                    "しめつける"]))
+                                    "しめつける",
+                                    # v0.121: ピカチュウ（PR1-001・PR1-003・PR1-017）の「でんきショック」（ParalyzeOnHeads。既存の型の登録だけ。docs/hand-bench-attack-conditions-v0.121.md 4 章）
+                                    "でんきショック", "でんきショック", "でんきショック"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}
