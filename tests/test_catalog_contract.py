@@ -19,19 +19,19 @@ class CatalogContractTest(unittest.TestCase):
     def test_current_catalog_totals(self):
         pool = load_card_pool()
         extract = read_extract()
-        self.assertEqual(len(extract["cards"]), 1355)
-        self.assertEqual(len(pool.playable_ids), 1355)
+        self.assertEqual(len(extract["cards"]), 1358)
+        self.assertEqual(len(pool.playable_ids), 1358)
         self.assertEqual(pool.playable_ids, frozenset(
             card.id for card in pool.definitions.values() if card.supported))
         self.assertEqual(
             Counter(pool.get(card).category for card in pool.playable_ids),
-            {"pokemon": 1053, "trainer": 265, "energy": 37},
+            {"pokemon": 1056, "trainer": 265, "energy": 37},
         )
         registry = DEFAULT_EFFECTS
         self.assertEqual(
             (len(registry.attack_keys()), len(registry.power_keys()),
              len(registry.trainer_ids()), len(registry.energy_ids())),
-            (1738, 179, 265, 19),
+            (1743, 179, 265, 19),
         )
         self.assertEqual(
             sum(registry.trainer_entry(card).effect.is_stadium
@@ -59,8 +59,10 @@ class CatalogContractTest(unittest.TestCase):
         # （ミュウ PR1-021・トゲピー PR1-065・ウソッキー PF3-001）を加えて 518 + 13 + 1 = 532 に、最初の実行 1 を加えた 533 回（全候補は 11 枚とも処理の違うカードで 1,118。たねとして
         # あつかって出す化石の進化カードは、山札・手札では印刷の分類の進化カード）。v0.121: たね 4 枚（コイル neo2-043・ピカチュウ PR1-001・PR1-003・PR1-017。3 枚のピカチュウは処理に使う
         # 文面の出典が別の最新の説明なので、それぞれの候補）を加えて 522 + 13 + 1 = 536 に、最初の実行 1 を加えた 537 回（全候補は 9 枚とも処理の違うカードで 1,127）。v0.122: たね 5 枚
-        # （アンノーンM・U・A・W・カポエラー PRN-030）を加えて 527 + 13 + 1 = 541 に、最初の実行 1 を加えた 542 回（全候補は 13 枚とも処理の違うカードで 1,140）
-        self.assertEqual((len(candidates), len(basics), len(babies)), (1140, 527, 13))
+        # （アンノーンM・U・A・W・カポエラー PRN-030）を加えて 527 + 13 + 1 = 541 に、最初の実行 1 を加えた 542 回（全候補は 13 枚とも処理の違うカードで 1,140）。v0.123: 1 進化 3 枚
+        # （ウィンディ IP2-032・PR1-016・カツラのウィンディ GD5-007）で、たねは増えない（542 回のまま）。全候補は 2 枚ぶん増えて 1,142（GD5-007 は PMCG6-034 と処理の同じカードとしてまとまる）。
+        # 名前の候補は 509 のまま（PMCG1-019・PMCG6-034 の名前が「ウィンディ」「カツラのウィンディ」に置きかわり、3 枚はそのどちらかの名前）
+        self.assertEqual((len(candidates), len(basics), len(babies)), (1142, 527, 13))
         self.assertEqual(engine._IDENTITY_TRIAL_LIMIT, 512)
 
     def test_current_research_totals(self):
@@ -71,7 +73,7 @@ class CatalogContractTest(unittest.TestCase):
              links["counts"]["engine_unresolved_rulings"]),
             (292, 293),
         )
-        self.assertEqual(len(links["latest_descriptions"]["adopted_printed_text"]), 1383)
+        self.assertEqual(len(links["latest_descriptions"]["adopted_printed_text"]), 1388)
         self.assertEqual(links["counts"]["kyuura_issues"], 79)
 
     def test_current_format_and_audit_agree(self):
@@ -106,7 +108,7 @@ class CatalogContractTest(unittest.TestCase):
         self.assertLessEqual(playable, ids)
         self.assertLessEqual(pmcg, playable)
         self.assertEqual((len(ids - playable), len(neo - playable),
-                          len(non_pack - playable)), (22, 3, 19))
+                          len(non_pack - playable)), (19, 3, 16))
 
 
 class ReleaseCohortTest(unittest.TestCase):

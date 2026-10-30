@@ -1,24 +1,43 @@
-"""v0.123（docs/arcanine-name-migration-v0.123.md）: 写しの元・研究の基準の移行（kyuura 2fe0bc0 → 74b3ceb。登録済みのウィンディ 2 枚の名前の訂正）。
+"""v0.123（docs/arcanine-name-migration-v0.123.md）: 写しの元・研究の基準の移行（kyuura 2fe0bc0 → 74b3ceb。登録済みのウィンディ 2 枚の名前の訂正）と、ウィンディ系の 3 枚（ワザ 5）。
 
 2 章: 移行だけの段。kyuura が同じカードの画像で確かめて直した PMCG1-019「ウインディ」→「ウィンディ」・PMCG6-034「カツラのウインディ」→「カツラのウィンディ」（訂正の種類は
 生成の値の誤り ``generated_value_error``）を写しの移行の段 v0.123 で受け付け、採用の記録・研究の対応表をそろえる。エンジンは画像を見ていない（kyuura の画像の照合を再利用しただけ）。
+
+3 章〜5 章: カツラのウィンディ（GD5-007）・ウィンディ（IP2-032・PR1-016）。盤面は ``build_test_state`` と通常の操作で作った規定の確かめで、``new_game`` からの自然な対戦の結果ではない
+（正式な開始からの対戦は ``AuditTest``）。
 """
 
 from __future__ import annotations
 
 import copy
+import dataclasses
 import datetime
 import json
 import pathlib
+import pickle
 import subprocess
 import unittest
+from typing import ClassVar
 
-from kyuura_engine import deck
-from kyuura_engine.cards import load_card_pool, read_extract
+from kyuura_engine import ResolveDecision, UseAttack, deck
+from kyuura_engine import effects as E
+from kyuura_engine.cards import (
+    EnergyType,
+    load_card_pool,
+    pool_from_extract,
+    read_extract,
+)
+from kyuura_engine.coins import CoinSide
+from kyuura_engine.errors import IllegalActionError, UnsupportedError
+from kyuura_engine.serialize import FORMAT_VERSIONS, state_to_dict
 from scripts import check_card_sources as cs
 from scripts import check_research_links as rl
 from tests import helpers as H
+from tests.release_catalog import cards_after, cards_before
 from tests.test_baby_rules_evolution_v0_114 import extract_module
+from tests.test_fossil_basic_virtual_attacks_v0_120 import spec, table, trainer
+from tests.test_neo_trainer_components_v0_80 import audited, new_events
+from tests.test_unown_family_powers_v0_96 import snap
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 KYUURA = ROOT.parent / "kyuura"
@@ -300,3 +319,360 @@ class NameTest(unittest.TestCase):
         self.assertEqual(len(names), 509)
         self.assertEqual(deck.same_name("ウィンディ"), "ウィンディ")
         self.assertNotEqual(deck.same_name("ウィンディ"), deck.same_name("カツラのウィンディ"))
+
+
+# ---------------------------------------------------------------- 3 章〜5 章: 3 枚の登録
+
+V0123 = NEW_TARGETS
+BLAINES_ARCANINE_GYM, ARCANINE_INTRO, ARCANINE_PROMO = V0123
+GROWLITHE, BLAINES_GROWLITHE, CLEFAIRY, CLEFABLE, ECOGYM = "PMCG1-018", "PMCG6-027", "PMCG1-067", "PMCG2-044", "neo1-086"
+F, W, P_ = H.FIRE, H.WATER, H.PSYCHIC
+HD, TL = CoinSide.HEADS, CoinSide.TAILS
+RAGE_TEXT = "このカードについている「炎」エネルギーカードを2枚はがして捨てなければこのワザは使えない。自分にのっているダメージカウンター×10のダメージを追加する"
+
+
+def run(state, command, *coins):
+    return H.apply_kernel(H.with_coin_results(state, *coins) if coins else state, command)
+
+
+def answer(state, choices, *coins):
+    d = state.decision
+    return run(state, ResolveDecision(d.player, d.id, tuple(choices)), *coins)
+
+
+def promo(energy=(F, F), damage=0, **extra):
+    return spec(ARCANINE_PROMO, energy, below=(GROWLITHE,), damage=damage, **extra)
+
+
+def rejected(test, state, fn, code):
+    before = snap(state)
+    with test.assertRaises((IllegalActionError, UnsupportedError)) as raised:
+        fn(state)
+    test.assertEqual(raised.exception.code, code)
+    test.assertEqual(snap(state), before)
+
+
+class RegistrationTest(unittest.TestCase):
+    """3 章: 3 枚・ワザ 5 の登録、再利用した型の数値、採用の記録、研究の対応表、登録を外したときの数。"""
+
+    def test_cards_and_registrations(self):
+        pool = load_card_pool()
+        extract = read_extract()
+        self.assertEqual(extract["pool_v0_123"], list(V0123))
+        registry = E.DEFAULT_EFFECTS
+        self.assertEqual(sorted(k for k in registry.attack_keys() if k.card_id in V0123), sorted(E.V0_123_ATTACKS))
+        self.assertEqual(len(E.V0_123_ATTACKS), 5)
+        self.assertFalse([k for k in registry.power_keys() if k.card_id in V0123] + [c for c in registry.trainer_ids() if c in V0123])
+        for key in E.V0_123_ATTACKS:
+            definition = pool.get(key.card_id)
+            attack = definition.attacks[key.attack_index]
+            entry = registry.attack_entry(key.card_id, key.attack_index)
+            self.assertIn(key.card_id, pool.playable_ids)
+            self.assertIsNone(registry.attack_problem(key.card_id, attack, definition.attacks), key)
+            self.assertEqual((entry.text_ja, entry.play_text_ja, entry.source), (attack.text_ja, attack.text_ja, "kyuura data/cards.json"), key)
+        effect = {(k.card_id, k.attack_index): registry.attack_entry(k.card_id, k.attack_index).effect for k in E.V0_123_ATTACKS}
+        self.assertEqual(effect, {
+            (BLAINES_ARCANINE_GYM, 0): E.DamageAndSelfDamage(10),
+            (BLAINES_ARCANINE_GYM, 1): E.DiscardEnergyBeforeDamage(EnergyType.FIRE, 3, "effect", "cannot_use"),
+            (ARCANINE_INTRO, 0): E.DamageAndSelfDamage(20),
+            (ARCANINE_PROMO, 0): E.CoinBonusDamage(20),
+            (ARCANINE_PROMO, 1): E.DiscardEnergyBeforeDamagePlusOwnCounters(EnergyType.FIRE, 2, 10),
+        })
+        # 第1弾のとっしん（80・自分にも 30）と、イントロパックのとっしん（50・自分にも 20）は別の数値
+        first, intro = pool.get(ARCANINE).attacks[1], pool.get(ARCANINE_INTRO).attacks[0]
+        self.assertEqual([(a.name_ja, a.damage, a.text_ja) for a in (first, intro)], [("とっしん", 80, "自分にも30ダメージ。"), ("とっしん", 50, "自分にも20ダメージ。")])
+        self.assertEqual(registry.attack_entry(ARCANINE, 1).effect, E.DamageAndSelfDamage(30))
+        rage = pool.get(ARCANINE_PROMO).attacks[1]
+        self.assertEqual((rage.damage, rage.damage_modifier, rage.text_ja), (40, "+", RAGE_TEXT))
+
+    def test_gym_card_shares_the_blaines_arcanine_registration(self):
+        """GD5-007 は PMCG6-034 と処理に使う欄が id のほかすべて同じ（SC-GD5-007）。登録は同じ値（同じオブジェクト）で、id ごとに持つ。"""
+        extract = {c["id"]: c for c in read_extract()["cards"]}
+        gym, dark = extract[BLAINES_ARCANINE_GYM], extract[BLAINES_ARCANINE]
+        self.assertEqual((gym["name"], gym["category"], gym["pokemon"], gym["same_card_group"]), (dark["name"], dark["category"], dark["pokemon"], dark["same_card_group"]))
+        self.assertEqual(dict(E.SAME_DATA_CARDS_V0_123), {BLAINES_ARCANINE_GYM: BLAINES_ARCANINE})
+        for index in (0, 1):
+            self.assertIs(E.DEFAULT_EFFECTS.attack_entry(BLAINES_ARCANINE_GYM, index), E.DEFAULT_EFFECTS.attack_entry(BLAINES_ARCANINE, index))
+        self.assertNotIn(BLAINES_ARCANINE_GYM, E.EQUIVALENT_CARDS)  # v0.69 の写しの表（前の版の選定）には加えていない
+
+    def test_rage_flames_check_binds_the_whole_text(self):
+        """いかりのほのお: 全文と、色・枚数・カウンター 1 個あたりの数を結びつけて照らす。形だけの DamagePlusOwnCounters は通るが、トラッシュが欠けるので登録しない。"""
+        attack = load_card_pool().get(ARCANINE_PROMO).attacks[1]
+        self.assertEqual(E.DiscardEnergyBeforeDamagePlusOwnCounters(EnergyType.FIRE, 2, 10).check(attack), [])
+        for wrong in (E.DiscardEnergyBeforeDamagePlusOwnCounters(EnergyType.FIRE, 1, 10), E.DiscardEnergyBeforeDamagePlusOwnCounters(EnergyType.FIRE, 3, 10),
+                      E.DiscardEnergyBeforeDamagePlusOwnCounters(EnergyType.FIRE, 2, 20), E.DiscardEnergyBeforeDamagePlusOwnCounters(EnergyType.WATER, 2, 10)):
+            self.assertNotEqual(wrong.check(attack), [], wrong)
+        for text in (RAGE_TEXT + "。", RAGE_TEXT.replace("2枚", "1枚"), RAGE_TEXT.replace("×10", "×20")):
+            self.assertNotEqual(E.DiscardEnergyBeforeDamagePlusOwnCounters(EnergyType.FIRE, 2, 10).check(dataclasses.replace(attack, text_ja=text)), [], text)
+        self.assertEqual(E.DamagePlusOwnCounters(10).check(attack), [])  # 形の検査だけなら通る
+        self.assertNotIsInstance(E.DEFAULT_EFFECTS.attack_entry(ARCANINE_PROMO, 1).effect, E.DamagePlusOwnCounters)
+        self.assertIn(E.DiscardEnergyBeforeDamagePlusOwnCounters, H.ATTACK_TYPES_SINCE_V0_17)
+
+    def test_adoption_records_and_links(self):
+        cards = cs.load_sources()["cards"]
+        for card in V0123:
+            record = cards[card]
+            self.assertEqual((record["basis"], record["status"], record["kyuura_commit"], record["recorded_on"], record["kyuura_records"], record["external_checks"],
+                              record["issues"], set(record["play_text"].values())),
+                             ("kyuura_data", "adopted", NOW, "2026-10-31", ["CR-ARCANINE-PRINTED-NAMES"], [], [], {"kyuura_printed_text"}), card)
+        self.assertEqual((cards[ARCANINE_PROMO]["name_ja"], cards[ARCANINE_INTRO]["name_ja"], cards[BLAINES_ARCANINE_GYM]["name_ja"]), ("ウィンディ", "ウィンディ", "カツラのウィンディ"))
+        self.assertIn("RUL-ENERGY-DISCARD-ATTACKS の範囲の読み方", cards[BLAINES_ARCANINE_GYM]["notes"])
+        links = json.loads(LINKS_PATH.read_text(encoding="utf-8"))
+        printed = links["latest_descriptions"]["adopted_printed_text"]
+        self.assertEqual(printed[-5:], ["GD5-007/attack/0", "GD5-007/attack/1", "IP2-032/attack/0", "PR1-016/attack/0", "PR1-016/attack/1"])
+
+    def test_removing_the_new_registrations(self):
+        """新規の登録だけを除くと 1,355 枚にもどる。名前の訂正は移行のあとのまま（2 枚は登録を除いた組でも新しい名前）。"""
+        extract = read_extract()
+        self.assertEqual(cards_after(extract, "0.122"), frozenset(V0123))
+        self.assertTrue(set(V0123).isdisjoint(cards_before(extract, "0.123")))
+        trimmed = dict(extract, cards=[c for c in extract["cards"] if c["id"] not in V0123], pool_v0_123=[])
+        pool = pool_from_extract(trimmed, E.DEFAULT_EFFECTS)
+        self.assertEqual(len(pool.playable_ids), 1355)
+        self.assertEqual((pool.get(ARCANINE).name_ja, pool.get(BLAINES_ARCANINE).name_ja), ("ウィンディ", "カツラのウィンディ"))
+        self.assertEqual(len(load_card_pool().playable_ids), 1358)
+
+
+class DeckNameTest(unittest.TestCase):
+    """4 章: 名前は印刷どおりの文字の比べ（CR-ARCANINE-PRINTED-NAMES）。「ウィンディ」3 枚で 4 枚まで、「カツラのウィンディ」2 枚で 4 枚まで、2 つは別の名前。"""
+
+    @staticmethod
+    def deck(*cards):
+        cards = [c for c, n in cards for _ in range(n)]
+        return cards + [F] * (60 - len(cards))
+
+    def test_same_name_limits(self):
+        growlithe = (GROWLITHE, 4)
+        self.assertEqual(deck.deck_problems(self.deck(growlithe, (ARCANINE, 1), (ARCANINE_INTRO, 1), (ARCANINE_PROMO, 2))), [])
+        self.assertEqual(deck.deck_problems(self.deck(growlithe, (ARCANINE, 2), (ARCANINE_INTRO, 2), (ARCANINE_PROMO, 1))),
+                         ["TOO_MANY_COPIES: 「ウィンディ」が 5 枚（同じ名前は 4 枚まで）"])
+        self.assertEqual(deck.deck_problems(self.deck(growlithe, (ARCANINE_INTRO, 4), (ARCANINE_PROMO, 1))), ["TOO_MANY_COPIES: 「ウィンディ」が 5 枚（同じ名前は 4 枚まで）"])
+        self.assertEqual(deck.deck_problems(self.deck((BLAINES_GROWLITHE, 4), (BLAINES_ARCANINE_GYM, 3), (BLAINES_ARCANINE, 2))),
+                         ["TOO_MANY_COPIES: 「カツラのウィンディ」が 5 枚（同じ名前は 4 枚まで）"])
+        # 別の名前: 「ウィンディ」4 枚・「カツラのウィンディ」4 枚・やさしいウインディ 4 枚を同じデッキに入れられる
+        self.assertEqual(deck.deck_problems(self.deck(growlithe, (BLAINES_GROWLITHE, 4), (ARCANINE, 2), (ARCANINE_PROMO, 2), (BLAINES_ARCANINE_GYM, 2),
+                                                      (BLAINES_ARCANINE, 2), (KIND_ARCANINE, 4))), [])
+
+    def test_evolves_from_printed_names(self):
+        pool = load_card_pool()
+        self.assertEqual({pool.get(c).evolves_from for c in (ARCANINE, ARCANINE_INTRO, ARCANINE_PROMO)}, {"ガーディ"})
+        self.assertEqual({pool.get(c).evolves_from for c in (BLAINES_ARCANINE, BLAINES_ARCANINE_GYM)}, {"カツラのガーディ"})
+
+
+class RageFlamesTest(unittest.TestCase):
+    """5 章: いかりのほのお（炎 2 枚を捨てなければ使えない・自分のダメージカウンター × 10 を追加）。"""
+
+    def test_discard_two_then_forty_plus_counters(self):
+        for counters in (0, 3, 6):
+            state = table(promo((F, F, W), damage=10 * counters), opponent=spec(H.CHANSEY))
+            asked = run(state, UseAttack(0, 1))
+            d = asked.decision
+            pokemon = state.players[0].active
+            fire = [u for u in pokemon.energy if state.cards[u].card_id == F]
+            self.assertEqual((d.kind, d.player, d.min_choices, d.max_choices, list(d.options)), ("discard_energy", 0, 2, 2, fire))
+            done = answer(asked, fire)
+            self.assertEqual([e["energy"] for e in new_events(state, done, "discard_energy")], fire)
+            self.assertEqual([(e["amount"], e["steps"]) for e in new_events(state, done, "damage")], [(40 + 10 * counters, (("1 基本となる計算", 40 + 10 * counters),))])
+            self.assertEqual([state.cards[u].card_id for u in done.players[0].active.energy], [W])
+            self.assertTrue(set(fire) <= set(done.players[0].discard))
+            audited(self, done)
+
+    def test_weakness_after_the_base(self):
+        state = table(promo(damage=30), opponent=spec(H.BULBASAUR))
+        done = answer(run(state, UseAttack(0, 1)), state.players[0].active.energy)
+        [damage] = new_events(state, done, "damage")
+        self.assertEqual((dict(damage["steps"])["1 基本となる計算"], damage["weakness"], damage["amount"]), (70, True, 140))
+
+    def test_choices_are_fire_cards_of_the_user_and_exactly_two(self):
+        state = table(promo((F, F, W, F)), opponent=spec(H.CHANSEY))
+        asked = run(state, UseAttack(0, 1))
+        pokemon = state.players[0].active
+        water = next(u for u in pokemon.energy if state.cards[u].card_id == W)
+        fire = [u for u in pokemon.energy if state.cards[u].card_id == F]
+        self.assertNotIn(water, asked.decision.options)
+        rejected(self, asked, lambda s: answer(s, fire[:1]), "INVALID_CHOICE_COUNT")
+        rejected(self, asked, lambda s: answer(s, fire), "INVALID_CHOICE_COUNT")
+        before = snap(asked)
+        with self.assertRaises(IllegalActionError):
+            answer(asked, (fire[0], water))
+        self.assertEqual(snap(asked), before)
+
+    def test_rainbow_energy_question_is_not_bypassed(self):
+        """レインボーエネルギーで「炎」2 個を払っても、炎エネルギーカードとして選ぶかは既存の RB1 で止める（カード名だけで決めない）。"""
+        state = table(promo((F, H.RAINBOW_ENERGY)), opponent=spec(H.CHANSEY))
+        rejected(self, state, lambda s: run(s, UseAttack(0, 1)), "UNRESOLVED_RAINBOW_ENERGY_TYPE")
+
+    def test_confusion_tails_discards_nothing(self):
+        state = table(promo(damage=20, confusion=True), opponent=spec(H.CHANSEY))
+        done = run(state, UseAttack(0, 1), TL)
+        self.assertEqual((done.decision, new_events(state, done, "discard_energy"), [e["amount"] for e in new_events(state, done, "damage")]), (None, [], []))
+        self.assertEqual(len(new_events(state, done, "confusion_damage")), 1)
+
+    def test_copied_by_clefable_uses_the_copier(self):
+        """ゆびをふる（ピクシー）で写すときは、写したポケモン（使い手）の炎エネルギーカードとダメージカウンターで数える。炎エネルギーカードが 2 枚ない使い手は選べない（既存の判定）。"""
+        opponent = promo(damage=0)
+        without = run(table(spec(CLEFABLE, (P_, P_, P_), below=(CLEFAIRY,), damage=20), opponent=opponent), UseAttack(0, 0))
+        self.assertEqual((without.decision.kind, list(without.decision.options)), ("select_attack", [0]))
+        state = table(spec(CLEFABLE, (F, F, P_), below=(CLEFAIRY,), damage=20), opponent=opponent)
+        chosen = answer(run(state, UseAttack(0, 0)), (1,))
+        copier = state.players[0].active
+        fire = [u for u in copier.energy if state.cards[u].card_id == F]
+        self.assertEqual((chosen.decision.kind, list(chosen.decision.options)), ("discard_energy", fire))
+        done = answer(chosen, fire)
+        self.assertEqual([(e["pokemon_id"], e["effect"]) for e in new_events(state, done, "discard_energy")], [(copier.pokemon_id, "PR1-016#1")] * 2)
+        self.assertEqual([e["amount"] for e in new_events(state, done, "damage")], [60])  # 40 + ピクシーのカウンター 2 個 × 10（ウィンディの 0 個ではない）
+        self.assertEqual(len(done.players[1].active.energy), 2)  # 写されたウィンディのエネルギーは減らない
+        audited(self, done)
+
+    def test_ecogym_does_not_return_own_discards(self):
+        """自分のワザでトラッシュした炎エネルギーカードは、エコロジム（相手の「ワザ・特殊能力」や「トレーナー」によるトラッシュだけをもどす）があっても手札にもどらない（v0.82 の共通の処理）。"""
+        state = table(promo(damage=10), opponent=spec(H.CHANSEY), hand=(ECOGYM,))
+        placed = trainer(state, ECOGYM)
+        fire = list(placed.players[0].active.energy)
+        done = answer(run(placed, UseAttack(0, 1)), fire)
+        self.assertTrue(set(fire) <= set(done.players[0].discard))
+        self.assertFalse(set(fire) & set(done.players[0].hand))
+        self.assertEqual([e["amount"] for e in new_events(placed, done, "damage")], [50])
+
+    def test_saved_and_resumed_across_the_discard(self):
+        """形式 28 のまま（決定の途中の状態を形式 28 で書き出せる。新しい状態の欄はない）。トラッシュを選ぶ決定の途中の状態を、複製・deepcopy・pickle から続けても、トラッシュ・ダメージは
+        1 回だけで、結果は同じ。"""
+        self.assertEqual(max(FORMAT_VERSIONS), 28)
+        state = table(promo((F, F, F), damage=40), opponent=spec(H.CHANSEY))
+        asked = run(state, UseAttack(0, 1))
+        data = state_to_dict(asked, format_version=28)
+        self.assertEqual((data["decision"]["kind"], data["decision"]["min_choices"], data["decision"]["max_choices"]), ("discard_energy", 2, 2))
+        choice = tuple(asked.decision.options[1:])
+        done = answer(asked, choice)
+        for other in (asked.clone(), copy.deepcopy(asked), pickle.loads(pickle.dumps(asked))):
+            again = answer(other, choice)
+            self.assertEqual(state_to_dict(again, format_version=28), state_to_dict(done, format_version=28))
+            self.assertEqual(len(new_events(state, again, "discard_energy")), 2)
+            self.assertEqual([e["amount"] for e in new_events(state, again, "damage")], [80])
+
+
+class ReusedAttacksTest(unittest.TestCase):
+    """3 章: 既存の型の 4 つのワザ（代表の場面だけ。型ごとの全組み合わせは既存のテスト）。"""
+
+    def test_take_down_and_heat_tackle(self):
+        state = table(spec(ARCANINE_INTRO, (F, F, W), below=(GROWLITHE,)), opponent=spec(H.CHANSEY))
+        done = run(state, UseAttack(0, 0))
+        self.assertEqual([(e["player"], e["amount"]) for e in new_events(state, done, "damage")], [(1, 50), (0, 20)])
+        state = table(spec(BLAINES_ARCANINE_GYM, (F, W, W), below=(BLAINES_GROWLITHE,)), opponent=spec(H.CHANSEY))
+        done = run(state, UseAttack(0, 0))
+        self.assertEqual([(e["player"], e["amount"]) for e in new_events(state, done, "damage")], [(1, 40), (0, 10)])
+
+    def test_quick_attack_and_firestorm(self):
+        for side, amount in ((HD, 30), (TL, 10)):
+            state = table(promo(), opponent=spec(H.CHANSEY))
+            self.assertEqual([e["amount"] for e in new_events(state, run(state, UseAttack(0, 0), side), "damage")], [amount])
+        state = table(spec(BLAINES_ARCANINE_GYM, (F, F, F, F), below=(BLAINES_GROWLITHE,)), opponent=spec(H.CHANSEY))
+        asked = run(state, UseAttack(0, 1))
+        self.assertEqual((asked.decision.min_choices, asked.decision.max_choices), (3, 3))
+        done = answer(asked, asked.decision.options[:3])
+        self.assertEqual((len(new_events(state, done, "discard_energy")), [e["amount"] for e in new_events(state, done, "damage")]), (3, [120]))
+
+
+class CatalogTest(unittest.TestCase):
+    """7 章: マチスの秘策の試すカードで、GD5-007 は PMCG6-034 と処理の同じカードとしてまとまる（v0.123 で 2 枚ぶん増える。総数の固定値は tests/test_catalog_contract.py）。"""
+
+    def test_secret_plan_candidates_and_limits(self):
+        from kyuura_engine import engine
+        from kyuura_engine.resolution import preflight
+
+        candidates = engine._identity_candidates(load_card_pool())
+        self.assertEqual(len([c for c in (BLAINES_ARCANINE, BLAINES_ARCANINE_GYM) if c in candidates]), 1)
+        self.assertTrue({ARCANINE_INTRO, ARCANINE_PROMO} <= set(candidates))
+        self.assertEqual((engine._IDENTITY_TRIAL_LIMIT, preflight.MAX_BRANCHES), (512, 4096))
+
+
+class PreflightTest(unittest.TestCase):
+    """8 章: 宣言の前の先読みで試す結果の数は、トラッシュするカードの組み合わせの数（上限 4,096 は増やさない）。"""
+
+    def test_measured_branches(self):
+        from unittest import mock
+
+        from kyuura_engine.resolution import preflight
+
+        branches = []
+        original = preflight.explore
+
+        def counting(*args, **kwargs):
+            found, tried = original(*args, **kwargs)
+            branches.append(tried)
+            return found, tried
+
+        def measured(state, command):
+            branches.clear()
+            with mock.patch.object(preflight, "explore", counting):
+                run(state, command)
+            return list(branches)
+
+        for fire, combinations in ((2, 1), (3, 3), (4, 6)):  # いかりのほのお: n 枚から 2 枚
+            self.assertEqual(measured(table(promo((F,) * fire, damage=20), opponent=spec(H.CHANSEY)), UseAttack(0, 1)), [combinations])
+        gym = table(spec(BLAINES_ARCANINE_GYM, (F, F, F, F), below=(BLAINES_GROWLITHE,)), opponent=spec(H.CHANSEY))
+        self.assertEqual(measured(gym, UseAttack(0, 1)), [4])  # ほのおのあらし: 4 枚から 3 枚
+        self.assertEqual(preflight.MAX_BRANCHES, 4096)
+
+
+# ---------------------------------------------------------------- 11 章: ログの監査
+
+class AuditTest(unittest.TestCase):
+    """ログの監査（tests/log_audit.py の ``v123_problems``・``v123_close``）は、エンジンの登録・計算を読まずに、印刷の文面とログから組み立てた場で確かめる。正式な開始からの対戦
+    （tools/existing_effect_games.py の局。開発用の seed 90〜93。正式な対戦の seed 0〜3 とは別）のログを 1 か所書き換える・エンジンに一時的に不具合を入れると、監査が見つける。"""
+
+    GAMES = ((("K123", "W123"), 90), (("W123", "K123"), 93), (("W123", "P31"), 90), (("W123", "E82"), 90))
+    _played: ClassVar[dict] = {}
+
+    @classmethod
+    def game(cls, labels, seed):
+        from tools import existing_effect_games as games
+
+        if (labels, seed) not in cls._played:
+            cls._played[(labels, seed)] = games.play(labels, seed, keep_state=True)
+        return cls._played[(labels, seed)]
+
+    def test_the_games_pass_the_audit(self):
+        from tests.log_audit import log_problems
+
+        used = set()
+        for labels, seed in self.GAMES:
+            result = self.game(labels, seed)
+            with self.subTest(labels=labels, seed=seed):
+                self.assertEqual((result["outcome"], result["audit"], log_problems(result["state"])), ("game_over", {}, []))
+            used |= {k for k, v in result["v123"].items() if v}
+        self.assertTrue({"attack_PR1-016#1", "rage_discard_2", "rage_counters_0", "rage_counters_3", "copied_PR1-016#0", "attack_GD5-007#1", "attack_IP2-032#0",
+                         "self_damage_IP2-032#0_20", "firestorm_discard_3", "quick_heads", "quick_tails"} <= used, used)
+
+    def test_audit_finds_a_wrong_base_or_discard(self):
+        from tests.log_audit import log_problems
+
+        state = self.game(("K123", "W123"), 90)["state"].clone()
+        log = [dict(e) for e in state.log]
+        rage = next(i for i, e in enumerate(log) if e["kind"] == "attack" and state.cards[e["pokemon"]].card_id == ARCANINE_PROMO and e["attack_index"] == 1)
+        damage = next(i for i in range(rage, len(log)) if log[i]["kind"] == "damage")
+        steps = tuple(log[damage]["steps"])
+        changed = list(log)
+        changed[damage] = dict(log[damage], steps=((steps[0][0], steps[0][1] + 10), *steps[1:]))
+        state.log = tuple(changed)
+        self.assertTrue([p for p in log_problems(state) if "PR1-016#1 の基本となるダメージ" in p])
+        discard = next(i for i in range(rage, len(log)) if log[i]["kind"] == "discard_energy")
+        state.log = tuple(log[:discard] + log[discard + 1:])
+        self.assertTrue([p for p in log_problems(state) if "PR1-016#1 でトラッシュしたカード" in p])
+
+    def test_audit_finds_a_temporary_engine_fault(self):
+        """エンジンにいかりのほのおのカウンターの数え方の不具合（1 個多く数える）を一時的に入れて同じ局を進めると、監査が基本となるダメージの違いを見つける（エンジンは戻す）。"""
+        from unittest import mock
+
+        from kyuura_engine.resolution import programs
+        from tests.log_audit import log_problems
+        from tools import existing_effect_games as games
+
+        original = programs.PlusOwnCounters.value
+
+        def wrong(self, run, flips):
+            return original(self, run, flips) + (self.per if run.key.card_id == ARCANINE_PROMO else 0)
+
+        with mock.patch.object(programs.PlusOwnCounters, "value", wrong):
+            result = games.play(("K123", "W123"), 90, keep_state=True)
+        self.assertTrue([p for p in log_problems(result["state"]) if "PR1-016#1 の基本となるダメージ" in p])
