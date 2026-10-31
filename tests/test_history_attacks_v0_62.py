@@ -239,9 +239,13 @@ class CorrectionTest(unittest.TestCase):
         # v0.123: kyuura がカードの画像で直したウィンディ 2 枚の名前（台帳 FIX-PMCG1-019-NAME-JA・FIX-PMCG6-034-NAME-JA。生成の値の誤り。v0.123 の移行の段。
         # docs/arcanine-name-migration-v0.123.md 2 章）
         arcanine = {"PMCG1-019", "PMCG6-034"}
-        self.assertEqual({c["card_id"] for c in self.data["kyuura_corrections"]}, corrected | unown | babies | old_rod | v122 | arcanine)
+        # v0.124: kyuura がカードの画像で直したメタモン ES2-032 の特殊能力の文面の 1 字（台帳 FIX-ES2-032-POWER0-TEXT-JA。転記の誤り。v0.124 の移行の段。写しにカードを入れる前から
+        # 訂正の一覧に挙げる。docs/super-transform-dark-pulse-v0.124.md 2 章）
+        ditto = {"ES2-032"}
+        self.assertEqual({c["card_id"] for c in self.data["kyuura_corrections"]}, corrected | unown | babies | old_rod | v122 | arcanine | ditto)
+        in_extract = {c["id"] for c in self.data["cards"]}
         self.assertEqual({c["id"] for c in self.data["cards"] if c.get("corrections")},
-                         corrected | (unown & {c["id"] for c in self.data["cards"]}) | babies | old_rod | v122 | arcanine)
+                         corrected | (unown & in_extract) | babies | old_rod | v122 | arcanine | (ditto & in_extract))
 
     @unittest.skipUnless((KYUURA / ".git").exists(), "../kyuura がない")
     def test_correction_sources_check_and_tampering(self):

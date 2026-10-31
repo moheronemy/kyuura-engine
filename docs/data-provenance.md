@@ -9,8 +9,8 @@
 | 項目 | 内容 |
 |---|---|
 | 元のリポジトリ | https://github.com/moheronemy/kyuura |
-| 元のコミット | `74b3ceb883dd815495d13b9987433fb14b36e44d`（v0.123 から。kyuura のブランチ `claude/v0122-names-text-trainer-procedures` の固定コミット。下の v0.123 の移行の章。v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`（kyuura のブランチ `claude/baby-data-engine-v0113-handover` の固定コミット。下の v0.114 の章）、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`）。それより前は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69〜v0.96。kyuura の main。形式 3 のカードデータ。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`（kyuura docs/engine-readiness.md が「基準にする調査データ」としたコミット。過去の原典照合の記録 card_verification.json はこのコミットの写しと照らした履歴）。下の v0.69 の章） |
-| 研究の基準 | `74b3ceb883dd815495d13b9987433fb14b36e44d`（v0.123 から。写しの元と同じ。v0.121〜v0.122 は 2fe0bc0、v0.114〜v0.120 は e519b99、v0.97〜v0.113 は 73a1690）。それより前は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69〜v0.96。写しの元と同じ。下の v0.69 の章）。v0.68 までは `3f349085645f47d0649a6cacece3680caeae50bf`（2026-10-15 から。ブランチ `claude/cool-ptolemy-5vtgsg`。裁定・論点・最新の説明・照合の記録を照らすコミット。カードの写しは作り直していない。[verified-record-reuse.md](verified-record-reuse.md)）。v0.18a〜v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。[research-alignment-v0.18a.md](research-alignment-v0.18a.md)） |
+| 元のコミット | `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`（v0.124 から。kyuura `main` の PR #6 のマージ。木は研究の最後のコミット 9731354 と同じ。下の v0.124 の移行の章。v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`（kyuura のブランチ `claude/v0122-names-text-trainer-procedures` の固定コミット）、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`（kyuura のブランチ `claude/baby-data-engine-v0113-handover` の固定コミット。下の v0.114 の章）、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`）。それより前は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69〜v0.96。kyuura の main。形式 3 のカードデータ。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`（kyuura docs/engine-readiness.md が「基準にする調査データ」としたコミット。過去の原典照合の記録 card_verification.json はこのコミットの写しと照らした履歴）。下の v0.69 の章） |
+| 研究の基準 | `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`（v0.124 から。写しの元と同じ。v0.123 は 74b3ceb、v0.121〜v0.122 は 2fe0bc0、v0.114〜v0.120 は e519b99、v0.97〜v0.113 は 73a1690）。それより前は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69〜v0.96。写しの元と同じ。下の v0.69 の章）。v0.68 までは `3f349085645f47d0649a6cacece3680caeae50bf`（2026-10-15 から。ブランチ `claude/cool-ptolemy-5vtgsg`。裁定・論点・最新の説明・照合の記録を照らすコミット。カードの写しは作り直していない。[verified-record-reuse.md](verified-record-reuse.md)）。v0.18a〜v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。[research-alignment-v0.18a.md](research-alignment-v0.18a.md)） |
 | 元のファイル | `data/cards.json`（schema_version 3。v0.68 までは 2） |
 | 生成 | `scripts/extract_kyuura_cards.py`（`git show <コミット>:data/cards.json` で読むので、kyuura の作業ツリーの状態に左右されない。kyuura は読むだけで変更しない） |
 | 照合の記録 | `kyuura_engine/data/card_verification.json`（このリポジトリの作業記録。2026-10-14 までの『オフィシャルブック2000』との照合。履歴として残し、書き換えない） |
@@ -1977,6 +1977,26 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - kyuura への報告事項: 9 枚の `engine_status` は今回の登録を写すと `registered`。エンジンの新しい問い HZ1・XP1・SX1・SX2・TN1 は kyuura に対応する記録がない（HZ1 は UQ-UP-TO-ZERO-CHOICE、
   SX1・TN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形の別のカードの問い）。v0.66 の「ナツメのESPと「うら」が出るまでのコインは起こらない」はエンジンの前提の誤りで、研究の論点ではない（kyuura は
   変えていない）。
+
+## v0.124: 写しの元・研究の基準を kyuura b9e7cff に上げる移行
+
+[super-transform-dark-pulse-v0.124.md](super-transform-dark-pulse-v0.124.md) の 2 章。この節は、カードの登録と処理の変更を加えない移行だけのコミットの記録です。
+
+- 写しの元・研究の基準を kyuura `74b3ceb883dd815495d13b9987433fb14b36e44d` から `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`（kyuura `main` の PR #6 のマージ。すごいへんしん・わるいはどうの調査。
+  木は研究の最後のコミット `9731354` と同じ）に上げた。以後 `main` の今の値には追わない。移行の連鎖に段 v0.124 を加え、v0.123 の段のあとを 74b3ceb に固定した（過去の段・採用したときのデータの
+  コミット・記録した日・外部照合の確認日と照らしたコミット・当時の違いの値・`ENGINE_USER_CORRECTIONS` は書き換えていない）。採用の記録の `data_migrations` に 6 段目。
+- `data/cards.json` 全 1,377 件で値が変わったのは、写しの外（未登録）のメタモン ES2-032 の `pokemon.powers[0].text.ja` の 1 字（「この「すごいへんしん」のカは使えず」の片仮名「カ」→漢字「力」）と、
+  同じカードの `notes`・`corrections` だけ。登録済みの 1,358 枚をふくむほかの 1,376 枚は同じ。
+- 訂正 FIX-ES2-032-POWER0-TEXT-JA の根拠は kyuura のカードの画像の照合（IMG-ES2-032。pcg-search.com の画像 1 枚）、種類は転記の誤り（`transcription_error`）。公式エラッタ・最新の説明
+  （LD-ES2-032-PWR0）ではない。画像を見たのは kyuura で、エンジンは見ていない。同じ段で kyuura が作った照合の記録 CC-ES2-032-P239 が同じ欄を訂正のあとの値で照らしているので、写しの道具は
+  「段の前にない CC- がどれも訂正のあとの値と同じ値でデータの誤りとしていない」ときだけ、画像の確認を CC- の代わりにした確かめから外す（CC- を訂正の根拠・独立した照合に数えない）。
+- 研究の記録: 一般条項 6・裁定 17（CONFIRMED 12・SUPPORTED 5）・論点 9 が加わり、既存の 3 論点に日付つきの注記が加わった。kyuura の論点 79 → 88（エンジンの停止コード 292・未解決の裁定 293 とは
+  別の数）。事例 31 件を `kyuura_cases_without_engine_ruling` に結んだ（`unregistered` 9・`requires_unregistered` 17・`stop_codes` 2（BX1。`engine_issue_differs`）・`codeless_question` 3）。
+  コードのない問い 3 件（`transform_energy_color_list`・`transform_revert_knockout_timing`・`transform_baby_and_basic_retreat`）は、移行の段のエンジンが化石のメタモンで止めていない場面の記録で、
+  答えを決めたのではない。特殊エネルギーの登録も、カードそのものの事例の登録した対象に数えるようにした（`scripts/check_research_links.py`）。登録済みの 21 枚の `kyuura_records` に、そのカードを
+  指す新しい id を加えた（記録を読み直したのではなく、id の対応を直した）。
+- kyuura への報告事項: kyuura の登録表の写しは v0.113 のまま（`engine_status` を次版の候補の正本にしていない）。GR団のミュウツーの「公式大会では使うことができません」は kyuura の記録だけで
+  `play_scope` は `standard` のまま。エンジンも `play_scope` を変えず、公式大会で使えるとも書かない。
 
 ## v0.123: ウィンディ系の 3 枚
 

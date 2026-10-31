@@ -103,6 +103,7 @@ from tests.helpers import (
     V0_80_CARDS,
     V0_81_CARDS, V0_82_CARDS, V0_83_CARDS, V0_84_CARDS, V0_85_CARDS, V0_86_CARDS, V0_87_CARDS, V0_88_CARDS,
     kyuura_records_since_v0_69,
+    V0_124_KYUURA_RECORDS_ADDED,  # v0.124: 研究の基準を b9e7cff に上げて加わった記録（エリカのフシギソウに UQ-DARK-PULSE-TIMING）
 )
 from tests.release_catalog import cards_after
 
@@ -273,7 +274,7 @@ class ShippedRecordTest(unittest.TestCase):
             record = sources["cards"][card_id]
             with self.subTest(card=card_id):
                 self.assertEqual((record["basis"], record["status"], record["kyuura_commit"], record["recorded_on"], record["kyuura_records"]),
-                                 (cs.KYUURA_DATA, cs.ADOPTED, ADOPTED_COMMIT, "2026-10-17", V046_KYUURA_RECORDS.get(card_id, [])))
+                                 (cs.KYUURA_DATA, cs.ADOPTED, ADOPTED_COMMIT, "2026-10-17", sorted([*V046_KYUURA_RECORDS.get(card_id, []), *V0_124_KYUURA_RECORDS_ADDED.get(card_id, ())])))
                 self.assertEqual(set(record["play_text"].values()), {cs.PRINTED_TEXT})
                 [check] = record["external_checks"]
                 self.assertEqual(check["checked_on"], "2026-10-17")

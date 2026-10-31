@@ -3,7 +3,7 @@
   "description": "kyuura の data/cards.json から、kyuura-engine が使うカードの記録を抜き出した写し。カード情報の正本は kyuura。値は書き換えていない。生成: scripts/extract_kyuura_cards.py（手で編集しない）。",
   "source": {
     "repository": "https://github.com/moheronemy/kyuura",
-    "commit": "74b3ceb883dd815495d13b9987433fb14b36e44d",
+    "commit": "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a",
     "path": "data/cards.json",
     "schema_version": 3
   },
@@ -1761,6 +1761,15 @@
         "FIX-PMCG1-019-NAME-JA",
         "FIX-PMCG6-034-NAME-JA"
       ]
+    },
+    {
+      "id": "v0.124",
+      "from": "74b3ceb883dd815495d13b9987433fb14b36e44d",
+      "to": "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a",
+      "document": "docs/super-transform-dark-pulse-v0.124.md",
+      "corrections": [
+        "FIX-ES2-032-POWER0-TEXT-JA"
+      ]
     }
   ],
   "kyuura_corrections": [
@@ -2883,6 +2892,30 @@
       "engine_history": "v0.31 から写しにあるカード（登録済み）。v0.122 までは「カツラのウインディ」で、採用の記録の外部照合（2026-10-15）の pcg-search.com の見出しとの違いを kyuura への報告事項にしていた",
       "applied_in_source": "74b3ceb883dd815495d13b9987433fb14b36e44d",
       "previous_source": "2fe0bc042ce187d191843819262f8036abbb343d"
+    },
+    {
+      "id": "FIX-ES2-032-POWER0-TEXT-JA",
+      "card_id": "ES2-032",
+      "field": "pokemon.powers[0].text.ja",
+      "before": "この力は、このカードがバトル場にいる時だけ、自分の番ごとに1回使える。コインを投げて「おもて」なら、場にいるポケモンから1匹を選び、それ以後このカードを、選んだポケモンと同じカードとしてあつかう。(ただし「進化・退化」はできず、この「すごいへんしん」の力は使うことができる)。「うら」なら、このカードはメタモンにもどる。エネルギーカードは、このカードについている限り、どの色のエネルギーとしても使える。このカードがバトル場をはなれた時や、「ねむり・マヒ・こんらん」状態の時、この「すごいへんしん」のカは使えず、このカードはメタモンにもどる。へんしんの元になっていたポケモンが場をはなれた時も、このカードはメタモンにもどる。",
+      "after": "この力は、このカードがバトル場にいる時だけ、自分の番ごとに1回使える。コインを投げて「おもて」なら、場にいるポケモンから1匹を選び、それ以後このカードを、選んだポケモンと同じカードとしてあつかう。(ただし「進化・退化」はできず、この「すごいへんしん」の力は使うことができる)。「うら」なら、このカードはメタモンにもどる。エネルギーカードは、このカードについている限り、どの色のエネルギーとしても使える。このカードがバトル場をはなれた時や、「ねむり・マヒ・こんらん」状態の時、この「すごいへんしん」の力は使えず、このカードはメタモンにもどる。へんしんの元になっていたポケモンが場をはなれた時も、このカードはメタモンにもどる。",
+      "basis": "card_image_check",
+      "kind": "transcription_error",
+      "migration": "v0.124",
+      "decided_on": "2026-10-31",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-ES2-032",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/1st/1stex2032.png",
+          "image_sha256": "944dcc13ba39944c9b1db69b18aeb7550f09ce749ad74d6481b148755e39a9bd",
+          "accessed_on": "2026-10-31"
+        }
+      ],
+      "engine_history": "v0.124 の移行の段で、写しの外（未登録）のカードの訂正として台帳・画像の照合の記録と照らした（v0.123 までは写しにないカード）",
+      "applied_in_source": "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a",
+      "previous_source": "74b3ceb883dd815495d13b9987433fb14b36e44d"
     }
   ],
   "engine_user_corrections": [
@@ -2900,7 +2933,7 @@
       "reference_url_role": "利用者が示した補助資料。エンジンは本文を取得していない（ネットワークのプロキシが 403）。サイトの本文を検証した・ルーン文字を解読したとは扱わない",
       "engine_saw_image": false,
       "kyuura_saw_image": false,
-      "source_commit": "74b3ceb883dd815495d13b9987433fb14b36e44d"
+      "source_commit": "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a"
     }
   ],
   "equivalent_targets": {

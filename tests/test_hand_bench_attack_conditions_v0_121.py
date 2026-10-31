@@ -261,7 +261,8 @@ class RegistrationTest(unittest.TestCase):
         printed = set(links["latest_descriptions"]["adopted_printed_text"])
         self.assertTrue({"neo2-043/attack/0", "neo2-043/attack/1", "neo4-229/attack/0", "neo4-229/attack/1", "neo4-096/attack/0", "neo4-096/attack/1",
                          "ES3-021/attack/0", "PR1-001/attack/1", "PR1-003/attack/1", "PR1-017/attack/1"} <= printed)
-        self.assertEqual(links["latest_descriptions"]["kyuura_records_not_registered"], [])
+        # v0.124: すごいへんしんの最新の説明 LD-ES2-032-PWR0 は、登録するまで「登録のない kyuura の最新の説明」（tests/test_super_transform_dark_pulse_v0_124.py）
+        self.assertEqual([x for x in links["latest_descriptions"]["kyuura_records_not_registered"] if x != "LD-ES2-032-PWR0"], [])
         cases = {(c["kyuura_issue"], c["card_id"], c["target"]): c["engine"] for c in links["kyuura_cases_without_engine_ruling"]["cases"]}
         self.assertEqual(cases[("UQ-CARD-USE-WITHOUT-TARGET", OLD_ROD, "trainer")], {"stop_codes": [STOP_CODES["OR1"]]})
         self.assertEqual(cases[("UQ-COPIED-ATTACK", SLOWBRO, "attack/1")], {"stop_codes": ["UNRESOLVED_COPIED_ATTACK", STOP_CODES["SQ1"]]})

@@ -66,7 +66,8 @@ class ResearchLinksTest(unittest.TestCase):
         # v0.114: 研究の基準と写しの元を kyuura e519b99（ブランチ claude/baby-data-engine-v0113-handover の固定コミット。親は 73a1690）に上げた（docs/baby-rules-evolution-v0.114.md 2 章）
         # v0.121: 研究の基準と写しの元を kyuura 2fe0bc0（ブランチ claude/neo2-fossil-type-cost-checks の固定コミット。親は 7b03fd9、研究 c932625 を含む）に上げた（docs/hand-bench-attack-conditions-v0.121.md 3 章）
         # v0.123: 研究の基準と写しの元を kyuura 74b3ceb（ブランチ claude/v0122-names-text-trainer-procedures の固定コミット。親は aceb98b、基点 2fe0bc0）に上げた（docs/arcanine-name-migration-v0.123.md 2 章）
-        self.assertEqual(LINKS["research_commit"], "74b3ceb883dd815495d13b9987433fb14b36e44d")
+        # v0.124: 研究の基準と写しの元を kyuura b9e7cff（main の PR #6 のマージ。木は研究の最後のコミット 9731354 と同じ。基点 74b3ceb）に上げた（docs/super-transform-dark-pulse-v0.124.md 2 章）
+        self.assertEqual(LINKS["research_commit"], "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a")
         self.assertEqual(LINKS["engine_import_id"], "ENGINE-46A3E2E")
         self.assertEqual(LINKS["card_data_commit"], read_extract()["source"]["commit"])
         self.assertEqual(LINKS["research_commit"], LINKS["card_data_commit"])
@@ -257,8 +258,12 @@ class ResearchLinksTest(unittest.TestCase):
         # 事例のカードを登録していない（または場面に要るカードを登録していない）ので停止コードがなく、事例の対応（kyuura_cases_without_engine_ruling）にだけある
         # （scripts/check_research_links.py の issues_in_links と同じ数え方。v0.97 から）
         cases = {v["kyuura_issue"] for v in LINKS["kyuura_cases_without_engine_ruling"]["cases"]}
+        # v0.124: kyuura b9e7cff の新しい論点 9 件のうち、事例が登録していないカード（または場面に要るカードを登録していないもの）だけのもの（すごいへんしん・わるいはどう）。
+        # 化石のメタモンの事例のある 3 件（UQ-TRANSFORM-ENERGY-COLOR-LIST・UQ-TRANSFORM-REVERT-KNOCKOUT-TIMING・UQ-TRANSFORM-BABY-AND-BASIC）は、コードのない問いにある
         self.assertEqual(cases - issues, {"UQ-BILINGUAL-NAME-GLOSS", "UQ-MIND-GAMES-OPTIONAL", "UQ-MIND-GAMES-TRAINER-STEP", "UQ-FLASH-FACE-UP-DECK",
-                                          "UQ-SWAP-PLEASE-OWNERSHIP"})
+                                          "UQ-SWAP-PLEASE-OWNERSHIP", "UQ-SUPER-TRANSFORM-TARGETS", "UQ-SUPER-TRANSFORM-SOURCE-CHANGES",
+                                          "UQ-SUPER-TRANSFORM-COPIED-POWERS", "UQ-SUPER-TRANSFORM-SUPPRESSED-FORM", "UQ-SUPER-TRANSFORM-ENERGY-COLORS",
+                                          "UQ-DARK-PULSE-TIMING"})
         self.assertEqual(len(issues | cases), LINKS["counts"]["kyuura_issues"])
         self.assertTrue(all(i.startswith("UQ-") for i in issues))
 
