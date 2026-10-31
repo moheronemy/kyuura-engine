@@ -352,9 +352,13 @@ class BorrowedAndFormTest(unittest.TestCase):
         self.assertTrue(after.players[1].active.conditions.paralyzed)
 
     def test_transform_keeps_tf1(self):
-        """［へんしん］のメタモンの相手の対戦ポケモンにミュウを出す（突風）と、写す常にはたらく特殊能力のある姿になるので、既存の TF1 で受け付けない（新しい能力で TF1 を解決しない）。"""
+        """［へんしん］のメタモンの相手の対戦ポケモンにミュウを出す（突風）と、写す常にはたらく特殊能力のある姿になる。v0.123 までは TF1 で受け付けなかった。v0.124 から、変身の対象の
+        いちばん上のカードの特殊能力を持つ（CR-TRANSFORM-COPIES-TOP-CARD。docs/super-transform-dark-pulse-v0.124.md 3.1 節）ので受け付け、メタモンは［ニュートラルシールド］を持つ
+        （意図した既存の動きの変化。v0.103 の新しい能力で TF1 を解決したのではなく、v0.124 の研究の採用による）。"""
         state = board(mon(DITTO, (PS,)), opponent=mon(RATTATA), opponent_bench=(mon(MEW),), hand=[GUST])
-        rejects(self, state, PlayTrainer(0, state.players[0].hand[0]), E.TRANSFORM_POWER_CODE)
+        played = apply_kernel(state, PlayTrainer(0, state.players[0].hand[0]))
+        done = apply_kernel(played, ResolveDecision(0, played.decision.id, (played.players[1].bench[0].pokemon_id,)))
+        self.assertIn(MEW, {slot.key.card_id for slot in E.powers_of(done, done.players[0].active)})
 
     def test_current_form_is_read_at_the_time_of_the_check(self):
         """段階は問い合わせの時点の今の姿（v0.49 の ``form_def``）: 同じ個体が進化する前はたね、進化したあとは 1 進化。宣言の前の場の値で固定しない。"""

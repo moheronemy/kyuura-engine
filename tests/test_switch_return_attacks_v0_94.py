@@ -543,13 +543,15 @@ class FoxFireTest(unittest.TestCase):
                     self.assertEqual(len(new_events(asked, done, "damage")), 1)
 
     def test_transformed_ditto_rx1_keeps_the_decline_answer(self):
-        """RX1: ［へんしん］のメタモンがきつねびを使うと、入れ替えで今の姿が変わる控えは選ぶと止める（同じゲーム用データでも id の違うカードは変わるとする）。入れ替えない答えは残る。"""
+        """RX1: ［へんしん］のメタモンがきつねびを使う。v0.123 までは、入れ替えで今の姿が変わる控えを選ぶと止めた。v0.124 から、ワザのあいだは変身の状態が変わらない
+        （CR-TRANSFORM-FROZEN-DURING-ACTION）ので、どの控えも選べ、残りのダメージは宣言のときの姿で処理する（意図した既存の動きの変化）。入れ替えない答えも残る。"""
         state = board(m(H.DITTO, (R, R)), opponent=m(VULPIX, (R,)), opponent_bench=(H.RATTATA, VULPIX_QSG))
         asked = attack(state, 0)
         d = asked.decision
-        self.assertEqual(set(d.context_value("unresolved_choices")), set(d.options))
-        self.assertEqual(d.context_value("unresolved_code"), RX1)
-        stopped(self, asked, ResolveDecision(0, d.id, (d.options[0],)), RX1)
+        self.assertEqual(d.context_value("unresolved_choices", ()), ())
+        switched = answer(asked, (d.options[0],))
+        self.assertEqual(len(new_events(asked, switched, "damage")), 1)
+        audited(self, switched)
         done = answer(asked, ())
         self.assertEqual(kinds(asked, done, "forced_switch_declined", "damage"), ["forced_switch_declined", "damage"])
         audited(self, done)
@@ -567,12 +569,15 @@ class DragOutTransformTest(unittest.TestCase):
     止める。同じカードの控えがあれば、それだけを選べる。あとにダメージのないこうそくスピンは聞かない。"""
 
     def test_drag_out(self):
+        # v0.124: ワザのあいだは変身の状態が変わらない（CR-TRANSFORM-FROZEN-DURING-ACTION）ので、どの控えも選べ、あとのダメージは宣言のときの姿（わるいゴーリキー）で処理する
         state = board(m(H.DITTO, (F, F, F)), opponent=m(H.DARK_MACHOKE, (F,)), opponent_bench=(H.RATTATA,))
-        stopped(self, state, UseAttack(0, 0), RX1)
+        asked = attack(state, 0)
+        self.assertEqual(asked.decision.context_value("unresolved_choices", ()), ())
+        audited(self, answer(asked, asked.decision.options[:1]))
         same = board(m(H.DITTO, (F, F, F)), opponent=m(H.DARK_MACHOKE, (F,)), opponent_bench=(H.RATTATA, m(H.DARK_MACHOKE)))
         asked = attack(same, 0)
-        rattata, machoke = asked.decision.options
-        self.assertEqual(asked.decision.context_value("unresolved_choices"), (rattata,))
+        _, machoke = asked.decision.options
+        self.assertEqual(asked.decision.context_value("unresolved_choices", ()), ())
         audited(self, answer(asked, (machoke,)))
         spin = board(m(H.DITTO, (F, F, F)), opponent=m(DONPHAN, (F,)), opponent_bench=(H.RATTATA,), bench=(H.CHANSEY,))
         asked = attack(spin, 1)

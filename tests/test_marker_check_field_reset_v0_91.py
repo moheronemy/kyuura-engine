@@ -430,9 +430,14 @@ class AllClearTest(unittest.TestCase):
         audited(self, done)
 
     def test_transform_source_is_zc2(self):
+        """v0.123 までは、［へんしん］のメタモンが写したオールクリアを使うと、抑止で［へんしん］が消えてワザの出どころが変わるので ZC2 で止めた。v0.124 から、ワザによって起こることが
+        すべて終わるまで変身の状態は変わらない（CR-TRANSFORM-FROZEN-DURING-ACTION。抑止そのものは固定しない）ので、宣言のときの姿のままワザを処理する（意図した既存の動きの変化。
+        ZC2 のほかの場面は残る）。"""
         ditto = mon(H.DITTO, (W,))
         state = board(ditto, opponent=mon(POLYGON))
-        rejects(self, state, UseAttack(0, 0), ZC2)
+        done = apply_kernel(state, UseAttack(0, 0, card=state.players[1].active.card))
+        self.assertEqual(done.frozen_forms, ())
+        self.assertTrue([e for e in done.log[len(state.log):] if e["kind"] == "attack"])
 
     def test_type_shift_or_lasting_goop_is_zc1(self):
         state = board(mon(POLYGON, (W,)), bench=(H.CHANSEY,), opponent=mon(H.CHANSEY), hand=(H.GOOP_GAS_ATTACK,))

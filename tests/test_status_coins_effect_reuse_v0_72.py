@@ -766,12 +766,14 @@ class ReusedTypeTest(unittest.TestCase):
         self.assertEqual([e["amount"] for e in events(done, since, "damage")], [20])
 
     def test_agility_needs_metal_energy_and_works_through_transform(self):
-        """エアームドの「こうそくいどう」の必要なエネルギーの「鋼」を出す基本エネルギーカードは写しにない。［へんしん］のメタモン（どの色のエネルギーとしても使える）が
-        写したときに使える。"""
+        """エアームドの「こうそくいどう」の必要なエネルギーの「鋼」を出す基本エネルギーカードは写しにない。v0.123 までは、［へんしん］のメタモン（どの色のエネルギーとしても使える）が
+        水エネルギーで写して使えた。v0.124 から、化石のメタモンの色が 8 色（p.239）か 6 色（p.324 の引く説明）かが決まらず、2 つの読みで払えるかが変わるので止める
+        （UQ-TRANSFORM-ENERGY-COLOR-LIST。TC1。docs/super-transform-dark-pulse-v0.124.md 3.7 節。意図した既存の動きの変化）。"""
         state = build_test_state([{"active": mon(DITTO, (W, W, W)), "bench": [RATTATA]}, {"active": mon("PF3-009", (W,)), "bench": [RATTATA]}],
                                  turn_number=TURN)
-        done = audited(self, attack(state, 1, H))
-        self.assertTrue(any(type(e) is AttackBarrier for e in done.players[0].active.persistent_effects))
+        with self.assertRaises(UnsupportedError) as raised:
+            attack(state, 1, H)
+        self.assertEqual(raised.exception.code, "UNRESOLVED_TRANSFORM_ENERGY_COLOR_LIST")
 
     def test_every_preflight_mode_gives_the_same_result(self):
         cases = [(board(mon("ES2-027", (F,)), mon(RATTATA, (W,))), 0), (board(mon("GD2-002", (W,))), 0), (board(mon("PR1-036", (W, W))), 1),

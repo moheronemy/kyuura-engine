@@ -474,10 +474,11 @@ class ScoopUpTest(unittest.TestCase):
 
     def test_opponent_ditto_max_hp_drop_is_mh1(self):
         """回収で相手の［へんしん］のメタモンの最大HPが下がり（バトル場が空くと同じカードとしてあつかう相手がいない）、のっているダメージ以下になる場面は、トレーナーの
-        効果で最大HPが下がる v0.48 の MH1（その答えを受け付けない。状態は変わらない）。ほかの答え（ベンチのポケモン）は受け付ける。内部エラーにならない。"""
+        効果で最大HPが下がる v0.48 の MH1（その答えを受け付けない。状態は変わらない）。ほかの答え（ベンチのポケモン）は受け付ける。内部エラーにならない。v0.124 から、トレーナーカードの
+        処理のあいだは変身の状態が変わらず、処理の終わりにもどってきぜつの判定の時点が決まらないので、コードは TK1（UQ-TRANSFORM-REVERT-KNOCKOUT-TIMING）になった（止める場面は同じ）。"""
         state = board(mon(CHANSEY), opponent=mon(DITTO, (W,), damage=60), bench=(RATTATA,), hand=(SCOOP_UP,))
         state = use_trainer(state, SCOOP_UP)
-        assert_stops(self, state, ResolveDecision(0, state.decision.id, (state.players[0].active.pokemon_id,)), "UNRESOLVED_MAX_HP_DROP")
+        assert_stops(self, state, ResolveDecision(0, state.decision.id, (state.players[0].active.pokemon_id,)), "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING")
         after = answer(state, [state.players[0].bench[0].pokemon_id])
         self.assertEqual(after.phase, Phase.MAIN)
         audited(self, after)

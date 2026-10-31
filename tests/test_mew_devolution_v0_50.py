@@ -706,12 +706,13 @@ class AfterTrainerKnockOutTest(unittest.TestCase):
 
     def test_transformed_ditto_max_hp_drop_is_unresolved(self):
         """自分のポケモンの退化で、相手の［へんしん］のメタモンの最大HPがのっているダメージ以下に下がる場合は、きぜつにするかが決まらない（v0.48 の MH1。その答えは
-        受け付けない。0 枚は受け付ける）。"""
+        受け付けない。0 枚は受け付ける）。v0.124 から、トレーナーカードの処理のあいだは変身の状態が変わらず（CR-TRANSFORM-FROZEN-DURING-ACTION）、処理の終わりに姿が変わって
+        きぜつの判定の時点が決まらないので、コードは TK1（UQ-TRANSFORM-REVERT-KNOCKOUT-TIMING）になった（止める場面は同じ）。"""
         state = board(mon(KADABRA, (P,)), mon(DITTO, damage=40), hand=(DEVOLUTION_SPRAY,))
         kadabra = state.players[0].active
         state = apply_kernel(state, PlayTrainer(0, card_of(state, 0, DEVOLUTION_SPRAY)))
         state = answer(state, [kadabra.pokemon_id])
-        assert_rejected(self, state, ResolveDecision(0, state.decision.id, (1,)), MH1, UnsupportedError)
+        assert_rejected(self, state, ResolveDecision(0, state.decision.id, (1,)), "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING", UnsupportedError)
         state = answer(state, [0])
         self.assertEqual(state.phase, Phase.MAIN)
 

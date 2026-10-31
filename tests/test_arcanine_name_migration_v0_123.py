@@ -323,7 +323,8 @@ class NameTest(unittest.TestCase):
         names = {pool.get(card).name_ja for card in pool.playable_ids if pool.get(card).category == "pokemon"}
         self.assertTrue({"ウィンディ", "カツラのウィンディ", "やさしいウインディ"} <= names)
         self.assertFalse({"ウインディ", "カツラのウインディ"} & names)
-        self.assertEqual(len(names), 509)
+        # v0.124 で「GR団のミュウツー」が加わって 510（今の値は tests/test_catalog_contract.py）。v0.123 の版の範囲の名前は 509
+        self.assertEqual(len(names - {"GR団のミュウツー"}), 509)
         self.assertEqual(deck.same_name("ウィンディ"), "ウィンディ")
         self.assertNotEqual(deck.same_name("ウィンディ"), deck.same_name("カツラのウィンディ"))
 
@@ -426,18 +427,21 @@ class RegistrationTest(unittest.TestCase):
         self.assertIn("RUL-ENERGY-DISCARD-ATTACKS の範囲の読み方", cards[BLAINES_ARCANINE_GYM]["notes"])
         links = json.loads(LINKS_PATH.read_text(encoding="utf-8"))
         printed = links["latest_descriptions"]["adopted_printed_text"]
-        self.assertEqual(printed[-5:], ["GD5-007/attack/0", "GD5-007/attack/1", "IP2-032/attack/0", "PR1-016/attack/0", "PR1-016/attack/1"])
+        # v0.124 で GR団のミュウツーの 2 つ（PRN-041）をあとに加えた
+        self.assertEqual(printed[-7:-2], ["GD5-007/attack/0", "GD5-007/attack/1", "IP2-032/attack/0", "PR1-016/attack/0", "PR1-016/attack/1"])
 
     def test_removing_the_new_registrations(self):
         """新規の登録だけを除くと 1,355 枚にもどる。名前の訂正は移行のあとのまま（2 枚は登録を除いた組でも新しい名前）。"""
         extract = read_extract()
-        self.assertEqual(cards_after(extract, "0.122"), frozenset(V0123))
+        later = cards_after(extract, "0.123")  # v0.124 からあとの版のカード（この版の範囲の外）
+        self.assertEqual(cards_after(extract, "0.122") - later, frozenset(V0123))
         self.assertTrue(set(V0123).isdisjoint(cards_before(extract, "0.123")))
-        trimmed = dict(extract, cards=[c for c in extract["cards"] if c["id"] not in V0123], pool_v0_123=[])
+        trimmed = dict(extract, cards=[c for c in extract["cards"] if c["id"] not in V0123 and c["id"] not in later], pool_v0_123=[],
+                       **{key: [] for key in extract if key.startswith("pool_v0_") and set(extract[key]) & later})
         pool = pool_from_extract(trimmed, E.DEFAULT_EFFECTS)
         self.assertEqual(len(pool.playable_ids), 1355)
         self.assertEqual((pool.get(ARCANINE).name_ja, pool.get(BLAINES_ARCANINE).name_ja), ("ウィンディ", "カツラのウィンディ"))
-        self.assertEqual(len(load_card_pool().playable_ids), 1358)
+        self.assertEqual(len(load_card_pool().playable_ids) - len(later), 1358)  # 今の総数は tests/test_catalog_contract.py
 
 
 class DeckNameTest(unittest.TestCase):
@@ -544,7 +548,7 @@ class RageFlamesTest(unittest.TestCase):
     def test_saved_and_resumed_across_the_discard(self):
         """形式 28 のまま（決定の途中の状態を形式 28 で書き出せる。新しい状態の欄はない）。トラッシュを選ぶ決定の途中の状態を、複製・deepcopy・pickle から続けても、トラッシュ・ダメージは
         1 回だけで、結果は同じ。"""
-        self.assertEqual(max(FORMAT_VERSIONS), 28)
+        self.assertIn(28, FORMAT_VERSIONS)  # v0.124 で形式 29 を加えた（この状態は形式 28 で表せる）
         state = table(promo((F, F, F), damage=40), opponent=spec(H.CHANSEY))
         asked = run(state, UseAttack(0, 1))
         data = state_to_dict(asked, format_version=28)

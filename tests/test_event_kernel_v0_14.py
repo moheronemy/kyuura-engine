@@ -639,6 +639,8 @@ class CatalogTest(unittest.TestCase):
                            "max_hp_per_attached_energy_cards",
                            # v0.49
                            "attacks_of_own_type_pokemon", "transform_into_defender",
+                           # v0.124: GR団のミュウツーの［わるいはどう］（ダメージの要素 ``kernel.dark_pulse_modifier`` が問い合わせる。窓の中の反応ではない）
+                           "dark_pulse",
                            # v0.60
                            "fail_and_return_on_attack",
                            # v0.61
@@ -729,6 +731,7 @@ class CatalogTest(unittest.TestCase):
                           "PMCG5-063@power0", "PMCG6-010@power0",
                           "PMCG6-033@power0", "PMCG6-049@power0", "PMCG6-053@power0", "PMCG6-074@power0",
                           "PRN-039@power0",  # v0.122
+                          "PRN-041@power0",  # v0.124
                           "QSG-003@power0", "QSG-030@power0",  # v0.102
                           "QSG-046@power0",  # v0.87
                           "neo1-014@power0", "neo1-017@power0", "neo1-033@power0",  # v0.117: neo1-017

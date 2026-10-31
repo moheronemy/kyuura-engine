@@ -279,12 +279,13 @@ class RegistrationTest(unittest.TestCase):
         self.assertEqual(DEFAULT_EFFECTS.trainer_entry(EGG).effect, E.FossilEggRevive(E.FOSSIL_EGG_TEXT))
 
     def test_excluded_cards_stay_out(self):
-        """依頼の対象外のメタモン（ES2-032）は登録しない（採用・保留の記録もない）。"""
-        from kyuura_engine.cards import load_card_pool
+        """依頼の対象外のメタモン（ES2-032）は v0.120 では登録しなかった（v0.124 で登録した。v0.120 の範囲の外。tests/test_super_transform_dark_pulse_v0_124.py）。"""
+        from kyuura_engine.cards import read_extract
+        from tests.release_catalog import cards_before
 
         sources = json.loads((ROOT / "kyuura_engine" / "data" / "card_sources.json").read_text(encoding="utf-8"))["cards"]
-        self.assertNotIn("ES2-032", load_card_pool().playable_ids)
-        self.assertNotIn("ES2-032", sources)
+        self.assertNotIn("ES2-032", cards_before(read_extract(), "0.124"))
+        self.assertIn("v0.124 で加えた", sources["ES2-032"]["notes"])
 
     def test_unregistered_without_the_v0_120_entries(self):
         """v0.120 の登録を除くと、対戦に使えなくなるのはちょうどこの 11 枚。"""
@@ -677,7 +678,7 @@ class SaveAndObservationTest(unittest.TestCase):
         from kyuura_engine.serialize import FORMAT_VERSIONS, state_to_dict
 
         state = table(spec(KABUTO, (F,), revived=True))
-        self.assertEqual(max(FORMAT_VERSIONS), 28)
+        self.assertIn(28, FORMAT_VERSIONS)  # v0.124 で形式 29 を加えた（形式 28 の意味は変えない）
         data = state_to_dict(state, format_version=28)
         entry = data["players"][0]["active"]["basic_entry"]
         self.assertEqual((entry["card"], entry["zone"], entry["source"]), (state.players[0].active.card, "deck", "test"))

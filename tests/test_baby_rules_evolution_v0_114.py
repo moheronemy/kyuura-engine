@@ -478,7 +478,10 @@ class BabyRuleTest(unittest.TestCase):
         ditto = V113.board(mon(H.RATTATA, (H.WATER,)), bench=(PICHU,), opponent=mon(H.DITTO))
         self.assertIsNone(E.transform_baby_question(ditto, ditto.players[1].active))  # メタモンは相手のバトル場（ラッタ）を写す
         copied = V113.board(mon(PICHU, (H.WATER,)), opponent=mon(H.DITTO))
-        rejected(self, copied, UseAttack(0, 0), "UNRESOLVED_TRANSFORM_BABY")  # BX1（ベイビィの姿のメタモン）
+        # v0.123 までは BX1（ベイビィの姿のメタモンをベイビィとしてあつかうか）で止めた。v0.124 から、ベイビィに変身したメタモンにはベイビィのルールが当たる（CR-TRANSFORM-BABY-RULE。
+        # docs/super-transform-dark-pulse-v0.124.md 3.4 節）ので、ルールのコインを投げる（意図した既存の動きの変化）
+        attacked = apply_kernel(H.with_coin_results(copied, HD, HD), UseAttack(0, 0))
+        self.assertEqual(coins_of(copied, attacked, "baby_rule"), ["heads"])
         # 既存の HC1: 「はがしてすてる」がワザを使うための条件か効果かで、「うら」でトラッシュするかが変わる（ミュウツーのバリアー）。相手がベイビィでなければ止めない
         barrier = V113.board(mon(H.MEWTWO, (H.PSYCHIC, H.PSYCHIC)), opponent=mon(PICHU))
         rejected(self, barrier, UseAttack(0, 1), "UNRESOLVED_DISCARD_ENERGY_TIMING")

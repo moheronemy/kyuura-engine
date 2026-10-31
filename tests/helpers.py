@@ -1590,6 +1590,8 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DamageThenSelfCannotAttackOrRetreat,
     # v0.123（docs/arcanine-name-migration-v0.123.md 5 章）: 炎エネルギーカードを捨てなければ使えない・自分のダメージカウンターで追加ダメージ（既存の要素 DiscardOwnEnergy と PlusOwnCounters の組み合わせ）
     _effects.DiscardEnergyBeforeDamagePlusOwnCounters,
+    # v0.124（docs/super-transform-dark-pulse-v0.124.md 6 章）: 自分のベンチの「わるい」ポケモンの数のコインで追加ダメージ（既存の要素 Coin(per_pokemon) に名前の分類を渡す）
+    _effects.CoinsPerOwnBenchDarkBonusDamage,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

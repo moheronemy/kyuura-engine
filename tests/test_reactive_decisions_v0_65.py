@@ -339,14 +339,19 @@ class NinjaTrickTest(unittest.TestCase):
         apply_kernel(new, ResolveDecision(0, d.id, ()))
 
     def test_rx1_transformed_attacker(self):
-        """RX1: ［へんしん］のメタモンのワザに変わり身の術で入れ替えると、メタモンの今の姿が変わる。その答えは止める。"""
+        """RX1: ［へんしん］のメタモンのワザに変わり身の術で入れ替える。v0.123 までは、メタモンの今の姿が変わるので止めた。v0.124 から、ワザによって起こることがすべて終わるまで
+        変身の状態は変わらない（CR-TRANSFORM-FROZEN-DURING-ACTION。docs/super-transform-dark-pulse-v0.124.md 3.5 節）ので、入れ替える答えも受け付け、ワザは宣言のときの姿
+        （キョウのドガース）のまま処理し、ワザのあとに新しい相手の対戦ポケモンの姿になる（意図した既存の動きの変化）。"""
         tricked = table(mon(KOGAS_KOFFING, (GRASS,), trainers=[(KOGAS_NINJA_TRICK, None)]), mon(DITTO, (FIGHTING,)),
                         bench=[RATTATA], opponent_bench=[RATTATA], turn=8, player=1)
         new = apply_kernel(tricked, UseAttack(1, 0))  # メタモンはキョウのドガースの「えんまく」
         d = new.decision
-        self.assertEqual((d.kind, d.context_value("unresolved_code")), (NINJA_TRICK, "UNRESOLVED_REACTIVE_SWITCH_TRANSFORMED_ATTACKER"))
-        with self.assertRaises(UnsupportedError):
-            apply_kernel(new, ResolveDecision(0, d.id, d.options))
+        self.assertEqual((d.kind, d.context_value("unresolved_code")), (NINJA_TRICK, None))
+        ditto = new.players[1].active
+        self.assertEqual(new.cards[E.current_form(new, ditto).card].card_id, KOGAS_KOFFING)  # 決定を待つあいだ、姿は宣言のときのまま
+        done = apply_kernel(new, ResolveDecision(0, d.id, d.options))
+        self.assertEqual(done.cards[E.current_form(done, done.players[1].active).card].card_id, RATTATA)  # ワザのあとは新しい相手の対戦ポケモンの姿
+        self.assertEqual(done.frozen_forms, ())
         apply_kernel(new, ResolveDecision(0, d.id, ()))
 
     def test_nt1_confusion_coin(self):
