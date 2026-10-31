@@ -391,7 +391,16 @@ data-provenance の v0.124 の節に記録しました。
 
 ### 13.7 全体のテスト
 
-（全体のテストのあとに書く）
+tests/ の 236 モジュールを、1 つずつ別のプロセスで順に走らせました（1 worker。モジュールごとの時間切れ 3,600 秒。`python -s -m unittest -v tests.<モジュール>`）。
+
+- コミット `2c077bb` の木（文書の 13.7 節を書く前。2026-10-31 15:22:21〜16:31:06。始めたモジュール 236・終えたモジュール 236。コードの指紋は実行の前後で `9d8a2bcb…`）: 6,911 件、
+  **失敗 0・エラー 0**・スキップ 1・終了コードが 0 でないモジュール 0・時間切れ 0。
+- スキップ: `tests.test_cross_version_compatibility.FullComparisonTest.test_no_differences`（大きな比較は `KYUURA_COMPAT_BASE` を設定したときだけ。既知）。
+- 時間のかかったモジュール: `tests.test_card_sources` 479.6 秒、`tests.test_preflight_consolidation_v0_16c` 134.7 秒、`tests.test_effect_preflight_v0_3d` 108.0 秒。
+
+### 13.8 全体のあとの文書
+
+全体のテストのあとは文書（この節・13.7 節）だけを変え、研究の対応表から文書を開く `tests.test_research_links_v0_18e` をやり直しました（`ResearchLinksTest` とあわせて 16 件。2026-10-31 16:31:45〜16:31:50。前後でコードの指紋 `9d8a2bcb…` が同じ）: すべて OK（失敗 0・エラー 0）。
 
 ## 14. 残る制限・行っていない検証
 
