@@ -85,6 +85,7 @@ from kyuura_engine.decisions import DISCARD_ENERGY
 from kyuura_engine.effects import ActiveRetreatIncreaseStadium, CoinReturnOwnerPokemonStadium, OwnerRetreatReductionStadium  # v0.57
 from kyuura_engine.effects import HealOnAttachEnergy, RainbowEnergy  # v0.58
 from kyuura_engine.effects import ConvertSelfToEnergy  # v0.59
+from kyuura_engine.effects import FlashTrainer  # v0.126（カードの見分けだけに使う。並べる枚数・順番・公開の範囲は監査が独立に持つ）
 from kyuura_engine.effects import DiscardAttackerEnergyOnDamage  # v0.68
 from kyuura_engine.effects import EachPlayerRecoverFromDiscard  # v0.83
 from kyuura_engine.effects import CoinChooseEitherPokemonHeal  # v0.89
@@ -501,9 +502,11 @@ TOP_FIELDS_SINCE = {
     "turn_history": 26,  # v0.100: プレイヤーの番ごとの記録（使ったワザ・番でないプレイヤーの場にいたカード）
     "poison_mists": 27, "replacement_poisons": 27,  # v0.119: ［ポイズンミスト］の効果・「ガスばくはつ」のまだ与えていないどく
     "frozen_forms": 29,  # v0.124: 処理のあいだ固定した変身の状態
+    "face_up_deck": 31,  # v0.126: おもてを上にして山札に置かれたカード（フラッシュ）
 }
 # v0.125: 形式 30 は、持続する効果 ``"damage_reduction"`` の項目 ``non_attack_unresolved``（「ふくらむ」の効果だけ）を加えた（場のポケモン・最上位の項目は変わらない）
-LATEST_FORMAT = 30
+# v0.126: 形式 31 は、最上位の ``face_up_deck``（フラッシュでおもてにした山札のカード）を加えた
+LATEST_FORMAT = 31
 # v0.99: 形式 25 で、場のポケモンの履歴の受けた記録（``"kind": "received"``）に加わった項目（ダメージを受けた場所）
 RECEIVED_FIELDS_SINCE = {"active_damage": 25}
 
@@ -616,6 +619,8 @@ def required_format(state) -> tuple[int, bool]:
         needed = max(needed, 29)  # v0.124: ［すごいへんしん］で選んだ変身のもと・処理のあいだ固定した変身の状態
     if any(type(effect).__name__ == "DamageReduction" and effect.non_attack_unresolved for pokemon in in_play for effect in pokemon.persistent_effects):
         needed = max(needed, 30)  # v0.125: ワザ以外のダメージに当てはめるかが決まらない「ふくらむ」の効果（IF1）
+    if state.face_up_deck:
+        needed = max(needed, 31)  # v0.126: おもてを上にして山札に置かれたカード（フラッシュ）
     d = state.decision
     not_v0_1 = d is not None and (
         d.context_value("then") is not None or d.resume in ("attack", "knock_out", "post_knockout", "power")  # v0.42: 特殊能力の途中の決定
@@ -1995,6 +2000,8 @@ def log_problems(state) -> list[str]:
     v124: dict = {"coins": [], "pending": None}  # v0.124: ［わるいはどう］の直前の特殊能力のコインと、決まった追加の量
     # v0.125: ［てだすけ］の宣言（使ったプレイヤー・ポケモン・特殊能力・回復しうる状態・コインの面）と、番ごとに使ったポケモン
     v125: dict = {"window": None, "used": set()}
+    # v0.126: フラッシュ。使っている最中のカード → 並べ終えた側の並び。おもての山札の印（ログから。持ち主 → 上からの uid の並び）
+    v126: dict = {"flash": {}, "marks": {0: [], 1: []}, "pending_look": None}
     color_types: dict[int, dict] = {}  # v0.88: ［せんすい］の記録（対象のポケモンの番号 → 色・発生源のカード・特殊能力の位置）
     # v0.90: ログから組み立てた、場のポケモンのマーカー・カウンター（番号 → のせた順の {"marker", "color", "turn"}）と、進化・退化で取りのぞくはずのポケモン（番号 → 理由）
     marks: dict[int, list[dict]] = {}
@@ -5193,6 +5200,40 @@ def log_problems(state) -> list[str]:
             w["cured"] = True
         return found
 
+    def v126_problems(e: dict) -> list[str]:
+        """v0.126: おもての山札（フラッシュ）を、エンジンの ``faceup`` を読まずに確かめる。印は flash_face_up で置き（並べたカード）、カードを動かさないログのほかで uid が出たら除き、
+        その持ち主の山札を切ったら除く。
+
+        - 切るログ（``shuffle``）の ``face_up_cleared`` は、そのときの印の数（印がなければ書かない）
+        - ``face_up_deck_top`` は、印の残る山札のいちばん上（残りの印の最初）のカードの id と残りの枚数（印がなくなれば None と 0）。uid を書かない
+        - フラッシュを使い終える（``discard_trainer``）までに、相手 → 使ったプレイヤーの順に 2 回の並べかえがある"""
+        found: list[str] = []
+        kind = e["kind"]
+        marks = v126["marks"]
+        if kind == "shuffle":
+            cleared = e.get("face_up_cleared")
+            if (cleared or 0) != len(marks[e["player"]]) or cleared == 0:
+                found.append(f"{e['turn']} 番に切ったプレイヤー {e['player']} の山札の、消したおもての印 {cleared} が、ログから組み立てた {len(marks[e['player']])} 枚と違う")
+            marks[e["player"]] = []
+        elif kind == "face_up_deck_top":
+            rest = marks[e["player"]]
+            expected = (state.cards[rest[0]].card_id if rest else None, len(rest))
+            if (e.get("card_id"), e.get("face_up_count")) != expected or set(e) - {"kind", "turn", "player", "card_id", "face_up_count"}:
+                found.append(f"{e['turn']} 番の face_up_deck_top（プレイヤー {e['player']}）{(e.get('card_id'), e.get('face_up_count'))} が、ログから組み立てたいちばん上のおもてのカード {expected} と違う")
+        elif kind == "discard_trainer" and e.get("card") in v126["flash"]:
+            user = e["player"]
+            if v126["flash"].pop(e["card"]) != [1 - user, user]:
+                found.append(f"{e['turn']} 番のフラッシュ（カード {e['card']}）を、相手 → 使ったプレイヤーの順の 2 回の並べかえを終えずに使い終えた")
+        elif kind not in _FACE_UP_STILL and (marks[0] or marks[1]):
+            named = _card_values(dict(e), set()) | {uid for name in ("cards", "discarded", "energy") if isinstance(e.get(name), (list, tuple)) for uid in e[name] if isinstance(uid, int)}
+            for player in (0, 1):
+                gone = [uid for uid in marks[player] if uid in named]
+                if gone:
+                    if kind == "draw" and (gone != marks[player][:len(gone)] or (len(gone) > 1)):
+                        found.append(f"{e['turn']} 番に引いたおもてのカード {gone} が、いちばん上の 1 枚ではない（FU3 で止めるはず）")
+                    marks[player] = [uid for uid in marks[player] if uid not in named]
+        return found
+
     def v124_problems(e: dict) -> list[str]:
         """v0.124: ［わるいはどう］を、エンジンの登録・計算を読まずに確かめる（印刷の文面とコインの面から）。コインは特殊能力のコイン（``source`` が ``power``）で、1 枚目が「うら」なら 1 枚だけ・
         量 0、「おもて」なら 2 枚・2 枚目が「おもて」なら 20・「うら」なら 10（DARK_PULSE の文面）。量が 0 でなければ、すぐあとのワザのダメージの 6 段階に「［わるいはどう］」がちょうどその量だけ
@@ -6859,6 +6900,7 @@ def log_problems(state) -> list[str]:
         problems.extend(v123_problems(e))  # v0.123: いかりのほのお
         problems.extend(v124_problems(e))  # v0.124: わるいはどう
         problems.extend(v125_problems(e))  # v0.125: てだすけ
+        problems.extend(v126_problems(e))  # v0.126: おもての山札（フラッシュ）
         if kind in ("damage", "confusion_damage"):
             # v0.90: のろいマーカーののっているポケモンが弱点の計算をしたワザのダメージは「×4」（ログの weakness_multiplier）。ほかは書かない。こんらんの 20 は、のろいマーカーと
             # 自分の弱点が当てはまるならコインの前に止まる（UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS）ので、弱点の計算をしたこんらんのダメージはない
@@ -8050,6 +8092,29 @@ def log_problems(state) -> list[str]:
             if not isinstance(_trainer_effect_of(state, e["stadium_card"]), LookDeckTopStadium) or e["player"] != e["owner"] \
                     or kind == "look_at_deck_top" and not 1 <= e["count"] <= 2:
                 problems.append(f"{e['turn']} 番の {kind} が、ラジオとうの処理のものではない")
+        elif kind == "look_at_deck_top" and "trainer_card" in e and isinstance(_trainer_effect_of(state, e["trainer_card"]), FlashTrainer):
+            # v0.126: フラッシュ。先に相手プレイヤー、そのあと使ったプレイヤーが、それぞれ自分の山札の上からちょうど 5 枚を見る（見るのは自分の山札だけ）
+            user = trainer_user(e["trainer_card"])
+            done = v126["flash"].setdefault(e["trainer_card"], [])
+            arranger = (1 - user) if not done else user
+            if using_trainer.get(user) != e["trainer_card"] or len(done) >= 2 or e["player"] != arranger or e["owner"] != arranger or e["count"] != 5 \
+                    or len(e["cards"]) != 5 or len(set(e["cards"])) != 5 \
+                    or any(owner.get(uid) != arranger or uid in hand[arranger] or uid in discard[arranger] for uid in e["cards"]):
+                problems.append(f"{e['turn']} 番のフラッシュで見たカード {e['cards']}（プレイヤー {e['player']}・山札 {e['owner']}）が、"
+                                f"{'相手' if not done else '使ったプレイヤー'}（プレイヤー {arranger}）の自分の山札の上の 5 枚ではない")
+            arrange_due = e
+            v126["pending_look"] = e
+        elif kind == "flash_face_up":
+            # v0.126: フラッシュの並べかえのすぐあと。おもてにしたのは並べたカード（すぐ前の arrange_deck_top）で、公開するのはいちばん上のカードの id だけ
+            look = v126["pending_look"]
+            if prior is None or prior["kind"] != "arrange_deck_top" or look is None or prior.get("trainer_card") != e.get("trainer_card") \
+                    or prior["owner"] != e["owner"] or e["player"] != e["owner"] or e["count"] != 5 or len(prior["cards"]) != 5 \
+                    or e.get("top_card_id") != state.cards[prior["cards"][0]].card_id or set(e) - {"kind", "turn", "player", "owner", "count", "top_card_id", "trainer_card"}:
+                problems.append(f"{e['turn']} 番の flash_face_up（プレイヤー {e['owner']}）が、すぐ前に並べたカードのいちばん上だけの公開ではない")
+            else:
+                v126["flash"].setdefault(e["trainer_card"], []).append(e["owner"])
+                v126["marks"][e["owner"]] = list(prior["cards"])
+            v126["pending_look"] = None
         elif kind in ("reveal_hand", "revealed_hand_to_deck", "look_at_hand", "trainer_draw_declined", "trainer_discard_declined", "look_at_deck_top_declined") \
                 or kind in ("look_at_deck_top", "look_at_deck_top_none") and "trainer_card" in e:
             # v0.54: 使っている最中のトレーナー（ミニスカート・スパイ作戦・エリカ・スパイ作戦／カツラのギャンブル・ポケモン図鑑）の処理
@@ -10121,6 +10186,32 @@ def _face_up_from_log(state) -> set[int]:
     return face_up
 
 
+# v0.126: フラッシュでおもてにしたカードが、そのあと山札を動かないままでいるかを見るとき、カードを動かさないログ（見る・並べかえる・公開のおもて）
+_FACE_UP_STILL = frozenset({"look_at_deck_top", "arrange_deck_top", "look_at_card", "reveal_deck_top", "flash_face_up", "face_up_deck_top"})
+
+
+def face_up_deck_from_log(state) -> set[int]:
+    """v0.126: ログから組み立てた、いまおもての山札のカード（エンジンの ``faceup`` を読まない）。フラッシュの並べかえ（``arrange_deck_top`` のすぐあとの ``flash_face_up``。
+    その持ち主の前のおもてのカードはなくなり、並べた 5 枚がおもて）で加え、その持ち主の山札を切ったら（``shuffle``）すべて除く。おもてにしたあと、カードを動かさないログ
+    （見る・並べかえる）のほかで uid が出たカードは山札をはなれた（引いた・取った・トラッシュした）ので除く。最後に、いま山札にないカードを除く。"""
+    marks: dict[int, int] = {}  # uid → 持ち主
+    prior = None
+    for e in state.log:
+        kind = e["kind"]
+        if kind == "flash_face_up" and prior is not None and prior["kind"] == "arrange_deck_top" and prior["owner"] == e["owner"]:
+            marks = {uid: o for uid, o in marks.items() if o != e["owner"]}
+            marks.update({uid: e["owner"] for uid in prior["cards"]})
+        elif kind == "shuffle":
+            marks = {uid: o for uid, o in marks.items() if o != e["player"]}
+        elif kind not in _FACE_UP_STILL and marks:
+            named = _card_values(dict(e), set()) | {uid for name in ("cards", "discarded", "energy") if isinstance(e.get(name), (list, tuple)) for uid in e[name] if isinstance(uid, int)}
+            for uid in named & set(marks):
+                del marks[uid]
+        prior = e
+    in_decks = {uid for p in state.players for uid in p.deck}
+    return {uid for uid in marks if uid in in_decks}
+
+
 def _sees_private(event: dict, viewer) -> bool:
     """v0.47: 見えない項目のあるログのイベントで、その項目が ``viewer`` に見えてよいか（observation.PRIVATE_FIELDS とは別に、イベントの意味から書き直した規則）。"""
     kind = event["kind"]
@@ -10297,6 +10388,9 @@ def observation_problems(state) -> list[str]:
         {state.stadium.card} if state.stadium is not None else set()) | {
         uid for p in state.players for pokemon in p.in_play() for uid in (*pokemon.cards(), *pokemon.energy, *(t.card for t in pokemon.trainers))}
     face_up = _face_up_from_log(state)  # v0.63
+    deck_face_up = face_up_deck_from_log(state)  # v0.126
+    if deck_face_up != set(state.face_up_deck):
+        problems.append(f"おもての山札の記録 {sorted(state.face_up_deck)} が、ログから組み立てた {sorted(deck_face_up)} と違う")
     # v0.67: うらのカード（マチスの秘策）の本当のカードは持ち主だけに見える（場のカードでも公開ではない）
     face_down_owner = {pokemon.card: owner for owner, p in enumerate(state.players) for pokemon in p.in_play() if state.is_face_down(pokemon)}
     if set(face_down_owner) != set(state.face_down_cards):
@@ -10315,8 +10409,19 @@ def observation_problems(state) -> list[str]:
                 problems.append(f"観測（{viewer}）のプレイヤー {owner} の手札のカードが、状態の手札と違う")
             if shows:
                 visible.update(p.hand)
-            if set(pv["deck"]) != {"count"} or set(pv["prizes"]) != {"count", "face_up"} or pv["deck"]["count"] != len(p.deck) or pv["prizes"]["count"] != len(p.prizes):
-                problems.append(f"観測（{viewer}）のプレイヤー {owner} の山札・サイドが、枚数（とおもてのサイド）だけではない")
+            # v0.126: おもての山札（フラッシュ）は、ログから組み立てたおもてのカード（``face_up_deck_from_log``）で、枚数・いちばん上のカードの id（全員）・持ち主が自分で並べた
+            # カードの位置と id（持ち主だけ）。2 枚目より下のおもてのカードは、持ち主でない人・観戦者に見せない。uid は書かない
+            marked = [(i, uid) for i, uid in enumerate(p.deck) if uid in deck_face_up]
+            expected_deck = {"count": len(p.deck)}
+            if marked:
+                expected_deck["face_up_count"] = len(marked)
+                expected_deck["face_up_top"] = {"card_id": state.cards[p.deck[0]].card_id} if marked[0][0] == 0 else None
+                if viewer == owner:
+                    expected_deck["known_face_up"] = [{"position": i, "card_id": state.cards[uid].card_id} for i, uid in marked]
+            if pv["deck"] != expected_deck:
+                problems.append(f"観測（{viewer}）のプレイヤー {owner} の山札 {pv['deck']} が、ログから組み立てた {expected_deck} と違う")
+            if set(pv["prizes"]) != {"count", "face_up"} or pv["prizes"]["count"] != len(p.prizes):
+                problems.append(f"観測（{viewer}）のプレイヤー {owner} のサイドが、枚数（とおもてのサイド）だけではない")
             # v0.63: おもてのサイド（ロケット団参上!）は、ログから組み立てたおもてのカードだけを、位置とともに全員に見せる
             shown_face_up = [(f["position"], f["card"]) for f in pv["prizes"]["face_up"]]
             if shown_face_up != [(i, uid) for i, uid in enumerate(p.prizes) if uid in face_up]:

@@ -744,6 +744,10 @@ V124_SUPER_DITTO, V124_GR_MEWTWO = "ES2-032", "PRN-041"
 V0_125 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_125"])
 V0_125_POKEMON = V0_125
 V125_WIGGLYTUFF = "ES1-027"
+# v0.126（docs/flash-faceup-deck-v0.126.md 10 章）: フラッシュ（拡張シート第2弾赤版。トレーナー）。使う手順 ``_v126_trainer``・並べかえの答え ``_v126_decision``・おもてのいちばん上を
+# 見てサカキのニャースのワザを選ぶ手順 ``_v126_attack`` を重ねる。ログから数えるのは ``v126_uses``
+V0_126 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_126"])
+V126_FLASH = "ES2-035"
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -1008,6 +1012,12 @@ DECKS = {
             (FIRE, 15), (LIGHTNING, 14)),
     # v0.45: 闘・無色（第1弾・リーダーズスタジアム・闇からの挑戦）。かたくなる・いかりのまえば・クロスカウンター・たすけをよぶ（タケシのポケモン）・スパイラルショット・
     # てつだうふり・ダブルひっかき
+    # v0.126: 無色・闘。フラッシュ 4 枚と、山札を引く（マサキ）・山札をさがして切る（パソコン通信）トレーナー。コラッタ → ラッタ・イワーク
+    "F126": ((RATTATA, 4), (RATICATE, 3), (ONIX, 3), (V126_FLASH, 4), (driver.BILL, 2), (driver.COMPUTER_SEARCH, 3), (SWITCH, 2), (driver.POTION, 2),
+             (FIGHTING, 37)),
+    # v0.126: 闘。サカキのニャース（てつだうふり。相手の山札のいちばん上のカードの種類で変わる）4 枚とフラッシュ 3 枚。おもてにした相手のいちばん上を見て、ワザを選ぶ（CR-FLASH-TOP-CARD-SEEN）
+    "M126": ((GIOVANNIS_MEOWTH_40, 4), (RATTATA, 4), (RATICATE, 3), (ONIX, 3), (V126_FLASH, 3), (driver.BILL, 2), (SWITCH, 2), (driver.POTION, 2),
+             (FIGHTING, 37)),
     "F45": ((ONIX, 3), (RATTATA, 4), (RATICATE, 3), (ROCKETS_HITMONCHAN, 3), (BROCKS_GEODUDE_40, 4), (BROCKS_RHYHORN, 1), (BROCKS_SANDSHREW, 1),
             (GIOVANNIS_MEOWTH_40, 3), *TRAINERS, (FIGHTING, 26)),
     # v0.45: 水・超（ロケット団・第1弾）。ハイドロキャノン・ロケットタックル・さいみんじゅつ・ゆめくい（相手がねむりでないと失敗）
@@ -2124,6 +2134,9 @@ PAIRINGS_V0_124 = (("S124", "G124"), ("S124", "W123"), ("G124", "W123"), ("S124"
 # （UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER）で止まりやすく、E115 は特殊状態がつかなかったので、P109・G108 に替えた。組・席・seed は正式な対戦の前に決めた（正式な対戦は seed 0〜3。
 # 局を選び直さない）
 PAIRINGS_V0_125 = (("W125", "P109"), ("W125", "P119"), ("W125", "G108"))
+# v0.126: M126 対 F126（お互いにフラッシュを使い、サカキのニャースがおもてのいちばん上を見てワザを選ぶ。マサキ・パソコン通信で引く・切る）・M126 対 W125・F126 対 F45（相手のサカキの
+# ニャースが、フラッシュでおもてにした山札のいちばん上を見る）。組・席・seed は正式な対戦の前に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめる seed 90〜93 とは別。局を選び直さない）
+PAIRINGS_V0_126 = (("M126", "F126"), ("M126", "W125"), ("F126", "F45"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -2147,7 +2160,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.113": PAIRINGS_V0_113, "v0.114": PAIRINGS_V0_114, "v0.115": PAIRINGS_V0_115,
            "v0.116": PAIRINGS_V0_116, "v0.117": PAIRINGS_V0_117, "v0.118": PAIRINGS_V0_118,
            "v0.119": PAIRINGS_V0_119, "v0.120": PAIRINGS_V0_120, "v0.121": PAIRINGS_V0_121, "v0.122": PAIRINGS_V0_122,
-           "v0.123": PAIRINGS_V0_123, "v0.124": PAIRINGS_V0_124, "v0.125": PAIRINGS_V0_125}
+           "v0.123": PAIRINGS_V0_123, "v0.124": PAIRINGS_V0_124, "v0.125": PAIRINGS_V0_125, "v0.126": PAIRINGS_V0_126}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -11820,6 +11833,75 @@ def _v122_decision(state, counts):
     return _v120_first(state, d, counts, f"v122_{key}_{d.kind}")
 
 
+def _v126_trainer(state, tried, counts):
+    """v0.126: 手札のフラッシュを、この番にまだ試していなければ使う（両方の山札が 5 枚以上のときだけ。5 枚より少ないときの FU1 は単体のテストで確かめる）。"""
+    player = state.current_player
+    if any(len(p.deck) < 5 for p in state.players) or state.trainer_in_use is not None:
+        return None
+    for card in state.players[player].hand:
+        if state.cards[card].card_id != V126_FLASH:
+            continue
+        key = ("v126_flash", state.turn_number)
+        if key in tried:
+            return None
+        tried.add(key)
+        counts["v126_flash_played"] += 1
+        return PlayTrainer(player, card)
+    return None
+
+
+def _v126_decision(state, counts):
+    """v0.126: フラッシュの並べかえ（決めるのは並べる本人。見た 5 枚の並べかえを、そのまま・逆・1 つずらし・カードの id の順で順に答える）と、おもての山札のある間の 1 枚を選ぶ決定で、
+    自分の山札の 2 枚目より下のおもてのカードを避ける（選ぶと FU3。選べるものから黙って除かれてはいないので、手順が避ける）。どちらでもなければ何もしない。"""
+    d = state.decision
+    used = state.trainer_in_use
+    if d.kind == ARRANGE_DECK_TOP and used is not None and state.cards[used.card].card_id == V126_FLASH:
+        seen = counts["v126_arrange_seen"]
+        counts["v126_arrange_seen"] += 1
+        options = list(d.options)
+        orders = (options, list(reversed(options)), options[1:] + options[:1], sorted(options, key=lambda uid: (state.cards[uid].card_id, uid)))
+        chosen = tuple(orders[seen % len(orders)])
+        counts[f"v126_arrange_{('same', 'reversed', 'rotated', 'by_id')[seen % len(orders)]}"] += 1
+        return ResolveDecision(d.player, d.id, chosen)
+    if not state.face_up_deck or d.max_choices != 1:
+        return None
+    deck = state.players[d.player].deck
+    hidden_face_up = {uid for uid in deck[1:] if uid in state.face_up_deck}
+    if not hidden_face_up & set(d.options):
+        return None
+    allowed = [o for o in d.options if o not in hidden_face_up and o not in set(d.context_value("unresolved_choices", ()) or ())]
+    counts["v126_avoided_face_up_choice"] += 1
+    if allowed:
+        return ResolveDecision(d.player, d.id, (allowed[0],))
+    return ResolveDecision(d.player, d.id, ()) if d.min_choices == 0 else None
+
+
+def _v126_attack(state, command, counts):
+    """v0.126: サカキのニャース（PMCG6-068）がバトル場にいて、相手の山札のいちばん上がおもて（観測の ``face_up_top``。CR-FLASH-TOP-CARD-SEEN）なら、その種類でワザを選ぶ: トレーナーカード
+    ならてつだうふり（トラッシュさせる）、そうでなければダブルひっかき。見る情報は使うプレイヤーの観測だけ（エンジンの状態の山札を読まない）。どちらでもなければ元の手順のまま。"""
+    from kyuura_engine.observation import observe
+
+    if not isinstance(command, UseAttack):
+        return None
+    active = state.players[command.player].active
+    if active is None or state.cards[active.card].card_id != GIOVANNIS_MEOWTH_40:
+        return None
+    top = observe(state, command.player)["players"][1 - command.player]["deck"].get("face_up_top")
+    if top is None:
+        return None
+    wanted = 0 if state.definitions[top["card_id"]].category == "trainer" else 1
+    counts[f"v126_meowth_seen_top_{'trainer' if wanted == 0 else 'other'}"] += 1
+    if wanted == command.attack_index:
+        return None
+    try:
+        apply_command(state, UseAttack(command.player, wanted))  # 使えるか（エネルギー・止める理由）を、状態を変えずに確かめる
+    except (IllegalActionError, UnsupportedError):
+        counts[f"v126_meowth_kept_{command.attack_index}"] += 1
+        return None
+    counts[f"v126_meowth_chose_{wanted}"] += 1
+    return UseAttack(command.player, wanted)
+
+
 def _v125_power(state, tried, counts):
     """v0.125: 自分のベンチのプクリン（ES1-027。［てだすけ］。この番にまだ使っていない）で、自分の対戦ポケモンが特殊状態なら使う（コインは状態の乱数）。状態が 1 つなら受け付け、
     2 つならエンジンが HH2 で拒否する（番ごとに 1 回だけ試す。拒否のあとは元の手順に任せる）。状態がないときは試さない（HH1 は単体のテストで確かめる）。"""
@@ -11837,6 +11919,46 @@ def _v125_power(state, tried, counts):
         counts[f"v125_power_helping_hand_{len(names)}"] += 1
         return UsePokemonPower(player, pokemon.pokemon_id, 0, card=pokemon.card)
     return None
+
+
+def v126_uses(state):
+    """v0.126: ログから数えたフラッシュ・おもての山札の動き（フラッシュのない局では空）。
+
+    - ``flash_played``（使った回数）・``flash_arranged``（並べかえを終えた側の数。``flash_face_up``）・``flash_completed``（両方の側を並べ終えて使い終えた回数）
+    - ``top_revealed``（いちばん上のおもてのカードが変わって公開された回数。``face_up_deck_top`` のカードのあるもの）・``top_none``（おもてのカードがなくなった）
+    - ``drew_face_up``（番の最初・効果で引いた、いちばん上のおもてのカード）・``shuffle_cleared``（切る前に印を消した回数）・``cleared_cards``（消した印の数）
+    - ``meowth_took_face_up_<行き先>``（てつだうふりで、おもてのいちばん上を動かした）"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_126 for uid in state.cards):
+        return counts
+    marks = {0: [], 1: []}
+    prior = None
+    for e in state.log:
+        kind = e["kind"]
+        if kind == "play_trainer" and state.cards[e["card"]].card_id == V126_FLASH:
+            counts["flash_played"] += 1
+        elif kind == "flash_face_up":
+            counts["flash_arranged"] += 1
+            if prior is not None and prior["kind"] == "arrange_deck_top":
+                marks[e["owner"]] = list(prior["cards"])
+        elif kind == "discard_trainer" and state.cards[e["card"]].card_id == V126_FLASH:
+            counts["flash_completed"] += 1
+        elif kind == "face_up_deck_top":
+            counts["top_revealed" if e["card_id"] is not None else "top_none"] += 1
+        elif kind == "shuffle" and e.get("face_up_cleared"):
+            counts["shuffle_cleared"] += 1
+            counts["cleared_cards"] += e["face_up_cleared"]
+            marks[e["player"]] = []
+        elif kind == "draw" and marks[e["player"]] and e["cards"] and e["cards"][0] == marks[e["player"]][0]:
+            counts["drew_face_up"] += 1
+            marks[e["player"]] = [uid for uid in marks[e["player"]] if uid not in e["cards"]]
+        elif kind == "take_deck_top" and marks[e["player"]] and e["card"] == marks[e["player"]][0]:
+            counts[f"meowth_took_face_up_{e['destination']}"] += 1
+            marks[e["player"]] = marks[e["player"]][1:]
+        elif kind == "shuffle":
+            marks[e["player"]] = []
+        prior = e
+    return counts
 
 
 def v125_uses(state):
@@ -12224,7 +12346,8 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = (_v124_decision(state, counts)  # v0.124: ［すごいへんしん］の選ぶポケモン（v0.124 のカードの決定でなければ何もしない）
+            early = (_v126_decision(state, counts)  # v0.126: フラッシュの並べかえ・おもての山札のある間の選択（フラッシュのない局では何もしない）
+                     or _v124_decision(state, counts)  # v0.124: ［すごいへんしん］の選ぶポケモン（v0.124 のカードの決定でなければ何もしない）
                      or _v123_decision(state, counts)  # v0.123: いかりのほのお・ほのおのあらしの炎エネルギーカードのトラッシュ（v0.123 のカードのワザでない決定では何もしない）
                      or _v122_decision(state, counts)  # v0.122: v0.122 の特殊能力・反応・ワザの決定（v0.122 のカードのない局では何もしない）
                      or _v121_decision(state, counts)  # v0.121: v0.121 のワザ・トレーナーの決定（v0.121 のカードのない局では何もしない）
@@ -12313,6 +12436,14 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             return (_v031_decision(state, counts) or _v039_decision(state, counts) or _v040_decision(state, counts) or _v041_decision(state, counts)
                     or _v042_decision(state, counts) or command)
+        if state.phase is Phase.MAIN and isinstance(command, (UseAttack, EndTurn)):
+            flash = _v126_trainer(state, tried, counts)  # v0.126: フラッシュ（ないデッキでは何もしない）
+            if flash is not None:
+                return flash
+            aimed = _v126_attack(state, command, counts)  # v0.126: おもてのいちばん上を見たサカキのニャースのワザ（ほかのデッキでは何もしない）
+            if aimed is not None and ("v126_aimed", state.turn_number) not in tried:
+                tried.add(("v126_aimed", state.turn_number))
+                return aimed
         if state.phase is Phase.MAIN and isinstance(command, (UseAttack, EndTurn)):
             power = (_v125_power(state, tried, counts)  # v0.125: ［てだすけ］（プクリンのないデッキでは何もしない）
                      or _v124_power(state, tried, counts)  # v0.124: ［すごいへんしん］（メタモンのないデッキでは何もしない）
@@ -12650,6 +12781,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v123"] = v123_uses(state)
         result["v124"] = v124_uses(state)
         result["v125"] = v125_uses(state)
+        result["v126"] = v126_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
