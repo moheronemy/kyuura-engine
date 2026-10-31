@@ -739,7 +739,9 @@ class G37Test(unittest.TestCase):
         "BenchOpponentHandBasicThenSwitchOrFail", "CoinsFailThenDamageParalyze", "StatusSelfAndOpponent",
         # v0.122: いやなかふん（どく・ねむり・こんらん・マヒ）。みだれうち（相手の場への配分のダメージ）・10まんボルト・きりもみアタック・ドリルダイブ（自分への効果）は相手の対戦ポケモンへの
         # 効果を持たない。docs/unown-fossil-retreat-reactions-v0.122.md 6 章
-        "DamageThenPoisonAndStatusByTwoCoins"]))
+        "DamageThenPoisonAndStatusByTwoCoins",
+        # v0.127: ドライアップ（相手の場の選んだポケモンのエネルギーのトラッシュ）・こまったなあ（利用者の簡略ルール。自分と相手のこんらん）。docs/deferred-shortage-user-promos-v0.127.md
+        "ChooseOpponentThenDiscardTypedEnergyUntilTails", "UserSimplifiedStatusSelfAndOpponent"]))
 
 
 class DecisionTest(unittest.TestCase):

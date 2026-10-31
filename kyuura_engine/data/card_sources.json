@@ -47,6 +47,30 @@
       "check": "scripts/extract_kyuura_cards.py の migration_copy_problems・previous_copy_problems・kyuura_correction_problems（移行の段ごとに、写す欄が、その段で kyuura が当てはめた修正の欄と出典の記録の欄を除いて同じ。修正は段の前の値・あとの値・台帳・カードの記録・根拠で確かめる）",
       "document": "docs/arcanine-name-migration-v0.123.md",
       "note": "v0.123 で写しの元を 2fe0bc0 から 74b3ceb（kyuura のブランチ claude/v0122-names-text-trainer-procedures の固定コミット。v0.122 のあとの名前・文面とトレーナーの手順の調査。kyuura main には未取り込み）に上げた。v0.69・v0.97・v0.114・v0.121 の段（ecb2d69 → 7d3f4ca → 73a1690 → e519b99 → 2fe0bc0）は書き換えない（v0.121 の段のあとは 2fe0bc0 に固定）。v0.122 までの採用の記録の kyuura_commit（ecb2d69・7d3f4ca・73a1690・e519b99・2fe0bc0）・記録した日・外部照合の確認日と照らしたコミット・当時の違いの値は書き換えない（採用し直した・照合し直したことにしない）。この段で値が変わったのは、写しの組の登録済みの 2 枚の名前（PMCG1-019「ウインディ」→「ウィンディ」・PMCG6-034「カツラのウインディ」→「カツラのウィンディ」。kyuura の台帳の訂正 FIX-PMCG1-019-NAME-JA・FIX-PMCG6-034-NAME-JA。根拠は kyuura のカードの画像の照合 IMG-PMCG1-019・IMG-PMCG6-034、種類は生成の値の誤り generated_value_error）と、同じ 2 枚の notes・corrections だけで、ほかの 1,375 枚（写しの 1,353 枚をふくむ）の値は同じ。2 枚の採用の記録の name_ja を写しの名前にそろえた（エンジンは画像を見ていない）。kyuura_records は、研究の基準のコミットを 74b3ceb に上げたので、そのコミットでカードを指す kyuura の記録の id に合わせた（記録を読み直したのではなく、id の対応を直した）"
+    },
+    {
+      "from": "74b3ceb883dd815495d13b9987433fb14b36e44d",
+      "to": "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a",
+      "on": "2026-10-31",
+      "check": "scripts/extract_kyuura_cards.py の migration_copy_problems・previous_copy_problems・kyuura_correction_problems（移行の段ごとに、写す欄が、その段で kyuura が当てはめた修正の欄と出典の記録の欄を除いて同じ。修正は段の前の値・あとの値・台帳・カードの記録・根拠で確かめる）",
+      "document": "docs/super-transform-dark-pulse-v0.124.md",
+      "note": "v0.124 で写しの元を 74b3ceb から b9e7cff（kyuura main の PR #6 のマージ。すごいへんしん・わるいはどうの調査。木は研究の最後のコミット 9731354 と同じ）に上げた。v0.69・v0.97・v0.114・v0.121・v0.123 の段（ecb2d69 → 7d3f4ca → 73a1690 → e519b99 → 2fe0bc0 → 74b3ceb）は書き換えない（v0.123 の段のあとを 74b3ceb に固定）。v0.123 までの採用の記録の kyuura_commit・記録した日・外部照合の確認日と照らしたコミット・当時の違いの値は書き換えない（採用し直した・照合し直したことにしない）。この段で値が変わったのは、写しの外（未登録）のメタモン ES2-032 の pokemon.powers[0].text.ja の 1 字（「この「すごいへんしん」のカは使えず」の片仮名「カ」→漢字「力」。kyuura の台帳の訂正 FIX-ES2-032-POWER0-TEXT-JA。根拠は kyuura のカードの画像の照合 IMG-ES2-032、種類は転記の誤り transcription_error）と、同じカードの notes・corrections だけで、ほかの 1,376 枚（写しの 1,358 枚をふくむ）の値は同じ。kyuura_records は、研究の基準のコミットを b9e7cff に上げたので、このコミットでカードを指す kyuura の記録の id に合わせた（記録を読み直したのではなく、id の対応を直した）"
+    },
+    {
+      "from": "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a",
+      "to": "134a664c6adf67d5604148a31b58e1a7d26d4d6d",
+      "on": "2026-10-31",
+      "check": "scripts/extract_kyuura_cards.py の migration_copy_problems・previous_copy_problems・kyuura_correction_problems（移行の段ごとに、写す欄が、その段で kyuura が当てはめた修正の欄と出典の記録の欄を除いて同じ。修正は段の前の値・あとの値・台帳・カードの記録・根拠で確かめる）",
+      "document": "docs/wigglytuff-helping-hand-v0.125.md",
+      "note": "v0.125 で写しの元を b9e7cff から 134a664（kyuura のブランチ claude/eloquent-lamport-5xyv5r の固定コミット。プクリンの最新の説明・コインで決まる枚数の不足の調査。kyuura main には未取り込み）に上げた。v0.69・v0.97・v0.114・v0.121・v0.123・v0.124 の段（ecb2d69 → 7d3f4ca → 73a1690 → e519b99 → 2fe0bc0 → 74b3ceb → b9e7cff）は書き換えない（v0.124 の段のあとを b9e7cff に固定）。v0.124 までの採用の記録の kyuura_commit・記録した日・外部照合の確認日と照らしたコミット・当時の違いの値は書き換えない（採用し直した・照合し直したことにしない）。この段の data/cards.json は全 1,377 枚の全欄が同じ（バイト列が同じ。訂正なし。台帳の ES1-027 の訂正の候補 held_illegible_print に later_notes が加わっただけで、候補のまま）。kyuura_records は、研究の基準のコミットを 134a664 に上げたので、このコミットでカードを指す kyuura の記録の id に合わせた（記録を読み直したのではなく、id の対応を直した。登録済みのカードではゴローン ES2-023 に CR-UNTIL-TAILS-NOT-CAPPED の related_cards が加わっただけ）"
+    },
+    {
+      "from": "134a664c6adf67d5604148a31b58e1a7d26d4d6d",
+      "to": "57d01f45cfb8b086d03dc0525b329cf6adeff69b",
+      "on": "2026-10-31",
+      "check": "scripts/extract_kyuura_cards.py の migration_copy_problems・previous_copy_problems・kyuura_correction_problems（移行の段ごとに、写す欄が、その段で kyuura が当てはめた修正の欄と出典の記録の欄を除いて同じ。修正は段の前の値・あとの値・台帳・カードの記録・根拠で確かめる）",
+      "document": "docs/flash-faceup-deck-v0.126.md",
+      "note": "v0.126 で写しの元を 134a664 から 57d01f4（kyuura のブランチ claude/trainer-reaction-faceup-deck-ownership-research の固定コミット。ちえくらべ・フラッシュ・とりかえっこプリーズの調査。kyuura main には未取り込み）に上げた。v0.69・v0.97・v0.114・v0.121・v0.123・v0.124・v0.125 の段（ecb2d69 → 7d3f4ca → 73a1690 → e519b99 → 2fe0bc0 → 74b3ceb → b9e7cff → 134a664）は書き換えない（v0.125 の段のあとを 134a664 に固定）。v0.125 までの採用の記録の kyuura_commit・記録した日・外部照合の確認日と照らしたコミット・当時の違いの値は書き換えない（採用し直した・照合し直したことにしない）。この段で値が変わったのは、写しの外（未登録）のとりかえっこプリーズ PR1-027 の trainer.text.ja の読点 1 つ（「ある時だけ使える」→「ある時だけ、使える」。kyuura の台帳の訂正 FIX-PR1-027-TEXT-JA。根拠は kyuura のカードの画像の照合 IMG-PR1-027、種類は転記の誤り transcription_error）と、同じカードの notes・corrections だけで、ほかの 1,376 枚（写しの 1,361 枚と、v0.126 で登録するフラッシュ ES2-035 をふくむ）の値は同じ。名前の末尾の「！」は kyuura が直していない（報告事項）。kyuura_records は、研究の基準のコミットを 57d01f4 に上げたので、このコミットでカードを指す kyuura の記録の id に合わせた（記録を読み直したのではなく、id の対応を直した。登録済みのカードでは、サカキのニャース PMCG6-068 に CR-FLASH-TOP-CARD-SEEN、錯乱ジム PMCG5-087 に CR-CHAOS-GYM-COIN-BEFORE-CONDITIONS、neo1-085・neo1-088 に CR-MIND-GAMES-STADIUM-TOOL の related_cards が加わっただけ）"
     }
   ],
   "cards": {
@@ -7234,7 +7258,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-DARK-PULSE-TIMING"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -11043,7 +11069,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "CR-FLASH-TOP-CARD-SEEN"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -11186,7 +11214,8 @@
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
       "kyuura_records": [
-        "UQ-CALMING-AROMA-RETALIATION"
+        "UQ-CALMING-AROMA-RETALIATION",
+        "UQ-DARK-PULSE-TIMING"
       ],
       "play_text": {
         "power/0": "kyuura_printed_text",
@@ -11625,7 +11654,8 @@
       "recorded_on": "2026-10-17",
       "kyuura_records": [
         "UQ-MIND-GAMES-TRAINER-STEP",
-        "UQ-PLAY-AS-POKEMON"
+        "UQ-PLAY-AS-POKEMON",
+        "UQ-SUPER-TRANSFORM-TARGETS"
       ],
       "play_text": {
         "trainer": "kyuura_printed_text"
@@ -11660,7 +11690,8 @@
       "recorded_on": "2026-10-17",
       "kyuura_records": [
         "UQ-MIND-GAMES-TRAINER-STEP",
-        "UQ-PLAY-AS-POKEMON"
+        "UQ-PLAY-AS-POKEMON",
+        "UQ-SUPER-TRANSFORM-TARGETS"
       ],
       "play_text": {
         "trainer": "kyuura_printed_text"
@@ -12581,8 +12612,20 @@
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
       "kyuura_records": [
+        "CR-TRANSFORM-BABY-RULE",
+        "CR-TRANSFORM-COPIES-TOP-CARD",
+        "CR-TRANSFORM-FROZEN-DURING-ACTION",
+        "CR-TRANSFORM-KEEPS-OWN-STATE",
+        "CR-TRANSFORM-NAME-AND-KIND",
+        "CR-TRANSFORM-NOT-NEWLY-PLAYED",
+        "CR-TRANSFORM-REVERT-KNOCKOUT",
         "UQ-REACTIVE-SWITCH-DURING-ATTACK",
         "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY",
+        "UQ-SUPER-TRANSFORM-SOURCE-CHANGES",
+        "UQ-SUPER-TRANSFORM-TARGETS",
+        "UQ-TRANSFORM-BABY-AND-BASIC",
+        "UQ-TRANSFORM-ENERGY-COLOR-LIST",
+        "UQ-TRANSFORM-REVERT-KNOCKOUT-TIMING",
         "UQ-TRANSFORM-SCOPE"
       ],
       "play_text": {
@@ -12625,7 +12668,9 @@
       "recorded_on": "2026-10-17",
       "kyuura_records": [
         "ERR-BROCK-NINETALES",
-        "UQ-SHAPESHIFT-SCOPE"
+        "UQ-SHAPESHIFT-SCOPE",
+        "UQ-SUPER-TRANSFORM-SOURCE-CHANGES",
+        "UQ-SUPER-TRANSFORM-TARGETS"
       ],
       "play_text": {
         "power/0": "kyuura_printed_text"
@@ -12755,7 +12800,8 @@
         "UQ-CARD-USE-WITHOUT-TARGET",
         "UQ-DEVOLUTION-SAME-TURN",
         "UQ-EVOLUTION-HP-BELOW-DAMAGE",
-        "UQ-SHAPESHIFT-SCOPE"
+        "UQ-SHAPESHIFT-SCOPE",
+        "UQ-SUPER-TRANSFORM-SOURCE-CHANGES"
       ],
       "play_text": {
         "trainer": "kyuura_printed_text"
@@ -12944,6 +12990,7 @@
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
       "kyuura_records": [
+        "CR-SUPER-TRANSFORM-RETRY-AFTER-SCOOP-UP",
         "UQ-ATTACHED-CARDS-WHEN-RETURNED",
         "UQ-CARD-USE-WITHOUT-TARGET"
       ],
@@ -15119,6 +15166,7 @@
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
       "kyuura_records": [
+        "CR-CHAOS-GYM-COIN-BEFORE-CONDITIONS",
         "UQ-CHAOS-GYM-BORROWED-TURN",
         "UQ-MIND-GAMES-TRAINER-STEP",
         "UQ-SWAP-PLEASE-OWNERSHIP"
@@ -15367,7 +15415,8 @@
       "kyuura_records": [
         "CR-ENERGY-TRANS-RAINBOW",
         "UQ-NON-ATTACK-DAMAGE-MODIFIERS",
-        "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY"
+        "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY",
+        "UQ-SUPER-TRANSFORM-ENERGY-COLORS"
       ],
       "play_text": {
         "energy": "kyuura_printed_text"
@@ -15402,7 +15451,8 @@
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
       "kyuura_records": [
-        "UQ-RETREAT-COST-PAYMENT"
+        "UQ-RETREAT-COST-PAYMENT",
+        "UQ-SUPER-TRANSFORM-ENERGY-COLORS"
       ],
       "play_text": {
         "energy": "card_name_and_edition_symbols"
@@ -15447,7 +15497,8 @@
       "kyuura_records": [
         "UQ-BUZZAP-TARGET-AND-COLOR",
         "UQ-SHAPESHIFT-SCOPE",
-        "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY"
+        "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY",
+        "UQ-SUPER-TRANSFORM-SOURCE-CHANGES"
       ],
       "play_text": {
         "power/0": "kyuura_printed_text",
@@ -15601,7 +15652,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-DARK-PULSE-TIMING"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -16827,6 +16880,7 @@
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-19",
       "kyuura_records": [
+        "CR-DARK-COSTUME-COINS",
         "UQ-ESP-REDO"
       ],
       "play_text": {
@@ -21427,7 +21481,9 @@
       "status": "adopted",
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-19",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "CR-UNTIL-TAILS-NOT-CAPPED"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -23522,6 +23578,7 @@
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-20",
       "kyuura_records": [
+        "CR-DARK-POKEMON-CATEGORY",
         "CR-UNOWN-DF-SOURCE-TYPE"
       ],
       "play_text": {
@@ -24714,7 +24771,9 @@
       "status": "adopted",
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-21",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "CR-DARK-POKEMON-CATEGORY"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -25011,6 +25070,7 @@
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-21",
       "kyuura_records": [
+        "CR-MIND-GAMES-STADIUM-TOOL",
         "UQ-MIND-GAMES-TRAINER-STEP"
       ],
       "play_text": {
@@ -25069,6 +25129,7 @@
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-21",
       "kyuura_records": [
+        "CR-MIND-GAMES-STADIUM-TOOL",
         "UQ-MIND-GAMES-TRAINER-STEP"
       ],
       "play_text": {
@@ -25098,7 +25159,9 @@
       "status": "adopted",
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-21",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-TRANSFORM-BABY-AND-BASIC"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -25714,7 +25777,8 @@
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-22",
       "kyuura_records": [
-        "CR-ARCANINE-PRINTED-NAMES"
+        "CR-ARCANINE-PRINTED-NAMES",
+        "UQ-TRANSFORM-BABY-AND-BASIC"
       ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
@@ -25805,7 +25869,9 @@
       "status": "adopted",
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-22",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "CR-DARK-POKEMON-CATEGORY"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "power/0": "kyuura_printed_text"
@@ -26190,7 +26256,9 @@
       "status": "adopted",
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-22",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-DARK-PULSE-TIMING"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "power/0": "kyuura_printed_text"
@@ -28815,7 +28883,9 @@
       "status": "adopted",
       "kyuura_commit": "73a169063463bbf7bcaa3137d70cbf9721d11534",
       "recorded_on": "2026-10-27",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-DARK-PULSE-TIMING"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -30006,7 +30076,9 @@
       "status": "adopted",
       "kyuura_commit": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
       "recorded_on": "2026-10-29",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-SUPER-TRANSFORM-SUPPRESSED-FORM"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "power/0": "kyuura_printed_text"
@@ -30666,6 +30738,222 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.123 で加えた（docs/arcanine-name-migration-v0.123.md）。PR1（promo）。ワザ: でんこうせっか（無無）10+・「おもて」で 20 を追加 = CoinBonusDamage(20)、いかりのほのお（炎炎）40+ = DiscardEnergyBeforeDamagePlusOwnCounters（炎エネルギーカード 2 枚を捨てなければ使えない・自分のダメージカウンター × 10 を追加。v0.123 の新しい型で、既存の要素 DiscardOwnEnergy と PlusOwnCounters の組み合わせ。トラッシュの時点は PMCG6-034 のほのおのあらしと同じ RUL-ENERGY-DISCARD-ATTACKS の範囲の読み方。印刷の文面の文末に句点がない（印刷のまま））。名前の数え方は CR-ARCANINE-PRINTED-NAMES。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（エンジンはカードの画像を読んでいない。名前は kyuura の画像の照合 IMG-PR1-016 の再利用）。欠けているレベルは補っていない"
+    },
+    "ES2-032": {
+      "basis": "kyuura_data",
+      "name_ja": "メタモン",
+      "status": "adopted",
+      "kyuura_commit": "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a",
+      "recorded_on": "2026-10-31",
+      "kyuura_records": [
+        "CC-ES2-032-P239",
+        "CR-SUPER-TRANSFORM-CHOICE",
+        "CR-SUPER-TRANSFORM-ENERGY-PAYMENT",
+        "CR-SUPER-TRANSFORM-ONCE-PER-TURN",
+        "CR-SUPER-TRANSFORM-RETRY-AFTER-SCOOP-UP",
+        "CR-SUPER-TRANSFORM-REVERT-CONDITIONS",
+        "CR-SUPER-TRANSFORM-REVERT-KNOCKOUT",
+        "CR-TRANSFORM-BABY-RULE",
+        "CR-TRANSFORM-COPIES-TOP-CARD",
+        "CR-TRANSFORM-FROZEN-DURING-ACTION",
+        "CR-TRANSFORM-KEEPS-OWN-STATE",
+        "CR-TRANSFORM-NAME-AND-KIND",
+        "CR-TRANSFORM-NOT-NEWLY-PLAYED",
+        "LD-ES2-032-PWR0",
+        "UQ-SUPER-TRANSFORM-COPIED-POWERS",
+        "UQ-SUPER-TRANSFORM-ENERGY-COLORS",
+        "UQ-SUPER-TRANSFORM-SOURCE-CHANGES",
+        "UQ-SUPER-TRANSFORM-SUPPRESSED-FORM",
+        "UQ-SUPER-TRANSFORM-TARGETS",
+        "UQ-TRANSFORM-BABY-AND-BASIC",
+        "UQ-TRANSFORM-REVERT-KNOCKOUT-TIMING"
+      ],
+      "play_text": {
+        "power/0": "LD-ES2-032-PWR0"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.124 で加えた（docs/super-transform-dark-pulse-v0.124.md 5 章）。拡張シート第2弾（赤版）。たね・無色・HP40、ワザなし。特殊能力［すごいへんしん］の処理に使う文面は kyuura の最新の説明 LD-ES2-032-PWR0（『オフィシャルブック2000』p.239。kyuura が 2026-10-31 に画像で読んだ）の全文。印刷の文面は段 v0.124 の訂正 FIX-ES2-032-POWER0-TEXT-JA（「カ」→「力」。kyuura のカードの画像の照合 IMG-ES2-032）のあとの値で照らす。照合の記録 CC-ES2-032-P239 は kyuura の記録（書籍の図版。カードの画像と独立した 2 件に数えない）。原文の括弧・残る欠け（レベル LV.15・図鑑番号 No.132）は補っていない。日本語の文面の転記元は pcg-search.com。エンジンは画像・書籍・外部のサイトを見ていない（外部照合なし）"
+    },
+    "PRN-041": {
+      "basis": "kyuura_data",
+      "name_ja": "GR団のミュウツー",
+      "status": "adopted",
+      "kyuura_commit": "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a",
+      "recorded_on": "2026-10-31",
+      "kyuura_records": [
+        "CR-DARK-COSTUME-COINS",
+        "CR-DARK-POKEMON-CATEGORY",
+        "CR-DARK-PULSE-DAMAGE-STEP",
+        "CR-DARK-PULSE-SCOPE",
+        "UQ-DARK-PULSE-TIMING",
+        "UQ-SELF-EXCLUDING-POWER-COPIES",
+        "UQ-SUPER-TRANSFORM-COPIED-POWERS"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.124 で加えた（docs/super-transform-dark-pulse-v0.124.md 6 章・7 章）。プロモ（neo）。たね・超・HP70。特殊能力［わるいはどう］= DarkPulse、ワザ わるいぞうふく（超超）20+ = CoinsPerOwnBenchDarkBonusDamage(20)。処理に使う文面は kyuura の印刷の文面（kyuura のカードの画像の照合 IMG-PRN-041 で訂正なし。LD- はない）。カードの補足の欄の「(このカードは公式大会では使うことができません)」は kyuura の記録だけで play_scope は standard のまま（エンジンも変えず、公式大会で使えるとも書かない。kyuura への報告事項）。エンジンは画像・外部のサイトを見ていない（外部照合なし）。レベル（LV.35）・図鑑番号は補っていない"
+    },
+    "ES1-027": {
+      "basis": "kyuura_data",
+      "name_ja": "プクリン",
+      "status": "adopted",
+      "kyuura_commit": "134a664c6adf67d5604148a31b58e1a7d26d4d6d",
+      "recorded_on": "2026-10-31",
+      "kyuura_records": [
+        "CC-ES1-027-P226",
+        "CR-HELPING-HAND-USE",
+        "CR-INFLATE-DAMAGE-STEP",
+        "CR-INFLATE-LATEST",
+        "LD-ES1-027-ATK0",
+        "LD-ES1-027-PWR0",
+        "UQ-CARD-USE-WITHOUT-TARGET",
+        "UQ-HELPING-HAND-CHOICE",
+        "UQ-NON-ATTACK-DAMAGE-MODIFIERS"
+      ],
+      "play_text": {
+        "attack/0": "LD-ES1-027-ATK0",
+        "power/0": "LD-ES1-027-PWR0"
+      },
+      "external_checks": [],
+      "issues": [
+        {
+          "question": "kyuura の文面（pcg-search.com の転記）のふくらむは「このカードが次の相手に受けるダメージは「-10」される。」で、印刷の「相手の」の「の」と漢字 1 字（カードの画像・『オフィシャルブック2000』p.226 の図版でも読めない）が欠けている（CC-ES1-027-P226 の data_error。kyuura の訂正の候補 held_illegible_print。訂正していない）",
+          "fields": [
+            "pokemon.attacks[0].text.ja"
+          ],
+          "affects_behavior": false,
+          "note": "処理に使う文面は、同じ欄の最新の説明 LD-ES1-027-ATK0 の全文（「次の相手の番、…（ダメージ以外の効果はそのまま）」）で、その最新の説明の印刷の文面の欄（printed_text.path）・写しの値がこの欄と同じ。印刷の未読の字を「番」と補った文面は使わない。写しの文面は照合だけに使う（印刷の文面 → 最新の説明・量の組 effects.INFLATE_PRINTED_UNDER_LATEST）。この欄の誤りは、最新の説明にしたがう登録の処理を変えない"
+        }
+      ],
+      "notes": "v0.125 で加えた（docs/wigglytuff-helping-hand-v0.125.md 3 章）。拡張シート第1弾（青版）。1進化（プリンから）・無色・HP90・弱点 闘×2・抵抗力 超-30・にげる 3。ワザ ふくらむ（無色 4 個・20）=DamageThenReduceDamageNextTurn（最新の説明 LD-ES1-027-ATK0 の全文と量 10 を結んだ登録）、特殊能力［てだすけ］=CureOneActiveConditionOnHeadsFromBench（最新の説明 LD-ES1-027-PWR0 の全文）。最新の説明は kyuura が 2026-10-31 に『オフィシャルブック2000』p.226（PDF 228）を画像で読んだ記録で、エンジンは原典・画像を見ていない。レベル（LV.40）・図鑑番号は補っていない（写しの値のまま）。日本語の文面の転記元は pcg-search.com（同じサイトでの日本語の欄の照合は独立した照合にならない）。新しい外部照合はしていない"
+    },
+    "ES2-035": {
+      "basis": "kyuura_data",
+      "name_ja": "フラッシュ",
+      "status": "adopted",
+      "kyuura_commit": "57d01f45cfb8b086d03dc0525b329cf6adeff69b",
+      "recorded_on": "2026-10-31",
+      "kyuura_records": [
+        "CC-ES2-035-P270",
+        "CR-FLASH-PROCEDURE",
+        "CR-FLASH-TOP-CARD-SEEN",
+        "LD-ES2-035-TRAINER",
+        "UQ-FLASH-FACE-UP-DECK",
+        "UQ-STATED-COUNT-SHORT"
+      ],
+      "play_text": {
+        "trainer": "LD-ES2-035-TRAINER"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.126 で加えた（docs/flash-faceup-deck-v0.126.md 3 章）。拡張シート第2弾（赤版）。トレーナー（種類の表示なし）。FlashTrainer（処理に使う文面は最新の説明 LD-ES2-035-TRAINER の全文。印刷の文面（kyuura の写し）は照合だけに使う。句読点・括弧を一般に正規化して一致させない）。最新の説明は kyuura が 2026-10-31 に『オフィシャルブック2000』p.270（PDF 272）を画像で読んだ記録、カードの画像の照合は kyuura の IMG-ES2-035 で、エンジンは原典・画像を見ていない。日本語の文面の転記元は pcg-search.com（同じサイトでの日本語の欄の照合は独立した照合にならない）。新しい外部照合はしていない"
+    },
+    "ES2-005": {
+      "basis": "kyuura_data",
+      "name_ja": "ファイヤー",
+      "status": "adopted",
+      "kyuura_commit": "57d01f45cfb8b086d03dc0525b329cf6adeff69b",
+      "recorded_on": "2026-11-01",
+      "kyuura_records": [
+        "CC-ES2-005-P82",
+        "CR-DRY-UP-PROCEDURE",
+        "CR-UNTIL-TAILS-NOT-CAPPED",
+        "LD-ES2-005-ATK0",
+        "UQ-STATED-COUNT-SHORT"
+      ],
+      "play_text": {
+        "attack/0": "LD-ES2-005-ATK0"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.127 で加えた（docs/deferred-shortage-user-promos-v0.127.md 3 章・7 章）。拡張シート第2弾（赤版）。たね・炎・HP80・弱点なし・抵抗力 闘-30・にげる 1。ワザ ドライアップ（炎 2 個）=ChooseOpponentThenDiscardTypedEnergyUntilTails（処理に使う文面は最新の説明 LD-ES2-005-ATK0 の全文。足りないときは途中停止 DU1）、ほのおのつばさ（炎 3 個・無色 1 個・50）=DAMAGE_ONLY。最新の説明は kyuura が 2026-10-31 に『オフィシャルブック2000』p.82（PDF 84）を画像で読んだ記録で、エンジンは原典・画像を見ていない。ES2-005 と QSG-055 は同じカードの組 SC-ES2-005（最新の説明の出典が違うので、登録・採用の記録は id ごと）。レベル・図鑑番号は補っていない（写しの値のまま）。日本語の文面の転記元は pcg-search.com（同じサイトでの日本語の欄の照合は独立した照合にならない）。新しい外部照合はしていない"
+    },
+    "QSG-055": {
+      "basis": "kyuura_data",
+      "name_ja": "ファイヤー",
+      "status": "adopted",
+      "kyuura_commit": "57d01f45cfb8b086d03dc0525b329cf6adeff69b",
+      "recorded_on": "2026-11-01",
+      "kyuura_records": [
+        "CC-QSG-055-P82",
+        "CR-DRY-UP-PROCEDURE",
+        "CR-UNTIL-TAILS-NOT-CAPPED",
+        "LD-QSG-055-ATK0",
+        "UQ-STATED-COUNT-SHORT"
+      ],
+      "play_text": {
+        "attack/0": "LD-QSG-055-ATK0"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.127 で加えた（docs/deferred-shortage-user-promos-v0.127.md 3 章・7 章）。クイックスターターギフトパック（キラ）。たね・炎・HP80・弱点なし・抵抗力 闘-30・にげる 1。ワザ ドライアップ（炎 2 個）=ChooseOpponentThenDiscardTypedEnergyUntilTails（処理に使う文面は最新の説明 LD-QSG-055-ATK0 の全文。足りないときは途中停止 DU1）、ほのおのつばさ（炎 3 個・無色 1 個・50）=DAMAGE_ONLY。最新の説明は kyuura が 2026-10-31 に『オフィシャルブック2000』p.82（PDF 84）を画像で読んだ記録で、エンジンは原典・画像を見ていない。ES2-005 と QSG-055 は同じカードの組 SC-ES2-005（最新の説明の出典が違うので、登録・採用の記録は id ごと）。レベル・図鑑番号は補っていない（写しの値のまま）。日本語の文面の転記元は pcg-search.com（同じサイトでの日本語の欄の照合は独立した照合にならない）。新しい外部照合はしていない"
+    },
+    "neo4-108": {
+      "basis": "kyuura_data",
+      "name_ja": "怪電波マシーン",
+      "status": "adopted",
+      "kyuura_commit": "57d01f45cfb8b086d03dc0525b329cf6adeff69b",
+      "recorded_on": "2026-11-01",
+      "kyuura_records": [
+        "CR-THOUGHT-WAVE-MACHINE-PROCEDURE",
+        "CR-UNTIL-TAILS-NOT-CAPPED",
+        "UQ-CARD-USE-WITHOUT-TARGET",
+        "UQ-STATED-COUNT-SHORT"
+      ],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.127 で加えた（docs/deferred-shortage-user-promos-v0.127.md 7 章）。neo 第4弾「闇、そして光へ...」。トレーナー（ロケット団秘密メカ）。CoinsUntilTailsReturnOpponentActiveEnergyThenEndTurn（kyuura の印刷の文面。最新の説明はない。英語版の「少なければすべて」は日本語の印刷にないので使わない）。足りないときは途中停止 TW1、相手の対戦ポケモンにはがせるエネルギーカードがないときは使う前に TW2。日本語の文面の転記元は Pokemon Wiki。新しい外部照合はしていない"
+    },
+    "PR1-044": {
+      "basis": "kyuura_data",
+      "name_ja": "_のピカチュウ",
+      "status": "adopted",
+      "kyuura_commit": "57d01f45cfb8b086d03dc0525b329cf6adeff69b",
+      "recorded_on": "2026-11-01",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura-engine user simplification docs/deferred-shortage-user-promos-v0.127.md#4"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.127 で加えた（docs/deferred-shortage-user-promos-v0.127.md 4 章）。プロモ（旧裏）。たね・雷・HP50・弱点 闘×2・にげる 1。ワザ おたんじょうび（雷 2 個・30+）=UserSimplifiedCoinBonusDamage（利用者が 2026-11-01 に指定した簡略ルール USER-BIRTHDAY-COIN-ONLY: 誕生日を確認せず、いつもコインを 1 枚投げ、「おもて」なら 30+50、「うら」なら 30。公式の裁定・最新の説明・エラッタではない。印刷の文面（誕生日の条件つき）は写しのまま照合だけに使う）。kyuura に記録（LD-・CC-・CR-・UQ-）はない。名前の「_」・レベルの欠けは補っていない（名前を書き込む機能・独自の同名の正規化は加えていない）。PR1-044 と PR1-090 は同じカードの組 SC-PR1-044（登録の値は同じ。採用の記録は id ごと）。日本語の文面の転記元は pcg-search.com。新しい外部照合はしていない"
+    },
+    "PR1-090": {
+      "basis": "kyuura_data",
+      "name_ja": "_のピカチュウ",
+      "status": "adopted",
+      "kyuura_commit": "57d01f45cfb8b086d03dc0525b329cf6adeff69b",
+      "recorded_on": "2026-11-01",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura-engine user simplification docs/deferred-shortage-user-promos-v0.127.md#4"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.127 で加えた（docs/deferred-shortage-user-promos-v0.127.md 4 章）。プロモ（旧裏）。たね・雷・HP50・弱点 闘×2・にげる 1。ワザ おたんじょうび（雷 2 個・30+）=UserSimplifiedCoinBonusDamage（利用者が 2026-11-01 に指定した簡略ルール USER-BIRTHDAY-COIN-ONLY: 誕生日を確認せず、いつもコインを 1 枚投げ、「おもて」なら 30+50、「うら」なら 30。公式の裁定・最新の説明・エラッタではない。印刷の文面（誕生日の条件つき）は写しのまま照合だけに使う）。kyuura に記録（LD-・CC-・CR-・UQ-）はない。名前の「_」・レベルの欠けは補っていない（名前を書き込む機能・独自の同名の正規化は加えていない）。PR1-044 と PR1-090 は同じカードの組 SC-PR1-044（登録の値は同じ。採用の記録は id ごと）。日本語の文面の転記元は pcg-search.com。新しい外部照合はしていない"
+    },
+    "PR1-072": {
+      "basis": "kyuura_data",
+      "name_ja": "ハマちゃんのヤドキング",
+      "status": "adopted",
+      "kyuura_commit": "57d01f45cfb8b086d03dc0525b329cf6adeff69b",
+      "recorded_on": "2026-11-01",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura-engine user simplification docs/deferred-shortage-user-promos-v0.127.md#4",
+        "attack/1": "kyuura-engine user simplification docs/deferred-shortage-user-promos-v0.127.md#4"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.127 で加えた（docs/deferred-shortage-user-promos-v0.127.md 4 章）。プロモ（旧裏）。1進化（ヤドンから）・超・HP70・弱点 超×2・にげる 1。ワザ こまったなあ（超 1 個）=UserSimplifiedStatusSelfAndOpponent（こんらん）・どつく（無色 2 個・20）=UserSimplifiedDamageOnly（どちらも利用者が 2026-11-01 に指定した簡略ルール USER-SPOKEN-CONDITION-IGNORED: 発話の条件を省く。公式の裁定・最新の説明・エラッタではない。印刷の文面は写しのまま照合だけに使う）。kyuura に記録はない。「こまったなあ」（ワザ名）と文面の「こまったなぁ」の表記の差は、今回の指示を根拠に訂正していない。図鑑番号・レベルは補っていない。日本語の文面の転記元は pcg-search.com。新しい外部照合はしていない"
     }
   }
 }

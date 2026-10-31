@@ -482,6 +482,10 @@ QUESTIONS: dict[str, Question] = {
                  "［にげこむ］で入れ替えたあとに、そのワザの残りのダメージの要素がかわりに出たポケモンに来る並びのワザは、今の写しにない"),
         Question("bench_guard_element", None, ("BG0",), 10,
                  "［ベンチガード］の決定を出せないダメージの要素で、控えポケモンが 10 以上のダメージを受ける（今の写しのワザの要素はどれも出せる）"),
+        # v0.124（docs/super-transform-dark-pulse-v0.124.md 6 章）: ［わるいはどう］のコインの時点・共有の範囲（UQ-DARK-PULSE-TIMING）
+        Question("dark_pulse_timing", "UNRESOLVED_DARK_PULSE_TIMING", ("DP1",), 10,
+                 "［わるいはどう］のコインの時点・複数のダメージでの共有・自分の場へのダメージ・ダメージを与えないときにコインを投げるか・6 段階のほかの効果との順番が決まらず、読み方で結果・決定・"
+                 "知る情報が変わる（UQ-DARK-PULSE-TIMING）"),
         # v0.100（docs/sketch-perish-song-history-v0.100.md 8 章）
         Question("sketch_presence", "UNRESOLVED_SKETCH_PRESENCE", ("SK1",), 10,
                  "ドーブルの「スケッチ」の「前の相手の番、このカードが場に出ていなければ、このワザは失敗する」が、前の相手の番の途中に場に出たカード・前の相手の番に場にいて、そのあと場を"

@@ -147,6 +147,23 @@
   6 章・8 章）。印刷の段階からは分からない場の分類なので、古い形式に黙って落とさない: 形式 1〜27 は、この事実のあるポケモンがいると ``ValueError``（いなければ形式 1〜27 の書き出しは
   v0.119 と同じ）。v0.120 の新しい決定（``revive_source``・``bench_from_deck_or_hand``）・ワザの途中の決定の続きの情報（ESPのやり直しを聞いたワザ ``esp_asked``・ワザを選ぶ範囲
   ``copy_source``）は、これまでと同じく種類の値と項目を加えただけ（知らない種類・項目は読む側が拒否すること）
+- 29: 28 に、場のポケモンの ``super_transform``（［すごいへんしん］で選んだ変身のもと。``{"source", "card", "card_id", "turn", "left_active"}``。ないポケモンは書かない）と、最上位の
+  ``frozen_forms``（ワザ・宣言する特殊能力・トレーナーカードの処理のあいだ固定した変身の状態。``{"pokemon_id", "card", "card_id", "kind", "source"}`` の並び。処理の決定を待つ間だけある）を
+  加えたもの（v0.124。docs/super-transform-dark-pulse-v0.124.md 7 章）。今の場から求め直せない状態なので古い形式に黙って落とさない: 形式 1〜28 は、どちらかがあると ``ValueError``
+  （なければ形式 1〜28 の書き出しは v0.123 と同じ）。新しいログ（``super_transform``・``super_transform_reverted``・``dark_pulse``）は種類の値と項目を加えただけ
+- 30: 29 に、持続する効果 ``"damage_reduction"`` の ``non_attack_unresolved``（真のときだけ書く。プクリンの「ふくらむ」の効果で、はたらく番にワザ以外のダメージに当てはめるかが
+  決まらない印。IF1）を加えたもの（v0.125。docs/wigglytuff-helping-hand-v0.125.md 6 章）。古い形式で項目を落とすと「ちいさくなる」などワザのダメージだけを減らす効果と区別できないので
+  黙って落とさない: 形式 1〜29 は、この印のある効果があると ``ValueError``（なければ形式 1〜29 の書き出しは v0.124 と同じ）。［てだすけ］の使用・コイン・回復は、既存の記録
+  （``power_uses_this_turn``・ログ ``pokemon_power``・``coin_flip``・``special_conditions_removed``）で表す
+- 31: 30 に、最上位の ``face_up_deck``（フラッシュでおもてを上にして山札に置かれたカードの uid の並び。置いた順）を加えたもの（v0.126。docs/flash-faceup-deck-v0.126.md 7 章）。
+  今のカードの並びから求め直せない状態（どのカードがおもてか）なので古い形式に黙って落とさない: 形式 1〜30 は、空でなければ ``ValueError``（空なら形式 1〜30 の書き出しは v0.125 と同じ）。
+  並べ替えの途中（相手が並べたあと・使ったプレイヤーの答えの前）は、使用中のトレーナー・決定（``ARRANGE_DECK_TOP``・続きの情報の ``stage``）・ログ（``look_at_deck_top``・
+  ``arrange_deck_top``・``flash_face_up``）で表す。プレイヤーが知っている情報は書き出しに別の項目を持たない（観測が状態とログから求める）
+- 32: 31 の ``halt`` に、途中停止の記録 ``interruption``（``interruption.public_record``。中断の種類・停止コード・論点・発生元・対象・止まった要素・必要な数・処理できる数・未完了の
+  処理・在途のカード・ログの位置。なければ null）を加えたもの（v0.127。docs/deferred-shortage-user-promos-v0.127.md 8 章）。途中停止の状態を古い形式に書くと、在途のカード（使用中の
+  トレーナー）を残した終端と通常の停止を区別できないので黙って落とさない: 形式 1〜31 は、途中停止の記録があると ``ValueError``（なければ形式 1〜31 の書き出しは v0.126 と同じ）。
+  最上位の ``user_simplifications`` は、この対戦のカードのうち、登録表（``effects``）で処理に使う文面の出典が利用者の指定した簡略ルール（``effects.USER_SIMPLIFICATION_SOURCE``）の
+  ワザの対象（``<カード id>/attack/<位置>``。並べた順）。状態の項目ではなく、登録表とカードの組から求める識別の情報（なければ空）
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -195,6 +212,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from .interruption import public_record
 from .rng import rng_fingerprint
 from .state import (
     RETALIATION_FIXED,
@@ -253,7 +271,7 @@ from .state import (
     WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -326,6 +344,8 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
         data["target_attack_index"] = effect.target_attack_index
     elif isinstance(effect, (DamageReduction, ReducedDamageToSource)):
         data["amount"] = effect.amount  # v0.34: "reduced_damage_to_source"（「なきつく」）も減らす量を加える
+        if isinstance(effect, DamageReduction) and effect.non_attack_unresolved:
+            data["non_attack_unresolved"] = True  # v0.125（形式 30）: 「ふくらむ」の効果だけ書く（``state_to_dict`` が形式 1〜29 で拒否する）
     elif isinstance(effect, AttackCoinCheck):
         data["single_use"] = effect.single_use  # v0.36: 「すなかけ」（PMCG1-051）の「効果は1回できえる」
         if effect.lasting:
@@ -503,7 +523,19 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay | None, format_version: in
         data["markers"] = [marker_record(state, marker) for marker in pokemon.markers]  # v0.90
     if format_version >= 28 and pokemon.basic_entry is not None:
         data["basic_entry"] = basic_entry_record(state, pokemon.basic_entry)  # v0.120（なければ書かない）
+    if format_version >= 29 and pokemon.super_transform is not None:
+        data["super_transform"] = super_transform_record(state, pokemon.super_transform)  # v0.124（なければ書かない）
     return data
+
+
+def super_transform_record(state: GameState, record) -> dict[str, Any]:
+    """v0.124: ［すごいへんしん］で選んだ変身のもと（``state.SuperTransform``）。選んだ場の個体の番号・同じカードとしてあつかうカード・選んだ番・バトル場をはなれたか。"""
+    return {"source": record.source, "card": record.card, "card_id": state.cards[record.card].card_id, "turn": record.turn, "left_active": record.left_active}
+
+
+def frozen_form_record(state: GameState, record) -> dict[str, Any]:
+    """v0.124: 処理のあいだ固定した変身の状態 1 つ（``state.FrozenForm``）。"""
+    return {"pokemon_id": record.pokemon, "card": record.card, "card_id": state.cards[record.card].card_id, "kind": record.kind, "source": record.source}
 
 
 def basic_entry_record(state: GameState, entry) -> dict[str, Any]:
@@ -624,6 +656,19 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         raise ValueError(f"形式 {format_version} は、ダメージカウンターの数を倍にするどく・［ポイズンミスト］の効果を表せない（format_version=27 を使う）")
     if format_version < 27 and state.replacement_poisons:
         raise ValueError(f"形式 {format_version} は、「ガスばくはつ」のかわりに出てくる対戦ポケモンへのまだ与えていないどくを表せない（format_version=27 を使う）")
+    if format_version < 29 and (state.frozen_forms or any(pokemon.super_transform is not None for p in state.players for pokemon in p.in_play())):
+        # v0.124: 選んだ変身のもと・処理のあいだ固定した姿は、今のカードの並びから求め直せない（相手の対戦ポケモンを読む［へんしん］の形に落とすと意味が変わる）ので古い形式に書かない
+        raise ValueError(f"形式 {format_version} は、［すごいへんしん］で選んだ変身のもと・処理のあいだ固定した変身の状態を表せない（format_version=29 を使う）")
+    if format_version < 30 and any(isinstance(effect, DamageReduction) and effect.non_attack_unresolved
+                                   for p in state.players for pokemon in p.in_play() for effect in pokemon.persistent_effects):
+        # v0.125: 「ふくらむ」の効果（ワザ以外のダメージに当てはめるかが決まらない印）を落とすと、ワザのダメージだけを減らす効果と区別できないので古い形式に書かない
+        raise ValueError(f"形式 {format_version} は、ワザ以外のダメージに当てはめるかが決まらない「ふくらむ」の効果を表せない（format_version=30 を使う）")
+    if format_version < 32 and state.halt is not None and state.halt.interruption is not None:
+        # v0.127: 途中停止の状態（在途のカードを残した終端）は、古い形式では通常の停止と区別できないので書かない
+        raise ValueError(f"形式 {format_version} は、途中停止の状態（数量のチェック地点で止めた終端）を表せない（format_version=32 を使う）")
+    if format_version < 31 and state.face_up_deck:
+        # v0.126: おもてを上にした山札のカード（フラッシュ）は、今のカードの並びから求め直せないので古い形式に書かない（落とすと、うらの山札と区別できない）
+        raise ValueError(f"形式 {format_version} は、おもてを上にして山札に置かれたカード（フラッシュ）を表せない（format_version=31 を使う）")
     if format_version < 28 and any(pokemon.basic_entry is not None for p in state.players for pokemon in p.in_play()):
         raise ValueError(f"形式 {format_version} は、進化元を重ねずに出して場ではたねポケモンとしてあつかう進化カードを表せない（format_version=28 を使う）")
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
@@ -683,7 +728,8 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         },
         "halt": None
         if state.halt is None
-        else {"code": state.halt.code, "message": state.halt.message, "references": list(state.halt.references)},
+        else {"code": state.halt.code, "message": state.halt.message, "references": list(state.halt.references),
+              **({"interruption": None if state.halt.interruption is None else public_record(state.halt.interruption)} if format_version >= 32 else {})},
         "log": [_plain(dict(event)) for event in state.log],
     }
     if format_version == 1:
@@ -776,7 +822,23 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
     if format_version >= 27:
         data["poison_mists"] = [poison_mist_record(state, record) for record in state.poison_mists]  # v0.119
         data["replacement_poisons"] = [replacement_poison_record(record) for record in state.replacement_poisons]  # v0.119
+    if format_version >= 29:
+        data["frozen_forms"] = [frozen_form_record(state, record) for record in state.frozen_forms]  # v0.124
+    if format_version >= 31:
+        data["face_up_deck"] = list(state.face_up_deck)  # v0.126
+    if format_version >= 32:
+        data["user_simplifications"] = user_simplification_targets(state)  # v0.127
     return data
+
+
+def user_simplification_targets(state: GameState) -> list[str]:
+    """v0.127: この対戦のカードのうち、登録表で処理に使う文面の出典が利用者の指定した簡略ルールのワザの対象（``<カード id>/attack/<位置>``。並べた順）。保存・再生の記録から、公式の
+    文面ではないエンジン固有の簡略ルールで処理したことを識別するため（状態に項目を加えない）。"""
+    from .effects import USER_SIMPLIFICATION_SOURCE
+
+    present = {instance.card_id for instance in state.cards.values()}
+    return sorted(f"{key.card_id}/attack/{key.attack_index}" for key in state.effects.attack_keys()
+                  if key.card_id in present and state.effects.attack_entry(key.card_id, key.attack_index).source == USER_SIMPLIFICATION_SOURCE)
 
 
 def replacement_poison_record(record) -> dict[str, Any]:

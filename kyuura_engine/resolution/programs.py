@@ -47,6 +47,7 @@ from ..decisions import OPPONENT_HAND_TO_BENCH
 from ..decisions import DISCARD_TO_DECK, RECOVER_POKEMON, SELECT_DRAW_COUNT, TAKE_LOOKED_CARDS
 from ..decisions import DISCARD_STADIUM, EVOLUTION_SONG_POKEMON
 from ..stadiums import bench_limit
+from .. import faceup as FU  # v0.126: おもての山札（フラッシュ）
 from ..errors import SECRET_PLAN_HIDDEN_CODE, IllegalActionError, UnsupportedError
 from ..evolution import DEVOLVE_TO_DECK, DEVOLVE_TO_DISCARD, DEVOLVE_TO_HAND, devolve, evolution_block, place_evolution_card
 from ..persistent import (RETURN_IN_PLAY_TO_DECK, RETURN_IN_PLAY_TO_HAND, add_persistent_effect, leave_lock, max_hp_set, remove_on_entering_active,
@@ -519,6 +520,8 @@ class AttackRun:
         # v0.57: クチバシティジムのコインの結果（投げ直さない）
         coin = carried.get("stadium_coin")
         self.res.stadium_coin = None if coin is None else (coin[0], bool(coin[1]))
+        pulse = carried.get("dark_pulse")  # v0.124: ［わるいはどう］のコインの結果（投げ直さない）
+        self.res.dark_pulse = None if pulse is None else (pulse[0], pulse[1])
         self.res.attack_power = bool(carried.get("attack_power", 0))  # v0.88
 
     def knocked_out(self, pokemon: PokemonInPlay) -> bool:
@@ -601,6 +604,8 @@ class AttackRun:
         if self.res.stadium_coin is not None:
             # v0.57: クチバシティジムのコインの結果（(スタジアムカード, 「おもて」なら 1)）。投げていなければ書かない（v0.56 までの決定の形は変えない）
             extra += (("stadium_coin", (self.res.stadium_coin[0], int(self.res.stadium_coin[1]))),)
+        if self.res.dark_pulse is not None:
+            extra += (("dark_pulse", tuple(self.res.dark_pulse)),)  # v0.124: 投げていなければ書かない（v0.123 までの決定の形は変えない）
         if self.res.attack_power:
             extra += (("attack_power", 1),)  # v0.88: ワザといっしょに使った特殊能力（［すいりょくはつでん］）。使っていなければ書かない（v0.87 までの決定の形は変えない）
         # v0.61: HP 以上になったポケモンのきぜつの原因（［ファイナルビーム］の候補。``kernel.ko_cause``）。HP 以上のポケモンがなければ書かない
@@ -959,6 +964,9 @@ def _switch_changes_attacker(run: AttackRun, owner: int, option: int) -> bool:
     attacker = run.attacker()
     if owner == run.player or E.transform_defender(state, attacker) is None:
         return False  # ［へんしん］で相手の対戦ポケモンの姿になっていなければ、相手の入れ替えで今の姿は変わらない（状態を複製しない。先読みの中でも使う）
+    if E.form_frozen(state, attacker):
+        # v0.124（CR-TRANSFORM-FROZEN-DURING-ACTION）: ワザによって起こることがすべて終わるまで、変身の状態は変わらない（入れ替えても、ワザを使っている姿は宣言のときの姿のまま。RX1 の中心）
+        return False
     incoming = state.find_pokemon(option)[1]
     return state.cards[incoming.card].card_id != E.form_def(state, attacker).id
 
@@ -1270,7 +1278,11 @@ def transform_energy_question(run: AttackRun, pokemon: PokemonInPlay, energy_typ
     v0.88（docs/type-energy-colors-v0.88.md 3 章）: ``cards`` は説明が数える・選ぶものの種類。真なら「「X」エネルギーカード」（カードとしての色）で、エナジーコンバーター・こうごうせいで
     色が変わったカードが当たるかが決まらなければ止める（CE3）。偽なら「「X」エネルギー」（エネルギーの今の色。``E.typed_unit_count``）で、色の読み方（CE1・CE2）で数が変われば止める。"""
     if len(E.energy_type_readings(run.state, pokemon, energy_type)) > 1:
-        raise run.res.question("transform_energy_count", f"ポケモン {pokemon.pokemon_id}・「{energy_type.ja}」エネルギー")
+        detail = f"ポケモン {pokemon.pokemon_id}・「{energy_type.ja}」エネルギー"
+        if E.current_form(run.state, pokemon).kind == E.FORM_SUPER_TRANSFORM:
+            # v0.124（SV5）: ［すごいへんしん］のメタモンの色のエネルギーを数える・選ぶ（UQ-SUPER-TRANSFORM-ENERGY-COLORS。支払いの 8 色とは別の問い）
+            raise run.res.question("transform_energy_count", detail, UnsupportedError(E.SUPER_TRANSFORM_ENERGY_CODE, f"{detail}: {E.SUPER_TRANSFORM_ENERGY_REASON}"))
+        raise run.res.question("transform_energy_count", detail)
     # v0.58（RB1）: レインボーエネルギーが、説明の「「X」エネルギー(カード)」に当たるかが決まらない（数える・選べるカードが変わる）なら止める
     rainbow = E.ambiguous_rainbow_cards(run.state, pokemon, energy_type)
     if rainbow:
@@ -1496,8 +1508,9 @@ class Coin(Element):
         if self.per_pokemon is not None:
             scope, names = self.per_pokemon
             if scope not in (SCOPE_OWN_BENCH, SCOPE_OWN_IN_PLAY, SCOPE_BOTH_IN_PLAY) or not (
-                    names is None or (type(names) is tuple and names and all(type(name) is str and name for name in names))):
-                raise ValueError(f"場のポケモンの数え方 {self.per_pokemon!r} は (範囲, 名前のタプルか None)")
+                    names is None or isinstance(names, E.NamePrefix)  # v0.124: 名前の分類（「わるい」ポケモン）
+                    or (type(names) is tuple and names and all(type(name) is str and name for name in names))):
+                raise ValueError(f"場のポケモンの数え方 {self.per_pokemon!r} は (範囲, 名前のタプル・名前の分類か None)")
 
     def run(self, run: AttackRun) -> bool:
         count = self.count
@@ -1695,7 +1708,7 @@ class Damage(Element):
             return False  # v0.115
         if self.color_filter is not None and not color_filter_hit(run, receiver, self.color_filter):
             return False
-        return self.names is None or E.form_def(run.state, receiver).name_ja in self.names  # v0.49: 今の姿の名前（［へんしん］・「ばける」）
+        return self.names is None or E.field_name_matches(run.state, receiver, self.names)  # v0.49: 今の姿の名前（［へんしん］・「ばける」）。v0.124: 両方の名前
 
     def decides(self, kind: str) -> bool:
         # v0.35: 同じ段階の変更効果の計算の順番の決定（``DAMAGE_STEP_ORDER``）。並びの中にダメージの要素が 2 つ以上あっても、続きの情報の
@@ -2313,8 +2326,8 @@ class ForceSwitch(Element):
         結果は変わらないので聞かない（状態を変えない）。"""
         if not any(element.phase is Phase.DAMAGE for element in run.program[run.index + 1:]):
             return ()
-        if E.transform_defender(run.state, run.attacker()) is None:
-            return ()
+        if E.transform_defender(run.state, run.attacker()) is None or E.form_frozen(run.state, run.attacker()):
+            return ()  # v0.124: 姿を固定しているあいだは、入れ替えで姿は変わらない
         # 相手のうらのカード（マチスの秘策）は、本当のカードによらず止める選択にする（選ぶのがワザを使ったプレイヤーでも、正体で選べるものが変わらない。入れ替えでおもてにしない）
         return tuple(option for option in options
                      if run.state.is_face_down(run.state.find_pokemon(option)[1]) or _switch_changes_attacker(run, 1 - run.player, option))
@@ -3084,7 +3097,7 @@ class BenchDamage(Element):
             bench = [p for p in bench if holds_power_now(run, p)]
         if self.energy_cards:
             bench = [p for p in bench if E.attached_energy_cards(run.state, p)]
-        named = [p for p in bench if self.names is None or E.form_def(run.state, p).name_ja in self.names]  # v0.49: 今の姿の名前
+        named = [p for p in bench if self.names is None or E.field_name_matches(run.state, p, self.names)]  # v0.49: 今の姿の名前。v0.124: 両方の名前
         if self.color_filter is not None:
             named = [p for p in named if color_filter_hit(run, p, self.color_filter)]  # v0.88
         if self.pokemon_type is None and not self.same_type_as_opponent_active and self.exclude_type is None:
@@ -3246,6 +3259,8 @@ class SelfPersistent(Element):
     requires: str | None = None
     local_coin: CoinSide | None = None  # v0.34: この要素のコイン（ギャロップの「こうそくいどう」は「おもて」でバリアー）。ワザを使ったポケモンがいなければ投げない
     gate: tuple | None = None  # v0.38: ワザ全体のコインの面（キョウのピジョンの「こうそくひこう」は、追加のダメージと同じコインの「おもて」でバリアー）
+    # v0.125: ``DamageReduction`` に、ワザ以外のダメージに当てはめるかが決まらない印を付ける（プクリンの「ふくらむ」。``effects.DamageThenReduceDamageNextTurn.non_attack_unresolved``）
+    non_attack_unresolved: bool = False
     phase: ClassVar[Phase] = Phase.EFFECT
 
     def run(self, run: AttackRun) -> bool:
@@ -3269,7 +3284,7 @@ class SelfPersistent(Element):
         elif self.kind == AttackBarrier.kind:
             effect = AttackBarrier(**common)
         elif self.kind == DamageReduction.kind:
-            effect = DamageReduction(**common, amount=self.amount)
+            effect = DamageReduction(**common, amount=self.amount, non_attack_unresolved=self.non_attack_unresolved)
         elif self.kind == PreventAttackDamage.kind:
             effect = PreventAttackDamage(**common)  # v0.79: ピカチュウ（neo1-036）の「こうそくいどう」（ワザによるダメージだけを受けない）
         elif self.kind == PreventDamage.kind:
@@ -3559,6 +3574,11 @@ class Draw(Element):
     phase: ClassVar[Phase] = Phase.EFFECT
     reads_deck_order: ClassVar[bool] = True  # v0.40: 山札の上から引く
 
+    def on_declare(self, res: Resolution, player: int, attacker: PokemonInPlay) -> None:
+        # v0.126（FU3）: 2 枚目より下のおもてのカード（フラッシュ）をまとめて引きうるなら、コインの前に止める（引く枚数がコインで決まっても、止めるかをコインの結果によらせない）
+        deck = res.state.players[player].deck
+        FU.require_draw_through_face_up(res.state, player, len(deck) if self.heads_of is not None else min(self.count, len(deck)), f"ワザで引く（プレイヤー {player}）")
+
     def __post_init__(self) -> None:
         if (self.count is None) == (self.heads_of is None):
             raise ValueError("引く枚数は count・heads_of のどちらか 1 つで決める")
@@ -3814,12 +3834,23 @@ class OptionalDiscardBenchDamage(Element):
         candidates = E.attached_basic_energy(run.state, attacker, self.energy_type)
         if not candidates:
             return False
-        run.suspend(kind=DISCARD_ENERGY, player=run.player, options=candidates, min_choices=0, max_choices=1, carry=True)
+        extra: tuple = ()
+        if run.res.dark_pulse is not None and run.state.players[1 - run.player].bench:
+            # v0.124（DP1）: このワザの相手の対戦ポケモンへのダメージで［わるいはどう］のコインを投げた。控えへのダメージを与える答え（トラッシュするカード）は、同じワザの 2 つめのダメージで
+            # コインの結果を共有するかが決まらないので、選べるが選ぶと止める（UQ-DARK-PULSE-TIMING。与えない答えは残る）
+            extra = (("unresolved_choices", tuple(candidates)), ("unresolved_code", E.DARK_PULSE_TIMING_CODE), ("unresolved_reason", E.DARK_PULSE_TIMING_REASON))
+        run.suspend(kind=DISCARD_ENERGY, player=run.player, options=candidates, min_choices=0, max_choices=1, carry=True, extra=extra)
         return True
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        blocked = set(decision.context_value("unresolved_choices", ()))  # v0.124: 選ぶと止める答え（DP1）は試さない（答えのときに止める）
+        return [answer for answer in all_answers(decision) if not blocked & set(answer)]
 
     def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         state = run.state
         if decision.kind == DISCARD_ENERGY:
+            if set(choices) & set(decision.context_value("unresolved_choices", ())):
+                raise UnsupportedError(E.DARK_PULSE_TIMING_CODE, f"ワザ {run.key} の控えへのダメージ: {E.DARK_PULSE_TIMING_REASON}")
             if not choices:
                 return
             _owner, attacker = state.find_pokemon(run.fs.frame.source_pid)
@@ -4223,7 +4254,7 @@ class EvolveChosenFromDeck(Element):
                 targets.append(pokemon.pokemon_id)
                 stops[pokemon.pokemon_id] = (SECRET_PLAN_HIDDEN_CODE, f"うらのカード（場のポケモン {pokemon.pokemon_id}）の名前は読めない（FD1）")
                 continue
-            if E.form_def(run.state, pokemon).name_ja not in self.names:
+            if not E.field_name_matches(run.state, pokemon, self.names):  # v0.124: 両方の名前
                 continue
             targets.append(pokemon.pokemon_id)
             stop = self._chosen_stops(run, pokemon)
@@ -5167,7 +5198,7 @@ def counted_pokemon(state: GameState, player: int, scope: str, names: tuple[str,
         pokemon = [*p.in_play(), *state.players[1 - player].in_play()]
     else:
         pokemon = list(p.bench) if scope == SCOPE_OWN_BENCH else list(p.in_play())
-    return [x for x in pokemon if names is None or E.form_def(state, x).name_ja in names]
+    return [x for x in pokemon if names is None or E.field_name_matches(state, x, names)]  # v0.124: 変身したポケモンは両方の名前（1 匹として数える）。名前の分類 ``E.NamePrefix`` も受け付ける
 
 
 @dataclass(frozen=True)
@@ -6967,6 +6998,11 @@ class OpponentDiscardToDeckTop(Element):
     def has_target(self, run: AttackRun) -> bool:
         return bool(run.state.players[1 - run.player].discard)
 
+    def on_declare(self, res: Resolution, player: int, attacker: PokemonInPlay) -> None:
+        # v0.126（FU4）: 相手の山札におもてのカード（フラッシュ）があれば、その上にのせるカードの向きが決まらないので、コインの前に止める（相手のトラッシュが空なら、のせないので止めない）
+        if res.state.players[1 - player].discard:
+            FU.require_no_face_up(res.state, 1 - player, FU.FACE_UP_DECK_PLACE_TOP_CODE, f"相手（プレイヤー {1 - player}）の山札の上にトラッシュのカードをのせるワザ")
+
     def run(self, run: AttackRun) -> bool:
         if not self.has_target(run):
             return False
@@ -7466,6 +7502,20 @@ class ArrangeDeckTop(Element):
     def decides(self, kind: str) -> bool:
         return kind in (SELECT_DECK_OWNER, SELECT_LOOK_COUNT, ARRANGE_DECK_TOP)
 
+    def _face_up_owners(self, state: GameState, owners: tuple[int, ...]) -> tuple[int, ...]:
+        """v0.126（FU5）: 見てもどす範囲（いちばん上から）におもてのカード（フラッシュ）がある山札の持ち主。おもてのカードはいつも上から続くので、1 枚以上見れば当たる。"""
+        return tuple(owner for owner in owners if FU.has_face_up(state, owner))
+
+    def _short_owners(self, state: GameState, owners: tuple[int, ...]) -> tuple[int, ...]:
+        return tuple(owner for owner in owners if len(state.players[owner].deck) < self.max_cards) if self.exact else ()
+
+    def on_declare(self, res: Resolution, player: int, attacker: PokemonInPlay) -> None:
+        # v0.126: どちらの山札も、おもてのカードがある（FU5）か、ちょうどの枚数に足りない（LT1。run が止める）なら、見る山札を選べない。おもてのカードによるものがあれば、ここで止める
+        owners = (player, 1 - player)
+        face_up = self._face_up_owners(res.state, owners)
+        if face_up and set(face_up) | set(self._short_owners(res.state, owners)) == set(owners):
+            raise FU.stop(FU.FACE_UP_DECK_LOOK_RETURN_CODE, f"見て並べかえる山札の持ち主 {list(owners)}（おもてのカード {list(face_up)}）")
+
     def run(self, run: AttackRun) -> bool:
         owners = (run.player, 1 - run.player)
         extra: tuple = ()
@@ -7477,6 +7527,13 @@ class ArrangeDeckTop(Element):
             if short:
                 error = to_error("attack_deck_top_short", detail)
                 extra = _unresolved_extra(short, error.code, error.message)
+        face_up = self._face_up_owners(run.state, owners)
+        if face_up:
+            # v0.126（FU5）: おもてのカードのある山札の持ち主は、選べるが選ぶと止める（もう一方の山札は止めない。両方なら宣言のあとすぐ止めている）
+            if extra:
+                raise RuntimeError(f"みらいよちで、山札が足りない持ち主と、おもてのカードのある持ち主 {face_up} が両方いる（宣言のあとに止めるはず。エンジンの不具合）")
+            error = FU.stop(FU.FACE_UP_DECK_LOOK_RETURN_CODE, f"ワザ {run.key}・見て並べかえる山札の持ち主 {list(face_up)}")
+            extra = _unresolved_extra(face_up, error.code, error.message)
         run.suspend(kind=SELECT_DECK_OWNER, player=run.player, options=owners, extra=extra)
         return True
 
@@ -7485,8 +7542,10 @@ class ArrangeDeckTop(Element):
         if decision.kind == SELECT_DECK_OWNER:
             owner = choices[0]
             deck = state.players[owner].deck
+            if owner in decision.context_value("unresolved_choices", ()):
+                raise RuntimeError(f"みらいよちで選ぶと止める山札の持ち主 {owner} を選んだ（答えのときに止めるはず。エンジンの不具合）")
             if self.exact:
-                if owner in decision.context_value("unresolved_choices", ()) or len(deck) < self.max_cards:
+                if len(deck) < self.max_cards:
                     raise RuntimeError(f"みらいよちで山札が {len(deck)} 枚の持ち主 {owner} を選んだ（答えのときに止めるはず。エンジンの不具合）")
                 self._look(run, owner, self.max_cards)
                 return
@@ -9821,7 +9880,7 @@ def defender_is_dark(run: AttackRun) -> bool:
     """v0.84: 相手の対戦ポケモンが「わるい」ポケモン（今の姿の名前が「わるい」ではじまる。日本語のカードの名前）または「悪」ポケモン（今有効なタイプ。［へんしょく］の読み方で
     答えが変わるなら VS1）。v0.78 の悪エネルギーの「「悪」または「わるい」ポケモン」と同じ判定。"""
     defender = run.opponent_active()
-    if E.form_def(run.state, defender).name_ja.startswith("わるい"):
+    if E.field_name_matches(run.state, defender, E.DARK_POKEMON):  # v0.124: 両方の名前
         return True
     try:
         return E.same_for_type_readings(run.state, (defender,), lambda views: views[0].pokemon_type is EnergyType.DARKNESS)
@@ -9967,7 +10026,7 @@ class AttachFromDeckUpToNamedCount(Element):
 
     def count(self, run: AttackRun) -> int:
         return sum(1 for side in run.state.players for p in side.in_play()
-                   if not run.state.is_face_down(p) and E.form_def(run.state, p).name_ja == self.name)
+                   if not run.state.is_face_down(p) and E.field_name_matches(run.state, p, (self.name,)))  # v0.124: 両方の名前
 
     def candidates(self, run: AttackRun) -> list[int]:
         rainbow_attach_question(run, run.state.players[run.player].deck, self.energy_type)  # v0.58: RB2
@@ -10210,7 +10269,8 @@ BUILDERS: dict[type, Any] = {
         Damage(OPP, Printed()), Damage(SELF, Fixed(e.self_damage), name="self_damage"), Status(POISON, local_coin=HEADS),
     ),
     E.DamageThenReduceDamageNextTurn: lambda e: (Damage(OPP, Printed()),
-                                                 SelfPersistent(DamageReduction.kind, amount=e.amount, local_coin=HEADS if e.on_heads else None)),
+                                                 SelfPersistent(DamageReduction.kind, amount=e.amount, local_coin=HEADS if e.on_heads else None,
+                                                                non_attack_unresolved=e.non_attack_unresolved)),
     E.DiscardAttachedAndReturnSelfToDeck: lambda e: (ReturnSelfToDeck(local_coin=None, after_damage=None, discard_attached=True),),
     E.ReturnSelfToDeckThenSearchPokemon: lambda e: (
         ReturnSelfToDeck(local_coin=None, after_damage=None, shuffle=False), PromoteFromBench(), RevealPokemonFromDeck(e.excluded),
@@ -12294,6 +12354,13 @@ class OpponentDeckTopDiscardIfTrainer(Element):
     phase: ClassVar[Phase] = Phase.EFFECT
     reads_deck_order: ClassVar[bool] = True
 
+    def on_declare(self, res: Resolution, player: int, attacker: PokemonInPlay) -> None:
+        # v0.126（FU5）: 相手の山札のいちばん上がおもて（フラッシュ。全員に見えている）で、トレーナーカードでなければ、見てもとの山札の上にもどすときの向きが決まらないので、宣言のあとすぐ
+        # 止める（トレーナーカードならトラッシュするだけなので止めない。どちらかは公開の情報で決まる）
+        top = FU.visible_top(res.state, 1 - player)
+        if top is not None and not E.CardFilter("trainer").matches(res.state.card_def(top)):
+            raise FU.stop(FU.FACE_UP_DECK_LOOK_RETURN_CODE, f"相手（プレイヤー {1 - player}）の山札のいちばん上のおもてのカードを見てもどすワザ")
+
     def run(self, run: AttackRun) -> bool:
         state = run.state
         opponent = 1 - run.player
@@ -13275,6 +13342,10 @@ BUILDERS |= {
     # むれでつつく: 自分のベンチの名前の合うポケモンの数のワザ全体のコイン → 目安 +「おもて」の数 × per
     E.CoinsPerOwnBenchNamedBonusDamage: lambda e: (
         Coin("coin", per_pokemon=(SCOPE_OWN_BENCH, e.names)), Damage(OPP, PrintedPlusHeadsOfCoin("coin", e.per)),
+    ),
+    # v0.124: わるいぞうふく（自分のベンチの「わるい」ポケモンの数ぶんコイン。むれでつつくと同じ要素で、名前の分類を渡す）
+    E.CoinsPerOwnBenchDarkBonusDamage: lambda e: (
+        Coin("coin", per_pokemon=(SCOPE_OWN_BENCH, E.DARK_POKEMON)), Damage(OPP, PrintedPlusHeadsOfCoin("coin", e.per)),
     ),
     # ダークフレイム: 自分の「炎」エネルギーカード 1 枚をトラッシュ（できなければワザの失敗）→ ダメージ（目安）→ トラッシュに「悪」エネルギーカードがあれば 1 枚を自分に
     E.DiscardEnergyThenDamageThenAttachFromDiscard: lambda e: (
@@ -14652,6 +14723,10 @@ class DrawUntilTails(Element):
     phase: ClassVar[Phase] = Phase.EFFECT
     reads_deck_order: ClassVar[bool] = True
 
+    def on_declare(self, res: Resolution, player: int, attacker: PokemonInPlay) -> None:
+        # v0.126（FU3）: 「おもて」の数で 2 枚以上引きうるので、2 枚目より下におもてのカード（フラッシュ）があれば、コインの前に止める
+        FU.require_draw_through_face_up(res.state, player, len(res.state.players[player].deck), f"まるもうけで引く（プレイヤー {player}）")
+
     def run(self, run: AttackRun) -> bool:
         deck = run.state.players[run.player].deck
         size = len(deck)
@@ -15484,4 +15559,151 @@ BUILDERS |= {
     E.DiscardEnergyBeforeDamagePlusOwnCounters: lambda e: (
         DiscardOwnEnergy(e.energy_type, count=e.count, when_lacking=LACKING_CANNOT_USE, timing=TIMING_EFFECT), Damage(OPP, PlusOwnCounters(e.per), requires="discard"),
     ),
+}
+
+
+# ---------------------------------------------------------------- v0.127（docs/deferred-shortage-user-promos-v0.127.md）
+
+SHORTAGE_OVER = "over"  # 「おもて」の数が処理できる数を超えた組の key（途中停止の終端の枝の代表）
+
+
+def shortage_classes(available: int):
+    """v0.127（docs 6 章）: 「うら」が出るまで投げるコインの「おもて」の数 h を、処理できる数 ``available``（N）との比べにだけ使う要素（ドライアップ）の組（``unbounded.HeadClasses``）。
+    h = 0〜N はそれぞれ別の組（ちょうど h 枚の処理。選び方の決定の形が h で変わる）、N + 1 以上は 1 つの組（代表は N + 1）: h > N では要素が数のチェック地点で必ず途中停止し、それより
+    あとの処理（トラッシュ・きぜつの判定）をしないので、h がいくつでも終端の分類（停止コード・止まった要素・処理できる数・在途の状態）は同じ（h はログと記録の必要な数にだけ残り、先読みの
+    範囲では読まれない）。h がダメージなどほかの処理にも使われる要素には使わない。実際のコインの数・ログ・乱数には代表を使わない"""
+    from .unbounded import HeadClasses
+
+    if type(available) is not int or available < 0:
+        raise RuntimeError(f"処理できる数 {available!r} が 0 以上の整数ではない（エンジンの不具合）")
+    keys = tuple(range(available + 1)) + (SHORTAGE_OVER,)
+    return HeadClasses(tuple(range(available + 2)), keys, available + 1, 1, lambda heads: heads if heads <= available else SHORTAGE_OVER)
+
+
+@dataclass(frozen=True)
+class DiscardChosenTypedEnergyUntilTails(DiscardOpponentEnergy):
+    """先に選んだ相手のポケモン（``chosen``）について、「うら」が出るまでコインを投げ続け、「おもて」の数ぶんの「``energy_type``」エネルギーカードを、そのポケモンからトラッシュする
+    （v0.127。ファイヤーの「ドライアップ」。``effects.ChooseOpponentThenDiscardTypedEnergyUntilTails``。docs 7 章）。
+
+    - 選んでからコインを投げる（``AttackRun.flip_until_tails``。上限なく「うら」まで。ナツメのESPのやり直しは一まとまりのあとに 1 回だけ聞き、最後の並びで判断する。最初の並びで止めない）。
+      選んだ個体が場をはなれていれば（うらのカードをおもてにしてトラッシュしたなど）処理の対象がないので投げない（p.309。``DiscardOpponentEnergy`` の ``chosen`` と同じ）
+    - 処理できる数 N は、選んだポケモンの「水」エネルギーカードの枚数（``E.attached_typed_energy_cards``。コインの前に数え、コインのあいだは変わらない）。「おもて」の数 H を
+      ``interruption.check_quantity`` のチェック地点で比べ、H > N（N = 0 をふくむ）なら、トラッシュする前に途中停止（DU1）
+    - H = 0 は何もしない。H = N はすべて（選び方は 1 つなので決定を出さない）。0 < H < N は、ワザを使ったプレイヤーがちょうど H 枚を選ぶ（決定 ``DISCARD_OPPONENT_ENERGY``。すべての組を残す）。
+      トラッシュはついている順（``E.discard_energy_from_play``。リサイクルエネルギーなどのもどる処理は既存）。トラッシュする前に効果の到達（``reaches``）を評価する
+    - 選ぶと止めるポケモン（``choice_problem``）: 「水」エネルギーカードの数え方が色の読み方で変わる（``transform_energy_question`` の問い）・コインが決めるトラッシュが効果を受けない
+      （タケシの保護・［KEEP］・「ワザをうけない」状態で ``prevented_effect_coin``・``keep_voided_discard_coin``、「とうめい」を持つポケモンで ``evaded_effect_coin``）・手札にもどるかが
+      決まらないカード（TE2 などの ``energy_discard_problem``）を持つ"""
+
+    energy_type: EnergyType = EnergyType.WATER
+    chosen: str | None = "target"
+
+    def _water(self, run: AttackRun, pokemon: PokemonInPlay) -> list[int]:
+        return E.attached_typed_energy_cards(run.state, pokemon, self.energy_type)
+
+    def choice_problem(self, run: AttackRun, owner: int, pokemon: PokemonInPlay) -> tuple[str, str] | None:
+        from .kernel import first_void
+
+        if run.state.is_face_down(pokemon):
+            return None  # うらのカードにはカードがついていない（N = 0）。おもてにしてトラッシュしたら処理の対象がない（既存の指定の処理）
+        detail = f"ポケモン {pokemon.pokemon_id}（ドライアップのコインの「おもて」の数の「{self.energy_type.ja}」エネルギーカードのトラッシュ）"
+        try:
+            transform_energy_question(run, pokemon, self.energy_type, cards=True)
+        except OpenQuestion as question:
+            return question.key, question.detail
+        if E.energy_removal_protected(run.state, owner, pokemon, run.player) is not None:
+            return "prevented_effect_coin", f"{detail}。タケシの保護ではがされない"
+        if self._voided(run, pokemon) is not None:
+            return "keep_voided_discard_coin", f"{detail}。［KEEP］でトラッシュの効果がなくなる"
+        if first_void(run.res, run.incoming(), owner, pokemon, Window.BEFORE_EFFECT) is not None:
+            return "prevented_effect_coin", f"{detail}。「ワザをうけない」などで効果を受けない"
+        if E.evasion_power(run.state, pokemon) is not None:
+            return "evaded_effect_coin", f"{detail}。「とうめい」で受けないと決まると、コインを投げるかが決められない"
+        for uid in self._water(run, pokemon):
+            if E.energy_discard_problem(run.state, pokemon, uid, cause=E.DISCARD_BY_ATTACK, by_player=run.player) is not None:
+                return "prevented_effect_coin", f"{detail}。トラッシュしたあと手札にもどるかが決まらないカード {uid}"
+        return None
+
+    def run(self, run: AttackRun) -> bool:
+        from ..interruption import DISCARD_WATER_ENERGY_CARDS, check_quantity
+
+        opponent = 1 - run.player
+        found = chosen_pokemon(run, self.chosen, opponent)
+        if not found:
+            return False
+        target = found[0]
+        available = len(self._water(run, target))
+        flips = run.flip_until_tails(lambda: shortage_classes(available))
+        heads = flips.heads
+        check_quantity(required=heads, available=available, code=E.DRY_UP_SHORT_CODE,
+                       message=f"ポケモン {target.pokemon_id}・「おもて」{heads}・「{self.energy_type.ja}」エネルギーカード {available} 枚: {E.DRY_UP_SHORT_REASON}",
+                       references=("kyuura CR-DRY-UP-PROCEDURE", "kyuura UQ-STATED-COUNT-SHORT", "docs/deferred-shortage-user-promos-v0.127.md"),
+                       source=str(run.key), player=run.player, target_owner=opponent, target=target.pokemon_id, element=DISCARD_WATER_ENERGY_CARDS,
+                       pending=(DISCARD_WATER_ENERGY_CARDS, "finish_attack", "knockout_check"))
+        if heads == 0 or not reaches(run.res, run.fs, opponent, target, E.ENERGY_DISCARD_ELEMENT):
+            return False
+        void = self._voided(run, target)
+        if void is not None:
+            E.note_energy_discard_voided(run.state, void, cause=E.DISCARD_BY_ATTACK, by_player=run.player, effect=str(run.key))
+            return False
+        options = self._water(run, target)
+        if heads == len(options):
+            self._discard_chosen(run, target, tuple(options))
+            return False
+        run.suspend(kind=DISCARD_OPPONENT_ENERGY, player=run.player, options=options, min_choices=heads, max_choices=heads,
+                    extra=(("target", target.pokemon_id), ("heads", heads)), carry=True)
+        return True
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        """先読みは、トラッシュするカードの組を、カードの種類（カード id と、この番の色の記録・エネルギーとしての役割の有無）の組ごとに 1 つ（はじめの uid）だけ試す。同じ種類のカードは
+        入れかえても先読みの範囲（トラッシュ・きぜつの判定まで）の結果が同じ（このあとに要素がなく、トラッシュしたカードの uid を読む処理がない）。実際の決定では、ちょうど「おもて」の数の
+        すべての組を選べる（選べるものを削らない）。同じ基本エネルギーカードばかりの場で、組の数が先読みの上限を超えないようにする（v0.127 の開発中の対戦で、「水」エネルギーカード 10 枚以上の
+        ポケモンを選べる場が UNSUPPORTED_PREFLIGHT_LIMIT になった）"""
+        state = run.state
+        target = state.find_pokemon(decision.context_value("target"))[1]
+        groups: dict[tuple, list[int]] = {}
+        for uid in decision.options:
+            kind = (state.cards[uid].card_id, (target.pokemon_id, uid) in state.energy_burn, any(role.card == uid for role in state.energy_roles))
+            groups.setdefault(kind, []).append(uid)
+        answers: list[tuple[int, ...]] = []
+
+        def pick(index: int, left: int, chosen: tuple[int, ...]) -> None:
+            members = list(groups.values())
+            if index == len(members):
+                if left == 0:
+                    answers.append(tuple(uid for uid in decision.options if uid in chosen))
+                return
+            for count in range(min(left, len(members[index])) + 1):
+                pick(index + 1, left - count, chosen + tuple(members[index][:count]))
+
+        pick(0, decision.min_choices, ())
+        return answers
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        opponent = 1 - run.player
+        found = run.state.find_pokemon(run.carried["target"])
+        if (found is None or found[0] != opponent or len(choices) != run.carried["heads"] or len(set(choices)) != len(choices)
+                or any(uid not in self._water(run, found[1]) for uid in choices)):
+            raise RuntimeError(f"トラッシュに選んだカード {choices} が、選んだポケモンの「おもて」の数の「{self.energy_type.ja}」エネルギーカードではない（エンジンの不具合）")
+        self._discard_chosen(run, found[1], tuple(choices))
+
+    def _discard_chosen(self, run: AttackRun, target: PokemonInPlay, cards: tuple[int, ...]) -> None:
+        opponent = 1 - run.player
+        attacker = run.attacker()
+        for energy in tuple(uid for uid in target.energy if uid in cards):
+            E.discard_energy_from_play(
+                run.state, target, (energy,), cause=E.DISCARD_BY_ATTACK, by_player=run.player,
+                log=lambda energy=energy: run.state.add_event("discard_attached_energy", player=opponent, pokemon=target.card, pokemon_id=target.pokemon_id,
+                                                              energy=energy, effect=str(run.key), attacker=run.player, attacker_pokemon_id=attacker.pokemon_id))
+
+
+BUILDERS |= {
+    # ドライアップ: 相手の場のポケモンを 1 匹選ぶ（ワザを使ったプレイヤー）→「うら」が出るまでコイン →「おもて」の数の「水」エネルギーカードをトラッシュ（足りなければ途中停止）
+    E.ChooseOpponentThenDiscardTypedEnergyUntilTails: lambda e: (
+        ChooseEffectTarget(side=E.TARGET_SIDE_OPPONENT, scope=E.TARGET_IN_PLAY, chooser=E.CHOOSER_ATTACKER), DiscardChosenTypedEnergyUntilTails(energy_type=e.energy_type),
+    ),
+    # 利用者が指定した簡略ルール（公式の裁定ではない。docs 4 章）: 既存の型と同じ要素の並び
+    E.UserSimplifiedCoinBonusDamage: lambda e: (Damage(OPP, HeadsBonus(e.bonus)),),  # おたんじょうび（誕生日の条件を省く。CoinBonusDamage と同じ）
+    E.UserSimplifiedStatusSelfAndOpponent: lambda e: (Status(e.condition, target=SELF), Status(e.condition)),  # こまったなあ（発話の条件を省く。StatusSelfAndOpponent と同じ）
+    E.UserSimplifiedDamageOnly: lambda e: (Damage(OPP, Printed()),),  # どつく（発話の条件を省く。DamageOnly と同じ）
 }

@@ -66,7 +66,10 @@ class ResearchLinksTest(unittest.TestCase):
         # v0.114: 研究の基準と写しの元を kyuura e519b99（ブランチ claude/baby-data-engine-v0113-handover の固定コミット。親は 73a1690）に上げた（docs/baby-rules-evolution-v0.114.md 2 章）
         # v0.121: 研究の基準と写しの元を kyuura 2fe0bc0（ブランチ claude/neo2-fossil-type-cost-checks の固定コミット。親は 7b03fd9、研究 c932625 を含む）に上げた（docs/hand-bench-attack-conditions-v0.121.md 3 章）
         # v0.123: 研究の基準と写しの元を kyuura 74b3ceb（ブランチ claude/v0122-names-text-trainer-procedures の固定コミット。親は aceb98b、基点 2fe0bc0）に上げた（docs/arcanine-name-migration-v0.123.md 2 章）
-        self.assertEqual(LINKS["research_commit"], "74b3ceb883dd815495d13b9987433fb14b36e44d")
+        # v0.124: 研究の基準と写しの元を kyuura b9e7cff（main の PR #6 のマージ。木は研究の最後のコミット 9731354 と同じ。基点 74b3ceb）に上げた（docs/super-transform-dark-pulse-v0.124.md 2 章）
+        # v0.125: 研究の基準と写しの元を kyuura 134a664（ブランチ claude/eloquent-lamport-5xyv5r の固定コミット。基点 b9e7cff）に上げた（docs/wigglytuff-helping-hand-v0.125.md 2 章）
+        # v0.126: 研究の基準と写しの元を kyuura 57d01f4（ブランチ claude/trainer-reaction-faceup-deck-ownership-research の固定コミット。基点 134a664）に上げた（docs/flash-faceup-deck-v0.126.md 2 章）
+        self.assertEqual(LINKS["research_commit"], "57d01f45cfb8b086d03dc0525b329cf6adeff69b")
         self.assertEqual(LINKS["engine_import_id"], "ENGINE-46A3E2E")
         self.assertEqual(LINKS["card_data_commit"], read_extract()["source"]["commit"])
         self.assertEqual(LINKS["research_commit"], LINKS["card_data_commit"])
@@ -206,7 +209,19 @@ class ResearchLinksTest(unittest.TestCase):
                                      "UNRESOLVED_BABY_RULE_COIN_ORDER", "UNRESOLVED_NEO_TEXT_BASIC_BABY", "UNRESOLVED_NEO_TEXT_EVOLUTION_CARD_BABY",
                                      "UNRESOLVED_GROWL_NON_ATTACK_DAMAGE",
                                      # v0.121: SQ1（UQ-COPIED-ATTACK の ES3-021 の事例）・OR1（UQ-CARD-USE-WITHOUT-TARGET の neo3-053 の事例）も、kyuura に論点と事例はあるが一覧に行がない
-                                     "UNRESOLVED_VIRTUAL_ASLEEP_ONLY_ATTACK", "UNRESOLVED_OLD_ROD_WITHOUT_TARGET"})
+                                     "UNRESOLVED_VIRTUAL_ASLEEP_ONLY_ATTACK", "UNRESOLVED_OLD_ROD_WITHOUT_TARGET",
+                                     # v0.124: TC1・TK1・BX2・SV1〜SV5・DP1（kyuura b9e7cff の新しい論点 9 件と事例に結んだ。未解決の一覧（v0.113 の写し）に行はない）
+                                     "UNRESOLVED_TRANSFORM_ENERGY_COLOR_LIST", "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING", "UNRESOLVED_TRANSFORM_BABY_AND_BASIC",
+                                     "UNRESOLVED_SUPER_TRANSFORM_TARGET", "UNRESOLVED_SUPER_TRANSFORM_SOURCE_CHANGE", "UNRESOLVED_SUPER_TRANSFORM_COPIED_POWER",
+                                     "UNRESOLVED_SUPER_TRANSFORM_SUPPRESSED_FORM", "UNRESOLVED_SUPER_TRANSFORM_ENERGY_COLORS", "UNRESOLVED_DARK_PULSE_TIMING",
+                                     # v0.125: HH1・HH2・IF1（kyuura 134a664 の論点と、事例を加えた既存の論点に結んだ。未解決の一覧（v0.113 の写し）に行はない）
+                                     "UNRESOLVED_HELPING_HAND_WITHOUT_CONDITION", "UNRESOLVED_HELPING_HAND_CHOICE", "UNRESOLVED_INFLATE_NON_ATTACK_DAMAGE",
+                                     # v0.126: FU1〜FU6（kyuura 57d01f4 の論点 UQ-STATED-COUNT-SHORT・UQ-FLASH-FACE-UP-DECK の事例に結んだ。未解決の一覧（v0.113 の写し）に行はない）
+                                     "UNRESOLVED_FLASH_DECK_SHORT", "UNRESOLVED_FACE_UP_DECK_CHECK", "UNRESOLVED_FACE_UP_DECK_HIDDEN_TAKE",
+                                     "UNRESOLVED_FACE_UP_DECK_PLACE_TOP", "UNRESOLVED_FACE_UP_DECK_LOOK_RETURN", "UNRESOLVED_FACE_UP_DECK_MOVE",
+                                     # v0.127: DU1・TW1・TW2（kyuura 57d01f4 の論点 UQ-STATED-COUNT-SHORT・UQ-CARD-USE-WITHOUT-TARGET の事例に結んだ。未解決の一覧に行はない）
+                                     "UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT", "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT",
+                                     "UNRESOLVED_THOUGHT_WAVE_MACHINE_WITHOUT_TARGET"})
         # v0.31〜v0.68 は、kyuura の一覧でコードのない行を指していた停止コード 8 件（T27・C34/C35・G40・P19・P32・Z9・DR8・DR13）に kyuura_index_engine_key を
         # 書いていた。v0.69 で kyuura が停止コードを書いたので外した（scripts/check_research_links.py が、kyuura の一覧のコードで照らす）
         # v0.97: SS1（v0.60 のコードのない問い。kyuura の一覧ではコードのない行）にコードを付けたので、その行を指す（v0.31 と同じ形）
@@ -257,8 +272,13 @@ class ResearchLinksTest(unittest.TestCase):
         # 事例のカードを登録していない（または場面に要るカードを登録していない）ので停止コードがなく、事例の対応（kyuura_cases_without_engine_ruling）にだけある
         # （scripts/check_research_links.py の issues_in_links と同じ数え方。v0.97 から）
         cases = {v["kyuura_issue"] for v in LINKS["kyuura_cases_without_engine_ruling"]["cases"]}
-        self.assertEqual(cases - issues, {"UQ-BILINGUAL-NAME-GLOSS", "UQ-MIND-GAMES-OPTIONAL", "UQ-MIND-GAMES-TRAINER-STEP", "UQ-FLASH-FACE-UP-DECK",
-                                          "UQ-SWAP-PLEASE-OWNERSHIP"})
+        # v0.124: kyuura b9e7cff の新しい論点 9 件は、2 枚を登録して止め方を見直したので、どれも停止コード（TC1・TK1・BX2・SV1〜SV5・DP1）に結んだ（移行の段では、2 枚の事例は
+        # 登録していないカード・場面に要るカードを登録していないもの、化石のメタモンの 3 件はコードのない問いだった。docs/super-transform-dark-pulse-v0.124.md 2.4 節・7 章）
+        # v0.125: kyuura 134a664 の新しい論点 2 件のうち、UQ-DESTRUCTIVE-FIRE-FAILURE は事例のカード（ひかるバンギラス）を登録していないので、事例の対応にだけある。
+        # UQ-HELPING-HAND-CHOICE は、プクリンを登録して停止コード HH2 に結んだ（移行の段では事例の対応にだけあった。docs/wigglytuff-helping-hand-v0.125.md 2.4 節・5 章）
+        # v0.126: UQ-FLASH-FACE-UP-DECK は、フラッシュを登録して停止コード FU2〜FU6 に結んだ（docs/flash-faceup-deck-v0.126.md 7 章）
+        self.assertEqual(cases - issues, {"UQ-BILINGUAL-NAME-GLOSS", "UQ-MIND-GAMES-OPTIONAL", "UQ-MIND-GAMES-TRAINER-STEP",
+                                          "UQ-SWAP-PLEASE-OWNERSHIP", "UQ-DESTRUCTIVE-FIRE-FAILURE"})
         self.assertEqual(len(issues | cases), LINKS["counts"]["kyuura_issues"])
         self.assertTrue(all(i.startswith("UQ-") for i in issues))
 
@@ -283,6 +303,8 @@ class ResearchLinksTest(unittest.TestCase):
                    "adopted_printed_text", "errata_text", "difference_text",
                    # v0.68: 利用者が示した訂正の文面（ガルーラのこどものおつかい）・エンジンの簡略化した仕様（イマクニ？のドードー）
                    "user_corrected_text", "engine_simplified_text",
+                   # v0.127: 利用者が指定した簡略ルール（_のピカチュウ・ハマちゃんのヤドキング。公式の裁定・エンジンの簡略化した仕様とは別の区分）
+                   "user_simplified_text",
                    # v0.69: 拡張パック以外の商品の同じカードの登録（元のカードの登録の区分にしたがう）
                    "equivalent_registrations",
                    # v0.71: 再録のカードの、元のカードの記録の文面を処理に使う登録

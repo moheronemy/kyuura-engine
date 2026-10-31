@@ -472,7 +472,9 @@ class BarrierCoinTest(unittest.TestCase):
                                 "CoinsFailThenDamageParalyze",
                                 # v0.122: わるいフシギバナの「いやなかふん」（ダメージのあとの 2 枚のコインは相手のねむり・こんらん・マヒだけを決める。どくはコインによらない。
                                 # オーロラウェーブと同じ形。docs/unown-fossil-retreat-reactions-v0.122.md 6 章）
-                                "DamageThenPoisonAndStatusByTwoCoins"})
+                                "DamageThenPoisonAndStatusByTwoCoins",
+                                # v0.124: GR団のミュウツーの「わるいぞうふく」（むれでつつくと同じ要素。数えるのは名前が「わるい」で始まるポケモン。docs/super-transform-dark-pulse-v0.124.md 6 章）
+                                "CoinsPerOwnBenchDarkBonusDamage"})
         for name in ("FailOnTailsSelfDestruct", "FailOnTailsDamageThenSelfBarrier", "DamageThenConfuseOpponentOrSelf"):
             self.assertIn(name, flipping)  # v0.107
         for name in ("CoinDevolveOpponentEvolvedToDeck", "FailOnTailsMoveOpponentFieldEnergy"):

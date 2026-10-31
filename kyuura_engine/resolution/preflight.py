@@ -29,6 +29,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable
 
+from ..interruption import DeferredShortage
 from .events import PreflightResult, Trace
 from .kernel import DryRunComplete, Resolution
 from .questions import OpenQuestion, pick, to_error
@@ -134,6 +135,10 @@ def explore(state: GameState, body: Callable[[Resolution], None], catalog: Catal
             stack.extend(script + (token,) for token in reversed(range(need.n)))
         except OpenQuestion as question:
             found.setdefault(question.key, question)
+            branches += 1
+        except DeferredShortage:
+            # v0.127（docs/deferred-shortage-user-promos-v0.127.md 6 章）: 共通の数量処理のチェック地点での途中停止の終端の枝。問いでも、従来の拒否でもない（この枝があることだけで
+            # 宣言を拒否しない）。ほかの枝の問いは今までどおり見つける
             branches += 1
         if branches > limit:
             raise BranchLimit(branches)

@@ -23,6 +23,10 @@ v0.4c 以降の 2 進化ポケモン。v0.11 はサカキのワンリキー・�
 - v0.114 で、段 v0.114（73a1690 → e519b99）を加えました（docs/baby-rules-evolution-v0.114.md 2 章）。
 - v0.121 で、段 v0.121（e519b99 → 2fe0bc0）を加えました（docs/hand-bench-attack-conditions-v0.121.md 3 章）。
 - v0.123 で、段 v0.123（2fe0bc0 → 74b3ceb）を加えました（docs/arcanine-name-migration-v0.123.md 2 章）。
+- v0.124 で、段 v0.124（74b3ceb → b9e7cff）を加え、写しの組 pool_v0_124（2 枚）を加えました（docs/super-transform-dark-pulse-v0.124.md 2 章・4 章）。
+- v0.125 で、段 v0.125（b9e7cff → 134a664）を加え、写しの組 pool_v0_125（1 枚）を加えました（docs/wigglytuff-helping-hand-v0.125.md 2 章・3 章）。
+- v0.126 で、段 v0.126（134a664 → 57d01f4）を加え、写しの組 pool_v0_126（1 枚）を加えました（docs/flash-faceup-deck-v0.126.md 2 章・3 章）。
+- v0.127 で、写しの組 pool_v0_127（6 枚）を加えました（写しの元・研究の基準は 57d01f4 のまま。段は加えていない。docs/deferred-shortage-user-promos-v0.127.md 3 章）。
 
 使い方::
 
@@ -40,11 +44,13 @@ import sys
 from pathlib import Path
 
 KYUURA_REPOSITORY = "https://github.com/moheronemy/kyuura"
-# v0.123: kyuura のブランチ claude/v0122-names-text-trainer-procedures の固定コミット（v0.122 のあとの調査。ウィンディ 5 枚などの名前・文面のカードの画像の確認と、トレーナーの
-# 手順の整理。kyuura main には未取り込み）。v0.121〜v0.122 は 2fe0bc0（``V0_121_KYUURA_COMMIT``。ブランチ claude/neo2-fossil-type-cost-checks の固定コミット）、
+# v0.126: kyuura のブランチ claude/trainer-reaction-faceup-deck-ownership-research の固定コミット 57d01f4（ちえくらべ・フラッシュ・とりかえっこプリーズの調査。kyuura main には未取り込み）。
+# v0.125 は 134a664（``V0_125_KYUURA_COMMIT``。ブランチ claude/eloquent-lamport-5xyv5r の固定コミット。プクリンの最新の説明・コインで決まる枚数の不足の調査）、
+# v0.124 は b9e7cff（``V0_124_KYUURA_COMMIT``。kyuura main の PR #6 のマージ。すごいへんしん・わるいはどうの調査）、v0.123 は 74b3ceb（``V0_123_KYUURA_COMMIT``。
+# ブランチ claude/v0122-names-text-trainer-procedures の固定コミット）、v0.121〜v0.122 は 2fe0bc0（``V0_121_KYUURA_COMMIT``。ブランチ claude/neo2-fossil-type-cost-checks の固定コミット）、
 # v0.114〜v0.120 は e519b99（``V0_114_KYUURA_COMMIT``。ブランチ claude/baby-data-engine-v0113-handover の固定コミット）、
 # v0.97〜v0.113 は 73a1690（``V0_97_KYUURA_COMMIT``。kyuura main の PR #5 のマージ。木は研究のコミット 78d090c と同じ）、v0.69〜v0.96 は 7d3f4ca（``V0_69_KYUURA_COMMIT``）
-KYUURA_COMMIT = "74b3ceb883dd815495d13b9987433fb14b36e44d"
+KYUURA_COMMIT = "57d01f45cfb8b086d03dc0525b329cf6adeff69b"
 KYUURA_PATH = "data/cards.json"
 
 # v0.1 の対戦で使うカード（kyuura docs/engine-readiness.md 5章の段階 1 のたねポケモンと基本エネルギー）
@@ -1428,6 +1434,9 @@ V0_69_KYUURA_COMMIT = "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"  # v0.69〜v0.9
 V0_97_KYUURA_COMMIT = "73a169063463bbf7bcaa3137d70cbf9721d11534"  # v0.97〜v0.113 の写しの元
 V0_114_KYUURA_COMMIT = "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"  # v0.114〜v0.120 の写しの元
 V0_121_KYUURA_COMMIT = "2fe0bc042ce187d191843819262f8036abbb343d"  # v0.121〜v0.122 の写しの元
+V0_123_KYUURA_COMMIT = "74b3ceb883dd815495d13b9987433fb14b36e44d"  # v0.123 の写しの元
+V0_124_KYUURA_COMMIT = "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a"  # v0.124 の写しの元
+V0_125_KYUURA_COMMIT = "134a664c6adf67d5604148a31b58e1a7d26d4d6d"  # v0.125 の写しの元
 # v0.97（docs/unown-research-idfnj-v0.97.md 2 章）: 写しの元を上げた移行の連鎖。段ごとに、前のコミット（``from``）とあとのコミット（``to``）。最後の段の ``to`` が写しの元、
 # 最初の段の ``from`` が PREVIOUS_KYUURA_COMMIT。過去の段の値は書き換えない（v0.69 の段の ``to`` は 7d3f4ca のまま）。kyuura が当てはめた修正は、当てはめた段（``migration``）の
 # ``from`` の値が ``before``・``to`` の値が ``after`` で、写しの元でも ``after``。写す欄は段ごとに、その段の修正の欄と出典の記録の欄を除いて同じことを確かめる
@@ -1435,12 +1444,20 @@ V0_121_KYUURA_COMMIT = "2fe0bc042ce187d191843819262f8036abbb343d"  # v0.121〜v0
 # （写しの元を上げても過去の段の値が変わらないように）
 # v0.121（docs/hand-bench-attack-conditions-v0.121.md 3 章）: 段 v0.121（e519b99 → 2fe0bc0）を加えた。v0.114 の段の ``to`` は、同じ理由で e519b99（``V0_114_KYUURA_COMMIT``）に固定した
 # v0.123（docs/arcanine-name-migration-v0.123.md 2 章）: 段 v0.123（2fe0bc0 → 74b3ceb）を加えた。v0.121 の段の ``to`` は、同じ理由で 2fe0bc0（``V0_121_KYUURA_COMMIT``）に固定した
+# v0.124（docs/super-transform-dark-pulse-v0.124.md 2 章）: 段 v0.124（74b3ceb → b9e7cff）を加えた。v0.123 の段の ``to`` は、同じ理由で 74b3ceb（``V0_123_KYUURA_COMMIT``）に固定した
+# v0.125（docs/wigglytuff-helping-hand-v0.125.md 2 章）: 段 v0.125（b9e7cff → 134a664）を加えた。v0.124 の段の ``to`` は、同じ理由で b9e7cff（``V0_124_KYUURA_COMMIT``）に固定した。
+# この段の data/cards.json は全 1,377 件の全欄が同じ（訂正なし）
+# v0.126（docs/flash-faceup-deck-v0.126.md 2 章）: 段 v0.126（134a664 → 57d01f4）を加えた。v0.125 の段の ``to`` は、同じ理由で 134a664（``V0_125_KYUURA_COMMIT``）に固定した。
+# この段で値が変わったのは写しの外のとりかえっこプリーズ PR1-027 の文面の読点 1 つ（FIX-PR1-027-TEXT-JA）だけ
 KYUURA_MIGRATIONS = (
     {"id": "v0.69", "from": PREVIOUS_KYUURA_COMMIT, "to": V0_69_KYUURA_COMMIT, "document": "docs/equivalent-non-pack-cards-v0.69.md"},
     {"id": "v0.97", "from": V0_69_KYUURA_COMMIT, "to": V0_97_KYUURA_COMMIT, "document": "docs/unown-research-idfnj-v0.97.md"},
     {"id": "v0.114", "from": V0_97_KYUURA_COMMIT, "to": V0_114_KYUURA_COMMIT, "document": "docs/baby-rules-evolution-v0.114.md"},
     {"id": "v0.121", "from": V0_114_KYUURA_COMMIT, "to": V0_121_KYUURA_COMMIT, "document": "docs/hand-bench-attack-conditions-v0.121.md"},
-    {"id": "v0.123", "from": V0_121_KYUURA_COMMIT, "to": KYUURA_COMMIT, "document": "docs/arcanine-name-migration-v0.123.md"},
+    {"id": "v0.123", "from": V0_121_KYUURA_COMMIT, "to": V0_123_KYUURA_COMMIT, "document": "docs/arcanine-name-migration-v0.123.md"},
+    {"id": "v0.124", "from": V0_123_KYUURA_COMMIT, "to": V0_124_KYUURA_COMMIT, "document": "docs/super-transform-dark-pulse-v0.124.md"},
+    {"id": "v0.125", "from": V0_124_KYUURA_COMMIT, "to": V0_125_KYUURA_COMMIT, "document": "docs/wigglytuff-helping-hand-v0.125.md"},
+    {"id": "v0.126", "from": V0_125_KYUURA_COMMIT, "to": KYUURA_COMMIT, "document": "docs/flash-faceup-deck-v0.126.md"},
 )
 KYUURA_CORRECTIONS_PATH = "data/curation/card_corrections.json"
 KYUURA_TARGETS_PATH = "data/engine_targets.json"
@@ -2274,6 +2291,52 @@ KYUURA_CORRECTIONS = [
         "engine_history": "v0.31 から写しにあるカード（登録済み）。v0.122 までは「カツラのウインディ」で、採用の記録の外部照合（2026-10-15）の pcg-search.com の見出しとの違いを kyuura への報告事項にしていた",
     },
 
+    # v0.124（docs/super-transform-dark-pulse-v0.124.md 2 章）: 写しの外（v0.124 の移行の段では登録していない）のメタモン ES2-032 の特殊能力の文面の 1 字（片仮名の「カ」→「力」）を、
+    # kyuura がカードの画像（pcg-search.com）で確かめて直した（根拠 ``card_image_check``・種類 ``transcription_error``。2026-10-31）。公式エラッタ・最新の説明（LD-ES2-032-PWR0）
+    # ではない。画像を見たのは kyuura で、エンジンは画像・公式の書籍を見ていない（``engine_saw_image``）。括弧・句読点は整形しない（前とあとの違いは 1 字だけ）
+    {
+        "id": "FIX-ES2-032-POWER0-TEXT-JA",
+        "card_id": "ES2-032",
+        "field": "pokemon.powers[0].text.ja",
+        "before": "この力は、このカードがバトル場にいる時だけ、自分の番ごとに1回使える。コインを投げて「おもて」なら、場にいるポケモンから1匹を選び、それ以後このカードを、選んだポケモンと同じカードとしてあつかう。(ただし「進化・退化」はできず、この「すごいへんしん」の力は使うことができる)。「うら」なら、このカードはメタモンにもどる。エネルギーカードは、このカードについている限り、どの色のエネルギーとしても使える。このカードがバトル場をはなれた時や、「ねむり・マヒ・こんらん」状態の時、この「すごいへんしん」のカは使えず、このカードはメタモンにもどる。へんしんの元になっていたポケモンが場をはなれた時も、このカードはメタモンにもどる。",
+        "after": "この力は、このカードがバトル場にいる時だけ、自分の番ごとに1回使える。コインを投げて「おもて」なら、場にいるポケモンから1匹を選び、それ以後このカードを、選んだポケモンと同じカードとしてあつかう。(ただし「進化・退化」はできず、この「すごいへんしん」の力は使うことができる)。「うら」なら、このカードはメタモンにもどる。エネルギーカードは、このカードについている限り、どの色のエネルギーとしても使える。このカードがバトル場をはなれた時や、「ねむり・マヒ・こんらん」状態の時、この「すごいへんしん」の力は使えず、このカードはメタモンにもどる。へんしんの元になっていたポケモンが場をはなれた時も、このカードはメタモンにもどる。",
+        "basis": "card_image_check",
+        "kind": "transcription_error",
+        "migration": "v0.124",
+        "decided_on": "2026-10-31",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-ES2-032",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/1st/1stex2032.png",
+             "image_sha256": "944dcc13ba39944c9b1db69b18aeb7550f09ce749ad74d6481b148755e39a9bd", "accessed_on": "2026-10-31"},
+        ],
+        "engine_history": "v0.124 の移行の段で、写しの外（未登録）のカードの訂正として台帳・画像の照合の記録と照らした（v0.123 までは写しにないカード）",
+    },
+
+    # v0.126（docs/flash-faceup-deck-v0.126.md 2 章）: 写しの外（v0.126 でも登録しない）のとりかえっこプリーズ PR1-027 の文面の読点 1 つ（「ある時だけ使える」→「ある時だけ、使える」）を、
+    # kyuura がカードの画像（pcg-search.com）と『オフィシャルブック2000』p.293 の図版で確かめて直した（根拠 ``card_image_check``・種類 ``transcription_error``。2026-10-31）。処理は変わらない。
+    # 名前の末尾の「！」は kyuura が直していない（報告事項）ので、ここでも直さない。画像を見たのは kyuura で、エンジンは画像・公式の書籍を見ていない（``engine_saw_image``）
+    {
+        "id": "FIX-PR1-027-TEXT-JA",
+        "card_id": "PR1-027",
+        "field": "trainer.text.ja",
+        "before": "相手プレイヤーの手札を見て、カードを1枚えらぶ。次に、相手プレイヤーにあなたの手札を見せ、カードを1枚えらばせる。そして、お互いがえらんだカードを交換してよいかどうか、相手にたずねる。オーケーなら、カードを交換して、それぞれの手札にくわえる。オーケーでないなら、交換はおこらず、あなたは山札からカードを2枚引く。(このカードは、お互いに手札が1枚以上ある時だけ使える)",
+        "after": "相手プレイヤーの手札を見て、カードを1枚えらぶ。次に、相手プレイヤーにあなたの手札を見せ、カードを1枚えらばせる。そして、お互いがえらんだカードを交換してよいかどうか、相手にたずねる。オーケーなら、カードを交換して、それぞれの手札にくわえる。オーケーでないなら、交換はおこらず、あなたは山札からカードを2枚引く。(このカードは、お互いに手札が1枚以上ある時だけ、使える)",
+        "basis": "card_image_check",
+        "kind": "transcription_error",
+        "migration": "v0.126",
+        "decided_on": "2026-10-31",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-PR1-027",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/1st/1stp027.png",
+             "image_sha256": "dba0b369a7a340ccd18ef7e429912555ef98dc7b5d8c826b3a2a52679ee7bd24", "accessed_on": "2026-10-31"},
+        ],
+        "engine_history": "v0.126 の移行の段で、写しの外（未登録）のカードの訂正として台帳・画像の照合の記録と照らした（写しにないカード）",
+    },
+
 ]
 def _card_after(c: dict):
     """v0.122: 修正 ``c`` のあと、カードの記録（corrections・値）にある値。ふつうは台帳の ``after`` と同じ。台帳とカードの記録がエンジンの使わない欄（英語名）だけで違う修正（GD3-003）は
@@ -2710,6 +2773,16 @@ def kyuura_correction_problems(kyuura: Path, source: dict, previous: dict, pool:
             if checks is None:
                 checks = _records(json.loads(_show(kyuura, KYUURA_COMMIT, "data/sidecar/card_checks.json").decode("utf-8")))
             checked = {(r.get("card_id"), field) for r in checks if isinstance(r, dict) for field in (r.get("checked_fields") or {})}
+            # v0.124: 同じ段で kyuura が新しく作った照合の記録（段の前のコミットにない CC-）が、訂正のあとの値と同じ値でその欄を照らし、データの誤りとしていなければ、画像の確認を
+            # CC- の代わりにしたことにはならない（ES2-032 の CC-ES2-032-P239。書籍の図版の文字は小さく、kyuura は独立した 2 件に数えていない。訂正の根拠は画像の照合 IMG-ES2-032 のまま）
+            try:
+                earlier_checks = {r.get("id") for r in _records(json.loads(_show(kyuura, step["from"], "data/sidecar/card_checks.json").decode("utf-8"))) if isinstance(r, dict)}
+            except subprocess.CalledProcessError:
+                earlier_checks = set()  # 段の前のコミットに照合の記録のファイルがない（古い段）
+            if any(r.get("card_id") == c["card_id"] and c["field"] in (r.get("checked_fields") or {}) for r in checks if isinstance(r, dict)) and all(
+                    r.get("id") not in earlier_checks and r.get("checked_fields", {}).get(c["field"]) == c["after"] and r.get("data_error") is False
+                    for r in checks if isinstance(r, dict) and r.get("card_id") == c["card_id"] and c["field"] in (r.get("checked_fields") or {})):
+                checked = checked - {(c["card_id"], c["field"])}
             if image_checks is None:
                 image_checks = _image_checks(kyuura, KYUURA_COMMIT)
             problems.extend(card_image_check_problems(label, c, entry, checked, _ledger(kyuura, step["from"]), image_checks))
@@ -3520,6 +3593,37 @@ POOL_V0_123 = [
     "PR1-016",  # ウィンディ（プロモ。ガーディから進化。でんこうせっか・いかりのほのお）
 ]
 
+# v0.124（docs/super-transform-dark-pulse-v0.124.md 4 章）: メタモン（拡張シート第2弾赤版。［すごいへんしん］）と GR団のミュウツー（［わるいはどう］・わるいぞうふく）の 2 枚。写しの元・研究の基準は
+# b9e7cff（段 v0.124 の移行のあと）。ES2-032 の特殊能力の文面は段 v0.124 の訂正 FIX-ES2-032-POWER0-TEXT-JA のあとの値。PRN-041 の値は 74b3ceb と同じ（訂正はない）
+POOL_V0_124 = [
+    "ES2-032",  # メタモン（拡張シート第2弾赤版。たね・無色・HP40。［すごいへんしん］。ワザなし）
+    "PRN-041",  # GR団のミュウツー（プロモ（neo）。たね・超・HP70。［わるいはどう］・わるいぞうふく）
+]
+
+# v0.125（docs/wigglytuff-helping-hand-v0.125.md 3 章）: プクリン（拡張シート第1弾青版。［てだすけ］・ふくらむ）の 1 枚。写しの元・研究の基準は 134a664（段 v0.125 の移行のあと）。
+# 値は b9e7cff と同じ（訂正はない。ふくらむの文面は印刷の 1 字が読めない転記のまま。kyuura の訂正の候補 held_illegible_print）
+POOL_V0_125 = [
+    "ES1-027",  # プクリン（拡張シート第1弾青版。1進化（プリンから）・無色・HP90。［てだすけ］・ふくらむ）
+]
+
+# v0.126（docs/flash-faceup-deck-v0.126.md 3 章）: フラッシュ（拡張シート第2弾赤版。トレーナー）の 1 枚。写しの元・研究の基準は 57d01f4（段 v0.126 の移行のあと）。値は 134a664 と同じ
+# （訂正はない。処理に使う文面は最新の説明 LD-ES2-035-TRAINER）。ヤドキング neo1-049・とりかえっこプリーズ PR1-027 は入れない
+POOL_V0_126 = [
+    "ES2-035",  # フラッシュ（拡張シート第2弾赤版。トレーナー。お互いの山札の上から 5 枚を並べ替えて、おもてを上にしてもどす）
+]
+
+# v0.127（docs/deferred-shortage-user-promos-v0.127.md 3 章）: ファイヤー 2 枚・怪電波マシーン（枚数不足の途中停止の共通基盤を使う）と、利用者が指定した簡略ルールで登録する
+# プロモ 3 枚（_のピカチュウ 2 枚・ハマちゃんのヤドキング）の 6 枚。写しの元・研究の基準は 57d01f4 のまま（段を加えない）。値は kyuura のまま（簡略化はエンジンの登録の記録で、
+# 写しの文面は書き換えない。名前・段階・進化元・レベルの欠けも補わない）。ひかるバンギラス neo4-082 は入れない
+POOL_V0_127 = [
+    "ES2-005",  # ファイヤー（拡張シート第2弾赤版。たね・炎・HP80。ドライアップ・ほのおのつばさ）
+    "QSG-055",  # ファイヤー（クイックスターターギフトパック。ES2-005 と同じカードの組 SC-ES2-005）
+    "neo4-108",  # 怪電波マシーン（neo 第4弾。ロケット団秘密メカ）
+    "PR1-044",  # _のピカチュウ（プロモ。たね・雷・HP50。おたんじょうび。利用者が指定した簡略ルール）
+    "PR1-090",  # _のピカチュウ（プロモ。PR1-044 と同じカードの組 SC-PR1-044。利用者が指定した簡略ルール）
+    "PR1-072",  # ハマちゃんのヤドキング（プロモ。1進化（ヤドンから）・超・HP70。こまったなあ・どつく。利用者が指定した簡略ルール）
+]
+
 POOLS = [
     ("pool_v0_1", POOL_V0_1),
     ("pool_v0_2b", POOL_V0_2B),
@@ -3649,6 +3753,10 @@ POOLS = [
     ("pool_v0_121", POOL_V0_121),
     ("pool_v0_122", POOL_V0_122),
     ("pool_v0_123", POOL_V0_123),
+    ("pool_v0_124", POOL_V0_124),
+    ("pool_v0_125", POOL_V0_125),
+    ("pool_v0_126", POOL_V0_126),
+    ("pool_v0_127", POOL_V0_127),
 ]
 
 

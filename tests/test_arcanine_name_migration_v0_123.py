@@ -46,6 +46,7 @@ NOW, V0121 = "74b3ceb883dd815495d13b9987433fb14b36e44d", "2fe0bc042ce187d1918438
 ECB, V069, V097, V0114 = ("ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691", "7d3f4ca76c084774efb4ac6a1d3a943387e183c3", "73a169063463bbf7bcaa3137d70cbf9721d11534",
                           "e519b99e2adcc6c2cd0998569ae5ee1101de6e89")
 BASE_ENGINE = "e080c9e34989fc94ad4add1e8e579738b237fd6f"  # v0.122（この版の基点）
+V0123_FINAL = "25552b8ca6292232e51e188d2be66af36ef7bf55"  # v0.123 の最後のコミット（v0.124 で研究の基準を上げたので、この版の対応表の値はここで確かめる）
 ARCANINE, BLAINES_ARCANINE, KIND_ARCANINE = "PMCG1-019", "PMCG6-034", "neo4-021"
 RENAMED = {ARCANINE: ("FIX-PMCG1-019-NAME-JA", "IMG-PMCG1-019", "ウインディ", "ウィンディ"),
            BLAINES_ARCANINE: ("FIX-PMCG6-034-NAME-JA", "IMG-PMCG6-034", "カツラのウインディ", "カツラのウィンディ")}
@@ -76,29 +77,31 @@ class MigrationChainTest(unittest.TestCase):
 
     def test_chain(self):
         module = extract_module()
-        self.assertEqual((module.KYUURA_COMMIT, module.V0_121_KYUURA_COMMIT, module.V0_114_KYUURA_COMMIT), (NOW, V0121, V0114))
+        # v0.124: 段 v0.124（74b3ceb → b9e7cff）を加え、v0.123 の段のあとは V0_123_KYUURA_COMMIT（74b3ceb）に固定した。今の写しの元は最後の段のあと
+        # （docs/super-transform-dark-pulse-v0.124.md 2 章。今の値は tests/test_super_transform_dark_pulse_v0_124.py）
+        self.assertEqual((module.V0_123_KYUURA_COMMIT, module.V0_121_KYUURA_COMMIT, module.V0_114_KYUURA_COMMIT), (NOW, V0121, V0114))
         self.assertEqual(module.migration_problems(), [])
-        self.assertEqual([(s["id"], s["from"], s["to"], s["document"]) for s in module.KYUURA_MIGRATIONS],
+        self.assertEqual([(s["id"], s["from"], s["to"], s["document"]) for s in module.KYUURA_MIGRATIONS][:5],
                          [("v0.69", ECB, V069, "docs/equivalent-non-pack-cards-v0.69.md"), ("v0.97", V069, V097, "docs/unown-research-idfnj-v0.97.md"),
                           ("v0.114", V097, V0114, "docs/baby-rules-evolution-v0.114.md"), ("v0.121", V0114, V0121, "docs/hand-bench-attack-conditions-v0.121.md"),
                           ("v0.123", V0121, NOW, "docs/arcanine-name-migration-v0.123.md")])
         extract = read_extract()
-        self.assertEqual((extract["source"]["commit"], extract["previous_source"]["commit"]), (NOW, ECB))
-        self.assertEqual(extract["source_migrations"][-1]["corrections"], ["FIX-PMCG1-019-NAME-JA", "FIX-PMCG6-034-NAME-JA"])
+        self.assertEqual((extract["source"]["commit"], extract["previous_source"]["commit"]), (module.KYUURA_MIGRATIONS[-1]["to"], ECB))
+        self.assertEqual(extract["source_migrations"][4]["corrections"], ["FIX-PMCG1-019-NAME-JA", "FIX-PMCG6-034-NAME-JA"])
         # v0.121 の段のあとを写しの元の定数にもどすと、写しの元を上げたときに過去の段のあとまで変わる（連鎖が切れて止まる）
         steps = module.KYUURA_MIGRATIONS
         try:
-            module.KYUURA_MIGRATIONS = (*steps[:3], {**steps[3], "to": module.KYUURA_COMMIT}, steps[4])
+            module.KYUURA_MIGRATIONS = (*steps[:3], {**steps[3], "to": module.KYUURA_COMMIT}, *steps[4:])
             self.assertTrue(any("その前の段のあと" in p for p in module.migration_problems()))
         finally:
             module.KYUURA_MIGRATIONS = steps
         # 利用者が示した PR1-069 の名前の訂正（kyuura はまだ直していない）は、今の写しの元でも同じ
         self.assertEqual([(c["card_id"], c["before"], c["after"], c["source_commit"]) for c in extract["engine_user_corrections"]],
-                         [("PR1-069", "？？？", "ミュウ", NOW)])
+                         [("PR1-069", "？？？", "ミュウ", module.KYUURA_COMMIT)])
 
     def test_adoption_migrations_are_appended(self):
         sources = cs.load_sources()
-        self.assertEqual([(m["from"], m["to"], m["on"], m["document"]) for m in sources["data_migrations"]],
+        self.assertEqual([(m["from"], m["to"], m["on"], m["document"]) for m in sources["data_migrations"]][:5],
                          [(ECB, V069, "2026-10-19", "docs/equivalent-non-pack-cards-v0.69.md"), (V069, V097, "2026-10-25", "docs/unown-research-idfnj-v0.97.md"),
                           (V097, V0114, "2026-10-28", "docs/baby-rules-evolution-v0.114.md"), (V0114, V0121, "2026-10-30", "docs/hand-bench-attack-conditions-v0.121.md"),
                           (V0121, NOW, "2026-10-31", "docs/arcanine-name-migration-v0.123.md")])
@@ -259,13 +262,22 @@ class ResearchLinksTest(unittest.TestCase):
         cls.links = json.loads(LINKS_PATH.read_text(encoding="utf-8"))
 
     def test_commits_and_counts(self):
-        links = self.links
+        # v0.124: 研究の基準を b9e7cff に上げた（今の値は tests/test_super_transform_dark_pulse_v0_124.py・tests/test_catalog_contract.py）。v0.123 の値は、その版の最後のコミットの対応表で確かめる
+        links = engine_json(V0123_FINAL, "kyuura_engine/data/research_links.json") if (ROOT / ".git").exists() else None
+        if links is None:
+            self.skipTest("このリポジトリの git の履歴がない（取り出した木）")
         self.assertEqual((links["research_commit"], links["card_data_commit"], links["research_branch"]), (NOW, NOW, "claude/v0122-names-text-trainer-procedures"))
         self.assertEqual((links["counts"]["kyuura_issues"], links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (79, 292, 293))
         self.assertEqual(links["engine_import_id"], "ENGINE-46A3E2E")
+        self.assertEqual(self.links["engine_import_id"], "ENGINE-46A3E2E")
 
     def test_new_cases(self):
-        added = [c for c in self.links["kyuura_cases_without_engine_ruling"]["cases"] if "v0.123 で研究の基準を 74b3ceb に上げて結んだ" in c.get("note", "")]
+        # v0.126: フラッシュ（ES2-035）を登録して、ES2-035 の事例と ES2-035 が要るとしていた事例を停止コード（FU1〜FU5）に結んだ（docs/flash-faceup-deck-v0.126.md 2.4 節・7 章。
+        # 今の値は tests/test_flash_faceup_deck_v0_126.py）。v0.123〜v0.125 の扱いは、v0.125 の最後のコミットの対応表で確かめる
+        if not (ROOT / ".git").exists():
+            self.skipTest("このリポジトリの git の履歴がない（取り出した木）")
+        links = engine_json("19c22051d10ec2a7610e7c7641b2c6053bd5c3f1", "kyuura_engine/data/research_links.json")
+        added = [c for c in links["kyuura_cases_without_engine_ruling"]["cases"] if "v0.123 で研究の基準を 74b3ceb に上げて結んだ" in c.get("note", "")]
         self.assertEqual(len(added), 25)
         self.assertEqual({c["kyuura_issue"] for c in added}, {*NEW_ISSUES, "UQ-STATED-COUNT-SHORT", "UQ-CHAOS-GYM-BORROWED-TURN"})
         unregistered = {(c["kyuura_issue"], c["card_id"]) for c in added if c["engine"] == {"unregistered": True}}
@@ -278,7 +290,7 @@ class ResearchLinksTest(unittest.TestCase):
         pool = load_card_pool()
         for (_, card), others in required.items():
             self.assertIn(card, pool.playable_ids, card)
-            self.assertFalse(set(others) & pool.playable_ids, card)
+            self.assertFalse((set(others) - {"ES2-035"}) & pool.playable_ids, card)  # v0.126: ES2-035 は登録した（この版ではまだ登録していない）
 
     def test_requires_unregistered_is_checked(self):
         """``requires_unregistered``: 挙げたカードは、同じ論点の事例のカードで、登録していない。事例のカードは登録している。"""
@@ -316,7 +328,9 @@ class NameTest(unittest.TestCase):
         names = {pool.get(card).name_ja for card in pool.playable_ids if pool.get(card).category == "pokemon"}
         self.assertTrue({"ウィンディ", "カツラのウィンディ", "やさしいウインディ"} <= names)
         self.assertFalse({"ウインディ", "カツラのウインディ"} & names)
-        self.assertEqual(len(names), 509)
+        # v0.124 で「GR団のミュウツー」が加わって 510（今の値は tests/test_catalog_contract.py）。v0.123 の版の範囲の名前は 509
+        # v0.127 で「_のピカチュウ」「ハマちゃんのヤドキング」が加わって 512
+        self.assertEqual(len(names - {"GR団のミュウツー", "_のピカチュウ", "ハマちゃんのヤドキング"}), 509)
         self.assertEqual(deck.same_name("ウィンディ"), "ウィンディ")
         self.assertNotEqual(deck.same_name("ウィンディ"), deck.same_name("カツラのウィンディ"))
 
@@ -419,18 +433,21 @@ class RegistrationTest(unittest.TestCase):
         self.assertIn("RUL-ENERGY-DISCARD-ATTACKS の範囲の読み方", cards[BLAINES_ARCANINE_GYM]["notes"])
         links = json.loads(LINKS_PATH.read_text(encoding="utf-8"))
         printed = links["latest_descriptions"]["adopted_printed_text"]
-        self.assertEqual(printed[-5:], ["GD5-007/attack/0", "GD5-007/attack/1", "IP2-032/attack/0", "PR1-016/attack/0", "PR1-016/attack/1"])
+        # v0.124 で GR団のミュウツーの 2 つ（PRN-041）をあとに加えた
+        self.assertEqual(printed[-7:-2], ["GD5-007/attack/0", "GD5-007/attack/1", "IP2-032/attack/0", "PR1-016/attack/0", "PR1-016/attack/1"])
 
     def test_removing_the_new_registrations(self):
         """新規の登録だけを除くと 1,355 枚にもどる。名前の訂正は移行のあとのまま（2 枚は登録を除いた組でも新しい名前）。"""
         extract = read_extract()
-        self.assertEqual(cards_after(extract, "0.122"), frozenset(V0123))
+        later = cards_after(extract, "0.123")  # v0.124 からあとの版のカード（この版の範囲の外）
+        self.assertEqual(cards_after(extract, "0.122") - later, frozenset(V0123))
         self.assertTrue(set(V0123).isdisjoint(cards_before(extract, "0.123")))
-        trimmed = dict(extract, cards=[c for c in extract["cards"] if c["id"] not in V0123], pool_v0_123=[])
+        trimmed = dict(extract, cards=[c for c in extract["cards"] if c["id"] not in V0123 and c["id"] not in later], pool_v0_123=[],
+                       **{key: [] for key in extract if key.startswith("pool_v0_") and set(extract[key]) & later})
         pool = pool_from_extract(trimmed, E.DEFAULT_EFFECTS)
         self.assertEqual(len(pool.playable_ids), 1355)
         self.assertEqual((pool.get(ARCANINE).name_ja, pool.get(BLAINES_ARCANINE).name_ja), ("ウィンディ", "カツラのウィンディ"))
-        self.assertEqual(len(load_card_pool().playable_ids), 1358)
+        self.assertEqual(len(load_card_pool().playable_ids) - len(later), 1358)  # 今の総数は tests/test_catalog_contract.py
 
 
 class DeckNameTest(unittest.TestCase):
@@ -537,7 +554,7 @@ class RageFlamesTest(unittest.TestCase):
     def test_saved_and_resumed_across_the_discard(self):
         """形式 28 のまま（決定の途中の状態を形式 28 で書き出せる。新しい状態の欄はない）。トラッシュを選ぶ決定の途中の状態を、複製・deepcopy・pickle から続けても、トラッシュ・ダメージは
         1 回だけで、結果は同じ。"""
-        self.assertEqual(max(FORMAT_VERSIONS), 28)
+        self.assertIn(28, FORMAT_VERSIONS)  # v0.124 で形式 29 を加えた（この状態は形式 28 で表せる）
         state = table(promo((F, F, F), damage=40), opponent=spec(H.CHANSEY))
         asked = run(state, UseAttack(0, 1))
         data = state_to_dict(asked, format_version=28)

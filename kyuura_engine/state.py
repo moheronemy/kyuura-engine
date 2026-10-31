@@ -502,6 +502,9 @@ class DamageReduction:
     created_turn: int
     active_turn: int
     amount: int
+    # v0.125（docs/wigglytuff-helping-hand-v0.125.md 4 章）: プクリンの「ふくらむ」（最新の説明「このカードが受けるダメージは「-10」される」。ワザに限らない書き方）の効果。はたらく番に
+    # ワザ以外（特殊能力）のダメージを受けるとき、当てはめるかが決まらない（IF1。``effects.received_power_damage`` が止める）。ほかの登録の効果は偽（v0.124 までと同じ）
+    non_attack_unresolved: bool = False
     kind: ClassVar[str] = "damage_reduction"
     turns_until_active: ClassVar[int] = 1
     on_opponent: ClassVar[bool] = False
@@ -1221,6 +1224,9 @@ def mark_returned_to_bench(pokemon: PokemonInPlay) -> None:
     にげる・ポケモンいれかえ／突風・ワザによる入れ替えの 3 か所で、特殊状態・持続する効果を消すのと同じところで呼ぶ（ログは残さない。記録の項目が変わるだけ）。"""
     if pokemon.type_shift is not None and not pokemon.type_shift.returned_to_bench:
         pokemon.type_shift = TypeShift(pokemon.type_shift.color, pokemon.type_shift.turn, pokemon.type_shift.source_card, True)
+    if pokemon.super_transform is not None and not pokemon.super_transform.left_active:
+        # v0.124: ［すごいへんしん］の「このカードがバトル場をはなれた時…メタモンにもどる」（記録は処理の終わり・コマンドの終わりに ``effects.settle_super_transforms`` がログを書いて消す）
+        pokemon.super_transform = SuperTransform(pokemon.super_transform.source, pokemon.super_transform.card, pokemon.super_transform.turn, True)
 
 
 @dataclass(frozen=True)
@@ -2055,6 +2061,39 @@ BASIC_ENTRY_ZONES = ("deck", "hand")
 
 
 @dataclass(frozen=True)
+class SuperTransform:
+    """v0.124（docs/super-transform-dark-pulse-v0.124.md 5 章）: メタモン（拡張シート第2弾赤版）の［すごいへんしん］の「おもて」で選んだ変身のもと（CR-SUPER-TRANSFORM-CHOICE）。
+
+    場のポケモンに持つ事実。選んだのは場の個体（``source``。ポケモンの番号）で、そのポケモンがバトル場とベンチを動いても同じものとして追う（CR-SUPER-TRANSFORM-REVERT-CONDITIONS）。
+    ``card`` は選んだときの変身のもとのいちばん上のカードの uid（同じカードとしてあつかうカード。変身のもとが進化・退化・ばけるでいちばん上のカードを変えたら UQ-SUPER-TRANSFORM-SOURCE-CHANGES
+    で止める）。``turn`` は選んだ番。もどる場面（バトル場をはなれた・ねむり・マヒ・こんらん・もとが場をはなれた・「うら」）で消す（``effects.settle_super_transforms``）。
+    相手のダメージ・特殊状態・持続する効果・ついているカードは写さない（CR-TRANSFORM-KEEPS-OWN-STATE。ここには持たない）。"""
+
+    source: int
+    card: int
+    turn: int
+    left_active: bool = False  # バトル場からベンチにもどった（``mark_returned_to_bench``）。処理のあいだに一度ベンチにもどってまたバトル場に出ても、もどる場面として消す
+
+
+@dataclass(frozen=True)
+class FrozenForm:
+    """v0.124（docs/super-transform-dark-pulse-v0.124.md 3.5 節）: ワザ・宣言する特殊能力・トレーナーカードの処理のあいだ、変身の状態を変えないための記録（CR-TRANSFORM-FROZEN-DURING-ACTION）。
+
+    処理の始めに、変身する特殊能力（［へんしん］・［すごいへんしん］）を持つ場のポケモンの今の姿を記録し、処理の終わり（``effects.release_frozen_forms``）まで今の姿の問い合わせはこれを返す。
+    固定するのは姿（同じカードとしてあつかうカード）だけで、ダメージ・特殊状態・持続する効果・特殊能力の抑止は固定しない。
+
+    - ``pokemon``: 場のポケモンの番号
+    - ``card``: 今の姿を決めるカードの uid（変身していなければ、いちばん上のカード）
+    - ``kind``: 姿の決め方（``effects.FORM_PRINTED``・``FORM_TRANSFORM``・``FORM_SUPER_TRANSFORM``）
+    - ``source``: 変身のもとのポケモンの番号（変身していなければ None）"""
+
+    pokemon: int
+    card: int
+    kind: str
+    source: int | None = None
+
+
+@dataclass(frozen=True)
 class BasicEntry:
     """v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 6 章）: 進化カードを、進化元を重ねずにベンチに出し、場では「たねポケモン」としてあつかう事実（カブトの［なかまのふっかつ］・
     オムナイトの［かせきのふっかつ］・たまごの化石の「（…出した「進化カード」は、「たねポケモン」としてあつかわれる。）」）。
@@ -2164,6 +2203,8 @@ class PokemonInPlay:
     markers: tuple[Marker, ...] = ()
     # v0.120（docs/fossil-basic-virtual-attacks-v0.120.md 6 章）: 進化カードを進化元を重ねずに出し、場では「たねポケモン」としてあつかう事実（``BasicEntry``）。なければ None
     basic_entry: BasicEntry | None = None
+    # v0.124（docs/super-transform-dark-pulse-v0.124.md 5 章）: ［すごいへんしん］で選んだ変身のもと（``SuperTransform``）。なければ None。書き出しは形式 29 だけが表せる
+    super_transform: SuperTransform | None = None
 
     @property
     def current_form_turn(self) -> int:
@@ -2200,6 +2241,7 @@ class PokemonInPlay:
             self.history,
             self.markers,
             self.basic_entry,
+            self.super_transform,
         )
 
 
@@ -2337,12 +2379,44 @@ class GameResult:
 
 
 @dataclass(frozen=True)
+class Interruption:
+    """v0.127（docs/deferred-shortage-user-promos-v0.127.md 5 章）: 共通の数量処理の明示的なチェック地点で、説明の数（``required``。コインの「おもて」の数）が処理できる数
+    （``available``）より多いと分かったので、その要素を処理せずに対戦を止めた記録（途中停止。``Halt.interruption``）。従来の拒否（入力の状態を変えない例外）とは別の、終端の状態。
+
+    - そこまでの処理（宣言・選んだ対象・実際のコイン・ナツメのESPの最後の選択・乱数の位置・ログ）は状態にそのまま残る。止まった要素と、そのあとの処理（``pending``）はしていない
+    - ``in_transit``: 使用中のトレーナーなど、処理の途中で場所が変わったまま止まったカード（使用中のトレーナー ``trainer_in_use`` と外側の使用 ``trainer_stack`` のカード）。
+      カードを片付けず、番・ポケモンチェック・サイドを進めない
+    - ``kind``・``code``・``kyuura_issue`` は中断の種類・停止コード・kyuura の論点。``source`` は発生元（ワザ・トレーナーの登録のキー）、``target_owner``・``target`` は対象の持ち主と
+      場のポケモンの番号、``element`` は止まった要素、``log_index`` は止めたときのログの長さ（このあとに ``halted`` のログだけがある）
+    - どれも全員に見える情報（コインの「おもて」の数・場のエネルギーカードの枚数・止まった処理の種類）。診断用の文は ``Halt.message``
+    """
+
+    kind: str
+    code: str
+    kyuura_issue: str
+    source: str
+    player: int
+    target_owner: int
+    target: int
+    element: str
+    required: int
+    available: int
+    pending: tuple[str, ...]
+    in_transit: tuple[int, ...]
+    log_index: int
+
+
+@dataclass(frozen=True)
 class Halt:
-    """未解決の裁定に当たって対戦を止めたときの理由。"""
+    """未解決の裁定に当たって対戦を止めたときの理由。
+
+    v0.127: ``interruption`` は途中停止の記録（``Interruption``。共通の数量処理のチェック地点で止めたときだけ）。None なら従来の停止（v0.126 までと同じ値。項目のない古い状態の写しも
+    None になる）。"""
 
     code: str
     message: str
     references: tuple[str, ...]
+    interruption: Interruption | None = None
 
 
 @dataclass(frozen=True)
@@ -2433,6 +2507,13 @@ class GameState:
     # v0.119（docs 6 章）: 「ガスばくはつ」の、かわりに出てくる対戦ポケモンへのどく（``ReplacementPoison`` の並び）。ワザの要素で加え、きぜつの処理・バトル場に出す処理で消す。書き出しは形式 27
     # だけが表せる（空でなければ形式 1〜26 は ``ValueError``）。v0.118 までの状態の写し（pickle）は項目がなく、この既定値（空）になる
     replacement_poisons: tuple[Any, ...] = ()
+    # v0.124（docs/super-transform-dark-pulse-v0.124.md 3.5 節）: ワザ・宣言する特殊能力・トレーナーカードの処理のあいだ固定する変身の状態（``FrozenForm`` の並び）。処理の始めに置き、処理の終わり
+    # （きぜつの判定の前）に消す。決定をまたいでも持つ。書き出しは形式 29 だけが表せる（空でなければ形式 1〜28 は ``ValueError``）。v0.123 までの状態の写し（pickle）は項目がなく、この既定値（空）になる
+    frozen_forms: tuple[Any, ...] = ()
+    # v0.126（docs/flash-faceup-deck-v0.126.md 4 章）: おもてを上にして山札に置かれたカード（フラッシュ。カードの uid の並び。置いた順）。カードごとの印で、番・プレイヤーへの持続効果ではない。
+    # 山札をはなれたら消し（``faceup.drop_left_marks``）、山札を切る前にその山札の印をすべて消す（``zones.shuffle_deck``）。どの山札でも上から続く並びになる（``faceup.prefix_problems``）。
+    # 書き出しは形式 31 だけが表せる（空でなければ形式 1〜30 は ``ValueError``）。v0.125 までの状態の写し（pickle）は項目がなく、この既定値（空）になる
+    face_up_deck: tuple[int, ...] = ()
     # v0.87（docs/movement-damage-reactions-v0.87.md 3 章）: 場の移動（控え → バトル場・バトル場 → ベンチ・手札からの登場）の事実への、まだ処理していない反応の段（``movement``。
     # ``reactions`` の ``("same", …)`` の段の並び）。事実を起こした処理の流れが、同じコマンドの中で処理する（ワザの要素のあいだ・トレーナー・特殊能力を使い終える前・にげるのあと・
     # バトル場に出したあと）。コマンドの終わり・決定を待つ間は空（決定をまたぐ続きは決定の ``context`` に移す）。書き出さない（不変条件 ``engine._pending_moves_problems``）

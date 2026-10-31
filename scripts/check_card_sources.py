@@ -86,6 +86,11 @@ USER_CORRECTION_SOURCE = "kyuura data/cards.json + data/curation/card_correction
 # v0.68（4 章）: エンジンの簡略化した仕様（公式の裁定・エラッタではない）を処理に使う文面にした登録の根拠・出典（イマクニ？のドードー）。文面がその文書の引用（「」）に
 # あること・印刷の文面と違うこと・研究の対応表の engine_simplified_text にあることを確かめる
 ENGINE_SIMPLIFICATIONS = {"kyuura-engine docs/final-pmcg-cards-v0.68.md#4": ROOT / "docs" / "final-pmcg-cards-v0.68.md"}
+# v0.127（docs/deferred-shortage-user-promos-v0.127.md 4 章）: 利用者が指定したエンジン固有の簡略ルール（公式の裁定・最新の説明・エラッタではない）を処理に使う文面にした登録の根拠・出典
+# （_のピカチュウの誕生日の条件・ハマちゃんのヤドキングの発話の条件を省く）。根拠の種類を明示的に分け（engine_simplified_text・adopted_printed_text とは別。印刷の文面との不一致を一般に許さない）、
+# 対象ごとの記録（effects.USER_SIMPLIFICATIONS）が、カード・対象・印刷の文面（写しと同じ）・処理に使う文面（登録と同じ・印刷と違う）・省いた条件・登録の型の値・指定した主体と日と合うかを照らす
+USER_SIMPLIFICATION_SOURCE = "kyuura-engine user simplification docs/deferred-shortage-user-promos-v0.127.md#4"
+USER_SIMPLIFICATION_DOCUMENT = ROOT / "docs" / "deferred-shortage-user-promos-v0.127.md"
 RESULTS = ("match", "differences", "edition_not_listed", "inaccessible")
 COMPLETED = ("match", "differences")
 
@@ -413,6 +418,43 @@ def behaviour_affecting(record: dict, corrections: dict | None = None, card_id: 
     return found
 
 
+def user_simplification_problems(here: str, key: str, entry, card: dict, target: str, links: dict, adopted_printed: set) -> list[str]:
+    """v0.127: 根拠が利用者の簡略ルール（``USER_SIMPLIFICATION_SOURCE``）の登録。対象の記録（``effects.USER_SIMPLIFICATIONS``）があり、記録のカード・対象が同じ、印刷の文面が写しと登録の
+    ``text_ja`` と同じ、処理に使う文面が登録の ``play_text_ja`` と同じで印刷の文面と違う、省いた条件・処理の説明・利用者の指定がある、指定したのが利用者で日付が方針の開始日から今日まで、
+    登録の型が記録の簡略化の種類と値を持つ、処理に使う文面が根拠の文書に引用（「」）されている、研究の対応表の user_simplified_text にあり adopted_printed_text にない。"""
+    from kyuura_engine import effects as E
+
+    found = []
+    record = E.USER_SIMPLIFICATIONS.get(key)
+    if entry.source != USER_SIMPLIFICATION_SOURCE:
+        found.append(f"{here}: 根拠が利用者の簡略ルールなのに、出典が {entry.source!r}（{USER_SIMPLIFICATION_SOURCE!r} にする）")
+    if record is None:
+        return found + [f"{here}: 根拠が利用者の簡略ルールなのに、対象の記録（effects.USER_SIMPLIFICATIONS の {key}）がない"]
+    if record.key != key or not record.key.startswith(f"{card['id']}/{target}"):
+        found.append(f"{here}: 利用者の簡略ルールの記録のカード・対象 {record.key} が違う")
+    if not (record.printed_text == entry.text_ja == printed_text(card, target)):
+        found.append(f"{here}: 利用者の簡略ルールの記録の印刷の文面が、写し・登録の照合する文面と違う（kyuura の文面を書き換えない）")
+    if record.play_text != entry.play_text_ja or record.play_text == record.printed_text:
+        found.append(f"{here}: 利用者の簡略ルールの記録の処理に使う文面が、登録の play_text_ja と違う（または印刷の文面と同じ）")
+    if not (record.omitted and record.processing and record.instruction):
+        found.append(f"{here}: 利用者の簡略ルールの記録に、省いた条件・実際の処理・利用者の指定がない")
+    if record.specified_by != "user" or not (DATE.match(record.specified_on or "") and POLICY["since"] <= record.specified_on <= datetime.date.today().isoformat()):
+        found.append(f"{here}: 利用者の簡略ルールの記録の指定した主体 {record.specified_by!r}・日 {record.specified_on!r} が正しくない")
+    effect = entry.effect
+    # 型の値（bonus・condition）は登録の型から、ダメージの目安（damage）は写しのワザから読む（どれも記録の値と同じ）
+    printed_damage = ((card.get("pokemon") or {}).get("attacks") or [{}] * (int(target.split("/")[1]) + 1))[int(target.split("/")[1])].get("damage") if target.startswith("attack/") else None
+    actual = {name: ((printed_damage or {}).get("base") if name == "damage" else getattr(effect, name, None)) for name, _ in record.parameters}
+    if getattr(effect, "rule", None) != record.rule or actual != dict(record.parameters):
+        found.append(f"{here}: 登録の型 {type(effect).__name__} の簡略化の種類・値 {getattr(effect, 'rule', None)}・{actual} が、利用者の簡略ルールの記録（{record.rule}・{record.parameters}）と違う")
+    if USER_SIMPLIFICATION_DOCUMENT.exists() and f"「{entry.play_text_ja}」" not in USER_SIMPLIFICATION_DOCUMENT.read_text(encoding="utf-8"):
+        found.append(f"{here}: 処理に使う文面が、根拠の文書 {USER_SIMPLIFICATION_DOCUMENT.name} の引用（「」）にない")
+    if links["latest_descriptions"].get("user_simplified_text", {}).get(key) != USER_SIMPLIFICATION_SOURCE:
+        found.append(f"{here}: 根拠 {USER_SIMPLIFICATION_SOURCE} が研究の対応表の user_simplified_text にない")
+    if key in adopted_printed:
+        found.append(f"{here}: 研究の対応表の adopted_printed_text にある（根拠は利用者の簡略ルール。印刷の文面の採用と偽らない）")
+    return found
+
+
 def play_text_problems(where: str, record: dict, card: dict, registry, links: dict, expected: set[str] | None = None,
                        corrections: dict | None = None) -> list[str]:
     """``play_text`` の対象と根拠。``expected`` は書くべき対象（既定は、処理に使う文面のある登録すべて。過去の原典照合の記録のあるカードは、
@@ -485,6 +527,8 @@ def play_text_problems(where: str, record: dict, card: dict, registry, links: di
                 found.append(f"{where} {target}: 根拠 {basis} が研究の対応表の engine_simplified_text にない")
             if key in adopted_printed:
                 found.append(f"{where} {target}: 研究の対応表の adopted_printed_text にある（根拠は {basis}）")
+        elif basis == USER_SIMPLIFICATION_SOURCE:
+            found.extend(user_simplification_problems(f"{where} {target}", key, entry, card, target, links, adopted_printed))
         elif isinstance(basis, str) and basis in ENGINE_RECORDS:
             if entry.source != basis:
                 found.append(f"{where} {target}: 根拠が {basis} なのに、出典が {entry.source!r}")
@@ -512,8 +556,10 @@ def play_text_problems(where: str, record: dict, card: dict, registry, links: di
                 found.append(f"{where} {target}: 根拠が {basis} なのに、出典が {entry.source!r}")
             if basis not in kyuura_records:
                 found.append(f"{where} {target}: 根拠 {basis} が kyuura_records にない")
-            if basis.startswith("LD-") and registered_ld.get(key) != basis:
-                found.append(f"{where} {target}: 根拠 {basis} が研究の対応表の registered にない")
+            # v0.126: トレーナーの最新の説明（LD-…-TRAINER）は研究の対応表の registered_trainers に結ぶ（ワザ・特殊能力は registered。フラッシュ ES2-035）
+            registered_here = (links["latest_descriptions"].get("registered_trainers", {}).get(card["id"]) if target == "trainer" else registered_ld.get(key))
+            if basis.startswith("LD-") and registered_here != basis:
+                found.append(f"{where} {target}: 根拠 {basis} が研究の対応表の {'registered_trainers' if target == 'trainer' else 'registered'} にない")
             if basis.split("-")[0] in ("ERR", "TXT", "RUL") and registered_errata.get(key) != basis:
                 found.append(f"{where} {target}: 根拠のエラッタ {basis} が研究の対応表の errata_text にない")
             if key in adopted_printed:

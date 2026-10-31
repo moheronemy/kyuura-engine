@@ -50,9 +50,11 @@ from .commands import (
     UseStadium,
     RemoveDisguise,
     RevealFaceDown,
+    CheckFaceUpDeckCard,
 )
 from .decisions import (
     ACCEPT_REQUEST,
+    DISCARD_ENERGY,
     BENCH_GUARD,
     FORCED_SWITCH,
     SELECT_COLOR,
@@ -142,9 +144,13 @@ from .effects import (
     current_form,
     form_def,
     hot_plate_baby_evolution_error,
-    FORM_TRANSFORM,
-    TRANSFORM_POWER_CODE,
-    TRANSFORM_POWER_REASON,
+    COPIED_FORMS,
+    copied_declared_power_problem,
+    copied_source_use_problem,
+    freeze_forms,
+    revert_ko_drop_check,
+    release_frozen_forms,
+    settle_super_transforms,
     ko_prevention_suppressed,
     PLAY_AS_POKEMON_RETREAT_CODE,
     PLAY_AS_POKEMON_RETREAT_REASON,
@@ -298,6 +304,8 @@ from .state import (
 )
 from .zones import DISGUISE_REVERT, attach_energy_from_hand, designate_face_down, discard_from_play, draw_cards, enter_play, place_stadium, remove_disguise, reveal_face_down, shuffle_deck
 from . import zones as _zones
+from . import faceup  # v0.126: おもての山札（フラッシュ）
+from .interruption import DeferredShortage, interrupt, interruption_problems  # v0.127: 途中停止
 from . import cards as cards_module
 from .coins import CoinSide, flip_coins
 
@@ -769,6 +777,10 @@ def _apply_once(state: GameState, command, context: resolution.Context | None, *
         open_probe(new)  # v0.62: ワザ以外で受けたこと（番でないプレイヤーの場のポケモンの、このコマンドの前後の比べ。``history``）
     ctx = context if context is not None else _context(state, "derived", None)
     order_stop = None
+    if isinstance(command, (UseAttack, UsePokemonPower, PlayTrainer, UseStadium)):
+        # v0.124（CR-TRANSFORM-FROZEN-DURING-ACTION）: ワザ・宣言する特殊能力・トレーナーカードによって起こることがすべて終わるまで、変身の状態を変えない（処理の始めに固定し、処理の終わり
+        # ``release_frozen_forms`` に解除する。決定への答えの続きは固定したまま）
+        freeze_forms(new)
     try:
         if not _reveal_for_action(new, command, ctx):
             handler(new, command, ctx)
@@ -776,6 +788,24 @@ def _apply_once(state: GameState, command, context: resolution.Context | None, *
         # v0.81a（MH2）: 処理の途中で、最大HPを決まった数にする効果と大きくする効果が同時にはたらく状態の最大HPを読んだ（その状態になる）。決められない姿と同じく、
         # このコマンドを受け付けない（答えのない決定は、その前の状態で止める）
         order_stop = (error.code, error.message)
+    except DeferredShortage as shortage:
+        # v0.127（docs/deferred-shortage-user-promos-v0.127.md 5 章）: 共通の数量処理のチェック地点で、説明の数が処理できる数より多い。従来の拒否（入力を変えない例外）ではなく、
+        # 実際のコインとそこまでの処理を残した終端の状態を返す（ここだけで捕まえる。一般の UnsupportedError・問い・内部エラーは捕まえない）
+        return _interrupted(state, new, shortage, verify)
+    if order_stop is None and (state.face_up_deck or new.face_up_deck):
+        # v0.126（docs/flash-faceup-deck-v0.126.md 6 章）: おもてのカード（フラッシュ）のある山札が、読み方で結果・要る情報が分かれる変わり方をしたら受け付けない（FU3〜FU6・
+        # エンジンの未対応）。決定への答えで、どの答えでもそうなるなら、答えのない決定を残さずにその前の状態で対戦を止める。受け付けるなら、山札をはなれたカードの印を消し、
+        # いちばん上の公開の変化をログに書く
+        face_up_stop = faceup.command_problem(state, new)
+        if face_up_stop is not None:
+            if isinstance(command, (TakePrize, PromoteActive, ResolveDecision)) and not _decision_has_unstopped_answer(state, context):
+                halted = state.clone()
+                _halt(halted, Halt(code=face_up_stop[0], message=f"どの答え（続け方）でも次の処理になるので、対戦を止める: {face_up_stop[1]}",
+                                   references=("docs/flash-faceup-deck-v0.126.md",)))
+                _require_integrity(halted)
+                return halted
+            raise UnsupportedError(*face_up_stop)
+        faceup.settle(state, new)
     if order_stop is None:
         close_probe(new)
     if new.energy_roles:
@@ -785,6 +815,10 @@ def _apply_once(state: GameState, command, context: resolution.Context | None, *
     if new.color_effects:
         # v0.88（docs/type-energy-colors-v0.88.md 2 章）: ［せんすい］の対象が場にいなくなった記録を消し、［エナジーコンバーター］のカードが場をはなれたら印を付ける
         settle_color_effects(new)
+    if new.decision is None and order_stop is None:
+        # v0.124: 処理が決定を出さずに終わった（拒否されない経路で解除の位置を通らなかった処理をふくむ）なら、固定した変身の状態を解除し、もどる場面の［すごいへんしん］を消す
+        release_frozen_forms(new)
+        settle_super_transforms(new)
     if new.poison_mists:
         # v0.119（docs/damage-reactions-poison-sleep-v0.119.md 5 章）: ［ポイズンミスト］を使ったポケモンが場にいない・特殊能力が消えている記録に、そのことを書く（PO3 の比べ）
         poison_mist_upkeep(new)
@@ -827,6 +861,9 @@ def _apply_once(state: GameState, command, context: resolution.Context | None, *
     # きぜつしている（ここに残らない）。コインの前に確かめるもの（にげる・ポケモンチェック）は、それぞれの処理が先に止める
     drops = max_hp_drops(state, new)
     if drops:
+        # v0.124: 変身の姿が変わって（もどる・姿が変わる）下がったポケモン（ワザで変身のもとがきぜつして［すごいへんしん］のメタモンがもどるなど）は、もどってきぜつする時点の問い（TK1。
+        # UQ-TRANSFORM-REVERT-KNOCKOUT-TIMING）。MH1 の理由（効果で最大HPが下がる）とは別のコードで止める（止める場面は同じ）
+        revert_ko_drop_check(state, new, drops)
         raise max_hp_drop_error(drops, during_attack=new.decision is not None and new.decision.resume == "attack")
     if new.phase not in (Phase.HALTED, Phase.GAME_OVER):
         # v0.61（SC2。docs/reactive-powers-trainer-damage-v0.61.md 4 章）: このコマンドで、残りHPが「10」のまま消えていた［ずらかる］の力がもどった（なんでもなおし・ポケモン
@@ -851,6 +888,22 @@ def _apply_once(state: GameState, command, context: resolution.Context | None, *
         stop = _reaction_dead_end(new, context)
         if stop is not None:
             raise stop
+    if verify:
+        _require_integrity(new)
+    return new
+
+
+def _interrupted(state: GameState, new: GameState, shortage: DeferredShortage, verify: bool) -> GameState:
+    """v0.127: 途中停止の終端の状態（``interruption.interrupt``）。在途のカード（使用中のトレーナー）・固定した変身の姿は片付けず、番・ポケモンチェック・サイドを進めない
+    （コマンドの終わりの解除・トラッシュ・決定の確かめはしない）。おもての山札（v0.126）は、止める時点までに変わった山札を通常と同じに分類する（読み方で分かれる変わり方なら、
+    途中停止にせずに受け付けない。山札の印は通常と同じに整える）。ワザ以外で受けたことの比べ（v0.62）は通常と同じに閉じる。"""
+    if state.face_up_deck or new.face_up_deck:
+        face_up_stop = faceup.command_problem(state, new)
+        if face_up_stop is not None:
+            raise UnsupportedError(*face_up_stop)
+        faceup.settle(state, new)
+    close_probe(new)
+    interrupt(new, shortage)
     if verify:
         _require_integrity(new)
     return new
@@ -1008,8 +1061,11 @@ def _decision_has_unstopped_answer(state: GameState, context: resolution.Context
                                                                                               context.catalog if context else None))
         except (IllegalActionError, UnsupportedError):
             continue
+        except DeferredShortage:
+            return True  # v0.127: 途中停止の終端になる答え（受け付けられる答え。止めた状態を返す）
         try:
-            if _fresh_form_problem(state, trial) is None and not max_hp_drops(state, trial) and not scram_restored(state, trial):
+            if (_fresh_form_problem(state, trial) is None and not max_hp_drops(state, trial) and not scram_restored(state, trial)
+                    and faceup.command_problem(state, trial) is None):  # v0.126: おもての山札の止め方（FU3〜FU6）も受け付けられない答え
                 return True
         except HiddenPropertyRead:
             continue  # v0.67: うらのカードの決まらない項目を読む答え（FD1）は、受け付けられない答え
@@ -1042,6 +1098,8 @@ def _trainer_dead_end(before: GameState, after: GameState, context: resolution.C
                 continue
             except IllegalActionError:
                 continue
+            except DeferredShortage:
+                return True  # v0.127: 途中停止の終端になる続き（受け付けられる。止めた状態を返す）
             stop = _fresh_form_problem(before, trial)
             if stop is None and max_hp_drops(before, trial):
                 error = max_hp_drop_error(max_hp_drops(before, trial))
@@ -1049,6 +1107,8 @@ def _trainer_dead_end(before: GameState, after: GameState, context: resolution.C
             if stop is None and scram_restored(before, trial):
                 error = scram_restored_error(scram_restored(before, trial))  # v0.61（SC2）
                 stop = (error.code, error.message)
+            if stop is None:
+                stop = faceup.command_problem(before, trial)  # v0.126: おもての山札の止め方（FU3〜FU6）
             if stop is None:
                 # v0.117（docs/retreat-return-active-powers-v0.117.md 5 章）: ［でんせつのからだ］の LB2・決定を待つあいだのトラッシュは、コマンドの終わり（``_apply_once``）で止めるので、
                 # 答えの続きの確かめでも同じに数える（まきちらせ!ベトベトガスのあいだに、ポケモンいれかえで控えの［でんせつのからだ］のポケモンしか出せないなど）
@@ -1929,6 +1989,9 @@ def _finish_trainer(state: GameState, effect, context: resolution.Context, *, en
         state.add_event("discard_trainer", player=used.player, card=used.card)
     _finish_outer_trainers(state)
     state.phase = Phase.MAIN
+    if state.trainer_in_use is None and not state.trainer_stack:
+        # v0.124（CR-TRANSFORM-FROZEN-DURING-ACTION）: トレーナーカードによって起こることが終わったので、固定した変身の状態を解除する（使ったあとのきぜつ・勝ち負け・バトル場に出す処理の前。TK1）
+        release_frozen_forms(state)
     if end_turn:
         # v0.56: 説明の「あなたの番は終わりになる」（ロケット団員の「うら」）。カードをトラッシュしてから、番の終わりの窓（期限 → ポケモンチェック → 次の番）に進む
         if effect.may_knock_out or effect.empties_active or effect.takes_prizes:
@@ -2047,17 +2110,15 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower, context: resoluti
         raise IllegalActionError("POKEMON_NOT_IN_PLAY", f"場のポケモンの番号 {cmd.pokemon!r} は自分の場にいない")
     # v0.49（docs/virtual-attacks-transformation-v0.49.md 2 章）: 特殊能力は、印刷したカード（``cmd.card``。None なら今の姿のカード。ふつうはいちばん上のカードで
     # v0.48 までと同じ）と位置で指す。ポケモンが今持つ特殊能力（``powers_of``。「ばける」でのせたカードの特殊能力と、その下のカードの「ばける」）の中から探す。
-    # ［へんしん］で同じカードとしてあつかう相手のカードの特殊能力を持つかは決められない（TF1。宣言の前に止める）
+    # v0.124: ［へんしん］・［すごいへんしん］で変身したポケモンは、変身の対象のいちばん上のカードの特殊能力も持つ（CR-TRANSFORM-COPIES-TOP-CARD。``powers_of``）。写した特殊能力の
+    # 使用は、パワーごとの確かめのあとに ``copied_declared_power_problem`` が止める場面（TF1・SV3・未対応）を見る
     form = current_form(state, user)
     card = form.card if cmd.card is None else cmd.card
     slot = next((s for s in powers_of(state, user) if s.card == card and s.key.power_index == cmd.power), None)
+    if slot is None and form.kind in COPIED_FORMS and cmd.card is None:
+        # 自分のいちばん上のカードの特殊能力（［すごいへんしん］）は、変身していても自分のカードで指す（``cmd.card`` を省いたら、写したカードより自分のカードを探す）
+        slot = next((s for s in powers_of(state, user) if s.card == user.card and s.key.power_index == cmd.power), None)
     if slot is None:
-        if form.kind == FORM_TRANSFORM and card == form.card and 0 <= cmd.power < len(state.card_def(card).powers):
-            raise UnsupportedError(
-                TRANSFORM_POWER_CODE,
-                f"場のポケモン {user.pokemon_id} の［へんしん］で同じカードとしてあつかうカード {card} の特殊能力"
-                f"「{state.card_def(card).powers[cmd.power].name_ja}」: {TRANSFORM_POWER_REASON}",
-            )
         name = form_def(state, user).name_ja
         where = "" if cmd.card is None else f"（カード {cmd.card!r} の）"
         raise IllegalActionError("NO_POKEMON_POWER", f"場のポケモン {user.pokemon_id}（{name}）に{where} {cmd.power!r} 番目の特殊能力はない")
@@ -2116,6 +2177,9 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower, context: resoluti
             f"場のポケモン {user.pokemon_id} は、相手のワザの効果で、次の相手の番の終わりまで特殊能力を使うことができない",
         )
     use = PowerUse(cmd.player, user.pokemon_id, slot.key, cmd.energy, cmd.source, cmd.target, card=None if slot.card == user.card else slot.card)
+    copied = copied_declared_power_problem(state, user, slot) or copied_source_use_problem(state, user, slot)  # v0.124
+    if copied is not None:
+        raise UnsupportedError(copied[0], f"場のポケモン {user.pokemon_id} の特殊能力「{power.name_ja}」: {copied[1]}")
     effect.check_usable(state, use)
     if effect.once_per_turn and power_reuse_after_devolution(state, use):
         # v0.50: 今の番に退化してまたいちばん上になったカードで、退化の前（進化させる前）にこの番に使っていた（DV3。パワーごとの確かめがすべて通ったあと）
@@ -2292,6 +2356,21 @@ def _resume_stadium(state: GameState, decision, choices: tuple[int, ...], contex
         resolution.after_stadium(state, context)
 
 
+def _check_face_up_deck_card(state: GameState, cmd: CheckFaceUpDeckCard) -> None:
+    """おもてを上にした山札のおもてのカードを確かめたい要求（v0.126。``CheckFaceUpDeckCard``）。どの場合も受け付けない（状態を変えない）: いちばん上は観測に出ている
+    （``ALREADY_VISIBLE``）、持ち主は自分で並べたカードを知っている（``ALREADY_KNOWN``）、おもてのカードでない（``NOT_FACE_UP``）、それ以外は FU2 で止める。理由の文にカードを書かない。"""
+    if cmd.player not in (0, 1) or cmd.owner not in (0, 1):
+        raise IllegalActionError("BAD_PLAYER", f"プレイヤー {cmd.player}・山札の持ち主 {cmd.owner} は 0・1")
+    deck = state.players[cmd.owner].deck
+    if not 0 <= cmd.position < len(deck) or deck[cmd.position] not in state.face_up_deck:
+        raise IllegalActionError("NOT_FACE_UP", f"プレイヤー {cmd.owner} の山札の上から {cmd.position + 1} 枚目は、おもてのカードではない（特に指示されないかぎり山札の内容を見ない。p.312）")
+    if cmd.position == 0:
+        raise IllegalActionError("ALREADY_VISIBLE", "いちばん上のおもてのカードは、観測（face_up_top）に出ている（CR-FLASH-TOP-CARD-SEEN）")
+    if cmd.player == cmd.owner:
+        raise IllegalActionError("ALREADY_KNOWN", "自分で並べたおもてのカードは、観測（known_face_up）に出ている")
+    raise faceup.stop(faceup.FACE_UP_DECK_CHECK_CODE, f"プレイヤー {cmd.player} が、プレイヤー {cmd.owner} の山札の上から {cmd.position + 1} 枚目のおもてのカードを確かめる")
+
+
 def _discard_from_play(state: GameState, cmd: DiscardFromPlay, context: resolution.Context) -> None:
     """自分の場のなにかの化石・ピッピ人形（進化カードがのっていないもの）を、自分の番の好きなときにトラッシュにすてる（v0.47。カードの文面「自分の番の好きなときに
     （自分のトラッシュに）すてることができる」。docs/fossil-hidden-info-v0.47.md 3 章）。
@@ -2451,6 +2530,7 @@ _HANDLERS: dict[type, Callable[[GameState, object, resolution.Context], None]] =
     RemoveDisguise: _engine(_remove_disguise),  # v0.49
     UseStadium: _use_stadium,  # v0.57: 空いたバトル場の勝ち負け・交代に解決の設定を使う
     RevealFaceDown: _reveal_face_down,  # v0.67: 空いたバトル場の勝ち負け・交代に解決の設定を使う
+    CheckFaceUpDeckCard: _engine(_check_face_up_deck_card),  # v0.126: 受け付けない（観測で足りる・FU2）
 }
 
 
@@ -2656,13 +2736,20 @@ def check_invariants(state: GameState) -> list[str]:
     problems.extend(_history_problems(state))  # v0.62
     problems.extend(_set_aside_problems(state))  # v0.63
     problems.extend(_face_up_prize_problems(state))  # v0.63
+    problems.extend(faceup.prefix_problems(state))  # v0.126: おもての山札の印（フラッシュ）
     problems.extend(_stadium_problems(state))  # v0.57
     problems.extend(_recall_problems(state))  # v0.49
     if phase in TERMINAL_PHASES:
+        # v0.127: 途中停止（``Halt.interruption``）だけは、在途のカード（使用中のトレーナー）を残す。その条件は ``interruption_problems`` が専用に確かめる（通常の停止・終局は緩めない）
+        interrupted = phase is Phase.HALTED and state.halt is not None and state.halt.interruption is not None
         if state.decision is not None:
             problems.append("対戦が終わっているのに、決定が残っている")
-        if state.trainer_in_use is not None or state.trainer_stack:
+        if (state.trainer_in_use is not None or state.trainer_stack) and not interrupted:
             problems.append("対戦が終わっているのに、使用中のトレーナーが残っている")
+        if state.halt is not None and state.halt.interruption is not None and phase is not Phase.HALTED:
+            problems.append(f"途中停止の記録があるのに {phase.value} になっている")
+        if interrupted:
+            problems.extend(interruption_problems(state))
         if any(group.kind != SET_ASIDE_HAND for group in state.set_aside):
             problems.append("対戦が終わっているのに、トレーナーの効果の途中に置いたカード（挑戦状・クイズ）が残っている")
         if phase is Phase.HALTED and state.halt is None:
@@ -5358,6 +5445,8 @@ def _decision_problems(state: GameState) -> list[str]:
             or (d.kind == FORCED_SWITCH and d.resume == "attack" and d.min_choices == 0) \
             or (d.kind == ACCEPT_REQUEST and d.resume == "power" and d.min_choices == 0) \
             or (d.kind == OPTIONAL_COIN and d.resume == "attack" and d.min_choices == 0)  # v0.118: エアロウイングで投げると止める場合も、投げない（0 個）が答え
+        # v0.124: ひばしらの「のぞむなら」のトラッシュ（DISCARD_ENERGY の選ぶ数 0〜1。［わるいはどう］の DP1 で選ぶと止める場合）も、トラッシュしない（0 個）が答え
+        no_choice_answers = no_choice_answers or (d.kind == DISCARD_ENERGY and d.resume == "attack" and d.min_choices == 0 and d.context_value("unresolved_code") == "UNRESOLVED_DARK_PULSE_TIMING")
         # v0.94: ワザの任意の入れ替え（きつねび。RX1 で止める控え）も、入れ替えない（0 個）が答え。v0.96: 特殊能力の「のぞむなら」の決定（［ENGAGE］で手札をもどすか。
         # 手札 0 枚の「もどす」は EG1）も、もどさない（0 個）がいつも答えになる
         needed = 0 if no_choice_answers and d.min_choices == 0 else max(d.min_choices, 1)

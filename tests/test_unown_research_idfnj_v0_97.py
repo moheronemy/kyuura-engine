@@ -200,7 +200,9 @@ class ResearchCasesTest(unittest.TestCase):
         # v0.121 で、研究の基準 2fe0bc0 の事例 4 件を加えた（ボロのつりざおの UQ-CARD-USE-WITHOUT-TARGET を含む。tests/test_hand_bench_attack_conditions_v0_121.py）。v0.97 の 13 件で数える
         expected = {"UQ-EFFECT-AFTER-NO-DAMAGE": 1, "UQ-CARD-USE-WITHOUT-TARGET": 3, "UQ-NON-ATTACK-DAMAGE-MODIFIERS": 1, "UQ-SPEED-STAR-SCOPE": 3,
                     "UQ-SELF-EXCLUDING-POWER-COPIES": 5}
-        counts = Counter(c["kyuura_issue"] for c in cases if c["card_id"] != "neo3-053")
+        # v0.125 で、研究の基準 134a664 の事例 11 件を加えた（ES1-027・neo4-108 の UQ-CARD-USE-WITHOUT-TARGET、ES1-027 の UQ-NON-ATTACK-DAMAGE-MODIFIERS を含む。
+        # tests/test_wigglytuff_helping_hand_v0_125.py）。v0.97 の 13 件で数える
+        counts = Counter(c["kyuura_issue"] for c in cases if c["card_id"] not in ("neo3-053", "ES1-027", "neo4-108"))
         self.assertEqual({issue: counts[issue] for issue in expected}, expected)
         self.assertEqual(sum(expected.values()), 13)
         cv1 = self.links["stop_codes"]["UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES"]

@@ -61,6 +61,7 @@ from scripts.extract_kyuura_cards import (
 )
 from tests.helpers import (
     ATTACK_TYPES_SINCE_V0_17,
+    V0_125_KYUURA_RECORDS_ADDED,  # v0.125: 研究の基準を 134a664 に上げて、ゴローン（ES2-023）に CR-UNTIL-TAILS-NOT-CAPPED の related_cards が加わった
     apply_kernel,
     build_test_state,
     with_coin_results,
@@ -766,12 +767,14 @@ class ReusedTypeTest(unittest.TestCase):
         self.assertEqual([e["amount"] for e in events(done, since, "damage")], [20])
 
     def test_agility_needs_metal_energy_and_works_through_transform(self):
-        """エアームドの「こうそくいどう」の必要なエネルギーの「鋼」を出す基本エネルギーカードは写しにない。［へんしん］のメタモン（どの色のエネルギーとしても使える）が
-        写したときに使える。"""
+        """エアームドの「こうそくいどう」の必要なエネルギーの「鋼」を出す基本エネルギーカードは写しにない。v0.123 までは、［へんしん］のメタモン（どの色のエネルギーとしても使える）が
+        水エネルギーで写して使えた。v0.124 から、化石のメタモンの色が 8 色（p.239）か 6 色（p.324 の引く説明）かが決まらず、2 つの読みで払えるかが変わるので止める
+        （UQ-TRANSFORM-ENERGY-COLOR-LIST。TC1。docs/super-transform-dark-pulse-v0.124.md 3.7 節。意図した既存の動きの変化）。"""
         state = build_test_state([{"active": mon(DITTO, (W, W, W)), "bench": [RATTATA]}, {"active": mon("PF3-009", (W,)), "bench": [RATTATA]}],
                                  turn_number=TURN)
-        done = audited(self, attack(state, 1, H))
-        self.assertTrue(any(type(e) is AttackBarrier for e in done.players[0].active.persistent_effects))
+        with self.assertRaises(UnsupportedError) as raised:
+            attack(state, 1, H)
+        self.assertEqual(raised.exception.code, "UNRESOLVED_TRANSFORM_ENERGY_COLOR_LIST")
 
     def test_every_preflight_mode_gives_the_same_result(self):
         cases = [(board(mon("ES2-027", (F,)), mon(RATTATA, (W,))), 0), (board(mon("GD2-002", (W,))), 0), (board(mon("PR1-036", (W, W))), 1),
@@ -795,7 +798,7 @@ class RecordTest(unittest.TestCase):
             with self.subTest(card=card_id):
                 record = sources[card_id]
                 self.assertEqual((record["basis"], record["status"], record["kyuura_commit"], record["recorded_on"], record["kyuura_records"], record["issues"]),
-                                 ("kyuura_data", "adopted", ADOPTED_COMMIT, "2026-10-19", [], []))
+                                 ("kyuura_data", "adopted", ADOPTED_COMMIT, "2026-10-19", list(V0_125_KYUURA_RECORDS_ADDED.get(card_id, ())), []))
                 self.assertEqual(record["external_checks"], [])  # 日本語の文面は pcg-search.com の転記。新しい外部照合はしていない
                 targets = {f"attack/{i}" for i, a in enumerate(CARDS[card_id]["pokemon"]["attacks"]) if a["text"]["ja"] is not None}
                 self.assertEqual(set(record["play_text"]), targets)

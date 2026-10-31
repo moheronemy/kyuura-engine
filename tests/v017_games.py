@@ -39,6 +39,7 @@ from kyuura_engine.state import PeriodAttackCoinCheck, PeriodLeaveLock  # v0.93
 from kyuura_engine.persistent import cannot_retreat, powers_use_prevented
 from kyuura_engine.effects import ATTACH_TRIGGER_ORDER_CODE, ATTACH_TRIGGER_SCOPE_CODE  # v0.116
 from kyuura_engine.persistent import attach_status_triggers, evolution_lock  # v0.116
+from kyuura_engine import faceup as _FU  # v0.126
 from tests.helpers import GIOVANNIS_MACHAMP, HAUNTER, MACHAMP, MUK, ROCKETS_MOLTRES
 from tests.test_alakazam_games_v0_7 import POWER_REJECTIONS
 from tests.test_blastoise_games_v0_6 import R13
@@ -66,8 +67,12 @@ def full(state):
 # v0.49（docs/virtual-attacks-transformation-v0.49.md）: 姿が変わりうるカードがあるときに、操作を受け付けない理由のコード
 V049_FORM_CODES = ("UNRESOLVED_TRANSFORM_COPIED_POWER", "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER", "UNRESOLVED_SHAPESHIFT_SUPPRESSED",
                    "UNRESOLVED_SHAPESHIFT_ENTRY_POWER", "UNRESOLVED_SHAPESHIFT_AGAIN", MAX_HP_DROP_CODE,
-                   "UNRESOLVED_TRANSFORM_REVIVED_BASIC")  # v0.120: TF3（入れ替えで、たねポケモンとしてあつかう進化カードが［へんしん］の写す相手になる）
-FORM_CARDS = ("PMCG3-042", "PMCG5-019")  # メタモン（［へんしん］）・タケシのキュウコン（「ばける」）
+                   "UNRESOLVED_TRANSFORM_REVIVED_BASIC",  # v0.120: TF3（入れ替えで、たねポケモンとしてあつかう進化カードが［へんしん］の写す相手になる）
+                   # v0.124: 変身の共通ルール・すごいへんしん（TK1・BX2・TC1・SV1〜SV5・写した特殊能力の未対応）
+                   "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING", "UNRESOLVED_TRANSFORM_BABY_AND_BASIC", "UNRESOLVED_TRANSFORM_ENERGY_COLOR_LIST",
+                   "UNRESOLVED_SUPER_TRANSFORM_TARGET", "UNRESOLVED_SUPER_TRANSFORM_SOURCE_CHANGE", "UNRESOLVED_SUPER_TRANSFORM_COPIED_POWER",
+                   "UNRESOLVED_SUPER_TRANSFORM_SUPPRESSED_FORM", "UNRESOLVED_SUPER_TRANSFORM_ENERGY_COLORS", "UNSUPPORTED_TRANSFORM_COPIED_POWER")
+FORM_CARDS = ("PMCG3-042", "PMCG5-019", "ES2-032")  # メタモン（［へんしん］）・タケシのキュウコン（「ばける」）・v0.124: メタモン（［すごいへんしん］）
 
 
 def form_cards_in_play(state) -> bool:
@@ -200,6 +205,18 @@ def v093_lock_in_play(state) -> bool:
                for effect in pokemon.persistent_effects)
 
 
+# v0.126: おもての山札（フラッシュ）の停止。FU1 はどちらかの山札が 5 枚より少ないとき、ほかはおもてのカードのある山札があるときだけ起こる
+V126_FACE_UP_CODES = frozenset({_FU.FLASH_DECK_SHORT_CODE, _FU.FACE_UP_DECK_CHECK_CODE, _FU.FACE_UP_DECK_HIDDEN_TAKE_CODE, _FU.FACE_UP_DECK_PLACE_TOP_CODE,
+                                _FU.FACE_UP_DECK_LOOK_RETURN_CODE, _FU.FACE_UP_DECK_MOVE_CODE})
+
+
+def v126_stop_expected(state, code: str) -> bool:
+    """v0.126: 場から確かめる（エンジンの判定を読まずに、状態の印と山札の枚数だけを見る）。"""
+    if code == _FU.FLASH_DECK_SHORT_CODE:
+        return any(len(p.deck) < 5 for p in state.players)
+    return bool(state.face_up_deck) and any(uid in state.face_up_deck for p in state.players for uid in p.deck)
+
+
 def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), extra_stop: dict[str, Callable] | None = None,
               double_ko_check: Callable | None = None, policy=None):
     """``decks``（2 つの 60 枚）・``seed`` の対戦を終わるまで進める。受け付けた操作の列と、拒否された操作・場面の観測を返す。
@@ -277,6 +294,16 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                         raise AssertionError(f"くろいまなざしの発生源でないのに {error.code}: {command}")
                     observed[f"stopped_{type(command).__name__}_{error.code}"] += 1
                     turn_tried.add(("max_hp_drop_card", command.card))
+                    continue
+                if error.code in V126_FACE_UP_CODES and v126_stop_expected(state, error.code):
+                    # v0.126（docs/flash-faceup-deck-v0.126.md 10 章）: おもての山札（フラッシュ）を通る処理（FU2〜FU6）・山札が 5 枚より少ないときのフラッシュ（FU1）。場から確かめる
+                    # （おもてのカードのある山札がある・どちらかの山札が 5 枚より少ない）。同じ操作を繰り返さない
+                    kind = type(command).__name__
+                    observed[f"stopped_{kind}_{error.code}"] += 1
+                    turn_tried.add("retreat" if kind == "Retreat" else ("attack_index", command.attack_index) if kind == "UseAttack"
+                                   else ("max_hp_drop_card", command.card) if kind in ("PlayTrainer", "EvolvePokemon") else ("max_hp_drop_command", command))
+                    if kind == "UseAttack":
+                        turn_tried.add(error.code)
                     continue
                 if error.code in V093_LEAVE_CODES:
                     # v0.93: 「バトル場をはなれられない」効果を受けたポケモンの「にげる」・すてる（LEAVE_ACTIVE_PREVENTED）、移動だけが効果の使用・選択・コイン（AL2）、きぜつ（AL1）、

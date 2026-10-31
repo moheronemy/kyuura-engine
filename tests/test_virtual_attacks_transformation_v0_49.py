@@ -132,6 +132,19 @@ from tests.log_audit import observation_problems, serialization_problems
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DOC = ROOT / "docs" / "virtual-attacks-transformation-v0.49.md"
+# v0.124: TF1 の残る部分（写すと止める、効果を消す力）の例に使うやさしいカイリュー（neo4-094。［きせきのかぜ］）と、その下の 2 枚（写しの進化元の名前から求める）
+KIND_DRAGONITE = "neo4-094"
+
+
+def _below(card_id):
+    pool = load_card_pool()
+    found = [card_id]
+    while pool.get(found[0]).evolves_from:
+        found.insert(0, next(c for c in sorted(pool.playable_ids) if pool.get(c).name_ja == pool.get(found[0]).evolves_from))
+    return found[:-1]
+
+
+KIND_DRAGONITE_BELOW = _below(KIND_DRAGONITE)
 TURN = 7
 P, R, W, G, F = PSYCHIC, FIRE, WATER, GRASS, FIGHTING
 TE1 = "UNRESOLVED_TRANSFORM_ENERGY_COUNT"
@@ -629,27 +642,34 @@ class TransformTest(unittest.TestCase):
         self.assertEqual(E.evolution_forbidden(board(mon(RATTATA), bench=(mon(DITTO),)), bench_ditto)[0], "EVOLUTION_PREVENTED")
 
     def test_copied_powers_are_tf1(self):
-        """写したカードの特殊能力を持つかは決まらない（TF1）。常にはたらく・自動的にはたらく特殊能力を持つ相手と同じカードになる操作は受け付けない（状態・乱数・ログは
-        そのまま）。宣言して使う特殊能力なら姿にはなれるが、写した特殊能力を使う宣言は TF1。メタモン自身の［へんしん］は宣言できない。"""
+        """v0.123 までは、写したカードの特殊能力を持つかは決まらない（TF1）として、常にはたらく・自動的にはたらく特殊能力を持つ相手と同じカードになる操作を受け付けなかった。
+        v0.124 から、変身の対象のいちばん上のカードの特殊能力を持つ（CR-TRANSFORM-COPIES-TOP-CARD。docs/super-transform-dark-pulse-v0.124.md 3.1 節。意図した既存の動きの変化）:
+        ［バリヤー］のバリヤードと同じカードになれ、その力を持つ。TF1 は残る部分（特殊能力を消す力・変身する力を写す）だけで止める（ベトベトンの［かがくへんかガス］）。写した宣言する
+        特殊能力は、写すことをエンジンが確かめた実装だけ使える（フシギバナの［エナジートランス］）。メタモン自身の［へんしん］は宣言できない。"""
         state = board(mon(RATTATA), mon(MR_MIME), bench=(mon(DITTO),))
-        assert_stops(self, state, Retreat(0, (), state.players[0].bench[0].card), TF1)
+        retreated = apply_kernel(state, Retreat(0, (), state.players[0].bench[0].card))
+        self.assertIn(MR_MIME, {slot.key.card_id for slot in powers_of(retreated, retreated.players[0].active)})
+        wind = board(mon(RATTATA), mon(KIND_DRAGONITE, evolved_from=KIND_DRAGONITE_BELOW), bench=(mon(DITTO),))
+        assert_stops(self, wind, Retreat(0, (), wind.players[0].bench[0].card), TF1)  # やさしいカイリューの［きせきのかぜ］（効果を消す力）を写すと TF1 の残る部分
         state = ditto_board(mon(VENUSAUR, (G,)), bench=(RATTATA,))
         ditto, venusaur = state.players[0].active, state.players[1].active
         self.assertEqual(current_form(state, ditto).kind, "transform")
-        assert_stops(self, state, UsePokemonPower(0, ditto.pokemon_id, 0, card=venusaur.card), TF1)
-        assert_stops(self, state, UsePokemonPower(0, ditto.pokemon_id, 0), TF1)  # ``card`` を書かなければ今の姿のカード（フシギバナ）の特殊能力
+        copied = next(slot for slot in powers_of(state, ditto) if slot.card == venusaur.card)
+        self.assertIsNone(E.copied_declared_power_problem(state, ditto, copied))
         assert_rejected(self, state, UsePokemonPower(0, ditto.pokemon_id, 0, card=ditto.card), "POWER_NOT_DECLARABLE", IllegalActionError)
 
     def test_promote_that_only_creates_tf1_halts(self):
-        """相手がバトル場に出すポケモンがどれも TF1 になるなら（答えのない決定を残さず）その前の状態で対戦を止める。ほかの答えがあれば、その答えだけを受け付けない。"""
-        state = ditto_board(mon(CHARMANDER, damage=40), opponent_bench=(mon(MR_MIME), mon(RATTATA)))
+        """相手がバトル場に出すポケモンがどれも TF1 になるなら（答えのない決定を残さず）その前の状態で対戦を止める。ほかの答えがあれば、その答えだけを受け付けない。v0.124 から、
+        TF1 は残る部分（写した効果を消す力）で止めるので、バリヤードのかわりにやさしいカイリュー（［きせきのかぜ］）で確かめる。"""
+        MR_MIME = {"card": KIND_DRAGONITE, "evolved_from": KIND_DRAGONITE_BELOW}  # v0.124: 写すと TF1 の残る部分になるポケモン
+        state = ditto_board(mon(CHARMANDER, damage=40), opponent_bench=(dict(MR_MIME, energy=[]), mon(RATTATA)))
         state = apply_kernel(state, UseAttack(0, 0))
         while state.decision is not None and state.decision.kind != "promote_active":
             state = answer(state, state.decision.options[:1])
         mime, rattata = state.players[1].bench
         assert_stops(self, state, PromoteActive(1, mime.card), TF1)
         apply_kernel(state, PromoteActive(1, rattata.card))
-        state = ditto_board(mon(CHARMANDER, damage=40), opponent_bench=(mon(MR_MIME),))
+        state = ditto_board(mon(CHARMANDER, damage=40), opponent_bench=(dict(MR_MIME, energy=[]),))
         state = apply_kernel(state, UseAttack(0, 0))
         while state.decision is not None and state.decision.kind != "promote_active":
             state = answer(state, state.decision.options[:1])
@@ -668,13 +688,14 @@ class TransformTest(unittest.TestCase):
 
     def test_ditto_against_ditto_and_alakazam(self):
         """メタモンどうし: 相手のメタモンのいちばん上のカード（メタモン）と同じカード（ワザなし・HP 50）。相手の今の姿をたどらないので循環しない。
-        ナツメのフーディン（常にはたらく［サイコリンク］）と同じカードにはならない（TF1）。"""
+        ナツメのフーディン（常にはたらく［サイコリンク］）と同じカードにはならない（v0.123 までは TF1。v0.124 から、写して持つことは決まったが、ワザを供給する力を写すことは
+        エンジンが確かめていないので未対応 UNSUPPORTED_TRANSFORM_COPIED_POWER）。"""
         state = ditto_board(mon(DITTO, (R,)), bench=(RATTATA,))
         mine, theirs = state.players[0].active, state.players[1].active
         self.assertEqual((current_form(state, mine).card, current_form(state, theirs).card), (theirs.card, mine.card))
         self.assertEqual((available_attacks(state, mine), max_hp(state, mine)), ((), 50))
         state = board(mon(RATTATA), mon(SABRINAS_ALAKAZAM), bench=(mon(DITTO),))
-        assert_stops(self, state, Retreat(0, (), state.players[0].bench[0].card), TF1)
+        assert_stops(self, state, Retreat(0, (), state.players[0].bench[0].card), "UNSUPPORTED_TRANSFORM_COPIED_POWER")
 
     def test_knock_out_keeps_card_conservation(self):
         """相手と同じカードとしてあつかわれていても、きぜつしてトラッシュするのはメタモンとついているカード（相手のカードは動かさない）。"""
@@ -1082,10 +1103,10 @@ class ReachableCombinationTest(unittest.TestCase):
 
     def test_trainer_with_only_dead_end_answers_is_refused_before_play(self):
         """ポケモンいれかえの答えがどれも決められない姿（相手のメタモンの TF1）になるなら、使う前に止める（使用中のトレーナーを残したまま止めない）。ほかの答えがあれば、
-        その答えだけを受け付けない。"""
-        state = ditto_board(mon(LAPRAS), opponent_bench=(mon(SABRINAS_GASTLY, (P,)),), opponent_hand=(SWITCH,), current=1, turn=TURN + 1)
+        その答えだけを受け付けない。v0.124 から、TF1 は残る部分（写した効果を消す力）で止めるので、ナツメのゴースのかわりにやさしいカイリューで確かめる。"""
+        state = ditto_board(mon(LAPRAS), opponent_bench=(mon(KIND_DRAGONITE, evolved_from=KIND_DRAGONITE_BELOW),), opponent_hand=(SWITCH,), current=1, turn=TURN + 1)
         assert_stops(self, state, PlayTrainer(1, card_of(state, 1, SWITCH)), TF1)
-        state = ditto_board(mon(LAPRAS), opponent_bench=(mon(SABRINAS_GASTLY, (P,)), RATTATA), opponent_hand=(SWITCH,), current=1, turn=TURN + 1)
+        state = ditto_board(mon(LAPRAS), opponent_bench=(mon(KIND_DRAGONITE, evolved_from=KIND_DRAGONITE_BELOW), RATTATA), opponent_hand=(SWITCH,), current=1, turn=TURN + 1)
         state = apply_kernel(state, PlayTrainer(1, card_of(state, 1, SWITCH)))
         gastly, rattata = state.players[1].bench
         assert_stops(self, state, ResolveDecision(1, state.decision.id, (gastly.pokemon_id,)), TF1)
@@ -1095,13 +1116,14 @@ class ReachableCombinationTest(unittest.TestCase):
 
     def test_max_hp_set_and_gaseous_form_never_meet(self):
         """「きょだいか」（最大HPを 80 にする）と［ガスのからだ］（最大HPを大きくする）が同じポケモンにはたらく組（``max_hp`` が RuntimeError にする組）は、
-        メタモンがキョウのメタモンと同じカードとして「きょだいか」を使い、そのあと相手の対戦ポケモンがナツメのゴースになるときに起こりうるが、［ガスのからだ］は常に
-        はたらく特殊能力なので TF1 で止める（その状態にならない）。"""
-        state = ditto_board(mon(KOGAS_DITTO), energy=(R, R), opponent_bench=(mon(SABRINAS_GASTLY, (P,)),), opponent_hand=(SWITCH,))
+        メタモンがキョウのメタモンと同じカードとして「きょだいか」を使い、そのあと相手の対戦ポケモンがナツメのゴースになるときに起こりうる。v0.123 までは、［ガスのからだ］は常に
+        はたらく特殊能力なので TF1 で止めた。v0.124 から写した特殊能力を持つ（CR-TRANSFORM-COPIES-TOP-CARD）ので、超エネルギーカードのついたメタモンでは 2 つの効果が同時にはたらき、
+        既存の MH2 で止める（その状態にならない）。超エネルギーカードがなければ［ガスのからだ］は大きくしないので、そのまま 80。"""
+        state = ditto_board(mon(KOGAS_DITTO), energy=(P, P), opponent_bench=(mon(SABRINAS_GASTLY, (P,)),), opponent_hand=(SWITCH,))
         state = apply_kernel(with_coin_results(state, H), UseAttack(0, 0))
         ditto = state.players[0].active
         self.assertEqual(max_hp(state, ditto), 80)
-        assert_stops(self, state, PlayTrainer(1, card_of(state, 1, SWITCH)), TF1)
+        assert_stops(self, state, PlayTrainer(1, card_of(state, 1, SWITCH)), "UNRESOLVED_MAX_HP_SET_AND_INCREASE")
 
     def test_switch_max_hp_drop_depends_on_the_chosen_bench(self):
         """メタモンの最大HPは相手の対戦ポケモンで変わるので、突風で選ぶ控えによって MH1 になるかが変わる。下がる控えだけを受け付けない（v0.48 の
@@ -1109,14 +1131,19 @@ class ReachableCombinationTest(unittest.TestCase):
         state = ditto_board(mon(LAPRAS), opponent_bench=(mon(CHARMANDER), mon(CHANSEY)), damage=60, hand=(GUST,))
         state = apply_kernel(state, PlayTrainer(0, card_of(state, 0, GUST)))
         charmander, chansey = state.players[1].bench
-        assert_stops(self, state, ResolveDecision(0, state.decision.id, (charmander.pokemon_id,)), MH1)
+        # v0.124: トレーナーカードの処理のあいだは変身の状態が変わらず、処理の終わりに姿が変わってきぜつの判定の時点が決まらないので TK1（止める場面は同じ）
+        assert_stops(self, state, ResolveDecision(0, state.decision.id, (charmander.pokemon_id,)), "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING")
         after = answer(state, [chansey.pokemon_id])
         self.assertEqual(max_hp(after, after.players[0].active), 120)
         # カビゴン（［めんえき］は常にはたらく特殊能力）を選ぶと TF1。どの控えも止まるなら使う前に止める（最初に見つけた理由）
         mixed = ditto_board(mon(LAPRAS), opponent_bench=(mon(CHARMANDER), mon(SNORLAX)), damage=60, hand=(GUST,))
-        assert_stops(self, mixed, PlayTrainer(0, card_of(mixed, 0, GUST)), MH1)
+        # v0.124: カビゴン（［めんえき］）は写して持てるので安全な答えになり、突風は使える（ヒトカゲを選ぶ答えだけが TK1）
+        mixed = apply_kernel(mixed, PlayTrainer(0, card_of(mixed, 0, GUST)))
+        assert_stops(self, mixed, ResolveDecision(0, mixed.decision.id, (mixed.players[1].bench[0].pokemon_id,)), "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING")
+        snorlax_chosen = answer(mixed, [mixed.players[1].bench[1].pokemon_id])
+        self.assertEqual(max_hp(snorlax_chosen, snorlax_chosen.players[0].active), 90)
         only = ditto_board(mon(LAPRAS), opponent_bench=(mon(CHARMANDER),), damage=60, hand=(GUST,))
-        assert_stops(self, only, PlayTrainer(0, card_of(only, 0, GUST)), MH1)
+        assert_stops(self, only, PlayTrainer(0, card_of(only, 0, GUST)), "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING")
 
     def test_guts_after_a_discard_decision_keeps_its_record(self):
         """わるいリザードンの「れんぞくファイヤーボール」（ダメージのあとにエネルギーをトラッシュする決定）でサカキのカイリキーが HP 以上になる。決定をまたいで

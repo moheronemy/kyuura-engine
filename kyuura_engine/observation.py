@@ -124,7 +124,8 @@ from .effects import (
     COLORS, attack_of, available_attacks, current_form, hand_revealed_by, max_hp, powers_of, resistance_of, type_readings, type_shift_determined, weakness_of,
     attached_units, card_color_readings,
 )
-from .serialize import basic_entry_record, history_record, poison_mist_record, replacement_poison_record, turn_record
+from .interruption import public_record
+from .serialize import basic_entry_record, super_transform_record, history_record, poison_mist_record, replacement_poison_record, turn_record
 from .state import GameState, PokemonInPlay
 
 VIEWERS = (0, 1, None)
@@ -263,6 +264,29 @@ def _seen_uid(state: GameState, uid: int, viewer: int | None) -> int | None:
     return uid
 
 
+def _deck(state: GameState, owner: int, viewer: int | None) -> dict[str, Any]:
+    """v0.126（docs/flash-faceup-deck-v0.126.md 4 章）: 山札の観測。枚数は全員に見える。フラッシュでおもてにしたカードがあれば、
+
+    - ``face_up_count``: おもてのカードの枚数（全員。おもてにした枚数と、そのあとの公開の移動から決まる。どのカードかは書かない）
+    - ``face_up_top``: いちばん上がおもてなら、そのカードの id（全員。CR-FLASH-TOP-CARD-SEEN。uid は書かない（uid はデッキの並びからカードがわかり、手札に移ったあとも追えるので））
+    - ``known_face_up``: 持ち主にだけ、自分の山札のおもてのカードの位置とカードの id（自分で並べたので知っている。新しく確かめたのではない。相手・観戦者には書かない。2 枚目より下を
+      新しく確かめる要求は ``CheckFaceUpDeckCard``（FU2）で、ここでは見せない）
+    おもてのカードがなければ、v0.125 までと同じ形（枚数だけ）。"""
+    from . import faceup
+
+    p = state.players[owner]
+    view: dict[str, Any] = {"count": len(p.deck)}
+    marked = faceup.face_up_in_deck(state, owner)
+    if not marked:
+        return view
+    top = faceup.visible_top(state, owner)
+    view["face_up_count"] = len(marked)
+    view["face_up_top"] = None if top is None else {"card_id": state.cards[top].card_id}
+    if viewer == owner:
+        view["known_face_up"] = [{"position": i, "card_id": state.cards[uid].card_id} for i, uid in enumerate(p.deck) if uid in marked]
+    return view
+
+
 def _face_down_pokemon(state: GameState, pokemon: PokemonInPlay, owner: int, viewer: int | None) -> dict[str, Any]:
     """v0.67（docs/secret-plan-preflight-v0.67.md 7 章）: うらにしてベンチに出したカード（マチスの秘策）。全員に見えるのは、場のポケモンの番号・うらであること・ついている
     エネルギーカード（手札からつけた表のカード）・ダメージ（うらのあいだは 0）だけ。本当のカード（uid・カードの id・名前。uid はデッキの並びからカードがわかる）は持ち主
@@ -286,10 +310,10 @@ def _field_pokemon(state: GameState, pokemon: PokemonInPlay, owner: int, viewer:
     """v0.67: 場のポケモンの観測（うらのカードは ``_face_down_pokemon``）。"""
     if state.is_face_down(pokemon):
         return _face_down_pokemon(state, pokemon, owner, viewer)
-    return _pokemon(state, pokemon)
+    return _pokemon(state, pokemon, viewer)
 
 
-def _pokemon(state: GameState, pokemon: PokemonInPlay) -> dict[str, Any]:
+def _pokemon(state: GameState, pokemon: PokemonInPlay, viewer: int | None = None) -> dict[str, Any]:
     """場のポケモン。v0.48: ``hp`` は今有効な最大HP（``effects.max_hp``。［ガスのからだ］・「きょだいか」を当てはめた値。エンジンの処理と同じ値）。``pokemon_type``・
     ``weakness``・``resistance`` も今有効な値（テクスチャー・［へんしょく］）。［へんしょく］で変えた色が有効か決まらない（VS1）ときは ``pokemon_type`` は None で、
     ``pokemon_type_readings`` に 2 つの読み方（変えた色・カードの定義の色）を書く（エンジンは読み方で結果が変わる処理を止める）。``type_shift`` は記録そのもの。"""
@@ -326,7 +350,7 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay) -> dict[str, Any]:
         # v0.49（docs/virtual-attacks-transformation-v0.49.md 9 章）: 実際のカード（``card``・``card_id``・``name_ja``。いちばん上のポケモンのカード）と、今の姿
         # （``form``。［へんしん］で同じカードとしてあつかう相手のカード・「ばける」でのせたカード）・のせたカード（``disguise``）・今持つワザ（``attacks``。印刷した
         # カード・位置・持ち方・供給するポケモン・選ぶと止める理由のコード）・今持つ特殊能力（``powers``。印刷したカード・位置）を分けて書く。どれも表のカード
-        "form": _form(state, pokemon),
+        "form": _form(state, pokemon, viewer),
         "disguise": None if pokemon.disguise is None else _card(state, pokemon.disguise),
         # v0.50（docs/mew-devolution-spray-v0.50.md 7 章）: 最後に退化した番（いまの姿になった番の決まり方の材料。退化していなければ None）。進化した番・場に出た番は
         # これまでどおり書かない（ログからわかる）
@@ -336,14 +360,18 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay) -> dict[str, Any]:
         "history": [history_record(record) for record in pokemon.history],
         # v0.120: 進化元を重ねずに出し、場ではたねポケモンとしてあつかう進化カードの事実（場の表の情報。書き出しの最新の形式と同じ形。ないときは None）
         "basic_entry": None if pokemon.basic_entry is None else basic_entry_record(state, pokemon.basic_entry),
+        # v0.124: ［すごいへんしん］で選んだ変身のもと（場の表の情報。書き出しの最新の形式と同じ形。ないときは None）
+        "super_transform": None if pokemon.super_transform is None else super_transform_record(state, pokemon.super_transform),
         "attacks": [
-            {**_card(state, option.card), "attack_index": option.attack_index, "name_ja": attack_of(state, option.key).name_ja, "route": option.route,
+            {"card": _seen_uid(state, option.card, viewer), "card_id": state.cards[option.card].card_id, "attack_index": option.attack_index, "name_ja": attack_of(state, option.key).name_ja, "route": option.route,
              "provider": option.provider, "problem": None if option.problem is None else option.problem[0],
              # v0.120: 必要なエネルギーを満たすポケモン（［にんぎょうつかい］のスリーパー）・許可を与える特殊能力を持つポケモン。どちらも場の表の情報。ないときは書かない（v0.119 までの形）
              **({"payer": option.payer} if option.payer is not None else {}), **({"grantors": list(option.grantors)} if option.grantors else {})}
             for option in available_attacks(state, pokemon)
         ],
-        "powers": [{**_card(state, slot.card), "power_index": slot.key.power_index, "name_ja": slot.power.name_ja} for slot in powers_of(state, pokemon)],
+        # v0.124: 写した特殊能力の供給元のカード（処理のあいだ固定した姿のカードが見えない場所にもどったときは uid を書かない。``_seen_uid``）
+        "powers": [{"card": _seen_uid(state, slot.card, viewer), "card_id": state.cards[slot.card].card_id, "power_index": slot.key.power_index, "name_ja": slot.power.name_ja}
+                   for slot in powers_of(state, pokemon)],
     }
 
 
@@ -355,10 +383,14 @@ def _marker(marker) -> dict[str, Any]:
     return view
 
 
-def _form(state: GameState, pokemon: PokemonInPlay) -> dict[str, Any]:
-    """場のポケモンの今の姿（v0.49。``effects.current_form``）。``kind`` は ``printed``・``transform``・``disguise``。"""
+def _form(state: GameState, pokemon: PokemonInPlay, viewer: int | None = None) -> dict[str, Any]:
+    """場のポケモンの今の姿（v0.49。``effects.current_form``）。``kind`` は ``printed``・``transform``・``disguise``（v0.124: ``super_transform``）。
+
+    v0.124: 処理のあいだ固定した姿のカードが、見えない場所（手札・山札など）にもどっていれば、その uid を ``viewer`` に見せない（カードの id・名前・姿の決め方は場の表の情報）。
+    ［すごいへんしん］の変身のもとは ``defender`` にポケモンの番号を書く（場の表の情報）。"""
     form = current_form(state, pokemon)
-    return {**_card(state, form.card), "name_ja": state.card_def(form.card).name_ja, "kind": form.kind, "defender": form.defender}
+    return {"card": _seen_uid(state, form.card, viewer), "card_id": state.cards[form.card].card_id, "name_ja": state.card_def(form.card).name_ja, "kind": form.kind,
+            "defender": form.defender}
 
 
 def _color(color) -> str | None:
@@ -468,7 +500,7 @@ def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
                 "cards": [_card(state, uid) for uid in p.hand] if visible_hand else None,
                 "revealed_by": [list(source) for source in hand_revealed_by(state, owner)],
             },
-            "deck": {"count": len(p.deck)},
+            "deck": _deck(state, owner, viewer),
             # v0.63: おもてのサイド（ロケット団参上!。全員に見える）は位置とカードを書く。裏のサイドは枚数だけ（uid も渡さない）
             "prizes": {"count": len(p.prizes),
                        "face_up": [{"position": i, **_card(state, uid)} for i, uid in enumerate(p.prizes) if uid in state.face_up_prizes]},
@@ -514,6 +546,8 @@ def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
         "replacement_poisons": [replacement_poison_record(record) for record in state.replacement_poisons],
         "decision": _decision(state, viewer),
         "result": None if state.result is None else {"outcome": state.result.outcome, "winner": state.result.winner},
+        # v0.127（docs/deferred-shortage-user-promos-v0.127.md 8 章）: 途中停止の状態だけ、その記録（全員に見える項目。ワザ・トレーナーを使い終えた盤面ではないことを示す）を加える
+        **({"interruption": public_record(state.halt.interruption)} if state.halt is not None and state.halt.interruption is not None else {}),
     }
 
 
@@ -606,6 +640,10 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
+    # v0.126: フラッシュでおもてにした山札（並べたプレイヤー・枚数・いちばん上のカードの id。uid は書かない）・いちばん上のおもてのカードが変わった（カードの id・おもての枚数）
+    "flash_face_up", "face_up_deck_top",
+    # v0.124: ［すごいへんしん］で選んだ変身のもと・もどった理由、［わるいはどう］のコインの結果と追加（どれも場・コインの公開の情報）
+    "super_transform", "super_transform_reverted", "dark_pulse",
     # v0.120: 進化元を重ねずにベンチに出したたねポケモンとしてあつかう進化カード（場に出たカード・出した場所・効果）・復活で出すカードがなかった（山札が 0 枚・選べるカードがなかった）・
     # しんかのほうしで選んだポケモン・たまごの化石で山札を見たこと（見たカードは書かない。どれも場・公開の情報）
     "bench_as_basic", "revive_none", "evolve_targets", "look_at_deck",

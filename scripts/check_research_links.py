@@ -32,7 +32,7 @@ v0.70（docs/non-pack-effect-reuse-v0.70.md 3 章）: 6 のカードデータの
    対応表・写し・写しの作り直しの表が同じ訂正で、研究の基準のコミットの値が訂正の前の値のときに、その欄を訂正のあとの値にして比べる。
 
 v0.69（docs/equivalent-non-pack-cards-v0.69.md 4 章・7 章）: 利用者が示した訂正（``user_corrected_text``）は kyuura の台帳（data/curation/card_corrections.json）の
-   根拠 ``user_provided`` の記録に結ぶ。トレーナーの最新の説明（LD-…-TRAINER）は ``registered_trainers`` に結び、登録の処理に使う文面と出典のページと照らす。
+   根拠 ``user_provided`` の記録に結ぶ。トレーナーの最新の説明（LD-…-TRAINER）は ``registered_trainers`` に結び、登録の処理に使う文面と出典のページと照らす（v0.126: 登録していないトレーナーの説明は ``trainer_records_not_registered``）。
    拡張パック以外の商品の同じカード（effects.EQUIVALENT_CARDS）の登録（``equivalent_registrations``）は、元のカードの登録と文面・出典が同じで、元のカードの登録が
    ほかの区分にあり、研究の基準のコミットで同じカードの組（same_card_group）にあって印刷の文面が同じ（4g）。
 
@@ -222,9 +222,20 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
             problems.append(f"{target}: 出典 {source} が kyuura の {ld_id} のページ（p.{record['latest_description']['page']}）と違う")
     registry_ = E.DEFAULT_EFFECTS if registry is None else registry
     trainers_listed = section.get("registered_trainers", {})
-    if set(trainers_listed) != set(trainer_ld):
-        problems.append(f"トレーナーの最新の説明（LD-…-TRAINER）の一覧が違う: kyuura だけ {sorted(set(trainer_ld) - set(trainers_listed))}、"
-                        f"対応表だけ {sorted(set(trainers_listed) - set(trainer_ld))}")
+    # v0.126（docs/flash-faceup-deck-v0.126.md 2.4 節）: 登録していないトレーナーの最新の説明（kyuura 57d01f4 のとりかえっこプリーズ）は trainer_records_not_registered に挙げる。
+    # 登録したトレーナーの説明と重ならず、合わせて kyuura のトレーナーの最新の説明のすべてと同じ
+    trainers_not_registered = section.get("trainer_records_not_registered", {})
+    if set(trainers_listed) & set(trainers_not_registered):
+        problems.append(f"トレーナーの最新の説明が、登録したものと登録していないものの両方にある: {sorted(set(trainers_listed) & set(trainers_not_registered))}")
+    if set(trainers_listed) | set(trainers_not_registered) != set(trainer_ld):
+        problems.append(f"トレーナーの最新の説明（LD-…-TRAINER）の一覧が違う: kyuura だけ {sorted(set(trainer_ld) - set(trainers_listed) - set(trainers_not_registered))}、"
+                        f"対応表だけ {sorted((set(trainers_listed) | set(trainers_not_registered)) - set(trainer_ld))}")
+    for card, ld_id in trainers_not_registered.items():
+        record = trainer_ld.get(card)
+        if record is None or record["id"] != ld_id:
+            problems.append(f"{card}: 登録していないトレーナーの最新の説明 {ld_id} が kyuura にない、またはカードが違う")
+        elif registry_.trainer_entry(card) is not None:
+            problems.append(f"{card}: トレーナーの最新の説明 {ld_id} のカードは登録されている（registered_trainers に挙げる）")
     for card, ld_id in trainers_listed.items():
         record = trainer_ld.get(card)
         entry = registry_.trainer_entry(card)
@@ -236,17 +247,19 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
             continue
         if record["latest_description"]["text_ja"] != entry.play_text_ja:
             problems.append(f"{card}: 登録の処理に使う文面が kyuura の {ld_id} と違う")
-        if entry.source != f"P43 p.{record['latest_description']['page']}":
+        # v0.126: 出典は LD- のページ（過去の原典照合で登録したもの）か、LD- の id（kyuura データの採用で、最新の説明を根拠にしたもの。ワザ・特殊能力と同じ。フラッシュ ES2-035）
+        if entry.source != f"P43 p.{record['latest_description']['page']}" and entry.source != ld_id:
             problems.append(f"{card}: 出典 {entry.source} が kyuura の {ld_id} のページ（p.{record['latest_description']['page']}）と違う")
     adopted_printed = set(section.get("adopted_printed_text", []))
     errata_text = section.get("errata_text", {})
     difference_text = section.get("difference_text", {})
     user_corrected = section.get("user_corrected_text", {})  # v0.68: 利用者が示した訂正（kyuura の照合の記録・最新の説明ではない。v0.69 から kyuura の台帳の記録）
     simplified = section.get("engine_simplified_text", {})  # v0.68: エンジンの簡略化した仕様（公式の裁定・エラッタではない）
+    user_simplified = section.get("user_simplified_text", {})  # v0.127: 利用者が指定した簡略ルール（公式の裁定・エラッタ・エンジンの仕様の判断ではない）
     equivalent = section.get("equivalent_registrations", {})  # v0.69: 登録したカードと処理に使う欄が同じカードの登録 → 元のカードの登録
     reprinted = section.get("reprint_registrations", {})  # v0.71: 再録のカードの、元のカードの記録の文面を処理に使う登録 → 元のカードの登録
     in_checks = (set(section.get("recorded_in_card_checks", {})) | set(section.get("card_checks_without_text", {})) | adopted_printed
-                 | set(errata_text) | set(difference_text) | set(user_corrected) | set(simplified) | set(equivalent) | set(reprinted))
+                 | set(errata_text) | set(difference_text) | set(user_corrected) | set(simplified) | set(user_simplified) | set(equivalent) | set(reprinted))
     without = sorted(t for t in texts if t not in ld_by_target and t not in in_checks)
     if without != sorted(section["registered_without_kyuura_record"]):
         problems.append(f"kyuura の記録のない登録の一覧が違う: 実際 {without}")
@@ -446,12 +459,28 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
             problems.append(f"{target}: engine_simplified_text の対象に、研究の基準のコミットの印刷の文面がない")
         if target in ld_by_target:
             problems.append(f"{target}: kyuura に最新の説明の記録 {ld_by_target[target]} がある（registered に移し、最新の説明にしたがう）")
+    # 4f'. v0.127（docs/deferred-shortage-user-promos-v0.127.md 4 章）: 利用者が指定した簡略ルールを処理に使う文面にした登録。区分は対象ごとの記録（effects.USER_SIMPLIFICATIONS）と
+    # ちょうど同じで、出典は USER_SIMPLIFICATION_SOURCE。記録の印刷の文面が研究の基準のコミットの印刷の文面と同じ（kyuura の文面を書き換えていない）・処理に使う文面が記録と同じで印刷の
+    # 文面と違う・kyuura に最新の説明がない（あれば最新の説明にしたがうべきなので、黙って簡略化を優先しない）。ほかの区分（エンジンの簡略化した仕様をふくむ）に入れない
+    if (set(user_simplified) & (others | set(user_corrected) | set(simplified))) or set(user_simplified) != set(getattr(E, "USER_SIMPLIFICATIONS", {})):
+        problems.append(f"user_simplified_text の一覧が、利用者の簡略ルールの記録と違うか、ほかの区分にも入っている: 対応表 {sorted(user_simplified)}")
+    for target, basis in user_simplified.items():
+        record = getattr(E, "USER_SIMPLIFICATIONS", {}).get(target)
+        if basis != getattr(E, "USER_SIMPLIFICATION_SOURCE", None) or record is None:
+            problems.append(f"{target}: user_simplified_text の根拠 {basis!r} が、利用者の簡略ルールの出典・記録でない")
+            continue
+        if target not in texts or texts[target] != (record.play_text, basis):
+            problems.append(f"{target}: user_simplified_text の登録の処理に使う文面・出典が、利用者の簡略ルールの記録と違う")
+        if printed_at_research(target) != record.printed_text or record.printed_text == record.play_text:
+            problems.append(f"{target}: 利用者の簡略ルールの記録の印刷の文面が、研究の基準のコミットの印刷の文面と違う（または処理に使う文面と同じ）")
+        if target in ld_by_target:
+            problems.append(f"{target}: kyuura に最新の説明の記録 {ld_by_target[target]} がある（利用者の簡略ルールより先に確かめる）")
 
     # 4g. v0.69（docs/equivalent-non-pack-cards-v0.69.md 4 章）: 登録したカードと処理に使う欄が同じカード（拡張パック以外の商品）の登録。元のカードの登録の区分にしたがう。
     # 元のカードと、研究の基準のコミットで同じカードの組（same_card_group）にあり、印刷の文面が同じで、登録の処理に使う文面・出典が元のカードと同じ。元のカードの登録は
     # ほかの区分にある（最新の説明・エラッタなどの記録は元のカードのもので、再録のカードの照合の記録ではない）
     others = (set(section["registered"]) | set(section.get("recorded_in_card_checks", {})) | set(section.get("card_checks_without_text", {}))
-              | adopted_printed | set(errata_text) | set(difference_text) | set(user_corrected) | set(simplified)
+              | adopted_printed | set(errata_text) | set(difference_text) | set(user_corrected) | set(simplified) | set(user_simplified)
               | set(section["registered_without_kyuura_record"]))
     actual = {t for t in texts if t.split("/")[0] in getattr(E, "EQUIVALENT_CARDS", {})}
     if set(equivalent) != actual:
@@ -636,6 +665,12 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
             for e in x.get("data_error") or []:
                 if e.get("field") not in noted:
                     problems.append(f"{card}: kyuura の {x['id']} のデータの誤りの欄 {e.get('field')} が、採用の記録の論点にない")
+                elif record.get("status") == "adopted" and _data_error_marked_harmless(record, e.get("field")):
+                    # v0.125（docs/wigglytuff-helping-hand-v0.125.md 3 章）: データの誤りの欄を「挙動に影響しない」とした採用は、その欄が説明文で、その対象の処理に使う文面が、
+                    # 印刷の文面の欄（printed_text.path）がこの欄・写しの値が kyuura の値と同じ最新の説明（LD-）のときだけ（プクリンのふくらむ）。未読の印刷・訂正の候補を一律に許可しない
+                    reason = _harmless_data_error_problem(card, record, e, descriptions)
+                    if reason:
+                        problems.append(f"{card}: kyuura の {x['id']} のデータの誤りの欄 {e.get('field')} を挙動に影響しないとした論点: {reason}")
 
     # 8. エンジンの処理に使う kyuura の規定・裁定（v0.50。applied_rule_records。退化の共通の処理）: 研究の基準のコミットにあり、裁定なら分類が対応表と同じ
     clauses = {x["id"] for x in rulings.get("rule_clauses", [])}
@@ -658,12 +693,45 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
     return problems
 
 
+def _data_error_marked_harmless(record: dict, field: str | None) -> bool:
+    """v0.125: 採用の記録の論点のうち、欄 ``field`` を挙げるものが、どれも挙動に影響しない（``affects_behavior`` が偽）か。"""
+    issues = [i for i in record.get("issues") or [] if isinstance(i, dict) and field in (i.get("fields") or [])]
+    return bool(issues) and all(i.get("affects_behavior") is False for i in issues)
+
+
+def _harmless_data_error_problem(card: str, record: dict, error: dict, descriptions: list) -> str | None:
+    """v0.125: データの誤り ``error``（CC- の ``data_error`` の 1 件）を挙動に影響しないとしてよいか。よければ None、だめなら理由の文。
+
+    よいのは、欄が説明文（``pokemon.attacks[i].text.ja``・``pokemon.powers[i].text.ja``）で、その対象（``attack/i``・``power/i``）の採用の記録の処理に使う文面の根拠が kyuura の
+    最新の説明（LD-）の id で、その記録がこのカード・この対象を指し、印刷の文面の欄（``printed_text.path``）がこの欄、印刷の文面の写しの値（``printed_text.text_ja``）が
+    データの誤りの kyuura の値と同じときだけ（処理は最新の説明の全文にしたがい、誤りのある写しの文面は照合だけに使う）。"""
+    field = error.get("field") or ""
+    match = re.fullmatch(r"pokemon\.(attacks|powers)\[(\d+)\]\.text\.ja", field)
+    if match is None:
+        return "説明文でない欄の誤りは、挙動に影響しないとしない"
+    target = f"{'attack' if match.group(1) == 'attacks' else 'power'}/{match.group(2)}"
+    basis = (record.get("play_text") or {}).get(target)
+    if not isinstance(basis, str) or not basis.startswith("LD-"):
+        return f"対象 {target} の処理に使う文面の根拠が最新の説明（LD-）ではない（{basis!r}）"
+    ld = next((x for x in descriptions if x.get("id") == basis), None)
+    if ld is None or ld.get("card_id") != card:
+        return f"最新の説明 {basis} が研究の基準のコミットにない、またはカードが違う"
+    kind, index = target.split("/")
+    if (ld.get("target") or {}).get("kind") != kind or (ld.get("target") or {}).get("index") != int(index):
+        return f"最新の説明 {basis} の対象が {target} ではない"
+    printed = ld.get("printed_text") or {}
+    if printed.get("path") != field or printed.get("text_ja") != error.get("kyuura_value"):
+        return f"最新の説明 {basis} の印刷の文面の欄・値が、データの誤りの欄・kyuura の値と違う"
+    return None
+
+
 def _registered_targets(registry, card_id: str) -> set[str]:
     targets = {f"attack/{key.attack_index}" for key in registry.attack_keys() if key.card_id == card_id}
     targets |= {f"power/{key.power_index}" for key in registry.power_keys() if key.card_id == card_id}
     if registry.trainer_entry(card_id) is not None:
         targets.add("trainer")
-    if targets:
+    # v0.124: 特殊エネルギーの登録（``EnergyEntry``。無色2個エネルギー・レインボーエネルギー）も、カードそのものの事例（``card``）の登録した対象とする
+    if targets or registry.energy_entry(card_id) is not None:
         # v0.114: カードそのものの事例（``card``。ベイビィポケモンのルールのような、ワザ・特殊能力・トレーナーの登録でないカードの規定）は、カードの登録があれば登録した対象とする
         targets.add("card")
     return targets

@@ -209,10 +209,20 @@ class RegistrationTest(unittest.TestCase):
 
         pool = load_card_pool()
         sources = json.loads((ROOT / "kyuura_engine" / "data" / "card_sources.json").read_text(encoding="utf-8"))["cards"]
-        for card in ("ES1-027", "neo4-082", "neo4-108", "ES2-005", "QSG-055", "PRN-041"):
+        self.assertNotIn("neo4-082", pool.playable_ids)
+        self.assertNotIn("neo4-082", sources)
+        # v0.127: 怪電波マシーン（neo4-108）・ファイヤー（ES2-005・QSG-055）は、途中停止の基盤を加えて v0.127 で登録した（v0.119 の範囲の外。
+        # tests/test_deferred_shortage_user_promos_v0_127.py）。v0.119 の範囲（v0.127 より前の写しの組）には入っていない
+        before_v0_127 = cards_before(read_extract(), "0.127")
+        for card in ("neo4-108", "ES2-005", "QSG-055"):
             with self.subTest(card=card):
-                self.assertNotIn(card, pool.playable_ids)
-                self.assertNotIn(card, sources)
+                self.assertNotIn(card, before_v0_127)
+                self.assertIn("v0.127 で加えた", sources[card]["notes"])
+        # v0.125: プクリン（ES1-027）は、kyuura が p.226 の最新の説明を読んだ記録（LD-ES1-027-ATK0・PWR0）で v0.125 に登録した（v0.119 の範囲の外。
+        # tests/test_wigglytuff_helping_hand_v0_125.py）。v0.119 の範囲（v0.125 より前の写しの組）には入っていない
+        self.assertNotIn("ES1-027", cards_before(read_extract(), "0.125"))
+        # v0.124: GR団のミュウツー（PRN-041）は v0.124 で登録した（v0.119 の範囲の外。tests/test_super_transform_dark_pulse_v0_124.py）
+        self.assertNotIn("PRN-041", cards_before(read_extract(), "0.124"))
         before_v0_122 = cards_before(read_extract(), "0.122")
         for card in ("GD3-003", "ES2-011", "ES2-028", "ES2-029", "ES3-018", "PRN-030", "PRN-039", "PRN-040", "PRN-045"):
             with self.subTest(card=card):
@@ -237,7 +247,8 @@ class RegistrationTest(unittest.TestCase):
             record = data[card]
             with self.subTest(card=card):
                 self.assertEqual((record["basis"], record["status"], record["kyuura_commit"], record["recorded_on"], record["kyuura_records"], record["external_checks"],
-                                  record["issues"]), ("kyuura_data", "adopted", COMMIT, "2026-10-29", [], [], []))
+                                  record["issues"]), ("kyuura_data", "adopted", COMMIT, "2026-10-29", list(H.V0_124_KYUURA_RECORDS_ADDED.get(card, ())), [], []))
+                # v0.124: 研究の基準を b9e7cff に上げて、わるいオーダイル（neo4-039）に UQ-SUPER-TRANSFORM-SUPPRESSED-FORM の事例が加わった（tests/helpers.py）
                 self.assertEqual(set(record["play_text"].values()), {"kyuura_printed_text"})
                 texts += [f"{card}/{key}" for key in record["play_text"]]
         self.assertEqual(len(texts), 19)

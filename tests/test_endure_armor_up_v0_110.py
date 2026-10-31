@@ -262,7 +262,9 @@ class RegistrationTest(unittest.TestCase):
             record = sources[card]
             with self.subTest(card=card):
                 self.assertEqual((record["basis"], record["status"], record["kyuura_commit"], record["kyuura_records"], record["external_checks"], record["issues"],
-                                  record["recorded_on"]), ("kyuura_data", "adopted", "73a169063463bbf7bcaa3137d70cbf9721d11534", [], [], [], "2026-10-27"))
+                                  record["recorded_on"]), ("kyuura_data", "adopted", "73a169063463bbf7bcaa3137d70cbf9721d11534",
+                                                           list(H.V0_124_KYUURA_RECORDS_ADDED.get(card, ())), [], [], "2026-10-27"))
+                # v0.124: 研究の基準を b9e7cff に上げて、わるいフォレトス（neo4-008）のだいばくはつに UQ-DARK-PULSE-TIMING の事例が加わった（tests/helpers.py）
                 self.assertEqual(record["play_text"], dict.fromkeys(texts[card], "kyuura_printed_text"))
         self.assertEqual(sorted(key for key in adopted if key.split("/")[0] in V0110), sorted(f"{card}/{part}" for card, parts in texts.items() for part in parts))
         for key, code, ruling in (("knockout_survival_timing", "UNRESOLVED_KO_SURVIVAL_TIMING", "KS1"), ("knockout_survival_overlap", "UNRESOLVED_KO_SURVIVAL_OVERLAP", "KS2")):
