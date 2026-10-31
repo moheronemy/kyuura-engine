@@ -229,5 +229,457 @@ class ResearchLinksTest(unittest.TestCase):
         self.assertFalse({SLOWKING, SWAP_PLEASE} & load_card_pool().playable_ids)
 
 
+
+# ---------------------------------------------------------------- 3 章以降: フラッシュの登録・表向きの山札（処理）
+
+import copy as _copy
+import itertools
+import pickle as _pickle
+
+from kyuura_engine import (
+    CheckFaceUpDeckCard,
+    EndTurn,
+    IllegalActionError,
+    PlayTrainer,
+    ResolveDecision,
+    UnsupportedError,
+    UseAttack,
+    UseStadium,
+    apply_command,
+    observe,
+    state_to_dict,
+    visible_log,
+)
+from kyuura_engine import effects as E
+from kyuura_engine import faceup as FU
+from kyuura_engine.engine import check_invariants
+from kyuura_engine.serialize import FORMAT_VERSIONS
+from tests.helpers import build_test_state
+from tests.log_audit import (
+    face_up_deck_from_log,
+    observation_problems,
+    serialization_problems,
+)
+
+GRASS_E, FIRE_E, WATER_E, LIGHTNING_E, PSYCHIC_E, FIGHTING_E = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
+ENERGIES = (GRASS_E, FIRE_E, WATER_E, LIGHTNING_E, PSYCHIC_E, FIGHTING_E)
+BILL, OAK, COMPUTER_SEARCH, POKEDEX, RETRIEVER, RADIO_TOWER = "PMCG1-074", "PMCG1-077", "PMCG1-090", "PMCG1-082", "ES3-035", "neo4-112"
+TELEPORTER = "IP1-020"
+CHANSEY, RATICATE_C = "PMCG1-058", "PMCG1-062"
+CODES = {"FU1": FU.FLASH_DECK_SHORT_CODE, "FU2": FU.FACE_UP_DECK_CHECK_CODE, "FU3": FU.FACE_UP_DECK_HIDDEN_TAKE_CODE,
+         "FU4": FU.FACE_UP_DECK_PLACE_TOP_CODE, "FU5": FU.FACE_UP_DECK_LOOK_RETURN_CODE, "FU6": FU.FACE_UP_DECK_MOVE_CODE}
+
+
+def board(hand=(FLASH,), deck0=None, deck1=None, *, discard0=(), current=0):
+    deck0 = list(ENERGIES) * 2 if deck0 is None else list(deck0)
+    deck1 = list(reversed(ENERGIES)) * 2 if deck1 is None else list(deck1)
+    return build_test_state([{"active": CHANSEY, "hand": list(hand), "deck": deck0, "discard": list(discard0), "prizes": 6},
+                             {"active": CHANSEY, "deck": deck1, "prizes": 6}], current_player=current)
+
+
+def fingerprint(state):
+    return (repr(state_to_dict(state, format_version=max(FORMAT_VERSIONS))), state.rng.getstate(), len(state.log), state.face_up_deck)
+
+
+def card_in_hand(state, card_id, player=None):
+    player = state.current_player if player is None else player
+    return next(uid for uid in state.players[player].hand if state.cards[uid].card_id == card_id)
+
+
+def play_flash(state, first=lambda d: tuple(d.options), second=lambda d: tuple(d.options)):
+    state = apply_command(state, PlayTrainer(state.current_player, card_in_hand(state, FLASH)))
+    d = state.decision
+    state = apply_command(state, ResolveDecision(d.player, d.id, first(d)))
+    d = state.decision
+    return apply_command(state, ResolveDecision(d.player, d.id, second(d)))
+
+
+class RegistrationTest(unittest.TestCase):
+    """3 章: フラッシュ ES2-035 の 1 枚。処理に使う文面は LD-ES2-035-TRAINER の全文。印刷の写しは別に持ち、句読点・括弧を一般に正規化して一致させない。"""
+
+    def test_entry_and_texts(self):
+        entry = E.DEFAULT_EFFECTS.trainer_entry(FLASH)
+        self.assertIsInstance(entry.effect, E.FlashTrainer)
+        self.assertEqual((entry.name_ja, entry.source), ("フラッシュ", "LD-ES2-035-TRAINER"))
+        self.assertEqual(entry.play_text_ja, "おたがいのプレイヤーは、それぞれ、自分の山札の上から5枚のカードを見て、好きな順番にならべ替えてから、おもてを上にして山札の上にもどす。"
+                                             "（先に相手プレイヤーが、ならべ替えをする）。山札を切るときには、おもてが上になっているカードをおもてが下になるように、もどしてから切る。")
+        self.assertEqual(entry.text_ja, load_card_pool().get(FLASH).trainer_text_ja)
+        self.assertNotEqual(entry.text_ja, entry.play_text_ja)
+        if (KYUURA / ".git").exists():
+            record = next(r for r in kyuura_json(NOW, "data/sidecar/latest_descriptions.json")["records"] if r["id"] == "LD-ES2-035-TRAINER")
+            self.assertEqual(record["latest_description"]["text_ja"], entry.play_text_ja)
+            self.assertEqual(record["printed_text"]["text_ja"], entry.text_ja)
+
+    @needs_history
+    def test_pool_and_counts(self):
+        extract = read_extract()
+        self.assertEqual(extract["pool_v0_126"], [FLASH])
+        before = engine_json(BASE_ENGINE, "kyuura_engine/data/kyuura_cards.json")
+        self.assertNotIn("pool_v0_126", before)
+        playable = load_card_pool().playable_ids
+        self.assertEqual(len(playable), 1362)
+        self.assertIn(FLASH, playable)
+        self.assertFalse({SLOWKING, SWAP_PLEASE} & playable)  # 8 章: 登録しない
+
+    def test_research_cases_are_bound_to_stop_codes(self):
+        links = json.loads(LINKS_PATH.read_text(encoding="utf-8"))
+        cases = {(c["kyuura_issue"], c["card_id"], c["target"]): c["engine"] for c in links["kyuura_cases_without_engine_ruling"]["cases"]}
+        self.assertEqual(cases[("UQ-STATED-COUNT-SHORT", FLASH, "trainer")], {"stop_codes": [CODES["FU1"]]})
+        self.assertEqual(cases[("UQ-FLASH-FACE-UP-DECK", FLASH, "trainer")], {"stop_codes": [CODES["FU2"], CODES["FU3"], CODES["FU6"]]})
+        self.assertEqual(cases[("UQ-FLASH-FACE-UP-DECK", RETRIEVER, "trainer")], {"stop_codes": [CODES["FU4"]]})
+        self.assertEqual(cases[("UQ-FLASH-FACE-UP-DECK", POKEDEX, "trainer")], {"stop_codes": [CODES["FU5"]]})
+        self.assertEqual(cases[("UQ-FLASH-FACE-UP-DECK", RADIO_TOWER, "trainer")], {"stop_codes": [CODES["FU5"]]})
+        self.assertEqual(cases[("UQ-FLASH-FACE-UP-DECK", SLOWKING, "power/0")], {"unregistered": True})
+        for code in CODES.values():
+            self.assertEqual(links["stop_codes"][code]["engine_rulings"][0]["version"], "v0.126")
+        self.assertEqual(links["latest_descriptions"]["registered_trainers"][FLASH], "LD-ES2-035-TRAINER")
+
+
+class ProcedureTest(unittest.TestCase):
+    """5 章: 使った側の相手が先・使った側があと。それぞれ自分の山札の 5 枚だけ。120 通りの並びを受け付け、誤った答えは状態・乱数・ログを変えない。"""
+
+    def test_opponent_first_each_own_five(self):
+        state = board()
+        flash = card_in_hand(state, FLASH)
+        before = (list(state.players[0].deck[:5]), list(state.players[1].deck[:5]))
+        state = apply_command(state, PlayTrainer(0, flash))
+        self.assertEqual(state.trainer_in_use.card, flash)
+        d = state.decision
+        self.assertEqual((d.player, d.options, d.min_choices, d.max_choices), (1, tuple(before[1]), 5, 5))
+        state = apply_command(state, ResolveDecision(1, d.id, tuple(reversed(d.options))))
+        self.assertEqual(state.players[1].deck[:5], list(reversed(before[1])))
+        self.assertEqual(set(FU.face_up_in_deck(state, 1)), set(before[1]))
+        self.assertEqual(FU.face_up_in_deck(state, 0), ())
+        d = state.decision
+        self.assertEqual((d.player, d.options), (0, tuple(before[0])))
+        # 相手の並べ替えの結果のいちばん上は、使ったプレイヤーの決定の前に観測に出ている
+        self.assertEqual(observe(state, 0)["players"][1]["deck"]["face_up_top"], {"card_id": state.cards[before[1][-1]].card_id})
+        state = apply_command(state, ResolveDecision(0, d.id, tuple(d.options)))
+        self.assertIsNone(state.decision)
+        self.assertIsNone(state.trainer_in_use)
+        self.assertEqual(sum(1 for e in state.log if e["kind"] == "discard_trainer"), 1)
+        self.assertEqual(state.players[0].deck[:5], before[0])  # 同じ並びでも空振りにしない
+        self.assertEqual(set(FU.face_up_in_deck(state, 0)), set(before[0]))
+        self.assertFalse(any(e["kind"] == "shuffle" for e in state.log))  # この処理では切らない
+        self.assertEqual(check_invariants(state), [])
+
+    def test_every_permutation_is_accepted_for_each_side(self):
+        """5! = 120 通りを、それぞれの側で別々に試す（両側の直積 14,400 は展開しない。相手の並べ替えは、使ったプレイヤーの選べるもの（自分の 5 枚）・決定の形を変えないので、
+        相手の答えを 2 つにしぼっても、使ったプレイヤーの側の答えの集まりは同じ）。"""
+        state = apply_command(board(), PlayTrainer(0, card_in_hand(board(), FLASH)))
+        d = state.decision
+        accepted = 0
+        for order in itertools.permutations(d.options):
+            after = apply_command(state, ResolveDecision(1, d.id, order))
+            self.assertEqual(tuple(after.players[1].deck[:5]), order)
+            accepted += 1
+        self.assertEqual(accepted, 120)
+        seconds = [apply_command(state, ResolveDecision(1, d.id, order)) for order in (d.options, tuple(reversed(d.options)))]
+        self.assertEqual(len({(s.decision.options, s.decision.min_choices, s.decision.max_choices, s.decision.player) for s in seconds}), 1)
+        mid = seconds[0]
+        d2 = mid.decision
+        self.assertEqual(sum(1 for order in itertools.permutations(d2.options)
+                             if tuple(apply_command(mid, ResolveDecision(0, d2.id, order)).players[0].deck[:5]) == order), 120)
+
+    def test_wrong_answers_change_nothing(self):
+        state = apply_command(board(), PlayTrainer(0, card_in_hand(board(), FLASH)))
+        d = state.decision
+        other = state.players[1].deck[5]
+        own_card = state.players[0].deck[0]
+        before = fingerprint(state)
+        for answer, player in ((d.options[:4], 1), (d.options + (other,), 1), (d.options[:4] + (d.options[0],), 1), (d.options[:4] + (other,), 1),
+                               (d.options[:4] + (own_card,), 1), (d.options, 0)):
+            with self.subTest(answer=answer, player=player):
+                with self.assertRaises((IllegalActionError, UnsupportedError)):
+                    apply_command(state, ResolveDecision(player, d.id, tuple(answer)))
+                self.assertEqual(fingerprint(state), before)
+
+    def test_short_decks_stop_before_use(self):
+        for deck0, deck1 in ((ENERGIES[:4], None), (None, ENERGIES[:4]), (ENERGIES[:4], ENERGIES[:3]), (None, ())):
+            with self.subTest(deck0=deck0, deck1=deck1):
+                state = board(deck0=deck0, deck1=deck1)
+                before = fingerprint(state)
+                with self.assertRaises(UnsupportedError) as caught:
+                    apply_command(state, PlayTrainer(0, card_in_hand(state, FLASH)))
+                self.assertEqual(caught.exception.code, CODES["FU1"])
+                self.assertEqual(fingerprint(state), before)
+        state = play_flash(board(deck0=ENERGIES[:5], deck1=ENERGIES[:5]))  # ちょうど 5 枚は使える
+        self.assertEqual(len(state.face_up_deck), 10)
+
+    def test_reuse_replaces_marks_within_the_top_five(self):
+        state = play_flash(board(hand=(FLASH, FLASH)))
+        again = play_flash(state, first=lambda d: tuple(reversed(d.options)))
+        self.assertEqual(len(FU.face_up_in_deck(again, 1)), 5)
+        self.assertEqual(check_invariants(again), [])
+
+
+class ObservationTest(unittest.TestCase):
+    """4 章: 向き・知っている情報・いまの公開を分ける。"""
+
+    def setUp(self):
+        self.state = play_flash(board(), first=lambda d: tuple(reversed(d.options)))
+
+    def test_top_public_rest_private(self):
+        state = self.state
+        top1 = state.cards[state.players[1].deck[0]].card_id
+        for viewer in (0, 1, None):
+            deck = observe(state, viewer)["players"][1]["deck"]
+            self.assertEqual((deck["face_up_count"], deck["face_up_top"]), (5, {"card_id": top1}))
+            self.assertEqual("known_face_up" in deck, viewer == 1)
+            self.assertNotIn('"card"', json.dumps(deck))
+        self.assertEqual(observation_problems(state), [])
+
+    def test_hidden_positions_do_not_leak_through_the_log(self):
+        """相手がいちばん上を同じにして下の並びを変えても、使ったプレイヤー・観戦者のログの写しと観測は同じ。"""
+        views = []
+        for first in (lambda d: tuple(d.options), lambda d: d.options[:1] + tuple(reversed(d.options[1:]))):
+            state = play_flash(board(), first=first)
+            views.append([(json.dumps(visible_log(state, viewer), default=str, ensure_ascii=False), json.dumps(observe(state, viewer)["players"][1]["deck"]))
+                          for viewer in (0, None)])
+        self.assertEqual(views[0], views[1])
+
+    def test_check_request(self):
+        state = self.state
+        before = fingerprint(state)
+        expected = {(0, 1, 2): CODES["FU2"], (1, 1, 2): "ALREADY_KNOWN", (0, 1, 0): "ALREADY_VISIBLE", (0, 1, 7): "NOT_FACE_UP", (1, 0, 3): CODES["FU2"]}
+        for (player, owner, position), code in expected.items():
+            with self.subTest(player=player, owner=owner, position=position):
+                with self.assertRaises((IllegalActionError, UnsupportedError)) as caught:
+                    apply_command(state, CheckFaceUpDeckCard(player, owner, position))
+                self.assertEqual(caught.exception.code, code)
+                self.assertNotIn(state.cards[state.players[owner].deck[position]].card_id, caught.exception.message)
+                self.assertEqual(fingerprint(state), before)
+
+
+class OperationTest(unittest.TestCase):
+    """6 章: 操作ごとの確定経路と停止の境界。"""
+
+    def test_normal_draw_reveals_next_top(self):
+        state = play_flash(board())
+        second = state.cards[state.players[1].deck[1]].card_id
+        drawn = state.players[1].deck[0]
+        state = apply_command(state, EndTurn(0))
+        self.assertIn(drawn, state.players[1].hand)
+        self.assertNotIn(drawn, state.face_up_deck)
+        self.assertEqual(observe(state, 0)["players"][1]["deck"]["face_up_top"], {"card_id": second})
+        last = [e for e in state.log if e["kind"] == "face_up_deck_top"][-1]
+        self.assertEqual((last["player"], last["card_id"], last["face_up_count"]), (1, second, 4))
+        self.assertEqual(observation_problems(state), [])
+        self.assertEqual(face_up_deck_from_log(state), set(state.face_up_deck))
+
+    def test_meowth_uses_the_visible_top_then_the_next_top_is_drawn(self):
+        """CR-FLASH-TOP-CARD-SEEN の代表経路: サカキのニャースのてつだうふりが、見えている相手のいちばん上（トラッシュでないカード → 相手の手札）を動かし、同じコマンドで続く相手の番の
+        最初の 1 枚ドローが、そのとき新しくいちばん上になったおもてのカードを引く（上から 1 枚ずつ別のログで動くので受け付ける。まとめて引く FU3 ではない）。"""
+        from tests.helpers import H, with_coin_results
+
+        state = build_test_state([{"active": {"card": "PMCG6-068", "energy": [FIGHTING_E] * 2}, "hand": [FLASH], "deck": list(ENERGIES) * 2, "prizes": 6},
+                                  {"active": CHANSEY, "deck": list(reversed(ENERGIES)) * 2, "prizes": 6}])
+        state = play_flash(state)
+        top, second, third = state.players[1].deck[:3]
+        self.assertEqual(observe(state, 0)["players"][1]["deck"]["face_up_top"]["card_id"], state.cards[top].card_id)
+        after = apply_command(with_coin_results(state, H), UseAttack(0, 0))
+        self.assertIn(top, after.players[1].hand)  # 基本エネルギー（トレーナーでない）は相手の手札
+        self.assertIn(second, after.players[1].hand)  # 相手の番の最初のドロー
+        self.assertEqual(after.players[1].deck[0], third)
+        self.assertEqual(observe(after, 0)["players"][1]["deck"]["face_up_top"], {"card_id": after.cards[third].card_id})
+        self.assertEqual(observation_problems(after), [])
+
+    def test_multi_draw_stops_before_side_effects(self):
+        for card_id in (BILL, OAK, TELEPORTER):
+            with self.subTest(card=card_id):
+                state = play_flash(board(hand=(FLASH, card_id)))
+                before = fingerprint(state)
+                with self.assertRaises(UnsupportedError) as caught:
+                    apply_command(state, PlayTrainer(0, card_in_hand(state, card_id)))
+                self.assertEqual(caught.exception.code, CODES["FU3"])
+                self.assertEqual(fingerprint(state), before)
+
+    def test_multi_draw_with_only_the_top_face_up_goes_through(self):
+        state = play_flash(board(hand=(FLASH, BILL)))
+        state.face_up_deck = tuple(uid for uid in state.face_up_deck if uid not in state.players[0].deck[1:])  # いちばん上だけがおもての盤面（テスト用）
+        top = state.players[0].deck[0]
+        after = apply_command(state, PlayTrainer(0, card_in_hand(state, BILL)))
+        self.assertIn(top, after.players[0].hand)
+        self.assertEqual(FU.face_up_in_deck(after, 0), ())
+
+    def test_search_then_shuffle_clears_marks_without_extra_rng(self):
+        state = play_flash(board(hand=(FLASH, COMPUTER_SEARCH, BILL, OAK)))
+        state = apply_command(state, PlayTrainer(0, card_in_hand(state, COMPUTER_SEARCH)))
+        d = state.decision  # 手札 2 枚をすてる
+        state = apply_command(state, ResolveDecision(0, d.id, tuple(uid for uid in d.options if state.cards[uid].card_id in (BILL, OAK))))
+        d = state.decision
+        hidden = [uid for uid in state.players[0].deck[1:] if uid in state.face_up_deck]
+        with self.assertRaises(UnsupportedError) as caught:
+            apply_command(state, ResolveDecision(0, d.id, (hidden[0],)))
+        self.assertEqual(caught.exception.code, CODES["FU3"])
+        chosen = next(uid for uid in d.options if uid not in state.face_up_deck)
+        rng = _copy.deepcopy(state.rng)
+        after = apply_command(state, ResolveDecision(0, d.id, (chosen,)))
+        self.assertEqual(FU.face_up_in_deck(after, 0), ())
+        shuffle = [e for e in after.log if e["kind"] == "shuffle"][-1]
+        self.assertEqual(shuffle["face_up_cleared"], 5)
+        # 乱数: 印の有無で、切ることの乱数の使い方は変わらない（印を消してから、同じ 1 回の shuffle）
+        deck = [uid for uid in state.players[0].deck if uid != chosen]
+        rng.shuffle(deck)
+        self.assertEqual(after.players[0].deck, deck)
+        self.assertTrue(any(e["kind"] == "flash_face_up" and e["owner"] == 0 for e in after.log))  # 記憶（公開のログ）は残る
+        self.assertEqual(observation_problems(after), [])
+        top = state.players[0].deck[0]
+        if top in d.options:
+            apply_command(state, ResolveDecision(0, d.id, (top,)))  # いちばん上（見えている）を取るのは受け付ける
+
+    def test_shuffle_without_marks_is_unchanged(self):
+        state = board(hand=(COMPUTER_SEARCH, BILL, OAK))
+        state = apply_command(state, PlayTrainer(0, card_in_hand(state, COMPUTER_SEARCH)))
+        d = state.decision
+        state = apply_command(state, ResolveDecision(0, d.id, tuple(uid for uid in d.options if state.cards[uid].card_id in (BILL, OAK))))
+        d = state.decision
+        after = apply_command(state, ResolveDecision(0, d.id, (d.options[0],)))
+        self.assertEqual(set([e for e in after.log if e["kind"] == "shuffle"][-1]), {"kind", "turn", "player"})
+
+    def test_place_on_top_stops_only_with_face_up(self):
+        plain = board(hand=(RETRIEVER,), discard0=(RATICATE_C,))
+        apply_command(plain, PlayTrainer(0, card_in_hand(plain, RETRIEVER)))  # おもてのない山札は v0.125 までと同じ
+        state = play_flash(board(hand=(FLASH, RETRIEVER), discard0=(RATICATE_C,)))
+        before = fingerprint(state)
+        with self.assertRaises(UnsupportedError) as caught:
+            apply_command(state, PlayTrainer(0, card_in_hand(state, RETRIEVER)))
+        self.assertEqual(caught.exception.code, CODES["FU4"])
+        self.assertEqual(fingerprint(state), before)
+
+    def test_look_and_return_stops_but_declining_is_accepted(self):
+        state = play_flash(board(hand=(FLASH, POKEDEX)))
+        state = apply_command(state, PlayTrainer(0, card_in_hand(state, POKEDEX)))
+        d = state.decision
+        for count in d.options:
+            if count == 0:
+                after = apply_command(state, ResolveDecision(0, d.id, (0,)))
+                self.assertEqual(FU.face_up_in_deck(after, 0), FU.face_up_in_deck(state, 0))
+                continue
+            with self.assertRaises(UnsupportedError) as caught:
+                apply_command(state, ResolveDecision(0, d.id, (count,)))
+            self.assertEqual(caught.exception.code, CODES["FU5"])
+
+    def test_swap_prize_with_face_up_top_stops_before_declaring(self):
+        """FU6: ［わるふざけ］（PMCG4-045）でサイドと山札のいちばん上を入れかえる。おもての山札なら宣言の前に止め、おもてのない山札では v0.125 までと同じに使える。"""
+        from kyuura_engine import UsePokemonPower
+
+        def side():
+            return build_test_state([{"active": "PMCG4-045", "hand": [FLASH], "deck": list(ENERGIES) * 2, "prizes": 6},
+                                     {"active": CHANSEY, "deck": list(ENERGIES) * 2, "prizes": 6}])
+
+        plain = side()
+        apply_command(plain, UsePokemonPower(0, plain.players[0].active.pokemon_id, 0))
+        state = play_flash(side())
+        before = fingerprint(state)
+        with self.assertRaises(UnsupportedError) as caught:
+            apply_command(state, UsePokemonPower(0, state.players[0].active.pokemon_id, 0))
+        self.assertEqual(caught.exception.code, CODES["FU6"])
+        self.assertEqual(fingerprint(state), before)
+
+    def test_radio_tower(self):
+        state = play_flash(board(hand=(FLASH, RADIO_TOWER)))
+        state = apply_command(state, PlayTrainer(0, card_in_hand(state, RADIO_TOWER)))
+        state = apply_command(state, UseStadium(0))
+        d = state.decision
+        with self.assertRaises(UnsupportedError) as caught:
+            apply_command(state, ResolveDecision(0, d.id, (1,)))
+        self.assertEqual(caught.exception.code, CODES["FU5"])
+        apply_command(state, ResolveDecision(0, d.id, (0,)))
+
+
+class PersistenceTest(unittest.TestCase):
+    """7 章: 保存・複製で、向き・順序・決定の段階・使用中のカードを保つ。形式 31。"""
+
+    def test_mid_flash_copies_continue_identically(self):
+        state = apply_command(board(), PlayTrainer(0, card_in_hand(board(), FLASH)))
+        d = state.decision
+        mid = apply_command(state, ResolveDecision(1, d.id, tuple(reversed(d.options))))
+        finals = []
+        for copy in (mid, mid.clone(), _copy.deepcopy(mid), _pickle.loads(_pickle.dumps(mid))):
+            self.assertEqual((copy.face_up_deck, copy.decision, copy.trainer_in_use), (mid.face_up_deck, mid.decision, mid.trainer_in_use))
+            d2 = copy.decision
+            done = apply_command(copy, ResolveDecision(0, d2.id, tuple(reversed(d2.options))))
+            finals.append(fingerprint(apply_command(done, EndTurn(0))))
+        self.assertEqual(len(set(finals)), 1)
+
+    def test_format_31(self):
+        state = play_flash(board())
+        self.assertEqual(max(FORMAT_VERSIONS), 31)
+        self.assertEqual(state_to_dict(state, format_version=31)["face_up_deck"], list(state.face_up_deck))
+        for version in (1, 29, 30):
+            with self.assertRaises(ValueError):
+                state_to_dict(state, format_version=version)
+        plain = board()
+        self.assertEqual({k: v for k, v in state_to_dict(plain, format_version=31).items() if k not in ("face_up_deck", "format_version")},
+                         {k: v for k, v in state_to_dict(plain, format_version=30).items() if k != "format_version"})
+        self.assertEqual(serialization_problems(state), [])
+        old = _pickle.loads(_pickle.dumps(plain))
+        old.__dict__.pop("face_up_deck", None)  # v0.125 までの写し（項目がない）
+        self.assertEqual(old.face_up_deck, ())
+
+
+class AuditTest(unittest.TestCase):
+    """7 章: 監査は、エンジンが出した公開範囲を正解にしない（ログから組み立てた印・観測と照らす）。"""
+
+    @classmethod
+    def setUpClass(cls):
+        from tools import existing_effect_games as games
+
+        cls.result = games.play(("M126", "F126"), 90, keep_state=True)  # 開発用の seed（正式な対戦の seed 0〜3 とは別）
+        cls.done = cls.result["state"]
+
+    def test_real_game_passes(self):
+        from tests.log_audit import log_problems
+
+        self.assertEqual(self.result["audit"], {})
+        self.assertGreater(self.result["v126"]["flash_arranged"], 0)
+        self.assertGreater(self.result["v126"]["drew_face_up"], 0)
+        self.assertEqual(log_problems(self.done), [])
+
+    def test_tampered_logs_are_found(self):
+        from types import MappingProxyType
+
+        from tests.log_audit import log_problems
+
+        face_up = next(e for e in self.done.log if e["kind"] == "flash_face_up")
+        top = next(e for e in self.done.log if e["kind"] == "face_up_deck_top" and e["card_id"] is not None)
+        other = next(cid for cid in ENERGIES + (FLASH,) if cid != top["card_id"] and cid != face_up["top_card_id"])
+        changes = {
+            "公開したいちばん上": lambda e: MappingProxyType(dict(e, top_card_id=other)) if e is face_up else e,
+            "uid を書いた": lambda e: MappingProxyType(dict(e, card=1)) if e is face_up else e,
+            "次のいちばん上": lambda e: MappingProxyType(dict(e, card_id=other)) if e is top else e,
+        }
+        cleared = next((e for e in self.done.log if e["kind"] == "shuffle" and e.get("face_up_cleared")), None)
+        self.assertIsNotNone(cleared)
+        changes["印の消し忘れ"] = lambda e: MappingProxyType({k: v for k, v in e.items() if k != "face_up_cleared"}) if e is cleared else e
+        for name, change in changes.items():
+            with self.subTest(name=name):
+                tampered = self.done.clone()
+                tampered.log = tuple(change(e) for e in self.done.log)
+                self.assertTrue(log_problems(tampered), name)
+
+    def test_observation_leak_is_found(self):
+        tampered = self.done.clone()
+        extra = next(uid for p in tampered.players for uid in p.deck if uid not in tampered.face_up_deck)
+        tampered.face_up_deck = tampered.face_up_deck + (extra,)
+        self.assertTrue(observation_problems(tampered))
+
+
+class DocumentTest(unittest.TestCase):
+    """10 章: 版の文書・対応状況・裁定・データの来歴・README の v0.126。"""
+
+    def test_documents(self):
+        doc = (ROOT / "docs" / "flash-faceup-deck-v0.126.md").read_text(encoding="utf-8")
+        for short, code in CODES.items():
+            self.assertIn(f"| {short} | `{code}` |", doc)
+        self.assertIn("UNSUPPORTED_FACE_UP_DECK_PATH", doc)
+        self.assertIn(E.FLASH_LATEST_TEXT, doc)
+        self.assertRegex((ROOT / "README.md").read_text(encoding="utf-8"), r"\n- v0\.126（(今のエンジンの版。)?`kyuura_engine` の版は 0\.126\.0）: フラッシュと表向きの山札")
+        self.assertIn("## v0.126: フラッシュと表向きの山札\n", (ROOT / "docs" / "implementation-status.md").read_text(encoding="utf-8"))
+        self.assertIn("### v0.126: フラッシュと表向きの山札", (ROOT / "docs" / "rules-2000-02-14.md").read_text(encoding="utf-8"))
+        self.assertIn("## v0.126: 写しの元・研究の基準を kyuura 57d01f4 に上げる移行", (ROOT / "docs" / "data-provenance.md").read_text(encoding="utf-8"))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -365,12 +365,13 @@ class RegistrationTest(unittest.TestCase):
 
         extract = read_extract()
         self.assertEqual(extract["pool_v0_125"], [W])
-        self.assertEqual(cards_after(extract, "0.124"), frozenset({W}))
+        self.assertEqual(cards_after(extract, "0.124") - cards_after(extract, "0.125"), frozenset({W}))  # v0.126: 後の版のカード（フラッシュ）を除いて比べる
         self.assertNotIn(W, cards_before(extract, "0.125"))
         trimmed = dict(extract, cards=[c for c in extract["cards"] if c["id"] != W], pool_v0_125=[])
         playable = pool_from_extract(trimmed, E.DEFAULT_EFFECTS).playable_ids
+        playable = playable - cards_after(extract, "0.125")  # v0.126: 後の版で加えたカード（フラッシュ）を除いて比べる
         self.assertEqual(len(playable), 1360)
-        self.assertEqual(set(load_card_pool().playable_ids) - set(playable), {W})
+        self.assertEqual(set(load_card_pool().playable_ids) - set(playable) - cards_after(extract, "0.125"), {W})
         if (ROOT / ".git").exists():
             base_ids = {c["id"] for c in engine_json(BASE_ENGINE, "kyuura_engine/data/kyuura_cards.json")["cards"]}
             self.assertLessEqual(set(playable), base_ids)
@@ -493,7 +494,8 @@ class InflateTest(unittest.TestCase):
     def test_format_and_copies(self):
         done = apply_kernel(self.board({"card": HITMONCHAN, "energy": [FIGHTING] * 3}), UseAttack(0, 0))
         self.assertEqual(serialization_problems(done), [])
-        for version in FORMAT_VERSIONS[:-1]:
+        # v0.126: 形式 31（おもての山札）を加えた。印のある効果を表せないのは形式 1〜29（docs/flash-faceup-deck-v0.126.md 7 章）
+        for version in (v for v in FORMAT_VERSIONS if v < 30):
             with self.subTest(version=version), self.assertRaises(ValueError):
                 state_to_dict(done, format_version=version)
         [item] = state_to_dict(done, format_version=30)["players"][0]["active"]["persistent_effects"]

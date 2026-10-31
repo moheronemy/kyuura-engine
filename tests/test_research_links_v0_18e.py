@@ -215,7 +215,10 @@ class ResearchLinksTest(unittest.TestCase):
                                      "UNRESOLVED_SUPER_TRANSFORM_TARGET", "UNRESOLVED_SUPER_TRANSFORM_SOURCE_CHANGE", "UNRESOLVED_SUPER_TRANSFORM_COPIED_POWER",
                                      "UNRESOLVED_SUPER_TRANSFORM_SUPPRESSED_FORM", "UNRESOLVED_SUPER_TRANSFORM_ENERGY_COLORS", "UNRESOLVED_DARK_PULSE_TIMING",
                                      # v0.125: HH1・HH2・IF1（kyuura 134a664 の論点と、事例を加えた既存の論点に結んだ。未解決の一覧（v0.113 の写し）に行はない）
-                                     "UNRESOLVED_HELPING_HAND_WITHOUT_CONDITION", "UNRESOLVED_HELPING_HAND_CHOICE", "UNRESOLVED_INFLATE_NON_ATTACK_DAMAGE"})
+                                     "UNRESOLVED_HELPING_HAND_WITHOUT_CONDITION", "UNRESOLVED_HELPING_HAND_CHOICE", "UNRESOLVED_INFLATE_NON_ATTACK_DAMAGE",
+                                     # v0.126: FU1〜FU6（kyuura 57d01f4 の論点 UQ-STATED-COUNT-SHORT・UQ-FLASH-FACE-UP-DECK の事例に結んだ。未解決の一覧（v0.113 の写し）に行はない）
+                                     "UNRESOLVED_FLASH_DECK_SHORT", "UNRESOLVED_FACE_UP_DECK_CHECK", "UNRESOLVED_FACE_UP_DECK_HIDDEN_TAKE",
+                                     "UNRESOLVED_FACE_UP_DECK_PLACE_TOP", "UNRESOLVED_FACE_UP_DECK_LOOK_RETURN", "UNRESOLVED_FACE_UP_DECK_MOVE"})
         # v0.31〜v0.68 は、kyuura の一覧でコードのない行を指していた停止コード 8 件（T27・C34/C35・G40・P19・P32・Z9・DR8・DR13）に kyuura_index_engine_key を
         # 書いていた。v0.69 で kyuura が停止コードを書いたので外した（scripts/check_research_links.py が、kyuura の一覧のコードで照らす）
         # v0.97: SS1（v0.60 のコードのない問い。kyuura の一覧ではコードのない行）にコードを付けたので、その行を指す（v0.31 と同じ形）
@@ -270,7 +273,8 @@ class ResearchLinksTest(unittest.TestCase):
         # 登録していないカード・場面に要るカードを登録していないもの、化石のメタモンの 3 件はコードのない問いだった。docs/super-transform-dark-pulse-v0.124.md 2.4 節・7 章）
         # v0.125: kyuura 134a664 の新しい論点 2 件のうち、UQ-DESTRUCTIVE-FIRE-FAILURE は事例のカード（ひかるバンギラス）を登録していないので、事例の対応にだけある。
         # UQ-HELPING-HAND-CHOICE は、プクリンを登録して停止コード HH2 に結んだ（移行の段では事例の対応にだけあった。docs/wigglytuff-helping-hand-v0.125.md 2.4 節・5 章）
-        self.assertEqual(cases - issues, {"UQ-BILINGUAL-NAME-GLOSS", "UQ-MIND-GAMES-OPTIONAL", "UQ-MIND-GAMES-TRAINER-STEP", "UQ-FLASH-FACE-UP-DECK",
+        # v0.126: UQ-FLASH-FACE-UP-DECK は、フラッシュを登録して停止コード FU2〜FU6 に結んだ（docs/flash-faceup-deck-v0.126.md 7 章）
+        self.assertEqual(cases - issues, {"UQ-BILINGUAL-NAME-GLOSS", "UQ-MIND-GAMES-OPTIONAL", "UQ-MIND-GAMES-TRAINER-STEP",
                                           "UQ-SWAP-PLEASE-OWNERSHIP", "UQ-DESTRUCTIVE-FIRE-FAILURE"})
         self.assertEqual(len(issues | cases), LINKS["counts"]["kyuura_issues"])
         self.assertTrue(all(i.startswith("UQ-") for i in issues))

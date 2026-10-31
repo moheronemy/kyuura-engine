@@ -272,7 +272,12 @@ class ResearchLinksTest(unittest.TestCase):
         self.assertEqual(self.links["engine_import_id"], "ENGINE-46A3E2E")
 
     def test_new_cases(self):
-        added = [c for c in self.links["kyuura_cases_without_engine_ruling"]["cases"] if "v0.123 で研究の基準を 74b3ceb に上げて結んだ" in c.get("note", "")]
+        # v0.126: フラッシュ（ES2-035）を登録して、ES2-035 の事例と ES2-035 が要るとしていた事例を停止コード（FU1〜FU5）に結んだ（docs/flash-faceup-deck-v0.126.md 2.4 節・7 章。
+        # 今の値は tests/test_flash_faceup_deck_v0_126.py）。v0.123〜v0.125 の扱いは、v0.125 の最後のコミットの対応表で確かめる
+        if not (ROOT / ".git").exists():
+            self.skipTest("このリポジトリの git の履歴がない（取り出した木）")
+        links = engine_json("19c22051d10ec2a7610e7c7641b2c6053bd5c3f1", "kyuura_engine/data/research_links.json")
+        added = [c for c in links["kyuura_cases_without_engine_ruling"]["cases"] if "v0.123 で研究の基準を 74b3ceb に上げて結んだ" in c.get("note", "")]
         self.assertEqual(len(added), 25)
         self.assertEqual({c["kyuura_issue"] for c in added}, {*NEW_ISSUES, "UQ-STATED-COUNT-SHORT", "UQ-CHAOS-GYM-BORROWED-TURN"})
         unregistered = {(c["kyuura_issue"], c["card_id"]) for c in added if c["engine"] == {"unregistered": True}}
@@ -285,7 +290,7 @@ class ResearchLinksTest(unittest.TestCase):
         pool = load_card_pool()
         for (_, card), others in required.items():
             self.assertIn(card, pool.playable_ids, card)
-            self.assertFalse(set(others) & pool.playable_ids, card)
+            self.assertFalse((set(others) - {"ES2-035"}) & pool.playable_ids, card)  # v0.126: ES2-035 は登録した（この版ではまだ登録していない）
 
     def test_requires_unregistered_is_checked(self):
         """``requires_unregistered``: 挙げたカードは、同じ論点の事例のカードで、登録していない。事例のカードは登録している。"""

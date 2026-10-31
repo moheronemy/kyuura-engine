@@ -1978,6 +1978,17 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   SX1・TN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形の別のカードの問い）。v0.66 の「ナツメのESPと「うら」が出るまでのコインは起こらない」はエンジンの前提の誤りで、研究の論点ではない（kyuura は
   変えていない）。
 
+## v0.126: フラッシュ（表向きの山札）
+
+[flash-faceup-deck-v0.126.md](flash-faceup-deck-v0.126.md) の 3 章〜7 章。写しの元・研究の基準は kyuura 57d01f4（移行の段 v0.126 のあと）。
+
+- 写しの組 `pool_v0_126` にフラッシュ ES2-035 を加えた（値は 134a664 と同じ。訂正はない）。採用の記録は `kyuura_data`・`adopted`・`kyuura_commit` 57d01f4・`play_text.trainer` = LD-ES2-035-TRAINER
+  （kyuura が 2026-10-31 に『オフィシャルブック2000』p.270 を画像で読んだ最新の説明。エンジンは原典・画像を見ていない）。登録の出典も LD- の id（採用の記録で登録したトレーナーの最新の説明は初めて。
+  `check_research_links.py`・`check_card_sources.py` を、ワザ・特殊能力と同じ形に広げた）。LD-ES2-035-TRAINER は研究の対応表の `registered_trainers` に移した。CC-ES2-035-P270 は `not_in_engine` のまま。
+- 研究の対応表: 停止コード 304 → 310（FU1〜FU6。どれも kyuura の論点に結び、未解決の一覧に行がない `issue_not_in_index`）。UQ-STATED-COUNT-SHORT・UQ-FLASH-FACE-UP-DECK の ES2-035 の事例と、
+  ES2-035 が要るとしていたポケモン再転送 ES3-035・ポケモン図鑑 PMCG1-082・ラジオとう neo4-112 の事例を停止コードに結んだ。ヤドキング neo1-049・とりかえっこプリーズ PR1-027 は登録していない。
+- kyuura への報告事項: UQ-FLASH-FACE-UP-DECK の事例に、2 枚以上をまとめて引く・山札をさがして途中のおもてのカードを取る・サイドと入れかえる場面（エンジンの FU3・FU6）がない。
+
 ## v0.126: 写しの元・研究の基準を kyuura 57d01f4 に上げる移行
 
 [flash-faceup-deck-v0.126.md](flash-faceup-deck-v0.126.md) の 2 章。この節は、カードの登録と処理の変更を加えない移行だけのコミットの記録です。
