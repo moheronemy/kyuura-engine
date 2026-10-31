@@ -1672,6 +1672,9 @@
     "ES2-032",
     "PRN-041"
   ],
+  "pool_v0_125": [
+    "ES1-027"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -126430,6 +126433,118 @@
         {
           "page": "neop041",
           "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "ES1-027",
+      "jp_set": "ES1",
+      "category": "pokemon",
+      "name": {
+        "ja": "プクリン",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "プリン",
+          "en": null
+        },
+        "hp": 90,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "てだすけ",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回、このカードがベンチにいる時にだけ使える。コインを投げて「おもて」なら、自分の対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態のうちの1つを回復させる。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ふくらむ",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "このカードが次の相手に受けるダメージは「-10」される。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex1027"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex1027.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第1弾(青版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex1027.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stex1027",
+          "list_number": "027/036"
         }
       ]
     }

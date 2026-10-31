@@ -24,7 +24,7 @@ v0.4c 以降の 2 進化ポケモン。v0.11 はサカキのワンリキー・�
 - v0.121 で、段 v0.121（e519b99 → 2fe0bc0）を加えました（docs/hand-bench-attack-conditions-v0.121.md 3 章）。
 - v0.123 で、段 v0.123（2fe0bc0 → 74b3ceb）を加えました（docs/arcanine-name-migration-v0.123.md 2 章）。
 - v0.124 で、段 v0.124（74b3ceb → b9e7cff）を加え、写しの組 pool_v0_124（2 枚）を加えました（docs/super-transform-dark-pulse-v0.124.md 2 章・4 章）。
-- v0.125 で、段 v0.125（b9e7cff → 134a664）を加えました（docs/wigglytuff-helping-hand-v0.125.md 2 章）。
+- v0.125 で、段 v0.125（b9e7cff → 134a664）を加え、写しの組 pool_v0_125（1 枚）を加えました（docs/wigglytuff-helping-hand-v0.125.md 2 章・3 章）。
 
 使い方::
 
@@ -3570,6 +3570,12 @@ POOL_V0_124 = [
     "PRN-041",  # GR団のミュウツー（プロモ（neo）。たね・超・HP70。［わるいはどう］・わるいぞうふく）
 ]
 
+# v0.125（docs/wigglytuff-helping-hand-v0.125.md 3 章）: プクリン（拡張シート第1弾青版。［てだすけ］・ふくらむ）の 1 枚。写しの元・研究の基準は 134a664（段 v0.125 の移行のあと）。
+# 値は b9e7cff と同じ（訂正はない。ふくらむの文面は印刷の 1 字が読めない転記のまま。kyuura の訂正の候補 held_illegible_print）
+POOL_V0_125 = [
+    "ES1-027",  # プクリン（拡張シート第1弾青版。1進化（プリンから）・無色・HP90。［てだすけ］・ふくらむ）
+]
+
 POOLS = [
     ("pool_v0_1", POOL_V0_1),
     ("pool_v0_2b", POOL_V0_2B),
@@ -3700,6 +3706,7 @@ POOLS = [
     ("pool_v0_122", POOL_V0_122),
     ("pool_v0_123", POOL_V0_123),
     ("pool_v0_124", POOL_V0_124),
+    ("pool_v0_125", POOL_V0_125),
 ]
 
 

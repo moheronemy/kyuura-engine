@@ -658,6 +658,7 @@ POOL_KEYS = (
     "pool_v0_122",  # v0.122（アンノーンの併用・化石の進化履歴・退却時の反応のポケモン 13 枚。docs/unown-fossil-retreat-reactions-v0.122.md）
     "pool_v0_123",  # v0.123（名前の訂正の移行とウィンディ 3 枚。docs/arcanine-name-migration-v0.123.md）
     "pool_v0_124",  # v0.124（変身の共通ルール・すごいへんしん・わるいはどう。docs/super-transform-dark-pulse-v0.124.md）
+    "pool_v0_125",  # v0.125（プクリンの最新の説明・てだすけ。docs/wigglytuff-helping-hand-v0.125.md）
 )
 
 

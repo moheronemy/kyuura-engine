@@ -97,7 +97,7 @@ from typing import TYPE_CHECKING, Any, Callable, ClassVar, Iterable, Mapping, Se
 
 from .cards import EnergyType, can_pay_with_units
 from .coins import CoinSide, flip_coins
-from .conditions import CONFUSION, CURED, PARALYSIS, POISON, SLEEP, SWITCH, clear_special_conditions, confuse, put_to_sleep
+from .conditions import CONFUSION, CURED, PARALYSIS, POISON, SLEEP, SWITCH, clear_special_conditions, confuse, cure_conditions, put_to_sleep
 from .damage import (
     HALVE_DOWN, HALVE_UP, MULTIPLY, REDUCE_CHOICE, SET, SET_IF_AT_LEAST, ZERO_IF_AT_LEAST, ZERO_IF_BELOW, DamageCalculation, DamageModifier, DamageOrderRequired,
     DamageReductionRequired, calculate_attack_damage, calculate_confusion_damage,
@@ -4537,23 +4537,51 @@ class DamageAndSelfDamageThenPoisonOnHeads(AttackEffect):
         return DamageProfile(opponent=(attack.damage,), self_damage=(self.self_damage,))
 
 
+# v0.125（docs/wigglytuff-helping-hand-v0.125.md 4 章）: プクリン（ES1-027）の「ふくらむ」の最新の説明 LD-ES1-027-ATK0（『オフィシャルブック2000』p.226。kyuura が 2026-10-31 に画像で
+# 読んだ記録）の全文（「される。」のあとに全角の括弧。括弧のあとに句点はない）
+INFLATE_LATEST_TEXT = "次の相手の番、このカードが受けるダメージは「-10」される。（ダメージ以外の効果はそのまま）"
+# v0.125: 印刷の文面（kyuura の写し）→ (処理に使う最新の説明, 量)。写しの文面は印刷の「相手の」の「の」と漢字 1 字（画像・図版でも読めない）が欠けた転記で、期間が決まらない
+# （kyuura の訂正の候補 held_illegible_print。訂正していない）。印刷の未読の字を補った文面・欠けた文面を ``expected`` に加えず、全文と量を結び付けた組だけを、最新の説明にしたがう登録
+# （``latest``）で受け付ける（v0.121 のなきごえの ``GROWL_PRINTED_UNDER_LATEST`` と同じ形）
+INFLATE_PRINTED_UNDER_LATEST: Mapping[str, tuple[str, int]] = MappingProxyType({"このカードが次の相手に受けるダメージは「-10」される。": (INFLATE_LATEST_TEXT, 10)})
+
+
 @dataclass(frozen=True)
 class DamageThenReduceDamageNextTurn(AttackEffect):
     """相手にダメージの目安の数字ぶんのダメージ。次の相手の番、このカードがワザによって受けるダメージは ``amount`` へる（v0.38。ナツメのポリゴンの
     「バリアアタック」の「「-10」される」）。効果は v0.31 のピクシーの「ちいさくなる」と同じ持続する効果 ``DamageReduction``（p.321 の 8 段階。ワザのダメージ
     だけ。こんらんの 20・どくのダメージは変えない。期限は次の相手の番の終わり。ベンチにもどる・進化・きぜつで消える）。このカードが相手の「はんげき」などで
-    HP 以上になったら与えない（p.309。ログ ``persistent_effect_skipped``）。"""
+    HP 以上になったら与えない（p.309。ログ ``persistent_effect_skipped``）。
+
+    v0.125（docs/wigglytuff-helping-hand-v0.125.md 4 章）: プクリン（ES1-027）の「ふくらむ」は、最新の説明 LD-ES1-027-ATK0 の全文にしたがう登録（``latest``）。量・段階・期限・消える
+    契機・発生源（実際にワザを使ったポケモン）は上と同じ（CR-INFLATE-LATEST・CR-INFLATE-DAMAGE-STEP（SUPPORTED。p.321 の 8 段階））。最新の説明は「このカードが受けるダメージ」と
+    ワザに限らずに書くので、相手の番にワザ以外（特殊能力）のダメージを受けるときに当てはめるかは決まらない（kyuura の UQ-NON-ATTACK-DAMAGE-MODIFIERS の事例）。この登録の効果だけ、
+    持続する効果に印（``DamageReduction.non_attack_unresolved``）を付け、受けるときに IF1 で止める（``received_power_damage``。ワザのダメージは止めない）"""
 
     amount: int
     # v0.78: コインの「おもて」のときだけ与える（エアームド（neo1-058）の「はがねのつばさ」の「コインを投げて「おもて」なら、次の相手の番、このカードが、ワザによって受ける
     # ダメージは「-20」される。」）。コインは自分への効果を決めるコイン（相手の状態によらず投げる。このカードがこのワザで HP 以上なら投げない）。既定の偽は v0.38 と同じ
     on_heads: bool = False
+    # v0.125: 処理に使う文面を最新の説明にした登録（プクリン ES1-027 の「ふくらむ」）の、その最新の説明の全文。None なら印刷の文面で照合する（v0.124 までと同じ）
+    latest: str | None = None
     implementation_id = "damage_then_reduce_damage_next_turn"
 
     def __post_init__(self) -> None:
         _positive_tens(self.amount, "へらすダメージ")
 
+    @property
+    def non_attack_unresolved(self) -> bool:
+        """v0.125: 与える持続する効果を、ワザ以外のダメージに当てはめるかが決まらない（IF1）か。最新の説明 ``INFLATE_LATEST_TEXT`` にしたがう登録だけ真（ほかの登録は v0.124 までと
+        同じく、ワザのダメージだけを減らす実装のまま。docs 4 章）。"""
+        return self.latest == INFLATE_LATEST_TEXT
+
     def check(self, attack: Attack) -> list[str]:
+        if self.latest is not None:
+            what = "ダメージのあと次の相手の番に受けるダメージがへるワザ"
+            problems = _check_form(attack, what, damage="fixed")
+            if self.on_heads or INFLATE_PRINTED_UNDER_LATEST.get(attack.text_ja or "") != (self.latest, self.amount):
+                problems.append(f"説明 {attack.text_ja!r} が、最新の説明 {self.latest!r}・量 {self.amount} と組にした印刷の文面ではない")
+            return problems
         expected = ((f"コインを投げて「おもて」なら、次の相手の番、このカードが、ワザによって受けるダメージは「-{self.amount}」される。",) if self.on_heads
                     else (f"次の相手の番、このカードがワザによって受けるダメージは「-{self.amount}」される。",
                           # v0.79: プリン（neo4-085）の「ふくらむ」の書き方。ダメージのない v0.62 の「あながくれ」（``reduce_damage_next_turn_texts``）と同じ言い回しで、
@@ -13143,6 +13171,11 @@ def received_power_damage(state: GameState, owner: int, receiver: PokemonInPlay,
     特殊能力のダメージに当てはめるかが決まらないので ``UnsupportedError``（量を変える前。呼ぶ側が状態を変える前に聞く）。"""
     if amount > 0 and doubled_damage(state, receiver) is not None:
         raise UnsupportedError(DOUBLED_POWER_DAMAGE_CODE, f"ポケモン {receiver.pokemon_id} の特殊能力のダメージ {amount}: {DOUBLED_POWER_DAMAGE_REASON}")
+    reduction = damage_reduction(state, receiver)
+    if amount > 0 and reduction is not None and reduction.non_attack_unresolved:
+        # v0.125（IF1）: 「ふくらむ」の効果がはたらく番の特殊能力のダメージ。減らすかで受けるダメージが変わるので止める（DB1 と同じく、量を変える前。呼ぶ側が状態を変える前に聞く）。
+        # ワザのダメージ（p.321 の 8 段階）・どく（ポケモンチェックはどちらの番でもない。p.323）は、ここを通らない
+        raise UnsupportedError(INFLATE_NON_ATTACK_DAMAGE_CODE, f"ポケモン {receiver.pokemon_id} の特殊能力のダメージ {amount}: {INFLATE_NON_ATTACK_DAMAGE_REASON}")
     growl = reduced_damage_to_source(state, source)
     if amount > 0 and growl is not None and not expires_at_turn_start(growl) and growl.source_card == receiver.card:
         # v0.76: 「なきごえ」（説明は「…このカードにダメージを与える時」で、ワザに限らない）を受けたポケモンが、はたらく番に、効果を与えたポケモンに特殊能力のダメージを
@@ -19888,6 +19921,13 @@ DOUBLED_POWER_DAMAGE_CODE = "UNRESOLVED_DOUBLED_DAMAGE_POWER_DAMAGE"
 DOUBLED_POWER_DAMAGE_REASON = (
     "「もろばバサミ」の「次の相手の番、このカードが受けるダメージは2倍になる。」を、特殊能力のダメージ（ワザによるダメージではない。p.321「8」）に当てはめるかは、"
     "印刷の文面・kyuura の記録から決められない（DB1。ワザのダメージは p.321 の 8 段階で 2 倍。トレーナーのダメージは TD1）"
+)
+# IF1（v0.125。docs/wigglytuff-helping-hand-v0.125.md 4 章）: プクリンの「ふくらむ」の「次の相手の番、このカードが受けるダメージは「-10」される」を、はたらく番にワザ以外（特殊能力）の
+# ダメージに当てはめるか（kyuura の UQ-NON-ATTACK-DAMAGE-MODIFIERS の事例。ワザのダメージは p.321 の 8 段階で引く）
+INFLATE_NON_ATTACK_DAMAGE_CODE = "UNRESOLVED_INFLATE_NON_ATTACK_DAMAGE"
+INFLATE_NON_ATTACK_DAMAGE_REASON = (
+    "「ふくらむ」の最新の説明「次の相手の番、このカードが受けるダメージは「-10」される。（ダメージ以外の効果はそのまま）」を、相手の番にワザ以外（特殊能力）で受けるダメージに"
+    "当てはめるかは、最新の説明・kyuura の記録から決められない（IF1。kyuura の UQ-NON-ATTACK-DAMAGE-MODIFIERS。ワザのダメージは p.321 の 8 段階で引く。CR-INFLATE-DAMAGE-STEP）"
 )
 # MT1（v0.78）: ワザでないダメージに、受けるダメージを変える常にはたらく特殊能力と、鋼エネルギー（NIP1X-010。ワザに限らない「-10」）の両方が当てはまり、当てはめる順番で
 # 量が変わる場合
@@ -47955,3 +47995,89 @@ V0_124_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
     PowerKey("PRN-041", 0): PowerEntry(DarkPulse(), "わるいはどう", DARK_PULSE_TEXT, DARK_PULSE_TEXT, _KYUURA_PRINTED_TEXT),
 })
 DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_124_ATTACKS), V0_124_POWERS)
+
+
+# ---------------------------------------------------------------- v0.125（docs/wigglytuff-helping-hand-v0.125.md）
+
+# プクリン（拡張シート第1弾青版。ES1-027）の［てだすけ］。印刷の文面（kyuura の写し。照合だけに使う）と、処理に使う最新の説明 LD-ES1-027-PWR0（『オフィシャルブック2000』p.226。kyuura が
+# 2026-10-31 に画像で読んだ記録）の全文。違うのは「ベンチにいる時にだけ使える」→「ベンチにいるとき使える」だけ（kyuura の meaning_change は none_apparent。同じ欄の解説は「ベンチに
+# いるときしか使えない」）
+HELPING_HAND_PRINTED_TEXT = ("この力は、自分の番ごとに1回、このカードがベンチにいる時にだけ使える。コインを投げて「おもて」なら、自分の対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態の"
+                             "うちの1つを回復させる。")
+HELPING_HAND_LATEST_TEXT = ("この力は、自分の番ごとに1回、このカードがベンチにいるとき使える。コインを投げて「おもて」なら、自分の対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態の"
+                            "うちの1つを回復させる。")
+# HH1: 自分の対戦ポケモンに回復する状態がないとき、［てだすけ］を使えるか（コインを投げるか・使ったことになるか）
+HELPING_HAND_WITHOUT_CONDITION_CODE = "UNRESOLVED_HELPING_HAND_WITHOUT_CONDITION"
+HELPING_HAND_WITHOUT_CONDITION_REASON = (
+    "自分の対戦ポケモンが「どく・ねむり・マヒ・こんらん」のどれでもないとき、［てだすけ］を使えるか（コインを投げ、自分の番ごとに1回を使ったことになるか）は、最新の説明・kyuura の"
+    "記録から決められないので扱わない（HH1。kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例。なんでもなおしの FH1・FH2、ヒーリングの答えを流用しない）"
+)
+# HH2: 自分の対戦ポケモンが 2 つの状態（どくと、ねむり・マヒ・こんらんのどれか）のとき、回復する 1 つをだれが、いつ（コインの前か「おもて」のあとか）選ぶか
+HELPING_HAND_CHOICE_CODE = "UNRESOLVED_HELPING_HAND_CHOICE"
+HELPING_HAND_CHOICE_REASON = (
+    "自分の対戦ポケモンが 2 つの状態（どくと、ねむり・マヒ・こんらんのどれか）のとき、［てだすけ］の「おもて」で回復する「うちの1つ」をだれが、いつ（コインを投げる前か、"
+    "「おもて」が出たあとか）選ぶかは、最新の説明・kyuura の記録から決められないので扱わない（HH2。kyuura の UQ-HELPING-HAND-CHOICE。両方を回復する・持ち主が選ぶとは決めない）"
+)
+
+
+def _helping_hand_conditions(state: GameState, player: int) -> tuple[str, ...]:
+    """［てだすけ］が回復しうる、``player`` の対戦ポケモンの特殊状態（p.322 の順。どくと、ねむり・マヒ・こんらんのどれか 1 つ。対戦ポケモンがいなければ空）。"""
+    active = state.players[player].active
+    return () if active is None else active.conditions.names()
+
+
+@dataclass(frozen=True)
+class CureOneActiveConditionOnHeadsFromBench(PowerEffect):
+    """この力は、自分の番ごとに 1 回、このカードがベンチにいるとき使える。コインを投げて「おもて」なら、自分の対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態のうちの 1 つを
+    回復させる（v0.125。プクリン（ES1-027）の［てだすけ］。処理に使う文面は最新の説明 LD-ES1-027-PWR0。docs/wigglytuff-helping-hand-v0.125.md 5 章）。
+
+    - 宣言して使う。自分の番ごとに 1 回（``once_per_turn``。場のポケモンごとの記録 ``require_power_not_used``。コインの「うら」でも使ったことになる。宣言のときに記録する）。
+      このカードがベンチにいるときだけ（``POKEMON_NOT_ON_BENCH``。CR-HELPING-HAND-USE）。選ぶものはない
+    - 回復できる状態がちょうど 1 つのときだけ受け付ける。誰がいつ選ぶ読みでも回復する状態は同じなので、新しい選択の決定を出さない。0 個は HH1（UQ-CARD-USE-WITHOUT-TARGET）、
+      2 個は HH2（UQ-HELPING-HAND-CHOICE）で、宣言の前に止める（状態・使用済みの記録・乱数・ログを変えない）
+    - コインは特殊能力のコイン（``_power_coin``。``source="power"``。ナツメのESPの対象ではない）。「うら」なら何もしない。「おもて」なら、その 1 つだけを回復させる
+      （``conditions.cure_conditions``。どくなら毒（倍率をふくむ）だけ、ねむり・マヒ・こんらんならその状態だけを取りのぞく。ダメージ・マーカー・持続する効果・ついているカードは
+      そのまま）。特殊能力の効果なので「とうめい」・「ワザをうけない」状態は関係しない
+    - 回復で能力の抑止・変身の姿・最大 HP が変わる場合は、宣言する特殊能力の共通の処理の終わり（``resolution.flow`` の ``release_frozen_forms``・きぜつの判定）にまかせる
+    """
+
+    implementation_id = "cure_one_active_condition_on_heads_from_bench"
+    once_per_turn: ClassVar[bool] = True
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "コインで自分の対戦ポケモンの特殊状態を 1 つ回復するベンチの特殊能力", (HELPING_HAND_PRINTED_TEXT,))
+
+    def texts(self) -> tuple[str, ...]:
+        return (HELPING_HAND_LATEST_TEXT,)
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_no_choices(use)
+        if not any(pokemon.pokemon_id == use.pokemon_id for pokemon in state.players[use.player].bench):
+            raise IllegalActionError("POKEMON_NOT_ON_BENCH", f"ポケモン {use.pokemon_id} はベンチにいない（この力は、このカードがベンチにいるとき使える）")
+        require_power_not_used(state, use)
+        names = _helping_hand_conditions(state, use.player)
+        if not names:
+            raise UnsupportedError(HELPING_HAND_WITHOUT_CONDITION_CODE, f"ポケモン {use.pokemon_id}: {HELPING_HAND_WITHOUT_CONDITION_REASON}")
+        if len(names) > 1:
+            raise UnsupportedError(HELPING_HAND_CHOICE_CODE, f"ポケモン {use.pokemon_id}（対戦ポケモンの状態 {list(names)}）: {HELPING_HAND_CHOICE_REASON}")
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        if _power_coin(state, use) is not CoinSide.HEADS:
+            return
+        names = _helping_hand_conditions(state, use.player)
+        if len(names) != 1:
+            raise RuntimeError(f"［てだすけ］の「おもて」で、対戦ポケモンの状態 {names} が 1 つではない（宣言の前に確かめた。エンジンの不具合）")
+        cure_conditions(state, use.player, state.players[use.player].active, names, effect=str(use.key))
+
+
+# v0.125 の登録（ワザ 1・特殊能力 1）。プクリン（拡張シート第1弾青版。ES1-027）のふくらむ・［てだすけ］は、どちらも最新の説明（LD-ES1-027-ATK0・LD-ES1-027-PWR0）の全文にしたがう。
+# 照合する印刷の文面は kyuura の写し（ふくらむは印刷の 1 字が読めない転記のまま。訂正の候補で、訂正していない）
+V0_125_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # プクリン（ES1-027）。ふくらむ（無色 4 個）20
+    AttackKey("ES1-027", 0): AttackEntry(DamageThenReduceDamageNextTurn(10, latest=INFLATE_LATEST_TEXT), "ふくらむ", text_ja="このカードが次の相手に受けるダメージは「-10」される。",
+                                         play_text_ja=INFLATE_LATEST_TEXT, source="LD-ES1-027-ATK0"),
+})
+V0_125_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
+    PowerKey("ES1-027", 0): PowerEntry(CureOneActiveConditionOnHeadsFromBench(), "てだすけ", HELPING_HAND_PRINTED_TEXT, HELPING_HAND_LATEST_TEXT, "LD-ES1-027-PWR0"),
+})
+DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_125_ATTACKS), V0_125_POWERS)

@@ -502,6 +502,9 @@ class DamageReduction:
     created_turn: int
     active_turn: int
     amount: int
+    # v0.125（docs/wigglytuff-helping-hand-v0.125.md 4 章）: プクリンの「ふくらむ」（最新の説明「このカードが受けるダメージは「-10」される」。ワザに限らない書き方）の効果。はたらく番に
+    # ワザ以外（特殊能力）のダメージを受けるとき、当てはめるかが決まらない（IF1。``effects.received_power_damage`` が止める）。ほかの登録の効果は偽（v0.124 までと同じ）
+    non_attack_unresolved: bool = False
     kind: ClassVar[str] = "damage_reduction"
     turns_until_active: ClassVar[int] = 1
     on_opponent: ClassVar[bool] = False

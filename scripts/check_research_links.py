@@ -636,6 +636,12 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
             for e in x.get("data_error") or []:
                 if e.get("field") not in noted:
                     problems.append(f"{card}: kyuura の {x['id']} のデータの誤りの欄 {e.get('field')} が、採用の記録の論点にない")
+                elif record.get("status") == "adopted" and _data_error_marked_harmless(record, e.get("field")):
+                    # v0.125（docs/wigglytuff-helping-hand-v0.125.md 3 章）: データの誤りの欄を「挙動に影響しない」とした採用は、その欄が説明文で、その対象の処理に使う文面が、
+                    # 印刷の文面の欄（printed_text.path）がこの欄・写しの値が kyuura の値と同じ最新の説明（LD-）のときだけ（プクリンのふくらむ）。未読の印刷・訂正の候補を一律に許可しない
+                    reason = _harmless_data_error_problem(card, record, e, descriptions)
+                    if reason:
+                        problems.append(f"{card}: kyuura の {x['id']} のデータの誤りの欄 {e.get('field')} を挙動に影響しないとした論点: {reason}")
 
     # 8. エンジンの処理に使う kyuura の規定・裁定（v0.50。applied_rule_records。退化の共通の処理）: 研究の基準のコミットにあり、裁定なら分類が対応表と同じ
     clauses = {x["id"] for x in rulings.get("rule_clauses", [])}
@@ -656,6 +662,38 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
     # 9. v0.97: kyuura の論点の事例のうち、エンジンの裁定 id（engine_ruling）を書いていないもの（kyuura の調査で加えた事例）と、エンジンでの扱い
     problems += unlinked_case_problems(links, issues, registry_)
     return problems
+
+
+def _data_error_marked_harmless(record: dict, field: str | None) -> bool:
+    """v0.125: 採用の記録の論点のうち、欄 ``field`` を挙げるものが、どれも挙動に影響しない（``affects_behavior`` が偽）か。"""
+    issues = [i for i in record.get("issues") or [] if isinstance(i, dict) and field in (i.get("fields") or [])]
+    return bool(issues) and all(i.get("affects_behavior") is False for i in issues)
+
+
+def _harmless_data_error_problem(card: str, record: dict, error: dict, descriptions: list) -> str | None:
+    """v0.125: データの誤り ``error``（CC- の ``data_error`` の 1 件）を挙動に影響しないとしてよいか。よければ None、だめなら理由の文。
+
+    よいのは、欄が説明文（``pokemon.attacks[i].text.ja``・``pokemon.powers[i].text.ja``）で、その対象（``attack/i``・``power/i``）の採用の記録の処理に使う文面の根拠が kyuura の
+    最新の説明（LD-）の id で、その記録がこのカード・この対象を指し、印刷の文面の欄（``printed_text.path``）がこの欄、印刷の文面の写しの値（``printed_text.text_ja``）が
+    データの誤りの kyuura の値と同じときだけ（処理は最新の説明の全文にしたがい、誤りのある写しの文面は照合だけに使う）。"""
+    field = error.get("field") or ""
+    match = re.fullmatch(r"pokemon\.(attacks|powers)\[(\d+)\]\.text\.ja", field)
+    if match is None:
+        return "説明文でない欄の誤りは、挙動に影響しないとしない"
+    target = f"{'attack' if match.group(1) == 'attacks' else 'power'}/{match.group(2)}"
+    basis = (record.get("play_text") or {}).get(target)
+    if not isinstance(basis, str) or not basis.startswith("LD-"):
+        return f"対象 {target} の処理に使う文面の根拠が最新の説明（LD-）ではない（{basis!r}）"
+    ld = next((x for x in descriptions if x.get("id") == basis), None)
+    if ld is None or ld.get("card_id") != card:
+        return f"最新の説明 {basis} が研究の基準のコミットにない、またはカードが違う"
+    kind, index = target.split("/")
+    if (ld.get("target") or {}).get("kind") != kind or (ld.get("target") or {}).get("index") != int(index):
+        return f"最新の説明 {basis} の対象が {target} ではない"
+    printed = ld.get("printed_text") or {}
+    if printed.get("path") != field or printed.get("text_ja") != error.get("kyuura_value"):
+        return f"最新の説明 {basis} の印刷の文面の欄・値が、データの誤りの欄・kyuura の値と違う"
+    return None
 
 
 def _registered_targets(registry, card_id: str) -> set[str]:

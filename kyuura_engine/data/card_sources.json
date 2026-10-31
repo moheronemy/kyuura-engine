@@ -30784,6 +30784,40 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.124 で加えた（docs/super-transform-dark-pulse-v0.124.md 6 章・7 章）。プロモ（neo）。たね・超・HP70。特殊能力［わるいはどう］= DarkPulse、ワザ わるいぞうふく（超超）20+ = CoinsPerOwnBenchDarkBonusDamage(20)。処理に使う文面は kyuura の印刷の文面（kyuura のカードの画像の照合 IMG-PRN-041 で訂正なし。LD- はない）。カードの補足の欄の「(このカードは公式大会では使うことができません)」は kyuura の記録だけで play_scope は standard のまま（エンジンも変えず、公式大会で使えるとも書かない。kyuura への報告事項）。エンジンは画像・外部のサイトを見ていない（外部照合なし）。レベル（LV.35）・図鑑番号は補っていない"
+    },
+    "ES1-027": {
+      "basis": "kyuura_data",
+      "name_ja": "プクリン",
+      "status": "adopted",
+      "kyuura_commit": "134a664c6adf67d5604148a31b58e1a7d26d4d6d",
+      "recorded_on": "2026-10-31",
+      "kyuura_records": [
+        "CC-ES1-027-P226",
+        "CR-HELPING-HAND-USE",
+        "CR-INFLATE-DAMAGE-STEP",
+        "CR-INFLATE-LATEST",
+        "LD-ES1-027-ATK0",
+        "LD-ES1-027-PWR0",
+        "UQ-CARD-USE-WITHOUT-TARGET",
+        "UQ-HELPING-HAND-CHOICE",
+        "UQ-NON-ATTACK-DAMAGE-MODIFIERS"
+      ],
+      "play_text": {
+        "attack/0": "LD-ES1-027-ATK0",
+        "power/0": "LD-ES1-027-PWR0"
+      },
+      "external_checks": [],
+      "issues": [
+        {
+          "question": "kyuura の文面（pcg-search.com の転記）のふくらむは「このカードが次の相手に受けるダメージは「-10」される。」で、印刷の「相手の」の「の」と漢字 1 字（カードの画像・『オフィシャルブック2000』p.226 の図版でも読めない）が欠けている（CC-ES1-027-P226 の data_error。kyuura の訂正の候補 held_illegible_print。訂正していない）",
+          "fields": [
+            "pokemon.attacks[0].text.ja"
+          ],
+          "affects_behavior": false,
+          "note": "処理に使う文面は、同じ欄の最新の説明 LD-ES1-027-ATK0 の全文（「次の相手の番、…（ダメージ以外の効果はそのまま）」）で、その最新の説明の印刷の文面の欄（printed_text.path）・写しの値がこの欄と同じ。印刷の未読の字を「番」と補った文面は使わない。写しの文面は照合だけに使う（印刷の文面 → 最新の説明・量の組 effects.INFLATE_PRINTED_UNDER_LATEST）。この欄の誤りは、最新の説明にしたがう登録の処理を変えない"
+        }
+      ],
+      "notes": "v0.125 で加えた（docs/wigglytuff-helping-hand-v0.125.md 3 章）。拡張シート第1弾（青版）。1進化（プリンから）・無色・HP90・弱点 闘×2・抵抗力 超-30・にげる 3。ワザ ふくらむ（無色 4 個・20）=DamageThenReduceDamageNextTurn（最新の説明 LD-ES1-027-ATK0 の全文と量 10 を結んだ登録）、特殊能力［てだすけ］=CureOneActiveConditionOnHeadsFromBench（最新の説明 LD-ES1-027-PWR0 の全文）。最新の説明は kyuura が 2026-10-31 に『オフィシャルブック2000』p.226（PDF 228）を画像で読んだ記録で、エンジンは原典・画像を見ていない。レベル（LV.40）・図鑑番号は補っていない（写しの値のまま）。日本語の文面の転記元は pcg-search.com（同じサイトでの日本語の欄の照合は独立した照合にならない）。新しい外部照合はしていない"
     }
   }
 }

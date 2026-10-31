@@ -12,8 +12,8 @@
   "card_data_commit": "134a664c6adf67d5604148a31b58e1a7d26d4d6d",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 302,
-    "engine_stop_codes": 301,
+    "engine_unresolved_rulings": 305,
+    "engine_stop_codes": 304,
     "kyuura_issues": 90
   },
   "stop_codes": {
@@ -3449,6 +3449,39 @@
       ],
       "kyuura_issue": "UQ-DARK-PULSE-TIMING",
       "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_HELPING_HAND_WITHOUT_CONDITION": {
+      "engine_rulings": [
+        {
+          "version": "v0.125",
+          "document": "docs/wigglytuff-helping-hand-v0.125.md",
+          "ruling_id": "HH1"
+        }
+      ],
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_HELPING_HAND_CHOICE": {
+      "engine_rulings": [
+        {
+          "version": "v0.125",
+          "document": "docs/wigglytuff-helping-hand-v0.125.md",
+          "ruling_id": "HH2"
+        }
+      ],
+      "kyuura_issue": "UQ-HELPING-HAND-CHOICE",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_INFLATE_NON_ATTACK_DAMAGE": {
+      "engine_rulings": [
+        {
+          "version": "v0.125",
+          "document": "docs/wigglytuff-helping-hand-v0.125.md",
+          "ruling_id": "IF1"
+        }
+      ],
+      "kyuura_issue": "UQ-NON-ATTACK-DAMAGE-MODIFIERS",
+      "kyuura_disposition": "issue_not_in_index"
     }
   },
   "codeless_questions": {
@@ -4399,9 +4432,11 @@
         "card_id": "ES1-027",
         "target": "power/0",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_HELPING_HAND_WITHOUT_CONDITION"
+          ]
         },
-        "note": "プクリン（拡張シート第1弾青版）の［てだすけ］。自分の対戦ポケモンに回復する状態がないとき使えるか（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）"
+        "note": "プクリン（拡張シート第1弾青版）の［てだすけ］。自分の対戦ポケモンに回復する状態がないとき使えるか（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）。v0.125 で登録・停止を見直した: 自分の対戦ポケモンに回復する状態がないときは、宣言の前に HH1 で止める（なんでもなおしの FH1・FH2 を流用しない）"
       },
       {
         "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
@@ -4426,18 +4461,22 @@
         "card_id": "ES1-027",
         "target": "power/0",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_HELPING_HAND_CHOICE"
+          ]
         },
-        "note": "プクリン（拡張シート第1弾青版）の［てだすけ］。2 つの状態のどちらを、だれがいつ選ぶか（エンジンに登録していないカード。kyuura の 2 つの事例は同じ対象）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）"
+        "note": "プクリン（拡張シート第1弾青版）の［てだすけ］。2 つの状態のどちらを、だれがいつ選ぶか（kyuura の 2 つの事例は同じ対象）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）。v0.125 で登録・停止を見直した: 2 つの状態（どくと、ねむり・マヒ・こんらんのどれか）のときは、宣言の前に HH2 で止める。状態が 1 つなら、だれがいつ選ぶ読みでも同じなので受け付ける"
       },
       {
         "kyuura_issue": "UQ-NON-ATTACK-DAMAGE-MODIFIERS",
         "card_id": "ES1-027",
         "target": "attack/0",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_INFLATE_NON_ATTACK_DAMAGE"
+          ]
         },
-        "note": "プクリン（拡張シート第1弾青版）のふくらむの「-10」が、相手の番にワザ以外で受けるダメージに当てはまるか（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）"
+        "note": "プクリン（拡張シート第1弾青版）のふくらむの「-10」が、相手の番にワザ以外で受けるダメージに当てはまるか（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）。v0.125 で登録・停止を見直した: 「ふくらむ」の効果がはたらく番に特殊能力のダメージを受けるときは IF1 で止める（ワザのダメージは p.321 の 8 段階で引く。トレーナーのダメージは既存の TD1。どくはポケモンチェックで、どちらの番でもない）"
       },
       {
         "kyuura_issue": "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY",
@@ -4879,7 +4918,9 @@
       "PR1-003/attack/0": "LD-PR1-003-ATK0",
       "PR1-017/attack/0": "LD-PR1-017-ATK0",
       "ES3-021/attack/1": "LD-ES3-021-ATK1",
-      "ES2-032/power/0": "LD-ES2-032-PWR0"
+      "ES2-032/power/0": "LD-ES2-032-PWR0",
+      "ES1-027/attack/0": "LD-ES1-027-ATK0",
+      "ES1-027/power/0": "LD-ES1-027-PWR0"
     },
     "registered_without_kyuura_record": [
       "PMCG5-033/power/0",
@@ -4887,8 +4928,6 @@
       "ES1-005/power/0"
     ],
     "kyuura_records_not_registered": [
-      "LD-ES1-027-ATK0",
-      "LD-ES1-027-PWR0",
       "LD-ES2-005-ATK0",
       "LD-QSG-055-ATK0"
     ],

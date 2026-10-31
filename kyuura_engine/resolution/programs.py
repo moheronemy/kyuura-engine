@@ -3258,6 +3258,8 @@ class SelfPersistent(Element):
     requires: str | None = None
     local_coin: CoinSide | None = None  # v0.34: この要素のコイン（ギャロップの「こうそくいどう」は「おもて」でバリアー）。ワザを使ったポケモンがいなければ投げない
     gate: tuple | None = None  # v0.38: ワザ全体のコインの面（キョウのピジョンの「こうそくひこう」は、追加のダメージと同じコインの「おもて」でバリアー）
+    # v0.125: ``DamageReduction`` に、ワザ以外のダメージに当てはめるかが決まらない印を付ける（プクリンの「ふくらむ」。``effects.DamageThenReduceDamageNextTurn.non_attack_unresolved``）
+    non_attack_unresolved: bool = False
     phase: ClassVar[Phase] = Phase.EFFECT
 
     def run(self, run: AttackRun) -> bool:
@@ -3281,7 +3283,7 @@ class SelfPersistent(Element):
         elif self.kind == AttackBarrier.kind:
             effect = AttackBarrier(**common)
         elif self.kind == DamageReduction.kind:
-            effect = DamageReduction(**common, amount=self.amount)
+            effect = DamageReduction(**common, amount=self.amount, non_attack_unresolved=self.non_attack_unresolved)
         elif self.kind == PreventAttackDamage.kind:
             effect = PreventAttackDamage(**common)  # v0.79: ピカチュウ（neo1-036）の「こうそくいどう」（ワザによるダメージだけを受けない）
         elif self.kind == PreventDamage.kind:
@@ -10233,7 +10235,8 @@ BUILDERS: dict[type, Any] = {
         Damage(OPP, Printed()), Damage(SELF, Fixed(e.self_damage), name="self_damage"), Status(POISON, local_coin=HEADS),
     ),
     E.DamageThenReduceDamageNextTurn: lambda e: (Damage(OPP, Printed()),
-                                                 SelfPersistent(DamageReduction.kind, amount=e.amount, local_coin=HEADS if e.on_heads else None)),
+                                                 SelfPersistent(DamageReduction.kind, amount=e.amount, local_coin=HEADS if e.on_heads else None,
+                                                                non_attack_unresolved=e.non_attack_unresolved)),
     E.DiscardAttachedAndReturnSelfToDeck: lambda e: (ReturnSelfToDeck(local_coin=None, after_damage=None, discard_attached=True),),
     E.ReturnSelfToDeckThenSearchPokemon: lambda e: (
         ReturnSelfToDeck(local_coin=None, after_damage=None, shuffle=False), PromoteFromBench(), RevealPokemonFromDeck(e.excluded),

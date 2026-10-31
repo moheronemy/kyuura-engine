@@ -151,6 +151,10 @@
   ``frozen_forms``（ワザ・宣言する特殊能力・トレーナーカードの処理のあいだ固定した変身の状態。``{"pokemon_id", "card", "card_id", "kind", "source"}`` の並び。処理の決定を待つ間だけある）を
   加えたもの（v0.124。docs/super-transform-dark-pulse-v0.124.md 7 章）。今の場から求め直せない状態なので古い形式に黙って落とさない: 形式 1〜28 は、どちらかがあると ``ValueError``
   （なければ形式 1〜28 の書き出しは v0.123 と同じ）。新しいログ（``super_transform``・``super_transform_reverted``・``dark_pulse``）は種類の値と項目を加えただけ
+- 30: 29 に、持続する効果 ``"damage_reduction"`` の ``non_attack_unresolved``（真のときだけ書く。プクリンの「ふくらむ」の効果で、はたらく番にワザ以外のダメージに当てはめるかが
+  決まらない印。IF1）を加えたもの（v0.125。docs/wigglytuff-helping-hand-v0.125.md 6 章）。古い形式で項目を落とすと「ちいさくなる」などワザのダメージだけを減らす効果と区別できないので
+  黙って落とさない: 形式 1〜29 は、この印のある効果があると ``ValueError``（なければ形式 1〜29 の書き出しは v0.124 と同じ）。［てだすけ］の使用・コイン・回復は、既存の記録
+  （``power_uses_this_turn``・ログ ``pokemon_power``・``coin_flip``・``special_conditions_removed``）で表す
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -257,7 +261,7 @@ from .state import (
     WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -330,6 +334,8 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
         data["target_attack_index"] = effect.target_attack_index
     elif isinstance(effect, (DamageReduction, ReducedDamageToSource)):
         data["amount"] = effect.amount  # v0.34: "reduced_damage_to_source"（「なきつく」）も減らす量を加える
+        if isinstance(effect, DamageReduction) and effect.non_attack_unresolved:
+            data["non_attack_unresolved"] = True  # v0.125（形式 30）: 「ふくらむ」の効果だけ書く（``state_to_dict`` が形式 1〜29 で拒否する）
     elif isinstance(effect, AttackCoinCheck):
         data["single_use"] = effect.single_use  # v0.36: 「すなかけ」（PMCG1-051）の「効果は1回できえる」
         if effect.lasting:
@@ -643,6 +649,10 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
     if format_version < 29 and (state.frozen_forms or any(pokemon.super_transform is not None for p in state.players for pokemon in p.in_play())):
         # v0.124: 選んだ変身のもと・処理のあいだ固定した姿は、今のカードの並びから求め直せない（相手の対戦ポケモンを読む［へんしん］の形に落とすと意味が変わる）ので古い形式に書かない
         raise ValueError(f"形式 {format_version} は、［すごいへんしん］で選んだ変身のもと・処理のあいだ固定した変身の状態を表せない（format_version=29 を使う）")
+    if format_version < 30 and any(isinstance(effect, DamageReduction) and effect.non_attack_unresolved
+                                   for p in state.players for pokemon in p.in_play() for effect in pokemon.persistent_effects):
+        # v0.125: 「ふくらむ」の効果（ワザ以外のダメージに当てはめるかが決まらない印）を落とすと、ワザのダメージだけを減らす効果と区別できないので古い形式に書かない
+        raise ValueError(f"形式 {format_version} は、ワザ以外のダメージに当てはめるかが決まらない「ふくらむ」の効果を表せない（format_version=30 を使う）")
     if format_version < 28 and any(pokemon.basic_entry is not None for p in state.players for pokemon in p.in_play()):
         raise ValueError(f"形式 {format_version} は、進化元を重ねずに出して場ではたねポケモンとしてあつかう進化カードを表せない（format_version=28 を使う）")
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
