@@ -502,7 +502,8 @@ TOP_FIELDS_SINCE = {
     "poison_mists": 27, "replacement_poisons": 27,  # v0.119: ［ポイズンミスト］の効果・「ガスばくはつ」のまだ与えていないどく
     "frozen_forms": 29,  # v0.124: 処理のあいだ固定した変身の状態
 }
-LATEST_FORMAT = 29
+# v0.125: 形式 30 は、持続する効果 ``"damage_reduction"`` の項目 ``non_attack_unresolved``（「ふくらむ」の効果だけ）を加えた（場のポケモン・最上位の項目は変わらない）
+LATEST_FORMAT = 30
 # v0.99: 形式 25 で、場のポケモンの履歴の受けた記録（``"kind": "received"``）に加わった項目（ダメージを受けた場所）
 RECEIVED_FIELDS_SINCE = {"active_damage": 25}
 
@@ -613,6 +614,8 @@ def required_format(state) -> tuple[int, bool]:
         needed = max(needed, 28)  # v0.120: たねポケモンとしてあつかう進化カードの事実
     if state.frozen_forms or any(pokemon.super_transform is not None for pokemon in in_play):
         needed = max(needed, 29)  # v0.124: ［すごいへんしん］で選んだ変身のもと・処理のあいだ固定した変身の状態
+    if any(type(effect).__name__ == "DamageReduction" and effect.non_attack_unresolved for pokemon in in_play for effect in pokemon.persistent_effects):
+        needed = max(needed, 30)  # v0.125: ワザ以外のダメージに当てはめるかが決まらない「ふくらむ」の効果（IF1）
     d = state.decision
     not_v0_1 = d is not None and (
         d.context_value("then") is not None or d.resume in ("attack", "knock_out", "post_knockout", "power")  # v0.42: 特殊能力の途中の決定
@@ -1195,8 +1198,9 @@ def _follows_declaration(state, key: str, player: int, pid: int, e: dict) -> boo
     if isinstance(effect, ConvertSelfToEnergy):
         # v0.59: ［エネエネ］は、決定（つける先・色）のあと、使ったマルマインのきぜつ（timing power・to_energy）
         return kind == "knock_out" and e["player"] == player and e.get("timing") == "power" and "to_energy" in e
-    if isinstance(effect, (HealOwnPokemonOnHeads, SwitchOpponentOnHeads, CoinLookOpponentHandMayReturnTrainer, CoinPeekOpponentDeckTopMayShuffle, E.SuperTransformPower)):
-        # v0.95: ［みやぶる］・［わるぢえ］も、持ち主のコイン。v0.124: ［すごいへんしん］も
+    if isinstance(effect, (HealOwnPokemonOnHeads, SwitchOpponentOnHeads, CoinLookOpponentHandMayReturnTrainer, CoinPeekOpponentDeckTopMayShuffle, E.SuperTransformPower,
+                           E.CureOneActiveConditionOnHeadsFromBench)):
+        # v0.95: ［みやぶる］・［わるぢえ］も、持ち主のコイン。v0.124: ［すごいへんしん］も。v0.125: ［てだすけ］も
         return kind == "coin_flip" and e["source"] == "power" and e.get("effect") == key and e["player"] == player and e.get("pokemon_id") == pid
     if isinstance(effect, SwitchSelfFromBench):
         return kind == "switch" and e.get("effect") == key and e["player"] == player
@@ -1341,6 +1345,10 @@ def _power_coin_follows(state, coin: dict, e: dict) -> bool:
         return (mine and e["player"] == coin["player"] and e.get("pokemon_id") == coin.get("pokemon_id")) if coin["result"] == "heads" else not mine
     if isinstance(effect, HealOwnPokemonOnHeads):
         return (kind == "power_heal" and e.get("power") == coin["effect"]) if coin["result"] == "heads" else kind != "power_heal"
+    if isinstance(effect, E.CureOneActiveConditionOnHeadsFromBench):
+        # v0.125: ［てだすけ］。「おもて」なら、使ったプレイヤーの対戦ポケモンの状態の回復（special_conditions_removed の effect）。「うら」なら何もしない（中身は v125_problems）
+        mine = kind == "special_conditions_removed" and e.get("effect") == coin["effect"]
+        return (mine and e["player"] == coin["player"]) if coin["result"] == "heads" else not mine
     if isinstance(effect, SwitchOpponentOnHeads):
         return (kind == "switch" and e.get("effect") == coin["effect"]) if coin["result"] == "heads" else not (
             kind == "switch" and e.get("effect") == coin["effect"])
@@ -1985,6 +1993,8 @@ def log_problems(state) -> list[str]:
     # v0.123: 今のワザの確かめ（宣言したポケモン・宣言のときについていたエネルギーカードとダメージカウンター）
     v123: dict = {"window": None}
     v124: dict = {"coins": [], "pending": None}  # v0.124: ［わるいはどう］の直前の特殊能力のコインと、決まった追加の量
+    # v0.125: ［てだすけ］の宣言（使ったプレイヤー・ポケモン・特殊能力・回復しうる状態・コインの面）と、番ごとに使ったポケモン
+    v125: dict = {"window": None, "used": set()}
     color_types: dict[int, dict] = {}  # v0.88: ［せんすい］の記録（対象のポケモンの番号 → 色・発生源のカード・特殊能力の位置）
     # v0.90: ログから組み立てた、場のポケモンのマーカー・カウンター（番号 → のせた順の {"marker", "color", "turn"}）と、進化・退化で取りのぞくはずのポケモン（番号 → 理由）
     marks: dict[int, list[dict]] = {}
@@ -5132,6 +5142,57 @@ def log_problems(state) -> list[str]:
                 found.append(f"{w['turn']} 番の {w['key']} のトラッシュが、ダメージのあとにある（ワザの効果。ダメージの前）")
         return found
 
+    def v125_close(w: dict) -> list[str]:
+        if w["coin"] == "heads" and not w["cured"]:
+            return [f"{w['turn']} 番の［てだすけ］（ポケモン {w['pid']}）の「おもて」のあとに、対戦ポケモンの状態の回復がない"]
+        if w["coin"] is None:
+            return [f"{w['turn']} 番の［てだすけ］（ポケモン {w['pid']}）の宣言のあとに、特殊能力のコインがない"]
+        return []
+
+    def v125_problems(e: dict) -> list[str]:
+        """v0.125: ［てだすけ］を、エンジンの登録・計算を読まずに確かめる（最新の説明の文面と、ログから組み立てた場・特殊状態から）。ログ ``e`` の組み立て直しの前に呼ぶ。
+
+        - 宣言したポケモンはベンチ（そのプレイヤーの対戦ポケモンではない）。同じ番に同じポケモンが 2 回使わない
+        - 宣言の時点で、そのプレイヤーの対戦ポケモンの特殊状態（ログから組み立てたどくと、ねむり・マヒ・こんらん）がちょうど 1 つ（0 個・2 個はエンジンが HH1・HH2 で止める）
+        - 宣言のすぐあとに特殊能力のコイン 1 枚。「おもて」なら、その状態だけを回復した記録（理由 cured・その特殊能力）が対戦ポケモンにちょうど 1 つ、「うら」なら回復の記録がない"""
+        found: list[str] = []
+        kind = e["kind"]
+        st = v125
+        w = st["window"]
+        if w is not None and kind in ("pokemon_power", "attack", "turn_end", "game_end", "halted", "play_trainer", "retreat"):
+            found += v125_close(w)
+            st["window"] = w = None
+        if kind == "turn_end":
+            st["used"] = set()
+        if kind == "pokemon_power" and e.get("pokemon") in state.cards:
+            card_id = state.cards[e["pokemon"]].card_id
+            entry = state.effects.power_entry(card_id, e.get("power_index", 0))
+            if entry is not None and isinstance(entry.effect, E.CureOneActiveConditionOnHeadsFromBench):
+                pid, player = e["pokemon_id"], e["player"]
+                active = active_of.get(player)
+                names = tuple(name for name in ("poison",) if active in poisoned) + ((exclusive[active],) if active in exclusive else ())
+                if pid == active or pokemon_owner.get(pid) != player:
+                    found.append(f"{e['turn']} 番の［てだすけ］を、ベンチにいないポケモン {pid} が使った")
+                if (e["turn"], pid) in st["used"]:
+                    found.append(f"{e['turn']} 番に、ポケモン {pid} が［てだすけ］を 2 回使った")
+                if len(names) != 1:
+                    found.append(f"{e['turn']} 番の［てだすけ］の宣言のとき、対戦ポケモン {active} の状態 {list(names)} が 1 つではない（HH1・HH2 で止めるはず）")
+                st["used"].add((e["turn"], pid))
+                st["window"] = {"turn": e["turn"], "pid": pid, "player": player, "key": f"{card_id}@power{e.get('power_index', 0)}", "active": active,
+                                "names": names, "coin": None, "cured": False}
+            return found
+        if w is None:
+            return found
+        if kind == "coin_flip" and e.get("source") == "power" and e.get("effect") == w["key"]:
+            if w["coin"] is not None or e["player"] != w["player"] or e.get("count") != 1:
+                found.append(f"{w['turn']} 番の［てだすけ］のコインが 1 枚ではない・使ったプレイヤーのコインではない")
+            w["coin"] = e.get("result")
+        elif kind == "special_conditions_removed" and e.get("effect") == w["key"]:
+            if w["coin"] != "heads" or w["cured"] or e["player"] != w["player"] or e["pokemon_id"] != w["active"] or e.get("reason") != "cured"                     or tuple(e.get("conditions") or ()) != w["names"]:
+                found.append(f"{w['turn']} 番の［てだすけ］の回復 {e.get('conditions')}（ポケモン {e['pokemon_id']}）が、「おもて」のあとの対戦ポケモンの状態 {list(w['names'])} の回復と合わない")
+            w["cured"] = True
+        return found
+
     def v124_problems(e: dict) -> list[str]:
         """v0.124: ［わるいはどう］を、エンジンの登録・計算を読まずに確かめる（印刷の文面とコインの面から）。コインは特殊能力のコイン（``source`` が ``power``）で、1 枚目が「うら」なら 1 枚だけ・
         量 0、「おもて」なら 2 枚・2 枚目が「おもて」なら 20・「うら」なら 10（DARK_PULSE の文面）。量が 0 でなければ、すぐあとのワザのダメージの 6 段階に「［わるいはどう］」がちょうどその量だけ
@@ -6797,6 +6858,7 @@ def log_problems(state) -> list[str]:
         problems.extend(v122_problems(e))  # v0.122: アンノーンの併用・化石の進化履歴・退却時の反応
         problems.extend(v123_problems(e))  # v0.123: いかりのほのお
         problems.extend(v124_problems(e))  # v0.124: わるいはどう
+        problems.extend(v125_problems(e))  # v0.125: てだすけ
         if kind in ("damage", "confusion_damage"):
             # v0.90: のろいマーカーののっているポケモンが弱点の計算をしたワザのダメージは「×4」（ログの weakness_multiplier）。ほかは書かない。こんらんの 20 は、のろいマーカーと
             # 自分の弱点が当てはまるならコインの前に止まる（UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS）ので、弱点の計算をしたこんらんのダメージはない

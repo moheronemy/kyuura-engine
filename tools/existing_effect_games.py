@@ -739,6 +739,11 @@ V123_RAGE_FLAMES = "PR1-016#1"
 V0_124 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_124"])
 V0_124_POKEMON = V0_124
 V124_SUPER_DITTO, V124_GR_MEWTWO = "ES2-032", "PRN-041"
+# v0.125（docs/wigglytuff-helping-hand-v0.125.md 11 章）: プクリン（拡張シート第1弾青版。［てだすけ］・ふくらむ）。TARGETS に加え、［てだすけ］を使う手順 ``_v125_power`` を重ねる。
+# ログから数えるのは ``v125_uses``
+V0_125 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_125"])
+V0_125_POKEMON = V0_125
+V125_WIGGLYTUFF = "ES1-027"
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -797,7 +802,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_121_POKEMON  # v0.121: 手札からの登場とワザの使用条件のポケモン 7 枚
            + V0_122_POKEMON  # v0.122: アンノーンの併用・化石の進化履歴・退却時の反応のポケモン 13 枚
            + V0_123_POKEMON  # v0.123: ウィンディ系の 3 枚
-           + V0_124_POKEMON)  # v0.124: メタモン（すごいへんしん）・GR団のミュウツー
+           + V0_124_POKEMON  # v0.124: メタモン（すごいへんしん）・GR団のミュウツー
+           + V0_125_POKEMON)  # v0.125: プクリン（てだすけ・ふくらむ）
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -1787,6 +1793,9 @@ DECKS = {
     # v0.124: 超・炎。GR団のミュウツー 3 枚と「わるい」ポケモン（ロケット団のポニータ → わるいギャロップ、イーブイ → わるいブースター）
     "G124": ((V124_GR_MEWTWO, 3), (ROCKET_PONYTA, 4), (DARK_RAPIDASH, 3), (EEVEE, 3), (DARK_FLAREON, 2), (driver.BILL, 4), (driver.POTION, 2), (SWITCH, 2),
              (FIRE, 21), (PSYCHIC, 16)),
+    # v0.125: 無色。プリン（PMCG2-035。こもりうた・はたく）→ プクリン（ES1-027。［てだすけ］・ふくらむ）4 枚と、ラッキー（PMCG1-068）。無色2個エネルギーと超エネルギー。
+    # ベンチのプクリンが、相手のワザで特殊状態になった自分の対戦ポケモンを［てだすけ］で回復する
+    "W125": ((JIGGLYPUFF, 4), (V125_WIGGLYTUFF, 4), (CHANSEY, 3), (driver.BILL, 4), (driver.POTION, 2), (SWITCH, 2), (DOUBLE_COLORLESS, 4), (PSYCHIC, 37)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -2110,6 +2119,11 @@ PAIRINGS_V0_123 = (("W123", "K123"), ("W123", "P31"), ("W123", "E82"), ("K123", 
 # S124 対 L122（雷のワザを写す）・G124 対 B122（草・闘の相手へのわるいぞうふく）・S124 対 F30（化石のメタモンと［すごいへんしん］の両方が相手の炎のポケモンを写す）。組・席・seed は正式な
 # 対戦の前に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめる seed 90〜93 とは別。局を選び直さない）
 PAIRINGS_V0_124 = (("S124", "G124"), ("S124", "W123"), ("G124", "W123"), ("S124", "L122"), ("G124", "B122"), ("S124", "F30"))
+# v0.125: W125 対 P109（あやしいひかりのこんらん・あくむのねむり）・W125 対 P119（どくをだす・ガスばくはつ・［ポイズンミスト］のどく）・W125 対 G108（どくえき・どくばりのどく）。
+# 1 つの状態をつける相手と組ませ、［てだすけ］とふくらむを狙う。開発用の seed 90〜93 で、ねむりの相手 Y121 は自分のプリンの「こもりうた」と重なってポケモンチェックの既存の停止
+# （UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER）で止まりやすく、E115 は特殊状態がつかなかったので、P109・G108 に替えた。組・席・seed は正式な対戦の前に決めた（正式な対戦は seed 0〜3。
+# 局を選び直さない）
+PAIRINGS_V0_125 = (("W125", "P109"), ("W125", "P119"), ("W125", "G108"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -2133,7 +2147,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.113": PAIRINGS_V0_113, "v0.114": PAIRINGS_V0_114, "v0.115": PAIRINGS_V0_115,
            "v0.116": PAIRINGS_V0_116, "v0.117": PAIRINGS_V0_117, "v0.118": PAIRINGS_V0_118,
            "v0.119": PAIRINGS_V0_119, "v0.120": PAIRINGS_V0_120, "v0.121": PAIRINGS_V0_121, "v0.122": PAIRINGS_V0_122,
-           "v0.123": PAIRINGS_V0_123, "v0.124": PAIRINGS_V0_124}
+           "v0.123": PAIRINGS_V0_123, "v0.124": PAIRINGS_V0_124, "v0.125": PAIRINGS_V0_125}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -2380,7 +2394,33 @@ def _v124_pulse_applies(st, c) -> bool:
     return attacker is not None and bool(E.dark_pulse_holders(st, c.player)) and E.field_name_matches(st, attacker, E.DARK_POKEMON)
 
 
+def _v125_active_conditions(st, player) -> tuple:
+    """v0.125: ``player`` の対戦ポケモンの特殊状態（［てだすけ］の HH1・HH2 を場から確かめる）。"""
+    active = st.players[player].active
+    return () if active is None else active.conditions.names()
+
+
+def _v125_helping_hand(st, c) -> bool:
+    """v0.125: コマンドが［てだすけ］の宣言か（のせたカード・写したカードの供給もふくめ、宣言する特殊能力の実装で見分ける）。"""
+    if not isinstance(c, UsePokemonPower):
+        return False
+    found = st.find_pokemon(c.pokemon_id)
+    if found is None:
+        return False
+    return any(isinstance(slot.effect, E.CureOneActiveConditionOnHeadsFromBench) and slot.key.power_index == c.power
+               for slot in E.powers_of(st, found[1]))
+
+
+def _v125_inflated_present(st) -> bool:
+    """v0.125: 場に、今の番にはたらく「ふくらむ」の効果（ワザ以外のダメージに当てはめるかが決まらない印のある ``DamageReduction``）があるか（IF1 を場から確かめる）。"""
+    return any((r := E.damage_reduction(st, p)) is not None and r.non_attack_unresolved for pl in st.players for p in pl.in_play())
+
+
 V031_STOPS = {
+    # v0.125（docs/wigglytuff-helping-hand-v0.125.md 11 章）: ［てだすけ］の対象 0 個・2 個（HH1・HH2）と、「ふくらむ」の効果があるときのワザ以外のダメージ（IF1）。どれも場から確かめる
+    "UNRESOLVED_HELPING_HAND_WITHOUT_CONDITION": lambda st, c: _v125_helping_hand(st, c) and not _v125_active_conditions(st, c.player),
+    "UNRESOLVED_HELPING_HAND_CHOICE": lambda st, c: _v125_helping_hand(st, c) and len(_v125_active_conditions(st, c.player)) == 2,
+    "UNRESOLVED_INFLATE_NON_ATTACK_DAMAGE": lambda st, c: _v125_inflated_present(st),
     # v0.124（docs/super-transform-dark-pulse-v0.124.md 10 章）: 変身の共通ルール・すごいへんしん・わるいはどうの停止。どれも場から確かめる
     "UNRESOLVED_DARK_PULSE_TIMING": lambda st, c: isinstance(c, UseAttack) and _v124_pulse_applies(st, c),
     "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES": lambda st, c: isinstance(c, UseAttack) and _v124_pulse_applies(st, c) and len(E.dark_pulse_holders(st, c.player)) > 1,
@@ -11780,6 +11820,55 @@ def _v122_decision(state, counts):
     return _v120_first(state, d, counts, f"v122_{key}_{d.kind}")
 
 
+def _v125_power(state, tried, counts):
+    """v0.125: 自分のベンチのプクリン（ES1-027。［てだすけ］。この番にまだ使っていない）で、自分の対戦ポケモンが特殊状態なら使う（コインは状態の乱数）。状態が 1 つなら受け付け、
+    2 つならエンジンが HH2 で拒否する（番ごとに 1 回だけ試す。拒否のあとは元の手順に任せる）。状態がないときは試さない（HH1 は単体のテストで確かめる）。"""
+    player = state.current_player
+    names = _v125_active_conditions(state, player)
+    if not names:
+        return None
+    for pokemon in state.players[player].bench:
+        if state.is_face_down(pokemon) or state.cards[pokemon.card].card_id != V125_WIGGLYTUFF or (pokemon.pokemon_id, 0) in state.power_uses_this_turn:
+            continue
+        key = ("v125_helping_hand", state.turn_number, pokemon.pokemon_id)
+        if key in tried:
+            continue
+        tried.add(key)
+        counts[f"v125_power_helping_hand_{len(names)}"] += 1
+        return UsePokemonPower(player, pokemon.pokemon_id, 0, card=pokemon.card)
+    return None
+
+
+def v125_uses(state):
+    """v0.125: ログから数えた［てだすけ］・ふくらむの動き（v0.125 のカードのない局では空）。
+
+    - ``helping_hand_<heads|tails>``（［てだすけ］のコインの面）・``helping_hand_cured_<状態>``（回復した状態）
+    - ``inflate_used``（ふくらむを使った回数）・``inflate_reduced``（受けたワザのダメージの 8 段階に「ふくらむ」の -10 の記録があるダメージ）・``inflate_zero``（そのうち 0 になったもの）"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_125 for uid in state.cards):
+        return counts
+    card = {uid: c.card_id for uid, c in state.cards.items()}
+    inflated = {}  # 効果を持つポケモンのカード（uid）→ はたらく番
+    for e in state.log:
+        kind = e["kind"]
+        if kind == "coin_flip" and e.get("source") == "power" and e.get("effect") == f"{V125_WIGGLYTUFF}@power0":
+            counts[f"helping_hand_{e.get('result')}"] += 1
+        elif kind == "special_conditions_removed" and e.get("effect") == f"{V125_WIGGLYTUFF}@power0":
+            for name in e.get("conditions", ()):
+                counts[f"helping_hand_cured_{name}"] += 1
+        elif kind == "attack" and card.get(e.get("card", e.get("pokemon"))) == V125_WIGGLYTUFF and e.get("attack_index") == 0:
+            counts["inflate_used"] += 1
+        elif kind == "persistent_effect_added" and e.get("persistent_effect") == "damage_reduction" and e.get("effect") == f"{V125_WIGGLYTUFF}#0":
+            inflated[e.get("pokemon")] = e.get("active_turn")
+        elif kind == "damage" and inflated.get(e.get("pokemon")) == e.get("turn") and any(
+                tuple(m) == (8, e.get("pokemon"), -10) for m in e.get("modifiers") or ()):
+            # ダメージの変更の記録 (段階, 発生源のカード, 量)。8 段階の、受けるポケモン自身の -10
+            counts["inflate_reduced"] += 1
+            if e.get("amount") == 0:
+                counts["inflate_zero"] += 1
+    return counts
+
+
 def _v124_power(state, tried, counts):
     """v0.124: 自分のバトル場の［すごいへんしん］のメタモン（変身していない・この番に使っていない・ねむり・マヒ・こんらんでない）なら使う（コインは状態の乱数）。変身しているときは使わない
     （「うら」でもどるので）。使う前に止まる場面（選べるどのポケモンも止める）は、エンジンが拒否し、元の手順に任せる。"""
@@ -12225,7 +12314,8 @@ def make_policy(seen: dict, counts: Counter):
             return (_v031_decision(state, counts) or _v039_decision(state, counts) or _v040_decision(state, counts) or _v041_decision(state, counts)
                     or _v042_decision(state, counts) or command)
         if state.phase is Phase.MAIN and isinstance(command, (UseAttack, EndTurn)):
-            power = (_v124_power(state, tried, counts)  # v0.124: ［すごいへんしん］（メタモンのないデッキでは何もしない）
+            power = (_v125_power(state, tried, counts)  # v0.125: ［てだすけ］（プクリンのないデッキでは何もしない）
+                     or _v124_power(state, tried, counts)  # v0.124: ［すごいへんしん］（メタモンのないデッキでは何もしない）
                      or _v114_power(state, command, tried, counts)  # v0.114: ［じっとみる］・［わんぱくパンチ］（ベイビィのないデッキでは何もしない）
                      or _v031_power(state, tried, counts) or _v042_power(state, tried, counts) or _v043_power(state, tried, counts)
                      or _v044_power(state, tried, counts) or _v044_trainer(state, tried, counts)
@@ -12559,6 +12649,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v122"] = v122_uses(state)
         result["v123"] = v123_uses(state)
         result["v124"] = v124_uses(state)
+        result["v125"] = v125_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
