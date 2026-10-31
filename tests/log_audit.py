@@ -85,6 +85,7 @@ from kyuura_engine.decisions import DISCARD_ENERGY
 from kyuura_engine.effects import ActiveRetreatIncreaseStadium, CoinReturnOwnerPokemonStadium, OwnerRetreatReductionStadium  # v0.57
 from kyuura_engine.effects import HealOnAttachEnergy, RainbowEnergy  # v0.58
 from kyuura_engine.effects import ConvertSelfToEnergy  # v0.59
+from kyuura_engine.effects import CoinsUntilTailsReturnOpponentActiveEnergyThenEndTurn  # v0.127: 怪電波マシーン
 from kyuura_engine.effects import FlashTrainer  # v0.126（カードの見分けだけに使う。並べる枚数・順番・公開の範囲は監査が独立に持つ）
 from kyuura_engine.effects import DiscardAttackerEnergyOnDamage  # v0.68
 from kyuura_engine.effects import EachPlayerRecoverFromDiscard  # v0.83
@@ -503,10 +504,12 @@ TOP_FIELDS_SINCE = {
     "poison_mists": 27, "replacement_poisons": 27,  # v0.119: ［ポイズンミスト］の効果・「ガスばくはつ」のまだ与えていないどく
     "frozen_forms": 29,  # v0.124: 処理のあいだ固定した変身の状態
     "face_up_deck": 31,  # v0.126: おもてを上にして山札に置かれたカード（フラッシュ）
+    "user_simplifications": 32,  # v0.127: 利用者が指定した簡略ルールで処理するワザの対象（登録表とカードの組から求める識別の情報）
 }
 # v0.125: 形式 30 は、持続する効果 ``"damage_reduction"`` の項目 ``non_attack_unresolved``（「ふくらむ」の効果だけ）を加えた（場のポケモン・最上位の項目は変わらない）
 # v0.126: 形式 31 は、最上位の ``face_up_deck``（フラッシュでおもてにした山札のカード）を加えた
-LATEST_FORMAT = 31
+# v0.127: 形式 32 は、``halt`` の ``interruption``（途中停止の記録。なければ null）と、最上位の ``user_simplifications`` を加えた
+LATEST_FORMAT = 32
 # v0.99: 形式 25 で、場のポケモンの履歴の受けた記録（``"kind": "received"``）に加わった項目（ダメージを受けた場所）
 RECEIVED_FIELDS_SINCE = {"active_damage": 25}
 
@@ -542,6 +545,8 @@ def _project(data_latest: dict, version: int) -> dict:
         data["trainer_in_use"] = {k: v for k, v in data["trainer_in_use"].items() if k != "via"}  # v0.58: 外側のトレーナーのカードは形式 18 から
     if version < 17 and isinstance(data.get("trainer_in_use"), dict):
         data["trainer_in_use"] = {k: v for k, v in data["trainer_in_use"].items() if k != "user"}  # v0.57: 借りて使っているプレイヤーは形式 17 から
+    if version < 32 and isinstance(data.get("halt"), dict):
+        data["halt"] = {k: v for k, v in data["halt"].items() if k != "interruption"}  # v0.127: 途中停止の記録は形式 32 から
     if version < 16 and "trainer_locks" in data:
         data["trainer_locks"] = [{k: v for k, v in lock.items() if k != "origin"} for lock in data["trainer_locks"]]  # v0.56: 禁止の出どころは形式 16 から
     return data
@@ -621,6 +626,8 @@ def required_format(state) -> tuple[int, bool]:
         needed = max(needed, 30)  # v0.125: ワザ以外のダメージに当てはめるかが決まらない「ふくらむ」の効果（IF1）
     if state.face_up_deck:
         needed = max(needed, 31)  # v0.126: おもてを上にして山札に置かれたカード（フラッシュ）
+    if state.halt is not None and state.halt.interruption is not None:
+        needed = max(needed, 32)  # v0.127: 途中停止の状態（在途のカードを残した終端）
     d = state.decision
     not_v0_1 = d is not None and (
         d.context_value("then") is not None or d.resume in ("attack", "knock_out", "post_knockout", "power")  # v0.42: 特殊能力の途中の決定
@@ -890,7 +897,8 @@ def instant_trainer_problems(state, events: list[dict]) -> list[str]:
     effect = _trainer_effect_of(state, card)
     kinds = (LookTopTakeRestDiscardTrainer, OpponentHandTrainerToDeck, DiscardPileExchange, DiscardAttachedEnergyTrainer, DiscardEnergyThenHealTrainer,
              CureSpecialConditionsTrainer, CoinStatusOnOpponentActiveTrainer, ReturnBasicEnergyToHandTrainer, HealEachDamagedPokemonTrainer,
-             HealOwnerPokemonThenDiscardHand, MoveAllEnergyBetweenOwnerPokemon, SwitchBothActivesTrainer)
+             HealOwnerPokemonThenDiscardHand, MoveAllEnergyBetweenOwnerPokemon, SwitchBothActivesTrainer,
+             CoinsUntilTailsReturnOpponentActiveEnergyThenEndTurn)
     if not isinstance(effect, kinds):
         return []
     body = list(events[1:-1])
@@ -984,6 +992,23 @@ def instant_trainer_problems(state, events: list[dict]) -> list[str]:
             else:
                 take("switch", player)
                 skip("special_conditions_removed", "persistent_effect_removed")
+    elif isinstance(effect, CoinsUntilTailsReturnOpponentActiveEnergyThenEndTurn):
+        # v0.127: 「うら」が出るまでのトレーナーのコイン（使ったプレイヤー。「おもて」の並びと最後の「うら」1 枚）→ ちょうど「おもて」の数のエネルギーカードを、相手の手札にもどす（``user`` は使った
+        # プレイヤー。0 なら何もない）。使い終えたあとの番の終わりは、この並びのあと（``discard_trainer`` のあと）。途中停止した使用は ``discard_trainer`` がないので、ここでは来ない（本体が確かめる）
+        coins = []
+        while body and body[0]["kind"] == "coin_flip" and body[0].get("source") == "trainer" and body[0].get("card") == card:
+            coins.append(body.pop(0))
+        sides = [c["result"] for c in coins]
+        if not sides or sides[-1] != "tails" or any(side != "heads" for side in sides[:-1]) or any(c.get("until") != "tails" or c["player"] != user for c in coins):
+            problems.append(f"{label} のコイン {sides} が、使ったプレイヤーの「うら」が出るまでのコインではない")
+        returned = []
+        while body and body[0]["kind"] == "trainer_return_energy":
+            e = body.pop(0)
+            if e["player"] != opponent or e.get("user") != user:
+                problems.append(f"{label} で手札にもどしたのが相手のカード（user が使ったプレイヤー）ではない")
+            returned += list(e["cards"])
+        if sides and len(returned) != len(sides) - 1:
+            problems.append(f"{label} で手札にもどした枚数 {len(returned)} が、「おもて」の数 {len(sides) - 1} と違う")
     if body:
         problems.append(f"{label} の最後に、処理にないイベント {[e['kind'] for e in body]} がある")
     return problems
@@ -8354,7 +8379,10 @@ def log_problems(state) -> list[str]:
                 pid = e["pokemon_id"]
                 if pid not in in_play or pokemon_owner.get(pid) != e["player"] or any(uid not in energy.get(pid, []) for uid in e["cards"]) or not e["cards"] \
                         or any(owner.get(uid) != e["player"] or state.printed_def(uid).category != "energy" for uid in e["cards"]) \
-                        or (kind == "trainer_return_energy" and (e["player"] != user or any(not state.printed_def(uid).is_basic_energy for uid in e["cards"]))):
+                        or (kind == "trainer_return_energy" and not isinstance(trainer_effect, CoinsUntilTailsReturnOpponentActiveEnergyThenEndTurn)
+                            and (e["player"] != user or any(not state.printed_def(uid).is_basic_energy for uid in e["cards"]))) \
+                        or (kind == "trainer_return_energy" and isinstance(trainer_effect, CoinsUntilTailsReturnOpponentActiveEnergyThenEndTurn)
+                            and (e["player"] != 1 - user or e.get("user") != user)):  # v0.127: 怪電波マシーンは相手のカード（特殊エネルギーも）を相手の手札に
                     problems.append(f"{e['turn']} 番に {kind} で動かしたカード {e['cards']} が、ログから組み立てたポケモン {pid} のエネルギーカードではない")
                 else:
                     for uid in e["cards"]:
@@ -10149,6 +10177,109 @@ def log_problems(state) -> list[str]:
         if not alive and key in remaining:
             problems.append(f"持続する効果 {key} が、消したあとも状態に残っている")
     problems.extend(coin_gated_effect_problems(state, log))  # v0.76
+    problems.extend(v127_problems(state))  # v0.127: ドライアップ・怪電波マシーン・途中停止
+    return problems
+
+
+V127_MOLTRES, V127_TWM = ("ES2-005", "QSG-055"), "neo4-108"
+
+
+def _v127_final_heads(window: list[dict]) -> int | None:
+    """v0.127: ワザ・トレーナーの「うら」が出るまでのコインの、最後の並びの「おもて」の数（ナツメのESPのやり直し ``esp_redo`` があればやり直した並び、``esp_redo_declined`` なら最初の並び）。
+    コインがなければ None。"""
+    heads = None
+    for e in window:
+        if e["kind"] == "coin_flip" and e.get("until") == "tails" and e["result"] == "tails":
+            heads = e["count"] - 1
+        elif e["kind"] == "esp_redo" and e.get("redone"):
+            heads = len(e["redone"]) - 1
+        elif e["kind"] == "esp_redo_declined" and e.get("original"):
+            heads = len(e["original"]) - 1
+    return heads
+
+
+def v127_problems(state) -> list[str]:
+    """v0.127（docs/deferred-shortage-user-promos-v0.127.md 8 章）: ドライアップ・怪電波マシーンと途中停止を、ログから組み立てて状態と照らす（エンジンの不変条件とは別に、ログだけから数える）。
+
+    - ドライアップ（宣言からワザの終わりまで）: 「うら」が出るまでのコインの最後の並びの「おもて」の数 H と、トラッシュした「水」エネルギーカードの数が同じ（途中停止した宣言はトラッシュが 0）。
+      トラッシュしたカードは 1 匹のポケモン（選んだポケモン）の「水」エネルギーカード
+    - 怪電波マシーン（使ってからトラッシュするまで）: 最後の並びの「おもて」の数と、相手の手札にもどした数が同じ。使い終えたら同じ番の ``discard_trainer`` のあと番を終える
+    - 途中停止（ログの ``halted`` に ``interrupted``）: 状態の ``Halt.interruption`` とちょうど対応し、最後のログ。止めた宣言・使用のあとに、トラッシュ・手札にもどす・使用中のカードのトラッシュ・
+      番の終わり・ポケモンチェック・サイド・きぜつ・別の宣言がない（番が進んでいない）。必要な数が最後の並びの「おもて」の数で、処理できる数が状態の対象の数（ドライアップは選んだポケモンの
+      「水」エネルギーカード、怪電波マシーンは相手の対戦ポケモンのエネルギーカード）と同じで、必要な数より少ない（不足が本当にある）。怪電波マシーンなら使用中のカードが残り、トラッシュに
+      ない。通常の停止・終局のログに ``interrupted`` はない"""
+    from kyuura_engine.effects import attached_typed_energy_cards
+
+    log = list(state.log)
+    if not any(state.cards[uid].card_id in V127_MOLTRES + (V127_TWM,) for uid in state.cards):
+        if any(e["kind"] == "halted" and e.get("interrupted") for e in log) or (state.halt is not None and state.halt.interruption is not None):
+            return ["途中停止を許すカードのない対戦に、途中停止の記録がある"]
+        return []
+    problems: list[str] = []
+    record = state.halt.interruption if state.halt is not None else None
+    marked = [i for i, e in enumerate(log) if e["kind"] == "halted" and e.get("interrupted")]
+    if (record is None) != (not marked) or len(marked) > 1 or (marked and marked[0] != len(log) - 1):
+        problems.append(f"途中停止のログ {marked} と状態の記録 {record is not None} が対応しない（最後のログの 1 つだけ）")
+        return problems
+    halted_at = marked[0] if marked else None
+    closers = ("attack", "turn_end", "turn_start", "pokemon_check", "take_prize", "knock_out", "play_trainer", "game_end", "halted")
+    for i, e in enumerate(log):
+        if e["kind"] == "attack" and (e.get("card_id") or state.cards[e["pokemon"]].card_id) in V127_MOLTRES and e.get("attack_index") == 0:
+            window = []
+            for later in log[i + 1:]:
+                if later["kind"] in closers:
+                    break
+                window.append(later)
+            interrupted = halted_at is not None and halted_at == i + 1 + len(window) and record.source.startswith(e.get("card_id") or state.cards[e["pokemon"]].card_id)
+            own = [later for later in window if later["kind"] != "coin_flip" or (later.get("source") == "attack" and str(later.get("effect", "")).split("#")[0] in V127_MOLTRES)]
+            heads = _v127_final_heads(own)  # こんらんのコインなど、ほかのコインは数えない
+            discards = [later for later in window if later["kind"] == "discard_attached_energy" and str(later.get("effect", "")).split("#")[0] in V127_MOLTRES]
+            if heads is None and not interrupted:
+                if any(later["kind"] == "coin_flip" for later in own) or discards:
+                    problems.append(f"{e['turn']} 番のドライアップのコインが、「うら」が出るまでの並びではない")
+                continue
+            if interrupted:
+                if discards or heads != record.required:
+                    problems.append(f"{e['turn']} 番の途中停止したドライアップで、トラッシュがある・必要な数 {record.required} が最後の「おもて」の数 {heads} と違う")
+                continue
+            if len(discards) != heads or len({d["pokemon_id"] for d in discards}) > 1 or any(not state.printed_def(d["energy"]).is_basic_energy
+                                                                                            or state.printed_def(d["energy"]).provides.value != "water" for d in discards):
+                problems.append(f"{e['turn']} 番のドライアップでトラッシュしたカード {[d['energy'] for d in discards]} が、選んだ 1 匹の「水」エネルギーカード「おもて」{heads} 枚ではない")
+        elif e["kind"] == "play_trainer" and state.cards[e["card"]].card_id == V127_TWM:
+            window = []
+            for later in log[i + 1:]:
+                window.append(later)
+                if later["kind"] in ("discard_trainer", "halted") and later.get("card", e["card"]) == e["card"]:
+                    break
+            end = window[-1] if window else {}
+            heads = _v127_final_heads([w for w in window if w["kind"] != "coin_flip" or (w.get("source") == "trainer" and w.get("card") == e["card"])])
+            returned = [uid for w in window if w["kind"] == "trainer_return_energy" and w.get("trainer_card") == e["card"] for uid in w["cards"]]
+            if end.get("kind") == "halted" and end.get("interrupted"):
+                if returned or heads != record.required or state.trainer_in_use is None or state.trainer_in_use.card != e["card"] or e["card"] in state.players[e["player"]].discard:
+                    problems.append(f"{e['turn']} 番の途中停止した怪電波マシーンで、もどした・使用中のカードがない・必要な数が最後の「おもて」の数と違う")
+            elif end.get("kind") == "discard_trainer":
+                rest = log[i + 1 + len(window):]
+                if heads is None or len(returned) != heads:
+                    problems.append(f"{e['turn']} 番の怪電波マシーンでもどした枚数 {len(returned)} が「おもて」の数 {heads} と違う")
+                if rest and not (rest[0]["kind"] == "trainer_turn_end" and rest[0].get("player") == e["player"]):
+                    problems.append(f"{e['turn']} 番の怪電波マシーンを使い終えたあと、番を終えていない（{rest[0]['kind']}）")
+    if record is not None:
+        found = state.find_pokemon(record.target)
+        if found is None or found[0] != record.target_owner:
+            problems.append(f"途中停止の対象 {record.target} が状態にない")
+        else:
+            pokemon = found[1]
+            if record.element == "discard_water_energy_cards":
+                available = len(attached_typed_energy_cards(state, pokemon, __import__("kyuura_engine.cards", fromlist=["EnergyType"]).EnergyType.WATER))
+            else:
+                available = len([uid for uid in pokemon.energy if state.card_def(uid).category == "energy"])
+            if available != record.available or not record.required > available:
+                problems.append(f"途中停止の処理できる数（状態 {available}・記録 {record.available}）が、必要な数 {record.required} より少なくない")
+        start = max((i for i, e in enumerate(log) if e["kind"] in ("attack", "play_trainer") and e.get("player") == record.player), default=None)
+        if start is None or any(e["kind"] in ("turn_end", "turn_start", "pokemon_check", "take_prize", "knock_out", "discard_trainer") for e in log[start + 1:]):
+            problems.append("途中停止の宣言・使用のあとに、番の終わり・ポケモンチェック・サイド・きぜつ・使用中のカードのトラッシュがある（番が進んだ）")
+        if state.current_player != record.player or (start is not None and log[start]["turn"] != state.turn_number):
+            problems.append("途中停止の状態の番が、止めた宣言・使用の番ではない")
     return problems
 
 

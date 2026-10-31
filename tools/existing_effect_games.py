@@ -748,6 +748,10 @@ V125_WIGGLYTUFF = "ES1-027"
 # 見てサカキのニャースのワザを選ぶ手順 ``_v126_attack`` を重ねる。ログから数えるのは ``v126_uses``
 V0_126 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_126"])
 V126_FLASH = "ES2-035"
+# v0.127（docs/deferred-shortage-user-promos-v0.127.md 12 章）: ファイヤー 2 枚（ドライアップ）・怪電波マシーン（枚数不足の途中停止）と、利用者が指定した簡略ルールのプロモ 3 枚（_のピカチュウ 2 枚・
+# ハマちゃんのヤドキング）。ワザ・トレーナーの手順 ``_v127_attack``・``_v127_trainer``・決定の答え ``_v127_decision`` を重ねる。ログから数えるのは ``v127_uses``
+V0_127 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_127"])
+V127_MOLTRES, V127_TWM, V127_PIKACHU, V127_SLOWKING = ("ES2-005", "QSG-055"), "neo4-108", ("PR1-044", "PR1-090"), "PR1-072"
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -1018,6 +1022,11 @@ DECKS = {
     # v0.126: 闘。サカキのニャース（てつだうふり。相手の山札のいちばん上のカードの種類で変わる）4 枚とフラッシュ 3 枚。おもてにした相手のいちばん上を見て、ワザを選ぶ（CR-FLASH-TOP-CARD-SEEN）
     "M126": ((GIOVANNIS_MEOWTH_40, 4), (RATTATA, 4), (RATICATE, 3), (ONIX, 3), (V126_FLASH, 3), (driver.BILL, 2), (SWITCH, 2), (driver.POTION, 2),
              (FIGHTING, 37)),
+    # v0.127: 炎・無色。ファイヤー 4 枚（ES2-005・QSG-055 を 2 枚ずつ。同じ名前で 4 枚まで）と怪電波マシーン 3 枚。相手の「水」エネルギーカードを見てドライアップを使う（足りなければ途中停止）
+    "F127": (("ES2-005", 2), ("QSG-055", 2), (RATTATA, 4), (RATICATE, 3), (V127_TWM, 3), (driver.BILL, 2), (SWITCH, 2), (driver.POTION, 2), (FIRE, 40)),
+    # v0.127: 雷・超。_のピカチュウ 4 枚（PR1-044・PR1-090 を 2 枚ずつ。同じ名前で 4 枚まで）とヤドン → ハマちゃんのヤドキング（利用者が指定した簡略ルールのワザ）。怪電波マシーンは入れない
+    # （通常のプロモの対戦。途中停止の起こる対戦と分けて数える）
+    "P127": (("PR1-044", 2), ("PR1-090", 2), (SLOWPOKE, 4), (V127_SLOWKING, 3), (driver.BILL, 2), (SWITCH, 2), (driver.POTION, 2), (LIGHTNING, 22), (PSYCHIC, 21)),
     "F45": ((ONIX, 3), (RATTATA, 4), (RATICATE, 3), (ROCKETS_HITMONCHAN, 3), (BROCKS_GEODUDE_40, 4), (BROCKS_RHYHORN, 1), (BROCKS_SANDSHREW, 1),
             (GIOVANNIS_MEOWTH_40, 3), *TRAINERS, (FIGHTING, 26)),
     # v0.45: 水・超（ロケット団・第1弾）。ハイドロキャノン・ロケットタックル・さいみんじゅつ・ゆめくい（相手がねむりでないと失敗）
@@ -2137,6 +2146,10 @@ PAIRINGS_V0_125 = (("W125", "P109"), ("W125", "P119"), ("W125", "G108"))
 # v0.126: M126 対 F126（お互いにフラッシュを使い、サカキのニャースがおもてのいちばん上を見てワザを選ぶ。マサキ・パソコン通信で引く・切る）・M126 対 W125・F126 対 F45（相手のサカキの
 # ニャースが、フラッシュでおもてにした山札のいちばん上を見る）。組・席・seed は正式な対戦の前に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめる seed 90〜93 とは別。局を選び直さない）
 PAIRINGS_V0_126 = (("M126", "F126"), ("M126", "W125"), ("F126", "F45"))
+# v0.127: 途中停止の起こりうる対戦（F127 対 W28・F127 対 S124: 「水」エネルギーの多い相手にドライアップ・怪電波マシーン、F127 対 F45: 「水」のない相手に怪電波マシーン）と、通常のプロモの
+# 対戦（P127 対 W28・P127 対 F45: 利用者が指定した簡略ルールのワザ。途中停止の起こるカードはない）。組・席・seed は正式な対戦の前に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめる
+# seed 90〜93 とは別。途中停止した局を除かない・seed を選び直さない）
+PAIRINGS_V0_127 = (("F127", "W28"), ("F127", "S124"), ("F127", "F45"), ("P127", "W28"), ("P127", "F45"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -2160,7 +2173,8 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.113": PAIRINGS_V0_113, "v0.114": PAIRINGS_V0_114, "v0.115": PAIRINGS_V0_115,
            "v0.116": PAIRINGS_V0_116, "v0.117": PAIRINGS_V0_117, "v0.118": PAIRINGS_V0_118,
            "v0.119": PAIRINGS_V0_119, "v0.120": PAIRINGS_V0_120, "v0.121": PAIRINGS_V0_121, "v0.122": PAIRINGS_V0_122,
-           "v0.123": PAIRINGS_V0_123, "v0.124": PAIRINGS_V0_124, "v0.125": PAIRINGS_V0_125, "v0.126": PAIRINGS_V0_126}
+           "v0.123": PAIRINGS_V0_123, "v0.124": PAIRINGS_V0_124, "v0.125": PAIRINGS_V0_125, "v0.126": PAIRINGS_V0_126,
+           "v0.127": PAIRINGS_V0_127}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -11902,6 +11916,135 @@ def _v126_attack(state, command, counts):
     return UseAttack(command.player, wanted)
 
 
+def _v127_water(state, pokemon) -> int:
+    return len(E.attached_typed_energy_cards(state, pokemon, EnergyType.WATER))
+
+
+def _v127_attack(state, command, counts):
+    """v0.127: バトル場のファイヤーは、相手の場に「水」エネルギーカードがあればドライアップ（ワザ 0）を選び、なければほのおのつばさ（ワザ 1。使えなければ番を終える）。ハマちゃんのヤドキングは、相手の対戦ポケモンが
+    こんらん状態でなければこまったなあ（ワザ 0。利用者の簡略ルールで発話の条件はない）、こんらんならどつく（ワザ 1）。使えるか（エネルギー・止める理由）は状態を変えずに確かめ、使えなければ
+    元の手順のまま（途中停止になる結果も「使える」に数える。拒否ではない）。どちらのカードでもなければ何もしない。"""
+    if not isinstance(command, (UseAttack, EndTurn)):
+        return None
+    player = state.current_player
+    active = state.players[player].active
+    if active is None:
+        return None
+    card_id = state.cards[active.card].card_id
+    opponent = state.players[1 - player]
+    if card_id in V127_MOLTRES:
+        wanted = 0 if any(_v127_water(state, p) for p in opponent.in_play()) else 1
+    elif card_id == V127_SLOWKING:
+        wanted = 1 if opponent.active is not None and opponent.active.conditions.confused else 0
+    else:
+        return None
+    if isinstance(command, UseAttack) and command.attack_index == wanted:
+        return None
+    try:
+        apply_command(state, UseAttack(player, wanted))
+    except (IllegalActionError, UnsupportedError):
+        if card_id in V127_MOLTRES and wanted == 1 and isinstance(command, UseAttack) and command.attack_index == 0:
+            counts[f"v127_{card_id}_no_water_end_turn"] += 1  # 「水」エネルギーカードのない相手にドライアップを使わない（ほのおのつばさを使えなければ番を終える）
+            return EndTurn(player)
+        counts[f"v127_{card_id}_kept"] += 1
+        return None
+    counts[f"v127_{card_id}_chose_{wanted}"] += 1
+    return UseAttack(player, wanted)
+
+
+def _v127_trainer(state, command, tried, counts):
+    """v0.127: 手札の怪電波マシーンを、相手の対戦ポケモンにエネルギーカードが 2 枚以上あるか、ワザを使えずに番を終えるとき（この番にまだ試していなければ）使う（番が終わるので、ワザの
+    かわりに使う）。相手の対戦ポケモンにエネルギーカードがないときは使わない（TW2 は単体のテストで確かめる）。"""
+    player = state.current_player
+    if state.trainer_in_use is not None:
+        return None
+    target = state.players[1 - player].active
+    energy = 0 if target is None else len([uid for uid in target.energy if state.card_def(uid).category == "energy"])
+    if energy == 0 or not (energy >= 2 or isinstance(command, EndTurn)):
+        return None
+    for card in state.players[player].hand:
+        if state.cards[card].card_id != V127_TWM:
+            continue
+        key = ("v127_twm", state.turn_number)
+        if key in tried:
+            return None
+        tried.add(key)
+        counts["v127_twm_played"] += 1
+        return PlayTrainer(player, card)
+    return None
+
+
+def _v127_decision(state, counts):
+    """v0.127: ドライアップの選ぶポケモン（相手の場で「水」エネルギーカードのいちばん多いポケモン。選ぶと止めるポケモンは選ばない）と、トラッシュ・手札にもどすカード（はじめの「おもて」の数の
+    枚数）。どちらでもなければ何もしない。"""
+    from kyuura_engine import decisions as D
+
+    d = state.decision
+    used = state.trainer_in_use
+    if d.resume == "trainer" and used is not None and state.cards[used.card].card_id == V127_TWM and d.kind == D.RETURN_ENERGY:
+        counts["v127_twm_decision"] += 1
+        return ResolveDecision(d.player, d.id, tuple(d.options[:d.min_choices]))
+    attacker = state.players[d.player].active if d.player == state.current_player else None
+    if d.resume != "attack" or attacker is None or state.cards[attacker.card].card_id not in V127_MOLTRES:
+        return None
+    if d.kind == D.SELECT_POKEMON:
+        blocked = set(d.context_value("unresolved_choices", ()) or ())
+        options = [pid for pid in d.options if pid not in blocked]
+        if not options:
+            return None
+        best = max(options, key=lambda pid: (_v127_water(state, state.find_pokemon(pid)[1]), -options.index(pid)))
+        counts[f"v127_dry_up_target_water_{_v127_water(state, state.find_pokemon(best)[1])}"] += 1
+        return ResolveDecision(d.player, d.id, (best,))
+    if d.kind == D.DISCARD_OPPONENT_ENERGY:
+        counts["v127_dry_up_decision"] += 1
+        return ResolveDecision(d.player, d.id, tuple(d.options[:d.min_choices]))
+    return None
+
+
+def v127_uses(state):
+    """v0.127: ログから数えたドライアップ・怪電波マシーン・利用者の簡略ルールのワザの動き（v0.127 のカードのない局では空）。
+
+    - ``dry_up``（宣言した回数）・``dry_up_heads_<H>``（ワザの「うら」が出るまでのコインの一まとまりの「おもて」の数。ナツメのESPのやり直しがあればまとまりごと）・``dry_up_discarded``
+      （トラッシュした「水」エネルギーカードの枚数）
+    - ``twm_played``・``twm_heads_<H>``・``twm_returned``（相手の手札にもどしたカードの枚数）・``twm_finished``（使い終えた。番を終える）
+    - ``interrupted_<コード>``・``interrupted_required_<H>``・``interrupted_available_<N>``（途中停止）
+    - ``birthday_heads``・``birthday_tails``（おたんじょうびのコイン）・``troubled``（こまったなあ）・``troubled_confused``（こまったなあでこんらんにした数）・``smack``（どつく）"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_127 for uid in state.cards):
+        return counts
+    for e in state.log:
+        kind = e["kind"]
+        effect = str(e.get("effect") or "")
+        if kind == "attack":
+            card_id = e.get("card_id") or state.cards[e["pokemon"]].card_id
+            index = e.get("attack_index")
+            if card_id in V127_MOLTRES and index == 0:
+                counts["dry_up"] += 1
+            elif card_id == V127_SLOWKING:
+                counts["troubled" if index == 0 else "smack"] += 1
+        elif kind == "coin_flip" and e.get("source") == "attack" and effect.split("#")[0] in V127_MOLTRES and e.get("until") == "tails" and e["result"] == "tails":
+            counts[f"dry_up_heads_{e['count'] - 1}"] += 1
+        elif kind == "coin_flip" and e.get("source") == "attack" and effect.split("#")[0] in V127_PIKACHU:
+            counts[f"birthday_{e['result']}"] += 1
+        elif kind == "coin_flip" and e.get("source") == "trainer" and effect == V127_TWM and e["result"] == "tails":
+            counts[f"twm_heads_{e['count'] - 1}"] += 1
+        elif kind == "discard_attached_energy" and effect.split("#")[0] in V127_MOLTRES:
+            counts["dry_up_discarded"] += 1
+        elif kind == "play_trainer" and state.cards[e["card"]].card_id == V127_TWM:
+            counts["twm_played"] += 1
+        elif kind == "trainer_return_energy" and state.cards[e["trainer_card"]].card_id == V127_TWM:
+            counts["twm_returned"] += len(e["cards"])
+        elif kind == "discard_trainer" and state.cards[e["card"]].card_id == V127_TWM:
+            counts["twm_finished"] += 1
+        elif kind == "halted" and e.get("interrupted"):
+            counts[f"interrupted_{e['code']}"] += 1
+            counts[f"interrupted_required_{e['required']}"] += 1
+            counts[f"interrupted_available_{e['available']}"] += 1
+        elif kind == "special_condition" and effect.split("#")[0] == V127_SLOWKING:
+            counts["troubled_confused"] += 1
+    return counts
+
+
 def _v125_power(state, tried, counts):
     """v0.125: 自分のベンチのプクリン（ES1-027。［てだすけ］。この番にまだ使っていない）で、自分の対戦ポケモンが特殊状態なら使う（コインは状態の乱数）。状態が 1 つなら受け付け、
     2 つならエンジンが HH2 で拒否する（番ごとに 1 回だけ試す。拒否のあとは元の手順に任せる）。状態がないときは試さない（HH1 は単体のテストで確かめる）。"""
@@ -12346,7 +12489,8 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = (_v126_decision(state, counts)  # v0.126: フラッシュの並べかえ・おもての山札のある間の選択（フラッシュのない局では何もしない）
+            early = (_v127_decision(state, counts)  # v0.127: ドライアップの選ぶポケモン・トラッシュ、怪電波マシーンのもどすカード（ないデッキでは何もしない）
+                     or _v126_decision(state, counts)  # v0.126: フラッシュの並べかえ・おもての山札のある間の選択（フラッシュのない局では何もしない）
                      or _v124_decision(state, counts)  # v0.124: ［すごいへんしん］の選ぶポケモン（v0.124 のカードの決定でなければ何もしない）
                      or _v123_decision(state, counts)  # v0.123: いかりのほのお・ほのおのあらしの炎エネルギーカードのトラッシュ（v0.123 のカードのワザでない決定では何もしない）
                      or _v122_decision(state, counts)  # v0.122: v0.122 の特殊能力・反応・ワザの決定（v0.122 のカードのない局では何もしない）
@@ -12437,6 +12581,13 @@ def make_policy(seen: dict, counts: Counter):
             return (_v031_decision(state, counts) or _v039_decision(state, counts) or _v040_decision(state, counts) or _v041_decision(state, counts)
                     or _v042_decision(state, counts) or command)
         if state.phase is Phase.MAIN and isinstance(command, (UseAttack, EndTurn)):
+            machine = _v127_trainer(state, command, tried, counts)  # v0.127: 怪電波マシーン（ないデッキでは何もしない）
+            if machine is not None:
+                return machine
+            aimed = _v127_attack(state, command, counts)  # v0.127: ファイヤー・ハマちゃんのヤドキングのワザ（ほかのデッキでは何もしない）
+            if aimed is not None and ("v127_aimed", state.turn_number) not in tried:
+                tried.add(("v127_aimed", state.turn_number))
+                return aimed
             flash = _v126_trainer(state, tried, counts)  # v0.126: フラッシュ（ないデッキでは何もしない）
             if flash is not None:
                 return flash
@@ -12679,7 +12830,8 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         state, commands, observed = play_game(decks, seed, policy=make_policy(seen, counts), max_steps=max_steps, extra_stop=V031_STOPS)
         outcome = state.phase.value
         if state.phase is Phase.HALTED:
-            outcome = "halted"
+            # v0.127: 途中停止（数量のチェック地点の終端。``Halt.interruption``）は、従来の停止と別に数える（拒否されたので別の操作を試す扱いにしない）
+            outcome = "interrupted" if state.halt is not None and state.halt.interruption is not None else "halted"
             result["halt_code"] = next((e["code"] for e in reversed(state.log) if e["kind"] == "halted"), None)
     except AssertionError as error:
         state, observed = seen.get("state"), Counter()
@@ -12782,6 +12934,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v124"] = v124_uses(state)
         result["v125"] = v125_uses(state)
         result["v126"] = v126_uses(state)
+        result["v127"] = v127_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
@@ -12799,7 +12952,7 @@ def audit(result, state, commands):
         failures["log"] += bool(log_problems(state))
         failures["serialization"] += bool(serialization_problems(state))
         return {k: v for k, v in failures.items() if v}
-    if state is None or result["outcome"] not in ("game_over", "sudden_death", "halted"):
+    if state is None or result["outcome"] not in ("game_over", "sudden_death", "halted", "interrupted"):
         return {"not_audited": 1}
     current = new_game(*(deck_cards(label) for label in result["decks"]), result["seed"])
     watch = any(state.cards[uid].card_id in V0_47 + V0_47_TRAINERS + V0_48 + V0_54_TRAINERS + V0_55_TRAINERS + V0_56_TRAINERS + V0_63_TRAINERS + V0_95 + V0_96
