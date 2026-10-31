@@ -15,6 +15,7 @@ from kyuura_engine.cards import load_card_pool, read_extract
 from scripts import check_card_sources as cs
 from scripts import check_research_links as rl
 from tests import helpers as HP
+from tests.release_catalog import cards_after, cards_before
 from tests.test_baby_rules_evolution_v0_114 import extract_module
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -115,7 +116,8 @@ class MigrationChainTest(unittest.TestCase):
         self.assertLessEqual(set(old), set(new))
         self.assertEqual({card for card in old if old[card] != new[card]}, set())
         # v0.126: v0.126 で写しに加えたカード（pool_v0_126）も基点にない。段 v0.126 の訂正（写しの外の PR1-027）が台帳の写しに加わった（tests/test_flash_faceup_deck_v0_126.py）
-        self.assertEqual(set(new) - set(old), set(now.get("pool_v0_125", ())) | set(now.get("pool_v0_126", ())))
+        # v0.127: v0.127 で写しに加えたカード（pool_v0_127。段は加えていない）も基点にない
+        self.assertEqual(set(new) - set(old), set(now.get("pool_v0_125", ())) | set(now.get("pool_v0_126", ())) | set(now.get("pool_v0_127", ())))
         self.assertNotIn(WIGGLYTUFF, old)
         self.assertEqual(before["kyuura_corrections"], [c for c in now["kyuura_corrections"] if c["migration"] != "v0.126"])
 
@@ -173,7 +175,8 @@ class ResearchLinksTest(unittest.TestCase):
         # v0.125 の最後のコミットではプクリンを登録した
         self.assertEqual(links["latest_descriptions"]["kyuura_records_not_registered"], ["LD-ES2-005-ATK0", "LD-QSG-055-ATK0"])
         self.assertIn(WIGGLYTUFF, load_card_pool().playable_ids)
-        self.assertEqual(self.links["latest_descriptions"]["kyuura_records_not_registered"], ["LD-ES2-005-ATK0", "LD-QSG-055-ATK0"])
+        # v0.127: ファイヤー 2 枚を登録して、ドライアップの最新の説明を registered に移した（tests/test_deferred_shortage_user_promos_v0_127.py）
+        self.assertEqual(self.links["latest_descriptions"]["kyuura_records_not_registered"], [])
         not_in_engine = self.links["card_checks"]["not_in_engine"]
         for card, ids in NEW_CCS.items():
             self.assertEqual(not_in_engine.get(card), ids, card)
@@ -182,11 +185,16 @@ class ResearchLinksTest(unittest.TestCase):
         added = [c for c in self.links["kyuura_cases_without_engine_ruling"]["cases"] if MIGRATION_TAG in c.get("note", "")]
         self.assertEqual({(c["kyuura_issue"], c["card_id"], c["target"]) for c in added}, NEW_CASES)
         self.assertEqual(len(added), 11)
-        # 登録しないカード（7 章）の事例は、登録のあとも unregistered のまま
+        # 登録しないカード（7 章）の事例は、登録のあとも unregistered のまま。v0.127 で、怪電波マシーン・ファイヤー 2 枚を途中停止の基盤とともに登録し、その事例を
+        # DU1・TW1・TW2 に結んだ（tests/test_deferred_shortage_user_promos_v0_127.py）。ひかるバンギラスは登録していない（unregistered のまま）
+        later = set(cards_after(read_extract(), "0.126"))
         for case in added:
-            if case["card_id"] in OUT_OF_SCOPE:
+            if case["card_id"] in OUT_OF_SCOPE and case["card_id"] not in later:
                 self.assertEqual(case["engine"], {"unregistered": True}, case)
-        self.assertFalse(set(OUT_OF_SCOPE) & load_card_pool().playable_ids)
+            elif case["card_id"] in OUT_OF_SCOPE:
+                self.assertTrue(case["engine"]["stop_codes"], case)
+        self.assertEqual(set(OUT_OF_SCOPE) & load_card_pool().playable_ids, set(OUT_OF_SCOPE) & later)
+        self.assertFalse(set(OUT_OF_SCOPE) & cards_before(read_extract(), "0.127"))
 
     @needs_kyuura
     def test_links_agree_with_kyuura(self):

@@ -1978,6 +1978,17 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   SX1・TN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形の別のカードの問い）。v0.66 の「ナツメのESPと「うら」が出るまでのコインは起こらない」はエンジンの前提の誤りで、研究の論点ではない（kyuura は
   変えていない）。
 
+## v0.127: 利用者指定の簡略ルールと途中停止
+
+- 写しの元・研究の基準は kyuura 57d01f4 のまま（段を加えていない）。写しの組 `pool_v0_127`（ファイヤー ES2-005・QSG-055、怪電波マシーン neo4-108、_のピカチュウ PR1-044・PR1-090、ハマちゃんの
+  ヤドキング PR1-072）。値は kyuura のまま（名前の「_」・レベル・図鑑番号の欠けは補っていない）。
+- 利用者が指定したエンジン固有の簡略ルール（2026-11-01。「のピカチュウについては誕生日の確認をせずに通常のコイントスのみ」「ハマちゃんのヤドキングに関しては発話要件を無視して実装」）。
+  公式の裁定・最新の説明・エラッタではない。記録は `kyuura_engine/effects.py` の `USER_SIMPLIFICATIONS`（4 つの対象）、`card_sources.json` の 3 件（`play_text` の根拠は
+  `kyuura-engine user simplification docs/deferred-shortage-user-promos-v0.127.md#4`）、`research_links.json` の `user_simplified_text`。kyuura の印刷の文面・生成した写しは書き換えていない。
+- kyuura への報告事項: 実装した簡略化（4 つの対象と省いた条件）と記録・検査の場所（[deferred-shortage-user-promos-v0.127.md](deferred-shortage-user-promos-v0.127.md) 4 章・14 章。最終コミットは
+  同 13 章）。途中停止 DU1・TW1（UQ-STATED-COUNT-SHORT）・TW2（UQ-CARD-USE-WITHOUT-TARGET）は論点の事例に結んだが、kyuura の未解決の一覧に行はない（`issue_not_in_index`）。ハマちゃんの
+  ワザ名「こまったなあ」と文面の「こまったなぁ」の表記の差（エンジンは訂正していない）。kyuura の並行の作業を待たずに、このリポジトリの記録で実装した。
+
 ## v0.126: フラッシュ（表向きの山札）
 
 [flash-faceup-deck-v0.126.md](flash-faceup-deck-v0.126.md) の 3 章〜7 章。写しの元・研究の基準は kyuura 57d01f4（移行の段 v0.126 のあと）。

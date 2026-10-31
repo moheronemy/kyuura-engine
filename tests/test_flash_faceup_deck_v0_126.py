@@ -15,6 +15,7 @@ from kyuura_engine.cards import load_card_pool, read_extract
 from scripts import check_card_sources as cs
 from scripts import check_research_links as rl
 from tests import helpers as HP
+from tests.release_catalog import cards_after
 from tests.test_baby_rules_evolution_v0_114 import extract_module
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -108,8 +109,9 @@ class MigrationChainTest(unittest.TestCase):
                           (V0121, V0123, "2026-10-31"), (V0123, V0124, "2026-10-31"), (V0124, V0125, "2026-10-31"), (V0125, NOW, "2026-10-31")])
         self.assertEqual(sources["data_migrations"][-1]["document"], "docs/flash-faceup-deck-v0.126.md")
         self.assertEqual(cs.data_migrations(sources, read_extract())[1], [])
-        # 採用したときのデータのコミットが 57d01f4 の記録は、この版で写しに加えたカード（pool_v0_126）だけ（移行の段では採用し直していない）
-        self.assertEqual({card for card, record in sources["cards"].items() if record.get("kyuura_commit") == NOW}, set(read_extract().get("pool_v0_126", ())))
+        # 採用したときのデータのコミットが 57d01f4 の記録は、この版で写しに加えたカード（pool_v0_126）だけ（移行の段では採用し直していない）。v0.127 は写しの元を変えずに
+        # pool_v0_127 の 6 枚を 57d01f4 で採用した（tests/test_deferred_shortage_user_promos_v0_127.py）
+        self.assertEqual({card for card, record in sources["cards"].items() if record.get("kyuura_commit") == NOW}, cards_after(read_extract(), "0.125"))
 
     @needs_history
     def test_extract_is_unchanged_for_the_base_cards(self):
@@ -120,7 +122,7 @@ class MigrationChainTest(unittest.TestCase):
         new = {card["id"]: card for card in now["cards"]}
         self.assertLessEqual(set(old), set(new))
         self.assertEqual({card for card in old if old[card] != new[card]}, set())
-        self.assertEqual(set(new) - set(old), set(now.get("pool_v0_126", ())))
+        self.assertEqual(set(new) - set(old), cards_after(now, "0.125"))  # v0.127: 後の版で写しに加えたカード（pool_v0_127）も基点にない
         self.assertNotIn(FLASH, old)
         self.assertEqual(before["kyuura_corrections"], [c for c in now["kyuura_corrections"] if c["id"] != FIX])
 
@@ -317,7 +319,7 @@ class RegistrationTest(unittest.TestCase):
         before = engine_json(BASE_ENGINE, "kyuura_engine/data/kyuura_cards.json")
         self.assertNotIn("pool_v0_126", before)
         playable = load_card_pool().playable_ids
-        self.assertEqual(len(playable), 1362)
+        self.assertEqual(len(playable - cards_after(extract, "0.126")), 1362)  # v0.127 から後の版の写しの組を除くと、この版の 1,362 枚（今の総数は tests/test_catalog_contract.py）
         self.assertIn(FLASH, playable)
         self.assertFalse({SLOWKING, SWAP_PLEASE} & playable)  # 8 章: 登録しない
 
@@ -605,7 +607,7 @@ class PersistenceTest(unittest.TestCase):
 
     def test_format_31(self):
         state = play_flash(board())
-        self.assertEqual(max(FORMAT_VERSIONS), 31)
+        self.assertGreaterEqual(max(FORMAT_VERSIONS), 31)  # v0.127 で形式 32（途中停止）を加えた
         self.assertEqual(state_to_dict(state, format_version=31)["face_up_deck"], list(state.face_up_deck))
         for version in (1, 29, 30):
             with self.assertRaises(ValueError):

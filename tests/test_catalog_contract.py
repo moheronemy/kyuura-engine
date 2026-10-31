@@ -19,19 +19,19 @@ class CatalogContractTest(unittest.TestCase):
     def test_current_catalog_totals(self):
         pool = load_card_pool()
         extract = read_extract()
-        self.assertEqual(len(extract["cards"]), 1362)
-        self.assertEqual(len(pool.playable_ids), 1362)
+        self.assertEqual(len(extract["cards"]), 1368)
+        self.assertEqual(len(pool.playable_ids), 1368)
         self.assertEqual(pool.playable_ids, frozenset(
             card.id for card in pool.definitions.values() if card.supported))
         self.assertEqual(
             Counter(pool.get(card).category for card in pool.playable_ids),
-            {"pokemon": 1059, "trainer": 266, "energy": 37},
+            {"pokemon": 1064, "trainer": 267, "energy": 37},
         )
         registry = DEFAULT_EFFECTS
         self.assertEqual(
             (len(registry.attack_keys()), len(registry.power_keys()),
              len(registry.trainer_ids()), len(registry.energy_ids())),
-            (1745, 182, 266, 19),
+            (1753, 182, 267, 19),
         )
         self.assertEqual(
             sum(registry.trainer_entry(card).effect.is_stadium
@@ -45,7 +45,7 @@ class CatalogContractTest(unittest.TestCase):
 
         pool = load_card_pool()
         names = {pool.get(card).name_ja for card in pool.playable_ids if pool.get(card).category == "pokemon"}
-        self.assertEqual(len(names), 510)
+        self.assertEqual(len(names), 512)
         candidates = engine._identity_candidates(pool)
         basics = [card for card in candidates if pool.get(card).category == "pokemon" and pool.get(card).stage == "basic"]
         babies = [card for card in candidates if pool.get(card).category == "pokemon" and pool.get(card).stage == "baby"]
@@ -64,8 +64,11 @@ class CatalogContractTest(unittest.TestCase):
         # 名前の候補は 509 のまま（PMCG1-019・PMCG6-034 の名前が「ウィンディ」「カツラのウィンディ」に置きかわり、3 枚はそのどちらかの名前）。v0.124: たね 2 枚（メタモン ES2-032・
         # GR団のミュウツー PRN-041）を加えて 529 + 13 + 1 = 543 に、最初の実行 1 を加えた 544 回（上限 512 は変えない。全候補は 1,144）。名前の候補は「GR団のミュウツー」だけ増えて 510
         # （「メタモン」は化石の秘密のメタモンと同じ名前）。v0.125: 1 進化 1 枚（プクリン ES1-027）で、たねは増えない（544 回のまま）。全候補は 1,145。名前の候補は 510 のまま
-        # （「プクリン」はポケモンジャングルのプクリンと同じ名前）。v0.126: トレーナー 1 枚（フラッシュ ES2-035）で、たね・名前の候補は変わらない。全候補は 1,146
-        self.assertEqual((len(candidates), len(basics), len(babies)), (1146, 529, 13))
+        # （「プクリン」はポケモンジャングルのプクリンと同じ名前）。v0.126: トレーナー 1 枚（フラッシュ ES2-035）で、たね・名前の候補は変わらない。全候補は 1,146。v0.127: たね 4 枚
+        # （ファイヤー ES2-005・QSG-055、_のピカチュウ PR1-044・PR1-090）と 1 進化 1 枚（ハマちゃんのヤドキング）・トレーナー 1 枚（怪電波マシーン）。処理の同じカード（同じ登録の値・同じ
+        # 写しの欄）は 1 枚で代表するので、たねは 3 増えて 532（ファイヤーは最新の説明の出典が違うので 2 枚とも候補）、全候補は 1,151。名前の候補は「_のピカチュウ」「ハマちゃんの
+        # ヤドキング」の 2 つ増えて 512（「ファイヤー」は化石の秘密などと同じ名前）
+        self.assertEqual((len(candidates), len(basics), len(babies)), (1151, 532, 13))
         self.assertEqual(engine._IDENTITY_TRIAL_LIMIT, 512)
 
     def test_current_research_totals(self):
@@ -74,7 +77,7 @@ class CatalogContractTest(unittest.TestCase):
         self.assertEqual(
             (links["counts"]["engine_stop_codes"],
              links["counts"]["engine_unresolved_rulings"]),
-            (310, 311),
+            (313, 314),
         )
         self.assertEqual(len(links["latest_descriptions"]["adopted_printed_text"]), 1390)
         self.assertEqual(links["counts"]["kyuura_issues"], 90)
@@ -82,7 +85,7 @@ class CatalogContractTest(unittest.TestCase):
     def test_current_format_and_audit_agree(self):
         # Keep the audit's independently maintained schema check. Deriving its
         # version from the serializer would hide missing audit field coverage.
-        self.assertEqual(LATEST_FORMAT, 31)
+        self.assertEqual(LATEST_FORMAT, 32)
         self.assertEqual(FORMAT_VERSIONS, tuple(range(1, LATEST_FORMAT + 1)))
 
     def test_target_universe_and_current_unsupported_totals(self):
@@ -111,7 +114,7 @@ class CatalogContractTest(unittest.TestCase):
         self.assertLessEqual(playable, ids)
         self.assertLessEqual(pmcg, playable)
         self.assertEqual((len(ids - playable), len(neo - playable),
-                          len(non_pack - playable)), (15, 3, 12))
+                          len(non_pack - playable)), (9, 2, 7))
 
 
 class ReleaseCohortTest(unittest.TestCase):

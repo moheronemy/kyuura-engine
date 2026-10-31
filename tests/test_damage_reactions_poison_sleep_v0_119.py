@@ -209,10 +209,15 @@ class RegistrationTest(unittest.TestCase):
 
         pool = load_card_pool()
         sources = json.loads((ROOT / "kyuura_engine" / "data" / "card_sources.json").read_text(encoding="utf-8"))["cards"]
-        for card in ("neo4-082", "neo4-108", "ES2-005", "QSG-055"):
+        self.assertNotIn("neo4-082", pool.playable_ids)
+        self.assertNotIn("neo4-082", sources)
+        # v0.127: 怪電波マシーン（neo4-108）・ファイヤー（ES2-005・QSG-055）は、途中停止の基盤を加えて v0.127 で登録した（v0.119 の範囲の外。
+        # tests/test_deferred_shortage_user_promos_v0_127.py）。v0.119 の範囲（v0.127 より前の写しの組）には入っていない
+        before_v0_127 = cards_before(read_extract(), "0.127")
+        for card in ("neo4-108", "ES2-005", "QSG-055"):
             with self.subTest(card=card):
-                self.assertNotIn(card, pool.playable_ids)
-                self.assertNotIn(card, sources)
+                self.assertNotIn(card, before_v0_127)
+                self.assertIn("v0.127 で加えた", sources[card]["notes"])
         # v0.125: プクリン（ES1-027）は、kyuura が p.226 の最新の説明を読んだ記録（LD-ES1-027-ATK0・PWR0）で v0.125 に登録した（v0.119 の範囲の外。
         # tests/test_wigglytuff_helping_hand_v0_125.py）。v0.119 の範囲（v0.125 より前の写しの組）には入っていない
         self.assertNotIn("ES1-027", cards_before(read_extract(), "0.125"))

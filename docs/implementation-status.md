@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.126）
+# 実装状況（v0.1〜v0.127）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `57d01f45cfb8b086d03dc0525b329cf6adeff69b`（v0.126 から。v0.125 は `134a664c6adf67d5604148a31b58e1a7d26d4d6d`、v0.124 は `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`、v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3818,6 +3818,26 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 338・neo 154・拡張パック以外 184） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistryTest` |
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.127: 枚数不足の途中停止と、利用者指定の簡略ルールのプロモ 3 枚
+
+[deferred-shortage-user-promos-v0.127.md](deferred-shortage-user-promos-v0.127.md)。写しの元・研究の基準は kyuura 57d01f4 のまま。書き出しの形式は 32。途中停止は公式の裁定の解決ではなく、
+プロモ 3 枚の処理は利用者が指定した簡略ルール（公式の裁定・エラッタではない）です。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 途中停止の基盤（共通の数量処理のチェック地点だけが、実際のコインとそこまでの処理を残した終端の状態を返す。従来の拒否・通常の受理と分ける。渡した状態は変えない） | 実装済み・テスト済み・対戦で確かめた | 5 章 | tests/test_deferred_shortage_user_promos_v0_127.py `FoundationTest` |
+| 先読み（途中停止の枝を拒否にしない。H の組 0〜N と N + 1。トラッシュするカードの組はカードの種類ごとに 1 つ）・ナツメのESP（やり直しを聞いてから最後の並びで判断） | 実装済み・テスト済み | 6 章 | 同 `FoundationTest`・`DryUpTest` |
+| ドライアップ（相手の場の 1 匹を選んでから「うら」まで投げ、ちょうど H 枚の「水」エネルギーカードをトラッシュ。H < N はすべての組を選べる） | 実装済み・テスト済み・対戦で確かめた | LD-ES2-005-ATK0・LD-QSG-055-ATK0・CR-DRY-UP-PROCEDURE・CR-UNTIL-TAILS-NOT-CAPPED | 同 `DryUpTest` |
+| 選んだポケモンの「水」エネルギーカードが「おもて」の数より少ない（DU1） | 裁定が未解決（トラッシュの前に途中停止） | UQ-STATED-COUNT-SHORT | 同 `DryUpTest.test_boundaries` |
+| 怪電波マシーン（「うら」まで投げ、ちょうど H 枚のエネルギーカードを相手の手札にもどし、使い終えて番を終える。H = 0 でも番を終える） | 実装済み・テスト済み・対戦で確かめた | CR-THOUGHT-WAVE-MACHINE-PROCEDURE・CR-UNTIL-TAILS-NOT-CAPPED | 同 `ThoughtWaveMachineTest` |
+| 相手の対戦ポケモンのエネルギーカードが「おもて」の数より少ない（TW1）・はがせるカードがない（TW2） | 裁定が未解決（TW1 は途中停止・TW2 は使う前に止める） | UQ-STATED-COUNT-SHORT・UQ-CARD-USE-WITHOUT-TARGET | 同 `ThoughtWaveMachineTest`・`FoundationTest` |
+| _のピカチュウ（おたんじょうび。誕生日の条件を省く。いつもコイン 1 枚で「おもて」30+50・「うら」30） | 実装済み・テスト済み・対戦で確かめた（利用者が指定した簡略ルール） | 利用者の指定（2026-11-01）・`USER_SIMPLIFICATIONS` | 同 `PromoTest`・`UserSimplificationRecordTest` |
+| ハマちゃんのヤドキング（こまったなあ・どつく。発話の条件を省く） | 実装済み・テスト済み・対戦で確かめた（利用者が指定した簡略ルール） | 利用者の指定（2026-11-01）・`USER_SIMPLIFICATIONS` | 同 `PromoTest` |
+| 状態の保存（`halt.interruption`・`user_simplifications`。形式 32。途中停止を古い形式に書かない）・不変条件（途中停止だけ専用に確かめる）・ログの監査・対戦の組 v0.127 | 実装済み・テスト済み | 8 章・12 章 | 同 `FoundationTest`・`AuditTest`・`--batch v0.127` |
+| 途中停止からの再開 | 未対応（今回の範囲の外） | — | — |
+| ひかるバンギラス neo4-082（はかいのほのおの失敗の判定・順番） | 未対応（今回の範囲の外） | UQ-DESTRUCTIVE-FIRE-FAILURE・UQ-STATED-COUNT-SHORT | — |
+| 外部照合（pcg-search.com・カードの画像・ガイドブック） | 原典未確認（kyuura の記録を再利用。プロモ 3 枚は利用者の指定） | していない | — |
 
 ## v0.126: フラッシュと表向きの山札
 

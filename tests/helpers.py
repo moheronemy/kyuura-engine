@@ -1592,6 +1592,12 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DiscardEnergyBeforeDamagePlusOwnCounters,
     # v0.124（docs/super-transform-dark-pulse-v0.124.md 6 章）: 自分のベンチの「わるい」ポケモンの数のコインで追加ダメージ（既存の要素 Coin(per_pokemon) に名前の分類を渡す）
     _effects.CoinsPerOwnBenchDarkBonusDamage,
+    # v0.127（docs/deferred-shortage-user-promos-v0.127.md）: 相手の場の 1 匹を選んでから「うら」まで投げ、その数の「水」エネルギーカードをトラッシュ（足りなければ途中停止。新しい要素
+    # DiscardChosenTypedEnergyUntilTails）と、利用者が指定した簡略ルールの 3 つの型（既存の型と同じ要素の並び。印刷の文面と記録が同じときだけ登録できる）
+    _effects.ChooseOpponentThenDiscardTypedEnergyUntilTails,
+    _effects.UserSimplifiedCoinBonusDamage,
+    _effects.UserSimplifiedStatusSelfAndOpponent,
+    _effects.UserSimplifiedDamageOnly,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

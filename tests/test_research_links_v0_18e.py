@@ -218,7 +218,10 @@ class ResearchLinksTest(unittest.TestCase):
                                      "UNRESOLVED_HELPING_HAND_WITHOUT_CONDITION", "UNRESOLVED_HELPING_HAND_CHOICE", "UNRESOLVED_INFLATE_NON_ATTACK_DAMAGE",
                                      # v0.126: FU1〜FU6（kyuura 57d01f4 の論点 UQ-STATED-COUNT-SHORT・UQ-FLASH-FACE-UP-DECK の事例に結んだ。未解決の一覧（v0.113 の写し）に行はない）
                                      "UNRESOLVED_FLASH_DECK_SHORT", "UNRESOLVED_FACE_UP_DECK_CHECK", "UNRESOLVED_FACE_UP_DECK_HIDDEN_TAKE",
-                                     "UNRESOLVED_FACE_UP_DECK_PLACE_TOP", "UNRESOLVED_FACE_UP_DECK_LOOK_RETURN", "UNRESOLVED_FACE_UP_DECK_MOVE"})
+                                     "UNRESOLVED_FACE_UP_DECK_PLACE_TOP", "UNRESOLVED_FACE_UP_DECK_LOOK_RETURN", "UNRESOLVED_FACE_UP_DECK_MOVE",
+                                     # v0.127: DU1・TW1・TW2（kyuura 57d01f4 の論点 UQ-STATED-COUNT-SHORT・UQ-CARD-USE-WITHOUT-TARGET の事例に結んだ。未解決の一覧に行はない）
+                                     "UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT", "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT",
+                                     "UNRESOLVED_THOUGHT_WAVE_MACHINE_WITHOUT_TARGET"})
         # v0.31〜v0.68 は、kyuura の一覧でコードのない行を指していた停止コード 8 件（T27・C34/C35・G40・P19・P32・Z9・DR8・DR13）に kyuura_index_engine_key を
         # 書いていた。v0.69 で kyuura が停止コードを書いたので外した（scripts/check_research_links.py が、kyuura の一覧のコードで照らす）
         # v0.97: SS1（v0.60 のコードのない問い。kyuura の一覧ではコードのない行）にコードを付けたので、その行を指す（v0.31 と同じ形）
@@ -300,6 +303,8 @@ class ResearchLinksTest(unittest.TestCase):
                    "adopted_printed_text", "errata_text", "difference_text",
                    # v0.68: 利用者が示した訂正の文面（ガルーラのこどものおつかい）・エンジンの簡略化した仕様（イマクニ？のドードー）
                    "user_corrected_text", "engine_simplified_text",
+                   # v0.127: 利用者が指定した簡略ルール（_のピカチュウ・ハマちゃんのヤドキング。公式の裁定・エンジンの簡略化した仕様とは別の区分）
+                   "user_simplified_text",
                    # v0.69: 拡張パック以外の商品の同じカードの登録（元のカードの登録の区分にしたがう）
                    "equivalent_registrations",
                    # v0.71: 再録のカードの、元のカードの記録の文面を処理に使う登録
