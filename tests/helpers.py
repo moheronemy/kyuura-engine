@@ -1883,10 +1883,14 @@ CARD_DATA_COMMIT_SINCE_V0_123 = "74b3ceb883dd815495d13b9987433fb14b36e44d"
 # v0.124（docs/super-transform-dark-pulse-v0.124.md 2 章）: 写しの元を 74b3ceb から b9e7cff（kyuura main の PR #6 のマージ）に上げた（段 v0.124。前の段の値は変えない）。この段で
 # 値が変わったのは写しの外のメタモン ES2-032 の文面の 1 字だけ
 CARD_DATA_COMMIT_SINCE_V0_124 = "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a"
-CARD_DATA_COMMIT = CARD_DATA_COMMIT_SINCE_V0_124  # 今の写しの元
+# v0.125（docs/wigglytuff-helping-hand-v0.125.md 2 章）: 写しの元を b9e7cff から 134a664（kyuura のブランチ claude/eloquent-lamport-5xyv5r の固定コミット）に上げた（段 v0.125。
+# 前の段の値は変えない）。この段の data/cards.json は全 1,377 枚の全欄が同じ（訂正なし）
+CARD_DATA_COMMIT_SINCE_V0_125 = "134a664c6adf67d5604148a31b58e1a7d26d4d6d"
+CARD_DATA_COMMIT = CARD_DATA_COMMIT_SINCE_V0_125  # 今の写しの元
 CARD_DATA_MIGRATIONS = ((CARD_DATA_COMMIT_BEFORE_V0_69, CARD_DATA_COMMIT_SINCE_V0_69), (CARD_DATA_COMMIT_SINCE_V0_69, CARD_DATA_COMMIT_SINCE_V0_97),
                         (CARD_DATA_COMMIT_SINCE_V0_97, CARD_DATA_COMMIT_SINCE_V0_114), (CARD_DATA_COMMIT_SINCE_V0_114, CARD_DATA_COMMIT_SINCE_V0_121),
-                        (CARD_DATA_COMMIT_SINCE_V0_121, CARD_DATA_COMMIT_SINCE_V0_123), (CARD_DATA_COMMIT_SINCE_V0_123, CARD_DATA_COMMIT_SINCE_V0_124))
+                        (CARD_DATA_COMMIT_SINCE_V0_121, CARD_DATA_COMMIT_SINCE_V0_123), (CARD_DATA_COMMIT_SINCE_V0_123, CARD_DATA_COMMIT_SINCE_V0_124),
+                        (CARD_DATA_COMMIT_SINCE_V0_124, CARD_DATA_COMMIT_SINCE_V0_125))
 
 
 def with_card_data_commit_at(data: dict, commit: str) -> dict:
@@ -1915,7 +1919,7 @@ def with_card_data_commit_at(data: dict, commit: str) -> dict:
 
 def with_card_data_commit_before_v0_69(data: dict) -> dict:
     """state_to_dict の値（の写し）の、写しの元の 2 か所だけを v0.68 までの値にもどした新しい値（``data`` は変えない）。もどした数も確かめる。v0.97 から、今の写しの元
-    （v0.114 から e519b99、v0.121 から 2fe0bc0、v0.123 から 74b3ceb、v0.124 から b9e7cff）から移行の連鎖を段ごとにさかのぼる（``with_card_data_commit_at``）。"""
+    （v0.114 から e519b99、v0.121 から 2fe0bc0、v0.123 から 74b3ceb、v0.124 から b9e7cff、v0.125 から 134a664）から移行の連鎖を段ごとにさかのぼる（``with_card_data_commit_at``）。"""
     return with_card_data_commit_at(data, CARD_DATA_COMMIT_BEFORE_V0_69)
 
 
@@ -2158,6 +2162,11 @@ V0_124_KYUURA_RECORDS_ADDED = {
     "neo4-105": ("CR-DARK-POKEMON-CATEGORY",),
     "neo4-110": ("UQ-TRANSFORM-BABY-AND-BASIC",),
 }
+# v0.125（docs/wigglytuff-helping-hand-v0.125.md 2.3 節）: 研究の基準を kyuura 134a664 に上げて、登録済みのカードの採用の記録の kyuura_records に加わった記録（「うら」が出るまで
+# 投げるコインを打ち切らない裁定の related_cards に挙がったゴローン）。tests/test_wigglytuff_helping_hand_v0_125.py が、同梱の記録と同じことを確かめる
+V0_125_KYUURA_RECORDS_ADDED = {
+    "ES2-023": ("CR-UNTIL-TAILS-NOT-CAPPED",),
+}
 
 
 # v0.123（docs/arcanine-name-migration-v0.123.md 2 章）: 段 v0.123 で kyuura が直した登録済みの 2 枚の名前（name.ja の前・あと）。前の版の固定した写しと今の写しを比べるテストは、
@@ -2184,10 +2193,11 @@ def without_v0_123_name_fixes(cards: dict, old_cards: dict) -> dict:
 
 def kyuura_records_since_v0_69(card_id: str, before: list | tuple = ()) -> list:
     """v0.68 までの kyuura_records（``before``）に、v0.69 で加わった記録を加えた値（並びは id の順）。v0.97 で加わった記録（``V0_97_KYUURA_RECORDS_ADDED``）・v0.114 で加わった記録
-    （``V0_114_KYUURA_RECORDS_ADDED``）・v0.121 で加わった記録（``V0_121_KYUURA_RECORDS_ADDED``）・v0.123 で加わった記録（``V0_123_KYUURA_RECORDS_ADDED``）・v0.124 で加わった記録（``V0_124_KYUURA_RECORDS_ADDED``）も加える。"""
+    （``V0_114_KYUURA_RECORDS_ADDED``）・v0.121 で加わった記録（``V0_121_KYUURA_RECORDS_ADDED``）・v0.123 で加わった記録（``V0_123_KYUURA_RECORDS_ADDED``）・v0.124 で加わった記録（``V0_124_KYUURA_RECORDS_ADDED``）・v0.125 で加わった記録（``V0_125_KYUURA_RECORDS_ADDED``）も加える。"""
     return sorted([*before, *V0_69_KYUURA_RECORDS_ADDED.get(card_id, ()), *V0_97_KYUURA_RECORDS_ADDED.get(card_id, ()),
                    *V0_114_KYUURA_RECORDS_ADDED.get(card_id, ()), *V0_121_KYUURA_RECORDS_ADDED.get(card_id, ()),
-                   *V0_123_KYUURA_RECORDS_ADDED.get(card_id, ()), *V0_124_KYUURA_RECORDS_ADDED.get(card_id, ())])
+                   *V0_123_KYUURA_RECORDS_ADDED.get(card_id, ()), *V0_124_KYUURA_RECORDS_ADDED.get(card_id, ()),
+                   *V0_125_KYUURA_RECORDS_ADDED.get(card_id, ())])
 
 
 # v0.69: kyuura の未解決の一覧で論点に結ばれた停止コード（v0.68 までは not_in_kyuura。進化のあとの HP だけは out_of_scope）→ kyuura の論点

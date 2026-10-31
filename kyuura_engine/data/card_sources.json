@@ -55,6 +55,14 @@
       "check": "scripts/extract_kyuura_cards.py の migration_copy_problems・previous_copy_problems・kyuura_correction_problems（移行の段ごとに、写す欄が、その段で kyuura が当てはめた修正の欄と出典の記録の欄を除いて同じ。修正は段の前の値・あとの値・台帳・カードの記録・根拠で確かめる）",
       "document": "docs/super-transform-dark-pulse-v0.124.md",
       "note": "v0.124 で写しの元を 74b3ceb から b9e7cff（kyuura main の PR #6 のマージ。すごいへんしん・わるいはどうの調査。木は研究の最後のコミット 9731354 と同じ）に上げた。v0.69・v0.97・v0.114・v0.121・v0.123 の段（ecb2d69 → 7d3f4ca → 73a1690 → e519b99 → 2fe0bc0 → 74b3ceb）は書き換えない（v0.123 の段のあとを 74b3ceb に固定）。v0.123 までの採用の記録の kyuura_commit・記録した日・外部照合の確認日と照らしたコミット・当時の違いの値は書き換えない（採用し直した・照合し直したことにしない）。この段で値が変わったのは、写しの外（未登録）のメタモン ES2-032 の pokemon.powers[0].text.ja の 1 字（「この「すごいへんしん」のカは使えず」の片仮名「カ」→漢字「力」。kyuura の台帳の訂正 FIX-ES2-032-POWER0-TEXT-JA。根拠は kyuura のカードの画像の照合 IMG-ES2-032、種類は転記の誤り transcription_error）と、同じカードの notes・corrections だけで、ほかの 1,376 枚（写しの 1,358 枚をふくむ）の値は同じ。kyuura_records は、研究の基準のコミットを b9e7cff に上げたので、このコミットでカードを指す kyuura の記録の id に合わせた（記録を読み直したのではなく、id の対応を直した）"
+    },
+    {
+      "from": "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a",
+      "to": "134a664c6adf67d5604148a31b58e1a7d26d4d6d",
+      "on": "2026-10-31",
+      "check": "scripts/extract_kyuura_cards.py の migration_copy_problems・previous_copy_problems・kyuura_correction_problems（移行の段ごとに、写す欄が、その段で kyuura が当てはめた修正の欄と出典の記録の欄を除いて同じ。修正は段の前の値・あとの値・台帳・カードの記録・根拠で確かめる）",
+      "document": "docs/wigglytuff-helping-hand-v0.125.md",
+      "note": "v0.125 で写しの元を b9e7cff から 134a664（kyuura のブランチ claude/eloquent-lamport-5xyv5r の固定コミット。プクリンの最新の説明・コインで決まる枚数の不足の調査。kyuura main には未取り込み）に上げた。v0.69・v0.97・v0.114・v0.121・v0.123・v0.124 の段（ecb2d69 → 7d3f4ca → 73a1690 → e519b99 → 2fe0bc0 → 74b3ceb → b9e7cff）は書き換えない（v0.124 の段のあとを b9e7cff に固定）。v0.124 までの採用の記録の kyuura_commit・記録した日・外部照合の確認日と照らしたコミット・当時の違いの値は書き換えない（採用し直した・照合し直したことにしない）。この段の data/cards.json は全 1,377 枚の全欄が同じ（バイト列が同じ。訂正なし。台帳の ES1-027 の訂正の候補 held_illegible_print に later_notes が加わっただけで、候補のまま）。kyuura_records は、研究の基準のコミットを 134a664 に上げたので、このコミットでカードを指す kyuura の記録の id に合わせた（記録を読み直したのではなく、id の対応を直した。登録済みのカードではゴローン ES2-023 に CR-UNTIL-TAILS-NOT-CAPPED の related_cards が加わっただけ）"
     }
   ],
   "cards": {
@@ -21462,7 +21470,9 @@
       "status": "adopted",
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-19",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "CR-UNTIL-TAILS-NOT-CAPPED"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"

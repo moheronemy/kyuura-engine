@@ -3,7 +3,7 @@
   "description": "kyuura の data/cards.json から、kyuura-engine が使うカードの記録を抜き出した写し。カード情報の正本は kyuura。値は書き換えていない。生成: scripts/extract_kyuura_cards.py（手で編集しない）。",
   "source": {
     "repository": "https://github.com/moheronemy/kyuura",
-    "commit": "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a",
+    "commit": "134a664c6adf67d5604148a31b58e1a7d26d4d6d",
     "path": "data/cards.json",
     "schema_version": 3
   },
@@ -1774,6 +1774,13 @@
       "corrections": [
         "FIX-ES2-032-POWER0-TEXT-JA"
       ]
+    },
+    {
+      "id": "v0.125",
+      "from": "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a",
+      "to": "134a664c6adf67d5604148a31b58e1a7d26d4d6d",
+      "document": "docs/wigglytuff-helping-hand-v0.125.md",
+      "corrections": []
     }
   ],
   "kyuura_corrections": [
@@ -2937,7 +2944,7 @@
       "reference_url_role": "利用者が示した補助資料。エンジンは本文を取得していない（ネットワークのプロキシが 403）。サイトの本文を検証した・ルーン文字を解読したとは扱わない",
       "engine_saw_image": false,
       "kyuura_saw_image": false,
-      "source_commit": "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a"
+      "source_commit": "134a664c6adf67d5604148a31b58e1a7d26d4d6d"
     }
   ],
   "equivalent_targets": {

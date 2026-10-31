@@ -2,19 +2,19 @@
   "format": "kyuura-engine research links 1",
   "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md kyuura の engine_unresolved_index にまだない停止コード（エンジンが新しく加えたもの）は kyuura_disposition を not_in_kyuura にし、kyuura への報告事項にする（v0.21 の突風・v0.22 のパソコン通信・v0.23 のエネルギー回収・v0.36 の AC6（手順 4 のコインとこんらん）・RD9（山札にもどす効果ときぜつ）・v0.37 の JS1（説明に弱点・抵抗力のない控えへのダメージ）。kyuura に記録ができたら scripts/check_research_links.py が知らせる）。 v0.31 で、コードのない未解決（T27・C34/C35・G40・P19・P32）に停止コードを付けた。kyuura の未解決の一覧はこれらをコードなし（stop_code が null）で挙げているので、kyuura_index_engine_key でその行と照らす（kyuura の一覧にコードが書かれたら scripts/check_research_links.py が知らせる）。 v0.50 で、退化の処理に使う kyuura の規定・裁定（GR-2000-P324-DEVOLUTION・CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION・CR-CHEMICAL-GAS-LEAVES・GR-2000-P323-KNOCKOUT）を applied_rule_records に結び付けた（id の対応だけ。scripts/check_research_links.py が研究の基準のコミットにあることと分類を確かめる）。 v0.51 で、トラッシュのたねポケモンを持ち主のベンチに出す処理に使う kyuura の規定（GR-2000-P309-ATTACK-PROCEDURE・GR-2000-P319-HP-AND-DAMAGE・GR-2000-P320-COUNTER-MOVE）を applied_rule_records に結び付けた（v0.50 と同じく id の対応だけ）。 v0.70 で、拡張パック以外の商品のポケモン 82 枚の説明文のあるワザ 85 を adopted_printed_text に加えた（kyuura データの採用。研究の基準のコミットに、これらのカードを指す LD-・CC-・CR-・UQ-・エラッタはない）。PR1-069 の名前（kyuura の値「？？？」）は、エンジンが写しの作り直しで利用者が示した訂正「ミュウ」を当てはめた（engine_user_corrections。scripts/check_research_links.py はこの訂正の欄だけを訂正のあとの値にして比べる）。",
   "repository": "https://github.com/moheronemy/kyuura",
-  "research_commit": "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a",
-  "research_branch": "main",
+  "research_commit": "134a664c6adf67d5604148a31b58e1a7d26d4d6d",
+  "research_branch": "claude/eloquent-lamport-5xyv5r",
   "research_files": [
     "data/sidecar/rulings.json",
     "data/sidecar/latest_descriptions.json",
     "data/sidecar/card_checks.json"
   ],
-  "card_data_commit": "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a",
+  "card_data_commit": "134a664c6adf67d5604148a31b58e1a7d26d4d6d",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
     "engine_unresolved_rulings": 302,
     "engine_stop_codes": 301,
-    "kyuura_issues": 88
+    "kyuura_issues": 90
   },
   "stop_codes": {
     "UNRESOLVED_MULLIGAN_COMPENSATION": {
@@ -3514,7 +3514,7 @@
     }
   },
   "kyuura_cases_without_engine_ruling": {
-    "note": "v0.97: kyuura の論点（UQ-）の事例（cases）のうち、エンジンの裁定 id（engine_ruling）を書いていないもの（kyuura の調査で加えた事例。kyuura の未解決の一覧 engine_unresolved_index は取り込んだ版（v0.68 まで）の項目だけ）と、エンジンでの扱い。stop_codes はエンジンがその場面を止める停止コード（研究の対応表の stop_codes にある。コードの kyuura_issue が事例の論点と違えば engine_issue_differs）、codeless_question はコードのない問い（codeless_questions）、unregistered はエンジンに登録していないカード（その場面は起こらない）。scripts/check_research_links.py が、研究の基準のコミットのそのような事例のすべてと同じことと、エンジンの扱いを確かめる。v0.123: requires_unregistered は、登録したカードの事例で、その場面が同じ論点の事例の、登録していない別のカード（挙げた id のどれか）があるときだけ起こるもの（そのカードはデッキに入れられないので、その場面は起こらない。答えを決めたのではない）。v0.124: 研究の基準を b9e7cff に上げて加わった論点 9 件の事例を結んだ（移行の段ではエンジンの処理を変えていない。登録していない 2 枚の事例は unregistered、その 2 枚があるときだけ起こる事例は requires_unregistered、化石のメタモンで移行の段のエンジンが止めていない事例は codeless_question）",
+    "note": "v0.97: kyuura の論点（UQ-）の事例（cases）のうち、エンジンの裁定 id（engine_ruling）を書いていないもの（kyuura の調査で加えた事例。kyuura の未解決の一覧 engine_unresolved_index は取り込んだ版（v0.68 まで）の項目だけ）と、エンジンでの扱い。stop_codes はエンジンがその場面を止める停止コード（研究の対応表の stop_codes にある。コードの kyuura_issue が事例の論点と違えば engine_issue_differs）、codeless_question はコードのない問い（codeless_questions）、unregistered はエンジンに登録していないカード（その場面は起こらない）。scripts/check_research_links.py が、研究の基準のコミットのそのような事例のすべてと同じことと、エンジンの扱いを確かめる。v0.123: requires_unregistered は、登録したカードの事例で、その場面が同じ論点の事例の、登録していない別のカード（挙げた id のどれか）があるときだけ起こるもの（そのカードはデッキに入れられないので、その場面は起こらない。答えを決めたのではない）。v0.124: 研究の基準を b9e7cff に上げて加わった論点 9 件の事例を結んだ（移行の段ではエンジンの処理を変えていない。登録していない 2 枚の事例は unregistered、その 2 枚があるときだけ起こる事例は requires_unregistered、化石のメタモンで移行の段のエンジンが止めていない事例は codeless_question）。v0.125: 研究の基準を 134a664 に上げて加わった事例 11 件（論点 2 件の新しい事例と、既存の論点 UQ-CARD-USE-WITHOUT-TARGET・UQ-NON-ATTACK-DAMAGE-MODIFIERS・UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY・UQ-STATED-COUNT-SHORT に加わった事例）を結んだ。移行の段ではどのカードも登録していないので、どれも unregistered",
     "cases": [
       {
         "kyuura_issue": "UQ-EFFECT-AFTER-NO-DAMAGE",
@@ -4393,6 +4393,105 @@
           ]
         },
         "note": "エリカのフシギソウのくつろぐかおりとわるいはどう。GR団のミュウツーを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: くつろぐかおりの半分との順番（DP1）"
+      },
+      {
+        "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+        "card_id": "ES1-027",
+        "target": "power/0",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "プクリン（拡張シート第1弾青版）の［てだすけ］。自分の対戦ポケモンに回復する状態がないとき使えるか（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+        "card_id": "neo4-108",
+        "target": "trainer",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "怪電波マシーン。相手の対戦ポケモンにエネルギーカードがないとき使えるか（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-DESTRUCTIVE-FIRE-FAILURE",
+        "card_id": "neo4-082",
+        "target": "attack/1",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "ひかるバンギラスのはかいのほのお。「おもて」0・炎エネルギーカード 0 枚のときの失敗、順番、相手への要素が無効なとき（エンジンに登録していないカード。kyuura の 5 つの事例は同じ対象）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-HELPING-HAND-CHOICE",
+        "card_id": "ES1-027",
+        "target": "power/0",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "プクリン（拡張シート第1弾青版）の［てだすけ］。2 つの状態のどちらを、だれがいつ選ぶか（エンジンに登録していないカード。kyuura の 2 つの事例は同じ対象）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-NON-ATTACK-DAMAGE-MODIFIERS",
+        "card_id": "ES1-027",
+        "target": "attack/0",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "プクリン（拡張シート第1弾青版）のふくらむの「-10」が、相手の番にワザ以外で受けるダメージに当てはまるか（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY",
+        "card_id": "neo4-082",
+        "target": "attack/1",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "ひかるバンギラスのはかいのほのおの「炎」エネルギーカードの枚数に、炎として使える特殊エネルギーを数えるか（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-STATED-COUNT-SHORT",
+        "card_id": "neo4-082",
+        "target": "attack/0",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "ひかるバンギラスのマウンテンクラッシュ。相手の山札が「おもて」の数より少ないとき（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-STATED-COUNT-SHORT",
+        "card_id": "neo4-082",
+        "target": "attack/1",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "ひかるバンギラスのはかいのほのお。相手のエネルギーカードが「おもて」の数より少ないとき（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-STATED-COUNT-SHORT",
+        "card_id": "neo4-108",
+        "target": "trainer",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "怪電波マシーン。相手の対戦ポケモンのエネルギーカードが「おもて」の数より少ないとき（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-STATED-COUNT-SHORT",
+        "card_id": "ES2-005",
+        "target": "attack/0",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "ファイヤー（拡張シート第2弾赤版）のドライアップ。選んだポケモンの「水」エネルギーカードが「おもて」の数より少ない・0 枚のとき（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）"
+      },
+      {
+        "kyuura_issue": "UQ-STATED-COUNT-SHORT",
+        "card_id": "QSG-055",
+        "target": "attack/0",
+        "engine": {
+          "unregistered": true
+        },
+        "note": "ファイヤー（クイックスターターギフトパック）のドライアップ。ES2-005 と同じ（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）"
       }
     ]
   },
@@ -4787,7 +4886,12 @@
       "GD3-009/power/0",
       "ES1-005/power/0"
     ],
-    "kyuura_records_not_registered": [],
+    "kyuura_records_not_registered": [
+      "LD-ES1-027-ATK0",
+      "LD-ES1-027-PWR0",
+      "LD-ES2-005-ATK0",
+      "LD-QSG-055-ATK0"
+    ],
     "note": "登録した最新の説明（play_text_ja）を持つワザ・特殊能力（カード id/種類/位置）と kyuura の記録の対応。registered は kyuura の最新の説明（LD-）の id。recorded_in_card_checks は、印刷の文面と同じ最新の説明を kyuura が照合の記録（CC-）に書いたもの（照合した欄の文面、またはデータの誤りの資料の値がエンジンの最新の説明と同じ。kyuura は文面が同じ最新の説明を LD- にしない）。card_checks_without_text は、照合の記録はあるが、ワザの文面を照合した欄に入れていないもの（ドードーのみだれづき。図版の版が決まらない）。registered_without_kyuura_record は kyuura に記録のない登録（2026-10-15 の kyuura の取り込みのあとは空になった。v0.27 でストライクの「つるぎのまい」（PMCG2-017/attack/0。p.56・p.321。2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（「2倍」）だけで、最新の説明（「「60」になる」）の LD- はない）を加えた。v0.28 で、既存の効果の型の登録だけで加えたラプラス（PMCG3-022。p.116）・スターミー（PMCG1-026。p.112）・カイロス（PMCG2-018。p.58）・タマタマ（PMCG2-006。p.49）・プリン（PMCG2-035。p.225）・ラッキー（PMCG1-068。p.235）・スリープ（PMCG1-045。p.164）・シェルダー（PMCG3-012。p.103）の説明文のあるワザ 13 を加えた（2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（cards.json）だけで、LD-・CC- はない）。kyuura への報告事項）。文面の一致は scripts/check_research_links.py が kyuura の研究の基準のコミットで確かめる。adopted_printed_text（2026-10-15 からの方針。docs/card-data-policy.md）は、kyuura データの採用（kyuura_engine/data/card_sources.json）で、処理に使う文面を kyuura の印刷の文面（data/cards.json）にした登録（研究の基準のコミットに、その対象の LD- がないもの。LD- があれば registered に挙げ、最新の説明にしたがう）。エンジンが原典と照合した記録ではない（registered_without_kyuura_record とは別）。v0.29 で、既存の効果の型で加えたポケモン 14 枚の説明文のあるワザ 14 を加えた。errata_text（v0.30）は、kyuura のエラッタの記録（ERR-・TXT-・RUL-。data/rule_history.json の errata）を処理に使う文面にした登録（登録の出典がその id。文面は記録の notes の引用と同じ）。記録の cards にないカードに記録の範囲として当てはめるものは errata_scope に、当てはめる文（scope_quote）・処理に使う文面（play_text_quote）・印刷の文面（printed_text。記録が挙げるカードのワザと同じ）・対象を書く。v0.30 で、エネルギーをトラッシュしてダメージを与えるワザ 4（ヒトカゲの「ひのこ」・リザード／ウインディ／ブーバーの「かえんほうしゃ」）をerrata_text に、ウインディの「とっしん」・第4弾のポニータの「ひのこ」を adopted_printed_text に加えた。difference_text（v0.31）は、処理に使う文面を kyuura の data/curation/card_differences.json の記録（確度: 確実）の最新の説明にした登録（LD- はない。kyuura への報告事項）。v0.31 でピッピの「ゆびをふる」、v0.42 でカイリューの［かけつける］（PMCG3-043/power/0）を加えた。user_corrected_text（v0.68）は、利用者が示した修正（scripts/extract_kyuura_cards.py の USER_PROVIDED_CORRECTIONS。kyuura の記録ではない）を当てはめた写しの説明文を処理に使う文面にした登録（ガルーラの「こどものおつかい」。研究の基準のコミットの kyuura の文面は修正の前の値のまま。kyuura への報告事項）。engine_simplified_text（v0.68）は、エンジンの簡略化した仕様を処理に使う文面にした登録（イマクニ？のドードー。公式の裁定・エラッタではない）",
     "recorded_in_card_checks": {
       "PMCG1-002/attack/0": "CC-PMCG1-002-P17",
@@ -6660,6 +6764,15 @@
       ],
       "ES2-032": [
         "CC-ES2-032-P239"
+      ],
+      "ES1-027": [
+        "CC-ES1-027-P226"
+      ],
+      "ES2-005": [
+        "CC-ES2-005-P82"
+      ],
+      "QSG-055": [
+        "CC-QSG-055-P82"
       ]
     },
     "engine_verified_without_kyuura_record": [],

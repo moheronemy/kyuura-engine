@@ -61,6 +61,7 @@ from scripts.extract_kyuura_cards import (
 )
 from tests.helpers import (
     ATTACK_TYPES_SINCE_V0_17,
+    V0_125_KYUURA_RECORDS_ADDED,  # v0.125: 研究の基準を 134a664 に上げて、ゴローン（ES2-023）に CR-UNTIL-TAILS-NOT-CAPPED の related_cards が加わった
     apply_kernel,
     build_test_state,
     with_coin_results,
@@ -797,7 +798,7 @@ class RecordTest(unittest.TestCase):
             with self.subTest(card=card_id):
                 record = sources[card_id]
                 self.assertEqual((record["basis"], record["status"], record["kyuura_commit"], record["recorded_on"], record["kyuura_records"], record["issues"]),
-                                 ("kyuura_data", "adopted", ADOPTED_COMMIT, "2026-10-19", [], []))
+                                 ("kyuura_data", "adopted", ADOPTED_COMMIT, "2026-10-19", list(V0_125_KYUURA_RECORDS_ADDED.get(card_id, ())), []))
                 self.assertEqual(record["external_checks"], [])  # 日本語の文面は pcg-search.com の転記。新しい外部照合はしていない
                 targets = {f"attack/{i}" for i, a in enumerate(CARDS[card_id]["pokemon"]["attacks"]) if a["text"]["ja"] is not None}
                 self.assertEqual(set(record["play_text"]), targets)

@@ -67,7 +67,8 @@ class ResearchLinksTest(unittest.TestCase):
         # v0.121: 研究の基準と写しの元を kyuura 2fe0bc0（ブランチ claude/neo2-fossil-type-cost-checks の固定コミット。親は 7b03fd9、研究 c932625 を含む）に上げた（docs/hand-bench-attack-conditions-v0.121.md 3 章）
         # v0.123: 研究の基準と写しの元を kyuura 74b3ceb（ブランチ claude/v0122-names-text-trainer-procedures の固定コミット。親は aceb98b、基点 2fe0bc0）に上げた（docs/arcanine-name-migration-v0.123.md 2 章）
         # v0.124: 研究の基準と写しの元を kyuura b9e7cff（main の PR #6 のマージ。木は研究の最後のコミット 9731354 と同じ。基点 74b3ceb）に上げた（docs/super-transform-dark-pulse-v0.124.md 2 章）
-        self.assertEqual(LINKS["research_commit"], "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a")
+        # v0.125: 研究の基準と写しの元を kyuura 134a664（ブランチ claude/eloquent-lamport-5xyv5r の固定コミット。基点 b9e7cff）に上げた（docs/wigglytuff-helping-hand-v0.125.md 2 章）
+        self.assertEqual(LINKS["research_commit"], "134a664c6adf67d5604148a31b58e1a7d26d4d6d")
         self.assertEqual(LINKS["engine_import_id"], "ENGINE-46A3E2E")
         self.assertEqual(LINKS["card_data_commit"], read_extract()["source"]["commit"])
         self.assertEqual(LINKS["research_commit"], LINKS["card_data_commit"])
@@ -264,8 +265,10 @@ class ResearchLinksTest(unittest.TestCase):
         cases = {v["kyuura_issue"] for v in LINKS["kyuura_cases_without_engine_ruling"]["cases"]}
         # v0.124: kyuura b9e7cff の新しい論点 9 件は、2 枚を登録して止め方を見直したので、どれも停止コード（TC1・TK1・BX2・SV1〜SV5・DP1）に結んだ（移行の段では、2 枚の事例は
         # 登録していないカード・場面に要るカードを登録していないもの、化石のメタモンの 3 件はコードのない問いだった。docs/super-transform-dark-pulse-v0.124.md 2.4 節・7 章）
+        # v0.125: kyuura 134a664 の新しい論点 2 件（UQ-HELPING-HAND-CHOICE・UQ-DESTRUCTIVE-FIRE-FAILURE）は、移行の段では事例のカードを登録していないので、事例の対応にだけある
+        # （docs/wigglytuff-helping-hand-v0.125.md 2.4 節）
         self.assertEqual(cases - issues, {"UQ-BILINGUAL-NAME-GLOSS", "UQ-MIND-GAMES-OPTIONAL", "UQ-MIND-GAMES-TRAINER-STEP", "UQ-FLASH-FACE-UP-DECK",
-                                          "UQ-SWAP-PLEASE-OWNERSHIP"})
+                                          "UQ-SWAP-PLEASE-OWNERSHIP", "UQ-HELPING-HAND-CHOICE", "UQ-DESTRUCTIVE-FIRE-FAILURE"})
         self.assertEqual(len(issues | cases), LINKS["counts"]["kyuura_issues"])
         self.assertTrue(all(i.startswith("UQ-") for i in issues))
 

@@ -262,7 +262,10 @@ class RegistrationTest(unittest.TestCase):
         self.assertTrue({"neo2-043/attack/0", "neo2-043/attack/1", "neo4-229/attack/0", "neo4-229/attack/1", "neo4-096/attack/0", "neo4-096/attack/1",
                          "ES3-021/attack/0", "PR1-001/attack/1", "PR1-003/attack/1", "PR1-017/attack/1"} <= printed)
         # v0.124: すごいへんしんの最新の説明 LD-ES2-032-PWR0 は、登録するまで「登録のない kyuura の最新の説明」（tests/test_super_transform_dark_pulse_v0_124.py）
-        self.assertEqual([x for x in links["latest_descriptions"]["kyuura_records_not_registered"] if x != "LD-ES2-032-PWR0"], [])
+        # v0.125: 研究の基準を 134a664 に上げて加わった最新の説明 4 件（プクリン ES1-027 の 2 件は登録するまで、ファイヤー 2 枚の 2 件は登録しないので）も、同じく登録のない最新の説明
+        # （tests/test_wigglytuff_helping_hand_v0_125.py）
+        later = {"LD-ES2-032-PWR0", "LD-ES1-027-ATK0", "LD-ES1-027-PWR0", "LD-ES2-005-ATK0", "LD-QSG-055-ATK0"}
+        self.assertEqual([x for x in links["latest_descriptions"]["kyuura_records_not_registered"] if x not in later], [])
         cases = {(c["kyuura_issue"], c["card_id"], c["target"]): c["engine"] for c in links["kyuura_cases_without_engine_ruling"]["cases"]}
         self.assertEqual(cases[("UQ-CARD-USE-WITHOUT-TARGET", OLD_ROD, "trainer")], {"stop_codes": [STOP_CODES["OR1"]]})
         self.assertEqual(cases[("UQ-COPIED-ATTACK", SLOWBRO, "attack/1")], {"stop_codes": ["UNRESOLVED_COPIED_ATTACK", STOP_CODES["SQ1"]]})

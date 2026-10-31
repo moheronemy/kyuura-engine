@@ -76,7 +76,7 @@ class CatalogContractTest(unittest.TestCase):
             (301, 302),
         )
         self.assertEqual(len(links["latest_descriptions"]["adopted_printed_text"]), 1390)
-        self.assertEqual(links["counts"]["kyuura_issues"], 88)
+        self.assertEqual(links["counts"]["kyuura_issues"], 90)
 
     def test_current_format_and_audit_agree(self):
         # Keep the audit's independently maintained schema check. Deriving its
