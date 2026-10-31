@@ -521,6 +521,21 @@ def _annotate_power(card_id: str, power: Power, effects: EffectRegistry) -> Powe
 
 
 @dataclass(frozen=True)
+class ScopeExclusion:
+    """通常対戦のエンジンの実装の対象外の記録（v0.128。写しの ``catalog_scope.excluded_records`` の 1 件。値は kyuura の目録の分類のまま）。
+
+    写しのカードではない（定義を持たない）。公式の使用禁止・裁定ではなく、kyuura の目録の分類（``catalog_class``）と実装範囲の指定（``engine_scope``）で外した記録。
+    デッキの検査が、知らないカードと区別して理由つきで拒否するために使う。"""
+
+    card_id: str
+    name_ja: str
+    catalog_class: str
+    play_scope: str
+    engine_scope: str
+    reason: str
+
+
+@dataclass(frozen=True)
 class CardPool:
     """読み込んだカードの定義と、出典の情報。``effects`` は分類に使った効果の登録表（対戦でも同じものを使う）。"""
 
@@ -528,6 +543,8 @@ class CardPool:
     playable_ids: frozenset[str]
     source: Mapping[str, Any]
     effects: EffectRegistry
+    # v0.128: 通常対戦の対象外の記録（id → 理由）。写しのカード（definitions）とは重ならない
+    excluded: Mapping[str, ScopeExclusion] = MappingProxyType({})
 
     def get(self, card_id: str) -> CardDefinition:
         return self.definitions[card_id]
@@ -673,13 +690,30 @@ def pool_from_extract(extract: dict, effects: EffectRegistry | None = None) -> C
     playable = frozenset(
         card_id for key in POOL_KEYS for card_id in extract.get(key, ()) if definitions[card_id].supported
     )
+    excluded = _scope_exclusions(extract)
+    overlap = sorted(set(excluded) & set(definitions))
+    if overlap:
+        raise ValueError(f"通常対戦の対象外の記録が写しのカードにある: {overlap}")
     # load_card_pool の結果はプロセス内で共有されるので、書き換えられないようにする
     return CardPool(
         definitions=MappingProxyType(definitions),
         playable_ids=playable,
         source=MappingProxyType(dict(extract["source"])),
         effects=effects,
+        excluded=MappingProxyType(excluded),
     )
+
+
+def _scope_exclusions(extract: dict) -> dict[str, ScopeExclusion]:
+    """写しの ``catalog_scope.excluded_records``（v0.128。scripts/extract_kyuura_cards.py が kyuura の目録の分類から求めた対象外の記録）。``catalog_scope`` のない写しは空。"""
+    records = (extract.get("catalog_scope") or {}).get("excluded_records", ())
+    return {
+        record["id"]: ScopeExclusion(
+            card_id=record["id"], name_ja=record["name_ja"], catalog_class=record["catalog_class"], play_scope=record["play_scope"],
+            engine_scope=record["engine_scope"], reason=record["engine_scope_reason"],
+        )
+        for record in records
+    }
 
 
 def _with_stage1_lineage(definitions: dict[str, CardDefinition]) -> dict[str, CardDefinition]:

@@ -7,12 +7,17 @@
 from __future__ import annotations
 
 import copy
+import csv
+import io
 import json
 import pathlib
 import subprocess
 import unittest
 
-from kyuura_engine.cards import load_card_pool, read_extract
+from kyuura_engine.cards import load_card_pool, pool_from_extract, read_extract
+from kyuura_engine.deck import deck_problems
+from kyuura_engine.engine import new_game
+from kyuura_engine.errors import DeckValidationError
 from scripts import check_card_sources as cs
 from tests import helpers as HP
 from tests.test_baby_rules_evolution_v0_114 import extract_module
@@ -160,6 +165,81 @@ class CountTest(unittest.TestCase):
         self.assertEqual(len(pool.playable_ids), 1368)
         self.assertFalse(set(EXCLUDED) & set(pool.definitions))
         self.assertNotIn("PR1-015", pool.definitions)  # 目録だけの行（non_game_items）は写しにない
+
+
+# ---------------------------------------------------------------- 4 章: デッキの検査・対象外の記録の混入の防止
+FILLER = ["PMCG1-016"] * 4 + ["PMCG1-097"] * 55  # ポニータ 4・草エネルギー 55（あと 1 枚で 60 枚）
+
+
+class DeckScopeTest(unittest.TestCase):
+    """4 章: 対象外の記録は、知らないカード・未対応のカードと分けて、分類と理由を示して拒否する（公式の使用禁止とは書かない）。"""
+
+    def test_excluded_records_are_rejected_with_reason(self):
+        pool = load_card_pool()
+        for card, (name, catalog_class, play_scope) in EXCLUDED.items():
+            problems = deck_problems(FILLER + [card], pool)
+            self.assertEqual(len(problems), 1, problems)
+            problem = problems[0]
+            self.assertTrue(problem.startswith(f"OUT_OF_ENGINE_SCOPE: {card} {name}（"), problem)
+            self.assertIn(f"目録の分類 {catalog_class}", problem)
+            self.assertIn(f"使用範囲 {play_scope}", problem)
+            self.assertIn(pool.excluded[card].reason, problem)
+            self.assertNotIn("禁止", problem)
+        self.assertEqual(deck_problems(FILLER + ["PMCG1-016"], pool), ["TOO_MANY_COPIES: 「ポニータ」が 5 枚（同じ名前は 4 枚まで）"])
+
+    def test_new_game_refuses_excluded_records(self):
+        deck = FILLER + ["PR1-038"]
+        with self.assertRaises(DeckValidationError) as caught:
+            new_game(deck, FILLER + ["PMCG1-097"], seed=1)
+        self.assertEqual(len(caught.exception.problems), 1)
+        self.assertTrue(caught.exception.problems[0].startswith("player 0: OUT_OF_ENGINE_SCOPE: PR1-038 タッチ交代！"))
+
+    def test_catalog_only_rows_stay_unknown(self):
+        # 目録だけの行（data/cards.json にない non_game_items・KC-）は写しにも対象外の記録にもない（知らないカード）
+        pool = load_card_pool()
+        for card in ("PR1-015", "KC-0001"):
+            self.assertNotIn(card, pool.excluded)
+            self.assertEqual(deck_problems(FILLER + [card], pool), [f"UNKNOWN_CARD: このエンジンのカードデータにないカード {[card]}"])
+
+    def test_excluded_is_separate_from_definitions(self):
+        extract = read_extract()
+        pool = load_card_pool()
+        self.assertEqual(set(pool.excluded), set(EXCLUDED))
+        self.assertFalse(set(pool.excluded) & set(pool.definitions))
+        broken = dict(extract, catalog_scope=dict(extract["catalog_scope"], excluded_records=[
+            *extract["catalog_scope"]["excluded_records"], dict(extract["catalog_scope"]["excluded_records"][0], id="PMCG1-016")]))
+        with self.assertRaises(ValueError):
+            pool_from_extract(broken)
+
+
+class CatalogMixingTest(unittest.TestCase):
+    """4 章: 対戦で使える集合・クイズの名前の候補・マチスの秘策の試すカードに、対象外の記録・目録だけの行が入らない。"""
+
+    @needs_kyuura
+    def test_playable_cards_are_catalog_targets(self):
+        records = kyuura_json(NOW, "data/cards.json")["cards"]
+        targets = {c["id"] for c in records if c["catalog_class"] == "battle" and c["engine_scope"] == "target"}
+        pool = load_card_pool()
+        self.assertLessEqual(set(pool.definitions), targets)
+        # kyuura の目録の一覧（CSV）の、対象でない行（非対戦の項目・目録だけの行・対象外の 3 件）はどれも写しにない
+        rows = list(csv.DictReader(io.StringIO(subprocess.check_output(
+            ["git", "-C", str(KYUURA), "show", f"{NOW}:data/cards.csv"]).decode("utf-8"))))
+        outside = {row["id"] for row in rows if (row["catalog_class"], row["engine_scope"]) != ("battle", "target")}
+        self.assertEqual(len(outside), 45)  # 対象外の記録 3・non_game_items 18・KC- 24
+        self.assertFalse(outside & set(pool.definitions))
+        self.assertEqual(outside & {c["id"] for c in records}, set(EXCLUDED))
+
+    def test_identity_candidates_and_quiz_names(self):
+        from kyuura_engine import engine
+        from kyuura_engine.effects import quiz_answer_names
+
+        pool = load_card_pool()
+        candidates = engine._identity_candidates(pool)
+        self.assertFalse(set(candidates) & (set(EXCLUDED) | {"PR1-015"}))
+        self.assertLessEqual(set(candidates), pool.playable_ids)
+        state = new_game(FILLER + ["PMCG1-097"], FILLER + ["PMCG1-097"], seed=1)
+        names = set(quiz_answer_names(state))
+        self.assertFalse(names & ({name for name, _, _ in EXCLUDED.values()} | {"ポケモンイラストレーター"}))
 
 
 if __name__ == "__main__":
