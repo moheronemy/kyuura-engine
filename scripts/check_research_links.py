@@ -255,10 +255,11 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
     difference_text = section.get("difference_text", {})
     user_corrected = section.get("user_corrected_text", {})  # v0.68: 利用者が示した訂正（kyuura の照合の記録・最新の説明ではない。v0.69 から kyuura の台帳の記録）
     simplified = section.get("engine_simplified_text", {})  # v0.68: エンジンの簡略化した仕様（公式の裁定・エラッタではない）
+    user_simplified = section.get("user_simplified_text", {})  # v0.127: 利用者が指定した簡略ルール（公式の裁定・エラッタ・エンジンの仕様の判断ではない）
     equivalent = section.get("equivalent_registrations", {})  # v0.69: 登録したカードと処理に使う欄が同じカードの登録 → 元のカードの登録
     reprinted = section.get("reprint_registrations", {})  # v0.71: 再録のカードの、元のカードの記録の文面を処理に使う登録 → 元のカードの登録
     in_checks = (set(section.get("recorded_in_card_checks", {})) | set(section.get("card_checks_without_text", {})) | adopted_printed
-                 | set(errata_text) | set(difference_text) | set(user_corrected) | set(simplified) | set(equivalent) | set(reprinted))
+                 | set(errata_text) | set(difference_text) | set(user_corrected) | set(simplified) | set(user_simplified) | set(equivalent) | set(reprinted))
     without = sorted(t for t in texts if t not in ld_by_target and t not in in_checks)
     if without != sorted(section["registered_without_kyuura_record"]):
         problems.append(f"kyuura の記録のない登録の一覧が違う: 実際 {without}")
@@ -458,12 +459,28 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
             problems.append(f"{target}: engine_simplified_text の対象に、研究の基準のコミットの印刷の文面がない")
         if target in ld_by_target:
             problems.append(f"{target}: kyuura に最新の説明の記録 {ld_by_target[target]} がある（registered に移し、最新の説明にしたがう）")
+    # 4f'. v0.127（docs/deferred-shortage-user-promos-v0.127.md 4 章）: 利用者が指定した簡略ルールを処理に使う文面にした登録。区分は対象ごとの記録（effects.USER_SIMPLIFICATIONS）と
+    # ちょうど同じで、出典は USER_SIMPLIFICATION_SOURCE。記録の印刷の文面が研究の基準のコミットの印刷の文面と同じ（kyuura の文面を書き換えていない）・処理に使う文面が記録と同じで印刷の
+    # 文面と違う・kyuura に最新の説明がない（あれば最新の説明にしたがうべきなので、黙って簡略化を優先しない）。ほかの区分（エンジンの簡略化した仕様をふくむ）に入れない
+    if (set(user_simplified) & (others | set(user_corrected) | set(simplified))) or set(user_simplified) != set(getattr(E, "USER_SIMPLIFICATIONS", {})):
+        problems.append(f"user_simplified_text の一覧が、利用者の簡略ルールの記録と違うか、ほかの区分にも入っている: 対応表 {sorted(user_simplified)}")
+    for target, basis in user_simplified.items():
+        record = getattr(E, "USER_SIMPLIFICATIONS", {}).get(target)
+        if basis != getattr(E, "USER_SIMPLIFICATION_SOURCE", None) or record is None:
+            problems.append(f"{target}: user_simplified_text の根拠 {basis!r} が、利用者の簡略ルールの出典・記録でない")
+            continue
+        if target not in texts or texts[target] != (record.play_text, basis):
+            problems.append(f"{target}: user_simplified_text の登録の処理に使う文面・出典が、利用者の簡略ルールの記録と違う")
+        if printed_at_research(target) != record.printed_text or record.printed_text == record.play_text:
+            problems.append(f"{target}: 利用者の簡略ルールの記録の印刷の文面が、研究の基準のコミットの印刷の文面と違う（または処理に使う文面と同じ）")
+        if target in ld_by_target:
+            problems.append(f"{target}: kyuura に最新の説明の記録 {ld_by_target[target]} がある（利用者の簡略ルールより先に確かめる）")
 
     # 4g. v0.69（docs/equivalent-non-pack-cards-v0.69.md 4 章）: 登録したカードと処理に使う欄が同じカード（拡張パック以外の商品）の登録。元のカードの登録の区分にしたがう。
     # 元のカードと、研究の基準のコミットで同じカードの組（same_card_group）にあり、印刷の文面が同じで、登録の処理に使う文面・出典が元のカードと同じ。元のカードの登録は
     # ほかの区分にある（最新の説明・エラッタなどの記録は元のカードのもので、再録のカードの照合の記録ではない）
     others = (set(section["registered"]) | set(section.get("recorded_in_card_checks", {})) | set(section.get("card_checks_without_text", {}))
-              | adopted_printed | set(errata_text) | set(difference_text) | set(user_corrected) | set(simplified)
+              | adopted_printed | set(errata_text) | set(difference_text) | set(user_corrected) | set(simplified) | set(user_simplified)
               | set(section["registered_without_kyuura_record"]))
     actual = {t for t in texts if t.split("/")[0] in getattr(E, "EQUIVALENT_CARDS", {})}
     if set(equivalent) != actual:

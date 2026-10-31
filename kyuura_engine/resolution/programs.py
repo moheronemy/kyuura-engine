@@ -15702,4 +15702,8 @@ BUILDERS |= {
     E.ChooseOpponentThenDiscardTypedEnergyUntilTails: lambda e: (
         ChooseEffectTarget(side=E.TARGET_SIDE_OPPONENT, scope=E.TARGET_IN_PLAY, chooser=E.CHOOSER_ATTACKER), DiscardChosenTypedEnergyUntilTails(energy_type=e.energy_type),
     ),
+    # 利用者が指定した簡略ルール（公式の裁定ではない。docs 4 章）: 既存の型と同じ要素の並び
+    E.UserSimplifiedCoinBonusDamage: lambda e: (Damage(OPP, HeadsBonus(e.bonus)),),  # おたんじょうび（誕生日の条件を省く。CoinBonusDamage と同じ）
+    E.UserSimplifiedStatusSelfAndOpponent: lambda e: (Status(e.condition, target=SELF), Status(e.condition)),  # こまったなあ（発話の条件を省く。StatusSelfAndOpponent と同じ）
+    E.UserSimplifiedDamageOnly: lambda e: (Damage(OPP, Printed()),),  # どつく（発話の条件を省く。DamageOnly と同じ）
 }

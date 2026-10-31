@@ -162,6 +162,8 @@
 - 32: 31 の ``halt`` に、途中停止の記録 ``interruption``（``interruption.public_record``。中断の種類・停止コード・論点・発生元・対象・止まった要素・必要な数・処理できる数・未完了の
   処理・在途のカード・ログの位置。なければ null）を加えたもの（v0.127。docs/deferred-shortage-user-promos-v0.127.md 8 章）。途中停止の状態を古い形式に書くと、在途のカード（使用中の
   トレーナー）を残した終端と通常の停止を区別できないので黙って落とさない: 形式 1〜31 は、途中停止の記録があると ``ValueError``（なければ形式 1〜31 の書き出しは v0.126 と同じ）。
+  最上位の ``user_simplifications`` は、この対戦のカードのうち、登録表（``effects``）で処理に使う文面の出典が利用者の指定した簡略ルール（``effects.USER_SIMPLIFICATION_SOURCE``）の
+  ワザの対象（``<カード id>/attack/<位置>``。並べた順）。状態の項目ではなく、登録表とカードの組から求める識別の情報（なければ空）
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -824,7 +826,19 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         data["frozen_forms"] = [frozen_form_record(state, record) for record in state.frozen_forms]  # v0.124
     if format_version >= 31:
         data["face_up_deck"] = list(state.face_up_deck)  # v0.126
+    if format_version >= 32:
+        data["user_simplifications"] = user_simplification_targets(state)  # v0.127
     return data
+
+
+def user_simplification_targets(state: GameState) -> list[str]:
+    """v0.127: この対戦のカードのうち、登録表で処理に使う文面の出典が利用者の指定した簡略ルールのワザの対象（``<カード id>/attack/<位置>``。並べた順）。保存・再生の記録から、公式の
+    文面ではないエンジン固有の簡略ルールで処理したことを識別するため（状態に項目を加えない）。"""
+    from .effects import USER_SIMPLIFICATION_SOURCE
+
+    present = {instance.card_id for instance in state.cards.values()}
+    return sorted(f"{key.card_id}/attack/{key.attack_index}" for key in state.effects.attack_keys()
+                  if key.card_id in present and state.effects.attack_entry(key.card_id, key.attack_index).source == USER_SIMPLIFICATION_SOURCE)
 
 
 def replacement_poison_record(record) -> dict[str, Any]:

@@ -48366,12 +48366,136 @@ class CoinsUntilTailsReturnOpponentActiveEnergyThenEndTurn(TrainerEffect):
         return problems
 
 
-# v0.127 の登録（ワザ 4・トレーナー 1）。ファイヤーの 2 枚は最新の説明の出典（LD-）が違うので、それぞれ登録する（効果の実装の値は同じ）
+# 利用者が指定したエンジン固有の簡略ルール（v0.127。docs/deferred-shortage-user-promos-v0.127.md 4 章）。公式の裁定・最新の説明・エラッタではない。印刷の文面（kyuura の写し）は書き換えずに
+# 照合だけに使い、処理は下の記録の文面にしたがう。省くのは記録の ``omitted`` の条件だけ（コスト・番・こんらんのコイン・効果の到達・弱点・抵抗力・ナツメのESP・きぜつ・進化などは通常どおり）
+USER_SIMPLIFICATION = "user_simplification"  # 簡略化の根拠の種類（研究の対応表の区分 user_simplified_text・採用の記録の play_text の値が出典 USER_SIMPLIFICATION_SOURCE）
+USER_SIMPLIFICATION_SOURCE = "kyuura-engine user simplification docs/deferred-shortage-user-promos-v0.127.md#4"
+USER_SIMPLIFICATION_DATE = "2026-11-01"
+USER_BIRTHDAY_COIN_ONLY = "USER-BIRTHDAY-COIN-ONLY"
+USER_SPOKEN_CONDITION_IGNORED = "USER-SPOKEN-CONDITION-IGNORED"
+USER_INSTRUCTIONS = MappingProxyType({
+    USER_BIRTHDAY_COIN_ONLY: "のピカチュウについては誕生日の確認をせずに通常のコイントスのみ",
+    USER_SPOKEN_CONDITION_IGNORED: "ハマちゃんのヤドキングに関しては発話要件を無視して実装",
+})
+BIRTHDAY_PRINTED_TEXT = "今日がこのカードの持ち主の誕生日ならコインを投げ、「おもて」なら、50ダメージを追加する。"
+BIRTHDAY_PLAY_TEXT = "コインを投げ、「おもて」なら、50ダメージを追加する。"
+TROUBLED_PRINTED_TEXT = "「こまったなぁ」と3回つぶやかないとこのワザは使えない。自分と相手は「こんらん」状態になる。"
+TROUBLED_PLAY_TEXT = "自分と相手は「こんらん」状態になる。"
+SMACK_PRINTED_TEXT = "「ええのかなあ」と3回つぶやかないとこのワザは使えない。"
+SMACK_PLAY_TEXT = "(「ええのかなあ」と3回つぶやく条件は処理にふくめない。ふつうのワザとして、相手の対戦ポケモンにダメージの目安の数字ぶんのダメージを与える。)"
+
+
+@dataclass(frozen=True)
+class UserSimplification:
+    """利用者が指定した簡略ルールの 1 つの対象の記録（v0.127）。``key`` は ``<カード id>/attack/<位置>``。``printed_text`` は kyuura の印刷の文面（写しと同じ。書き換えない）、
+    ``play_text`` は処理に使う文面（登録の ``play_text_ja``）、``omitted`` は省いた条件、``processing`` は実際の処理、``parameters`` は登録の型の値（``(名前, 値)`` の並び）、``rule`` は
+    簡略化の種類（``USER_INSTRUCTIONS`` の利用者の指定に結ぶ）。``specified_by`` は ``"user"``・``specified_on`` は指定を受けた日。"""
+
+    key: str
+    rule: str
+    printed_text: str
+    play_text: str
+    omitted: str
+    processing: str
+    parameters: tuple[tuple[str, Any], ...]
+    specified_by: str = "user"
+    specified_on: str = USER_SIMPLIFICATION_DATE
+
+    @property
+    def instruction(self) -> str:
+        return USER_INSTRUCTIONS[self.rule]
+
+
+_BIRTHDAY_OMITTED = "「今日がこのカードの持ち主の誕生日なら」（誕生日の条件。誕生日の入力・実名・記入名・日付・時計を使わない）"
+_BIRTHDAY_PROCESSING = "どの日も、ワザの説明のコインを 1 枚投げ、「おもて」なら基本となるダメージ 30+50、「うら」なら 30。そのあと通常のダメージの計算（弱点・抵抗力など）"
+USER_SIMPLIFICATIONS: Mapping[str, UserSimplification] = MappingProxyType({record.key: record for record in (
+    UserSimplification("PR1-044/attack/0", USER_BIRTHDAY_COIN_ONLY, BIRTHDAY_PRINTED_TEXT, BIRTHDAY_PLAY_TEXT, _BIRTHDAY_OMITTED, _BIRTHDAY_PROCESSING, (("bonus", 50),)),
+    UserSimplification("PR1-090/attack/0", USER_BIRTHDAY_COIN_ONLY, BIRTHDAY_PRINTED_TEXT, BIRTHDAY_PLAY_TEXT, _BIRTHDAY_OMITTED, _BIRTHDAY_PROCESSING, (("bonus", 50),)),
+    UserSimplification("PR1-072/attack/0", USER_SPOKEN_CONDITION_IGNORED, TROUBLED_PRINTED_TEXT, TROUBLED_PLAY_TEXT,
+                       "「「こまったなぁ」と3回つぶやかないとこのワザは使えない。」（発話の条件。発話の申告・回数・音声の認識・確認の決定を作らない）",
+                       "ダメージはない。自分（ワザを実際に使ったポケモン）と相手の対戦ポケモンを、それぞれ「こんらん」状態にする（自分 → 相手。効果の到達はそれぞれ評価する）",
+                       (("condition", CONFUSION),)),
+    UserSimplification("PR1-072/attack/1", USER_SPOKEN_CONDITION_IGNORED, SMACK_PRINTED_TEXT, SMACK_PLAY_TEXT,
+                       "「「ええのかなあ」と3回つぶやかないとこのワザは使えない。」（発話の条件。発話の申告・回数・音声の認識・確認の決定を作らない）",
+                       "相手の対戦ポケモンに、ダメージの目安の数字（20）ぶんのダメージ（通常のダメージの計算）", (("damage", 20),)),
+)})
+
+
+def _user_simplification_problems(rule: str, attack: Attack, parameters: tuple[tuple[str, Any], ...], what: str) -> list[str]:
+    """登録の型（利用者の簡略ルール）が、印刷の文面の同じ記録（``USER_SIMPLIFICATIONS``）を持ち、簡略化の種類と型の値が記録と同じか。知らない印刷の文面に当てはめない（未対応の
+    ワザを一般に受け付ける仕組みではない）。"""
+    found = [record for record in USER_SIMPLIFICATIONS.values() if record.printed_text == attack.text_ja and record.rule == rule]
+    if not found:
+        return [f"説明 {attack.text_ja!r} に、{what}の利用者の簡略ルール（{rule}）の記録がない"]
+    if any(record.parameters != parameters for record in found):
+        return [f"{what}の値 {parameters!r} が、利用者の簡略ルールの記録の値 {[record.parameters for record in found]!r} と違う"]
+    return []
+
+
+@dataclass(frozen=True)
+class UserSimplifiedCoinBonusDamage(AttackEffect):
+    """利用者が指定した簡略ルール（v0.127。_のピカチュウ PR1-044・PR1-090 の「おたんじょうび」。``USER_BIRTHDAY_COIN_ONLY``）: 誕生日を確認せず、いつもコインを 1 枚投げ、「おもて」なら
+    ``bonus`` ダメージを追加する。要素は ``CoinBonusDamage`` と同じ（``Damage(OPP, HeadsBonus(bonus))``。ナツメのESP・こんらん・弱点・抵抗力は通常どおり。ほかのポケモンがワザとして使っても
+    同じ）。印刷の文面（誕生日の条件つき）は照合だけに使う。公式の裁定・エラッタではない"""
+
+    bonus: int = 50
+    rule: str = USER_BIRTHDAY_COIN_ONLY
+    implementation_id = "user_simplified_coin_bonus_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "誕生日の条件を省いたコインの追加ダメージのワザ"
+        return _check_form(attack, what, damage="modified", modifier="+") + _user_simplification_problems(self.rule, attack, (("bonus", self.bonus),), what)
+
+
+@dataclass(frozen=True)
+class UserSimplifiedStatusSelfAndOpponent(AttackEffect):
+    """利用者が指定した簡略ルール（v0.127。ハマちゃんのヤドキング PR1-072 の「こまったなあ」。``USER_SPOKEN_CONDITION_IGNORED``）: 発話の条件を省き、ダメージを与えずに自分と相手を、それぞれ
+    ``condition`` 状態にする。要素は v0.121 の ``StatusSelfAndOpponent``（おおあくび）と同じ（``Status(condition, target=SELF)`` → ``Status(condition)``。受けるポケモンが違うので順番で結果は
+    変わらない。相手が効果を受けなくても自分はこんらんになる。コピーしたときは実際に使ったポケモンが自分）。公式の裁定・エラッタではない"""
+
+    condition: str = CONFUSION
+    rule: str = USER_SPOKEN_CONDITION_IGNORED
+    implementation_id = "user_simplified_status_self_and_opponent"
+
+    @property
+    def opponent_effect_elements(self) -> tuple[str, ...]:  # type: ignore[override]
+        return (self.condition,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "発話の条件を省いた、自分と相手を特殊状態にするワザ"
+        return _check_form(attack, what, damage="none") + _user_simplification_problems(self.rule, attack, (("condition", self.condition),), what)
+
+
+@dataclass(frozen=True)
+class UserSimplifiedDamageOnly(AttackEffect):
+    """利用者が指定した簡略ルール（v0.127。ハマちゃんのヤドキング PR1-072 の「どつく」。``USER_SPOKEN_CONDITION_IGNORED``）: 発話の条件を省き、ふつうのワザとして相手の対戦ポケモンに
+    ダメージの目安の数字ぶんのダメージ。要素は ``DamageOnly`` と同じ。公式の裁定・エラッタではない"""
+
+    rule: str = USER_SPOKEN_CONDITION_IGNORED
+    implementation_id = "user_simplified_damage_only"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "発話の条件を省いたダメージだけのワザ"
+        return _check_form(attack, what, damage="fixed") + _user_simplification_problems(self.rule, attack, (("damage", attack.damage),), what)
+
+
+# v0.127 の登録（ワザ 8・トレーナー 1）。ファイヤーの 2 枚は最新の説明の出典（LD-）が違うので、それぞれ登録する（効果の実装の値は同じ）。_のピカチュウ PR1-090 は PR1-044 と処理に使う欄・
+# 登録の値（効果の実装・照合した文面・処理に使う文面・出典）が同じなので、同じ登録の値を加える（SAME_DATA_CARDS_V0_127。採用の記録は id ごと）
 V0_127_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
     # ファイヤー（ES2-005・QSG-055）。ドライアップ（炎 2 個）・ほのおのつばさ（炎 3 個・無色 1 個）50
     **{AttackKey(card, 0): AttackEntry(ChooseOpponentThenDiscardTypedEnergyUntilTails(EnergyType.WATER), "ドライアップ", text_ja=DRY_UP_PRINTED_TEXT.format(ja="水"),
                                        play_text_ja=DRY_UP_LATEST_TEXT, source=f"LD-{card}-ATK0") for card in ("ES2-005", "QSG-055")},
     **{AttackKey(card, 1): AttackEntry(DAMAGE_ONLY, "ほのおのつばさ") for card in ("ES2-005", "QSG-055")},
+    # _のピカチュウ（PR1-044）。おたんじょうび（雷 2 個）30+（利用者が指定した簡略ルール）
+    AttackKey("PR1-044", 0): AttackEntry(UserSimplifiedCoinBonusDamage(50), "おたんじょうび", text_ja=BIRTHDAY_PRINTED_TEXT, play_text_ja=BIRTHDAY_PLAY_TEXT,
+                                         source=USER_SIMPLIFICATION_SOURCE),
+    # ハマちゃんのヤドキング（PR1-072）。こまったなあ（超 1 個）・どつく（無色 2 個）20（どちらも利用者が指定した簡略ルール）
+    AttackKey("PR1-072", 0): AttackEntry(UserSimplifiedStatusSelfAndOpponent(CONFUSION), "こまったなあ", text_ja=TROUBLED_PRINTED_TEXT, play_text_ja=TROUBLED_PLAY_TEXT,
+                                         source=USER_SIMPLIFICATION_SOURCE),
+    AttackKey("PR1-072", 1): AttackEntry(UserSimplifiedDamageOnly(), "どつく", text_ja=SMACK_PRINTED_TEXT, play_text_ja=SMACK_PLAY_TEXT, source=USER_SIMPLIFICATION_SOURCE),
+})
+SAME_DATA_CARDS_V0_127: Mapping[str, str] = MappingProxyType({
+    "PR1-090": "PR1-044",  # _のピカチュウ（kyuura の同じカードの組 SC-PR1-044）
 })
 V0_127_TRAINERS: Mapping[str, TrainerEntry] = MappingProxyType({
     "neo4-108": TrainerEntry(CoinsUntilTailsReturnOpponentActiveEnergyThenEndTurn(THOUGHT_WAVE_MACHINE_TEXT), "怪電波マシーン", THOUGHT_WAVE_MACHINE_TEXT,
@@ -48379,4 +48503,19 @@ V0_127_TRAINERS: Mapping[str, TrainerEntry] = MappingProxyType({
 })
 
 
-DEFAULT_EFFECTS = _with_trainers(_with_attacks(DEFAULT_EFFECTS, V0_127_ATTACKS), V0_127_TRAINERS)
+def _with_same_attacks(registry: EffectRegistry, table: Mapping[str, str]) -> EffectRegistry:
+    """v0.127: ``table``（id → 同じデータのカードの id）の id に、同じデータのカードのワザの登録の値をそのまま加えた登録表。新しい id にすでに登録があれば ``RuntimeError``（v0.70 の
+    ``_with_shared_entries`` は、両方に登録があるときに値が同じかを照らしてまとめる。こちらは新しい id に同じ値を加えるだけ。値は 1 か所で持つ）。"""
+    attacks = dict(registry._attacks)
+    for new, original in table.items():
+        if any(k.card_id == new for k in registry.attack_keys()) or new in registry.trainer_ids() or any(k.card_id == new for k in registry.power_keys()):
+            raise RuntimeError(f"{new} にはすでに登録がある")
+        theirs = {k.attack_index: registry.attack_entry(original, k.attack_index) for k in registry.attack_keys() if k.card_id == original}
+        if not theirs:
+            raise RuntimeError(f"{new} の同じデータのカード {original} に登録がない")
+        for index, entry in theirs.items():
+            attacks[AttackKey(new, index)] = entry
+    return EffectRegistry(registry.id, attacks, registry._trainers, registry._powers, registry._energies)
+
+
+DEFAULT_EFFECTS = _with_trainers(_with_same_attacks(_with_attacks(DEFAULT_EFFECTS, V0_127_ATTACKS), SAME_DATA_CARDS_V0_127), V0_127_TRAINERS)

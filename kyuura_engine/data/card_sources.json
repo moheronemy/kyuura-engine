@@ -30911,6 +30911,49 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.127 で加えた（docs/deferred-shortage-user-promos-v0.127.md 7 章）。neo 第4弾「闇、そして光へ...」。トレーナー（ロケット団秘密メカ）。CoinsUntilTailsReturnOpponentActiveEnergyThenEndTurn（kyuura の印刷の文面。最新の説明はない。英語版の「少なければすべて」は日本語の印刷にないので使わない）。足りないときは途中停止 TW1、相手の対戦ポケモンにはがせるエネルギーカードがないときは使う前に TW2。日本語の文面の転記元は Pokemon Wiki。新しい外部照合はしていない"
+    },
+    "PR1-044": {
+      "basis": "kyuura_data",
+      "name_ja": "_のピカチュウ",
+      "status": "adopted",
+      "kyuura_commit": "57d01f45cfb8b086d03dc0525b329cf6adeff69b",
+      "recorded_on": "2026-11-01",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura-engine user simplification docs/deferred-shortage-user-promos-v0.127.md#4"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.127 で加えた（docs/deferred-shortage-user-promos-v0.127.md 4 章）。プロモ（旧裏）。たね・雷・HP50・弱点 闘×2・にげる 1。ワザ おたんじょうび（雷 2 個・30+）=UserSimplifiedCoinBonusDamage（利用者が 2026-11-01 に指定した簡略ルール USER-BIRTHDAY-COIN-ONLY: 誕生日を確認せず、いつもコインを 1 枚投げ、「おもて」なら 30+50、「うら」なら 30。公式の裁定・最新の説明・エラッタではない。印刷の文面（誕生日の条件つき）は写しのまま照合だけに使う）。kyuura に記録（LD-・CC-・CR-・UQ-）はない。名前の「_」・レベルの欠けは補っていない（名前を書き込む機能・独自の同名の正規化は加えていない）。PR1-044 と PR1-090 は同じカードの組 SC-PR1-044（登録の値は同じ。採用の記録は id ごと）。日本語の文面の転記元は pcg-search.com。新しい外部照合はしていない"
+    },
+    "PR1-090": {
+      "basis": "kyuura_data",
+      "name_ja": "_のピカチュウ",
+      "status": "adopted",
+      "kyuura_commit": "57d01f45cfb8b086d03dc0525b329cf6adeff69b",
+      "recorded_on": "2026-11-01",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura-engine user simplification docs/deferred-shortage-user-promos-v0.127.md#4"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.127 で加えた（docs/deferred-shortage-user-promos-v0.127.md 4 章）。プロモ（旧裏）。たね・雷・HP50・弱点 闘×2・にげる 1。ワザ おたんじょうび（雷 2 個・30+）=UserSimplifiedCoinBonusDamage（利用者が 2026-11-01 に指定した簡略ルール USER-BIRTHDAY-COIN-ONLY: 誕生日を確認せず、いつもコインを 1 枚投げ、「おもて」なら 30+50、「うら」なら 30。公式の裁定・最新の説明・エラッタではない。印刷の文面（誕生日の条件つき）は写しのまま照合だけに使う）。kyuura に記録（LD-・CC-・CR-・UQ-）はない。名前の「_」・レベルの欠けは補っていない（名前を書き込む機能・独自の同名の正規化は加えていない）。PR1-044 と PR1-090 は同じカードの組 SC-PR1-044（登録の値は同じ。採用の記録は id ごと）。日本語の文面の転記元は pcg-search.com。新しい外部照合はしていない"
+    },
+    "PR1-072": {
+      "basis": "kyuura_data",
+      "name_ja": "ハマちゃんのヤドキング",
+      "status": "adopted",
+      "kyuura_commit": "57d01f45cfb8b086d03dc0525b329cf6adeff69b",
+      "recorded_on": "2026-11-01",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura-engine user simplification docs/deferred-shortage-user-promos-v0.127.md#4",
+        "attack/1": "kyuura-engine user simplification docs/deferred-shortage-user-promos-v0.127.md#4"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.127 で加えた（docs/deferred-shortage-user-promos-v0.127.md 4 章）。プロモ（旧裏）。1進化（ヤドンから）・超・HP70・弱点 超×2・にげる 1。ワザ こまったなあ（超 1 個）=UserSimplifiedStatusSelfAndOpponent（こんらん）・どつく（無色 2 個・20）=UserSimplifiedDamageOnly（どちらも利用者が 2026-11-01 に指定した簡略ルール USER-SPOKEN-CONDITION-IGNORED: 発話の条件を省く。公式の裁定・最新の説明・エラッタではない。印刷の文面は写しのまま照合だけに使う）。kyuura に記録はない。「こまったなあ」（ワザ名）と文面の「こまったなぁ」の表記の差は、今回の指示を根拠に訂正していない。図鑑番号・レベルは補っていない。日本語の文面の転記元は pcg-search.com。新しい外部照合はしていない"
     }
   }
 }
