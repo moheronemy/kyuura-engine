@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from . import faceup
 from .errors import UnsupportedError
 from .stadiums import bench_limit
 from .state import (
@@ -461,6 +462,8 @@ def draw_cards(state: GameState, player: int, count: int) -> tuple[int, ...]:
     p = state.players[player]
     if not 0 <= count <= len(p.deck):
         raise RuntimeError(f"山札 {len(p.deck)} 枚から {count} 枚は引けない（エンジンの不具合）")
+    # v0.126: 2 枚目より下のおもてのカード（フラッシュ）をまとめて引く読み方は決まらない（FU3）。いちばん上のおもてのカードを 1 枚引くのは、見えているカードを引くだけ（どの読みでも同じ）
+    faceup.require_draw_through_face_up(state, player, count)
     drawn = p.deck[:count]
     del p.deck[:count]
     p.hand.extend(drawn)
@@ -653,6 +656,7 @@ def put_hand_card_on_deck_top(state: GameState, player: int, card: int, *, power
     p = state.players[player]
     if card not in p.hand or state.cards[card].owner != player:
         raise RuntimeError(f"プレイヤー {player} の手札のカード {card} を山札の上に置けない（確認の漏れ。エンジンの不具合）")
+    faceup.require_no_face_up(state, player, faceup.FACE_UP_DECK_PLACE_TOP_CODE, f"プレイヤー {player} の山札の上に手札のカードを置く")  # v0.126（FU4）
     p.hand.remove(card)
     p.deck.insert(0, card)
     state.add_event("hand_to_deck_top", player=player, card=card, power=power)
@@ -673,6 +677,7 @@ def put_discard_on_deck_top(state: GameState, owner: int, card: int, *, effect: 
         raise RuntimeError("トラッシュのカードを山札の上にのせる効果の出どころ（ワザ effect・トレーナー trainer）はちょうど一方（エンジンの不具合）")
     if card not in p.discard or state.cards[card].owner != owner:
         raise RuntimeError(f"プレイヤー {owner} のトラッシュのカード {card} を山札の上にのせられない（確認の漏れ。エンジンの不具合）")
+    faceup.require_no_face_up(state, owner, faceup.FACE_UP_DECK_PLACE_TOP_CODE, f"プレイヤー {owner} の山札の上にトラッシュのカードをのせる")  # v0.126（FU4）
     p.discard.remove(card)
     p.deck.insert(0, card)
     source = {"effect": effect} if effect is not None else {"trainer_card": trainer}
@@ -729,7 +734,10 @@ def shuffle_deck(state: GameState, player: int, *, effect: str | None = None, po
     同じ）。v0.43: 特殊能力の効果で山札を切るとき（わるいハクリューの［しんかのひかり］・わるいカイリューの［てしたをよぶ］）は ``power``（``PowerKey`` の
     文字列）を書く。v0.57: スタジアムの効果で山札を切るとき（セキチクシティジム）は ``stadium``（スタジアムカードの uid。ログの ``stadium_card``）を書く。
     v0.96: 山札の持ち主でないプレイヤーが切るとき（アンノーンL の［LAUGH］の「おたがいのプレイヤーは、それぞれ、相手の山札をよく切る」）は、切ったプレイヤーを ``shuffled_by``
-    （ログの ``shuffled_by``）に書く（``player`` はいつも切る山札の持ち主。乱数の使い方は同じ）。"""
+    （ログの ``shuffled_by``）に書く（``player`` はいつも切る山札の持ち主。乱数の使い方は同じ）。
+    v0.126（docs/flash-faceup-deck-v0.126.md 6 章）: 切る前に、その山札のおもての印（フラッシュ）をすべて消す（「山札を切るときには、おもてが上になっているカードをおもてが下になるように、
+    もどしてから切る」）。消した数をログの ``face_up_cleared`` に書く（印がなければ書かない。乱数の使い方は印の有無で変わらない）。どのカードがあったかの記憶（公開のログ）は残る"""
+    cleared = faceup.clear_marks(state, player)
     state.rng.shuffle(state.players[player].deck)
     extra = {} if effect is None else {"effect": effect}
     if power is not None:
@@ -738,6 +746,8 @@ def shuffle_deck(state: GameState, player: int, *, effect: str | None = None, po
         extra["stadium_card"] = stadium
     if shuffled_by is not None:
         extra["shuffled_by"] = shuffled_by
+    if cleared:
+        extra["face_up_cleared"] = cleared
     state.add_event("shuffle", player=player, **extra)
 
 

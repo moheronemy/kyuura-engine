@@ -121,6 +121,7 @@ from .decisions import (
     EVOLUTION_SONG_POKEMON,
     HEAL_ALLOCATION, OPTIONAL_COIN, STADIUM_FROM_DISCARD, DECK_TOP_FROM_HAND,
 )
+from . import faceup as _faceup  # v0.126: おもての山札（フラッシュ）
 from .errors import SECRET_PLAN_HIDDEN_CODE, IllegalActionError, UnsupportedError
 from .markers import color_marker, has_marker, marker_count
 from .evolution import (
@@ -6481,6 +6482,10 @@ class DrawCards(TrainerEffect):
     count: int
     implementation_id = "draw_cards"
 
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        # v0.126（FU3）: 2 枚目より下のおもてのカード（フラッシュ）をまとめて引く読み方は決まらないので、使う前に止める
+        _faceup.require_draw_through_face_up(state, use.player, min(self.count, len(state.players[use.player].deck)))
+
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         deck = state.players[use.player].deck
         draw_cards(state, use.player, min(self.count, len(deck)))
@@ -6503,6 +6508,10 @@ class DiscardHandAndDraw(TrainerEffect):
 
     count: int
     implementation_id = "discard_hand_and_draw"
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        # v0.126（FU3）: 2 枚目より下のおもてのカード（フラッシュ）をまとめて引く読み方は決まらないので、手札をトラッシュする前（使う前）に止める
+        _faceup.require_draw_through_face_up(state, use.player, min(self.count, len(state.players[use.player].deck)))
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         discard_hand(state, use.player)
@@ -13750,6 +13759,8 @@ class SwapPrizeWithDeckTop(PowerEffect):
         p = state.players[use.player]
         if not p.prizes or not p.deck:
             raise _power_zero_cards(f"サイド {len(p.prizes)} 枚・山札 {len(p.deck)} 枚で、入れかえるカードがない")
+        # v0.126（FU6）: 山札のいちばん上がおもて（フラッシュ）なら、サイドに置くそのカードの向き（と、山札の上に来るサイドのカードの向き）が決まらないので、宣言の前に止める
+        _faceup.require_no_face_up(state, use.player, _faceup.FACE_UP_DECK_MOVE_CODE, "サイドと山札のいちばん上のおもてのカードを入れかえる")
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
         push_power_decision(state, use, kind=SELECT_PRIZE_CARD, player=use.player, options=range(len(state.players[use.player].prizes)))
@@ -17466,6 +17477,9 @@ class TakeFromDiscardTrainer(TrainerEffect):
             _hand_cost_problem(state, use, self.discard_cost, "すてる")
         if self.destination == TO_HAND:
             check_tower_trainer(state, use)  # v0.74（PT1）: 効果がすべてトラッシュから手札に加える効果（ダウジングマシーン）
+        if self.destination == TO_DECK_TOP:
+            # v0.126（FU4）: 山札におもてのカード（フラッシュ）があれば、その上に置くカードの向きが決まらないので、使う前（コインの前）に止める
+            _faceup.require_no_face_up(state, use.player, _faceup.FACE_UP_DECK_PLACE_TOP_CODE, "トラッシュのカードを山札のいちばん上に置く")
         if self.discard_cost:
             return  # 選べるものは、すてたあとに求める（すてたカードも選べる）。選ばなくてよい（「ことができる」）ので、選べるカードがなくても止めない
         if not self.optional and not self.candidates(state, use):
@@ -17860,6 +17874,11 @@ class DiscardFromHandThenDrawTrainer(TrainerEffect):
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         if not self.optional and not [uid for uid in state.players[use.player].hand if uid != use.card]:
             raise UnsupportedError(DISCARD_ANY_NUMBER_ZERO_CODE, f"{DISCARD_ANY_NUMBER_ZERO_REASON}。このカードを除く手札が 0 枚で、選べるのは 0 枚だけ")
+        if self.coin:
+            # v0.126（FU3）: コインのあとに 2 枚以上引きうるので、2 枚目より下におもてのカード（フラッシュ）があれば、使う前（コインの前）に止める（コインのない版は、引く枚数を選んだあとに
+            # 引く処理が止める。止めるかをコインの結果によらせない）
+            hand_size = len([uid for uid in state.players[use.player].hand if uid != use.card])
+            _faceup.require_draw_through_face_up(state, use.player, min(hand_size * self.multiplier, len(state.players[use.player].deck)))
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         if self.look_opponent_hand:
@@ -17930,11 +17949,23 @@ class ArrangeOwnDeckTopTrainer(TrainerEffect):
     def _count_options(self, state: GameState, use: TrainerUse) -> tuple[int, ...]:
         return tuple(range(min(self.max_cards, len(state.players[use.player].deck)) + 1))
 
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        # v0.126（FU5）: おもてのカード（フラッシュ）はいちばん上から続くので、1 枚以上見ればふくむ。見ないこと（0 枚）を選べない版（PD2）は、どの答えも止まるので使う前に止める
+        if not self.zero_allowed:
+            _faceup.require_look_without_face_up(state, use.player, 1, "ポケモン図鑑で山札の上のおもてのカードを見て並べかえる")
+
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         if not state.players[use.player].deck:
             state.add_event("look_at_deck_top_none", player=use.player, owner=use.player, trainer_card=use.card)
             return
         if self.zero_allowed:
+            if _faceup.has_face_up(state, use.player):
+                # v0.126（FU5）: 1 枚以上見る答えは、見る範囲におもてのカードをふくむので選ぶと止める（見ない 0 枚は受け付ける）
+                error = _faceup.stop(_faceup.FACE_UP_DECK_LOOK_RETURN_CODE, "ポケモン図鑑で山札の上のおもてのカードを見て並べかえる")
+                push_trainer_decision(state, use, kind=SELECT_LOOK_COUNT, player=use.player, options=self._count_options(state, use),
+                                      unresolved_choices=tuple(c for c in self._count_options(state, use) if c), unresolved_code=error.code,
+                                      unresolved_reason=error.message)
+                return
             push_trainer_decision(state, use, kind=SELECT_LOOK_COUNT, player=use.player, options=self._count_options(state, use))
             return
         push_trainer_decision(state, use, kind=SELECT_LOOK_COUNT, player=use.player, options=self._count_options(state, use),
@@ -29332,6 +29363,10 @@ class CoinDrawTrainer(TrainerEffect):
             problems.append("文面と登録の処理（コイン・引く枚数）が合わない")
         return problems
 
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        # v0.126（FU3）: 2 枚目より下のおもてのカード（フラッシュ）をまとめて引きうるので、使う前（コインの前）に止める（止めるかをコインの結果によらせない）
+        _faceup.require_draw_through_face_up(state, use.player, min(self.count, len(state.players[use.player].deck)))
+
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         if _trainer_coin(state, use):
             _draw_up_to(state, use.player, self.count)
@@ -32226,6 +32261,8 @@ class LookDeckTopStadium(StadiumEffect):
         if count == 0:
             state.add_event("look_at_deck_top_declined", player=player, owner=player, stadium_card=stadium.card)
             return
+        # v0.126（FU5）: 見る範囲におもてのカード（フラッシュ）があれば、順番を変えずにもどすときの向きが決まらないので、この答えを受け付けない（見ない 0 枚は受け付ける）
+        _faceup.require_look_without_face_up(state, player, count, f"ラジオとうで山札の上から {count} 枚を見てもどす")
         cards = tuple(state.players[player].deck[:count])
         state.add_event("look_at_deck_top", player=player, owner=player, count=count, cards=cards, stadium_card=stadium.card)
 
@@ -39425,6 +39462,8 @@ class CoinPeekOpponentDeckTopMayShuffle(PowerEffect):
         require_power_not_used(state, use)
         if not state.players[1 - use.player].deck:
             raise _power_zero_cards("［わるぢえ］で、相手の山札が 0 枚（見るカードがない。v0.47 の［スパイ］と同じ問い）")
+        # v0.126（FU5）: 相手の山札のいちばん上がおもて（フラッシュ）なら、見てもとの山札の上にもどすときの向きが決まらないので、コインの前に止める
+        _faceup.require_look_without_face_up(state, 1 - use.player, 1, "［わるぢえ］で相手の山札のいちばん上のおもてのカードを見てもどす")
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
         if _power_coin(state, use) is not CoinSide.HEADS:
@@ -39665,6 +39704,8 @@ class LookOpponentDeckTopKeepOrder(PowerEffect):
             raise _power_zero_cards("［OBSERVE］で、相手の山札が 0 枚（見るカードがない。v0.95 の［わるぢえ］と同じ問い）")
         if len(deck) < self.count:
             raise UnsupportedError(POWER_DECK_TOP_SHORT_CODE, f"{POWER_DECK_TOP_SHORT_REASON}。相手の山札が {len(deck)} 枚")
+        # v0.126（FU5）: 見る範囲におもてのカード（フラッシュ）があれば、もどすときの向きが決まらないので、宣言の前に止める
+        _faceup.require_look_without_face_up(state, 1 - use.player, self.count, f"相手の山札の上から {self.count} 枚を見てもどす")
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
         opponent = 1 - use.player
@@ -45526,6 +45567,8 @@ class DrawThenPutHandCardOnDeckTop(PowerEffect):
         side = state.players[use.player]
         if not side.deck and not side.hand:
             raise UnsupportedError(TRANSPORT_WITHOUT_CARDS_CODE, TRANSPORT_WITHOUT_CARDS_REASON)
+        # v0.126（FU4）: 山札におもてのカード（フラッシュ）があれば、引いたあと山札の上に置くカードの向きが決まらないので、宣言の前に止める
+        _faceup.require_no_face_up(state, use.player, _faceup.FACE_UP_DECK_PLACE_TOP_CODE, "［トランスポート］で山札の上に手札のカードを置く")
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
         side = state.players[use.player]
@@ -48081,3 +48124,105 @@ V0_125_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
     PowerKey("ES1-027", 0): PowerEntry(CureOneActiveConditionOnHeadsFromBench(), "てだすけ", HELPING_HAND_PRINTED_TEXT, HELPING_HAND_LATEST_TEXT, "LD-ES1-027-PWR0"),
 })
 DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_125_ATTACKS), V0_125_POWERS)
+
+
+# ---------------------------------------------------------------- v0.126（docs/flash-faceup-deck-v0.126.md）
+
+# フラッシュ（拡張シート第2弾赤版。ES2-035）。印刷の文面（kyuura の写し。照合だけに使う）と、処理に使う最新の説明 LD-ES2-035-TRAINER（『オフィシャルブック2000』p.270。kyuura が
+# 2026-10-31 に画像で読んだ記録）の全文。違うのは書き方だけ（kyuura の meaning_change は none_apparent）。句読点・括弧を一般に正規化して一致させない（2 つの文面をそれぞれ持つ）
+FLASH_PRINTED_TEXT = ("お互いのプレイヤーは、それぞれ、自分の山札の上から5枚のカードを見て、好きな順番にならべ替えてから、おもてを上にして山札の上にもどす。(先に相手プレイヤーが、"
+                      "ならべ替えをする)山札を切る時には、おもてが上になっているカードをおもてが下になるようにもどしてから、切る。")
+FLASH_LATEST_TEXT = ("おたがいのプレイヤーは、それぞれ、自分の山札の上から5枚のカードを見て、好きな順番にならべ替えてから、おもてを上にして山札の上にもどす。（先に相手プレイヤーが、"
+                     "ならべ替えをする）。山札を切るときには、おもてが上になっているカードをおもてが下になるように、もどしてから切る。")
+FLASH_COUNT = 5
+
+
+@dataclass(frozen=True)
+class FlashTrainer(TrainerEffect):
+    """おたがいのプレイヤーは、それぞれ、自分の山札の上から 5 枚のカードを見て、好きな順番にならべ替えてから、おもてを上にして山札の上にもどす。（先に相手プレイヤーが、ならべ替えを
+    する）。山札を切るときには、おもてが上になっているカードをおもてが下になるように、もどしてから切る（v0.126。フラッシュ（ES2-035）。処理に使う文面は最新の説明
+    LD-ES2-035-TRAINER。docs/flash-faceup-deck-v0.126.md 5 章）。
+
+    - 使うための条件の確認（手札から出す前）: どちらの山札も 5 枚以上（片方でも 5 枚より少なければ FU1。UQ-STATED-COUNT-SHORT。見られるだけに丸めない・片方だけ処理しない）。
+      錯乱ジムでかわりに使うプレイヤー（``use.player``）にも同じ確かめ（相手は ``1 - use.player``）
+    - 段階 0（CR-FLASH-PROCEDURE）: 使ったプレイヤーの相手が、自分の山札の上から 5 枚を見る（ログ ``look_at_deck_top`` の ``cards`` は見たプレイヤーだけ）→ 並べ替える（決定
+      ``ARRANGE_DECK_TOP``。決めるのは相手。選べるものは見た 5 枚（上から順）、ちょうど 5 枚。答えの並びが新しい上からの順。120 通りのどれでも受け付ける。ほかのカード・重なり・
+      不足・余分・別のプレイヤーの答えは決定の共通の確かめが拒む）→ おもてを上にしてもどす（ログ ``arrange_deck_top`` の ``cards`` は並べたプレイヤーだけ。``flash_face_up`` は
+      公開で、いちばん上のカードの id だけを書く。CR-FLASH-TOP-CARD-SEEN）
+    - 段階 1: 使ったプレイヤーが同じことをする。相手のいちばん上（公開）は、この決定の前に観測に出ている
+    - 同じ並びの答えでも、おもてにすることに意味があるので空振りにしない。この処理では山札を切らない。相手の 5 枚を並べ替えるカードではない
+    - もう一度使うとき、5 枚より下におもてのカードが残るなら FU5（UQ-FLASH-FACE-UP-DECK (f)）。おもてのカードはいつも上から続く並びなので、今の対応カードでは起こらない
+    """
+
+    text: str
+    implementation_id = "flash_trainer"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = _require_text(definition, self.text, self)
+        if not problems and (f"自分の山札の上から{FLASH_COUNT}枚のカードを見て" not in self.text or "おもてを上にして山札の上にもどす" not in self.text
+                             or "先に相手プレイヤーが、ならべ替えをする" not in self.text or "おもてが下になるようにもどしてから、切る" not in self.text):
+            problems.append("文面と登録の処理（5 枚・おもてを上にもどす・相手が先・切るときはおもてを下にもどす）が合わない")
+        return problems
+
+    @staticmethod
+    def _arranger(use: TrainerUse, stage: int) -> int:
+        return 1 - use.player if stage == 0 else use.player
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        short = [player for player in (1 - use.player, use.player) if len(state.players[player].deck) < FLASH_COUNT]
+        if short:
+            raise _faceup.stop(_faceup.FLASH_DECK_SHORT_CODE, f"山札が {FLASH_COUNT} 枚より少ないプレイヤー {short}")
+        for player in (1 - use.player, use.player):
+            if any(uid in state.face_up_deck for uid in state.players[player].deck[FLASH_COUNT:]):
+                raise _faceup.stop(_faceup.FACE_UP_DECK_LOOK_RETURN_CODE, f"プレイヤー {player} の山札の上から {FLASH_COUNT} 枚より下のおもてのカード")
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        self._offer(state, use, 0)
+
+    def _offer(self, state: GameState, use: TrainerUse, stage: int) -> None:
+        player = self._arranger(use, stage)
+        cards = tuple(state.players[player].deck[:FLASH_COUNT])
+        if len(cards) != FLASH_COUNT:
+            raise RuntimeError(f"フラッシュの段階 {stage} で、プレイヤー {player} の山札が {FLASH_COUNT} 枚より少ない（使う前に確かめた。エンジンの不具合）")
+        state.add_event("look_at_deck_top", player=player, owner=player, count=FLASH_COUNT, cards=cards, trainer_card=use.card)
+        push_trainer_decision(state, use, kind=ARRANGE_DECK_TOP, player=player, options=cards, min_choices=FLASH_COUNT, max_choices=FLASH_COUNT,
+                              context=(("stage", stage),))
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        stage = decision.context_value("stage")
+        player = self._arranger(use, stage)
+        deck = state.players[player].deck
+        if decision.player != player or tuple(deck[:FLASH_COUNT]) != tuple(decision.options) or sorted(choices) != sorted(decision.options) or len(choices) != FLASH_COUNT:
+            raise RuntimeError(f"フラッシュの並べ替え {choices} が、プレイヤー {player} の見た 5 枚 {decision.options} の並べ替えではない（エンジンの不具合）")
+        deck[:FLASH_COUNT] = list(choices)
+        _faceup.clear_marks(state, player)
+        _faceup.set_marks(state, player, choices)
+        state.add_event("arrange_deck_top", player=player, owner=player, count=FLASH_COUNT, cards=tuple(choices), trainer_card=use.card)
+        state.add_event("flash_face_up", player=player, owner=player, count=FLASH_COUNT, top_card_id=state.cards[choices[0]].card_id, trainer_card=use.card)
+        if stage == 0:
+            self._offer(state, use, 1)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = f"トレーナー {use.card_id}"
+        stage = decision.context_value("stage")
+        if stage not in (0, 1):
+            return [f"{what}の決定の段階 {stage!r} が 0・1 ではない"]
+        player = self._arranger(use, stage)
+        problems = _decided_by(decision, player, what)
+        top = tuple(state.players[player].deck[:FLASH_COUNT])
+        if decision.kind != ARRANGE_DECK_TOP or decision.options != top or len(top) != FLASH_COUNT or (decision.min_choices, decision.max_choices) != (FLASH_COUNT, FLASH_COUNT):
+            problems.append(f"{what}の段階 {stage} の決定 {decision.kind} {decision.options} が、プレイヤー {player} の山札の上の {FLASH_COUNT} 枚の並べ替えではない")
+        events = _last_trainer_events(state, use)
+        looked = [e for e in events if e["kind"] == "look_at_deck_top" and e.get("trainer_card") == use.card and e["owner"] == player]
+        if len(looked) != 1 or tuple(looked[0]["cards"]) != decision.options:
+            problems.append(f"{what}の段階 {stage} の決定の前に、同じ 5 枚を見たログがない")
+        done = {e["owner"] for e in events if e["kind"] == "flash_face_up" and e.get("trainer_card") == use.card}
+        if done != ({1 - use.player} if stage == 1 else set()):
+            problems.append(f"{what}の段階 {stage} の決定のときに、並べ替えを終えた側が {sorted(done)}（相手が先）")
+        return problems
+
+
+V0_126_TRAINERS: Mapping[str, TrainerEntry] = MappingProxyType({
+    "ES2-035": TrainerEntry(FlashTrainer(FLASH_PRINTED_TEXT), "フラッシュ", FLASH_PRINTED_TEXT, FLASH_LATEST_TEXT, "LD-ES2-035-TRAINER"),
+})
+DEFAULT_EFFECTS = _with_trainers(DEFAULT_EFFECTS, V0_126_TRAINERS)

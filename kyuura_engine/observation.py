@@ -263,6 +263,29 @@ def _seen_uid(state: GameState, uid: int, viewer: int | None) -> int | None:
     return uid
 
 
+def _deck(state: GameState, owner: int, viewer: int | None) -> dict[str, Any]:
+    """v0.126（docs/flash-faceup-deck-v0.126.md 4 章）: 山札の観測。枚数は全員に見える。フラッシュでおもてにしたカードがあれば、
+
+    - ``face_up_count``: おもてのカードの枚数（全員。おもてにした枚数と、そのあとの公開の移動から決まる。どのカードかは書かない）
+    - ``face_up_top``: いちばん上がおもてなら、そのカードの id（全員。CR-FLASH-TOP-CARD-SEEN。uid は書かない（uid はデッキの並びからカードがわかり、手札に移ったあとも追えるので））
+    - ``known_face_up``: 持ち主にだけ、自分の山札のおもてのカードの位置とカードの id（自分で並べたので知っている。新しく確かめたのではない。相手・観戦者には書かない。2 枚目より下を
+      新しく確かめる要求は ``CheckFaceUpDeckCard``（FU2）で、ここでは見せない）
+    おもてのカードがなければ、v0.125 までと同じ形（枚数だけ）。"""
+    from . import faceup
+
+    p = state.players[owner]
+    view: dict[str, Any] = {"count": len(p.deck)}
+    marked = faceup.face_up_in_deck(state, owner)
+    if not marked:
+        return view
+    top = faceup.visible_top(state, owner)
+    view["face_up_count"] = len(marked)
+    view["face_up_top"] = None if top is None else {"card_id": state.cards[top].card_id}
+    if viewer == owner:
+        view["known_face_up"] = [{"position": i, "card_id": state.cards[uid].card_id} for i, uid in enumerate(p.deck) if uid in marked]
+    return view
+
+
 def _face_down_pokemon(state: GameState, pokemon: PokemonInPlay, owner: int, viewer: int | None) -> dict[str, Any]:
     """v0.67（docs/secret-plan-preflight-v0.67.md 7 章）: うらにしてベンチに出したカード（マチスの秘策）。全員に見えるのは、場のポケモンの番号・うらであること・ついている
     エネルギーカード（手札からつけた表のカード）・ダメージ（うらのあいだは 0）だけ。本当のカード（uid・カードの id・名前。uid はデッキの並びからカードがわかる）は持ち主
@@ -476,7 +499,7 @@ def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
                 "cards": [_card(state, uid) for uid in p.hand] if visible_hand else None,
                 "revealed_by": [list(source) for source in hand_revealed_by(state, owner)],
             },
-            "deck": {"count": len(p.deck)},
+            "deck": _deck(state, owner, viewer),
             # v0.63: おもてのサイド（ロケット団参上!。全員に見える）は位置とカードを書く。裏のサイドは枚数だけ（uid も渡さない）
             "prizes": {"count": len(p.prizes),
                        "face_up": [{"position": i, **_card(state, uid)} for i, uid in enumerate(p.prizes) if uid in state.face_up_prizes]},
@@ -614,6 +637,8 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
+    # v0.126: フラッシュでおもてにした山札（並べたプレイヤー・枚数・いちばん上のカードの id。uid は書かない）・いちばん上のおもてのカードが変わった（カードの id・おもての枚数）
+    "flash_face_up", "face_up_deck_top",
     # v0.124: ［すごいへんしん］で選んだ変身のもと・もどった理由、［わるいはどう］のコインの結果と追加（どれも場・コインの公開の情報）
     "super_transform", "super_transform_reverted", "dark_pulse",
     # v0.120: 進化元を重ねずにベンチに出したたねポケモンとしてあつかう進化カード（場に出たカード・出した場所・効果）・復活で出すカードがなかった（山札が 0 枚・選べるカードがなかった）・

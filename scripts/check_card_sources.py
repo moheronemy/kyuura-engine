@@ -512,8 +512,10 @@ def play_text_problems(where: str, record: dict, card: dict, registry, links: di
                 found.append(f"{where} {target}: 根拠が {basis} なのに、出典が {entry.source!r}")
             if basis not in kyuura_records:
                 found.append(f"{where} {target}: 根拠 {basis} が kyuura_records にない")
-            if basis.startswith("LD-") and registered_ld.get(key) != basis:
-                found.append(f"{where} {target}: 根拠 {basis} が研究の対応表の registered にない")
+            # v0.126: トレーナーの最新の説明（LD-…-TRAINER）は研究の対応表の registered_trainers に結ぶ（ワザ・特殊能力は registered。フラッシュ ES2-035）
+            registered_here = (links["latest_descriptions"].get("registered_trainers", {}).get(card["id"]) if target == "trainer" else registered_ld.get(key))
+            if basis.startswith("LD-") and registered_here != basis:
+                found.append(f"{where} {target}: 根拠 {basis} が研究の対応表の {'registered_trainers' if target == 'trainer' else 'registered'} にない")
             if basis.split("-")[0] in ("ERR", "TXT", "RUL") and registered_errata.get(key) != basis:
                 found.append(f"{where} {target}: 根拠のエラッタ {basis} が研究の対応表の errata_text にない")
             if key in adopted_printed:

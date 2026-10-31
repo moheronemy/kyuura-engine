@@ -47,6 +47,7 @@ from ..decisions import OPPONENT_HAND_TO_BENCH
 from ..decisions import DISCARD_TO_DECK, RECOVER_POKEMON, SELECT_DRAW_COUNT, TAKE_LOOKED_CARDS
 from ..decisions import DISCARD_STADIUM, EVOLUTION_SONG_POKEMON
 from ..stadiums import bench_limit
+from .. import faceup as FU  # v0.126: おもての山札（フラッシュ）
 from ..errors import SECRET_PLAN_HIDDEN_CODE, IllegalActionError, UnsupportedError
 from ..evolution import DEVOLVE_TO_DECK, DEVOLVE_TO_DISCARD, DEVOLVE_TO_HAND, devolve, evolution_block, place_evolution_card
 from ..persistent import (RETURN_IN_PLAY_TO_DECK, RETURN_IN_PLAY_TO_HAND, add_persistent_effect, leave_lock, max_hp_set, remove_on_entering_active,
@@ -3573,6 +3574,11 @@ class Draw(Element):
     phase: ClassVar[Phase] = Phase.EFFECT
     reads_deck_order: ClassVar[bool] = True  # v0.40: 山札の上から引く
 
+    def on_declare(self, res: Resolution, player: int, attacker: PokemonInPlay) -> None:
+        # v0.126（FU3）: 2 枚目より下のおもてのカード（フラッシュ）をまとめて引きうるなら、コインの前に止める（引く枚数がコインで決まっても、止めるかをコインの結果によらせない）
+        deck = res.state.players[player].deck
+        FU.require_draw_through_face_up(res.state, player, len(deck) if self.heads_of is not None else min(self.count, len(deck)), f"ワザで引く（プレイヤー {player}）")
+
     def __post_init__(self) -> None:
         if (self.count is None) == (self.heads_of is None):
             raise ValueError("引く枚数は count・heads_of のどちらか 1 つで決める")
@@ -6992,6 +6998,11 @@ class OpponentDiscardToDeckTop(Element):
     def has_target(self, run: AttackRun) -> bool:
         return bool(run.state.players[1 - run.player].discard)
 
+    def on_declare(self, res: Resolution, player: int, attacker: PokemonInPlay) -> None:
+        # v0.126（FU4）: 相手の山札におもてのカード（フラッシュ）があれば、その上にのせるカードの向きが決まらないので、コインの前に止める（相手のトラッシュが空なら、のせないので止めない）
+        if res.state.players[1 - player].discard:
+            FU.require_no_face_up(res.state, 1 - player, FU.FACE_UP_DECK_PLACE_TOP_CODE, f"相手（プレイヤー {1 - player}）の山札の上にトラッシュのカードをのせるワザ")
+
     def run(self, run: AttackRun) -> bool:
         if not self.has_target(run):
             return False
@@ -7491,6 +7502,20 @@ class ArrangeDeckTop(Element):
     def decides(self, kind: str) -> bool:
         return kind in (SELECT_DECK_OWNER, SELECT_LOOK_COUNT, ARRANGE_DECK_TOP)
 
+    def _face_up_owners(self, state: GameState, owners: tuple[int, ...]) -> tuple[int, ...]:
+        """v0.126（FU5）: 見てもどす範囲（いちばん上から）におもてのカード（フラッシュ）がある山札の持ち主。おもてのカードはいつも上から続くので、1 枚以上見れば当たる。"""
+        return tuple(owner for owner in owners if FU.has_face_up(state, owner))
+
+    def _short_owners(self, state: GameState, owners: tuple[int, ...]) -> tuple[int, ...]:
+        return tuple(owner for owner in owners if len(state.players[owner].deck) < self.max_cards) if self.exact else ()
+
+    def on_declare(self, res: Resolution, player: int, attacker: PokemonInPlay) -> None:
+        # v0.126: どちらの山札も、おもてのカードがある（FU5）か、ちょうどの枚数に足りない（LT1。run が止める）なら、見る山札を選べない。おもてのカードによるものがあれば、ここで止める
+        owners = (player, 1 - player)
+        face_up = self._face_up_owners(res.state, owners)
+        if face_up and set(face_up) | set(self._short_owners(res.state, owners)) == set(owners):
+            raise FU.stop(FU.FACE_UP_DECK_LOOK_RETURN_CODE, f"見て並べかえる山札の持ち主 {list(owners)}（おもてのカード {list(face_up)}）")
+
     def run(self, run: AttackRun) -> bool:
         owners = (run.player, 1 - run.player)
         extra: tuple = ()
@@ -7502,6 +7527,13 @@ class ArrangeDeckTop(Element):
             if short:
                 error = to_error("attack_deck_top_short", detail)
                 extra = _unresolved_extra(short, error.code, error.message)
+        face_up = self._face_up_owners(run.state, owners)
+        if face_up:
+            # v0.126（FU5）: おもてのカードのある山札の持ち主は、選べるが選ぶと止める（もう一方の山札は止めない。両方なら宣言のあとすぐ止めている）
+            if extra:
+                raise RuntimeError(f"みらいよちで、山札が足りない持ち主と、おもてのカードのある持ち主 {face_up} が両方いる（宣言のあとに止めるはず。エンジンの不具合）")
+            error = FU.stop(FU.FACE_UP_DECK_LOOK_RETURN_CODE, f"ワザ {run.key}・見て並べかえる山札の持ち主 {list(face_up)}")
+            extra = _unresolved_extra(face_up, error.code, error.message)
         run.suspend(kind=SELECT_DECK_OWNER, player=run.player, options=owners, extra=extra)
         return True
 
@@ -7510,8 +7542,10 @@ class ArrangeDeckTop(Element):
         if decision.kind == SELECT_DECK_OWNER:
             owner = choices[0]
             deck = state.players[owner].deck
+            if owner in decision.context_value("unresolved_choices", ()):
+                raise RuntimeError(f"みらいよちで選ぶと止める山札の持ち主 {owner} を選んだ（答えのときに止めるはず。エンジンの不具合）")
             if self.exact:
-                if owner in decision.context_value("unresolved_choices", ()) or len(deck) < self.max_cards:
+                if len(deck) < self.max_cards:
                     raise RuntimeError(f"みらいよちで山札が {len(deck)} 枚の持ち主 {owner} を選んだ（答えのときに止めるはず。エンジンの不具合）")
                 self._look(run, owner, self.max_cards)
                 return
@@ -12320,6 +12354,13 @@ class OpponentDeckTopDiscardIfTrainer(Element):
     phase: ClassVar[Phase] = Phase.EFFECT
     reads_deck_order: ClassVar[bool] = True
 
+    def on_declare(self, res: Resolution, player: int, attacker: PokemonInPlay) -> None:
+        # v0.126（FU5）: 相手の山札のいちばん上がおもて（フラッシュ。全員に見えている）で、トレーナーカードでなければ、見てもとの山札の上にもどすときの向きが決まらないので、宣言のあとすぐ
+        # 止める（トレーナーカードならトラッシュするだけなので止めない。どちらかは公開の情報で決まる）
+        top = FU.visible_top(res.state, 1 - player)
+        if top is not None and not E.CardFilter("trainer").matches(res.state.card_def(top)):
+            raise FU.stop(FU.FACE_UP_DECK_LOOK_RETURN_CODE, f"相手（プレイヤー {1 - player}）の山札のいちばん上のおもてのカードを見てもどすワザ")
+
     def run(self, run: AttackRun) -> bool:
         state = run.state
         opponent = 1 - run.player
@@ -14681,6 +14722,10 @@ class DrawUntilTails(Element):
 
     phase: ClassVar[Phase] = Phase.EFFECT
     reads_deck_order: ClassVar[bool] = True
+
+    def on_declare(self, res: Resolution, player: int, attacker: PokemonInPlay) -> None:
+        # v0.126（FU3）: 「おもて」の数で 2 枚以上引きうるので、2 枚目より下におもてのカード（フラッシュ）があれば、コインの前に止める
+        FU.require_draw_through_face_up(res.state, player, len(res.state.players[player].deck), f"まるもうけで引く（プレイヤー {player}）")
 
     def run(self, run: AttackRun) -> bool:
         deck = run.state.players[run.player].deck

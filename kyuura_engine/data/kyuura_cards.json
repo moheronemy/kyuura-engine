@@ -1675,6 +1675,9 @@
   "pool_v0_125": [
     "ES1-027"
   ],
+  "pool_v0_126": [
+    "ES2-035"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -126578,6 +126581,55 @@
         {
           "page": "1stex1027",
           "list_number": "027/036"
+        }
+      ]
+    },
+    {
+      "id": "ES2-035",
+      "jp_set": "ES2",
+      "category": "trainer",
+      "name": {
+        "ja": "フラッシュ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "お互いのプレイヤーは、それぞれ、自分の山札の上から5枚のカードを見て、好きな順番にならべ替えてから、おもてを上にして山札の上にもどす。(先に相手プレイヤーが、ならべ替えをする)山札を切る時には、おもてが上になっているカードをおもてが下になるようにもどしてから、切る。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex2035"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex2035.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第2弾(赤版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex2035.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex2035",
+          "list_number": "035/036"
         }
       ]
     }

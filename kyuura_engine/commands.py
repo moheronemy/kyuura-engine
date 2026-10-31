@@ -265,6 +265,24 @@ class RevealFaceDown:
     pokemon: int
 
 
+@dataclass(frozen=True)
+class CheckFaceUpDeckCard:
+    """おもてを上にした山札（フラッシュ）の、上から ``position`` 番目（0 がいちばん上）のおもてのカードを確かめたい、という要求（v0.126。docs/flash-faceup-deck-v0.126.md 4 章）。
+
+    原典が新しい自由行動を定めたのではない。いちばん上より下のおもてのカードを新しく知ろうとする操作を、通常のコマンドとして識別して止めるための、実装上の最小限の入口:
+
+    - いちばん上（``position`` 0）のおもてのカードは、いつも観測（``face_up_top``）に出ている（CR-FLASH-TOP-CARD-SEEN）。要求は要らない（``ALREADY_VISIBLE``）
+    - 山札の持ち主は、自分で並べたおもてのカードを知っている（観測の ``known_face_up``）。要求は要らない（``ALREADY_KNOWN``）
+    - その位置のカードがおもてでない・ないなら ``NOT_FACE_UP``（p.312。特に指示されないかぎり山札の内容を見ない）
+    - それ以外（相手の山札の 2 枚目より下のおもてのカード）は、確かめてよいかが決まらないので ``UNRESOLVED_FACE_UP_DECK_CHECK``（FU2。UQ-FLASH-FACE-UP-DECK）で止める。どの場合も
+      状態・乱数・ログを変えず、カードの中身を返さない（止める理由の文にもカードを書かない）
+    """
+
+    player: int
+    owner: int
+    position: int
+
+
 COMMAND_TYPES: dict[str, type] = {
     "place_starting_pokemon": PlaceStartingPokemon,
     "draw_mulligan_cards": DrawMulliganCards,
@@ -284,6 +302,7 @@ COMMAND_TYPES: dict[str, type] = {
     "remove_disguise": RemoveDisguise,  # v0.49
     "use_stadium": UseStadium,  # v0.57
     "reveal_face_down": RevealFaceDown,  # v0.67
+    "check_face_up_deck_card": CheckFaceUpDeckCard,  # v0.126
 }
 
 # ルールにはあるが、まだ対応していない操作（受け取ると UnsupportedError）。EvolvePokemon は v0.4a、UsePokemonPower は v0.5 で対応した
@@ -310,6 +329,7 @@ Command = (
     | RemoveDisguise
     | UseStadium
     | RevealFaceDown
+    | CheckFaceUpDeckCard
 )
 
 

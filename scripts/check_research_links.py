@@ -247,7 +247,8 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
             continue
         if record["latest_description"]["text_ja"] != entry.play_text_ja:
             problems.append(f"{card}: 登録の処理に使う文面が kyuura の {ld_id} と違う")
-        if entry.source != f"P43 p.{record['latest_description']['page']}":
+        # v0.126: 出典は LD- のページ（過去の原典照合で登録したもの）か、LD- の id（kyuura データの採用で、最新の説明を根拠にしたもの。ワザ・特殊能力と同じ。フラッシュ ES2-035）
+        if entry.source != f"P43 p.{record['latest_description']['page']}" and entry.source != ld_id:
             problems.append(f"{card}: 出典 {entry.source} が kyuura の {ld_id} のページ（p.{record['latest_description']['page']}）と違う")
     adopted_printed = set(section.get("adopted_printed_text", []))
     errata_text = section.get("errata_text", {})

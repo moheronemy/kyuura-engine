@@ -155,6 +155,10 @@
   決まらない印。IF1）を加えたもの（v0.125。docs/wigglytuff-helping-hand-v0.125.md 6 章）。古い形式で項目を落とすと「ちいさくなる」などワザのダメージだけを減らす効果と区別できないので
   黙って落とさない: 形式 1〜29 は、この印のある効果があると ``ValueError``（なければ形式 1〜29 の書き出しは v0.124 と同じ）。［てだすけ］の使用・コイン・回復は、既存の記録
   （``power_uses_this_turn``・ログ ``pokemon_power``・``coin_flip``・``special_conditions_removed``）で表す
+- 31: 30 に、最上位の ``face_up_deck``（フラッシュでおもてを上にして山札に置かれたカードの uid の並び。置いた順）を加えたもの（v0.126。docs/flash-faceup-deck-v0.126.md 7 章）。
+  今のカードの並びから求め直せない状態（どのカードがおもてか）なので古い形式に黙って落とさない: 形式 1〜30 は、空でなければ ``ValueError``（空なら形式 1〜30 の書き出しは v0.125 と同じ）。
+  並べ替えの途中（相手が並べたあと・使ったプレイヤーの答えの前）は、使用中のトレーナー・決定（``ARRANGE_DECK_TOP``・続きの情報の ``stage``）・ログ（``look_at_deck_top``・
+  ``arrange_deck_top``・``flash_face_up``）で表す。プレイヤーが知っている情報は書き出しに別の項目を持たない（観測が状態とログから求める）
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -261,7 +265,7 @@ from .state import (
     WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -653,6 +657,9 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
                                    for p in state.players for pokemon in p.in_play() for effect in pokemon.persistent_effects):
         # v0.125: 「ふくらむ」の効果（ワザ以外のダメージに当てはめるかが決まらない印）を落とすと、ワザのダメージだけを減らす効果と区別できないので古い形式に書かない
         raise ValueError(f"形式 {format_version} は、ワザ以外のダメージに当てはめるかが決まらない「ふくらむ」の効果を表せない（format_version=30 を使う）")
+    if format_version < 31 and state.face_up_deck:
+        # v0.126: おもてを上にした山札のカード（フラッシュ）は、今のカードの並びから求め直せないので古い形式に書かない（落とすと、うらの山札と区別できない）
+        raise ValueError(f"形式 {format_version} は、おもてを上にして山札に置かれたカード（フラッシュ）を表せない（format_version=31 を使う）")
     if format_version < 28 and any(pokemon.basic_entry is not None for p in state.players for pokemon in p.in_play()):
         raise ValueError(f"形式 {format_version} は、進化元を重ねずに出して場ではたねポケモンとしてあつかう進化カードを表せない（format_version=28 を使う）")
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
@@ -807,6 +814,8 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         data["replacement_poisons"] = [replacement_poison_record(record) for record in state.replacement_poisons]  # v0.119
     if format_version >= 29:
         data["frozen_forms"] = [frozen_form_record(state, record) for record in state.frozen_forms]  # v0.124
+    if format_version >= 31:
+        data["face_up_deck"] = list(state.face_up_deck)  # v0.126
     return data
 
 

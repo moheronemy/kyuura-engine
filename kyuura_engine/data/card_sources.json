@@ -30831,6 +30831,27 @@
         }
       ],
       "notes": "v0.125 で加えた（docs/wigglytuff-helping-hand-v0.125.md 3 章）。拡張シート第1弾（青版）。1進化（プリンから）・無色・HP90・弱点 闘×2・抵抗力 超-30・にげる 3。ワザ ふくらむ（無色 4 個・20）=DamageThenReduceDamageNextTurn（最新の説明 LD-ES1-027-ATK0 の全文と量 10 を結んだ登録）、特殊能力［てだすけ］=CureOneActiveConditionOnHeadsFromBench（最新の説明 LD-ES1-027-PWR0 の全文）。最新の説明は kyuura が 2026-10-31 に『オフィシャルブック2000』p.226（PDF 228）を画像で読んだ記録で、エンジンは原典・画像を見ていない。レベル（LV.40）・図鑑番号は補っていない（写しの値のまま）。日本語の文面の転記元は pcg-search.com（同じサイトでの日本語の欄の照合は独立した照合にならない）。新しい外部照合はしていない"
+    },
+    "ES2-035": {
+      "basis": "kyuura_data",
+      "name_ja": "フラッシュ",
+      "status": "adopted",
+      "kyuura_commit": "57d01f45cfb8b086d03dc0525b329cf6adeff69b",
+      "recorded_on": "2026-10-31",
+      "kyuura_records": [
+        "CC-ES2-035-P270",
+        "CR-FLASH-PROCEDURE",
+        "CR-FLASH-TOP-CARD-SEEN",
+        "LD-ES2-035-TRAINER",
+        "UQ-FLASH-FACE-UP-DECK",
+        "UQ-STATED-COUNT-SHORT"
+      ],
+      "play_text": {
+        "trainer": "LD-ES2-035-TRAINER"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.126 で加えた（docs/flash-faceup-deck-v0.126.md 3 章）。拡張シート第2弾（赤版）。トレーナー（種類の表示なし）。FlashTrainer（処理に使う文面は最新の説明 LD-ES2-035-TRAINER の全文。印刷の文面（kyuura の写し）は照合だけに使う。句読点・括弧を一般に正規化して一致させない）。最新の説明は kyuura が 2026-10-31 に『オフィシャルブック2000』p.270（PDF 272）を画像で読んだ記録、カードの画像の照合は kyuura の IMG-ES2-035 で、エンジンは原典・画像を見ていない。日本語の文面の転記元は pcg-search.com（同じサイトでの日本語の欄の照合は独立した照合にならない）。新しい外部照合はしていない"
     }
   }
 }

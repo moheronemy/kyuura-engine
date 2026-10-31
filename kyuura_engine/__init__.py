@@ -21,6 +21,7 @@ from .commands import (
     ResolveDecision,
     Retreat,
     RevealFaceDown,
+    CheckFaceUpDeckCard,
     TakePrize,
     UseAttack,
     UsePokemonPower,
@@ -73,7 +74,7 @@ from .state import (
     TrainerInUse,
 )
 
-__version__ = "0.125.0"
+__version__ = "0.126.0"
 
 __all__ = [
     "Asleep",
@@ -111,6 +112,7 @@ __all__ = [
     "PromoteActive",
     "RemoveDisguise",
     "RevealFaceDown",
+    "CheckFaceUpDeckCard",
     "RULE_REFERENCES",
     "RULES_2000_02_14",
     "ReportJankenResult",

@@ -50,6 +50,7 @@ from .commands import (
     UseStadium,
     RemoveDisguise,
     RevealFaceDown,
+    CheckFaceUpDeckCard,
 )
 from .decisions import (
     ACCEPT_REQUEST,
@@ -303,6 +304,7 @@ from .state import (
 )
 from .zones import DISGUISE_REVERT, attach_energy_from_hand, designate_face_down, discard_from_play, draw_cards, enter_play, place_stadium, remove_disguise, reveal_face_down, shuffle_deck
 from . import zones as _zones
+from . import faceup  # v0.126: おもての山札（フラッシュ）
 from . import cards as cards_module
 from .coins import CoinSide, flip_coins
 
@@ -785,6 +787,20 @@ def _apply_once(state: GameState, command, context: resolution.Context | None, *
         # v0.81a（MH2）: 処理の途中で、最大HPを決まった数にする効果と大きくする効果が同時にはたらく状態の最大HPを読んだ（その状態になる）。決められない姿と同じく、
         # このコマンドを受け付けない（答えのない決定は、その前の状態で止める）
         order_stop = (error.code, error.message)
+    if order_stop is None and (state.face_up_deck or new.face_up_deck):
+        # v0.126（docs/flash-faceup-deck-v0.126.md 6 章）: おもてのカード（フラッシュ）のある山札が、読み方で結果・要る情報が分かれる変わり方をしたら受け付けない（FU3〜FU6・
+        # エンジンの未対応）。決定への答えで、どの答えでもそうなるなら、答えのない決定を残さずにその前の状態で対戦を止める。受け付けるなら、山札をはなれたカードの印を消し、
+        # いちばん上の公開の変化をログに書く
+        face_up_stop = faceup.command_problem(state, new)
+        if face_up_stop is not None:
+            if isinstance(command, (TakePrize, PromoteActive, ResolveDecision)) and not _decision_has_unstopped_answer(state, context):
+                halted = state.clone()
+                _halt(halted, Halt(code=face_up_stop[0], message=f"どの答え（続け方）でも次の処理になるので、対戦を止める: {face_up_stop[1]}",
+                                   references=("docs/flash-faceup-deck-v0.126.md",)))
+                _require_integrity(halted)
+                return halted
+            raise UnsupportedError(*face_up_stop)
+        faceup.settle(state, new)
     if order_stop is None:
         close_probe(new)
     if new.energy_roles:
@@ -1025,7 +1041,8 @@ def _decision_has_unstopped_answer(state: GameState, context: resolution.Context
         except (IllegalActionError, UnsupportedError):
             continue
         try:
-            if _fresh_form_problem(state, trial) is None and not max_hp_drops(state, trial) and not scram_restored(state, trial):
+            if (_fresh_form_problem(state, trial) is None and not max_hp_drops(state, trial) and not scram_restored(state, trial)
+                    and faceup.command_problem(state, trial) is None):  # v0.126: おもての山札の止め方（FU3〜FU6）も受け付けられない答え
                 return True
         except HiddenPropertyRead:
             continue  # v0.67: うらのカードの決まらない項目を読む答え（FD1）は、受け付けられない答え
@@ -1065,6 +1082,8 @@ def _trainer_dead_end(before: GameState, after: GameState, context: resolution.C
             if stop is None and scram_restored(before, trial):
                 error = scram_restored_error(scram_restored(before, trial))  # v0.61（SC2）
                 stop = (error.code, error.message)
+            if stop is None:
+                stop = faceup.command_problem(before, trial)  # v0.126: おもての山札の止め方（FU3〜FU6）
             if stop is None:
                 # v0.117（docs/retreat-return-active-powers-v0.117.md 5 章）: ［でんせつのからだ］の LB2・決定を待つあいだのトラッシュは、コマンドの終わり（``_apply_once``）で止めるので、
                 # 答えの続きの確かめでも同じに数える（まきちらせ!ベトベトガスのあいだに、ポケモンいれかえで控えの［でんせつのからだ］のポケモンしか出せないなど）
@@ -2312,6 +2331,21 @@ def _resume_stadium(state: GameState, decision, choices: tuple[int, ...], contex
         resolution.after_stadium(state, context)
 
 
+def _check_face_up_deck_card(state: GameState, cmd: CheckFaceUpDeckCard) -> None:
+    """おもてを上にした山札のおもてのカードを確かめたい要求（v0.126。``CheckFaceUpDeckCard``）。どの場合も受け付けない（状態を変えない）: いちばん上は観測に出ている
+    （``ALREADY_VISIBLE``）、持ち主は自分で並べたカードを知っている（``ALREADY_KNOWN``）、おもてのカードでない（``NOT_FACE_UP``）、それ以外は FU2 で止める。理由の文にカードを書かない。"""
+    if cmd.player not in (0, 1) or cmd.owner not in (0, 1):
+        raise IllegalActionError("BAD_PLAYER", f"プレイヤー {cmd.player}・山札の持ち主 {cmd.owner} は 0・1")
+    deck = state.players[cmd.owner].deck
+    if not 0 <= cmd.position < len(deck) or deck[cmd.position] not in state.face_up_deck:
+        raise IllegalActionError("NOT_FACE_UP", f"プレイヤー {cmd.owner} の山札の上から {cmd.position + 1} 枚目は、おもてのカードではない（特に指示されないかぎり山札の内容を見ない。p.312）")
+    if cmd.position == 0:
+        raise IllegalActionError("ALREADY_VISIBLE", "いちばん上のおもてのカードは、観測（face_up_top）に出ている（CR-FLASH-TOP-CARD-SEEN）")
+    if cmd.player == cmd.owner:
+        raise IllegalActionError("ALREADY_KNOWN", "自分で並べたおもてのカードは、観測（known_face_up）に出ている")
+    raise faceup.stop(faceup.FACE_UP_DECK_CHECK_CODE, f"プレイヤー {cmd.player} が、プレイヤー {cmd.owner} の山札の上から {cmd.position + 1} 枚目のおもてのカードを確かめる")
+
+
 def _discard_from_play(state: GameState, cmd: DiscardFromPlay, context: resolution.Context) -> None:
     """自分の場のなにかの化石・ピッピ人形（進化カードがのっていないもの）を、自分の番の好きなときにトラッシュにすてる（v0.47。カードの文面「自分の番の好きなときに
     （自分のトラッシュに）すてることができる」。docs/fossil-hidden-info-v0.47.md 3 章）。
@@ -2471,6 +2505,7 @@ _HANDLERS: dict[type, Callable[[GameState, object, resolution.Context], None]] =
     RemoveDisguise: _engine(_remove_disguise),  # v0.49
     UseStadium: _use_stadium,  # v0.57: 空いたバトル場の勝ち負け・交代に解決の設定を使う
     RevealFaceDown: _reveal_face_down,  # v0.67: 空いたバトル場の勝ち負け・交代に解決の設定を使う
+    CheckFaceUpDeckCard: _engine(_check_face_up_deck_card),  # v0.126: 受け付けない（観測で足りる・FU2）
 }
 
 
@@ -2676,6 +2711,7 @@ def check_invariants(state: GameState) -> list[str]:
     problems.extend(_history_problems(state))  # v0.62
     problems.extend(_set_aside_problems(state))  # v0.63
     problems.extend(_face_up_prize_problems(state))  # v0.63
+    problems.extend(faceup.prefix_problems(state))  # v0.126: おもての山札の印（フラッシュ）
     problems.extend(_stadium_problems(state))  # v0.57
     problems.extend(_recall_problems(state))  # v0.49
     if phase in TERMINAL_PHASES:
