@@ -242,8 +242,12 @@ class CorrectionTest(unittest.TestCase):
         # v0.124: kyuura がカードの画像で直したメタモン ES2-032 の特殊能力の文面の 1 字（台帳 FIX-ES2-032-POWER0-TEXT-JA。転記の誤り。v0.124 の移行の段。写しにカードを入れる前から
         # 訂正の一覧に挙げる。docs/super-transform-dark-pulse-v0.124.md 2 章）
         ditto = {"ES2-032"}
-        self.assertEqual({c["card_id"] for c in self.data["kyuura_corrections"]}, corrected | unown | babies | old_rod | v122 | arcanine | ditto)
+        # v0.126: kyuura がカードの画像で直したとりかえっこプリーズ PR1-027 の文面の読点 1 つ（台帳 FIX-PR1-027-TEXT-JA。転記の誤り。v0.126 の移行の段。写しの外のカード（登録しない）。
+        # docs/flash-faceup-deck-v0.126.md 2 章）
+        swap_please = {"PR1-027"}
+        self.assertEqual({c["card_id"] for c in self.data["kyuura_corrections"]}, corrected | unown | babies | old_rod | v122 | arcanine | ditto | swap_please)
         in_extract = {c["id"] for c in self.data["cards"]}
+        self.assertNotIn("PR1-027", in_extract)
         self.assertEqual({c["id"] for c in self.data["cards"] if c.get("corrections")},
                          corrected | (unown & in_extract) | babies | old_rod | v122 | arcanine | (ditto & in_extract))
 

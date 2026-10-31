@@ -26,6 +26,7 @@ ECB, V069, V097, V0114, V0121, V0123 = ("ecb2d694e6280ec5dc9ddd2a8f709cea16a6b69
                                         "73a169063463bbf7bcaa3137d70cbf9721d11534", "e519b99e2adcc6c2cd0998569ae5ee1101de6e89",
                                         "2fe0bc042ce187d191843819262f8036abbb343d", "74b3ceb883dd815495d13b9987433fb14b36e44d")
 BASE_ENGINE = "e165fe0fb3de0e73129135f8cbaa34e2aae0eb64"  # この版の基点（v0.124 の最後のコミット。main 84bf94f を祖先に持つ）
+V0125_FINAL = "19c22051d10ec2a7610e7c7641b2c6053bd5c3f1"  # v0.126: この版の最後のコミット（v0.126 で写しの元・研究の基準を 57d01f4 に上げたので、v0.125 の値はこのコミットで確かめる）
 WIGGLYTUFF = "ES1-027"
 NEW_LDS = ("LD-ES1-027-ATK0", "LD-ES1-027-PWR0", "LD-ES2-005-ATK0", "LD-QSG-055-ATK0")
 NEW_CCS = {"ES1-027": ["CC-ES1-027-P226"], "ES2-005": ["CC-ES2-005-P82"], "QSG-055": ["CC-QSG-055-P82"]}
@@ -72,31 +73,34 @@ class MigrationChainTest(unittest.TestCase):
 
     def test_chain(self):
         module = extract_module()
-        self.assertEqual((module.KYUURA_COMMIT, module.V0_124_KYUURA_COMMIT, module.V0_123_KYUURA_COMMIT), (NOW, V0124, V0123))
+        # v0.126: 段 v0.126（134a664 → 57d01f4）を加え、v0.125 の段のあとは V0_125_KYUURA_COMMIT（134a664）に固定した。今の写しの元は最後の段のあと
+        # （docs/flash-faceup-deck-v0.126.md 2 章。今の値は tests/test_flash_faceup_deck_v0_126.py）
+        self.assertEqual((module.V0_125_KYUURA_COMMIT, module.V0_124_KYUURA_COMMIT, module.V0_123_KYUURA_COMMIT), (NOW, V0124, V0123))
         self.assertEqual(module.migration_problems(), [])
-        self.assertEqual([(s["id"], s["from"], s["to"]) for s in module.KYUURA_MIGRATIONS],
+        self.assertEqual([(s["id"], s["from"], s["to"]) for s in module.KYUURA_MIGRATIONS][:7],
                          [("v0.69", ECB, V069), ("v0.97", V069, V097), ("v0.114", V097, V0114), ("v0.121", V0114, V0121), ("v0.123", V0121, V0123),
                           ("v0.124", V0123, V0124), ("v0.125", V0124, NOW)])
-        self.assertEqual(module.KYUURA_MIGRATIONS[-1]["document"], "docs/wigglytuff-helping-hand-v0.125.md")
+        self.assertEqual(module.KYUURA_MIGRATIONS[6]["document"], "docs/wigglytuff-helping-hand-v0.125.md")
         extract = read_extract()
-        self.assertEqual((extract["source"]["commit"], extract["previous_source"]["commit"]), (NOW, ECB))
-        self.assertEqual(extract["source_migrations"][-1], {"id": "v0.125", "from": V0124, "to": NOW, "document": "docs/wigglytuff-helping-hand-v0.125.md", "corrections": []})
+        self.assertEqual((extract["source"]["commit"], extract["previous_source"]["commit"]), (module.KYUURA_MIGRATIONS[-1]["to"], ECB))
+        self.assertEqual(extract["source_migrations"][6], {"id": "v0.125", "from": V0124, "to": NOW, "document": "docs/wigglytuff-helping-hand-v0.125.md", "corrections": []})
         self.assertFalse([c for c in extract["kyuura_corrections"] if c["migration"] == "v0.125"])
         # v0.124 の段のあとを写しの元の定数にもどすと、写しの元を上げたときに過去の段のあとまで変わる（連鎖が切れて止まる）
         steps = module.KYUURA_MIGRATIONS
         try:
-            module.KYUURA_MIGRATIONS = (*steps[:5], {**steps[5], "to": module.KYUURA_COMMIT}, steps[6])
+            module.KYUURA_MIGRATIONS = (*steps[:5], {**steps[5], "to": module.KYUURA_COMMIT}, *steps[6:])
             self.assertTrue(any("その前の段のあと" in p for p in module.migration_problems()))
         finally:
             module.KYUURA_MIGRATIONS = steps
-        self.assertEqual([(c["card_id"], c["source_commit"]) for c in extract["engine_user_corrections"]], [("PR1-069", NOW)])
+        self.assertEqual([c["card_id"] for c in extract["engine_user_corrections"]], ["PR1-069"])
 
     def test_adoption_migrations_are_appended(self):
         sources = cs.load_sources()
-        self.assertEqual([(m["from"], m["to"], m["on"]) for m in sources["data_migrations"]],
+        # v0.126: 8 段目（134a664 → 57d01f4）が加わった（今の値は tests/test_flash_faceup_deck_v0_126.py）。v0.125 までの 7 段は書き換えない
+        self.assertEqual([(m["from"], m["to"], m["on"]) for m in sources["data_migrations"]][:7],
                          [(ECB, V069, "2026-10-19"), (V069, V097, "2026-10-25"), (V097, V0114, "2026-10-28"), (V0114, V0121, "2026-10-30"),
                           (V0121, V0123, "2026-10-31"), (V0123, V0124, "2026-10-31"), (V0124, NOW, "2026-10-31")])
-        self.assertEqual(sources["data_migrations"][-1]["document"], "docs/wigglytuff-helping-hand-v0.125.md")
+        self.assertEqual(sources["data_migrations"][6]["document"], "docs/wigglytuff-helping-hand-v0.125.md")
         self.assertEqual(cs.data_migrations(sources, read_extract())[1], [])
         # 採用したときのデータのコミットが 134a664 の記録は、この版で写しに加えたカード（pool_v0_125）だけ（移行の段では採用し直していない）
         self.assertEqual({card for card, record in sources["cards"].items() if record.get("kyuura_commit") == NOW}, set(read_extract().get("pool_v0_125", ())))
@@ -110,9 +114,10 @@ class MigrationChainTest(unittest.TestCase):
         new = {card["id"]: card for card in now["cards"]}
         self.assertLessEqual(set(old), set(new))
         self.assertEqual({card for card in old if old[card] != new[card]}, set())
-        self.assertEqual(set(new) - set(old), set(now.get("pool_v0_125", ())))
+        # v0.126: v0.126 で写しに加えたカード（pool_v0_126）も基点にない。段 v0.126 の訂正（写しの外の PR1-027）が台帳の写しに加わった（tests/test_flash_faceup_deck_v0_126.py）
+        self.assertEqual(set(new) - set(old), set(now.get("pool_v0_125", ())) | set(now.get("pool_v0_126", ())))
         self.assertNotIn(WIGGLYTUFF, old)
-        self.assertEqual(before["kyuura_corrections"], now["kyuura_corrections"])
+        self.assertEqual(before["kyuura_corrections"], [c for c in now["kyuura_corrections"] if c["migration"] != "v0.126"])
 
     @needs_kyuura
     def test_kyuura_card_data_is_identical(self):
@@ -158,14 +163,18 @@ class ResearchLinksTest(unittest.TestCase):
         cls.links = json.loads(LINKS_PATH.read_text(encoding="utf-8"))
 
     def test_commits_and_counts(self):
-        links = self.links
+        # v0.126: 研究の基準を 57d01f4 に上げた（今の値は tests/test_flash_faceup_deck_v0_126.py・tests/test_catalog_contract.py）。v0.125 の値は、その版の最後のコミットの対応表で確かめる
+        if not (ROOT / ".git").exists():
+            self.skipTest("このリポジトリの git の履歴がない（取り出した木）")
+        links = engine_json(V0125_FINAL, "kyuura_engine/data/research_links.json")
         self.assertEqual((links["research_commit"], links["card_data_commit"], links["research_branch"]), (NOW, NOW, "claude/eloquent-lamport-5xyv5r"))
         self.assertEqual(links["counts"]["kyuura_issues"], 90)
         self.assertEqual(links["engine_import_id"], "ENGINE-46A3E2E")
-        registered = WIGGLYTUFF in load_card_pool().playable_ids
-        expected = ["LD-ES2-005-ATK0", "LD-QSG-055-ATK0"] if registered else sorted(NEW_LDS)
-        self.assertEqual(links["latest_descriptions"]["kyuura_records_not_registered"], expected)
-        not_in_engine = links["card_checks"]["not_in_engine"]
+        # v0.125 の最後のコミットではプクリンを登録した
+        self.assertEqual(links["latest_descriptions"]["kyuura_records_not_registered"], ["LD-ES2-005-ATK0", "LD-QSG-055-ATK0"])
+        self.assertIn(WIGGLYTUFF, load_card_pool().playable_ids)
+        self.assertEqual(self.links["latest_descriptions"]["kyuura_records_not_registered"], ["LD-ES2-005-ATK0", "LD-QSG-055-ATK0"])
+        not_in_engine = self.links["card_checks"]["not_in_engine"]
         for card, ids in NEW_CCS.items():
             self.assertEqual(not_in_engine.get(card), ids, card)
 

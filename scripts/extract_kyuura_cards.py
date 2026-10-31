@@ -25,6 +25,7 @@ v0.4c 以降の 2 進化ポケモン。v0.11 はサカキのワンリキー・�
 - v0.123 で、段 v0.123（2fe0bc0 → 74b3ceb）を加えました（docs/arcanine-name-migration-v0.123.md 2 章）。
 - v0.124 で、段 v0.124（74b3ceb → b9e7cff）を加え、写しの組 pool_v0_124（2 枚）を加えました（docs/super-transform-dark-pulse-v0.124.md 2 章・4 章）。
 - v0.125 で、段 v0.125（b9e7cff → 134a664）を加え、写しの組 pool_v0_125（1 枚）を加えました（docs/wigglytuff-helping-hand-v0.125.md 2 章・3 章）。
+- v0.126 で、段 v0.126（134a664 → 57d01f4）を加えました（docs/flash-faceup-deck-v0.126.md 2 章）。
 
 使い方::
 
@@ -42,12 +43,13 @@ import sys
 from pathlib import Path
 
 KYUURA_REPOSITORY = "https://github.com/moheronemy/kyuura"
-# v0.125: kyuura のブランチ claude/eloquent-lamport-5xyv5r の固定コミット 134a664（プクリンの最新の説明・コインで決まる枚数の不足の調査。kyuura main には未取り込み）。
+# v0.126: kyuura のブランチ claude/trainer-reaction-faceup-deck-ownership-research の固定コミット 57d01f4（ちえくらべ・フラッシュ・とりかえっこプリーズの調査。kyuura main には未取り込み）。
+# v0.125 は 134a664（``V0_125_KYUURA_COMMIT``。ブランチ claude/eloquent-lamport-5xyv5r の固定コミット。プクリンの最新の説明・コインで決まる枚数の不足の調査）、
 # v0.124 は b9e7cff（``V0_124_KYUURA_COMMIT``。kyuura main の PR #6 のマージ。すごいへんしん・わるいはどうの調査）、v0.123 は 74b3ceb（``V0_123_KYUURA_COMMIT``。
 # ブランチ claude/v0122-names-text-trainer-procedures の固定コミット）、v0.121〜v0.122 は 2fe0bc0（``V0_121_KYUURA_COMMIT``。ブランチ claude/neo2-fossil-type-cost-checks の固定コミット）、
 # v0.114〜v0.120 は e519b99（``V0_114_KYUURA_COMMIT``。ブランチ claude/baby-data-engine-v0113-handover の固定コミット）、
 # v0.97〜v0.113 は 73a1690（``V0_97_KYUURA_COMMIT``。kyuura main の PR #5 のマージ。木は研究のコミット 78d090c と同じ）、v0.69〜v0.96 は 7d3f4ca（``V0_69_KYUURA_COMMIT``）
-KYUURA_COMMIT = "134a664c6adf67d5604148a31b58e1a7d26d4d6d"
+KYUURA_COMMIT = "57d01f45cfb8b086d03dc0525b329cf6adeff69b"
 KYUURA_PATH = "data/cards.json"
 
 # v0.1 の対戦で使うカード（kyuura docs/engine-readiness.md 5章の段階 1 のたねポケモンと基本エネルギー）
@@ -1433,6 +1435,7 @@ V0_114_KYUURA_COMMIT = "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"  # v0.114〜v0
 V0_121_KYUURA_COMMIT = "2fe0bc042ce187d191843819262f8036abbb343d"  # v0.121〜v0.122 の写しの元
 V0_123_KYUURA_COMMIT = "74b3ceb883dd815495d13b9987433fb14b36e44d"  # v0.123 の写しの元
 V0_124_KYUURA_COMMIT = "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a"  # v0.124 の写しの元
+V0_125_KYUURA_COMMIT = "134a664c6adf67d5604148a31b58e1a7d26d4d6d"  # v0.125 の写しの元
 # v0.97（docs/unown-research-idfnj-v0.97.md 2 章）: 写しの元を上げた移行の連鎖。段ごとに、前のコミット（``from``）とあとのコミット（``to``）。最後の段の ``to`` が写しの元、
 # 最初の段の ``from`` が PREVIOUS_KYUURA_COMMIT。過去の段の値は書き換えない（v0.69 の段の ``to`` は 7d3f4ca のまま）。kyuura が当てはめた修正は、当てはめた段（``migration``）の
 # ``from`` の値が ``before``・``to`` の値が ``after`` で、写しの元でも ``after``。写す欄は段ごとに、その段の修正の欄と出典の記録の欄を除いて同じことを確かめる
@@ -1443,6 +1446,8 @@ V0_124_KYUURA_COMMIT = "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a"  # v0.124 の�
 # v0.124（docs/super-transform-dark-pulse-v0.124.md 2 章）: 段 v0.124（74b3ceb → b9e7cff）を加えた。v0.123 の段の ``to`` は、同じ理由で 74b3ceb（``V0_123_KYUURA_COMMIT``）に固定した
 # v0.125（docs/wigglytuff-helping-hand-v0.125.md 2 章）: 段 v0.125（b9e7cff → 134a664）を加えた。v0.124 の段の ``to`` は、同じ理由で b9e7cff（``V0_124_KYUURA_COMMIT``）に固定した。
 # この段の data/cards.json は全 1,377 件の全欄が同じ（訂正なし）
+# v0.126（docs/flash-faceup-deck-v0.126.md 2 章）: 段 v0.126（134a664 → 57d01f4）を加えた。v0.125 の段の ``to`` は、同じ理由で 134a664（``V0_125_KYUURA_COMMIT``）に固定した。
+# この段で値が変わったのは写しの外のとりかえっこプリーズ PR1-027 の文面の読点 1 つ（FIX-PR1-027-TEXT-JA）だけ
 KYUURA_MIGRATIONS = (
     {"id": "v0.69", "from": PREVIOUS_KYUURA_COMMIT, "to": V0_69_KYUURA_COMMIT, "document": "docs/equivalent-non-pack-cards-v0.69.md"},
     {"id": "v0.97", "from": V0_69_KYUURA_COMMIT, "to": V0_97_KYUURA_COMMIT, "document": "docs/unown-research-idfnj-v0.97.md"},
@@ -1450,7 +1455,8 @@ KYUURA_MIGRATIONS = (
     {"id": "v0.121", "from": V0_114_KYUURA_COMMIT, "to": V0_121_KYUURA_COMMIT, "document": "docs/hand-bench-attack-conditions-v0.121.md"},
     {"id": "v0.123", "from": V0_121_KYUURA_COMMIT, "to": V0_123_KYUURA_COMMIT, "document": "docs/arcanine-name-migration-v0.123.md"},
     {"id": "v0.124", "from": V0_123_KYUURA_COMMIT, "to": V0_124_KYUURA_COMMIT, "document": "docs/super-transform-dark-pulse-v0.124.md"},
-    {"id": "v0.125", "from": V0_124_KYUURA_COMMIT, "to": KYUURA_COMMIT, "document": "docs/wigglytuff-helping-hand-v0.125.md"},
+    {"id": "v0.125", "from": V0_124_KYUURA_COMMIT, "to": V0_125_KYUURA_COMMIT, "document": "docs/wigglytuff-helping-hand-v0.125.md"},
+    {"id": "v0.126", "from": V0_125_KYUURA_COMMIT, "to": KYUURA_COMMIT, "document": "docs/flash-faceup-deck-v0.126.md"},
 )
 KYUURA_CORRECTIONS_PATH = "data/curation/card_corrections.json"
 KYUURA_TARGETS_PATH = "data/engine_targets.json"
@@ -2305,6 +2311,29 @@ KYUURA_CORRECTIONS = [
              "image_sha256": "944dcc13ba39944c9b1db69b18aeb7550f09ce749ad74d6481b148755e39a9bd", "accessed_on": "2026-10-31"},
         ],
         "engine_history": "v0.124 の移行の段で、写しの外（未登録）のカードの訂正として台帳・画像の照合の記録と照らした（v0.123 までは写しにないカード）",
+    },
+
+    # v0.126（docs/flash-faceup-deck-v0.126.md 2 章）: 写しの外（v0.126 でも登録しない）のとりかえっこプリーズ PR1-027 の文面の読点 1 つ（「ある時だけ使える」→「ある時だけ、使える」）を、
+    # kyuura がカードの画像（pcg-search.com）と『オフィシャルブック2000』p.293 の図版で確かめて直した（根拠 ``card_image_check``・種類 ``transcription_error``。2026-10-31）。処理は変わらない。
+    # 名前の末尾の「！」は kyuura が直していない（報告事項）ので、ここでも直さない。画像を見たのは kyuura で、エンジンは画像・公式の書籍を見ていない（``engine_saw_image``）
+    {
+        "id": "FIX-PR1-027-TEXT-JA",
+        "card_id": "PR1-027",
+        "field": "trainer.text.ja",
+        "before": "相手プレイヤーの手札を見て、カードを1枚えらぶ。次に、相手プレイヤーにあなたの手札を見せ、カードを1枚えらばせる。そして、お互いがえらんだカードを交換してよいかどうか、相手にたずねる。オーケーなら、カードを交換して、それぞれの手札にくわえる。オーケーでないなら、交換はおこらず、あなたは山札からカードを2枚引く。(このカードは、お互いに手札が1枚以上ある時だけ使える)",
+        "after": "相手プレイヤーの手札を見て、カードを1枚えらぶ。次に、相手プレイヤーにあなたの手札を見せ、カードを1枚えらばせる。そして、お互いがえらんだカードを交換してよいかどうか、相手にたずねる。オーケーなら、カードを交換して、それぞれの手札にくわえる。オーケーでないなら、交換はおこらず、あなたは山札からカードを2枚引く。(このカードは、お互いに手札が1枚以上ある時だけ、使える)",
+        "basis": "card_image_check",
+        "kind": "transcription_error",
+        "migration": "v0.126",
+        "decided_on": "2026-10-31",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-PR1-027",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/1st/1stp027.png",
+             "image_sha256": "dba0b369a7a340ccd18ef7e429912555ef98dc7b5d8c826b3a2a52679ee7bd24", "accessed_on": "2026-10-31"},
+        ],
+        "engine_history": "v0.126 の移行の段で、写しの外（未登録）のカードの訂正として台帳・画像の照合の記録と照らした（写しにないカード）",
     },
 
 ]

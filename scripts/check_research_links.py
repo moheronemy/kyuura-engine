@@ -32,7 +32,7 @@ v0.70（docs/non-pack-effect-reuse-v0.70.md 3 章）: 6 のカードデータの
    対応表・写し・写しの作り直しの表が同じ訂正で、研究の基準のコミットの値が訂正の前の値のときに、その欄を訂正のあとの値にして比べる。
 
 v0.69（docs/equivalent-non-pack-cards-v0.69.md 4 章・7 章）: 利用者が示した訂正（``user_corrected_text``）は kyuura の台帳（data/curation/card_corrections.json）の
-   根拠 ``user_provided`` の記録に結ぶ。トレーナーの最新の説明（LD-…-TRAINER）は ``registered_trainers`` に結び、登録の処理に使う文面と出典のページと照らす。
+   根拠 ``user_provided`` の記録に結ぶ。トレーナーの最新の説明（LD-…-TRAINER）は ``registered_trainers`` に結び、登録の処理に使う文面と出典のページと照らす（v0.126: 登録していないトレーナーの説明は ``trainer_records_not_registered``）。
    拡張パック以外の商品の同じカード（effects.EQUIVALENT_CARDS）の登録（``equivalent_registrations``）は、元のカードの登録と文面・出典が同じで、元のカードの登録が
    ほかの区分にあり、研究の基準のコミットで同じカードの組（same_card_group）にあって印刷の文面が同じ（4g）。
 
@@ -222,9 +222,20 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
             problems.append(f"{target}: 出典 {source} が kyuura の {ld_id} のページ（p.{record['latest_description']['page']}）と違う")
     registry_ = E.DEFAULT_EFFECTS if registry is None else registry
     trainers_listed = section.get("registered_trainers", {})
-    if set(trainers_listed) != set(trainer_ld):
-        problems.append(f"トレーナーの最新の説明（LD-…-TRAINER）の一覧が違う: kyuura だけ {sorted(set(trainer_ld) - set(trainers_listed))}、"
-                        f"対応表だけ {sorted(set(trainers_listed) - set(trainer_ld))}")
+    # v0.126（docs/flash-faceup-deck-v0.126.md 2.4 節）: 登録していないトレーナーの最新の説明（kyuura 57d01f4 のとりかえっこプリーズ）は trainer_records_not_registered に挙げる。
+    # 登録したトレーナーの説明と重ならず、合わせて kyuura のトレーナーの最新の説明のすべてと同じ
+    trainers_not_registered = section.get("trainer_records_not_registered", {})
+    if set(trainers_listed) & set(trainers_not_registered):
+        problems.append(f"トレーナーの最新の説明が、登録したものと登録していないものの両方にある: {sorted(set(trainers_listed) & set(trainers_not_registered))}")
+    if set(trainers_listed) | set(trainers_not_registered) != set(trainer_ld):
+        problems.append(f"トレーナーの最新の説明（LD-…-TRAINER）の一覧が違う: kyuura だけ {sorted(set(trainer_ld) - set(trainers_listed) - set(trainers_not_registered))}、"
+                        f"対応表だけ {sorted((set(trainers_listed) | set(trainers_not_registered)) - set(trainer_ld))}")
+    for card, ld_id in trainers_not_registered.items():
+        record = trainer_ld.get(card)
+        if record is None or record["id"] != ld_id:
+            problems.append(f"{card}: 登録していないトレーナーの最新の説明 {ld_id} が kyuura にない、またはカードが違う")
+        elif registry_.trainer_entry(card) is not None:
+            problems.append(f"{card}: トレーナーの最新の説明 {ld_id} のカードは登録されている（registered_trainers に挙げる）")
     for card, ld_id in trainers_listed.items():
         record = trainer_ld.get(card)
         entry = registry_.trainer_entry(card)
