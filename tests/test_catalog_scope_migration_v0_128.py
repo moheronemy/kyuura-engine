@@ -242,5 +242,21 @@ class CatalogMixingTest(unittest.TestCase):
         self.assertFalse(names & ({name for name, _, _ in EXCLUDED.values()} | {"ポケモンイラストレーター"}))
 
 
+
+class DocumentTest(unittest.TestCase):
+    """版の文書・対応状況・裁定・データの来歴・README の v0.128。"""
+
+    def test_documents(self):
+        doc = (ROOT / "docs" / "catalog-scope-migration-v0.128.md").read_text(encoding="utf-8")
+        for heading in ("## 1. 開始点と範囲", "## 2. 写しの元・研究の基準の移行（57d01f4 → 71d1728）", "## 3. 分類の欄の扱い（写しに入れない理由）",
+                        "## 4. エンジン: 対象外の記録のデッキの拒否と、混入の防止", "## 5. 数"):
+            self.assertIn(heading + "\n", doc)
+        self.assertIn("公式の使用禁止・裁定の変更・エラッタではありません", doc)
+        self.assertRegex((ROOT / "README.md").read_text(encoding="utf-8"), r"\n- v0\.128（(今のエンジンの版。)?`kyuura_engine` の版は 0\.128\.0）: kyuura の目録の分類")
+        self.assertIn("## v0.128: kyuura の目録の分類の取り込みと、通常対戦の対象の整理\n", (ROOT / "docs" / "implementation-status.md").read_text(encoding="utf-8"))
+        self.assertIn("### v0.128: 目録の分類と通常対戦の対象", (ROOT / "docs" / "rules-2000-02-14.md").read_text(encoding="utf-8"))
+        self.assertIn("## v0.128: 写しの元・研究の基準を kyuura 71d1728 に上げる移行\n", (ROOT / "docs" / "data-provenance.md").read_text(encoding="utf-8"))
+
+
 if __name__ == "__main__":
     unittest.main()
