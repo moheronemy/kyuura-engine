@@ -212,7 +212,9 @@ class ResearchLinksTest(unittest.TestCase):
                                      # v0.124: TC1・TK1・BX2・SV1〜SV5・DP1（kyuura b9e7cff の新しい論点 9 件と事例に結んだ。未解決の一覧（v0.113 の写し）に行はない）
                                      "UNRESOLVED_TRANSFORM_ENERGY_COLOR_LIST", "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING", "UNRESOLVED_TRANSFORM_BABY_AND_BASIC",
                                      "UNRESOLVED_SUPER_TRANSFORM_TARGET", "UNRESOLVED_SUPER_TRANSFORM_SOURCE_CHANGE", "UNRESOLVED_SUPER_TRANSFORM_COPIED_POWER",
-                                     "UNRESOLVED_SUPER_TRANSFORM_SUPPRESSED_FORM", "UNRESOLVED_SUPER_TRANSFORM_ENERGY_COLORS", "UNRESOLVED_DARK_PULSE_TIMING"})
+                                     "UNRESOLVED_SUPER_TRANSFORM_SUPPRESSED_FORM", "UNRESOLVED_SUPER_TRANSFORM_ENERGY_COLORS", "UNRESOLVED_DARK_PULSE_TIMING",
+                                     # v0.125: HH1・HH2・IF1（kyuura 134a664 の論点と、事例を加えた既存の論点に結んだ。未解決の一覧（v0.113 の写し）に行はない）
+                                     "UNRESOLVED_HELPING_HAND_WITHOUT_CONDITION", "UNRESOLVED_HELPING_HAND_CHOICE", "UNRESOLVED_INFLATE_NON_ATTACK_DAMAGE"})
         # v0.31〜v0.68 は、kyuura の一覧でコードのない行を指していた停止コード 8 件（T27・C34/C35・G40・P19・P32・Z9・DR8・DR13）に kyuura_index_engine_key を
         # 書いていた。v0.69 で kyuura が停止コードを書いたので外した（scripts/check_research_links.py が、kyuura の一覧のコードで照らす）
         # v0.97: SS1（v0.60 のコードのない問い。kyuura の一覧ではコードのない行）にコードを付けたので、その行を指す（v0.31 と同じ形）
@@ -265,10 +267,10 @@ class ResearchLinksTest(unittest.TestCase):
         cases = {v["kyuura_issue"] for v in LINKS["kyuura_cases_without_engine_ruling"]["cases"]}
         # v0.124: kyuura b9e7cff の新しい論点 9 件は、2 枚を登録して止め方を見直したので、どれも停止コード（TC1・TK1・BX2・SV1〜SV5・DP1）に結んだ（移行の段では、2 枚の事例は
         # 登録していないカード・場面に要るカードを登録していないもの、化石のメタモンの 3 件はコードのない問いだった。docs/super-transform-dark-pulse-v0.124.md 2.4 節・7 章）
-        # v0.125: kyuura 134a664 の新しい論点 2 件（UQ-HELPING-HAND-CHOICE・UQ-DESTRUCTIVE-FIRE-FAILURE）は、移行の段では事例のカードを登録していないので、事例の対応にだけある
-        # （docs/wigglytuff-helping-hand-v0.125.md 2.4 節）
+        # v0.125: kyuura 134a664 の新しい論点 2 件のうち、UQ-DESTRUCTIVE-FIRE-FAILURE は事例のカード（ひかるバンギラス）を登録していないので、事例の対応にだけある。
+        # UQ-HELPING-HAND-CHOICE は、プクリンを登録して停止コード HH2 に結んだ（移行の段では事例の対応にだけあった。docs/wigglytuff-helping-hand-v0.125.md 2.4 節・5 章）
         self.assertEqual(cases - issues, {"UQ-BILINGUAL-NAME-GLOSS", "UQ-MIND-GAMES-OPTIONAL", "UQ-MIND-GAMES-TRAINER-STEP", "UQ-FLASH-FACE-UP-DECK",
-                                          "UQ-SWAP-PLEASE-OWNERSHIP", "UQ-HELPING-HAND-CHOICE", "UQ-DESTRUCTIVE-FIRE-FAILURE"})
+                                          "UQ-SWAP-PLEASE-OWNERSHIP", "UQ-DESTRUCTIVE-FIRE-FAILURE"})
         self.assertEqual(len(issues | cases), LINKS["counts"]["kyuura_issues"])
         self.assertTrue(all(i.startswith("UQ-") for i in issues))
 

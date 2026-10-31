@@ -648,10 +648,11 @@ class RegistrationTest(unittest.TestCase):
 
         extract = read_extract()
         self.assertEqual(extract["pool_v0_124"], [DITTO_SUPER, GR_MEWTWO])
-        self.assertEqual(cards_after(extract, "0.123"), frozenset({DITTO_SUPER, GR_MEWTWO}))
+        # v0.125: 後の版のカード（pool_v0_125 から）は cards_after(…, "0.124") で除く（tests/release_catalog.py）。除いた残りは、今の対応カードからこの 2 枚を除いたものと同じ
+        self.assertEqual(cards_after(extract, "0.123") - cards_after(extract, "0.124"), frozenset({DITTO_SUPER, GR_MEWTWO}))
         self.assertTrue({DITTO_SUPER, GR_MEWTWO}.isdisjoint(cards_before(extract, "0.124")))
         trimmed = dict(extract, cards=[c for c in extract["cards"] if c["id"] not in (DITTO_SUPER, GR_MEWTWO)], pool_v0_124=[])
-        self.assertEqual(len(pool_from_extract(trimmed, E.DEFAULT_EFFECTS).playable_ids), 1358)
+        self.assertEqual(pool_from_extract(trimmed, E.DEFAULT_EFFECTS).playable_ids, load_card_pool().playable_ids - {DITTO_SUPER, GR_MEWTWO})
         ditto = next(c for c in extract["cards"] if c["id"] == DITTO_SUPER)
         self.assertEqual([x["id"] for x in ditto["corrections"]], [FIX])
 
@@ -668,7 +669,10 @@ class RegistrationTest(unittest.TestCase):
         codes = {code for c in added for code in c["engine"]["stop_codes"]}
         self.assertEqual(codes, {TC1, TK1, BX2, SV1, SV2, "UNRESOLVED_SUPER_TRANSFORM_COPIED_POWER", SV4, "UNRESOLVED_SUPER_TRANSFORM_ENERGY_COLORS", DP1, DF1,
                                  "UNRESOLVED_TRANSFORM_SPECIAL_ENERGY"})
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (301, 302))
+        # v0.125: 停止コード・未解決の数は v0.125 で増えた（今の値は tests/test_catalog_contract.py）。v0.124 の値は、その版の最後のコミットの対応表で確かめる
+        if (ROOT / ".git").exists():
+            final = engine_json(V0124_FINAL, "kyuura_engine/data/research_links.json")
+            self.assertEqual((final["counts"]["engine_stop_codes"], final["counts"]["engine_unresolved_rulings"]), (301, 302))
 
 
 if __name__ == "__main__":
