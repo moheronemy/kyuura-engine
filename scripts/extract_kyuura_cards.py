@@ -23,7 +23,7 @@ v0.4c 以降の 2 進化ポケモン。v0.11 はサカキのワンリキー・�
 - v0.114 で、段 v0.114（73a1690 → e519b99）を加えました（docs/baby-rules-evolution-v0.114.md 2 章）。
 - v0.121 で、段 v0.121（e519b99 → 2fe0bc0）を加えました（docs/hand-bench-attack-conditions-v0.121.md 3 章）。
 - v0.123 で、段 v0.123（2fe0bc0 → 74b3ceb）を加えました（docs/arcanine-name-migration-v0.123.md 2 章）。
-- v0.124 で、段 v0.124（74b3ceb → b9e7cff）を加えました（docs/super-transform-dark-pulse-v0.124.md 2 章）。
+- v0.124 で、段 v0.124（74b3ceb → b9e7cff）を加え、写しの組 pool_v0_124（2 枚）を加えました（docs/super-transform-dark-pulse-v0.124.md 2 章・4 章）。
 
 使い方::
 
@@ -2739,7 +2739,10 @@ def kyuura_correction_problems(kyuura: Path, source: dict, previous: dict, pool:
             checked = {(r.get("card_id"), field) for r in checks if isinstance(r, dict) for field in (r.get("checked_fields") or {})}
             # v0.124: 同じ段で kyuura が新しく作った照合の記録（段の前のコミットにない CC-）が、訂正のあとの値と同じ値でその欄を照らし、データの誤りとしていなければ、画像の確認を
             # CC- の代わりにしたことにはならない（ES2-032 の CC-ES2-032-P239。書籍の図版の文字は小さく、kyuura は独立した 2 件に数えていない。訂正の根拠は画像の照合 IMG-ES2-032 のまま）
-            earlier_checks = {r.get("id") for r in _records(json.loads(_show(kyuura, step["from"], "data/sidecar/card_checks.json").decode("utf-8"))) if isinstance(r, dict)}
+            try:
+                earlier_checks = {r.get("id") for r in _records(json.loads(_show(kyuura, step["from"], "data/sidecar/card_checks.json").decode("utf-8"))) if isinstance(r, dict)}
+            except subprocess.CalledProcessError:
+                earlier_checks = set()  # 段の前のコミットに照合の記録のファイルがない（古い段）
             if any(r.get("card_id") == c["card_id"] and c["field"] in (r.get("checked_fields") or {}) for r in checks if isinstance(r, dict)) and all(
                     r.get("id") not in earlier_checks and r.get("checked_fields", {}).get(c["field"]) == c["after"] and r.get("data_error") is False
                     for r in checks if isinstance(r, dict) and r.get("card_id") == c["card_id"] and c["field"] in (r.get("checked_fields") or {})):
@@ -3554,6 +3557,13 @@ POOL_V0_123 = [
     "PR1-016",  # ウィンディ（プロモ。ガーディから進化。でんこうせっか・いかりのほのお）
 ]
 
+# v0.124（docs/super-transform-dark-pulse-v0.124.md 4 章）: メタモン（拡張シート第2弾赤版。［すごいへんしん］）と GR団のミュウツー（［わるいはどう］・わるいぞうふく）の 2 枚。写しの元・研究の基準は
+# b9e7cff（段 v0.124 の移行のあと）。ES2-032 の特殊能力の文面は段 v0.124 の訂正 FIX-ES2-032-POWER0-TEXT-JA のあとの値。PRN-041 の値は 74b3ceb と同じ（訂正はない）
+POOL_V0_124 = [
+    "ES2-032",  # メタモン（拡張シート第2弾赤版。たね・無色・HP40。［すごいへんしん］。ワザなし）
+    "PRN-041",  # GR団のミュウツー（プロモ（neo）。たね・超・HP70。［わるいはどう］・わるいぞうふく）
+]
+
 POOLS = [
     ("pool_v0_1", POOL_V0_1),
     ("pool_v0_2b", POOL_V0_2B),
@@ -3683,6 +3693,7 @@ POOLS = [
     ("pool_v0_121", POOL_V0_121),
     ("pool_v0_122", POOL_V0_122),
     ("pool_v0_123", POOL_V0_123),
+    ("pool_v0_124", POOL_V0_124),
 ]
 
 

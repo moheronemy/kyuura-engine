@@ -482,14 +482,10 @@ QUESTIONS: dict[str, Question] = {
                  "［にげこむ］で入れ替えたあとに、そのワザの残りのダメージの要素がかわりに出たポケモンに来る並びのワザは、今の写しにない"),
         Question("bench_guard_element", None, ("BG0",), 10,
                  "［ベンチガード］の決定を出せないダメージの要素で、控えポケモンが 10 以上のダメージを受ける（今の写しのワザの要素はどれも出せる）"),
-        # v0.124（docs/super-transform-dark-pulse-v0.124.md 2.4 節）: 研究の基準を b9e7cff に上げて加わった論点の事例のうち、化石のメタモンの場面で、移行の段のエンジンが止めていないもの
-        # （コードのない問い。答えを決めたのではない。移行の段のあとのコミットで止め方を見直す）
-        Question("transform_energy_color_list", None, ("v0.124",), 10,
-                 "化石のメタモンの［へんしん］の色の数（p.239 は 8 色、p.324 の引く説明は 6 色。UQ-TRANSFORM-ENERGY-COLOR-LIST）。移行の段のエンジンは 8 色の読みで払う"),
-        Question("transform_revert_knockout_timing", None, ("v0.124",), 10,
-                 "もどったメタモンのきぜつを判定する時点（UQ-TRANSFORM-REVERT-KNOCKOUT-TIMING）。移行の段のエンジンはワザのあとのきぜつの判定で同時にきぜつさせる"),
-        Question("transform_baby_and_basic_retreat", None, ("v0.124",), 10,
-                 "ベイビィの姿のメタモンとでこぼこジム（UQ-TRANSFORM-BABY-AND-BASIC）。移行の段のエンジンは 1 個ぶん多くする"),
+        # v0.124（docs/super-transform-dark-pulse-v0.124.md 6 章）: ［わるいはどう］のコインの時点・共有の範囲（UQ-DARK-PULSE-TIMING）
+        Question("dark_pulse_timing", "UNRESOLVED_DARK_PULSE_TIMING", ("DP1",), 10,
+                 "［わるいはどう］のコインの時点・複数のダメージでの共有・自分の場へのダメージ・ダメージを与えないときにコインを投げるか・6 段階のほかの効果との順番が決まらず、読み方で結果・決定・"
+                 "知る情報が変わる（UQ-DARK-PULSE-TIMING）"),
         # v0.100（docs/sketch-perish-song-history-v0.100.md 8 章）
         Question("sketch_presence", "UNRESOLVED_SKETCH_PRESENCE", ("SK1",), 10,
                  "ドーブルの「スケッチ」の「前の相手の番、このカードが場に出ていなければ、このワザは失敗する」が、前の相手の番の途中に場に出たカード・前の相手の番に場にいて、そのあと場を"

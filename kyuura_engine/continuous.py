@@ -36,10 +36,11 @@ def _suppressor(state: GameState, pokemon: PokemonInPlay) -> tuple[SuppressOther
     """場のポケモン ``pokemon`` の今持つ特殊能力（v0.49 から ``effects.powers_of``。いちばん上のカードと「ばける」でのせたカード。メタモンの［へんしん］で写した
     カードの特殊能力は入らない（TF1。写した特殊能力を持つかは決まらないので、``effects.form_problems`` がその状態にしない））のうち、ほかの特殊能力を消す実装が
     登録されたもの。［へんしん］がはたらいているかはこの答えを聞くので、［へんしん］で決まる姿を聞かない（循環しない）。"""
-    from .effects import powers_of
+    from .effects import printed_power_slots
     from .persistent import powers_stopped
 
-    found = tuple(slot.effect for slot in powers_of(state, pokemon) if isinstance(slot.effect, SuppressOtherPowers))
+    # v0.124: 写した特殊能力（変身の姿で持つ）は探さない（変身の姿がこの答えを聞くので循環する。写したかがくへんかガスは ``effects.copied_form_problems`` がその状態にしない）
+    found = tuple(slot.effect for slot in printed_power_slots(state, pokemon) if isinstance(slot.effect, SuppressOtherPowers))
     if not found:
         return ()  # v0.119: 消す特殊能力を持たないポケモンの止まる効果は読まない（［いあつ］の問い合わせが、ほかのポケモンの［じっとみる］の発生源を読んで循環しない）
     if powers_stopped(state, pokemon) is not None:
@@ -161,12 +162,12 @@ def scaring_powers(state: GameState, baby_owner: int) -> tuple[tuple[int, str], 
     """v0.119: プレイヤー ``baby_owner`` の場のベイビィポケモンに当たる、相手の今はたらいている［いあつ］（``effects.ScareOpponentBabies``。相手のバトル場のポケモンの。ねむり・マヒ・こんらんでない。
     力が消えていない）の (持つポケモンの番号, ``PowerKey`` の文字列) の並び。状態を変えない。［いあつ］を持つポケモンはベイビィポケモンではないので、その力が消えているかの問い合わせは
     ここにもどらない（循環しない）。"""
-    from .effects import ScareOpponentBabies, powers_of
+    from .effects import ScareOpponentBabies, printed_power_slots
 
     holder = state.players[1 - baby_owner].active
     if holder is None or state.is_face_down(holder):
         return ()
-    return tuple((holder.pokemon_id, str(slot.key)) for slot in powers_of(state, holder)
+    return tuple((holder.pokemon_id, str(slot.key)) for slot in printed_power_slots(state, holder)  # v0.124: 写した［いあつ］は探さない（循環しない）
                  if isinstance(slot.effect, ScareOpponentBabies) and slot.effect.status_allows(holder) and not power_suppressed(state, slot.power, holder))
 
 

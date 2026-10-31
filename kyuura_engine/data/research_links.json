@@ -12,8 +12,8 @@
   "card_data_commit": "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 293,
-    "engine_stop_codes": 292,
+    "engine_unresolved_rulings": 302,
+    "engine_stop_codes": 301,
     "kyuura_issues": 88
   },
   "stop_codes": {
@@ -3350,6 +3350,105 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TRANSFORM_ENERGY_COLOR_LIST": {
+      "engine_rulings": [
+        {
+          "version": "v0.124",
+          "document": "docs/super-transform-dark-pulse-v0.124.md",
+          "ruling_id": "TC1"
+        }
+      ],
+      "kyuura_issue": "UQ-TRANSFORM-ENERGY-COLOR-LIST",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING": {
+      "engine_rulings": [
+        {
+          "version": "v0.124",
+          "document": "docs/super-transform-dark-pulse-v0.124.md",
+          "ruling_id": "TK1"
+        }
+      ],
+      "kyuura_issue": "UQ-TRANSFORM-REVERT-KNOCKOUT-TIMING",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_TRANSFORM_BABY_AND_BASIC": {
+      "engine_rulings": [
+        {
+          "version": "v0.124",
+          "document": "docs/super-transform-dark-pulse-v0.124.md",
+          "ruling_id": "BX2"
+        }
+      ],
+      "kyuura_issue": "UQ-TRANSFORM-BABY-AND-BASIC",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_SUPER_TRANSFORM_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.124",
+          "document": "docs/super-transform-dark-pulse-v0.124.md",
+          "ruling_id": "SV1"
+        }
+      ],
+      "kyuura_issue": "UQ-SUPER-TRANSFORM-TARGETS",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_SUPER_TRANSFORM_SOURCE_CHANGE": {
+      "engine_rulings": [
+        {
+          "version": "v0.124",
+          "document": "docs/super-transform-dark-pulse-v0.124.md",
+          "ruling_id": "SV2"
+        }
+      ],
+      "kyuura_issue": "UQ-SUPER-TRANSFORM-SOURCE-CHANGES",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_SUPER_TRANSFORM_COPIED_POWER": {
+      "engine_rulings": [
+        {
+          "version": "v0.124",
+          "document": "docs/super-transform-dark-pulse-v0.124.md",
+          "ruling_id": "SV3"
+        }
+      ],
+      "kyuura_issue": "UQ-SUPER-TRANSFORM-COPIED-POWERS",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_SUPER_TRANSFORM_SUPPRESSED_FORM": {
+      "engine_rulings": [
+        {
+          "version": "v0.124",
+          "document": "docs/super-transform-dark-pulse-v0.124.md",
+          "ruling_id": "SV4"
+        }
+      ],
+      "kyuura_issue": "UQ-SUPER-TRANSFORM-SUPPRESSED-FORM",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_SUPER_TRANSFORM_ENERGY_COLORS": {
+      "engine_rulings": [
+        {
+          "version": "v0.124",
+          "document": "docs/super-transform-dark-pulse-v0.124.md",
+          "ruling_id": "SV5"
+        }
+      ],
+      "kyuura_issue": "UQ-SUPER-TRANSFORM-ENERGY-COLORS",
+      "kyuura_disposition": "issue_not_in_index"
+    },
+    "UNRESOLVED_DARK_PULSE_TIMING": {
+      "engine_rulings": [
+        {
+          "version": "v0.124",
+          "document": "docs/super-transform-dark-pulse-v0.124.md",
+          "ruling_id": "DP1"
+        }
+      ],
+      "kyuura_issue": "UQ-DARK-PULSE-TIMING",
+      "kyuura_disposition": "issue_not_in_index"
     }
   },
   "codeless_questions": {
@@ -3411,42 +3510,6 @@
       ],
       "kyuura_issue": "UQ-ESP-REDO",
       "reachable_with_current_cards": false,
-      "counted_as_engine_unresolved": false
-    },
-    "transform_energy_color_list": {
-      "engine_rulings": [
-        {
-          "version": "v0.124",
-          "document": "docs/super-transform-dark-pulse-v0.124.md",
-          "ruling_id": null
-        }
-      ],
-      "kyuura_issue": "UQ-TRANSFORM-ENERGY-COLOR-LIST",
-      "reachable_with_current_cards": true,
-      "counted_as_engine_unresolved": false
-    },
-    "transform_revert_knockout_timing": {
-      "engine_rulings": [
-        {
-          "version": "v0.124",
-          "document": "docs/super-transform-dark-pulse-v0.124.md",
-          "ruling_id": null
-        }
-      ],
-      "kyuura_issue": "UQ-TRANSFORM-REVERT-KNOCKOUT-TIMING",
-      "reachable_with_current_cards": true,
-      "counted_as_engine_unresolved": false
-    },
-    "transform_baby_and_basic_retreat": {
-      "engine_rulings": [
-        {
-          "version": "v0.124",
-          "document": "docs/super-transform-dark-pulse-v0.124.md",
-          "ruling_id": null
-        }
-      ],
-      "kyuura_issue": "UQ-TRANSFORM-BABY-AND-BASIC",
-      "reachable_with_current_cards": true,
       "counted_as_engine_unresolved": false
     }
   },
@@ -3593,9 +3656,11 @@
         "card_id": "PRN-041",
         "target": "power/0",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES"
+          ]
         },
-        "note": "GR団のミュウツーの［わるいはどう］（エンジンに登録していないカード）"
+        "note": "GR団のミュウツーの［わるいはどう］（エンジンに登録していないカード）。v0.124 で登録・処理を見直した: GR団のミュウツーが 2 匹以上（DF1）"
       },
       {
         "kyuura_issue": "UQ-ATTACK-PRE-DAMAGE-COIN-ORDER",
@@ -3991,18 +4056,22 @@
         "card_id": "PMCG3-042",
         "target": "power/0",
         "engine": {
-          "codeless_question": "transform_energy_color_list"
+          "stop_codes": [
+            "UNRESOLVED_TRANSFORM_ENERGY_COLOR_LIST"
+          ]
         },
-        "note": "化石のメタモンの［へんしん］で写したワザの悪・鋼の記号を基本エネルギーカードで払えるか（p.239 は 8 色、p.324 の引用は 6 色）。移行の段のエンジンは v0.49 からの実装のまま 8 色の読みで払う（止めていない）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "化石のメタモンの［へんしん］で写したワザの悪・鋼の記号を基本エネルギーカードで払えるか（p.239 は 8 色、p.324 の引用は 6 色）。移行の段のエンジンは v0.49 からの実装のまま 8 色の読みで払う（止めていない）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: 化石のメタモンの［へんしん］で写したワザの悪・鋼の記号。8 色と 6 色の読みで払えるかが変わるときだけ止める（TC1。v0.124 の処理の変更。移行の段では 8 色の読みで払っていた）"
       },
       {
         "kyuura_issue": "UQ-TRANSFORM-REVERT-KNOCKOUT-TIMING",
         "card_id": "PMCG3-042",
         "target": "power/0",
         "engine": {
-          "codeless_question": "transform_revert_knockout_timing"
+          "stop_codes": [
+            "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING"
+          ]
         },
-        "note": "［へんしん］のメタモンのワザで相手の対戦ポケモンがきぜつし、メタモンにもどって HP50 以下になったときのきぜつの時点。移行の段のエンジンは v0.49 からの実装のまま、ワザのあとのきぜつの判定で同時にきぜつさせる（止めていない）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "［へんしん］のメタモンのワザで相手の対戦ポケモンがきぜつし、メタモンにもどって HP50 以下になったときのきぜつの時点。移行の段のエンジンは v0.49 からの実装のまま、ワザのあとのきぜつの判定で同時にきぜつさせる（止めていない）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: 処理の終わりに姿が変わり、HP がのっているダメージ以下かが変わるとき止める（TK1。v0.124。移行の段では同時にきぜつさせていた）"
       },
       {
         "kyuura_issue": "UQ-TRANSFORM-BABY-AND-BASIC",
@@ -4010,11 +4079,10 @@
         "target": "power/0",
         "engine": {
           "stop_codes": [
-            "UNRESOLVED_TRANSFORM_BABY"
+            "UNRESOLVED_TRANSFORM_BABY_AND_BASIC"
           ]
         },
-        "note": "相手の対戦ポケモンがベイビィポケモンのときの［へんしん］のメタモン。移行の段のエンジンは BX1（v0.114。ベイビィとしてあつかうか）で止める（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）",
-        "engine_issue_differs": true
+        "note": "相手の対戦ポケモンがベイビィポケモンのときの［へんしん］のメタモン。移行の段のエンジンは BX1（v0.114。ベイビィとしてあつかうか）で止める（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: ベイビィとたねの両方としてあつかわれる［へんしん］のメタモン。ベイビィのルールは当てはめ、種類で結果が分かれる効果だけ止める（BX2。v0.123 までの BX1 はベイビィとしてあつかうかを止めていた）"
       },
       {
         "kyuura_issue": "UQ-TRANSFORM-BABY-AND-BASIC",
@@ -4022,288 +4090,309 @@
         "target": "attack/0",
         "engine": {
           "stop_codes": [
-            "UNRESOLVED_TRANSFORM_BABY"
+            "UNRESOLVED_TRANSFORM_BABY_AND_BASIC"
           ]
         },
-        "note": "やさしいほのおの相手がベイビィの姿のメタモン。移行の段のエンジンは BX1 で止める（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）",
-        "engine_issue_differs": true
+        "note": "やさしいほのおの相手がベイビィの姿のメタモン。移行の段のエンジンは BX1 で止める（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: やさしいほのおの 10 か 30 か（BX2）"
       },
       {
         "kyuura_issue": "UQ-TRANSFORM-BABY-AND-BASIC",
         "card_id": "neo4-110",
         "target": "trainer",
         "engine": {
-          "codeless_question": "transform_baby_and_basic_retreat"
+          "stop_codes": [
+            "UNRESOLVED_TRANSFORM_BABY_AND_BASIC"
+          ]
         },
-        "note": "でこぼこジムとベイビィの姿の［へんしん］のメタモン。移行の段のエンジンは v0.114 からの実装のまま 1 個ぶん多くする（止めていない）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "でこぼこジムとベイビィの姿の［へんしん］のメタモン。移行の段のエンジンは v0.114 からの実装のまま 1 個ぶん多くする（止めていない）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: でこぼこジムの 1 個ぶんか 2 個ぶんか（BX2。移行の段では 1 個ぶん多くしていた）"
       },
       {
         "kyuura_issue": "UQ-TRANSFORM-BABY-AND-BASIC",
         "card_id": "ES2-032",
         "target": "power/0",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_TRANSFORM_BABY_AND_BASIC"
+          ]
         },
-        "note": "すごいへんしん（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "すごいへんしん（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: すごいへんしんでベイビィを選んだとき（BX2）"
       },
       {
         "kyuura_issue": "UQ-TRANSFORM-REVERT-KNOCKOUT-TIMING",
         "card_id": "ES2-032",
         "target": "power/0",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING"
+          ]
         },
-        "note": "すごいへんしん（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "すごいへんしん（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: すごいへんしんでもどってきぜつする時点（TK1）"
       },
       {
         "kyuura_issue": "UQ-SUPER-TRANSFORM-TARGETS",
         "card_id": "ES2-032",
         "target": "power/0",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_SUPER_TRANSFORM_TARGET"
+          ]
         },
-        "note": "すごいへんしん（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "すごいへんしん（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: 自分自身・変身しているすごいへんしんのメタモンを選ぶ（SV1。選ぶと止める）"
       },
       {
         "kyuura_issue": "UQ-SUPER-TRANSFORM-TARGETS",
         "card_id": "PMCG5-019",
         "target": "power/0",
         "engine": {
-          "requires_unregistered": [
-            "ES2-032"
+          "stop_codes": [
+            "UNRESOLVED_SUPER_TRANSFORM_TARGET"
           ]
         },
-        "note": "ばけているタケシのキュウコンをすごいへんしんで選ぶ。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "ばけているタケシのキュウコンをすごいへんしんで選ぶ。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: ばけているキュウコンを選ぶ（SV1）"
       },
       {
         "kyuura_issue": "UQ-SUPER-TRANSFORM-TARGETS",
         "card_id": "PMCG3-042",
         "target": "power/0",
         "engine": {
-          "requires_unregistered": [
-            "ES2-032"
+          "stop_codes": [
+            "UNRESOLVED_SUPER_TRANSFORM_TARGET"
           ]
         },
-        "note": "［へんしん］で変身しているメタモンをすごいへんしんで選ぶ。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "［へんしん］で変身しているメタモンをすごいへんしんで選ぶ。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: ［へんしん］で変身しているメタモンを選ぶ（SV1）"
       },
       {
         "kyuura_issue": "UQ-SUPER-TRANSFORM-TARGETS",
         "card_id": "PMCG3-046",
         "target": "trainer",
         "engine": {
-          "requires_unregistered": [
-            "ES2-032"
+          "stop_codes": [
+            "UNRESOLVED_SUPER_TRANSFORM_TARGET"
           ]
         },
-        "note": "ポケモンとして出したなにかの化石をすごいへんしんで選ぶ。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "ポケモンとして出したなにかの化石をすごいへんしんで選ぶ。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: ポケモンとして出したなにかの化石を選ぶ（SV1）"
       },
       {
         "kyuura_issue": "UQ-SUPER-TRANSFORM-TARGETS",
         "card_id": "PMCG1-091",
         "target": "trainer",
         "engine": {
-          "requires_unregistered": [
-            "ES2-032"
+          "stop_codes": [
+            "UNRESOLVED_SUPER_TRANSFORM_TARGET"
           ]
         },
-        "note": "ポケモンとして出したピッピ人形をすごいへんしんで選ぶ。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "ポケモンとして出したピッピ人形をすごいへんしんで選ぶ。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: ポケモンとして出したピッピ人形を選ぶ（SV1）"
       },
       {
         "kyuura_issue": "UQ-SUPER-TRANSFORM-SOURCE-CHANGES",
         "card_id": "ES2-032",
         "target": "power/0",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_SUPER_TRANSFORM_SOURCE_CHANGE"
+          ]
         },
-        "note": "すごいへんしん（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "すごいへんしん（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: 変身のもとが進化した（SV2）"
       },
       {
         "kyuura_issue": "UQ-SUPER-TRANSFORM-SOURCE-CHANGES",
         "card_id": "PMCG1-086",
         "target": "trainer",
         "engine": {
-          "requires_unregistered": [
-            "ES2-032"
+          "stop_codes": [
+            "UNRESOLVED_SUPER_TRANSFORM_SOURCE_CHANGE"
           ]
         },
-        "note": "すごいへんしんの変身のもとを退化スプレーで退化させる。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "すごいへんしんの変身のもとを退化スプレーで退化させる。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: 変身のもとが退化した（SV2）"
       },
       {
         "kyuura_issue": "UQ-SUPER-TRANSFORM-SOURCE-CHANGES",
         "card_id": "PMCG5-019",
         "target": "power/0",
         "engine": {
-          "requires_unregistered": [
-            "ES2-032"
+          "stop_codes": [
+            "UNRESOLVED_SUPER_TRANSFORM_SOURCE_CHANGE"
           ]
         },
-        "note": "すごいへんしんの変身のもとのタケシのキュウコンがばける。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "すごいへんしんの変身のもとのタケシのキュウコンがばける。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: 変身のもとのキュウコンがばけた（SV2）"
       },
       {
         "kyuura_issue": "UQ-SUPER-TRANSFORM-SOURCE-CHANGES",
         "card_id": "PMCG3-042",
         "target": "power/0",
         "engine": {
-          "requires_unregistered": [
-            "ES2-032"
+          "stop_codes": [
+            "UNRESOLVED_SUPER_TRANSFORM_SOURCE_CHANGE"
           ]
         },
-        "note": "すごいへんしんの変身のもとが［へんしん］のメタモン。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "すごいへんしんの変身のもとが［へんしん］のメタモン。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: 変身のもとの［へんしん］のメタモンの姿が変わる（SV2）"
       },
       {
         "kyuura_issue": "UQ-SUPER-TRANSFORM-SOURCE-CHANGES",
         "card_id": "PMCG1-040",
         "target": "power/0",
         "engine": {
-          "requires_unregistered": [
-            "ES2-032"
+          "stop_codes": [
+            "UNRESOLVED_SUPER_TRANSFORM_SOURCE_CHANGE"
           ]
         },
-        "note": "すごいへんしんの変身のもとのマルマインが［エネエネ］。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "すごいへんしんの変身のもとのマルマインが［エネエネ］。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: 変身のもとのマルマインが［エネエネ］でエネルギーとしてつく（SV2。場をはなれたとしてもどさない）"
       },
       {
         "kyuura_issue": "UQ-SUPER-TRANSFORM-COPIED-POWERS",
         "card_id": "ES2-032",
         "target": "power/0",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_SUPER_TRANSFORM_COPIED_POWER"
+          ]
         },
-        "note": "すごいへんしん（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "すごいへんしん（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: 写した回数の制限のある力・もう 1 枚のすごいへんしんを写す（SV3）"
       },
       {
         "kyuura_issue": "UQ-SUPER-TRANSFORM-COPIED-POWERS",
         "card_id": "PRN-041",
         "target": "power/0",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES"
+          ]
         },
-        "note": "わるいはどう（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "わるいはどう（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: GR団のミュウツーに変身したメタモンと本物の GR団のミュウツーで 2 匹（DF1。ダメージの要素で、1 つもはたらかない読みと 1 匹の読みで追加が変わるので止める）",
+        "engine_issue_differs": true
       },
       {
         "kyuura_issue": "UQ-SUPER-TRANSFORM-SUPPRESSED-FORM",
         "card_id": "ES2-032",
         "target": "power/0",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_SUPER_TRANSFORM_SUPPRESSED_FORM"
+          ]
         },
-        "note": "すごいへんしん（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "すごいへんしん（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: ガスで使えないあいだのすごいへんしんの姿（SV4）"
       },
       {
         "kyuura_issue": "UQ-SUPER-TRANSFORM-SUPPRESSED-FORM",
         "card_id": "PMCG3-007",
         "target": "power/0",
         "engine": {
-          "requires_unregistered": [
-            "ES2-032"
+          "stop_codes": [
+            "UNRESOLVED_SUPER_TRANSFORM_SUPPRESSED_FORM"
           ]
         },
-        "note": "すごいへんしんで変身しているメタモンとかがくへんかガス。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "すごいへんしんで変身しているメタモンとかがくへんかガス。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: かがくへんかガスと変身しているメタモン（SV4）"
       },
       {
         "kyuura_issue": "UQ-SUPER-TRANSFORM-SUPPRESSED-FORM",
         "card_id": "neo4-039",
         "target": "power/0",
         "engine": {
-          "requires_unregistered": [
-            "ES2-032"
+          "stop_codes": [
+            "UNRESOLVED_SUPER_TRANSFORM_SUPPRESSED_FORM"
           ]
         },
-        "note": "すごいへんしんでベイビィに変身しているメタモンといあつ。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "すごいへんしんでベイビィに変身しているメタモンといあつ。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: ベイビィの姿のメタモンといあつ（SV4）"
       },
       {
         "kyuura_issue": "UQ-SUPER-TRANSFORM-ENERGY-COLORS",
         "card_id": "ES2-032",
         "target": "power/0",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_SUPER_TRANSFORM_ENERGY_COLORS"
+          ]
         },
-        "note": "すごいへんしん（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "すごいへんしん（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: 色のエネルギーを数える・選ぶ（SV5。支払いの 8 色は CR-SUPER-TRANSFORM-ENERGY-PAYMENT で処理する）"
       },
       {
         "kyuura_issue": "UQ-SUPER-TRANSFORM-ENERGY-COLORS",
         "card_id": "PMCG1-096",
         "target": "card",
         "engine": {
-          "requires_unregistered": [
-            "ES2-032"
+          "stop_codes": [
+            "UNRESOLVED_TRANSFORM_SPECIAL_ENERGY"
           ]
         },
-        "note": "すごいへんしんのメタモンについた無色2個エネルギー。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "すごいへんしんのメタモンについた無色2個エネルギー。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: 無色2個エネルギーをどの色にもするか（既存の TE2 の問いで止める）",
+        "engine_issue_differs": true
       },
       {
         "kyuura_issue": "UQ-SUPER-TRANSFORM-ENERGY-COLORS",
         "card_id": "PMCG4-065",
         "target": "card",
         "engine": {
-          "requires_unregistered": [
-            "ES2-032"
+          "stop_codes": [
+            "UNRESOLVED_SUPER_TRANSFORM_ENERGY_COLORS"
           ]
         },
-        "note": "すごいへんしんのメタモンについたレインボーエネルギー。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "すごいへんしんのメタモンについたレインボーエネルギー。すごいへんしんを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: レインボーエネルギーを数える・選ぶ（SV5）"
       },
       {
         "kyuura_issue": "UQ-DARK-PULSE-TIMING",
         "card_id": "PRN-041",
         "target": "power/0",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_DARK_PULSE_TIMING"
+          ]
         },
-        "note": "わるいはどう（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "わるいはどう（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: 読み方で結果・決定・知る情報が変わる場面（DP1。単一の相手への正のダメージのふつうの場面は処理する）"
       },
       {
         "kyuura_issue": "UQ-DARK-PULSE-TIMING",
         "card_id": "PMCG4-008",
         "target": "attack/1",
         "engine": {
-          "requires_unregistered": [
-            "PRN-041"
+          "stop_codes": [
+            "UNRESOLVED_DARK_PULSE_TIMING"
           ]
         },
-        "note": "わるいアーボックのどくのきりとわるいはどう。GR団のミュウツーを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "わるいアーボックのどくのきりとわるいはどう。GR団のミュウツーを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: どくのきり（複数のダメージ。DP1）"
       },
       {
         "kyuura_issue": "UQ-DARK-PULSE-TIMING",
         "card_id": "PMCG4-011",
         "target": "attack/0",
         "engine": {
-          "requires_unregistered": [
-            "PRN-041"
+          "stop_codes": [
+            "UNRESOLVED_DARK_PULSE_TIMING"
           ]
         },
-        "note": "わるいマタドガスのみんなでばくはつとわるいはどう。GR団のミュウツーを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "わるいマタドガスのみんなでばくはつとわるいはどう。GR団のミュウツーを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: みんなでばくはつ（自分の場へのダメージ。DP1）"
       },
       {
         "kyuura_issue": "UQ-DARK-PULSE-TIMING",
         "card_id": "neo4-008",
         "target": "attack/1",
         "engine": {
-          "requires_unregistered": [
-            "PRN-041"
+          "stop_codes": [
+            "UNRESOLVED_DARK_PULSE_TIMING"
           ]
         },
-        "note": "わるいフォレトスのだいばくはつとわるいはどう。GR団のミュウツーを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "わるいフォレトスのだいばくはつとわるいはどう。GR団のミュウツーを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: だいばくはつ（自分へのダメージ。DP1）"
       },
       {
         "kyuura_issue": "UQ-DARK-PULSE-TIMING",
         "card_id": "neo4-012",
         "target": "attack/0",
         "engine": {
-          "requires_unregistered": [
-            "PRN-041"
+          "stop_codes": [
+            "UNRESOLVED_DARK_PULSE_TIMING"
           ]
         },
-        "note": "わるいクロバットのダークドレインとわるいはどう。GR団のミュウツーを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "わるいクロバットのダークドレインとわるいはどう。GR団のミュウツーを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: ダークドレイン（ポケモンごとのダメージ。DP1）"
       },
       {
         "kyuura_issue": "UQ-DARK-PULSE-TIMING",
         "card_id": "PMCG6-010",
         "target": "power/0",
         "engine": {
-          "requires_unregistered": [
-            "PRN-041"
+          "stop_codes": [
+            "UNRESOLVED_DARK_PULSE_TIMING"
           ]
         },
-        "note": "エリカのフシギソウのくつろぐかおりとわるいはどう。GR団のミュウツーを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）"
+        "note": "エリカのフシギソウのくつろぐかおりとわるいはどう。GR団のミュウツーを登録していないので起こらない（kyuura が 2026-10-31 に加えた事例。v0.124 で研究の基準を b9e7cff に上げて結んだ）。v0.124 で登録・処理を見直した: くつろぐかおりの半分との順番（DP1）"
       }
     ]
   },
@@ -4690,16 +4779,15 @@
       "PR1-001/attack/0": "LD-PR1-001-ATK0",
       "PR1-003/attack/0": "LD-PR1-003-ATK0",
       "PR1-017/attack/0": "LD-PR1-017-ATK0",
-      "ES3-021/attack/1": "LD-ES3-021-ATK1"
+      "ES3-021/attack/1": "LD-ES3-021-ATK1",
+      "ES2-032/power/0": "LD-ES2-032-PWR0"
     },
     "registered_without_kyuura_record": [
       "PMCG5-033/power/0",
       "GD3-009/power/0",
       "ES1-005/power/0"
     ],
-    "kyuura_records_not_registered": [
-      "LD-ES2-032-PWR0"
-    ],
+    "kyuura_records_not_registered": [],
     "note": "登録した最新の説明（play_text_ja）を持つワザ・特殊能力（カード id/種類/位置）と kyuura の記録の対応。registered は kyuura の最新の説明（LD-）の id。recorded_in_card_checks は、印刷の文面と同じ最新の説明を kyuura が照合の記録（CC-）に書いたもの（照合した欄の文面、またはデータの誤りの資料の値がエンジンの最新の説明と同じ。kyuura は文面が同じ最新の説明を LD- にしない）。card_checks_without_text は、照合の記録はあるが、ワザの文面を照合した欄に入れていないもの（ドードーのみだれづき。図版の版が決まらない）。registered_without_kyuura_record は kyuura に記録のない登録（2026-10-15 の kyuura の取り込みのあとは空になった。v0.27 でストライクの「つるぎのまい」（PMCG2-017/attack/0。p.56・p.321。2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（「2倍」）だけで、最新の説明（「「60」になる」）の LD- はない）を加えた。v0.28 で、既存の効果の型の登録だけで加えたラプラス（PMCG3-022。p.116）・スターミー（PMCG1-026。p.112）・カイロス（PMCG2-018。p.58）・タマタマ（PMCG2-006。p.49）・プリン（PMCG2-035。p.225）・ラッキー（PMCG1-068。p.235）・スリープ（PMCG1-045。p.164）・シェルダー（PMCG3-012。p.103）の説明文のあるワザ 13 を加えた（2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（cards.json）だけで、LD-・CC- はない）。kyuura への報告事項）。文面の一致は scripts/check_research_links.py が kyuura の研究の基準のコミットで確かめる。adopted_printed_text（2026-10-15 からの方針。docs/card-data-policy.md）は、kyuura データの採用（kyuura_engine/data/card_sources.json）で、処理に使う文面を kyuura の印刷の文面（data/cards.json）にした登録（研究の基準のコミットに、その対象の LD- がないもの。LD- があれば registered に挙げ、最新の説明にしたがう）。エンジンが原典と照合した記録ではない（registered_without_kyuura_record とは別）。v0.29 で、既存の効果の型で加えたポケモン 14 枚の説明文のあるワザ 14 を加えた。errata_text（v0.30）は、kyuura のエラッタの記録（ERR-・TXT-・RUL-。data/rule_history.json の errata）を処理に使う文面にした登録（登録の出典がその id。文面は記録の notes の引用と同じ）。記録の cards にないカードに記録の範囲として当てはめるものは errata_scope に、当てはめる文（scope_quote）・処理に使う文面（play_text_quote）・印刷の文面（printed_text。記録が挙げるカードのワザと同じ）・対象を書く。v0.30 で、エネルギーをトラッシュしてダメージを与えるワザ 4（ヒトカゲの「ひのこ」・リザード／ウインディ／ブーバーの「かえんほうしゃ」）をerrata_text に、ウインディの「とっしん」・第4弾のポニータの「ひのこ」を adopted_printed_text に加えた。difference_text（v0.31）は、処理に使う文面を kyuura の data/curation/card_differences.json の記録（確度: 確実）の最新の説明にした登録（LD- はない。kyuura への報告事項）。v0.31 でピッピの「ゆびをふる」、v0.42 でカイリューの［かけつける］（PMCG3-043/power/0）を加えた。user_corrected_text（v0.68）は、利用者が示した修正（scripts/extract_kyuura_cards.py の USER_PROVIDED_CORRECTIONS。kyuura の記録ではない）を当てはめた写しの説明文を処理に使う文面にした登録（ガルーラの「こどものおつかい」。研究の基準のコミットの kyuura の文面は修正の前の値のまま。kyuura への報告事項）。engine_simplified_text（v0.68）は、エンジンの簡略化した仕様を処理に使う文面にした登録（イマクニ？のドードー。公式の裁定・エラッタではない）",
     "recorded_in_card_checks": {
       "PMCG1-002/attack/0": "CC-PMCG1-002-P17",
@@ -6132,7 +6220,9 @@
       "GD5-007/attack/1",
       "IP2-032/attack/0",
       "PR1-016/attack/0",
-      "PR1-016/attack/1"
+      "PR1-016/attack/1",
+      "PRN-041/attack/0",
+      "PRN-041/power/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

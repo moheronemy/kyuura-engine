@@ -519,6 +519,8 @@ class AttackRun:
         # v0.57: クチバシティジムのコインの結果（投げ直さない）
         coin = carried.get("stadium_coin")
         self.res.stadium_coin = None if coin is None else (coin[0], bool(coin[1]))
+        pulse = carried.get("dark_pulse")  # v0.124: ［わるいはどう］のコインの結果（投げ直さない）
+        self.res.dark_pulse = None if pulse is None else (pulse[0], pulse[1])
         self.res.attack_power = bool(carried.get("attack_power", 0))  # v0.88
 
     def knocked_out(self, pokemon: PokemonInPlay) -> bool:
@@ -601,6 +603,8 @@ class AttackRun:
         if self.res.stadium_coin is not None:
             # v0.57: クチバシティジムのコインの結果（(スタジアムカード, 「おもて」なら 1)）。投げていなければ書かない（v0.56 までの決定の形は変えない）
             extra += (("stadium_coin", (self.res.stadium_coin[0], int(self.res.stadium_coin[1]))),)
+        if self.res.dark_pulse is not None:
+            extra += (("dark_pulse", tuple(self.res.dark_pulse)),)  # v0.124: 投げていなければ書かない（v0.123 までの決定の形は変えない）
         if self.res.attack_power:
             extra += (("attack_power", 1),)  # v0.88: ワザといっしょに使った特殊能力（［すいりょくはつでん］）。使っていなければ書かない（v0.87 までの決定の形は変えない）
         # v0.61: HP 以上になったポケモンのきぜつの原因（［ファイナルビーム］の候補。``kernel.ko_cause``）。HP 以上のポケモンがなければ書かない
@@ -959,6 +963,9 @@ def _switch_changes_attacker(run: AttackRun, owner: int, option: int) -> bool:
     attacker = run.attacker()
     if owner == run.player or E.transform_defender(state, attacker) is None:
         return False  # ［へんしん］で相手の対戦ポケモンの姿になっていなければ、相手の入れ替えで今の姿は変わらない（状態を複製しない。先読みの中でも使う）
+    if E.form_frozen(state, attacker):
+        # v0.124（CR-TRANSFORM-FROZEN-DURING-ACTION）: ワザによって起こることがすべて終わるまで、変身の状態は変わらない（入れ替えても、ワザを使っている姿は宣言のときの姿のまま。RX1 の中心）
+        return False
     incoming = state.find_pokemon(option)[1]
     return state.cards[incoming.card].card_id != E.form_def(state, attacker).id
 
@@ -1270,7 +1277,11 @@ def transform_energy_question(run: AttackRun, pokemon: PokemonInPlay, energy_typ
     v0.88（docs/type-energy-colors-v0.88.md 3 章）: ``cards`` は説明が数える・選ぶものの種類。真なら「「X」エネルギーカード」（カードとしての色）で、エナジーコンバーター・こうごうせいで
     色が変わったカードが当たるかが決まらなければ止める（CE3）。偽なら「「X」エネルギー」（エネルギーの今の色。``E.typed_unit_count``）で、色の読み方（CE1・CE2）で数が変われば止める。"""
     if len(E.energy_type_readings(run.state, pokemon, energy_type)) > 1:
-        raise run.res.question("transform_energy_count", f"ポケモン {pokemon.pokemon_id}・「{energy_type.ja}」エネルギー")
+        detail = f"ポケモン {pokemon.pokemon_id}・「{energy_type.ja}」エネルギー"
+        if E.current_form(run.state, pokemon).kind == E.FORM_SUPER_TRANSFORM:
+            # v0.124（SV5）: ［すごいへんしん］のメタモンの色のエネルギーを数える・選ぶ（UQ-SUPER-TRANSFORM-ENERGY-COLORS。支払いの 8 色とは別の問い）
+            raise run.res.question("transform_energy_count", detail, UnsupportedError(E.SUPER_TRANSFORM_ENERGY_CODE, f"{detail}: {E.SUPER_TRANSFORM_ENERGY_REASON}"))
+        raise run.res.question("transform_energy_count", detail)
     # v0.58（RB1）: レインボーエネルギーが、説明の「「X」エネルギー(カード)」に当たるかが決まらない（数える・選べるカードが変わる）なら止める
     rainbow = E.ambiguous_rainbow_cards(run.state, pokemon, energy_type)
     if rainbow:
@@ -1496,8 +1507,9 @@ class Coin(Element):
         if self.per_pokemon is not None:
             scope, names = self.per_pokemon
             if scope not in (SCOPE_OWN_BENCH, SCOPE_OWN_IN_PLAY, SCOPE_BOTH_IN_PLAY) or not (
-                    names is None or (type(names) is tuple and names and all(type(name) is str and name for name in names))):
-                raise ValueError(f"場のポケモンの数え方 {self.per_pokemon!r} は (範囲, 名前のタプルか None)")
+                    names is None or isinstance(names, E.NamePrefix)  # v0.124: 名前の分類（「わるい」ポケモン）
+                    or (type(names) is tuple and names and all(type(name) is str and name for name in names))):
+                raise ValueError(f"場のポケモンの数え方 {self.per_pokemon!r} は (範囲, 名前のタプル・名前の分類か None)")
 
     def run(self, run: AttackRun) -> bool:
         count = self.count
@@ -1695,7 +1707,7 @@ class Damage(Element):
             return False  # v0.115
         if self.color_filter is not None and not color_filter_hit(run, receiver, self.color_filter):
             return False
-        return self.names is None or E.form_def(run.state, receiver).name_ja in self.names  # v0.49: 今の姿の名前（［へんしん］・「ばける」）
+        return self.names is None or E.field_name_matches(run.state, receiver, self.names)  # v0.49: 今の姿の名前（［へんしん］・「ばける」）。v0.124: 両方の名前
 
     def decides(self, kind: str) -> bool:
         # v0.35: 同じ段階の変更効果の計算の順番の決定（``DAMAGE_STEP_ORDER``）。並びの中にダメージの要素が 2 つ以上あっても、続きの情報の
@@ -2313,8 +2325,8 @@ class ForceSwitch(Element):
         結果は変わらないので聞かない（状態を変えない）。"""
         if not any(element.phase is Phase.DAMAGE for element in run.program[run.index + 1:]):
             return ()
-        if E.transform_defender(run.state, run.attacker()) is None:
-            return ()
+        if E.transform_defender(run.state, run.attacker()) is None or E.form_frozen(run.state, run.attacker()):
+            return ()  # v0.124: 姿を固定しているあいだは、入れ替えで姿は変わらない
         # 相手のうらのカード（マチスの秘策）は、本当のカードによらず止める選択にする（選ぶのがワザを使ったプレイヤーでも、正体で選べるものが変わらない。入れ替えでおもてにしない）
         return tuple(option for option in options
                      if run.state.is_face_down(run.state.find_pokemon(option)[1]) or _switch_changes_attacker(run, 1 - run.player, option))
@@ -3084,7 +3096,7 @@ class BenchDamage(Element):
             bench = [p for p in bench if holds_power_now(run, p)]
         if self.energy_cards:
             bench = [p for p in bench if E.attached_energy_cards(run.state, p)]
-        named = [p for p in bench if self.names is None or E.form_def(run.state, p).name_ja in self.names]  # v0.49: 今の姿の名前
+        named = [p for p in bench if self.names is None or E.field_name_matches(run.state, p, self.names)]  # v0.49: 今の姿の名前。v0.124: 両方の名前
         if self.color_filter is not None:
             named = [p for p in named if color_filter_hit(run, p, self.color_filter)]  # v0.88
         if self.pokemon_type is None and not self.same_type_as_opponent_active and self.exclude_type is None:
@@ -3814,12 +3826,23 @@ class OptionalDiscardBenchDamage(Element):
         candidates = E.attached_basic_energy(run.state, attacker, self.energy_type)
         if not candidates:
             return False
-        run.suspend(kind=DISCARD_ENERGY, player=run.player, options=candidates, min_choices=0, max_choices=1, carry=True)
+        extra: tuple = ()
+        if run.res.dark_pulse is not None and run.state.players[1 - run.player].bench:
+            # v0.124（DP1）: このワザの相手の対戦ポケモンへのダメージで［わるいはどう］のコインを投げた。控えへのダメージを与える答え（トラッシュするカード）は、同じワザの 2 つめのダメージで
+            # コインの結果を共有するかが決まらないので、選べるが選ぶと止める（UQ-DARK-PULSE-TIMING。与えない答えは残る）
+            extra = (("unresolved_choices", tuple(candidates)), ("unresolved_code", E.DARK_PULSE_TIMING_CODE), ("unresolved_reason", E.DARK_PULSE_TIMING_REASON))
+        run.suspend(kind=DISCARD_ENERGY, player=run.player, options=candidates, min_choices=0, max_choices=1, carry=True, extra=extra)
         return True
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        blocked = set(decision.context_value("unresolved_choices", ()))  # v0.124: 選ぶと止める答え（DP1）は試さない（答えのときに止める）
+        return [answer for answer in all_answers(decision) if not blocked & set(answer)]
 
     def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         state = run.state
         if decision.kind == DISCARD_ENERGY:
+            if set(choices) & set(decision.context_value("unresolved_choices", ())):
+                raise UnsupportedError(E.DARK_PULSE_TIMING_CODE, f"ワザ {run.key} の控えへのダメージ: {E.DARK_PULSE_TIMING_REASON}")
             if not choices:
                 return
             _owner, attacker = state.find_pokemon(run.fs.frame.source_pid)
@@ -4223,7 +4246,7 @@ class EvolveChosenFromDeck(Element):
                 targets.append(pokemon.pokemon_id)
                 stops[pokemon.pokemon_id] = (SECRET_PLAN_HIDDEN_CODE, f"うらのカード（場のポケモン {pokemon.pokemon_id}）の名前は読めない（FD1）")
                 continue
-            if E.form_def(run.state, pokemon).name_ja not in self.names:
+            if not E.field_name_matches(run.state, pokemon, self.names):  # v0.124: 両方の名前
                 continue
             targets.append(pokemon.pokemon_id)
             stop = self._chosen_stops(run, pokemon)
@@ -5167,7 +5190,7 @@ def counted_pokemon(state: GameState, player: int, scope: str, names: tuple[str,
         pokemon = [*p.in_play(), *state.players[1 - player].in_play()]
     else:
         pokemon = list(p.bench) if scope == SCOPE_OWN_BENCH else list(p.in_play())
-    return [x for x in pokemon if names is None or E.form_def(state, x).name_ja in names]
+    return [x for x in pokemon if names is None or E.field_name_matches(state, x, names)]  # v0.124: 変身したポケモンは両方の名前（1 匹として数える）。名前の分類 ``E.NamePrefix`` も受け付ける
 
 
 @dataclass(frozen=True)
@@ -9821,7 +9844,7 @@ def defender_is_dark(run: AttackRun) -> bool:
     """v0.84: 相手の対戦ポケモンが「わるい」ポケモン（今の姿の名前が「わるい」ではじまる。日本語のカードの名前）または「悪」ポケモン（今有効なタイプ。［へんしょく］の読み方で
     答えが変わるなら VS1）。v0.78 の悪エネルギーの「「悪」または「わるい」ポケモン」と同じ判定。"""
     defender = run.opponent_active()
-    if E.form_def(run.state, defender).name_ja.startswith("わるい"):
+    if E.field_name_matches(run.state, defender, E.DARK_POKEMON):  # v0.124: 両方の名前
         return True
     try:
         return E.same_for_type_readings(run.state, (defender,), lambda views: views[0].pokemon_type is EnergyType.DARKNESS)
@@ -9967,7 +9990,7 @@ class AttachFromDeckUpToNamedCount(Element):
 
     def count(self, run: AttackRun) -> int:
         return sum(1 for side in run.state.players for p in side.in_play()
-                   if not run.state.is_face_down(p) and E.form_def(run.state, p).name_ja == self.name)
+                   if not run.state.is_face_down(p) and E.field_name_matches(run.state, p, (self.name,)))  # v0.124: 両方の名前
 
     def candidates(self, run: AttackRun) -> list[int]:
         rainbow_attach_question(run, run.state.players[run.player].deck, self.energy_type)  # v0.58: RB2
@@ -13275,6 +13298,10 @@ BUILDERS |= {
     # むれでつつく: 自分のベンチの名前の合うポケモンの数のワザ全体のコイン → 目安 +「おもて」の数 × per
     E.CoinsPerOwnBenchNamedBonusDamage: lambda e: (
         Coin("coin", per_pokemon=(SCOPE_OWN_BENCH, e.names)), Damage(OPP, PrintedPlusHeadsOfCoin("coin", e.per)),
+    ),
+    # v0.124: わるいぞうふく（自分のベンチの「わるい」ポケモンの数ぶんコイン。むれでつつくと同じ要素で、名前の分類を渡す）
+    E.CoinsPerOwnBenchDarkBonusDamage: lambda e: (
+        Coin("coin", per_pokemon=(SCOPE_OWN_BENCH, E.DARK_POKEMON)), Damage(OPP, PrintedPlusHeadsOfCoin("coin", e.per)),
     ),
     # ダークフレイム: 自分の「炎」エネルギーカード 1 枚をトラッシュ（できなければワザの失敗）→ ダメージ（目安）→ トラッシュに「悪」エネルギーカードがあれば 1 枚を自分に
     E.DiscardEnergyThenDamageThenAttachFromDiscard: lambda e: (

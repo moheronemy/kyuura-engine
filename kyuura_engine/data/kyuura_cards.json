@@ -1668,6 +1668,10 @@
     "IP2-032",
     "PR1-016"
   ],
+  "pool_v0_124": [
+    "ES2-032",
+    "PRN-041"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -126221,6 +126225,203 @@
       "copies": [
         {
           "page": "1stp016",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "ES2-032",
+      "jp_set": "ES2",
+      "category": "pokemon",
+      "name": {
+        "ja": "メタモン",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "すごいへんしん",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、このカードがバトル場にいる時だけ、自分の番ごとに1回使える。コインを投げて「おもて」なら、場にいるポケモンから1匹を選び、それ以後このカードを、選んだポケモンと同じカードとしてあつかう。(ただし「進化・退化」はできず、この「すごいへんしん」の力は使うことができる)。「うら」なら、このカードはメタモンにもどる。エネルギーカードは、このカードについている限り、どの色のエネルギーとしても使える。このカードがバトル場をはなれた時や、「ねむり・マヒ・こんらん」状態の時、この「すごいへんしん」の力は使えず、このカードはメタモンにもどる。へんしんの元になっていたポケモンが場をはなれた時も、このカードはメタモンにもどる。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": []
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-ES2-032-POWER0-TEXT-JA）: pokemon.powers[0].text.ja を「この力は、このカードがバトル場にいる時だけ、自分の番ごとに1回使える。コインを投げて「おもて」なら、場にいるポケモンから1匹を選び、それ以後このカードを、選んだポケモンと同じカードとしてあつかう。(ただし「進化・退化」はできず、この「すごいへんしん」の力は使うことができる)。「うら」なら、このカードはメタモンにもどる。エネルギーカードは、このカードについている限り、どの色のエネルギーとしても使える。このカードがバトル場をはなれた時や、「ねむり・マヒ・こんらん」状態の時、この「すごいへんしん」のカは使えず、このカードはメタモンにもどる。へんしんの元になっていたポケモンが場をはなれた時も、このカードはメタモンにもどる。」から「この力は、このカードがバトル場にいる時だけ、自分の番ごとに1回使える。コインを投げて「おもて」なら、場にいるポケモンから1匹を選び、それ以後このカードを、選んだポケモンと同じカードとしてあつかう。(ただし「進化・退化」はできず、この「すごいへんしん」の力は使うことができる)。「うら」なら、このカードはメタモンにもどる。エネルギーカードは、このカードについている限り、どの色のエネルギーとしても使える。このカードがバトル場をはなれた時や、「ねむり・マヒ・こんらん」状態の時、この「すごいへんしん」の力は使えず、このカードはメタモンにもどる。へんしんの元になっていたポケモンが場をはなれた時も、このカードはメタモンにもどる。」に直した。根拠: kyuura が、同じカード（拡張シート第2弾赤版のメタモン（LV.15・HP40））の日本語版のカードの画像で、「この「すごいへんしん」の力は使えず」の字が、同じ説明の書き出し「この力は」の「力」と同じ形・大きさであることを確かめた（2026-10-31。照合の記録 IMG-ES2-032）。転記の片仮名「カ」を漢字「力」に直した。ほかの字・括弧は変えていない"
+      ],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex2032"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex2032.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第2弾(赤版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex2032.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex2032",
+          "list_number": "032/036"
+        }
+      ],
+      "corrections": [
+        {
+          "id": "FIX-ES2-032-POWER0-TEXT-JA",
+          "field": "pokemon.powers[0].text.ja",
+          "before": "この力は、このカードがバトル場にいる時だけ、自分の番ごとに1回使える。コインを投げて「おもて」なら、場にいるポケモンから1匹を選び、それ以後このカードを、選んだポケモンと同じカードとしてあつかう。(ただし「進化・退化」はできず、この「すごいへんしん」の力は使うことができる)。「うら」なら、このカードはメタモンにもどる。エネルギーカードは、このカードについている限り、どの色のエネルギーとしても使える。このカードがバトル場をはなれた時や、「ねむり・マヒ・こんらん」状態の時、この「すごいへんしん」のカは使えず、このカードはメタモンにもどる。へんしんの元になっていたポケモンが場をはなれた時も、このカードはメタモンにもどる。",
+          "after": "この力は、このカードがバトル場にいる時だけ、自分の番ごとに1回使える。コインを投げて「おもて」なら、場にいるポケモンから1匹を選び、それ以後このカードを、選んだポケモンと同じカードとしてあつかう。(ただし「進化・退化」はできず、この「すごいへんしん」の力は使うことができる)。「うら」なら、このカードはメタモンにもどる。エネルギーカードは、このカードについている限り、どの色のエネルギーとしても使える。このカードがバトル場をはなれた時や、「ねむり・マヒ・こんらん」状態の時、この「すごいへんしん」の力は使えず、このカードはメタモンにもどる。へんしんの元になっていたポケモンが場をはなれた時も、このカードはメタモンにもどる。",
+          "basis": "card_image_check",
+          "decided_on": "2026-10-31"
+        }
+      ]
+    },
+    {
+      "id": "PRN-041",
+      "jp_set": "PRN",
+      "category": "pokemon",
+      "name": {
+        "ja": "GR団のミュウツー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 70,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "わるいはどう",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、自分の場の「わるい」ポケモンがワザによるダメージを与えるとき、はたらく。コインを投げて「おもて」なら、もう1枚コインを投げる。2枚目のコインが「おもて」なら、与えるダメージそれぞれに、20ダメージを追加する。2枚目のコインが「うら」なら、与えるダメージそれぞれに、10ダメージを追加する。(ベンチへのダメージも追加される。)自分の場のほかの「GR団のミュウツー」の「わるいはどう」がはたらいているときや、このカードが、「ねむり・マヒ・こんらん」状態のとき、この力は、はたらかない。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "わるいぞうふく",
+              "en": null
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "自分のベンチの「わるい」ポケモンの数ぶんコインを投げ、「おもて」の数×20のダメージを追加する。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neop041"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop041.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop041.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "neop041",
           "list_number": "-/-"
         }
       ]

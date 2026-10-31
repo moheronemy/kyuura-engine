@@ -5220,7 +5220,7 @@ class NamedPokemonExplosion(AttackEffect):
         from .resolution.programs import SCOPE_BOTH_IN_PLAY, counted_pokemon
 
         _, attacker = state.find_pokemon(use.pokemon_id)
-        own = self.each if form_def(state, attacker).name_ja in self.names else 0  # v0.49: 今の姿の名前
+        own = self.each if field_name_matches(state, attacker, self.names) else 0  # v0.49: 今の姿の名前。v0.124: 変身したポケモンは両方の名前
         return DamageProfile(opponent=(len(counted_pokemon(state, use.player, SCOPE_BOTH_IN_PLAY, self.names)) * self.per,), self_damage=(own,))
 
 
@@ -7139,6 +7139,13 @@ def switch_max_hp_drop_check(state: GameState, owner: int) -> None:
     for pokemon in p.bench:
         trial = state.clone()
         _switch_active_with_bench(trial, owner, pokemon.pokemon_id)
+        if trial.frozen_forms:
+            # v0.124: 処理のあいだ固定した変身の状態は、処理の終わりに解除する。解除で止まる控え（TK1・MH2）は選べない控えとして数える（解除と同じ確かめ）
+            try:
+                release_frozen_forms(trial)
+            except UnsupportedError as error:
+                first = first or error
+                continue
         order = next(((code, message) for code, message in form_problems(trial) if code == MAX_HP_ORDER_CODE), None)
         if order is not None:
             first = first or UnsupportedError(*order)
@@ -7157,6 +7164,12 @@ def switch_choice_stops(state: GameState, owner: int) -> list[tuple[int, str, st
     for pokemon in state.players[owner].bench:
         trial = state.clone()
         _switch_active_with_bench(trial, owner, pokemon.pokemon_id)
+        if trial.frozen_forms:
+            try:
+                release_frozen_forms(trial)  # v0.124: 処理の終わりの解除と同じ確かめ（TK1・MH2）
+            except UnsupportedError as error:
+                blocked.append((pokemon.pokemon_id, error.code, error.message))
+                continue
         stop = state_stop_after(state, trial)
         if stop is not None:
             blocked.append((pokemon.pokemon_id, *stop))
@@ -10126,7 +10139,7 @@ def darkness_received_power_problem(state: GameState, pokemon: PokemonInPlay, am
 def darkness_exempt(state: GameState, pokemon: PokemonInPlay) -> bool:
     """悪エネルギーの「このカードをつけているポケモンが「悪」または「わるい」ポケモンでないなら」の、「悪」または「わるい」ポケモンか（v0.78）。今有効なタイプ（色）が「悪」か、
     今の姿の名前が「わるい」ではじまる（日本語のカードの名前。英語の「has Dark in its name」ではない）なら真。色の読み方（VS1）で答えが変わるなら ``shift_duration_error``。"""
-    if form_def(state, pokemon).name_ja.startswith("わるい"):
+    if field_name_matches(state, pokemon, DARK_POKEMON):  # v0.124: 変身したポケモンは両方の名前（CR-DARK-POKEMON-CATEGORY）
         return True
     readings = {color is EnergyType.DARKNESS for color in type_readings(state, pokemon)}
     if len(readings) > 1:
@@ -10701,7 +10714,8 @@ def energy_attached_from_hand(state: GameState, player: int, card: int, target: 
     return effect.may_knock_out
 
 
-def special_energy_payment_readings(state: GameState, pokemon: PokemonInPlay, *, wild: bool = False) -> tuple[list[frozenset[EnergyType]], ...]:
+def special_energy_payment_readings(state: GameState, pokemon: PokemonInPlay, *, wild: bool = False,
+                                    colors: frozenset[EnergyType] | None = None) -> tuple[list[frozenset[EnergyType]], ...]:
     """ワザに必要なエネルギーの支払いに使えるエネルギーの読み方（v0.58）。ふつうは 1 つ（``attached_units``）。［へんしん］がはたらいていれば、基本エネルギーカード
     （とエナジーバーンのカード・レインボーエネルギー）の 1 個はどの色にもなり、無色の特殊エネルギーの 1 個がどの色にもなるか（TE2）で 2 つの読み方。
 
@@ -10725,14 +10739,36 @@ def special_energy_payment_readings(state: GameState, pokemon: PokemonInPlay, *,
             raise UnsupportedError(COLOR_READINGS_LIMIT_CODE, f"ポケモン {pokemon.pokemon_id} のエネルギーの色の読み方の組が {total} 通りで、上限 {COLOR_READINGS_LIMIT} を超える（エンジンの未対応）")
         return tuple([unit for uid, option, card in zip(pokemon.energy, options, combo) for unit in (card if len(option) > 1 else card_units(uid))]
                      for combo in itertools.product(*options))
-    every = frozenset(EnergyType)
-    all_colors = [every for _ in units]
-    keep_special = []
-    for uid in pokemon.energy:
-        for unit in card_units(uid):
-            special_colorless = not state.card_def(uid).is_basic_energy and unit == COLORLESS_UNIT and (pokemon.pokemon_id, uid) not in state.energy_burn
-            keep_special.append(unit if special_colorless else every)
-    return (all_colors,) if keep_special == all_colors else (all_colors, keep_special)
+    readings = []
+    for every in ((colors,) if colors is not None else transform_color_lists(state, pokemon)):
+        # v0.124: 色の範囲（8 色。化石のメタモンの［へんしん］は p.324 の引く説明の 6 色の読み方も。UQ-TRANSFORM-ENERGY-COLOR-LIST）。6 色の読み方でも、カードがもとから出す色
+        # （悪エネルギーの「悪」など）はそのまま使える（どの色にするかを広げる説明で、もとの色を消さない。8 色ではどちらでも同じ）
+        all_colors = [every | unit for unit in units]
+        keep_special = []
+        for uid in pokemon.energy:
+            for unit in card_units(uid):
+                special_colorless = not state.card_def(uid).is_basic_energy and unit == COLORLESS_UNIT and (pokemon.pokemon_id, uid) not in state.energy_burn
+                keep_special.append(unit if special_colorless else every | unit)
+        for reading in ((all_colors,) if keep_special == all_colors else (all_colors, keep_special)):
+            if reading not in readings:
+                readings.append(reading)
+    return tuple(readings)
+
+
+TRANSFORM_COLOR_LIST_CODE = "UNRESOLVED_TRANSFORM_ENERGY_COLOR_LIST"
+TRANSFORM_COLOR_LIST_REASON = (
+    "化石のメタモンの［へんしん］の「どの色のエネルギーとしても使える」の色が、p.239 のこのカードの説明の 8 色（悪・鋼をふくむ）か、p.324 の「ポケモンの変身」が引く説明の 6 色かは、"
+    "同じ本の 2 か所の印刷が食い違うので決められない。2 つの読み方でワザの必要なエネルギーを払えるかが変わるので扱わない（UQ-TRANSFORM-ENERGY-COLOR-LIST。TC1。［すごいへんしん］の 8 色は"
+    "このカードに当てはめない）")
+EIGHT_COLORS = frozenset(EnergyType) - {EnergyType.COLORLESS}  # v0.124: 草・炎・水・雷・超・闘・悪・鋼
+
+
+def transform_color_lists(state: GameState, pokemon: PokemonInPlay) -> tuple[frozenset[EnergyType], ...]:
+    """v0.124: 変身しているポケモンについているエネルギーカードをどの色として使えるかの、色の範囲の読み方。［すごいへんしん］は 8 色（CR-SUPER-TRANSFORM-ENERGY-PAYMENT）、化石のメタモンの
+    ［へんしん］は 8 色と 6 色の 2 つ（UQ-TRANSFORM-ENERGY-COLOR-LIST。どちらかの読み方を採らない）。無色の記号はどの 1 個でも払えるので、無色は範囲に入れなくてよい。"""
+    if current_form(state, pokemon).kind == FORM_SUPER_TRANSFORM:
+        return (EIGHT_COLORS,)
+    return (EIGHT_COLORS, BASIC_ENERGY_COLORS)
 
 
 # ---------------------------------------------------------------- 登録表
@@ -10998,7 +11034,7 @@ def owner_pokemon(state: GameState, player: int, owner: str) -> list[int]:
     """プレイヤーの場の「(``owner``)のポケモン」（いちばん上のカードの名前が「(``owner``)の」で始まるポケモン。場の並び）の番号（v0.44。トレーナー「サカキ」の
     「サカキのポケモン」。名前の一部（「サカキ」を含む）・カードの弾で判定しない）。"""
     prefix = f"{owner}の"
-    return [pokemon.pokemon_id for pokemon in state.players[player].in_play() if form_def(state, pokemon).name_ja.startswith(prefix)]  # v0.49: 今の姿の名前
+    return [pokemon.pokemon_id for pokemon in state.players[player].in_play() if field_name_matches(state, pokemon, NamePrefix(prefix))]  # v0.49: 今の姿の名前。v0.124: 両方の名前
 
 
 def self_deck_evolution_cards(state: GameState, player: int, pokemon: PokemonInPlay, *, evolves_from: str | None = None,
@@ -14791,6 +14827,8 @@ class DamageThenCoinsReturnOpponentToDeck(AttackEffect):
 FORM_PRINTED = "printed"  # いちばん上のカード（v0.48 までと同じ）
 FORM_TRANSFORM = "transform"  # メタモンの［へんしん］: 相手の対戦ポケモンと同じカードとしてあつかう
 FORM_DISGUISE = "disguise"  # タケシのキュウコンの「ばける」: のせた進化カードのポケモンとしてあつかう
+FORM_SUPER_TRANSFORM = "super_transform"  # v0.124: メタモン（拡張シート第2弾赤版）の［すごいへんしん］: 選んだ場のポケモンと同じカードとしてあつかう
+COPIED_FORMS = (FORM_TRANSFORM, FORM_SUPER_TRANSFORM)  # v0.124: p.324 の「ポケモンの変身」で、変身の対象のいちばん上のカードの内容を持つ姿（「ばける」は別に扱う）
 
 
 @dataclass(frozen=True)
@@ -14832,6 +14870,21 @@ def powers_of(state: GameState, pokemon: PokemonInPlay) -> list[PowerSlot]:
     - メタモンの［へんしん］で相手の対戦ポケモンと同じカードとしてあつかうとき、写したカードの特殊能力を持つかは決まらない（TF1）。ここにはメタモン自身の特殊能力
       （［へんしん］）だけを入れる（写した特殊能力を持つ・持たないのどちらにも決めない。宣言する特殊能力は使うときに止め、ほかの特殊能力は ``form_problems`` が止める）
     状態を変えず、乱数を使わない。"""
+    if pokemon.disguise is None:
+        form = current_form(state, pokemon)
+        if form.kind in COPIED_FORMS:
+            # v0.124（docs/super-transform-dark-pulse-v0.124.md 3.1 節。CR-TRANSFORM-COPIES-TOP-CARD）: 変身の対象のいちばん上のカードの特殊能力も持つ。供給元のカード（``PowerSlot.card``）は
+            # 変身の対象のカードで、持つのはこのポケモン（使った記録・はたらく場所・特殊状態はこのポケモンのもの）。自分のいちばん上のカードの特殊能力（［へんしん］・［すごいへんしん］）を
+            # 先に置き、位置の同じ写した特殊能力が自分の特殊能力を上書きしない（供給元のカードで区別する）
+            own = card_power_slots(state, pokemon.card)
+            return own + [slot for slot in card_power_slots(state, form.card) if form.card != pokemon.card]
+        return card_power_slots(state, pokemon.card)
+    return card_power_slots(state, pokemon.disguise) + card_power_slots(state, pokemon.card)
+
+
+def printed_power_slots(state: GameState, pokemon: PokemonInPlay) -> list[PowerSlot]:
+    """v0.124: 写した特殊能力をふくめない、場のポケモンの特殊能力（いちばん上のカードと「ばける」でのせたカード）。特殊能力を消す力・［いあつ］の持ち主を探す問い合わせ（``continuous``）が使う
+    （変身の姿はその答えを聞くので、写した特殊能力を探すと循環する。写した特殊能力を消す力・［いあつ］は ``copied_form_problems`` がその状態にしない）。"""
     if pokemon.disguise is None:
         return card_power_slots(state, pokemon.card)
     return card_power_slots(state, pokemon.disguise) + card_power_slots(state, pokemon.card)
@@ -14903,16 +14956,261 @@ def transform_defender(state: GameState, pokemon: PokemonInPlay) -> PokemonInPla
     return state.players[1 - owner].active
 
 
+# ---------------------------------------------------------------- v0.124（docs/super-transform-dark-pulse-v0.124.md 5 章）: メタモン（拡張シート第2弾赤版）の［すごいへんしん］
+
+SUPER_TRANSFORM_PRINTED_TEXT = (
+    "この力は、このカードがバトル場にいる時だけ、自分の番ごとに1回使える。コインを投げて「おもて」なら、場にいるポケモンから1匹を選び、それ以後このカードを、選んだポケモンと同じカードとして"
+    "あつかう。(ただし「進化・退化」はできず、この「すごいへんしん」の力は使うことができる)。「うら」なら、このカードはメタモンにもどる。エネルギーカードは、このカードについている限り、"
+    "どの色のエネルギーとしても使える。このカードがバトル場をはなれた時や、「ねむり・マヒ・こんらん」状態の時、この「すごいへんしん」の力は使えず、このカードはメタモンにもどる。"
+    "へんしんの元になっていたポケモンが場をはなれた時も、このカードはメタモンにもどる。"
+)
+SUPER_TRANSFORM_LATEST_TEXT = (
+    "この力は、このカードがバトル場にいるとき、自分の番ごとに1回使える。コインを投げて「おもて」なら、おたがいの場にいるポケモンの中から1匹を選び、以後、このカードを、その選んだポケモンと"
+    "同じカードとしてあつかう。ただし「進化・退化」はできず、引き続き、この「すごいへんしん」の力は使うことができる。「うら」なら、このカードはメタモンにもどる。「エネルギーカード」は、"
+    "このカードについているかぎり、「草・炎・水・雷・超・闘・悪・鋼」の、どの「色（タイプ）」のエネルギーとしても、あつかわれる。このカードがバトル場をはなれたときや、"
+    "「ねむり・マヒ・こんらん」状態のとき、この力は使えず、このカードはメタモンにもどる。へんしんのもとになっていたポケモンが場をはなれたときも、このカードはメタモンにもどる。"
+)
+SUPER_TRANSFORM_TARGET_CODE = "UNRESOLVED_SUPER_TRANSFORM_TARGET"
+SUPER_TRANSFORM_TARGET_REASON = (
+    "［すごいへんしん］で、自分自身・すでに変身している（ばけている）ポケモン・うらのカード・ポケモンとして場に出したトレーナーカードを選べるか、選んだら何と同じカードになるかは、"
+    "kyuura の記録から決められないので扱わない（UQ-SUPER-TRANSFORM-TARGETS。SV1。選ぶと止める）")
+SUPER_TRANSFORM_SOURCE_CODE = "UNRESOLVED_SUPER_TRANSFORM_SOURCE_CHANGE"
+SUPER_TRANSFORM_SOURCE_REASON = (
+    "［すごいへんしん］の変身のもとのポケモンが進化・退化・ばける・変身などで、選んだときのいちばん上のカードと違う姿になった。選んだときのカードのままか、新しい姿を追うかは、"
+    "kyuura の記録から決められないので扱わない（UQ-SUPER-TRANSFORM-SOURCE-CHANGES。SV2）")
+SUPER_TRANSFORM_COPIED_CODE = "UNRESOLVED_SUPER_TRANSFORM_COPIED_POWER"
+SUPER_TRANSFORM_COPIED_REASON = (
+    "［すごいへんしん］で写した特殊能力の使用回数（変身のもとがこの番にすでに使った・写した特殊能力を使ったあとに変身のもとが使う）、変身する特殊能力を 2 つ持つことになる場合は、"
+    "kyuura の記録から決められないので扱わない（UQ-SUPER-TRANSFORM-COPIED-POWERS。SV3）")
+SUPER_TRANSFORM_SUPPRESSED_CODE = "UNRESOLVED_SUPER_TRANSFORM_SUPPRESSED_FORM"
+SUPER_TRANSFORM_SUPPRESSED_REASON = (
+    "［すごいへんしん］で変身しているメタモンの力が、かがくへんかガス・いあつなどで使えず、消えているとき、すでに得た姿のままか、もどるか（変身して得た力・姿と抑止が循環する場合を"
+    "ふくむ）は、kyuura の記録から決められないので扱わない（UQ-SUPER-TRANSFORM-SUPPRESSED-FORM。SV4）")
+SUPER_TRANSFORM_ENERGY_CODE = "UNRESOLVED_SUPER_TRANSFORM_ENERGY_COLORS"
+SUPER_TRANSFORM_ENERGY_REASON = (
+    "［すごいへんしん］のメタモンについているエネルギーカードを、支払いのほかに、色のエネルギーとして数える・選ぶか、特殊エネルギーをどの色にもするかは、"
+    "kyuura の記録から決められないので扱わない（UQ-SUPER-TRANSFORM-ENERGY-COLORS。SV5）")
+
+
+@dataclass(frozen=True)
+class SuperTransformPower(PowerEffect):
+    """メタモン（拡張シート第2弾赤版。ES2-032）の［すごいへんしん］（v0.124。処理に使う文面は最新の説明 LD-ES2-032-PWR0。docs/super-transform-dark-pulse-v0.124.md 5 章）。
+
+    - 宣言して使う。このカードがバトル場にいるとき（``POKEMON_NOT_ACTIVE``）、自分の番ごとに 1 回（``once_per_turn``。変身・もどることで数え直さない。CR-SUPER-TRANSFORM-ONCE-PER-TURN）。
+      ねむり・マヒ・こんらんのこのカードは使えない。かがくへんかガスなどの共通の抑止を通す
+    - 宣言のあとコインを 1 枚投げる（特殊能力のコイン）。「おもて」ならおたがいの場のポケモンから 1 匹を選び（決定 ``SELECT_POKEMON``。選ぶのは使ったプレイヤー）、その場の個体を変身の
+      もとにする（``SuperTransform``。CR-SUPER-TRANSFORM-CHOICE）。「うら」ならメタモンにもどる（記録を消す。拒否・やり直しではない）
+    - 自分自身・変身している（ばけている）ポケモン・うらのカード・ポケモンとして出したトレーナーカードは選べるが選ぶと止める（SV1。UQ-SUPER-TRANSFORM-TARGETS）。選べる答えがなければ
+      コインの前に止める
+    - 変身しているあいだも、この特殊能力を持ち（自分のいちばん上のカードの特殊能力。写した特殊能力とは供給元のカードで区別する）、次の自分の番にも使える。進化・退化はできない
+      （``evolution_forbidden``・``devolution_forbidden``）
+    """
+
+    implementation_id = "super_transform"
+    once_per_turn: ClassVar[bool] = True
+    supplies_attacks: ClassVar[bool] = True  # ワザのないカード（メタモン）に、変身の対象のカードのワザを持たせる（``cards`` の分類）
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "選んだポケモンと同じカードとしてあつかう特殊能力", (SUPER_TRANSFORM_PRINTED_TEXT,))
+
+    def texts(self) -> tuple[str, ...]:
+        return (SUPER_TRANSFORM_LATEST_TEXT,)
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        owner, user = state.find_pokemon(use.pokemon_id)
+        if state.players[owner].active is not user:
+            raise IllegalActionError("POKEMON_NOT_ACTIVE", f"ポケモン {use.pokemon_id} はバトル場にいない（この力は、このカードがバトル場にいるときに使える）")
+        _require_user_not_asleep_paralyzed_confused(state, use)
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+        options = super_transform_options(state, use.player, user)
+        stops = super_transform_target_stops(state, user, options)
+        if len(stops) == len(options):
+            # 「おもて」のあとに答えのない決定を残さない（選べるどのポケモンも止める選択）。コインの前に止める
+            raise UnsupportedError(SUPER_TRANSFORM_TARGET_CODE, f"ポケモン {use.pokemon_id}（選べるどのポケモンも）: {SUPER_TRANSFORM_TARGET_REASON}")
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        owner, user = state.find_pokemon(use.pokemon_id)
+        if _power_coin(state, use) is not CoinSide.HEADS:
+            # 「うら」ならメタモンにもどる（変身していなければ何も変わらない）。使ったことになる（宣言のときに記録した）
+            if user.super_transform is not None:
+                user.super_transform = None
+                state.add_event("super_transform_reverted", player=owner, pokemon=user.card, pokemon_id=user.pokemon_id, reason="tails")
+            return
+        options = super_transform_options(state, use.player, user)
+        push_power_decision(state, use, kind=SELECT_POKEMON, player=use.player, options=options,
+                            unresolved_choices=super_transform_target_stops(state, user, options), unresolved_code=SUPER_TRANSFORM_TARGET_CODE,
+                            unresolved_reason=SUPER_TRANSFORM_TARGET_REASON)
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        owner, user = state.find_pokemon(use.pokemon_id)
+        found = state.find_pokemon(choices[0])
+        if found is None:
+            raise RuntimeError(f"［すごいへんしん］で選んだポケモン {choices} が場にいない（エンジンの不具合）")
+        if choices[0] in super_transform_target_stops(state, user, (choices[0],)):
+            raise UnsupportedError(SUPER_TRANSFORM_TARGET_CODE, f"ポケモン {use.pokemon_id} が選んだポケモン {choices[0]}: {SUPER_TRANSFORM_TARGET_REASON}")
+        from .state import SuperTransform  # v0.124
+
+        source = found[1]
+        user.super_transform = SuperTransform(source.pokemon_id, source.card, state.turn_number)
+        state.add_event("super_transform", player=owner, pokemon=user.card, pokemon_id=user.pokemon_id, source_pokemon_id=source.pokemon_id,
+                        source_player=found[0], card=source.card, card_id=state.cards[source.card].card_id)
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        _, user = state.find_pokemon(use.pokemon_id)
+        options = super_transform_options(state, use.player, user)
+        return _power_decision_form(decision, use, kind=SELECT_POKEMON, choices=(1, 1), options=options,
+                                    unresolved=super_transform_target_stops(state, user, options))
+
+
+def super_transform_options(state: GameState, player: int, user: PokemonInPlay) -> list[int]:
+    """v0.124: ［すごいへんしん］で選べるポケモン（おたがいの場のすべてのポケモン。使ったプレイヤー → 相手、それぞれバトル場 → ベンチの並び）。選ぶと止めるもの
+    （``super_transform_target_stops``）も一覧から消さない。"""
+    return [pokemon.pokemon_id for side in (player, 1 - player) for pokemon in state.players[side].in_play()]
+
+
+def super_transform_target_stops(state: GameState, user: PokemonInPlay, options) -> tuple[int, ...]:
+    """v0.124（SV1）: 選ぶと止めるポケモン: 自分自身、今の姿がいちばん上のカードでない（変身している・ばけている）ポケモン、うらのカード、ポケモンとして場に出したトレーナーカード。
+    うらのカードは本当のカードを読まずに決める（どのカードでも止める）。"""
+    stops = []
+    for pid in options:
+        found = state.find_pokemon(pid)
+        if found is None:
+            continue
+        pokemon = found[1]
+        if (pid == user.pokemon_id or state.is_face_down(pokemon) or pokemon.disguise is not None or current_form(state, pokemon).card != pokemon.card
+                or state.card_def(pokemon.card).play_role is not None):
+            stops.append(pid)
+    return tuple(stops)
+
+
+def super_transform_reason(state: GameState, pokemon: PokemonInPlay) -> str | None:
+    """v0.124（CR-SUPER-TRANSFORM-REVERT-CONDITIONS）: ［すごいへんしん］の記録のあるポケモンが、もどる場面なら、その理由（``left_active``・``special_condition``・``source_left``）。
+    もどる場面でなければ None。変身のもとがバトル場とベンチを動くのは場をはなれることではない（p.312）。"""
+    record = pokemon.super_transform
+    if record is None:
+        return None
+    located = state.find_pokemon(pokemon.pokemon_id)
+    if record.left_active or located is None or state.players[located[0]].active is not pokemon:
+        return "left_active"
+    conditions = pokemon.conditions
+    if conditions.asleep or conditions.paralyzed or conditions.confused:
+        return "special_condition"
+    if state.find_pokemon(record.source) is None:
+        if state.energy_role(record.card) is not None:
+            # 変身のもとが［エネエネ］でエネルギーとしてついた（カードは場に残る）。場をはなれたとしてもどすかは決まらない（SV2。``copied_form_problems`` が止める）
+            return None
+        return "source_left"
+    return None
+
+
+def settle_super_transforms(state: GameState) -> None:
+    """v0.124: もどる場面の［すごいへんしん］の記録を消す（ログ ``super_transform_reverted``）。処理のあいだ（姿を固定しているあいだ）は消さない（処理の終わりに呼ぶ）。"""
+    if state.frozen_forms:
+        return
+    for owner, player in enumerate(state.players):
+        for pokemon in player.in_play():
+            reason = super_transform_reason(state, pokemon)
+            if reason is not None:
+                pokemon.super_transform = None
+                state.add_event("super_transform_reverted", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, reason=reason)
+
+
 def current_form(state: GameState, pokemon: PokemonInPlay) -> Form:
     """場のポケモンの今の姿（v0.49。公開の問い合わせ）。「ばける」でのせたカードがあればそのカード、［へんしん］がはたらいていれば相手の対戦ポケモンのいちばん上のカード
-    （相手のポケモンの姿がそのカードと違う（TF2）・写したカードの特殊能力（TF1）の状態には、``form_problems`` がしない）、どちらでもなければいちばん上のカード。
-    状態に持たず、問い合わせのたびに今の場から求める（入れ替え・進化・場をはなれる・特殊状態・かがくへんかガスのあとも、その時点の答え）。"""
+    （相手のポケモンの姿がそのカードと違う（TF2）の状態には、``form_problems`` がしない）、どちらでもなければいちばん上のカード。
+    状態に持たず、問い合わせのたびに今の場から求める（入れ替え・進化・場をはなれる・特殊状態・かがくへんかガスのあとも、その時点の答え）。
+
+    v0.124（docs/super-transform-dark-pulse-v0.124.md 3.5 節・5 章）:
+
+    - ワザ・宣言する特殊能力・トレーナーカードの処理のあいだは、処理の始めに固定した姿（``GameState.frozen_forms``。CR-TRANSFORM-FROZEN-DURING-ACTION）。途中の入れ替え・相手の姿の
+      変化・変身のもとが場をはなれることでは変わらない（処理の終わり ``release_frozen_forms`` で今の場から求め直す）
+    - ［すごいへんしん］で選んだ変身のもと（``PokemonInPlay.super_transform``）があり、もどる場面でなければ、選んだときの変身のもとのいちばん上のカード（``FORM_SUPER_TRANSFORM``）"""
     if pokemon.disguise is not None:
         return Form(pokemon.disguise, FORM_DISGUISE)
+    for frozen in state.frozen_forms:
+        if frozen.pokemon == pokemon.pokemon_id:
+            return Form(frozen.card, frozen.kind, frozen.source)
+    return live_form(state, pokemon)
+
+
+def form_frozen(state: GameState, pokemon: PokemonInPlay) -> bool:
+    """v0.124: ``pokemon`` の姿を、ワザ・宣言する特殊能力・トレーナーカードの処理のあいだ固定しているか。"""
+    return any(frozen.pokemon == pokemon.pokemon_id for frozen in state.frozen_forms)
+
+
+def live_form(state: GameState, pokemon: PokemonInPlay) -> Form:
+    """v0.124: 固定した姿を見ない、今の場から求めた姿（``current_form`` の処理のあいだでないときの答え。処理の始め・終わりに固定・解除するときに使う）。"""
+    if pokemon.disguise is not None:
+        return Form(pokemon.disguise, FORM_DISGUISE)
+    record = pokemon.super_transform
+    if record is not None and super_transform_reason(state, pokemon) is None:
+        return Form(record.card, FORM_SUPER_TRANSFORM, record.source)
     defender = transform_defender(state, pokemon)
     if defender is not None:
         return Form(defender.card, FORM_TRANSFORM, defender.pokemon_id)
     return Form(pokemon.card, FORM_PRINTED)
+
+
+def transform_capable(state: GameState, pokemon: PokemonInPlay) -> bool:
+    """v0.124: ``pokemon`` のいちばん上のカードが、変身する特殊能力（［へんしん］・［すごいへんしん］）を持つか（処理の始めに姿を固定する場のポケモン）。"""
+    return any(isinstance(slot.effect, (TransformIntoDefender, SuperTransformPower)) for slot in card_power_slots(state, pokemon.card))
+
+
+def freeze_forms(state: GameState) -> None:
+    """v0.124（CR-TRANSFORM-FROZEN-DURING-ACTION）: ワザ・宣言する特殊能力・トレーナーカードの処理の始めに、変身する特殊能力を持つ場のポケモンの今の姿を固定する（すでに固定していれば
+    何もしない。決定のあとの続きは同じ処理）。変身していないポケモンも「変身していない」姿として固定する（処理の途中で変身がはじまらない）。"""
+    from .state import FrozenForm  # v0.124
+
+    if state.frozen_forms:
+        return
+    frozen = []
+    for player in state.players:
+        for pokemon in player.in_play():
+            if pokemon.disguise is None and transform_capable(state, pokemon):
+                form = live_form(state, pokemon)
+                frozen.append(FrozenForm(pokemon.pokemon_id, form.card, form.kind, form.defender))
+    state.frozen_forms = tuple(frozen)
+
+
+TRANSFORM_REVERT_KO_CODE = "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING"
+TRANSFORM_REVERT_KO_REASON = (
+    "ワザ・宣言する特殊能力・トレーナーカードの処理が終わって変身の状態が変わり（もどる・姿が変わる）、HP がのっているダメージ以下になる（またはならなくなる）。もどったポケモンがきぜつすることは"
+    "決まっている（CR-TRANSFORM-REVERT-KNOCKOUT・CR-SUPER-TRANSFORM-REVERT-KNOCKOUT）が、そのきぜつを判定する時点（処理のきぜつと同時か、そのあとか）は kyuura の記録から決められないので、"
+    "処理の前に止める（UQ-TRANSFORM-REVERT-KNOCKOUT-TIMING。TK1）")
+
+
+def revert_ko_drop_check(before: GameState, after: GameState, drops) -> None:
+    """v0.124: ``max_hp_drops`` の答え ``drops`` のうち、変身の姿の変化（同じカードとしてあつかうカードが変わった）で下がったポケモンがあれば TK1（``UnsupportedError``）。なければ何もしない。"""
+    for _, pokemon, _, _ in drops:
+        found = before.find_pokemon(pokemon.pokemon_id)
+        if found is None:
+            continue
+        old_form, new_form = current_form(before, found[1]), current_form(after, pokemon)
+        if (old_form.kind in COPIED_FORMS or new_form.kind in COPIED_FORMS) and old_form.card != new_form.card:
+            raise UnsupportedError(TRANSFORM_REVERT_KO_CODE, f"ポケモン {pokemon.pokemon_id}: {TRANSFORM_REVERT_KO_REASON}")
+
+
+def release_frozen_forms(state: GameState) -> None:
+    """v0.124（docs/super-transform-dark-pulse-v0.124.md 3.6 節）: 処理の終わり（ワザの要素のあと・きぜつの判定の前、特殊能力・トレーナーの効果のあと・使用後の処理の前）に、固定した姿を
+    解除する。解除して姿が変わったポケモンで、HP がのっているダメージ以下かどうかが変わるなら、きぜつの判定の時点が決まらないので止める（TK1。``UnsupportedError``）。変わらなければ何もしない
+    （HP が変わるだけでは止めない）。そのあと、もどる場面の［すごいへんしん］を消す（``settle_super_transforms``）。"""
+    if not state.frozen_forms:
+        settle_super_transforms(state)
+        return
+    before = {}
+    for frozen in state.frozen_forms:
+        found = state.find_pokemon(frozen.pokemon)
+        if found is not None:
+            before[frozen.pokemon] = (frozen.card, found[1].damage >= max_hp(state, found[1]))
+    state.frozen_forms = ()
+    settle_super_transforms(state)
+    for pid, (card, knocked) in before.items():
+        found = state.find_pokemon(pid)
+        if found is None:
+            continue
+        if current_form(state, found[1]).card != card and (found[1].damage >= max_hp(state, found[1])) != knocked:
+            raise UnsupportedError(TRANSFORM_REVERT_KO_CODE, f"ポケモン {pid}: {TRANSFORM_REVERT_KO_REASON}")
 
 
 def form_def(state: GameState, pokemon: PokemonInPlay) -> CardDefinition:
@@ -14943,9 +15241,63 @@ NEO_EVOLUTION_CARD_BABY_REASON = (
     "neo のカードの説明で「進化カード」とだけ書かれているとき、ベイビィポケモンを進化させる（させた）たねポケモンカードをふくむかは、2000.02.14 版の公式ルール（p.325 は"
     "ネオより前のカードの読み方だけを書く）・kyuura の記録から決められない（NB2。UQ-NEO-TEXT-BABY-CATEGORIES）")
 TRANSFORM_BABY_CODE = "UNRESOLVED_TRANSFORM_BABY"
+# v0.124: BX1 の中心（ベイビィの姿のメタモンがベイビィポケモンとしてあつかわれ、ベイビィのルールが当たるか）は CR-TRANSFORM-BABY-RULE（CONFIRMED）で決まったので、このコードでは
+# 止めない（履歴として残す）。ベイビィとたねの両方としてあつかわれることで結果が分かれる効果は BX2（``TRANSFORM_BABY_AND_BASIC_CODE``）
 TRANSFORM_BABY_REASON = (
     "メタモンの［へんしん］で相手の対戦ポケモンのベイビィポケモンと同じカードとしてあつかわれているとき、メタモンがベイビィポケモン（ベイビィポケモンのルール・場のベイビィポケモンとしての"
     "あつかい）を持つかは、印刷の文面・kyuura の記録から決められない（BX1。写した特殊能力の TF1 とは別の問い。ベイビィポケモンのルールは特殊能力ではない。CR-BABY-RULE-NOT-POWER）")
+
+
+TRANSFORM_BABY_AND_BASIC_CODE = "UNRESOLVED_TRANSFORM_BABY_AND_BASIC"
+TRANSFORM_BABY_AND_BASIC_REASON = (
+    "ベイビィポケモンに変身したメタモンは、ベイビィポケモンとしてもたねポケモン（変身の前の種類）としてもあつかわれる（CR-TRANSFORM-NAME-AND-KIND・CR-TRANSFORM-BABY-RULE）。ベイビィと"
+    "たねで別の処理をする効果（やさしいほのおの 10 か 30 か、でこぼこジムの 1 個ぶんか 2 個ぶんか）でどちらにするかは kyuura の記録から決められないので扱わない"
+    "（UQ-TRANSFORM-BABY-AND-BASIC。BX2。どちらかの種類を優先しない）")
+
+
+def field_kinds(state: GameState, pokemon: PokemonInPlay) -> frozenset[str]:
+    """v0.124（CR-TRANSFORM-NAME-AND-KIND）: 場のポケモンの場での種類の集まり（``FIELD_BABY``・``FIELD_BASIC``・``FIELD_EVOLVED``）。ふつうは ``field_stage`` の 1 つ。［へんしん］・［すごいへんしん］で
+    変身したポケモンは、変身の後の種類（今の姿の段階）と、変身の前の種類（自分のいちばん上のカードの印刷の段階。メタモンはたねポケモン）の両方。1 匹のポケモンで、2 匹とは数えない。
+    「ばける」は p.324 の変身にも入るが、この裁定を結んでいないので今までどおり今の姿の 1 つ。"""
+    stage = field_stage(state, pokemon)
+    if state.is_face_down(pokemon) or current_form(state, pokemon).kind not in COPIED_FORMS:
+        return frozenset({stage})
+    own = state.card_def(pokemon.card)
+    before = FIELD_EVOLVED if own.is_evolution_pokemon else FIELD_BABY if own.is_baby_pokemon else FIELD_BASIC
+    return frozenset({stage, before})
+
+
+def field_names(state: GameState, pokemon: PokemonInPlay) -> tuple[str, ...]:
+    """v0.124（CR-TRANSFORM-NAME-AND-KIND）: 場のポケモンの名前の集まり（比べるための名前。表示の名前は ``form_def(...).name_ja``）。ふつうは今の姿の名前 1 つ。［へんしん］・［すごいへんしん］で
+    変身したポケモンは、変身の後の名前（今の姿のカード）と変身の前の名前（自分のいちばん上のカード）の両方（同じなら 1 つ）。どちらの名前で当たっても 1 匹として数える。うらのカードは
+    今の姿（読めない名前）だけ。「ばける」は今までどおり今の姿の名前だけ。"""
+    names = [form_def(state, pokemon).name_ja]
+    if not state.is_face_down(pokemon) and current_form(state, pokemon).kind in COPIED_FORMS:
+        own = state.card_def(pokemon.card).name_ja
+        if own not in names:
+            names.append(own)
+    return tuple(names)
+
+
+@dataclass(frozen=True)
+class NamePrefix:
+    """v0.124: 名前の分類（名前が ``prefix`` で始まるポケモン）。「わるい」ポケモン（CR-DARK-POKEMON-CATEGORY: 名前が「わるい」で始まるポケモン。「悪」タイプとは別）。数える・比べる処理で、
+    完全に同じ名前の並び（文字列のタプル）のかわりに渡す（``field_name_matches``）。"""
+
+    prefix: str
+
+    def matches(self, name: str) -> bool:
+        return name.startswith(self.prefix)
+
+
+DARK_POKEMON = NamePrefix("わるい")
+
+
+def field_name_matches(state: GameState, pokemon: PokemonInPlay, names) -> bool:
+    """v0.124: 場のポケモンの名前（``field_names``。変身したポケモンは両方の名前）のどれかが ``names``（完全に同じ名前の並び、または ``NamePrefix``）に当たるか。"""
+    if isinstance(names, NamePrefix):
+        return any(names.matches(name) for name in field_names(state, pokemon))
+    return any(name in names for name in field_names(state, pokemon))
 
 
 def evolved_from_baby(state: GameState, pokemon: PokemonInPlay) -> bool:
@@ -14989,19 +15341,29 @@ def field_stage(state: GameState, pokemon: PokemonInPlay) -> str:
 def is_evolution_in_play(state: GameState, pokemon: PokemonInPlay) -> bool:
     """場の「進化ポケモン」か（v0.114。GR-2000-P315-EVOLVED-BABY。1 進化・2 進化と、ベイビィから進化したたねポケモン）。v0.113 までの ``form_def(...).is_evolution_pokemon`` と、
     ベイビィから進化していないポケモンでは同じ答え。"""
-    return field_stage(state, pokemon) == FIELD_EVOLVED
+    return FIELD_EVOLVED in field_kinds(state, pokemon)  # v0.124: 変身したポケモンは変身の後の種類もふくむ
 
 
 def is_baby_in_play(state: GameState, pokemon: PokemonInPlay) -> bool:
     """場の進化していないベイビィポケモンか（v0.114。いちばん上の印刷のカードがベイビィポケモンカード。［へんしん］で写した姿・うらのカードは偽。ベイビィの姿のメタモンの扱いは
     ``transform_baby_question``）。ベイビィポケモンのルール（バトル場にいるかぎり）は、この個体についてだけはたらく。"""
-    return not state.is_face_down(pokemon) and not copied_form(state, pokemon) and state.card_def(pokemon.card).is_baby_pokemon and state.card_def(pokemon.card).baby_rule
+    if state.is_face_down(pokemon):
+        return False
+    form = current_form(state, pokemon)
+    if form.kind in COPIED_FORMS:
+        # v0.124（CR-TRANSFORM-BABY-RULE）: ベイビィポケモンに変身したメタモンはベイビィポケモンとしてあつかわれ、ベイビィポケモンのルール（相手のワザのコイン）が当てはまる
+        definition = state.card_def(form.card)
+        return definition.is_baby_pokemon and definition.baby_rule
+    return not copied_form(state, pokemon) and state.card_def(pokemon.card).is_baby_pokemon and state.card_def(pokemon.card).baby_rule
 
 
 def transform_baby_question(state: GameState, pokemon: PokemonInPlay) -> UnsupportedError | None:
     """v0.114（BX1）: ［へんしん］で相手のベイビィポケモンと同じカードとしてあつかわれているメタモンなら、ベイビィとしてあつかうかが決まらないので止める理由。ほかは None。呼ぶ側は、
     ベイビィかどうかで結果が変わるときだけ使う（ベイビィとたねを分けない処理では止めない）。"""
-    if copied_form(state, pokemon) and form_def(state, pokemon).is_baby_pokemon:
+    if {FIELD_BABY, FIELD_BASIC} <= field_kinds(state, pokemon):
+        # v0.124: ベイビィとたねの両方としてあつかわれる（BX2）。v0.123 までは BX1（ベイビィとしてあつかうか）で止めていた
+        return UnsupportedError(TRANSFORM_BABY_AND_BASIC_CODE, f"ポケモン {pokemon.pokemon_id}: {TRANSFORM_BABY_AND_BASIC_REASON}")
+    if copied_form(state, pokemon) and current_form(state, pokemon).kind not in COPIED_FORMS and form_def(state, pokemon).is_baby_pokemon:
         return UnsupportedError(TRANSFORM_BABY_CODE, f"ポケモン {pokemon.pokemon_id}: {TRANSFORM_BABY_REASON}")
     return None
 
@@ -15100,10 +15462,10 @@ def deck_baby_evolution_card_in_text(era: str) -> bool | None:
 def field_is_basic_in_text(state: GameState, pokemon: PokemonInPlay, era: str) -> bool | None:
     """場のポケモンが、カードの説明の「たねポケモン」に当たるか（v0.114）。たねポケモン（ベイビィから進化していない）は True、進化ポケモン（ベイビィから進化したたねポケモンを
     ふくむ。GR-2000-P315-EVOLVED-BABY は版によらない一般の規定）は False。場のベイビィポケモンは、ネオより前の説明では True（GR-2000-P325-PRE-NEO-BABY）、neo の説明では None（NB1）。"""
-    stage = field_stage(state, pokemon)
-    if stage == FIELD_BASIC:
+    kinds = field_kinds(state, pokemon)  # v0.124: 変身したポケモンは変身の前の種類（たね）もふくむ
+    if FIELD_BASIC in kinds:
         return True
-    if stage == FIELD_BABY:
+    if FIELD_BABY in kinds:
         return True if era == TEXT_PRE_NEO else None
     return False
 
@@ -15141,8 +15503,10 @@ def attack_of(state: GameState, key: AttackKey) -> Attack:
 
 
 def any_color_energy(state: GameState, pokemon: PokemonInPlay) -> bool:
-    """``pokemon`` についているエネルギーカードを、ワザに必要なエネルギーの支払いで、どの色のエネルギーとしても使えるか（v0.49。［へんしん］がはたらいているとき）。"""
-    return transform_works(state, pokemon)
+    """``pokemon`` についているエネルギーカードを、ワザに必要なエネルギーの支払いで、どの色のエネルギーとしても使えるか（v0.49。［へんしん］がはたらいているとき）。
+
+    v0.124: 今の姿（処理のあいだは固定した姿）が［へんしん］・［すごいへんしん］で変身した姿のとき。色の範囲（6 色か 8 色か）は ``transform_color_lists`` が決める。"""
+    return current_form(state, pokemon).kind in COPIED_FORMS
 
 
 def attack_cost_payable(state: GameState, pokemon: PokemonInPlay, attack: Attack) -> bool:
@@ -15177,6 +15541,14 @@ def attack_cost_problem(state: GameState, pokemon: PokemonInPlay, attack: Attack
             return wild_growth_error(state, pokemon, ambiguities, f"・ワザ「{attack.name_ja}」の支払い")
     readings = {can_pay_with_units(attack.cost, units) for units in special_energy_payment_readings(state, pokemon)}
     if len(readings) > 1:
+        lists = transform_color_lists(state, pokemon)
+        if len(lists) > 1:
+            # v0.124（TC1）: 8 色と 6 色の読み方（それぞれ TE2 の読み方をふくむ）で払えるかが違う。同じなら TE2 の問い
+            by_list = [{can_pay_with_units(attack.cost, units) for units in special_energy_payment_readings(state, pokemon, colors=colors)} for colors in lists]
+            if by_list[0] != by_list[1] and all(len(found) == 1 for found in by_list):
+                return UnsupportedError(TRANSFORM_COLOR_LIST_CODE, f"ポケモン {pokemon.pokemon_id} のワザ「{attack.name_ja}」: {TRANSFORM_COLOR_LIST_REASON}")
+            if by_list[0] != by_list[1] and len(by_list[1]) > 1 and len(by_list[0]) == 1:
+                return UnsupportedError(TRANSFORM_COLOR_LIST_CODE, f"ポケモン {pokemon.pokemon_id} のワザ「{attack.name_ja}」: {TRANSFORM_COLOR_LIST_REASON}")
         return UnsupportedError(TRANSFORM_SPECIAL_ENERGY_CODE, f"ポケモン {pokemon.pokemon_id} のワザ「{attack.name_ja}」: {TRANSFORM_SPECIAL_ENERGY_REASON}")
     return None
 
@@ -15880,6 +16252,9 @@ def evolution_forbidden(state: GameState, target: PokemonInPlay, *, by_effect: b
         return "EVOLUTION_PREVENTED", f"場のポケモン {target.pokemon_id} は「ばける」でのせたカードのポケモンとしてあつかわれているので、進化できない（「ただし「進化・退化」はできない」）"
     if transform_slot(state, target) is not None:
         return "EVOLUTION_PREVENTED", f"場のポケモン {target.pokemon_id} のカードには進化カードをつけることはできない（［へんしん］の説明）"
+    if current_form(state, target).kind == FORM_SUPER_TRANSFORM:
+        # v0.124: ［すごいへんしん］の「ただし「進化・退化」はできず」（変身しているあいだ。手札・トレーナー・ワザ・特殊能力のどの入口でも）
+        return "EVOLUTION_PREVENTED", f"場のポケモン {target.pokemon_id} は［すごいへんしん］で変身しているので、進化できない（「ただし「進化・退化」はできず」）"
     ban = evolution_ban(state, target)
     if ban is not None:
         # v0.80: 退化スプレーHYPER の「(退化させたポケモンを、同じ番に進化させることはできない。)」。今の番の記録（``TrainerTurnEffect`` の ``EVOLUTION_BAN``）で決める。v0.50 の
@@ -18521,7 +18896,7 @@ def trainer_turn_effects(state: GameState, kind: str) -> list[tuple[TrainerTurnE
 
 def _named_owner_pokemon(state: GameState, pokemon: PokemonInPlay, owner: str | None) -> bool:
     """場のポケモンが「(``owner``)のポケモン」か（今の姿の名前の始まり。v0.44 の ``owner_pokemon`` と同じ判定。［へんしん］・「ばける」の姿の名前で決める）。"""
-    return owner is not None and form_def(state, pokemon).name_ja.startswith(f"{owner}の")
+    return owner is not None and field_name_matches(state, pokemon, NamePrefix(f"{owner}の"))  # v0.124: 変身したポケモンは両方の名前
 
 
 def trainer_attack_damage_bonuses(state: GameState, attacker: PokemonInPlay) -> list[tuple[TrainerTurnEffect, int]]:
@@ -19246,9 +19621,12 @@ def energy_removal_protected(state: GameState, owner: int, pokemon: PokemonInPla
 # ---------------------------------------------------------------- 決められない姿の状態（TF1・TF2・DG1）
 
 TRANSFORM_POWER_CODE = "UNRESOLVED_TRANSFORM_COPIED_POWER"
+# v0.124: 写したカードの特殊能力を持つことは CR-TRANSFORM-COPIES-TOP-CARD（CONFIRMED）で決まったので、TF1 は残る部分（変身する特殊能力・特殊能力を消す力を写す、ベイビィの姿と［いあつ］の
+# 循環、写した「自分の番ごとに1回」の力を変身のもとがこの番に使っていた。UQ-TRANSFORM-SCOPE）だけで止める。v0.123 までの理由の文は docs/virtual-attacks-transformation-v0.49.md の履歴
 TRANSFORM_POWER_REASON = (
-    "［へんしん］の「相手の対戦ポケモンと同じカードとしてあつかう」で、相手の対戦ポケモンのカードの特殊能力をこのカードも持つか（写した特殊能力を使える・はたらくか）は、"
-    "kyuura の記録・印刷の文面から決められないので扱わない（TF1。英語版の「always has this Pokémon Power」は日本語版の処理の根拠にしない）"
+    "［へんしん］で写したカードの特殊能力を持つことは決まった（CR-TRANSFORM-COPIES-TOP-CARD）が、写した特殊能力が変身する力・特殊能力を消す力であるとき、ベイビィの姿と［いあつ］のように"
+    "姿と抑止が循環するとき、写した「自分の番ごとに1回」の力を変身のもとがこの番に使っていたときに、いつ使える・はたらくかは kyuura の記録から決められないので扱わない"
+    "（TF1 の残る部分。UQ-TRANSFORM-SCOPE。英語版の「always has this Pokémon Power」は日本語版の処理の根拠にしない）"
 )
 TRANSFORM_TARGET_CODE = "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER"
 TRANSFORM_TARGET_REASON = (
@@ -19308,22 +19686,120 @@ def form_problems(state: GameState) -> list[tuple[str, str]]:
                 if changed:
                     # v0.88（CE3）: エナジーコンバーター・こうごうせいで「エネルギー」の色が変わったカードを「「超」エネルギーカード」として数えるかで最大HPが変わる
                     problems.append((COLOR_CARD_CODE, color_card_error(pokemon, effect.energy_type, changed, f"（プレイヤー {owner} の最大HP。［ガスのからだ］）").message))
-            defender = transform_defender(state, pokemon)
-            if defender is None:
-                continue
-            where = f"プレイヤー {owner} のポケモン {pokemon.pokemon_id} の［へんしん］（相手の対戦ポケモン {defender.pokemon_id}）"
-            if defender.disguise is not None or state.card_def(defender.card).play_role is not None:
-                problems.append((TRANSFORM_TARGET_CODE, f"{where}: {TRANSFORM_TARGET_REASON}"))
-                continue
-            if treated_as_basic(state, defender):
-                # v0.120（TF3。docs/fossil-basic-virtual-attacks-v0.120.md 6 章）: 写す相手が、進化元を重ねずに出してたねポケモンとしてあつかう進化カード
-                problems.append((TRANSFORM_REVIVED_CODE, f"{where}: {TRANSFORM_REVIVED_REASON}"))
-                continue
-            copied = [slot for slot in card_power_slots(state, defender.card) if _copied_power_needs_stop(slot.effect)]
-            if copied:
-                names = "・".join(slot.power.name_ja for slot in copied)
-                problems.append((TRANSFORM_POWER_CODE, f"{where}・写す特殊能力［{names}］: {TRANSFORM_POWER_REASON}"))
+            problems.extend(copied_form_problems(state, owner, pokemon))
     return problems
+
+
+def copied_form_problems(state: GameState, owner: int, pokemon: PokemonInPlay) -> list[tuple[str, str]]:
+    """v0.124（docs/super-transform-dark-pulse-v0.124.md 3.2 節・5 章）: 変身している（［へんしん］・［すごいへんしん］）ポケモンの、決められない・扱えない姿。
+
+    - ［へんしん］の相手の対戦ポケモンが「ばける」・ポケモンとして出したトレーナー（TF2）・進化元を重ねずに出した進化カード（TF3）は v0.120 までと同じ
+    - ［すごいへんしん］の変身のもとが、選んだときのいちばん上のカードと違う姿になった（SV2）・［すごいへんしん］が抑止されている（SV4）
+    - 写した特殊能力（CR-TRANSFORM-COPIES-TOP-CARD で持つことは決まった）のうち、変身する特殊能力・特殊能力を消す力・ベイビィの姿と［いあつ］のように姿と抑止が循環するもの・変身を
+      2 つ持つものは決まらない（［へんしん］は TF1 の残る部分（UQ-TRANSFORM-SCOPE）、［すごいへんしん］は SV3・SV4）。写すことをエンジンが確かめていない実装は未対応
+      （``UNSUPPORTED_TRANSFORM_COPIED_POWER``。研究上の未解決ではない）"""
+    # continuous.py は effects.py を読み込むので、使うときに読み込む
+    from .continuous import power_suppressed, scaring_powers
+
+    problems: list[tuple[str, str]] = []
+    form = current_form(state, pokemon)
+    if form.kind not in COPIED_FORMS:
+        return problems
+    superform = form.kind == FORM_SUPER_TRANSFORM
+    name = "［すごいへんしん］" if superform else "［へんしん］"
+    where = f"プレイヤー {owner} のポケモン {pokemon.pokemon_id} の{name}（変身のもと {form.defender}）"
+    source = state.find_pokemon(form.defender) if form.defender is not None else None
+    if superform:
+        if source is None and state.energy_role(form.card) is not None:
+            problems.append((SUPER_TRANSFORM_SOURCE_CODE, f"{where}（変身のもとがエネルギーとしてついた）: {SUPER_TRANSFORM_SOURCE_REASON}"))
+            return problems
+        if source is not None and (source[1].disguise is not None or source[1].card != form.card or live_form(state, source[1]).card != source[1].card):
+            problems.append((SUPER_TRANSFORM_SOURCE_CODE, f"{where}: {SUPER_TRANSFORM_SOURCE_REASON}"))
+            return problems
+        own = next((slot for slot in card_power_slots(state, pokemon.card) if isinstance(slot.effect, SuperTransformPower)), None)
+        if own is not None and power_suppressed(state, own.power, pokemon):
+            problems.append((SUPER_TRANSFORM_SUPPRESSED_CODE, f"{where}: {SUPER_TRANSFORM_SUPPRESSED_REASON}"))
+            return problems
+    elif source is not None:
+        defender = source[1]
+        if defender.disguise is not None or state.card_def(defender.card).play_role is not None:
+            problems.append((TRANSFORM_TARGET_CODE, f"{where}: {TRANSFORM_TARGET_REASON}"))
+            return problems
+        if treated_as_basic(state, defender):
+            # v0.120（TF3。docs/fossil-basic-virtual-attacks-v0.120.md 6 章）: 写す相手が、進化元を重ねずに出してたねポケモンとしてあつかう進化カード
+            problems.append((TRANSFORM_REVIVED_CODE, f"{where}: {TRANSFORM_REVIVED_REASON}"))
+            return problems
+    if state.card_def(form.card).is_baby_pokemon and scaring_powers(state, owner):
+        # ベイビィの姿で相手の［いあつ］が当たると、変身の力が消えて姿が変わり、［いあつ］が当たらなくなる（姿と抑止の循環）
+        problems.append((SUPER_TRANSFORM_SUPPRESSED_CODE if superform else TRANSFORM_POWER_CODE,
+                         f"{where}・ベイビィの姿と相手の［いあつ］: {SUPER_TRANSFORM_SUPPRESSED_REASON if superform else TRANSFORM_POWER_REASON}"))
+        return problems
+    for slot in card_power_slots(state, form.card):
+        problem = copied_power_problem(slot.effect, superform)
+        if problem is not None:
+            problems.append((problem[0], f"{where}・写す特殊能力［{slot.power.name_ja}］: {problem[1]}"))
+    return problems
+
+
+TRANSFORM_COPIED_UNSUPPORTED_CODE = "UNSUPPORTED_TRANSFORM_COPIED_POWER"
+TRANSFORM_COPIED_UNSUPPORTED_REASON = (
+    "変身したポケモンは写したカードの特殊能力を持つ（CR-TRANSFORM-COPIES-TOP-CARD）が、この特殊能力の実装が、持ち主を変身したポケモンとして正しく処理することをエンジンが確かめていない"
+    "（エンジンの未対応。研究上の未解決ではない）")
+
+
+def copied_power_problem(effect: PowerEffect | None, superform: bool) -> tuple[str, str] | None:
+    """v0.124: 写した特殊能力 ``effect`` を持つ状態が受け付けられないなら (コード, 理由)。宣言して使う特殊能力は、使うときに確かめる（``copied_declared_power_problem``）ので、ここでは
+    きぜつ・きぜつしたときに使えるものだけを見る（v0.49 の ``_copied_power_needs_stop`` と同じ範囲）。"""
+    if effect is None:
+        return TRANSFORM_COPIED_UNSUPPORTED_CODE, TRANSFORM_COPIED_UNSUPPORTED_REASON
+    if isinstance(effect, TransformIntoDefender) and not superform:
+        # 化石のメタモンどうし（相手のメタモンのいちばん上のカードはメタモン）: 写した［へんしん］は自分の［へんしん］と同じ姿を指す（どちらもいちばん上のカードを写す。循環しない）
+        return None
+    if isinstance(effect, (TransformIntoDefender, SuperTransformPower, Shapeshift)):
+        return (SUPER_TRANSFORM_COPIED_CODE, SUPER_TRANSFORM_COPIED_REASON) if superform else (TRANSFORM_POWER_CODE, TRANSFORM_POWER_REASON)
+    if isinstance(effect, (SuppressOtherPowers, ScareOpponentBabies, MiraculousWind)):
+        return (SUPER_TRANSFORM_SUPPRESSED_CODE, SUPER_TRANSFORM_SUPPRESSED_REASON) if superform else (TRANSFORM_POWER_CODE, TRANSFORM_POWER_REASON)
+    if isinstance(effect, EntryPower):
+        return None  # 変身しても新しく場に出たのではない（CR-TRANSFORM-NOT-NEWLY-PLAYED）ので、場に出たときの力は使う機会がない
+    if effect.declared and not isinstance(effect, (PreventKnockOutOnHeads, ReturnToHandOnKnockOut)):
+        return None
+    if isinstance(effect, COPY_UNSUPPORTED_EFFECTS) or getattr(effect, "supplies_attacks", False):
+        return TRANSFORM_COPIED_UNSUPPORTED_CODE, TRANSFORM_COPIED_UNSUPPORTED_REASON
+    return None
+
+
+def copied_declared_power_problem(state: GameState, user: PokemonInPlay, slot: PowerSlot) -> tuple[str, str] | None:
+    """v0.124: 変身したポケモンが写した宣言する特殊能力 ``slot`` を使うときに止める理由（コード, 理由）。写した特殊能力でなければ None。
+
+    - 写すことをエンジンが確かめた実装（``COPY_VERIFIED_DECLARED``）でなければ未対応
+    - 「自分の番ごとに1回」の特殊能力を、変身のもとがこの番にすでに使っていたら SV3・TF1（同じ名前の力の使用回数を分けるかは決まらない。変身のもとの記録をこのポケモンの記録にしない）"""
+    form = current_form(state, user)
+    if form.kind not in COPIED_FORMS or slot.card != form.card or slot.card == user.card:
+        return None
+    superform = form.kind == FORM_SUPER_TRANSFORM
+    if not isinstance(slot.effect, COPY_VERIFIED_DECLARED):
+        return TRANSFORM_COPIED_UNSUPPORTED_CODE, TRANSFORM_COPIED_UNSUPPORTED_REASON
+    if slot.effect.once_per_turn and form.defender is not None:
+        used = {(record[0], record[1]) for record in state.power_uses_this_turn}
+        if (form.defender, slot.key.power_index) in used:
+            return (SUPER_TRANSFORM_COPIED_CODE, SUPER_TRANSFORM_COPIED_REASON) if superform else (TRANSFORM_POWER_CODE, TRANSFORM_POWER_REASON)
+    return None
+
+
+def copied_source_use_problem(state: GameState, user: PokemonInPlay, slot: PowerSlot) -> tuple[str, str] | None:
+    """v0.124（SV3・TF1）: ``user`` が自分の「自分の番ごとに1回」の特殊能力を使うとき、この番にそれを写した変身しているポケモンが写した特殊能力を使っていたら止める理由。"""
+    if not getattr(slot.effect, "once_per_turn", False) or slot.card != user.card:
+        return None
+    for player in state.players:
+        for other in player.in_play():
+            form = current_form(state, other)
+            if other is user or form.kind not in COPIED_FORMS or form.defender != user.pokemon_id:
+                continue
+            if any(record[0] == other.pokemon_id and record[1] == slot.key.power_index and len(record) > 2 and record[2] == form.card
+                   for record in state.power_uses_this_turn):
+                superform = form.kind == FORM_SUPER_TRANSFORM
+                return (SUPER_TRANSFORM_COPIED_CODE, SUPER_TRANSFORM_COPIED_REASON) if superform else (TRANSFORM_POWER_CODE, TRANSFORM_POWER_REASON)
+    return None
 
 
 def attack_state_stop_after(before: GameState, after: GameState) -> tuple[str, str] | None:
@@ -20251,7 +20727,10 @@ def stadium_retreat_terms(state: GameState, player: int, active: PokemonInPlay) 
         return ((stadium.card, effect.amount),), ()
     if isinstance(effect, OwnerRetreatReductionStadium) and _owner_named(form_def(state, active).name_ja, effect.owner):
         return (), ((stadium.card, effect.amount),)
-    if isinstance(effect, BasicRetreatIncreaseStadium) and field_stage(state, active) in (FIELD_BABY, FIELD_BASIC):  # v0.114: GR-2000-P315-EVOLVED-BABY
+    if isinstance(effect, BasicRetreatIncreaseStadium) and {FIELD_BABY, FIELD_BASIC} <= field_kinds(state, active):
+        # v0.124（BX2）: ベイビィとたねの両方としてあつかわれるメタモン（1 個ぶんか 2 個ぶんか）。どちらかを優先しない
+        raise UnsupportedError(TRANSFORM_BABY_AND_BASIC_CODE, f"バトル場のポケモン {active.pokemon_id}・でこぼこジム: {TRANSFORM_BABY_AND_BASIC_REASON}")
+    if isinstance(effect, BasicRetreatIncreaseStadium) and field_kinds(state, active) & {FIELD_BABY, FIELD_BASIC}:  # v0.114: GR-2000-P315-EVOLVED-BABY
         return ((stadium.card, effect.amount),), ()  # v0.81: でこぼこジム（今の姿の段階が「たね」。v0.114: 場のベイビィポケモンをふくみ、ベイビィから進化したたねポケモンはふくまない）
     return (), ()
 
@@ -34052,7 +34531,7 @@ ALL_COLOR_UNIT = frozenset(EnergyType) - {EnergyType.COLORLESS}
 def shining_or_light(state: GameState, pokemon: PokemonInPlay) -> bool:
     """場のポケモンが「ひかるポケモン」または「やさしいポケモン」か（v0.85。今の姿の名前が「ひかる」「やさしい」ではじまる。v0.82・v0.83 のカードの名前の決まり。
     ［へんしん］・「ばける」の姿の名前で決める）。"""
-    return form_def(state, pokemon).name_ja.startswith(SHINING_OR_LIGHT_PREFIXES)
+    return any(name.startswith(SHINING_OR_LIGHT_PREFIXES) for name in field_names(state, pokemon))  # v0.124: 変身したポケモンは両方の名前
 
 
 @dataclass(frozen=True)
@@ -36618,7 +37097,7 @@ class MoveEnergyAmongNamed(PowerEffect):
         return _check_power_text(power, "名前の決まったポケモンのあいだでエネルギーカードをつけ替える特殊能力", (MAGNETIC_FORCE_TEXT.format(names=names),))
 
     def _named(self, state: GameState, pokemon: PokemonInPlay) -> bool:
-        return form_def(state, pokemon).name_ja in self.names
+        return field_name_matches(state, pokemon, self.names)  # v0.124: 変身したポケモンは両方の名前
 
     def check_usable(self, state: GameState, use: PowerUse) -> None:
         _require_user_not_asleep_paralyzed_confused(state, use)
@@ -43944,7 +44423,7 @@ class AttackDamageBonusWithNamedFieldCount(ContinuousPower):
     def counted(self, state: GameState) -> bool:
         pokemon = [p for side in state.players for p in side.in_play()]
         hidden = [p for p in pokemon if state.is_face_down(p)]
-        known = sum(1 for p in pokemon if not state.is_face_down(p) and form_def(state, p).name_ja in self.names)
+        known = sum(1 for p in pokemon if not state.is_face_down(p) and field_name_matches(state, p, self.names))  # v0.124: 両方の名前でも 1 匹
         if known >= self.at_least:
             return True
         if known + len(hidden) < self.at_least:
@@ -44798,7 +45277,7 @@ class CommandBonusToNamedAttackers(AttackDeclaredPower):
         return problems
 
     def usable_for(self, state: GameState, attacker: PokemonInPlay, key: AttackKey) -> str | None:
-        if state.is_face_down(attacker) or form_def(state, attacker).name_ja not in self.names:
+        if state.is_face_down(attacker) or not field_name_matches(state, attacker, self.names):  # v0.124: 両方の名前
             return f"自分の{'・'.join(self.names)}がワザを使う時だけ使える"
         return None
 
@@ -46523,7 +47002,7 @@ class HealNamedPokemonUpTo(TrainerEffect):
         return problems
 
     def _named(self, state: GameState, side: int) -> list[PokemonInPlay]:
-        return [p for p in state.players[side].in_play() if not state.is_face_down(p) and form_def(state, p).name_ja == self.name]
+        return [p for p in state.players[side].in_play() if not state.is_face_down(p) and field_name_matches(state, p, (self.name,))]  # v0.124: 両方の名前
 
     def options(self, state: GameState, use: TrainerUse) -> tuple[tuple[int, ...], tuple[int, ...]]:
         """(選べるポケモンの番号（自分の場 → 相手の場。バトル場 → ベンチ）, そのうち選ぶと止めるもの（相手の場のラプラス。MQ1）)。"""
@@ -47382,3 +47861,97 @@ SAME_DATA_CARDS_V0_123: Mapping[str, str] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_123_ATTACKS), SAME_DATA_CARDS_V0_123)
+
+
+# ---------------------------------------------------------------- v0.124（docs/super-transform-dark-pulse-v0.124.md 6 章・7 章）: GR団のミュウツー（PRN-041）
+
+DARK_PULSE_TEXT = (
+    "この力は、自分の場の「わるい」ポケモンがワザによるダメージを与えるとき、はたらく。コインを投げて「おもて」なら、もう1枚コインを投げる。2枚目のコインが「おもて」なら、与えるダメージ"
+    "それぞれに、20ダメージを追加する。2枚目のコインが「うら」なら、与えるダメージそれぞれに、10ダメージを追加する。(ベンチへのダメージも追加される。)自分の場のほかの「GR団のミュウツー」の"
+    "「わるいはどう」がはたらいているときや、このカードが、「ねむり・マヒ・こんらん」状態のとき、この力は、はたらかない。"
+)
+DARK_COSTUME_TEXT = "自分のベンチの「わるい」ポケモンの数ぶんコインを投げ、「おもて」の数×20のダメージを追加する。"
+DARK_PULSE_TIMING_CODE = "UNRESOLVED_DARK_PULSE_TIMING"
+DARK_PULSE_TIMING_REASON = (
+    "［わるいはどう］のコインを投げる時点・1 つのワザの複数のダメージで結果を共有するか・自分の場や自分へのダメージに追加するか・ダメージを与えない（2 段階までに 0 以下・受けない）ときに"
+    "コインを投げるか・同じ 6 段階のほかの効果との順番をコインの結果を知ってから決めるか・途中でこの力の持ち主が場をはなれる・抑止されるときは、kyuura の記録から決められないので、"
+    "読み方で結果・決定・知る情報が変わる場面は処理の前に止める（UQ-DARK-PULSE-TIMING。DP1）")
+
+
+@dataclass(frozen=True)
+class DarkPulse(ContinuousPower):
+    """この力は、自分の場の「わるい」ポケモンがワザによるダメージを与えるとき、はたらく。コインを投げて「おもて」なら、もう 1 枚。2 枚目が「おもて」なら 20、「うら」なら 10 を、与える
+    ダメージそれぞれに追加（v0.124。GR団のミュウツー（PRN-041）の［わるいはどう］。kyuura の印刷の文面。CR-DARK-PULSE-SCOPE・CR-DARK-PULSE-DAMAGE-STEP）。
+
+    - 自動的にはたらく（宣言しない。使うかを選ばない）。場所の制限はない（バトル場・ベンチ）。ねむり・マヒ・こんらんのこのカードははたらかない。かがくへんかガスなどは共通の抑止
+    - 「わるい」ポケモン（名前が「わるい」で始まる。CR-DARK-POKEMON-CATEGORY。変身したポケモンは両方の名前で判定）のワザのダメージ。コインは特殊能力のコイン（ナツメのESPのやり直しの対象ではない）
+      で、問い合わせの中では投げず、ダメージの要素の処理（``kernel.dark_pulse_modifiers``）が投げる。1 枚目が「うら」なら 2 枚目を投げない（T → 0、HT → 10、HH → 20）
+    - 追加は p.321 の 6 段階（この力の持ち主はふつうベンチにいるので、受けるポケモン自身の効果ではない。弱点で追加を 2 倍にしない）。2 段階までに 0 以下なら追加しない読み（SUPPORTED）が
+      あるが、そのときコインを投げるかは決まらない（DP1）ので止める
+    - 同じ力が 2 匹以上ではたらきうるとき（``self_excluding``）は、1 つもはたらかない読みと 1 匹だけの読みで結果が変わるので止める（DF1。番号の小さい持ち主を選ばない）
+    """
+
+    implementation_id = "dark_pulse"
+    self_excluding: ClassVar[bool] = True
+    what = "自分の場の「わるい」ポケモンのワザのダメージを、コインで追加する特殊能力"
+    per_heads: int = 20
+    per_tails: int = 10
+
+    def texts(self) -> tuple[str, ...]:
+        return (DARK_PULSE_TEXT,)
+
+
+def dark_pulse_holders(state: GameState, player: int) -> list[tuple[int, PokemonInPlay, PowerKey, DarkPulse]]:
+    """v0.124: プレイヤー ``player`` の場の、今はたらきうる［わるいはどう］（``continuous_powers`` の (持ち主, 持つポケモン, キー, 実装)）。"""
+    return [found for found in continuous_powers(state, DarkPulse) if found[0] == player]
+
+
+@dataclass(frozen=True)
+class CoinsPerOwnBenchDarkBonusDamage(AttackEffect):
+    """自分のベンチの「わるい」ポケモンの数ぶんコインを投げ、「おもて」の数×``per`` のダメージを追加する（v0.124。GR団のミュウツー（PRN-041）の「わるいぞうふく」。目安「20+」。
+    CR-DARK-COSTUME-COINS・CR-DARK-POKEMON-CATEGORY）。
+
+    - 要素は ``Coin(per_pokemon=(SCOPE_OWN_BENCH, DARK_POKEMON))`` → ``Damage(OPP, PrintedPlusHeadsOfCoin)``（v0.113 のむれでつつくと同じ要素。数えるのは名前が「わるい」で始まるポケモン。
+      完全に同じ名前の型 ``CoinsPerOwnBenchNamedBonusDamage`` に「わるい」を渡すと、どのわるいポケモンも数えない）。数えるのは、ワザを使ったポケモンの持ち主のコインの時点のベンチだけ
+      （バトル場・相手の場は数えない。GR団のミュウツー自身は入らない）。変身したメタモンは両方の名前で判定し、1 匹として数える。うらのカードの名前は既存の FD1
+    - 0 匹ならコインを投げず、基本となるダメージは目安の数字（ワザの失敗ではない）。コインはワザの説明のコイン（ナツメのESPの対象。わるいはどうのコインとは別）"""
+
+    per: int = 20
+    base: int = 20  # 目安の数字（「20+」）。登録の検査で印刷の目安と結ぶ
+    implementation_id = "coins_per_own_bench_dark_bonus_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "「おもて」1 枚あたりの追加のダメージ")
+        _positive_tens(self.base, "目安の数字")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "自分のベンチの「わるい」ポケモンの数のコインで追加ダメージのワザ"
+        problems = [] if attack.damage == self.base else [f"目安の数字 {attack.damage!r} が登録の {self.base} ではない"]
+        return problems + _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(
+            attack, what, (f"自分のベンチの「わるい」ポケモンの数ぶんコインを投げ、「おもて」の数×{self.per}のダメージを追加する。",))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        from .resolution.programs import SCOPE_OWN_BENCH, counted_pokemon
+
+        printed = attack_of(state, use.key).damage
+        count = len(counted_pokemon(state, use.player, SCOPE_OWN_BENCH, DARK_POKEMON))
+        return DamageProfile(opponent=tuple(printed + self.per * heads for heads in range(count + 1)))
+
+
+# v0.124（docs/super-transform-dark-pulse-v0.124.md 3.1 節）: 変身したポケモンが写した特殊能力のうち、写すことをエンジンが確かめた宣言する特殊能力（処理が使ったポケモン ``use.pokemon_id`` を
+# 持ち主として扱い、印刷したカード ``use.card`` を「このカード」として動かさない）。ほかの宣言する特殊能力は、写した姿で使うと未対応（UNSUPPORTED_TRANSFORM_COPIED_POWER）で止める
+COPY_VERIFIED_DECLARED = (RemoveOwnCounterOncePerTurn, HealOwnPokemonOnHeads, EnergyTransfer, DiscardThenDraw)
+# v0.124: 写す（持つ）と、ワザの供給・カードの id・持ち主の取り違えのおそれがあり、エンジンが確かめていない常時・自動の特殊能力（未対応で止める）
+COPY_UNSUPPORTED_EFFECTS = (DollUsesHolderAttacks, UseDefenderAttacks, PreEvolutionAttacksForEvolvedActives, AttacksOfOwnTypePokemon)
+
+
+# v0.124 の登録（ワザ 1・特殊能力 2）。メタモン（拡張シート第2弾赤版）の［すごいへんしん］は最新の説明 LD-ES2-032-PWR0 の全文、GR団のミュウツーは kyuura の印刷の文面（訂正なし）
+V0_124_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # GR団のミュウツー（PRN-041）。わるいぞうふく（超超）20+・自分のベンチの「わるい」ポケモンの数のコイン、「おもて」× 20
+    AttackKey("PRN-041", 0): _printed(CoinsPerOwnBenchDarkBonusDamage(20), "わるいぞうふく", DARK_COSTUME_TEXT),
+})
+V0_124_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
+    PowerKey("ES2-032", 0): PowerEntry(SuperTransformPower(), "すごいへんしん", SUPER_TRANSFORM_PRINTED_TEXT, SUPER_TRANSFORM_LATEST_TEXT, "LD-ES2-032-PWR0"),
+    PowerKey("PRN-041", 0): PowerEntry(DarkPulse(), "わるいはどう", DARK_PULSE_TEXT, DARK_PULSE_TEXT, _KYUURA_PRINTED_TEXT),
+})
+DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_124_ATTACKS), V0_124_POWERS)

@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any, Callable
 
 from ..coins import CoinSide, flip_coins
 from ..damage import ADD, HALVE_DOWN, HALVE_UP, MULTIPLY, SET, SET_IF_AT_LEAST, ZERO_IF_AT_LEAST, ZERO_IF_BELOW, DamageOrderRequired, DamageReductionRequired, step_orders
-from ..damage import OPTION_AMBIGUOUS, SET_IF_AT_MOST, DamageOptionRequired
+from ..damage import OPTION_AMBIGUOUS, SET_IF_AT_MOST, DamageModifier, DamageOptionRequired
 from ..effects import (
     knocked_by_hp,
     calculate_with_stadium,
@@ -145,6 +145,9 @@ class Resolution:
         # v0.57: このワザでクチバシティジムのコインを投げた結果（(スタジアムカード, 「おもて」か)。投げていなければ None）。ワザの宣言のあとに投げ（``flow._attack_body``）、
         # 決定をまたぐときは続きの情報の ``stadium_coin`` で運ぶ（投げ直さない）。「おもて」なら相手の対戦ポケモンへのダメージの要素に 6 段階の +10（``deal_damage``）
         self.stadium_coin: tuple[int, bool] | None = None
+        # v0.124: このワザで［わるいはどう］のコインを投げた結果（(持ち主のポケモンの番号, 追加の量 0・10・20)。投げていなければ None）。ダメージの要素で投げ（``dark_pulse_modifier``）、決定を
+        # またぐときは続きの情報の ``dark_pulse`` で運ぶ（投げ直さない。同じワザの 2 つめのダメージは DP1 で止める）
+        self.dark_pulse: tuple[int, int] | None = None
         # v0.88: このワザといっしょに使った特殊能力（ランターンの［すいりょくはつでん］。使ったら真）。ワザの宣言で決め（``flow._attack_body``）、決定をまたぐときは続きの情報の
         # ``attack_power`` で運ぶ。相手の対戦ポケモンへのワザのダメージの要素に 2 段階の追加（``attack_modifiers_of``）
         self.attack_power: bool = False
@@ -910,6 +913,74 @@ def ignored_effects_scope_difference(res: Resolution, fs: FrameState, attacker: 
     return None
 
 
+def dark_pulse_applies(res: Resolution, fs: FrameState, attacker: PokemonInPlay) -> bool:
+    """v0.124: このダメージの要素に［わるいはどう］がはたらきうるか（ワザを使うポケモンの持ち主の場にはたらく力があり、ワザを使うポケモンが「わるい」ポケモン）。状態を変えない。"""
+    return bool(E.dark_pulse_holders(res.state, fs.frame.player)) and E.field_name_matches(res.state, attacker, E.DARK_POKEMON)
+
+
+def _evasion_possible(res: Resolution, fs: FrameState, owner: int, receiver: PokemonInPlay) -> bool:
+    """v0.124: 受けるポケモンが、このダメージを受けないことになりうる（とうめい・かげぶんしん・ぬるぬる・リフレクトシールドなど、受けるときのコイン・置きかえ）か。状態を変えない。"""
+    state = res.state
+    memo = fs.reception.get(receiver.pokemon_id)
+    if memo is False:
+        return True
+    if memo is None and any(c.definition.timing is C.Timing.REPLACE and C.working(state, c, receiver)
+                            for c in C.in_window(state, Window.BEFORE_DAMAGE, owner, receiver, res.catalog)):
+        return True
+    return tails_damage_guard(receiver) is not None or bool(timed_damage_guards(state, receiver)) or reflect_shield(state, receiver) is not None
+
+
+def dark_pulse_modifier(res: Resolution, fs: FrameState, attacker: PokemonInPlay, receiver_player: int, receiver: PokemonInPlay, target: str, calc):
+    """v0.124（docs/super-transform-dark-pulse-v0.124.md 6 章）: ［わるいはどう］（``effects.DarkPulse``）の追加。はたらかないなら None。
+
+    処理するのは、他の読みと結果が同じになる通常の場面だけ: ワザの枠で、相手のポケモン（バトル場・ベンチ）1 匹への、2 段階までに正のダメージ（このワザのはじめのダメージ）で、
+    6 段階に足し算でない効果がなく、受けないことになりうる効果がない。持ち主のプレイヤーがコインを投げ（特殊能力のコイン。ログ ``coin_flip`` の ``source`` は ``"power"``、ログ ``dark_pulse``）、
+    1 枚目が「おもて」なら 2 枚目（T → 0、HT → 10、HH → 20）。量が 0 なら None（変更効果を加えない）。投げる位置は、同値な範囲での実装上の順序（ワザの説明のコインのあと・弱点の計算のまえに
+    結果が決まる。公式に時点が決まったのではない）。
+
+    止める（DP1・DF1）: 2 匹以上ではたらきうる（DF1）、ワザの枠でない、同じワザの 2 つめのダメージ、自分・自分の場へのダメージ、2 段階までに 0 以下、6 段階に半分などの足し算でない効果、
+    受けないことになりうる。どれもコインの前（乱数を使わない）。"""
+    state = res.state
+    frame = fs.frame
+    if not dark_pulse_applies(res, fs, attacker):
+        return None
+    holders = E.dark_pulse_holders(state, frame.player)
+    where = f"ポケモン {attacker.pokemon_id} → ポケモン {receiver.pokemon_id}"
+
+    def stop(detail: str):
+        return res.question("dark_pulse_timing", f"{where}（{detail}）", UnsupportedError(E.DARK_PULSE_TIMING_CODE, f"{where}（{detail}）: {E.DARK_PULSE_TIMING_REASON}"))
+
+    if len(holders) > 1:
+        raise res.question("self_excluding_power_copies", f"{where}・［わるいはどう］を持つポケモン {[h[1].pokemon_id for h in holders]}（1 つもはたらかない読みと 1 匹の読みで追加が変わる）")
+    if frame.kind is not FrameKind.ATTACK:
+        raise stop(f"{frame.kind.value} の枠のダメージ")
+    if res.dark_pulse is not None:
+        raise stop("同じワザの 2 つめのダメージ")
+    if receiver_player == frame.player or target not in (OPPONENT_ACTIVE, OPPONENT_BENCH):
+        raise stop("自分・自分の場へのダメージ")
+    if calc.stopped_after_step_2:
+        raise stop("2 段階までに 0 以下")
+    if any(m.step == 6 and m.operation != ADD for m in calc.modifiers):
+        raise stop("6 段階の足し算でない効果との順番")
+    if _evasion_possible(res, fs, receiver_player, receiver):
+        raise stop("受けないことになりうる")
+    _, holder, key, effect = holders[0]
+    slot = next(s for s in E.powers_of(state, holder) if s.key == key)
+    first = flip_coins(state, frame.player, 1, source="power", effect=str(key), card=slot.card, pokemon_id=holder.pokemon_id).results[0]
+    results = [first.value]
+    amount = 0
+    if first is CoinSide.HEADS:
+        second = flip_coins(state, frame.player, 1, source="power", effect=str(key), card=slot.card, pokemon_id=holder.pokemon_id).results[0]
+        results.append(second.value)
+        amount = effect.per_heads if second is CoinSide.HEADS else effect.per_tails
+    res.dark_pulse = (holder.pokemon_id, amount)
+    state.add_event("dark_pulse", player=frame.player, pokemon=slot.card, pokemon_id=holder.pokemon_id, power=str(key), attacker_pokemon_id=attacker.pokemon_id,
+                    target_pokemon_id=receiver.pokemon_id, effect=str(frame.attack_key), coins=tuple(results), amount=amount)
+    if not amount:
+        return None
+    return DamageModifier(step=6, amount=amount, label="［わるいはどう］", source=slot.card)
+
+
 def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_extra: dict | None = None, pokemon_id: int | None = None,
                 weakness_resistance: bool = True, orders: dict[int, tuple[int, ...]] | None = None,
                 order_decision: bool = False, resistance: bool = True, defender_effects: bool = True,
@@ -1007,6 +1078,10 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         )
         res.trace.record(DamageVoided(frame.id, receiver.pokemon_id, void.name))
         note_receipt(res, fs, receiver_player, receiver, voided=(DAMAGE_ELEMENT, _void_reason(res, incoming, receiver_player, receiver)))
+        if dark_pulse_applies(res, fs, attacker):
+            # v0.124（DP1）: ダメージを与えない（無効にした）ときに［わるいはどう］のコインを投げるかは決まらない
+            raise res.question("dark_pulse_timing", f"ポケモン {attacker.pokemon_id} → ポケモン {receiver.pokemon_id}（ダメージの要素を無効にした）",
+                               UnsupportedError(E.DARK_PULSE_TIMING_CODE, f"ポケモン {attacker.pokemon_id} → ポケモン {receiver.pokemon_id}（無効）: {E.DARK_PULSE_TIMING_REASON}"))
         return DamageResult(target, receiver_player, receiver.pokemon_id, True, None, receiver.damage >= hp_of(state, receiver))
     if target in BENCH_TARGETS:
         cry = reduced_damage_to_source(state, attacker)
@@ -1072,6 +1147,16 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         # v0.119（HS1）: 0 以下のダメージに来た「「40」以下のダメージは、すべて「10」になる」を当てはめるかで結果が変わる
         raise res.question("hard_shell_nonpositive", f"ポケモン {receiver.pokemon_id}・{list(calc.nonpositive_at_most)}（当てはめない {calc.final}・当てはめる "
                                                        f"{calc.nonpositive_alternative}）")
+    pulse = dark_pulse_modifier(res, fs, attacker, receiver_player, receiver, target, calc)
+    if pulse is not None:
+        # v0.124: ［わるいはどう］の 6 段階の追加をふくめて計算し直す（決まった順番・使うかの答えは同じものを使う。追加をふくめると決定・順番が要るなら DP1）
+        modifiers = [*modifiers, pulse]
+        try:
+            calc = compute_damage(state, attacker, receiver, base, modifiers, weakness_resistance=weakness_resistance, orders=orders, resistance=resistance,
+                                  reduction=reduction, optional_used=optional)
+        except (TypeReadingsDiffer, DamageOrderRequired, DamageReductionRequired, DamageOptionRequired):
+            raise res.question("dark_pulse_timing", f"ポケモン {attacker.pokemon_id} → ポケモン {receiver.pokemon_id}（追加のあとの計算に決定が要る）",
+                               UnsupportedError(E.DARK_PULSE_TIMING_CODE, f"ポケモン {attacker.pokemon_id}: {E.DARK_PULSE_TIMING_REASON}")) from None
     if target == SELF:
         trainer_self_bonus_question(res, attacker, receiver, base, modifiers, calc.final, weakness_resistance, orders, resistance,
                                     None if calc.optional_choice is None or not calc.optional_choice[1] else calc.optional_choice[2])

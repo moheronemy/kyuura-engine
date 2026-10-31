@@ -30715,6 +30715,65 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.123 で加えた（docs/arcanine-name-migration-v0.123.md）。PR1（promo）。ワザ: でんこうせっか（無無）10+・「おもて」で 20 を追加 = CoinBonusDamage(20)、いかりのほのお（炎炎）40+ = DiscardEnergyBeforeDamagePlusOwnCounters（炎エネルギーカード 2 枚を捨てなければ使えない・自分のダメージカウンター × 10 を追加。v0.123 の新しい型で、既存の要素 DiscardOwnEnergy と PlusOwnCounters の組み合わせ。トラッシュの時点は PMCG6-034 のほのおのあらしと同じ RUL-ENERGY-DISCARD-ATTACKS の範囲の読み方。印刷の文面の文末に句点がない（印刷のまま））。名前の数え方は CR-ARCANINE-PRINTED-NAMES。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（エンジンはカードの画像を読んでいない。名前は kyuura の画像の照合 IMG-PR1-016 の再利用）。欠けているレベルは補っていない"
+    },
+    "ES2-032": {
+      "basis": "kyuura_data",
+      "name_ja": "メタモン",
+      "status": "adopted",
+      "kyuura_commit": "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a",
+      "recorded_on": "2026-10-31",
+      "kyuura_records": [
+        "CC-ES2-032-P239",
+        "CR-SUPER-TRANSFORM-CHOICE",
+        "CR-SUPER-TRANSFORM-ENERGY-PAYMENT",
+        "CR-SUPER-TRANSFORM-ONCE-PER-TURN",
+        "CR-SUPER-TRANSFORM-RETRY-AFTER-SCOOP-UP",
+        "CR-SUPER-TRANSFORM-REVERT-CONDITIONS",
+        "CR-SUPER-TRANSFORM-REVERT-KNOCKOUT",
+        "CR-TRANSFORM-BABY-RULE",
+        "CR-TRANSFORM-COPIES-TOP-CARD",
+        "CR-TRANSFORM-FROZEN-DURING-ACTION",
+        "CR-TRANSFORM-KEEPS-OWN-STATE",
+        "CR-TRANSFORM-NAME-AND-KIND",
+        "CR-TRANSFORM-NOT-NEWLY-PLAYED",
+        "LD-ES2-032-PWR0",
+        "UQ-SUPER-TRANSFORM-COPIED-POWERS",
+        "UQ-SUPER-TRANSFORM-ENERGY-COLORS",
+        "UQ-SUPER-TRANSFORM-SOURCE-CHANGES",
+        "UQ-SUPER-TRANSFORM-SUPPRESSED-FORM",
+        "UQ-SUPER-TRANSFORM-TARGETS",
+        "UQ-TRANSFORM-BABY-AND-BASIC",
+        "UQ-TRANSFORM-REVERT-KNOCKOUT-TIMING"
+      ],
+      "play_text": {
+        "power/0": "LD-ES2-032-PWR0"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.124 で加えた（docs/super-transform-dark-pulse-v0.124.md 5 章）。拡張シート第2弾（赤版）。たね・無色・HP40、ワザなし。特殊能力［すごいへんしん］の処理に使う文面は kyuura の最新の説明 LD-ES2-032-PWR0（『オフィシャルブック2000』p.239。kyuura が 2026-10-31 に画像で読んだ）の全文。印刷の文面は段 v0.124 の訂正 FIX-ES2-032-POWER0-TEXT-JA（「カ」→「力」。kyuura のカードの画像の照合 IMG-ES2-032）のあとの値で照らす。照合の記録 CC-ES2-032-P239 は kyuura の記録（書籍の図版。カードの画像と独立した 2 件に数えない）。原文の括弧・残る欠け（レベル LV.15・図鑑番号 No.132）は補っていない。日本語の文面の転記元は pcg-search.com。エンジンは画像・書籍・外部のサイトを見ていない（外部照合なし）"
+    },
+    "PRN-041": {
+      "basis": "kyuura_data",
+      "name_ja": "GR団のミュウツー",
+      "status": "adopted",
+      "kyuura_commit": "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a",
+      "recorded_on": "2026-10-31",
+      "kyuura_records": [
+        "CR-DARK-COSTUME-COINS",
+        "CR-DARK-POKEMON-CATEGORY",
+        "CR-DARK-PULSE-DAMAGE-STEP",
+        "CR-DARK-PULSE-SCOPE",
+        "UQ-DARK-PULSE-TIMING",
+        "UQ-SELF-EXCLUDING-POWER-COPIES",
+        "UQ-SUPER-TRANSFORM-COPIED-POWERS"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.124 で加えた（docs/super-transform-dark-pulse-v0.124.md 6 章・7 章）。プロモ（neo）。たね・超・HP70。特殊能力［わるいはどう］= DarkPulse、ワザ わるいぞうふく（超超）20+ = CoinsPerOwnBenchDarkBonusDamage(20)。処理に使う文面は kyuura の印刷の文面（kyuura のカードの画像の照合 IMG-PRN-041 で訂正なし。LD- はない）。カードの補足の欄の「(このカードは公式大会では使うことができません)」は kyuura の記録だけで play_scope は standard のまま（エンジンも変えず、公式大会で使えるとも書かない。kyuura への報告事項）。エンジンは画像・外部のサイトを見ていない（外部照合なし）。レベル（LV.35）・図鑑番号は補っていない"
     }
   }
 }

@@ -148,6 +148,7 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
             raise UnsupportedError("UNSUPPORTED_ATTACK", "v0.13 の約束で書いたワザの実装では、ワザといっしょに使うほかのポケモンの特殊能力を扱わない（エンジンの未対応）")
 
     def body(res: Resolution) -> None:
+        E.freeze_forms(res.state)  # v0.124: 実際の処理も先読み（宣言の前の状態から始める）も、ワザの始めに変身の状態を固定する（CR-TRANSFORM-FROZEN-DURING-ACTION）
         _attack_body(res, cmd.player, res.state.find_pokemon(pid)[1], key, attack, program, once, option, coin_stadium, cmd.attack_power, holders)
 
     # v0.67（docs/secret-plan-preflight-v0.67.md 8 章）: v0.13 の止める関数（``v013_checks``）が知らない選択・役割がある盤面。ワザの型が ``VERIFIED`` でも、それらの安全の
@@ -417,9 +418,8 @@ def baby_rule_holder(res: Resolution, player: int):
     defender = res.state.players[1 - player].active
     if defender is None:
         return None
-    problem = E.transform_baby_question(res.state, defender)
-    if problem is not None:
-        raise problem
+    # v0.124（CR-TRANSFORM-BABY-RULE）: ベイビィポケモンに変身したメタモンにもベイビィポケモンのルールが当てはまる（v0.123 までは BX1 で止めていた）。ルールのコインは、ベイビィとたねで
+    # 別の処理をする効果ではない（たねポケモンでもあることで、コインがなくなりはしない）
     return defender if E.is_baby_in_play(res.state, defender) else None
 
 
@@ -563,6 +563,9 @@ def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
     """ワザの要素のあと: きぜつの判定の窓（同時のきぜつの原因・任意の効果の候補）→ 決定か、きぜつの処理。"""
     state = res.state
     end_attack_power_suppression(res)  # v0.91: 「このワザを使っているあいだ」の特殊能力の抑止の終わり（きぜつの判定の前）
+    # v0.124（CR-TRANSFORM-FROZEN-DURING-ACTION）: ワザによって起こることが終わったので、固定した変身の状態を解除する（きぜつの判定の前。姿が変わって HP がのっているダメージ以下かが
+    # 変わるなら TK1 で止める）
+    E.release_frozen_forms(state)
     settle_scram(res)  # v0.61: ［ずらかる］（ワザの要素のあとに残りHPが「10」になったポケモン。ワザの要素を処理しない経路（こんらん・手順 4 の失敗）も通る）
     res.trace.record(WindowOpened(Window.KO_CHECK, None))
     _time_travel(res)  # v0.117: ［ときわたり］（きぜつのかわりにコインで山札にもどる。ほかのきぜつの判定の効果とかかわるなら TW2）
@@ -972,6 +975,7 @@ def after_power(state: GameState, ctx: Context, *, knock_outs: bool, converted=N
     v0.7 の二重の確かめ）。
 
     渡された状態（コマンドの入口が作った複製）を変える。"""
+    E.release_frozen_forms(state)  # v0.124: 宣言する特殊能力の処理が終わったので、固定した変身の状態を解除する（使用後のきぜつの処理の前。TK1）
     res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace, dormant=dormant_scram(ctx.original))
     state.phase = Phase.MAIN
     if converted is not None:
@@ -1065,6 +1069,7 @@ def after_trainer(state: GameState, ctx: Context) -> None:
     - どちらもなければ何もしない（番のプレイヤーの ``Phase.MAIN`` のまま）
 
     渡された状態（コマンドの入口が作った複製）を変える。"""
+    E.release_frozen_forms(state)  # v0.124: トレーナーカードの効果が終わったので、固定した変身の状態を解除する（使ったあとのきぜつの処理の前。TK1）
     res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace, dormant=dormant_scram(ctx.original))
     state.phase = Phase.MAIN
     _settle_outside_attack(res)  # v0.61: ［ずらかる］（バトル場は穴だらけ!の 10 ダメージで残りHPが「10」になった）
@@ -1226,6 +1231,7 @@ def after_stadium(state: GameState, ctx: Context) -> None:
     ロケット団の爆発ジムだけで、それはベンチに出す操作の中。今の写しではきぜつしない）。バトル場が空いたプレイヤーがいれば（セキチクシティジムでバトル場の「キョウの
     ポケモン」を山札にもどした。きぜつではないのでサイドはない）、勝ち負けの判定（場にポケモンがいない。p.311）→ バトル場に出す（``promote_active``）→ 同じ番
     （``CONTINUE_TURN``）。なければ番のプレイヤーの ``Phase.MAIN``。"""
+    E.release_frozen_forms(state)  # v0.124: スタジアム（トレーナーカード）の効果が終わったので、固定した変身の状態を解除する
     res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace)
     state.phase = Phase.MAIN
     if knocked(res):
