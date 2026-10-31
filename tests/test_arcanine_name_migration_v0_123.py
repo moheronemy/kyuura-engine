@@ -676,3 +676,26 @@ class AuditTest(unittest.TestCase):
         with mock.patch.object(programs.PlusOwnCounters, "value", wrong):
             result = games.play(("K123", "W123"), 90, keep_state=True)
         self.assertTrue([p for p in log_problems(result["state"]) if "PR1-016#1 の基本となるダメージ" in p])
+
+
+class DocumentTest(unittest.TestCase):
+    def test_document_records_the_version(self):
+        text = (ROOT / "docs" / "arcanine-name-migration-v0.123.md").read_text(encoding="utf-8")
+        for needle in ("## 1. 開始点と範囲", "## 2. 写しの元・研究の基準の移行（2fe0bc0 → 74b3ceb）", "generated_value_error", "requires_unregistered", "CR-ARCANINE-PRINTED-NAMES",
+                       "## 4. 名前と、同じ名前の数え方", "## 5. いかりのほのお", "DiscardEnergyBeforeDamagePlusOwnCounters", "RUL-ENERGY-DISCARD-ATTACKS", "## 6. 今回登録しないもの",
+                       "UQ-BILINGUAL-NAME-GLOSS", "held_illegible_print", "0.123.0", "## 13. 検証", "lockstep", "--card-data-commit",
+                       "単体のテストだけ", "4,096", "## 14. 残る制限", "外部照合・カードの画像・ガイドブックの読み直しをしていません", NOW, V0121):
+            self.assertIn(needle, text)
+        self.assertRegex((ROOT / "README.md").read_text(encoding="utf-8"),
+                         r"\n- v0\.123（(今のエンジンの版。)?`kyuura_engine` の版は 0\.123\.0）: 名前の訂正の移行とウィンディ 3 枚")
+        self.assertIn("## v0.123: 名前の訂正の移行とウィンディ 3 枚\n", (ROOT / "docs" / "implementation-status.md").read_text(encoding="utf-8"))
+        self.assertIn("### v0.123: 名前の訂正の移行とウィンディ 3 枚", (ROOT / "docs" / "rules-2000-02-14.md").read_text(encoding="utf-8"))
+        provenance = (ROOT / "docs" / "data-provenance.md").read_text(encoding="utf-8")
+        for needle in ("## v0.123: ウィンディ系の 3 枚", "## v0.123: 写しの元・研究の基準を kyuura 74b3ceb に上げる移行", "2026-10-31（v0.123）の追記"):
+            self.assertIn(needle, provenance)
+        self.assertLess(len((ROOT / "CLAUDE.md").read_text(encoding="utf-8").splitlines()), 200)
+
+
+if __name__ == "__main__":
+    unittest.main()
+
