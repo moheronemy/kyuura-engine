@@ -329,7 +329,8 @@ class NameTest(unittest.TestCase):
         self.assertTrue({"ウィンディ", "カツラのウィンディ", "やさしいウインディ"} <= names)
         self.assertFalse({"ウインディ", "カツラのウインディ"} & names)
         # v0.124 で「GR団のミュウツー」が加わって 510（今の値は tests/test_catalog_contract.py）。v0.123 の版の範囲の名前は 509
-        self.assertEqual(len(names - {"GR団のミュウツー"}), 509)
+        # v0.127 で「_のピカチュウ」「ハマちゃんのヤドキング」が加わって 512
+        self.assertEqual(len(names - {"GR団のミュウツー", "_のピカチュウ", "ハマちゃんのヤドキング"}), 509)
         self.assertEqual(deck.same_name("ウィンディ"), "ウィンディ")
         self.assertNotEqual(deck.same_name("ウィンディ"), deck.same_name("カツラのウィンディ"))
 
