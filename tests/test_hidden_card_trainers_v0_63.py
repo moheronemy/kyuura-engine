@@ -169,7 +169,11 @@ class RegistrationTest(unittest.TestCase):
         for card_id, result in results.items():
             record = sources[card_id]
             with self.subTest(card=card_id):
-                self.assertEqual((record["basis"], record["status"], record["kyuura_records"]), ("kyuura_data", "adopted", records.get(card_id, [])))
+                # v0.123: 研究の基準を 74b3ceb に上げて、カツラのクイズ その3 に UQ-BILINGUAL-NAME-GLOSS の事例が加わった（tests/helpers.py の V0_123_KYUURA_RECORDS_ADDED）
+                from tests import helpers as _helpers
+
+                expected = sorted([*records.get(card_id, []), *_helpers.V0_123_KYUURA_RECORDS_ADDED.get(card_id, ())])
+                self.assertEqual((record["basis"], record["status"], record["kyuura_records"]), ("kyuura_data", "adopted", expected))
                 self.assertEqual(record["play_text"], {"trainer": "kyuura_printed_text"})
                 check = record["external_checks"][0]
                 self.assertEqual((check["site"], check["result"]), ("pcg-search.com", result))

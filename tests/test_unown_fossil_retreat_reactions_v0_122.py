@@ -179,7 +179,9 @@ class RegistrationTest(unittest.TestCase):
         pool = pool_from_extract(read_extract(), registry)
         full = load_card_pool()
         self.assertEqual(full.playable_ids - pool.playable_ids, frozenset(V0122))
-        self.assertEqual(len(pool.playable_ids), 1342)
+        from tests.release_catalog import cards_after
+
+        self.assertEqual(len(pool.playable_ids - cards_after(read_extract(), "0.122")), 1342)  # v0.123 からの組を除いた、v0.122 の時点の数
 
 
 # ---------------------------------------------------------------- 3 章: アンノーン（［ANGER］と［XXXXX］の併用・［METAL df］・［UNDO］・［WANT］）

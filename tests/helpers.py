@@ -2130,6 +2130,28 @@ V0_123_KYUURA_RECORDS_ADDED = {
 }
 
 
+# v0.123（docs/arcanine-name-migration-v0.123.md 2 章）: 段 v0.123 で kyuura が直した登録済みの 2 枚の名前（name.ja の前・あと）。前の版の固定した写しと今の写しを比べるテストは、
+# この 2 枚の name.ja と、付随する notes・corrections だけを前の写しの値にもどして比べる（``without_v0_123_name_fixes``）
+V0_123_NAME_FIXES = {"PMCG1-019": ("ウインディ", "ウィンディ"), "PMCG6-034": ("カツラのウインディ", "カツラのウィンディ")}
+
+
+def without_v0_123_name_fixes(cards: dict, old_cards: dict) -> dict:
+    """今の写しのカード（id → 記録）の、段 v0.123 の 2 枚の name.ja・notes・corrections だけを前の写し ``old_cards`` の値にもどした新しい辞書（``cards`` は変えない）。もどす前の名前が
+    訂正のあとの値・前の写しの名前が訂正の前の値でなければ AssertionError（知らない値を置きかえない）。ほかの欄・ほかのカードはそのまま。"""
+    result = dict(cards)
+    for card_id, (before, after) in V0_123_NAME_FIXES.items():
+        if card_id not in cards or card_id not in old_cards:
+            continue
+        new, old = cards[card_id], old_cards[card_id]
+        assert (new["name"]["ja"], old["name"]["ja"]) == (after, before), card_id
+        reverted = {**new, "name": {**new["name"], "ja": before}, "notes": old["notes"]}
+        reverted.pop("corrections", None)
+        if "corrections" in old:
+            reverted["corrections"] = old["corrections"]
+        result[card_id] = reverted
+    return result
+
+
 def kyuura_records_since_v0_69(card_id: str, before: list | tuple = ()) -> list:
     """v0.68 までの kyuura_records（``before``）に、v0.69 で加わった記録を加えた値（並びは id の順）。v0.97 で加わった記録（``V0_97_KYUURA_RECORDS_ADDED``）・v0.114 で加わった記録
     （``V0_114_KYUURA_RECORDS_ADDED``）・v0.121 で加わった記録（``V0_121_KYUURA_RECORDS_ADDED``）・v0.123 で加わった記録（``V0_123_KYUURA_RECORDS_ADDED``）も加える。"""

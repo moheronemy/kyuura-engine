@@ -773,7 +773,8 @@ class SecretPlanCandidatesTest(unittest.TestCase):
         pool = load_card_pool()
         candidates = engine_module._identity_candidates(pool)
         v072 = cards_after(EXTRACT, '0.71')  # v0.76 の 24 枚も除く。 v0.72: 試すカードの数は固定しない（v0.72 の 43 枚・v0.73 の 18 枚・v0.74 の 13 枚を除いて比べる）
-        self.assertEqual(len(set(candidates) - v072), 572)  # v0.71 で再録のカード（処理の違う 45 種類）が加わった（v0.70 の時点は 527）
+        # v0.123: カツラのウィンディ PMCG6-034 は、同じ登録の値にまとめた GD5-007（SAME_DATA_CARDS_V0_123）と処理の同じカードとしてまとまり、代表は id の小さい GD5-007（v0.70 からの同じデータのカードと同じ選び方）。GD5-007 は後の版のカードとして除くので、ここで数える前の版の範囲から PMCG6-034 が 1 枚減る（処理の違うカードの種類は同じ）
+        self.assertEqual(len(set(candidates) - v072), 572 - 1)  # v0.71 で再録のカード（処理の違う 45 種類）が加わった（v0.70 の時点は 527）
         self.assertEqual(set(candidates) & set(POOL_V0_70), set(POOL_V0_70) - set(E.SAME_DATA_CARDS_V0_70))
         self.assertFalse(set(candidates) & set(E.EQUIVALENT_CARDS))
         basics = [c for c in candidates if pool.get(c).is_basic_pokemon]

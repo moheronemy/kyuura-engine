@@ -341,9 +341,11 @@ class SecretPlanPoolTest(unittest.TestCase):
         pool = load_card_pool()
         candidates = engine_module._identity_candidates(pool)
         v070 = cards_after(read_extract(), '0.69')  # v0.76 の 24 枚も除く。 v0.75 の 15 枚も除く。 v0.71: 再録のカード（処理の違う 45 種類）・v0.72 の 43 枚・v0.73 の 18 枚も除いて比べる
-        self.assertEqual(len(set(candidates) - v070), 457)
+        # v0.123: カツラのウィンディ PMCG6-034 は、同じ登録の値にまとめた GD5-007（SAME_DATA_CARDS_V0_123）と処理の同じカードとしてまとまり、代表は id の小さい GD5-007（v0.70 からの同じデータのカードと同じ選び方）。GD5-007 は後の版のカードとして除くので、ここで数える前の版の範囲から PMCG6-034 が 1 枚減る（処理の違うカードの種類は同じ）
+        self.assertEqual((engine_module._behavior_key(pool, "PMCG6-034"), "GD5-007" in candidates, "PMCG6-034" in candidates), (engine_module._behavior_key(pool, "GD5-007"), True, False))
+        self.assertEqual(len(set(candidates) - v070), 457 - 1)
         self.assertFalse(set(candidates) & set(POOL_V0_69) - {c for c in POOL_V0_69 if c not in TABLE})
-        self.assertEqual(set(candidates) - v070, set(pool.playable_ids) - set(POOL_V0_69) - v070)
+        self.assertEqual(set(candidates) - v070, set(pool.playable_ids) - set(POOL_V0_69) - v070 - {"PMCG6-034"})
         keys = {engine_module._behavior_key(pool, c) for c in candidates}
         for new in POOL_V0_69:
             self.assertIn(engine_module._behavior_key(pool, new), keys, new)

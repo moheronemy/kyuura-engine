@@ -288,7 +288,10 @@ class RegistrationTest(unittest.TestCase):
         old_cards = {c["id"]: c for c in old["cards"]}
         new_cards = {c["id"]: c for c in new["cards"]}
         self.assertEqual(set(new_cards) - set(old_cards), cards_after(read_extract(), "0.76"))
-        self.assertEqual({k: v for k, v in new_cards.items() if k in old_cards}, old_cards)
+        # v0.123: 段 v0.123 で kyuura が直した 2 枚の名前（PMCG1-019・PMCG6-034）は、その欄と付随する notes・corrections だけをもどして比べる（tests/helpers.py の without_v0_123_name_fixes）
+        from tests import helpers as _helpers
+
+        self.assertEqual({k: v for k, v in _helpers.without_v0_123_name_fixes(new_cards, old_cards).items() if k in old_cards}, old_cards)
         # v0.97: 写しの元を 7d3f4ca から 73a1690 に上げた（確かめた移行。docs/unown-research-idfnj-v0.97.md 2 章）。写しの元はコミットのほかは変わらない
         self.assertEqual(old["source"]["commit"], KYUURA_COMMIT)
         self.assertEqual(new["source"], dict(old["source"], commit=SOURCE_COMMIT))
