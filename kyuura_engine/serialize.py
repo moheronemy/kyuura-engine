@@ -159,6 +159,9 @@
   今のカードの並びから求め直せない状態（どのカードがおもてか）なので古い形式に黙って落とさない: 形式 1〜30 は、空でなければ ``ValueError``（空なら形式 1〜30 の書き出しは v0.125 と同じ）。
   並べ替えの途中（相手が並べたあと・使ったプレイヤーの答えの前）は、使用中のトレーナー・決定（``ARRANGE_DECK_TOP``・続きの情報の ``stage``）・ログ（``look_at_deck_top``・
   ``arrange_deck_top``・``flash_face_up``）で表す。プレイヤーが知っている情報は書き出しに別の項目を持たない（観測が状態とログから求める）
+- 32: 31 の ``halt`` に、途中停止の記録 ``interruption``（``interruption.public_record``。中断の種類・停止コード・論点・発生元・対象・止まった要素・必要な数・処理できる数・未完了の
+  処理・在途のカード・ログの位置。なければ null）を加えたもの（v0.127。docs/deferred-shortage-user-promos-v0.127.md 8 章）。途中停止の状態を古い形式に書くと、在途のカード（使用中の
+  トレーナー）を残した終端と通常の停止を区別できないので黙って落とさない: 形式 1〜31 は、途中停止の記録があると ``ValueError``（なければ形式 1〜31 の書き出しは v0.126 と同じ）。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -207,6 +210,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from .interruption import public_record
 from .rng import rng_fingerprint
 from .state import (
     RETALIATION_FIXED,
@@ -265,7 +269,7 @@ from .state import (
     WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -657,6 +661,9 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
                                    for p in state.players for pokemon in p.in_play() for effect in pokemon.persistent_effects):
         # v0.125: 「ふくらむ」の効果（ワザ以外のダメージに当てはめるかが決まらない印）を落とすと、ワザのダメージだけを減らす効果と区別できないので古い形式に書かない
         raise ValueError(f"形式 {format_version} は、ワザ以外のダメージに当てはめるかが決まらない「ふくらむ」の効果を表せない（format_version=30 を使う）")
+    if format_version < 32 and state.halt is not None and state.halt.interruption is not None:
+        # v0.127: 途中停止の状態（在途のカードを残した終端）は、古い形式では通常の停止と区別できないので書かない
+        raise ValueError(f"形式 {format_version} は、途中停止の状態（数量のチェック地点で止めた終端）を表せない（format_version=32 を使う）")
     if format_version < 31 and state.face_up_deck:
         # v0.126: おもてを上にした山札のカード（フラッシュ）は、今のカードの並びから求め直せないので古い形式に書かない（落とすと、うらの山札と区別できない）
         raise ValueError(f"形式 {format_version} は、おもてを上にして山札に置かれたカード（フラッシュ）を表せない（format_version=31 を使う）")
@@ -719,7 +726,8 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         },
         "halt": None
         if state.halt is None
-        else {"code": state.halt.code, "message": state.halt.message, "references": list(state.halt.references)},
+        else {"code": state.halt.code, "message": state.halt.message, "references": list(state.halt.references),
+              **({"interruption": None if state.halt.interruption is None else public_record(state.halt.interruption)} if format_version >= 32 else {})},
         "log": [_plain(dict(event)) for event in state.log],
     }
     if format_version == 1:

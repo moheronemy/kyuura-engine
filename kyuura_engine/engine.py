@@ -305,6 +305,7 @@ from .state import (
 from .zones import DISGUISE_REVERT, attach_energy_from_hand, designate_face_down, discard_from_play, draw_cards, enter_play, place_stadium, remove_disguise, reveal_face_down, shuffle_deck
 from . import zones as _zones
 from . import faceup  # v0.126: おもての山札（フラッシュ）
+from .interruption import DeferredShortage, interrupt, interruption_problems  # v0.127: 途中停止
 from . import cards as cards_module
 from .coins import CoinSide, flip_coins
 
@@ -787,6 +788,10 @@ def _apply_once(state: GameState, command, context: resolution.Context | None, *
         # v0.81a（MH2）: 処理の途中で、最大HPを決まった数にする効果と大きくする効果が同時にはたらく状態の最大HPを読んだ（その状態になる）。決められない姿と同じく、
         # このコマンドを受け付けない（答えのない決定は、その前の状態で止める）
         order_stop = (error.code, error.message)
+    except DeferredShortage as shortage:
+        # v0.127（docs/deferred-shortage-user-promos-v0.127.md 5 章）: 共通の数量処理のチェック地点で、説明の数が処理できる数より多い。従来の拒否（入力を変えない例外）ではなく、
+        # 実際のコインとそこまでの処理を残した終端の状態を返す（ここだけで捕まえる。一般の UnsupportedError・問い・内部エラーは捕まえない）
+        return _interrupted(state, new, shortage, verify)
     if order_stop is None and (state.face_up_deck or new.face_up_deck):
         # v0.126（docs/flash-faceup-deck-v0.126.md 6 章）: おもてのカード（フラッシュ）のある山札が、読み方で結果・要る情報が分かれる変わり方をしたら受け付けない（FU3〜FU6・
         # エンジンの未対応）。決定への答えで、どの答えでもそうなるなら、答えのない決定を残さずにその前の状態で対戦を止める。受け付けるなら、山札をはなれたカードの印を消し、
@@ -883,6 +888,22 @@ def _apply_once(state: GameState, command, context: resolution.Context | None, *
         stop = _reaction_dead_end(new, context)
         if stop is not None:
             raise stop
+    if verify:
+        _require_integrity(new)
+    return new
+
+
+def _interrupted(state: GameState, new: GameState, shortage: DeferredShortage, verify: bool) -> GameState:
+    """v0.127: 途中停止の終端の状態（``interruption.interrupt``）。在途のカード（使用中のトレーナー）・固定した変身の姿は片付けず、番・ポケモンチェック・サイドを進めない
+    （コマンドの終わりの解除・トラッシュ・決定の確かめはしない）。おもての山札（v0.126）は、止める時点までに変わった山札を通常と同じに分類する（読み方で分かれる変わり方なら、
+    途中停止にせずに受け付けない。山札の印は通常と同じに整える）。ワザ以外で受けたことの比べ（v0.62）は通常と同じに閉じる。"""
+    if state.face_up_deck or new.face_up_deck:
+        face_up_stop = faceup.command_problem(state, new)
+        if face_up_stop is not None:
+            raise UnsupportedError(*face_up_stop)
+        faceup.settle(state, new)
+    close_probe(new)
+    interrupt(new, shortage)
     if verify:
         _require_integrity(new)
     return new
@@ -1040,6 +1061,8 @@ def _decision_has_unstopped_answer(state: GameState, context: resolution.Context
                                                                                               context.catalog if context else None))
         except (IllegalActionError, UnsupportedError):
             continue
+        except DeferredShortage:
+            return True  # v0.127: 途中停止の終端になる答え（受け付けられる答え。止めた状態を返す）
         try:
             if (_fresh_form_problem(state, trial) is None and not max_hp_drops(state, trial) and not scram_restored(state, trial)
                     and faceup.command_problem(state, trial) is None):  # v0.126: おもての山札の止め方（FU3〜FU6）も受け付けられない答え
@@ -1075,6 +1098,8 @@ def _trainer_dead_end(before: GameState, after: GameState, context: resolution.C
                 continue
             except IllegalActionError:
                 continue
+            except DeferredShortage:
+                return True  # v0.127: 途中停止の終端になる続き（受け付けられる。止めた状態を返す）
             stop = _fresh_form_problem(before, trial)
             if stop is None and max_hp_drops(before, trial):
                 error = max_hp_drop_error(max_hp_drops(before, trial))
@@ -2715,10 +2740,16 @@ def check_invariants(state: GameState) -> list[str]:
     problems.extend(_stadium_problems(state))  # v0.57
     problems.extend(_recall_problems(state))  # v0.49
     if phase in TERMINAL_PHASES:
+        # v0.127: 途中停止（``Halt.interruption``）だけは、在途のカード（使用中のトレーナー）を残す。その条件は ``interruption_problems`` が専用に確かめる（通常の停止・終局は緩めない）
+        interrupted = phase is Phase.HALTED and state.halt is not None and state.halt.interruption is not None
         if state.decision is not None:
             problems.append("対戦が終わっているのに、決定が残っている")
-        if state.trainer_in_use is not None or state.trainer_stack:
+        if (state.trainer_in_use is not None or state.trainer_stack) and not interrupted:
             problems.append("対戦が終わっているのに、使用中のトレーナーが残っている")
+        if state.halt is not None and state.halt.interruption is not None and phase is not Phase.HALTED:
+            problems.append(f"途中停止の記録があるのに {phase.value} になっている")
+        if interrupted:
+            problems.extend(interruption_problems(state))
         if any(group.kind != SET_ASIDE_HAND for group in state.set_aside):
             problems.append("対戦が終わっているのに、トレーナーの効果の途中に置いたカード（挑戦状・クイズ）が残っている")
         if phase is Phase.HALTED and state.halt is None:

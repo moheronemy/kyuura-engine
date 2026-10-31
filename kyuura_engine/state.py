@@ -2379,12 +2379,44 @@ class GameResult:
 
 
 @dataclass(frozen=True)
+class Interruption:
+    """v0.127（docs/deferred-shortage-user-promos-v0.127.md 5 章）: 共通の数量処理の明示的なチェック地点で、説明の数（``required``。コインの「おもて」の数）が処理できる数
+    （``available``）より多いと分かったので、その要素を処理せずに対戦を止めた記録（途中停止。``Halt.interruption``）。従来の拒否（入力の状態を変えない例外）とは別の、終端の状態。
+
+    - そこまでの処理（宣言・選んだ対象・実際のコイン・ナツメのESPの最後の選択・乱数の位置・ログ）は状態にそのまま残る。止まった要素と、そのあとの処理（``pending``）はしていない
+    - ``in_transit``: 使用中のトレーナーなど、処理の途中で場所が変わったまま止まったカード（使用中のトレーナー ``trainer_in_use`` と外側の使用 ``trainer_stack`` のカード）。
+      カードを片付けず、番・ポケモンチェック・サイドを進めない
+    - ``kind``・``code``・``kyuura_issue`` は中断の種類・停止コード・kyuura の論点。``source`` は発生元（ワザ・トレーナーの登録のキー）、``target_owner``・``target`` は対象の持ち主と
+      場のポケモンの番号、``element`` は止まった要素、``log_index`` は止めたときのログの長さ（このあとに ``halted`` のログだけがある）
+    - どれも全員に見える情報（コインの「おもて」の数・場のエネルギーカードの枚数・止まった処理の種類）。診断用の文は ``Halt.message``
+    """
+
+    kind: str
+    code: str
+    kyuura_issue: str
+    source: str
+    player: int
+    target_owner: int
+    target: int
+    element: str
+    required: int
+    available: int
+    pending: tuple[str, ...]
+    in_transit: tuple[int, ...]
+    log_index: int
+
+
+@dataclass(frozen=True)
 class Halt:
-    """未解決の裁定に当たって対戦を止めたときの理由。"""
+    """未解決の裁定に当たって対戦を止めたときの理由。
+
+    v0.127: ``interruption`` は途中停止の記録（``Interruption``。共通の数量処理のチェック地点で止めたときだけ）。None なら従来の停止（v0.126 までと同じ値。項目のない古い状態の写しも
+    None になる）。"""
 
     code: str
     message: str
     references: tuple[str, ...]
+    interruption: Interruption | None = None
 
 
 @dataclass(frozen=True)

@@ -124,6 +124,7 @@ from .effects import (
     COLORS, attack_of, available_attacks, current_form, hand_revealed_by, max_hp, powers_of, resistance_of, type_readings, type_shift_determined, weakness_of,
     attached_units, card_color_readings,
 )
+from .interruption import public_record
 from .serialize import basic_entry_record, super_transform_record, history_record, poison_mist_record, replacement_poison_record, turn_record
 from .state import GameState, PokemonInPlay
 
@@ -545,6 +546,8 @@ def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
         "replacement_poisons": [replacement_poison_record(record) for record in state.replacement_poisons],
         "decision": _decision(state, viewer),
         "result": None if state.result is None else {"outcome": state.result.outcome, "winner": state.result.winner},
+        # v0.127（docs/deferred-shortage-user-promos-v0.127.md 8 章）: 途中停止の状態だけ、その記録（全員に見える項目。ワザ・トレーナーを使い終えた盤面ではないことを示す）を加える
+        **({"interruption": public_record(state.halt.interruption)} if state.halt is not None and state.halt.interruption is not None else {}),
     }
 
 
