@@ -203,14 +203,21 @@ class RegistrationTest(unittest.TestCase):
                     self.assertEqual(entry.effect.check(definition.powers[index]), [])
 
     def test_purin_is_not_registered_and_excluded_cards_stay_out(self):
-        """プクリン（ES1-027）は文面の確認待ちで登録しない（採用の記録・保留の記録もない）。依頼の対象外のカードも登録しない。"""
+        """プクリン（ES1-027）は文面の確認待ちで登録しない（採用の記録・保留の記録もない）。依頼の対象外のカードも登録しない。v0.122 で登録した 9 枚（GD3-003 など）は、v0.119 の
+        範囲（v0.122 より前の写しの組）に入っていないことで確かめる（今の対応の有無は v0.122 のテスト）。"""
+        from tests.release_catalog import cards_before
+
         pool = load_card_pool()
         sources = json.loads((ROOT / "kyuura_engine" / "data" / "card_sources.json").read_text(encoding="utf-8"))["cards"]
-        for card in ("ES1-027", "neo4-082", "neo4-108", "ES2-005", "QSG-055", "GD3-003", "ES2-011", "ES2-028", "ES2-029", "ES3-018", "PRN-030", "PRN-039",
-                     "PRN-040", "PRN-045", "PRN-041"):
+        for card in ("ES1-027", "neo4-082", "neo4-108", "ES2-005", "QSG-055", "PRN-041"):
             with self.subTest(card=card):
                 self.assertNotIn(card, pool.playable_ids)
                 self.assertNotIn(card, sources)
+        before_v0_122 = cards_before(read_extract(), "0.122")
+        for card in ("GD3-003", "ES2-011", "ES2-028", "ES2-029", "ES3-018", "PRN-030", "PRN-039", "PRN-040", "PRN-045"):
+            with self.subTest(card=card):
+                self.assertNotIn(card, before_v0_122)
+                self.assertIn("v0.122 で加えた", sources[card]["notes"])
 
     def test_unregistered_without_the_v0_119_entries(self):
         """v0.119 の登録を除くと、対戦に使えなくなるのはちょうどこの 11 枚（ほかのカードは失われない）。"""

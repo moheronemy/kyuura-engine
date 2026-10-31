@@ -9,8 +9,8 @@
 | 項目 | 内容 |
 |---|---|
 | 元のリポジトリ | https://github.com/moheronemy/kyuura |
-| 元のコミット | `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`（v0.114 から。kyuura のブランチ `claude/baby-data-engine-v0113-handover` の固定コミット。下の v0.114 の章。v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`）。それより前は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69〜v0.96。kyuura の main。形式 3 のカードデータ。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`（kyuura docs/engine-readiness.md が「基準にする調査データ」としたコミット。過去の原典照合の記録 card_verification.json はこのコミットの写しと照らした履歴）。下の v0.69 の章） |
-| 研究の基準 | `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`（v0.114 から。写しの元と同じ。v0.97〜v0.113 は 73a1690）。それより前は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69〜v0.96。写しの元と同じ。下の v0.69 の章）。v0.68 までは `3f349085645f47d0649a6cacece3680caeae50bf`（2026-10-15 から。ブランチ `claude/cool-ptolemy-5vtgsg`。裁定・論点・最新の説明・照合の記録を照らすコミット。カードの写しは作り直していない。[verified-record-reuse.md](verified-record-reuse.md)）。v0.18a〜v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。[research-alignment-v0.18a.md](research-alignment-v0.18a.md)） |
+| 元のコミット | `74b3ceb883dd815495d13b9987433fb14b36e44d`（v0.123 から。kyuura のブランチ `claude/v0122-names-text-trainer-procedures` の固定コミット。下の v0.123 の移行の章。v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`（kyuura のブランチ `claude/baby-data-engine-v0113-handover` の固定コミット。下の v0.114 の章）、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`）。それより前は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69〜v0.96。kyuura の main。形式 3 のカードデータ。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`（kyuura docs/engine-readiness.md が「基準にする調査データ」としたコミット。過去の原典照合の記録 card_verification.json はこのコミットの写しと照らした履歴）。下の v0.69 の章） |
+| 研究の基準 | `74b3ceb883dd815495d13b9987433fb14b36e44d`（v0.123 から。写しの元と同じ。v0.121〜v0.122 は 2fe0bc0、v0.114〜v0.120 は e519b99、v0.97〜v0.113 は 73a1690）。それより前は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69〜v0.96。写しの元と同じ。下の v0.69 の章）。v0.68 までは `3f349085645f47d0649a6cacece3680caeae50bf`（2026-10-15 から。ブランチ `claude/cool-ptolemy-5vtgsg`。裁定・論点・最新の説明・照合の記録を照らすコミット。カードの写しは作り直していない。[verified-record-reuse.md](verified-record-reuse.md)）。v0.18a〜v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。[research-alignment-v0.18a.md](research-alignment-v0.18a.md)） |
 | 元のファイル | `data/cards.json`（schema_version 3。v0.68 までは 2） |
 | 生成 | `scripts/extract_kyuura_cards.py`（`git show <コミット>:data/cards.json` で読むので、kyuura の作業ツリーの状態に左右されない。kyuura は読むだけで変更しない） |
 | 照合の記録 | `kyuura_engine/data/card_verification.json`（このリポジトリの作業記録。2026-10-14 までの『オフィシャルブック2000』との照合。履歴として残し、書き換えない） |
@@ -647,6 +647,9 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
    すべて同じ処理になります。」と書くので、同じ印刷の文面のヒトカゲ（PMCG1-014）・リザード（PMCG1-017）・ブーバー（PMCG1-020）・キュウコン（PMCG1-022）も `cards` に挙げるかを確かめてください。
 2. ヒトカゲの照合の記録（CC-PMCG1-014-P63）は「ひのこ」の最新の説明の記録（LD-）を作っていません。RUL- の notes に文面があります。
 3. pcg-search.com のカードページの見出しはウインディを「ウィンディ」（小さい「ィ」）と書き、kyuura は「ウインディ」です（同じページの進化ラインの欄は「ウインディ」）。処理に影響しないので写しは直していません。
+   - 2026-10-31（v0.123）の追記: 解決しました。kyuura が 2026-10-30 に同じカードの画像（pcg-search.com・なぞのばしょ。画像の照合の記録 IMG-PMCG1-019）で印刷が「ウィンディ」（小さい「ィ」）で
+     あることを確かめ、訂正 FIX-PMCG1-019-NAME-JA（生成の値の誤り）で直しました。v0.123 の写しの元 74b3ceb の名前は印刷どおりです（下の v0.123 の移行の章）。この報告の時点では、エンジンも kyuura も
+     画像を読んでおらず、どちらが印刷の表記かを決めていませんでした（上の文は当時のまま）。エンジンは今回も画像を見ていません。
 
 
 ## v0.31 で加えたポケモン 29 枚（v0.30 で保留した 22 枚と進化元 7 枚）
@@ -670,6 +673,9 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 2. ピッピ（PMCG1-067）の「ゆびをふる」の最新の説明は card_differences の記録にだけあり、LD- の記録がありません。
 3. pcg-search.com との表記の違い: ファイヤー（化石の秘密 PMCG3-009）のワザ名（サイトは「ゴットバード」、kyuura は「ゴッドバード」）、カツラのウインディ
    （PMCG6-034。サイトの見出しは「カツラのウィンディ」）。ほかの違い（サイトの誤記と見られるもの）は採用の記録の `external_checks` にあります。
+   - 2026-10-31（v0.123）の追記: カツラのウインディの名前は解決しました。kyuura が 2026-10-30 に同じカードの画像（pcg-search.com。IMG-PMCG6-034）で印刷が「カツラのウィンディ」であることを
+     確かめ、訂正 FIX-PMCG6-034-NAME-JA（生成の値の誤り）で直しました（v0.123 の写しの元 74b3ceb）。この報告の時点では画像を読んでいませんでした（上の文は当時のまま）。ファイヤーのワザ名は
+     今回の対象の外です。
 4. エンジンの新しい未解決 HC1〜HC10 は kyuura に論点がありません（研究の対応表の `not_in_kyuura`）。T27・C34/C35・G40・P19・P32 は、kyuura の未解決の一覧で
    コードのない行です（エンジンが停止コードを付けた）。
 
@@ -1971,6 +1977,64 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - kyuura への報告事項: 9 枚の `engine_status` は今回の登録を写すと `registered`。エンジンの新しい問い HZ1・XP1・SX1・SX2・TN1 は kyuura に対応する記録がない（HZ1 は UQ-UP-TO-ZERO-CHOICE、
   SX1・TN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形の別のカードの問い）。v0.66 の「ナツメのESPと「うら」が出るまでのコインは起こらない」はエンジンの前提の誤りで、研究の論点ではない（kyuura は
   変えていない）。
+
+## v0.123: ウィンディ系の 3 枚
+
+[arcanine-name-migration-v0.123.md](arcanine-name-migration-v0.123.md) の 3 章・12 章（移行は下の節と 2 章）。
+
+- 写しの組 `pool_v0_123`（3 枚。カツラのウィンディ GD5-007・ウィンディ IP2-032・PR1-016）を加え、写しの作り直しの道具で作った（手で直していない）。3 枚の値は 2fe0bc0 と同じ（kyuura の訂正はない）。
+  v0.122 までの 1,355 枚の値は、移行の段 v0.123 の 2 枚の名前のほかは変わっていない。
+- 3 枚の採用の記録（`kyuura_commit` 74b3ceb・記録した日 2026-10-31・外部照合なし。記録 1,268 → 1,271）。処理に使う文面は、説明文のあるワザ 5 がどれも kyuura の印刷の文面（研究の対応表の
+  `adopted_printed_text` 1,383 → 1,388）。`kyuura_records` は研究の基準のコミットでカードを指す記録とちょうど同じ（3 枚とも CR-ARCANINE-PRINTED-NAMES）。
+- GD5-007 は名前の訂正のあと PMCG6-034 と処理に使う欄が id のほかすべて同じ（kyuura の同じカードの組 SC-GD5-007）。登録の値を共有し、採用の記録は id ごとに持つ。ほのおのあらしのトラッシュの時点は
+  v0.31 の RUL-ENERGY-DISCARD-ATTACKS の範囲の読み方の再利用で、新しい公式の裁定・原典の確認ではない。
+- 名前は kyuura の画像の照合（IMG-GD5-007・IMG-IP2-032・IMG-PR1-016）の再利用で、エンジンは画像を見ていない。欠けている図鑑番号・レベルは補っていない。
+- 対象外: ナッシー[Exeggutor] PR1-075・PR1-077、ヤドキング neo1-049、フラッシュ ES2-035、とりかえっこプリーズ PR1-027、プクリン ES1-027（6 章）。登録・保留の記録は加えていない。
+- kyuura への報告事項: 3 枚の `engine_status` は今回の登録を写すと `registered`。エンジンの新しい停止コードはない。
+
+## v0.123: 写しの元・研究の基準を kyuura 74b3ceb に上げる移行
+
+[arcanine-name-migration-v0.123.md](arcanine-name-migration-v0.123.md) の 2 章。この節は、カードの登録を加えない移行だけのコミットの記録です。
+
+- 写しの元・研究の基準を kyuura `2fe0bc042ce187d191843819262f8036abbb343d` から `74b3ceb883dd815495d13b9987433fb14b36e44d`（ブランチ `claude/v0122-names-text-trainer-procedures`。v0.122 のあとの
+  名前・文面とトレーナーの手順の調査。kyuura main には未取り込み）に上げた。移行の連鎖に段 v0.123 を加え、v0.121 の段のあとを 2fe0bc0 に固定した（過去の段・採用したときのデータのコミット・
+  記録した日・外部照合の確認日と照らしたコミット・当時の違いの値・`ENGINE_USER_CORRECTIONS` は書き換えていない）。採用の記録の `data_migrations` に 5 段目。
+- `data/cards.json` 全 1,377 件で値が変わったのは、写しの組の登録済みの 2 枚の名前だけ（PMCG1-019「ウインディ」→「ウィンディ」・PMCG6-034「カツラのウインディ」→「カツラのウィンディ」）と、
+  同じ 2 枚の `notes`・`corrections`。ほかの 1,375 枚（写しの 1,353 枚をふくむ）は同じ。エンジンが使う欄で変わったのは `name.ja` だけで、ワザの文面は同じ。
+- 2 件の訂正（FIX-PMCG1-019-NAME-JA・FIX-PMCG6-034-NAME-JA）の根拠は kyuura のカードの画像の照合（IMG-PMCG1-019 は pcg-search.com となぞのばしょの画像。独立した 2 枚に数えない。
+  IMG-PMCG6-034 は pcg-search.com の画像）、種類は生成の値の誤り（`generated_value_error`。kyuura の生成が種の名前の書き方「ウインディ」で作った値）。写しの道具は、この種類を根拠が画像の照合・
+  欄が `name.ja`・前とあとが違う文字列の訂正だけ受け付ける（転記の誤りに書きかえていない。未知の種類は受け付けない）。画像を見たのは kyuura で、エンジンは見ていない。
+- 2 枚の採用の記録の `name_ja` を写しの名前にそろえ、「どちらが印刷の表記か」の報告事項（論点・v0.30 と v0.31 の節の 3）に、2026-10-31 の解決を追記した（当時の問いと違いの値は残す）。
+- 研究の記録: 裁定 5（CR-ARCANINE-PRINTED-NAMES・CR-MIND-GAMES-SCOPE・CR-FLASH-PROCEDURE・CR-SWAP-PLEASE-PROCEDURE・CR-SWAP-PLEASE-USE-CONDITION）・論点 5（UQ-BILINGUAL-NAME-GLOSS・
+  UQ-MIND-GAMES-OPTIONAL・UQ-MIND-GAMES-TRAINER-STEP・UQ-FLASH-FACE-UP-DECK・UQ-SWAP-PLEASE-OWNERSHIP）が加わり、既存の UQ-STATED-COUNT-SHORT（フラッシュ）・UQ-CHAOS-GYM-BORROWED-TURN
+  （とりかえっこプリーズ）に事例が加わった。kyuura の論点 74 → 79（エンジンの停止コード 292・未解決の裁定 293 とは別の数）。事例 25 件を `kyuura_cases_without_engine_ruling` に結んだ
+  （登録していないカードの事例 10 件は `unregistered`、登録したカードの事例で、その場面が登録していない別のカードのときだけ起こる 15 件は新しい扱い `requires_unregistered`）。新しい停止コードは
+  加えていない。登録済みの 17 枚の `kyuura_records` に、そのカードを指す新しい id を加えた（記録を読み直したのではなく、id の対応を直した）。
+- 対象外: やさしいウインディ（neo4-021）の名前（kyuura も画像を確かめていない。CR-ARCANINE-PRINTED-NAMES の `related_cards` に挙がるので `kyuura_records` だけを合わせた）、リムーブ禁止ジムの
+  「エネルギーリムーブ／エネルギー・リムーブ」の書き方。
+- kyuura への報告事項: kyuura の登録表の写しは v0.113 のまま（`engine_status` を次版の候補の正本にしていない）。エンジンは新しい論点のカード（ナッシー[Exeggutor]・ちえくらべ・フラッシュ・
+  とりかえっこプリーズ）を登録していないので、登録したカードの事例（ナッシー・スロットゲーム・カツラのクイズ その3・錯乱ジム・リムーブ禁止ジムなど）は今の対応カードでは起こらない。
+
+## v0.122: アンノーンの併用・化石の進化履歴・退却時の反応の 13 枚
+
+[unown-fossil-retreat-reactions-v0.122.md](unown-fossil-retreat-reactions-v0.122.md) の 2 章・12 章。写しの元・研究の基準は kyuura 2fe0bc0 のまま（移行の段を加えていない）。
+
+- 写しの組 `pool_v0_122`（13 枚。アンノーンM neo2-027・U neo2-028・A neo2-030・W neo4-064、マチスのライチュウ GD3-003、オムナイト ES2-011・ES3-018、カブト ES2-028、プテラ ES2-029、
+  カポエラー PRN-030、わるいフシギソウ PRN-039、わるいフシギバナ PRN-040、わるいオニドリル PRN-045）を加え、写しの作り直しの道具で作った（手で直していない）。段 v0.121 で kyuura が
+  当てはめた訂正のうち 12 枚のもの（アンノーン M・U・A のルール文、8 枚の進化元、PRN-030 の段階。kyuura がカードの画像で確かめた）を `KYUURA_CORRECTIONS`（段 v0.121）に加えた。
+  v0.121 までの 1,342 枚の値は変わっていない。
+- 道具の確かめを狭く広げた: GD3-003 の台帳の `after` の英語名が null でカードの記録が `"Lt. Surge's Pikachu"` の違い（日本語は同じ。`card_record_after`・`kyuura_inconsistency`）、
+  画像の照合の `print_values` の `.ja` の欄、同じ段で画像の照合が確かめた欄の `data_gaps` からの削除（GD3-003 の段階・PRN-030 の進化元。値は変わらない）。
+- 13 枚の採用の記録（`kyuura_commit` 2fe0bc0・記録した日 2026-10-30・外部照合なし。記録 1,255 → 1,268）。処理に使う文面は、説明文のあるワザ 10 と特殊能力 8 が kyuura の印刷の文面
+  （研究の対応表の `adopted_printed_text` 1,365 → 1,383）。説明文のない 7 つのワザは文面・出典を書いていない。`kyuura_records` は研究の基準のコミットでカードを指す記録とちょうど同じ
+  （アンノーンM だけが CR-UNOWN-DF-AT-MOST-ONE・CR-UNOWN-DF-PROTECTS-OWN-UNOWN・UQ-SELF-EXCLUDING-POWER-COPIES）。
+- アンノーンM: CR-UNOWN-DF-* の 2 件は主な対象が D・N で、M を `related_cards` に挙げつつ調査の対象外と書くので、M 自身の独立した裁定として引いていない（印刷の文面・一般の規定・D/N と
+  同じ処理として採用）。UQ-SELF-EXCLUDING-POWER-COPIES の M の事例は既存の DF1 に結んだ。
+- kyuura の画像の照合（IMG-）は kyuura の記録として再利用し、エンジン自身の原典の確認に数えていない。エンジンは外部照合・カードの画像・ガイドブックの読み直しをしていない。
+- 対象外: kyuura の写しの外に残る 22 枚（neo 3・それ以外 19）。登録・保留の記録は加えていない。
+- kyuura への報告事項: 13 枚の `engine_status` は今回の登録を写すと `registered`。FIX-GD3-003-EVOLVES-FROM の台帳とカードの記録の英語名の違い。段 v0.121 で訂正の欄ではないが画像の照合で
+  `data_gaps` から消えた欄（GD3-003 の段階・PRN-030 の進化元）。エンジンの新しい問い FE3・PM1・PM2・WT1・GU1・FS1・PW5・VL1 は kyuura に対応する記録がない（WT1・GU1・FS1 は
+  UQ-CARD-USE-WITHOUT-TARGET と同じ形、PW5 は PT1 と同じ形の別の問い）。
 
 ## v0.121: 手札からの登場とワザの使用条件の 9 枚
 

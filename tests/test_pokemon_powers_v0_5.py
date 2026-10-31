@@ -161,8 +161,12 @@ ALL_POWERS = (# v0.87（docs/movement-damage-reactions-v0.87.md）: ［どくの
               PowerKey("ES1-003", 0),  # v0.102（docs/weakness-resistance-powers-v0.102.md）: ［グリーンシールド］
               PowerKey("ES1-005", 0),
               PowerKey("ES1-021", 0),  # v0.102: ［ニュートラルダメージ］
-              PowerKey("ES1-034", 0), PowerKey("ES2-003", 0), PowerKey("ES2-012", 0), PowerKey("ES2-014", 0),
+              PowerKey("ES1-034", 0), PowerKey("ES2-003", 0),
+              PowerKey("ES2-011", 0),  # v0.122（docs/unown-fossil-retreat-reactions-v0.122.md）: ［げんしのゆめ］
+              PowerKey("ES2-012", 0), PowerKey("ES2-014", 0),
+              PowerKey("ES2-028", 0),  # v0.122: ［かせきか］
               PowerKey("ES3-007", 0),  # v0.119（docs/damage-reactions-poison-sleep-v0.119.md）: ［ポイズンミスト］
+              PowerKey("ES3-018", 0),  # v0.122: ［かせきのみちびき］
               PowerKey("ES3-025", 0),  # v0.120（docs/fossil-basic-virtual-attacks-v0.120.md）: ［にんぎょうつかい］
               PowerKey("GD2-007", 0),  # v0.119: ［シェルアーマー］
               PowerKey("GD3-009", 0),
@@ -191,6 +195,7 @@ ALL_POWERS = (# v0.87（docs/movement-damage-reactions-v0.87.md）: ［どくの
               PowerKey("PRN-024", 0),
               PowerKey("PRN-034", 0),  # v0.97: ［JOIN］
               PowerKey("PRN-035", 0),  # v0.96: ［REASSURE］
+              PowerKey("PRN-039", 0),  # v0.122: ［つるでひっぱる］
               PowerKey("QSG-003", 0),  # v0.102: ［グリーンシールド］（ES1-003 と同じデータ）
               PowerKey("QSG-023", 0),
               PowerKey("QSG-030", 0),  # v0.102: ［ニュートラルダメージ］（ES1-021 と同じデータ）
@@ -206,6 +211,7 @@ ALL_POWERS = (# v0.87（docs/movement-damage-reactions-v0.87.md）: ［どくの
               PowerKey("neo2-019", 0),  # v0.117: ［かえるのうた］
               # v0.86: ［エナジーしんか］（neo2-049）・［おたけび］・［クリスタルボディ］・［いなびかり］・［タマゴうみ］・［とつぜんかみつく］
               PowerKey("neo2-023", 0), PowerKey("neo2-025", 0), PowerKey("neo2-026", 0),  # v0.97: ［INCREASE］・［DARK df］・［FIND］
+              PowerKey("neo2-027", 0), PowerKey("neo2-028", 0), PowerKey("neo2-030", 0),  # v0.122: ［METAL df］・［UNDO］・［ANGER］
               PowerKey("neo2-032", 0),  # v0.120: ［かせきのふっかつ］
               PowerKey("neo2-044", 0),  # v0.87: ［まきびし］（同じ行の下の neo3-009 は v0.87 の［やけのこり］）
               PowerKey("neo2-049", 0),
@@ -237,6 +243,7 @@ ALL_POWERS = (# v0.87（docs/movement-damage-reactions-v0.87.md）: ［どくの
               PowerKey("neo4-061", 0),  # v0.95: ［わるぢえ］
               PowerKey("neo4-062", 0),  # v0.98: ［GIVE］
               PowerKey("neo4-063", 0),  # v0.99: ［HELP］
+              PowerKey("neo4-064", 0),  # v0.122: ［WANT］
               PowerKey("neo4-065", 0),  # v0.118: ［XXXXX］
               PowerKey("neo4-066", 0),  # v0.119: ［ふかいねむり］
               PowerKey("neo4-077", 0), PowerKey("neo4-094", 0), PowerKey("neo4-095", 0),
@@ -353,7 +360,7 @@ class PowerRegistryTest(unittest.TestCase):
         # v0.69 は 68（拡張パック以外の商品の同じカードの新しい id 10。tests/helpers.py の V0_69_POWER_CARDS）
         # v0.71 は 74（拡張パック以外の商品の再録のカード 6。tests/helpers.py の V0_71_POWER_CARDS）
         self.assertEqual(tuple(k.card_id for k in DEFAULT_EFFECTS.power_keys() if k not in ALL_POWERS), tuple(sorted(V0_69_POWER_CARDS + V0_71_POWER_CARDS)))
-        self.assertIn("171 powers", repr(DEFAULT_EFFECTS))  # v0.120 で 5 を加えた  # v0.119 で 7 を加えた  # v0.118 で 3 を加えた  # v0.117 で 8 を加えた  # v0.114 で 2 を加えた  # v0.103 で 2 を加えた  # v0.102 で 4 を加えた  # v0.101 で 1 を加えた  # v0.99 で 2 を加えた  # v0.98 で 4 を加えた  # v0.97 で 5 を加えた  # v0.96 で 7 を加えた  # v0.95 で 2 を加えた  # v0.88 で 5 を加えた  # v0.87 で 14 を加えた  # v0.86 で 12 を加えた
+        self.assertIn("179 powers", repr(DEFAULT_EFFECTS))  # v0.122 で 8 を加えた  # v0.120 で 5 を加えた  # v0.119 で 7 を加えた  # v0.118 で 3 を加えた  # v0.117 で 8 を加えた  # v0.114 で 2 を加えた  # v0.103 で 2 を加えた  # v0.102 で 4 を加えた  # v0.101 で 1 を加えた  # v0.99 で 2 を加えた  # v0.98 で 4 を加えた  # v0.97 で 5 を加えた  # v0.96 で 7 を加えた  # v0.95 で 2 を加えた  # v0.88 で 5 を加えた  # v0.87 で 14 を加えた  # v0.86 で 12 を加えた
 
     def test_power_is_not_an_attack(self):
         """ポケモンパワーはワザ（AttackEffect）の一種ではない。識別子もワザ（AttackKey）とは別で、同じカードの同じ位置のワザ

@@ -22,6 +22,7 @@ v0.4c 以降の 2 進化ポケモン。v0.11 はサカキのワンリキー・�
   修正は、当てはめた移行の段（``migration``）の前・あとのコミットの値で確かめ、写す欄は段ごとに比べます（docs/unown-research-idfnj-v0.97.md 2 章）。
 - v0.114 で、段 v0.114（73a1690 → e519b99）を加えました（docs/baby-rules-evolution-v0.114.md 2 章）。
 - v0.121 で、段 v0.121（e519b99 → 2fe0bc0）を加えました（docs/hand-bench-attack-conditions-v0.121.md 3 章）。
+- v0.123 で、段 v0.123（2fe0bc0 → 74b3ceb）を加えました（docs/arcanine-name-migration-v0.123.md 2 章）。
 
 使い方::
 
@@ -39,10 +40,11 @@ import sys
 from pathlib import Path
 
 KYUURA_REPOSITORY = "https://github.com/moheronemy/kyuura"
-# v0.121: kyuura のブランチ claude/neo2-fossil-type-cost-checks の固定コミット（次の便のカードの文面と進化データの研究 c932625 と、neo2 の化石 4 枚のタイプ・必要なエネルギーの
-# 画像の確認。kyuura main には未取り込み）。v0.114〜v0.120 は e519b99（``V0_114_KYUURA_COMMIT``。ブランチ claude/baby-data-engine-v0113-handover の固定コミット）、
+# v0.123: kyuura のブランチ claude/v0122-names-text-trainer-procedures の固定コミット（v0.122 のあとの調査。ウィンディ 5 枚などの名前・文面のカードの画像の確認と、トレーナーの
+# 手順の整理。kyuura main には未取り込み）。v0.121〜v0.122 は 2fe0bc0（``V0_121_KYUURA_COMMIT``。ブランチ claude/neo2-fossil-type-cost-checks の固定コミット）、
+# v0.114〜v0.120 は e519b99（``V0_114_KYUURA_COMMIT``。ブランチ claude/baby-data-engine-v0113-handover の固定コミット）、
 # v0.97〜v0.113 は 73a1690（``V0_97_KYUURA_COMMIT``。kyuura main の PR #5 のマージ。木は研究のコミット 78d090c と同じ）、v0.69〜v0.96 は 7d3f4ca（``V0_69_KYUURA_COMMIT``）
-KYUURA_COMMIT = "2fe0bc042ce187d191843819262f8036abbb343d"
+KYUURA_COMMIT = "74b3ceb883dd815495d13b9987433fb14b36e44d"
 KYUURA_PATH = "data/cards.json"
 
 # v0.1 の対戦で使うカード（kyuura docs/engine-readiness.md 5章の段階 1 のたねポケモンと基本エネルギー）
@@ -328,7 +330,7 @@ POOL_V0_29 = [
 POOL_V0_30 = [
     "PMCG1-014",  # ヒトカゲ（第1弾。ひっかく・ひのこ）
     "PMCG1-017",  # リザード（第1弾。ヒトカゲから進化。きりさく・かえんほうしゃ）
-    "PMCG1-019",  # ウインディ（第1弾。ガーディから進化。かえんほうしゃ・とっしん）
+    "PMCG1-019",  # ウインディ（第1弾。ガーディから進化。かえんほうしゃ・とっしん。v0.123 の写しの元から名前は「ウィンディ」）
     "PMCG1-020",  # ブーバー（第1弾。ほのおパンチ・かえんほうしゃ）
     "PMCG4-013",  # ポニータ（第4弾ロケット団。ひのこ）
 ]
@@ -358,7 +360,7 @@ POOL_V0_31 = [
     "PMCG6-029",  # カツラのリザード（闇からの挑戦。カツラのヒトカゲから進化。ほのおのつめ・やきはらう）
     "PMCG6-031",  # カツラのブーバー（闇からの挑戦。ひをふく・マグマふんしゅつ）
     "PMCG6-033",  # カツラのキュウコン（闇からの挑戦。カツラのロコンから進化。ほのおでかいふく・しゃくねつ）
-    "PMCG6-034",  # カツラのウインディ（闇からの挑戦。カツラのガーディから進化。ヒートタックル・ほのおのあらし）
+    "PMCG6-034",  # カツラのウインディ（闇からの挑戦。カツラのガーディから進化。ヒートタックル・ほのおのあらし。v0.123 の写しの元から名前は「カツラのウィンディ」）
     "PMCG6-041",  # マチスのライチュウ（闇からの挑戦。マチスのピカチュウから進化。バリバリ・でんきタックル）
     # 進化元（依存のために加えたカード）
     "PMCG1-067",  # ピッピ（第1弾。うたう・ゆびをふる）
@@ -1425,17 +1427,20 @@ PREVIOUS_KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"  # v0.68 ま
 V0_69_KYUURA_COMMIT = "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"  # v0.69〜v0.96 の写しの元
 V0_97_KYUURA_COMMIT = "73a169063463bbf7bcaa3137d70cbf9721d11534"  # v0.97〜v0.113 の写しの元
 V0_114_KYUURA_COMMIT = "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"  # v0.114〜v0.120 の写しの元
+V0_121_KYUURA_COMMIT = "2fe0bc042ce187d191843819262f8036abbb343d"  # v0.121〜v0.122 の写しの元
 # v0.97（docs/unown-research-idfnj-v0.97.md 2 章）: 写しの元を上げた移行の連鎖。段ごとに、前のコミット（``from``）とあとのコミット（``to``）。最後の段の ``to`` が写しの元、
 # 最初の段の ``from`` が PREVIOUS_KYUURA_COMMIT。過去の段の値は書き換えない（v0.69 の段の ``to`` は 7d3f4ca のまま）。kyuura が当てはめた修正は、当てはめた段（``migration``）の
 # ``from`` の値が ``before``・``to`` の値が ``after`` で、写しの元でも ``after``。写す欄は段ごとに、その段の修正の欄と出典の記録の欄を除いて同じことを確かめる
 # v0.114（docs/baby-rules-evolution-v0.114.md 2 章）: 段 v0.114（73a1690 → e519b99）を加えた。v0.97 の段の ``to`` は、写しの元の定数ではなく 73a1690（``V0_97_KYUURA_COMMIT``）に固定した
 # （写しの元を上げても過去の段の値が変わらないように）
 # v0.121（docs/hand-bench-attack-conditions-v0.121.md 3 章）: 段 v0.121（e519b99 → 2fe0bc0）を加えた。v0.114 の段の ``to`` は、同じ理由で e519b99（``V0_114_KYUURA_COMMIT``）に固定した
+# v0.123（docs/arcanine-name-migration-v0.123.md 2 章）: 段 v0.123（2fe0bc0 → 74b3ceb）を加えた。v0.121 の段の ``to`` は、同じ理由で 2fe0bc0（``V0_121_KYUURA_COMMIT``）に固定した
 KYUURA_MIGRATIONS = (
     {"id": "v0.69", "from": PREVIOUS_KYUURA_COMMIT, "to": V0_69_KYUURA_COMMIT, "document": "docs/equivalent-non-pack-cards-v0.69.md"},
     {"id": "v0.97", "from": V0_69_KYUURA_COMMIT, "to": V0_97_KYUURA_COMMIT, "document": "docs/unown-research-idfnj-v0.97.md"},
     {"id": "v0.114", "from": V0_97_KYUURA_COMMIT, "to": V0_114_KYUURA_COMMIT, "document": "docs/baby-rules-evolution-v0.114.md"},
-    {"id": "v0.121", "from": V0_114_KYUURA_COMMIT, "to": KYUURA_COMMIT, "document": "docs/hand-bench-attack-conditions-v0.121.md"},
+    {"id": "v0.121", "from": V0_114_KYUURA_COMMIT, "to": V0_121_KYUURA_COMMIT, "document": "docs/hand-bench-attack-conditions-v0.121.md"},
+    {"id": "v0.123", "from": V0_121_KYUURA_COMMIT, "to": KYUURA_COMMIT, "document": "docs/arcanine-name-migration-v0.123.md"},
 )
 KYUURA_CORRECTIONS_PATH = "data/curation/card_corrections.json"
 KYUURA_TARGETS_PATH = "data/engine_targets.json"
@@ -1984,15 +1989,335 @@ KYUURA_CORRECTIONS = [
              "image_sha256": "6f191d61a0d8113c6b07adffa934b87b34b305e0435fc8e3207cb4c2ff737c85", "accessed_on": "2026-10-30"},
         ],
         "engine_history": "v0.121 で写しの元を e519b99 から上げたときに台帳・画像の照合の記録と照らし、登録のコミットでカードを写しに入れた（v0.120 までは写しにないカード）",
+    },    # v0.122（docs/unown-fossil-retreat-reactions-v0.122.md 2 章）: 段 v0.121 で kyuura が当てはめた 13 件の訂正のうち、v0.122 で写しに入れた 12 枚のもの（アンノーンW neo4-064 には訂正がない）
+    {
+        "id": "FIX-neo2-027-RULES-TEXT-JA",
+        "card_id": "neo2-027",
+        "field": "pokemon.rules_text.ja",
+        "before": None,
+        "after": "「アンノーン」はデッキに4枚までしか入れることができません。",
+        "basis": "card_image_check",
+        "kind": "transcription_omission",
+        "migration": "v0.121",
+        "decided_on": "2026-10-30",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-neo2-027",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neo2027.png",
+             "image_sha256": "7f6a9d692aee235aa764709ba86347b022523c71629668c8a4a89ec7d46e45d3", "accessed_on": "2026-10-30"},
+            {"image_url": "https://nazonobasho.com/wp-content/uploads/2021/05/neo2_B_027_unknown-m_copy.jpg",
+             "image_sha256": "ee3ecccca3a17a43074458815e2944b61239128d2ac2dabf622274aee1ad6d47", "accessed_on": "2026-10-30"},
+        ],
+        "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
     },
+    {
+        "id": "FIX-neo2-028-RULES-TEXT-JA",
+        "card_id": "neo2-028",
+        "field": "pokemon.rules_text.ja",
+        "before": None,
+        "after": "「アンノーン」はデッキに4枚までしか入れることができません。",
+        "basis": "card_image_check",
+        "kind": "transcription_omission",
+        "migration": "v0.121",
+        "decided_on": "2026-10-30",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-neo2-028",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neo2028.png",
+             "image_sha256": "b69ab1e9926932b8a6417ea8196b8e9ac05b51d234c447d25f537b221d357ea3", "accessed_on": "2026-10-30"},
+            {"image_url": "https://nazonobasho.com/wp-content/uploads/2021/05/neo2_B_028_unknown-u_copy.jpg",
+             "image_sha256": "72fe980906fa00cd4acb9d618939d4c74a147c59a8322b574e85360cba0f9c36", "accessed_on": "2026-10-30"},
+        ],
+        "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+    },
+    {
+        "id": "FIX-neo2-030-RULES-TEXT-JA",
+        "card_id": "neo2-030",
+        "field": "pokemon.rules_text.ja",
+        "before": None,
+        "after": "「アンノーン」はデッキに4枚までしか入れることができません。",
+        "basis": "card_image_check",
+        "kind": "transcription_omission",
+        "migration": "v0.121",
+        "decided_on": "2026-10-30",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-neo2-030",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neo2030.png",
+             "image_sha256": "a88894524ce40c453c2f112e11caf3bdbb5e9b7c96e9c97c6c9403de3e5a5aa5", "accessed_on": "2026-10-30"},
+            {"image_url": "https://nazonobasho.com/wp-content/uploads/2021/05/neo2_B_030_unknown-a_copy.jpg",
+             "image_sha256": "4e3dc1894b77bf295b83d0ef58fa8e3aa86106e06d9fd2f11ee6cde838969619", "accessed_on": "2026-10-30"},
+        ],
+        "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+    },
+    {
+        "id": "FIX-GD3-003-EVOLVES-FROM",
+        "card_id": "GD3-003",
+        "field": "pokemon.evolves_from",
+        "before": None,
+        "after": {"ja": "マチスのピカチュウ", "en": None},
+        # v0.122: kyuura の台帳の after（英語名なし）と、カードの記録の corrections・値（英語名 "Lt. Surge's Pikachu"）が、エンジンの使わない英語名の欄だけで違う（kyuura への報告事項。
+        # 写しの値はカードの記録のまま。日本語の欄は同じ。``_card_after``）
+        "card_record_after": {"ja": "マチスのピカチュウ", "en": "Lt. Surge's Pikachu"},
+        "kyuura_inconsistency": "台帳の after の en が null、カードの記録の corrections と値の en が \"Lt. Surge's Pikachu\"（エンジンの使う ja は同じ）",
+        "basis": "card_image_check",
+        "kind": "transcription_omission",
+        "migration": "v0.121",
+        "decided_on": "2026-10-30",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-GD3-003",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/1st/1stgymd3003.png",
+             "image_sha256": "6e3d16e3bf86fa31ca22d4f75ed78eb4f822aaba7446386cb635bc9cb94e05e4", "accessed_on": "2026-10-30"},
+        ],
+        "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+    },
+    {
+        "id": "FIX-ES2-011-EVOLVES-FROM",
+        "card_id": "ES2-011",
+        "field": "pokemon.evolves_from",
+        "before": None,
+        "after": {"ja": "なにかの化石", "en": None},
+        "basis": "card_image_check",
+        "kind": "transcription_omission",
+        "migration": "v0.121",
+        "decided_on": "2026-10-30",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-ES2-011",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/1st/1stex2011.png",
+             "image_sha256": "dde1cf9e1e87493f74b1c069f28815797e86e8ffa7bdca1503508565b7e806e7", "accessed_on": "2026-10-30"},
+        ],
+        "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+    },
+    {
+        "id": "FIX-ES2-028-EVOLVES-FROM",
+        "card_id": "ES2-028",
+        "field": "pokemon.evolves_from",
+        "before": None,
+        "after": {"ja": "なにかの化石", "en": None},
+        "basis": "card_image_check",
+        "kind": "transcription_omission",
+        "migration": "v0.121",
+        "decided_on": "2026-10-30",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-ES2-028",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/1st/1stex2028.png",
+             "image_sha256": "9d83353d02fcda3e5bae1b84c7a4b51f8e8729a8a4f8f63c82477f0ddb6aaf05", "accessed_on": "2026-10-30"},
+        ],
+        "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+    },
+    {
+        "id": "FIX-ES2-029-EVOLVES-FROM",
+        "card_id": "ES2-029",
+        "field": "pokemon.evolves_from",
+        "before": None,
+        "after": {"ja": "なにかの化石", "en": None},
+        "basis": "card_image_check",
+        "kind": "transcription_omission",
+        "migration": "v0.121",
+        "decided_on": "2026-10-30",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-ES2-029",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/1st/1stex2029.png",
+             "image_sha256": "7ac3bc1a2a3b661f97c9eb196e06662bf8c2c685c6aeb88086ffd7e0698fbd79", "accessed_on": "2026-10-30"},
+        ],
+        "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+    },
+    {
+        "id": "FIX-ES3-018-EVOLVES-FROM",
+        "card_id": "ES3-018",
+        "field": "pokemon.evolves_from",
+        "before": None,
+        "after": {"ja": "なにかの化石", "en": None},
+        "basis": "card_image_check",
+        "kind": "transcription_omission",
+        "migration": "v0.121",
+        "decided_on": "2026-10-30",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-ES3-018",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/1st/1stex3018.png",
+             "image_sha256": "df0b964841de479c3aeeb99c10ba37f2b1bc66177acdebd4f3a34af2ed122369", "accessed_on": "2026-10-30"},
+        ],
+        "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+    },
+    {
+        "id": "FIX-PRN-030-STAGE",
+        "card_id": "PRN-030",
+        "field": "pokemon.stage",
+        "before": "stage1",
+        "after": "basic",
+        "basis": "card_image_check",
+        "kind": "transcription_error",
+        "migration": "v0.121",
+        "decided_on": "2026-10-30",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-PRN-030",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neop030.png",
+             "image_sha256": "e4862218025bad95ce68c8c766c782188155596b7ed4dd5690b99d7cd56cb28a", "accessed_on": "2026-10-30"},
+        ],
+        "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+    },
+    {
+        "id": "FIX-PRN-039-EVOLVES-FROM",
+        "card_id": "PRN-039",
+        "field": "pokemon.evolves_from",
+        "before": None,
+        "after": {"ja": "フシギダネ", "en": None},
+        "basis": "card_image_check",
+        "kind": "transcription_omission",
+        "migration": "v0.121",
+        "decided_on": "2026-10-30",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-PRN-039",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neop039.png",
+             "image_sha256": "8474da72d848a1b103d13f604d6d632544c743b01468c4870f56e2e5e06f82ab", "accessed_on": "2026-10-30"},
+        ],
+        "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+    },
+    {
+        "id": "FIX-PRN-040-EVOLVES-FROM",
+        "card_id": "PRN-040",
+        "field": "pokemon.evolves_from",
+        "before": None,
+        "after": {"ja": "わるいフシギソウ", "en": None},
+        "basis": "card_image_check",
+        "kind": "transcription_omission",
+        "migration": "v0.121",
+        "decided_on": "2026-10-30",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-PRN-040",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neop040.png",
+             "image_sha256": "1617b4d51431297c13247821c6abfbd4a3355844e4f9daa14a7daae5c3207f29", "accessed_on": "2026-10-30"},
+        ],
+        "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+    },
+    {
+        "id": "FIX-PRN-045-EVOLVES-FROM",
+        "card_id": "PRN-045",
+        "field": "pokemon.evolves_from",
+        "before": None,
+        "after": {"ja": "オニスズメ", "en": None},
+        "basis": "card_image_check",
+        "kind": "transcription_omission",
+        "migration": "v0.121",
+        "decided_on": "2026-10-30",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-PRN-045",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/neo/neop045.png",
+             "image_sha256": "e12b32883a363bcd3258e8b7d007df4e7689d6e0c8faa0cadefdd110f7d629f5", "accessed_on": "2026-10-30"},
+        ],
+        "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+    },
+
+    # v0.123（docs/arcanine-name-migration-v0.123.md 2 章）: 写しの組の 2 枚の名前（v0.30・v0.31 から登録済み）を、kyuura がカードの画像（pcg-search.com・なぞのばしょ）で確かめて直した
+    # （根拠 ``card_image_check``・種類 ``generated_value_error``。2026-10-30）。kyuura の生成（英語名と図鑑番号から種の名前「ウインディ」で作る名前）の値が印刷（小さい「ィ」）と違っていた。
+    # 転記の誤り（``transcription_error``）ではないので種類を書き換えない。画像を見たのは kyuura で、エンジンは画像・公式の書籍を見ていない（``engine_saw_image``）。
+    # kyuura の照合の記録（CC-）・最新の説明（LD-）ではない（``record`` を書かない）。``evidence`` は kyuura の画像の照合の記録（IMG-）の画像の URL・sha256・取得日の写し
+    {
+        "id": "FIX-PMCG1-019-NAME-JA",
+        "card_id": "PMCG1-019",
+        "field": "name.ja",
+        "before": "ウインディ",
+        "after": "ウィンディ",
+        "basis": "card_image_check",
+        "kind": "generated_value_error",
+        "migration": "v0.123",
+        "decided_on": "2026-10-30",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-PMCG1-019",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/1st/1st1020.png",
+             "image_sha256": "b456d34b9eec7c77344f226b67fc704bdc1f63dbe049eb499249aaca5da4b592", "accessed_on": "2026-10-30"},
+            {"image_url": "https://nazonobasho.com/wp-content/uploads/2020/10/pmcg01-020-windie-copy.jpg",
+             "image_sha256": "dba3840f6ced857e8fc81b5b8bcb5ab202e1fe2f9e63f982f8f3b4d290075de3", "accessed_on": "2026-10-30"},
+        ],
+        "engine_history": "v0.30 から写しにあるカード（登録済み）。v0.122 までは「ウインディ」で、採用の記録の外部照合（2026-10-15）の pcg-search.com の見出しとの違いを kyuura への報告事項にしていた",
+    },
+    {
+        "id": "FIX-PMCG6-034-NAME-JA",
+        "card_id": "PMCG6-034",
+        "field": "name.ja",
+        "before": "カツラのウインディ",
+        "after": "カツラのウィンディ",
+        "basis": "card_image_check",
+        "kind": "generated_value_error",
+        "migration": "v0.123",
+        "decided_on": "2026-10-30",
+        "kyuura_saw_image": True,
+        "engine_saw_image": False,
+        "image_check": "IMG-PMCG6-034",
+        "evidence": [
+            {"image_url": "https://pcg-search.com/img/1st/1stgym2031.png",
+             "image_sha256": "784f1f7b6875c56a7be2070f0286d0c4fa26875177be659d01608d6965339220", "accessed_on": "2026-10-30"},
+        ],
+        "engine_history": "v0.31 から写しにあるカード（登録済み）。v0.122 までは「カツラのウインディ」で、採用の記録の外部照合（2026-10-15）の pcg-search.com の見出しとの違いを kyuura への報告事項にしていた",
+    },
+
 ]
+def _card_after(c: dict):
+    """v0.122: 修正 ``c`` のあと、カードの記録（corrections・値）にある値。ふつうは台帳の ``after`` と同じ。台帳とカードの記録がエンジンの使わない欄（英語名）だけで違う修正（GD3-003）は
+    ``card_record_after``（``card_record_problems`` が違いの範囲を確かめる）。"""
+    return c.get("card_record_after", c["after"])
+
+
+def card_record_problems(label: str, c: dict) -> list[str]:
+    """v0.122: ``card_record_after`` を持つ修正は、台帳の ``after`` と、日本語（``ja``）が同じで英語名（``en``）だけが違う辞書で、違いの記録（``kyuura_inconsistency``）を書く。"""
+    if "card_record_after" not in c:
+        return []
+    ours, ledger = c["card_record_after"], c["after"]
+    if (not isinstance(ours, dict) or not isinstance(ledger, dict) or set(ours) != set(ledger) or ours.get("ja") != ledger.get("ja") or ours == ledger
+            or any(ours[key] != ledger[key] for key in ours if key != "en")):
+        return [f"{label}: カードの記録の値 {ours!r} が、台帳の after {ledger!r} と英語名（en）だけで違う値ではない"]
+    if not isinstance(c.get("kyuura_inconsistency"), str) or not c["kyuura_inconsistency"].strip():
+        return [f"{label}: 台帳とカードの記録の違い（kyuura_inconsistency）を書いていない"]
+    return []
+
+
+def image_confirmed_fields(image_checks: dict) -> list[tuple[str, str, frozenset[str]]]:
+    """v0.122: 修正が指す kyuura の画像の照合の記録（IMG-）が印刷の値（``print_values``）を書いた欄（``pokemon.evolves_from.ja`` は ``pokemon.evolves_from``）。(カード id, 移行の段, 欄)。
+    その段で、カードの欠けている欄の一覧（``data_gaps``）から消えてよい（値は変わらない。値の変化は修正の欄だけ）。"""
+    found = []
+    for c in KYUURA_CORRECTIONS:
+        record = image_checks.get(c.get("image_check")) if c.get("image_check") else None
+        if record is None:
+            continue
+        fields = frozenset(key.removesuffix(".ja") for key in (record.get("print_values") or {}))
+        found.append((c["card_id"], c["migration"], fields))
+    return found
+
+
 # 前の写しの元と比べるときに、変わってよい欄（出典の記録。エンジンは使わない）。ほかの欄は修正の欄を除いて同じでなければ書き出さない
 PROVENANCE_FIELDS = ("notes", "ja_text_source", "source_ids", "jp_en_differences")
 # v0.97: 欠けていた欄を埋める修正（種類 ``transcription_omission``）では、欠けている欄の一覧（``data_gaps``）から、ちょうどその欄だけが消えてよい（ほかの欠けは変わらない）
 OMISSION_KIND = "transcription_omission"
 # v0.114: 前の写しの元になかった欄を、印刷の値で加える修正（ベイビィの ``pokemon.evolves_to``）。段の前のコミットではその欄がない（または null）、あとのコミットで ``after``。``data_gaps`` は変えない
 ADDED_FIELD_KIND = "field_added_from_print"
-CORRECTION_KINDS = ("transcription_error", OMISSION_KIND, ADDED_FIELD_KIND)
+# v0.123: kyuura の生成（英語名と図鑑番号から種の名前で作るポケモンの名前）の値が印刷と違っていた誤りを、kyuura がカードの画像で直した修正（ウィンディ 2 枚の名前）。受け付けるのは、
+# 根拠がカードの画像の照合（``card_image_check``）で、欄が ``GENERATED_VALUE_FIELDS`` にあり、前の値がある（欠けを埋める修正ではない）・前とあとが違う修正だけ（``generated_value_problems``）
+GENERATED_VALUE_KIND = "generated_value_error"
+GENERATED_VALUE_FIELDS = ("name.ja",)
+CORRECTION_KINDS = ("transcription_error", OMISSION_KIND, ADDED_FIELD_KIND, GENERATED_VALUE_KIND)
 KYUURA_IMAGE_CHECKS_PATH = "data/curation/card_image_checks.json"  # v0.114: kyuura の画像の照合の記録（IMG-）
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 _DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
@@ -2220,7 +2545,13 @@ def image_check_record_problems(label: str, c: dict, record: dict | None, image_
         problems.append(f"{label}: 画像の照合の記録の照合した日 {record.get('checked_on')!r} が、決めた日 {c.get('decided_on')!r} ではない")
     if c["id"] not in (record.get("corrections") or ()):
         problems.append(f"{label}: 画像の照合の記録 {record.get('id')} の corrections に、この訂正がない")
-    if (record.get("print_values") or {}).get(c["field"], _ABSENT) != c["after"]:
+    values = record.get("print_values") or {}
+    if c["field"] in values:
+        matches = values[c["field"]] == c["after"]
+    else:
+        # v0.122: 日本語の画像の照合は、名前の辞書（進化元）の日本語だけを書く（``pokemon.evolves_from.ja``）
+        matches = isinstance(c["after"], dict) and f"{c['field']}.ja" in values and values[f"{c['field']}.ja"] == c["after"].get("ja")
+    if not matches:
         problems.append(f"{label}: 画像の照合の記録の印刷の値（print_values）が、訂正のあとの値 {c['after']!r} ではない")
     if not isinstance(record.get("identification"), str) or not record["identification"].strip():
         problems.append(f"{label}: 画像の照合の記録にカードの識別（identification）がない")
@@ -2284,6 +2615,20 @@ def card_image_check_problems(label: str, c: dict, entry: dict, card_ids_with_ch
     return problems
 
 
+def generated_value_problems(label: str, c: dict) -> list[str]:
+    """v0.123: 生成の値の誤りの修正（``GENERATED_VALUE_KIND``）は、根拠がカードの画像の照合・欄が ``GENERATED_VALUE_FIELDS``・前の値が文字列であとと違う。ほかの種類は空。"""
+    if c.get("kind") != GENERATED_VALUE_KIND:
+        return []
+    problems = []
+    if c.get("basis") != "card_image_check":
+        problems.append(f"{label}: 生成の値の誤りの修正の根拠 {c.get('basis')!r} が card_image_check ではない")
+    if c.get("field") not in GENERATED_VALUE_FIELDS:
+        problems.append(f"{label}: 生成の値の誤りの修正の欄 {c.get('field')!r} が {GENERATED_VALUE_FIELDS} にない")
+    if not isinstance(c.get("before"), str) or not isinstance(c.get("after"), str) or c["before"] == c["after"]:
+        problems.append(f"{label}: 生成の値の誤りの修正の前とあとが、違う文字列ではない")
+    return problems
+
+
 def kyuura_correction_problems(kyuura: Path, source: dict, previous: dict, pool: list[str]) -> list[str]:
     """kyuura が当てはめた修正（``KYUURA_CORRECTIONS``。v0.69）を、台帳・カードの記録・前の写しの元で確かめる。問題の一覧（空なら書き出してよい）。
 
@@ -2315,16 +2660,19 @@ def kyuura_correction_problems(kyuura: Path, source: dict, previous: dict, pool:
                 problems.append(f"{label}: 台帳の {key} が {entry.get(key)!r}（写しの記録は {c.get(key)!r}）")
         if c.get("kind") not in CORRECTION_KINDS:
             problems.append(f"{label}: 修正の種類 {c.get('kind')!r} を扱えない")
+        problems.extend(generated_value_problems(label, c))  # v0.123
         card = current.get(c["card_id"])
         if card is None:
             problems.append(f"{label}: kyuura（{KYUURA_COMMIT[:7]}）にカードがない")
             continue
-        if not any(x.get("id") == c["id"] and all(x.get(k) == c[k] for k in ("field", "before", "after", "basis")) for x in card.get("corrections") or ()):
+        problems.extend(card_record_problems(label, c))  # v0.122
+        after = _card_after(c)
+        if not any(x.get("id") == c["id"] and all(x.get(k) == c[k] for k in ("field", "before", "basis")) and x.get("after") == after for x in card.get("corrections") or ()):
             problems.append(f"{label}: カードの記録の corrections に同じ修正がない")
-        if field_or_absent(card, c["field"]) != c["after"]:
-            problems.append(f"{label}: 写しの元（{KYUURA_COMMIT[:7]}）の値が {c['after']!r} ではない（修正が当てはまっていない）")
-        if c["card_id"] not in new or field_or_absent(new[c["card_id"]], c["field"]) != c["after"]:
-            problems.append(f"{label}: 移行の段 {step['id']} のあと（{step['to'][:7]}）の値が {c['after']!r} ではない")
+        if field_or_absent(card, c["field"]) != after:
+            problems.append(f"{label}: 写しの元（{KYUURA_COMMIT[:7]}）の値が {after!r} ではない（修正が当てはまっていない）")
+        if c["card_id"] not in new or field_or_absent(new[c["card_id"]], c["field"]) != after:
+            problems.append(f"{label}: 移行の段 {step['id']} のあと（{step['to'][:7]}）の値が {after!r} ではない")
         if c.get("kind") == ADDED_FIELD_KIND:
             # v0.114: 段の前にその欄がない（または null）。前の値は null と書く。ほかの欠けている欄（data_gaps）は変えない（同じ段の欠けの修正の欄を除く）
             if c["before"] is not None or (c["card_id"] in old and field_or_absent(old[c["card_id"]], c["field"]) not in (_ABSENT, None)):
@@ -2451,12 +2799,14 @@ def apply_engine_user_corrections(cards: list[dict]) -> list[dict]:
     return cards
 
 
-def previous_copy_problems(source: dict, previous: dict, pool: list[str], *, start: str = PREVIOUS_KYUURA_COMMIT, end: str = KYUURA_COMMIT) -> list[str]:
+def previous_copy_problems(source: dict, previous: dict, pool: list[str], *, start: str = PREVIOUS_KYUURA_COMMIT, end: str = KYUURA_COMMIT,
+                           confirmed: list[tuple[str, str, frozenset[str]]] = ()) -> list[str]:
     """前の写しの元（PREVIOUS_KYUURA_COMMIT）にあったカードの写す欄が、修正の欄と出典の記録の欄（``PROVENANCE_FIELDS``）を除いて同じことを確かめる（v0.69）。
 
     v0.97: ``previous`` は ``start``、``source`` は ``end`` の data/cards.json で、当てはめるのは移行の連鎖の ``start`` から ``end`` までの段の修正だけ（既定は最初の段の前から
     写しの元まで、すべての修正）。段ごとの比べ（``migration_copy_problems``）と、最初の段の前から写しの元までの比べの両方に使う。欠けを埋める修正（``OMISSION_KIND``）は、
-    欠けている欄の一覧（``data_gaps``）からその欄が消えてよい（ほかの欠けの増減は許さない）。"""
+    欠けている欄の一覧（``data_gaps``）からその欄が消えてよい（ほかの欠けの増減は許さない）。v0.122: ``confirmed``（``image_confirmed_fields``）の、その段の修正が指す画像の照合の記録が印刷の値を
+    書いた欄も、``data_gaps`` から消えてよい（kyuura が画像で値を確かめて欠けを閉じた。値の変化は許さない）。"""
     commits = [KYUURA_MIGRATIONS[0]["from"], *(step["to"] for step in KYUURA_MIGRATIONS)]
     if start not in commits or end not in commits or commits.index(start) >= commits.index(end):
         raise ValueError(f"比べるコミット {start[:7]} → {end[:7]} が、移行の連鎖の前とあとの順ではない")
@@ -2471,9 +2821,12 @@ def previous_copy_problems(source: dict, previous: dict, pool: list[str], *, sta
         before = json.loads(json.dumps(old[card_id]))
         for c in corrections:
             if c["card_id"] == card_id:
-                set_field(before, c["field"], c["after"])
+                set_field(before, c["field"], _card_after(c))
                 if c.get("kind") == OMISSION_KIND and isinstance(before.get("data_gaps"), list):
                     before["data_gaps"] = [gap for gap in before["data_gaps"] if gap != c["field"]]
+        for confirmed_card, migration, fields in confirmed:
+            if confirmed_card == card_id and migration in steps and isinstance(before.get("data_gaps"), list):
+                before["data_gaps"] = [gap for gap in before["data_gaps"] if gap not in fields]
         for field in FIELDS:
             if field in PROVENANCE_FIELDS or field not in before:
                 continue
@@ -2485,10 +2838,11 @@ def previous_copy_problems(source: dict, previous: dict, pool: list[str], *, sta
 def migration_copy_problems(kyuura: Path, source: dict, previous: dict, pool: list[str]) -> list[str]:
     """移行の連鎖の段ごとに、段の前のコミットにあったカードの写す欄が、段のあとのコミットで、その段の修正の欄と出典の記録の欄を除いて同じことを確かめる（v0.97）。"""
     snapshots = migration_snapshots(kyuura, source, previous)
+    confirmed = image_confirmed_fields(_image_checks(kyuura, KYUURA_COMMIT))  # v0.122
     problems = []
     for step in KYUURA_MIGRATIONS:
         problems.extend(f"移行の段 {step['id']}: {p}" for p in previous_copy_problems(snapshots[step["to"]], snapshots[step["from"]], pool,
-                                                                                 start=step["from"], end=step["to"]))
+                                                                                 start=step["from"], end=step["to"], confirmed=confirmed))
     return problems
 
 
@@ -3139,6 +3493,33 @@ POOL_V0_121 = [
     "PR1-017",  # ピカチュウ（同上）
 ]
 
+# v0.122（docs/unown-fossil-retreat-reactions-v0.122.md）: アンノーンの併用・化石の進化履歴・退却時の反応の 13 枚（ポケモン 13。ワザ 17・特殊能力 8）。写しの元・研究の基準は v0.121 と同じ
+# 2fe0bc0（追加の移行はない）。12 枚の効果文以外の欄は段 v0.121 の kyuura の訂正（ルール文・進化元・段階）のあとの値。表にない残る 22 枚は入れない
+POOL_V0_122 = [
+    "neo2-027",  # アンノーンM（めざめるパワー・［METAL df］）
+    "neo2-028",  # アンノーンU（めざめるパワー・［UNDO］）
+    "neo2-030",  # アンノーンA（めざめるパワー・［ANGER］）
+    "neo4-064",  # アンノーンW（めざめるパワー・［WANT］）
+    "GD3-003",  # マチスのライチュウ（メガトンパンチ・10まんボルト）
+    "ES2-011",  # オムナイト（ころがりタックル・［げんしのゆめ］）
+    "ES2-028",  # カブト（するどいツメ・［かせきか］）
+    "ES2-029",  # プテラ（ちょうおんぱ・きりもみアタック）
+    "ES3-018",  # オムナイト（なみのり・［かせきのみちびき］）
+    "PRN-030",  # カポエラー（れんぞくキック・こうそくスピン）
+    "PRN-039",  # わるいフシギソウ（みだれうち・［つるでひっぱる］）
+    "PRN-040",  # わるいフシギバナ（いやなかふん）
+    "PRN-045",  # わるいオニドリル（たかくとぶ・ドリルダイブ）
+]
+
+# v0.123（docs/arcanine-name-migration-v0.123.md 3 章）: 名前が印刷どおりにそろったウィンディ系の 3 枚（ポケモン 3。ワザ 5）。写しの元・研究の基準は 74b3ceb（段 v0.123 の移行のあと）。
+# 3 枚の値は 2fe0bc0 と同じ（訂正はない）。GD5-007 は PMCG6-034 と処理に使う欄が id のほかすべて同じ（kyuura の同じカードの組 SC-GD5-007）。下調べの残る 5 枚（PR1-075・PR1-077・neo1-049・
+# ES2-035・PR1-027）とプクリン ES1-027 は入れない
+POOL_V0_123 = [
+    "GD5-007",  # カツラのウィンディ（ポケモンジム第3弾。カツラのガーディから進化。ヒートタックル・ほのおのあらし）
+    "IP2-032",  # ウィンディ（イントロパック ゼニガメデッキ。ガーディから進化。とっしん）
+    "PR1-016",  # ウィンディ（プロモ。ガーディから進化。でんこうせっか・いかりのほのお）
+]
+
 POOLS = [
     ("pool_v0_1", POOL_V0_1),
     ("pool_v0_2b", POOL_V0_2B),
@@ -3266,6 +3647,8 @@ POOLS = [
     ("pool_v0_119", POOL_V0_119),
     ("pool_v0_120", POOL_V0_120),
     ("pool_v0_121", POOL_V0_121),
+    ("pool_v0_122", POOL_V0_122),
+    ("pool_v0_123", POOL_V0_123),
 ]
 
 
@@ -3336,7 +3719,8 @@ def main(argv: list[str] | None = None) -> int:
     reprints = reprint_targets(args.kyuura)
     pool = all_pool_cards() + REFERENCE_ONLY
     problems = (kyuura_correction_problems(args.kyuura, source, previous, pool) + engine_user_correction_problems(args.kyuura, source, pool)
-                + previous_copy_problems(source, previous, pool) + migration_copy_problems(args.kyuura, source, previous, pool)
+                + previous_copy_problems(source, previous, pool, confirmed=image_confirmed_fields(_image_checks(args.kyuura, KYUURA_COMMIT)))
+                + migration_copy_problems(args.kyuura, source, previous, pool)
                 + equivalent_target_problems(targets) + reprint_target_problems(reprints) + current_target_status_problems(args.kyuura))
     if problems:
         print("kyuura のデータを写しにできない:\n" + "\n".join(problems), file=sys.stderr)

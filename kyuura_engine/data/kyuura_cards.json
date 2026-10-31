@@ -3,7 +3,7 @@
   "description": "kyuura の data/cards.json から、kyuura-engine が使うカードの記録を抜き出した写し。カード情報の正本は kyuura。値は書き換えていない。生成: scripts/extract_kyuura_cards.py（手で編集しない）。",
   "source": {
     "repository": "https://github.com/moheronemy/kyuura",
-    "commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+    "commit": "74b3ceb883dd815495d13b9987433fb14b36e44d",
     "path": "data/cards.json",
     "schema_version": 3
   },
@@ -1648,6 +1648,26 @@
     "PR1-003",
     "PR1-017"
   ],
+  "pool_v0_122": [
+    "neo2-027",
+    "neo2-028",
+    "neo2-030",
+    "neo4-064",
+    "GD3-003",
+    "ES2-011",
+    "ES2-028",
+    "ES2-029",
+    "ES3-018",
+    "PRN-030",
+    "PRN-039",
+    "PRN-040",
+    "PRN-045"
+  ],
+  "pool_v0_123": [
+    "GD5-007",
+    "IP2-032",
+    "PR1-016"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -1717,7 +1737,29 @@
       "to": "2fe0bc042ce187d191843819262f8036abbb343d",
       "document": "docs/hand-bench-attack-conditions-v0.121.md",
       "corrections": [
-        "FIX-neo3-053-TRAINER-TEXT-JA"
+        "FIX-neo3-053-TRAINER-TEXT-JA",
+        "FIX-neo2-027-RULES-TEXT-JA",
+        "FIX-neo2-028-RULES-TEXT-JA",
+        "FIX-neo2-030-RULES-TEXT-JA",
+        "FIX-GD3-003-EVOLVES-FROM",
+        "FIX-ES2-011-EVOLVES-FROM",
+        "FIX-ES2-028-EVOLVES-FROM",
+        "FIX-ES2-029-EVOLVES-FROM",
+        "FIX-ES3-018-EVOLVES-FROM",
+        "FIX-PRN-030-STAGE",
+        "FIX-PRN-039-EVOLVES-FROM",
+        "FIX-PRN-040-EVOLVES-FROM",
+        "FIX-PRN-045-EVOLVES-FROM"
+      ]
+    },
+    {
+      "id": "v0.123",
+      "from": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "to": "74b3ceb883dd815495d13b9987433fb14b36e44d",
+      "document": "docs/arcanine-name-migration-v0.123.md",
+      "corrections": [
+        "FIX-PMCG1-019-NAME-JA",
+        "FIX-PMCG6-034-NAME-JA"
       ]
     }
   ],
@@ -2456,6 +2498,391 @@
       "engine_history": "v0.121 で写しの元を e519b99 から上げたときに台帳・画像の照合の記録と照らし、登録のコミットでカードを写しに入れた（v0.120 までは写しにないカード）",
       "applied_in_source": "2fe0bc042ce187d191843819262f8036abbb343d",
       "previous_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
+    },
+    {
+      "id": "FIX-neo2-027-RULES-TEXT-JA",
+      "card_id": "neo2-027",
+      "field": "pokemon.rules_text.ja",
+      "before": null,
+      "after": "「アンノーン」はデッキに4枚までしか入れることができません。",
+      "basis": "card_image_check",
+      "kind": "transcription_omission",
+      "migration": "v0.121",
+      "decided_on": "2026-10-30",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-neo2-027",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neo2027.png",
+          "image_sha256": "7f6a9d692aee235aa764709ba86347b022523c71629668c8a4a89ec7d46e45d3",
+          "accessed_on": "2026-10-30"
+        },
+        {
+          "image_url": "https://nazonobasho.com/wp-content/uploads/2021/05/neo2_B_027_unknown-m_copy.jpg",
+          "image_sha256": "ee3ecccca3a17a43074458815e2944b61239128d2ac2dabf622274aee1ad6d47",
+          "accessed_on": "2026-10-30"
+        }
+      ],
+      "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+      "applied_in_source": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "previous_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
+    },
+    {
+      "id": "FIX-neo2-028-RULES-TEXT-JA",
+      "card_id": "neo2-028",
+      "field": "pokemon.rules_text.ja",
+      "before": null,
+      "after": "「アンノーン」はデッキに4枚までしか入れることができません。",
+      "basis": "card_image_check",
+      "kind": "transcription_omission",
+      "migration": "v0.121",
+      "decided_on": "2026-10-30",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-neo2-028",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neo2028.png",
+          "image_sha256": "b69ab1e9926932b8a6417ea8196b8e9ac05b51d234c447d25f537b221d357ea3",
+          "accessed_on": "2026-10-30"
+        },
+        {
+          "image_url": "https://nazonobasho.com/wp-content/uploads/2021/05/neo2_B_028_unknown-u_copy.jpg",
+          "image_sha256": "72fe980906fa00cd4acb9d618939d4c74a147c59a8322b574e85360cba0f9c36",
+          "accessed_on": "2026-10-30"
+        }
+      ],
+      "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+      "applied_in_source": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "previous_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
+    },
+    {
+      "id": "FIX-neo2-030-RULES-TEXT-JA",
+      "card_id": "neo2-030",
+      "field": "pokemon.rules_text.ja",
+      "before": null,
+      "after": "「アンノーン」はデッキに4枚までしか入れることができません。",
+      "basis": "card_image_check",
+      "kind": "transcription_omission",
+      "migration": "v0.121",
+      "decided_on": "2026-10-30",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-neo2-030",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neo2030.png",
+          "image_sha256": "a88894524ce40c453c2f112e11caf3bdbb5e9b7c96e9c97c6c9403de3e5a5aa5",
+          "accessed_on": "2026-10-30"
+        },
+        {
+          "image_url": "https://nazonobasho.com/wp-content/uploads/2021/05/neo2_B_030_unknown-a_copy.jpg",
+          "image_sha256": "4e3dc1894b77bf295b83d0ef58fa8e3aa86106e06d9fd2f11ee6cde838969619",
+          "accessed_on": "2026-10-30"
+        }
+      ],
+      "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+      "applied_in_source": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "previous_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
+    },
+    {
+      "id": "FIX-GD3-003-EVOLVES-FROM",
+      "card_id": "GD3-003",
+      "field": "pokemon.evolves_from",
+      "before": null,
+      "after": {
+        "ja": "マチスのピカチュウ",
+        "en": null
+      },
+      "card_record_after": {
+        "ja": "マチスのピカチュウ",
+        "en": "Lt. Surge's Pikachu"
+      },
+      "kyuura_inconsistency": "台帳の after の en が null、カードの記録の corrections と値の en が \"Lt. Surge's Pikachu\"（エンジンの使う ja は同じ）",
+      "basis": "card_image_check",
+      "kind": "transcription_omission",
+      "migration": "v0.121",
+      "decided_on": "2026-10-30",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-GD3-003",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/1st/1stgymd3003.png",
+          "image_sha256": "6e3d16e3bf86fa31ca22d4f75ed78eb4f822aaba7446386cb635bc9cb94e05e4",
+          "accessed_on": "2026-10-30"
+        }
+      ],
+      "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+      "applied_in_source": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "previous_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
+    },
+    {
+      "id": "FIX-ES2-011-EVOLVES-FROM",
+      "card_id": "ES2-011",
+      "field": "pokemon.evolves_from",
+      "before": null,
+      "after": {
+        "ja": "なにかの化石",
+        "en": null
+      },
+      "basis": "card_image_check",
+      "kind": "transcription_omission",
+      "migration": "v0.121",
+      "decided_on": "2026-10-30",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-ES2-011",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/1st/1stex2011.png",
+          "image_sha256": "dde1cf9e1e87493f74b1c069f28815797e86e8ffa7bdca1503508565b7e806e7",
+          "accessed_on": "2026-10-30"
+        }
+      ],
+      "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+      "applied_in_source": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "previous_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
+    },
+    {
+      "id": "FIX-ES2-028-EVOLVES-FROM",
+      "card_id": "ES2-028",
+      "field": "pokemon.evolves_from",
+      "before": null,
+      "after": {
+        "ja": "なにかの化石",
+        "en": null
+      },
+      "basis": "card_image_check",
+      "kind": "transcription_omission",
+      "migration": "v0.121",
+      "decided_on": "2026-10-30",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-ES2-028",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/1st/1stex2028.png",
+          "image_sha256": "9d83353d02fcda3e5bae1b84c7a4b51f8e8729a8a4f8f63c82477f0ddb6aaf05",
+          "accessed_on": "2026-10-30"
+        }
+      ],
+      "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+      "applied_in_source": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "previous_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
+    },
+    {
+      "id": "FIX-ES2-029-EVOLVES-FROM",
+      "card_id": "ES2-029",
+      "field": "pokemon.evolves_from",
+      "before": null,
+      "after": {
+        "ja": "なにかの化石",
+        "en": null
+      },
+      "basis": "card_image_check",
+      "kind": "transcription_omission",
+      "migration": "v0.121",
+      "decided_on": "2026-10-30",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-ES2-029",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/1st/1stex2029.png",
+          "image_sha256": "7ac3bc1a2a3b661f97c9eb196e06662bf8c2c685c6aeb88086ffd7e0698fbd79",
+          "accessed_on": "2026-10-30"
+        }
+      ],
+      "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+      "applied_in_source": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "previous_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
+    },
+    {
+      "id": "FIX-ES3-018-EVOLVES-FROM",
+      "card_id": "ES3-018",
+      "field": "pokemon.evolves_from",
+      "before": null,
+      "after": {
+        "ja": "なにかの化石",
+        "en": null
+      },
+      "basis": "card_image_check",
+      "kind": "transcription_omission",
+      "migration": "v0.121",
+      "decided_on": "2026-10-30",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-ES3-018",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/1st/1stex3018.png",
+          "image_sha256": "df0b964841de479c3aeeb99c10ba37f2b1bc66177acdebd4f3a34af2ed122369",
+          "accessed_on": "2026-10-30"
+        }
+      ],
+      "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+      "applied_in_source": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "previous_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
+    },
+    {
+      "id": "FIX-PRN-030-STAGE",
+      "card_id": "PRN-030",
+      "field": "pokemon.stage",
+      "before": "stage1",
+      "after": "basic",
+      "basis": "card_image_check",
+      "kind": "transcription_error",
+      "migration": "v0.121",
+      "decided_on": "2026-10-30",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-PRN-030",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neop030.png",
+          "image_sha256": "e4862218025bad95ce68c8c766c782188155596b7ed4dd5690b99d7cd56cb28a",
+          "accessed_on": "2026-10-30"
+        }
+      ],
+      "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+      "applied_in_source": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "previous_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
+    },
+    {
+      "id": "FIX-PRN-039-EVOLVES-FROM",
+      "card_id": "PRN-039",
+      "field": "pokemon.evolves_from",
+      "before": null,
+      "after": {
+        "ja": "フシギダネ",
+        "en": null
+      },
+      "basis": "card_image_check",
+      "kind": "transcription_omission",
+      "migration": "v0.121",
+      "decided_on": "2026-10-30",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-PRN-039",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neop039.png",
+          "image_sha256": "8474da72d848a1b103d13f604d6d632544c743b01468c4870f56e2e5e06f82ab",
+          "accessed_on": "2026-10-30"
+        }
+      ],
+      "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+      "applied_in_source": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "previous_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
+    },
+    {
+      "id": "FIX-PRN-040-EVOLVES-FROM",
+      "card_id": "PRN-040",
+      "field": "pokemon.evolves_from",
+      "before": null,
+      "after": {
+        "ja": "わるいフシギソウ",
+        "en": null
+      },
+      "basis": "card_image_check",
+      "kind": "transcription_omission",
+      "migration": "v0.121",
+      "decided_on": "2026-10-30",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-PRN-040",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neop040.png",
+          "image_sha256": "1617b4d51431297c13247821c6abfbd4a3355844e4f9daa14a7daae5c3207f29",
+          "accessed_on": "2026-10-30"
+        }
+      ],
+      "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+      "applied_in_source": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "previous_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
+    },
+    {
+      "id": "FIX-PRN-045-EVOLVES-FROM",
+      "card_id": "PRN-045",
+      "field": "pokemon.evolves_from",
+      "before": null,
+      "after": {
+        "ja": "オニスズメ",
+        "en": null
+      },
+      "basis": "card_image_check",
+      "kind": "transcription_omission",
+      "migration": "v0.121",
+      "decided_on": "2026-10-30",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-PRN-045",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/neo/neop045.png",
+          "image_sha256": "e12b32883a363bcd3258e8b7d007df4e7689d6e0c8faa0cadefdd110f7d629f5",
+          "accessed_on": "2026-10-30"
+        }
+      ],
+      "engine_history": "v0.122 で登録のコミットでカードを写しに入れたときに、段 v0.121 の台帳・画像の照合の記録と照らした（v0.121 までは写しにないカード。段 v0.121 の移行のときは写しの外）",
+      "applied_in_source": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "previous_source": "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
+    },
+    {
+      "id": "FIX-PMCG1-019-NAME-JA",
+      "card_id": "PMCG1-019",
+      "field": "name.ja",
+      "before": "ウインディ",
+      "after": "ウィンディ",
+      "basis": "card_image_check",
+      "kind": "generated_value_error",
+      "migration": "v0.123",
+      "decided_on": "2026-10-30",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-PMCG1-019",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/1st/1st1020.png",
+          "image_sha256": "b456d34b9eec7c77344f226b67fc704bdc1f63dbe049eb499249aaca5da4b592",
+          "accessed_on": "2026-10-30"
+        },
+        {
+          "image_url": "https://nazonobasho.com/wp-content/uploads/2020/10/pmcg01-020-windie-copy.jpg",
+          "image_sha256": "dba3840f6ced857e8fc81b5b8bcb5ab202e1fe2f9e63f982f8f3b4d290075de3",
+          "accessed_on": "2026-10-30"
+        }
+      ],
+      "engine_history": "v0.30 から写しにあるカード（登録済み）。v0.122 までは「ウインディ」で、採用の記録の外部照合（2026-10-15）の pcg-search.com の見出しとの違いを kyuura への報告事項にしていた",
+      "applied_in_source": "74b3ceb883dd815495d13b9987433fb14b36e44d",
+      "previous_source": "2fe0bc042ce187d191843819262f8036abbb343d"
+    },
+    {
+      "id": "FIX-PMCG6-034-NAME-JA",
+      "card_id": "PMCG6-034",
+      "field": "name.ja",
+      "before": "カツラのウインディ",
+      "after": "カツラのウィンディ",
+      "basis": "card_image_check",
+      "kind": "generated_value_error",
+      "migration": "v0.123",
+      "decided_on": "2026-10-30",
+      "kyuura_saw_image": true,
+      "engine_saw_image": false,
+      "image_check": "IMG-PMCG6-034",
+      "evidence": [
+        {
+          "image_url": "https://pcg-search.com/img/1st/1stgym2031.png",
+          "image_sha256": "784f1f7b6875c56a7be2070f0286d0c4fa26875177be659d01608d6965339220",
+          "accessed_on": "2026-10-30"
+        }
+      ],
+      "engine_history": "v0.31 から写しにあるカード（登録済み）。v0.122 までは「カツラのウインディ」で、採用の記録の外部照合（2026-10-15）の pcg-search.com の見出しとの違いを kyuura への報告事項にしていた",
+      "applied_in_source": "74b3ceb883dd815495d13b9987433fb14b36e44d",
+      "previous_source": "2fe0bc042ce187d191843819262f8036abbb343d"
     }
   ],
   "engine_user_corrections": [
@@ -2473,7 +2900,7 @@
       "reference_url_role": "利用者が示した補助資料。エンジンは本文を取得していない（ネットワークのプロキシが 403）。サイトの本文を検証した・ルーン文字を解読したとは扱わない",
       "engine_saw_image": false,
       "kyuura_saw_image": false,
-      "source_commit": "2fe0bc042ce187d191843819262f8036abbb343d"
+      "source_commit": "74b3ceb883dd815495d13b9987433fb14b36e44d"
     }
   ],
   "equivalent_targets": {
@@ -13085,7 +13512,7 @@
       "jp_set": "PMCG1",
       "category": "pokemon",
       "name": {
-        "ja": "ウインディ",
+        "ja": "ウィンディ",
         "en": "Arcanine"
       },
       "name_ja_confidence": "有力",
@@ -13162,7 +13589,9 @@
       "trainer": null,
       "energy": null,
       "jp_en_differences": [],
-      "notes": [],
+      "notes": [
+        "訂正（FIX-PMCG1-019-NAME-JA）: name.ja を「ウインディ」から「ウィンディ」に直した。根拠: kyuura が、同じカード（第1弾 拡張パックのウィンディ（LV.45・HP100））の日本語版のカードの画像で、名前の「ウ」のすぐあとの「ィ」が小さい字（「ウィンディ」）であることを確かめた（2026-10-30。照合の記録 IMG-PMCG1-019）。種の名前・ほかの版・英語版からは決めていない"
+      ],
       "source_ids": {
         "tcgdex": "PMCG1-019",
         "pokemontcg": [
@@ -13184,7 +13613,17 @@
       "product_group": "expansion_pack",
       "play_scope": "standard",
       "data_gaps": [],
-      "same_card_group": null
+      "same_card_group": null,
+      "corrections": [
+        {
+          "id": "FIX-PMCG1-019-NAME-JA",
+          "field": "name.ja",
+          "before": "ウインディ",
+          "after": "ウィンディ",
+          "basis": "card_image_check",
+          "decided_on": "2026-10-30"
+        }
+      ]
     },
     {
       "id": "PMCG1-020",
@@ -15336,7 +15775,7 @@
       "jp_set": "PMCG6",
       "category": "pokemon",
       "name": {
-        "ja": "カツラのウインディ",
+        "ja": "カツラのウィンディ",
         "en": "Blaine's Arcanine"
       },
       "name_ja_confidence": "有力",
@@ -15413,7 +15852,9 @@
       "trainer": null,
       "energy": null,
       "jp_en_differences": [],
-      "notes": [],
+      "notes": [
+        "訂正（FIX-PMCG6-034-NAME-JA）: name.ja を「カツラのウインディ」から「カツラのウィンディ」に直した。根拠: kyuura が、同じカード（ジム拡張第2弾「闇からの挑戦」のカツラのウィンディ（LV.42・HP90））の日本語版のカードの画像で、名前の「ウ」のすぐあとの「ィ」が小さい字（「カツラのウィンディ」）であることを確かめた（2026-10-30。照合の記録 IMG-PMCG6-034）。種の名前・ほかの版・英語版からは決めていない"
+      ],
       "source_ids": {
         "tcgdex": "PMCG6-034",
         "pokemontcg": [
@@ -15432,7 +15873,17 @@
       "product_group": "expansion_pack",
       "play_scope": "standard",
       "data_gaps": [],
-      "same_card_group": "SC-GD5-007"
+      "same_card_group": "SC-GD5-007",
+      "corrections": [
+        {
+          "id": "FIX-PMCG6-034-NAME-JA",
+          "field": "name.ja",
+          "before": "カツラのウインディ",
+          "after": "カツラのウィンディ",
+          "basis": "card_image_check",
+          "decided_on": "2026-10-30"
+        }
+      ]
     },
     {
       "id": "PMCG6-041",
@@ -123903,6 +124354,1840 @@
       "copies": [
         {
           "page": "1stp017",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "neo2-027",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "アンノーンM",
+        "en": "Unown [M]"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          201
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "en": "You may have up to 4 Basic Pokémon cards in your deck with Unown in their names."
+        },
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "METAL df[メタル ディーエフ]",
+              "en": "[Metal]"
+            },
+            "text": {
+              "ja": "自分の場の「アンノーン」が「鋼」ポケモンからダメージを受けるとき、そのダメージは「-30」される。自分の場のほかのアンノーン「M」の「METAL df」がはたらいているとき、この力は、はたらかない。",
+              "en": "Whenever a Metal Pokémon damages 1 of your Pokémon, reduce that damage by 30 (after applying Weakness and Resistance). This power stops working if you have more than 1 Unown [M] in play. (This power works even if Unown [M] is Asleep, Confused, or Paralyzed.)"
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "めざめるパワー",
+              "en": "Hidden Power"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-neo2-027-RULES-TEXT-JA）: 空だった pokemon.rules_text.ja に「「アンノーン」はデッキに4枚までしか入れることができません。」を入れた。根拠: kyuura が、同じカード（第2弾「遺跡をこえて...」のアンノーン「M」）の日本語版のカードの画像を pcg-search.com [N3]・なぞのばしょ [N1] で読み、カード名の上の小さい文字のルール文「「アンノーン」はデッキに4枚までしか入れることができません。」を確かめた（2026-10-30。照合の記録 IMG-neo2-027）。ほかの文字のアンノーンの文面・英語版の文面・グループ全体の裁定（CR-UNOWN-DECK-LIMIT-ALL-LETTERS）からは写していない"
+      ],
+      "source_ids": {
+        "tcgdex": "neo2-027",
+        "pokemontcg": [
+          "neo2-49"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-027-unknown-m/",
+      "jp_print": {
+        "level": 14,
+        "rarity": "◆(U)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-027-unknown-m/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "corrections": [
+        {
+          "id": "FIX-neo2-027-RULES-TEXT-JA",
+          "field": "pokemon.rules_text.ja",
+          "before": null,
+          "after": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "basis": "card_image_check",
+          "decided_on": "2026-10-30"
+        }
+      ]
+    },
+    {
+      "id": "neo2-028",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "アンノーンU",
+        "en": "Unown [U]"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          201
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "en": "You may have up to 4 Basic Pokémon cards in your deck with Unown in their names."
+        },
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "UNDO[アンドゥ]",
+              "en": "[Undo]"
+            },
+            "text": {
+              "ja": "この力は、自分のベンチに、このカードとアンノーン「N」「D」「O」がいるとき、自分の番ごとに1回使える。自分のバトル場のポケモンと、そのポケモンについているすべてのカードを、自分の手札にもどす。",
+              "en": "Once during your turn (before your attack), if you have Unown [U], Unown [N], Unown [D], and Unown [O] on your Bench, you may return your Active Pokémon and all cards attached to it to your hand."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "めざめるパワー",
+              "en": "Hidden Power"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-neo2-028-RULES-TEXT-JA）: 空だった pokemon.rules_text.ja に「「アンノーン」はデッキに4枚までしか入れることができません。」を入れた。根拠: kyuura が、同じカード（第2弾「遺跡をこえて...」のアンノーン「U」）の日本語版のカードの画像を pcg-search.com [N3]・なぞのばしょ [N1] で読み、カード名の上の小さい文字のルール文「「アンノーン」はデッキに4枚までしか入れることができません。」を確かめた（2026-10-30。照合の記録 IMG-neo2-028）。ほかの文字のアンノーンの文面・英語版の文面・グループ全体の裁定（CR-UNOWN-DECK-LIMIT-ALL-LETTERS）からは写していない"
+      ],
+      "source_ids": {
+        "tcgdex": "neo2-028",
+        "pokemontcg": [
+          "neo2-51"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-028-unknown-u/",
+      "jp_print": {
+        "level": 16,
+        "rarity": "◆(U)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-028-unknown-u/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "corrections": [
+        {
+          "id": "FIX-neo2-028-RULES-TEXT-JA",
+          "field": "pokemon.rules_text.ja",
+          "before": null,
+          "after": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "basis": "card_image_check",
+          "decided_on": "2026-10-30"
+        }
+      ]
+    },
+    {
+      "id": "neo2-030",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "アンノーンA",
+        "en": "Unown [A]"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          201
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "en": "You may have up to 4 Basic Pokémon cards in your deck with Unown in their names."
+        },
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ANGER[アンガー]",
+              "en": "[Anger]"
+            },
+            "text": {
+              "ja": "この力は、自分の場の「アンノーン」が「めざめるパワー」を使うとき、使える。その「めざめるパワー」のダメージに、このカードにのっているダメージカウンターの数×10のダメージを追加する。このカード以外のアンノーン「A」が「ANGER」を使っているとき、この力は使えない。",
+              "en": "Whenever 1 of your Pokémon with Unown in its name uses its Hidden Power attack, that attack does 10 more damage for each damage counter on Unown [A]. If you have more than 1 Unown [A] in play, use only 1 [Anger] for each attack."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "めざめるパワー",
+              "en": "Hidden Power"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-neo2-030-RULES-TEXT-JA）: 空だった pokemon.rules_text.ja に「「アンノーン」はデッキに4枚までしか入れることができません。」を入れた。根拠: kyuura が、同じカード（第2弾「遺跡をこえて...」のアンノーン「A」）の日本語版のカードの画像を pcg-search.com [N3]・なぞのばしょ [N1] で読み、カード名の上の小さい文字のルール文「「アンノーン」はデッキに4枚までしか入れることができません。」を確かめた（2026-10-30。照合の記録 IMG-neo2-030）。ほかの文字のアンノーンの文面・英語版の文面・グループ全体の裁定（CR-UNOWN-DECK-LIMIT-ALL-LETTERS）からは写していない"
+      ],
+      "source_ids": {
+        "tcgdex": "neo2-030",
+        "pokemontcg": [
+          "neo2-14",
+          "neo2-33"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-030-unknown-a/",
+      "jp_print": {
+        "level": 15,
+        "rarity": "★(R)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-030-unknown-a/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "corrections": [
+        {
+          "id": "FIX-neo2-030-RULES-TEXT-JA",
+          "field": "pokemon.rules_text.ja",
+          "before": null,
+          "after": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "basis": "card_image_check",
+          "decided_on": "2026-10-30"
+        }
+      ]
+    },
+    {
+      "id": "neo4-064",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "アンノーンW",
+        "en": "Unown [W]"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          201
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「アンノーン」はデッキに4枚までしか入れることができません。",
+          "en": "You may have up to 4 Basic Pokémon cards in your deck with Unown in their names."
+        },
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "WANT[ウォント]",
+              "en": "[Want]"
+            },
+            "text": {
+              "ja": "この力は、自分のベンチに、このカードとアンノーン｢A｣｢N｣｢T｣がいるとき、自分の番ごとに一回使うことができる。コインを投げて「おもて」なら、自分のトラッシュから「トレーナーカード」を一枚選び出し、相手プレイヤーに見せてから、手札に加える。",
+              "en": "Once during your turn (before your attack), if you have Unown [W], Unown [A], Unown [N], and Unown [T] on your Bench, you may flip a coin. If heads, put a Trainer card from your discard pile into your hand."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "めざめるパワー",
+              "en": "Hidden Power"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-064",
+        "pokemontcg": [
+          "neo4-29"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A2%E3%83%B3%E3%83%8E%E3%83%BC%E3%83%B3W_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 16,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A2%E3%83%B3%E3%83%8E%E3%83%BC%E3%83%B3W_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "GD3-003",
+      "jp_set": "GD3",
+      "category": "pokemon",
+      "name": {
+        "ja": "マチスのライチュウ",
+        "en": "Lt. Surge's Raichu"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          26
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "マチスのピカチュウ",
+          "en": "Lt. Surge's Pikachu"
+        },
+        "hp": 70,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "メガトンパンチ",
+              "en": "Mega Punch"
+            },
+            "cost": [
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "10まんボルト",
+              "en": "Thunderbolt"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 100,
+              "modifier": null,
+              "display": "100"
+            },
+            "text": {
+              "ja": "自分についているエネルギーカードを、すべてトラッシュする。(トラッシュできない時、このワザのダメージは0になる)",
+              "en": "Discard all Energy cards attached to Lt. Surge's Raichu in order to use this attack."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-GD3-003-EVOLVES-FROM）: 空だった pokemon.evolves_from に「マチスのピカチュウ」を入れた。根拠: kyuura が、同じカード（ポケモンカード(PMCG) ポケモンジム第2弾「クチバシティジム マチス」のマチスのライチュウ）の日本語版のカードの画像（pcg-search.com [N3]）で、左上の「1進化」と「マチスのピカチュウから進化」を読んだ（2026-10-30。照合の記録 IMG-GD3-003）。ポケモンの系統・英語版から決めていない"
+      ],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-28"
+        ],
+        "pcg_search": [
+          "1stgymd3003"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd3003.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「クチバシティジム マチス」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd3003.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-28",
+        "pokemon.dex": "pokemontcg:gym1-28",
+        "pokemon.evolves_from": "card_corrections:FIX-GD3-003-EVOLVES-FROM",
+        "pokemon.stage": "card_image_check:IMG-GD3-003"
+      },
+      "copies": [
+        {
+          "page": "1stgymd3003",
+          "list_number": "003/025"
+        }
+      ],
+      "corrections": [
+        {
+          "id": "FIX-GD3-003-EVOLVES-FROM",
+          "field": "pokemon.evolves_from",
+          "before": null,
+          "after": {
+            "ja": "マチスのピカチュウ",
+            "en": "Lt. Surge's Pikachu"
+          },
+          "basis": "card_image_check",
+          "decided_on": "2026-10-30"
+        }
+      ]
+    },
+    {
+      "id": "ES2-011",
+      "jp_set": "ES2",
+      "category": "pokemon",
+      "name": {
+        "ja": "オムナイト",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "なにかの化石",
+          "en": null
+        },
+        "hp": 50,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "げんしのゆめ",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使える。コインを投げて「おもて」なら、「なにかの化石」から進化したポケモンのワザが相手に与えるダメージは、この番だけ「+10」される。(控えポケモンへのダメージは、そのまま)",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ころがりタックル",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-ES2-011-EVOLVES-FROM）: 空だった pokemon.evolves_from に「なにかの化石」を入れた。根拠: kyuura が、同じカード（ポケモンカード(PMCG) 拡張シート 第2弾(赤版)のオムナイト）の日本語版のカードの画像（pcg-search.com [N3]）で、左上の「1進化」と「なにかの化石から進化」を読んだ（2026-10-30。照合の記録 IMG-ES2-011）。ポケモンの系統・英語版から決めていない"
+      ],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex2011"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex2011.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第2弾(赤版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex2011.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "card_corrections:FIX-ES2-011-EVOLVES-FROM"
+      },
+      "copies": [
+        {
+          "page": "1stex2011",
+          "list_number": "011/036"
+        }
+      ],
+      "corrections": [
+        {
+          "id": "FIX-ES2-011-EVOLVES-FROM",
+          "field": "pokemon.evolves_from",
+          "before": null,
+          "after": {
+            "ja": "なにかの化石",
+            "en": null
+          },
+          "basis": "card_image_check",
+          "decided_on": "2026-10-30"
+        }
+      ]
+    },
+    {
+      "id": "ES2-028",
+      "jp_set": "ES2",
+      "category": "pokemon",
+      "name": {
+        "ja": "カブト",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "なにかの化石",
+          "en": null
+        },
+        "hp": 50,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "かせきか",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使える。自分の場にいる「なにかの化石」から進化したポケモンを、1匹選ぶ。その後、コインを投げて「おもて」なら、選んだポケモンにのっているすべての進化カードを手札にもどす。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "するどいツメ",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、30ダメージを追加する。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-ES2-028-EVOLVES-FROM）: 空だった pokemon.evolves_from に「なにかの化石」を入れた。根拠: kyuura が、同じカード（ポケモンカード(PMCG) 拡張シート 第2弾(赤版)のカブト）の日本語版のカードの画像（pcg-search.com [N3]）で、左上の「1進化」と「なにかの化石から進化」を読んだ（2026-10-30。照合の記録 IMG-ES2-028）。ポケモンの系統・英語版から決めていない"
+      ],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex2028"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex2028.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第2弾(赤版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex2028.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "card_corrections:FIX-ES2-028-EVOLVES-FROM"
+      },
+      "copies": [
+        {
+          "page": "1stex2028",
+          "list_number": "028/036"
+        }
+      ],
+      "corrections": [
+        {
+          "id": "FIX-ES2-028-EVOLVES-FROM",
+          "field": "pokemon.evolves_from",
+          "before": null,
+          "after": {
+            "ja": "なにかの化石",
+            "en": null
+          },
+          "basis": "card_image_check",
+          "decided_on": "2026-10-30"
+        }
+      ]
+    },
+    {
+      "id": "ES2-029",
+      "jp_set": "ES2",
+      "category": "pokemon",
+      "name": {
+        "ja": "プテラ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "なにかの化石",
+          "en": null
+        },
+        "hp": 70,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ちょうおんぱ",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "きりもみアタック",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "自分にも、「弱点・抵抗力」に関係なく、10ダメージ。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-ES2-029-EVOLVES-FROM）: 空だった pokemon.evolves_from に「なにかの化石」を入れた。根拠: kyuura が、同じカード（ポケモンカード(PMCG) 拡張シート 第2弾(赤版)のプテラ）の日本語版のカードの画像（pcg-search.com [N3]）で、左上の「1進化」と「なにかの化石から進化」を読んだ（2026-10-30。照合の記録 IMG-ES2-029）。ポケモンの系統・英語版から決めていない"
+      ],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex2029"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex2029.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第2弾(赤版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex2029.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "card_corrections:FIX-ES2-029-EVOLVES-FROM"
+      },
+      "copies": [
+        {
+          "page": "1stex2029",
+          "list_number": "029/036"
+        }
+      ],
+      "corrections": [
+        {
+          "id": "FIX-ES2-029-EVOLVES-FROM",
+          "field": "pokemon.evolves_from",
+          "before": null,
+          "after": {
+            "ja": "なにかの化石",
+            "en": null
+          },
+          "basis": "card_image_check",
+          "decided_on": "2026-10-30"
+        }
+      ]
+    },
+    {
+      "id": "ES3-018",
+      "jp_set": "ES3",
+      "category": "pokemon",
+      "name": {
+        "ja": "オムナイト",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "なにかの化石",
+          "en": null
+        },
+        "hp": 50,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "かせきのみちびき",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使える。コインを投げて「おもて」なら、自分のトラッシュから「なにかの化石」を1枚選び出し、手札に加える。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "なみのり",
+              "en": null
+            },
+            "cost": [
+              "water",
+              "water"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-ES3-018-EVOLVES-FROM）: 空だった pokemon.evolves_from に「なにかの化石」を入れた。根拠: kyuura が、同じカード（ポケモンカード(PMCG) 拡張シート 第3弾(緑版)のオムナイト）の日本語版のカードの画像（pcg-search.com [N3]）で、左上の「1進化」と「なにかの化石から進化」を読んだ（2026-10-30。照合の記録 IMG-ES3-018）。ポケモンの系統・英語版から決めていない"
+      ],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex3018"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex3018.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第3弾(緑版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex3018.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "card_corrections:FIX-ES3-018-EVOLVES-FROM"
+      },
+      "copies": [
+        {
+          "page": "1stex3018",
+          "list_number": "018/036"
+        }
+      ],
+      "corrections": [
+        {
+          "id": "FIX-ES3-018-EVOLVES-FROM",
+          "field": "pokemon.evolves_from",
+          "before": null,
+          "after": {
+            "ja": "なにかの化石",
+            "en": null
+          },
+          "basis": "card_image_check",
+          "decided_on": "2026-10-30"
+        }
+      ]
+    },
+    {
+      "id": "PRN-030",
+      "jp_set": "PRN",
+      "category": "pokemon",
+      "name": {
+        "ja": "カポエラー",
+        "en": "Hitmontop"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          237
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "れんぞくキック",
+              "en": "Repeating Kick"
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "「うら」が出るまでコインを投げつづけ、その間に出た「おもて」の数×20のダメージ。",
+              "en": "Flip a coin until you get tails. This attack does 20 damage times the number of heads."
+            }
+          },
+          {
+            "name": {
+              "ja": "こうそくスピン",
+              "en": "Rapid Spin"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "相手を相手の控えポケモンと入れ替える。その後、自分を自分の控えポケモンと入れ替える。入れ替えるときは、それぞれのプレイヤーが、それぞれ自分の場のポケモンを選ぶ。(控えがいない側は、入れ替えをしない。)",
+              "en": "If your opponent has any Benched Pokémon, he or she chooses 1 of them and switches it with his or her Active Pokémon, then, if you have any Benched Pokémon, you switch 1 of them with your Active Pokémon. (Do the damage before switching the Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-PRN-030-STAGE）: pokemon.stage を「stage1」から「basic」に直した。根拠: kyuura が、同じカード（プロモ（neo）のカポエラー）の日本語版のカードの画像（pcg-search.com [N3]）で、HP の下の帯の「たねポケモン」と、左上に進化の印・「〇〇から進化」の欄がないことを確かめた（2026-10-30。照合の記録 IMG-PRN-030）。ベイビィ（バルキー）から進化できることは印刷の段階を決めない（印刷はたねポケモン）"
+      ],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-37"
+        ],
+        "pcg_search": [
+          "neop030"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop030.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop030.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-37",
+        "pokemon.dex": "pokemontcg:basep-37",
+        "pokemon.stage": "card_corrections:FIX-PRN-030-STAGE"
+      },
+      "copies": [
+        {
+          "page": "neop030",
+          "list_number": "-/-"
+        }
+      ],
+      "corrections": [
+        {
+          "id": "FIX-PRN-030-STAGE",
+          "field": "pokemon.stage",
+          "before": "stage1",
+          "after": "basic",
+          "basis": "card_image_check",
+          "decided_on": "2026-10-30"
+        }
+      ]
+    },
+    {
+      "id": "PRN-039",
+      "jp_set": "PRN",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいフシギソウ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "フシギダネ",
+          "en": null
+        },
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "つるでひっぱる",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回、このカードが「にげる」とき、はたらく。このカードがベンチにもどったとき、相手の対戦ポケモンを相手の控えポケモンと入れ替える。入れ替えるポケモンは相手プレイヤーが選ぶ。相手に控えがいないとき、この力は、はたらかない。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "みだれうち",
+              "en": null
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "相手の場のポケモンを、相手プレイヤーが、3回選ぶ(同じポケモンを2回以上選んでもよい)。その後、選ばれたポケモンそれぞれに、選ばれた数×10のダメージを、「弱点・抵抗力」に関係なく与える。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-PRN-039-EVOLVES-FROM）: 空だった pokemon.evolves_from に「フシギダネ」を入れた。根拠: kyuura が、同じカード（ポケモンカードneo プロモのわるいフシギソウ）の日本語版のカードの画像（pcg-search.com [N3]）で、左上の「1進化」と「フシギダネから進化」を読んだ（2026-10-30。照合の記録 IMG-PRN-039）。ポケモンの系統・英語版から決めていない"
+      ],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neop039"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop039.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop039.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "card_corrections:FIX-PRN-039-EVOLVES-FROM"
+      },
+      "copies": [
+        {
+          "page": "neop039",
+          "list_number": "-/-"
+        }
+      ],
+      "corrections": [
+        {
+          "id": "FIX-PRN-039-EVOLVES-FROM",
+          "field": "pokemon.evolves_from",
+          "before": null,
+          "after": {
+            "ja": "フシギダネ",
+            "en": null
+          },
+          "basis": "card_image_check",
+          "decided_on": "2026-10-30"
+        }
+      ]
+    },
+    {
+      "id": "PRN-040",
+      "jp_set": "PRN",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいフシギバナ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "わるいフシギソウ",
+          "en": null
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "いやなかふん",
+              "en": null
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを2枚投げる。「おもて」が1枚なら相手を「どく」と「ねむり」状態に、すべて「おもて」なら相手を「どく」と「こんらん」状態に、すべて「うら」なら相手を「どく」と「マヒ」状態にする。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-PRN-040-EVOLVES-FROM）: 空だった pokemon.evolves_from に「わるいフシギソウ」を入れた。根拠: kyuura が、同じカード（ポケモンカードneo プロモのわるいフシギバナ）の日本語版のカードの画像（pcg-search.com [N3]）で、左上の「2進化」と「わるいフシギソウから進化」を読んだ（2026-10-30。照合の記録 IMG-PRN-040）。ポケモンの系統・英語版から決めていない"
+      ],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neop040"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop040.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop040.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "card_corrections:FIX-PRN-040-EVOLVES-FROM"
+      },
+      "copies": [
+        {
+          "page": "neop040",
+          "list_number": "-/-"
+        }
+      ],
+      "corrections": [
+        {
+          "id": "FIX-PRN-040-EVOLVES-FROM",
+          "field": "pokemon.evolves_from",
+          "before": null,
+          "after": {
+            "ja": "わるいフシギソウ",
+            "en": null
+          },
+          "basis": "card_image_check",
+          "decided_on": "2026-10-30"
+        }
+      ]
+    },
+    {
+      "id": "PRN-045",
+      "jp_set": "PRN",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいオニドリル",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "オニスズメ",
+          "en": null
+        },
+        "hp": 60,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たかくとぶ",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "次の自分の番、このカードが使う「ドリルダイブ」のダメージは「80」になる。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ドリルダイブ",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "次の自分の番、このカードはワザを使うことができず、「にげる」こともできない。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-PRN-045-EVOLVES-FROM）: 空だった pokemon.evolves_from に「オニスズメ」を入れた。根拠: kyuura が、同じカード（ポケモンカードneo プロモのわるいオニドリル）の日本語版のカードの画像（pcg-search.com [N3]）で、左上の「1進化」と「オニスズメから進化」を読んだ（2026-10-30。照合の記録 IMG-PRN-045）。ポケモンの系統・英語版から決めていない"
+      ],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neop045"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop045.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop045.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash",
+        "pokemon.evolves_from": "card_corrections:FIX-PRN-045-EVOLVES-FROM"
+      },
+      "copies": [
+        {
+          "page": "neop045",
+          "list_number": "-/-"
+        }
+      ],
+      "corrections": [
+        {
+          "id": "FIX-PRN-045-EVOLVES-FROM",
+          "field": "pokemon.evolves_from",
+          "before": null,
+          "after": {
+            "ja": "オニスズメ",
+            "en": null
+          },
+          "basis": "card_image_check",
+          "decided_on": "2026-10-30"
+        }
+      ]
+    },
+    {
+      "id": "GD5-007",
+      "jp_set": "GD5",
+      "category": "pokemon",
+      "name": {
+        "ja": "カツラのウィンディ",
+        "en": "Blaine's Arcanine"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          59
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "カツラのガーディ",
+          "en": "Blaine's Growlithe"
+        },
+        "hp": 90,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ヒートタックル",
+              "en": "Heat Tackle"
+            },
+            "cost": [
+              "fire",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "自分にも10ダメージ。",
+              "en": "Blaine's Arcanine does 10 damage to itself."
+            }
+          },
+          {
+            "name": {
+              "ja": "ほのおのあらし",
+              "en": "Firestorm"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 120,
+              "modifier": null,
+              "display": "120"
+            },
+            "text": {
+              "ja": "自分についている「炎」エネルギーカードを3枚トラッシュしなければ、このワザは使えない。",
+              "en": "Discard 3 Fire Energy cards attached to Blaine's Arcanine in order to use this attack."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym2-1"
+        ],
+        "pcg_search": [
+          "1stgymd5007"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd5007.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "ポケモンジム第3弾「グレンタウンジム カツラ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd5007.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-GD5-007",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym2-1",
+        "pokemon.dex": "pokemontcg:gym2-1",
+        "pokemon.evolves_from": "same_card:PMCG6-034"
+      },
+      "copies": [
+        {
+          "page": "1stgymd5007",
+          "list_number": "007/025"
+        }
+      ]
+    },
+    {
+      "id": "IP2-032",
+      "jp_set": "IP2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ウィンディ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ガーディ",
+          "en": null
+        },
+        "hp": 70,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "とっしん",
+              "en": null
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "自分にも20ダメージ。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stintro2032"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stintro2032.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック(ゼニガメデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stintro2032.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stintro2032",
+          "list_number": "032/040"
+        }
+      ]
+    },
+    {
+      "id": "PR1-016",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ウィンディ",
+        "en": "Arcanine"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          59
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ガーディ",
+          "en": "Growlithe"
+        },
+        "hp": 70,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "でんこうせっか",
+              "en": "Quick Attack"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、20ダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 10 damage plus 20 more damage; if tails, this attack does 10 damage."
+            }
+          },
+          {
+            "name": {
+              "ja": "いかりのほのお",
+              "en": "Flames of Rage"
+            },
+            "cost": [
+              "fire",
+              "fire"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 40,
+              "modifier": "+",
+              "display": "40+"
+            },
+            "text": {
+              "ja": "このカードについている「炎」エネルギーカードを2枚はがして捨てなければこのワザは使えない。自分にのっているダメージカウンター×10のダメージを追加する",
+              "en": "Discard 2 Fire Energy cards attached to Arcanine in order to use this attack. This attack does 40 damage plus 10 more damage for each damage counter on Arcanine."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-6"
+        ],
+        "pcg_search": [
+          "1stp016"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp016.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp016.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-6",
+        "pokemon.dex": "pokemontcg:basep-6",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stp016",
           "list_number": "-/-"
         }
       ]

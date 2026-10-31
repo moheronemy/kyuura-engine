@@ -246,6 +246,23 @@ def _card(state: GameState, uid: int) -> dict[str, Any]:
     return {"card": uid, "card_id": state.cards[uid].card_id}
 
 
+def _seen_uid(state: GameState, uid: int, viewer: int | None) -> int | None:
+    """v0.122（docs/unown-fossil-retreat-reactions-v0.122.md 7 章）: 場の外の記録（番の効果・色の効果）が指すカード ``uid`` を、``viewer`` に見える場所にあるときだけ返す（見えない
+    手札・山札・うらのサイド・見られない置いておくカードなら None。カードの id は記録のとおり公開）。［げんしのゆめ］を使ったオムナイトが、その番のうちに［かせきか］で手札に
+    もどる場面で、手札のカードの uid を相手・観戦者に渡さない。"""
+    for owner, p in enumerate(state.players):
+        if uid in p.hand:
+            return uid if hand_visible_to(state, owner, viewer) else None
+        if uid in p.deck:
+            return None
+        if uid in p.prizes:
+            return uid if uid in state.face_up_prizes else None
+    for group in state.set_aside:
+        if uid in group.cards:
+            return uid if viewer in group.visible_to else None
+    return uid
+
+
 def _face_down_pokemon(state: GameState, pokemon: PokemonInPlay, owner: int, viewer: int | None) -> dict[str, Any]:
     """v0.67（docs/secret-plan-preflight-v0.67.md 7 章）: うらにしてベンチに出したカード（マチスの秘策）。全員に見えるのは、場のポケモンの番号・うらであること・ついている
     エネルギーカード（手札からつけた表のカード）・ダメージ（うらのあいだは 0）だけ。本当のカード（uid・カードの id・名前。uid はデッキの並びからカードがわかる）は持ち主
@@ -475,7 +492,8 @@ def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
                            "origin": lock.origin}
                           for lock in state.trainer_locks],
         # v0.56: トレーナーを使ったプレイヤーに与えた期限のある効果（カスミ・キョウ・見えない壁。公開の情報）
-        "trainer_effects": [{"kind": e.kind, "player": e.player, "card": e.source_card, "card_id": e.card_id, "expires_turn": e.expires_turn,
+        # v0.122: 発生源のカードが見えない場所にもどっていれば、その uid は書かない（``_seen_uid``）
+        "trainer_effects": [{"kind": e.kind, "player": e.player, "card": _seen_uid(state, e.source_card, viewer), "card_id": e.card_id, "expires_turn": e.expires_turn,
                              **({} if e.pokemon_id is None else {"pokemon_id": e.pokemon_id})}  # v0.80: 退化スプレーHYPER の禁止
                             for e in state.trainer_effects],
         # v0.57: 場に出ているスタジアム（両方の場の境界線上。公開の情報）と、この番にスタジアムの効果を使ったプレイヤー
@@ -483,7 +501,8 @@ def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
                                                        **_card(state, state.stadium.card)},
         "stadium_uses_this_turn": [list(use) for use in state.stadium_uses_this_turn],
         # v0.88: 特殊能力で色を変える効果（［せんすい］・［エナジーコンバーター］。公開の情報。書き出しの形式 23 と同じ項目）
-        "color_effects": [{"kind": e.kind, "player": e.player, "source": e.source, **_card(state, e.source_card), "power_index": e.power_index,
+        "color_effects": [{"kind": e.kind, "player": e.player, "source": e.source, "card": _seen_uid(state, e.source_card, viewer),
+                           "card_id": state.cards[e.source_card].card_id, "power_index": e.power_index,
                            "target": e.target, "color": e.color.value, "turn": e.turn, "left_play": e.left_play}
                           for e in state.color_effects],
         # v0.100（docs/sketch-perish-song-history-v0.100.md 7 章）: プレイヤーの番ごとの記録（使ったワザ・番でないプレイヤーの場にいたカード）。どちらも両方のプレイヤーが見た
@@ -610,6 +629,9 @@ PUBLIC_EVENTS = frozenset({
     "trainer_effect_blocked",
     # v0.118: ワザといっしょに使った［XXXXX］の宣言・コインの結果と追加、エアロウイングで投げる・投げないの答え（どれも場・コインの公開の情報）
     "group_attack_power", "group_attack_power_coins", "optional_coin_chosen", "optional_coin_declined",
+    # v0.122: ［ANGER］で数えた力を持つ個体のダメージカウンター、［WANT］・［かせきのみちびき］でトラッシュから手札に加えたカード（トラッシュは公開）、［かせきか］で選んだポケモン、
+    # 相手に控えがいなくてはたらかなかった［つるでひっぱる］（どれも場・トラッシュの公開の情報）
+    "group_attack_power_counters", "power_recover_from_discard", "fossilize_target", "vine_pull_skipped",
     # v0.87: 場の移動・ダメージへの反応（どれも場・コインの公開の情報）
     "spikes_damage", "hot_plate_damage", "movement_damage_skipped", "magma_pool", "magma_pool_none", "shock_blast_check", "shock_blast_damage",
     "shock_blast_skipped", "poison_fluid", "poison_fluid_skipped", "split_skipped", "split_declined",

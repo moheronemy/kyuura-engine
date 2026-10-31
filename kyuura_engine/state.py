@@ -748,6 +748,21 @@ class CannotRetreat:
 
 
 @dataclass(frozen=True)
+class CannotRetreatNextOwnTurn(CannotRetreat):
+    """ワザによる「持続する効果」（v0.122）のうち、わるいオニドリル（PRN-045）の「ドリルダイブ」の「次の自分の番、このカードは…「にげる」こともできない。」（kyuura の印刷の文面。ワザの
+    禁止は v0.78 の ``CannotAttackNextOwnTurn`` と同じ効果を別に与える）。
+
+    v0.36 の ``CannotRetreat``（「アイスバーン」。相手に与え、次の相手の番）と同じく、はたらく番の間このポケモンは「にげる」を宣言できない（``persistent.cannot_retreat``・``engine._retreat``。
+    同じ所・同じコード）。自分自身に与え（``on_opponent`` が偽。``source_card`` は自分のカード）、はたらく番は次の自分の番（``created_turn + 2``）。消える契機はほかの持続する効果と同じ（期限・
+    ベンチにもどる・進化・きぜつ）。入れ替えは止めない（p.325）。
+    """
+
+    kind: ClassVar[str] = "cannot_retreat_next_own_turn"
+    turns_until_active: ClassVar[int] = 2
+    on_opponent: ClassVar[bool] = False
+
+
+@dataclass(frozen=True)
 class CannotAttackWhileSourceActive:
     """ワザによる「持続する効果」（v0.40）のうち、サカキのニドキング（PMCG6-021）の「すごむ」の「このワザを受けた相手が「最大HPが50以下」のポケモンなら、
     そのポケモンは、次の相手の番、このカードがバトル場にいる限り、ワザを使えない。」（kyuura の印刷の文面。docs/count-condition-switch-return-v0.40.md 4 章）。
@@ -1711,6 +1726,7 @@ PERSISTENT_EFFECT_TYPES = (PreventDamage, PreventAttackDamage, Retaliation, Next
                            DoubledDamage,  # v0.75: DoubledDamage（もろばバサミ）
                            ReducedDamageToSourceNextTurn,  # v0.76: ReducedDamageToSourceNextTurn（なきごえ。期限が次の相手の番の終わり）
                            CannotAttackNextOwnTurn,  # v0.78: CannotAttackNextOwnTurn（メタルスラッシュ。次の自分の番にすべてのワザを使えない）
+                           CannotRetreatNextOwnTurn,  # v0.122: ドリルダイブ（次の自分の番に「にげる」ことができない）
                            ReflectShield,  # v0.83: ReflectShield（リフレクトシールド）
                            TimedDamageGuard,  # v0.109: ぬるぬる・かわす・ブリンク
                            KnockOutSurvival,  # v0.110: こらえる・こうてつか
@@ -1784,7 +1800,11 @@ GROUP_ATTACK_IMMUNITY = "group_attack_immunity"
 # ``player`` は使ったプレイヤー、``source_card``・``pokemon_id`` は特殊能力を持つポケモン（ワザを使ったポケモンとは限らない）のいちばん上のカードと場の番号、``card_id`` は特殊能力を印刷した
 # カード。使った番の終わりに消える。「この番に、すでに自分の場のほかのアンノーン「X」の「XXXXX」を使っていたなら」の確かめ（ほかの個体だけ。同じ個体の使用制限に広げない）
 GROUP_ATTACK_POWER_USED = "group_attack_power_used"
-POWER_TURN_EFFECT_KINDS = (QUICKEN_USED, GROUP_ATTACK_IMMUNITY, GROUP_ATTACK_POWER_USED)
+# v0.122（docs/unown-fossil-retreat-reactions-v0.122.md 4 章）: オムナイト（ES2-011）の［げんしのゆめ］の「おもて」の効果（「「なにかの化石」から進化したポケモンのワザが相手に与えるダメージは、
+# この番だけ「+10」される」）。``player`` は使ったプレイヤー、``source_card``・``pokemon_id`` は使ったポケモンのいちばん上のカードと場の番号、``card_id`` は特殊能力を印刷したカード。
+# 使った番だけはたらき、その番の終わりに消える（使ったポケモンが場をはなれても消さない）。2 匹が使えば記録も 2 つ（それぞれ +10）
+FOSSIL_ATTACK_BONUS = "fossil_attack_bonus"
+POWER_TURN_EFFECT_KINDS = (QUICKEN_USED, GROUP_ATTACK_IMMUNITY, GROUP_ATTACK_POWER_USED, FOSSIL_ATTACK_BONUS)
 @dataclass(frozen=True)
 class PoisonMist:
     """v0.119（docs/damage-reactions-poison-sleep-v0.119.md 5 章）: マタドガス（ES3-007）の［ポイズンミスト］の「おもて」の効果（「次の自分の番の始めまで、「どく」状態になったポケモンが

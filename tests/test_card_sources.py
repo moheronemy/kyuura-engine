@@ -102,10 +102,11 @@ from tests.helpers import (
     V0_79_CARDS,
     V0_80_CARDS,
     V0_81_CARDS, V0_82_CARDS, V0_83_CARDS, V0_84_CARDS, V0_85_CARDS, V0_86_CARDS, V0_87_CARDS, V0_88_CARDS,
+    kyuura_records_since_v0_69,
 )
 from tests.release_catalog import cards_after
 
-TODAY = datetime.date(2026, 10, 30)  # v0.120 の採用の記録の日（v0.87 から 2026-10-23、v0.89 から 2026-10-24、v0.97 から 2026-10-25、v0.103 から 2026-10-26、v0.108 から 2026-10-27、v0.113 から 2026-10-28、v0.117 から 2026-10-29）
+TODAY = datetime.date(2026, 10, 31)  # v0.123 の採用の記録の日（v0.87 から 2026-10-23、v0.89 から 2026-10-24、v0.97 から 2026-10-25、v0.103 から 2026-10-26、v0.108 から 2026-10-27、v0.113 から 2026-10-28、v0.117 から 2026-10-29、v0.120 から 2026-10-30）
 COMMIT = read_extract()["source"]["commit"]
 # v0.69: 写しの元を上げた（7d3f4ca）。v0.68 までの同梱の採用の記録は、採用したときのデータのコミット（ecb2d69）のまま（書き換えない。card_sources.json の data_migrations）
 ADOPTED_COMMIT = read_extract()["previous_source"]["commit"]
@@ -328,7 +329,8 @@ class ShippedRecordTest(unittest.TestCase):
             with self.subTest(card=card_id):
                 self.assertEqual((record["basis"], record["status"], record["kyuura_commit"]), (cs.KYUURA_DATA, cs.ADOPTED, ADOPTED_COMMIT))
                 # 炎エネルギーをトラッシュするワザの文面は kyuura のエラッタ（RUL-）。第4弾ロケット団のポニータは印刷の文面（記録の文と違う）
-                self.assertEqual(record["kyuura_records"], [] if card_id == "PMCG4-013" else [RUL])
+                # v0.123: 研究の基準を 74b3ceb に上げて、ウィンディ（PMCG1-019）に名前の裁定 CR-ARCANINE-PRINTED-NAMES が加わった（tests/helpers.py の V0_123_KYUURA_RECORDS_ADDED）
+                self.assertEqual(record["kyuura_records"], kyuura_records_since_v0_69(card_id, [] if card_id == "PMCG4-013" else [RUL]))
                 self.assertLessEqual(set(record["play_text"].values()), {cs.PRINTED_TEXT, RUL})
                 [check] = record["external_checks"]
                 self.assertEqual(check["checked_on"], "2026-10-15")
@@ -559,7 +561,7 @@ REJECTED = [
     ("URL がない", mutate(TANGELA_CHECKS + (0, "url"), delete=True), "['url'] がない"),
     ("確認日がない", mutate(TANGELA_CHECKS + (0, "checked_on"), delete=True), "['checked_on'] がない"),
     ("版がない", mutate(TANGELA_CHECKS + (0, "edition"), delete=True), "['edition'] がない"),
-    ("確認日が今日より後", check_of(TANGELA, 0, checked_on="2026-10-31"), "より後"),  # v0.87: 今日（TODAY）を 2026-10-23 にした。v0.89: 2026-10-24 にした。v0.97: 2026-10-25 にした。v0.103: 2026-10-26 にした。v0.108: 2026-10-27 にした。v0.113: 2026-10-28 にした。v0.117: 2026-10-29 にした。v0.120: 2026-10-30 にした
+    ("確認日が今日より後", check_of(TANGELA, 0, checked_on="2026-11-01"), "より後"),  # v0.87: 今日（TODAY）を 2026-10-23 にした。v0.89: 2026-10-24 にした。v0.97: 2026-10-25 にした。v0.103: 2026-10-26 にした。v0.108: 2026-10-27 にした。v0.113: 2026-10-28 にした。v0.117: 2026-10-29 にした。v0.120: 2026-10-30 にした。v0.123: 2026-10-31 にした
     ("確認日が方針の開始日より前", check_of(TANGELA, 0, checked_on="2026-10-14"), "より前"),
     ("確認日の形が違う", check_of(TANGELA, 0, checked_on="2026/10/16"), "日付ではない"),
     ("照合した版の一覧の番号がない", check_of(TANGELA, 0, edition={"expansion": "第1弾 拡張パック", "list_number": None}), "一覧の番号（list_number）がない"),

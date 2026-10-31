@@ -1581,6 +1581,15 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.CoinPerPokemonInPlayDamage,
     _effects.BenchOpponentHandBasicThenSwitchOrFail,
     _effects.EachPlayerBenchesOpponentHandBasics,
+    # v0.122（docs/unown-fossil-retreat-reactions-v0.122.md 6 章）: すべてのエネルギーカードをトラッシュして足りなければ 0・自分にも弱点・抵抗力なしのダメージ・相手プレイヤーが選ぶ配分・
+    # 2 枚のコインの組のどくと特殊状態・次の自分の番のワザとにげるの禁止
+    _effects.DiscardAllEnergyCardsThenDamageZeroIfLacking,
+    _effects.DamageAndSelfDamageIgnoringWeaknessResistance,
+    _effects.OpponentChoosesRepeatedTargetsDamage,
+    _effects.DamageThenPoisonAndStatusByTwoCoins,
+    _effects.DamageThenSelfCannotAttackOrRetreat,
+    # v0.123（docs/arcanine-name-migration-v0.123.md 5 章）: 炎エネルギーカードを捨てなければ使えない・自分のダメージカウンターで追加ダメージ（既存の要素 DiscardOwnEnergy と PlusOwnCounters の組み合わせ）
+    _effects.DiscardEnergyBeforeDamagePlusOwnCounters,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -1866,9 +1875,13 @@ CARD_DATA_COMMIT_SINCE_V0_97 = "73a169063463bbf7bcaa3137d70cbf9721d11534"
 CARD_DATA_COMMIT_SINCE_V0_114 = "e519b99e2adcc6c2cd0998569ae5ee1101de6e89"
 # v0.121（docs/hand-bench-attack-conditions-v0.121.md 3 章）: 写しの元を e519b99 から 2fe0bc0 に上げた（段 v0.121。前の段の値は変えない）
 CARD_DATA_COMMIT_SINCE_V0_121 = "2fe0bc042ce187d191843819262f8036abbb343d"
-CARD_DATA_COMMIT = CARD_DATA_COMMIT_SINCE_V0_121  # 今の写しの元
+# v0.123（docs/arcanine-name-migration-v0.123.md 2 章）: 写しの元を 2fe0bc0 から 74b3ceb に上げた（段 v0.123。前の段の値は変えない）。もどすのは写しの元の 2 か所だけで、
+# 名前の訂正（ウィンディ 2 枚の name.ja）はもどさない
+CARD_DATA_COMMIT_SINCE_V0_123 = "74b3ceb883dd815495d13b9987433fb14b36e44d"
+CARD_DATA_COMMIT = CARD_DATA_COMMIT_SINCE_V0_123  # 今の写しの元
 CARD_DATA_MIGRATIONS = ((CARD_DATA_COMMIT_BEFORE_V0_69, CARD_DATA_COMMIT_SINCE_V0_69), (CARD_DATA_COMMIT_SINCE_V0_69, CARD_DATA_COMMIT_SINCE_V0_97),
-                        (CARD_DATA_COMMIT_SINCE_V0_97, CARD_DATA_COMMIT_SINCE_V0_114), (CARD_DATA_COMMIT_SINCE_V0_114, CARD_DATA_COMMIT_SINCE_V0_121))
+                        (CARD_DATA_COMMIT_SINCE_V0_97, CARD_DATA_COMMIT_SINCE_V0_114), (CARD_DATA_COMMIT_SINCE_V0_114, CARD_DATA_COMMIT_SINCE_V0_121),
+                        (CARD_DATA_COMMIT_SINCE_V0_121, CARD_DATA_COMMIT_SINCE_V0_123))
 
 
 def with_card_data_commit_at(data: dict, commit: str) -> dict:
@@ -1897,7 +1910,7 @@ def with_card_data_commit_at(data: dict, commit: str) -> dict:
 
 def with_card_data_commit_before_v0_69(data: dict) -> dict:
     """state_to_dict の値（の写し）の、写しの元の 2 か所だけを v0.68 までの値にもどした新しい値（``data`` は変えない）。もどした数も確かめる。v0.97 から、今の写しの元
-    （v0.114 から e519b99、v0.121 から 2fe0bc0）から移行の連鎖を段ごとにさかのぼる（``with_card_data_commit_at``）。"""
+    （v0.114 から e519b99、v0.121 から 2fe0bc0、v0.123 から 74b3ceb）から移行の連鎖を段ごとにさかのぼる（``with_card_data_commit_at``）。"""
     return with_card_data_commit_at(data, CARD_DATA_COMMIT_BEFORE_V0_69)
 
 
@@ -2094,13 +2107,57 @@ V0_114_KYUURA_RECORDS_ADDED = {
 V0_121_KYUURA_RECORDS_ADDED = {
     "IP1-040": ("CC-IP1-040-P127", "CR-PIKACHU-GROWL-LATEST", "CR-PIKACHU-GROWL-OPPONENT-EFFECT", "LD-IP1-040-ATK0", "UQ-GROWL-NON-ATTACK-DAMAGE"),
 }
+# v0.123（docs/arcanine-name-migration-v0.123.md 2.3 節）: 研究の基準を kyuura 74b3ceb に上げて、登録済みのカードの採用の記録の kyuura_records に加わった記録（ウィンディの名前の裁定と、
+# ナッシー[Exeggutor]・ちえくらべ・フラッシュ・とりかえっこプリーズの論点の事例に挙がったカード）。tests/test_arcanine_name_migration_v0_123.py が、同梱の記録と同じことを確かめる
+V0_123_KYUURA_RECORDS_ADDED = {
+    "PMCG1-019": ("CR-ARCANINE-PRINTED-NAMES",),
+    "PMCG6-034": ("CR-ARCANINE-PRINTED-NAMES",),
+    "neo4-021": ("CR-ARCANINE-PRINTED-NAMES",),
+    "PMCG2-012": ("UQ-BILINGUAL-NAME-GLOSS",),
+    "SI-013": ("UQ-BILINGUAL-NAME-GLOSS",),
+    "neo1-090": ("UQ-BILINGUAL-NAME-GLOSS",),
+    "PMCG6-082": ("UQ-BILINGUAL-NAME-GLOSS",),
+    "PMCG1-091": ("UQ-MIND-GAMES-TRAINER-STEP",),
+    "PMCG3-046": ("UQ-MIND-GAMES-TRAINER-STEP",),
+    "PMCG5-087": ("UQ-MIND-GAMES-TRAINER-STEP", "UQ-SWAP-PLEASE-OWNERSHIP"),
+    "PMCG5-094": ("UQ-MIND-GAMES-TRAINER-STEP",),
+    "neo1-085": ("UQ-MIND-GAMES-TRAINER-STEP",),
+    "neo1-088": ("UQ-MIND-GAMES-TRAINER-STEP",),
+    "neo1-092": ("UQ-MIND-GAMES-TRAINER-STEP",),
+    "PMCG1-082": ("UQ-FLASH-FACE-UP-DECK",),
+    "ES3-035": ("UQ-FLASH-FACE-UP-DECK",),
+    "neo4-112": ("UQ-FLASH-FACE-UP-DECK",),
+}
+
+
+# v0.123（docs/arcanine-name-migration-v0.123.md 2 章）: 段 v0.123 で kyuura が直した登録済みの 2 枚の名前（name.ja の前・あと）。前の版の固定した写しと今の写しを比べるテストは、
+# この 2 枚の name.ja と、付随する notes・corrections だけを前の写しの値にもどして比べる（``without_v0_123_name_fixes``）
+V0_123_NAME_FIXES = {"PMCG1-019": ("ウインディ", "ウィンディ"), "PMCG6-034": ("カツラのウインディ", "カツラのウィンディ")}
+
+
+def without_v0_123_name_fixes(cards: dict, old_cards: dict) -> dict:
+    """今の写しのカード（id → 記録）の、段 v0.123 の 2 枚の name.ja・notes・corrections だけを前の写し ``old_cards`` の値にもどした新しい辞書（``cards`` は変えない）。もどす前の名前が
+    訂正のあとの値・前の写しの名前が訂正の前の値でなければ AssertionError（知らない値を置きかえない）。ほかの欄・ほかのカードはそのまま。"""
+    result = dict(cards)
+    for card_id, (before, after) in V0_123_NAME_FIXES.items():
+        if card_id not in cards or card_id not in old_cards:
+            continue
+        new, old = cards[card_id], old_cards[card_id]
+        assert (new["name"]["ja"], old["name"]["ja"]) == (after, before), card_id
+        reverted = {**new, "name": {**new["name"], "ja": before}, "notes": old["notes"]}
+        reverted.pop("corrections", None)
+        if "corrections" in old:
+            reverted["corrections"] = old["corrections"]
+        result[card_id] = reverted
+    return result
 
 
 def kyuura_records_since_v0_69(card_id: str, before: list | tuple = ()) -> list:
     """v0.68 までの kyuura_records（``before``）に、v0.69 で加わった記録を加えた値（並びは id の順）。v0.97 で加わった記録（``V0_97_KYUURA_RECORDS_ADDED``）・v0.114 で加わった記録
-    （``V0_114_KYUURA_RECORDS_ADDED``）・v0.121 で加わった記録（``V0_121_KYUURA_RECORDS_ADDED``）も加える。"""
+    （``V0_114_KYUURA_RECORDS_ADDED``）・v0.121 で加わった記録（``V0_121_KYUURA_RECORDS_ADDED``）・v0.123 で加わった記録（``V0_123_KYUURA_RECORDS_ADDED``）も加える。"""
     return sorted([*before, *V0_69_KYUURA_RECORDS_ADDED.get(card_id, ()), *V0_97_KYUURA_RECORDS_ADDED.get(card_id, ()),
-                   *V0_114_KYUURA_RECORDS_ADDED.get(card_id, ()), *V0_121_KYUURA_RECORDS_ADDED.get(card_id, ())])
+                   *V0_114_KYUURA_RECORDS_ADDED.get(card_id, ()), *V0_121_KYUURA_RECORDS_ADDED.get(card_id, ()),
+                   *V0_123_KYUURA_RECORDS_ADDED.get(card_id, ())])
 
 
 # v0.69: kyuura の未解決の一覧で論点に結ばれた停止コード（v0.68 までは not_in_kyuura。進化のあとの HP だけは out_of_scope）→ kyuura の論点

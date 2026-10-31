@@ -284,7 +284,7 @@ def retag_power_uses(state: GameState, target: PokemonInPlay) -> None:
 
 
 def devolve(state: GameState, owner: int, target: PokemonInPlay, count: int, *, destination: str, by_player: int,
-            effect: str | None = None, trainer: int | None = None) -> tuple[int, ...]:
+            effect: str | None = None, trainer: int | None = None, power: str | None = None) -> tuple[int, ...]:
     """場のポケモン ``target``（``owner`` の場のポケモン）から、実際に重なっている進化カードを上から ``count`` 枚はがし、``destination``（持ち主の手札・トラッシュ）に
     置く（退化。p.324「19 ポケモンの退化」。kyuura の GR-2000-P324-DEVOLUTION）。はがしたカード（上から順の uid）を返す。
 
@@ -299,15 +299,16 @@ def devolve(state: GameState, owner: int, target: PokemonInPlay, count: int, *, 
       （退化前のポケモンのもの）も消す。v0.90: マーカー・カウンター（ダメージカウンター以外）も取りのぞく（``markers.remove_markers``）。場に出てから 1 度だけ使えるワザの記録（``attacks_used_once``）は、はがしたカードのものだけを消す（そのカードは場をはなれた。
       残るカードの記録は「別のポケモン」だけを理由に消さない）。「自分の番ごとに1回」の記録は ``retag_power_uses``
     - ログ ``devolve``（``player`` は持ち主・``pokemon_id``・``from_card``／``from_card_id``（はがす前のいちばん上）・``to_card``／``to_card_id``（はがしたあと）・
-      ``removed``／``removed_ids``（はがしたカード。上から順）・``destination``・``by_player``（はがしたプレイヤー）・ワザなら ``effect``、トレーナーなら ``trainer_card``）
+      ``removed``／``removed_ids``（はがしたカード。上から順）・``destination``・``by_player``（はがしたプレイヤー）・ワザなら ``effect``、トレーナーなら ``trainer_card``、v0.122 から
+      特殊能力（カブトの［かせきか］）なら ``power``（``PowerKey`` の文字列））
     - きぜつの判定はしない（HP 以上なら、ワザのあと・トレーナーのあとの判定。呼ぶ側）。乱数は使わない
     """
     if destination not in DEVOLVE_DESTINATIONS:
         raise ValueError(f"はがした進化カードの行き先 {destination!r} は {DEVOLVE_DESTINATIONS} のどれか")
     if not 1 <= count <= len(target.evolution_stack) or target.disguise is not None:
         raise RuntimeError(f"場のポケモン {target.pokemon_id} から {count} 枚はがせない（重なり {target.evolution_stack}・のせたカード {target.disguise}。エンジンの不具合）")
-    if (effect is None) == (trainer is None):
-        raise RuntimeError("退化はワザの効果かトレーナーの効果のどちらか（エンジンの不具合）")
+    if sum(source is not None for source in (effect, trainer, power)) != 1:
+        raise RuntimeError("退化はワザの効果・トレーナーの効果・特殊能力の効果のどれか 1 つ（エンジンの不具合）")
     p = state.players[owner]
     chain = (*target.evolution_stack, target.card)
     removed = tuple(reversed(chain[-count:]))
@@ -333,7 +334,7 @@ def devolve(state: GameState, owner: int, target: PokemonInPlay, count: int, *, 
         target.evolved_turn = None
     target.devolved_turn = state.turn_number
     (p.hand if destination == DEVOLVE_TO_HAND else p.deck if destination == DEVOLVE_TO_DECK else p.discard).extend(removed)  # v0.116: 山札（切るのは呼ぶ側）
-    extra = {"effect": effect} if effect is not None else {"trainer_card": trainer}
+    extra = {"effect": effect} if effect is not None else ({"trainer_card": trainer} if trainer is not None else {"power": power})
     state.add_event(
         "devolve",
         player=owner,

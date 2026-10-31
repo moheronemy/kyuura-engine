@@ -154,8 +154,9 @@ class RegistrationTest(unittest.TestCase):
         pool = load_card_pool()
         for card in H.V0_89_CARDS:
             record = sources[card]
+            # v0.123: 研究の基準を 74b3ceb に上げて、ナッシー SI-013 に UQ-BILINGUAL-NAME-GLOSS の事例が加わった（tests/helpers.py の V0_123_KYUURA_RECORDS_ADDED）
             self.assertEqual((record["basis"], record["status"], record["external_checks"], record["kyuura_records"], record["kyuura_commit"]),
-                             ("kyuura_data", "adopted", [], [], "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"))
+                             ("kyuura_data", "adopted", [], list(H.V0_123_KYUURA_RECORDS_ADDED.get(card, ())), "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"))
             self.assertNotIn(card, verification.get("cards", verification))
             for index, attack in enumerate(pool.get(card).attacks):
                 key = f"attack/{index}"

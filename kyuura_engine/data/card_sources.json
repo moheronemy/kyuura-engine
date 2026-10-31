@@ -39,6 +39,14 @@
       "check": "scripts/extract_kyuura_cards.py の migration_copy_problems・previous_copy_problems・kyuura_correction_problems（移行の段ごとに、写す欄が、その段で kyuura が当てはめた修正の欄と出典の記録の欄を除いて同じ。修正は段の前の値・あとの値・台帳・カードの記録・根拠で確かめる）",
       "document": "docs/hand-bench-attack-conditions-v0.121.md",
       "note": "v0.121 で写しの元を e519b99 から 2fe0bc0（kyuura のブランチ claude/neo2-fossil-type-cost-checks の固定コミット。次の便のカードの文面と進化データの研究 c932625 と、neo2 の化石 4 枚のタイプ・必要なエネルギーの画像の確認。kyuura main には未取り込み）に上げた。v0.69・v0.97・v0.114 の段（ecb2d69 → 7d3f4ca → 73a1690 → e519b99）は書き換えない（v0.114 の段のあとは e519b99 に固定）。v0.120 までの採用の記録の kyuura_commit（ecb2d69・7d3f4ca・73a1690・e519b99）・記録した日・外部照合の確認日と照らしたコミットは書き換えない（採用し直した・照合し直したことにしない）。この段で値が変わったのは、写しの外の 13 枚（ボロのつりざおの効果文、アンノーン M・U・A のルール文、8 枚の進化元、PRN-030 の段階の kyuura の台帳の訂正と notes・corrections・data_gaps・field_sources）だけで、写しの 1,333 枚の値は同じ。kyuura_records は、研究の基準のコミットを 2fe0bc0 に上げたので、そのコミットでカードを指す kyuura の記録の id に合わせた（記録を読み直したのではなく、id の対応を直した。ピカチュウ IP1-040 の 5 件）。IP1-040 のなきごえの処理に使う文面は、kyuura の新しい最新の説明 LD-IP1-040-ATK0 にした（採用の記録の play_text。型・量・挙動は v0.76 のまま）"
+    },
+    {
+      "from": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "to": "74b3ceb883dd815495d13b9987433fb14b36e44d",
+      "on": "2026-10-31",
+      "check": "scripts/extract_kyuura_cards.py の migration_copy_problems・previous_copy_problems・kyuura_correction_problems（移行の段ごとに、写す欄が、その段で kyuura が当てはめた修正の欄と出典の記録の欄を除いて同じ。修正は段の前の値・あとの値・台帳・カードの記録・根拠で確かめる）",
+      "document": "docs/arcanine-name-migration-v0.123.md",
+      "note": "v0.123 で写しの元を 2fe0bc0 から 74b3ceb（kyuura のブランチ claude/v0122-names-text-trainer-procedures の固定コミット。v0.122 のあとの名前・文面とトレーナーの手順の調査。kyuura main には未取り込み）に上げた。v0.69・v0.97・v0.114・v0.121 の段（ecb2d69 → 7d3f4ca → 73a1690 → e519b99 → 2fe0bc0）は書き換えない（v0.121 の段のあとは 2fe0bc0 に固定）。v0.122 までの採用の記録の kyuura_commit（ecb2d69・7d3f4ca・73a1690・e519b99・2fe0bc0）・記録した日・外部照合の確認日と照らしたコミット・当時の違いの値は書き換えない（採用し直した・照合し直したことにしない）。この段で値が変わったのは、写しの組の登録済みの 2 枚の名前（PMCG1-019「ウインディ」→「ウィンディ」・PMCG6-034「カツラのウインディ」→「カツラのウィンディ」。kyuura の台帳の訂正 FIX-PMCG1-019-NAME-JA・FIX-PMCG6-034-NAME-JA。根拠は kyuura のカードの画像の照合 IMG-PMCG1-019・IMG-PMCG6-034、種類は生成の値の誤り generated_value_error）と、同じ 2 枚の notes・corrections だけで、ほかの 1,375 枚（写しの 1,353 枚をふくむ）の値は同じ。2 枚の採用の記録の name_ja を写しの名前にそろえた（エンジンは画像を見ていない）。kyuura_records は、研究の基準のコミットを 74b3ceb に上げたので、そのコミットでカードを指す kyuura の記録の id に合わせた（記録を読み直したのではなく、id の対応を直した）"
     }
   ],
   "cards": {
@@ -735,11 +743,12 @@
     },
     "PMCG1-019": {
       "basis": "kyuura_data",
-      "name_ja": "ウインディ",
+      "name_ja": "ウィンディ",
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-15",
       "kyuura_records": [
+        "CR-ARCANINE-PRINTED-NAMES",
         "RUL-ENERGY-DISCARD-ATTACKS"
       ],
       "play_text": {
@@ -793,7 +802,7 @@
             "name.ja"
           ],
           "affects_behavior": false,
-          "note": "処理に影響しない（写しにウインディから進化するカードはない）。kyuura のデータは直さず、kyuura への報告事項にする"
+          "note": "処理に影響しない（写しにウインディから進化するカードはない）。kyuura のデータは直さず、kyuura への報告事項にする。2026-10-31（v0.123。docs/arcanine-name-migration-v0.123.md 2 章）: 解決した。kyuura が 2026-10-30 に同じカードのpcg-search.com となぞのばしょの画像で、印刷の名前が「ウィンディ」（小さい「ィ」）であることを確かめ（画像の照合の記録 IMG-PMCG1-019）、訂正 FIX-PMCG1-019-NAME-JA（種類 generated_value_error。kyuura の生成の値が種の名前の書き方だった）で直した。写しの元 74b3ceb の名前は印刷どおりで、この違いは写しに残っていない。この照合（2026-10-15）の時点では、エンジンも kyuura も画像を読んでおらず、どちらが印刷の表記かは決めていなかった（上の問いと違いの値は当時のまま残す）。エンジンは今回も画像を見ていない（kyuura の画像の照合を再利用しただけ）"
         }
       ],
       "notes": "かえんほうしゃは RUL-ENERGY-DISCARD-ATTACKS の記録が挙げるカード（cards。『トレーナーズ』Vol.9 の Q&A は第1弾のウインディの「かえんほうしゃ」の最新の記述を引く）。処理に使う文面は記録の最新の説明（ひのこと同じ文面）。とっしん（炎炎無無）80・「自分にも30ダメージ。」は既存の DamageAndSelfDamage(30)（kyuura の印刷の文面。LD-・エラッタはない）"
@@ -1873,11 +1882,13 @@
     },
     "PMCG6-034": {
       "basis": "kyuura_data",
-      "name_ja": "カツラのウインディ",
+      "name_ja": "カツラのウィンディ",
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-15",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "CR-ARCANINE-PRINTED-NAMES"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -1929,7 +1940,7 @@
             "name.ja"
           ],
           "affects_behavior": false,
-          "note": "処理に影響しない（写しにカツラのウインディから進化するカードはない）。kyuura のデータは直さず、kyuura への報告事項にする"
+          "note": "処理に影響しない（写しにカツラのウインディから進化するカードはない）。kyuura のデータは直さず、kyuura への報告事項にする。2026-10-31（v0.123。docs/arcanine-name-migration-v0.123.md 2 章）: 解決した。kyuura が 2026-10-30 に同じカードのpcg-search.com の画像で、印刷の名前が「カツラのウィンディ」（小さい「ィ」）であることを確かめ（画像の照合の記録 IMG-PMCG6-034）、訂正 FIX-PMCG6-034-NAME-JA（種類 generated_value_error。kyuura の生成の値が種の名前の書き方だった）で直した。写しの元 74b3ceb の名前は印刷どおりで、この違いは写しに残っていない。この照合（2026-10-15）の時点では、エンジンも kyuura も画像を読んでおらず、どちらが印刷の表記かは決めていなかった（上の問いと違いの値は当時のまま残す）。エンジンは今回も画像を見ていない（kyuura の画像の照合を再利用しただけ）"
         }
       ],
       "notes": "v0.31。ヒートタックルは既存の DamageAndSelfDamage(10)。ほのおのあらしは DiscardEnergyBeforeDamage（炎 3 枚。トラッシュできなければ使えない（印刷の文面）。炎エネルギーカードをトラッシュして大きなダメージを与えるワザなので、時点は RUL-ENERGY-DISCARD-ATTACKS の範囲としてワザの効果（処理に使う文面は印刷の文面）。進化元のカツラのガーディ（PMCG6-027）を v0.31 で加えた"
@@ -4128,7 +4139,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-BILINGUAL-NAME-GLOSS"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -11611,6 +11624,7 @@
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
       "kyuura_records": [
+        "UQ-MIND-GAMES-TRAINER-STEP",
         "UQ-PLAY-AS-POKEMON"
       ],
       "play_text": {
@@ -11645,6 +11659,7 @@
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
       "kyuura_records": [
+        "UQ-MIND-GAMES-TRAINER-STEP",
         "UQ-PLAY-AS-POKEMON"
       ],
       "play_text": {
@@ -13635,7 +13650,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-FLASH-FACE-UP-DECK"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -15059,7 +15076,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-MIND-GAMES-TRAINER-STEP"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -15100,7 +15119,9 @@
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
       "kyuura_records": [
-        "UQ-CHAOS-GYM-BORROWED-TURN"
+        "UQ-CHAOS-GYM-BORROWED-TURN",
+        "UQ-MIND-GAMES-TRAINER-STEP",
+        "UQ-SWAP-PLEASE-OWNERSHIP"
       ],
       "play_text": {
         "trainer": "kyuura_printed_text"
@@ -16464,6 +16485,7 @@
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
       "kyuura_records": [
+        "UQ-BILINGUAL-NAME-GLOSS",
         "UQ-CARD-USE-WITHOUT-TARGET"
       ],
       "play_text": {
@@ -21908,7 +21930,9 @@
       "status": "adopted",
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-20",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-FLASH-FACE-UP-DECK"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -24474,7 +24498,9 @@
       "status": "adopted",
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-21",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-MIND-GAMES-TRAINER-STEP"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -24586,7 +24612,9 @@
       "status": "adopted",
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-21",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-BILINGUAL-NAME-GLOSS"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -24840,7 +24868,9 @@
       "status": "adopted",
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-21",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-FLASH-FACE-UP-DECK"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -24980,7 +25010,9 @@
       "status": "adopted",
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-21",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-MIND-GAMES-TRAINER-STEP"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -25036,7 +25068,9 @@
       "status": "adopted",
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-21",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-MIND-GAMES-TRAINER-STEP"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -25679,7 +25713,9 @@
       "status": "adopted",
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-22",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "CR-ARCANINE-PRINTED-NAMES"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "power/0": "kyuura_printed_text"
@@ -26746,7 +26782,9 @@
       "status": "adopted",
       "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "recorded_on": "2026-10-24",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-BILINGUAL-NAME-GLOSS"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text"
       },
@@ -30387,6 +30425,247 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.121 で加えた（docs/hand-bench-attack-conditions-v0.121.md）。ワザ: なきごえ=ReduceDamageToSelfNextOpponentTurn(10, latest=最新の説明)（処理に使う文面は kyuura の最新の説明 LD-PR1-017-ATK0。p.127。kyuura は見出しの配布で当てはめた（heading_listing。配布の特定は推論で、独立した画像の照合にしない）。印刷の文面（古い書き方）は照合だけに使い、最新の説明の全文と量の組だけを受け付ける）、でんきショック=ParalyzeOnHeads（kyuura の印刷の文面）。CR-PIKACHU-GROWL-LATEST（CONFIRMED）・CR-PIKACHU-GROWL-OPPONENT-EFFECT（SUPPORTED）にしたがう。3 枚の pokemon のデータは同じ（同じカードの組 SC-PR1-001。IP1-040 は文面が違う）。`jp_print.level` の欠けは補っていない（kyuura の訂正の候補のレベル 16 は使わない）。日本語の文面の転記元は pcg-search.com。外部照合なし"
+    },
+    "neo2-027": {
+      "basis": "kyuura_data",
+      "name_ja": "アンノーンM",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [
+        "CR-UNOWN-DF-AT-MOST-ONE",
+        "CR-UNOWN-DF-PROTECTS-OWN-UNOWN",
+        "UQ-SELF-EXCLUDING-POWER-COPIES"
+      ],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。METAL df[メタル ディーエフ]=ReduceOwnGroupDamageFromType(EnergyType.METAL, \"M\", \"METAL df\")（v0.97 の［DARK df］と同じ型・同じ文面の書き方。DF1・DF2 の問い合わせを再利用）。ルール文「「アンノーン」はデッキに4枚までしか入れることができません。」は v0.96 の名前のグループの枚数の規定（文字を問わず合わせて 4 枚）。めざめるパワー=DAMAGE_ONLY（説明文なし。文面・出典を書かない）。kyuura の CR-UNOWN-DF-PROTECTS-OWN-UNOWN・CR-UNOWN-DF-AT-MOST-ONE は related_cards にこのカードを挙げるが、どちらもアンノーンM を調査の対象外と書くので、M 自身の独立した裁定として引かない（印刷の文面・一般の規定・D/N と同じ処理として採用。docs 3 章）。UQ-SELF-EXCLUDING-POWER-COPIES の事例（2 匹以上の M は DF1）。ルール文は kyuura の訂正 FIX-neo2-027-RULES-TEXT-JA のあとの値。日本語の文面の転記元はなぞのばしょ。外部照合なし（カードの画像は読んでいない）"
+    },
+    "neo2-028": {
+      "basis": "kyuura_data",
+      "name_ja": "アンノーンU",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。UNDO[アンドゥ]=ReturnActiveToHandWithBenchLetters((\"N\", \"D\", \"O\"))。ルール文「「アンノーン」はデッキに4枚までしか入れることができません。」は v0.96 の名前のグループの枚数の規定（文字を問わず合わせて 4 枚）。めざめるパワー=DAMAGE_ONLY（説明文なし。文面・出典を書かない）。ルール文は kyuura の訂正 FIX-neo2-028-RULES-TEXT-JA のあとの値。日本語の文面の転記元はなぞのばしょ。外部照合なし（カードの画像は読んでいない）"
+    },
+    "neo2-030": {
+      "basis": "kyuura_data",
+      "name_ja": "アンノーンA",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。ANGER[アンガー]=CounterBonusToGroupAttack(\"A\", \"ANGER\")（ワザといっしょに使う力。UseAttack.with_power・with_powers。［XXXXX］といっしょに使える）。ルール文「「アンノーン」はデッキに4枚までしか入れることができません。」は v0.96 の名前のグループの枚数の規定（文字を問わず合わせて 4 枚）。めざめるパワー=DAMAGE_ONLY（説明文なし。文面・出典を書かない）。ルール文は kyuura の訂正 FIX-neo2-030-RULES-TEXT-JA のあとの値。日本語の文面の転記元はなぞのばしょ。外部照合なし（カードの画像は読んでいない）"
+    },
+    "neo4-064": {
+      "basis": "kyuura_data",
+      "name_ja": "アンノーンW",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。WANT[ウォント]=CoinRecoverTrainerWithBenchLetters((\"A\", \"N\", \"T\"))（文面の半角の「｢｣」・「一回」「一枚」は写しのまま）。ルール文「「アンノーン」はデッキに4枚までしか入れることができません。」は v0.96 の名前のグループの枚数の規定（文字を問わず合わせて 4 枚）。めざめるパワー=DAMAGE_ONLY（説明文なし。文面・出典を書かない）。日本語の文面の転記元はポケモンWiki。外部照合なし（カードの画像は読んでいない）"
+    },
+    "GD3-003": {
+      "basis": "kyuura_data",
+      "name_ja": "マチスのライチュウ",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。メガトンパンチ=DAMAGE_ONLY（説明文なし）。10まんボルト=DiscardAllEnergyCardsThenDamageZeroIfLacking（すべてのエネルギーカードをワザの効果としてトラッシュ。0 枚なら基本となるダメージ 0）。進化元「マチスのピカチュウ」は kyuura の訂正 FIX-GD3-003-EVOLVES-FROM のあとの値（kyuura の台帳の after の英語名は null で、カードの記録・写しの値は \"Lt. Surge's Pikachu\"。エンジンの使わない英語名だけの違いなので論点にしない。kyuura への報告事項。docs 12 章）。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（カードの画像は読んでいない）"
+    },
+    "ES2-011": {
+      "basis": "kyuura_data",
+      "name_ja": "オムナイト",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。ころがりタックル=DAMAGE_ONLY（説明文なし）。げんしのゆめ=CoinFossilAttackBonusThisTurn（「なにかの化石」から進化したポケモンは effects.fossil_evolution。読み方で答えが変われば FE3）。進化元は kyuura の訂正 FIX-ES2-011-EVOLVES-FROM のあとの値。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（カードの画像は読んでいない）"
+    },
+    "ES2-028": {
+      "basis": "kyuura_data",
+      "name_ja": "カブト",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。するどいツメ=CoinBonusDamage(30)。かせきか=ChooseFossilEvolvedThenCoinDevolveAll（選んでからコイン。「おもて」なら重なっている進化カードをすべて手札にもどす退化）。進化元は kyuura の訂正 FIX-ES2-028-EVOLVES-FROM のあとの値。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（カードの画像は読んでいない）"
+    },
+    "ES2-029": {
+      "basis": "kyuura_data",
+      "name_ja": "プテラ",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。ちょうおんぱ=ConfuseOnHeadsWithoutDamage。きりもみアタック=DamageAndSelfDamageIgnoringWeaknessResistance(10)（自分への 10 は弱点・抵抗力なし。v0.10 の DamageAndSelfDamage の既定は変えない）。進化元は kyuura の訂正 FIX-ES2-029-EVOLVES-FROM のあとの値。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（カードの画像は読んでいない）"
+    },
+    "ES3-018": {
+      "basis": "kyuura_data",
+      "name_ja": "オムナイト",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。なみのり=DAMAGE_ONLY（説明文なし）。かせきのみちびき=CoinRecoverNamedFromDiscard（名前が「なにかの化石」とちょうど同じカード）。進化元は kyuura の訂正 FIX-ES3-018-EVOLVES-FROM のあとの値。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（カードの画像は読んでいない）"
+    },
+    "PRN-030": {
+      "basis": "kyuura_data",
+      "name_ja": "カポエラー",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。れんぞくキック=CoinsUntilTailsDamage(20)。こうそくスピン=DamageThenSwitchBothActives（フォレトス neo2-044 と同じ全文）。段階「たね」は kyuura の訂正 FIX-PRN-030-STAGE のあとの値（印刷の進化元はない。バルキーからの進化はベイビィ側の evolves_to と場の進化の規定）。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（カードの画像は読んでいない）"
+    },
+    "PRN-039": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいフシギソウ",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。みだれうち=OpponentChoosesRepeatedTargetsDamage(3, 10)（相手プレイヤーが選ぶ配分。ALLOCATE_DAMAGE）。つるでひっぱる=SwitchOpponentOnRetreat（成功した「にげる」の反応。宣言しない）。進化元は kyuura の訂正 FIX-PRN-039-EVOLVES-FROM のあとの値。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（カードの画像は読んでいない）"
+    },
+    "PRN-040": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいフシギバナ",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。いやなかふん=DamageThenPoisonAndStatusByTwoCoins（同じ 2 枚のコインの組。どのときもどく）。進化元は kyuura の訂正 FIX-PRN-040-EVOLVES-FROM のあとの値。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（カードの画像は読んでいない）"
+    },
+    "PRN-045": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいオニドリル",
+      "status": "adopted",
+      "kyuura_commit": "2fe0bc042ce187d191843819262f8036abbb343d",
+      "recorded_on": "2026-10-30",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.122 で加えた（docs/unown-fossil-retreat-reactions-v0.122.md）。たかくとぶ=SetNextTurnAttackDamage(1, \"ドリルダイブ\", 80, target_text=ドリルダイブの全文)（p.321 の 2 段階で 80 にする）。ドリルダイブ=DamageThenSelfCannotAttackOrRetreat（次の自分の番、ワザ（すべて）と「にげる」を禁止）。進化元は kyuura の訂正 FIX-PRN-045-EVOLVES-FROM のあとの値。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（カードの画像は読んでいない）"
+    },
+    "GD5-007": {
+      "basis": "kyuura_data",
+      "name_ja": "カツラのウィンディ",
+      "status": "adopted",
+      "kyuura_commit": "74b3ceb883dd815495d13b9987433fb14b36e44d",
+      "recorded_on": "2026-10-31",
+      "kyuura_records": [
+        "CR-ARCANINE-PRINTED-NAMES"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.123 で加えた（docs/arcanine-name-migration-v0.123.md）。GD5（gym_deck。ポケモンジム第3弾「グレンタウンジム カツラ」）。名前の訂正の移行（段 v0.123）のあと、処理に使う欄が PMCG6-034 と id のほかすべて同じ（kyuura の同じカードの組 SC-GD5-007。SAME_DATA_CARDS_V0_123 で同じ登録の値にまとめる。id ごとの登録・この採用の記録は持つ）。ワザ: ヒートタックル=DamageAndSelfDamage(10)、ほのおのあらし=DiscardEnergyBeforeDamage（炎 3 枚。トラッシュの時点は v0.31 の PMCG6-034 と同じ RUL-ENERGY-DISCARD-ATTACKS の範囲の読み方（ワザの効果）。トラッシュできなければ使えない（印刷の文面）。新しい公式の裁定・原典の確認ではない）。名前の数え方は CR-ARCANINE-PRINTED-NAMES（「カツラのウィンディ」は PMCG6-034 と合わせて 4 枚まで。「ウィンディ」とは別の名前）。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（エンジンはカードの画像を読んでいない。名前は kyuura の画像の照合 IMG-GD5-007 の再利用）。欠けているレベルは補っていない"
+    },
+    "IP2-032": {
+      "basis": "kyuura_data",
+      "name_ja": "ウィンディ",
+      "status": "adopted",
+      "kyuura_commit": "74b3ceb883dd815495d13b9987433fb14b36e44d",
+      "recorded_on": "2026-10-31",
+      "kyuura_records": [
+        "CR-ARCANINE-PRINTED-NAMES"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.123 で加えた（docs/arcanine-name-migration-v0.123.md）。IP2（intro_pack。イントロパック ゼニガメデッキ）。ワザ: とっしん（炎炎無）50・自分にも 20 = DamageAndSelfDamage(20)（第1弾 PMCG1-019 のとっしん 80・自分にも 30 とは別の数値）。名前の数え方は CR-ARCANINE-PRINTED-NAMES（「ウィンディ」は PMCG1-019・PR1-016 と合わせて 4 枚まで）。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（エンジンはカードの画像を読んでいない。名前は kyuura の画像の照合 IMG-IP2-032 の再利用）。欠けている図鑑番号・レベルは補っていない"
+    },
+    "PR1-016": {
+      "basis": "kyuura_data",
+      "name_ja": "ウィンディ",
+      "status": "adopted",
+      "kyuura_commit": "74b3ceb883dd815495d13b9987433fb14b36e44d",
+      "recorded_on": "2026-10-31",
+      "kyuura_records": [
+        "CR-ARCANINE-PRINTED-NAMES"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.123 で加えた（docs/arcanine-name-migration-v0.123.md）。PR1（promo）。ワザ: でんこうせっか（無無）10+・「おもて」で 20 を追加 = CoinBonusDamage(20)、いかりのほのお（炎炎）40+ = DiscardEnergyBeforeDamagePlusOwnCounters（炎エネルギーカード 2 枚を捨てなければ使えない・自分のダメージカウンター × 10 を追加。v0.123 の新しい型で、既存の要素 DiscardOwnEnergy と PlusOwnCounters の組み合わせ。トラッシュの時点は PMCG6-034 のほのおのあらしと同じ RUL-ENERGY-DISCARD-ATTACKS の範囲の読み方。印刷の文面の文末に句点がない（印刷のまま））。名前の数え方は CR-ARCANINE-PRINTED-NAMES。日本語の文面の転記元は pcg-search.com（同じサイトとの一致を独立した照合に数えない）。外部照合なし（エンジンはカードの画像を読んでいない。名前は kyuura の画像の照合 IMG-PR1-016 の再利用）。欠けているレベルは補っていない"
     }
   }
 }

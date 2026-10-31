@@ -655,6 +655,8 @@ POOL_KEYS = (
     "pool_v0_119",  # v0.119（受けるダメージの選択・どくとねむり・場の効果のポケモン 11 枚。docs/damage-reactions-poison-sleep-v0.119.md）
     "pool_v0_120",  # v0.120（化石の復活と仮想ワザの供給のポケモン 10 枚・トレーナー 1 枚。docs/fossil-basic-virtual-attacks-v0.120.md）
     "pool_v0_121",  # v0.121（手札からの登場とワザの使用条件のポケモン 7 枚・トレーナー 2 枚。docs/hand-bench-attack-conditions-v0.121.md）
+    "pool_v0_122",  # v0.122（アンノーンの併用・化石の進化履歴・退却時の反応のポケモン 13 枚。docs/unown-fossil-retreat-reactions-v0.122.md）
+    "pool_v0_123",  # v0.123（名前の訂正の移行とウィンディ 3 枚。docs/arcanine-name-migration-v0.123.md）
 )
 
 

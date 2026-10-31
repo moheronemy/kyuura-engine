@@ -162,19 +162,25 @@ class MigrationTest(unittest.TestCase):
         from tests.test_baby_rules_evolution_v0_114 import extract_module
 
         module = extract_module()
-        self.assertEqual((module.KYUURA_COMMIT, module.V0_114_KYUURA_COMMIT), (NOW, V0114))
+        # v0.123: 段 v0.123（2fe0bc0 → 74b3ceb）を加え、v0.121 の段のあとは V0_121_KYUURA_COMMIT（2fe0bc0）に固定した。今の写しの元は最後の段のあと
+        # （docs/arcanine-name-migration-v0.123.md 2 章。今の値は tests/test_arcanine_name_migration_v0_123.py）
+        self.assertEqual((module.V0_121_KYUURA_COMMIT, module.V0_114_KYUURA_COMMIT), (NOW, V0114))
         self.assertEqual(module.migration_problems(), [])
-        self.assertEqual([(s["id"], s["from"], s["to"]) for s in module.KYUURA_MIGRATIONS][-2:], [("v0.114", "73a169063463bbf7bcaa3137d70cbf9721d11534", V0114),
-                                                                                                    ("v0.121", V0114, NOW)])
+        steps = [(s["id"], s["from"], s["to"]) for s in module.KYUURA_MIGRATIONS]
+        self.assertEqual(steps[steps.index(("v0.121", V0114, NOW)) - 1], ("v0.114", "73a169063463bbf7bcaa3137d70cbf9721d11534", V0114))
         extract = read_extract()
-        self.assertEqual(extract["source"]["commit"], NOW)
-        self.assertEqual([c["id"] for c in extract["kyuura_corrections"] if c["migration"] == "v0.121"], ["FIX-neo3-053-TRAINER-TEXT-JA"])
+        self.assertEqual(extract["source"]["commit"], module.KYUURA_MIGRATIONS[-1]["to"])
+        # v0.121 の写しの組までのカードの、段 v0.121 の訂正（v0.122 から、段 v0.121 で訂正された 12 枚を写しに入れたので、その訂正は v0.122 の組のカードのもの）
+        from tests.release_catalog import cards_after
+
+        later = cards_after(extract, "0.121")
+        self.assertEqual([c["id"] for c in extract["kyuura_corrections"] if c["migration"] == "v0.121" and c["card_id"] not in later], ["FIX-neo3-053-TRAINER-TEXT-JA"])
         sources = cs.load_sources()
-        last = sources["data_migrations"][-1]
-        self.assertEqual((last["from"], last["to"], last["on"], last["document"]), (V0114, NOW, "2026-10-30", "docs/hand-bench-attack-conditions-v0.121.md"))
+        step = sources["data_migrations"][3]  # v0.123 で 5 段目を加えた（4 段目までは書き換えない）
+        self.assertEqual((step["from"], step["to"], step["on"], step["document"]), (V0114, NOW, "2026-10-30", "docs/hand-bench-attack-conditions-v0.121.md"))
         links = json.loads(LINKS_PATH.read_text(encoding="utf-8"))
-        self.assertEqual((links["research_commit"], links["card_data_commit"], links["research_branch"]), (NOW, NOW, "claude/neo2-fossil-type-cost-checks"))
-        self.assertEqual(links["counts"]["kyuura_issues"], 74)
+        # v0.123: 研究の基準を 74b3ceb に上げ、kyuura の論点は 74 → 79（今の値は tests/test_research_links_v0_18e.py・tests/test_catalog_contract.py）
+        self.assertEqual((links["research_commit"], links["card_data_commit"]), (extract["source"]["commit"],) * 2)
         # IP1-040 のなきごえは最新の説明 LD-IP1-040-ATK0（型・量・印刷の文面の照合は v0.76 のまま。採用したときのデータのコミット・記録した日は変えない）
         entry = E.DEFAULT_EFFECTS.attack_entry("IP1-040", 0)
         self.assertEqual((entry.effect, entry.play_text_ja, entry.source), (E.ReduceDamageToSelfNextOpponentTurn(10), E.GROWL_LATEST_TEXT, "LD-IP1-040-ATK0"))
@@ -195,7 +201,10 @@ class MigrationTest(unittest.TestCase):
         changed = {c["id"] for c in new["cards"] if c != before[c["id"]]}
         self.assertEqual(changed, CHANGED_13)
         self.assertEqual([c["id"] for c in mid["cards"] if c != {x["id"]: x for x in new["cards"]}[c["id"]]], [])
-        extract_ids = {c["id"] for c in read_extract()["cards"]} - set(V0121)
+        from tests.release_catalog import cards_after
+
+        extract = read_extract()
+        extract_ids = {c["id"] for c in extract["cards"]} - set(V0121) - cards_after(extract, "0.121")  # v0.121 の時点の写し（v0.122 から 12 枚を写しに入れた）
         self.assertEqual(changed & extract_ids, set())
         self.assertEqual(len(new["cards"]), 1377)
 
@@ -262,10 +271,13 @@ class RegistrationTest(unittest.TestCase):
     def test_removing_the_registrations_restores_the_previous_catalog(self):
         """今回の登録だけを外すと 1,333 枚にもどる（ほかのカードは失われない）。"""
         registry = E.DEFAULT_EFFECTS.without_attacks("test-without-v0121", list(E.V0_121_ATTACKS)).without_trainers("test-without-v0121-trainers", list(E.V0_121_TRAINERS))
-        pool = pool_from_extract(read_extract(), registry)
+        from tests.release_catalog import cards_after
+
+        extract = read_extract()
+        pool = pool_from_extract(extract, registry)
         full = load_card_pool()
         self.assertEqual(full.playable_ids - pool.playable_ids, frozenset(V0121))
-        self.assertEqual(len(pool.playable_ids), 1333)
+        self.assertEqual(len(pool.playable_ids - cards_after(extract, "0.121")), 1333)  # v0.122 からの組を除いた、v0.121 の時点の数
 
 
 class GrowlTest(unittest.TestCase):
