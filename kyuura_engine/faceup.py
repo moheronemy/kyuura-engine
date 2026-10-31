@@ -210,12 +210,25 @@ def _look_owner(event) -> int | None:
     return event.get("owner")
 
 
+def _first_moves(events, gone: set[int]) -> dict[int, int]:
+    """山札をはなれたカード ``gone`` が、そのコマンドのログで最初に出たイベントの位置（見る・並べかえるログは除く。カードが動いた順を決める）。"""
+    found: dict[int, int] = {}
+    for i, e in enumerate(events):
+        if e["kind"] in LOOK_EVENTS or e["kind"] == "arrange_deck_top":
+            continue
+        named = [e.get("card")] + [uid for name in ("cards",) if isinstance(e.get(name), (list, tuple)) for uid in e[name]]
+        for uid in named:
+            if uid in gone and uid not in found:
+                found[uid] = i
+    return found
+
+
 def command_problem(before: GameState, after: GameState) -> tuple[str, str] | None:
     """1 つのコマンドの前（``before``）・あと（``after``）と、そのコマンドのログで、おもてのカードのある山札が、読み方で結果・要る情報が分かれる変わり方をしたら (コード, 理由)。
 
     - フラッシュの並べ替え（ログ ``flash_face_up``）をした山札は、フラッシュの処理が確かめる（ここでは見ない）
     - 山札をはなれたおもてのカード: 公開の場所（トラッシュ・場など）か、見せてから手札に加えた（``reveal_from_deck``）なら、どの読みでも全員に見えるので受け付ける。手札なら、
-      いちばん上（見えていたカード）だけ受け付け、2 枚目より下なら FU3。向きのある見えない場所（サイド・山札の別の位置・置いておく場所）なら FU6
+      そのときいちばん上（見えていたカード）だったものだけ受け付ける（上のカードがすべて、先に別のログで 1 枚ずつ動いていれば、そのときのいちばん上）。そうでなければ FU3。向きのある見えない場所（サイド・山札の別の位置・置いておく場所）なら FU6
     - 切った山札（ログ ``shuffle``）は、切る前に印を消すので、残りの並びは見ない
     - 切っていない山札: 残ったカードの並びが変わらず、新しいカードはいちばん下にだけ加わる（上・途中に置いた → FU4、並びが変わった → FU5。どちらでもない → エンジンの未対応）
     - 見るログ（``look_at_deck_top``・``reveal_deck_top``・山札の ``look_at_card``）がおもてのカードをふくみ、コマンドの終わりに決定がなく（処理が終わった）、見たおもてのカードが
@@ -233,6 +246,7 @@ def command_problem(before: GameState, after: GameState) -> tuple[str, str] | No
         d0, d1 = before.players[owner].deck, after.players[owner].deck
         remaining = set(d1)
         shown = {e.get("card") for e in events if e["kind"] in SHOWN_EVENTS}
+        moved_at = _first_moves(events, set(d0) - remaining)
         for uid in marked:
             if uid in remaining:
                 continue
@@ -241,7 +255,10 @@ def command_problem(before: GameState, after: GameState) -> tuple[str, str] | No
             if place in PUBLIC_PLACES or (place == HAND and uid in shown):
                 continue
             if place == HAND:
-                if position == 0:
+                # いちばん上だったカード。同じコマンドで上のカードが先に 1 枚ずつ別のログで動いた（てつだうふりのあとの番の最初のドローなど）なら、そのときのいちばん上
+                above = d0[:position]
+                if position == 0 or (uid in moved_at and all(moved_at.get(card, len(events)) < moved_at[uid] for card in above)
+                                     and sum(1 for card in moved_at if moved_at[card] == moved_at[uid]) == 1):
                     continue
                 return FACE_UP_DECK_HIDDEN_TAKE_CODE, f"プレイヤー {owner} の山札の上から {position + 1} 枚目のおもてのカード: " + FACE_UP_DECK_HIDDEN_TAKE_REASON
             return FACE_UP_DECK_MOVE_CODE, f"プレイヤー {owner} の山札の上から {position + 1} 枚目のおもてのカード（行き先 {place}）: " + FACE_UP_DECK_MOVE_REASON
