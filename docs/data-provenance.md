@@ -1978,6 +1978,17 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   SX1・TN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形の別のカードの問い）。v0.66 の「ナツメのESPと「うら」が出るまでのコインは起こらない」はエンジンの前提の誤りで、研究の論点ではない（kyuura は
   変えていない）。
 
+## v0.124: メタモン（すごいへんしん）・GR団のミュウツー
+
+[super-transform-dark-pulse-v0.124.md](super-transform-dark-pulse-v0.124.md) の 4 章〜7 章。写しの元・研究の基準は kyuura b9e7cff（移行の段 v0.124 のあと）。
+
+- 写しの組 pool_v0_124 に 2 枚（ES2-032・PRN-041）。kyuura データの採用（`basis: kyuura_data`・`kyuura_commit` b9e7cff・2026-10-31）。ES2-032 の［すごいへんしん］の処理に使う文面は最新の説明
+  LD-ES2-032-PWR0（研究の対応表の `latest_descriptions.registered`。kyuura が 2026-10-31 に p.239 を画像で読んだ記録）、印刷の文面は段 v0.124 の訂正のあとの値で照らす。PRN-041 の 2 つは印刷の文面
+  （`adopted_printed_text`。kyuura の画像の照合 IMG-PRN-041 で訂正なし）。外部照合はしていない（エンジンは画像・外部のサイト・書籍を見ていない）。レベル・図鑑番号は補っていない。
+- 2 枚の kyuura_records は、研究の基準のコミットでカードを指す記録の id（ES2-032 は CC-・LD-・裁定 12・論点 7、PRN-041 は裁定 4・論点 3）。
+- kyuura への報告事項: GR団のミュウツーのカードの「(このカードは公式大会では使うことができません)」は kyuura の記録だけで `play_scope` は `standard`（エンジンも変えない。公式大会で使えるとは
+  書かない）。kyuura の登録表の写しは v0.113 のまま。CC-ES2-032-P239 は訂正のあとの値で同じ欄を照らす（エンジンは同じ段の記録としてだけ受け付けた。2.2 節）。
+
 ## v0.124: 写しの元・研究の基準を kyuura b9e7cff に上げる移行
 
 [super-transform-dark-pulse-v0.124.md](super-transform-dark-pulse-v0.124.md) の 2 章。この節は、カードの登録と処理の変更を加えない移行だけのコミットの記録です。
