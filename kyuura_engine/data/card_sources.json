@@ -71,6 +71,14 @@
       "check": "scripts/extract_kyuura_cards.py の migration_copy_problems・previous_copy_problems・kyuura_correction_problems（移行の段ごとに、写す欄が、その段で kyuura が当てはめた修正の欄と出典の記録の欄を除いて同じ。修正は段の前の値・あとの値・台帳・カードの記録・根拠で確かめる）",
       "document": "docs/flash-faceup-deck-v0.126.md",
       "note": "v0.126 で写しの元を 134a664 から 57d01f4（kyuura のブランチ claude/trainer-reaction-faceup-deck-ownership-research の固定コミット。ちえくらべ・フラッシュ・とりかえっこプリーズの調査。kyuura main には未取り込み）に上げた。v0.69・v0.97・v0.114・v0.121・v0.123・v0.124・v0.125 の段（ecb2d69 → 7d3f4ca → 73a1690 → e519b99 → 2fe0bc0 → 74b3ceb → b9e7cff → 134a664）は書き換えない（v0.125 の段のあとを 134a664 に固定）。v0.125 までの採用の記録の kyuura_commit・記録した日・外部照合の確認日と照らしたコミット・当時の違いの値は書き換えない（採用し直した・照合し直したことにしない）。この段で値が変わったのは、写しの外（未登録）のとりかえっこプリーズ PR1-027 の trainer.text.ja の読点 1 つ（「ある時だけ使える」→「ある時だけ、使える」。kyuura の台帳の訂正 FIX-PR1-027-TEXT-JA。根拠は kyuura のカードの画像の照合 IMG-PR1-027、種類は転記の誤り transcription_error）と、同じカードの notes・corrections だけで、ほかの 1,376 枚（写しの 1,361 枚と、v0.126 で登録するフラッシュ ES2-035 をふくむ）の値は同じ。名前の末尾の「！」は kyuura が直していない（報告事項）。kyuura_records は、研究の基準のコミットを 57d01f4 に上げたので、このコミットでカードを指す kyuura の記録の id に合わせた（記録を読み直したのではなく、id の対応を直した。登録済みのカードでは、サカキのニャース PMCG6-068 に CR-FLASH-TOP-CARD-SEEN、錯乱ジム PMCG5-087 に CR-CHAOS-GYM-COIN-BEFORE-CONDITIONS、neo1-085・neo1-088 に CR-MIND-GAMES-STADIUM-TOOL の related_cards が加わっただけ）"
+    },
+    {
+      "from": "57d01f45cfb8b086d03dc0525b329cf6adeff69b",
+      "to": "71d1728938fb4c8fefde9b82779cdef74beb612d",
+      "on": "2026-11-01",
+      "check": "scripts/extract_kyuura_cards.py の migration_copy_problems・previous_copy_problems・kyuura_correction_problems（移行の段ごとに、写す欄が、その段で kyuura が当てはめた修正の欄と出典の記録の欄を除いて同じ。修正は段の前の値・あとの値・台帳・カードの記録・根拠で確かめる）と catalog_scope_problems（全記録の目録の分類と、分類から求めた対象・対象外の集合が kyuura の engine_targets.json と同じ）",
+      "document": "docs/catalog-scope-migration-v0.128.md",
+      "note": "v0.128 で写しの元を 57d01f4 から 71d1728（kyuura main の PR #7 のマージ。目録の分類とプロモの収録範囲の調査）に上げた。v0.69〜v0.126 の段（ecb2d69 → 7d3f4ca → 73a1690 → e519b99 → 2fe0bc0 → 74b3ceb → b9e7cff → 134a664 → 57d01f4）は書き換えない（v0.126 の段のあとを 57d01f4 に固定）。v0.127 までの採用の記録の kyuura_commit・記録した日・外部照合の確認日と照らしたコミット・当時の違いの値は書き換えない（採用し直した・照合し直したことにしない）。この段の data/cards.json は全 1,377 件の記録の集合・並び・既存の欄の値が同じで、全件に目録の分類の 3 つの欄（catalog_class・engine_scope・engine_scope_reason）が加わっただけ（訂正なし）。3 つの欄はカードの写す欄に入れず、書き出しの catalog_scope に対象の数と対象外の記録を残す。利用者の指定で通常対戦のエンジンの対象外になった 3 件（PR1-038・PRN-048・PR1-079）は、どれも写しの外（未登録）で、採用の記録もない。研究の基準のサイドカー（最新の説明・裁定・照合）は同じなので、kyuura_records の id の対応は変わらない"
     }
   ],
   "cards": {

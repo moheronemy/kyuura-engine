@@ -1,7 +1,7 @@
 """カードデータの読み込みと、対応・未対応の分類。
 
 カードデータの由来: kyuura（https://github.com/moheronemy/kyuura）commit
-57d01f45cfb8b086d03dc0525b329cf6adeff69b の data/cards.json（v0.126 から。v0.125 は 134a664c6adf67d5604148a31b58e1a7d26d4d6d、v0.124 は b9e7cff6d2b2c6b4539ec45e61bf453879adab3a、v0.123 は 74b3ceb883dd815495d13b9987433fb14b36e44d、v0.121〜v0.122 は 2fe0bc042ce187d191843819262f8036abbb343d、v0.114〜v0.120 は e519b99e2adcc6c2cd0998569ae5ee1101de6e89、v0.97〜v0.113 は 73a169063463bbf7bcaa3137d70cbf9721d11534、v0.69〜v0.96 は
+71d1728938fb4c8fefde9b82779cdef74beb612d の data/cards.json（v0.128 から。v0.126〜v0.127 は 57d01f45cfb8b086d03dc0525b329cf6adeff69b、v0.125 は 134a664c6adf67d5604148a31b58e1a7d26d4d6d、v0.124 は b9e7cff6d2b2c6b4539ec45e61bf453879adab3a、v0.123 は 74b3ceb883dd815495d13b9987433fb14b36e44d、v0.121〜v0.122 は 2fe0bc042ce187d191843819262f8036abbb343d、v0.114〜v0.120 は e519b99e2adcc6c2cd0998569ae5ee1101de6e89、v0.97〜v0.113 は 73a169063463bbf7bcaa3137d70cbf9721d11534、v0.69〜v0.96 は
 7d3f4ca76c084774efb4ac6a1d3a943387e183c3、v0.68 までは ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691）。
 過去の原典照合は kyuura_engine/data/card_verification.json（ecb2d69 の写しと照らした履歴）。
 """
@@ -67,7 +67,7 @@ from tests.helpers import (
 )
 from tests.release_catalog import cards_after
 
-KYUURA_COMMIT = "57d01f45cfb8b086d03dc0525b329cf6adeff69b"  # v0.126 から（v0.125 は 134a664、v0.124 は b9e7cff、v0.123 は 74b3ceb、v0.121〜v0.122 は 2fe0bc0、v0.114〜v0.120 は e519b99、v0.97〜v0.113 は 73a1690、v0.69〜v0.96 は 7d3f4ca76c084774efb4ac6a1d3a943387e183c3）
+KYUURA_COMMIT = "71d1728938fb4c8fefde9b82779cdef74beb612d"  # v0.128 から（v0.126〜v0.127 は 57d01f4、v0.125 は 134a664、v0.124 は b9e7cff、v0.123 は 74b3ceb、v0.121〜v0.122 は 2fe0bc0、v0.114〜v0.120 は e519b99、v0.97〜v0.113 は 73a1690、v0.69〜v0.96 は 7d3f4ca76c084774efb4ac6a1d3a943387e183c3）
 # v0.68 までの写しの元。過去の原典照合の記録（card_verification.json。履歴）はこのコミットの写しと照らした
 PREVIOUS_KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
 ROOT = Path(__file__).resolve().parent.parent

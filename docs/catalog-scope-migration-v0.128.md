@@ -1,0 +1,87 @@
+# v0.128: kyuura の目録の分類の取り込みと、通常対戦の対象の整理
+
+v0.128（版 0.128.0）は、kyuura `main` に取り込まれた目録の分類（`catalog_class`・`engine_scope`・`engine_scope_reason`）を写しの元・研究の基準に取り込み、通常対戦のエンジンの
+実装の対象を、その明示の分類から求めるようにする版です。**新しいカードは登録していません**（対応カード 1,368 枚のまま）。
+
+利用者の指定（kyuura 側の記録は 2026-10-31）で、次の 3 件を通常対戦のエンジンの実装の対象から外しました。**公式の使用禁止・裁定の変更・エラッタではありません。** カードの記録・
+印刷の文面・出典・id は kyuura に残り、エンジンも id を付け直していません。
+
+| id | 名前 | `catalog_class` | `play_scope` | 理由（kyuura の `engine_scope_reason` の要約） |
+|---|---|---|---|---|
+| PR1-038 | タッチ交代！ | `special_rule` | `kangaskhan_rule` | ガルーラルール専用のカード（専用ルールで使う） |
+| PRN-048 | タッチ世代交代！ | `special_rule` | `kangaskhan_rule` | 新ガルーラルール専用のカード（専用ルールで使う） |
+| PR1-079 | カードトレーナー認定証 | `award` | `standard` | 認定証のカード（対戦の手順を書いていない） |
+
+タッチ系の 2 枚は、専用ルール（ガルーラルール・新ガルーラルール）で使うカードです。その事実は `play_scope` と理由の文に残しています。「遊べないカード」「公式に使用禁止のカード」とは
+扱いません。専用ルールを実装するかは別の判断で、今回は**通常対戦**の対象から外しただけです。
+
+## 1. 開始点と範囲
+
+- エンジンの基点は `355589d432b39f8c985aafd55b8f9712ac1e9c91`（v0.127 の最後のコミット。公開済みのブランチ `claude/v0.127-deferred-shortage-user-promos` の先端）。2026-11-01 に fetch し、
+  リモートの `main` が `cdde860268f95598331eb0f91ae560d3374c6293`（PR #22 で v0.127 をマージ）で、その木が 355589d の木と同じ（`246b61b…`）ことを確かめました。`main` から作業ブランチ
+  `claude/v0.128-catalog-scope-migration` を作りました（`main` を追跡しない設定にした）。作業ツリーには利用者の `.claude/` のほかに変更はなく、`.claude/` はコミットに入れていません。
+- kyuura は `main` の `71d1728938fb4c8fefde9b82779cdef74beb612d`（PR #7 のマージ。目録の分類とプロモの収録範囲の調査）に固定して読みました。kyuura は fetch しただけで、作業ツリー・
+  ブランチ・履歴は変えていません（読むのは `git show <コミット>:<パス>` だけ。kyuura の checkout は `b9e7cff` のまま）。57d01f4 は 71d1728 の祖先です。
+- 読んだ kyuura の文書: `docs/engine-handover-catalog-scope.md`（引き継ぎ）・`docs/catalog-promo-survey.md`（調査と整備の記録）・`docs/data-schema.md`（欄の意味）・`scripts/catalog.py`
+  （目録の一覧の生成。`battle_records` は `catalog_class == "battle"` かつ `engine_scope == "target"`）。
+- ルールの基準は公式ルール 2000.02.14 版のままです。カードの画像・外部照合・ガイドブックのキャプチャ・OCR・読み直しはしていません。
+- 公開の固定デッキ・過去の版の比べ用の参照データは変えていません。`CLAUDE.md` は変えていません。
+- 新規登録はしていません（とりかえっこプリーズ PR1-027・カツラのクイズ GD5-016・ひかるバンギラス neo4-082 なども対象のまま未登録）。
+
+## 2. 写しの元・研究の基準の移行（57d01f4 → 71d1728）
+
+この章は、カードの登録と処理の変更を加えない移行だけのコミットの記録です。
+
+### 2.1 kyuura の差分（全データ）
+
+`57d01f4` → `71d1728` の差分のファイル（34）のうち、データ（`data/`）は 8 ファイルです。推測で「同じ」とせず、エンジンが読むファイルはすべて中身で比べました。
+
+| ファイル | エンジンが読むか | 差 |
+|---|---|---|
+| `data/cards.json` | 読む（写しの元） | 全 1,377 件の記録の集合・並び・id・既存の欄の値は**同じ**（欄ごとに比べた）。最上位の欄（`description`・`schema_version` 3・`text_availability`）も同じ。全件に 3 つの欄 `catalog_class`・`engine_scope`・`engine_scope_reason` が加わった。分類は `battle`・`target` 1,374、`special_rule`・`excluded` 2（PR1-038・PRN-048）、`award`・`excluded` 1（PR1-079）。`undecided` は 0 |
+| `data/engine_targets.json` | 読む（検査・テスト） | `cards` 1,377 → 1,374（3 件を新しい `excluded_records` に移した。残りの 1,374 件は値・並びとも同じ）。`counts` に `excluded_records` 3、`by_category` の `candidate` 1,364 → 1,363・`special_rule_design` 4 → 2、`by_engine_status` の `new_effect_needed` 121 → 118 など（kyuura の一覧の数で、エンジンの数ではない） |
+| `data/rule_history.json` | 読む（`errata` だけ。`check_research_links.py`） | `documents` の『オフィシャルブック2000』の読んだページに 4 件（p.122・p.251・p.300・p.301）が加わっただけ。`errata` ほかの欄は同じ |
+| `data/sidecar/*.json`（最新の説明・裁定・照合） | 読む（研究の基準） | 差なし |
+| `data/curation/card_corrections.json`・`card_image_checks.json`・`card_differences.json`・`other_products.json` | 読む | 差なし |
+| `data/cards.csv` | 読まない | 目録の一覧になった（`non_game_items` の 18・`KC-` の 24 の行と、後ろに 6 つの欄）。エンジンは CSV を読まないので、CSV の全行を対戦用のカードとして扱うことはない |
+| `data/curation/non_pack.json` | 読まない | `catalog_scope`（3 件の明示の指定）と、網羅の状況の文 |
+| `data/curation/catalog_items.json`・`promo_survey.json` | 読まない | 新しいファイル（目録だけの項目 24 と、プロモの収録範囲の比較の記録） |
+| `data/product_items.json` | 読まない | プロモの `standard_play_cards` 86 → 85 |
+
+- 訂正（`card_corrections.json`）はこの段にありません。`KYUURA_CORRECTIONS` に段 v0.128 の訂正は加えていません。
+- 目録だけの行（`PR1-015` ポケモンイラストレーター・`ES3-` のおまけのカード・`KC-0001`〜`KC-0024`）は `data/cards.json` にないので、エンジンの写しに入ることはありません。
+  PR1-015 などが CSV に載ったことを理由に、写しへ加えていません。
+
+### 2.2 移行の連鎖
+
+- 段 v0.128（`57d01f4` → `71d1728`）を `scripts/extract_kyuura_cards.py` の `KYUURA_MIGRATIONS` の末尾に加えました（連鎖は ecb2d69 → 7d3f4ca → 73a1690 → e519b99 → 2fe0bc0 → 74b3ceb → b9e7cff →
+  134a664 → 57d01f4 → 71d1728）。v0.126 の段の `to` は写しの元の定数を指していたので、`V0_126_KYUURA_COMMIT`（57d01f4）に固定してから写しの元を上げました。過去の段の前・あと・文書・訂正・
+  採用日・外部照合の日・当時の固定コミットは書き換えていません。
+- 写しを作り直した結果（手で編集していない）: `source.commit`、`source_migrations`（段 v0.128。訂正 0 件）、`engine_user_corrections` の `source_commit`、新しい `catalog_scope`（3 章）だけが
+  変わりました。**写しのカード 1,368 枚の値は全欄が同じ**です（`cards` の配列が基点と同じ）。
+- 採用の記録の移行（`card_sources.json` の `data_migrations`）に 9 段目（2026-11-01）を加えました。採用したときのデータのコミット・記録した日・外部照合の確認日と照らしたコミット・当時の違いの
+  値は書き換えていません。研究の基準のサイドカーが同じなので、登録済みのカードの `kyuura_records` の id の対応は変わりません。対象外の 3 件は未登録で、採用の記録もありません。
+- 研究の対応表: `research_commit`・`card_data_commit` を `71d1728`、`research_branch` を `main` にしました。kyuura の記録の数（最新の説明・照合・裁定・論点 90）は変わりません。停止コード 313・
+  未解決の裁定 314 も同じです。
+- テストの補助（`tests/helpers.py`）の写しの元の連鎖に段を加えました（`CARD_DATA_COMMIT_SINCE_V0_128`）。v0.126 の値を固定値で持っていたテストは、段の位置・57d01f4 を基準にした最後の
+  コミット（355589d）の対応表で確かめる形にしました（`tests/test_flash_faceup_deck_v0_126.py`）。
+
+## 3. 分類の欄の扱い（写しに入れない理由）
+
+kyuura の新しい 3 つの欄は、**カードの写す欄（`FIELDS`）には加えず、抽出のときに使い**、その結果を書き出しの最上位の `catalog_scope` に残しました。
+
+- 写しのカードはどれも対象（`battle`・`target`）なので、1,368 枚に同じ値を持たせても情報は増えません。
+- 写す欄は、移行の段ごとに前のコミットと比べています（`migration_copy_problems`）。前の段のコミットにない欄を写す欄に加えると、過去の段の比べに例外が要ります。
+- エンジンが知る必要があるのは、写しにない対象外の記録とその理由です（デッキの拒否の理由。4 章）。
+
+抽出（`scripts/extract_kyuura_cards.py`）は、書き出すたびに次を確かめ、違えば書き出しません（`catalog_scope_problems`）。カード id ごとの例外の表は持たず、対象外の集合は kyuura の
+明示の分類から求めます。
+
+1. 写しの元の全記録に 3 つの欄があり、値が決まった値（`catalog_class` は `battle`・`special_rule`・`award`、`engine_scope` は `target`・`excluded`・`undecided`）。
+2. 理由は `engine_scope` が `target` のときだけ null。`target` の記録は `battle`。
+3. 写しのカード（対戦用の組と参照カード）はどれも対象（`battle` かつ `target`）。対象外・未判断の記録を写しに入れると止まります。
+4. 分類から求めた対象の集合（並び）が、同じコミットの kyuura の `engine_targets.json` の `cards` と同じ。対象外の記録（id・名前・弾・商品・使用範囲・分類・理由）が `excluded_records` と同じ
+   （kyuura の 2 つの生成物の食い違いを黙って受け入れない）。
+
+`catalog_scope` の中身は、写しの元のコミット・3 つの欄の名前・対象を選ぶ条件（`target_rule`）・数（記録 1,377・対象 1,374・対象外 3）・対象外の記録（`excluded_records`。上の表の 3 件。
+値は kyuura のまま）です。`undecided` の記録も対象ではありません（今は 0 件）。

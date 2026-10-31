@@ -28,6 +28,9 @@ ECB, V069, V097, V0114, V0121, V0123, V0124 = (
     "e519b99e2adcc6c2cd0998569ae5ee1101de6e89", "2fe0bc042ce187d191843819262f8036abbb343d", "74b3ceb883dd815495d13b9987433fb14b36e44d",
     "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a")
 BASE_ENGINE = "19c22051d10ec2a7610e7c7641b2c6053bd5c3f1"  # この版の基点（v0.125 の最後のコミット。main 84bf94f を祖先に持つ）
+# v0.128: 写しの元・研究の基準を 71d1728 に上げた（docs/catalog-scope-migration-v0.128.md 2 章）。v0.126 の研究の対応表の値は、57d01f4 を基準にした最後のコミット（v0.127 の
+# 最後のコミット 355589d。v0.126 の最後のコミット 6c70bfd と、この版の値は同じ）で確かめる
+V0127_FINAL = "355589d432b39f8c985aafd55b8f9712ac1e9c91"
 FLASH, SWAP_PLEASE, SLOWKING = "ES2-035", "PR1-027", "neo1-049"
 FIX = "FIX-PR1-027-TEXT-JA"
 SWAP_BEFORE = ("相手プレイヤーの手札を見て、カードを1枚えらぶ。次に、相手プレイヤーにあなたの手札を見せ、カードを1枚えらばせる。そして、お互いがえらんだカードを交換してよいかどうか、"
@@ -70,15 +73,17 @@ class MigrationChainTest(unittest.TestCase):
 
     def test_chain(self):
         module = extract_module()
-        self.assertEqual((module.KYUURA_COMMIT, module.V0_125_KYUURA_COMMIT, module.V0_124_KYUURA_COMMIT), (NOW, V0125, V0124))
+        # v0.128: 段 v0.128（57d01f4 → 71d1728）を加え、v0.126 の段のあとは V0_126_KYUURA_COMMIT（57d01f4）に固定した。今の写しの元は最後の段のあと
+        # （docs/catalog-scope-migration-v0.128.md 2 章。今の値は tests/test_catalog_scope_migration_v0_128.py）
+        self.assertEqual((module.V0_126_KYUURA_COMMIT, module.V0_125_KYUURA_COMMIT, module.V0_124_KYUURA_COMMIT), (NOW, V0125, V0124))
         self.assertEqual(module.migration_problems(), [])
-        self.assertEqual([(s["id"], s["from"], s["to"]) for s in module.KYUURA_MIGRATIONS],
+        self.assertEqual([(s["id"], s["from"], s["to"]) for s in module.KYUURA_MIGRATIONS][:8],
                          [("v0.69", ECB, V069), ("v0.97", V069, V097), ("v0.114", V097, V0114), ("v0.121", V0114, V0121), ("v0.123", V0121, V0123),
                           ("v0.124", V0123, V0124), ("v0.125", V0124, V0125), ("v0.126", V0125, NOW)])
-        self.assertEqual(module.KYUURA_MIGRATIONS[-1]["document"], "docs/flash-faceup-deck-v0.126.md")
+        self.assertEqual(module.KYUURA_MIGRATIONS[7]["document"], "docs/flash-faceup-deck-v0.126.md")
         extract = read_extract()
-        self.assertEqual((extract["source"]["commit"], extract["previous_source"]["commit"]), (NOW, ECB))
-        self.assertEqual(extract["source_migrations"][-1], {"id": "v0.126", "from": V0125, "to": NOW, "document": "docs/flash-faceup-deck-v0.126.md", "corrections": [FIX]})
+        self.assertEqual((extract["source"]["commit"], extract["previous_source"]["commit"]), (module.KYUURA_MIGRATIONS[-1]["to"], ECB))
+        self.assertEqual(extract["source_migrations"][7], {"id": "v0.126", "from": V0125, "to": NOW, "document": "docs/flash-faceup-deck-v0.126.md", "corrections": [FIX]})
         # v0.125 の段のあとを写しの元の定数にもどすと、写しの元を上げたときに過去の段のあとまで変わる（連鎖が切れて止まる）
         steps = module.KYUURA_MIGRATIONS
         try:
@@ -86,7 +91,7 @@ class MigrationChainTest(unittest.TestCase):
             self.assertTrue(any("その前の段のあと" in p for p in module.migration_problems()))
         finally:
             module.KYUURA_MIGRATIONS = steps
-        self.assertEqual([(c["card_id"], c["source_commit"]) for c in extract["engine_user_corrections"]], [("PR1-069", NOW)])
+        self.assertEqual([(c["card_id"], c["source_commit"]) for c in extract["engine_user_corrections"]], [("PR1-069", module.KYUURA_COMMIT)])
 
     def test_correction_record(self):
         """FIX-PR1-027-TEXT-JA: 写しの外のカードの転記の誤り（読点 1 つ）。画像を見たのは kyuura で、エンジンは見ていない。名前の「！」は直していない。"""
@@ -104,10 +109,11 @@ class MigrationChainTest(unittest.TestCase):
 
     def test_adoption_migrations_are_appended(self):
         sources = cs.load_sources()
-        self.assertEqual([(m["from"], m["to"], m["on"]) for m in sources["data_migrations"]],
+        # v0.128: 9 段目（57d01f4 → 71d1728）が加わった（今の値は tests/test_catalog_scope_migration_v0_128.py）。v0.126 までの 8 段は書き換えない
+        self.assertEqual([(m["from"], m["to"], m["on"]) for m in sources["data_migrations"]][:8],
                          [(ECB, V069, "2026-10-19"), (V069, V097, "2026-10-25"), (V097, V0114, "2026-10-28"), (V0114, V0121, "2026-10-30"),
                           (V0121, V0123, "2026-10-31"), (V0123, V0124, "2026-10-31"), (V0124, V0125, "2026-10-31"), (V0125, NOW, "2026-10-31")])
-        self.assertEqual(sources["data_migrations"][-1]["document"], "docs/flash-faceup-deck-v0.126.md")
+        self.assertEqual(sources["data_migrations"][7]["document"], "docs/flash-faceup-deck-v0.126.md")
         self.assertEqual(cs.data_migrations(sources, read_extract())[1], [])
         # 採用したときのデータのコミットが 57d01f4 の記録は、この版で写しに加えたカード（pool_v0_126）だけ（移行の段では採用し直していない）。v0.127 は写しの元を変えずに
         # pool_v0_127 の 6 枚を 57d01f4 で採用した（tests/test_deferred_shortage_user_promos_v0_127.py）
@@ -168,9 +174,13 @@ class ResearchLinksTest(unittest.TestCase):
         cls.links = json.loads(LINKS_PATH.read_text(encoding="utf-8"))
 
     def test_commits_and_counts(self):
-        links = self.links
-        self.assertEqual((links["research_commit"], links["card_data_commit"], links["research_branch"]),
+        # v0.128: 研究の基準を 71d1728 に上げた（今の値は tests/test_catalog_scope_migration_v0_128.py）。v0.126 の基準の値は、57d01f4 を基準にした最後のコミットの対応表で確かめる
+        if not (ROOT / ".git").exists():
+            self.skipTest("このリポジトリの git の履歴がない（取り出した木）")
+        pinned = engine_json(V0127_FINAL, "kyuura_engine/data/research_links.json")
+        self.assertEqual((pinned["research_commit"], pinned["card_data_commit"], pinned["research_branch"]),
                          (NOW, NOW, "claude/trainer-reaction-faceup-deck-ownership-research"))
+        links = self.links
         self.assertEqual(links["counts"]["kyuura_issues"], 90)
         self.assertEqual(links["engine_import_id"], "ENGINE-46A3E2E")
         registered = FLASH in load_card_pool().playable_ids

@@ -89,32 +89,46 @@ class CatalogContractTest(unittest.TestCase):
         self.assertEqual(FORMAT_VERSIONS, tuple(range(1, LATEST_FORMAT + 1)))
 
     def test_target_universe_and_current_unsupported_totals(self):
+        # v0.128（docs/catalog-scope-migration-v0.128.md 3 章・4 章）: 通常対戦の対象は、写しの元の data/cards.json の明示の分類（catalog_class が battle かつ
+        # engine_scope が target）から求める。kyuura の engine_targets.json の cards はその写しの生成物で、同じ集合であることを別に確かめる
         extract = read_extract()
         kyuura = ROOT.parent / "kyuura"
         if not (kyuura / ".git").exists():
             self.skipTest("../kyuura is required for the pinned target catalog")
-        raw = subprocess.check_output([
-            "git", "-C", str(kyuura), "show",
-            f"{extract['source']['commit']}:data/engine_targets.json",
-        ])
-        targets = json.loads(raw)["cards"]
+
+        def show(path):
+            return json.loads(subprocess.check_output([
+                "git", "-C", str(kyuura), "show", f"{extract['source']['commit']}:{path}"]))
+
+        records = show("data/cards.json")["cards"]
+        targets = [card for card in records
+                   if card["catalog_class"] == "battle" and card["engine_scope"] == "target"]
         ids = {card["id"] for card in targets}
+        self.assertEqual(ids, {card["id"] for card in show("data/engine_targets.json")["cards"]})
         neo = {card["id"] for card in targets if card["id"].startswith("neo")}
         non_pack = {card["id"] for card in targets
                     if card["product_group"] != "expansion_pack"}
         pmcg = {card for card in ids if card.startswith("PMCG")}
         self.assertEqual(len(ids), len(targets))
-        self.assertEqual((len(ids), len(pmcg), len(non_pack), len(neo)),
-                         (1377, 457, 597, 323))
+        self.assertEqual((len(records), len(ids), len(pmcg), len(non_pack), len(neo)),
+                         (1377, 1374, 457, 594, 323))
         self.assertEqual(
             Counter(card["jp_set"] for card in targets if card["id"] in neo),
             {"neo1": 96, "neo2": 57, "neo3": 57, "neo4": 113},
         )
+        excluded = {card["id"]: (card["catalog_class"], card["engine_scope"])
+                    for card in records if card["id"] not in ids}
+        self.assertEqual(excluded, {"PR1-038": ("special_rule", "excluded"),
+                                    "PRN-048": ("special_rule", "excluded"),
+                                    "PR1-079": ("award", "excluded")})
+        self.assertEqual({r["id"] for r in extract["catalog_scope"]["excluded_records"]}, set(excluded))
         playable = load_card_pool().playable_ids
         self.assertLessEqual(playable, ids)
         self.assertLessEqual(pmcg, playable)
         self.assertEqual((len(ids - playable), len(neo - playable),
-                          len(non_pack - playable)), (9, 2, 7))
+                          len(non_pack - playable)), (6, 2, 4))
+        self.assertEqual(ids - playable, {"GD5-016", "PR1-027", "PR1-075", "PR1-077",
+                                          "neo1-049", "neo4-082"})
 
 
 class ReleaseCohortTest(unittest.TestCase):
