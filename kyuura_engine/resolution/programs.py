@@ -15560,3 +15560,146 @@ BUILDERS |= {
         DiscardOwnEnergy(e.energy_type, count=e.count, when_lacking=LACKING_CANNOT_USE, timing=TIMING_EFFECT), Damage(OPP, PlusOwnCounters(e.per), requires="discard"),
     ),
 }
+
+
+# ---------------------------------------------------------------- v0.127（docs/deferred-shortage-user-promos-v0.127.md）
+
+SHORTAGE_OVER = "over"  # 「おもて」の数が処理できる数を超えた組の key（途中停止の終端の枝の代表）
+
+
+def shortage_classes(available: int):
+    """v0.127（docs 6 章）: 「うら」が出るまで投げるコインの「おもて」の数 h を、処理できる数 ``available``（N）との比べにだけ使う要素（ドライアップ）の組（``unbounded.HeadClasses``）。
+    h = 0〜N はそれぞれ別の組（ちょうど h 枚の処理。選び方の決定の形が h で変わる）、N + 1 以上は 1 つの組（代表は N + 1）: h > N では要素が数のチェック地点で必ず途中停止し、それより
+    あとの処理（トラッシュ・きぜつの判定）をしないので、h がいくつでも終端の分類（停止コード・止まった要素・処理できる数・在途の状態）は同じ（h はログと記録の必要な数にだけ残り、先読みの
+    範囲では読まれない）。h がダメージなどほかの処理にも使われる要素には使わない。実際のコインの数・ログ・乱数には代表を使わない"""
+    from .unbounded import HeadClasses
+
+    if type(available) is not int or available < 0:
+        raise RuntimeError(f"処理できる数 {available!r} が 0 以上の整数ではない（エンジンの不具合）")
+    keys = tuple(range(available + 1)) + (SHORTAGE_OVER,)
+    return HeadClasses(tuple(range(available + 2)), keys, available + 1, 1, lambda heads: heads if heads <= available else SHORTAGE_OVER)
+
+
+@dataclass(frozen=True)
+class DiscardChosenTypedEnergyUntilTails(DiscardOpponentEnergy):
+    """先に選んだ相手のポケモン（``chosen``）について、「うら」が出るまでコインを投げ続け、「おもて」の数ぶんの「``energy_type``」エネルギーカードを、そのポケモンからトラッシュする
+    （v0.127。ファイヤーの「ドライアップ」。``effects.ChooseOpponentThenDiscardTypedEnergyUntilTails``。docs 7 章）。
+
+    - 選んでからコインを投げる（``AttackRun.flip_until_tails``。上限なく「うら」まで。ナツメのESPのやり直しは一まとまりのあとに 1 回だけ聞き、最後の並びで判断する。最初の並びで止めない）。
+      選んだ個体が場をはなれていれば（うらのカードをおもてにしてトラッシュしたなど）処理の対象がないので投げない（p.309。``DiscardOpponentEnergy`` の ``chosen`` と同じ）
+    - 処理できる数 N は、選んだポケモンの「水」エネルギーカードの枚数（``E.attached_typed_energy_cards``。コインの前に数え、コインのあいだは変わらない）。「おもて」の数 H を
+      ``interruption.check_quantity`` のチェック地点で比べ、H > N（N = 0 をふくむ）なら、トラッシュする前に途中停止（DU1）
+    - H = 0 は何もしない。H = N はすべて（選び方は 1 つなので決定を出さない）。0 < H < N は、ワザを使ったプレイヤーがちょうど H 枚を選ぶ（決定 ``DISCARD_OPPONENT_ENERGY``。すべての組を残す）。
+      トラッシュはついている順（``E.discard_energy_from_play``。リサイクルエネルギーなどのもどる処理は既存）。トラッシュする前に効果の到達（``reaches``）を評価する
+    - 選ぶと止めるポケモン（``choice_problem``）: 「水」エネルギーカードの数え方が色の読み方で変わる（``transform_energy_question`` の問い）・コインが決めるトラッシュが効果を受けない
+      （タケシの保護・［KEEP］・「ワザをうけない」状態で ``prevented_effect_coin``・``keep_voided_discard_coin``、「とうめい」を持つポケモンで ``evaded_effect_coin``）・手札にもどるかが
+      決まらないカード（TE2 などの ``energy_discard_problem``）を持つ"""
+
+    energy_type: EnergyType = EnergyType.WATER
+    chosen: str | None = "target"
+
+    def _water(self, run: AttackRun, pokemon: PokemonInPlay) -> list[int]:
+        return E.attached_typed_energy_cards(run.state, pokemon, self.energy_type)
+
+    def choice_problem(self, run: AttackRun, owner: int, pokemon: PokemonInPlay) -> tuple[str, str] | None:
+        from .kernel import first_void
+
+        if run.state.is_face_down(pokemon):
+            return None  # うらのカードにはカードがついていない（N = 0）。おもてにしてトラッシュしたら処理の対象がない（既存の指定の処理）
+        detail = f"ポケモン {pokemon.pokemon_id}（ドライアップのコインの「おもて」の数の「{self.energy_type.ja}」エネルギーカードのトラッシュ）"
+        try:
+            transform_energy_question(run, pokemon, self.energy_type, cards=True)
+        except OpenQuestion as question:
+            return question.key, question.detail
+        if E.energy_removal_protected(run.state, owner, pokemon, run.player) is not None:
+            return "prevented_effect_coin", f"{detail}。タケシの保護ではがされない"
+        if self._voided(run, pokemon) is not None:
+            return "keep_voided_discard_coin", f"{detail}。［KEEP］でトラッシュの効果がなくなる"
+        if first_void(run.res, run.incoming(), owner, pokemon, Window.BEFORE_EFFECT) is not None:
+            return "prevented_effect_coin", f"{detail}。「ワザをうけない」などで効果を受けない"
+        if E.evasion_power(run.state, pokemon) is not None:
+            return "evaded_effect_coin", f"{detail}。「とうめい」で受けないと決まると、コインを投げるかが決められない"
+        for uid in self._water(run, pokemon):
+            if E.energy_discard_problem(run.state, pokemon, uid, cause=E.DISCARD_BY_ATTACK, by_player=run.player) is not None:
+                return "prevented_effect_coin", f"{detail}。トラッシュしたあと手札にもどるかが決まらないカード {uid}"
+        return None
+
+    def run(self, run: AttackRun) -> bool:
+        from ..interruption import DISCARD_WATER_ENERGY_CARDS, check_quantity
+
+        opponent = 1 - run.player
+        found = chosen_pokemon(run, self.chosen, opponent)
+        if not found:
+            return False
+        target = found[0]
+        available = len(self._water(run, target))
+        flips = run.flip_until_tails(lambda: shortage_classes(available))
+        heads = flips.heads
+        check_quantity(required=heads, available=available, code=E.DRY_UP_SHORT_CODE,
+                       message=f"ポケモン {target.pokemon_id}・「おもて」{heads}・「{self.energy_type.ja}」エネルギーカード {available} 枚: {E.DRY_UP_SHORT_REASON}",
+                       references=("kyuura CR-DRY-UP-PROCEDURE", "kyuura UQ-STATED-COUNT-SHORT", "docs/deferred-shortage-user-promos-v0.127.md"),
+                       source=str(run.key), player=run.player, target_owner=opponent, target=target.pokemon_id, element=DISCARD_WATER_ENERGY_CARDS,
+                       pending=(DISCARD_WATER_ENERGY_CARDS, "finish_attack", "knockout_check"))
+        if heads == 0 or not reaches(run.res, run.fs, opponent, target, E.ENERGY_DISCARD_ELEMENT):
+            return False
+        void = self._voided(run, target)
+        if void is not None:
+            E.note_energy_discard_voided(run.state, void, cause=E.DISCARD_BY_ATTACK, by_player=run.player, effect=str(run.key))
+            return False
+        options = self._water(run, target)
+        if heads == len(options):
+            self._discard_chosen(run, target, tuple(options))
+            return False
+        run.suspend(kind=DISCARD_OPPONENT_ENERGY, player=run.player, options=options, min_choices=heads, max_choices=heads,
+                    extra=(("target", target.pokemon_id), ("heads", heads)), carry=True)
+        return True
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        """先読みは、トラッシュするカードの組を、カードの種類（カード id と、この番の色の記録・エネルギーとしての役割の有無）の組ごとに 1 つ（はじめの uid）だけ試す。同じ種類のカードは
+        入れかえても先読みの範囲（トラッシュ・きぜつの判定まで）の結果が同じ（このあとに要素がなく、トラッシュしたカードの uid を読む処理がない）。実際の決定では、ちょうど「おもて」の数の
+        すべての組を選べる（選べるものを削らない）。同じ基本エネルギーカードばかりの場で、組の数が先読みの上限を超えないようにする（v0.127 の開発中の対戦で、「水」エネルギーカード 10 枚以上の
+        ポケモンを選べる場が UNSUPPORTED_PREFLIGHT_LIMIT になった）"""
+        state = run.state
+        target = state.find_pokemon(decision.context_value("target"))[1]
+        groups: dict[tuple, list[int]] = {}
+        for uid in decision.options:
+            kind = (state.cards[uid].card_id, (target.pokemon_id, uid) in state.energy_burn, any(role.card == uid for role in state.energy_roles))
+            groups.setdefault(kind, []).append(uid)
+        answers: list[tuple[int, ...]] = []
+
+        def pick(index: int, left: int, chosen: tuple[int, ...]) -> None:
+            members = list(groups.values())
+            if index == len(members):
+                if left == 0:
+                    answers.append(tuple(uid for uid in decision.options if uid in chosen))
+                return
+            for count in range(min(left, len(members[index])) + 1):
+                pick(index + 1, left - count, chosen + tuple(members[index][:count]))
+
+        pick(0, decision.min_choices, ())
+        return answers
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        opponent = 1 - run.player
+        found = run.state.find_pokemon(run.carried["target"])
+        if (found is None or found[0] != opponent or len(choices) != run.carried["heads"] or len(set(choices)) != len(choices)
+                or any(uid not in self._water(run, found[1]) for uid in choices)):
+            raise RuntimeError(f"トラッシュに選んだカード {choices} が、選んだポケモンの「おもて」の数の「{self.energy_type.ja}」エネルギーカードではない（エンジンの不具合）")
+        self._discard_chosen(run, found[1], tuple(choices))
+
+    def _discard_chosen(self, run: AttackRun, target: PokemonInPlay, cards: tuple[int, ...]) -> None:
+        opponent = 1 - run.player
+        attacker = run.attacker()
+        for energy in tuple(uid for uid in target.energy if uid in cards):
+            E.discard_energy_from_play(
+                run.state, target, (energy,), cause=E.DISCARD_BY_ATTACK, by_player=run.player,
+                log=lambda energy=energy: run.state.add_event("discard_attached_energy", player=opponent, pokemon=target.card, pokemon_id=target.pokemon_id,
+                                                              energy=energy, effect=str(run.key), attacker=run.player, attacker_pokemon_id=attacker.pokemon_id))
+
+
+BUILDERS |= {
+    # ドライアップ: 相手の場のポケモンを 1 匹選ぶ（ワザを使ったプレイヤー）→「うら」が出るまでコイン →「おもて」の数の「水」エネルギーカードをトラッシュ（足りなければ途中停止）
+    E.ChooseOpponentThenDiscardTypedEnergyUntilTails: lambda e: (
+        ChooseEffectTarget(side=E.TARGET_SIDE_OPPONENT, scope=E.TARGET_IN_PLAY, chooser=E.CHOOSER_ATTACKER), DiscardChosenTypedEnergyUntilTails(energy_type=e.energy_type),
+    ),
+}

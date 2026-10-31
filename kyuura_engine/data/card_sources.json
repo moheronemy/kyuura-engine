@@ -30852,6 +30852,65 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.126 で加えた（docs/flash-faceup-deck-v0.126.md 3 章）。拡張シート第2弾（赤版）。トレーナー（種類の表示なし）。FlashTrainer（処理に使う文面は最新の説明 LD-ES2-035-TRAINER の全文。印刷の文面（kyuura の写し）は照合だけに使う。句読点・括弧を一般に正規化して一致させない）。最新の説明は kyuura が 2026-10-31 に『オフィシャルブック2000』p.270（PDF 272）を画像で読んだ記録、カードの画像の照合は kyuura の IMG-ES2-035 で、エンジンは原典・画像を見ていない。日本語の文面の転記元は pcg-search.com（同じサイトでの日本語の欄の照合は独立した照合にならない）。新しい外部照合はしていない"
+    },
+    "ES2-005": {
+      "basis": "kyuura_data",
+      "name_ja": "ファイヤー",
+      "status": "adopted",
+      "kyuura_commit": "57d01f45cfb8b086d03dc0525b329cf6adeff69b",
+      "recorded_on": "2026-11-01",
+      "kyuura_records": [
+        "CC-ES2-005-P82",
+        "CR-DRY-UP-PROCEDURE",
+        "CR-UNTIL-TAILS-NOT-CAPPED",
+        "LD-ES2-005-ATK0",
+        "UQ-STATED-COUNT-SHORT"
+      ],
+      "play_text": {
+        "attack/0": "LD-ES2-005-ATK0"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.127 で加えた（docs/deferred-shortage-user-promos-v0.127.md 3 章・7 章）。拡張シート第2弾（赤版）。たね・炎・HP80・弱点なし・抵抗力 闘-30・にげる 1。ワザ ドライアップ（炎 2 個）=ChooseOpponentThenDiscardTypedEnergyUntilTails（処理に使う文面は最新の説明 LD-ES2-005-ATK0 の全文。足りないときは途中停止 DU1）、ほのおのつばさ（炎 3 個・無色 1 個・50）=DAMAGE_ONLY。最新の説明は kyuura が 2026-10-31 に『オフィシャルブック2000』p.82（PDF 84）を画像で読んだ記録で、エンジンは原典・画像を見ていない。ES2-005 と QSG-055 は同じカードの組 SC-ES2-005（最新の説明の出典が違うので、登録・採用の記録は id ごと）。レベル・図鑑番号は補っていない（写しの値のまま）。日本語の文面の転記元は pcg-search.com（同じサイトでの日本語の欄の照合は独立した照合にならない）。新しい外部照合はしていない"
+    },
+    "QSG-055": {
+      "basis": "kyuura_data",
+      "name_ja": "ファイヤー",
+      "status": "adopted",
+      "kyuura_commit": "57d01f45cfb8b086d03dc0525b329cf6adeff69b",
+      "recorded_on": "2026-11-01",
+      "kyuura_records": [
+        "CC-QSG-055-P82",
+        "CR-DRY-UP-PROCEDURE",
+        "CR-UNTIL-TAILS-NOT-CAPPED",
+        "LD-QSG-055-ATK0",
+        "UQ-STATED-COUNT-SHORT"
+      ],
+      "play_text": {
+        "attack/0": "LD-QSG-055-ATK0"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.127 で加えた（docs/deferred-shortage-user-promos-v0.127.md 3 章・7 章）。クイックスターターギフトパック（キラ）。たね・炎・HP80・弱点なし・抵抗力 闘-30・にげる 1。ワザ ドライアップ（炎 2 個）=ChooseOpponentThenDiscardTypedEnergyUntilTails（処理に使う文面は最新の説明 LD-QSG-055-ATK0 の全文。足りないときは途中停止 DU1）、ほのおのつばさ（炎 3 個・無色 1 個・50）=DAMAGE_ONLY。最新の説明は kyuura が 2026-10-31 に『オフィシャルブック2000』p.82（PDF 84）を画像で読んだ記録で、エンジンは原典・画像を見ていない。ES2-005 と QSG-055 は同じカードの組 SC-ES2-005（最新の説明の出典が違うので、登録・採用の記録は id ごと）。レベル・図鑑番号は補っていない（写しの値のまま）。日本語の文面の転記元は pcg-search.com（同じサイトでの日本語の欄の照合は独立した照合にならない）。新しい外部照合はしていない"
+    },
+    "neo4-108": {
+      "basis": "kyuura_data",
+      "name_ja": "怪電波マシーン",
+      "status": "adopted",
+      "kyuura_commit": "57d01f45cfb8b086d03dc0525b329cf6adeff69b",
+      "recorded_on": "2026-11-01",
+      "kyuura_records": [
+        "CR-THOUGHT-WAVE-MACHINE-PROCEDURE",
+        "CR-UNTIL-TAILS-NOT-CAPPED",
+        "UQ-CARD-USE-WITHOUT-TARGET",
+        "UQ-STATED-COUNT-SHORT"
+      ],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.127 で加えた（docs/deferred-shortage-user-promos-v0.127.md 7 章）。neo 第4弾「闇、そして光へ...」。トレーナー（ロケット団秘密メカ）。CoinsUntilTailsReturnOpponentActiveEnergyThenEndTurn（kyuura の印刷の文面。最新の説明はない。英語版の「少なければすべて」は日本語の印刷にないので使わない）。足りないときは途中停止 TW1、相手の対戦ポケモンにはがせるエネルギーカードがないときは使う前に TW2。日本語の文面の転記元は Pokemon Wiki。新しい外部照合はしていない"
     }
   }
 }

@@ -1012,15 +1012,19 @@ def discard_attached_energy_cards(state: GameState, owner: int, pokemon: Pokemon
     return moved
 
 
-def return_attached_energy_to_hand(state: GameState, owner: int, pokemon: PokemonInPlay, cards: tuple[int, ...], *, trainer: int) -> tuple[int, ...]:
+def return_attached_energy_to_hand(state: GameState, owner: int, pokemon: PokemonInPlay, cards: tuple[int, ...], *, trainer: int, user: int | None = None) -> tuple[int, ...]:
     """トレーナーの効果で、自分（``owner``）の場のポケモン ``pokemon`` についているエネルギーカード ``cards`` を、自分の手札にもどす（v0.55。エネルギーサーキュレートの
     「はがし、手札に戻してよい」）。トラッシュ・つけなおし・手札からつける通常の操作ではない。ログ ``trainer_return_energy``（場にあったカードなので ``cards`` は公開）。
-    手札にもどしたカード（ついていた順）を返す。"""
+    手札にもどしたカード（ついていた順）を返す。
+
+    v0.127: ``user`` はトレーナーを使ったプレイヤー（相手のポケモンのカードを、持ち主（``owner``）の手札にもどす怪電波マシーン）。持ち主と違うときだけログに ``user`` を書く
+    （持ち主が使ったときのログは v0.126 と同じ）。"""
     moved = _attached_energy_cards(state, owner, pokemon, cards)
     for uid in moved:
         pokemon.energy.remove(uid)
     state.players[owner].hand.extend(moved)
-    state.add_event("trainer_return_energy", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, cards=moved, trainer_card=trainer)
+    state.add_event("trainer_return_energy", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, cards=moved, trainer_card=trainer,
+                    **({} if user is None or user == owner else {"user": user}))
     return moved
 
 

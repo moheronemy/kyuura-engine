@@ -48226,3 +48226,157 @@ V0_126_TRAINERS: Mapping[str, TrainerEntry] = MappingProxyType({
     "ES2-035": TrainerEntry(FlashTrainer(FLASH_PRINTED_TEXT), "フラッシュ", FLASH_PRINTED_TEXT, FLASH_LATEST_TEXT, "LD-ES2-035-TRAINER"),
 })
 DEFAULT_EFFECTS = _with_trainers(DEFAULT_EFFECTS, V0_126_TRAINERS)
+
+
+# ---------------------------------------------------------------- v0.127（docs/deferred-shortage-user-promos-v0.127.md）
+
+# ファイヤー（ES2-005・QSG-055）のドライアップ。照合する印刷の文面（kyuura の写し）と、処理に使う最新の説明（LD-ES2-005-ATK0・LD-QSG-055-ATK0。kyuura が 2026-10-31 に
+# 『オフィシャルブック2000』p.82 を画像で読んだ記録。エンジンは原典を見ていない）。2 つの印刷・最新の説明は同じ文面
+DRY_UP_PRINTED_TEXT = "相手の場のポケモンから1匹を選ぶ。その後、「うら」が出るまでコインを投げ続け、「おもて」の数ぶんの「{ja}」エネルギーカードを、そのポケモンからはがしてトラッシュさせる。"
+DRY_UP_LATEST_TEXT = "相手の場にいるポケモンを1匹選ぶ。その後、「うら」が出るまでコインを投げ続け、「おもて」の数ぶんの「水」エネルギーカードを、そのポケモンからトラッシュする。"
+# 途中停止のコード（DU1・TW1。kyuura の UQ-STATED-COUNT-SHORT。研究上の未解決で、エンジンが決めたのではない）と、怪電波マシーンの使う前の停止（TW2。UQ-CARD-USE-WITHOUT-TARGET）
+DRY_UP_SHORT_CODE = "UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT"
+DRY_UP_SHORT_REASON = (
+    "ドライアップで、選んだポケモンの「水」エネルギーカードが「おもて」の数より少ない（0 枚をふくむ）。あるだけトラッシュするのか、その分を処理しないのか、ワザが失敗するのかは、"
+    "最新の説明・kyuura の記録（CR-DRY-UP-PROCEDURE・UQ-STATED-COUNT-SHORT）から決められないので、トラッシュする前に対戦を止める（DU1。途中停止。コインと選んだポケモンは残す）"
+)
+THOUGHT_WAVE_MACHINE_TEXT = ("「うら」が出るまでコインを投げつづけ、その間に出た「おもて」の数ぶんの「エネルギーカード」を、相手の対戦ポケモンからはがし、相手プレイヤーの手札にもどす。"
+                             "このカードを使ったら、あなたの番は終わりになる。")
+THOUGHT_WAVE_SHORT_CODE = "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT"
+THOUGHT_WAVE_SHORT_REASON = (
+    "怪電波マシーンで、相手の対戦ポケモンのエネルギーカードが「おもて」の数より少ない。あるだけもどすのか、その分を処理しないのか、使えなかったことになるのかは、印刷の文面・kyuura の記録"
+    "（CR-THOUGHT-WAVE-MACHINE-PROCEDURE・UQ-STATED-COUNT-SHORT。英語版の「少なければすべて」は日本語の印刷にない）から決められないので、もどす前に対戦を止める（TW1。途中停止。"
+    "コインと使用中のカードは残し、番を終えない）"
+)
+THOUGHT_WAVE_WITHOUT_TARGET_CODE = "UNRESOLVED_THOUGHT_WAVE_MACHINE_WITHOUT_TARGET"
+THOUGHT_WAVE_WITHOUT_TARGET_REASON = (
+    "怪電波マシーンを、相手の対戦ポケモンにはがせるエネルギーカードがない（ついていない・タケシの保護）ときに使えるか・コインを投げるかは、kyuura の記録（UQ-CARD-USE-WITHOUT-TARGET）・"
+    "印刷の文面から決められないので扱わない（TW2。手札から出す前に止める）"
+)
+
+
+@dataclass(frozen=True)
+class ChooseOpponentThenDiscardTypedEnergyUntilTails(AttackEffect):
+    """相手の場のポケモンから 1 匹を選ぶ。その後、「うら」が出るまでコインを投げ続け、「おもて」の数ぶんの「``energy_type``」エネルギーカードを、そのポケモンからトラッシュする
+    （v0.127。ファイヤーの「ドライアップ」。処理に使う文面は最新の説明 LD-ES2-005-ATK0・LD-QSG-055-ATK0）。要素は ``ChooseEffectTarget``（相手の場。選ぶのはワザを使ったプレイヤー）→
+    ``DiscardChosenTypedEnergyUntilTails``（docs 7 章）。
+
+    - ダメージはない。選んでからコインを投げる（「おもて」の数を見て選び直さない）。コインは上限なく「うら」まで（CR-UNTIL-TAILS-NOT-CAPPED。カードの枚数で打ち切らない・丸めない）
+    - 「おもて」の数 H ≤ 選んだポケモンの「水」エネルギーカードの枚数 N なら、ちょうど H 枚をトラッシュする（H < N なら、ちょうど H 枚のすべての選び方の決定）。H > N（N = 0 をふくむ）は、
+      トラッシュする前に途中停止（DU1。``interruption.check_quantity``。kyuura の UQ-STATED-COUNT-SHORT）
+    - 「水」エネルギーカードはカードとしての種類・タイプ（``attached_typed_energy_cards``）で、数えるのはカードの枚数。色の読み方（レインボーエネルギー・［エネエネ］・［へんしん］など）・
+      効果を受けない（「ワザをうけない」・タケシの保護・［KEEP］・「とうめい」）で枚数・結果が決まらないポケモンは、選べるが選ぶと止める（既存の問い）"""
+
+    energy_type: EnergyType = EnergyType.WATER
+    implementation_id = "choose_opponent_then_discard_typed_energy_until_tails"
+    opponent_effect_elements = (ENERGY_DISCARD_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の場のポケモンを選んで「うら」が出るまでのコインの数のエネルギーカードをトラッシュするワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (DRY_UP_PRINTED_TEXT.format(ja=self.energy_type.ja),))
+
+
+@dataclass(frozen=True)
+class CoinsUntilTailsReturnOpponentActiveEnergyThenEndTurn(TrainerEffect):
+    """「うら」が出るまでコインを投げつづけ、その間に出た「おもて」の数ぶんの「エネルギーカード」を、相手の対戦ポケモンからはがし、相手プレイヤーの手札にもどす。このカードを使ったら、
+    あなたの番は終わりになる。（v0.127。怪電波マシーン（neo4-108。ロケット団秘密メカ）。kyuura の印刷の文面。docs 7 章）
+
+    - 使う前の確かめ: 相手の対戦ポケモンにはがせるエネルギーカードがない（ついていない・タケシの保護）なら TW2（UQ-CARD-USE-WITHOUT-TARGET。手札から出す前）。［でんせつのからだ］で
+      トレーナーの効果を受けない相手の対戦ポケモンなら LB1（コインの前）
+    - コインはトレーナーのコイン（``coins.flip_until_tails``。上限なく「うら」まで。ナツメのESPはワザのコインだけなので当たらない）。数えるのはカードの枚数（特殊エネルギーも 1 枚）
+    - 「おもて」の数 H ≤ はがせる枚数 N なら、使ったプレイヤーがちょうど H 枚を選び（H < N のときだけ決定 ``RETURN_ENERGY``。H = N はすべて、H = 0 はなし）、相手の手札にもどす
+      （トラッシュではない。ログ ``trainer_return_energy`` の ``user``）。そのあと ``END_TURN``（エンジンがこのカードをトラッシュしてから番を終える。H = 0 でも番を終える）
+    - H > N は、もどす前に途中停止（TW1。``interruption.check_quantity``）。もどさず、このカードは使用中のまま（片付けない）、番を終えない
+    - 錯乱ジムで相手がかわりに使うと「あなたの番」がどの番か決まらない（CH1。``refers_to_user_turn``）"""
+
+    text: str
+    implementation_id = "coins_until_tails_return_opponent_active_energy_then_end_turn"
+    may_end_turn = True
+    refers_to_user_turn = True
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = _require_text(definition, self.text, self, secret_machine=True)
+        if not problems and ("「うら」が出るまでコインを投げつづけ" not in self.text or "相手の対戦ポケモンからはがし、相手プレイヤーの手札にもどす" not in self.text
+                             or "このカードを使ったら、あなたの番は終わりになる" not in self.text):
+            problems.append("文面と登録のコイン・もどす先・番の終わりが合わない")
+        return problems
+
+    @staticmethod
+    def _target(state: GameState, use: TrainerUse) -> PokemonInPlay | None:
+        return state.players[1 - use.player].active
+
+    def _returnable(self, state: GameState, use: TrainerUse) -> list[int]:
+        """相手の対戦ポケモンについている、はがせるエネルギーカード（ついている順）。タケシの保護がついていれば（使ったプレイヤーのトレーナーではがされない）なし。"""
+        opponent = 1 - use.player
+        target = self._target(state, use)
+        if target is None or energy_removal_protected(state, opponent, target, use.player) is not None:
+            return []
+        return [uid for uid in target.energy if state.card_def(uid).category == "energy"]
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        target = self._target(state, use)
+        if not self._returnable(state, use):
+            raise UnsupportedError(THOUGHT_WAVE_WITHOUT_TARGET_CODE, THOUGHT_WAVE_WITHOUT_TARGET_REASON)
+        if any(pokemon is target for _, pokemon in trainer_immune_pokemon(state)):
+            raise legend_body_error(f"トレーナー {use.card_id} の効果（コインの「おもて」の数のエネルギーカードを手札にもどす）が、相手の対戦ポケモン {target.pokemon_id} に及ぶ")
+
+    def resolve(self, state: GameState, use: TrainerUse):
+        from .coins import flip_until_tails
+        from .interruption import RETURN_ENERGY_CARDS_TO_HAND, check_quantity
+
+        flips = flip_until_tails(state, use.player, source="trainer", effect=use.card_id, card=use.card)
+        heads = flips.heads
+        target = self._target(state, use)
+        options = self._returnable(state, use)
+        check_quantity(required=heads, available=len(options), code=THOUGHT_WAVE_SHORT_CODE, message=f"「おもて」{heads}・エネルギーカード {len(options)} 枚: {THOUGHT_WAVE_SHORT_REASON}",
+                       references=("kyuura CR-THOUGHT-WAVE-MACHINE-PROCEDURE", "kyuura UQ-STATED-COUNT-SHORT", "docs/deferred-shortage-user-promos-v0.127.md"),
+                       source=f"{use.card_id}/trainer", player=use.player, target_owner=1 - use.player, target=target.pokemon_id, element=RETURN_ENERGY_CARDS_TO_HAND,
+                       pending=(RETURN_ENERGY_CARDS_TO_HAND, "discard_trainer", "end_turn"))
+        if heads == 0:
+            return END_TURN
+        if heads == len(options):
+            return_attached_energy_to_hand(state, 1 - use.player, target, tuple(options), trainer=use.card, user=use.player)
+            return END_TURN
+        push_trainer_decision(state, use, kind=RETURN_ENERGY, player=use.player, options=tuple(options), min_choices=heads, max_choices=heads,
+                              context=(("heads", heads), ("target", target.pokemon_id)))
+        return None
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]):
+        target = self._target(state, use)
+        if target is None or target.pokemon_id != decision.context_value("target") or len(choices) != decision.context_value("heads") \
+                or any(uid not in self._returnable(state, use) for uid in choices):
+            raise RuntimeError(f"怪電波マシーンで選んだカード {choices} が、相手の対戦ポケモンの「おもて」の数のエネルギーカードではない（エンジンの不具合）")
+        return_attached_energy_to_hand(state, 1 - use.player, target, tuple(choices), trainer=use.card, user=use.player)
+        return END_TURN
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = f"トレーナー {use.card_id}"
+        problems = _decided_by(decision, use.player, what)
+        heads = decision.context_value("heads")
+        target = self._target(state, use)
+        options = tuple(self._returnable(state, use))
+        if (decision.kind != RETURN_ENERGY or target is None or decision.context_value("target") != target.pokemon_id or decision.options != options
+                or type(heads) is not int or not 0 < heads < len(options) or (decision.min_choices, decision.max_choices) != (heads, heads)):
+            problems.append(f"{what}の決定 {decision.kind} {decision.options} が、相手の対戦ポケモンのエネルギーカードから「おもて」の数（{heads!r}）を選ぶ決定ではない")
+            return problems
+        events = _last_trainer_events(state, use)
+        coins = [e for e in events if e["kind"] == "coin_flip" and e.get("source") == "trainer" and e.get("card") == use.card and e.get("until") == "tails"]
+        if len(coins) != heads + 1 or [e["result"] for e in coins] != ["heads"] * heads + ["tails"]:
+            problems.append(f"{what}の決定の前に、「おもて」{heads} のあとに「うら」が出るまで投げたコインのログがない")
+        return problems
+
+
+# v0.127 の登録（ワザ 4・トレーナー 1）。ファイヤーの 2 枚は最新の説明の出典（LD-）が違うので、それぞれ登録する（効果の実装の値は同じ）
+V0_127_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # ファイヤー（ES2-005・QSG-055）。ドライアップ（炎 2 個）・ほのおのつばさ（炎 3 個・無色 1 個）50
+    **{AttackKey(card, 0): AttackEntry(ChooseOpponentThenDiscardTypedEnergyUntilTails(EnergyType.WATER), "ドライアップ", text_ja=DRY_UP_PRINTED_TEXT.format(ja="水"),
+                                       play_text_ja=DRY_UP_LATEST_TEXT, source=f"LD-{card}-ATK0") for card in ("ES2-005", "QSG-055")},
+    **{AttackKey(card, 1): AttackEntry(DAMAGE_ONLY, "ほのおのつばさ") for card in ("ES2-005", "QSG-055")},
+})
+V0_127_TRAINERS: Mapping[str, TrainerEntry] = MappingProxyType({
+    "neo4-108": TrainerEntry(CoinsUntilTailsReturnOpponentActiveEnergyThenEndTurn(THOUGHT_WAVE_MACHINE_TEXT), "怪電波マシーン", THOUGHT_WAVE_MACHINE_TEXT,
+                             THOUGHT_WAVE_MACHINE_TEXT, _KYUURA_PRINTED_TEXT),
+})
+
+
+DEFAULT_EFFECTS = _with_trainers(_with_attacks(DEFAULT_EFFECTS, V0_127_ATTACKS), V0_127_TRAINERS)

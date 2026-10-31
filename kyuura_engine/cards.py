@@ -660,6 +660,7 @@ POOL_KEYS = (
     "pool_v0_124",  # v0.124（変身の共通ルール・すごいへんしん・わるいはどう。docs/super-transform-dark-pulse-v0.124.md）
     "pool_v0_125",  # v0.125（プクリンの最新の説明・てだすけ。docs/wigglytuff-helping-hand-v0.125.md）
     "pool_v0_126",  # v0.126（フラッシュと表向きの山札。docs/flash-faceup-deck-v0.126.md）
+    "pool_v0_127",  # v0.127（枚数不足の途中停止と、利用者指定の簡略ルールのプロモ 3 枚。docs/deferred-shortage-user-promos-v0.127.md）
 )
 
 
