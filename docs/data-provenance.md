@@ -1978,6 +1978,21 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   SX1・TN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形の別のカードの問い）。v0.66 の「ナツメのESPと「うら」が出るまでのコインは起こらない」はエンジンの前提の誤りで、研究の論点ではない（kyuura は
   変えていない）。
 
+## v0.125: プクリン（てだすけ・ふくらむ）
+
+[wigglytuff-helping-hand-v0.125.md](wigglytuff-helping-hand-v0.125.md) の 3 章〜6 章。写しの元・研究の基準は kyuura 134a664（移行の段 v0.125 のあと）。
+
+- 写しの組 pool_v0_125 に 1 枚（ES1-027）。kyuura データの採用（`basis: kyuura_data`・`kyuura_commit` 134a664・2026-10-31）。ふくらむ・［てだすけ］の処理に使う文面は最新の説明
+  LD-ES1-027-ATK0・LD-ES1-027-PWR0（研究の対応表の `latest_descriptions.registered`。kyuura が 2026-10-31 に『オフィシャルブック2000』p.226（PDF 228）を画像で読んだ記録）の全文。照合する印刷の
+  文面は写しの値のまま（ふくらむは「の」と漢字 1 字の欠けた転記。kyuura の訂正の候補 `held_illegible_print`。印刷の未読の字を補った訂正は作っていない）。外部照合はしていない（エンジンは
+  画像・外部のサイト・書籍を見ていない）。レベル・図鑑番号は補っていない。
+- kyuura_records は研究の基準のコミットでこのカードを指す 9 件（CC-・LD- 2・裁定 3・論点 3）。CC-ES1-027-P226 のデータの誤り（ふくらむの文面の欄）は、採用の記録の論点に
+  `affects_behavior: false` で挙げた（処理は同じ欄の最新の説明にしたがう。`scripts/check_research_links.py` が、その欄の最新の説明に処理がしたがうときだけ受け付ける）。
+- kyuura への報告事項: kyuura の登録表の写しは v0.113 のまま（ES1-027 の `engine_status` は今回の登録を写すと `registered`）。エンジンの新しい停止 HH1・HH2・IF1 は、kyuura の論点
+  （UQ-CARD-USE-WITHOUT-TARGET・UQ-HELPING-HAND-CHOICE・UQ-NON-ATTACK-DAMAGE-MODIFIERS）の事例に結んだが、kyuura の未解決の一覧（v0.113 の写し）に行はない。ふくらむと同じ「このカードが受ける
+  ダメージ」の書き方の既存の登録（ちいさくなる・neo4-085 のふくらむ・あながくれなど）は、エンジンでは v0.124 までと同じくワザのダメージだけを減らしている（UQ-NON-ATTACK-DAMAGE-MODIFIERS の
+  事例に挙がっていない。kyuura が同じ問いとみるかの確かめを頼む）。
+
 ## v0.125: 写しの元・研究の基準を kyuura 134a664 に上げる移行
 
 [wigglytuff-helping-hand-v0.125.md](wigglytuff-helping-hand-v0.125.md) の 2 章。この節は、カードの登録と処理の変更を加えない移行だけのコミットの記録です。
