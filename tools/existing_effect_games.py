@@ -438,7 +438,10 @@ V0_56_TRAINERS = (ERIKAS_PERFUME, LT_SURGE_TRAINER, ROCKETS_TRAP, ROCKET_GRUNT, 
 # 決められない姿・MH1 で拒否される操作のコード（v0.49。場から確かめてから別の操作を続ける）
 V049_FORM_STOPS = ("UNRESOLVED_TRANSFORM_COPIED_POWER", "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER", "UNRESOLVED_SHAPESHIFT_SUPPRESSED",
                    "UNRESOLVED_MAX_HP_DROP",
-                   "UNRESOLVED_TRANSFORM_REVIVED_BASIC")  # v0.120: TF3（［へんしん］で写す相手が、たねポケモンとしてあつかう進化カード）
+                   "UNRESOLVED_TRANSFORM_REVIVED_BASIC",  # v0.120: TF3（［へんしん］で写す相手が、たねポケモンとしてあつかう進化カード）
+                   # v0.124: 変身の共通ルール・すごいへんしんで、決められない・扱えない姿（TK1・BX2・SV2〜SV4・写した特殊能力の未対応）
+                   "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING", "UNRESOLVED_TRANSFORM_BABY_AND_BASIC", "UNRESOLVED_SUPER_TRANSFORM_SOURCE_CHANGE",
+                   "UNRESOLVED_SUPER_TRANSFORM_COPIED_POWER", "UNRESOLVED_SUPER_TRANSFORM_SUPPRESSED_FORM", "UNSUPPORTED_TRANSFORM_COPIED_POWER")
 # v0.70（docs/non-pack-effect-reuse-v0.70.md）: 拡張パック以外の商品のポケモン 82 枚（写しの組 pool_v0_70。既存の効果の型の登録と、ダメージのない型 2 つ）。TARGETS に加え、
 # 使っていないワザを選ぶ手順・エネルギーをためる手順を重ねる（v0.70 のカードのないデッキでは何もしない）
 V0_70 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_70"])
@@ -731,6 +734,11 @@ V0_123 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read
 V0_123_POKEMON = V0_123
 V123_RENAMED = (ARCANINE, BLAINES_ARCANINE)  # 段 v0.123 で名前を直した登録済みのカード（第1弾のウィンディ・カツラのウィンディ）
 V123_RAGE_FLAMES = "PR1-016#1"
+# v0.124（docs/super-transform-dark-pulse-v0.124.md 10 章）: メタモン（拡張シート第2弾赤版。［すごいへんしん］）と GR団のミュウツー（［わるいはどう］・わるいぞうふく）。TARGETS に加え、
+# ［すごいへんしん］を使う手順 ``_v124_power`` と選ぶポケモンの決定 ``_v124_decision`` を重ねる。ログから数えるのは ``v124_uses``
+V0_124 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_124"])
+V0_124_POKEMON = V0_124
+V124_SUPER_DITTO, V124_GR_MEWTWO = "ES2-032", "PRN-041"
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -788,7 +796,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_120_POKEMON  # v0.120: 化石の復活と仮想ワザの供給のポケモン 10 枚
            + V0_121_POKEMON  # v0.121: 手札からの登場とワザの使用条件のポケモン 7 枚
            + V0_122_POKEMON  # v0.122: アンノーンの併用・化石の進化履歴・退却時の反応のポケモン 13 枚
-           + V0_123_POKEMON)  # v0.123: ウィンディ系の 3 枚
+           + V0_123_POKEMON  # v0.123: ウィンディ系の 3 枚
+           + V0_124_POKEMON)  # v0.124: メタモン（すごいへんしん）・GR団のミュウツー
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -1773,6 +1782,11 @@ DECKS = {
     # 合わせて 4 枚まで。「ウィンディ」とは別の名前）、カツラのヒトカゲ（PMCG6-025）→ カツラのリザード（PMCG6-029）
     "K123": ((BLAINES_GROWLITHE, 2), ("GD5-005", 2), ("GD5-007", 2), (BLAINES_ARCANINE, 2), (BLAINES_CHARMANDER, 4), (BLAINES_CHARMELEON, 2),
              (driver.BILL, 4), (driver.POTION, 2), (SWITCH, 2), (FIRE, 38)),
+    # v0.124: 水・超。メタモン 4 枚（拡張シート第2弾赤版 ES2-032 2 枚・化石の秘密 PMCG3-042 2 枚。印刷の名前が同じ「メタモン」なので合わせて 4 枚まで）、ラプラス、ヒトデマン（PMCG1-025）
+    "S124": ((V124_SUPER_DITTO, 2), (DITTO, 2), (LAPRAS, 3), (STARYU, 4), (driver.BILL, 4), (driver.POTION, 2), (SWITCH, 2), (WATER, 37), (PSYCHIC, 4)),
+    # v0.124: 超・炎。GR団のミュウツー 3 枚と「わるい」ポケモン（ロケット団のポニータ → わるいギャロップ、イーブイ → わるいブースター）
+    "G124": ((V124_GR_MEWTWO, 3), (ROCKET_PONYTA, 4), (DARK_RAPIDASH, 3), (EEVEE, 3), (DARK_FLAREON, 2), (driver.BILL, 4), (driver.POTION, 2), (SWITCH, 2),
+             (FIRE, 21), (PSYCHIC, 16)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -2092,6 +2106,10 @@ PAIRINGS_V0_121 = (("C121", "H121"), ("C121", "U121"), ("C121", "Y121"), ("H121"
 # カード）・K123 対 F30（v0.30 のデッキの第1弾のウィンディ（名前を直した PMCG1-019）と、ほのおのあらし）。組・席・seed は正式な対戦の前に決めた（正式な対戦は seed 0〜3。開発中に手順を
 # 確かめる seed 90〜93 とは別。局を選び直さない）
 PAIRINGS_V0_123 = (("W123", "K123"), ("W123", "P31"), ("W123", "E82"), ("K123", "F30"))
+# v0.124: S124 対 G124（相手の GR団のミュウツー・わるいポケモンに変身する・わるいはどう）・S124 対 W123（炎のワザを写す。悪・鋼の記号はない）・G124 対 W123（わるいポケモンのワザへの追加）・
+# S124 対 L122（雷のワザを写す）・G124 対 B122（草・闘の相手へのわるいぞうふく）・S124 対 F30（化石のメタモンと［すごいへんしん］の両方が相手の炎のポケモンを写す）。組・席・seed は正式な
+# 対戦の前に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめる seed 90〜93 とは別。局を選び直さない）
+PAIRINGS_V0_124 = (("S124", "G124"), ("S124", "W123"), ("G124", "W123"), ("S124", "L122"), ("G124", "B122"), ("S124", "F30"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -2115,7 +2133,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.113": PAIRINGS_V0_113, "v0.114": PAIRINGS_V0_114, "v0.115": PAIRINGS_V0_115,
            "v0.116": PAIRINGS_V0_116, "v0.117": PAIRINGS_V0_117, "v0.118": PAIRINGS_V0_118,
            "v0.119": PAIRINGS_V0_119, "v0.120": PAIRINGS_V0_120, "v0.121": PAIRINGS_V0_121, "v0.122": PAIRINGS_V0_122,
-           "v0.123": PAIRINGS_V0_123}
+           "v0.123": PAIRINGS_V0_123, "v0.124": PAIRINGS_V0_124}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -2351,7 +2369,30 @@ def _v120_permission_in_play(state) -> bool:
     return any(isinstance(slot.effect, kinds) for side in state.players for p in side.in_play() if not state.is_face_down(p) for slot in E.powers_of(state, p))
 
 
+def _v124_copied_present(st) -> bool:
+    """v0.124: 場に変身している（［へんしん］・［すごいへんしん］）ポケモンがいるか（変身の共通ルールの停止を、場から確かめる）。"""
+    return any(not st.is_face_down(p) and E.current_form(st, p).kind in E.COPIED_FORMS for pl in st.players for p in pl.in_play())
+
+
+def _v124_pulse_applies(st, c) -> bool:
+    """v0.124: ワザを使うポケモンが「わるい」ポケモンで、持ち主の場に［わるいはどう］がはたらきうる（DP1・DF1 を場から確かめる）。"""
+    attacker = st.players[c.player].active
+    return attacker is not None and bool(E.dark_pulse_holders(st, c.player)) and E.field_name_matches(st, attacker, E.DARK_POKEMON)
+
+
 V031_STOPS = {
+    # v0.124（docs/super-transform-dark-pulse-v0.124.md 10 章）: 変身の共通ルール・すごいへんしん・わるいはどうの停止。どれも場から確かめる
+    "UNRESOLVED_DARK_PULSE_TIMING": lambda st, c: isinstance(c, UseAttack) and _v124_pulse_applies(st, c),
+    "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES": lambda st, c: isinstance(c, UseAttack) and _v124_pulse_applies(st, c) and len(E.dark_pulse_holders(st, c.player)) > 1,
+    "UNRESOLVED_TRANSFORM_ENERGY_COLOR_LIST": lambda st, c: isinstance(c, UseAttack) and _v124_copied_present(st),
+    "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING": lambda st, c: _v124_copied_present(st),
+    "UNRESOLVED_TRANSFORM_BABY_AND_BASIC": lambda st, c: _v124_copied_present(st),
+    "UNRESOLVED_SUPER_TRANSFORM_TARGET": lambda st, c: _v124_copied_present(st) or any(st.cards[p.card].card_id == V124_SUPER_DITTO for pl in st.players for p in pl.in_play()),
+    "UNRESOLVED_SUPER_TRANSFORM_SOURCE_CHANGE": lambda st, c: _v124_copied_present(st),
+    "UNRESOLVED_SUPER_TRANSFORM_COPIED_POWER": lambda st, c: _v124_copied_present(st),
+    "UNRESOLVED_SUPER_TRANSFORM_SUPPRESSED_FORM": lambda st, c: _v124_copied_present(st),
+    "UNRESOLVED_SUPER_TRANSFORM_ENERGY_COLORS": lambda st, c: _v124_copied_present(st),
+    "UNSUPPORTED_TRANSFORM_COPIED_POWER": lambda st, c: _v124_copied_present(st),
     # v0.122（docs/unown-fossil-retreat-reactions-v0.122.md 10 章）: 「なにかの化石」から進化したポケモンの読み方（FE3）・［げんしのゆめ］の効果の消えた発生源（PM1）・使ったポケモン自身の段階（PM2）・
     # ［WANT］・［かせきのみちびき］・［かせきか］の対象なし（WT1・GU1・FS1）・ポケモンタワーの下の回収の力（PW5）・［つるでひっぱる］の時点（VL1）。どれも場から確かめる
     "UNRESOLVED_FOSSIL_EVOLVED_READING": lambda st, c: (isinstance(c, UseAttack) and bool(E.fossil_attack_bonuses(st)))
@@ -2385,7 +2426,8 @@ V031_STOPS = {
     "UNRESOLVED_REVIVED_BASIC_DEVOLVED": lambda st, c: any(p.basic_entry is not None and p.evolution_stack for side in st.players for p in side.in_play()),
     # v0.120: 既存の MH1（v0.48）。［へんしん］のメタモンが、写す相手（相手の対戦ポケモン）をきぜつさせると、メタモンの最大HPが印刷の HP にもどり、のっているダメージ以下になる。
     # F120 対 D49 で初めて届いた（ワザの前に場から確かめる: ワザを使うのがはたらく［へんしん］のメタモンで、のっているダメージがメタモンの印刷の HP 以上）
-    "UNRESOLVED_MAX_HP_DROP": lambda st, c: st.cards[_attacker(st, c).card].card_id == DITTO and E.transform_defender(st, _attacker(st, c)) is not None
+    "UNRESOLVED_MAX_HP_DROP": lambda st, c: ((st.cards[_attacker(st, c).card].card_id == DITTO and E.transform_defender(st, _attacker(st, c)) is not None)
+                                             or _v124_copied_present(st))  # v0.124: ［すごいへんしん］のメタモンも
     and _attacker(st, c).damage >= st.card_def(_attacker(st, c).card).hp,
     # v0.92（docs/power-suppression-lasting-locks-v0.92.md 8 章）: やみのはどうで、相手の場にワザの効果を受けない特殊能力のポケモン（DW2）・HP 以上になるポケモンのきぜつの時の
     # 特殊能力（DW3）。どれもワザがやみのはどう（相手のワザとして使うものも）のときだけ
@@ -11738,6 +11780,75 @@ def _v122_decision(state, counts):
     return _v120_first(state, d, counts, f"v122_{key}_{d.kind}")
 
 
+def _v124_power(state, tried, counts):
+    """v0.124: 自分のバトル場の［すごいへんしん］のメタモン（変身していない・この番に使っていない・ねむり・マヒ・こんらんでない）なら使う（コインは状態の乱数）。変身しているときは使わない
+    （「うら」でもどるので）。使う前に止まる場面（選べるどのポケモンも止める）は、エンジンが拒否し、元の手順に任せる。"""
+    player = state.current_player
+    active = state.players[player].active
+    if active is None or state.is_face_down(active) or state.cards[active.card].card_id != V124_SUPER_DITTO or active.super_transform is not None:
+        return None
+    conditions = active.conditions
+    if conditions.asleep or conditions.paralyzed or conditions.confused or (active.pokemon_id, 0) in state.power_uses_this_turn:
+        return None
+    key = ("v124_super", state.turn_number, active.pokemon_id)
+    if key in tried:
+        return None
+    tried.add(key)
+    counts["v124_power_super_transform"] += 1
+    return UsePokemonPower(player, active.pokemon_id, 0, card=active.card)
+
+
+def _v124_decision(state, counts):
+    """v0.124: ［すごいへんしん］の選ぶポケモン。止める選択（自分自身など。``unresolved_choices``）を選ばず、相手のバトル場 → 相手のベンチ → 自分のベンチの順に、最初の選べるものを選ぶ。"""
+    d = state.decision
+    if d is None or d.resume != "power" or d.kind != "select_pokemon":
+        return None
+    use = d.context_value("use")
+    if not use or use[2] != V124_SUPER_DITTO:
+        return None
+    blocked = set(d.context_value("unresolved_choices", ())) | set(d.context_value("unsupported_choices", ()))
+    opponent = state.players[1 - d.player]
+    order = [p.pokemon_id for p in opponent.in_play()] + [p.pokemon_id for p in state.players[d.player].bench]
+    choice = next((pid for pid in order if pid in d.options and pid not in blocked), None)
+    if choice is None:
+        return None
+    side = "opponent" if any(p.pokemon_id == choice for p in opponent.in_play()) else "own"
+    counts[f"v124_super_target_{side}"] += 1
+    return ResolveDecision(d.player, d.id, (choice,))
+
+
+def v124_uses(state):
+    """v0.124: ログから数えた［すごいへんしん］・［わるいはどう］・わるいぞうふくの動き（v0.124 のカードのない局では空）。
+
+    - ``super_<id>``（選んだ変身のもとのカード）・``super_side_<own|opponent>``・``super_reverted_<理由>``・``super_attack_<id>#<位置>``（変身したメタモンが使ったワザ。写したワザ）
+    - ``pulse_<量>``（わるいはどうの追加 0・10・20）・``pulse_coins_<枚数>``・``costume_bench_<わるいポケモンの数>``・``costume_heads_<おもての数>``（わるいぞうふく）
+    - ``classic_attack_<id>#<位置>``（化石のメタモンが写して使ったワザ）"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_124 for uid in state.cards):
+        return counts
+    card = {uid: c.card_id for uid, c in state.cards.items()}
+    for e in state.log:
+        kind = e["kind"]
+        if kind == "super_transform":
+            counts[f"super_{e.get('card_id')}"] += 1
+            counts[f"super_side_{'own' if e.get('source_player') == e.get('player') else 'opponent'}"] += 1
+        elif kind == "super_transform_reverted":
+            counts[f"super_reverted_{e.get('reason')}"] += 1
+        elif kind == "dark_pulse":
+            counts[f"pulse_{e.get('amount')}"] += 1
+            counts[f"pulse_coins_{len(e.get('coins', ()))}"] += 1
+        elif kind == "attack":
+            pokemon_card = card.get(e.get("pokemon"))
+            printed = card.get(e.get("card", e.get("pokemon")))
+            if pokemon_card == V124_SUPER_DITTO and printed != V124_SUPER_DITTO:
+                counts[f"super_attack_{printed}#{e.get('attack_index')}"] += 1
+            elif pokemon_card == DITTO and printed != DITTO:
+                counts[f"classic_attack_{printed}#{e.get('attack_index')}"] += 1
+            elif pokemon_card == V124_GR_MEWTWO:
+                counts["costume_used"] += 1
+    return counts
+
+
 def _v123_decision(state, counts):
     """v0.123: v0.123 のカードのワザ（相手のワザとして使ったときもふくむ）の決定への答え。トラッシュするエネルギーカード（いかりのほのお 2 枚・ほのおのあらし 3 枚。ちょうどの枚数の決定）は、
     選べるもののうち前から決定の数だけ選ぶ（v0.31 の ``_v031_decision`` と同じ答え方。元の手順は 1 つだけ選ぶ）。原典で決められない選択・未対応の選択は選ばない。ほかの決定は元の手順に任せる。"""
@@ -12024,7 +12135,8 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = (_v123_decision(state, counts)  # v0.123: いかりのほのお・ほのおのあらしの炎エネルギーカードのトラッシュ（v0.123 のカードのワザでない決定では何もしない）
+            early = (_v124_decision(state, counts)  # v0.124: ［すごいへんしん］の選ぶポケモン（v0.124 のカードの決定でなければ何もしない）
+                     or _v123_decision(state, counts)  # v0.123: いかりのほのお・ほのおのあらしの炎エネルギーカードのトラッシュ（v0.123 のカードのワザでない決定では何もしない）
                      or _v122_decision(state, counts)  # v0.122: v0.122 の特殊能力・反応・ワザの決定（v0.122 のカードのない局では何もしない）
                      or _v121_decision(state, counts)  # v0.121: v0.121 のワザ・トレーナーの決定（v0.121 のカードのない局では何もしない）
                      or _v120_decision(state, counts)  # v0.120: たまごの化石・復活・ワザを選ぶ・しんかのほうし・たつまきの決定（v0.120 のカードのない局では何もしない）
@@ -12113,7 +12225,8 @@ def make_policy(seen: dict, counts: Counter):
             return (_v031_decision(state, counts) or _v039_decision(state, counts) or _v040_decision(state, counts) or _v041_decision(state, counts)
                     or _v042_decision(state, counts) or command)
         if state.phase is Phase.MAIN and isinstance(command, (UseAttack, EndTurn)):
-            power = (_v114_power(state, command, tried, counts)  # v0.114: ［じっとみる］・［わんぱくパンチ］（ベイビィのないデッキでは何もしない）
+            power = (_v124_power(state, tried, counts)  # v0.124: ［すごいへんしん］（メタモンのないデッキでは何もしない）
+                     or _v114_power(state, command, tried, counts)  # v0.114: ［じっとみる］・［わんぱくパンチ］（ベイビィのないデッキでは何もしない）
                      or _v031_power(state, tried, counts) or _v042_power(state, tried, counts) or _v043_power(state, tried, counts)
                      or _v044_power(state, tried, counts) or _v044_trainer(state, tried, counts)
                      or _v047_power(state, tried, counts) or _v047_trainer(state, tried, counts)  # v0.47
@@ -12445,6 +12558,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v121"] = v121_uses(state)
         result["v122"] = v122_uses(state)
         result["v123"] = v123_uses(state)
+        result["v124"] = v124_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:

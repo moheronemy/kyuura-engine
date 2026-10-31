@@ -66,8 +66,12 @@ def full(state):
 # v0.49（docs/virtual-attacks-transformation-v0.49.md）: 姿が変わりうるカードがあるときに、操作を受け付けない理由のコード
 V049_FORM_CODES = ("UNRESOLVED_TRANSFORM_COPIED_POWER", "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER", "UNRESOLVED_SHAPESHIFT_SUPPRESSED",
                    "UNRESOLVED_SHAPESHIFT_ENTRY_POWER", "UNRESOLVED_SHAPESHIFT_AGAIN", MAX_HP_DROP_CODE,
-                   "UNRESOLVED_TRANSFORM_REVIVED_BASIC")  # v0.120: TF3（入れ替えで、たねポケモンとしてあつかう進化カードが［へんしん］の写す相手になる）
-FORM_CARDS = ("PMCG3-042", "PMCG5-019")  # メタモン（［へんしん］）・タケシのキュウコン（「ばける」）
+                   "UNRESOLVED_TRANSFORM_REVIVED_BASIC",  # v0.120: TF3（入れ替えで、たねポケモンとしてあつかう進化カードが［へんしん］の写す相手になる）
+                   # v0.124: 変身の共通ルール・すごいへんしん（TK1・BX2・TC1・SV1〜SV5・写した特殊能力の未対応）
+                   "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING", "UNRESOLVED_TRANSFORM_BABY_AND_BASIC", "UNRESOLVED_TRANSFORM_ENERGY_COLOR_LIST",
+                   "UNRESOLVED_SUPER_TRANSFORM_TARGET", "UNRESOLVED_SUPER_TRANSFORM_SOURCE_CHANGE", "UNRESOLVED_SUPER_TRANSFORM_COPIED_POWER",
+                   "UNRESOLVED_SUPER_TRANSFORM_SUPPRESSED_FORM", "UNRESOLVED_SUPER_TRANSFORM_ENERGY_COLORS", "UNSUPPORTED_TRANSFORM_COPIED_POWER")
+FORM_CARDS = ("PMCG3-042", "PMCG5-019", "ES2-032")  # メタモン（［へんしん］）・タケシのキュウコン（「ばける」）・v0.124: メタモン（［すごいへんしん］）
 
 
 def form_cards_in_play(state) -> bool:

@@ -491,6 +491,7 @@ POKEMON_FIELDS_SINCE = {
     "evolved_turn": 7, "persistent_effects": 8, "attacks_used_once": 11, "evolution_permission_turn": 11, "type_shift": 13, "disguise": 14,
     "devolved_turn": 15, "history": 20, "markers": 24,
     "basic_entry": 28,  # v0.120: 進化元を重ねずに出し、場ではたねポケモンとしてあつかう進化カードの事実（ないポケモンは書かない）
+    "super_transform": 29,  # v0.124: ［すごいへんしん］で選んだ変身のもと（ないポケモンは書かない）
 }
 TOP_FIELDS_SINCE = {
     "format_version": 2, "effects": 2, "next_pokemon_id": 2, "next_decision_id": 2, "decision": 2, "trainer_in_use": 3,
@@ -499,8 +500,9 @@ TOP_FIELDS_SINCE = {
     "color_effects": 23,
     "turn_history": 26,  # v0.100: プレイヤーの番ごとの記録（使ったワザ・番でないプレイヤーの場にいたカード）
     "poison_mists": 27, "replacement_poisons": 27,  # v0.119: ［ポイズンミスト］の効果・「ガスばくはつ」のまだ与えていないどく
+    "frozen_forms": 29,  # v0.124: 処理のあいだ固定した変身の状態
 }
-LATEST_FORMAT = 28
+LATEST_FORMAT = 29
 # v0.99: 形式 25 で、場のポケモンの履歴の受けた記録（``"kind": "received"``）に加わった項目（ダメージを受けた場所）
 RECEIVED_FIELDS_SINCE = {"active_damage": 25}
 
@@ -609,6 +611,8 @@ def required_format(state) -> tuple[int, bool]:
         needed = max(needed, 27)  # v0.119: カウンターの数を倍にするどく・［ポイズンミスト］の効果・「ガスばくはつ」のまだ与えていないどく
     if any(pokemon.basic_entry is not None for pokemon in in_play):
         needed = max(needed, 28)  # v0.120: たねポケモンとしてあつかう進化カードの事実
+    if state.frozen_forms or any(pokemon.super_transform is not None for pokemon in in_play):
+        needed = max(needed, 29)  # v0.124: ［すごいへんしん］で選んだ変身のもと・処理のあいだ固定した変身の状態
     d = state.decision
     not_v0_1 = d is not None and (
         d.context_value("then") is not None or d.resume in ("attack", "knock_out", "post_knockout", "power")  # v0.42: 特殊能力の途中の決定
@@ -1191,8 +1195,8 @@ def _follows_declaration(state, key: str, player: int, pid: int, e: dict) -> boo
     if isinstance(effect, ConvertSelfToEnergy):
         # v0.59: ［エネエネ］は、決定（つける先・色）のあと、使ったマルマインのきぜつ（timing power・to_energy）
         return kind == "knock_out" and e["player"] == player and e.get("timing") == "power" and "to_energy" in e
-    if isinstance(effect, (HealOwnPokemonOnHeads, SwitchOpponentOnHeads, CoinLookOpponentHandMayReturnTrainer, CoinPeekOpponentDeckTopMayShuffle)):
-        # v0.95: ［みやぶる］・［わるぢえ］も、持ち主のコイン
+    if isinstance(effect, (HealOwnPokemonOnHeads, SwitchOpponentOnHeads, CoinLookOpponentHandMayReturnTrainer, CoinPeekOpponentDeckTopMayShuffle, E.SuperTransformPower)):
+        # v0.95: ［みやぶる］・［わるぢえ］も、持ち主のコイン。v0.124: ［すごいへんしん］も
         return kind == "coin_flip" and e["source"] == "power" and e.get("effect") == key and e["player"] == player and e.get("pokemon_id") == pid
     if isinstance(effect, SwitchSelfFromBench):
         return kind == "switch" and e.get("effect") == key and e["player"] == player
@@ -1319,6 +1323,16 @@ def _power_coin_follows(state, coin: dict, e: dict) -> bool:
     「おもて」なら処理（power_heal・switch。そのあいだに決定がある）、「うら」なら何もしない（そのあとに処理がない）。"""
     effect = _power_effect(state, coin.get("effect"))
     kind = e["kind"]
+    if isinstance(effect, E.DarkPulse):
+        # v0.124: ［わるいはどう］。1 枚目が「おもて」なら同じ特殊能力の 2 枚目、そうでなければ（2 枚目のあとも）結果 dark_pulse
+        if kind == "coin_flip":
+            return coin["result"] == "heads" and e.get("source") == "power" and e.get("effect") == coin["effect"]
+        return kind == "dark_pulse" and e.get("power") == coin["effect"]
+    if isinstance(effect, E.SuperTransformPower):
+        # v0.124: ［すごいへんしん］。「おもて」なら選んだ変身のもと（super_transform。そのあいだに決定がある）、「うら」なら、もどる（super_transform_reverted）か何もしない
+        if coin["result"] == "heads":
+            return kind == "super_transform" and e.get("pokemon_id") == coin.get("pokemon_id")
+        return kind != "super_transform"
     if isinstance(effect, ConfuseDamageSourceOnHeads):
         return kind == "power_confusion" and e["power"] == coin["effect"] and e["result"] == coin["result"]
     if isinstance(effect, E.CoinPoisonMistUntilNextTurn):
@@ -1924,6 +1938,12 @@ def log_problems(state) -> list[str]:
     current_turn = 0
     # v0.49: ログから組み立てた、「ばける」でのせたカード（場のポケモンの番号 → カードの uid）
     disguised: dict[int, int] = {}
+    # v0.124: ログから組み立てた、［すごいへんしん］の変身のもと（場のポケモンの番号 → (もとの番号, 選んだときのもとのいちばん上のカード)。ログ super_transform・super_transform_reverted）・
+    # 選んだあとバトル場をはなれたメタモン（もどってきても変身はもどる）・処理（ワザ・宣言する特殊能力・トレーナー）のあいだ固定した変身の姿（番号 → 写したカードの uid。変身して
+    # いなければ None。処理のはじめのログで固定し、処理の終わりを示すログで解除する。CR-TRANSFORM-FROZEN-DURING-ACTION）
+    super_of: dict[int, tuple[int, int]] = {}
+    super_left: set[int] = set()
+    frozen_forms: dict[int, int | None] | None = None
     # v0.60: ログから組み立てた、はたらいている「まきちらせ!ベトベトガス」（使ったトレーナーのカード → 消える番）。v0.59 から特殊能力を消すが、「とうめい」・はんげきの
     # 確かめはかがくへんかガスしか見ていなかった（v0.59 の対戦では起こらなかった）
     goop_gases: dict[int, int] = {}
@@ -1964,16 +1984,21 @@ def log_problems(state) -> list[str]:
     v122: dict = {"window": None, "retreat": None, "vine_used": set(), "vine_due": None, "dream": [], "fossilize": None, "prev": None}
     # v0.123: 今のワザの確かめ（宣言したポケモン・宣言のときについていたエネルギーカードとダメージカウンター）
     v123: dict = {"window": None}
+    v124: dict = {"coins": [], "pending": None}  # v0.124: ［わるいはどう］の直前の特殊能力のコインと、決まった追加の量
     color_types: dict[int, dict] = {}  # v0.88: ［せんすい］の記録（対象のポケモンの番号 → 色・発生源のカード・特殊能力の位置）
     # v0.90: ログから組み立てた、場のポケモンのマーカー・カウンター（番号 → のせた順の {"marker", "color", "turn"}）と、進化・退化で取りのぞくはずのポケモン（番号 → 理由）
     marks: dict[int, list[dict]] = {}
     marker_clear_due: dict[int, str] = {}
     char_due: dict[int, bool] = {}  # v0.91: ポケモンチェックのくろこげマーカーのコインの結果（「うら」ならダメージを受ける）
 
-    def power_defs(pid: int) -> list[tuple[object, int, object]]:
+    def power_defs(pid: int, *, copied: bool = True) -> list[tuple[object, int, object]]:
         """v0.49: ログから組み立てた今の場の、ポケモン ``pid`` が今持つ特殊能力（``effects.powers_of`` と同じ求め方）: [(印刷したカードの定義, 位置, 特殊能力)]。
-        「ばける」でのせたカードがあれば、そのカードの特殊能力（先）といちばん上のカードの特殊能力。［へんしん］で写したカードの特殊能力は持たない（TF1）。"""
+        「ばける」でのせたカードがあれば、そのカードの特殊能力（先）といちばん上のカードの特殊能力。v0.123 までは［へんしん］で写したカードの特殊能力を持たなかった（TF1）。
+        v0.124 から、変身して同じカードとしてあつかうカード（``copied_card``）の特殊能力も、自分のカードの特殊能力のあとに持つ（CR-TRANSFORM-COPIES-TOP-CARD）。``copied`` が偽なら
+        写した特殊能力を見ない（ほかの特殊能力を消す特殊能力を探すとき。写したかがくへんかガスはエンジンが TF1 で止める）。"""
         definitions = ([state.in_play_def(disguised[pid])] if pid in disguised else []) + [state.in_play_def(top[pid])]
+        if copied and (card := copied_card(pid)) is not None:
+            definitions.append(state.in_play_def(card))
         return [(definition, index, power) for definition in definitions for index, power in enumerate(definition.powers)]
 
     def transform_target(pid: int) -> int | None:
@@ -1993,16 +2018,39 @@ def log_problems(state) -> list[str]:
     def evolved_in_play(pid: int) -> bool:
         """v0.114: ログから組み立てた、ポケモン ``pid`` が場の「進化ポケモン」か（今の姿が 1 進化・2 進化か、今の姿がいちばん上のカードで、ベイビィポケモンから進化した
         たねポケモン。GR-2000-P315-EVOLVED-BABY）。"""
-        return form_def(pid).is_evolution_pokemon or (pid in baby_evolved and pid not in disguised and transform_target(pid) is None)
+        return form_def(pid).is_evolution_pokemon or (pid in baby_evolved and pid not in disguised and copied_card(pid) is None)
 
     def form_def(pid: int):
-        """v0.49: ログから組み立てた、ポケモン ``pid`` の今の姿のカードの定義（「ばける」でのせたカード・［へんしん］の相手の対戦ポケモンのカード・いちばん上のカード）。"""
+        """v0.49: ログから組み立てた、ポケモン ``pid`` の今の姿のカードの定義（「ばける」でのせたカード・変身して同じカードとしてあつかうカード・いちばん上のカード）。"""
         if pid in disguised:
             return state.in_play_def(disguised[pid])
-        target = transform_target(pid)
-        if target is not None and target in top:
-            return state.in_play_def(top[target])
+        card = copied_card(pid)
+        if card is not None:
+            return state.in_play_def(card)
         return state.in_play_def(top[pid])
+
+    def transform_holder(pid: int) -> bool:
+        """v0.124: ログから組み立てた今の場で、ポケモン ``pid`` のいちばん上のカードが変身する特殊能力（［へんしん］・［すごいへんしん］）を持つか（処理のはじめに姿を固定するポケモン）。"""
+        definition = state.in_play_def(top[pid])
+        return any(isinstance(state.effects.power_effect(definition.id, power), (TransformIntoDefender, E.SuperTransformPower)) for power in definition.powers)
+
+    def live_copy(pid: int) -> int | None:
+        """v0.124: ログから組み立てた今の場で、ポケモン ``pid`` が変身して同じカードとしてあつかうカードの uid（固定した姿を見ない）。［すごいへんしん］の変身のもとがあり、もどる場面
+        （選んだあとバトル場をはなれた・ねむり・マヒ・こんらん・もとが場にいない。CR-SUPER-TRANSFORM-REVERT-CONDITIONS）でなければ選んだときのもとのいちばん上のカード、
+        ［へんしん］がはたらいていれば相手の対戦ポケモンのいちばん上のカード。どちらでもなければ None。"""
+        record = super_of.get(pid)
+        if record is not None and pid not in super_left and is_active(pid) and pid not in exclusive and record[0] in in_play:
+            return record[1]
+        target = transform_target(pid)
+        return top[target] if target is not None and target in top else None
+
+    def copied_card(pid: int) -> int | None:
+        """v0.124: ログから組み立てた、ポケモン ``pid`` の今の姿として写したカードの uid（「ばける」でのせたカードがあれば None）。処理のあいだは、処理のはじめに固定した姿。"""
+        if pid in disguised:
+            return None
+        if frozen_forms is not None and pid in frozen_forms:
+            return frozen_forms[pid]
+        return live_copy(pid)
 
     def entry_opportunity(uid: int, *, from_hand: bool, on_bench: bool = True) -> str | None:
         """v0.43: カード ``uid`` を重ねた進化（手札から ``from_hand``）で、場に出たときの特殊能力を使う機会があるか（その特殊能力の PowerKey の文字列。経路が
@@ -2034,7 +2082,7 @@ def log_problems(state) -> list[str]:
         """ログから組み立てた今の場で、はたらいている「ほかの特殊能力を消す」特殊能力（v0.8。かがくへんかガス）。"""
         found = []
         for pid in sorted(in_play):
-            for definition, _, power in power_defs(pid):  # v0.49: 今持つ特殊能力（「ばける」でのせたカードを含む）
+            for definition, _, power in power_defs(pid, copied=False):  # v0.49: 今持つ特殊能力（「ばける」でのせたカードを含む。v0.124: 写した特殊能力は見ない）
                 effect = state.effects.power_effect(definition.id, power)
                 if isinstance(effect, SuppressOtherPowers) and pid not in exclusive:
                     found.append((pid, effect))
@@ -2552,7 +2600,8 @@ def log_problems(state) -> list[str]:
             groups = {f"［{name}］" for name in attack_window.get("group_powers", {group})}
             steps_for_continuous = [step for step in steps_for_continuous if str(step[0]).partition(" ")[2] not in groups]
         # v0.122: ［げんしのゆめ］の 6 段階（使った個体のワザなら 2・6 段階が決まらず PM2 で止まる）の追加は、v122_close が効果の数・相手の対戦ポケモンへのダメージかを確かめる
-        steps_for_continuous = [step for step in steps_for_continuous if str(step[0]).partition(" ")[2] != "［げんしのゆめ］"]
+        # v0.124: ［わるいはどう］の 6 段階の追加は、v124_problems がコインの面と量を確かめる
+        steps_for_continuous = [step for step in steps_for_continuous if str(step[0]).partition(" ")[2] not in ("［げんしのゆめ］", "［わるいはどう］")]
         recorded = [(i, step) for i, step in enumerate(steps) if step in steps_for_continuous and _v046_rank(str(step[0]).partition(" ")[2])]
         if any(by_label[label][:5] != x[:5] for label, x in zip(labels, expected)) or sorted(str(step[0]) for _, step in recorded) != sorted(labels):
             return found + [f"{where} の記録 {[step[0] for _, step in recorded]} が、当てはまる効果 {sorted(by_label)} と合わない"]
@@ -4726,8 +4775,8 @@ def log_problems(state) -> list[str]:
             else:
                 return None
         need = Counter(energy_type for cost in costs for energy_type in cost)
-        if transform_target(pid) is not None:
-            return len(provided) >= sum(need.values())  # ［へんしん］: エネルギーカードは、どの色のエネルギーとしても使える
+        if copied_card(pid) is not None:
+            return len(provided) >= sum(need.values())  # ［へんしん］・［すごいへんしん］（v0.124）: エネルギーカードは、どの色のエネルギーとしても使える
         have = Counter(provided)
         for energy_type, count in need.items():
             if energy_type is EnergyType.COLORLESS:
@@ -5081,6 +5130,39 @@ def log_problems(state) -> list[str]:
                 found.append(f"{w['turn']} 番の {w['key']} の基本となるダメージ {base} が、目安 {attack.damage} + ダメージカウンター {w['counters']} 個 × {per} = {expected} ではない")
             if discards and events.index(discards[-1]) > events.index(opp_damage[0]):
                 found.append(f"{w['turn']} 番の {w['key']} のトラッシュが、ダメージのあとにある（ワザの効果。ダメージの前）")
+        return found
+
+    def v124_problems(e: dict) -> list[str]:
+        """v0.124: ［わるいはどう］を、エンジンの登録・計算を読まずに確かめる（印刷の文面とコインの面から）。コインは特殊能力のコイン（``source`` が ``power``）で、1 枚目が「うら」なら 1 枚だけ・
+        量 0、「おもて」なら 2 枚・2 枚目が「おもて」なら 20・「うら」なら 10（DARK_PULSE の文面）。量が 0 でなければ、すぐあとのワザのダメージの 6 段階に「［わるいはどう］」がちょうどその量だけ
+        増える記録があり、0 なら記録がない。ほかのダメージ（同じワザの 2 つめ）には記録がない（エンジンは DP1 で止める）。"""
+        found: list[str] = []
+        kind = e["kind"]
+        st = v124
+        if kind == "coin_flip" and e.get("source") == "power":
+            st["coins"].append(e.get("result"))
+            return found
+        if kind == "dark_pulse":
+            coins = list(e.get("coins") or ())
+            expected = 0 if coins[:1] == ["tails"] else (20 if coins[1:2] == ["heads"] else 10) if coins[:1] == ["heads"] else None
+            if coins != st["coins"][-len(coins):] or (coins[:1] == ["tails"] and len(coins) != 1) or (coins[:1] == ["heads"] and len(coins) != 2):
+                found.append(f"{e['turn']} 番の［わるいはどう］のコイン {coins} が、直前の特殊能力のコインと合わない・枚数が文面と違う")
+            if expected != e.get("amount"):
+                found.append(f"{e['turn']} 番の［わるいはどう］の量 {e.get('amount')} が、コインの面 {coins} から求めた {expected} と違う")
+            st["pending"] = e.get("amount")
+            st["coins"] = []
+            return found
+        if kind == "damage" and not e.get("retaliation"):
+            steps = [tuple(step) for step in (e.get("steps") or ())]
+            marked = [i for i, step in enumerate(steps) if str(step[0]) == "6 ［わるいはどう］"]
+            pending, st["pending"] = st["pending"], None
+            if pending:
+                if len(marked) != 1 or steps[marked[0]][1] - steps[marked[0] - 1][1] != pending:
+                    found.append(f"{e['turn']} 番のダメージの［わるいはどう］の記録 {[steps[i] for i in marked]} が、追加の量 {pending} と合わない")
+            elif marked:
+                found.append(f"{e['turn']} 番のダメージに、量の決まった［わるいはどう］のない記録 {[steps[i] for i in marked]} がある")
+        if kind in ("turn_end", "attack"):
+            st["coins"] = []
         return found
 
     def v123_problems(e: dict) -> list[str]:
@@ -5869,7 +5951,8 @@ def log_problems(state) -> list[str]:
         if kind == "attack":
             defender = active_of.get(1 - e["player"])
             card = top.get(defender) if defender is not None else None
-            if card is not None and defender not in face_down_pids and state.in_play_def(card).is_baby_pokemon:
+            # v0.124: 変身して同じカードとしてあつかうベイビィポケモンも、ベイビィポケモンのルールの対象（BX1 の中心。今の姿 form_def で見る。ログの baby は場のいちばん上のカード）
+            if card is not None and defender not in face_down_pids and form_def(defender).is_baby_pokemon:
                 v114_due = {"stage": "coin", "turn": e["turn"], "player": e["player"], "pokemon_id": ids.get(e["pokemon"]), "baby": defender, "baby_card": card}
             else:
                 v114_due = {"stage": "none", "turn": e["turn"]}
@@ -6176,6 +6259,26 @@ def log_problems(state) -> list[str]:
         turn_now = e["turn"]
         if kind == "damage":
             last_damage = e
+        # v0.124: ［すごいへんしん］の記録と、処理のあいだ固定した変身の姿（処理のはじめのログで固定し直し、V124_FORM_RELEASES で解除する）
+        for pid in list(super_of):
+            if pid not in in_play:
+                super_of.pop(pid)
+                super_left.discard(pid)
+            elif not is_active(pid):
+                super_left.add(pid)
+        form_start = (kind in ("attack", "stadium_used")
+                  or (kind == "pokemon_power" and not ({"entry", "forced", "trigger", "on_retreat"} & set(e)))
+                  or (kind == "play_trainer" and "via" not in e and e["player"] == turn_player))
+        if form_start or kind in V124_FORM_RELEASES:
+            frozen_forms = None
+        if form_start:
+            frozen_forms = {pid: live_copy(pid) for pid in in_play if pid not in disguised and transform_holder(pid)}
+        if kind == "super_transform":
+            super_of[e["pokemon_id"]] = (e["source_pokemon_id"], e["card"])
+            super_left.discard(e["pokemon_id"])
+        elif kind == "super_transform_reverted":
+            super_of.pop(e["pokemon_id"], None)
+            super_left.discard(e["pokemon_id"])
         if each_due is not None:
             # v0.96: ［LAUGH］・［TELL］の 2 回目は 1 回目のすぐあと（同じ特殊能力・逆のプレイヤー）
             due, each_due = each_due, None
@@ -6693,6 +6796,7 @@ def log_problems(state) -> list[str]:
         problems.extend(v121_problems(e))  # v0.121: 手札からの登場とワザの使用条件
         problems.extend(v122_problems(e))  # v0.122: アンノーンの併用・化石の進化履歴・退却時の反応
         problems.extend(v123_problems(e))  # v0.123: いかりのほのお
+        problems.extend(v124_problems(e))  # v0.124: わるいはどう
         if kind in ("damage", "confusion_damage"):
             # v0.90: のろいマーカーののっているポケモンが弱点の計算をしたワザのダメージは「×4」（ログの weakness_multiplier）。ほかは書かない。こんらんの 20 は、のろいマーカーと
             # 自分の弱点が当てはまるならコインの前に止まる（UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS）ので、弱点の計算をしたこんらんのダメージはない
@@ -9989,6 +10093,8 @@ def _effective_from_state(state, pokemon) -> dict:
     hp = definition.hp
     shift_works = False
     held = ([state.card_def(pokemon.disguise)] if pokemon.disguise is not None else []) + [state.card_def(pokemon.card)]
+    if pokemon.disguise is None and definition is not state.card_def(pokemon.card):
+        held.append(definition)  # v0.124: 変身して同じカードとしてあつかうカードの特殊能力も持つ（CR-TRANSFORM-COPIES-TOP-CARD）
     for power, owner_def in ((power, d) for d in held for power in d.powers):
         effect = state.effects.power_effect(owner_def.id, power)
         if isinstance(effect, MaxHpPerAttachedEnergyCards) and not power_suppressed(state, power):
@@ -10063,12 +10169,25 @@ def _form_from_state(state, pokemon):
         return state.card_def(pokemon.disguise)
     definition = state.card_def(pokemon.card)
     owner = next(o for o, p in enumerate(state.players) if any(q is pokemon for q in p.in_play()))
+    # v0.124: 処理のあいだは固定した姿。［すごいへんしん］の変身のもとがあり、バトル場にいて（選んだあとはなれていない）、ねむり・マヒ・こんらんでなく、もとが場にいれば、選んだときの
+    # もとのいちばん上のカード
+    frozen = next((f for f in state.frozen_forms if f.pokemon == pokemon.pokemon_id), None)
+    if frozen is not None:
+        return state.card_def(frozen.card)
+    record = pokemon.super_transform
+    if record is not None and not record.left_active and state.players[owner].active is pokemon and pokemon.conditions.exclusive is None \
+            and state.find_pokemon(record.source) is not None:
+        return state.card_def(record.card)
     for power in definition.powers:
         if isinstance(state.effects.power_effect(definition.id, power), TransformIntoDefender) and state.players[owner].active is pokemon \
                 and pokemon.conditions.exclusive is None and not power_suppressed(state, power) and state.players[1 - owner].active is not None:
             return state.card_def(state.players[1 - owner].active.card)
     return definition
 
+
+# v0.124: 処理（ワザ・宣言する特殊能力・トレーナー）の終わりのあとに来るログ。固定した変身の姿を解除する（ワザのあとのきぜつ・番の終わり・使ったトレーナーのトラッシュ・次の自分の番の操作）
+V124_FORM_RELEASES = frozenset({"knock_out", "turn_end", "pokemon_check", "game_end", "halted", "end_turn_without_attack", "discard_trainer", "attach_energy", "evolve",
+                                "play_to_bench", "retreat", "promote_active"})
 
 AUDIT_UID_FIELDS = frozenset({"pokemon", "card", "cards", "old_active", "new_active", "target", "active", "bench", "energy", "discarded", "discarded_energy"})
 
