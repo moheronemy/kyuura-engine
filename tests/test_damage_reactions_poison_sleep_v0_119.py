@@ -209,10 +209,13 @@ class RegistrationTest(unittest.TestCase):
 
         pool = load_card_pool()
         sources = json.loads((ROOT / "kyuura_engine" / "data" / "card_sources.json").read_text(encoding="utf-8"))["cards"]
-        for card in ("ES1-027", "neo4-082", "neo4-108", "ES2-005", "QSG-055"):
+        for card in ("neo4-082", "neo4-108", "ES2-005", "QSG-055"):
             with self.subTest(card=card):
                 self.assertNotIn(card, pool.playable_ids)
                 self.assertNotIn(card, sources)
+        # v0.125: プクリン（ES1-027）は、kyuura が p.226 の最新の説明を読んだ記録（LD-ES1-027-ATK0・PWR0）で v0.125 に登録した（v0.119 の範囲の外。
+        # tests/test_wigglytuff_helping_hand_v0_125.py）。v0.119 の範囲（v0.125 より前の写しの組）には入っていない
+        self.assertNotIn("ES1-027", cards_before(read_extract(), "0.125"))
         # v0.124: GR団のミュウツー（PRN-041）は v0.124 で登録した（v0.119 の範囲の外。tests/test_super_transform_dark_pulse_v0_124.py）
         self.assertNotIn("PRN-041", cards_before(read_extract(), "0.124"))
         before_v0_122 = cards_before(read_extract(), "0.122")

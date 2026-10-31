@@ -319,7 +319,21 @@ LD-ES1-027-PWR0・UQ-CARD-USE-WITHOUT-TARGET・UQ-HELPING-HAND-CHOICE・UQ-NON-A
 
 ### 13.5 全体のテスト
 
-（全体のテストの結果は、実行のあとに書き入れる）
+tests/ の 237 モジュールを、1 つずつ別のプロセスで順に走らせました（1 worker。モジュールごとの時間切れ 3,600 秒。`python -s -m unittest -v tests.<モジュール>`）。
+
+- コミット `3cdee8b` の木（2026-10-31 19:15:58〜20:22:49。始めたモジュール 237・終えたモジュール 237。コードの指紋は実行の前後で `10d61d0a…`（308 ファイル））: 6,947 件、**失敗 1・エラー 0**・
+  スキップ 1・終了コードが 0 でないモジュール 1・時間切れ 0。
+- 失敗 1: `tests.test_damage_reactions_poison_sleep_v0_119.RegistrationTest.test_purin_is_not_registered_and_excluded_cards_stay_out`（card='ES1-027'）。v0.119 で「プクリンは文面の確認待ちで
+  登録しない」とした一覧の期待で、v0.125 の登録で意図して変わったもの（挙動の不具合ではない。全体のテストの前に、登録したカードを固定値に持つテストを探しきれていなかった）。v0.124 の
+  GR団のミュウツーと同じ形で、ES1-027 は v0.119 の範囲（`cards_before(…, "0.125")`）に入っていないことを確かめる形に直し、ほかの 4 枚（登録しないカード）の確かめは残しました。
+- スキップ: `tests.test_cross_version_compatibility.FullComparisonTest.test_no_differences`（大きな比較は `KYUURA_COMPAT_BASE` を設定したときだけ。既知）。
+- 時間のかかったモジュール: `tests.test_card_sources` 484.1 秒、`tests.test_preflight_consolidation_v0_16c` 132.0 秒、`tests.test_effect_preflight_v0_3d` 104.2 秒。
+
+### 13.6 全体のあとに直したもの・確かめたこと
+
+- 上の 1 件のテストの直し（tests/ の 1 ファイルだけ。製品のコード・道具・データは変えていない。指紋は `be37082e…`（308 ファイル））のあと、そのモジュール `tests.test_damage_reactions_poison_sleep_v0_119`
+  を走らせ直しました（2026-10-31 20:23。57 件・OK）。ruff は 482 のまま（ファイル・規則ごとに同じ）。ほかのモジュールはこのファイルを読まないので、全体の 2 回目は走らせていません。
+- 全体のあとは文書（この節・13.5 節）だけを変え、研究の対応表から文書を開く `tests.test_research_links_v0_18e.ResearchLinksTest` と、この版の文書を読むモジュール `tests.test_wigglytuff_helping_hand_v0_125` をやり直しました（2026-10-31 20:24。47 件・OK）。
 
 ## 14. 残る問い・制限・行っていない検証
 
