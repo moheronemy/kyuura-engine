@@ -244,12 +244,15 @@ class ResearchLinksTest(unittest.TestCase):
         """2.4 節: フラッシュの事例。ちえくらべ（neo1-049）の事例は登録しないので、登録のあとも unregistered のまま。v0.130: とりかえっこプリーズ（PR1-027）は v0.130 で登録し、
         所有者の事例を利用者が指定した規則で処理する（論点は解決していない。tests/test_trade_please_v0_130.py）。"""
         cases = {(c["kyuura_issue"], c["card_id"], c["target"]): c["engine"] for c in self.links["kyuura_cases_without_engine_ruling"]["cases"]}
-        self.assertEqual(cases[("UQ-FLASH-FACE-UP-DECK", SLOWKING, "power/0")], {"unregistered": True})
+        # v0.132 でヤドキングを登録した: 使ったプレイヤーの山札におもてのカードがあれば、使うを選ぶと FU4 で止める（docs/slowking-mind-games-v0.132.md 6 章）
+        self.assertEqual(cases[("UQ-FLASH-FACE-UP-DECK", SLOWKING, "power/0")], {"stop_codes": ["UNRESOLVED_FACE_UP_DECK_PLACE_TOP"]})
         swap_registered = SWAP_PLEASE in load_card_pool().playable_ids
         for issue in ("UQ-MIND-GAMES-OPTIONAL", "UQ-MIND-GAMES-TRAINER-STEP", "UQ-SWAP-PLEASE-OWNERSHIP"):
             for (key, card, _), engine in cases.items():
                 if key == issue and card == SLOWKING:
-                    self.assertEqual(engine, {"unregistered": True}, (key, card))
+                    # v0.132 でヤドキングを登録した: 使うかの選択・時点は利用者が指定した規則、交換したカードの山札は v0.130 の所有者の規則（論点は解決していない）
+                    expected = {"user_specified_rule": "PR1-027/trainer"} if issue == "UQ-SWAP-PLEASE-OWNERSHIP" else {"user_specified_rule": "neo1-049/power/0"}
+                    self.assertEqual(engine, expected if SLOWKING in load_card_pool().playable_ids else {"unregistered": True}, (key, card))
                 elif key == issue and card == SWAP_PLEASE:
                     self.assertEqual(engine, {"user_specified_rule": "PR1-027/trainer"} if swap_registered else {"unregistered": True}, (key, card))
         self.assertFalse({SLOWKING, SWAP_PLEASE} & (load_card_pool().playable_ids - cards_after(read_extract(), "0.126")))
@@ -355,7 +358,7 @@ class RegistrationTest(unittest.TestCase):
         self.assertEqual(cases[("UQ-FLASH-FACE-UP-DECK", RETRIEVER, "trainer")], {"stop_codes": [CODES["FU4"]]})
         self.assertEqual(cases[("UQ-FLASH-FACE-UP-DECK", POKEDEX, "trainer")], {"stop_codes": [CODES["FU5"]]})
         self.assertEqual(cases[("UQ-FLASH-FACE-UP-DECK", RADIO_TOWER, "trainer")], {"stop_codes": [CODES["FU5"]]})
-        self.assertEqual(cases[("UQ-FLASH-FACE-UP-DECK", SLOWKING, "power/0")], {"unregistered": True})
+        self.assertEqual(cases[("UQ-FLASH-FACE-UP-DECK", SLOWKING, "power/0")], {"stop_codes": [CODES["FU4"]]})  # v0.132: ヤドキングを登録した（FU4）
         for code in CODES.values():
             self.assertEqual(links["stop_codes"][code]["engine_rulings"][0]["version"], "v0.126")
         self.assertEqual(links["latest_descriptions"]["registered_trainers"][FLASH], "LD-ES2-035-TRAINER")

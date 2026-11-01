@@ -728,6 +728,7 @@ POOL_KEYS = (
     "pool_v0_129",  # v0.129（カツラのクイズ その1。正解の参照値は利用者指定の公式図鑑の種族の身長。docs/blaines-quiz-heights-v0.129.md）
     "pool_v0_130",  # v0.130（とりかえっこプリーズ。交換したカードの所有者は利用者指定の簡略化。docs/trade-please-ownership-v0.130.md）
     "pool_v0_131",  # v0.131（ナッシー[Exeggutor] 2 枚。日英併記の名前は利用者指定の扱い。docs/exeggutor-bilingual-names-v0.131.md）
+    "pool_v0_132",  # v0.132（ヤドキング neo1-049。［ちえくらべ］の使うかの選択と投げる時点は利用者指定の規則。docs/slowking-mind-games-v0.132.md）
 )
 
 

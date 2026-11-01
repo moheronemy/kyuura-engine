@@ -694,7 +694,10 @@ class CatalogTest(unittest.TestCase):
                            "pre_evolution_attacks_for_evolved_actives", "doll_uses_holder_attacks", "use_defender_attacks",
                            # v0.122: ［つるでひっぱる］（成功した「にげる」の事実への反応。``engine._retreat``・``movement`` の段で処理する。窓の中の反応ではない）。［METAL df］は v0.97 の
                            # ``reduce_own_group_damage_from_type`` のまま（ダメージの計算が問い合わせる）。docs/unown-fossil-retreat-reactions-v0.122.md 3 章・5 章
-                           "switch_opponent_on_retreat")
+                           "switch_opponent_on_retreat",
+                           # v0.132: ［ちえくらべ］（手札から使うトレーナーへの反応。``engine._play_trainer`` の共通の段で、その時点の場から問い合わせる。ワザの窓の中の反応ではない）。
+                           # docs/slowking-mind-games-v0.132.md 5 章
+                           "block_opponent_hand_trainer_on_heads")
         # v0.87: フリーザーの［オーロラヴェール］・ダグトリオの［もぐる］は窓の中の反応（要素を無効にする）だが、守るのは持ち主の控え・ベンチにいるこのカードなので、印刷した
         # ポケモンの効果の対応表（``POWER_DEFINITIONS``）ではなく ``catalog.instances`` が受けるポケモンについて作る（v0.84 のこおりのはしらと同じ形）
         built_by_instances = {"own_bench_attack_immunity_while_active": C.AURORA_VEIL, "bench_attack_damage_immunity": C.DIG_UNDER}
@@ -735,6 +738,7 @@ class CatalogTest(unittest.TestCase):
                           "QSG-003@power0", "QSG-030@power0",  # v0.102
                           "QSG-046@power0",  # v0.87
                           "neo1-014@power0", "neo1-017@power0", "neo1-033@power0",  # v0.117: neo1-017
+                          "neo1-049@power0",  # v0.132
                           "neo2-019@power0",  # v0.117
                           "neo2-025@power0",  # v0.97
                           "neo2-027@power0",  # v0.122

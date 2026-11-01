@@ -117,10 +117,10 @@ class RegistrationTest(unittest.TestCase):
     def test_pool_and_counts(self):
         extract = read_extract()
         self.assertEqual(extract["pool_v0_131"], list(TARGETS))
-        self.assertEqual(cards_after(extract, "0.130"), set(TARGETS))
+        self.assertEqual(cards_after(extract, "0.130") - cards_after(extract, "0.131"), set(TARGETS))  # v0.132: 後の版のカード（ヤドキング）を除く
         self.assertEqual(extract["source"]["commit"], "71d1728938fb4c8fefde9b82779cdef74beb612d")  # 写しの元は上げていない
         self.assertLessEqual(set(TARGETS), self.pool.playable_ids)
-        self.assertEqual(len(self.pool.playable_ids), 1372)
+        self.assertEqual(len(self.pool.playable_ids - cards_after(extract, "0.131")), 1372)
 
     def test_attack_reuses_coin_bonus_damage_with_the_printed_full_text(self):
         """ふみつけ（無無・20+）: 「おもて」なら 10 を追加する ``CoinBonusDamage(10)``。照合と処理に使う文面は印刷の全文（英語の文を含む。転記の元のまま）。2 枚は同じ登録の値。
@@ -137,7 +137,7 @@ class RegistrationTest(unittest.TestCase):
         self.assertEqual(entry.effect, E.DEFAULT_EFFECTS.attack_entry(*PONYTA_STOMP).effect)
         self.assertEqual((printed["cost"], printed["damage"]), (["colorless", "colorless"], {"base": 20, "modifier": "+", "display": "20+"}))
         self.assertEqual([a.name_ja for a in self.pool.get(EXEGGUTOR).attacks], ["テレポート", "たまなげMAX"])
-        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 1755)
+        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()) - len(E.V0_132_ATTACKS), 1755)  # v0.132 のワザ（マッドインパクト）を除いた、v0.131 の時点の数
 
     def test_type_check_reads_the_whole_text_and_numbers(self):
         """``CoinBonusDamage`` の日英併記の書き方の照らしは全文と数（基本となるダメージ・追加・英語の文の数も）。登録の値・ダメージの目安が違えば受け付けない。"""

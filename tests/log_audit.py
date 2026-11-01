@@ -691,10 +691,16 @@ def _without_stadium_steps(events):
     """v0.57: 1 回ぶんのトレーナーの並び（play_trainer から discard_trainer まで）から、スタジアムの処理（錯乱ジムのコイン・chaos_check・chaos_answered・
     chaos_not_borrowable・リムーブ禁止ジムの追加の条件の discard_from_hand）を除く。錯乱ジムで相手が借りて使ったら、play_trainer の写しのプレイヤーを借りた
     プレイヤーにする。使わなかったカード（借りなかった・借りられなかった）は (None, None)。スタジアムの処理がなければ (0, None) で、呼ぶ側は今までどおり確かめる。"""
+    # v0.132: ［ちえくらべ］の答え・コイン・判定（使わない・「うら」のときの、カードの効果の前の段階）も除く。「おもて」で使えなかったカードはトラッシュしない（ここには来ない）
+    reaction = [e for e in events if e["kind"] in ("trainer_reaction_answered", "trainer_reaction_check")]
+    if reaction:
+        keys = {e["power"] for e in reaction}
+        events = [e for e in events if e["kind"] not in ("trainer_reaction_answered", "trainer_reaction_check")
+                  and not (e["kind"] == "coin_flip" and e.get("source") == "power" and e.get("effect") in keys)]
     chaos = [e for e in events if e["kind"] in ("chaos_check", "chaos_answered", "chaos_not_borrowable")]
     cost = [e for e in events if e["kind"] == "discard_from_hand" and "stadium_card" in e]
     if not chaos and not cost:
-        return 0, None
+        return (None, events) if reaction else (0, None)
     if any(e["kind"] == "chaos_not_borrowable" for e in chaos) or any(e["kind"] == "chaos_answered" and not e["accepted"] for e in chaos):
         return None, None
     borrower = next((e["player"] for e in chaos if e["kind"] == "chaos_answered"), None)
@@ -708,6 +714,18 @@ def _without_stadium_steps(events):
             e = {**e, "player": borrower}
         kept.append(e)
     return None, kept
+
+
+def _follows_presentation(log: list[dict], e: dict, card: int) -> bool:
+    """v0.132: ログのイベント ``e`` が、カード ``card`` を手札から出して見せた ``play_trainer`` のすぐあとか（あいだにあってよいのは、そのカードへの［ちえくらべ］の答え・コイン・判定だけ。
+    使わない・「うら」の続き）。"""
+    here = next(i for i in range(len(log) - 1, -1, -1) if log[i] is e)
+    i = here - 1
+    while i >= 0 and ((log[i]["kind"] in ("trainer_reaction_answered", "trainer_reaction_check") and log[i].get("card") == card)
+                      or (log[i]["kind"] == "coin_flip" and log[i].get("source") == "power" and i > 0 and log[i - 1]["kind"] == "trainer_reaction_answered"
+                          and log[i - 1].get("card") == card)):
+        i -= 1
+    return i >= 0 and log[i]["kind"] == "play_trainer" and log[i]["card"] == card
 
 
 def _trainer_effect_of(state, card):
@@ -1382,6 +1400,10 @@ def _power_coin_follows(state, coin: dict, e: dict) -> bool:
     「おもて」なら処理（power_heal・switch。そのあいだに決定がある）、「うら」なら何もしない（そのあとに処理がない）。"""
     effect = _power_effect(state, coin.get("effect"))
     kind = e["kind"]
+    if isinstance(effect, E.BlockOpponentHandTrainerOnHeads):
+        # v0.132: ［ちえくらべ］。持ち主のコインのすぐあとに判定（trainer_reaction_check。中身と「おもて」のあとは v132_problems）
+        return kind == "trainer_reaction_check" and e["power"] == coin["effect"] and e["player"] == coin["player"] and e["result"] == coin["result"] \
+            and e["pokemon_id"] == coin.get("pokemon_id")
     if isinstance(effect, E.DarkPulse):
         # v0.124: ［わるいはどう］。1 枚目が「おもて」なら同じ特殊能力の 2 枚目、そうでなければ（2 枚目のあとも）結果 dark_pulse
         if kind == "coin_flip":
@@ -6986,6 +7008,18 @@ def log_problems(state) -> list[str]:
             replaced[e["pokemon_id"]] = exclusive.get(e["pokemon_id"])
         elif kind == "special_condition":
             replaced.pop(e["pokemon_id"], None)
+        # v0.132: 手札から使ったトレーナー（play_trainer。source_zone なし）のすぐあとの［ちえくらべ］の機会。ログから組み立てた今の場で、使ったプレイヤーの相手のポケモンに、はたらいている
+        # ［ちえくらべ］（場所・特殊状態・かがくへんかガスをログから求める。エンジンの continuous_powers とは別）があれば、すぐあとはその持ち主の答え。なければ答えはない
+        if previous is not None and previous["kind"] == "play_trainer" and "source_zone" not in previous:
+            holders = [pid for pid in sorted(in_play) if pokemon_owner.get(pid) == 1 - previous["player"]
+                       and working_continuous(pid, E.BlockOpponentHandTrainerOnHeads)]
+            if holders and (kind != "trainer_reaction_answered" or e["card"] != previous["card"] or e["pokemon_id"] not in holders
+                            or e["player"] != 1 - previous["player"] or e["trainer_player"] != previous["player"]):
+                problems.append(f"{previous['turn']} 番に手札から使ったトレーナー {previous['card']} のすぐあとに、相手のはたらいている［ちえくらべ］（ポケモン {holders}）の持ち主の答えがない（{kind}）")
+            elif not holders and kind == "trainer_reaction_answered":
+                problems.append(f"{e['turn']} 番の［ちえくらべ］の答えが、ログから組み立てた場ではたらく［ちえくらべ］のない使用（トレーナー {previous['card']}）にある")
+        elif kind == "trainer_reaction_answered":
+            problems.append(f"{e['turn']} 番の［ちえくらべ］の答えが、手札から使ったトレーナーのすぐあとではない")
         previous = e
 
         if kind == "turn_start":
@@ -8736,7 +8770,7 @@ def log_problems(state) -> list[str]:
                 elif card in discard[e["player"]]:
                     discard[e["player"]].remove(card)
             elif using_trainer.get(e["player"]) != card or entry is None or not entry.effect.is_stadium or prior is None \
-                    or prior["kind"] != "play_trainer" or prior["card"] != card or owner.get(card) != e["player"] \
+                    or not _follows_presentation(log, e, card) or owner.get(card) != e["player"] \
                     or e.get("replaces") != (None if stadium_zone is None else stadium_zone[0]):
                 problems.append(f"{e['turn']} 番に場に出したスタジアム {card} が、使っている最中のスタジアムカード（前のスタジアム {stadium_zone}）ではない")
             if e.get("from_zone") != "discard":
@@ -8763,6 +8797,11 @@ def log_problems(state) -> list[str]:
         elif kind == "stadium_discarded":
             if prior is None or prior["kind"] != "stadium_placed" or prior.get("replaces") != e["card"] or owner.get(e["card"]) != e["player"]:
                 problems.append(f"{e['turn']} 番にトラッシュしたスタジアム {e['card']} が、新しいスタジアムに入れかわった前のスタジアムではない")
+        elif kind == "trainer_blocked":
+            # v0.132: ［ちえくらべ］の「おもて」で使えなかった、使っている最中の手札から出したカードを、持ち主の山札の上に置く（トラッシュしない。山札は組み立て直さない。並びは v132_problems）
+            if using_trainer.get(e["player"]) != e["card"] or owner.get(e["card"]) != e["player"] or outer_trainers.get(e["player"]):
+                problems.append(f"{e['turn']} 番に山札の上に置いた使えなかったトレーナー {e['card']} が、そのプレイヤーが手札から使っている最中のカードではない")
+            using_trainer[e["player"]] = None
         elif kind == "chaos_answered" and e["accepted"]:
             # v0.57: 錯乱ジムのコインの「うら」で、相手プレイヤーが借りて使う（使っている最中のカードを使うプレイヤーが借りたプレイヤーになる。持ち主は変わらない）
             if using_trainer.get(e["owner"]) != e["card"] or e["player"] != 1 - e["owner"]:
@@ -9045,7 +9084,7 @@ def log_problems(state) -> list[str]:
             card = e["card"]
             entry = state.effects.trainer_entry(state.cards[card].card_id) if card in state.cards else None
             if using_trainer.get(e["player"]) != card or entry is None or not isinstance(entry.effect, PlayAsPokemon) or prior is None \
-                    or prior["kind"] != "play_trainer" or prior["card"] != card or owner.get(card) != e["player"]:
+                    or not _follows_presentation(log, e, card) or owner.get(card) != e["player"]:
                 problems.append(f"{e['turn']} 番にポケモンとして場に出したカード {card} が、使っている最中のポケモンとして場に出せるトレーナーカードではない")
             using_trainer[e["player"]] = None
             enter(card)
@@ -10277,8 +10316,11 @@ def v129_problems(state) -> list[str]:
         window = []
         for later in log[i + 1:]:
             window.append(later)
-            if later["kind"] in ("discard_trainer", "halted", "game_end") or (later["kind"] == "play_trainer" and later["card"] != e["card"]):
+            if later["kind"] in ("discard_trainer", "halted", "game_end", "trainer_blocked") or (later["kind"] == "play_trainer" and later["card"] != e["card"]):
                 break
+        window, blocked = _without_reaction_steps(window)  # v0.132: 相手の［ちえくらべ］の答え・コイン・判定（効果の前の段階）
+        if blocked:
+            continue  # v0.132: 「おもて」で使えず山札の上（効果を処理していない。並びは v132_problems）
         # 錯乱ジム（v0.57）: 使う前のスタジアムのコイン・問いの答え。相手が借りて使えば、借りたプレイヤーが「あなた」（使ったプレイヤー）
         lead = 0
         while lead < len(window) and (window[lead]["kind"] in ("chaos_check", "chaos_answered")
@@ -10328,6 +10370,17 @@ def v129_problems(state) -> list[str]:
 V130_SWAP = ("PR1-027",)
 
 
+def _without_reaction_steps(window: list[dict]) -> tuple[list[dict], bool]:
+    """v0.132: 手札から使ったトレーナーの play_trainer のあとの並び ``window`` の先頭から、相手の［ちえくらべ］の答え・コイン・判定を除いたものと、「おもて」で使えず山札の上に置いたか。"""
+    lead = 0
+    while lead < len(window) and (window[lead]["kind"] in ("trainer_reaction_answered", "trainer_reaction_check")
+                                  or (window[lead]["kind"] == "coin_flip" and window[lead].get("source") == "power" and lead
+                                      and window[lead - 1]["kind"] == "trainer_reaction_answered")):
+        lead += 1
+    rest = window[lead:]
+    return rest, bool(rest) and rest[0]["kind"] == "trainer_blocked"
+
+
 def _zone_holders(state) -> dict[int, int]:
     """v0.130: 今の状態で、カードがあるゾーンの持ち主（uid → プレイヤー）。山札・手札・サイド・トラッシュ・場（重なり・ついているカード・のせたカード）・置いておく場所・使用中の
     トレーナー（持ち主）・場のスタジアム（出したプレイヤー）。カードの表の所有者の値は読まない。"""
@@ -10365,8 +10418,11 @@ def v130_problems(state) -> list[str]:
         window = []
         for later in log[i + 1:]:
             window.append(later)
-            if later["kind"] in ("discard_trainer", "halted", "game_end") or (later["kind"] == "play_trainer" and later["card"] != e["card"]):
+            if later["kind"] in ("discard_trainer", "halted", "game_end", "trainer_blocked") or (later["kind"] == "play_trainer" and later["card"] != e["card"]):
                 break
+        window, blocked = _without_reaction_steps(window)  # v0.132: 相手の［ちえくらべ］の答え・コイン・判定（効果の前の段階）
+        if blocked:
+            continue  # v0.132: 「おもて」で使えず山札の上（効果を処理していない。並びは v132_problems）
         lead = 0
         while lead < len(window) and (window[lead]["kind"] in ("chaos_check", "chaos_answered")
                                       or (window[lead]["kind"] == "coin_flip" and window[lead].get("source") == "stadium")
@@ -10387,7 +10443,7 @@ def v130_problems(state) -> list[str]:
             continue
         if not window or window[-1]["kind"] != "discard_trainer" or window[-1].get("card") != e["card"]:
             waiting = state.trainer_in_use is not None and state.trainer_in_use.card == e["card"]
-            if waiting and kinds in (head[:1], head[:3], head[:4]):
+            if waiting and kinds in ([], head[:1], head[:3], head[:4]):  # v0.132: [] は相手の［ちえくらべ］の答えを待っている
                 continue  # 選ぶ・答えを待っている（使い終えていない）
             if any(w["kind"] == "chaos_not_borrowable" for w in window) and kinds[-1:] == ["discard_trainer"]:
                 continue  # 錯乱ジムの「うら」で使えなかった（持ち主のトラッシュ。下の所有者の照らしで確かめる）
@@ -10886,4 +10942,108 @@ def observation_problems(state) -> list[str]:
                     problems.append(f"ログの写し（{viewer}）の {event['kind']}（{event['turn']} 番）に、見えない項目 {fields} がある・hidden がない")
             elif shown != dict(event):
                 problems.append(f"ログの写し（{viewer}）の公開のイベント {event['kind']} が、内部の記録と違う")
+    return problems
+
+
+# v0.132: 山札の上を変えるログ（使えなかったトレーナーを置いた山札の、次に引くカードの確かめを打ち切る）。監査が独立に持つ（エンジンの定義から読まない）
+V132_DECK_TOUCHING = frozenset({
+    "shuffle", "deck_top_to_discard", "discard_from_deck", "arrange_deck_top", "hand_to_deck_top", "put_discard_on_deck_top", "trainer_blocked", "return_to_deck",
+    "swap_prize_with_deck_top", "deck_top_to_prizes", "revealed_hand_to_deck", "discard_to_deck", "deck_top_returned", "return_in_play_to_deck",
+    "attached_trainer_to_deck", "discard_pile_to_deck", "look_at_deck_top", "reveal_deck_top", "flash_face_up", "search_deck", "bench_from_deck",
+    "attach_energy_from_deck", "reveal_from_deck", "trainer_bench_from_deck", "stadium_bench_from_deck", "milled_to_hand", "looked_to_discard",
+})
+
+
+def _v132_card_mentioned(e: dict, card: int) -> bool:
+    for name, value in e.items():
+        if (name in AUDIT_UID_FIELDS or name.endswith(("_card", "_cards"))) and (value == card or (isinstance(value, (list, tuple)) and card in value)):
+            return True
+    return False
+
+
+def v132_problems(state) -> list[str]:
+    """v0.132（docs/slowking-mind-games-v0.132.md 9 章）: ［ちえくらべ］（使うかの答え・コイン・判定・使えなかったカードを山札の上に置く）を、ログから組み立てて照らす（エンジンの結論・
+    決定の続きの情報は読まない。機会の有無は ``log_problems`` がログから組み立てた場の［ちえくらべ］で確かめる）。
+
+    - 答え（trainer_reaction_answered）は、手札から使ったトレーナー（play_trainer。source_zone なし）のすぐあとで、同じカード・使ったプレイヤー（trainer_player）・決めたのはその相手。
+      1 回の使用に答えは 1 回だけ（使わない・「うら」のあとに 2 回目の答え・コインがない）。答えたとき、ログから組み立てた場のスタジアムが錯乱ジムで、カードがスタジアムカード以外なら誤り（MG1）
+    - 使う答えのすぐあとに、決めたプレイヤーの特殊能力のコイン 1 枚（source power・effect は答えの power）、そのすぐあとに同じ結果の判定（trainer_reaction_check）。使わない答えの
+      あとにコイン・判定はない
+    - 「おもて」なら、判定のすぐあとに、そのカードを使ったプレイヤーの山札の上に置いたログ（trainer_blocked。destination deck_top）。play_trainer から trainer_blocked までのあいだは答え・コイン・
+      判定だけ（使うための条件の支払い・効果・スタジアムを出す・どうぐをつける・場に出すがない）。そのカードのトラッシュ（discard_trainer）・場に出すログがそのあとにもない
+    - 置いたカードは、そのあとにログに出てこなければ、今の状態でそのプレイヤーの山札にある。そのプレイヤーの次の引くログ（あいだに山札の上を変えるログがない）は、そのカードから引く
+    - 「うら」・使わないなら、trainer_blocked はなく、そのカードはふつうに使われる（トラッシュ・場・ついている・決定を待っている）
+    """
+    log = list(state.log)
+    problems: list[str] = []
+    stadium = None  # ログから組み立てた場のスタジアム（カードの uid）
+    for i, e in enumerate(log):
+        kind = e["kind"]
+        if kind == "stadium_placed":
+            stadium = e["card"]
+        elif kind == "stadium_discarded" and stadium == e.get("card"):
+            stadium = None
+        if kind != "trainer_reaction_answered":
+            if kind == "trainer_reaction_check" and (i < 2 or log[i - 1]["kind"] != "coin_flip" or log[i - 2]["kind"] != "trainer_reaction_answered"):
+                problems.append(f"{e['turn']} 番の［ちえくらべ］の判定が、使う答えとコインのすぐあとではない")
+            if kind == "trainer_blocked" and (i < 1 or log[i - 1]["kind"] != "trainer_reaction_check" or log[i - 1].get("result") != "heads"
+                                              or log[i - 1].get("card") != e["card"]):
+                problems.append(f"{e['turn']} 番に山札の上に置いたトレーナー {e['card']} が、そのカードへの［ちえくらべ］の「おもて」の判定のすぐあとではない")
+            continue
+        play = log[i - 1] if i else None
+        card = e["card"]
+        if play is None or play["kind"] != "play_trainer" or play["card"] != card or "source_zone" in play or play["player"] != e["trainer_player"] \
+                or e["player"] != 1 - play["player"]:
+            problems.append(f"{e['turn']} 番の［ちえくらべ］の答えが、相手が手札から使ったトレーナー（同じカード）のすぐあとの、その相手の答えではない")
+            continue
+        definition = state.printed_def(card)
+        entry = state.effects.trainer_entry(definition.id)
+        if stadium is not None and isinstance(_trainer_effect_of(state, stadium), E.TrainerCoinStadium) and (entry is None or not entry.effect.is_stadium):
+            problems.append(f"{e['turn']} 番の［ちえくらべ］の答えが、場に錯乱ジムがあるときのスタジアムカード以外のトレーナー {card} にある（MG1 で止めるはず）")
+        user = play["player"]
+        rest = log[i + 1:]
+        if not e["used"]:
+            if rest[:1] and (rest[0]["kind"] in ("coin_flip", "trainer_reaction_check", "trainer_blocked", "trainer_reaction_answered")):
+                problems.append(f"{e['turn']} 番の［ちえくらべ］を使わない答えのあとに {rest[0]['kind']} がある")
+            continue
+        if len(rest) < 2 or rest[0]["kind"] != "coin_flip" or rest[0].get("source") != "power" or rest[0]["player"] != e["player"] \
+                or rest[0].get("effect") != e["power"] or rest[0].get("pokemon_id") != e["pokemon_id"]:
+            problems.append(f"{e['turn']} 番の［ちえくらべ］を使う答えのすぐあとが、決めたプレイヤーのその特殊能力のコインではない")
+            continue
+        coin, check = rest[0], rest[1]
+        if check["kind"] != "trainer_reaction_check" or check["result"] != coin["result"] or check["card"] != card or check["player"] != e["player"] \
+                or check["power"] != e["power"]:
+            problems.append(f"{e['turn']} 番の［ちえくらべ］のコイン（{coin['result']}）のすぐあとが、同じ結果の判定ではない")
+            continue
+        if len(rest) > 2 and rest[2]["kind"] == "coin_flip" and rest[2].get("effect") == e["power"]:
+            problems.append(f"{e['turn']} 番の［ちえくらべ］のコインを 2 回投げた")
+        after = rest[2:]
+        blocked = after[:1] and after[0]["kind"] == "trainer_blocked"
+        if coin["result"] != "heads":
+            if any(x["kind"] == "trainer_blocked" and x["card"] == card for x in after[:1]):
+                problems.append(f"{e['turn']} 番の［ちえくらべ］の「うら」のあとに、トレーナー {card} を山札の上に置いた")
+            continue
+        if not blocked or after[0]["card"] != card or after[0]["player"] != user or after[0].get("destination") != "deck_top" \
+                or after[0].get("by_player") != e["player"] or after[0].get("pokemon_id") != e["pokemon_id"]:
+            problems.append(f"{e['turn']} 番の［ちえくらべ］の「おもて」のすぐあとが、トレーナー {card} を使ったプレイヤー {user} の山札の上に置いたログではない")
+            continue
+        if state.cards[card].owner != user and not state.ownership_changes:
+            problems.append(f"{e['turn']} 番に山札の上に置いたトレーナー {card} の持ち主が、使ったプレイヤーではない")
+        later = after[1:]
+        for j, x in enumerate(later):
+            if x["kind"] in ("discard_trainer", "stadium_placed", "attach_trainer", "play_trainer_as_pokemon") and x.get("card") == card:
+                problems.append(f"{e['turn']} 番に使えなかったトレーナー {card} を、そのあと {x['kind']} した（効果・支払いを処理していないはず）")
+                break
+            if x["kind"] == "play_trainer" and x["card"] == card:
+                break
+        mentioned = [x for x in later if _v132_card_mentioned(x, card)]
+        if not mentioned and card not in state.players[user].deck:
+            problems.append(f"{e['turn']} 番に山札の上に置いたトレーナー {card} が、そのあとログに出てこないのに、今プレイヤー {user} の山札にない")
+        for x in later:
+            if x["kind"] == "draw" and x["player"] == user:
+                if x["cards"] and x["cards"][0] != card:
+                    problems.append(f"{e['turn']} 番に山札の上に置いたトレーナー {card} のあと、プレイヤー {user} が最初に引いたカード {x['cards'][0]} がそのカードではない")
+                break
+            if x["kind"] in V132_DECK_TOUCHING and x.get("player") in (user, None):
+                break
     return problems

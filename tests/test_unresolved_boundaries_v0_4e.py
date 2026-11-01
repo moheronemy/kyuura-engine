@@ -387,6 +387,10 @@ ALL_CODES = (
     "UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT",  # DU1（v0.127。docs/deferred-shortage-user-promos-v0.127.md。途中停止）
     "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT",  # TW1（v0.127。同。途中停止）
     "UNRESOLVED_THOUGHT_WAVE_MACHINE_WITHOUT_TARGET",  # TW2（v0.127。同。使う前に止める）
+    # v0.132（docs/slowking-mind-games-v0.132.md 6 章。止まる場合・止まらない場合は tests/test_slowking_mind_games_v0_132.py の ScopeTest）
+    "UNRESOLVED_MIND_GAMES_CHAOS_GYM_ORDER",  # MG1（手札から出す前・借りる答え）
+    "UNRESOLVED_MIND_GAMES_PLAY_AS_POKEMON",  # MG2（使う答え）
+    "UNRESOLVED_MIND_GAMES_BLOCKED_TURN_END",  # MG3（使う答え）
 )
 TURN = 7
 

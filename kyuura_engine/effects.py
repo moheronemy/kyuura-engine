@@ -6391,6 +6391,9 @@ class TrainerEffect:
 
     implementation_id = "abstract"
     stays_in_play = False  # True: 使い終わったら場に残る（つけて使うトレーナー）。False: 使いすて（p.310）
+    # v0.132（docs/slowking-mind-games-v0.132.md 6 章）: True なら、説明が「このカードを使ったら、あなたの番は終わりになる」（効果のコイン・答えによらず、使ったことで番が終わる）。
+    # 相手の［ちえくらべ］の「おもて」で使えなかったときに番が終わるかは決まらないので、使うことを選ぶと止める（MG3）。カード id では分けない
+    ends_turn_when_used = False
     # v0.47: True なら、効果でこのカード自身をポケモンとして場に出す（なにかの化石・ピッピ人形。``PlayAsPokemon``）。使い終わってもトラッシュしない（``resolve`` が
     # ``zones.put_trainer_into_play`` で使用中から場に移した）。つけて使うトレーナー（``stays_in_play``。ポケモンについて場に残る）とは別の印
     enters_play = False
@@ -29422,6 +29425,7 @@ class EachPlayerMayDrawThenEndTurn(EachPlayerMayDraw):
 
     implementation_id = "each_player_may_draw_then_end_turn"
     may_end_turn = True
+    ends_turn_when_used = True  # v0.132: 「このカードを使ったら、あなたの番は自動的に終わりになる」（MG3）
     refers_to_user_turn = True  # v0.57: 説明が使ったプレイヤーの番を書く（錯乱ジムで相手がかわりに使うと CH1）
 
     def check(self, definition: CardDefinition) -> list[str]:
@@ -30431,8 +30435,10 @@ class CoinBonusDamageAndConfuse(AttackEffect):
 
     def check(self, attack: Attack) -> list[str]:
         what = "コインでダメージを追加してこんらん状態にするワザ"
+        # v0.132: ヤドキング（neo1-049）の「マッドインパクト」は「追加して、」と書くだけの違い（v0.79 の ``CoinBonusDamageAndParalyze`` の「追加し、」の受け付けと同じ形。処理は同じ）
         return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(
-            attack, what, (f"コインを投げて「おもて」なら、{self.bonus}ダメージを追加し、相手を「こんらん」状態にする。",))
+            attack, what, (f"コインを投げて「おもて」なら、{self.bonus}ダメージを追加し、相手を「こんらん」状態にする。",
+                           f"コインを投げて「おもて」なら、{self.bonus}ダメージを追加して、相手を「こんらん」状態にする。"))
 
     def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
         attack = attack_of(state, use.key)
@@ -48303,6 +48309,7 @@ class CoinsUntilTailsReturnOpponentActiveEnergyThenEndTurn(TrainerEffect):
     text: str
     implementation_id = "coins_until_tails_return_opponent_active_energy_then_end_turn"
     may_end_turn = True
+    ends_turn_when_used = True  # v0.132: 「このカードを使ったら、あなたの番は終わりになる」（MG3）
     refers_to_user_turn = True
 
     def check(self, definition: CardDefinition) -> list[str]:
@@ -48777,6 +48784,14 @@ class UserSpecifiedRule:
     kyuura_issue: str
     specified_by: str = "user"
     specified_on: str = USER_SPECIFIED_RULE_DATE
+    # v0.132: 指定の根拠の文書（採用の記録・研究の対応表の出典と同じ値）と、同じ指定で処理する、解決済みにしないほかの kyuura の論点（``kyuura_issue`` のほか）。v0.130 の記録は既定値のまま
+    source: str = USER_SPECIFIED_RULE_SOURCE
+    related_issues: tuple[str, ...] = ()
+
+    @property
+    def issues(self) -> tuple[str, ...]:
+        """解決済みにしない kyuura の論点のすべて（``kyuura_issue`` が先）。"""
+        return (self.kyuura_issue, *self.related_issues)
 
 
 USER_SPECIFIED_RULES: Mapping[str, UserSpecifiedRule] = MappingProxyType({record.key: record for record in (
@@ -49022,3 +49037,125 @@ SAME_DATA_CARDS_V0_131: Mapping[str, str] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_131_ATTACKS), SAME_DATA_CARDS_V0_131)
+
+
+# ---------------------------------------------------------------- v0.132（docs/slowking-mind-games-v0.132.md）
+
+# ヤドキング（neo1-049）の［ちえくらべ］・マッドインパクトの印刷の文面（kyuura の写し。最新の説明・エラッタ・文面の訂正はない。kyuura に IMG-neo1-049 で全文を確かめた記録がある）
+MIND_GAMES_TEXT = ("この力は、このカードがバトル場にいるとき、使える。相手プレイヤーが「トレーナーカード」を手札から出して使うとき、このカードの持ち主は、コインを投げる。"
+                   "「おもて」なら、相手プレイヤーは、その「トレーナーカード」を使えず、その「トレーナーカード」を相手の山札の上におく。このカードが「ねむり・マヒ・こんらん」状態の"
+                   "とき、この力は使えない。")
+MUD_IMPACT_TEXT = "コインを投げて「おもて」なら、10ダメージを追加して、相手を「こんらん」状態にする。"
+
+# 利用者が指定した［ちえくらべ］の使うかの選択と投げる時点（v0.132。docs/slowking-mind-games-v0.132.md 3 章）。v0.130 の所有者の規則と同じ記録（``USER_SPECIFIED_RULES``）の別の種類で、
+# 処理に使う文面は印刷の文面のまま。公式の裁定・最新の説明・エラッタ・印刷の訂正としては記録せず、kyuura の UQ-MIND-GAMES-OPTIONAL・UQ-MIND-GAMES-TRAINER-STEP（歴史資料上の問い）は
+# 解決済みにしない。錯乱ジムとの順番・ポケモンとして出すトレーナー・使ったら番が終わるトレーナーは、この指定が決めないので止める（MG1〜MG3）
+USER_MIND_GAMES_RULE_SOURCE = "kyuura-engine user specification docs/slowking-mind-games-v0.132.md#3"
+USER_MIND_GAMES_OPTIONAL = "USER-MIND-GAMES-OPTIONAL-BEFORE-COST"
+USER_MIND_GAMES_DATE = "2026-11-01"
+
+# MG1: 場の錯乱ジムのコインと［ちえくらべ］のコインの前後（UQ-MIND-GAMES-TRAINER-STEP の PMCG5-087 の事例）
+MIND_GAMES_CHAOS_GYM_CODE = "UNRESOLVED_MIND_GAMES_CHAOS_GYM_ORDER"
+MIND_GAMES_CHAOS_GYM_REASON = (
+    "場に錯乱ジムがあるときに、相手の［ちえくらべ］がはたらきうるプレイヤーがスタジアムカード以外のトレーナーカードを手札から出して使う（または、［ちえくらべ］を持つ側が使ったカードを"
+    "錯乱ジムの「うら」で相手がかわりに使う）。錯乱ジムのコインと［ちえくらべ］のコインのどちらを先に投げるか（かわりに使うことが「手札から出して使う」に当たるか）は、"
+    "2000.02.14 版の公式ルール（p.325 の同じタイミングの規定は、2 つのコインが同じタイミングかが確かめられていない）・kyuura の記録から決められず、利用者の指定も決めていないので扱わない"
+    "（MG1。kyuura の UQ-MIND-GAMES-TRAINER-STEP。エンジンの錯乱ジムの処理の順番を根拠にしない。［ちえくらべ］を先にする簡略化をしない）")
+# MG2: なにかの化石・ピッピ人形のように、ポケモンとして場に出すトレーナーカード（UQ-MIND-GAMES-TRAINER-STEP の PMCG3-046・PMCG1-091 の事例）
+MIND_GAMES_PLAY_AS_POKEMON_CODE = "UNRESOLVED_MIND_GAMES_PLAY_AS_POKEMON"
+MIND_GAMES_PLAY_AS_POKEMON_REASON = (
+    "ポケモンとして場に出すトレーナーカード（なにかの化石・ピッピ人形）を手札から出すことが、［ちえくらべ］の「相手プレイヤーが「トレーナーカード」を手札から出して使うとき」に"
+    "当たるかは、kyuura の記録（CR-MIND-GAMES-STADIUM-TOOL はスタジアム・どうぐだけを決めた）・利用者の指定から決められないので扱わない（MG2。kyuura の UQ-MIND-GAMES-TRAINER-STEP。"
+    "使わない答えは、当たらない読み方と同じ結果なので受け付ける）")
+# MG3: 「このカードを使ったら、あなたの番は終わりになる」トレーナーが「おもて」で使えなかったときの番の終わり（kyuura に記録のない問い）
+MIND_GAMES_BLOCKED_TURN_END_CODE = "UNRESOLVED_MIND_GAMES_BLOCKED_TURN_END"
+MIND_GAMES_BLOCKED_TURN_END_REASON = (
+    "「このカードを使ったら、あなたの番は終わりになる」と書くトレーナーカード（パソコン大暴走！・怪電波マシーン）が、相手の［ちえくらべ］の「おもて」で「使えず」山札の上におかれたとき、"
+    "使ったプレイヤーの番が終わるか（「使ったら」に当たるか）は、印刷の文面・2000.02.14 版の公式ルール・kyuura の記録・利用者の指定から決められないので扱わない（MG3。kyuura に記録のない問い。"
+    "カードの名前で番を終えない・終えないと決めない。使わない答えは受け付ける）")
+
+
+@dataclass(frozen=True)
+class BlockOpponentHandTrainerOnHeads(ContinuousPower):
+    """この力は、このカードがバトル場にいるとき、使える。相手プレイヤーが「トレーナーカード」を手札から出して使うとき、このカードの持ち主は、コインを投げる。「おもて」なら、相手プレイヤーは、
+    その「トレーナーカード」を使えず、その「トレーナーカード」を相手の山札の上におく。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない（v0.132。ヤドキング（neo1-049）の
+    ［ちえくらべ］。kyuura の印刷の文面。docs/slowking-mind-games-v0.132.md 4 章）。
+
+    - 範囲（CR-MIND-GAMES-SCOPE・CR-MIND-GAMES-STADIUM-TOOL）: このポケモンがバトル場にいて、ねむり・マヒ・こんらん状態でなく、力が消えていない（かがくへんかガスなど。``continuous_powers``
+      の共通の確かめ）とき、相手プレイヤーがトレーナーカード（スタジアムカード・ポケモンのどうぐを含む）を手札から出して使う（``PlayTrainer``）たび。持ち主自身のトレーナー・場のスタジアムや
+      ついているどうぐの効果・相手のトラッシュから使うカード（サイキックコントロール）・錯乱ジムでかわりに使うことは手札から出して使うのではないので、機会を出さない（かわりに使うときは MG1）。
+      ベンチからははたらかない（英語版のベンチからの働き・複数匹の重ねがけは持ち込まない。バトル場は 1 匹なので、同時にはたらくのは多くても 1 つ）
+    - 使うかと投げる時点は利用者が指定した規則（``trigger_rule``。``USER_SPECIFIED_RULES`` の ``USER_MIND_GAMES_OPTIONAL``）: 相手がカードを見せて名前を伝え（ログ ``play_trainer``）、
+      状態を変えない使える確かめ（使うための条件・リムーブ禁止ジムの枚数・原典で決められない場合）を通ったあと、使うための条件を払う前に、持ち主が使うかを選ぶ（エンジンの決定
+      ``REACTION_POWER``。使わない 0 個・使う 1 個）。使うならコインを 1 回（特殊能力のコイン。ナツメのESPのワザのコインではない）。「おもて」ならカードを使ったプレイヤーの山札の
+      上に置き（``zones.blocked_trainer_to_deck_top``）、条件・効果を処理しない。「うら」・使わないなら、通常どおり（スタジアムを出す・条件・効果）
+    - 止める場面（使わない答えはどれも受け付ける）: 錯乱ジムとの前後（MG1。使う前に止める）・ポケモンとして出すトレーナー（MG2）・使ったら番が終わるトレーナー（MG3）・おもてのカードの
+      ある山札の上に置く（FU4）
+    - 宣言しない（``UsePokemonPower`` では使えない。機会はエンジンが出す）"""
+
+    trigger_rule: str = USER_MIND_GAMES_OPTIONAL
+    implementation_id = "block_opponent_hand_trainer_on_heads"
+    location: ClassVar[str] = CONTINUOUS_ACTIVE
+    what: ClassVar[str] = "相手が手札からトレーナーカードを使うとき、コインの「おもて」で使えなくし、その山札の上におく特殊能力"
+
+    def texts(self) -> tuple[str, ...]:
+        return (MIND_GAMES_TEXT,)
+
+    def check(self, power: Power) -> list[str]:
+        problems = super().check(power)
+        if not any(r.rule == self.trigger_rule and r.printed_text == power.text_ja == r.play_text for r in USER_SPECIFIED_RULES.values()):
+            problems.append(f"使うかの選択と投げる時点の利用者の指定（{self.trigger_rule}）の記録がない")
+        return problems
+
+
+def trainer_reaction_sources(state: GameState, player: int) -> list[tuple[int, PokemonInPlay, PowerKey, BlockOpponentHandTrainerOnHeads]]:
+    """v0.132: プレイヤー ``player`` が手札からトレーナーカードを使うときに、相手の場で今はたらきうる［ちえくらべ］（``BlockOpponentHandTrainerOnHeads``）の (持ち主, 持つポケモン, ``PowerKey``,
+    実装)。位置・特殊状態・力が消えているか・写した力（変身・「ばける」）は ``continuous_powers`` の共通の確かめ（実際に持つ今のポケモンで判定する）。公開の問い合わせ。状態を変えず、
+    乱数を使わない。"""
+    found = [item for item in continuous_powers(state, BlockOpponentHandTrainerOnHeads) if item[0] == 1 - player]
+    if len(found) > 1:
+        raise RuntimeError(f"バトル場でだけはたらく［ちえくらべ］が 2 つ以上ある（{[(o, p.pokemon_id) for o, p, _, _ in found]}。エンジンの不具合）")
+    return found
+
+
+def trainer_reaction_use_stop(state: GameState, use: TrainerUse, effect: TrainerEffect) -> tuple[str, str] | None:
+    """v0.132: ［ちえくらべ］を「使う」と答えると止める理由 (コード, 理由)（コインの前・状態を変える前に決める。公開の情報だけで決まる）。なければ None。ポケモンとして出すトレーナー（MG2）・
+    使ったら番が終わるトレーナー（MG3）・おもてのカードのある山札の上に置く（FU4）。"""
+    name = state.card_def(use.card).name_ja
+    if effect.enters_play:
+        return MIND_GAMES_PLAY_AS_POKEMON_CODE, f"トレーナー {use.card_id}（{name}）: {MIND_GAMES_PLAY_AS_POKEMON_REASON}"
+    if effect.ends_turn_when_used:
+        return MIND_GAMES_BLOCKED_TURN_END_CODE, f"トレーナー {use.card_id}（{name}）: {MIND_GAMES_BLOCKED_TURN_END_REASON}"
+    if _faceup.has_face_up(state, use.player):
+        error = _faceup.stop(_faceup.FACE_UP_DECK_PLACE_TOP_CODE, f"プレイヤー {use.player} の山札の上に使えなかったトレーナーカードを置く")
+        return error.code, error.message
+    return None
+
+
+USER_SPECIFIED_RULES = MappingProxyType({**USER_SPECIFIED_RULES, **{record.key: record for record in (
+    UserSpecifiedRule(
+        "neo1-049/power/0", USER_MIND_GAMES_OPTIONAL, MIND_GAMES_TEXT, MIND_GAMES_TEXT,
+        "相手プレイヤーが「トレーナーカード」（スタジアムカード・ポケモンのどうぐを含む）を手札から出して使うときの、［ちえくらべ］を使うかの選択とコインを投げる時点",
+        "発動は任意。1. 相手がトレーナーカードを見せ（名前を伝え）、状態を変えずに使えるかを確かめる（使えないカードの宣言には選択もコインもない）→ 2. ヤドキングの持ち主が使うかを選ぶ → "
+        "3. 使うならコインを 1 回投げる → 4. 「おもて」なら使用を止め、そのカードを使ったプレイヤーの山札の上に置く（使うための条件を払わず、効果も処理しない）→ 5. 「うら」・使わないなら、"
+        "通常の条件の支払いと効果へ進む",
+        "日本語版の文面の範囲（バトル場にいるときだけ・相手が手札から出して使うときだけ・持ち主が投げる・ねむり・マヒ・こんらんでは使えない・特殊能力を消す効果は既存の規定）。"
+        "英語版のベンチからの働き・複数匹の重ねがけは持ち込まない。特殊能力・ワザで手札以外から使うトレーナーには広げない",
+        "錯乱ジムのコインとの前後（UQ-MIND-GAMES-TRAINER-STEP の錯乱ジムの事例。止める MG1）、ポケモンとして出すトレーナーが当たるか（止める MG2）、使ったら番が終わるトレーナーが"
+        "「おもて」で使えなかったときの番（止める MG3）、おもてのカードのある山札の上に置く向き（UQ-FLASH-FACE-UP-DECK。止める FU4）",
+        "発動は任意とし、順序を次のようにします。",
+        "kyuura に記録なし（71d1728・9242b9b とも。今回の指定は kyuura に書き込んでいない。docs/slowking-mind-games-v0.132.md 12 章の報告事項）",
+        "公式の裁定・最新の説明・エラッタ・印刷の訂正・UQ-MIND-GAMES-OPTIONAL・UQ-MIND-GAMES-TRAINER-STEP の解決",
+        "UQ-MIND-GAMES-OPTIONAL", specified_on=USER_MIND_GAMES_DATE, source=USER_MIND_GAMES_RULE_SOURCE, related_issues=("UQ-MIND-GAMES-TRAINER-STEP",)),
+)}})
+
+
+# v0.132 の登録（ワザ 1・特殊能力 1）。どちらも kyuura の印刷の文面（最新の説明はない）。マッドインパクト（超超超）20+ は v0.79 の ``CoinBonusDamageAndConfuse(10)``（あやしいおどりと同じ処理。
+# 文面は「追加して、」の書き方）。［ちえくらべ］は ``BlockOpponentHandTrainerOnHeads``（エンジンが ``engine._play_trainer`` の共通の段で問い合わせる。カード id で分けない）
+V0_132_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    AttackKey("neo1-049", 0): _printed(CoinBonusDamageAndConfuse(10), "マッドインパクト", MUD_IMPACT_TEXT),
+})
+V0_132_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
+    PowerKey("neo1-049", 0): PowerEntry(BlockOpponentHandTrainerOnHeads(), "ちえくらべ", MIND_GAMES_TEXT, MIND_GAMES_TEXT, _KYUURA_PRINTED_TEXT),
+})
+DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_132_ATTACKS), V0_132_POWERS)

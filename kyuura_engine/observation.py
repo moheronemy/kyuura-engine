@@ -781,6 +781,8 @@ PUBLIC_EVENTS = frozenset({
     # v0.57: スタジアム（場に出す・トラッシュ・効果を使う・場のカードを動かす・ダメージ・コイン・錯乱ジムのコインと答え。場・トラッシュ・コインは公開の情報）
     "stadium_placed", "stadium_discarded", "stadium_discard_energy", "stadium_return_energy", "stadium_used", "stadium_damage", "evolution_heal",
     "evolution_heal_declined", "stadium_attack_coin", "chaos_check", "chaos_answered", "chaos_not_borrowable",
+    # v0.132: 相手の［ちえくらべ］を使うかの答え・コインの判定・使えなかったトレーナーカードを山札の上に置いた（見せたカード・コイン・答えは公開の情報）
+    "trainer_reaction_answered", "trainer_reaction_check", "trainer_blocked",
     # v0.58: 特殊エネルギーをつけたときの効果（回復・ダメージ）・ばくれつのスタジアムがない場面・サイキックコントロールで使えるカードがない・使わなかった
     # （場・トラッシュは公開の情報）
     "energy_heal", "energy_damage", "stadium_discard_none", "discard_trainer_use_none", "discard_trainer_use_declined",
