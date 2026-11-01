@@ -393,6 +393,19 @@ class DestructiveFireTest(unittest.TestCase):
         self.assertEqual(done.players[1].active.damage, 0)
         audited(self, done)
 
+    def test_keep_voids_only_the_opponent_discard(self):
+        """相手のアンノーンに［KEEP］（ベンチのアンノーンK）がはたらくとき、ワザ全体のコイン（自分の炎と相手のトラッシュを決める）は投げ、自分の炎はトラッシュし、相手のトラッシュだけが
+        なくなる（利用者の指定。v0.101 の KP2 はこの要素のコインがトラッシュだけを決めるワザの問いで、このワザではコインがほかの要素も決めるので起こらない）。"""
+        state = build_test_state([{"active": {"card": TYR, "energy": list(DF)}, "deck": [F] * 10, "prizes": 6},
+                                  {"active": {"card": "neo2-025", "energy": [W, W]}, "bench": ["neo3-030"], "deck": [W] * 5, "prizes": 6}])
+        done = finish(attack(state, 1, HD, HD, TL))
+        self.assertEqual(len([e for e in since(state, done, "coin_flip") if e.get("effect") == f"{TYR}#1"]), 3)
+        self.assertEqual(len(since(state, done, "discard_energy")), 2)
+        self.assertEqual(since(state, done, "discard_attached_energy"), [])
+        self.assertEqual(len(since(state, done, "energy_discard_voided")), 1)
+        self.assertEqual(len(done.players[1].active.energy), 2)
+        audited(self, done, snapshots_for(state, 1))
+
     def test_copy_counts_the_copiers_cards(self):
         state = build_test_state([{"active": {"card": HP.CLEFAIRY, "energy": [F, W, W]}, "deck": [F] * 10, "prizes": 6},
                                   {"active": {"card": TYR, "energy": list(DF)}, "deck": [W] * 3, "prizes": 6}])

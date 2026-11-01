@@ -531,7 +531,11 @@ class KeepReturnTest(unittest.TestCase):
 class SharedCoinTest(unittest.TestCase):
     def test_no_shared_coin_decides_an_opponent_energy_discard(self):
         """登録表のどのワザでも、相手のエネルギーカードのトラッシュの要素を決めるのはその要素のコイン（``local_coin``）だけで、ワザ全体のコイン（ほかの要素も決める）ではない。
-        ワザ全体のコインの役割の分類に［KEEP］を加える場面は、今の写しにない。"""
+        ワザ全体のコインの役割の分類に［KEEP］を加える場面は、今の写しにない。
+
+        v0.133 の例外: ひかるバンギラス（neo4-082）の「はかいのほのお」は、利用者の指定（``USER_DESTRUCTIVE_FIRE_RULE``）で 1 つのコインが自分の炎と相手のトラッシュを決め、相手が守られて
+        いてもコインを投げて自分の炎をトラッシュする（投げるかが［KEEP］で変わらないので KP2 の問いは起こらない。tests/test_shining_tyranitar_v0_133.py）。その要素は指定の規則を持つ。"""
+        shared_by_user_rule = {AttackKey("neo4-082", 1): E.USER_DESTRUCTIVE_FIRE_RULE}
         found = 0
         for key in DEFAULT_EFFECTS.attack_keys():
             effect = DEFAULT_EFFECTS.attack_entry(key.card_id, key.attack_index).effect
@@ -543,6 +547,9 @@ class SharedCoinTest(unittest.TestCase):
             if not discards:
                 continue
             found += 1
+            if key in shared_by_user_rule:
+                self.assertEqual([getattr(element, "rule", None) for element in discards], [shared_by_user_rule[key]], key)
+                continue
             for coin in (element for element in program if isinstance(element, Coin)):
                 self.assertFalse(any(element.coin_dependent(coin.name) for element in discards), key)
         self.assertGreater(found, 5)
