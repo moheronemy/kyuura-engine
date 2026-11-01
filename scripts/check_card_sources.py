@@ -91,6 +91,22 @@ ENGINE_SIMPLIFICATIONS = {"kyuura-engine docs/final-pmcg-cards-v0.68.md#4": ROOT
 # 対象ごとの記録（effects.USER_SIMPLIFICATIONS）が、カード・対象・印刷の文面（写しと同じ）・処理に使う文面（登録と同じ・印刷と違う）・省いた条件・登録の型の値・指定した主体と日と合うかを照らす
 USER_SIMPLIFICATION_SOURCE = "kyuura-engine user simplification docs/deferred-shortage-user-promos-v0.127.md#4"
 USER_SIMPLIFICATION_DOCUMENT = ROOT / "docs" / "deferred-shortage-user-promos-v0.127.md"
+# v0.129（docs/blaines-quiz-heights-v0.129.md 3 章）: 利用者が指定した参照値（カツラのクイズ その1の正解に、kyuura が集めた公式図鑑の種族の身長を採る）。処理に使う文面は印刷の文面のまま
+# （play_text の根拠は kyuura_printed_text）で、採用の記録の ``user_specified_reference``（対象 → 出典）に別に書く。印刷の文面の採用・利用者の簡略ルール・印刷の訂正・最新の説明とは別の
+# 記録で、対象ごとの記録（effects.USER_SPECIFIED_REFERENCES）・登録の型の参照の種類・根拠の文書の引用・研究の対応表の user_specified_references と照らす
+USER_SPECIFIED_REFERENCE_SOURCE = "kyuura-engine user specification docs/blaines-quiz-heights-v0.129.md#3"
+USER_SPECIFIED_REFERENCE_DOCUMENT = ROOT / "docs" / "blaines-quiz-heights-v0.129.md"
+# v0.130（docs/trade-please-ownership-v0.130.md 3 章）: 利用者が指定した、説明が書かない処理の規則（とりかえっこプリーズで交換したカードの対戦の中の所有者を、受け取ったプレイヤーに
+# する）。処理に使う文面は最新の説明のまま（play_text の根拠は LD-…。文面の区分とは別）で、採用の記録の ``user_specified_rule``（対象 → 出典）に別に書く。公式の裁定・最新の説明・
+# 印刷の訂正・利用者の簡略ルール・参照値とは別の記録で、対象ごとの記録（effects.USER_SPECIFIED_RULES）・登録の型の規則の種類・根拠の文書の引用・研究の対応表の user_specified_rules と照らす
+USER_SPECIFIED_RULE_SOURCE = "kyuura-engine user specification docs/trade-please-ownership-v0.130.md#3"
+USER_SPECIFIED_RULE_DOCUMENT = ROOT / "docs" / "trade-please-ownership-v0.130.md"
+# v0.131（docs/exeggutor-bilingual-names-v0.131.md 3 章）: 利用者が指定した名前の扱い（ナッシー[Exeggutor] の英語の併記を翻訳の表示として扱い、名前・進化元・ワザ名の判定に日本語の部分を
+# 使う）。処理に使う文面の区分ではない（ワザの文面は印刷のまま。play_text の根拠は kyuura_printed_text）ので、採用の記録の ``user_specified_name``（"name" → 出典）に別に書く。印刷の文面の
+# 採用・転記の訂正（user_name_correction）・簡略ルール・参照値・規則とは別の記録で、対象ごとの記録（effects.USER_SPECIFIED_NAMES）・写しの値・定義の判定に使う値・根拠の文書の引用・
+# 研究の対応表の user_specified_names と照らす
+USER_SPECIFIED_NAME_SOURCE = "kyuura-engine user specification docs/exeggutor-bilingual-names-v0.131.md#3"
+USER_SPECIFIED_NAME_DOCUMENT = ROOT / "docs" / "exeggutor-bilingual-names-v0.131.md"
 RESULTS = ("match", "differences", "edition_not_listed", "inaccessible")
 COMPLETED = ("match", "differences")
 
@@ -100,7 +116,9 @@ GUIDEBOOK_KEYS = {"page", "pdf_page", "scan", "rules_page", "commentary_page", "
 KYUURA_DATA_KEYS = {"basis", "name_ja", "status", "kyuura_commit", "recorded_on", "kyuura_records", "play_text", "external_checks", "issues"}
 GUIDEBOOK_RECORD_KEYS = {"basis", "name_ja", "external_checks"}
 # v0.30: 過去の原典照合の記録のあるカードに、照合の記録に処理に使う文面のない登録の根拠（play_text・kyuura_records）を書ける
-OPTIONAL_CARD_KEYS = {KYUURA_DATA: {"notes", "equivalent_to", "user_name_correction", "reprint_of", "reprint_scope", "behavior_differs"}, GUIDEBOOK_RECORD: {"issues", "notes", "play_text", "kyuura_records"}}
+OPTIONAL_CARD_KEYS = {KYUURA_DATA: {"notes", "equivalent_to", "user_name_correction", "reprint_of", "reprint_scope", "behavior_differs", "user_specified_reference",
+                                    "user_specified_rule", "user_specified_name"},
+                      GUIDEBOOK_RECORD: {"issues", "notes", "play_text", "kyuura_records"}}
 # v0.70（docs/non-pack-effect-reuse-v0.70.md 3 章）: エンジンが写しの作り直しで当てはめた、利用者が示した名前の訂正（写しの engine_user_corrections。PR1-069 の
 # 「？？？」→「ミュウ」）。採用の記録の ``user_name_correction`` に kyuura の値・採用した値・根拠を書き、写しの訂正と照らす（名前の比べ方はほかのカードと同じ。
 # 訂正のないカードに書けず、写しの訂正のあるカードには必ず書く）
@@ -667,6 +685,135 @@ def card_problems(card_id: str, record, *, cards: dict, commit: str, verificatio
                                          sources=sources or {}, equivalents=equivalents or {}))
     else:
         found.extend(play_text_problems(where, record, card, registry, links, corrections=corrections))
+    found.extend(user_specified_reference_problems(where, card_id, record, card, registry, links))
+    found.extend(user_specified_rule_problems(where, card_id, record, card, registry, links))
+    found.extend(user_specified_name_problems(where, card_id, record, card, registry, links))
+    return found
+
+
+def user_specified_name_problems(where: str, card_id: str, record: dict, card: dict, registry, links: dict) -> list[str]:
+    """v0.131: 利用者が指定した名前の扱い（``user_specified_name``。``{"name": 出典}``）。対象ごとの記録（``effects.USER_SPECIFIED_NAMES`` の ``<カード id>/name``）のあるカードには必ず書き、
+    ないカードには書けない。記録の欄ごとの写しの値がこのカードの写しの値（原文）と同じ、写しの値は書き換えていない（``user_name_correction`` を使わない・写しの名前のまま）、カードの定義の
+    判定に使う値（名前・進化元・ワザ名）が記録の値で原文は ``printed_name_ja`` に残る、ワザの処理に使う文面の根拠が利用者の指定ではない、指定した主体と日・場面・範囲・置きかえないもの・
+    印刷の確認・記録しない扱い・論点があり、利用者の指定の文が根拠の文書の引用（「」）にあり、論点が採用の記録の kyuura_records にあり、研究の対応表の user_specified_names に同じ出典で挙がる。"""
+    from kyuura_engine import effects as E
+    from kyuura_engine.cards import load_card_pool
+
+    spec = getattr(E, "USER_SPECIFIED_NAMES", {}).get(f"{card_id}/name")
+    value = record.get("user_specified_name")
+    if value is None:
+        return [f"{where}: 利用者が指定した名前の扱いの記録 {card_id}/name があるのに user_specified_name がない"] if spec is not None else []
+    if spec is None or value != {"name": USER_SPECIFIED_NAME_SOURCE}:
+        return [f"{where}: user_specified_name {value!r} が、利用者が指定した名前の扱いの記録・出典 {USER_SPECIFIED_NAME_SOURCE!r} と合わない"]
+    found = []
+    pokemon = card.get("pokemon") or {}
+    copied = {"name.ja": (card.get("name") or {}).get("ja"), "pokemon.evolves_from.ja": (pokemon.get("evolves_from") or {}).get("ja")}
+    copied |= {f"pokemon.attacks[{i}].name.ja": (a.get("name") or {}).get("ja") for i, a in enumerate(pokemon.get("attacks") or ())}
+    for field in spec.fields:
+        if copied.get(field.field) != field.copy_value or not field.rule_value or not field.gloss or not field.printed:
+            found.append(f"{where}: 名前の扱いの欄 {field.field} の写しの値 {field.copy_value!r} が写しの値 {copied.get(field.field)!r} と違う・判定に使う値・併記・印刷の確認がない")
+    if "user_name_correction" in record or record.get("name_ja") != copied["name.ja"]:
+        found.append(f"{where}: 名前の扱いは転記の訂正ではない（user_name_correction を書かない・採用の記録の name_ja は写しの値 {copied['name.ja']!r}）")
+    definition = load_card_pool().definitions.get(card_id)
+    expected = {"name.ja": None if definition is None else definition.name_ja,
+                "pokemon.evolves_from.ja": None if definition is None else definition.evolves_from}
+    if definition is not None:
+        expected |= {f"pokemon.attacks[{a.index}].name.ja": a.name_ja for a in definition.attacks}
+    if definition is None or any(expected.get(field.field) != field.rule_value for field in spec.fields) or definition.printed_name_ja != copied["name.ja"]:
+        found.append(f"{where}: カードの定義の判定に使う値・原文の名前が、利用者が指定した名前の扱いの記録と合わない")
+    if any(source in (USER_SPECIFIED_NAME_SOURCE, USER_SPECIFIED_RULE_SOURCE, USER_SPECIFIED_REFERENCE_SOURCE, USER_SIMPLIFICATION_SOURCE)
+           for source in (record.get("play_text") or {}).values()):
+        found.append(f"{where}: 処理に使う文面の根拠が利用者の指定になっている（名前の扱いは文面の区分ではない）")
+    if spec.specified_by != "user" or not all((spec.specified_on, spec.applies_to, spec.scope, spec.not_changed, spec.print_check, spec.not_recorded_as, spec.kyuura_issue)):
+        found.append(f"{where}: 利用者が指定した名前の扱いの記録に、指定した主体と日・場面・範囲・置きかえないもの・印刷の確認・記録しない扱い・論点がない")
+    document = USER_SPECIFIED_NAME_DOCUMENT.read_text(encoding="utf-8") if USER_SPECIFIED_NAME_DOCUMENT.exists() else ""
+    if f"「{spec.instruction}」" not in document:
+        found.append(f"{where}: 利用者の指定の文が、根拠の文書 {USER_SPECIFIED_NAME_DOCUMENT.name} の引用（「」）にない")
+    if spec.kyuura_issue not in record.get("kyuura_records", ()):
+        found.append(f"{where}: 解決済みにしない論点 {spec.kyuura_issue} が、採用の記録の kyuura_records にない")
+    if links["latest_descriptions"].get("user_specified_names", {}).get(f"{card_id}/name") != USER_SPECIFIED_NAME_SOURCE:
+        found.append(f"{where}: 研究の対応表の user_specified_names にない")
+    return found
+
+
+def user_specified_rule_problems(where: str, card_id: str, record: dict, card: dict, registry, links: dict) -> list[str]:
+    """v0.130: 利用者が指定した、説明が書かない処理の規則（``user_specified_rule``。対象 → 出典）。対象ごとの記録（``effects.USER_SPECIFIED_RULES``）のあるカードには必ず書き、ないカードには
+    書けない。処理に使う文面は書き換えない（登録の照合の文面と記録の印刷の文面が写しの文面と同じ・登録の処理に使う文面と記録の処理に使う文面が同じ・play_text の根拠が利用者の
+    指定ではない）、登録の型の規則の種類が記録と同じ、指定した主体と日・当てはめる場面・規則・範囲・決めないこと・利用者の指定の文（根拠の文書の引用「」）・kyuura の記録の場所・記録しない
+    扱い・解決済みにしない論点があり、研究の対応表の user_specified_rules に同じ出典で挙がる。"""
+    from kyuura_engine import effects as E
+
+    rules = getattr(E, "USER_SPECIFIED_RULES", {})
+    records = {key.split("/", 1)[1]: r for key, r in rules.items() if key.split("/", 1)[0] == card_id}
+    value = record.get("user_specified_rule")
+    if value is None:
+        return [f"{where}: 利用者が指定した規則の記録 {sorted(records)} があるのに user_specified_rule がない"] if records else []
+    if not isinstance(value, dict) or set(value) != set(records):
+        return [f"{where}: user_specified_rule の対象 {value!r} が、利用者が指定した規則の記録の対象 {sorted(records)} と違う"]
+    found = []
+    listed = links["latest_descriptions"].get("user_specified_rules", {})
+    targets = play_text_targets(registry, card_id)
+    document = USER_SPECIFIED_RULE_DOCUMENT.read_text(encoding="utf-8") if USER_SPECIFIED_RULE_DOCUMENT.exists() else ""
+    for target, source in value.items():
+        here = f"{where} {target}"
+        rule = records[target]
+        entry = targets.get(target)
+        if source != USER_SPECIFIED_RULE_SOURCE:
+            found.append(f"{here}: user_specified_rule の出典 {source!r} が {USER_SPECIFIED_RULE_SOURCE!r} ではない")
+        if (record.get("play_text") or {}).get(target) in (USER_SPECIFIED_RULE_SOURCE, USER_SPECIFIED_REFERENCE_SOURCE, USER_SIMPLIFICATION_SOURCE):
+            found.append(f"{here}: 処理に使う文面の根拠が利用者の指定になっている（規則は文面の区分ではない）")
+        if entry is None or not (entry.text_ja == rule.printed_text == printed_text(card, target) and entry.play_text_ja == rule.play_text):
+            found.append(f"{here}: 登録の文面・処理に使う文面が、利用者が指定した規則の記録の印刷の文面（写しと同じ）・処理に使う文面と同じではない")
+        effect = registry.trainer_entry(card_id).effect if target == "trainer" and registry.trainer_entry(card_id) is not None else None
+        if getattr(effect, "ownership_rule", None) != rule.rule:
+            found.append(f"{here}: 登録の型の規則の種類 {getattr(effect, 'ownership_rule', None)!r} が記録 {rule.rule!r} と違う")
+        if rule.specified_by != "user" or not all((rule.specified_on, rule.applies_to, rule.specification, rule.scope, rule.not_decided, rule.kyuura_record,
+                                                   rule.not_recorded_as, rule.kyuura_issue)):
+            found.append(f"{here}: 利用者が指定した規則の記録に、指定した主体と日・場面・規則・範囲・決めないこと・kyuura の記録・記録しない扱い・論点がない")
+        if f"「{rule.instruction}」" not in document:
+            found.append(f"{here}: 利用者の指定の文が、根拠の文書 {USER_SPECIFIED_RULE_DOCUMENT.name} の引用（「」）にない")
+        if rule.kyuura_issue not in record.get("kyuura_records", ()):
+            found.append(f"{here}: 解決済みにしない論点 {rule.kyuura_issue} が、採用の記録の kyuura_records にない")
+        if listed.get(f"{card_id}/{target}") != source:
+            found.append(f"{here}: 研究の対応表の user_specified_rules にない")
+    return found
+
+
+def user_specified_reference_problems(where: str, card_id: str, record: dict, card: dict, registry, links: dict) -> list[str]:
+    """v0.129: 利用者が指定した参照値（``user_specified_reference``。対象 → 出典）。対象ごとの記録（``effects.USER_SPECIFIED_REFERENCES``）のあるカードには必ず書き、ないカードには書けない。
+    処理に使う文面は印刷の文面のまま（play_text の根拠が kyuura_printed_text・登録の照合の文面と処理に使う文面と記録の印刷の文面が写しの文面と同じ）、登録の型の参照の種類が記録と同じ、
+    指定した主体と日・利用者の指定の文（根拠の文書の引用「」）・記録しない扱いがあり、研究の対応表の user_specified_references に同じ出典で挙がる。"""
+    from kyuura_engine import effects as E
+
+    records = {key.split("/", 1)[1]: r for key, r in E.USER_SPECIFIED_REFERENCES.items() if key.split("/", 1)[0] == card_id}
+    value = record.get("user_specified_reference")
+    if value is None:
+        return [f"{where}: 利用者が指定した参照値の記録 {sorted(records)} があるのに user_specified_reference がない"] if records else []
+    if not isinstance(value, dict) or set(value) != set(records):
+        return [f"{where}: user_specified_reference の対象 {value!r} が、利用者が指定した参照値の記録の対象 {sorted(records)} と違う"]
+    found = []
+    listed = links["latest_descriptions"].get("user_specified_references", {})
+    targets = play_text_targets(registry, card_id)
+    document = USER_SPECIFIED_REFERENCE_DOCUMENT.read_text(encoding="utf-8") if USER_SPECIFIED_REFERENCE_DOCUMENT.exists() else ""
+    for target, source in value.items():
+        here = f"{where} {target}"
+        reference = records[target]
+        entry = targets.get(target)
+        if source != USER_SPECIFIED_REFERENCE_SOURCE:
+            found.append(f"{here}: user_specified_reference の出典 {source!r} が {USER_SPECIFIED_REFERENCE_SOURCE!r} ではない")
+        if (record.get("play_text") or {}).get(target) != PRINTED_TEXT:
+            found.append(f"{here}: 利用者が指定した参照値の対象の処理に使う文面の根拠が {PRINTED_TEXT} ではない（文面は印刷のまま）")
+        if entry is None or not (entry.text_ja == entry.play_text_ja == reference.printed_text == printed_text(card, target)):
+            found.append(f"{here}: 登録の文面・処理に使う文面・利用者が指定した参照値の記録の印刷の文面が、写しの文面と同じではない")
+        effect = registry.trainer_entry(card_id).effect if target == "trainer" and registry.trainer_entry(card_id) is not None else None
+        if getattr(effect, "reference", None) != reference.rule:
+            found.append(f"{here}: 登録の型の参照の種類 {getattr(effect, 'reference', None)!r} が記録 {reference.rule!r} と違う")
+        if reference.specified_by != "user" or not reference.specified_on or not reference.applies_to or not reference.reference or not reference.not_recorded_as:
+            found.append(f"{here}: 利用者が指定した参照値の記録に、指定した主体と日・当てはめる部分・参照値・記録しない扱いがない")
+        if f"「{reference.instruction}」" not in document:
+            found.append(f"{here}: 利用者の指定の文が、根拠の文書 {USER_SPECIFIED_REFERENCE_DOCUMENT.name} の引用（「」）にない")
+        if listed.get(f"{card_id}/{target}") != source:
+            found.append(f"{here}: 研究の対応表の user_specified_references にない")
     return found
 
 

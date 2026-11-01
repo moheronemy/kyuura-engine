@@ -35,6 +35,9 @@
   そのカードをトラッシュから手札に加え、選ばなければ何もせず、そのあとバトル場にポケモンを出す（``engine._resume_post_knockout``）。
   ``context`` は ``"power"``（特殊能力）と、ポケモンチェックの中のきぜつなら ``"then"``
 
+値で答える決定（v0.129。docs/blaines-quiz-heights-v0.129.md 4 章）: ``context`` の ``"value_range"``（(下限, 上限)）を持つ決定は、選べるものを並べず
+（``options`` は空・選ぶ数は 1）、その範囲の整数 1 つを答えにする（カツラのクイズ その1の身長の答え（整数 cm）。``check_choices``）。
+
 選べるもののうち、原典で処理を決められないもの（v0.2b）: カードの文面では選べるが、選んだときの扱いを
 原典で決められないものは、``context`` の ``"unresolved_choices"`` に入れる。それを選ぶと、状態を変えずに
 ``UnsupportedError``（``"unresolved_code"``・``"unresolved_reason"``）になる。推測で処理しないため。
@@ -306,6 +309,23 @@ QUIZ_CARD = "quiz_card"
 QUIZ_ATTACK = "quiz_attack"
 # 相手プレイヤーが答えるカードの名前。選べるものは ``context`` の ``"names"``（カードのデータのポケモンの名前の並び。置いたカード・手札によらない）の位置。決めるのは相手プレイヤー
 QUIZ_ANSWER = "quiz_answer"
+# v0.129（docs/blaines-quiz-heights-v0.129.md 4 章）: カツラのクイズ その1で、相手プレイヤーが答える、置いたポケモンの身長（整数 cm）。値で答える決定（``VALUE_RANGE``）で、
+# 選べるものを並べない（``options`` は空）。答えは ``context`` の ``"value_range"`` の範囲の整数 1 つ。``context`` の ``"name"`` は伝えた名前（全員に伝えた情報）・``"quiz_card"`` は
+# 置いたカード（使ったプレイヤーだけが見る）。決めるのは相手プレイヤー（再開先は "trainer"、段階は Phase.DECISION）。正解の値は続きの情報に入れない（答えのあとに、置いた
+# カードの図鑑番号から引く）
+QUIZ_HEIGHT_ANSWER = "quiz_height_answer"
+
+# v0.129: 値で答える決定。``context`` の ``VALUE_RANGE``（(下限, 上限)。整数）があれば、選べるものを並べず（``options`` は空・選ぶ数は 1）、その範囲の整数 1 つを答えにする
+# （``check_choices``）。答えの数が多い（並べられない）決定のための形で、答えの候補を正解のデータ（身長の参照値）の集合にしない（候補から正解が漏れない・誤った答えも表せる）
+VALUE_RANGE = "value_range"
+# 値で答える決定の上限: JSON の数として誤差なく読み書きできる整数（2^53 − 1）。答えを絞るための値ではなく、書き出し・ログ・観測の JSON で値を落とさないための表現の上限
+VALUE_ANSWER_MAX = 2**53 - 1
+
+
+def value_range(decision: PendingDecision) -> tuple[int, int] | None:
+    """v0.129: 値で答える決定の範囲 (下限, 上限)。値で答える決定でなければ None。"""
+    bounds = decision.context_value(VALUE_RANGE)
+    return None if bounds is None else (bounds[0], bounds[1])
 
 # v0.67（docs/secret-plan-preflight-v0.67.md）: マチスの秘策で、うらにしてベンチに出す手札のカード。決めるのは使ったプレイヤー。選べるものは手札のカード（どの種類でもよい）。
 # 0〜1 枚（0 枚は出さない）。選べるもの・選ぶ数は使ったプレイヤーだけが見る（観測）
@@ -382,6 +402,10 @@ REVIVE_SOURCE = "revive_source"
 # v0.120: たまごの化石で山札を見たあと、ベンチに出す「なにかの化石」を進化させる進化カード（山札・手札のカード。uid）。決めるのは使ったプレイヤー。選べるカードがあれば 1 枚、なければ
 # 選べるもののない決定（0 枚。山札の中身で決定の有無を変えない）。選べるもの・数は相手に見せない。再開先は "trainer"
 BENCH_FROM_DECK_OR_HAND = "bench_from_deck_or_hand"
+# v0.130（docs/trade-please-ownership-v0.130.md 5 章）: とりかえっこプリーズの、見た相手の手札から交換するカードを 1 枚選ぶ決定。1 つ目は使ったプレイヤーが相手の手札から（「相手プレイヤーの
+# 手札を見て、カードを1枚えらぶ」）、2 つ目は相手プレイヤーが使ったプレイヤーの手札から（「相手プレイヤーにあなたの手札を見せ、カードを1枚えらばせる」）。選べるものは見た手札のカードの
+# uid（手札の並び）で 1 枚。決めるプレイヤーは見ている（観測の ``LOOKED_HAND_KINDS``）。続きの情報の ``stage`` は ``"take"``・``"give"``。再開先は "trainer"
+SELECT_EXCHANGE_CARD = "select_exchange_card"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 
@@ -602,6 +626,14 @@ def check_choices(decision: PendingDecision, choices: tuple[int, ...]) -> None:
     合わなければ ``IllegalActionError``。選べるものの中でも、原典で扱いを決められないもの
     （``context`` の ``"unresolved_choices"``）を選んだら ``UnsupportedError``。
     """
+    bounds = value_range(decision)
+    if bounds is not None:
+        # v0.129: 値で答える決定。範囲の整数 1 つ（bool・整数でない値・範囲の外は不正な答え。状態は変えない）。範囲は公開の情報で、正解を書かない
+        if len(choices) != 1:
+            raise IllegalActionError("INVALID_CHOICE_COUNT", f"値で答える決定には値を 1 つ答える（{len(choices)} 個答えている）")
+        if type(choices[0]) is not int or not bounds[0] <= choices[0] <= bounds[1]:
+            raise IllegalActionError("INVALID_CHOICE", f"{choices[0]!r} はこの決定で答えられる値（{bounds[0]}〜{bounds[1]} の整数）ではない")
+        return
     if not decision.min_choices <= len(choices) <= decision.max_choices:
         raise IllegalActionError(
             "INVALID_CHOICE_COUNT", f"選ぶ数は {decision.min_choices}〜{decision.max_choices}（{len(choices)} 個選んでいる）"

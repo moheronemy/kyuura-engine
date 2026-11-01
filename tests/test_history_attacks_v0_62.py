@@ -247,9 +247,12 @@ class CorrectionTest(unittest.TestCase):
         swap_please = {"PR1-027"}
         self.assertEqual({c["card_id"] for c in self.data["kyuura_corrections"]}, corrected | unown | babies | old_rod | v122 | arcanine | ditto | swap_please)
         in_extract = {c["id"] for c in self.data["cards"]}
-        self.assertNotIn("PR1-027", in_extract)
+        # v0.130: とりかえっこプリーズは v0.130 で写しに加えた（pool_v0_130。docs/trade-please-ownership-v0.130.md）。v0.129 までの版の写しの組にはない
+        from tests.release_catalog import cards_after
+
+        self.assertNotIn("PR1-027", in_extract - cards_after(self.data, "0.129"))
         self.assertEqual({c["id"] for c in self.data["cards"] if c.get("corrections")},
-                         corrected | (unown & in_extract) | babies | old_rod | v122 | arcanine | (ditto & in_extract))
+                         corrected | (unown & in_extract) | babies | old_rod | v122 | arcanine | (ditto & in_extract) | (swap_please & in_extract))
 
     @unittest.skipUnless((KYUURA / ".git").exists(), "../kyuura がない")
     def test_correction_sources_check_and_tampering(self):

@@ -752,6 +752,24 @@ V126_FLASH = "ES2-035"
 # ハマちゃんのヤドキング）。ワザ・トレーナーの手順 ``_v127_attack``・``_v127_trainer``・決定の答え ``_v127_decision`` を重ねる。ログから数えるのは ``v127_uses``
 V0_127 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_127"])
 V127_MOLTRES, V127_TWM, V127_PIKACHU, V127_SLOWKING = ("ES2-005", "QSG-055"), "neo4-108", ("PR1-044", "PR1-090"), "PR1-072"
+# v0.129（docs/blaines-quiz-heights-v0.129.md 8 章）: カツラのクイズ その1。使う手順 ``_v129_trainer``・置くカードと身長の答え ``_v129_decision`` を重ねる。ログから数えるのは ``v129_uses``。
+# 答えの方策は 2 つ（``V129_ANSWER_POLICIES``）: ``knowledge``（正解を目ざす。観測の伝えた名前と、公開のカードの一覧（名前 → 全国図鑑番号）・公開の身長の参照値だけを読む）と ``wrong``
+# （開発用の、意図して誤る方策。knowledge の答えに 1 cm を足す）。どちらも置いたカード・続きの情報の正解を読まない。どちらを使うかは公開の情報（番の番号と使ったトレーナーの uid）で決まる
+# 決まった割り当てで、結果を見て答えを変えない
+V0_129 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_129"])
+V129_QUIZ = "GD5-016"
+V129_ANSWER_POLICIES = ("knowledge", "wrong")
+# v0.130（docs/trade-please-ownership-v0.130.md 10 章）: とりかえっこプリーズ。使う手順 ``_v130_trainer``・選ぶカードと答え ``_v130_decision`` を重ねる。ログから数えるのは ``v130_uses``。
+# 方策はどれも公開の情報と、決めるプレイヤーが見ている手札（選べるもの）だけを読む決まった割り当てで、正式な対戦の前に決めた（結果を見て変えない）: 使ったプレイヤーが選ぶカードは
+# 選べるもののうち (番の番号 + 使ったトレーナーの uid) を数で割った余りの位置、相手が選ぶカードは (3 × 番の番号 + 使ったトレーナーの uid) の余りの位置、答えは (番の番号 + 使ったトレーナーの
+# uid) が偶数ならオーケー、奇数ならオーケーでない
+V0_130 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_130"])
+V130_SWAP = "PR1-027"
+# v0.131（docs/exeggutor-bilingual-names-v0.131.md 10 章）: ナッシー[Exeggutor] 2 枚（日英併記の名前は利用者が指定した扱い）。新しい方策は加えない（進化・ワザは元の手順、カツラのクイズ
+# その3 は v0.63 の手順、スロットゲームは v0.80 の手順のまま）。ログから数えるのは ``v131_uses``
+V0_131 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_131"])
+V131_EXEGGUTOR, V131_EXEGGUTOR_B = V0_131
+V131_SLOT_GAME = "neo1-090"
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -1027,6 +1045,22 @@ DECKS = {
     # v0.127: 雷・超。_のピカチュウ 4 枚（PR1-044・PR1-090 を 2 枚ずつ。同じ名前で 4 枚まで）とヤドン → ハマちゃんのヤドキング（利用者が指定した簡略ルールのワザ）。怪電波マシーンは入れない
     # （通常のプロモの対戦。途中停止の起こる対戦と分けて数える）
     "P127": (("PR1-044", 2), ("PR1-090", 2), (SLOWPOKE, 4), (V127_SLOWKING, 3), (driver.BILL, 2), (SWITCH, 2), (driver.POTION, 2), (LIGHTNING, 22), (PSYCHIC, 21)),
+    # v0.129: 闘・無色。カツラのクイズ その1 4 枚と、出題に使うポケモン: ディグダ（いちばん低い 20cm の種族）・ダグトリオ・イワーク（880cm）・ハガネール（いちばん高い 920cm。鋼のワザは
+    # 使えないが手札で出題できる）・ポリゴン・ポリゴン2（公式の表記は「ポリゴン２」）・エリカのフシギダネ（所有者名つき。図鑑番号 1）。図鑑番号のないポリゴン ES1-033・イワーク ES2-024 は
+    # 選べるが選ぶと止める（手順は選ばず、出たことを数える）
+    "Q129": ((V129_QUIZ, 4), ("PMCG1-052", 4), ("PMCG1-056", 2), ("PMCG1-054", 2), ("ES2-024", 1), ("neo1-057", 1), ("PMCG1-064", 2), ("ES1-033", 2),
+             ("neo3-051", 2), ("PMCG5-007", 2), (driver.BILL, 2), (SWITCH, 2), (driver.POTION, 2), (FIGHTING, 32)),
+    # v0.130: 闘・無色。とりかえっこプリーズ 4 枚と、交換したカードを場に出す・進化させる・つける・トラッシュする・山札にもどす・手札にもどす・サイドに置く経路のカード: たね（エビワラー・
+    # コラッタ・イワーク）と 1 進化（ラッタ）、退化スプレー（進化カードを手札にもどす）・ポケモン回収（たねを手札にもどし、ほかはトラッシュ）・ポケモン交換おじさん（手札のポケモンを山札に
+    # もどす）・にせオーキドはかせ（相手の手札を山札にもどす）・オーキドはかせ（手札をトラッシュ）・にせオーキドの発明（相手のサイドを山札にもどして置きなおす）・プラスパワー（つける
+    # トレーナー）・錯乱ジム（相手がかわりに使うことを選ぶと止まる経路。UQ-CHAOS-GYM-BORROWED-TURN）
+    "T130": ((V130_SWAP, 4), (HITMONCHAN, 3), (RATTATA, 4), (RATICATE, 3), (ONIX, 2), ("PMCG1-086", 1), ("PMCG1-092", 1), ("PMCG1-093", 1), ("PMCG1-089", 1),
+             ("PMCG1-077", 1), ("neo4-111", 1), ("PMCG5-087", 1), (driver.BILL, 2), (SWITCH, 1), (driver.POTION, 1), (driver.PLUSPOWER, 2), (FIGHTING, 31)),
+    # v0.131: 草・超。タマタマ（PMCG2-006・neo4-049 を 2 枚ずつ。「タマタマ」4 枚）→ ナッシー[Exeggutor]（PR1-075 2 枚・PR1-077 1 枚）と通常のナッシー（PMCG2-012）1 枚（「ナッシー」をちょうど 4 枚。デッキの
+    # 同じ名前の数え方を通す）、カツラのクイズ その3（置くカード・伝えるワザ名・答えの名前）・スロットゲーム（同じ名前のカード）、ピッピ（ゆびをふる。相手のワザをまねる）・メタモン
+    # （［へんしん］。相手の対戦ポケモンと同じカードとしてあつかう）
+    "X131": ((EXEGGCUTE, 2), ("neo4-049", 2), (V131_EXEGGUTOR, 2), (V131_EXEGGUTOR_B, 1), ("PMCG2-012", 1), (CLEFAIRY, 2), (DITTO, 1), (BLAINES_QUIZ_3, 3),
+             (V131_SLOT_GAME, 2), (driver.BILL, 2), (driver.POTION, 1), (SWITCH, 1), (GRASS, 26), (PSYCHIC, 14)),
     "F45": ((ONIX, 3), (RATTATA, 4), (RATICATE, 3), (ROCKETS_HITMONCHAN, 3), (BROCKS_GEODUDE_40, 4), (BROCKS_RHYHORN, 1), (BROCKS_SANDSHREW, 1),
             (GIOVANNIS_MEOWTH_40, 3), *TRAINERS, (FIGHTING, 26)),
     # v0.45: 水・超（ロケット団・第1弾）。ハイドロキャノン・ロケットタックル・さいみんじゅつ・ゆめくい（相手がねむりでないと失敗）
@@ -2150,6 +2184,15 @@ PAIRINGS_V0_126 = (("M126", "F126"), ("M126", "W125"), ("F126", "F45"))
 # 対戦（P127 対 W28・P127 対 F45: 利用者が指定した簡略ルールのワザ。途中停止の起こるカードはない）。組・席・seed は正式な対戦の前に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめる
 # seed 90〜93 とは別。途中停止した局を除かない・seed を選び直さない）
 PAIRINGS_V0_127 = (("F127", "W28"), ("F127", "S124"), ("F127", "F45"), ("P127", "W28"), ("P127", "F45"))
+# v0.129: Q129 対 W28（水・無色）・Q129 対 F45（闘）・Q129 対 Q129（お互いにクイズを使い、お互いに答える）。組・席・seed は正式な対戦の前に決めた（正式な対戦は seed 0〜3。開発中に
+# 手順を確かめる seed 90〜93 とは別。局・seed を選び直さない）
+PAIRINGS_V0_129 = (("Q129", "W28"), ("Q129", "F45"), ("Q129", "Q129"))
+# v0.130: T130 どうし（お互いに使い、受け取ったカードをふたたび交換しうる。席を入れかえた局は同じ局なので 1 回だけ行う）・T130 対 W28（水・無色）・T130 対 F45（闘）。組・席・seed は正式な
+# 対戦の前に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめる seed 90〜93 とは別。局・seed・方策を選び直さない）
+PAIRINGS_V0_130 = (("T130", "T130"), ("T130", "W28"), ("T130", "F45"))
+# v0.131: X131 どうし（相手のナッシー[Exeggutor] をゆびをふる・［へんしん］で写しうる。席を入れかえた局は同じ局なので 1 回だけ行う）・X131 対 W28（水・無色）・X131 対 F45（闘）。組・席・seed は
+# 正式な対戦の前に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめる seed 90〜93 とは別。局・seed を選び直さない）
+PAIRINGS_V0_131 = (("X131", "X131"), ("X131", "W28"), ("X131", "F45"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -2174,7 +2217,8 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.116": PAIRINGS_V0_116, "v0.117": PAIRINGS_V0_117, "v0.118": PAIRINGS_V0_118,
            "v0.119": PAIRINGS_V0_119, "v0.120": PAIRINGS_V0_120, "v0.121": PAIRINGS_V0_121, "v0.122": PAIRINGS_V0_122,
            "v0.123": PAIRINGS_V0_123, "v0.124": PAIRINGS_V0_124, "v0.125": PAIRINGS_V0_125, "v0.126": PAIRINGS_V0_126,
-           "v0.127": PAIRINGS_V0_127}
+           "v0.127": PAIRINGS_V0_127, "v0.129": PAIRINGS_V0_129, "v0.130": PAIRINGS_V0_130,
+           "v0.131": PAIRINGS_V0_131}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -12001,6 +12045,231 @@ def _v127_decision(state, counts):
     return None
 
 
+def _v129_trainer(state, tried, counts):
+    """v0.129: 手札のカツラのクイズ その1を、ワザか番の終わりの前に使う（1 つの番に 1 回。使う前に止まるなら、その番は試さない）。"""
+    player = state.current_player
+    if state.trainer_in_use is not None:
+        return None
+    for card in state.players[player].hand:
+        if state.cards[card].card_id != V129_QUIZ:
+            continue
+        key = ("v129_quiz", state.turn_number)
+        if key in tried:
+            return None
+        tried.add(key)
+        command = PlayTrainer(player, card)
+        if not _v052_accepted(state, command):
+            counts["v129_quiz_not_played"] += 1
+            return None
+        counts["v129_quiz_played"] += 1
+        return command
+    return None
+
+
+def v129_public_answer(state, d, policy: str) -> int:
+    """v0.129: 身長の答え（整数 cm）を、答えるプレイヤーの観測と公開の情報だけで決める（置いたカード・決定の続きの情報の置いたカードを読まない）。
+
+    - ``knowledge``（正解を目ざす方策）: 観測の伝えた名前のカードを、公開のカードの一覧（同梱の写しの定義）から引き、全国図鑑番号が 1 つに決まれば、公開の身長の参照値の原表記（「0.2m」）を
+      人向けの答えの換算（``heights.height_answer_cm``）で整数 cm にする。決まらなければ 100
+    - ``wrong``（開発用の、意図して誤る方策）: knowledge の答え + 1"""
+    from kyuura_engine.cards import load_card_pool
+    from kyuura_engine.heights import height_answer_cm, load_species_heights
+    from kyuura_engine.observation import observe
+
+    name = observe(state, d.player)["decision"]["name"]
+    numbers = {d_.dex for d_ in load_card_pool().definitions.values() if d_.category == "pokemon" and d_.name_ja == name and d_.dex}
+    heights = load_species_heights().by_dex
+    known = None
+    if len(numbers) == 1 and len(next(iter(numbers))) == 1 and next(iter(numbers))[0] in heights:
+        known = height_answer_cm(heights[next(iter(numbers))[0]].height_raw)
+    value = 100 if known is None else known
+    return value + 1 if policy == "wrong" else value
+
+
+def _v129_decision(state, counts):
+    """v0.129: カツラのクイズ その1の置くカード（選べるもののうち、選ぶと止めるカードを除いたものを順に。止めるカードがあったことを数える）と、相手プレイヤーの身長の答え（方策の割り当て
+    ``V129_ANSWER_POLICIES``: 番の番号と使ったトレーナーの uid の和が偶数なら knowledge、奇数なら wrong）。"""
+    from kyuura_engine import decisions as D
+
+    d = state.decision
+    used = state.trainer_in_use
+    if d is None or d.resume != "trainer" or used is None or state.cards[used.card].card_id != V129_QUIZ:
+        return None
+    if d.kind == D.QUIZ_CARD:
+        blocked = set(d.context_value("unresolved_choices", ()) or ())
+        free = [uid for uid in d.options if uid not in blocked]
+        if blocked:
+            counts["v129_blocked_offered"] += 1
+        if not free:
+            return None
+        chosen = free[(state.turn_number // 2 + used.card) % len(free)]
+        counts["v129_card_chosen"] += 1
+        return ResolveDecision(d.player, d.id, (chosen,))
+    if d.kind == D.QUIZ_HEIGHT_ANSWER:
+        policy = V129_ANSWER_POLICIES[(state.turn_number + used.card) % 2]
+        counts[f"v129_answer_{policy}"] += 1
+        return ResolveDecision(d.player, d.id, (v129_public_answer(state, d, policy),))
+    return None
+
+
+def v129_uses(state):
+    """v0.129: ログから数えたカツラのクイズ その1の動き（このカードのない局では空）。
+
+    - ``played``・``correct``・``wrong``・``drawn_by_answerer``・``drawn_by_user``（引いた枚数）・``short_draw``（2 枚より少なく引いた）・``returned``（手札にもどした）
+    - ``card_<id>``（置いたカード）・``height_<cm>``（置いたカードの参照値）"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_129 for uid in state.cards):
+        return counts
+    log = list(state.log)
+    for i, e in enumerate(log):
+        kind = e["kind"]
+        if kind == "play_trainer" and state.cards[e["card"]].card_id == V129_QUIZ:
+            counts["played"] += 1
+        elif kind == "quiz_height_reveal":
+            counts["correct" if e["correct"] else "wrong"] += 1
+            counts[f"card_{e['card_id']}"] += 1
+            counts[f"height_{e['height_cm']}"] += 1
+            following = log[i + 1] if i + 1 < len(log) else None
+            drawn = len(following["cards"]) if following is not None and following["kind"] == "draw" else 0
+            counts["drawn_by_answerer" if e["correct"] else "drawn_by_user"] += drawn
+            if drawn < 2:
+                counts["short_draw"] += 1
+        elif kind == "set_aside_returned" and e.get("reason") == "quiz" and state.cards[e["trainer_card"]].card_id == V129_QUIZ:
+            counts["returned"] += 1
+    return counts
+
+
+def _v130_trainer(state, tried, counts):
+    """v0.130: 手札のとりかえっこプリーズを、ワザか番の終わりの前に使う（1 つの番に 1 回。使う前に止まる・拒否されるなら、その番は試さない）。"""
+    player = state.current_player
+    if state.trainer_in_use is not None:
+        return None
+    for card in state.players[player].hand:
+        if state.cards[card].card_id != V130_SWAP:
+            continue
+        key = ("v130_swap", state.turn_number)
+        if key in tried:
+            return None
+        tried.add(key)
+        command = PlayTrainer(player, card)
+        if not _v052_accepted(state, command):
+            counts["v130_swap_not_played"] += 1
+            return None
+        counts["v130_swap_played"] += 1
+        return command
+    return None
+
+
+def _v130_decision(state, counts):
+    """v0.130: とりかえっこプリーズの選ぶカード（使ったプレイヤー・相手プレイヤー）と、相手プレイヤーの答え（``V130_SWAP`` の上の決まった割り当て）。錯乱ジムで相手がかわりに使うかの問い
+    （使うことを選ぶと止まる）には答えない（元の手順が止まらない答えを選ぶ）。"""
+    from kyuura_engine import decisions as D
+
+    d = state.decision
+    used = state.trainer_in_use
+    if d is None or d.resume != "trainer" or used is None or state.cards[used.card].card_id != V130_SWAP or d.context_value("stage") is None:
+        return None
+    stage = d.context_value("stage")
+    if d.kind == D.SELECT_EXCHANGE_CARD:
+        offset = state.turn_number if stage == "take" else 3 * state.turn_number
+        counts[f"v130_select_{stage}"] += 1
+        return ResolveDecision(d.player, d.id, (d.options[(offset + used.card) % len(d.options)],))
+    if d.kind == D.ACCEPT_REQUEST and stage == "accept":
+        accept = (state.turn_number + used.card) % 2 == 0
+        counts["v130_answer_accept" if accept else "v130_answer_decline"] += 1
+        return ResolveDecision(d.player, d.id, (1,) if accept else ())
+    return None
+
+
+def v130_uses(state):
+    """v0.130: ログから数えたとりかえっこプリーズと、交換したカードの動き（このカードのない局では空）。
+
+    - ``played``・``accepted``・``declined``・``exchanged_cards``（交換したカードの延べ枚数）・``re_exchanged``（2 回以上交換したカード）・``drawn_on_decline``（オーケーでないときに引いた
+      枚数）・``short_draw``（2 枚より少なく引いた）・``chaos_offered``（錯乱ジムの「うら」で、相手がかわりに使うかを問われた）
+    - ``after_<ログの種類>``: 交換したあとのログで、交換したカードの uid が出たもの（交換のログを除く。そのカードを使う・場に出す・進化させる・つける・トラッシュする・山札・手札・サイドに
+      移すなど。同じログに 2 枚出れば 2）。``swapped_<種類>``: 交換したカードの印刷の分類"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_130 for uid in state.cards):
+        return counts
+    from kyuura_engine.observation import _uid_field
+
+    log = list(state.log)
+    swapped: dict[int, int] = {}  # uid → 交換した回数
+    for i, e in enumerate(log):
+        kind = e["kind"]
+        if kind == "play_trainer" and state.cards[e["card"]].card_id == V130_SWAP:
+            counts["played"] += 1
+        elif kind == "request_answered" and e.get("trainer_card") in state.cards and state.cards[e["trainer_card"]].card_id == V130_SWAP:
+            counts["accepted" if e["accepted"] else "declined"] += 1
+            following = log[i + 1] if i + 1 < len(log) else None
+            if not e["accepted"]:
+                drawn = len(following["cards"]) if following is not None and following["kind"] == "draw" else 0
+                counts["drawn_on_decline"] += drawn
+                counts["short_draw"] += drawn < 2
+        elif kind in ("chaos_answered", "chaos_not_borrowable") and state.cards[e["card"]].card_id == V130_SWAP:
+            counts["chaos_" + ("answered" if kind == "chaos_answered" else "not_borrowable")] += 1
+        if kind == "cards_exchanged":
+            for uid in (e["given_card"], e["taken_card"]):
+                swapped[uid] = swapped.get(uid, 0) + 1
+                counts["exchanged_cards"] += 1
+                counts[f"swapped_{state.printed_def(uid).category}"] += 1
+            continue
+        if not swapped:
+            continue
+        for name, value in e.items():
+            if not _uid_field(name):
+                continue
+            values = value if isinstance(value, (list, tuple)) else (value,)
+            counts.update(f"after_{kind}" for v in values if type(v) is int and v in swapped)
+    counts["re_exchanged"] = sum(1 for n in swapped.values() if n > 1)
+    chaos_offers = sum(1 for e in log if e["kind"] == "chaos_check" and e.get("card") in state.cards and state.cards[e["card"]].card_id == V130_SWAP)
+    counts["chaos_checks"] = chaos_offers
+    return +counts
+
+
+def v131_uses(state):
+    """v0.131: ログから数えたナッシー[Exeggutor]（``V0_131``）の動き（このカードのない局では空）。
+
+    - ``in_deck_<id>``: デッキに入れた枚数（同じ名前 4 枚の数え方を通ったデッキ）。``evolve_<id>_from_<下のカード>``: 手札から進化させた（下のポケモンのカード）
+    - ``attack_<id>``: このカードがワザ（ふみつけ）を宣言した。``attack_heads``・``attack_tails``: そのコイン。``form_attack_<id>``: ［へんしん］の今の姿のワザとして宣言された
+    - ``copied_<id>``: ゆびをふるなどでワザをまねられた。``quiz_card_<id>``・``quiz_hint_<ワザ名>``・``quiz_answer_<正解か>``: カツラのクイズ その3 で置いた・伝えたワザ名・答え
+    - ``slot_same_name``: スロットゲームで、このカードがほかの「ナッシー」と同じ名前のカードとして手札に加わった"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_131 for uid in state.cards):
+        return counts
+    log = list(state.log)
+    for card in state.cards.values():
+        if card.card_id in V0_131:
+            counts[f"in_deck_{card.card_id}"] += 1
+    quiz_cards = set()
+    for i, e in enumerate(log):
+        kind = e["kind"]
+        if kind == "evolve" and e.get("to_card_id") in V0_131:
+            counts[f"evolve_{e['to_card_id']}_from_{e['from_card_id']}"] += 1
+        elif kind == "attack":
+            source = e.get("card_id") or state.cards[e["pokemon"]].card_id
+            if source in V0_131:
+                counts[f"{'form_' if e.get('route') == 'form' else ''}attack_{source}"] += 1
+                flip = next((x for x in log[i + 1:] if x["kind"] in ("coin_flip", "attack", "turn_end")), None)
+                if flip is not None and flip["kind"] == "coin_flip":
+                    counts[f"attack_{flip['result']}"] += 1
+        elif kind == "copy_attack" and str(e.get("copied", "")).split("#")[0] in V0_131:
+            counts[f"copied_{e['copied'].split('#')[0]}"] += 1
+        elif kind == "quiz_card_set" and state.cards[e["card"]].card_id in V0_131:
+            quiz_cards.add(e["trainer_card"])
+            counts[f"quiz_card_{state.cards[e['card']].card_id}"] += 1
+        elif kind == "quiz_hint" and e.get("trainer_card") in quiz_cards:
+            counts[f"quiz_hint_{e['attack_name']}"] += 1
+        elif kind == "quiz_reveal" and e.get("card_id") in V0_131:
+            counts[f"quiz_answer_{'correct' if e['correct'] else 'wrong'}"] += 1
+        elif kind == "reveal_deck_top":
+            taken = [x["card"] for x in log[i + 1:i + 4] if x["kind"] == "reveal_from_deck"]
+            if any(state.cards[uid].card_id in V0_131 for uid in taken) and len(taken) >= 2:
+                counts["slot_same_name"] += 1
+                counts[f"slot_with_{'_'.join(sorted(state.cards[uid].card_id for uid in taken))}"] += 1
+    return +counts
+
+
 def v127_uses(state):
     """v0.127: ログから数えたドライアップ・怪電波マシーン・利用者の簡略ルールのワザの動き（v0.127 のカードのない局では空）。
 
@@ -12489,7 +12758,9 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = (_v127_decision(state, counts)  # v0.127: ドライアップの選ぶポケモン・トラッシュ、怪電波マシーンのもどすカード（ないデッキでは何もしない）
+            early = (_v130_decision(state, counts)  # v0.130: とりかえっこプリーズの選ぶカード・答え（相手の決定にも答える。ないデッキでは何もしない）
+                     or _v129_decision(state, counts)  # v0.129: カツラのクイズ その1の置くカード・身長の答え（相手の決定にも答える。ないデッキでは何もしない）
+                     or _v127_decision(state, counts)  # v0.127: ドライアップの選ぶポケモン・トラッシュ、怪電波マシーンのもどすカード（ないデッキでは何もしない）
                      or _v126_decision(state, counts)  # v0.126: フラッシュの並べかえ・おもての山札のある間の選択（フラッシュのない局では何もしない）
                      or _v124_decision(state, counts)  # v0.124: ［すごいへんしん］の選ぶポケモン（v0.124 のカードの決定でなければ何もしない）
                      or _v123_decision(state, counts)  # v0.123: いかりのほのお・ほのおのあらしの炎エネルギーカードのトラッシュ（v0.123 のカードのワザでない決定では何もしない）
@@ -12581,6 +12852,12 @@ def make_policy(seen: dict, counts: Counter):
             return (_v031_decision(state, counts) or _v039_decision(state, counts) or _v040_decision(state, counts) or _v041_decision(state, counts)
                     or _v042_decision(state, counts) or command)
         if state.phase is Phase.MAIN and isinstance(command, (UseAttack, EndTurn)):
+            swap = _v130_trainer(state, tried, counts)  # v0.130: とりかえっこプリーズ（ないデッキでは何もしない）
+            if swap is not None:
+                return swap
+            quiz = _v129_trainer(state, tried, counts)  # v0.129: カツラのクイズ その1（ないデッキでは何もしない）
+            if quiz is not None:
+                return quiz
             machine = _v127_trainer(state, command, tried, counts)  # v0.127: 怪電波マシーン（ないデッキでは何もしない）
             if machine is not None:
                 return machine
@@ -12935,6 +13212,9 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v125"] = v125_uses(state)
         result["v126"] = v126_uses(state)
         result["v127"] = v127_uses(state)
+        result["v129"] = v129_uses(state)
+        result["v130"] = v130_uses(state)
+        result["v131"] = v131_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
@@ -12956,7 +13236,7 @@ def audit(result, state, commands):
         return {"not_audited": 1}
     current = new_game(*(deck_cards(label) for label in result["decks"]), result["seed"])
     watch = any(state.cards[uid].card_id in V0_47 + V0_47_TRAINERS + V0_48 + V0_54_TRAINERS + V0_55_TRAINERS + V0_56_TRAINERS + V0_63_TRAINERS + V0_95 + V0_96
-                + V0_97 for uid in state.cards)  # v0.48: 観測の今有効な値も（v0.54・v0.55: 見る・見せるトレーナー。v0.95: 手札・山札を見るワザ・特殊能力）
+                + V0_97 + V0_130 for uid in state.cards)  # v0.48: 観測の今有効な値も（v0.54・v0.55: 見る・見せるトレーナー。v0.95: 手札・山札を見るワザ・特殊能力）
     deck_before: dict[int, int] = {}  # v0.105: ワザの宣言の直前の、ワザを使ったプレイヤーの山札の枚数（宣言を処理する前のログの長さ → 枚数）
     for command in commands:
         if isinstance(command, UseAttack):

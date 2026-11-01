@@ -72,6 +72,9 @@ class Attack:
     supported: bool  # 効果の登録表に実装があり、データと合うか（登録表は CardPool.effects）
     unsupported_reason: str | None
     damage_modifier: str | None = None  # データの damage.modifier（「+」「×」など）
+    # v0.131（docs/exeggutor-bilingual-names-v0.131.md 4 章）: 判定に使うワザ名（``name_ja``）が写しのワザ名と違うときだけ、写しのワザ名（原文。日本語と英語の併記を含む表示用の
+    # 値）。利用者が指定した名前の扱い（``effects.USER_SPECIFIED_NAMES``）の登録のあるカードだけが持ち、ほかのワザはいつも None（``name_ja`` が写しの値のまま）
+    printed_name_ja: str | None = None
 
 
 @dataclass(frozen=True)
@@ -160,6 +163,13 @@ class CardDefinition:
     evolves_to: tuple[str, ...] = ()
     # v0.114: ベイビィポケモンのルール（GR-2000-P314-BABY-RULE）を印刷したカードか（ルール文が ``BABY_RULE_TEXT``）。特殊能力ではない（CR-BABY-RULE-NOT-POWER）
     baby_rule: bool = False
+    # v0.129（docs/blaines-quiz-heights-v0.129.md 2 章）: kyuura の ``pokemon.dex``（全国図鑑番号の並び。写しの値のまま。記録がなければ ()）。公式図鑑の種族の身長の参照値
+    # （``heights.card_height``）を引くのに使う。名前から推測して補わない。ポケモン以外はいつも ()
+    dex: tuple[int, ...] = ()
+    # v0.131（docs/exeggutor-bilingual-names-v0.131.md 4 章）: 判定に使う名前（``name_ja``）が写しの名前と違うときだけ、写しの名前（原文。日本語と英語の併記を含む表示用の値）。
+    # 利用者が指定した名前の扱い（``effects.USER_SPECIFIED_NAMES``）の登録のあるカードだけが持ち、ほかのカードはいつも None（``name_ja`` が写しの値のまま。括弧書き・英語を一律に
+    # 除く正規化はしない）。デッキの同じ名前・進化元・名前を指定する効果・クイズの答えは ``name_ja`` で比べる
+    printed_name_ja: str | None = None
 
     @property
     def is_basic_pokemon(self) -> bool:
@@ -310,7 +320,10 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
         from .effects import DEFAULT_EFFECTS as effects
     name = record["name"]
     category = record["category"]
-    common = dict(id=record["id"], name_ja=name.get("ja") or "", name_en=name.get("en"), category=category)
+    names, name_problem = _user_specified_names(record)
+    common = dict(id=record["id"], name_ja=names.get("name.ja", name.get("ja") or ""), name_en=name.get("en"), category=category)
+    if name_problem is not None and category != "pokemon":
+        return CardDefinition(**common, supported=False, unsupported_reasons=(name_problem,))
 
     if category == "trainer":
         # トレーナーは、効果の登録表にカード id で実装が登録され、登録したときに照合した名前・文面と
@@ -360,8 +373,8 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
         return CardDefinition(**common, supported=False, unsupported_reasons=(f"未知のカードの種類 {category}",))
 
     pokemon = record["pokemon"]
-    reasons = []
-    evolves_from = (pokemon.get("evolves_from") or {}).get("ja")
+    reasons = [] if name_problem is None else [name_problem]
+    evolves_from = names.get("pokemon.evolves_from.ja", (pokemon.get("evolves_from") or {}).get("ja"))
     evolves_to: tuple[str, ...] = ()
     if pokemon["stage"] in ("stage1", "stage2"):
         # 1 進化（v0.4a）・2 進化（v0.4c）。「○○○○から進化」の名前がなければ、何に重ねるか決まらない（p.309・p.324）。
@@ -425,6 +438,8 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
         resistance = EnergyType(r["type"])
         resistance_value = r["value"]
     parsed = tuple(_parse_attack(i, a) for i, a in enumerate(pokemon["attacks"]))
+    parsed = tuple(attack if f"pokemon.attacks[{attack.index}].name.ja" not in names
+                   else replace(attack, name_ja=names[f"pokemon.attacks[{attack.index}].name.ja"], printed_name_ja=attack.name_ja) for attack in parsed)
     attacks = tuple(_annotate_attack(record["id"], attack, effects, parsed) for attack in parsed)
     if not attacks and not baby_rule and not any(power.supported and getattr(effects.power_effect(record["id"], power), "supplies_attacks", False) for power in powers):
         # v0.49: ワザのないポケモンは、今の姿のワザを持たせる特殊能力（メタモンの［へんしん］。``PowerEffect.supplies_attacks``）が登録されているときだけ対応にする
@@ -454,7 +469,39 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
         name_group=None if group_rule is None else group_rule[0],
         name_letter=None if group_rule is None else group_rule[1],
         deck_group_limit=None if group_rule is None else group_rule[2],
+        dex=_parse_dex(record["id"], pokemon.get("dex")),
+        printed_name_ja=None if "name.ja" not in names else name.get("ja"),
     )
+
+
+def _user_specified_names(record: dict) -> tuple[dict[str, str], str | None]:
+    """v0.131（docs/exeggutor-bilingual-names-v0.131.md 4 章）: 利用者が指定した名前の扱い（``effects.USER_SPECIFIED_NAMES`` の ``<カード id>/name``）の登録があるカードの、
+    判定に使う値（欄 → 値。写しの値と違う欄だけ）と、使えない理由。登録のないカードは ({}, None)（名前は写しのまま。括弧書き・英語を一律に除かない）。
+
+    登録の欄ごとの写しの値（原文）が、このカードの写しの値とちょうど同じときだけ当てはめる。違えば（写しが変わった・別のカードに書いた）何も置きかえず、理由を返す
+    （カードは未対応になる。黙って別の値で判定しない）。写しの値そのものは書き換えない（原文は ``printed_name_ja`` に残す）。"""
+    from .effects import USER_SPECIFIED_NAMES
+
+    spec = USER_SPECIFIED_NAMES.get(f"{record['id']}/name")
+    if spec is None:
+        return {}, None
+    pokemon = record.get("pokemon") or {}
+    attacks = pokemon.get("attacks") or ()
+    copied = {"name.ja": (record.get("name") or {}).get("ja"), "pokemon.evolves_from.ja": (pokemon.get("evolves_from") or {}).get("ja")}
+    copied |= {f"pokemon.attacks[{i}].name.ja": (attack.get("name") or {}).get("ja") for i, attack in enumerate(attacks)}
+    wrong = [field.field for field in spec.fields if field.field not in copied or copied[field.field] != field.copy_value]
+    if record.get("category") != "pokemon" or wrong or "name.ja" not in {field.field for field in spec.fields}:
+        return {}, f"利用者が指定した名前の扱い（{spec.key}）の記録の写しの値が、このカードの写しの値と違う（欄 {wrong}。当てはめない）"
+    return {field.field: field.rule_value for field in spec.fields if field.rule_value != field.copy_value}, None
+
+
+def _parse_dex(card_id: str, value) -> tuple[int, ...]:
+    """v0.129: kyuura の ``pokemon.dex``（整数の並び）。欄がない・空なら ()（補わない）。整数でない値は写しの誤りとして ``ValueError``。"""
+    if value is None:
+        return ()
+    if not isinstance(value, list) or any(type(number) is not int or number < 1 for number in value):
+        raise ValueError(f"{card_id} の pokemon.dex {value!r} が 1 以上の整数の並びではない")
+    return tuple(value)
 
 
 def _deck_limit_rule(name: str, text: str | None) -> int | None:
@@ -678,6 +725,9 @@ POOL_KEYS = (
     "pool_v0_125",  # v0.125（プクリンの最新の説明・てだすけ。docs/wigglytuff-helping-hand-v0.125.md）
     "pool_v0_126",  # v0.126（フラッシュと表向きの山札。docs/flash-faceup-deck-v0.126.md）
     "pool_v0_127",  # v0.127（枚数不足の途中停止と、利用者指定の簡略ルールのプロモ 3 枚。docs/deferred-shortage-user-promos-v0.127.md）
+    "pool_v0_129",  # v0.129（カツラのクイズ その1。正解の参照値は利用者指定の公式図鑑の種族の身長。docs/blaines-quiz-heights-v0.129.md）
+    "pool_v0_130",  # v0.130（とりかえっこプリーズ。交換したカードの所有者は利用者指定の簡略化。docs/trade-please-ownership-v0.130.md）
+    "pool_v0_131",  # v0.131（ナッシー[Exeggutor] 2 枚。日英併記の名前は利用者指定の扱い。docs/exeggutor-bilingual-names-v0.131.md）
 )
 
 

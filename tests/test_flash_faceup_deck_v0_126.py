@@ -104,8 +104,11 @@ class MigrationChainTest(unittest.TestCase):
         self.assertEqual((fix["kyuura_saw_image"], fix["engine_saw_image"], fix["applied_in_source"], fix["previous_source"]), (True, False, NOW, V0125))
         self.assertEqual([c for c in SWAP_BEFORE if c not in SWAP_AFTER], [])
         self.assertEqual(len(SWAP_AFTER) - len(SWAP_BEFORE), 1)  # 加わったのは読点 1 つだけ（括弧・句読点を一般に正規化していない）
-        self.assertNotIn(SWAP_PLEASE, {c["id"] for c in extract["cards"]})
-        self.assertNotIn(SWAP_PLEASE, load_card_pool().playable_ids)
+        # v0.130: とりかえっこプリーズは v0.130 で写しに加えて登録した（pool_v0_130。docs/trade-please-ownership-v0.130.md）。v0.126 の版の範囲（後の版の写しの組を除く）では写しの外
+        later = cards_after(extract, "0.126")
+        self.assertEqual(later & {SWAP_PLEASE}, {SWAP_PLEASE})
+        self.assertNotIn(SWAP_PLEASE, {c["id"] for c in extract["cards"]} - later)
+        self.assertNotIn(SWAP_PLEASE, load_card_pool().playable_ids - later)
 
     def test_adoption_migrations_are_appended(self):
         sources = cs.load_sources()
@@ -117,7 +120,9 @@ class MigrationChainTest(unittest.TestCase):
         self.assertEqual(cs.data_migrations(sources, read_extract())[1], [])
         # 採用したときのデータのコミットが 57d01f4 の記録は、この版で写しに加えたカード（pool_v0_126）だけ（移行の段では採用し直していない）。v0.127 は写しの元を変えずに
         # pool_v0_127 の 6 枚を 57d01f4 で採用した（tests/test_deferred_shortage_user_promos_v0_127.py）
-        self.assertEqual({card for card, record in sources["cards"].items() if record.get("kyuura_commit") == NOW}, cards_after(read_extract(), "0.125"))
+        # v0.129: pool_v0_129 のカツラのクイズ その1は 71d1728 で採用した（tests/test_blaines_quiz_heights_v0_129.py）ので、57d01f4 の記録には入らない
+        self.assertEqual({card for card, record in sources["cards"].items() if record.get("kyuura_commit") == NOW},
+                         cards_after(read_extract(), "0.125") - cards_after(read_extract(), "0.128"))
 
     @needs_history
     def test_extract_is_unchanged_for_the_base_cards(self):
@@ -185,7 +190,10 @@ class ResearchLinksTest(unittest.TestCase):
         self.assertEqual(links["engine_import_id"], "ENGINE-46A3E2E")
         registered = FLASH in load_card_pool().playable_ids
         trainers = links["latest_descriptions"]
-        self.assertEqual(trainers["trainer_records_not_registered"], {SWAP_PLEASE: NEW_LDS[SWAP_PLEASE]} if registered else NEW_LDS)
+        # v0.130: とりかえっこプリーズを登録したので、その最新の説明は registered_trainers に移った（tests/test_trade_please_v0_130.py）
+        swap_registered = SWAP_PLEASE in load_card_pool().playable_ids
+        self.assertEqual(trainers["trainer_records_not_registered"], {} if swap_registered else {SWAP_PLEASE: NEW_LDS[SWAP_PLEASE]} if registered else NEW_LDS)
+        self.assertEqual(trainers["registered_trainers"].get(SWAP_PLEASE), NEW_LDS[SWAP_PLEASE] if swap_registered else None)
         self.assertEqual(trainers["registered_trainers"].get(FLASH), NEW_LDS[FLASH] if registered else None)
         not_in_engine = links["card_checks"]["not_in_engine"]
         for card, ids in NEW_CCS.items():
@@ -198,7 +206,9 @@ class ResearchLinksTest(unittest.TestCase):
         import copy
 
         broken = copy.deepcopy(self.links)
-        broken["latest_descriptions"]["trainer_records_not_registered"].pop(SWAP_PLEASE)
+        # v0.130: とりかえっこプリーズは登録した（registered_trainers）。どちらかの一覧から落とすと、kyuura のトレーナーの説明のすべてと違う
+        listed = "trainer_records_not_registered" if SWAP_PLEASE in broken["latest_descriptions"]["trainer_records_not_registered"] else "registered_trainers"
+        broken["latest_descriptions"][listed].pop(SWAP_PLEASE)
         self.assertTrue(any("トレーナーの最新の説明（LD-…-TRAINER）の一覧が違う" in p for p in rl.check(KYUURA, links=broken)))
         broken = copy.deepcopy(self.links)
         broken["latest_descriptions"]["trainer_records_not_registered"]["PMCG1-077"] = "LD-PMCG1-077-TRAINER"
@@ -231,14 +241,18 @@ class ResearchLinksTest(unittest.TestCase):
         self.assertEqual((len(checks), checks - old_checks), (90, {i for ids in NEW_CCS.values() for i in ids}))
 
     def test_flash_cases_before_registration(self):
-        """2.4 節: フラッシュの事例。ちえくらべ（neo1-049）・とりかえっこプリーズ（PR1-027）の事例は登録しないので、登録のあとも unregistered のまま。"""
+        """2.4 節: フラッシュの事例。ちえくらべ（neo1-049）の事例は登録しないので、登録のあとも unregistered のまま。v0.130: とりかえっこプリーズ（PR1-027）は v0.130 で登録し、
+        所有者の事例を利用者が指定した規則で処理する（論点は解決していない。tests/test_trade_please_v0_130.py）。"""
         cases = {(c["kyuura_issue"], c["card_id"], c["target"]): c["engine"] for c in self.links["kyuura_cases_without_engine_ruling"]["cases"]}
         self.assertEqual(cases[("UQ-FLASH-FACE-UP-DECK", SLOWKING, "power/0")], {"unregistered": True})
+        swap_registered = SWAP_PLEASE in load_card_pool().playable_ids
         for issue in ("UQ-MIND-GAMES-OPTIONAL", "UQ-MIND-GAMES-TRAINER-STEP", "UQ-SWAP-PLEASE-OWNERSHIP"):
             for (key, card, _), engine in cases.items():
-                if key == issue and card in (SLOWKING, SWAP_PLEASE):
+                if key == issue and card == SLOWKING:
                     self.assertEqual(engine, {"unregistered": True}, (key, card))
-        self.assertFalse({SLOWKING, SWAP_PLEASE} & load_card_pool().playable_ids)
+                elif key == issue and card == SWAP_PLEASE:
+                    self.assertEqual(engine, {"user_specified_rule": "PR1-027/trainer"} if swap_registered else {"unregistered": True}, (key, card))
+        self.assertFalse({SLOWKING, SWAP_PLEASE} & (load_card_pool().playable_ids - cards_after(read_extract(), "0.126")))
 
 
 
@@ -331,7 +345,7 @@ class RegistrationTest(unittest.TestCase):
         playable = load_card_pool().playable_ids
         self.assertEqual(len(playable - cards_after(extract, "0.126")), 1362)  # v0.127 から後の版の写しの組を除くと、この版の 1,362 枚（今の総数は tests/test_catalog_contract.py）
         self.assertIn(FLASH, playable)
-        self.assertFalse({SLOWKING, SWAP_PLEASE} & playable)  # 8 章: 登録しない
+        self.assertFalse({SLOWKING, SWAP_PLEASE} & (playable - cards_after(extract, "0.126")))  # 8 章: 登録しない（v0.130: とりかえっこプリーズは後の版で登録した）
 
     def test_research_cases_are_bound_to_stop_codes(self):
         links = json.loads(LINKS_PATH.read_text(encoding="utf-8"))

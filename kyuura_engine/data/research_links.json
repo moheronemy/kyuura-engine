@@ -1,6 +1,6 @@
 {
   "format": "kyuura-engine research links 1",
-  "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md kyuura の engine_unresolved_index にまだない停止コード（エンジンが新しく加えたもの）は kyuura_disposition を not_in_kyuura にし、kyuura への報告事項にする（v0.21 の突風・v0.22 のパソコン通信・v0.23 のエネルギー回収・v0.36 の AC6（手順 4 のコインとこんらん）・RD9（山札にもどす効果ときぜつ）・v0.37 の JS1（説明に弱点・抵抗力のない控えへのダメージ）。kyuura に記録ができたら scripts/check_research_links.py が知らせる）。 v0.31 で、コードのない未解決（T27・C34/C35・G40・P19・P32）に停止コードを付けた。kyuura の未解決の一覧はこれらをコードなし（stop_code が null）で挙げているので、kyuura_index_engine_key でその行と照らす（kyuura の一覧にコードが書かれたら scripts/check_research_links.py が知らせる）。 v0.50 で、退化の処理に使う kyuura の規定・裁定（GR-2000-P324-DEVOLUTION・CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION・CR-CHEMICAL-GAS-LEAVES・GR-2000-P323-KNOCKOUT）を applied_rule_records に結び付けた（id の対応だけ。scripts/check_research_links.py が研究の基準のコミットにあることと分類を確かめる）。 v0.51 で、トラッシュのたねポケモンを持ち主のベンチに出す処理に使う kyuura の規定（GR-2000-P309-ATTACK-PROCEDURE・GR-2000-P319-HP-AND-DAMAGE・GR-2000-P320-COUNTER-MOVE）を applied_rule_records に結び付けた（v0.50 と同じく id の対応だけ）。 v0.70 で、拡張パック以外の商品のポケモン 82 枚の説明文のあるワザ 85 を adopted_printed_text に加えた（kyuura データの採用。研究の基準のコミットに、これらのカードを指す LD-・CC-・CR-・UQ-・エラッタはない）。PR1-069 の名前（kyuura の値「？？？」）は、エンジンが写しの作り直しで利用者が示した訂正「ミュウ」を当てはめた（engine_user_corrections。scripts/check_research_links.py はこの訂正の欄だけを訂正のあとの値にして比べる）。",
+  "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md kyuura の engine_unresolved_index にまだない停止コード（エンジンが新しく加えたもの）は kyuura_disposition を not_in_kyuura にし、kyuura への報告事項にする（v0.21 の突風・v0.22 のパソコン通信・v0.23 のエネルギー回収・v0.36 の AC6（手順 4 のコインとこんらん）・RD9（山札にもどす効果ときぜつ）・v0.37 の JS1（説明に弱点・抵抗力のない控えへのダメージ）。kyuura に記録ができたら scripts/check_research_links.py が知らせる）。 v0.31 で、コードのない未解決（T27・C34/C35・G40・P19・P32）に停止コードを付けた。kyuura の未解決の一覧はこれらをコードなし（stop_code が null）で挙げているので、kyuura_index_engine_key でその行と照らす（kyuura の一覧にコードが書かれたら scripts/check_research_links.py が知らせる）。 v0.50 で、退化の処理に使う kyuura の規定・裁定（GR-2000-P324-DEVOLUTION・CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION・CR-CHEMICAL-GAS-LEAVES・GR-2000-P323-KNOCKOUT）を applied_rule_records に結び付けた（id の対応だけ。scripts/check_research_links.py が研究の基準のコミットにあることと分類を確かめる）。 v0.51 で、トラッシュのたねポケモンを持ち主のベンチに出す処理に使う kyuura の規定（GR-2000-P309-ATTACK-PROCEDURE・GR-2000-P319-HP-AND-DAMAGE・GR-2000-P320-COUNTER-MOVE）を applied_rule_records に結び付けた（v0.50 と同じく id の対応だけ）。 v0.70 で、拡張パック以外の商品のポケモン 82 枚の説明文のあるワザ 85 を adopted_printed_text に加えた（kyuura データの採用。研究の基準のコミットに、これらのカードを指す LD-・CC-・CR-・UQ-・エラッタはない）。PR1-069 の名前（kyuura の値「？？？」）は、エンジンが写しの作り直しで利用者が示した訂正「ミュウ」を当てはめた（engine_user_corrections。scripts/check_research_links.py はこの訂正の欄だけを訂正のあとの値にして比べる）。 v0.129 で、利用者が指定した参照値（カツラのクイズ その1 GD5-016 の正解に、kyuura 9242b9b の公式図鑑の種族の身長を採る。処理に使う文面は印刷のまま）を latest_descriptions.user_specified_references に挙げた（adopted_printed_text・user_simplified_text とは別の区分。effects.USER_SPECIFIED_REFERENCES と同じ一覧）。QZ1（UNRESOLVED_BLAINES_QUIZ_WITHOUT_POKEMON）を、手札にポケモンのカードがないその1 に当てはめた（停止コードの数は変わらない）。 v0.130 で、とりかえっこプリーズ（PR1-027）を登録し、最新の説明 LD-PR1-027-TRAINER を registered_trainers に移した。交換したカードの対戦の中の所有者は利用者が指定した規則（受け取ったプレイヤー）で処理し、latest_descriptions.user_specified_rules に挙げた（文面の区分とは別。effects.USER_SPECIFIED_RULES と同じ一覧）。kyuura の事例のうちUQ-SWAP-PLEASE-OWNERSHIP の PR1-027・PMCG5-087 はエンジンの扱いを user_specified_rule（利用者の指定で処理する。論点は解決済みにしない）にし、UQ-CHAOS-GYM-BORROWED-TURN のPR1-027 は CH1 の停止コードで止める。停止コードの数は変わらない。 v0.131 で、ナッシー[Exeggutor]（PR1-075・PR1-077）を登録し、ワザ（ふみつけ）の印刷の文面を adopted_printed_text に加えた。英語の併記は利用者が指定した名前の扱い（名前・進化元・ワザ名の判定に日本語の部分を使う。公式の裁定・転記の訂正ではない）で処理し、latest_descriptions.user_specified_names に挙げた（文面の区分とは別。effects.USER_SPECIFIED_NAMES と同じ一覧）。kyuura の事例のうち UQ-BILINGUAL-NAME-GLOSS の 6 件は、エンジンの扱いを user_specified_name（利用者の指定で処理する。論点は解決済みにしない）にした。停止コードの数は変わらない。",
   "repository": "https://github.com/moheronemy/kyuura",
   "research_commit": "71d1728938fb4c8fefde9b82779cdef74beb612d",
   "research_branch": "main",
@@ -1318,6 +1318,11 @@
           "version": "v0.57",
           "document": "docs/stadiums-v0.57.md",
           "ruling_id": "CH1"
+        },
+        {
+          "version": "v0.130",
+          "document": "docs/trade-please-ownership-v0.130.md",
+          "ruling_id": "CH1"
         }
       ],
       "kyuura_issue": "UQ-CHAOS-GYM-BORROWED-TURN",
@@ -1586,6 +1591,11 @@
         {
           "version": "v0.63",
           "document": "docs/hidden-card-trainers-v0.63.md",
+          "ruling_id": "QZ1"
+        },
+        {
+          "version": "v0.129",
+          "document": "docs/blaines-quiz-heights-v0.129.md",
           "ruling_id": "QZ1"
         }
       ],
@@ -3926,75 +3936,81 @@
         "card_id": "PR1-077",
         "target": "card",
         "engine": {
-          "unregistered": true
+          "user_specified_name": [
+            "PR1-077/name"
+          ]
         },
-        "note": "ナッシー[Exeggutor]（エンジンに登録していないカード。英語の括弧書きが名前の一部かが決まらないので登録しない）（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+        "note": "ナッシー[Exeggutor]（v0.131 で登録。利用者が指定した名前の扱い USER-BILINGUAL-NAME-JAPANESE で、英語の併記を翻訳の表示とし、名前「ナッシー」・進化元「タマタマ」・ワザ名「ふみつけ」で判定する。論点は解決済みにしない。印刷は kyuura の画像の照合 IMG-PR1-077）（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
       },
       {
         "kyuura_issue": "UQ-BILINGUAL-NAME-GLOSS",
         "card_id": "PR1-075",
         "target": "card",
         "engine": {
-          "unregistered": true
+          "user_specified_name": [
+            "PR1-075/name"
+          ]
         },
-        "note": "ナッシー[Exeggutor]（エンジンに登録していないカード。PR1-077 と同じ。印刷の画像は kyuura も読んでいない）（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+        "note": "ナッシー[Exeggutor]（v0.131 で登録。PR1-077 と同じ利用者が指定した名前の扱い。論点は解決済みにしない。印刷の画像は kyuura も読んでいない（未確認））（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
       },
       {
         "kyuura_issue": "UQ-BILINGUAL-NAME-GLOSS",
         "card_id": "PMCG2-012",
         "target": "card",
         "engine": {
-          "requires_unregistered": [
-            "PR1-075",
-            "PR1-077"
+          "user_specified_name": [
+            "PR1-075/name",
+            "PR1-077/name"
           ]
         },
-        "note": "ナッシー（ジャングル。登録済み）と、ナッシー[Exeggutor] を同じ名前として数えるか。ナッシー[Exeggutor] は登録していないのでデッキに入れられず、この数え方は起こらない。エンジンは別名の表を加えていない（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+        "note": "ナッシー（ジャングル。登録済み）と、ナッシー[Exeggutor]（v0.131 で登録）を、利用者が指定した名前の扱いで同じ名前「ナッシー」として数える（デッキの同じ名前 4 枚は合わせて数える）。公式の裁定ではなく、論点は解決済みにしない。英語だけの別名・一律の正規化は加えていない（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
       },
       {
         "kyuura_issue": "UQ-BILINGUAL-NAME-GLOSS",
         "card_id": "SI-013",
         "target": "card",
         "engine": {
-          "requires_unregistered": [
-            "PR1-075",
-            "PR1-077"
+          "user_specified_name": [
+            "PR1-075/name",
+            "PR1-077/name"
           ]
         },
-        "note": "ナッシー（サザンアイランド。登録済み）。PMCG2-012 と同じ（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+        "note": "ナッシー（サザンアイランド。登録済み）。PMCG2-012 と同じ（利用者が指定した名前の扱いで同じ名前「ナッシー」）（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
       },
       {
         "kyuura_issue": "UQ-BILINGUAL-NAME-GLOSS",
         "card_id": "neo1-090",
         "target": "trainer",
         "engine": {
-          "requires_unregistered": [
-            "PR1-075",
-            "PR1-077"
+          "user_specified_name": [
+            "PR1-075/name",
+            "PR1-077/name"
           ]
         },
-        "note": "スロットゲーム（登録済み）の「同じ名前のカード」に、ナッシーとナッシー[Exeggutor] が当たるか。ナッシー[Exeggutor] は山札に入らないので起こらない（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+        "note": "スロットゲーム（登録済み）の「同じ名前のカード」で、ナッシーとナッシー[Exeggutor]（v0.131 で登録）は、利用者が指定した名前の扱いで同じ名前「ナッシー」（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
       },
       {
         "kyuura_issue": "UQ-BILINGUAL-NAME-GLOSS",
         "card_id": "PMCG6-082",
         "target": "trainer",
         "engine": {
-          "requires_unregistered": [
-            "PR1-075",
-            "PR1-077"
+          "user_specified_name": [
+            "PR1-075/name",
+            "PR1-077/name"
           ]
         },
-        "note": "カツラのクイズ その3（登録済み）の答えの名前。置いたカードがナッシー[Exeggutor] になる場面は起こらない（クイズの候補の名前は登録したカードの名前で、ナッシー[Exeggutor] はない）（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+        "note": "カツラのクイズ その3（登録済み）で置いたカードがナッシー[Exeggutor]（v0.131 で登録）のとき、利用者が指定した名前の扱いで「ナッシー」が正解（答えの名前の候補にも「ナッシー［Exeggutor］」の別の候補はない。伝えるワザ名は「ふみつけ」）（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
       },
       {
         "kyuura_issue": "UQ-CHAOS-GYM-BORROWED-TURN",
         "card_id": "PR1-027",
         "target": "trainer",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_CHAOS_GYM_BORROWED_TURN"
+          ]
         },
-        "note": "とりかえっこプリーズ（エンジンに登録していないカード）を錯乱ジムでかわりに使うときの「あなた」「相手」（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+        "note": "とりかえっこプリーズ（エンジンに登録していないカード）を錯乱ジムでかわりに使うときの「あなた」「相手」（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）。v0.130 で登録した: 錯乱ジムで相手プレイヤーがかわりに使うことを選ぶと、状態を変えずに UNRESOLVED_CHAOS_GYM_BORROWED_TURN で止める（「あなた」「相手」・手札の数え方を推測しない。利用者が指定した所有者の簡略化はこの問いを決めない。docs/trade-please-ownership-v0.130.md 6 章）"
       },
       {
         "kyuura_issue": "UQ-FLASH-FACE-UP-DECK",
@@ -4162,9 +4178,9 @@
         "card_id": "PR1-027",
         "target": "trainer",
         "engine": {
-          "unregistered": true
+          "user_specified_rule": "PR1-027/trainer"
         },
-        "note": "とりかえっこプリーズ（エンジンに登録していないカード。カードの持ち主と、今持っているプレイヤーを分けて持たない）（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+        "note": "とりかえっこプリーズ（エンジンに登録していないカード。カードの持ち主と、今持っているプレイヤーを分けて持たない）（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）。v0.130 で登録した: 交換したカードの対戦の中の所有者は、利用者が指定した簡略化（USER-SWAP-OWNERSHIP-RECEIVER。受け取ったプレイヤー。kyuura の研究の記録の読み B に当たる処理）で処理する。公式の裁定ではなく、論点は解決済みにしない（docs/trade-please-ownership-v0.130.md 3 章）"
       },
       {
         "kyuura_issue": "UQ-SWAP-PLEASE-OWNERSHIP",
@@ -4180,11 +4196,9 @@
         "card_id": "PMCG5-087",
         "target": "trainer",
         "engine": {
-          "requires_unregistered": [
-            "PR1-027"
-          ]
+          "user_specified_rule": "PR1-027/trainer"
         },
-        "note": "交換で受け取ったトレーナーカードを錯乱ジム（登録済み）で使えなかったときの「持ち主のトラッシュ」。とりかえっこプリーズを登録していないので、持ち主と持っているプレイヤーは違わない（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）"
+        "note": "交換で受け取ったトレーナーカードを錯乱ジム（登録済み）で使えなかったときの「持ち主のトラッシュ」。とりかえっこプリーズを登録していないので、持ち主と持っているプレイヤーは違わない（kyuura が 2026-10-30 に加えた事例。v0.123 で研究の基準を 74b3ceb に上げて結んだ）。v0.130 でとりかえっこプリーズを登録した: 交換で受け取ったトレーナーカードを錯乱ジムで使えなかったときの「持ち主のトラッシュ」は、利用者が指定した簡略化の所有者（受け取ったプレイヤー）のトラッシュ。公式の裁定ではなく、論点は解決済みにしない（docs/trade-please-ownership-v0.130.md 6 章）"
       },
       {
         "kyuura_issue": "UQ-TRANSFORM-ENERGY-COLOR-LIST",
@@ -6474,7 +6488,9 @@
       "PR1-016/attack/0",
       "PR1-016/attack/1",
       "PRN-041/attack/0",
-      "PRN-041/power/0"
+      "PRN-041/power/0",
+      "PR1-075/attack/0",
+      "PR1-077/attack/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
@@ -6517,6 +6533,16 @@
       "PR1-072/attack/1": "kyuura-engine user simplification docs/deferred-shortage-user-promos-v0.127.md#4",
       "PR1-090/attack/0": "kyuura-engine user simplification docs/deferred-shortage-user-promos-v0.127.md#4"
     },
+    "user_specified_references": {
+      "GD5-016/trainer": "kyuura-engine user specification docs/blaines-quiz-heights-v0.129.md#3"
+    },
+    "user_specified_rules": {
+      "PR1-027/trainer": "kyuura-engine user specification docs/trade-please-ownership-v0.130.md#3"
+    },
+    "user_specified_names": {
+      "PR1-075/name": "kyuura-engine user specification docs/exeggutor-bilingual-names-v0.131.md#3",
+      "PR1-077/name": "kyuura-engine user specification docs/exeggutor-bilingual-names-v0.131.md#3"
+    },
     "registered_trainers": {
       "PMCG1-077": "LD-PMCG1-077-TRAINER",
       "PMCG1-072": "LD-PMCG1-072-TRAINER",
@@ -6524,11 +6550,10 @@
       "PMCG1-076": "LD-PMCG1-076-TRAINER",
       "PMCG1-093": "LD-PMCG1-093-TRAINER",
       "PMCG1-094": "LD-PMCG1-094-TRAINER",
-      "ES2-035": "LD-ES2-035-TRAINER"
-    },
-    "trainer_records_not_registered": {
+      "ES2-035": "LD-ES2-035-TRAINER",
       "PR1-027": "LD-PR1-027-TRAINER"
     },
+    "trainer_records_not_registered": {},
     "equivalent_registrations": {
       "GD1-002/attack/1": "PMCG5-018/attack/1",
       "GD1-009/attack/0": "PMCG5-053/attack/0",

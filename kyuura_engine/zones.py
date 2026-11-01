@@ -12,10 +12,13 @@ from .state import (
     SET_ASIDE_HAND,
     SET_ASIDE_QUIZ,
     AttachedTrainer,
+    CardInstance,
+    OwnershipChange,
     PokemonInPlay,
     SetAsideCards,
     StadiumInPlay,
     TrainerInUse,
+    freeze_mapping,
 )
 
 if TYPE_CHECKING:
@@ -1081,6 +1084,40 @@ def opponent_hand_card_to_deck(state: GameState, owner: int, card: int, *, looke
         raise RuntimeError(f"プレイヤー {owner} の手札のカード {card} を山札にもどせない（確認の漏れ。エンジンの不具合）")
     _hand_to_deck_bottom(state, owner, (card,))
     state.add_event("opponent_hand_to_deck", player=owner, card=card, looker=looker, **source)
+
+
+def exchange_hand_cards(state: GameState, player: int, given: int, taken: int, *, trainer: int) -> int:
+    """v0.130（docs/trade-please-ownership-v0.130.md 4 章）: とりかえっこプリーズの「オーケーなら、カードを交換して、それぞれの手札にくわえる」。プレイヤー ``player`` の手札のカード
+    ``given`` と、相手の手札のカード ``taken`` を交換し、それぞれ受け取ったプレイヤーの手札の最後に加える（uid は付け直さない）。
+
+    利用者が指定した所有者の簡略化（``effects.USER_SWAP_OWNERSHIP``）: 交換した 2 枚それぞれの対戦の中の所有者（``CardInstance.owner``）を、受け取ったプレイヤーにする。対戦開始時の
+    デッキのプレイヤー（``CardInstance.origin``。追跡用の出所）は最初の変更で記録し、再交換でも変えない。2 枚の移動・所有者の変更・記録（``GameState.ownership_changes``）・ログ
+    ``cards_exchanged`` を 1 回で行う（片方だけの状態を作らない）。どちらかが手札にない・所有者が違う・同じカードなら ``RuntimeError``（状態を変える前）。
+
+    ログ ``cards_exchanged`` の ``given_card``・``taken_card``・``card_ids``・``ownership`` は、交換した 2 人だけに見える（``observation.PRIVATE_FIELDS``。観戦者には、交換が成立したこと・
+    プレイヤー・番号・枚数だけ）。交換の通し番号を返す。"""
+    opponent = 1 - player
+    hands = state.players[player].hand, state.players[opponent].hand
+    if (given == taken or given not in hands[0] or taken not in hands[1] or state.cards[given].owner != player
+            or state.cards[taken].owner != opponent):
+        raise RuntimeError(f"プレイヤー {player} の手札のカード {given} と、相手の手札のカード {taken} を交換できない（確認の漏れ。エンジンの不具合）")
+    number = 1 + max((change.exchange for change in state.ownership_changes), default=0)
+    changes = []
+    cards = dict(state.cards)
+    for card, receiver in ((given, opponent), (taken, player)):
+        instance = cards[card]
+        cards[card] = CardInstance(instance.uid, instance.card_id, receiver, instance.deck_owner)
+        changes.append(OwnershipChange(card, instance.card_id, instance.owner, receiver, instance.deck_owner, state.turn_number, trainer, number))
+    hands[0].remove(given)
+    hands[1].remove(taken)
+    hands[0].append(taken)
+    hands[1].append(given)
+    state.cards = freeze_mapping(cards)
+    state.ownership_changes = (*state.ownership_changes, *changes)
+    state.add_event("cards_exchanged", player=player, opponent=opponent, given_card=given, taken_card=taken,
+                    card_ids=(state.cards[given].card_id, state.cards[taken].card_id), exchange=number, count=1,
+                    ownership=tuple((c.card, c.previous, c.owner, c.origin) for c in changes), trainer_card=trainer)
+    return number
 
 
 def return_attached_trainer_to_deck(state: GameState, owner: int, pokemon: PokemonInPlay, card: int, *, effect: str, chooser: int) -> None:

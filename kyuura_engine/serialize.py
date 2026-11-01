@@ -1,6 +1,6 @@
 """ゲーム状態を JSON にできる辞書にする（画面やほかの言語に渡すため・テストで比べるため）。
 
-形式は 27 あります（``format_version``）。
+形式は 33 あります（``format_version``）。
 
 - 1（既定）: v0.1 と同じ形。v0.1 の固定値のテストと互換性の参照データは、この形で比べる。
 - 2: 1 に次を加えたもの（v0.2a）。``format_version``、``effects``（効果の登録表の id）、
@@ -164,6 +164,12 @@
   トレーナー）を残した終端と通常の停止を区別できないので黙って落とさない: 形式 1〜31 は、途中停止の記録があると ``ValueError``（なければ形式 1〜31 の書き出しは v0.126 と同じ）。
   最上位の ``user_simplifications`` は、この対戦のカードのうち、登録表（``effects``）で処理に使う文面の出典が利用者の指定した簡略ルール（``effects.USER_SIMPLIFICATION_SOURCE``）の
   ワザの対象（``<カード id>/attack/<位置>``。並べた順）。状態の項目ではなく、登録表とカードの組から求める識別の情報（なければ空）
+- 33: 32 の ``cards`` の、対戦の中で所有者が変わったカードに ``origin``（対戦開始時のデッキのプレイヤー。追跡用の出所）を加え、最上位に ``ownership_changes``（所有者の変更の記録。
+  ``{"card", "card_id", "previous", "owner", "origin", "turn", "trainer_card", "exchange"}`` の並び。変更した順）を加えたもの（v0.130。docs/trade-please-ownership-v0.130.md 7 章）。
+  とりかえっこプリーズの交換で変わった所有者（利用者が指定した所有者の簡略化）を古い形式に書くと、``owner`` が受け取ったプレイヤーになり出所と変更の記録が落ちる（対戦開始時の
+  デッキと区別できない）ので黙って落とさない: 形式 1〜32 は、所有者の変更があると ``ValueError``（なければ形式 1〜32 の書き出しは v0.129 と同じ。``cards`` の項目も同じ）。最上位の
+  ``user_ownership_rules`` は、この対戦のカードのうち、利用者が指定した所有者の簡略化（``effects.USER_SPECIFIED_RULES``）を当てはめる登録の対象（``<カード id>/trainer``。並べた順）。
+  ``user_simplifications`` と同じく状態の項目ではなく、登録表とカードの組から求める識別の情報（なければ空）
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -271,7 +277,7 @@ from .state import (
     WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -666,6 +672,9 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
     if format_version < 32 and state.halt is not None and state.halt.interruption is not None:
         # v0.127: 途中停止の状態（在途のカードを残した終端）は、古い形式では通常の停止と区別できないので書かない
         raise ValueError(f"形式 {format_version} は、途中停止の状態（数量のチェック地点で止めた終端）を表せない（format_version=32 を使う）")
+    if format_version < 33 and state.ownership_changes:
+        # v0.130: とりかえっこプリーズの交換で変わった所有者は、古い形式では出所・変更の記録を落とし、対戦開始時のデッキと区別できなくなるので書かない
+        raise ValueError(f"形式 {format_version} は、対戦の中の所有者の変更（とりかえっこプリーズの交換。出所・変更の記録）を表せない（format_version=33 を使う）")
     if format_version < 31 and state.face_up_deck:
         # v0.126: おもてを上にした山札のカード（フラッシュ）は、今のカードの並びから求め直せないので古い形式に書かない（落とすと、うらの山札と区別できない）
         raise ValueError(f"形式 {format_version} は、おもてを上にして山札に置かれたカード（フラッシュ）を表せない（format_version=31 を使う）")
@@ -704,7 +713,7 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         "pending_prizes": {str(k): v for k, v in sorted(state.pending_prizes.items())},
         "pending_promotions": list(state.pending_promotions),
         "mulligan_rounds": [list(r) for r in state.mulligan_rounds],
-        "cards": {str(uid): {"card_id": c.card_id, "owner": c.owner} for uid, c in sorted(state.cards.items())},
+        "cards": {str(uid): _card_record(c, format_version) for uid, c in sorted(state.cards.items())},
         "players": [
             {
                 "deck": list(p.deck),
@@ -828,7 +837,36 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         data["face_up_deck"] = list(state.face_up_deck)  # v0.126
     if format_version >= 32:
         data["user_simplifications"] = user_simplification_targets(state)  # v0.127
+    if format_version >= 33:
+        data["ownership_changes"] = [  # v0.130
+            {"card": c.card, "card_id": c.card_id, "previous": c.previous, "owner": c.owner, "origin": c.origin, "turn": c.turn, "trainer_card": c.trainer_card,
+             "exchange": c.exchange}
+            for c in state.ownership_changes
+        ]
+        data["user_ownership_rules"] = user_ownership_rule_targets(state)
     return data
+
+
+def _card_record(card, format_version: int) -> dict[str, Any]:
+    """``cards`` の 1 枚。v0.130（形式 33）: 対戦の中で所有者が変わったカードだけ ``origin``（対戦開始時のデッキのプレイヤー）を加える（形式 1〜32 は変更があれば書き出しの前に
+    ``ValueError`` なので、ここに ``origin`` のあるカードは来ない）。"""
+    record = {"card_id": card.card_id, "owner": card.owner}
+    origin = getattr(card, "origin", None)
+    if origin is not None:
+        if format_version < 33:
+            raise ValueError(f"形式 {format_version} は、所有者の変わったカードの出所を表せない（format_version=33 を使う）")
+        record["origin"] = origin
+    return record
+
+
+def user_ownership_rule_targets(state: GameState) -> list[str]:
+    """v0.130: この対戦のカードのうち、利用者が指定した所有者の簡略化（``effects.USER_SPECIFIED_RULES``）を当てはめる登録の対象（``<カード id>/trainer``。並べた順）。保存・再生の
+    記録から、公式の裁定ではないエンジン固有の所有者の扱いで処理したことを識別するため（状態に項目を加えない）。"""
+    from .effects import USER_SPECIFIED_RULES
+
+    present = {instance.card_id for instance in state.cards.values()}
+    return sorted(key for key in USER_SPECIFIED_RULES if key.split("/", 1)[0] in present
+                  and state.effects.trainer_entry(key.split("/", 1)[0]) is not None)
 
 
 def user_simplification_targets(state: GameState) -> list[str]:

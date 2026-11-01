@@ -115,13 +115,16 @@ from .decisions import (
     EVOLUTION_HEAL, STADIUM_RETURN_BENCH, push_stadium_decision, USE_DISCARD_TRAINER,
     DAMAGE_STEP_ORDER,
     CHALLENGE_BENCH, QUIZ_ANSWER, QUIZ_ATTACK, QUIZ_CARD, SECRET_PLAN_CARD,
+    QUIZ_HEIGHT_ANSWER, VALUE_ANSWER_MAX, VALUE_RANGE, value_range,  # v0.129: カツラのクイズ その1の身長の答え（値で答える決定）
     JANKEN_HAND, OPTIONAL_DRAIN, OPTIONAL_DISCARD_ALL, SELECT_MARKER_COUNT,
     OPTIONAL_SHUFFLE, SELECT_ATTACHED_TRAINER, OPTIONAL_HEAL, SELECT_ATTACHED_SPECIAL_ENERGY, ALLOCATE_DAMAGE,
     SEARCH_DECK_OR_DISCARD, TAKE_LOOKED_POKEMON, SELECT_OPPONENT_PRIZE, TAKE_LOOKED_TRAINER,
     EVOLUTION_SONG_POKEMON,
     HEAL_ALLOCATION, OPTIONAL_COIN, STADIUM_FROM_DISCARD, DECK_TOP_FROM_HAND,
+    SELECT_EXCHANGE_CARD,  # v0.130: とりかえっこプリーズ
 )
 from . import faceup as _faceup  # v0.126: おもての山札（フラッシュ）
+from .heights import HEIGHT_WITHOUT_DEX, card_height  # v0.129: 公式図鑑の種族の身長の参照値（カツラのクイズ その1）
 from .errors import SECRET_PLAN_HIDDEN_CODE, IllegalActionError, UnsupportedError
 from .markers import color_marker, has_marker, marker_count
 from .evolution import (
@@ -187,7 +190,7 @@ from .zones import (
     look_at_card, put_trainer_into_play, swap_prize_with_deck_top, put_discard_on_deck_top, return_discard_to_deck, return_hand_cards_to_deck,
     look_at_hand, return_revealed_hand_cards_to_deck, reveal_hand,
     discard_attached_energy_cards, return_attached_energy_to_hand, move_attached_energy, opponent_hand_card_to_deck, take_looked_deck_cards,
-    discard_pile_to_deck, deck_top_to_discard,
+    discard_pile_to_deck, deck_top_to_discard, exchange_hand_cards,
     hand_to_bench_by_effect, hand_basic_to_active, hand_positions_to_deck, swap_prize_with_hand, take_prize_by_trainer,
     discard_attached_energy_by_stadium, return_attached_energy_by_stadium,
     reveal_face_down_bench, reveal_prizes, return_set_aside, set_aside_face_down_bench, set_aside_hand, set_aside_quiz_card,
@@ -2925,10 +2928,18 @@ class CoinBonusDamage(AttackEffect):
 
     def check(self, attack: Attack) -> list[str]:
         # v0.34: 説明の追加ダメージの数と登録の ``bonus`` を照らす（「…20ダメージを追加する。」「…20ダメージ追加する。」の 2 つの書き方。v0.31 の登録も同じ）
+        # v0.131: 日本語と英語の文を交互に書いたカード（ナッシー[Exeggutor] PR1-075・PR1-077 のふみつけ）の書き方も、全文で照らす（日本語の文の基本となるダメージがダメージの目安の
+        # 数字と同じで、追加のダメージが登録の ``bonus``。英語の文も同じ数。英語の文は翻訳の表示で、処理は日本語の文にしたがう。docs/exeggutor-bilingual-names-v0.131.md 5 章）
         problems = _check_form(attack, "コインで追加ダメージのワザ", damage="modified", modifier="+")
-        if re.fullmatch(f"コインを投げて「おもて」なら、{self.bonus}ダメージを?追加する。", attack.text_ja or "") is None:
+        if (re.fullmatch(f"コインを投げて「おもて」なら、{self.bonus}ダメージを?追加する。", attack.text_ja or "") is None
+                and re.fullmatch(BILINGUAL_COIN_BONUS_PATTERN.format(base=attack.damage, bonus=self.bonus), attack.text_ja or "") is None):
             problems.append(f"説明 {attack.text_ja!r} が、コインの「おもて」で {self.bonus} ダメージを追加するワザの説明ではない")
         return problems
+
+
+# v0.131: 日本語と英語の文を交互に書いたカードの、コインで追加ダメージのワザの説明（kyuura の写しの印刷の文面の書き方。``CoinBonusDamage.check`` が全文で照らす）
+BILINGUAL_COIN_BONUS_PATTERN = (r"コインを1枚投げる。もし「おもて」なら、このワザは{base}\+{bonus}ダメージを与える。もし「うら」なら、このワザは{base}ダメージを与える。"
+                                r" \( Flip a coin\. If heads, this attack does {base} damage plus {bonus} more damage, if tails, this attack does {base} damage\.\)")
 
 
 @dataclass(frozen=True)
@@ -48519,3 +48530,495 @@ def _with_same_attacks(registry: EffectRegistry, table: Mapping[str, str]) -> Ef
 
 
 DEFAULT_EFFECTS = _with_trainers(_with_same_attacks(_with_attacks(DEFAULT_EFFECTS, V0_127_ATTACKS), SAME_DATA_CARDS_V0_127), V0_127_TRAINERS)
+
+
+# ---------------------------------------------------------------- v0.129（docs/blaines-quiz-heights-v0.129.md）
+
+BLAINES_QUIZ_1_TEXT = ("あなたの手札から「ポケモン」のカードを1枚選び、おもてを下にして、置く。相手プレイヤーにそのポケモンの名前を伝え、その身長を答えてもらう。"
+                       "その後、置いたカードをおもてにして、正解なら、相手プレイヤーは山札からカードを2枚引く。正解でないなら、あなたは山札からカードを2枚引く。"
+                       "(置いたカードは、手札にもどす)")
+# QZ1 の再利用（v0.129。新しい問いにしない）: カツラのクイズ その1で、使ったカードを除く手札に「ポケモン」のカードがないとき。その3 と同じ「手札から「ポケモン」のカードを1枚選び」で、
+# 選べるカードがないときに使えるかを説明が書いていない（kyuura UQ-CARD-USE-WITHOUT-TARGET）。図鑑番号・身長がないカードしかないときとは別（そちらはエンジンの未対応）
+BLAINES_QUIZ_1_WITHOUT_POKEMON_REASON = (
+    "カツラのクイズ その1: 手札に「ポケモン」のカードがない。説明は選べるカードがないときに使えるか（何も起こらずに使い終わるか・使えないか）を書いていないので決められない（QZ1。"
+    "その3 と同じ問い）。ほかのカードの「対象がない」ときの問いの答えを当てはめない"
+)
+# エンジンの未対応（研究上の未解決ではない）: 置くカードに、正解の参照値（公式図鑑の種族の身長）を引ける全国図鑑番号・身長がない。印刷上は選べるので選べるものから除かず、選んだ時点で
+# 状態を変えずに止める（``unresolved_detail``）。名前から図鑑番号を推測しない・欠けた番号を補わない・0cm にしない
+QUIZ_HEIGHT_WITHOUT_DEX_CODE = "UNSUPPORTED_QUIZ_HEIGHT_WITHOUT_DEX"
+QUIZ_HEIGHT_WITHOUT_DEX_REASON = (
+    "カツラのクイズ その1: 選んだカードの記録に全国図鑑番号がないので、正解の参照値（公式図鑑の種族の身長）を引けない（エンジンの未対応。名前から図鑑番号を推測しない）。"
+    "ほかのポケモンのカードは選べる"
+)
+QUIZ_HEIGHT_NOT_AVAILABLE_CODE = "UNSUPPORTED_QUIZ_HEIGHT_NOT_AVAILABLE"
+QUIZ_HEIGHT_NOT_AVAILABLE_REASON = (
+    "カツラのクイズ その1: 選んだカードの全国図鑑番号の種族に、確定した正解の参照値（公式図鑑の種族の身長）がない、または図鑑番号が 2 つ以上ある（エンジンの未対応。"
+    "値を補わない・0cm にしない）。ほかのポケモンのカードは選べる"
+)
+
+# 利用者が指定した参照値（v0.129。docs/blaines-quiz-heights-v0.129.md 3 章）。v0.127 の簡略ルール（``USER_SIMPLIFICATIONS``。印刷の条件を省く）とは別の指定で、処理に使う文面は
+# 印刷の文面のまま。説明の「その身長」の正解に、kyuura が集めた公式図鑑の種族の値（全国図鑑 No.001〜251・通常の姿。``heights``）を採る。出題したカードの印刷の身長を確かめた
+# 値ではなく、印刷の訂正・公式の裁定・最新の説明・エラッタとしては記録しない
+USER_SPECIFIED_REFERENCE_SOURCE = "kyuura-engine user specification docs/blaines-quiz-heights-v0.129.md#3"
+USER_QUIZ_HEIGHT_OFFICIAL_ZUKAN = "USER-QUIZ-HEIGHT-OFFICIAL-ZUKAN"
+USER_SPECIFIED_REFERENCE_DATE = "2026-11-01"
+
+
+@dataclass(frozen=True)
+class UserSpecifiedReference:
+    """利用者が指定した参照値の 1 つの対象の記録（v0.129）。``key`` は ``<カード id>/trainer``。``printed_text`` は kyuura の印刷の文面（写しと同じ。処理に使う文面もこれ）、
+    ``applies_to`` は参照値を当てはめる説明の部分、``reference`` は参照値のデータ、``instruction`` は利用者の指定の文、``not_recorded_as`` は記録しない扱い。"""
+
+    key: str
+    rule: str
+    printed_text: str
+    applies_to: str
+    reference: str
+    instruction: str
+    not_recorded_as: str
+    specified_by: str = "user"
+    specified_on: str = USER_SPECIFIED_REFERENCE_DATE
+
+
+USER_SPECIFIED_REFERENCES: Mapping[str, UserSpecifiedReference] = MappingProxyType({record.key: record for record in (
+    UserSpecifiedReference(
+        "GD5-016/trainer", USER_QUIZ_HEIGHT_OFFICIAL_ZUKAN, BLAINES_QUIZ_1_TEXT,
+        "「その身長を答えてもらう」「正解なら」の正解（置いたカードの全国図鑑番号の種族の身長。整数 cm の完全一致）",
+        "kyuura data/species_heights.json（9242b9b。kyuura_engine/data/species_heights.json の写し）の confirmed の値",
+        "クイズの正解には、今回収集した全国図鑑No.001〜251の通常の姿の公式図鑑値を採用します。",
+        "出題したカードの印刷の身長の確認・印刷の訂正・公式の裁定・最新の説明・エラッタ"),
+)})
+
+
+def quiz_height_candidates(state: GameState, use: TrainerUse) -> tuple[int, ...]:
+    """v0.129: カツラのクイズ その1で置ける、使ったプレイヤーの手札の「ポケモン」のカード（手札にある間の印刷の分類。なにかの化石・ピッピ人形はトレーナーカード。手札の並び）。
+    図鑑番号・身長のないカードも含む（印刷上は選べる。選ぶと止める）。"""
+    return tuple(uid for uid in state.players[use.player].hand if uid != use.card and state.card_def(uid).category == "pokemon")
+
+
+def quiz_height_blocked(state: GameState, candidates: tuple[int, ...]) -> dict[int, tuple[str, str]]:
+    """v0.129: 置けるが、正解の参照値を引けないので選ぶと止めるカード（uid → (コード, 理由)）。図鑑番号だけで引く（``heights.card_height``）。"""
+    blocked = {}
+    for uid in candidates:
+        found, why = card_height(state.card_def(uid))
+        if found is None:
+            blocked[uid] = ((QUIZ_HEIGHT_WITHOUT_DEX_CODE, QUIZ_HEIGHT_WITHOUT_DEX_REASON) if why == HEIGHT_WITHOUT_DEX
+                            else (QUIZ_HEIGHT_NOT_AVAILABLE_CODE, QUIZ_HEIGHT_NOT_AVAILABLE_REASON))
+    return blocked
+
+
+@dataclass(frozen=True)
+class BlainesHeightQuiz(TrainerEffect):
+    """v0.129（docs/blaines-quiz-heights-v0.129.md 4 章）: 手札の「ポケモン」のカードを 1 枚おもてを下にして置き、相手プレイヤーにそのポケモンの名前を伝え、相手が身長を答える。
+    そのあと置いたカードをおもてにして、正解なら相手プレイヤーが、正解でないなら使ったプレイヤーが ``draw`` 枚引く。置いたカードは手札にもどす（カツラのクイズ その1 GD5-016。
+    kyuura の印刷の文面）。
+
+    - 説明の順: 選んで置く（決定 ``QUIZ_CARD``。v0.63 の ``zones.set_aside_quiz_card``。置いたカードは使ったプレイヤーだけが見る）→ 名前を伝える（ログ ``quiz_name_hint`` は
+      名前（置いたカードの印刷の名前。所有者名・「わるい」などを含むカードの名前のまま）だけ。カードの id・uid・収録・図鑑番号・身長は伝えない）→ 相手が答える（決定
+      ``QUIZ_HEIGHT_ANSWER``。値で答える決定で、答えは 1〜``VALUE_ANSWER_MAX`` の整数 cm。正解の値の集合に絞らない）→ おもてにする（ログ ``quiz_height_reveal``。正解かと、
+      図鑑番号・身長の参照値）→ 引く（効果で引く。山札が足りなければ引けるだけ。v0.63 のクイズと同じ）→ 手札にもどす（``zones.return_set_aside``）
+    - 正解: 答えの整数 cm が、置いたカードの全国図鑑番号の種族の身長の参照値（``heights.card_height``。利用者の指定 ``USER_QUIZ_HEIGHT_OFFICIAL_ZUKAN``）と完全に同じ。
+      正解の値は答えのあとに引き、決定の続きの情報に書かない
+    - 手札に「ポケモン」のカードがなければ QZ1 で使う前に止める（その3 と同じ問い）。図鑑番号・身長のないカードは選べるが選ぶと止める（エンジンの未対応）。選べるカードが
+      どれもそうなら使う前に止める
+    - おもてのカードのある山札（v0.126）で、正解・正解でないのどちらかの引き方が既存の止め方に当たるなら、使う前に止める（``face_up_draw_stop``。答えの拒否から正誤を漏らさない）
+    - ``kinds``（``"species_height"``）は置いてよいカードの宣言（``engine._quiz_card_accepted``。カード id で分けない）
+    """
+
+    text: str
+    reference: str = USER_QUIZ_HEIGHT_OFFICIAL_ZUKAN
+    draw: int = 2
+    kinds: ClassVar[str] = "species_height"
+    implementation_id = "blaines_height_quiz"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = _require_text(definition, self.text, self)
+        if not problems and ("手札から「ポケモン」のカードを1枚選び、おもてを下にして、置く" not in self.text or "相手プレイヤーにそのポケモンの名前を伝え、その身長を答えてもらう" not in self.text
+                             or f"正解なら、相手プレイヤーは山札からカードを{self.draw}枚引く" not in self.text
+                             or f"正解でないなら、あなたは山札からカードを{self.draw}枚引く" not in self.text or "置いたカードは、手札にもどす" not in self.text):
+            problems.append("文面と登録の処理（置く・名前を伝える・身長を答える・引く・手札にもどす）が合わない")
+        records = [r for r in USER_SPECIFIED_REFERENCES.values() if r.rule == self.reference and r.printed_text == self.text and r.key == f"{definition.id}/trainer"]
+        if not records:
+            problems.append(f"{definition.id} の正解の参照値の利用者の指定（{self.reference}）の記録がない")
+        return problems
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        candidates = quiz_height_candidates(state, use)
+        if not candidates:
+            raise UnsupportedError(BLAINES_QUIZ_WITHOUT_POKEMON_CODE, BLAINES_QUIZ_1_WITHOUT_POKEMON_REASON)
+        blocked = quiz_height_blocked(state, candidates)
+        if len(blocked) == len(candidates):
+            raise UnsupportedError(*blocked[candidates[0]])
+        stop = self.face_up_draw_stop(state, use)
+        if stop is not None:
+            raise UnsupportedError(*stop)
+
+    def face_up_draw_stop(self, state: GameState, use: TrainerUse) -> tuple[str, str] | None:
+        """おもてのカードのある山札（v0.126。フラッシュ）: 引くのは答えの正誤で決まる（正解なら相手プレイヤー、正解でないなら使ったプレイヤー）。どちらかの引き方が既存のおもての山札の止め方
+        （``faceup.command_problem``。FU3 など）に当たるなら、使う前にその (コード, 理由) を返す（答えを拒否すると、拒否の有無から答えの正誤（置いたカード）が漏れるため。止めるかは公開の
+        情報（おもての山札・山札の枚数）だけで決まる）。どちらも当たらなければ None（新しい問いにしない）。"""
+        if not state.face_up_deck:
+            return None
+        for drawer in (use.player, 1 - use.player):
+            trial = state.clone()
+            _draw_up_to(trial, drawer, self.draw)
+            stop = _faceup.command_problem(state, trial)
+            if stop is not None:
+                return stop
+        return None
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        candidates = quiz_height_candidates(state, use)
+        blocked = quiz_height_blocked(state, candidates)
+        first = next(iter(blocked.values()), (QUIZ_HEIGHT_WITHOUT_DEX_CODE, QUIZ_HEIGHT_WITHOUT_DEX_REASON))
+        push_trainer_decision(state, use, kind=QUIZ_CARD, player=use.player, options=candidates, unresolved_choices=tuple(blocked),
+                              unresolved_code=first[0], unresolved_reason=first[1], unresolved_detail=tuple((uid, *problem) for uid, problem in blocked.items()))
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if decision.kind == QUIZ_CARD:
+            (card,) = choices
+            if card_height(state.card_def(card))[0] is None:
+                raise RuntimeError(f"正解の参照値のないカード {card} を置こうとした（選ぶと止める選択。エンジンの不具合）")
+            set_aside_quiz_card(state, use.player, card, trainer=use.card, card_id=use.card_id)
+            name = state.card_def(card).name_ja
+            state.add_event("quiz_name_hint", player=use.player, name=name, trainer_card=use.card)
+            push_trainer_decision(state, use, kind=QUIZ_HEIGHT_ANSWER, player=1 - use.player, options=(),
+                                  context=(("quiz_card", card), ("name", name), (VALUE_RANGE, (1, VALUE_ANSWER_MAX))))
+            return
+        card = decision.context_value("quiz_card")
+        (answer,) = choices
+        height = card_height(state.card_def(card))[0]
+        if height is None:
+            raise RuntimeError(f"置いたカード {card} の正解の参照値がない（エンジンの不具合）")
+        correct = answer == height.height_cm
+        state.add_event("quiz_height_answer", player=1 - use.player, answer_cm=answer, trainer_card=use.card)
+        state.add_event("quiz_height_reveal", player=use.player, card=card, card_id=state.cards[card].card_id, name=state.card_def(card).name_ja, dex=height.dex,
+                        height_cm=height.height_cm, correct=correct, trainer_card=use.card)
+        _draw_up_to(state, 1 - use.player if correct else use.player, self.draw)
+        return_set_aside(state, _quiz_group(state, use), reason="quiz")
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = f"トレーナー {use.card_id}"
+        group = _quiz_group(state, use)
+        if decision.kind == QUIZ_CARD:
+            problems = _decided_by(decision, use.player, what)
+            candidates = quiz_height_candidates(state, use)
+            blocked = quiz_height_blocked(state, candidates)
+            if decision.options != candidates or not candidates or (decision.min_choices, decision.max_choices) != (1, 1) or group is not None:
+                problems.append(f"{what}の置くカードを選ぶ決定 {decision.options} が、まだ置いていない手札のポケモンのカード {candidates} から 1 枚ではない")
+            if tuple(decision.context_value("unresolved_choices", ())) != tuple(blocked) or len(blocked) == len(candidates):
+                problems.append(f"{what}の選ぶと止めるカード {decision.context_value('unresolved_choices', ())} が、正解の参照値のないカード {tuple(blocked)} と合わない")
+            return problems
+        card = decision.context_value("quiz_card")
+        problems = _decided_by(decision, 1 - use.player, what)
+        if decision.kind != QUIZ_HEIGHT_ANSWER or group is None or group.cards != (card,) or group.owner != use.player:
+            return problems + [f"{what}の決定 {decision.kind} の置いたカード {card!r} が、置いた場所 {group} と合わない"]
+        if decision.options != () or (decision.min_choices, decision.max_choices) != (1, 1) or value_range(decision) != (1, VALUE_ANSWER_MAX) \
+                or decision.context_value("unresolved_choices") is not None:
+            problems.append(f"{what}の身長を答える決定が、1〜{VALUE_ANSWER_MAX} の整数 1 つを答える値の決定ではない")
+        if card_height(state.card_def(card))[0] is None:
+            problems.append(f"{what}で置いたカード {card} に正解の参照値がない")
+        name = state.card_def(card).name_ja
+        hints = [e["name"] for e in _stage_events(state, use, "quiz_name_hint")]
+        if decision.context_value("name") != name or hints != [name]:
+            problems.append(f"{what}の伝えた名前 {decision.context_value('name')!r} が、置いたカードの名前・伝えたログ {hints} と合わない")
+        if {key for key, _ in decision.context} != {"use", "quiz_card", "name", VALUE_RANGE}:
+            problems.append(f"{what}の身長を答える決定の続きの情報 {[key for key, _ in decision.context]} に、決まった項目のほかのもの（正解の値など）がある")
+        return problems
+
+
+# v0.129 の登録（トレーナー 1）
+V0_129_TRAINERS: Mapping[str, TrainerEntry] = MappingProxyType({
+    "GD5-016": TrainerEntry(BlainesHeightQuiz(BLAINES_QUIZ_1_TEXT), "カツラのクイズ その1", BLAINES_QUIZ_1_TEXT, BLAINES_QUIZ_1_TEXT, _KYUURA_PRINTED_TEXT),
+})
+
+DEFAULT_EFFECTS = _with_trainers(DEFAULT_EFFECTS, V0_129_TRAINERS)
+
+
+# ---------------------------------------------------------------- v0.130（docs/trade-please-ownership-v0.130.md）
+
+# 利用者が指定した所有者の簡略化（v0.130。docs/trade-please-ownership-v0.130.md 3 章）。v0.127 の簡略ルール（``USER_SIMPLIFICATIONS``。印刷の条件を省く）・v0.129 の参照値
+# （``USER_SPECIFIED_REFERENCES``。説明の正解に参照値を採る）とは別の指定で、処理に使う文面は最新の説明（LD-PR1-027-TRAINER）のまま。説明が書かない「交換したカードの対戦の中の
+# 所有者」に、受け取ったプレイヤーを採る（kyuura の研究の記録の読み B に当たる処理）。公式の裁定・エラッタ・印刷の訂正・最新の説明としては記録せず、kyuura の UQ-SWAP-PLEASE-OWNERSHIP
+# （歴史資料上の問い）は解決済みにしない
+USER_SPECIFIED_RULE_SOURCE = "kyuura-engine user specification docs/trade-please-ownership-v0.130.md#3"
+USER_SWAP_OWNERSHIP = "USER-SWAP-OWNERSHIP-RECEIVER"
+USER_SPECIFIED_RULE_DATE = "2026-11-01"
+SWAP_PLEASE_PRINTED_TEXT = ("相手プレイヤーの手札を見て、カードを1枚えらぶ。次に、相手プレイヤーにあなたの手札を見せ、カードを1枚えらばせる。そして、お互いがえらんだカードを交換してよいか"
+                            "どうか、相手にたずねる。オーケーなら、カードを交換して、それぞれの手札にくわえる。オーケーでないなら、交換はおこらず、あなたは山札からカードを2枚引く。"
+                            "(このカードは、お互いに手札が1枚以上ある時だけ、使える)")
+SWAP_PLEASE_LATEST_TEXT = ("相手プレイヤーの手札を見て、その中からカードを1枚選ぶ。次に、相手プレイヤーにあなたの手札を見せ、カードを1枚選ばせる。そして、おたがいが選んだカードを交換して"
+                           "よいかどうか、相手プレイヤーにたずねる。オーケーなら、カードを交換して、それぞれの手札に加える。オーケーでないなら、交換はおこらず、あなたは山札からカードを2枚"
+                           "引いて、手札に加える。（このカードは、おたがいに手札が1枚以上あるときだけ、使える）")
+SWAP_PLEASE_BORROWED_REASON = (
+    "錯乱ジムで相手プレイヤーがかわりに使うとりかえっこプリーズの説明の「あなた」「相手プレイヤー」（相手の手札を見て選ぶ・手札を見せて選ばせる・たずねる・山札から2枚引く）と、"
+    "「おたがいに手札が1枚以上」をだれから見て読むかは、印刷の文面・最新の説明・2000.02.14 版の公式ルール・kyuura の記録から決められないので扱わない（kyuura の "
+    "UQ-CHAOS-GYM-BORROWED-TURN の PR1-027 の事例。利用者が指定した所有者の簡略化はこの問いを決めない。相手プレイヤーが使うことを選ぶと止める。docs/trade-please-ownership-v0.130.md 6 章）")
+
+
+@dataclass(frozen=True)
+class UserSpecifiedRule:
+    """利用者が指定した、説明が書かない処理の規則の 1 つの対象の記録（v0.130）。``key`` は ``<カード id>/trainer``。``printed_text`` は kyuura の印刷の文面（写しと同じ）、``play_text`` は
+    処理に使う文面（登録の ``play_text_ja``。最新の説明があればその文面）で、どちらも書き換えない。``applies_to`` は規則を当てはめる場面、``specification`` は規則の中身、``scope`` は
+    規則がはたらく範囲、``not_decided`` はこの指定が決めないこと、``instruction`` は利用者の指定の文（根拠の文書の引用）、``kyuura_record`` は kyuura に記録された指定の場所、
+    ``not_recorded_as`` は記録しない扱い、``kyuura_issue`` は解決済みにしない kyuura の論点。"""
+
+    key: str
+    rule: str
+    printed_text: str
+    play_text: str
+    applies_to: str
+    specification: str
+    scope: str
+    not_decided: str
+    instruction: str
+    kyuura_record: str
+    not_recorded_as: str
+    kyuura_issue: str
+    specified_by: str = "user"
+    specified_on: str = USER_SPECIFIED_RULE_DATE
+
+
+USER_SPECIFIED_RULES: Mapping[str, UserSpecifiedRule] = MappingProxyType({record.key: record for record in (
+    UserSpecifiedRule(
+        "PR1-027/trainer", USER_SWAP_OWNERSHIP, SWAP_PLEASE_PRINTED_TEXT, SWAP_PLEASE_LATEST_TEXT,
+        "「オーケーなら、カードを交換して、それぞれの手札に加える」で交換が成立した 2 枚の、対戦の中の所有者",
+        "交換した 2 枚それぞれの所有者を、交換と一体で受け取ったプレイヤーにする（片方だけを変えない）。以後その対戦の終わりまで、手札・山札・トラッシュ・サイド・場に置く処理は"
+        "新しい所有者を基準にする。対戦開始時のデッキのプレイヤー（出所）は追跡用に残し、uid は付け直さない。再交換も同じ規則（もとの所有者へ自動では戻さない）。オーケーでないときは"
+        "所有者を変えず、説明どおり使ったプレイヤーが山札から2枚引く。とりかえっこプリーズ自身の所有者は変えない",
+        "交換したカード 2 枚だけ（あとから重ねた進化カード・つけたエネルギー・どうぐなどの所有者は変えない）。その対戦の中だけ（実物の所有権・次の対戦の所有者を変えない）。"
+        "デッキの構築の制限（同じ名前 4 枚など）は交換のたびに当てはめ直さない",
+        "錯乱ジムで相手プレイヤーがかわりに使うときの「あなた」「相手」（UQ-CHAOS-GYM-BORROWED-TURN。止める）、ヤドキングの［ちえくらべ］との組み合わせ（未登録）、交換以外の手順"
+        "（CR-SWAP-PLEASE-PROCEDURE・CR-SWAP-PLEASE-USE-CONDITION・CR-SWAP-PLEASE-USE-IN-GAME のまま）",
+        "交換が成立した2枚は、対戦終了まで、それぞれの受取側が所有者になります。",
+        "kyuura docs/engine-user-swap-ownership.md（71d1728。2026-10-31 に kyuura に記録された利用者の採用「とりかえっこプリーズについて簡略化仕様を採用します。」）",
+        "公式の裁定・エラッタ・印刷の訂正・最新の説明・実物の所有権の変更・UQ-SWAP-PLEASE-OWNERSHIP の解決",
+        "UQ-SWAP-PLEASE-OWNERSHIP"),
+)})
+
+
+@dataclass(frozen=True)
+class SwapPleaseTrainer(TrainerEffect):
+    """v0.130（docs/trade-please-ownership-v0.130.md 5 章）: 相手プレイヤーの手札を見て、その中からカードを 1 枚選ぶ。次に、相手プレイヤーにあなたの手札を見せ、カードを 1 枚選ばせる。
+    そして、おたがいが選んだカードを交換してよいかどうか、相手プレイヤーにたずねる。オーケーなら、カードを交換して、それぞれの手札に加える。オーケーでないなら、交換はおこらず、あなたは
+    山札からカードを ``draw`` 枚引いて、手札に加える（とりかえっこプリーズ PR1-027。処理に使う文面は最新の説明 LD-PR1-027-TRAINER）。
+
+    - 使うための条件（CR-SWAP-PLEASE-USE-CONDITION）: このカードを除いた使ったプレイヤーの手札と、相手の手札が、どちらも 1 枚以上。満たさなければ手札から出す前に
+      ``NO_OTHER_CARDS_IN_HAND``・``OPPONENT_HAND_EMPTY``（状態を変えない）
+    - 説明の順（CR-SWAP-PLEASE-PROCEDURE）: 使ったプレイヤーが相手の手札を見る（``zones.look_at_hand``。見た人と持ち主だけ）→ 1 枚選ぶ（決定 ``SELECT_EXCHANGE_CARD``・``stage``
+      ``"take"``。どのカードでもよい）→ 相手プレイヤーが使ったプレイヤーの手札を見る（同じ。観戦者には見せない）→ 1 枚選ぶ（``stage`` ``"give"``）→ 相手プレイヤーが交換してよいかを
+      答える（決定 ``ACCEPT_REQUEST``。1 個: オーケー・0 個: オーケーでない）→ オーケーなら ``zones.exchange_hand_cards``、オーケーでないなら使ったプレイヤーが引く（引けるだけ。p.312）
+    - 交換した 2 枚の所有者は、利用者が指定した簡略化（``ownership_rule``。``USER_SWAP_OWNERSHIP``）で受け取ったプレイヤーにする（``zones.exchange_hand_cards``）。このカード自身の
+      所有者は変えない（使い終わったら持ち主のトラッシュ）
+    - 錯乱ジムで相手プレイヤーがかわりに使うことを選ぶと止める（``borrow_problem``。UQ-CHAOS-GYM-BORROWED-TURN）。おもてのカードのある山札（v0.126）で、オーケーでないときの引き方が
+      既存の止め方に当たるなら、使う前に止める（``face_up_draw_stop``。相手の答えで止まる場面を作らない）
+    - 場を変えない（``changes_field`` は False。答えの続きを試す確かめをしない）
+    """
+
+    text: str
+    ownership_rule: str = USER_SWAP_OWNERSHIP
+    draw: int = 2
+    implementation_id = "swap_please_exchange_or_draw"
+    changes_field = False
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = TrainerEffect.check(self, definition)
+        if definition.trainer_text_ja != SWAP_PLEASE_PRINTED_TEXT:
+            problems.append(f"文面 {definition.trainer_text_ja!r} が、登録の印刷の文面ではない")
+        if (self.text != SWAP_PLEASE_LATEST_TEXT or "相手プレイヤーの手札を見て、その中からカードを1枚選ぶ" not in self.text
+                or "相手プレイヤーにあなたの手札を見せ、カードを1枚選ばせる" not in self.text or "相手プレイヤーにたずねる" not in self.text
+                or "オーケーなら、カードを交換して、それぞれの手札に加える" not in self.text or f"あなたは山札からカードを{self.draw}枚引いて、手札に加える" not in self.text
+                or "おたがいに手札が1枚以上あるときだけ、使える" not in self.text):
+            problems.append("文面と登録の処理（見る・選ぶ・見せて選ばせる・たずねる・交換する・引く・使うための条件）が合わない")
+        records = [r for r in USER_SPECIFIED_RULES.values() if r.rule == self.ownership_rule and r.key == f"{definition.id}/trainer"
+                   and r.printed_text == definition.trainer_text_ja and r.play_text == self.text]
+        if not records:
+            problems.append(f"{definition.id} の交換したカードの所有者の利用者の指定（{self.ownership_rule}）の記録がない")
+        return problems
+
+    def borrow_problem(self, state: GameState, use: TrainerUse) -> tuple[str, str] | None:
+        return CHAOS_GYM_BORROWED_TURN_CODE, f"トレーナー {use.card_id}: {SWAP_PLEASE_BORROWED_REASON}"
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        if not any(uid != use.card for uid in state.players[use.player].hand):
+            raise IllegalActionError("NO_OTHER_CARDS_IN_HAND",
+                                     "このカードのほかに手札がないので、このカードは使えない（「おたがいに手札が1枚以上あるときだけ、使える」。CR-SWAP-PLEASE-USE-CONDITION）")
+        if not state.players[1 - use.player].hand:
+            raise IllegalActionError("OPPONENT_HAND_EMPTY", "相手の手札がないので、このカードは使えない（「おたがいに手札が1枚以上あるときだけ、使える」）")
+        stop = self.face_up_draw_stop(state, use)
+        if stop is not None:
+            raise UnsupportedError(*stop)
+
+    def face_up_draw_stop(self, state: GameState, use: TrainerUse) -> tuple[str, str] | None:
+        """おもてのカードのある山札（v0.126。フラッシュ）: オーケーでないときに使ったプレイヤーが引くと、既存のおもての山札の止め方（``faceup.command_problem``）に当たるなら、使う前に
+        その (コード, 理由) を返す（v0.129 のカツラのクイズ その1と同じ形。相手の答えを拒否して答えを強いない。止めるかは公開の情報だけで決まる）。当たらなければ None。"""
+        if not state.face_up_deck:
+            return None
+        trial = state.clone()
+        _draw_up_to(trial, use.player, self.draw)
+        return _faceup.command_problem(state, trial)
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        opponent = 1 - use.player
+        look_at_hand(state, use.player, opponent, trainer=use.card)
+        push_trainer_decision(state, use, kind=SELECT_EXCHANGE_CARD, player=use.player, options=state.players[opponent].hand, context=(("stage", "take"),))
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        opponent = 1 - use.player
+        stage = decision.context_value("stage")
+        if decision.kind == SELECT_EXCHANGE_CARD and stage == "take":
+            (taken,) = choices
+            state.add_event("exchange_selected", player=use.player, owner=opponent, card=taken, card_id=state.cards[taken].card_id, stage="take", trainer_card=use.card)
+            look_at_hand(state, opponent, use.player, trainer=use.card)
+            push_trainer_decision(state, use, kind=SELECT_EXCHANGE_CARD, player=opponent, options=state.players[use.player].hand,
+                                  context=(("stage", "give"), ("taken", taken)))
+            return
+        if decision.kind == SELECT_EXCHANGE_CARD:
+            (given,) = choices
+            taken = decision.context_value("taken")
+            state.add_event("exchange_selected", player=opponent, owner=use.player, card=given, card_id=state.cards[given].card_id, stage="give", trainer_card=use.card)
+            push_trainer_decision(state, use, kind=ACCEPT_REQUEST, player=opponent, options=(1,), min_choices=0, max_choices=1,
+                                  context=(("stage", "accept"), ("taken", taken), ("given", given)))
+            return
+        accepted = bool(choices)
+        state.add_event("request_answered", player=opponent, accepted=accepted, trainer_card=use.card)
+        if accepted:
+            exchange_hand_cards(state, use.player, decision.context_value("given"), decision.context_value("taken"), trainer=use.card)
+        else:
+            _draw_up_to(state, use.player, self.draw)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = f"トレーナー {use.card_id}"
+        opponent = 1 - use.player
+        stage = decision.context_value("stage")
+        events = _last_trainer_events(state, use)
+        looks = [(e["player"], e["owner"]) for e in events if e["kind"] == "look_at_hand" and e.get("trainer_card") == use.card]
+        selected = [(e["stage"], e["card"]) for e in events if e["kind"] == "exchange_selected" and e.get("trainer_card") == use.card]
+        taken, given = decision.context_value("taken"), decision.context_value("given")
+        both_looks = [(use.player, opponent), (opponent, use.player)]
+        expected = {"take": (SELECT_EXCHANGE_CARD, use.player, tuple(state.players[opponent].hand), (1, 1), [(use.player, opponent)], [], {"use", "stage"}),
+                    "give": (SELECT_EXCHANGE_CARD, opponent, tuple(state.players[use.player].hand), (1, 1), both_looks, [("take", taken)], {"use", "stage", "taken"}),
+                    "accept": (ACCEPT_REQUEST, opponent, (1,), (0, 1), both_looks, [("take", taken), ("give", given)], {"use", "stage", "taken", "given"})}.get(stage)
+        if expected is None:
+            return [f"{what}の決定 {decision.kind} の段階 {stage!r} が正しくない"]
+        kind, player, options, counts, want_looks, want_selected, keys = expected
+        problems = _decided_by(decision, player, what)
+        if (decision.kind != kind or tuple(decision.options) != options or not options or (decision.min_choices, decision.max_choices) != counts
+                or decision.context_value("unresolved_choices") is not None):
+            problems.append(f"{what}の段階 {stage} の決定 {decision.kind} {decision.options} が、{kind} の {options} からではない")
+        if {key for key, _ in decision.context} != keys:
+            problems.append(f"{what}の段階 {stage} の決定の続きの情報 {[key for key, _ in decision.context]} が、決まった項目 {sorted(keys)} ではない")
+        if looks != want_looks or selected != want_selected:
+            problems.append(f"{what}の段階 {stage} の決定の前の、手札を見たログ {looks}・選んだログ {selected} が説明の順と合わない")
+        if stage != "take" and (taken not in state.players[opponent].hand or state.cards[taken].owner != opponent):
+            problems.append(f"{what}で使ったプレイヤーが選んだカード {taken!r} が、相手の手札にない")
+        if stage == "accept" and (given not in state.players[use.player].hand or state.cards[given].owner != use.player):
+            problems.append(f"{what}で相手プレイヤーが選んだカード {given!r} が、使ったプレイヤーの手札にない")
+        return problems
+
+
+# v0.130 の登録（トレーナー 1）
+V0_130_TRAINERS: Mapping[str, TrainerEntry] = MappingProxyType({
+    "PR1-027": TrainerEntry(SwapPleaseTrainer(SWAP_PLEASE_LATEST_TEXT), "とりかえっこプリーズ", SWAP_PLEASE_PRINTED_TEXT, SWAP_PLEASE_LATEST_TEXT, "LD-PR1-027-TRAINER"),
+})
+
+DEFAULT_EFFECTS = _with_trainers(DEFAULT_EFFECTS, V0_130_TRAINERS)
+
+
+# ---------------------------------------------------------------- v0.131（docs/exeggutor-bilingual-names-v0.131.md）
+
+# 利用者が指定した名前の扱い（v0.131。docs/exeggutor-bilingual-names-v0.131.md 3 章）。日本語と英語を併記したナッシー[Exeggutor]（PR1-075・PR1-077）の英語の併記を翻訳の表示として
+# 扱い、判定（デッキの同じ名前・進化元・名前を指定する効果・同じ名前を比べる効果・クイズの答え・ワザ名）には日本語の部分を使う。名前以外の性能（HP・タイプ・必要なエネルギー・ワザの
+# 内容など）は通常のナッシーに置きかえず、それぞれのカードの写しの値にしたがう。v0.127 の簡略ルール（``USER_SIMPLIFICATIONS``）・v0.129 の参照値（``USER_SPECIFIED_REFERENCES``）・
+# v0.130 の規則（``USER_SPECIFIED_RULES``）とは別の記録で、印刷の文面の採用（ワザの処理に使う文面は印刷の文面のまま）とも別。公式の裁定・最新の説明・エラッタ・転記の訂正としては
+# 記録せず、kyuura の UQ-BILINGUAL-NAME-GLOSS（歴史資料上の問い）は解決済みにしない。写しの値（原文）は書き換えず、``CardDefinition.printed_name_ja``・``Attack.printed_name_ja`` に
+# 残す（``cards._user_specified_names``）。すべてのカードの括弧書き・英語を一律に除く正規化ではない（ここに挙げた 2 枚だけ）
+USER_SPECIFIED_NAME_SOURCE = "kyuura-engine user specification docs/exeggutor-bilingual-names-v0.131.md#3"
+USER_BILINGUAL_NAME_JAPANESE = "USER-BILINGUAL-NAME-JAPANESE"
+USER_SPECIFIED_NAME_DATE = "2026-11-01"
+STOMP_BILINGUAL_TEXT = ("コインを1枚投げる。もし「おもて」なら、このワザは20+10ダメージを与える。もし「うら」なら、このワザは20ダメージを与える。"
+                        " ( Flip a coin. If heads, this attack does 20 damage plus 10 more damage, if tails, this attack does 20 damage.)")
+
+
+@dataclass(frozen=True)
+class UserSpecifiedNameField:
+    """利用者が指定した名前の扱いの 1 つの欄（v0.131）。``field`` は写しの欄（``name.ja``・``pokemon.evolves_from.ja``・``pokemon.attacks[<位置>].name.ja``）、``copy_value`` は
+    その欄の写しの値（原文。書き換えない）、``rule_value`` は判定に使う値、``gloss`` は表示用の英語の併記（翻訳の表示。判定に使わない）、``printed`` はカードの印刷の書き方を
+    確かめた範囲（画像の照合の記録。確かめていなければそう書く）。"""
+
+    field: str
+    copy_value: str
+    rule_value: str
+    gloss: str
+    printed: str
+
+
+@dataclass(frozen=True)
+class UserSpecifiedName:
+    """利用者が指定した名前の扱いの 1 つの対象の記録（v0.131）。``key`` は ``<カード id>/name``。``fields`` は対象の欄と判定に使う値、``applies_to`` は判定に使う場面、``scope`` は
+    範囲（このカードだけ・名前の欄だけ）、``not_changed`` は置きかえないもの（名前以外の性能）、``instruction`` は利用者の指定の文（根拠の文書の引用）、``print_check`` は印刷を
+    確かめた記録（kyuura の画像の照合の id。なければ未確認と書く）、``not_recorded_as`` は記録しない扱い、``kyuura_issue`` は解決済みにしない kyuura の論点。"""
+
+    key: str
+    rule: str
+    fields: tuple[UserSpecifiedNameField, ...]
+    applies_to: str
+    scope: str
+    not_changed: str
+    instruction: str
+    print_check: str
+    not_recorded_as: str
+    kyuura_issue: str
+    specified_by: str = "user"
+    specified_on: str = USER_SPECIFIED_NAME_DATE
+
+    @property
+    def card_id(self) -> str:
+        return self.key.split("/", 1)[0]
+
+    def rule_value(self, field: str) -> str | None:
+        return next((f.rule_value for f in self.fields if f.field == field), None)
+
+
+_EXEGGUTOR_APPLIES_TO = (
+    "カード名「ナッシー」（デッキの同じ名前 4 枚の数え方で通常のナッシーと合わせる・名前を指定する効果・同じ名前を比べる効果・カツラのクイズ その3 の答えと答えの名前の候補・"
+    "カツラのクイズ その1 で伝える名前・名前の候補を作る処理・変身したあとの名前）、進化元「タマタマ」（手札・効果での進化）、ワザ名「ふみつけ」（クイズで伝える名前・ワザ名で"
+    "比べる効果・ログ・観測）")
+_EXEGGUTOR_SCOPE = "このカードの名前・進化元・ワザ名の 3 つの欄だけ（ほかのカードの括弧書き・英語の名前は変えない。英語だけの「Exeggutor」を別名として受け付けない）"
+_EXEGGUTOR_NOT_CHANGED = ("名前以外の性能（HP・タイプ・弱点・抵抗力・にげる・段階・必要なエネルギー・ダメージ・ワザの説明）は通常のナッシーに置きかえず、このカードの写しの値にしたがう"
+                          "（ワザの処理に使う文面は印刷の文面のまま）")
+_EXEGGUTOR_INSTRUCTION = "対象2枚の英語併記は翻訳表示として扱い、判定に使いません。"
+_EXEGGUTOR_NOT_RECORDED_AS = "公式の裁定・最新の説明・エラッタ・転記の訂正・UQ-BILINGUAL-NAME-GLOSS の解決"
+
+
+def _exeggutor_fields(printed: str) -> tuple[UserSpecifiedNameField, ...]:
+    return (UserSpecifiedNameField("name.ja", "ナッシー［Exeggutor］", "ナッシー", "Exeggutor", printed),
+            UserSpecifiedNameField("pokemon.evolves_from.ja", "タマタマ", "タマタマ", "Exeggcute", printed),
+            UserSpecifiedNameField("pokemon.attacks[0].name.ja", "ふみつけ[Stomp]", "ふみつけ", "Stomp", printed))
+
+
+USER_SPECIFIED_NAMES: Mapping[str, UserSpecifiedName] = MappingProxyType({record.key: record for record in (
+    UserSpecifiedName(
+        "PR1-075/name", USER_BILINGUAL_NAME_JAPANESE,
+        _exeggutor_fields("印刷は未確認（kyuura も読んでいない。pcg-search の画像は代わりの画像。同じカードの組 SC-PR1-075 の転記の値による）"),
+        _EXEGGUTOR_APPLIES_TO, _EXEGGUTOR_SCOPE, _EXEGGUTOR_NOT_CHANGED, _EXEGGUTOR_INSTRUCTION, "未確認（画像の照合の記録なし）", _EXEGGUTOR_NOT_RECORDED_AS,
+        "UQ-BILINGUAL-NAME-GLOSS"),
+    UserSpecifiedName(
+        "PR1-077/name", USER_BILINGUAL_NAME_JAPANESE,
+        _exeggutor_fields("kyuura の画像の照合 IMG-PR1-077（2026-10-30）: 「ナッシー[Exeggutor]」「タマタマ[Exeggcute]から進化」「ふみつけ[Stomp]」"),
+        _EXEGGUTOR_APPLIES_TO, _EXEGGUTOR_SCOPE, _EXEGGUTOR_NOT_CHANGED, _EXEGGUTOR_INSTRUCTION, "IMG-PR1-077", _EXEGGUTOR_NOT_RECORDED_AS,
+        "UQ-BILINGUAL-NAME-GLOSS"),
+)})
+
+
+# v0.131 の登録（ワザ 2）。ふみつけ（無色 2 個）20+: 印刷の文面（kyuura の写し）で照合し、処理にも使う。処理は通常のナッシーではなく、ギャロップ・ケンタロスなどのふみつけと同じ
+# ``CoinBonusDamage(10)``（基本となるダメージ 20、「おもて」なら 10 を追加）。PR1-077 は PR1-075 と処理に使う欄・登録の値が同じなので、同じ登録の値を加える（SAME_DATA_CARDS_V0_131。
+# 採用の記録・名前の扱いの記録は id ごと）
+V0_131_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    AttackKey(card, 0): _printed(CoinBonusDamage(10), "ふみつけ", STOMP_BILINGUAL_TEXT) for card in ("PR1-075", "PR1-077")
+})
+SAME_DATA_CARDS_V0_131: Mapping[str, str] = MappingProxyType({
+    "PR1-077": "PR1-075",  # ナッシー[Exeggutor]（SC-PR1-075）
+})
+
+DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_131_ATTACKS), SAME_DATA_CARDS_V0_131)

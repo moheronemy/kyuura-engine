@@ -29,6 +29,12 @@ v0.4c 以降の 2 進化ポケモン。v0.11 はサカキのワンリキー・�
 - v0.127 で、写しの組 pool_v0_127（6 枚）を加えました（写しの元・研究の基準は 57d01f4 のまま。段は加えていない。docs/deferred-shortage-user-promos-v0.127.md 3 章）。
 - v0.128 で、段 v0.128（57d01f4 → 71d1728）を加え、kyuura の目録の分類（``catalog_class``・``engine_scope``・``engine_scope_reason``）から通常対戦の対象の集合を求めて
   書き出しの ``catalog_scope`` に残しました（3 つの欄はカードの写す欄には加えない。docs/catalog-scope-migration-v0.128.md 2 章・3 章）。
+- v0.129 で、写しの組 pool_v0_129（1 枚）と、エンジンが処理に使う欄 ``pokemon.dex`` を加えました（写しの元・研究の基準は 71d1728 のまま。段は加えていない。
+  公式図鑑の種族の身長は scripts/extract_species_heights.py の別の写し。docs/blaines-quiz-heights-v0.129.md 2 章）。
+- v0.130 で、写しの組 pool_v0_130（1 枚）を加えました（写しの元・研究の基準は 71d1728 のまま。段は加えていない。文面は FIX-PR1-027-TEXT-JA（段 v0.126）のあとの値。
+  docs/trade-please-ownership-v0.130.md 2 章）。
+- v0.131 で、写しの組 pool_v0_131（2 枚）を加えました（写しの元・研究の基準は 71d1728 のまま。段は加えていない。名前・進化元・ワザ名は kyuura の値（日本語と英語の併記）の
+  まま写し、判定に使う値は利用者が指定した名前の扱い（effects.USER_SPECIFIED_NAMES）で別に持つ。docs/exeggutor-bilingual-names-v0.131.md 2 章）。
 
 使い方::
 
@@ -2484,6 +2490,7 @@ FIELDS_USED_BY_ENGINE = [
     "energy.provides",
     "energy.text",  # v0.58: 特殊エネルギーの説明（登録した実装との照合に使う）
     "pokemon.evolves_to",  # v0.114: ベイビィの進化先（日本語名の配列。印刷の順。ベイビィの記録にだけある。docs/baby-rules-evolution-v0.114.md 4 章）
+    "pokemon.dex",  # v0.129: 公式図鑑の種族の身長の参照値を引く全国図鑑番号（docs/blaines-quiz-heights-v0.129.md 2 章。kyuura_engine/heights.py）
 ]
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -3705,6 +3712,25 @@ POOL_V0_127 = [
     "PR1-072",  # ハマちゃんのヤドキング（プロモ。1進化（ヤドンから）・超・HP70。こまったなあ・どつく。利用者が指定した簡略ルール）
 ]
 
+# v0.129 で加えたカード（docs/blaines-quiz-heights-v0.129.md）。写しの元・研究の基準は 71d1728 のまま（段は加えていない）。正解の参照値（公式図鑑の種族の身長）は
+# scripts/extract_species_heights.py の別の写し（kyuura 9242b9b）
+POOL_V0_129 = [
+    "GD5-016",  # カツラのクイズ その1（ジムデッキ。ポケモンジム第3弾「グレンタウンジム カツラ」）
+]
+
+# v0.130 で加えたカード（docs/trade-please-ownership-v0.130.md）。写しの元・研究の基準は 71d1728 のまま（段は加えていない）。処理に使う文面は最新の説明 LD-PR1-027-TRAINER、
+# 交換したカードの所有者は利用者が指定した簡略化（effects.USER_SPECIFIED_RULES）。名前は kyuura の値のまま（印刷の「！」は kyuura の報告事項で、写しでは直さない）
+POOL_V0_130 = [
+    "PR1-027",  # とりかえっこプリーズ（プロモ（旧裏）。トレーナー。公式大会では使えない（kyuura の notes）が、通常対戦の対象）
+]
+
+# v0.131 で加えたカード（docs/exeggutor-bilingual-names-v0.131.md）。写しの元・研究の基準は 71d1728 のまま（段は加えていない）。名前「ナッシー［Exeggutor］」・ワザ名「ふみつけ[Stomp]」は
+# kyuura の値のまま写す（訂正・正規化しない）。判定に使う名前は利用者が指定した名前の扱い（effects.USER_SPECIFIED_NAMES）
+POOL_V0_131 = [
+    "PR1-075",  # ナッシー[Exeggutor]（プロモ（旧裏）。トロピカルメガバトル。印刷は未確認）
+    "PR1-077",  # ナッシー[Exeggutor]（プロモ（旧裏）。トレーナーズVol.3。kyuura の画像の照合 IMG-PR1-077）
+]
+
 POOLS = [
     ("pool_v0_1", POOL_V0_1),
     ("pool_v0_2b", POOL_V0_2B),
@@ -3838,6 +3864,9 @@ POOLS = [
     ("pool_v0_125", POOL_V0_125),
     ("pool_v0_126", POOL_V0_126),
     ("pool_v0_127", POOL_V0_127),
+    ("pool_v0_129", POOL_V0_129),
+    ("pool_v0_130", POOL_V0_130),
+    ("pool_v0_131", POOL_V0_131),
 ]
 
 

@@ -140,6 +140,8 @@ from kyuura_engine.effects import CoinBenchOwnerBasicFromDeckStadium, CoinRetrie
 from kyuura_engine.effects import AttackLockWhileSourceActiveOnHeads, CoinNextTurnMultiplyElseLockAttack, LockOpponentAttackOnHeads  # v0.76
 from kyuura_engine.effects import EXPIRE_TO_HAND, RockPaperScissorsRefreshHand  # v0.66
 from kyuura_engine.effects import BlainesQuiz, ChallengeBenchFromDecks, CoinSetAsideOpponentHandElseEndTurn, RevealAllPrizesTrainer  # v0.63
+from kyuura_engine.effects import BlainesHeightQuiz  # v0.129: カツラのクイズ その1（カードの見分けだけに使う。正解の判定・引く側・公開の範囲は監査が独立に持つ）
+from kyuura_engine.heights import load_species_heights  # v0.129: 正解の参照値（写しの値。図鑑番号だけで引く）
 from kyuura_engine.effects import (
     AskOpponentEachTakePrizeElseDraw,
     BenchActiveThenHandBasicToActive,
@@ -505,11 +507,14 @@ TOP_FIELDS_SINCE = {
     "frozen_forms": 29,  # v0.124: 処理のあいだ固定した変身の状態
     "face_up_deck": 31,  # v0.126: おもてを上にして山札に置かれたカード（フラッシュ）
     "user_simplifications": 32,  # v0.127: 利用者が指定した簡略ルールで処理するワザの対象（登録表とカードの組から求める識別の情報）
+    "ownership_changes": 33,  # v0.130: 対戦の中の所有者の変更の記録（とりかえっこプリーズの交換）
+    "user_ownership_rules": 33,  # v0.130: 利用者が指定した所有者の簡略化を当てはめる登録の対象（登録表とカードの組から求める識別の情報）
 }
 # v0.125: 形式 30 は、持続する効果 ``"damage_reduction"`` の項目 ``non_attack_unresolved``（「ふくらむ」の効果だけ）を加えた（場のポケモン・最上位の項目は変わらない）
 # v0.126: 形式 31 は、最上位の ``face_up_deck``（フラッシュでおもてにした山札のカード）を加えた
 # v0.127: 形式 32 は、``halt`` の ``interruption``（途中停止の記録。なければ null）と、最上位の ``user_simplifications`` を加えた
-LATEST_FORMAT = 32
+# v0.130: 形式 33 は、所有者の変わったカードの ``cards`` の ``origin`` と、最上位の ``ownership_changes`` を加えた
+LATEST_FORMAT = 33
 # v0.99: 形式 25 で、場のポケモンの履歴の受けた記録（``"kind": "received"``）に加わった項目（ダメージを受けた場所）
 RECEIVED_FIELDS_SINCE = {"active_damage": 25}
 
@@ -547,9 +552,27 @@ def _project(data_latest: dict, version: int) -> dict:
         data["trainer_in_use"] = {k: v for k, v in data["trainer_in_use"].items() if k != "user"}  # v0.57: 借りて使っているプレイヤーは形式 17 から
     if version < 32 and isinstance(data.get("halt"), dict):
         data["halt"] = {k: v for k, v in data["halt"].items() if k != "interruption"}  # v0.127: 途中停止の記録は形式 32 から
+    if version < 33 and "cards" in data:
+        data["cards"] = {uid: {k: v for k, v in card.items() if k != "origin"} for uid, card in data["cards"].items()}  # v0.130: 出所は形式 33 から
     if version < 16 and "trainer_locks" in data:
         data["trainer_locks"] = [{k: v for k, v in lock.items() if k != "origin"} for lock in data["trainer_locks"]]  # v0.56: 禁止の出どころは形式 16 から
     return data
+
+
+def initial_owners(state) -> dict[int, int]:
+    """v0.130: 対戦開始時のカードの持ち主（uid → プレイヤー）。``new_game`` で作った対戦は、デッキリストの並びで uid を付ける（プレイヤー 0 のデッキ、続けてプレイヤー 1 の
+    デッキ）ので、エンジンの所有者・出所の値を読まずに求める（カードの id がデッキリストと違えば ``ValueError``）。デッキリストのない盤面（テスト専用）は、カードの表の出所
+    （``deck_owner``）を使う。"""
+    if not any(state.decklists):
+        return {uid: card.deck_owner for uid, card in state.cards.items()}
+    sizes = len(state.decklists[0]), len(state.decklists[1])
+    owners = {}
+    for uid, card in state.cards.items():
+        player, index = (0, uid) if uid < sizes[0] else (1, uid - sizes[0])
+        if index >= sizes[player] or state.decklists[player][index] != card.card_id:
+            raise ValueError(f"カード {uid} が、デッキリストの並びの uid の付け方と合わない")
+        owners[uid] = player
+    return owners
 
 
 def required_format(state) -> tuple[int, bool]:
@@ -628,6 +651,8 @@ def required_format(state) -> tuple[int, bool]:
         needed = max(needed, 31)  # v0.126: おもてを上にして山札に置かれたカード（フラッシュ）
     if state.halt is not None and state.halt.interruption is not None:
         needed = max(needed, 32)  # v0.127: 途中停止の状態（在途のカードを残した終端）
+    if state.ownership_changes:
+        needed = max(needed, 33)  # v0.130: 対戦の中の所有者の変更（とりかえっこプリーズの交換）
     d = state.decision
     not_v0_1 = d is not None and (
         d.context_value("then") is not None or d.resume in ("attack", "knock_out", "post_knockout", "power")  # v0.42: 特殊能力の途中の決定
@@ -6375,7 +6400,9 @@ def log_problems(state) -> list[str]:
             return None
         return pid if pid is not None and active_of.get(pokemon_owner.get(pid)) == pid else None
 
-    owner = {uid: card.owner for uid, card in state.cards.items()}
+    # v0.130: カードの持ち主は、対戦開始時の持ち主（デッキリストの並びの uid の付け方から求める。エンジンの所有者の値を読まない）から始め、交換のログ（cards_exchanged）で組み立て直す
+    initial_owner = initial_owners(state)
+    owner = dict(initial_owner)
     turn_now = 0  # v0.46: 今処理しているイベントの番（continuous_expected が持続する効果のはたらく番を見る）
     declared = None  # 直前の特殊能力の宣言（番・プレイヤー・ポケモン）。移動のログはその直後に続く（v0.5）
     vanish_pending = None  # v0.98: ［VANISH］でついているカードをトラッシュしたポケモン（(特殊能力, 場のポケモンの番号)。すぐあとに手札にもどす）
@@ -7099,7 +7126,10 @@ def log_problems(state) -> list[str]:
                     and pid == attack_window["pokemon_id"])
             else:
                 trainer_entry = state.effects.trainer_entry(state.cards[via].card_id) if via in state.cards else None
-                source_ok = using_trainer.get(e["by_player"]) == via and e["by_player"] == e["player"] == turn_player \
+                # v0.130: 錯乱ジムの「うら」で相手が借りて使った退化スプレー（借りたプレイヤーが、相手の番に自分の場のポケモンを退化させる。v0.57 の既存の処理）。ログから組み立てた
+                # 使っているプレイヤーが借りたプレイヤーで、カードの持ち主がその相手のときだけ、番のプレイヤーでなくてよい（docs/trade-please-ownership-v0.130.md 10.3 節）
+                borrowed_by = e["by_player"] if owner.get(via) == 1 - e["by_player"] and using_trainer.get(e["by_player"]) == via else None
+                source_ok = using_trainer.get(e["by_player"]) == via and e["by_player"] == e["player"] and e["by_player"] in (turn_player, borrowed_by) \
                     and trainer_entry is not None and (isinstance(trainer_entry.effect, DevolveOwnPokemon) and e["destination"] == "discard"
                                                        # v0.80: 退化スプレーHYPER（1 枚を持ち主の手札に）
                                                        or isinstance(trainer_entry.effect, DevolveOneToHandWithBan) and e["destination"] == "hand"
@@ -8140,6 +8170,30 @@ def log_problems(state) -> list[str]:
                 v126["flash"].setdefault(e["trainer_card"], []).append(e["owner"])
                 v126["marks"][e["owner"]] = list(prior["cards"])
             v126["pending_look"] = None
+        elif kind in ("look_at_hand", "exchange_selected", "cards_exchanged") and isinstance(_trainer_effect_of(state, e.get("trainer_card")), E.SwapPleaseTrainer):
+            # v0.130: とりかえっこプリーズ。使ったプレイヤーが相手の手札を見て選び、相手が使ったプレイヤーの手札を見て選ぶ。交換が成立したら、2 枚を受け取ったプレイヤーの手札に移し、
+            # 組み立て直した持ち主を受け取ったプレイヤーにする（交換のログの所有者の値を、組み立て直した値と照らす）
+            user = trainer_user(e["trainer_card"])
+            if using_trainer.get(user) != e["trainer_card"]:
+                problems.append(f"{e['turn']} 番の {kind} が、使っている最中のとりかえっこプリーズの処理のものではない")
+            elif kind == "look_at_hand":
+                if (e["player"], e["owner"]) not in ((user, 1 - user), (1 - user, user)) or sorted(e["cards"]) != sorted(hand[e["owner"]]):
+                    problems.append(f"{e['turn']} 番にとりかえっこプリーズで見た手札 {e['cards']}（プレイヤー {e['owner']}）が、ログから組み立てた手札と違う")
+            elif kind == "exchange_selected":
+                if ((e["stage"], e["player"], e["owner"]) not in (("take", user, 1 - user), ("give", 1 - user, user)) or e["card"] not in hand[e["owner"]]
+                        or owner.get(e["card"]) != e["owner"] or e["card_id"] != state.cards[e["card"]].card_id):
+                    problems.append(f"{e['turn']} 番にとりかえっこプリーズで選んだカード {e['card']} が、見た相手の手札のカードではない")
+            else:
+                given, taken = e["given_card"], e["taken_card"]
+                expected_ownership = ((given, user, 1 - user, initial_owner.get(given)), (taken, 1 - user, user, initial_owner.get(taken)))
+                if ((e["player"], e["opponent"]) != (user, 1 - user) or owner.get(given) != user or owner.get(taken) != 1 - user
+                        or tuple(tuple(x) for x in e["ownership"]) != expected_ownership):
+                    problems.append(f"{e['turn']} 番の交換 {e.get('exchange')} の所有者の変更 {e['ownership']} が、組み立て直した持ち主 {expected_ownership} と合わない")
+                from_hand(e, user, given)
+                from_hand(e, 1 - user, taken)
+                hand[1 - user].append(given)
+                hand[user].append(taken)
+                owner[given], owner[taken] = 1 - user, user
         elif kind in ("reveal_hand", "revealed_hand_to_deck", "look_at_hand", "trainer_draw_declined", "trainer_discard_declined", "look_at_deck_top_declined") \
                 or kind in ("look_at_deck_top", "look_at_deck_top_none") and "trainer_card" in e:
             # v0.54: 使っている最中のトレーナー（ミニスカート・スパイ作戦・エリカ・スパイ作戦／カツラのギャンブル・ポケモン図鑑）の処理
@@ -8473,6 +8527,10 @@ def log_problems(state) -> list[str]:
             # v0.80: カツラのクイズ その2（手札のどのカードでも）・ポケモン性格判定（進化カード）
             accepted = (state.printed_def(e["card"]).category == "pokemon" and bool(state.printed_def(e["card"]).attacks)) if isinstance(quiz, BlainesQuiz) \
                 else isinstance(quiz, SetAsideGuessKindQuiz) and (quiz.kinds != "personality" or state.printed_def(e["card"]).is_evolution_pokemon)
+            if isinstance(quiz, BlainesHeightQuiz):
+                # v0.129: その1。手札の「ポケモン」のカードで、図鑑番号がちょうど 1 つあり、その種族の参照値がある（ないカードは選ぶと止めるので置かない）
+                dex = state.printed_def(e["card"]).dex
+                accepted = state.printed_def(e["card"]).category == "pokemon" and len(dex) == 1 and dex[0] in load_species_heights().by_dex
             if using_trainer.get(user) != e["trainer_card"] or e["player"] != user or not accepted:
                 problems.append(f"{e['turn']} 番にクイズで置いたカード {e['card']} が、使ったプレイヤーの手札のワザを持つポケモンのカードではない")
             from_hand(e, e["player"], e["card"])
@@ -8619,7 +8677,7 @@ def log_problems(state) -> list[str]:
             # v0.56: 相手の答え（マチスの交渉・カスミのわがまま）・期限のある効果を与えた（カスミ・キョウ・見えない壁）。使っている最中のそのトレーナーの処理
             user = trainer_user(e["trainer_card"])
             trainer_effect = _trainer_effect_of(state, e["trainer_card"])
-            expected = (AskOpponentEachTakePrizeElseDraw, LookPrizeAskSwapElseDraw, ChallengeBenchFromDecks) if kind == "request_answered" \
+            expected = (AskOpponentEachTakePrizeElseDraw, LookPrizeAskSwapElseDraw, ChallengeBenchFromDecks, E.SwapPleaseTrainer) if kind == "request_answered" \
                 else (TrainerTurnEffectTrainer, DevolveOneToHandWithBan)  # v0.80: 退化スプレーHYPER（その番だけ、退化させたポケモンを進化させない）
             if kind == "request_answered" and isinstance(trainer_effect, LookOpponentPrizesMayRedeal):
                 # v0.80: にせオーキドの発明（置きなおすかを決めるのは使ったプレイヤー）
@@ -10178,6 +10236,8 @@ def log_problems(state) -> list[str]:
             problems.append(f"持続する効果 {key} が、消したあとも状態に残っている")
     problems.extend(coin_gated_effect_problems(state, log))  # v0.76
     problems.extend(v127_problems(state))  # v0.127: ドライアップ・怪電波マシーン・途中停止
+    problems.extend(v129_problems(state))  # v0.129: カツラのクイズ その1
+    problems.extend(v130_problems(state))  # v0.130: とりかえっこプリーズと、対戦の中の所有者
     return problems
 
 
@@ -10196,6 +10256,192 @@ def _v127_final_heads(window: list[dict]) -> int | None:
         elif e["kind"] == "esp_redo_declined" and e.get("original"):
             heads = len(e["original"]) - 1
     return heads
+
+
+V129_QUIZ = ("GD5-016",)
+
+
+def v129_problems(state) -> list[str]:
+    """v0.129（docs/blaines-quiz-heights-v0.129.md 7 章）: カツラのクイズ その1を、ログから組み立てて照らす（エンジンの不変条件とは別に、ログと身長の参照値の写しだけから）。
+
+    - 使ってからトラッシュするまでの並びが、置く（``quiz_card_set``。置いたカードは使ったプレイヤーだけが見る）→ 名前（``quiz_name_hint``。置いたカードの印刷の名前だけ）→ 答え
+      （``quiz_height_answer``。相手プレイヤーの 1 以上の整数 cm）→ 表にする（``quiz_height_reveal``）→ 引く（正解なら相手プレイヤー、正解でないなら使ったプレイヤー。山札の
+      残りが足りなければ引けるだけ。2 枚まで）→ 手札にもどす（``set_aside_returned``。全員に見せる）→ トラッシュ。答えの前に、置いたカードの id・図鑑番号・身長のログがない
+    - 正解は、答えの cm と、置いたカードの全国図鑑番号（ちょうど 1 つ）の参照値が同じこと。表にしたログの図鑑番号・身長・名前が置いたカードのもの"""
+    heights = load_species_heights().by_dex
+    log = list(state.log)
+    problems: list[str] = []
+    for i, e in enumerate(log):
+        if e["kind"] != "play_trainer" or state.cards[e["card"]].card_id not in V129_QUIZ:
+            continue
+        window = []
+        for later in log[i + 1:]:
+            window.append(later)
+            if later["kind"] in ("discard_trainer", "halted", "game_end") or (later["kind"] == "play_trainer" and later["card"] != e["card"]):
+                break
+        # 錯乱ジム（v0.57）: 使う前のスタジアムのコイン・問いの答え。相手が借りて使えば、借りたプレイヤーが「あなた」（使ったプレイヤー）
+        lead = 0
+        while lead < len(window) and (window[lead]["kind"] in ("chaos_check", "chaos_answered")
+                                      or (window[lead]["kind"] == "coin_flip" and window[lead].get("source") == "stadium")):
+            lead += 1
+        borrowed = [w for w in window[:lead] if w["kind"] == "chaos_answered" and w.get("accepted")]
+        user = borrowed[-1]["player"] if borrowed else e["player"]
+        window = window[lead:]
+        kinds = [w["kind"] for w in window]
+        if not window or window[-1]["kind"] != "discard_trainer" or window[-1].get("card") != e["card"]:
+            waiting = state.trainer_in_use is not None and state.trainer_in_use.card == e["card"]
+            if waiting and kinds in ([], ["quiz_card_set", "quiz_name_hint"]):
+                continue  # 置くカード・答えを待っている（使い終えていない）
+            problems.append(f"{e['turn']} 番のカツラのクイズ その1 の使用が、トラッシュで終わっていない {kinds}")
+            continue
+        expected = ["quiz_card_set", "quiz_name_hint", "quiz_height_answer", "quiz_height_reveal"]
+        if kinds[:4] != expected or kinds[-2:] != ["set_aside_returned", "discard_trainer"] or any(k != "draw" for k in kinds[4:-2]) or len(kinds) > 7:
+            problems.append(f"{e['turn']} 番のカツラのクイズ その1 の並び {kinds} が、置く → 名前 → 答え → 表にする → 引く → もどす → トラッシュではない")
+            continue
+        placed, hint, answer, reveal = window[:4]
+        draws = window[4:-2]
+        returned = window[-2]
+        definition = state.printed_def(placed["card"])
+        dex = definition.dex
+        height = heights.get(dex[0]) if len(dex) == 1 else None
+        if placed["player"] != user or definition.category != "pokemon" or height is None:
+            problems.append(f"{e['turn']} 番に置いたカード {placed['card']} が、使ったプレイヤーの、参照値のある「ポケモン」のカードではない")
+            continue
+        if set(hint) != {"kind", "turn", "player", "name", "trainer_card"} or hint["name"] != definition.name_ja or hint["player"] != user:
+            problems.append(f"{e['turn']} 番に伝えた名前 {hint.get('name')!r} が、置いたカードの名前だけではない")
+        value = answer.get("answer_cm")
+        if answer["player"] != 1 - user or type(value) is not int or value < 1 or set(answer) != {"kind", "turn", "player", "answer_cm", "trainer_card"}:
+            problems.append(f"{e['turn']} 番の身長の答え {answer!r} が、相手プレイヤーの 1 以上の整数 cm ではない")
+            continue
+        correct = value == height.height_cm
+        if (reveal["player"], reveal["card"], reveal["card_id"], reveal["name"], reveal["dex"], reveal["height_cm"], reveal["correct"]) != (
+                user, placed["card"], state.cards[placed["card"]].card_id, definition.name_ja, height.dex, height.height_cm, correct):
+            problems.append(f"{e['turn']} 番に表にしたカード・正解 {dict(reveal)!r} が、置いたカード・答え・参照値と合わない")
+        drawer = 1 - user if correct else user
+        if any(d["player"] != drawer for d in draws) or sum(len(d["cards"]) for d in draws) > 2 or len(draws) > 1:
+            problems.append(f"{e['turn']} 番のクイズで引いた {[(d['player'], len(d['cards'])) for d in draws]} が、{'正解' if correct else '正解でない'}のときのプレイヤー {drawer} の 2 枚までではない")
+        if tuple(returned["cards"]) != (placed["card"],) or returned["player"] != user or "cards" not in returned.get("face_up", ()):
+            problems.append(f"{e['turn']} 番に手札にもどしたカード {returned['cards']} が、表にした置いたカードではない")
+    return problems
+
+
+V130_SWAP = ("PR1-027",)
+
+
+def _zone_holders(state) -> dict[int, int]:
+    """v0.130: 今の状態で、カードがあるゾーンの持ち主（uid → プレイヤー）。山札・手札・サイド・トラッシュ・場（重なり・ついているカード・のせたカード）・置いておく場所・使用中の
+    トレーナー（持ち主）・場のスタジアム（出したプレイヤー）。カードの表の所有者の値は読まない。"""
+    holders: dict[int, int] = {}
+    for player, p in enumerate(state.players):
+        for uid in (*p.deck, *p.hand, *p.prizes, *p.discard):
+            holders[uid] = player
+        for pokemon in p.in_play():
+            for uid in (pokemon.card, *pokemon.evolution_stack, *pokemon.energy, *(t.card for t in pokemon.trainers),
+                        *(() if pokemon.disguise is None else (pokemon.disguise,))):
+                holders[uid] = player
+    for group in state.set_aside:
+        for uid in group.cards:
+            holders[uid] = group.owner
+    for used in (*state.trainer_stack, *(() if state.trainer_in_use is None else (state.trainer_in_use,))):
+        holders[used.card] = used.player
+    if state.stadium is not None:
+        holders[state.stadium.card] = state.stadium.owner
+    return holders
+
+
+def v130_problems(state) -> list[str]:
+    """v0.130（docs/trade-please-ownership-v0.130.md 9 章）: とりかえっこプリーズと対戦の中の所有者を、ログから組み立てて照らす（エンジンの不変条件・所有者の値とは別に）。
+
+    - 使ってからトラッシュするまでの並びが、見る（使ったプレイヤーが相手の手札）→ 選ぶ（take）→ 見る（相手が使ったプレイヤーの手札）→ 選ぶ（give）→ 答え（相手）→ 交換（オーケー。
+      選んだ 2 枚）か引く（オーケーでない。使ったプレイヤーが 2 枚まで）→ トラッシュ（持ち主のトラッシュ）
+    - 所有者は、対戦開始時の持ち主（デッキリストの並びの uid の付け方）から始め、交換のログの 2 枚だけを受け取ったプレイヤーに変えて組み立て直す。組み立て直した所有者が、今の状態の
+      カードのあるゾーンの持ち主・カードの表の所有者と同じ。出所は所有者の変わったカードだけが持ち、対戦開始時の持ち主と同じ。変更の記録（ownership_changes）が交換のログと同じ
+    """
+    log = list(state.log)
+    problems: list[str] = []
+    for i, e in enumerate(log):
+        if e["kind"] != "play_trainer" or state.cards[e["card"]].card_id not in V130_SWAP:
+            continue
+        window = []
+        for later in log[i + 1:]:
+            window.append(later)
+            if later["kind"] in ("discard_trainer", "halted", "game_end") or (later["kind"] == "play_trainer" and later["card"] != e["card"]):
+                break
+        lead = 0
+        while lead < len(window) and (window[lead]["kind"] in ("chaos_check", "chaos_answered")
+                                      or (window[lead]["kind"] == "coin_flip" and window[lead].get("source") == "stadium")
+                                      or (window[lead]["kind"] == "discard_from_hand" and "stadium_card" in window[lead])):
+            lead += 1
+        if any(w["kind"] == "chaos_answered" and w.get("accepted") for w in window[:lead]):
+            problems.append(f"{e['turn']} 番のとりかえっこプリーズを、錯乱ジムで相手が借りて使った（UQ-CHAOS-GYM-BORROWED-TURN で止めるはず）")
+            continue
+        user = e["player"]
+        declined_borrow = any(w["kind"] == "chaos_answered" and not w.get("accepted") for w in window[:lead])
+        window = window[lead:]
+        kinds = [w["kind"] for w in window]
+        head = ["look_at_hand", "exchange_selected", "look_at_hand", "exchange_selected", "request_answered"]
+        if declined_borrow:
+            # 錯乱ジムの「うら」で使ったプレイヤーは使えず、相手もかわりに使わなかった: 使わなかったカードは、すぐ持ち主のトラッシュに行く（下の所有者の照らしで確かめる）
+            if kinds != ["discard_trainer"] or window[0].get("card") != e["card"]:
+                problems.append(f"{e['turn']} 番のとりかえっこプリーズを錯乱ジムで使えず、相手も使わなかったのに、そのあとが {kinds}")
+            continue
+        if not window or window[-1]["kind"] != "discard_trainer" or window[-1].get("card") != e["card"]:
+            waiting = state.trainer_in_use is not None and state.trainer_in_use.card == e["card"]
+            if waiting and kinds in (head[:1], head[:3], head[:4]):
+                continue  # 選ぶ・答えを待っている（使い終えていない）
+            if any(w["kind"] == "chaos_not_borrowable" for w in window) and kinds[-1:] == ["discard_trainer"]:
+                continue  # 錯乱ジムの「うら」で使えなかった（持ち主のトラッシュ。下の所有者の照らしで確かめる）
+            problems.append(f"{e['turn']} 番のとりかえっこプリーズの使用が、トラッシュで終わっていない {kinds}")
+            continue
+        if kinds[:5] != head or kinds[-1] != "discard_trainer" or not (kinds[5:-1] in (["cards_exchanged"], [], ["draw"])):
+            problems.append(f"{e['turn']} 番のとりかえっこプリーズの並び {kinds} が、見る → 選ぶ → 見る → 選ぶ → 答え → 交換か引く → トラッシュではない")
+            continue
+        look1, take, look2, give, answer = window[:5]
+        rest = window[5:-1]
+        if (look1["player"], look1["owner"], look2["player"], look2["owner"]) != (user, 1 - user, 1 - user, user):
+            problems.append(f"{e['turn']} 番のとりかえっこプリーズの手札を見たプレイヤーが、使ったプレイヤー → 相手の順ではない")
+        if (take["player"], take["stage"], take["card"] in look1["cards"], give["player"], give["stage"], give["card"] in look2["cards"]) != (
+                user, "take", True, 1 - user, "give", True):
+            problems.append(f"{e['turn']} 番のとりかえっこプリーズで選んだカードが、それぞれ見た相手の手札のカードではない")
+        if answer["player"] != 1 - user:
+            problems.append(f"{e['turn']} 番のとりかえっこプリーズの答えが、相手プレイヤーのものではない")
+        if answer.get("accepted"):
+            if [w["kind"] for w in rest] != ["cards_exchanged"] or (rest[0]["given_card"], rest[0]["taken_card"], rest[0]["player"]) != (give["card"], take["card"], user):
+                problems.append(f"{e['turn']} 番のオーケーの答えのあとが、選んだ 2 枚の交換ではない {[w['kind'] for w in rest]}")
+        elif any(w["kind"] != "draw" or w["player"] != user for w in rest) or sum(len(w["cards"]) for w in rest) > 2:
+            problems.append(f"{e['turn']} 番のオーケーでない答えのあとが、使ったプレイヤーの 2 枚までのドローではない {[w['kind'] for w in rest]}")
+    # 所有者の組み立て直し
+    try:
+        initial = initial_owners(state)
+    except ValueError as error:
+        return problems + [str(error)]
+    owner = dict(initial)
+    changes = []
+    for index, e in enumerate(log):
+        if e["kind"] == "cards_exchanged":
+            player = e["player"]
+            for card, previous, new, origin in e["ownership"]:
+                if owner.get(card) != previous or new != 1 - previous or origin != initial.get(card):
+                    problems.append(f"{e['turn']} 番の交換 {e['exchange']} のカード {card} の所有者の変更 {(previous, new, origin)} が、組み立て直した持ち主 {owner.get(card)}・出所と合わない")
+                owner[card] = new
+                changes.append((card, state.cards[card].card_id, previous, new, origin, e["turn"], e["trainer_card"], e["exchange"]))
+            if {x[0] for x in e["ownership"]} != {e["given_card"], e["taken_card"]} or len(e["ownership"]) != 2 or player not in (0, 1):
+                problems.append(f"{e['turn']} 番の交換 {e['exchange']} の所有者の変更が、交換した 2 枚のものではない")
+        elif e["kind"] == "discard_trainer" and e.get("card") in state.cards and state.cards[e["card"]].card_id in V130_SWAP and e["player"] != owner.get(e["card"]):
+            problems.append(f"{e['turn']} 番にとりかえっこプリーズ {e['card']} をトラッシュしたプレイヤー {e['player']} が、組み立て直した持ち主 {owner.get(e['card'])} ではない")
+    recorded = [(c.card, c.card_id, c.previous, c.owner, c.origin, c.turn, c.trainer_card, c.exchange) for c in state.ownership_changes]
+    if recorded != changes:
+        problems.append(f"所有者の変更の記録 {recorded} が、交換のログから組み立てた変更 {changes} と違う")
+    holders = _zone_holders(state)
+    changed = {c[0] for c in changes}
+    for uid, card in state.cards.items():
+        if card.owner != owner[uid]:
+            problems.append(f"カード {uid} の所有者 {card.owner} が、組み立て直した持ち主 {owner[uid]} と違う")
+        if holders.get(uid, owner[uid]) != owner[uid]:
+            problems.append(f"カード {uid} が、組み立て直した持ち主 {owner[uid]} でないプレイヤー {holders.get(uid)} のゾーンにある")
+        if getattr(card, "origin", None) != (initial[uid] if uid in changed else None):
+            problems.append(f"カード {uid} の出所 {getattr(card, 'origin', None)} が、組み立て直した出所 {initial[uid] if uid in changed else None} と違う")
+    return problems
 
 
 def v127_problems(state) -> list[str]:
@@ -10356,6 +10602,10 @@ def _sees_private(event: dict, viewer) -> bool:
         return viewer is not None and viewer in (event["player"], event["owner"])  # v0.54: スパイ作戦（見たプレイヤーと、自分の手札を知っている持ち主）
     if kind == "opponent_hand_to_deck":
         return viewer is not None and viewer in (event["player"], event["looker"])  # v0.55: ロケット団のおねーさん（持ち主と、見て選んだプレイヤー）
+    if kind == "exchange_selected":
+        return viewer is not None and viewer in (event["player"], event["owner"])  # v0.130: とりかえっこプリーズで選んだカード（選んだプレイヤーと、手札の持ち主）
+    if kind == "cards_exchanged":
+        return viewer is not None and viewer in (event["player"], event["opponent"])  # v0.130: 交換したカード・所有者の変更（交換した 2 人。観戦者には見せない）
     if kind == "set_aside_hand":
         return False  # v0.63: くすぐりマシーンで置いたカードは、だれも見られない（持ち主も）
     if kind == "prizes_to_deck":
@@ -10606,7 +10856,14 @@ def observation_problems(state) -> list[str]:
                                       "split_from_deck",  # v0.88: v0.87 の［ぶんれつ］（観測の HIDDEN_COUNT_KINDS にあり、監査の一覧から漏れていた）
                                       # v0.120: たまごの化石の手札・山札の選択（手札に出せるカードがあるかを漏らす）と、手札・山札から出すカード
                                       "revive_source", "bench_from_deck_or_hand")
-            if viewer != d.player and ("options" in dv or (dv != {"kind": d.kind, "player": d.player} if hidden_count else dv.get("option_count") != len(d.options))):
+            bounds = d.context_value("value_range")
+            if bounds is not None:
+                # v0.129: 値で答える決定（カツラのクイズ その1の身長）。どの見る人にも、種類・決める人・選ぶ数・範囲（単位 cm）・伝えた名前だけ（選べるもの・置いたカード・正解の値はない）
+                expected = {"kind": d.kind, "player": d.player, "min_choices": 1, "max_choices": 1, "value_range": {"min": bounds[0], "max": bounds[1], "unit": "cm"},
+                            "name": d.context_value("name"), **({"meaning": "value"} if viewer == d.player else {})}
+                if d.kind != "quiz_height_answer" or dv != expected:
+                    problems.append(f"観測（{viewer}）の値で答える決定 {dv!r} が、範囲と伝えた名前だけではない")
+            elif viewer != d.player and ("options" in dv or (dv != {"kind": d.kind, "player": d.player} if hidden_count else dv.get("option_count") != len(d.options))):
                 problems.append(f"観測（{viewer}）に、ほかのプレイヤー {d.player} の決定の選べるもの（の数）がある")
             if viewer == d.player and OPTION_MEANINGS[d.kind] == "card":
                 for option in dv["options"]:

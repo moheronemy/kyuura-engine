@@ -45,6 +45,7 @@ from scripts import check_card_sources as cs
 from tests import helpers as HP
 from tests.helpers import build_test_state, with_coin_bits
 from tests.log_audit import log_problems, observation_problems, serialization_problems
+from tests.release_catalog import cards_after
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 KYUURA = ROOT.parent / "kyuura"
@@ -115,7 +116,8 @@ class RegistrationTest(unittest.TestCase):
         self.assertEqual(extract["pool_v0_127"], list(NEW_CARDS))
         playable = load_card_pool().playable_ids
         self.assertLessEqual(set(NEW_CARDS), playable)
-        self.assertEqual(len(playable - set(NEW_CARDS)), 1362)  # 6 枚を外すと基点の 1,362 枚
+        # 6 枚を外すと基点の 1,362 枚（v0.129: 後の版で加えたカード pool_v0_129 も外す。v0.130: 後の版のカードは cards_after でまとめて外す）
+        self.assertEqual(len(playable - set(NEW_CARDS) - cards_after(extract, "0.127")), 1362)
         self.assertNotIn("neo4-082", playable)  # 10 章: ひかるバンギラスは登録しない
         registry = E.DEFAULT_EFFECTS
         attacks = [k for k in registry.attack_keys() if k.card_id in NEW_CARDS]
@@ -368,7 +370,7 @@ class FoundationTest(unittest.TestCase):
         data = state_to_dict(halted, format_version=32)
         self.assertEqual(data["halt"]["interruption"]["required"], 2)
         self.assertEqual(data["user_simplifications"], [])
-        self.assertEqual(max(FORMAT_VERSIONS), 32)
+        self.assertEqual(max(FORMAT_VERSIONS), 33)  # v0.130: 形式 33（所有者の変更）を加えた。形式 32 の項目は変わらない
         for version in (1, 9, 31):
             with self.assertRaises(ValueError):
                 state_to_dict(halted, format_version=version)

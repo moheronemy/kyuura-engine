@@ -48,9 +48,43 @@ TERMINAL_PHASES = frozenset({Phase.GAME_OVER, Phase.SUDDEN_DEATH, Phase.HALTED})
 
 @dataclass(frozen=True)
 class CardInstance:
+    """対戦の中の 1 枚のカード。
+
+    - ``owner``: 対戦の中の所有者（カードを置くゾーンの持ち主。トラッシュ・山札・サイド・場に置くときはこのプレイヤーのもの。不変条件 ``engine.check_invariants``）
+    - ``origin``（v0.130。docs/trade-please-ownership-v0.130.md 4 章）: 対戦開始時のデッキのプレイヤー（追跡用の出所）。None は ``owner`` と同じ（対戦の中で所有者が変わっていない。
+      v0.129 までの値と同じ）。とりかえっこプリーズの交換（利用者が指定した所有者の簡略化 ``effects.USER_SWAP_OWNERSHIP``）で所有者が変わったカードだけが値を持ち、その後も
+      変わらない。実物の所有権・使っているプレイヤー（``TrainerInUse.user`` など）とは別のもの
+    """
+
     uid: int
     card_id: str
     owner: int
+    origin: int | None = None
+
+    @property
+    def deck_owner(self) -> int:
+        """対戦開始時のデッキのプレイヤー（v0.130。``origin`` があればそれ、なければ ``owner``）。"""
+        return self.owner if self.origin is None else self.origin
+
+
+@dataclass(frozen=True)
+class OwnershipChange:
+    """対戦の中の所有者の変更 1 つ（v0.130。docs/trade-please-ownership-v0.130.md 4 章）。とりかえっこプリーズの交換が成立したときだけ、交換した 2 枚それぞれに 1 つずつ、交換と
+    一体で加える（``zones.exchange_hand_cards``）。利用者が指定した簡略化（``effects.USER_SWAP_OWNERSHIP``）で、公式の裁定・実物の所有権の変更ではない。
+
+    - ``card``・``card_id``: 交換したカード（uid は付け直さない）
+    - ``previous``・``owner``: 変更の前・後の所有者（後は受け取ったプレイヤー）。``origin``: 対戦開始時のデッキのプレイヤー（追跡用の出所。再交換でも変わらない）
+    - ``turn``: 交換した番。``trainer_card``: 使ったとりかえっこプリーズの uid。``exchange``: 対戦の中の交換の通し番号（1 から。同じ交換の 2 枚は同じ番号）
+    """
+
+    card: int
+    card_id: str
+    previous: int
+    owner: int
+    origin: int
+    turn: int
+    trainer_card: int
+    exchange: int
 
 
 @dataclass(frozen=True)
@@ -2514,6 +2548,10 @@ class GameState:
     # 山札をはなれたら消し（``faceup.drop_left_marks``）、山札を切る前にその山札の印をすべて消す（``zones.shuffle_deck``）。どの山札でも上から続く並びになる（``faceup.prefix_problems``）。
     # 書き出しは形式 31 だけが表せる（空でなければ形式 1〜30 は ``ValueError``）。v0.125 までの状態の写し（pickle）は項目がなく、この既定値（空）になる
     face_up_deck: tuple[int, ...] = ()
+    # v0.130（docs/trade-please-ownership-v0.130.md 4 章）: 対戦の中の所有者の変更（``OwnershipChange`` の並び。変更した順）。とりかえっこプリーズの交換が成立したときだけ加え、消さない。
+    # カードの表（``cards``）の ``owner``・``origin`` はこの並びの最後の値と同じ（不変条件 ``engine._ownership_problems``）。書き出しは形式 33 だけが表せる（空でなければ形式 1〜32 は
+    # ``ValueError``）。v0.129 までの状態の写し（pickle）は項目がなく、この既定値（空）になる
+    ownership_changes: tuple[OwnershipChange, ...] = ()
     # v0.87（docs/movement-damage-reactions-v0.87.md 3 章）: 場の移動（控え → バトル場・バトル場 → ベンチ・手札からの登場）の事実への、まだ処理していない反応の段（``movement``。
     # ``reactions`` の ``("same", …)`` の段の並び）。事実を起こした処理の流れが、同じコマンドの中で処理する（ワザの要素のあいだ・トレーナー・特殊能力を使い終える前・にげるのあと・
     # バトル場に出したあと）。コマンドの終わり・決定を待つ間は空（決定をまたぐ続きは決定の ``context`` に移す）。書き出さない（不変条件 ``engine._pending_moves_problems``）

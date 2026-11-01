@@ -43,6 +43,7 @@ from ..decisions import ENERGY_DRAIN_DISCARD
 from ..decisions import MOVE_ENERGY, OPTIONAL_DRAIN
 from ..decisions import OPTIONAL_DISCARD_ALL
 from ..decisions import OPTIONAL_HEAL
+from ..decisions import value_range  # v0.129: 値で答える決定（カツラのクイズ その1の身長）
 from ..decisions import OPPONENT_HAND_TO_BENCH
 from ..decisions import DISCARD_TO_DECK, RECOVER_POKEMON, SELECT_DRAW_COUNT, TAKE_LOOKED_CARDS
 from ..decisions import DISCARD_STADIUM, EVOLUTION_SONG_POKEMON
@@ -1466,19 +1467,31 @@ def combinations_answers(decision: PendingDecision, sizes) -> list[tuple[int, ..
 
 def all_answers(decision: PendingDecision, *, minimum: int = 0) -> list[tuple[int, ...]]:
     """決定に合うすべての答え（``min_choices``（と ``minimum`` の大きいほう）〜``max_choices`` 個の、重ならない選択の並び。
-    ``decisions.check_choices`` が受け付けるもの）。代表を選ばない（v0.15c。docs/preflight-optimization-v0.15c.md 3 章）。"""
+    ``decisions.check_choices`` が受け付けるもの）。代表を選ばない（v0.15c。docs/preflight-optimization-v0.15c.md 3 章）。
+
+    v0.129: 値で答える決定（``decisions.VALUE_RANGE``）は答えを並べられないので ``ValueError``（``iter_answers`` で 1 つずつ作るか、``answer_count`` で数える）。"""
+    if value_range(decision) is not None:
+        raise ValueError(f"値で答える決定 {decision.kind} の答えは並べない（iter_answers・answer_count を使う）")
     return list(iter_answers(decision, minimum=minimum))
 
 
 def iter_answers(decision: PendingDecision, *, minimum: int = 0):
-    """``all_answers`` と同じ答えを同じ順に 1 つずつ返す（v0.63。答えの数が多い決定（たたきつけろ!挑戦状の「好きなだけ」）で、すべてを並びにしない）。"""
+    """``all_answers`` と同じ答えを同じ順に 1 つずつ返す（v0.63。答えの数が多い決定（たたきつけろ!挑戦状の「好きなだけ」）で、すべてを並びにしない）。
+    v0.129: 値で答える決定は、範囲の整数を小さい順に 1 つずつ（(値,) の形）。"""
+    bounds = value_range(decision)
+    if bounds is not None:
+        yield from ((value,) for value in range(bounds[0], bounds[1] + 1))
+        return
     low = max(decision.min_choices, minimum)
     for count in range(low, decision.max_choices + 1):
         yield from itertools.permutations(decision.options, count)
 
 
 def answer_count(decision: PendingDecision) -> int:
-    """``all_answers(decision)`` の数（v0.63。並びを作らずに数える）。"""
+    """``all_answers(decision)`` の数（v0.63。並びを作らずに数える）。v0.129: 値で答える決定は範囲の整数の数。"""
+    bounds = value_range(decision)
+    if bounds is not None:
+        return bounds[1] - bounds[0] + 1
     n = len(decision.options)
     return sum(math.perm(n, count) for count in range(decision.min_choices, decision.max_choices + 1) if count <= n)
 

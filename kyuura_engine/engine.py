@@ -53,6 +53,8 @@ from .commands import (
     CheckFaceUpDeckCard,
 )
 from .decisions import (
+    VALUE_ANSWER_MAX,  # v0.129: 値で答える決定（カツラのクイズ その1）
+    VALUE_RANGE,
     ACCEPT_REQUEST,
     DISCARD_ENERGY,
     BENCH_GUARD,
@@ -86,6 +88,7 @@ from .decisions import (
     TAKE_PRIZE,
     phase_for,
 )
+from .heights import card_height  # v0.129: 公式図鑑の種族の身長の参照値（クイズで置いてよいカード）
 from .effects import (
     retreat_guards,
     ATTACK_HAND_TRAINER_LOCK,
@@ -270,6 +273,7 @@ from .state import (
     SetAsideCards,
     Asleep,
     CardInstance,
+    OwnershipChange,
     Confused,
     DataSource,
     GameState,
@@ -626,12 +630,18 @@ _IDENTITY_CANDIDATES: dict[int, tuple[str, ...]] = {}
 
 
 def _behavior_key(pool, card_id: str):
-    """v0.69: カードの処理を決めるもの（定義の id・英語の欄を除いたもの、効果の登録表のそのカードの登録）。同じなら、どの処理でも同じに扱われる。"""
+    """v0.69: カードの処理を決めるもの（定義の id・英語の欄を除いたもの、効果の登録表のそのカードの登録）。同じなら、どの処理でも同じに扱われる。
+
+    v0.129: 全国図鑑番号（``dex``）も除く。図鑑番号を読むのはカツラのクイズ その1 で手札から置いたカードの身長だけで、この確かめが割り当てる相手のうらのカード（場にうらで
+    出したカード）の処理には入らない（docs/blaines-quiz-heights-v0.129.md 5 章）。除かないと、図鑑番号の記録の有無だけが違う同じ処理のカードが別の候補になる。
+
+    v0.131: 表示用の原文の名前・ワザ名（``printed_name_ja``。利用者が指定した名前の扱いのカードだけが持つ）も除く。処理は判定に使う名前（``name_ja``）で決まる
+    （docs/exeggutor-bilingual-names-v0.131.md 4 章）。"""
     definition = pool.get(card_id)
     effects = pool.effects
     plain = dataclasses.replace(
-        definition, id="", name_en=None, energy_text_en=None, trainer_text_en=None,
-        attacks=tuple(dataclasses.replace(a, name_en=None, text_en=None) for a in definition.attacks),
+        definition, id="", name_en=None, energy_text_en=None, trainer_text_en=None, dex=(), printed_name_ja=None,
+        attacks=tuple(dataclasses.replace(a, name_en=None, text_en=None, printed_name_ja=None) for a in definition.attacks),
         powers=tuple(dataclasses.replace(w, name_en=None, text_en=None) for w in definition.powers))
     entries = (tuple(effects.attack_entry(card_id, a.index) for a in definition.attacks),
                tuple(effects.power_entry(card_id, w.index) for w in definition.powers),
@@ -2603,7 +2613,7 @@ def check_invariants(state: GameState) -> list[str]:
         evolve_events = _evolve_events_by_pokemon(state)
 
     for uid, card in state.cards.items():
-        if card.uid != uid or card.owner not in PLAYERS:
+        if card.uid != uid or card.owner not in PLAYERS or getattr(card, "origin", None) not in (None, *PLAYERS):
             problems.append(f"カードの表の {uid} 番が {card} になっている")
 
     def place(uid: int, player: int, zone: str) -> None:
@@ -2713,12 +2723,14 @@ def check_invariants(state: GameState) -> list[str]:
     if len(set(pokemon_ids)) != len(pokemon_ids):
         problems.append(f"場のポケモンの番号が重なっている {sorted(pokemon_ids)}")
 
-    # new_game で作った対戦は、カードの組が対戦開始時のデッキリストと同じ
+    # new_game で作った対戦は、カードの組が対戦開始時のデッキリストと同じ。v0.130: 対戦開始時のデッキのプレイヤー（追跡用の出所 ``deck_owner``）で数える（とりかえっこプリーズの
+    # 交換で対戦の中の所有者が変わっても、出所は変わらない）
     if any(state.decklists):
         for owner in PLAYERS:
-            ids = sorted(c.card_id for c in state.cards.values() if c.owner == owner)
+            ids = sorted(c.card_id for c in state.cards.values() if c.deck_owner == owner)
             if ids != sorted(state.decklists[owner]):
                 problems.append(f"プレイヤー {owner} のカードの組が対戦開始時のデッキと違う")
+    problems.extend(_ownership_problems(state))  # v0.130
 
     phase = state.phase
     if not isinstance(phase, Phase):
@@ -5050,6 +5062,53 @@ def _events_since_turn_start(state: GameState) -> list:
     return recent
 
 
+def _ownership_problems(state: GameState) -> list[str]:
+    """v0.130（docs/trade-please-ownership-v0.130.md 4 章）: 対戦の中の所有者の変更（``ownership_changes``）とカードの表・ログの整合。
+
+    - 変更は交換ごとに 2 つ（番号は 1 から順・同じ番・同じトレーナー・一方は使ったプレイヤーから相手へ、もう一方は相手から使ったプレイヤーへ。2 枚は別のカード）。交換と一体で
+      加えるので、片方だけの変更はない
+    - カードごとに、変更の前の所有者が 1 つ前の値（最初は対戦開始時の所有者）、出所はどの変更も同じ（最初の変更の前の所有者）。カードの表の ``owner`` は最後の変更の後の所有者、
+      ``origin`` は変更のあるカードだけが持ち、その出所と同じ。変更のないカードの ``origin`` は None
+    - 変更ごとに、同じ番号・2 枚・所有者のログ ``cards_exchanged`` が 1 つあり、ログの交換の数と同じ
+    """
+    problems: list[str] = []
+    changes = state.ownership_changes
+    if not isinstance(changes, tuple) or any(not isinstance(c, OwnershipChange) for c in changes):
+        return [f"所有者の変更の記録 {changes!r} が OwnershipChange の並びではない"]
+    current: dict[int, tuple[int, int]] = {}  # uid → (今の所有者, 出所)
+    numbers = [c.exchange for c in changes]
+    if len(changes) % 2 or numbers != [1 + i // 2 for i in range(len(changes))]:
+        problems.append(f"所有者の変更の交換の番号 {numbers} が、1 から順に 2 つずつではない")
+    for first, second in zip(changes[0::2], changes[1::2]):
+        if (first.card == second.card or first.turn != second.turn or first.trainer_card != second.trainer_card or first.previous not in PLAYERS
+                or (first.previous, first.owner) != (1 - second.previous, 1 - second.owner) or first.owner != 1 - first.previous):
+            problems.append(f"交換 {first.exchange} の所有者の変更 {first}・{second} が、2 人のあいだの 1 枚ずつの交換ではない")
+    for change in changes:
+        instance = state.cards.get(change.card)
+        if instance is None or instance.card_id != change.card_id:
+            problems.append(f"所有者の変更 {change} のカードが、カードの表にない・カードの id が違う")
+            continue
+        before, origin = current.get(change.card, (instance.deck_owner, instance.deck_owner))
+        if change.previous != before or change.origin != origin:
+            problems.append(f"所有者の変更 {change} の前の所有者・出所が、それまでの値（{before}・{origin}）と違う")
+        current[change.card] = (change.owner, origin)
+    for uid, instance in state.cards.items():
+        expected = current.get(uid)
+        origin = getattr(instance, "origin", None)
+        if expected is None and origin is not None:
+            problems.append(f"所有者の変更のないカード {uid} に出所 {origin} がある")
+        elif expected is not None and (instance.owner, origin) != expected:
+            problems.append(f"カード {uid} の所有者・出所 {(instance.owner, origin)} が、所有者の変更の記録の最後の値 {expected} と違う")
+    logged = [e for e in state.log if e["kind"] == "cards_exchanged"]
+    by_number = {c.exchange: [] for c in changes}
+    for change in changes:
+        by_number[change.exchange].append((change.card, change.previous, change.owner, change.origin))
+    if [e.get("exchange") for e in logged] != list(by_number) or any(tuple(tuple(x) for x in e["ownership"]) != tuple(by_number[e["exchange"]]) for e in logged
+                                                                     if e.get("exchange") in by_number):
+        problems.append(f"交換のログ {[e.get('exchange') for e in logged]} が、所有者の変更の記録 {list(by_number)} と合わない")
+    return problems
+
+
 def _power_attachment_problems(state: GameState) -> list[str]:
     """この番にポケモンパワーで手札からつけたエネルギーの数（v0.6。``energy_attached_by_powers_this_turn``）。
 
@@ -5344,8 +5403,14 @@ def _decision_problems(state: GameState) -> list[str]:
         return problems
     if not 1 <= d.id < state.next_decision_id:
         problems.append(f"決定の番号 {d.id} が正しくない（次に付ける番号 {state.next_decision_id}）")
+    bounds = d.context_value(VALUE_RANGE)
+    if bounds is not None:
+        # v0.129: 値で答える決定（選べるものを並べない。範囲の整数 1 つ）。範囲は 1 以上・表現の上限以下の整数の組で、選べるもの・止める選択はない
+        if (not isinstance(bounds, tuple) or len(bounds) != 2 or any(type(b) is not int for b in bounds) or not 1 <= bounds[0] <= bounds[1] <= VALUE_ANSWER_MAX
+                or d.options != () or (d.min_choices, d.max_choices) != (1, 1) or d.context_value("unresolved_choices") is not None):
+            problems.append(f"値で答える決定 {d.kind} の範囲 {bounds!r}・選べるもの {d.options}・選ぶ数 {d.min_choices}〜{d.max_choices} が正しくない")
     # 選ぶ数の上限は選べるものの数を超えてよい（「2 匹まで選ぶ」で 1 匹しかいない場合）。下限は選べる数まで
-    if len(set(d.options)) != len(d.options) or not 0 <= d.min_choices <= d.max_choices or d.min_choices > len(d.options):
+    elif len(set(d.options)) != len(d.options) or not 0 <= d.min_choices <= d.max_choices or d.min_choices > len(d.options):
         problems.append(f"決定の選べるもの {d.options} と選ぶ数 {d.min_choices}〜{d.max_choices} が合わない")
     if d.resume not in DECISION_RESUMES:
         problems.append(f"決定の再開先 {d.resume!r} がない")
@@ -5508,7 +5573,7 @@ def _set_aside_problems(state: GameState) -> list[str]:
                 if len(state.players[group.owner].bench) + len(cards) > _bench_limit_or_default(state, group.owner):
                     problems.append(f"プレイヤー {group.owner} のベンチとうらにして出したカードが、ベンチの上限より多い")
             elif len(cards) != 1 or group.owner != group.user or not _quiz_card_accepted(state, group.card_id, cards[0]):
-                problems.append(f"クイズで置いたカード {group} が、使ったプレイヤーのワザを持つポケモンのカード 1 枚ではない")
+                problems.append(f"クイズで置いたカード {group} が、使ったプレイヤーの、そのクイズで置いてよいカード 1 枚ではない")
         put = [e for e in state.log if put_events.get(e["kind"]) == group.kind and e.get("player") == group.owner and e.get("trainer_card") == group.trainer_card
                and tuple(e.get("cards", (e.get("card"),))) == cards]
         if not put:
@@ -5523,12 +5588,15 @@ def _set_aside_problems(state: GameState) -> list[str]:
 
 def _quiz_card_accepted(state: GameState, card_id: str, card: int) -> bool:
     """v0.63・v0.80: クイズで置いてよいカードか（カツラのクイズ その3 はワザを持つポケモンのカード、その2 は手札のどのカードでも、ポケモン性格判定は進化カード。登録の実装の
-    ``kinds`` で決め、カード id で分けない）。"""
+    ``kinds`` で決め、カード id で分けない）。v0.129: その1（``kinds`` が ``"species_height"``）は「ポケモン」のカードで、正解の参照値（全国図鑑番号の種族の身長）のあるもの
+    （ないカードは選ぶと止めるので置かない）。"""
     entry = state.effects.trainer_entry(card_id)
     kinds = getattr(entry.effect, "kinds", None) if entry is not None else None
     definition = state.card_def(card)
     if kinds == "card_kind":
         return True
+    if kinds == "species_height":
+        return definition.category == "pokemon" and card_height(definition)[0] is not None
     if kinds == "personality":
         return definition.is_evolution_pokemon
     return definition.category == "pokemon" and bool(definition.attacks)

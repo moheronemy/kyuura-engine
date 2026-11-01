@@ -89,6 +89,7 @@ from .decisions import (
     DISCARD_STADIUM,
     EVOLUTION_SONG_POKEMON,
     OPPONENT_HAND_TO_DECK,
+    SELECT_EXCHANGE_CARD,
     SELECT_COUNTER_COUNT,
     ACCEPT_REQUEST,
     HAND_TO_ACTIVE,
@@ -107,6 +108,8 @@ from .decisions import (
     QUIZ_ANSWER,
     QUIZ_ATTACK,
     QUIZ_CARD,
+    QUIZ_HEIGHT_ANSWER,
+    value_range,
     SELECT_MARKER_COUNT,
     SELECT_ATTACHED_TRAINER,
     OPTIONAL_SHUFFLE,
@@ -155,6 +158,7 @@ OPTION_MEANINGS: dict[str, str] = {
     SELECT_DRAW_COUNT: "number",  # v0.54: エリカで引く枚数
     TAKE_LOOKED_CARDS: "card",  # v0.55: カスミのいかり（見た山札の上のカード。決めるプレイヤーは見ている）
     OPPONENT_HAND_TO_DECK: "card",  # v0.55: ロケット団のおねーさん（見た相手の手札のトレーナーカード。決めるプレイヤーは見ている）
+    SELECT_EXCHANGE_CARD: "card",  # v0.130: とりかえっこプリーズ（見た相手の手札のカード。決めるプレイヤーは見ている）
     SELECT_COUNTER_COUNT: "number",  # v0.55: いいきずぐすりでとりのぞく数
     SELECT_COLOR: "color",  # v0.48: ``effects.COLORS`` の位置（選べるものに色の名前を添える）
     # v0.56: 相手の答え（1 = オーケー）・見た相手の手札のたねポケモン・相手の手札の位置（おもてを見ない）・手札からバトル場に出すたねポケモン・サイドと交換する手札のカード
@@ -166,6 +170,8 @@ OPTION_MEANINGS: dict[str, str] = {
     # v0.63: たたきつけろ!挑戦状で山札から選ぶたねポケモン（決めるプレイヤーが自分の山札をさがす）・カツラのクイズ その3で置く手札のポケモン・伝えるワザの位置・
     # 答えるカードの名前（``context`` の ``"names"`` の位置。選べるものに名前を添える）
     CHALLENGE_BENCH: "card", QUIZ_CARD: "card", QUIZ_ATTACK: "number", QUIZ_ANSWER: "name",
+    # v0.129: カツラのクイズ その1で答える身長（値で答える決定。選べるものを並べず、範囲 ``value_range`` と単位 cm を見せる）
+    QUIZ_HEIGHT_ANSWER: "value",
     # v0.66: お上品攻撃で減らす量・ナツメのESPのやり直し（1 = やり直す）・カスミの勝負のじゃんけんの手（選べるものに手の名前を添える。もう 1 人の手は続きの情報にあり、見せない）
     DAMAGE_REDUCTION: "number", ESP_REDO: "number", OPTIONAL_DISCARD_ALL: "number", JANKEN_HAND: "janken", OPTIONAL_DRAIN: "pokemon", SEARCH_DECK_OR_DISCARD: "card", TAKE_LOOKED_POKEMON: "card",
     # v0.67: マチスの秘策でうらにして出す手札のカード（決めるプレイヤーの手札）
@@ -230,7 +236,7 @@ HIDDEN_COUNT_KINDS = frozenset({SPLIT_FROM_DECK, CHALLENGE_BENCH, QUIZ_CARD, QUI
 PRIZE_POSITION_KINDS = frozenset({TAKE_PRIZE, SELECT_PRIZE_CARD})
 # v0.55: 決めるプレイヤーが効果で見た相手の手札のカードを選べるものにする決定（ロケット団のおねーさん）。選べるもののカードは、決めるプレイヤーに見える（相手の手札を
 # 続けて見せる効果ではないので、観測の手札は公開しない）
-LOOKED_HAND_KINDS = frozenset({OPPONENT_HAND_TO_DECK, OPPONENT_HAND_TO_BENCH})  # v0.56: エリカの香水も見た相手の手札から選ぶ
+LOOKED_HAND_KINDS = frozenset({OPPONENT_HAND_TO_DECK, OPPONENT_HAND_TO_BENCH, SELECT_EXCHANGE_CARD})  # v0.56: エリカの香水も見た相手の手札から選ぶ。v0.130: とりかえっこプリーズも
 
 
 def _check_viewer(viewer) -> None:
@@ -245,6 +251,12 @@ def hand_visible_to(state: GameState, owner: int, viewer: int | None) -> bool:
 
 def _card(state: GameState, uid: int) -> dict[str, Any]:
     return {"card": uid, "card_id": state.cards[uid].card_id}
+
+
+def _printed_name(item) -> dict[str, Any]:
+    """v0.131（docs/exeggutor-bilingual-names-v0.131.md 7 章）: 判定に使う名前（``name_ja``。提示する日本語名）と別の、写しの原文の名前・ワザ名（``printed_name_ja``。日本語と英語の
+    併記を含む表示用の値）。利用者が指定した名前の扱いのカード・ワザだけが持ち、ほかは書かない（v0.130 までの形）。"""
+    return {} if item.printed_name_ja is None else {"printed_name_ja": item.printed_name_ja}
 
 
 def _seen_uid(state: GameState, uid: int, viewer: int | None) -> int | None:
@@ -302,7 +314,7 @@ def _face_down_pokemon(state: GameState, pokemon: PokemonInPlay, owner: int, vie
         "markers": [_marker(marker) for marker in pokemon.markers],  # v0.90
     }
     if viewer == owner:
-        view["real"] = {**_card(state, pokemon.card), "name_ja": state.printed_def(pokemon.card).name_ja}
+        view["real"] = {**_card(state, pokemon.card), "name_ja": state.printed_def(pokemon.card).name_ja, **_printed_name(state.printed_def(pokemon.card))}
     return view
 
 
@@ -325,6 +337,7 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay, viewer: int | None = None
         "pokemon_id": pokemon.pokemon_id,
         **_card(state, pokemon.card),
         "name_ja": definition.name_ja,
+        **_printed_name(definition),
         "play_role": definition.play_role,
         "hp": max_hp(state, pokemon),
         "printed_hp": definition.hp,
@@ -363,7 +376,8 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay, viewer: int | None = None
         # v0.124: ［すごいへんしん］で選んだ変身のもと（場の表の情報。書き出しの最新の形式と同じ形。ないときは None）
         "super_transform": None if pokemon.super_transform is None else super_transform_record(state, pokemon.super_transform),
         "attacks": [
-            {"card": _seen_uid(state, option.card, viewer), "card_id": state.cards[option.card].card_id, "attack_index": option.attack_index, "name_ja": attack_of(state, option.key).name_ja, "route": option.route,
+            {"card": _seen_uid(state, option.card, viewer), "card_id": state.cards[option.card].card_id, "attack_index": option.attack_index, "name_ja": attack_of(state, option.key).name_ja,
+             **_printed_name(attack_of(state, option.key)), "route": option.route,
              "provider": option.provider, "problem": None if option.problem is None else option.problem[0],
              # v0.120: 必要なエネルギーを満たすポケモン（［にんぎょうつかい］のスリーパー）・許可を与える特殊能力を持つポケモン。どちらも場の表の情報。ないときは書かない（v0.119 までの形）
              **({"payer": option.payer} if option.payer is not None else {}), **({"grantors": list(option.grantors)} if option.grantors else {})}
@@ -389,8 +403,8 @@ def _form(state: GameState, pokemon: PokemonInPlay, viewer: int | None = None) -
     v0.124: 処理のあいだ固定した姿のカードが、見えない場所（手札・山札など）にもどっていれば、その uid を ``viewer`` に見せない（カードの id・名前・姿の決め方は場の表の情報）。
     ［すごいへんしん］の変身のもとは ``defender`` にポケモンの番号を書く（場の表の情報）。"""
     form = current_form(state, pokemon)
-    return {"card": _seen_uid(state, form.card, viewer), "card_id": state.cards[form.card].card_id, "name_ja": state.card_def(form.card).name_ja, "kind": form.kind,
-            "defender": form.defender}
+    return {"card": _seen_uid(state, form.card, viewer), "card_id": state.cards[form.card].card_id, "name_ja": state.card_def(form.card).name_ja,
+            **_printed_name(state.card_def(form.card)), "kind": form.kind, "defender": form.defender}
 
 
 def _color(color) -> str | None:
@@ -427,6 +441,20 @@ def _decision(state: GameState, viewer: int | None) -> dict[str, Any] | None:
     d = state.decision
     if d is None:
         return None
+    bounds = value_range(d)
+    if bounds is not None:
+        # v0.129: 値で答える決定（カツラのクイズ その1の身長）。選べるものを並べず、答えられる範囲と単位・伝えた名前（全員に伝えた情報。ログ quiz_name_hint）を全員に見せる。
+        # 置いたカード・正解の値は見せない（続きの情報の quiz_card は観測に出さない）
+        meaning = OPTION_MEANINGS.get(d.kind)
+        if meaning != "value":
+            raise ValueError(f"値で答える決定の種類 {d.kind!r} の意味が value ではない（OPTION_MEANINGS）")
+        view = {"kind": d.kind, "player": d.player, "min_choices": d.min_choices, "max_choices": d.max_choices, "value_range": {"min": bounds[0], "max": bounds[1]}}
+        if d.kind == QUIZ_HEIGHT_ANSWER:
+            view["value_range"]["unit"] = "cm"
+            view["name"] = d.context_value("name")
+        if viewer == d.player:
+            view["meaning"] = meaning
+        return view
     view: dict[str, Any] = {"kind": d.kind, "player": d.player, "min_choices": d.min_choices, "max_choices": d.max_choices,
                             "option_count": len(d.options)}
     if d.kind == QUIZ_ANSWER:
@@ -462,7 +490,8 @@ def _decision(state: GameState, viewer: int | None) -> dict[str, Any] | None:
             # v0.49: 相手のワザを選ぶ決定の選べるものが指すワザ（印刷したカードの id・位置・名前。表のカード）
             key = _chosen_attack(state, d, value)
             if key is not None:
-                option["attack"] = {"card_id": key[0], "attack_index": key[1], "name_ja": state.definitions[key[0]].attacks[key[1]].name_ja}
+                option["attack"] = {"card_id": key[0], "attack_index": key[1], "name_ja": state.definitions[key[0]].attacks[key[1]].name_ja,
+                                    **_printed_name(state.definitions[key[0]].attacks[key[1]])}
         options.append(option)
     view["options"] = options
     view["meaning"] = meaning
@@ -582,6 +611,12 @@ def _looker_only(event, viewer) -> bool:
     return viewer is not None and viewer == event.get("looker")
 
 
+def _exchange_parties(event, viewer) -> bool:
+    """v0.130: とりかえっこプリーズで選んだカード・交換したカードと所有者の変更は、交換にかかわる 2 人（使ったプレイヤー ``player`` と相手 ``opponent``・手札の持ち主 ``owner``）だけに
+    見える（観戦者には見せない。2 人とも相手の手札を見て、選んだカードを知っている）。"""
+    return viewer is not None and viewer in (event.get("player"), event.get("opponent"), event.get("owner"))
+
+
 def _amount_unless_private(event, viewer) -> bool:
     """v0.95: 受けなかったダメージの量（``amount``）は、印 ``amount_private``（基本となるダメージが見た手札の中身で決まるワザ。``kernel._amount_privacy``）があれば対戦する
     プレイヤーだけに見える（観戦者には見せない）。印がなければ全員（v0.94 までと同じ）。"""
@@ -637,6 +672,10 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
     "damage_guard_check": (("amount",), _amount_unless_private),
     "reflect_shield_check": (("amount",), _amount_unless_private),
     "timed_damage_guard_check": (("amount",), _amount_unless_private),  # v0.109: ぬるぬる・かわす・ブリンク（同じ扱い）
+    # v0.130（docs/trade-please-ownership-v0.130.md 8 章）: とりかえっこプリーズで選んだカード（選んだプレイヤーと手札の持ち主）・交換したカードと所有者の変更（交換した 2 人。観戦者には
+    # 交換が成立したこと・番号・枚数だけ。uid・カードの id・出所を見せない）
+    "exchange_selected": (("card", "card_id"), _exchange_parties),
+    "cards_exchanged": (("given_card", "taken_card", "card_ids", "ownership"), _exchange_parties),
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
@@ -747,6 +786,8 @@ PUBLIC_EVENTS = frozenset({
     "energy_heal", "energy_damage", "stadium_discard_none", "discard_trainer_use_none", "discard_trainer_use_declined",
     # v0.63: おもてにしたサイド（全員に見えるようにした）・うらにして出したカードを表にした・クイズの伝えたワザ・答え・表にしたカード
     "prizes_revealed", "face_down_revealed", "quiz_hint", "quiz_answer", "quiz_reveal",
+    # v0.129: カツラのクイズ その1の伝えた名前・答えた身長（整数 cm）・表にしたカード（正解か・図鑑番号・身長の参照値。表にしたあとの公開の情報）
+    "quiz_name_hint", "quiz_height_answer", "quiz_height_reveal",
     # v0.74: ポケモンタワーで消えた効果・エネルギースタジアムで手札に加えた（見せた）カード・キョウの忍者ジムでベンチに出したカード（トラッシュ・場は公開の情報）
     "discard_to_hand_suppressed", "stadium_retrieve_energy", "stadium_bench_from_deck",
     # v0.75: エナジーサポートで、つける控えが「とうめい」で受けなかったので持ち主のトラッシュに置いたカード（トラッシュは公開の情報）
