@@ -1700,6 +1700,9 @@
   "pool_v0_132": [
     "neo1-049"
   ],
+  "pool_v0_133": [
+    "neo4-082"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -127664,6 +127667,111 @@
         "series": "金、銀、新世界へ...、スターターパック",
         "remarks": [],
         "source": "https://nazonobasho.com/neo01-049-yadoking/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-082",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ひかるバンギラス",
+        "en": "Shining Tyranitar"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          248
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 80,
+        "types": [
+          "darkness"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 3,
+        "rules_text": {
+          "ja": "「ひかるバンギラス」はデッキに1枚までしか入れることができません。",
+          "en": "You can't have more than 1 Shining Tyranitar in your deck."
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "マウンテンクラッシュ",
+              "en": "Mountain Crush"
+            },
+            "cost": [
+              "darkness",
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "「うら」が出るまでコインを投げつづけ、その間に出た「おもて」の数ぶんのカードを、相手の山札の上からトラッシュする。",
+              "en": "Flip a coin until you get tails. For each heads, your opponent discards the top card from his or her deck."
+            }
+          },
+          {
+            "name": {
+              "ja": "はかいのほのお",
+              "en": "Destructive Fire"
+            },
+            "cost": [
+              "darkness",
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "自分についている「炎」エネルギーカードの枚数ぶんコインを投げ、「おもて」の数ぶんの「炎」エネルギーカードを、自分からトラッシュする。その後、「おもて」の数ぶんの「エネルギーカード」を、相手からトラッシュする。(自分についている「炎」エネルギーカードをトラッシュできないとき、このワザは失敗する。)",
+              "en": "Flip a coin for each Fire Energy card attached to Shining Tyranitar. For each heads, discard a Fire Energy card attached to Shining Tyranitar or this attack does nothing. Then, for each heads, choose an Energy card attached to the Defending Pokémon and discard it. If it has fewer Energy cards than that, remove all of them."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "レアリティ表記は出典データにより異なる（TCGdex: Rare／別データ: ★キラ）"
+      ],
+      "source_ids": {
+        "tcgdex": "neo4-082",
+        "pokemontcg": [
+          "neo4-113"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%83%90%E3%83%B3%E3%82%AE%E3%83%A9%E3%82%B9_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 41,
+        "rarity": "★★★",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%83%90%E3%83%B3%E3%82%AE%E3%83%A9%E3%82%B9_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
       },
       "product_group": "expansion_pack",
       "play_scope": "standard",

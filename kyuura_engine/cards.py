@@ -729,6 +729,7 @@ POOL_KEYS = (
     "pool_v0_130",  # v0.130（とりかえっこプリーズ。交換したカードの所有者は利用者指定の簡略化。docs/trade-please-ownership-v0.130.md）
     "pool_v0_131",  # v0.131（ナッシー[Exeggutor] 2 枚。日英併記の名前は利用者指定の扱い。docs/exeggutor-bilingual-names-v0.131.md）
     "pool_v0_132",  # v0.132（ヤドキング neo1-049。［ちえくらべ］の使うかの選択と投げる時点は利用者指定の規則。docs/slowking-mind-games-v0.132.md）
+    "pool_v0_133",  # v0.133（ひかるバンギラス neo4-082。山札・エネルギーカードが足りないときの処理と、はかいのほのおの宣言の条件・順番は利用者指定の規則。docs/shining-tyranitar-v0.133.md）
 )
 
 

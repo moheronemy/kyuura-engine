@@ -31069,6 +31069,32 @@
         "power/0": "kyuura-engine user specification docs/slowking-mind-games-v0.132.md#3"
       },
       "notes": "v0.132 で加えた（docs/slowking-mind-games-v0.132.md）。neo 第1弾。1 進化（ヤドンから）・超・HP80。特殊能力［ちえくらべ］= BlockOpponentHandTrainerOnHeads、ワザ マッドインパクト（超超超）20+ = CoinBonusDamageAndConfuse(10)（あやしいおどりと同じ処理。文面は「追加して、」の書き方）。処理に使う文面はどちらも kyuura の印刷の文面（最新の説明はない。kyuura のカードの画像の照合 IMG-neo1-049 で全文が同じと記録）。範囲は CR-MIND-GAMES-SCOPE・CR-MIND-GAMES-STADIUM-TOOL（バトル場・状態・相手が手札から出して使う・スタジアム・どうぐを含む）。使うかの選択と投げる時点（条件の確かめのあと・支払いの前）は利用者が指定した規則（USER-MIND-GAMES-OPTIONAL-BEFORE-COST。user_specified_rule）で、公式の裁定・最新の説明・エラッタ・印刷の訂正ではない。kyuura の UQ-MIND-GAMES-OPTIONAL・UQ-MIND-GAMES-TRAINER-STEP は未解決のまま。錯乱ジムとの前後（MG1）・ポケモンとして出すトレーナー（MG2）・使ったら番が終わるトレーナー（MG3）・おもてのカードのある山札（FU4）は止める。英語版のベンチからの働き・重ねがけは持ち込まない。エンジンは画像・外部のサイトを見ていない（外部照合なし）"
+    },
+    "neo4-082": {
+      "basis": "kyuura_data",
+      "name_ja": "ひかるバンギラス",
+      "status": "adopted",
+      "kyuura_commit": "71d1728938fb4c8fefde9b82779cdef74beb612d",
+      "recorded_on": "2026-11-01",
+      "kyuura_records": [
+        "CR-DESTRUCTIVE-FIRE-TEXT",
+        "CR-MOUNTAIN-CRUSH-PROCEDURE",
+        "CR-UNTIL-TAILS-NOT-CAPPED",
+        "UQ-DESTRUCTIVE-FIRE-FAILURE",
+        "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY",
+        "UQ-STATED-COUNT-SHORT"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "user_specified_rule": {
+        "attack/0": "kyuura-engine user specification docs/shining-tyranitar-v0.133.md#3",
+        "attack/1": "kyuura-engine user specification docs/shining-tyranitar-v0.133.md#3"
+      },
+      "notes": "v0.133 で加えた（docs/shining-tyranitar-v0.133.md）。neo 第4弾。たね・悪・HP80・弱点なし・抵抗力 超 -30・にげる 3。ルール文「「ひかるバンギラス」はデッキに1枚までしか入れることができません。」は v0.82 の deck_limit（同じ名前で 1 枚まで）。マウンテンクラッシュ（悪闘闘）30 = DamageThenMillOpponentUntilTailsUpToDeck、はかいのほのお（悪炎炎炎）50 = CoinsPerOwnTypedCardsDiscardThenDamageThenOpponentEnergy。処理に使う文面はどちらも kyuura の印刷の文面（最新の説明はない。kyuura のカードの画像の照合 IMG-neo4-082 で全文が同じと記録）。手順は CR-MOUNTAIN-CRUSH-PROCEDURE・CR-UNTIL-TAILS-NOT-CAPPED・CR-DESTRUCTIVE-FIRE-TEXT。山札が「おもて」の数より少ないとき（マウンテンクラッシュ）と、はかいのほのおの宣言の条件（炎エネルギーカード 1 枚以上）・順番（自分の炎のトラッシュ → 50 → 相手のトラッシュ）・相手が足りないとき（あるだけ）は利用者が指定した規則（USER-MOUNTAIN-CRUSH-MILL-UP-TO-DECK・USER-DESTRUCTIVE-FIRE-DECLARE-ORDER-UP-TO。user_specified_rule）で、公式の裁定・最新の説明・エラッタ・転記の訂正ではない。kyuura の UQ-STATED-COUNT-SHORT・UQ-DESTRUCTIVE-FIRE-FAILURE は未解決のまま。炎エネルギーカードに特殊エネルギーを数えるか（UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY）は既存の止め方（RB1・BZ2 など）。英語版の「少なければ全て」「or this attack does nothing」は持ち込まない。エンジンは画像・外部のサイトを見ていない（外部照合なし）"
     }
   }
 }

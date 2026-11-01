@@ -104,7 +104,9 @@ USER_SPECIFIED_RULE_DOCUMENT = ROOT / "docs" / "trade-please-ownership-v0.130.md
 # v0.132（docs/slowking-mind-games-v0.132.md 3 章）: 同じ記録の別の種類（ヤドキングの［ちえくらべ］を使うかの選択と投げる時点）。出典は記録ごと（``UserSpecifiedRule.source``）で、ここに挙げた
 # 出典だけを受け付ける。根拠の文書は出典の文書（``#`` の前）
 USER_RULE_SOURCE_PREFIX = "kyuura-engine user specification "
-USER_SPECIFIED_RULE_SOURCES = (USER_SPECIFIED_RULE_SOURCE, "kyuura-engine user specification docs/slowking-mind-games-v0.132.md#3")
+# v0.133: ひかるバンギラスの 2 つのワザの処理の規則（docs/shining-tyranitar-v0.133.md 3 章）
+USER_SPECIFIED_RULE_SOURCES = (USER_SPECIFIED_RULE_SOURCE, "kyuura-engine user specification docs/slowking-mind-games-v0.132.md#3",
+                               "kyuura-engine user specification docs/shining-tyranitar-v0.133.md#3")
 # v0.131（docs/exeggutor-bilingual-names-v0.131.md 3 章）: 利用者が指定した名前の扱い（ナッシー[Exeggutor] の英語の併記を翻訳の表示として扱い、名前・進化元・ワザ名の判定に日本語の部分を
 # 使う）。処理に使う文面の区分ではない（ワザの文面は印刷のまま。play_text の根拠は kyuura_printed_text）ので、採用の記録の ``user_specified_name``（"name" → 出典）に別に書く。印刷の文面の
 # 採用・転記の訂正（user_name_correction）・簡略ルール・参照値・規則とは別の記録で、対象ごとの記録（effects.USER_SPECIFIED_NAMES）・写しの値・定義の判定に使う値・根拠の文書の引用・
@@ -767,7 +769,9 @@ def user_specified_rule_problems(where: str, card_id: str, record: dict, card: d
         document = path.read_text(encoding="utf-8") if path is not None and path.exists() else ""
         if source != expected or expected not in USER_SPECIFIED_RULE_SOURCES:
             found.append(f"{here}: user_specified_rule の出典 {source!r} が {expected!r}（記録の出典）ではない")
-        if (record.get("play_text") or {}).get(target) in (USER_SPECIFIED_RULE_SOURCE, USER_SPECIFIED_REFERENCE_SOURCE, USER_SIMPLIFICATION_SOURCE):
+        basis = (record.get("play_text") or {}).get(target)
+        # v0.133: 規則の出典（版ごとの文書。USER_SPECIFIED_RULE_SOURCES）も文面の根拠にしない
+        if basis in (USER_SPECIFIED_RULE_SOURCE, USER_SPECIFIED_REFERENCE_SOURCE, USER_SIMPLIFICATION_SOURCE, *USER_SPECIFIED_RULE_SOURCES):
             found.append(f"{here}: 処理に使う文面の根拠が利用者の指定になっている（規則は文面の区分ではない）")
         if entry is None or not (entry.text_ja == rule.printed_text == printed_text(card, target) and entry.play_text_ja == rule.play_text):
             found.append(f"{here}: 登録の文面・処理に使う文面が、利用者が指定した規則の記録の印刷の文面（写しと同じ）・処理に使う文面と同じではない")
@@ -775,7 +779,13 @@ def user_specified_rule_problems(where: str, card_id: str, record: dict, card: d
         if target.startswith("power/") and target.split("/", 1)[1].isdigit():
             power = registry.power_entry(card_id, int(target.split("/", 1)[1]))
             effect = None if power is None else power.effect
-        kind = getattr(effect, "ownership_rule", None) or getattr(effect, "trigger_rule", None)  # v0.132: 特殊能力の規則（使うかの選択と投げる時点）
+        if target.startswith("attack/") and target.split("/", 1)[1].isdigit():
+            attack = registry.attack_entry(card_id, int(target.split("/", 1)[1]))  # v0.133: ワザの規則（足りないときの処理・宣言の条件・順番）
+            effect = None if attack is None else attack.effect
+            if not getattr(rule, "text_difference", ""):
+                found.append(f"{here}: ワザの処理の規則の記録に、処理に使う文面（印刷のまま）と採用した処理の差（text_difference）がない")
+        # v0.132: 特殊能力の規則（使うかの選択と投げる時点）。v0.133: ワザの規則（``attack_rule``）
+        kind = getattr(effect, "ownership_rule", None) or getattr(effect, "trigger_rule", None) or getattr(effect, "attack_rule", None)
         if kind != rule.rule:
             found.append(f"{here}: 登録の型の規則の種類 {kind!r} が記録 {rule.rule!r} と違う")
         if rule.specified_by != "user" or not all((rule.specified_on, rule.applies_to, rule.specification, rule.scope, rule.not_decided, rule.kyuura_record,
