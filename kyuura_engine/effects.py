@@ -115,6 +115,7 @@ from .decisions import (
     EVOLUTION_HEAL, STADIUM_RETURN_BENCH, push_stadium_decision, USE_DISCARD_TRAINER,
     DAMAGE_STEP_ORDER,
     CHALLENGE_BENCH, QUIZ_ANSWER, QUIZ_ATTACK, QUIZ_CARD, SECRET_PLAN_CARD,
+    QUIZ_HEIGHT_ANSWER, VALUE_ANSWER_MAX, VALUE_RANGE, value_range,  # v0.129: カツラのクイズ その1の身長の答え（値で答える決定）
     JANKEN_HAND, OPTIONAL_DRAIN, OPTIONAL_DISCARD_ALL, SELECT_MARKER_COUNT,
     OPTIONAL_SHUFFLE, SELECT_ATTACHED_TRAINER, OPTIONAL_HEAL, SELECT_ATTACHED_SPECIAL_ENERGY, ALLOCATE_DAMAGE,
     SEARCH_DECK_OR_DISCARD, TAKE_LOOKED_POKEMON, SELECT_OPPONENT_PRIZE, TAKE_LOOKED_TRAINER,
@@ -122,6 +123,7 @@ from .decisions import (
     HEAL_ALLOCATION, OPTIONAL_COIN, STADIUM_FROM_DISCARD, DECK_TOP_FROM_HAND,
 )
 from . import faceup as _faceup  # v0.126: おもての山札（フラッシュ）
+from .heights import HEIGHT_WITHOUT_DEX, card_height  # v0.129: 公式図鑑の種族の身長の参照値（カツラのクイズ その1）
 from .errors import SECRET_PLAN_HIDDEN_CODE, IllegalActionError, UnsupportedError
 from .markers import color_marker, has_marker, marker_count
 from .evolution import (
@@ -48519,3 +48521,206 @@ def _with_same_attacks(registry: EffectRegistry, table: Mapping[str, str]) -> Ef
 
 
 DEFAULT_EFFECTS = _with_trainers(_with_same_attacks(_with_attacks(DEFAULT_EFFECTS, V0_127_ATTACKS), SAME_DATA_CARDS_V0_127), V0_127_TRAINERS)
+
+
+# ---------------------------------------------------------------- v0.129（docs/blaines-quiz-heights-v0.129.md）
+
+BLAINES_QUIZ_1_TEXT = ("あなたの手札から「ポケモン」のカードを1枚選び、おもてを下にして、置く。相手プレイヤーにそのポケモンの名前を伝え、その身長を答えてもらう。"
+                       "その後、置いたカードをおもてにして、正解なら、相手プレイヤーは山札からカードを2枚引く。正解でないなら、あなたは山札からカードを2枚引く。"
+                       "(置いたカードは、手札にもどす)")
+# QZ1 の再利用（v0.129。新しい問いにしない）: カツラのクイズ その1で、使ったカードを除く手札に「ポケモン」のカードがないとき。その3 と同じ「手札から「ポケモン」のカードを1枚選び」で、
+# 選べるカードがないときに使えるかを説明が書いていない（kyuura UQ-CARD-USE-WITHOUT-TARGET）。図鑑番号・身長がないカードしかないときとは別（そちらはエンジンの未対応）
+BLAINES_QUIZ_1_WITHOUT_POKEMON_REASON = (
+    "カツラのクイズ その1: 手札に「ポケモン」のカードがない。説明は選べるカードがないときに使えるか（何も起こらずに使い終わるか・使えないか）を書いていないので決められない（QZ1。"
+    "その3 と同じ問い）。ほかのカードの「対象がない」ときの問いの答えを当てはめない"
+)
+# エンジンの未対応（研究上の未解決ではない）: 置くカードに、正解の参照値（公式図鑑の種族の身長）を引ける全国図鑑番号・身長がない。印刷上は選べるので選べるものから除かず、選んだ時点で
+# 状態を変えずに止める（``unresolved_detail``）。名前から図鑑番号を推測しない・欠けた番号を補わない・0cm にしない
+QUIZ_HEIGHT_WITHOUT_DEX_CODE = "UNSUPPORTED_QUIZ_HEIGHT_WITHOUT_DEX"
+QUIZ_HEIGHT_WITHOUT_DEX_REASON = (
+    "カツラのクイズ その1: 選んだカードの記録に全国図鑑番号がないので、正解の参照値（公式図鑑の種族の身長）を引けない（エンジンの未対応。名前から図鑑番号を推測しない）。"
+    "ほかのポケモンのカードは選べる"
+)
+QUIZ_HEIGHT_NOT_AVAILABLE_CODE = "UNSUPPORTED_QUIZ_HEIGHT_NOT_AVAILABLE"
+QUIZ_HEIGHT_NOT_AVAILABLE_REASON = (
+    "カツラのクイズ その1: 選んだカードの全国図鑑番号の種族に、確定した正解の参照値（公式図鑑の種族の身長）がない、または図鑑番号が 2 つ以上ある（エンジンの未対応。"
+    "値を補わない・0cm にしない）。ほかのポケモンのカードは選べる"
+)
+
+# 利用者が指定した参照値（v0.129。docs/blaines-quiz-heights-v0.129.md 3 章）。v0.127 の簡略ルール（``USER_SIMPLIFICATIONS``。印刷の条件を省く）とは別の指定で、処理に使う文面は
+# 印刷の文面のまま。説明の「その身長」の正解に、kyuura が集めた公式図鑑の種族の値（全国図鑑 No.001〜251・通常の姿。``heights``）を採る。出題したカードの印刷の身長を確かめた
+# 値ではなく、印刷の訂正・公式の裁定・最新の説明・エラッタとしては記録しない
+USER_SPECIFIED_REFERENCE_SOURCE = "kyuura-engine user specification docs/blaines-quiz-heights-v0.129.md#3"
+USER_QUIZ_HEIGHT_OFFICIAL_ZUKAN = "USER-QUIZ-HEIGHT-OFFICIAL-ZUKAN"
+USER_SPECIFIED_REFERENCE_DATE = "2026-11-01"
+
+
+@dataclass(frozen=True)
+class UserSpecifiedReference:
+    """利用者が指定した参照値の 1 つの対象の記録（v0.129）。``key`` は ``<カード id>/trainer``。``printed_text`` は kyuura の印刷の文面（写しと同じ。処理に使う文面もこれ）、
+    ``applies_to`` は参照値を当てはめる説明の部分、``reference`` は参照値のデータ、``instruction`` は利用者の指定の文、``not_recorded_as`` は記録しない扱い。"""
+
+    key: str
+    rule: str
+    printed_text: str
+    applies_to: str
+    reference: str
+    instruction: str
+    not_recorded_as: str
+    specified_by: str = "user"
+    specified_on: str = USER_SPECIFIED_REFERENCE_DATE
+
+
+USER_SPECIFIED_REFERENCES: Mapping[str, UserSpecifiedReference] = MappingProxyType({record.key: record for record in (
+    UserSpecifiedReference(
+        "GD5-016/trainer", USER_QUIZ_HEIGHT_OFFICIAL_ZUKAN, BLAINES_QUIZ_1_TEXT,
+        "「その身長を答えてもらう」「正解なら」の正解（置いたカードの全国図鑑番号の種族の身長。整数 cm の完全一致）",
+        "kyuura data/species_heights.json（9242b9b。kyuura_engine/data/species_heights.json の写し）の confirmed の値",
+        "クイズの正解には、今回収集した全国図鑑No.001〜251の通常の姿の公式図鑑値を採用します。",
+        "出題したカードの印刷の身長の確認・印刷の訂正・公式の裁定・最新の説明・エラッタ"),
+)})
+
+
+def quiz_height_candidates(state: GameState, use: TrainerUse) -> tuple[int, ...]:
+    """v0.129: カツラのクイズ その1で置ける、使ったプレイヤーの手札の「ポケモン」のカード（手札にある間の印刷の分類。なにかの化石・ピッピ人形はトレーナーカード。手札の並び）。
+    図鑑番号・身長のないカードも含む（印刷上は選べる。選ぶと止める）。"""
+    return tuple(uid for uid in state.players[use.player].hand if uid != use.card and state.card_def(uid).category == "pokemon")
+
+
+def quiz_height_blocked(state: GameState, candidates: tuple[int, ...]) -> dict[int, tuple[str, str]]:
+    """v0.129: 置けるが、正解の参照値を引けないので選ぶと止めるカード（uid → (コード, 理由)）。図鑑番号だけで引く（``heights.card_height``）。"""
+    blocked = {}
+    for uid in candidates:
+        found, why = card_height(state.card_def(uid))
+        if found is None:
+            blocked[uid] = ((QUIZ_HEIGHT_WITHOUT_DEX_CODE, QUIZ_HEIGHT_WITHOUT_DEX_REASON) if why == HEIGHT_WITHOUT_DEX
+                            else (QUIZ_HEIGHT_NOT_AVAILABLE_CODE, QUIZ_HEIGHT_NOT_AVAILABLE_REASON))
+    return blocked
+
+
+@dataclass(frozen=True)
+class BlainesHeightQuiz(TrainerEffect):
+    """v0.129（docs/blaines-quiz-heights-v0.129.md 4 章）: 手札の「ポケモン」のカードを 1 枚おもてを下にして置き、相手プレイヤーにそのポケモンの名前を伝え、相手が身長を答える。
+    そのあと置いたカードをおもてにして、正解なら相手プレイヤーが、正解でないなら使ったプレイヤーが ``draw`` 枚引く。置いたカードは手札にもどす（カツラのクイズ その1 GD5-016。
+    kyuura の印刷の文面）。
+
+    - 説明の順: 選んで置く（決定 ``QUIZ_CARD``。v0.63 の ``zones.set_aside_quiz_card``。置いたカードは使ったプレイヤーだけが見る）→ 名前を伝える（ログ ``quiz_name_hint`` は
+      名前（置いたカードの印刷の名前。所有者名・「わるい」などを含むカードの名前のまま）だけ。カードの id・uid・収録・図鑑番号・身長は伝えない）→ 相手が答える（決定
+      ``QUIZ_HEIGHT_ANSWER``。値で答える決定で、答えは 1〜``VALUE_ANSWER_MAX`` の整数 cm。正解の値の集合に絞らない）→ おもてにする（ログ ``quiz_height_reveal``。正解かと、
+      図鑑番号・身長の参照値）→ 引く（効果で引く。山札が足りなければ引けるだけ。v0.63 のクイズと同じ）→ 手札にもどす（``zones.return_set_aside``）
+    - 正解: 答えの整数 cm が、置いたカードの全国図鑑番号の種族の身長の参照値（``heights.card_height``。利用者の指定 ``USER_QUIZ_HEIGHT_OFFICIAL_ZUKAN``）と完全に同じ。
+      正解の値は答えのあとに引き、決定の続きの情報に書かない
+    - 手札に「ポケモン」のカードがなければ QZ1 で使う前に止める（その3 と同じ問い）。図鑑番号・身長のないカードは選べるが選ぶと止める（エンジンの未対応）。選べるカードが
+      どれもそうなら使う前に止める
+    - おもてのカードのある山札（v0.126）で、正解・正解でないのどちらかの引き方が既存の止め方に当たるなら、使う前に止める（``face_up_draw_stop``。答えの拒否から正誤を漏らさない）
+    - ``kinds``（``"species_height"``）は置いてよいカードの宣言（``engine._quiz_card_accepted``。カード id で分けない）
+    """
+
+    text: str
+    reference: str = USER_QUIZ_HEIGHT_OFFICIAL_ZUKAN
+    draw: int = 2
+    kinds: ClassVar[str] = "species_height"
+    implementation_id = "blaines_height_quiz"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = _require_text(definition, self.text, self)
+        if not problems and ("手札から「ポケモン」のカードを1枚選び、おもてを下にして、置く" not in self.text or "相手プレイヤーにそのポケモンの名前を伝え、その身長を答えてもらう" not in self.text
+                             or f"正解なら、相手プレイヤーは山札からカードを{self.draw}枚引く" not in self.text
+                             or f"正解でないなら、あなたは山札からカードを{self.draw}枚引く" not in self.text or "置いたカードは、手札にもどす" not in self.text):
+            problems.append("文面と登録の処理（置く・名前を伝える・身長を答える・引く・手札にもどす）が合わない")
+        records = [r for r in USER_SPECIFIED_REFERENCES.values() if r.rule == self.reference and r.printed_text == self.text and r.key == f"{definition.id}/trainer"]
+        if not records:
+            problems.append(f"{definition.id} の正解の参照値の利用者の指定（{self.reference}）の記録がない")
+        return problems
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        candidates = quiz_height_candidates(state, use)
+        if not candidates:
+            raise UnsupportedError(BLAINES_QUIZ_WITHOUT_POKEMON_CODE, BLAINES_QUIZ_1_WITHOUT_POKEMON_REASON)
+        blocked = quiz_height_blocked(state, candidates)
+        if len(blocked) == len(candidates):
+            raise UnsupportedError(*blocked[candidates[0]])
+        stop = self.face_up_draw_stop(state, use)
+        if stop is not None:
+            raise UnsupportedError(*stop)
+
+    def face_up_draw_stop(self, state: GameState, use: TrainerUse) -> tuple[str, str] | None:
+        """おもてのカードのある山札（v0.126。フラッシュ）: 引くのは答えの正誤で決まる（正解なら相手プレイヤー、正解でないなら使ったプレイヤー）。どちらかの引き方が既存のおもての山札の止め方
+        （``faceup.command_problem``。FU3 など）に当たるなら、使う前にその (コード, 理由) を返す（答えを拒否すると、拒否の有無から答えの正誤（置いたカード）が漏れるため。止めるかは公開の
+        情報（おもての山札・山札の枚数）だけで決まる）。どちらも当たらなければ None（新しい問いにしない）。"""
+        if not state.face_up_deck:
+            return None
+        for drawer in (use.player, 1 - use.player):
+            trial = state.clone()
+            _draw_up_to(trial, drawer, self.draw)
+            stop = _faceup.command_problem(state, trial)
+            if stop is not None:
+                return stop
+        return None
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        candidates = quiz_height_candidates(state, use)
+        blocked = quiz_height_blocked(state, candidates)
+        first = next(iter(blocked.values()), (QUIZ_HEIGHT_WITHOUT_DEX_CODE, QUIZ_HEIGHT_WITHOUT_DEX_REASON))
+        push_trainer_decision(state, use, kind=QUIZ_CARD, player=use.player, options=candidates, unresolved_choices=tuple(blocked),
+                              unresolved_code=first[0], unresolved_reason=first[1], unresolved_detail=tuple((uid, *problem) for uid, problem in blocked.items()))
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if decision.kind == QUIZ_CARD:
+            (card,) = choices
+            if card_height(state.card_def(card))[0] is None:
+                raise RuntimeError(f"正解の参照値のないカード {card} を置こうとした（選ぶと止める選択。エンジンの不具合）")
+            set_aside_quiz_card(state, use.player, card, trainer=use.card, card_id=use.card_id)
+            name = state.card_def(card).name_ja
+            state.add_event("quiz_name_hint", player=use.player, name=name, trainer_card=use.card)
+            push_trainer_decision(state, use, kind=QUIZ_HEIGHT_ANSWER, player=1 - use.player, options=(),
+                                  context=(("quiz_card", card), ("name", name), (VALUE_RANGE, (1, VALUE_ANSWER_MAX))))
+            return
+        card = decision.context_value("quiz_card")
+        (answer,) = choices
+        height = card_height(state.card_def(card))[0]
+        if height is None:
+            raise RuntimeError(f"置いたカード {card} の正解の参照値がない（エンジンの不具合）")
+        correct = answer == height.height_cm
+        state.add_event("quiz_height_answer", player=1 - use.player, answer_cm=answer, trainer_card=use.card)
+        state.add_event("quiz_height_reveal", player=use.player, card=card, card_id=state.cards[card].card_id, name=state.card_def(card).name_ja, dex=height.dex,
+                        height_cm=height.height_cm, correct=correct, trainer_card=use.card)
+        _draw_up_to(state, 1 - use.player if correct else use.player, self.draw)
+        return_set_aside(state, _quiz_group(state, use), reason="quiz")
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = f"トレーナー {use.card_id}"
+        group = _quiz_group(state, use)
+        if decision.kind == QUIZ_CARD:
+            problems = _decided_by(decision, use.player, what)
+            candidates = quiz_height_candidates(state, use)
+            blocked = quiz_height_blocked(state, candidates)
+            if decision.options != candidates or not candidates or (decision.min_choices, decision.max_choices) != (1, 1) or group is not None:
+                problems.append(f"{what}の置くカードを選ぶ決定 {decision.options} が、まだ置いていない手札のポケモンのカード {candidates} から 1 枚ではない")
+            if tuple(decision.context_value("unresolved_choices", ())) != tuple(blocked) or len(blocked) == len(candidates):
+                problems.append(f"{what}の選ぶと止めるカード {decision.context_value('unresolved_choices', ())} が、正解の参照値のないカード {tuple(blocked)} と合わない")
+            return problems
+        card = decision.context_value("quiz_card")
+        problems = _decided_by(decision, 1 - use.player, what)
+        if decision.kind != QUIZ_HEIGHT_ANSWER or group is None or group.cards != (card,) or group.owner != use.player:
+            return problems + [f"{what}の決定 {decision.kind} の置いたカード {card!r} が、置いた場所 {group} と合わない"]
+        if decision.options != () or (decision.min_choices, decision.max_choices) != (1, 1) or value_range(decision) != (1, VALUE_ANSWER_MAX) \
+                or decision.context_value("unresolved_choices") is not None:
+            problems.append(f"{what}の身長を答える決定が、1〜{VALUE_ANSWER_MAX} の整数 1 つを答える値の決定ではない")
+        if card_height(state.card_def(card))[0] is None:
+            problems.append(f"{what}で置いたカード {card} に正解の参照値がない")
+        name = state.card_def(card).name_ja
+        hints = [e["name"] for e in _stage_events(state, use, "quiz_name_hint")]
+        if decision.context_value("name") != name or hints != [name]:
+            problems.append(f"{what}の伝えた名前 {decision.context_value('name')!r} が、置いたカードの名前・伝えたログ {hints} と合わない")
+        if {key for key, _ in decision.context} != {"use", "quiz_card", "name", VALUE_RANGE}:
+            problems.append(f"{what}の身長を答える決定の続きの情報 {[key for key, _ in decision.context]} に、決まった項目のほかのもの（正解の値など）がある")
+        return problems
+
+
+# v0.129 の登録（トレーナー 1）
+V0_129_TRAINERS: Mapping[str, TrainerEntry] = MappingProxyType({
+    "GD5-016": TrainerEntry(BlainesHeightQuiz(BLAINES_QUIZ_1_TEXT), "カツラのクイズ その1", BLAINES_QUIZ_1_TEXT, BLAINES_QUIZ_1_TEXT, _KYUURA_PRINTED_TEXT),
+})
+
+DEFAULT_EFFECTS = _with_trainers(DEFAULT_EFFECTS, V0_129_TRAINERS)

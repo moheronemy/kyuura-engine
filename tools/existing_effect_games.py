@@ -752,6 +752,13 @@ V126_FLASH = "ES2-035"
 # ハマちゃんのヤドキング）。ワザ・トレーナーの手順 ``_v127_attack``・``_v127_trainer``・決定の答え ``_v127_decision`` を重ねる。ログから数えるのは ``v127_uses``
 V0_127 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_127"])
 V127_MOLTRES, V127_TWM, V127_PIKACHU, V127_SLOWKING = ("ES2-005", "QSG-055"), "neo4-108", ("PR1-044", "PR1-090"), "PR1-072"
+# v0.129（docs/blaines-quiz-heights-v0.129.md 8 章）: カツラのクイズ その1。使う手順 ``_v129_trainer``・置くカードと身長の答え ``_v129_decision`` を重ねる。ログから数えるのは ``v129_uses``。
+# 答えの方策は 2 つ（``V129_ANSWER_POLICIES``）: ``knowledge``（正解を目ざす。観測の伝えた名前と、公開のカードの一覧（名前 → 全国図鑑番号）・公開の身長の参照値だけを読む）と ``wrong``
+# （開発用の、意図して誤る方策。knowledge の答えに 1 cm を足す）。どちらも置いたカード・続きの情報の正解を読まない。どちらを使うかは公開の情報（番の番号と使ったトレーナーの uid）で決まる
+# 決まった割り当てで、結果を見て答えを変えない
+V0_129 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_129"])
+V129_QUIZ = "GD5-016"
+V129_ANSWER_POLICIES = ("knowledge", "wrong")
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -1027,6 +1034,11 @@ DECKS = {
     # v0.127: 雷・超。_のピカチュウ 4 枚（PR1-044・PR1-090 を 2 枚ずつ。同じ名前で 4 枚まで）とヤドン → ハマちゃんのヤドキング（利用者が指定した簡略ルールのワザ）。怪電波マシーンは入れない
     # （通常のプロモの対戦。途中停止の起こる対戦と分けて数える）
     "P127": (("PR1-044", 2), ("PR1-090", 2), (SLOWPOKE, 4), (V127_SLOWKING, 3), (driver.BILL, 2), (SWITCH, 2), (driver.POTION, 2), (LIGHTNING, 22), (PSYCHIC, 21)),
+    # v0.129: 闘・無色。カツラのクイズ その1 4 枚と、出題に使うポケモン: ディグダ（いちばん低い 20cm の種族）・ダグトリオ・イワーク（880cm）・ハガネール（いちばん高い 920cm。鋼のワザは
+    # 使えないが手札で出題できる）・ポリゴン・ポリゴン2（公式の表記は「ポリゴン２」）・エリカのフシギダネ（所有者名つき。図鑑番号 1）。図鑑番号のないポリゴン ES1-033・イワーク ES2-024 は
+    # 選べるが選ぶと止める（手順は選ばず、出たことを数える）
+    "Q129": ((V129_QUIZ, 4), ("PMCG1-052", 4), ("PMCG1-056", 2), ("PMCG1-054", 2), ("ES2-024", 1), ("neo1-057", 1), ("PMCG1-064", 2), ("ES1-033", 2),
+             ("neo3-051", 2), ("PMCG5-007", 2), (driver.BILL, 2), (SWITCH, 2), (driver.POTION, 2), (FIGHTING, 32)),
     "F45": ((ONIX, 3), (RATTATA, 4), (RATICATE, 3), (ROCKETS_HITMONCHAN, 3), (BROCKS_GEODUDE_40, 4), (BROCKS_RHYHORN, 1), (BROCKS_SANDSHREW, 1),
             (GIOVANNIS_MEOWTH_40, 3), *TRAINERS, (FIGHTING, 26)),
     # v0.45: 水・超（ロケット団・第1弾）。ハイドロキャノン・ロケットタックル・さいみんじゅつ・ゆめくい（相手がねむりでないと失敗）
@@ -2150,6 +2162,9 @@ PAIRINGS_V0_126 = (("M126", "F126"), ("M126", "W125"), ("F126", "F45"))
 # 対戦（P127 対 W28・P127 対 F45: 利用者が指定した簡略ルールのワザ。途中停止の起こるカードはない）。組・席・seed は正式な対戦の前に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめる
 # seed 90〜93 とは別。途中停止した局を除かない・seed を選び直さない）
 PAIRINGS_V0_127 = (("F127", "W28"), ("F127", "S124"), ("F127", "F45"), ("P127", "W28"), ("P127", "F45"))
+# v0.129: Q129 対 W28（水・無色）・Q129 対 F45（闘）・Q129 対 Q129（お互いにクイズを使い、お互いに答える）。組・席・seed は正式な対戦の前に決めた（正式な対戦は seed 0〜3。開発中に
+# 手順を確かめる seed 90〜93 とは別。局・seed を選び直さない）
+PAIRINGS_V0_129 = (("Q129", "W28"), ("Q129", "F45"), ("Q129", "Q129"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -2174,7 +2189,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.116": PAIRINGS_V0_116, "v0.117": PAIRINGS_V0_117, "v0.118": PAIRINGS_V0_118,
            "v0.119": PAIRINGS_V0_119, "v0.120": PAIRINGS_V0_120, "v0.121": PAIRINGS_V0_121, "v0.122": PAIRINGS_V0_122,
            "v0.123": PAIRINGS_V0_123, "v0.124": PAIRINGS_V0_124, "v0.125": PAIRINGS_V0_125, "v0.126": PAIRINGS_V0_126,
-           "v0.127": PAIRINGS_V0_127}
+           "v0.127": PAIRINGS_V0_127, "v0.129": PAIRINGS_V0_129}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -12001,6 +12016,100 @@ def _v127_decision(state, counts):
     return None
 
 
+def _v129_trainer(state, tried, counts):
+    """v0.129: 手札のカツラのクイズ その1を、ワザか番の終わりの前に使う（1 つの番に 1 回。使う前に止まるなら、その番は試さない）。"""
+    player = state.current_player
+    if state.trainer_in_use is not None:
+        return None
+    for card in state.players[player].hand:
+        if state.cards[card].card_id != V129_QUIZ:
+            continue
+        key = ("v129_quiz", state.turn_number)
+        if key in tried:
+            return None
+        tried.add(key)
+        command = PlayTrainer(player, card)
+        if not _v052_accepted(state, command):
+            counts["v129_quiz_not_played"] += 1
+            return None
+        counts["v129_quiz_played"] += 1
+        return command
+    return None
+
+
+def v129_public_answer(state, d, policy: str) -> int:
+    """v0.129: 身長の答え（整数 cm）を、答えるプレイヤーの観測と公開の情報だけで決める（置いたカード・決定の続きの情報の置いたカードを読まない）。
+
+    - ``knowledge``（正解を目ざす方策）: 観測の伝えた名前のカードを、公開のカードの一覧（同梱の写しの定義）から引き、全国図鑑番号が 1 つに決まれば、公開の身長の参照値の原表記（「0.2m」）を
+      人向けの答えの換算（``heights.height_answer_cm``）で整数 cm にする。決まらなければ 100
+    - ``wrong``（開発用の、意図して誤る方策）: knowledge の答え + 1"""
+    from kyuura_engine.cards import load_card_pool
+    from kyuura_engine.heights import height_answer_cm, load_species_heights
+    from kyuura_engine.observation import observe
+
+    name = observe(state, d.player)["decision"]["name"]
+    numbers = {d_.dex for d_ in load_card_pool().definitions.values() if d_.category == "pokemon" and d_.name_ja == name and d_.dex}
+    heights = load_species_heights().by_dex
+    known = None
+    if len(numbers) == 1 and len(next(iter(numbers))) == 1 and next(iter(numbers))[0] in heights:
+        known = height_answer_cm(heights[next(iter(numbers))[0]].height_raw)
+    value = 100 if known is None else known
+    return value + 1 if policy == "wrong" else value
+
+
+def _v129_decision(state, counts):
+    """v0.129: カツラのクイズ その1の置くカード（選べるもののうち、選ぶと止めるカードを除いたものを順に。止めるカードがあったことを数える）と、相手プレイヤーの身長の答え（方策の割り当て
+    ``V129_ANSWER_POLICIES``: 番の番号と使ったトレーナーの uid の和が偶数なら knowledge、奇数なら wrong）。"""
+    from kyuura_engine import decisions as D
+
+    d = state.decision
+    used = state.trainer_in_use
+    if d is None or d.resume != "trainer" or used is None or state.cards[used.card].card_id != V129_QUIZ:
+        return None
+    if d.kind == D.QUIZ_CARD:
+        blocked = set(d.context_value("unresolved_choices", ()) or ())
+        free = [uid for uid in d.options if uid not in blocked]
+        if blocked:
+            counts["v129_blocked_offered"] += 1
+        if not free:
+            return None
+        chosen = free[(state.turn_number // 2 + used.card) % len(free)]
+        counts["v129_card_chosen"] += 1
+        return ResolveDecision(d.player, d.id, (chosen,))
+    if d.kind == D.QUIZ_HEIGHT_ANSWER:
+        policy = V129_ANSWER_POLICIES[(state.turn_number + used.card) % 2]
+        counts[f"v129_answer_{policy}"] += 1
+        return ResolveDecision(d.player, d.id, (v129_public_answer(state, d, policy),))
+    return None
+
+
+def v129_uses(state):
+    """v0.129: ログから数えたカツラのクイズ その1の動き（このカードのない局では空）。
+
+    - ``played``・``correct``・``wrong``・``drawn_by_answerer``・``drawn_by_user``（引いた枚数）・``short_draw``（2 枚より少なく引いた）・``returned``（手札にもどした）
+    - ``card_<id>``（置いたカード）・``height_<cm>``（置いたカードの参照値）"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_129 for uid in state.cards):
+        return counts
+    log = list(state.log)
+    for i, e in enumerate(log):
+        kind = e["kind"]
+        if kind == "play_trainer" and state.cards[e["card"]].card_id == V129_QUIZ:
+            counts["played"] += 1
+        elif kind == "quiz_height_reveal":
+            counts["correct" if e["correct"] else "wrong"] += 1
+            counts[f"card_{e['card_id']}"] += 1
+            counts[f"height_{e['height_cm']}"] += 1
+            following = log[i + 1] if i + 1 < len(log) else None
+            drawn = len(following["cards"]) if following is not None and following["kind"] == "draw" else 0
+            counts["drawn_by_answerer" if e["correct"] else "drawn_by_user"] += drawn
+            if drawn < 2:
+                counts["short_draw"] += 1
+        elif kind == "set_aside_returned" and e.get("reason") == "quiz" and state.cards[e["trainer_card"]].card_id == V129_QUIZ:
+            counts["returned"] += 1
+    return counts
+
+
 def v127_uses(state):
     """v0.127: ログから数えたドライアップ・怪電波マシーン・利用者の簡略ルールのワザの動き（v0.127 のカードのない局では空）。
 
@@ -12489,7 +12598,8 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = (_v127_decision(state, counts)  # v0.127: ドライアップの選ぶポケモン・トラッシュ、怪電波マシーンのもどすカード（ないデッキでは何もしない）
+            early = (_v129_decision(state, counts)  # v0.129: カツラのクイズ その1の置くカード・身長の答え（相手の決定にも答える。ないデッキでは何もしない）
+                     or _v127_decision(state, counts)  # v0.127: ドライアップの選ぶポケモン・トラッシュ、怪電波マシーンのもどすカード（ないデッキでは何もしない）
                      or _v126_decision(state, counts)  # v0.126: フラッシュの並べかえ・おもての山札のある間の選択（フラッシュのない局では何もしない）
                      or _v124_decision(state, counts)  # v0.124: ［すごいへんしん］の選ぶポケモン（v0.124 のカードの決定でなければ何もしない）
                      or _v123_decision(state, counts)  # v0.123: いかりのほのお・ほのおのあらしの炎エネルギーカードのトラッシュ（v0.123 のカードのワザでない決定では何もしない）
@@ -12581,6 +12691,9 @@ def make_policy(seen: dict, counts: Counter):
             return (_v031_decision(state, counts) or _v039_decision(state, counts) or _v040_decision(state, counts) or _v041_decision(state, counts)
                     or _v042_decision(state, counts) or command)
         if state.phase is Phase.MAIN and isinstance(command, (UseAttack, EndTurn)):
+            quiz = _v129_trainer(state, tried, counts)  # v0.129: カツラのクイズ その1（ないデッキでは何もしない）
+            if quiz is not None:
+                return quiz
             machine = _v127_trainer(state, command, tried, counts)  # v0.127: 怪電波マシーン（ないデッキでは何もしない）
             if machine is not None:
                 return machine
@@ -12935,6 +13048,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v125"] = v125_uses(state)
         result["v126"] = v126_uses(state)
         result["v127"] = v127_uses(state)
+        result["v129"] = v129_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:

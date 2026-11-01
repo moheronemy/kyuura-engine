@@ -29,6 +29,8 @@ v0.4c 以降の 2 進化ポケモン。v0.11 はサカキのワンリキー・�
 - v0.127 で、写しの組 pool_v0_127（6 枚）を加えました（写しの元・研究の基準は 57d01f4 のまま。段は加えていない。docs/deferred-shortage-user-promos-v0.127.md 3 章）。
 - v0.128 で、段 v0.128（57d01f4 → 71d1728）を加え、kyuura の目録の分類（``catalog_class``・``engine_scope``・``engine_scope_reason``）から通常対戦の対象の集合を求めて
   書き出しの ``catalog_scope`` に残しました（3 つの欄はカードの写す欄には加えない。docs/catalog-scope-migration-v0.128.md 2 章・3 章）。
+- v0.129 で、写しの組 pool_v0_129（1 枚）と、エンジンが処理に使う欄 ``pokemon.dex`` を加えました（写しの元・研究の基準は 71d1728 のまま。段は加えていない。
+  公式図鑑の種族の身長は scripts/extract_species_heights.py の別の写し。docs/blaines-quiz-heights-v0.129.md 2 章）。
 
 使い方::
 
@@ -3706,6 +3708,12 @@ POOL_V0_127 = [
     "PR1-072",  # ハマちゃんのヤドキング（プロモ。1進化（ヤドンから）・超・HP70。こまったなあ・どつく。利用者が指定した簡略ルール）
 ]
 
+# v0.129 で加えたカード（docs/blaines-quiz-heights-v0.129.md）。写しの元・研究の基準は 71d1728 のまま（段は加えていない）。正解の参照値（公式図鑑の種族の身長）は
+# scripts/extract_species_heights.py の別の写し（kyuura 9242b9b）
+POOL_V0_129 = [
+    "GD5-016",  # カツラのクイズ その1（ジムデッキ。ポケモンジム第3弾「グレンタウンジム カツラ」）
+]
+
 POOLS = [
     ("pool_v0_1", POOL_V0_1),
     ("pool_v0_2b", POOL_V0_2B),
@@ -3839,6 +3847,7 @@ POOLS = [
     ("pool_v0_125", POOL_V0_125),
     ("pool_v0_126", POOL_V0_126),
     ("pool_v0_127", POOL_V0_127),
+    ("pool_v0_129", POOL_V0_129),
 ]
 
 

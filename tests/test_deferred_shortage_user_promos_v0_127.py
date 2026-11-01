@@ -115,7 +115,8 @@ class RegistrationTest(unittest.TestCase):
         self.assertEqual(extract["pool_v0_127"], list(NEW_CARDS))
         playable = load_card_pool().playable_ids
         self.assertLessEqual(set(NEW_CARDS), playable)
-        self.assertEqual(len(playable - set(NEW_CARDS)), 1362)  # 6 枚を外すと基点の 1,362 枚
+        # 6 枚を外すと基点の 1,362 枚（v0.129: 後の版で加えたカード pool_v0_129 も外す）
+        self.assertEqual(len(playable - set(NEW_CARDS) - set(extract.get("pool_v0_129", ()))), 1362)
         self.assertNotIn("neo4-082", playable)  # 10 章: ひかるバンギラスは登録しない
         registry = E.DEFAULT_EFFECTS
         attacks = [k for k in registry.attack_keys() if k.card_id in NEW_CARDS]

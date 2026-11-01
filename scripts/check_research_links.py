@@ -256,6 +256,7 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
     user_corrected = section.get("user_corrected_text", {})  # v0.68: 利用者が示した訂正（kyuura の照合の記録・最新の説明ではない。v0.69 から kyuura の台帳の記録）
     simplified = section.get("engine_simplified_text", {})  # v0.68: エンジンの簡略化した仕様（公式の裁定・エラッタではない）
     user_simplified = section.get("user_simplified_text", {})  # v0.127: 利用者が指定した簡略ルール（公式の裁定・エラッタ・エンジンの仕様の判断ではない）
+    user_references = section.get("user_specified_references", {})  # v0.129: 利用者が指定した参照値（処理に使う文面は印刷のまま。公式の裁定・最新の説明・印刷の訂正ではない）
     equivalent = section.get("equivalent_registrations", {})  # v0.69: 登録したカードと処理に使う欄が同じカードの登録 → 元のカードの登録
     reprinted = section.get("reprint_registrations", {})  # v0.71: 再録のカードの、元のカードの記録の文面を処理に使う登録 → 元のカードの登録
     in_checks = (set(section.get("recorded_in_card_checks", {})) | set(section.get("card_checks_without_text", {})) | adopted_printed
@@ -475,6 +476,23 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
             problems.append(f"{target}: 利用者の簡略ルールの記録の印刷の文面が、研究の基準のコミットの印刷の文面と違う（または処理に使う文面と同じ）")
         if target in ld_by_target:
             problems.append(f"{target}: kyuura に最新の説明の記録 {ld_by_target[target]} がある（利用者の簡略ルールより先に確かめる）")
+    # 4f''. v0.129（docs/blaines-quiz-heights-v0.129.md 3 章）: 利用者が指定した参照値（カツラのクイズ その1の正解に公式図鑑の種族の身長を採る）。処理に使う文面の区分ではない（文面は
+    # 印刷のまま）ので、印刷の文面の採用（adopted_printed_text）・利用者の簡略ルール（user_simplified_text）と別に挙げる。一覧は対象ごとの記録（effects.USER_SPECIFIED_REFERENCES）と
+    # ちょうど同じで、出典は USER_SPECIFIED_REFERENCE_SOURCE。記録の印刷の文面が研究の基準のコミットの印刷の文面・登録の処理に使う文面と同じ、kyuura に最新の説明がない
+    if set(user_references) != set(getattr(E, "USER_SPECIFIED_REFERENCES", {})) or set(user_references) & (set(user_simplified) | adopted_printed):
+        problems.append(f"user_specified_references の一覧が、利用者が指定した参照値の記録と違うか、文面の区分にも入っている: 対応表 {sorted(user_references)}")
+    for target, basis in user_references.items():
+        record = getattr(E, "USER_SPECIFIED_REFERENCES", {}).get(target)
+        if basis != getattr(E, "USER_SPECIFIED_REFERENCE_SOURCE", None) or record is None:
+            problems.append(f"{target}: user_specified_references の根拠 {basis!r} が、利用者が指定した参照値の出典・記録でない")
+            continue
+        card, _, kind = target.partition("/")
+        entry = registry_.trainer_entry(card) if kind == "trainer" else None
+        printed = (((research_cards.get(card) or {}).get("trainer") or {}).get("text") or {}).get("ja") if kind == "trainer" else None
+        if entry is None or not (entry.text_ja == entry.play_text_ja == record.printed_text == printed):
+            problems.append(f"{target}: 利用者が指定した参照値の記録の印刷の文面が、研究の基準のコミットの印刷の文面・登録の処理に使う文面と同じではない")
+        if card in trainer_ld:
+            problems.append(f"{target}: kyuura に最新の説明の記録 {trainer_ld[card]['id']} がある（利用者が指定した参照値より先に確かめる）")
 
     # 4g. v0.69（docs/equivalent-non-pack-cards-v0.69.md 4 章）: 登録したカードと処理に使う欄が同じカード（拡張パック以外の商品）の登録。元のカードの登録の区分にしたがう。
     # 元のカードと、研究の基準のコミットで同じカードの組（same_card_group）にあり、印刷の文面が同じで、登録の処理に使う文面・出典が元のカードと同じ。元のカードの登録は

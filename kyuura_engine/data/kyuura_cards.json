@@ -1687,6 +1687,9 @@
     "PR1-090",
     "PR1-072"
   ],
+  "pool_v0_129": [
+    "GD5-016"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -127246,6 +127249,59 @@
         {
           "page": "1stp072",
           "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "GD5-016",
+      "jp_set": "GD5",
+      "category": "trainer",
+      "name": {
+        "ja": "カツラのクイズ その1",
+        "en": "Blaine's Quiz 1"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの手札から「ポケモン」のカードを1枚選び、おもてを下にして、置く。相手プレイヤーにそのポケモンの名前を伝え、その身長を答えてもらう。その後、置いたカードをおもてにして、正解なら、相手プレイヤーは山札からカードを2枚引く。正解でないなら、あなたは山札からカードを2枚引く。(置いたカードは、手札にもどす)",
+          "en": "Put a Basic Pokémon or Evolution card from your hand face down in front of you and tell your opponent its name. Your opponent guesses the length of that Pokémon. Flip the card over. If your opponent guessed right, he or she draws 2 cards. If your opponent guessed wrong, you draw 2 cards. Either way, return the card to your hand."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-97"
+        ],
+        "pcg_search": [
+          "1stgymd5016"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd5016.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「グレンタウンジム カツラ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd5016.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-97"
+      },
+      "copies": [
+        {
+          "page": "1stgymd5016",
+          "list_number": "016/025"
         }
       ]
     }

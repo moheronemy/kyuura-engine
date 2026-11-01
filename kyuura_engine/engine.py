@@ -53,6 +53,8 @@ from .commands import (
     CheckFaceUpDeckCard,
 )
 from .decisions import (
+    VALUE_ANSWER_MAX,  # v0.129: 値で答える決定（カツラのクイズ その1）
+    VALUE_RANGE,
     ACCEPT_REQUEST,
     DISCARD_ENERGY,
     BENCH_GUARD,
@@ -86,6 +88,7 @@ from .decisions import (
     TAKE_PRIZE,
     phase_for,
 )
+from .heights import card_height  # v0.129: 公式図鑑の種族の身長の参照値（クイズで置いてよいカード）
 from .effects import (
     retreat_guards,
     ATTACK_HAND_TRAINER_LOCK,
@@ -5347,8 +5350,14 @@ def _decision_problems(state: GameState) -> list[str]:
         return problems
     if not 1 <= d.id < state.next_decision_id:
         problems.append(f"決定の番号 {d.id} が正しくない（次に付ける番号 {state.next_decision_id}）")
+    bounds = d.context_value(VALUE_RANGE)
+    if bounds is not None:
+        # v0.129: 値で答える決定（選べるものを並べない。範囲の整数 1 つ）。範囲は 1 以上・表現の上限以下の整数の組で、選べるもの・止める選択はない
+        if (not isinstance(bounds, tuple) or len(bounds) != 2 or any(type(b) is not int for b in bounds) or not 1 <= bounds[0] <= bounds[1] <= VALUE_ANSWER_MAX
+                or d.options != () or (d.min_choices, d.max_choices) != (1, 1) or d.context_value("unresolved_choices") is not None):
+            problems.append(f"値で答える決定 {d.kind} の範囲 {bounds!r}・選べるもの {d.options}・選ぶ数 {d.min_choices}〜{d.max_choices} が正しくない")
     # 選ぶ数の上限は選べるものの数を超えてよい（「2 匹まで選ぶ」で 1 匹しかいない場合）。下限は選べる数まで
-    if len(set(d.options)) != len(d.options) or not 0 <= d.min_choices <= d.max_choices or d.min_choices > len(d.options):
+    elif len(set(d.options)) != len(d.options) or not 0 <= d.min_choices <= d.max_choices or d.min_choices > len(d.options):
         problems.append(f"決定の選べるもの {d.options} と選ぶ数 {d.min_choices}〜{d.max_choices} が合わない")
     if d.resume not in DECISION_RESUMES:
         problems.append(f"決定の再開先 {d.resume!r} がない")
@@ -5511,7 +5520,7 @@ def _set_aside_problems(state: GameState) -> list[str]:
                 if len(state.players[group.owner].bench) + len(cards) > _bench_limit_or_default(state, group.owner):
                     problems.append(f"プレイヤー {group.owner} のベンチとうらにして出したカードが、ベンチの上限より多い")
             elif len(cards) != 1 or group.owner != group.user or not _quiz_card_accepted(state, group.card_id, cards[0]):
-                problems.append(f"クイズで置いたカード {group} が、使ったプレイヤーのワザを持つポケモンのカード 1 枚ではない")
+                problems.append(f"クイズで置いたカード {group} が、使ったプレイヤーの、そのクイズで置いてよいカード 1 枚ではない")
         put = [e for e in state.log if put_events.get(e["kind"]) == group.kind and e.get("player") == group.owner and e.get("trainer_card") == group.trainer_card
                and tuple(e.get("cards", (e.get("card"),))) == cards]
         if not put:
@@ -5526,12 +5535,15 @@ def _set_aside_problems(state: GameState) -> list[str]:
 
 def _quiz_card_accepted(state: GameState, card_id: str, card: int) -> bool:
     """v0.63・v0.80: クイズで置いてよいカードか（カツラのクイズ その3 はワザを持つポケモンのカード、その2 は手札のどのカードでも、ポケモン性格判定は進化カード。登録の実装の
-    ``kinds`` で決め、カード id で分けない）。"""
+    ``kinds`` で決め、カード id で分けない）。v0.129: その1（``kinds`` が ``"species_height"``）は「ポケモン」のカードで、正解の参照値（全国図鑑番号の種族の身長）のあるもの
+    （ないカードは選ぶと止めるので置かない）。"""
     entry = state.effects.trainer_entry(card_id)
     kinds = getattr(entry.effect, "kinds", None) if entry is not None else None
     definition = state.card_def(card)
     if kinds == "card_kind":
         return True
+    if kinds == "species_height":
+        return definition.category == "pokemon" and card_height(definition)[0] is not None
     if kinds == "personality":
         return definition.is_evolution_pokemon
     return definition.category == "pokemon" and bool(definition.attacks)

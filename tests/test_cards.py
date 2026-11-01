@@ -77,6 +77,7 @@ ROOT = Path(__file__).resolve().parent.parent
 V0_121_TRAINERS = ("neo3-053", "PR1-073")
 V0_126_TRAINERS = ("ES2-035",)  # v0.126: フラッシュ（docs/flash-faceup-deck-v0.126.md）
 V0_127_TRAINERS = ("neo4-108",)  # v0.127: 怪電波マシーン（docs/deferred-shortage-user-promos-v0.127.md）
+V0_129_TRAINERS = ("GD5-016",)  # v0.129: カツラのクイズ その1（docs/blaines-quiz-heights-v0.129.md）
 
 class CardPoolTest(unittest.TestCase):
     def test_source_is_pinned_kyuura_commit(self):
@@ -106,7 +107,7 @@ class CardPoolTest(unittest.TestCase):
                                     MISTYS_WRATH, BROCK_TRAINING, LT_SURGES_TREATY, GOOD_MANNERS, ERIKA, ERIKAS_KINDNESS, MISTY_TRAINER, MISTYS_WISH, SECRET_MISSION, BROCK_TRAINER, LT_SURGE_TRAINER, ROCKETS_TRAP, BLAINES_GAMBLE,
                                     TRASH_EXCHANGE, SABRINAS_GAZE, INVISIBLE_WALL, WARP_POINT, BLAINES_LAST_RESORT, ROCKET_GRUNT, ROCKETS_EXPERIMENT,
                                     KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, SABRINAS_PSYCHIC_CONTROL, DIGGER] + list(V0_63_CARDS) + list(V0_66_CARDS) + list(V0_67_CARDS)
-                                   + list(V0_69_TRAINERS) + list(V0_71_TRAINERS) + list(V0_73_CARDS) + list(V0_74_CARDS) + list(V0_77_TRAINERS) + list(V0_80_CARDS) + list(V0_81_CARDS) + [ECOGYM, BREEDER_COUPLE] + list(V0_96_TRAINERS) + [FOSSIL_EGG] + list(V0_121_TRAINERS) + list(V0_126_TRAINERS) + list(V0_127_TRAINERS)))  # v0.84 でポケモン育て屋夫婦（pool_v0_84）。 v0.82 でエコロジム（pool_v0_82）。 v0.80 でトレーナー 30 枚（pool_v0_80）、v0.77 で neo1 のスーパーポケモン回収・マサキの転送装置、v0.74 で拡張パック以外の商品のスタジアム 13 枚（pool_v0_74）、v0.73 で拡張パック以外の商品の検索・回収・ドローのトレーナー 18 枚（pool_v0_73）、v0.71 で拡張パック以外の商品の再録のトレーナー 67 枚（pool_v0_71）、v0.69 で拡張パック以外の商品の同じトレーナー 19 枚（pool_v0_69）、v0.67 でマチスの秘策（pool_v0_67）、v0.57 でスタジアム 14 枚（pool_v0_57）、v0.58 でナツメのサイキックコントロール（pool_v0_58）、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス（pool_v0_59）、v0.61 でバトル場は穴だらけ!（pool_v0_61）、v0.63 で公開・非公開の状態を扱う 4 枚（pool_v0_63）
+                                   + list(V0_69_TRAINERS) + list(V0_71_TRAINERS) + list(V0_73_CARDS) + list(V0_74_CARDS) + list(V0_77_TRAINERS) + list(V0_80_CARDS) + list(V0_81_CARDS) + [ECOGYM, BREEDER_COUPLE] + list(V0_96_TRAINERS) + [FOSSIL_EGG] + list(V0_121_TRAINERS) + list(V0_126_TRAINERS) + list(V0_127_TRAINERS) + list(V0_129_TRAINERS)))  # v0.84 でポケモン育て屋夫婦（pool_v0_84）。 v0.82 でエコロジム（pool_v0_82）。 v0.80 でトレーナー 30 枚（pool_v0_80）、v0.77 で neo1 のスーパーポケモン回収・マサキの転送装置、v0.74 で拡張パック以外の商品のスタジアム 13 枚（pool_v0_74）、v0.73 で拡張パック以外の商品の検索・回収・ドローのトレーナー 18 枚（pool_v0_73）、v0.71 で拡張パック以外の商品の再録のトレーナー 67 枚（pool_v0_71）、v0.69 で拡張パック以外の商品の同じトレーナー 19 枚（pool_v0_69）、v0.67 でマチスの秘策（pool_v0_67）、v0.57 でスタジアム 14 枚（pool_v0_57）、v0.58 でナツメのサイキックコントロール（pool_v0_58）、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス（pool_v0_59）、v0.61 でバトル場は穴だらけ!（pool_v0_61）、v0.63 で公開・非公開の状態を扱う 4 枚（pool_v0_63）
         self.assertEqual(read_extract()["pool_v0_2e"], [DEFENDER])
         self.assertEqual(read_extract()["pool_v0_2f"], [PIKACHU])
         self.assertTrue(pool.is_playable(PIKACHU))

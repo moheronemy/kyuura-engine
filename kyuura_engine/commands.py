@@ -136,6 +136,8 @@ class ResolveDecision:
     （``PendingDecision.options`` の中から、``min_choices``〜``max_choices`` 個。重ねない）。
     どの種類の決定にも使える。サイドを取る決定には ``TakePrize``、バトル場に出す決定には
     ``PromoteActive`` も使える（v0.1 からある形。ポケモンはカードの uid で指す）。
+    v0.129: 値で答える決定（``decisions.VALUE_RANGE``。カツラのクイズ その1の身長）は、``choices`` に範囲の整数 1 つ（身長は整数 cm）。単位の換算は
+    呼ぶ側の責任（人向けの入力は ``heights.height_answer_cm``）。
     """
 
     player: int

@@ -117,7 +117,9 @@ class MigrationChainTest(unittest.TestCase):
         self.assertEqual(cs.data_migrations(sources, read_extract())[1], [])
         # 採用したときのデータのコミットが 57d01f4 の記録は、この版で写しに加えたカード（pool_v0_126）だけ（移行の段では採用し直していない）。v0.127 は写しの元を変えずに
         # pool_v0_127 の 6 枚を 57d01f4 で採用した（tests/test_deferred_shortage_user_promos_v0_127.py）
-        self.assertEqual({card for card, record in sources["cards"].items() if record.get("kyuura_commit") == NOW}, cards_after(read_extract(), "0.125"))
+        # v0.129: pool_v0_129 のカツラのクイズ その1は 71d1728 で採用した（tests/test_blaines_quiz_heights_v0_129.py）ので、57d01f4 の記録には入らない
+        self.assertEqual({card for card, record in sources["cards"].items() if record.get("kyuura_commit") == NOW},
+                         cards_after(read_extract(), "0.125") - cards_after(read_extract(), "0.128"))
 
     @needs_history
     def test_extract_is_unchanged_for_the_base_cards(self):

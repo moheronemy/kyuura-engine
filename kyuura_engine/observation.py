@@ -107,6 +107,8 @@ from .decisions import (
     QUIZ_ANSWER,
     QUIZ_ATTACK,
     QUIZ_CARD,
+    QUIZ_HEIGHT_ANSWER,
+    value_range,
     SELECT_MARKER_COUNT,
     SELECT_ATTACHED_TRAINER,
     OPTIONAL_SHUFFLE,
@@ -166,6 +168,8 @@ OPTION_MEANINGS: dict[str, str] = {
     # v0.63: たたきつけろ!挑戦状で山札から選ぶたねポケモン（決めるプレイヤーが自分の山札をさがす）・カツラのクイズ その3で置く手札のポケモン・伝えるワザの位置・
     # 答えるカードの名前（``context`` の ``"names"`` の位置。選べるものに名前を添える）
     CHALLENGE_BENCH: "card", QUIZ_CARD: "card", QUIZ_ATTACK: "number", QUIZ_ANSWER: "name",
+    # v0.129: カツラのクイズ その1で答える身長（値で答える決定。選べるものを並べず、範囲 ``value_range`` と単位 cm を見せる）
+    QUIZ_HEIGHT_ANSWER: "value",
     # v0.66: お上品攻撃で減らす量・ナツメのESPのやり直し（1 = やり直す）・カスミの勝負のじゃんけんの手（選べるものに手の名前を添える。もう 1 人の手は続きの情報にあり、見せない）
     DAMAGE_REDUCTION: "number", ESP_REDO: "number", OPTIONAL_DISCARD_ALL: "number", JANKEN_HAND: "janken", OPTIONAL_DRAIN: "pokemon", SEARCH_DECK_OR_DISCARD: "card", TAKE_LOOKED_POKEMON: "card",
     # v0.67: マチスの秘策でうらにして出す手札のカード（決めるプレイヤーの手札）
@@ -427,6 +431,20 @@ def _decision(state: GameState, viewer: int | None) -> dict[str, Any] | None:
     d = state.decision
     if d is None:
         return None
+    bounds = value_range(d)
+    if bounds is not None:
+        # v0.129: 値で答える決定（カツラのクイズ その1の身長）。選べるものを並べず、答えられる範囲と単位・伝えた名前（全員に伝えた情報。ログ quiz_name_hint）を全員に見せる。
+        # 置いたカード・正解の値は見せない（続きの情報の quiz_card は観測に出さない）
+        meaning = OPTION_MEANINGS.get(d.kind)
+        if meaning != "value":
+            raise ValueError(f"値で答える決定の種類 {d.kind!r} の意味が value ではない（OPTION_MEANINGS）")
+        view = {"kind": d.kind, "player": d.player, "min_choices": d.min_choices, "max_choices": d.max_choices, "value_range": {"min": bounds[0], "max": bounds[1]}}
+        if d.kind == QUIZ_HEIGHT_ANSWER:
+            view["value_range"]["unit"] = "cm"
+            view["name"] = d.context_value("name")
+        if viewer == d.player:
+            view["meaning"] = meaning
+        return view
     view: dict[str, Any] = {"kind": d.kind, "player": d.player, "min_choices": d.min_choices, "max_choices": d.max_choices,
                             "option_count": len(d.options)}
     if d.kind == QUIZ_ANSWER:
@@ -747,6 +765,8 @@ PUBLIC_EVENTS = frozenset({
     "energy_heal", "energy_damage", "stadium_discard_none", "discard_trainer_use_none", "discard_trainer_use_declined",
     # v0.63: おもてにしたサイド（全員に見えるようにした）・うらにして出したカードを表にした・クイズの伝えたワザ・答え・表にしたカード
     "prizes_revealed", "face_down_revealed", "quiz_hint", "quiz_answer", "quiz_reveal",
+    # v0.129: カツラのクイズ その1の伝えた名前・答えた身長（整数 cm）・表にしたカード（正解か・図鑑番号・身長の参照値。表にしたあとの公開の情報）
+    "quiz_name_hint", "quiz_height_answer", "quiz_height_reveal",
     # v0.74: ポケモンタワーで消えた効果・エネルギースタジアムで手札に加えた（見せた）カード・キョウの忍者ジムでベンチに出したカード（トラッシュ・場は公開の情報）
     "discard_to_hand_suppressed", "stadium_retrieve_energy", "stadium_bench_from_deck",
     # v0.75: エナジーサポートで、つける控えが「とうめい」で受けなかったので持ち主のトラッシュに置いたカード（トラッシュは公開の情報）

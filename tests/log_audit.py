@@ -140,6 +140,8 @@ from kyuura_engine.effects import CoinBenchOwnerBasicFromDeckStadium, CoinRetrie
 from kyuura_engine.effects import AttackLockWhileSourceActiveOnHeads, CoinNextTurnMultiplyElseLockAttack, LockOpponentAttackOnHeads  # v0.76
 from kyuura_engine.effects import EXPIRE_TO_HAND, RockPaperScissorsRefreshHand  # v0.66
 from kyuura_engine.effects import BlainesQuiz, ChallengeBenchFromDecks, CoinSetAsideOpponentHandElseEndTurn, RevealAllPrizesTrainer  # v0.63
+from kyuura_engine.effects import BlainesHeightQuiz  # v0.129: カツラのクイズ その1（カードの見分けだけに使う。正解の判定・引く側・公開の範囲は監査が独立に持つ）
+from kyuura_engine.heights import load_species_heights  # v0.129: 正解の参照値（写しの値。図鑑番号だけで引く）
 from kyuura_engine.effects import (
     AskOpponentEachTakePrizeElseDraw,
     BenchActiveThenHandBasicToActive,
@@ -8473,6 +8475,10 @@ def log_problems(state) -> list[str]:
             # v0.80: カツラのクイズ その2（手札のどのカードでも）・ポケモン性格判定（進化カード）
             accepted = (state.printed_def(e["card"]).category == "pokemon" and bool(state.printed_def(e["card"]).attacks)) if isinstance(quiz, BlainesQuiz) \
                 else isinstance(quiz, SetAsideGuessKindQuiz) and (quiz.kinds != "personality" or state.printed_def(e["card"]).is_evolution_pokemon)
+            if isinstance(quiz, BlainesHeightQuiz):
+                # v0.129: その1。手札の「ポケモン」のカードで、図鑑番号がちょうど 1 つあり、その種族の参照値がある（ないカードは選ぶと止めるので置かない）
+                dex = state.printed_def(e["card"]).dex
+                accepted = state.printed_def(e["card"]).category == "pokemon" and len(dex) == 1 and dex[0] in load_species_heights().by_dex
             if using_trainer.get(user) != e["trainer_card"] or e["player"] != user or not accepted:
                 problems.append(f"{e['turn']} 番にクイズで置いたカード {e['card']} が、使ったプレイヤーの手札のワザを持つポケモンのカードではない")
             from_hand(e, e["player"], e["card"])
@@ -10178,6 +10184,7 @@ def log_problems(state) -> list[str]:
             problems.append(f"持続する効果 {key} が、消したあとも状態に残っている")
     problems.extend(coin_gated_effect_problems(state, log))  # v0.76
     problems.extend(v127_problems(state))  # v0.127: ドライアップ・怪電波マシーン・途中停止
+    problems.extend(v129_problems(state))  # v0.129: カツラのクイズ その1
     return problems
 
 
@@ -10196,6 +10203,73 @@ def _v127_final_heads(window: list[dict]) -> int | None:
         elif e["kind"] == "esp_redo_declined" and e.get("original"):
             heads = len(e["original"]) - 1
     return heads
+
+
+V129_QUIZ = ("GD5-016",)
+
+
+def v129_problems(state) -> list[str]:
+    """v0.129（docs/blaines-quiz-heights-v0.129.md 7 章）: カツラのクイズ その1を、ログから組み立てて照らす（エンジンの不変条件とは別に、ログと身長の参照値の写しだけから）。
+
+    - 使ってからトラッシュするまでの並びが、置く（``quiz_card_set``。置いたカードは使ったプレイヤーだけが見る）→ 名前（``quiz_name_hint``。置いたカードの印刷の名前だけ）→ 答え
+      （``quiz_height_answer``。相手プレイヤーの 1 以上の整数 cm）→ 表にする（``quiz_height_reveal``）→ 引く（正解なら相手プレイヤー、正解でないなら使ったプレイヤー。山札の
+      残りが足りなければ引けるだけ。2 枚まで）→ 手札にもどす（``set_aside_returned``。全員に見せる）→ トラッシュ。答えの前に、置いたカードの id・図鑑番号・身長のログがない
+    - 正解は、答えの cm と、置いたカードの全国図鑑番号（ちょうど 1 つ）の参照値が同じこと。表にしたログの図鑑番号・身長・名前が置いたカードのもの"""
+    heights = load_species_heights().by_dex
+    log = list(state.log)
+    problems: list[str] = []
+    for i, e in enumerate(log):
+        if e["kind"] != "play_trainer" or state.cards[e["card"]].card_id not in V129_QUIZ:
+            continue
+        window = []
+        for later in log[i + 1:]:
+            window.append(later)
+            if later["kind"] in ("discard_trainer", "halted", "game_end") or (later["kind"] == "play_trainer" and later["card"] != e["card"]):
+                break
+        # 錯乱ジム（v0.57）: 使う前のスタジアムのコイン・問いの答え。相手が借りて使えば、借りたプレイヤーが「あなた」（使ったプレイヤー）
+        lead = 0
+        while lead < len(window) and (window[lead]["kind"] in ("chaos_check", "chaos_answered")
+                                      or (window[lead]["kind"] == "coin_flip" and window[lead].get("source") == "stadium")):
+            lead += 1
+        borrowed = [w for w in window[:lead] if w["kind"] == "chaos_answered" and w.get("accepted")]
+        user = borrowed[-1]["player"] if borrowed else e["player"]
+        window = window[lead:]
+        kinds = [w["kind"] for w in window]
+        if not window or window[-1]["kind"] != "discard_trainer" or window[-1].get("card") != e["card"]:
+            waiting = state.trainer_in_use is not None and state.trainer_in_use.card == e["card"]
+            if waiting and kinds in ([], ["quiz_card_set", "quiz_name_hint"]):
+                continue  # 置くカード・答えを待っている（使い終えていない）
+            problems.append(f"{e['turn']} 番のカツラのクイズ その1 の使用が、トラッシュで終わっていない {kinds}")
+            continue
+        expected = ["quiz_card_set", "quiz_name_hint", "quiz_height_answer", "quiz_height_reveal"]
+        if kinds[:4] != expected or kinds[-2:] != ["set_aside_returned", "discard_trainer"] or any(k != "draw" for k in kinds[4:-2]) or len(kinds) > 7:
+            problems.append(f"{e['turn']} 番のカツラのクイズ その1 の並び {kinds} が、置く → 名前 → 答え → 表にする → 引く → もどす → トラッシュではない")
+            continue
+        placed, hint, answer, reveal = window[:4]
+        draws = window[4:-2]
+        returned = window[-2]
+        definition = state.printed_def(placed["card"])
+        dex = definition.dex
+        height = heights.get(dex[0]) if len(dex) == 1 else None
+        if placed["player"] != user or definition.category != "pokemon" or height is None:
+            problems.append(f"{e['turn']} 番に置いたカード {placed['card']} が、使ったプレイヤーの、参照値のある「ポケモン」のカードではない")
+            continue
+        if set(hint) != {"kind", "turn", "player", "name", "trainer_card"} or hint["name"] != definition.name_ja or hint["player"] != user:
+            problems.append(f"{e['turn']} 番に伝えた名前 {hint.get('name')!r} が、置いたカードの名前だけではない")
+        value = answer.get("answer_cm")
+        if answer["player"] != 1 - user or type(value) is not int or value < 1 or set(answer) != {"kind", "turn", "player", "answer_cm", "trainer_card"}:
+            problems.append(f"{e['turn']} 番の身長の答え {answer!r} が、相手プレイヤーの 1 以上の整数 cm ではない")
+            continue
+        correct = value == height.height_cm
+        if (reveal["player"], reveal["card"], reveal["card_id"], reveal["name"], reveal["dex"], reveal["height_cm"], reveal["correct"]) != (
+                user, placed["card"], state.cards[placed["card"]].card_id, definition.name_ja, height.dex, height.height_cm, correct):
+            problems.append(f"{e['turn']} 番に表にしたカード・正解 {dict(reveal)!r} が、置いたカード・答え・参照値と合わない")
+        drawer = 1 - user if correct else user
+        if any(d["player"] != drawer for d in draws) or sum(len(d["cards"]) for d in draws) > 2 or len(draws) > 1:
+            problems.append(f"{e['turn']} 番のクイズで引いた {[(d['player'], len(d['cards'])) for d in draws]} が、{'正解' if correct else '正解でない'}のときのプレイヤー {drawer} の 2 枚までではない")
+        if tuple(returned["cards"]) != (placed["card"],) or returned["player"] != user or "cards" not in returned.get("face_up", ()):
+            problems.append(f"{e['turn']} 番に手札にもどしたカード {returned['cards']} が、表にした置いたカードではない")
+    return problems
 
 
 def v127_problems(state) -> list[str]:
@@ -10606,7 +10680,14 @@ def observation_problems(state) -> list[str]:
                                       "split_from_deck",  # v0.88: v0.87 の［ぶんれつ］（観測の HIDDEN_COUNT_KINDS にあり、監査の一覧から漏れていた）
                                       # v0.120: たまごの化石の手札・山札の選択（手札に出せるカードがあるかを漏らす）と、手札・山札から出すカード
                                       "revive_source", "bench_from_deck_or_hand")
-            if viewer != d.player and ("options" in dv or (dv != {"kind": d.kind, "player": d.player} if hidden_count else dv.get("option_count") != len(d.options))):
+            bounds = d.context_value("value_range")
+            if bounds is not None:
+                # v0.129: 値で答える決定（カツラのクイズ その1の身長）。どの見る人にも、種類・決める人・選ぶ数・範囲（単位 cm）・伝えた名前だけ（選べるもの・置いたカード・正解の値はない）
+                expected = {"kind": d.kind, "player": d.player, "min_choices": 1, "max_choices": 1, "value_range": {"min": bounds[0], "max": bounds[1], "unit": "cm"},
+                            "name": d.context_value("name"), **({"meaning": "value"} if viewer == d.player else {})}
+                if d.kind != "quiz_height_answer" or dv != expected:
+                    problems.append(f"観測（{viewer}）の値で答える決定 {dv!r} が、範囲と伝えた名前だけではない")
+            elif viewer != d.player and ("options" in dv or (dv != {"kind": d.kind, "player": d.player} if hidden_count else dv.get("option_count") != len(d.options))):
                 problems.append(f"観測（{viewer}）に、ほかのプレイヤー {d.player} の決定の選べるもの（の数）がある")
             if viewer == d.player and OPTION_MEANINGS[d.kind] == "card":
                 for option in dv["options"]:

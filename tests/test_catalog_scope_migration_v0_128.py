@@ -20,6 +20,7 @@ from kyuura_engine.engine import new_game
 from kyuura_engine.errors import DeckValidationError
 from scripts import check_card_sources as cs
 from tests import helpers as HP
+from tests.release_catalog import cards_after
 from tests.test_baby_rules_evolution_v0_114 import extract_module
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -75,7 +76,8 @@ class MigrationChainTest(unittest.TestCase):
         self.assertEqual(len(sources["data_migrations"]), 9)
         self.assertEqual(cs.data_migrations(sources, read_extract())[1], [])
         # 移行の段では採用し直していない（採用したときのデータのコミットが 71d1728 の記録はない）
-        self.assertFalse({card for card, record in sources["cards"].items() if record.get("kyuura_commit") == NOW})
+        # v0.129: 写しの元を変えずに pool_v0_129 のカツラのクイズ その1を 71d1728 で採用した（tests/test_blaines_quiz_heights_v0_129.py）
+        self.assertEqual({card for card, record in sources["cards"].items() if record.get("kyuura_commit") == NOW}, cards_after(read_extract(), "0.128"))
         # 対象外の 3 件は登録しておらず、採用の記録もない
         self.assertFalse(set(EXCLUDED) & set(sources["cards"]))
 
@@ -88,12 +90,15 @@ class MigrationChainTest(unittest.TestCase):
         """基点の写しのカード（1,368 枚）は全欄が同じ。変わったのは写しの元の記録・移行の段・利用者の訂正の写しの元のコミットと、新しい catalog_scope だけ。"""
         before = engine_json(BASE_ENGINE, "kyuura_engine/data/kyuura_cards.json")
         after = read_extract()
-        self.assertEqual(before["cards"], after["cards"])
-        self.assertEqual(len(after["cards"]), 1368)
+        # v0.129: 後の版で写しに加えたカード（pool_v0_129）は除いて比べる
+        later = cards_after(after, "0.128")
+        self.assertEqual(before["cards"], [card for card in after["cards"] if card["id"] not in later])
+        self.assertEqual(len(after["cards"]) - len(later), 1368)
         # v0.129: エンジンが処理に使う欄の一覧に pokemon.dex を加えた（docs/blaines-quiz-heights-v0.129.md 2 章。カードの写す欄・値は変えていない）
         self.assertEqual(after["fields_used_by_engine"], before["fields_used_by_engine"] + ["pokemon.dex"])
         self.assertEqual(sorted(key for key in set(before) | set(after) if before.get(key) != after.get(key)),
-                         ["catalog_scope", "engine_user_corrections", "fields_used_by_engine", "source", "source_migrations"])
+                         # v0.129: cards（pool_v0_129 の 1 枚を加えた）と pool_v0_129 も変わる
+                         ["cards", "catalog_scope", "engine_user_corrections", "fields_used_by_engine", "pool_v0_129", "source", "source_migrations"])
         self.assertEqual(before["source_migrations"], after["source_migrations"][:-1])
         self.assertEqual(after["fields_copied"], before["fields_copied"])  # 分類の 3 つの欄はカードの写す欄に加えていない
         self.assertFalse(set(SCOPE_FIELDS) & set(after["fields_copied"] + after["fields_copied_when_present"]))
@@ -164,7 +169,8 @@ class CatalogScopeTest(unittest.TestCase):
 class CountTest(unittest.TestCase):
     def test_supported_count_is_unchanged(self):
         pool = load_card_pool()
-        self.assertEqual(len(pool.playable_ids), 1368)
+        # v0.129: 後の版で加えたカード（pool_v0_129）を外すと 1,368 枚
+        self.assertEqual(len(pool.playable_ids - cards_after(read_extract(), "0.128")), 1368)
         self.assertFalse(set(EXCLUDED) & set(pool.definitions))
         self.assertNotIn("PR1-015", pool.definitions)  # 目録だけの行（non_game_items）は写しにない
 

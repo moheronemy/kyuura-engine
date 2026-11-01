@@ -75,6 +75,7 @@ def ids(pokemons):
 V0_121_TRAINERS = ("neo3-053", "PR1-073")
 V0_126_TRAINERS = ("ES2-035",)  # v0.126: フラッシュ（docs/flash-faceup-deck-v0.126.md）
 V0_127_TRAINERS = ("neo4-108",)  # v0.127: 怪電波マシーン（docs/deferred-shortage-user-promos-v0.127.md）
+V0_129_TRAINERS = ("GD5-016",)  # v0.129: カツラのクイズ その1（docs/blaines-quiz-heights-v0.129.md）
 
 class RejectsMixin:
     def assert_rejected(self, state, command, code, error=IllegalActionError):
@@ -104,7 +105,7 @@ class TrainerRegistryTest(unittest.TestCase):
                           ROCKETS_SNEAK_ATTACK, ENERGY_FLOW, MISTYS_TEARS, RECALL, ERIKAS_MAIDS, ERIKAS_PERFUME, MISTYS_WRATH, BROCK_TRAINING, LT_SURGES_TREATY, GOOD_MANNERS, ERIKA,
                           ERIKAS_KINDNESS, MISTY_TRAINER, MISTYS_WISH, SECRET_MISSION, BROCK_TRAINER, LT_SURGE_TRAINER, ROCKETS_TRAP, BLAINES_GAMBLE, TRASH_EXCHANGE, SABRINAS_GAZE, INVISIBLE_WALL, WARP_POINT,
                           BLAINES_LAST_RESORT, ROCKET_GRUNT, ROCKETS_EXPERIMENT, KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, SABRINAS_PSYCHIC_CONTROL,
-                          BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK, DIGGER) + V0_63_CARDS + V0_66_CARDS + V0_67_CARDS + V0_69_TRAINERS + V0_71_TRAINERS + V0_73_CARDS + V0_74_CARDS + V0_77_TRAINERS + V0_80_CARDS + V0_81_CARDS + (ECOGYM, BREEDER_COUPLE) + V0_96_TRAINERS + (FOSSIL_EGG,) + V0_121_TRAINERS + V0_126_TRAINERS + V0_127_TRAINERS)))  # v0.121: ボロのつりざお・カスミのてあて。v0.84: ポケモン育て屋夫婦。  # v0.82: エコロジム。v0.81: トレーナー 15 枚（ポケモンのどうぐ 11 枚・ピントレンズ・スタジアム 3 枚）。v0.80: トレーナー 30 枚。v0.77: neo1 のスーパーポケモン回収・マサキの転送装置。v0.74: スタジアム 13 枚。v0.73: 検索・回収・ドローのトレーナー 18 枚。v0.71: 再録のトレーナー 67 枚。v0.69: 新しい id 19 枚。v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス、v0.61 でバトル場は穴だらけ!、v0.63 で 4 枚
+                          BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK, DIGGER) + V0_63_CARDS + V0_66_CARDS + V0_67_CARDS + V0_69_TRAINERS + V0_71_TRAINERS + V0_73_CARDS + V0_74_CARDS + V0_77_TRAINERS + V0_80_CARDS + V0_81_CARDS + (ECOGYM, BREEDER_COUPLE) + V0_96_TRAINERS + (FOSSIL_EGG,) + V0_121_TRAINERS + V0_126_TRAINERS + V0_127_TRAINERS + V0_129_TRAINERS)))  # v0.121: ボロのつりざお・カスミのてあて。v0.84: ポケモン育て屋夫婦。  # v0.82: エコロジム。v0.81: トレーナー 15 枚（ポケモンのどうぐ 11 枚・ピントレンズ・スタジアム 3 枚）。v0.80: トレーナー 30 枚。v0.77: neo1 のスーパーポケモン回収・マサキの転送装置。v0.74: スタジアム 13 枚。v0.73: 検索・回収・ドローのトレーナー 18 枚。v0.71: 再録のトレーナー 67 枚。v0.69: 新しい id 19 枚。v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス、v0.61 でバトル場は穴だらけ!、v0.63 で 4 枚
         # v0.2f・v0.3a・v0.3b・v0.3c・v0.4a・v0.4b・v0.4c・v0.4d はワザ（ピカチュウ・ビードル・キャタピーとパラス・ロコン・
         # パラセクトとジュゴン・トランセルとコクーン・スピアー・バタフリー）を加えた。v0.5 はワザとポケモンパワー（フシギダネ・
         # フシギソウ・フシギバナ）を加えた。v0.6 はワザとポケモンパワー（ゼニガメ・カメール・カメックス）を加えた。v0.7 はワザと
@@ -183,7 +184,8 @@ class TrainerRegistryTest(unittest.TestCase):
                                        "fossil_egg_revive",  # v0.120 のたまごの化石
                                    "coins_take_pokemon_or_trainer_from_discard", "heal_named_pokemon_up_to",  # v0.121 のボロのつりざお・カスミのてあて
                                "flash_trainer",  # v0.126 のフラッシュ
-                           "coins_until_tails_return_opponent_active_energy_then_end_turn"})  # v0.127 の怪電波マシーン
+                           "coins_until_tails_return_opponent_active_energy_then_end_turn",  # v0.127 の怪電波マシーン
+                           "blaines_height_quiz"})  # v0.129 のカツラのクイズ その1
 
     def test_registered_trainers_are_playable_and_match_the_data(self):
         pool = load_card_pool()
@@ -271,7 +273,7 @@ class TrainerRegistryTest(unittest.TestCase):
                           ROCKETS_SNEAK_ATTACK, ENERGY_FLOW, MISTYS_TEARS, RECALL, ERIKAS_MAIDS, ERIKAS_PERFUME, MISTYS_WRATH, BROCK_TRAINING, LT_SURGES_TREATY, GOOD_MANNERS, ERIKA,
                           ERIKAS_KINDNESS, MISTY_TRAINER, MISTYS_WISH, SECRET_MISSION, BROCK_TRAINER, LT_SURGE_TRAINER, ROCKETS_TRAP, BLAINES_GAMBLE, TRASH_EXCHANGE, SABRINAS_GAZE, INVISIBLE_WALL, WARP_POINT,
                           BLAINES_LAST_RESORT, ROCKET_GRUNT, ROCKETS_EXPERIMENT, KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, SABRINAS_PSYCHIC_CONTROL,
-                          BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK, DIGGER) + V0_63_CARDS + V0_66_CARDS + V0_67_CARDS + V0_69_TRAINERS + V0_71_TRAINERS + V0_73_CARDS + V0_74_CARDS + V0_77_TRAINERS + V0_80_CARDS + V0_81_CARDS + (ECOGYM, BREEDER_COUPLE) + V0_96_TRAINERS + (FOSSIL_EGG,) + V0_121_TRAINERS + V0_126_TRAINERS + V0_127_TRAINERS)))  # v0.121: ボロのつりざお・カスミのてあて。v0.84: ポケモン育て屋夫婦。  # v0.82: エコロジム。v0.81: トレーナー 15 枚（ポケモンのどうぐ 11 枚・ピントレンズ・スタジアム 3 枚）。v0.80: トレーナー 30 枚。v0.77: neo1 のスーパーポケモン回収・マサキの転送装置。v0.74: スタジアム 13 枚。v0.73: 検索・回収・ドローのトレーナー 18 枚。v0.71: 再録のトレーナー 67 枚。v0.69: 新しい id 19 枚。v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス、v0.61 でバトル場は穴だらけ!、v0.63 で 4 枚
+                          BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK, DIGGER) + V0_63_CARDS + V0_66_CARDS + V0_67_CARDS + V0_69_TRAINERS + V0_71_TRAINERS + V0_73_CARDS + V0_74_CARDS + V0_77_TRAINERS + V0_80_CARDS + V0_81_CARDS + (ECOGYM, BREEDER_COUPLE) + V0_96_TRAINERS + (FOSSIL_EGG,) + V0_121_TRAINERS + V0_126_TRAINERS + V0_127_TRAINERS + V0_129_TRAINERS)))  # v0.121: ボロのつりざお・カスミのてあて。v0.84: ポケモン育て屋夫婦。  # v0.82: エコロジム。v0.81: トレーナー 15 枚（ポケモンのどうぐ 11 枚・ピントレンズ・スタジアム 3 枚）。v0.80: トレーナー 30 枚。v0.77: neo1 のスーパーポケモン回収・マサキの転送装置。v0.74: スタジアム 13 枚。v0.73: 検索・回収・ドローのトレーナー 18 枚。v0.71: 再録のトレーナー 67 枚。v0.69: 新しい id 19 枚。v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス、v0.61 でバトル場は穴だらけ!、v0.63 で 4 枚
         self.assertEqual(removed.attack_keys(), attacks)
         self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), trainers)  # 元は変わらない
         self.assertEqual(DEFAULT_EFFECTS.attack_keys(), attacks)
