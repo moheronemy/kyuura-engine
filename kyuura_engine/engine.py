@@ -71,6 +71,7 @@ from .decisions import (
     SELECT_POKEMON,
     STADIUM_RETURN_BENCH,
     USE_DISCARD_TRAINER,
+    push_decision,  # v0.132: ［ちえくらべ］を使うかの決定（再開先 "trainer"。［でんせつのからだ］の止める選択を加えない）
     push_trainer_decision,
     DAMAGE_STEP_ORDER,
     DAMAGE_REDUCTION,
@@ -162,6 +163,10 @@ from .effects import (
     play_as_pokemon_effect,
     play_as_pokemon_in_hand,
     trainer_use_blockers,
+    MIND_GAMES_CHAOS_GYM_CODE,
+    MIND_GAMES_CHAOS_GYM_REASON,
+    trainer_reaction_sources,
+    trainer_reaction_use_stop,
     TrainerCoinStadium,
     BenchLimitStadium,
     CoinReturnOwnerPokemonStadium,
@@ -306,7 +311,8 @@ from .state import (
     EvolutionLock,
     StatusOnEnergyAttach,
 )
-from .zones import DISGUISE_REVERT, attach_energy_from_hand, designate_face_down, discard_from_play, draw_cards, enter_play, place_stadium, remove_disguise, reveal_face_down, shuffle_deck
+from .zones import (DISGUISE_REVERT, attach_energy_from_hand, blocked_trainer_to_deck_top, designate_face_down, discard_from_play, draw_cards, enter_play, place_stadium,
+                    remove_disguise, reveal_face_down, shuffle_deck)
 from . import zones as _zones
 from . import faceup  # v0.126: おもての山札（フラッシュ）
 from .interruption import DeferredShortage, interrupt, interruption_problems  # v0.127: 途中停止
@@ -884,7 +890,14 @@ def _apply_once(state: GameState, command, context: resolution.Context | None, *
         # 残りHPが「10」で力がはたらく［ずらかる］が残っていれば、決まった時点で確かめていない経路（エンジンの不具合）。ワザの途中の決定を待つ間は、決定のあとの時点で確かめる
         if not (new.decision is not None and new.decision.resume == "attack") and scram_unsettled(new):
             raise RuntimeError(f"残りHPが「10」で［ずらかる］の力がはたらくポケモン {scram_unsettled(new)} が残っている（確かめる時点がない経路。エンジンの不具合）")
-    if (new.trainer_in_use is not None and new.decision is not None and isinstance(command, (PlayTrainer, ResolveDecision))
+    if (isinstance(command, PlayTrainer) and new.decision is not None and new.decision.context_value(TRAINER_REACTION) is not None
+            and new.phase not in (Phase.HALTED, Phase.GAME_OVER)):
+        # v0.132（docs/slowking-mind-games-v0.132.md 5 章）: 相手の［ちえくらべ］を使うかの決定を出したら、使わない答え（「うら」の続きと同じトレーナーの処理）を複製の上で最後まで
+        # 確かめる。受け付けられなければ（既存の未解決・未対応の先読み・答えの続きのない決定）、手札から出す前の状態で、このコマンドを受け付けない（見せたあと・コインのあとに通常の
+        # 拒否へ変えない。「おもて」なら起こらない処理でも、使わない・「うら」の枝のために止める）
+        _trainer_reaction_decline_check(new, ctx)
+    elif (new.trainer_in_use is not None and new.decision is not None and isinstance(command, (PlayTrainer, ResolveDecision))
+            and new.decision.context_value(TRAINER_REACTION) is None
             and (new.effects.trainer_entry(new.cards[new.trainer_in_use.card].card_id).effect.changes_field or legend_body_holders(new))):
         # v0.49（docs 7 章）: トレーナーの効果の途中の決定（入れ替える・進化させるトレーナーなど）で、どの答えの続きも受け付けられない状態（決められない姿・MH1）
         # になるなら、このコマンド（使う・前の段階の答え）を受け付けない。答えのない決定を、使用中のトレーナーを残したまま止めない
@@ -1080,6 +1093,16 @@ def _decision_has_unstopped_answer(state: GameState, context: resolution.Context
         except HiddenPropertyRead:
             continue  # v0.67: うらのカードの決まらない項目を読む答え（FD1）は、受け付けられない答え
     return False
+
+
+def _trainer_reaction_decline_check(state: GameState, context: resolution.Context) -> None:
+    """v0.132: ``state`` で待っている［ちえくらべ］を使うかの決定に、使わない（0 個）と答えた続きを複製の上で処理し（コマンドの終わりの確かめ・トレーナーの効果の途中の決定の答えの続きの
+    確かめを含む）、受け付けられなければその拒否（``UnsupportedError``）をそのまま上げる。使える確かめのあとなので ``IllegalActionError`` はエンジンの不具合。状態を変えない。"""
+    decision = state.decision
+    try:
+        _apply_once(state, ResolveDecision(decision.player, decision.id, ()), context)
+    except IllegalActionError as error:
+        raise RuntimeError(f"使えるとした手札のトレーナーで、［ちえくらべ］を使わない続きが受け付けられない（{error.code}。エンジンの不具合）") from error
 
 
 def _trainer_dead_end(before: GameState, after: GameState, context: resolution.Context | None) -> tuple[str, str] | None:
@@ -1791,6 +1814,10 @@ def _play_trainer(state: GameState, cmd: PlayTrainer, context: resolution.Contex
       あと・手札から出す前）。手札から出したあと、カードの効果の前に 2 枚をトラッシュする（決定 ``DISCARD_FROM_HAND``。続きの情報の ``stadium_cost``）
     - 場の錯乱ジムがあれば、スタジアムカード以外のトレーナーを手札から出したあと（手順 1・2）、使うための条件を払う前に、使ったプレイヤーがコインを投げる。「うら」なら
       使えず、相手プレイヤーがかわりに使えるか聞く（``_chaos_tails``）
+
+    v0.132（docs/slowking-mind-games-v0.132.md 5 章）: 相手の場に、手札から使うトレーナーに反応する特殊能力（［ちえくらべ］。``effects.trainer_reaction_sources``）がはたらいていれば、
+    状態を変えない確かめ（上のすべて）を通って手札から出し、見せて名前を伝えたあと（スタジアムを出す・錯乱ジム・使うための条件・効果の前）に、持ち主が使うかを選ぶ（``_offer_trainer_reaction``。
+    利用者が指定した規則）。場に錯乱ジムがあり、スタジアムカード以外なら、2 つのコインの前後が決まらないので手札から出す前に止める（MG1）
     """
     p = _require_turn(state, cmd.player)
     _require_in_hand(state, cmd.player, cmd.card)
@@ -1823,14 +1850,63 @@ def _play_trainer(state: GameState, cmd: PlayTrainer, context: resolution.Contex
                 f"場の「{state.card_def(extra_cost[0].card).name_ja}」があるので、「{definition.name_ja}」を使うには、このカードを除く手札から {needed} 枚をトラッシュする"
                 f"（手札はこのカードを除いて {len(p.hand) - 1} 枚）")
 
+    reaction = trainer_reaction_sources(state, cmd.player)
+    if reaction and not effect.is_stadium and stadium_of(state, TrainerCoinStadium) is not None:
+        owner, holder, _, _ = reaction[0]
+        raise UnsupportedError(MIND_GAMES_CHAOS_GYM_CODE, f"トレーナー {definition.id}・相手 {owner} のポケモン {holder.pokemon_id}・場の錯乱ジム: {MIND_GAMES_CHAOS_GYM_REASON}")
+
     # 1・2. 手札から出して相手プレイヤーに見えるようにし、名前を伝える（p.310）
     p.hand.remove(cmd.card)
     state.trainer_in_use = TrainerInUse(cmd.player, cmd.card)
     state.add_event("play_trainer", player=cmd.player, card=cmd.card, trainer=definition.name_ja)
+    if reaction:
+        _offer_trainer_reaction(state, use, effect, reaction[0])
+        return
+    _continue_trainer_use(state, use, effect, context)
+
+
+def _continue_trainer_use(state: GameState, use: TrainerUse, effect, context: resolution.Context) -> None:
+    """手札から出して見せたあとの続き（v0.132 で ``_play_trainer`` から分けた。動きは同じ）: スタジアムカードなら場に出し、ほかは錯乱ジム・リムーブ禁止ジム・効果の段階へ。"""
     if effect.is_stadium:
-        _play_stadium(state, cmd.player, cmd.card, effect)
+        _play_stadium(state, use.player, use.card, effect)
         return
     _start_trainer_use(state, use, effect, context)
+
+
+TRAINER_REACTION = "trainer_reaction"  # v0.132: 決定の続きの情報の、手札から使うトレーナーへの反応の特殊能力（``PowerKey`` の文字列）
+
+
+def _offer_trainer_reaction(state: GameState, use: TrainerUse, effect, reaction) -> None:
+    """v0.132（docs/slowking-mind-games-v0.132.md 5 章）: 手札から出して見せたトレーナー（使うための条件・効果の前）への、相手の［ちえくらべ］を使うかの決定（``REACTION_POWER``。
+    決めるのは特殊能力の持ち主。選べるものはそのポケモンの番号 1 つ。0 個 = 使わない、1 個 = 使う。再開先 ``"trainer"``・続きの情報 ``trainer_reaction``）。「使う」と答えると止める場面
+    （MG2・MG3・FU4）は、選ぶと止める選択にする（使わない答えはいつも受け付ける）。決定を待つ間、カードは使用中の場所にあり、条件はまだ払っていない。"""
+    owner, holder, key, _ = reaction
+    stop = trainer_reaction_use_stop(state, use, effect)
+    entries = [("use", (use.player, use.card, use.card_id)), (TRAINER_REACTION, str(key))]
+    if stop is not None:
+        entries += [("unresolved_choices", (holder.pokemon_id,)), ("unresolved_code", stop[0]), ("unresolved_reason", stop[1])]
+    push_decision(state, kind=reactions.REACTION_POWER, player=owner, options=(holder.pokemon_id,), resume="trainer", context=tuple(entries), min_choices=0, max_choices=1)
+
+
+def _resume_trainer_reaction(state: GameState, decision, choices: tuple[int, ...], effect, use: TrainerUse, context: resolution.Context) -> None:
+    """v0.132: ［ちえくらべ］を使うかの答えの続き。使うなら持ち主がコインを 1 回投げ（特殊能力のコイン）、「おもて」ならカードを使ったプレイヤーの山札の上に置いて番にもどる（使うための
+    条件・効果は処理しない）。「うら」・使わないなら、手札から出したあとの通常の続き（``_continue_trainer_use``）。ログ ``trainer_reaction_answered``・``coin_flip``・``trainer_reaction_check``・
+    ``trainer_blocked``。"""
+    owner = decision.player
+    pokemon_id = decision.options[0]
+    key = decision.context_value(TRAINER_REACTION)
+    used = bool(choices)
+    state.add_event("trainer_reaction_answered", player=owner, pokemon_id=pokemon_id, power=key, card=use.card, trainer_player=use.player, used=used)
+    if used:
+        holder = state.find_pokemon(pokemon_id)[1]
+        heads = flip_coins(state, owner, 1, source="power", effect=key, card=holder.card, pokemon_id=pokemon_id).results[0] is CoinSide.HEADS
+        state.add_event("trainer_reaction_check", player=owner, pokemon_id=pokemon_id, power=key, card=use.card, trainer_player=use.player,
+                        result="heads" if heads else "tails")
+        if heads:
+            blocked_trainer_to_deck_top(state, use.player, use.card, by_player=owner, pokemon_id=pokemon_id, power=key)
+            state.phase = Phase.MAIN
+            return
+    _continue_trainer_use(state, use, effect, context)
 
 
 def _start_trainer_use(state: GameState, use: TrainerUse, effect, context: resolution.Context) -> None:
@@ -1956,6 +2032,11 @@ def _chaos_tails(state: GameState, use: TrainerUse, effect, stadium, context: re
     problem = effect.borrow_problem(state, borrowed)
     if problem is not None and not unresolved:
         unresolved = {"unresolved_choices": (1,), "unresolved_code": problem[0], "unresolved_reason": problem[1]}
+    if trainer_reaction_sources(state, borrower) and not unresolved:
+        # v0.132（MG1）: かわりに使うプレイヤーの相手（このカードを使えなかったプレイヤー）の場に［ちえくらべ］がはたらいている。かわりに使うことが「手札から出して使う」に当たるかは
+        # 決まらないので、使うことを選ぶと止める（使わない答えは受け付ける）
+        unresolved = {"unresolved_choices": (1,), "unresolved_code": MIND_GAMES_CHAOS_GYM_CODE,
+                      "unresolved_reason": f"トレーナー {use.card_id}（錯乱ジムでかわりに使う）: {MIND_GAMES_CHAOS_GYM_REASON}"}
     push_trainer_decision(state, use, kind=ACCEPT_REQUEST, player=borrower, options=(1,), min_choices=0, max_choices=1,
                           context=(("chaos", stadium.card),), **unresolved)
 
@@ -2048,6 +2129,10 @@ def _resume_trainer(state: GameState, decision, choices: tuple[int, ...], contex
     player, card, card_id = decision.context_value("use")
     entry = state.effects.trainer_entry(card_id)
     use = TrainerUse(player, card, card_id)
+    if decision.context_value(TRAINER_REACTION) is not None:
+        # v0.132: 相手の［ちえくらべ］を使うか（カードの効果の前の段階）
+        _resume_trainer_reaction(state, decision, choices, entry.effect, use, context)
+        return
     if decision.context_value("chaos") is not None:
         # 錯乱ジム: 相手プレイヤーがかわりに使うか（選ばない = 使わない）
         borrower = decision.player
@@ -2475,7 +2560,7 @@ def _answer_decision_once(state: GameState, cmd, context: resolution.Context) ->
     if decision.resume != "trainer":
         raise RuntimeError(f"決定の再開先 {decision.resume!r} を続ける処理がない（不変条件で拒否するはず。エンジンの不具合）")
     state.decision = None
-    if decision.context_value("chaos") is None and decision.context_value("stadium_cost") is None:
+    if decision.context_value("chaos") is None and decision.context_value("stadium_cost") is None and decision.context_value(TRAINER_REACTION) is None:
         entry = state.effects.trainer_entry(decision.context_value("use")[2])
         if _designate_answer(state, decision, choices, entry.effect):
             # v0.67: 指定したうらのカードをおもてにしたら「たねポケモン」でなくトラッシュした。対象がいないので効果は終わる（入れ替えのトレーナー）
@@ -6326,6 +6411,27 @@ def _trainer_problems(state: GameState) -> list[str]:
         problems.append(f"トレーナーの決定の続きの情報 {use!r} が正しくない")
         return problems
     player, card, card_id = use
+    if d.context_value(TRAINER_REACTION) is not None:
+        # v0.132: 相手の［ちえくらべ］を使うかの決定（手札から出して見せたあと・スタジアムの段階と効果の前）。使用中のカードは手札から出したもの（外側・借りた使用ではない）で、
+        # 決めるのは今その力がはたらいている相手のポケモンの持ち主（選べるものはそのポケモン 1 つ。0〜1 個）。使うと止める選択は、今の状態から求めた理由と同じ
+        sources = trainer_reaction_sources(state, used.player)
+        if (player, card) != (used.player, used.card) or used.via is not None or used.user is not None or state.trainer_stack:
+            problems.append(f"［ちえくらべ］の決定の続きの情報 {use!r} が、手札から使っている最中のトレーナー {used} と違う")
+        if card in state.cards and state.cards[card].card_id != card_id:
+            problems.append(f"［ちえくらべ］の決定の続きのカード id {card_id} が、カード {card} と違う")
+        if not sources:
+            problems.append("［ちえくらべ］の決定を待っているのに、相手の場にはたらく［ちえくらべ］がない")
+            return problems
+        owner, holder, key, _ = sources[0]
+        if (d.kind, d.player, d.options, d.min_choices, d.max_choices) != (reactions.REACTION_POWER, owner, (holder.pokemon_id,), 0, 1) \
+                or d.context_value(TRAINER_REACTION) != str(key):
+            problems.append(f"［ちえくらべ］の決定 {d.kind} {d.player} {d.options} が、はたらいている力（持ち主 {owner}・ポケモン {holder.pokemon_id}・{key}）の 0〜1 個ではない")
+        entry = state.effects.trainer_entry(card_id)
+        stop = None if entry is None else trainer_reaction_use_stop(state, TrainerUse(player, card, card_id), entry.effect)
+        if tuple(d.context_value("unresolved_choices", ())) != (() if stop is None else (holder.pokemon_id,)) \
+                or (stop is not None and d.context_value("unresolved_code") != stop[0]):
+            problems.append(f"［ちえくらべ］の使うと止める選択 {d.context_value('unresolved_choices', ())} が、今の状態の理由 {stop and stop[0]} と合わない")
+        return problems
     stage = "chaos" if d.context_value("chaos") is not None else "stadium_cost" if d.context_value("stadium_cost") is not None else None
     if stage is not None:
         # v0.57: スタジアムがトレーナーの使用に加えた段階（錯乱ジムの問い・リムーブ禁止ジムの追加の条件）。続きの情報は持ち主の使用で、まだ借りていない

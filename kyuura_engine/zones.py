@@ -687,6 +687,22 @@ def put_discard_on_deck_top(state: GameState, owner: int, card: int, *, effect: 
     state.add_event("put_discard_on_deck_top", player=owner, card=card, **source, chooser=chooser)
 
 
+def blocked_trainer_to_deck_top(state: GameState, player: int, card: int, *, by_player: int, pokemon_id: int, power: str) -> None:
+    """手札から出して見せたが、相手の特殊能力（v0.132。ヤドキングの［ちえくらべ］の「おもて」）で使えなかったトレーナーカード ``card`` を、使用中の場所から同じ uid のまま
+    使ったプレイヤー ``player``（カードの持ち主）の山札の一番上に置く。山札は切らない（説明にない）。使うための条件・効果は処理していない（呼ぶ側が決定の前に止めた）。
+
+    カードは見せてあるので、ログ ``trainer_blocked`` の ``card`` は公開（``by_player`` は特殊能力の持ち主、``pokemon_id`` は特殊能力を持つ場のポケモン、``power`` は ``PowerKey`` の文字列、
+    ``destination`` は ``"deck_top"``）。使用中のカードでない・手札から出したのでない（外側のトレーナー・借りた使用）・持ち主が違うなら ``RuntimeError``（状態を変える前）。おもての
+    カードのある山札の上に置くことは FU4（呼ぶ側が選ぶと止める選択にしている。ここは念のため）。"""
+    if state.trainer_in_use != TrainerInUse(player, card) or state.trainer_stack or state.cards[card].owner != player:
+        raise RuntimeError(f"プレイヤー {player} が手札から使っている最中のカード {card} を山札の上に置けない（確認の漏れ。エンジンの不具合）")
+    faceup.require_no_face_up(state, player, faceup.FACE_UP_DECK_PLACE_TOP_CODE, f"プレイヤー {player} の山札の上に使えなかったトレーナーカードを置く")  # v0.126（FU4）
+    state.trainer_in_use = None
+    state.players[player].deck.insert(0, card)
+    state.add_event("trainer_blocked", player=player, card=card, card_id=state.cards[card].card_id, by_player=by_player, pokemon_id=pokemon_id, power=power,
+                    destination="deck_top")
+
+
 def return_discard_to_deck(state: GameState, player: int, cards: tuple[int, ...], *, trainer: int) -> tuple[int, ...]:
     """自分のトラッシュのカード ``cards`` を、相手に見せてから、同じ uid のままトラッシュの並びの順に自分の山札の一番下にもどす（v0.53。夜の廃品回収の「あなたの
     トラッシュから、…を最大3枚選び、相手プレイヤーに見せてから、山札にもどす。その後、その山札をよく切る。」）。山札は切らない（呼ぶ側。``shuffle_deck``）。

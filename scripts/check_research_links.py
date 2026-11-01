@@ -504,20 +504,34 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
         problems.append(f"user_specified_rules の一覧が、利用者が指定した規則の記録と違うか、簡略ルール・参照値の区分にも入っている: 対応表 {sorted(user_rules)}")
     for target, basis in user_rules.items():
         record = getattr(E, "USER_SPECIFIED_RULES", {}).get(target)
-        if basis != getattr(E, "USER_SPECIFIED_RULE_SOURCE", None) or record is None:
+        # v0.132: 出典は記録ごと（v0.130 の所有者の規則は USER_SPECIFIED_RULE_SOURCE、v0.132 の［ちえくらべ］の規則はその版の文書）
+        if record is None or basis != getattr(record, "source", getattr(E, "USER_SPECIFIED_RULE_SOURCE", None)):
             problems.append(f"{target}: user_specified_rules の根拠 {basis!r} が、利用者が指定した規則の出典・記録でない")
             continue
         card, _, kind = target.partition("/")
-        entry = registry_.trainer_entry(card) if kind == "trainer" else None
-        printed = (((research_cards.get(card) or {}).get("trainer") or {}).get("text") or {}).get("ja") if kind == "trainer" else None
-        latest = trainer_ld.get(card)
+        latest = None
+        if kind == "trainer":
+            entry = registry_.trainer_entry(card)
+            printed = (((research_cards.get(card) or {}).get("trainer") or {}).get("text") or {}).get("ja")
+            latest = trainer_ld.get(card)
+        elif kind.startswith("power/") and kind.split("/", 1)[1].isdigit():
+            # v0.132: 特殊能力の対象（``<カード id>/power/<位置>``）。kyuura の最新の説明があれば、規則より先に確かめる（文面の区分は登録のまま）
+            index = int(kind.split("/", 1)[1])
+            entry = registry_.power_entry(card, index)
+            powers = (((research_cards.get(card) or {}).get("pokemon") or {}).get("powers") or [])
+            printed = ((powers[index].get("text") or {}).get("ja")) if index < len(powers) else None
+            if f"{card}/power/{index}" in ld_by_target:
+                problems.append(f"{target}: kyuura に最新の説明の記録 {ld_by_target[f'{card}/power/{index}']} がある（利用者が指定した規則より先に確かめる）")
+        else:
+            entry, printed = None, None
         if entry is None or not (entry.text_ja == record.printed_text == printed and entry.play_text_ja == record.play_text):
             problems.append(f"{target}: 利用者が指定した規則の記録の文面が、研究の基準のコミットの印刷の文面・登録の処理に使う文面と同じではない")
         elif latest is not None and (entry.source != latest["id"] or entry.play_text_ja != (latest.get("latest_description") or {}).get("text_ja")):
             problems.append(f"{target}: 最新の説明 {latest['id']} があるのに、処理に使う文面がその文面ではない（規則は文面を書き換えない）")
-        issue = issues.get(record.kyuura_issue)
-        if issue is None or issue.get("status") != "UNRESOLVED":
-            problems.append(f"{target}: 解決済みにしない論点 {record.kyuura_issue} が、研究の基準のコミットで UNRESOLVED ではない")
+        for issue_id in getattr(record, "issues", (record.kyuura_issue,)):
+            issue = issues.get(issue_id)
+            if issue is None or issue.get("status") != "UNRESOLVED":
+                problems.append(f"{target}: 解決済みにしない論点 {issue_id} が、研究の基準のコミットで UNRESOLVED ではない")
 
     # 4f-4. v0.131（docs/exeggutor-bilingual-names-v0.131.md 3 章）: 利用者が指定した名前の扱い（ナッシー[Exeggutor] の英語の併記を翻訳の表示とし、名前・進化元・ワザ名の判定に日本語の部分を
     # 使う）。処理に使う文面の区分ではない（ワザの文面は adopted_printed_text の印刷の文面のまま）ので、文面の区分と別に挙げる。一覧は対象ごとの記録（effects.USER_SPECIFIED_NAMES）とちょうど同じで、
@@ -880,7 +894,7 @@ def unlinked_case_problems(links: dict, issues: dict, registry) -> list[str]:
 
             rule = getattr(E, "USER_SPECIFIED_RULES", {}).get(engine["user_specified_rule"])
             rule_card, _, rule_kind = str(engine["user_specified_rule"]).partition("/")
-            if rule is None or rule.kyuura_issue != case["kyuura_issue"] or rule_kind not in _registered_targets(registry, rule_card):
+            if rule is None or case["kyuura_issue"] not in getattr(rule, "issues", (rule.kyuura_issue,)) or rule_kind not in _registered_targets(registry, rule_card):
                 problems.append(f"{where}: 利用者が指定した規則 {engine['user_specified_rule']!r} が記録にない・論点が違う・規則の対象が登録されていない")
             if not registered:
                 problems.append(f"{where}: 利用者が指定した規則で処理するとしたカードの対象 {case['target']} が登録されていない（unregistered にする）")

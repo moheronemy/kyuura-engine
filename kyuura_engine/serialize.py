@@ -862,10 +862,11 @@ def _card_record(card, format_version: int) -> dict[str, Any]:
 def user_ownership_rule_targets(state: GameState) -> list[str]:
     """v0.130: この対戦のカードのうち、利用者が指定した所有者の簡略化（``effects.USER_SPECIFIED_RULES``）を当てはめる登録の対象（``<カード id>/trainer``。並べた順）。保存・再生の
     記録から、公式の裁定ではないエンジン固有の所有者の扱いで処理したことを識別するため（状態に項目を加えない）。"""
-    from .effects import USER_SPECIFIED_RULES
+    from .effects import USER_SPECIFIED_RULES, USER_SWAP_OWNERSHIP
 
     present = {instance.card_id for instance in state.cards.values()}
-    return sorted(key for key in USER_SPECIFIED_RULES if key.split("/", 1)[0] in present
+    # v0.132: 同じ記録の別の種類（［ちえくらべ］の使うかの選択と投げる時点）は所有者の簡略化ではないので挙げない（この項目の意味を変えない。形式も変えない）
+    return sorted(key for key, record in USER_SPECIFIED_RULES.items() if record.rule == USER_SWAP_OWNERSHIP and key.split("/", 1)[0] in present
                   and state.effects.trainer_entry(key.split("/", 1)[0]) is not None)
 
 

@@ -1697,6 +1697,9 @@
     "PR1-075",
     "PR1-077"
   ],
+  "pool_v0_132": [
+    "neo1-049"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -127557,6 +127560,115 @@
           "list_number": "-/-"
         }
       ]
+    },
+    {
+      "id": "neo1-049",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ヤドキング",
+        "en": "Slowking"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          199
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ヤドン",
+          "en": "Slowpoke"
+        },
+        "hp": 80,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ちえくらべ",
+              "en": "Mind Games"
+            },
+            "text": {
+              "ja": "この力は、このカードがバトル場にいるとき、使える。相手プレイヤーが「トレーナーカード」を手札から出して使うとき、このカードの持ち主は、コインを投げる。「おもて」なら、相手プレイヤーは、その「トレーナーカード」を使えず、その「トレーナーカード」を相手の山札の上におく。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。",
+              "en": "Whenever your opponent plays a Trainer card, you may flip a coin. If heads, that card does nothing. Put it on top of your opponent's deck. This power can't be used if Slowking is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "マッドインパクト",
+              "en": "Mind Blast"
+            },
+            "cost": [
+              "psychic",
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、10ダメージを追加して、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, this attack does 20 damage plus 10 more damage and the Defending Pokémon is now Confused. If tails, this attack does 20 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "text",
+          "summary": "ポケモンパワー ちえくらべ（Mind Games）の使える場所",
+          "ja": "「この力は、このカードがバトル場にいるとき、使える。」と、バトル場にいるときだけに限っている",
+          "en": "バトル場の条件がなく、ベンチからでも働き、複数枚で重ねがけできた。WotC は 2002年末に Modified で禁止",
+          "confidence": "確実",
+          "sources": [
+            "N1",
+            "N3",
+            "X3",
+            "X11",
+            "X15",
+            "X16"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-049",
+        "pokemontcg": [
+          "neo1-14"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-049-yadoking/",
+      "jp_print": {
+        "level": 39,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-049-yadoking/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
     }
   ]
 }

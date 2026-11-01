@@ -35,6 +35,8 @@ v0.4c 以降の 2 進化ポケモン。v0.11 はサカキのワンリキー・�
   docs/trade-please-ownership-v0.130.md 2 章）。
 - v0.131 で、写しの組 pool_v0_131（2 枚）を加えました（写しの元・研究の基準は 71d1728 のまま。段は加えていない。名前・進化元・ワザ名は kyuura の値（日本語と英語の併記）の
   まま写し、判定に使う値は利用者が指定した名前の扱い（effects.USER_SPECIFIED_NAMES）で別に持つ。docs/exeggutor-bilingual-names-v0.131.md 2 章）。
+- v0.132 で、写しの組 pool_v0_132（1 枚）を加えました（写しの元・研究の基準は 71d1728 のまま。段は加えていない。［ちえくらべ］の使うかの選択と投げる時点は利用者が指定した規則
+  （effects.USER_SPECIFIED_RULES）で別に持ち、写しの値は書き換えない。docs/slowking-mind-games-v0.132.md 2 章）。
 
 使い方::
 
@@ -3731,6 +3733,12 @@ POOL_V0_131 = [
     "PR1-077",  # ナッシー[Exeggutor]（プロモ（旧裏）。トレーナーズVol.3。kyuura の画像の照合 IMG-PR1-077）
 ]
 
+# v0.132 で加えたカード（docs/slowking-mind-games-v0.132.md）。写しの元・研究の基準は 71d1728 のまま（段は加えていない）。［ちえくらべ］・マッドインパクトは kyuura の印刷の文面
+# （最新の説明はない）。使うかの選択と投げる時点は利用者が指定した規則（effects.USER_SPECIFIED_RULES。写しの値は書き換えない）
+POOL_V0_132 = [
+    "neo1-049",  # ヤドキング（neo 第1弾「金、銀、新世界へ...」。kyuura の画像の照合 IMG-neo1-049）
+]
+
 POOLS = [
     ("pool_v0_1", POOL_V0_1),
     ("pool_v0_2b", POOL_V0_2B),
@@ -3867,6 +3875,7 @@ POOLS = [
     ("pool_v0_129", POOL_V0_129),
     ("pool_v0_130", POOL_V0_130),
     ("pool_v0_131", POOL_V0_131),
+    ("pool_v0_132", POOL_V0_132),
 ]
 
 

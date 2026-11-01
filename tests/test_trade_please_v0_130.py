@@ -115,7 +115,8 @@ class RegistrationTest(unittest.TestCase):
                          (E.USER_SWAP_OWNERSHIP, definition.trainer_text_ja, entry.play_text_ja, "UQ-SWAP-PLEASE-OWNERSHIP", "user"))
         self.assertEqual(entry.effect.ownership_rule, record.rule)
         # 利用者の指定の 3 つの記録は別の区分（重ならない）
-        self.assertEqual(set(E.USER_SPECIFIED_RULES), {"PR1-027/trainer"})
+        # v0.132: 同じ記録に［ちえくらべ］の使うかの選択と投げる時点（別の種類）が加わった。所有者の規則はこの 1 つだけ
+        self.assertEqual({key for key, r in E.USER_SPECIFIED_RULES.items() if r.rule == E.USER_SWAP_OWNERSHIP}, {"PR1-027/trainer"})
         self.assertFalse(set(E.USER_SPECIFIED_RULES) & (set(E.USER_SIMPLIFICATIONS) | set(E.USER_SPECIFIED_REFERENCES)))
         self.assertIn(f"「{record.instruction}」", DOC.read_text(encoding="utf-8"))
         # 記録の規則を持たない登録は受け付けない（知らない文面・カードに当てはめない）
@@ -140,13 +141,14 @@ class RegistrationTest(unittest.TestCase):
         section = links["latest_descriptions"]
         self.assertEqual(section["registered_trainers"][SWAP], "LD-PR1-027-TRAINER")
         self.assertEqual(section["trainer_records_not_registered"], {})
-        self.assertEqual(section["user_specified_rules"], {"PR1-027/trainer": E.USER_SPECIFIED_RULE_SOURCE})
+        self.assertEqual(section["user_specified_rules"]["PR1-027/trainer"], E.USER_SPECIFIED_RULE_SOURCE)  # v0.132: ［ちえくらべ］の規則も同じ区分にある
         self.assertNotIn("PR1-027/trainer", section.get("user_specified_references", {}))
         cases = {(c["kyuura_issue"], c["card_id"], c["target"]): c["engine"] for c in links["kyuura_cases_without_engine_ruling"]["cases"]}
         self.assertEqual(cases[("UQ-CHAOS-GYM-BORROWED-TURN", SWAP, "trainer")], {"stop_codes": [CH1]})
         self.assertEqual(cases[("UQ-SWAP-PLEASE-OWNERSHIP", SWAP, "trainer")], {"user_specified_rule": "PR1-027/trainer"})
         self.assertEqual(cases[("UQ-SWAP-PLEASE-OWNERSHIP", CHAOS_GYM, "trainer")], {"user_specified_rule": "PR1-027/trainer"})
-        self.assertEqual(cases[("UQ-SWAP-PLEASE-OWNERSHIP", "neo1-049", "power/0")], {"unregistered": True})  # ちえくらべは登録していない
+        # v0.132 で［ちえくらべ］を登録した: 交換で受け取ったカードの「相手の山札」は、この所有者の規則の山札（docs/slowking-mind-games-v0.132.md 7 章）
+        self.assertEqual(cases[("UQ-SWAP-PLEASE-OWNERSHIP", "neo1-049", "power/0")], {"user_specified_rule": "PR1-027/trainer"})
 
 
 class UseConditionTest(unittest.TestCase):
