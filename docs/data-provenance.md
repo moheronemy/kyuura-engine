@@ -1979,6 +1979,23 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   SX1・TN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形の別のカードの問い）。v0.66 の「ナツメのESPと「うら」が出るまでのコインは起こらない」はエンジンの前提の誤りで、研究の論点ではない（kyuura は
   変えていない）。
 
+## v0.133: ひかるバンギラス（neo4-082）と、利用者が指定した 2 つのワザの処理
+
+[shining-tyranitar-v0.133.md](shining-tyranitar-v0.133.md) の 1〜3 章・12 章。
+
+- 写しの元・研究の基準は kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d` のまま、身長の写しは `9242b9be89be0f747279f39c11875d1ed61763ec` のまま（移行していない。neo4-082 の記録は 71d1728 に
+  そろっている）。写しの組 `pool_v0_133`（neo4-082）を加え、`scripts/extract_kyuura_cards.py` で写しを作り直した（値は kyuura の値のまま。ほかのカードの値は同じ。`--check` で kyuura 71d1728 と一致）。
+- 採用の記録（`card_sources.json`。1,286 → 1,287 件）: 2 つのワザの処理に使う文面の根拠は印刷の文面 `kyuura_printed_text`（kyuura に LD-・CC-・ERR- の記録はない。画像の照合 IMG-neo4-082 は
+  kyuura の記録の再利用で、エンジンは画像を読んでいない）。足りないときの処理・宣言の条件・順番は別の欄 `user_specified_rule`（利用者の指定 USER-MOUNTAIN-CRUSH-MILL-UP-TO-DECK・
+  USER-DESTRUCTIVE-FIRE-DECLARE-ORDER-UP-TO。2026-11-01）に書き、研究の対応表の `latest_descriptions.user_specified_rules` に挙げた（文面の区分 `adopted_printed_text` とは別に数える。
+  1,394 → 1,396 と、規則 2 → 4）。`kyuura_records` は CR-DESTRUCTIVE-FIRE-TEXT・CR-MOUNTAIN-CRUSH-PROCEDURE・CR-UNTIL-TAILS-NOT-CAPPED・UQ-DESTRUCTIVE-FIRE-FAILURE・
+  UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY・UQ-STATED-COUNT-SHORT。新しい外部照合・ガイドブックの読み直しはしていない。
+- 記録 `UserSpecifiedRule` に欄 `text_difference`（処理に使う文面と採用した処理の差）を加えた。ワザの対象の記録には必ず書く（検査）。v0.130・v0.132 の記録は空のまま（中身は変えていない）。
+- 研究の対応表の kyuura の事例: UQ-STATED-COUNT-SHORT の neo4-082 attack/0・attack/1 と UQ-DESTRUCTIVE-FIRE-FAILURE の attack/1 は `unregistered` から `user_specified_rule`、
+  UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY の attack/1 は既存の停止コード RB1・BZ2。`unregistered` の事例は 0 になった。停止コード 316・未解決 317・kyuura の論点 90 は変わらない。
+- kyuura への報告事項（kyuura のデータ・記録は変えていない）: 12.3 節。2 つのワザの指定の内容、公式の裁定ではないこと、実装を確かめられる場所、論点を解決済みにしていないこと、残る制限。
+  過去の版の利用者の指定のうち v0.129・v0.131・v0.132 のものは kyuura に未反映のまま（この版でも書き込んでいない）。
+
 ## v0.132: ヤドキング（neo1-049）と、利用者が指定した［ちえくらべ］の使うかの選択・投げる時点
 
 [slowking-mind-games-v0.132.md](slowking-mind-games-v0.132.md) の 1〜3 章・12 章。
