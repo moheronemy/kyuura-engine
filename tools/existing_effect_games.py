@@ -770,6 +770,11 @@ V130_SWAP = "PR1-027"
 V0_131 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_131"])
 V131_EXEGGUTOR, V131_EXEGGUTOR_B = V0_131
 V131_SLOT_GAME = "neo1-090"
+# v0.132（docs/slowking-mind-games-v0.132.md 10 章）: ヤドキング（neo1-049。［ちえくらべ］・マッドインパクト）。［ちえくらべ］を使うかの答えは ``_v132_decision``（使う → 使わないを交互に。
+# 使うと止める選択（MG2・MG3・FU4）なら使わない）。ほかの手順は元のまま。ログから数えるのは ``v132_uses``
+V0_132 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_132"])
+(V132_SLOWKING,) = V0_132
+V132_SLOWPOKE, V132_SUPER_ENERGY_RETRIEVAL, V132_SPROUT_TOWER, V132_FOCUS_BAND = "neo1-045", "neo1-092", "neo1-085", "neo1-088"
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -1061,6 +1066,11 @@ DECKS = {
     # （［へんしん］。相手の対戦ポケモンと同じカードとしてあつかう）
     "X131": ((EXEGGCUTE, 2), ("neo4-049", 2), (V131_EXEGGUTOR, 2), (V131_EXEGGUTOR_B, 1), ("PMCG2-012", 1), (CLEFAIRY, 2), (DITTO, 1), (BLAINES_QUIZ_3, 3),
              (V131_SLOT_GAME, 2), (driver.BILL, 2), (driver.POTION, 1), (SWITCH, 1), (GRASS, 26), (PSYCHIC, 14)),
+    # v0.132: 超。ヤドン（neo1-045）4 枚 → ヤドキング（neo1-049）3 枚（［ちえくらべ］・マッドインパクト）・メタモン（［へんしん］で相手のヤドキングを写しうる）と、相手の［ちえくらべ］が当たる
+    # 手札のトレーナー: 使うための条件のあるトレーナー（超エネルギー回収。手札から 2 枚トラッシュ）・スタジアム（マダツボミのとう）・ポケモンのどうぐ（きあいのハチマキ）・ポケモンとして
+    # 出すトレーナー（なにかの化石。使うと MG2 で止まる）・マサキ・ポケモンいれかえ・きずぐすり
+    "X132": ((V132_SLOWPOKE, 4), (V132_SLOWKING, 3), (DITTO, 1), (V132_SUPER_ENERGY_RETRIEVAL, 2), (V132_SPROUT_TOWER, 2), (V132_FOCUS_BAND, 2),
+             (MYSTERIOUS_FOSSIL, 1), (driver.BILL, 2), (SWITCH, 2), (driver.POTION, 1), (PSYCHIC, 40)),
     "F45": ((ONIX, 3), (RATTATA, 4), (RATICATE, 3), (ROCKETS_HITMONCHAN, 3), (BROCKS_GEODUDE_40, 4), (BROCKS_RHYHORN, 1), (BROCKS_SANDSHREW, 1),
             (GIOVANNIS_MEOWTH_40, 3), *TRAINERS, (FIGHTING, 26)),
     # v0.45: 水・超（ロケット団・第1弾）。ハイドロキャノン・ロケットタックル・さいみんじゅつ・ゆめくい（相手がねむりでないと失敗）
@@ -2193,6 +2203,11 @@ PAIRINGS_V0_130 = (("T130", "T130"), ("T130", "W28"), ("T130", "F45"))
 # v0.131: X131 どうし（相手のナッシー[Exeggutor] をゆびをふる・［へんしん］で写しうる。席を入れかえた局は同じ局なので 1 回だけ行う）・X131 対 W28（水・無色）・X131 対 F45（闘）。組・席・seed は
 # 正式な対戦の前に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめる seed 90〜93 とは別。局・seed を選び直さない）
 PAIRINGS_V0_131 = (("X131", "X131"), ("X131", "W28"), ("X131", "F45"))
+# v0.132: X132 どうし（お互いのヤドキングの［ちえくらべ］が、相手の手札のトレーナー（条件のある超エネルギー回収・マダツボミのとう・きあいのハチマキ・なにかの化石）に当たる。席を入れかえた局は
+# 同じ局なので 1 回だけ行う）・X132 対 T81（相手のポケモンのどうぐ 11 種類）・X132 対 N80（相手の v0.80 のトレーナー。使うための条件のあるもの）・X132 対 D81（相手のスタジアム 3 種類）・X132 対 T130
+# （相手のとりかえっこプリーズで受け取ったカード・錯乱ジム。MG1）。組・席・seed は正式な対戦の前に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめる seed 90〜93 とは別。局・seed・
+# 方策を選び直さない）
+PAIRINGS_V0_132 = (("X132", "X132"), ("X132", "T81"), ("X132", "N80"), ("X132", "D81"), ("X132", "T130"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -2218,7 +2233,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.119": PAIRINGS_V0_119, "v0.120": PAIRINGS_V0_120, "v0.121": PAIRINGS_V0_121, "v0.122": PAIRINGS_V0_122,
            "v0.123": PAIRINGS_V0_123, "v0.124": PAIRINGS_V0_124, "v0.125": PAIRINGS_V0_125, "v0.126": PAIRINGS_V0_126,
            "v0.127": PAIRINGS_V0_127, "v0.129": PAIRINGS_V0_129, "v0.130": PAIRINGS_V0_130,
-           "v0.131": PAIRINGS_V0_131}
+           "v0.131": PAIRINGS_V0_131, "v0.132": PAIRINGS_V0_132}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -12227,6 +12242,83 @@ def v130_uses(state):
     return +counts
 
 
+def _v132_decision(state, counts):
+    """v0.132: 相手の［ちえくらべ］を使うかの決定（再開先 trainer・続きの情報 trainer_reaction）への答え。使う → 使わないを交互に（決定ごとの数え上げの順）。使うと止める選択（MG2・MG3・FU4）
+    なら使わない（止める選択を出たことだけ数える）。受け付けない答えは次の候補。"""
+    d = state.decision
+    if d is None or d.resume != "trainer" or d.context_value("trainer_reaction") is None:
+        return None
+    card_id = d.context_value("use")[2]
+    seen = counts["v132_reaction_seen"]
+    counts["v132_reaction_seen"] += 1
+    stop = d.context_value("unresolved_code")
+    if stop is not None:
+        counts[f"v132_use_stops_{stop}"] += 1
+    candidates = [tuple(d.options), ()] if seen % 2 == 0 and stop is None else [()]
+    for choices in candidates:
+        command = ResolveDecision(d.player, d.id, choices)
+        if _v057_accepted(state, command):
+            counts[f"v132_reaction_{'use' if choices else 'decline'}_{card_id}"] += 1
+            return command
+    counts["v132_reaction_no_accepted_answer"] += 1
+    return None
+
+
+def v132_uses(state):
+    """v0.132: ログから数えたヤドキング（``V0_132``）の動き（このカードのない局では空）。
+
+    - ``offer_<種類>``: 相手が手札から使ったトレーナーへの［ちえくらべ］の機会（種類は stadium・tool・play_as_pokemon・cost（使うための条件のあるカード）・other）。``used``・``declined``: 答え。
+      ``heads``・``tails``: そのコイン。``blocked_<id>``: 「おもて」で山札の上に置いたカード
+    - ``after_tails_<種類>``・``after_decline_<種類>``: 「うら」・使わないのあとに、そのカードがトラッシュ・場に出た・ついた（ふつうに使った）
+    - ``mind_blast``・``mind_blast_heads``・``mind_blast_tails``・``mind_blast_confused``: マッドインパクトの宣言・コイン・こんらん"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_132 for uid in state.cards):
+        return counts
+    log = list(state.log)
+
+    def category(uid):
+        entry = state.effects.trainer_entry(state.cards[uid].card_id)
+        effect = None if entry is None else entry.effect
+        if effect is None:
+            return "other"
+        if effect.is_stadium:
+            return "stadium"
+        if effect.stays_in_play:
+            return "tool"
+        if effect.enters_play:
+            return "play_as_pokemon"
+        return "cost" if state.cards[uid].card_id in (V132_SUPER_ENERGY_RETRIEVAL, "PMCG1-090", "neo1-087") else "other"
+
+    for i, e in enumerate(log):
+        kind = e["kind"]
+        if kind == "trainer_reaction_answered":
+            group = category(e["card"])
+            counts[f"offer_{group}"] += 1
+            counts["used" if e["used"] else "declined"] += 1
+            outcome = "decline"
+            if e["used"]:
+                check = next((x for x in log[i + 1:i + 3] if x["kind"] == "trainer_reaction_check"), None)
+                if check is not None:
+                    counts[check["result"]] += 1
+                    outcome = check["result"]
+            if outcome != "heads":
+                done = next((x for x in log[i + 1:] if x.get("card") == e["card"] and x["kind"] in ("discard_trainer", "stadium_placed", "attach_trainer",
+                                                                                                      "play_trainer_as_pokemon")), None)
+                if done is not None:
+                    counts[f"after_{outcome}_{group}"] += 1
+        elif kind == "trainer_blocked":
+            counts[f"blocked_{e['card_id']}"] += 1
+        elif kind == "attack" and (e.get("card_id") or state.cards[e["pokemon"]].card_id) == V132_SLOWKING:
+            counts["mind_blast"] += 1
+            flip = next((x for x in log[i + 1:] if x["kind"] in ("coin_flip", "attack", "turn_end")), None)
+            if flip is not None and flip["kind"] == "coin_flip":
+                counts[f"mind_blast_{flip['result']}"] += 1
+            if any(x["kind"] == "special_condition" and x.get("condition") == "confusion" for x in log[i + 1:i + 12]
+                   if x.get("effect", "").startswith(V132_SLOWKING)):
+                counts["mind_blast_confused"] += 1
+    return +counts
+
+
 def v131_uses(state):
     """v0.131: ログから数えたナッシー[Exeggutor]（``V0_131``）の動き（このカードのない局では空）。
 
@@ -12758,7 +12850,8 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = (_v130_decision(state, counts)  # v0.130: とりかえっこプリーズの選ぶカード・答え（相手の決定にも答える。ないデッキでは何もしない）
+            early = (_v132_decision(state, counts)  # v0.132: 相手の［ちえくらべ］を使うか（どのトレーナーの使用でも、カードの効果の決定より先。ないデッキでは何もしない）
+                     or _v130_decision(state, counts)  # v0.130: とりかえっこプリーズの選ぶカード・答え（相手の決定にも答える。ないデッキでは何もしない）
                      or _v129_decision(state, counts)  # v0.129: カツラのクイズ その1の置くカード・身長の答え（相手の決定にも答える。ないデッキでは何もしない）
                      or _v127_decision(state, counts)  # v0.127: ドライアップの選ぶポケモン・トラッシュ、怪電波マシーンのもどすカード（ないデッキでは何もしない）
                      or _v126_decision(state, counts)  # v0.126: フラッシュの並べかえ・おもての山札のある間の選択（フラッシュのない局では何もしない）
@@ -13215,6 +13308,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v129"] = v129_uses(state)
         result["v130"] = v130_uses(state)
         result["v131"] = v131_uses(state)
+        result["v132"] = v132_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:

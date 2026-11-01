@@ -348,6 +348,13 @@ def _check_trainer_state(state, counts):
     user, card, card_id = d.context_value("use")
     used = state.trainer_in_use
     counts[f"check_decision_{card_id}_{d.kind}"] += 1
+    if d.context_value("trainer_reaction") is not None:
+        # v0.132: 相手の［ちえくらべ］を使うか（決めるのは相手。手札から使っている最中のカードは使ったプレイヤーのまま）
+        if not (d.player == 1 - user and user == state.current_player):
+            counts["check_decision_player_mismatch"] += 1
+        if used is None or (used.player, used.card) != (user, card) or used.via is not None or state.cards[card].card_id != card_id:
+            counts["check_in_use_mismatch"] += 1
+        return
     if d.context_value("chaos") is not None:
         # v0.57: 錯乱ジムのコインの「うら」で、相手プレイヤーに借りて使うかを聞く（決めるのは相手。使っている最中のカードは持ち主のまま）
         if not (d.player == 1 - user and user == state.current_player):
@@ -384,6 +391,15 @@ def trainer_sequence_problems(state):
             if kind == "chaos_answered":
                 if e["accepted"]:
                     borrowed[card] = e["player"]
+                continue
+            # v0.132: 相手の［ちえくらべ］の答え・コイン・判定は、カードの効果の前の段階。「おもて」なら使えず山札の上（トラッシュしない）
+            if kind in ("trainer_reaction_answered", "trainer_reaction_check") or (kind == "coin_flip" and e.get("source") == "power" and i
+                                                                                     and state.log[i - 1]["kind"] == "trainer_reaction_answered"):
+                continue
+            if kind == "trainer_blocked":
+                if (e["player"], e["card"]) != (user, card):
+                    problems.append(f"{i}: 使用中の {card_id}（{card}）でないカード {e['card']} を山札の上に置いた")
+                open_use = None
                 continue
             if kind == "discard_trainer":
                 if (e["player"], e["card"]) != (user, card):
