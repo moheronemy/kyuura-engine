@@ -765,6 +765,11 @@ V129_ANSWER_POLICIES = ("knowledge", "wrong")
 # uid) が偶数ならオーケー、奇数ならオーケーでない
 V0_130 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_130"])
 V130_SWAP = "PR1-027"
+# v0.131（docs/exeggutor-bilingual-names-v0.131.md 10 章）: ナッシー[Exeggutor] 2 枚（日英併記の名前は利用者が指定した扱い）。新しい方策は加えない（進化・ワザは元の手順、カツラのクイズ
+# その3 は v0.63 の手順、スロットゲームは v0.80 の手順のまま）。ログから数えるのは ``v131_uses``
+V0_131 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_131"])
+V131_EXEGGUTOR, V131_EXEGGUTOR_B = V0_131
+V131_SLOT_GAME = "neo1-090"
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -1051,6 +1056,11 @@ DECKS = {
     # トレーナー）・錯乱ジム（相手がかわりに使うことを選ぶと止まる経路。UQ-CHAOS-GYM-BORROWED-TURN）
     "T130": ((V130_SWAP, 4), (HITMONCHAN, 3), (RATTATA, 4), (RATICATE, 3), (ONIX, 2), ("PMCG1-086", 1), ("PMCG1-092", 1), ("PMCG1-093", 1), ("PMCG1-089", 1),
              ("PMCG1-077", 1), ("neo4-111", 1), ("PMCG5-087", 1), (driver.BILL, 2), (SWITCH, 1), (driver.POTION, 1), (driver.PLUSPOWER, 2), (FIGHTING, 31)),
+    # v0.131: 草・超。タマタマ（PMCG2-006・neo4-049 を 2 枚ずつ。「タマタマ」4 枚）→ ナッシー[Exeggutor]（PR1-075 2 枚・PR1-077 1 枚）と通常のナッシー（PMCG2-012）1 枚（「ナッシー」をちょうど 4 枚。デッキの
+    # 同じ名前の数え方を通す）、カツラのクイズ その3（置くカード・伝えるワザ名・答えの名前）・スロットゲーム（同じ名前のカード）、ピッピ（ゆびをふる。相手のワザをまねる）・メタモン
+    # （［へんしん］。相手の対戦ポケモンと同じカードとしてあつかう）
+    "X131": ((EXEGGCUTE, 2), ("neo4-049", 2), (V131_EXEGGUTOR, 2), (V131_EXEGGUTOR_B, 1), ("PMCG2-012", 1), (CLEFAIRY, 2), (DITTO, 1), (BLAINES_QUIZ_3, 3),
+             (V131_SLOT_GAME, 2), (driver.BILL, 2), (driver.POTION, 1), (SWITCH, 1), (GRASS, 26), (PSYCHIC, 14)),
     "F45": ((ONIX, 3), (RATTATA, 4), (RATICATE, 3), (ROCKETS_HITMONCHAN, 3), (BROCKS_GEODUDE_40, 4), (BROCKS_RHYHORN, 1), (BROCKS_SANDSHREW, 1),
             (GIOVANNIS_MEOWTH_40, 3), *TRAINERS, (FIGHTING, 26)),
     # v0.45: 水・超（ロケット団・第1弾）。ハイドロキャノン・ロケットタックル・さいみんじゅつ・ゆめくい（相手がねむりでないと失敗）
@@ -2180,6 +2190,9 @@ PAIRINGS_V0_129 = (("Q129", "W28"), ("Q129", "F45"), ("Q129", "Q129"))
 # v0.130: T130 どうし（お互いに使い、受け取ったカードをふたたび交換しうる。席を入れかえた局は同じ局なので 1 回だけ行う）・T130 対 W28（水・無色）・T130 対 F45（闘）。組・席・seed は正式な
 # 対戦の前に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめる seed 90〜93 とは別。局・seed・方策を選び直さない）
 PAIRINGS_V0_130 = (("T130", "T130"), ("T130", "W28"), ("T130", "F45"))
+# v0.131: X131 どうし（相手のナッシー[Exeggutor] をゆびをふる・［へんしん］で写しうる。席を入れかえた局は同じ局なので 1 回だけ行う）・X131 対 W28（水・無色）・X131 対 F45（闘）。組・席・seed は
+# 正式な対戦の前に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめる seed 90〜93 とは別。局・seed を選び直さない）
+PAIRINGS_V0_131 = (("X131", "X131"), ("X131", "W28"), ("X131", "F45"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -2204,7 +2217,8 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.116": PAIRINGS_V0_116, "v0.117": PAIRINGS_V0_117, "v0.118": PAIRINGS_V0_118,
            "v0.119": PAIRINGS_V0_119, "v0.120": PAIRINGS_V0_120, "v0.121": PAIRINGS_V0_121, "v0.122": PAIRINGS_V0_122,
            "v0.123": PAIRINGS_V0_123, "v0.124": PAIRINGS_V0_124, "v0.125": PAIRINGS_V0_125, "v0.126": PAIRINGS_V0_126,
-           "v0.127": PAIRINGS_V0_127, "v0.129": PAIRINGS_V0_129, "v0.130": PAIRINGS_V0_130}
+           "v0.127": PAIRINGS_V0_127, "v0.129": PAIRINGS_V0_129, "v0.130": PAIRINGS_V0_130,
+           "v0.131": PAIRINGS_V0_131}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -12213,6 +12227,49 @@ def v130_uses(state):
     return +counts
 
 
+def v131_uses(state):
+    """v0.131: ログから数えたナッシー[Exeggutor]（``V0_131``）の動き（このカードのない局では空）。
+
+    - ``in_deck_<id>``: デッキに入れた枚数（同じ名前 4 枚の数え方を通ったデッキ）。``evolve_<id>_from_<下のカード>``: 手札から進化させた（下のポケモンのカード）
+    - ``attack_<id>``: このカードがワザ（ふみつけ）を宣言した。``attack_heads``・``attack_tails``: そのコイン。``form_attack_<id>``: ［へんしん］の今の姿のワザとして宣言された
+    - ``copied_<id>``: ゆびをふるなどでワザをまねられた。``quiz_card_<id>``・``quiz_hint_<ワザ名>``・``quiz_answer_<正解か>``: カツラのクイズ その3 で置いた・伝えたワザ名・答え
+    - ``slot_same_name``: スロットゲームで、このカードがほかの「ナッシー」と同じ名前のカードとして手札に加わった"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_131 for uid in state.cards):
+        return counts
+    log = list(state.log)
+    for card in state.cards.values():
+        if card.card_id in V0_131:
+            counts[f"in_deck_{card.card_id}"] += 1
+    quiz_cards = set()
+    for i, e in enumerate(log):
+        kind = e["kind"]
+        if kind == "evolve" and e.get("to_card_id") in V0_131:
+            counts[f"evolve_{e['to_card_id']}_from_{e['from_card_id']}"] += 1
+        elif kind == "attack":
+            source = e.get("card_id") or state.cards[e["pokemon"]].card_id
+            if source in V0_131:
+                counts[f"{'form_' if e.get('route') == 'form' else ''}attack_{source}"] += 1
+                flip = next((x for x in log[i + 1:] if x["kind"] in ("coin_flip", "attack", "turn_end")), None)
+                if flip is not None and flip["kind"] == "coin_flip":
+                    counts[f"attack_{flip['result']}"] += 1
+        elif kind == "copy_attack" and str(e.get("copied", "")).split("#")[0] in V0_131:
+            counts[f"copied_{e['copied'].split('#')[0]}"] += 1
+        elif kind == "quiz_card_set" and state.cards[e["card"]].card_id in V0_131:
+            quiz_cards.add(e["trainer_card"])
+            counts[f"quiz_card_{state.cards[e['card']].card_id}"] += 1
+        elif kind == "quiz_hint" and e.get("trainer_card") in quiz_cards:
+            counts[f"quiz_hint_{e['attack_name']}"] += 1
+        elif kind == "quiz_reveal" and e.get("card_id") in V0_131:
+            counts[f"quiz_answer_{'correct' if e['correct'] else 'wrong'}"] += 1
+        elif kind == "reveal_deck_top":
+            taken = [x["card"] for x in log[i + 1:i + 4] if x["kind"] == "reveal_from_deck"]
+            if any(state.cards[uid].card_id in V0_131 for uid in taken) and len(taken) >= 2:
+                counts["slot_same_name"] += 1
+                counts[f"slot_with_{'_'.join(sorted(state.cards[uid].card_id for uid in taken))}"] += 1
+    return +counts
+
+
 def v127_uses(state):
     """v0.127: ログから数えたドライアップ・怪電波マシーン・利用者の簡略ルールのワザの動き（v0.127 のカードのない局では空）。
 
@@ -13157,6 +13214,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v127"] = v127_uses(state)
         result["v129"] = v129_uses(state)
         result["v130"] = v130_uses(state)
+        result["v131"] = v131_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
