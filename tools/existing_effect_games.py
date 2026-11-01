@@ -12025,7 +12025,7 @@ def _v133_energy(state, command, tried, counts):
             continue
         tried.add(("v133_energy", state.turn_number))
         try:
-            apply_command(state, AttachEnergy(player, uid, tyranitar.card))
+            apply_command(_v052_real(state), AttachEnergy(player, uid, tyranitar.card))  # 手札を隠した写しでなく本当の状態で試す（v0.117 の _v052_real）
         except (IllegalActionError, UnsupportedError) as error:
             counts[f"v133_attach_rejected_{error.code}"] += 1
             return None
@@ -12070,7 +12070,7 @@ def _v133_promote(state, command, counts):
         if not state.is_face_down(pk) and state.cards[current_form(state, pk).card].card_id == V133_TYRANITAR and len(pk.energy) >= 3:
             replaced = dataclasses.replace(command, pokemon=pk.card)
             try:
-                apply_command(state, replaced)
+                apply_command(_v052_real(state), replaced)
             except (IllegalActionError, UnsupportedError):
                 return None
             counts["v133_promote_tyranitar"] += 1
@@ -12090,7 +12090,7 @@ def _v133_attack(state, command, counts):
     order = (0, 1) if state.turn_number % 2 else (1, 0)
     for index in order:
         try:
-            apply_command(state, UseAttack(player, index))
+            apply_command(_v052_real(state), UseAttack(player, index))
         except (IllegalActionError, UnsupportedError) as error:
             counts[f"v133_attack_{index}_rejected_{error.code}"] += 1
             continue
