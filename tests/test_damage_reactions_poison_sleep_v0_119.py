@@ -209,8 +209,10 @@ class RegistrationTest(unittest.TestCase):
 
         pool = load_card_pool()
         sources = json.loads((ROOT / "kyuura_engine" / "data" / "card_sources.json").read_text(encoding="utf-8"))["cards"]
-        self.assertNotIn("neo4-082", pool.playable_ids)
-        self.assertNotIn("neo4-082", sources)
+        # v0.133: ひかるバンギラス（neo4-082）は v0.133 で登録した（v0.119 の範囲の外。tests/test_shining_tyranitar_v0_133.py）。v0.119 の範囲（v0.133 より前の写しの組）には入っていない
+        self.assertNotIn("neo4-082", cards_before(read_extract(), "0.133"))
+        self.assertIn("v0.133 で加えた", sources["neo4-082"]["notes"])
+        self.assertTrue(pool.playable_ids)
         # v0.127: 怪電波マシーン（neo4-108）・ファイヤー（ES2-005・QSG-055）は、途中停止の基盤を加えて v0.127 で登録した（v0.119 の範囲の外。
         # tests/test_deferred_shortage_user_promos_v0_127.py）。v0.119 の範囲（v0.127 より前の写しの組）には入っていない
         before_v0_127 = cards_before(read_extract(), "0.127")

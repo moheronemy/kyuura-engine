@@ -19,19 +19,19 @@ class CatalogContractTest(unittest.TestCase):
     def test_current_catalog_totals(self):
         pool = load_card_pool()
         extract = read_extract()
-        self.assertEqual(len(extract["cards"]), 1373)  # v0.130: とりかえっこプリーズ PR1-027。v0.131: ナッシー[Exeggutor] PR1-075・PR1-077。v0.132: ヤドキング neo1-049
-        self.assertEqual(len(pool.playable_ids), 1373)
+        self.assertEqual(len(extract["cards"]), 1374)  # v0.130: とりかえっこプリーズ PR1-027。v0.131: ナッシー[Exeggutor] PR1-075・PR1-077。v0.132: ヤドキング neo1-049。v0.133: ひかるバンギラス neo4-082
+        self.assertEqual(len(pool.playable_ids), 1374)
         self.assertEqual(pool.playable_ids, frozenset(
             card.id for card in pool.definitions.values() if card.supported))
         self.assertEqual(
             Counter(pool.get(card).category for card in pool.playable_ids),
-            {"pokemon": 1067, "trainer": 269, "energy": 37},
+            {"pokemon": 1068, "trainer": 269, "energy": 37},  # v0.133: ひかるバンギラス
         )
         registry = DEFAULT_EFFECTS
         self.assertEqual(
             (len(registry.attack_keys()), len(registry.power_keys()),
              len(registry.trainer_ids()), len(registry.energy_ids())),
-            (1756, 183, 269, 19),
+            (1758, 183, 269, 19),
         )
         self.assertEqual(
             sum(registry.trainer_entry(card).effect.is_stadium
@@ -45,7 +45,7 @@ class CatalogContractTest(unittest.TestCase):
 
         pool = load_card_pool()
         names = {pool.get(card).name_ja for card in pool.playable_ids if pool.get(card).category == "pokemon"}
-        self.assertEqual(len(names), 512)
+        self.assertEqual(len(names), 513)  # v0.133: 「ひかるバンギラス」
         candidates = engine._identity_candidates(pool)
         basics = [card for card in candidates if pool.get(card).category == "pokemon" and pool.get(card).stage == "basic"]
         babies = [card for card in candidates if pool.get(card).category == "pokemon" and pool.get(card).stage == "baby"]
@@ -72,7 +72,8 @@ class CatalogContractTest(unittest.TestCase):
         # 名前の候補は変わらない）。v0.131: 1 進化 2 枚（ナッシー[Exeggutor] PR1-075・PR1-077）で、たね・ベイビィは変わらない。2 枚は処理の同じカード（同じ登録の値。表示用の原文の
         # 名前は処理の比べに入れない）なので 1 枚で代表し、全候補は 1,154。名前の候補は 512 のまま（判定に使う名前「ナッシー」は通常のナッシーと同じ名前。英語の併記の別の候補はない）。
         # v0.132: 1 進化 1 枚（ヤドキング neo1-049）で、たね・ベイビィは変わらない。全候補は 1,155。名前の候補は 512 のまま（「ヤドキング」はすでに対応しているカードの名前）
-        self.assertEqual((len(candidates), len(basics), len(babies)), (1155, 532, 13))
+        # v0.133: たね 1 枚（ひかるバンギラス neo4-082）で、たねは 533・全候補は 1,156（ベイビィは変わらない）。名前の候補は「ひかるバンギラス」が加わって 513
+        self.assertEqual((len(candidates), len(basics), len(babies)), (1156, 533, 13))
         self.assertEqual(engine._IDENTITY_TRIAL_LIMIT, 512)
 
     def test_current_research_totals(self):
@@ -83,7 +84,7 @@ class CatalogContractTest(unittest.TestCase):
              links["counts"]["engine_unresolved_rulings"]),
             (316, 317),  # v0.132: MG1・MG2・MG3
         )
-        self.assertEqual(len(links["latest_descriptions"]["adopted_printed_text"]), 1394)  # v0.131: ナッシー[Exeggutor] のふみつけ 2 つ。v0.132: ヤドキングのワザ・特殊能力
+        self.assertEqual(len(links["latest_descriptions"]["adopted_printed_text"]), 1396)  # v0.131: ナッシー[Exeggutor] のふみつけ 2 つ。v0.132: ヤドキングのワザ・特殊能力。v0.133: ひかるバンギラスのワザ 2 つ
         self.assertEqual(links["counts"]["kyuura_issues"], 90)
 
     def test_current_format_and_audit_agree(self):
@@ -130,10 +131,11 @@ class CatalogContractTest(unittest.TestCase):
         self.assertLessEqual(playable, ids)
         self.assertLessEqual(pmcg, playable)
         # v0.129: カツラのクイズ その1（GD5-016。拡張パック以外）を登録して 6 → 5。v0.130: とりかえっこプリーズ（PR1-027。拡張パック以外）を登録して 5 → 4。
-        # v0.131: ナッシー[Exeggutor]（PR1-075・PR1-077。拡張パック以外）を登録して 4 → 2。v0.132: ヤドキング（neo1-049）を登録して 2 → 1
+        # v0.131: ナッシー[Exeggutor]（PR1-075・PR1-077。拡張パック以外）を登録して 4 → 2。v0.132: ヤドキング（neo1-049）を登録して 2 → 1。
+        # v0.133: ひかるバンギラス（neo4-082）を登録して 1 → 0（未登録 0 は、研究上の未解決・エンジンの未対応・対象外の項目がないことではない）
         self.assertEqual((len(ids - playable), len(neo - playable),
-                          len(non_pack - playable)), (1, 1, 0))
-        self.assertEqual(ids - playable, {"neo4-082"})
+                          len(non_pack - playable)), (0, 0, 0))
+        self.assertEqual(ids - playable, set())
 
 
 class ReleaseCohortTest(unittest.TestCase):

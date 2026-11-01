@@ -296,24 +296,26 @@ class ResearchLinksTest(unittest.TestCase):
     def test_requires_unregistered_is_checked(self):
         """``requires_unregistered``: 挙げたカードは、同じ論点の事例のカードで、登録していない。事例のカードは登録している。v0.130: 登録していないカードの例を、v0.130 で
         登録したとりかえっこプリーズ（PR1-027）から、登録していないナッシー（PR1-075）にかえた（合成した事例。確かめる規則は同じ）。v0.131: ナッシー（PR1-075）も登録したので、
-        登録していないひかるバンギラス（neo4-082）にかえた（合成した事例。確かめる規則は同じ）。"""
+        登録していないひかるバンギラス（neo4-082）にかえた（合成した事例。確かめる規則は同じ）。v0.133: ひかるバンギラスも登録したので、登録表にない合成の id にかえた。"""
         from kyuura_engine.effects import DEFAULT_EFFECTS
 
-        issues = {"UQ-X": {"cases": [{"card_id": "PMCG5-087", "target": {"kind": "trainer"}}, {"card_id": "neo4-082", "target": {"kind": "trainer"}}]}}
+        UNREGISTERED = "TEST-UNREGISTERED"  # 登録表にない合成の id（v0.133）
+
+        issues = {"UQ-X": {"cases": [{"card_id": "PMCG5-087", "target": {"kind": "trainer"}}, {"card_id": UNREGISTERED, "target": {"kind": "trainer"}}]}}
 
         def problems(engine, card="PMCG5-087"):
             links = {"stop_codes": {}, "codeless_questions": {}, "kyuura_cases_without_engine_ruling": {"cases": [
                 {"kyuura_issue": "UQ-X", "card_id": card, "target": "trainer", "engine": engine},
-                {"kyuura_issue": "UQ-X", "card_id": "neo4-082" if card != "neo4-082" else "PMCG5-087", "target": "trainer",
-                 "engine": {"unregistered": True} if card != "neo4-082" else {"requires_unregistered": ["neo4-082"]}}]}}
+                {"kyuura_issue": "UQ-X", "card_id": UNREGISTERED if card != UNREGISTERED else "PMCG5-087", "target": "trainer",
+                 "engine": {"unregistered": True} if card != UNREGISTERED else {"requires_unregistered": [UNREGISTERED]}}]}}
             return rl.unlinked_case_problems(links, issues, DEFAULT_EFFECTS)
 
-        self.assertEqual(problems({"requires_unregistered": ["neo4-082"]}), [])
+        self.assertEqual(problems({"requires_unregistered": [UNREGISTERED]}), [])
         self.assertTrue(any("登録されている" in p for p in problems({"requires_unregistered": ["PMCG1-019"]})))  # 登録したカード（同じ論点の事例でもない）
         self.assertTrue(any("事例のカードではない" in p for p in problems({"requires_unregistered": ["neo1-049"]})))
         self.assertTrue(any("重ならないリスト" in p for p in problems({"requires_unregistered": []})))
         self.assertTrue(any("重ならないリスト" in p for p in problems({"requires_unregistered": ["PMCG5-087"]})))  # 事例のカードそのもの
-        self.assertTrue(any("ちょうど 1 つ" in p for p in problems({"requires_unregistered": ["neo4-082"], "unregistered": True})))
+        self.assertTrue(any("ちょうど 1 つ" in p for p in problems({"requires_unregistered": [UNREGISTERED], "unregistered": True})))
 
     @needs_kyuura
     def test_links_agree_with_kyuura(self):
@@ -328,7 +330,7 @@ class NameTest(unittest.TestCase):
         self.assertEqual((pool.get(ARCANINE).name_ja, pool.get(BLAINES_ARCANINE).name_ja, pool.get(KIND_ARCANINE).name_ja),
                          ("ウィンディ", "カツラのウィンディ", "やさしいウインディ"))
         self.assertEqual(dict(deck.SAME_NAME_SPELLINGS), {"ポケモン図鑑HANDY505": "ポケモン図鑑 HANDY505"})
-        names = {pool.get(card).name_ja for card in pool.playable_ids if pool.get(card).category == "pokemon"}
+        names = {pool.get(card).name_ja for card in pool.playable_ids if pool.get(card).category == "pokemon"} - {"ひかるバンギラス"}  # v0.133 の名前（この版の範囲の外）
         self.assertTrue({"ウィンディ", "カツラのウィンディ", "やさしいウインディ"} <= names)
         self.assertFalse({"ウインディ", "カツラのウインディ"} & names)
         # v0.124 で「GR団のミュウツー」が加わって 510（今の値は tests/test_catalog_contract.py）。v0.123 の版の範囲の名前は 509

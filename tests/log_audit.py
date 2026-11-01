@@ -457,6 +457,8 @@ COUNTER_BARRIERS = (
     # v0.31: ダメージ以外の効果（エネルギーのトラッシュ・つける・回復・トレーナーの回収・山札・引く）と、ワザの失敗・効果を受けない状態
     "discard_attached_energy", "attack_heal", "recover_trainer", "attach_energy_from_discard", "attack_attach_energy", "discard_from_deck",
     "draw", "effect_prevented", "effect_skipped", "destiny_bond",
+    # v0.133: 利用者の指定で足りないときにあるだけ処理した記録（ワザのダメージ以外の効果のあと）
+    "user_rule_count_short",
     # v0.104: 取り除くかを選ぶ回復で取り除かなかった（プリンの「かいふく」）
     "attack_heal_declined",
     # v0.32: 山札からベンチに出す（なかまをよぶ・ふえる）
@@ -10277,6 +10279,7 @@ def log_problems(state) -> list[str]:
     problems.extend(v127_problems(state))  # v0.127: ドライアップ・怪電波マシーン・途中停止
     problems.extend(v129_problems(state))  # v0.129: カツラのクイズ その1
     problems.extend(v130_problems(state))  # v0.130: とりかえっこプリーズと、対戦の中の所有者
+    problems.extend(v133_problems(state))  # v0.133: ひかるバンギラスの 2 つのワザ（宣言の前の数との照らしは、やり直しの状態を渡す監査だけ）
     return problems
 
 
@@ -11046,4 +11049,134 @@ def v132_problems(state) -> list[str]:
                 break
             if x["kind"] in V132_DECK_TOUCHING and x.get("player") in (user, None):
                 break
+    return problems
+
+
+# v0.133（docs/shining-tyranitar-v0.133.md 8 章）: ひかるバンギラスの 2 つのワザ。監査が独立に持つ（エンジンの定義・集計から読まない）
+V133_MOUNTAIN_CRUSH, V133_DESTRUCTIVE_FIRE = "neo4-082#0", "neo4-082#1"
+V133_CLOSERS = ("attack", "turn_end", "game_end", "halted", "turn_start")
+V133_DAMAGE_STEPS = ("damage", "damage_prevented", "attack_evaded")  # 相手の対戦ポケモンへのダメージの要素のログ（受けた・防いだ・とうめい）
+V133_EFFECT_VOIDS = ("effect_prevented", "attack_evaded", "energy_discard_voided", "flee_effect_skipped")  # 相手のトラッシュを防いだかもしれないログ
+
+
+def _v133_final_flips(body: list[dict], key: str) -> tuple[str, ...] | None:
+    """ワザ ``key`` の説明のコインの最後の並び（ナツメのESPでやり直したらやり直した並び）。コインがなければ None。"""
+    flips = tuple(x["result"] for x in body if x["kind"] == "coin_flip" and x.get("source") == "attack" and x.get("effect") == key)
+    redo = [x for x in body if x["kind"] == "esp_redo" and x.get("effect") == key]
+    if redo:
+        return tuple(redo[-1]["redone"])
+    return flips or None
+
+
+def v133_snapshot(state, command) -> tuple | None:
+    """v0.133: ワザの宣言の直前の、監査が照らす数（やり直しの状態から数える。エンジンの集計を読まない）: (ワザを使うプレイヤー, 相手の山札の枚数, ワザを使うポケモンの「炎」の基本
+    エネルギーカードの枚数, 相手の対戦ポケモンのエネルギーカードの枚数)。``UseAttack`` でなければ None。"""
+    from kyuura_engine.commands import UseAttack
+
+    if not isinstance(command, UseAttack):
+        return None
+    player = command.player
+    active, defender = state.players[player].active, state.players[1 - player].active
+    fire = 0 if active is None else sum(1 for uid in active.energy if state.printed_def(uid).is_basic_energy and state.printed_def(uid).provides.value == "fire")
+    energy = 0 if defender is None else sum(1 for uid in defender.energy if state.card_def(uid).category == "energy")
+    return player, len(state.players[1 - player].deck), fire, energy
+
+
+def v133_problems(state, before: dict[int, tuple] | None = None) -> list[str]:
+    """v0.133（docs/shining-tyranitar-v0.133.md 8 章）: マウンテンクラッシュ・はかいのほのお（相手のワザとして使ったもの・［サイコリンク］で使ったものも）を、ログから組み立てて照らす。
+    ``before`` は宣言の直前の数（``v133_snapshot``。宣言を処理する前のログの長さ → 数。正式な対戦の監査がやり直しの状態から渡す）。
+
+    - マウンテンクラッシュ: コインは「うら」が出るまでの並び（最後だけ「うら」。山札の枚数で打ち切らない）で、すべてダメージの要素のあと。トラッシュは相手の山札のカードで、「おもて」の数 H
+      以下。H より少なければ不足の記録（必要な数 H・処理した数）があり、多くなければない。``before`` があれば、トラッシュの枚数がちょうど min(H, 宣言の前の山札の枚数)。同じワザの中に
+      山札切れの終局がない（山札がなくなっただけでは負けにしない）
+    - はかいのほのお: コインの枚数が 1 以上（``before`` があれば、宣言の前の使い手の「炎」の基本エネルギーカードの枚数と同じ）。自分のトラッシュは使い手の「炎」の基本エネルギーカードで
+      ちょうど H 枚、すべてダメージの要素の前。相手のトラッシュは相手のカードで H 以下、すべてダメージの要素のあと。H より少なければ不足の記録か、防いだ・きぜつのログがある。``before`` が
+      あり、防いだ・きぜつのログがなければ、ちょうど min(H, 宣言の前の相手のエネルギーカードの枚数)"""
+    log = list(state.log)
+    starts: dict[int, tuple] = {}
+    for position, snapshot in (before or {}).items():
+        index = next((j for j in range(position, len(log)) if log[j]["kind"] == "attack"), None)
+        if snapshot is not None and index is not None:
+            starts[index] = snapshot
+    problems: list[str] = []
+    for index, e in enumerate(log):
+        if e["kind"] != "attack":
+            continue
+        end = next((j for j in range(index + 1, len(log)) if log[j]["kind"] in V133_CLOSERS), len(log))
+        body = log[index + 1:end]
+        key = f"{e.get('card_id') or state.cards[e['pokemon']].card_id}#{e['attack_index']}"
+        key = next((x["copied"] for x in body if x["kind"] == "copy_attack" and x.get("effect") == key), key)
+        if key not in (V133_MOUNTAIN_CRUSH, V133_DESTRUCTIVE_FIRE):
+            continue
+        player, where = e["player"], f"{e['turn']} 番の {key}"
+        flips = _v133_final_flips(body, key)
+        heads = None if flips is None else flips.count("heads")
+        coin_at = [i for i, x in enumerate(body) if x["kind"] == "coin_flip" and x.get("source") == "attack" and x.get("effect") == key]  # こんらんのコインは数えない
+        damage_at = [i for i, x in enumerate(body) if x["kind"] in V133_DAMAGE_STEPS and x.get("player") == 1 - player]
+        shorts = [x for x in body if x["kind"] == "user_rule_count_short" and x.get("effect") == key]
+        snapshot = starts.get(index)
+        if snapshot is not None and snapshot[0] != player:
+            problems.append(f"{where}: 宣言の前の数のプレイヤー {snapshot[0]} が、ワザを使ったプレイヤー {player} と違う")
+            snapshot = None
+        if key == V133_MOUNTAIN_CRUSH:
+            milled = [uid for x in body if x["kind"] == "discard_from_deck" and x.get("effect") == key for uid in x["cards"]]
+            if any(x["kind"] == "discard_from_deck" and x.get("effect") == key and (x["player"] != 1 - player or x.get("attacker") != player) for x in body):
+                problems.append(f"{where}: 山札のトラッシュのプレイヤーが相手ではない")
+            if any(state.cards[uid].owner != 1 - player for uid in milled):
+                problems.append(f"{where}: トラッシュしたカード {milled} が相手のカードではない")
+            if flips is None:
+                if milled or shorts:
+                    problems.append(f"{where}: コインがないのに山札をトラッシュした・不足の記録がある")
+                continue
+            redone = any(x["kind"] == "esp_redo" and x.get("effect") == key for x in body)
+            redo = [x for x in body if x["kind"] == "esp_redo" and x.get("effect") == key]
+            original = tuple(redo[-1]["original"]) if redo else flips  # やり直す前の並び（ログの esp_redo が持つ）
+            logged = tuple(x["result"] for x in body if x["kind"] == "coin_flip" and x.get("source") == "attack" and x.get("effect") == key)
+            if redone and logged != original + flips:
+                problems.append(f"{where}: コインのログ {logged} が、やり直す前とやり直した並び {original}・{flips} と合わない")
+            for sequence in (flips, original) if redone else (flips,):
+                if sequence[-1] != "tails" or "tails" in sequence[:-1]:
+                    problems.append(f"{where}: コインの並び {sequence} が「うら」が出るまでの並びではない（最後だけ「うら」）")
+            if damage_at and coin_at and min(coin_at) < max(damage_at):
+                problems.append(f"{where}: コインがダメージの要素より前にある（30 ダメージが先）")
+            if len(milled) > heads:
+                problems.append(f"{where}: トラッシュした {len(milled)} 枚が「おもて」の数 {heads} より多い")
+            if len(milled) < heads and not any(x["required"] == heads and x["processed"] == len(milled) for x in shorts):
+                problems.append(f"{where}: トラッシュした {len(milled)} 枚が「おもて」の数 {heads} より少ないのに、不足の記録がない")
+            if len(milled) == heads and shorts:
+                problems.append(f"{where}: 「おもて」の数どおりトラッシュしたのに、不足の記録がある")
+            if snapshot is not None and len(milled) != min(heads, snapshot[1]):
+                problems.append(f"{where}: トラッシュした {len(milled)} 枚が、min(「おもて」{heads}, 宣言の前の相手の山札 {snapshot[1]} 枚) と違う")
+            if any(x["kind"] == "deck_out" for x in body):
+                problems.append(f"{where}: 山札のトラッシュのあと、同じワザの中で山札切れの負けになった（負けは番の最初に引くとき）")
+            continue
+        # はかいのほのお
+        own = [x for x in body if x["kind"] == "discard_energy" and x.get("effect") == key]
+        opp = [x for x in body if x["kind"] == "discard_attached_energy" and x.get("effect") == key]
+        own_at = [i for i, x in enumerate(body) if x in own]
+        opp_at = [i for i, x in enumerate(body) if x in opp]
+        if snapshot is not None and snapshot[2] == 0:
+            problems.append(f"{where}: 使い手に「炎」エネルギーカードがないのに宣言を受け付けた（宣言の拒否のはず）")
+        if flips is None:
+            if own or opp or shorts:
+                problems.append(f"{where}: コインがないのにトラッシュした・不足の記録がある")
+            continue
+        if snapshot is not None and len(flips) != snapshot[2]:
+            problems.append(f"{where}: コイン {len(flips)} 枚が、宣言の前の使い手の「炎」エネルギーカード {snapshot[2]} 枚と違う")
+        if len(own) != heads or any(x["player"] != player or not state.printed_def(x["energy"]).is_basic_energy
+                                    or state.printed_def(x["energy"]).provides.value != "fire" for x in own):
+            problems.append(f"{where}: 自分のトラッシュ {[x.get('energy') for x in own]} が、使い手の「炎」の基本エネルギーカード「おもて」{heads} 枚ではない")
+        if damage_at and (any(i > min(damage_at) for i in own_at) or any(i < max(damage_at) for i in opp_at)):
+            problems.append(f"{where}: 順番が、自分の炎のトラッシュ → ダメージ → 相手のトラッシュ ではない")
+        if any(x["player"] != 1 - player or x.get("attacker") != player or state.cards[x["energy"]].owner != 1 - player for x in opp):
+            problems.append(f"{where}: 相手のトラッシュのカードが、相手のエネルギーカードではない")
+        if len(opp) > heads:
+            problems.append(f"{where}: 相手のトラッシュ {len(opp)} 枚が「おもて」の数 {heads} より多い")
+        guarded = any(x["kind"] in V133_EFFECT_VOIDS or (x["kind"] == "knock_out" and x.get("player") == 1 - player) for x in body)
+        if len(opp) < heads and not guarded and not any(x["required"] == heads and x["processed"] == len(opp) for x in shorts):
+            problems.append(f"{where}: 相手のトラッシュ {len(opp)} 枚が「おもて」の数 {heads} より少ないのに、不足の記録・防いだログがない")
+        if len(opp) == heads and shorts:
+            problems.append(f"{where}: 「おもて」の数どおり相手のトラッシュをしたのに、不足の記録がある")
+        if snapshot is not None and not guarded and len(opp) != min(heads, snapshot[3]):
+            problems.append(f"{where}: 相手のトラッシュ {len(opp)} 枚が、min(「おもて」{heads}, 宣言の前の相手のエネルギーカード {snapshot[3]} 枚) と違う")
     return problems

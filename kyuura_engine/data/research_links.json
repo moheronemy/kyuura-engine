@@ -4597,9 +4597,9 @@
         "card_id": "neo4-082",
         "target": "attack/1",
         "engine": {
-          "unregistered": true
+          "user_specified_rule": "neo4-082/attack/1"
         },
-        "note": "ひかるバンギラスのはかいのほのお。「おもて」0・炎エネルギーカード 0 枚のときの失敗、順番、相手への要素が無効なとき（エンジンに登録していないカード。kyuura の 5 つの事例は同じ対象）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）"
+        "note": "ひかるバンギラスのはかいのほのお。「おもて」0・炎エネルギーカード 0 枚のときの失敗、順番、相手への要素が無効なとき（エンジンに登録していないカード。kyuura の 5 つの事例は同じ対象）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）。v0.133 で登録し、扱いを見直した: 利用者が指定した規則（USER-DESTRUCTIVE-FIRE-DECLARE-ORDER-UP-TO）で処理する: 炎エネルギーカード 0 枚は宣言を拒否、1 枚以上なら「おもて」0 でも成功、自分の炎のトラッシュ → 50 → 相手のトラッシュ、相手が防護されてもコインと自分のトラッシュは行う（公式の裁定ではない。論点は未解決のまま）"
       },
       {
         "kyuura_issue": "UQ-HELPING-HAND-CHOICE",
@@ -4628,27 +4628,30 @@
         "card_id": "neo4-082",
         "target": "attack/1",
         "engine": {
-          "unregistered": true
+          "stop_codes": [
+            "UNRESOLVED_RAINBOW_ENERGY_TYPE",
+            "UNRESOLVED_BUZZAP_ENERGY_CARD_TYPE"
+          ]
         },
-        "note": "ひかるバンギラスのはかいのほのおの「炎」エネルギーカードの枚数に、炎として使える特殊エネルギーを数えるか（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）"
+        "note": "ひかるバンギラスのはかいのほのおの「炎」エネルギーカードの枚数に、炎として使える特殊エネルギーを数えるか（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）。v0.133 で登録し、扱いを見直した: 炎エネルギーカードの枚数は既存の per_attached の数え方（基本エネルギーカード）で、レインボーエネルギー・［エネエネ］のカードがあればコインの前に RB1・BZ2 で止める（ミラクルエネルギー・色を変えたカード・［へんしん］・［すごいへんしん］も既存の MEC1・CE3・TE1・SV5。利用者の指定はこの問いを決めない）"
       },
       {
         "kyuura_issue": "UQ-STATED-COUNT-SHORT",
         "card_id": "neo4-082",
         "target": "attack/0",
         "engine": {
-          "unregistered": true
+          "user_specified_rule": "neo4-082/attack/0"
         },
-        "note": "ひかるバンギラスのマウンテンクラッシュ。相手の山札が「おもて」の数より少ないとき（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）"
+        "note": "ひかるバンギラスのマウンテンクラッシュ。相手の山札が「おもて」の数より少ないとき（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）。v0.133 で登録し、扱いを見直した: 利用者が指定した規則（USER-MOUNTAIN-CRUSH-MILL-UP-TO-DECK）で、「おもて」の数と山札の枚数の少ない方だけトラッシュする（山札 0 枚でもコインは「うら」まで。公式の裁定ではない。論点は未解決のまま）"
       },
       {
         "kyuura_issue": "UQ-STATED-COUNT-SHORT",
         "card_id": "neo4-082",
         "target": "attack/1",
         "engine": {
-          "unregistered": true
+          "user_specified_rule": "neo4-082/attack/1"
         },
-        "note": "ひかるバンギラスのはかいのほのお。相手のエネルギーカードが「おもて」の数より少ないとき（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）"
+        "note": "ひかるバンギラスのはかいのほのお。相手のエネルギーカードが「おもて」の数より少ないとき（エンジンに登録していないカード）（kyuura が 2026-10-31 に加えた事例。v0.125 で研究の基準を 134a664 に上げて結んだ）。v0.133 で登録し、扱いを見直した: 利用者が指定した規則（USER-DESTRUCTIVE-FIRE-DECLARE-ORDER-UP-TO）で、相手のエネルギーカードが足りなければ残っている分すべてをトラッシュする（たつまきの FC1 などほかのカードは変えない。公式の裁定ではない。論点は未解決のまま）"
       },
       {
         "kyuura_issue": "UQ-STATED-COUNT-SHORT",
@@ -6519,7 +6522,9 @@
       "PR1-075/attack/0",
       "PR1-077/attack/0",
       "neo1-049/attack/0",
-      "neo1-049/power/0"
+      "neo1-049/power/0",
+      "neo4-082/attack/0",
+      "neo4-082/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
@@ -6567,7 +6572,9 @@
     },
     "user_specified_rules": {
       "PR1-027/trainer": "kyuura-engine user specification docs/trade-please-ownership-v0.130.md#3",
-      "neo1-049/power/0": "kyuura-engine user specification docs/slowking-mind-games-v0.132.md#3"
+      "neo1-049/power/0": "kyuura-engine user specification docs/slowking-mind-games-v0.132.md#3",
+      "neo4-082/attack/0": "kyuura-engine user specification docs/shining-tyranitar-v0.133.md#3",
+      "neo4-082/attack/1": "kyuura-engine user specification docs/shining-tyranitar-v0.133.md#3"
     },
     "user_specified_names": {
       "PR1-075/name": "kyuura-engine user specification docs/exeggutor-bilingual-names-v0.131.md#3",

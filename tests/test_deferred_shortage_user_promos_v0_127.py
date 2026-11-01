@@ -118,7 +118,7 @@ class RegistrationTest(unittest.TestCase):
         self.assertLessEqual(set(NEW_CARDS), playable)
         # 6 枚を外すと基点の 1,362 枚（v0.129: 後の版で加えたカード pool_v0_129 も外す。v0.130: 後の版のカードは cards_after でまとめて外す）
         self.assertEqual(len(playable - set(NEW_CARDS) - cards_after(extract, "0.127")), 1362)
-        self.assertNotIn("neo4-082", playable)  # 10 章: ひかるバンギラスは登録しない
+        self.assertNotIn("neo4-082", set(NEW_CARDS) | (playable - cards_after(extract, "0.127")))  # 10 章: ひかるバンギラスは登録しない（v0.133 で登録した。この版の範囲の外）
         registry = E.DEFAULT_EFFECTS
         attacks = [k for k in registry.attack_keys() if k.card_id in NEW_CARDS]
         self.assertEqual(len(attacks), 8)
@@ -157,7 +157,8 @@ class RegistrationTest(unittest.TestCase):
         self.assertEqual(cases[("UQ-STATED-COUNT-SHORT", MOLTRES_QSG, "attack/0")], {"stop_codes": [CODES["DU1"]]})
         self.assertEqual(cases[("UQ-STATED-COUNT-SHORT", TWM, "trainer")], {"stop_codes": [CODES["TW1"]]})
         self.assertEqual(cases[("UQ-CARD-USE-WITHOUT-TARGET", TWM, "trainer")], {"stop_codes": [CODES["TW2"]]})
-        self.assertEqual(cases[("UQ-STATED-COUNT-SHORT", "neo4-082", "attack/0")], {"unregistered": True})
+        # v0.133: ひかるバンギラスを登録し、利用者が指定した規則に結んだ（DU1・TW1・TW2 は変えていない。tests/test_shining_tyranitar_v0_133.py）
+        self.assertEqual(cases[("UQ-STATED-COUNT-SHORT", "neo4-082", "attack/0")], {"user_specified_rule": "neo4-082/attack/0"})
         for short, code in CODES.items():
             self.assertEqual(links["stop_codes"][code]["engine_rulings"], [{"version": "v0.127", "document": "docs/deferred-shortage-user-promos-v0.127.md", "ruling_id": short}])
         section = links["latest_descriptions"]

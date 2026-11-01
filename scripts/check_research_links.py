@@ -522,6 +522,14 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
             printed = ((powers[index].get("text") or {}).get("ja")) if index < len(powers) else None
             if f"{card}/power/{index}" in ld_by_target:
                 problems.append(f"{target}: kyuura に最新の説明の記録 {ld_by_target[f'{card}/power/{index}']} がある（利用者が指定した規則より先に確かめる）")
+        elif kind.startswith("attack/") and kind.split("/", 1)[1].isdigit():
+            # v0.133: ワザの対象（``<カード id>/attack/<位置>``。ひかるバンギラスの足りないときの処理・宣言の条件・順番）。kyuura の最新の説明があれば、規則より先に確かめる
+            index = int(kind.split("/", 1)[1])
+            entry = registry_.attack_entry(card, index)
+            attacks = (((research_cards.get(card) or {}).get("pokemon") or {}).get("attacks") or [])
+            printed = ((attacks[index].get("text") or {}).get("ja")) if index < len(attacks) else None
+            if f"{card}/attack/{index}" in ld_by_target:
+                problems.append(f"{target}: kyuura に最新の説明の記録 {ld_by_target[f'{card}/attack/{index}']} がある（利用者が指定した規則より先に確かめる）")
         else:
             entry, printed = None, None
         if entry is None or not (entry.text_ja == record.printed_text == printed and entry.play_text_ja == record.play_text):

@@ -15720,3 +15720,197 @@ BUILDERS |= {
     E.UserSimplifiedStatusSelfAndOpponent: lambda e: (Status(e.condition, target=SELF), Status(e.condition)),  # こまったなあ（発話の条件を省く。StatusSelfAndOpponent と同じ）
     E.UserSimplifiedDamageOnly: lambda e: (Damage(OPP, Printed()),),  # どつく（発話の条件を省く。DamageOnly と同じ）
 }
+
+
+# ---------------------------------------------------------------- v0.133（docs/shining-tyranitar-v0.133.md）
+
+
+def capped_classes(available: int):
+    """v0.133（docs 6 章）: 「うら」が出るまで投げるコインの「おもて」の数 h のうち、処理する数 ``min(h, available)`` だけを使う要素（マウンテンクラッシュの相手の山札のトラッシュ。利用者の
+    指定 ``USER-MOUNTAIN-CRUSH-MILL-UP-TO-DECK``）の組（``unbounded.HeadClasses``）。h = 0〜``available`` はそれぞれ別の組、``available`` 以上は 1 つの組（代表は ``available``）: どの h でも
+    山札をすべてトラッシュし、そのあとの処理（きぜつの判定・ワザの終わり）は h を読まない（h はログのコインの並びと不足の記録の必要な数にだけ残る）。v0.118 の ``draw_classes`` と同じ形だが、
+    根拠は p.312 の「引けるだけ」ではなく利用者の指定（引く処理の組をトラッシュに流用していない）。実際のコインの数・ログ・乱数には代表を使わない"""
+    from .unbounded import HeadClasses
+
+    if type(available) is not int or available < 0:
+        raise RuntimeError(f"処理できる数 {available!r} が 0 以上の整数ではない（エンジンの不具合）")
+    representatives = tuple(range(available + 1))
+    return HeadClasses(representatives, representatives, available, 1, lambda heads: min(heads, available))
+
+
+def note_count_short(run: AttackRun, *, element: str, target_player: int, required: int, available: int, processed: int, rule: str) -> None:
+    """v0.133: 利用者の指定（``rule``）で、説明の数 ``required`` に足りない ``available`` のうち ``processed`` だけを処理したログ ``user_rule_count_short``（公開の情報。ワザを使ったプレイヤー・
+    使ったポケモン・ワザ・要素・処理した側のプレイヤー）。途中停止（v0.127）・従来の拒否とは別の、受け付けた処理の記録。"""
+    attacker = run.attacker()
+    run.state.add_event(E.USER_RULE_COUNT_SHORT_EVENT, player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key), element=element,
+                        target_player=target_player, required=required, available=available, processed=processed, rule=rule)
+
+
+def kind_grouped_answers(state: GameState, pokemon_id: int, decision: PendingDecision, blocked: frozenset = frozenset()) -> list[tuple[int, ...]]:
+    """v0.133: ちょうど ``decision.min_choices`` 枚を選ぶエネルギーカードのトラッシュの決定の先読みの答え。カードの種類（カード id と、この番の色の記録・エネルギーとしての役割の有無。v0.127 の
+    ドライアップの ``dry_choices`` と同じ分け方）の組ごとに 1 つ（はじめの uid）だけを試す。同じ種類のカードは、入れかえてもこのワザの残りの処理（ダメージの計算・相手のトラッシュ・きぜつの
+    判定）の結果が同じ（トラッシュしたカードの uid を読む処理がない）。``blocked``（選ぶと止めるカード）は試さない。実際の決定では、ちょうどその枚数のすべての組を選べる（選べるものを削らない）"""
+    groups: dict[tuple, list[int]] = {}
+    for uid in decision.options:
+        if uid in blocked:
+            continue
+        kind = (state.cards[uid].card_id, (pokemon_id, uid) in state.energy_burn, any(role.card == uid for role in state.energy_roles))
+        groups.setdefault(kind, []).append(uid)
+    members = list(groups.values())
+    answers: list[tuple[int, ...]] = []
+
+    def pick(index: int, left: int, chosen: tuple[int, ...]) -> None:
+        if index == len(members):
+            if left == 0:
+                answers.append(tuple(uid for uid in decision.options if uid in chosen))
+            return
+        for count in range(min(left, len(members[index])) + 1):
+            pick(index + 1, left - count, chosen + tuple(members[index][:count]))
+
+    pick(0, decision.min_choices, ())
+    return answers
+
+
+@dataclass(frozen=True)
+class MillOpponentDeckUntilTailsUpTo(Element):
+    """「うら」が出るまでコインを投げつづけ、その間に出た「おもて」の数ぶんのカードを、相手の山札の上からトラッシュする（v0.133。マウンテンクラッシュの効果。docs 4 章）。
+
+    - コインはワザの説明のコイン（``AttackRun.flip_until_tails``。上限なく「うら」まで。山札の枚数で省かない・打ち切らない（0 枚でも投げる。CR-UNTIL-TAILS-NOT-CAPPED）。ナツメのESPの
+      やり直しは一まとまりのあとに 1 回だけで、最後の並びを使う。やり直しはこの要素から処理し直すので、前のダメージの要素はくり返さない）
+    - 山札の枚数 D はコインの前に数える（コインのあいだは変わらない）。トラッシュは ``min(H, D)`` 枚（利用者の指定 ``rule``。``zones.discard_from_deck``。ログ ``discard_from_deck``）。H > D
+      なら、ログ ``user_rule_count_short``（必要な数 H・処理できる数 D・処理した数 D）。山札がなくなっても負けにしない（負けは番の最初に引くとき。既存の規定）
+    - 相手の山札への処理で、相手のポケモンへの効果ではない（``coin_receiver`` は None。相手の対戦ポケモンの「ワザをうけない」状態などを当てはめない。v0.115 の ``MillOpponentDeck`` と同じ）
+    - 先読みは ``capped_classes(D)``"""
+
+    rule: str = E.USER_MOUNTAIN_CRUSH_RULE
+    phase: ClassVar[Phase] = Phase.EFFECT
+    reads_deck_order: ClassVar[bool] = True
+
+    def run(self, run: AttackRun) -> bool:
+        opponent = 1 - run.player
+        available = len(run.state.players[opponent].deck)
+        flips = run.flip_until_tails(lambda: capped_classes(available))
+        heads = flips.heads
+        if len(run.state.players[opponent].deck) != available:
+            raise RuntimeError("「うら」が出るまでのコインのあいだに相手の山札の枚数が変わった（エンジンの不具合）")
+        count = min(heads, available)
+        if count:
+            cards = discard_from_deck(run.state, opponent, count)
+            attacker = run.attacker()
+            run.state.add_event("discard_from_deck", player=opponent, effect=str(run.key), cards=cards, attacker=run.player, attacker_pokemon_id=attacker.pokemon_id)
+        if heads > available:
+            note_count_short(run, element="mill_opponent_deck", target_player=opponent, required=heads, available=available, processed=count, rule=self.rule)
+        return False
+
+
+@dataclass(frozen=True)
+class OwnTypedEnergyCardsRequired(Element):
+    """ワザを実際に使うポケモンに「``energy_type``」エネルギーカードが 1 枚以上ついていることが、ワザを使うための条件（v0.133。はかいのほのおの利用者の指定の 1。docs 5 章）。
+
+    条件はワザの実装の ``usage_problem``（``effects.typed_energy_card_usage_problem``）が宣言の前（必要なエネルギーの確認のあと・こんらんのコインの前。状態・乱数・ログを変えない）に確かめる。
+    この要素は、相手のワザとして使うとき（「ゆびをふる」など）の扱い（``copy_problem``。実際に使うポケモンのカードで数える。説明が「使えない」「説明にしたがう」なら選べず、ほかは既存の HC9。
+    v0.111 の ``EqualEnergyCardsRequired`` と同じ形）だけを持つ。色の読み方で枚数が変わりうるなら、ここでは止めず、次のコインの要素の既存の止め方に任せる"""
+
+    energy_type: EnergyType
+    phase: ClassVar[Phase] = Phase.NEUTRAL
+
+    def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
+        if E.typed_energy_card_usage_problem(run.state, copier, self.energy_type) is None:
+            return None
+        return (ILLEGAL if clause in (CANNOT_USE, FOLLOW_TEXT) else UNRESOLVED), \
+            f"「{self.energy_type.ja}」エネルギーカードがついていない（利用者が指定した宣言の条件。{E.USER_DESTRUCTIVE_FIRE_RULE}）"
+
+    def run(self, run: AttackRun) -> bool:
+        if E.typed_energy_card_usage_problem(run.state, run.attacker(), self.energy_type) is not None:
+            raise RuntimeError(f"「{self.energy_type.ja}」エネルギーカードのないポケモンがワザ {run.key} を使った（宣言の条件の確かめの漏れ。エンジンの不具合）")
+        return False
+
+
+@dataclass(frozen=True)
+class DiscardOwnTypedEnergyByHeads(DiscardOwnEnergy):
+    """ワザ全体のコイン ``heads_of`` の「おもて」の数ぶんの「``energy_type``」エネルギーカードを、ワザを使ったポケモンから選んでトラッシュする（v0.133。はかいのほのおの利用者の指定の 3。
+    ``DiscardOwnEnergy`` の ``heads_of`` と同じ処理・決定・ログ ``discard_energy``）。コインの枚数がその枚数なので、「おもて」の数より少なくなることはない（足りないときの扱いを持たない。
+    相手のワザとして使うときの必要な枚数は ``OwnTypedEnergyCardsRequired`` が確かめるので、この要素の ``copy_need`` は 0）。先読みは ``kind_grouped_answers``（同じ種類のカードは 1 つの組）"""
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        return kind_grouped_answers(run.state, run.attacker().pokemon_id, decision)
+
+
+@dataclass(frozen=True)
+class DiscardOpponentEnergyUpToHeads(DiscardOpponentEnergyByHeads):
+    """ワザ全体のコイン ``heads_of`` の「おもて」の数ぶんの「エネルギーカード」を、相手の対戦ポケモンから選んでトラッシュする。足りなければ、ついているものすべて（v0.133。はかいのほのおの
+    利用者の指定の 5。``rule``。docs 5 章）。v0.120 の ``DiscardOpponentEnergyByHeads``（たつまき。足りなければ FC1）の確かめ（タケシの保護・［KEEP］・「ワザをうけない」・「とうめい」・
+    リサイクルエネルギーなど）を使い、足りないときだけを変える（たつまきの扱いは変えない）。
+
+    - 数えるのはこの要素を処理する時点のエネルギーカード M（ダメージのあと）。トラッシュは ``min(H, M)`` 枚。``min(H, M) = M`` ならすべて（選び方は 1 つなので決定を出さない）、``< M`` なら
+      ワザを使ったプレイヤーがちょうどその枚数を選ぶ（決定 ``DISCARD_OPPONENT_ENERGY``。すべての組を選べる）。H > M（M = 0 をふくむ）なら、ログ ``user_rule_count_short``
+    - 「おもて」0・相手がこのワザで HP 以上・効果を受けない・タケシの保護なら何もしない（不足の記録もない）"""
+
+    rule: str = E.USER_DESTRUCTIVE_FIRE_RULE
+
+    def run(self, run: AttackRun) -> bool:
+        heads = run.heads(self.heads_of)
+        opponent = 1 - run.player
+        target = run.opponent_active()
+        if not heads or target is None or run.knocked_out(target):
+            if heads and target is not None:
+                run.ko_prevention_conflict(target, opponent)
+            return False
+        if not any(run.state.card_def(uid).category == "energy" for uid in target.energy):
+            note_count_short(run, element="discard_opponent_energy", target_player=opponent, required=heads, available=0, processed=0, rule=self.rule)
+            return False
+        if not self._energy(run, target) or not reaches(run.res, run.fs, opponent, target, E.ENERGY_DISCARD_ELEMENT):
+            return False
+        void = self._voided(run, target)
+        if void is not None:
+            E.note_energy_discard_voided(run.state, void, cause=E.DISCARD_BY_ATTACK, by_player=run.player, effect=str(run.key))
+            return False
+        options = self._energy(run, target)
+        count = min(heads, len(options))
+        problems = {uid: E.energy_discard_problem(run.state, target, uid, cause=E.DISCARD_BY_ATTACK, by_player=run.player) for uid in options}
+        blocked = tuple(uid for uid in options if problems[uid] is not None)
+        if len(options) - len(blocked) < count:
+            raise UnsupportedError(*problems[blocked[0]])
+        if count == len(options):
+            self._discard_cards(run, target, tuple(options), heads)
+            return False
+        code, reason = problems[blocked[0]] if blocked else (None, None)
+        run.suspend(kind=DISCARD_OPPONENT_ENERGY, player=run.player, options=options, min_choices=count, max_choices=count,
+                    extra=(("target", target.pokemon_id), ("heads", heads)) + _unresolved_extra(blocked, code, reason), carry=True)
+        return True
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        return kind_grouped_answers(run.state, decision.context_value("target"), decision, frozenset(decision.context_value("unresolved_choices", ())))
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        opponent = 1 - run.player
+        found = run.state.find_pokemon(run.carried["target"])
+        heads = run.carried["heads"]
+        if (found is None or found[0] != opponent or heads != run.heads(self.heads_of) or len(set(choices)) != len(choices)
+                or len(choices) != min(heads, len(self._energy(run, found[1]))) or any(uid not in self._energy(run, found[1]) for uid in choices)):
+            raise RuntimeError(f"トラッシュに選んだカード {choices} が、相手の対戦ポケモンについている「おもて」の数（足りなければすべて）のカードではない（エンジンの不具合）")
+        self._discard_cards(run, found[1], tuple(choices), heads)
+
+    def _discard_cards(self, run: AttackRun, target: PokemonInPlay, cards: tuple[int, ...], heads: int) -> None:
+        opponent = 1 - run.player
+        attacker = run.attacker()
+        available = len(self._energy(run, target))
+        for energy in tuple(uid for uid in target.energy if uid in cards):
+            E.discard_energy_from_play(
+                run.state, target, (energy,), cause=E.DISCARD_BY_ATTACK, by_player=run.player,
+                log=lambda energy=energy: run.state.add_event("discard_attached_energy", player=opponent, pokemon=target.card, pokemon_id=target.pokemon_id,
+                                                              energy=energy, effect=str(run.key), attacker=run.player, attacker_pokemon_id=attacker.pokemon_id))
+        if heads > available:
+            note_count_short(run, element="discard_opponent_energy", target_player=opponent, required=heads, available=available, processed=len(cards), rule=self.rule)
+
+
+BUILDERS |= {
+    # マウンテンクラッシュ: ダメージ → 「うら」が出るまでコイン → 「おもて」の数ぶん相手の山札の上からトラッシュ（足りなければあるだけ。利用者の指定）
+    E.DamageThenMillOpponentUntilTailsUpToDeck: lambda e: (Damage(OPP, Printed()), MillOpponentDeckUntilTailsUpTo(rule=e.attack_rule)),
+    # はかいのほのお（利用者の指定の順番）: 宣言の条件（炎エネルギーカード 1 枚以上）→ その枚数のコイン → 「おもて」の数の自分の炎のトラッシュ → ダメージ → 「おもて」の数の相手の
+    # エネルギーカードのトラッシュ（足りなければすべて）
+    E.CoinsPerOwnTypedCardsDiscardThenDamageThenOpponentEnergy: lambda e: (
+        OwnTypedEnergyCardsRequired(e.energy_type), Coin("coin", per_attached=e.energy_type), DiscardOwnTypedEnergyByHeads(e.energy_type, heads_of="coin", copy_need=0),
+        Damage(OPP, Printed()), DiscardOpponentEnergyUpToHeads(heads_of="coin", rule=e.attack_rule),
+    ),
+}

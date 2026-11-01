@@ -98,8 +98,8 @@ class MigrationChainTest(unittest.TestCase):
         self.assertEqual(after["fields_used_by_engine"], before["fields_used_by_engine"] + ["pokemon.dex"])
         self.assertEqual(sorted(key for key in set(before) | set(after) if before.get(key) != after.get(key)),
                          # v0.129: cards（pool_v0_129 の 1 枚を加えた）と pool_v0_129 も変わる。v0.130: pool_v0_130（とりかえっこプリーズ）も。v0.131: pool_v0_131（ナッシー[Exeggutor]）も。
-                         # v0.132: pool_v0_132（ヤドキング）も
-                         ["cards", "catalog_scope", "engine_user_corrections", "fields_used_by_engine", "pool_v0_129", "pool_v0_130", "pool_v0_131", "pool_v0_132", "source",
+                         # v0.132: pool_v0_132（ヤドキング）も。v0.133: pool_v0_133（ひかるバンギラス）も
+                         ["cards", "catalog_scope", "engine_user_corrections", "fields_used_by_engine", "pool_v0_129", "pool_v0_130", "pool_v0_131", "pool_v0_132", "pool_v0_133", "source",
                           "source_migrations"])
         self.assertEqual(before["source_migrations"], after["source_migrations"][:-1])
         self.assertEqual(after["fields_copied"], before["fields_copied"])  # 分類の 3 つの欄はカードの写す欄に加えていない

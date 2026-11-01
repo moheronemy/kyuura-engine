@@ -735,6 +735,8 @@ class G37Test(unittest.TestCase):
         # v0.120: たつまき（「おもて」の数の相手のエネルギーカードのトラッシュ）。ワザを選んで自分のワザとして使うワザ（CopyAttackFromSource）は、選んだワザの要素で効果を与える
         # （v0.31 の CopyOpponentAttackEffect と同じく宣言しない）。docs/fossil-basic-virtual-attacks-v0.120.md
         "CoinsDiscardOpponentEnergyElseFail",
+        # v0.133: はかいのほのお（「おもて」の数の相手のエネルギーカードのトラッシュ。足りなければすべて）。マウンテンクラッシュは相手の山札への処理で、相手の対戦ポケモンへの効果ではない
+        "CoinsPerOwnTypedCardsDiscardThenDamageThenOpponentEnergy",
         # v0.121: ぶきみなとおぼえ（入れ替え）・でんじほう（マヒ）・おおあくび（ねむり）は相手に与える効果の要素を宣言する。docs/hand-bench-attack-conditions-v0.121.md
         "BenchOpponentHandBasicThenSwitchOrFail", "CoinsFailThenDamageParalyze", "StatusSelfAndOpponent",
         # v0.122: いやなかふん（どく・ねむり・こんらん・マヒ）。みだれうち（相手の場への配分のダメージ）・10まんボルト・きりもみアタック・ドリルダイブ（自分への効果）は相手の対戦ポケモンへの

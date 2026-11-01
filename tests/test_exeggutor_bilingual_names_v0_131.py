@@ -137,7 +137,7 @@ class RegistrationTest(unittest.TestCase):
         self.assertEqual(entry.effect, E.DEFAULT_EFFECTS.attack_entry(*PONYTA_STOMP).effect)
         self.assertEqual((printed["cost"], printed["damage"]), (["colorless", "colorless"], {"base": 20, "modifier": "+", "display": "20+"}))
         self.assertEqual([a.name_ja for a in self.pool.get(EXEGGUTOR).attacks], ["テレポート", "たまなげMAX"])
-        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()) - len(E.V0_132_ATTACKS), 1755)  # v0.132 のワザ（マッドインパクト）を除いた、v0.131 の時点の数
+        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()) - len(E.V0_132_ATTACKS) - len(E.V0_133_ATTACKS), 1755)  # 後の版のワザ（v0.132 のマッドインパクト・v0.133 の 2 つ）を除いた、v0.131 の時点の数
 
     def test_type_check_reads_the_whole_text_and_numbers(self):
         """``CoinBonusDamage`` の日英併記の書き方の照らしは全文と数（基本となるダメージ・追加・英語の文の数も）。登録の値・ダメージの目安が違えば受け付けない。"""

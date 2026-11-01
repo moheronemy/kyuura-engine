@@ -121,7 +121,8 @@ class MigrationChainTest(unittest.TestCase):
         self.assertEqual(set(new) - set(old), set(now.get("pool_v0_125", ())) | set(now.get("pool_v0_126", ())) | set(now.get("pool_v0_127", ()))
                          | set(now.get("pool_v0_129", ())) | set(now.get("pool_v0_130", ()))  # v0.130: とりかえっこプリーズ（pool_v0_130）も基点にない
                          | set(now.get("pool_v0_131", ()))  # v0.131: ナッシー[Exeggutor]（pool_v0_131）も基点にない
-                         | set(now.get("pool_v0_132", ())))  # v0.132: ヤドキング（pool_v0_132）も基点にない
+                         | set(now.get("pool_v0_132", ()))  # v0.132: ヤドキング（pool_v0_132）も基点にない
+                         | set(now.get("pool_v0_133", ())))  # v0.133: ひかるバンギラス（pool_v0_133）も基点にない
         self.assertNotIn(WIGGLYTUFF, old)
         self.assertEqual(before["kyuura_corrections"], [c for c in now["kyuura_corrections"] if c["migration"] != "v0.126"])
 
@@ -196,7 +197,8 @@ class ResearchLinksTest(unittest.TestCase):
             if case["card_id"] in OUT_OF_SCOPE and case["card_id"] not in later:
                 self.assertEqual(case["engine"], {"unregistered": True}, case)
             elif case["card_id"] in OUT_OF_SCOPE:
-                self.assertTrue(case["engine"]["stop_codes"], case)
+                # v0.133: ひかるバンギラスは利用者が指定した規則（user_specified_rule）か、特殊エネルギーの既存の停止コードに結んだ（tests/test_shining_tyranitar_v0_133.py）
+                self.assertTrue(case["engine"].get("stop_codes") or case["engine"].get("user_specified_rule"), case)
         self.assertEqual(set(OUT_OF_SCOPE) & load_card_pool().playable_ids, set(OUT_OF_SCOPE) & later)
         self.assertFalse(set(OUT_OF_SCOPE) & cards_before(read_extract(), "0.127"))
 

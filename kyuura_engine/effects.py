@@ -48787,6 +48787,8 @@ class UserSpecifiedRule:
     # v0.132: 指定の根拠の文書（採用の記録・研究の対応表の出典と同じ値）と、同じ指定で処理する、解決済みにしないほかの kyuura の論点（``kyuura_issue`` のほか）。v0.130 の記録は既定値のまま
     source: str = USER_SPECIFIED_RULE_SOURCE
     related_issues: tuple[str, ...] = ()
+    # v0.133: 処理に使う文面（印刷の文面のまま）と、採用した処理の差（ワザの規則は文面が書く処理を変えるところがあるので、どこが違うかを書く）。v0.130・v0.132 の記録は既定値のまま
+    text_difference: str = ""
 
     @property
     def issues(self) -> tuple[str, ...]:
@@ -49159,3 +49161,141 @@ V0_132_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
     PowerKey("neo1-049", 0): PowerEntry(BlockOpponentHandTrainerOnHeads(), "ちえくらべ", MIND_GAMES_TEXT, MIND_GAMES_TEXT, _KYUURA_PRINTED_TEXT),
 })
 DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_132_ATTACKS), V0_132_POWERS)
+
+
+# ---------------------------------------------------------------- v0.133（docs/shining-tyranitar-v0.133.md）
+
+# ひかるバンギラス（neo4-082）のマウンテンクラッシュ・はかいのほのおの印刷の文面（kyuura の写し。最新の説明・エラッタ・文面の訂正はない。kyuura に IMG-neo4-082 で全文を確かめた記録がある）
+MOUNTAIN_CRUSH_TEXT = "「うら」が出るまでコインを投げつづけ、その間に出た「おもて」の数ぶんのカードを、相手の山札の上からトラッシュする。"
+DESTRUCTIVE_FIRE_TEXT = ("自分についている「炎」エネルギーカードの枚数ぶんコインを投げ、「おもて」の数ぶんの「炎」エネルギーカードを、自分からトラッシュする。その後、「おもて」の数ぶんの"
+                         "「エネルギーカード」を、相手からトラッシュする。(自分についている「炎」エネルギーカードをトラッシュできないとき、このワザは失敗する。)")
+
+# 利用者が指定した 2 つのワザの処理（v0.133。docs/shining-tyranitar-v0.133.md 3 章）。v0.130 の所有者の規則・v0.132 の［ちえくらべ］の規則と同じ記録（``USER_SPECIFIED_RULES``）の別の種類で、
+# 処理に使う文面は印刷の文面のまま。公式の裁定・最新の説明・エラッタ・印刷の訂正としては記録せず、kyuura の UQ-STATED-COUNT-SHORT・UQ-DESTRUCTIVE-FIRE-FAILURE（歴史資料上の問い）は
+# 解決済みにしない。「足りなければあるだけ」はこの 2 つの対象だけの規則で、ほかのカードの不足の止め方（HC6・FC1・DU1・TW1 など）は変えない
+USER_TYRANITAR_RULE_SOURCE = "kyuura-engine user specification docs/shining-tyranitar-v0.133.md#3"
+USER_MOUNTAIN_CRUSH_RULE = "USER-MOUNTAIN-CRUSH-MILL-UP-TO-DECK"
+USER_DESTRUCTIVE_FIRE_RULE = "USER-DESTRUCTIVE-FIRE-DECLARE-ORDER-UP-TO"
+USER_TYRANITAR_DATE = "2026-11-01"
+NO_TYPED_ENERGY_CARDS_CODE = "NO_TYPED_ENERGY_CARDS"  # はかいのほのお: 自分に「炎」エネルギーカードがないので宣言できない（利用者の指定の宣言の条件。研究上の未解決ではない）
+USER_RULE_COUNT_SHORT_EVENT = "user_rule_count_short"  # 利用者の指定で、説明の数に足りないときにあるだけ処理したログ（公開の情報）
+
+
+def typed_energy_card_reading_open(state: GameState, pokemon: PokemonInPlay, energy_type: EnergyType) -> bool:
+    """v0.133: ``pokemon`` についている「``energy_type``」エネルギーカードの枚数が、エネルギーの色の読み方で変わりうるか（状態を変えない問い合わせ）。``programs.transform_energy_question``
+    （``cards=True``。TE1・SV5・RB1・BZ2・MEC1・CE3）が止める場面と同じ確かめで、真なら宣言の条件では拒否せず、ワザのコインの前の既存の止め方に任せる（色の論点を決めない）。"""
+    return (len(energy_type_readings(state, pokemon, energy_type)) > 1 or bool(ambiguous_rainbow_cards(state, pokemon, energy_type))
+            or bool(converted_energy_cards(state, pokemon, energy_type)) or bool(ambiguous_miracle_cards(state, pokemon, energy_type))
+            or bool(color_changed_cards(state, pokemon, energy_type)))
+
+
+def typed_energy_card_usage_problem(state: GameState, pokemon: PokemonInPlay, energy_type: EnergyType) -> IllegalActionError | None:
+    """v0.133（はかいのほのおの利用者の指定の 1）: ワザを実際に使うポケモン ``pokemon`` に「``energy_type``」エネルギーカード（``attached_basic_energy``。コインの枚数を決めるのと同じ数え方）が
+    1 枚もないなら、宣言を拒否する理由。色の読み方で枚数が変わりうるなら None（拒否せず、コインの前の既存の止め方に任せる）。必要なエネルギーの支払いとは別の確かめ。"""
+    if typed_energy_card_reading_open(state, pokemon, energy_type) or attached_basic_energy(state, pokemon, energy_type):
+        return None
+    return IllegalActionError(NO_TYPED_ENERGY_CARDS_CODE,
+                              f"ポケモン {pokemon.pokemon_id} に「{energy_type.ja}」エネルギーカードがついていないので、このワザは使えない（利用者が指定した宣言の条件。"
+                              f"{USER_DESTRUCTIVE_FIRE_RULE}。印刷の「トラッシュできないとき、このワザは失敗する」を、ワザを使ってから失敗する扱いにしない）")
+
+
+@dataclass(frozen=True)
+class DamageThenMillOpponentUntilTailsUpToDeck(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。「うら」が出るまでコインを投げつづけ、その間に出た「おもて」の数ぶんのカードを、相手の山札の上からトラッシュする
+    （v0.133。ひかるバンギラス（neo4-082）の「マウンテンクラッシュ」。kyuura の印刷の文面。CR-MOUNTAIN-CRUSH-PROCEDURE・CR-UNTIL-TAILS-NOT-CAPPED。docs/shining-tyranitar-v0.133.md 4 章）。
+
+    - 要素は ``Damage(OPP, Printed())`` → ``MillOpponentDeckUntilTailsUpTo``。ダメージが先（p.309）。コインはワザの説明のコインで、山札の枚数で省かない・打ち切らない（0 枚でも投げる）
+    - 山札が「おもて」の数より少ないとき、あるだけトラッシュする（``attack_rule``。``USER_SPECIFIED_RULES`` の ``USER_MOUNTAIN_CRUSH_RULE``。UQ-STATED-COUNT-SHORT は解決済みにしない）。
+      山札がなくなっても、その時点では負けにしない（負けは番の最初に引けないとき。既存の規定）
+    - 相手の山札への処理で、相手のポケモンへの効果ではない（相手の対戦ポケモンの「ダメージを受けない」「ワザをうけない」状態は、ダメージの要素だけに当てはまる）"""
+
+    attack_rule: str = USER_MOUNTAIN_CRUSH_RULE
+    implementation_id = "damage_then_mill_opponent_until_tails_up_to_deck"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "ダメージのあと、「うら」が出るまでのコインの「おもて」の数ぶん相手の山札の上からトラッシュするワザ"
+        problems = _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (MOUNTAIN_CRUSH_TEXT,))
+        return problems + _attack_rule_problems(self.attack_rule, attack)
+
+
+@dataclass(frozen=True)
+class CoinsPerOwnTypedCardsDiscardThenDamageThenOpponentEnergy(AttackEffect):
+    """自分についている「``energy_type``」エネルギーカードの枚数ぶんコインを投げ、「おもて」の数ぶんの「``energy_type``」エネルギーカードを、自分からトラッシュする。その後、「おもて」の数ぶんの
+    「エネルギーカード」を、相手からトラッシュする（v0.133。ひかるバンギラス（neo4-082）の「はかいのほのお」。kyuura の印刷の文面。CR-DESTRUCTIVE-FIRE-TEXT。docs/shining-tyranitar-v0.133.md 5 章）。
+
+    印刷の「(自分についている「炎」エネルギーカードをトラッシュできないとき、このワザは失敗する。)」の失敗の判定・順番・相手の不足は原典で決まらない（UQ-DESTRUCTIVE-FIRE-FAILURE・
+    UQ-STATED-COUNT-SHORT）。この型は利用者が指定した処理（``attack_rule``。``USER_DESTRUCTIVE_FIRE_RULE``）で処理し、論点は解決済みにしない:
+
+    1. 宣言の条件（``usage_problem``。必要なエネルギーの確かめのあと・こんらんのコインの前）: ワザを実際に使うポケモンに「炎」エネルギーカードが 1 枚以上。0 枚なら宣言を拒否する
+       （状態・乱数・ログを変えない。ワザを使ってから失敗する扱いにしない）。色の読み方で枚数が変わりうるなら拒否せず、コインの前の既存の止め方（TE1・SV5・RB1・BZ2・MEC1・CE3）
+    2. ``Coin(per_attached)``: そのときの「炎」エネルギーカードの枚数ぶん（ナツメのESPのやり直しの対象。最後の結果を使う）
+    3. ``DiscardOwnEnergy(heads_of)``: 「おもて」の数ぶん、自分の「炎」エネルギーカードを選んでトラッシュ（選ぶのはワザを使ったプレイヤー）。「おもて」0 は 0 枚で、失敗ではない
+    4. ``Damage(OPP, Printed())``: 基本となるダメージ 50。弱点・抵抗力・持続する効果などはトラッシュのあとのその時点の既存の計算
+    5. ``DiscardOpponentEnergyUpToHeads``: 「おもて」の数ぶん、相手の対戦ポケモンのエネルギーカードを選んでトラッシュ。足りなければあるだけすべて（この対象だけの規則。たつまきの FC1 は変えない）
+
+    相手が防護されていても、コインと自分のトラッシュは行う（ダメージ・相手のトラッシュは、それぞれの要素の既存の防護の規定）。"""
+
+    energy_type: EnergyType = EnergyType.FIRE
+    attack_rule: str = USER_DESTRUCTIVE_FIRE_RULE
+    implementation_id = "coins_per_own_typed_cards_discard_then_damage_then_opponent_energy"
+    opponent_effect_elements = (ENERGY_DISCARD_ELEMENT,)  # 相手の対戦ポケモンのエネルギーカードのトラッシュ（要素の並びの宣言と同じ。v0.120 のたつまきと同じ）
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "自分のエネルギーカードの枚数ぶんのコインで、自分と相手のエネルギーカードをトラッシュし、ダメージを与えるワザ"
+        problems = _check_form(attack, what, damage="fixed", cost_types=(self.energy_type,))
+        problems += _check_exact_text(attack, what, (DESTRUCTIVE_FIRE_TEXT,) if self.energy_type is EnergyType.FIRE else ())
+        return problems + _attack_rule_problems(self.attack_rule, attack)
+
+    def usage_problem(self, state: GameState, attacker: PokemonInPlay) -> IllegalActionError | None:
+        return typed_energy_card_usage_problem(state, attacker, self.energy_type)
+
+
+def _attack_rule_problems(rule: str, attack: Attack) -> list[str]:
+    """v0.133: ワザの登録の型が、利用者が指定した規則（``USER_SPECIFIED_RULES``）の記録と同じ印刷の文面・処理に使う文面のときだけ登録できる（未対応のワザを一般に受け付けない）。"""
+    if not any(r.rule == rule and r.printed_text == attack.text_ja == r.play_text and r.key.split("/", 1)[1].startswith("attack/") for r in USER_SPECIFIED_RULES.values()):
+        return [f"ワザの処理の利用者の指定（{rule}）の記録がない・文面が記録と違う"]
+    return []
+
+
+USER_SPECIFIED_RULES = MappingProxyType({**USER_SPECIFIED_RULES, **{record.key: record for record in (
+    UserSpecifiedRule(
+        "neo4-082/attack/0", USER_MOUNTAIN_CRUSH_RULE, MOUNTAIN_CRUSH_TEXT, MOUNTAIN_CRUSH_TEXT,
+        "マウンテンクラッシュで、「うら」が出るまでのコインの「おもて」の数が、相手の山札の枚数より多いとき（山札 0 枚をふくむ）",
+        "1. 通常どおり基本となるダメージ 30 を処理する → 2. 「うら」が出るまでコインを投げる（山札の枚数で省かない・打ち切らない。ナツメのESPでやり直したら最後の並び）→ "
+        "3. 「おもて」の数と相手の残りの山札の枚数の少ない方だけ、山札の上からトラッシュする。山札がなくなっても、その時点では負けにしない（負けは番の最初に引けないとき）",
+        "neo4-082 の attack/0 だけ（写した姿・［サイコリンク］などで使うときも同じワザの処理）。「足りなければあるだけ」を、ほかのカードの山札・エネルギー・手札の不足"
+        "（HC6・FC1・DU1・TW1・MW1・FU1 など）に広げない",
+        "相手のポケモンへの防護を相手の山札に当てはめるか（当てはめない既存の扱い。MillOpponentDeck と同じ）、おもてのカードのある山札（既存の止め方）",
+        "おもての数と相手の残り山札枚数の少ない方だけ、山札の上からトラッシュする。",
+        "kyuura に記録なし（71d1728・9242b9b とも。今回の指定は kyuura に書き込んでいない。docs/shining-tyranitar-v0.133.md 12 章の報告事項）",
+        "公式の裁定・最新の説明・エラッタ・転記の訂正・UQ-STATED-COUNT-SHORT の解決",
+        "UQ-STATED-COUNT-SHORT", specified_on=USER_TYRANITAR_DATE, source=USER_TYRANITAR_RULE_SOURCE,
+        text_difference="印刷の文面は、山札が「おもて」の数より少ないときを書かない（あるだけトラッシュするか・その要素を処理しないかは UQ-STATED-COUNT-SHORT）。採用した処理は、少ない方の枚数だけ"
+                        "トラッシュする（印刷にない「少なければあるだけ」を補う。英語版の文面を根拠にしない）"),
+    UserSpecifiedRule(
+        "neo4-082/attack/1", USER_DESTRUCTIVE_FIRE_RULE, DESTRUCTIVE_FIRE_TEXT, DESTRUCTIVE_FIRE_TEXT,
+        "はかいのほのおの、炎エネルギーカードが 0 枚のとき・「おもて」が 0 のときの失敗の判定、50 ダメージと 2 つのトラッシュの順番、相手のエネルギーカードが「おもて」の数より少ないとき",
+        "1. 必要なエネルギーとは別に、自分についている「炎」エネルギーカードが 1 枚以上あることを宣言の条件として確かめる（0 枚なら状態・乱数・ログを変えずに宣言を拒否する）→ "
+        "2. 自分の「炎」エネルギーカードの枚数ぶんコインを投げる → 3. 「おもて」の数ぶん、自分の「炎」エネルギーカードを選んでトラッシュする → 4. 基本となるダメージ 50 を処理する"
+        "（弱点・抵抗力・持続する効果などの既存の計算）→ 5. 「おもて」の数ぶん、相手のエネルギーカードを選んでトラッシュする（足りなければ残っている分すべて）。1 枚以上あれば「おもて」0 でも"
+        "成功（双方のトラッシュ 0 枚・50 の通常の計算）。相手が防護されていても、コインと自分の炎のトラッシュは行う",
+        "neo4-082 の attack/1 だけ（写した姿・［サイコリンク］など、ワザを実際に使うポケモンのカードで数える）。「足りなければあるだけ」を、たつまき（FC1）・ドライアップ（DU1）・"
+        "怪電波マシーン（TW1）などに広げない",
+        "「炎」エネルギーカードに特殊エネルギーを数えるか（UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY。既存の止め方 RB1・BZ2・MEC1・CE3・TE1・SV5）、相手のワザとして使うときに説明が条件を"
+        "書かないコピー（既存の HC9）",
+        "以下の順序を採用します。",
+        "kyuura に記録なし（71d1728・9242b9b とも。今回の指定は kyuura に書き込んでいない。docs/shining-tyranitar-v0.133.md 12 章の報告事項）",
+        "公式の裁定・最新の説明・エラッタ・転記の訂正・UQ-DESTRUCTIVE-FIRE-FAILURE・UQ-STATED-COUNT-SHORT の解決",
+        "UQ-DESTRUCTIVE-FIRE-FAILURE", specified_on=USER_TYRANITAR_DATE, source=USER_TYRANITAR_RULE_SOURCE, related_issues=("UQ-STATED-COUNT-SHORT",),
+        text_difference="印刷は「炎」エネルギーカードを「トラッシュできないとき、このワザは失敗する」と書く（ワザを使ったあとの失敗。失敗の判定の時点・「おもて」0 は書かない）。採用した処理は、"
+                        "0 枚を宣言の拒否にし（ワザを使ったことにならない）、1 枚以上なら「おもて」0 でも失敗にしない。順番（自分のトラッシュ → 50 → 相手のトラッシュ）は p.309 の「まず、"
+                        "ダメージ」と違う並びを指定に従って採る。相手が足りないときの「あるだけ」は印刷にない（英語版の文面を根拠にしない）"),
+)}})
+
+
+# v0.133 の登録（ワザ 2）。どちらも kyuura の印刷の文面（最新の説明はない）で、処理は利用者が指定した規則（``attack_rule``）。「デッキに1枚まで」は v0.82 の ``deck_limit``（ルール文から）
+V0_133_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    AttackKey("neo4-082", 0): _printed(DamageThenMillOpponentUntilTailsUpToDeck(), "マウンテンクラッシュ", MOUNTAIN_CRUSH_TEXT),
+    AttackKey("neo4-082", 1): _printed(CoinsPerOwnTypedCardsDiscardThenDamageThenOpponentEnergy(), "はかいのほのお", DESTRUCTIVE_FIRE_TEXT),
+})
+DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_133_ATTACKS)

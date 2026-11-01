@@ -467,7 +467,7 @@ class ExistingQuizTest(unittest.TestCase):
         self.assertEqual(d.kind, QUIZ_ANSWER)
         self.assertIsNone(d.context_value(VALUE_RANGE))
         self.assertEqual(d.options, tuple(range(len(E.quiz_answer_names(state)))))
-        self.assertEqual(len(E.quiz_answer_names(state)), 512)  # 名前の候補は変わらない（その1 はトレーナー）
+        self.assertEqual(len(E.quiz_answer_names(state)), 513)  # 名前の候補は変わらない（その1 はトレーナー）。v0.133: 「ひかるバンギラス」が加わって 513（tests/test_catalog_contract.py）
         self.assertIn("option_count", observe(state, 0)["decision"])
         assert_answer_stops(self, state, (len(d.options),), "INVALID_CHOICE", IllegalActionError)
         right = answer(state, (d.context_value("names").index("エビワラー"),))

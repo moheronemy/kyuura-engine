@@ -783,6 +783,8 @@ PUBLIC_EVENTS = frozenset({
     "evolution_heal_declined", "stadium_attack_coin", "chaos_check", "chaos_answered", "chaos_not_borrowable",
     # v0.132: 相手の［ちえくらべ］を使うかの答え・コインの判定・使えなかったトレーナーカードを山札の上に置いた（見せたカード・コイン・答えは公開の情報）
     "trainer_reaction_answered", "trainer_reaction_check", "trainer_blocked",
+    # v0.133: 利用者の指定で、説明の数に足りないときにあるだけ処理した記録（必要な数・処理できる数・処理した数。山札の枚数・場のエネルギーカードは公開の情報）
+    "user_rule_count_short",
     # v0.58: 特殊エネルギーをつけたときの効果（回復・ダメージ）・ばくれつのスタジアムがない場面・サイキックコントロールで使えるカードがない・使わなかった
     # （場・トラッシュは公開の情報）
     "energy_heal", "energy_damage", "stadium_discard_none", "discard_trainer_use_none", "discard_trainer_use_declined",
