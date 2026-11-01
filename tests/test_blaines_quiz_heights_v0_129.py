@@ -520,6 +520,14 @@ class DocumentTest(unittest.TestCase):
         for phrase in ("QZ1", WITHOUT_DEX, NOT_AVAILABLE, E.USER_QUIZ_HEIGHT_OFFICIAL_ZUKAN, "9242b9b", "71d1728",
                        f"「{E.USER_SPECIFIED_REFERENCES[f'{QUIZ}/trainer'].instruction}」"):
             self.assertIn(phrase, text)
+        for heading in ("## 1. 開始点と範囲", "## 2. 身長のデータの移行（kyuura 9242b9b）", "## 3. 利用者が指定した参照値（USER-QUIZ-HEIGHT-OFFICIAL-ZUKAN）",
+                        "## 4. カードの処理", "## 5. 答えの表現（値で答える決定）", "## 6. 図鑑番号・身長がないカード、手札にポケモンがない、ほかの経路",
+                        "## 7. 見える範囲・保存・不変条件・監査", "## 8. 対戦の方策・正式な対戦の組", "## 9. 数", "## 10. 検証", "## 11. 制限・kyuura への報告事項"):
+            self.assertIn(heading + "\n", text)
+        self.assertRegex((ROOT / "README.md").read_text(encoding="utf-8"), r"\n- v0\.129（(今のエンジンの版。)?`kyuura_engine` の版は 0\.129\.0）: カツラのクイズ その1")
+        self.assertIn("## v0.129: カツラのクイズ その1と、公式図鑑の種族の身長の参照値\n", (ROOT / "docs" / "implementation-status.md").read_text(encoding="utf-8"))
+        self.assertIn("### v0.129: カツラのクイズ その1と公式図鑑の身長", (ROOT / "docs" / "rules-2000-02-14.md").read_text(encoding="utf-8"))
+        self.assertIn("## v0.129: 公式図鑑の種族の身長の写しと、カツラのクイズ その1\n", (ROOT / "docs" / "data-provenance.md").read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

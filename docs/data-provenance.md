@@ -12,6 +12,7 @@
 | 元のコミット | `71d1728938fb4c8fefde9b82779cdef74beb612d`（v0.128 から。kyuura `main` の PR #7 のマージ。目録の分類。下の v0.128 の移行の章。v0.126〜v0.127 は `57d01f45cfb8b086d03dc0525b329cf6adeff69b`（kyuura のブランチ `claude/trainer-reaction-faceup-deck-ownership-research` の固定コミット）、v0.125 は `134a664c6adf67d5604148a31b58e1a7d26d4d6d`（kyuura のブランチ `claude/eloquent-lamport-5xyv5r` の固定コミット）、v0.124 は `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`（kyuura `main` の PR #6 のマージ。木は研究の最後のコミット 9731354 と同じ）、v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`（kyuura のブランチ `claude/v0122-names-text-trainer-procedures` の固定コミット）、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`（kyuura のブランチ `claude/baby-data-engine-v0113-handover` の固定コミット。下の v0.114 の章）、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`）。それより前は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69〜v0.96。kyuura の main。形式 3 のカードデータ。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`（kyuura docs/engine-readiness.md が「基準にする調査データ」としたコミット。過去の原典照合の記録 card_verification.json はこのコミットの写しと照らした履歴）。下の v0.69 の章） |
 | 研究の基準 | `71d1728938fb4c8fefde9b82779cdef74beb612d`（v0.128 から。写しの元と同じ。v0.126〜v0.127 は 57d01f4、v0.125 は 134a664、v0.124 は b9e7cff、v0.123 は 74b3ceb、v0.121〜v0.122 は 2fe0bc0、v0.114〜v0.120 は e519b99、v0.97〜v0.113 は 73a1690）。それより前は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69〜v0.96。写しの元と同じ。下の v0.69 の章）。v0.68 までは `3f349085645f47d0649a6cacece3680caeae50bf`（2026-10-15 から。ブランチ `claude/cool-ptolemy-5vtgsg`。裁定・論点・最新の説明・照合の記録を照らすコミット。カードの写しは作り直していない。[verified-record-reuse.md](verified-record-reuse.md)）。v0.18a〜v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。[research-alignment-v0.18a.md](research-alignment-v0.18a.md)） |
 | 元のファイル | `data/cards.json`（schema_version 3。v0.68 までは 2） |
+| 種族の身長（v0.129 から） | kyuura `9242b9be89be0f747279f39c11875d1ed61763ec`（`main` の PR #8 のマージ。木は報告の最後のコミット 59a99fc と同じ）の `data/species_heights.json` を `scripts/extract_species_heights.py` で `kyuura_engine/data/species_heights.json` に写す（全国図鑑 No.001〜251・通常の姿の公式図鑑の値。カードの写しの元とは別に固定。下の v0.129 の章） |
 | 生成 | `scripts/extract_kyuura_cards.py`（`git show <コミット>:data/cards.json` で読むので、kyuura の作業ツリーの状態に左右されない。kyuura は読むだけで変更しない） |
 | 照合の記録 | `kyuura_engine/data/card_verification.json`（このリポジトリの作業記録。2026-10-14 までの『オフィシャルブック2000』との照合。履歴として残し、書き換えない） |
 | 採用・外部照合の記録 | `kyuura_engine/data/card_sources.json`（2026-10-15 からの方針。kyuura データの採用と pcg-search.com との照合。[card-data-policy.md](card-data-policy.md)。まだ記録はない） |
@@ -1977,6 +1978,25 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - kyuura への報告事項: 9 枚の `engine_status` は今回の登録を写すと `registered`。エンジンの新しい問い HZ1・XP1・SX1・SX2・TN1 は kyuura に対応する記録がない（HZ1 は UQ-UP-TO-ZERO-CHOICE、
   SX1・TN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形の別のカードの問い）。v0.66 の「ナツメのESPと「うら」が出るまでのコインは起こらない」はエンジンの前提の誤りで、研究の論点ではない（kyuura は
   変えていない）。
+
+## v0.129: 公式図鑑の種族の身長の写しと、カツラのクイズ その1
+
+[blaines-quiz-heights-v0.129.md](blaines-quiz-heights-v0.129.md) の 2 章・3 章・11 章。
+
+- 身長の写し（移行のコミット `d1878bf`。カードの登録は含まない）: kyuura `9242b9b`（PR #8 のマージ。報告の最後のコミット `59a99fc` と木 `b1fbdfc` が同じ）の
+  `data/species_heights.json`（git のブロブ `28994130…`・sha256 `0348c5e7…`）から、状態が `confirmed` の 251 件（No.001〜251。2026-10-31 に `SRC-ZUKAN-JP` の詳細ページから取得）を
+  `kyuura_engine/data/species_heights.json` に写した。名前は公式の表記のまま（No.233 は「ポリゴン２」）。原表記（m）と整数 cm を両方持ち、十進数のまま換算して一致を確かめる。
+  確定していない種族は値を持たない（今は 0 件）。実行時に公式サイトへ接続しない。全 251 件が kyuura の値と 1 件ずつ同じことをテストで確かめた。
+- カードの写しの元・研究の基準は `71d1728` のまま（`9242b9b` の `data/cards.json` は同じブロブ。段を加えていない）。写しの `fields_used_by_engine` に `pokemon.dex` を加えた（写す欄・値は同じ）。
+- 写しの組 `pool_v0_129`（カツラのクイズ その1 GD5-016）。採用の記録は kyuura 71d1728 の印刷の文面（`kyuura_printed_text`）で、正解の参照値は別の欄 `user_specified_reference`
+  （利用者の指定 USER-QUIZ-HEIGHT-OFFICIAL-ZUKAN。2026-11-01）。印刷の訂正・公式の裁定・最新の説明・エラッタではなく、`adopted_printed_text`（1,390）・`user_simplified_text`（v0.127）に
+  数えない。研究の対応表の区分 `latest_descriptions.user_specified_references` に分けて記録した。
+- 図鑑番号はカードの写しの `pokemon.dex` のまま使い、名前からの推測・欠けた番号の補いはしない。写しのポケモン 1,064 枚のうち図鑑番号のないもの 225 枚（拡張シートのポリゴン ES1-033 など）は
+  クイズで選ぶと `UNSUPPORTED_QUIZ_HEIGHT_WITHOUT_DEX` で止まる（エンジンの未対応）。
+- kyuura への報告事項（kyuura のデータ・記録は変えていない。解決したとは記録しない）: 公式図鑑の値を正解に採用した利用者の指定（3 章）と、kyuura の引き継ぎの 3 章の未確認事項（カードの時期の
+  図鑑の値と今の値が同じかは確かめていない）が残ること。図鑑番号のないポケモンのカード 225 枚（クイズで選べない）。カツラのクイズ その1に kyuura の最新の説明・照合の記録がないこと。
+  QZ1（UQ-CARD-USE-WITHOUT-TARGET）をその1 にも当てはめたが、kyuura の記録（`data/sidecar/rulings.json`）の QZ1 の当てはめはその3（PMCG6-082）だけであること。表向きの山札で既存のカツラのクイズ その3の答えの拒否から正誤が漏れうること（11 章）。
+  未登録のまま残るカード（とりかえっこプリーズ PR1-027・ナッシー PR1-075・PR1-077・ヤドキング neo1-049・ひかるバンギラス neo4-082）。
 
 ## v0.128: 写しの元・研究の基準を kyuura 71d1728 に上げる移行
 
