@@ -1979,6 +1979,23 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   SX1・TN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形の別のカードの問い）。v0.66 の「ナツメのESPと「うら」が出るまでのコインは起こらない」はエンジンの前提の誤りで、研究の論点ではない（kyuura は
   変えていない）。
 
+## v0.130: とりかえっこプリーズと、利用者が指定した交換したカードの所有者
+
+[trade-please-ownership-v0.130.md](trade-please-ownership-v0.130.md) の 1〜3 章・12 章。
+
+- 写しの元・研究の基準は kyuura `71d1728` のまま、身長の写しは `9242b9b` のまま（移行していない。v0.129 の 2 つの固定コミットの構造を保った）。写しの組 `pool_v0_130`（とりかえっこプリーズ PR1-027）を加え、
+  `scripts/extract_kyuura_cards.py` で写しを作り直した（PR1-027 の値は訂正 FIX-PR1-027-TEXT-JA（段 v0.126）のあと。ほかのカードの値は同じ。`--check` で kyuura 71d1728 と一致）。
+- 採用の記録（`card_sources.json`。1,282 → 1,283 件）: 処理に使う文面の根拠は最新の説明 `LD-PR1-027-TRAINER`（印刷の文面は照合だけに使う）。所有者の規則は別の欄 `user_specified_rule`
+  （利用者の指定 USER-SWAP-OWNERSHIP-RECEIVER。2026-11-01）に書き、研究の対応表の新しい区分 `latest_descriptions.user_specified_rules` に挙げた（文面の区分 `registered_trainers` とは別。
+  v0.127 の `user_simplified_text`・v0.129 の `user_specified_references` とも別）。最新の説明は `trainer_records_not_registered` から `registered_trainers` に移した。
+- 研究の対応表の kyuura の事例: UQ-SWAP-PLEASE-OWNERSHIP の PR1-027・PMCG5-087 は新しい扱い `user_specified_rule`（利用者の指定で処理する。論点は解決済みにしない）、UQ-CHAOS-GYM-BORROWED-TURN の
+  PR1-027 は停止コード `UNRESOLVED_CHAOS_GYM_BORROWED_TURN`（CH1。engine_rulings に v0.130 の当てはめを加えた）、UQ-SWAP-PLEASE-OWNERSHIP の neo1-049 は unregistered のまま。停止コード 313・
+  研究の対応表の未解決 314・kyuura の論点 90 は変わらない。
+- 名前の末尾の「！」（印刷）は kyuura に未反映の表記で、写し・登録では加えていない。カードの画像・外部照合・ガイドブックの読み直しはしていない（最新の説明・図版の照合は kyuura の記録
+  CC-PR1-027-P293・IMG-PR1-027 のまま）。
+- kyuura への報告事項（kyuura のデータ・記録は変えていない）: 12 章。採用した所有者の簡略化と範囲、公式の裁定ではないこと、実装を確かめられる最後のコミット・登録・テストの場所、
+  UQ-SWAP-PLEASE-OWNERSHIP・UQ-CHAOS-GYM-BORROWED-TURN は未解決のままであること、残った制限。
+
 ## v0.129: 公式図鑑の種族の身長の写しと、カツラのクイズ その1
 
 [blaines-quiz-heights-v0.129.md](blaines-quiz-heights-v0.129.md) の 2 章・3 章・11 章。
