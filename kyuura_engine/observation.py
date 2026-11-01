@@ -89,6 +89,7 @@ from .decisions import (
     DISCARD_STADIUM,
     EVOLUTION_SONG_POKEMON,
     OPPONENT_HAND_TO_DECK,
+    SELECT_EXCHANGE_CARD,
     SELECT_COUNTER_COUNT,
     ACCEPT_REQUEST,
     HAND_TO_ACTIVE,
@@ -157,6 +158,7 @@ OPTION_MEANINGS: dict[str, str] = {
     SELECT_DRAW_COUNT: "number",  # v0.54: エリカで引く枚数
     TAKE_LOOKED_CARDS: "card",  # v0.55: カスミのいかり（見た山札の上のカード。決めるプレイヤーは見ている）
     OPPONENT_HAND_TO_DECK: "card",  # v0.55: ロケット団のおねーさん（見た相手の手札のトレーナーカード。決めるプレイヤーは見ている）
+    SELECT_EXCHANGE_CARD: "card",  # v0.130: とりかえっこプリーズ（見た相手の手札のカード。決めるプレイヤーは見ている）
     SELECT_COUNTER_COUNT: "number",  # v0.55: いいきずぐすりでとりのぞく数
     SELECT_COLOR: "color",  # v0.48: ``effects.COLORS`` の位置（選べるものに色の名前を添える）
     # v0.56: 相手の答え（1 = オーケー）・見た相手の手札のたねポケモン・相手の手札の位置（おもてを見ない）・手札からバトル場に出すたねポケモン・サイドと交換する手札のカード
@@ -234,7 +236,7 @@ HIDDEN_COUNT_KINDS = frozenset({SPLIT_FROM_DECK, CHALLENGE_BENCH, QUIZ_CARD, QUI
 PRIZE_POSITION_KINDS = frozenset({TAKE_PRIZE, SELECT_PRIZE_CARD})
 # v0.55: 決めるプレイヤーが効果で見た相手の手札のカードを選べるものにする決定（ロケット団のおねーさん）。選べるもののカードは、決めるプレイヤーに見える（相手の手札を
 # 続けて見せる効果ではないので、観測の手札は公開しない）
-LOOKED_HAND_KINDS = frozenset({OPPONENT_HAND_TO_DECK, OPPONENT_HAND_TO_BENCH})  # v0.56: エリカの香水も見た相手の手札から選ぶ
+LOOKED_HAND_KINDS = frozenset({OPPONENT_HAND_TO_DECK, OPPONENT_HAND_TO_BENCH, SELECT_EXCHANGE_CARD})  # v0.56: エリカの香水も見た相手の手札から選ぶ。v0.130: とりかえっこプリーズも
 
 
 def _check_viewer(viewer) -> None:
@@ -600,6 +602,12 @@ def _looker_only(event, viewer) -> bool:
     return viewer is not None and viewer == event.get("looker")
 
 
+def _exchange_parties(event, viewer) -> bool:
+    """v0.130: とりかえっこプリーズで選んだカード・交換したカードと所有者の変更は、交換にかかわる 2 人（使ったプレイヤー ``player`` と相手 ``opponent``・手札の持ち主 ``owner``）だけに
+    見える（観戦者には見せない。2 人とも相手の手札を見て、選んだカードを知っている）。"""
+    return viewer is not None and viewer in (event.get("player"), event.get("opponent"), event.get("owner"))
+
+
 def _amount_unless_private(event, viewer) -> bool:
     """v0.95: 受けなかったダメージの量（``amount``）は、印 ``amount_private``（基本となるダメージが見た手札の中身で決まるワザ。``kernel._amount_privacy``）があれば対戦する
     プレイヤーだけに見える（観戦者には見せない）。印がなければ全員（v0.94 までと同じ）。"""
@@ -655,6 +663,10 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
     "damage_guard_check": (("amount",), _amount_unless_private),
     "reflect_shield_check": (("amount",), _amount_unless_private),
     "timed_damage_guard_check": (("amount",), _amount_unless_private),  # v0.109: ぬるぬる・かわす・ブリンク（同じ扱い）
+    # v0.130（docs/trade-please-ownership-v0.130.md 8 章）: とりかえっこプリーズで選んだカード（選んだプレイヤーと手札の持ち主）・交換したカードと所有者の変更（交換した 2 人。観戦者には
+    # 交換が成立したこと・番号・枚数だけ。uid・カードの id・出所を見せない）
+    "exchange_selected": (("card", "card_id"), _exchange_parties),
+    "cards_exchanged": (("given_card", "taken_card", "card_ids", "ownership"), _exchange_parties),
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({

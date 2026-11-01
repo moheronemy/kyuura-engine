@@ -507,11 +507,13 @@ TOP_FIELDS_SINCE = {
     "frozen_forms": 29,  # v0.124: 処理のあいだ固定した変身の状態
     "face_up_deck": 31,  # v0.126: おもてを上にして山札に置かれたカード（フラッシュ）
     "user_simplifications": 32,  # v0.127: 利用者が指定した簡略ルールで処理するワザの対象（登録表とカードの組から求める識別の情報）
+    "ownership_changes": 33,  # v0.130: 対戦の中の所有者の変更の記録（とりかえっこプリーズの交換）
 }
 # v0.125: 形式 30 は、持続する効果 ``"damage_reduction"`` の項目 ``non_attack_unresolved``（「ふくらむ」の効果だけ）を加えた（場のポケモン・最上位の項目は変わらない）
 # v0.126: 形式 31 は、最上位の ``face_up_deck``（フラッシュでおもてにした山札のカード）を加えた
 # v0.127: 形式 32 は、``halt`` の ``interruption``（途中停止の記録。なければ null）と、最上位の ``user_simplifications`` を加えた
-LATEST_FORMAT = 32
+# v0.130: 形式 33 は、所有者の変わったカードの ``cards`` の ``origin`` と、最上位の ``ownership_changes`` を加えた
+LATEST_FORMAT = 33
 # v0.99: 形式 25 で、場のポケモンの履歴の受けた記録（``"kind": "received"``）に加わった項目（ダメージを受けた場所）
 RECEIVED_FIELDS_SINCE = {"active_damage": 25}
 
@@ -549,6 +551,8 @@ def _project(data_latest: dict, version: int) -> dict:
         data["trainer_in_use"] = {k: v for k, v in data["trainer_in_use"].items() if k != "user"}  # v0.57: 借りて使っているプレイヤーは形式 17 から
     if version < 32 and isinstance(data.get("halt"), dict):
         data["halt"] = {k: v for k, v in data["halt"].items() if k != "interruption"}  # v0.127: 途中停止の記録は形式 32 から
+    if version < 33 and "cards" in data:
+        data["cards"] = {uid: {k: v for k, v in card.items() if k != "origin"} for uid, card in data["cards"].items()}  # v0.130: 出所は形式 33 から
     if version < 16 and "trainer_locks" in data:
         data["trainer_locks"] = [{k: v for k, v in lock.items() if k != "origin"} for lock in data["trainer_locks"]]  # v0.56: 禁止の出どころは形式 16 から
     return data
@@ -630,6 +634,8 @@ def required_format(state) -> tuple[int, bool]:
         needed = max(needed, 31)  # v0.126: おもてを上にして山札に置かれたカード（フラッシュ）
     if state.halt is not None and state.halt.interruption is not None:
         needed = max(needed, 32)  # v0.127: 途中停止の状態（在途のカードを残した終端）
+    if state.ownership_changes:
+        needed = max(needed, 33)  # v0.130: 対戦の中の所有者の変更（とりかえっこプリーズの交換）
     d = state.decision
     not_v0_1 = d is not None and (
         d.context_value("then") is not None or d.resume in ("attack", "knock_out", "post_knockout", "power")  # v0.42: 特殊能力の途中の決定

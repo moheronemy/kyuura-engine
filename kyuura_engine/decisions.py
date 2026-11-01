@@ -402,6 +402,10 @@ REVIVE_SOURCE = "revive_source"
 # v0.120: たまごの化石で山札を見たあと、ベンチに出す「なにかの化石」を進化させる進化カード（山札・手札のカード。uid）。決めるのは使ったプレイヤー。選べるカードがあれば 1 枚、なければ
 # 選べるもののない決定（0 枚。山札の中身で決定の有無を変えない）。選べるもの・数は相手に見せない。再開先は "trainer"
 BENCH_FROM_DECK_OR_HAND = "bench_from_deck_or_hand"
+# v0.130（docs/trade-please-ownership-v0.130.md 5 章）: とりかえっこプリーズの、見た相手の手札から交換するカードを 1 枚選ぶ決定。1 つ目は使ったプレイヤーが相手の手札から（「相手プレイヤーの
+# 手札を見て、カードを1枚えらぶ」）、2 つ目は相手プレイヤーが使ったプレイヤーの手札から（「相手プレイヤーにあなたの手札を見せ、カードを1枚えらばせる」）。選べるものは見た手札のカードの
+# uid（手札の並び）で 1 枚。決めるプレイヤーは見ている（観測の ``LOOKED_HAND_KINDS``）。続きの情報の ``stage`` は ``"take"``・``"give"``。再開先は "trainer"
+SELECT_EXCHANGE_CARD = "select_exchange_card"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

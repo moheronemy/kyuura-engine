@@ -369,7 +369,7 @@ class FoundationTest(unittest.TestCase):
         data = state_to_dict(halted, format_version=32)
         self.assertEqual(data["halt"]["interruption"]["required"], 2)
         self.assertEqual(data["user_simplifications"], [])
-        self.assertEqual(max(FORMAT_VERSIONS), 32)
+        self.assertEqual(max(FORMAT_VERSIONS), 33)  # v0.130: 形式 33（所有者の変更）を加えた。形式 32 の項目は変わらない
         for version in (1, 9, 31):
             with self.assertRaises(ValueError):
                 state_to_dict(halted, format_version=version)
