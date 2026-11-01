@@ -571,6 +571,26 @@ class GamesTest(unittest.TestCase):
         self.assertEqual(result["audit"], {})
 
 
+class BorrowedDevolutionAuditTest(unittest.TestCase):
+    """10.3 節: 正式な対戦で見つかった監査の不足。錯乱ジムで相手が借りて使った退化スプレー（借りたプレイヤーが相手の番に自分のポケモンを退化させる。v0.57 からの既存の処理）を、監査が
+    番のプレイヤーでないとして誤って報告していた。借りたことをログから組み立てたときだけ受け付け、ほかの食い違いは今までどおり見つける。"""
+
+    def test_borrowed_devolution_spray_passes_and_tampering_is_found(self):
+        from tools import existing_effect_games as G
+
+        result = G.play(("W28", "T130"), 0, keep_state=True)
+        state = result["state"]
+        index = next(i for i, e in enumerate(state.log) if e["kind"] == "devolve")
+        self.assertTrue(any(e["kind"] == "chaos_answered" and e["accepted"] for e in state.log[index - 3:index]))
+        self.assertEqual(result["audit"], {})
+        self.assertEqual(log_problems(state), [])
+        tampered = copy.deepcopy(state)
+        event = dict(tampered.log[index])
+        event["by_player"] = event["player"] = 1 - event["player"]  # 借りていない番のプレイヤーが、相手の番の退化スプレーで退化させたことにする
+        tampered.log = (*tampered.log[:index], freeze_mapping(event), *tampered.log[index + 1:])
+        self.assertTrue(any("の退化（ポケモン" in p for p in log_problems(tampered)))
+
+
 class DocumentTest(unittest.TestCase):
     def test_document_states_the_limits(self):
         text = DOC.read_text(encoding="utf-8")

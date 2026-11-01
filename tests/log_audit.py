@@ -7126,7 +7126,10 @@ def log_problems(state) -> list[str]:
                     and pid == attack_window["pokemon_id"])
             else:
                 trainer_entry = state.effects.trainer_entry(state.cards[via].card_id) if via in state.cards else None
-                source_ok = using_trainer.get(e["by_player"]) == via and e["by_player"] == e["player"] == turn_player \
+                # v0.130: 錯乱ジムの「うら」で相手が借りて使った退化スプレー（借りたプレイヤーが、相手の番に自分の場のポケモンを退化させる。v0.57 の既存の処理）。ログから組み立てた
+                # 使っているプレイヤーが借りたプレイヤーで、カードの持ち主がその相手のときだけ、番のプレイヤーでなくてよい（docs/trade-please-ownership-v0.130.md 10.3 節）
+                borrowed_by = e["by_player"] if owner.get(via) == 1 - e["by_player"] and using_trainer.get(e["by_player"]) == via else None
+                source_ok = using_trainer.get(e["by_player"]) == via and e["by_player"] == e["player"] and e["by_player"] in (turn_player, borrowed_by) \
                     and trainer_entry is not None and (isinstance(trainer_entry.effect, DevolveOwnPokemon) and e["destination"] == "discard"
                                                        # v0.80: 退化スプレーHYPER（1 枚を持ち主の手札に）
                                                        or isinstance(trainer_entry.effect, DevolveOneToHandWithBan) and e["destination"] == "hand"
