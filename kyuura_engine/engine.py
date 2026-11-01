@@ -626,11 +626,14 @@ _IDENTITY_CANDIDATES: dict[int, tuple[str, ...]] = {}
 
 
 def _behavior_key(pool, card_id: str):
-    """v0.69: カードの処理を決めるもの（定義の id・英語の欄を除いたもの、効果の登録表のそのカードの登録）。同じなら、どの処理でも同じに扱われる。"""
+    """v0.69: カードの処理を決めるもの（定義の id・英語の欄を除いたもの、効果の登録表のそのカードの登録）。同じなら、どの処理でも同じに扱われる。
+
+    v0.129: 全国図鑑番号（``dex``）も除く。図鑑番号を読むのはカツラのクイズ その1 で手札から置いたカードの身長だけで、この確かめが割り当てる相手のうらのカード（場にうらで
+    出したカード）の処理には入らない（docs/blaines-quiz-heights-v0.129.md 5 章）。除かないと、図鑑番号の記録の有無だけが違う同じ処理のカードが別の候補になる。"""
     definition = pool.get(card_id)
     effects = pool.effects
     plain = dataclasses.replace(
-        definition, id="", name_en=None, energy_text_en=None, trainer_text_en=None,
+        definition, id="", name_en=None, energy_text_en=None, trainer_text_en=None, dex=(),
         attacks=tuple(dataclasses.replace(a, name_en=None, text_en=None) for a in definition.attacks),
         powers=tuple(dataclasses.replace(w, name_en=None, text_en=None) for w in definition.powers))
     entries = (tuple(effects.attack_entry(card_id, a.index) for a in definition.attacks),

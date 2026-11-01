@@ -52,7 +52,8 @@
     "energy.kind",
     "energy.provides",
     "energy.text",
-    "pokemon.evolves_to"
+    "pokemon.evolves_to",
+    "pokemon.dex"
   ],
   "pool_v0_1": [
     "PMCG1-016",

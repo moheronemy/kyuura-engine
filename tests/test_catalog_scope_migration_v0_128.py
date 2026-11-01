@@ -90,8 +90,10 @@ class MigrationChainTest(unittest.TestCase):
         after = read_extract()
         self.assertEqual(before["cards"], after["cards"])
         self.assertEqual(len(after["cards"]), 1368)
+        # v0.129: エンジンが処理に使う欄の一覧に pokemon.dex を加えた（docs/blaines-quiz-heights-v0.129.md 2 章。カードの写す欄・値は変えていない）
+        self.assertEqual(after["fields_used_by_engine"], before["fields_used_by_engine"] + ["pokemon.dex"])
         self.assertEqual(sorted(key for key in set(before) | set(after) if before.get(key) != after.get(key)),
-                         ["catalog_scope", "engine_user_corrections", "source", "source_migrations"])
+                         ["catalog_scope", "engine_user_corrections", "fields_used_by_engine", "source", "source_migrations"])
         self.assertEqual(before["source_migrations"], after["source_migrations"][:-1])
         self.assertEqual(after["fields_copied"], before["fields_copied"])  # 分類の 3 つの欄はカードの写す欄に加えていない
         self.assertFalse(set(SCOPE_FIELDS) & set(after["fields_copied"] + after["fields_copied_when_present"]))

@@ -160,6 +160,9 @@ class CardDefinition:
     evolves_to: tuple[str, ...] = ()
     # v0.114: ベイビィポケモンのルール（GR-2000-P314-BABY-RULE）を印刷したカードか（ルール文が ``BABY_RULE_TEXT``）。特殊能力ではない（CR-BABY-RULE-NOT-POWER）
     baby_rule: bool = False
+    # v0.129（docs/blaines-quiz-heights-v0.129.md 2 章）: kyuura の ``pokemon.dex``（全国図鑑番号の並び。写しの値のまま。記録がなければ ()）。公式図鑑の種族の身長の参照値
+    # （``heights.card_height``）を引くのに使う。名前から推測して補わない。ポケモン以外はいつも ()
+    dex: tuple[int, ...] = ()
 
     @property
     def is_basic_pokemon(self) -> bool:
@@ -454,7 +457,17 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
         name_group=None if group_rule is None else group_rule[0],
         name_letter=None if group_rule is None else group_rule[1],
         deck_group_limit=None if group_rule is None else group_rule[2],
+        dex=_parse_dex(record["id"], pokemon.get("dex")),
     )
+
+
+def _parse_dex(card_id: str, value) -> tuple[int, ...]:
+    """v0.129: kyuura の ``pokemon.dex``（整数の並び）。欄がない・空なら ()（補わない）。整数でない値は写しの誤りとして ``ValueError``。"""
+    if value is None:
+        return ()
+    if not isinstance(value, list) or any(type(number) is not int or number < 1 for number in value):
+        raise ValueError(f"{card_id} の pokemon.dex {value!r} が 1 以上の整数の並びではない")
+    return tuple(value)
 
 
 def _deck_limit_rule(name: str, text: str | None) -> int | None:

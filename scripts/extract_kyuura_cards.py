@@ -2484,6 +2484,7 @@ FIELDS_USED_BY_ENGINE = [
     "energy.provides",
     "energy.text",  # v0.58: 特殊エネルギーの説明（登録した実装との照合に使う）
     "pokemon.evolves_to",  # v0.114: ベイビィの進化先（日本語名の配列。印刷の順。ベイビィの記録にだけある。docs/baby-rules-evolution-v0.114.md 4 章）
+    "pokemon.dex",  # v0.129: 公式図鑑の種族の身長の参照値を引く全国図鑑番号（docs/blaines-quiz-heights-v0.129.md 2 章。kyuura_engine/heights.py）
 ]
 
 ROOT = Path(__file__).resolve().parent.parent
