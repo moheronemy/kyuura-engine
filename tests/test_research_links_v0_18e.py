@@ -69,7 +69,8 @@ class ResearchLinksTest(unittest.TestCase):
         # v0.124: 研究の基準と写しの元を kyuura b9e7cff（main の PR #6 のマージ。木は研究の最後のコミット 9731354 と同じ。基点 74b3ceb）に上げた（docs/super-transform-dark-pulse-v0.124.md 2 章）
         # v0.125: 研究の基準と写しの元を kyuura 134a664（ブランチ claude/eloquent-lamport-5xyv5r の固定コミット。基点 b9e7cff）に上げた（docs/wigglytuff-helping-hand-v0.125.md 2 章）
         # v0.126: 研究の基準と写しの元を kyuura 57d01f4（ブランチ claude/trainer-reaction-faceup-deck-ownership-research の固定コミット。基点 134a664）に上げた（docs/flash-faceup-deck-v0.126.md 2 章）
-        self.assertEqual(LINKS["research_commit"], "57d01f45cfb8b086d03dc0525b329cf6adeff69b")
+        # v0.128: 研究の基準と写しの元を kyuura 71d1728（main の PR #7 のマージ。目録の分類。基点 57d01f4）に上げた（docs/catalog-scope-migration-v0.128.md 2 章）
+        self.assertEqual(LINKS["research_commit"], "71d1728938fb4c8fefde9b82779cdef74beb612d")
         self.assertEqual(LINKS["engine_import_id"], "ENGINE-46A3E2E")
         self.assertEqual(LINKS["card_data_commit"], read_extract()["source"]["commit"])
         self.assertEqual(LINKS["research_commit"], LINKS["card_data_commit"])

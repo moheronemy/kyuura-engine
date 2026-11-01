@@ -38,7 +38,13 @@ def deck_problems(cards: Sequence[str], pool: CardPool | None = None, rules: Rul
     if len(cards) != rules.deck_size:
         problems.append(f"DECK_SIZE: デッキはぴったり {rules.deck_size} 枚（{len(cards)} 枚）")
 
-    unknown = sorted({c for c in cards if c not in pool.definitions})
+    # v0.128（docs/catalog-scope-migration-v0.128.md 4 章）: kyuura の目録の分類で通常対戦のエンジンの実装の対象外の記録（専用ルール用・認定証など）は、知らないカードと
+    # 分けて、分類と理由を示して拒否する（未対応のカードとは数えない。公式の使用禁止とは扱わない）
+    for card_id in sorted({c for c in cards if c in pool.excluded}):
+        exclusion = pool.excluded[card_id]
+        problems.append(f"OUT_OF_ENGINE_SCOPE: {card_id} {exclusion.name_ja}（通常対戦のエンジンの実装の対象外。kyuura の目録の分類 {exclusion.catalog_class}・"
+                        f"使用範囲 {exclusion.play_scope}: {exclusion.reason}）")
+    unknown = sorted({c for c in cards if c not in pool.definitions and c not in pool.excluded})
     if unknown:
         problems.append(f"UNKNOWN_CARD: このエンジンのカードデータにないカード {unknown}")
     known = [c for c in cards if c in pool.definitions]

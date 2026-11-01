@@ -1895,11 +1895,15 @@ CARD_DATA_COMMIT_SINCE_V0_125 = "134a664c6adf67d5604148a31b58e1a7d26d4d6d"
 # v0.126（docs/flash-faceup-deck-v0.126.md 2 章）: 写しの元を 134a664 から 57d01f4（kyuura のブランチ claude/trainer-reaction-faceup-deck-ownership-research の固定コミット）に上げた
 # （段 v0.126。前の段の値は変えない）。この段で値が変わったのは写しの外のとりかえっこプリーズ PR1-027 の文面の読点 1 つだけ
 CARD_DATA_COMMIT_SINCE_V0_126 = "57d01f45cfb8b086d03dc0525b329cf6adeff69b"
-CARD_DATA_COMMIT = CARD_DATA_COMMIT_SINCE_V0_126  # 今の写しの元
+# v0.128（docs/catalog-scope-migration-v0.128.md 2 章）: 写しの元を 57d01f4 から 71d1728（kyuura main の PR #7 のマージ）に上げた（段 v0.128。前の段の値は変えない）。この段の
+# data/cards.json は既存の欄の値が全件同じで、目録の分類の 3 つの欄が加わっただけ
+CARD_DATA_COMMIT_SINCE_V0_128 = "71d1728938fb4c8fefde9b82779cdef74beb612d"
+CARD_DATA_COMMIT = CARD_DATA_COMMIT_SINCE_V0_128  # 今の写しの元
 CARD_DATA_MIGRATIONS = ((CARD_DATA_COMMIT_BEFORE_V0_69, CARD_DATA_COMMIT_SINCE_V0_69), (CARD_DATA_COMMIT_SINCE_V0_69, CARD_DATA_COMMIT_SINCE_V0_97),
                         (CARD_DATA_COMMIT_SINCE_V0_97, CARD_DATA_COMMIT_SINCE_V0_114), (CARD_DATA_COMMIT_SINCE_V0_114, CARD_DATA_COMMIT_SINCE_V0_121),
                         (CARD_DATA_COMMIT_SINCE_V0_121, CARD_DATA_COMMIT_SINCE_V0_123), (CARD_DATA_COMMIT_SINCE_V0_123, CARD_DATA_COMMIT_SINCE_V0_124),
-                        (CARD_DATA_COMMIT_SINCE_V0_124, CARD_DATA_COMMIT_SINCE_V0_125), (CARD_DATA_COMMIT_SINCE_V0_125, CARD_DATA_COMMIT_SINCE_V0_126))
+                        (CARD_DATA_COMMIT_SINCE_V0_124, CARD_DATA_COMMIT_SINCE_V0_125), (CARD_DATA_COMMIT_SINCE_V0_125, CARD_DATA_COMMIT_SINCE_V0_126),
+                        (CARD_DATA_COMMIT_SINCE_V0_126, CARD_DATA_COMMIT_SINCE_V0_128))
 
 
 def with_card_data_commit_at(data: dict, commit: str) -> dict:

@@ -27,6 +27,8 @@ v0.4c 以降の 2 進化ポケモン。v0.11 はサカキのワンリキー・�
 - v0.125 で、段 v0.125（b9e7cff → 134a664）を加え、写しの組 pool_v0_125（1 枚）を加えました（docs/wigglytuff-helping-hand-v0.125.md 2 章・3 章）。
 - v0.126 で、段 v0.126（134a664 → 57d01f4）を加え、写しの組 pool_v0_126（1 枚）を加えました（docs/flash-faceup-deck-v0.126.md 2 章・3 章）。
 - v0.127 で、写しの組 pool_v0_127（6 枚）を加えました（写しの元・研究の基準は 57d01f4 のまま。段は加えていない。docs/deferred-shortage-user-promos-v0.127.md 3 章）。
+- v0.128 で、段 v0.128（57d01f4 → 71d1728）を加え、kyuura の目録の分類（``catalog_class``・``engine_scope``・``engine_scope_reason``）から通常対戦の対象の集合を求めて
+  書き出しの ``catalog_scope`` に残しました（3 つの欄はカードの写す欄には加えない。docs/catalog-scope-migration-v0.128.md 2 章・3 章）。
 
 使い方::
 
@@ -44,13 +46,14 @@ import sys
 from pathlib import Path
 
 KYUURA_REPOSITORY = "https://github.com/moheronemy/kyuura"
-# v0.126: kyuura のブランチ claude/trainer-reaction-faceup-deck-ownership-research の固定コミット 57d01f4（ちえくらべ・フラッシュ・とりかえっこプリーズの調査。kyuura main には未取り込み）。
+# v0.128: kyuura main の PR #7 のマージ 71d1728（目録の分類 catalog_class・engine_scope と、プロモの収録範囲の調査）。
+# v0.126〜v0.127 は 57d01f4（``V0_126_KYUURA_COMMIT``。ブランチ claude/trainer-reaction-faceup-deck-ownership-research の固定コミット。ちえくらべ・フラッシュ・とりかえっこプリーズの調査）、
 # v0.125 は 134a664（``V0_125_KYUURA_COMMIT``。ブランチ claude/eloquent-lamport-5xyv5r の固定コミット。プクリンの最新の説明・コインで決まる枚数の不足の調査）、
 # v0.124 は b9e7cff（``V0_124_KYUURA_COMMIT``。kyuura main の PR #6 のマージ。すごいへんしん・わるいはどうの調査）、v0.123 は 74b3ceb（``V0_123_KYUURA_COMMIT``。
 # ブランチ claude/v0122-names-text-trainer-procedures の固定コミット）、v0.121〜v0.122 は 2fe0bc0（``V0_121_KYUURA_COMMIT``。ブランチ claude/neo2-fossil-type-cost-checks の固定コミット）、
 # v0.114〜v0.120 は e519b99（``V0_114_KYUURA_COMMIT``。ブランチ claude/baby-data-engine-v0113-handover の固定コミット）、
 # v0.97〜v0.113 は 73a1690（``V0_97_KYUURA_COMMIT``。kyuura main の PR #5 のマージ。木は研究のコミット 78d090c と同じ）、v0.69〜v0.96 は 7d3f4ca（``V0_69_KYUURA_COMMIT``）
-KYUURA_COMMIT = "57d01f45cfb8b086d03dc0525b329cf6adeff69b"
+KYUURA_COMMIT = "71d1728938fb4c8fefde9b82779cdef74beb612d"
 KYUURA_PATH = "data/cards.json"
 
 # v0.1 の対戦で使うカード（kyuura docs/engine-readiness.md 5章の段階 1 のたねポケモンと基本エネルギー）
@@ -1437,6 +1440,7 @@ V0_121_KYUURA_COMMIT = "2fe0bc042ce187d191843819262f8036abbb343d"  # v0.121〜v0
 V0_123_KYUURA_COMMIT = "74b3ceb883dd815495d13b9987433fb14b36e44d"  # v0.123 の写しの元
 V0_124_KYUURA_COMMIT = "b9e7cff6d2b2c6b4539ec45e61bf453879adab3a"  # v0.124 の写しの元
 V0_125_KYUURA_COMMIT = "134a664c6adf67d5604148a31b58e1a7d26d4d6d"  # v0.125 の写しの元
+V0_126_KYUURA_COMMIT = "57d01f45cfb8b086d03dc0525b329cf6adeff69b"  # v0.126〜v0.127 の写しの元
 # v0.97（docs/unown-research-idfnj-v0.97.md 2 章）: 写しの元を上げた移行の連鎖。段ごとに、前のコミット（``from``）とあとのコミット（``to``）。最後の段の ``to`` が写しの元、
 # 最初の段の ``from`` が PREVIOUS_KYUURA_COMMIT。過去の段の値は書き換えない（v0.69 の段の ``to`` は 7d3f4ca のまま）。kyuura が当てはめた修正は、当てはめた段（``migration``）の
 # ``from`` の値が ``before``・``to`` の値が ``after`` で、写しの元でも ``after``。写す欄は段ごとに、その段の修正の欄と出典の記録の欄を除いて同じことを確かめる
@@ -1449,6 +1453,8 @@ V0_125_KYUURA_COMMIT = "134a664c6adf67d5604148a31b58e1a7d26d4d6d"  # v0.125 の�
 # この段の data/cards.json は全 1,377 件の全欄が同じ（訂正なし）
 # v0.126（docs/flash-faceup-deck-v0.126.md 2 章）: 段 v0.126（134a664 → 57d01f4）を加えた。v0.125 の段の ``to`` は、同じ理由で 134a664（``V0_125_KYUURA_COMMIT``）に固定した。
 # この段で値が変わったのは写しの外のとりかえっこプリーズ PR1-027 の文面の読点 1 つ（FIX-PR1-027-TEXT-JA）だけ
+# v0.128（docs/catalog-scope-migration-v0.128.md 2 章）: 段 v0.128（57d01f4 → 71d1728）を加えた。v0.126 の段の ``to`` は、同じ理由で 57d01f4（``V0_126_KYUURA_COMMIT``）に固定した。
+# この段の data/cards.json は全 1,377 件の既存の欄の値が同じで、全件に目録の分類の 3 つの欄（``CATALOG_SCOPE_FIELDS``）が加わっただけ（訂正なし）
 KYUURA_MIGRATIONS = (
     {"id": "v0.69", "from": PREVIOUS_KYUURA_COMMIT, "to": V0_69_KYUURA_COMMIT, "document": "docs/equivalent-non-pack-cards-v0.69.md"},
     {"id": "v0.97", "from": V0_69_KYUURA_COMMIT, "to": V0_97_KYUURA_COMMIT, "document": "docs/unown-research-idfnj-v0.97.md"},
@@ -1457,7 +1463,8 @@ KYUURA_MIGRATIONS = (
     {"id": "v0.123", "from": V0_121_KYUURA_COMMIT, "to": V0_123_KYUURA_COMMIT, "document": "docs/arcanine-name-migration-v0.123.md"},
     {"id": "v0.124", "from": V0_123_KYUURA_COMMIT, "to": V0_124_KYUURA_COMMIT, "document": "docs/super-transform-dark-pulse-v0.124.md"},
     {"id": "v0.125", "from": V0_124_KYUURA_COMMIT, "to": V0_125_KYUURA_COMMIT, "document": "docs/wigglytuff-helping-hand-v0.125.md"},
-    {"id": "v0.126", "from": V0_125_KYUURA_COMMIT, "to": KYUURA_COMMIT, "document": "docs/flash-faceup-deck-v0.126.md"},
+    {"id": "v0.126", "from": V0_125_KYUURA_COMMIT, "to": V0_126_KYUURA_COMMIT, "document": "docs/flash-faceup-deck-v0.126.md"},
+    {"id": "v0.128", "from": V0_126_KYUURA_COMMIT, "to": KYUURA_COMMIT, "document": "docs/catalog-scope-migration-v0.128.md"},
 )
 KYUURA_CORRECTIONS_PATH = "data/curation/card_corrections.json"
 KYUURA_TARGETS_PATH = "data/engine_targets.json"
@@ -2980,6 +2987,80 @@ def current_target_status_problems(kyuura: Path) -> list[str]:
             for card_id in [*POOL_V0_69, *POOL_V0_71] if (by_id.get(card_id) or {}).get("engine_status") != "registered"]
 
 
+# v0.128（docs/catalog-scope-migration-v0.128.md 3 章）: kyuura の目録の分類（71d1728 から全記録にある欄）。目録の分類（``catalog_class``）・通常対戦のエンジンの実装の対象か
+# （``engine_scope``）・対象でない理由（``engine_scope_reason``）。kyuura の ``play_scope``（使用範囲）とは別の情報。カードの写す欄（``FIELDS``）には加えない: 写しのカードは
+# どれも対象（``battle``・``target``）なので、カードごとに同じ値を持たせても情報が増えず、移行の段ごとの写す欄の比べ（前の段のコミットにはない欄）を変えずに済むため。
+# かわりに、書き出すたびに全記録の分類を確かめ、対象の集合（``battle`` かつ ``target``）・対象外の記録（理由つき）を書き出しの ``catalog_scope`` に残す。カード id ごとの
+# 例外の表は持たない（対象外の集合は kyuura の明示の分類から求める）
+CATALOG_SCOPE_FIELDS = ("catalog_class", "engine_scope", "engine_scope_reason")
+CATALOG_TARGET = {"catalog_class": "battle", "engine_scope": "target"}
+ENGINE_SCOPES = ("target", "excluded", "undecided")
+# kyuura docs/data-schema.md の「目録の分類」のうち、cards.json の記録が取る値（``jumbo``・``extra_rule`` などは目録だけの行の分類で、cards.json の記録にはない）
+CATALOG_CLASSES = ("battle", "special_rule", "award")
+CATALOG_EXCLUDED_FIELDS = ("id", "name_ja", "jp_set", "product_group", "play_scope", "catalog_class", "engine_scope", "engine_scope_reason")
+
+
+def is_catalog_target(card: dict) -> bool:
+    """通常対戦のエンジンの実装の対象か（kyuura の分類で ``catalog_class`` が ``battle`` かつ ``engine_scope`` が ``target``）。"""
+    return all(card.get(field) == value for field, value in CATALOG_TARGET.items())
+
+
+def _excluded_record(card: dict) -> dict:
+    return {"id": card["id"], "name_ja": card["name"]["ja"], "jp_set": card["jp_set"], "product_group": card["product_group"],
+            "play_scope": card["play_scope"], "catalog_class": card["catalog_class"], "engine_scope": card["engine_scope"],
+            "engine_scope_reason": card["engine_scope_reason"]}
+
+
+def catalog_scope_problems(kyuura: Path, source: dict, pool: list[str]) -> list[str]:
+    """v0.128: 写しの元の全記録に分類の 3 つの欄があり、値が決まった値で、理由が ``target`` のときだけ null。写しのカード（``pool``）はどれも対象。分類から求めた対象・対象外の
+    集合が、同じコミットの kyuura の engine_targets.json の ``cards``・``excluded_records``（id・分類・理由）と同じ（kyuura の 2 つの生成物の食い違いを黙って受け入れない）。"""
+    problems = []
+    for card in source["cards"]:
+        missing = [field for field in CATALOG_SCOPE_FIELDS if field not in card]
+        if missing:
+            problems.append(f"{card['id']}: 目録の分類の欄 {missing} がない")
+            continue
+        if card["catalog_class"] not in CATALOG_CLASSES or card["engine_scope"] not in ENGINE_SCOPES:
+            problems.append(f"{card['id']}: 目録の分類の値が知らない値（{card['catalog_class']!r}・{card['engine_scope']!r}）")
+        if (card["engine_scope"] == "target") != (card["engine_scope_reason"] is None):
+            problems.append(f"{card['id']}: engine_scope {card['engine_scope']!r} と理由 {card['engine_scope_reason']!r} が合わない（理由は target のときだけ null）")
+        if card["engine_scope"] == "target" and card["catalog_class"] != "battle":
+            problems.append(f"{card['id']}: 対戦用でない分類 {card['catalog_class']!r} が engine_scope target")
+    if problems:
+        return problems
+    by_id = {card["id"]: card for card in source["cards"]}
+    problems += [f"{card_id}: 写しのカードが通常対戦の対象ではない（{by_id[card_id]['catalog_class']}・{by_id[card_id]['engine_scope']}）"
+                 for card_id in pool if not is_catalog_target(by_id[card_id])]
+    targets = json.loads(_show(kyuura, KYUURA_COMMIT, KYUURA_TARGETS_PATH).decode("utf-8"))
+    target_ids = [card["id"] for card in source["cards"] if is_catalog_target(card)]
+    if [card["id"] for card in targets["cards"]] != target_ids:
+        problems.append("分類から求めた対象の集合（並び）が engine_targets.json の cards と同じではない")
+    excluded = [_excluded_record(card) for card in source["cards"] if not is_catalog_target(card)]
+    listed = [{field: record.get(field) for field in CATALOG_EXCLUDED_FIELDS} for record in targets.get("excluded_records", [])]
+    if sorted(excluded, key=lambda r: r["id"]) != sorted(listed, key=lambda r: r["id"]):
+        problems.append("分類から求めた対象外の記録が engine_targets.json の excluded_records（id・名前・分類・理由）と同じではない")
+    return problems
+
+
+def catalog_scope(source: dict) -> dict:
+    """v0.128: 書き出しの ``catalog_scope``（対象を選ぶ条件・数・対象外の記録）。値は kyuura の記録のまま。"""
+    excluded = [_excluded_record(card) for card in source["cards"] if not is_catalog_target(card)]
+    return {
+        "path": KYUURA_PATH,
+        "commit": KYUURA_COMMIT,
+        "fields": list(CATALOG_SCOPE_FIELDS),
+        "target_rule": dict(CATALOG_TARGET),
+        "note": "kyuura の目録の分類。通常対戦のエンジンの実装の対象は catalog_class が battle かつ engine_scope が target の記録。対象外の記録は理由つきで excluded_records に挙げる"
+                "（公式の使用禁止・裁定・エラッタではない。カードの記録・文面・出典・id は kyuura に残る）。3 つの欄はカードの写す欄（fields_copied）には入れない",
+        "counts": {
+            "records": len(source["cards"]),
+            "target": sum(1 for card in source["cards"] if is_catalog_target(card)),
+            "excluded": len(excluded),
+        },
+        "excluded_records": excluded,
+    }
+
+
 def _copy(card: dict) -> dict:
     copied = {field: json.loads(json.dumps(card[field])) for field in FIELDS}
     copied.update({field: json.loads(json.dumps(card[field])) for field in OPTIONAL_FIELDS if field in card})
@@ -3806,6 +3887,7 @@ def build_extract(source: dict, targets: list[dict], reprints: list[dict]) -> di
     extract["engine_user_corrections"] = [dict(correction, source_commit=KYUURA_COMMIT) for correction in ENGINE_USER_CORRECTIONS]
     extract["equivalent_targets"] = {"path": KYUURA_TARGETS_PATH, "commit": TARGET_SELECTION_COMMIT, "cards": targets}
     extract["reprint_targets"] = {"path": KYUURA_TARGETS_PATH, "commit": TARGET_SELECTION_COMMIT, "cards": reprints}
+    extract["catalog_scope"] = catalog_scope(source)  # v0.128
     extract["cards"] = cards
     return extract
 
@@ -3829,7 +3911,8 @@ def main(argv: list[str] | None = None) -> int:
     problems = (kyuura_correction_problems(args.kyuura, source, previous, pool) + engine_user_correction_problems(args.kyuura, source, pool)
                 + previous_copy_problems(source, previous, pool, confirmed=image_confirmed_fields(_image_checks(args.kyuura, KYUURA_COMMIT)))
                 + migration_copy_problems(args.kyuura, source, previous, pool)
-                + equivalent_target_problems(targets) + reprint_target_problems(reprints) + current_target_status_problems(args.kyuura))
+                + equivalent_target_problems(targets) + reprint_target_problems(reprints) + current_target_status_problems(args.kyuura)
+                + catalog_scope_problems(args.kyuura, source, pool))
     if problems:
         print("kyuura のデータを写しにできない:\n" + "\n".join(problems), file=sys.stderr)
         return 1

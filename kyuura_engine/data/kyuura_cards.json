@@ -3,7 +3,7 @@
   "description": "kyuura の data/cards.json から、kyuura-engine が使うカードの記録を抜き出した写し。カード情報の正本は kyuura。値は書き換えていない。生成: scripts/extract_kyuura_cards.py（手で編集しない）。",
   "source": {
     "repository": "https://github.com/moheronemy/kyuura",
-    "commit": "57d01f45cfb8b086d03dc0525b329cf6adeff69b",
+    "commit": "71d1728938fb4c8fefde9b82779cdef74beb612d",
     "path": "data/cards.json",
     "schema_version": 3
   },
@@ -1804,6 +1804,13 @@
       "corrections": [
         "FIX-PR1-027-TEXT-JA"
       ]
+    },
+    {
+      "id": "v0.128",
+      "from": "57d01f45cfb8b086d03dc0525b329cf6adeff69b",
+      "to": "71d1728938fb4c8fefde9b82779cdef74beb612d",
+      "document": "docs/catalog-scope-migration-v0.128.md",
+      "corrections": []
     }
   ],
   "kyuura_corrections": [
@@ -2991,7 +2998,7 @@
       "reference_url_role": "利用者が示した補助資料。エンジンは本文を取得していない（ネットワークのプロキシが 403）。サイトの本文を検証した・ルーン文字を解読したとは扱わない",
       "engine_saw_image": false,
       "kyuura_saw_image": false,
-      "source_commit": "57d01f45cfb8b086d03dc0525b329cf6adeff69b"
+      "source_commit": "71d1728938fb4c8fefde9b82779cdef74beb612d"
     }
   ],
   "equivalent_targets": {
@@ -6007,6 +6014,57 @@
         "released_after_rule_base": true,
         "category": "candidate",
         "play_scope": "standard"
+      }
+    ]
+  },
+  "catalog_scope": {
+    "path": "data/cards.json",
+    "commit": "71d1728938fb4c8fefde9b82779cdef74beb612d",
+    "fields": [
+      "catalog_class",
+      "engine_scope",
+      "engine_scope_reason"
+    ],
+    "target_rule": {
+      "catalog_class": "battle",
+      "engine_scope": "target"
+    },
+    "note": "kyuura の目録の分類。通常対戦のエンジンの実装の対象は catalog_class が battle かつ engine_scope が target の記録。対象外の記録は理由つきで excluded_records に挙げる（公式の使用禁止・裁定・エラッタではない。カードの記録・文面・出典・id は kyuura に残る）。3 つの欄はカードの写す欄（fields_copied）には入れない",
+    "counts": {
+      "records": 1377,
+      "target": 1374,
+      "excluded": 3
+    },
+    "excluded_records": [
+      {
+        "id": "PR1-038",
+        "name_ja": "タッチ交代！",
+        "jp_set": "PR1",
+        "product_group": "promo",
+        "play_scope": "kangaskhan_rule",
+        "catalog_class": "special_rule",
+        "engine_scope": "excluded",
+        "engine_scope_reason": "ガルーラルール専用のカード（専用ルールで使う。通常の対戦のカードではない）。通常対戦のエンジンの実装の対象から外す"
+      },
+      {
+        "id": "PR1-079",
+        "name_ja": "カードトレーナー認定証",
+        "jp_set": "PR1",
+        "product_group": "promo",
+        "play_scope": "standard",
+        "catalog_class": "award",
+        "engine_scope": "excluded",
+        "engine_scope_reason": "認定証のカード（本文はチャレンジパスポートの記録による公式カードトレーナーの認定で、対戦の手順を書いていない）。通常対戦のエンジンの実装の対象から外す"
+      },
+      {
+        "id": "PRN-048",
+        "name_ja": "タッチ世代交代！",
+        "jp_set": "PRN",
+        "product_group": "promo",
+        "play_scope": "kangaskhan_rule",
+        "catalog_class": "special_rule",
+        "engine_scope": "excluded",
+        "engine_scope_reason": "新ガルーラルール専用のカード（専用ルールで使う。通常の対戦のカードではない）。通常対戦のエンジンの実装の対象から外す"
       }
     ]
   },
