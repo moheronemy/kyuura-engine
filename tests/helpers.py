@@ -1598,6 +1598,10 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.UserSimplifiedCoinBonusDamage,
     _effects.UserSimplifiedStatusSelfAndOpponent,
     _effects.UserSimplifiedDamageOnly,
+    # v0.133（docs/shining-tyranitar-v0.133.md）: ひかるバンギラスの 2 つのワザ（利用者が指定した規則。新しい要素 MillOpponentDeckUntilTailsUpTo・OwnTypedEnergyCardsRequired・
+    # DiscardOwnTypedEnergyByHeads・DiscardOpponentEnergyUpToHeads。印刷の文面と記録が同じときだけ登録できる）
+    _effects.DamageThenMillOpponentUntilTailsUpToDeck,
+    _effects.CoinsPerOwnTypedCardsDiscardThenDamageThenOpponentEnergy,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
