@@ -125,7 +125,7 @@ class RegistrationTest(unittest.TestCase):
     def test_pool(self):
         extract = read_extract()
         self.assertEqual(extract["pool_v0_129"], [QUIZ])
-        self.assertEqual(cards_after(extract, "0.127"), {QUIZ})
+        self.assertEqual(cards_after(extract, "0.127") - cards_after(extract, "0.129"), {QUIZ})  # v0.130: 後の版のカード（とりかえっこプリーズ）を除く
         self.assertEqual(extract["source"]["commit"], "71d1728938fb4c8fefde9b82779cdef74beb612d")  # 写しの元は上げていない
         self.assertIn("pokemon.dex", extract["fields_used_by_engine"])
 

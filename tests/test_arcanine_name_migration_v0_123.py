@@ -290,27 +290,29 @@ class ResearchLinksTest(unittest.TestCase):
         pool = load_card_pool()
         for (_, card), others in required.items():
             self.assertIn(card, pool.playable_ids, card)
-            self.assertFalse((set(others) - {"ES2-035"}) & pool.playable_ids, card)  # v0.126: ES2-035 は登録した（この版ではまだ登録していない）
+            # v0.126: ES2-035 は登録した（この版ではまだ登録していない）。v0.130: PR1-027 も登録した。後の版の写しの組のカードを除いて、この版で登録していないことを確かめる
+            self.assertFalse(set(others) & (pool.playable_ids - cards_after(read_extract(), "0.123")), card)
 
     def test_requires_unregistered_is_checked(self):
-        """``requires_unregistered``: 挙げたカードは、同じ論点の事例のカードで、登録していない。事例のカードは登録している。"""
+        """``requires_unregistered``: 挙げたカードは、同じ論点の事例のカードで、登録していない。事例のカードは登録している。v0.130: 登録していないカードの例を、v0.130 で
+        登録したとりかえっこプリーズ（PR1-027）から、登録していないナッシー（PR1-075）にかえた（合成した事例。確かめる規則は同じ）。"""
         from kyuura_engine.effects import DEFAULT_EFFECTS
 
-        issues = {"UQ-X": {"cases": [{"card_id": "PMCG5-087", "target": {"kind": "trainer"}}, {"card_id": "PR1-027", "target": {"kind": "trainer"}}]}}
+        issues = {"UQ-X": {"cases": [{"card_id": "PMCG5-087", "target": {"kind": "trainer"}}, {"card_id": "PR1-075", "target": {"kind": "trainer"}}]}}
 
         def problems(engine, card="PMCG5-087"):
             links = {"stop_codes": {}, "codeless_questions": {}, "kyuura_cases_without_engine_ruling": {"cases": [
                 {"kyuura_issue": "UQ-X", "card_id": card, "target": "trainer", "engine": engine},
-                {"kyuura_issue": "UQ-X", "card_id": "PR1-027" if card != "PR1-027" else "PMCG5-087", "target": "trainer",
-                 "engine": {"unregistered": True} if card != "PR1-027" else {"requires_unregistered": ["PR1-027"]}}]}}
+                {"kyuura_issue": "UQ-X", "card_id": "PR1-075" if card != "PR1-075" else "PMCG5-087", "target": "trainer",
+                 "engine": {"unregistered": True} if card != "PR1-075" else {"requires_unregistered": ["PR1-075"]}}]}}
             return rl.unlinked_case_problems(links, issues, DEFAULT_EFFECTS)
 
-        self.assertEqual(problems({"requires_unregistered": ["PR1-027"]}), [])
+        self.assertEqual(problems({"requires_unregistered": ["PR1-075"]}), [])
         self.assertTrue(any("登録されている" in p for p in problems({"requires_unregistered": ["PMCG1-019"]})))  # 登録したカード（同じ論点の事例でもない）
         self.assertTrue(any("事例のカードではない" in p for p in problems({"requires_unregistered": ["neo1-049"]})))
         self.assertTrue(any("重ならないリスト" in p for p in problems({"requires_unregistered": []})))
         self.assertTrue(any("重ならないリスト" in p for p in problems({"requires_unregistered": ["PMCG5-087"]})))  # 事例のカードそのもの
-        self.assertTrue(any("ちょうど 1 つ" in p for p in problems({"requires_unregistered": ["PR1-027"], "unregistered": True})))
+        self.assertTrue(any("ちょうど 1 つ" in p for p in problems({"requires_unregistered": ["PR1-075"], "unregistered": True})))
 
     @needs_kyuura
     def test_links_agree_with_kyuura(self):

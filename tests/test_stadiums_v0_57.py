@@ -178,7 +178,9 @@ class CardDataTest(unittest.TestCase):
             with self.subTest(code=code):
                 entry = links["stop_codes"][code]
                 self.assertEqual((entry["kyuura_disposition"], entry["kyuura_issue"]), ("issue", V0_69_STOP_CODE_ISSUES[code]))  # v0.69: kyuura が論点に結んだ（v0.68 までは not_in_kyuura。tests/helpers.py の V0_69_STOP_CODE_ISSUES）
-                self.assertEqual(entry["engine_rulings"], [{"version": "v0.57", "document": "docs/stadiums-v0.57.md", "ruling_id": ruling}])
+                # v0.130: CH1 を、とりかえっこプリーズを錯乱ジムで相手がかわりに使う場面にも当てはめた（同じ停止コード。docs/trade-please-ownership-v0.130.md 6 章）。v0.57 の記録は最初のまま
+                later = {"UNRESOLVED_CHAOS_GYM_BORROWED_TURN": [{"version": "v0.130", "document": "docs/trade-please-ownership-v0.130.md", "ruling_id": "CH1"}]}.get(code, [])
+                self.assertEqual(entry["engine_rulings"], [{"version": "v0.57", "document": "docs/stadiums-v0.57.md", "ruling_id": ruling}, *later])
 
     def test_doc_names_every_new_code(self):
         text = DOC.read_text(encoding="utf-8")

@@ -167,7 +167,9 @@
 - 33: 32 の ``cards`` の、対戦の中で所有者が変わったカードに ``origin``（対戦開始時のデッキのプレイヤー。追跡用の出所）を加え、最上位に ``ownership_changes``（所有者の変更の記録。
   ``{"card", "card_id", "previous", "owner", "origin", "turn", "trainer_card", "exchange"}`` の並び。変更した順）を加えたもの（v0.130。docs/trade-please-ownership-v0.130.md 7 章）。
   とりかえっこプリーズの交換で変わった所有者（利用者が指定した所有者の簡略化）を古い形式に書くと、``owner`` が受け取ったプレイヤーになり出所と変更の記録が落ちる（対戦開始時の
-  デッキと区別できない）ので黙って落とさない: 形式 1〜32 は、所有者の変更があると ``ValueError``（なければ形式 1〜32 の書き出しは v0.129 と同じ。``cards`` の項目も同じ）。
+  デッキと区別できない）ので黙って落とさない: 形式 1〜32 は、所有者の変更があると ``ValueError``（なければ形式 1〜32 の書き出しは v0.129 と同じ。``cards`` の項目も同じ）。最上位の
+  ``user_ownership_rules`` は、この対戦のカードのうち、利用者が指定した所有者の簡略化（``effects.USER_SPECIFIED_RULES``）を当てはめる登録の対象（``<カード id>/trainer``。並べた順）。
+  ``user_simplifications`` と同じく状態の項目ではなく、登録表とカードの組から求める識別の情報（なければ空）
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -841,6 +843,7 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
              "exchange": c.exchange}
             for c in state.ownership_changes
         ]
+        data["user_ownership_rules"] = user_ownership_rule_targets(state)
     return data
 
 
@@ -855,6 +858,15 @@ def _card_record(card, format_version: int) -> dict[str, Any]:
         record["origin"] = origin
     return record
 
+
+def user_ownership_rule_targets(state: GameState) -> list[str]:
+    """v0.130: この対戦のカードのうち、利用者が指定した所有者の簡略化（``effects.USER_SPECIFIED_RULES``）を当てはめる登録の対象（``<カード id>/trainer``。並べた順）。保存・再生の
+    記録から、公式の裁定ではないエンジン固有の所有者の扱いで処理したことを識別するため（状態に項目を加えない）。"""
+    from .effects import USER_SPECIFIED_RULES
+
+    present = {instance.card_id for instance in state.cards.values()}
+    return sorted(key for key in USER_SPECIFIED_RULES if key.split("/", 1)[0] in present
+                  and state.effects.trainer_entry(key.split("/", 1)[0]) is not None)
 
 
 def user_simplification_targets(state: GameState) -> list[str]:

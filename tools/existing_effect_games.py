@@ -759,6 +759,12 @@ V127_MOLTRES, V127_TWM, V127_PIKACHU, V127_SLOWKING = ("ES2-005", "QSG-055"), "n
 V0_129 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_129"])
 V129_QUIZ = "GD5-016"
 V129_ANSWER_POLICIES = ("knowledge", "wrong")
+# v0.130（docs/trade-please-ownership-v0.130.md 10 章）: とりかえっこプリーズ。使う手順 ``_v130_trainer``・選ぶカードと答え ``_v130_decision`` を重ねる。ログから数えるのは ``v130_uses``。
+# 方策はどれも公開の情報と、決めるプレイヤーが見ている手札（選べるもの）だけを読む決まった割り当てで、正式な対戦の前に決めた（結果を見て変えない）: 使ったプレイヤーが選ぶカードは
+# 選べるもののうち (番の番号 + 使ったトレーナーの uid) を数で割った余りの位置、相手が選ぶカードは (3 × 番の番号 + 使ったトレーナーの uid) の余りの位置、答えは (番の番号 + 使ったトレーナーの
+# uid) が偶数ならオーケー、奇数ならオーケーでない
+V0_130 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_130"])
+V130_SWAP = "PR1-027"
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -1039,6 +1045,12 @@ DECKS = {
     # 選べるが選ぶと止める（手順は選ばず、出たことを数える）
     "Q129": ((V129_QUIZ, 4), ("PMCG1-052", 4), ("PMCG1-056", 2), ("PMCG1-054", 2), ("ES2-024", 1), ("neo1-057", 1), ("PMCG1-064", 2), ("ES1-033", 2),
              ("neo3-051", 2), ("PMCG5-007", 2), (driver.BILL, 2), (SWITCH, 2), (driver.POTION, 2), (FIGHTING, 32)),
+    # v0.130: 闘・無色。とりかえっこプリーズ 4 枚と、交換したカードを場に出す・進化させる・つける・トラッシュする・山札にもどす・手札にもどす・サイドに置く経路のカード: たね（エビワラー・
+    # コラッタ・イワーク）と 1 進化（ラッタ）、退化スプレー（進化カードを手札にもどす）・ポケモン回収（たねを手札にもどし、ほかはトラッシュ）・ポケモン交換おじさん（手札のポケモンを山札に
+    # もどす）・にせオーキドはかせ（相手の手札を山札にもどす）・オーキドはかせ（手札をトラッシュ）・にせオーキドの発明（相手のサイドを山札にもどして置きなおす）・プラスパワー（つける
+    # トレーナー）・錯乱ジム（相手がかわりに使うことを選ぶと止まる経路。UQ-CHAOS-GYM-BORROWED-TURN）
+    "T130": ((V130_SWAP, 4), (HITMONCHAN, 3), (RATTATA, 4), (RATICATE, 3), (ONIX, 2), ("PMCG1-086", 1), ("PMCG1-092", 1), ("PMCG1-093", 1), ("PMCG1-089", 1),
+             ("PMCG1-077", 1), ("neo4-111", 1), ("PMCG5-087", 1), (driver.BILL, 2), (SWITCH, 1), (driver.POTION, 1), (driver.PLUSPOWER, 2), (FIGHTING, 31)),
     "F45": ((ONIX, 3), (RATTATA, 4), (RATICATE, 3), (ROCKETS_HITMONCHAN, 3), (BROCKS_GEODUDE_40, 4), (BROCKS_RHYHORN, 1), (BROCKS_SANDSHREW, 1),
             (GIOVANNIS_MEOWTH_40, 3), *TRAINERS, (FIGHTING, 26)),
     # v0.45: 水・超（ロケット団・第1弾）。ハイドロキャノン・ロケットタックル・さいみんじゅつ・ゆめくい（相手がねむりでないと失敗）
@@ -2165,6 +2177,9 @@ PAIRINGS_V0_127 = (("F127", "W28"), ("F127", "S124"), ("F127", "F45"), ("P127", 
 # v0.129: Q129 対 W28（水・無色）・Q129 対 F45（闘）・Q129 対 Q129（お互いにクイズを使い、お互いに答える）。組・席・seed は正式な対戦の前に決めた（正式な対戦は seed 0〜3。開発中に
 # 手順を確かめる seed 90〜93 とは別。局・seed を選び直さない）
 PAIRINGS_V0_129 = (("Q129", "W28"), ("Q129", "F45"), ("Q129", "Q129"))
+# v0.130: T130 どうし（お互いに使い、受け取ったカードをふたたび交換しうる。席を入れかえた局は同じ局なので 1 回だけ行う）・T130 対 W28（水・無色）・T130 対 F45（闘）。組・席・seed は正式な
+# 対戦の前に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめる seed 90〜93 とは別。局・seed・方策を選び直さない）
+PAIRINGS_V0_130 = (("T130", "T130"), ("T130", "W28"), ("T130", "F45"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -2189,7 +2204,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.116": PAIRINGS_V0_116, "v0.117": PAIRINGS_V0_117, "v0.118": PAIRINGS_V0_118,
            "v0.119": PAIRINGS_V0_119, "v0.120": PAIRINGS_V0_120, "v0.121": PAIRINGS_V0_121, "v0.122": PAIRINGS_V0_122,
            "v0.123": PAIRINGS_V0_123, "v0.124": PAIRINGS_V0_124, "v0.125": PAIRINGS_V0_125, "v0.126": PAIRINGS_V0_126,
-           "v0.127": PAIRINGS_V0_127, "v0.129": PAIRINGS_V0_129}
+           "v0.127": PAIRINGS_V0_127, "v0.129": PAIRINGS_V0_129, "v0.130": PAIRINGS_V0_130}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -12110,6 +12125,95 @@ def v129_uses(state):
     return counts
 
 
+def _v130_trainer(state, tried, counts):
+    """v0.130: 手札のとりかえっこプリーズを、ワザか番の終わりの前に使う（1 つの番に 1 回。使う前に止まる・拒否されるなら、その番は試さない）。"""
+    player = state.current_player
+    if state.trainer_in_use is not None:
+        return None
+    for card in state.players[player].hand:
+        if state.cards[card].card_id != V130_SWAP:
+            continue
+        key = ("v130_swap", state.turn_number)
+        if key in tried:
+            return None
+        tried.add(key)
+        command = PlayTrainer(player, card)
+        if not _v052_accepted(state, command):
+            counts["v130_swap_not_played"] += 1
+            return None
+        counts["v130_swap_played"] += 1
+        return command
+    return None
+
+
+def _v130_decision(state, counts):
+    """v0.130: とりかえっこプリーズの選ぶカード（使ったプレイヤー・相手プレイヤー）と、相手プレイヤーの答え（``V130_SWAP`` の上の決まった割り当て）。錯乱ジムで相手がかわりに使うかの問い
+    （使うことを選ぶと止まる）には答えない（元の手順が止まらない答えを選ぶ）。"""
+    from kyuura_engine import decisions as D
+
+    d = state.decision
+    used = state.trainer_in_use
+    if d is None or d.resume != "trainer" or used is None or state.cards[used.card].card_id != V130_SWAP or d.context_value("stage") is None:
+        return None
+    stage = d.context_value("stage")
+    if d.kind == D.SELECT_EXCHANGE_CARD:
+        offset = state.turn_number if stage == "take" else 3 * state.turn_number
+        counts[f"v130_select_{stage}"] += 1
+        return ResolveDecision(d.player, d.id, (d.options[(offset + used.card) % len(d.options)],))
+    if d.kind == D.ACCEPT_REQUEST and stage == "accept":
+        accept = (state.turn_number + used.card) % 2 == 0
+        counts["v130_answer_accept" if accept else "v130_answer_decline"] += 1
+        return ResolveDecision(d.player, d.id, (1,) if accept else ())
+    return None
+
+
+def v130_uses(state):
+    """v0.130: ログから数えたとりかえっこプリーズと、交換したカードの動き（このカードのない局では空）。
+
+    - ``played``・``accepted``・``declined``・``exchanged_cards``（交換したカードの延べ枚数）・``re_exchanged``（2 回以上交換したカード）・``drawn_on_decline``（オーケーでないときに引いた
+      枚数）・``short_draw``（2 枚より少なく引いた）・``chaos_offered``（錯乱ジムの「うら」で、相手がかわりに使うかを問われた）
+    - ``after_<ログの種類>``: 交換したあとのログで、交換したカードの uid が出たもの（交換のログを除く。そのカードを使う・場に出す・進化させる・つける・トラッシュする・山札・手札・サイドに
+      移すなど。同じログに 2 枚出れば 2）。``swapped_<種類>``: 交換したカードの印刷の分類"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_130 for uid in state.cards):
+        return counts
+    from kyuura_engine.observation import _uid_field
+
+    log = list(state.log)
+    swapped: dict[int, int] = {}  # uid → 交換した回数
+    for i, e in enumerate(log):
+        kind = e["kind"]
+        if kind == "play_trainer" and state.cards[e["card"]].card_id == V130_SWAP:
+            counts["played"] += 1
+        elif kind == "request_answered" and e.get("trainer_card") in state.cards and state.cards[e["trainer_card"]].card_id == V130_SWAP:
+            counts["accepted" if e["accepted"] else "declined"] += 1
+            following = log[i + 1] if i + 1 < len(log) else None
+            if not e["accepted"]:
+                drawn = len(following["cards"]) if following is not None and following["kind"] == "draw" else 0
+                counts["drawn_on_decline"] += drawn
+                counts["short_draw"] += drawn < 2
+        elif kind == "chaos_answered" or kind == "chaos_not_borrowable":
+            if state.cards[e["card"]].card_id == V130_SWAP:
+                counts["chaos_" + ("answered" if kind == "chaos_answered" else "not_borrowable")] += 1
+        if kind == "cards_exchanged":
+            for uid in (e["given_card"], e["taken_card"]):
+                swapped[uid] = swapped.get(uid, 0) + 1
+                counts["exchanged_cards"] += 1
+                counts[f"swapped_{state.printed_def(uid).category}"] += 1
+            continue
+        if not swapped:
+            continue
+        for name, value in e.items():
+            if not _uid_field(name):
+                continue
+            values = value if isinstance(value, (list, tuple)) else (value,)
+            counts.update(f"after_{kind}" for v in values if type(v) is int and v in swapped)
+    counts["re_exchanged"] = sum(1 for n in swapped.values() if n > 1)
+    chaos_offers = sum(1 for e in log if e["kind"] == "chaos_check" and e.get("card") in state.cards and state.cards[e["card"]].card_id == V130_SWAP)
+    counts["chaos_checks"] = chaos_offers
+    return +counts
+
+
 def v127_uses(state):
     """v0.127: ログから数えたドライアップ・怪電波マシーン・利用者の簡略ルールのワザの動き（v0.127 のカードのない局では空）。
 
@@ -12598,7 +12702,8 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = (_v129_decision(state, counts)  # v0.129: カツラのクイズ その1の置くカード・身長の答え（相手の決定にも答える。ないデッキでは何もしない）
+            early = (_v130_decision(state, counts)  # v0.130: とりかえっこプリーズの選ぶカード・答え（相手の決定にも答える。ないデッキでは何もしない）
+                     or _v129_decision(state, counts)  # v0.129: カツラのクイズ その1の置くカード・身長の答え（相手の決定にも答える。ないデッキでは何もしない）
                      or _v127_decision(state, counts)  # v0.127: ドライアップの選ぶポケモン・トラッシュ、怪電波マシーンのもどすカード（ないデッキでは何もしない）
                      or _v126_decision(state, counts)  # v0.126: フラッシュの並べかえ・おもての山札のある間の選択（フラッシュのない局では何もしない）
                      or _v124_decision(state, counts)  # v0.124: ［すごいへんしん］の選ぶポケモン（v0.124 のカードの決定でなければ何もしない）
@@ -12691,6 +12796,9 @@ def make_policy(seen: dict, counts: Counter):
             return (_v031_decision(state, counts) or _v039_decision(state, counts) or _v040_decision(state, counts) or _v041_decision(state, counts)
                     or _v042_decision(state, counts) or command)
         if state.phase is Phase.MAIN and isinstance(command, (UseAttack, EndTurn)):
+            swap = _v130_trainer(state, tried, counts)  # v0.130: とりかえっこプリーズ（ないデッキでは何もしない）
+            if swap is not None:
+                return swap
             quiz = _v129_trainer(state, tried, counts)  # v0.129: カツラのクイズ その1（ないデッキでは何もしない）
             if quiz is not None:
                 return quiz
@@ -13049,6 +13157,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v126"] = v126_uses(state)
         result["v127"] = v127_uses(state)
         result["v129"] = v129_uses(state)
+        result["v130"] = v130_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
@@ -13070,7 +13179,7 @@ def audit(result, state, commands):
         return {"not_audited": 1}
     current = new_game(*(deck_cards(label) for label in result["decks"]), result["seed"])
     watch = any(state.cards[uid].card_id in V0_47 + V0_47_TRAINERS + V0_48 + V0_54_TRAINERS + V0_55_TRAINERS + V0_56_TRAINERS + V0_63_TRAINERS + V0_95 + V0_96
-                + V0_97 for uid in state.cards)  # v0.48: 観測の今有効な値も（v0.54・v0.55: 見る・見せるトレーナー。v0.95: 手札・山札を見るワザ・特殊能力）
+                + V0_97 + V0_130 for uid in state.cards)  # v0.48: 観測の今有効な値も（v0.54・v0.55: 見る・見せるトレーナー。v0.95: 手札・山札を見るワザ・特殊能力）
     deck_before: dict[int, int] = {}  # v0.105: ワザの宣言の直前の、ワザを使ったプレイヤーの山札の枚数（宣言を処理する前のログの長さ → 枚数）
     for command in commands:
         if isinstance(command, UseAttack):

@@ -206,7 +206,8 @@ class SerializationTest(unittest.TestCase):
             self.assertTrue(all(set(record) == {"card_id", "owner"} for record in data["cards"].values()))
         latest = state_to_dict(state, 33)
         self.assertEqual(latest["ownership_changes"], [])
-        self.assertEqual({key: value for key, value in latest.items() if key not in ("ownership_changes", "format_version")}, {key: value for key, value in state_to_dict(state, 32).items() if key != "format_version"})
+        self.assertEqual(latest["user_ownership_rules"], [])  # とりかえっこプリーズのない対戦（登録表とカードの組から求める識別の情報）
+        self.assertEqual({key: value for key, value in latest.items() if key not in ("ownership_changes", "user_ownership_rules", "format_version")}, {key: value for key, value in state_to_dict(state, 32).items() if key != "format_version"})
 
     def test_pickle_deepcopy_clone_keep_the_owners(self):
         state = board()

@@ -30979,6 +30979,32 @@
         "trainer": "kyuura-engine user specification docs/blaines-quiz-heights-v0.129.md#3"
       },
       "notes": "v0.129 で加えた（docs/blaines-quiz-heights-v0.129.md）。GD5（gym_deck。ポケモンジム第3弾「グレンタウンジム カツラ」）。トレーナー。BlainesHeightQuiz: 手札の「ポケモン」のカード 1 枚を伏せて置き、相手プレイヤーにその名前を伝え、相手が身長（整数 cm）を答える。正解なら相手、正解でないなら使ったプレイヤーが 2 枚引く（引けるだけ）。置いたカードは手札にもどす。処理に使う文面は kyuura の印刷の文面のまま。正解の参照値は利用者の指定（USER-QUIZ-HEIGHT-OFFICIAL-ZUKAN: kyuura 9242b9b の data/species_heights.json の公式図鑑の種族の身長。全国図鑑番号だけで結ぶ。出題したカードの印刷の身長を確かめた値ではなく、印刷の訂正・公式の裁定・最新の説明・エラッタとしては記録しない。user_specified_reference）。手札にポケモンのカードがなければ QZ1、図鑑番号・身長のないカードは選べるが選ぶと止める（エンジンの未対応）。kyuura の研究の基準のコミット（71d1728）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）。英語版の文面（「length」）・現代のルール・後年の規定は持ち込まない"
+    },
+    "PR1-027": {
+      "basis": "kyuura_data",
+      "name_ja": "とりかえっこプリーズ",
+      "status": "adopted",
+      "kyuura_commit": "71d1728938fb4c8fefde9b82779cdef74beb612d",
+      "recorded_on": "2026-11-01",
+      "kyuura_records": [
+        "CC-PR1-027-P293",
+        "CR-SWAP-PLEASE-PROCEDURE",
+        "CR-SWAP-PLEASE-REAL-TRADE-SEPARATE",
+        "CR-SWAP-PLEASE-USE-CONDITION",
+        "CR-SWAP-PLEASE-USE-IN-GAME",
+        "LD-PR1-027-TRAINER",
+        "UQ-CHAOS-GYM-BORROWED-TURN",
+        "UQ-SWAP-PLEASE-OWNERSHIP"
+      ],
+      "play_text": {
+        "trainer": "LD-PR1-027-TRAINER"
+      },
+      "external_checks": [],
+      "issues": [],
+      "user_specified_rule": {
+        "trainer": "kyuura-engine user specification docs/trade-please-ownership-v0.130.md#3"
+      },
+      "notes": "v0.130 で加えた（docs/trade-please-ownership-v0.130.md）。プロモ（旧裏）。トレーナー（種類の表示なし）。SwapPleaseTrainer: 処理に使う文面は最新の説明 LD-PR1-027-TRAINER の全文（印刷の文面（kyuura の写し。訂正 FIX-PR1-027-TEXT-JA のあと）は照合だけに使う。書き方の違いだけで処理は同じ）。使うための条件は CR-SWAP-PLEASE-USE-CONDITION（このカードを除いた手札と相手の手札がどちらも 1 枚以上）、手順は CR-SWAP-PLEASE-PROCEDURE、交換したカードを対戦で使ってよいのは CR-SWAP-PLEASE-USE-IN-GAME。交換したカードの対戦の中の所有者は利用者が指定した簡略化（USER-SWAP-OWNERSHIP-RECEIVER: 受け取ったプレイヤー。user_specified_rule）で、公式の裁定・エラッタ・印刷の訂正・最新の説明ではない。kyuura のUQ-SWAP-PLEASE-OWNERSHIP は未解決のまま。錯乱ジムで相手がかわりに使うことを選ぶと UQ-CHAOS-GYM-BORROWED-TURN で止める（CH1 のコード）。名前の末尾の「！」（印刷）は kyuura の報告事項で、写し・登録では直していない。最新の説明・図版の照合は kyuura が 2026-10-31 に『オフィシャルブック2000』p.293 を画像で読んだ記録（CC-PR1-027-P293）、カードの画像の照合はkyuura の IMG-PR1-027 で、エンジンは原典・画像を見ていない。日本語の文面の転記元は pcg-search.com。新しい外部照合はしていない"
     }
   }
 }

@@ -31,6 +31,8 @@ v0.4c 以降の 2 進化ポケモン。v0.11 はサカキのワンリキー・�
   書き出しの ``catalog_scope`` に残しました（3 つの欄はカードの写す欄には加えない。docs/catalog-scope-migration-v0.128.md 2 章・3 章）。
 - v0.129 で、写しの組 pool_v0_129（1 枚）と、エンジンが処理に使う欄 ``pokemon.dex`` を加えました（写しの元・研究の基準は 71d1728 のまま。段は加えていない。
   公式図鑑の種族の身長は scripts/extract_species_heights.py の別の写し。docs/blaines-quiz-heights-v0.129.md 2 章）。
+- v0.130 で、写しの組 pool_v0_130（1 枚）を加えました（写しの元・研究の基準は 71d1728 のまま。段は加えていない。文面は FIX-PR1-027-TEXT-JA（段 v0.126）のあとの値。
+  docs/trade-please-ownership-v0.130.md 2 章）。
 
 使い方::
 
@@ -3714,6 +3716,12 @@ POOL_V0_129 = [
     "GD5-016",  # カツラのクイズ その1（ジムデッキ。ポケモンジム第3弾「グレンタウンジム カツラ」）
 ]
 
+# v0.130 で加えたカード（docs/trade-please-ownership-v0.130.md）。写しの元・研究の基準は 71d1728 のまま（段は加えていない）。処理に使う文面は最新の説明 LD-PR1-027-TRAINER、
+# 交換したカードの所有者は利用者が指定した簡略化（effects.USER_SPECIFIED_RULES）。名前は kyuura の値のまま（印刷の「！」は kyuura の報告事項で、写しでは直さない）
+POOL_V0_130 = [
+    "PR1-027",  # とりかえっこプリーズ（プロモ（旧裏）。トレーナー。公式大会では使えない（kyuura の notes）が、通常対戦の対象）
+]
+
 POOLS = [
     ("pool_v0_1", POOL_V0_1),
     ("pool_v0_2b", POOL_V0_2B),
@@ -3848,6 +3856,7 @@ POOLS = [
     ("pool_v0_126", POOL_V0_126),
     ("pool_v0_127", POOL_V0_127),
     ("pool_v0_129", POOL_V0_129),
+    ("pool_v0_130", POOL_V0_130),
 ]
 
 

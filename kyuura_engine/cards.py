@@ -692,6 +692,7 @@ POOL_KEYS = (
     "pool_v0_126",  # v0.126（フラッシュと表向きの山札。docs/flash-faceup-deck-v0.126.md）
     "pool_v0_127",  # v0.127（枚数不足の途中停止と、利用者指定の簡略ルールのプロモ 3 枚。docs/deferred-shortage-user-promos-v0.127.md）
     "pool_v0_129",  # v0.129（カツラのクイズ その1。正解の参照値は利用者指定の公式図鑑の種族の身長。docs/blaines-quiz-heights-v0.129.md）
+    "pool_v0_130",  # v0.130（とりかえっこプリーズ。交換したカードの所有者は利用者指定の簡略化。docs/trade-please-ownership-v0.130.md）
 )
 
 

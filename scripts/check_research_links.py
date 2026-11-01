@@ -257,6 +257,7 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
     simplified = section.get("engine_simplified_text", {})  # v0.68: エンジンの簡略化した仕様（公式の裁定・エラッタではない）
     user_simplified = section.get("user_simplified_text", {})  # v0.127: 利用者が指定した簡略ルール（公式の裁定・エラッタ・エンジンの仕様の判断ではない）
     user_references = section.get("user_specified_references", {})  # v0.129: 利用者が指定した参照値（処理に使う文面は印刷のまま。公式の裁定・最新の説明・印刷の訂正ではない）
+    user_rules = section.get("user_specified_rules", {})  # v0.130: 利用者が指定した、説明が書かない処理の規則（処理に使う文面は最新の説明のまま。公式の裁定ではない）
     equivalent = section.get("equivalent_registrations", {})  # v0.69: 登録したカードと処理に使う欄が同じカードの登録 → 元のカードの登録
     reprinted = section.get("reprint_registrations", {})  # v0.71: 再録のカードの、元のカードの記録の文面を処理に使う登録 → 元のカードの登録
     in_checks = (set(section.get("recorded_in_card_checks", {})) | set(section.get("card_checks_without_text", {})) | adopted_printed
@@ -493,6 +494,29 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
             problems.append(f"{target}: 利用者が指定した参照値の記録の印刷の文面が、研究の基準のコミットの印刷の文面・登録の処理に使う文面と同じではない")
         if card in trainer_ld:
             problems.append(f"{target}: kyuura に最新の説明の記録 {trainer_ld[card]['id']} がある（利用者が指定した参照値より先に確かめる）")
+
+    # 4f-3. v0.130（docs/trade-please-ownership-v0.130.md 3 章）: 利用者が指定した、説明が書かない処理の規則（とりかえっこプリーズで交換したカードの対戦の中の所有者）。処理に使う
+    # 文面の区分ではない（文面は登録の区分のまま。PR1-027 は registered_trainers の最新の説明）ので、文面の区分と別に挙げる。一覧は対象ごとの記録（effects.USER_SPECIFIED_RULES）と
+    # ちょうど同じで、出典は USER_SPECIFIED_RULE_SOURCE。記録の印刷の文面が研究の基準のコミットの印刷の文面と同じ、処理に使う文面が登録の処理に使う文面と同じで、kyuura の
+    # 最新の説明があればその文面（規則は文面を書き換えない）。解決済みにしない論点が、研究の基準のコミットで UNRESOLVED のまま
+    if set(user_rules) != set(getattr(E, "USER_SPECIFIED_RULES", {})) or set(user_rules) & (set(user_simplified) | set(user_references)):
+        problems.append(f"user_specified_rules の一覧が、利用者が指定した規則の記録と違うか、簡略ルール・参照値の区分にも入っている: 対応表 {sorted(user_rules)}")
+    for target, basis in user_rules.items():
+        record = getattr(E, "USER_SPECIFIED_RULES", {}).get(target)
+        if basis != getattr(E, "USER_SPECIFIED_RULE_SOURCE", None) or record is None:
+            problems.append(f"{target}: user_specified_rules の根拠 {basis!r} が、利用者が指定した規則の出典・記録でない")
+            continue
+        card, _, kind = target.partition("/")
+        entry = registry_.trainer_entry(card) if kind == "trainer" else None
+        printed = (((research_cards.get(card) or {}).get("trainer") or {}).get("text") or {}).get("ja") if kind == "trainer" else None
+        latest = trainer_ld.get(card)
+        if entry is None or not (entry.text_ja == record.printed_text == printed and entry.play_text_ja == record.play_text):
+            problems.append(f"{target}: 利用者が指定した規則の記録の文面が、研究の基準のコミットの印刷の文面・登録の処理に使う文面と同じではない")
+        elif latest is not None and (entry.source != latest["id"] or entry.play_text_ja != (latest.get("latest_description") or {}).get("text_ja")):
+            problems.append(f"{target}: 最新の説明 {latest['id']} があるのに、処理に使う文面がその文面ではない（規則は文面を書き換えない）")
+        issue = issues.get(record.kyuura_issue)
+        if issue is None or issue.get("status") != "UNRESOLVED":
+            problems.append(f"{target}: 解決済みにしない論点 {record.kyuura_issue} が、研究の基準のコミットで UNRESOLVED ではない")
 
     # 4g. v0.69（docs/equivalent-non-pack-cards-v0.69.md 4 章）: 登録したカードと処理に使う欄が同じカード（拡張パック以外の商品）の登録。元のカードの登録の区分にしたがう。
     # 元のカードと、研究の基準のコミットで同じカードの組（same_card_group）にあり、印刷の文面が同じで、登録の処理に使う文面・出典が元のカードと同じ。元のカードの登録は
@@ -762,7 +786,9 @@ def unlinked_case_problems(links: dict, issues: dict, registry) -> list[str]:
     - エンジンの扱いはちょうど 1 つ: ``stop_codes``（対応表の stop_codes にある停止コード。そのカードの対象が登録されている。コードの kyuura_issue が事例の論点と違えば
       ``engine_issue_differs`` を真にする（kyuura への報告事項）。同じなら書かない）・``codeless_question``（codeless_questions にあり、論点が同じ。対象が登録されている）・
       ``unregistered``（そのカードの対象を登録していない。その場面は起こらない）・``requires_unregistered``（v0.123。対象は登録されているが、その場面は、同じ論点の事例の、
-      登録していない別のカード（挙げた id のどれか）があるときだけ起こる。デッキに入れられないので、その場面は起こらない）
+      登録していない別のカード（挙げた id のどれか）があるときだけ起こる。デッキに入れられないので、その場面は起こらない）・``user_specified_rule``（v0.130。その場面を、
+      利用者が指定した規則 ``effects.USER_SPECIFIED_RULES`` の対象（``<カード id>/trainer``）で処理する。規則の対象のカードが登録されていて、規則の解決済みにしない論点が事例の論点と同じ。
+      論点を解決したことにはしない。事例のカードの対象が登録されていなければ unregistered のまま）
     """
     problems: list[str] = []
     section = links.get("kyuura_cases_without_engine_ruling")
@@ -791,7 +817,7 @@ def unlinked_case_problems(links: dict, issues: dict, registry) -> list[str]:
         engine = case["engine"]
         registered = case["target"] in _registered_targets(registry, case["card_id"])
         if not isinstance(engine, dict) or len(engine) != 1:
-            problems.append(f"{where}: エンジンの扱い（engine）は stop_codes・codeless_question・unregistered・requires_unregistered のちょうど 1 つ")
+            problems.append(f"{where}: エンジンの扱い（engine）は stop_codes・codeless_question・unregistered・requires_unregistered・user_specified_rule のちょうど 1 つ")
             continue
         differs = False
         if "stop_codes" in engine:
@@ -822,6 +848,16 @@ def unlinked_case_problems(links: dict, issues: dict, registry) -> list[str]:
                     problems.append(f"{where}: 場面に要るとしたカード {card} が登録されている（扱いを書き直す）")
             if not registered:
                 problems.append(f"{where}: 登録していない別のカードを要るとしたカードの対象 {case['target']} が登録されていない（unregistered にする）")
+        elif "user_specified_rule" in engine:
+            # v0.130: 利用者が指定した規則で処理する場面（とりかえっこプリーズで交換したカードの所有者）。規則の対象が登録されていて、規則の論点が事例の論点と同じ
+            from kyuura_engine import effects as E
+
+            rule = getattr(E, "USER_SPECIFIED_RULES", {}).get(engine["user_specified_rule"])
+            rule_card, _, rule_kind = str(engine["user_specified_rule"]).partition("/")
+            if rule is None or rule.kyuura_issue != case["kyuura_issue"] or rule_kind not in _registered_targets(registry, rule_card):
+                problems.append(f"{where}: 利用者が指定した規則 {engine['user_specified_rule']!r} が記録にない・論点が違う・規則の対象が登録されていない")
+            if not registered:
+                problems.append(f"{where}: 利用者が指定した規則で処理するとしたカードの対象 {case['target']} が登録されていない（unregistered にする）")
         elif engine != {"unregistered": True}:
             problems.append(f"{where}: エンジンの扱い {engine!r} を扱えない")
         elif registered:

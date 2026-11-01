@@ -121,6 +121,7 @@ from .decisions import (
     SEARCH_DECK_OR_DISCARD, TAKE_LOOKED_POKEMON, SELECT_OPPONENT_PRIZE, TAKE_LOOKED_TRAINER,
     EVOLUTION_SONG_POKEMON,
     HEAL_ALLOCATION, OPTIONAL_COIN, STADIUM_FROM_DISCARD, DECK_TOP_FROM_HAND,
+    SELECT_EXCHANGE_CARD,  # v0.130: とりかえっこプリーズ
 )
 from . import faceup as _faceup  # v0.126: おもての山札（フラッシュ）
 from .heights import HEIGHT_WITHOUT_DEX, card_height  # v0.129: 公式図鑑の種族の身長の参照値（カツラのクイズ その1）
@@ -189,7 +190,7 @@ from .zones import (
     look_at_card, put_trainer_into_play, swap_prize_with_deck_top, put_discard_on_deck_top, return_discard_to_deck, return_hand_cards_to_deck,
     look_at_hand, return_revealed_hand_cards_to_deck, reveal_hand,
     discard_attached_energy_cards, return_attached_energy_to_hand, move_attached_energy, opponent_hand_card_to_deck, take_looked_deck_cards,
-    discard_pile_to_deck, deck_top_to_discard,
+    discard_pile_to_deck, deck_top_to_discard, exchange_hand_cards,
     hand_to_bench_by_effect, hand_basic_to_active, hand_positions_to_deck, swap_prize_with_hand, take_prize_by_trainer,
     discard_attached_energy_by_stadium, return_attached_energy_by_stadium,
     reveal_face_down_bench, reveal_prizes, return_set_aside, set_aside_face_down_bench, set_aside_hand, set_aside_quiz_card,
@@ -48724,3 +48725,193 @@ V0_129_TRAINERS: Mapping[str, TrainerEntry] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_trainers(DEFAULT_EFFECTS, V0_129_TRAINERS)
+
+
+# ---------------------------------------------------------------- v0.130（docs/trade-please-ownership-v0.130.md）
+
+# 利用者が指定した所有者の簡略化（v0.130。docs/trade-please-ownership-v0.130.md 3 章）。v0.127 の簡略ルール（``USER_SIMPLIFICATIONS``。印刷の条件を省く）・v0.129 の参照値
+# （``USER_SPECIFIED_REFERENCES``。説明の正解に参照値を採る）とは別の指定で、処理に使う文面は最新の説明（LD-PR1-027-TRAINER）のまま。説明が書かない「交換したカードの対戦の中の
+# 所有者」に、受け取ったプレイヤーを採る（kyuura の研究の記録の読み B に当たる処理）。公式の裁定・エラッタ・印刷の訂正・最新の説明としては記録せず、kyuura の UQ-SWAP-PLEASE-OWNERSHIP
+# （歴史資料上の問い）は解決済みにしない
+USER_SPECIFIED_RULE_SOURCE = "kyuura-engine user specification docs/trade-please-ownership-v0.130.md#3"
+USER_SWAP_OWNERSHIP = "USER-SWAP-OWNERSHIP-RECEIVER"
+USER_SPECIFIED_RULE_DATE = "2026-11-01"
+SWAP_PLEASE_PRINTED_TEXT = ("相手プレイヤーの手札を見て、カードを1枚えらぶ。次に、相手プレイヤーにあなたの手札を見せ、カードを1枚えらばせる。そして、お互いがえらんだカードを交換してよいか"
+                            "どうか、相手にたずねる。オーケーなら、カードを交換して、それぞれの手札にくわえる。オーケーでないなら、交換はおこらず、あなたは山札からカードを2枚引く。"
+                            "(このカードは、お互いに手札が1枚以上ある時だけ、使える)")
+SWAP_PLEASE_LATEST_TEXT = ("相手プレイヤーの手札を見て、その中からカードを1枚選ぶ。次に、相手プレイヤーにあなたの手札を見せ、カードを1枚選ばせる。そして、おたがいが選んだカードを交換して"
+                           "よいかどうか、相手プレイヤーにたずねる。オーケーなら、カードを交換して、それぞれの手札に加える。オーケーでないなら、交換はおこらず、あなたは山札からカードを2枚"
+                           "引いて、手札に加える。（このカードは、おたがいに手札が1枚以上あるときだけ、使える）")
+SWAP_PLEASE_BORROWED_REASON = (
+    "錯乱ジムで相手プレイヤーがかわりに使うとりかえっこプリーズの説明の「あなた」「相手プレイヤー」（相手の手札を見て選ぶ・手札を見せて選ばせる・たずねる・山札から2枚引く）と、"
+    "「おたがいに手札が1枚以上」をだれから見て読むかは、印刷の文面・最新の説明・2000.02.14 版の公式ルール・kyuura の記録から決められないので扱わない（kyuura の "
+    "UQ-CHAOS-GYM-BORROWED-TURN の PR1-027 の事例。利用者が指定した所有者の簡略化はこの問いを決めない。相手プレイヤーが使うことを選ぶと止める。docs/trade-please-ownership-v0.130.md 6 章）")
+
+
+@dataclass(frozen=True)
+class UserSpecifiedRule:
+    """利用者が指定した、説明が書かない処理の規則の 1 つの対象の記録（v0.130）。``key`` は ``<カード id>/trainer``。``printed_text`` は kyuura の印刷の文面（写しと同じ）、``play_text`` は
+    処理に使う文面（登録の ``play_text_ja``。最新の説明があればその文面）で、どちらも書き換えない。``applies_to`` は規則を当てはめる場面、``specification`` は規則の中身、``scope`` は
+    規則がはたらく範囲、``not_decided`` はこの指定が決めないこと、``instruction`` は利用者の指定の文（根拠の文書の引用）、``kyuura_record`` は kyuura に記録された指定の場所、
+    ``not_recorded_as`` は記録しない扱い、``kyuura_issue`` は解決済みにしない kyuura の論点。"""
+
+    key: str
+    rule: str
+    printed_text: str
+    play_text: str
+    applies_to: str
+    specification: str
+    scope: str
+    not_decided: str
+    instruction: str
+    kyuura_record: str
+    not_recorded_as: str
+    kyuura_issue: str
+    specified_by: str = "user"
+    specified_on: str = USER_SPECIFIED_RULE_DATE
+
+
+USER_SPECIFIED_RULES: Mapping[str, UserSpecifiedRule] = MappingProxyType({record.key: record for record in (
+    UserSpecifiedRule(
+        "PR1-027/trainer", USER_SWAP_OWNERSHIP, SWAP_PLEASE_PRINTED_TEXT, SWAP_PLEASE_LATEST_TEXT,
+        "「オーケーなら、カードを交換して、それぞれの手札に加える」で交換が成立した 2 枚の、対戦の中の所有者",
+        "交換した 2 枚それぞれの所有者を、交換と一体で受け取ったプレイヤーにする（片方だけを変えない）。以後その対戦の終わりまで、手札・山札・トラッシュ・サイド・場に置く処理は"
+        "新しい所有者を基準にする。対戦開始時のデッキのプレイヤー（出所）は追跡用に残し、uid は付け直さない。再交換も同じ規則（もとの所有者へ自動では戻さない）。オーケーでないときは"
+        "所有者を変えず、説明どおり使ったプレイヤーが山札から2枚引く。とりかえっこプリーズ自身の所有者は変えない",
+        "交換したカード 2 枚だけ（あとから重ねた進化カード・つけたエネルギー・どうぐなどの所有者は変えない）。その対戦の中だけ（実物の所有権・次の対戦の所有者を変えない）。"
+        "デッキの構築の制限（同じ名前 4 枚など）は交換のたびに当てはめ直さない",
+        "錯乱ジムで相手プレイヤーがかわりに使うときの「あなた」「相手」（UQ-CHAOS-GYM-BORROWED-TURN。止める）、ヤドキングの［ちえくらべ］との組み合わせ（未登録）、交換以外の手順"
+        "（CR-SWAP-PLEASE-PROCEDURE・CR-SWAP-PLEASE-USE-CONDITION・CR-SWAP-PLEASE-USE-IN-GAME のまま）",
+        "交換が成立した2枚は、対戦終了まで、それぞれの受取側が所有者になります。",
+        "kyuura docs/engine-user-swap-ownership.md（71d1728。2026-10-31 に kyuura に記録された利用者の採用「とりかえっこプリーズについて簡略化仕様を採用します。」）",
+        "公式の裁定・エラッタ・印刷の訂正・最新の説明・実物の所有権の変更・UQ-SWAP-PLEASE-OWNERSHIP の解決",
+        "UQ-SWAP-PLEASE-OWNERSHIP"),
+)})
+
+
+@dataclass(frozen=True)
+class SwapPleaseTrainer(TrainerEffect):
+    """v0.130（docs/trade-please-ownership-v0.130.md 5 章）: 相手プレイヤーの手札を見て、その中からカードを 1 枚選ぶ。次に、相手プレイヤーにあなたの手札を見せ、カードを 1 枚選ばせる。
+    そして、おたがいが選んだカードを交換してよいかどうか、相手プレイヤーにたずねる。オーケーなら、カードを交換して、それぞれの手札に加える。オーケーでないなら、交換はおこらず、あなたは
+    山札からカードを ``draw`` 枚引いて、手札に加える（とりかえっこプリーズ PR1-027。処理に使う文面は最新の説明 LD-PR1-027-TRAINER）。
+
+    - 使うための条件（CR-SWAP-PLEASE-USE-CONDITION）: このカードを除いた使ったプレイヤーの手札と、相手の手札が、どちらも 1 枚以上。満たさなければ手札から出す前に
+      ``NO_OTHER_CARDS_IN_HAND``・``OPPONENT_HAND_EMPTY``（状態を変えない）
+    - 説明の順（CR-SWAP-PLEASE-PROCEDURE）: 使ったプレイヤーが相手の手札を見る（``zones.look_at_hand``。見た人と持ち主だけ）→ 1 枚選ぶ（決定 ``SELECT_EXCHANGE_CARD``・``stage``
+      ``"take"``。どのカードでもよい）→ 相手プレイヤーが使ったプレイヤーの手札を見る（同じ。観戦者には見せない）→ 1 枚選ぶ（``stage`` ``"give"``）→ 相手プレイヤーが交換してよいかを
+      答える（決定 ``ACCEPT_REQUEST``。1 個: オーケー・0 個: オーケーでない）→ オーケーなら ``zones.exchange_hand_cards``、オーケーでないなら使ったプレイヤーが引く（引けるだけ。p.312）
+    - 交換した 2 枚の所有者は、利用者が指定した簡略化（``ownership_rule``。``USER_SWAP_OWNERSHIP``）で受け取ったプレイヤーにする（``zones.exchange_hand_cards``）。このカード自身の
+      所有者は変えない（使い終わったら持ち主のトラッシュ）
+    - 錯乱ジムで相手プレイヤーがかわりに使うことを選ぶと止める（``borrow_problem``。UQ-CHAOS-GYM-BORROWED-TURN）。おもてのカードのある山札（v0.126）で、オーケーでないときの引き方が
+      既存の止め方に当たるなら、使う前に止める（``face_up_draw_stop``。相手の答えで止まる場面を作らない）
+    - 場を変えない（``changes_field`` は False。答えの続きを試す確かめをしない）
+    """
+
+    text: str
+    ownership_rule: str = USER_SWAP_OWNERSHIP
+    draw: int = 2
+    implementation_id = "swap_please_exchange_or_draw"
+    changes_field = False
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = TrainerEffect.check(self, definition)
+        if definition.trainer_text_ja != SWAP_PLEASE_PRINTED_TEXT:
+            problems.append(f"文面 {definition.trainer_text_ja!r} が、登録の印刷の文面ではない")
+        if (self.text != SWAP_PLEASE_LATEST_TEXT or "相手プレイヤーの手札を見て、その中からカードを1枚選ぶ" not in self.text
+                or "相手プレイヤーにあなたの手札を見せ、カードを1枚選ばせる" not in self.text or "相手プレイヤーにたずねる" not in self.text
+                or "オーケーなら、カードを交換して、それぞれの手札に加える" not in self.text or f"あなたは山札からカードを{self.draw}枚引いて、手札に加える" not in self.text
+                or "おたがいに手札が1枚以上あるときだけ、使える" not in self.text):
+            problems.append("文面と登録の処理（見る・選ぶ・見せて選ばせる・たずねる・交換する・引く・使うための条件）が合わない")
+        records = [r for r in USER_SPECIFIED_RULES.values() if r.rule == self.ownership_rule and r.key == f"{definition.id}/trainer"
+                   and r.printed_text == definition.trainer_text_ja and r.play_text == self.text]
+        if not records:
+            problems.append(f"{definition.id} の交換したカードの所有者の利用者の指定（{self.ownership_rule}）の記録がない")
+        return problems
+
+    def borrow_problem(self, state: GameState, use: TrainerUse) -> tuple[str, str] | None:
+        return CHAOS_GYM_BORROWED_TURN_CODE, f"トレーナー {use.card_id}: {SWAP_PLEASE_BORROWED_REASON}"
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        if not any(uid != use.card for uid in state.players[use.player].hand):
+            raise IllegalActionError("NO_OTHER_CARDS_IN_HAND",
+                                     "このカードのほかに手札がないので、このカードは使えない（「おたがいに手札が1枚以上あるときだけ、使える」。CR-SWAP-PLEASE-USE-CONDITION）")
+        if not state.players[1 - use.player].hand:
+            raise IllegalActionError("OPPONENT_HAND_EMPTY", "相手の手札がないので、このカードは使えない（「おたがいに手札が1枚以上あるときだけ、使える」）")
+        stop = self.face_up_draw_stop(state, use)
+        if stop is not None:
+            raise UnsupportedError(*stop)
+
+    def face_up_draw_stop(self, state: GameState, use: TrainerUse) -> tuple[str, str] | None:
+        """おもてのカードのある山札（v0.126。フラッシュ）: オーケーでないときに使ったプレイヤーが引くと、既存のおもての山札の止め方（``faceup.command_problem``）に当たるなら、使う前に
+        その (コード, 理由) を返す（v0.129 のカツラのクイズ その1と同じ形。相手の答えを拒否して答えを強いない。止めるかは公開の情報だけで決まる）。当たらなければ None。"""
+        if not state.face_up_deck:
+            return None
+        trial = state.clone()
+        _draw_up_to(trial, use.player, self.draw)
+        return _faceup.command_problem(state, trial)
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        opponent = 1 - use.player
+        look_at_hand(state, use.player, opponent, trainer=use.card)
+        push_trainer_decision(state, use, kind=SELECT_EXCHANGE_CARD, player=use.player, options=state.players[opponent].hand, context=(("stage", "take"),))
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        opponent = 1 - use.player
+        stage = decision.context_value("stage")
+        if decision.kind == SELECT_EXCHANGE_CARD and stage == "take":
+            (taken,) = choices
+            state.add_event("exchange_selected", player=use.player, owner=opponent, card=taken, card_id=state.cards[taken].card_id, stage="take", trainer_card=use.card)
+            look_at_hand(state, opponent, use.player, trainer=use.card)
+            push_trainer_decision(state, use, kind=SELECT_EXCHANGE_CARD, player=opponent, options=state.players[use.player].hand,
+                                  context=(("stage", "give"), ("taken", taken)))
+            return
+        if decision.kind == SELECT_EXCHANGE_CARD:
+            (given,) = choices
+            taken = decision.context_value("taken")
+            state.add_event("exchange_selected", player=opponent, owner=use.player, card=given, card_id=state.cards[given].card_id, stage="give", trainer_card=use.card)
+            push_trainer_decision(state, use, kind=ACCEPT_REQUEST, player=opponent, options=(1,), min_choices=0, max_choices=1,
+                                  context=(("stage", "accept"), ("taken", taken), ("given", given)))
+            return
+        accepted = bool(choices)
+        state.add_event("request_answered", player=opponent, accepted=accepted, trainer_card=use.card)
+        if accepted:
+            exchange_hand_cards(state, use.player, decision.context_value("given"), decision.context_value("taken"), trainer=use.card)
+        else:
+            _draw_up_to(state, use.player, self.draw)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = f"トレーナー {use.card_id}"
+        opponent = 1 - use.player
+        stage = decision.context_value("stage")
+        events = _last_trainer_events(state, use)
+        looks = [(e["player"], e["owner"]) for e in events if e["kind"] == "look_at_hand" and e.get("trainer_card") == use.card]
+        selected = [(e["stage"], e["card"]) for e in events if e["kind"] == "exchange_selected" and e.get("trainer_card") == use.card]
+        taken, given = decision.context_value("taken"), decision.context_value("given")
+        both_looks = [(use.player, opponent), (opponent, use.player)]
+        expected = {"take": (SELECT_EXCHANGE_CARD, use.player, tuple(state.players[opponent].hand), (1, 1), [(use.player, opponent)], [], {"use", "stage"}),
+                    "give": (SELECT_EXCHANGE_CARD, opponent, tuple(state.players[use.player].hand), (1, 1), both_looks, [("take", taken)], {"use", "stage", "taken"}),
+                    "accept": (ACCEPT_REQUEST, opponent, (1,), (0, 1), both_looks, [("take", taken), ("give", given)], {"use", "stage", "taken", "given"})}.get(stage)
+        if expected is None:
+            return [f"{what}の決定 {decision.kind} の段階 {stage!r} が正しくない"]
+        kind, player, options, counts, want_looks, want_selected, keys = expected
+        problems = _decided_by(decision, player, what)
+        if (decision.kind != kind or tuple(decision.options) != options or not options or (decision.min_choices, decision.max_choices) != counts
+                or decision.context_value("unresolved_choices") is not None):
+            problems.append(f"{what}の段階 {stage} の決定 {decision.kind} {decision.options} が、{kind} の {options} からではない")
+        if {key for key, _ in decision.context} != keys:
+            problems.append(f"{what}の段階 {stage} の決定の続きの情報 {[key for key, _ in decision.context]} が、決まった項目 {sorted(keys)} ではない")
+        if looks != want_looks or selected != want_selected:
+            problems.append(f"{what}の段階 {stage} の決定の前の、手札を見たログ {looks}・選んだログ {selected} が説明の順と合わない")
+        if stage != "take" and (taken not in state.players[opponent].hand or state.cards[taken].owner != opponent):
+            problems.append(f"{what}で使ったプレイヤーが選んだカード {taken!r} が、相手の手札にない")
+        if stage == "accept" and (given not in state.players[use.player].hand or state.cards[given].owner != use.player):
+            problems.append(f"{what}で相手プレイヤーが選んだカード {given!r} が、使ったプレイヤーの手札にない")
+        return problems
+
+
+# v0.130 の登録（トレーナー 1）
+V0_130_TRAINERS: Mapping[str, TrainerEntry] = MappingProxyType({
+    "PR1-027": TrainerEntry(SwapPleaseTrainer(SWAP_PLEASE_LATEST_TEXT), "とりかえっこプリーズ", SWAP_PLEASE_PRINTED_TEXT, SWAP_PLEASE_LATEST_TEXT, "LD-PR1-027-TRAINER"),
+})
+
+DEFAULT_EFFECTS = _with_trainers(DEFAULT_EFFECTS, V0_130_TRAINERS)
