@@ -237,6 +237,7 @@ from kyuura_engine.effects import devolution_candidates, devolution_forbidden  #
 from kyuura_engine.stadiums import bench_limit  # v0.57
 from kyuura_engine.decisions import USE_DISCARD_TRAINER  # v0.58
 from kyuura_engine.decisions import SELECT_OPPONENT_ATTACK  # v0.76
+from kyuura_engine.decisions import DISCARD_OPPONENT_ENERGY  # v0.133
 from kyuura_engine.decisions import SELECT_MARKER_COUNT  # v0.90
 from kyuura_engine.state import AttackBarrier  # v0.107: そらをとぶの防護（v107_uses）
 from kyuura_engine.markers import marker_count  # v0.90
@@ -252,7 +253,7 @@ from kyuura_engine.history import other_received_on, received_on  # v0.62
 from kyuura_engine.decisions import BENCH_FROM_DISCARD  # noqa: E402  v0.51
 from kyuura_engine.effects import bench_from_discard_candidates, trainer_attack_damage_bonuses, trainer_poison_effects  # noqa: E402  v0.51・v0.56
 from kyuura_engine.resolution.programs import all_answers  # noqa: E402  v0.49
-from tests.log_audit import log_problems, observation_problems, serialization_problems  # noqa: E402
+from tests.log_audit import log_problems, observation_problems, serialization_problems, v133_problems, v133_snapshot  # noqa: E402
 from tests.v017_games import V093_LEAVE_CODES, play_game  # noqa: E402
 from tests.test_machamp_games_v0_10 import working as counter_working  # v0.99: C18 の止める関数（はんげき）
 from tests.test_rocket_snorlax_v0_17b import restless_working  # v0.99: C18 の止める関数（わるいねぞう）
@@ -775,6 +776,11 @@ V131_SLOT_GAME = "neo1-090"
 V0_132 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_132"])
 (V132_SLOWKING,) = V0_132
 V132_SLOWPOKE, V132_SUPER_ENERGY_RETRIEVAL, V132_SPROUT_TOWER, V132_FOCUS_BAND = "neo1-045", "neo1-092", "neo1-085", "neo1-088"
+# v0.133（docs/shining-tyranitar-v0.133.md 10 章）: ひかるバンギラス（neo4-082。マウンテンクラッシュ・はかいのほのお。利用者が指定した規則）。ほかの手順は元のまま（ワザ・決定は既存の方策）。
+# ログから数えるのは ``v133_uses``、宣言の前の数との照らしは監査の ``v133``（``tests.log_audit.v133_problems`` にやり直しの状態の ``v133_snapshot`` を渡す）
+V0_133 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_133"])
+(V133_TYRANITAR,) = V0_133
+V133_DARKNESS = "neo1-094"  # 悪エネルギー（特殊エネルギー。悪のポケモンのワザのダメージ +10）
 DEFAULT_EFFECTS_FOR_TOOL = E.DEFAULT_EFFECTS
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
@@ -1069,6 +1075,11 @@ DECKS = {
     # v0.132: 超。ヤドン（neo1-045）4 枚 → ヤドキング（neo1-049）3 枚（［ちえくらべ］・マッドインパクト）・メタモン（［へんしん］で相手のヤドキングを写しうる）と、相手の［ちえくらべ］が当たる
     # 手札のトレーナー: 使うための条件のあるトレーナー（超エネルギー回収。手札から 2 枚トラッシュ）・スタジアム（マダツボミのとう）・ポケモンのどうぐ（きあいのハチマキ）・ポケモンとして
     # 出すトレーナー（なにかの化石。使うと MG2 で止まる）・マサキ・ポケモンいれかえ・きずぐすり
+    # v0.133: 悪・炎・闘。ひかるバンギラス（neo4-082。デッキに 1 枚まで）と、相手のワザを使うピッピ（ゆびをふる。相手のひかるバンギラスのワザを写しうる）・コラッタ → ラッタ。
+    # 悪エネルギー 4 枚（マウンテンクラッシュ・はかいのほのおの悪の記号）・炎（はかいのほのおのコインの枚数）・闘（マウンテンクラッシュ）
+    # （1 枚しか入れられないので、山札から探すトレーナー（コンピューター検索・ポケモン交換）・引くトレーナーを多めに入れる）
+    "X133": ((V133_TYRANITAR, 1), (CLEFAIRY, 3), (RATTATA, 3), (RATICATE, 1), (driver.COMPUTER_SEARCH, 4), (driver.POKEMON_TRADER, 2), (driver.PROFESSOR_OAK, 2),
+             (driver.BILL, 4), (SWITCH, 2), (V133_DARKNESS, 4), (FIRE, 17), (FIGHTING, 17)),
     "X132": ((V132_SLOWPOKE, 4), (V132_SLOWKING, 3), (DITTO, 1), (V132_SUPER_ENERGY_RETRIEVAL, 2), (V132_SPROUT_TOWER, 2), (V132_FOCUS_BAND, 2),
              (MYSTERIOUS_FOSSIL, 1), (driver.BILL, 2), (SWITCH, 2), (driver.POTION, 1), (PSYCHIC, 40)),
     "F45": ((ONIX, 3), (RATTATA, 4), (RATICATE, 3), (ROCKETS_HITMONCHAN, 3), (BROCKS_GEODUDE_40, 4), (BROCKS_RHYHORN, 1), (BROCKS_SANDSHREW, 1),
@@ -2208,6 +2219,10 @@ PAIRINGS_V0_131 = (("X131", "X131"), ("X131", "W28"), ("X131", "F45"))
 # （相手のとりかえっこプリーズで受け取ったカード・錯乱ジム。MG1）。組・席・seed は正式な対戦の前に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめる seed 90〜93 とは別。局・seed・
 # 方策を選び直さない）
 PAIRINGS_V0_132 = (("X132", "X132"), ("X132", "T81"), ("X132", "N80"), ("X132", "D81"), ("X132", "T130"))
+# v0.133: X133 どうし（相手のひかるバンギラスのワザをピッピがゆびをふるで写しうる。席を入れかえた局は同じ局なので 1 回だけ行う）・X133 対 W28（水のエネルギーカードの多い相手。
+# はかいのほのおの相手のトラッシュ）・X133 対 F45（闘。山札・エネルギーの不足）・X133 対 S124（メタモンの［へんしん］・［すごいへんしん］で写す。色の止め方）。組・席・seed は正式な対戦の
+# 前に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめる seed 90〜91 とは別。局・seed・方策を選び直さない）
+PAIRINGS_V0_133 = (("X133", "X133"), ("X133", "W28"), ("X133", "F45"), ("X133", "S124"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -2233,7 +2248,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.119": PAIRINGS_V0_119, "v0.120": PAIRINGS_V0_120, "v0.121": PAIRINGS_V0_121, "v0.122": PAIRINGS_V0_122,
            "v0.123": PAIRINGS_V0_123, "v0.124": PAIRINGS_V0_124, "v0.125": PAIRINGS_V0_125, "v0.126": PAIRINGS_V0_126,
            "v0.127": PAIRINGS_V0_127, "v0.129": PAIRINGS_V0_129, "v0.130": PAIRINGS_V0_130,
-           "v0.131": PAIRINGS_V0_131, "v0.132": PAIRINGS_V0_132}
+           "v0.131": PAIRINGS_V0_131, "v0.132": PAIRINGS_V0_132, "v0.133": PAIRINGS_V0_133}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -11979,6 +11994,113 @@ def _v127_water(state, pokemon) -> int:
     return len(E.attached_typed_energy_cards(state, pokemon, EnergyType.WATER))
 
 
+def _v133_tyranitar(state, player):
+    """v0.133: プレイヤー ``player`` の場のおもての、今の姿がひかるバンギラスのポケモン（なければ None）。"""
+    for pk in state.players[player].in_play():
+        if not state.is_face_down(pk) and state.cards[current_form(state, pk).card].card_id == V133_TYRANITAR:
+            return pk
+    return None
+
+
+def _v133_energy(state, command, tried, counts):
+    """v0.133: ひかるバンギラスを場に持つプレイヤーは、この番に手札からまだエネルギーカードをつけておらず、ひかるバンギラスのワザの必要なエネルギーの足りない色のエネルギーカードが
+    手札にあれば、元の手順（バトル場につける）のかわりに、ひかるバンギラス（控えでも）につける（悪 → 闘 2 枚 → 炎 4 枚まで。マウンテンクラッシュ（悪闘闘）を先に、はかいのほのお（悪炎炎炎）の
+    炎はコインの枚数なので 3 枚より多くもためる）。ひかるバンギラスのないプレイヤーでは何もしない。受け付けない場面はつけず ``v133_attach_rejected_<コード>`` に数える。"""
+    if state.phase is not Phase.MAIN or state.energy_attachments_this_turn or ("v133_energy", state.turn_number) in tried:
+        return None
+    if not isinstance(command, (AttachEnergy, UseAttack, EndTurn)):
+        return None
+    player = state.current_player
+    tyranitar = _v133_tyranitar(state, player)
+    if tyranitar is None:
+        return None
+    p = state.players[player]
+    have = Counter(state.cards[u].card_id for u in tyranitar.energy)
+    wanted = [(V133_DARKNESS, 1), (FIGHTING, 2), (FIRE, 4)]
+    for card_id, limit in wanted:
+        if have[card_id] >= limit:
+            continue
+        uid = next((u for u in p.hand if state.cards[u].card_id == card_id), None)
+        if uid is None:
+            continue
+        tried.add(("v133_energy", state.turn_number))
+        try:
+            apply_command(state, AttachEnergy(player, uid, tyranitar.card))
+        except (IllegalActionError, UnsupportedError) as error:
+            counts[f"v133_attach_rejected_{error.code}"] += 1
+            return None
+        counts[f"v133_attach_{card_id}_{'active' if tyranitar is p.active else 'bench'}"] += 1
+        return AttachEnergy(player, uid, tyranitar.card)
+    return None
+
+
+def _v133_decision(state, counts):
+    """v0.133: ひかるバンギラスのワザ（写したもの・相手のワザとして使ったものも）の中の、ちょうど決まった枚数のエネルギーカードのトラッシュの決定（自分の炎・相手のエネルギーカード）への答え。
+    選べるものの並びを決定ごとにずらして、その枚数を選ぶ（同じカードばかりにしない）。ナツメのESPのやり直しなど、ほかの決定は元の手順のまま。今のワザがひかるバンギラスのワザでなければ何もしない。"""
+    d = state.decision
+    if d is None or d.kind not in (DISCARD_ENERGY, DISCARD_OPPONENT_ENERGY) or d.min_choices != d.max_choices or not d.min_choices:
+        return None
+    attack = next((e for e in reversed(state.log) if e["kind"] == "attack"), None)
+    if attack is None:
+        return None
+    index = len(state.log) - 1 - next(i for i, e in enumerate(reversed(state.log)) if e is attack)
+    key = f"{attack.get('card_id') or state.cards[attack['pokemon']].card_id}#{attack['attack_index']}"
+    key = next((x["copied"] for x in state.log[index + 1:] if x["kind"] == "copy_attack" and x.get("effect") == key), key)
+    if not key.startswith(f"{V133_TYRANITAR}#"):
+        return None
+    shift = counts["v133_discard_decisions"] % len(d.options)
+    counts["v133_discard_decisions"] += 1
+    blocked = set(d.context_value("unresolved_choices", ()))
+    ordered = [u for u in d.options[shift:] + d.options[:shift] if u not in blocked]
+    choices = tuple(u for u in d.options if u in ordered[:d.min_choices])
+    command = ResolveDecision(d.player, d.id, choices)
+    if len(choices) != d.min_choices or not _v057_accepted(state, command):
+        counts["v133_discard_no_accepted_answer"] += 1
+        return None
+    counts[f"v133_discard_{d.kind}_{d.min_choices}"] += 1
+    return command
+
+
+def _v133_promote(state, command, counts):
+    """v0.133: バトル場に出すポケモンを選ぶとき、控えのひかるバンギラスにエネルギーカードが 3 枚以上ついていれば、それを出す（ワザを使う場面を作る）。ほかは元の手順のまま。"""
+    if type(command).__name__ != "PromoteActive":
+        return None
+    player = command.player
+    for pk in state.players[player].bench:
+        if not state.is_face_down(pk) and state.cards[current_form(state, pk).card].card_id == V133_TYRANITAR and len(pk.energy) >= 3:
+            replaced = dataclasses.replace(command, pokemon=pk.card)
+            try:
+                apply_command(state, replaced)
+            except (IllegalActionError, UnsupportedError):
+                return None
+            counts["v133_promote_tyranitar"] += 1
+            return replaced
+    return None
+
+
+def _v133_attack(state, command, counts):
+    """v0.133: バトル場のひかるバンギラス（写した姿をふくむ今の姿）は、2 つのワザがどちらも使えれば番ごとに交互に（奇数の番はマウンテンクラッシュ、偶数の番ははかいのほのお）、片方だけなら
+    それを使う。使えるか（エネルギー・止める理由・宣言の条件）は状態を変えずに確かめ、どちらも使えなければ元の手順のまま。ほかのポケモンでは何もしない。"""
+    if not isinstance(command, (UseAttack, EndTurn)):
+        return None
+    player = state.current_player
+    active = state.players[player].active
+    if active is None or state.is_face_down(active) or state.cards[current_form(state, active).card].card_id != V133_TYRANITAR:
+        return None
+    order = (0, 1) if state.turn_number % 2 else (1, 0)
+    for index in order:
+        try:
+            apply_command(state, UseAttack(player, index))
+        except (IllegalActionError, UnsupportedError) as error:
+            counts[f"v133_attack_{index}_rejected_{error.code}"] += 1
+            continue
+        if isinstance(command, UseAttack) and command.attack_index == index:
+            return None
+        counts[f"v133_chose_{index}"] += 1
+        return UseAttack(player, index)
+    return None
+
+
 def _v127_attack(state, command, counts):
     """v0.127: バトル場のファイヤーは、相手の場に「水」エネルギーカードがあればドライアップ（ワザ 0）を選び、なければほのおのつばさ（ワザ 1。使えなければ番を終える）。ハマちゃんのヤドキングは、相手の対戦ポケモンが
     こんらん状態でなければこまったなあ（ワザ 0。利用者の簡略ルールで発話の条件はない）、こんらんならどつく（ワザ 1）。使えるか（エネルギー・止める理由）は状態を変えずに確かめ、使えなければ
@@ -12316,6 +12438,50 @@ def v132_uses(state):
             if any(x["kind"] == "special_condition" and x.get("condition") == "confusion" for x in log[i + 1:i + 12]
                    if x.get("effect", "").startswith(V132_SLOWKING)):
                 counts["mind_blast_confused"] += 1
+    return +counts
+
+
+def v133_uses(state):
+    """v0.133: ログから数えたひかるバンギラス（``V0_133``）のワザ（相手のワザとして使った・写した姿で使ったものも。このカードのない局では空）。
+
+    - ``crush``: マウンテンクラッシュの宣言（コインまで進んだもの）。``crush_heads_<h>``: 最後の並びの「おもて」の数。``crush_milled``: トラッシュした山札の枚数の合計。
+      ``crush_short``・``crush_short_deck_zero``: 山札が「おもて」の数より少なかった（そのうち山札 0 枚）
+    - ``fire``: はかいのほのおの宣言（コインまで進んだもの）。``fire_coins_<n>``・``fire_heads_<h>``: コインの枚数・「おもて」の数。``fire_own_discarded``・``fire_opp_discarded``: 双方のトラッシュの
+      枚数の合計。``fire_short``・``fire_short_zero``: 相手のエネルギーカードが「おもて」の数より少なかった（そのうち 0 枚）。``fire_opp_prevented``: 相手のトラッシュを防いだログ
+    - ``by_<カード id>``: ワザを実際に使ったポケモンのカード（ひかるバンギラス以外ならコピー・変身）"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V0_133 for uid in state.cards):
+        return counts
+    keys = {f"{V133_TYRANITAR}#0": "crush", f"{V133_TYRANITAR}#1": "fire"}
+    log = list(state.log)
+    for index, e in enumerate(log):
+        if e["kind"] != "attack":
+            continue
+        end = next((j for j in range(index + 1, len(log)) if log[j]["kind"] in ("attack", "turn_end", "game_end", "halted", "turn_start")), len(log))
+        window = log[index + 1:end]
+        key = f"{e.get('card_id') or state.cards[e['pokemon']].card_id}#{e['attack_index']}"
+        key = next((x["copied"] for x in window if x["kind"] == "copy_attack" and x.get("effect") == key), key)
+        body = [x for x in window if x.get("effect") == key]
+        coins = [x for x in body if x["kind"] == "coin_flip" and x.get("source") == "attack"]
+        if key not in keys or not coins:
+            continue
+        label = keys[key]
+        counts[label] += 1
+        counts[f"by_{state.cards[coins[0]['card']].card_id}"] += 1
+        redo = [x for x in body if x["kind"] == "esp_redo"]
+        final = tuple(redo[-1]["redone"]) if redo else tuple(x["result"] for x in coins)
+        counts[f"{label}_heads_{final.count('heads')}"] += 1
+        if label == "fire":
+            counts[f"fire_coins_{len(final)}"] += 1
+        counts["crush_milled"] += sum(len(x["cards"]) for x in body if x["kind"] == "discard_from_deck")
+        counts["fire_own_discarded"] += sum(1 for x in body if x["kind"] == "discard_energy")
+        counts["fire_opp_discarded"] += sum(1 for x in body if x["kind"] == "discard_attached_energy")
+        counts["fire_opp_prevented"] += sum(1 for x in window if x["kind"] in ("effect_prevented", "energy_discard_voided"))
+        for x in body:
+            if x["kind"] == "user_rule_count_short":
+                counts[f"{label}_short"] += 1
+                if x["available"] == 0:
+                    counts[f"{label}_short_{'deck_zero' if label == 'crush' else 'zero'}"] += 1
     return +counts
 
 
@@ -12850,7 +13016,8 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = (_v132_decision(state, counts)  # v0.132: 相手の［ちえくらべ］を使うか（どのトレーナーの使用でも、カードの効果の決定より先。ないデッキでは何もしない）
+            early = (_v133_decision(state, counts)  # v0.133: ひかるバンギラスのワザのトラッシュの決定（ないデッキでは何もしない）
+                     or _v132_decision(state, counts)  # v0.132: 相手の［ちえくらべ］を使うか（どのトレーナーの使用でも、カードの効果の決定より先。ないデッキでは何もしない）
                      or _v130_decision(state, counts)  # v0.130: とりかえっこプリーズの選ぶカード・答え（相手の決定にも答える。ないデッキでは何もしない）
                      or _v129_decision(state, counts)  # v0.129: カツラのクイズ その1の置くカード・身長の答え（相手の決定にも答える。ないデッキでは何もしない）
                      or _v127_decision(state, counts)  # v0.127: ドライアップの選ぶポケモン・トラッシュ、怪電波マシーンのもどすカード（ないデッキでは何もしない）
@@ -12932,7 +13099,11 @@ def make_policy(seen: dict, counts: Counter):
             revive = _v073_trainer(state, command, tried, counts, only=("GD5-019", "ES2-034"))
             if revive is not None:
                 return revive
-        special = (_v115_energy(state, command, tried, counts)  # v0.115: なぎたおすの悪（バンギラスのないデッキでは何もしない）
+        promote = _v133_promote(state, command, counts)  # v0.133: 控えのひかるバンギラスを出す（ないデッキでは何もしない）
+        if promote is not None:
+            return promote
+        special = (_v133_energy(state, command, tried, counts)  # v0.133: ひかるバンギラスにつける（ないデッキでは何もしない）
+                   or _v115_energy(state, command, tried, counts)  # v0.115: なぎたおすの悪（バンギラスのないデッキでは何もしない）
                    or _v085_energy(state, command, tried, counts)  # v0.85: ミラクルエネルギー（手札にないデッキでは何もしない）
                    or _v059_energy(state, command, tried, counts)  # v0.59: カツラの 2 枚（カツラの効果がなければ何もしない）
                    or _v082_energy(state, command, tried, counts)  # v0.82: リサイクルエネルギー（手札にないデッキでは何もしない）
@@ -12954,6 +13125,9 @@ def make_policy(seen: dict, counts: Counter):
             machine = _v127_trainer(state, command, tried, counts)  # v0.127: 怪電波マシーン（ないデッキでは何もしない）
             if machine is not None:
                 return machine
+            tyranitar = _v133_attack(state, command, counts)  # v0.133: ひかるバンギラスのワザ（ほかのデッキでは何もしない）
+            if tyranitar is not None:
+                return tyranitar
             aimed = _v127_attack(state, command, counts)  # v0.127: ファイヤー・ハマちゃんのヤドキングのワザ（ほかのデッキでは何もしない）
             if aimed is not None and ("v127_aimed", state.turn_number) not in tried:
                 tried.add(("v127_aimed", state.turn_number))
@@ -13309,6 +13483,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v130"] = v130_uses(state)
         result["v131"] = v131_uses(state)
         result["v132"] = v132_uses(state)
+        result["v133"] = v133_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
@@ -13331,10 +13506,14 @@ def audit(result, state, commands):
     current = new_game(*(deck_cards(label) for label in result["decks"]), result["seed"])
     watch = any(state.cards[uid].card_id in V0_47 + V0_47_TRAINERS + V0_48 + V0_54_TRAINERS + V0_55_TRAINERS + V0_56_TRAINERS + V0_63_TRAINERS + V0_95 + V0_96
                 + V0_97 + V0_130 for uid in state.cards)  # v0.48: 観測の今有効な値も（v0.54・v0.55: 見る・見せるトレーナー。v0.95: 手札・山札を見るワザ・特殊能力）
+    tyranitar = any(state.cards[uid].card_id in V0_133 for uid in state.cards)
+    v133_before: dict[int, tuple] = {}
     deck_before: dict[int, int] = {}  # v0.105: ワザの宣言の直前の、ワザを使ったプレイヤーの山札の枚数（宣言を処理する前のログの長さ → 枚数）
     for command in commands:
         if isinstance(command, UseAttack):
             deck_before[len(current.log)] = len(current.players[command.player].deck)
+            if tyranitar:
+                v133_before[len(current.log)] = v133_snapshot(current, command)  # v0.133: 宣言の直前の相手の山札・使い手の炎・相手のエネルギーカード（やり直しの状態で数える）
             active = current.players[command.player].active
             if "v106" in result and command.attack_index == 1 and active is not None and current.cards[active.card].card_id == KABUTOPS_NEO2:
                 # v0.106: カブトプスのハイドロカッターの宣言の直前の、ついているエネルギーカードの枚数（やり直しの状態で数える。上限 3 枚を超えた場面があったか）
@@ -13344,6 +13523,8 @@ def audit(result, state, commands):
             failures["observation"] += bool(observation_problems(current))  # v0.47: 受け付けた操作ごとに、プレイヤー・観戦者に渡す観測
     failures["replay_mismatch"] += [dict(e) for e in current.log] != [dict(e) for e in state.log]
     failures["v105_shuffle"] += bool(v105_replay_problems(current, deck_before))
+    if tyranitar:
+        failures["v133"] += bool(v133_problems(state, v133_before))  # v0.133
     failures["invariants"] += bool(check_invariants(state))
     failures["log"] += bool(log_problems(state))
     failures["serialization"] += bool(serialization_problems(state))
