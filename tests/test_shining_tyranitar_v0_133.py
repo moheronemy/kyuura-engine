@@ -279,6 +279,20 @@ class MountainCrushTest(unittest.TestCase):
         self.assertEqual(sum(len(e["cards"]) for e in since(state, done, "discard_from_deck") if e["player"] == 1), 3)
         audited(self, done)
 
+    def test_confusion_coin_is_not_an_attack_coin(self):
+        """こんらんのひかるバンギラス: こんらんのコイン（``source`` confusion）のあとに 30 とワザのコイン。「うら」ならワザは失敗し、ワザのコインはない（監査はこんらんのコインを数えない）。"""
+        state = build_test_state([{"active": {"card": TYR, "energy": list(MC), "confusion": True}, "deck": [F] * 10, "prizes": 6},
+                                  {"active": {"card": HP.CHANSEY, "energy": [W]}, "deck": [W] * 5, "prizes": 6}])
+        done = attack(state, 0, HD, HD, TL)
+        coins = since(state, done, "coin_flip")
+        self.assertEqual([(e["source"], e["result"]) for e in coins], [("confusion", "heads"), ("attack", "heads"), ("attack", "tails")])
+        self.assertEqual(sum(len(e["cards"]) for e in since(state, done, "discard_from_deck")), 1)
+        audited(self, done, snapshots_for(state, 0))
+        failed = attack(state, 0, TL)
+        self.assertEqual([e["source"] for e in since(state, failed, "coin_flip")], ["confusion"])
+        self.assertEqual(since(state, failed, "discard_from_deck"), [])
+        audited(self, failed, snapshots_for(state, 0))
+
     def test_capped_classes(self):
         classes = P.capped_classes(3)
         self.assertEqual((classes.representatives, classes.bound), ((0, 1, 2, 3), 3))

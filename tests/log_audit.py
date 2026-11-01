@@ -11111,7 +11111,7 @@ def v133_problems(state, before: dict[int, tuple] | None = None) -> list[str]:
         player, where = e["player"], f"{e['turn']} 番の {key}"
         flips = _v133_final_flips(body, key)
         heads = None if flips is None else flips.count("heads")
-        coin_at = [i for i, x in enumerate(body) if x["kind"] == "coin_flip" and x.get("effect") == key]
+        coin_at = [i for i, x in enumerate(body) if x["kind"] == "coin_flip" and x.get("source") == "attack" and x.get("effect") == key]  # こんらんのコインは数えない
         damage_at = [i for i, x in enumerate(body) if x["kind"] in V133_DAMAGE_STEPS and x.get("player") == 1 - player]
         shorts = [x for x in body if x["kind"] == "user_rule_count_short" and x.get("effect") == key]
         snapshot = starts.get(index)
@@ -11131,7 +11131,7 @@ def v133_problems(state, before: dict[int, tuple] | None = None) -> list[str]:
             redone = any(x["kind"] == "esp_redo" and x.get("effect") == key for x in body)
             redo = [x for x in body if x["kind"] == "esp_redo" and x.get("effect") == key]
             original = tuple(redo[-1]["original"]) if redo else flips  # やり直す前の並び（ログの esp_redo が持つ）
-            logged = tuple(x["result"] for x in body if x["kind"] == "coin_flip" and x.get("effect") == key)
+            logged = tuple(x["result"] for x in body if x["kind"] == "coin_flip" and x.get("source") == "attack" and x.get("effect") == key)
             if redone and logged != original + flips:
                 problems.append(f"{where}: コインのログ {logged} が、やり直す前とやり直した並び {original}・{flips} と合わない")
             for sequence in (flips, original) if redone else (flips,):
