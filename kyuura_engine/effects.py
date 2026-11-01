@@ -2928,10 +2928,18 @@ class CoinBonusDamage(AttackEffect):
 
     def check(self, attack: Attack) -> list[str]:
         # v0.34: 説明の追加ダメージの数と登録の ``bonus`` を照らす（「…20ダメージを追加する。」「…20ダメージ追加する。」の 2 つの書き方。v0.31 の登録も同じ）
+        # v0.131: 日本語と英語の文を交互に書いたカード（ナッシー[Exeggutor] PR1-075・PR1-077 のふみつけ）の書き方も、全文で照らす（日本語の文の基本となるダメージがダメージの目安の
+        # 数字と同じで、追加のダメージが登録の ``bonus``。英語の文も同じ数。英語の文は翻訳の表示で、処理は日本語の文にしたがう。docs/exeggutor-bilingual-names-v0.131.md 5 章）
         problems = _check_form(attack, "コインで追加ダメージのワザ", damage="modified", modifier="+")
-        if re.fullmatch(f"コインを投げて「おもて」なら、{self.bonus}ダメージを?追加する。", attack.text_ja or "") is None:
+        if (re.fullmatch(f"コインを投げて「おもて」なら、{self.bonus}ダメージを?追加する。", attack.text_ja or "") is None
+                and re.fullmatch(BILINGUAL_COIN_BONUS_PATTERN.format(base=attack.damage, bonus=self.bonus), attack.text_ja or "") is None):
             problems.append(f"説明 {attack.text_ja!r} が、コインの「おもて」で {self.bonus} ダメージを追加するワザの説明ではない")
         return problems
+
+
+# v0.131: 日本語と英語の文を交互に書いたカードの、コインで追加ダメージのワザの説明（kyuura の写しの印刷の文面の書き方。``CoinBonusDamage.check`` が全文で照らす）
+BILINGUAL_COIN_BONUS_PATTERN = (r"コインを1枚投げる。もし「おもて」なら、このワザは{base}\+{bonus}ダメージを与える。もし「うら」なら、このワザは{base}ダメージを与える。"
+                                r" \( Flip a coin\. If heads, this attack does {base} damage plus {bonus} more damage, if tails, this attack does {base} damage\.\)")
 
 
 @dataclass(frozen=True)
@@ -48915,3 +48923,102 @@ V0_130_TRAINERS: Mapping[str, TrainerEntry] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_trainers(DEFAULT_EFFECTS, V0_130_TRAINERS)
+
+
+# ---------------------------------------------------------------- v0.131（docs/exeggutor-bilingual-names-v0.131.md）
+
+# 利用者が指定した名前の扱い（v0.131。docs/exeggutor-bilingual-names-v0.131.md 3 章）。日本語と英語を併記したナッシー[Exeggutor]（PR1-075・PR1-077）の英語の併記を翻訳の表示として
+# 扱い、判定（デッキの同じ名前・進化元・名前を指定する効果・同じ名前を比べる効果・クイズの答え・ワザ名）には日本語の部分を使う。名前以外の性能（HP・タイプ・必要なエネルギー・ワザの
+# 内容など）は通常のナッシーに置きかえず、それぞれのカードの写しの値にしたがう。v0.127 の簡略ルール（``USER_SIMPLIFICATIONS``）・v0.129 の参照値（``USER_SPECIFIED_REFERENCES``）・
+# v0.130 の規則（``USER_SPECIFIED_RULES``）とは別の記録で、印刷の文面の採用（ワザの処理に使う文面は印刷の文面のまま）とも別。公式の裁定・最新の説明・エラッタ・転記の訂正としては
+# 記録せず、kyuura の UQ-BILINGUAL-NAME-GLOSS（歴史資料上の問い）は解決済みにしない。写しの値（原文）は書き換えず、``CardDefinition.printed_name_ja``・``Attack.printed_name_ja`` に
+# 残す（``cards._user_specified_names``）。すべてのカードの括弧書き・英語を一律に除く正規化ではない（ここに挙げた 2 枚だけ）
+USER_SPECIFIED_NAME_SOURCE = "kyuura-engine user specification docs/exeggutor-bilingual-names-v0.131.md#3"
+USER_BILINGUAL_NAME_JAPANESE = "USER-BILINGUAL-NAME-JAPANESE"
+USER_SPECIFIED_NAME_DATE = "2026-11-01"
+STOMP_BILINGUAL_TEXT = ("コインを1枚投げる。もし「おもて」なら、このワザは20+10ダメージを与える。もし「うら」なら、このワザは20ダメージを与える。"
+                        " ( Flip a coin. If heads, this attack does 20 damage plus 10 more damage, if tails, this attack does 20 damage.)")
+
+
+@dataclass(frozen=True)
+class UserSpecifiedNameField:
+    """利用者が指定した名前の扱いの 1 つの欄（v0.131）。``field`` は写しの欄（``name.ja``・``pokemon.evolves_from.ja``・``pokemon.attacks[<位置>].name.ja``）、``copy_value`` は
+    その欄の写しの値（原文。書き換えない）、``rule_value`` は判定に使う値、``gloss`` は表示用の英語の併記（翻訳の表示。判定に使わない）、``printed`` はカードの印刷の書き方を
+    確かめた範囲（画像の照合の記録。確かめていなければそう書く）。"""
+
+    field: str
+    copy_value: str
+    rule_value: str
+    gloss: str
+    printed: str
+
+
+@dataclass(frozen=True)
+class UserSpecifiedName:
+    """利用者が指定した名前の扱いの 1 つの対象の記録（v0.131）。``key`` は ``<カード id>/name``。``fields`` は対象の欄と判定に使う値、``applies_to`` は判定に使う場面、``scope`` は
+    範囲（このカードだけ・名前の欄だけ）、``not_changed`` は置きかえないもの（名前以外の性能）、``instruction`` は利用者の指定の文（根拠の文書の引用）、``print_check`` は印刷を
+    確かめた記録（kyuura の画像の照合の id。なければ未確認と書く）、``not_recorded_as`` は記録しない扱い、``kyuura_issue`` は解決済みにしない kyuura の論点。"""
+
+    key: str
+    rule: str
+    fields: tuple[UserSpecifiedNameField, ...]
+    applies_to: str
+    scope: str
+    not_changed: str
+    instruction: str
+    print_check: str
+    not_recorded_as: str
+    kyuura_issue: str
+    specified_by: str = "user"
+    specified_on: str = USER_SPECIFIED_NAME_DATE
+
+    @property
+    def card_id(self) -> str:
+        return self.key.split("/", 1)[0]
+
+    def rule_value(self, field: str) -> str | None:
+        return next((f.rule_value for f in self.fields if f.field == field), None)
+
+
+_EXEGGUTOR_APPLIES_TO = (
+    "カード名「ナッシー」（デッキの同じ名前 4 枚の数え方で通常のナッシーと合わせる・名前を指定する効果・同じ名前を比べる効果・カツラのクイズ その3 の答えと答えの名前の候補・"
+    "カツラのクイズ その1 で伝える名前・名前の候補を作る処理・変身したあとの名前）、進化元「タマタマ」（手札・効果での進化）、ワザ名「ふみつけ」（クイズで伝える名前・ワザ名で"
+    "比べる効果・ログ・観測）")
+_EXEGGUTOR_SCOPE = "このカードの名前・進化元・ワザ名の 3 つの欄だけ（ほかのカードの括弧書き・英語の名前は変えない。英語だけの「Exeggutor」を別名として受け付けない）"
+_EXEGGUTOR_NOT_CHANGED = ("名前以外の性能（HP・タイプ・弱点・抵抗力・にげる・段階・必要なエネルギー・ダメージ・ワザの説明）は通常のナッシーに置きかえず、このカードの写しの値にしたがう"
+                          "（ワザの処理に使う文面は印刷の文面のまま）")
+_EXEGGUTOR_INSTRUCTION = "対象2枚の英語併記は翻訳表示として扱い、判定に使いません。"
+_EXEGGUTOR_NOT_RECORDED_AS = "公式の裁定・最新の説明・エラッタ・転記の訂正・UQ-BILINGUAL-NAME-GLOSS の解決"
+
+
+def _exeggutor_fields(printed: str) -> tuple[UserSpecifiedNameField, ...]:
+    return (UserSpecifiedNameField("name.ja", "ナッシー［Exeggutor］", "ナッシー", "Exeggutor", printed),
+            UserSpecifiedNameField("pokemon.evolves_from.ja", "タマタマ", "タマタマ", "Exeggcute", printed),
+            UserSpecifiedNameField("pokemon.attacks[0].name.ja", "ふみつけ[Stomp]", "ふみつけ", "Stomp", printed))
+
+
+USER_SPECIFIED_NAMES: Mapping[str, UserSpecifiedName] = MappingProxyType({record.key: record for record in (
+    UserSpecifiedName(
+        "PR1-075/name", USER_BILINGUAL_NAME_JAPANESE,
+        _exeggutor_fields("印刷は未確認（kyuura も読んでいない。pcg-search の画像は代わりの画像。同じカードの組 SC-PR1-075 の転記の値による）"),
+        _EXEGGUTOR_APPLIES_TO, _EXEGGUTOR_SCOPE, _EXEGGUTOR_NOT_CHANGED, _EXEGGUTOR_INSTRUCTION, "未確認（画像の照合の記録なし）", _EXEGGUTOR_NOT_RECORDED_AS,
+        "UQ-BILINGUAL-NAME-GLOSS"),
+    UserSpecifiedName(
+        "PR1-077/name", USER_BILINGUAL_NAME_JAPANESE,
+        _exeggutor_fields("kyuura の画像の照合 IMG-PR1-077（2026-10-30）: 「ナッシー[Exeggutor]」「タマタマ[Exeggcute]から進化」「ふみつけ[Stomp]」"),
+        _EXEGGUTOR_APPLIES_TO, _EXEGGUTOR_SCOPE, _EXEGGUTOR_NOT_CHANGED, _EXEGGUTOR_INSTRUCTION, "IMG-PR1-077", _EXEGGUTOR_NOT_RECORDED_AS,
+        "UQ-BILINGUAL-NAME-GLOSS"),
+)})
+
+
+# v0.131 の登録（ワザ 2）。ふみつけ（無色 2 個）20+: 印刷の文面（kyuura の写し）で照合し、処理にも使う。処理は通常のナッシーではなく、ギャロップ・ケンタロスなどのふみつけと同じ
+# ``CoinBonusDamage(10)``（基本となるダメージ 20、「おもて」なら 10 を追加）。PR1-077 は PR1-075 と処理に使う欄・登録の値が同じなので、同じ登録の値を加える（SAME_DATA_CARDS_V0_131。
+# 採用の記録・名前の扱いの記録は id ごと）
+V0_131_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    AttackKey(card, 0): _printed(CoinBonusDamage(10), "ふみつけ", STOMP_BILINGUAL_TEXT) for card in ("PR1-075", "PR1-077")
+})
+SAME_DATA_CARDS_V0_131: Mapping[str, str] = MappingProxyType({
+    "PR1-077": "PR1-075",  # ナッシー[Exeggutor]（SC-PR1-075）
+})
+
+DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_131_ATTACKS), SAME_DATA_CARDS_V0_131)

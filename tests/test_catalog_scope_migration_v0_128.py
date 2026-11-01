@@ -97,8 +97,9 @@ class MigrationChainTest(unittest.TestCase):
         # v0.129: エンジンが処理に使う欄の一覧に pokemon.dex を加えた（docs/blaines-quiz-heights-v0.129.md 2 章。カードの写す欄・値は変えていない）
         self.assertEqual(after["fields_used_by_engine"], before["fields_used_by_engine"] + ["pokemon.dex"])
         self.assertEqual(sorted(key for key in set(before) | set(after) if before.get(key) != after.get(key)),
-                         # v0.129: cards（pool_v0_129 の 1 枚を加えた）と pool_v0_129 も変わる。v0.130: pool_v0_130（とりかえっこプリーズ）も
-                         ["cards", "catalog_scope", "engine_user_corrections", "fields_used_by_engine", "pool_v0_129", "pool_v0_130", "source", "source_migrations"])
+                         # v0.129: cards（pool_v0_129 の 1 枚を加えた）と pool_v0_129 も変わる。v0.130: pool_v0_130（とりかえっこプリーズ）も。v0.131: pool_v0_131（ナッシー[Exeggutor]）も
+                         ["cards", "catalog_scope", "engine_user_corrections", "fields_used_by_engine", "pool_v0_129", "pool_v0_130", "pool_v0_131", "source",
+                          "source_migrations"])
         self.assertEqual(before["source_migrations"], after["source_migrations"][:-1])
         self.assertEqual(after["fields_copied"], before["fields_copied"])  # 分類の 3 つの欄はカードの写す欄に加えていない
         self.assertFalse(set(SCOPE_FIELDS) & set(after["fields_copied"] + after["fields_copied_when_present"]))

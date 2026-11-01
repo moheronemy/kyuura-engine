@@ -194,7 +194,12 @@ class LoaderTest(unittest.TestCase):
         self.assertEqual(card_height(renamed), (None, HEIGHT_WITHOUT_DEX))  # 公式の表記と同じ名前でも名前から引かない
 
     def test_dex_counts_in_the_copy(self):
-        pokemon = [d for d in load_card_pool().definitions.values() if d.category == "pokemon"]
+        # v0.131: 後の版の写しの組のカード（ナッシー[Exeggutor] 2 枚。図鑑番号なし）を除いて、この版の写しを見る
+        from kyuura_engine.cards import read_extract
+        from tests.release_catalog import cards_after
+
+        later = cards_after(read_extract(), "0.129")
+        pokemon = [d for d in load_card_pool().definitions.values() if d.category == "pokemon" and d.id not in later]
         self.assertEqual(len(pokemon), 1064)
         self.assertEqual(sum(1 for d in pokemon if not d.dex), 225)
         self.assertEqual(sum(1 for d in pokemon if len(d.dex) == 1), 839)

@@ -1693,6 +1693,10 @@
   "pool_v0_130": [
     "PR1-027"
   ],
+  "pool_v0_131": [
+    "PR1-075",
+    "PR1-077"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -127367,6 +127371,190 @@
           "after": "相手プレイヤーの手札を見て、カードを1枚えらぶ。次に、相手プレイヤーにあなたの手札を見せ、カードを1枚えらばせる。そして、お互いがえらんだカードを交換してよいかどうか、相手にたずねる。オーケーなら、カードを交換して、それぞれの手札にくわえる。オーケーでないなら、交換はおこらず、あなたは山札からカードを2枚引く。(このカードは、お互いに手札が1枚以上ある時だけ、使える)",
           "basis": "card_image_check",
           "decided_on": "2026-10-31"
+        }
+      ]
+    },
+    {
+      "id": "PR1-075",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ナッシー［Exeggutor］",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "タマタマ",
+          "en": null
+        },
+        "hp": 80,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ふみつけ[Stomp]",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "コインを1枚投げる。もし「おもて」なら、このワザは20+10ダメージを与える。もし「うら」なら、このワザは20ダメージを与える。 ( Flip a coin. If heads, this attack does 20 damage plus 10 more damage, if tails, this attack does 20 damage.)",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp075"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp075.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp075.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PR1-075",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stp075",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PR1-077",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ナッシー［Exeggutor］",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "タマタマ",
+          "en": null
+        },
+        "hp": 80,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ふみつけ[Stomp]",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "コインを1枚投げる。もし「おもて」なら、このワザは20+10ダメージを与える。もし「うら」なら、このワザは20ダメージを与える。 ( Flip a coin. If heads, this attack does 20 damage plus 10 more damage, if tails, this attack does 20 damage.)",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp077"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp077.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp077.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PR1-075",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stp077",
+          "list_number": "-/-"
         }
       ]
     }

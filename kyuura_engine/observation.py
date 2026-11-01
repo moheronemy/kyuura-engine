@@ -253,6 +253,12 @@ def _card(state: GameState, uid: int) -> dict[str, Any]:
     return {"card": uid, "card_id": state.cards[uid].card_id}
 
 
+def _printed_name(item) -> dict[str, Any]:
+    """v0.131（docs/exeggutor-bilingual-names-v0.131.md 7 章）: 判定に使う名前（``name_ja``。提示する日本語名）と別の、写しの原文の名前・ワザ名（``printed_name_ja``。日本語と英語の
+    併記を含む表示用の値）。利用者が指定した名前の扱いのカード・ワザだけが持ち、ほかは書かない（v0.130 までの形）。"""
+    return {} if item.printed_name_ja is None else {"printed_name_ja": item.printed_name_ja}
+
+
 def _seen_uid(state: GameState, uid: int, viewer: int | None) -> int | None:
     """v0.122（docs/unown-fossil-retreat-reactions-v0.122.md 7 章）: 場の外の記録（番の効果・色の効果）が指すカード ``uid`` を、``viewer`` に見える場所にあるときだけ返す（見えない
     手札・山札・うらのサイド・見られない置いておくカードなら None。カードの id は記録のとおり公開）。［げんしのゆめ］を使ったオムナイトが、その番のうちに［かせきか］で手札に
@@ -308,7 +314,7 @@ def _face_down_pokemon(state: GameState, pokemon: PokemonInPlay, owner: int, vie
         "markers": [_marker(marker) for marker in pokemon.markers],  # v0.90
     }
     if viewer == owner:
-        view["real"] = {**_card(state, pokemon.card), "name_ja": state.printed_def(pokemon.card).name_ja}
+        view["real"] = {**_card(state, pokemon.card), "name_ja": state.printed_def(pokemon.card).name_ja, **_printed_name(state.printed_def(pokemon.card))}
     return view
 
 
@@ -331,6 +337,7 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay, viewer: int | None = None
         "pokemon_id": pokemon.pokemon_id,
         **_card(state, pokemon.card),
         "name_ja": definition.name_ja,
+        **_printed_name(definition),
         "play_role": definition.play_role,
         "hp": max_hp(state, pokemon),
         "printed_hp": definition.hp,
@@ -369,7 +376,8 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay, viewer: int | None = None
         # v0.124: ［すごいへんしん］で選んだ変身のもと（場の表の情報。書き出しの最新の形式と同じ形。ないときは None）
         "super_transform": None if pokemon.super_transform is None else super_transform_record(state, pokemon.super_transform),
         "attacks": [
-            {"card": _seen_uid(state, option.card, viewer), "card_id": state.cards[option.card].card_id, "attack_index": option.attack_index, "name_ja": attack_of(state, option.key).name_ja, "route": option.route,
+            {"card": _seen_uid(state, option.card, viewer), "card_id": state.cards[option.card].card_id, "attack_index": option.attack_index, "name_ja": attack_of(state, option.key).name_ja,
+             **_printed_name(attack_of(state, option.key)), "route": option.route,
              "provider": option.provider, "problem": None if option.problem is None else option.problem[0],
              # v0.120: 必要なエネルギーを満たすポケモン（［にんぎょうつかい］のスリーパー）・許可を与える特殊能力を持つポケモン。どちらも場の表の情報。ないときは書かない（v0.119 までの形）
              **({"payer": option.payer} if option.payer is not None else {}), **({"grantors": list(option.grantors)} if option.grantors else {})}
@@ -395,8 +403,8 @@ def _form(state: GameState, pokemon: PokemonInPlay, viewer: int | None = None) -
     v0.124: 処理のあいだ固定した姿のカードが、見えない場所（手札・山札など）にもどっていれば、その uid を ``viewer`` に見せない（カードの id・名前・姿の決め方は場の表の情報）。
     ［すごいへんしん］の変身のもとは ``defender`` にポケモンの番号を書く（場の表の情報）。"""
     form = current_form(state, pokemon)
-    return {"card": _seen_uid(state, form.card, viewer), "card_id": state.cards[form.card].card_id, "name_ja": state.card_def(form.card).name_ja, "kind": form.kind,
-            "defender": form.defender}
+    return {"card": _seen_uid(state, form.card, viewer), "card_id": state.cards[form.card].card_id, "name_ja": state.card_def(form.card).name_ja,
+            **_printed_name(state.card_def(form.card)), "kind": form.kind, "defender": form.defender}
 
 
 def _color(color) -> str | None:
@@ -482,7 +490,8 @@ def _decision(state: GameState, viewer: int | None) -> dict[str, Any] | None:
             # v0.49: 相手のワザを選ぶ決定の選べるものが指すワザ（印刷したカードの id・位置・名前。表のカード）
             key = _chosen_attack(state, d, value)
             if key is not None:
-                option["attack"] = {"card_id": key[0], "attack_index": key[1], "name_ja": state.definitions[key[0]].attacks[key[1]].name_ja}
+                option["attack"] = {"card_id": key[0], "attack_index": key[1], "name_ja": state.definitions[key[0]].attacks[key[1]].name_ja,
+                                    **_printed_name(state.definitions[key[0]].attacks[key[1]])}
         options.append(option)
     view["options"] = options
     view["meaning"] = meaning

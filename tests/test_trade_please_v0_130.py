@@ -124,10 +124,10 @@ class RegistrationTest(unittest.TestCase):
     def test_pool_counts_and_no_card_branch(self):
         extract = read_extract()
         self.assertEqual(extract["pool_v0_130"], [SWAP])
-        self.assertEqual(cards_after(extract, "0.129"), {SWAP})
+        self.assertEqual(cards_after(extract, "0.129") - cards_after(extract, "0.130"), {SWAP})  # v0.131: 後の版のカード（ナッシー[Exeggutor]）を除く
         pool = load_card_pool()
         self.assertIn(SWAP, pool.playable_ids)
-        self.assertEqual(len(pool.playable_ids), 1370)
+        self.assertEqual(len(pool.playable_ids - cards_after(extract, "0.130")), 1370)
         for path in [ROOT / "kyuura_engine" / "engine.py", *sorted((ROOT / "kyuura_engine" / "resolution").glob("*.py"))]:
             self.assertNotIn(SWAP, path.read_text(encoding="utf-8"), path.name)
 

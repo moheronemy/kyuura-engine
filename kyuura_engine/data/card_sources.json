@@ -31005,6 +31005,44 @@
         "trainer": "kyuura-engine user specification docs/trade-please-ownership-v0.130.md#3"
       },
       "notes": "v0.130 で加えた（docs/trade-please-ownership-v0.130.md）。プロモ（旧裏）。トレーナー（種類の表示なし）。SwapPleaseTrainer: 処理に使う文面は最新の説明 LD-PR1-027-TRAINER の全文（印刷の文面（kyuura の写し。訂正 FIX-PR1-027-TEXT-JA のあと）は照合だけに使う。書き方の違いだけで処理は同じ）。使うための条件は CR-SWAP-PLEASE-USE-CONDITION（このカードを除いた手札と相手の手札がどちらも 1 枚以上）、手順は CR-SWAP-PLEASE-PROCEDURE、交換したカードを対戦で使ってよいのは CR-SWAP-PLEASE-USE-IN-GAME。交換したカードの対戦の中の所有者は利用者が指定した簡略化（USER-SWAP-OWNERSHIP-RECEIVER: 受け取ったプレイヤー。user_specified_rule）で、公式の裁定・エラッタ・印刷の訂正・最新の説明ではない。kyuura のUQ-SWAP-PLEASE-OWNERSHIP は未解決のまま。錯乱ジムで相手がかわりに使うことを選ぶと UQ-CHAOS-GYM-BORROWED-TURN で止める（CH1 のコード）。名前の末尾の「！」（印刷）は kyuura の報告事項で、写し・登録では直していない。最新の説明・図版の照合は kyuura が 2026-10-31 に『オフィシャルブック2000』p.293 を画像で読んだ記録（CC-PR1-027-P293）、カードの画像の照合はkyuura の IMG-PR1-027 で、エンジンは原典・画像を見ていない。日本語の文面の転記元は pcg-search.com。新しい外部照合はしていない"
+    },
+    "PR1-075": {
+      "basis": "kyuura_data",
+      "name_ja": "ナッシー［Exeggutor］",
+      "status": "adopted",
+      "kyuura_commit": "71d1728938fb4c8fefde9b82779cdef74beb612d",
+      "recorded_on": "2026-11-01",
+      "kyuura_records": [
+        "UQ-BILINGUAL-NAME-GLOSS"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "user_specified_name": {
+        "name": "kyuura-engine user specification docs/exeggutor-bilingual-names-v0.131.md#3"
+      },
+      "notes": "v0.131 で加えた（docs/exeggutor-bilingual-names-v0.131.md）。プロモ（旧裏）。1 進化（写しの進化元「タマタマ」）・草・HP80・弱点 炎×2・抵抗力なし・にげる 2。ワザ ふみつけ（無色 2 個・20+）= CoinBonusDamage(10)（基本となるダメージ 20、「おもて」なら 10 を追加。ギャロップ PMCG2-019 などのふみつけと同じ処理の型・値。通常のナッシーのワザには置きかえない）。処理に使う文面は印刷の文面（kyuura の写しの全文。日本語と英語の文を交互に書く。英語の文は翻訳の表示で、処理は日本語の文。意味の違いはない）。名前・進化元・ワザ名は利用者が指定した名前の扱い（USER-BILINGUAL-NAME-JAPANESE。2026-11-01）で、判定に「ナッシー」「タマタマ」「ふみつけ」を使い、写しの値「ナッシー［Exeggutor］」「タマタマ」「ふみつけ[Stomp]」は原文として残す（user_specified_name。転記の訂正・公式の裁定・最新の説明・エラッタではない。UQ-BILINGUAL-NAME-GLOSS は未解決のまま）。kyuura に LD-・CC-・CR-・ERR- の記録はない。図鑑番号は写しにない（data_gaps。カツラのクイズ その1 では選ぶと止める。補わない）。PR1-075 と PR1-077 は同じカードの組 SC-PR1-075（登録の値は同じ。採用の記録・名前の扱いの記録は id ごと）。日本語の文面の転記の元は pcg-search.com。新しい外部照合・画像の確認はしていない。印刷は未確認（kyuura も読んでいない。pcg-search の 1stp075 の画像は「Dummy」と重ねた代わりの画像。値は同じカードの組の転記による）。原典照合済みとはしない"
+    },
+    "PR1-077": {
+      "basis": "kyuura_data",
+      "name_ja": "ナッシー［Exeggutor］",
+      "status": "adopted",
+      "kyuura_commit": "71d1728938fb4c8fefde9b82779cdef74beb612d",
+      "recorded_on": "2026-11-01",
+      "kyuura_records": [
+        "UQ-BILINGUAL-NAME-GLOSS"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "user_specified_name": {
+        "name": "kyuura-engine user specification docs/exeggutor-bilingual-names-v0.131.md#3"
+      },
+      "notes": "v0.131 で加えた（docs/exeggutor-bilingual-names-v0.131.md）。プロモ（旧裏）。1 進化（写しの進化元「タマタマ」）・草・HP80・弱点 炎×2・抵抗力なし・にげる 2。ワザ ふみつけ（無色 2 個・20+）= CoinBonusDamage(10)（基本となるダメージ 20、「おもて」なら 10 を追加。ギャロップ PMCG2-019 などのふみつけと同じ処理の型・値。通常のナッシーのワザには置きかえない）。処理に使う文面は印刷の文面（kyuura の写しの全文。日本語と英語の文を交互に書く。英語の文は翻訳の表示で、処理は日本語の文。意味の違いはない）。名前・進化元・ワザ名は利用者が指定した名前の扱い（USER-BILINGUAL-NAME-JAPANESE。2026-11-01）で、判定に「ナッシー」「タマタマ」「ふみつけ」を使い、写しの値「ナッシー［Exeggutor］」「タマタマ」「ふみつけ[Stomp]」は原文として残す（user_specified_name。転記の訂正・公式の裁定・最新の説明・エラッタではない。UQ-BILINGUAL-NAME-GLOSS は未解決のまま）。kyuura に LD-・CC-・CR-・ERR- の記録はない。図鑑番号は写しにない（data_gaps。カツラのクイズ その1 では選ぶと止める。補わない）。PR1-075 と PR1-077 は同じカードの組 SC-PR1-075（登録の値は同じ。採用の記録・名前の扱いの記録は id ごと）。日本語の文面の転記の元は pcg-search.com。新しい外部照合・画像の確認はしていない。名前・進化元・ワザ名・HP・ダメージの印刷は kyuura の画像の照合 IMG-PR1-077（2026-10-30。pcg-search.com の画像 1 枚。同じサイトの転記とは別に数える）の再利用で、ワザの説明の全文・弱点・にげるの値の読み比べは kyuura もしていない。エンジンは画像を読んでいない"
     }
   }
 }

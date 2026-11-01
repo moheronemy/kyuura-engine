@@ -258,6 +258,7 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
     user_simplified = section.get("user_simplified_text", {})  # v0.127: 利用者が指定した簡略ルール（公式の裁定・エラッタ・エンジンの仕様の判断ではない）
     user_references = section.get("user_specified_references", {})  # v0.129: 利用者が指定した参照値（処理に使う文面は印刷のまま。公式の裁定・最新の説明・印刷の訂正ではない）
     user_rules = section.get("user_specified_rules", {})  # v0.130: 利用者が指定した、説明が書かない処理の規則（処理に使う文面は最新の説明のまま。公式の裁定ではない）
+    user_names = section.get("user_specified_names", {})  # v0.131: 利用者が指定した名前の扱い（日英併記の名前の判定。文面の区分ではない。公式の裁定・転記の訂正ではない）
     equivalent = section.get("equivalent_registrations", {})  # v0.69: 登録したカードと処理に使う欄が同じカードの登録 → 元のカードの登録
     reprinted = section.get("reprint_registrations", {})  # v0.71: 再録のカードの、元のカードの記録の文面を処理に使う登録 → 元のカードの登録
     in_checks = (set(section.get("recorded_in_card_checks", {})) | set(section.get("card_checks_without_text", {})) | adopted_printed
@@ -514,6 +515,29 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
             problems.append(f"{target}: 利用者が指定した規則の記録の文面が、研究の基準のコミットの印刷の文面・登録の処理に使う文面と同じではない")
         elif latest is not None and (entry.source != latest["id"] or entry.play_text_ja != (latest.get("latest_description") or {}).get("text_ja")):
             problems.append(f"{target}: 最新の説明 {latest['id']} があるのに、処理に使う文面がその文面ではない（規則は文面を書き換えない）")
+        issue = issues.get(record.kyuura_issue)
+        if issue is None or issue.get("status") != "UNRESOLVED":
+            problems.append(f"{target}: 解決済みにしない論点 {record.kyuura_issue} が、研究の基準のコミットで UNRESOLVED ではない")
+
+    # 4f-4. v0.131（docs/exeggutor-bilingual-names-v0.131.md 3 章）: 利用者が指定した名前の扱い（ナッシー[Exeggutor] の英語の併記を翻訳の表示とし、名前・進化元・ワザ名の判定に日本語の部分を
+    # 使う）。処理に使う文面の区分ではない（ワザの文面は adopted_printed_text の印刷の文面のまま）ので、文面の区分と別に挙げる。一覧は対象ごとの記録（effects.USER_SPECIFIED_NAMES）とちょうど同じで、
+    # 出典は USER_SPECIFIED_NAME_SOURCE。記録の欄ごとの写しの値が研究の基準のコミットの値（kyuura の値を書き換えていない）、カードが登録されている、ほかの利用者の指定の区分と重ならない、
+    # 解決済みにしない論点が研究の基準のコミットで UNRESOLVED のまま
+    if set(user_names) != set(getattr(E, "USER_SPECIFIED_NAMES", {})) or set(user_names) & (set(user_simplified) | set(user_references) | set(user_rules)):
+        problems.append(f"user_specified_names の一覧が、利用者が指定した名前の扱いの記録と違うか、ほかの利用者の指定の区分にも入っている: 対応表 {sorted(user_names)}")
+    for target, basis in user_names.items():
+        record = getattr(E, "USER_SPECIFIED_NAMES", {}).get(target)
+        if basis != getattr(E, "USER_SPECIFIED_NAME_SOURCE", None) or record is None:
+            problems.append(f"{target}: user_specified_names の根拠 {basis!r} が、利用者が指定した名前の扱いの出典・記録でない")
+            continue
+        card = research_cards.get(record.card_id) or {}
+        pokemon = card.get("pokemon") or {}
+        values = {"name.ja": (card.get("name") or {}).get("ja"), "pokemon.evolves_from.ja": (pokemon.get("evolves_from") or {}).get("ja")}
+        values |= {f"pokemon.attacks[{i}].name.ja": (a.get("name") or {}).get("ja") for i, a in enumerate(pokemon.get("attacks") or ())}
+        if any(values.get(field.field) != field.copy_value for field in record.fields):
+            problems.append(f"{target}: 利用者が指定した名前の扱いの記録の写しの値が、研究の基準のコミットの値と違う")
+        if not _registered_targets(registry_, record.card_id):
+            problems.append(f"{target}: 利用者が指定した名前の扱いのカードが登録されていない")
         issue = issues.get(record.kyuura_issue)
         if issue is None or issue.get("status") != "UNRESOLVED":
             problems.append(f"{target}: 解決済みにしない論点 {record.kyuura_issue} が、研究の基準のコミットで UNRESOLVED ではない")
@@ -788,7 +812,9 @@ def unlinked_case_problems(links: dict, issues: dict, registry) -> list[str]:
       ``unregistered``（そのカードの対象を登録していない。その場面は起こらない）・``requires_unregistered``（v0.123。対象は登録されているが、その場面は、同じ論点の事例の、
       登録していない別のカード（挙げた id のどれか）があるときだけ起こる。デッキに入れられないので、その場面は起こらない）・``user_specified_rule``（v0.130。その場面を、
       利用者が指定した規則 ``effects.USER_SPECIFIED_RULES`` の対象（``<カード id>/trainer``）で処理する。規則の対象のカードが登録されていて、規則の解決済みにしない論点が事例の論点と同じ。
-      論点を解決したことにはしない。事例のカードの対象が登録されていなければ unregistered のまま）
+      論点を解決したことにはしない。事例のカードの対象が登録されていなければ unregistered のまま）・``user_specified_name``（v0.131。その場面を、利用者が指定した名前の扱い
+      ``effects.USER_SPECIFIED_NAMES`` の対象（``<カード id>/name`` の重ならないリスト）で処理する。どの記録のカードも登録されていて、記録の解決済みにしない論点が事例の論点と同じ。
+      論点を解決したことにはしない）
     """
     problems: list[str] = []
     section = links.get("kyuura_cases_without_engine_ruling")
@@ -817,7 +843,7 @@ def unlinked_case_problems(links: dict, issues: dict, registry) -> list[str]:
         engine = case["engine"]
         registered = case["target"] in _registered_targets(registry, case["card_id"])
         if not isinstance(engine, dict) or len(engine) != 1:
-            problems.append(f"{where}: エンジンの扱い（engine）は stop_codes・codeless_question・unregistered・requires_unregistered・user_specified_rule のちょうど 1 つ")
+            problems.append(f"{where}: エンジンの扱い（engine）は stop_codes・codeless_question・unregistered・requires_unregistered・user_specified_rule・user_specified_name のちょうど 1 つ")
             continue
         differs = False
         if "stop_codes" in engine:
@@ -858,6 +884,20 @@ def unlinked_case_problems(links: dict, issues: dict, registry) -> list[str]:
                 problems.append(f"{where}: 利用者が指定した規則 {engine['user_specified_rule']!r} が記録にない・論点が違う・規則の対象が登録されていない")
             if not registered:
                 problems.append(f"{where}: 利用者が指定した規則で処理するとしたカードの対象 {case['target']} が登録されていない（unregistered にする）")
+        elif "user_specified_name" in engine:
+            # v0.131: 利用者が指定した名前の扱いで処理する場面（ナッシー[Exeggutor] の名前）。記録のカードがどれも登録されていて、記録の論点が事例の論点と同じ
+            from kyuura_engine import effects as E
+
+            keys = engine["user_specified_name"]
+            if not isinstance(keys, list) or not keys or len(set(keys)) != len(keys):
+                problems.append(f"{where}: user_specified_name は、利用者が指定した名前の扱いの対象の重ならないリスト")
+                continue
+            for key in keys:
+                spec = getattr(E, "USER_SPECIFIED_NAMES", {}).get(key)
+                if spec is None or spec.kyuura_issue != case["kyuura_issue"] or not _registered_targets(registry, spec.card_id):
+                    problems.append(f"{where}: 利用者が指定した名前の扱い {key!r} が記録にない・論点が違う・記録のカードが登録されていない")
+            if not registered:
+                problems.append(f"{where}: 利用者が指定した名前の扱いで処理するとしたカードの対象 {case['target']} が登録されていない（unregistered にする）")
         elif engine != {"unregistered": True}:
             problems.append(f"{where}: エンジンの扱い {engine!r} を扱えない")
         elif registered:

@@ -33,6 +33,8 @@ v0.4c 以降の 2 進化ポケモン。v0.11 はサカキのワンリキー・�
   公式図鑑の種族の身長は scripts/extract_species_heights.py の別の写し。docs/blaines-quiz-heights-v0.129.md 2 章）。
 - v0.130 で、写しの組 pool_v0_130（1 枚）を加えました（写しの元・研究の基準は 71d1728 のまま。段は加えていない。文面は FIX-PR1-027-TEXT-JA（段 v0.126）のあとの値。
   docs/trade-please-ownership-v0.130.md 2 章）。
+- v0.131 で、写しの組 pool_v0_131（2 枚）を加えました（写しの元・研究の基準は 71d1728 のまま。段は加えていない。名前・進化元・ワザ名は kyuura の値（日本語と英語の併記）の
+  まま写し、判定に使う値は利用者が指定した名前の扱い（effects.USER_SPECIFIED_NAMES）で別に持つ。docs/exeggutor-bilingual-names-v0.131.md 2 章）。
 
 使い方::
 
@@ -3722,6 +3724,13 @@ POOL_V0_130 = [
     "PR1-027",  # とりかえっこプリーズ（プロモ（旧裏）。トレーナー。公式大会では使えない（kyuura の notes）が、通常対戦の対象）
 ]
 
+# v0.131 で加えたカード（docs/exeggutor-bilingual-names-v0.131.md）。写しの元・研究の基準は 71d1728 のまま（段は加えていない）。名前「ナッシー［Exeggutor］」・ワザ名「ふみつけ[Stomp]」は
+# kyuura の値のまま写す（訂正・正規化しない）。判定に使う名前は利用者が指定した名前の扱い（effects.USER_SPECIFIED_NAMES）
+POOL_V0_131 = [
+    "PR1-075",  # ナッシー[Exeggutor]（プロモ（旧裏）。トロピカルメガバトル。印刷は未確認）
+    "PR1-077",  # ナッシー[Exeggutor]（プロモ（旧裏）。トレーナーズVol.3。kyuura の画像の照合 IMG-PR1-077）
+]
+
 POOLS = [
     ("pool_v0_1", POOL_V0_1),
     ("pool_v0_2b", POOL_V0_2B),
@@ -3857,6 +3866,7 @@ POOLS = [
     ("pool_v0_127", POOL_V0_127),
     ("pool_v0_129", POOL_V0_129),
     ("pool_v0_130", POOL_V0_130),
+    ("pool_v0_131", POOL_V0_131),
 ]
 
 

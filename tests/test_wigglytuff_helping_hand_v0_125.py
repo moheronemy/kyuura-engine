@@ -119,7 +119,8 @@ class MigrationChainTest(unittest.TestCase):
         # v0.127: v0.127 で写しに加えたカード（pool_v0_127。段は加えていない）も基点にない
         # v0.129: カツラのクイズ その1（pool_v0_129）も基点にない
         self.assertEqual(set(new) - set(old), set(now.get("pool_v0_125", ())) | set(now.get("pool_v0_126", ())) | set(now.get("pool_v0_127", ()))
-                         | set(now.get("pool_v0_129", ())) | set(now.get("pool_v0_130", ())))  # v0.130: とりかえっこプリーズ（pool_v0_130）も基点にない
+                         | set(now.get("pool_v0_129", ())) | set(now.get("pool_v0_130", ()))  # v0.130: とりかえっこプリーズ（pool_v0_130）も基点にない
+                         | set(now.get("pool_v0_131", ())))  # v0.131: ナッシー[Exeggutor]（pool_v0_131）も基点にない
         self.assertNotIn(WIGGLYTUFF, old)
         self.assertEqual(before["kyuura_corrections"], [c for c in now["kyuura_corrections"] if c["migration"] != "v0.126"])
 

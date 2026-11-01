@@ -143,7 +143,9 @@ class RegistrationTest(unittest.TestCase):
         self.assertEqual(section["user_specified_references"], {f"{QUIZ}/trainer": E.USER_SPECIFIED_REFERENCE_SOURCE})
         self.assertNotIn(f"{QUIZ}/trainer", section["adopted_printed_text"])
         self.assertNotIn(f"{QUIZ}/trainer", section["user_simplified_text"])
-        self.assertEqual(len(section["adopted_printed_text"]), 1390)  # 印刷の文面の採用の数に入れていない
+        # 印刷の文面の採用の数に入れていない（v0.131: 後の版の写しの組のカード（ナッシー[Exeggutor] のふみつけ）を除いて、この版の 1,390 を見る）
+        later = cards_after(read_extract(), "0.129")
+        self.assertEqual(len([t for t in section["adopted_printed_text"] if t.split("/")[0] not in later]), 1390)
         self.assertIn({"version": "v0.129", "document": "docs/blaines-quiz-heights-v0.129.md", "ruling_id": "QZ1"},
                       links["stop_codes"][QZ1]["engine_rulings"])
         sources = json.loads((ROOT / "kyuura_engine" / "data" / "card_sources.json").read_text(encoding="utf-8"))["cards"][QUIZ]
