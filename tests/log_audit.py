@@ -10425,7 +10425,7 @@ def v130_problems(state) -> list[str]:
                     problems.append(f"{e['turn']} 番の交換 {e['exchange']} のカード {card} の所有者の変更 {(previous, new, origin)} が、組み立て直した持ち主 {owner.get(card)}・出所と合わない")
                 owner[card] = new
                 changes.append((card, state.cards[card].card_id, previous, new, origin, e["turn"], e["trainer_card"], e["exchange"]))
-            if {tuple(x)[0] for x in e["ownership"]} != {e["given_card"], e["taken_card"]} or len(e["ownership"]) != 2 or player not in (0, 1):
+            if {x[0] for x in e["ownership"]} != {e["given_card"], e["taken_card"]} or len(e["ownership"]) != 2 or player not in (0, 1):
                 problems.append(f"{e['turn']} 番の交換 {e['exchange']} の所有者の変更が、交換した 2 枚のものではない")
         elif e["kind"] == "discard_trainer" and e.get("card") in state.cards and state.cards[e["card"]].card_id in V130_SWAP and e["player"] != owner.get(e["card"]):
             problems.append(f"{e['turn']} 番にとりかえっこプリーズ {e['card']} をトラッシュしたプレイヤー {e['player']} が、組み立て直した持ち主 {owner.get(e['card'])} ではない")

@@ -44,7 +44,6 @@ from kyuura_engine.zones import deck_top_to_prizes
 from tests.helpers import (
     BILL,
     CHAOS_GYM,
-    H,
     DEVOLUTION_SPRAY,
     FIGHTING,
     HITMONCHAN,
@@ -53,13 +52,23 @@ from tests.helpers import (
     RATTATA,
     SCOOP_UP,
     SWITCH,
+    H,
     T,
     apply_kernel,
     build_test_state,
 )
 from tests.log_audit import log_problems, observation_problems, v130_problems
 from tests.release_catalog import cards_after
-from tests.test_instant_trainers_v0_55 import answer, assert_stops, audited, card_of, kinds, mon, snapshot, use
+from tests.test_instant_trainers_v0_55 import (
+    answer,
+    assert_stops,
+    audited,
+    card_of,
+    kinds,
+    mon,
+    snapshot,
+    use,
+)
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DOC = ROOT / "docs" / "trade-please-ownership-v0.130.md"

@@ -18,7 +18,12 @@ from kyuura_engine import check_invariants, state_to_dict
 from kyuura_engine.engine import new_game
 from kyuura_engine.serialize import FORMAT_VERSIONS
 from kyuura_engine.state import CardInstance, GameState, OwnershipChange, freeze_mapping
-from kyuura_engine.zones import discard_from_hand, exchange_hand_cards, return_hand_cards_to_deck, shuffle_deck
+from kyuura_engine.zones import (
+    discard_from_hand,
+    exchange_hand_cards,
+    return_hand_cards_to_deck,
+    shuffle_deck,
+)
 from tests.helpers import FIRE, HITMONCHAN, POTION, RATTATA, build_test_state
 
 TRAINER = 999  # 交換に使ったトレーナーの uid の代わり（この部品のテストでは、トレーナーの処理を通さない）
@@ -167,7 +172,7 @@ class MovementAfterExchangeTest(unittest.TestCase):
         state2 = board()
         g, t = hand(state2, 0, POTION), hand(state2, 1, HITMONCHAN)
         exchange_hand_cards(state2, 0, g, t, trainer=TRAINER)
-        with self.assertRaises(Exception):
+        with self.assertRaises(RuntimeError):
             discard_from_hand(state2, 0, (g,))
 
     def test_return_to_deck_and_shuffle_use_the_new_owner(self):

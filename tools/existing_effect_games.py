@@ -12192,9 +12192,8 @@ def v130_uses(state):
                 drawn = len(following["cards"]) if following is not None and following["kind"] == "draw" else 0
                 counts["drawn_on_decline"] += drawn
                 counts["short_draw"] += drawn < 2
-        elif kind == "chaos_answered" or kind == "chaos_not_borrowable":
-            if state.cards[e["card"]].card_id == V130_SWAP:
-                counts["chaos_" + ("answered" if kind == "chaos_answered" else "not_borrowable")] += 1
+        elif kind in ("chaos_answered", "chaos_not_borrowable") and state.cards[e["card"]].card_id == V130_SWAP:
+            counts["chaos_" + ("answered" if kind == "chaos_answered" else "not_borrowable")] += 1
         if kind == "cards_exchanged":
             for uid in (e["given_card"], e["taken_card"]):
                 swapped[uid] = swapped.get(uid, 0) + 1
