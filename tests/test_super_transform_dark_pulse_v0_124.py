@@ -205,7 +205,7 @@ class ResearchLinksTest(unittest.TestCase):
 
         self.assertIn("card", rl._registered_targets(DEFAULT_EFFECTS, "PMCG1-096"))  # 無色2個エネルギー（特殊エネルギーの登録）
         self.assertIn("card", rl._registered_targets(DEFAULT_EFFECTS, "PMCG4-065"))  # レインボーエネルギー
-        self.assertEqual(rl._registered_targets(DEFAULT_EFFECTS, "neo1-049"), set())  # 登録していないカード
+        self.assertEqual(rl._registered_targets(DEFAULT_EFFECTS, "neo4-082"), set())  # 登録していないカード（v0.132 で neo1-049 を登録したので、残る未対応のカードで確かめる）
 
     @needs_kyuura
     def test_links_agree_with_kyuura(self):

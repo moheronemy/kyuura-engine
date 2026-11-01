@@ -313,7 +313,10 @@ class ChemicalGasRegistrationTest(unittest.TestCase):
                                                                    "neo2-027", "PRN-039",
                                                                    # v0.124: GR団のミュウツーの［わるいはどう］（自動的にはたらく）。docs/super-transform-dark-pulse-v0.124.md 6 章。
                                                                    # ［すごいへんしん］は宣言して使う
-                                                                   "PRN-041"))})
+                                                                   "PRN-041",
+                                                                   # v0.132: ヤドキングの［ちえくらべ］（宣言しない。相手が手札からトレーナーを使うときに、エンジンが使うかを聞く）。
+                                                                   # docs/slowking-mind-games-v0.132.md 4 章
+                                                                   "neo1-049"))})
         self.assertTrue(PowerEffect.declared)
         self.assertEqual((entry.name_ja, entry.text_ja, entry.play_text_ja, entry.source), ("かがくへんかガス", GAS_PRINTED, GAS_LATEST, "P43 p.48"))
         self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.13")  # v0.9 でゴース・ゴースト、v0.10 でゴーリキー・カイリキー、v0.11 でサカキのワンリキー・ゴーリキー・カイリキー、v0.12 で R団のファイヤー、v0.13 で第4弾のゼニガメ・わるいカメールの登録を加えた（かがくへんかガスの登録は同じ）

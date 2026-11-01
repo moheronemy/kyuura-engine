@@ -211,7 +211,10 @@ class DependencyTest(unittest.TestCase):
                                  "_answer_decision_once", "_reaction_dead_end", "_evolve_pokemon",
                                  # v0.87: 手札からたねポケモンをベンチに出したあとの登場時のダメージ（［ヒートプレート］・ロケット団の爆発ジム）のきぜつ・サイド・交代は、特殊能力のあとと
                                  # 同じ形の ``resolution.after_effects``（docs/movement-damage-reactions-v0.87.md 4.3 節）
-                                 "_play_basic_to_bench"})
+                                 "_play_basic_to_bench",
+                                 # v0.132: ［ちえくらべ］の段（手札から出したあとの続き・答えの続き・使わない答えの続きの確かめ）は設定（``resolution.Context``）を渡すだけ
+                                 # （docs/slowking-mind-games-v0.132.md 5 章）
+                                 "_continue_trainer_use", "_resume_trainer_reaction", "_trainer_reaction_decline_check"})
         trial_names = {
             node.attr
             for function in functions if function.name in ("_decision_has_unstopped_answer", "_trainer_dead_end")
