@@ -1979,6 +1979,24 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   SX1・TN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形の別のカードの問い）。v0.66 の「ナツメのESPと「うら」が出るまでのコインは起こらない」はエンジンの前提の誤りで、研究の論点ではない（kyuura は
   変えていない）。
 
+## v0.131: ナッシー[Exeggutor] 2 枚と、利用者が指定した日英併記の名前の扱い
+
+[exeggutor-bilingual-names-v0.131.md](exeggutor-bilingual-names-v0.131.md) の 1〜3 章・12 章。
+
+- 写しの元・研究の基準は kyuura `71d1728` のまま、身長の写しは `9242b9b` のまま（移行していない。kyuura の `origin/main` は `9242b9b` で、`71d1728` からの差は身長のファイル・手順だけ）。
+  写しの組 `pool_v0_131`（PR1-075・PR1-077）を加え、`scripts/extract_kyuura_cards.py` で写しを作り直した（2 枚の値は kyuura の値のまま。名前「ナッシー［Exeggutor］」・ワザ名「ふみつけ[Stomp]」・
+  説明の英語の文を写しで直していない。ほかのカードの値は同じ。`--check` で kyuura 71d1728 と一致）。
+- 採用の記録（`card_sources.json`。1,283 → 1,285 件。id ごと）: ワザの処理に使う文面の根拠は印刷の文面 `kyuura_printed_text`（kyuura に LD-・CC-・CR-・ERR- の記録はない）。名前の扱いは別の欄
+  `user_specified_name`（利用者の指定 USER-BILINGUAL-NAME-JAPANESE。2026-11-01）に書き、研究の対応表の新しい区分 `latest_descriptions.user_specified_names` に挙げた（文面の区分
+  `adopted_printed_text` とは別。v0.70 の転記の訂正 `user_name_correction`・v0.127 の `user_simplified_text`・v0.129 の `user_specified_references`・v0.130 の `user_specified_rules` とも別）。
+  採用の記録の `name_ja` は写しの値「ナッシー［Exeggutor］」のまま。
+- 印刷の確認: PR1-077 は kyuura の画像の照合 IMG-PR1-077（2026-10-30。名前・進化元・ワザ名・HP・ダメージ）の再利用で、エンジンは画像を読んでいない。**PR1-075 の印刷は未確認**
+  （kyuura も読んでいない）。どちらも原典照合済みとは記録していない。新しい外部照合・ガイドブックの読み直しはしていない。図鑑番号は写しにない（`data_gaps`）ので補っていない。
+- 研究の対応表の kyuura の事例: UQ-BILINGUAL-NAME-GLOSS の 6 件（PR1-075・PR1-077・PMCG2-012・SI-013・neo1-090・PMCG6-082）は、新しい扱い `user_specified_name`（利用者の指定で処理する。
+  論点は解決済みにしない）。停止コード 313・研究の対応表の未解決 314・kyuura の論点 90 は変わらない。印刷の文面の採用 1,390 → 1,392。
+- kyuura への報告事項（kyuura のデータ・記録は変えていない）: 12 章。採用した名前の扱いと範囲、公式の裁定ではないこと、実装を確かめられる最後のコミット・登録・検査の場所、
+  UQ-BILINGUAL-NAME-GLOSS は未解決のままであること、PR1-075 の印刷が未確認のままであること、kyuura に今回の指定の記録がないこと。
+
 ## v0.130: とりかえっこプリーズと、利用者が指定した交換したカードの所有者
 
 [trade-please-ownership-v0.130.md](trade-please-ownership-v0.130.md) の 1〜3 章・12 章。
