@@ -1979,6 +1979,25 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   SX1・TN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形の別のカードの問い）。v0.66 の「ナツメのESPと「うら」が出るまでのコインは起こらない」はエンジンの前提の誤りで、研究の論点ではない（kyuura は
   変えていない）。
 
+## v0.132: ヤドキング（neo1-049）と、利用者が指定した［ちえくらべ］の使うかの選択・投げる時点
+
+[slowking-mind-games-v0.132.md](slowking-mind-games-v0.132.md) の 1〜3 章・12 章。
+
+- 写しの元・研究の基準は kyuura `71d1728` のまま、身長の写しは `9242b9b` のまま（移行していない。kyuura の `origin/main` は `9242b9b` で、`71d1728` からの差は身長のファイル・手順だけ）。
+  写しの組 `pool_v0_132`（neo1-049）を加え、`scripts/extract_kyuura_cards.py` で写しを作り直した（値は kyuura の値のまま。ほかのカードの値は同じ。`--check` で kyuura 71d1728 と一致）。
+- 採用の記録（`card_sources.json`。1,285 → 1,286 件）: ワザ・特殊能力の処理に使う文面の根拠は印刷の文面 `kyuura_printed_text`（kyuura に LD-・CC-・ERR- の記録はない。画像の照合 IMG-neo1-049 は
+  kyuura の記録の再利用で、エンジンは画像を読んでいない）。使うかの選択と投げる時点は別の欄 `user_specified_rule`（利用者の指定 USER-MIND-GAMES-OPTIONAL-BEFORE-COST。2026-11-01）に書き、
+  研究の対応表の `latest_descriptions.user_specified_rules`（v0.130 と同じ区分）に挙げた。`kyuura_records` は CR-MIND-GAMES-SCOPE・CR-MIND-GAMES-STADIUM-TOOL・RUL-SLOWKING・
+  UQ-FLASH-FACE-UP-DECK・UQ-MIND-GAMES-OPTIONAL・UQ-MIND-GAMES-TRAINER-STEP・UQ-SWAP-PLEASE-OWNERSHIP。新しい外部照合・ガイドブックの読み直しはしていない。
+- 研究の対応表の kyuura の事例: UQ-MIND-GAMES-OPTIONAL・UQ-MIND-GAMES-TRAINER-STEP の neo1-049 と、UQ-MIND-GAMES-TRAINER-STEP のリムーブ禁止ジム・マダツボミのとう・きあいのハチマキ・
+  超エネルギー回収は `user_specified_rule`（`neo1-049/power/0`）、錯乱ジムは停止コード MG1、なにかの化石・ピッピ人形は MG2、UQ-FLASH-FACE-UP-DECK の neo1-049 は FU4、UQ-SWAP-PLEASE-OWNERSHIP の
+  neo1-049 は v0.130 の `PR1-027/trainer`。停止コード 313 → 316（MG1・MG2 は `issue_not_in_index`、MG3 は `not_in_kyuura`）・研究の対応表の未解決 314 → 317・kyuura の論点 90 は変わらない。
+  印刷の文面の採用 1,392 → 1,394。
+- kyuura への報告事項（kyuura のデータ・記録は変えていない）: 12 章。採用した任意性と時点（条件の確かめのあと・支払いの前）、公式の裁定ではないこと、錯乱ジムとの順番を指定に含めていないこと、
+  実装を確かめられる最後のコミット・登録・検査・テストの場所、歴史的な論点を解決済みにしていないこと、新しい問い（MG3）とエンジンの制限。
+- 別の引き継ぎ事項: 過去の版の利用者の指定のうち、v0.129 の参照値（USER-QUIZ-HEIGHT-OFFICIAL-ZUKAN）と v0.131 の名前の扱い（USER-BILINGUAL-NAME-JAPANESE）は kyuura に未反映のまま
+  （71d1728・9242b9b とも。v0.127 の簡略ルールと v0.130 の所有者の簡略仕様は kyuura の引き継ぎに記録がある）。この版でも kyuura には書き込んでいない。
+
 ## v0.131: ナッシー[Exeggutor] 2 枚と、利用者が指定した日英併記の名前の扱い
 
 [exeggutor-bilingual-names-v0.131.md](exeggutor-bilingual-names-v0.131.md) の 1〜3 章・12 章。
