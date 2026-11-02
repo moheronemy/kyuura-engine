@@ -104,8 +104,8 @@ TYPES = {ENERGY_SEARCH: E.SearchDeckTrainer, POKE_BALL: E.SearchDeckTrainer, BOS
          ITEM_FINDER: E.TakeFromDiscardTrainer, RECYCLE: E.TakeFromDiscardTrainer, NIGHTLY_GARBAGE_RUN: E.TakeFromDiscardTrainer}
 
 
-def board(hand=(), *, deck=None, discard=(), opponent_discard=(), active=HITMONCHAN, opponent_active=HITMONCHAN, seed=0):
-    me = {"active": active, "bench": [RATTATA], "hand": list(hand), "discard": list(discard)}
+def board(hand=(), *, deck=None, discard=(), opponent_discard=(), active=HITMONCHAN, opponent_active=HITMONCHAN, seed=0, prizes=6):
+    me = {"active": active, "bench": [RATTATA], "hand": list(hand), "discard": list(discard), "prizes": prizes}
     if deck is not None:
         me["deck"] = list(deck)
     them = {"active": opponent_active, "bench": [RATTATA], "discard": list(opponent_discard)}
@@ -361,7 +361,7 @@ class NamedSearchTest(unittest.TestCase):
     """ボスのやりかた・タケシの育て方: 説明の名前の（進化）カードを 1 枚、見せて手札に加えて切る。選べなければ ST1。"""
 
     def test_boss_way_only_dark_evolution_cards(self):
-        state = use(board([BOSS_WAY], deck=[ROCKET_ZUBAT, DARK_GOLBAT, DARK_GOLBAT, RATTATA]), BOSS_WAY)
+        state = use(board([BOSS_WAY], deck=[ROCKET_ZUBAT, DARK_GOLBAT, DARK_GOLBAT, RATTATA], prizes=1), BOSS_WAY)  # v0.137: 山札の選べるカードが、うらのサイド（炎エネルギー）の枚数より多い盤面（配分を読まない下限で確かめられる。docs/deck-search-oracle-v0.137.md 5 章）
         self.assertEqual([state.cards[o].card_id for o in state.decision.options], [DARK_GOLBAT, DARK_GOLBAT])  # 同じ名前の別のカードは両方
         after = answer(state, state.decision.options[1:])
         self.assertEqual(kinds(after), ["play_trainer", "reveal_from_deck", "shuffle", "discard_trainer"])
@@ -370,7 +370,7 @@ class NamedSearchTest(unittest.TestCase):
         assert_stops(self, state, PlayTrainer(0, card_of(state, BOSS_WAY)), ST1)
 
     def test_brock_training_basic_and_evolution(self):
-        state = use(board([BROCK_TRAINING], deck=[BROCKS_ZUBAT, BROCKS_GOLBAT, BROCKS_GEODUDE, RATTATA, GRASS]), BROCK_TRAINING)
+        state = use(board([BROCK_TRAINING], deck=[BROCKS_ZUBAT, BROCKS_GOLBAT, BROCKS_GEODUDE, RATTATA, GRASS], prizes=2), BROCK_TRAINING)  # v0.137: 山札の選べるカードが、うらのサイド（炎エネルギー）の枚数より多い盤面（配分を読まない下限で確かめられる。docs/deck-search-oracle-v0.137.md 5 章）
         self.assertEqual({state.cards[o].card_id for o in state.decision.options}, {BROCKS_ZUBAT, BROCKS_GOLBAT, BROCKS_GEODUDE})
         self.assertEqual(state.decision.min_choices, 1)
         trainer_sequence_ok(self, answer(state, state.decision.options[:1]))
@@ -609,10 +609,28 @@ class GameTest(unittest.TestCase):
                 for card, uses in game.get("card_uses", {}).items():
                     for key, count in uses.items():
                         totals[(card, key)] = totals.get((card, key), 0) + count
+        # v0.137（docs/deck-search-oracle-v0.137.md 5 章・10 章）: ボスのやりかたは、S53 の「わるい」進化カード 2 枚がサイドの枚数より多くならないので、この組では配分を読まない下限で
+        # 使えない（使う前の ST1。v0.136 までは実際の山札を読んで使えた。意図した差）。使える場面の対戦の経路は v0.137 の組（D137）で確かめる
+        policy: dict = {}
+        for run in results.values():
+            for game in run["games"]:
+                for key, count in game.get("policy", {}).items():
+                    policy[key] = policy.get(key, 0) + count
+        self.assertGreater(policy.get(f"v053_{BOSS_WAY}_not_playable_UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET", 0), 0)
+        self.assertEqual(totals.get((BOSS_WAY, "played"), 0), 0)
+        later = games.run(range(90, 91), pairings=games.PAIRINGS_V0_137)
+        later_totals: dict = {}
+        for run in later.values():
+            for game in run["games"]:
+                for key, count in game.get("card_uses", {}).get(BOSS_WAY, {}).items():
+                    later_totals[key] = later_totals.get(key, 0) + count
+        for key in ("played", "taken_then_evolve"):
+            self.assertGreater(later_totals.get(key, 0), 0, key)
         for card in V0_53_CARDS:
-            self.assertGreater(totals.get((card, "played"), 0), 0, card)
+            if card != BOSS_WAY:
+                self.assertGreater(totals.get((card, "played"), 0), 0, card)
         for card, key in ((ENERGY_SEARCH, "search_deck"), (ENERGY_SEARCH, "taken_then_attach_energy"), (POKE_BALL, "coin_heads"), (POKE_BALL, "coin_tails"),
-                          (POKE_BALL, "taken_then_play_to_bench"), (BOSS_WAY, "taken_then_evolve"), (BROCK_TRAINING, "taken_then_play_to_bench"),
+                          (POKE_BALL, "taken_then_play_to_bench"), (BROCK_TRAINING, "taken_then_play_to_bench"),
                           (MISTYS_TEARS, "taken_then_attach_energy"), (MISTYS_TEARS, "none_declined"), (ERIKAS_MAIDS, "hand_to_deck"),
                           (ERIKAS_MAIDS, "taken_then_play_to_bench"), (MAINTENANCE, "draw"), (ITEM_FINDER, "retrieve_trainer"),
                           (ITEM_FINDER, "taken_then_play_trainer"), (RECYCLE, "coin_tails"), (RECYCLE, "taken_then_draw"), (NIGHTLY_GARBAGE_RUN, "discard_to_deck")):

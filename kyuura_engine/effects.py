@@ -17144,6 +17144,45 @@ def deck_cards_matching(state: GameState, player: int, target: CardFilter) -> tu
     return tuple(sorted(uid for uid in state.players[player].deck if target.matches(state.card_def(uid))))
 
 
+def unseen_card_pool(state: GameState, player: int) -> tuple[tuple[int, ...], tuple[int, ...]]:
+    """v0.137（docs/deck-search-oracle-v0.137.md 4 章）: プレイヤー ``player`` の、本人に見えない自分のカードを 2 つに分けた並び（山札のうらのカード, 山札の外の見えないカード）。
+
+    - 山札のうらのカード: 山札のうち、フラッシュでおもてにしたカード（``faceup.face_up_in_deck``）を除いたもの
+    - 山札の外の見えないカード: うらのサイド（おもてのサイド ``face_up_prizes`` を除く）と、持ち主に見えない置いておくカード（``SetAsideCards.visible_to`` に持ち主がいない）
+
+    2 つを合わせたカードの集合（カードの id の多重集合）は、持ち主が知っている情報だけで決まる: 自分が所有するカード（対戦開始時のデッキリストと、両者が見た所有者の変更
+    ``OwnershipChange``）から、自分に見えるカード（手札・場・トラッシュ・スタジアム・使用中のトレーナー・見られる置いておくカード・おもてのサイド・自分で並べたおもての山札）を
+    除いたものだから（カードは持ち主のゾーンにある。``check_invariants``）。どちらの並びにどのカードがあるか（山札とサイドの配分）は、持ち主にも見えない。2 つの枚数は公開
+    （山札・おもての枚数・サイド・置いておくカードの枚数）。"""
+    p = state.players[player]
+    marked = set(_faceup.face_up_in_deck(state, player))
+    deck = tuple(uid for uid in p.deck if uid not in marked)
+    elsewhere = tuple(uid for uid in p.prizes if uid is not None and uid not in state.face_up_prizes) + tuple(
+        uid for group in state.set_aside if group.owner == player and player not in group.visible_to for uid in group.cards)
+    return deck, elsewhere
+
+
+def deck_target_lower_bound(state: GameState, player: int, target: CardFilter) -> int:
+    """v0.137（docs/deck-search-oracle-v0.137.md 4 章）: プレイヤー ``player`` の山札のうらのカードに ``target`` のカードが少なくとも何枚あるかを、山札とサイドの配分を読まずに
+    決めた下限。
+
+    本人に見えない自分のカード（``unseen_card_pool``）のうち ``target`` のカードが K 枚、山札の外の見えないカードが C 枚なら、山札の外に置けるのは多くて C 枚なので、山札のうらの
+    カードには少なくとも max(0, K - C) 枚がある（鳩の巣の原理）。K は 2 つの並びを合わせた集合だけ、C は公開の枚数だけで決まるので、結果はどのカードが山札・サイドにあるかによらない。
+    実際の山札の候補の数（``deck_cards_matching``）とは別のもので、実際にあっても下限が足りないことがある（保守的）。フラッシュでおもてにした山札のカードは数えない（いちばん上より
+    下のおもてのカードを手札へ移すと止まる FU3 で、続きの有無が配分によることを避ける。保守的）。前に山札をさがして見た内容など、過去に見た情報は使わない（保守的）。"""
+    deck, elsewhere = unseen_card_pool(state, player)
+    known = sum(1 for uid in (*deck, *elsewhere) if target.matches(state.card_def(uid)))
+    return max(0, known - len(elsewhere))
+
+
+# v0.137: 山札に選べるカードが（決まった枚数）あると、見えないカードの配分を読まずに確かめられないとき、使う前に止める理由の文の後半（ST1・FC1 の共通。docs/deck-search-oracle-v0.137.md）。
+# 実際の山札の中身・サイドとの配分によらない決まった文（カードの名前・枚数・位置を書かない）
+DECK_TARGET_UNCONFIRMED_DETAIL = (
+    "山札に選べるカードがあることを、山札とサイドの見えないカードの配分を読まずに確かめられない（本人に見えない自分のカードのうち選べるカードの枚数が、サイドなど山札の外の見えない"
+    "カードの枚数を必要な枚数以上こえない。実際には山札にある場合も含む、情報漏れを防ぐための保守的な制限。v0.137）"
+)
+
+
 def discard_cards_matching(state: GameState, player: int, target: CardFilter) -> tuple[int, ...]:
     """v0.53: プレイヤーのトラッシュの ``target`` のカード（トラッシュの並び。公開の情報）。使っている最中のトレーナーはトラッシュにない（``trainer_in_use``）。"""
     return tuple(uid for uid in state.players[player].discard if target.matches(state.card_def(uid)))
@@ -17285,8 +17324,10 @@ class SearchDeckTrainer(TrainerEffect):
             _hand_cost_problem(state, use, self.discard_cost, "トラッシュする")
         if self.return_cost:
             _hand_cost_problem(state, use, self.return_cost, "山札にもどす")
-        if not self.optional and not self.candidates(state, use):
-            raise UnsupportedError(SEARCH_TRAINER_WITHOUT_TARGET_CODE, f"{SEARCH_TRAINER_WITHOUT_TARGET_REASON}。山札に選べるカードがない")
+        # v0.137: 選ばなくてよいと書かれていない登録は、山札に選べるカードがあることを、配分を読まない下限（``deck_target_lower_bound``）で確かめる。v0.136 までは実際の山札を
+        # 読んでいたので、選べるカードが山札とサイドのどちらにあるかが、カードを使わずに分かった（PSP-ST1-DECK-ORACLE）。使うための条件（手札・ベンチ）の確かめはこの前のまま
+        if not self.optional and deck_target_lower_bound(state, use.player, self.target) < 1:
+            raise UnsupportedError(SEARCH_TRAINER_WITHOUT_TARGET_CODE, f"{SEARCH_TRAINER_WITHOUT_TARGET_REASON}。{DECK_TARGET_UNCONFIRMED_DETAIL}")
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         hand = state.players[use.player].hand
@@ -31096,9 +31137,10 @@ class CoinsSearchBasicEnergyPerHeads(TrainerEffect):
         return _require_v080_text(definition, self.text, self, f"コインを{self.coins}枚投げ、「おもて」の数ぶんの「基本エネルギーカード」をあなたの山札から選び出し、相手プレイヤーに見せてから")
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
-        found = len(deck_cards_matching(state, use.player, self.TARGET))
-        if found < self.coins:
-            raise UnsupportedError(STATED_CARDS_SHORT_CODE, f"{STATED_CARDS_SHORT_REASON}。エネルギーアークで、山札の基本エネルギーカードが {found} 枚（「おもて」は最大 {self.coins}）")
+        # v0.137: 山札の基本エネルギーカードがコインの枚数以上あることを、配分を読まない下限（``deck_target_lower_bound``）で確かめる。v0.136 までは実際の山札の枚数を読み、
+        # 理由の文にもその枚数を書いていた（PSP-FC1-ENERGY-ARK-ORACLE）。FC1 を使うほかの効果（枚数が公開のもの）は変えていない
+        if deck_target_lower_bound(state, use.player, self.TARGET) < self.coins:
+            raise UnsupportedError(STATED_CARDS_SHORT_CODE, f"{STATED_CARDS_SHORT_REASON}。エネルギーアークで、「おもて」は最大 {self.coins}: {DECK_TARGET_UNCONFIRMED_DETAIL}")
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         flips = flip_coins(state, use.player, self.coins, source="trainer", effect=use.card_id, card=use.card)
@@ -39910,15 +39952,22 @@ class BenchNameGroupFromDeckTrainer(TrainerEffect):
         return _require_v080_text(definition, self.text, self, f"あなたの山札から「{self.group}」を1枚選び出し、ベンチに出す", "その後、その山札をよく切る",
                                   "あなたのベンチに空きがないとき、このカードは使えない")
 
+    @property
+    def target(self) -> CardFilter:
+        """山札から選べるカード（印刷の定義の名前のグループが「``group``」のたねポケモンのカード）。"""
+        return CardFilter("basic_pokemon", name_group=self.group)
+
     def candidates(self, state: GameState, use: TrainerUse) -> tuple[int, ...]:
-        return deck_cards_matching(state, use.player, CardFilter("basic_pokemon", name_group=self.group))
+        return deck_cards_matching(state, use.player, self.target)
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         if not bench_has_space(state, use.player):
             raise IllegalActionError("BENCH_FULL", f"あなたのベンチに空きがない（{bench_limit(state, use.player)} 匹）ので、このカードは使えない（カードの説明）")
+        # v0.137: 山札に「group」があることを、配分を読まない下限で確かめる（PSP-ST1-DECK-ORACLE。SearchDeckTrainer と同じ）。このあとの、山札の候補がどれもベンチに出すと
+        # 止めるカードかの確かめ（実際の山札を読む）は変えていない（docs/deck-search-oracle-v0.137.md 9 章の新しい発見）
+        if deck_target_lower_bound(state, use.player, self.target) < 1:
+            raise UnsupportedError(SEARCH_TRAINER_WITHOUT_TARGET_CODE, f"{SEARCH_TRAINER_WITHOUT_TARGET_REASON}。{DECK_TARGET_UNCONFIRMED_DETAIL}")
         options = self.candidates(state, use)
-        if not options:
-            raise UnsupportedError(SEARCH_TRAINER_WITHOUT_TARGET_CODE, f"{SEARCH_TRAINER_WITHOUT_TARGET_REASON}。山札に「{self.group}」がない")
         blocked, code, reason = bench_entry_unresolved(state, options)
         if len(blocked) == len(options):
             raise UnsupportedError(code, f"山札の「{self.group}」がどれも、ベンチに出すと止めるカード: {reason}")
