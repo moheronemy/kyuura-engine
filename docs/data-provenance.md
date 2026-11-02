@@ -1979,6 +1979,26 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   SX1・TN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形の別のカードの問い）。v0.66 の「ナツメのESPと「うら」が出るまでのコインは起こらない」はエンジンの前提の誤りで、研究の論点ではない（kyuura は
   変えていない）。
 
+## v0.136: カードめくりゲームの答えの受理・拒否による情報漏れの修正
+
+[card-flip-answer-rejection-v0.136.md](card-flip-answer-rejection-v0.136.md)。
+
+- 写しの元・研究の基準は kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d` のまま、身長の写しは `9242b9be89be0f747279f39c11875d1ed61763ec` のまま。カードの写し・採用の記録・研究の対応表・
+  身長の写しは変えていない（`extract_kyuura_cards --check`・`extract_species_heights --check`・`check_card_sources`（1,287 件）・`check_research_links` で一致を確かめた）。カードめくりゲームの
+  文面は既存の写しの印刷の文面で、原典・ガイドブックは読んでいない。kyuura は読むだけ（checkout `b9e7cff`。この版では変えていない）。
+- 処理の変更はエンジンの制限（情報漏れを防ぐための使う前の停止）だけで、裁定・利用者の指定・印刷の文面の採用は変えていない。
+- kyuura への報告事項: なし。UQ-FLASH-FACE-UP-DECK は未解決のまま。
+
+## v0.135: クイズの答えの受理・拒否による情報漏れの修正
+
+[quiz-answer-rejection-v0.135.md](quiz-answer-rejection-v0.135.md)。
+
+- 写しの元・研究の基準は kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d` のまま、身長の写しは `9242b9be89be0f747279f39c11875d1ed61763ec` のまま。カードの写し・採用の記録・研究の対応表・
+  身長の写しは変えていない。原典・ガイドブックは読んでいない（新しい画像の取得・OCR・読み直しはしていない）。kyuura は読むだけ（checkout `b9e7cff`。この版では読んでいない）。
+- 処理の変更はエンジンの制限（情報漏れを防ぐための使う前の停止）だけで、裁定・利用者の指定・印刷の文面の採用は変えていない。
+- kyuura への報告事項: なし（kyuura の記録の変更を求める事項はない）。UQ-FLASH-FACE-UP-DECK は未解決のまま。同じ型の漏れがカードめくりゲーム（neo1-080）に残ることは、エンジンの
+  報告事項として版の文書 8 章に記録した（kyuura の記録の問題ではない）。
+
 ## v0.134: サドン・デスの延長戦の開始（利用者が指定した、交換したカードの出所へのもどし）
 
 [sudden-death-v0.134.md](sudden-death-v0.134.md) の 1 章・2 章・12.3 節。

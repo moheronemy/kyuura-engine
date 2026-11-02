@@ -22068,6 +22068,37 @@ def _quiz_group(state: GameState, use: TrainerUse) -> SetAsideCards | None:
     return next((g for g in state.set_aside if g.kind == SET_ASIDE_QUIZ and g.trainer_card == use.card), None)
 
 
+def quiz_draw_outcome_stop(state: GameState, user: int, draw: int, *, outcomes: tuple[tuple[int, int], ...] | None = None) -> tuple[str, str] | None:
+    """v0.135（docs/quiz-answer-rejection-v0.135.md 4 章）: 答えの正誤で引くプレイヤーが変わるクイズ（正解なら相手プレイヤー、正解でないなら使ったプレイヤー ``user`` が ``draw`` 枚引く。
+    引けるだけ）で、正解・正解でないの両方の引き方を使う前に確かめる。どちらかが既存のおもての山札の止め方（v0.126。``zones.draw_cards`` の FU3・``faceup.command_problem``）に当たるなら、
+    その (コード, 理由) を返す（使う前に止める）。どちらも当たらなければ None。
+
+    - 答えの受理・拒否から正解（置いたカード）を漏らさないための制限で、片方の結果だけなら進められる場面も止める（保守的。FU3 などの裁定は変えず、解決済みにしない）
+    - 結果を決めるのは、それぞれの山札の枚数とおもてのカードの枚数（おもてのカードはいつも山札の上から続く並びなので、位置も決まる。どちらも全員に公開。観測の ``count``・
+      ``face_up_count``）と引く枚数だけ。置くカード（まだ選んでいない）・答え・手札・引くカードの中身によらない。おもてのカードがなければ試さない
+    - 試す順は決まった順（使ったプレイヤー → 相手プレイヤー）。理由の文は既存の止め方の文（プレイヤーの番号・山札の上からの位置・枚数だけを書き、カードを書かない）
+    - 状態の複製の上で引いて比べる（渡した状態・乱数・ログは変えない。公開・ログを加えない）。v0.129 のカツラのクイズ その1の確かめ（``BlainesHeightQuiz.face_up_draw_stop``）を
+      共通にした（その1 の動きは同じ）
+    - v0.136（docs/card-flip-answer-rejection-v0.136.md）: ``outcomes`` は、答えの結果ごとの (引くプレイヤー, 枚数) の並び（既定は v0.135 と同じ ((``user``, ``draw``),
+      (相手, ``draw``))）。枚数 0 は「その結果では引かない」で、試さない（山札が変わらないので止め方に当たらない）。カードめくりゲーム（正解なら使ったプレイヤーが引き、正解でないなら
+      引かない）が ((``user``, ``draw``), (``user``, 0)) を渡す。試す順は並びの順
+    """
+    if not state.face_up_deck:
+        return None
+    for drawer, count in ((user, draw), (1 - user, draw)) if outcomes is None else outcomes:
+        if count <= 0:
+            continue
+        trial = state.clone()
+        try:
+            _draw_up_to(trial, drawer, count)
+        except UnsupportedError as error:
+            return error.code, error.message
+        stop = _faceup.command_problem(state, trial)
+        if stop is not None:
+            return stop
+    return None
+
+
 @dataclass(frozen=True)
 class BlainesQuiz(TrainerEffect):
     """v0.63（docs/hidden-card-trainers-v0.63.md 6 章）: 手札のポケモンのカードを 1 枚おもてを下にして置き、そのカードのワザの名前を 1 つ相手プレイヤーに伝え、相手がカードの名前を
@@ -22081,6 +22112,8 @@ class BlainesQuiz(TrainerEffect):
     - 正解: 答えの名前が置いたカードの名前と同じ（同じ名前の別の収録のカードも正解。「わるい」「○○の」の付いた名前は別の名前）。候補にない値の答えは不正な操作（決定は
       待ったまま）で、正解でない答えとは別
     - 手札にワザを持つポケモンのカードがなければ QZ1 で使う前に止める
+    - v0.135: おもてのカードのある山札（v0.126）で、正解・正解でないのどちらかの引き方が既存の止め方に当たるなら、QZ1 の確かめのあとに使う前に止める（``face_up_draw_stop``。
+      答えの拒否から正解を漏らさない。v0.134 までは答えの段階で FU3 になり、同じ答えの受理・拒否が置いたカードで変わった）
     """
 
     text: str
@@ -22098,6 +22131,13 @@ class BlainesQuiz(TrainerEffect):
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         if not [uid for uid in quiz_candidates(state, use.player) if uid != use.card]:
             raise UnsupportedError(BLAINES_QUIZ_WITHOUT_POKEMON_CODE, BLAINES_QUIZ_WITHOUT_POKEMON_REASON)
+        stop = self.face_up_draw_stop(state, use)
+        if stop is not None:
+            raise UnsupportedError(*stop)
+
+    def face_up_draw_stop(self, state: GameState, use: TrainerUse) -> tuple[str, str] | None:
+        """v0.135: 正解・正解でないの両方の引き方の確かめ（``quiz_draw_outcome_stop``）。"""
+        return quiz_draw_outcome_stop(state, use.player, self.draw)
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         push_trainer_decision(state, use, kind=QUIZ_CARD, player=use.player, options=quiz_candidates(state, use.player))
@@ -31772,6 +31812,8 @@ class SetAsideGuessKindQuiz(TrainerEffect):
       ``NO_EVOLUTION_CARD_IN_HAND``。印刷の文面の「このカードを使うことはできない」）
     - 置く（決定 ``QUIZ_CARD``。v0.63 の ``zones.set_aside_quiz_card``。置いたカードは使ったプレイヤーだけが見る）→ 相手が答える（決定 ``QUIZ_ANSWER``。答えの候補は ``kinds`` の並びで、
       置いたカードによらない）→ おもてにする（ログ ``quiz_kind_reveal`` の ``category``）→ 引く → 手札にもどす（``zones.return_set_aside``）
+    - v0.135: おもてのカードのある山札（v0.126）で、正解・正解でないのどちらかの引き方が既存の止め方に当たるなら、置くカードの確かめ（FC1・``NO_EVOLUTION_CARD_IN_HAND``）のあとに
+      使う前に止める（``face_up_draw_stop``。答えの拒否から正解を漏らさない。v0.134 までは答えの段階で FU3 になり、同じ答えの受理・拒否が置いたカードで変わった）
     """
 
     text: str
@@ -31805,11 +31847,17 @@ class SetAsideGuessKindQuiz(TrainerEffect):
         return tuple(hand)
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
-        if self.candidates(state, use):
-            return
-        if self.kinds == "personality":
-            raise IllegalActionError("NO_EVOLUTION_CARD_IN_HAND", "手札に「進化カード」がないので、このカードは使えない")
-        raise UnsupportedError(STATED_CARDS_SHORT_CODE, f"{STATED_CARDS_SHORT_REASON}。カツラのクイズ その2 で、このカードを除く手札がない")
+        if not self.candidates(state, use):
+            if self.kinds == "personality":
+                raise IllegalActionError("NO_EVOLUTION_CARD_IN_HAND", "手札に「進化カード」がないので、このカードは使えない")
+            raise UnsupportedError(STATED_CARDS_SHORT_CODE, f"{STATED_CARDS_SHORT_REASON}。カツラのクイズ その2 で、このカードを除く手札がない")
+        stop = self.face_up_draw_stop(state, use)
+        if stop is not None:
+            raise UnsupportedError(*stop)
+
+    def face_up_draw_stop(self, state: GameState, use: TrainerUse) -> tuple[str, str] | None:
+        """v0.135: 正解・正解でないの両方の引き方の確かめ（``quiz_draw_outcome_stop``）。"""
+        return quiz_draw_outcome_stop(state, use.player, self.draw)
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         push_trainer_decision(state, use, kind=QUIZ_CARD, player=use.player, options=self.candidates(state, use))
@@ -31851,6 +31899,9 @@ class GuessOpponentPrizeKind(TrainerEffect):
       決めるのは使ったプレイヤー。答えの候補は ``FLIP_KIND_NAMES``。続きの情報には位置だけを書き、カードを書かない）→ おもてにする（``zones.reveal_prize``。v0.63 のおもてのサイドの
       記録 ``face_up_prizes``。ログ ``prize_revealed`` は公開）→ 正解なら引く（引けるだけ）
     - 種類はサイドにある間の印刷の分類（なにかの化石・ピッピ人形はトレーナーカード）。うらの相手のサイドがなければ FC1（使う前）
+    - v0.136（docs/card-flip-answer-rejection-v0.136.md）: おもてのカードのある山札（v0.126）で、正解の引き方（使ったプレイヤーが ``draw`` 枚。正解でないなら引かない）が既存の
+      止め方に当たるなら、FC1 の確かめのあとに使う前に止める（``face_up_draw_stop``。答えの拒否からサイドの種類を漏らさない。v0.135 までは答えの段階で正解だけが FU3 になり、同じ
+      答えの受理・拒否が見えないサイドで変わった）。片方の結果だけなら進められる場面も止める保守的な制限で、FU3 の裁定は変えない
     """
 
     text: str
@@ -31869,6 +31920,14 @@ class GuessOpponentPrizeKind(TrainerEffect):
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         if not self.positions(state, use):
             raise UnsupportedError(STATED_CARDS_SHORT_CODE, f"{STATED_CARDS_SHORT_REASON}。カードめくりゲームで、うらになっている相手のサイドがない")
+        stop = self.face_up_draw_stop(state, use)
+        if stop is not None:
+            raise UnsupportedError(*stop)
+
+    def face_up_draw_stop(self, state: GameState, use: TrainerUse) -> tuple[str, str] | None:
+        """v0.136: 正解（使ったプレイヤーが ``draw`` 枚引く）・正解でない（引かない）の両方の結果の確かめ（``quiz_draw_outcome_stop``）。使ったプレイヤーの山札の枚数・おもての
+        カードの枚数（公開）と引く枚数だけで決まり、選ぶサイド・答え・サイドの中身によらない。"""
+        return quiz_draw_outcome_stop(state, use.player, self.draw, outcomes=((use.player, self.draw), (use.player, 0)))
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         push_trainer_decision(state, use, kind=SELECT_OPPONENT_PRIZE, player=use.player, options=self.positions(state, use))
@@ -48664,16 +48723,9 @@ class BlainesHeightQuiz(TrainerEffect):
     def face_up_draw_stop(self, state: GameState, use: TrainerUse) -> tuple[str, str] | None:
         """おもてのカードのある山札（v0.126。フラッシュ）: 引くのは答えの正誤で決まる（正解なら相手プレイヤー、正解でないなら使ったプレイヤー）。どちらかの引き方が既存のおもての山札の止め方
         （``faceup.command_problem``。FU3 など）に当たるなら、使う前にその (コード, 理由) を返す（答えを拒否すると、拒否の有無から答えの正誤（置いたカード）が漏れるため。止めるかは公開の
-        情報（おもての山札・山札の枚数）だけで決まる）。どちらも当たらなければ None（新しい問いにしない）。"""
-        if not state.face_up_deck:
-            return None
-        for drawer in (use.player, 1 - use.player):
-            trial = state.clone()
-            _draw_up_to(trial, drawer, self.draw)
-            stop = _faceup.command_problem(state, trial)
-            if stop is not None:
-                return stop
-        return None
+        情報（おもての山札・山札の枚数）だけで決まる）。どちらも当たらなければ None（新しい問いにしない）。v0.135: その2・その3・ポケモン性格判定と共通の ``quiz_draw_outcome_stop``
+        にした（動きは同じ。試しに引いたときの FU3 を例外のまま伝えず、(コード, 理由) で返す）。"""
+        return quiz_draw_outcome_stop(state, use.player, self.draw)
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         candidates = quiz_height_candidates(state, use)
