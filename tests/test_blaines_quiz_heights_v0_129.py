@@ -448,9 +448,14 @@ class TrainerPathTest(unittest.TestCase):
             done = answer(state, (value,))
             self.assertEqual(len([e for e in done.log if e["kind"] == "draw"]), 1)
             self.assertEqual(check_invariants(done), [])
-        # 既存のその3 は変えていない（使う前の確かめを加えていない。答えの段階の FU3 は v0.126 からの既存の動き。docs 6 章）
+        # v0.129 ではその3 を変えなかった（答えの段階の FU3 は v0.126 からの動き。docs 6 章）。v0.135 で、その3 も同じ確かめで使う前に止める（答えの拒否から正解が漏れたため。
+        # docs/quiz-answer-rejection-v0.135.md。意図した変更）
         three = play_flash(board(hand=("ES2-035", BLAINES_QUIZ_3, HITMONCHAN)))
-        self.assertEqual(apply_kernel(three, PlayTrainer(0, card_in_hand(three, BLAINES_QUIZ_3))).decision.kind, QUIZ_CARD)
+        before = snapshot(three)
+        with self.assertRaises(UnsupportedError) as caught:
+            apply_kernel(three, PlayTrainer(0, card_in_hand(three, BLAINES_QUIZ_3)))
+        self.assertEqual(caught.exception.code, FU3)
+        self.assertEqual(snapshot(three), before)
 
 
 # ---------------------------------------------------------------- 既存のクイズ・監査・対戦

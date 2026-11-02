@@ -11307,3 +11307,79 @@ def v133_problems(state, before: dict[int, tuple] | None = None) -> list[str]:
         if snapshot is not None and not guarded and len(opp) != min(heads, snapshot[3]):
             problems.append(f"{where}: 相手のトラッシュ {len(opp)} 枚が、min(「おもて」{heads}, 宣言の前の相手のエネルギーカード {snapshot[3]} 枚) と違う")
     return problems
+
+
+# ---------------------------------------------------------------- v0.135 拒否による情報漏れの比較検査（docs/quiz-answer-rejection-v0.135.md 6 章）
+
+
+def public_view(state, viewer) -> tuple:
+    """v0.135: プレイヤー ``viewer``（None は観戦者）の観測と、ログの写し（``observation.observe``・``visible_log``）。比べる 2 つの状態の公開の情報が同じかを見る値。"""
+    from kyuura_engine.observation import observe, visible_log
+
+    return observe(state, viewer), visible_log(state, viewer)
+
+
+def command_outcome(state, command) -> tuple[tuple, object | None]:
+    """v0.135: ``command`` を ``state`` に送った結果の印（受け付けたら ``("accepted",)``、拒否なら (例外の種類, コード, 理由の文)）と、受け付けたときの新しい状態（拒否なら None）。
+    拒否のとき、渡した状態（書き出し・乱数・ログ）が変わっていないことも確かめる（変わっていれば印に ``"state_changed"`` を加える）。"""
+    from kyuura_engine import apply_command
+    from kyuura_engine.errors import EngineError
+    from kyuura_engine.serialize import FORMAT_VERSIONS
+
+    before = (repr(state_to_dict(state, format_version=max(FORMAT_VERSIONS))), state.rng.getstate(), len(state.log))
+    try:
+        after = apply_command(state, command)
+    except EngineError as error:
+        outcome: tuple = (type(error).__name__, error.code, error.message)
+        after = None
+    else:
+        outcome = ("accepted",)
+    if (repr(state_to_dict(state, format_version=max(FORMAT_VERSIONS))), state.rng.getstate(), len(state.log)) != before:
+        outcome += ("state_changed",)
+    return outcome, after
+
+
+def twin_command_problems(states, commands, viewers=(0, 1, None), *, until_public_difference: bool = True) -> list[str]:
+    """v0.135: 拒否による情報漏れの比較検査。ある見る人（``viewers`` のどれか）の公開の情報（``public_view``）が同じで、見えない情報だけが違う状態（``states``。2 つ以上）に、同じ
+    コマンドの並び（``commands``。それぞれ状態を受け取りコマンドを返す関数でもよい）を順に送り、それぞれの段で、受理・拒否・拒否のコードと理由の文が状態によって変わらないか。
+
+    正常なログの検査（ほかの ``*_problems``）は 1 つの対戦のログだけを見るので、拒否（状態を変えない）から見えない情報が漏れても見つけられない。この検査は、同じ公開の情報から
+    同じ操作をしたときの結果の違いそのものを見る。
+
+    - 始める前に、``viewers`` のそれぞれについて、すべての状態の公開の情報が同じであること（前提。同じでなければ前提の問題として返す）
+    - 段ごとに結果の印（``command_outcome``）を比べる。違えば問題（どの段・どの見る人にも、受理・拒否が見えない情報に依存した）
+    - 受け付けたら、``viewers`` の公開の情報を比べる。``until_public_difference`` なら、公開の情報が分かれた段（答えの正誤をおもてにするなど、説明どおりに公開した段）で比べるのを
+      やめる（そこから先は公開の情報が違うので、比べる前提が成り立たない）。偽なら、違えば問題
+    - どれかの段で全部が拒否されたら、そこで終わる（拒否の印は同じことを確かめた）
+    """
+    problems: list[str] = []
+    states = list(states)
+    if len(states) < 2:
+        return ["比べる状態が 2 つ以上ない"]
+    for viewer in viewers:
+        views = [public_view(s, viewer) for s in states]
+        if any(v != views[0] for v in views[1:]):
+            return [f"比べる前提: 見る人 {viewer} の公開の情報（観測・ログの写し）が、状態によって違う"]
+    for step, command in enumerate(commands):
+        built = [command(s) if callable(command) else command for s in states]
+        if any(repr(b) != repr(built[0]) for b in built[1:]):
+            problems.append(f"段 {step}: 送るコマンド {[repr(b) for b in built]} が状態によって違う（同じ操作ではない）")
+            return problems
+        results = [command_outcome(s, c) for s, c in zip(states, built)]
+        outcomes = [r[0] for r in results]
+        for outcome in outcomes:
+            if "state_changed" in outcome:
+                problems.append(f"段 {step}: 拒否したのに渡した状態が変わった（{outcome[:2]}）")
+        if any(o != outcomes[0] for o in outcomes[1:]):
+            problems.append(f"段 {step}: 同じ公開の情報から同じ操作 {built[0]!r} をしたのに、受理・拒否・理由が状態によって違う: {[o[:2] for o in outcomes]}")
+            return problems
+        if outcomes[0][0] != "accepted":
+            return problems
+        states = [r[1] for r in results]
+        differs = [viewer for viewer in viewers if any(public_view(s, viewer) != public_view(states[0], viewer) for s in states[1:])]
+        if differs:
+            if until_public_difference:
+                return problems
+            problems.append(f"段 {step}: 受け付けたあとの見る人 {differs} の公開の情報が、状態によって違う")
+            return problems
+    return problems
