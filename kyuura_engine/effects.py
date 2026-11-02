@@ -41569,8 +41569,9 @@ def prizes_taken(state: GameState, player: int) -> int:
     準備で置くサイドの数（``Rules.prize_count``。数を直に書かない）− 今のサイドの枚数。対戦の準備（``engine``）はサイドを ``prize_count`` 枚置き、サイドの枚数を変える処理は、取る処理
     （きぜつで取る ``take_prize``・マチスの交渉の ``zones.take_prize_by_trainer``）と、同じ枚数をもどして置き直すにせオーキドの発明（``prizes_to_deck`` → ``deck_top_to_prizes``。1 枚の
     トレーナーの効果の中で枚数は同じ）だけで、サイドを見せる・入れかえる処理（``reveal_prize``・``swap_prize_with_deck_top``・``swap_prize_with_hand``）は枚数を変えない。このため、
-    取った経路（きぜつ・トレーナー）によらず取った数と同じ。カードの中身は読まず、公開の枚数だけを使う（ログを読み直さない。新しい状態の項目を持たない）。"""
-    return state.rules.prize_count - len(state.players[player].prizes)
+    取った経路（きぜつ・トレーナー）によらず取った数と同じ。カードの中身は読まず、公開の枚数だけを使う（ログを読み直さない。新しい状態の項目を持たない）。
+    v0.134（docs/sudden-death-v0.134.md 5 章）: 準備で置く数は今の区間の枚数（``GameState.initial_prize_count``。サドン・デスの延長戦は 1 枚）。前の区間で取った数は数えない。"""
+    return state.initial_prize_count - len(state.players[player].prizes)
 
 
 @dataclass(frozen=True)

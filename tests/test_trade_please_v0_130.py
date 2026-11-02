@@ -275,7 +275,7 @@ class PersistenceTest(unittest.TestCase):
                 for accept in (True, False):
                     self.assertEqual(state_to_dict(answer(current, (1,) if accept else ()), 33), expected[accept])
         accepted = answer(state, (1,))
-        for version in FORMAT_VERSIONS[:-1]:
+        for version in FORMAT_VERSIONS[:32]:  # v0.134: 形式 34（延長戦の区間）を加えたので、形式の番号で書く（形式 1〜32 は所有者の変更を表せない）
             with self.assertRaises(ValueError):
                 state_to_dict(accepted, version)
         self.assertEqual(len(state_to_dict(accepted, 33)["ownership_changes"]), 2)

@@ -30,6 +30,9 @@ class RuleSet:
     energy_attachments_per_turn: int
     weakness_multiplier: int
     damage_per_counter: int  # ダメージカウンター 1 個が表すダメージ（p.319）
+    # v0.134: サドン・デスの延長戦の準備で置くサイドの枚数（p.324「ただし、サイドカードは、1枚だけしかセットしません。」。既定の値を持つ項目にして、v0.133 までの
+    # 状態の写し（pickle）のルールの組もこの値になる）
+    sudden_death_prize_count: int = 1
 
 
 RULES_2000_02_14 = RuleSet(
@@ -46,6 +49,7 @@ RULES_2000_02_14 = RuleSet(
     energy_attachments_per_turn=1,
     weakness_multiplier=2,
     damage_per_counter=10,
+    sudden_death_prize_count=1,
 )
 
 

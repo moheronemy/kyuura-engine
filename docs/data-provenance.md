@@ -1979,6 +1979,19 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   SX1・TN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形の別のカードの問い）。v0.66 の「ナツメのESPと「うら」が出るまでのコインは起こらない」はエンジンの前提の誤りで、研究の論点ではない（kyuura は
   変えていない）。
 
+## v0.134: サドン・デスの延長戦の開始（利用者が指定した、交換したカードの出所へのもどし）
+
+[sudden-death-v0.134.md](sudden-death-v0.134.md) の 1 章・2 章・12.3 節。
+
+- 写しの元・研究の基準は kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d` のまま、身長の写しは `9242b9be89be0f747279f39c11875d1ed61763ec` のまま（移行していない）。カードの写し
+  （`kyuura_cards.json`）・採用の記録（`card_sources.json`）・研究の対応表（`research_links.json`）は変えていない。作業の時点の kyuura の checkout は `b9e7cff`（記録は固定コミットの内容で読んだ）。
+- 原典: p.324「17 サドン・デス」の手順の 2 文は、既存の確認記録（simultaneous-ko-v0.2f.md 2 章）の引用の再利用。新しい画像の取得・OCR・読み直しはしていない。kyuura の
+  `rule_differences.json` の `sudden_death`（71d1728）とは食い違いがない（kyuura の記録の再利用。独立した二度目の確認ではない）。
+- 利用者の指定 USER-SUDDEN-DEATH-OWNERSHIP-RESET（2026-11-02）: 延長戦を始めるとき、とりかえっこプリーズで交換したカードを最初のデッキに入れたプレイヤーへもどす。記録はエンジンの
+  `sudden_death.USER_SUDDEN_DEATH_OWNERSHIP_RESET`（カードの登録の記録 `effects.USER_SPECIFIED_RULES` とは別の種類）。UQ-SWAP-PLEASE-OWNERSHIP は解決済みにしない。
+- kyuura への報告事項（kyuura のデータ・記録は変えていない）: 12.3 節。原典の再利用の範囲、利用者の指定、実装上の読み方（ジャンケン・切り直しからやり直す・勝ち負けは通常の規則・
+  延長戦の中の再度のサドン・デスは同じ手順）、実装と検査の場所、未解決のまま残るもの（UQ-SWAP-PLEASE-OWNERSHIP・切り直しの補償・化石の手札）。
+
 ## v0.133: ひかるバンギラス（neo4-082）と、利用者が指定した 2 つのワザの処理
 
 [shining-tyranitar-v0.133.md](shining-tyranitar-v0.133.md) の 1〜3 章・12 章。

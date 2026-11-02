@@ -19,7 +19,7 @@ import unittest
 
 from kyuura_engine import (
     EndTurn, EngineError, IllegalActionError, Phase, PlayTrainer, PromoteActive, ResolveDecision, Retreat, TakePrize,
-    UnsupportedError, UseAttack, apply_command, check_invariants, state_to_dict,
+    UseAttack, apply_command, check_invariants, state_to_dict,
 )
 from kyuura_engine.resolution import flow
 from kyuura_engine.resolution.kernel import Resolution
@@ -222,12 +222,13 @@ class WinTableTest(unittest.TestCase):
         self.assert_result(state, "win", 1, [(1, "ALL_PRIZES_TAKEN")])
 
     def test_both_take_the_last_prize(self):
-        """両方が同時にサイドを取り終えた: サドン・デス（p.311）。延長戦は未実装なので、対戦を止める。"""
+        """両方が同時にサイドを取り終えた: サドン・デス（p.311）。v0.134 から、延長戦は ``StartSuddenDeath`` で始め、ほかのコマンドは受け付けない（v0.133 までは
+        延長戦が未実装で ``SUDDEN_DEATH_NOT_IMPLEMENTED``。期待の更新）。"""
         state, _ = self.outcome(prizes=1, their_prizes=1)
         self.assert_result(state, "sudden_death", None, [(0, "ALL_PRIZES_TAKEN"), (1, "ALL_PRIZES_TAKEN")])
-        with self.assertRaises(UnsupportedError) as ctx:
+        with self.assertRaises(IllegalActionError) as ctx:
             apply_command(state, EndTurn(1))
-        self.assertEqual(ctx.exception.code, "SUDDEN_DEATH_NOT_IMPLEMENTED")
+        self.assertEqual(ctx.exception.code, "SUDDEN_DEATH_NOT_STARTED")
 
     def test_one_side_cannot_field(self):
         state, answered = self.outcome(bench=())

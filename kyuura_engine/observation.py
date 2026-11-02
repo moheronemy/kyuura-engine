@@ -577,6 +577,12 @@ def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
         "result": None if state.result is None else {"outcome": state.result.outcome, "winner": state.result.winner},
         # v0.127（docs/deferred-shortage-user-promos-v0.127.md 8 章）: 途中停止の状態だけ、その記録（全員に見える項目。ワザ・トレーナーを使い終えた盤面ではないことを示す）を加える
         **({"interruption": public_record(state.halt.interruption)} if state.halt is not None and state.halt.interruption is not None else {}),
+        # v0.134（docs/sudden-death-v0.134.md 8 章）: サドン・デスの延長戦の区間だけ、今の区間の番号・準備で置いたサイドの枚数と、終わった区間の結果（全員に見える）を加える
+        # （最初の対戦の観測の項目は v0.133 と同じ）。終わった区間のログは ``visible_segment_logs``
+        **({"segment": {"index": state.segment_index, "prize_count": state.initial_prize_count,
+                        "previous": [{"index": r.index, "outcome": r.result.outcome, "conditions": [list(c) for c in r.result.conditions], "turns": r.turn_number}
+                                     for r in state.segments]}}
+           if state.segments else {}),
     }
 
 
@@ -679,6 +685,8 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
+    # v0.134（docs/sudden-death-v0.134.md 8 章）: サドン・デスの延長戦の区間の始まり（区間の番号・準備で置くサイドの枚数だけ。新しい山札の並び・手札・サイドは書かない）
+    "sudden_death_started",
     # v0.126: フラッシュでおもてにした山札（並べたプレイヤー・枚数・いちばん上のカードの id。uid は書かない）・いちばん上のおもてのカードが変わった（カードの id・おもての枚数）
     "flash_face_up", "face_up_deck_top",
     # v0.124: ［すごいへんしん］で選んだ変身のもと・もどった理由、［わるいはどう］のコインの結果と追加（どれも場・コインの公開の情報）
@@ -859,6 +867,21 @@ def _mask_face_down(event: dict[str, Any], hidden: frozenset[int]) -> dict[str, 
         elif isinstance(value, (tuple, list)) and any(type(v) is int and v in hidden for v in value):
             masked[name] = type(value)(None if type(v) is int and v in hidden else v for v in value)
     return masked
+
+
+def visible_segment_logs(state: GameState, viewer: int | None) -> list[dict[str, Any]]:
+    """v0.134（docs/sudden-death-v0.134.md 8 章）: 終わった対戦の区間（サドン・デスの延長戦を始める前の区間）ごとの、``viewer`` に見えるログ（古い順。``{"index", "log"}``）。
+    状態を変えない。各イベントの見える範囲は ``visible_log`` と同じで、その区間が終わったときにうらのままだった相手のカード（マチスの秘策。おもてにならずに山札にもどった）の uid は
+    見せない。今の区間のログ（``visible_log``）には入らない。"""
+    _check_viewer(viewer)
+    result = []
+    for record in state.segments:
+        # その区間の終わりの所有者（区間の始まりはデッキに入れたプレイヤー。とりかえっこプリーズの交換があれば最後の変更のあとの所有者）
+        owners = {change.card: change.owner for change in record.ownership_changes}
+        hidden = frozenset(uid for uid in record.face_down_cards if owners.get(uid, state.cards[uid].deck_owner) != viewer)
+        events = [visible_event(event, viewer) for event in record.log]
+        result.append({"index": record.index, "log": [_mask_face_down(event, hidden) for event in events] if hidden else events})
+    return result
 
 
 def visible_log(state: GameState, viewer: int | None) -> list[dict[str, Any]]:

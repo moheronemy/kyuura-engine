@@ -186,7 +186,7 @@ class MovementAfterExchangeTest(unittest.TestCase):
 
 class SerializationTest(unittest.TestCase):
     def test_format_33_writes_origin_and_changes(self):
-        self.assertEqual(FORMAT_VERSIONS[-1], 33)
+        self.assertEqual(FORMAT_VERSIONS[32], 33)  # v0.134: 形式 34（延長戦の区間）を加えた。形式 33 の項目は変わらない
         state = board()
         given, taken = hand(state, 0, RATTATA), hand(state, 1, HITMONCHAN)
         exchange_hand_cards(state, 0, given, taken, trainer=TRAINER)
@@ -198,14 +198,14 @@ class SerializationTest(unittest.TestCase):
             {"card": given, "card_id": RATTATA, "previous": 0, "owner": 1, "origin": 0, "turn": state.turn_number, "trainer_card": TRAINER, "exchange": 1},
             {"card": taken, "card_id": HITMONCHAN, "previous": 1, "owner": 0, "origin": 1, "turn": state.turn_number, "trainer_card": TRAINER, "exchange": 1}])
         before = snapshot(state)
-        for version in FORMAT_VERSIONS[:-1]:
+        for version in FORMAT_VERSIONS[:32]:  # v0.134: 形式の番号で書く（形式 34 を加えた）
             with self.subTest(version=version), self.assertRaises(ValueError):
                 state_to_dict(state, version)
         self.assertEqual(snapshot(state), before)
 
     def test_no_change_keeps_the_old_formats(self):
         state = board()
-        for version in FORMAT_VERSIONS[:-1]:
+        for version in FORMAT_VERSIONS[:32]:  # v0.134: 形式の番号で書く（形式 34 を加えた）
             data = state_to_dict(state, version)
             self.assertNotIn("ownership_changes", data)
             self.assertTrue(all(set(record) == {"card_id", "owner"} for record in data["cards"].values()))

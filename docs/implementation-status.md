@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.133）
+# 実装状況（v0.1〜v0.134）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d`（v0.128 から。v0.129 の種族の身長の写しは別に `9242b9be89be0f747279f39c11875d1ed61763ec`。v0.126〜v0.127 は `57d01f45cfb8b086d03dc0525b329cf6adeff69b`、v0.125 は `134a664c6adf67d5604148a31b58e1a7d26d4d6d`、v0.124 は `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`、v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -46,7 +46,7 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | 番の最初に山札がなくて負け（最後の 1 枚を引いた段階では負けではない） | p.309、p.311、p.312 | test_combat.py、test_integration.py `test_game_lost_by_deck_out` |
 | 勝敗の表（同時に満たした条件の数で決める） | p.311 | test_judge.py（表の 9 行）、test_simultaneous_ko.py `WinTableTest`（v0.2f: 9 行すべてを対戦の中の同時のきぜつで） |
 | 両方の対戦ポケモンが同時にきぜつしたら、番でないプレイヤーが先に出す（v0.2f から対戦の中で起こる） | pp.323〜324 | test_combat.py `SimultaneousKnockOutOrderTest`、test_simultaneous_ko.py `BothKnockedOutTest`・`PromotionOrderOnOpponentTurnTest`、test_pikachu_games.py |
-| サドン・デスになったことの判定（v0.2f から対戦の中で起こる。延長戦は未実装） | p.311、p.324 | test_judge.py、test_simultaneous_ko.py `WinTableTest`、test_pikachu_games.py `GoldenSuddenDeathGameTest` |
+| サドン・デスになったことの判定（v0.2f から対戦の中で起こる。延長戦は v0.134 から `StartSuddenDeath` で始める。[sudden-death-v0.134.md](sudden-death-v0.134.md)） | p.311、p.324 | test_judge.py、test_simultaneous_ko.py `WinTableTest`、test_pikachu_games.py `GoldenSuddenDeathGameTest`、test_sudden_death_v0_134.py |
 | 不正な操作で状態が変わらない | — | test_turns.py `IllegalCommandsDoNotChangeStateTest`、test_setup.py |
 | 同じデッキ・seed・操作列なら同じ結果、状態が共有されない | — | test_reproducibility.py |
 | 未対応のカード・ワザ・操作を黙って処理しない | — | test_cards.py `ClassificationTest`、test_deck.py `SupportedCardsTest`、test_combat.py `UnsupportedAttackTest`、test_turns.py `UnsupportedActionsTest` |
@@ -78,7 +78,7 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 - ワザによる持続する効果のうち、「かたまる」（v0.4b）・「ほのおのかべ」（v0.12）・「こうらがえし」（v0.13）のほか（「クロスカウンター」などのほかの相手の番ではたらく効果、相手に与える「すなかけ」（v0.36 で対応した）「からまるいと」、ほかの自分に与える効果、カウンター・マーカーをのせるタイプ、「効果を受けない」状態）、マーカーとカウンター、変身、ポケモンいれかえ以外の入れ替えの効果（ふきとばしなど）、バトル場をはなれられないポケモン
 - 同じタイミングで起こったことの順番を番のプレイヤーが決める処理（p.325）。同時のきぜつで両方がサイドを取る順番は、選ばせずに番のプレイヤーから取る（どちらの順でも結果が同じため。[simultaneous-ko-v0.2f.md 5 章](simultaneous-ko-v0.2f.md)）。「ふしちょう」とサイド・勝ち負け・バトル場に出すの順番も、選ばせずに正規化している（[post-knockout-powers-v0.12.md 3 章](post-knockout-powers-v0.12.md)）
 - 同じ段階に複数のダメージ変更効果があるときに、プレイヤーが計算の順番を選ぶ処理（原文で決まっている: 2・5・6 段階はワザを使うプレイヤー、7・8 段階はワザを受けるプレイヤー。p.321〜322）
-- サドン・デスの延長戦（サイド 1 枚でやり直す）
+- サドン・デスの延長戦（サイド 1 枚でやり直す。v0.134 で実装した。[sudden-death-v0.134.md](sudden-death-v0.134.md)）
 - 旧裏の複数の時期のルールの切り替え（`RuleSet` は 2000.02.14版だけ）
 - 公式大会のレギュレーション（サイド 4 枚など）
 - 画面、AI、通信（隠れた情報の管理は、v0.47 でプレイヤーに渡す観測 `observe`・`visible_log` を加えた。状態とログは内部の完全な記録のまま。[fossil-hidden-info-v0.47.md](fossil-hidden-info-v0.47.md) 5.1 節）
@@ -104,7 +104,7 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | 事項 | v0.1 の扱い |
 |---|---|
 | 両方が同時に切り直したあと、片方だけがさらに切り直したときの補償（切り直しの回数が違う場合） | 対戦を止める（`Phase.HALTED`、`UNRESOLVED_MULLIGAN_COMPENSATION`）。test_setup.py `test_unequal_mulligans_after_both_mulliganed_is_halted` |
-| サドン・デスの延長戦の手順の細部（ジャンケン・切り直しのやり直し、ほかの勝利条件の扱い） | 延長戦を実装していないので決めていない（`Phase.SUDDEN_DEATH` で止める） |
+| サドン・デスの延長戦の手順の細部（ジャンケン・切り直しのやり直し、ほかの勝利条件の扱い） | v0.134 で読み方を決めた（ジャンケン・切り直しからやり直す。勝ち負けは通常の勝利条件と p.311 の表。実装上の読み方。[sudden-death-v0.134.md](sudden-death-v0.134.md) 2.1 節） |
 | きずぐすり: 自分の場にダメージカウンターののったポケモンがいないときに使えるか（v0.2b） | `PlayTrainer` を `UnsupportedError`（`UNRESOLVED_POTION_WITHOUT_DAMAGE`）で拒否。カードは手札に残る。test_trainers.py `test_no_damaged_pokemon_is_unresolved` |
 | きずぐすり: ダメージカウンターののっていないポケモンを選べるか（v0.2b） | 選ぶと `UnsupportedError`（`UNRESOLVED_POTION_UNDAMAGED_TARGET`）。決定は残る。test_trainers.py `test_undamaged_target_is_unresolved` |
 | ポケモンいれかえ: 控えポケモンがいないときに使えるか（v0.2b） | `PlayTrainer` を `UnsupportedError`（`UNRESOLVED_SWITCH_WITHOUT_BENCH`）で拒否。test_trainers.py `test_no_bench_is_unresolved` |
@@ -521,7 +521,7 @@ v0.3d で、上の表の v0.2b〜v0.3c の事項を原典で調べ直しまし�
 - ほかの自分へのダメージのワザ（エレブー「かみなりパンチ」のダメージの目安「+」、サンダー「かみなり」など）。カードのページと照合していない
 - こんらんの自分へのダメージ（v0.3c で対応した。ワザの説明による自分へのダメージとは別の計算。[confusion-attacks-v0.3c.md](confusion-attacks-v0.3c.md) 5 章）
 - サイドを取る順番を番のプレイヤーが選ぶ決定（p.325。結果が変わらないので出していない）
-- サドン・デスの延長戦（`Phase.SUDDEN_DEATH` で止める）
+- サドン・デスの延長戦（`Phase.SUDDEN_DEATH` で止める。v0.134 から `StartSuddenDeath` で始める）
 - ライチュウへの進化（v0.4a で 1 進化を実装したが、ライチュウは未照合・未登録。ワザ「こうそくいどう」は持続する効果）
 
 ### 原典未確認・未解決
@@ -3819,6 +3819,29 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 338・neo 154・拡張パック以外 184） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistryTest` |
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.134: サドン・デスの延長戦の開始（`StartSuddenDeath`）
+
+[sudden-death-v0.134.md](sudden-death-v0.134.md)。`Phase.SUDDEN_DEATH` に移った対戦から、p.324 の手順（既存の確認記録 simultaneous-ko-v0.2f.md 2 章の引用の再利用）にしたがって、
+すべてのカードを最初のデッキの状態にもどし、サイド 1 枚で準備からやり直す延長戦を始める。とりかえっこプリーズで交換したカードを出所にもどすのは**利用者の指定**
+（USER-SUDDEN-DEATH-OWNERSHIP-RESET。2026-11-02）で、UQ-SWAP-PLEASE-OWNERSHIP は未解決のまま。カードの登録・写し・研究の対応表は変えていない（対応 1,374 枚・停止コード 316 のまま）。
+書き出しの形式は 34。新しい拒否のコード `NOT_SUDDEN_DEATH`・`SUDDEN_DEATH_NOT_STARTED`（IllegalActionError）・`UNSUPPORTED_SUDDEN_DEATH_INITIAL_DECK`（エンジンの未対応）。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 延長戦の開始の操作（`StartSuddenDeath`。項目なし・自動では始めない・整合したサドン・デスの状態だけ） | 実装済み・テスト済み・対戦で確かめた | 3 章 | test_sudden_death_v0_134 `NaturalStartTest`・`RejectionTest` |
+| すべてのカードを最初のデッキの状態にもどす（全領域・uid は同じ・山札は uid の順から切る） | 実装済み・テスト済み・対戦で確かめた（どうぐ・「ばける」・［エネエネ］・うらのカード・くすぐりマシーン・スタジアムは構築のテストだけ） | p.324・5 章・6 章 | 同 `NaturalStartTest`・`ZoneRestorationTest` |
+| 交換・再交換したカードを出所（最初のデッキに入れたプレイヤー）にもどす | 実装済み・テスト済み・対戦で確かめた | 2.2 節（利用者の指定） | 同 `SwapOwnershipTest` |
+| サイド 1 枚の準備・「取ったサイドの数」（おんねん）を延長戦の枚数から求める | 実装済み・テスト済み・対戦で確かめた（おんねんは単体のテストだけ） | p.324・5 章 | 同 `ExtensionGameTest` |
+| 前の区間の盤面・効果・回数・履歴・所有者の変更・結果を持ち越さない（項目ごとの扱い `SEGMENT_FIELD_POLICY`） | 実装済み・テスト済み | 5 章 | 同 `RecordTest`・`NaturalStartTest` |
+| 区間の記録（`segments`）・新しい区間のログ・区間の境界のイベント `sudden_death_started` | 実装済み・テスト済み | 4 章 | 同 `NaturalStartTest` |
+| 乱数は入力の状態から続ける・同じ入力は同じ結果・拒否は乱数を使わない | 実装済み・テスト済み・対戦で確かめた | 6 章 | 同 `NaturalStartTest`・`RejectionTest` |
+| 観測（`segment`・`visible_segment_logs`）・新しい手札・山札・サイドを漏らさない | 実装済み・テスト済み・対戦で確かめた | 8 章 | 同 `NaturalStartTest`・`ZoneRestorationTest` |
+| 延長戦の準備の停止（切り直しの補償・化石の手札 PF1）を通常の準備と同じに保つ | 実装済み・テスト済み（正式な対戦では起きていない） | 6 章 | 同 `ZoneRestorationTest` |
+| 延長戦の中の再度のサドン・デスから次の延長戦（回数の上限なし） | 実装済み・テスト済み・対戦で確かめた | p.324・2.1 節 | 同 `RepeatedSuddenDeathTest` |
+| 保存と復元・形式 34・旧形式の拒否・旧保存状態 | 実装済み・テスト済み | 7 章 | 同 `SerializationTest` |
+| ログの監査（区間の境界・最初のデッキ・サイドの枚数・所有者）と、わざと誤らせた状態の検出 | 実装済み・テスト済み | 9 章 | 同 `AuditDetectsTamperingTest` |
+| 交換したカードの持ち主（歴史資料上の問い。UQ-SWAP-PLEASE-OWNERSHIP） | 裁定が未解決（エンジンは利用者の指定で処理する） | 2.2 節 | — |
 
 ## v0.133: ひかるバンギラス（neo4-082）と、2 つのワザの処理（利用者の指定）
 

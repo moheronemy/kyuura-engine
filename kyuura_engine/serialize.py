@@ -1,6 +1,6 @@
 """ゲーム状態を JSON にできる辞書にする（画面やほかの言語に渡すため・テストで比べるため）。
 
-形式は 33 あります（``format_version``）。
+形式は 34 あります（``format_version``）。
 
 - 1（既定）: v0.1 と同じ形。v0.1 の固定値のテストと互換性の参照データは、この形で比べる。
 - 2: 1 に次を加えたもの（v0.2a）。``format_version``、``effects``（効果の登録表の id）、
@@ -170,6 +170,11 @@
   デッキと区別できない）ので黙って落とさない: 形式 1〜32 は、所有者の変更があると ``ValueError``（なければ形式 1〜32 の書き出しは v0.129 と同じ。``cards`` の項目も同じ）。最上位の
   ``user_ownership_rules`` は、この対戦のカードのうち、利用者が指定した所有者の簡略化（``effects.USER_SPECIFIED_RULES``）を当てはめる登録の対象（``<カード id>/trainer``。並べた順）。
   ``user_simplifications`` と同じく状態の項目ではなく、登録表とカードの組から求める識別の情報（なければ空）
+- 34: 33 の最上位に、今の対戦の区間の番号 ``segment``（0 は最初の対戦、1 からはサドン・デスの延長戦）・今の区間の準備で置くサイドの枚数 ``initial_prize_count``・終わった区間の記録
+  ``segments``（``{"index", "prize_count", "first_player", "turn_number", "mulligan_rounds", "result", "ownership_changes", "face_down_cards", "log"}`` の並び。古い順。``result`` は
+  ``{"outcome", "winner", "conditions"}``、``ownership_changes`` は形式 33 と同じ形、``log`` はその区間のログ（内部の完全な記録））を加えたもの（v0.134。docs/sudden-death-v0.134.md 7 章）。
+  延長戦の状態を古い形式に書くと、サイドが 1 枚の準備・前の区間のログと結果・出所にもどした所有者が落ち、最初の対戦と区別できないので黙って落とさない: 形式 1〜33 は、終わった
+  区間があると ``ValueError``（なければ形式 1〜33 の書き出しは v0.133 と同じ。サドン・デスに移っただけで延長戦を始めていない状態も同じ）
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -277,7 +282,7 @@ from .state import (
     WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -675,6 +680,9 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
     if format_version < 33 and state.ownership_changes:
         # v0.130: とりかえっこプリーズの交換で変わった所有者は、古い形式では出所・変更の記録を落とし、対戦開始時のデッキと区別できなくなるので書かない
         raise ValueError(f"形式 {format_version} は、対戦の中の所有者の変更（とりかえっこプリーズの交換。出所・変更の記録）を表せない（format_version=33 を使う）")
+    if format_version < 34 and state.segments:
+        # v0.134: サドン・デスの延長戦の状態は、古い形式では準備のサイドの枚数・前の区間の記録が落ち、最初の対戦と区別できなくなるので書かない
+        raise ValueError(f"形式 {format_version} は、サドン・デスの延長戦の区間（終わった区間の記録・延長戦のサイドの枚数）を表せない（format_version=34 を使う）")
     if format_version < 31 and state.face_up_deck:
         # v0.126: おもてを上にした山札のカード（フラッシュ）は、今のカードの並びから求め直せないので古い形式に書かない（落とすと、うらの山札と区別できない）
         raise ValueError(f"形式 {format_version} は、おもてを上にして山札に置かれたカード（フラッシュ）を表せない（format_version=31 を使う）")
@@ -838,13 +846,35 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
     if format_version >= 32:
         data["user_simplifications"] = user_simplification_targets(state)  # v0.127
     if format_version >= 33:
-        data["ownership_changes"] = [  # v0.130
-            {"card": c.card, "card_id": c.card_id, "previous": c.previous, "owner": c.owner, "origin": c.origin, "turn": c.turn, "trainer_card": c.trainer_card,
-             "exchange": c.exchange}
-            for c in state.ownership_changes
-        ]
+        data["ownership_changes"] = [ownership_change_record(c) for c in state.ownership_changes]  # v0.130
         data["user_ownership_rules"] = user_ownership_rule_targets(state)
+    if format_version >= 34:
+        data["segment"] = state.segment_index  # v0.134
+        data["initial_prize_count"] = state.initial_prize_count
+        data["segments"] = [segment_record(record) for record in state.segments]
     return data
+
+
+def ownership_change_record(change) -> dict[str, Any]:
+    """所有者の変更 1 つ（形式 33 の ``ownership_changes`` の要素と同じ形）。"""
+    return {"card": change.card, "card_id": change.card_id, "previous": change.previous, "owner": change.owner, "origin": change.origin, "turn": change.turn,
+            "trainer_card": change.trainer_card, "exchange": change.exchange}
+
+
+def segment_record(record) -> dict[str, Any]:
+    """終わった対戦の区間 1 つ（v0.134。形式 34 の ``segments`` の要素）。"""
+    result = record.result
+    return {
+        "index": record.index,
+        "prize_count": record.prize_count,
+        "first_player": record.first_player,
+        "turn_number": record.turn_number,
+        "mulligan_rounds": [list(r) for r in record.mulligan_rounds],
+        "result": {"outcome": result.outcome, "winner": result.winner, "conditions": [list(c) for c in result.conditions]},
+        "ownership_changes": [ownership_change_record(c) for c in record.ownership_changes],
+        "face_down_cards": list(record.face_down_cards),
+        "log": [_plain(dict(event)) for event in record.log],
+    }
 
 
 def _card_record(card, format_version: int) -> dict[str, Any]:
