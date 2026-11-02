@@ -285,6 +285,19 @@ class CheckFaceUpDeckCard:
     position: int
 
 
+@dataclass(frozen=True)
+class StartSuddenDeath:
+    """サドン・デスの延長戦を始める（v0.134。docs/sudden-death-v0.134.md 3 章）。p.324「17 サドン・デス」の「それぞれ自分の山札、トラッシュ、サイドカード、場にあるカード、
+    手札のすべてをまとめて、最初のデッキの状態に戻します。」「延長戦として、もう一度初めから対戦をやり直します。ただし、サイドカードは、1枚だけしかセットしません。」。
+
+    - 項目を持たない。``ReportJankenResult`` と同じく、対戦の進行の操作で、どちらかのプレイヤーの選択ではない（送ったのがだれかで、先攻・カード・乱数は変わらない）
+    - 受け付けるのは、サドン・デスに移った状態（``Phase.SUDDEN_DEATH``・結果がサドン・デス）だけ。ほかの段階・不整合な状態では、状態・乱数・ログを変えずに拒否する
+    - すべてのカードを、そのカードを最初のデッキに入れたプレイヤー（出所。``CardInstance.deck_owner``）の山札にもどし、切って、手札 7 枚・切り直しから準備をやり直す。とりかえっこ
+      プリーズで所有者が変わったカードも出所にもどす（利用者の指定。``sudden_death.USER_SUDDEN_DEATH_OWNERSHIP_RESET``）。サイドは 1 枚。先攻はジャンケンで決め直す
+    - それまでの区間（ログ・結果など）は ``GameState.segments`` に移る。新しい区間のログは空から始まる
+    """
+
+
 COMMAND_TYPES: dict[str, type] = {
     "place_starting_pokemon": PlaceStartingPokemon,
     "draw_mulligan_cards": DrawMulliganCards,
@@ -305,6 +318,7 @@ COMMAND_TYPES: dict[str, type] = {
     "use_stadium": UseStadium,  # v0.57
     "reveal_face_down": RevealFaceDown,  # v0.67
     "check_face_up_deck_card": CheckFaceUpDeckCard,  # v0.126
+    "start_sudden_death": StartSuddenDeath,  # v0.134
 }
 
 # ルールにはあるが、まだ対応していない操作（受け取ると UnsupportedError）。EvolvePokemon は v0.4a、UsePokemonPower は v0.5 で対応した
@@ -332,6 +346,7 @@ Command = (
     | UseStadium
     | RevealFaceDown
     | CheckFaceUpDeckCard
+    | StartSuddenDeath
 )
 
 

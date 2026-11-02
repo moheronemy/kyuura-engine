@@ -37,12 +37,12 @@ class Phase(str, Enum):
     PROMOTE_ACTIVE = "promote_active"  # 決定待ち: バトル場のポケモンがいなくなったプレイヤーがベンチから出す
     DECISION = "decision"  # 決定待ち: 上の 2 つ以外の決定（トレーナー・ワザの効果の途中の選択など）
     GAME_OVER = "game_over"
-    SUDDEN_DEATH = "sudden_death"  # サドン・デスに移った（延長戦の開始は v0.1 では未実装）
+    SUDDEN_DEATH = "sudden_death"  # サドン・デスに移った（v0.134 から ``StartSuddenDeath`` で延長戦を始める。docs/sudden-death-v0.134.md）
     HALTED = "halted"  # 未解決の裁定に当たったので止めた（終端。再開する API はない）
 
 
 # この段階になったら、どのコマンドも受け付けない。GAME_OVER・SUDDEN_DEATH は result、HALTED は halt を持つ
-# （HALTED の result は None なので、「result が None なら続いている」とは判断できない）
+# （HALTED の result は None なので、「result が None なら続いている」とは判断できない）。v0.134: SUDDEN_DEATH だけは、延長戦を始める操作（``StartSuddenDeath``）を受け付ける
 TERMINAL_PHASES = frozenset({Phase.GAME_OVER, Phase.SUDDEN_DEATH, Phase.HALTED})
 
 
@@ -2460,6 +2460,43 @@ class DataSource:
     path: str
 
 
+@dataclass(frozen=True)
+class SegmentRecord:
+    """終わった対戦の区間 1 つの記録（v0.134。docs/sudden-death-v0.134.md 4 章）。サドン・デスの延長戦を始めたとき（``StartSuddenDeath``）、それまでの区間をここに移し、
+    新しい区間は空のログ・初期の値から始める（``GameState.segments``。古い順）。
+
+    - ``index``: 区間の番号（0 は最初の対戦、1 からは延長戦）。``prize_count``: その区間の準備で置いたサイドの枚数（0 はルールの枚数、延長戦は 1 枚。p.324）
+    - ``first_player``・``turn_number``・``mulligan_rounds``: その区間の先攻・最後の番・切り直しの記録。``result``: その区間を終えた結果（いつもサドン・デス）
+    - ``log``: その区間のログ（内部の完全な記録。見せるときは ``observation.visible_segment_logs``）。新しい区間のログ（``GameState.log``）とは別の並びで、ワザ・効果・
+      不変条件・監査が読む「今の対戦の中の履歴」には入らない
+    - ``ownership_changes``: その区間の所有者の変更（とりかえっこプリーズ。v0.130）。新しい区間ではカードをデッキに入れたプレイヤーにもどすので、ここにだけ残す
+    - ``face_down_cards``: その区間が終わったときに、うらのままだったカード（マチスの秘策。v0.67）。区間のログを見せるとき、相手にはその uid を見せない（おもてにならずに
+      山札にもどったので、あとから見えるようにはならない）
+    """
+
+    index: int
+    prize_count: int
+    first_player: int | None
+    turn_number: int
+    mulligan_rounds: tuple[tuple[int, ...], ...]
+    result: GameResult
+    log: tuple[Mapping[str, Any], ...]
+    ownership_changes: tuple[OwnershipChange, ...]
+    face_down_cards: tuple[int, ...]
+
+    # pickle・copy.deepcopy のため（ログの要素は読み取り専用の Mapping。``GameState.__getstate__`` と同じ扱い）
+    def __getstate__(self) -> dict[str, Any]:
+        data = dict(self.__dict__)
+        data["log"] = tuple(dict(event) for event in self.log)
+        return data
+
+    def __setstate__(self, data: dict[str, Any]) -> None:
+        data = dict(data)
+        data["log"] = tuple(MappingProxyType(dict(event)) for event in data["log"])
+        for name, value in data.items():
+            object.__setattr__(self, name, value)
+
+
 @dataclass
 class GameState:
     rules: RuleSet
@@ -2556,6 +2593,21 @@ class GameState:
     # ``reactions`` の ``("same", …)`` の段の並び）。事実を起こした処理の流れが、同じコマンドの中で処理する（ワザの要素のあいだ・トレーナー・特殊能力を使い終える前・にげるのあと・
     # バトル場に出したあと）。コマンドの終わり・決定を待つ間は空（決定をまたぐ続きは決定の ``context`` に移す）。書き出さない（不変条件 ``engine._pending_moves_problems``）
     pending_moves: tuple = ()
+    # v0.134（docs/sudden-death-v0.134.md 4 章）: 終わった対戦の区間（``SegmentRecord`` の並び。古い順）。サドン・デスの延長戦を始めたときに、それまでの区間（ログ・結果・
+    # 所有者の変更など）を移す。空なら最初の対戦の中（v0.133 までと同じ値）。今の区間の番号は ``segment_index``、準備で置くサイドの枚数は ``initial_prize_count``。書き出しは
+    # 形式 34 だけが表せる（空でなければ形式 1〜33 は ``ValueError``）。v0.133 までの状態の写し（pickle）は項目がなく、この既定値（空）になる
+    segments: tuple[SegmentRecord, ...] = ()
+
+    @property
+    def segment_index(self) -> int:
+        """今の対戦の区間の番号（v0.134。0 は最初の対戦、1 からはサドン・デスの延長戦）。"""
+        return len(self.segments)
+
+    @property
+    def initial_prize_count(self) -> int:
+        """今の区間の準備で置くサイドの枚数（v0.134）。最初の対戦はルールの枚数（``RuleSet.prize_count``。6 枚）、サドン・デスの延長戦は 1 枚
+        （``RuleSet.sudden_death_prize_count``。p.324「サイドカードは、1枚だけしかセットしません」）。「取ったサイドの数」はこの枚数から求める（``effects.prizes_taken``）。"""
+        return self.rules.prize_count if not self.segments else self.rules.sudden_death_prize_count
 
     def clone(self) -> GameState:
         new = object.__new__(type(self))

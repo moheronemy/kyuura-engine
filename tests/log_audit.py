@@ -511,12 +511,14 @@ TOP_FIELDS_SINCE = {
     "user_simplifications": 32,  # v0.127: 利用者が指定した簡略ルールで処理するワザの対象（登録表とカードの組から求める識別の情報）
     "ownership_changes": 33,  # v0.130: 対戦の中の所有者の変更の記録（とりかえっこプリーズの交換）
     "user_ownership_rules": 33,  # v0.130: 利用者が指定した所有者の簡略化を当てはめる登録の対象（登録表とカードの組から求める識別の情報）
+    "segment": 34, "initial_prize_count": 34, "segments": 34,  # v0.134: 今の対戦の区間・準備で置くサイドの枚数・終わった区間の記録（サドン・デスの延長戦）
 }
 # v0.125: 形式 30 は、持続する効果 ``"damage_reduction"`` の項目 ``non_attack_unresolved``（「ふくらむ」の効果だけ）を加えた（場のポケモン・最上位の項目は変わらない）
 # v0.126: 形式 31 は、最上位の ``face_up_deck``（フラッシュでおもてにした山札のカード）を加えた
 # v0.127: 形式 32 は、``halt`` の ``interruption``（途中停止の記録。なければ null）と、最上位の ``user_simplifications`` を加えた
 # v0.130: 形式 33 は、所有者の変わったカードの ``cards`` の ``origin`` と、最上位の ``ownership_changes`` を加えた
-LATEST_FORMAT = 33
+# v0.134: 形式 34 は、最上位の ``segment``・``initial_prize_count``・``segments``（サドン・デスの延長戦の区間）を加えた
+LATEST_FORMAT = 34
 # v0.99: 形式 25 で、場のポケモンの履歴の受けた記録（``"kind": "received"``）に加わった項目（ダメージを受けた場所）
 RECEIVED_FIELDS_SINCE = {"active_damage": 25}
 
@@ -559,6 +561,107 @@ def _project(data_latest: dict, version: int) -> dict:
     if version < 16 and "trainer_locks" in data:
         data["trainer_locks"] = [{k: v for k, v in lock.items() if k != "origin"} for lock in data["trainer_locks"]]  # v0.56: 禁止の出どころは形式 16 から
     return data
+
+
+# v0.134（docs/sudden-death-v0.134.md 9 章）: サドン・デスの延長戦の準備で置くサイドの枚数（p.324「サイドカードは、1枚だけしかセットしません」）。監査が独立に持つ
+# （エンジンのルールの組・状態の値から読まない）。最初の区間はルールの枚数
+SUDDEN_DEATH_PRIZES = 1
+# 延長戦の区間の始まりのログに書いてよい項目（新しい山札の並び・手札・サイド・前の区間のカードの場所を書かない）
+SEGMENT_START_FIELDS = frozenset({"kind", "turn", "segment", "prize_count"})
+
+
+def _audit_prize_count(state, index: int | None = None) -> int:
+    """v0.134: 区間 ``index``（省くと今の区間）の準備で置くサイドの枚数（監査の値）。区間の番号は ``segment_problems`` がログの並びで確かめる。"""
+    index = len(getattr(state, "segments", ())) if index is None else index
+    return state.rules.prize_count if index == 0 else SUDDEN_DEATH_PRIZES
+
+
+def _segment_log_problems(state, log: list[dict], index: int, initial: dict[int, int], where: str) -> list[str]:
+    """v0.134: 1 つの区間のログの、区間の始まり・準備・サイドの枚数の確かめ（今の区間・終わった区間の共通）。"""
+    problems: list[str] = []
+    expected = _audit_prize_count(state, index)
+    start = dict(log[0]) if log else {}
+    if index == 0:
+        if start.get("kind") != "game_created":
+            problems.append(f"{where}（最初の区間）のログが game_created から始まっていない")
+    elif start != {"kind": "sudden_death_started", "turn": 0, "segment": index, "prize_count": expected} or set(start) != SEGMENT_START_FIELDS:
+        problems.append(f"{where} の始まり {start} が、区間の番号 {index}・サイド {expected} 枚だけの sudden_death_started ではない")
+    if any(e["kind"] in ("game_created", "sudden_death_started") for e in log[1:]):
+        problems.append(f"{where} のログの途中に、区間の始まりのイベントがある")
+    # 準備の始まり: 2 人の山札を切り、手札を 7 枚ずつ引く（p.308）。引いたカードは、そのプレイヤーが最初のデッキに入れたカード（区間の始まりに出所へもどしたことの確かめ）
+    head = log[1:5]
+    if [(e["kind"], e.get("player")) for e in head] != [("shuffle", 0), ("shuffle", 1), ("draw", 0), ("draw", 1)]:
+        problems.append(f"{where} の準備の始まりが、2 人の山札を切って手札を引く並びではない {[(e['kind'], e.get('player')) for e in head]}")
+    else:
+        for e in head[2:]:
+            cards = list(e.get("cards", ()))
+            if len(cards) != state.rules.opening_hand_size or any(initial.get(uid) != e["player"] for uid in cards):
+                problems.append(f"{where} の最初の手札 {cards} が、プレイヤー {e['player']} の最初のデッキの {state.rules.opening_hand_size} 枚ではない")
+    for e in log:
+        if e["kind"] == "set_prizes" and e.get("count") != expected:
+            problems.append(f"{where} でプレイヤー {e.get('player')} が置いたサイドが {e.get('count')} 枚（{expected} 枚のはず）")
+    return problems
+
+
+def _replayed_exchanges(state, log: list[dict], initial: dict[int, int]) -> list[tuple]:
+    """v0.134: 区間のログの交換（cards_exchanged）を、最初のデッキの持ち主から組み立て直した所有者の変更（v130_problems と同じ形）。"""
+    owner = dict(initial)
+    changes = []
+    for e in log:
+        if e["kind"] != "cards_exchanged":
+            continue
+        for card, previous, new, origin in e["ownership"]:
+            changes.append((card, state.cards[card].card_id, previous, new, origin, e["turn"], e["trainer_card"], e["exchange"]))
+            owner[card] = new
+    return changes
+
+
+def segment_problems(state) -> list[str]:
+    """v0.134（docs/sudden-death-v0.134.md 9 章）: サドン・デスの延長戦の区間を、ログの並びから確かめる（エンジンの区間の番号・サイドの枚数・出所の値を信じない）。
+
+    - 区間の記録（``segments``）の i 番目のログは、i が 0 なら ``game_created``、ほかは区間の番号 i・サイド 1 枚だけの ``sudden_death_started`` から始まり、準備（切る・7 枚）の並び・
+      置いたサイドの枚数（最初の区間は 6 枚、延長戦は 1 枚。監査の値）・サドン・デスの終わり（``game_end`` が 1 つ・勝者なし）を持つ。記録の結果・先攻・番が、ログのそれと同じ
+    - 区間ごとの所有者の変更が、その区間のログの交換を最初のデッキの持ち主（デッキリストの並びの uid の付け方。エンジンの出所を読まない）から組み立て直したものと同じ（区間の始まりに
+      出所へもどしたので、どの区間も最初のデッキの持ち主から始まる）
+    - 今の区間のログも、同じ始まり・準備・サイドの枚数を持つ。最初の手札は、そのプレイヤーの最初のデッキのカード
+    区間のない対戦（最初の区間の中）は、最初の区間の始まりだけを確かめる（盤面を直接作った状態は確かめない）。
+    """
+    segments = tuple(getattr(state, "segments", ()))
+    log = [dict(e) for e in state.log]
+    if not segments and not (log and log[0]["kind"] == "game_created"):
+        return []
+    try:
+        initial = initial_owners(state)
+    except ValueError as error:
+        return [str(error)]
+    problems: list[str] = []
+    for index, record in enumerate(segments):
+        where = f"区間 {index}"
+        events = [dict(e) for e in record.log]
+        # 盤面を直接作った状態（テスト専用）から始めた最初の区間は、準備・番の始まりのログがないので、その確かめをしない（終わり・交換は確かめる。延長戦の区間からはすべて確かめる）
+        constructed = index == 0 and not (events and events[0]["kind"] == "game_created")
+        if constructed:
+            if any(e["kind"] in ("game_created", "sudden_death_started") for e in events):
+                problems.append(f"{where} のログの途中に、区間の始まりのイベントがある")
+        else:
+            problems.extend(_segment_log_problems(state, events, index, initial, where))
+        ends = [e for e in events if e["kind"] == "game_end"]
+        if len(ends) != 1 or ends[0].get("outcome") != "sudden_death" or ends[0].get("winner") is not None:
+            problems.append(f"{where} のログの終わりが、サドン・デスの game_end 1 つではない（{len(ends)} 個）")
+        elif (record.result.outcome, record.result.winner, tuple(map(tuple, ends[0]["conditions"]))) != ("sudden_death", None, tuple(map(tuple, record.result.conditions))):
+            problems.append(f"{where} の記録の結果 {record.result} が、ログの game_end と違う")
+        janken = next((e for e in events if e["kind"] == "janken"), None)
+        starts = [e for e in events if e["kind"] == "turn_start"]
+        if not constructed and ((None if janken is None else janken["first_player"]) != record.first_player
+                                or (starts[-1]["turn"] if starts else 0) != record.turn_number):
+            problems.append(f"{where} の記録の先攻・番 {(record.first_player, record.turn_number)} が、ログのジャンケン・最後の番の始まりと違う")
+        if any(e["turn"] != i + 1 or (janken is not None and e["player"] != (janken["first_player"] + i) % 2) for i, e in enumerate(starts)):
+            problems.append(f"{where} の番の始まりが、1 番から 1 つずつ交互になっていない")
+        recorded = [(c.card, c.card_id, c.previous, c.owner, c.origin, c.turn, c.trainer_card, c.exchange) for c in record.ownership_changes]
+        if recorded != _replayed_exchanges(state, events, initial):
+            problems.append(f"{where} の記録の所有者の変更が、その区間のログの交換を最初のデッキの持ち主から組み立て直したものと違う")
+    problems.extend(_segment_log_problems(state, log, len(segments), initial, f"今の区間 {len(segments)}"))
+    return problems
 
 
 def initial_owners(state) -> dict[int, int]:
@@ -655,6 +758,8 @@ def required_format(state) -> tuple[int, bool]:
         needed = max(needed, 32)  # v0.127: 途中停止の状態（在途のカードを残した終端）
     if state.ownership_changes:
         needed = max(needed, 33)  # v0.130: 対戦の中の所有者の変更（とりかえっこプリーズの交換）
+    if state.segments:
+        needed = max(needed, 34)  # v0.134: サドン・デスの延長戦の区間（終わった区間の記録・延長戦のサイドの枚数）
     d = state.decision
     not_v0_1 = d is not None and (
         d.context_value("then") is not None or d.resume in ("attack", "knock_out", "post_knockout", "power")  # v0.42: 特殊能力の途中の決定
@@ -9219,7 +9324,7 @@ def log_problems(state) -> list[str]:
         elif kind == "swap_prize_with_deck_top":
             # v0.47: ［わるふざけ］。自分のサイドの位置と山札の一番上を入れかえる（どちらも見ない）
             if not isinstance(_power_effect(state, e["power"]), SwapPrizeWithDeckTop) or e["player"] != turn_player \
-                    or not 0 <= e["prize_position"] < state.rules.prize_count - prizes_taken[e["player"]]:
+                    or not 0 <= e["prize_position"] < _audit_prize_count(state) - prizes_taken[e["player"]]:
                 problems.append(f"{e['turn']} 番のサイドと山札の一番上の入れかえ（位置 {e['prize_position']}）が、その特殊能力の処理ではない")
             if "face_up_card" in e:
                 if e["face_up_card"] not in face_up_log:
@@ -10220,12 +10325,12 @@ def log_problems(state) -> list[str]:
             problems.append(f"プレイヤー {p_index} の手札 {sorted(p.hand)} が、ログから組み立てた {sorted(hand[p_index])} と違う")
         if sorted(p.discard) != sorted(discard[p_index]):
             problems.append(f"プレイヤー {p_index} のトラッシュ {sorted(p.discard)} が、ログから組み立てた {sorted(discard[p_index])} と違う")
-        if starts and len(p.prizes) != state.rules.prize_count - prizes_taken[p_index] - trainer_prizes[p_index]:
+        if starts and len(p.prizes) != _audit_prize_count(state) - prizes_taken[p_index] - trainer_prizes[p_index]:  # v0.134: 今の区間の枚数
             problems.append(f"プレイヤー {p_index} のサイド {len(p.prizes)} 枚が、取ったサイドの数 {prizes_taken[p_index]} + {trainer_prizes[p_index]} と合わない")
-        if prizes_taken[p_index] > min(knocked[1 - p_index], state.rules.prize_count):
+        if prizes_taken[p_index] > min(knocked[1 - p_index], _audit_prize_count(state)):
             problems.append(f"プレイヤー {p_index} が、相手のきぜつ {knocked[1 - p_index]} 回より多くサイドを取った")
         if state.phase in TERMINAL and state.phase is not Phase.HALTED \
-                and prizes_taken[p_index] != min(knocked[1 - p_index], state.rules.prize_count - trainer_prizes[p_index]):
+                and prizes_taken[p_index] != min(knocked[1 - p_index], _audit_prize_count(state) - trainer_prizes[p_index]):
             problems.append(f"プレイヤー {p_index} の取ったサイド {prizes_taken[p_index]} 枚が、相手のきぜつ {knocked[1 - p_index]} 回と合わない")
     if {pokemon.pokemon_id for p in state.players for pokemon in p.in_play()} != in_play:
         problems.append("ログから組み立てた場のポケモンが状態と違う")
@@ -10279,6 +10384,7 @@ def log_problems(state) -> list[str]:
     problems.extend(v127_problems(state))  # v0.127: ドライアップ・怪電波マシーン・途中停止
     problems.extend(v129_problems(state))  # v0.129: カツラのクイズ その1
     problems.extend(v130_problems(state))  # v0.130: とりかえっこプリーズと、対戦の中の所有者
+    problems.extend(segment_problems(state))  # v0.134: サドン・デスの延長戦の区間（区間の始まり・前の区間の記録・最初のデッキ・サイドの枚数）
     problems.extend(v133_problems(state))  # v0.133: ひかるバンギラスの 2 つのワザ（宣言の前の数との照らしは、やり直しの状態を渡す監査だけ）
     return problems
 
@@ -10811,7 +10917,7 @@ def observation_problems(state) -> list[str]:
     - ログの写し: 見えない項目は、イベントの意味から決めた見てよい人（``_sees_private``）だけに残り、ほかには ``hidden`` に名前だけ。ほかのイベントは内部の記録と同じ
     """
     from kyuura_engine.continuous import power_suppressed
-    from kyuura_engine.observation import DECK_REVEALING_KINDS, LOOKED_HAND_KINDS, OPTION_MEANINGS, PRIVATE_FIELDS, observe, visible_log
+    from kyuura_engine.observation import DECK_REVEALING_KINDS, LOOKED_HAND_KINDS, OPTION_MEANINGS, PRIVATE_FIELDS, observe, visible_log, visible_segment_logs
 
     problems: list[str] = []
     revealed = {0: False, 1: False}
@@ -10898,6 +11004,12 @@ def observation_problems(state) -> list[str]:
                 if {key: shown.get(key) for key in expected} != expected or shown.get("printed_hp") != state.card_def(pokemon.card).hp:
                     problems.append(f"観測（{viewer}）の場のポケモン {pokemon.pokemon_id} の今有効な値 {[shown.get(key) for key in expected]} が、"
                                     f"状態から求めた {list(expected.values())} と違う")
+        # v0.134: 延長戦の区間だけ、今の区間の番号・サイドの枚数（監査の値）・終わった区間の結果を全員に見せる（最初の区間の観測は v0.133 と同じ項目）
+        expected_segment = None if not state.segments else {
+            "index": len(state.segments), "prize_count": _audit_prize_count(state),
+            "previous": [{"index": r.index, "outcome": r.result.outcome, "conditions": [list(c) for c in r.result.conditions], "turns": r.turn_number} for r in state.segments]}
+        if view.get("segment") != expected_segment or ("segment" in view) != bool(state.segments):
+            problems.append(f"観測（{viewer}）の区間 {view.get('segment')} が、区間の記録から求めた {expected_segment} と違う")
         board = {key: value for key, value in view.items() if key != "decision"}
         leaked = _card_values(board, set()) - visible
         if leaked:
@@ -10933,8 +11045,23 @@ def observation_problems(state) -> list[str]:
                         problems.append(f"観測（{viewer}）の決定 {d.kind} の選べるものに、見えないカード {uid} がある")
                     if ("card_id" in option) != (uid in visible or seen):
                         problems.append(f"観測（{viewer}）の決定 {d.kind} の選べるもの {uid} のカードの id の有無が、見えるかと合わない")
-        for event, shown in zip(state.log, visible_log(state, viewer)):
-            event = _audit_masked(event, hidden_uids)  # v0.67: 見る人の相手の今うらのカードの uid は、カードの uid を書く項目から除く
+        # v0.134: 終わった区間のログの写し（visible_segment_logs）も同じ規則で確かめる。その区間の終わりにうらのままだった、見る人の相手のカードの uid は除く（所有者は
+        # その区間の交換を最初のデッキの持ち主から組み立て直す）
+        segment_views = visible_segment_logs(state, viewer)
+        if [v["index"] for v in segment_views] != list(range(len(state.segments))):
+            problems.append(f"終わった区間のログの写し（{viewer}）の区間の番号 {[v['index'] for v in segment_views]} が、区間の記録と合わない")
+        pairs = []
+        for record, view_record in zip(state.segments, segment_views):
+            owners = dict(initial_owners(state))
+            for change in _replayed_exchanges(state, [dict(e) for e in record.log], owners):
+                owners[change[0]] = change[3]
+            masked = {uid for uid in record.face_down_cards if owners.get(uid) != viewer}
+            if len(view_record["log"]) != len(record.log):
+                problems.append(f"終わった区間 {record.index} のログの写し（{viewer}）の長さが、記録と違う")
+            pairs.extend((_audit_masked(event, masked), shown) for event, shown in zip(record.log, view_record["log"]))
+        pairs.extend((_audit_masked(event, hidden_uids), shown) for event, shown in zip(state.log, visible_log(state, viewer)))
+        for event, shown in pairs:
+            # v0.67: 見る人の相手の今うらのカードの uid は、カードの uid を書く項目から除く（上で除いた）
             if event["kind"] in PRIVATE_FIELDS:
                 # v0.63: おもてだったカードの項目（face_up）は全員に見える
                 fields = [name for name in PRIVATE_FIELDS[event["kind"]][0] if name in event and name not in event.get("face_up", ())]

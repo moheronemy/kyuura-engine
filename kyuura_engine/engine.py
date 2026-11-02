@@ -51,6 +51,7 @@ from .commands import (
     RemoveDisguise,
     RevealFaceDown,
     CheckFaceUpDeckCard,
+    StartSuddenDeath,
 )
 from .decisions import (
     VALUE_ANSWER_MAX,  # v0.129: 値で答える決定（カツラのクイズ その1）
@@ -279,6 +280,8 @@ from .state import (
     Asleep,
     CardInstance,
     OwnershipChange,
+    SegmentRecord,
+    GameResult,
     Confused,
     DataSource,
     GameState,
@@ -317,7 +320,9 @@ from . import zones as _zones
 from . import faceup  # v0.126: おもての山札（フラッシュ）
 from .interruption import DeferredShortage, interrupt, interruption_problems  # v0.127: 途中停止
 from . import cards as cards_module
+from . import sudden_death  # v0.134: サドン・デスの延長戦の開始
 from .coins import CoinSide, flip_coins
+from .rng import copy_rng
 
 # v0.15a: v0.13 まで engine.py にあった確認と共通の手続きを、engine.py を読み込まない部品に移した（docs/integration-dependencies-v0.15a.md）。
 # 範囲外のコマンドの処理が使う名前を、v0.13 の名前で読み込む（v0.16b でワザ・番の終わりの処理は解決の基盤だけになった）
@@ -370,36 +375,82 @@ def new_game(
         raise ValueError("seed は 0 以上の整数")
 
     cards: dict[int, CardInstance] = {}
-    players = []
     for owner, deck in enumerate((deck0, deck1)):
-        uids = []
         for card_id in deck:
             uid = len(cards)
             cards[uid] = CardInstance(uid=uid, card_id=card_id, owner=owner)
-            uids.append(uid)
-        players.append(PlayerState(deck=uids))
 
     used_ids = {c.card_id for c in cards.values()}
-    state = GameState(
+    state = _segment_state(
         rules=rules,
         card_data=DataSource(pool.source["repository"], pool.source["commit"], pool.source["path"]),
         seed=seed,
         rng=random.Random(seed),
-        cards=freeze_mapping(cards),
+        cards=cards,
         definitions=freeze_mapping({card_id: pool.get(card_id) for card_id in used_ids}),
         decklists=(tuple(deck0), tuple(deck1)),
-        players=players,
-        phase=Phase.SETUP_PLACEMENT,
         effects=pool.effects,
+        segments=(),
     )
     state.add_event("game_created", rules=rules.id, seed=seed, card_data_commit=pool.source["commit"])
+    _prepare_segment(state)
+    return state
 
+
+def _segment_state(*, rules, card_data, seed, rng, cards: dict[int, CardInstance], definitions, decklists, effects, segments) -> GameState:
+    """対戦の区間の始まりの状態（v0.134 で ``new_game`` から分けた。サドン・デスの延長戦 ``_start_sudden_death`` と共通）。すべてのカードを持ち主の山札に uid の順に置き、
+    ほかの項目は既定の値（番・決定・効果・履歴・結果など）。ログは空（呼ぶ側が始まりのイベントを書く）。"""
+    players = [PlayerState(deck=[uid for uid in sorted(cards) if cards[uid].owner == player]) for player in PLAYERS]
+    return GameState(
+        rules=rules,
+        card_data=card_data,
+        seed=seed,
+        rng=rng,
+        cards=freeze_mapping(cards),
+        definitions=definitions,
+        decklists=decklists,
+        players=players,
+        phase=Phase.SETUP_PLACEMENT,
+        effects=effects,
+        segments=segments,
+    )
+
+
+def _prepare_segment(state: GameState) -> None:
+    """対戦の準備（p.308）: 山札を切り、手札を 7 枚ずつ配り、切り直しまで済ませる（v0.134 で ``new_game`` から分けた。延長戦も同じ処理）。"""
     # デッキを切る（自分で切り、相手にも切ってもらう。その結果を乱数 1 回の並べ替えで表す）
     for player in PLAYERS:
         _shuffle_deck(state, player)
     _deal_opening_hands(state)
     _require_integrity(state)
-    return state
+
+
+def _start_sudden_death(state: GameState) -> GameState:
+    """サドン・デスの延長戦を始める（v0.134。``StartSuddenDeath``。docs/sudden-death-v0.134.md 3 章〜6 章）。渡した状態は変えない。
+
+    受け付けるのは、整合したサドン・デスの状態だけ（段階・結果・ログ・不変条件・最初のデッキの復元）。拒否するときは、状態・乱数・ログを変えずに例外を投げる。
+
+    1. 今の区間を区間の記録にする（``sudden_death.archive``。ログ・結果・所有者の変更・うらのままのカード）
+    2. すべてのカードを、最初のデッキに入れたプレイヤーの山札にもどす（p.324「最初のデッキの状態に戻します」。とりかえっこプリーズで所有者が変わったカードも出所にもどす。
+       利用者の指定 ``USER_SUDDEN_DEATH_OWNERSHIP_RESET``）。uid は付け直さない。山札は uid の順に並べてから切る（前の区間の並び・場所が新しい並びに残らない）
+    3. ほかの項目は新しい対戦と同じ既定の値（``sudden_death.SEGMENT_FIELD_POLICY``）。乱数は入力の状態から続ける（最初の seed にもどさない）
+    4. ログに区間の始まり（``sudden_death_started``。区間の番号・サイドの枚数だけ）を書き、``new_game`` と同じ準備（切る・7 枚・切り直し）をする。サイドは 1 枚（p.324）。
+       先攻はジャンケン（``ReportJankenResult``）で決め直す。切り直しの補償・化石の手札の止め方は通常の準備と同じ
+    """
+    if state.phase is not Phase.SUDDEN_DEATH:
+        raise IllegalActionError(sudden_death.NOT_SUDDEN_DEATH_CODE,
+                                 f"延長戦を始められるのはサドン・デスに移った状態だけ（今は {getattr(state.phase, 'value', state.phase)}）")
+    problems = check_invariants(state) + sudden_death.start_problems(state)
+    if problems:
+        raise StateIntegrityError(problems)
+    owners = sudden_death.initial_deck_owners(state)
+    record = sudden_death.archive(state)
+    cards = {uid: CardInstance(uid=uid, card_id=card.card_id, owner=owners[uid]) for uid, card in state.cards.items()}
+    new = _segment_state(rules=state.rules, card_data=state.card_data, seed=state.seed, rng=copy_rng(state.rng), cards=cards,
+                         definitions=state.definitions, decklists=state.decklists, effects=state.effects, segments=state.segments + (record,))
+    new.add_event("sudden_death_started", segment=new.segment_index, prize_count=new.initial_prize_count)
+    _prepare_segment(new)
+    return new
 
 
 def _shuffle_deck(state: GameState, player: int) -> None:
@@ -778,6 +829,9 @@ def _apply_once(state: GameState, command, context: resolution.Context | None, *
     """``_apply`` の本体（v0.67 で分けた）。``verify`` が偽なら、最後の不変条件の確かめをしない（うらのカードを置きかえた確かめの状態。カードの組がデッキと違う）。"""
     if isinstance(command, UNSUPPORTED_COMMANDS):
         raise UnsupportedError("UNSUPPORTED_ACTION", f"{type(command).__name__} は未対応")
+    if type(command) is StartSuddenDeath:
+        # v0.134: サドン・デスの延長戦の開始（状態を作り直す。ほかのコマンドの処理の流れは通らない）
+        return _start_sudden_death(state)
     handler = _HANDLERS.get(type(command))
     if handler is None:
         raise IllegalActionError("UNKNOWN_COMMAND", f"知らないコマンド {command!r}")
@@ -785,7 +839,8 @@ def _apply_once(state: GameState, command, context: resolution.Context | None, *
     if state.phase is Phase.GAME_OVER:
         raise IllegalActionError("GAME_OVER", "対戦は終わっている")
     if state.phase is Phase.SUDDEN_DEATH:
-        raise UnsupportedError("SUDDEN_DEATH_NOT_IMPLEMENTED", "サドン・デス（延長戦）の開始は v0.1 では未実装")
+        # v0.134: v0.133 までは延長戦が未実装で、どのコマンドも UnsupportedError（SUDDEN_DEATH_NOT_IMPLEMENTED）。延長戦は StartSuddenDeath で始める
+        raise IllegalActionError(sudden_death.SUDDEN_DEATH_NOT_STARTED_CODE, "サドン・デスに移った。延長戦は StartSuddenDeath で始める（ほかの操作は受け付けない）")
     if state.phase is Phase.HALTED:
         raise UnsupportedError(state.halt.code, state.halt.message)
     new = state.clone()
@@ -1204,8 +1259,9 @@ def _place_starting_pokemon(state: GameState, cmd: PlaceStartingPokemon) -> None
         # サイドカードをセットする: 山札の一番上から裏のまま 6 枚（p.308）
         for pl in PLAYERS:
             q = state.players[pl]
-            q.prizes = q.deck[: state.rules.prize_count]
-            del q.deck[: state.rules.prize_count]
+            # v0.134: 置く枚数は今の区間の枚数（最初の対戦はルールの 6 枚、サドン・デスの延長戦は 1 枚。p.324）
+            q.prizes = q.deck[: state.initial_prize_count]
+            del q.deck[: state.initial_prize_count]
             state.add_event("set_prizes", player=pl, count=len(q.prizes))
         _after_prizes(state)
 
@@ -2761,8 +2817,8 @@ def check_invariants(state: GameState) -> list[str]:
         if len(p.bench) > limit and not _narrow_cleanup_pending(state, player):
             # v0.57: ベンチの上限は場のスタジアム（せまいジム）を当てはめた数。場に出た時の、手札にもどすポケモンを選ぶ決定を待つ間だけ、そのプレイヤーは多くてよい
             problems.append(f"プレイヤー {player} のベンチが {len(p.bench)} 匹（{limit} 匹まで）")
-        if len(p.prizes) > rules.prize_count:
-            problems.append(f"プレイヤー {player} のサイドが {len(p.prizes)} 枚（{rules.prize_count} 枚まで）")
+        if len(p.prizes) > state.initial_prize_count:  # v0.134: 今の区間の準備で置く枚数（延長戦は 1 枚）
+            problems.append(f"プレイヤー {player} のサイドが {len(p.prizes)} 枚（{state.initial_prize_count} 枚まで）")
         if p.mulligan_draws_remaining < 0:
             problems.append(f"プレイヤー {player} の切り直しの補償の残りが負")
     if state.face_down_cards:
@@ -2816,6 +2872,7 @@ def check_invariants(state: GameState) -> list[str]:
             if ids != sorted(state.decklists[owner]):
                 problems.append(f"プレイヤー {owner} のカードの組が対戦開始時のデッキと違う")
     problems.extend(_ownership_problems(state))  # v0.130
+    problems.extend(_segment_problems(state))  # v0.134
 
     phase = state.phase
     if not isinstance(phase, Phase):
@@ -2853,6 +2910,9 @@ def check_invariants(state: GameState) -> list[str]:
             problems.append("止めた理由がないまま HALTED になっている")
         if phase is not Phase.HALTED and state.result is None:
             problems.append("結果がないまま対戦が終わっている")
+        if state.result is not None and (phase is Phase.SUDDEN_DEATH) != (state.result.outcome == "sudden_death"):
+            # v0.134: サドン・デスの段階と結果の対応（延長戦を始める操作は、この段階だけを受け付ける）
+            problems.append(f"段階 {phase.value} と結果 {state.result.outcome!r} が合わない（サドン・デスの段階の結果はサドン・デス、ほかの終局は勝ち負け）")
         return problems
     if state.result is not None or state.halt is not None:
         problems.append(f"結果か止めた理由があるのに {phase.value} になっている")
@@ -5147,6 +5207,50 @@ def _events_since_turn_start(state: GameState) -> list:
     return recent
 
 
+def _segment_problems(state: GameState) -> list[str]:
+    """v0.134（docs/sudden-death-v0.134.md 4 章）: 終わった対戦の区間の記録（``segments``）の整合。区間がなければ何もしない（v0.133 までの状態）。
+
+    - 区間の番号は 0 から順。準備で置いたサイドの枚数は、最初の区間がルールの枚数・延長戦の区間が延長戦の枚数（p.324）。結果はどれもサドン・デス（区間を終えて延長戦を始めた）
+    - 区間のログの始まり: 最初の区間は ``game_created``（盤面を直接作った状態から始めた対戦は、ログに ``game_created`` がない）、延長戦の区間は ``sudden_death_started``（その区間の番号・
+      サイドの枚数）。ほかの位置に区間の始まりのイベントはない。ログの対戦の終わり（``game_end``）は 1 つで結果と同じ
+    - 今の区間のログは ``sudden_death_started``（今の区間の番号・枚数）から始まり、``game_created`` を持たない（前の区間のログを今の区間に混ぜない）
+    """
+    segments = state.segments
+    if not segments:
+        return []
+    if not isinstance(segments, tuple) or any(not isinstance(record, SegmentRecord) for record in segments):
+        return [f"区間の記録 {segments!r} が SegmentRecord の並びではない"]
+    problems: list[str] = []
+    for index, record in enumerate(segments):
+        where = f"区間の記録 {index}"
+        expected = state.rules.prize_count if index == 0 else state.rules.sudden_death_prize_count
+        if record.index != index or record.prize_count != expected:
+            problems.append(f"{where} の番号・サイドの枚数 {(record.index, record.prize_count)} が {(index, expected)} ではない")
+        result = record.result
+        if not isinstance(result, GameResult) or result.outcome != "sudden_death" or result.winner is not None:
+            problems.append(f"{where} の結果 {result!r} がサドン・デスではない")
+        log = record.log
+        start = log[0] if log else {}
+        starts = [i for i, e in enumerate(log) if e["kind"] in ("game_created", "sudden_death_started")]
+        if index == 0 and (starts not in ([], [0]) or start.get("kind") == "sudden_death_started") or index > 0 and (
+                starts != [0] or (start.get("kind"), start.get("segment"), start.get("prize_count")) != ("sudden_death_started", index, expected)):
+            problems.append(f"{where} のログが区間の始まり（{'game_created' if index == 0 else 'sudden_death_started'}）から始まっていない")
+        ends = [e for e in log if e["kind"] == "game_end"]
+        if isinstance(result, GameResult) and (len(ends) != 1 or (ends[0].get("outcome"), ends[0].get("winner"), tuple(ends[0].get("conditions", ())))
+                                               != (result.outcome, result.winner, tuple(result.conditions))):
+            problems.append(f"{where} のログの対戦の終わり（game_end）が 1 つで結果と同じ、になっていない")
+        if not isinstance(record.ownership_changes, tuple) or any(not isinstance(c, OwnershipChange) for c in record.ownership_changes):
+            problems.append(f"{where} の所有者の変更 {record.ownership_changes!r} が OwnershipChange の並びではない")
+        if not isinstance(record.face_down_cards, tuple) or any(uid not in state.cards for uid in record.face_down_cards):
+            problems.append(f"{where} のうらのままのカード {record.face_down_cards!r} が対戦のカードではない")
+    start = state.log[0] if state.log else {}
+    if (start.get("kind"), start.get("segment"), start.get("prize_count")) != ("sudden_death_started", len(segments), state.initial_prize_count):
+        problems.append(f"今の区間（{len(segments)}）のログが区間の始まり（sudden_death_started）から始まっていない")
+    if any(e["kind"] in ("game_created", "sudden_death_started") for e in state.log[1:]):
+        problems.append("今の区間のログに、別の区間の始まりのイベントがある")
+    return problems
+
+
 def _ownership_problems(state: GameState) -> list[str]:
     """v0.130（docs/trade-please-ownership-v0.130.md 4 章）: 対戦の中の所有者の変更（``ownership_changes``）とカードの表・ログの整合。
 
@@ -5354,7 +5458,7 @@ def _stadium_problems(state: GameState) -> list[str]:
             problems.append(f"{where} のカード {definition.id} が、登録されたスタジアムカードではない")
         if type(stadium.placed_turn) is not int or not 0 <= stadium.placed_turn <= state.turn_number:
             problems.append(f"{where} の場に出した番 {stadium.placed_turn!r} が正しくない")
-        if any(event["kind"] == "game_created" for event in state.log):
+        if any(event["kind"] in ("game_created", "sudden_death_started") for event in state.log):  # v0.134: 延長戦の区間のログも区間の始まりから
             placed = [i for i, e in enumerate(state.log) if e["kind"] == "stadium_placed" and e.get("card") == stadium.card]
             if not placed or any(e["kind"] == "stadium_discarded" and e.get("card") == stadium.card for e in state.log[placed[-1]:]):
                 problems.append(f"{where} を場に出したログ stadium_placed がない（または、そのあとにトラッシュしたログがある）")

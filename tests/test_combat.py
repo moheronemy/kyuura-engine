@@ -172,7 +172,8 @@ class SimultaneousKnockOutOrderTest(unittest.TestCase):
         self.assertEqual((state.phase, state.current_player), (Phase.MAIN, 1))
 
     def test_both_cannot_field_is_sudden_death_and_not_continued(self):
-        """両方とも出せないときはサドン・デス（p.311, p.324）。延長戦の開始は v0.1 では未実装。"""
+        """両方とも出せないときはサドン・デス（p.311, p.324）。v0.133 までは延長戦の開始が未実装で ``SUDDEN_DEATH_NOT_IMPLEMENTED``。v0.134 から、延長戦は
+        ``StartSuddenDeath`` で始め、ほかのコマンドは ``SUDDEN_DEATH_NOT_STARTED`` で受け付けない（docs/sudden-death-v0.134.md 3 章。期待の更新）。"""
         from kyuura_engine.resolution import flow
         from kyuura_engine.resolution.kernel import Resolution
 
@@ -180,9 +181,9 @@ class SimultaneousKnockOutOrderTest(unittest.TestCase):
         flow._after_knockouts(Resolution(state), (), None, ())
         self.assertEqual(state.phase, Phase.SUDDEN_DEATH)
         self.assertEqual(state.result.outcome, "sudden_death")
-        with self.assertRaises(UnsupportedError) as ctx:
+        with self.assertRaises(IllegalActionError) as ctx:
             apply_command(state, EndTurn(0))
-        self.assertEqual(ctx.exception.code, "SUDDEN_DEATH_NOT_IMPLEMENTED")
+        self.assertEqual(ctx.exception.code, "SUDDEN_DEATH_NOT_STARTED")
 
 
 class WinLossTest(unittest.TestCase):

@@ -22,6 +22,7 @@ from .commands import (
     Retreat,
     RevealFaceDown,
     CheckFaceUpDeckCard,
+    StartSuddenDeath,
     TakePrize,
     UseAttack,
     UsePokemonPower,
@@ -51,7 +52,7 @@ from .effects import (
     working_evasion_power,
 )
 from .engine import apply_command, check_invariants, new_game
-from .observation import observe, visible_log
+from .observation import observe, visible_log, visible_segment_logs
 from .errors import DeckValidationError, EngineError, IllegalActionError, StateIntegrityError, UnsupportedError
 from .rules import RULE_REFERENCES, RULES_2000_02_14, RuleSet
 from .serialize import state_to_dict
@@ -69,12 +70,13 @@ from .state import (
     Poison,
     PreventDamage,
     Retaliation,
+    SegmentRecord,
     SpecialConditions,
     StadiumInPlay,
     TrainerInUse,
 )
 
-__version__ = "0.133.0"
+__version__ = "0.134.0"
 
 __all__ = [
     "Asleep",
@@ -113,6 +115,8 @@ __all__ = [
     "RemoveDisguise",
     "RevealFaceDown",
     "CheckFaceUpDeckCard",
+    "StartSuddenDeath",
+    "SegmentRecord",
     "RULE_REFERENCES",
     "RULES_2000_02_14",
     "ReportJankenResult",
@@ -155,6 +159,7 @@ __all__ = [
     "type_readings",
     "validate_deck",
     "visible_log",
+    "visible_segment_logs",
     "weakness_of",
     "working_power_suppressors",
     "working_counterattack_power",
