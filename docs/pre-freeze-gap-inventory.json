@@ -170925,5 +170925,104 @@
         }
       ]
     }
+  ],
+  "post_classification_entries": [
+    {
+      "id": "PSP-ST1-DECK-ORACLE",
+      "entry_kind": "silent_information_leak",
+      "classification": "A",
+      "discovered_in": {
+        "how": "停止の方針の分類の作業（基点 3e25ac5。docs/stop-policy-classification.md 7.1 節）。v0.133 の棚卸しの台帳（entries）にはない",
+        "recorded_on": "2026-11-02"
+      },
+      "ledger_ref": "docs/stop-policy-classification.json の PSP-ST1-DECK-ORACLE",
+      "related_cards": [
+        "PMCG3-044",
+        "PMCG4-060",
+        "PMCG5-077",
+        "neo2-054",
+        "neo2-057"
+      ],
+      "research": {
+        "related_stop": "UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET",
+        "ruling_status": "unresolved（ST1・UQ-CARD-USE-WITHOUT-TARGET は解決済みにしない）"
+      },
+      "root_cause_group": "QUIZ-CONDITIONAL-DRAW-REJECTION-ORACLE と同じ型（使う前の拒否の受理可否による漏れ）",
+      "followups": [
+        {
+          "recorded_on": "2026-11-02",
+          "engine_version": "0.137.0",
+          "work_tree": {
+            "branch": "claude/v0.137-deck-search-oracle",
+            "base": "897103e4b67f670d1c223bb83d9a0a95c394cd2f"
+          },
+          "status": "information_leak_fixed",
+          "fix": "使う前の確かめを、実際の山札の候補から、配分を読まない下限 effects.deck_target_lower_bound（本人に見えない自分のカードのうち目的のカード K 枚・山札の外の見えないカード C 枚から max(0, K - C)）に替えた。下限が足りなければ既存のコードのまま使う前に止める（保守的な制限）",
+          "document": "docs/deck-search-oracle-v0.137.md",
+          "approval": "利用者の承認は「情報漏れ2件を先に修正すること」だけ（厳密モードの定義・不足時の規約・プレイ用の規約の承認ではない）"
+        }
+      ]
+    },
+    {
+      "id": "PSP-FC1-ENERGY-ARK-ORACLE",
+      "entry_kind": "silent_information_leak",
+      "classification": "A",
+      "discovered_in": {
+        "how": "停止の方針の分類の作業（基点 3e25ac5。docs/stop-policy-classification.md 7.2 節）。v0.133 の棚卸しの台帳（entries）にはない",
+        "recorded_on": "2026-11-02"
+      },
+      "ledger_ref": "docs/stop-policy-classification.json の PSP-FC1-ENERGY-ARK-ORACLE",
+      "related_cards": [
+        "neo2-053"
+      ],
+      "research": {
+        "related_stop": "UNRESOLVED_STATED_CARDS_SHORT",
+        "ruling_status": "unresolved（FC1・UQ-STATED-COUNT-SHORT は解決済みにしない）"
+      },
+      "root_cause_group": "同上",
+      "followups": [
+        {
+          "recorded_on": "2026-11-02",
+          "engine_version": "0.137.0",
+          "work_tree": {
+            "branch": "claude/v0.137-deck-search-oracle",
+            "base": "897103e4b67f670d1c223bb83d9a0a95c394cd2f"
+          },
+          "status": "information_leak_fixed",
+          "fix": "使う前の確かめを、実際の山札の候補から、配分を読まない下限 effects.deck_target_lower_bound（本人に見えない自分のカードのうち目的のカード K 枚・山札の外の見えないカード C 枚から max(0, K - C)）に替えた。下限が足りなければ既存のコードのまま使う前に止める（保守的な制限）",
+          "document": "docs/deck-search-oracle-v0.137.md",
+          "approval": "利用者の承認は「情報漏れ2件を先に修正すること」だけ（厳密モードの定義・不足時の規約・プレイ用の規約の承認ではない）"
+        }
+      ]
+    },
+    {
+      "id": "PSP-RUIN-WALL-BLOCKED-REASON-ORACLE",
+      "entry_kind": "silent_information_leak",
+      "classification": "A",
+      "discovered_in": {
+        "how": "v0.137 の比較プローブ（PSP-DECK-CONTENT-PRECHECKS の確認。docs/deck-search-oracle-v0.137.md 9 章）",
+        "recorded_on": "2026-11-02"
+      },
+      "ledger_ref": "docs/stop-policy-classification.json の PSP-RUIN-WALL-BLOCKED-REASON-ORACLE",
+      "related_cards": [
+        "neo2-054",
+        "neo2-057"
+      ],
+      "status": "active（v0.137 では修正していない）"
+    },
+    {
+      "id": "PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE",
+      "entry_kind": "silent_information_leak",
+      "classification": "A",
+      "discovered_in": {
+        "how": "v0.137 の同じ型の横断（docs/deck-search-oracle-v0.137.md 9 章）",
+        "recorded_on": "2026-11-02"
+      },
+      "ledger_ref": "docs/stop-policy-classification.json の PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE",
+      "related_cards": [
+        "neo4-102"
+      ],
+      "status": "active（v0.137 では修正していない）"
+    }
   ]
 }

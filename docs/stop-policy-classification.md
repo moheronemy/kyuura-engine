@@ -5,6 +5,7 @@ kyuura・利用者の `.claude/` は変えていません。ここに書く方�
 
 - 構造化台帳: [stop-policy-classification.json](stop-policy-classification.json)（`scripts/build_stop_policy_classification.py --write` で作り、`--check` で現行コードと突き合わせる）
 - 利用者が決める事項: [stop-policy-decisions.md](stop-policy-decisions.md)
+- 後の版の経過: 7.4 節（v0.137 で PSP-ST1-DECK-ORACLE・PSP-FC1-ENERGY-ARK-ORACLE を修正。ST1・FC1 の論点・モードの方針は未決のまま）
 - 元の棚卸し（v0.133 時点。基点・集計は書き換えず、履歴として参照する）: [pre-freeze-gap-inventory.md](pre-freeze-gap-inventory.md)・[JSON](pre-freeze-gap-inventory.json)・
   [修正計画](pre-freeze-remediation-plan.md)
 
@@ -205,6 +206,23 @@ v0.135・v0.136 の漏れと同じ型（受理・拒否による漏れ）です�
 
 この 3 項目は、モードによらず塞ぐべき漏れです（10 章の SB-SECRET-INDEPENDENCE）。PF-USE-WITHOUT-EFFECT の「使えない」（P-UWE-1）や PF-STATED-COUNT-SHORT の「使えない」（P-SCS-2）を
 規約にしても、漏れは塞がりません。
+
+### 7.4 v0.137 での経過（2026-11-02。上の 7.1〜7.3 の発見の記録・基点・集計は変えていない）
+
+利用者の承認は「情報漏れ 2 件を先に修正すること」だけです（厳密モードの定義・不足時の規約・プレイ用の規約の承認ではありません）。[deck-search-oracle-v0.137.md](deck-search-oracle-v0.137.md)。
+
+- **PSP-ST1-DECK-ORACLE・PSP-FC1-ENERGY-ARK-ORACLE は修正済み**（台帳の status は `fixed`）。使う前の確かめを、実際の山札の候補から、配分を読まない下限
+  `effects.deck_target_lower_bound`（本人に見えない自分のカードのうち目的のカード K 枚・山札の外の見えないカード C 枚から max(0, K − C)）に替えました。下限が足りなければ既存の
+  ST1・FC1 のまま使う前に止めます（実際には山札にある場面も止める保守的な制限）。理由の文は決まった文です
+- **ST1・FC1 の研究上の論点は未解決のまま**です。研究の停止コードは `active` のまま（停止コードを修正済みにしない）。事例 `#deck`・`#deck-contents` の `secret_dependency` は
+  `owner_known_pool`（本人が知っている集合と公開の枚数だけで決まる）にしました
+- K の集合は持ち主のデッキリストと所有者の変更から持ち主が知っている値で、エンジンの観測には入っていません。受理（公開）は相手・観戦者に「見えないカードに C + 必要な枚数以上ある」ことを
+  伝えます（分類の時点は「山札に必要な枚数ある」）。どちらも使ったプレイヤーの非公開の情報で、相手は試せません（版の文書 4.3・4.4 節）
+- 7.3 節の候補を比較プローブで確かめ、遺跡の石版の「山札の候補がどれもベンチに出すと止める」拒否の理由の文が山札のカードの名前・uid を書く漏れ（PSP-RUIN-WALL-BLOCKED-REASON-ORACLE）と、
+  同じ型の横断でエネルギー増幅装置（neo4-102）の UPZ2 の漏れ（PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE）を見つけました。どちらも修正していません（台帳に `active` で追加）。キョウのコクーンの経路は
+  未確認の候補のままです
+- 台帳の作成スクリプトの直した点: 2 項目の修正の記録、新しい 2 項目、`updates`（この版の基点 897103e と変えた項目）、`counts_at_classification`（分類の時点の集計の写し）、事例の行番号、
+  リポジトリのファイルの sha256 を改行を LF にそろえて求めること（分類の時点の `research_reference.sha256` は CRLF の作業の木の値。内容は同じ）
 
 ## 8. プレイ用の規約だけでは解消できない項目
 

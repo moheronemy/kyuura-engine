@@ -57,3 +57,10 @@ P0/P1の着手順は、根拠と設計が揃うまで時間を要するR2を準�
 ## 追記: R1 の経過（v0.136。2026-11-02）
 
 この計画の本文と v0.135 の追記は変えずに追記する。R1（回答拒否オラクル）のうち、v0.135 の横断調査で残ったカードめくりゲーム（neo1-080。GAP-CARD-FLIP-REJECTION-ORACLE）を v0.136 で修正した（使う前に正解・正解でないの両方の結果を確かめて止める。保守的な制限。FU3 の裁定は未解決のまま）。完了条件は `twin_command_problems` と `tests/test_card_flip_answer_rejection_v0_136.py` で確かめた。引く処理の横断（答え・コイン・相手の答え・自分の選択で引き方が分かれるもの）では、ほかに同じ型の漏れの候補はなかった（版の文書 8 章）。[card-flip-answer-rejection-v0.136.md](card-flip-answer-rejection-v0.136.md)
+
+## 追記: R1 の経過（v0.137。2026-11-02）
+
+この計画の本文と v0.135・v0.136 の追記は変えずに追記する。R1（回答拒否オラクル）と同じ型の、使う前の拒否による漏れ 2 件（停止の方針の分類で見つけた PSP-ST1-DECK-ORACLE・
+PSP-FC1-ENERGY-ARK-ORACLE）を v0.137 で修正した（配分を読まない下限で確かめて止める。保守的な制限。ST1・FC1 の論点は未解決のまま）。完了条件は `twin_command_problems`（持ち主が知っている
+所有カードの集合を前提に加える `owner_knowledge`）と `tests/test_deck_search_oracle_v0_137.py` で確かめた。同じ型の横断で、遺跡の石版の理由の文・エネルギー増幅装置の 2 件が残る（未修正）。
+[deck-search-oracle-v0.137.md](deck-search-oracle-v0.137.md)
