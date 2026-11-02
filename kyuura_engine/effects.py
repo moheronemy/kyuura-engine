@@ -22068,7 +22068,7 @@ def _quiz_group(state: GameState, use: TrainerUse) -> SetAsideCards | None:
     return next((g for g in state.set_aside if g.kind == SET_ASIDE_QUIZ and g.trainer_card == use.card), None)
 
 
-def quiz_draw_outcome_stop(state: GameState, user: int, draw: int) -> tuple[str, str] | None:
+def quiz_draw_outcome_stop(state: GameState, user: int, draw: int, *, outcomes: tuple[tuple[int, int], ...] | None = None) -> tuple[str, str] | None:
     """v0.135（docs/quiz-answer-rejection-v0.135.md 4 章）: 答えの正誤で引くプレイヤーが変わるクイズ（正解なら相手プレイヤー、正解でないなら使ったプレイヤー ``user`` が ``draw`` 枚引く。
     引けるだけ）で、正解・正解でないの両方の引き方を使う前に確かめる。どちらかが既存のおもての山札の止め方（v0.126。``zones.draw_cards`` の FU3・``faceup.command_problem``）に当たるなら、
     その (コード, 理由) を返す（使う前に止める）。どちらも当たらなければ None。
@@ -22079,13 +22079,18 @@ def quiz_draw_outcome_stop(state: GameState, user: int, draw: int) -> tuple[str,
     - 試す順は決まった順（使ったプレイヤー → 相手プレイヤー）。理由の文は既存の止め方の文（プレイヤーの番号・山札の上からの位置・枚数だけを書き、カードを書かない）
     - 状態の複製の上で引いて比べる（渡した状態・乱数・ログは変えない。公開・ログを加えない）。v0.129 のカツラのクイズ その1の確かめ（``BlainesHeightQuiz.face_up_draw_stop``）を
       共通にした（その1 の動きは同じ）
+    - v0.136（docs/card-flip-answer-rejection-v0.136.md）: ``outcomes`` は、答えの結果ごとの (引くプレイヤー, 枚数) の並び（既定は v0.135 と同じ ((``user``, ``draw``),
+      (相手, ``draw``))）。枚数 0 は「その結果では引かない」で、試さない（山札が変わらないので止め方に当たらない）。カードめくりゲーム（正解なら使ったプレイヤーが引き、正解でないなら
+      引かない）が ((``user``, ``draw``), (``user``, 0)) を渡す。試す順は並びの順
     """
     if not state.face_up_deck:
         return None
-    for drawer in (user, 1 - user):
+    for drawer, count in ((user, draw), (1 - user, draw)) if outcomes is None else outcomes:
+        if count <= 0:
+            continue
         trial = state.clone()
         try:
-            _draw_up_to(trial, drawer, draw)
+            _draw_up_to(trial, drawer, count)
         except UnsupportedError as error:
             return error.code, error.message
         stop = _faceup.command_problem(state, trial)
@@ -31894,6 +31899,9 @@ class GuessOpponentPrizeKind(TrainerEffect):
       決めるのは使ったプレイヤー。答えの候補は ``FLIP_KIND_NAMES``。続きの情報には位置だけを書き、カードを書かない）→ おもてにする（``zones.reveal_prize``。v0.63 のおもてのサイドの
       記録 ``face_up_prizes``。ログ ``prize_revealed`` は公開）→ 正解なら引く（引けるだけ）
     - 種類はサイドにある間の印刷の分類（なにかの化石・ピッピ人形はトレーナーカード）。うらの相手のサイドがなければ FC1（使う前）
+    - v0.136（docs/card-flip-answer-rejection-v0.136.md）: おもてのカードのある山札（v0.126）で、正解の引き方（使ったプレイヤーが ``draw`` 枚。正解でないなら引かない）が既存の
+      止め方に当たるなら、FC1 の確かめのあとに使う前に止める（``face_up_draw_stop``。答えの拒否からサイドの種類を漏らさない。v0.135 までは答えの段階で正解だけが FU3 になり、同じ
+      答えの受理・拒否が見えないサイドで変わった）。片方の結果だけなら進められる場面も止める保守的な制限で、FU3 の裁定は変えない
     """
 
     text: str
@@ -31912,6 +31920,14 @@ class GuessOpponentPrizeKind(TrainerEffect):
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         if not self.positions(state, use):
             raise UnsupportedError(STATED_CARDS_SHORT_CODE, f"{STATED_CARDS_SHORT_REASON}。カードめくりゲームで、うらになっている相手のサイドがない")
+        stop = self.face_up_draw_stop(state, use)
+        if stop is not None:
+            raise UnsupportedError(*stop)
+
+    def face_up_draw_stop(self, state: GameState, use: TrainerUse) -> tuple[str, str] | None:
+        """v0.136: 正解（使ったプレイヤーが ``draw`` 枚引く）・正解でない（引かない）の両方の結果の確かめ（``quiz_draw_outcome_stop``）。使ったプレイヤーの山札の枚数・おもての
+        カードの枚数（公開）と引く枚数だけで決まり、選ぶサイド・答え・サイドの中身によらない。"""
+        return quiz_draw_outcome_stop(state, use.player, self.draw, outcomes=((use.player, self.draw), (use.player, 0)))
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         push_trainer_decision(state, use, kind=SELECT_OPPONENT_PRIZE, player=use.player, options=self.positions(state, use))
