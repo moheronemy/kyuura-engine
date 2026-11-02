@@ -99,6 +99,11 @@
 - **推奨（案）**: 次の版で、公開の情報だけで決める止め方に直す。研究の答えを作らず、保守的な制限として記録する。候補の 2 経路は、同じ版で比較プローブを作ってから判断する。
 - **影響**: 止める場面が増える（保守的）か、使える場面が増える（P-UWE-2）。どちらも秘密への非依存（SB-SECRET-INDEPENDENCE）を対のテストで確かめる。
 - **依存**: P-UWE-2 を採るなら DEC-USE-WITHOUT-EFFECT。
+- **経過（v0.137。2026-11-02）**: 利用者は「情報漏れ 2 件を先に修正すること」を承認し、v0.137 で `PSP-ST1-DECK-ORACLE`・`PSP-FC1-ENERGY-ARK-ORACLE` を直しました（[deck-search-oracle-v0.137.md](deck-search-oracle-v0.137.md)）。
+  止め方は上の選択肢の「公開の情報だけで止める」そのものではなく、持ち主が知っている見えない自分のカードの集合と公開の枚数から求めた下限で止める形です（公開の情報だけでは実際にほぼ
+  使えなくなるため。受理が相手に伝える内容が変わる点を版の文書 4.4 節に記録）。P-UWE-2（使えて見つからない）・P-SCS（あるだけ）は採っていません。この承認は、厳密モードの定義・
+  不足時の規約・プレイ用の規約・既存の利用者指定の扱いの承認ではありません（DEC-STRICT-DEFINITION・DEC-USE-WITHOUT-EFFECT・DEC-STATED-COUNT-SHORT ほかは未決のまま）。
+  `PSP-DECK-CONTENT-PRECHECKS` の残り（キョウのコクーン）と、v0.137 で見つけた `PSP-RUIN-WALL-BLOCKED-REASON-ORACLE`・`PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE` の扱いは未決です。
 
 ### DEC-SEARCH-LIMITS — 探索・組合せの上限
 

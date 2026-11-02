@@ -571,3 +571,15 @@ v0.133の既存報告は247モジュール7208件で失敗2、その後3モジ�
 - 再現: 基点 da9d4e9 の木で、使ったプレイヤーの山札の 2 枚目がおもての盤面（3 つ）で、同じ答えの受理・FU3 が、だれにも見えない相手のサイドの種類で変わった
 - 修正（v0.136）: 使う前に正解（使ったプレイヤーが 2 枚引く）・正解でない（引かない）の両方の結果を確かめ、どちらかが既存の止め方に当たれば使う前に止める（`effects.quiz_draw_outcome_stop` に `outcomes` を加えた）。片方の結果だけなら進められる場面も止める保守的な制限。**情報漏れは修正した。FU3（UQ-FLASH-FACE-UP-DECK）の裁定は未解決のまま**
 - 検証: `twin_command_problems` が基点の木で 9 つの組すべてを検出し、この版で違いなし・全体のテスト: 250 モジュール・7,282 件、失敗 0・エラー 0・省略 1（KYUURA_COMPAT_BASE 未設定の大きな比較）、終了コード 0 以外なし、監視の時間切れなし（1 ワーカー・1 モジュール 1 プロセス、PYTHONUTF8=1、18:02:22〜19:12:29）・lockstep 290 局 差 0。詳細は [card-flip-answer-rejection-v0.136.md](card-flip-answer-rejection-v0.136.md)
+
+## 追記: v0.137 での経過（2026-11-02）
+
+この節は v0.133 の棚卸しの記録（上の本文・基点・集計）と v0.135・v0.136 の追記を変えずに、後の版での経過だけを追記する。
+
+- 対象: 停止の方針の分類（[stop-policy-classification.md](stop-policy-classification.md) 7 章）で見つけた PSP-ST1-DECK-ORACLE（エネルギー転送・ボスのやりかた・タケシの育て方・遺跡の石版）・
+  PSP-FC1-ENERGY-ARK-ORACLE（エネルギーアーク）。v0.133 の台帳にはない（根本の原因は QUIZ-CONDITIONAL-DRAW-REJECTION-ORACLE と同じ型の、使う前の拒否による漏れ）。JSON では、もとの
+  `entries`・`post_audit_entries`・集計を変えずに、最上位の `post_classification_entries` に記録した
+- 再現: 基点 897103e の木で、構築盤面の 5 組と、new_game からの合法な操作の列（seed 18 は炎エネルギーがサイドで ST1、seed 1 は山札で受理）で、受理・拒否が配分で変わった
+- 修正（v0.137）: 使う前の確かめを、配分を読まない下限（`effects.deck_target_lower_bound`）に替えた。実際には山札にある場面も止める保守的な制限。**情報漏れは修正した。ST1・FC1 の論点は未解決のまま**
+- 新たに見つけた項目（修正していない）: PSP-RUIN-WALL-BLOCKED-REASON-ORACLE・PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE（分類の台帳に記録）
+- 検証: [deck-search-oracle-v0.137.md](deck-search-oracle-v0.137.md) 10 章

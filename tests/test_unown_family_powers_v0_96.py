@@ -441,7 +441,7 @@ class EngageTest(unittest.TestCase):
     def test_no_opportunity_from_the_deck_or_under_chemical_gas(self):
         for card in (UE, UR):
             with self.subTest(card=card):
-                wall = board(mon(H.RATTATA), hand=(WALL,), deck=[card, W, W])
+                wall = board(mon(H.RATTATA), hand=(WALL,), deck=[card, W, W], prizes=0)  # v0.137: 山札のアンノーンが、うらのサイドの枚数より多い盤面（配分を読まない下限で、山札にあると確かめられる。docs/deck-search-oracle-v0.137.md 5 章）
                 chosen = answer(apply_kernel(wall, PlayTrainer(0, uid(wall, WALL))), (uid(wall, card, zone="deck"),))
                 self.assertIsNone(chosen.decision)
                 self.assertFalse(new_events(wall, chosen, "pokemon_power", "entry_power_declined"))
@@ -622,7 +622,7 @@ class LaughTest(unittest.TestCase):
         rejects(self, done, UsePokemonPower(0, pid, 0), "POWER_ALREADY_USED", error=IllegalActionError)
 
     def test_other_shuffles_have_no_shuffler_field(self):
-        wall = board(mon(H.RATTATA), hand=(WALL,), deck=[UE, W, W])
+        wall = board(mon(H.RATTATA), hand=(WALL,), deck=[UE, W, W], prizes=0)  # v0.137: 山札のアンノーンが、うらのサイドの枚数より多い盤面（配分を読まない下限で、山札にあると確かめられる。docs/deck-search-oracle-v0.137.md 5 章）
         chosen = answer(apply_kernel(wall, PlayTrainer(0, uid(wall, WALL))), (uid(wall, UE, zone="deck"),))
         self.assertEqual([sorted(e) for e in new_events(wall, chosen, "shuffle")], [["kind", "player", "turn"]])
 
@@ -747,7 +747,7 @@ class RuinWallTest(unittest.TestCase):
     def test_benches_one_unown_from_the_deck_and_shuffles_once(self):
         for card in (WALL, WALL2):
             with self.subTest(card=card):
-                state = board(mon(H.RATTATA), hand=(card,), deck=[W, UO, H.RATTATA, UL, POTION, UE, W])
+                state = board(mon(H.RATTATA), hand=(card,), deck=[W, UO, H.RATTATA, UL, POTION, UE, W], prizes=2)  # v0.137: 山札のアンノーンが、うらのサイドの枚数より多い盤面（配分を読まない下限で、山札にあると確かめられる。docs/deck-search-oracle-v0.137.md 5 章）
                 asked = apply_kernel(state, PlayTrainer(0, uid(state, card)))
                 deck = state.players[0].deck
                 options = tuple(sorted(u for u in deck if state.cards[u].card_id in (UO, UL, UE)))
@@ -767,7 +767,7 @@ class RuinWallTest(unittest.TestCase):
                 audited(self, done)
 
     def test_invalid_answers_change_nothing(self):
-        state = board(mon(H.RATTATA), hand=(WALL,), deck=[W, UO, H.RATTATA])
+        state = board(mon(H.RATTATA), hand=(WALL,), deck=[W, UO, H.RATTATA], prizes=0)  # v0.137: 山札のアンノーンが、うらのサイドの枚数より多い盤面（配分を読まない下限で、山札にあると確かめられる。docs/deck-search-oracle-v0.137.md 5 章）
         asked = apply_kernel(state, PlayTrainer(0, uid(state, WALL)))
         rattata = uid(state, H.RATTATA, zone="deck")
         for choices in ((), (rattata,), (asked.decision.options[0], rattata)):
@@ -786,7 +786,7 @@ class RuinWallTest(unittest.TestCase):
                 rejects(self, state, PlayTrainer(0, uid(state, WALL)), ST1)
 
     def test_goop_gas_blocks_every_candidate_before_use(self):
-        state = board(mon(H.RATTATA), hand=(H.GOOP_GAS_ATTACK, WALL), deck=[UO, UL, W])
+        state = board(mon(H.RATTATA), hand=(H.GOOP_GAS_ATTACK, WALL), deck=[UO, UL, W], prizes=1)  # v0.137: 山札のアンノーンが、うらのサイドの枚数より多い盤面（配分を読まない下限で、山札にあると確かめられる。docs/deck-search-oracle-v0.137.md 5 章）
         gas = apply_kernel(state, PlayTrainer(0, uid(state, H.GOOP_GAS_ATTACK)))
         rejects(self, gas, PlayTrainer(0, uid(gas, WALL)), GG1)
 

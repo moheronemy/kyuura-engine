@@ -6487,6 +6487,11 @@ def log_problems(state) -> list[str]:
 
     face_down_pids: set[int] = set()  # v0.67: ログから組み立てた、うらのカードの場のポケモン
 
+    def in_play_now(uid: int) -> bool:
+        """v0.137: カード ``uid`` が今、場のポケモンのカード（いちばん上・重なり）か。``ids`` は場をはなれても消さないので（場の番号の記録）、``uid in ids`` は「一度でも場に出た」
+        になる。場から山札にもどしたカードを、あとで山札から出す（山札にもどすワザのあとの［INCREASE］など）ときに、場にあると読み違えないため。"""
+        return ids.get(uid) in in_play
+
     def enter(uid: int) -> None:
         nonlocal next_id
         v100_entered[next_id] = current_turn  # v0.100
@@ -6724,9 +6729,11 @@ def log_problems(state) -> list[str]:
         answers_entry = kind == "entry_power_declined" or (kind == "pokemon_power" and "entry" in e)
         # v0.43: 場に出たときの特殊能力の使う機会には、その機会のあと（進化・手札から場に出したあと）に 1 回だけ答える。v0.86 から、同じ時点のほかの反応（［れんさしんか］・
         # 別のポケモンの使う機会。順番は番のプレイヤーが決める）のあとに答えることがあるので、答えを待つ機会を番号ごとに持ち、ワザ・番の終わりまでにすべて答えたことを確かめる
+        entry_answer_ok = False
         if answers_entry:
             due_entry = entry_due.pop(e["pokemon_id"], None)
-            if due_entry is None or e["turn"] != due_entry[0]:
+            entry_answer_ok = due_entry is not None and e["turn"] == due_entry[0]
+            if not entry_answer_ok:
                 problems.append(f"{e['turn']} 番の場に出たときの特殊能力の答え（ポケモン {e['pokemon_id']}）が、使う機会（その特殊能力を持つカードの進化・手札から場に出したあと）にない")
         elif kind in ("attack", "turn_end") and entry_due:
             for pid, (turn, key) in sorted(entry_due.items()):
@@ -7226,7 +7233,7 @@ def log_problems(state) -> list[str]:
                                                                                                            E.EvolveChosenNamedFromDeck)))
                         or isinstance(_effect_of_event(state, e), EachPlayerEvolutionSong))
                 if not valid or owner.get(uid) != e["player"] \
-                        or uid in hand[e["player"]] or uid in discard[e["player"]] or uid in ids or pokemon_owner.get(e["pokemon_id"]) != e["player"]:
+                        or uid in hand[e["player"]] or uid in discard[e["player"]] or in_play_now(uid) or pokemon_owner.get(e["pokemon_id"]) != e["player"]:
                     problems.append(f"{e['turn']} 番に山札から重ねた進化カード {uid} が、そのワザ（山札から進化させるワザ）の処理・山札のカードではない")
                 if "power" in e or not isinstance(_effect_of_event(state, e), E.EvolveChosenNamedFromDeck):
                     shuffle_due = e  # v0.120: しんかのほうしは、選んだポケモンをすべて処理したあとに 1 回だけ切る（v120_problems）
@@ -7718,7 +7725,10 @@ def log_problems(state) -> list[str]:
             declared = (e["turn"], e["player"], e["pokemon_id"])
             power_card = e.get("card", top.get(e["pokemon_id"]))  # v0.49: のせたカードの特殊能力ならそのカード（ログの card）
             declared_key = f"{state.cards[power_card].card_id}@power{e['power_index']}" if power_card is not None else None
-            if e["player"] != turn_player or pokemon_owner.get(e["pokemon_id"]) != e["player"] or e["pokemon_id"] not in in_play:
+            # v0.137: 場に出たときの特殊能力の答え（記録した使う機会に当たったもの）は、番でない持ち主のものでもよい（v0.96。相手のエリカの香水でベンチに出させられた
+            # アンノーン[E] の［ENGAGE］は、持ち主が相手の番に答える）
+            outside_turn_entry = "entry" in e and entry_answer_ok
+            if (e["player"] != turn_player and not outside_turn_entry) or pokemon_owner.get(e["pokemon_id"]) != e["player"] or e["pokemon_id"] not in in_play:
                 problems.append(f"{e['turn']} 番の特殊能力の宣言（ポケモン {e['pokemon_id']}）が、番のプレイヤーの場のポケモンではない")
                 continue
             # v0.8: 宣言した時点の場で、宣言しない特殊能力でないこと・はたらいているかがくへんかガスに消されていないこと
@@ -9174,7 +9184,7 @@ def log_problems(state) -> list[str]:
                 from_hand(e, e["player"], uid)
             elif uid in hand[e["player"]] or uid in discard[e["player"]]:
                 fits = False
-            if not fits or owner.get(uid) != e["player"] or uid in ids:
+            if not fits or owner.get(uid) != e["player"] or in_play_now(uid):
                 problems.append(f"{e['turn']} 番にたねポケモンとしてあつかって出したカード {uid}（{zone}）が、その効果で出せるカードではない")
             enter(uid)
             if ids[uid] != e["to_pokemon_id"]:
@@ -9444,7 +9454,7 @@ def log_problems(state) -> list[str]:
             grouped = isinstance(effect, E.BenchNameGroupFromDeckOnEntry) and definition.name_group == effect.group
             if not (isinstance(effect, BenchBasicsFromDeckOnEntry) or (named and definition.name_ja == effect.name) or grouped) \
                     or pokemon_owner.get(e["pokemon_id"]) != e["player"] or owner.get(uid) != e["player"] \
-                    or uid in hand[e["player"]] or uid in discard[e["player"]] or uid in ids or not definition.is_basic_pokemon:
+                    or uid in hand[e["player"]] or uid in discard[e["player"]] or in_play_now(uid) or not definition.is_basic_pokemon:
                 problems.append(f"{e['turn']} 番に特殊能力 {e['power']} でベンチに出したカード {uid} が、プレイヤー {e['player']} の山札のたねポケモンではない")
             benched = (shuffle_due["count"] + 1) if shuffle_due is not None and shuffle_due.get("power") == e["power"] and "count" in shuffle_due else 1
             if isinstance(effect, BenchBasicsFromDeckOnEntry) and benched > effect.max_cards:
@@ -9471,7 +9481,7 @@ def log_problems(state) -> list[str]:
             if kind == "bench_from_deck":
                 uid = e["card"]
                 definition = state.printed_def(uid)
-                if owner.get(uid) != e["player"] or uid in hand[e["player"]] or uid in discard[e["player"]] or uid in ids \
+                if owner.get(uid) != e["player"] or uid in hand[e["player"]] or uid in discard[e["player"]] or in_play_now(uid) \
                         or not (definition.is_baby_pokemon if babies else definition.is_basic_pokemon) or (names is not None and definition.name_ja not in names) \
                         or (pokemon_type is not None and definition.pokemon_type is not pokemon_type) \
                         or (owner_name is not None and not definition.name_ja.startswith(f"{owner_name}の")):
@@ -11339,7 +11349,14 @@ def command_outcome(state, command) -> tuple[tuple, object | None]:
     return outcome, after
 
 
-def twin_command_problems(states, commands, viewers=(0, 1, None), *, until_public_difference: bool = True) -> list[str]:
+def owned_card_ids(state, player) -> tuple[str, ...]:
+    """v0.137（docs/deck-search-oracle-v0.137.md 4 章）: プレイヤー ``player`` が所有するカードの id の多重集合（並べた組）。持ち主は、対戦開始時のデッキリスト（自分で出した）と、
+    両者が見た所有者の変更（とりかえっこプリーズの交換）から知っている。観測（``observe``）には入っていないので、比べる検査で「持ち主が知っている」ことを明示して比べる値。相手・
+    観戦者は知らない（相手のデッキリストは公開されない）。"""
+    return tuple(sorted(card.card_id for card in state.cards.values() if card.owner == player))
+
+
+def twin_command_problems(states, commands, viewers=(0, 1, None), *, until_public_difference: bool = True, owner_knowledge: bool = False) -> list[str]:
     """v0.135: 拒否による情報漏れの比較検査。ある見る人（``viewers`` のどれか）の公開の情報（``public_view``）が同じで、見えない情報だけが違う状態（``states``。2 つ以上）に、同じ
     コマンドの並び（``commands``。それぞれ状態を受け取りコマンドを返す関数でもよい）を順に送り、それぞれの段で、受理・拒否・拒否のコードと理由の文が状態によって変わらないか。
 
@@ -11351,6 +11368,8 @@ def twin_command_problems(states, commands, viewers=(0, 1, None), *, until_publi
     - 受け付けたら、``viewers`` の公開の情報を比べる。``until_public_difference`` なら、公開の情報が分かれた段（答えの正誤をおもてにするなど、説明どおりに公開した段）で比べるのを
       やめる（そこから先は公開の情報が違うので、比べる前提が成り立たない）。偽なら、違えば問題
     - どれかの段で全部が拒否されたら、そこで終わる（拒否の印は同じことを確かめた）
+    - v0.137: ``owner_knowledge`` なら、前提に、``viewers`` のプレイヤーそれぞれが所有するカードの id の多重集合（``owned_card_ids``。持ち主だけが知っている）が状態によって同じことを
+      加える（山札とサイドの配分だけが違う状態を比べる。持ち主の知っている集合が違う状態は比べない）
     """
     problems: list[str] = []
     states = list(states)
@@ -11360,6 +11379,8 @@ def twin_command_problems(states, commands, viewers=(0, 1, None), *, until_publi
         views = [public_view(s, viewer) for s in states]
         if any(v != views[0] for v in views[1:]):
             return [f"比べる前提: 見る人 {viewer} の公開の情報（観測・ログの写し）が、状態によって違う"]
+        if owner_knowledge and viewer is not None and any(owned_card_ids(s, viewer) != owned_card_ids(states[0], viewer) for s in states[1:]):
+            return [f"比べる前提: 見る人 {viewer} が所有するカードの集合（デッキリストと所有者の変更から知っている）が、状態によって違う"]
     for step, command in enumerate(commands):
         built = [command(s) if callable(command) else command for s in states]
         if any(repr(b) != repr(built[0]) for b in built[1:]):

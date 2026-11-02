@@ -724,9 +724,13 @@ class AuditTest(unittest.TestCase):
     対戦（tools/existing_effect_games.py の局。開発用の seed 80〜83。正式な対戦の seed 0〜3 とは別）のログを 1 か所書き換えると、監査が見つける。
 
     A122 対 C121（seed 82）は、なきごえで 2 段階のあとに 0 になって計算が止まったワザ（stopped_after_step_2）の 6 段階の［ANGER］の記録がないことを、監査が誤って指摘した局
-    （文書 13 章。エンジンの処理は正しい）。監査を直したあとの回帰の確かめに使う。"""
+    （文書 13 章。エンジンの処理は正しい）。監査を直したあとの回帰の確かめに使う。
 
-    GAMES = ((("U122", "W122"), 80), (("W122", "A122"), 80), (("A122", "C121"), 82), (("B122", "F122"), 80), (("F122", "L122"), 83),
+    v0.137: 遺跡の石版の保守的な使う前の確かめ（docs/deck-search-oracle-v0.137.md）で、遺跡の石版を使う局が変わった（U122 対 W122・W122 対 A122 の seed 80 は、
+    遺跡の石版を使わなくなるところから分かれ、［UNDO］・［WANT］を使わなくなる）。確かめの中身は変えず、同じ組で［UNDO］（undo_returned）・［WANT］（want_recovered・
+    want_tails）を使う開発用の seed 151 に替え、［ANGER］と［XXXXX］の組（anger_with_xxxxx）に C121 対 A122・seed 89 を加えた。"""
+
+    GAMES = ((("U122", "W122"), 151), (("W122", "A122"), 151), (("A122", "C121"), 82), (("C121", "A122"), 89), (("B122", "F122"), 80), (("F122", "L122"), 83),
              (("B122", "L122"), 81), (("L122", "B122"), 80), (("L122", "B122"), 81))
     _played: ClassVar[dict] = {}
 
@@ -775,10 +779,14 @@ class AuditTest(unittest.TestCase):
 
     def test_xxxxx_stopped_after_step_two_is_not_reported(self):
         """v0.118 の監査（``v118_close``）の誤りの回帰（正式な対戦の C121 対 A122・seed 0 で見つけた。エンジンの処理は正しい。文書 13 章）: なきごえを受けたアンノーンの
-        「めざめるパワー」が 2 段階で 0 になって計算を終えると、6 段階の［XXXXX］の追加は記録されない。正式な対戦の局の再生（seed を選び直すためではない）。"""
+        「めざめるパワー」が 2 段階で 0 になって計算を終えると、6 段階の［XXXXX］の追加は記録されない。
+
+        v0.137: もとは見つけた正式な対戦の局（C121 対 A122・seed 0）の再生。v0.137 の遺跡の石版の保守的な使う前の確かめ（docs/deck-search-oracle-v0.137.md）で、
+        その局は 4 ターンめの遺跡の石版を使わなくなるところから分かれ、この場面に届かない。同じ場面（［XXXXX］のコインのあるターンに 2 段階で止まったワザ）に届く同じ組の
+        開発用の seed 89 で、同じ確かめをする（もとの局の再生ではない）。"""
         from tests.log_audit import log_problems
 
-        result = self.game(("C121", "A122"), 0)
+        result = self.game(("C121", "A122"), 89)
         state = result["state"]
         coins = {x["turn"] for x in state.log if x["kind"] == "group_attack_power_coins" and x["amount"]}
         self.assertTrue([e for e in state.log if e["kind"] == "damage" and e.get("stopped_after_step_2") and e["turn"] in coins])
@@ -793,7 +801,7 @@ class AuditTest(unittest.TestCase):
         def without_letters(log, i, e):
             return e["kind"] == "pokemon_power" and e.get("power", "").startswith("UNDO")
 
-        found = self.rewritten(("U122", "W122"), 80, without_letters, lambda e: e.update(turn=e["turn"]))
+        found = self.rewritten(("U122", "W122"), 151, without_letters, lambda e: e.update(turn=e["turn"]))
         self.assertEqual([p for p in found if "ベンチにアンノーン" in p], [])  # 書き換えない局は通る
         from unittest import mock
 
@@ -802,13 +810,13 @@ class AuditTest(unittest.TestCase):
 
         # エンジンがベンチの文字を確かめなくなると、手順は文字がそろう前に［UNDO］を使い、監査が見つける
         with mock.patch.object(E, "require_bench_letters", lambda *args, **kwargs: None):
-            result = games.play(("U122", "W122"), 80, keep_state=True)
+            result = games.play(("U122", "W122"), 151, keep_state=True)
         self.assertTrue([p for p in log_problems(result["state"]) if "ベンチにアンノーン" in p])
 
     def test_audit_finds_want_recovering_a_pokemon(self):
-        state = self.game(("W122", "A122"), 80)["state"]
+        state = self.game(("W122", "A122"), 151)["state"]
         pokemon_card = next(uid for uid, c in state.cards.items() if state.card_def(uid).category == "pokemon" and c.owner == 0)
-        found = self.rewritten(("W122", "A122"), 80, lambda log, i, e: e["kind"] == "power_recover_from_discard", lambda e: e.update(card=pokemon_card))
+        found = self.rewritten(("W122", "A122"), 151, lambda log, i, e: e["kind"] == "power_recover_from_discard", lambda e: e.update(card=pokemon_card))
         self.assertTrue([p for p in found if "トラッシュから手札に加えたカード" in p])
 
     def test_audit_finds_a_vine_pull_switch_on_the_wrong_side(self):

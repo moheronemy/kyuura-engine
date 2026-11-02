@@ -751,6 +751,9 @@ V0_126 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read
 V126_FLASH = "ES2-035"
 V135_QUIZ_2, V135_PERSONALITY, V135_DARK_RATICATE = "GD5-017", "neo4-105", "PMCG4-046"  # v0.135: カツラのクイズ その2・ポケモン性格判定・わるいラッタ
 V136_CARD_FLIP = "neo1-080"  # v0.136: カードめくりゲーム
+# v0.137（docs/deck-search-oracle-v0.137.md）: 選ばなくてよいと書かれていない山札の検索（エネルギー転送・ボスのやりかた・タケシの育て方・遺跡の石版 2 種）とエネルギーアーク
+V137_ENERGY_ARK, V137_RUIN_WALLS, V137_UNOWN_E, V137_UNOWN_R = "neo2-053", ("neo2-054", "neo2-057"), "PF2-002", "PRN-035"
+V137_TRAINERS = ("PMCG3-044", "PMCG4-060", "PMCG5-077", V137_ENERGY_ARK, *V137_RUIN_WALLS)
 # v0.127（docs/deferred-shortage-user-promos-v0.127.md 12 章）: ファイヤー 2 枚（ドライアップ）・怪電波マシーン（枚数不足の途中停止）と、利用者が指定した簡略ルールのプロモ 3 枚（_のピカチュウ 2 枚・
 # ハマちゃんのヤドキング）。ワザ・トレーナーの手順 ``_v127_attack``・``_v127_trainer``・決定の答え ``_v127_decision`` を重ねる。ログから数えるのは ``v127_uses``
 V0_127 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_127"])
@@ -1090,6 +1093,14 @@ DECKS = {
     # 入るように、たね・1 進化・トレーナーを入れる。パソコン通信（山札を切って、おもての印を消す）でおもての山札の偏りを作る
     "C136": ((V126_FLASH, 4), (V136_CARD_FLIP, 4), (RATTATA, 4), (RATICATE, 3), (ONIX, 3), (driver.BILL, 2), (driver.COMPUTER_SEARCH, 2), (driver.POTION, 2),
              (FIGHTING, 36)),
+    # v0.137: 草・無色。ボスのやりかた・エネルギー転送・エネルギーアーク 4 枚ずつと、「わるい」の進化カード 12 枚（わるいゴルバット・わるいアーボック・わるいラッタ）・基本エネルギーカード
+    # 24 枚（サイド 6 枚より多いので、対戦の早い番から配分を読まない下限で使える。少なくなれば使う前に止まる）
+    "D137": (("PMCG4-060", 4), ("PMCG3-044", 4), (V137_ENERGY_ARK, 4), (DARK_GOLBAT, 4), (ROCKET_ZUBAT, 4), (DARK_ARBOK, 4), (ROCKET_EKANS, 4),
+             (V135_DARK_RATICATE, 4), (RATTATA, 4), (GRASS, 24)),
+    # v0.137: 超・闘・草・無色。遺跡の石版 2 種（2 枚ずつ）とアンノーン 4 枚（「アンノーン」は合わせて 4 枚まで。サイドが 3 枚以下にならないと下限が 1 にならない）、タケシの育て方 4 枚と
+    # 「タケシの」ポケモン 14 枚、エネルギー転送 4 枚
+    "U137": ((V137_RUIN_WALLS[0], 2), (V137_RUIN_WALLS[1], 2), (V137_UNOWN_E, 2), (V137_UNOWN_R, 2), ("PMCG5-077", 4), (BROCKS_ZUBAT, 4), (BROCKS_GOLBAT, 2),
+             (BROCKS_GEODUDE, 4), (BROCKS_LICKITUNG, 4), ("PMCG3-044", 4), (RATTATA, 4), (PSYCHIC, 8), (FIGHTING, 8), (GRASS, 10)),
     "X132": ((V132_SLOWPOKE, 4), (V132_SLOWKING, 3), (DITTO, 1), (V132_SUPER_ENERGY_RETRIEVAL, 2), (V132_SPROUT_TOWER, 2), (V132_FOCUS_BAND, 2),
              (MYSTERIOUS_FOSSIL, 1), (driver.BILL, 2), (SWITCH, 2), (driver.POTION, 1), (PSYCHIC, 40)),
     "F45": ((ONIX, 3), (RATTATA, 4), (RATICATE, 3), (ROCKETS_HITMONCHAN, 3), (BROCKS_GEODUDE_40, 4), (BROCKS_RHYHORN, 1), (BROCKS_SANDSHREW, 1),
@@ -2240,6 +2251,9 @@ PAIRINGS_V0_135 = (("Q135", "Q135"), ("Q135", "F126"), ("Q135", "S80"))
 # v0.135 のクイズ 3 種類。共通の確かめを共有するクイズが今までどおり動くか）。組・席・seed は正式な対戦の前に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめる seed 90 とは別。
 # 局・seed・方策を選び直さない）
 PAIRINGS_V0_136 = (("C136", "C136"), ("C136", "F126"), ("C136", "Q135"))
+# v0.137: D137 どうし・U137 どうし（席を入れかえた局は同じ局なので 1 回だけ行う）・D137 対 U137。組・席・seed は正式な対戦の前に決めた（正式な対戦は seed 0〜3。開発中に手順を確かめる
+# seed 90 とは別。局・seed・方策を選び直さない）
+PAIRINGS_V0_137 = (("D137", "D137"), ("D137", "U137"), ("U137", "U137"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -2266,7 +2280,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.123": PAIRINGS_V0_123, "v0.124": PAIRINGS_V0_124, "v0.125": PAIRINGS_V0_125, "v0.126": PAIRINGS_V0_126,
            "v0.127": PAIRINGS_V0_127, "v0.129": PAIRINGS_V0_129, "v0.130": PAIRINGS_V0_130,
            "v0.131": PAIRINGS_V0_131, "v0.132": PAIRINGS_V0_132, "v0.133": PAIRINGS_V0_133,
-           "v0.135": PAIRINGS_V0_135, "v0.136": PAIRINGS_V0_136}
+           "v0.135": PAIRINGS_V0_135, "v0.136": PAIRINGS_V0_136, "v0.137": PAIRINGS_V0_137}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -12526,6 +12540,38 @@ def v135_uses(state):
     return counts
 
 
+def v137_uses(state):
+    """v0.137: ログから数えた、選ばなくてよいと書かれていない山札の検索とエネルギーアーク（``V137_TRAINERS``）の動き（このカードのない局では空）。
+
+    - ``played_<id>``: 使った（手札から出した。錯乱ジムなどのない組なので、そのまま効果に進む）
+    - ``searched_<id>``: 山札から選んだカードの数（``search_deck``・``reveal_from_deck``・``trainer_bench_from_deck`` のうち、このカードの使用のもの）。``shuffled_<id>``: そのあと切った
+    - ``ark_coin_heads``・``ark_coin_tails``: エネルギーアークのコインの結果
+    使う前に止めた（ST1・FC1）回数は、方策の数え上げ（``policy`` の ``v053_<id>_not_playable_<コード>``・``v080_…``・``v096_…``）にある。"""
+    counts = Counter()
+    if not any(state.cards[uid].card_id in V137_TRAINERS for uid in state.cards):
+        return counts
+    log = list(state.log)
+    current = None
+    for e in log:
+        kind = e["kind"]
+        if kind == "play_trainer":
+            card_id = state.cards[e["card"]].card_id
+            current = card_id if card_id in V137_TRAINERS else None
+            if current is not None:
+                counts[f"played_{current}"] += 1
+        elif current is None:
+            continue
+        elif kind in ("search_deck", "reveal_from_deck", "trainer_bench_from_deck"):
+            counts[f"searched_{current}"] += 1
+        elif kind == "shuffle":
+            counts[f"shuffled_{current}"] += 1
+        elif kind == "coin_flip" and current == V137_ENERGY_ARK and e.get("source") == "trainer":
+            counts[f"ark_coin_{e['result']}"] += 1
+        elif kind == "discard_trainer":
+            current = None
+    return counts
+
+
 def v136_uses(state):
     """v0.136: ログから数えたカードめくりゲーム（``V136_CARD_FLIP``）の動き（このカードのない局では空）。
 
@@ -13611,6 +13657,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v133"] = v133_uses(state)
         result["v135"] = v135_uses(state)
         result["v136"] = v136_uses(state)
+        result["v137"] = v137_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:

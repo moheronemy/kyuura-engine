@@ -557,7 +557,10 @@ class SharedCoinTest(unittest.TestCase):
 
 class AuditTest(unittest.TestCase):
     """ログの監査（tests/log_audit.py の ``v101_problems``）は、エンジンの ``energy_discard_void`` を読まずにログから組み立てた場で確かめる。エンジンの問い合わせを一時的に誤らせた
-    正式な開始からの対戦（tools/existing_effect_games.py の K101 対 W33・seed 0。両方の席）で、監査がそれを見つける。"""
+    正式な開始からの対戦（tools/existing_effect_games.py の K101 対 W33・seed 1。両方の席）で、監査がそれを見つける。
+
+    v0.137: もとは seed 0。v0.137 の遺跡の石版の保守的な使う前の確かめ（docs/deck-search-oracle-v0.137.md）で seed 0 の局が変わり（13 ターンめの遺跡の石版を使わなくなる）、
+    相手のワザで KEEP のエネルギーをトラッシュする場面がなくなった。確かめの中身は変えず、両方の偽りの問い合わせを監査が見つける最小の seed（1）に替えた。"""
 
     @staticmethod
     def problems(fake):
@@ -566,7 +569,7 @@ class AuditTest(unittest.TestCase):
         found = []
         with mock.patch.object(E, "energy_discard_void", fake):
             for labels in (("K101", "W33"), ("W33", "K101")):
-                found += [problem for problem in log_problems(games.play(labels, 0, keep_state=True)["state"]) if "［KEEP］" in problem]
+                found += [problem for problem in log_problems(games.play(labels, 1, keep_state=True)["state"]) if "［KEEP］" in problem]
         return found
 
     def test_audit_finds_a_missing_void(self):
