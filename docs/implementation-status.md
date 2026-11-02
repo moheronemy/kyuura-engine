@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.135）
+# 実装状況（v0.1〜v0.136）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d`（v0.128 から。v0.129 の種族の身長の写しは別に `9242b9be89be0f747279f39c11875d1ed61763ec`。v0.126〜v0.127 は `57d01f45cfb8b086d03dc0525b329cf6adeff69b`、v0.125 は `134a664c6adf67d5604148a31b58e1a7d26d4d6d`、v0.124 は `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`、v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3819,6 +3819,22 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 338・neo 154・拡張パック以外 184） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistryTest` |
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.136: カードめくりゲームの答えの受理・拒否による情報漏れの修正
+
+[card-flip-answer-rejection-v0.136.md](card-flip-answer-rejection-v0.136.md)。カードめくりゲーム（neo1-080）で、おもてのカードのある山札（フラッシュ）の正解（使ったプレイヤーが 2 枚引く）・
+正解でない（引かない）の両方の結果を使う前に確かめ、正解の引き方が既存の止め方（FU3）に当たれば使う前に止める（**情報漏れを防ぐための保守的な制限**。正解でないなら進められる場面も
+止める）。v0.135 までは答えの段で正解だけが止まり、答えの受理・拒否から相手のうらのサイドの種類が分かった（v0.135 の横断調査で見つけた。棚卸しの追記 GAP-CARD-FLIP-REJECTION-ORACLE）。
+FU3 などの裁定は未解決のまま。カードの登録・写し・研究の対応表・書き出しの形式（34）は変えていない（対応 1,374 枚・停止コード 316）。新しい停止コードはない。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 正解・正解でないの両方の結果を使う前に確かめる（`quiz_draw_outcome_stop` の `outcomes`。使ったプレイヤーの山札の公開の枚数だけで決まる。状態・乱数・ログを変えない） | 実装済み・テスト済み | 4 章 | test_card_flip_answer_rejection_v0_136 `TwinRejectionTest`・`ShapeMatrixTest` |
+| ほかのクイズ 4 種類の動きを保つ（`outcomes` の既定は v0.135 と同じ） | 実装済み・テスト済み | 4 章 | 同 `SharedCheckTest`・test_quiz_answer_rejection_v0_135・test_blaines_quiz_heights_v0_129 |
+| 受け付ける場面を保つ（おもてなし・相手の山札だけ・いちばん上だけ・山札 0／1／不足／十分。3 つの答えのすべてが原文どおり） | 実装済み・テスト済み | 5 章 | 同 `LegalPathTest`・`ShapeMatrixTest` |
+| 選ぶサイド・無効な選択と答え・保存と復元 | 実装済み・テスト済み | 6 章 | 同 `LegalPathTest`・`DecisionAndPersistenceTest` |
+| 錯乱ジム・サイキックコントロールの選べるカード・［ちえくらべ］・延長戦（今の区間だけを見る） | 実装済み・テスト済み（サイキックコントロールは確かめの関数だけ） | 7 章 | 同 `ChaosGymTest`・`PsychicControlChoicesTest`・`MindGamesTest`・`SuddenDeathSegmentTest` |
+| フラッシュのおもての山札の論点（UQ-FLASH-FACE-UP-DECK・FU3） | 裁定が未解決（変えていない） | 5 章 | — |
 
 ## v0.135: クイズの答えの受理・拒否による情報漏れの修正
 

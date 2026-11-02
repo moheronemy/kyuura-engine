@@ -53,3 +53,7 @@ P0/P1の着手順は、根拠と設計が揃うまで時間を要するR2を準�
 ## 追記: R1 の経過（v0.135。2026-11-02）
 
 この計画の本文は変えずに追記する。R1（回答拒否オラクル）のうち、クイズその2・その3・ポケモン性格判定は v0.135 で修正した（使う前に両方の引き方を確かめて止める。保守的な制限。FU3 の裁定は未解決のまま）。完了条件の「同じ公開観測から同じ回答を送った2盤面の受理可否・エラー・観測が秘密に依存しない」は `tests/log_audit.py` の `twin_command_problems` と `tests/test_quiz_answer_rejection_v0_135.py` で確かめた。「ほかにも同じ処理を横断調査」の結果、カードめくりゲーム（neo1-080）に同じ型の漏れが残る（未修正）。[quiz-answer-rejection-v0.135.md](quiz-answer-rejection-v0.135.md)
+
+## 追記: R1 の経過（v0.136。2026-11-02）
+
+この計画の本文と v0.135 の追記は変えずに追記する。R1（回答拒否オラクル）のうち、v0.135 の横断調査で残ったカードめくりゲーム（neo1-080。GAP-CARD-FLIP-REJECTION-ORACLE）を v0.136 で修正した（使う前に正解・正解でないの両方の結果を確かめて止める。保守的な制限。FU3 の裁定は未解決のまま）。完了条件は `twin_command_problems` と `tests/test_card_flip_answer_rejection_v0_136.py` で確かめた。引く処理の横断（答え・コイン・相手の答え・自分の選択で引き方が分かれるもの）では、ほかに同じ型の漏れの候補はなかった（版の文書 8 章）。[card-flip-answer-rejection-v0.136.md](card-flip-answer-rejection-v0.136.md)
