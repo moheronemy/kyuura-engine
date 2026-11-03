@@ -53,6 +53,52 @@ STRICT_DEFINITIONS = {
 }
 PLAY_DEFINITION = ("プレイ用モード: 厳密モードのルールセットに、項目ごとに承認したプレイ用の規約を加える。すべての停止をなくすことは目的にしない。安全に続けられない経路・未実装の経路は止める候補のまま")
 
+# ---------------------------------------------------------------------------------------------------------------------------------------------------
+# モードの定義の合意（2026-11-03。docs/ruleset-mode-design.md 2 章）。根拠は本会話の利用者の指示で、公式の裁定・kyuura の研究上の解決ではない。
+# 合意したのはこの 6 項目だけ。規約集合の識別・採用の単位・途中の変更・旧保存状態・不足した構成の開始・個々の続行規約は未決（docs/ruleset-mode-decisions.md）
+# ---------------------------------------------------------------------------------------------------------------------------------------------------
+AGREEMENT_SOURCE = {"by": "user", "on": "2026-11-03", "where": "本会話の利用者の指示（作業ブランチ claude/ruleset-mode-design の依頼の「合意済みの定義」）",
+                    "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（UQ- の論点は解決済みにしない）"}
+AGREEMENTS = [
+    {"id": "AGR-MODE-SHARED-ENGINE", "statement": "同じ処理基盤に、採用する規約集合を渡す。",
+     "reading": "モードごとに別のエンジン・別の分岐を持たない。モードの違いは、渡す規約集合の中身の違いとして表す"},
+    {"id": "AGR-MODE-STRICT", "statement": "厳密モードは、未決の裁定に当たったら停止する検証用モード。",
+     "reading": "未決の裁定（研究の停止コード UNRESOLVED_*・コードのない問いのうち止めている場面）に当たったら、今のエンジンと同じく止める（拒否・HALTED・途中停止の区別も今のまま）"},
+    {"id": "AGR-MODE-PLAY", "statement": "プレイ用モードは、未決の裁定を事前に定めた続行規約で処理し、実際の対戦を進めるモード。",
+     "reading": "続行規約は対戦の前に集合に入れておくもの（対戦の途中で決めない）。どの未決の裁定にどの規約を当てるかは未決（個々の続行規約は 1 つも採っていない）"},
+    {"id": "AGR-MODE-BASELINE-USER", "statement": "既存の承認済み利用者指定は、両モードに共通する基礎集合に含める。",
+     "reading": "台帳の conventions のうち、利用者が明示的に指定した記録（baseline_category が user_specified）だけ。指定の対象・範囲は記録のまま（広げない・無効化しない）。"
+                "エンジンの簡略化・実装上の仮定・データの訂正は、この合意に含まれない（DEC-BASELINE-NONUSER・DEC-CARD-DATA-CORRECTIONS）"},
+    {"id": "AGR-MODE-SAFETY", "statement": "情報漏れ、状態破損、不正入力、実装不足、計算上限は、プレイ用だから無視してよいものではない。",
+     "reading": "両モードで同じ安全境界（safety_boundaries の SB-*）を保つ。プレイ用の規約で漏れ・破損・未実装・上限の超過を解消したことにしない"},
+    {"id": "AGR-MODE-PRIORITY", "statement": "続行規約の整備は、対戦全体を終端にする項目から優先する。",
+     "reading": "準備の HALTED・ポケモンチェックの HALTED・途中停止（5 章の 14 コード）を、選択肢を 1 つ減らすだけの拒否より先に扱う。どの規約を採るかは決めていない"},
+]
+AGREEMENT_IDS = {a["id"] for a in AGREEMENTS}
+AGREED_CONVENTION_STATUS = "user_agreed"  # 規約（conventions）だけが使える。合意 AGR-MODE-BASELINE-USER で基礎集合に入れた利用者指定。続行規約の採用ではない
+MODE_DEFINITIONS_HISTORY = {
+    "STRICT-A": "厳密モードの定義としては採用しない（過去の検討案。AGR-MODE-STRICT・AGR-MODE-BASELINE-USER と合わない）。研究・照合の用途の集合として別に作るかは決めていない",
+    "STRICT-B": "AGR-MODE-STRICT・AGR-MODE-BASELINE-USER に置きかえた。STRICT-B が含めていたエンジンの簡略化・実装上の仮定を基礎集合に入れるかは未決（DEC-BASELINE-NONUSER）",
+    "families_strict_columns": "族の strict の 2 列（STRICT-A・STRICT-B）は分類の時点の案のまま残す。合意後の厳密モードは、未決の裁定に当たったら止める（今の止め方。STRICT-B の列と同じ動き）",
+    "play_at_classification": PLAY_DEFINITION,
+}
+
+# 判断事項の置き場所（見出し ``### <ID>`` が置き場所の文書にちょうど 1 つある。--check が確かめる）。DEC-STRICT-DEFINITION は合意で決まった（履歴として元の文書に残す）
+STOP_DECISIONS_DOC = "docs/stop-policy-decisions.md"
+RULESET_DECISIONS_DOC = "docs/ruleset-mode-decisions.md"
+RULESET_DESIGN_DOC = ROOT / "docs" / "ruleset-mode-design.md"
+RULESET_DECISIONS = [
+    "DEC-RULESET-IDENTITY", "DEC-RULESET-VERSIONING", "DEC-CONVENTION-GRANULARITY", "DEC-CONVENTION-CONFLICTS", "DEC-MODE-CHANGE-DURING-GAME", "DEC-LEGACY-STATES",
+    "DEC-PLAY-CONFIG-INCOMPLETE-START", "DEC-PLAY-DEBUG-PARTIAL", "DEC-BASELINE-NONUSER", "DEC-BASELINE-CENSUS", "DEC-CARD-DATA-CORRECTIONS", "DEC-RESUME-WITH-OTHER-RULESET",
+    "DEC-EXISTING-USER-SPECS",
+]
+DECISION_STATUS = {
+    "DEC-STRICT-DEFINITION": {"status": "agreed", "agreements": ["AGR-MODE-STRICT", "AGR-MODE-PLAY", "AGR-MODE-BASELINE-USER"],
+                              "note": "STRICT-A は厳密モードの定義として採用しない（過去の検討案）。STRICT-B は合意済みの定義に置きかえた"},
+    "DEC-EXISTING-USER-SPECS": {"status": "partly_agreed", "agreements": ["AGR-MODE-BASELINE-USER"],
+                                "note": "利用者指定（12 件・USER-ID 9 つ）は基礎集合に入れる。エンジンの簡略化・実装上の仮定・データの訂正の扱いは DEC-BASELINE-NONUSER・DEC-CARD-DATA-CORRECTIONS で未決"},
+}
+
 SAFETY_CONDITIONS = {
     "SC-CARD": "カードの消失・重複・不正な領域移動がない",
     "SC-SECRET": "秘密情報が受理可否・エラー・候補から漏れない",
@@ -656,6 +702,15 @@ UPDATES = [
                          "事例の sites の行番号（ST1 #deck・#discard、FC1 #deck-contents・#public-counts。effects.py の編集で行がずれただけ。意味は変えていない。前の行は note に残した）"],
      "new_entries": ["PSP-INCREASE-ENTRY-PW3-ORACLE（active。修正していない）", "PSP-COCOON-DV2-ORACLE（active。修正していない）"],
      "unchanged": "研究の停止コード（GG1・MG1・DW1・UPZ2・ST1 を含む）は active のまま（停止コードを修正済みにしない）。族・規約・判断事項・方針の案は変えていない"},
+    {"version": "0.138.0（版は変えない。文書・台帳・作成スクリプトだけ）", "work": "モードの定義の合意の反映と、規約集合の設計（docs/ruleset-mode-design.md・docs/ruleset-mode-decisions.md）",
+     "document": "docs/ruleset-mode-design.md",
+     "base": {"commit": "1bf94a13cae33ac4e07082fc88f0f07b431908b8", "branch_of_base": "main（PR #32 のマージ。v0.138 の最後 42e00f6 と同じ木）"},
+     "approval": ("利用者の合意は mode_agreements の 6 項目（2026-11-03。本会話の利用者の指示。公式の裁定・kyuura の研究上の解決ではない）。規約集合の識別・採用の単位・途中の変更・"
+                  "旧保存状態・不足した構成の開始・デバッグ用の構成・個々の続行規約は decision_required のまま"),
+     "changed_entries": ["mode_definitions（合意済みの定義。STRICT-A・STRICT-B は履歴）", "conventions（baseline_category・対象・効果・承認の記録。利用者指定 12 件は user_agreed、ほかの 6 件は decision_required）",
+                         "conventions の user_ids（簡略ルールの 4 対象を登録と同じ 1 つずつに直した）", "decision_status（DEC-STRICT-DEFINITION は agreed、DEC-EXISTING-USER-SPECS は partly_agreed）"],
+     "new_entries": ["mode_agreements（AGR-MODE-* の 6 項目）", "判断事項 8 つ（DEC-RULESET-VERSIONING ほか。docs/ruleset-mode-decisions.md）"],
+     "unchanged": "停止コード・事例・問題の項目・族・安全境界・方針の案は変えていない。エンジン・既存のテスト・カードデータ・保存形式は変えていない"},
 ]
 # 分類の時点（基点 3e25ac5）の集計（counts）の写し。今の counts は現行コードから作り直した値
 COUNTS_AT_CLASSIFICATION = {"research_stop_codes": 316, "runtime_codes_outside_table": 40, "runtime_codes_outside_table_active": 39, "test_tool_only_codes": 8, "cases": 15, "codes_with_cases": 7, "problems_new": 4, "problems_from_inventory": 28, "conventions": 18, "internal_guard_sites_current": 602, "internal_guard_sites_matched_to_inventory": 600, "internal_guard_sites_new_since_inventory": ["kyuura_engine/engine.py:445", "kyuura_engine/resolution/programs.py:10739"], "safety_boundaries": 8, "families": 23, "decisions": 29, "by_reachability": {"constructed_board": 145, "legal_sequence": 25, "static_only": 185}, "by_family": {"PF-COPY-TRANSFORM": 34, "PF-DAMAGE-SCOPE": 22, "PF-EFFECT-TIMING": 13, "PF-ENERGY-TYPE": 21, "PF-ESP-REDO": 4, "PF-HIDDEN-INFORMATION": 8, "PF-HISTORY-LASTING": 20, "PF-KNOCKOUT-TIMING": 15, "PF-POWER-SUPPRESSION": 11, "PF-PROTECTED-TARGET-EFFECT": 12, "PF-REACTION-DURING-PROCESS": 10, "PF-RUNTIME-CONTINUATION": 15, "PF-RUNTIME-COPY-GAPS": 5, "PF-RUNTIME-DATA": 5, "PF-RUNTIME-GENERIC": 1, "PF-RUNTIME-REGISTRY": 7, "PF-RUNTIME-SEARCH-LIMIT": 6, "PF-SETUP-PLAY-AS-POKEMON": 5, "PF-SIMULTANEOUS-ORDER": 26, "PF-STATED-COUNT-SHORT": 11, "PF-TEXT-READING": 34, "PF-UP-TO-ZERO": 13, "PF-USE-WITHOUT-EFFECT": 57}, "by_play_group": {"1": 316, "2": 39, "3": 89, "4": 6, "5": 20, "6": 1}, "by_mechanism": {"answer_rejection": 13, "command_rejection": 339, "deck_validation": 1, "deferred_interruption": 2, "pokemon_check_halt": 10, "setup_halt": 2}, "by_status": {"active": 402, "fixed": 5, "historical": 2, "unverified": 1}, "note": "停止コード・事例・規約・内部ガードは別の数。事例はコードの下位で、コードの数に足さない。棚卸しと同じ項目は独立した不足として数えない"}
@@ -716,11 +771,13 @@ CONVENTIONS_EXTRA = [
      "source": "research_links.json engine_user_corrections・scripts/extract_kyuura_cards.py ENGINE_USER_CORRECTIONS（v0.70）", "inventory_ref": None,
      "note": "データの修正で、裁定ではない。v0.133 の棚卸しの採用済み 16 件には入っていない"},
 ]
+# 対象ごとの USER-ID（登録の記録 effects.USER_SIMPLIFICATIONS などの rule と同じ。--check が登録と照らす）。分類の時点（3e25ac5〜v0.138）は簡略ルールの 4 対象に 2 つの ID を
+# 両方書いていたが、登録では誕生日（PR1-044・PR1-090）と発話（PR1-072）は別の対象。この作業で登録に合わせて直した（docs/ruleset-mode-design.md 4.3 節）
 CONVENTION_USER_IDS = {
-    "POLICY:user_simplified_text:PR1-044/attack/0": ["USER-BIRTHDAY-COIN-ONLY", "USER-SPOKEN-CONDITION-IGNORED"],
-    "POLICY:user_simplified_text:PR1-072/attack/0": ["USER-BIRTHDAY-COIN-ONLY", "USER-SPOKEN-CONDITION-IGNORED"],
-    "POLICY:user_simplified_text:PR1-072/attack/1": ["USER-BIRTHDAY-COIN-ONLY", "USER-SPOKEN-CONDITION-IGNORED"],
-    "POLICY:user_simplified_text:PR1-090/attack/0": ["USER-BIRTHDAY-COIN-ONLY", "USER-SPOKEN-CONDITION-IGNORED"],
+    "POLICY:user_simplified_text:PR1-044/attack/0": ["USER-BIRTHDAY-COIN-ONLY"],
+    "POLICY:user_simplified_text:PR1-072/attack/0": ["USER-SPOKEN-CONDITION-IGNORED"],
+    "POLICY:user_simplified_text:PR1-072/attack/1": ["USER-SPOKEN-CONDITION-IGNORED"],
+    "POLICY:user_simplified_text:PR1-090/attack/0": ["USER-BIRTHDAY-COIN-ONLY"],
     "POLICY:user_specified_references:GD5-016/trainer": ["USER-QUIZ-HEIGHT-OFFICIAL-ZUKAN"],
     "POLICY:user_specified_rules:PR1-027/trainer": ["USER-SWAP-OWNERSHIP-RECEIVER"],
     "POLICY:user_specified_rules:neo1-049/power/0": ["USER-MIND-GAMES-OPTIONAL-BEFORE-COST"],
@@ -728,6 +785,116 @@ CONVENTION_USER_IDS = {
     "POLICY:user_specified_rules:neo4-082/attack/1": ["USER-DESTRUCTIVE-FIRE-DECLARE-ORDER-UP-TO"],
     "POLICY:user_specified_names:PR1-075/name": ["USER-BILINGUAL-NAME-JAPANESE"],
     "POLICY:user_specified_names:PR1-077/name": ["USER-BILINGUAL-NAME-JAPANESE"],
+}
+
+# 基礎集合の区分（docs/ruleset-mode-design.md 4 章）。conventions の各項目は、このどれか 1 つ
+BASELINE_CATEGORIES = {
+    "user_specified": "利用者が明示的に指定した記録（指定の文・日・根拠の文書がある）。AGR-MODE-BASELINE-USER で両モードの基礎集合に入れる",
+    "engine_simplification": "エンジンが記録している簡略化（利用者の指定の記録はない）。基礎集合に入れるかは未決（DEC-BASELINE-NONUSER）",
+    "implementation_assumption": "実装上の仮定・エンジンの採用の仕様（公式に決まったことにしない）。基礎集合に入れるかは未決（DEC-BASELINE-NONUSER）",
+    "card_data_correction": "カードのデータの訂正（写しの作り直しで当てはめる）。規約集合ではなくカードデータの層で識別する案（DEC-CARD-DATA-CORRECTIONS）",
+}
+# 登録の記録（対象・効果を名前だけでなく確かめる。--check が、登録の対象の鍵と USER-ID が同じことを照らす）
+REGISTRY_OF_KIND = {
+    "user_simplified_text": "effects.USER_SIMPLIFICATIONS", "user_specified_references": "effects.USER_SPECIFIED_REFERENCES",
+    "user_specified_rules": "effects.USER_SPECIFIED_RULES", "user_specified_names": "effects.USER_SPECIFIED_NAMES",
+}
+_BIRTHDAY = {"category": "user_specified",
+             "approval": {"document": "docs/deferred-shortage-user-promos-v0.127.md 4.1 節", "on": "2026-11-01", "instruction": "のピカチュウについては誕生日の確認をせずに通常のコイントスのみ"},
+             "effect": "おたんじょうびの「今日がこのカードの持ち主の誕生日なら」を処理にふくめない。どの日もコイン 1 枚、「おもて」なら 50 追加（30+50）",
+             "affects": ["ワザのダメージ（コイン 1 枚）", "乱数（どの日もコインを投げる）"],
+             "not_covered": ["誕生日・日付・実名の入力（作らない。「いつも誕生日」とは記録しない）", "コスト・こんらんのコイン・弱点・抵抗力・ESP のやり直し（通常どおり）", "ほかのカードの日付・現実の条件"]}
+_SPOKEN = {"category": "user_specified",
+           "approval": {"document": "docs/deferred-shortage-user-promos-v0.127.md 4.1 節", "on": "2026-11-01", "instruction": "ハマちゃんのヤドキングに関しては発話要件を無視して実装"},
+           "affects": ["ワザを使えるか（発話の条件で拒否しない）"],
+           "not_covered": ["発話の申告・回数・音声（作らない）", "ほかのカードの発話・動作の条件（PMCG6-074 は別の記録の engine_simplification）"]}
+CONVENTION_DETAILS = {
+    "POLICY:user_simplified_text:PR1-044/attack/0": {**_BIRTHDAY, "target": "_のピカチュウ PR1-044 のワザ 0（おたんじょうび）"},
+    "POLICY:user_simplified_text:PR1-090/attack/0": {**_BIRTHDAY, "target": "_のピカチュウ PR1-090 のワザ 0（おたんじょうび）"},
+    "POLICY:user_simplified_text:PR1-072/attack/0": {**_SPOKEN, "target": "ハマちゃんのヤドキング PR1-072 のワザ 0（こまったなあ）",
+                                                     "effect": "「「こまったなぁ」と3回つぶやかないとこのワザは使えない」を処理にふくめない。自分と相手の対戦ポケモンをこんらんにする"},
+    "POLICY:user_simplified_text:PR1-072/attack/1": {**_SPOKEN, "target": "ハマちゃんのヤドキング PR1-072 のワザ 1（どつく）",
+                                                     "effect": "「「ええのかなあ」と3回つぶやかないとこのワザは使えない」を処理にふくめない。相手の対戦ポケモンに 20（通常の計算）"},
+    "POLICY:user_specified_references:GD5-016/trainer": {
+        "category": "user_specified", "target": "カツラのクイズ その1 GD5-016 の正解",
+        "approval": {"document": "docs/blaines-quiz-heights-v0.129.md 3 章", "on": "2026-11-01", "instruction": "クイズの正解には、今回収集した全国図鑑No.001〜251の通常の姿の公式図鑑値を採用します。"},
+        "effect": "置いたカードの全国図鑑番号の種族の身長（公式図鑑の整数 cm。kyuura 9242b9b の値）を正解にし、答えが完全に同じなら正解",
+        "affects": ["クイズの正誤（どちらが 2 枚引くか）", "図鑑番号のないカードの扱い（GAP-QUIZ-REFERENCE-DATA）"],
+        "not_covered": ["処理に使う文面（印刷のまま）", "印刷の身長・カードの時期の図鑑の値と同じとは確かめていない", "その2・その3（GD5 以外のクイズ）の正解"]},
+    "POLICY:user_specified_rules:PR1-027/trainer": {
+        "category": "user_specified", "target": "とりかえっこプリーズ PR1-027 で交換が成立した 2 枚",
+        "approval": {"document": "docs/trade-please-ownership-v0.130.md 3 章", "on": "2026-11-01", "instruction": "交換が成立した2枚は、対戦終了まで、それぞれの受取側が所有者になります。"},
+        "effect": "2 枚それぞれの対戦の中の所有者を、受け取ったプレイヤーにする（片方だけを変えない）。再交換も同じ規則。トラッシュ・山札・サイド・場に置く処理は新しい所有者を基準にする",
+        "affects": ["カードの行き先（所有者のゾーン）", "保存形式 33 の ownership_changes・origin", "延長戦の開始（USER-SUDDEN-DEATH-OWNERSHIP-RESET が出所にもどす）"],
+        "not_covered": ["実物の所有権・次の対戦（CR-SWAP-PLEASE-REAL-TRADE-SEPARATE）", "錯乱ジムでかわりに使うときの「あなた」「相手」（UQ-CHAOS-GYM-BORROWED-TURN。止める）",
+                        "あとから重ねた進化カード・つけたエネルギー・どうぐの所有者（変えない）", "デッキの構築の制限の当てはめ直し（しない）"]},
+    "POLICY:user_specified_rules:neo1-049/power/0": {
+        "category": "user_specified", "target": "ヤドキング neo1-049 の［ちえくらべ］",
+        "approval": {"document": "docs/slowking-mind-games-v0.132.md 3 章", "on": "2026-11-01", "instruction": "発動は任意とし、順序を次のようにします。"},
+        "effect": "相手がトレーナーを手札から出して使うとき: 状態を変えずに使えるか確かめる → ヤドキング側が使うか選ぶ（任意）→ 使うならコイン 1 回 →「おもて」なら使えず相手の山札の上（コスト・効果なし）→「うら」・使わないなら通常どおり",
+        "affects": ["トレーナーの使用の可否", "乱数（使うと選んだときだけコイン）", "決定（使うかの選択）"],
+        "not_covered": ["錯乱ジムのコインとの前後（MG1 で止める。DEC-CHAOS-GYM-MIND-GAMES。この指定の延長として扱えるかは未決）", "ポケモンとして出すトレーナー（MG2）",
+                        "使ったら番が終わるトレーナーが使えなかったときの番（MG3）", "おもてのカードのある山札の上の向き（FU4）", "使えないトレーナーの宣言では選択もコインも出さない"]},
+    "POLICY:user_specified_rules:neo4-082/attack/0": {
+        "category": "user_specified", "target": "ひかるバンギラス neo4-082 のワザ 0（マウンテンクラッシュ）",
+        "approval": {"document": "docs/shining-tyranitar-v0.133.md 3.1 節", "on": "2026-11-01", "instruction": "おもての数と相手の残り山札枚数の少ない方だけ、山札の上からトラッシュする。"},
+        "effect": "「うら」が出るまでコインを投げ（山札 0 枚でも省かない）、「おもて」の数と相手の山札の枚数の少ない方だけトラッシュ。山札が空になっただけでは負けにしない",
+        "affects": ["相手の山札の枚数", "乱数（コインを省かない）"],
+        "not_covered": ["ほかのカードの「足りなければあるだけ」（たつまき FC1・ドライアップ DU1・怪電波マシーン TW1/TW2・HC6・MW1・FU1 などの止め方は変えない）", "相手のポケモンへの防護を山札へ当てはめるか（当てはめない既存の扱い）"]},
+    "POLICY:user_specified_rules:neo4-082/attack/1": {
+        "category": "user_specified", "target": "ひかるバンギラス neo4-082 のワザ 1（はかいのほのお）",
+        "approval": {"document": "docs/shining-tyranitar-v0.133.md 3.2 節", "on": "2026-11-01", "instruction": "以下の順序を採用します。"},
+        "effect": "炎エネルギーカード 0 枚なら宣言を拒否（状態を変えない）。1 枚以上ならその枚数のコイン →「おもて」の数の自分の炎をトラッシュ → 50 → 「おもて」の数の相手のエネルギー（足りなければすべて）",
+        "affects": ["ワザを使えるか", "要素の順番（p.309 の「まずダメージ」と違う並び）", "相手のエネルギーの枚数"],
+        "not_covered": ["特殊エネルギーを「炎」エネルギーカードに数えるか（UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY。既存の止め方）", "ほかのカードの順番・数の不足の扱い"]},
+    "POLICY:user_specified_names:PR1-075/name": {
+        "category": "user_specified", "target": "ナッシー［Exeggutor］PR1-075 の名前・進化元・ワザ名",
+        "approval": {"document": "docs/exeggutor-bilingual-names-v0.131.md 3 章", "on": "2026-11-01", "instruction": "対象2枚の英語併記は翻訳表示として扱い、判定に使いません。"},
+        "effect": "判定には日本語の部分（ナッシー・タマタマ・ふみつけ）を使い、英語の併記は翻訳の表示として判定に使わない",
+        "affects": ["デッキの同じ名前 4 枚の数え方（通常のナッシーと合わせる）", "進化元（タマタマから進化）", "名前を指定する効果・同じ名前を比べる効果", "カツラのクイズ その1・その3 の答えと伝える名前",
+                    "変身したあとの名前", "ワザ名で比べる効果・ログ・観測"],
+        "not_covered": ["名前以外の性能（このカードの写しの値のまま。通常のナッシーに置きかえない）", "ほかのカードの括弧書き・英語の名前", "英語だけの「Exeggutor」を別名として受け付けること"],
+        "display_only": False},
+    "POLICY:user_specified_names:PR1-077/name": {
+        "category": "user_specified", "target": "ナッシー［Exeggutor］PR1-077 の名前・進化元・ワザ名",
+        "approval": {"document": "docs/exeggutor-bilingual-names-v0.131.md 3 章", "on": "2026-11-01", "instruction": "対象2枚の英語併記は翻訳表示として扱い、判定に使いません。"},
+        "effect": "PR1-075 と同じ（判定には日本語の部分を使う）", "affects": ["PR1-075 と同じ（同名制限・進化・名前を指定する効果・クイズ・変身・ワザ名）"],
+        "not_covered": ["PR1-075 と同じ"], "display_only": False},
+    "POLICY:engine_simplified_text:PMCG6-074/attack/0": {
+        "category": "engine_simplification", "target": "イマクニ？のドードー PMCG6-074 のワザ 0（ハモる）",
+        "basis": "docs/final-pmcg-cards-v0.68.md 4 章（エンジンの簡略化した仕様。利用者の指定の記録はない）",
+        "effect": "歌を歌う状態・歌い終わりの通知を作らず、ふつうのワザとして相手の対戦ポケモンに 30", "affects": ["ワザのダメージ"], "not_covered": ["ほかのカードの動作の条件"]},
+    "POLICY:engine_simplified_text:PMCG6-074/power/0": {
+        "category": "engine_simplification", "target": "イマクニ？のドードー PMCG6-074 の特殊能力（にげまくり）",
+        "basis": "docs/final-pmcg-cards-v0.68.md 4 章（エンジンの簡略化した仕様。利用者の指定の記録はない）",
+        "effect": "カードを投げる動作を処理にふくめない。特殊能力は状態・ログ・乱数を変えず宣言できない。にげるは通常の規定", "affects": ["特殊能力の宣言の可否"], "not_covered": ["ほかのカードの動作の条件"]},
+    "POLICY:implementation_assumption:1": {
+        "category": "implementation_assumption", "target": "「ふしちょう」とサイド・勝ち負け・バトル場に出すの順番（P27・P28・P30。UQ-PHOENIX-KO-PROCESS-ORDER）",
+        "basis": "docs/post-knockout-powers-v0.12.md 3 章（どの順番でも行き先・サイド・出せるポケモン・勝ち負け・乱数が変わらないことを確かめた正規化）",
+        "effect": "選ばせずに「サイド → 勝ち負けの判定 →（続くなら）ふしちょう → バトル場に出す」に正規化", "affects": ["決定の順番（結果は同じと確かめた範囲）"],
+        "not_covered": ["同時のきぜつで、番のプレイヤーがバトル場に出すポケモンを選ぶときに、相手の「ふしちょう」の使用を知っているか（正規化した順番の 1 つ）"]},
+    "POLICY:implementation_assumption:2": {
+        "category": "implementation_assumption", "target": "キョウのベトベトン PMCG6-023 の［だつりょくえき］の宣言（DR1・DR12。UQ-ENERGY-DRAIN-DECLARATION）",
+        "basis": ("docs/final-pmcg-cards-v0.68.md 3 章（エンジンの採用の仕様。根拠は 2002-05-24 の Q&A・『トレーナーズ』Vol.13 で、2000.02.14 版の裁定ではない。"
+                  "後年の資料を根拠にした採用で、CLAUDE.md の「後年の裁定で補わない」との関係は未判断。利用者の指定の記録はない）"),
+        "effect": "自動的にはたらく（使わない選択・「おもて」のあとトラッシュしない選択はない）", "affects": ["決定の有無", "乱数（条件を満たせば必ずコイン）"],
+        "not_covered": ["2002 年のほかの変更（持ち込まない）", "ほかの特殊能力の宣言"]},
+    "POLICY:implementation_assumption:3": {
+        "category": "implementation_assumption", "target": "キョウのベトベトン PMCG6-023 の［だつりょくえき］を処理する時点（DR6。UQ-ENERGY-DRAIN-TIMING）",
+        "basis": "docs/final-pmcg-cards-v0.68.md 3 章（p.89 のこうらがえしの解説の時点を当てはめた類推。エンジンの採用の仕様。利用者の指定の記録はない）",
+        "effect": "そのワザのすべての対象へのダメージのあと、ダメージ以外の効果の前", "affects": ["効果の順番（ほかの効果の前提）"], "not_covered": ["ダメージとほかの効果を交互に与える並び（GK1 のまま）"]},
+    "CONV:USER-SUDDEN-DEATH-OWNERSHIP-RESET": {
+        "category": "user_specified", "target": "延長戦を始めるとき（StartSuddenDeath）の、とりかえっこプリーズで所有者が変わったカード",
+        "approval": {"document": "docs/sudden-death-v0.134.md 2.2 節", "on": "2026-11-02", "instruction": "とりかえっこプリーズで交換したカードは、元の所有者へ戻す。"},
+        "effect": "そのカードを最初のデッキに入れたプレイヤー（出所 origin）のデッキにもどす（交換の直前の所有者ではない。再交換があっても最初の出所）。新しい区間の所有者の変更の記録は空から",
+        "affects": ["延長戦の区間のデッキの中身", "保存形式 34 の segments"], "not_covered": ["同じ区間の中の交換（USER-SWAP-OWNERSHIP-RECEIVER のまま）", "実物の所有権・対戦の外の返し方"],
+        "registry": "sudden_death.USER_SUDDEN_DEATH_OWNERSHIP_RESET"},
+    "CONV:ENGINE-USER-CORRECTION:PR1-069/name.ja": {
+        "category": "card_data_correction", "target": "PR1-069 の名前（kyuura の値「？？？」）",
+        "basis": "research_links.json engine_user_corrections（v0.70。利用者がミュウと同定し画像と資料の URL を示した。エンジンは画像を見ていない。kyuura の記録ではない）",
+        "effect": "写しの作り直しで名前を「ミュウ」にする", "affects": ["デッキの同じ名前 4 枚の数え方", "名前を指定する効果・同じ名前を比べる効果", "クイズで伝える名前・観測・ログ"],
+        "not_covered": ["名前以外の値"], "display_only": False, "user_provided": True,
+        "registry": "scripts/extract_kyuura_cards.py ENGINE_USER_CORRECTIONS"},
 }
 
 # 両モードで維持する安全境界（内部ガードを独立した未裁定として数えない。棚卸しの GUARD:* を参照する）
@@ -756,6 +923,9 @@ DECISIONS = [
     "DEC-FACE-UP-DECK", "DEC-MODE-CHANGE-DURING-GAME", "DEC-LEGACY-STATES", "DEC-PLAY-AS-POKEMON", "DEC-KNOCKOUT-READINGS", "DEC-TIMING-READINGS", "DEC-NULLIFIED-COINS",
     "DEC-DAMAGE-READINGS", "DEC-ENERGY-READINGS", "DEC-COPY-SCOPE", "DEC-LASTING-READINGS", "DEC-TEXT-READINGS", "DEC-REACTION-READINGS", "DEC-SUPPRESSION-READINGS",
     "DEC-ESP-READINGS", "DEC-CONVENTION-GRANULARITY",
+    # 規約集合の設計の作業（2026-11-03）で加えた判断事項（置き場所は docs/ruleset-mode-decisions.md）
+    "DEC-RULESET-VERSIONING", "DEC-CONVENTION-CONFLICTS", "DEC-PLAY-CONFIG-INCOMPLETE-START", "DEC-PLAY-DEBUG-PARTIAL", "DEC-BASELINE-NONUSER", "DEC-BASELINE-CENSUS",
+    "DEC-CARD-DATA-CORRECTIONS", "DEC-RESUME-WITH-OTHER-RULESET",
 ]
 
 FAMILY_DECISION = {
@@ -904,6 +1074,31 @@ def test_evidence(code: str, occurrences: dict, constants_for_code: list[str], t
     return {"assert_like_lines": len(assert_like), "mention_lines": len(other), "files": files[:20], "files_total": len(files),
             "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
             "adjacent_accept_branch": "unknown"}
+
+
+def _convention(record: dict) -> dict:
+    """規約（conventions）の 1 項目。基礎集合の区分・対象・効果・承認の記録（CONVENTION_DETAILS）を加え、合意 AGR-MODE-BASELINE-USER の利用者指定だけを user_agreed にする。"""
+    detail = CONVENTION_DETAILS[record["id"]]
+    category = detail["category"]
+    user = category == "user_specified"
+    record.update({key: value for key, value in detail.items() if key != "category"})
+    record["baseline_category"] = category
+    if "registry" not in record and record.get("kind") in REGISTRY_OF_KIND:
+        record["registry"] = f"{REGISTRY_OF_KIND[record['kind']]}['{record['id'].split(':', 2)[2]}']"
+    # 既存の挙動の状態（分類の時点と同じ）: 利用者指定と、利用者が示したデータの訂正（user_provided）は user_approved。区分（基礎集合の合意の対象か）とは別の軸
+    record["existing_behavior_status"] = ["user_approved", "implemented", "verified"] if user or detail.get("user_provided") else ["implemented", "verified"]
+    if user:
+        record["mode_policy_status"] = AGREED_CONVENTION_STATUS
+        record["agreement_refs"] = ["AGR-MODE-BASELINE-USER"]
+        record["modes"] = {"strict": "基礎集合の一部として今のまま", "play": "基礎集合の一部として今のまま（続行規約ではない）"}
+        record["decision_refs"] = []
+    else:
+        record["mode_policy_status"] = "decision_required"
+        record["agreement_refs"] = []
+        record["modes"] = {"strict": "今の挙動のまま（基礎集合に入れるかは未決。今回は無効化しない）", "play": "同じ"}
+        record["decision_refs"] = ["DEC-CARD-DATA-CORRECTIONS"] if category == "card_data_correction" else ["DEC-BASELINE-NONUSER", "DEC-BASELINE-CENSUS"]
+    record["extension"] = "ほかのカード・ほかのコード・隣の場面へ自動的に広げない（対象と not_covered は記録のまま）"
+    return record
 
 
 def build() -> dict:
@@ -1064,17 +1259,10 @@ def build() -> dict:
     for inv in inventory["entries"]:
         if inv["entry_kind"] != "adopted_policy":
             continue
-        conventions.append({"id": inv["id"], "inventory_ref": inv["id"], "user_ids": CONVENTION_USER_IDS.get(inv["id"], []), "kind": inv["id"].split(":")[1],
-                            "related_cards": inv.get("related_cards", []), "source": (inv.get("research") or {}).get("reference", ""),
-                            "existing_behavior_status": ["user_approved", "implemented", "verified"] if inv["id"].split(":")[1].startswith("user_") else ["implemented", "verified"],
-                            "strict_mode": {"STRICT-A": "公式の根拠ではないので、STRICT-A の定義なら止める候補（今は無効化しない）", "STRICT-B": "固定したルールセットの一部として今のまま"},
-                            "mode_policy_status": "decision_required", "decision_refs": ["DEC-STRICT-DEFINITION", "DEC-EXISTING-USER-SPECS"],
-                            "extension": "ほかのカード・ほかのコードへ自動的に広げない"})
+        conventions.append(_convention({"id": inv["id"], "inventory_ref": inv["id"], "user_ids": CONVENTION_USER_IDS.get(inv["id"], []), "kind": inv["id"].split(":")[1],
+                                        "related_cards": inv.get("related_cards", []), "source": (inv.get("research") or {}).get("reference", "")}))
     for extra in CONVENTIONS_EXTRA:
-        conventions.append({**extra, "existing_behavior_status": ["user_approved", "implemented", "verified"],
-                            "strict_mode": {"STRICT-A": "公式の根拠ではないので、STRICT-A の定義なら止める候補（今は無効化しない）", "STRICT-B": "固定したルールセットの一部として今のまま"},
-                            "mode_policy_status": "decision_required", "decision_refs": ["DEC-STRICT-DEFINITION", "DEC-EXISTING-USER-SPECS"],
-                            "extension": "ほかのカード・ほかのコードへ自動的に広げない"})
+        conventions.append(_convention(dict(extra)))
 
     boundaries = []
     for boundary in SAFETY_BOUNDARIES:
@@ -1103,6 +1291,7 @@ def build() -> dict:
         "problems_new": len(PROBLEMS),
         "problems_from_inventory": sum(1 for e in entries if e.get("inventory_ref") and e["entry_kind"] not in ("research_stop_code", "runtime_stop_code", "test_tool_only_code", "case")),
         "conventions": len(conventions),
+        "conventions_by_category": {c: sum(1 for x in conventions if x["baseline_category"] == c) for c in BASELINE_CATEGORIES},
         "internal_guard_sites_current": len(guards),
         "internal_guard_sites_matched_to_inventory": len(guard_ref),
         "internal_guard_sites_new_since_inventory": [f"{guards[i]['path']}:{guards[i]['line']}" for i in range(len(guards)) if i not in guard_ref],
@@ -1131,7 +1320,8 @@ def build() -> dict:
     return {
         "schema_version": 1,
         "title": "停止コードと未対応処理の分類（厳密モード・プレイ用モードの将来の導入に向けて）",
-        "scope": "調査・分類・設計の記録。モードの実装・既存の動作・裁定・保存形式は変えていない。方針の案はどれも利用者の承認を受けていない",
+        "scope": ("調査・分類・設計の記録。モードの実装・既存の動作・裁定・保存形式は変えていない。利用者と合意したのはモードの定義の 6 項目（mode_agreements）だけで、"
+                  "既存の利用者指定を基礎集合に入れること以外の方針の案（族の候補・個々の続行規約・規約集合の識別など）は承認を受けていない"),
         "base": BASE, "kyuura": KYUURA,
         "updates": UPDATES,
         "counts_at_classification": COUNTS_AT_CLASSIFICATION,
@@ -1143,12 +1333,20 @@ def build() -> dict:
         "axes": {"classification": inventory["methodology"]["classification"], "play_groups": PLAY_GROUPS, "reachability": REACHABILITY, "stop_mechanisms": STOP_MECHANISMS,
                  "mode_policy_status": list(MODE_POLICY_STATUS), "existing_behavior_status": list(EXISTING_BEHAVIOR_STATUS),
                  "entry_status": {"active": "現在有効", "fixed": "修正済み", "historical": "履歴項目", "unverified": "未確認（候補）"}},
-        "mode_definitions": {"strict_options": STRICT_DEFINITIONS, "play": PLAY_DEFINITION, "status": "decision_required（DEC-STRICT-DEFINITION）"},
+        "mode_agreements": {"source": AGREEMENT_SOURCE, "agreements": AGREEMENTS},
+        "mode_definitions": {"strict": next(a["statement"] for a in AGREEMENTS if a["id"] == "AGR-MODE-STRICT"),
+                             "play": next(a["statement"] for a in AGREEMENTS if a["id"] == "AGR-MODE-PLAY"),
+                             "status": "agreed（AGR-MODE-STRICT・AGR-MODE-PLAY。2026-11-03）",
+                             "strict_options_at_classification": STRICT_DEFINITIONS, "history": MODE_DEFINITIONS_HISTORY,
+                             "design": "docs/ruleset-mode-design.md"},
+        "baseline_categories": BASELINE_CATEGORIES,
         "safety_conditions": SAFETY_CONDITIONS,
         "families": FAMILIES,
         "safety_boundaries": boundaries,
         "conventions": conventions,
         "decisions": DECISIONS,
+        "decision_status": {d: DECISION_STATUS.get(d, {"status": "decision_required"}) | {"document": RULESET_DECISIONS_DOC if d in RULESET_DECISIONS else STOP_DECISIONS_DOC}
+                            for d in DECISIONS},
         "evidence": {"tool_observation_files": observations["files"], "tool_evidence_root": str(TOOL_EVIDENCE_ROOT).replace("\\", "/"),
                      "probes": ["PSP-ST1-DECK-ORACLE", "PSP-FC1-ENERGY-ARK-ORACLE"],
                      "v0137_probes": ["PSP-ST1-DECK-ORACLE", "PSP-FC1-ENERGY-ARK-ORACLE", "PSP-RUIN-WALL-BLOCKED-REASON-ORACLE", "PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE"],
@@ -1224,9 +1422,10 @@ def check(ledger: dict, fresh: dict) -> list[str]:
     for e in ledger["entries"]:
         if e["status"] == "fixed" and e["entry_kind"] in ("research_stop_code", "runtime_stop_code"):
             problems.append(f"{e['id']}: 停止コードを修正済みにしない（修正済みは問題の項目）")
-    for convention in ledger["conventions"]:
-        if convention["mode_policy_status"] != "decision_required":
-            problems.append(f"{convention['id']}: 既存の利用者指定のモードでの扱いは decision_required")
+    problems += convention_problems(ledger)
+    problems += agreement_problems(ledger)
+    problems += decision_document_problems(ledger)
+    problems += generated_block_problems(ledger)
     for family, spec in ledger["families"].items():
         for key in ("title", "play_groups", "strict", "requirements", "risks", "regression", "mode_policy_status"):
             if key not in spec:
@@ -1243,6 +1442,165 @@ def check(ledger: dict, fresh: dict) -> list[str]:
     if fresh is not None and stable(_without_tool(ledger)) != stable(_without_tool(fresh)):
         problems.append("現行コードから作り直した台帳と、書き出した台帳が違う（--write で作り直して差を確かめる）")
     return problems
+
+
+# ---------------------------------------------------------------------------------------------------------------------------------------------------
+# 規約集合の設計の作業（2026-11-03）で加えた確かめ。合意・規約・判断事項・設計文書の生成した表が、台帳と登録の記録と同じこと
+# ---------------------------------------------------------------------------------------------------------------------------------------------------
+# 判断事項を定義する行: 見出し「### DEC-…」か、表の最初の列「| DEC-… |」（族ごとの判断事項の表）。移した判断事項の履歴は「#### 」の見出しにして、定義に数えない
+DECISION_HEADING_RE = re.compile(r"^(?:### |\| )(DEC-[A-Z0-9-]+)(?=\s)", re.MULTILINE)
+
+
+def _engine_registries() -> dict:
+    """登録の記録（対象の鍵 → 規則の ID）。カードの登録を名前だけでなく対象で照らすために読む（エンジンの動作は変えない）。"""
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from kyuura_engine import effects, sudden_death
+    registries = {name: {key: record.rule for key, record in getattr(effects, name.split(".", 1)[1]).items()} for name in set(REGISTRY_OF_KIND.values())}
+    registries["sudden_death.USER_SUDDEN_DEATH_OWNERSHIP_RESET"] = {"": sudden_death.USER_SUDDEN_DEATH_OWNERSHIP_RESET.id}
+    return registries
+
+
+def convention_problems(ledger: dict) -> list[str]:
+    problems = []
+    agreement_ids = {a["id"] for a in ledger.get("mode_agreements", {}).get("agreements", [])}
+    registries = _engine_registries()
+    seen: dict[str, set[str]] = {name: set() for name in registries}
+    for c in ledger["conventions"]:
+        cid, status, category = c["id"], c.get("mode_policy_status"), c.get("baseline_category")
+        if category not in BASELINE_CATEGORIES:
+            problems.append(f"{cid}: 基礎集合の区分 {category} がない")
+        if status == AGREED_CONVENTION_STATUS:
+            if category != "user_specified":
+                problems.append(f"{cid}: {AGREED_CONVENTION_STATUS} は利用者指定（user_specified）だけ（区分 {category} は decision_required）")
+            if "AGR-MODE-BASELINE-USER" not in c.get("agreement_refs", []):
+                problems.append(f"{cid}: {AGREED_CONVENTION_STATUS} なのに合意 AGR-MODE-BASELINE-USER を参照しない")
+            approval = c.get("approval") or {}
+            if not (approval.get("document") and approval.get("on") and approval.get("instruction")):
+                problems.append(f"{cid}: 利用者の指定の文書・日・指定の文がない")
+            elif approval["instruction"] not in (ROOT / approval["document"].split(" ", 1)[0]).read_text(encoding="utf-8"):
+                problems.append(f"{cid}: 指定の文が根拠の文書 {approval['document']} にない")
+        elif status != "decision_required":
+            problems.append(f"{cid}: 既存の規約の状態 {status} は使わない（{AGREED_CONVENTION_STATUS} は合意した利用者指定だけ、ほかは decision_required）")
+        elif not c.get("decision_refs"):
+            problems.append(f"{cid}: decision_required なのに判断事項がない")
+        for ref in c.get("decision_refs", []):
+            if ref not in ledger["decisions"]:
+                problems.append(f"{cid}: 判断事項 {ref} がない")
+        for ref in c.get("agreement_refs", []):
+            if ref not in agreement_ids:
+                problems.append(f"{cid}: 合意 {ref} がない")
+        for key in ("target", "effect", "affects", "not_covered"):
+            if not c.get(key):
+                problems.append(f"{cid}: {key}（対象・効果・影響する判定・含まない場面）がない")
+        if c.get("kind") == "user_specified_names" and c.get("display_only") is not False:
+            problems.append(f"{cid}: 名前の扱いは判定（同じ名前・進化・クイズ）に影響する（表示だけにしない）")
+        registry = c.get("registry", "")
+        name = registry.split("[", 1)[0]
+        if name in registries:
+            key = registry.split("['", 1)[1].removesuffix("']") if "['" in registry else ""
+            seen[name].add(key)
+            rule = registries[name].get(key)
+            if rule is None:
+                problems.append(f"{cid}: 登録の記録 {registry} がない")
+            elif c.get("user_ids") != [rule]:
+                problems.append(f"{cid}: USER-ID {c.get('user_ids')} が登録の規則 {rule} と違う")
+        elif category == "user_specified":
+            problems.append(f"{cid}: 利用者指定なのに登録の記録（registry）を照らせない")
+    for name, keys in registries.items():
+        missing = sorted(set(keys) - seen[name])
+        if missing:
+            problems.append(f"登録の記録 {name} の対象 {missing} が台帳の conventions にない")
+    return problems
+
+
+def agreement_problems(ledger: dict) -> list[str]:
+    problems = []
+    block = ledger.get("mode_agreements") or {}
+    source = block.get("source") or {}
+    if source.get("by") != "user" or "公式" not in source.get("not_recorded_as", ""):
+        problems.append("合意の出典は利用者の指示で、公式の裁定・kyuura の解決として記録しない")
+    ids = [a.get("id") for a in block.get("agreements", [])]
+    if not ids or len(ids) != len(set(ids)):
+        problems.append(f"合意の ID が空か重複: {ids}")
+    for a in block.get("agreements", []):
+        if not (a.get("statement") and a.get("reading")):
+            problems.append(f"{a.get('id')}: 合意の文・読み方がない")
+    statuses = ledger.get("decision_status", {})
+    if set(statuses) != set(ledger["decisions"]):
+        problems.append("判断事項と判断事項の状態の集合が違う")
+    for d, status in statuses.items():
+        if status["status"] not in ("decision_required", "agreed", "partly_agreed"):
+            problems.append(f"{d}: 判断事項の状態 {status['status']} は使わない")
+        if status["status"] != "decision_required" and not (status.get("agreements") and set(status["agreements"]) <= set(ids)):
+            problems.append(f"{d}: 合意の参照 {status.get('agreements')} がない")
+    return problems
+
+
+def decision_document_problems(ledger: dict) -> list[str]:
+    problems = []
+    headings = {doc: DECISION_HEADING_RE.findall((ROOT / doc).read_text(encoding="utf-8")) for doc in (STOP_DECISIONS_DOC, RULESET_DECISIONS_DOC) if (ROOT / doc).exists()}
+    for d, status in ledger.get("decision_status", {}).items():
+        doc = status["document"]
+        if headings.get(doc, []).count(d) != 1:
+            problems.append(f"{d}: 置き場所 {doc} に見出しがちょうど 1 つない（{headings.get(doc, []).count(d)}）")
+        for other, found in headings.items():
+            if other != doc and d in found:
+                problems.append(f"{d}: 置き場所でない {other} にも見出しがある（同じ判断事項を 2 か所に書かない）")
+    for doc, found in headings.items():
+        for d in found:
+            if d not in ledger["decisions"]:
+                problems.append(f"{doc}: 見出しの判断事項 {d} が台帳にない")
+    return problems
+
+
+def _markers(name: str) -> tuple[str, str]:
+    return (f"<!-- generated:{name} begin（scripts/build_stop_policy_classification.py --write が台帳から書く。手で直さない） -->", f"<!-- generated:{name} end -->")
+
+
+def _cell(value) -> str:
+    text = "・".join(value) if isinstance(value, list) else str(value)
+    return text.replace("|", "／").replace("\n", " ")
+
+
+def render_agreements(ledger: dict) -> str:
+    rows = ["| ID | 合意の文（利用者の指示のまま） | 台帳での読み方 |", "|---|---|---|"]
+    rows += [f"| `{a['id']}` | {_cell(a['statement'])} | {_cell(a['reading'])} |" for a in ledger["mode_agreements"]["agreements"]]
+    return "\n".join(rows)
+
+
+def render_baseline(ledger: dict) -> str:
+    labels = {"user_specified": "利用者指定", "engine_simplification": "エンジンの簡略化", "implementation_assumption": "実装上の仮定", "card_data_correction": "データの訂正"}
+    rows = ["| 規約（台帳の ID） | 区分 | USER-ID | 対象 | 効果 | 影響する判定 | 基礎集合 |", "|---|---|---|---|---|---|---|"]
+    for c in ledger["conventions"]:
+        inclusion = "含める（AGR-MODE-BASELINE-USER）" if c["mode_policy_status"] == AGREED_CONVENTION_STATUS else f"未決（{'・'.join(c['decision_refs'])}）"
+        rows.append(f"| `{c['id']}` | {labels[c['baseline_category']]} | {_cell(c['user_ids']) or '—'} | {_cell(c['target'])} | {_cell(c['effect'])} | {_cell(c['affects'])} | {inclusion} |")
+    return "\n".join(rows)
+
+
+GENERATED_BLOCKS = {"mode-agreements": render_agreements, "baseline-conventions": render_baseline}
+
+
+def with_generated_blocks(text: str, ledger: dict) -> str:
+    for name, render in GENERATED_BLOCKS.items():
+        begin, end = _markers(name)
+        if text.count(begin) != 1 or text.count(end) != 1 or text.index(begin) > text.index(end):
+            raise ValueError(f"{RULESET_DESIGN_DOC.name}: 生成する表 {name} の印がちょうど 1 組ない")
+        head, rest = text.split(begin, 1)
+        _, tail = rest.split(end, 1)
+        text = f"{head}{begin}\n{render(ledger)}\n{end}{tail}"
+    return text
+
+
+def generated_block_problems(ledger: dict) -> list[str]:
+    if not RULESET_DESIGN_DOC.exists():
+        return [f"{RULESET_DESIGN_DOC.name} がない"]
+    text = RULESET_DESIGN_DOC.read_text(encoding="utf-8")
+    try:
+        expected = with_generated_blocks(text, ledger)
+    except ValueError as error:
+        return [str(error)]
+    return [] if expected == text else [f"{RULESET_DESIGN_DOC.name} の生成した表が台帳と違う（--write で書き直す）"]
 
 
 def stable(ledger: dict) -> str:
@@ -1273,6 +1631,9 @@ def main() -> int:
     if args.write:
         OUTPUT.write_text(json.dumps(fresh, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
         print(f"wrote {OUTPUT.relative_to(ROOT).as_posix()}: {len(fresh['entries'])} entries")
+        text = RULESET_DESIGN_DOC.read_text(encoding="utf-8")
+        RULESET_DESIGN_DOC.write_text(with_generated_blocks(text, fresh), encoding="utf-8", newline="\n")
+        print(f"wrote generated blocks of {RULESET_DESIGN_DOC.relative_to(ROOT).as_posix()}")
     ledger = load_json(OUTPUT)
     if not TOOL_EVIDENCE_ROOT.exists():
         fresh = None  # 道具の証拠がない環境では、作り直した台帳との比べを省く（不変条件だけ確かめる）

@@ -1,11 +1,13 @@
 # 停止コードと未対応処理の分類（厳密モード・プレイ用モードの将来の導入に向けて）
 
 この文書は調査・分類・設計の記録です。モードの実装、既存の動作の変更、裁定の変更はしていません。エンジン・既存のテスト・カードの登録・保存形式・固定デッキ・過去の参照データ・
-kyuura・利用者の `.claude/` は変えていません。ここに書く方針は**どれも案で、利用者の承認を受けていません**。
+kyuura・利用者の `.claude/` は変えていません。ここに書く方針は**どれも案で、利用者の承認を受けていません**（分類の時点の記録）。その後、2026-11-03 にモードの定義の 6 項目を利用者と
+合意しました（7.6 節・[ruleset-mode-design.md](ruleset-mode-design.md) 2 章）。合意したのはその 6 項目だけで、族の候補・個々の続行規約は今も案です。
 
 - 構造化台帳: [stop-policy-classification.json](stop-policy-classification.json)（`scripts/build_stop_policy_classification.py --write` で作り、`--check` で現行コードと突き合わせる）
-- 利用者が決める事項: [stop-policy-decisions.md](stop-policy-decisions.md)
-- 後の版の経過: 7.4 節（v0.137 で PSP-ST1-DECK-ORACLE・PSP-FC1-ENERGY-ARK-ORACLE を修正。ST1・FC1 の論点・モードの方針は未決のまま）・7.5 節（v0.138 で PSP-RUIN-WALL-BLOCKED-REASON-ORACLE・PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE を修正。新しい発見 2 件は未修正）
+- 利用者が決める事項: [stop-policy-decisions.md](stop-policy-decisions.md)（個々の停止コード・族）・[ruleset-mode-decisions.md](ruleset-mode-decisions.md)（規約集合とモード）
+- 規約集合の設計: [ruleset-mode-design.md](ruleset-mode-design.md)
+- 後の版の経過: 7.4 節（v0.137 で PSP-ST1-DECK-ORACLE・PSP-FC1-ENERGY-ARK-ORACLE を修正。ST1・FC1 の論点・モードの方針は未決のまま）・7.5 節（v0.138 で PSP-RUIN-WALL-BLOCKED-REASON-ORACLE・PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE を修正。新しい発見 2 件は未修正）・7.6 節（2026-11-03。モードの定義の合意と、規約集合の設計）
 - 元の棚卸し（v0.133 時点。基点・集計は書き換えず、履歴として参照する）: [pre-freeze-gap-inventory.md](pre-freeze-gap-inventory.md)・[JSON](pre-freeze-gap-inventory.json)・
   [修正計画](pre-freeze-remediation-plan.md)
 
@@ -242,6 +244,24 @@ v0.135・v0.136 の漏れと同じ型（受理・拒否による漏れ）です�
 - **厳密モードの定義は未決**です（DEC-STRICT-DEFINITION ほか）。この版の承認をプレイ用の規約・モードの定義の承認へ広げていません
 - 台帳の作り直しで、既存の 173 項目の行番号が変わりました（effects.py の編集で行がずれただけ。意味は変わらない。版の文書 10 章）
 
+### 7.6 モードの定義の合意と、規約集合の設計（2026-11-03。7.1〜7.5 の記録・基点・集計は変えていない）
+
+利用者と、モードの定義の 6 項目を合意しました（台帳の `mode_agreements`。根拠は本会話の利用者の指示で、公式の裁定・kyuura の研究上の解決ではない）。設計と残る判断事項は
+[ruleset-mode-design.md](ruleset-mode-design.md)・[ruleset-mode-decisions.md](ruleset-mode-decisions.md) にあります。エンジン・既存のテスト・カードデータ・保存形式は変えていません。
+
+- **合意したこと**: 同じ処理基盤に規約集合を渡す。厳密モードは未決の裁定に当たったら止める検証用。プレイ用は未決の裁定を事前に定めた続行規約で処理する。既存の承認済み利用者指定は両モード
+  共通の基礎集合に含める。情報漏れ・状態破損・不正入力・実装不足・計算上限はプレイ用でも無視しない。続行規約は対戦全体を終端にする項目から整える。
+- **過去の検討案**: 9 章の STRICT-A は厳密モードの定義として採用しません。STRICT-B は合意済みの定義に置きかえました（9 章・11 章の本文は分類の時点の記録として残す）。
+- **台帳の変更**（作成スクリプトを直して作り直した。JSON は手で直していない）:
+  - `mode_agreements`・`mode_definitions`（合意済みの定義。STRICT-A・STRICT-B は `strict_options_at_classification`・`history`）・`baseline_categories`・`decision_status` を加えた。
+  - `conventions` の 18 件に、基礎集合の区分（利用者指定 12・エンジンの簡略化 2・実装上の仮定 3・データの訂正 1）・対象・効果・影響する判定・含まない場面・承認の記録・登録の記録の
+    場所を加えた。利用者指定の 12 件だけを `user_agreed`（合意 AGR-MODE-BASELINE-USER）にし、ほかの 6 件は `decision_required` のまま（18 件を一括で承認済みにしていない）。
+  - 誤りの訂正: 簡略ルールの 4 対象の `user_ids` に 2 つの ID を両方書いていたのを、登録と同じ 1 つずつに直した。ナッシーの名前・PR1-069 の名前は判定に影響する（`display_only: false`）。
+  - 判断事項を 8 つ加え、5 つ（DEC-RULESET-IDENTITY ほか）の置き場所を ruleset-mode-decisions.md に移した（stop-policy-decisions.md には分類の時点の案を履歴として残す）。
+  - `--check` に、合意・規約・判断事項の置き場所・設計文書の生成した表の確かめを加えた（16 章）。
+- **変えていないこと**: 停止コード・事例・問題の項目（v0.138 の 2 件の修正と、`PSP-INCREASE-ENTRY-PW3-ORACLE`・`PSP-COCOON-DV2-ORACLE` の未修正・`PSP-DECK-CONTENT-PRECHECKS` の残りの
+  未確認を含む）・族・族の候補・安全境界。個々の続行規約は 1 つも採っていません。
+
 ## 8. プレイ用の規約だけでは解消できない項目
 
 対応群 3・4・5 を含むコードは 110 件です。規約を決めても、実装・計算の改善・保護がなければ続けられません。
@@ -269,9 +289,13 @@ v0.135・v0.136 の漏れと同じ型（受理・拒否による漏れ）です�
 - `LIMIT:*` の 7 件
 - 新しい漏れの 3 項目
 
-## 9. モードの定義の選択肢（未確定）
+## 9. モードの定義の選択肢（分類の時点。2026-11-03 に合意で置きかえた）
 
-「厳密モード」の意味は決まっていません（DEC-STRICT-DEFINITION）。
+> **経過**: この章は分類の時点（基点 `3e25ac5`）の記録です。2026-11-03 に、厳密モードは「未決の裁定に当たったら停止する検証用モード」、既存の承認済み利用者指定は両モード共通の基礎集合に
+> 含める、と合意しました（7.6 節）。STRICT-A は厳密モードの定義として採用しません。下の表の「18 件」のうち、利用者指定ではない 6 件（簡略化 2・仮定 3・データの訂正 1）の扱いは未決です
+> （DEC-BASELINE-NONUSER・DEC-CARD-DATA-CORRECTIONS）。
+
+分類の時点では、「厳密モード」の意味は決まっていませんでした（DEC-STRICT-DEFINITION）。
 
 | 案 | 内容 | 既存の採用済みの規約（18 件）の扱い |
 |---|---|---|
@@ -298,6 +322,9 @@ v0.135・v0.136 の漏れと同じ型（受理・拒否による漏れ）です�
 | SB-NO-FAIL-OPEN-SEARCH | 探索の上限で、未探索の枝を安全とみなさない |
 
 ## 11. モード導入に向けた設計メモ（実装していない）
+
+> **経過**: この章は分類の時点の設計メモです。合意（7.6 節）を受けた設計は [ruleset-mode-design.md](ruleset-mode-design.md) にあります（識別の照合値・事例単位の採用・構成の検査・
+> 旧保存状態は作成した版が分かる場合だけ対応付ける、などを加えた）。下の例（`ruleset = {...}`）は案のままです。
 
 1. **規約の集合をモードと別に識別する。**
    - モード名（strict・play）だけで挙動を決めず、採る規約の集合に ID と版を付ける（例: `ruleset = {base: "2000-02-14", conventions: [USER-…, PLAY-…], version}`）。
@@ -376,3 +403,7 @@ v0.135・v0.136 の漏れと同じ型（受理・拒否による漏れ）です�
   - 族・事例・規約・判断事項・安全境界の定義はこのスクリプトにある。
   - 道具の証拠（リポジトリの外）がない環境では、作り直した台帳との比べを省き、不変条件だけを確かめる。
 - `tests/test_stop_policy_classification.py`: `--check` の不変条件（コードの集合の一致・ID・参照・方針の状態・到達可能性の証拠）を確かめる。分類の件数は写していない。
+- 2026-11-03 の追加（7.6 節）: `--check` は、合意の出典（利用者の指示で、公式・kyuura の解決として記録しない）、規約の状態（`user_agreed` は利用者指定で、承認の文が根拠の文書にあるもの
+  だけ）、利用者指定の登録の記録（`effects.USER_SIMPLIFICATIONS` など）の対象の鍵と規則の ID が台帳と同じこと・登録の対象がすべて台帳にあること、名前の扱いを表示だけにしないこと、
+  判断事項の見出しが置き場所の文書にちょうど 1 つあること、ruleset-mode-design.md の生成した表が台帳と同じことを確かめる。`--write` はその表も書く。テストは、それぞれの確かめが
+  壊した台帳を見つけることを確かめる。
