@@ -486,22 +486,33 @@ RUNTIME_FAMILY = {
 # 1 つのコードに、発生条件・対処の違う事例が混在するもの（コードは改名・分割しない。台帳の下位の事例として分ける）
 CASES = {
     "UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET": [
-        {"case": "deck", "sites": ["kyuura_engine/effects.py:17330", "kyuura_engine/effects.py:39969"],
+        {"case": "deck", "sites": ["kyuura_engine/effects.py:17340", "kyuura_engine/effects.py:40040"],
          "condition": "山札に選べるカードがあると、配分を読まない下限（effects.deck_target_lower_bound）で確かめられない（エネルギー転送・ボスのやりかた・タケシの育て方・遺跡の石版）",
          "secret_dependency": "owner_known_pool",
          "note": "v0.137 で修正（PSP-ST1-DECK-ORACLE）。本人に見えない自分のカードの集合と公開の枚数だけで決める。分類の時点（基点 3e25ac5。sites は effects.py:17289・:39921）は"
-                 "実際の山札を読み、山札とサイドのどちらにあるかで受理・拒否が変わった（depends_on_hidden）"},
-        {"case": "discard", "sites": ["kyuura_engine/effects.py:17543"], "condition": "トラッシュにカードがない（リサイクル）", "secret_dependency": "public_only", "note": "トラッシュは公開"},
+                 "実際の山札を読み、山札とサイドのどちらにあるかで受理・拒否が変わった（depends_on_hidden）。v0.137 の記録の sites は effects.py:17330・:39969（v0.138 の編集で行がずれた）"},
+        {"case": "discard", "sites": ["kyuura_engine/effects.py:17553"], "condition": "トラッシュにカードがない（リサイクル）", "secret_dependency": "public_only", "note": "トラッシュは公開"},
     ],
     "UNRESOLVED_STATED_CARDS_SHORT": [
-        {"case": "deck-contents", "sites": ["kyuura_engine/effects.py:31143"],
+        {"case": "deck-contents", "sites": ["kyuura_engine/effects.py:31159"],
          "condition": "エネルギーアークで、山札の基本エネルギーカードがコインの枚数以上あると、配分を読まない下限（effects.deck_target_lower_bound）で確かめられない",
          "secret_dependency": "owner_known_pool",
-         "note": "v0.137 で修正（PSP-FC1-ENERGY-ARK-ORACLE）。分類の時点（基点 3e25ac5。effects.py:31101）は実際の山札の枚数を読み、理由の文にも枚数を書いていた（depends_on_hidden）"},
-        {"case": "public-counts", "sites": ["kyuura_engine/effects.py:17440", "kyuura_engine/effects.py:18370", "kyuura_engine/effects.py:31207", "kyuura_engine/effects.py:31309",
-                                            "kyuura_engine/effects.py:31895", "kyuura_engine/effects.py:31964", "kyuura_engine/effects.py:32026"],
+         "note": "v0.137 で修正（PSP-FC1-ENERGY-ARK-ORACLE）。分類の時点（基点 3e25ac5。effects.py:31101）は実際の山札の枚数を読み、理由の文にも枚数を書いていた（depends_on_hidden）。v0.137 の記録の site は effects.py:31143（v0.138 の編集で行がずれた）"},
+        {"case": "public-counts", "sites": ["kyuura_engine/effects.py:17450", "kyuura_engine/effects.py:18380", "kyuura_engine/effects.py:31230", "kyuura_engine/effects.py:31332",
+                                            "kyuura_engine/effects.py:31918", "kyuura_engine/effects.py:31987", "kyuura_engine/effects.py:32049"],
          "condition": "手札・場・サイドの枚数・相手の手札の枚数など（メンテナンス・クルミ・クイズ・カードめくりゲーム・ロケット団の暗躍など）", "secret_dependency": "unchecked_per_site",
-         "note": "数を読む領域は静的に公開（枚数）と読んだが、行ごとの比較プローブはしていない。v0.137 で変えていない"},
+         "note": "数を読む領域は静的に公開（枚数）と読んだが、行ごとの比較プローブはしていない。v0.137・v0.138 で変えていない（v0.137 の記録の sites は 17440・18370・31207・31309・31895・31964・32026。v0.138 の編集で行がずれた）"},
+    ],
+    "UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET": [
+        {"case": "amplifier-deck", "sites": ["kyuura_engine/effects.py:31232", "kyuura_engine/effects.py:31237"],
+         "condition": "エネルギー増幅装置で、特殊エネルギーカードをもどすとき、もどしたあとの山札に基本エネルギーカードがあると、配分を読まない下限（effects.deck_target_lower_bound）で確かめられない"
+                      "（使う宣言: 手札のエネルギーカードがどれもそうなら。段階 1 の答え: その特殊エネルギーカードを選ぶと）",
+         "secret_dependency": "owner_known_pool",
+         "note": "v0.138 で修正（PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE）。v0.137 まで（effects.py:31209・_blocked）は実際の山札に基本エネルギーカードがあるかを読み、使う宣言・段階 1 の答えの受理・拒否が"
+                 "山札とサイドのどちらにあるかで変わった（depends_on_hidden）。基本エネルギーカードをもどす答えはいつも止めない"},
+        {"case": "public-zones", "sites": ["kyuura_engine/effects.py:31081", "kyuura_engine/effects.py:34598"],
+         "condition": "エネルギーチャージのトラッシュのエネルギーカード、育て屋さんの組の場のポケモン（どちらも公開の領域）", "secret_dependency": "public_only",
+         "note": "v0.138 で変えていない（行ごとの比較プローブはしていない）"},
     ],
     "UNRESOLVED_FACE_UP_DECK_HIDDEN_TAKE": [
         {"case": "draw", "sites": ["kyuura_engine/faceup.py"], "condition": "おもてのカードが上からの並びの途中にある山札から 2 枚以上を引く（いちばん上だけは止めない）",
@@ -548,9 +559,38 @@ V137_FIX_COMMON = {
 }
 V137_FIX_ST1 = {**V137_FIX_COMMON, "fix_sites": ["kyuura_engine/effects.py SearchDeckTrainer.check_playable", "kyuura_engine/effects.py BenchNameGroupFromDeckTrainer.check_playable"]}
 V137_FIX_FC1 = {**V137_FIX_COMMON, "fix_sites": ["kyuura_engine/effects.py CoinsSearchBasicEnergyPerHeads.check_playable"]}
+# v0.138（docs/oracle-leak-fixes-v0.138.md）: 利用者の承認（2026-11-03「v0.137 で新たに見つかった 2 件の情報漏れを、モード共通の不具合として修正すること」。厳密モードの定義・プレイ用の
+# 規約・検索の不足時の処理の承認ではない）を受けて直した 2 項目の記録。発見の記録（found_in・trigger・reachability・impact）は v0.137 のまま残し、修正の内容・制限・検証を加える
+V138_FIX_COMMON = {
+    "fixed_in": "v0.138（docs/oracle-leak-fixes-v0.138.md。基点 903a9bd）",
+    "status_basis": "v0.138 で漏れを修正。研究の論点（GG1・MG1・DW1・UPZ2・ST1）は未解決のまま。厳密モードの定義・プレイ用の規約・検索の不足時の処理は決めていない",
+    "fix_verification": ["tests/test_oracle_leak_fixes_v0_138.py（twin_command_problems に owner_knowledge を加えて、配分だけが違う状態を比べる。修正の前の木では failures 49・errors 18）",
+                         "docs/oracle-leak-fixes-v0.138.md 2 章（修正の前の再現: 構築盤面と合法な操作の列）・9 章（検証）"],
+}
+V138_FIX_RUIN_WALL = {**V138_FIX_COMMON,
+    "fix": ("使う前の確かめを、実際の山札の候補（bench_entry_unresolved。どれも止めるなら最後のカードの理由の文）から、配分を読まない下限 effects.bench_entry_unconfirmed に替えた。本人に"
+            "見えない自分のカードのうち、アンノーン（たね）でベンチに出しても止めない（goop_gas_entry_check に当たらない）カードが U 枚、山札の外の見えないカードが C 枚なら、山札に少なくとも"
+            "max(0, U - C) 枚（effects.deck_lower_bound_where。止めるかはカードの定義と公開の場の効果・持ち主だけで決まる）。1 より少なければ、止める効果のコード（GG1・MG1・DW1）と決まった文"
+            "（コードの決まった理由 + effects.BENCH_ENTRY_UNCONFIRMED_DETAIL。カードの名前・uid・特殊能力の名前・枚数を書かない）で止める"),
+    "fix_sites": ["kyuura_engine/effects.py bench_entry_unconfirmed・deck_lower_bound_where", "kyuura_engine/effects.py BenchNameGroupFromDeckTrainer.check_playable"],
+    "fix_limitations": [("写しのアンノーンはどれも特殊能力を持つので、受理・拒否・コードは v0.137 と同じ（変わったのは理由の文だけ）。止めないカードと止めるカードが混ざる候補（今の写しにはない）では、"
+                        "止めないカードが実際には山札にあっても下限が足りなければ止める（保守的な制限。共通処理のテストで確かめる）"),
+                        "選んだあとの決定（山札をさがすので本人が見る）の選ぶと止める選択・理由の文は、今までどおり実際の山札の候補で決める",
+                        "同じ bench_entry_unresolved を使う［INCREASE］の使う機会は変えていない（PSP-INCREASE-ENTRY-PW3-ORACLE。別の項目）"],
+}
+V138_FIX_AMPLIFIER = {**V138_FIX_COMMON,
+    "fix": ("使う宣言・段階 1（手札からもどすカード）の UPZ2 の印（_blocked）を、実際の山札の基本エネルギーカードの有無から、配分を読まない下限 effects.deck_target_lower_bound に替えた。"
+            "基本エネルギーカードをもどす答えは、もどしたカードが山札の基本エネルギーカードになるのでいつも止めない。特殊エネルギーカードをもどす答えは、下限が 1 以上のときだけ止めない。"
+            "手札のエネルギーカードのどれも止める印なら使う前に止める（コードは UPZ2 のまま。理由の文は決まった文 effects.AMPLIFIER_UNCONFIRMED_REASON）"),
+    "fix_sites": ["kyuura_engine/effects.py ReturnHandEnergyThenCoinSearchBasicEnergy._blocked・check_playable・resolve"],
+    "fix_limitations": [("実際には山札に基本エネルギーカードがあっても、下限が 0 なら、特殊エネルギーカードをもどす答え（手札がそれだけなら使う宣言）を止める（保守的な制限。"
+                        "サイド 6 枚の間は、見えない基本エネルギーカード 7 枚以上が要る）"),
+                        ("受理（使った事実・もどしたカードは公開）は、相手・観戦者に「特殊エネルギーカードをもどしたなら、使ったプレイヤーの見えない基本エネルギーカードが C + 1 枚以上ある」ことを"
+                        "伝える（v0.137 までは「山札に基本エネルギーカードがある」。どちらも使ったプレイヤーの非公開の情報で、相手は試せない。docs 5.4 節）")],
+}
 V137_NEW_FINDINGS = [
-    {"id": "PSP-RUIN-WALL-BLOCKED-REASON-ORACLE", "entry_kind": "silent_information_leak", "status": "active", "classification": "A",
-     "found_in": "v0.137 の作業（PSP-DECK-CONTENT-PRECHECKS の比較プローブ。基点 897103e）",
+    {"id": "PSP-RUIN-WALL-BLOCKED-REASON-ORACLE", "entry_kind": "silent_information_leak", "status": "fixed", "classification": "A",
+     "found_in": "v0.137 の作業（PSP-DECK-CONTENT-PRECHECKS の比較プローブ。基点 897103e）", **V138_FIX_RUIN_WALL,
      "summary": "遺跡の石版で、山札の候補のアンノーンがどれもベンチに出すと止めるカード（ベトベトガスの GG1 など）のとき、拒否の理由の文が最後に確かめた山札のカードの名前・uid を書く",
      "trigger": "BenchNameGroupFromDeckTrainer.check_playable（kyuura_engine/effects.py:39973）の bench_entry_unresolved の理由の文（goop_gas_entry_check の文はカードの uid・名前を含む）",
      "related_cards": ["neo2-054", "neo2-057"], "related_codes": ["UNRESOLVED_GOOP_GAS_NEW_POKEMON"],
@@ -559,8 +599,8 @@ V137_NEW_FINDINGS = [
                       "note": "合法な操作の列での再現はしていない。同じ bench_entry_unresolved を使うほかの経路（effects.py:36663・:40085・:40097）はプローブしていない"},
      "impact": "カードを使わずに、山札に（サイドではなく）どのアンノーンがあるかが理由の文から分かる。受理・拒否・コードは配分によらない（アンノーンはどれも特殊能力を持つので、止めるかは同じ）",
      "play_groups": ["5"], "mode_policy": "両モードで塞ぐ候補（修正は別の作業。v0.137 では変えていない）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
-    {"id": "PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE", "entry_kind": "silent_information_leak", "status": "active", "classification": "A",
-     "found_in": "v0.137 の作業（同じ型の横断。基点 897103e）",
+    {"id": "PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE", "entry_kind": "silent_information_leak", "status": "fixed", "classification": "A",
+     "found_in": "v0.137 の作業（同じ型の横断。基点 897103e）", **V138_FIX_AMPLIFIER,
      "summary": "エネルギー増幅装置（neo4-102）の使う前の UPZ2 の拒否が、基本エネルギーカードが山札とサイドのどちらにあるかで変わる（手札のエネルギーカードが特殊エネルギーだけのとき）",
      "trigger": "ReturnHandEnergyThenCoinSearchBasicEnergy.check_playable（kyuura_engine/effects.py:31209）・_blocked（山札に基本エネルギーカードがあるかを実際の山札で読む）",
      "related_cards": ["neo4-102"], "related_codes": ["UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET"],
@@ -569,6 +609,34 @@ V137_NEW_FINDINGS = [
                       "note": "合法な操作の列での再現はしていない"},
      "impact": "カードを使わずに、山札に基本エネルギーカードがあるか（＝サイドにあるか）を知れる", "play_groups": ["5"],
      "mode_policy": "両モードで塞ぐ候補（修正は別の作業。v0.137 では変えていない）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
+]
+# v0.138 の作業で、今回触った共通処理（bench_entry_unresolved）のまわりと PSP-DECK-CONTENT-PRECHECKS の残りを比較プローブで確かめて見つけた項目（修正していない。承認の範囲の外）
+V138_NEW_FINDINGS = [
+    {"id": "PSP-INCREASE-ENTRY-PW3-ORACLE", "entry_kind": "silent_information_leak", "status": "active", "classification": "A",
+     "found_in": "v0.138 の作業（bench_entry_unresolved を使うほかの経路の比較プローブ。基点 903a9bd）",
+     "summary": "アンノーンI（neo2-023）の［INCREASE］の使う機会の決定で「使う」を答えると、山札に「アンノーン」がない（サイドにある）ときだけ PW3 で拒否される",
+     "trigger": "BenchNameGroupFromDeckOnEntry.accept_problem（実際の山札の候補を読む）→ offer_entry_power の unresolved_choices（観測には出ないが、答えの受理・拒否で分かる）",
+     "related_cards": ["neo2-023"], "related_codes": ["UNRESOLVED_POWER_ZERO_CARDS"],
+     "reachability": {"status": "constructed_board",
+                      "evidence": [("C:/dev/kyuura-engine-verification-v0.138/scripts/probe_routes_v0138.py (a)（見えないアンノーン[E] 1 枚が山札／サイド 1 枚。手札のアンノーンI をベンチに出す → "
+                                   "「使う」の答えが受理／UNRESOLVED_POWER_ZERO_CARDS。twin_command_problems が段 1 で検出。「使わない」の答えは同じ）"),
+                                   "docs/oracle-leak-fixes-v0.138.md 7 章"],
+                      "note": "合法な操作の列での再現はしていない。基点と v0.138 で出力は同じ（v0.138 の修正はこの経路を変えていない）"},
+     "impact": "アンノーンI を出すたびに、山札にアンノーンがあるか（＝サイドにあるか）を、拒否のあと「使わない」を答え直すことで、費用なしに知れる。まきちらせ!ベトベトガスなどのもとでは"
+               "アンノーンI 自体を出せない（GG1 など）ので、［INCREASE］の「どれも止める」の理由の文の経路には届かない",
+     "play_groups": ["5"], "mode_policy": "両モードで塞ぐ候補（修正は別の作業。v0.138 では変えていない）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
+    {"id": "PSP-COCOON-DV2-ORACLE", "entry_kind": "silent_information_leak", "status": "active", "classification": "A",
+     "found_in": "v0.138 の作業（PSP-DECK-CONTENT-PRECHECKS の残りの比較プローブ。基点 903a9bd）",
+     "summary": "キョウのコクーン（PMCG6-011）の［うか］の使う前の DV2（今の番に退化した）の拒否が、キョウのスピアーが山札とサイドのどちらにあるかで変わる",
+     "trigger": "CoinEvolveSelfFromDeck.check_usable（実際の山札の「キョウのスピアー」を deck_evolution_devolved_pairs に渡す。山札になければ組がなく、受理）",
+     "related_cards": ["PMCG6-011", "PMCG6-018"], "related_codes": ["UNRESOLVED_EVOLVE_AFTER_DEVOLUTION"],
+     "reachability": {"status": "constructed_board",
+                      "evidence": [("C:/dev/kyuura-engine-verification-v0.138/scripts/probe_routes_v0138.py (b)（キョウのスピアーを退化スプレーで 1 枚はがした（合法な操作）キョウのコクーン。"
+                                   "見えないキョウのスピアー 1 枚が山札／サイド 1 枚。使う宣言が UNRESOLVED_EVOLVE_AFTER_DEVOLUTION／受理。twin_command_problems が段 0 で検出）"),
+                                   "docs/oracle-leak-fixes-v0.138.md 7 章"],
+                      "note": "合法な操作の列（new_game から）での再現はしていない。GV1（PERMISSION_FROM_DECK）・UNRESOLVED_EVOLUTION_HP の経路はプローブしていない"},
+     "impact": "退化スプレーのあと、カードを使わずに（拒否は状態を変えない）、山札にキョウのスピアーがあるかを知れる",
+     "play_groups": ["5"], "mode_policy": "両モードで塞ぐ候補（修正は別の作業。v0.138 では変えていない）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
 ]
 # 分類の後の更新（基点・集計の履歴は BASE・COUNTS_AT_CLASSIFICATION に残し、書き換えない）
 UPDATES = [
@@ -579,6 +647,15 @@ UPDATES = [
                          "PSP-DECK-CONTENT-PRECHECKS（v0137_followup）"],
      "new_entries": ["PSP-RUIN-WALL-BLOCKED-REASON-ORACLE（active。修正していない）", "PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE（active。修正していない）"],
      "unchanged": "研究の停止コード（ST1・FC1 を含む）は active のまま（停止コードを修正済みにしない）。族・規約・判断事項・方針の案は変えていない"},
+    {"version": "0.138.0", "work": "情報漏れ 2 件の修正（PSP-RUIN-WALL-BLOCKED-REASON-ORACLE・PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE）", "document": "docs/oracle-leak-fixes-v0.138.md",
+     "base": {"commit": "903a9bdce6505c1881fbca154c38ff0761c49ba4", "branch_of_base": "main（PR #31 のマージ。v0.137 の最後 6473470 と同じ木）"},
+     "approval": "利用者の承認は「v0.137 で新たに見つかった 2 件の情報漏れを、モード共通の不具合として修正すること」だけ（2026-11-03）。厳密モードの定義・プレイ用の規約・検索の不足時の処理は"
+                 "decision_required のまま",
+     "changed_entries": ["PSP-RUIN-WALL-BLOCKED-REASON-ORACLE（fixed）", "PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE（fixed）", "UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET（事例 amplifier-deck・public-zones を加えた）",
+                         "PSP-DECK-CONTENT-PRECHECKS（v0138_followup）",
+                         "事例の sites の行番号（ST1 #deck・#discard、FC1 #deck-contents・#public-counts。effects.py の編集で行がずれただけ。意味は変えていない。前の行は note に残した）"],
+     "new_entries": ["PSP-INCREASE-ENTRY-PW3-ORACLE（active。修正していない）", "PSP-COCOON-DV2-ORACLE（active。修正していない）"],
+     "unchanged": "研究の停止コード（GG1・MG1・DW1・UPZ2・ST1 を含む）は active のまま（停止コードを修正済みにしない）。族・規約・判断事項・方針の案は変えていない"},
 ]
 # 分類の時点（基点 3e25ac5）の集計（counts）の写し。今の counts は現行コードから作り直した値
 COUNTS_AT_CLASSIFICATION = {"research_stop_codes": 316, "runtime_codes_outside_table": 40, "runtime_codes_outside_table_active": 39, "test_tool_only_codes": 8, "cases": 15, "codes_with_cases": 7, "problems_new": 4, "problems_from_inventory": 28, "conventions": 18, "internal_guard_sites_current": 602, "internal_guard_sites_matched_to_inventory": 600, "internal_guard_sites_new_since_inventory": ["kyuura_engine/engine.py:445", "kyuura_engine/resolution/programs.py:10739"], "safety_boundaries": 8, "families": 23, "decisions": 29, "by_reachability": {"constructed_board": 145, "legal_sequence": 25, "static_only": 185}, "by_family": {"PF-COPY-TRANSFORM": 34, "PF-DAMAGE-SCOPE": 22, "PF-EFFECT-TIMING": 13, "PF-ENERGY-TYPE": 21, "PF-ESP-REDO": 4, "PF-HIDDEN-INFORMATION": 8, "PF-HISTORY-LASTING": 20, "PF-KNOCKOUT-TIMING": 15, "PF-POWER-SUPPRESSION": 11, "PF-PROTECTED-TARGET-EFFECT": 12, "PF-REACTION-DURING-PROCESS": 10, "PF-RUNTIME-CONTINUATION": 15, "PF-RUNTIME-COPY-GAPS": 5, "PF-RUNTIME-DATA": 5, "PF-RUNTIME-GENERIC": 1, "PF-RUNTIME-REGISTRY": 7, "PF-RUNTIME-SEARCH-LIMIT": 6, "PF-SETUP-PLAY-AS-POKEMON": 5, "PF-SIMULTANEOUS-ORDER": 26, "PF-STATED-COUNT-SHORT": 11, "PF-TEXT-READING": 34, "PF-UP-TO-ZERO": 13, "PF-USE-WITHOUT-EFFECT": 57}, "by_play_group": {"1": 316, "2": 39, "3": 89, "4": 6, "5": 20, "6": 1}, "by_mechanism": {"answer_rejection": 13, "command_rejection": 339, "deck_validation": 1, "deferred_interruption": 2, "pokemon_check_halt": 10, "setup_halt": 2}, "by_status": {"active": 402, "fixed": 5, "historical": 2, "unverified": 1}, "note": "停止コード・事例・規約・内部ガードは別の数。事例はコードの下位で、コードの数に足さない。棚卸しと同じ項目は独立した不足として数えない"}
@@ -611,11 +688,16 @@ PROBLEMS = [
      "v0137_followup": ("v0.137 で比較プローブをした: bench_entry_unresolved（遺跡の石版）は受理・コードは配分によらないが、理由の文が山札のカードの名前・uid を書く漏れを確認し、"
                         "PSP-RUIN-WALL-BLOCKED-REASON-ORACLE に分けた（修正していない）。CoinEvolveSelfFromDeck はプローブしていない（キョウのコクーン HP 60・キョウのスピアー HP 80 で、"
                         "UNRESOLVED_EVOLUTION_HP の盤面は通常のダメージでは作れない。GV1・DV2 の盤面も作っていない）。v0.137 の共通処理（deck_target_lower_bound）はこの 2 つの経路を変えていない"),
+     "v0138_followup": ("v0.138 で PSP-RUIN-WALL-BLOCKED-REASON-ORACLE を修正した。CoinEvolveSelfFromDeck（キョウのコクーンの［うか］）の DV2 を比較プローブで確かめ、配分で受理・拒否が変わる漏れを"
+                        "確認して PSP-COCOON-DV2-ORACLE に分けた（修正していない）。同じクラスの GV1（PERMISSION_FROM_DECK）・UNRESOLVED_EVOLUTION_HP の経路はプローブしていない（未確認の候補のまま）。"
+                        "bench_entry_unresolved を使うほかの経路のうち、［INCREASE］の使う機会は PSP-INCREASE-ENTRY-PW3-ORACLE に分けた。［ぶんれつ］・［マグネット］は使う前に山札を読まない"
+                        "（選んだあとの決定だけ。本人が山札を見る）"),
      "related_cards": ["neo2-054", "neo2-057"], "related_codes": ["UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK", "UNRESOLVED_EVOLVE_AFTER_DEVOLUTION", "UNRESOLVED_EVOLUTION_HP"],
      "reachability": {"status": "static_only", "evidence": ["scripts/stop_policy_scan.py の外で行った AST の横断（check_playable・check_usable で .deck・deck_cards_matching を読み UnsupportedError を投げる 19 クラスのうち、中身を読むもの）"]},
      "impact": "確かめれば PSP-ST1 と同じ型の漏れの可能性。熱血!（FV1。effects.py:29159）は山札とサイドを合わせて読むので、分け方に依存しない（候補から外した）",
      "play_groups": ["5"], "mode_policy": "比較プローブで確かめるまで、漏れとも安全とも数えない", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
     *V137_NEW_FINDINGS,
+    *V138_NEW_FINDINGS,
     {"id": "SUDDEN_DEATH_NOT_IMPLEMENTED", "entry_kind": "nonprefix_stop", "status": "fixed", "classification": "A", "found_in": "v0.133 の棚卸し（P0）",
      "summary": "v0.134 で StartSuddenDeath を加えた。サドン・デスの状態にほかのコマンドを送ると IllegalActionError SUDDEN_DEATH_NOT_STARTED（UnsupportedError ではない）",
      "trigger": "Phase.SUDDEN_DEATH", "related_cards": [], "related_codes": ["SUDDEN_DEATH_NOT_STARTED", "NOT_SUDDEN_DEATH", "UNSUPPORTED_SUDDEN_DEATH_INITIAL_DECK"],
@@ -1071,6 +1153,8 @@ def build() -> dict:
                      "probes": ["PSP-ST1-DECK-ORACLE", "PSP-FC1-ENERGY-ARK-ORACLE"],
                      "v0137_probes": ["PSP-ST1-DECK-ORACLE", "PSP-FC1-ENERGY-ARK-ORACLE", "PSP-RUIN-WALL-BLOCKED-REASON-ORACLE", "PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE"],
                      "v0137_probe_scripts": "docs/deck-search-oracle-v0.137.md 2 章・9 章（リポジトリの外の C:/dev/kyuura-engine-verification-v0.137/。この台帳の道具の証拠の場所には置かない）",
+                     "v0138_probes": ["PSP-RUIN-WALL-BLOCKED-REASON-ORACLE", "PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE", "PSP-INCREASE-ENTRY-PW3-ORACLE", "PSP-COCOON-DV2-ORACLE"],
+                     "v0138_probe_scripts": "docs/oracle-leak-fixes-v0.138.md 2 章・7 章（リポジトリの外の C:/dev/kyuura-engine-verification-v0.138/。この台帳の道具の証拠の場所には置かない）",
                      "probe_scripts": "docs/stop-policy-classification.md 付録（エンジンを変えない比較プローブ。tests/log_audit.py の twin_command_problems を使う）"},
         "scan": {"engine_prefixed_codes": len([c for c, v in codes.items() if v["engine"]]), "engine_literal_codes": len([c for c, v in codes.items() if v["engine"].get("literal")]),
                  "nonprefix_unsupported_literals": scan.nonprefix_unsupported(root), "halt_sites": len(scan.halt_sites(root)),
