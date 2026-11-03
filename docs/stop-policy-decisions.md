@@ -2,21 +2,27 @@
 
 [分類](stop-policy-classification.md)と[台帳](stop-policy-classification.json)の `decision_refs` から引く判断事項の一覧です。
 
-- 推奨は**案**です。どれも承認されていません（状態はすべて `decision_required`）。
-- 推奨を書いても、規約を採ったことにはなりません。挙動も変えていません。
+- 推奨は**案**です。どれも承認されていません（状態は `decision_required`）。例外は、2026-11-03 に利用者と合意したモードの定義の 6 項目（台帳の `mode_agreements`。
+  [ruleset-mode-design.md](ruleset-mode-design.md) 2 章）で、これにより DEC-STRICT-DEFINITION は合意済み、DEC-EXISTING-USER-SPECS は利用者指定の部分だけ合意済みになりました（台帳の
+  `decision_status`）。合意の根拠は本会話の利用者の指示で、公式の裁定・kyuura の研究上の解決ではありません。
+- 推奨を書いても、規約を採ったことにはなりません。挙動も変えていません。個々の続行規約（切り直しの補償・両側ねむり・錯乱ジムとちえくらべなど）は、どれも決めていません。
+- モードと規約集合の構造の判断事項（規約集合の識別・採用の単位・途中の変更・旧保存状態など）は [ruleset-mode-decisions.md](ruleset-mode-decisions.md) に移しました。この文書には、分類の時点の
+  案を「移した判断事項（履歴）」として残します（1.1 節）。台帳の `decision_status.<ID>.document` が、それぞれの判断事項の置き場所です。
 - 影響に書く件数は台帳の集計（基点 `3e25ac5`）です。
 
 ## 優先して決めるもの
 
 | 順 | 判断事項 | 理由 |
 |---:|---|---|
-| 1 | DEC-INFO-LEAK-FIXES | モードによらない漏れ（確認 2・候補 1）。モードの導入より前に扱う |
-| 2 | DEC-STRICT-DEFINITION | 既存の利用者指定 12 件・簡略化・仮定の扱いがここで決まる |
-| 3 | DEC-RULESET-IDENTITY | 保存・比較・監査の前提 |
-| 4 | DEC-MULLIGAN-COMPENSATION | 通常の固定デッキで準備が HALTED（道具の対戦で観測） |
-| 5 | DEC-SLEEP-COIN-ORDER | ポケモンチェックで HALTED（道具の対戦で観測） |
+| 1 | DEC-INFO-LEAK-FIXES | モードによらない漏れ。v0.137・v0.138 で 4 件を修正。PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE（未修正）と PSP-DECK-CONTENT-PRECHECKS の残り（未確認）が残る |
+| 2 | DEC-STRICT-DEFINITION | **合意済み**（2026-11-03。AGR-MODE-STRICT・AGR-MODE-PLAY・AGR-MODE-BASELINE-USER） |
+| 3 | DEC-RULESET-IDENTITY | 保存・比較・監査の前提（[ruleset-mode-decisions.md](ruleset-mode-decisions.md) に移した） |
+| 4 | DEC-MULLIGAN-COMPENSATION | 通常の固定デッキで準備が HALTED（道具の対戦で観測）。AGR-MODE-PRIORITY の対戦全体を終端にする項目 |
+| 5 | DEC-SLEEP-COIN-ORDER | ポケモンチェックで HALTED（道具の対戦で観測）。同上 |
 | 6 | DEC-CHAOS-GYM-MIND-GAMES | v0.132 の正式な対戦で拒否を観測 |
-| 7 | DEC-EXISTING-USER-SPECS | 2 の結果を、既存の 18 件の規約へ当てはめる |
+| 7 | DEC-EXISTING-USER-SPECS | 利用者指定の部分は合意済み。残り（簡略化・仮定・データの訂正）は DEC-BASELINE-NONUSER・DEC-CARD-DATA-CORRECTIONS（[ruleset-mode-decisions.md](ruleset-mode-decisions.md)） |
+
+順の 4〜6 の続行規約は、合意（AGR-MODE-PRIORITY）で優先の順を決めただけで、どの規約を採るかは決めていません。
 
 ## 1. モードと規約の集合
 
@@ -33,8 +39,27 @@
     ひかるバンギラスの 2 ワザ（neo4-082）、ナッシーの名前（PR1-075・PR1-077）、サドン・デスの所有者の戻し、キョウのベトベトン（PMCG6-074）、実装上の仮定 3 件、PR1-069 の名前。
   - エネルギードレインの v0.68 の仕様は 2002 年の Q&A が根拠で、2000.02.14 版の裁定ではない。そのため、STRICT-A では止める候補に入る。
 - **依存**: なし。DEC-EXISTING-USER-SPECS・DEC-RULESET-IDENTITY がこれに依存する。
+- **訂正（2026-11-03）**: 上の「影響」の「キョウのベトベトン（PMCG6-074）」は誤りで、キョウのベトベトンは PMCG6-023 です（PMCG6-074 はイマクニ？のドードー。エンジンの簡略化の記録）。
+  分類の時点の文はそのまま残し、ここで訂正します。
+- **経過（2026-11-03。合意済み）**: 利用者と次を合意しました（台帳の `mode_agreements`。根拠は本会話の利用者の指示で、公式の裁定・kyuura の研究上の解決ではない）。
+  - 同じ処理基盤に、採用する規約集合を渡す（AGR-MODE-SHARED-ENGINE）。
+  - 厳密モードは、未決の裁定に当たったら停止する検証用モード（AGR-MODE-STRICT）。
+  - プレイ用モードは、未決の裁定を事前に定めた続行規約で処理し、実際の対戦を進めるモード（AGR-MODE-PLAY）。
+  - 既存の承認済み利用者指定は、両モードに共通する基礎集合に含める（AGR-MODE-BASELINE-USER）。
+  - 情報漏れ・状態破損・不正入力・実装不足・計算上限は、プレイ用だから無視してよいものではない（AGR-MODE-SAFETY）。
+  - 続行規約の整備は、対戦全体を終端にする項目から優先する（AGR-MODE-PRIORITY）。
 
-### DEC-RULESET-IDENTITY — 規約の集合の識別
+  **STRICT-A（公式の根拠だけ）は、厳密モードの定義としては採用しません**（過去の検討案として残す）。STRICT-B は合意済みの定義に置きかえました。STRICT-B が含めていたエンジンの
+  簡略化・実装上の仮定を基礎集合に入れるかは未決です（DEC-BASELINE-NONUSER）。上の「推奨（案）」「影響」は分類の時点の記録として残します。
+
+### 1.1 移した判断事項（履歴）
+
+次の 5 つの判断事項は [ruleset-mode-decisions.md](ruleset-mode-decisions.md) に移しました（置き場所は 1 つ。台帳の `decision_status`）。この節の下の 4 段の見出し（`####`）は、分類の時点
+（基点 `3e25ac5`）の案の記録で、今の推奨ではありません。
+
+- DEC-RULESET-IDENTITY・DEC-EXISTING-USER-SPECS・DEC-CONVENTION-GRANULARITY・DEC-MODE-CHANGE-DURING-GAME・DEC-LEGACY-STATES
+
+#### DEC-RULESET-IDENTITY — 規約の集合の識別
 
 - **問い**: モード名と別に、採る規約の集合をどう識別するか（ID・版・中身の列挙）。
 - **選択肢**:
@@ -45,20 +70,23 @@
 - **影響**: 書き出しの形式を上げる（保存形式の変更は別の版の作業）。lockstep・前の版の組の比べは、同じ集合どうしでだけ比べる。
 - **依存**: DEC-STRICT-DEFINITION。
 
-### DEC-EXISTING-USER-SPECS — 既存の利用者指定の扱い
+#### DEC-EXISTING-USER-SPECS — 既存の利用者指定の扱い
 
 - **問い**: 採用済みの 18 件（台帳の `conventions`）を、各モードでどう扱うか。
 - **選択肢**:
   - **すべて STRICT-B の集合に入れる**。
-  - **一部を STRICT-A でも許す**: 例えば名前の表示だけの指定。
+  - **一部を STRICT-A でも許す**: 例えば名前の指定（分類の時点は「表示だけの指定」と書いたが誤り。判定に影響する。下の訂正）。
   - **すべて STRICT-A では止める**。
-- **推奨（案）**: STRICT-B の集合にすべて入れる。STRICT-A では、挙動に影響する指定は止める。表示だけの指定（ナッシーの日英併記の名前・PR1-069 の名前）は、別に判断する。
+- **推奨（案）**: STRICT-B の集合にすべて入れる。STRICT-A では、挙動に影響する指定は止める。名前の指定（ナッシーの日英併記の名前・PR1-069 の名前。分類の時点は「表示だけの指定」と書いた）は、別に判断する。
+- **訂正（2026-11-03）**: 分類の時点の「表示だけの指定」は誤りです。ナッシー［Exeggutor］（PR1-075・PR1-077）の名前の扱いは、デッキの同じ名前 4 枚の数え方・進化元（タマタマ）・名前を指定する効果・
+  同じ名前を比べる効果・カツラのクイズの答え・変身したあとの名前・ワザ名に使います（`effects.USER_SPECIFIED_NAMES` の `applies_to`。docs/exeggutor-bilingual-names-v0.131.md 3 章）。
+  PR1-069 の名前（ミュウ）も、同じ名前の数え方と名前を指定する効果に使うデータの訂正です。どちらも表示だけではありません。台帳の `conventions` の `affects`・`display_only: false` に記録しました。
 - **影響**:
   - 公式の論点（UQ-SWAP-PLEASE-OWNERSHIP など）は、どちらでも解決済みにしない。
   - ひかるバンギラスの指定をほかのカードへ広げない。
 - **依存**: DEC-STRICT-DEFINITION。
 
-### DEC-CONVENTION-GRANULARITY — プレイ用の規約を採る単位
+#### DEC-CONVENTION-GRANULARITY — プレイ用の規約を採る単位
 
 - **問い**: プレイ用の規約を、コード単位・族単位・カード単位のどれで採るか。
 - **選択肢**:
@@ -69,7 +97,7 @@
 - **影響**: 判断の数が多くなる（族 23・研究コード 316）。頻度の高いものから順に決める。
 - **依存**: DEC-RULESET-IDENTITY。
 
-### DEC-MODE-CHANGE-DURING-GAME — 対戦の途中の変更
+#### DEC-MODE-CHANGE-DURING-GAME — 対戦の途中の変更
 
 - **問い**: 対戦の途中で規約の集合を変えられるか。
 - **選択肢**: 変えられない／止まった状態からだけ変えられる／いつでも変えられる。
@@ -79,7 +107,7 @@
 - **影響**: 途中で変えると、乱数の列・ログの意味が区間の途中で変わり、再生・比較ができなくなる。
 - **依存**: DEC-RULESET-IDENTITY。
 
-### DEC-LEGACY-STATES — 方針の情報がない旧保存状態
+#### DEC-LEGACY-STATES — 方針の情報がない旧保存状態
 
 - **問い**: 規約の集合の情報がない旧保存状態を、どう読むか。
 - **選択肢**: その版の挙動（STRICT-B 相当）として読む／読むのを拒否する／読む人が指定する。
