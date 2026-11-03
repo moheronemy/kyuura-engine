@@ -17170,8 +17170,18 @@ def deck_target_lower_bound(state: GameState, player: int, target: CardFilter) -
     カードには少なくとも max(0, K - C) 枚がある（鳩の巣の原理）。K は 2 つの並びを合わせた集合だけ、C は公開の枚数だけで決まるので、結果はどのカードが山札・サイドにあるかによらない。
     実際の山札の候補の数（``deck_cards_matching``）とは別のもので、実際にあっても下限が足りないことがある（保守的）。フラッシュでおもてにした山札のカードは数えない（いちばん上より
     下のおもてのカードを手札へ移すと止まる FU3 で、続きの有無が配分によることを避ける。保守的）。前に山札をさがして見た内容など、過去に見た情報は使わない（保守的）。"""
+    return deck_lower_bound_where(state, player, lambda uid: target.matches(state.card_def(uid)))
+
+
+def deck_lower_bound_where(state: GameState, player: int, predicate: Callable[[int], bool]) -> int:
+    """v0.138（docs/oracle-leak-fixes-v0.138.md 4 章）: ``deck_target_lower_bound`` の条件を、カードの id の条件（``CardFilter``）から、本人に見えない自分のカード 1 枚ずつの条件
+    ``predicate``（uid を受け取る）に広げたもの。本人に見えない自分のカード（``unseen_card_pool``）のうち ``predicate`` が真のカードが K 枚、山札の外の見えないカードが C 枚なら、
+    山札のうらのカードに少なくとも max(0, K - C) 枚ある（鳩の巣の原理）。
+
+    ``predicate`` は、カードがどこ（山札・サイド・置いておくカード）にあるかを読まず、カードの定義と公開の状態（場にはたらく効果・持ち主）だけで決まる条件にすること（呼ぶ側の
+    責任。そうでなければ結果が配分に依存する）。v0.138 の遺跡の石版の「ベンチに出しても止めない」（``bench_entry_unconfirmed``）が使う。"""
     deck, elsewhere = unseen_card_pool(state, player)
-    known = sum(1 for uid in (*deck, *elsewhere) if target.matches(state.card_def(uid)))
+    known = sum(1 for uid in (*deck, *elsewhere) if predicate(uid))
     return max(0, known - len(elsewhere))
 
 
@@ -30863,6 +30873,12 @@ UP_TO_WITHOUT_TARGET_CODE = "UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET"
 UP_TO_WITHOUT_TARGET_REASON = (
     "「最大2枚」「3枚まで」選び出すトレーナー（エネルギーチャージ・エネルギー増幅装置）を、選び出す場所に選べるカードがないときに使えるか（コインだけを投げられるか）は、"
     "印刷の文面・kyuura の記録から決められないので扱わない（UPZ2。コインの前に止める。エネルギー回収の ER10 の答えを流用しない）")
+# v0.138（docs/oracle-leak-fixes-v0.138.md 5 章。PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE）: エネルギー増幅装置の使う前・段階 1 の答えの UPZ2 の理由の文。実際の山札の中身・サイドとの配分に
+# よらない決まった文（v0.137 までの「もどしたあとの山札に基本エネルギーカードがない」は実際の山札を読んでいた）
+AMPLIFIER_UNCONFIRMED_REASON = (
+    f"{UP_TO_WITHOUT_TARGET_REASON}。エネルギー増幅装置で、もどすカードが基本エネルギーカードでなく、もどしたあとの山札に基本エネルギーカードがあることを、山札とサイドの見えない"
+    "カードの配分を読まずに確かめられない（本人に見えない自分の基本エネルギーカードの枚数が、サイドなど山札の外の見えないカードの枚数をこえない。実際には山札にある場合も含む、"
+    "情報漏れを防ぐための保守的な制限。v0.138）")
 DECK_TOP_SHORT_CODE = "UNRESOLVED_DECK_TOP_SHORT"
 DECK_TOP_SHORT_REASON = (
     "山札の上から決まった枚数（新ポケモン図鑑HANDY808 の 5 枚・スロットゲームの 3 枚・ポケモンギアの 7 枚）のカードを見るトレーナーを、山札がその枚数より少ないときに使えるか"
@@ -31180,7 +31196,8 @@ class ReturnHandEnergyThenCoinSearchBasicEnergy(TrainerEffect):
     - コイン →「おもて」: 山札の基本エネルギーカード（もどしたカードが基本エネルギーカードなら、それも選べる）から 1〜min(``count``, 数) 枚（決定 ``SEARCH_DECK``。0 枚の答えは UPZ1）→
       見せて手札に加え → 切る。「うら」なら何もしない（2 回目は切らない）
     - もどしたあとの山札に基本エネルギーカードがなくなる段階 1 の選択は、「おもて」で選べるカードがない（UPZ2）ので、コインの結果で受け付けるかが変わらないよう、選べるが選ぶと
-      止める（どれもそうなら使う前に止める）
+      止める（どれもそうなら使う前に止める）。v0.138 から、もどしたあとの山札に基本エネルギーカードがあることを配分を読まない下限で確かめられない選択（特殊エネルギーカードをもどし、
+      もどす前の下限が 0）を止める（``_blocked``。実際には山札にある場合も含む保守的な制限。理由の文は決まった文 ``AMPLIFIER_UNCONFIRMED_REASON``）
     """
 
     text: str
@@ -31197,7 +31214,13 @@ class ReturnHandEnergyThenCoinSearchBasicEnergy(TrainerEffect):
         return tuple(uid for uid in state.players[use.player].hand if uid != use.card and self.HAND.matches(state.card_def(uid)))
 
     def _blocked(self, state: GameState, use: TrainerUse, options: tuple[int, ...]) -> tuple[int, ...]:
-        if deck_cards_matching(state, use.player, self.TARGET):
+        """段階 1 の選べるもの ``options`` のうち、もどしたあとの山札に基本エネルギーカードがあると、配分を読まずに確かめられない選択（UPZ2。選べるが選ぶと止める）。
+
+        v0.138（docs/oracle-leak-fixes-v0.138.md 5 章。PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE）: 基本エネルギーカードをもどすなら、もどしたカードが山札の基本エネルギーカードになるので、
+        いつも止めない。特殊エネルギーカードをもどすなら、もどす前の山札のうらに基本エネルギーカードが少なくとも 1 枚あると、配分を読まない下限（``deck_target_lower_bound``）で
+        確かめられるときだけ止めない（もどす特殊エネルギーカード・使っているこのカードは本人に見えるカードなので、下限は段階 1 の前とあとで同じ）。v0.137 までは実際の山札を
+        読み、山札とサイドのどちらに基本エネルギーカードがあるかで、使う宣言・段階 1 の答えの受理・拒否が変わった。"""
+        if deck_target_lower_bound(state, use.player, self.TARGET) >= 1:
             return ()
         return tuple(uid for uid in options if not self.TARGET.matches(state.card_def(uid)))
 
@@ -31206,12 +31229,12 @@ class ReturnHandEnergyThenCoinSearchBasicEnergy(TrainerEffect):
         if not options:
             raise UnsupportedError(STATED_CARDS_SHORT_CODE, f"{STATED_CARDS_SHORT_REASON}。エネルギー増幅装置で、手札にエネルギーカードがない")
         if len(self._blocked(state, use, options)) == len(options):
-            raise UnsupportedError(UP_TO_WITHOUT_TARGET_CODE, f"{UP_TO_WITHOUT_TARGET_REASON}。もどしたあとの山札に基本エネルギーカードがない")
+            raise UnsupportedError(UP_TO_WITHOUT_TARGET_CODE, AMPLIFIER_UNCONFIRMED_REASON)
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         options = self._hand(state, use)
         push_trainer_decision(state, use, kind=RETURN_TO_DECK, player=use.player, options=options, unresolved_choices=self._blocked(state, use, options),
-                              unresolved_code=UP_TO_WITHOUT_TARGET_CODE, unresolved_reason=f"{UP_TO_WITHOUT_TARGET_REASON}。もどしたあとの山札に基本エネルギーカードがない")
+                              unresolved_code=UP_TO_WITHOUT_TARGET_CODE, unresolved_reason=AMPLIFIER_UNCONFIRMED_REASON)
 
     def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         if decision.kind == RETURN_TO_DECK:
@@ -36616,6 +36639,53 @@ def bench_entry_unresolved(state: GameState, cards: Iterable[int]) -> tuple[tupl
     return tuple(blocked), code, reason
 
 
+# v0.138（docs/oracle-leak-fixes-v0.138.md。PSP-RUIN-WALL-BLOCKED-REASON-ORACLE）: 山札からベンチに出す効果の使う前の確かめで、ベンチに出しても止めないカードが山札にあることを、配分を
+# 読まずに確かめられないときの理由の文の後半。カードの名前・uid・枚数・位置を書かない決まった文（前半は止める効果のコードの決まった理由 ``_BENCH_ENTRY_BLOCK_REASONS``）
+BENCH_ENTRY_UNCONFIRMED_DETAIL = (
+    "山札の候補に、ベンチに出しても止めないカードがあることを、山札とサイドの見えないカードの配分を読まずに確かめられない（本人に見えない自分のカードのうち、選べてベンチに出しても"
+    "止めないカードの枚数が、サイドなど山札の外の見えないカードの枚数をこえない。山札の候補がどれも止めるカードの場合と、実際には止めないカードが山札にある場合の両方を含む。v0.138）"
+)
+
+
+def _bench_entry_block_reasons() -> Mapping[str, str]:
+    """ベンチに出すと止める確かめ（``goop_gas_entry_check``）のコード → そのコードの決まった理由の文（カードの名前・uid を含まない）。"""
+    return {GOOP_GAS_SCOPE_CODE: GOOP_GAS_SCOPE_REASON, STRANGE_GAS_SCOPE_CODE: STRANGE_GAS_SCOPE_REASON, DARK_WAVE_SCOPE_CODE: DARK_WAVE_SCOPE_REASON}
+
+
+def bench_entry_unconfirmed(state: GameState, player: int, target: CardFilter) -> UnsupportedError | None:
+    """v0.138（docs/oracle-leak-fixes-v0.138.md 3 章。PSP-RUIN-WALL-BLOCKED-REASON-ORACLE）: 山札の ``target`` のカードを 1 枚選んでベンチに出す効果を使う前に、山札の候補に
+    ベンチに出しても止めない（``goop_gas_entry_check`` に当たらない）カードが少なくとも 1 枚あることを、山札とサイドの配分を読まずに確かめる。確かめられなければ、止める効果のコードの
+    ``UnsupportedError``（理由の文は決まった文）、確かめられれば None。
+
+    - 本人に見えない自分のカード（``unseen_card_pool``）のうち、``target`` に合い、ベンチに出しても止めないカードが U 枚、山札の外の見えないカードが C 枚なら、山札のうらのカードに
+      少なくとも max(0, U - C) 枚ある（``deck_lower_bound_where``）。1 以上なら None
+    - 止めるかは、カードの定義（特殊能力の有無）と公開の場の効果（ベトベトガス・ふしぎなガス・やみのはどう）・カードの持ち主だけで決まり、カードの場所を読まない
+      （``goop_gas_entry_check`` は ``in_play_def`` と持ち主・場の効果だけを読む）。U は持ち主が知っている集合、C は公開の枚数なので、結果は配分によらない
+    - 1 より少なければ、本人に見えない ``target`` のカードのうち止めるカードのコード（いちばん小さい文字列。持ち主が知っている集合だけで決まる）で止める。止めるカードがない
+      （止める効果がはたらいていない）なら None（山札に ``target`` があるかの確かめ ST1 は呼ぶ側が先にする）
+    - v0.137 までの確かめ（``bench_entry_unresolved`` で実際の山札の候補を読み、どれも止めるなら最後のカードの理由の文で止める）は、受理・コードは配分によらなかったが（写しの
+      アンノーンはどれも特殊能力を持つ）、理由の文に最後に確かめた山札のカードの名前・uid を書いた
+    - 選んだあとの決定（山札をさがすので本人が見る）の選ぶと止める選択は、今までどおり実際の山札の候補で決める（``bench_entry_unresolved``）
+    """
+    codes: set[str] = set()
+
+    def enters(uid: int) -> bool:
+        if not target.matches(state.card_def(uid)):
+            return False
+        try:
+            goop_gas_entry_check(state, uid, how="enter")
+        except UnsupportedError as error:
+            codes.add(error.code)
+            return False
+        return True
+
+    if deck_lower_bound_where(state, player, enters) >= 1 or not codes:
+        return None
+    code = min(codes)
+    reason = _bench_entry_block_reasons().get(code, "ベンチに出すと止めるカード")
+    return UnsupportedError(code, f"{reason}。{BENCH_ENTRY_UNCONFIRMED_DETAIL}")
+
+
 MAGNET_TEXTS = (
     ("この力は、自分の番ごとに1回使える。コインを投げて「おもて」なら、自分の山札から「コイル」を選び出し、ベンチに出してよい。その後、その山札をよく切る。自分のベンチに空きがない時や、"
      "このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。"),
@@ -39941,7 +40011,9 @@ class BenchNameGroupFromDeckTrainer(TrainerEffect):
       1 枚選ばせるトレーナー）で、手札から出す前に止める
     - 決定 ``BENCH_FROM_DECK``（選べるものの数は使ったプレイヤーだけが見る）→ 手札を通さずにベンチの最後へ（``zones.bench_from_deck``。場に出た番は今の番。ログ ``trainer_bench_from_deck``
       は公開）→ 山札を 1 回切る。手札から出していないので、「手札から場に出したとき」の特殊能力（［ENGAGE］・［REASSURE］）の機会はない
-    - まきちらせ!ベトベトガス・ふしぎなガス・やみのはどうの間の特殊能力を持つカードは GG1 など（選べるが選ぶと止める。どれもそうなら手札から出す前に止める）
+    - まきちらせ!ベトベトガス・ふしぎなガス・やみのはどうの間の特殊能力を持つカードは GG1 など（選べるが選ぶと止める）。v0.138 から、山札の候補にベンチに出しても止めないカードが
+      あることを配分を読まない下限（``bench_entry_unconfirmed``）で確かめられなければ、手札から出す前に止める（理由の文は決まった文。v0.137 までは実際の山札の候補を読み、どれも
+      止めるなら最後のカードの名前・uid を理由の文に書いた）
     """
 
     text: str
@@ -39963,14 +40035,14 @@ class BenchNameGroupFromDeckTrainer(TrainerEffect):
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         if not bench_has_space(state, use.player):
             raise IllegalActionError("BENCH_FULL", f"あなたのベンチに空きがない（{bench_limit(state, use.player)} 匹）ので、このカードは使えない（カードの説明）")
-        # v0.137: 山札に「group」があることを、配分を読まない下限で確かめる（PSP-ST1-DECK-ORACLE。SearchDeckTrainer と同じ）。このあとの、山札の候補がどれもベンチに出すと
-        # 止めるカードかの確かめ（実際の山札を読む）は変えていない（docs/deck-search-oracle-v0.137.md 9 章の新しい発見）
+        # v0.137: 山札に「group」があることを、配分を読まない下限で確かめる（PSP-ST1-DECK-ORACLE。SearchDeckTrainer と同じ）
         if deck_target_lower_bound(state, use.player, self.target) < 1:
             raise UnsupportedError(SEARCH_TRAINER_WITHOUT_TARGET_CODE, f"{SEARCH_TRAINER_WITHOUT_TARGET_REASON}。{DECK_TARGET_UNCONFIRMED_DETAIL}")
-        options = self.candidates(state, use)
-        blocked, code, reason = bench_entry_unresolved(state, options)
-        if len(blocked) == len(options):
-            raise UnsupportedError(code, f"山札の「{self.group}」がどれも、ベンチに出すと止めるカード: {reason}")
+        # v0.138: 山札の候補にベンチに出しても止めないカードがあることも、配分を読まない下限で確かめる（PSP-RUIN-WALL-BLOCKED-REASON-ORACLE。v0.137 までは実際の山札の候補を
+        # 読み、どれも止めるなら最後に確かめた山札のカードの名前・uid を理由の文に書いた。docs/oracle-leak-fixes-v0.138.md 3 章）
+        problem = bench_entry_unconfirmed(state, use.player, self.target)
+        if problem is not None:
+            raise problem
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         options = self.candidates(state, use)
