@@ -2641,7 +2641,9 @@ V031_STOPS = {
     # v0.49: ［へんしん］のメタモンが、タイプのエネルギーの数を数える・トラッシュするワザを使う（どの色としても数えるかが決まらない。TE1）
     "UNRESOLVED_TRANSFORM_ENERGY_COUNT": lambda st, c: any_color_energy(st, _attacker(st, c)),
     # HC1。v0.114: 相手のバトル場のベイビィポケモンのルールのコイン（宣言のあと・説明の処理の前）も、トラッシュの時点が決まらないワザのコイン
-    "UNRESOLVED_DISCARD_ENERGY_TIMING": lambda st, c: _attacker(st, c).conditions.confused or E.baby_rule_applies(st, c.player),
+    # v0.139: p.309 の手順 4 のコイン（すなかけなどの効果・［はんこう］）も（docs/prize-order-hc1-fix-v0.139.md 3 章）
+    "UNRESOLVED_DISCARD_ENERGY_TIMING": lambda st, c: _attacker(st, c).conditions.confused or E.baby_rule_applies(st, c.player)
+    or bool(attack_coin_checks(st, _attacker(st, c))) or bool(E.attack_rebellion_powers(st, _attacker(st, c))),
     # HC4（第4弾のコダック・v0.34 のシャワーズの「みずでっぽう」）
     "UNRESOLVED_EXTRA_ENERGY_COLORLESS": lambda st, c: "ExtraEnergyDamageMixed" in _attack_and_copied_types(st, c),  # v0.62: オウムがえしで出すワザも
     # HC3。v0.80: 相手の対戦ポケモンについているエフェクトガード（効果の要素だけを受けない。ダメージの要素も無効なら同じ問い）

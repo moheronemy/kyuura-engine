@@ -1721,6 +1721,9 @@ def trainer_policy_command(state: GameState, *, janken_winner: int = 0):
             options.sort(key=lambda pid: -state.find_pokemon(pid)[1].damage)
         if not options and d.min_choices == 0:
             return ResolveDecision(d.player, d.id, ())  # v0.61: 使うと止める［ファイナルビーム］など、選ばない（使わない）だけが答えになる決定
+        if d.kind == "prize_order" and state.current_player in options:
+            # v0.139: 次にサイドを取るプレイヤーの決定（おもてのサイドがあるときだけ）は、番のプレイヤーを選ぶ（v0.2f の正規化と同じ順番。v0.138 までの対戦と比べられるように）
+            return ResolveDecision(d.player, d.id, (state.current_player,))
         return ResolveDecision(d.player, d.id, (options[0],))
     if state.phase is Phase.MAIN:
         command = trainer_command(state)

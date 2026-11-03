@@ -86,6 +86,7 @@ from .decisions import (
     KNOCK_OUT_POWER,
     KO_PREVENTION,
     POST_KNOCKOUT_POWER,
+    PRIZE_ORDER,
     PROMOTE_ACTIVE,
     TAKE_PRIZE,
     phase_for,
@@ -2920,7 +2921,7 @@ def check_invariants(state: GameState) -> list[str]:
         problems.append(f"次の決定の番号 {state.next_decision_id!r} が正しくない")
 
     # v0.12: 「ふしちょう」を使うかの決定（きぜつの処理のあと、バトル場に出す前。再開先 "post_knockout"）を待つ間も、バトル場が空のことがある
-    after_knockout = phase is Phase.DECISION and state.decision is not None and state.decision.resume == "post_knockout"
+    after_knockout = phase is Phase.DECISION and state.decision is not None and state.decision.resume in ("post_knockout", PRIZE_ORDER)  # v0.139: 次にサイドを取るプレイヤーの決定も
     # v0.38: ワザを使ったポケモンがワザの効果で場をはなれたあとのワザの途中の決定（キョウのポッポの「でんれい」）を待つ間も、そのプレイヤーのバトル場が
     # 空のことがある（かわりの対戦ポケモンを出す決定・控えがいないときの山札をさがす決定。``_returned_attacker``）
     left_play = phase is Phase.DECISION and state.decision is not None and _returned_attacker(state, state.decision) is not None
@@ -5605,7 +5606,7 @@ def _decision_problems(state: GameState) -> list[str]:
         problems.append(f"決定の再開先 {d.resume!r} がない")
     remaining = d.context_value("remaining", ())
     then = d.context_value("then")
-    if (d.kind in (TAKE_PRIZE, PROMOTE_ACTIVE) or d.resume in (TAKE_PRIZE, PROMOTE_ACTIVE)) and d.resume != d.kind:
+    if (d.kind in (TAKE_PRIZE, PROMOTE_ACTIVE, PRIZE_ORDER) or d.resume in (TAKE_PRIZE, PROMOTE_ACTIVE, PRIZE_ORDER)) and d.resume != d.kind:
         # v0.1 からある種類の決定は、その種類の再開先で続ける（v0.4e。それまではポケモンチェックの中の決定だけ確かめていた）
         problems.append(f"決定 {d.kind} の再開先 {d.resume!r} が種類と合わない")
     if d.kind in (TAKE_PRIZE, PROMOTE_ACTIVE) and (d.min_choices, d.max_choices) != (1, 1):
@@ -5614,17 +5615,22 @@ def _decision_problems(state: GameState) -> list[str]:
         # ポケモンチェックの中のきぜつのあとの決定（v0.3a）。サイド・交代（v0.12 から「ふしちょう」も）だけで、交代は 1 人だけ
         # （両方のバトル場が空になる場合は、出す順番が決まらないので止めている）。v0.42: 特殊能力の処理のあとの決定（続き CONTINUE_TURN。のろいのきぜつ・
         # おくびょうで空いたバトル場）も同じ種類だけで、交代は 1 人だけ（1 回の使用できぜつする・場をはなれるのは 1 匹）
-        kinds = {TAKE_PRIZE: TAKE_PRIZE, PROMOTE_ACTIVE: PROMOTE_ACTIVE, POST_KNOCKOUT_POWER: "post_knockout"}
+        kinds = {TAKE_PRIZE: TAKE_PRIZE, PROMOTE_ACTIVE: PROMOTE_ACTIVE, POST_KNOCKOUT_POWER: "post_knockout", PRIZE_ORDER: PRIZE_ORDER}
         if then not in (NEXT_TURN, CONTINUE_TURN) or kinds.get(d.kind) != d.resume:
             problems.append(f"決定 {d.kind} の続き {then!r} が正しくない")
+        if d.kind == PRIZE_ORDER and then == NEXT_TURN:
+            # v0.139: ポケモンチェックはどちらの番でもない。両方のポケモンがきぜつする場合は、ダメージの前に止めている（UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT）
+            problems.append("ポケモンチェックのあとに、次にサイドを取るプレイヤーの決定がある")
         if d.kind == PROMOTE_ACTIVE and remaining:
             problems.append(f"{'ポケモンチェック' if then == NEXT_TURN else '特殊能力の処理'}のあとにバトル場に出すプレイヤーが複数いる {(d.player, *remaining)}")
         if then == CONTINUE_TURN:
             problems.extend(_power_aftermath_problems(state))
-    if d.kind == TAKE_PRIZE:
+    if d.kind == PRIZE_ORDER:
+        problems.extend(_prize_order_decision_problems(state, d, remaining))
+    if d.kind in (TAKE_PRIZE, PRIZE_ORDER):
         prizes = state.players[d.player].prizes
-        queue = (d.player, *remaining)
-        if d.options != tuple(range(len(prizes))):
+        queue = (d.player, *remaining) if d.kind == TAKE_PRIZE else tuple(remaining)
+        if d.kind == TAKE_PRIZE and d.options != tuple(range(len(prizes))):
             problems.append(f"サイドを取る決定の選べる位置 {d.options} が、サイドの枚数 {len(prizes)} と合わない")
         for player in PLAYERS:
             if queue.count(player) > len(state.players[player].prizes):
@@ -5830,6 +5836,24 @@ def _knockout_bookkeeping(event) -> bool:
         or (kind == "energy_returned_to_hand" and event.get("cause") == "knock_out") \
         or (kind == "color_effect_removed" and event.get("reason") == "target_gone") \
         or kind == "poison_mist_interrupted"  # v0.119: きぜつで場をはなれた［ポイズンミスト］の発生源の中断を、コマンドの終わり（effects.poison_mist_upkeep）に書いた
+
+
+def _prize_order_decision_problems(state: GameState, d, remaining) -> list[str]:
+    """v0.139: 次にサイドを取るプレイヤーの決定（``PRIZE_ORDER``。docs/prize-order-hc1-fix-v0.139.md 2 章）の形。決めるのは番のプレイヤー（p.325）、選ぶのは 1 つ、選べるものは
+    残りの並びにいるプレイヤー（両方）。出すのは、残りのどちらかのサイドにおもてのカードがあるときだけ（``flow.prize_order_matters``。ないなら正規化の順番で取る）。
+    並び（``remaining``）の中身は、サイドを取る決定と同じ確かめ（``_prize_queue_problems``）。"""
+    problems = []
+    if d.player != state.current_player:
+        problems.append(f"次にサイドを取るプレイヤーの決定をするのが、番のプレイヤー {state.current_player} ではなくプレイヤー {d.player}")
+    if (d.min_choices, d.max_choices) != (1, 1):
+        problems.append(f"次にサイドを取るプレイヤーの決定で選ぶ数が {d.min_choices}〜{d.max_choices}（1 人のはず）")
+    if not isinstance(remaining, tuple) or not remaining or any(player not in PLAYERS for player in remaining):
+        return problems + [f"次にサイドを取るプレイヤーの決定の並び {remaining!r} が正しくない"]
+    if d.options != tuple(sorted(set(remaining))):
+        problems.append(f"次にサイドを取るプレイヤーの決定の選べるもの {d.options} が、並び {remaining} のプレイヤーと合わない")
+    if not resolution.prize_order_matters(state, remaining):
+        problems.append(f"並び {remaining} は順番で情報が変わらない（両方が残っていない・おもてのサイドがない）のに、次にサイドを取るプレイヤーの決定がある")
+    return problems
 
 
 def _prize_queue_problems(state: GameState, queue: tuple[int, ...]) -> list[str]:

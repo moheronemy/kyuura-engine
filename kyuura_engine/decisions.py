@@ -406,6 +406,12 @@ BENCH_FROM_DECK_OR_HAND = "bench_from_deck_or_hand"
 # 手札を見て、カードを1枚えらぶ」）、2 つ目は相手プレイヤーが使ったプレイヤーの手札から（「相手プレイヤーにあなたの手札を見せ、カードを1枚えらばせる」）。選べるものは見た手札のカードの
 # uid（手札の並び）で 1 枚。決めるプレイヤーは見ている（観測の ``LOOKED_HAND_KINDS``）。続きの情報の ``stage`` は ``"take"``・``"give"``。再開先は "trainer"
 SELECT_EXCHANGE_CARD = "select_exchange_card"
+# 同時のきぜつ（p.324）で両方のプレイヤーがサイドを取るとき、次にサイドを取るプレイヤー（docs/prize-order-hc1-fix-v0.139.md 2 章）。p.325「23」（GR-2000-P325-SAME-TIMING）により、
+# 番のプレイヤーが順番を決める。v0.2f はこの選択を出さずに番のプレイヤーからに正規化した（docs/simultaneous-ko-v0.2f.md 5 章）。正規化の前提（後に取るプレイヤーが、先に取られた
+# カードの情報を得ない）は、取るプレイヤーのサイドにおもてのカード（``GameState.face_up_prizes``。ロケット団参上!・カードめくりゲーム）があると成り立たないので、そのときだけ出す。
+# 反応の順番（``REACTION_ORDER``）と同じく、1 つずつ「次」を選ぶ（取ったあとに、まだ両方が残り、おもてのカードがあれば、もう一度聞く）。決めるのは番のプレイヤー。選べるものは
+# 残りの並び（``context`` の ``"remaining"``）にいるプレイヤーの番号（0・1）で 1 つ。再開先は "prize_order"。段階は Phase.DECISION（「ふしちょう」の決定と同じく、バトル場が空のことがある）
+PRIZE_ORDER = "prize_order"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

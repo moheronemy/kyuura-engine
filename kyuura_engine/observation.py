@@ -71,6 +71,7 @@ from .decisions import (
     MOVE_OPPONENT_ENERGY,
     PEEK_CARD,
     POST_KNOCKOUT_POWER,
+    PRIZE_ORDER,
     PROMOTE_ACTIVE,
     RECOVER_ENERGY,
     RECOVER_POKEMON,
@@ -141,6 +142,7 @@ OPTION_MEANINGS: dict[str, str] = {
     PEEK_CARD: "peek_target",
     PROMOTE_ACTIVE: "pokemon", SELECT_POKEMON: "pokemon", FORCED_SWITCH: "pokemon", KO_PREVENTION: "pokemon", KNOCK_OUT_POWER: "pokemon", ATTACH_TO_BENCH: "pokemon", NINJA_TRICK: "pokemon", REACTION_SWITCH: "pokemon", BENCH_GUARD: "pokemon",
     ENTRY_POWER: "pokemon",
+    PRIZE_ORDER: "number",  # v0.139: 次にサイドを取るプレイヤー（プレイヤーの番号）
     REACTION_POWER: "pokemon", REACTION_ORDER: "number",  # v0.86: 反応の特殊能力の使う機会（場のポケモンの番号）・同じ時点の反応の順番（待っている反応の位置）
     DISCARD_ENERGY: "card", RECOVER_ENERGY: "card", POST_KNOCKOUT_POWER: "card", DISCARD_FROM_HAND: "card", SEARCH_DECK: "card",
     RETURN_TO_DECK: "card", SELECT_EVOLUTION_CARD: "card", RETRIEVE_ENERGY: "card", DISCARD_OPPONENT_ENERGY: "card", RECOVER_TRAINER: "card",

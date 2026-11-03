@@ -14,7 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from ..decisions import KO_PREVENTION, POST_KNOCKOUT_POWER, PROMOTE_ACTIVE, TAKE_PRIZE, phase_for, push_decision
+from ..decisions import KO_PREVENTION, POST_KNOCKOUT_POWER, PRIZE_ORDER, PROMOTE_ACTIVE, TAKE_PRIZE, phase_for, push_decision
 from ..state import PendingDecision
 
 if TYPE_CHECKING:
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 ATTACK = "attack"
 KNOCK_OUT = "knock_out"
 POST_KNOCKOUT = "post_knockout"
-RESUMES = frozenset({ATTACK, KNOCK_OUT, POST_KNOCKOUT, TAKE_PRIZE, PROMOTE_ACTIVE})
+RESUMES = frozenset({ATTACK, KNOCK_OUT, POST_KNOCKOUT, TAKE_PRIZE, PROMOTE_ACTIVE, PRIZE_ORDER})
 
 
 @dataclass(frozen=True)
@@ -47,7 +47,7 @@ class KoCheckContinuation:
 class AftermathContinuation:
     """きぜつのあと（サイド → 勝ち負け → ふしちょう → 交代 → 番の終わり／ポケモンチェックの続き）。"""
 
-    stage: str  # TAKE_PRIZE・POST_KNOCKOUT・PROMOTE_ACTIVE
+    stage: str  # TAKE_PRIZE・POST_KNOCKOUT・PROMOTE_ACTIVE・PRIZE_ORDER（PRIZE_ORDER の ``remaining`` は、まだ取っていないサイドの並びのすべて）
     remaining: tuple[int, ...] = ()
     then: str | None = None
     post_knockout: tuple = ()
@@ -90,6 +90,14 @@ def prize_decision(state: GameState, player: int, cont: AftermathContinuation) -
                          context=(("remaining", cont.remaining), *_then(cont.then), *post))
 
 
+def prize_order_decision(state: GameState, cont: AftermathContinuation) -> PendingDecision:
+    """同時のきぜつで両方がサイドを取るとき、次に取るプレイヤーを番のプレイヤーが選ぶ決定（p.325。docs/prize-order-hc1-fix-v0.139.md 2 章）。``context`` はサイドを取る決定と
+    同じ項目（``remaining`` はまだ取っていない並びのすべて）。"""
+    post = () if not cont.post_knockout else (("post_knockout", tuple(cont.post_knockout)),)
+    return push_decision(state, kind=PRIZE_ORDER, player=state.current_player, options=sorted(set(cont.remaining)), resume=PRIZE_ORDER,
+                         context=(("remaining", cont.remaining), *_then(cont.then), *post))
+
+
 def post_knockout_decision(state: GameState, owner: int, card: int, cont: AftermathContinuation) -> PendingDecision:
     """勝ち負けのあとの任意の効果（ふしちょう）の決定（v0.13 の ``engine._offer_post_knockout`` と同じ形）。"""
     return push_decision(state, kind=POST_KNOCKOUT_POWER, player=owner, options=(card,), resume=POST_KNOCKOUT,
@@ -112,8 +120,8 @@ def decode(decision: PendingDecision):
     if resume == KNOCK_OUT:
         power = decision.context_value("power")
         return KoCheckContinuation(tuple(decision.context_value("attack")), None if power is None else tuple(power))
-    if resume == TAKE_PRIZE:
-        return AftermathContinuation(TAKE_PRIZE, tuple(decision.context_value("remaining", ())), decision.context_value("then"),
+    if resume in (TAKE_PRIZE, PRIZE_ORDER):
+        return AftermathContinuation(resume, tuple(decision.context_value("remaining", ())), decision.context_value("then"),
                                      tuple(decision.context_value("post_knockout", ())))
     if resume == POST_KNOCKOUT:
         return AftermathContinuation(POST_KNOCKOUT, (), decision.context_value("then"), (), tuple(decision.context_value("power")))
@@ -143,5 +151,6 @@ __all__ = [
     "phase_for",
     "post_knockout_decision",
     "prize_decision",
+    "prize_order_decision",
     "promote_decision",
 ]
