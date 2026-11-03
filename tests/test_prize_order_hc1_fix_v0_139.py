@@ -268,6 +268,30 @@ class PartialFaceUpTest(unittest.TestCase):
                     self.assertTrue(all(o.get("card_id") is None or s.players[later].prizes[o["value"]] in s.face_up_prizes
                                         for o in view["decision"]["options"]))
 
+    def test_two_knockouts_ask_again(self):
+        """じばくで相手のバトル場とダメージののった控え（コラッタ 20）、自分のコイルがきぜつする（P0 が 2 枚・P1 が 1 枚。並び (0, 0, 1)）。P1 のサイドの 1 枚がおもて。
+        P0 を先にすると、1 枚取ったあとまだ両方が残り、おもてのカードもあるので、もう一度聞く。P1 を先にすると、残りは P0 だけなので聞かない。"""
+        def knockouts():
+            state = build_test_state([
+                {"active": {"card": MAGNEMITE, "energy": [LIGHTNING, LIGHTNING]}, "bench": [MAGNEMITE], "prizes": [LIGHTNING, RATTATA, WATER], "deck": [LIGHTNING] * 5},
+                {"active": RATTATA, "bench": [{"card": RATTATA, "damage": 20}, RATTATA], "prizes": [WATER, RATTATA, LIGHTNING], "deck": [WATER] * 5},
+            ])
+            reveal_prize(state, 1, 1, trainer=0)
+            return apply_command(state, UseAttack(0, SELFDESTRUCT))
+
+        expected = {0: [("prize_order", 0, (0, 0, 1)), ("take_prize", 0, (0, 1)), ("prize_order", 0, (0, 1)), ("take_prize", 0, (1,)), ("take_prize", 1, ())],
+                    1: [("prize_order", 0, (0, 0, 1)), ("take_prize", 1, (0, 0)), ("take_prize", 0, (0,)), ("take_prize", 0, ())]}
+        for first, sequence in expected.items():
+            with self.subTest(first=first):
+                state, seen = knockouts(), []
+                while state.decision is not None and state.decision.kind in ("prize_order", "take_prize"):
+                    d = state.decision
+                    seen.append((d.kind, d.player, d.context_value("remaining")))
+                    state = answer(state, d, first if len(seen) == 1 else d.options[0])
+                self.assertEqual(seen, sequence)
+                self.assertEqual((len(state.players[0].hand), len(state.players[1].hand)), (2, 1))
+                self.assertEqual((state.decision.kind, state.decision.player), ("promote_active", 1))
+
     def test_no_face_up_card_no_decision(self):
         state = apply_command(partial_board(reveal_owner=None), UseAttack(0, SELFDESTRUCT))
         self.assertEqual((state.decision.kind, state.decision.player, state.decision.context_value("remaining")), ("take_prize", 0, (1,)))
