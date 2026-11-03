@@ -1,7 +1,7 @@
 {
  "schema_version": 1,
  "title": "停止コードと未対応処理の分類（厳密モード・プレイ用モードの将来の導入に向けて）",
- "scope": "調査・分類・設計の記録。モードの実装・既存の動作・裁定・保存形式は変えていない。方針の案はどれも利用者の承認を受けていない",
+ "scope": "調査・分類・設計の記録。モードの実装・既存の動作・裁定・保存形式は変えていない。利用者と合意したのはモードの定義の 6 項目（mode_agreements）だけで、既存の利用者指定を基礎集合に入れること以外の方針の案（族の候補・個々の続行規約・規約集合の識別など）は承認を受けていない",
  "base": {
   "commit": "3e25ac5eff0f90dbea224045e77c2b60e025bf2d",
   "version": "0.136.0",
@@ -68,6 +68,27 @@
     "PSP-COCOON-DV2-ORACLE（active。修正していない）"
    ],
    "unchanged": "研究の停止コード（GG1・MG1・DW1・UPZ2・ST1 を含む）は active のまま（停止コードを修正済みにしない）。族・規約・判断事項・方針の案は変えていない"
+  },
+  {
+   "version": "0.138.0（版は変えない。文書・台帳・作成スクリプトだけ）",
+   "work": "モードの定義の合意の反映と、規約集合の設計（docs/ruleset-mode-design.md・docs/ruleset-mode-decisions.md）",
+   "document": "docs/ruleset-mode-design.md",
+   "base": {
+    "commit": "1bf94a13cae33ac4e07082fc88f0f07b431908b8",
+    "branch_of_base": "main（PR #32 のマージ。v0.138 の最後 42e00f6 と同じ木）"
+   },
+   "approval": "利用者の合意は mode_agreements の 6 項目（2026-11-03。本会話の利用者の指示。公式の裁定・kyuura の研究上の解決ではない）。規約集合の識別・採用の単位・途中の変更・旧保存状態・不足した構成の開始・デバッグ用の構成・個々の続行規約は decision_required のまま",
+   "changed_entries": [
+    "mode_definitions（合意済みの定義。STRICT-A・STRICT-B は履歴）",
+    "conventions（baseline_category・対象・効果・承認の記録。利用者指定 12 件は user_agreed、ほかの 6 件は decision_required）",
+    "conventions の user_ids（簡略ルールの 4 対象を登録と同じ 1 つずつに直した）",
+    "decision_status（DEC-STRICT-DEFINITION は agreed、DEC-EXISTING-USER-SPECS は partly_agreed）"
+   ],
+   "new_entries": [
+    "mode_agreements（AGR-MODE-* の 6 項目）",
+    "判断事項 8 つ（DEC-RULESET-VERSIONING ほか。docs/ruleset-mode-decisions.md）"
+   ],
+   "unchanged": "停止コード・事例・問題の項目・族・安全境界・方針の案は変えていない。エンジン・既存のテスト・カードデータ・保存形式は変えていない"
   }
  ],
  "counts_at_classification": {
@@ -214,8 +235,51 @@
    "unverified": "未確認（候補）"
   }
  },
+ "mode_agreements": {
+  "source": {
+   "by": "user",
+   "on": "2026-11-03",
+   "where": "本会話の利用者の指示（作業ブランチ claude/ruleset-mode-design の依頼の「合意済みの定義」）",
+   "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（UQ- の論点は解決済みにしない）"
+  },
+  "agreements": [
+   {
+    "id": "AGR-MODE-SHARED-ENGINE",
+    "statement": "同じ処理基盤に、採用する規約集合を渡す。",
+    "reading": "モードごとに別のエンジン・別の分岐を持たない。モードの違いは、渡す規約集合の中身の違いとして表す"
+   },
+   {
+    "id": "AGR-MODE-STRICT",
+    "statement": "厳密モードは、未決の裁定に当たったら停止する検証用モード。",
+    "reading": "未決の裁定（研究の停止コード UNRESOLVED_*・コードのない問いのうち止めている場面）に当たったら、今のエンジンと同じく止める（拒否・HALTED・途中停止の区別も今のまま）"
+   },
+   {
+    "id": "AGR-MODE-PLAY",
+    "statement": "プレイ用モードは、未決の裁定を事前に定めた続行規約で処理し、実際の対戦を進めるモード。",
+    "reading": "続行規約は対戦の前に集合に入れておくもの（対戦の途中で決めない）。どの未決の裁定にどの規約を当てるかは未決（個々の続行規約は 1 つも採っていない）"
+   },
+   {
+    "id": "AGR-MODE-BASELINE-USER",
+    "statement": "既存の承認済み利用者指定は、両モードに共通する基礎集合に含める。",
+    "reading": "台帳の conventions のうち、利用者が明示的に指定した記録（baseline_category が user_specified）だけ。指定の対象・範囲は記録のまま（広げない・無効化しない）。エンジンの簡略化・実装上の仮定・データの訂正は、この合意に含まれない（DEC-BASELINE-NONUSER・DEC-CARD-DATA-CORRECTIONS）"
+   },
+   {
+    "id": "AGR-MODE-SAFETY",
+    "statement": "情報漏れ、状態破損、不正入力、実装不足、計算上限は、プレイ用だから無視してよいものではない。",
+    "reading": "両モードで同じ安全境界（safety_boundaries の SB-*）を保つ。プレイ用の規約で漏れ・破損・未実装・上限の超過を解消したことにしない"
+   },
+   {
+    "id": "AGR-MODE-PRIORITY",
+    "statement": "続行規約の整備は、対戦全体を終端にする項目から優先する。",
+    "reading": "準備の HALTED・ポケモンチェックの HALTED・途中停止（5 章の 14 コード）を、選択肢を 1 つ減らすだけの拒否より先に扱う。どの規約を採るかは決めていない"
+   }
+  ]
+ },
  "mode_definitions": {
-  "strict_options": {
+  "strict": "厳密モードは、未決の裁定に当たったら停止する検証用モード。",
+  "play": "プレイ用モードは、未決の裁定を事前に定めた続行規約で処理し、実際の対戦を進めるモード。",
+  "status": "agreed（AGR-MODE-STRICT・AGR-MODE-PLAY。2026-11-03）",
+  "strict_options_at_classification": {
    "STRICT-A": {
     "name": "公式の根拠だけ",
     "rule": "2000.02.14 版の公式ルールと、既存の公式資料（最新の説明・エラッタ・裁定）だけを使い、それ以外（利用者指定・エンジンの簡略化・実装上の仮定）で決めている処理も止める"
@@ -225,8 +289,19 @@
     "rule": "公式の根拠に、明示的に承認された利用者指定・記録済みの簡略化・実装上の仮定を加えた、版で固定したルールセットに厳密にしたがう（集合に入っていない処理は止める）"
    }
   },
-  "play": "プレイ用モード: 厳密モードのルールセットに、項目ごとに承認したプレイ用の規約を加える。すべての停止をなくすことは目的にしない。安全に続けられない経路・未実装の経路は止める候補のまま",
-  "status": "decision_required（DEC-STRICT-DEFINITION）"
+  "history": {
+   "STRICT-A": "厳密モードの定義としては採用しない（過去の検討案。AGR-MODE-STRICT・AGR-MODE-BASELINE-USER と合わない）。研究・照合の用途の集合として別に作るかは決めていない",
+   "STRICT-B": "AGR-MODE-STRICT・AGR-MODE-BASELINE-USER に置きかえた。STRICT-B が含めていたエンジンの簡略化・実装上の仮定を基礎集合に入れるかは未決（DEC-BASELINE-NONUSER）",
+   "families_strict_columns": "族の strict の 2 列（STRICT-A・STRICT-B）は分類の時点の案のまま残す。合意後の厳密モードは、未決の裁定に当たったら止める（今の止め方。STRICT-B の列と同じ動き）",
+   "play_at_classification": "プレイ用モード: 厳密モードのルールセットに、項目ごとに承認したプレイ用の規約を加える。すべての停止をなくすことは目的にしない。安全に続けられない経路・未実装の経路は止める候補のまま"
+  },
+  "design": "docs/ruleset-mode-design.md"
+ },
+ "baseline_categories": {
+  "user_specified": "利用者が明示的に指定した記録（指定の文・日・根拠の文書がある）。AGR-MODE-BASELINE-USER で両モードの基礎集合に入れる",
+  "engine_simplification": "エンジンが記録している簡略化（利用者の指定の記録はない）。基礎集合に入れるかは未決（DEC-BASELINE-NONUSER）",
+  "implementation_assumption": "実装上の仮定・エンジンの採用の仕様（公式に決まったことにしない）。基礎集合に入れるかは未決（DEC-BASELINE-NONUSER）",
+  "card_data_correction": "カードのデータの訂正（写しの作り直しで当てはめる）。規約集合ではなくカードデータの層で識別する案（DEC-CARD-DATA-CORRECTIONS）"
  },
  "safety_conditions": {
   "SC-CARD": "カードの消失・重複・不正な領域移動がない",
@@ -1328,35 +1403,51 @@
    "id": "POLICY:user_simplified_text:PR1-044/attack/0",
    "inventory_ref": "POLICY:user_simplified_text:PR1-044/attack/0",
    "user_ids": [
-    "USER-BIRTHDAY-COIN-ONLY",
-    "USER-SPOKEN-CONDITION-IGNORED"
+    "USER-BIRTHDAY-COIN-ONLY"
    ],
    "kind": "user_simplified_text",
    "related_cards": [
     "PR1-044"
    ],
    "source": "kyuura-engine user simplification docs/deferred-shortage-user-promos-v0.127.md#4",
+   "approval": {
+    "document": "docs/deferred-shortage-user-promos-v0.127.md 4.1 節",
+    "on": "2026-11-01",
+    "instruction": "のピカチュウについては誕生日の確認をせずに通常のコイントスのみ"
+   },
+   "effect": "おたんじょうびの「今日がこのカードの持ち主の誕生日なら」を処理にふくめない。どの日もコイン 1 枚、「おもて」なら 50 追加（30+50）",
+   "affects": [
+    "ワザのダメージ（コイン 1 枚）",
+    "乱数（どの日もコインを投げる）"
+   ],
+   "not_covered": [
+    "誕生日・日付・実名の入力（作らない。「いつも誕生日」とは記録しない）",
+    "コスト・こんらんのコイン・弱点・抵抗力・ESP のやり直し（通常どおり）",
+    "ほかのカードの日付・現実の条件"
+   ],
+   "target": "_のピカチュウ PR1-044 のワザ 0（おたんじょうび）",
+   "baseline_category": "user_specified",
+   "registry": "effects.USER_SIMPLIFICATIONS['PR1-044/attack/0']",
    "existing_behavior_status": [
     "user_approved",
     "implemented",
     "verified"
    ],
-   "strict_mode": {
-    "STRICT-A": "公式の根拠ではないので、STRICT-A の定義なら止める候補（今は無効化しない）",
-    "STRICT-B": "固定したルールセットの一部として今のまま"
-   },
-   "mode_policy_status": "decision_required",
-   "decision_refs": [
-    "DEC-STRICT-DEFINITION",
-    "DEC-EXISTING-USER-SPECS"
+   "mode_policy_status": "user_agreed",
+   "agreement_refs": [
+    "AGR-MODE-BASELINE-USER"
    ],
-   "extension": "ほかのカード・ほかのコードへ自動的に広げない"
+   "modes": {
+    "strict": "基礎集合の一部として今のまま",
+    "play": "基礎集合の一部として今のまま（続行規約ではない）"
+   },
+   "decision_refs": [],
+   "extension": "ほかのカード・ほかのコード・隣の場面へ自動的に広げない（対象と not_covered は記録のまま）"
   },
   {
    "id": "POLICY:user_simplified_text:PR1-072/attack/0",
    "inventory_ref": "POLICY:user_simplified_text:PR1-072/attack/0",
    "user_ids": [
-    "USER-BIRTHDAY-COIN-ONLY",
     "USER-SPOKEN-CONDITION-IGNORED"
    ],
    "kind": "user_simplified_text",
@@ -1364,27 +1455,42 @@
     "PR1-072"
    ],
    "source": "kyuura-engine user simplification docs/deferred-shortage-user-promos-v0.127.md#4",
+   "approval": {
+    "document": "docs/deferred-shortage-user-promos-v0.127.md 4.1 節",
+    "on": "2026-11-01",
+    "instruction": "ハマちゃんのヤドキングに関しては発話要件を無視して実装"
+   },
+   "affects": [
+    "ワザを使えるか（発話の条件で拒否しない）"
+   ],
+   "not_covered": [
+    "発話の申告・回数・音声（作らない）",
+    "ほかのカードの発話・動作の条件（PMCG6-074 は別の記録の engine_simplification）"
+   ],
+   "target": "ハマちゃんのヤドキング PR1-072 のワザ 0（こまったなあ）",
+   "effect": "「「こまったなぁ」と3回つぶやかないとこのワザは使えない」を処理にふくめない。自分と相手の対戦ポケモンをこんらんにする",
+   "baseline_category": "user_specified",
+   "registry": "effects.USER_SIMPLIFICATIONS['PR1-072/attack/0']",
    "existing_behavior_status": [
     "user_approved",
     "implemented",
     "verified"
    ],
-   "strict_mode": {
-    "STRICT-A": "公式の根拠ではないので、STRICT-A の定義なら止める候補（今は無効化しない）",
-    "STRICT-B": "固定したルールセットの一部として今のまま"
-   },
-   "mode_policy_status": "decision_required",
-   "decision_refs": [
-    "DEC-STRICT-DEFINITION",
-    "DEC-EXISTING-USER-SPECS"
+   "mode_policy_status": "user_agreed",
+   "agreement_refs": [
+    "AGR-MODE-BASELINE-USER"
    ],
-   "extension": "ほかのカード・ほかのコードへ自動的に広げない"
+   "modes": {
+    "strict": "基礎集合の一部として今のまま",
+    "play": "基礎集合の一部として今のまま（続行規約ではない）"
+   },
+   "decision_refs": [],
+   "extension": "ほかのカード・ほかのコード・隣の場面へ自動的に広げない（対象と not_covered は記録のまま）"
   },
   {
    "id": "POLICY:user_simplified_text:PR1-072/attack/1",
    "inventory_ref": "POLICY:user_simplified_text:PR1-072/attack/1",
    "user_ids": [
-    "USER-BIRTHDAY-COIN-ONLY",
     "USER-SPOKEN-CONDITION-IGNORED"
    ],
    "kind": "user_simplified_text",
@@ -1392,49 +1498,82 @@
     "PR1-072"
    ],
    "source": "kyuura-engine user simplification docs/deferred-shortage-user-promos-v0.127.md#4",
+   "approval": {
+    "document": "docs/deferred-shortage-user-promos-v0.127.md 4.1 節",
+    "on": "2026-11-01",
+    "instruction": "ハマちゃんのヤドキングに関しては発話要件を無視して実装"
+   },
+   "affects": [
+    "ワザを使えるか（発話の条件で拒否しない）"
+   ],
+   "not_covered": [
+    "発話の申告・回数・音声（作らない）",
+    "ほかのカードの発話・動作の条件（PMCG6-074 は別の記録の engine_simplification）"
+   ],
+   "target": "ハマちゃんのヤドキング PR1-072 のワザ 1（どつく）",
+   "effect": "「「ええのかなあ」と3回つぶやかないとこのワザは使えない」を処理にふくめない。相手の対戦ポケモンに 20（通常の計算）",
+   "baseline_category": "user_specified",
+   "registry": "effects.USER_SIMPLIFICATIONS['PR1-072/attack/1']",
    "existing_behavior_status": [
     "user_approved",
     "implemented",
     "verified"
    ],
-   "strict_mode": {
-    "STRICT-A": "公式の根拠ではないので、STRICT-A の定義なら止める候補（今は無効化しない）",
-    "STRICT-B": "固定したルールセットの一部として今のまま"
-   },
-   "mode_policy_status": "decision_required",
-   "decision_refs": [
-    "DEC-STRICT-DEFINITION",
-    "DEC-EXISTING-USER-SPECS"
+   "mode_policy_status": "user_agreed",
+   "agreement_refs": [
+    "AGR-MODE-BASELINE-USER"
    ],
-   "extension": "ほかのカード・ほかのコードへ自動的に広げない"
+   "modes": {
+    "strict": "基礎集合の一部として今のまま",
+    "play": "基礎集合の一部として今のまま（続行規約ではない）"
+   },
+   "decision_refs": [],
+   "extension": "ほかのカード・ほかのコード・隣の場面へ自動的に広げない（対象と not_covered は記録のまま）"
   },
   {
    "id": "POLICY:user_simplified_text:PR1-090/attack/0",
    "inventory_ref": "POLICY:user_simplified_text:PR1-090/attack/0",
    "user_ids": [
-    "USER-BIRTHDAY-COIN-ONLY",
-    "USER-SPOKEN-CONDITION-IGNORED"
+    "USER-BIRTHDAY-COIN-ONLY"
    ],
    "kind": "user_simplified_text",
    "related_cards": [
     "PR1-090"
    ],
    "source": "kyuura-engine user simplification docs/deferred-shortage-user-promos-v0.127.md#4",
+   "approval": {
+    "document": "docs/deferred-shortage-user-promos-v0.127.md 4.1 節",
+    "on": "2026-11-01",
+    "instruction": "のピカチュウについては誕生日の確認をせずに通常のコイントスのみ"
+   },
+   "effect": "おたんじょうびの「今日がこのカードの持ち主の誕生日なら」を処理にふくめない。どの日もコイン 1 枚、「おもて」なら 50 追加（30+50）",
+   "affects": [
+    "ワザのダメージ（コイン 1 枚）",
+    "乱数（どの日もコインを投げる）"
+   ],
+   "not_covered": [
+    "誕生日・日付・実名の入力（作らない。「いつも誕生日」とは記録しない）",
+    "コスト・こんらんのコイン・弱点・抵抗力・ESP のやり直し（通常どおり）",
+    "ほかのカードの日付・現実の条件"
+   ],
+   "target": "_のピカチュウ PR1-090 のワザ 0（おたんじょうび）",
+   "baseline_category": "user_specified",
+   "registry": "effects.USER_SIMPLIFICATIONS['PR1-090/attack/0']",
    "existing_behavior_status": [
     "user_approved",
     "implemented",
     "verified"
    ],
-   "strict_mode": {
-    "STRICT-A": "公式の根拠ではないので、STRICT-A の定義なら止める候補（今は無効化しない）",
-    "STRICT-B": "固定したルールセットの一部として今のまま"
-   },
-   "mode_policy_status": "decision_required",
-   "decision_refs": [
-    "DEC-STRICT-DEFINITION",
-    "DEC-EXISTING-USER-SPECS"
+   "mode_policy_status": "user_agreed",
+   "agreement_refs": [
+    "AGR-MODE-BASELINE-USER"
    ],
-   "extension": "ほかのカード・ほかのコードへ自動的に広げない"
+   "modes": {
+    "strict": "基礎集合の一部として今のまま",
+    "play": "基礎集合の一部として今のまま（続行規約ではない）"
+   },
+   "decision_refs": [],
+   "extension": "ほかのカード・ほかのコード・隣の場面へ自動的に広げない（対象と not_covered は記録のまま）"
   },
   {
    "id": "POLICY:user_specified_references:GD5-016/trainer",
@@ -1447,21 +1586,39 @@
     "GD5-016"
    ],
    "source": "kyuura-engine user specification docs/blaines-quiz-heights-v0.129.md#3",
+   "target": "カツラのクイズ その1 GD5-016 の正解",
+   "approval": {
+    "document": "docs/blaines-quiz-heights-v0.129.md 3 章",
+    "on": "2026-11-01",
+    "instruction": "クイズの正解には、今回収集した全国図鑑No.001〜251の通常の姿の公式図鑑値を採用します。"
+   },
+   "effect": "置いたカードの全国図鑑番号の種族の身長（公式図鑑の整数 cm。kyuura 9242b9b の値）を正解にし、答えが完全に同じなら正解",
+   "affects": [
+    "クイズの正誤（どちらが 2 枚引くか）",
+    "図鑑番号のないカードの扱い（GAP-QUIZ-REFERENCE-DATA）"
+   ],
+   "not_covered": [
+    "処理に使う文面（印刷のまま）",
+    "印刷の身長・カードの時期の図鑑の値と同じとは確かめていない",
+    "その2・その3（GD5 以外のクイズ）の正解"
+   ],
+   "baseline_category": "user_specified",
+   "registry": "effects.USER_SPECIFIED_REFERENCES['GD5-016/trainer']",
    "existing_behavior_status": [
     "user_approved",
     "implemented",
     "verified"
    ],
-   "strict_mode": {
-    "STRICT-A": "公式の根拠ではないので、STRICT-A の定義なら止める候補（今は無効化しない）",
-    "STRICT-B": "固定したルールセットの一部として今のまま"
-   },
-   "mode_policy_status": "decision_required",
-   "decision_refs": [
-    "DEC-STRICT-DEFINITION",
-    "DEC-EXISTING-USER-SPECS"
+   "mode_policy_status": "user_agreed",
+   "agreement_refs": [
+    "AGR-MODE-BASELINE-USER"
    ],
-   "extension": "ほかのカード・ほかのコードへ自動的に広げない"
+   "modes": {
+    "strict": "基礎集合の一部として今のまま",
+    "play": "基礎集合の一部として今のまま（続行規約ではない）"
+   },
+   "decision_refs": [],
+   "extension": "ほかのカード・ほかのコード・隣の場面へ自動的に広げない（対象と not_covered は記録のまま）"
   },
   {
    "id": "POLICY:user_specified_rules:PR1-027/trainer",
@@ -1474,21 +1631,41 @@
     "PR1-027"
    ],
    "source": "kyuura-engine user specification docs/trade-please-ownership-v0.130.md#3",
+   "target": "とりかえっこプリーズ PR1-027 で交換が成立した 2 枚",
+   "approval": {
+    "document": "docs/trade-please-ownership-v0.130.md 3 章",
+    "on": "2026-11-01",
+    "instruction": "交換が成立した2枚は、対戦終了まで、それぞれの受取側が所有者になります。"
+   },
+   "effect": "2 枚それぞれの対戦の中の所有者を、受け取ったプレイヤーにする（片方だけを変えない）。再交換も同じ規則。トラッシュ・山札・サイド・場に置く処理は新しい所有者を基準にする",
+   "affects": [
+    "カードの行き先（所有者のゾーン）",
+    "保存形式 33 の ownership_changes・origin",
+    "延長戦の開始（USER-SUDDEN-DEATH-OWNERSHIP-RESET が出所にもどす）"
+   ],
+   "not_covered": [
+    "実物の所有権・次の対戦（CR-SWAP-PLEASE-REAL-TRADE-SEPARATE）",
+    "錯乱ジムでかわりに使うときの「あなた」「相手」（UQ-CHAOS-GYM-BORROWED-TURN。止める）",
+    "あとから重ねた進化カード・つけたエネルギー・どうぐの所有者（変えない）",
+    "デッキの構築の制限の当てはめ直し（しない）"
+   ],
+   "baseline_category": "user_specified",
+   "registry": "effects.USER_SPECIFIED_RULES['PR1-027/trainer']",
    "existing_behavior_status": [
     "user_approved",
     "implemented",
     "verified"
    ],
-   "strict_mode": {
-    "STRICT-A": "公式の根拠ではないので、STRICT-A の定義なら止める候補（今は無効化しない）",
-    "STRICT-B": "固定したルールセットの一部として今のまま"
-   },
-   "mode_policy_status": "decision_required",
-   "decision_refs": [
-    "DEC-STRICT-DEFINITION",
-    "DEC-EXISTING-USER-SPECS"
+   "mode_policy_status": "user_agreed",
+   "agreement_refs": [
+    "AGR-MODE-BASELINE-USER"
    ],
-   "extension": "ほかのカード・ほかのコードへ自動的に広げない"
+   "modes": {
+    "strict": "基礎集合の一部として今のまま",
+    "play": "基礎集合の一部として今のまま（続行規約ではない）"
+   },
+   "decision_refs": [],
+   "extension": "ほかのカード・ほかのコード・隣の場面へ自動的に広げない（対象と not_covered は記録のまま）"
   },
   {
    "id": "POLICY:user_specified_rules:neo1-049/power/0",
@@ -1501,21 +1678,42 @@
     "neo1-049"
    ],
    "source": "kyuura-engine user specification docs/slowking-mind-games-v0.132.md#3",
+   "target": "ヤドキング neo1-049 の［ちえくらべ］",
+   "approval": {
+    "document": "docs/slowking-mind-games-v0.132.md 3 章",
+    "on": "2026-11-01",
+    "instruction": "発動は任意とし、順序を次のようにします。"
+   },
+   "effect": "相手がトレーナーを手札から出して使うとき: 状態を変えずに使えるか確かめる → ヤドキング側が使うか選ぶ（任意）→ 使うならコイン 1 回 →「おもて」なら使えず相手の山札の上（コスト・効果なし）→「うら」・使わないなら通常どおり",
+   "affects": [
+    "トレーナーの使用の可否",
+    "乱数（使うと選んだときだけコイン）",
+    "決定（使うかの選択）"
+   ],
+   "not_covered": [
+    "錯乱ジムのコインとの前後（MG1 で止める。DEC-CHAOS-GYM-MIND-GAMES。この指定の延長として扱えるかは未決）",
+    "ポケモンとして出すトレーナー（MG2）",
+    "使ったら番が終わるトレーナーが使えなかったときの番（MG3）",
+    "おもてのカードのある山札の上の向き（FU4）",
+    "使えないトレーナーの宣言では選択もコインも出さない"
+   ],
+   "baseline_category": "user_specified",
+   "registry": "effects.USER_SPECIFIED_RULES['neo1-049/power/0']",
    "existing_behavior_status": [
     "user_approved",
     "implemented",
     "verified"
    ],
-   "strict_mode": {
-    "STRICT-A": "公式の根拠ではないので、STRICT-A の定義なら止める候補（今は無効化しない）",
-    "STRICT-B": "固定したルールセットの一部として今のまま"
-   },
-   "mode_policy_status": "decision_required",
-   "decision_refs": [
-    "DEC-STRICT-DEFINITION",
-    "DEC-EXISTING-USER-SPECS"
+   "mode_policy_status": "user_agreed",
+   "agreement_refs": [
+    "AGR-MODE-BASELINE-USER"
    ],
-   "extension": "ほかのカード・ほかのコードへ自動的に広げない"
+   "modes": {
+    "strict": "基礎集合の一部として今のまま",
+    "play": "基礎集合の一部として今のまま（続行規約ではない）"
+   },
+   "decision_refs": [],
+   "extension": "ほかのカード・ほかのコード・隣の場面へ自動的に広げない（対象と not_covered は記録のまま）"
   },
   {
    "id": "POLICY:user_specified_rules:neo4-082/attack/0",
@@ -1528,21 +1726,38 @@
     "neo4-082"
    ],
    "source": "kyuura-engine user specification docs/shining-tyranitar-v0.133.md#3",
+   "target": "ひかるバンギラス neo4-082 のワザ 0（マウンテンクラッシュ）",
+   "approval": {
+    "document": "docs/shining-tyranitar-v0.133.md 3.1 節",
+    "on": "2026-11-01",
+    "instruction": "おもての数と相手の残り山札枚数の少ない方だけ、山札の上からトラッシュする。"
+   },
+   "effect": "「うら」が出るまでコインを投げ（山札 0 枚でも省かない）、「おもて」の数と相手の山札の枚数の少ない方だけトラッシュ。山札が空になっただけでは負けにしない",
+   "affects": [
+    "相手の山札の枚数",
+    "乱数（コインを省かない）"
+   ],
+   "not_covered": [
+    "ほかのカードの「足りなければあるだけ」（たつまき FC1・ドライアップ DU1・怪電波マシーン TW1/TW2・HC6・MW1・FU1 などの止め方は変えない）",
+    "相手のポケモンへの防護を山札へ当てはめるか（当てはめない既存の扱い）"
+   ],
+   "baseline_category": "user_specified",
+   "registry": "effects.USER_SPECIFIED_RULES['neo4-082/attack/0']",
    "existing_behavior_status": [
     "user_approved",
     "implemented",
     "verified"
    ],
-   "strict_mode": {
-    "STRICT-A": "公式の根拠ではないので、STRICT-A の定義なら止める候補（今は無効化しない）",
-    "STRICT-B": "固定したルールセットの一部として今のまま"
-   },
-   "mode_policy_status": "decision_required",
-   "decision_refs": [
-    "DEC-STRICT-DEFINITION",
-    "DEC-EXISTING-USER-SPECS"
+   "mode_policy_status": "user_agreed",
+   "agreement_refs": [
+    "AGR-MODE-BASELINE-USER"
    ],
-   "extension": "ほかのカード・ほかのコードへ自動的に広げない"
+   "modes": {
+    "strict": "基礎集合の一部として今のまま",
+    "play": "基礎集合の一部として今のまま（続行規約ではない）"
+   },
+   "decision_refs": [],
+   "extension": "ほかのカード・ほかのコード・隣の場面へ自動的に広げない（対象と not_covered は記録のまま）"
   },
   {
    "id": "POLICY:user_specified_rules:neo4-082/attack/1",
@@ -1555,21 +1770,39 @@
     "neo4-082"
    ],
    "source": "kyuura-engine user specification docs/shining-tyranitar-v0.133.md#3",
+   "target": "ひかるバンギラス neo4-082 のワザ 1（はかいのほのお）",
+   "approval": {
+    "document": "docs/shining-tyranitar-v0.133.md 3.2 節",
+    "on": "2026-11-01",
+    "instruction": "以下の順序を採用します。"
+   },
+   "effect": "炎エネルギーカード 0 枚なら宣言を拒否（状態を変えない）。1 枚以上ならその枚数のコイン →「おもて」の数の自分の炎をトラッシュ → 50 → 「おもて」の数の相手のエネルギー（足りなければすべて）",
+   "affects": [
+    "ワザを使えるか",
+    "要素の順番（p.309 の「まずダメージ」と違う並び）",
+    "相手のエネルギーの枚数"
+   ],
+   "not_covered": [
+    "特殊エネルギーを「炎」エネルギーカードに数えるか（UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY。既存の止め方）",
+    "ほかのカードの順番・数の不足の扱い"
+   ],
+   "baseline_category": "user_specified",
+   "registry": "effects.USER_SPECIFIED_RULES['neo4-082/attack/1']",
    "existing_behavior_status": [
     "user_approved",
     "implemented",
     "verified"
    ],
-   "strict_mode": {
-    "STRICT-A": "公式の根拠ではないので、STRICT-A の定義なら止める候補（今は無効化しない）",
-    "STRICT-B": "固定したルールセットの一部として今のまま"
-   },
-   "mode_policy_status": "decision_required",
-   "decision_refs": [
-    "DEC-STRICT-DEFINITION",
-    "DEC-EXISTING-USER-SPECS"
+   "mode_policy_status": "user_agreed",
+   "agreement_refs": [
+    "AGR-MODE-BASELINE-USER"
    ],
-   "extension": "ほかのカード・ほかのコードへ自動的に広げない"
+   "modes": {
+    "strict": "基礎集合の一部として今のまま",
+    "play": "基礎集合の一部として今のまま（続行規約ではない）"
+   },
+   "decision_refs": [],
+   "extension": "ほかのカード・ほかのコード・隣の場面へ自動的に広げない（対象と not_covered は記録のまま）"
   },
   {
    "id": "POLICY:user_specified_names:PR1-075/name",
@@ -1582,21 +1815,44 @@
     "PR1-075"
    ],
    "source": "kyuura-engine user specification docs/exeggutor-bilingual-names-v0.131.md#3",
+   "target": "ナッシー［Exeggutor］PR1-075 の名前・進化元・ワザ名",
+   "approval": {
+    "document": "docs/exeggutor-bilingual-names-v0.131.md 3 章",
+    "on": "2026-11-01",
+    "instruction": "対象2枚の英語併記は翻訳表示として扱い、判定に使いません。"
+   },
+   "effect": "判定には日本語の部分（ナッシー・タマタマ・ふみつけ）を使い、英語の併記は翻訳の表示として判定に使わない",
+   "affects": [
+    "デッキの同じ名前 4 枚の数え方（通常のナッシーと合わせる）",
+    "進化元（タマタマから進化）",
+    "名前を指定する効果・同じ名前を比べる効果",
+    "カツラのクイズ その1・その3 の答えと伝える名前",
+    "変身したあとの名前",
+    "ワザ名で比べる効果・ログ・観測"
+   ],
+   "not_covered": [
+    "名前以外の性能（このカードの写しの値のまま。通常のナッシーに置きかえない）",
+    "ほかのカードの括弧書き・英語の名前",
+    "英語だけの「Exeggutor」を別名として受け付けること"
+   ],
+   "display_only": false,
+   "baseline_category": "user_specified",
+   "registry": "effects.USER_SPECIFIED_NAMES['PR1-075/name']",
    "existing_behavior_status": [
     "user_approved",
     "implemented",
     "verified"
    ],
-   "strict_mode": {
-    "STRICT-A": "公式の根拠ではないので、STRICT-A の定義なら止める候補（今は無効化しない）",
-    "STRICT-B": "固定したルールセットの一部として今のまま"
-   },
-   "mode_policy_status": "decision_required",
-   "decision_refs": [
-    "DEC-STRICT-DEFINITION",
-    "DEC-EXISTING-USER-SPECS"
+   "mode_policy_status": "user_agreed",
+   "agreement_refs": [
+    "AGR-MODE-BASELINE-USER"
    ],
-   "extension": "ほかのカード・ほかのコードへ自動的に広げない"
+   "modes": {
+    "strict": "基礎集合の一部として今のまま",
+    "play": "基礎集合の一部として今のまま（続行規約ではない）"
+   },
+   "decision_refs": [],
+   "extension": "ほかのカード・ほかのコード・隣の場面へ自動的に広げない（対象と not_covered は記録のまま）"
   },
   {
    "id": "POLICY:user_specified_names:PR1-077/name",
@@ -1609,21 +1865,37 @@
     "PR1-077"
    ],
    "source": "kyuura-engine user specification docs/exeggutor-bilingual-names-v0.131.md#3",
+   "target": "ナッシー［Exeggutor］PR1-077 の名前・進化元・ワザ名",
+   "approval": {
+    "document": "docs/exeggutor-bilingual-names-v0.131.md 3 章",
+    "on": "2026-11-01",
+    "instruction": "対象2枚の英語併記は翻訳表示として扱い、判定に使いません。"
+   },
+   "effect": "PR1-075 と同じ（判定には日本語の部分を使う）",
+   "affects": [
+    "PR1-075 と同じ（同名制限・進化・名前を指定する効果・クイズ・変身・ワザ名）"
+   ],
+   "not_covered": [
+    "PR1-075 と同じ"
+   ],
+   "display_only": false,
+   "baseline_category": "user_specified",
+   "registry": "effects.USER_SPECIFIED_NAMES['PR1-077/name']",
    "existing_behavior_status": [
     "user_approved",
     "implemented",
     "verified"
    ],
-   "strict_mode": {
-    "STRICT-A": "公式の根拠ではないので、STRICT-A の定義なら止める候補（今は無効化しない）",
-    "STRICT-B": "固定したルールセットの一部として今のまま"
-   },
-   "mode_policy_status": "decision_required",
-   "decision_refs": [
-    "DEC-STRICT-DEFINITION",
-    "DEC-EXISTING-USER-SPECS"
+   "mode_policy_status": "user_agreed",
+   "agreement_refs": [
+    "AGR-MODE-BASELINE-USER"
    ],
-   "extension": "ほかのカード・ほかのコードへ自動的に広げない"
+   "modes": {
+    "strict": "基礎集合の一部として今のまま",
+    "play": "基礎集合の一部として今のまま（続行規約ではない）"
+   },
+   "decision_refs": [],
+   "extension": "ほかのカード・ほかのコード・隣の場面へ自動的に広げない（対象と not_covered は記録のまま）"
   },
   {
    "id": "POLICY:engine_simplified_text:PMCG6-074/attack/0",
@@ -1634,20 +1906,31 @@
     "PMCG6-074"
    ],
    "source": "kyuura-engine docs/final-pmcg-cards-v0.68.md#4",
+   "target": "イマクニ？のドードー PMCG6-074 のワザ 0（ハモる）",
+   "basis": "docs/final-pmcg-cards-v0.68.md 4 章（エンジンの簡略化した仕様。利用者の指定の記録はない）",
+   "effect": "歌を歌う状態・歌い終わりの通知を作らず、ふつうのワザとして相手の対戦ポケモンに 30",
+   "affects": [
+    "ワザのダメージ"
+   ],
+   "not_covered": [
+    "ほかのカードの動作の条件"
+   ],
+   "baseline_category": "engine_simplification",
    "existing_behavior_status": [
     "implemented",
     "verified"
    ],
-   "strict_mode": {
-    "STRICT-A": "公式の根拠ではないので、STRICT-A の定義なら止める候補（今は無効化しない）",
-    "STRICT-B": "固定したルールセットの一部として今のまま"
-   },
    "mode_policy_status": "decision_required",
+   "agreement_refs": [],
+   "modes": {
+    "strict": "今の挙動のまま（基礎集合に入れるかは未決。今回は無効化しない）",
+    "play": "同じ"
+   },
    "decision_refs": [
-    "DEC-STRICT-DEFINITION",
-    "DEC-EXISTING-USER-SPECS"
+    "DEC-BASELINE-NONUSER",
+    "DEC-BASELINE-CENSUS"
    ],
-   "extension": "ほかのカード・ほかのコードへ自動的に広げない"
+   "extension": "ほかのカード・ほかのコード・隣の場面へ自動的に広げない（対象と not_covered は記録のまま）"
   },
   {
    "id": "POLICY:engine_simplified_text:PMCG6-074/power/0",
@@ -1658,20 +1941,31 @@
     "PMCG6-074"
    ],
    "source": "kyuura-engine docs/final-pmcg-cards-v0.68.md#4",
+   "target": "イマクニ？のドードー PMCG6-074 の特殊能力（にげまくり）",
+   "basis": "docs/final-pmcg-cards-v0.68.md 4 章（エンジンの簡略化した仕様。利用者の指定の記録はない）",
+   "effect": "カードを投げる動作を処理にふくめない。特殊能力は状態・ログ・乱数を変えず宣言できない。にげるは通常の規定",
+   "affects": [
+    "特殊能力の宣言の可否"
+   ],
+   "not_covered": [
+    "ほかのカードの動作の条件"
+   ],
+   "baseline_category": "engine_simplification",
    "existing_behavior_status": [
     "implemented",
     "verified"
    ],
-   "strict_mode": {
-    "STRICT-A": "公式の根拠ではないので、STRICT-A の定義なら止める候補（今は無効化しない）",
-    "STRICT-B": "固定したルールセットの一部として今のまま"
-   },
    "mode_policy_status": "decision_required",
+   "agreement_refs": [],
+   "modes": {
+    "strict": "今の挙動のまま（基礎集合に入れるかは未決。今回は無効化しない）",
+    "play": "同じ"
+   },
    "decision_refs": [
-    "DEC-STRICT-DEFINITION",
-    "DEC-EXISTING-USER-SPECS"
+    "DEC-BASELINE-NONUSER",
+    "DEC-BASELINE-CENSUS"
    ],
-   "extension": "ほかのカード・ほかのコードへ自動的に広げない"
+   "extension": "ほかのカード・ほかのコード・隣の場面へ自動的に広げない（対象と not_covered は記録のまま）"
   },
   {
    "id": "POLICY:implementation_assumption:1",
@@ -1680,20 +1974,31 @@
    "kind": "implementation_assumption",
    "related_cards": [],
    "source": "",
+   "target": "「ふしちょう」とサイド・勝ち負け・バトル場に出すの順番（P27・P28・P30。UQ-PHOENIX-KO-PROCESS-ORDER）",
+   "basis": "docs/post-knockout-powers-v0.12.md 3 章（どの順番でも行き先・サイド・出せるポケモン・勝ち負け・乱数が変わらないことを確かめた正規化）",
+   "effect": "選ばせずに「サイド → 勝ち負けの判定 →（続くなら）ふしちょう → バトル場に出す」に正規化",
+   "affects": [
+    "決定の順番（結果は同じと確かめた範囲）"
+   ],
+   "not_covered": [
+    "同時のきぜつで、番のプレイヤーがバトル場に出すポケモンを選ぶときに、相手の「ふしちょう」の使用を知っているか（正規化した順番の 1 つ）"
+   ],
+   "baseline_category": "implementation_assumption",
    "existing_behavior_status": [
     "implemented",
     "verified"
    ],
-   "strict_mode": {
-    "STRICT-A": "公式の根拠ではないので、STRICT-A の定義なら止める候補（今は無効化しない）",
-    "STRICT-B": "固定したルールセットの一部として今のまま"
-   },
    "mode_policy_status": "decision_required",
+   "agreement_refs": [],
+   "modes": {
+    "strict": "今の挙動のまま（基礎集合に入れるかは未決。今回は無効化しない）",
+    "play": "同じ"
+   },
    "decision_refs": [
-    "DEC-STRICT-DEFINITION",
-    "DEC-EXISTING-USER-SPECS"
+    "DEC-BASELINE-NONUSER",
+    "DEC-BASELINE-CENSUS"
    ],
-   "extension": "ほかのカード・ほかのコードへ自動的に広げない"
+   "extension": "ほかのカード・ほかのコード・隣の場面へ自動的に広げない（対象と not_covered は記録のまま）"
   },
   {
    "id": "POLICY:implementation_assumption:2",
@@ -1702,20 +2007,33 @@
    "kind": "implementation_assumption",
    "related_cards": [],
    "source": "",
+   "target": "キョウのベトベトン PMCG6-023 の［だつりょくえき］の宣言（DR1・DR12。UQ-ENERGY-DRAIN-DECLARATION）",
+   "basis": "docs/final-pmcg-cards-v0.68.md 3 章（エンジンの採用の仕様。根拠は 2002-05-24 の Q&A・『トレーナーズ』Vol.13 で、2000.02.14 版の裁定ではない。後年の資料を根拠にした採用で、CLAUDE.md の「後年の裁定で補わない」との関係は未判断。利用者の指定の記録はない）",
+   "effect": "自動的にはたらく（使わない選択・「おもて」のあとトラッシュしない選択はない）",
+   "affects": [
+    "決定の有無",
+    "乱数（条件を満たせば必ずコイン）"
+   ],
+   "not_covered": [
+    "2002 年のほかの変更（持ち込まない）",
+    "ほかの特殊能力の宣言"
+   ],
+   "baseline_category": "implementation_assumption",
    "existing_behavior_status": [
     "implemented",
     "verified"
    ],
-   "strict_mode": {
-    "STRICT-A": "公式の根拠ではないので、STRICT-A の定義なら止める候補（今は無効化しない）",
-    "STRICT-B": "固定したルールセットの一部として今のまま"
-   },
    "mode_policy_status": "decision_required",
+   "agreement_refs": [],
+   "modes": {
+    "strict": "今の挙動のまま（基礎集合に入れるかは未決。今回は無効化しない）",
+    "play": "同じ"
+   },
    "decision_refs": [
-    "DEC-STRICT-DEFINITION",
-    "DEC-EXISTING-USER-SPECS"
+    "DEC-BASELINE-NONUSER",
+    "DEC-BASELINE-CENSUS"
    ],
-   "extension": "ほかのカード・ほかのコードへ自動的に広げない"
+   "extension": "ほかのカード・ほかのコード・隣の場面へ自動的に広げない（対象と not_covered は記録のまま）"
   },
   {
    "id": "POLICY:implementation_assumption:3",
@@ -1724,20 +2042,31 @@
    "kind": "implementation_assumption",
    "related_cards": [],
    "source": "",
+   "target": "キョウのベトベトン PMCG6-023 の［だつりょくえき］を処理する時点（DR6。UQ-ENERGY-DRAIN-TIMING）",
+   "basis": "docs/final-pmcg-cards-v0.68.md 3 章（p.89 のこうらがえしの解説の時点を当てはめた類推。エンジンの採用の仕様。利用者の指定の記録はない）",
+   "effect": "そのワザのすべての対象へのダメージのあと、ダメージ以外の効果の前",
+   "affects": [
+    "効果の順番（ほかの効果の前提）"
+   ],
+   "not_covered": [
+    "ダメージとほかの効果を交互に与える並び（GK1 のまま）"
+   ],
+   "baseline_category": "implementation_assumption",
    "existing_behavior_status": [
     "implemented",
     "verified"
    ],
-   "strict_mode": {
-    "STRICT-A": "公式の根拠ではないので、STRICT-A の定義なら止める候補（今は無効化しない）",
-    "STRICT-B": "固定したルールセットの一部として今のまま"
-   },
    "mode_policy_status": "decision_required",
+   "agreement_refs": [],
+   "modes": {
+    "strict": "今の挙動のまま（基礎集合に入れるかは未決。今回は無効化しない）",
+    "play": "同じ"
+   },
    "decision_refs": [
-    "DEC-STRICT-DEFINITION",
-    "DEC-EXISTING-USER-SPECS"
+    "DEC-BASELINE-NONUSER",
+    "DEC-BASELINE-CENSUS"
    ],
-   "extension": "ほかのカード・ほかのコードへ自動的に広げない"
+   "extension": "ほかのカード・ほかのコード・隣の場面へ自動的に広げない（対象と not_covered は記録のまま）"
   },
   {
    "id": "CONV:USER-SUDDEN-DEATH-OWNERSHIP-RESET",
@@ -1752,21 +2081,38 @@
    "source": "docs/sudden-death-v0.134.md 2.2 節（利用者の指定 2026-11-02）・kyuura_engine/sudden_death.py USER_SUDDEN_DEATH_OWNERSHIP_RESET",
    "inventory_ref": null,
    "note": "v0.133 の棚卸しの後に加わった。UQ-SWAP-PLEASE-OWNERSHIP は未解決のまま",
+   "target": "延長戦を始めるとき（StartSuddenDeath）の、とりかえっこプリーズで所有者が変わったカード",
+   "approval": {
+    "document": "docs/sudden-death-v0.134.md 2.2 節",
+    "on": "2026-11-02",
+    "instruction": "とりかえっこプリーズで交換したカードは、元の所有者へ戻す。"
+   },
+   "effect": "そのカードを最初のデッキに入れたプレイヤー（出所 origin）のデッキにもどす（交換の直前の所有者ではない。再交換があっても最初の出所）。新しい区間の所有者の変更の記録は空から",
+   "affects": [
+    "延長戦の区間のデッキの中身",
+    "保存形式 34 の segments"
+   ],
+   "not_covered": [
+    "同じ区間の中の交換（USER-SWAP-OWNERSHIP-RECEIVER のまま）",
+    "実物の所有権・対戦の外の返し方"
+   ],
+   "registry": "sudden_death.USER_SUDDEN_DEATH_OWNERSHIP_RESET",
+   "baseline_category": "user_specified",
    "existing_behavior_status": [
     "user_approved",
     "implemented",
     "verified"
    ],
-   "strict_mode": {
-    "STRICT-A": "公式の根拠ではないので、STRICT-A の定義なら止める候補（今は無効化しない）",
-    "STRICT-B": "固定したルールセットの一部として今のまま"
-   },
-   "mode_policy_status": "decision_required",
-   "decision_refs": [
-    "DEC-STRICT-DEFINITION",
-    "DEC-EXISTING-USER-SPECS"
+   "mode_policy_status": "user_agreed",
+   "agreement_refs": [
+    "AGR-MODE-BASELINE-USER"
    ],
-   "extension": "ほかのカード・ほかのコードへ自動的に広げない"
+   "modes": {
+    "strict": "基礎集合の一部として今のまま",
+    "play": "基礎集合の一部として今のまま（続行規約ではない）"
+   },
+   "decision_refs": [],
+   "extension": "ほかのカード・ほかのコード・隣の場面へ自動的に広げない（対象と not_covered は記録のまま）"
   },
   {
    "id": "CONV:ENGINE-USER-CORRECTION:PR1-069/name.ja",
@@ -1779,21 +2125,36 @@
    "source": "research_links.json engine_user_corrections・scripts/extract_kyuura_cards.py ENGINE_USER_CORRECTIONS（v0.70）",
    "inventory_ref": null,
    "note": "データの修正で、裁定ではない。v0.133 の棚卸しの採用済み 16 件には入っていない",
+   "target": "PR1-069 の名前（kyuura の値「？？？」）",
+   "basis": "research_links.json engine_user_corrections（v0.70。利用者がミュウと同定し画像と資料の URL を示した。エンジンは画像を見ていない。kyuura の記録ではない）",
+   "effect": "写しの作り直しで名前を「ミュウ」にする",
+   "affects": [
+    "デッキの同じ名前 4 枚の数え方",
+    "名前を指定する効果・同じ名前を比べる効果",
+    "クイズで伝える名前・観測・ログ"
+   ],
+   "not_covered": [
+    "名前以外の値"
+   ],
+   "display_only": false,
+   "user_provided": true,
+   "registry": "scripts/extract_kyuura_cards.py ENGINE_USER_CORRECTIONS",
+   "baseline_category": "card_data_correction",
    "existing_behavior_status": [
     "user_approved",
     "implemented",
     "verified"
    ],
-   "strict_mode": {
-    "STRICT-A": "公式の根拠ではないので、STRICT-A の定義なら止める候補（今は無効化しない）",
-    "STRICT-B": "固定したルールセットの一部として今のまま"
-   },
    "mode_policy_status": "decision_required",
+   "agreement_refs": [],
+   "modes": {
+    "strict": "今の挙動のまま（基礎集合に入れるかは未決。今回は無効化しない）",
+    "play": "同じ"
+   },
    "decision_refs": [
-    "DEC-STRICT-DEFINITION",
-    "DEC-EXISTING-USER-SPECS"
+    "DEC-CARD-DATA-CORRECTIONS"
    ],
-   "extension": "ほかのカード・ほかのコードへ自動的に広げない"
+   "extension": "ほかのカード・ほかのコード・隣の場面へ自動的に広げない（対象と not_covered は記録のまま）"
   }
  ],
  "decisions": [
@@ -1825,8 +2186,176 @@
   "DEC-REACTION-READINGS",
   "DEC-SUPPRESSION-READINGS",
   "DEC-ESP-READINGS",
-  "DEC-CONVENTION-GRANULARITY"
+  "DEC-CONVENTION-GRANULARITY",
+  "DEC-RULESET-VERSIONING",
+  "DEC-CONVENTION-CONFLICTS",
+  "DEC-PLAY-CONFIG-INCOMPLETE-START",
+  "DEC-PLAY-DEBUG-PARTIAL",
+  "DEC-BASELINE-NONUSER",
+  "DEC-BASELINE-CENSUS",
+  "DEC-CARD-DATA-CORRECTIONS",
+  "DEC-RESUME-WITH-OTHER-RULESET"
  ],
+ "decision_status": {
+  "DEC-STRICT-DEFINITION": {
+   "status": "agreed",
+   "agreements": [
+    "AGR-MODE-STRICT",
+    "AGR-MODE-PLAY",
+    "AGR-MODE-BASELINE-USER"
+   ],
+   "note": "STRICT-A は厳密モードの定義として採用しない（過去の検討案）。STRICT-B は合意済みの定義に置きかえた",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-RULESET-IDENTITY": {
+   "status": "decision_required",
+   "document": "docs/ruleset-mode-decisions.md"
+  },
+  "DEC-EXISTING-USER-SPECS": {
+   "status": "partly_agreed",
+   "agreements": [
+    "AGR-MODE-BASELINE-USER"
+   ],
+   "note": "利用者指定（12 件・USER-ID 9 つ）は基礎集合に入れる。エンジンの簡略化・実装上の仮定・データの訂正の扱いは DEC-BASELINE-NONUSER・DEC-CARD-DATA-CORRECTIONS で未決",
+   "document": "docs/ruleset-mode-decisions.md"
+  },
+  "DEC-INFO-LEAK-FIXES": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-MULLIGAN-COMPENSATION": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-SLEEP-COIN-ORDER": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-CHAOS-GYM-MIND-GAMES": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-USE-WITHOUT-EFFECT": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-UP-TO-ZERO": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-STATED-COUNT-SHORT": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-ORDER-RULE": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-DEFERRED-RESUME": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-SEARCH-LIMITS": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-FACE-UP-DECK": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-MODE-CHANGE-DURING-GAME": {
+   "status": "decision_required",
+   "document": "docs/ruleset-mode-decisions.md"
+  },
+  "DEC-LEGACY-STATES": {
+   "status": "decision_required",
+   "document": "docs/ruleset-mode-decisions.md"
+  },
+  "DEC-PLAY-AS-POKEMON": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-KNOCKOUT-READINGS": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-TIMING-READINGS": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-NULLIFIED-COINS": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-DAMAGE-READINGS": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-ENERGY-READINGS": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-COPY-SCOPE": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-LASTING-READINGS": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-TEXT-READINGS": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-REACTION-READINGS": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-SUPPRESSION-READINGS": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-ESP-READINGS": {
+   "status": "decision_required",
+   "document": "docs/stop-policy-decisions.md"
+  },
+  "DEC-CONVENTION-GRANULARITY": {
+   "status": "decision_required",
+   "document": "docs/ruleset-mode-decisions.md"
+  },
+  "DEC-RULESET-VERSIONING": {
+   "status": "decision_required",
+   "document": "docs/ruleset-mode-decisions.md"
+  },
+  "DEC-CONVENTION-CONFLICTS": {
+   "status": "decision_required",
+   "document": "docs/ruleset-mode-decisions.md"
+  },
+  "DEC-PLAY-CONFIG-INCOMPLETE-START": {
+   "status": "decision_required",
+   "document": "docs/ruleset-mode-decisions.md"
+  },
+  "DEC-PLAY-DEBUG-PARTIAL": {
+   "status": "decision_required",
+   "document": "docs/ruleset-mode-decisions.md"
+  },
+  "DEC-BASELINE-NONUSER": {
+   "status": "decision_required",
+   "document": "docs/ruleset-mode-decisions.md"
+  },
+  "DEC-BASELINE-CENSUS": {
+   "status": "decision_required",
+   "document": "docs/ruleset-mode-decisions.md"
+  },
+  "DEC-CARD-DATA-CORRECTIONS": {
+   "status": "decision_required",
+   "document": "docs/ruleset-mode-decisions.md"
+  },
+  "DEC-RESUME-WITH-OTHER-RULESET": {
+   "status": "decision_required",
+   "document": "docs/ruleset-mode-decisions.md"
+  }
+ },
  "evidence": {
   "tool_observation_files": [
    {
@@ -2078,6 +2607,12 @@
   "problems_new": 8,
   "problems_from_inventory": 28,
   "conventions": 18,
+  "conventions_by_category": {
+   "user_specified": 12,
+   "engine_simplification": 2,
+   "implementation_assumption": 3,
+   "card_data_correction": 1
+  },
   "internal_guard_sites_current": 602,
   "internal_guard_sites_matched_to_inventory": 600,
   "internal_guard_sites_new_since_inventory": [
@@ -2086,7 +2621,7 @@
   ],
   "safety_boundaries": 8,
   "families": 23,
-  "decisions": 29,
+  "decisions": 37,
   "by_reachability": {
    "constructed_board": 146,
    "legal_sequence": 25,
