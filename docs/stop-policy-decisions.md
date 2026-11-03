@@ -104,6 +104,10 @@
   使えなくなるため。受理が相手に伝える内容が変わる点を版の文書 4.4 節に記録）。P-UWE-2（使えて見つからない）・P-SCS（あるだけ）は採っていません。この承認は、厳密モードの定義・
   不足時の規約・プレイ用の規約・既存の利用者指定の扱いの承認ではありません（DEC-STRICT-DEFINITION・DEC-USE-WITHOUT-EFFECT・DEC-STATED-COUNT-SHORT ほかは未決のまま）。
   `PSP-DECK-CONTENT-PRECHECKS` の残り（キョウのコクーン）と、v0.137 で見つけた `PSP-RUIN-WALL-BLOCKED-REASON-ORACLE`・`PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE` の扱いは未決です。
+- **経過（v0.138。2026-11-03）**: 利用者は「v0.137 で新たに見つかった 2 件の情報漏れを、モード共通の不具合として修正すること」を承認し、v0.138 で `PSP-RUIN-WALL-BLOCKED-REASON-ORACLE`・
+  `PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE` を直しました（[oracle-leak-fixes-v0.138.md](oracle-leak-fixes-v0.138.md)）。止め方は v0.137 と同じ型（持ち主が知っている見えない自分のカードの集合と
+  公開の枚数から求めた下限）で、既存のコード（GG1・MG1・DW1・UPZ2）のまま決まった文で止めます。この承認は、厳密モードの定義・プレイ用の規約・検索の不足時の処理の承認ではありません。
+  比較プローブで見つけた `PSP-INCREASE-ENTRY-PW3-ORACLE`・`PSP-COCOON-DV2-ORACLE` と、`PSP-DECK-CONTENT-PRECHECKS` の残り（GV1・EVOLUTION_HP の経路）の扱いは未決です。
 
 ### DEC-SEARCH-LIMITS — 探索・組合せの上限
 

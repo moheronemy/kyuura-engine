@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.137）
+# 実装状況（v0.1〜v0.138）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d`（v0.128 から。v0.129 の種族の身長の写しは別に `9242b9be89be0f747279f39c11875d1ed61763ec`。v0.126〜v0.127 は `57d01f45cfb8b086d03dc0525b329cf6adeff69b`、v0.125 は `134a664c6adf67d5604148a31b58e1a7d26d4d6d`、v0.124 は `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`、v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3819,6 +3819,22 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 338・neo 154・拡張パック以外 184） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistryTest` |
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.138: 遺跡の石版の拒否の理由の文・エネルギー増幅装置の UPZ2 による情報漏れの修正
+
+[oracle-leak-fixes-v0.138.md](oracle-leak-fixes-v0.138.md)。v0.137 で見つけた PSP-RUIN-WALL-BLOCKED-REASON-ORACLE（遺跡の石版 neo2-054・neo2-057）・PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE
+（エネルギー増幅装置 neo4-102）を修正した。使う前・段階 1 の確かめを、配分を読まない下限（`effects.bench_entry_unconfirmed`・`deck_target_lower_bound`）に替え、足りなければ既存のコード
+（GG1・MG1・DW1・UPZ2）のまま決まった文で止める（**情報漏れを防ぐための保守的な制限**）。GG1・UPZ2 などの裁定は未解決のまま。カードの登録・写し・研究の対応表・書き出しの形式（34）は
+変えていない（対応 1,374 枚・停止コード 316）。新しい停止コードはない。比較プローブで見つけた 2 件（［INCREASE］・キョウのコクーンの［うか］）は修正していない（版の文書 7 章）。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 遺跡の石版のガスのもとの拒否（配分によらないコード・決まった文。受理・拒否は同じ） | 実装済み・テスト済み | 3 章 | test_oracle_leak_fixes_v0_138 `RuinWallTwinTest`・`BenchEntryHelperTest` |
+| エネルギー増幅装置の使う宣言・段階 1 の UPZ2（下限で確かめる。基本エネルギーカードをもどす答えはいつも止めない） | 実装済み・テスト済み | 5 章 | 同 `AmplifierTwinTest`・`AmplifierSafePathTest` |
+| 錯乱ジム・［ちえくらべ］・保存と復元・延長戦・合法な操作の列 | 実装済み・テスト済み | 5.5 節・6 章 | 同 `AmplifierRoutesTest`・`LegalPathTest` |
+| 保守的な制限（増幅装置: 実際には山札にあっても下限 0 なら特殊エネルギーをもどせない） | エンジンの制限 | 5.3 節 | 同 `AmplifierSafePathTest.test_over_rejection_when_basic_energy_is_actually_in_the_deck` |
+| GG1・MG1・DW1・UPZ2・ST1 | 裁定が未解決（変えていない） | 11.3 節 | — |
+| ［INCREASE］の PW3・キョウのコクーンの DV2（この版で見つけた漏れ）・PSP-DECK-CONTENT-PRECHECKS の残り | 未修正（記録だけ）・未確認 | 7 章 | — |
 
 ## v0.137: 山札から選ぶトレーナーの使う前の拒否による情報漏れの修正
 
