@@ -509,7 +509,9 @@ SS1 はこの違いでは止まりません。SS1 自体は v0.97 のアンノ�
 直したあとの動き・検証は参照先の版の文書にあります。
 
 <!-- generated:addenda begin（scripts/check_normalization_revalidation.py --write が台帳から書く。手で直さない） -->
-| 追記 | 日 | 項目 | 直したコミット | 参照先 | 内容 |
-|---|---|---|---|---|---|
-| `ADD-V0139-PRIZE-ORDER-HC1-FIX` | 2026-11-03 | `IA-PRIZE-TAKE-ORDER-SIMULTANEOUS-KO`・`IA-HC1-NONCONFUSED-PROCEED` | `4f3b88c`・`ff9ea57` | [docs/prize-order-hc1-fix-v0.139.md](../docs/prize-order-hc1-fix-v0.139.md) | 再検証で common_defect_candidate とした 2 項目を v0.139 で直した。再検証の分類・軸・推奨・集計は再検証の時点の記録のまま（直したあとの動きは参照先の版の文書）。サイド: おもてのサイドがあるときの順番の決定（p.325）。HC1: 手順 4 のコインでもコインの前に止める |
+| 追記 | 日 | 種類 | 項目 | 直したコミット | 参照先 | 内容 |
+|---|---|---|---|---|---|---|
+| `ADD-V0139-PRIZE-ORDER-HC1-FIX` | 2026-11-03 | fix | `IA-PRIZE-TAKE-ORDER-SIMULTANEOUS-KO`・`IA-HC1-NONCONFUSED-PROCEED` | `4f3b88c`・`ff9ea57` | [docs/prize-order-hc1-fix-v0.139.md](../docs/prize-order-hc1-fix-v0.139.md) | 再検証で common_defect_candidate とした 2 項目を v0.139 で直した。再検証の分類・軸・推奨・集計は再検証の時点の記録のまま（直したあとの動きは参照先の版の文書）。サイド: おもてのサイドがあるときの順番の決定（p.325）。HC1: 手順 4 のコインでもコインの前に止める |
+| `ADD-PRIZE-ORDER-FOLLOWUP` | 2026-11-03 | followup | `IA-PRIZE-TAKE-ORDER-SIMULTANEOUS-KO` | — | [docs/prize-order-followup.json](../docs/prize-order-followup.json) | v0.139 のあとの追加の検証（調査・再現・分類だけ。動作は変えていない）。本人だけが知るうらのサイド: 位置ごとの知識だけでは今の観測で順番による差はないが、［おみとおし］で先に取るプレイヤーの手札が見えると、どのサイドもうらでも後のプレイヤーの観測が変わる（合法な操作で再現。今の条件に加える必要がある候補）。単位: 1 枚ごと（今）とプレイヤーごとで、届く並び・決定の数・決定の時点の情報が変わり、カードの動き・勝ち負けは変わらない。保存形式 34: 既存の約束の範囲内。v0.138 は prize_order の写しを読み込み、再開で RuntimeError。この項目の記載・状態・集計は元の調査時点のまま |
+| `ADD-PRIZE-ORDER-UNIT-ASSUMPTION` | 2026-11-03 | assumption | `IA-PRIZE-TAKE-ORDER-SIMULTANEOUS-KO` | — | [docs/prize-order-followup.json](../docs/prize-order-followup.json) | v0.139 で加えた実装上の仮定（p.325 の一般規定は公式資料、同時のきぜつのサイドへの当てはめは v0.2f の導出、単位と決める時点は v0.86 の反応の順番からの類推と実装の選択）。利用者の承認はない。比べた読みと差は docs/prize-order-followup.md 2 章 |
 <!-- generated:addenda end -->

@@ -336,29 +336,32 @@ def source_addendum_problems(ledger: dict, source: dict) -> list[str]:
     return problems
 
 
+FOLLOWUP_KINDS = ("fix", "followup", "assumption")
+
+
 def followup_problems(ledger: dict, source: dict) -> list[str]:
-    """後の修正の追記（``addenda``。種類 ``fix``）。再検証の記録（項目・軸・分類・集計・基点）は書き換えず、直したコミットへの参照だけを足す。追記は集計に入れない。
-    元の一覧の addenda に、同じ ID・同じ項目・同じコミットの ``fix`` があること。"""
+    """後の追記（``addenda``。種類 ``fix``: 直したコミット・``followup``: 後の追加の検証・``assumption``: 後の版の実装上の仮定）。再検証の記録（項目・軸・分類・集計・基点）は
+    書き換えず、後の結果への参照だけを足す。追記は集計に入れない。元の一覧の addenda に、同じ ID・同じ種類・同じ項目（``fix`` は同じコミット）の追記があること。"""
     problems: list[str] = []
     rows = ledger.get("addenda", [])
     ids = [a.get("id", "") for a in rows]
     for dup in sorted({x for x in ids if ids.count(x) > 1}):
         problems.append(f"追記の ID が重複: {dup}")
     mine = {i["item_id"] for i in ledger["items"]}
-    source_rows = {a.get("id"): a for a in source.get("addenda", []) if a.get("kind") == "fix"}
+    source_rows = {a.get("id"): a for a in source.get("addenda", []) if a.get("kind") in FOLLOWUP_KINDS}
     for row in rows:
         where = row.get("id", "?")
         if not re.fullmatch(r"ADD-[A-Z0-9][A-Z0-9-]*[A-Z0-9]", where):
             problems.append(f"{where}: 追記の ID の形（ADD-英大文字のスラッグ）でない")
-        if row.get("kind") != "fix":
-            problems.append(f"{where}: 追記の種類 {row.get('kind')} が fix でない")
+        if row.get("kind") not in FOLLOWUP_KINDS:
+            problems.append(f"{where}: 追記の種類 {row.get('kind')} が {FOLLOWUP_KINDS} のどれでもない")
         for key in ("on", "ref", "summary"):
             if not row.get(key):
                 problems.append(f"{where}: 追記に {key} がない")
         if row.get("ref") and not (ROOT / row["ref"]).exists():
             problems.append(f"{where}: 参照先 {row['ref']} がない")
         commits = row.get("commits")
-        if not commits or not all(isinstance(c, str) and re.fullmatch(r"[0-9a-f]{40}", c) for c in commits):
+        if row.get("kind") == "fix" and (not commits or not all(isinstance(c, str) and re.fullmatch(r"[0-9a-f]{40}", c) for c in commits)):
             problems.append(f"{where}: 直したコミット（40 桁）の並び commits がない")
         if not row.get("item_ids"):
             problems.append(f"{where}: 追記の項目がない")
@@ -366,8 +369,9 @@ def followup_problems(ledger: dict, source: dict) -> list[str]:
             if iid not in mine:
                 problems.append(f"{where}: 項目 {iid} が再検証にない")
         other = source_rows.get(where)
-        if other is None or sorted(other.get("item_ids", [])) != sorted(row.get("item_ids", [])) or other.get("commits") != commits:
-            problems.append(f"{where}: 元の一覧の addenda に、同じ項目・同じコミットの fix の追記がない")
+        if (other is None or other.get("kind") != row.get("kind") or sorted(other.get("item_ids", [])) != sorted(row.get("item_ids", []))
+                or other.get("commits") != commits):
+            problems.append(f"{where}: 元の一覧の addenda に、同じ種類・同じ項目・同じコミットの追記がない")
     return problems
 
 
@@ -422,8 +426,9 @@ def render_results(ledger: dict) -> str:
 
 
 def render_addenda(ledger: dict) -> str:
-    head = ["| 追記 | 日 | 項目 | 直したコミット | 参照先 | 内容 |", "|---|---|---|---|---|---|"]
-    return "\n".join(head + [f"| `{a['id']}` | {a['on']} | {'・'.join(f'`{i}`' for i in a['item_ids'])} | {'・'.join(f'`{c[:7]}`' for c in a['commits'])} | "
+    head = ["| 追記 | 日 | 種類 | 項目 | 直したコミット | 参照先 | 内容 |", "|---|---|---|---|---|---|---|"]
+    return "\n".join(head + [f"| `{a['id']}` | {a['on']} | {a['kind']} | {'・'.join(f'`{i}`' for i in a['item_ids'])} | "
+                             f"{'・'.join(f'`{c[:7]}`' for c in a.get('commits', [])) or '—'} | "
                              f"[{a['ref']}](../{a['ref']}) | {_cell(a['summary'])} |" for a in ledger.get("addenda", [])])
 
 

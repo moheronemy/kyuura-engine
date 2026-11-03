@@ -130,6 +130,19 @@ class RevalidationLedgerTest(unittest.TestCase):
         self.assertTrue(any("直したコミット（40 桁）" in p for p in problems))
         self.assertTrue(any("項目 IA-NOT-REVALIDATED が再検証にない" in p for p in problems))
 
+    def test_followup_kinds_must_match_the_source_addendum(self):
+        """後の追加の検証（followup）・後の版の仮定（assumption）の追記は、元の一覧の同じ ID・同じ種類の追記と一致する（commits は fix だけが要る）。"""
+        ledger, source = _copy(self.ledger), _copy(self.source)
+        row = {"id": "ADD-SYNTHETIC-FOLLOWUP", "kind": "followup", "on": "2026-01-01", "ref": "docs/normalization-revalidation.md",
+               "item_ids": [ledger["items"][0]["item_id"]], "summary": "x"}
+        ledger.setdefault("addenda", []).append(dict(row))
+        source.setdefault("addenda", []).append(dict(row, base_commit="0" * 40))
+        self.assertFalse(any("ADD-SYNTHETIC-FOLLOWUP" in p for p in self.problems(ledger, source)))
+        ledger["addenda"][-1]["kind"] = "assumption"
+        self.assertTrue(any("ADD-SYNTHETIC-FOLLOWUP: 元の一覧の addenda に、同じ種類" in p for p in self.problems(ledger, source)))
+        ledger["addenda"][-1]["kind"] = "guess"
+        self.assertTrue(any("ADD-SYNTHETIC-FOLLOWUP: 追記の種類 guess" in p for p in self.problems(ledger, source)))
+
     def test_detects_stale_counts(self):
         broken = _copy(self.ledger)
         broken["counts"]["items"] += 1

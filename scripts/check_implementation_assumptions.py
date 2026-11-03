@@ -296,7 +296,10 @@ def check(ledger: dict) -> list[str]:
     return problems
 
 
-ADDENDUM_KINDS = ("revalidation", "approval_supplement", "fix")  # fix: 項目の論点を直したコミット（``commits``。40 桁）への参照
+# fix: 項目の論点を直したコミット（``commits``。40 桁）への参照。followup: 後の追加の検証（調査・再現・分類だけ。動作は変えていない）への参照。
+# assumption: 後の版で加えた実装上の仮定（``statement``・根拠の種類 ``basis``・承認 ``approval``。承認がなければ "none"。項目の記載は書き換えない）
+ADDENDUM_KINDS = ("revalidation", "approval_supplement", "fix", "followup", "assumption")
+ASSUMPTION_BASES = ("official", "derived", "analogy", "implementation")  # 公式資料で確かめた・既存の導出・類推・実装の選択
 
 
 def addenda_problems(ledger: dict, known: set[str]) -> list[str]:
@@ -327,6 +330,14 @@ def addenda_problems(ledger: dict, known: set[str]) -> list[str]:
             commits = row.get("commits")
             if not commits or not all(isinstance(c, str) and re.fullmatch(r"[0-9a-f]{40}", c) for c in commits):
                 problems.append(f"{where}: 修正の追記に、直したコミット（40 桁）の並び commits がない")
+        if row.get("kind") == "assumption":
+            if not row.get("statement"):
+                problems.append(f"{where}: 仮定の追記に statement がない")
+            if not row.get("basis") or not set(row["basis"]) <= set(ASSUMPTION_BASES):
+                problems.append(f"{where}: 仮定の追記の根拠の種類 basis が {ASSUMPTION_BASES} の並びでない")
+            approval = row.get("approval")
+            if approval != "none" and not (isinstance(approval, dict) and approval.get("quote")):
+                problems.append(f"{where}: 仮定の追記の承認 approval が \"none\" でも、利用者の指示の文（quote）でもない")
     return problems
 
 

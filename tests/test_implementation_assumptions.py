@@ -111,6 +111,18 @@ class LedgerInvariantTest(unittest.TestCase):
                                                  "ref": "docs/implementation-assumptions.md", "summary": "x", "item_ids": [item], "commits": ["abc"]})
         self.assertTrue(any("ADD-BROKEN-FIX: 修正の追記に、直したコミット" in p for p in C.check(broken)))
 
+    def test_detects_assumption_addendum_without_statement_or_approval(self):
+        """後の版の実装上の仮定の追記（種類 assumption）は、仮定の文・根拠の種類・承認（なければ "none"）を持つ。承認を推測で書かない。"""
+        broken = _copy(self.ledger)
+        item = broken["items"][0]["id"]
+        broken.setdefault("addenda", []).append({"id": "ADD-BROKEN-ASSUMPTION", "kind": "assumption", "on": "2026-01-01", "base_commit": "0" * 40,
+                                                 "ref": "docs/implementation-assumptions.md", "summary": "x", "item_ids": [item], "basis": ["guess"],
+                                                 "approval": "approved"})
+        problems = C.check(broken)
+        self.assertTrue(any("ADD-BROKEN-ASSUMPTION: 仮定の追記に statement がない" in p for p in problems))
+        self.assertTrue(any("ADD-BROKEN-ASSUMPTION: 仮定の追記の根拠の種類" in p for p in problems))
+        self.assertTrue(any("ADD-BROKEN-ASSUMPTION: 仮定の追記の承認" in p for p in problems))
+
     def test_merged_duplicates_point_to_live_items(self):
         by_id = {i["id"]: i for i in self.ledger["items"]}
         for item in self.ledger["items"]:
