@@ -49755,6 +49755,22 @@
     "IA-DATA-CATALOG-SCOPE-EXCLUSIONS"
    ],
    "summary": "利用者が示した指示の文（3 枚の非対戦カードへの移管）を approval_supplement に収録。承認は 3 枚の移管だけで、分類方式・記録と ID の設計・拒否の仕方は承認なし。この項目の approval は元の調査時点の記録として書き換えていない"
+  },
+  {
+   "id": "ADD-V0139-PRIZE-ORDER-HC1-FIX",
+   "kind": "fix",
+   "on": "2026-11-03",
+   "base_commit": "4ded41817ef9a64ba07d3e0d2819d3b9cf06d318",
+   "commits": [
+    "4f3b88c005929f23e372e6f29d1be61ea145b59b",
+    "ff9ea57d058c40efabdca07e20915f425ee5076e"
+   ],
+   "ref": "docs/prize-order-hc1-fix-v0.139.md",
+   "item_ids": [
+    "IA-PRIZE-TAKE-ORDER-SIMULTANEOUS-KO",
+    "IA-HC1-NONCONFUSED-PROCEED"
+   ],
+   "summary": "v0.139 で 2 項目の論点を直した（両モード共通の不具合として）。サイド: 両方がサイドを取り、どちらかのサイドにおもてのカードがあるとき、番のプレイヤーが次に取るプレイヤーを選ぶ決定（prize_order。p.325）を出す（すべてうらなら v0.2f の正規化のまま）。HC1: p.309 の手順 4 のコイン（すなかけなど・［はんこう］）があるときも、こんらん・ベイビィと同じくコインの前に UNRESOLVED_DISCARD_ENERGY_TIMING で止める（HC1 は未解決のまま）。元の項目の記載・状態・集計は元の調査の時点のまま"
   }
  ]
 }

@@ -119,6 +119,17 @@ class RevalidationLedgerTest(unittest.TestCase):
         source["addenda"] = [a for a in source.get("addenda", []) if a.get("ref") != "docs/normalization-revalidation.json"]
         self.assertTrue(any("addenda" in p for p in self.problems(self.ledger, source)))
 
+    def test_followup_must_match_the_source_addendum(self):
+        """後の修正の追記（種類 fix）は、直したコミット（40 桁）と再検証の項目を持ち、元の一覧の同じ ID の追記と一致する。"""
+        broken = _copy(self.ledger)
+        broken["addenda"] = [{"id": "ADD-NOT-IN-SOURCE", "kind": "fix", "on": "2026-01-01", "commits": ["0" * 40], "ref": "docs/normalization-revalidation.md",
+                              "item_ids": [broken["items"][0]["item_id"]], "summary": "x"}]
+        self.assertTrue(any("ADD-NOT-IN-SOURCE: 元の一覧の addenda に" in p for p in self.problems(broken)))
+        broken["addenda"][0].update(commits=["abc"], item_ids=["IA-NOT-REVALIDATED"])
+        problems = self.problems(broken)
+        self.assertTrue(any("直したコミット（40 桁）" in p for p in problems))
+        self.assertTrue(any("項目 IA-NOT-REVALIDATED が再検証にない" in p for p in problems))
+
     def test_detects_stale_counts(self):
         broken = _copy(self.ledger)
         broken["counts"]["items"] += 1

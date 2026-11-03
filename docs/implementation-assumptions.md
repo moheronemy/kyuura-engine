@@ -650,4 +650,5 @@ kyuura の記録の時点の区別:
 |---|---|---|---|---|---|---|
 | `ADD-NORMALIZATION-REVALIDATION` | 2026-11-03 | `2d67820` | revalidation | 26 項目 | [docs/normalization-revalidation.json](normalization-revalidation.md) | 採否判断の順序 3 段目の 20 項目と、範囲を広げた 6 項目の正規化の成立条件を、現行コード・テスト・再現で確かめ直した結果（分類 A〜D・優先・推奨対応の提案）。この一覧の項目の記載・状態・群・集計は元の調査時点のまま |
 | `ADD-CATALOG-SCOPE-APPROVAL-QUOTE` | 2026-11-03 | `2d67820` | approval_supplement | 1 項目 | [docs/normalization-revalidation.json](normalization-revalidation.md) | 利用者が示した指示の文（3 枚の非対戦カードへの移管）を approval_supplement に収録。承認は 3 枚の移管だけで、分類方式・記録と ID の設計・拒否の仕方は承認なし。この項目の approval は元の調査時点の記録として書き換えていない |
+| `ADD-V0139-PRIZE-ORDER-HC1-FIX` | 2026-11-03 | `4ded418` | fix | 2 項目 | [docs/prize-order-hc1-fix-v0.139.md](prize-order-hc1-fix-v0.139.md) | v0.139 で 2 項目の論点を直した（両モード共通の不具合として）。サイド: 両方がサイドを取り、どちらかのサイドにおもてのカードがあるとき、番のプレイヤーが次に取るプレイヤーを選ぶ決定（prize_order。p.325）を出す（すべてうらなら v0.2f の正規化のまま）。HC1: p.309 の手順 4 のコイン（すなかけなど・［はんこう］）があるときも、こんらん・ベイビィと同じくコインの前に UNRESOLVED_DISCARD_ENERGY_TIMING で止める（HC1 は未解決のまま）。元の項目の記載・状態・集計は元の調査の時点のまま |
 <!-- generated:addenda end -->

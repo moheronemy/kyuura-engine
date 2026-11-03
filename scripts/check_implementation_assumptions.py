@@ -296,7 +296,7 @@ def check(ledger: dict) -> list[str]:
     return problems
 
 
-ADDENDUM_KINDS = ("revalidation", "approval_supplement")
+ADDENDUM_KINDS = ("revalidation", "approval_supplement", "fix")  # fix: 項目の論点を直したコミット（``commits``。40 桁）への参照
 
 
 def addenda_problems(ledger: dict, known: set[str]) -> list[str]:
@@ -323,6 +323,10 @@ def addenda_problems(ledger: dict, known: set[str]) -> list[str]:
         for iid in row.get("item_ids", []):
             if iid not in known:
                 problems.append(f"{where}: 項目 {iid} が一覧にない")
+        if row.get("kind") == "fix":
+            commits = row.get("commits")
+            if not commits or not all(isinstance(c, str) and re.fullmatch(r"[0-9a-f]{40}", c) for c in commits):
+                problems.append(f"{where}: 修正の追記に、直したコミット（40 桁）の並び commits がない")
     return problems
 
 

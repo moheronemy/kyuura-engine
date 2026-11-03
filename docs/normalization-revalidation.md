@@ -502,3 +502,14 @@ SS1 はこの違いでは止まりません。SS1 自体は v0.97 のアンノ�
 - 項目を直すときは台帳（JSON）を直し、`--write` で集計と表を書き直します。表を手で直しません。
 - 推奨対応を採用・却下したら、判断事項の文書と停止の方針の台帳に記録します。この再検証の記録は、調査時点の結果として残します。
 - 元の一覧に `premise_changed`・`equivalence_scope` の食い違いが増えたら、`--check` が対応の漏れとして報告します。
+
+## 12. 追記（後の修正）
+
+この再検証の記録（1〜11 章・台帳の項目・集計）は調査の時点のまま残します。推奨対応のうち、後の版で直したものを台帳の `addenda`（種類 `fix`）に、直したコミットとともに追記します。
+直したあとの動き・検証は参照先の版の文書にあります。
+
+<!-- generated:addenda begin（scripts/check_normalization_revalidation.py --write が台帳から書く。手で直さない） -->
+| 追記 | 日 | 項目 | 直したコミット | 参照先 | 内容 |
+|---|---|---|---|---|---|
+| `ADD-V0139-PRIZE-ORDER-HC1-FIX` | 2026-11-03 | `IA-PRIZE-TAKE-ORDER-SIMULTANEOUS-KO`・`IA-HC1-NONCONFUSED-PROCEED` | `4f3b88c`・`ff9ea57` | [docs/prize-order-hc1-fix-v0.139.md](../docs/prize-order-hc1-fix-v0.139.md) | 再検証で common_defect_candidate とした 2 項目を v0.139 で直した。再検証の分類・軸・推奨・集計は再検証の時点の記録のまま（直したあとの動きは参照先の版の文書）。サイド: おもてのサイドがあるときの順番の決定（p.325）。HC1: 手順 4 のコインでもコインの前に止める |
+<!-- generated:addenda end -->

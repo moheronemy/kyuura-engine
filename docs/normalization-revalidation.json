@@ -6080,5 +6080,22 @@
   "test_refs_run": 62,
   "test_refs_read_only": 2,
   "tests_executed_targets": 61
- }
+ },
+ "addenda": [
+  {
+   "id": "ADD-V0139-PRIZE-ORDER-HC1-FIX",
+   "kind": "fix",
+   "on": "2026-11-03",
+   "commits": [
+    "4f3b88c005929f23e372e6f29d1be61ea145b59b",
+    "ff9ea57d058c40efabdca07e20915f425ee5076e"
+   ],
+   "ref": "docs/prize-order-hc1-fix-v0.139.md",
+   "item_ids": [
+    "IA-PRIZE-TAKE-ORDER-SIMULTANEOUS-KO",
+    "IA-HC1-NONCONFUSED-PROCEED"
+   ],
+   "summary": "再検証で common_defect_candidate とした 2 項目を v0.139 で直した。再検証の分類・軸・推奨・集計は再検証の時点の記録のまま（直したあとの動きは参照先の版の文書）。サイド: おもてのサイドがあるときの順番の決定（p.325）。HC1: 手順 4 のコインでもコインの前に止める"
+  }
+ ]
 }
