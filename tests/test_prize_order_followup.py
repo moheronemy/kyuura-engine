@@ -1,15 +1,23 @@
 """v0.139 のサイドを取る順番の追加検証（docs/prize-order-followup.md・.json）の再現と台帳の形。
 
 このテストは調査の記録が再現することを確かめる。新しく提案する仕様（順番の決定を出す条件を広げる・単位を変える・保存の確かめを加える）を、今の契約として
-固定するテストではない。記録した evidence には、比較用の改変（``forced_order``・``_unknown_resume``）で作った結果を含む。エンジンの動きを変えたら、記録を
-``scripts/prize_order_followup.py --write`` で作り直し、文書の結論を見直す（過去の基点・結果は上書きせず追記する）。
+固定するテストではない。記録した evidence には、比較用の改変（``forced_order``・``_unknown_resume``）で作った結果を含む。
+
+v0.140（docs/prize-order-user-rule-v0.140.md 6 章）: 利用者の指定でエンジンの動きを変えた（順番の決定 prize_order を prize_first に改めた）ので、記録の evidence は、記録を作った
+コミット（``RECORDED_AT``。追加検証の最後のコミット d631038。エンジンは v0.139 の 789f58e と同じ）の木で再現する（``git archive`` の読み取り用の木・別のプロセス。記録は上書きしない）。
+今のエンジンでの扱いは tests/test_prize_order_user_rule_v0_140.py。
 """
 
 from __future__ import annotations
 
+import io
 import json
+import os
 import pathlib
+import subprocess
 import sys
+import tarfile
+import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -17,23 +25,47 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 import prize_order_followup as F
 
-from kyuura_engine import resolution
-from kyuura_engine.resolution import flow
-
+RECORDED_AT = "d631038d5ca065b3ba9756d1320aa754ee9be0e9"  # 記録を作ったコミット（追加検証の最後。docs/prize-order-followup.md 1 章）
 CONCLUSIONS = {"maintainable", "condition_needed", "unconfirmed", "within_contract_with_gap"}
+
+
+def run_in_recorded_tree(*args):
+    """記録を作ったコミットの木（``git archive``）で、その木の python を別のプロセスで動かし、標準出力を返す。木の中の ``git archive``（比べる旧版の取り出し）は、
+    このリポジトリの履歴を読む（``GIT_DIR``。読むだけ）。"""
+    with tempfile.TemporaryDirectory() as tmp:
+        tree = pathlib.Path(tmp) / "recorded"
+        data = subprocess.run(["git", "-C", str(ROOT), "archive", RECORDED_AT], check=True, capture_output=True).stdout
+        with tarfile.open(fileobj=io.BytesIO(data)) as tar:
+            tar.extractall(tree, filter="data")
+        env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"} | {"PYTHONHASHSEED": "0", "PYTHONUTF8": "1", "GIT_DIR": str(ROOT / ".git")}
+        flags = ["-s", "-X", "utf8"] if args[0] == "-m" else ["-P", "-s", "-X", "utf8"]  # -m unittest は木の根（cwd）から読み込む
+        proc = subprocess.run([sys.executable, *flags, *args], cwd=tree, capture_output=True, text=True, encoding="utf-8", env=env, check=False)
+        if proc.returncode != 0:
+            raise AssertionError(proc.stdout[-2000:] + proc.stderr[-2000:])
+        return proc.stdout
 
 
 class FollowupEvidenceTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.ledger = json.loads(F.LEDGER.read_text(encoding="utf-8"))
-        cls.evidence = F.evidence()
+        cls.evidence = json.loads(run_in_recorded_tree("scripts/prize_order_followup.py", "--print"))
 
     def test_evidence_reproduces(self):
-        """記録の evidence（3 章ぶん）が、今のエンジンと比べる旧版（v0.138。git archive の読み取り用の木）で同じに再現する。"""
+        """記録の evidence（3 章ぶん）が、記録を作ったコミットの木と比べる旧版（v0.138。git archive の読み取り用の木）で同じに再現する。"""
         for part in ("knowledge", "units", "compat"):
             with self.subTest(part=part):
                 self.assertEqual(self.evidence[part], self.ledger["evidence"][part])
+
+    def test_recorded_tree_tests_pass(self):
+        """記録を作ったコミットの木の、この検証のテスト（比較用の改変がもどることを含む）がその木で通る。"""
+        run_in_recorded_tree("-m", "unittest", "tests.test_prize_order_followup")
+
+    def test_current_script_refuses_the_current_engine(self):
+        """今の木のスクリプトは、今のエンジン（v0.140）では再現を作らずに止まる（記録を今の動きで上書きしない）。"""
+        with self.assertRaises(SystemExit) as ctx:
+            F.evidence()
+        self.assertIn(RECORDED_AT[:7], str(ctx.exception))
 
     def test_key_findings(self):
         """文書の結論が依る事実（記録の値を写さず、意味で確かめる）。"""
@@ -59,14 +91,6 @@ class FollowupEvidenceTest(unittest.TestCase):
         self.assertEqual(c["old_reads_new"]["take_prize"]["invariants"], [])
         self.assertTrue(c["new_reads_old"]["export34_equal_to_new_game"])
         self.assertTrue(all(same and rng for _, same, rng in c["current"]["prize_order"]["restore_same_version"]))
-
-    def test_forced_order_is_local(self):
-        """比較用の改変は、使い終えたらもとの関数にもどる（エンジンの動きを残して変えない）。"""
-        original = flow.prize_order_matters
-        with F.forced_order():
-            self.assertIsNot(flow.prize_order_matters, original)
-        self.assertIs(flow.prize_order_matters, original)
-        self.assertIs(resolution.prize_order_matters, original)
 
 
 class FollowupLedgerTest(unittest.TestCase):

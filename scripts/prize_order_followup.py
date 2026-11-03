@@ -14,6 +14,10 @@
 ``resolution.prize_order_matters``（とそれを呼ぶ ``flow`` の名前）を、両方が残っていれば真を返す関数に一時的に置きかえる（``forced_order``）。
 エンジンのファイルは変えない。置きかえた状態は比較にだけ使い、エンジンの今の動き（現行の契約）としては記録しない。
 
+v0.140（docs/prize-order-user-rule-v0.140.md 6 章）: 利用者の指定でエンジンの順番の決定を改めた（prize_order → prize_first）。このスクリプトは記録を作ったコミット d631038 の
+エンジン（v0.139 と同じ）の動きを前提にするので、今のエンジンでは再現を作らずに止まる（``_require_recorded_engine``）。記録の再現は、d631038 の木で動かす
+（tests/test_prize_order_followup.py の ``run_in_recorded_tree``）。
+
 使い方::
 
     python scripts/prize_order_followup.py --check     # 記録（docs/prize-order-followup.json の evidence）と今の再現が一致するか
@@ -524,7 +528,15 @@ def _old_pickle_to_new(workdir: pathlib.Path) -> dict:
 # ---------------------------------------------------------------- 実行
 
 
+def _require_recorded_engine() -> None:
+    """記録を作ったエンジン（v0.139 の ``resolution.prize_order_matters`` がある）でなければ止める（今の動きで記録を作り直さない）。"""
+    from kyuura_engine.resolution import flow
+    if not hasattr(flow, "prize_order_matters"):
+        raise SystemExit("このスクリプトは d631038 の木で動かす（今のエンジンは v0.140 で順番の決定を改めた。docs/prize-order-user-rule-v0.140.md 6 章）")
+
+
 def evidence() -> dict:
+    _require_recorded_engine()
     with contextlib.redirect_stdout(io.StringIO()):
         return {"knowledge": knowledge_evidence(), "units": units_evidence(), "compat": compat_evidence()}
 

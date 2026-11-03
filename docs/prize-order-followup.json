@@ -2313,5 +2313,13 @@
     "export34_equal_to_new_game": true
    }
   }
- }
+ },
+ "addenda": [
+  {
+   "id": "ADD-V0140-PRIZE-ORDER-USER-RULE",
+   "on": "2026-11-03",
+   "ref": "docs/prize-order-user-rule-v0.140.md",
+   "summary": "利用者が UD1 は b（両方が取るときはいつも聞く）、UD3 は A（プレイヤーごとにまとめて取る）、UD2 は a（取った位置の観測は今のまま）、UD4 は既存の約束の明記と知らない再開先の明示的な拒否（S3＋S4 に当たる）を指定した。v0.140 で採用した。この記録の evidence・結論は記録を作った d631038 の時点のまま（書き換えていない。再現は d631038 の木で行う）"
+  }
+ ]
 }
