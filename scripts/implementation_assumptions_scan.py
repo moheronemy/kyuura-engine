@@ -2,7 +2,7 @@
 
 エンジンの動作・文書・データは変えない。``scripts/check_implementation_assumptions.py`` が使う。
 
-- 対象: ``docs/*.md``（一覧そのものの文書を除く）・``kyuura_engine/**/*.py``・``tests/**/*.py``・``scripts/*.py``（この抽出と検査の 2 つを除く。一覧の台帳のテストも除く）。
+- 対象: ``docs/*.md``（一覧そのものの文書を除く）・``kyuura_engine/**/*.py``・``tests/**/*.py``・``scripts/*.py``（この抽出と検査の 2 つを除く。一覧の台帳のテストと、一覧から派生した正規化の再検証の文書・検査・テストも除く）。
 - 単位: 行。1 行に複数の語があっても 1 つの候補箇所（``keywords`` に語を並べる）。
 - 候補箇所の ID: ``S-`` + (パス, 行の本文を空白で正規化したもの) の sha1 の先頭 12 桁。行番号は ID に入れない
   （行の挿入で ID が変わらない）。同じパスに同じ本文の行が複数あれば、2 つめから ``~2``・``~3`` を付ける。
@@ -31,6 +31,10 @@ EXCLUDED = {
     "scripts/implementation_assumptions_scan.py",
     "scripts/check_implementation_assumptions.py",
     "tests/test_implementation_assumptions.py",
+    # 一覧から派生した後の調査（正規化の再検証）。一覧の項目を引用するので、候補箇所に数えない
+    "docs/normalization-revalidation.md",
+    "scripts/check_normalization_revalidation.py",
+    "tests/test_normalization_revalidation.py",
 }
 
 

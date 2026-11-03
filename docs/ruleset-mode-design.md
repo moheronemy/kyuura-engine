@@ -129,6 +129,8 @@
 | `POLICY:implementation_assumption:2` | 実装上の仮定 | — | キョウのベトベトン PMCG6-023 の［だつりょくえき］の宣言（DR1・DR12。UQ-ENERGY-DRAIN-DECLARATION） | 自動的にはたらく（使わない選択・「おもて」のあとトラッシュしない選択はない） | 決定の有無・乱数（条件を満たせば必ずコイン） | 未決（DEC-BASELINE-NONUSER・DEC-BASELINE-CENSUS） |
 | `POLICY:implementation_assumption:3` | 実装上の仮定 | — | キョウのベトベトン PMCG6-023 の［だつりょくえき］を処理する時点（DR6。UQ-ENERGY-DRAIN-TIMING） | そのワザのすべての対象へのダメージのあと、ダメージ以外の効果の前 | 効果の順番（ほかの効果の前提） | 未決（DEC-BASELINE-NONUSER・DEC-BASELINE-CENSUS） |
 | `CONV:USER-SUDDEN-DEATH-OWNERSHIP-RESET` | 利用者指定 | USER-SUDDEN-DEATH-OWNERSHIP-RESET | 延長戦を始めるとき（StartSuddenDeath）の、とりかえっこプリーズで所有者が変わったカード | そのカードを最初のデッキに入れたプレイヤー（出所 origin）のデッキにもどす（交換の直前の所有者ではない。再交換があっても最初の出所）。新しい区間の所有者の変更の記録は空から | 延長戦の区間のデッキの中身・保存形式 34 の segments | 含める（AGR-MODE-BASELINE-USER） |
+| `CONV:USER-PRIZE-ORDER-ALWAYS-CHOSEN` | 利用者指定 | USER-PRIZE-ORDER-ALWAYS-CHOSEN | 同じきぜつの処理で両方のプレイヤーがサイドを取るとき | いつも番のプレイヤーに先に取るプレイヤーの決定（prize_first）を出す。おもてのサイド・［おみとおし］・本人だけが知るサイドで出すかどうかを変えない | 決定の有無・サイドを取る順番・決定の時点の観測 | 含める（AGR-MODE-BASELINE-USER） |
+| `CONV:USER-PRIZE-ORDER-PER-PLAYER` | 利用者指定 | USER-PRIZE-ORDER-PER-PLAYER | 先に取るプレイヤーを選んだあとの、両方のサイドを取る並び | 先に選ばれたプレイヤーがその処理の分をすべて取ってから、もう一方が取る。1 枚ごとに選び直さない | サイドを取る順番・決定の数・決定の時点の観測 | 含める（AGR-MODE-BASELINE-USER） |
 | `CONV:ENGINE-USER-CORRECTION:PR1-069/name.ja` | データの訂正 | — | PR1-069 の名前（kyuura の値「？？？」） | 写しの作り直しで名前を「ミュウ」にする | デッキの同じ名前 4 枚の数え方・名前を指定する効果・同じ名前を比べる効果・クイズで伝える名前・観測・ログ | 未決（DEC-CARD-DATA-CORRECTIONS） |
 <!-- generated:baseline-conventions end -->
 
@@ -367,3 +369,9 @@ UQ-MIND-GAMES-OPTIONAL・UQ-STATED-COUNT-SHORT・UQ-BILINGUAL-NAME-GLOSS など�
 | 参照の整合 | `--check`: 規約の判断事項・合意の参照があること。判断事項の見出しが置き場所の文書にちょうど 1 つ（もう一方の文書にはない） |
 | 既存の利用者指定を広げていない・無効化していない | `--check`: 登録の記録の対象の鍵・規則の ID が台帳と同じ。登録の記録の対象がすべて台帳にある。エンジン・登録は変えていない |
 | 動作が変わっていないこと | 変えたのは文書・台帳・作成スクリプト・台帳のテストだけ（`kyuura_engine/`・既存のカードのテスト・カードデータ・保存形式・固定デッキ・参照データは変えていない） |
+
+## 14. 追記（後の版）
+
+- v0.140（[prize-order-user-rule-v0.140.md](prize-order-user-rule-v0.140.md) 2 章）: カードによらない利用者の指定 2 件（`CONV:USER-PRIZE-ORDER-ALWAYS-CHOSEN`・
+  `CONV:USER-PRIZE-ORDER-PER-PLAYER`。登録 `decisions.USER_PRIZE_ORDER_RULES`）を、既存の利用者の指定と同じく基礎集合（AGR-MODE-BASELINE-USER）の規約として台帳の conventions に加えた。
+  4.2 節の表（台帳から生成）には加わっている。本文の件数（利用者指定 12 件・採用済みの規約 18 件など）は、この設計の時点の値のまま（書き換えていない）。モードは実装していない

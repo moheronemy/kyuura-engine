@@ -303,7 +303,8 @@ def observe(state, new, command, observed, returned):
             reason = rebirth_blocked(condition, snapshot, knocked_ids)
             answered = [r for r in events if r["kind"] in ("post_knockout_power_declined", "post_knockout_power_declared") and r["card"] == e["pokemon"]]
             offered = new.decision is not None and new.decision.kind == POST_KNOCKOUT_POWER and new.decision.options == (e["pokemon"],)
-            waiting_prize = new.decision is not None and new.decision.kind == "take_prize" and any(
+            # v0.140（docs/prize-order-user-rule-v0.140.md）: 両方がサイドを取るときは、サイドの前に先に取るプレイヤーの決定（prize_first）がある（同じ「ふしちょう」の候補を持つ）
+            waiting_prize = new.decision is not None and new.decision.kind in ("take_prize", "prize_first") and any(
                 c[1] == e["pokemon"] for c in new.decision.context_value("post_knockout", ()))
             if reason is not None:
                 observed[f"rebirth_blocked_{reason}"] += 1
@@ -343,7 +344,8 @@ def count_events(state):
 # 使ったポケモンが HP 以上 6 回。そのダメージで「はんげき」16 回）。効果が期限で消えた 170 回・きぜつで消えた 2 回（残りは対戦の終わり）。
 # W24（UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT）で止めたワザ 1 回。
 EXPECTED_COUNTS = {
-    "accepted": 12266, "attack_ほのおのかべ": 199, "counterattack_after_retaliation": 16, "decisive": 100, "knock_out_rockets_moltres": 79,
+    # v0.140（docs/prize-order-user-rule-v0.140.md 7 章）: 両方がサイドを取る 1 回の場面ごとに、先に取るプレイヤーの決定（prize_first）への答えが 1 つ増えた（12266 → 12267）。ほかの数は同じ
+    "accepted": 12267, "attack_ほのおのかべ": 199, "counterattack_after_retaliation": 16, "decisive": 100, "knock_out_rockets_moltres": 79,
     "knock_out_rockets_moltres_poison": 3, "knock_out_simultaneous": 2, "persistent_effect_skipped": 1, "phase_game_over": 100,
     "post_knockout_power_declared": 21, "post_knockout_power_declined": 11, "rebirth_blocked_condition": 34, "rebirth_blocked_gas": 4,
     "rebirth_card_played_again": 19, "rebirth_not_offered_game_over": 9, "rebirth_offered": 32, "rejected": 1388,

@@ -478,8 +478,8 @@ class SelfDestructTest(unittest.TestCase):
         self.assertEqual(list(damage_of(done, since, "opponent_bench").values()), [20])
 
     def test_double_knock_out_prizes_and_promotion_order(self):
-        """両方の対戦ポケモンがきぜつ（同時のきぜつ。p.324）: サイドを取るのは番のプレイヤーから（v0.2f の正規化）、バトル場に出すのは番でないプレイヤーから
-        （pp.323〜324）。控えのきぜつもいっしょに数える。"""
+        """両方の対戦ポケモンがきぜつ（同時のきぜつ。p.324）: サイドを取るのは番のプレイヤーから（v0.2f の正規化。v0.140 からは番のプレイヤーが先に取るプレイヤーを選ぶ
+        決定 prize_first があり、ここでは自分を選ぶ。docs/prize-order-user-rule-v0.140.md）、バトル場に出すのは番でないプレイヤーから（pp.323〜324）。控えのきぜつもいっしょに数える。"""
         state = board(mon(MAGNEMITE), mon(RATTATA, ()), bench=({"card": RATTATA, "damage": 20}, PIKACHU), opponent_bench=(RATTATA,))
         current = attack(state, 1)
         since = len(state.log)
@@ -489,7 +489,7 @@ class SelfDestructTest(unittest.TestCase):
             d = current.decision
             seen.append((d.kind, d.player))
             current = apply_kernel(current, ResolveDecision(d.player, d.id, first(d)))
-        self.assertEqual(seen, [(TAKE_PRIZE, 0), (TAKE_PRIZE, 1), (TAKE_PRIZE, 1), (PROMOTE_ACTIVE, 1), (PROMOTE_ACTIVE, 0)])
+        self.assertEqual(seen, [("prize_first", 0), (TAKE_PRIZE, 0), (TAKE_PRIZE, 1), (TAKE_PRIZE, 1), (PROMOTE_ACTIVE, 1), (PROMOTE_ACTIVE, 0)])
         self.assertIsNone(current.result)
         self.assertEqual(current.current_player, 1)
         self.assertEqual(check_invariants(current), [])

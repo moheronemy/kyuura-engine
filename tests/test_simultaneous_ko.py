@@ -55,12 +55,14 @@ def jolt(state):
 
 
 def answer_all(state, choose=lambda d: d.options[0]):
-    """残りの決定（サイド・バトル場に出す）に、決まった選び方で答える。答えた決定の (種類, プレイヤー) の並びも返す。"""
+    """残りの決定（サイド・バトル場に出す）に、決まった選び方で答える。答えた決定の (種類, プレイヤー) の並びも返す。
+    v0.140（docs/prize-order-user-rule-v0.140.md）: 両方がサイドを取るときの先に取るプレイヤーの決定（prize_first）には、番のプレイヤーを選ぶ（v0.2f の正規化と同じ順番）。"""
     answered = []
     while state.decision is not None:
         d = state.decision
         answered.append((d.kind, d.player))
-        state = apply_command(state, ResolveDecision(d.player, d.id, (choose(d),)))
+        choice = state.current_player if d.kind == "prize_first" else choose(d)
+        state = apply_command(state, ResolveDecision(d.player, d.id, (choice,)))
         assert check_invariants(state) == []
     return state, answered
 
@@ -81,7 +83,8 @@ class BothKnockedOutTest(unittest.TestCase):
         self.assertEqual(check_invariants(state), [])
         state, answered = answer_all(state)
         # サイド: 番のプレイヤー → 相手（正規化した順番。p.325）。バトル場: 番でないプレイヤー → 番のプレイヤー（pp.323〜324）
-        self.assertEqual(answered, [("take_prize", 0), ("take_prize", 1), ("promote_active", 1), ("promote_active", 0)])
+        # v0.140: 両方がサイドを取るので、番のプレイヤーが先に取るプレイヤーを選ぶ決定が先にある（利用者の指定）
+        self.assertEqual(answered, [("prize_first", 0), ("take_prize", 0), ("take_prize", 1), ("promote_active", 1), ("promote_active", 0)])
         self.assertEqual((len(state.players[0].prizes), len(state.players[1].prizes)), (5, 5))
         self.assertEqual((state.phase, state.current_player, state.turn_number), (Phase.MAIN, 1, 4))
         self.assertEqual(state.players[0].discard.count(pikachu.card), 1)
@@ -132,14 +135,14 @@ class BothKnockedOutTest(unittest.TestCase):
 
 
 class PrizeOrderTest(unittest.TestCase):
-    """同時のきぜつで両方がサイドを取る順番は、番のプレイヤーが決める（p.325）。エンジンは番のプレイヤーからに正規化する。
-    どちらの順番でも、選べるもの・結果が同じことを、順番を入れ替えて確かめる（エンジンの内部の関数を直接呼ぶ）。"""
+    """同時のきぜつで両方がサイドを取る順番は、番のプレイヤーが決める（p.325。v0.140 からは利用者の指定で、いつも先に取るプレイヤーの決定を出す）。
+    どちらの順番でも、選べるもの・結果が同じことを、順番を入れ替えて確かめる（エンジンの内部の関数を直接呼ぶ。v0.140: 先に取るプレイヤーを ``first`` で渡す）。"""
 
     def finish(self, order):
         state, _ = jolt(board())
         state = state.clone()
         state.decision = None
-        flow._next_prize_or_judge(Resolution(state), tuple(order), None, ())  # v0.16b: 解決の基盤（v0.15 までは engine._next_prize_or_judge）
+        flow._next_prize_or_judge(Resolution(state), tuple(order), None, (), first=order[0])  # v0.16b: 解決の基盤（v0.15 までは engine._next_prize_or_judge）
         options = []
         while state.decision is not None:
             d = state.decision
@@ -167,6 +170,9 @@ class PrizeAndPromotionDecisionTest(unittest.TestCase):
 
     def test_intermediate_states(self):
         state, _ = jolt(board())
+        # v0.140: 先に取るプレイヤーの決定（番のプレイヤー 0 が自分を選ぶ）。そのあとは v0.139 までと同じ並び
+        self.assertEqual((state.decision.kind, state.decision.player), ("prize_first", 0))
+        state = apply_command(state, ResolveDecision(0, state.decision.id, (0,)))
         d = state.decision
         self.assertEqual((d.kind, d.player), ("take_prize", 0))
         for command, code in ((UseAttack(0, THUNDER_JOLT), "WRONG_PHASE"), (EndTurn(0), "WRONG_PHASE"),
@@ -212,7 +218,7 @@ class WinTableTest(unittest.TestCase):
         """番のプレイヤーだけが最後のサイド: 番のプレイヤーの勝ち（p.311 本文「サイドカードを取り終えた」。表にない 1 条件だけの
         場合）。相手がサイドを取ってから判定する。"""
         state, answered = self.outcome(prizes=1)
-        self.assertEqual(answered, [("take_prize", 0), ("take_prize", 1)])
+        self.assertEqual(answered, [("prize_first", 0), ("take_prize", 0), ("take_prize", 1)])  # v0.140: 先に取るプレイヤーの決定
         self.assert_result(state, "win", 0, [(0, "ALL_PRIZES_TAKEN")])
         self.assertEqual(len(state.players[1].prizes), 5)
 
@@ -232,7 +238,7 @@ class WinTableTest(unittest.TestCase):
 
     def test_one_side_cannot_field(self):
         state, answered = self.outcome(bench=())
-        self.assertEqual(answered, [("take_prize", 0), ("take_prize", 1)])  # 判定のあとはバトル場に出さない
+        self.assertEqual(answered, [("prize_first", 0), ("take_prize", 0), ("take_prize", 1)])  # 判定のあとはバトル場に出さない（v0.140: 先に取るプレイヤーの決定）
         self.assert_result(state, "win", 1, [(1, "OPPONENT_CANNOT_FIELD_ACTIVE")])
         state, _ = self.outcome(their_bench=())
         self.assert_result(state, "win", 0, [(0, "OPPONENT_CANNOT_FIELD_ACTIVE")])
@@ -271,7 +277,7 @@ class WinTableTest(unittest.TestCase):
                 state, answered = self.outcome(prizes=1 if you_prizes else 6, their_prizes=1 if opp_prizes else 6,
                                                bench=() if you_cannot else (PONYTA,),
                                                their_bench=() if opp_cannot else (GROWLITHE,))
-                self.assertEqual(answered, [("take_prize", 0), ("take_prize", 1)])  # 判定はすべてのサイドを取ってから
+                self.assertEqual(answered, [("prize_first", 0), ("take_prize", 0), ("take_prize", 1)])  # 判定はすべてのサイドを取ってから（v0.140: 先に取るプレイヤーの決定）
                 self.assertEqual((state.result.outcome, state.result.winner), expected[outcome])
                 self.assertEqual(([not state.players[p].prizes for p in (0, 1)],
                                   [state.players[p].active is None and not state.players[p].bench for p in (0, 1)]),
@@ -297,7 +303,8 @@ class PromotionOrderOnOpponentTurnTest(unittest.TestCase):
         state = with_coin_results(state, T)
         state = apply_command(state, UseAttack(1, THUNDER_JOLT))
         state, answered = answer_all(state)
-        self.assertEqual(answered, [("take_prize", 1), ("take_prize", 0), ("promote_active", 0), ("promote_active", 1)])
+        # v0.140: 先に取るプレイヤーを番のプレイヤー 1 が選ぶ（ここでは自分）
+        self.assertEqual(answered, [("prize_first", 1), ("take_prize", 1), ("take_prize", 0), ("promote_active", 0), ("promote_active", 1)])
         self.assertEqual((state.phase, state.current_player), (Phase.MAIN, 0))
 
 

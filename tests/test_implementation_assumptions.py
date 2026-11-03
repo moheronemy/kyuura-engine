@@ -98,6 +98,46 @@ class LedgerInvariantTest(unittest.TestCase):
         ref["symbol"] = "NoSuchSymbolInThisModule"
         self.assertTrue(any("見つからない" in p for p in C.check(broken)))
 
+    def test_detects_addendum_with_unknown_item(self):
+        broken = _copy(self.ledger)
+        broken.setdefault("addenda", []).append({"id": "ADD-BROKEN", "kind": "revalidation", "on": "2026-01-01", "base_commit": "0" * 40,
+                                                 "ref": "docs/implementation-assumptions.md", "summary": "x", "item_ids": ["IA-NOT-IN-THE-LEDGER"]})
+        self.assertTrue(any("ADD-BROKEN: 項目 IA-NOT-IN-THE-LEDGER" in p for p in C.check(broken)))
+
+    def test_detects_fix_addendum_without_commits(self):
+        broken = _copy(self.ledger)
+        item = broken["items"][0]["id"]
+        broken.setdefault("addenda", []).append({"id": "ADD-BROKEN-FIX", "kind": "fix", "on": "2026-01-01", "base_commit": "0" * 40,
+                                                 "ref": "docs/implementation-assumptions.md", "summary": "x", "item_ids": [item], "commits": ["abc"]})
+        self.assertTrue(any("ADD-BROKEN-FIX: 修正の追記に、直したコミット" in p for p in C.check(broken)))
+
+    def test_detects_assumption_addendum_without_statement_or_approval(self):
+        """後の版の実装上の仮定の追記（種類 assumption）は、仮定の文・根拠の種類・承認（なければ "none"）を持つ。承認を推測で書かない。"""
+        broken = _copy(self.ledger)
+        item = broken["items"][0]["id"]
+        broken.setdefault("addenda", []).append({"id": "ADD-BROKEN-ASSUMPTION", "kind": "assumption", "on": "2026-01-01", "base_commit": "0" * 40,
+                                                 "ref": "docs/implementation-assumptions.md", "summary": "x", "item_ids": [item], "basis": ["guess"],
+                                                 "approval": "approved"})
+        problems = C.check(broken)
+        self.assertTrue(any("ADD-BROKEN-ASSUMPTION: 仮定の追記に statement がない" in p for p in problems))
+        self.assertTrue(any("ADD-BROKEN-ASSUMPTION: 仮定の追記の根拠の種類" in p for p in problems))
+        self.assertTrue(any("ADD-BROKEN-ASSUMPTION: 仮定の追記の承認" in p for p in problems))
+
+    def test_detects_user_rule_addendum_without_quote_or_convention(self):
+        """v0.140: 後の版で採った利用者の指定の追記（種類 user_rule）は、指定の文（文書にそのまま）・停止の方針の台帳の利用者指定の規約を持つ。規約は追記で対応付けてよい
+        （項目の記載は書き換えない）が、どこにも対応付けない規約は見つける。"""
+        broken = _copy(self.ledger)
+        row = next(a for a in broken["addenda"] if a["kind"] == "user_rule")
+        self.assertEqual(C.check(broken), [])
+        row["approval"]["quote"] = ["文書にない指定の文"]
+        row["supersedes"] = ["ADD-NOT-THERE"]
+        problems = C.check(broken)
+        self.assertTrue(any(f"{row['id']}: 指定の文が文書" in p for p in problems))
+        self.assertTrue(any(f"{row['id']}: 置きかえた追記 ADD-NOT-THERE がない" in p for p in problems))
+        broken = _copy(self.ledger)
+        broken["addenda"] = [a for a in broken["addenda"] if a["kind"] != "user_rule"]
+        self.assertTrue(any("CONV:USER-PRIZE-ORDER-ALWAYS-CHOSEN が、どの項目にも対応付けられていない" in p for p in C.check(broken)))
+
     def test_merged_duplicates_point_to_live_items(self):
         by_id = {i["id"]: i for i in self.ledger["items"]}
         for item in self.ledger["items"]:

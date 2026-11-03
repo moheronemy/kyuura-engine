@@ -45,6 +45,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Iterable
 
 from .errors import IllegalActionError, UnsupportedError
@@ -406,6 +407,75 @@ BENCH_FROM_DECK_OR_HAND = "bench_from_deck_or_hand"
 # 手札を見て、カードを1枚えらぶ」）、2 つ目は相手プレイヤーが使ったプレイヤーの手札から（「相手プレイヤーにあなたの手札を見せ、カードを1枚えらばせる」）。選べるものは見た手札のカードの
 # uid（手札の並び）で 1 枚。決めるプレイヤーは見ている（観測の ``LOOKED_HAND_KINDS``）。続きの情報の ``stage`` は ``"take"``・``"give"``。再開先は "trainer"
 SELECT_EXCHANGE_CARD = "select_exchange_card"
+# v0.140（docs/prize-order-user-rule-v0.140.md 2 章）: 同じきぜつの処理（p.324 の同時のきぜつ）で両方のプレイヤーがサイドを取るとき、先にサイドを取るプレイヤー。利用者の指定
+# （USER_PRIZE_ORDER_ALWAYS_CHOSEN・USER_PRIZE_ORDER_PER_PLAYER。公式の裁定ではない）により、おもて・うら・特殊能力の有無によらず、番のプレイヤーが選ぶ。選ばれたプレイヤーが、その処理で
+# 取る枚数をすべて取り終えてから、もう一方が取る（1 枚ごとに選び直さない）。決めるのは番のプレイヤー。選べるものは並び（``context`` の ``"remaining"``。まだ取っていない並びのすべて）にいる
+# プレイヤーの番号（0・1）で 1 つ。再開先は "prize_first"。段階は Phase.DECISION（「ふしちょう」の決定と同じく、バトル場が空のことがある）。一方だけが取るなら出さない
+PRIZE_FIRST = "prize_first"
+
+# v0.140: この版では続けない、前の版の決定の種類・再開先（名前 → 理由）。後の版の状態の写しにある知らない種類・再開先と同じく、決定に答える・観測する前に UnsupportedError
+# （``DECISION_UNSUPPORTED_CODE``）で拒否する。名前は前の版で使った決まった値だけ（拒否の理由の文に、状態の中の文字列をそのまま書かない）
+RETIRED_DECISIONS: dict[str, str] = {
+    "prize_order": "v0.139 の、1 枚ごとに次にサイドを取るプレイヤーを選ぶ決定（v0.140 から、先に取るプレイヤーを 1 回選び、そのプレイヤーがまとめて取る prize_first にした）",
+}
+DECISION_UNSUPPORTED_CODE = "UNSUPPORTED_DECISION"
+
+
+def unsupported_decision_error(decision: PendingDecision | None, known_resumes) -> UnsupportedError | None:
+    """v0.140（docs/prize-order-user-rule-v0.140.md 3 章）: 保留中の決定の再開先を、この版が扱えないなら、拒否の例外（返すだけ。投げるのは呼ぶ側）。扱えるなら None。
+
+    - 前の版の決定（再開先・種類が ``RETIRED_DECISIONS`` の名前）: その理由を書く
+    - この版の知らない再開先（``known_resumes`` にない。後の版の状態の写しなど）: 再開先の文字列は書かない（状態の中の値で、信頼できない）
+    再開先の名前は閉じた語彙（エンジンの ``DECISION_RESUMES``）なので、ここで確かめる。決定の種類はカードの実装が加える開いた語彙（試験の登録表の種類もある）なので、ここでは確かめない
+    （知っている再開先の知らない種類は、それぞれの再開先の確かめ・観測の ``OPTION_MEANINGS`` のまま）。知っている再開先で、続けるのに要る情報が欠ける・合わない状態（壊れた状態）は、ここでは
+    なく不変条件（``StateIntegrityError``）で扱う。"""
+    if decision is None:
+        return None
+    for name in (decision.resume, decision.kind):
+        if isinstance(name, str) and name in RETIRED_DECISIONS:
+            return UnsupportedError(DECISION_UNSUPPORTED_CODE, f"この版では続けられない前の版の決定: {RETIRED_DECISIONS[name]}")
+    if not (isinstance(decision.resume, str) and decision.resume in known_resumes):
+        return UnsupportedError(DECISION_UNSUPPORTED_CODE, "この版が知らない再開先の決定を待つ状態（後の版の状態の写しなど）は続けられない")
+    return None
+
+
+@dataclass(frozen=True)
+class UserSpecifiedProcedureRule:
+    """v0.140: 利用者が指定した、カードによらない処理の手順（サイドを取る順番）。カード 1 枚の登録の記録（``effects.USER_SPECIFIED_RULES``）・区間をまたぐ扱い
+    （``sudden_death.UserSpecifiedSegmentRule``）とは別の種類の記録で、公式の裁定・エラッタ・最新の説明・kyuura の研究上の解決ではない。両モードに共通する基礎集合の規約として記録する
+    （docs/ruleset-mode-design.md の AGR-MODE-BASELINE-USER。モードは実装していない）。"""
+
+    id: str
+    specified_on: str
+    statement: str
+    rule: str
+    scope: str
+    not_decided: tuple[str, ...]
+    document: str
+
+
+# 利用者の指定（2026-11-03。v0.140 の依頼）。p.325 の一般規定（GR-2000-P325-SAME-TIMING。公式資料）と、それを同時のきぜつのサイドに当てはめる v0.2f の導出（SUPPORTED）とは別に、
+# この 2 点だけを利用者の指定とする
+USER_PRIZE_ORDER_ALWAYS_CHOSEN = UserSpecifiedProcedureRule(
+    id="USER-PRIZE-ORDER-ALWAYS-CHOSEN",
+    specified_on="2026-11-03",
+    statement="両方のプレイヤーがサイドを取る場合は、表向き・うら向きや特殊能力の有無によらず、番のプレイヤーが先に取る人を選ぶ。",
+    rule=("同じきぜつの処理で両方のプレイヤーがサイドを取るとき、いつも番のプレイヤーに先に取るプレイヤーを選ぶ決定（prize_first）を出す。おもてのサイド・［おみとおし］・"
+          "本人だけが知るサイドなどで、出すかどうかを変えない"),
+    scope="同じきぜつの処理（resolution.flow._after_knockouts）で両方がサイドを取るときだけ。一方だけが取るときは決定を出さない。トレーナー・特殊能力でサイドを取る処理（マチスの交渉）は対象外",
+    not_decided=("取ったサイドの位置を相手に見せないこと（今の観測のまま。公式の正しさを承認したのではない）", "マチスの交渉の位置の公開との不統一（別件）"),
+    document="docs/prize-order-user-rule-v0.140.md 2 章",
+)
+USER_PRIZE_ORDER_PER_PLAYER = UserSpecifiedProcedureRule(
+    id="USER-PRIZE-ORDER-PER-PLAYER",
+    specified_on="2026-11-03",
+    statement="先に選ばれたプレイヤーが必要な枚数を取り終え、その後、もう一方が必要な枚数を取る。1枚ごとの交互取得は認めない。",
+    rule="先に選ばれたプレイヤーが、その処理で取る枚数をすべて取り終えてから、もう一方が取る。1 枚取るたびに順番を選び直さない（v0.139 の 1 枚ごとの仮定を置きかえる）",
+    scope="USER-PRIZE-ORDER-ALWAYS-CHOSEN と同じ場面。勝ち負け・サドン・デスの判定は、すべて取り終えてから（v0.2f 2 章 #5 のまま）",
+    not_decided=("p.325 で順番を決める単位・時点の公式の読み（記録がない）",),
+    document="docs/prize-order-user-rule-v0.140.md 2 章",
+)
+USER_PRIZE_ORDER_RULES = (USER_PRIZE_ORDER_ALWAYS_CHOSEN, USER_PRIZE_ORDER_PER_PLAYER)
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

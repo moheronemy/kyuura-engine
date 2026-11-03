@@ -1,0 +1,2325 @@
+{
+ "schema_version": 1,
+ "title": "v0.139 のサイドを取る順番の追加検証と保存互換性の確認",
+ "on": "2026-11-03",
+ "scope": "調査・再現・分類・文書化だけ。サイドを取る順番の新しい規約の採用・エンジンの動作の変更はしていない。HC1・ほかの未解決事項・モードは変えていない。",
+ "base": {
+  "commit": "789f58e2d5e60cf071f80b9d8411e329072744ba",
+  "describes": "v0.139 の最終コミット（ブランチ claude/prize-order-hc1-fix に公開済み）",
+  "origin_main": "2d678203db5c7fa7b9779b8746d3a873ab294351",
+  "merged_into_main": false,
+  "branch": "claude/prize-order-followup"
+ },
+ "compared_old": {
+  "commit": "4ded41817ef9a64ba07d3e0d2819d3b9cf06d318",
+  "version": "0.138.0",
+  "how": "scripts/prize_order_followup.py が git archive で kyuura_engine/ を一時の読み取り用の木に取り出し、別のプロセス（python -P -s -X utf8・PYTHONHASHSEED=0）で読み込む。旧版のコードと参照データは変えていない"
+ },
+ "kyuura": {
+  "commit": "71d1728938fb4c8fefde9b82779cdef74beb612d",
+  "read_only": true,
+  "read": [
+   "data/sidecar/rulings.json の rule_clauses GR-2000-P325-SAME-TIMING・GR-2000-P323-KNOCKOUT",
+   "rulings・issues のサイドの見え方の記録（見つからなかった）"
+  ],
+  "not_used": "data/Silver_Bible_structured.md（ガイドブックの写し）は根拠に使っていない（読み直しの依頼がない）"
+ },
+ "basis_labels": {
+  "official": "公式資料の記録で確かめたこと（kyuura の checked: kyuura_image の条項の要約）",
+  "derived": "エンジンの既存の導出（v0.2f の SUPPORTED など。公式資料の直接の記述ではない）",
+  "analogy": "既存の実装・別の場面からの類推",
+  "implementation": "今の実装上の仮定・選択",
+  "executed": "このスクリプトで実行して確かめたこと（evidence）",
+  "code_read": "コードを読んだだけで確かめたこと（実行していない）"
+ },
+ "questions": [
+  {
+   "id": "Q1-PRIVATE-PRIZE-KNOWLEDGE",
+   "title": "本人だけが知るうらのサイドがある場合、固定した取得順でも同等か",
+   "knowledge_sources": [
+    {
+     "card": "PMCG2-028 マンキー［スパイ］",
+     "what": "どちらかのサイドの位置 1 つを見る（自分の番に 1 回）",
+     "who_knows": "使ったプレイヤーだけ（ログ look_at_card の card。位置は公開）",
+     "engine": "zones.look_at_card。知識はログの位置で表す",
+     "basis": "code_read"
+    },
+    {
+     "card": "neo4-051 アンノーンS［SEARCH］",
+     "what": "自分のサイドの位置 1 つを見る",
+     "who_knows": "使ったプレイヤーだけ",
+     "engine": "zones.look_at_card",
+     "basis": "code_read"
+    },
+    {
+     "card": "カスミのわがまま（LookPrizeAskSwapElseDraw）",
+     "what": "自分のサイドの位置 1 つを見る。オーケーなら手札の 1 枚と入れかえる（サイドに置いたカードを本人が知る）",
+     "who_knows": "使ったプレイヤーだけ（位置は公開）",
+     "engine": "zones.look_at_card・zones.swap_prize_with_hand",
+     "basis": "code_read"
+    },
+    {
+     "card": "neo4-111 にせオーキドの発明",
+     "what": "相手のサイドをすべて見る（並びのまま）。のぞめば置きなおす（置きなおしたら知識はなくなる）",
+     "who_knows": "使ったプレイヤーだけ（持ち主も見ない）",
+     "engine": "zones.look_at_prizes（ログの cards はサイドの並び）",
+     "basis": "code_read"
+    },
+    {
+     "card": "PMCG4-045 コラッタ［わるふざけ］",
+     "what": "自分のサイドの位置 1 つと山札の一番上を、どちらも見ずに入れかえる。山札の一番上を前に知っていれば（［スパイ］・みらいよちなど）、その位置のカードを知ることになる",
+     "who_knows": "組み合わせによる（ログは位置だけ公開）",
+     "engine": "zones.swap_prize_with_deck_top",
+     "basis": "code_read"
+    },
+    {
+     "card": "PMCG3-015 オムナイト［おみとおし］",
+     "what": "サイドの知識ではないが、相手の手札が全員に見える。先に取ったプレイヤーの手札に入ったうらのサイドのカードが、後に取るプレイヤー・観戦者に見える",
+     "who_knows": "全員（観測の hand.cards）",
+     "engine": "effects.hand_revealed_by・observation.observe",
+     "basis": "executed"
+    }
+   ],
+   "engine_model": [
+    {
+     "fact": "サイドの決定（take_prize）の選べるものは自分のサイドの位置。相手のサイドは選べないので、合法な選択は相手の取得の順番によらない",
+     "basis": "executed"
+    },
+    {
+     "fact": "ログ take_prize は player・card・remaining だけで、取った位置を書かない。card は取ったプレイヤーだけに見える（おもてだったカードは全員）。相手・観戦者に見えるのは、取ったことと残りの枚数だけ",
+     "basis": "executed"
+    },
+    {
+     "fact": "一方、マチスの交渉のサイド（trainer_take_prize）・カスミのわがまま・［わるふざけ］のログは、位置を公開の項目として書く（位置の扱いがログの種類で違う）",
+     "basis": "code_read"
+    },
+    {
+     "fact": "エンジンの内部の状態（GameState）はすべてのカードを持つ。プレイヤーの知識は観測（observe・visible_log）の範囲で、位置ごとの知識はログの look_at_card の位置で表す。サイドを取ると並びが詰まる（pop）ので、取った位置を知らない相手の位置ごとの知識は、その後の位置と結びつかなくなる",
+     "basis": "code_read"
+    },
+    {
+     "fact": "kyuura の固定コミットに、取ったサイドの位置が相手に見えるかの記録は見つからなかった",
+     "basis": "official"
+    }
+   ],
+   "comparison_table": [
+    {
+     "case": "すべて未知（K1）",
+     "information_at_decision_by_order": "同じ（取ったことと枚数だけ）",
+     "result": "同じ選択なら同じ",
+     "evidence": "K1-none"
+    },
+    {
+     "case": "本人だけが自分のサイドを知る（K2: ［スパイ］で自分の位置 0）",
+     "information_at_decision_by_order": "同じ（自分のサイドは相手の取得で変わらない）",
+     "result": "同じ",
+     "evidence": "K2-spy-own"
+    },
+    {
+     "case": "後のプレイヤーが先のプレイヤーのサイドの位置を知る（K3: ［スパイ］で相手の位置 0）",
+     "information_at_decision_by_order": "エンジンの観測では同じ（取った位置が見えないので、知っている位置のカードを取ったかがわからない）。取った位置が見える読みでは変わりうる（未確認）",
+     "result": "エンジンでは同じ",
+     "evidence": "K3-spy-opponent"
+    },
+    {
+     "case": "両者が知る（おもて。v0.63・v0.80）",
+     "information_at_decision_by_order": "変わる（v0.139 が順番の決定を出す場面）",
+     "result": "v0.139 で扱う",
+     "evidence": "docs/prize-order-hc1-fix-v0.139.md 2 章"
+    },
+    {
+     "case": "うらのサイドだが、先に取るプレイヤーの手札が見える（K4・K4L: ［おみとおし］）",
+     "information_at_decision_by_order": "変わる（後に取るプレイヤー・観戦者に、先に取られたうらのカードが見える）",
+     "result": "見えた情報で選び方を変える方策なら、選択と結果が変わる（K5。構築盤面）",
+     "evidence": "K4-omanyte・K4L-omanyte-legal・K5-omanyte-spy-own"
+    }
+   ],
+   "conclusion": "condition_needed",
+   "conclusion_text": "現行の条件（どちらかのサイドにおもてのカードがあるときだけ prize_order を出す）は、エンジン自身の観測の範囲でも十分でない: どのサイドもうらでも、先に取るプレイヤーの手札が［おみとおし］で見えると、後に取るプレイヤーの決定の時点の観測が順番で変わる（new_game(seed 2) からの合法な操作で再現。K4L）。見えた情報で選び方を変える方策では、選択と結果も変わる（構築盤面と合法なコマンド。K5）。本人だけが知る位置ごとの知識（［スパイ］・アンノーンS・カスミのわがまま・にせオーキドの発明）だけでは、エンジンの観測が取った位置を表さないので、順番で後のプレイヤーの観測は変わらなかった（K2・K3）。ただし、取った位置が相手に見える読み（実物の場では位置が見える）を採るなら、これらの場面も順番で情報が変わりうる。その読みは記録がなく未確認。同等性を証明したとは書かない（確かめたのは K1〜K5・K4L の盤面だけ）",
+   "conditions_to_keep_current": [
+    "後に取るプレイヤーが、先に取られたうらのカードを見る経路がないこと: おもてのサイド（今の条件）のほか、先に取るプレイヤーの手札が相手に見える効果（［おみとおし］）がはたらいていないこと",
+    "取った位置を相手に見せない今の観測を保つこと（位置を公開にするなら、位置ごとの知識のある場面も順番で情報が変わりうる）",
+    "サイドを取るあいだに、ほかに見える情報が増える効果（取ったときにはたらく効果）がないこと（今の登録にはないことをコードで確かめた範囲）"
+   ],
+   "unconfirmed": [
+    "取ったサイドの位置が相手に見えるか（実物の場の扱い。記録なし）",
+    "位置ごとの知識を順番で増やす経路のすべての組み合わせ（［わるふざけ］と山札の一番上の知識など）の網羅",
+    "K5 の方策は反例のための例で、対戦の方策としての妥当性は確かめていない"
+   ]
+  },
+  {
+   "id": "Q2-ORDER-UNIT",
+   "title": "複数枚のサイドを取る場合、順番を選ぶ単位によって何が変わるか",
+   "readings": [
+    {
+     "id": "A",
+     "text": "最初にプレイヤーの順番を決め、各プレイヤーが必要な枚数をまとめて取る",
+     "why_candidate": "利用者の指定の比較対象。「プレイヤーごとのサイドを取ること」を 1 つのことがらとみる読み"
+    },
+    {
+     "id": "B",
+     "text": "1 枚取るたびに、番のプレイヤーが次に取る人を選ぶ（v0.139 の処理）",
+     "why_candidate": "今の実装。きぜつ 1 匹ごとのサイド 1 枚（p.323）を 1 つのことがらとみて、v0.86 の反応の順番と同じく次を 1 つずつ選ぶ"
+    },
+    {
+     "id": "C",
+     "text": "最初に、1 枚ずつの並び全体（交互を含む）を番のプレイヤーがまとめて決める",
+     "why_candidate": "単位（1 枚ずつ）と決める時点（まとめて先に）を分けるために加えた。届く並びは B と同じで、決める時点の情報だけが違う"
+    }
+   ],
+   "basis": [
+    {
+     "topic": "p.325 の一般規定",
+     "status": "official",
+     "text": "同じタイミングで複数のことがらが起こったときは、特に指示されていないかぎり、それらを処理する順番を、そのとき番をおこなっているプレイヤーが決める（kyuura GR-2000-P325-SAME-TIMING。checked: kyuura_image）"
+    },
+    {
+     "topic": "同時のきぜつのサイドを取ることへの当てはめ",
+     "status": "derived",
+     "text": "v0.2f 2 章 #4 の SUPPORTED の導出（明文はない）。p.323（きぜつ 1 匹につき相手が 1 枚）・p.324（同時のきぜつ）の要約は kyuura GR-2000-P323-KNOCKOUT"
+    },
+    {
+     "topic": "何を 1 つの処理（ことがら）として順番を決めるか",
+     "status": "implementation",
+     "text": "公式資料の記述は見つからない。B は、きぜつ 1 匹ごとの 1 枚を単位にする今の実装の選択（v0.86 の REACTION_ORDER の形からの類推 analogy を含む）。A・C も読みとして残る"
+    },
+    {
+     "topic": "いつ順番を決めるか",
+     "status": "implementation",
+     "text": "公式資料の記述は見つからない。B は取る直前に次の 1 人を決める。C はまとめて先に決める。A は最初に 1 回"
+    },
+    {
+     "topic": "v0.86 との類似",
+     "status": "analogy",
+     "text": "v0.86 の反応の順番（1 つずつ次を選ぶ）と同じ形にしたことは、公式の根拠ではない"
+    }
+   ],
+   "findings": [
+    {
+     "fact": "2 枚対 1 枚（並び (0, 0, 1)）: B で届く並びは 001・010・100、A は 001・100。交互の 010 は B だけ",
+     "evidence": "units.2v1",
+     "basis": "executed"
+    },
+    {
+     "fact": "2 枚対 2 枚（並び (0, 0, 1, 1)）: B で届く並びは 6 通り（交互を含む）、A は 2 通り（0011・1100）",
+     "evidence": "units.2v2",
+     "basis": "executed"
+    },
+    {
+     "fact": "決定の数: B は 1 つの並びで順番の決定が 1〜(n−1) 回（2v1 で 1〜2、2v2 で 2〜3）、A は 1 回。C は 1 回（選べるものは並びの数）",
+     "evidence": "units.*.B_decisions_per_path",
+     "basis": "executed"
+    },
+    {
+     "fact": "合法な選択（自分のサイドの位置）とカードの動きは単位によらない: 同じ位置を取れば、どの並びでも最後の盤面（手札・サイド・山札・トラッシュ）は同じ",
+     "evidence": "units.*.boards_identical",
+     "basis": "executed"
+    },
+    {
+     "fact": "勝ち負けの判定は、どの並びでもすべて取り終えてから（取る途中では result がない）。P1 が途中で 0 枚になる並び（2v1-last）でも同じ。サドン・デスへの移り方は v0.139 の SuddenDeathPrizeOrderTest（両方の順）のまま",
+     "evidence": "units.2v1-last・units.*.result_before_each_take",
+     "basis": "executed"
+    },
+    {
+     "fact": "決定の時点の情報は単位で変わる: B の交互の並びでは、同じプレイヤーの 1 枚目と 2 枚目のあいだに相手が取るので、2 枚目だけが相手のおもてのカードを見たあとになる（2v2 の 0110 で P0 の 2 枚目が P1 のおもてのコラッタを見る）。A ではプレイヤーの全部の取得が同じ情報のもと",
+     "evidence": "units.2v2.paths",
+     "basis": "executed"
+    },
+    {
+     "fact": "途中で勝ち負けを判定するか（取る途中の判定）は、この論点（順番の単位）とは別。v0.139 は変えていない（すべて取ってから判定。v0.2f 2 章 #5）",
+     "basis": "code_read"
+    },
+    {
+     "fact": "探索・操作数: B の葉の数は並びの組み合わせ C(n, k)、A は 2。テストの方策（tests/helpers.py）はいつも番のプレイヤーを選ぶので、B でも A と同じ並び（番のプレイヤーが先にまとめて）になる",
+     "basis": "executed"
+    }
+   ],
+   "conclusion": "unconfirmed",
+   "conclusion_text": "単位（B: 1 枚ごと／A: プレイヤーごと）で変わるのは、届く取得の並び（交互ができるか）・決定の数・決定の時点の情報だけで、合法な選択・カードの動き・勝ち負けとサドン・デスの判定は変わらない（確かめた盤面の範囲）。どの単位が p.325 に合うかは公式資料で決まらない。B は今の実装上の仮定として台帳に追記した（承認なし）",
+   "unconfirmed": [
+    "どの単位・どの時点が公式の処理か",
+    "3 匹以上同時のきぜつ（並び 5 以上）の組み合わせ（盤面は作っていない）"
+   ]
+  },
+  {
+   "id": "Q3-SAVE-FORMAT-34",
+   "title": "保存形式 34 の prize_order 状態を、旧版が安全に扱えるか",
+   "contract": [
+    {
+     "fact": "ゲーム状態全体を JSON から読み込む処理はない（README「ゲーム状態全体を JSON から読み込む処理はまだありません」）。形式 34 は書き出し（state_to_dict）の形で、読む側はエンジンの外",
+     "basis": "code_read"
+    },
+    {
+     "fact": "書き出しの約束: 新しい決定・持続する効果の種類は、種類の値と項目を加えただけなら形式の番号を変えない。読む側は知らない種類を拒否すること（serialize.py の v0.119・v0.120 などの記述）。形式の番号は書き出しの形の版で、決定の種類の語彙の版ではない",
+     "basis": "code_read"
+    },
+    {
+     "fact": "保存・復元は pickle・copy.deepcopy・clone。後から加えた状態の項目は既定値を持たせ、前の版の写し（pickle）を後の版で読めるようにしている（後方の互換。state.py の v0.100・v0.119・v0.124 の注記・rules.py の v0.134）。後の版の写しを前の版で読む向きの約束は書かれていない",
+     "basis": "code_read"
+    },
+    {
+     "fact": "書き出し（形式 34）にも pickle にも、エンジンの版・必要な機能の記録はない（format_version・effects（登録表の id）・rules はある）",
+     "basis": "executed"
+    }
+   ],
+   "findings": [
+    {
+     "fact": "v0.139 の中: prize_order を待つ状態（seed 473 の合法な操作）を pickle で保存・復元し、0・1 のどちらを選んでも、復元しない状態と同じ書き出し・同じ乱数で進む",
+     "evidence": "compat.current.prize_order.restore_same_version",
+     "basis": "executed"
+    },
+    {
+     "fact": "v0.138 は v0.139 の prize_order の状態の写しを pickle として読み込める（拒否しない）。check_invariants は 3 件の問題（バトル場が空のまま決定・再開先 prize_order がない）を返す",
+     "evidence": "compat.old_reads_new.prize_order",
+     "basis": "executed"
+    },
+    {
+     "fact": "v0.138 で答える（ResolveDecision 0・1）と RuntimeError（「決定の再開先 'prize_order' を続ける処理がない（不変条件で拒否するはず。エンジンの不具合）」）。明示的な非対応（UnsupportedError）でも、壊れた状態の拒否（StateIntegrityError）でもない内部エラー。選べない答え（2）は INVALID_CHOICE。どの場合も渡した状態・乱数・ログは変わらない",
+     "evidence": "compat.old_reads_new.prize_order.answers・unchanged_after_answers",
+     "basis": "executed"
+    },
+    {
+     "fact": "v0.138 の observe は ValueError（「決定の種類 'prize_order' の選べるものの意味が決まっていない」）。state_to_dict(形式 34) は書き出せる（知らない種類のまま書く）",
+     "evidence": "compat.old_reads_new.prize_order",
+     "basis": "executed"
+    },
+    {
+     "fact": "prize_order のない通常の状態（サイドの決定を待つ）は、v0.138 で読み込み・再開できる（不変条件の問題なし）",
+     "evidence": "compat.old_reads_new.take_prize",
+     "basis": "executed"
+    },
+    {
+     "fact": "v0.138 で作った写しを v0.139 で読める（new_game(seed 473) の書き出しが同じ）",
+     "evidence": "compat.new_reads_old",
+     "basis": "executed"
+    },
+    {
+     "fact": "v0.139 も同じ作り: 知らない再開先の決定を待つ状態（後の版の写しを読んだ場合を、比較用に種類・再開先だけ書きかえて作った）に答えると RuntimeError。apply_command は入力の状態の不変条件を処理の前に確かめず、結果だけを確かめる",
+     "evidence": "compat.current.unknown_resume",
+     "basis": "executed"
+    }
+   ],
+   "conclusion": "within_contract_with_gap",
+   "conclusion_text": "形式 34 の番号を変えずに prize_order を加えたことは、既存の書き出しの約束（新しい種類は形式を変えない・読む側は知らない種類を拒否する）の範囲内で、形式の番号の不具合とは言えない。pickle は後方の互換だけが設計されており、前の版が後の版の写しを読む向きの約束はない。ただし、前の版は後の版の写しを拒否せずに読み込み、再開で内部エラー（RuntimeError）になる。これは約束の空白で、エンジンの例外の分類（未対応・壊れた状態・内部エラーを分ける）から見ると、入力の状態の確かめがない点が共通の不具合の候補（今の版にも同じ作りがある）",
+   "options": [
+    {
+     "id": "S1",
+     "text": "形式 34 を維持し、必要機能や対応版の検査を加える",
+     "need": "前の版の写しを後の版で読むことは今も保てる。後の版の写しを前の版で読む場合の誤動作を防ぐには、写しに版・必要機能を記録し、読む側（apply_command の入口など）で確かめる必要がある",
+     "impact": "pickle の状態に版の項目を加える（既定値つき）・apply_command の入口に確かめを加える（エンジンの変更）。すでに出た v0.138 には効かない（後の版どうしだけ）。書き出しに版を加えるなら形式の形が変わるので S2 と同じ影響"
+    },
+    {
+     "id": "S2",
+     "text": "保存形式を更新する（35）",
+     "need": "書き出しの形を変えないかぎり必要ない（prize_order は形式 2 からの decision の項目で表せる）",
+     "impact": "既存の約束（新しい決定の種類で形式を上げない）と食い違う。テスト・文書の期待値（最新の形式）が変わる。前の版に読み込む処理がないので、v0.138 の安全性は変わらない"
+    },
+    {
+     "id": "S3",
+     "text": "既存の互換性契約の範囲内として文書を明確にする",
+     "need": "約束がコード・README に散らばり、pickle の前方の互換がないことが書かれていない",
+     "impact": "文書だけ（serialize.py の説明・README・この文書）。動作は変わらない。v0.138 の内部エラーは残る（記録する）"
+    },
+    {
+     "id": "S4",
+     "text": "その他: 入力の状態の確かめだけを入口に加える（知らない再開先・不変条件を満たさない入力を、処理の前に StateIntegrityError で拒否する）",
+     "need": "今の版が後の版の写しを受けたときに内部エラーにしないため",
+     "impact": "エンジンの変更（共通の不具合の修正候補）。処理の前に不変条件を確かめる時間が増える（全コマンド）。S3 と組み合わせられる"
+    }
+   ],
+   "recommendation": "S3（文書の明確化）を先に行い、S4（入口での入力の確かめ）を共通の不具合の修正候補として別に判断する。S2 は必要ない。S1 の版の記録は、後の版どうしの安全性に効くが、既存の pickle の形に項目を加えるので、S4 の結果を見てから判断する"
+  }
+ ],
+ "defect_candidates": [
+  {
+   "id": "FU-D1-HAND-VISIBLE-PRIZE-ORDER",
+   "question": "Q1-PRIVATE-PRIZE-KNOWLEDGE",
+   "summary": "どのサイドもうらでも、先に取るプレイヤーの手札が相手に見える（［おみとおし］）とき、順番で後のプレイヤーの観測が変わるのに prize_order を出さない（v0.2f の正規化の前提「後に取るプレイヤーの情報は増えない」が成り立たない）",
+   "repro": "K4L-omanyte-legal（合法な操作）・K5-omanyte-spy-own（構築盤面。選択が変わる）",
+   "scope": "両モード共通",
+   "fix_shape": "prize_order_matters の条件に、残りの並びのプレイヤーの手札が相手に見えること（effects.hand_revealed_by）を加える（案。採用していない）"
+  },
+  {
+   "id": "FU-D2-UNKNOWN-RESUME-INTERNAL-ERROR",
+   "question": "Q3-SAVE-FORMAT-34",
+   "summary": "知らない再開先の決定を待つ状態（後の版の写し）に答えると、明示的な拒否ではなく RuntimeError になる（v0.138 で prize_order・v0.139 で比較用の未知の再開先）",
+   "repro": "compat.old_reads_new.prize_order・compat.current.unknown_resume",
+   "scope": "両モード共通（保存・復元の境界）",
+   "fix_shape": "S4（入口での入力の確かめ）。採用していない"
+  }
+ ],
+ "user_decisions": [
+  {
+   "id": "UD1-PRIZE-ORDER-CONDITION",
+   "question": "prize_order を出す条件を、おもてのサイドのほかに広げるか",
+   "options": [
+    {
+     "id": "a",
+     "text": "手札が相手に見える場合（［おみとおし］）を加える",
+     "effect": "K4・K4L の場面だけ決定が増える。今の観測の範囲で順番が情報を変える場面をすべて含む（確かめた範囲）",
+     "recommended": true
+    },
+    {
+     "id": "b",
+     "text": "両方がサイドを取るときはいつも聞く（正規化をやめる）",
+     "effect": "条件の判断が不要になり、取った位置を公開にしても足りる。両方がサイドを取るすべての局で決定が 1 つ以上増える（旧バッチとの比較は、番のプレイヤーを選ぶ方策なら決定の数だけが変わる）",
+     "recommended": false
+    },
+    {
+     "id": "c",
+     "text": "今のまま（おもてのサイドだけ）にして、制限として記録する",
+     "effect": "動作は変わらない。［おみとおし］の場面では p.325 の選択を出さないまま",
+     "recommended": false
+    }
+   ],
+   "recommendation_reason": "a は今の観測の範囲で見つかった反例だけを最小限に扱う。UD2 で位置を公開にするなら b にする"
+  },
+  {
+   "id": "UD2-TAKEN-PRIZE-POSITION-VISIBILITY",
+   "question": "きぜつで取ったサイドの位置を、相手・観戦者に見せるか（実物の場では位置が見える。記録はない）",
+   "options": [
+    {
+     "id": "a",
+     "text": "今のまま見せない（観測の簡略化として記録する）",
+     "effect": "位置ごとの知識（［スパイ］・にせオーキドの発明など）は、相手が取ったあと位置と結びつかなくなる。順番の条件は UD1 の a で足りる",
+     "recommended": true
+    },
+    {
+     "id": "b",
+     "text": "位置を公開の項目にする（マチスの交渉の trainer_take_prize と同じ扱い）",
+     "effect": "観測とログの形が変わる（見える項目の追加）。位置ごとの知識のある場面も順番で情報が変わりうるので、UD1 は b が必要",
+     "recommended": false
+    }
+   ],
+   "recommendation_reason": "位置の扱いを変えると観測の約束が広く変わる。公式資料の記録がないので、今は簡略化として明示し、別の論点として残す"
+  },
+  {
+   "id": "UD3-PRIZE-ORDER-UNIT",
+   "question": "複数枚のサイドの順番の単位と決める時点を、どれにするか",
+   "options": [
+    {
+     "id": "B",
+     "text": "今のまま 1 枚ごとに次の人を選ぶ（実装上の仮定として記録。承認なし）",
+     "effect": "動作は変わらない",
+     "recommended": true
+    },
+    {
+     "id": "A",
+     "text": "最初にプレイヤーの順番を決め、まとめて取る",
+     "effect": "交互の並びがなくなり、決定は 1 回。v0.139 の 2 回目以降の決定がなくなる",
+     "recommended": false
+    },
+    {
+     "id": "C",
+     "text": "最初に 1 枚ずつの並び全体を決める",
+     "effect": "届く並びは今と同じで、決める時点が先になる（選べるものが並びの数になる）",
+     "recommended": false
+    }
+   ],
+   "recommendation_reason": "公式資料で単位・時点が決まらないので、今の形を仮定として明示して保つ。A・C のどちらかを規約として採るなら利用者の判断（規約・プレイ用の決め事）として記録する"
+  },
+  {
+   "id": "UD4-SAVE-COMPATIBILITY",
+   "question": "保存互換性への対応をどうするか",
+   "options": [
+    {
+     "id": "S3",
+     "text": "既存の約束の範囲内として文書を明確にする",
+     "effect": "文書だけ",
+     "recommended": true
+    },
+    {
+     "id": "S3+S4",
+     "text": "S3 に加え、入口で入力の状態を確かめる（共通の不具合 FU-D2 の修正）",
+     "effect": "エンジンの変更。全コマンドで処理の前の確かめが増える",
+     "recommended": false
+    },
+    {
+     "id": "S1",
+     "text": "写しに版・必要機能を記録して確かめる",
+     "effect": "状態の項目を加える。後の版どうしだけに効く",
+     "recommended": false
+    },
+    {
+     "id": "S2",
+     "text": "形式を 35 にする",
+     "effect": "既存の約束と食い違う。v0.138 の安全性は変わらない",
+     "recommended": false
+    }
+   ],
+   "recommendation_reason": "形式の番号は書き出しの形の版で、prize_order は約束の範囲内。v0.138 には読み込む処理の側で対策できない。S4 は効果があるが動作の変更なので、別に判断する"
+  }
+ ],
+ "verification": {
+  "script": "scripts/prize_order_followup.py（--check で evidence と今の再現を比べる。--write で evidence を書き直す）",
+  "test": "tests/test_prize_order_followup.py（evidence の再現と、この台帳の形の確かめ。新しく提案する仕様をテストとして固定しない）",
+  "comparison_modification": "forced_order（このスクリプトの中だけで prize_order_matters を置きかえる）・_unknown_resume（状態の写しの決定の種類・再開先だけを書きかえる）。どちらもエンジンのファイルを変えない",
+  "commands": [
+   "PYTHONUTF8=1 PYTHONHASHSEED=0 python scripts/prize_order_followup.py --check",
+   "PYTHONUTF8=1 PYTHONHASHSEED=0 python -m unittest tests.test_prize_order_followup"
+  ]
+ },
+ "evidence": {
+  "knowledge": {
+   "K1-none": {
+    "omanyte": false,
+    "spy": null,
+    "repro": "constructed_board_then_legal_commands",
+    "v0139_first_decision": [
+     "take_prize",
+     0,
+     [
+      1
+     ]
+    ],
+    "orders": {
+     "0": {
+      "players": {
+       "0": {
+        "options": [
+         0,
+         1,
+         2
+        ],
+        "seen_opponent_cards": [],
+        "known_own_positions": [],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [],
+        "spectator_seen_hands": [
+         null,
+         null
+        ],
+        "pick": 0,
+        "took": "PMCG3-046"
+       },
+       "1": {
+        "options": [
+         0,
+         1,
+         2
+        ],
+        "seen_opponent_cards": [],
+        "known_own_positions": [],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [
+         "hidden",
+         "player",
+         "remaining",
+         "turn"
+        ],
+        "spectator_seen_hands": [
+         null,
+         null
+        ],
+        "pick": 2,
+        "took": "PMCG1-099"
+       }
+      },
+      "board": "390f73a628905370"
+     },
+     "1": {
+      "players": {
+       "1": {
+        "options": [
+         0,
+         1,
+         2
+        ],
+        "seen_opponent_cards": [],
+        "known_own_positions": [],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [],
+        "spectator_seen_hands": [
+         null,
+         null
+        ],
+        "pick": 2,
+        "took": "PMCG1-099"
+       },
+       "0": {
+        "options": [
+         0,
+         1,
+         2
+        ],
+        "seen_opponent_cards": [],
+        "known_own_positions": [],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [
+         "hidden",
+         "player",
+         "remaining",
+         "turn"
+        ],
+        "spectator_seen_hands": [
+         null,
+         null
+        ],
+        "pick": 0,
+        "took": "PMCG3-046"
+       }
+      },
+      "board": "390f73a628905370"
+     }
+    },
+    "information_differs_by_order": {
+     "0": {
+      "options": false,
+      "seen_opponent_cards": false,
+      "known_own_positions": false,
+      "known_opponent_positions": false
+     },
+     "1": {
+      "options": false,
+      "seen_opponent_cards": false,
+      "known_own_positions": false,
+      "known_opponent_positions": false
+     }
+    },
+    "choice_differs_by_order": {
+     "0": false,
+     "1": false
+    },
+    "board_differs_by_order": false
+   },
+   "K2-spy-own": {
+    "omanyte": false,
+    "spy": "own",
+    "repro": "constructed_board_then_legal_commands",
+    "v0139_first_decision": [
+     "take_prize",
+     0,
+     [
+      1
+     ]
+    ],
+    "orders": {
+     "0": {
+      "players": {
+       "0": {
+        "options": [
+         0,
+         1,
+         2
+        ],
+        "seen_opponent_cards": [],
+        "known_own_positions": [],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [],
+        "spectator_seen_hands": [
+         null,
+         null
+        ],
+        "pick": 0,
+        "took": "PMCG3-046"
+       },
+       "1": {
+        "options": [
+         0,
+         1,
+         2
+        ],
+        "seen_opponent_cards": [],
+        "known_own_positions": [
+         [
+          0,
+          "PMCG1-091"
+         ]
+        ],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [
+         "hidden",
+         "player",
+         "remaining",
+         "turn"
+        ],
+        "spectator_seen_hands": [
+         null,
+         null
+        ],
+        "pick": 2,
+        "took": "PMCG1-099"
+       }
+      },
+      "board": "390f73a628905370"
+     },
+     "1": {
+      "players": {
+       "1": {
+        "options": [
+         0,
+         1,
+         2
+        ],
+        "seen_opponent_cards": [],
+        "known_own_positions": [
+         [
+          0,
+          "PMCG1-091"
+         ]
+        ],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [],
+        "spectator_seen_hands": [
+         null,
+         null
+        ],
+        "pick": 2,
+        "took": "PMCG1-099"
+       },
+       "0": {
+        "options": [
+         0,
+         1,
+         2
+        ],
+        "seen_opponent_cards": [],
+        "known_own_positions": [],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [
+         "hidden",
+         "player",
+         "remaining",
+         "turn"
+        ],
+        "spectator_seen_hands": [
+         null,
+         null
+        ],
+        "pick": 0,
+        "took": "PMCG3-046"
+       }
+      },
+      "board": "390f73a628905370"
+     }
+    },
+    "information_differs_by_order": {
+     "0": {
+      "options": false,
+      "seen_opponent_cards": false,
+      "known_own_positions": false,
+      "known_opponent_positions": false
+     },
+     "1": {
+      "options": false,
+      "seen_opponent_cards": false,
+      "known_own_positions": false,
+      "known_opponent_positions": false
+     }
+    },
+    "choice_differs_by_order": {
+     "0": false,
+     "1": false
+    },
+    "board_differs_by_order": false
+   },
+   "K3-spy-opponent": {
+    "omanyte": false,
+    "spy": "opponent",
+    "repro": "constructed_board_then_legal_commands",
+    "v0139_first_decision": [
+     "take_prize",
+     0,
+     [
+      1
+     ]
+    ],
+    "orders": {
+     "0": {
+      "players": {
+       "0": {
+        "options": [
+         0,
+         1,
+         2
+        ],
+        "seen_opponent_cards": [],
+        "known_own_positions": [],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [],
+        "spectator_seen_hands": [
+         null,
+         null
+        ],
+        "pick": 0,
+        "took": "PMCG3-046"
+       },
+       "1": {
+        "options": [
+         0,
+         1,
+         2
+        ],
+        "seen_opponent_cards": [],
+        "known_own_positions": [],
+        "known_opponent_positions": [
+         [
+          0,
+          "PMCG3-046"
+         ]
+        ],
+        "take_prize_fields_seen": [
+         "hidden",
+         "player",
+         "remaining",
+         "turn"
+        ],
+        "spectator_seen_hands": [
+         null,
+         null
+        ],
+        "pick": 2,
+        "took": "PMCG1-099"
+       }
+      },
+      "board": "390f73a628905370"
+     },
+     "1": {
+      "players": {
+       "1": {
+        "options": [
+         0,
+         1,
+         2
+        ],
+        "seen_opponent_cards": [],
+        "known_own_positions": [],
+        "known_opponent_positions": [
+         [
+          0,
+          "PMCG3-046"
+         ]
+        ],
+        "take_prize_fields_seen": [],
+        "spectator_seen_hands": [
+         null,
+         null
+        ],
+        "pick": 2,
+        "took": "PMCG1-099"
+       },
+       "0": {
+        "options": [
+         0,
+         1,
+         2
+        ],
+        "seen_opponent_cards": [],
+        "known_own_positions": [],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [
+         "hidden",
+         "player",
+         "remaining",
+         "turn"
+        ],
+        "spectator_seen_hands": [
+         null,
+         null
+        ],
+        "pick": 0,
+        "took": "PMCG3-046"
+       }
+      },
+      "board": "390f73a628905370"
+     }
+    },
+    "information_differs_by_order": {
+     "0": {
+      "options": false,
+      "seen_opponent_cards": false,
+      "known_own_positions": false,
+      "known_opponent_positions": false
+     },
+     "1": {
+      "options": false,
+      "seen_opponent_cards": false,
+      "known_own_positions": false,
+      "known_opponent_positions": false
+     }
+    },
+    "choice_differs_by_order": {
+     "0": false,
+     "1": false
+    },
+    "board_differs_by_order": false
+   },
+   "K4-omanyte": {
+    "omanyte": true,
+    "spy": null,
+    "repro": "constructed_board_then_legal_commands",
+    "v0139_first_decision": [
+     "take_prize",
+     0,
+     [
+      1
+     ]
+    ],
+    "orders": {
+     "0": {
+      "players": {
+       "0": {
+        "options": [
+         0,
+         1,
+         2
+        ],
+        "seen_opponent_cards": [],
+        "known_own_positions": [],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [],
+        "spectator_seen_hands": [
+         [
+          "PMCG1-100"
+         ],
+         null
+        ],
+        "pick": 0,
+        "took": "PMCG3-046"
+       },
+       "1": {
+        "options": [
+         0,
+         1,
+         2
+        ],
+        "seen_opponent_cards": [
+         "PMCG1-100",
+         "PMCG3-046"
+        ],
+        "known_own_positions": [],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [
+         "hidden",
+         "player",
+         "remaining",
+         "turn"
+        ],
+        "spectator_seen_hands": [
+         [
+          "PMCG1-100",
+          "PMCG3-046"
+         ],
+         null
+        ],
+        "pick": 2,
+        "took": "PMCG1-099"
+       }
+      },
+      "board": "b9a9bee379b4355c"
+     },
+     "1": {
+      "players": {
+       "1": {
+        "options": [
+         0,
+         1,
+         2
+        ],
+        "seen_opponent_cards": [
+         "PMCG1-100"
+        ],
+        "known_own_positions": [],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [],
+        "spectator_seen_hands": [
+         [
+          "PMCG1-100"
+         ],
+         null
+        ],
+        "pick": 2,
+        "took": "PMCG1-099"
+       },
+       "0": {
+        "options": [
+         0,
+         1,
+         2
+        ],
+        "seen_opponent_cards": [],
+        "known_own_positions": [],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [
+         "hidden",
+         "player",
+         "remaining",
+         "turn"
+        ],
+        "spectator_seen_hands": [
+         [
+          "PMCG1-100"
+         ],
+         null
+        ],
+        "pick": 0,
+        "took": "PMCG3-046"
+       }
+      },
+      "board": "b9a9bee379b4355c"
+     }
+    },
+    "information_differs_by_order": {
+     "0": {
+      "options": false,
+      "seen_opponent_cards": false,
+      "known_own_positions": false,
+      "known_opponent_positions": false
+     },
+     "1": {
+      "options": false,
+      "seen_opponent_cards": true,
+      "known_own_positions": false,
+      "known_opponent_positions": false
+     }
+    },
+    "choice_differs_by_order": {
+     "0": false,
+     "1": false
+    },
+    "board_differs_by_order": false
+   },
+   "K5-omanyte-spy-own": {
+    "omanyte": true,
+    "spy": "own",
+    "repro": "constructed_board_then_legal_commands",
+    "v0139_first_decision": [
+     "take_prize",
+     0,
+     [
+      1
+     ]
+    ],
+    "orders": {
+     "0": {
+      "players": {
+       "0": {
+        "options": [
+         0,
+         1,
+         2
+        ],
+        "seen_opponent_cards": [],
+        "known_own_positions": [],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [],
+        "spectator_seen_hands": [
+         [
+          "PMCG1-100"
+         ],
+         null
+        ],
+        "pick": 0,
+        "took": "PMCG3-046"
+       },
+       "1": {
+        "options": [
+         0,
+         1,
+         2
+        ],
+        "seen_opponent_cards": [
+         "PMCG1-100",
+         "PMCG3-046"
+        ],
+        "known_own_positions": [
+         [
+          0,
+          "PMCG1-091"
+         ]
+        ],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [
+         "hidden",
+         "player",
+         "remaining",
+         "turn"
+        ],
+        "spectator_seen_hands": [
+         [
+          "PMCG1-100",
+          "PMCG3-046"
+         ],
+         null
+        ],
+        "pick": 0,
+        "took": "PMCG1-091"
+       }
+      },
+      "board": "ccbf1a7b6775f5d4"
+     },
+     "1": {
+      "players": {
+       "1": {
+        "options": [
+         0,
+         1,
+         2
+        ],
+        "seen_opponent_cards": [
+         "PMCG1-100"
+        ],
+        "known_own_positions": [
+         [
+          0,
+          "PMCG1-091"
+         ]
+        ],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [],
+        "spectator_seen_hands": [
+         [
+          "PMCG1-100"
+         ],
+         null
+        ],
+        "pick": 2,
+        "took": "PMCG1-099"
+       },
+       "0": {
+        "options": [
+         0,
+         1,
+         2
+        ],
+        "seen_opponent_cards": [],
+        "known_own_positions": [],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [
+         "hidden",
+         "player",
+         "remaining",
+         "turn"
+        ],
+        "spectator_seen_hands": [
+         [
+          "PMCG1-100"
+         ],
+         null
+        ],
+        "pick": 0,
+        "took": "PMCG3-046"
+       }
+      },
+      "board": "b9a9bee379b4355c"
+     }
+    },
+    "information_differs_by_order": {
+     "0": {
+      "options": false,
+      "seen_opponent_cards": false,
+      "known_own_positions": false,
+      "known_opponent_positions": false
+     },
+     "1": {
+      "options": false,
+      "seen_opponent_cards": true,
+      "known_own_positions": false,
+      "known_opponent_positions": false
+     }
+    },
+    "choice_differs_by_order": {
+     "0": false,
+     "1": true
+    },
+    "board_differs_by_order": true
+   },
+   "K4L-omanyte-legal": {
+    "omanyte": true,
+    "spy": null,
+    "repro": "legal_ops_from_new_game",
+    "v0139_first_decision": [
+     "take_prize",
+     0,
+     [
+      1
+     ]
+    ],
+    "orders": {
+     "0": {
+      "players": {
+       "0": {
+        "options": [
+         0,
+         1,
+         2,
+         3,
+         4,
+         5
+        ],
+        "seen_opponent_cards": [],
+        "known_own_positions": [],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [],
+        "spectator_seen_hands": [
+         [
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100"
+         ],
+         null
+        ],
+        "pick": 0,
+        "took": "PMCG1-100"
+       },
+       "1": {
+        "options": [
+         0,
+         1,
+         2,
+         3,
+         4,
+         5
+        ],
+        "seen_opponent_cards": [
+         "PMCG1-100",
+         "PMCG1-100",
+         "PMCG1-100",
+         "PMCG1-100",
+         "PMCG1-100",
+         "PMCG1-100",
+         "PMCG1-100",
+         "PMCG1-100"
+        ],
+        "known_own_positions": [],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [
+         "hidden",
+         "player",
+         "remaining",
+         "turn"
+        ],
+        "spectator_seen_hands": [
+         [
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100"
+         ],
+         null
+        ],
+        "pick": 5,
+        "took": "PMCG3-046"
+       }
+      },
+      "board": "60e94128646f7b8b"
+     },
+     "1": {
+      "players": {
+       "1": {
+        "options": [
+         0,
+         1,
+         2,
+         3,
+         4,
+         5
+        ],
+        "seen_opponent_cards": [
+         "PMCG1-100",
+         "PMCG1-100",
+         "PMCG1-100",
+         "PMCG1-100",
+         "PMCG1-100",
+         "PMCG1-100",
+         "PMCG1-100"
+        ],
+        "known_own_positions": [],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [],
+        "spectator_seen_hands": [
+         [
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100"
+         ],
+         null
+        ],
+        "pick": 5,
+        "took": "PMCG3-046"
+       },
+       "0": {
+        "options": [
+         0,
+         1,
+         2,
+         3,
+         4,
+         5
+        ],
+        "seen_opponent_cards": [],
+        "known_own_positions": [],
+        "known_opponent_positions": [],
+        "take_prize_fields_seen": [
+         "hidden",
+         "player",
+         "remaining",
+         "turn"
+        ],
+        "spectator_seen_hands": [
+         [
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100",
+          "PMCG1-100"
+         ],
+         null
+        ],
+        "pick": 0,
+        "took": "PMCG1-100"
+       }
+      },
+      "board": "60e94128646f7b8b"
+     }
+    },
+    "information_differs_by_order": {
+     "0": {
+      "options": false,
+      "seen_opponent_cards": false,
+      "known_own_positions": false,
+      "known_opponent_positions": false
+     },
+     "1": {
+      "options": false,
+      "seen_opponent_cards": true,
+      "known_own_positions": false,
+      "known_opponent_positions": false
+     }
+    },
+    "choice_differs_by_order": {
+     "0": false,
+     "1": false
+    },
+    "board_differs_by_order": false,
+    "config": {
+     "seed": 2,
+     "deck0": {
+      "PMCG1-036": 4,
+      "PMCG1-100": 56
+     },
+     "deck1": {
+      "PMCG1-060": 4,
+      "PMCG3-046": 4,
+      "PMCG3-015": 4,
+      "PMCG1-099": 48
+     },
+     "janken_winner": 0
+    }
+   }
+  },
+  "units": {
+   "2v1": {
+    "queue": [
+     0,
+     0,
+     1
+    ],
+    "first_decision": [
+     "prize_order",
+     0
+    ],
+    "B_sequences": [
+     [
+      0,
+      0,
+      1
+     ],
+     [
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      0,
+      0
+     ]
+    ],
+    "A_sequences": [
+     [
+      0,
+      0,
+      1
+     ],
+     [
+      1,
+      0,
+      0
+     ]
+    ],
+    "B_only": [
+     [
+      0,
+      1,
+      0
+     ]
+    ],
+    "B_decisions_per_path": [
+     1,
+     2
+    ],
+    "A_decisions": 1,
+    "boards_identical": true,
+    "results": [
+     "None"
+    ],
+    "next_after_takes": [
+     "[\"promote_active\", 1]"
+    ],
+    "result_before_each_take": [
+     "None"
+    ],
+    "paths": [
+     {
+      "takes": [
+       0,
+       0,
+       1
+      ],
+      "decisions": 2,
+      "info": [
+       {
+        "player": 0,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 3
+       },
+       {
+        "player": 0,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 2
+       },
+       {
+        "player": 1,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 3
+       }
+      ]
+     },
+     {
+      "takes": [
+       0,
+       1,
+       0
+      ],
+      "decisions": 2,
+      "info": [
+       {
+        "player": 0,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 3
+       },
+       {
+        "player": 1,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 3
+       },
+       {
+        "player": 0,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 2
+       }
+      ]
+     },
+     {
+      "takes": [
+       1,
+       0,
+       0
+      ],
+      "decisions": 1,
+      "info": [
+       {
+        "player": 1,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 3
+       },
+       {
+        "player": 0,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 3
+       },
+       {
+        "player": 0,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 2
+       }
+      ]
+     }
+    ]
+   },
+   "2v2": {
+    "queue": [
+     0,
+     0,
+     1,
+     1
+    ],
+    "first_decision": [
+     "prize_order",
+     0
+    ],
+    "B_sequences": [
+     [
+      0,
+      0,
+      1,
+      1
+     ],
+     [
+      0,
+      1,
+      0,
+      1
+     ],
+     [
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      0,
+      0,
+      1
+     ],
+     [
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      0
+     ]
+    ],
+    "A_sequences": [
+     [
+      0,
+      0,
+      1,
+      1
+     ],
+     [
+      1,
+      1,
+      0,
+      0
+     ]
+    ],
+    "B_only": [
+     [
+      0,
+      1,
+      0,
+      1
+     ],
+     [
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      0,
+      0,
+      1
+     ],
+     [
+      1,
+      0,
+      1,
+      0
+     ]
+    ],
+    "B_decisions_per_path": [
+     2,
+     3
+    ],
+    "A_decisions": 1,
+    "boards_identical": true,
+    "results": [
+     "None"
+    ],
+    "next_after_takes": [
+     "[\"promote_active\", 1]"
+    ],
+    "result_before_each_take": [
+     "None"
+    ],
+    "paths": [
+     {
+      "takes": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "decisions": 2,
+      "info": [
+       {
+        "player": 0,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 3
+       },
+       {
+        "player": 0,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 2
+       },
+       {
+        "player": 1,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 3
+       },
+       {
+        "player": 1,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 2
+       }
+      ]
+     },
+     {
+      "takes": [
+       0,
+       1,
+       0,
+       1
+      ],
+      "decisions": 3,
+      "info": [
+       {
+        "player": 0,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 3
+       },
+       {
+        "player": 1,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 3
+       },
+       {
+        "player": 0,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 2
+       },
+       {
+        "player": 1,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 2
+       }
+      ]
+     },
+     {
+      "takes": [
+       0,
+       1,
+       1,
+       0
+      ],
+      "decisions": 3,
+      "info": [
+       {
+        "player": 0,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 3
+       },
+       {
+        "player": 1,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 3
+       },
+       {
+        "player": 1,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 2
+       },
+       {
+        "player": 0,
+        "seen_opponent_taken": [
+         "PMCG1-060"
+        ],
+        "result_before": null,
+        "own_prizes": 2
+       }
+      ]
+     },
+     {
+      "takes": [
+       1,
+       0,
+       0,
+       1
+      ],
+      "decisions": 3,
+      "info": [
+       {
+        "player": 1,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 3
+       },
+       {
+        "player": 0,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 3
+       },
+       {
+        "player": 0,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 2
+       },
+       {
+        "player": 1,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 2
+       }
+      ]
+     },
+     {
+      "takes": [
+       1,
+       0,
+       1,
+       0
+      ],
+      "decisions": 3,
+      "info": [
+       {
+        "player": 1,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 3
+       },
+       {
+        "player": 0,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 3
+       },
+       {
+        "player": 1,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 2
+       },
+       {
+        "player": 0,
+        "seen_opponent_taken": [
+         "PMCG1-060"
+        ],
+        "result_before": null,
+        "own_prizes": 2
+       }
+      ]
+     },
+     {
+      "takes": [
+       1,
+       1,
+       0,
+       0
+      ],
+      "decisions": 2,
+      "info": [
+       {
+        "player": 1,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 3
+       },
+       {
+        "player": 1,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 2
+       },
+       {
+        "player": 0,
+        "seen_opponent_taken": [
+         "PMCG1-060"
+        ],
+        "result_before": null,
+        "own_prizes": 3
+       },
+       {
+        "player": 0,
+        "seen_opponent_taken": [
+         "PMCG1-060"
+        ],
+        "result_before": null,
+        "own_prizes": 2
+       }
+      ]
+     }
+    ]
+   },
+   "2v1-last": {
+    "queue": [
+     0,
+     0,
+     1
+    ],
+    "first_decision": [
+     "prize_order",
+     0
+    ],
+    "B_sequences": [
+     [
+      0,
+      0,
+      1
+     ],
+     [
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      0,
+      0
+     ]
+    ],
+    "A_sequences": [
+     [
+      0,
+      0,
+      1
+     ],
+     [
+      1,
+      0,
+      0
+     ]
+    ],
+    "B_only": [
+     [
+      0,
+      1,
+      0
+     ]
+    ],
+    "B_decisions_per_path": [
+     1,
+     2
+    ],
+    "A_decisions": 1,
+    "boards_identical": true,
+    "results": [
+     "win"
+    ],
+    "next_after_takes": [
+     "null"
+    ],
+    "result_before_each_take": [
+     "None"
+    ],
+    "paths": [
+     {
+      "takes": [
+       0,
+       0,
+       1
+      ],
+      "decisions": 2,
+      "info": [
+       {
+        "player": 0,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 3
+       },
+       {
+        "player": 0,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 2
+       },
+       {
+        "player": 1,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 1
+       }
+      ]
+     },
+     {
+      "takes": [
+       0,
+       1,
+       0
+      ],
+      "decisions": 2,
+      "info": [
+       {
+        "player": 0,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 3
+       },
+       {
+        "player": 1,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 1
+       },
+       {
+        "player": 0,
+        "seen_opponent_taken": [
+         "PMCG1-060"
+        ],
+        "result_before": null,
+        "own_prizes": 2
+       }
+      ]
+     },
+     {
+      "takes": [
+       1,
+       0,
+       0
+      ],
+      "decisions": 1,
+      "info": [
+       {
+        "player": 1,
+        "seen_opponent_taken": [],
+        "result_before": null,
+        "own_prizes": 1
+       },
+       {
+        "player": 0,
+        "seen_opponent_taken": [
+         "PMCG1-060"
+        ],
+        "result_before": null,
+        "own_prizes": 3
+       },
+       {
+        "player": 0,
+        "seen_opponent_taken": [
+         "PMCG1-060"
+        ],
+        "result_before": null,
+        "own_prizes": 2
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "compat": {
+   "old_commit": "4ded41817ef9a64ba07d3e0d2819d3b9cf06d318",
+   "old_version_seen": "0.138.0",
+   "new_version": "0.139.0",
+   "current": {
+    "prize_order": {
+     "decision": [
+      "prize_order",
+      "prize_order",
+      0,
+      [
+       0,
+       1
+      ]
+     ],
+     "export34_top_level_keys": [
+      "card_data",
+      "cards",
+      "color_effects",
+      "current_player",
+      "decision",
+      "effects",
+      "energy_attached_by_powers_this_turn",
+      "energy_attachments_this_turn",
+      "energy_burn",
+      "energy_roles",
+      "face_down_cards",
+      "face_up_deck",
+      "face_up_prizes",
+      "first_player",
+      "format_version",
+      "frozen_forms",
+      "halt",
+      "initial_prize_count",
+      "log",
+      "mulligan_rounds",
+      "next_decision_id",
+      "next_pokemon_id",
+      "ownership_changes",
+      "pending_prizes",
+      "pending_promotions",
+      "phase",
+      "players",
+      "poison_mists",
+      "power_uses_this_turn",
+      "recalls",
+      "replacement_poisons",
+      "result",
+      "rng_state_sha256",
+      "rules",
+      "seed",
+      "segment",
+      "segments",
+      "set_aside",
+      "stadium",
+      "stadium_uses_this_turn",
+      "trainer_effects",
+      "trainer_in_use",
+      "trainer_locks",
+      "trainer_stack",
+      "turn_history",
+      "turn_number",
+      "user_ownership_rules",
+      "user_simplifications"
+     ],
+     "export34_decision": {
+      "kind": "prize_order",
+      "resume": "prize_order",
+      "player": 0,
+      "options": [
+       0,
+       1
+      ]
+     },
+     "export34_has_engine_version": false,
+     "export34_format_version": 34,
+     "restore_same_version": [
+      [
+       0,
+       true,
+       true
+      ],
+      [
+       1,
+       true,
+       true
+      ]
+     ]
+    },
+    "take_prize": {
+     "decision": [
+      "take_prize",
+      "take_prize",
+      0,
+      [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5
+      ]
+     ],
+     "export34_top_level_keys": [
+      "card_data",
+      "cards",
+      "color_effects",
+      "current_player",
+      "decision",
+      "effects",
+      "energy_attached_by_powers_this_turn",
+      "energy_attachments_this_turn",
+      "energy_burn",
+      "energy_roles",
+      "face_down_cards",
+      "face_up_deck",
+      "face_up_prizes",
+      "first_player",
+      "format_version",
+      "frozen_forms",
+      "halt",
+      "initial_prize_count",
+      "log",
+      "mulligan_rounds",
+      "next_decision_id",
+      "next_pokemon_id",
+      "ownership_changes",
+      "pending_prizes",
+      "pending_promotions",
+      "phase",
+      "players",
+      "poison_mists",
+      "power_uses_this_turn",
+      "recalls",
+      "replacement_poisons",
+      "result",
+      "rng_state_sha256",
+      "rules",
+      "seed",
+      "segment",
+      "segments",
+      "set_aside",
+      "stadium",
+      "stadium_uses_this_turn",
+      "trainer_effects",
+      "trainer_in_use",
+      "trainer_locks",
+      "trainer_stack",
+      "turn_history",
+      "turn_number",
+      "user_ownership_rules",
+      "user_simplifications"
+     ],
+     "export34_decision": {
+      "kind": "take_prize",
+      "resume": "take_prize",
+      "player": 0,
+      "options": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5
+      ]
+     },
+     "export34_has_engine_version": false,
+     "export34_format_version": 34,
+     "restore_same_version": [
+      [
+       0,
+       true,
+       true
+      ]
+     ]
+    },
+    "unknown_resume": {
+     "invariants": [
+      "決定の種類 future_decision と段階 take_prize が合わない",
+      "決定の再開先 'future_decision' がない"
+     ],
+     "answer": {
+      "accepted": false,
+      "type": "RuntimeError",
+      "code": null,
+      "message": "決定の再開先 'future_decision' を続ける処理がない（不変条件で拒否するはず。エンジンの不具合）"
+     },
+     "unchanged": [
+      true
+     ]
+    }
+   },
+   "old_reads_new": {
+    "prize_order": {
+     "unpickle": "ok",
+     "decision": [
+      "prize_order",
+      "prize_order",
+      0,
+      [
+       0,
+       1
+      ]
+     ],
+     "invariants": [
+      "プレイヤー 0 のバトル場にポケモンがいないまま decision になっている",
+      "プレイヤー 1 のバトル場にポケモンがいないまま decision になっている",
+      "決定の再開先 'prize_order' がない"
+     ],
+     "export34": "ok",
+     "observe": {
+      "type": "ValueError",
+      "code": null,
+      "message": "決定の種類 'prize_order' の選べるものの意味が決まっていない（OPTION_MEANINGS に加える）"
+     },
+     "answers": {
+      "0": {
+       "accepted": false,
+       "type": "RuntimeError",
+       "code": null,
+       "message": "決定の再開先 'prize_order' を続ける処理がない（不変条件で拒否するはず。エンジンの不具合）"
+      },
+      "1": {
+       "accepted": false,
+       "type": "RuntimeError",
+       "code": null,
+       "message": "決定の再開先 'prize_order' を続ける処理がない（不変条件で拒否するはず。エンジンの不具合）"
+      },
+      "2": {
+       "accepted": false,
+       "type": "IllegalActionError",
+       "code": "INVALID_CHOICE",
+       "message": "INVALID_CHOICE: 2 はこの決定で選べるものではない（(0, 1)）"
+      }
+     },
+     "unchanged_after_answers": [
+      true,
+      true,
+      true
+     ]
+    },
+    "take_prize": {
+     "unpickle": "ok",
+     "decision": [
+      "take_prize",
+      "take_prize",
+      0,
+      [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5
+      ]
+     ],
+     "invariants": [],
+     "export34": "ok",
+     "observe": "ok",
+     "answers": {
+      "0": {
+       "accepted": true,
+       "next": [
+        "take_prize",
+        1
+       ],
+       "invariants": []
+      }
+     },
+     "unchanged_after_answers": [
+      true,
+      true,
+      true
+     ]
+    }
+   },
+   "new_reads_new": {
+    "prize_order": {
+     "unpickle": "ok",
+     "decision": [
+      "prize_order",
+      "prize_order",
+      0,
+      [
+       0,
+       1
+      ]
+     ],
+     "invariants": [],
+     "export34": "ok",
+     "observe": "ok",
+     "answers": {
+      "0": {
+       "accepted": true,
+       "next": [
+        "take_prize",
+        0
+       ],
+       "invariants": []
+      },
+      "1": {
+       "accepted": true,
+       "next": [
+        "take_prize",
+        1
+       ],
+       "invariants": []
+      },
+      "2": {
+       "accepted": false,
+       "type": "IllegalActionError",
+       "code": "INVALID_CHOICE",
+       "message": "INVALID_CHOICE: 2 はこの決定で選べるものではない（(0, 1)）"
+      }
+     },
+     "unchanged_after_answers": [
+      true,
+      true,
+      true
+     ]
+    },
+    "take_prize": {
+     "unpickle": "ok",
+     "decision": [
+      "take_prize",
+      "take_prize",
+      0,
+      [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5
+      ]
+     ],
+     "invariants": [],
+     "export34": "ok",
+     "observe": "ok",
+     "answers": {
+      "0": {
+       "accepted": true,
+       "next": [
+        "take_prize",
+        1
+       ],
+       "invariants": []
+      }
+     },
+     "unchanged_after_answers": [
+      true,
+      true,
+      true
+     ]
+    }
+   },
+   "new_reads_old": {
+    "made_by": "0.138.0",
+    "unpickle": "ok",
+    "export34_equal_to_new_game": true
+   }
+  }
+ },
+ "addenda": [
+  {
+   "id": "ADD-V0140-PRIZE-ORDER-USER-RULE",
+   "on": "2026-11-03",
+   "ref": "docs/prize-order-user-rule-v0.140.md",
+   "summary": "利用者が UD1 は b（両方が取るときはいつも聞く）、UD3 は A（プレイヤーごとにまとめて取る）、UD2 は a（取った位置の観測は今のまま）、UD4 は既存の約束の明記と知らない再開先の明示的な拒否（S3＋S4 に当たる）を指定した。v0.140 で採用した。この記録の evidence・結論は記録を作った d631038 の時点のまま（書き換えていない。再現は d631038 の木で行う）"
+  }
+ ]
+}

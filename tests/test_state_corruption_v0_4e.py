@@ -135,12 +135,16 @@ def knocked_out_state():
 
 def double_knock_out_state():
     """ピカチュウの「でんげき」（30、「うら」なら自分にも 10）で、相手のコラッタ（HP 30）と自分のピカチュウ（HP 40・ダメージ 30）が
-    同時にきぜつする（p.324。サイドは相手のきぜつのぶんが先。v0.2f。docs/simultaneous-ko-v0.2f.md）。"""
+    同時にきぜつする（p.324。サイドは相手のきぜつのぶんが先。v0.2f。docs/simultaneous-ko-v0.2f.md）。
+    v0.140（docs/prize-order-user-rule-v0.140.md）: 両方が取るので、先に番のプレイヤーが先に取るプレイヤーを選ぶ決定（prize_first）がある。ここでは番のプレイヤー 0 が自分を選んだ
+    あとの状態（サイドの決定。``context`` の ``first`` は 0）を返す（v0.139 までの、番のプレイヤーからの並びと同じ）。"""
     state = build_test_state([
         {"active": {"card": PIKACHU, "energy": [LIGHTNING, LIGHTNING], "damage": 30}, "bench": [RATTATA]},
         {"active": RATTATA, "bench": [PONYTA]},
     ])
-    return apply_command(with_coin_results(state, T), UseAttack(0, 1))
+    state = apply_command(with_coin_results(state, T), UseAttack(0, 1))
+    assert (state.decision.kind, state.decision.player) == ("prize_first", 0)
+    return apply_command(state, ResolveDecision(0, state.decision.id, (0,)))
 
 
 class PrizeAndPromotionDecisionCorruptionTest(CorruptionTestCase):
@@ -192,13 +196,19 @@ class PrizeAndPromotionDecisionCorruptionTest(CorruptionTestCase):
         self.assert_detects(extra, "サイドを取るプレイヤーの並び")
 
     def test_simultaneous_prize_queue_must_follow_the_knock_outs(self):
-        """C3: 同時のきぜつ（p.324）で、両方が 1 枚ずつ取る。エンジンは「相手のきぜつのぶん（0）→ 自分のきぜつのぶん（1）」に
-        正規化している（v0.2f）が、順番は番のプレイヤーが選べる（p.325）ので、入れ替えた並びは拒否しない（tests/test_simultaneous_ko.py
-        の PrizeOrderTest がその並びで最後まで進める）。取る人・枚数が違えば検出する。"""
+        """C3: 同時のきぜつ（p.324）で、両方が 1 枚ずつ取る。順番は番のプレイヤーが選べる（v0.140 からは利用者の指定で、先に取るプレイヤーの決定 prize_first）ので、
+        先に取るプレイヤーの記録（``first``）と合う入れ替えた並びは拒否しない（tests/test_simultaneous_ko.py の PrizeOrderTest がその並びで最後まで進める）。記録のない
+        両方の並び（v0.139 までの形）・記録と合わない並び・取る人・枚数が違えば検出する。"""
         state = double_knock_out_state()
         swapped = state.clone()
-        swapped.decision = dataclasses.replace(state.decision, player=1, context=(("remaining", (0,)),))
+        swapped.decision = dataclasses.replace(state.decision, player=1, context=(("remaining", (0,)), ("first", 1)))
         self.assert_legal(swapped)
+        unmarked = state.clone()
+        unmarked.decision = dataclasses.replace(state.decision, context=(("remaining", (1,)),))
+        self.assert_detects(unmarked, "先に取るプレイヤーの記録")
+        mismatched = state.clone()
+        mismatched.decision = dataclasses.replace(state.decision, context=(("remaining", (1,)), ("first", 1)))
+        self.assert_detects(mismatched, "まとめていない")
         dropped = state.clone()
         dropped.decision = dataclasses.replace(state.decision, context=(("remaining", ()),))
         self.assert_detects(dropped, "サイドを取るプレイヤーの並び")

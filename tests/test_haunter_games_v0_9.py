@@ -272,7 +272,8 @@ def count_events(state):
 # ダメージ 56 件・合計 940、受けなかった効果: ねむり 42・どく 8・入れ替え 2・マヒ 1。ベンチでの判定 0 回（ベンチにダメージや効果を与える
 # ワザが対応カードにない。T7・T25 は盤面を直接作ったテストで確かめる）。T19b で止めたワザ 43 回。「とうめい」の宣言の拒否 311 回。
 EXPECTED_COUNTS = {
-    "accepted": 9473, "attack_あくむ": 659, "attack_したでなめる": 122, "attack_エナジーへんかん": 11, "evade_check": 207,
+    # v0.140（docs/prize-order-user-rule-v0.140.md 7 章）: 両方がサイドを取る 1 回の場面ごとに、先に取るプレイヤーの決定（prize_first）への答えが 1 つ増えた（9473 → 9474）。ほかの数は同じ
+    "accepted": 9474, "attack_あくむ": 659, "attack_したでなめる": 122, "attack_エナジーへんかん": 11, "evade_check": 207,
     "evade_check_first_damage": 140, "evade_check_first_paralysis": 1, "evade_check_first_poison": 9, "evade_check_first_sleep": 57,
     "evade_check_heads": 97, "evade_check_tails": 110, "evaded_damage": 56, "evaded_damage_total": 940, "evaded_forced_switch": 2,
     "evaded_paralysis": 1, "evaded_poison": 8, "evaded_sleep": 42, "evolve_to_PMCG1-003": 29, "evolve_to_PMCG1-008": 70,

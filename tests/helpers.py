@@ -1721,6 +1721,9 @@ def trainer_policy_command(state: GameState, *, janken_winner: int = 0):
             options.sort(key=lambda pid: -state.find_pokemon(pid)[1].damage)
         if not options and d.min_choices == 0:
             return ResolveDecision(d.player, d.id, ())  # v0.61: 使うと止める［ファイナルビーム］など、選ばない（使わない）だけが答えになる決定
+        if d.kind == "prize_first" and state.current_player in options:
+            # v0.140: 先にサイドを取るプレイヤーの決定（両方が取るときはいつも）は、番のプレイヤーを選ぶ（v0.2f の正規化と同じ順番。v0.139 までの対戦と比べられるように）
+            return ResolveDecision(d.player, d.id, (state.current_player,))
         return ResolveDecision(d.player, d.id, (options[0],))
     if state.phase is Phase.MAIN:
         command = trainer_command(state)
@@ -1938,6 +1941,27 @@ def with_card_data_commit_before_v0_69(data: dict) -> dict:
     """state_to_dict の値（の写し）の、写しの元の 2 か所だけを v0.68 までの値にもどした新しい値（``data`` は変えない）。もどした数も確かめる。v0.97 から、今の写しの元
     （v0.114 から e519b99、v0.121 から 2fe0bc0、v0.123 から 74b3ceb、v0.124 から b9e7cff、v0.125 から 134a664、v0.126 から 57d01f4）から移行の連鎖を段ごとにさかのぼる（``with_card_data_commit_at``）。"""
     return with_card_data_commit_at(data, CARD_DATA_COMMIT_BEFORE_V0_69)
+
+
+def prize_first_answers(state0, commands) -> int:
+    """v0.140（docs/prize-order-user-rule-v0.140.md 7 章）: ``state0`` から ``commands`` をやり直したときに答えた、先にサイドを取るプレイヤーの決定（prize_first）の数。"""
+    count, state = 0, state0
+    for command in commands:
+        if state.decision is not None and state.decision.kind == "prize_first":
+            count += 1
+        state = apply_command(state, command)
+    return count
+
+
+def with_prize_first_before_v0_140(data: dict, answered: int) -> dict:
+    """state_to_dict の値（の写し）の、次に付ける決定の番号（``next_decision_id``）だけを、v0.139 までの値にもどした新しい値（``data`` は変えない）。v0.140 の利用者の指定で、
+    両方がサイドを取るたびに先に取るプレイヤーの決定（prize_first）が 1 つ増えた（その答えはログに残らない）。v0.139 までの固定値（参照データ）は変えず、この移行で比べる。
+    ``answered`` はその決定に答えた数（``prize_first_answers``）。最後の状態が決定を待っていないことを確かめる（待っていれば決定の番号ももどす必要があり、この移行の範囲の外）。"""
+    if data.get("decision") is not None:
+        raise AssertionError("決定を待つ状態は、この移行の範囲の外")
+    if not 0 <= answered < data["next_decision_id"]:
+        raise AssertionError(f"答えた数 {answered} が決定の番号 {data['next_decision_id']} と合わない")
+    return {**data, "next_decision_id": data["next_decision_id"] - answered}
 
 
 # v0.69（docs/equivalent-non-pack-cards-v0.69.md）: 拡張パック以外の商品の、登録したカードと処理に使う欄が同じカード（写しの組 pool_v0_69 のうち登録のある 84 枚。

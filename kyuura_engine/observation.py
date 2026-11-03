@@ -71,6 +71,7 @@ from .decisions import (
     MOVE_OPPONENT_ENERGY,
     PEEK_CARD,
     POST_KNOCKOUT_POWER,
+    PRIZE_FIRST,
     PROMOTE_ACTIVE,
     RECOVER_ENERGY,
     RECOVER_POKEMON,
@@ -141,6 +142,7 @@ OPTION_MEANINGS: dict[str, str] = {
     PEEK_CARD: "peek_target",
     PROMOTE_ACTIVE: "pokemon", SELECT_POKEMON: "pokemon", FORCED_SWITCH: "pokemon", KO_PREVENTION: "pokemon", KNOCK_OUT_POWER: "pokemon", ATTACH_TO_BENCH: "pokemon", NINJA_TRICK: "pokemon", REACTION_SWITCH: "pokemon", BENCH_GUARD: "pokemon",
     ENTRY_POWER: "pokemon",
+    PRIZE_FIRST: "number",  # v0.140: 先にサイドを取るプレイヤー（プレイヤーの番号）
     REACTION_POWER: "pokemon", REACTION_ORDER: "number",  # v0.86: 反応の特殊能力の使う機会（場のポケモンの番号）・同じ時点の反応の順番（待っている反応の位置）
     DISCARD_ENERGY: "card", RECOVER_ENERGY: "card", POST_KNOCKOUT_POWER: "card", DISCARD_FROM_HAND: "card", SEARCH_DECK: "card",
     RETURN_TO_DECK: "card", SELECT_EVOLUTION_CARD: "card", RETRIEVE_ENERGY: "card", DISCARD_OPPONENT_ENERGY: "card", RECOVER_TRAINER: "card",
@@ -515,8 +517,16 @@ def _chosen_attack(state: GameState, d, value: int) -> tuple[str, int] | None:
 
 
 def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
-    """``viewer``（0・1・``None`` は観戦者）に見える、その時点の盤面（モジュールの説明の範囲）。状態を変えない。"""
+    """``viewer``（0・1・``None`` は観戦者）に見える、その時点の盤面（モジュールの説明の範囲）。状態を変えない。
+
+    v0.140: 保留中の決定の再開先をこの版が扱えない（前の版の決定・後の版の状態の写し）なら、観測を作らずに ``UnsupportedError``（``UNSUPPORTED_DECISION``。
+    ``engine.supported_decision_error``。コマンドの入口と同じ確かめ）。v0.139 では、前の版の決定の種類で ``ValueError`` になる場合があった。知っている再開先の知らない種類は、今までどおり
+    ``OPTION_MEANINGS`` の ``ValueError``"""
     _check_viewer(viewer)
+    from .engine import supported_decision_error
+    error = supported_decision_error(state)
+    if error is not None:
+        raise error
     face_down = state.turn_number == 0  # 対戦準備で出したポケモンは、最初の番の前に表にする（ログ reveal_pokemon）
     players = []
     for owner, p in enumerate(state.players):

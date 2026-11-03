@@ -240,9 +240,17 @@ def check(ledger: dict) -> list[str]:
     for item in items:
         for conv in item.get("ledger_refs", {}).get("stop_policy_conventions", []):
             mapped[conv].append(item["id"])
+    # v0.140: 一覧の調査の後に加わった利用者の指定（追記の種類 user_rule の stop_policy_conventions）。項目の記載（ledger_refs）は元の調査の時点のまま書き換えず、追記で対応付ける
+    later = {conv: row for row in ledger.get("addenda", []) if row.get("kind") == "user_rule" for conv in row.get("stop_policy_conventions", [])}
+    for conv_id, row in later.items():
+        if conv_id not in conventions:
+            problems.append(f"{row.get('id')}: 停止の方針の台帳の規約 {conv_id} がない")
+        elif conventions[conv_id]["baseline_category"] != "user_specified":
+            problems.append(f"{row.get('id')}: 停止の方針の台帳の規約 {conv_id} は利用者指定でない（追記 user_rule は利用者の指定だけ）")
     for conv_id, conv in conventions.items():
         if conv_id not in mapped:
-            problems.append(f"停止の方針の台帳の規約 {conv_id} が、どの項目にも対応付けられていない")
+            if conv_id not in later:
+                problems.append(f"停止の方針の台帳の規約 {conv_id} が、どの項目にも対応付けられていない")
             continue
         for iid in mapped[conv_id]:
             item = by_id[iid]
@@ -288,9 +296,73 @@ def check(ledger: dict) -> list[str]:
             if iid not in known:
                 problems.append(f"採否判断の順序: 項目 {iid} が一覧にない")
 
+    problems += addenda_problems(ledger, known)
+
     if ledger.get("counts") != counts(ledger):
         problems.append("集計（counts）が台帳の項目・候補箇所から数え直した値と違う（--write で書き直す）")
     problems += generated_block_problems(ledger)
+    return problems
+
+
+# fix: 項目の論点を直したコミット（``commits``。40 桁）への参照。followup: 後の追加の検証（調査・再現・分類だけ。動作は変えていない）への参照。
+# assumption: 後の版で加えた実装上の仮定（``statement``・根拠の種類 ``basis``・承認 ``approval``。承認がなければ "none"。項目の記載は書き換えない）
+# user_rule（v0.140）: 後の版で採った利用者の指定（指定の文 ``approval.quote``・日・文書、停止の方針の台帳の規約 ``stop_policy_conventions``、置きかえた追記 ``supersedes``）。
+# 公式の裁定・研究上の解決として記録しない
+ADDENDUM_KINDS = ("revalidation", "approval_supplement", "fix", "followup", "assumption", "user_rule")
+ASSUMPTION_BASES = ("official", "derived", "analogy", "implementation")  # 公式資料で確かめた・既存の導出・類推・実装の選択
+
+
+def addenda_problems(ledger: dict, known: set[str]) -> list[str]:
+    """後の調査の追記（``addenda``）。元の調査の記録（項目・集計・基点）は書き換えず、後の結果への参照だけを足す。
+    追記は集計に入れない（``counts`` は元の調査時点の値のまま）。"""
+    problems: list[str] = []
+    rows = ledger.get("addenda", [])
+    ids = [a.get("id", "") for a in rows]
+    for dup in sorted({x for x in ids if ids.count(x) > 1}):
+        problems.append(f"追記の ID が重複: {dup}")
+    for row in rows:
+        where = row.get("id", "?")
+        if not re.fullmatch(r"ADD-[A-Z0-9][A-Z0-9-]*[A-Z0-9]", where):
+            problems.append(f"{where}: 追記の ID の形（ADD-英大文字のスラッグ）でない")
+        if row.get("kind") not in ADDENDUM_KINDS:
+            problems.append(f"{where}: 追記の種類 {row.get('kind')} が未知")
+        for key in ("on", "base_commit", "ref", "summary"):
+            if not row.get(key):
+                problems.append(f"{where}: 追記に {key} がない")
+        if row.get("ref") and not _exists(row["ref"]):
+            problems.append(f"{where}: 参照先 {row['ref']} がない")
+        if not row.get("item_ids"):
+            problems.append(f"{where}: 追記の項目がない")
+        for iid in row.get("item_ids", []):
+            if iid not in known:
+                problems.append(f"{where}: 項目 {iid} が一覧にない")
+        if row.get("kind") == "fix":
+            commits = row.get("commits")
+            if not commits or not all(isinstance(c, str) and re.fullmatch(r"[0-9a-f]{40}", c) for c in commits):
+                problems.append(f"{where}: 修正の追記に、直したコミット（40 桁）の並び commits がない")
+        if row.get("kind") == "user_rule":
+            approval = row.get("approval") or {}
+            quotes = approval.get("quote") or []
+            if approval.get("by") != "user" or not approval.get("on") or not approval.get("document") or not quotes:
+                problems.append(f"{where}: 利用者の指定の追記に、指定の文（quote）・日・文書（by user）がない")
+            elif _exists(approval["document"].split(" ", 1)[0]):
+                text = (ROOT / approval["document"].split(" ", 1)[0]).read_text(encoding="utf-8")
+                for quote in quotes:
+                    if quote not in text:
+                        problems.append(f"{where}: 指定の文が文書 {approval['document']} にない: {quote[:30]}")
+            if not row.get("stop_policy_conventions"):
+                problems.append(f"{where}: 利用者の指定の追記に、停止の方針の台帳の規約（stop_policy_conventions）がない")
+            for old in row.get("supersedes", []):
+                if old not in ids:
+                    problems.append(f"{where}: 置きかえた追記 {old} がない")
+        if row.get("kind") == "assumption":
+            if not row.get("statement"):
+                problems.append(f"{where}: 仮定の追記に statement がない")
+            if not row.get("basis") or not set(row["basis"]) <= set(ASSUMPTION_BASES):
+                problems.append(f"{where}: 仮定の追記の根拠の種類 basis が {ASSUMPTION_BASES} の並びでない")
+            approval = row.get("approval")
+            if approval != "none" and not (isinstance(approval, dict) and approval.get("quote")):
+                problems.append(f"{where}: 仮定の追記の承認 approval が \"none\" でも、利用者の指示の文（quote）でもない")
     return problems
 
 
@@ -374,6 +446,13 @@ def render_existing(ledger: dict) -> str:
                              for c in stop["conventions"]])
 
 
+def render_addenda(ledger: dict) -> str:
+    head = ["| 追記 | 日 | 基点 | 種類 | 項目 | 参照先 | 内容 |", "|---|---|---|---|---|---|---|"]
+    return "\n".join(head + [f"| `{a['id']}` | {a['on']} | `{a['base_commit'][:7]}` | {a['kind']} | {len(a['item_ids'])} 項目 | "
+                             f"[{a['ref']}]({pathlib.PurePosixPath(a['ref']).name.replace('.json', '.md')}) | {_cell(a['summary'])} |"
+                             for a in ledger.get("addenda", [])])
+
+
 BLOCKS = {
     "counts": render_counts,
     "items-approved": lambda l: render_items(l, ("approved_user",)),
@@ -382,6 +461,7 @@ BLOCKS = {
     "items-other": lambda l: render_items(l, ("technical", "defect_separate", "history")),
     "existing-ledger": render_existing,
     "discrepancies": render_discrepancies,
+    "addenda": render_addenda,
 }
 
 

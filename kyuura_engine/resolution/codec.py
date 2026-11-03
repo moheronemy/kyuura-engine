@@ -14,7 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from ..decisions import KO_PREVENTION, POST_KNOCKOUT_POWER, PROMOTE_ACTIVE, TAKE_PRIZE, phase_for, push_decision
+from ..decisions import KO_PREVENTION, POST_KNOCKOUT_POWER, PRIZE_FIRST, PROMOTE_ACTIVE, TAKE_PRIZE, phase_for, push_decision
 from ..state import PendingDecision
 
 if TYPE_CHECKING:
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 ATTACK = "attack"
 KNOCK_OUT = "knock_out"
 POST_KNOCKOUT = "post_knockout"
-RESUMES = frozenset({ATTACK, KNOCK_OUT, POST_KNOCKOUT, TAKE_PRIZE, PROMOTE_ACTIVE})
+RESUMES = frozenset({ATTACK, KNOCK_OUT, POST_KNOCKOUT, TAKE_PRIZE, PROMOTE_ACTIVE, PRIZE_FIRST})
 
 
 @dataclass(frozen=True)
@@ -47,11 +47,14 @@ class KoCheckContinuation:
 class AftermathContinuation:
     """きぜつのあと（サイド → 勝ち負け → ふしちょう → 交代 → 番の終わり／ポケモンチェックの続き）。"""
 
-    stage: str  # TAKE_PRIZE・POST_KNOCKOUT・PROMOTE_ACTIVE
+    stage: str  # TAKE_PRIZE・POST_KNOCKOUT・PROMOTE_ACTIVE・PRIZE_FIRST（PRIZE_FIRST の ``remaining`` は、まだ取っていないサイドの並びのすべて）
     remaining: tuple[int, ...] = ()
     then: str | None = None
     post_knockout: tuple = ()
     power: tuple[str, int] | None = None  # 勝ち負けのあとの任意の効果（ふしちょう）の特殊能力
+    # v0.140: 両方がサイドを取るときに、番のプレイヤーが選んだ先に取るプレイヤー（PRIZE_FIRST の答え）。サイドの決定の ``context`` の ``"first"`` に書く（一方だけが取るときは None で、
+    # 書かない。v0.139 までの形と同じ）
+    first: int | None = None
 
 
 def _then(then: str | None) -> tuple:
@@ -86,7 +89,16 @@ def exp_all_decision(state: GameState, cont: KoCheckContinuation, *, player: int
 def prize_decision(state: GameState, player: int, cont: AftermathContinuation) -> PendingDecision:
     """サイドを取る決定（v0.13 の ``engine._next_prize_or_judge`` と同じ形）。"""
     post = () if not cont.post_knockout else (("post_knockout", tuple(cont.post_knockout)),)
+    first = () if cont.first is None else (("first", cont.first),)
     return push_decision(state, kind=TAKE_PRIZE, player=player, options=range(len(state.players[player].prizes)), resume=TAKE_PRIZE,
+                         context=(("remaining", cont.remaining), *_then(cont.then), *post, *first))
+
+
+def prize_first_decision(state: GameState, cont: AftermathContinuation) -> PendingDecision:
+    """v0.140: 同じきぜつの処理で両方がサイドを取るとき、先に取るプレイヤーを番のプレイヤーが選ぶ決定（利用者の指定。docs/prize-order-user-rule-v0.140.md 2 章）。``context`` は
+    サイドを取る決定と同じ項目（``remaining`` はまだ取っていない並びのすべて）。"""
+    post = () if not cont.post_knockout else (("post_knockout", tuple(cont.post_knockout)),)
+    return push_decision(state, kind=PRIZE_FIRST, player=state.current_player, options=sorted(set(cont.remaining)), resume=PRIZE_FIRST,
                          context=(("remaining", cont.remaining), *_then(cont.then), *post))
 
 
@@ -112,9 +124,9 @@ def decode(decision: PendingDecision):
     if resume == KNOCK_OUT:
         power = decision.context_value("power")
         return KoCheckContinuation(tuple(decision.context_value("attack")), None if power is None else tuple(power))
-    if resume == TAKE_PRIZE:
-        return AftermathContinuation(TAKE_PRIZE, tuple(decision.context_value("remaining", ())), decision.context_value("then"),
-                                     tuple(decision.context_value("post_knockout", ())))
+    if resume in (TAKE_PRIZE, PRIZE_FIRST):
+        return AftermathContinuation(resume, tuple(decision.context_value("remaining", ())), decision.context_value("then"),
+                                     tuple(decision.context_value("post_knockout", ())), first=decision.context_value("first"))
     if resume == POST_KNOCKOUT:
         return AftermathContinuation(POST_KNOCKOUT, (), decision.context_value("then"), (), tuple(decision.context_value("power")))
     if resume == PROMOTE_ACTIVE:
@@ -143,5 +155,6 @@ __all__ = [
     "phase_for",
     "post_knockout_decision",
     "prize_decision",
+    "prize_first_decision",
     "promote_decision",
 ]

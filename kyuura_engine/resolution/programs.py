@@ -51,7 +51,7 @@ from ..stadiums import bench_limit
 from .. import faceup as FU  # v0.126: おもての山札（フラッシュ）
 from ..errors import SECRET_PLAN_HIDDEN_CODE, IllegalActionError, UnsupportedError
 from ..evolution import DEVOLVE_TO_DECK, DEVOLVE_TO_DISCARD, DEVOLVE_TO_HAND, devolve, evolution_block, place_evolution_card
-from ..persistent import (RETURN_IN_PLAY_TO_DECK, RETURN_IN_PLAY_TO_HAND, add_persistent_effect, leave_lock, max_hp_set, remove_on_entering_active,
+from ..persistent import (RETURN_IN_PLAY_TO_DECK, RETURN_IN_PLAY_TO_HAND, add_persistent_effect, attack_coin_checks, leave_lock, max_hp_set, remove_on_entering_active,
                           remove_persistent_effects, remove_source_left_effects, replace_persistent_effect, require_can_leave)
 from ..persistent import CURED as PERSISTENT_CURED
 from ..state import (
@@ -2592,6 +2592,18 @@ TIMING_EFFECT = "effect"  # ワザの効果（こんらんのコインのあと�
 TIMING_UNRESOLVED = "unresolved"  # ワザを使うための条件か効果かが決められない（こんらん状態で使うときは宣言のあとに止める。HC1）
 
 
+def attack_step4_coin(state: GameState, attacker: PokemonInPlay) -> str | None:
+    """v0.139（docs/prize-order-hc1-fix-v0.139.md 3 章）: ワザを使うポケモン ``attacker`` に、p.309 の手順 4 のコイン（宣言のあと・ワザの効果の前に投げ、「うら」ならワザが失敗する）が
+    あるか。すなかけ・えんまくなどの効果（``persistent.attack_coin_checks``。v0.36）か、［はんこう］（``effects.attack_rebellion_powers``。v0.60）。あれば、問いの文に書き足す説明、なければ
+    None。HC1 の問い（トラッシュが宣言のときか、コインのあとか）は、こんらんのコイン・ベイビィポケモンのルールのコインと同じく、このコインでも「うら」のときにトラッシュするかが変わる。
+    状態を変えない（コインを投げない）。"""
+    if attack_coin_checks(state, attacker):
+        return "p.309 の手順 4 のコイン（すなかけなどの効果）"
+    if E.attack_rebellion_powers(state, attacker):
+        return "p.309 の手順 4 のコイン（［はんこう］。失敗するとポケモンとついているカードを山札にもどす）"
+    return None
+
+
 @dataclass(frozen=True)
 class Discarded:
     """トラッシュの要素の結果（v0.31）: トラッシュしたカード（ついている順）と、``outcome``（``"done"``・トラッシュできなかったときの扱い）。"""
@@ -2668,6 +2680,11 @@ class DiscardOwnEnergy(Element):
             # v0.114: 相手のバトル場のベイビィポケモンのルールのコイン（宣言のあと・説明の処理の前）。トラッシュがワザを使うための条件（宣言のとき）か効果（コインのあと）かで、
             # 「うら」でトラッシュするかが変わる（HC1 と同じ問い。CR-BABY-RULE-COIN-STEP の notes の「トラッシュしないと使えない」とベイビィのコインの前後）
             raise res.question("discard_energy_timing", f"ポケモン {attacker.pokemon_id}（相手のバトル場のベイビィポケモンのルールのコイン）")
+        step4 = attack_step4_coin(res.state, attacker) if self.timing == TIMING_UNRESOLVED else None
+        if step4 is not None:
+            # v0.139: 手順 4 のコイン（v0.36 のすなかけ・v0.60 の［はんこう］）も、宣言のあと・ワザの効果の前に投げ、「うら」でワザが失敗する（こんらんでなくても）。v0.31 の
+            # 「こんらんでなければ、どちらの読み方でも結果は同じ」は、このコインがあると成り立たない（HC1 と同じ問い。コインの前に止める。docs/prize-order-hc1-fix-v0.139.md 3 章）
+            raise res.question("discard_energy_timing", f"ポケモン {attacker.pokemon_id}（{step4}）")
 
     def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
         need = self.copy_need if self.copy_need is not None else (1 if self.any_number else self.count)
@@ -6432,6 +6449,9 @@ class ReturnOwnEnergyToHand(DiscardOwnEnergy):
             raise res.question("discard_energy_timing", f"ポケモン {attacker.pokemon_id}。「はがして手札にもどす」と書かれたワザも同じ問い")
         if self.timing == TIMING_UNRESOLVED and E.baby_rule_applies(res.state, player):
             raise res.question("discard_energy_timing", f"ポケモン {attacker.pokemon_id}（相手のバトル場のベイビィポケモンのルールのコイン）。「はがして手札にもどす」と書かれたワザも同じ問い")
+        step4 = attack_step4_coin(res.state, attacker) if self.timing == TIMING_UNRESOLVED else None
+        if step4 is not None:
+            raise res.question("discard_energy_timing", f"ポケモン {attacker.pokemon_id}（{step4}）。「はがして手札にもどす」と書かれたワザも同じ問い")
 
     def _discard(self, run: AttackRun, cards: tuple[int, ...]) -> None:
         state = run.state

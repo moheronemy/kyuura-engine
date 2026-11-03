@@ -105,8 +105,9 @@ class DesignAssumptionTest(unittest.TestCase):
             self.assertNotIn("suspend", source)
 
     def test_resumes_are_unchanged(self):
-        """再開先は v0.16 からの 5 つのまま（窓の途中の再開先はない）。"""
-        self.assertEqual(codec.RESUMES, frozenset({"attack", "knock_out", "post_knockout", "take_prize", "promote_active"}))
+        """再開先は v0.16 からの 5 つと、先にサイドを取るプレイヤーの決定（v0.139 の prize_order を v0.140 で prize_first に改めた。きぜつの処理のあとのサイドの段で、窓の途中ではない。
+        docs/prize-order-user-rule-v0.140.md 2 章）だけ（窓の途中の再開先はない）。"""
+        self.assertEqual(codec.RESUMES, frozenset({"attack", "knock_out", "post_knockout", "take_prize", "prize_first", "promote_active"}))
 
     def test_kogas_muk_is_supported_with_the_v0_68_spec(self):
         """v0.18d の時点ではキョウのベトベトンは未対応だった（DEFER）。v0.68 で、この特殊能力に限った採用の仕様（自動的にはたらく・ダメージの要素のあと。

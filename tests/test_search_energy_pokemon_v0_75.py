@@ -270,7 +270,8 @@ class PhoenixGasTowerTest(unittest.TestCase):
         バトル場に出して MAIN にもどる。ふしちょうの機会はなく、R団のファイヤーはトラッシュに残る（手札にもどらない）。"""
         state = attack(self.board(True), 1)
         while state.decision is not None:
-            self.assertIn(state.decision.kind, ("take_prize", "promote_active"))
+            # v0.140（docs/prize-order-user-rule-v0.140.md）: お互いにサイドを取るので、先に取るプレイヤーの決定（prize_first。番のプレイヤーが選ぶ）もある
+            self.assertIn(state.decision.kind, ("prize_first", "take_prize", "promote_active"))
             state = answer(state, (state.decision.options[0],))
         self.assertEqual(state.phase.name, "MAIN")
         self.assertEqual(len([e for e in state.log if e["kind"] == "knock_out"]), 3)

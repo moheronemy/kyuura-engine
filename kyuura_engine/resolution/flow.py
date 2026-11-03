@@ -23,7 +23,7 @@ from .. import judge
 from .. import procedures as PR
 from ..checks import PLAYERS, attack_request, require_turn
 from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack
-from ..decisions import BENCH_GUARD, DAMAGE_OPTION, ENERGY_DRAIN_DISCARD, ESP_REDO, EXP_ALL_ENERGY, KNOCK_OUT_POWER, NINJA_TRICK, PROMOTE_ACTIVE, REACTION_SWITCH, SPLIT_FROM_DECK, TAKE_PRIZE
+from ..decisions import BENCH_GUARD, DAMAGE_OPTION, ENERGY_DRAIN_DISCARD, ESP_REDO, EXP_ALL_ENERGY, KNOCK_OUT_POWER, NINJA_TRICK, PRIZE_FIRST, PROMOTE_ACTIVE, REACTION_SWITCH, SPLIT_FROM_DECK, TAKE_PRIZE
 from ..coins import CoinSide, flip_coins
 from .. import effects as E
 from ..effects import (AttackKey, AttackUse, PowerKey, usable_ninja_tricks, attach_converted_energy, attack_rebellion_powers, counts_as_knockout, dormant_scram, max_hp,
@@ -888,10 +888,22 @@ def _after_knockouts(res: Resolution, prize_takers, then, post_knockout) -> None
     _next_prize_or_judge(res, tuple(queue), then, tuple(post_knockout))
 
 
-def _next_prize_or_judge(res: Resolution, queue: tuple, then, post_knockout: tuple) -> None:
+def prize_first_needed(queue: tuple, first: int | None) -> bool:
+    """サイドの並び ``queue`` で、先に取るプレイヤーを番のプレイヤーに選ばせるか（v0.140。利用者の指定 USER-PRIZE-ORDER-ALWAYS-CHOSEN。docs/prize-order-user-rule-v0.140.md 2 章）。
+
+    両方のプレイヤーが並びにいて、まだ選んでいない（``first`` が None）ときだけ。おもてのサイド・手札の見え方・本人だけが知るサイドでは変えない（v0.139 はおもてのサイドがある
+    ときだけ、1 枚ごとに出した）。選んだあとは、そのプレイヤーの分をすべて取ってから、もう一方が取る（USER-PRIZE-ORDER-PER-PLAYER。選び直さない）。"""
+    return first is None and len(set(queue)) >= 2
+
+
+def _next_prize_or_judge(res: Resolution, queue: tuple, then, post_knockout: tuple, first: int | None = None) -> None:
     state = res.state
+    if queue and prize_first_needed(queue, first):
+        codec.prize_first_decision(state, codec.AftermathContinuation(PRIZE_FIRST, tuple(queue), then, post_knockout))
+        res.trace.record(Suspended(PRIZE_FIRST, PRIZE_FIRST, state.current_player))
+        return
     if queue:
-        codec.prize_decision(state, queue[0], codec.AftermathContinuation(TAKE_PRIZE, queue[1:], then, post_knockout))
+        codec.prize_decision(state, queue[0], codec.AftermathContinuation(TAKE_PRIZE, queue[1:], then, post_knockout, first=first))
         res.trace.record(Suspended(TAKE_PRIZE, TAKE_PRIZE, queue[0]))
         return
     result = judge.decide(
@@ -1316,6 +1328,8 @@ def _resume(ctx: Context, state, choices: tuple[int, ...]) -> None:
         _resume_ko_check(res, decision, cont, choices)
     elif cont.stage == TAKE_PRIZE:
         _resume_take_prize(res, decision, cont, choices)
+    elif cont.stage == PRIZE_FIRST:
+        _resume_prize_first(res, decision, cont, choices)
     elif cont.stage == codec.POST_KNOCKOUT:
         _resume_post_knockout(res, decision, cont, choices)
     else:
@@ -1496,7 +1510,18 @@ def _resume_take_prize(res: Resolution, decision, cont: codec.AftermathContinuat
     face_up = prize_left(state, uid)  # v0.63: おもてのサイド（ロケット団参上!）を取ったら、おもての記録から除く（手札は公開にならない）
     state.players[player].hand.append(uid)
     state.add_event("take_prize", player=player, card=uid, remaining=len(prizes), **face_up_fields(face_up, "card"))
-    _next_prize_or_judge(res, cont.remaining, cont.then, cont.post_knockout)
+    _next_prize_or_judge(res, cont.remaining, cont.then, cont.post_knockout, cont.first)
+
+
+def _resume_prize_first(res: Resolution, decision, cont: codec.AftermathContinuation, choices) -> None:
+    """先に取るプレイヤーの答え（v0.140。利用者の指定）: 並びを、選んだプレイヤーの分をすべて先に、もう一方の分をそのあとにして（それぞれの枚数は変えない）、選んだプレイヤーの
+    サイドの決定を出す。選んだプレイヤーは続きの情報（``first``）に持ち、取るたびに選び直さない。選んだことはログに書かない（ほかの決定と同じ。結果は ``take_prize`` の順番に
+    表れる）。乱数は使わない。"""
+    state = res.state
+    chosen = choices[0]
+    queue = tuple(p for p in cont.remaining if p == chosen) + tuple(p for p in cont.remaining if p != chosen)
+    codec.prize_decision(state, chosen, codec.AftermathContinuation(TAKE_PRIZE, queue[1:], cont.then, cont.post_knockout, first=chosen))
+    res.trace.record(Suspended(TAKE_PRIZE, TAKE_PRIZE, chosen))
 
 
 def _resume_promote(res: Resolution, decision, cont: codec.AftermathContinuation, choices) -> None:

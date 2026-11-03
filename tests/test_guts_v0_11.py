@@ -507,7 +507,8 @@ class KnockOutAndPrizeTest(unittest.TestCase):
         tails, events, _ = answer(state, True, T)
         knocks = [e for e in events if e["kind"] == "knock_out"]
         self.assertEqual([(e["player"], e.get("simultaneous")) for e in knocks], [(1, True), (0, True)])
-        self.assertEqual((tails.decision.kind, tails.decision.player, dict(tails.decision.context)["remaining"]), ("take_prize", 0, (1,)))
+        # v0.140（docs/prize-order-user-rule-v0.140.md）: 両方がサイドを取るので、先に番のプレイヤーが先に取るプレイヤーを選ぶ（利用者の指定。v0.139 までは番のプレイヤーから）
+        self.assertEqual((tails.decision.kind, tails.decision.player, dict(tails.decision.context)["remaining"]), ("prize_first", 0, (0, 1)))
 
     def test_attacker_knocked_out_by_its_own_attack_only(self):
         """サカキのゴーリキーのいちかばちか「うら」: 相手にはダメージを与えず、自分に 100（自分のワザによるきぜつ。こんじょうは関係しない。
