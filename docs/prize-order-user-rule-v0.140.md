@@ -120,19 +120,110 @@ v0.139 の決定 `prize_order` は意味が違う（1 枚ごとに次の人）�
 | 既存の約束（明記した） | 形式の番号は書き出しの**形**の版で、決定の種類などの**値の語彙**の版ではない。読む側は、知らない形式に加えて知らない種類の値・項目を拒否する（同じ形式の番号でも、前の版の読む側が後の版の書き出しを読めるとは約束しない）。`serialize.py` のモジュールの説明と README に書いた |
 | 書き出しと状態の写しの区別 | 書き出し（`state_to_dict`）は一方向で、エンジンに読み込む処理はない。状態の写し（pickle・deepcopy・clone）は別のもので、前の版の写しを後の版で読む向き（後方の互換）だけを考えてきた。後の版の写しを前の版で読む向きは約束しない。pickle は安全な外部のデータ交換の形式ではない |
 | 既存の約束との矛盾 | 見つからなかった。ただし、v0.139 の `prize_order` を `prize_first` に改めたので、v0.139 の決定を待つ状態の写しはこの版で続けられない（明示的に拒否する。2.3 節）。v0.138・v0.139 の両方が取る途中のサイドの決定も続けられない（`StateIntegrityError`） |
-| 旧版の制限 | v0.139 以前のエンジンは、この版の `prize_first` を待つ状態の写しに答えると内部エラー（v0.138 で確かめた `RuntimeError` と同じ作り）。前の版は直せない |
+| 旧版の制限 | v0.139 以前のエンジンは、この版の `prize_first` を待つ状態の写しを拒否せずに読み込み、観測で `ValueError`（「決定の種類 'prize_first' の選べるものの意味が決まっていない」）、答えると `RuntimeError`（「決定の再開先 'prize_first' を続ける処理がない …」）になる（この版で作った seed 473 の状態の pickle を v0.139 の木 `789f58e` で読んで実行して確かめた。一度だけの確認で、回帰テストにはしていない）。前の版は直せない |
 
 ## 5. テスト
 
-<!-- 5 章は実行のあとに書く -->
+実行はどれも Windows・Python 3.14.6・`PYTHONUTF8=1`・`PYTHONHASHSEED=0`。
+
+### 5.1 新しいテスト（`tests/test_prize_order_user_rule_v0_140.py`。27 件）
+
+| 区分 | クラス | 再現の種類 | 確かめること |
+|---|---|---|---|
+| 新しい規約 | `AlwaysChosenTest` | 合法な操作（seed 473 のうら・おもて、seed 2 の［おみとおし］）と構築盤面（本人だけが知るサイド・一部おもて・一方だけが取る） | どの場面でも番のプレイヤーに `prize_first`。一方だけなら出さない。記録は 2 件だけ |
+| 新しい規約 | `PerPlayerTest` | 構築盤面と合法なじばく | 2 枚対 1 枚（001・100 だけ）・2 枚対 2 枚（0011・1100 だけ）・選び直さない・途中で 0 枚でも判定は取り終えてから・両方の順でサドン・デス・同じ位置なら同じ盤面 |
+| 新しい規約 | `OrderAndInformationTest` | 構築盤面（［おみとおし］＋［スパイ］）・合法な操作（seed 2） | 候補が同じでも、順番と決定の時点の情報で選択と結果が変わる。P0 が先なら P1・観戦者に先に取られたカードが見える |
+| 新しい規約 | `PrizeFirstAnswerTest` | 合法な操作（seed 473）・構築盤面 | 観測に非公開の情報がない・決める人と選ぶ人の分離・取ったあとの観測に位置・カードが増えない・不正な答え 7 種類と選んだあとの割り込みで状態・乱数・ログが変わらない・決定をまたぐ保存と復元・書き出しの形 |
+| 不具合の修正 | `UnsupportedDecisionTest` | 合法な操作の状態の決定の種類・再開先だけを書きかえた比較用の状態 | 知らない再開先・前の版の `prize_order` を、観測（両方のプレイヤー・観戦者）と 4 種類のコマンドで `UNSUPPORTED_DECISION`。理由の文に状態の文字列を書かない。状態・乱数・ログは変わらない。保存と復元のあとも同じ。知っている再開先の壊れた状態は `StateIntegrityError`。正常な決定は妨げない |
+| 不具合の修正 | `OldVersionStateTest` | v0.139（789f58e）・v0.138（4ded418）の木で作った状態の写し（別のプロセス） | v0.139 の `prize_order` は `UNSUPPORTED_DECISION`。両方が取る途中のサイドの決定は `StateIntegrityError`。残りが一方だけのサイドの決定は続けられる |
+
+修正の前の確かめ: 基点の木（`git archive d631038`）にこのファイルだけを写して実行すると（基点にない名前の import は比較用の写しだけで空の値にした）、27 件のうち 24 件が失敗した（失敗 28・エラー 2。
+サブテストを含む）。基点でも通る 3 件は、変えていない動きの確かめ（一方だけが取る・旧版の残りが一方だけのサイドの決定・知っている決定）。修正のあとはすべて通る。
+`OrderAndInformationTest.test_choice_depends_on_order` は、はじめの書き方では基点でも偶然通った（基点では順番の決定への答えがサイドの位置として受け付けられた）ので、順番の決定が出る
+ことと取った順を確かめるように直した。
+
+### 5.2 意図した差に合わせて直した既存のテスト
+
+| テスト | 直したこと | 固定値・参照データ |
+|---|---|---|
+| `test_simultaneous_ko`・`test_selfdestruct_spread_count_v0_39`・`test_count_condition_switch_return_v0_40`・`test_guts_v0_11`・`test_search_energy_pokemon_v0_75`・`test_reactive_powers_trainer_damage_v0_61`・`test_cd4_opponent_energy_coins_v0_33`・`test_state_corruption_v0_4e`・`test_moltres_games_v0_12`（ふしちょうの確かめ） | 決定の並びの期待の先頭に `prize_first` を加え、答えは番のプレイヤー（v0.2f の正規化と同じ順番）。壊れた状態の確かめに、`first` のない両方の並び・まとめていない並びを加えた | 変えていない |
+| `test_blastoise_games_v0_6`・`test_dark_wartortle_games_v0_13`・`test_haunter_games_v0_9`・`test_machamp_games_v0_10`・`test_moltres_games_v0_12`（件数） | 件数の期待のうち、受け付けた操作の数（`accepted`）だけが、両方が取る場面の数（1・3・1・3・1）だけ増えた。ほかの件数は同じ（違いのあるキーを数えて確かめた） | テストの中の期待値（その版の対戦の件数）。コメントで理由を書いた |
+| `test_pikachu_games`（seed 9 の固定値） | 固定値（`GOLDEN_SEED_9`）は変えず、次に付ける決定の番号だけをもどす移行（`tests/helpers.py` の `with_prize_first_before_v0_140`。答えた数を数えて確かめる）で比べる。基点と今の最後の状態の違いは `next_decision_id`（29 → 30）だけだった | 変えていない（v0.69 の写しの元の移行と同じ考え方） |
+| `test_event_kernel_games_v0_14`（旧経路の記録） | 記録（`tests/fixtures/legacy_reference_v0_15.json`）は変えない・作り直さない。比べられなくなった 1 局（`stress:wartortle_mixed:0`）を `tests/legacy_reference.py` の `RULE_CHANGED_CHAINS` に理由つきで挙げ、記録と比べるかわりに「順番の決定を通ったこと」と「記録と違うこと」を確かめる。挙げていない局が順番の決定を通れば失敗にする。この局の最初の差が順番の決定だけであることは lockstep で確かめた（7.2 節） | 変えていない |
+| `test_kernel_integration_v0_15`・`test_mid_window_decisions_v0_18d` | 設計の前提の再開先の集合・関数名を `prize_first` に改めた | — |
+| `test_prize_order_hc1_fix_v0_139` | v0.139 の順番のテスト 3 クラスを新しいテストに移した（今の規約で書き直した）。盤面を作る関数と HC1 のテストは残した | — |
+| `test_prize_order_followup` | 記録の再現を、記録を作ったコミット `d631038` の木（`git archive`・別のプロセス）で行う。今の木のスクリプトは今のエンジンでは再現を作らずに止まる（記録を今の動きで上書きしない） | 記録（evidence）は変えていない |
+| `test_implementation_assumptions` | 追記の種類 `user_rule` の確かめを加えた | — |
+
+### 5.3 全体テスト
+
+`tests/test_*.py` の 258 モジュールを、1 worker・モジュールごとの別プロセスで順に実行した（[testing](testing.md) の数え方）。コードの指紋は、`kyuura_engine/`・`tests/`・`tools/`・`scripts/`
+の `.py`・`.json` と `pyproject.toml`（343 ファイル）の相対パスと中身（改行を LF にそろえた）の sha256。
+
+| コードの状態 | 開始〜終了 | 指紋（前・後） | モジュール | テスト | 失敗 | エラー | 省略 | 監視の打ち切り・時間切れ |
+|---|---|---|---|---|---|---|---|---|
+| `082acb6c3e779b732cf4b49123a80d1c40495190` | 2026-11-03T23:58:02〜2026-11-04T01:11:22 | `0ddde38b071b5b6c32f22be326d838c5962de1cf82c5fcffad9eb055bb3d0398`・実行の前後で同じ | 258（終了 258） | 7439 | 0 | 0 | 1 | 0 |
+
+飛ばした 1 件は `tests.test_cross_version_compatibility.FullComparisonTest.test_no_differences`（大きな比較は `KYUURA_COMPAT_BASE=4bd97bf` を設定したときだけ。既存の扱い）。0 以外の終了コードのモジュールはない。
+
+### 5.4 追加の実行（全体テストとは別）
+
+| 対象 | 結果 |
+|---|---|
+| 洗い出し（全体テストの前。8 プロセスの並列で全モジュール。正式な全体テストではない） | 1 回目: 失敗 16 モジュール（5.2 節で直した）。2 回目: 失敗 1 モジュール（`test_implementation_assumptions`。台帳の対応付け。6 章で直した） |
+| 文書を書いたあとの文書を読むテスト・台帳の検査 | 全体テストのあとに文書を書いたので、文書（README・この文書・状況・裁定・経過・台帳）を名前で参照する `tests/test_*.py` の 40 モジュール（1364 件）をモジュールごとに流し直し、すべて成功。台帳の検査（実装上の仮定・再検証の `--check`、停止の方針の台帳の `--check`）は問題 0。この欄の記入のあと、指定の文を読むテスト 3 モジュールをもう一度流し、成功。全体テストの数には足さない |
+| データの検査（`extract_kyuura_cards.py --check`・`extract_species_heights.py --check`・`check_card_sources.py`・`check_research_links.py --kyuura ../kyuura`） | 4 件とも終了コード 0（kyuura は `b9e7cff` のまま、作業ツリーに変更なし） |
+| ruff（0.17.2・リポジトリの設定。基点の木と今の木をそれぞれの根で `ruff check .`） | どちらも 492 件で、ファイル別・規則別の件数が同じ。新しい抑止の注釈はない（新しい指摘は、使わない import・クラスの変更できる属性・import の並びを直した） |
 
 ## 6. 台帳と経過の記録
 
-<!-- 6 章は台帳を書いたあとに書く -->
+- 停止の方針の台帳（[stop-policy-classification.json](stop-policy-classification.json)）: 規約に `CONV:USER-PRIZE-ORDER-ALWAYS-CHOSEN`・`CONV:USER-PRIZE-ORDER-PER-PLAYER`（区分 `user_specified`。
+  合意 AGR-MODE-BASELINE-USER で基礎集合。指定の文は 2.1 節。登録 `decisions.USER_PRIZE_ORDER_RULES` と照らす）を加え、新しい停止コード `UNSUPPORTED_DECISION` を族 `PF-RUNTIME-DATA`
+  に分類した。生成元（`scripts/build_stop_policy_classification.py --write`）から作り直した。[ruleset-mode-design.md](ruleset-mode-design.md) の 4.2 節の表（生成）に 2 行が加わり、本文の件数は
+  設計の時点のまま（14 章に追記）
+- 実装上の仮定の一覧（[implementation-assumptions.json](implementation-assumptions.json)）・正規化の再検証（[normalization-revalidation.json](normalization-revalidation.json)）の `addenda` に:
+  - `ADD-V0140-PRIZE-ORDER-USER-RULE`（種類 `user_rule`。指定の文・日・文書、規約、置きかえた追記 `ADD-PRIZE-ORDER-UNIT-ASSUMPTION`）。追加検証で加えた「1 枚ごと」の仮定は、今回の規約で
+    置きかわった（その追記は書き換えず、`supersedes` で示す）
+  - `ADD-V0140-UNSUPPORTED-DECISION-FIX`（種類 `fix`。直したコミット `a9891a5`。項目 `IA-PRIZE-TAKE-ORDER-SIMULTANEOUS-KO`。追加検証の FU-D2）
+  - 項目の記載・状態・集計・基点は元の調査の時点のまま。後から加わった規約を項目に対応付けるかわりに、追記 `user_rule` で対応付ける確かめを `scripts/check_implementation_assumptions.py`
+    に加えた（再検証の検査も種類 `user_rule` を受ける）
+- 追加検証の記録（[prize-order-followup.json](prize-order-followup.json)）: `addenda` に v0.140 の採用（UD1 は b・UD2 は a・UD3 は A・UD4 は S3＋S4 に当たる）を追記した。evidence・結論は
+  記録を作った `d631038` の時点のまま
+- 停止の方針の台帳の生成した文書・実装上の仮定と再検証の文書の生成した表は、生成元の `--write` で作り直した
+- 停止の方針の台帳の集計 `internal_guard_sites_new_since_inventory`（棚卸しの後に加わった内部ガードの箇所。数えるだけで問題にはしない）に、`engine.py` の答えの入力の確かめ（`_require_supported_decision` の `StateIntegrityError`）が 1 箇所加わった（基点は 2 箇所、この版は 3 箇所。もとの 2 箇所は行番号がずれただけ）。意図した差
 
 ## 7. 基点との比較
 
-<!-- 7 章は比較のあとに書く -->
+比べた木: 基点（`git archive d631038`）と今の木（`082acb6`）。組・席・seed は実行の前に決めた（v0.139 と同じ。選び直していない）。比較の道具はスクラッチ領域
+（`cmp_run.py`・`cmp_diff.py`・`ls_kinds.py`）で、リポジトリには入れていない。順番の決定と取得順による差は、正規化で消さずに数えた。
+
+### 7.1 旧バッチ（`tools/existing_effect_games.py`。各バッチの組 × 2 席 × seed 0〜9）
+
+| バッチ | 選んだ理由 | 局 | 同じ | 違う | 違いの中身 |
+|---|---|---|---|---|---|
+| v0.39 | じばく・控えへのダメージ（すべてうらの同時のきぜつ・複数枚の取得） | 80 | 46 | 34 | どれも歩数が順番の決定の数（32 局は 1 回・2 局は 2 回）だけ増え、最後の状態の指紋が変わっただけ（決定の番号）。場・ログの種類の並び・終わり方・勝者は同じ。並び (1, 0, 0) の局もある |
+| v0.63 | ロケット団参上!（おもてのサイド） | 60 | 59 | 1 | K56-Q63:7: 基点は順番の決定なし（おもてのサイドがない）、今は 1 回（歩数 24 → 25）。v0.139 で順番の決定が出た Q63-T63:6 は、基点の `prize_order` が `prize_first` に変わっただけで、歩数・最後の状態とも同じ |
+| v0.80 | カードめくりゲーム（サイドの一部がおもて） | 60 | 53 | 7 | 歩数が順番の決定の数だけ増えただけ（v0.139 ではおもてのサイドがないので決定がなかった局） |
+| v0.136 | カードめくりゲーム | 50 | 50 | 0 | — |
+| v0.106 | おんねん（取ったサイドの数）・E106 対 T63 | 220 | 198 | 22 | 歩数が順番の決定の数だけ増えただけ |
+
+どの局も、内部エラー・予期しない拒否・監査の失敗は 0（基点・今とも 470 局）。違う 64 局は、どれも違う項目が歩数と最後の状態の指紋だけで、歩数の差は順番の決定の数の差とちょうど同じ。
+
+### 7.2 lockstep（`tools/engine_lockstep.py`。既定の組: natural 23 モジュール × seed 0〜19・stress × seed 0〜9）
+
+対戦 760・一致した歩 134,288・**食い違い 10**・許した差 0。どちらもエラー 0。10 局の最初の食い違いは、どれも同じコマンドを受け付けた歩で、その歩のあと基点は `take_prize`、今は
+`prize_first` の決定を出した（`ls_kinds.py` で両方の木の決定の種類を確かめた）。局: natural の test_combined_games_v0_4e（6・11）・test_haunter_games_v0_9（7）・test_pikachu_games
+（0・9・18）、stress の status:3・all:6・moltres:7・wartortle_mixed:0。順番の決定のあとは決定の番号がずれるので、この道具はその局の残りを比べない（最初の食い違いで止める）。残りの歩の
+結果は、natural の局はテストの対戦の確かめ（5.2 節の件数・固定値）、旧バッチ（7.1 節）で確かめた。
+
+### 7.3 サドン・デス（`tools/sudden_death_games.py --corpus magnemite --seeds 0:200`）
+
+基点と今の木で、所要時間を除いて同じ記録（集計の全項目が同じ）。方策は番のプレイヤーを選ぶので、順番の決定が増えても延長戦の起こり方は変わらない。両方の順でサドン・デスに移ることは
+`PerPlayerTest.test_both_orders_reach_sudden_death` で確かめた。
+
+### 7.4 変えていないもの
+
+`git diff d631038 -- tests/fixtures kyuura_engine/data` は空（参照データ・カードの写し）。固定デッキ（`kyuura_engine/decks.py`）・kyuura（`git status` が空、HEAD `b9e7cff`）も変えていない。
 
 ## 8. kyuura への報告事項（kyuura は変更していない）
 
