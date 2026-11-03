@@ -5,7 +5,7 @@ kyuura・利用者の `.claude/` は変えていません。ここに書く方�
 
 - 構造化台帳: [stop-policy-classification.json](stop-policy-classification.json)（`scripts/build_stop_policy_classification.py --write` で作り、`--check` で現行コードと突き合わせる）
 - 利用者が決める事項: [stop-policy-decisions.md](stop-policy-decisions.md)
-- 後の版の経過: 7.4 節（v0.137 で PSP-ST1-DECK-ORACLE・PSP-FC1-ENERGY-ARK-ORACLE を修正。ST1・FC1 の論点・モードの方針は未決のまま）
+- 後の版の経過: 7.4 節（v0.137 で PSP-ST1-DECK-ORACLE・PSP-FC1-ENERGY-ARK-ORACLE を修正。ST1・FC1 の論点・モードの方針は未決のまま）・7.5 節（v0.138 で PSP-RUIN-WALL-BLOCKED-REASON-ORACLE・PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE を修正。新しい発見 2 件は未修正）
 - 元の棚卸し（v0.133 時点。基点・集計は書き換えず、履歴として参照する）: [pre-freeze-gap-inventory.md](pre-freeze-gap-inventory.md)・[JSON](pre-freeze-gap-inventory.json)・
   [修正計画](pre-freeze-remediation-plan.md)
 
@@ -223,6 +223,24 @@ v0.135・v0.136 の漏れと同じ型（受理・拒否による漏れ）です�
   未確認の候補のままです
 - 台帳の作成スクリプトの直した点: 2 項目の修正の記録、新しい 2 項目、`updates`（この版の基点 897103e と変えた項目）、`counts_at_classification`（分類の時点の集計の写し）、事例の行番号、
   リポジトリのファイルの sha256 を改行を LF にそろえて求めること（分類の時点の `research_reference.sha256` は CRLF の作業の木の値。内容は同じ）
+
+### 7.5 v0.138 での経過（2026-11-03。7.1〜7.4 の記録・基点・集計は変えていない）
+
+利用者の承認は「v0.137 で新たに見つかった 2 件の情報漏れを、モード共通の不具合として修正すること」だけです（厳密モードの定義・プレイ用の規約・検索の不足時の処理の承認ではありません）。
+[oracle-leak-fixes-v0.138.md](oracle-leak-fixes-v0.138.md)。
+
+- **修正した情報漏れの範囲**: PSP-RUIN-WALL-BLOCKED-REASON-ORACLE（遺跡の石版のガスのもとの使う前の拒否の理由の文。受理・拒否・コードは修正の前も配分によらなかった）と
+  PSP-UPZ2-ENERGY-AMPLIFIER-ORACLE（エネルギー増幅装置の使う宣言と段階 1 の答えの UPZ2）。台帳の status は `fixed`。どちらも配分を読まない下限（`effects.bench_entry_unconfirmed`・
+  `deck_target_lower_bound`）で確かめ、既存のコードのまま決まった文で止めます
+- **依然残る情報伝達・未確認の候補**: 受理（公開）が相手・観戦者に、使ったプレイヤーの見えないカードの構成の 1 ビットを伝えること（v0.137 4.4 節・v0.138 5.4 節）。比較プローブで新しく
+  見つけた PSP-INCREASE-ENTRY-PW3-ORACLE（［INCREASE］の使う機会）・PSP-COCOON-DV2-ORACLE（キョウのコクーンの［うか］の DV2）は修正していません（`active`）。PSP-DECK-CONTENT-PRECHECKS の
+  残り（GV1・EVOLUTION_HP の経路）は未確認の候補のままです
+- **未解決の裁定**: GG1・MG1・DW1・UPZ2・ST1 などの研究の停止コードは `active` のまま（停止コードを修正済みにしない）。UPZ2 に事例 `#amplifier-deck`（`owner_known_pool`）・
+  `#public-zones` を加えました
+- **保守的な使用制限**: 増幅装置は、実際には山札に基本エネルギーカードがあっても、下限 0 なら特殊エネルギーカードをもどせません（手札がそれだけなら使えません）。遺跡の石版は今の写しでは
+  受理・拒否が変わりません（止めないカードと止めるカードが混ざる候補で、実際には山札にあっても止める制限が共通処理にある）
+- **厳密モードの定義は未決**です（DEC-STRICT-DEFINITION ほか）。この版の承認をプレイ用の規約・モードの定義の承認へ広げていません
+- 台帳の作り直しで、既存の 173 項目の行番号が変わりました（effects.py の編集で行がずれただけ。意味は変わらない。版の文書 10 章）
 
 ## 8. プレイ用の規約だけでは解消できない項目
 
