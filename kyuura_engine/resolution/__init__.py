@@ -16,7 +16,7 @@ from .events import DamageClass, FrameKind, Trace, Window
 from .contract import Contract, ContractRuntime, open_attack, program_for
 from .flow import (COMMANDS, CONTINUE_TURN, PREFLIGHT_MODES, RESUMES, Context, after_effects, after_energy, after_power, after_retreat, after_stadium, after_trainer,
                    settle_after_retreat,
-                   end_turn_after_power, end_turn_after_trainer, handle, prize_order_matters, processes, resume_decision, trainer_damage_stop)
+                   end_turn_after_power, end_turn_after_trainer, handle, prize_first_needed, processes, resume_decision, trainer_damage_stop)
 from .programs import BUILDERS, UnsupportedByKernel, compile_attack
 from .questions import QUESTIONS
 
@@ -55,7 +55,7 @@ __all__ = [
     "compile_attack",
     "handle",
     "open_attack",
-    "prize_order_matters",
+    "prize_first_needed",
     "processes",
     "program_for",
     "resume_decision",

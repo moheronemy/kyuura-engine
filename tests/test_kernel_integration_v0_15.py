@@ -216,8 +216,9 @@ class DependencyTest(unittest.TestCase):
                                  # （docs/slowking-mind-games-v0.132.md 5 章）
                                  "_continue_trainer_use", "_resume_trainer_reaction", "_trainer_reaction_decline_check",
                                  # v0.139: 次にサイドを取るプレイヤーの決定の確かめは、決定がいるかどうか（``resolution.prize_order_matters``）を読むだけ
-                                 # （docs/prize-order-hc1-fix-v0.139.md 2.3 節）
-                                 "_prize_order_decision_problems"})
+                                 # （docs/prize-order-hc1-fix-v0.139.md 2.3 節）。v0.140: 先にサイドを取るプレイヤーの決定（``resolution.prize_first_needed``）に改めた
+                                 # （docs/prize-order-user-rule-v0.140.md 2 章）
+                                 "_prize_first_decision_problems"})
         trial_names = {
             node.attr
             for function in functions if function.name in ("_decision_has_unstopped_answer", "_trainer_dead_end")
@@ -325,11 +326,12 @@ class DispatchTest(unittest.TestCase):
 
     def test_target_commands(self):
         """解決の基盤が処理するのは、ワザ・番の終わり（``resolution.COMMANDS``）と、再開先が ``resolution.RESUMES``（attack・knock_out・
-        post_knockout・take_prize・prize_order・promote_active）の決定への答え。トレーナーの決定（trainer）・特殊能力の途中の決定（power。v0.42）への答えと、
+        post_knockout・take_prize・prize_first・promote_active）の決定への答え。トレーナーの決定（trainer）・特殊能力の途中の決定（power。v0.42）への答えと、
         範囲外のコマンドは engine.py。"""
         self.assertEqual(set(resolution.COMMANDS), {UseAttack, EndTurn})
-        # v0.139: 次にサイドを取るプレイヤーの決定（prize_order。docs/prize-order-hc1-fix-v0.139.md 2.3 節）
-        self.assertEqual(resolution.RESUMES, {"attack", "knock_out", "post_knockout", "take_prize", "prize_order", "promote_active"})
+        # v0.139: 次にサイドを取るプレイヤーの決定（prize_order。docs/prize-order-hc1-fix-v0.139.md 2.3 節）。v0.140: 先にサイドを取るプレイヤーの決定 prize_first に改めた
+        # （docs/prize-order-user-rule-v0.140.md 2 章。prize_order は decisions.RETIRED_DECISIONS）
+        self.assertEqual(resolution.RESUMES, {"attack", "knock_out", "post_knockout", "take_prize", "prize_first", "promote_active"})
         self.assertEqual(engine.DECISION_RESUMES, resolution.RESUMES | {"trainer", "power", "stadium", "reaction"})  # v0.57: スタジアムの効果の途中の決定（stadium）。v0.86: 反応（reaction）
         for command in (UseAttack, EndTurn):
             self.assertIs(engine._HANDLERS[command], resolution.handle)

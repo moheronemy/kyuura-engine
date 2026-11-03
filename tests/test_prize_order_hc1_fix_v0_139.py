@@ -1,14 +1,16 @@
 """v0.139（docs/prize-order-hc1-fix-v0.139.md）: 同時のきぜつでサイドを取る順番（2 章）と、HC1 の止める範囲（3 章）の修正。
 
-サイドを取る順番: 両方がサイドを取り、どちらかのサイドにおもてのカードがあるとき、番のプレイヤーが次に取るプレイヤーを選ぶ（決定 ``prize_order``。p.325）。
-どのサイドもうらなら v0.2f の正規化（番のプレイヤーから）のまま（決定を出さない）。
+サイドを取る順番: v0.139 は、両方がサイドを取り、どちらかのサイドにおもてのカードがあるとき、番のプレイヤーが次に取るプレイヤーを 1 枚ごとに選ぶ（決定 ``prize_order``）とした。
+v0.140 の利用者の指定（docs/prize-order-user-rule-v0.140.md）で、両方が取るときはいつも先に取るプレイヤーを 1 回選び、そのプレイヤーがまとめて取る（決定 ``prize_first``）に改めたので、
+v0.139 の順番のテスト（``LegalPrizeOrderTest``・``PartialFaceUpTest``・``SuddenDeathPrizeOrderTest``）は tests/test_prize_order_user_rule_v0_140.py に移した（今の規約で書き直した）。
+この file には、盤面を作る関数（ほかのテスト・検証スクリプトが使う）と HC1 のテストを残す。
 
 HC1: 「はがしてすてる」（トラッシュが条件か効果か決められない）ワザを、p.309 の手順 4 のコイン（すなかけなど・［はんこう］）があるときに使うなら、こんらん・ベイビィポケモンの
 ルールのコインと同じく、宣言を受け付けずに止める（``UNRESOLVED_DISCARD_ENERGY_TIMING``。コインの前。状態・乱数・ログを変えない）。
 
 再現の種類:
-- ``LegalPrizeOrderTest``: new_game(seed=473) からの合法な操作の列（固定。seed を選び直さない）
-- ``PartialFaceUpTest``・``SuddenDeathPrizeOrderTest``: 盤面を直接作った状態（``build_test_state``。おもてにするのは ``zones.reveal_prize``／ロケット団参上!を使う合法なコマンド）
+- ``legal_double_knockout``: new_game(seed=473) からの合法な操作の列（固定。seed を選び直さない）
+- ``partial_board``: 盤面を直接作った状態（``build_test_state``。おもてにするのは ``zones.reveal_prize``）
 - ``LegalHc1Test``: new_game(seed=0) からの合法な操作の列（ミュウツー対サンド。seed は 0 から順に試して、この操作の列が通る最初のもの）
 - ``ConstructedHc1Test``: 盤面を直接作った状態から、相手の合法なワザ（すなかけ・えんまく）→ 自分のワザ。［はんこう］は補助関数だけ（HC1 のワザを使う［はんこう］のポケモンは作っていない）
 """
@@ -19,13 +21,11 @@ import pickle
 import unittest
 
 from kyuura_engine import (
-    EngineError,
     UnsupportedError,
     apply_command,
     check_invariants,
     expand_decklist,
     new_game,
-    observe,
     state_to_dict,
     visible_log,
 )
@@ -34,14 +34,12 @@ from kyuura_engine.commands import (
     EndTurn,
     PlayTrainer,
     ResolveDecision,
-    TakePrize,
     UseAttack,
 )
 from kyuura_engine.persistent import attack_coin_checks
 from kyuura_engine.resolution import PREFLIGHT_MODES
 from kyuura_engine.resolution.programs import attack_step4_coin
 from kyuura_engine.rng import rng_fingerprint
-from kyuura_engine.state import Phase
 from kyuura_engine.zones import reveal_prize
 from tests.helpers import (
     ABRA,
@@ -62,7 +60,6 @@ from tests.helpers import (
     RATTATA,
     SABRINAS_ABRA,
     SANDSHREW,
-    SCYTHER,
     WATER,
     H,
     T,
@@ -113,128 +110,6 @@ def answer(state, d, choice):
     return new
 
 
-class LegalPrizeOrderTest(unittest.TestCase):
-    """new_game からの合法な操作で、ロケット団参上!のあと両方がきぜつする（全部のサイドがおもて）。"""
-
-    @classmethod
-    def setUpClass(cls):
-        cls.state = legal_double_knockout()
-        cls.plain = legal_double_knockout(rocket=False)
-
-    def test_turn_player_chooses_the_order(self):
-        state = self.state
-        self.assertEqual(check_invariants(state), [])
-        d = state.decision
-        self.assertEqual((d.kind, d.player, d.options, d.resume, state.phase), ("prize_order", 0, (0, 1), "prize_order", Phase.DECISION))
-        self.assertEqual(d.context_value("remaining"), (0, 1))
-        self.assertEqual(state.current_player, 0)
-        # 決めるプレイヤーには選べるもの（プレイヤーの番号）だけ。相手には種類と数だけ。どちらにもカードの情報はない
-        mine, theirs = observe(state, 0)["decision"], observe(state, 1)["decision"]
-        self.assertEqual(mine["options"], [{"value": 0}, {"value": 1}])
-        self.assertEqual(mine["meaning"], "number")
-        self.assertNotIn("options", theirs)
-        # まだだれもサイドを取っていない
-        self.assertEqual(takes_seen(state, 0) + takes_seen(state, 1), [])
-
-    def test_face_down_prizes_keep_the_normalized_order(self):
-        """ロケット団参上!を使わない同じ対戦（すべてうら）: 決定を出さず、番のプレイヤーから（v0.2f と同じ）。後に取るプレイヤーには、先に取られたカードが見えない。"""
-        state = self.plain
-        d = state.decision
-        self.assertEqual((d.kind, d.player, d.context_value("remaining")), ("take_prize", 0, (1,)))
-        state = answer(state, d, 0)
-        d = state.decision
-        self.assertEqual((d.kind, d.player), ("take_prize", 1))
-        self.assertEqual(takes_seen(state, 1), [(0, None)])
-
-    def run_order(self, first, pick):
-        """番のプレイヤーが ``first`` を先にする。各サイドの決定の時点で、決めるプレイヤーに見えている take_prize と相手のおもてのサイドを記録する。"""
-        state = answer(self.state, self.state.decision, first)
-        seen = []
-        while state.decision is not None and state.decision.kind == "take_prize":
-            d = state.decision
-            view = observe(state, d.player)
-            seen.append({"player": d.player, "takes": takes_seen(state, d.player),
-                         "opponent_face_up": [c["card"] for c in view["players"][1 - d.player]["prizes"]["face_up"]]})
-            state = answer(state, d, pick(state, d, view))
-        return state, seen
-
-    def test_later_player_sees_the_earlier_take(self):
-        before = {p: tuple(self.state.players[p].prizes) for p in (0, 1)}
-        for first in (0, 1):
-            with self.subTest(first=first):
-                state, seen = self.run_order(first, lambda s, d, v: 0)
-                later = 1 - first
-                self.assertEqual([s["player"] for s in seen], [first, later])
-                self.assertEqual(seen[0]["takes"], [])  # 先に取るプレイヤーは、相手の取ったカードの情報を持たない
-                taken = before[first][0]
-                self.assertEqual(seen[1]["takes"], [(first, taken)])  # 後に取るプレイヤーには、先に取られたおもてのカードが見える
-                self.assertNotIn(taken, seen[1]["opponent_face_up"])
-                self.assertIn(taken, self.state.face_up_prizes)  # 取ったのはおもてのカード（だから見える）
-                self.assertEqual(state.decision.kind, "promote_active")  # そのあとはバトル場に出す（番でないプレイヤーから。v0.2f と同じ）
-                self.assertEqual(state.decision.player, 1)
-
-    def test_information_can_change_the_later_choice(self):
-        """後に取るプレイヤーが、先に取られたカードを見てから選び方を変えられる例（この seed の P1 のサイドはすべて水なので、変えられるのは P0）。
-        P0 の選び方: 「P1 が取ったカードが見えていればおもてのロケット団参上!を取る、見えていなければ位置 0」。P1 を先にすると P0 はそれを見て選び、P0 を先にすると見ていない。"""
-        prizes = self.state.players[0].prizes
-        rocket = next(i for i, u in enumerate(prizes) if _cid(self.state, u) == HERE_COMES_TEAM_ROCKET)
-        self.assertNotEqual(_cid(self.state, prizes[0]), HERE_COMES_TEAM_ROCKET, "盤面の前提: P0 のサイドの位置 0 はロケット団参上!ではない")
-
-        def pick(state, d, view):
-            if d.player == 1:
-                return 0
-            saw = any(player == 1 and card is not None for player, card in takes_seen(state, 0))
-            return rocket if saw else 0
-
-        hands = {}
-        for first in (0, 1):
-            state, _ = self.run_order(first, pick)
-            hands[first] = sorted(_cid(state, u) for u in state.players[0].hand)
-        self.assertNotEqual(hands[0], hands[1])
-        self.assertEqual(hands[1].count(HERE_COMES_TEAM_ROCKET) - hands[0].count(HERE_COMES_TEAM_ROCKET), 1)
-
-    def test_same_choices_give_the_same_board(self):
-        """同じ位置を選べば、順番によらず場・手札・サイド・乱数は同じ（違うのはログの順番と決定の番号）。"""
-        results = [self.run_order(first, lambda s, d, v: len(d.options) - 1)[0] for first in (0, 1)]
-        a, b = (full(s) for s in results)
-        for key in ("players", "phase", "turn_number", "current_player", "result", "rng_state_sha256", "face_up_prizes"):
-            self.assertEqual(a.get(key), b.get(key), key)
-
-    def test_invalid_answers_change_nothing(self):
-        state = self.state
-        d = state.decision
-        for command, code in ((ResolveDecision(1, d.id, (0,)), "NOT_YOUR_DECISION"), (ResolveDecision(0, d.id + 1, (0,)), "WRONG_DECISION"),
-                              (ResolveDecision(0, d.id, (2,)), "INVALID_CHOICE"), (ResolveDecision(0, d.id, ()), "INVALID_CHOICE_COUNT"),
-                              (ResolveDecision(0, d.id, (0, 1)), "INVALID_CHOICE_COUNT"), (TakePrize(0, 0), "WRONG_PHASE"), (EndTurn(0), "WRONG_PHASE")):
-            with self.subTest(command=command):
-                before, fingerprint, log = full(state), rng_fingerprint(state.rng), len(state.log)
-                with self.assertRaises(EngineError) as ctx:
-                    apply_command(state, command)
-                self.assertEqual(ctx.exception.code, code)
-                self.assertEqual((full(state), rng_fingerprint(state.rng), len(state.log)), (before, fingerprint, log))
-
-    def test_no_randomness_and_save_restore(self):
-        state = self.state
-        fingerprint = rng_fingerprint(state.rng)
-        restored = pickle.loads(pickle.dumps(state))
-        self.assertEqual(full(restored), full(state))
-        a, _ = self.run_order(1, lambda s, d, v: 0)
-        self.assertEqual(rng_fingerprint(a.rng), fingerprint)  # 順番の決定・サイドは乱数を使わない
-        # 復元した状態から同じ答えで続けると、同じ結果
-        b = answer(restored, restored.decision, 1)
-        while b.decision is not None and b.decision.kind == "take_prize":
-            b = answer(b, b.decision, 0)
-        self.assertEqual(full(a), full(b))
-        # 決定を待つ途中（2 人目のサイドの前）でも保存・復元できる
-        first = answer(state, state.decision, 1)
-        mid = answer(first, first.decision, 0)
-        self.assertEqual(mid.decision.kind, "take_prize")
-        self.assertEqual(full(pickle.loads(pickle.dumps(mid))), full(mid))
-        self.assertEqual(state_to_dict(state, format_version=34)["decision"]["kind"], "prize_order")
-        with self.assertRaises(ValueError):
-            state_to_dict(state, format_version=20)  # おもてのサイドを表せない形式（v0.63 から 21 以上）
-
-
 def partial_board(*, reveal_owner, reveal_position=1, prizes=(3, 3), rocket_in_hand=False):
     """盤面を直接作った状態: P0（番）のコイル（雷 2）と P1 のコラッタ。どちらもベンチに 1 匹。``reveal_owner`` のサイドの 1 枚だけをおもてにする（カードめくりゲームと同じ記録）。"""
     hand = [HERE_COMES_TEAM_ROCKET] if rocket_in_hand else []
@@ -246,88 +121,6 @@ def partial_board(*, reveal_owner, reveal_position=1, prizes=(3, 3), rocket_in_h
     if reveal_owner is not None:
         reveal_prize(state, reveal_owner, reveal_position, trainer=0)
     return state
-
-
-class PartialFaceUpTest(unittest.TestCase):
-    """おもてのカードが一方のサイドの 1 枚だけ（構築した盤面）。うらのサイドの中身は、順番の決定でも、取ったあとでも漏れない。"""
-
-    def test_one_face_up_card_is_enough_and_face_down_cards_stay_hidden(self):
-        for owner in (0, 1):
-            with self.subTest(owner=owner):
-                state = apply_command(partial_board(reveal_owner=owner), UseAttack(0, SELFDESTRUCT))
-                self.assertEqual(check_invariants(state), [])
-                d = state.decision
-                self.assertEqual((d.kind, d.player, d.options), ("prize_order", 0, (0, 1)))
-                for first in (0, 1):
-                    s = answer(state, d, first)
-                    s = answer(s, s.decision, 0)  # 先のプレイヤーは位置 0（うら）を取る
-                    later = 1 - first
-                    self.assertEqual(s.decision.player, later)
-                    self.assertEqual(takes_seen(s, later), [(first, None)])  # うらのカードは、後のプレイヤーに見えない
-                    view = observe(s, later)
-                    self.assertTrue(all(o.get("card_id") is None or s.players[later].prizes[o["value"]] in s.face_up_prizes
-                                        for o in view["decision"]["options"]))
-
-    def test_two_knockouts_ask_again(self):
-        """じばくで相手のバトル場とダメージののった控え（コラッタ 20）、自分のコイルがきぜつする（P0 が 2 枚・P1 が 1 枚。並び (0, 0, 1)）。P1 のサイドの 1 枚がおもて。
-        P0 を先にすると、1 枚取ったあとまだ両方が残り、おもてのカードもあるので、もう一度聞く。P1 を先にすると、残りは P0 だけなので聞かない。"""
-        def knockouts():
-            state = build_test_state([
-                {"active": {"card": MAGNEMITE, "energy": [LIGHTNING, LIGHTNING]}, "bench": [MAGNEMITE], "prizes": [LIGHTNING, RATTATA, WATER], "deck": [LIGHTNING] * 5},
-                {"active": RATTATA, "bench": [{"card": RATTATA, "damage": 20}, RATTATA], "prizes": [WATER, RATTATA, LIGHTNING], "deck": [WATER] * 5},
-            ])
-            reveal_prize(state, 1, 1, trainer=0)
-            return apply_command(state, UseAttack(0, SELFDESTRUCT))
-
-        expected = {0: [("prize_order", 0, (0, 0, 1)), ("take_prize", 0, (0, 1)), ("prize_order", 0, (0, 1)), ("take_prize", 0, (1,)), ("take_prize", 1, ())],
-                    1: [("prize_order", 0, (0, 0, 1)), ("take_prize", 1, (0, 0)), ("take_prize", 0, (0,)), ("take_prize", 0, ())]}
-        for first, sequence in expected.items():
-            with self.subTest(first=first):
-                state, seen = knockouts(), []
-                while state.decision is not None and state.decision.kind in ("prize_order", "take_prize"):
-                    d = state.decision
-                    seen.append((d.kind, d.player, d.context_value("remaining")))
-                    state = answer(state, d, first if len(seen) == 1 else d.options[0])
-                self.assertEqual(seen, sequence)
-                self.assertEqual((len(state.players[0].hand), len(state.players[1].hand)), (2, 1))
-                self.assertEqual((state.decision.kind, state.decision.player), ("promote_active", 1))
-
-    def test_no_face_up_card_no_decision(self):
-        state = apply_command(partial_board(reveal_owner=None), UseAttack(0, SELFDESTRUCT))
-        self.assertEqual((state.decision.kind, state.decision.player, state.decision.context_value("remaining")), ("take_prize", 0, (1,)))
-
-    def test_one_player_takes_no_decision(self):
-        """一方だけがサイドを取るなら、おもてのカードがあっても順番の決定はない: 相手のストライク（HP 70）はじばくの 40 で残り、自分のコイルだけがきぜつする。"""
-        state = build_test_state([
-            {"active": {"card": MAGNEMITE, "energy": [LIGHTNING, LIGHTNING]}, "bench": [MAGNEMITE], "prizes": 3, "deck": [LIGHTNING] * 5},
-            {"active": SCYTHER, "bench": [RATTATA], "prizes": [WATER, RATTATA, LIGHTNING], "deck": [WATER] * 5},
-        ])
-        reveal_prize(state, 1, 0, trainer=0)
-        state = apply_command(state, UseAttack(0, SELFDESTRUCT))
-        self.assertEqual(check_invariants(state), [])
-        d = state.decision
-        self.assertEqual((d.kind, d.player, d.context_value("remaining")), ("take_prize", 1, ()))
-
-
-class SuddenDeathPrizeOrderTest(unittest.TestCase):
-    """両方が最後のサイドを同時に取る（構築した盤面。サイド 1 枚ずつ。ロケット団参上!は合法なコマンド）: 順番の決定のあと、どちらの順でもサドン・デス（p.311・p.324）。"""
-
-    def test_both_orders_reach_sudden_death(self):
-        state = partial_board(reveal_owner=None, prizes=(1, 1), rocket_in_hand=True)
-        state = apply_command(state, PlayTrainer(0, state.players[0].hand[0]))
-        state = apply_command(state, UseAttack(0, SELFDESTRUCT))
-        d = state.decision
-        self.assertEqual((d.kind, d.player), ("prize_order", 0))
-        outcomes = []
-        for first in (0, 1):
-            s = answer(state, d, first)
-            self.assertEqual(s.decision.player, first)
-            s = answer(s, s.decision, 0)
-            self.assertEqual(s.decision.player, 1 - first)
-            self.assertEqual(s.result, None)  # 1 人目が取り終えても判定しない（v0.2f 2 章 #5）
-            s = answer(s, s.decision, 0)
-            outcomes.append((s.phase, s.result.outcome))
-        self.assertEqual(outcomes, [(Phase.SUDDEN_DEATH, "sudden_death")] * 2)
 
 
 # ---------------------------------------------------------------- HC1（3 章）
