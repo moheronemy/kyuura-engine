@@ -519,7 +519,7 @@ def _chosen_attack(state: GameState, d, value: int) -> tuple[str, int] | None:
 def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
     """``viewer``（0・1・``None`` は観戦者）に見える、その時点の盤面（モジュールの説明の範囲）。状態を変えない。
 
-    v0.140: 保留中の決定の再開先をこの版が扱えない（前の版の決定・後の版の状態の写し）なら、観測を作らずに ``UnsupportedError``（``UNSUPPORTED_DECISION``。
+    v0.140: 保留中の決定の再開先をこの版が扱えない（前の版の決定・この版が知らない再開先）なら、観測を作らずに ``UnsupportedError``（``UNSUPPORTED_DECISION``。
     ``engine.supported_decision_error``。コマンドの入口と同じ確かめ）。v0.139 では、前の版の決定の種類で ``ValueError`` になる場合があった。知っている再開先の知らない種類は、今までどおり
     ``OPTION_MEANINGS`` の ``ValueError``"""
     _check_viewer(viewer)

@@ -836,10 +836,10 @@ def supported_decision_error(state: GameState) -> UnsupportedError | None:
 def _require_supported_decision(state: GameState, command) -> None:
     """v0.140: コマンドを処理する前（状態を複製する前）の、保留中の決定の確かめ。
 
-    - この版が扱えない再開先（前の版の決定・後の版の状態の写し）: どのコマンドも ``UnsupportedError``（``UNSUPPORTED_DECISION``）。答えを試してから内部エラーを捕まえる
+    - この版が扱えない再開先（前の版の決定・この版が知らない再開先）: どのコマンドも ``UnsupportedError``（``UNSUPPORTED_DECISION``）。答えを試してから内部エラーを捕まえる
       方式にしない（処理の前に拒否する）
     - 扱える再開先で、決定への答え（``ResolveDecision``・``TakePrize``・``PromoteActive``）のときは、決定の形の不変条件（``_decision_problems``）を処理の前に確かめ、問題があれば
-      ``StateIntegrityError``（続けるのに要る情報が欠ける・合わない状態）
+      ``StateIntegrityError``（続けるのに要る情報が欠ける・合わない状態。欠けるだけなら、前の版で正しく作った写しのこともある。どちらかは状態から分からない）
     どちらも入力の状態・乱数・ログを変えない。"""
     error = supported_decision_error(state)
     if error is not None:
@@ -5887,11 +5887,13 @@ def _prize_first_decision_problems(state: GameState, d, remaining) -> list[str]:
 
 def _prize_first_marker_problems(d, queue: tuple[int, ...]) -> list[str]:
     """v0.140: サイドを取る決定の、先に取るプレイヤーの記録（``context`` の ``"first"``）と並び（決定するプレイヤーと残り）。両方が取る並びは、先に取るプレイヤーを選んだあとにだけあり、
-    そのプレイヤーの分がすべて先にある（USER-PRIZE-ORDER-PER-PLAYER）。記録のない両方の並び（v0.139 で 1 枚ごとに選んだあとの状態など）は、この版では続けない（壊れた状態として扱う）。"""
+    そのプレイヤーの分がすべて先にある（USER-PRIZE-ORDER-PER-PLAYER）。記録のない両方の並びは、続けるのに必要な情報（先に取るプレイヤー）が足りないので、この版では続けない。
+    v0.138・v0.139 が正しく作った同時のきぜつの途中の状態もこの形だが、状態に作った版の記録はなく、書きかえた状態と区別できないので、前の版の状態とも壊れた状態とも決めつけない
+    （v0.141。docs/prize-order-v0140-cleanup-v0.141.md 4 章）。記録が合わない並び（記録があるのに、先に取るプレイヤーの分をまとめていない・値が正しくない）は、矛盾する状態。"""
     first = d.context_value("first")
     if first is None:
         if len(set(queue)) >= 2:
-            return [f"両方がサイドを取る並び {queue} に、先に取るプレイヤーの記録（first）がない（この版では作らない。v0.139 の状態など）"]
+            return [f"両方がサイドを取る並び {queue} に、先に取るプレイヤーの記録（first）がない（続けるのに必要な情報が不足している。どの版で作った状態かは、状態から分からない）"]
         return []
     if first not in PLAYERS:
         return [f"先にサイドを取るプレイヤーの記録 {first!r} が正しくない"]
