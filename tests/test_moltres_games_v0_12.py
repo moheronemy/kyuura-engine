@@ -211,7 +211,11 @@ def play_game(seed, *, cure=True, max_steps=10000):
         problems = check_invariants(new)
         if problems:
             raise AssertionError(problems)
-        observed["accepted"] += 1
+        if state.decision is not None and state.decision.kind == "prize_first":
+            # v0.141（docs/prize-order-v0140-cleanup-v0.141.md 3 章）: 先にサイドを取るプレイヤーの決定（prize_first。v0.140）への答えは別に数える（accepted は v0.139 までと同じ操作を数える）
+            observed["prize_first_answered"] += 1
+        else:
+            observed["accepted"] += 1
         observe(state, new, command, observed, returned)
         commands.append(command)
         state = new
@@ -344,8 +348,9 @@ def count_events(state):
 # 使ったポケモンが HP 以上 6 回。そのダメージで「はんげき」16 回）。効果が期限で消えた 170 回・きぜつで消えた 2 回（残りは対戦の終わり）。
 # W24（UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT）で止めたワザ 1 回。
 EXPECTED_COUNTS = {
-    # v0.140（docs/prize-order-user-rule-v0.140.md 7 章）: 両方がサイドを取る 1 回の場面ごとに、先に取るプレイヤーの決定（prize_first）への答えが 1 つ増えた（12266 → 12267）。ほかの数は同じ
-    "accepted": 12267, "attack_ほのおのかべ": 199, "counterattack_after_retaliation": 16, "decisive": 100, "knock_out_rockets_moltres": 79,
+    # v0.140 で accepted が 12266 → 12267（prize_first の答え 1 回）になった。v0.141（docs/prize-order-v0140-cleanup-v0.141.md 3 章）からその答えを prize_first_answered に分けて数え、
+    # accepted は v0.139 までの値にもどす（基点 d631038 の木で同じ seed の対戦を走らせ、答えを除いた操作の列・ログ・ほかの数が同じことを確かめた）
+    "accepted": 12266, "prize_first_answered": 1, "attack_ほのおのかべ": 199, "counterattack_after_retaliation": 16, "decisive": 100, "knock_out_rockets_moltres": 79,
     "knock_out_rockets_moltres_poison": 3, "knock_out_simultaneous": 2, "persistent_effect_skipped": 1, "phase_game_over": 100,
     "post_knockout_power_declared": 21, "post_knockout_power_declined": 11, "rebirth_blocked_condition": 34, "rebirth_blocked_gas": 4,
     "rebirth_card_played_again": 19, "rebirth_not_offered_game_over": 9, "rebirth_offered": 32, "rejected": 1388,

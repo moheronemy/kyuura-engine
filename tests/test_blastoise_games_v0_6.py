@@ -196,7 +196,11 @@ def play_game(seed, *, cure=True, max_steps=8000):
         problems = check_invariants(new)
         if problems:
             raise AssertionError(problems)
-        observed["accepted"] += 1
+        if state.decision is not None and state.decision.kind == "prize_first":
+            # v0.141（docs/prize-order-v0140-cleanup-v0.141.md 3 章）: 先にサイドを取るプレイヤーの決定（prize_first。v0.140）への答えは別に数える（accepted は v0.139 までと同じ操作を数える）
+            observed["prize_first_answered"] += 1
+        else:
+            observed["accepted"] += 1
         p = state.players[state.current_player] if state.current_player in (0, 1) else None
         if isinstance(command, UsePokemonPower) and new.log[-1]["kind"] == "power_attach_energy":
             where = lambda pid: "active" if p.active.pokemon_id == pid else "bench"  # noqa: E731
@@ -477,8 +481,9 @@ class GoldenBlastoiseGameTest(unittest.TestCase):
 # 1 つの番の中の 2 回以上が 37 番・最大 5 回、通常の操作のあとの使用 105 回・通常の操作と同じ番 65 番、進化したその番のカメックスで
 # 82 回）、R13 で止めた通常の操作 17 回、拒否 306 回（R13 の 17 回を含む）、あまごいでつけたエネルギーがきぜつでトラッシュされた 21 回
 EXPECTED_COUNTS = {
-    # v0.140（docs/prize-order-user-rule-v0.140.md 7 章）: 両方がサイドを取る 1 回の場面ごとに、先に取るプレイヤーの決定（prize_first）への答えが 1 つ増えた（4872 → 4873）。ほかの数は同じ
-    "accepted": 4873, "attack_あわ": 165, "attack_かみつく": 65, "attack_からにこもる": 46, "attack_ハイドロポンプ": 186, "bubble_paralysis": 74,
+    # v0.140 で accepted が 4872 → 4873（prize_first の答え 1 回）になった。v0.141（docs/prize-order-v0140-cleanup-v0.141.md 3 章）からその答えを prize_first_answered に分けて数え、
+    # accepted は v0.139 までの値にもどす（基点 d631038 の木で同じ seed の対戦を走らせ、答えを除いた操作の列・ログ・ほかの数が同じことを確かめた）
+    "accepted": 4872, "prize_first_answered": 1, "attack_あわ": 165, "attack_かみつく": 65, "attack_からにこもる": 46, "attack_ハイドロポンプ": 186, "bubble_paralysis": 74,
     "evolve_to_PMCG1-027": 128, "evolve_to_PMCG1-030": 38, "evolve_to_PMCG1-032": 79,
     "halted_UNRESOLVED_MULLIGAN_COMPENSATION": 3, "hydro_pump_extra_0": 39, "hydro_pump_extra_1": 27, "hydro_pump_extra_2": 120,
     "knock_out_blastoise": 26, "knock_out_with_rain_dance_energy": 21, "max_rain_dances_in_a_turn": 5, "phase_game_over": 77,

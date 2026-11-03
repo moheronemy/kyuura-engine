@@ -169,7 +169,11 @@ def play_game(seed, *, cure=True, max_steps=10000):
         problems = check_invariants(new)
         if problems:
             raise AssertionError(problems)
-        observed["accepted"] += 1
+        if state.decision is not None and state.decision.kind == "prize_first":
+            # v0.141（docs/prize-order-v0140-cleanup-v0.141.md 3 章）: 先にサイドを取るプレイヤーの決定（prize_first。v0.140）への答えは別に数える（accepted は v0.139 までと同じ操作を数える）
+            observed["prize_first_answered"] += 1
+        else:
+            observed["accepted"] += 1
         if isinstance(command, (UseAttack, ResolveDecision)):
             observe_counter(state, new, command, observed)
         commands.append(command)
@@ -255,8 +259,9 @@ def count_events(state):
 # ポケモンをきぜつさせた 11 回・そのダメージできぜつしたカイリキーの「はんげき」2 回。与えなかった（相手がすでに HP 以上）0 回・ベンチの
 # カイリキー 0 回（ベンチにダメージを与えるワザが対応カードにない））。C18 で止めたワザ 1 回。「はんげき」の宣言の拒否 40 回。
 EXPECTED_COUNTS = {
-    # v0.140（docs/prize-order-user-rule-v0.140.md 7 章）: 両方がサイドを取る 3 回の場面ごとに、先に取るプレイヤーの決定（prize_first）への答えが 1 つ増えた（5124 → 5127）。ほかの数は同じ
-    "accepted": 5127, "attack_からてチョップ": 21, "attack_けたぐり": 181, "attack_じごくぐるま": 49, "attack_ちきゅうなげ": 114,
+    # v0.140 で accepted が 5124 → 5127（prize_first の答え 3 回）になった。v0.141（docs/prize-order-v0140-cleanup-v0.141.md 3 章）からその答えを prize_first_answered に分けて数え、
+    # accepted は v0.139 までの値にもどす（基点 d631038 の木で同じ seed の対戦を走らせ、答えを除いた操作の列・ログ・ほかの数が同じことを確かめた）
+    "accepted": 5124, "prize_first_answered": 3, "attack_からてチョップ": 21, "attack_けたぐり": 181, "attack_じごくぐるま": 49, "attack_ちきゅうなげ": 114,
     "counter_from_knocked_out_machamp": 2, "counterattack": 67, "counterattack_damage_total": 670, "counterattack_knock_out": 11,
     "decisive": 79, "evolve_to_PMCG1-003": 8, "evolve_to_PMCG1-008": 40, "evolve_to_PMCG1-055": 99, "evolve_to_PMCG1-057": 50,
     "evolve_to_PMCG2-007": 4, "evolve_to_PMCG3-007": 12, "evolve_to_PMCG3-030": 17, "halted_UNRESOLVED_MULLIGAN_COMPENSATION": 1,
