@@ -214,7 +214,10 @@ class DependencyTest(unittest.TestCase):
                                  "_play_basic_to_bench",
                                  # v0.132: ［ちえくらべ］の段（手札から出したあとの続き・答えの続き・使わない答えの続きの確かめ）は設定（``resolution.Context``）を渡すだけ
                                  # （docs/slowking-mind-games-v0.132.md 5 章）
-                                 "_continue_trainer_use", "_resume_trainer_reaction", "_trainer_reaction_decline_check"})
+                                 "_continue_trainer_use", "_resume_trainer_reaction", "_trainer_reaction_decline_check",
+                                 # v0.139: 次にサイドを取るプレイヤーの決定の確かめは、決定がいるかどうか（``resolution.prize_order_matters``）を読むだけ
+                                 # （docs/prize-order-hc1-fix-v0.139.md 2.3 節）
+                                 "_prize_order_decision_problems"})
         trial_names = {
             node.attr
             for function in functions if function.name in ("_decision_has_unstopped_answer", "_trainer_dead_end")
@@ -322,10 +325,11 @@ class DispatchTest(unittest.TestCase):
 
     def test_target_commands(self):
         """解決の基盤が処理するのは、ワザ・番の終わり（``resolution.COMMANDS``）と、再開先が ``resolution.RESUMES``（attack・knock_out・
-        post_knockout・take_prize・promote_active）の決定への答え。トレーナーの決定（trainer）・特殊能力の途中の決定（power。v0.42）への答えと、
+        post_knockout・take_prize・prize_order・promote_active）の決定への答え。トレーナーの決定（trainer）・特殊能力の途中の決定（power。v0.42）への答えと、
         範囲外のコマンドは engine.py。"""
         self.assertEqual(set(resolution.COMMANDS), {UseAttack, EndTurn})
-        self.assertEqual(resolution.RESUMES, {"attack", "knock_out", "post_knockout", "take_prize", "promote_active"})
+        # v0.139: 次にサイドを取るプレイヤーの決定（prize_order。docs/prize-order-hc1-fix-v0.139.md 2.3 節）
+        self.assertEqual(resolution.RESUMES, {"attack", "knock_out", "post_knockout", "take_prize", "prize_order", "promote_active"})
         self.assertEqual(engine.DECISION_RESUMES, resolution.RESUMES | {"trainer", "power", "stadium", "reaction"})  # v0.57: スタジアムの効果の途中の決定（stadium）。v0.86: 反応（reaction）
         for command in (UseAttack, EndTurn):
             self.assertIs(engine._HANDLERS[command], resolution.handle)
