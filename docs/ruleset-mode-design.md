@@ -165,6 +165,9 @@ UQ-MIND-GAMES-OPTIONAL・UQ-STATED-COUNT-SHORT・UQ-BILINGUAL-NAME-GLOSS など�
 - **数え上げが終わっていない**: 棚卸しの 3 件は、研究の対応表の `implementation_assumptions_with_issue`（kyuura の論点のある仮定）だけです。版の文書には、ほかにも「実装上の仮定」の記録が
   あります（78 の文書に語がある。例: v0.2f のサイドを取る順番の正規化）。基礎集合を確定するには、これらの数え上げが要ります（**[未決 DEC-BASELINE-CENSUS]**）。数え上げていないものを、
   入れる・入れないのどちらにも数えていません。
+- **数え上げの記録（追記）**: [implementation-assumptions.md](implementation-assumptions.md)（構造化した台帳は [implementation-assumptions.json](implementation-assumptions.json)）に、
+  文書・コード・テストを横断した一覧を作りました。上の 5 件と利用者指定の 9 規約も、その一覧の項目に対応付けています。一覧に載せたことは基礎集合に入れたことではなく、
+  採否は DEC-BASELINE-NONUSER・DEC-CARD-DATA-CORRECTIONS で決めます（この文書の 4.2 節の表・台帳の区分は変えていない）。
 
 今回は挙動を変えていません。どの記録も、今のエンジンでは両モードとも今のままはたらきます。
 

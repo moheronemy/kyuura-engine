@@ -65,6 +65,9 @@ DEC-EXISTING-USER-SPECS は、利用者指定の部分が合意済みで、残�
   数え上げは文書と台帳の作業で、挙動は変えない。
 - **影響**: 台帳の `conventions` が増える。厳密の集合の定義が確定するまで、比べ・保存の識別（DEC-RULESET-IDENTITY）は「今の版のエンジンが暗に採っている集合」になる。
 - **依存**: なし。
+- **数え上げの記録（判断の材料。判断はしていない）**: [implementation-assumptions.md](implementation-assumptions.md)・[implementation-assumptions.json](implementation-assumptions.json)。
+  文書・コード・テストの候補を整理し、項目ごとに分類・状態・群・別の扱いの影響を記録した。停止の方針の台帳の `conventions` には加えず、別の台帳にした。18 対象は ID で対応付けている。
+  どの範囲を規約として集合に入れるか（この判断事項の問い）と、各項目の採否（DEC-BASELINE-NONUSER・DEC-CARD-DATA-CORRECTIONS）は未決のまま。
 
 ### DEC-CARD-DATA-CORRECTIONS — データの訂正を、どの層で識別するか
 
