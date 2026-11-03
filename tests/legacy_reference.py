@@ -58,6 +58,14 @@ def input_digest(state, command) -> str:
 
 _WRONG_PHASE = re.compile(r"今は (\S+)。この操作は (.+) のときだけ")
 
+# v0.140（docs/prize-order-user-rule-v0.140.md 7 章）: 利用者の指定（USER-PRIZE-ORDER-ALWAYS-CHOSEN）で、両方がサイドを取るときにいつも先に取るプレイヤーの決定（prize_first）を出す
+# ようになり、旧経路（v0.13）の記録と比べられなくなった対戦（対戦の名前 → 理由）。記録（fixtures/legacy_reference_v0_15.json）は変えない・作り直さない。ここに挙げた対戦は、記録と
+# 比べるかわりに、(1) その決定を通ったこと、(2) 記録と違うこと（同じなら挙げる理由がない）を確かめる。そのほかの差がないことは、基点（d631038）との lockstep で確かめた（文書 7 章）
+RULE_CHANGED_CHAINS: dict[str, str] = {
+    "tests.test_event_kernel_games_v0_14.LockstepGamesTest.test_stress_scenarios_in_both_modes_with_mixed_states:stress:wartortle_mixed:0":
+        "v0.140 USER-PRIZE-ORDER-ALWAYS-CHOSEN: 両方がサイドを取る場面に prize_first の決定が加わり、stress の選び方（乱数）がその決定の答えを選ぶので、そこから先の歩が変わる",
+}
+
 
 def error_outcome(error: EngineError) -> tuple:
     """拒否の結果 ("error", 例外の種類, コード, 理由の文)。``WRONG_PHASE`` の理由の文の段階の名前の並びだけ、名前の順に並べ直す。"""
@@ -151,8 +159,11 @@ class Chain:
         self.label = label
         self.steps = 0
         self._hash = hashlib.sha256()
+        self.saw_prize_first = False
 
     def add(self, state, command, result: tuple) -> None:
+        if state.decision is not None and state.decision.kind == "prize_first":
+            self.saw_prize_first = True  # v0.140: RULE_CHANGED_CHAINS の確かめ
         self._hash.update(json.dumps([input_digest(state, command), list(result)], ensure_ascii=False).encode("utf-8"))
         self.steps += 1
 
@@ -165,6 +176,14 @@ class Chain:
         entry = chains.get(self.label)
         if entry is None:
             raise AssertionError(f"参照データに対戦 {self.label} がない（{HOW}）")
+        if self.label in RULE_CHANGED_CHAINS:
+            if not self.saw_prize_first:
+                raise AssertionError(f"対戦 {self.label} は記録と比べない理由（{RULE_CHANGED_CHAINS[self.label]}）の決定を通らない")
+            if entry == value:
+                raise AssertionError(f"対戦 {self.label} は記録と同じ（RULE_CHANGED_CHAINS から外す）")
+            return
+        if self.saw_prize_first:
+            raise AssertionError(f"対戦 {self.label} が先にサイドを取るプレイヤーの決定を通るのに、RULE_CHANGED_CHAINS にない（比べる意味を確かめて加える）")
         if entry != value:
             raise AssertionError(f"対戦 {self.label} の結果の連なりが旧経路の記録と違う（記録 {entry}、今 {value}）")
 

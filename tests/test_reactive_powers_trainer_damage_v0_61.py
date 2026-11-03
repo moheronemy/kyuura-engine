@@ -223,7 +223,10 @@ class FinalBeamTest(unittest.TestCase):
         knock_outs = [e for e in since(after, offered) if e["kind"] == "knock_out"]
         self.assertEqual({e["player"] for e in knock_outs}, {0, 1})
         audited(self, after)
-        # サイドを取る: 番のプレイヤー（ラッタの持ち主ではなく、きぜつさせたほう）から 1 枚ずつ
+        # サイドを取る: 番のプレイヤー（ラッタの持ち主ではなく、きぜつさせたほう）から 1 枚ずつ。v0.140（docs/prize-order-user-rule-v0.140.md）: その前に、番のプレイヤーが
+        # 先に取るプレイヤーを選ぶ決定（prize_first）がある（ここでは自分 = 番のプレイヤー）
+        self.assertEqual((after.decision.kind, after.decision.player), ("prize_first", after.current_player))
+        after = answer(after, (after.current_player,))
         first = answer(after, (0,))
         second = answer(first, (0,))
         self.assertEqual((len(second.players[0].prizes), len(second.players[1].prizes)), (2, 2))

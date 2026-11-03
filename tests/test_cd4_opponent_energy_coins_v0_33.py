@@ -683,7 +683,8 @@ class OwnBenchDamageTest(unittest.TestCase):
         """自分の控えがきぜつしたら、相手（きぜつしたポケモンの相手側のプレイヤー）がサイドを取る（p.323）。相手の対戦ポケモンもきぜつすれば、1 つのワザ
         による同時のきぜつで、両方が取る。"""
         state = board(self.diglett(), mon(HITMONCHAN, (FIGHTING,), damage=30), bench=(mon(RATTATA, damage=30),), opponent_bench=(RATTATA,))
-        new = play(state, UseAttack(0, 1), [first, first])
+        # v0.140（docs/prize-order-user-rule-v0.140.md）: 両方が取るので、先に取るプレイヤーの決定（prize_first。番のプレイヤーを選ぶ）への答えが 1 つ増える
+        new = play(state, UseAttack(0, 1), [first, first, first])
         knocked = [(e["player"], e["pokemon"]) for e in events(new, len(state.log), "knock_out")]
         self.assertEqual(len(knocked), 2)
         self.assertEqual(sorted(len(p.prizes) for p in new.players), [5, 5])

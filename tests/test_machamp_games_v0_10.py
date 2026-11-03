@@ -255,7 +255,8 @@ def count_events(state):
 # ポケモンをきぜつさせた 11 回・そのダメージできぜつしたカイリキーの「はんげき」2 回。与えなかった（相手がすでに HP 以上）0 回・ベンチの
 # カイリキー 0 回（ベンチにダメージを与えるワザが対応カードにない））。C18 で止めたワザ 1 回。「はんげき」の宣言の拒否 40 回。
 EXPECTED_COUNTS = {
-    "accepted": 5124, "attack_からてチョップ": 21, "attack_けたぐり": 181, "attack_じごくぐるま": 49, "attack_ちきゅうなげ": 114,
+    # v0.140（docs/prize-order-user-rule-v0.140.md 7 章）: 両方がサイドを取る 3 回の場面ごとに、先に取るプレイヤーの決定（prize_first）への答えが 1 つ増えた（5124 → 5127）。ほかの数は同じ
+    "accepted": 5127, "attack_からてチョップ": 21, "attack_けたぐり": 181, "attack_じごくぐるま": 49, "attack_ちきゅうなげ": 114,
     "counter_from_knocked_out_machamp": 2, "counterattack": 67, "counterattack_damage_total": 670, "counterattack_knock_out": 11,
     "decisive": 79, "evolve_to_PMCG1-003": 8, "evolve_to_PMCG1-008": 40, "evolve_to_PMCG1-055": 99, "evolve_to_PMCG1-057": 50,
     "evolve_to_PMCG2-007": 4, "evolve_to_PMCG3-007": 12, "evolve_to_PMCG3-030": 17, "halted_UNRESOLVED_MULLIGAN_COMPENSATION": 1,

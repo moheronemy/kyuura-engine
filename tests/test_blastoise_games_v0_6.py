@@ -477,7 +477,8 @@ class GoldenBlastoiseGameTest(unittest.TestCase):
 # 1 つの番の中の 2 回以上が 37 番・最大 5 回、通常の操作のあとの使用 105 回・通常の操作と同じ番 65 番、進化したその番のカメックスで
 # 82 回）、R13 で止めた通常の操作 17 回、拒否 306 回（R13 の 17 回を含む）、あまごいでつけたエネルギーがきぜつでトラッシュされた 21 回
 EXPECTED_COUNTS = {
-    "accepted": 4872, "attack_あわ": 165, "attack_かみつく": 65, "attack_からにこもる": 46, "attack_ハイドロポンプ": 186, "bubble_paralysis": 74,
+    # v0.140（docs/prize-order-user-rule-v0.140.md 7 章）: 両方がサイドを取る 1 回の場面ごとに、先に取るプレイヤーの決定（prize_first）への答えが 1 つ増えた（4872 → 4873）。ほかの数は同じ
+    "accepted": 4873, "attack_あわ": 165, "attack_かみつく": 65, "attack_からにこもる": 46, "attack_ハイドロポンプ": 186, "bubble_paralysis": 74,
     "evolve_to_PMCG1-027": 128, "evolve_to_PMCG1-030": 38, "evolve_to_PMCG1-032": 79,
     "halted_UNRESOLVED_MULLIGAN_COMPENSATION": 3, "hydro_pump_extra_0": 39, "hydro_pump_extra_1": 27, "hydro_pump_extra_2": 120,
     "knock_out_blastoise": 26, "knock_out_with_rain_dance_energy": 21, "max_rain_dances_in_a_turn": 5, "phase_game_over": 77,

@@ -29,7 +29,7 @@ from kyuura_engine.rng import copy_rng, rng_fingerprint
 
 from tests.helpers import (
     CARD_DATA_COMMIT,
-    with_card_data_commit_before_v0_69,
+    with_card_data_commit_before_v0_69, prize_first_answers, with_prize_first_before_v0_140,
     DEFENDER, PIKACHU_DECK, PIKACHU_DECK_B, PLUSPOWER, coin_events, trainer_policy_command,
 )
 
@@ -174,9 +174,13 @@ class GoldenSuddenDeathGameTest(unittest.TestCase):
 
     def test_seed_9(self):
         state, commands = play_game(9)
-        self.assertEqual((len(commands), state.turn_number, state.phase), (193, 79, Phase.SUDDEN_DEATH))
+        # v0.140（docs/prize-order-user-rule-v0.140.md 7 章）: 両方が最後のサイドを取る場面で、先に取るプレイヤーの決定（prize_first）への答えが 1 つ増えた。固定値は変えず、
+        # その数を除いて比べる（方策は番のプレイヤーを選ぶので、ほかの操作・状態は v0.139 までと同じ）
+        answered = prize_first_answers(new_game(PIKACHU_DECK, PIKACHU_DECK_B, 9), commands)
+        self.assertEqual(answered, 1)
+        self.assertEqual((len(commands) - answered, state.turn_number, state.phase), (193, 79, Phase.SUDDEN_DEATH))
         self.assertEqual(state.result.conditions, ((0, "ALL_PRIZES_TAKEN"), (1, "ALL_PRIZES_TAKEN")))
-        data = full(state)
+        data = with_prize_first_before_v0_140(full(state), answered)
         # v0.69・v0.97: 写しの元を上げた（7d3f4ca・73a1690）。固定値は変えず、写しの元の 2 か所だけを確かめた移行でもどして比べる（tests/helpers.py）
         self.assertEqual(data["card_data"]["commit"], CARD_DATA_COMMIT)
         data = with_card_data_commit_before_v0_69(data)

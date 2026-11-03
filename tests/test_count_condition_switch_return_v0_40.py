@@ -35,7 +35,7 @@ from kyuura_engine import (
 )
 from kyuura_engine import effects as E
 from kyuura_engine.cards import load_card_pool, read_extract
-from kyuura_engine.decisions import BENCH_FROM_DECK, FORCED_SWITCH, PROMOTE_ACTIVE, SELECT_ATTACK, TAKE_PRIZE
+from kyuura_engine.decisions import BENCH_FROM_DECK, FORCED_SWITCH, PROMOTE_ACTIVE, SELECT_ATTACK
 from kyuura_engine.persistent import cannot_attack_while_source_active
 from kyuura_engine.resolution import PREFLIGHT_MODES, programs, v013_checks
 from kyuura_engine.resolution.questions import QUESTIONS
@@ -551,7 +551,8 @@ class ExplosionTest(unittest.TestCase):
         done = attack(state, 0)
         knocked = [done.cards[e["pokemon"]].card_id for e in events(done, since, "knock_out")]
         self.assertEqual(sorted(knocked), sorted([KOFFING, KOFFING, ROCKET_KOFFING]))
-        self.assertEqual((done.decision.kind, done.decision.player), (TAKE_PRIZE, 0))
+        # v0.140（docs/prize-order-user-rule-v0.140.md）: お互いにサイドを取るので、先に番のプレイヤーが先に取るプレイヤーを選ぶ（利用者の指定。v0.139 までは番のプレイヤーから）
+        self.assertEqual((done.decision.kind, done.decision.player, done.decision.context_value("remaining")), ("prize_first", 0, (0, 0, 1)))
 
     def test_counterattack_comes_after_every_damage_element(self):
         """相手の対戦ポケモン（カイリキー。名前は合わない）の「はんげき」は、自分・控えへのダメージをすべてのせたあと（p.89。CR-COUNTERATTACK-TIMING）。"""
