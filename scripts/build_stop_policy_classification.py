@@ -526,6 +526,7 @@ RUNTIME_FAMILY = {
     "UNSUPPORTED_POKEMON_CHECK_CHAR_COINS": "PF-RUNTIME-SEARCH-LIMIT", "UNSUPPORTED_UNBOUNDED_COIN_PREFLIGHT": "PF-RUNTIME-SEARCH-LIMIT",
     "UNSUPPORTED_QUIZ_HEIGHT_WITHOUT_DEX": "PF-RUNTIME-DATA", "UNSUPPORTED_QUIZ_HEIGHT_NOT_AVAILABLE": "PF-RUNTIME-DATA",
     "UNSUPPORTED_HISTORY_DAMAGE_PLACE_UNKNOWN": "PF-RUNTIME-DATA", "UNSUPPORTED_SUDDEN_DEATH_INITIAL_DECK": "PF-RUNTIME-DATA",
+    "UNSUPPORTED_DECISION": "PF-RUNTIME-DATA",  # v0.140: この版が扱えない決定の再開先（後の版・前の版の状態の写し。docs/prize-order-user-rule-v0.140.md 3 章）
     "UNRESOLVED_RULING": "PF-RUNTIME-GENERIC",
 }
 
@@ -767,6 +768,15 @@ CONVENTIONS_EXTRA = [
     {"id": "CONV:USER-SUDDEN-DEATH-OWNERSHIP-RESET", "kind": "user_specified_rule", "user_ids": ["USER-SUDDEN-DEATH-OWNERSHIP-RESET"], "related_cards": ["PR1-027"], "scope": "延長戦を始めるときの、とりかえっこプリーズで所有者が変わったカード",
      "source": "docs/sudden-death-v0.134.md 2.2 節（利用者の指定 2026-11-02）・kyuura_engine/sudden_death.py USER_SUDDEN_DEATH_OWNERSHIP_RESET",
      "inventory_ref": None, "note": "v0.133 の棚卸しの後に加わった。UQ-SWAP-PLEASE-OWNERSHIP は未解決のまま"},
+    # v0.140（docs/prize-order-user-rule-v0.140.md 2 章）: カードによらないサイドを取る順番の利用者の指定 2 件（decisions.USER_PRIZE_ORDER_RULES）
+    {"id": "CONV:USER-PRIZE-ORDER-ALWAYS-CHOSEN", "kind": "user_specified_procedure", "user_ids": ["USER-PRIZE-ORDER-ALWAYS-CHOSEN"], "related_cards": [],
+     "scope": "同じきぜつの処理で両方のプレイヤーがサイドを取るとき（先に取るプレイヤーの決定 prize_first）",
+     "source": "docs/prize-order-user-rule-v0.140.md 2 章（利用者の指定 2026-11-03）・kyuura_engine/decisions.py USER_PRIZE_ORDER_ALWAYS_CHOSEN", "inventory_ref": None,
+     "note": "v0.139 の「おもてのサイドがあるときだけ」の条件と、v0.2f の正規化を置きかえた。p.325 の一般規定・その当てはめの導出とは別の記録"},
+    {"id": "CONV:USER-PRIZE-ORDER-PER-PLAYER", "kind": "user_specified_procedure", "user_ids": ["USER-PRIZE-ORDER-PER-PLAYER"], "related_cards": [],
+     "scope": "先に取るプレイヤーが選ばれたあとの、両方のサイドを取る並び",
+     "source": "docs/prize-order-user-rule-v0.140.md 2 章（利用者の指定 2026-11-03）・kyuura_engine/decisions.py USER_PRIZE_ORDER_PER_PLAYER", "inventory_ref": None,
+     "note": "v0.139 の「1 枚ごとに次の人を選ぶ」実装上の仮定（ADD-PRIZE-ORDER-UNIT-ASSUMPTION）を置きかえた"},
     {"id": "CONV:ENGINE-USER-CORRECTION:PR1-069/name.ja", "kind": "user_provided_data_correction", "user_ids": [], "related_cards": ["PR1-069"], "scope": "PR1-069 の名前（kyuura の値「？？？」をミュウにした）",
      "source": "research_links.json engine_user_corrections・scripts/extract_kyuura_cards.py ENGINE_USER_CORRECTIONS（v0.70）", "inventory_ref": None,
      "note": "データの修正で、裁定ではない。v0.133 の棚卸しの採用済み 16 件には入っていない"},
@@ -889,6 +899,18 @@ CONVENTION_DETAILS = {
         "effect": "そのカードを最初のデッキに入れたプレイヤー（出所 origin）のデッキにもどす（交換の直前の所有者ではない。再交換があっても最初の出所）。新しい区間の所有者の変更の記録は空から",
         "affects": ["延長戦の区間のデッキの中身", "保存形式 34 の segments"], "not_covered": ["同じ区間の中の交換（USER-SWAP-OWNERSHIP-RECEIVER のまま）", "実物の所有権・対戦の外の返し方"],
         "registry": "sudden_death.USER_SUDDEN_DEATH_OWNERSHIP_RESET"},
+    "CONV:USER-PRIZE-ORDER-ALWAYS-CHOSEN": {
+        "category": "user_specified", "target": "同じきぜつの処理で両方のプレイヤーがサイドを取るとき",
+        "approval": {"document": "docs/prize-order-user-rule-v0.140.md 2.1 節", "on": "2026-11-03", "instruction": "両方のプレイヤーがサイドを取る場合は、表向き・うら向きや特殊能力の有無によらず、番のプレイヤーが先に取る人を選ぶ。"},
+        "effect": "いつも番のプレイヤーに先に取るプレイヤーの決定（prize_first）を出す。おもてのサイド・［おみとおし］・本人だけが知るサイドで出すかどうかを変えない",
+        "affects": ["決定の有無", "サイドを取る順番", "決定の時点の観測"], "not_covered": ["一方だけが取るとき（決定を出さない）", "トレーナー・特殊能力でサイドを取る処理（マチスの交渉）", "取ったサイドの位置の観測（今のまま。承認ではない）"],
+        "registry": "decisions.USER_PRIZE_ORDER_RULES['USER-PRIZE-ORDER-ALWAYS-CHOSEN']"},
+    "CONV:USER-PRIZE-ORDER-PER-PLAYER": {
+        "category": "user_specified", "target": "先に取るプレイヤーを選んだあとの、両方のサイドを取る並び",
+        "approval": {"document": "docs/prize-order-user-rule-v0.140.md 2.1 節", "on": "2026-11-03", "instruction": "先に選ばれたプレイヤーが必要な枚数を取り終え、その後、もう一方が必要な枚数を取る。1枚ごとの交互取得は認めない。"},
+        "effect": "先に選ばれたプレイヤーがその処理の分をすべて取ってから、もう一方が取る。1 枚ごとに選び直さない",
+        "affects": ["サイドを取る順番", "決定の数", "決定の時点の観測"], "not_covered": ["勝ち負け・サドン・デスの判定（すべて取ってから。v0.2f のまま）", "p.325 で順番を決める単位の公式の読み"],
+        "registry": "decisions.USER_PRIZE_ORDER_RULES['USER-PRIZE-ORDER-PER-PLAYER']"},
     "CONV:ENGINE-USER-CORRECTION:PR1-069/name.ja": {
         "category": "card_data_correction", "target": "PR1-069 の名前（kyuura の値「？？？」）",
         "basis": "research_links.json engine_user_corrections（v0.70。利用者がミュウと同定し画像と資料の URL を示した。エンジンは画像を見ていない。kyuura の記録ではない）",
@@ -1455,9 +1477,10 @@ def _engine_registries() -> dict:
     """登録の記録（対象の鍵 → 規則の ID）。カードの登録を名前だけでなく対象で照らすために読む（エンジンの動作は変えない）。"""
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
-    from kyuura_engine import effects, sudden_death
+    from kyuura_engine import decisions, effects, sudden_death
     registries = {name: {key: record.rule for key, record in getattr(effects, name.split(".", 1)[1]).items()} for name in set(REGISTRY_OF_KIND.values())}
     registries["sudden_death.USER_SUDDEN_DEATH_OWNERSHIP_RESET"] = {"": sudden_death.USER_SUDDEN_DEATH_OWNERSHIP_RESET.id}
+    registries["decisions.USER_PRIZE_ORDER_RULES"] = {rule.id: rule.id for rule in decisions.USER_PRIZE_ORDER_RULES}  # v0.140
     return registries
 
 

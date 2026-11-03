@@ -336,7 +336,7 @@ def source_addendum_problems(ledger: dict, source: dict) -> list[str]:
     return problems
 
 
-FOLLOWUP_KINDS = ("fix", "followup", "assumption")
+FOLLOWUP_KINDS = ("fix", "followup", "assumption", "user_rule")  # v0.140: user_rule（後の版で採った利用者の指定）
 
 
 def followup_problems(ledger: dict, source: dict) -> list[str]:

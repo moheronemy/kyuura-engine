@@ -123,6 +123,21 @@ class LedgerInvariantTest(unittest.TestCase):
         self.assertTrue(any("ADD-BROKEN-ASSUMPTION: 仮定の追記の根拠の種類" in p for p in problems))
         self.assertTrue(any("ADD-BROKEN-ASSUMPTION: 仮定の追記の承認" in p for p in problems))
 
+    def test_detects_user_rule_addendum_without_quote_or_convention(self):
+        """v0.140: 後の版で採った利用者の指定の追記（種類 user_rule）は、指定の文（文書にそのまま）・停止の方針の台帳の利用者指定の規約を持つ。規約は追記で対応付けてよい
+        （項目の記載は書き換えない）が、どこにも対応付けない規約は見つける。"""
+        broken = _copy(self.ledger)
+        row = next(a for a in broken["addenda"] if a["kind"] == "user_rule")
+        self.assertEqual(C.check(broken), [])
+        row["approval"]["quote"] = ["文書にない指定の文"]
+        row["supersedes"] = ["ADD-NOT-THERE"]
+        problems = C.check(broken)
+        self.assertTrue(any(f"{row['id']}: 指定の文が文書" in p for p in problems))
+        self.assertTrue(any(f"{row['id']}: 置きかえた追記 ADD-NOT-THERE がない" in p for p in problems))
+        broken = _copy(self.ledger)
+        broken["addenda"] = [a for a in broken["addenda"] if a["kind"] != "user_rule"]
+        self.assertTrue(any("CONV:USER-PRIZE-ORDER-ALWAYS-CHOSEN が、どの項目にも対応付けられていない" in p for p in C.check(broken)))
+
     def test_merged_duplicates_point_to_live_items(self):
         by_id = {i["id"]: i for i in self.ledger["items"]}
         for item in self.ledger["items"]:

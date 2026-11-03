@@ -483,6 +483,8 @@ kyuura の記録の時点の区別:
 | `POLICY:implementation_assumption:2` | implementation_assumption | `IA-ENERGY-DRAIN-AUTOMATIC` |
 | `POLICY:implementation_assumption:3` | implementation_assumption | `IA-ENERGY-DRAIN-TIMING` |
 | `CONV:USER-SUDDEN-DEATH-OWNERSHIP-RESET` | user_specified | `IA-USER-SUDDEN-DEATH-OWNERSHIP-RESET` |
+| `CONV:USER-PRIZE-ORDER-ALWAYS-CHOSEN` | user_specified |  |
+| `CONV:USER-PRIZE-ORDER-PER-PLAYER` | user_specified |  |
 | `CONV:ENGINE-USER-CORRECTION:PR1-069/name.ja` | card_data_correction | `IA-DATA-PR1-069-NAME` |
 <!-- generated:existing-ledger end -->
 
@@ -653,4 +655,5 @@ kyuura の記録の時点の区別:
 | `ADD-V0139-PRIZE-ORDER-HC1-FIX` | 2026-11-03 | `4ded418` | fix | 2 項目 | [docs/prize-order-hc1-fix-v0.139.md](prize-order-hc1-fix-v0.139.md) | v0.139 で 2 項目の論点を直した（両モード共通の不具合として）。サイド: 両方がサイドを取り、どちらかのサイドにおもてのカードがあるとき、番のプレイヤーが次に取るプレイヤーを選ぶ決定（prize_order。p.325）を出す（すべてうらなら v0.2f の正規化のまま）。HC1: p.309 の手順 4 のコイン（すなかけなど・［はんこう］）があるときも、こんらん・ベイビィと同じくコインの前に UNRESOLVED_DISCARD_ENERGY_TIMING で止める（HC1 は未解決のまま）。元の項目の記載・状態・集計は元の調査の時点のまま |
 | `ADD-PRIZE-ORDER-FOLLOWUP` | 2026-11-03 | `789f58e` | followup | 1 項目 | [docs/prize-order-followup.json](prize-order-followup.md) | v0.139 のあとの追加の検証（調査・再現・分類だけ。動作は変えていない）。本人だけが知るうらのサイド: 位置ごとの知識だけでは今の観測で順番による差はないが、［おみとおし］で先に取るプレイヤーの手札が見えると、どのサイドもうらでも後のプレイヤーの観測が変わる（合法な操作で再現。今の条件に加える必要がある候補）。単位: 1 枚ごと（今）とプレイヤーごとで、届く並び・決定の数・決定の時点の情報が変わり、カードの動き・勝ち負けは変わらない。保存形式 34: 既存の約束の範囲内。v0.138 は prize_order の写しを読み込み、再開で RuntimeError。この項目の記載・状態・集計は元の調査時点のまま |
 | `ADD-PRIZE-ORDER-UNIT-ASSUMPTION` | 2026-11-03 | `789f58e` | assumption | 1 項目 | [docs/prize-order-followup.json](prize-order-followup.md) | v0.139 で加えた実装上の仮定（p.325 の一般規定は公式資料、同時のきぜつのサイドへの当てはめは v0.2f の導出、単位と決める時点は v0.86 の反応の順番からの類推と実装の選択）。利用者の承認はない。比べた読みと差は docs/prize-order-followup.md 2 章 |
+| `ADD-V0140-PRIZE-ORDER-USER-RULE` | 2026-11-03 | `d631038` | user_rule | 1 項目 | [docs/prize-order-user-rule-v0.140.md](prize-order-user-rule-v0.140.md) | v0.140 で利用者の指定 2 点を採った（両方が取るときはいつも番のプレイヤーが先に取るプレイヤーを選ぶ・選ばれたプレイヤーがまとめて取る）。v0.2f の正規化・v0.139 の「おもてのサイドがあるときだけ」の条件・追加検証で台帳に加えた「1 枚ごと」の仮定（ADD-PRIZE-ORDER-UNIT-ASSUMPTION）を置きかえた。公式の裁定・研究上の解決ではない。p.325 の一般規定とその当てはめの導出は変えていない。取ったサイドの位置の観測は今のまま（承認ではない）。この項目の記載・状態・集計は元の調査時点のまま |
 <!-- generated:addenda end -->
