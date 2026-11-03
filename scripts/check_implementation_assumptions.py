@@ -288,9 +288,41 @@ def check(ledger: dict) -> list[str]:
             if iid not in known:
                 problems.append(f"採否判断の順序: 項目 {iid} が一覧にない")
 
+    problems += addenda_problems(ledger, known)
+
     if ledger.get("counts") != counts(ledger):
         problems.append("集計（counts）が台帳の項目・候補箇所から数え直した値と違う（--write で書き直す）")
     problems += generated_block_problems(ledger)
+    return problems
+
+
+ADDENDUM_KINDS = ("revalidation", "approval_supplement")
+
+
+def addenda_problems(ledger: dict, known: set[str]) -> list[str]:
+    """後の調査の追記（``addenda``）。元の調査の記録（項目・集計・基点）は書き換えず、後の結果への参照だけを足す。
+    追記は集計に入れない（``counts`` は元の調査時点の値のまま）。"""
+    problems: list[str] = []
+    rows = ledger.get("addenda", [])
+    ids = [a.get("id", "") for a in rows]
+    for dup in sorted({x for x in ids if ids.count(x) > 1}):
+        problems.append(f"追記の ID が重複: {dup}")
+    for row in rows:
+        where = row.get("id", "?")
+        if not re.fullmatch(r"ADD-[A-Z0-9][A-Z0-9-]*[A-Z0-9]", where):
+            problems.append(f"{where}: 追記の ID の形（ADD-英大文字のスラッグ）でない")
+        if row.get("kind") not in ADDENDUM_KINDS:
+            problems.append(f"{where}: 追記の種類 {row.get('kind')} が未知")
+        for key in ("on", "base_commit", "ref", "summary"):
+            if not row.get(key):
+                problems.append(f"{where}: 追記に {key} がない")
+        if row.get("ref") and not _exists(row["ref"]):
+            problems.append(f"{where}: 参照先 {row['ref']} がない")
+        if not row.get("item_ids"):
+            problems.append(f"{where}: 追記の項目がない")
+        for iid in row.get("item_ids", []):
+            if iid not in known:
+                problems.append(f"{where}: 項目 {iid} が一覧にない")
     return problems
 
 
@@ -374,6 +406,13 @@ def render_existing(ledger: dict) -> str:
                              for c in stop["conventions"]])
 
 
+def render_addenda(ledger: dict) -> str:
+    head = ["| 追記 | 日 | 基点 | 種類 | 項目 | 参照先 | 内容 |", "|---|---|---|---|---|---|---|"]
+    return "\n".join(head + [f"| `{a['id']}` | {a['on']} | `{a['base_commit'][:7]}` | {a['kind']} | {len(a['item_ids'])} 項目 | "
+                             f"[{a['ref']}]({pathlib.PurePosixPath(a['ref']).name.replace('.json', '.md')}) | {_cell(a['summary'])} |"
+                             for a in ledger.get("addenda", [])])
+
+
 BLOCKS = {
     "counts": render_counts,
     "items-approved": lambda l: render_items(l, ("approved_user",)),
@@ -382,6 +421,7 @@ BLOCKS = {
     "items-other": lambda l: render_items(l, ("technical", "defect_separate", "history")),
     "existing-ledger": render_existing,
     "discrepancies": render_discrepancies,
+    "addenda": render_addenda,
 }
 
 

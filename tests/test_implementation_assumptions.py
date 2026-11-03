@@ -98,6 +98,12 @@ class LedgerInvariantTest(unittest.TestCase):
         ref["symbol"] = "NoSuchSymbolInThisModule"
         self.assertTrue(any("見つからない" in p for p in C.check(broken)))
 
+    def test_detects_addendum_with_unknown_item(self):
+        broken = _copy(self.ledger)
+        broken.setdefault("addenda", []).append({"id": "ADD-BROKEN", "kind": "revalidation", "on": "2026-01-01", "base_commit": "0" * 40,
+                                                 "ref": "docs/implementation-assumptions.md", "summary": "x", "item_ids": ["IA-NOT-IN-THE-LEDGER"]})
+        self.assertTrue(any("ADD-BROKEN: 項目 IA-NOT-IN-THE-LEDGER" in p for p in C.check(broken)))
+
     def test_merged_duplicates_point_to_live_items(self):
         by_id = {i["id"]: i for i in self.ledger["items"]}
         for item in self.ledger["items"]:
