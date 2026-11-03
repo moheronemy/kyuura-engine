@@ -640,3 +640,14 @@ kyuura の記録の時点の区別:
 - 項目を加える・直すときは台帳（JSON）を直し、`--write` で集計と表を書き直します。表を手で直しません。
 - 仮定の採否を決めたら、判断事項の文書と停止の方針の台帳に記録し、この一覧の `baseline_decision` を合わせます（採否をこの一覧だけで決めない）。
 - 版の文書が増えて `--sites` に新しい候補箇所が出たら、その版の作業で整理を加えます。
+
+## 14. 追記（後の調査）
+
+後の調査の結果は、この一覧の項目・状態・群・集計を書き換えずに、台帳の `addenda` に参照として足します（集計 `counts` には入れません。上の各章は元の調査時点の記録です）。`--check` は追記の ID・種類・参照先・項目があることを確かめます。
+
+<!-- generated:addenda begin（scripts/check_implementation_assumptions.py --write が台帳から書く。手で直さない） -->
+| 追記 | 日 | 基点 | 種類 | 項目 | 参照先 | 内容 |
+|---|---|---|---|---|---|---|
+| `ADD-NORMALIZATION-REVALIDATION` | 2026-11-03 | `2d67820` | revalidation | 26 項目 | [docs/normalization-revalidation.json](normalization-revalidation.md) | 採否判断の順序 3 段目の 20 項目と、範囲を広げた 6 項目の正規化の成立条件を、現行コード・テスト・再現で確かめ直した結果（分類 A〜D・優先・推奨対応の提案）。この一覧の項目の記載・状態・群・集計は元の調査時点のまま |
+| `ADD-CATALOG-SCOPE-APPROVAL-QUOTE` | 2026-11-03 | `2d67820` | approval_supplement | 1 項目 | [docs/normalization-revalidation.json](normalization-revalidation.md) | 利用者が示した指示の文（3 枚の非対戦カードへの移管）を approval_supplement に収録。承認は 3 枚の移管だけで、分類方式・記録と ID の設計・拒否の仕方は承認なし。この項目の approval は元の調査時点の記録として書き換えていない |
+<!-- generated:addenda end -->

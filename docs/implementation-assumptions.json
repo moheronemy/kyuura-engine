@@ -49707,5 +49707,54 @@
   "user_specification_targets": 12,
   "keywordless_items": 26,
   "discrepancies": 54
- }
+ },
+ "addenda": [
+  {
+   "id": "ADD-NORMALIZATION-REVALIDATION",
+   "kind": "revalidation",
+   "on": "2026-11-03",
+   "base_commit": "2d678203db5c7fa7b9779b8746d3a873ab294351",
+   "ref": "docs/normalization-revalidation.json",
+   "item_ids": [
+    "IA-PRIZE-TAKE-ORDER-SIMULTANEOUS-KO",
+    "IA-POKEMON-CHECK-STEP1-2-KO-TIMING",
+    "IA-KO-SURVIVAL-FURTHER-DAMAGE-NOT-STOPPED",
+    "IA-GRUDGE-PRIZES-TAKEN-COUNT",
+    "IA-RX1-NOT-ASKED-WITHOUT-LATER-DAMAGE",
+    "IA-TRAINER-DISCARD-AFTER-RESOLUTION",
+    "IA-DECK-RETURN-BOTTOM-BEFORE-SHUFFLE",
+    "IA-PREFLIGHT-ENERGY-DISCARD-BY-CARD-KIND",
+    "IA-ENERGY-CHARGE-NO-TARGET-UNUSABLE",
+    "IA-FULL-HEAL-AGREEING-READINGS",
+    "IA-RAIN-DANCE-ONE-CARD-PER-USE",
+    "IA-DAMAGE-SWAP-ONE-COUNTER-PER-USE",
+    "IA-BERRY-BATCH-NO-INTERMEDIATE-CHECK",
+    "IA-BOTH-PLAYERS-ORDER-USER-FIRST",
+    "IA-NAME-COUNT-EXACT-CURRENT-FORM",
+    "IA-SINKHOLE-TIMING-AFTER-SWITCH",
+    "IA-THUNDERSTORM-COINS-BEFORE-DAMAGE",
+    "IA-POISON-BYPASSES-DAMAGE-THRESHOLD-POWERS",
+    "IA-POWER-DAMAGE-WR-SKIPPED-WHEN-NO-DIFFERENCE",
+    "IA-SWIFT-EFFECTS-BY-HOLDER",
+    "IA-POISON-STING-NO-COIN-ON-KO",
+    "IA-HC1-NONCONFUSED-PROCEED",
+    "IA-IMMUNITY-SKIPS-STATUS-QUESTIONS",
+    "IA-JS1-PROCEED-WHEN-READINGS-AGREE",
+    "IA-LEAVE-LOCKED-OPTIONAL-SELF-SWITCH-NOT-ASKED",
+    "IA-WARP-POINT-SG1-ONLY-WITHOUT-BENCH"
+   ],
+   "summary": "採否判断の順序 3 段目の 20 項目と、範囲を広げた 6 項目の正規化の成立条件を、現行コード・テスト・再現で確かめ直した結果（分類 A〜D・優先・推奨対応の提案）。この一覧の項目の記載・状態・群・集計は元の調査時点のまま"
+  },
+  {
+   "id": "ADD-CATALOG-SCOPE-APPROVAL-QUOTE",
+   "kind": "approval_supplement",
+   "on": "2026-11-03",
+   "base_commit": "2d678203db5c7fa7b9779b8746d3a873ab294351",
+   "ref": "docs/normalization-revalidation.json",
+   "item_ids": [
+    "IA-DATA-CATALOG-SCOPE-EXCLUSIONS"
+   ],
+   "summary": "利用者が示した指示の文（3 枚の非対戦カードへの移管）を approval_supplement に収録。承認は 3 枚の移管だけで、分類方式・記録と ID の設計・拒否の仕方は承認なし。この項目の approval は元の調査時点の記録として書き換えていない"
+  }
+ ]
 }
