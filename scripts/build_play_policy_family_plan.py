@@ -926,7 +926,7 @@ PRIORITY = {
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
 # 対戦の道具の発生の記録（リポジトリの外。数え方と分母を一緒に書く）
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
-OBSERVATION_PATH = pathlib.Path("C:/dev/kyuura-engine-verification/play-policy/census_summary.json")
+OBSERVATION_PATH = pathlib.Path("C:/dev/kyuura-engine-play-policy-evidence/census_summary.json")
 
 
 def load_observation() -> dict | None:
@@ -1317,7 +1317,7 @@ def render_individual(plan: dict) -> str:
 def render_observation(plan: dict) -> str:
     obs = plan.get("observation")
     if not obs:
-        return "（記録がない環境。リポジトリの外の C:/dev/kyuura-engine-verification/play-policy/census_summary.json）"
+        return "（記録がない環境。リポジトリの外の C:/dev/kyuura-engine-play-policy-evidence/census_summary.json）"
     lines = [f"- 木: `{obs['head']}`（版 {obs['version']}）。道具: {obs['tool']}。方策: {obs['policy']}。seed: {obs['seeds']}。組: {obs['batches']} バッチ（各バッチの組 × 2 席 × seed）",
              f"- 分母: 対戦 {obs['games']} 局。数え方: 1 局の終わり方（game_over・halted・道具の打ち切り）を 1 回ずつ。拒否は局ごとの回数の合計（同じ局の同じ拒否を重ねて数える）",
              "", "| 終わり方 | 局 | 意味 |", "|---|---:|---|"]
