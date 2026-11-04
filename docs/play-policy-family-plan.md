@@ -1065,3 +1065,6 @@ v0.141 の報告の訂正: v0.141 の作業の最後の報告では、停止の�
   旧状態用の集合だけで、この文書の規約案 27 件は 1 つも採用していない（どれも `proposal` のまま）。止める箇所の照会はどの場面でも「続行規約なし」。S1 の完了の基準の「厳密の集合（基礎集合だけ）」は、
   DEC-BASELINE-NONUSER が未決なので、承認のない今の挙動の記録を含む今の挙動の集合で確かめた（v0.142 の文書 9 章）。この版で台帳に新しい停止コード `UNSUPPORTED_CONVENTION_SET`（E）が加わり、
   生成した集計（3 章など）はその値で作り直した。上の章の案・調査の記録は当時のまま
+- 2026-11-04（[play-policy-s2a-spec.md](play-policy-s2a-spec.md)・`.json`）: 利用者が S2a の進め方を承認し（具体的な続行仕様は未承認）、S2a の 5 件（`PC-SETUP-MULLIGAN-COUNT`・`PC-SETUP-PLAY-AS-POKEMON`・
+  `PC-CHECK-SIDE-ORDER`・`PC-COIN-COUNT-SHORT`・`PC-CHECK-KO-POINT`）を具体化した仕様案を作った。この文書の候補はどれも `proposal` のまま（書き換えていない）。仕様案は `PC-CHECK-SIDE-ORDER` の対象から
+  `UNRESOLVED_POKEMON_CHECK_BERRY_ORDER` を除き、`PC-SETUP-PLAY-AS-POKEMON` に準備の配置の事例（台帳に加える案）を加えた（違いは仕様案の 5 章）

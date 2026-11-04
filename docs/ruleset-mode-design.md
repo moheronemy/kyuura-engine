@@ -377,3 +377,4 @@ UQ-MIND-GAMES-OPTIONAL・UQ-STATED-COUNT-SHORT・UQ-BILINGUAL-NAME-GLOSS など�
   4.2 節の表（台帳から生成）には加わっている。本文の件数（利用者指定 12 件・採用済みの規約 18 件など）は、この設計の時点の値のまま（書き換えていない）。モードは実装していない
 - 2026-11-04（[play-policy-family-plan.md](play-policy-family-plan.md)）: 停止の方針の台帳の場面を、少数の共通規約の案と個別の場面に対応付け、採用・実装の段階の案を書いた（規約集合を受け取る基盤を S1 とし、この文書の 5〜9 章の設計をそのまま使う）。規約案はどれも案で、採用していない。識別・版・保存形式は決めていない
 - v0.142（[ruleset-foundation-v0.142.md](ruleset-foundation-v0.142.md)。2026-11-04）: 利用者が規約集合の識別・版の管理の設計方針 7 項目を承認し（台帳の `ruleset_agreements`）、S1 の基盤（規約集合を `new_game` で受け取り `GameState.conventions` に持つ・照合値・構成の検査・記録のない旧状態・書き出しの形式 35・止める箇所の照会）を実装した。実装した集合は今の挙動の集合と旧状態用の集合だけで、続行規約は採用していない。この文書の 5〜9 章の案は当時の案のまま（違いは v0.142 の文書。DEC-LEGACY-STATES の扱いは 8 章の推奨と違う）
+- 2026-11-04（[play-policy-s2a-spec.md](play-policy-s2a-spec.md)）: S2a の続行規約 5 件の仕様案（採用の判断の前）。厳密側は `CS-KYUURA-CURRENT@1` のまま、続行側は新しい集合 `CS-KYUURA-PLAY-S2A@1`（development・halts_at_undecided）とする案。エンジンは変えていない
