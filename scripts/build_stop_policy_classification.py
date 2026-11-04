@@ -75,6 +75,27 @@ AGREEMENTS = [
      "reading": "準備の HALTED・ポケモンチェックの HALTED・途中停止（5 章の 14 コード）を、選択肢を 1 つ減らすだけの拒否より先に扱う。どの規約を採るかは決めていない"},
 ]
 AGREEMENT_IDS = {a["id"] for a in AGREEMENTS}
+# v0.142（docs/ruleset-foundation-v0.142.md 1 章）: 規約集合の識別・版の管理の設計方針の承認（利用者の指示。エンジンの設計方針で、公式の裁定ではない）。モードの定義の合意（AGREEMENTS）とは
+# 別の日・別の依頼の承認なので、別の出典で記録する（モードの定義の 6 項目に加えない）
+RULESET_AGREEMENT_SOURCE = {"by": "user", "on": "2026-11-04",
+                            "where": "本会話の利用者の指示（作業ブランチ claude/ruleset-s1-foundation の依頼の「採用する設計方針」。この指示を設計方針への承認として記録する、と明記）",
+                            "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（エンジンの設計方針。個々の続行規約・未承認の仮定の採用ではない）"}
+RULESET_AGREEMENTS = [
+    {"id": "AGR-RULESET-IDENTITY", "statement": "規約集合は、集合ID・版・含まれる規約IDと各版・内容ハッシュで識別する。",
+     "reading": "conventions.ConventionSetIdentity（集合 ID・版・照合値・区分・含む規約の ID と版と照合値）。照合値は意味の内容の正規化した JSON の SHA-256（内容の識別で、署名・認証ではない）"},
+    {"id": "AGR-RULESET-IMMUTABLE", "statement": "同じ集合IDと版の内容は不変とする。",
+     "reading": "conventions.PINNED_CONVENTION_DIGESTS・PINNED_SET_DIGESTS に固定し、計算した値と違えば構成の誤り（対戦を始めない・状態を続けない）。内容を変えるときは版を上げる"},
+    {"id": "AGR-RULESET-VERSIONING", "statement": "規約の意味の変更と、エンジンの不具合修正を区別する。",
+     "reading": "照合値は規約の意味の記録（利用者の指定の登録の記録・今の挙動の記録）だけに付け、エンジンのコードには付けない。不具合の修正はエンジンの版（書き出しの engine_version）の変更"},
+    {"id": "AGR-RULESET-NO-MIDGAME-CHANGE", "statement": "対戦開始後の規約集合の変更は禁止する。",
+     "reading": "new_game で受け取り GameState.conventions に置く。変えるコマンドを作らない"},
+    {"id": "AGR-RULESET-SUDDEN-DEATH", "statement": "サドン・デスへ同じ規約集合を引き継ぐ。",
+     "reading": "sudden_death.SEGMENT_FIELD_POLICY の keep"},
+    {"id": "AGR-RULESET-LEGACY", "statement": "規約集合の記録がない旧状態は、旧来の固定集合として扱う。現在のプレイ用集合へ自動変換しない。",
+     "reading": "記録のない状態（v0.141 までの pickle）は、扱える条件（new_game で作った対戦のログ）を確かめて CS-KYUURA-LEGACY-UNRECORDED@1 に対応付け、満たさなければ拒否する"},
+    {"id": "AGR-RULESET-DEVELOPMENT", "statement": "規約がそろわない構成は開発用として区別し、通常のプレイ用として完成扱いにしない。",
+     "reading": "集合の区分 usage（standard・development・legacy）と完全性の主張（この版は halts_at_undecided だけ。play_complete の判定は未実装で受け付けない）"},
+]
 AGREED_CONVENTION_STATUS = "user_agreed"  # 規約（conventions）だけが使える。合意 AGR-MODE-BASELINE-USER で基礎集合に入れた利用者指定。続行規約の採用ではない
 MODE_DEFINITIONS_HISTORY = {
     "STRICT-A": "厳密モードの定義としては採用しない（過去の検討案。AGR-MODE-STRICT・AGR-MODE-BASELINE-USER と合わない）。研究・照合の用途の集合として別に作るかは決めていない",
@@ -95,6 +116,18 @@ RULESET_DECISIONS = [
 DECISION_STATUS = {
     "DEC-STRICT-DEFINITION": {"status": "agreed", "agreements": ["AGR-MODE-STRICT", "AGR-MODE-PLAY", "AGR-MODE-BASELINE-USER"],
                               "note": "STRICT-A は厳密モードの定義として採用しない（過去の検討案）。STRICT-B は合意済みの定義に置きかえた"},
+    "DEC-RULESET-IDENTITY": {"status": "agreed", "agreements": ["AGR-RULESET-IDENTITY", "AGR-RULESET-IMMUTABLE"],
+                             "note": "v0.142（2026-11-04）に承認。推奨案 D（ID・版・含む規約・照合値）と同じ。綴り・正規化は docs/ruleset-foundation-v0.142.md 4 章"},
+    "DEC-RULESET-VERSIONING": {"status": "agreed", "agreements": ["AGR-RULESET-VERSIONING"], "note": "v0.142（2026-11-04）に承認。推奨案（意味で分ける）と同じ"},
+    "DEC-MODE-CHANGE-DURING-GAME": {"status": "agreed", "agreements": ["AGR-RULESET-NO-MIDGAME-CHANGE", "AGR-RULESET-SUDDEN-DEATH"],
+                                    "note": "v0.142（2026-11-04）に承認。推奨案（変えられない・延長戦は引き継ぐ）と同じ。別の集合での再開は DEC-RESUME-WITH-OTHER-RULESET（未決）"},
+    "DEC-LEGACY-STATES": {"status": "agreed", "agreements": ["AGR-RULESET-LEGACY"],
+                          "note": ("v0.142（2026-11-04）に承認。分類・設計の時点の推奨案（作成した版が分かる場合だけ、その版の集合に対応付ける）とは違い、旧来の固定集合として扱う。"
+                                   "作成した版は推測せず、扱える条件を満たさない状態は拒否する")},
+    "DEC-PLAY-DEBUG-PARTIAL": {"status": "partly_agreed", "agreements": ["AGR-RULESET-DEVELOPMENT"],
+                               "note": "v0.142: 規約がそろわない構成を開発用として区別することは承認。開発用の集合を実際に設けるか・どの規約を入れるかは未決（この版に開発用の集合はない）"},
+    "DEC-PLAY-CONFIG-INCOMPLETE-START": {"status": "partly_agreed", "agreements": ["AGR-RULESET-DEVELOPMENT"],
+                                         "note": "v0.142: 規約がそろわない構成を通常のプレイ用として完成扱いにしないことは承認。そうした構成で対戦を始められるか・止まったときの表示は未決"},
     "DEC-EXISTING-USER-SPECS": {"status": "partly_agreed", "agreements": ["AGR-MODE-BASELINE-USER"],
                                 "note": "利用者指定（12 件・USER-ID 9 つ）は基礎集合に入れる。エンジンの簡略化・実装上の仮定・データの訂正の扱いは DEC-BASELINE-NONUSER・DEC-CARD-DATA-CORRECTIONS で未決"},
 }
@@ -527,6 +560,7 @@ RUNTIME_FAMILY = {
     "UNSUPPORTED_QUIZ_HEIGHT_WITHOUT_DEX": "PF-RUNTIME-DATA", "UNSUPPORTED_QUIZ_HEIGHT_NOT_AVAILABLE": "PF-RUNTIME-DATA",
     "UNSUPPORTED_HISTORY_DAMAGE_PLACE_UNKNOWN": "PF-RUNTIME-DATA", "UNSUPPORTED_SUDDEN_DEATH_INITIAL_DECK": "PF-RUNTIME-DATA",
     "UNSUPPORTED_DECISION": "PF-RUNTIME-DATA",  # v0.140: この版が扱えない決定の再開先（後の版・前の版の状態の写し。docs/prize-order-user-rule-v0.140.md 3 章）
+    "UNSUPPORTED_CONVENTION_SET": "PF-RUNTIME-DATA",  # v0.142: この版が扱えない状態の規約集合（登録と合わない・知らない集合・旧状態として扱えない記録なし。docs/ruleset-foundation-v0.142.md 6 章）
     "UNRESOLVED_RULING": "PF-RUNTIME-GENERIC",
 }
 
@@ -712,6 +746,14 @@ UPDATES = [
                          "conventions の user_ids（簡略ルールの 4 対象を登録と同じ 1 つずつに直した）", "decision_status（DEC-STRICT-DEFINITION は agreed、DEC-EXISTING-USER-SPECS は partly_agreed）"],
      "new_entries": ["mode_agreements（AGR-MODE-* の 6 項目）", "判断事項 8 つ（DEC-RULESET-VERSIONING ほか。docs/ruleset-mode-decisions.md）"],
      "unchanged": "停止コード・事例・問題の項目・族・安全境界・方針の案は変えていない。エンジン・既存のテスト・カードデータ・保存形式は変えていない"},
+    {"version": "0.142.0", "work": "規約集合の識別・版の管理の確定と、共通処理基盤 S1（規約集合を対戦へ渡し状態に持つ。今の挙動の集合だけ）",
+     "document": "docs/ruleset-foundation-v0.142.md",
+     "base": {"commit": "0a3ee994f3d9a89a5e3a536e7b0ab9be9900a5fa", "branch_of_base": "claude/play-policy-family-plan（v0.141 の 8164194 と共通規約の設計案を含む。main には未取り込み）"},
+     "approval": ("利用者の承認は ruleset_agreements の 7 項目（2026-11-04。エンジンの設計方針）。DEC-RULESET-IDENTITY・DEC-RULESET-VERSIONING・DEC-MODE-CHANGE-DURING-GAME・"
+                  "DEC-LEGACY-STATES は agreed、DEC-PLAY-DEBUG-PARTIAL・DEC-PLAY-CONFIG-INCOMPLETE-START は partly_agreed。個々の続行規約・共通規約の案 27 件・未承認の仮定は採用していない"),
+     "changed_entries": ["decision_status（上の 6 つ）", "停止箇所の行番号（エンジンの編集で動いただけ）"],
+     "new_entries": ["ruleset_agreements（AGR-RULESET-* の 7 項目）", "UNSUPPORTED_CONVENTION_SET（PF-RUNTIME-DATA。状態の規約集合を扱えないときの拒否）"],
+     "unchanged": "研究の停止コード・事例・問題の項目・族・安全境界・規約（conventions）・方針の案は変えていない。止め方・乱数・選択肢は変えていない"},
 ]
 # 分類の時点（基点 3e25ac5）の集計（counts）の写し。今の counts は現行コードから作り直した値
 COUNTS_AT_CLASSIFICATION = {"research_stop_codes": 316, "runtime_codes_outside_table": 40, "runtime_codes_outside_table_active": 39, "test_tool_only_codes": 8, "cases": 15, "codes_with_cases": 7, "problems_new": 4, "problems_from_inventory": 28, "conventions": 18, "internal_guard_sites_current": 602, "internal_guard_sites_matched_to_inventory": 600, "internal_guard_sites_new_since_inventory": ["kyuura_engine/engine.py:445", "kyuura_engine/resolution/programs.py:10739"], "safety_boundaries": 8, "families": 23, "decisions": 29, "by_reachability": {"constructed_board": 145, "legal_sequence": 25, "static_only": 185}, "by_family": {"PF-COPY-TRANSFORM": 34, "PF-DAMAGE-SCOPE": 22, "PF-EFFECT-TIMING": 13, "PF-ENERGY-TYPE": 21, "PF-ESP-REDO": 4, "PF-HIDDEN-INFORMATION": 8, "PF-HISTORY-LASTING": 20, "PF-KNOCKOUT-TIMING": 15, "PF-POWER-SUPPRESSION": 11, "PF-PROTECTED-TARGET-EFFECT": 12, "PF-REACTION-DURING-PROCESS": 10, "PF-RUNTIME-CONTINUATION": 15, "PF-RUNTIME-COPY-GAPS": 5, "PF-RUNTIME-DATA": 5, "PF-RUNTIME-GENERIC": 1, "PF-RUNTIME-REGISTRY": 7, "PF-RUNTIME-SEARCH-LIMIT": 6, "PF-SETUP-PLAY-AS-POKEMON": 5, "PF-SIMULTANEOUS-ORDER": 26, "PF-STATED-COUNT-SHORT": 11, "PF-TEXT-READING": 34, "PF-UP-TO-ZERO": 13, "PF-USE-WITHOUT-EFFECT": 57}, "by_play_group": {"1": 316, "2": 39, "3": 89, "4": 6, "5": 20, "6": 1}, "by_mechanism": {"answer_rejection": 13, "command_rejection": 339, "deck_validation": 1, "deferred_interruption": 2, "pokemon_check_halt": 10, "setup_halt": 2}, "by_status": {"active": 402, "fixed": 5, "historical": 2, "unverified": 1}, "note": "停止コード・事例・規約・内部ガードは別の数。事例はコードの下位で、コードの数に足さない。棚卸しと同じ項目は独立した不足として数えない"}
@@ -1356,6 +1398,7 @@ def build() -> dict:
                  "mode_policy_status": list(MODE_POLICY_STATUS), "existing_behavior_status": list(EXISTING_BEHAVIOR_STATUS),
                  "entry_status": {"active": "現在有効", "fixed": "修正済み", "historical": "履歴項目", "unverified": "未確認（候補）"}},
         "mode_agreements": {"source": AGREEMENT_SOURCE, "agreements": AGREEMENTS},
+        "ruleset_agreements": {"source": RULESET_AGREEMENT_SOURCE, "agreements": RULESET_AGREEMENTS},
         "mode_definitions": {"strict": next(a["statement"] for a in AGREEMENTS if a["id"] == "AGR-MODE-STRICT"),
                              "play": next(a["statement"] for a in AGREEMENTS if a["id"] == "AGR-MODE-PLAY"),
                              "status": "agreed（AGR-MODE-STRICT・AGR-MODE-PLAY。2026-11-03）",
@@ -1549,6 +1592,13 @@ def agreement_problems(ledger: dict) -> list[str]:
     for a in block.get("agreements", []):
         if not (a.get("statement") and a.get("reading")):
             problems.append(f"{a.get('id')}: 合意の文・読み方がない")
+    ruleset = ledger.get("ruleset_agreements") or {}
+    if (ruleset.get("source") or {}).get("by") != "user" or "公式" not in (ruleset.get("source") or {}).get("not_recorded_as", ""):
+        problems.append("規約集合の設計方針の承認の出典は利用者の指示で、公式の裁定・kyuura の解決として記録しない")
+    for a in ruleset.get("agreements", []):
+        if not (a.get("statement") and a.get("reading")) or a.get("id") in ids:
+            problems.append(f"{a.get('id')}: 設計方針の承認の文・読み方がないか、ID が重複")
+    ids = ids + [a.get("id") for a in ruleset.get("agreements", [])]
     statuses = ledger.get("decision_status", {})
     if set(statuses) != set(ledger["decisions"]):
         problems.append("判断事項と判断事項の状態の集合が違う")

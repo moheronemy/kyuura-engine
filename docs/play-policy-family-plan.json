@@ -19,7 +19,7 @@
   "ledger": {
    "path": "docs/stop-policy-classification.json",
    "base_commit": "3e25ac5eff0f90dbea224045e77c2b60e025bf2d",
-   "entries": 417
+   "entries": 418
   },
   "research": {
    "path": "kyuura_engine/data/research_links.json",
@@ -9981,6 +9981,7 @@
    "plan_class": "A",
    "class_reason": "研究上の未決の裁定（固定研究基準の対応表の停止コード）",
    "mechanisms": [
+    "command_rejection",
     "setup_halt"
    ],
    "reachability": "legal_sequence",
@@ -10005,6 +10006,7 @@
    "plan_class": "A",
    "class_reason": "研究上の未決の裁定（固定研究基準の対応表の停止コード）",
    "mechanisms": [
+    "command_rejection",
     "setup_halt"
    ],
    "reachability": "legal_sequence",
@@ -14243,6 +14245,27 @@
    "candidate": null
   },
   {
+   "id": "UNSUPPORTED_CONVENTION_SET",
+   "parent": null,
+   "code": "UNSUPPORTED_CONVENTION_SET",
+   "entry_kind": "runtime_stop_code",
+   "family": "PF-RUNTIME-DATA",
+   "ledger_classification": "A",
+   "plan_class": "E",
+   "class_reason": "この版が扱えない状態の規約集合（状態の互換・登録との不一致の拒否。v0.142。規約の対象ではない）",
+   "mechanisms": [
+    "command_rejection"
+   ],
+   "reachability": "constructed_board",
+   "whole_game": false,
+   "whole_game_basis": null,
+   "secret_dependency": null,
+   "ruling_ids": [],
+   "kyuura_issue": null,
+   "ruling_documents": [],
+   "candidate": null
+  },
+  {
    "id": "UNSUPPORTED_COPIED_ATTACK",
    "parent": null,
    "code": "UNSUPPORTED_COPIED_ATTACK",
@@ -15659,17 +15682,17 @@
    "mode_policy_status": "decision_required"
   }
  ],
- "internal_guard_sites": 603,
+ "internal_guard_sites": 604,
  "counts": {
-  "scenes": 399,
-  "stop_code_scenes": 365,
-  "stop_codes": 356,
+  "scenes": 400,
+  "stop_code_scenes": 366,
+  "stop_codes": 357,
   "by_plan_class": {
    "A": 325,
    "B": 33,
    "C": 14,
    "D": 9,
-   "E": 18
+   "E": 19
   },
   "a_scenes": 325,
   "a_scenes_with_candidate": 170,
@@ -15726,7 +15749,7 @@
   "whole_game_dynamic_channel_scenes": 12,
   "whole_game_a_scenes_with_candidate": 15,
   "new_findings": 1,
-  "internal_guard_sites_not_listed_as_scenes": 603,
+  "internal_guard_sites_not_listed_as_scenes": 604,
   "note": "場面は台帳の項目（事例のあるコードは事例）。重複を含む数は規約案ごとの対象の合計、重複を除いた数は場面・コードの集合の大きさ。内部ガードは場面に数えない（D。個数だけ）"
  }
 }

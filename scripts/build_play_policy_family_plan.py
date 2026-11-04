@@ -752,6 +752,7 @@ RUNTIME_FAMILY_CLASS = {
 RUNTIME_CODE_CLASS = {
     "UNSUPPORTED_CARD": ("E", "デッキの検査（不正入力。SB-INPUT-VALIDATION）"),
     "UNSUPPORTED_DECISION": ("E", "この版が知らない再開先の決定を待つ状態（状態の互換の拒否。v0.141 で文を直した。規約の対象ではない）"),
+    "UNSUPPORTED_CONVENTION_SET": ("E", "この版が扱えない状態の規約集合（状態の互換・登録との不一致の拒否。v0.142。規約の対象ではない）"),
 }
 OTHER_KIND_CLASS = {
     "silent_information_leak": ("D", "情報漏れ（未修正）"),
