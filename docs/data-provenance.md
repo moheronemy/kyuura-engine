@@ -1979,6 +1979,11 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   SX1・TN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形の別のカードの問い）。v0.66 の「ナツメのESPと「うら」が出るまでのコインは起こらない」はエンジンの前提の誤りで、研究の論点ではない（kyuura は
   変えていない）。
 
+## v0.141: サイドを取る順番の件の最終整理
+
+[prize-order-v0140-cleanup-v0.141.md](prize-order-v0140-cleanup-v0.141.md)。写しの元・研究の基準は kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d` のまま。カードの写し・採用の記録・研究の対応表・身長の写しは変えていない。kyuura は読むだけ。
+新しい報告事項はない（v0.140 の 2 点のまま）。
+
 ## v0.140: サイドを取る順番の利用者の指定と、知らない再開先の決定の拒否
 
 [prize-order-user-rule-v0.140.md](prize-order-user-rule-v0.140.md)。写しの元・研究の基準は kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d` のまま。カードの写し・採用の記録・研究の対応表・身長の写しは変えていない。kyuura は読むだけ。
