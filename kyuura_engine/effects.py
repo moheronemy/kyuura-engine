@@ -20232,6 +20232,28 @@ def scram_restored_error(pokemon_ids) -> UnsupportedError:
     return UnsupportedError(SCRAM_RESTORED_CODE, f"ポケモン {list(pokemon_ids)}: {SCRAM_RESTORED_REASON}")
 
 
+def scram_restored_by_leaving(state: GameState, gone_ids) -> tuple[int, list[int]] | None:
+    """v0.61（SC2）・v0.144: ``gone_ids`` のポケモンがきぜつの処理で場をはなれると、残りHPが［ずらかる］の数で力が消えていた場のポケモンの力がもどる（かがくへんかガスの発生源が
+    すべて ``gone_ids`` の中）なら、最初のそのポケモンの (番号, 発生源の番号)。なければ None。状態を変えない。
+
+    きぜつの判定の窓の問い（``resolution.kernel.scram_restored_question``）と、ポケモンチェックのダメージの前の確かめ（``procedures._pokemon_check_plan``。v0.144）が同じ判定を使う。
+    まきちらせ!ベトベトガス・オールクリアのワザを使っているあいだ（v0.91）・やみのはどう（v0.92）の抑止はきぜつで消えないので見ない。"""
+    from .continuous import field_powers_suppressed, suppressors_of
+
+    gone_ids = set(gone_ids)
+    if field_powers_suppressed(state):
+        return None
+    for _, pokemon, slot in scram_slots(state):
+        if pokemon.pokemon_id in gone_ids or not scram_due(state, pokemon, slot) or scram_working(state, pokemon, slot):
+            continue
+        if not slot.effect.is_able(pokemon):
+            continue
+        sources = suppressors_of(state, slot.power)
+        if sources and all(pid in gone_ids for pid in sources):
+            return pokemon.pokemon_id, list(sources)
+    return None
+
+
 def scram_unsettled(state: GameState) -> list[int]:
     """v0.61: 残りHPが［ずらかる］の数で、力がはたらいている場のポケモンの番号（処理の決まった時点のあとに残っていればエンジンの不具合。SC2 は ``scram_restored``）。"""
     return [pokemon.pokemon_id for _, pokemon, slot in scram_slots(state) if scram_due(state, pokemon, slot) and scram_working(state, pokemon, slot)]

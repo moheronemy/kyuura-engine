@@ -350,7 +350,35 @@ def _pokemon_check_plan(state: GameState, order: tuple[int, int], char_damages: 
                         references=pk1_halt.references + ("docs/play-policy-s2a-v0.143.md",))
         if ko_point is not None:
             ko_point.extend(ko_point_ids)
+    restored = _knockout_scram_restored_stop(after_two, order)
+    if restored is not None:
+        return restored
     return poisoned_ids
+
+
+def _knockout_scram_restored_stop(after: GameState, order: tuple[int, int]) -> Halt | None:
+    """v0.144（docs/sc2-integrity-fix-v0.144.md）: ポケモンチェックの 1・2 のあとの場（状態の複製）で HP 以上のポケモンがきぜつの処理で場をはなれると、残りHPが「10」で消えていた
+    ［ずらかる］の力がもどる（SC2。``effects.scram_restored_by_leaving``）なら、ダメージを与える前に止める ``Halt``。状態を変えない。
+
+    v0.143 まではこの問いをきぜつの判定の窓（ダメージのあと）で確かめていたので、HP 以上のポケモンが場に残った状態で止まり、状態の確かめ（``StateIntegrityError``）がコマンドを
+    受け付けなかった（両方の集合で同じ）。SC2 の答えは決めない（止めるコード・理由は今のまま。止める位置だけをダメージの前にする。v0.48 の MH1・v0.93 の AL1 と同じ形）。"""
+    from .effects import (
+        SCRAM_RESTORED_CODE,
+        SCRAM_RESTORED_REASON,
+        scram_restored_by_leaving,
+    )
+
+    gone = {p.pokemon_id for o in order for p in after.players[o].in_play() if knocked_by_hp(after, p)}
+    if not gone:
+        return None
+    restored = scram_restored_by_leaving(after, gone)
+    if restored is None:
+        return None
+    pid, sources = restored
+    return Halt(code=SCRAM_RESTORED_CODE,
+                message=(f"ポケモンチェックで: ポケモン {pid}（かがくへんかガスのポケモン {sources} がきぜつする）: {SCRAM_RESTORED_REASON}。"
+                         "きぜつの処理で起こるので、ダメージを与える前に止める"),
+                references=("GR-2000-P323-POKEMON-CHECK", "docs/reactive-powers-trainer-damage-v0.61.md", "docs/sc2-integrity-fix-v0.144.md"))
 
 
 def _knockout_stop(after: GameState, order: tuple[int, int]) -> tuple[str, str] | None:

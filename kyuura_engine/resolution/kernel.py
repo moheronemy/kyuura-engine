@@ -472,20 +472,11 @@ def fire_scram(res: Resolution, owner: int, pokemon: PokemonInPlay, slot) -> Non
 def scram_restored_question(res: Resolution, gone) -> None:
     """きぜつの処理でかがくへんかガスの発生源が場をはなれると、残りHPが「10」で力が消えていた［ずらかる］の力がもどるなら SC2（v0.61。きぜつの判定の窓で、きぜつの処理の
     前に確かめる。先読みの範囲の中）。"""
-    state = res.state
-    gone_ids = {pokemon.pokemon_id for _, pokemon in gone}
-    from ..continuous import field_powers_suppressed, suppressors_of
-
-    if field_powers_suppressed(state):
-        return  # まきちらせ!ベトベトガス・オールクリアのワザを使っているあいだ（v0.91）・やみのはどう（v0.92）の抑止はきぜつで消えない
-    for _, pokemon, slot in E.scram_slots(state):
-        if pokemon.pokemon_id in gone_ids or not E.scram_due(state, pokemon, slot) or E.scram_working(state, pokemon, slot):
-            continue
-        if not slot.effect.is_able(pokemon):
-            continue
-        sources = suppressors_of(state, slot.power)
-        if sources and all(pid in gone_ids for pid in sources):
-            raise res.question("scram_power_restored", f"ポケモン {pokemon.pokemon_id}（かがくへんかガスのポケモン {list(sources)} がきぜつする）")
+    # v0.144: 判定は ``effects.scram_restored_by_leaving``（ポケモンチェックのダメージの前の確かめと同じ）。まきちらせ!ベトベトガスなどの抑止はきぜつで消えないので見ない
+    restored = E.scram_restored_by_leaving(res.state, {pokemon.pokemon_id for _, pokemon in gone})
+    if restored is not None:
+        pid, sources = restored
+        raise res.question("scram_power_restored", f"ポケモン {pid}（かがくへんかガスのポケモン {sources} がきぜつする）")
 
 
 # ---------------------------------------------------------------- ダメージの要素（窓: 適用の前 → 受けるとき → 適用 → 受けたとき）
