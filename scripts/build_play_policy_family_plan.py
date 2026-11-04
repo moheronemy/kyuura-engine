@@ -7,6 +7,9 @@
 - 共通規約の案（``CANDIDATES``）は**どれも案**で、利用者の承認を受けていない（``status`` は proposal だけ）。規約の採用・モードの実装・エンジンの変更はしていない。
 - v0.143 の経過: 5 つの案（``ADOPTIONS``）は、S2a の続行規約として利用者が採用し、開発用の集合 CS-KYUURA-PLAY-S2A@1 に登録した（``status`` は adopted。採用の範囲は
   ``adoption`` に書き、案の対象（``targets``）は提案の時点のまま残す）。ほかの案は proposal のまま。
+- v0.145 の経過: この設計案の候補ではない別の仕様案（docs/poison-mist-play-policy-spec.md）の続行規約 3 件（``SPEC_ADOPTIONS``）を、利用者が採用し、開発用の集合
+  CS-KYUURA-PLAY-PO@1 に登録した。場面の行に採用した規約の印（``adopted_convention``）を付けるだけで、候補の状態は変えない。台帳が PO3 を事例（#source-left・#power-lost）に
+  分けたので、場面の ID だけを事例に合わせた（PC-LASTING-SOURCE-CHANGE の対象・経路の一覧）。
 - 各場面の区分（``plan_class``）は、利用者の依頼の A〜E の軸。台帳の ``classification``（棚卸しの A〜E。A=機能不足 …）とは**別の軸**で、同じ文字でも意味が違う。
 - 対戦の道具の発生の記録（``OBSERVATION``）は、リポジトリの外の記録の集計の写し。版・組・方策・seed・分母・数え方を一緒に書く。停止コードの件数から停止率を推定しない。
 """
@@ -56,6 +59,16 @@ ADOPTIONS = {
                             "added_scenes": []},
     "PC-COIN-COUNT-SHORT": {**_S2A_ADOPTION, "convention": ["PC-COIN-COUNT-SHORT", 1], "excluded_targets": [], "added_scenes": []},
     "PC-CHECK-KO-POINT": {**_S2A_ADOPTION, "convention": ["PC-CHECK-KO-POINT", 1], "excluded_targets": [], "added_scenes": []},
+}
+# v0.145（docs/poison-mist-play-po-v0.145.md）: この設計案の候補ではない、別の仕様案の続行規約の採用（場面の行の印と、エンジンの登録との照らし合わせだけ。候補の状態は変えない）
+_PO_ADOPTION = {"on": "2026-11-05", "by": "user", "version": "0.145.0", "set": ["CS-KYUURA-PLAY-PO", 1], "document": "docs/poison-mist-play-po-v0.145.md",
+                "spec": "docs/poison-mist-play-policy-spec.md", "not_recorded_as": "公式の裁定・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用）"}
+SPEC_ADOPTIONS = {
+    "PC-POISON-AMOUNT-ORDER": {**_PO_ADOPTION, "convention": ["PC-POISON-AMOUNT-ORDER", 1], "scenes": ["UNRESOLVED_POISON_CHANGE_ORDER"]},
+    "PC-POISON-MIST-TARGETS": {**_PO_ADOPTION, "convention": ["PC-POISON-MIST-TARGETS", 1], "scenes": ["UNRESOLVED_POISON_MIST_EARLIER_POISON"]},
+    "PC-POISON-MIST-SOURCE-LEFT": {**_PO_ADOPTION, "convention": ["PC-POISON-MIST-SOURCE-LEFT", 1], "scenes": ["UNRESOLVED_POISON_MIST_SOURCE#source-left"],
+                                   "related_candidate": "PC-LASTING-SOURCE-CHANGE",
+                                   "note": "PC-LASTING-SOURCE-CHANGE（proposal のまま）と同じ原則の［ポイズンミスト］の記録だけの規約。案そのものは採用していない"},
 }
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -647,7 +660,10 @@ CANDIDATES = [
         "applies_when": "持続する効果の記録の発生源が進化・退化・場をはなれた場面で、続くかで結果が変わる（対象の一覧のコード）",
         "targets": [_t(s) for s in ("UNRESOLVED_CLAMPING_JAW_SOURCE_DEVOLVED", "UNRESOLVED_JAW_CLAMP_SOURCE_EVOLVED", "UNRESOLVED_JAW_CLAMP_SOURCE_RETURNED",
                                     "UNRESOLVED_MEAN_LOOK_SOURCE_EVOLVED", "UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED")]
-        + [_t("UNRESOLVED_POISON_MIST_SOURCE", "partial", "［ポイズンミスト］の使ったポケモンが場にいない場合は規約の文に当たるが、特殊能力が消えている場合は当たらない（ポケモンチェックの HALTED。道具の対戦で観測）")],
+        # v0.145: 台帳が PO3 を事例に分けたので、提案の時点の対象（UNRESOLVED_POISON_MIST_SOURCE・partial。「使ったポケモンが場にいない場合は規約の文に当たるが、特殊能力が消えている
+        # 場合は当たらない」）のうち、規約の文に当たる事例の ID にした。#power-lost は個別（INDIVIDUAL_REASON_BY_SCENE）
+        + [_t("UNRESOLVED_POISON_MIST_SOURCE#source-left", "full", "［ポイズンミスト］の使ったポケモンが場にいない（ポケモンチェックの HALTED。道具の対戦で観測）。v0.145 に PO3 を事例に"
+              "分ける前は UNRESOLVED_POISON_MIST_SOURCE（partial）。この事例は PC-POISON-MIST-SOURCE-LEFT@1 として別に採用した（この案は proposal のまま）")],
         "excludes": ["効果を受けたポケモンの側の変化（今のまま）", "「自分の番に 1 回」の記録（PC-ONCE-PER-TURN-IDENTITY）"],
         "exceptions": ["説明に終わる条件が書かれている効果（今のまま）"],
         "depends_on": [], "related": ["PC-TARGET-LOST-MID-EFFECT"], "conflicts_with": [],
@@ -749,6 +765,8 @@ INDIVIDUAL_REASON_BY_FAMILY = {
 
 # 族の既定より具体的な、個別の理由（場面ごと）
 INDIVIDUAL_REASON_BY_SCENE = {
+    "UNRESOLVED_POISON_MIST_SOURCE#power-lost": ("v0.145: ［ポイズンミスト］の発生源が場にいるまま力が消えた記録（かがくへんかガス・退化・へんしんなど）。QK1 と同じ形の、力が消えたあとの"
+                                                  "効果の問い（docs/poison-mist-play-policy-spec.md の分けた問い）。続行側でも止める"),
     "UNRESOLVED_POWER_DISCARD_WITHOUT_HAND": "コストを払えない（特殊能力の手札のトラッシュ。cost_unpayable）。にげるのコスト（PC-RETREAT-COST-PAYMENT）と手順が違い、同じ問いの場面がほかにない",
     "UNRESOLVED_ENERGY_DRAIN_NO_ENERGY": "キョウのベトベトンの［だつりょくえき］。実装上の仮定（DR1・DR6）を基礎集合に入れるか（DEC-BASELINE-NONUSER）の判断が先",
     "UNRESOLVED_MIND_GAMES_CHAOS_GYM_ORDER": "利用者指定 USER-MIND-GAMES-OPTIONAL-BEFORE-COST の範囲（錯乱ジムのコインとの前後を含むか）の判断が先（DEC-CHAOS-GYM-MIND-GAMES）。順番の規約案に入れない",
@@ -841,7 +859,8 @@ WHOLE_GAME_CHANNELS = [
                   "きのみの上限（UNSUPPORTED_BERRY_ORDER_LIMIT。動的）で止める",
      "scenes": ["UNRESOLVED_POKEMON_CHECK_BERRY_ORDER", "UNRESOLVED_POISON_DAMAGE_RECEIVED_POWER", "UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT",
                 "UNRESOLVED_SCRAM_TIMING#pokemon-check", "UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT", "UNRESOLVED_LEAVE_LOCK_KNOCKOUT", "UNRESOLVED_LEAVE_LOCK_SCRAM",
-                "UNRESOLVED_POISON_CHANGE_ORDER", "UNRESOLVED_POISON_MIST_EARLIER_POISON", "UNRESOLVED_POISON_MIST_SOURCE", "UNSUPPORTED_BERRY_ORDER_LIMIT"],
+                "UNRESOLVED_POISON_CHANGE_ORDER", "UNRESOLVED_POISON_MIST_EARLIER_POISON", "UNRESOLVED_POISON_MIST_SOURCE#source-left",
+                "UNRESOLVED_POISON_MIST_SOURCE#power-lost", "UNSUPPORTED_BERRY_ORDER_LIMIT"],
      "candidates": ["PC-CHECK-SIDE-ORDER", "PC-NON-ATTACK-DAMAGE-MODIFIERS", "PC-CHECK-KO-POINT", "PC-CHECK-DOUBLE-KNOCKOUT", "PC-LASTING-SOURCE-CHANGE"],
      "continuation": "コードごと。SC1・AL1・AL3・PO1・PO2 はカード固有（個別）。きのみの上限は C"},
     {"id": "WG-CHECK-SCRAM", "kind": "unresolved_ruling", "mechanism": "pokemon_check_halt", "site": "kyuura_engine/resolution/flow.py:1290〜1300",
@@ -1022,6 +1041,7 @@ def build() -> dict:
             target_of[t["scene"]].append((cand["id"], t))  # v0.143: 採用で加えた場面
     adopted_scene = {(t if isinstance(t, str) else t["scene"]): ADOPTIONS[c["id"]]["convention"] for c in CANDIDATES if c["id"] in ADOPTIONS
                      for t in adoption_scenes(c)}
+    adopted_scene.update({sid: a["convention"] for a in SPEC_ADOPTIONS.values() for sid in a["scenes"]})  # v0.145: 別の仕様案の採用
     whole_game_scenes = {s for ch in WHOLE_GAME_CHANNELS for s in ch["scenes"]}
     scene_rows = []
     for s in scenes:
@@ -1211,8 +1231,22 @@ def adoption_problems(plan: dict) -> list[str]:
         for sid in adoption["scenes"]:
             if scenes.get(sid, {}).get("adopted_convention") != list(key):
                 problems.append(f"{c['id']}: 採用の範囲の場面 {sid} に、採用した規約の印がない")
+    scenes = {s["id"]: s for s in plan["scenes"]}
+    for cid, adoption in SPEC_ADOPTIONS.items():  # v0.145: 別の仕様案の採用（候補ではない）
+        key = tuple(adoption["convention"])
+        convention, spec = C.CONVENTIONS.get(key), C.SETS.get(tuple(adoption["set"]))
+        if cid in {c["id"] for c in plan["candidates"]} or convention is None or spec is None or key not in spec.members:
+            problems.append(f"{cid}: 別の仕様案の採用の規約が、候補と同じ ID か、エンジンの登録の集合 {adoption['set']} にない")
+            continue
+        if convention.layer != C.LAYER_CONTINUATION or convention.approval != C.APPROVAL_USER_AGREED or spec.usage != C.USAGE_DEVELOPMENT:
+            problems.append(f"{cid}: 採用の規約の層・承認・集合の区分が、開発用の集合の採用した続行規約ではない")
+        if sorted(convention.scenes) != sorted(adoption["scenes"]):
+            problems.append(f"{cid}: 採用の範囲 {adoption['scenes']} が、登録した規約の場面 {sorted(convention.scenes)} と違う")
+        for sid in adoption["scenes"]:
+            if scenes.get(sid, {}).get("adopted_convention") != list(key):
+                problems.append(f"{cid}: 採用の範囲の場面 {sid} に、採用した規約の印がない")
     registered = {key for key, conv in C.CONVENTIONS.items() if conv.layer == C.LAYER_CONTINUATION}
-    if registered != {tuple(a["convention"]) for a in ADOPTIONS.values()}:
+    if registered != {tuple(a["convention"]) for a in (*ADOPTIONS.values(), *SPEC_ADOPTIONS.values())}:
         problems.append(f"エンジンに登録した続行規約 {sorted(registered)} が、採用した案と対応しない")
     return problems
 

@@ -2193,7 +2193,9 @@ def log_problems(state) -> list[str]:
     v118: dict = {"window": None, "x_used": set(), "transport": None, "prev": None}
     # v0.119: v119_problems の記録（今のワザ・［ポイズンミスト］の記録（(プレイヤー, 番号, 番) → 使う前のどく・中断）・どくのかける数（番号 → 数）・「どくをだす」の効果（番号 → 与えた番・
     # ワザ）・「ガスばくはつ」の予定（プレイヤー → 状態）・「なぞのこうせん」の効果・1 つ前のログ）
-    v119: dict = {"window": None, "mists": {}, "mult": {}, "secrete": {}, "gas": {}, "beams": [], "prev": None, "secrete_due": None, "sleep_coins": []}
+    v119: dict = {"window": None, "mists": {}, "mult": {}, "secrete": {}, "gas": {}, "beams": [], "prev": None, "secrete_due": None, "sleep_coins": [],
+                  "po_pending": []}  # v0.145: poison_damage の直前の PO の規約の記録
+    po_members = {m for m, _, _ in getattr(getattr(state, "conventions", None), "members", ())} & set(PO_RULES)  # v0.145: 状態の規約集合の PO の続行規約
     # v0.120: v120_problems の記録（今のワザ・進化の重なり（いちばん上のカードの uid → (場のポケモンの番号, 下のカードの並び)）・たねポケモンとしてあつかって出したカード（uid →
     # (場のポケモンの番号, 出した番)）・復活の特殊能力を使った (番, 番号)・使っている最中のたまごの化石）
     v120: dict = {"window": None, "below": {}, "revived": {}, "power_used": set(), "egg": None}
@@ -4935,6 +4937,98 @@ def log_problems(state) -> list[str]:
             w["events"].append((kind, e))
         return found
 
+    def v145_poison_problems(e: dict, pending: list[dict]) -> list[str]:
+        """v0.145（docs/poison-mist-play-po-v0.145.md 6 章）: PO の続行規約のある集合の対戦の ``poison_damage`` を、ログから組み立てたどく（量・かける数）・［ポイズンミスト］の記録
+        （使う前からどく状態だったポケモン・中断・発生源が今の場にいるか）・鋼エネルギーの枚数（``energy_reduction``）から求め直して照らす（エンジンの記録・計算を読まない）。
+
+        - 厳密側の読み方（すべての順番・使う前のどくに当てはめるか・中断した記録が続くか）で量が 1 つに決まれば、規約の記録はない
+        - 決まらなければ、状態の集合の規約を、発生源 → 当てはまる相手 → 順番の順に加えて求め直し、決まった量がログの量（鋼エネルギーの前の量）と同じ。規約の記録は、加えた規約のうち
+          除くと結果（止まる・量）が変わるものとちょうど同じで、このポケモンの poison_damage の直前に、その順で並ぶ。記録の量・ポケモンが同じ
+        - 発生源が場にいるまま中断した記録（#power-lost）で量が変わるなら、ログにあってはならない（止まる）"""
+        import itertools
+
+        found: list[str] = []
+        pid, turn = e["pokemon_id"], e["turn"]
+        mult = v119["mult"].get(pid, 1)
+        special = poisoned.get(pid, 10)
+        metal = len(e.get("energy_reduction", ()))
+        records = list(v119["mists"].values())
+
+        def amounts(mist: int | None, fixed_order: bool) -> list[tuple[int, int]]:
+            """当てはめてよい並びごとの (量, 鋼エネルギーの前)。最初は、性質 → ［ポイズンミスト］→ 鋼エネルギーの並び（記録に書く値）。"""
+            steps = ([("special", special)] if special != 10 else []) + ([("multiply", mult)] if mult != 1 else []) + ([("mist", mist)] if mist is not None else [])
+            out = []
+            for order in itertools.permutations(steps + [("metal", metal)]):
+                names = [n for n, _ in order]
+                if any(n in names and names.index(n) > names.index("metal") for n in ("special", "mist")):
+                    continue
+                if fixed_order and (any(n in names and "mist" in names and names.index(n) > names.index("mist") for n in ("special", "multiply"))
+                                    or ("multiply" in names and names.index("multiply") > names.index("metal"))):
+                    continue
+                value = before = 10
+                for n, a in order:
+                    if n == "metal":
+                        before, value = value, (max(0, value - 10 * a) if value > 0 and a else value)
+                    elif n == "multiply":
+                        value = (value // 10) * a * 10 if value > 0 else value
+                    else:
+                        value = a
+                out.append((value, before))
+            return out
+
+        def solve(fixed: frozenset) -> tuple:
+            unsure = [m for m in records if m["interrupted"] and (m["pid"] in in_play or "source" not in fixed)]
+            live = [m for m in records if not m["interrupted"]]
+            earlier_options = (True,) if "targets" in fixed else (True, False)
+            results = {}
+            for earlier in earlier_options:
+                for on in ((False, True) if unsure else (False,)):
+                    used = [m for m in live + (unsure if on else []) if earlier or pid not in m["before"]]
+                    found_amounts = amounts(used[0]["amount"] if used else None, "order" in fixed)
+                    if len({v for v, _ in found_amounts}) > 1:
+                        return ("halt", "UNRESOLVED_POISON_CHANGE_ORDER")
+                    results[(earlier, on)] = (found_amounts[0], sorted(m["pid"] for m in used if not m["interrupted"]))
+            if unsure and any(results[(x, False)][0][0] != results[(x, True)][0][0] for x in earlier_options):
+                return ("halt", "UNRESOLVED_POISON_MIST_SOURCE")
+            if "targets" not in fixed and results[(True, False)][0][0] != results[(False, False)][0][0]:
+                return ("halt", "UNRESOLVED_POISON_MIST_EARLIER_POISON")
+            return ("amount",) + results[(earlier_options[-1], False)]
+
+        def key(outcome: tuple) -> tuple:
+            return outcome[:2] if outcome[0] == "halt" else ("amount", outcome[1])
+
+        questions = (("source", "PC-POISON-MIST-SOURCE-LEFT"), ("targets", "PC-POISON-MIST-TARGETS"), ("order", "PC-POISON-AMOUNT-ORDER"))
+        fixed: frozenset = frozenset()
+        outcome = solve(fixed)
+        expected: list[str] = []
+        if outcome[0] == "halt":
+            for question, convention in questions:
+                if convention not in po_members or (question == "source" and not any(m["interrupted"] and m["pid"] not in in_play for m in records)):
+                    continue
+                fixed = fixed | {question}
+                outcome = solve(fixed)
+                if outcome[0] == "amount":
+                    break
+            if outcome[0] == "amount":
+                expected = [c for q, c in questions if q in fixed and key(solve(fixed - {q})) != key(outcome)]
+        if outcome[0] == "halt":
+            found.append(f"{turn} 番のポケモン {pid} のどくのダメージは、状態の集合の規約でも量が決まらない（{outcome[1]}）のに止まっていない")
+            return found
+        (value, before), mists = outcome[1], outcome[2]
+        if (e["amount"], e.get("amount_before", e["amount"])) != (value, before if metal else value):
+            found.append(f"{turn} 番のポケモン {pid} のどくのダメージ {e['amount']}（鋼エネルギーの前 {e.get('amount_before')}）が、ログから組み立てた規約の量 {value}（前 {before}）と違う")
+        if e.get("multiplier", 1) != mult or sorted(e.get("poison_mists", ())) != mists:
+            found.append(f"{turn} 番のポケモン {pid} のどくのダメージの multiplier {e.get('multiplier')}・poison_mists {e.get('poison_mists')} が、ログから組み立てた {mult}・{mists} と合わない")
+        if [x.get("convention") for x in pending] != expected:
+            found.append(f"{turn} 番のポケモン {pid} のどくの規約の記録 {[x.get('convention') for x in pending]} が、ログから組み立てた量を決めた規約 {expected} と違う")
+        for x in pending:
+            if x.get("pokemon_id") != pid or x.get("amount") != e["amount"]:
+                found.append(f"{turn} 番のどくの規約の記録 {x.get('convention')} のポケモン・量 {x.get('pokemon_id')}・{x.get('amount')} が、直後のどくのダメージと違う")
+            if x.get("convention") == "PC-POISON-MIST-SOURCE-LEFT" and sorted(x.get("ended_mists", ())) != sorted(
+                    m["pid"] for m in records if m["interrupted"] and m["pid"] not in in_play):
+                found.append(f"{turn} 番の発生源の規約の記録の ended_mists {x.get('ended_mists')} が、場にいない発生源の記録と違う")
+        return found
+
     def v119_poison_expected(pid: int) -> int:
         """v0.119: ログから組み立てた、ポケモン ``pid`` がポケモンチェックの「どく」で受けるダメージ（鋼エネルギーの前）。どくの量（通常 10・特殊などくの量）× ダメージカウンターの数にかける数
         （「どくどくエキス」の文面の数）。はたらいている［ポイズンミスト］（中断していない・使う前からどく状態だった記録に入っていない）があれば、その文面の数。順番・使う前のどく・中断で
@@ -5780,7 +5874,12 @@ def log_problems(state) -> list[str]:
         if kind == "knock_out":
             gone = ids.get(e.get("pokemon"))
             st["mult"].pop(gone, None)
-        if kind == "poison_damage":
+        pending, st["po_pending"] = st["po_pending"], ([e] + st["po_pending"] if kind == "convention_applied" and e.get("convention") in PO_RULES else [])
+        if pending and kind not in ("convention_applied", "poison_damage"):
+            found.append(f"{turn} 番の［ポイズンミスト］・どくの量の規約の記録 {[x.get('convention') for x in pending]} のあとに、どくのダメージがない")
+        if kind == "poison_damage" and po_members:
+            found += v145_poison_problems(e, list(reversed(pending)))
+        elif kind == "poison_damage":
             pid = e["pokemon_id"]
             mult = st["mult"].get(pid, 1)
             live = [m for m in st["mists"].values() if pid not in m["before"] and not m["interrupted"]]
@@ -10455,6 +10554,12 @@ S2A_RULES = {
                             {"element", "heads", "available", "processed", "source", "player", "target_owner", "target"}),
     "PC-CHECK-KO-POINT": (1, {"UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT"}, {"pokemon_ids"}),
 }
+# v0.145（docs/poison-mist-play-po-v0.145.md）: PO の続行規約の記録（規約 → (版, 場面, 項目)）。量の確かめは v145_poison_problems（log_problems の中）、記録の場所は s2a_problems
+PO_RULES = {
+    "PC-POISON-AMOUNT-ORDER": (1, {"UNRESOLVED_POISON_CHANGE_ORDER"}, {"pokemon_id", "amount", "poison_mists"}),
+    "PC-POISON-MIST-TARGETS": (1, {"UNRESOLVED_POISON_MIST_EARLIER_POISON"}, {"pokemon_id", "amount", "poison_mists"}),
+    "PC-POISON-MIST-SOURCE-LEFT": (1, {"UNRESOLVED_POISON_MIST_SOURCE#source-left"}, {"pokemon_id", "amount", "ended_mists"}),
+}
 S2A_PLAY_AS_CARDS = frozenset({"PMCG1-091", "PMCG3-046"})  # ピッピ人形・なにかの化石（ポケモンとして場に出せるトレーナー）
 S2A_SHORT_ELEMENTS = {"UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT": "discard_water_energy_cards", "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT": "return_energy_cards_to_hand"}
 
@@ -10519,16 +10624,16 @@ def s2a_problems(state) -> list[str]:
         for e in log:
             if e["kind"] != "convention_applied":
                 continue
-            rule = S2A_RULES.get(e.get("convention"))
+            rule = S2A_RULES.get(e.get("convention")) or PO_RULES.get(e.get("convention"))  # v0.145: PO の規約
             if rule is None or e.get("version") != rule[0] or (e.get("convention"), e.get("version")) not in members:
-                problems.append(f"{where} の {e['turn']} 番の規約の記録 {e.get('convention')}@{e.get('version')} が、状態の規約集合の S2a の規約ではない")
+                problems.append(f"{where} の {e['turn']} 番の規約の記録 {e.get('convention')}@{e.get('version')} が、状態の規約集合の S2a・PO の規約ではない")
                 continue
             if e.get("scene") not in rule[1] or e.get("code") != str(e.get("scene")).split("#")[0]:
                 problems.append(f"{where} の {e['turn']} 番の規約の記録の場面 {e.get('scene')}・コード {e.get('code')} が、規約 {e['convention']} の場面ではない")
             extra = set(e) - {"kind", "turn", "convention", "version", "scene", "code"} - rule[2]
             if extra:
                 problems.append(f"{where} の {e['turn']} 番の規約の記録に、決めていない項目 {sorted(extra)} がある（秘密の情報を書かない）")
-            if "#" in str(e.get("scene")) and not str(e["scene"]).endswith(("#" + case, "#setup-placement")):
+            if "#" in str(e.get("scene")) and e.get("convention") not in PO_RULES and not str(e["scene"]).endswith(("#" + case, "#setup-placement")):
                 problems.append(f"{where} の規約の記録の場面 {e['scene']} が、この区間の事例 {case} ではない")
         # 2. 準備
         placed = next((i for i, e in enumerate(log) if e["kind"] == "place_starting_pokemon"), len(log))
@@ -10618,6 +10723,19 @@ def s2a_problems(state) -> list[str]:
                 for pid in mark.get("pokemon_ids", ()):
                     if cards.get(pid) not in knocked:
                         problems.append(f"{where} の {mark['turn']} 番のきぜつ判定の規約の記録のポケモン {pid} が、そのポケモンチェックできぜつしていない")
+        # 5. v0.145: PO の規約の記録は、ポケモンチェックの中の、同じポケモン・同じ量の poison_damage の直前（あいだは同じポケモンの PO の記録だけ）。同じ規約は 1 つ
+        for i, e in enumerate(log):
+            if e["kind"] != "convention_applied" or e.get("convention") not in PO_RULES:
+                continue
+            j = i
+            while j < len(log) and log[j]["kind"] == "convention_applied" and log[j].get("convention") in PO_RULES and log[j].get("pokemon_id") == e.get("pokemon_id"):
+                j += 1
+            run = [x.get("convention") for x in log[i:j]]
+            target = log[j] if j < len(log) else None
+            if (target is None or target["kind"] != "poison_damage" or target.get("pokemon_id") != e.get("pokemon_id") or target.get("amount") != e.get("amount")
+                    or id(e) not in inside or len(set(run)) != len(run)):
+                problems.append(f"{where} の {e['turn']} 番のどくの量の規約の記録 {e.get('convention')}（ポケモン {e.get('pokemon_id')}）が、ポケモンチェックの中の同じポケモンの"
+                                f"どくのダメージの直前にない")
         # 4. 枚数の不足の規約の記録の場所（ワザ・トレーナーの使用のあと、番の終わりの前）
         last_use = None
         for e in log:

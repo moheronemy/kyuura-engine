@@ -46099,6 +46099,9 @@ POISON_MIST_SOURCE_CODE = "UNRESOLVED_POISON_MIST_SOURCE"  # PO3
 POISON_MIST_SOURCE_REASON = (
     "［ポイズンミスト］を使ったポケモンが場をはなれた・その特殊能力が消えた（かがくへんかガス・退化など）あとも、「次の自分の番の始めまで」の効果が続くか（説明は「ねむり・マヒ・"
     "こんらん」状態で効果が消えることだけを書く）は、印刷の文面・kyuura の記録から決められない（効果が続くかで量が変わるときだけ止める。PO3。QK1 と同じ形の、別の特殊能力の問い）")
+# v0.145（docs/poison-mist-play-po-v0.145.md）: PO3 の事例（停止の方針の台帳の UNRESOLVED_POISON_MIST_SOURCE の下位）。続行規約 PC-POISON-MIST-SOURCE-LEFT@1 は ``source-left`` だけ
+POISON_MIST_SOURCE_LEFT_CASE = "source-left"  # 記録の発生源（場の番号）のポケモンが、ポケモンチェックの時点で場にいない
+POISON_MIST_POWER_LOST_CASE = "power-lost"  # 発生源は場にいるが、記録に中断がある（特殊能力が消えた・消えていた。続行側でも止める）
 
 
 @dataclass(frozen=True)
@@ -46198,13 +46201,20 @@ class PoisonCheckAmount:
     cards: tuple[int, ...]
     mists: tuple[int, ...]
     multiplier: int
+    # v0.145: 量を決めた続行規約の場面（停止コード, 事例）。規約の順（発生源 → 当てはまる相手 → 順番）。空なら規約を使っていない（厳密側と同じ量・記録）
+    conventions: tuple[tuple[str, str | None], ...] = ()
+    ended: tuple[int, ...] = ()  # v0.145: PC-POISON-MIST-SOURCE-LEFT で当てはめなかった記録の発生源の場の番号（規約を当てたときだけ）
 
 
-def _poison_orders(state: GameState, pokemon: PokemonInPlay, special: int | None, multiplier: int, mist: int | None) -> dict[tuple[str, ...], tuple[int, int, tuple[int, ...]]]:
+def _poison_orders(state: GameState, pokemon: PokemonInPlay, special: int | None, multiplier: int, mist: int | None,
+                   *, fixed_order: bool = False) -> dict[tuple[str, ...], tuple[int, int, tuple[int, ...]]]:
     """v0.119: どくの量を変える効果の当てはめ方（順番。効果の名前の並び）ごとの (受けるダメージ, 鋼エネルギーの前の量, 減らしたカード)。基本は通常のどくの 10（p.322）。効果は、特殊などくの
     決まった量（``special``。その数にする）・ダメージカウンターの数にかける数（``multiplier``）・［ポイズンミスト］（``mist``。その数にする）・鋼エネルギー（受けるダメージの「-10」）。
     特殊などく・［ポイズンミスト］は鋼エネルギーより先（v0.78 からの既存の量の扱い。特殊などくの説明と［ポイズンミスト］の説明は同じ「受ける「どく」のダメージは」の書き方）。ほかの順番は
-    決めない（並べかえのすべて）。最初の並びは、鋼エネルギーを最後に当てはめる並び（記録に書く値）。"""
+    決めない（並べかえのすべて）。最初の並びは、鋼エネルギーを最後に当てはめる並び（記録に書く値）。
+
+    v0.145（PC-POISON-AMOUNT-ORDER@1。``fixed_order``）: どく状態の性質（特殊などく・かける数）→ ［ポイズンミスト］→ 鋼エネルギーの並びだけ。性質の 2 つ（特殊などくとかける数）の
+    あいだの順番は決めない（今の写しでは同時に持たない）。"""
     per = state.rules.damage_per_counter
     steps = []
     if special is not None:
@@ -46219,6 +46229,10 @@ def _poison_orders(state: GameState, pokemon: PokemonInPlay, special: int | None
         names = tuple(name for name, _ in order)
         if any(name in names and names.index(name) > names.index("metal") for name in ("special", "mist")):
             continue
+        if fixed_order and any(name in names and "mist" in names and names.index(name) > names.index("mist") for name in ("special", "multiply")):
+            continue
+        if fixed_order and "multiply" in names and names.index("multiply") > names.index("metal"):
+            continue
         value, before, cards = 10, 10, ()
         for name, amount in order:
             if name == "metal":
@@ -46232,6 +46246,48 @@ def _poison_orders(state: GameState, pokemon: PokemonInPlay, special: int | None
     return found
 
 
+def _poison_outcome(state: GameState, pokemon: PokemonInPlay, special: int | None, multiplier: int, amount: int | None, working: list, left: list, lost: list,
+                    fixed: frozenset[str]) -> tuple:
+    """v0.145: 読み方の組ごとの量を求め、決まらなければ ("halt", 停止コード, 文)、決まれば ("amount", (受けるダメージ, 鋼エネルギーの前, 減らしたカード), 当てはめた記録の発生源)。
+    状態を変えない。
+
+    ``fixed`` は続行規約で決めた問い（``"source"``: 発生源が場にいない記録は当てはめない・``"targets"``: 使う前からどく状態のポケモンにも当てはめる・``"order"``: 量を変える効果の順番）。
+    空なら v0.119 からの厳密側の判断と同じ（読み方の組を調べる順・止める順・文・記録に書く値）。決まらない記録は、``"source"`` がなければ場にいない記録と力の消えた記録を一組で、
+    あれば力の消えた記録だけで比べる。"""
+    unsure = [r for r in state.poison_mists if r in lost or ("source" not in fixed and r in left)]  # 記録の並び（v0.119 と同じ順）
+    earlier_options = (True,) if "targets" in fixed else (True, False)
+    results = {}
+    for earlier in earlier_options:
+        for unsure_on in ((False, True) if unsure else (False,)):
+            used = [r for r in working + (unsure if unsure_on else []) if earlier or pokemon.pokemon_id not in r.poisoned_before]
+            found = _poison_orders(state, pokemon, special, multiplier, amount if used else None, fixed_order="order" in fixed)
+            values = {value for value, _, _ in found.values()}
+            if len(values) > 1:
+                if "order" in fixed:
+                    raise RuntimeError(f"特殊などくの量とかける数を同時に持つどく状態（ポケモン {pokemon.pokemon_id}）の量の順番が決まらない（今の写しでは起こらない。エンジンの不具合）")
+                shown = {"→".join(names): value for names, (value, _, _) in found.items()}
+                return "halt", POISON_CHANGE_ORDER_CODE, f"{POISON_CHANGE_ORDER_REASON}。ポケモン {pokemon.pokemon_id}・当てはめ方ごとの量 {shown}"
+            results[(earlier, unsure_on)] = (next(iter(found.values())), tuple(r.pokemon_id for r in used))
+    finals = {key: canonical[0] for key, (canonical, _) in results.items()}
+    if unsure and any(finals[(earlier, False)] != finals[(earlier, True)] for earlier in earlier_options):
+        return "halt", POISON_MIST_SOURCE_CODE, f"{POISON_MIST_SOURCE_REASON}。ポケモン {pokemon.pokemon_id}・［ポイズンミスト］の記録 {[r.pokemon_id for r in unsure]}"
+    if "targets" not in fixed and finals[(True, False)] != finals[(False, False)]:
+        return "halt", POISON_MIST_EARLIER_CODE, (f"{POISON_MIST_EARLIER_REASON}。ポケモン {pokemon.pokemon_id}（当てはめる {finals[(True, False)]}・当てはめない "
+                                                  f"{finals[(False, False)]}）")
+    # どの読み方・当てはめ方でも量は同じ。記録には、鋼エネルギーを最後に当てはめる並び（既存の順番）の値を書き、当てはめた［ポイズンミスト］は、使う前からどく状態のポケモンをふくめない
+    # 読み方（``"targets"`` で決めたなら、ふくめる読み方）で当てはまるもの（量を変えたかによらない）
+    canonical, used = results[(earlier_options[-1], False)]
+    return "amount", canonical, used
+
+
+# v0.145: 続行規約を試す順（発生源 → 当てはまる相手 → 順番）。(問い, 停止コード, 事例)
+_POISON_CONTINUATIONS = (
+    ("source", POISON_MIST_SOURCE_CODE, POISON_MIST_SOURCE_LEFT_CASE),
+    ("targets", POISON_MIST_EARLIER_CODE, None),
+    ("order", POISON_CHANGE_ORDER_CODE, None),
+)
+
+
 def poison_check_amount(state: GameState, owner: int, pokemon: PokemonInPlay) -> PoisonCheckAmount:
     """v0.119（docs/damage-reactions-poison-sleep-v0.119.md 5 章）: ポケモンチェックの 2 の「どく」で ``pokemon``（持ち主 ``owner``。どく状態）が受けるダメージ。実際の処理
     （``procedures.pokemon_check_poison``）と、その前の確かめ（KA1・きぜつ・［ずらかる］・PK1 の見積もり）が同じ問い合わせを使う（どくの量を直接読まない）。状態を変えず、乱数を使わない。
@@ -46239,7 +46295,13 @@ def poison_check_amount(state: GameState, owner: int, pokemon: PokemonInPlay) ->
     - 量を変える効果: どく状態の性質（特殊などくの決まった量・「どくどくエキス」のダメージカウンターの数の倍）・［ポイズンミスト］（今の場の記録。``poison_mists``）・鋼エネルギー（NIP1X-010）
     - 当てはめる順番で量が変わるなら PO1（``_poison_orders``）、［ポイズンミスト］が使う前からどく状態のポケモンに当てはまるかで変わるなら PO2、使ったポケモンが場をはなれた・特殊能力が
       消えたあとの効果が続くかで変わるなら PO3 で、``UnsupportedError``（呼ぶ側がダメージを与える前に止める）。量が同じなら止めない
-    - 2 つ以上の［ポイズンミスト］は足さない（どれも「20 ダメージになる」）"""
+    - 2 つ以上の［ポイズンミスト］は足さない（どれも「20 ダメージになる」）
+
+    v0.145（docs/poison-mist-play-po-v0.145.md）: 厳密側の判断（続行規約なし）で量が決まれば、それを返す（どの規約集合でも同じ量・記録）。決まらず、状態の規約集合に続行規約があれば、
+    PC-POISON-MIST-SOURCE-LEFT（記録の発生源が場にいない記録は当てはめない。場にいない記録があるときだけ）→ PC-POISON-MIST-TARGETS（ポケモンチェックの時点でどく状態のすべての
+    ポケモンに当てはめる）→ PC-POISON-AMOUNT-ORDER（性質 → ［ポイズンミスト］→ 鋼エネルギー）の順に 1 つずつ加えて求め直し、量が決まったところでやめる。加えた規約のうち、それを
+    除くと結果（停止コード・量）が変わる規約だけを ``conventions`` に入れる（呼ぶ側の実際の処理が規約を当てた記録を書く。先読み・確かめは書かない）。発生源が場にいて力が消えた記録（``power-lost``）で量が変わるなら、
+    続行側でも PO3 で止める。記録は発生源ごと（``PoisonMist`` 1 つずつ）に分けて判断し、場にいない発生源の記録だけを当てはめない（ほかの発生源の記録は消さない）。"""
     poison = pokemon.conditions.poison
     if poison is None:
         raise RuntimeError(f"どく状態でないポケモン {pokemon.pokemon_id} のどくのダメージを求めた（エンジンの不具合）")
@@ -46249,28 +46311,35 @@ def poison_check_amount(state: GameState, owner: int, pokemon: PokemonInPlay) ->
     if any(poison_mist_effect(state, record).amount != amount for record in records):
         raise RuntimeError("量の違う［ポイズンミスト］の記録がある（今の写しでは起こらない。エンジンの不具合）")
     working = [r for r in records if not r.interrupted and poison_mist_working(state, r)]
-    unsure = [r for r in records if r not in working]
+    left = [r for r in records if r not in working and state.find_pokemon(r.pokemon_id) is None]
+    lost = [r for r in records if r not in working and r not in left]
+    def solve(questions: frozenset[str]) -> tuple:
+        return _poison_outcome(state, pokemon, special, poison.multiplier, amount, working, left, lost, questions)
 
-    def outcome(earlier: bool, unsure_on: bool):
-        used = [r for r in working + (unsure if unsure_on else []) if earlier or pokemon.pokemon_id not in r.poisoned_before]
-        found = _poison_orders(state, pokemon, special, poison.multiplier, amount if used else None)
-        values = {value for value, _, _ in found.values()}
-        if len(values) > 1:
-            shown = {"→".join(names): value for names, (value, _, _) in found.items()}
-            raise UnsupportedError(POISON_CHANGE_ORDER_CODE, f"{POISON_CHANGE_ORDER_REASON}。ポケモン {pokemon.pokemon_id}・当てはめ方ごとの量 {shown}")
-        return next(iter(found.values())), tuple(r.pokemon_id for r in used)
+    def result_key(found: tuple) -> tuple:
+        return found[:2] if found[0] == "halt" else ("amount", found[1][:2])  # 止まるなら停止コード、決まるなら (受けるダメージ, 鋼エネルギーの前)
 
-    results = {(earlier, on): outcome(earlier, on) for earlier in (True, False) for on in ((False, True) if unsure else (False,))}
-    finals = {key: canonical[0] for key, (canonical, _) in results.items()}
-    if unsure and (finals[(True, False)] != finals[(True, True)] or finals[(False, False)] != finals[(False, True)]):
-        raise UnsupportedError(POISON_MIST_SOURCE_CODE, f"{POISON_MIST_SOURCE_REASON}。ポケモン {pokemon.pokemon_id}・［ポイズンミスト］の記録 {[r.pokemon_id for r in unsure]}")
-    if finals[(True, False)] != finals[(False, False)]:
-        raise UnsupportedError(POISON_MIST_EARLIER_CODE, f"{POISON_MIST_EARLIER_REASON}。ポケモン {pokemon.pokemon_id}（当てはめる {finals[(True, False)]}・当てはめない "
-                               f"{finals[(False, False)]}）")
-    (value, before, cards), used = results[(False, False)]
-    # どの読み方・当てはめ方でも量は同じ。記録には、鋼エネルギーを最後に当てはめる並び（既存の順番）の値を書き、当てはめた［ポイズンミスト］は、使う前からどく状態のポケモンをふくめない
-    # 読み方で当てはまるもの（量を変えたかによらない）
-    return PoisonCheckAmount(value, before, cards, used, poison.multiplier)
+    fixed: frozenset[str] = frozenset()
+    applied: list[tuple[str, str | None]] = []
+    outcome = solve(fixed)
+    if outcome[0] == "halt":
+        from .conventions import continuation_for
+
+        for question, code, case in _POISON_CONTINUATIONS:
+            if (question == "source" and not left) or continuation_for(state, code, case) is None:
+                continue
+            fixed = fixed | {question}
+            outcome = solve(fixed)
+            if outcome[0] == "amount":
+                break
+        if outcome[0] == "amount":
+            # 量を決めた規約: 加えた規約の組から 1 つを除くと結果（停止コード・量）が変わるもの。最後に加えた規約は、いつも入る（それを除くと止まる）
+            applied = [(code, case) for question, code, case in _POISON_CONTINUATIONS if question in fixed and result_key(solve(fixed - {question})) != result_key(outcome)]
+    if outcome[0] == "halt":
+        raise UnsupportedError(outcome[1], outcome[2])
+    _, (value, before, cards), used = outcome
+    ended = tuple(r.pokemon_id for r in left) if (POISON_MIST_SOURCE_CODE, POISON_MIST_SOURCE_LEFT_CASE) in applied else ()
+    return PoisonCheckAmount(value, before, cards, used, poison.multiplier, tuple(applied), ended)
 
 
 PULL_IN_TEXT = "相手を「ねむり」状態にする。のぞむなら、ダメージと効果を与える前に、相手の控えポケモンを1匹選び、相手と入れ替えてよい。"

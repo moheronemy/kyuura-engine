@@ -85,16 +85,16 @@ A の場面でも、続けるのに実装・秘密への非依存の確かめ・
 <!-- generated:plan-counts begin（scripts/build_play_policy_family_plan.py --write が書く。手で直さない） -->
 | 対象 | 件数 |
 |---|---:|
-| 場面（台帳の現在有効な項目。事例のあるコードは事例） | 401 |
-| うち停止コードの場面 | 367 |
+| 場面（台帳の現在有効な項目。事例のあるコードは事例） | 402 |
+| うち停止コードの場面 | 368 |
 | 停止コード（重複を除く） | 357 |
-| 区分 A（研究上の未決場面） | 326 |
+| 区分 A（研究上の未決場面） | 327 |
 | 区分 B（機能不足） | 33 |
 | 区分 C（技術的な制限） | 14 |
 | 区分 D（共通の不具合） | 9 |
 | 区分 E（そのほか） | 19 |
 | A のうち規約案の対象 | 171 |
-| A のうち個別（共通化しない） | 155 |
+| A のうち個別（共通化しない） | 156 |
 | 規約案 | 27 |
 | 規約案の対象の場面（重複を含む） | 171 |
 | 規約案の対象の場面（重複を除く） | 171 |
@@ -104,12 +104,12 @@ A の場面でも、続けるのに実装・秘密への非依存の確かめ・
 | 一部だけ扱える場面 | 5 |
 | 追加の実装・秘密の確かめ・不具合の修正が要る場面 | 37 |
 | 続けられるか未確認の場面（unverified） | 126 |
-| 対戦全体を止める場面（静的な止め方と、経路の一覧の場面） | 28 |
+| 対戦全体を止める場面（静的な止め方と、経路の一覧の場面） | 29 |
 | うち静的な Halt・途中停止の定数で止める | 17 |
-| うち動的な経路（4 章の一覧）でだけ止める（ほかの場面では拒否） | 11 |
+| うち動的な経路（4 章の一覧）でだけ止める（ほかの場面では拒否） | 12 |
 | 対戦全体を止める場面のうち規約案の対象 | 15 |
 | この調査で見つけた不具合 | 1 |
-| 内部ガード（場面に数えない。D） | 607 |
+| 内部ガード（場面に数えない。D） | 608 |
 <!-- generated:plan-counts end -->
 
 A 以外の場面の内訳（理由ごと）:
@@ -160,7 +160,7 @@ A 以外の場面の内訳（理由ごと）:
 | `WG-CHECK-SLEEP-ORDER` | unresolved_ruling | pokemon_check_halt | kyuura_engine/procedures.py:946〜961 | 1 | PC-CHECK-SIDE-ORDER | 規約で順番が決まる。そのあと回復したときの止め方（WG-CHECK-RECOVERY）に当たりうる |
 | `WG-CHECK-CHAR-ORDER` | unresolved_ruling | pokemon_check_halt | kyuura_engine/procedures.py:374〜381 | 1 | PC-CHECK-SIDE-ORDER | 規約で順番が決まる。コインの前の確かめ・上限（WG-CHECK-CHAR-LIMIT）が残る |
 | `WG-CHECK-CHAR-LIMIT` | technical_limit | pokemon_check_halt | kyuura_engine/procedures.py:382〜385 | 1 | — | 規約では続けられない（計算の改善が要る。C） |
-| `WG-CHECK-PLAN` | unresolved_ruling | pokemon_check_halt | kyuura_engine/procedures.py:267〜330（_pokemon_check_plan） | 11 | PC-CHECK-SIDE-ORDER・PC-NON-ATTACK-DAMAGE-MODIFIERS・PC-CHECK-KO-POINT・PC-CHECK-DOUBLE-KNOCKOUT・PC-LASTING-SOURCE-CHANGE | コードごと。SC1・AL1・AL3・PO1・PO2 はカード固有（個別）。きのみの上限は C |
+| `WG-CHECK-PLAN` | unresolved_ruling | pokemon_check_halt | kyuura_engine/procedures.py:267〜330（_pokemon_check_plan） | 12 | PC-CHECK-SIDE-ORDER・PC-NON-ATTACK-DAMAGE-MODIFIERS・PC-CHECK-KO-POINT・PC-CHECK-DOUBLE-KNOCKOUT・PC-LASTING-SOURCE-CHANGE | コードごと。SC1・AL1・AL3・PO1・PO2 はカード固有（個別）。きのみの上限は C |
 | `WG-CHECK-SCRAM` | unresolved_ruling | pokemon_check_halt | kyuura_engine/resolution/flow.py:1290〜1300 | 1 | — | カード固有の時点の読み方（個別） |
 | `WG-CHECK-RECOVERY` | unresolved_ruling | pokemon_check_halt | kyuura_engine/procedures.py:966〜981・1009〜1015（_recovery_stop → effects.state_stop_after） | 4 | PC-NON-DAMAGE-HP-KNOCKOUT | MH1 は規約と判定の時点の実装。姿の問いはカード固有。コードの全件の列挙はしていない（form_problems が返すコードは静的に一部だけ確かめた） |
 | `WG-TURN-END-SUPPRESSION` | unresolved_ruling | turn_end_halt | kyuura_engine/procedures.py:80〜99（expire_at_turn_end → state_stop_after） | 3 | PC-NON-DAMAGE-HP-KNOCKOUT | WG-CHECK-RECOVERY と同じ |
@@ -717,7 +717,7 @@ A 以外の場面の内訳（理由ごと）:
 - **問い**: 相手のポケモンに与えた持続する効果（にげられない・ワザを使えない・どくの量など）は、効果を与えたポケモンが進化・退化・場をはなれたら続くか
 - **規約の文（案）**: 発生源のポケモンに結び付いた持続する効果は、発生源が場をはなれたら終わる。発生源の進化・退化では終わらない（同じポケモンとして続く）
 - **適用条件**: 持続する効果の記録の発生源が進化・退化・場をはなれた場面で、続くかで結果が変わる（対象の一覧のコード）
-- **対象の場面（続けられ方）**: `UNRESOLVED_CLAMPING_JAW_SOURCE_DEVOLVED`（needs_implementation）、`UNRESOLVED_JAW_CLAMP_SOURCE_EVOLVED`（needs_implementation）、`UNRESOLVED_JAW_CLAMP_SOURCE_RETURNED`（needs_implementation）、`UNRESOLVED_MEAN_LOOK_SOURCE_EVOLVED`（needs_implementation）、`UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED`（needs_implementation）、`UNRESOLVED_POISON_MIST_SOURCE`（needs_implementation）
+- **対象の場面（続けられ方）**: `UNRESOLVED_CLAMPING_JAW_SOURCE_DEVOLVED`（needs_implementation）、`UNRESOLVED_JAW_CLAMP_SOURCE_EVOLVED`（needs_implementation）、`UNRESOLVED_JAW_CLAMP_SOURCE_RETURNED`（needs_implementation）、`UNRESOLVED_MEAN_LOOK_SOURCE_EVOLVED`（needs_implementation）、`UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED`（needs_implementation）、`UNRESOLVED_POISON_MIST_SOURCE#source-left`（needs_implementation）
 - **除外・対象外の隣の場面**: 効果を受けたポケモンの側の変化（今のまま）／「自分の番に 1 回」の記録（PC-ONCE-PER-TURN-IDENTITY）
 - **例外**: 説明に終わる条件が書かれている効果（今のまま）
 - **依存・関係・競合**: 依存 なし／関係 PC-TARGET-LOST-MID-EFFECT／競合 なし
@@ -801,9 +801,9 @@ A 以外の場面の内訳（理由ごと）:
 | PF-TEXT-READING | 34 | カード固有の説明の読み方（同じ言い回しの別のカードに広げない） |
 | PF-COPY-TRANSFORM | 26 | へんしん・ばける・すごいへんしん・思い出す・スケッチなど、1 つのカードの仕組みの中の問い（同じ仕組みのコードはまとめて判断できるが、ほかのカードに広げない） |
 | PF-EFFECT-TIMING | 14 | カード固有の効果の時点の読み方（ずらかる・おとしあな・はかいのはどう・時間の歪みなど） |
+| PF-HISTORY-LASTING | 10 | カード固有の記録・持続する効果の読み方 |
 | PF-ENERGY-TYPE | 10 | 色を変える効果・きせきのかぜ・エナジーバーンなど、カード固有のエネルギーの読み方 |
 | PF-DAMAGE-SCOPE | 10 | カード固有のダメージの範囲・計算の読み方（ダメージの量を変える効果の当てはめの問いではない） |
-| PF-HISTORY-LASTING | 9 | カード固有の記録・持続する効果の読み方 |
 | PF-POWER-SUPPRESSION | 8 | 「特殊能力の効果を受けない」ポケモン・循環・消えた特殊能力の扱いなど、カード固有の問い |
 | PF-REACTION-DURING-PROCESS | 7 | 途中の反応を使えるか（継続の実装と組）のカード固有の問い |
 | PF-PROTECTED-TARGET-EFFECT | 7 | 対象の選び方・ダメージのない要素のあとの効果の読み方（コインの問いではない） |
@@ -867,7 +867,7 @@ A 以外の場面の内訳（理由ごと）:
 | `UNRESOLVED_MULLIGAN_COMPENSATION` | 17 | PC-SETUP-MULLIGAN-COUNT（事例ごと） |
 | `UNRESOLVED_POISON_MIST_EARLIER_POISON` | 11 | A（個別） |
 | `UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT` | 9 | PC-COIN-COUNT-SHORT |
-| `UNRESOLVED_POISON_MIST_SOURCE` | 7 | PC-LASTING-SOURCE-CHANGE |
+| `UNRESOLVED_POISON_MIST_SOURCE` | 7 | PC-LASTING-SOURCE-CHANGE（事例ごと） |
 | `UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT` | 4 | PC-COIN-COUNT-SHORT |
 | `UNRESOLVED_POISON_CHANGE_ORDER` | 1 | A（個別） |
 | `UNSUPPORTED_TRANSFORM_COPIED_POWER` | 1 | B（規約の対象外） |
@@ -948,7 +948,7 @@ PSP-COCOON-DV2-ORACLE（DV2）・PSP-DECK-CONTENT-PRECHECKS の残り（GV1・EV
 | S2a | `PC-COIN-COUNT-SHORT` | ○ | 2 | 2 | 13 | 0・0 | — | 小（共通のチェック地点） | 小 | 2 |
 | S2a | `PC-CHECK-KO-POINT` | ○ | 1 | 1 | 0 | 0・0 | — | 小 | 中（勝ち負け） | 1 |
 | S2b | `PC-NON-ATTACK-DAMAGE-MODIFIERS` | ○ | 10 | 10 | 0 | 219・85 | — | 中（量の問い合わせの部品） | 小（量だけ） | 10 |
-| S2b | `PC-LASTING-SOURCE-CHANGE` | ○ | 6 | 6 | 7 | 0・0 | — | 中（発生源の記録） | 小 | 6 |
+| S2b | `PC-LASTING-SOURCE-CHANGE` | ○ | 6 | 6 | 7＊ | 0・0＊ | — | 中（発生源の記録） | 小 | 6 |
 | S2b | `PC-NON-DAMAGE-HP-KNOCKOUT` | ○ | 3 | 3 | 0 | 49・14 | — | 中（判定の窓） | 中（勝ち負け） | 3 |
 | S2b | `PC-CHECK-DOUBLE-KNOCKOUT` | ○ | 1 | 1 | 0 | 0・0 | — | 中（ポケモンチェックの続きの並び） | 中（勝ち負け・サドン・デス） | 1 |
 | S3 | `PC-USE-WITHOUT-TARGET` |  | 38 | 38 | 0＊ | 0・0＊ | — | 小（拒否の記録だけ） | 小（今と同じ。止める条件が公開で決まることの確かめが要る） | 38 |

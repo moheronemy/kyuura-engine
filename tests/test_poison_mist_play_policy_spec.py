@@ -1,7 +1,7 @@
 """［ポイズンミスト］とどくの量（PO1〜PO3）の続行規約の仕様案（docs/poison-mist-play-policy-spec.json）の不変条件。
 
 ``scripts/build_poison_mist_play_policy_spec.py`` の ``check`` が、書き出した仕様案で問題 0 であることと、わざと壊した仕様案（存在しない場面・対象の漏れ・2 つの規約の重なり・
-同じ規約の対象を除外にする・存在しないテスト・実装箇所・研究の記録・判断事項・観測の局の数の食い違い・仕様を承認済みにする・規約を案でなくする・規約をエンジンに登録する）を見つけること。
+同じ規約の対象を除外にする・存在しないテスト・実装箇所・研究の記録・判断事項・観測の局の数の食い違い・仕様を承認済みにする・規約を案でなくする・登録と採用の記録の食い違い（v0.145 の採用のあと））を見つけること。
 件数・停止コードの名前は写さない（値は書き出した仕様案から引く）。
 """
 
@@ -59,15 +59,23 @@ class SpecInvariantTest(unittest.TestCase):
         broken["approvals"]["work"]["scope"] = "作業"
         self.assert_detects(broken, "作業の承認の範囲")
 
-    def test_conventions_are_not_registered(self):
-        """仕様案のあいだは、規約・集合をエンジンに登録しない（登録したら --check が見つける）。"""
+    def test_adopted_conventions_are_registered_as_adopted(self):
+        """v0.145: 採用のあとは、仕様の 3 規約が採用した続行規約として登録され、採用の記録が利用者の指示（公式の裁定ではない）。登録と食い違えば --check が見つける。
+        提案の時点の記録（1〜12 章・仕様の承認 not_approved）は書き換えない（test_work_approval_is_not_a_specification_approval）。"""
         for c in self.spec["conventions"]:
-            self.assertFalse(any(key[0] == c["id"] for key in C.CONVENTIONS))
+            self.assertEqual([key for key in C.CONVENTIONS if key[0] == c["id"]], [(c["id"], c["version"])])
+        self.assertEqual(self.spec["adoption"]["status"], "user_agreed")
         fake = dict(C.CONVENTIONS)
         first = self.spec["conventions"][0]
-        fake[(first["id"], first["version"])] = next(iter(C.CONVENTIONS.values()))
+        fake[(first["id"], first["version"])] = next(iter(C.CONVENTIONS.values()))  # 違う中身（今の挙動の記録）を同じ ID で登録した
         with mock.patch.object(C, "CONVENTIONS", fake):
-            self.assert_detects(self.spec, "エンジンに登録されている")
+            self.assert_detects(self.spec, "ちょうど 1 つ登録されていない")
+        broken = _copy(self.spec)
+        broken["adoption"]["scope"] = "採用"
+        self.assert_detects(broken, "採用の記録")
+        broken = _copy(self.spec)
+        broken["adoption"]["set"] = ["CS-KYUURA-PLAY-S2A", 1]
+        self.assert_detects(broken, "開発用の部分的な集合")
 
     def test_detects_unknown_scene_and_missing_target(self):
         broken = _copy(self.spec)

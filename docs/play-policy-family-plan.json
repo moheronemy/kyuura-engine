@@ -19,7 +19,7 @@
   "ledger": {
    "path": "docs/stop-policy-classification.json",
    "base_commit": "3e25ac5eff0f90dbea224045e77c2b60e025bf2d",
-   "entries": 420
+   "entries": 422
   },
   "research": {
    "path": "kyuura_engine/data/research_links.json",
@@ -2980,9 +2980,9 @@
      "coverage": "needs_implementation"
     },
     {
-     "scene": "UNRESOLVED_POISON_MIST_SOURCE",
+     "scene": "UNRESOLVED_POISON_MIST_SOURCE#source-left",
      "coverage": "needs_implementation",
-     "note": "［ポイズンミスト］の使ったポケモンが場にいない場合は規約の文に当たるが、特殊能力が消えている場合は当たらない（ポケモンチェックの HALTED。道具の対戦で観測）"
+     "note": "［ポイズンミスト］の使ったポケモンが場にいない（ポケモンチェックの HALTED。道具の対戦で観測）。v0.145 に PO3 を事例に分ける前は UNRESOLVED_POISON_MIST_SOURCE（partial）。この事例は PC-POISON-MIST-SOURCE-LEFT@1 として別に採用した（この案は proposal のまま）"
     }
    ],
    "excludes": [
@@ -3530,7 +3530,8 @@
     "UNRESOLVED_LEAVE_LOCK_SCRAM",
     "UNRESOLVED_POISON_CHANGE_ORDER",
     "UNRESOLVED_POISON_MIST_EARLIER_POISON",
-    "UNRESOLVED_POISON_MIST_SOURCE",
+    "UNRESOLVED_POISON_MIST_SOURCE#source-left",
+    "UNRESOLVED_POISON_MIST_SOURCE#power-lost",
     "UNSUPPORTED_BERRY_ORDER_LIMIT"
    ],
    "candidates": [
@@ -4141,7 +4142,8 @@
    "observed": {
     "halted_games": 7,
     "rejections": 0,
-    "rejection_games": 0
+    "rejection_games": 0,
+    "note": "事例を分けたコード ['UNRESOLVED_POISON_MIST_SOURCE'] の数は、ほかの事例の分を含む"
    },
    "prerequisite_for": [],
    "burden": "中（発生源の記録）",
@@ -10703,7 +10705,11 @@
     "docs/damage-reactions-poison-sleep-v0.119.md"
    ],
    "candidate": null,
-   "individual_reason": "効果の種類の優先（どの効果が勝つか）の読み方、または利用者の指定の範囲の判断が先の問い。順番を選ぶ規約では扱えない"
+   "individual_reason": "効果の種類の優先（どの効果が勝つか）の読み方、または利用者の指定の範囲の判断が先の問い。順番を選ぶ規約では扱えない",
+   "adopted_convention": [
+    "PC-POISON-AMOUNT-ORDER",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_POISON_DAMAGE_RECEIVED_POWER",
@@ -10756,11 +10762,15 @@
     "docs/damage-reactions-poison-sleep-v0.119.md"
    ],
    "candidate": null,
-   "individual_reason": "カード固有の記録・持続する効果の読み方"
+   "individual_reason": "カード固有の記録・持続する効果の読み方",
+   "adopted_convention": [
+    "PC-POISON-MIST-TARGETS",
+    1
+   ]
   },
   {
-   "id": "UNRESOLVED_POISON_MIST_SOURCE",
-   "parent": null,
+   "id": "UNRESOLVED_POISON_MIST_SOURCE#source-left",
+   "parent": "UNRESOLVED_POISON_MIST_SOURCE",
    "code": "UNRESOLVED_POISON_MIST_SOURCE",
    "entry_kind": "research_stop_code",
    "family": "PF-HISTORY-LASTING",
@@ -10773,7 +10783,7 @@
    "reachability": "constructed_board",
    "whole_game": true,
    "whole_game_basis": "listed_channel",
-   "secret_dependency": null,
+   "secret_dependency": "public_only",
    "ruling_ids": [
     "PO3"
    ],
@@ -10783,7 +10793,37 @@
    ],
    "candidate": "PC-LASTING-SOURCE-CHANGE",
    "coverage": "needs_implementation",
-   "coverage_note": "［ポイズンミスト］の使ったポケモンが場にいない場合は規約の文に当たるが、特殊能力が消えている場合は当たらない（ポケモンチェックの HALTED。道具の対戦で観測）"
+   "coverage_note": "［ポイズンミスト］の使ったポケモンが場にいない（ポケモンチェックの HALTED。道具の対戦で観測）。v0.145 に PO3 を事例に分ける前は UNRESOLVED_POISON_MIST_SOURCE（partial）。この事例は PC-POISON-MIST-SOURCE-LEFT@1 として別に採用した（この案は proposal のまま）",
+   "adopted_convention": [
+    "PC-POISON-MIST-SOURCE-LEFT",
+    1
+   ]
+  },
+  {
+   "id": "UNRESOLVED_POISON_MIST_SOURCE#power-lost",
+   "parent": "UNRESOLVED_POISON_MIST_SOURCE",
+   "code": "UNRESOLVED_POISON_MIST_SOURCE",
+   "entry_kind": "research_stop_code",
+   "family": "PF-HISTORY-LASTING",
+   "ledger_classification": "C",
+   "plan_class": "A",
+   "class_reason": "研究上の未決の裁定（固定研究基準の対応表の停止コード）",
+   "mechanisms": [
+    "command_rejection"
+   ],
+   "reachability": "constructed_board",
+   "whole_game": true,
+   "whole_game_basis": "listed_channel",
+   "secret_dependency": "public_only",
+   "ruling_ids": [
+    "PO3"
+   ],
+   "kyuura_issue": null,
+   "ruling_documents": [
+    "docs/damage-reactions-poison-sleep-v0.119.md"
+   ],
+   "candidate": null,
+   "individual_reason": "v0.145: ［ポイズンミスト］の発生源が場にいるまま力が消えた記録（かがくへんかガス・退化・へんしんなど）。QK1 と同じ形の、力が消えたあとの効果の問い（docs/poison-mist-play-policy-spec.md の分けた問い）。続行側でも止める"
   },
   {
    "id": "UNRESOLVED_POKEDEX_UP_TO_ZERO",
@@ -15875,21 +15915,21 @@
    "mode_policy_status": "decision_required"
   }
  ],
- "internal_guard_sites": 607,
+ "internal_guard_sites": 608,
  "counts": {
-  "scenes": 401,
-  "stop_code_scenes": 367,
+  "scenes": 402,
+  "stop_code_scenes": 368,
   "stop_codes": 357,
   "by_plan_class": {
-   "A": 326,
+   "A": 327,
    "B": 33,
    "C": 14,
    "D": 9,
    "E": 19
   },
-  "a_scenes": 326,
+  "a_scenes": 327,
   "a_scenes_with_candidate": 171,
-  "a_scenes_individual": 155,
+  "a_scenes_individual": 156,
   "candidates": 27,
   "candidate_scenes_with_duplicates": 171,
   "candidate_scenes_unique": 171,
@@ -15937,12 +15977,12 @@
    "PC-USE-WITHOUT-EFFECT": 7,
    "PC-USE-WITHOUT-TARGET": 38
   },
-  "whole_game_scenes": 28,
+  "whole_game_scenes": 29,
   "whole_game_static_halt_scenes": 17,
-  "whole_game_dynamic_channel_scenes": 11,
+  "whole_game_dynamic_channel_scenes": 12,
   "whole_game_a_scenes_with_candidate": 15,
   "new_findings": 1,
-  "internal_guard_sites_not_listed_as_scenes": 607,
+  "internal_guard_sites_not_listed_as_scenes": 608,
   "note": "場面は台帳の項目（事例のあるコードは事例）。重複を含む数は規約案ごとの対象の合計、重複を除いた数は場面・コードの集合の大きさ。内部ガードは場面に数えない（D。個数だけ）"
  }
 }

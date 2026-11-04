@@ -286,8 +286,63 @@ SETS = MappingProxyType({
                                    description=("v0.143 の開発用の部分的な集合: 今の挙動の集合の規約 12 件と、S2a の続行規約 5 件。5 規約の場面だけを続け、ほかの未決の場面では今の停止"
                                                 "コードで止める（すべての未決の場面で止まらない完成したプレイ用の集合ではない）")),
 })
+
+# ---------------------------------------------------------------- v0.145: ［ポイズンミスト］とどくの量の続行規約（docs/poison-mist-play-po-v0.145.md）
+#
+# 利用者の採用（2026-11-05「方針を採用します。」と、その指示の採用仕様。仕様案は docs/poison-mist-play-policy-spec.md）。公式の裁定・エラッタ・kyuura の研究上の解決ではない
+# （PO1〜PO3 は研究上の未解決のまま）。今の挙動の集合・S2a の集合には入れず、新しい開発用の部分的な集合 CS-KYUURA-PLAY-PO@1 だけに入れる
+
+PO_SET_ID = "CS-KYUURA-PLAY-PO"
+PO_ADOPTION = "利用者の採用（2026-11-05。PO1〜PO3 の続行規約 3 件を、仕様案の範囲で採用）。公式の裁定・エラッタ・kyuura の研究上の解決ではない"
+PO_REFERENCES = ("docs/poison-mist-play-po-v0.145.md", "docs/poison-mist-play-policy-spec.md")
+
+POISON_AMOUNT_ORDER_ID = "PC-POISON-AMOUNT-ORDER"
+POISON_MIST_TARGETS_ID = "PC-POISON-MIST-TARGETS"
+POISON_MIST_SOURCE_LEFT_ID = "PC-POISON-MIST-SOURCE-LEFT"
+
+_PO_CONVENTIONS = (
+    Convention(POISON_AMOUNT_ORDER_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "ポケモンチェックの「どく」のダメージは、ポケモンチェックの時点で、どく状態の性質（特殊などくの決まった量、またはダメージカウンターの数にかける数）→ ［ポイズンミスト］"
+               "（はたらけば量をその数にする）→ 鋼エネルギー（受けるダメージの「-10」。0 より小さくしない）の順に当てはめて決める",
+               content={"adoption": PO_ADOPTION,
+                        "applies_when": "どくの量を変える効果の当てはめる順番（effects._poison_orders の並べかえ）で量が変わる（PO1）",
+                        "order": ["どく状態の性質（特殊などくの量・かける数）", "［ポイズンミスト］", "鋼エネルギー"],
+                        "time": "ポケモンチェックの 2 の「どく」の時点（1 のあとの場）",
+                        "floor": "鋼エネルギーの「-10」は 0 より小さくしない（energy_received_damage のまま）",
+                        "unchanged": ["TP3（違うどく状態への上書き）", "キョウのどくの順番", "KA1（受けるダメージを変える特殊能力）", "PX1",
+                                      "性質の 2 つ（特殊などくの量とかける数）のあいだの順番（今の写しでは同時に持たない）", "量が 1 つに決まる組の量・記録"]},
+               scenes=("UNRESOLVED_POISON_CHANGE_ORDER",), references=PO_REFERENCES),
+    Convention(POISON_MIST_TARGETS_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "［ポイズンミスト］の効果は、ポケモンチェックの時点でどく状態のすべてのポケモン（お互いの場）が受ける「どく」のダメージに当てはまる。力を使った時点でどく状態だったかは問わない",
+               content={"adoption": PO_ADOPTION,
+                        "applies_when": "力を使う前からどく状態だったポケモン（PoisonMist.poisoned_before）に当てはめるかで量が変わる（PO2）",
+                        "targets": "ポケモンチェックの時点でどく状態のポケモン（使ったあとにどく状態になった・回復した・またどく状態になったポケモンも、時点の状態で決める）",
+                        "unchanged": ["どく状態になるか自体の未決の停止", "記録 poisoned_before（状態の形）", "量が 1 つに決まる組の量・記録", "2 つ以上の記録は足さない（v0.119 のまま）"]},
+               scenes=("UNRESOLVED_POISON_MIST_EARLIER_POISON",), references=PO_REFERENCES),
+    Convention(POISON_MIST_SOURCE_LEFT_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "［ポイズンミスト］を使ったポケモン（記録の発生源の場の番号）が場をはなれたら、その発生源の記録の効果は終わる（そのあとのポケモンチェックで当てはめない）。発生源が場に"
+               "いるまま特殊能力が消えた記録（#power-lost）は対象にしない",
+               content={"adoption": PO_ADOPTION,
+                        "applies_when": "中断のある記録の発生源の場の番号のポケモンが、ポケモンチェックの時点で場にいない（PO3 の #source-left）",
+                        "left_play": "場の番号のポケモンが場にいない（きぜつ・手札・山札・トラッシュなど）。バトル場とベンチのあいだの移動・進化・退化・へんしんは場をはなれていない",
+                        "per_source": "記録（発生源）ごとに判断し、場にいない発生源の記録だけを当てはめない。ほかの発生源の記録は消さない",
+                        "state": "記録・中断の印は変えない（量の判断で使わないだけ。使ったプレイヤーの次の番の始めに今までどおり消える）",
+                        "unchanged": ["#power-lost（かがくへんかガス・退化・へんしんなどで発生源が場にいるまま力が消えた記録。今の停止のまま）", "ほかの特殊能力・持続する効果の発生源",
+                                      "効果の重複・加算・最大値（新しく決めない）", "量が 1 つに決まる組の量・記録"]},
+               scenes=("UNRESOLVED_POISON_MIST_SOURCE#source-left",), references=PO_REFERENCES),
+)
+PO_MEMBERS = tuple((c.id, c.version) for c in _PO_CONVENTIONS)
+
+CONVENTIONS = MappingProxyType({**CONVENTIONS, **{(c.id, c.version): c for c in _PO_CONVENTIONS}})
+SETS = MappingProxyType({
+    **SETS,
+    (PO_SET_ID, 1): ConventionSet(PO_SET_ID, 1, USAGE_DEVELOPMENT, _CURRENT_MEMBERS + S2A_MEMBERS + PO_MEMBERS,
+                                  description=("v0.145 の開発用の部分的な集合: 今の挙動の集合の規約 12 件・S2a の続行規約 5 件と、［ポイズンミスト］とどくの量の続行規約 3 件。8 規約の場面"
+                                               "だけを続け、ほかの未決の場面（#power-lost をふくむ）では今の停止コードで止める（完成したプレイ用の集合ではない）")),
+})
+
 # この版のエンジンが処理を持つ続行規約（``Registry.implemented_continuations``）
-IMPLEMENTED_CONTINUATIONS = frozenset(S2A_MEMBERS)
+IMPLEMENTED_CONTINUATIONS = frozenset(S2A_MEMBERS + PO_MEMBERS)
 # 形式 34 までの書き出し（規約集合の項目がない）に書いてよい集合: 記録のない状態の意味（その版のエンジンの今の挙動）と同じ意味の集合だけ
 IMPLICIT_IN_OLD_FORMATS = frozenset({(CURRENT_SET_ID, 1), (LEGACY_SET_ID, 1)})
 
@@ -311,11 +366,16 @@ PINNED_CONVENTION_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
     ("PC-CHECK-SIDE-ORDER", 1): "sha256:c8f78ccaf484c12430fdc48e57bbb1f05a0c8d49207c364e0507380054292ba4",
     ("PC-COIN-COUNT-SHORT", 1): "sha256:6a0554ff17e94934eb5f81aff1533ef5b600b4e59f69a9ca2abd24d3055492c5",
     ("PC-CHECK-KO-POINT", 1): "sha256:7a91e7fe7f72e35828edb97e2c5661f6d6186b8607584c86631164c69fa8d2ad",
+    # v0.145: PO の続行規約（利用者の採用。2026-11-05）
+    ("PC-POISON-AMOUNT-ORDER", 1): "sha256:daf99cffee744cb70043c21f67702ebe6bef5fde1911e3e82ffeb19d3535e5aa",
+    ("PC-POISON-MIST-TARGETS", 1): "sha256:e5e48dd17d5af226ae38f3004a21ae3bf9fd2639b1454f00a1a09f30d6d021d5",
+    ("PC-POISON-MIST-SOURCE-LEFT", 1): "sha256:dbf6b8e8bae49b5c884446e367abd9a861d71f701ec420cc8feedfaf8b4609e6",
 })
 PINNED_SET_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
     ("CS-KYUURA-CURRENT", 1): "sha256:9a9b95c689d86fa01a5b710984560efda3c08f4dbf1d7c6218094ac8666f3cee",
     ("CS-KYUURA-LEGACY-UNRECORDED", 1): "sha256:abf39e6d87755507a9169537608596246f4ed9a9bf0c2e8794ffa44a97742407",
     ("CS-KYUURA-PLAY-S2A", 1): "sha256:b317a3f050206577bff35ac05c87fdb4224ee28c6c0222e4e7f8460b5e9410c4",  # v0.143: 開発用の部分的な集合
+    ("CS-KYUURA-PLAY-PO", 1): "sha256:06d512194feee1857319f0c765ab2162d5259e4519895ed057d176d15fc43528",  # v0.145: 開発用の部分的な集合
 })
 
 
@@ -714,7 +774,8 @@ def continuation_for(state, code: str, case: str | None = None) -> ContinuationL
 
 # 規約を当てた記録（ログ ``convention_applied``）に書ける項目（全員に見える値だけ。手札・山札などの秘密の情報は書かない）
 APPLIED_FIELDS = frozenset({"players", "player", "rounds_both", "rounds_single", "order", "pokemon_ids", "element", "heads", "available", "processed", "source",
-                            "target_owner", "target"})
+                            "target_owner", "target",
+                            "pokemon_id", "amount", "poison_mists", "ended_mists"})  # v0.145: どくの量の規約（ポケモンの場の番号・受けるダメージ・［ポイズンミスト］の記録の発生源。公開）
 
 
 def record_application(state, lookup: ContinuationLookup, **detail) -> None:

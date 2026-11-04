@@ -117,6 +117,26 @@ CONTINUATION_AGREEMENTS = [
     {"id": "AGR-PLAY-S2A-KO-POINT", "statement": "PC-CHECK-KO-POINT@1: ポケモンチェックの 1 と 2 を終えてから、きぜつを 1 回だけ判定する（HP 以上になっても判定まで場に残る）。",
      "reading": "UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT（procedures._pokemon_check_plan）。両方のきぜつ・SC1・AL1・AL3・PO1〜PO3・KA1・VS1・DE1・BY1 は対象外"},
 ]
+# v0.145（docs/poison-mist-play-po-v0.145.md 1 章）: PO1〜PO3 の続行規約 3 件の採用（利用者の指示。S2a とは別の依頼なので、項目ごとの出典 ``source`` で記録する）。採用したのは
+# 開発用の部分的な集合 CS-KYUURA-PLAY-PO@1 の 3 規約の中身だけ（厳密側・S2a の集合・#power-lost・ほかの未決の場面は変えない）
+PO_AGREEMENT_SOURCE = {"by": "user", "on": "2026-11-05",
+                       "where": ("本会話の利用者の指示（作業ブランチ claude/poison-mist-play-po の依頼「方針を採用します。」と、その指示の採用仕様。仕様案は "
+                                 "docs/poison-mist-play-policy-spec.md）"),
+                       "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用。厳密側の集合・ほかの未決の場面の判断ではない）"}
+CONTINUATION_AGREEMENTS += [
+    {"id": "AGR-PLAY-PO-SET", "source": PO_AGREEMENT_SOURCE,
+     "statement": "続行側として、開発用の部分的な集合 CS-KYUURA-PLAY-PO@1（今の挙動の集合の規約 12 件・S2a の 5 規約・PO の 3 規約）を登録する。完成したプレイ用とは表示しない。",
+     "reading": "conventions.SETS の CS-KYUURA-PLAY-PO@1（usage development・completeness halts_at_undecided）。CS-KYUURA-CURRENT@1・CS-KYUURA-PLAY-S2A@1 は同じ ID・版・中身のまま"},
+    {"id": "AGR-PLAY-PO-AMOUNT-ORDER", "source": PO_AGREEMENT_SOURCE,
+     "statement": "PC-POISON-AMOUNT-ORDER@1: どくの量はポケモンチェックの時点で、どく状態の性質 → ［ポイズンミスト］→ 鋼エネルギーの順に当てはめて決める。",
+     "reading": "UNRESOLVED_POISON_CHANGE_ORDER（effects.poison_check_amount・_poison_orders）。TP3・キョウのどくの順番・KA1・PX1 は対象外"},
+    {"id": "AGR-PLAY-PO-MIST-TARGETS", "source": PO_AGREEMENT_SOURCE,
+     "statement": "PC-POISON-MIST-TARGETS@1: ［ポイズンミスト］は、ポケモンチェックの時点でどく状態のすべてのポケモンに当てはまる（使った時点でどくだったかは問わない）。",
+     "reading": "UNRESOLVED_POISON_MIST_EARLIER_POISON（effects.poison_check_amount）。どく状態になるか自体の未決の停止は対象外"},
+    {"id": "AGR-PLAY-PO-MIST-SOURCE-LEFT", "source": PO_AGREEMENT_SOURCE,
+     "statement": "PC-POISON-MIST-SOURCE-LEFT@1: ［ポイズンミスト］を使ったポケモンが場をはなれたら、その発生源の記録の効果は終わる。発生源が場にいるまま力が消えた記録（#power-lost）は対象外。",
+     "reading": "UNRESOLVED_POISON_MIST_SOURCE#source-left（effects.poison_check_amount）。#power-lost・ほかの特殊能力の発生源・効果の重複の細部は対象外"},
+]
 AGREED_CONVENTION_STATUS = "user_agreed"  # 規約（conventions）だけが使える。合意 AGR-MODE-BASELINE-USER で基礎集合に入れた利用者指定。続行規約の採用ではない
 MODE_DEFINITIONS_HISTORY = {
     "STRICT-A": "厳密モードの定義としては採用しない（過去の検討案。AGR-MODE-STRICT・AGR-MODE-BASELINE-USER と合わない）。研究・照合の用途の集合として別に作るかは決めていない",
@@ -161,6 +181,13 @@ DECISION_STATUS = {
                                "note": "v0.143: DU1・TW1 だけを続行側の規約 PC-COIN-COUNT-SHORT@1（あるだけ）として採用。ほかのコード・使う前に決まる不足・厳密側は未決のまま"},
     "DEC-KNOCKOUT-READINGS": {"status": "partly_agreed", "agreements": ["AGR-PLAY-S2A-KO-POINT"],
                               "note": "v0.143: PK1（ポケモンチェックの 1 と 2 のあいだ）だけを続行側の規約 PC-CHECK-KO-POINT@1 として採用。ほかのきぜつの読み方・厳密側は未決のまま"},
+    "DEC-DAMAGE-READINGS": {"status": "partly_agreed", "agreements": ["AGR-PLAY-PO-AMOUNT-ORDER"],
+                            "note": "v0.145: PO1（どくの量を変える効果の順番）だけを続行側の規約 PC-POISON-AMOUNT-ORDER@1 として採用。ほかのダメージの読み方・KA1・厳密側は未決のまま"},
+    "DEC-TEXT-READINGS": {"status": "partly_agreed", "agreements": ["AGR-PLAY-PO-MIST-TARGETS"],
+                          "note": "v0.145: PO2（［ポイズンミスト］の当てはまる相手）だけを続行側の規約 PC-POISON-MIST-TARGETS@1 として採用。ほかの文面の読み方・厳密側は未決のまま"},
+    "DEC-LASTING-READINGS": {"status": "partly_agreed", "agreements": ["AGR-PLAY-PO-MIST-SOURCE-LEFT"],
+                             "note": ("v0.145: PO3 の #source-left（発生源が場をはなれた［ポイズンミスト］の記録）だけを続行側の規約 PC-POISON-MIST-SOURCE-LEFT@1 として採用。#power-lost・"
+                                      "ほかの持続する効果の発生源（PC-LASTING-SOURCE-CHANGE の候補）・厳密側は未決のまま")},
     "DEC-EXISTING-USER-SPECS": {"status": "partly_agreed", "agreements": ["AGR-MODE-BASELINE-USER"],
                                 "note": "利用者指定（12 件・USER-ID 9 つ）は基礎集合に入れる。エンジンの簡略化・実装上の仮定・データの訂正の扱いは DEC-BASELINE-NONUSER・DEC-CARD-DATA-CORRECTIONS で未決"},
 }
@@ -599,6 +626,15 @@ RUNTIME_FAMILY = {
 
 # 1 つのコードに、発生条件・対処の違う事例が混在するもの（コードは改名・分割しない。台帳の下位の事例として分ける）
 CASES = {
+    # v0.145（docs/poison-mist-play-po-v0.145.md。docs/poison-mist-play-policy-spec.md の proposed_cases）: PO3 を、発生源が場にいない記録と、場にいるまま力が消えた記録に分ける
+    "UNRESOLVED_POISON_MIST_SOURCE": [
+        {"case": "source-left", "sites": [lambda: _site_line("kyuura_engine/effects.py", '("source", POISON_MIST_SOURCE_CODE, POISON_MIST_SOURCE_LEFT_CASE)')],
+         "condition": "中断のある［ポイズンミスト］の記録の発生源（場の番号）のポケモンが、ポケモンチェックの時点で場にいない", "secret_dependency": "public_only",
+         "note": "続行規約 PC-POISON-MIST-SOURCE-LEFT@1（CS-KYUURA-PLAY-PO@1）の場面。厳密側は今のまま止める。道具の対戦で観測（v0.144 の仕様案の 7 局）"},
+        {"case": "power-lost", "sites": [lambda: _site_line("kyuura_engine/effects.py", 'return "halt", POISON_MIST_SOURCE_CODE')],
+         "condition": "中断のある記録の発生源のポケモンが、ポケモンチェックの時点で場にいる（かがくへんかガス・退化・へんしんなどで力が消えた・消えていた）", "secret_dependency": "public_only",
+         "note": "続行規約はない（両方の集合で止める。QK1 と同じ形の問い）。道具の対戦では観測していない"},
+    ],
     "UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET": [
         {"case": "deck", "sites": ["kyuura_engine/effects.py:17340", "kyuura_engine/effects.py:40040"],
          "condition": "山札に選べるカードがあると、配分を読まない下限（effects.deck_target_lower_bound）で確かめられない（エネルギー転送・ボスのやりかた・タケシの育て方・遺跡の石版）",
@@ -838,6 +874,15 @@ UPDATES = [
      "new_entries": ["PSP-SC2-POKEMON-CHECK-INTEGRITY（fixed。v0.143 で見つけた両モード共通の不具合）"],
      "unchanged": ("研究の停止コード（SC2 の UNRESOLVED_SCRAM_POWER_RESTORED・PO1〜PO3 を含む）は active のまま。止めるコードは同じで、止める位置だけがダメージの前になった。"
                    "族・規約・判断事項・方針の案・合意の記録は変えていない。PO の規約は登録していない")},
+    {"version": "0.145.0", "work": "PO1〜PO3 の続行規約 3 件の採用・実装（開発用の部分的な集合 CS-KYUURA-PLAY-PO@1）",
+     "document": "docs/poison-mist-play-po-v0.145.md",
+     "base": {"commit": "f03238c39067502909dbfccb46ace3e8f0b6ca96", "branch_of_base": "claude/sc2-integrity-poison-mist-spec（v0.144。S2a と PO の仕様案を含む。main には未取り込み）"},
+     "approval": ("利用者の採用は continuation_agreements の AGR-PLAY-PO-* の 4 項目（2026-11-05。続行側の集合の規約の採用で、公式の裁定・kyuura の研究上の解決ではない）。"
+                  "DEC-DAMAGE-READINGS・DEC-TEXT-READINGS・DEC-LASTING-READINGS を partly_agreed（続行側の対象の場面だけ）にした。厳密側・S2a の集合・#power-lost・ほかの未決の場面は変えていない"),
+     "changed_entries": ["decision_status（上の 3 つ）", "停止箇所の行番号（エンジンの編集で動いただけ）"],
+     "new_entries": ["continuation_agreements（AGR-PLAY-PO-* の 4 項目。項目ごとの出典 source）",
+                     "事例 UNRESOLVED_POISON_MIST_SOURCE#source-left・#power-lost（PO3 を 2 つに分けた）"],
+     "unchanged": "研究の停止コードは active のまま（厳密側・S2a の集合では今のまま止まる）。族・安全境界・規約（conventions）・方針の案は変えていない"},
 ]
 # 分類の時点（基点 3e25ac5）の集計（counts）の写し。今の counts は現行コードから作り直した値
 COUNTS_AT_CLASSIFICATION = {"research_stop_codes": 316, "runtime_codes_outside_table": 40, "runtime_codes_outside_table_active": 39, "test_tool_only_codes": 8, "cases": 15, "codes_with_cases": 7, "problems_new": 4, "problems_from_inventory": 28, "conventions": 18, "internal_guard_sites_current": 602, "internal_guard_sites_matched_to_inventory": 600, "internal_guard_sites_new_since_inventory": ["kyuura_engine/engine.py:445", "kyuura_engine/resolution/programs.py:10739"], "safety_boundaries": 8, "families": 23, "decisions": 29, "by_reachability": {"constructed_board": 145, "legal_sequence": 25, "static_only": 185}, "by_family": {"PF-COPY-TRANSFORM": 34, "PF-DAMAGE-SCOPE": 22, "PF-EFFECT-TIMING": 13, "PF-ENERGY-TYPE": 21, "PF-ESP-REDO": 4, "PF-HIDDEN-INFORMATION": 8, "PF-HISTORY-LASTING": 20, "PF-KNOCKOUT-TIMING": 15, "PF-POWER-SUPPRESSION": 11, "PF-PROTECTED-TARGET-EFFECT": 12, "PF-REACTION-DURING-PROCESS": 10, "PF-RUNTIME-CONTINUATION": 15, "PF-RUNTIME-COPY-GAPS": 5, "PF-RUNTIME-DATA": 5, "PF-RUNTIME-GENERIC": 1, "PF-RUNTIME-REGISTRY": 7, "PF-RUNTIME-SEARCH-LIMIT": 6, "PF-SETUP-PLAY-AS-POKEMON": 5, "PF-SIMULTANEOUS-ORDER": 26, "PF-STATED-COUNT-SHORT": 11, "PF-TEXT-READING": 34, "PF-UP-TO-ZERO": 13, "PF-USE-WITHOUT-EFFECT": 57}, "by_play_group": {"1": 316, "2": 39, "3": 89, "4": 6, "5": 20, "6": 1}, "by_mechanism": {"answer_rejection": 13, "command_rejection": 339, "deck_validation": 1, "deferred_interruption": 2, "pokemon_check_halt": 10, "setup_halt": 2}, "by_status": {"active": 402, "fixed": 5, "historical": 2, "unverified": 1}, "note": "停止コード・事例・規約・内部ガードは別の数。事例はコードの下位で、コードの数に足さない。棚卸しと同じ項目は独立した不足として数えない"}
@@ -1701,6 +1746,9 @@ def agreement_problems(ledger: dict) -> list[str]:
     for a in continuation.get("agreements", []):
         if not (a.get("statement") and a.get("reading")) or a.get("id") in ids:
             problems.append(f"{a.get('id')}: 続行規約の採用の文・読み方がないか、ID が重複")
+        own = a.get("source")  # v0.145: 項目ごとの出典（別の依頼で採用した規約）
+        if own is not None and (own.get("by") != "user" or not own.get("on") or "公式" not in own.get("not_recorded_as", "")):
+            problems.append(f"{a.get('id')}: 続行規約の採用の出典は利用者の指示（日付つき）で、公式の裁定・kyuura の解決として記録しない")
     ids = ids + [a.get("id") for a in continuation.get("agreements", [])]
     statuses = ledger.get("decision_status", {})
     if set(statuses) != set(ledger["decisions"]):

@@ -146,6 +146,25 @@
     "PSP-SC2-POKEMON-CHECK-INTEGRITY（fixed。v0.143 で見つけた両モード共通の不具合）"
    ],
    "unchanged": "研究の停止コード（SC2 の UNRESOLVED_SCRAM_POWER_RESTORED・PO1〜PO3 を含む）は active のまま。止めるコードは同じで、止める位置だけがダメージの前になった。族・規約・判断事項・方針の案・合意の記録は変えていない。PO の規約は登録していない"
+  },
+  {
+   "version": "0.145.0",
+   "work": "PO1〜PO3 の続行規約 3 件の採用・実装（開発用の部分的な集合 CS-KYUURA-PLAY-PO@1）",
+   "document": "docs/poison-mist-play-po-v0.145.md",
+   "base": {
+    "commit": "f03238c39067502909dbfccb46ace3e8f0b6ca96",
+    "branch_of_base": "claude/sc2-integrity-poison-mist-spec（v0.144。S2a と PO の仕様案を含む。main には未取り込み）"
+   },
+   "approval": "利用者の採用は continuation_agreements の AGR-PLAY-PO-* の 4 項目（2026-11-05。続行側の集合の規約の採用で、公式の裁定・kyuura の研究上の解決ではない）。DEC-DAMAGE-READINGS・DEC-TEXT-READINGS・DEC-LASTING-READINGS を partly_agreed（続行側の対象の場面だけ）にした。厳密側・S2a の集合・#power-lost・ほかの未決の場面は変えていない",
+   "changed_entries": [
+    "decision_status（上の 3 つ）",
+    "停止箇所の行番号（エンジンの編集で動いただけ）"
+   ],
+   "new_entries": [
+    "continuation_agreements（AGR-PLAY-PO-* の 4 項目。項目ごとの出典 source）",
+    "事例 UNRESOLVED_POISON_MIST_SOURCE#source-left・#power-lost（PO3 を 2 つに分けた）"
+   ],
+   "unchanged": "研究の停止コードは active のまま（厳密側・S2a の集合では今のまま止まる）。族・安全境界・規約（conventions）・方針の案は変えていない"
   }
  ],
  "counts_at_classification": {
@@ -414,6 +433,50 @@
     "id": "AGR-PLAY-S2A-KO-POINT",
     "statement": "PC-CHECK-KO-POINT@1: ポケモンチェックの 1 と 2 を終えてから、きぜつを 1 回だけ判定する（HP 以上になっても判定まで場に残る）。",
     "reading": "UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT（procedures._pokemon_check_plan）。両方のきぜつ・SC1・AL1・AL3・PO1〜PO3・KA1・VS1・DE1・BY1 は対象外"
+   },
+   {
+    "id": "AGR-PLAY-PO-SET",
+    "source": {
+     "by": "user",
+     "on": "2026-11-05",
+     "where": "本会話の利用者の指示（作業ブランチ claude/poison-mist-play-po の依頼「方針を採用します。」と、その指示の採用仕様。仕様案は docs/poison-mist-play-policy-spec.md）",
+     "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用。厳密側の集合・ほかの未決の場面の判断ではない）"
+    },
+    "statement": "続行側として、開発用の部分的な集合 CS-KYUURA-PLAY-PO@1（今の挙動の集合の規約 12 件・S2a の 5 規約・PO の 3 規約）を登録する。完成したプレイ用とは表示しない。",
+    "reading": "conventions.SETS の CS-KYUURA-PLAY-PO@1（usage development・completeness halts_at_undecided）。CS-KYUURA-CURRENT@1・CS-KYUURA-PLAY-S2A@1 は同じ ID・版・中身のまま"
+   },
+   {
+    "id": "AGR-PLAY-PO-AMOUNT-ORDER",
+    "source": {
+     "by": "user",
+     "on": "2026-11-05",
+     "where": "本会話の利用者の指示（作業ブランチ claude/poison-mist-play-po の依頼「方針を採用します。」と、その指示の採用仕様。仕様案は docs/poison-mist-play-policy-spec.md）",
+     "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用。厳密側の集合・ほかの未決の場面の判断ではない）"
+    },
+    "statement": "PC-POISON-AMOUNT-ORDER@1: どくの量はポケモンチェックの時点で、どく状態の性質 → ［ポイズンミスト］→ 鋼エネルギーの順に当てはめて決める。",
+    "reading": "UNRESOLVED_POISON_CHANGE_ORDER（effects.poison_check_amount・_poison_orders）。TP3・キョウのどくの順番・KA1・PX1 は対象外"
+   },
+   {
+    "id": "AGR-PLAY-PO-MIST-TARGETS",
+    "source": {
+     "by": "user",
+     "on": "2026-11-05",
+     "where": "本会話の利用者の指示（作業ブランチ claude/poison-mist-play-po の依頼「方針を採用します。」と、その指示の採用仕様。仕様案は docs/poison-mist-play-policy-spec.md）",
+     "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用。厳密側の集合・ほかの未決の場面の判断ではない）"
+    },
+    "statement": "PC-POISON-MIST-TARGETS@1: ［ポイズンミスト］は、ポケモンチェックの時点でどく状態のすべてのポケモンに当てはまる（使った時点でどくだったかは問わない）。",
+    "reading": "UNRESOLVED_POISON_MIST_EARLIER_POISON（effects.poison_check_amount）。どく状態になるか自体の未決の停止は対象外"
+   },
+   {
+    "id": "AGR-PLAY-PO-MIST-SOURCE-LEFT",
+    "source": {
+     "by": "user",
+     "on": "2026-11-05",
+     "where": "本会話の利用者の指示（作業ブランチ claude/poison-mist-play-po の依頼「方針を採用します。」と、その指示の採用仕様。仕様案は docs/poison-mist-play-policy-spec.md）",
+     "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用。厳密側の集合・ほかの未決の場面の判断ではない）"
+    },
+    "statement": "PC-POISON-MIST-SOURCE-LEFT@1: ［ポイズンミスト］を使ったポケモンが場をはなれたら、その発生源の記録の効果は終わる。発生源が場にいるまま力が消えた記録（#power-lost）は対象外。",
+    "reading": "UNRESOLVED_POISON_MIST_SOURCE#source-left（effects.poison_check_amount）。#power-lost・ほかの特殊能力の発生源・効果の重複の細部は対象外"
    }
   ]
  },
@@ -1478,13 +1541,14 @@
     "remediation-plan R10"
    ],
    "guards": {
-    "current_sites": 603,
+    "current_sites": 604,
     "inventory_refs": 598,
     "new_since_inventory": [
-     "kyuura_engine/conventions.py:694",
-     "kyuura_engine/conventions.py:711",
-     "kyuura_engine/conventions.py:724",
-     "kyuura_engine/conventions.py:727",
+     "kyuura_engine/conventions.py:754",
+     "kyuura_engine/conventions.py:771",
+     "kyuura_engine/conventions.py:785",
+     "kyuura_engine/conventions.py:788",
+     "kyuura_engine/effects.py:46267",
      "kyuura_engine/resolution/programs.py:10759"
     ],
     "per_file": {
@@ -1494,7 +1558,7 @@
      "kyuura_engine/conventions.py": 4,
      "kyuura_engine/damage.py": 3,
      "kyuura_engine/decisions.py": 5,
-     "kyuura_engine/effects.py": 173,
+     "kyuura_engine/effects.py": 174,
      "kyuura_engine/engine.py": 23,
      "kyuura_engine/evolution.py": 3,
      "kyuura_engine/faceup.py": 1,
@@ -2561,7 +2625,11 @@
    "document": "docs/stop-policy-decisions.md"
   },
   "DEC-DAMAGE-READINGS": {
-   "status": "decision_required",
+   "status": "partly_agreed",
+   "agreements": [
+    "AGR-PLAY-PO-AMOUNT-ORDER"
+   ],
+   "note": "v0.145: PO1（どくの量を変える効果の順番）だけを続行側の規約 PC-POISON-AMOUNT-ORDER@1 として採用。ほかのダメージの読み方・KA1・厳密側は未決のまま",
    "document": "docs/stop-policy-decisions.md"
   },
   "DEC-ENERGY-READINGS": {
@@ -2573,11 +2641,19 @@
    "document": "docs/stop-policy-decisions.md"
   },
   "DEC-LASTING-READINGS": {
-   "status": "decision_required",
+   "status": "partly_agreed",
+   "agreements": [
+    "AGR-PLAY-PO-MIST-SOURCE-LEFT"
+   ],
+   "note": "v0.145: PO3 の #source-left（発生源が場をはなれた［ポイズンミスト］の記録）だけを続行側の規約 PC-POISON-MIST-SOURCE-LEFT@1 として採用。#power-lost・ほかの持続する効果の発生源（PC-LASTING-SOURCE-CHANGE の候補）・厳密側は未決のまま",
    "document": "docs/stop-policy-decisions.md"
   },
   "DEC-TEXT-READINGS": {
-   "status": "decision_required",
+   "status": "partly_agreed",
+   "agreements": [
+    "AGR-PLAY-PO-MIST-TARGETS"
+   ],
+   "note": "v0.145: PO2（［ポイズンミスト］の当てはまる相手）だけを続行側の規約 PC-POISON-MIST-TARGETS@1 として採用。ほかの文面の読み方・厳密側は未決のまま",
    "document": "docs/stop-policy-decisions.md"
   },
   "DEC-REACTION-READINGS": {
@@ -2877,7 +2953,7 @@
   "nonprefix_unsupported_literals": [],
   "halt_sites": 47,
   "guard_sites_by_type": {
-   "RuntimeError": 592,
+   "RuntimeError": 593,
    "NotImplementedError": 10,
    "AssertionError": 0,
    "StateIntegrityError": 4,
@@ -2889,8 +2965,8 @@
   "runtime_codes_outside_table": 42,
   "runtime_codes_outside_table_active": 41,
   "test_tool_only_codes": 8,
-  "cases": 18,
-  "codes_with_cases": 8,
+  "cases": 20,
+  "codes_with_cases": 9,
   "problems_new": 9,
   "problems_from_inventory": 28,
   "conventions": 20,
@@ -2900,13 +2976,14 @@
    "implementation_assumption": 3,
    "card_data_correction": 1
   },
-  "internal_guard_sites_current": 607,
+  "internal_guard_sites_current": 608,
   "internal_guard_sites_matched_to_inventory": 600,
   "internal_guard_sites_new_since_inventory": [
-   "kyuura_engine/conventions.py:694",
-   "kyuura_engine/conventions.py:711",
-   "kyuura_engine/conventions.py:724",
-   "kyuura_engine/conventions.py:727",
+   "kyuura_engine/conventions.py:754",
+   "kyuura_engine/conventions.py:771",
+   "kyuura_engine/conventions.py:785",
+   "kyuura_engine/conventions.py:788",
+   "kyuura_engine/effects.py:46267",
    "kyuura_engine/engine.py:456",
    "kyuura_engine/engine.py:883",
    "kyuura_engine/resolution/programs.py:10759"
@@ -2961,7 +3038,7 @@
    "setup_halt": 2
   },
   "by_status": {
-   "active": 407,
+   "active": 409,
    "fixed": 10,
    "historical": 2,
    "unverified": 1
@@ -3722,7 +3799,7 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:46977",
+    "kyuura_engine/effects.py:47046",
     "kyuura_engine/resolution/questions.py:443"
    ],
    "implementation_sites_total": 2,
@@ -3730,7 +3807,7 @@
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:46977",
+      "kyuura_engine/effects.py:47046",
       "kyuura_engine/resolution/questions.py:443"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
@@ -3763,7 +3840,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:46977",
+     "kyuura_engine/effects.py:47046",
      "kyuura_engine/resolution/questions.py:443"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
@@ -5962,13 +6039,13 @@
     "kyuura_engine/effects.py:13602",
     "kyuura_engine/effects.py:32884",
     "kyuura_engine/effects.py:38607",
-    "kyuura_engine/procedures.py:1205",
-    "kyuura_engine/procedures.py:1219",
-    "kyuura_engine/procedures.py:1238",
-    "kyuura_engine/procedures.py:1246",
-    "kyuura_engine/procedures.py:1255",
-    "kyuura_engine/procedures.py:1263",
-    "kyuura_engine/procedures.py:1273",
+    "kyuura_engine/procedures.py:1209",
+    "kyuura_engine/procedures.py:1223",
+    "kyuura_engine/procedures.py:1242",
+    "kyuura_engine/procedures.py:1250",
+    "kyuura_engine/procedures.py:1259",
+    "kyuura_engine/procedures.py:1267",
+    "kyuura_engine/procedures.py:1277",
     "kyuura_engine/resolution/questions.py:46"
    ],
    "implementation_sites_total": 13,
@@ -5980,13 +6057,13 @@
       "kyuura_engine/effects.py:13602",
       "kyuura_engine/effects.py:32884",
       "kyuura_engine/effects.py:38607",
-      "kyuura_engine/procedures.py:1205",
-      "kyuura_engine/procedures.py:1219",
-      "kyuura_engine/procedures.py:1238",
-      "kyuura_engine/procedures.py:1246",
-      "kyuura_engine/procedures.py:1255",
-      "kyuura_engine/procedures.py:1263",
-      "kyuura_engine/procedures.py:1273",
+      "kyuura_engine/procedures.py:1209",
+      "kyuura_engine/procedures.py:1223",
+      "kyuura_engine/procedures.py:1242",
+      "kyuura_engine/procedures.py:1250",
+      "kyuura_engine/procedures.py:1259",
+      "kyuura_engine/procedures.py:1267",
+      "kyuura_engine/procedures.py:1277",
       "kyuura_engine/resolution/questions.py:46"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
@@ -6599,7 +6676,7 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:48177",
+    "kyuura_engine/effects.py:48246",
     "kyuura_engine/engine.py:5776",
     "kyuura_engine/resolution/questions.py:486"
    ],
@@ -6608,7 +6685,7 @@
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:48177",
+      "kyuura_engine/effects.py:48246",
       "kyuura_engine/engine.py:5776",
       "kyuura_engine/resolution/questions.py:486"
      ],
@@ -6641,7 +6718,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:48177",
+     "kyuura_engine/effects.py:48246",
      "kyuura_engine/engine.py:5776",
      "kyuura_engine/resolution/questions.py:486"
     ],
@@ -7291,7 +7368,7 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:46971",
+    "kyuura_engine/effects.py:47040",
     "kyuura_engine/resolution/questions.py:440"
    ],
    "implementation_sites_total": 2,
@@ -7299,7 +7376,7 @@
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:46971",
+      "kyuura_engine/effects.py:47040",
       "kyuura_engine/resolution/questions.py:440"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
@@ -7331,7 +7408,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:46971",
+     "kyuura_engine/effects.py:47040",
      "kyuura_engine/resolution/questions.py:440"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
@@ -7680,14 +7757,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:46418"
+    "kyuura_engine/effects.py:46487"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:46418"
+      "kyuura_engine/effects.py:46487"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -7719,7 +7796,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:46418"
+     "kyuura_engine/effects.py:46487"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -7883,7 +7960,7 @@
    },
    "implementation_sites": [
     "kyuura_engine/conventions.py:270",
-    "kyuura_engine/effects.py:48458"
+    "kyuura_engine/effects.py:48527"
    ],
    "implementation_sites_total": 2,
    "current_stop": [
@@ -7898,7 +7975,7 @@
      "mechanism": "command_rejection",
      "sites": [
       "kyuura_engine/conventions.py:270",
-      "kyuura_engine/effects.py:48458"
+      "kyuura_engine/effects.py:48527"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -10273,14 +10350,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:47454"
+    "kyuura_engine/effects.py:47523"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:47454"
+      "kyuura_engine/effects.py:47523"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -10311,7 +10388,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:47454"
+     "kyuura_engine/effects.py:47523"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -10339,7 +10416,7 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:47429",
+    "kyuura_engine/effects.py:47498",
     "kyuura_engine/resolution/questions.py:278"
    ],
    "implementation_sites_total": 2,
@@ -10347,7 +10424,7 @@
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:47429",
+      "kyuura_engine/effects.py:47498",
       "kyuura_engine/resolution/questions.py:278"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
@@ -10411,14 +10488,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:47450"
+    "kyuura_engine/effects.py:47519"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:47450"
+      "kyuura_engine/effects.py:47519"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -10449,7 +10526,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:47450"
+     "kyuura_engine/effects.py:47519"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -11372,14 +11449,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:48279"
+    "kyuura_engine/effects.py:48348"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:48279"
+      "kyuura_engine/effects.py:48348"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -11410,7 +11487,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:48279"
+     "kyuura_engine/effects.py:48348"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -11438,14 +11515,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:48273"
+    "kyuura_engine/effects.py:48342"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:48273"
+      "kyuura_engine/effects.py:48342"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -11476,7 +11553,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:48273"
+     "kyuura_engine/effects.py:48342"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -12773,7 +12850,7 @@
     {
      "mechanism": "pokemon_check_halt",
      "sites": [
-      "kyuura_engine/procedures.py:429"
+      "kyuura_engine/procedures.py:433"
      ],
      "basis": "static: Halt(code=…)・check_quantity(code=…) の定数"
     },
@@ -12924,7 +13001,7 @@
     {
      "mechanism": "pokemon_check_halt",
      "sites": [
-      "kyuura_engine/procedures.py:434"
+      "kyuura_engine/procedures.py:438"
      ],
      "basis": "static: Halt(code=…)・check_quantity(code=…) の定数"
     },
@@ -13194,7 +13271,7 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:46966",
+    "kyuura_engine/effects.py:47035",
     "kyuura_engine/resolution/questions.py:437"
    ],
    "implementation_sites_total": 2,
@@ -13202,7 +13279,7 @@
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:46966",
+      "kyuura_engine/effects.py:47035",
       "kyuura_engine/resolution/questions.py:437"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
@@ -13234,7 +13311,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:46966",
+     "kyuura_engine/effects.py:47035",
      "kyuura_engine/resolution/questions.py:437"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
@@ -13843,14 +13920,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:49271"
+    "kyuura_engine/effects.py:49340"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:49271"
+      "kyuura_engine/effects.py:49340"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -13881,7 +13958,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:49271"
+     "kyuura_engine/effects.py:49340"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -13909,14 +13986,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:49258"
+    "kyuura_engine/effects.py:49327"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:49258"
+      "kyuura_engine/effects.py:49327"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -13978,14 +14055,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:49265"
+    "kyuura_engine/effects.py:49334"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:49265"
+      "kyuura_engine/effects.py:49334"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -14017,7 +14094,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:49265"
+     "kyuura_engine/effects.py:49334"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -14683,14 +14760,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:46988"
+    "kyuura_engine/effects.py:47057"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:46988"
+      "kyuura_engine/effects.py:47057"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -14721,7 +14798,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:46988"
+     "kyuura_engine/effects.py:47057"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -14749,14 +14826,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:46993"
+    "kyuura_engine/effects.py:47062"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:46993"
+      "kyuura_engine/effects.py:47062"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -14787,7 +14864,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:46993"
+     "kyuura_engine/effects.py:47062"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -15954,14 +16031,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:46983"
+    "kyuura_engine/effects.py:47052"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:46983"
+      "kyuura_engine/effects.py:47052"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -15992,7 +16069,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:46983"
+     "kyuura_engine/effects.py:47052"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -16555,13 +16632,15 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
+    "kyuura_engine/conventions.py:314",
     "kyuura_engine/effects.py:46089"
    ],
-   "implementation_sites_total": 1,
+   "implementation_sites_total": 2,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
+      "kyuura_engine/conventions.py:314",
       "kyuura_engine/effects.py:46089"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
@@ -16569,14 +16648,16 @@
    ],
    "tests": {
     "assert_like_lines": 1,
-    "mention_lines": 5,
+    "mention_lines": 8,
     "files": [
+     "tests/log_audit.py",
      "tests/test_damage_reactions_poison_sleep_v0_119.py",
+     "tests/test_poison_mist_play_po_v0_145.py",
      "tests/test_research_links_v0_18e.py",
      "tests/test_unresolved_boundaries_v0_4e.py",
      "tests/v017_games.py"
     ],
-    "files_total": 4,
+    "files_total": 6,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -16595,10 +16676,11 @@
    "reachability": {
     "status": "constructed_board",
     "evidence": [
+     "tests/log_audit.py",
      "tests/test_damage_reactions_poison_sleep_v0_119.py",
+     "tests/test_poison_mist_play_po_v0_145.py",
      "tests/test_research_links_v0_18e.py",
-     "tests/test_unresolved_boundaries_v0_4e.py",
-     "tests/v017_games.py"
+     "tests/test_unresolved_boundaries_v0_4e.py"
     ],
     "basis": "テストに表明らしい行がある（静的）。盤面の作り方・行の実行は個別に確かめていない"
    }
@@ -16698,13 +16780,15 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
+    "kyuura_engine/conventions.py:321",
     "kyuura_engine/effects.py:46094"
    ],
-   "implementation_sites_total": 1,
+   "implementation_sites_total": 2,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
+      "kyuura_engine/conventions.py:321",
       "kyuura_engine/effects.py:46094"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
@@ -16712,14 +16796,16 @@
    ],
    "tests": {
     "assert_like_lines": 1,
-    "mention_lines": 5,
+    "mention_lines": 8,
     "files": [
+     "tests/log_audit.py",
      "tests/test_damage_reactions_poison_sleep_v0_119.py",
+     "tests/test_poison_mist_play_po_v0_145.py",
      "tests/test_research_links_v0_18e.py",
      "tests/test_unresolved_boundaries_v0_4e.py",
      "tests/v017_games.py"
     ],
-    "files_total": 4,
+    "files_total": 6,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -16738,10 +16824,11 @@
    "reachability": {
     "status": "constructed_board",
     "evidence": [
+     "tests/log_audit.py",
      "tests/test_damage_reactions_poison_sleep_v0_119.py",
+     "tests/test_poison_mist_play_po_v0_145.py",
      "tests/test_research_links_v0_18e.py",
-     "tests/test_unresolved_boundaries_v0_4e.py",
-     "tests/v017_games.py"
+     "tests/test_unresolved_boundaries_v0_4e.py"
     ],
     "basis": "テストに表明らしい行がある（静的）。盤面の作り方・行の実行は個別に確かめていない"
    }
@@ -16769,28 +16856,32 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
+    "kyuura_engine/conventions.py:332",
     "kyuura_engine/effects.py:46098"
    ],
-   "implementation_sites_total": 1,
+   "implementation_sites_total": 2,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
+      "kyuura_engine/conventions.py:332",
       "kyuura_engine/effects.py:46098"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
    ],
    "tests": {
-    "assert_like_lines": 1,
-    "mention_lines": 5,
+    "assert_like_lines": 2,
+    "mention_lines": 8,
     "files": [
+     "tests/log_audit.py",
      "tests/test_damage_reactions_poison_sleep_v0_119.py",
+     "tests/test_poison_mist_play_po_v0_145.py",
      "tests/test_research_links_v0_18e.py",
      "tests/test_unresolved_boundaries_v0_4e.py",
      "tests/v017_games.py"
     ],
-    "files_total": 4,
+    "files_total": 6,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -16809,13 +16900,18 @@
    "reachability": {
     "status": "constructed_board",
     "evidence": [
+     "tests/log_audit.py",
      "tests/test_damage_reactions_poison_sleep_v0_119.py",
+     "tests/test_poison_mist_play_po_v0_145.py",
      "tests/test_research_links_v0_18e.py",
-     "tests/test_unresolved_boundaries_v0_4e.py",
-     "tests/v017_games.py"
+     "tests/test_unresolved_boundaries_v0_4e.py"
     ],
     "basis": "テストに表明らしい行がある（静的）。盤面の作り方・行の実行は個別に確かめていない"
-   }
+   },
+   "cases": [
+    "UNRESOLVED_POISON_MIST_SOURCE#source-left",
+    "UNRESOLVED_POISON_MIST_SOURCE#power-lost"
+   ]
   },
   {
    "id": "UNRESOLVED_POKEDEX_UP_TO_ZERO",
@@ -16911,21 +17007,21 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/procedures.py:490"
+    "kyuura_engine/procedures.py:494"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "pokemon_check_halt",
      "sites": [
-      "kyuura_engine/procedures.py:804"
+      "kyuura_engine/procedures.py:808"
      ],
      "basis": "static: Halt(code=…)・check_quantity(code=…) の定数"
     },
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/procedures.py:490"
+      "kyuura_engine/procedures.py:494"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -16993,14 +17089,14 @@
    },
    "implementation_sites": [
     "kyuura_engine/conventions.py:261",
-    "kyuura_engine/procedures.py:439"
+    "kyuura_engine/procedures.py:443"
    ],
    "implementation_sites_total": 2,
    "current_stop": [
     {
      "mechanism": "pokemon_check_halt",
      "sites": [
-      "kyuura_engine/procedures.py:456"
+      "kyuura_engine/procedures.py:460"
      ],
      "basis": "static: Halt(code=…)・check_quantity(code=…) の定数"
     },
@@ -17008,7 +17104,7 @@
      "mechanism": "command_rejection",
      "sites": [
       "kyuura_engine/conventions.py:261",
-      "kyuura_engine/procedures.py:439"
+      "kyuura_engine/procedures.py:443"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -17043,7 +17139,7 @@
     "status": "static_only",
     "evidence": [
      "kyuura_engine/conventions.py:261",
-     "kyuura_engine/procedures.py:439"
+     "kyuura_engine/procedures.py:443"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -17167,14 +17263,14 @@
    },
    "implementation_sites": [
     "kyuura_engine/conventions.py:278",
-    "kyuura_engine/procedures.py:815"
+    "kyuura_engine/procedures.py:819"
    ],
    "implementation_sites_total": 2,
    "current_stop": [
     {
      "mechanism": "pokemon_check_halt",
      "sites": [
-      "kyuura_engine/procedures.py:313"
+      "kyuura_engine/procedures.py:317"
      ],
      "basis": "static: Halt(code=…)・check_quantity(code=…) の定数"
     },
@@ -17182,7 +17278,7 @@
      "mechanism": "command_rejection",
      "sites": [
       "kyuura_engine/conventions.py:278",
-      "kyuura_engine/procedures.py:815"
+      "kyuura_engine/procedures.py:819"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -17254,15 +17350,15 @@
    "implementation_sites": [
     "kyuura_engine/conventions.py:261",
     "kyuura_engine/effects.py:2224",
-    "kyuura_engine/procedures.py:1009",
-    "kyuura_engine/procedures.py:1013"
+    "kyuura_engine/procedures.py:1013",
+    "kyuura_engine/procedures.py:1017"
    ],
    "implementation_sites_total": 4,
    "current_stop": [
     {
      "mechanism": "pokemon_check_halt",
      "sites": [
-      "kyuura_engine/procedures.py:1041"
+      "kyuura_engine/procedures.py:1045"
      ],
      "basis": "static: Halt(code=…)・check_quantity(code=…) の定数"
     },
@@ -17271,8 +17367,8 @@
      "sites": [
       "kyuura_engine/conventions.py:261",
       "kyuura_engine/effects.py:2224",
-      "kyuura_engine/procedures.py:1009",
-      "kyuura_engine/procedures.py:1013"
+      "kyuura_engine/procedures.py:1013",
+      "kyuura_engine/procedures.py:1017"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -17439,14 +17535,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:47459"
+    "kyuura_engine/effects.py:47528"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:47459"
+      "kyuura_engine/effects.py:47528"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -17477,7 +17573,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:47459"
+     "kyuura_engine/effects.py:47528"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -19065,7 +19161,7 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:47440",
+    "kyuura_engine/effects.py:47509",
     "kyuura_engine/resolution/questions.py:283"
    ],
    "implementation_sites_total": 2,
@@ -19073,7 +19169,7 @@
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:47440",
+      "kyuura_engine/effects.py:47509",
       "kyuura_engine/resolution/questions.py:283"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
@@ -19105,7 +19201,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:47440",
+     "kyuura_engine/effects.py:47509",
      "kyuura_engine/resolution/questions.py:283"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
@@ -19134,7 +19230,7 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:47435",
+    "kyuura_engine/effects.py:47504",
     "kyuura_engine/resolution/questions.py:281"
    ],
    "implementation_sites_total": 2,
@@ -19142,7 +19238,7 @@
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:47435",
+      "kyuura_engine/effects.py:47504",
       "kyuura_engine/resolution/questions.py:281"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
@@ -19174,7 +19270,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:47435",
+     "kyuura_engine/effects.py:47504",
      "kyuura_engine/resolution/questions.py:281"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
@@ -21263,14 +21359,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:46546"
+    "kyuura_engine/effects.py:46615"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:46546"
+      "kyuura_engine/effects.py:46615"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -21302,7 +21398,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:46546"
+     "kyuura_engine/effects.py:46615"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -21330,14 +21426,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:46540"
+    "kyuura_engine/effects.py:46609"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:46540"
+      "kyuura_engine/effects.py:46609"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -21368,7 +21464,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:46540"
+     "kyuura_engine/effects.py:46609"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -21731,14 +21827,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:46308"
+    "kyuura_engine/effects.py:46377"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:46308"
+      "kyuura_engine/effects.py:46377"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -21941,7 +22037,7 @@
     {
      "mechanism": "pokemon_check_halt",
      "sites": [
-      "kyuura_engine/procedures.py:378"
+      "kyuura_engine/procedures.py:382"
      ],
      "basis": "static: Halt(code=…)・check_quantity(code=…) の定数"
     },
@@ -21955,17 +22051,18 @@
     }
    ],
    "tests": {
-    "assert_like_lines": 5,
+    "assert_like_lines": 6,
     "mention_lines": 9,
     "files": [
      "tests/helpers.py",
      "tests/test_play_policy_s2a_v0_143.py",
+     "tests/test_poison_mist_play_po_v0_145.py",
      "tests/test_reactive_powers_trainer_damage_v0_61.py",
      "tests/test_sc2_integrity_v0_144.py",
      "tests/test_unresolved_boundaries_v0_4e.py",
      "tests/v017_games.py"
     ],
-    "files_total": 6,
+    "files_total": 7,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -22038,7 +22135,7 @@
     {
      "mechanism": "pokemon_check_halt",
      "sites": [
-      "kyuura_engine/procedures.py:329"
+      "kyuura_engine/procedures.py:333"
      ],
      "basis": "static: Halt(code=…)・check_quantity(code=…) の定数"
     },
@@ -24466,14 +24563,14 @@
    },
    "implementation_sites": [
     "kyuura_engine/conventions.py:270",
-    "kyuura_engine/effects.py:48465"
+    "kyuura_engine/effects.py:48534"
    ],
    "implementation_sites_total": 2,
    "current_stop": [
     {
      "mechanism": "deferred_interruption",
      "sites": [
-      "kyuura_engine/effects.py:48553"
+      "kyuura_engine/effects.py:48622"
      ],
      "basis": "static: Halt(code=…)・check_quantity(code=…) の定数"
     },
@@ -24481,7 +24578,7 @@
      "mechanism": "command_rejection",
      "sites": [
       "kyuura_engine/conventions.py:270",
-      "kyuura_engine/effects.py:48465"
+      "kyuura_engine/effects.py:48534"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -24516,7 +24613,7 @@
     "status": "static_only",
     "evidence": [
      "kyuura_engine/conventions.py:270",
-     "kyuura_engine/effects.py:48465"
+     "kyuura_engine/effects.py:48534"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -24544,14 +24641,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:48471"
+    "kyuura_engine/effects.py:48540"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:48471"
+      "kyuura_engine/effects.py:48540"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -25708,14 +25805,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:46551"
+    "kyuura_engine/effects.py:46620"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:46551"
+      "kyuura_engine/effects.py:46620"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -25748,7 +25845,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:46551"
+     "kyuura_engine/effects.py:46620"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -26134,14 +26231,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:47464"
+    "kyuura_engine/effects.py:47533"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:47464"
+      "kyuura_engine/effects.py:47533"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -26172,7 +26269,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:47464"
+     "kyuura_engine/effects.py:47533"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -26267,14 +26364,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:46960"
+    "kyuura_engine/effects.py:47029"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:46960"
+      "kyuura_engine/effects.py:47029"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -26403,14 +26500,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:47446"
+    "kyuura_engine/effects.py:47515"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:47446"
+      "kyuura_engine/effects.py:47515"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -26441,7 +26538,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:47446"
+     "kyuura_engine/effects.py:47515"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -26825,14 +26922,14 @@
     "note": "研究の対応表の外（エンジンの未対応・技術上限・データ・汎用）"
    },
    "implementation_sites": [
-    "kyuura_engine/procedures.py:606"
+    "kyuura_engine/procedures.py:610"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/procedures.py:606"
+      "kyuura_engine/procedures.py:610"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -26861,7 +26958,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/procedures.py:606"
+     "kyuura_engine/procedures.py:610"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -26995,8 +27092,8 @@
    },
    "implementation_sites": [
     "kyuura_engine/conventions.py:63",
-    "kyuura_engine/conventions.py:635",
-    "kyuura_engine/conventions.py:699"
+    "kyuura_engine/conventions.py:695",
+    "kyuura_engine/conventions.py:759"
    ],
    "implementation_sites_total": 3,
    "current_stop": [
@@ -27004,8 +27101,8 @@
      "mechanism": "command_rejection",
      "sites": [
       "kyuura_engine/conventions.py:63",
-      "kyuura_engine/conventions.py:635",
-      "kyuura_engine/conventions.py:699"
+      "kyuura_engine/conventions.py:695",
+      "kyuura_engine/conventions.py:759"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -27055,7 +27152,7 @@
     "kyuura_engine/effects.py:11261",
     "kyuura_engine/effects.py:12216",
     "kyuura_engine/effects.py:40868",
-    "kyuura_engine/effects.py:47098",
+    "kyuura_engine/effects.py:47167",
     "kyuura_engine/resolution/programs.py:3975",
     "kyuura_engine/resolution/programs.py:4108",
     "kyuura_engine/resolution/questions.py:105"
@@ -27068,7 +27165,7 @@
       "kyuura_engine/effects.py:11261",
       "kyuura_engine/effects.py:12216",
       "kyuura_engine/effects.py:40868",
-      "kyuura_engine/effects.py:47098",
+      "kyuura_engine/effects.py:47167",
       "kyuura_engine/resolution/programs.py:3975",
       "kyuura_engine/resolution/programs.py:4108",
       "kyuura_engine/resolution/questions.py:105"
@@ -28181,21 +28278,21 @@
     "note": "研究の対応表の外（エンジンの未対応・技術上限・データ・汎用）"
    },
    "implementation_sites": [
-    "kyuura_engine/procedures.py:442"
+    "kyuura_engine/procedures.py:446"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "pokemon_check_halt",
      "sites": [
-      "kyuura_engine/procedures.py:463"
+      "kyuura_engine/procedures.py:467"
      ],
      "basis": "static: Halt(code=…)・check_quantity(code=…) の定数"
     },
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/procedures.py:442"
+      "kyuura_engine/procedures.py:446"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -28431,14 +28528,14 @@
     "note": "研究の対応表の外（エンジンの未対応・技術上限・データ・汎用）"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:48765"
+    "kyuura_engine/effects.py:48834"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:48765"
+      "kyuura_engine/effects.py:48834"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -28466,7 +28563,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/effects.py:48765"
+     "kyuura_engine/effects.py:48834"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -28485,14 +28582,14 @@
     "note": "研究の対応表の外（エンジンの未対応・技術上限・データ・汎用）"
    },
    "implementation_sites": [
-    "kyuura_engine/effects.py:48760"
+    "kyuura_engine/effects.py:48829"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/effects.py:48760"
+      "kyuura_engine/effects.py:48829"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -29095,7 +29192,7 @@
     "evidence": [
      "tests/test_cross_version_compatibility.py:125",
      "tests/test_deferred_shortage_user_promos_v0_127.py:318",
-     "tests/test_play_policy_s2a_v0_143.py:462"
+     "tests/test_play_policy_s2a_v0_143.py:463"
     ],
     "basis": "エンジンに定義・参照がない（静的）"
    },
@@ -29106,6 +29203,30 @@
      "basis": "エンジンでは投げない"
     }
    ]
+  },
+  {
+   "id": "UNRESOLVED_POISON_MIST_SOURCE#source-left",
+   "entry_kind": "case",
+   "parent": "UNRESOLVED_POISON_MIST_SOURCE",
+   "status": "active",
+   "condition": "中断のある［ポイズンミスト］の記録の発生源（場の番号）のポケモンが、ポケモンチェックの時点で場にいない",
+   "sites": [
+    "kyuura_engine/effects.py:46285"
+   ],
+   "secret_dependency": "public_only",
+   "note": "続行規約 PC-POISON-MIST-SOURCE-LEFT@1（CS-KYUURA-PLAY-PO@1）の場面。厳密側は今のまま止める。道具の対戦で観測（v0.144 の仕様案の 7 局）"
+  },
+  {
+   "id": "UNRESOLVED_POISON_MIST_SOURCE#power-lost",
+   "entry_kind": "case",
+   "parent": "UNRESOLVED_POISON_MIST_SOURCE",
+   "status": "active",
+   "condition": "中断のある記録の発生源のポケモンが、ポケモンチェックの時点で場にいる（かがくへんかガス・退化・へんしんなどで力が消えた・消えていた）",
+   "sites": [
+    "kyuura_engine/effects.py:46273"
+   ],
+   "secret_dependency": "public_only",
+   "note": "続行規約はない（両方の集合で止める。QK1 と同じ形の問い）。道具の対戦では観測していない"
   },
   {
    "id": "UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET#deck",

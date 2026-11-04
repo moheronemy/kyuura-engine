@@ -55,6 +55,31 @@ SPECIFICATION_APPROVAL = {
     "note": "この仕様案（3 規約の中身・除外・依存・実装の段階）は、利用者の採用の判断を待つ。採用まで、エンジンに登録・有効化しない（--check が登録のないことを確かめる）",
 }
 
+# v0.145 の経過（採用のあとに加えた記録。上の WORK_APPROVAL・SPECIFICATION_APPROVAL・規約の状態は提案の時点の記録のまま残す）
+ADOPTION = {
+    "status": "user_agreed",
+    "date": "2026-11-05",
+    "quote": "方針を採用します。",
+    "scope": ("この指示と、その依頼に書いた具体的な採用仕様（3 規約の対象・処理・除外・複数の発生源の扱い）。続行側の開発用の部分的な集合の規約の採用で、公式の裁定・エラッタ・kyuura の"
+              "研究上の解決ではない。厳密側の集合・S2a の集合・#power-lost・ほかの未決の場面は変えない"),
+    "implemented_in": {"version": "0.145.0", "document": "docs/poison-mist-play-po-v0.145.md", "branch": "claude/poison-mist-play-po"},
+    "set": ["CS-KYUURA-PLAY-PO", 1],
+    "open_choices": {
+        "OC-PO-1": "推奨のとおり（性質 → ［ポイズンミスト］→ 鋼エネルギー）", "OC-PO-2": "推奨のとおり（時点でどく状態のすべてのポケモン）",
+        "OC-PO-3": "推奨のとおり（場をはなれたら終わる。#source-left だけ）", "OC-PO-4": "推奨のとおり（#power-lost は扱わず、続行側でも止める）",
+        "OC-PO-5": "推奨のとおり（新しい ID CS-KYUURA-PLAY-PO@1。S2a の 5 規約を引き継ぎ、PO の 3 規約を加える）", "OC-PO-6": "推奨のとおり（convention_applied を残す）",
+    },
+    "differences_from_proposal": [
+        ("規約を当てた記録の単位: どくのダメージを受けるポケモンごと、量を決めた規約ごとに 1 つ（PC-POISON-MIST-SOURCE-LEFT → PC-POISON-MIST-TARGETS → PC-POISON-AMOUNT-ORDER の順）を、"
+         "そのポケモンの poison_damage の直前に書く。規約は厳密側の判断で止まるときだけ、その順に 1 つずつ加えて求め直し、量が決まったところでやめる。加えた規約のうち、それを除くと結果（止まる・量）が変わるものだけを記録する（最後に加えた規約はいつも入る）"),
+        ("PC-POISON-AMOUNT-ORDER: 性質の 2 つ（特殊などくの量とかける数）のあいだの順番は決めない（今の写しでは同時に持たない。持てばエンジンの不具合として RuntimeError）。"
+         "かける数は鋼エネルギーより先"),
+        ("PC-POISON-MIST-SOURCE-LEFT: 場をはなれたかは、記録の発生源の場の番号のポケモンがポケモンチェックの時点で場にいないかで判断する（新しい状態の項目は加えていない）。"
+         "記録ごとに判断し、発生源が 2 匹以上でもそれぞれの記録を分けて扱う（2 つ以上の記録は足さない v0.119 のまま）"),
+        "ログの poison_mists は、PC-POISON-MIST-TARGETS を当てたときだけ使う前からどく状態のポケモンの記録をふくむ（ほかは今のまま）",
+    ],
+}
+
 GROUND_RULES = [
     "厳密側の現行集合 CS-KYUURA-CURRENT@1 と、開発用の集合 CS-KYUURA-PLAY-S2A@1 は、同じ ID・版のまま中身を変えない。PO1〜PO3 では従来どおり止まる",
     "採用されたら、新しい規約（ID@1）と、それを加えた新しい集合（新しい ID または版）で入れる。既存の集合の中身を書き換えない",
@@ -445,6 +470,7 @@ def build() -> dict:
         "open_choices": OPEN_CHOICES,
         "verification": VERIFICATION,
         "unverified": UNVERIFIED,
+        "adoption": ADOPTION,
     }
 
 
@@ -614,6 +640,24 @@ def render(spec: dict) -> str:
     for line in spec["unverified"]:
         w(f"- {line}。")
     w("")
+    adoption = spec["adoption"]
+    w("## 13. 採用のあとの経過（v0.145）")
+    w("")
+    w(f"- 採用: `{adoption['status']}`（{adoption['date']}）。利用者の指示「{adoption['quote']}」と、その依頼の採用仕様。{adoption['scope']}。")
+    w(f"- 実装: 版 {adoption['implemented_in']['version']}（{adoption['implemented_in']['document']}・作業ブランチ `{adoption['implemented_in']['branch']}`）。"
+      f"集合 `{adoption['set'][0]}@{adoption['set'][1]}`（開発用・halts_at_undecided）。")
+    w("- 作業の承認（2 章）と、具体的な続行仕様の採用（この章）は別の記録です。2 章の「仕様: not_approved」と 1〜12 章は提案の時点の記録で、書き換えていません。")
+    w("")
+    w("| 選択肢 | 採用 |")
+    w("|---|---|")
+    for oc, text in adoption["open_choices"].items():
+        w(f"| {oc} | {_cell(text)} |")
+    w("")
+    w("仕様案からの差・実装で具体化したこと:")
+    w("")
+    for line in adoption["differences_from_proposal"]:
+        w(f"- {line}。")
+    w("")
     return "\n".join(out)
 
 
@@ -760,12 +804,27 @@ def check(written: dict, document: str) -> list[str]:
     sys.path.insert(0, str(ROOT))
     from kyuura_engine import conventions as C
 
-    for c in spec["conventions"]:
-        if any(key[0] == c["id"] for key in C.CONVENTIONS):
-            problems.append(f"{c['id']} がエンジンに登録されている（仕様案のあいだは登録・有効化しない）")
+    # v0.145: 採用のあとは、採用の記録（adoption）の集合・規約がエンジンに登録されていて、中身の区分が採用した続行規約（S2a の集合に PO の規約を加えた開発用の集合）
+    adoption = spec.get("adoption") or {}
+    if adoption.get("status") != "user_agreed" or not adoption.get("quote") or "公式" not in adoption.get("scope", ""):
+        problems.append("採用の記録（利用者の指示・範囲。公式の裁定ではない）がない")
+    if sorted(adoption.get("open_choices", {})) != sorted(o["id"] for o in spec["open_choices"]):
+        problems.append("採用の記録の選択肢が、判断が残る選択肢（9 章）と対応しない")
+    adopted_set = C.SETS.get(tuple(adoption.get("set", ())))
     proposal_set = spec["set_proposal"]["continuation"]["id"]
-    if any(key[0] == proposal_set for key in C.SETS):
-        problems.append(f"集合 {proposal_set} がエンジンに登録されている（仕様案のあいだは登録しない）")
+    if adopted_set is None or adopted_set.id != proposal_set or adopted_set.usage != C.USAGE_DEVELOPMENT or adopted_set.completeness != C.COMPLETENESS_HALTS:
+        problems.append(f"採用の集合 {adoption.get('set')} が、エンジンの開発用の部分的な集合 {proposal_set} として登録されていない")
+    else:
+        s2a = C.SETS[(spec["set_proposal"]["existing_development"]["id"], spec["set_proposal"]["existing_development"]["version"])]
+        added = [m for m in adopted_set.members if m not in s2a.members]
+        if adopted_set.members[:len(s2a.members)] != s2a.members or sorted(k for k, _ in added) != sorted(known_ids):
+            problems.append(f"採用の集合 {proposal_set} の中身が、既存の開発用の集合の規約に、この仕様の規約を加えたものでない")
+    for c in spec["conventions"]:
+        registered = [conv for key, conv in C.CONVENTIONS.items() if key[0] == c["id"]]
+        if [(conv.version, conv.layer, conv.approval) for conv in registered] != [(c["version"], C.LAYER_CONTINUATION, C.APPROVAL_USER_AGREED)]:
+            problems.append(f"{c['id']}@{c['version']} が、採用した続行規約（continuation・user_agreed）としてエンジンにちょうど 1 つ登録されていない")
+        elif sorted(registered[0].scenes) != sorted(t["scene"] for t in c["targets"]):
+            problems.append(f"{c['id']}: 登録した規約の場面 {sorted(registered[0].scenes)} が、仕様の対象と違う")
     if (spec["set_proposal"]["strict"]["id"], spec["set_proposal"]["strict"]["version"]) != C.DEFAULT_SET:
         problems.append("厳密側の集合が、エンジンの既定の集合と違う")
     existing = (spec["set_proposal"]["existing_development"]["id"], spec["set_proposal"]["existing_development"]["version"])

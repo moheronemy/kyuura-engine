@@ -241,6 +241,10 @@ def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | 
         # 止めた（同じ状態で求め直す）
         found = poison_check_amount(state, owner, pokemon)
         amount = found.amount
+        for code, case in found.conventions:
+            # v0.145（docs/poison-mist-play-po-v0.145.md）: どくの量を決めた続行規約ごとに 1 つ、このポケモンの poison_damage の直前に書く（実際の処理だけ。先読み・確かめは書かない）
+            record_application(state, continuation_for(state, code, case), pokemon_id=pokemon.pokemon_id, amount=amount,
+                               **({"ended_mists": found.ended} if case is not None else {"poison_mists": found.mists}))
         pokemon.damage += amount
         state.add_event(
             "poison_damage",

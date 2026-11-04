@@ -113,7 +113,8 @@ class RegistrationTest(unittest.TestCase):
             convention = C.CONVENTIONS[key]
             self.assertEqual((convention.layer, convention.approval), (C.LAYER_CONTINUATION, C.APPROVAL_USER_AGREED))
             self.assertEqual(C.convention_digest(convention), C.PINNED_CONVENTION_DIGESTS[key])
-        self.assertEqual(C.DEFAULT_REGISTRY.implemented_continuations, frozenset(C.S2A_MEMBERS))
+        # v0.145: この版が処理を持つ続行規約に PO の 3 件が加わった（別の集合 CS-KYUURA-PLAY-PO@1 だけ）。S2a の集合の中の続行規約は S2a の 5 件のまま
+        self.assertEqual(C.DEFAULT_REGISTRY.implemented_continuations & frozenset(spec.members), frozenset(C.S2A_MEMBERS))
         self.assertNotIn("完成", spec.description.replace("完成したプレイ用の集合ではない", ""))
 
     def test_strict_set_is_unchanged(self):

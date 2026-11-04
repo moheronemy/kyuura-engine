@@ -1879,7 +1879,8 @@
     "UNRESOLVED_POISON_MIST_EARLIER_POISON"
    ],
    "UNRESOLVED_POISON_MIST_SOURCE": [
-    "UNRESOLVED_POISON_MIST_SOURCE"
+    "UNRESOLVED_POISON_MIST_SOURCE#power-lost",
+    "UNRESOLVED_POISON_MIST_SOURCE#source-left"
    ],
    "UNRESOLVED_POKEDEX_UP_TO_ZERO": [
     "UNRESOLVED_POKEDEX_UP_TO_ZERO"
@@ -3880,7 +3881,14 @@
      "UNRESOLVED_POISON_MIST_SOURCE"
     ],
     "entry_kind": "research_stop_code",
-    "id": "UNRESOLVED_POISON_MIST_SOURCE"
+    "id": "UNRESOLVED_POISON_MIST_SOURCE#power-lost"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POISON_MIST_SOURCE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POISON_MIST_SOURCE#source-left"
    },
    {
     "codes": [
