@@ -137,6 +137,9 @@
   公開の枚数から求めた下限）で、既存のコード（GG1・MG1・DW1・UPZ2）のまま決まった文で止めます。この承認は、厳密モードの定義・プレイ用の規約・検索の不足時の処理の承認ではありません。
   比較プローブで見つけた `PSP-INCREASE-ENTRY-PW3-ORACLE`・`PSP-COCOON-DV2-ORACLE` と、`PSP-DECK-CONTENT-PRECHECKS` の残り（GV1・EVOLUTION_HP の経路）の扱いは未決です。
 
+- **材料（2026-11-04。判断はしていない）**: 共通規約の設計案（[play-policy-family-plan.md](play-policy-family-plan.md) 7 章）の調査で、キョウの忍者ジム（PR1-067）の
+  使う前の確かめ（NJ1）が、山札の実際の中身で受理・拒否を変える漏れ `PSP-NJ1-NINJA-GYM-ORACLE` を、比較プローブで確かめました（未修正）。
+
 ### DEC-SEARCH-LIMITS — 探索・組合せの上限
 
 - **問い**: 4096・512・256・6・3 の上限と、256 件の代替回答探索の fail-open の 3 経路を、どう扱うか。

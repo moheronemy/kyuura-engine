@@ -375,3 +375,4 @@ UQ-MIND-GAMES-OPTIONAL・UQ-STATED-COUNT-SHORT・UQ-BILINGUAL-NAME-GLOSS など�
 - v0.140（[prize-order-user-rule-v0.140.md](prize-order-user-rule-v0.140.md) 2 章）: カードによらない利用者の指定 2 件（`CONV:USER-PRIZE-ORDER-ALWAYS-CHOSEN`・
   `CONV:USER-PRIZE-ORDER-PER-PLAYER`。登録 `decisions.USER_PRIZE_ORDER_RULES`）を、既存の利用者の指定と同じく基礎集合（AGR-MODE-BASELINE-USER）の規約として台帳の conventions に加えた。
   4.2 節の表（台帳から生成）には加わっている。本文の件数（利用者指定 12 件・採用済みの規約 18 件など）は、この設計の時点の値のまま（書き換えていない）。モードは実装していない
+- 2026-11-04（[play-policy-family-plan.md](play-policy-family-plan.md)）: 停止の方針の台帳の場面を、少数の共通規約の案と個別の場面に対応付け、採用・実装の段階の案を書いた（規約集合を受け取る基盤を S1 とし、この文書の 5〜9 章の設計をそのまま使う）。規約案はどれも案で、採用していない。識別・版・保存形式は決めていない
