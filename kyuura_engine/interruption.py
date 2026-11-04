@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from .conventions import stop_without_continuation  # v0.142: 止める前の続行規約の照会
 from .state import GameState, Halt, Interruption, Phase
 
 # 中断の種類（``Interruption.kind``）。今は説明の枚数に足りない場合（kyuura の UQ-STATED-COUNT-SHORT）だけ
@@ -93,6 +94,7 @@ def interrupt(state: GameState, shortage: DeferredShortage) -> None:
     在途のカード・固定した変身の姿は動かさない。ログの最後に ``halted``（公開の項目: 中断の種類・発生元・止まった要素・必要な数・処理できる数・対象）。"""
     if state.decision is not None or state.pending_moves or state.phase is Phase.HALTED:
         raise RuntimeError(f"途中停止 {shortage.code} の時点に、決定・まだ処理していない反応・停止が残っている（チェック地点ではない。エンジンの不具合）")
+    stop_without_continuation(state, shortage.code)  # v0.142: 続行規約の照会（この版はいつも「なし」で、今までどおり止める）
     record = Interruption(kind=shortage.kind, code=shortage.code, kyuura_issue=shortage.kyuura_issue, source=shortage.source, player=shortage.player,
                           target_owner=shortage.target_owner, target=shortage.target, element=shortage.element, required=shortage.required,
                           available=shortage.available, pending=tuple(shortage.pending), in_transit=in_transit_cards(state), log_index=len(state.log))

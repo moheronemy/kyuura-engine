@@ -323,6 +323,7 @@ from . import faceup  # v0.126: おもての山札（フラッシュ）
 from .interruption import DeferredShortage, interrupt, interruption_problems  # v0.127: 途中停止
 from . import cards as cards_module
 from . import sudden_death  # v0.134: サドン・デスの延長戦の開始
+from .conventions import require_state_conventions, resolve_for_new_game, stop_without_continuation  # v0.142: 規約集合
 from .coins import CoinSide, flip_coins
 from .rng import copy_rng
 
@@ -359,12 +360,17 @@ def new_game(
     *,
     rules: RuleSet = RULES_2000_02_14,
     pool: CardPool | None = None,
+    conventions=None,
 ) -> GameState:
     """デッキを検査し、山札を切り、手札を 7 枚ずつ配り、切り直しまで済ませた状態を返す（p.308）。
 
     この後は ``PlaceStartingPokemon`` で両方のプレイヤーがポケモンを出す。
     ``seed`` は 0 以上の整数。切り直しの補償が原文で決められない場合は、``Phase.HALTED`` の状態を返す
     （例外は投げない。``state.phase`` を確かめること）。
+
+    v0.142（docs/ruleset-foundation-v0.142.md 3 章）: ``conventions`` は規約集合（``conventions.ConventionSet``・``"ID@版"``・``ConventionSetIdentity``）。省略すると今の挙動の集合
+    （``CS-KYUURA-CURRENT@1``）。登録した集合と内容が同じでなければ、対戦を始めずに ``conventions.ConventionSetError``（``INVALID_CONVENTION_SET``）。状態には確かめた識別の値だけを置く
+    （渡したオブジェクトは持たない）。この版の集合はどれも未決の場面で止まる（続行規約はない）
     """
     pool = pool or load_card_pool()
     problems = [f"player {p}: {problem}" for p, deck in enumerate((deck0, deck1)) for problem in deck_problems(deck, pool, rules)]
@@ -375,6 +381,7 @@ def new_game(
     if seed < 0:
         # random.Random は負の seed を絶対値として扱うので、-5 と 5 が同じ対戦になってしまう
         raise ValueError("seed は 0 以上の整数")
+    convention_set = resolve_for_new_game(conventions)
 
     cards: dict[int, CardInstance] = {}
     for owner, deck in enumerate((deck0, deck1)):
@@ -393,13 +400,14 @@ def new_game(
         decklists=(tuple(deck0), tuple(deck1)),
         effects=pool.effects,
         segments=(),
+        conventions=convention_set,
     )
     state.add_event("game_created", rules=rules.id, seed=seed, card_data_commit=pool.source["commit"])
     _prepare_segment(state)
     return state
 
 
-def _segment_state(*, rules, card_data, seed, rng, cards: dict[int, CardInstance], definitions, decklists, effects, segments) -> GameState:
+def _segment_state(*, rules, card_data, seed, rng, cards: dict[int, CardInstance], definitions, decklists, effects, segments, conventions) -> GameState:
     """対戦の区間の始まりの状態（v0.134 で ``new_game`` から分けた。サドン・デスの延長戦 ``_start_sudden_death`` と共通）。すべてのカードを持ち主の山札に uid の順に置き、
     ほかの項目は既定の値（番・決定・効果・履歴・結果など）。ログは空（呼ぶ側が始まりのイベントを書く）。"""
     players = [PlayerState(deck=[uid for uid in sorted(cards) if cards[uid].owner == player]) for player in PLAYERS]
@@ -415,6 +423,7 @@ def _segment_state(*, rules, card_data, seed, rng, cards: dict[int, CardInstance
         phase=Phase.SETUP_PLACEMENT,
         effects=effects,
         segments=segments,
+        conventions=conventions,
     )
 
 
@@ -449,7 +458,8 @@ def _start_sudden_death(state: GameState) -> GameState:
     record = sudden_death.archive(state)
     cards = {uid: CardInstance(uid=uid, card_id=card.card_id, owner=owners[uid]) for uid, card in state.cards.items()}
     new = _segment_state(rules=state.rules, card_data=state.card_data, seed=state.seed, rng=copy_rng(state.rng), cards=cards,
-                         definitions=state.definitions, decklists=state.decklists, effects=state.effects, segments=state.segments + (record,))
+                         definitions=state.definitions, decklists=state.decklists, effects=state.effects, segments=state.segments + (record,),
+                         conventions=state.conventions)  # v0.142: 同じ規約集合を引き継ぐ（keep）
     new.add_event("sudden_death_started", segment=new.segment_index, prize_count=new.initial_prize_count)
     _prepare_segment(new)
     return new
@@ -466,6 +476,11 @@ def _draw(state: GameState, player: int, count: int) -> None:
 def _hand_has_basic(state: GameState, player: int) -> bool:
     # v0.114: 最初の手札に、ベイビィポケモンカードかたねポケモンカードがあれば切り直さない（GR-2000-P308-BABY-SETUP。ベイビィだけの手札も切り直さない）
     return any(state.card_def(uid).is_baby_or_basic_pokemon for uid in state.players[player].hand)
+
+
+def _setup_case(state: GameState) -> str:
+    """v0.142: 準備の停止の事例（停止の方針の台帳の事例 ID の ``#`` のあと）。最初の対戦の準備か、サドン・デスの延長戦の準備か。"""
+    return "initial-setup" if not state.segments else "sudden-death-segment"
 
 
 def _deal_opening_hands(state: GameState) -> None:
@@ -490,6 +505,7 @@ def _deal_opening_hands(state: GameState) -> None:
             break
         undecided = [p for p in lacking if play_as_pokemon_in_hand(state, p)]
         if undecided:
+            stop_without_continuation(state, PLAY_AS_POKEMON_SETUP_CODE, _setup_case(state))  # v0.142: 続行規約の照会（この版はいつも「なし」で、今までどおり止める）
             # v0.47: たねポケモンがなく、なにかの化石・ピッピ人形がある手札で、切り直すのか、それを最初のポケモンとして出せるのかは決められない（PF1）。切り直す前に
             # 対戦を止める（v0.1 の切り直しの補償と同じ形。推測で決めない）
             state.phase = Phase.HALTED
@@ -513,6 +529,7 @@ def _deal_opening_hands(state: GameState) -> None:
     both_rounds = [r for r in rounds if len(r) == 2]
     single_rounds = [r for r in rounds if len(r) == 1]
     if both_rounds and single_rounds:
+        stop_without_continuation(state, "UNRESOLVED_MULLIGAN_COMPENSATION", _setup_case(state))  # v0.142: 続行規約の照会（この版はいつも「なし」）
         state.phase = Phase.HALTED
         state.halt = Halt(
             code="UNRESOLVED_MULLIGAN_COMPENSATION",
@@ -573,6 +590,7 @@ def _apply(state: GameState, command, context: resolution.Context | None) -> Gam
     v0.67（docs/secret-plan-preflight-v0.67.md 6 章）: 相手のうらのカード（マチスの秘策）があるとき、このコマンドの処理が相手のうらのカードの本当のカードを使ったら
     （おもてにした・おもてにしたら残るかを見た。``zones.IDENTITY_CONSULTED``）、受け付けるか・拒否の理由が本当のカードによらないように、ありうるカードのすべてで同じ
     コマンドを確かめる（``_identity_independent``）。"""
+    require_state_conventions(state)  # v0.142: 状態の規約集合を、この版が扱える（登録の内容と同じ・記録のない旧状態は条件つき）。扱えなければ処理の前に UnsupportedError
     try:
         return _apply_checked(state, command, context)
     except HiddenPropertyRead as exc:

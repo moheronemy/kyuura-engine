@@ -34,6 +34,7 @@ from .effects import (
     bench_guard_holders, char_check_targets,
     confusion_damage_calculation, weakness_resistance_log,
 )
+from .conventions import stop_without_continuation  # v0.142: 止める前の続行規約の照会
 from .errors import UnsupportedError
 from .persistent import (KNOCK_OUT, USED, dealt_attack_damage_reductions, knockout_survivals, received_attack_damage_bonuses, remove_expired_persistent_effects, remove_on_damage, remove_persistent_effects,
                          remove_source_left_effects, remove_turn_start_expired_persistent_effects, require_can_leave)
@@ -859,7 +860,11 @@ def finish(state: GameState, result: GameResult) -> None:
 
 
 def halt(state: GameState, halt: Halt) -> None:
-    """原典で決められない処理に当たったので、対戦を止める（``Phase.HALTED``。終端）。"""
+    """原典で決められない処理に当たったので、対戦を止める（``Phase.HALTED``。終端）。
+
+    v0.142: 止める前に、規約集合の続行規約を照会する（``conventions.stop_without_continuation``。この版はいつも「なし」で、今までどおり止める。停止コードに 2 つ以上の事例があるコードは、
+    ここでは事例を特定しない）。"""
+    stop_without_continuation(state, halt.code)
     state.phase = Phase.HALTED
     state.halt = halt
     state.decision = None

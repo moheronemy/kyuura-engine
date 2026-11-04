@@ -512,13 +512,17 @@ TOP_FIELDS_SINCE = {
     "ownership_changes": 33,  # v0.130: 対戦の中の所有者の変更の記録（とりかえっこプリーズの交換）
     "user_ownership_rules": 33,  # v0.130: 利用者が指定した所有者の簡略化を当てはめる登録の対象（登録表とカードの組から求める識別の情報）
     "segment": 34, "initial_prize_count": 34, "segments": 34,  # v0.134: 今の対戦の区間・準備で置くサイドの枚数・終わった区間の記録（サドン・デスの延長戦）
+    "convention_set": 35, "engine_version": 35,  # v0.142: 規約集合の識別・エンジンの版
 }
 # v0.125: 形式 30 は、持続する効果 ``"damage_reduction"`` の項目 ``non_attack_unresolved``（「ふくらむ」の効果だけ）を加えた（場のポケモン・最上位の項目は変わらない）
 # v0.126: 形式 31 は、最上位の ``face_up_deck``（フラッシュでおもてにした山札のカード）を加えた
 # v0.127: 形式 32 は、``halt`` の ``interruption``（途中停止の記録。なければ null）と、最上位の ``user_simplifications`` を加えた
 # v0.130: 形式 33 は、所有者の変わったカードの ``cards`` の ``origin`` と、最上位の ``ownership_changes`` を加えた
 # v0.134: 形式 34 は、最上位の ``segment``・``initial_prize_count``・``segments``（サドン・デスの延長戦の区間）を加えた
-LATEST_FORMAT = 34
+# v0.142: 形式 35 は、最上位の ``convention_set``（規約集合の識別）・``engine_version`` を加えた
+LATEST_FORMAT = 35
+# v0.142（docs/ruleset-foundation-v0.142.md 7 章）: 形式 34 までに書いてよい規約集合（記録のない状態の意味と同じ集合）。監査が独立に持つ（エンジンの一覧を読まない）
+OLD_FORMAT_CONVENTION_SETS = {("CS-KYUURA-CURRENT", 1), ("CS-KYUURA-LEGACY-UNRECORDED", 1)}
 # v0.99: 形式 25 で、場のポケモンの履歴の受けた記録（``"kind": "received"``）に加わった項目（ダメージを受けた場所）
 RECEIVED_FIELDS_SINCE = {"active_damage": 25}
 
@@ -760,6 +764,9 @@ def required_format(state) -> tuple[int, bool]:
         needed = max(needed, 33)  # v0.130: 対戦の中の所有者の変更（とりかえっこプリーズの交換）
     if state.segments:
         needed = max(needed, 34)  # v0.134: サドン・デスの延長戦の区間（終わった区間の記録・延長戦のサイドの枚数）
+    conventions = getattr(state, "conventions", None)
+    if hasattr(conventions, "set_id") and (conventions.set_id, conventions.version) not in OLD_FORMAT_CONVENTION_SETS:
+        needed = max(needed, 35)  # v0.142: 今の挙動・旧状態用のほかの規約集合（落とすと意味が変わる）
     d = state.decision
     not_v0_1 = d is not None and (
         d.context_value("then") is not None or d.resume in ("attack", "knock_out", "post_knockout", "power")  # v0.42: 特殊能力の途中の決定

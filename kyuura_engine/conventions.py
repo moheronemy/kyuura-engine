@@ -1,0 +1,600 @@
+"""規約集合（v0.142。docs/ruleset-foundation-v0.142.md）: 未決の場面などの扱いを決める規約の集合を識別し、対戦に渡して状態に持つための基盤。
+
+この版の規約集合は、今の挙動をそのまま固定した集合だけです。プレイ用の続行規約は 1 つも採用していません（未決の場面は今までどおり止める）。
+
+次のものを分けます（docs/ruleset-foundation-v0.142.md 2 章）:
+
+- エンジンの版（``kyuura_engine.__version__``）: 処理の実装。不具合の修正・最適化はここが変わる（規約集合の版は変えない）
+- 書き出しの形式の版（``serialize.FORMAT_VERSIONS``）: ``state_to_dict`` の形
+- 対戦の条件のルールの組（``rules.RuleSet``）: デッキ 60 枚・サイド 6 枚などの数値。規約集合とは別のもので、規約集合はルールの組の値を持たない（二重に持たない）
+- 規約集合（``ConventionSet``）: 集合 ID・版・含む規約の ID と版・内容の照合値・区分（通常・開発用・旧状態用）
+- 規約（``Convention``）: 規約 ID・版・層（利用者が承認した基礎の規約・承認されていない今の挙動の記録・続行規約）・承認の状態・意味の内容
+
+照合値は内容を識別するための SHA-256 で、署名・認証ではありません（誰が作ったかは示さない）。辞書の順序・改行・実行環境・ファイルの絶対パスに依存しない正規化した JSON から作り、
+意味の内容だけを入れます（根拠の文書の場所・行番号などの説明上の参照は入れない）。同じ ID・版の内容は変えない約束を、固定した照合値（``PINNED_*``）で機械的に確かめます。
+
+カード id・モードの名前で分岐しません。``engine.py``・``resolution/`` はこのモジュールの入口（``resolve_for_new_game``・``require_state_conventions``・``stop_without_continuation``）
+だけを呼びます。
+"""
+
+from __future__ import annotations
+
+import dataclasses
+import enum
+import hashlib
+import json
+import unicodedata
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass, field
+from functools import lru_cache
+from importlib import resources
+from types import MappingProxyType
+from typing import Any
+
+from .errors import EngineError, UnsupportedError
+
+# ---------------------------------------------------------------- 語彙
+
+LAYER_BASELINE_USER = "baseline_user"  # 利用者が承認した指定（両モード共通の基礎集合。AGR-MODE-BASELINE-USER）
+LAYER_CURRENT_BEHAVIOR = "current_behavior"  # 今の実装の挙動の記録（承認されていない仮定・簡略化を含む。採用の記録ではない）
+LAYER_CONTINUATION = "continuation"  # 未決の場面を続ける規約（この版では 1 つもない・実装もない）
+LAYERS = (LAYER_BASELINE_USER, LAYER_CURRENT_BEHAVIOR, LAYER_CONTINUATION)
+
+APPROVAL_USER_AGREED = "user_agreed"
+APPROVAL_NOT_APPROVED = "not_approved"
+APPROVALS = (APPROVAL_USER_AGREED, APPROVAL_NOT_APPROVED)
+
+USAGE_STANDARD = "standard"  # 通常の対戦に使う集合
+USAGE_DEVELOPMENT = "development"  # 規約がそろわない開発・検証用の集合（通常のプレイ用として完成扱いにしない）
+USAGE_LEGACY = "legacy"  # 規約集合の記録がない旧状態の対応付け専用（新しい対戦には使わない）
+USAGES = (USAGE_STANDARD, USAGE_DEVELOPMENT, USAGE_LEGACY)
+
+# 集合の完全性の主張。この版の集合はどれも未決の場面で止まる（"halts_at_undecided"）。"play_complete"（止まらずに対戦を終えられる集合）を主張する集合は、完全性の判定が
+# 未実装なので受け付けない（``completeness_problems`` が拡張点）
+COMPLETENESS_HALTS = "halts_at_undecided"
+COMPLETENESS_PLAY = "play_complete"
+COMPLETENESS = (COMPLETENESS_HALTS, COMPLETENESS_PLAY)
+
+INVALID_CONVENTION_SET_CODE = "INVALID_CONVENTION_SET"  # new_game に渡した規約集合の構成の誤り（対戦を始めない）
+UNSUPPORTED_CONVENTION_SET_CODE = "UNSUPPORTED_CONVENTION_SET"  # 状態の規約集合を、この版が扱えない・登録の内容と合わない（推測で続けない）
+
+# 照合値の領域の区切り（規約と集合の照合値が同じ JSON から同じ値にならないようにする）
+_CONVENTION_DOMAIN = b"kyuura-convention/1\n"
+_SET_DOMAIN = b"kyuura-convention-set/1\n"
+
+# 意味の内容に入れない、登録の記録の項目（根拠の文書の場所・kyuura の記録の場所・画像の照合の記録。説明上の参照）
+REFERENCE_FIELDS = frozenset({"source", "document", "kyuura_record", "print_check"})
+
+
+class ConventionSetError(EngineError):
+    """渡した規約集合の構成の誤り（未知・重複・競合・依存の不足・ID と版と内容の不一致・未実装・区分）。対戦を始めない。"""
+
+    def __init__(self, problems: list[str]):
+        super().__init__(INVALID_CONVENTION_SET_CODE, "; ".join(problems))
+        self.problems = list(problems)
+
+
+# ---------------------------------------------------------------- 正規化と照合値
+
+
+def canonical(value: Any) -> Any:
+    """照合値のための正規化。文字列は NFC・改行を LF に、並び（tuple・list）は list、辞書のキーは文字列だけ（順序は書き出しで並べる）、列挙は値、dataclass は項目の辞書。
+    浮動小数点数・その他の型は受け付けない（実行環境で表し方が変わりうる）。"""
+    if isinstance(value, bool) or value is None or isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        return unicodedata.normalize("NFC", value.replace("\r\n", "\n").replace("\r", "\n"))
+    if isinstance(value, enum.Enum):
+        return canonical(value.value)
+    if isinstance(value, (tuple, list)):
+        return [canonical(v) for v in value]
+    if isinstance(value, Mapping):
+        if not all(isinstance(k, str) for k in value):
+            raise TypeError("照合値の辞書のキーは文字列だけ")
+        return {canonical(k): canonical(v) for k, v in value.items()}
+    if dataclasses.is_dataclass(value) and not isinstance(value, type):
+        return canonical({f.name: getattr(value, f.name) for f in dataclasses.fields(value)})
+    raise TypeError(f"照合値に入れられない型 {type(value).__name__}")
+
+
+def canonical_bytes(value: Any) -> bytes:
+    return json.dumps(canonical(value), ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+
+
+def _digest(domain: bytes, value: Any) -> str:
+    return "sha256:" + hashlib.sha256(domain + canonical_bytes(value)).hexdigest()
+
+
+# ---------------------------------------------------------------- 規約と集合
+
+
+@dataclass(frozen=True)
+class Convention:
+    """規約 1 つの定義。意味の内容は ``content``（直接の値）か ``source``（エンジンの登録・同梱の記録から読む内容の名前。``CONTENT_SOURCES``）のどちらか。
+
+    - ``requires``・``conflicts``: ほかの規約の (ID, 版)。``requires`` の不足・``conflicts`` の同居は構成の誤り
+    - ``scenes``: 続行規約が当たる場面（停止の方針の台帳の場面 ID。``scene_index``）。基礎・今の挙動の記録は空
+    - ``references``: 根拠の文書など（照合値に入れない）"""
+
+    id: str
+    version: int
+    layer: str
+    approval: str
+    statement: str
+    content: Mapping[str, Any] | None = None
+    source: str | None = None
+    requires: tuple[tuple[str, int], ...] = ()
+    conflicts: tuple[tuple[str, int], ...] = ()
+    scenes: tuple[str, ...] = ()
+    references: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class ConventionSet:
+    """規約集合の定義。``members`` は含む規約の (ID, 版)（並びの順は意味を持たない。照合値は ID の順で作る）。``description`` は照合値に入れない説明。"""
+
+    id: str
+    version: int
+    usage: str
+    members: tuple[tuple[str, int], ...]
+    completeness: str = COMPLETENESS_HALTS
+    description: str = ""
+
+
+@dataclass(frozen=True)
+class ConventionSetIdentity:
+    """状態に持つ規約集合の識別（変えられない値だけ。呼び出し元のオブジェクト・登録表を後から変えても、この値は変わらない）。``members`` は (規約 ID, 版, 照合値) を ID の順に。"""
+
+    set_id: str
+    version: int
+    digest: str
+    usage: str
+    completeness: str
+    members: tuple[tuple[str, int, str], ...]
+
+    @property
+    def key(self) -> tuple[str, int]:
+        return self.set_id, self.version
+
+    def record(self) -> dict[str, Any]:
+        """書き出し・観測の形（全員に見える。秘密の情報は入らない）。"""
+        return {"id": self.set_id, "version": self.version, "digest": self.digest, "usage": self.usage, "completeness": self.completeness,
+                "members": [{"id": m, "version": v, "digest": d} for m, v, d in self.members]}
+
+
+@dataclass(frozen=True)
+class UnrecordedConventions:
+    """規約集合の記録がない状態（v0.141 までの状態の写し。``GameState.__setstate__`` が、項目がないときだけ置く）。どの版で作った状態か・どの規約で処理したかを、この値から
+    推測しない（``require_state_conventions`` が旧状態として扱える条件を確かめ、旧状態用の集合に対応付けるか拒否する）。"""
+
+
+UNRECORDED = UnrecordedConventions()
+
+
+# ---------------------------------------------------------------- 登録（この版の規約・集合）
+
+CURRENT_SET_ID = "CS-KYUURA-CURRENT"
+LEGACY_SET_ID = "CS-KYUURA-LEGACY-UNRECORDED"
+
+# 利用者が承認した指定（基礎集合）。規約 ID は既存の利用者指定の ID をそのまま使う（新しい ID を作らない）。内容はエンジンの登録の記録から読む（``_user_registrations``）
+USER_CONVENTION_IDS = (
+    "USER-BIRTHDAY-COIN-ONLY", "USER-SPOKEN-CONDITION-IGNORED", "USER-QUIZ-HEIGHT-OFFICIAL-ZUKAN", "USER-SWAP-OWNERSHIP-RECEIVER",
+    "USER-BILINGUAL-NAME-JAPANESE", "USER-MIND-GAMES-OPTIONAL-BEFORE-COST", "USER-MOUNTAIN-CRUSH-MILL-UP-TO-DECK", "USER-DESTRUCTIVE-FIRE-DECLARE-ORDER-UP-TO",
+    "USER-SUDDEN-DEATH-OWNERSHIP-RESET", "USER-PRIZE-ORDER-ALWAYS-CHOSEN", "USER-PRIZE-ORDER-PER-PLAYER",
+)
+CURRENT_BEHAVIOR_ID = "CB-IMPLEMENTATION-ASSUMPTIONS"
+
+_USER_STATEMENT = "利用者が承認した指定（対象・範囲は登録の記録のまま。ほかのカード・場面へ広げない）。公式の裁定・kyuura の研究上の解決ではない"
+_CB_STATEMENT = ("この版のエンジンが実装している、利用者の承認のない実装上の仮定・正規化・簡略化・データの訂正の記録（実装上の仮定の一覧の項目）。今の挙動の記録で、承認・採用の記録"
+                 "ではない（DEC-BASELINE-NONUSER・DEC-BASELINE-CENSUS・DEC-CARD-DATA-CORRECTIONS は未決のまま）")
+
+CONVENTIONS: Mapping[tuple[str, int], Convention] = MappingProxyType({
+    (c.id, c.version): c for c in (
+        *(Convention(uid, 1, LAYER_BASELINE_USER, APPROVAL_USER_AGREED, _USER_STATEMENT, source="user_registrations",
+                     references=("docs/stop-policy-classification.json conventions", "docs/ruleset-mode-design.md 4.2 節")) for uid in USER_CONVENTION_IDS),
+        Convention(CURRENT_BEHAVIOR_ID, 1, LAYER_CURRENT_BEHAVIOR, APPROVAL_NOT_APPROVED, _CB_STATEMENT, source="current_behavior_records",
+                   references=("docs/implementation-assumptions.json items", "kyuura_engine/data/convention_records.json")),
+    )
+})
+
+_CURRENT_MEMBERS = tuple((uid, 1) for uid in USER_CONVENTION_IDS) + ((CURRENT_BEHAVIOR_ID, 1),)
+SETS: Mapping[tuple[str, int], ConventionSet] = MappingProxyType({
+    (s.id, s.version): s for s in (
+        ConventionSet(CURRENT_SET_ID, 1, USAGE_STANDARD, _CURRENT_MEMBERS,
+                      description="v0.142 の時点の今の挙動を固定した集合（利用者の指定 11 と、承認のない今の挙動の記録）。未決の場面では止める。プレイ用の続行規約はない"),
+        ConventionSet(LEGACY_SET_ID, 1, USAGE_LEGACY, _CURRENT_MEMBERS,
+                      description="規約集合の記録がない旧状態（v0.141 までの状態の写し）を、この版のエンジンの処理で扱うための固定の集合。過去の版の挙動を再現するとは主張しない"),
+    )
+})
+DEFAULT_SET = (CURRENT_SET_ID, 1)
+# 形式 34 までの書き出し（規約集合の項目がない）に書いてよい集合: 記録のない状態の意味（その版のエンジンの今の挙動）と同じ意味の集合だけ
+IMPLICIT_IN_OLD_FORMATS = frozenset({(CURRENT_SET_ID, 1), (LEGACY_SET_ID, 1)})
+
+# 同じ ID・版の内容を変えない約束（変えたら版を上げ、ここに新しい値を加える。古い値は書き換えない）。tests/test_conventions_v0_142.py が、計算した値と同じことを確かめる
+PINNED_CONVENTION_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
+    ("USER-BIRTHDAY-COIN-ONLY", 1): "sha256:b54ad58f9d604c45e7385a32323dc54ff5c3e002687ea62c18a4b60e953fbb7c",
+    ("USER-SPOKEN-CONDITION-IGNORED", 1): "sha256:88778bc6f7c4b9635cb80efeacda36293923e80122490bf1af67c49a76dcf97c",
+    ("USER-QUIZ-HEIGHT-OFFICIAL-ZUKAN", 1): "sha256:8e217be7ac7d45e6ee5fbc036e02ba70fbef14bb19c35edebc7dd85efbdf4073",
+    ("USER-SWAP-OWNERSHIP-RECEIVER", 1): "sha256:158dc036912409eb6825d11840e02dffdd3c8d6f2bb369c888b501e7ec1aaea3",
+    ("USER-BILINGUAL-NAME-JAPANESE", 1): "sha256:4a2019d0466a30bcebab4b3f4b2f444bdaf560d3fd073f08a473ba76092e599e",
+    ("USER-MIND-GAMES-OPTIONAL-BEFORE-COST", 1): "sha256:a81654749122531ab0952d14468dcacba62e7b32ced88fd33fc6ac41ef841fcb",
+    ("USER-MOUNTAIN-CRUSH-MILL-UP-TO-DECK", 1): "sha256:c2de0518d7fcc05924cac85874404f1ae35f462613e449085caa0b838474c14b",
+    ("USER-DESTRUCTIVE-FIRE-DECLARE-ORDER-UP-TO", 1): "sha256:c7b5a46b43024a3c4d4deeec0c82dbe0353379af9471ae51896824627044e611",
+    ("USER-SUDDEN-DEATH-OWNERSHIP-RESET", 1): "sha256:7b3b66feb0a5147e1a6d64d9ec5092cc1c81ff820c1d0e5e9310e62990cc97ab",
+    ("USER-PRIZE-ORDER-ALWAYS-CHOSEN", 1): "sha256:1b175a1760073605da85e31de2bf2310449b862db9bc257a93ffdd8776415785",
+    ("USER-PRIZE-ORDER-PER-PLAYER", 1): "sha256:4a1eed17ff7d90234ce68bb92b8b862cc0e5d32478849553453a3e26104bac60",
+    ("CB-IMPLEMENTATION-ASSUMPTIONS", 1): "sha256:347aadfadcc21580ceb1fbf047d66a5d10f92be930499370ae6d3f6534991a6a",
+})
+PINNED_SET_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
+    ("CS-KYUURA-CURRENT", 1): "sha256:9a9b95c689d86fa01a5b710984560efda3c08f4dbf1d7c6218094ac8666f3cee",
+    ("CS-KYUURA-LEGACY-UNRECORDED", 1): "sha256:abf39e6d87755507a9169537608596246f4ed9a9bf0c2e8794ffa44a97742407",
+})
+
+
+# ---------------------------------------------------------------- 内容の読み出し
+
+
+def _record_content(record) -> dict[str, Any]:
+    """登録の記録（frozen dataclass）の意味の内容（説明上の参照 ``REFERENCE_FIELDS`` を除く）。簡略ルールの指定の文（``instruction`` の property）は加える。"""
+    data = {f.name: getattr(record, f.name) for f in dataclasses.fields(record) if f.name not in REFERENCE_FIELDS}
+    instruction = getattr(type(record), "instruction", None)
+    if isinstance(instruction, property):
+        data["instruction"] = record.instruction
+    return data
+
+
+def user_registrations() -> dict[str, list[dict[str, Any]]]:
+    """利用者の指定の登録（エンジンがいつも当てはめる記録）を、指定の ID ごとに集める。``{指定 ID: [{"registry", "key", "record"}...]}``（キーの順）。"""
+    from . import decisions, effects, sudden_death
+
+    out: dict[str, list[dict[str, Any]]] = {}
+
+    def add(rule_id: str, registry: str, key: str, record) -> None:
+        out.setdefault(rule_id, []).append({"registry": registry, "key": key, "record": _record_content(record)})
+
+    for name in ("USER_SIMPLIFICATIONS", "USER_SPECIFIED_REFERENCES", "USER_SPECIFIED_RULES", "USER_SPECIFIED_NAMES"):
+        for key, record in sorted(getattr(effects, name).items()):
+            add(record.rule, f"effects.{name}", key, record)
+    for record in decisions.USER_PRIZE_ORDER_RULES:
+        add(record.id, "decisions.USER_PRIZE_ORDER_RULES", record.id, record)
+    segment = sudden_death.USER_SUDDEN_DEATH_OWNERSHIP_RESET
+    add(segment.id, "sudden_death.USER_SUDDEN_DEATH_OWNERSHIP_RESET", segment.id, segment)
+    return out
+
+
+@lru_cache(maxsize=1)
+def _bundled_records() -> Mapping[str, Any]:
+    """同梱の記録（``kyuura_engine/data/convention_records.json``。``scripts/build_convention_records.py`` が台帳から作る。手で直さない）。"""
+    text = resources.files(__package__).joinpath("data/convention_records.json").read_text(encoding="utf-8")
+    return json.loads(text)
+
+
+def current_behavior_records() -> dict[str, Any]:
+    return {"items": _bundled_records()["current_behavior"]["items"]}
+
+
+def scene_index() -> Mapping[str, Any]:
+    """停止の方針の台帳の場面（事例のあるコードは事例）と停止コードの対応（同梱の記録）。``{"scenes": [...], "codes": {停止コード: [場面 ID...]}}``。"""
+    return _bundled_records()["scene_index"]
+
+
+CONTENT_SOURCES: Mapping[str, Callable[[Convention], Any]] = MappingProxyType({
+    "user_registrations": lambda c: {"registrations": user_registrations().get(c.id, [])},
+    "current_behavior_records": lambda c: current_behavior_records(),
+})
+
+
+def convention_payload(convention: Convention, sources: Mapping[str, Callable[[Convention], Any]] = CONTENT_SOURCES) -> dict[str, Any]:
+    """照合値に入れる規約の意味の内容（``references`` を除く）。"""
+    if (convention.content is None) == (convention.source is None):
+        raise ValueError(f"規約 {convention.id} は content と source のどちらか 1 つを持つ")
+    content = convention.content if convention.source is None else sources[convention.source](convention)
+    return {"id": convention.id, "version": convention.version, "layer": convention.layer, "approval": convention.approval, "statement": convention.statement,
+            "content": content, "requires": sorted([list(r) for r in convention.requires]), "conflicts": sorted([list(r) for r in convention.conflicts]),
+            "scenes": sorted(convention.scenes)}
+
+
+def convention_digest(convention: Convention, sources: Mapping[str, Callable[[Convention], Any]] = CONTENT_SOURCES) -> str:
+    return _digest(_CONVENTION_DOMAIN, convention_payload(convention, sources))
+
+
+def set_payload(spec: ConventionSet, member_digests: Mapping[tuple[str, int], str]) -> dict[str, Any]:
+    return {"id": spec.id, "version": spec.version, "usage": spec.usage, "completeness": spec.completeness,
+            "members": sorted([[m, v, member_digests[(m, v)]] for m, v in spec.members])}
+
+
+# ---------------------------------------------------------------- 登録表（試験では別の登録表を作れる）
+
+
+@dataclass(frozen=True)
+class Registry:
+    """規約と集合の登録表。``implemented`` は、この版のエンジンが処理を持つ規約か（続行規約は 1 つもない）。``engine_baseline`` は、エンジンがいつも当てはめる基礎の規約の ID
+    （集合から外せない）。"""
+
+    conventions: Mapping[tuple[str, int], Convention]
+    sets: Mapping[tuple[str, int], ConventionSet]
+    pinned_conventions: Mapping[tuple[str, int], str]
+    pinned_sets: Mapping[tuple[str, int], str]
+    sources: Mapping[str, Callable[[Convention], Any]] = CONTENT_SOURCES
+    implemented_continuations: frozenset[tuple[str, int]] = frozenset()
+    engine_baseline: Callable[[], frozenset[str]] = field(default=lambda: frozenset(user_registrations()))
+
+
+DEFAULT_REGISTRY = Registry(CONVENTIONS, SETS, PINNED_CONVENTION_DIGESTS, PINNED_SET_DIGESTS)
+
+
+def implemented(convention: Convention, registry: Registry) -> bool:
+    """この版のエンジンが、この規約の処理を持つか。基礎の規約は登録の記録があること、今の挙動の記録は同梱の記録があること、続行規約は登録表の ``implemented_continuations``
+    にあること（この版の登録表は空。続行の処理はない）。"""
+    if convention.layer == LAYER_BASELINE_USER:
+        return convention.source == "user_registrations" and convention.id in registry.engine_baseline()
+    if convention.layer == LAYER_CURRENT_BEHAVIOR:
+        return convention.source == "current_behavior_records"
+    return (convention.id, convention.version) in registry.implemented_continuations
+
+
+def completeness_problems(spec: ConventionSet, registry: Registry) -> list[str]:
+    """集合の完全性の主張の確かめ（拡張点）。この版は「止まらずに対戦を終えられる」ことの判定を実装していないので、その主張（``COMPLETENESS_PLAY``）は受け付けない。"""
+    if spec.completeness == COMPLETENESS_PLAY:
+        return ["止まらずに対戦を終えられる集合（play_complete）の完全性の判定は、この版では実装していない（主張できない）"]
+    return []
+
+
+def _is_key(value) -> bool:
+    return (isinstance(value, tuple) and len(value) == 2 and isinstance(value[0], str) and isinstance(value[1], int) and not isinstance(value[1], bool)
+            and value[1] >= 1)
+
+
+def validate(spec: ConventionSet, registry: Registry = DEFAULT_REGISTRY, *, for_new_game: bool = True) -> list[str]:
+    """規約集合の構成の問題（なければ空）。対戦を始める前・状態を受け取ったときに確かめる（docs/ruleset-foundation-v0.142.md 5 章）。"""
+    if not isinstance(spec, ConventionSet):
+        return [f"規約集合は ConventionSet で渡す（{type(spec).__name__} は受け付けない）"]
+    problems: list[str] = []
+    if not (isinstance(spec.id, str) and spec.id and _is_key((spec.id, spec.version))):
+        return ["規約集合の ID（空でない文字列）と版（1 以上の整数）がない"]
+    if spec.usage not in USAGES:
+        problems.append(f"規約集合の区分 {spec.usage!r} を知らない（{USAGES}）")
+    if spec.completeness not in COMPLETENESS:
+        problems.append(f"規約集合の完全性の主張 {spec.completeness!r} を知らない（{COMPLETENESS}）")
+    if for_new_game and spec.usage == USAGE_LEGACY:
+        problems.append("旧状態用の集合は、記録のない旧状態の対応付けだけに使う（新しい対戦には使わない）")
+    if not (isinstance(spec.members, tuple) and all(_is_key(m) for m in spec.members)):
+        return [*problems, "含む規約は (ID, 版) の並び（tuple）で渡す"]
+    ids = [m for m, _ in spec.members]
+    for duplicated in sorted({m for m in ids if ids.count(m) > 1}):
+        problems.append(f"規約 {duplicated} が重複している（同じ ID の規約は 1 つの版だけ）")
+    present = set(spec.members)
+    digests: dict[tuple[str, int], str] = {}
+    for key in sorted(present):
+        convention = registry.conventions.get(key)
+        if convention is None:
+            known = sorted(v for (m, v) in registry.conventions if m == key[0])
+            problems.append(f"規約 {key[0]}@{key[1]} を知らない" + (f"（知っている版は {known}）" if known else "（未知の規約 ID）"))
+            continue
+        if convention.layer not in LAYERS or convention.approval not in APPROVALS:
+            problems.append(f"規約 {key[0]}@{key[1]} の層・承認の状態を知らない")
+            continue
+        try:
+            digest = convention_digest(convention, registry.sources)
+        except (KeyError, TypeError, ValueError) as exc:
+            problems.append(f"規約 {key[0]}@{key[1]} の内容を読めない（{exc}）")
+            continue
+        digests[key] = digest
+        pinned = registry.pinned_conventions.get(key)
+        if pinned is None:
+            problems.append(f"規約 {key[0]}@{key[1]} の照合値が固定されていない（内容の不変を確かめられない）")
+        elif pinned != digest:
+            problems.append(f"規約 {key[0]}@{key[1]} の内容が、固定した照合値と違う（同じ ID・版のまま内容を変えた。版を上げる）")
+        if convention.layer == LAYER_BASELINE_USER and convention.approval != APPROVAL_USER_AGREED:
+            problems.append(f"規約 {key[0]}@{key[1]} は利用者の指定の層なのに、承認の状態が {convention.approval}")
+        if convention.layer == LAYER_CURRENT_BEHAVIOR and convention.approval != APPROVAL_NOT_APPROVED:
+            problems.append(f"規約 {key[0]}@{key[1]} は今の挙動の記録で、承認の記録ではない（承認済みにしない）")
+        if convention.layer == LAYER_CONTINUATION and spec.usage == USAGE_STANDARD and convention.approval != APPROVAL_USER_AGREED:
+            problems.append(f"続行規約 {key[0]}@{key[1]} は承認されていないので、通常の集合に入れない（開発用の集合だけ）")
+        if not implemented(convention, registry):
+            problems.append(f"規約 {key[0]}@{key[1]} は、この版のエンジンが処理を持たない（未実装）")
+        for need in convention.requires:
+            if need not in present:
+                problems.append(f"規約 {key[0]}@{key[1]} が必要とする {need[0]}@{need[1]} が集合にない（依存の不足）")
+        for other in convention.conflicts:
+            if other in present:
+                problems.append(f"規約 {key[0]}@{key[1]} と {other[0]}@{other[1]} は同じ集合に入れられない（競合）")
+    scenes: dict[str, list[str]] = {}
+    for key in sorted(present):
+        convention = registry.conventions.get(key)
+        for scene in (convention.scenes if convention is not None else ()):
+            scenes.setdefault(scene, []).append(f"{key[0]}@{key[1]}")
+    for scene, owners in sorted(scenes.items()):
+        if len(owners) > 1:
+            problems.append(f"場面 {scene} に 2 つ以上の規約（{'・'.join(owners)}）が当たる（暗黙の優先順位を作らない。競合）")
+    in_set = {m for (m, v) in present if (c := registry.conventions.get((m, v))) is not None and c.layer == LAYER_BASELINE_USER}
+    missing_baseline = sorted(registry.engine_baseline() - in_set)
+    for uid in missing_baseline:
+        problems.append(f"利用者の指定 {uid} を外した集合は、この版のエンジンが実装できない（登録はいつもはたらく）")
+    problems.extend(completeness_problems(spec, registry))
+    registered = registry.sets.get((spec.id, spec.version))
+    if registered is None:
+        known = sorted(v for (s, v) in registry.sets if s == spec.id)
+        problems.append(f"規約集合 {spec.id}@{spec.version} を知らない" + (f"（知っている版は {known}）" if known else "（未知の集合 ID）"))
+    elif (registered.usage, registered.completeness, tuple(sorted(registered.members))) != (spec.usage, spec.completeness, tuple(sorted(spec.members))):
+        problems.append(f"規約集合 {spec.id}@{spec.version} の中身が、登録した同じ ID・版の集合と違う（同じ ID・版の内容は変えない）")
+    if not problems:
+        digest = _digest(_SET_DOMAIN, set_payload(spec, digests))
+        pinned = registry.pinned_sets.get((spec.id, spec.version))
+        if pinned is None:
+            problems.append(f"規約集合 {spec.id}@{spec.version} の照合値が固定されていない")
+        elif pinned != digest:
+            problems.append(f"規約集合 {spec.id}@{spec.version} の内容が、固定した照合値と違う（同じ ID・版のまま内容を変えた。版を上げる）")
+    return problems
+
+
+def identity_of(spec: ConventionSet, registry: Registry = DEFAULT_REGISTRY, *, for_new_game: bool = True) -> ConventionSetIdentity:
+    """確かめた集合の識別。問題があれば ``ConventionSetError``。"""
+    problems = validate(spec, registry, for_new_game=for_new_game)
+    if problems:
+        raise ConventionSetError(problems)
+    digests = {key: convention_digest(registry.conventions[key], registry.sources) for key in spec.members}
+    return ConventionSetIdentity(set_id=spec.id, version=spec.version, digest=_digest(_SET_DOMAIN, set_payload(spec, digests)), usage=spec.usage,
+                                 completeness=spec.completeness, members=tuple(sorted((m, v, digests[(m, v)]) for m, v in spec.members)))
+
+
+# 登録した集合の識別の写し（登録の記録のオブジェクトが同じあいだだけ使う。記録・登録表を差しかえたら作り直して比べる）
+_IDENTITY_CACHE: dict[tuple, ConventionSetIdentity] = {}
+
+
+def _source_marker() -> tuple:
+    from . import decisions, effects, sudden_death
+
+    return (id(CONVENTIONS), id(SETS), id(PINNED_CONVENTION_DIGESTS), id(PINNED_SET_DIGESTS), id(effects.USER_SIMPLIFICATIONS), id(effects.USER_SPECIFIED_REFERENCES),
+            id(effects.USER_SPECIFIED_RULES), id(effects.USER_SPECIFIED_NAMES), id(decisions.USER_PRIZE_ORDER_RULES), id(sudden_death.USER_SUDDEN_DEATH_OWNERSHIP_RESET),
+            id(_bundled_records()))
+
+
+def registered_identity(key: tuple[str, int]) -> ConventionSetIdentity:
+    """登録した集合（``SETS``）の識別。確かめに失敗すれば ``ConventionSetError``。"""
+    marker = (key, _source_marker())
+    cached = _IDENTITY_CACHE.get(marker)
+    if cached is None:
+        spec = DEFAULT_REGISTRY.sets.get(key)
+        if spec is None:
+            raise ConventionSetError([f"規約集合 {key[0]}@{key[1]} を知らない"])
+        cached = identity_of(spec, DEFAULT_REGISTRY, for_new_game=False)
+        _IDENTITY_CACHE.clear()
+        _IDENTITY_CACHE[marker] = cached
+    return cached
+
+
+def default_identity() -> ConventionSetIdentity:
+    """省略したときの集合（今の挙動の集合）の識別。``GameState`` を直接作ったときの既定値にも使う。"""
+    return registered_identity(DEFAULT_SET)
+
+
+def parse_key(text: str) -> tuple[str, int]:
+    """``"ID@版"`` の文字列を (ID, 版) にする。形が違えば ``ConventionSetError``。"""
+    name, sep, version = text.rpartition("@")
+    if not (sep and name and version.isdigit() and version == str(int(version)) and int(version) >= 1):
+        raise ConventionSetError([f"規約集合は ID@版（例 {CURRENT_SET_ID}@1）で指定する"])
+    return name, int(version)
+
+
+def resolve_for_new_game(conventions) -> ConventionSetIdentity:
+    """``new_game`` の ``conventions`` を確かめて識別にする。省略（None）は今の挙動の集合。``ConventionSet``・``"ID@版"``・``ConventionSetIdentity`` を受け付け、どれも登録した集合と
+    内容が同じときだけ。呼び出し元のオブジェクトは持たない（識別の値だけを状態に置く）。"""
+    if conventions is None:
+        return default_identity()
+    if isinstance(conventions, str):
+        spec = DEFAULT_REGISTRY.sets.get(parse_key(conventions))
+        if spec is None:
+            raise ConventionSetError([f"規約集合 {conventions} を知らない"])
+        return identity_of(spec)
+    if isinstance(conventions, ConventionSetIdentity):
+        spec = DEFAULT_REGISTRY.sets.get(conventions.key) if isinstance(conventions.set_id, str) and _is_key(conventions.key) else None
+        if spec is None:
+            raise ConventionSetError(["規約集合の識別が、登録した集合のどれでもない"])
+        identity = identity_of(spec)
+        if identity != conventions:
+            raise ConventionSetError([f"規約集合の識別が、登録した {spec.id}@{spec.version} の内容（照合値・規約）と違う"])
+        return identity
+    return identity_of(conventions)
+
+
+# ---------------------------------------------------------------- 状態の規約集合
+
+
+def legacy_problems(state) -> list[str]:
+    """記録のない状態を旧状態として扱える条件（docs/ruleset-foundation-v0.142.md 6 章）。どの版で作ったかは推測しない。
+
+    - 最初の区間のログの最初が ``game_created`` で、項目が v0.141 までと同じ（kind・turn・rules・seed・card_data_commit）、値が状態のルールの組・seed・写しの元と同じ
+      （``new_game`` で作った対戦の状態であること。盤面を直接作った状態・ログの合わない状態は、どの処理で作ったかが分からないので扱わない）"""
+    first_log = state.segments[0].log if getattr(state, "segments", ()) else state.log
+    created = first_log[0] if first_log else None
+    if created is None or created.get("kind") != "game_created":
+        return ["規約集合の記録がなく、最初のログが対戦の作成（game_created）ではない（new_game で作った対戦の状態と確かめられない）"]
+    if set(created) != {"kind", "turn", "rules", "seed", "card_data_commit"}:
+        return ["規約集合の記録がなく、対戦の作成のログの項目が v0.141 までの形と違う"]
+    if (created["rules"], created["seed"], created["card_data_commit"]) != (state.rules.id, state.seed, state.card_data.commit):
+        return ["規約集合の記録がなく、対戦の作成のログが状態のルールの組・seed・写しの元と合わない"]
+    return []
+
+
+def state_conventions(state) -> tuple[ConventionSetIdentity | None, str | None]:
+    """状態の規約集合の識別と、扱えないときの理由。記録のない旧状態は、条件を満たせば旧状態用の集合（``LEGACY_SET_ID``）。理由の文に状態の中の値を書かない（信頼できない）。"""
+    value = getattr(state, "conventions", UNRECORDED)
+    if isinstance(value, UnrecordedConventions):
+        problems = legacy_problems(state)
+        if problems:
+            return None, problems[0]
+        return registered_identity((LEGACY_SET_ID, 1)), None
+    if not isinstance(value, ConventionSetIdentity):
+        return None, "状態の規約集合の記録の形を知らない"
+    if not (isinstance(value.set_id, str) and _is_key(value.key)) or value.key not in DEFAULT_REGISTRY.sets:
+        return None, "状態の規約集合を、この版は知らない（どこで作った状態かは状態から分からない）"
+    try:
+        registered = registered_identity(value.key)
+    except ConventionSetError:
+        return None, "状態の規約集合の登録を、この版で確かめられない"
+    if registered != value:
+        return None, "状態の規約集合の識別（照合値・規約）が、この版の登録の内容と違う（推測で続けない）"
+    return value, None
+
+
+def require_state_conventions(state) -> ConventionSetIdentity:
+    """コマンド・観測の前の確かめ。扱えなければ ``UnsupportedError``（``UNSUPPORTED_CONVENTION_SET``）。状態・乱数・ログを変えない。"""
+    identity, problem = state_conventions(state)
+    if identity is None:
+        raise UnsupportedError(UNSUPPORTED_CONVENTION_SET_CODE, problem)
+    return identity
+
+
+# ---------------------------------------------------------------- 場面と規約の照会
+
+
+@dataclass(frozen=True)
+class ContinuationLookup:
+    """未決の場面の続行規約の照会の結果。``convention`` が None なら続行規約はなく、呼ぶ側は今までどおり止める。``status``:
+
+    - ``"no_continuation"``: 場面を特定でき、その場面の続行規約が集合にない
+    - ``"case_not_identified"``: 停止コードに 2 つ以上の事例があり、この場所で事例を特定していない（コードだけで規約を決めない）
+    - ``"unknown_scene"``: 停止の方針の台帳の場面にない停止（台帳の作り直しが要る）"""
+
+    code: str
+    scene: str | None
+    candidates: tuple[str, ...]
+    status: str
+    convention: tuple[str, int] | None = None
+
+
+def scenes_for_code(code: str) -> tuple[str, ...]:
+    return tuple(scene_index()["codes"].get(code, ()))
+
+
+def continuation_lookup(identity: ConventionSetIdentity, code: str, case: str | None = None) -> ContinuationLookup:
+    """未決の場面（停止コード、事例が分かればその事例）の続行規約を、集合から引く。基礎の規約（利用者の指定）の照会とは別のもの（基礎の規約は、エンジンの登録がいつも当てはめる）。"""
+    candidates = scenes_for_code(code)
+    if case is not None:
+        scene = f"{code}#{case}"
+        if scene not in candidates:
+            return ContinuationLookup(code, None, candidates, "unknown_scene")
+    elif len(candidates) == 1:
+        scene = candidates[0]
+    elif not candidates:
+        return ContinuationLookup(code, None, (), "unknown_scene")
+    else:
+        return ContinuationLookup(code, None, candidates, "case_not_identified")
+    for member, version, _ in identity.members:
+        convention = DEFAULT_REGISTRY.conventions.get((member, version))
+        if convention is not None and convention.layer == LAYER_CONTINUATION and scene in convention.scenes:
+            return ContinuationLookup(code, scene, candidates, "convention", (member, version))
+    return ContinuationLookup(code, scene, candidates, "no_continuation")
+
+
+def stop_without_continuation(state, code: str, case: str | None = None) -> ContinuationLookup:
+    """止める箇所の照会（v0.142）。続行規約がないことを確かめて返す（呼ぶ側はそのまま止める）。この版には続行の処理がないので、規約が見つかればエンジンの不具合（集合の確かめが
+    続行規約を受け付けないはず）。停止の例外を捕まえて無視する仕組みではない（止める前に引くだけ）。"""
+    identity, problem = state_conventions(state)
+    if identity is None:
+        raise UnsupportedError(UNSUPPORTED_CONVENTION_SET_CODE, problem)
+    lookup = continuation_lookup(identity, code, case)
+    if lookup.convention is not None:
+        raise RuntimeError(f"この版に処理のない続行規約が、止める場面 {lookup.scene} に当たった（エンジンの不具合）")
+    return lookup

@@ -1,0 +1,5130 @@
+{
+ "current_behavior": {
+  "items": [
+   {
+    "category": "normalization",
+    "id": "IA-ALL-CLEAR-OTHER-EFFECTS-SCOPE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-ATTACH-TO-TRANSPARENT-BENCH-TRASH",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-ATTACK-COIN-FLIPPER-ATTACKER-SIDE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-ATTACK-FAILURE-COIN-GOVERNS-ALL",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-ATTACK-ONLY-PROHIBITION",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-BASE-DAMAGE-COUNT-ADDITIONS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-BENCH-FROM-DISCARD-CANDIDATE-ORDER",
+    "status": "documented_impl_unverified"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-BENCH-FROM-DISCARD-FULL-BENCH-EXCLUDED",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-BENCH-GUARD-NO-REAPPLY-ON-ABSORBED",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-BENCH-ONLY-POWER-STATUS-CLAUSE-OMITTED",
+    "status": "adopted_current"
+   },
+   {
+    "category": "implementation_method",
+    "id": "IA-BENCH-POSITION-ON-SWITCH",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-BERRY-BATCH-NO-INTERMEDIATE-CHECK",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-BERRY-MANDATORY",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-BILINGUAL-NAME-JUDGED-NAME-ALL-PATHS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-BLAINE-SECOND-COPY-NO-STACK",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-BLANK-OWNER-NAME-PIKACHU-LITERAL",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-BLINK-COIN-THROWER-OWNER",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-BOTH-PLAYERS-ORDER-USER-FIRST",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-BUBBLE-JUMP-EFFECT-MEANS-NONDAMAGE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-CHAOS-GYM-COINS-OUTER-INNER-SEPARATE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-CHAR-MARKER-COIN-ORDER-FIELD",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-CHOSEN-BENCH-DAMAGE-ANSWER-ORDER",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-CLEFAIRY-DOLL-NOT-TRAINER-ON-FIELD",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-COIN-FLIP-ONE-AT-A-TIME",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-COIN-SKIPPED-WITHOUT-TARGET",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-COIN-WORDING-SINGLE-COIN",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-CONDITION-BONUS-READINGS-V0108",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-CONVERSION-COLORS-EIGHT",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-CONVERSION1-REAPPLY-REPLACES",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-COUNTER-AMOUNT-ACTUAL-FINAL-DAMAGE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-COUNTERATTACK-DEAL-AFTER-DAMAGE-ELEMENTS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-COUNTERATTACK-SKIP-ATTACKER-ALREADY-KO",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-DAMAGE-MODIFIER-ORDER-CHOICE-WHEN-DIFFERENT",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-DAMAGE-STEP-ADDITIVE-ORDER-NOT-ASKED",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-DAMAGE-SWAP-ONE-COUNTER-PER-USE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-DARK-DRAIN-COIN-ORDER-FIELD",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-DARK-PULSE-COIN-POSITION",
+    "status": "adopted_current"
+   },
+   {
+    "category": "data_correction",
+    "id": "IA-DATA-CATALOG-SCOPE-EXCLUSIONS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "data_correction",
+    "id": "IA-DATA-KYUURA-CORRECTIONS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "data_correction",
+    "id": "IA-DATA-PR1-069-NAME",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-DECK-EVOLVE-CASE-SPLIT",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-DECK-GROUP-LIMIT-ALL-GROUP-CARDS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-DECK-RETURN-BOTTOM-BEFORE-SHUFFLE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-DECK-SAME-NAME-SPELLING-VARIANT",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-DEEP-SEARCH-REQUIRED-COUNT-FIXED",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-DEFERRED-SHORTAGE-INTERRUPTION",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-DESTRUCTIVE-FIRE-COUNT-BASIC-FIRE-CARDS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-DEVOLUTION-ONCE-ATTACK-RECORD-KEPT",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-DEVOLUTION-SPRAY-ZERO-AND-ORDER",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-DEVOLVE-REMOVES-MARKERS-COUNTERS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-DISGUISE-KEEPS-TOP-POWER",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-DISGUISE-PERSISTS-ON-BENCH",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-DOWSING-DISCARD-AS-PLAY-CONDITION",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-DOWSING-DISCARDED-TRAINER-SELECTABLE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-DOWSING-OWN-DISCARD",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-DRAIN-OPTIONAL-ALL-OR-NOTHING",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-DRY-UP-ZERO-WATER-TARGET-SELECTABLE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-DURING-ATTACK-POWER-SUPPRESSION-PERIOD",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-DV1-PROCEED-WHEN-COUNTS-AGREE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-DW2-NO-POWER-NOT-STOPPED",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-ENERGY-BURN-UNIT-COUNT",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-ENERGY-CHARGE-NO-TARGET-UNUSABLE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-ENERGY-CHARGE-REATTACH-FIELD-ORDER",
+    "status": "adopted_current"
+   },
+   {
+    "category": "later_source",
+    "id": "IA-ENERGY-DRAIN-AUTOMATIC",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-ENERGY-DRAIN-RECEIPT-CONDITIONS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-ENERGY-DRAIN-TIMING",
+    "status": "adopted_current"
+   },
+   {
+    "category": "implementation_method",
+    "id": "IA-ENERGY-STAYS-ATTACHED-BETWEEN-DECISIONS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-ENERGY-TRANSFER-ONE-CARD-PER-USE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-ENGINE-SIMPLIFIED-PMCG6-074-ATTACK",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-ENGINE-SIMPLIFIED-PMCG6-074-POWER",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-ERIKA-OPPONENT-COUNT-BY-OPPONENT",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-EXP-ALL-NOT-ASKED-WHEN-HOLDER-KO",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-FLAME-WALL-EXPIRY-AND-DAMAGE-CLASS-BY-P89",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-FLASH-FACE-UP-DECK-READINGS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-FLEE-OFFER-ONCE-PER-POKEMON",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-FLING-RETURN-ORDER-AND-UNAFFECTED-DECK",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-FLY-BARRIER-ONLY-ON-HEADS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-FLY-BARRIER-SCOPE-EQUIVALENT",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-FORCED-SWITCH-SKIPPED-ON-KO",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-FOSSIL-ROLE-COLORLESS-NONE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-FROLIC-USER-CHOOSES-BENCH",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-FULL-HEAL-AGREEING-READINGS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-FUTURE-SIGHT-DECISION-ORDER",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-GAS-BODY-COUNTS-BASIC-ENERGY-CARDS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-GENTLE-CONDITION-AT-DAMAGE-TIME",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-GREEN-SHIELD-NEUTRAL-DAMAGE-SCOPE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-GRUDGE-PRIZES-TAKEN-COUNT",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-GUTS-OFFER-AFTER-ALL-ATTACK-ELEMENTS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-HAND-PICK-BY-POSITION-NOT-RANDOM",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-HAND-RETURN-SHUFFLE-EVEN-ZERO",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-HARDEN-THRESHOLD-30",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-HC1-NONCONFUSED-PROCEED",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-HEAL-ALL-NO-TARGET-RESOLVES",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-HEALING-READINGS-V0104",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-HEALING-WIND-TARGETS-AT-APPLICATION",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-HELP-ZERO-HAND-HD2",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-HP-ZERO-SOURCE-STAYS-UNTIL-KO-PROCESSING",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-IGNORE-EFFECTS-SCOPE-RECIPIENT-OWN",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-IMMUNITY-SKIPS-STATUS-QUESTIONS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-INCREASE-BENCH-SPACE-AFTER-ENTRY",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-INF-ATTACHED-TRAINER-PERSISTS-THROUGH-BENCH",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-INF-ATTACK-VALUE-READINGS",
+    "status": "documented_impl_unverified"
+   },
+   {
+    "category": "inference",
+    "id": "IA-INF-CHEMICAL-GAS-SCOPE",
+    "status": "documented_impl_unverified"
+   },
+   {
+    "category": "inference",
+    "id": "IA-INF-CONFUSED-ZERO-RETREAT-FLIPS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-INF-DAMAGE-SWAP-SCOPE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-INF-ENERGY-TRANSFER-SCOPE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-INF-EVOLUTION-KEEPS-TRAINER-CLEARS-RETREAT-FAIL",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-INF-EXCLUSIVE-CONDITION-REPLACE",
+    "status": "documented_impl_unverified"
+   },
+   {
+    "category": "inference",
+    "id": "IA-INF-MEGA-DRAIN",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-INF-NEXT-OPP-TURN-EFFECT-ENDS-AT-ITS-END",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-INF-PHOENIX-OPTIONAL",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-INF-PREVENT-DAMAGE-NULLIFIES-ELEMENT",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-INF-RAIN-DANCE-SCOPE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-INF-SELF-RECOVER",
+    "status": "documented_impl_unverified"
+   },
+   {
+    "category": "inference",
+    "id": "IA-INF-SNORE-AUTOMATIC",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-INF-STICKY-NO-PARALYSIS-ON-KO",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-JS1-PROCEED-WHEN-READINGS-AGREE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-KEEP-SCOPE-READINGS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-KO-PROCESS-AFTER-ALL-ATTACK-ELEMENTS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-KO-SEQUENCE-PRIZE-JUDGE-PROMOTE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-KO-SURVIVAL-FURTHER-DAMAGE-NOT-STOPPED",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-KO-SURVIVAL-PERIOD-AND-TIMING",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-KO-SURVIVAL-SPEED-STAR",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-LARVITAR-SOURCE-EVOLUTION-NOT-END",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-LASTING-EFFECT-PERSISTS-AFTER-SOURCE-LEAVES",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-LEAVE-CONDITION-WORDING-AS-GENERAL-RULE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-LEAVE-LOCKED-OPTIONAL-SELF-SWITCH-NOT-ASKED",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-LIGHTNING-BOLT-UNITS-SEPARATE-WHEN-NO-MODIFIER",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-MARKER-ADJACENT-SAME-RESULT-NOT-STOPPED",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-METAL-ENERGY-PER-CARD-REDUCTION",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-MEW-NEUTRAL-SHIELD-SCOPE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-MIND-GAMES-DECLINE-BRANCH-PREFLIGHT",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-MIND-GAMES-OPPORTUNITY-SCOPE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-MINUS-ION-SWEET-TALK-ALL-RECIPIENTS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-MIRROR-MOVE-COPIED-MIRROR-MOVE-RECORD",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-MISS-TRAINER-CLASS-IN-HAND",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-MOUNTAIN-CRUSH-ESP-REDO-FROM-MILL",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-MULLIGAN-COMP-PER-MULLIGAN",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-MULLIGAN-COMP-TIMING-AFTER-PRIZES",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-MULTI-COLOR-DISCARD-ALL-OR-NOTHING",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-MURKROW-FEINT-SCOPE-RECIPIENT-ONLY",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-NAME-COUNT-EXACT-CURRENT-FORM",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-NEXT-OPPONENT-TURN-AS-PLUS-ONE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-NO-SHUFFLE-WHEN-NOTHING-SEARCHED",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-NO-STOP-WHEN-READINGS-COINCIDE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-OCTAZOOKA-HEREAFTER-EXISTING-VALUE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "implementation_method",
+    "id": "IA-ORACLE-CHECK-FIXED-ORDER-USER-FIRST",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-PAINT-MARKER-PRECEDES-FORM-TYPE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-PARALYSIS-REAPPLY-PROCEED-WHEN-SAME-TURN",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-PERFORM-FINSLAP-HISTORY-READINGS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-PERSISTENT-EFFECT-EXPIRY-ORDER",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-PHOENIX-KO-PROCESS-ORDER",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-POISON-BYPASSES-DAMAGE-THRESHOLD-POWERS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-POISON-STING-NO-COIN-ON-KO",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-POKE-BALL-TAILS-NO-SHUFFLE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-POKEDEX-ZERO-IS-NOT-LOOKING",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-POKEMON-CHECK-DARKNESS-BEFORE-BERRY",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-POKEMON-CHECK-DARKNESS-EFFECT-ORDER",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-POKEMON-CHECK-KO-BEFORE-SLEEP",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-POKEMON-CHECK-POISON-ALL-THEN-KO",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-POWER-DAMAGE-WR-SKIPPED-WHEN-NO-DIFFERENCE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-POWER-EFFECT-PERSISTS-AFTER-USER-LEAVES",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-POWER-INVALID-USE-REJECTED-AS-UNDECLARED",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-POWER-ONE-CARD-PER-USE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-PREFLIGHT-COUNT-CAPPED-HEAD-CLASSES",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-PREFLIGHT-ENERGY-DISCARD-BY-CARD-KIND",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-PREFLIGHT-SHORTAGE-OVER-CLASS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-PRESENT-DAMAGE-ELEMENTS-FIRST",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-PRIVATE-LOOK-MISC-READINGS-V095",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-PRIZE-OVERFLOW-TAKE-REMAINING",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-PRIZE-TAKE-ORDER-SIMULTANEOUS-KO",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-PSYCHIC-CONTROL-CARD-TO-IN-USE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-PSYCHIC-LINK-PER-SOURCE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-PURIN-HEAL-OPTIONAL-ALL-OR-NOTHING",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-QUIZ-ANSWER-CANDIDATES-BUNDLED-POOL",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-QUIZ-CHAOS-GYM-BORROWER-IS-YOU",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-QUIZ-HEIGHT-DEX-ONLY-LOOKUP",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-QUIZ-HEIGHT-EXACT-INTEGER-CM",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-QUIZ-HEIGHT-HINT-PRINTED-CARD-NAME",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-RAID-PRIZES-REVEAL-SCOPE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-RAIN-DANCE-ONE-CARD-PER-USE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-REACTION-EVOLUTION-AFTER-PENDING",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-READINGS-ARCANINE-RAGING-FLAME",
+    "status": "documented_impl_unverified"
+   },
+   {
+    "category": "inference",
+    "id": "IA-READINGS-BABY-RULES-CARDS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-READINGS-DAMAGE-REACTIONS-POISON-SLEEP",
+    "status": "documented_impl_unverified"
+   },
+   {
+    "category": "inference",
+    "id": "IA-READINGS-ENERGY-MOVEMENT-ATTACH-DEVOLUTION",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-READINGS-FIELD-ENERGY-CARD-ATTACKS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-READINGS-FOSSIL-VIRTUAL-ATTACKS",
+    "status": "documented_impl_unverified"
+   },
+   {
+    "category": "inference",
+    "id": "IA-READINGS-HAND-BENCH-ATTACK-CONDITIONS",
+    "status": "documented_impl_unverified"
+   },
+   {
+    "category": "inference",
+    "id": "IA-READINGS-RETREAT-RETURN-POWERS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-READINGS-SPREAD-DAMAGE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-READINGS-TRANSFORM-DARK-PULSE",
+    "status": "documented_impl_unverified"
+   },
+   {
+    "category": "inference",
+    "id": "IA-READINGS-UNBOUNDED-COINS-HEAL-ALLOCATION",
+    "status": "documented_impl_unverified"
+   },
+   {
+    "category": "inference",
+    "id": "IA-READINGS-UNOWN-FOSSIL-RETREAT",
+    "status": "documented_impl_unverified"
+   },
+   {
+    "category": "inference",
+    "id": "IA-READINGS-VARIABLE-COINS-SEARCH-ATTACH",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-READINGS-WATER-ENERGY-COIN-DRAW",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-READINGS-WIGGLYTUFF-HELPING-HAND",
+    "status": "documented_impl_unverified"
+   },
+   {
+    "category": "inference",
+    "id": "IA-REASSURE-NO-NAME-READING",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-REBEL-COIN-THROWN-UNDER-LEAVE-LOCK",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-REBELLION-AS-STEP4-ATTACK-CHECK",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-RECALL-SAME-POKEMON-ONLY",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-RECOVER-ON-ENTRY-ZERO-AS-DECLINE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-RECYCLE-ENERGY-NOT-TOWER",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-REDUCE-DAMAGE-STEP-OF-TEN",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-REPEATABLE-POWER-ONE-UNIT-PER-USE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-RETREAT-REPLACEMENT-CHOSEN-BEFORE-COIN",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-RETURNED-CARDS-NOT-SHOWN",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-REVIVE-OWN-DISCARD-AND-BENCH",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-ROCKET-SNEAK-NO-SHUFFLE-WITHOUT-TRAINER",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-RUN-AWAY-FIXED-TIMING",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-SABRINA-REATTACH-THEN-EVALUATE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-SAME-AMOUNT-MULTI-SOURCE-FIELD-ORDER",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-SCOOP-UP-DISGUISE-CARD-DISCARDED",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-SCREECH-ATTACK-DAMAGE-ANY-TURN",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-SEARCH-SHUFFLE-WITHOUT-CHOICE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-SECRET-PLAN-NOT-PLAY-CONDITION",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-SECRET-PLAN-REVEAL-OWN-MAIN-ONLY",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-SELF-ATTACK-DAMAGE-WEAKNESS-RESISTANCE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-SELF-KO-TO-ENERGY-ORDER",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-SELF-THEN-OPPONENT-ORDER",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-SELFDESTRUCT-ELEMENT-ORDER",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-SETUP-POKEMON-IN-PLAY-BEFORE-FIRST-TURN",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-SHIFT-COLOR-CHOICES-FIELD-COLORS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-SHUFFLE-WHEN-SEARCHED-DECK-NONEMPTY",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-SIMPLIFICATION-COPY-SCOPE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-SINGLE-CHOICE-DECISION-STILL-ISSUED",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-SINGLE-USE-COIN-CHECK-EXPIRES-ON-FLIP",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-SINKHOLE-TIMING-AFTER-SWITCH",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-SKETCH-PERISH-SONG-READINGS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-SPY-OPERATION-LOOK-EMPTY-HAND",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-SPY-OPERATION-SINGLE-OPTIONAL",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-STADIUM-SAME-NAME-AND-COUNT-UNRESTRICTED",
+    "status": "adopted_current"
+   },
+   {
+    "category": "implementation_method",
+    "id": "IA-SUDDEN-DEATH-DECK-UID-ORDER-THEN-SHUFFLE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-SUDDEN-DEATH-PRIZES-TAKEN-PER-SEGMENT",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-SUDDEN-DEATH-RESTART-READING",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-SWAP-OWNERSHIP-SCOPE-EXTENSIONS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-SWAP-REVEAL-HAND-OPPONENT-ONLY",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-SWIFT-EFFECTS-BY-HOLDER",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-SWIFT-POST-DAMAGE-REACTIONS-APPLY",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-TEXT-WORDING-VARIANTS-SAME-TYPE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-THREATEN-STEAL-NO-CARD-SHUFFLE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-THUNDERSTORM-COINS-BEFORE-DAMAGE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-TICKLE-MACHINE-RETURN-ORDER",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-TIMED-GUARD-ACTUAL-USER-AND-PSYCHIC-PANIC",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-TIMED-GUARD-COIN-PER-DAMAGE-ELEMENT",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-TOOL-SELF-DISCARD-TIMING",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-TOWER-PHOENIX-OPPORTUNITY-NOT-OFFERED",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-TRAINER-DISCARD-AFTER-RESOLUTION",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-TRANSFORM-EVOLUTION-BAN-REGARDLESS-OF-ACTIVITY",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-TRANSPARENCY-EVALUATED-ON-OWN-POKEMON",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-TRANSPARENCY-ONE-FLIP-RESULT-FIXED-FOR-ATTACK",
+    "status": "adopted_current"
+   },
+   {
+    "category": "normalization",
+    "id": "IA-TURN-END-DISCARD-ORDER",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-UNOWN-BYVG-READINGS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-V080-TRAINER-READINGS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-V083-MISC-READINGS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-V085-MISC-READINGS",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-WARP-POINT-SG1-ONLY-WITHOUT-BENCH",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-WILL-O-WISP-DAMAGE-TO-CURRENT-ACTIVE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "inference",
+    "id": "IA-WONDER-WALL-NONATTACK-DAMAGE",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-XXXXX-CONCURRENT-DECLARATION-REJECTED",
+    "status": "adopted_current"
+   },
+   {
+    "category": "engine_adopted",
+    "id": "IA-ZOOM-COST-AT-RETREAT-DECLARATION",
+    "status": "adopted_current"
+   }
+  ]
+ },
+ "generated_by": "scripts/build_convention_records.py",
+ "scene_index": {
+  "codes": {
+   "UNRESOLVED_ALL_CLEAR_ATTACK_SOURCE": [
+    "UNRESOLVED_ALL_CLEAR_ATTACK_SOURCE"
+   ],
+   "UNRESOLVED_ALL_CLEAR_FOSSIL_IN_PLAY": [
+    "UNRESOLVED_ALL_CLEAR_FOSSIL_IN_PLAY"
+   ],
+   "UNRESOLVED_ALL_CLEAR_OTHER_EFFECTS": [
+    "UNRESOLVED_ALL_CLEAR_OTHER_EFFECTS"
+   ],
+   "UNRESOLVED_ALL_PURPOSE_POWDER_WITHOUT_TARGET": [
+    "UNRESOLVED_ALL_PURPOSE_POWDER_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_ATTACH_AFTER_POWER_ATTACH": [
+    "UNRESOLVED_ATTACH_AFTER_POWER_ATTACH"
+   ],
+   "UNRESOLVED_ATTACH_BLOCK_SCOPE": [
+    "UNRESOLVED_ATTACH_BLOCK_SCOPE"
+   ],
+   "UNRESOLVED_ATTACH_FROM_DISCARD_ZERO": [
+    "UNRESOLVED_ATTACH_FROM_DISCARD_ZERO"
+   ],
+   "UNRESOLVED_ATTACH_TRIGGER_SCOPE": [
+    "UNRESOLVED_ATTACH_TRIGGER_SCOPE"
+   ],
+   "UNRESOLVED_ATTACK_CHECK_CONFUSION": [
+    "UNRESOLVED_ATTACK_CHECK_CONFUSION"
+   ],
+   "UNRESOLVED_ATTACK_DECK_TOP_SHORT": [
+    "UNRESOLVED_ATTACK_DECK_TOP_SHORT"
+   ],
+   "UNRESOLVED_ATTACK_HAND_BENCH_REACTION": [
+    "UNRESOLVED_ATTACK_HAND_BENCH_REACTION"
+   ],
+   "UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED": [
+    "UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED"
+   ],
+   "UNRESOLVED_BABY_RULE_COIN_ORDER": [
+    "UNRESOLVED_BABY_RULE_COIN_ORDER"
+   ],
+   "UNRESOLVED_BALLOON_BERRY_FAILED_RETREAT": [
+    "UNRESOLVED_BALLOON_BERRY_FAILED_RETREAT"
+   ],
+   "UNRESOLVED_BENCH_COIN_TRANSPARENCY_ORDER": [
+    "UNRESOLVED_BENCH_COIN_TRANSPARENCY_ORDER"
+   ],
+   "UNRESOLVED_BENCH_DAMAGE_WEAKNESS_RESISTANCE": [
+    "UNRESOLVED_BENCH_DAMAGE_WEAKNESS_RESISTANCE"
+   ],
+   "UNRESOLVED_BENCH_GUARD_RECOMPUTE": [
+    "UNRESOLVED_BENCH_GUARD_RECOMPUTE"
+   ],
+   "UNRESOLVED_BENCH_GUARD_ZERO_DAMAGE_REACTION": [
+    "UNRESOLVED_BENCH_GUARD_ZERO_DAMAGE_REACTION"
+   ],
+   "UNRESOLVED_BENCH_TARGETS_ZERO_CHOICE": [
+    "UNRESOLVED_BENCH_TARGETS_ZERO_CHOICE"
+   ],
+   "UNRESOLVED_BLAINES_QUIZ_WITHOUT_POKEMON": [
+    "UNRESOLVED_BLAINES_QUIZ_WITHOUT_POKEMON"
+   ],
+   "UNRESOLVED_BLAINE_SECOND_ATTACH": [
+    "UNRESOLVED_BLAINE_SECOND_ATTACH"
+   ],
+   "UNRESOLVED_BOLT_DURING_OWN_ATTACK": [
+    "UNRESOLVED_BOLT_DURING_OWN_ATTACK"
+   ],
+   "UNRESOLVED_BREEDER_ON_PLAY_AS_POKEMON": [
+    "UNRESOLVED_BREEDER_ON_PLAY_AS_POKEMON"
+   ],
+   "UNRESOLVED_BUZZAP_COLOR": [
+    "UNRESOLVED_BUZZAP_COLOR"
+   ],
+   "UNRESOLVED_BUZZAP_DISGUISED": [
+    "UNRESOLVED_BUZZAP_DISGUISED"
+   ],
+   "UNRESOLVED_BUZZAP_ENERGY_CARD_TYPE": [
+    "UNRESOLVED_BUZZAP_ENERGY_CARD_TYPE"
+   ],
+   "UNRESOLVED_BUZZAP_OPPONENT_TARGET": [
+    "UNRESOLVED_BUZZAP_OPPONENT_TARGET"
+   ],
+   "UNRESOLVED_CALMING_AROMA_RETALIATION": [
+    "UNRESOLVED_CALMING_AROMA_RETALIATION"
+   ],
+   "UNRESOLVED_CELADON_GYM_WITHOUT_CONDITION": [
+    "UNRESOLVED_CELADON_GYM_WITHOUT_CONDITION"
+   ],
+   "UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE": [
+    "UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE"
+   ],
+   "UNRESOLVED_CHAOS_GYM_BORROWED_TURN": [
+    "UNRESOLVED_CHAOS_GYM_BORROWED_TURN"
+   ],
+   "UNRESOLVED_CHARITY_BELOW_ZERO": [
+    "UNRESOLVED_CHARITY_BELOW_ZERO"
+   ],
+   "UNRESOLVED_CHOSEN_ACTIVE_EXTRA_DAMAGE": [
+    "UNRESOLVED_CHOSEN_ACTIVE_EXTRA_DAMAGE"
+   ],
+   "UNRESOLVED_CLAMPING_JAW_SOURCE_DEVOLVED": [
+    "UNRESOLVED_CLAMPING_JAW_SOURCE_DEVOLVED"
+   ],
+   "UNRESOLVED_COLOR_CHANGED_ENERGY_CARD": [
+    "UNRESOLVED_COLOR_CHANGED_ENERGY_CARD"
+   ],
+   "UNRESOLVED_COLOR_EFFECT_CONTINUATION": [
+    "UNRESOLVED_COLOR_EFFECT_CONTINUATION"
+   ],
+   "UNRESOLVED_COLOR_MARKER_PRECEDENCE": [
+    "UNRESOLVED_COLOR_MARKER_PRECEDENCE"
+   ],
+   "UNRESOLVED_COLOR_REPLACEMENT_ORDER": [
+    "UNRESOLVED_COLOR_REPLACEMENT_ORDER"
+   ],
+   "UNRESOLVED_COMMAND_DAMAGE_SCOPE": [
+    "UNRESOLVED_COMMAND_DAMAGE_SCOPE"
+   ],
+   "UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK": [
+    "UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK"
+   ],
+   "UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES": [
+    "UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES"
+   ],
+   "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS": [
+    "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS"
+   ],
+   "UNRESOLVED_COPIED_ATTACK": [
+    "UNRESOLVED_COPIED_ATTACK"
+   ],
+   "UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT": [
+    "UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT"
+   ],
+   "UNRESOLVED_COUNTER_TRANSFER_PROTECTED": [
+    "UNRESOLVED_COUNTER_TRANSFER_PROTECTED"
+   ],
+   "UNRESOLVED_DAMAGE_GUARD_OVERLAP": [
+    "UNRESOLVED_DAMAGE_GUARD_OVERLAP"
+   ],
+   "UNRESOLVED_DAMAGE_TRIGGER_TIMING": [
+    "UNRESOLVED_DAMAGE_TRIGGER_TIMING"
+   ],
+   "UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER": [
+    "UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER"
+   ],
+   "UNRESOLVED_DARK_PULSE_TIMING": [
+    "UNRESOLVED_DARK_PULSE_TIMING"
+   ],
+   "UNRESOLVED_DARK_WAVE_KNOCKED_OUT_POWER": [
+    "UNRESOLVED_DARK_WAVE_KNOCKED_OUT_POWER"
+   ],
+   "UNRESOLVED_DARK_WAVE_NEW_POKEMON": [
+    "UNRESOLVED_DARK_WAVE_NEW_POKEMON"
+   ],
+   "UNRESOLVED_DARK_WAVE_PROTECTED_POKEMON": [
+    "UNRESOLVED_DARK_WAVE_PROTECTED_POKEMON"
+   ],
+   "UNRESOLVED_DECK_TOP_SHORT": [
+    "UNRESOLVED_DECK_TOP_SHORT"
+   ],
+   "UNRESOLVED_DESTINY_BOND_KNOCKOUT": [
+    "UNRESOLVED_DESTINY_BOND_KNOCKOUT"
+   ],
+   "UNRESOLVED_DEVOLUTION_INTERMEDIATE_KNOCKOUT": [
+    "UNRESOLVED_DEVOLUTION_INTERMEDIATE_KNOCKOUT"
+   ],
+   "UNRESOLVED_DEVOLUTION_SPRAY_HYPER_WITHOUT_TARGET": [
+    "UNRESOLVED_DEVOLUTION_SPRAY_HYPER_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_DEVOLUTION_SPRAY_WITHOUT_TARGET": [
+    "UNRESOLVED_DEVOLUTION_SPRAY_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_DEVOLUTION_TARGET_DISGUISED": [
+    "UNRESOLVED_DEVOLUTION_TARGET_DISGUISED"
+   ],
+   "UNRESOLVED_DISCARDED_ENERGY_DAMAGE_BONUS": [
+    "UNRESOLVED_DISCARDED_ENERGY_DAMAGE_BONUS"
+   ],
+   "UNRESOLVED_DISCARD_ANY_NUMBER_ZERO": [
+    "UNRESOLVED_DISCARD_ANY_NUMBER_ZERO"
+   ],
+   "UNRESOLVED_DISCARD_DECK_SHORT": [
+    "UNRESOLVED_DISCARD_DECK_SHORT"
+   ],
+   "UNRESOLVED_DISCARD_ENERGY_TIMING": [
+    "UNRESOLVED_DISCARD_ENERGY_TIMING"
+   ],
+   "UNRESOLVED_DISCARD_PROTECTED_COIN": [
+    "UNRESOLVED_DISCARD_PROTECTED_COIN"
+   ],
+   "UNRESOLVED_DISCARD_PROTECTED_POWER_USE": [
+    "UNRESOLVED_DISCARD_PROTECTED_POWER_USE"
+   ],
+   "UNRESOLVED_DISCARD_UP_TO_ZERO": [
+    "UNRESOLVED_DISCARD_UP_TO_ZERO"
+   ],
+   "UNRESOLVED_DOUBLED_DAMAGE_POWER_DAMAGE": [
+    "UNRESOLVED_DOUBLED_DAMAGE_POWER_DAMAGE"
+   ],
+   "UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT": [
+    "UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT"
+   ],
+   "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE": [
+    "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE"
+   ],
+   "UNRESOLVED_ENERGY_BURN_TRANSFER": [
+    "UNRESOLVED_ENERGY_BURN_TRANSFER"
+   ],
+   "UNRESOLVED_ENERGY_DRAIN_ATTACKER_KNOCKED_OUT": [
+    "UNRESOLVED_ENERGY_DRAIN_ATTACKER_KNOCKED_OUT"
+   ],
+   "UNRESOLVED_ENERGY_DRAIN_NO_ENERGY": [
+    "UNRESOLVED_ENERGY_DRAIN_NO_ENERGY"
+   ],
+   "UNRESOLVED_ENERGY_REMOVAL_WITHOUT_TARGET": [
+    "UNRESOLVED_ENERGY_REMOVAL_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET": [
+    "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE": [
+    "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE"
+   ],
+   "UNRESOLVED_ENERGY_STADIUM_WITHOUT_TARGET": [
+    "UNRESOLVED_ENERGY_STADIUM_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_ENGAGE_EMPTY_HAND": [
+    "UNRESOLVED_ENGAGE_EMPTY_HAND"
+   ],
+   "UNRESOLVED_ENTRY_POWER_DURING_ATTACK": [
+    "UNRESOLVED_ENTRY_POWER_DURING_ATTACK"
+   ],
+   "UNRESOLVED_ESP_COPIED_ATTACK_COINS": [
+    "UNRESOLVED_ESP_COPIED_ATTACK_COINS"
+   ],
+   "UNRESOLVED_ESP_HOLDER_NOT_SABRINAS": [
+    "UNRESOLVED_ESP_HOLDER_NOT_SABRINAS"
+   ],
+   "UNRESOLVED_ESP_LEFT_BEFORE_COIN": [
+    "UNRESOLVED_ESP_LEFT_BEFORE_COIN"
+   ],
+   "UNRESOLVED_ESP_MULTIPLE": [
+    "UNRESOLVED_ESP_MULTIPLE"
+   ],
+   "UNRESOLVED_ESP_OPPONENT_COIN_TOSS": [
+    "UNRESOLVED_ESP_OPPONENT_COIN_TOSS"
+   ],
+   "UNRESOLVED_EVADED_EFFECT_COIN": [
+    "UNRESOLVED_EVADED_EFFECT_COIN"
+   ],
+   "UNRESOLVED_EVOLUTION_HP": [
+    "UNRESOLVED_EVOLUTION_HP"
+   ],
+   "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK": [
+    "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK#coin-evolve-self-from-deck",
+    "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK#other"
+   ],
+   "UNRESOLVED_EVOLVE_AFTER_DEVOLUTION": [
+    "UNRESOLVED_EVOLVE_AFTER_DEVOLUTION"
+   ],
+   "UNRESOLVED_EXTRA_ENERGY_COLORLESS": [
+    "UNRESOLVED_EXTRA_ENERGY_COLORLESS"
+   ],
+   "UNRESOLVED_FACE_UP_DECK_CHECK": [
+    "UNRESOLVED_FACE_UP_DECK_CHECK"
+   ],
+   "UNRESOLVED_FACE_UP_DECK_HIDDEN_TAKE": [
+    "UNRESOLVED_FACE_UP_DECK_HIDDEN_TAKE#decision-halt",
+    "UNRESOLVED_FACE_UP_DECK_HIDDEN_TAKE#draw",
+    "UNRESOLVED_FACE_UP_DECK_HIDDEN_TAKE#quiz-precheck"
+   ],
+   "UNRESOLVED_FACE_UP_DECK_LOOK_RETURN": [
+    "UNRESOLVED_FACE_UP_DECK_LOOK_RETURN"
+   ],
+   "UNRESOLVED_FACE_UP_DECK_MOVE": [
+    "UNRESOLVED_FACE_UP_DECK_MOVE"
+   ],
+   "UNRESOLVED_FACE_UP_DECK_PLACE_TOP": [
+    "UNRESOLVED_FACE_UP_DECK_PLACE_TOP"
+   ],
+   "UNRESOLVED_FERVOR_RAINBOW_ENERGY": [
+    "UNRESOLVED_FERVOR_RAINBOW_ENERGY"
+   ],
+   "UNRESOLVED_FLASH_DECK_SHORT": [
+    "UNRESOLVED_FLASH_DECK_SHORT"
+   ],
+   "UNRESOLVED_FLEE_DURING_OWN_ATTACK": [
+    "UNRESOLVED_FLEE_DURING_OWN_ATTACK"
+   ],
+   "UNRESOLVED_FOCUS_BAND_TIMING": [
+    "UNRESOLVED_FOCUS_BAND_TIMING"
+   ],
+   "UNRESOLVED_FOSSILIZE_WITHOUT_TARGET": [
+    "UNRESOLVED_FOSSILIZE_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_FOSSIL_EVOLVED_READING": [
+    "UNRESOLVED_FOSSIL_EVOLVED_READING"
+   ],
+   "UNRESOLVED_FOSSIL_GUIDE_WITHOUT_TARGET": [
+    "UNRESOLVED_FOSSIL_GUIDE_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_FUCHSIA_GYM_AFTER_REPLACEMENT": [
+    "UNRESOLVED_FUCHSIA_GYM_AFTER_REPLACEMENT"
+   ],
+   "UNRESOLVED_FUCHSIA_GYM_WITHOUT_TARGET": [
+    "UNRESOLVED_FUCHSIA_GYM_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_FULL_HEAL_SCOPE": [
+    "UNRESOLVED_FULL_HEAL_SCOPE"
+   ],
+   "UNRESOLVED_FULL_HEAL_WITHOUT_CONDITION": [
+    "UNRESOLVED_FULL_HEAL_WITHOUT_CONDITION"
+   ],
+   "UNRESOLVED_FULL_RECOVERY_COUNTERS": [
+    "UNRESOLVED_FULL_RECOVERY_COUNTERS"
+   ],
+   "UNRESOLVED_GOOP_GAS_NEW_POKEMON": [
+    "UNRESOLVED_GOOP_GAS_NEW_POKEMON"
+   ],
+   "UNRESOLVED_GROUP_POWER_COIN_ORDER": [
+    "UNRESOLVED_GROUP_POWER_COIN_ORDER"
+   ],
+   "UNRESOLVED_GROWL_NON_ATTACK_DAMAGE": [
+    "UNRESOLVED_GROWL_NON_ATTACK_DAMAGE"
+   ],
+   "UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH": [
+    "UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH"
+   ],
+   "UNRESOLVED_HAND_TRAINER_LOCK_BORROW": [
+    "UNRESOLVED_HAND_TRAINER_LOCK_BORROW"
+   ],
+   "UNRESOLVED_HARD_SHELL_NONPOSITIVE": [
+    "UNRESOLVED_HARD_SHELL_NONPOSITIVE"
+   ],
+   "UNRESOLVED_HEALING_FIELD_WITHOUT_DAMAGE": [
+    "UNRESOLVED_HEALING_FIELD_WITHOUT_DAMAGE"
+   ],
+   "UNRESOLVED_HEAL_UP_TO_ZERO": [
+    "UNRESOLVED_HEAL_UP_TO_ZERO"
+   ],
+   "UNRESOLVED_HELPING_HAND_CHOICE": [
+    "UNRESOLVED_HELPING_HAND_CHOICE"
+   ],
+   "UNRESOLVED_HELPING_HAND_WITHOUT_CONDITION": [
+    "UNRESOLVED_HELPING_HAND_WITHOUT_CONDITION"
+   ],
+   "UNRESOLVED_HOT_PLATE_BABY_EVOLUTION": [
+    "UNRESOLVED_HOT_PLATE_BABY_EVOLUTION"
+   ],
+   "UNRESOLVED_HOT_PLATE_FACE_DOWN": [
+    "UNRESOLVED_HOT_PLATE_FACE_DOWN"
+   ],
+   "UNRESOLVED_HOWL_OUTSIDE_OWN_TURN": [
+    "UNRESOLVED_HOWL_OUTSIDE_OWN_TURN"
+   ],
+   "UNRESOLVED_HYPER_TEXTURE_UNMARKED_TARGET": [
+    "UNRESOLVED_HYPER_TEXTURE_UNMARKED_TARGET"
+   ],
+   "UNRESOLVED_IGNORED_EFFECTS_SCOPE": [
+    "UNRESOLVED_IGNORED_EFFECTS_SCOPE"
+   ],
+   "UNRESOLVED_INFLATE_NON_ATTACK_DAMAGE": [
+    "UNRESOLVED_INFLATE_NON_ATTACK_DAMAGE"
+   ],
+   "UNRESOLVED_JAW_CLAMP_SOURCE_EVOLVED": [
+    "UNRESOLVED_JAW_CLAMP_SOURCE_EVOLVED"
+   ],
+   "UNRESOLVED_JAW_CLAMP_SOURCE_RETURNED": [
+    "UNRESOLVED_JAW_CLAMP_SOURCE_RETURNED"
+   ],
+   "UNRESOLVED_KEEP_DETACHED_ENERGY_DISCARD": [
+    "UNRESOLVED_KEEP_DETACHED_ENERGY_DISCARD"
+   ],
+   "UNRESOLVED_KEEP_PROTECTED_TARGET": [
+    "UNRESOLVED_KEEP_PROTECTED_TARGET"
+   ],
+   "UNRESOLVED_KEEP_VOIDED_DISCARD_COIN": [
+    "UNRESOLVED_KEEP_VOIDED_DISCARD_COIN"
+   ],
+   "UNRESOLVED_KOGA_POISON_ORDER": [
+    "UNRESOLVED_KOGA_POISON_ORDER"
+   ],
+   "UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT": [
+    "UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT"
+   ],
+   "UNRESOLVED_KO_PREVENTION_ORDER": [
+    "UNRESOLVED_KO_PREVENTION_ORDER"
+   ],
+   "UNRESOLVED_KO_SURVIVAL_OVERLAP": [
+    "UNRESOLVED_KO_SURVIVAL_OVERLAP"
+   ],
+   "UNRESOLVED_KO_SURVIVAL_TIMING": [
+    "UNRESOLVED_KO_SURVIVAL_TIMING"
+   ],
+   "UNRESOLVED_LAST_RESORT_UNDAMAGED_TARGET": [
+    "UNRESOLVED_LAST_RESORT_UNDAMAGED_TARGET"
+   ],
+   "UNRESOLVED_LAST_RESORT_WITHOUT_TARGET": [
+    "UNRESOLVED_LAST_RESORT_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_LEAVE_LOCK_KNOCKOUT": [
+    "UNRESOLVED_LEAVE_LOCK_KNOCKOUT"
+   ],
+   "UNRESOLVED_LEAVE_LOCK_NO_EFFECT": [
+    "UNRESOLVED_LEAVE_LOCK_NO_EFFECT"
+   ],
+   "UNRESOLVED_LEAVE_LOCK_SCRAM": [
+    "UNRESOLVED_LEAVE_LOCK_SCRAM"
+   ],
+   "UNRESOLVED_LEGEND_BODY_GOOP_GAS": [
+    "UNRESOLVED_LEGEND_BODY_GOOP_GAS"
+   ],
+   "UNRESOLVED_LEGEND_BODY_TRAINER_TARGET": [
+    "UNRESOLVED_LEGEND_BODY_TRAINER_TARGET"
+   ],
+   "UNRESOLVED_LIGHTNING_BOLT_DEFENDER_UNITS": [
+    "UNRESOLVED_LIGHTNING_BOLT_DEFENDER_UNITS"
+   ],
+   "UNRESOLVED_LOCK_ON_PROTECTED_TARGET": [
+    "UNRESOLVED_LOCK_ON_PROTECTED_TARGET"
+   ],
+   "UNRESOLVED_LT_SURGE_WITHOUT_BASIC": [
+    "UNRESOLVED_LT_SURGE_WITHOUT_BASIC"
+   ],
+   "UNRESOLVED_LUCKY_STADIUM_UNSTATED_REPEAT": [
+    "UNRESOLVED_LUCKY_STADIUM_UNSTATED_REPEAT"
+   ],
+   "UNRESOLVED_MASTER_BALL_SHORT_DECK": [
+    "UNRESOLVED_MASTER_BALL_SHORT_DECK"
+   ],
+   "UNRESOLVED_MAX_HP_DROP": [
+    "UNRESOLVED_MAX_HP_DROP"
+   ],
+   "UNRESOLVED_MAX_HP_SET_AND_INCREASE": [
+    "UNRESOLVED_MAX_HP_SET_AND_INCREASE"
+   ],
+   "UNRESOLVED_MAX_REVIVE_WITHOUT_TARGET": [
+    "UNRESOLVED_MAX_REVIVE_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_MEAN_LOOK_SOURCE_EVOLVED": [
+    "UNRESOLVED_MEAN_LOOK_SOURCE_EVOLVED"
+   ],
+   "UNRESOLVED_METAL_ENERGY_POWER_ORDER": [
+    "UNRESOLVED_METAL_ENERGY_POWER_ORDER"
+   ],
+   "UNRESOLVED_MIND_GAMES_BLOCKED_TURN_END": [
+    "UNRESOLVED_MIND_GAMES_BLOCKED_TURN_END"
+   ],
+   "UNRESOLVED_MIND_GAMES_CHAOS_GYM_ORDER": [
+    "UNRESOLVED_MIND_GAMES_CHAOS_GYM_ORDER"
+   ],
+   "UNRESOLVED_MIND_GAMES_PLAY_AS_POKEMON": [
+    "UNRESOLVED_MIND_GAMES_PLAY_AS_POKEMON"
+   ],
+   "UNRESOLVED_MINEFIELD_DAMAGE_RECEIVED_POWER": [
+    "UNRESOLVED_MINEFIELD_DAMAGE_RECEIVED_POWER"
+   ],
+   "UNRESOLVED_MIRACLE_ENERGY_AS_TYPE": [
+    "UNRESOLVED_MIRACLE_ENERGY_AS_TYPE"
+   ],
+   "UNRESOLVED_MIRACLE_ENERGY_UNDER_WIND": [
+    "UNRESOLVED_MIRACLE_ENERGY_UNDER_WIND"
+   ],
+   "UNRESOLVED_MIRACULOUS_WIND_CONVERTED_ENERGY": [
+    "UNRESOLVED_MIRACULOUS_WIND_CONVERTED_ENERGY"
+   ],
+   "UNRESOLVED_MIRACULOUS_WIND_ENERGY_BURN": [
+    "UNRESOLVED_MIRACULOUS_WIND_ENERGY_BURN"
+   ],
+   "UNRESOLVED_MIRROR_MOVE_ATTACK_CONDITIONS": [
+    "UNRESOLVED_MIRROR_MOVE_ATTACK_CONDITIONS"
+   ],
+   "UNRESOLVED_MIRROR_MOVE_LASTING_EFFECT": [
+    "UNRESOLVED_MIRROR_MOVE_LASTING_EFFECT"
+   ],
+   "UNRESOLVED_MIRROR_MOVE_NON_ATTACK": [
+    "UNRESOLVED_MIRROR_MOVE_NON_ATTACK"
+   ],
+   "UNRESOLVED_MIRROR_MOVE_RECEIVED_ATTACK": [
+    "UNRESOLVED_MIRROR_MOVE_RECEIVED_ATTACK"
+   ],
+   "UNRESOLVED_MISTYS_CARE_OPPONENT_LAPRAS": [
+    "UNRESOLVED_MISTYS_CARE_OPPONENT_LAPRAS"
+   ],
+   "UNRESOLVED_MISTYS_CARE_WITHOUT_TARGET": [
+    "UNRESOLVED_MISTYS_CARE_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_MISTYS_WISH_WITHOUT_HAND": [
+    "UNRESOLVED_MISTYS_WISH_WITHOUT_HAND"
+   ],
+   "UNRESOLVED_MISTYS_WRATH_SHORT_DECK": [
+    "UNRESOLVED_MISTYS_WRATH_SHORT_DECK"
+   ],
+   "UNRESOLVED_MISTY_SELF_DAMAGE": [
+    "UNRESOLVED_MISTY_SELF_DAMAGE"
+   ],
+   "UNRESOLVED_MOOMOO_MILK_UNDAMAGED_TARGET": [
+    "UNRESOLVED_MOOMOO_MILK_UNDAMAGED_TARGET"
+   ],
+   "UNRESOLVED_MR_FUJI_WITHOUT_BENCH": [
+    "UNRESOLVED_MR_FUJI_WITHOUT_BENCH"
+   ],
+   "UNRESOLVED_MULLIGAN_COMPENSATION": [
+    "UNRESOLVED_MULLIGAN_COMPENSATION#initial-setup",
+    "UNRESOLVED_MULLIGAN_COMPENSATION#sudden-death-segment"
+   ],
+   "UNRESOLVED_MULTIPLE_ATTACK_CHECKS": [
+    "UNRESOLVED_MULTIPLE_ATTACK_CHECKS"
+   ],
+   "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS": [
+    "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS"
+   ],
+   "UNRESOLVED_NEO_TEXT_BASIC_BABY": [
+    "UNRESOLVED_NEO_TEXT_BASIC_BABY"
+   ],
+   "UNRESOLVED_NEO_TEXT_EVOLUTION_CARD_BABY": [
+    "UNRESOLVED_NEO_TEXT_EVOLUTION_CARD_BABY"
+   ],
+   "UNRESOLVED_NIGHTLY_GARBAGE_RUN_ZERO_CHOICE": [
+    "UNRESOLVED_NIGHTLY_GARBAGE_RUN_ZERO_CHOICE"
+   ],
+   "UNRESOLVED_NINJA_GYM_WITHOUT_TARGET": [
+    "UNRESOLVED_NINJA_GYM_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_NINJA_TRICK_ATTACK_COIN_ORDER": [
+    "UNRESOLVED_NINJA_TRICK_ATTACK_COIN_ORDER"
+   ],
+   "UNRESOLVED_NINJA_TRICK_LEAVES_WITH_POKEMON": [
+    "UNRESOLVED_NINJA_TRICK_LEAVES_WITH_POKEMON"
+   ],
+   "UNRESOLVED_NINJA_TRICK_UNDER_TRAINER_BAN": [
+    "UNRESOLVED_NINJA_TRICK_UNDER_TRAINER_BAN"
+   ],
+   "UNRESOLVED_OLD_ROD_WITHOUT_TARGET": [
+    "UNRESOLVED_OLD_ROD_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_OPPONENT_POKEMON_COUNTERS": [
+    "UNRESOLVED_OPPONENT_POKEMON_COUNTERS"
+   ],
+   "UNRESOLVED_PERFORM_DAMAGE_PLACES": [
+    "UNRESOLVED_PERFORM_DAMAGE_PLACES"
+   ],
+   "UNRESOLVED_PERISH_SONG_RECEIVED_ATTACK": [
+    "UNRESOLVED_PERISH_SONG_RECEIVED_ATTACK"
+   ],
+   "UNRESOLVED_PERMITTED_ATTACK_HELD": [
+    "UNRESOLVED_PERMITTED_ATTACK_HELD"
+   ],
+   "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT": [
+    "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT"
+   ],
+   "UNRESOLVED_PLAY_AS_POKEMON_RETREAT": [
+    "UNRESOLVED_PLAY_AS_POKEMON_RETREAT"
+   ],
+   "UNRESOLVED_PLAY_AS_POKEMON_SETUP": [
+    "UNRESOLVED_PLAY_AS_POKEMON_SETUP#initial-setup",
+    "UNRESOLVED_PLAY_AS_POKEMON_SETUP#sudden-death-segment"
+   ],
+   "UNRESOLVED_POISON_CHANGE_ORDER": [
+    "UNRESOLVED_POISON_CHANGE_ORDER"
+   ],
+   "UNRESOLVED_POISON_DAMAGE_RECEIVED_POWER": [
+    "UNRESOLVED_POISON_DAMAGE_RECEIVED_POWER"
+   ],
+   "UNRESOLVED_POISON_MIST_EARLIER_POISON": [
+    "UNRESOLVED_POISON_MIST_EARLIER_POISON"
+   ],
+   "UNRESOLVED_POISON_MIST_SOURCE": [
+    "UNRESOLVED_POISON_MIST_SOURCE"
+   ],
+   "UNRESOLVED_POKEDEX_UP_TO_ZERO": [
+    "UNRESOLVED_POKEDEX_UP_TO_ZERO"
+   ],
+   "UNRESOLVED_POKEMON_CHECK_BERRY_ORDER": [
+    "UNRESOLVED_POKEMON_CHECK_BERRY_ORDER"
+   ],
+   "UNRESOLVED_POKEMON_CHECK_CHAR_COIN_ORDER": [
+    "UNRESOLVED_POKEMON_CHECK_CHAR_COIN_ORDER"
+   ],
+   "UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT": [
+    "UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT"
+   ],
+   "UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT": [
+    "UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT"
+   ],
+   "UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER": [
+    "UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER"
+   ],
+   "UNRESOLVED_POKEMON_FLUTE_WITHOUT_TARGET": [
+    "UNRESOLVED_POKEMON_FLUTE_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_POKEMON_TOWER_POWER_WITHOUT_EFFECT": [
+    "UNRESOLVED_POKEMON_TOWER_POWER_WITHOUT_EFFECT"
+   ],
+   "UNRESOLVED_POKEMON_TOWER_TRAINER_WITHOUT_EFFECT": [
+    "UNRESOLVED_POKEMON_TOWER_TRAINER_WITHOUT_EFFECT"
+   ],
+   "UNRESOLVED_POST_KNOCKOUT_POWERS_ORDER": [
+    "UNRESOLVED_POST_KNOCKOUT_POWERS_ORDER"
+   ],
+   "UNRESOLVED_POTION_UNDAMAGED_TARGET": [
+    "UNRESOLVED_POTION_UNDAMAGED_TARGET"
+   ],
+   "UNRESOLVED_POTION_WITHOUT_DAMAGE": [
+    "UNRESOLVED_POTION_WITHOUT_DAMAGE"
+   ],
+   "UNRESOLVED_POWER_COUNTER_MOVE_TO_SAME_POKEMON": [
+    "UNRESOLVED_POWER_COUNTER_MOVE_TO_SAME_POKEMON"
+   ],
+   "UNRESOLVED_POWER_COUNTER_MOVE_WITHOUT_COUNTERS": [
+    "UNRESOLVED_POWER_COUNTER_MOVE_WITHOUT_COUNTERS"
+   ],
+   "UNRESOLVED_POWER_DAMAGE_PREVENTED": [
+    "UNRESOLVED_POWER_DAMAGE_PREVENTED"
+   ],
+   "UNRESOLVED_POWER_DAMAGE_RECEIVED_POWER": [
+    "UNRESOLVED_POWER_DAMAGE_RECEIVED_POWER"
+   ],
+   "UNRESOLVED_POWER_DAMAGE_WEAKNESS_RESISTANCE": [
+    "UNRESOLVED_POWER_DAMAGE_WEAKNESS_RESISTANCE"
+   ],
+   "UNRESOLVED_POWER_DECK_TOP_SHORT": [
+    "UNRESOLVED_POWER_DECK_TOP_SHORT"
+   ],
+   "UNRESOLVED_POWER_DISCARD_WITHOUT_HAND": [
+    "UNRESOLVED_POWER_DISCARD_WITHOUT_HAND"
+   ],
+   "UNRESOLVED_POWER_HEAL_WITHOUT_DAMAGE": [
+    "UNRESOLVED_POWER_HEAL_WITHOUT_DAMAGE"
+   ],
+   "UNRESOLVED_POWER_RETURN_WITHOUT_TARGET": [
+    "UNRESOLVED_POWER_RETURN_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_POWER_REUSE_AFTER_DEVOLUTION": [
+    "UNRESOLVED_POWER_REUSE_AFTER_DEVOLUTION"
+   ],
+   "UNRESOLVED_POWER_SWITCH_WITHOUT_OPPONENT_BENCH": [
+    "UNRESOLVED_POWER_SWITCH_WITHOUT_OPPONENT_BENCH"
+   ],
+   "UNRESOLVED_POWER_ZERO_CARDS": [
+    "UNRESOLVED_POWER_ZERO_CARDS"
+   ],
+   "UNRESOLVED_PREVENTED_COIN_DAMAGE": [
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE"
+   ],
+   "UNRESOLVED_PREVENTED_EFFECT_COIN": [
+    "UNRESOLVED_PREVENTED_EFFECT_COIN"
+   ],
+   "UNRESOLVED_PRE_EVOLUTION_ATTACK_CONDITIONS": [
+    "UNRESOLVED_PRE_EVOLUTION_ATTACK_CONDITIONS"
+   ],
+   "UNRESOLVED_PRE_EVOLUTION_ATTACK_STAGE": [
+    "UNRESOLVED_PRE_EVOLUTION_ATTACK_STAGE"
+   ],
+   "UNRESOLVED_PRIMAL_DREAM_DAMAGE_STEP": [
+    "UNRESOLVED_PRIMAL_DREAM_DAMAGE_STEP"
+   ],
+   "UNRESOLVED_PRIMAL_DREAM_SUPPRESSED": [
+    "UNRESOLVED_PRIMAL_DREAM_SUPPRESSED"
+   ],
+   "UNRESOLVED_PROTECTIVE_FLAME_SCOPE": [
+    "UNRESOLVED_PROTECTIVE_FLAME_SCOPE"
+   ],
+   "UNRESOLVED_QUICKEN_EFFECT_SUPPRESSED": [
+    "UNRESOLVED_QUICKEN_EFFECT_SUPPRESSED"
+   ],
+   "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD": [
+    "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD"
+   ],
+   "UNRESOLVED_RAINBOW_ATTACH_AS_TYPE": [
+    "UNRESOLVED_RAINBOW_ATTACH_AS_TYPE"
+   ],
+   "UNRESOLVED_RAINBOW_DAMAGE_RECEIVED_POWER": [
+    "UNRESOLVED_RAINBOW_DAMAGE_RECEIVED_POWER"
+   ],
+   "UNRESOLVED_RAINBOW_ENERGY_TYPE": [
+    "UNRESOLVED_RAINBOW_ENERGY_TYPE"
+   ],
+   "UNRESOLVED_RAINBOW_RECOVER_AS_TYPE": [
+    "UNRESOLVED_RAINBOW_RECOVER_AS_TYPE"
+   ],
+   "UNRESOLVED_REACTION_AFTER_KNOCKOUT": [
+    "UNRESOLVED_REACTION_AFTER_KNOCKOUT"
+   ],
+   "UNRESOLVED_REACTION_BY_KNOCKED_OUT_POKEMON": [
+    "UNRESOLVED_REACTION_BY_KNOCKED_OUT_POKEMON"
+   ],
+   "UNRESOLVED_REACTION_CONDITION_CHANGED": [
+    "UNRESOLVED_REACTION_CONDITION_CHANGED"
+   ],
+   "UNRESOLVED_REACTIVE_SWITCH_TRANSFORMED_ATTACKER": [
+    "UNRESOLVED_REACTIVE_SWITCH_TRANSFORMED_ATTACKER"
+   ],
+   "UNRESOLVED_RECALL_EARLIER_STAGE": [
+    "UNRESOLVED_RECALL_EARLIER_STAGE"
+   ],
+   "UNRESOLVED_RECALL_FORM": [
+    "UNRESOLVED_RECALL_FORM"
+   ],
+   "UNRESOLVED_RECALL_TARGET_CHANGED": [
+    "UNRESOLVED_RECALL_TARGET_CHANGED"
+   ],
+   "UNRESOLVED_RECALL_WITHOUT_PRE_EVOLUTION_ATTACK": [
+    "UNRESOLVED_RECALL_WITHOUT_PRE_EVOLUTION_ATTACK"
+   ],
+   "UNRESOLVED_RECOVER_ZERO_ENERGY": [
+    "UNRESOLVED_RECOVER_ZERO_ENERGY"
+   ],
+   "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET": [
+    "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET"
+   ],
+   "UNRESOLVED_REFLECT_SHIELD_OVERLAP": [
+    "UNRESOLVED_REFLECT_SHIELD_OVERLAP"
+   ],
+   "UNRESOLVED_REFLECT_SHIELD_TIMING": [
+    "UNRESOLVED_REFLECT_SHIELD_TIMING"
+   ],
+   "UNRESOLVED_REPARALYSIS_RECOVERY_TURN": [
+    "UNRESOLVED_REPARALYSIS_RECOVERY_TURN"
+   ],
+   "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT": [
+    "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT"
+   ],
+   "UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED": [
+    "UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED"
+   ],
+   "UNRESOLVED_RETREAT_COST_FLOOR": [
+    "UNRESOLVED_RETREAT_COST_FLOOR"
+   ],
+   "UNRESOLVED_RETREAT_OVERPAY": [
+    "UNRESOLVED_RETREAT_OVERPAY"
+   ],
+   "UNRESOLVED_RETREAT_REACTION_TIMING": [
+    "UNRESOLVED_RETREAT_REACTION_TIMING"
+   ],
+   "UNRESOLVED_RETURN_IN_PLAY_TO_DECK_KNOCKOUT": [
+    "UNRESOLVED_RETURN_IN_PLAY_TO_DECK_KNOCKOUT"
+   ],
+   "UNRESOLVED_REVIVED_BASIC_DEVOLVED": [
+    "UNRESOLVED_REVIVED_BASIC_DEVOLVED"
+   ],
+   "UNRESOLVED_REVIVE_HAND_BASIC_ENTRY": [
+    "UNRESOLVED_REVIVE_HAND_BASIC_ENTRY"
+   ],
+   "UNRESOLVED_REVIVE_WITHOUT_TARGET": [
+    "UNRESOLVED_REVIVE_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_ROCKETS_TRAP_ZERO_CHOICE": [
+    "UNRESOLVED_ROCKETS_TRAP_ZERO_CHOICE"
+   ],
+   "UNRESOLVED_ROCKET_GRUNT_WITHOUT_BENCH": [
+    "UNRESOLVED_ROCKET_GRUNT_WITHOUT_BENCH"
+   ],
+   "UNRESOLVED_RULING": [
+    "UNRESOLVED_RULING"
+   ],
+   "UNRESOLVED_SABRINA_SOURCE_WITHOUT_ENERGY": [
+    "UNRESOLVED_SABRINA_SOURCE_WITHOUT_ENERGY"
+   ],
+   "UNRESOLVED_SABRINA_WITHOUT_TWO_POKEMON": [
+    "UNRESOLVED_SABRINA_WITHOUT_TWO_POKEMON"
+   ],
+   "UNRESOLVED_SCARE_SUPPRESSION_CYCLE": [
+    "UNRESOLVED_SCARE_SUPPRESSION_CYCLE"
+   ],
+   "UNRESOLVED_SCOOP_UP_ATTACHED_TRAINER": [
+    "UNRESOLVED_SCOOP_UP_ATTACHED_TRAINER"
+   ],
+   "UNRESOLVED_SCOOP_UP_LAST_POKEMON": [
+    "UNRESOLVED_SCOOP_UP_LAST_POKEMON"
+   ],
+   "UNRESOLVED_SCRAM_POWER_RESTORED": [
+    "UNRESOLVED_SCRAM_POWER_RESTORED"
+   ],
+   "UNRESOLVED_SCRAM_TIMING": [
+    "UNRESOLVED_SCRAM_TIMING#command",
+    "UNRESOLVED_SCRAM_TIMING#pokemon-check"
+   ],
+   "UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET": [
+    "UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET#deck",
+    "UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET#discard"
+   ],
+   "UNRESOLVED_SECRETE_POISON_TARGET": [
+    "UNRESOLVED_SECRETE_POISON_TARGET"
+   ],
+   "UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY": [
+    "UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY"
+   ],
+   "UNRESOLVED_SECRET_PLAN_MINEFIELD": [
+    "UNRESOLVED_SECRET_PLAN_MINEFIELD"
+   ],
+   "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES": [
+    "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES"
+   ],
+   "UNRESOLVED_SHAPESHIFT_AGAIN": [
+    "UNRESOLVED_SHAPESHIFT_AGAIN"
+   ],
+   "UNRESOLVED_SHAPESHIFT_ENTRY_POWER": [
+    "UNRESOLVED_SHAPESHIFT_ENTRY_POWER"
+   ],
+   "UNRESOLVED_SHAPESHIFT_SUPPRESSED": [
+    "UNRESOLVED_SHAPESHIFT_SUPPRESSED"
+   ],
+   "UNRESOLVED_SHELL_ARMOR_TIMING": [
+    "UNRESOLVED_SHELL_ARMOR_TIMING"
+   ],
+   "UNRESOLVED_SHIFT_COLOR_DURATION": [
+    "UNRESOLVED_SHIFT_COLOR_DURATION"
+   ],
+   "UNRESOLVED_SINKHOLE_TIMING": [
+    "UNRESOLVED_SINKHOLE_TIMING"
+   ],
+   "UNRESOLVED_SKETCH_COPIED_ATTACK": [
+    "UNRESOLVED_SKETCH_COPIED_ATTACK"
+   ],
+   "UNRESOLVED_SKETCH_PRESENCE": [
+    "UNRESOLVED_SKETCH_PRESENCE"
+   ],
+   "UNRESOLVED_SOLAR_POWER_WITHOUT_CONDITION": [
+    "UNRESOLVED_SOLAR_POWER_WITHOUT_CONDITION"
+   ],
+   "UNRESOLVED_SPECIAL_POISON_OVERWRITE": [
+    "UNRESOLVED_SPECIAL_POISON_OVERWRITE"
+   ],
+   "UNRESOLVED_SPEED_STAR_SCOPE": [
+    "UNRESOLVED_SPEED_STAR_SCOPE"
+   ],
+   "UNRESOLVED_STADIUM_ACTIVATION_UNDER_TRAINER_BAN": [
+    "UNRESOLVED_STADIUM_ACTIVATION_UNDER_TRAINER_BAN"
+   ],
+   "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT": [
+    "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT"
+   ],
+   "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN": [
+    "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN"
+   ],
+   "UNRESOLVED_STATED_CARDS_SHORT": [
+    "UNRESOLVED_STATED_CARDS_SHORT#deck-contents",
+    "UNRESOLVED_STATED_CARDS_SHORT#public-counts"
+   ],
+   "UNRESOLVED_STOPPED_POWER_HOLDER": [
+    "UNRESOLVED_STOPPED_POWER_HOLDER"
+   ],
+   "UNRESOLVED_STRANGE_GAS_NEW_POKEMON": [
+    "UNRESOLVED_STRANGE_GAS_NEW_POKEMON"
+   ],
+   "UNRESOLVED_STRANGE_GAS_PROTECTED_POKEMON": [
+    "UNRESOLVED_STRANGE_GAS_PROTECTED_POKEMON"
+   ],
+   "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_WITHOUT_TARGET": [
+    "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_ZERO_CHOICE": [
+    "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_ZERO_CHOICE"
+   ],
+   "UNRESOLVED_SUPER_POTION_UNDAMAGED_TARGET": [
+    "UNRESOLVED_SUPER_POTION_UNDAMAGED_TARGET"
+   ],
+   "UNRESOLVED_SUPER_ROD_WITHOUT_TARGET": [
+    "UNRESOLVED_SUPER_ROD_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_SUPER_TRANSFORM_COPIED_POWER": [
+    "UNRESOLVED_SUPER_TRANSFORM_COPIED_POWER"
+   ],
+   "UNRESOLVED_SUPER_TRANSFORM_ENERGY_COLORS": [
+    "UNRESOLVED_SUPER_TRANSFORM_ENERGY_COLORS"
+   ],
+   "UNRESOLVED_SUPER_TRANSFORM_SOURCE_CHANGE": [
+    "UNRESOLVED_SUPER_TRANSFORM_SOURCE_CHANGE"
+   ],
+   "UNRESOLVED_SUPER_TRANSFORM_SUPPRESSED_FORM": [
+    "UNRESOLVED_SUPER_TRANSFORM_SUPPRESSED_FORM"
+   ],
+   "UNRESOLVED_SUPER_TRANSFORM_TARGET": [
+    "UNRESOLVED_SUPER_TRANSFORM_TARGET"
+   ],
+   "UNRESOLVED_SWITCH_WITHOUT_BENCH": [
+    "UNRESOLVED_SWITCH_WITHOUT_BENCH"
+   ],
+   "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT": [
+    "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT"
+   ],
+   "UNRESOLVED_THOUGHT_WAVE_MACHINE_WITHOUT_TARGET": [
+    "UNRESOLVED_THOUGHT_WAVE_MACHINE_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_TIME_SHIFT_WITHOUT_TARGET": [
+    "UNRESOLVED_TIME_SHIFT_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_TIME_TRAVEL_OVERLAP": [
+    "UNRESOLVED_TIME_TRAVEL_OVERLAP"
+   ],
+   "UNRESOLVED_TIME_TRAVEL_TIMING": [
+    "UNRESOLVED_TIME_TRAVEL_TIMING"
+   ],
+   "UNRESOLVED_TRAINER_DAMAGE_REDUCTION": [
+    "UNRESOLVED_TRAINER_DAMAGE_REDUCTION"
+   ],
+   "UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET": [
+    "UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET#amplifier-deck",
+    "UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET#public-zones"
+   ],
+   "UNRESOLVED_TRAINER_UP_TO_ZERO_CHOICE": [
+    "UNRESOLVED_TRAINER_UP_TO_ZERO_CHOICE"
+   ],
+   "UNRESOLVED_TRAINER_WITHOUT_TARGET": [
+    "UNRESOLVED_TRAINER_WITHOUT_TARGET"
+   ],
+   "UNRESOLVED_TRANSFORM_BABY": [
+    "UNRESOLVED_TRANSFORM_BABY"
+   ],
+   "UNRESOLVED_TRANSFORM_BABY_AND_BASIC": [
+    "UNRESOLVED_TRANSFORM_BABY_AND_BASIC"
+   ],
+   "UNRESOLVED_TRANSFORM_COPIED_POWER": [
+    "UNRESOLVED_TRANSFORM_COPIED_POWER"
+   ],
+   "UNRESOLVED_TRANSFORM_ENERGY_COLOR_LIST": [
+    "UNRESOLVED_TRANSFORM_ENERGY_COLOR_LIST"
+   ],
+   "UNRESOLVED_TRANSFORM_ENERGY_COUNT": [
+    "UNRESOLVED_TRANSFORM_ENERGY_COUNT"
+   ],
+   "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER": [
+    "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER"
+   ],
+   "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING": [
+    "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING"
+   ],
+   "UNRESOLVED_TRANSFORM_REVIVED_BASIC": [
+    "UNRESOLVED_TRANSFORM_REVIVED_BASIC"
+   ],
+   "UNRESOLVED_TRANSFORM_SPECIAL_ENERGY": [
+    "UNRESOLVED_TRANSFORM_SPECIAL_ENERGY"
+   ],
+   "UNRESOLVED_TRANSPARENCY_COIN_ORDER": [
+    "UNRESOLVED_TRANSPARENCY_COIN_ORDER"
+   ],
+   "UNRESOLVED_TRANSPORT_WITHOUT_CARDS": [
+    "UNRESOLVED_TRANSPORT_WITHOUT_CARDS"
+   ],
+   "UNRESOLVED_VANISH_OTHER_ATTACHED": [
+    "UNRESOLVED_VANISH_OTHER_ATTACHED"
+   ],
+   "UNRESOLVED_VERMILION_GYM_ATTACK_ORDER": [
+    "UNRESOLVED_VERMILION_GYM_ATTACK_ORDER"
+   ],
+   "UNRESOLVED_VINE_PULL_TIMING": [
+    "UNRESOLVED_VINE_PULL_TIMING"
+   ],
+   "UNRESOLVED_VIRIDIAN_GYM_ONE_COUNTER": [
+    "UNRESOLVED_VIRIDIAN_GYM_ONE_COUNTER"
+   ],
+   "UNRESOLVED_VIRTUAL_ASLEEP_ONLY_ATTACK": [
+    "UNRESOLVED_VIRTUAL_ASLEEP_ONLY_ATTACK"
+   ],
+   "UNRESOLVED_VIRTUAL_ONCE_ATTACK": [
+    "UNRESOLVED_VIRTUAL_ONCE_ATTACK"
+   ],
+   "UNRESOLVED_WANT_WITHOUT_TARGET": [
+    "UNRESOLVED_WANT_WITHOUT_TARGET"
+   ],
+   "UNSUPPORTED_ACTION": [
+    "UNSUPPORTED_ACTION"
+   ],
+   "UNSUPPORTED_ATTACH_TRIGGER_ORDER": [
+    "UNSUPPORTED_ATTACH_TRIGGER_ORDER"
+   ],
+   "UNSUPPORTED_ATTACK": [
+    "UNSUPPORTED_ATTACK"
+   ],
+   "UNSUPPORTED_ATTACK_SOURCE_LEFT_PLAY": [
+    "UNSUPPORTED_ATTACK_SOURCE_LEFT_PLAY"
+   ],
+   "UNSUPPORTED_BENCH_GUARD_OUTSIDE_ATTACK": [
+    "UNSUPPORTED_BENCH_GUARD_OUTSIDE_ATTACK"
+   ],
+   "UNSUPPORTED_BERRY_ORDER_LIMIT": [
+    "UNSUPPORTED_BERRY_ORDER_LIMIT"
+   ],
+   "UNSUPPORTED_CARD": [
+    "UNSUPPORTED_CARD"
+   ],
+   "UNSUPPORTED_COLOR_READINGS_LIMIT": [
+    "UNSUPPORTED_COLOR_READINGS_LIMIT"
+   ],
+   "UNSUPPORTED_CONVENTION_SET": [
+    "UNSUPPORTED_CONVENTION_SET"
+   ],
+   "UNSUPPORTED_COPIED_ATTACK": [
+    "UNSUPPORTED_COPIED_ATTACK"
+   ],
+   "UNSUPPORTED_DAMAGE_OPTION_ELEMENT": [
+    "UNSUPPORTED_DAMAGE_OPTION_ELEMENT"
+   ],
+   "UNSUPPORTED_DAMAGE_REDUCTION_DECISION": [
+    "UNSUPPORTED_DAMAGE_REDUCTION_DECISION"
+   ],
+   "UNSUPPORTED_DAMAGE_STEP_ORDER": [
+    "UNSUPPORTED_DAMAGE_STEP_ORDER"
+   ],
+   "UNSUPPORTED_DECISION": [
+    "UNSUPPORTED_DECISION"
+   ],
+   "UNSUPPORTED_ENERGY_DRAIN_DECISION": [
+    "UNSUPPORTED_ENERGY_DRAIN_DECISION"
+   ],
+   "UNSUPPORTED_ENERGY_REACTION_DURING_ATTACK": [
+    "UNSUPPORTED_ENERGY_REACTION_DURING_ATTACK"
+   ],
+   "UNSUPPORTED_ESP_CONTINUATION": [
+    "UNSUPPORTED_ESP_CONTINUATION"
+   ],
+   "UNSUPPORTED_EVOLUTION": [
+    "UNSUPPORTED_EVOLUTION"
+   ],
+   "UNSUPPORTED_EVOLUTION_LINEAGE": [
+    "UNSUPPORTED_EVOLUTION_LINEAGE"
+   ],
+   "UNSUPPORTED_FACE_UP_DECK_PATH": [
+    "UNSUPPORTED_FACE_UP_DECK_PATH"
+   ],
+   "UNSUPPORTED_HISTORY_DAMAGE_PLACE_UNKNOWN": [
+    "UNSUPPORTED_HISTORY_DAMAGE_PLACE_UNKNOWN"
+   ],
+   "UNSUPPORTED_HISTORY_TURN_RECORD_MISSING": [
+    "UNSUPPORTED_HISTORY_TURN_RECORD_MISSING"
+   ],
+   "UNSUPPORTED_LEGACY_PREFLIGHT": [
+    "UNSUPPORTED_LEGACY_PREFLIGHT"
+   ],
+   "UNSUPPORTED_LEGEND_BODY_PENDING_DISCARD": [
+    "UNSUPPORTED_LEGEND_BODY_PENDING_DISCARD"
+   ],
+   "UNSUPPORTED_MAX_HP_DROP_DURING_ATTACK": [
+    "UNSUPPORTED_MAX_HP_DROP_DURING_ATTACK"
+   ],
+   "UNSUPPORTED_MIRACLE_ENERGY_DURING_EFFECT": [
+    "UNSUPPORTED_MIRACLE_ENERGY_DURING_EFFECT"
+   ],
+   "UNSUPPORTED_MIRROR_MOVE_ATTACK": [
+    "UNSUPPORTED_MIRROR_MOVE_ATTACK"
+   ],
+   "UNSUPPORTED_MIRROR_MOVE_EFFECT": [
+    "UNSUPPORTED_MIRROR_MOVE_EFFECT"
+   ],
+   "UNSUPPORTED_POKEMON_CHECK_CHAR_COINS": [
+    "UNSUPPORTED_POKEMON_CHECK_CHAR_COINS"
+   ],
+   "UNSUPPORTED_POKEMON_POWER": [
+    "UNSUPPORTED_POKEMON_POWER"
+   ],
+   "UNSUPPORTED_PREFLIGHT_LIMIT": [
+    "UNSUPPORTED_PREFLIGHT_LIMIT"
+   ],
+   "UNSUPPORTED_PURSUIT_DAMAGE_REACTION": [
+    "UNSUPPORTED_PURSUIT_DAMAGE_REACTION"
+   ],
+   "UNSUPPORTED_QUIZ_HEIGHT_NOT_AVAILABLE": [
+    "UNSUPPORTED_QUIZ_HEIGHT_NOT_AVAILABLE"
+   ],
+   "UNSUPPORTED_QUIZ_HEIGHT_WITHOUT_DEX": [
+    "UNSUPPORTED_QUIZ_HEIGHT_WITHOUT_DEX"
+   ],
+   "UNSUPPORTED_SECRET_PLAN_IDENTITIES": [
+    "UNSUPPORTED_SECRET_PLAN_IDENTITIES"
+   ],
+   "UNSUPPORTED_SECRET_PLAN_LOST_TARGET": [
+    "UNSUPPORTED_SECRET_PLAN_LOST_TARGET"
+   ],
+   "UNSUPPORTED_SUDDEN_DEATH_INITIAL_DECK": [
+    "UNSUPPORTED_SUDDEN_DEATH_INITIAL_DECK"
+   ],
+   "UNSUPPORTED_TRAINER": [
+    "UNSUPPORTED_TRAINER"
+   ],
+   "UNSUPPORTED_TRANSFORM_COPIED_POWER": [
+    "UNSUPPORTED_TRANSFORM_COPIED_POWER"
+   ],
+   "UNSUPPORTED_UNBOUNDED_COIN_PREFLIGHT": [
+    "UNSUPPORTED_UNBOUNDED_COIN_PREFLIGHT"
+   ]
+  },
+  "scenes": [
+   {
+    "codes": [],
+    "entry_kind": "technical_limit",
+    "id": "GAP-ANSWER-SEARCH-FAIL-OPEN"
+   },
+   {
+    "codes": [],
+    "entry_kind": "terminal_limitation",
+    "id": "GAP-DEFERRED-HALT-NO-RESUME"
+   },
+   {
+    "codes": [],
+    "entry_kind": "preflight_overrejection",
+    "id": "GAP-PRESENT-CORRELATED-OUTCOMES"
+   },
+   {
+    "codes": [],
+    "entry_kind": "data_limitation",
+    "id": "GAP-QUIZ-REFERENCE-DATA"
+   },
+   {
+    "codes": [],
+    "entry_kind": "preflight_overrejection",
+    "id": "GAP-SLOWKING-DECLINE-OVERREJECTION"
+   },
+   {
+    "codes": [],
+    "entry_kind": "technical_limit",
+    "id": "GAP-UNTIL-TAILS-RESOURCE-BOUND"
+   },
+   {
+    "codes": [],
+    "entry_kind": "technical_limit",
+    "id": "LIMIT:COLOR_READINGS_LIMIT"
+   },
+   {
+    "codes": [],
+    "entry_kind": "technical_limit",
+    "id": "LIMIT:MAX_BRANCHES"
+   },
+   {
+    "codes": [],
+    "entry_kind": "technical_limit",
+    "id": "LIMIT:MAX_CHAR_COINS"
+   },
+   {
+    "codes": [],
+    "entry_kind": "technical_limit",
+    "id": "LIMIT:MAX_INFLUENTIAL_BERRIES"
+   },
+   {
+    "codes": [],
+    "entry_kind": "representation_limit",
+    "id": "LIMIT:VALUE_ANSWER_MAX"
+   },
+   {
+    "codes": [],
+    "entry_kind": "technical_limit",
+    "id": "LIMIT:_ALTERNATIVE_ANSWER_LIMIT"
+   },
+   {
+    "codes": [],
+    "entry_kind": "technical_limit",
+    "id": "LIMIT:_IDENTITY_TRIAL_LIMIT"
+   },
+   {
+    "codes": [],
+    "entry_kind": "silent_information_leak",
+    "id": "PSP-COCOON-DV2-ORACLE"
+   },
+   {
+    "codes": [],
+    "entry_kind": "information_leak_candidate",
+    "id": "PSP-DECK-CONTENT-PRECHECKS"
+   },
+   {
+    "codes": [],
+    "entry_kind": "silent_information_leak",
+    "id": "PSP-INCREASE-ENTRY-PW3-ORACLE"
+   },
+   {
+    "codes": [],
+    "entry_kind": "metadata_limitation",
+    "id": "RESEARCH-ALIGNMENT-NOT-LATEST"
+   },
+   {
+    "codes": [],
+    "entry_kind": "codeless_question",
+    "id": "RESEARCH:bench_guard_element"
+   },
+   {
+    "codes": [],
+    "entry_kind": "codeless_question",
+    "id": "RESEARCH:earthdrill_copied_use"
+   },
+   {
+    "codes": [],
+    "entry_kind": "codeless_question",
+    "id": "RESEARCH:esp_separate_coin_tosses"
+   },
+   {
+    "codes": [],
+    "entry_kind": "codeless_question",
+    "id": "RESEARCH:flee_then_damage"
+   },
+   {
+    "codes": [],
+    "entry_kind": "codeless_question",
+    "id": "RESEARCH:ko_prevention_self_effect"
+   },
+   {
+    "codes": [],
+    "entry_kind": "fallback_review",
+    "id": "REVIEW-BENCH-LIMIT-FALLBACK"
+   },
+   {
+    "codes": [],
+    "entry_kind": "fallback_review",
+    "id": "REVIEW-LASTING-EFFECT-PASS"
+   },
+   {
+    "codes": [],
+    "entry_kind": "out_of_scope",
+    "id": "SCOPE-SPECIAL-RULES"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ALL_CLEAR_ATTACK_SOURCE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ALL_CLEAR_ATTACK_SOURCE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ALL_CLEAR_FOSSIL_IN_PLAY"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ALL_CLEAR_FOSSIL_IN_PLAY"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ALL_CLEAR_OTHER_EFFECTS"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ALL_CLEAR_OTHER_EFFECTS"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ALL_PURPOSE_POWDER_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ALL_PURPOSE_POWDER_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ATTACH_AFTER_POWER_ATTACH"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ATTACH_AFTER_POWER_ATTACH"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ATTACH_BLOCK_SCOPE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ATTACH_BLOCK_SCOPE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ATTACH_FROM_DISCARD_ZERO"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ATTACH_FROM_DISCARD_ZERO"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ATTACH_TRIGGER_SCOPE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ATTACH_TRIGGER_SCOPE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ATTACK_CHECK_CONFUSION"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ATTACK_CHECK_CONFUSION"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ATTACK_DECK_TOP_SHORT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ATTACK_DECK_TOP_SHORT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ATTACK_HAND_BENCH_REACTION"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ATTACK_HAND_BENCH_REACTION"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_BABY_RULE_COIN_ORDER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_BABY_RULE_COIN_ORDER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_BALLOON_BERRY_FAILED_RETREAT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_BALLOON_BERRY_FAILED_RETREAT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_BENCH_COIN_TRANSPARENCY_ORDER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_BENCH_COIN_TRANSPARENCY_ORDER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_BENCH_DAMAGE_WEAKNESS_RESISTANCE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_BENCH_DAMAGE_WEAKNESS_RESISTANCE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_BENCH_GUARD_RECOMPUTE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_BENCH_GUARD_RECOMPUTE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_BENCH_GUARD_ZERO_DAMAGE_REACTION"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_BENCH_GUARD_ZERO_DAMAGE_REACTION"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_BENCH_TARGETS_ZERO_CHOICE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_BENCH_TARGETS_ZERO_CHOICE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_BLAINES_QUIZ_WITHOUT_POKEMON"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_BLAINES_QUIZ_WITHOUT_POKEMON"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_BLAINE_SECOND_ATTACH"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_BLAINE_SECOND_ATTACH"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_BOLT_DURING_OWN_ATTACK"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_BOLT_DURING_OWN_ATTACK"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_BREEDER_ON_PLAY_AS_POKEMON"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_BREEDER_ON_PLAY_AS_POKEMON"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_BUZZAP_COLOR"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_BUZZAP_COLOR"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_BUZZAP_DISGUISED"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_BUZZAP_DISGUISED"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_BUZZAP_ENERGY_CARD_TYPE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_BUZZAP_ENERGY_CARD_TYPE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_BUZZAP_OPPONENT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_BUZZAP_OPPONENT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_CALMING_AROMA_RETALIATION"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_CALMING_AROMA_RETALIATION"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_CELADON_GYM_WITHOUT_CONDITION"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_CELADON_GYM_WITHOUT_CONDITION"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_CHAOS_GYM_BORROWED_TURN"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_CHAOS_GYM_BORROWED_TURN"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_CHARITY_BELOW_ZERO"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_CHARITY_BELOW_ZERO"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_CHOSEN_ACTIVE_EXTRA_DAMAGE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_CHOSEN_ACTIVE_EXTRA_DAMAGE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_CLAMPING_JAW_SOURCE_DEVOLVED"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_CLAMPING_JAW_SOURCE_DEVOLVED"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_COLOR_CHANGED_ENERGY_CARD"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_COLOR_CHANGED_ENERGY_CARD"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_COLOR_EFFECT_CONTINUATION"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_COLOR_EFFECT_CONTINUATION"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_COLOR_MARKER_PRECEDENCE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_COLOR_MARKER_PRECEDENCE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_COLOR_REPLACEMENT_ORDER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_COLOR_REPLACEMENT_ORDER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_COMMAND_DAMAGE_SCOPE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_COMMAND_DAMAGE_SCOPE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_CONDUCTIVITY_MULTIPLE_SOURCES"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_COPIED_ATTACK"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_COPIED_ATTACK"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_COUNTER_TRANSFER_PROTECTED"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_COUNTER_TRANSFER_PROTECTED"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DAMAGE_GUARD_OVERLAP"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DAMAGE_GUARD_OVERLAP"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DAMAGE_TRIGGER_TIMING"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DAMAGE_TRIGGER_TIMING"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DARK_PULSE_TIMING"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DARK_PULSE_TIMING"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DARK_WAVE_KNOCKED_OUT_POWER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DARK_WAVE_KNOCKED_OUT_POWER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DARK_WAVE_NEW_POKEMON"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DARK_WAVE_NEW_POKEMON"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DARK_WAVE_PROTECTED_POKEMON"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DARK_WAVE_PROTECTED_POKEMON"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DECK_TOP_SHORT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DECK_TOP_SHORT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DESTINY_BOND_KNOCKOUT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DESTINY_BOND_KNOCKOUT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DEVOLUTION_INTERMEDIATE_KNOCKOUT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DEVOLUTION_INTERMEDIATE_KNOCKOUT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DEVOLUTION_SPRAY_HYPER_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DEVOLUTION_SPRAY_HYPER_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DEVOLUTION_SPRAY_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DEVOLUTION_SPRAY_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DEVOLUTION_TARGET_DISGUISED"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DEVOLUTION_TARGET_DISGUISED"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DISCARDED_ENERGY_DAMAGE_BONUS"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DISCARDED_ENERGY_DAMAGE_BONUS"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DISCARD_ANY_NUMBER_ZERO"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DISCARD_ANY_NUMBER_ZERO"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DISCARD_DECK_SHORT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DISCARD_DECK_SHORT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DISCARD_ENERGY_TIMING"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DISCARD_ENERGY_TIMING"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DISCARD_PROTECTED_COIN"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DISCARD_PROTECTED_COIN"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DISCARD_PROTECTED_POWER_USE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DISCARD_PROTECTED_POWER_USE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DISCARD_UP_TO_ZERO"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DISCARD_UP_TO_ZERO"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DOUBLED_DAMAGE_POWER_DAMAGE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DOUBLED_DAMAGE_POWER_DAMAGE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE"
+   },
+   {
+    "codes": [],
+    "entry_kind": "test_tool_only_code",
+    "id": "UNRESOLVED_EFFECT_AFTER_NO_DAMAGES"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ENERGY_BURN_TRANSFER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ENERGY_BURN_TRANSFER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ENERGY_DRAIN_ATTACKER_KNOCKED_OUT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ENERGY_DRAIN_ATTACKER_KNOCKED_OUT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ENERGY_DRAIN_NO_ENERGY"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ENERGY_DRAIN_NO_ENERGY"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ENERGY_REMOVAL_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ENERGY_REMOVAL_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ENERGY_STADIUM_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ENERGY_STADIUM_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ENGAGE_EMPTY_HAND"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ENGAGE_EMPTY_HAND"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ENTRY_POWER_DURING_ATTACK"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ENTRY_POWER_DURING_ATTACK"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ESP_COPIED_ATTACK_COINS"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ESP_COPIED_ATTACK_COINS"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ESP_HOLDER_NOT_SABRINAS"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ESP_HOLDER_NOT_SABRINAS"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ESP_LEFT_BEFORE_COIN"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ESP_LEFT_BEFORE_COIN"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ESP_MULTIPLE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ESP_MULTIPLE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ESP_OPPONENT_COIN_TOSS"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ESP_OPPONENT_COIN_TOSS"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_EVADED_EFFECT_COIN"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_EVADED_EFFECT_COIN"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_EVOLUTION_HP"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_EVOLUTION_HP"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK#coin-evolve-self-from-deck"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK#other"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_EVOLVE_AFTER_DEVOLUTION"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_EVOLVE_AFTER_DEVOLUTION"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_EXTRA_ENERGY_COLORLESS"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_EXTRA_ENERGY_COLORLESS"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_FACE_UP_DECK_CHECK"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_FACE_UP_DECK_CHECK"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_FACE_UP_DECK_HIDDEN_TAKE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_FACE_UP_DECK_HIDDEN_TAKE#decision-halt"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_FACE_UP_DECK_HIDDEN_TAKE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_FACE_UP_DECK_HIDDEN_TAKE#draw"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_FACE_UP_DECK_HIDDEN_TAKE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_FACE_UP_DECK_HIDDEN_TAKE#quiz-precheck"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_FACE_UP_DECK_LOOK_RETURN"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_FACE_UP_DECK_LOOK_RETURN"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_FACE_UP_DECK_MOVE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_FACE_UP_DECK_MOVE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_FACE_UP_DECK_PLACE_TOP"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_FACE_UP_DECK_PLACE_TOP"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_FERVOR_RAINBOW_ENERGY"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_FERVOR_RAINBOW_ENERGY"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_FLASH_DECK_SHORT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_FLASH_DECK_SHORT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_FLEE_DURING_OWN_ATTACK"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_FLEE_DURING_OWN_ATTACK"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_FOCUS_BAND_TIMING"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_FOCUS_BAND_TIMING"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_FOSSILIZE_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_FOSSILIZE_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_FOSSIL_EVOLVED_READING"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_FOSSIL_EVOLVED_READING"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_FOSSIL_GUIDE_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_FOSSIL_GUIDE_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_FUCHSIA_GYM_AFTER_REPLACEMENT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_FUCHSIA_GYM_AFTER_REPLACEMENT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_FUCHSIA_GYM_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_FUCHSIA_GYM_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_FULL_HEAL_SCOPE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_FULL_HEAL_SCOPE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_FULL_HEAL_WITHOUT_CONDITION"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_FULL_HEAL_WITHOUT_CONDITION"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_FULL_RECOVERY_COUNTERS"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_FULL_RECOVERY_COUNTERS"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_GOOP_GAS_NEW_POKEMON"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_GOOP_GAS_NEW_POKEMON"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_GROUP_POWER_COIN_ORDER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_GROUP_POWER_COIN_ORDER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_GROWL_NON_ATTACK_DAMAGE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_GROWL_NON_ATTACK_DAMAGE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_HAND_TRAINER_LOCK_BORROW"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_HAND_TRAINER_LOCK_BORROW"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_HARD_SHELL_NONPOSITIVE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_HARD_SHELL_NONPOSITIVE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_HEALING_FIELD_WITHOUT_DAMAGE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_HEALING_FIELD_WITHOUT_DAMAGE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_HEAL_UP_TO_ZERO"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_HEAL_UP_TO_ZERO"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_HELPING_HAND_CHOICE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_HELPING_HAND_CHOICE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_HELPING_HAND_WITHOUT_CONDITION"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_HELPING_HAND_WITHOUT_CONDITION"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_HOT_PLATE_BABY_EVOLUTION"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_HOT_PLATE_BABY_EVOLUTION"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_HOT_PLATE_FACE_DOWN"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_HOT_PLATE_FACE_DOWN"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_HOWL_OUTSIDE_OWN_TURN"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_HOWL_OUTSIDE_OWN_TURN"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_HYPER_TEXTURE_UNMARKED_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_HYPER_TEXTURE_UNMARKED_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_IGNORED_EFFECTS_SCOPE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_IGNORED_EFFECTS_SCOPE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_INFLATE_NON_ATTACK_DAMAGE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_INFLATE_NON_ATTACK_DAMAGE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_JAW_CLAMP_SOURCE_EVOLVED"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_JAW_CLAMP_SOURCE_EVOLVED"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_JAW_CLAMP_SOURCE_RETURNED"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_JAW_CLAMP_SOURCE_RETURNED"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_KEEP_DETACHED_ENERGY_DISCARD"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_KEEP_DETACHED_ENERGY_DISCARD"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_KEEP_PROTECTED_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_KEEP_PROTECTED_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_KEEP_VOIDED_DISCARD_COIN"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_KEEP_VOIDED_DISCARD_COIN"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_KOGA_POISON_ORDER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_KOGA_POISON_ORDER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_KO_PREVENTION_ORDER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_KO_PREVENTION_ORDER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_KO_SURVIVAL_OVERLAP"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_KO_SURVIVAL_OVERLAP"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_KO_SURVIVAL_TIMING"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_KO_SURVIVAL_TIMING"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_LAST_RESORT_UNDAMAGED_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_LAST_RESORT_UNDAMAGED_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_LAST_RESORT_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_LAST_RESORT_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_LEAVE_LOCK_KNOCKOUT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_LEAVE_LOCK_KNOCKOUT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_LEAVE_LOCK_NO_EFFECT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_LEAVE_LOCK_NO_EFFECT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_LEAVE_LOCK_SCRAM"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_LEAVE_LOCK_SCRAM"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_LEGEND_BODY_GOOP_GAS"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_LEGEND_BODY_GOOP_GAS"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_LEGEND_BODY_TRAINER_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_LEGEND_BODY_TRAINER_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_LIGHTNING_BOLT_DEFENDER_UNITS"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_LIGHTNING_BOLT_DEFENDER_UNITS"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_LOCK_ON_PROTECTED_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_LOCK_ON_PROTECTED_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_LT_SURGE_WITHOUT_BASIC"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_LT_SURGE_WITHOUT_BASIC"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_LUCKY_STADIUM_UNSTATED_REPEAT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_LUCKY_STADIUM_UNSTATED_REPEAT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MASTER_BALL_SHORT_DECK"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MASTER_BALL_SHORT_DECK"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MAX_HP_DROP"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MAX_HP_DROP"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MAX_HP_SET_AND_INCREASE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MAX_HP_SET_AND_INCREASE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MAX_REVIVE_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MAX_REVIVE_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MEAN_LOOK_SOURCE_EVOLVED"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MEAN_LOOK_SOURCE_EVOLVED"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_METAL_ENERGY_POWER_ORDER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_METAL_ENERGY_POWER_ORDER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MIND_GAMES_BLOCKED_TURN_END"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MIND_GAMES_BLOCKED_TURN_END"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MIND_GAMES_CHAOS_GYM_ORDER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MIND_GAMES_CHAOS_GYM_ORDER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MIND_GAMES_PLAY_AS_POKEMON"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MIND_GAMES_PLAY_AS_POKEMON"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MINEFIELD_DAMAGE_RECEIVED_POWER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MINEFIELD_DAMAGE_RECEIVED_POWER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MIRACLE_ENERGY_AS_TYPE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MIRACLE_ENERGY_AS_TYPE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MIRACLE_ENERGY_UNDER_WIND"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MIRACLE_ENERGY_UNDER_WIND"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MIRACULOUS_WIND_CONVERTED_ENERGY"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MIRACULOUS_WIND_CONVERTED_ENERGY"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MIRACULOUS_WIND_ENERGY_BURN"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MIRACULOUS_WIND_ENERGY_BURN"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MIRROR_MOVE_ATTACK_CONDITIONS"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MIRROR_MOVE_ATTACK_CONDITIONS"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MIRROR_MOVE_LASTING_EFFECT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MIRROR_MOVE_LASTING_EFFECT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MIRROR_MOVE_NON_ATTACK"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MIRROR_MOVE_NON_ATTACK"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MIRROR_MOVE_RECEIVED_ATTACK"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MIRROR_MOVE_RECEIVED_ATTACK"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MISTYS_CARE_OPPONENT_LAPRAS"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MISTYS_CARE_OPPONENT_LAPRAS"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MISTYS_CARE_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MISTYS_CARE_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MISTYS_WISH_WITHOUT_HAND"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MISTYS_WISH_WITHOUT_HAND"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MISTYS_WRATH_SHORT_DECK"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MISTYS_WRATH_SHORT_DECK"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MISTY_SELF_DAMAGE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MISTY_SELF_DAMAGE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MOOMOO_MILK_UNDAMAGED_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MOOMOO_MILK_UNDAMAGED_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MR_FUJI_WITHOUT_BENCH"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MR_FUJI_WITHOUT_BENCH"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MULLIGAN_COMPENSATION"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MULLIGAN_COMPENSATION#initial-setup"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MULLIGAN_COMPENSATION"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MULLIGAN_COMPENSATION#sudden-death-segment"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MULTIPLE_ATTACK_CHECKS"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MULTIPLE_ATTACK_CHECKS"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_NEO_TEXT_BASIC_BABY"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_NEO_TEXT_BASIC_BABY"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_NEO_TEXT_EVOLUTION_CARD_BABY"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_NEO_TEXT_EVOLUTION_CARD_BABY"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_NIGHTLY_GARBAGE_RUN_ZERO_CHOICE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_NIGHTLY_GARBAGE_RUN_ZERO_CHOICE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_NINJA_GYM_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_NINJA_GYM_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_NINJA_TRICK_ATTACK_COIN_ORDER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_NINJA_TRICK_ATTACK_COIN_ORDER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_NINJA_TRICK_LEAVES_WITH_POKEMON"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_NINJA_TRICK_LEAVES_WITH_POKEMON"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_NINJA_TRICK_UNDER_TRAINER_BAN"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_NINJA_TRICK_UNDER_TRAINER_BAN"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_OLD_ROD_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_OLD_ROD_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_OPPONENT_POKEMON_COUNTERS"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_OPPONENT_POKEMON_COUNTERS"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_PERFORM_DAMAGE_PLACES"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_PERFORM_DAMAGE_PLACES"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_PERISH_SONG_RECEIVED_ATTACK"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_PERISH_SONG_RECEIVED_ATTACK"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_PERMITTED_ATTACK_HELD"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_PERMITTED_ATTACK_HELD"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_PLAY_AS_POKEMON_RETREAT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_PLAY_AS_POKEMON_RETREAT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_PLAY_AS_POKEMON_SETUP"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_PLAY_AS_POKEMON_SETUP#initial-setup"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_PLAY_AS_POKEMON_SETUP"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_PLAY_AS_POKEMON_SETUP#sudden-death-segment"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POISON_CHANGE_ORDER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POISON_CHANGE_ORDER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POISON_DAMAGE_RECEIVED_POWER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POISON_DAMAGE_RECEIVED_POWER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POISON_MIST_EARLIER_POISON"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POISON_MIST_EARLIER_POISON"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POISON_MIST_SOURCE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POISON_MIST_SOURCE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POKEDEX_UP_TO_ZERO"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POKEDEX_UP_TO_ZERO"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POKEMON_CHECK_BERRY_ORDER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POKEMON_CHECK_BERRY_ORDER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POKEMON_CHECK_CHAR_COIN_ORDER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POKEMON_CHECK_CHAR_COIN_ORDER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POKEMON_FLUTE_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POKEMON_FLUTE_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POKEMON_TOWER_POWER_WITHOUT_EFFECT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POKEMON_TOWER_POWER_WITHOUT_EFFECT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POKEMON_TOWER_TRAINER_WITHOUT_EFFECT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POKEMON_TOWER_TRAINER_WITHOUT_EFFECT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POST_KNOCKOUT_POWERS_ORDER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POST_KNOCKOUT_POWERS_ORDER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POTION_UNDAMAGED_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POTION_UNDAMAGED_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POTION_WITHOUT_DAMAGE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POTION_WITHOUT_DAMAGE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POWER_COUNTER_MOVE_TO_SAME_POKEMON"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POWER_COUNTER_MOVE_TO_SAME_POKEMON"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POWER_COUNTER_MOVE_WITHOUT_COUNTERS"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POWER_COUNTER_MOVE_WITHOUT_COUNTERS"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POWER_DAMAGE_PREVENTED"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POWER_DAMAGE_PREVENTED"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POWER_DAMAGE_RECEIVED_POWER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POWER_DAMAGE_RECEIVED_POWER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POWER_DAMAGE_WEAKNESS_RESISTANCE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POWER_DAMAGE_WEAKNESS_RESISTANCE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POWER_DECK_TOP_SHORT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POWER_DECK_TOP_SHORT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POWER_DISCARD_WITHOUT_HAND"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POWER_DISCARD_WITHOUT_HAND"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POWER_HEAL_WITHOUT_DAMAGE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POWER_HEAL_WITHOUT_DAMAGE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POWER_RETURN_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POWER_RETURN_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POWER_REUSE_AFTER_DEVOLUTION"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POWER_REUSE_AFTER_DEVOLUTION"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POWER_SWITCH_WITHOUT_OPPONENT_BENCH"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POWER_SWITCH_WITHOUT_OPPONENT_BENCH"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_POWER_ZERO_CARDS"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_POWER_ZERO_CARDS"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_PREVENTED_COIN_DAMAGE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_PREVENTED_COIN_DAMAGE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_PREVENTED_EFFECT_COIN"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_PREVENTED_EFFECT_COIN"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_PRE_EVOLUTION_ATTACK_CONDITIONS"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_PRE_EVOLUTION_ATTACK_CONDITIONS"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_PRE_EVOLUTION_ATTACK_STAGE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_PRE_EVOLUTION_ATTACK_STAGE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_PRIMAL_DREAM_DAMAGE_STEP"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_PRIMAL_DREAM_DAMAGE_STEP"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_PRIMAL_DREAM_SUPPRESSED"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_PRIMAL_DREAM_SUPPRESSED"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_PROTECTIVE_FLAME_SCOPE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_PROTECTIVE_FLAME_SCOPE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_QUICKEN_EFFECT_SUPPRESSED"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_QUICKEN_EFFECT_SUPPRESSED"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_RAINBOW_ATTACH_AS_TYPE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_RAINBOW_ATTACH_AS_TYPE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_RAINBOW_DAMAGE_RECEIVED_POWER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_RAINBOW_DAMAGE_RECEIVED_POWER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_RAINBOW_ENERGY_TYPE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_RAINBOW_ENERGY_TYPE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_RAINBOW_RECOVER_AS_TYPE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_RAINBOW_RECOVER_AS_TYPE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_REACTION_AFTER_KNOCKOUT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_REACTION_AFTER_KNOCKOUT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_REACTION_BY_KNOCKED_OUT_POKEMON"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_REACTION_BY_KNOCKED_OUT_POKEMON"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_REACTION_CONDITION_CHANGED"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_REACTION_CONDITION_CHANGED"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_REACTIVE_SWITCH_TRANSFORMED_ATTACKER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_REACTIVE_SWITCH_TRANSFORMED_ATTACKER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_RECALL_EARLIER_STAGE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_RECALL_EARLIER_STAGE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_RECALL_FORM"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_RECALL_FORM"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_RECALL_TARGET_CHANGED"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_RECALL_TARGET_CHANGED"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_RECALL_WITHOUT_PRE_EVOLUTION_ATTACK"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_RECALL_WITHOUT_PRE_EVOLUTION_ATTACK"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_RECOVER_ZERO_ENERGY"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_RECOVER_ZERO_ENERGY"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_REFLECT_SHIELD_OVERLAP"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_REFLECT_SHIELD_OVERLAP"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_REFLECT_SHIELD_TIMING"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_REFLECT_SHIELD_TIMING"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_REPARALYSIS_RECOVERY_TURN"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_REPARALYSIS_RECOVERY_TURN"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_RETREAT_COST_FLOOR"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_RETREAT_COST_FLOOR"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_RETREAT_OVERPAY"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_RETREAT_OVERPAY"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_RETREAT_REACTION_TIMING"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_RETREAT_REACTION_TIMING"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_RETURN_IN_PLAY_TO_DECK_KNOCKOUT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_RETURN_IN_PLAY_TO_DECK_KNOCKOUT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_REVIVED_BASIC_DEVOLVED"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_REVIVED_BASIC_DEVOLVED"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_REVIVE_HAND_BASIC_ENTRY"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_REVIVE_HAND_BASIC_ENTRY"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_REVIVE_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_REVIVE_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ROCKETS_TRAP_ZERO_CHOICE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ROCKETS_TRAP_ZERO_CHOICE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_ROCKET_GRUNT_WITHOUT_BENCH"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_ROCKET_GRUNT_WITHOUT_BENCH"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_RULING"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNRESOLVED_RULING"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SABRINA_SOURCE_WITHOUT_ENERGY"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SABRINA_SOURCE_WITHOUT_ENERGY"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SABRINA_WITHOUT_TWO_POKEMON"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SABRINA_WITHOUT_TWO_POKEMON"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SCARE_SUPPRESSION_CYCLE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SCARE_SUPPRESSION_CYCLE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SCOOP_UP_ATTACHED_TRAINER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SCOOP_UP_ATTACHED_TRAINER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SCOOP_UP_LAST_POKEMON"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SCOOP_UP_LAST_POKEMON"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SCRAM_POWER_RESTORED"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SCRAM_POWER_RESTORED"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SCRAM_TIMING"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SCRAM_TIMING#command"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SCRAM_TIMING"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SCRAM_TIMING#pokemon-check"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET#deck"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET#discard"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SECRETE_POISON_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SECRETE_POISON_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SECRET_PLAN_MINEFIELD"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SECRET_PLAN_MINEFIELD"
+   },
+   {
+    "codes": [],
+    "entry_kind": "test_tool_only_code",
+    "id": "UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SHAPESHIFT_AGAIN"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SHAPESHIFT_AGAIN"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SHAPESHIFT_ENTRY_POWER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SHAPESHIFT_ENTRY_POWER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SHAPESHIFT_SUPPRESSED"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SHAPESHIFT_SUPPRESSED"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SHELL_ARMOR_TIMING"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SHELL_ARMOR_TIMING"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SHIFT_COLOR_DURATION"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SHIFT_COLOR_DURATION"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SINKHOLE_TIMING"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SINKHOLE_TIMING"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SKETCH_COPIED_ATTACK"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SKETCH_COPIED_ATTACK"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SKETCH_PRESENCE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SKETCH_PRESENCE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SOLAR_POWER_WITHOUT_CONDITION"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SOLAR_POWER_WITHOUT_CONDITION"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SPECIAL_POISON_OVERWRITE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SPECIAL_POISON_OVERWRITE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SPEED_STAR_SCOPE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SPEED_STAR_SCOPE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_STADIUM_ACTIVATION_UNDER_TRAINER_BAN"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_STADIUM_ACTIVATION_UNDER_TRAINER_BAN"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_STATED_CARDS_SHORT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_STATED_CARDS_SHORT#deck-contents"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_STATED_CARDS_SHORT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_STATED_CARDS_SHORT#public-counts"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_STOPPED_POWER_HOLDER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_STOPPED_POWER_HOLDER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_STRANGE_GAS_NEW_POKEMON"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_STRANGE_GAS_NEW_POKEMON"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_STRANGE_GAS_PROTECTED_POKEMON"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_STRANGE_GAS_PROTECTED_POKEMON"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_ZERO_CHOICE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_ZERO_CHOICE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SUPER_POTION_UNDAMAGED_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SUPER_POTION_UNDAMAGED_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SUPER_ROD_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SUPER_ROD_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SUPER_TRANSFORM_COPIED_POWER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SUPER_TRANSFORM_COPIED_POWER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SUPER_TRANSFORM_ENERGY_COLORS"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SUPER_TRANSFORM_ENERGY_COLORS"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SUPER_TRANSFORM_SOURCE_CHANGE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SUPER_TRANSFORM_SOURCE_CHANGE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SUPER_TRANSFORM_SUPPRESSED_FORM"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SUPER_TRANSFORM_SUPPRESSED_FORM"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SUPER_TRANSFORM_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SUPER_TRANSFORM_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_SWITCH_WITHOUT_BENCH"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_SWITCH_WITHOUT_BENCH"
+   },
+   {
+    "codes": [],
+    "entry_kind": "test_tool_only_code",
+    "id": "UNRESOLVED_TEST"
+   },
+   {
+    "codes": [],
+    "entry_kind": "test_tool_only_code",
+    "id": "UNRESOLVED_TEST_AFTER_COIN"
+   },
+   {
+    "codes": [],
+    "entry_kind": "test_tool_only_code",
+    "id": "UNRESOLVED_TEST_EFFECT"
+   },
+   {
+    "codes": [],
+    "entry_kind": "test_tool_only_code",
+    "id": "UNRESOLVED_TEST_FORM"
+   },
+   {
+    "codes": [],
+    "entry_kind": "test_tool_only_code",
+    "id": "UNRESOLVED_TEST_PREFLIGHT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_THOUGHT_WAVE_MACHINE_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_THOUGHT_WAVE_MACHINE_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_TIME_SHIFT_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_TIME_SHIFT_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_TIME_TRAVEL_OVERLAP"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_TIME_TRAVEL_OVERLAP"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_TIME_TRAVEL_TIMING"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_TIME_TRAVEL_TIMING"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_TRAINER_DAMAGE_REDUCTION"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_TRAINER_DAMAGE_REDUCTION"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET#amplifier-deck"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET#public-zones"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_TRAINER_UP_TO_ZERO_CHOICE"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_TRAINER_UP_TO_ZERO_CHOICE"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_TRAINER_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_TRAINER_WITHOUT_TARGET"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_TRANSFORM_BABY"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_TRANSFORM_BABY"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_TRANSFORM_BABY_AND_BASIC"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_TRANSFORM_BABY_AND_BASIC"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_TRANSFORM_COPIED_POWER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_TRANSFORM_COPIED_POWER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_TRANSFORM_ENERGY_COLOR_LIST"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_TRANSFORM_ENERGY_COLOR_LIST"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_TRANSFORM_ENERGY_COUNT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_TRANSFORM_ENERGY_COUNT"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_TRANSFORM_REVIVED_BASIC"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_TRANSFORM_REVIVED_BASIC"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_TRANSFORM_SPECIAL_ENERGY"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_TRANSFORM_SPECIAL_ENERGY"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_TRANSPARENCY_COIN_ORDER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_TRANSPARENCY_COIN_ORDER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_TRANSPORT_WITHOUT_CARDS"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_TRANSPORT_WITHOUT_CARDS"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_VANISH_OTHER_ATTACHED"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_VANISH_OTHER_ATTACHED"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_VERMILION_GYM_ATTACK_ORDER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_VERMILION_GYM_ATTACK_ORDER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_VINE_PULL_TIMING"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_VINE_PULL_TIMING"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_VIRIDIAN_GYM_ONE_COUNTER"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_VIRIDIAN_GYM_ONE_COUNTER"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_VIRTUAL_ASLEEP_ONLY_ATTACK"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_VIRTUAL_ASLEEP_ONLY_ATTACK"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_VIRTUAL_ONCE_ATTACK"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_VIRTUAL_ONCE_ATTACK"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_WANT_WITHOUT_TARGET"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_WANT_WITHOUT_TARGET"
+   },
+   {
+    "codes": [],
+    "entry_kind": "test_tool_only_code",
+    "id": "UNRESOLVED_X"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_ACTION"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_ACTION"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_ATTACH_TRIGGER_ORDER"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_ATTACH_TRIGGER_ORDER"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_ATTACK"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_ATTACK"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_ATTACK_SOURCE_LEFT_PLAY"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_ATTACK_SOURCE_LEFT_PLAY"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_BENCH_GUARD_OUTSIDE_ATTACK"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_BENCH_GUARD_OUTSIDE_ATTACK"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_BERRY_ORDER_LIMIT"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_BERRY_ORDER_LIMIT"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_CARD"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_CARD"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_COLOR_READINGS_LIMIT"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_COLOR_READINGS_LIMIT"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_CONVENTION_SET"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_CONVENTION_SET"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_COPIED_ATTACK"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_COPIED_ATTACK"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_DAMAGE_OPTION_ELEMENT"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_DAMAGE_OPTION_ELEMENT"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_DAMAGE_REDUCTION_DECISION"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_DAMAGE_REDUCTION_DECISION"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_DAMAGE_STEP_ORDER"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_DAMAGE_STEP_ORDER"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_DECISION"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_DECISION"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_ENERGY_DRAIN_DECISION"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_ENERGY_DRAIN_DECISION"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_ENERGY_REACTION_DURING_ATTACK"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_ENERGY_REACTION_DURING_ATTACK"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_ESP_CONTINUATION"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_ESP_CONTINUATION"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_EVOLUTION"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_EVOLUTION"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_EVOLUTION_LINEAGE"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_EVOLUTION_LINEAGE"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_FACE_UP_DECK_PATH"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_FACE_UP_DECK_PATH"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_HISTORY_DAMAGE_PLACE_UNKNOWN"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_HISTORY_DAMAGE_PLACE_UNKNOWN"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_HISTORY_TURN_RECORD_MISSING"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_HISTORY_TURN_RECORD_MISSING"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_LEGACY_PREFLIGHT"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_LEGACY_PREFLIGHT"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_LEGEND_BODY_PENDING_DISCARD"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_LEGEND_BODY_PENDING_DISCARD"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_MAX_HP_DROP_DURING_ATTACK"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_MAX_HP_DROP_DURING_ATTACK"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_MIRACLE_ENERGY_DURING_EFFECT"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_MIRACLE_ENERGY_DURING_EFFECT"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_MIRROR_MOVE_ATTACK"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_MIRROR_MOVE_ATTACK"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_MIRROR_MOVE_EFFECT"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_MIRROR_MOVE_EFFECT"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_POKEMON_CHECK_CHAR_COINS"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_POKEMON_CHECK_CHAR_COINS"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_POKEMON_POWER"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_POKEMON_POWER"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_PREFLIGHT_LIMIT"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_PREFLIGHT_LIMIT"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_PURSUIT_DAMAGE_REACTION"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_PURSUIT_DAMAGE_REACTION"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_QUIZ_HEIGHT_NOT_AVAILABLE"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_QUIZ_HEIGHT_NOT_AVAILABLE"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_QUIZ_HEIGHT_WITHOUT_DEX"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_QUIZ_HEIGHT_WITHOUT_DEX"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_SECRET_PLAN_IDENTITIES"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_SECRET_PLAN_IDENTITIES"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_SECRET_PLAN_LOST_TARGET"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_SECRET_PLAN_LOST_TARGET"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_SUDDEN_DEATH_INITIAL_DECK"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_SUDDEN_DEATH_INITIAL_DECK"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_TRAINER"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_TRAINER"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_TRANSFORM_COPIED_POWER"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_TRANSFORM_COPIED_POWER"
+   },
+   {
+    "codes": [
+     "UNSUPPORTED_UNBOUNDED_COIN_PREFLIGHT"
+    ],
+    "entry_kind": "runtime_stop_code",
+    "id": "UNSUPPORTED_UNBOUNDED_COIN_PREFLIGHT"
+   }
+  ]
+ },
+ "schema_version": 1,
+ "sources": {
+  "current_behavior": "docs/implementation-assumptions.json items（状態 adopted_current・documented_impl_unverified、区分 user_specified を除く）",
+  "scene_index": "docs/stop-policy-classification.json entries（現在有効な項目。事例のあるコードは事例）"
+ }
+}

@@ -21,6 +21,7 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, ClassVar, Mapping
 
 from .cards import FACE_DOWN_DEFINITION, CardDefinition, EnergyType
+from .conventions import UNRECORDED, default_identity
 from .rng import copy_rng
 
 if TYPE_CHECKING:
@@ -2597,6 +2598,10 @@ class GameState:
     # 所有者の変更など）を移す。空なら最初の対戦の中（v0.133 までと同じ値）。今の区間の番号は ``segment_index``、準備で置くサイドの枚数は ``initial_prize_count``。書き出しは
     # 形式 34 だけが表せる（空でなければ形式 1〜33 は ``ValueError``）。v0.133 までの状態の写し（pickle）は項目がなく、この既定値（空）になる
     segments: tuple[SegmentRecord, ...] = ()
+    # v0.142（docs/ruleset-foundation-v0.142.md 3 章）: この対戦の規約集合の識別（``conventions.ConventionSetIdentity``。変えられない値だけ）。``new_game`` が確かめた集合を置き、
+    # 対戦の中では変えない（変える操作はない）。サドン・デスの延長戦へ同じ値を引き継ぐ（``SEGMENT_FIELD_POLICY`` の keep）。盤面を直接作ったときの既定は今の挙動の集合。v0.141 までの
+    # 状態の写し（pickle）は項目がなく、``__setstate__`` が記録なし（``conventions.UNRECORDED``）を置く（旧状態として扱えるかは ``conventions.require_state_conventions`` が確かめる）
+    conventions: Any = field(default_factory=default_identity)
 
     @property
     def segment_index(self) -> int:
@@ -2660,6 +2665,8 @@ class GameState:
         data["cards"] = freeze_mapping(data["cards"])
         data["definitions"] = freeze_mapping(data["definitions"])
         data["log"] = tuple(MappingProxyType(dict(event)) for event in data["log"])
+        # v0.142: 規約集合の項目のない写し（v0.141 まで）は、記録なしの印にする（既定値の今の挙動の集合にしない。推測しない）
+        data.setdefault("conventions", UNRECORDED)
         self.__dict__.update(data)
 
     # --- 読み取り用 ---

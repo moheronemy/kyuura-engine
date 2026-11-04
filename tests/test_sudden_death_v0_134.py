@@ -156,7 +156,7 @@ class RecordTest(unittest.TestCase):
         self.assertEqual(set(sudden_death.SEGMENT_FIELD_POLICY), {f.name for f in dataclasses.fields(GameState)})
         self.assertEqual(set(sudden_death.SEGMENT_FIELD_POLICY.values()), {"keep", "continue", "rebuild", "reset"})
         self.assertEqual({k for k, v in sudden_death.SEGMENT_FIELD_POLICY.items() if v == "keep"},
-                         {"rules", "card_data", "seed", "definitions", "decklists", "effects"})
+                         {"rules", "card_data", "seed", "definitions", "decklists", "effects", "conventions"})  # v0.142: 規約集合（docs/ruleset-foundation-v0.142.md 3 章）
         self.assertEqual({k for k, v in sudden_death.SEGMENT_FIELD_POLICY.items() if v == "continue"}, {"rng"})
 
     def test_rules_and_records(self):
@@ -613,7 +613,7 @@ class SerializationTest(unittest.TestCase):
         self.assertEqual(state_to_dict(stages["before"], format_version=33), {k: v for k, v in state_to_dict(stages["before"], format_version=34).items()
                                                                               if k not in ("segment", "initial_prize_count", "segments")} | {"format_version": 33})
         for name in ("setup", "middle", "again"):
-            for version in FORMAT_VERSIONS[:-1]:
+            for version in [v for v in FORMAT_VERSIONS if v < 34]:  # v0.142: 形式 35 を加えたので、形式 34 より前（最後の 1 つを除く、ではない）
                 with self.assertRaises(ValueError):
                     state_to_dict(stages[name], format_version=version)
             data = state_to_dict(stages[name], format_version=34)
