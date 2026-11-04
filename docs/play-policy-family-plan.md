@@ -1070,3 +1070,6 @@ v0.141 の報告の訂正: v0.141 の作業の最後の報告では、停止の�
   `UNRESOLVED_POKEMON_CHECK_BERRY_ORDER` を除き、`PC-SETUP-PLAY-AS-POKEMON` に準備の配置の事例（台帳に加える案）を加えた（違いは仕様案の 5 章）
 - v0.143（[play-policy-s2a-v0.143.md](play-policy-s2a-v0.143.md)。2026-11-04）: 利用者が S2a の 5 件をまとめて採用した（「5規約をまとめて採用し、S2a-0〜4を一つの実装タスクとして進める案を採用します。」。続行側の集合の規約で、公式の裁定・研究上の解決ではない）。
   5 件は開発用の部分的な集合 `CS-KYUURA-PLAY-S2A@1` に入れ、候補の状態は `adopted`（ほかの 22 件は `proposal` のまま）。省略したときの集合 `CS-KYUURA-CURRENT@1` は変えていない。上の章の案・調査の記録は当時のまま（採用の範囲と仕様案との違いは v0.143 の文書と仕様案の 13 章）
+- v0.144（[sc2-integrity-fix-v0.144.md](sc2-integrity-fix-v0.144.md)・[poison-mist-play-policy-spec.md](poison-mist-play-policy-spec.md)。2026-11-05）: 両モード共通の不具合（ポケモンチェックのどくのきぜつで［ずらかる］の力がもどる SC2 が StateIntegrityError）を直し、ダメージの前に同じコードで止める。
+  台帳から作り直した集計は、SC2 が静的な Halt の場面に加わった差だけ（3 章の 16 → 17・12 → 11）。PO1〜PO3 の続行規約の仕様案（PC-POISON-AMOUNT-ORDER・PC-POISON-MIST-TARGETS・PC-POISON-MIST-SOURCE-LEFT。proposal・未承認）を別の文書にした。
+  この文書の候補（PC-LASTING-SOURCE-CHANGE・PC-ORDER-OVERLAP ほか）の状態・記述は変えていない。上の章の案・調査の記録は当時のまま
