@@ -1342,8 +1342,8 @@ def render_observation(plan: dict) -> str:
         lines.append(f"| `{code}` | {n} | {g} | {where(code)} |")
     if obs.get("sudden_death"):
         sd = obs["sudden_death"]
-        lines += ["", f"- サドン・デスの道具（{sd['tool']}。corpus {'・'.join(sd['corpora'])}・seed {sd['seeds']}）: 対戦 {sd['games']} 局、終わり方 {sd['outcomes']}、"
-                      f"延長戦の開始 {sd['extensions_started']} 回、延長戦の準備の HALTED {sd['halt_codes'] or 'なし'}"]
+        lines += ["", (f"- サドン・デスの道具（{sd['tool']}。corpus {'・'.join(sd['corpora'])}・seed {sd['seeds']}）: 対戦 {sd['games']} 局、終わり方 {sd['outcomes']}、"
+                       f"延長戦の開始 {sd['extensions_started']} 回、延長戦の準備の HALTED {sd['halt_codes'] or 'なし'}")]
     return "\n".join(lines)
 
 
