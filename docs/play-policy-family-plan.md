@@ -1068,3 +1068,5 @@ v0.141 の報告の訂正: v0.141 の作業の最後の報告では、停止の�
 - 2026-11-04（[play-policy-s2a-spec.md](play-policy-s2a-spec.md)・`.json`）: 利用者が S2a の進め方を承認し（具体的な続行仕様は未承認）、S2a の 5 件（`PC-SETUP-MULLIGAN-COUNT`・`PC-SETUP-PLAY-AS-POKEMON`・
   `PC-CHECK-SIDE-ORDER`・`PC-COIN-COUNT-SHORT`・`PC-CHECK-KO-POINT`）を具体化した仕様案を作った。この文書の候補はどれも `proposal` のまま（書き換えていない）。仕様案は `PC-CHECK-SIDE-ORDER` の対象から
   `UNRESOLVED_POKEMON_CHECK_BERRY_ORDER` を除き、`PC-SETUP-PLAY-AS-POKEMON` に準備の配置の事例（台帳に加える案）を加えた（違いは仕様案の 5 章）
+- v0.143（[play-policy-s2a-v0.143.md](play-policy-s2a-v0.143.md)。2026-11-04）: 利用者が S2a の 5 件をまとめて採用した（「5規約をまとめて採用し、S2a-0〜4を一つの実装タスクとして進める案を採用します。」。続行側の集合の規約で、公式の裁定・研究上の解決ではない）。
+  5 件は開発用の部分的な集合 `CS-KYUURA-PLAY-S2A@1` に入れ、候補の状態は `adopted`（ほかの 22 件は `proposal` のまま）。省略したときの集合 `CS-KYUURA-CURRENT@1` は変えていない。上の章の案・調査の記録は当時のまま（採用の範囲と仕様案との違いは v0.143 の文書と仕様案の 13 章）
