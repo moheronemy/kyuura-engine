@@ -22020,14 +22020,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/errors.py:49"
+    "kyuura_engine/errors.py:51"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/errors.py:49"
+      "kyuura_engine/errors.py:51"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -26197,10 +26197,10 @@
     "note": "研究の対応表の外（エンジンの未対応・技術上限・データ・汎用）"
    },
    "implementation_sites": [
-    "kyuura_engine/decisions.py:560",
-    "kyuura_engine/decisions.py:618",
-    "kyuura_engine/decisions.py:670",
-    "kyuura_engine/decisions.py:723",
+    "kyuura_engine/decisions.py:561",
+    "kyuura_engine/decisions.py:619",
+    "kyuura_engine/decisions.py:671",
+    "kyuura_engine/decisions.py:724",
     "kyuura_engine/effects.py:16273",
     "kyuura_engine/effects.py:16985",
     "kyuura_engine/effects.py:32194",
@@ -26211,10 +26211,10 @@
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/decisions.py:560",
-      "kyuura_engine/decisions.py:618",
-      "kyuura_engine/decisions.py:670",
-      "kyuura_engine/decisions.py:723",
+      "kyuura_engine/decisions.py:561",
+      "kyuura_engine/decisions.py:619",
+      "kyuura_engine/decisions.py:671",
+      "kyuura_engine/decisions.py:724",
       "kyuura_engine/effects.py:16273",
       "kyuura_engine/effects.py:16985",
       "kyuura_engine/effects.py:32194",
@@ -26246,9 +26246,9 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/decisions.py:560",
-     "kyuura_engine/decisions.py:618",
-     "kyuura_engine/decisions.py:670"
+     "kyuura_engine/decisions.py:561",
+     "kyuura_engine/decisions.py:619",
+     "kyuura_engine/decisions.py:671"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -26999,12 +26999,13 @@
     }
    ],
    "tests": {
-    "assert_like_lines": 2,
-    "mention_lines": 2,
+    "assert_like_lines": 3,
+    "mention_lines": 3,
     "files": [
+     "tests/test_prize_order_cleanup_v0_141.py",
      "tests/test_prize_order_user_rule_v0_140.py"
     ],
-    "files_total": 1,
+    "files_total": 2,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -27021,6 +27022,7 @@
    "reachability": {
     "status": "constructed_board",
     "evidence": [
+     "tests/test_prize_order_cleanup_v0_141.py",
      "tests/test_prize_order_user_rule_v0_140.py"
     ],
     "basis": "テストに表明らしい行がある（静的）。盤面の作り方・行の実行は個別に確かめていない"
