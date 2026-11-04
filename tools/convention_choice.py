@@ -25,7 +25,15 @@ def use_conventions(text: str | None) -> str | None:
         return _ORIGINAL(*args, conventions=text if conventions is None else conventions, **kwargs)
 
     new_game.__doc__ = _ORIGINAL.__doc__
+    new_game._chosen_conventions = text
     for module in list(sys.modules.values()):
         if module is not None and getattr(module, "new_game", None) is _ORIGINAL:
             module.new_game = new_game
     return f"{key[0]}@{key[1]}"
+
+
+def restore_conventions() -> None:
+    """``use_conventions`` で置きかえた ``new_game`` を、エンジンの ``new_game`` にもどす（試験の後片づけ）。"""
+    for module in list(sys.modules.values()):
+        if module is not None and hasattr(getattr(module, "new_game", None), "_chosen_conventions"):
+            module.new_game = _ORIGINAL

@@ -701,6 +701,24 @@ class PersistenceTest(unittest.TestCase):
             apply_command(asked, EndTurn(1))
         self.assertEqual(snapshot(asked), before)
 
+    def test_prize_retaken_after_deck_top_swap_is_not_flagged(self):
+        """legal（続行側の計測 v0.47 F47-H47 seed 2）: 化石の手札の切り直しのあとの対戦で、取ったサイドのカードが手札から山札にもどり、山札の上とサイドを入れかえる特殊能力で
+        サイドに置かれて、もう一度取られた。監査の「同じサイドのカードを 2 回取った」の誤検出（エンジンの誤りではない）を直した回帰テスト。入れかえのない 2 回目の取得は見つける。"""
+        from tests.log_audit import _retaken_without_return
+        from tools import existing_effect_games as G
+        from tools.convention_choice import restore_conventions, use_conventions
+
+        self.addCleanup(restore_conventions)
+        use_conventions(PLAY)
+        result = G.play(("H47", "F47"), 2, keep_state=True)
+        state = result["state"]
+        taken = [e["card"] for e in state.log if e["kind"] == "take_prize"]
+        self.assertGreater(len(taken), len(set(taken)))
+        self.assertEqual(result["audit"], {})
+        log = [dict(e) for e in state.log]
+        without_swap = [e for e in log if e["kind"] != "swap_prize_with_deck_top"]
+        self.assertTrue(_retaken_without_return(without_swap))
+
     def test_audit_detects_missing_or_misplaced_records(self):
         play = V91.end_turn(as_play(both_asleep()), TL, TL)
         log = [dict(e) for e in play.log]

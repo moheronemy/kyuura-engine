@@ -1788,6 +1788,24 @@ def _trainer_coins_since_play(state, event) -> list[dict]:
     return [e for e in state.log[start:index] if e["kind"] == "coin_flip" and e.get("source") == "trainer" and e.get("card") == event["trainer_card"]]
 
 
+def _retaken_without_return(log: list[dict]) -> list[int]:
+    """v0.143: 2 回取ったサイドのカードのうち、2 回の取得のあいだに、そのカードがサイドにもどりうるログがないもの。山札の上とサイドを入れかえる特殊能力（``swap_prize_with_deck_top``。
+    入れかえたカードの uid は秘密なので書かない）は、前に取って山札にもどったカードを、その持ち主のサイドに置きうる（v0.143 の続行側の計測で、化石の手札の切り直しのあとの対戦で
+    初めて起こった。同じカードの 2 回目の取得として数えない）。カスミのわがまま（``swap_prize_with_hand``）は呼ぶ側が取り除く（v0.57）。"""
+    taken: dict[int, tuple[int, int]] = {}  # カード → (取ったプレイヤー, 取ったログの位置)
+    found = []
+    for i, e in enumerate(log):
+        if e["kind"] not in ("take_prize", "trainer_take_prize"):
+            continue
+        card = e["card"]
+        if card in taken:
+            player, at = taken[card]
+            if not any(x["kind"] == "swap_prize_with_deck_top" and x.get("player") == player for x in log[at + 1:i]):
+                found.append(card)
+        taken[card] = (e["player"], i)
+    return found
+
+
 def log_problems(state) -> list[str]:
     """``new_game`` から進めた対戦のログと状態の整合の問題（なければ空）。"""
     log = [dict(e) for e in state.log]
@@ -10351,7 +10369,7 @@ def log_problems(state) -> list[str]:
             problems.append(f"プレイヤー {p_index} の取ったサイド {prizes_taken[p_index]} 枚が、相手のきぜつ {knocked[1 - p_index]} 回と合わない")
     if {pokemon.pokemon_id for p in state.players for pokemon in p.in_play()} != in_play:
         problems.append("ログから組み立てた場のポケモンが状態と違う")
-    if len(set(taken_cards)) != len(taken_cards):
+    if len(set(taken_cards)) != len(taken_cards) and _retaken_without_return(log):
         problems.append("同じサイドのカードを 2 回取った")
     # v0.47: 状態の期限のあるトレーナーの使用の禁止が、ログで与えてまだ消していない禁止と同じ
     if {(lock.player, lock.expires_turn, lock.origin) for lock in state.trainer_locks} != set(trainer_locks_log):
