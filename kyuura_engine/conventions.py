@@ -1,6 +1,10 @@
 """規約集合（v0.142。docs/ruleset-foundation-v0.142.md）: 未決の場面などの扱いを決める規約の集合を識別し、対戦に渡して状態に持つための基盤。
 
-この版の規約集合は、今の挙動をそのまま固定した集合だけです。プレイ用の続行規約は 1 つも採用していません（未決の場面は今までどおり止める）。
+v0.142 の規約集合は、今の挙動をそのまま固定した集合だけでした（未決の場面は今までどおり止める）。
+
+v0.143（docs/play-policy-s2a-v0.143.md）: 利用者が採用した S2a の続行規約 5 件と、それを含む開発用の部分的な集合 ``CS-KYUURA-PLAY-S2A@1`` を加えた。今の挙動の集合
+（``CS-KYUURA-CURRENT@1``。省略したときの集合）は同じ ID・版・中身のまま。続行規約は、止める理由を作る分岐の手前の照会（``continuation_for``）で引き、当てたらログ
+``convention_applied``（``record_application``）を書く。5 規約の場面のほかの未決の場面は、続行側の集合でも今までどおり止める（完成したプレイ用の集合ではない）。
 
 次のものを分けます（docs/ruleset-foundation-v0.142.md 2 章）:
 
@@ -13,8 +17,8 @@
 照合値は内容を識別するための SHA-256 で、署名・認証ではありません（誰が作ったかは示さない）。辞書の順序・改行・実行環境・ファイルの絶対パスに依存しない正規化した JSON から作り、
 意味の内容だけを入れます（根拠の文書の場所・行番号などの説明上の参照は入れない）。同じ ID・版の内容は変えない約束を、固定した照合値（``PINNED_*``）で機械的に確かめます。
 
-カード id・モードの名前で分岐しません。``engine.py``・``resolution/`` はこのモジュールの入口（``resolve_for_new_game``・``require_state_conventions``・``stop_without_continuation``）
-だけを呼びます。
+カード id・モードの名前で分岐しません。``engine.py``・``resolution/`` はこのモジュールの入口（``resolve_for_new_game``・``require_state_conventions``・``stop_without_continuation``。v0.143 から
+``continuation_for``・``record_application``）だけを呼びます。
 """
 
 from __future__ import annotations
@@ -37,7 +41,7 @@ from .errors import EngineError, UnsupportedError
 
 LAYER_BASELINE_USER = "baseline_user"  # 利用者が承認した指定（両モード共通の基礎集合。AGR-MODE-BASELINE-USER）
 LAYER_CURRENT_BEHAVIOR = "current_behavior"  # 今の実装の挙動の記録（承認されていない仮定・簡略化を含む。採用の記録ではない）
-LAYER_CONTINUATION = "continuation"  # 未決の場面を続ける規約（この版では 1 つもない・実装もない）
+LAYER_CONTINUATION = "continuation"  # 未決の場面を続ける規約（v0.142 は 0 件。v0.143 は S2a の 5 件。開発用の集合だけ）
 LAYERS = (LAYER_BASELINE_USER, LAYER_CURRENT_BEHAVIOR, LAYER_CONTINUATION)
 
 APPROVAL_USER_AGREED = "user_agreed"
@@ -49,7 +53,7 @@ USAGE_DEVELOPMENT = "development"  # 規約がそろわない開発・検証用�
 USAGE_LEGACY = "legacy"  # 規約集合の記録がない旧状態の対応付け専用（新しい対戦には使わない）
 USAGES = (USAGE_STANDARD, USAGE_DEVELOPMENT, USAGE_LEGACY)
 
-# 集合の完全性の主張。この版の集合はどれも未決の場面で止まる（"halts_at_undecided"）。"play_complete"（止まらずに対戦を終えられる集合）を主張する集合は、完全性の判定が
+# 集合の完全性の主張。この版の集合はどれも未決の場面で止まる（"halts_at_undecided"。v0.143 の続行側の集合も、5 規約の場面のほかでは止まる）。"play_complete"（止まらずに対戦を終えられる集合）を主張する集合は、完全性の判定が
 # 未実装なので受け付けない（``completeness_problems`` が拡張点）
 COMPLETENESS_HALTS = "halts_at_undecided"
 COMPLETENESS_PLAY = "play_complete"
@@ -207,6 +211,83 @@ SETS: Mapping[tuple[str, int], ConventionSet] = MappingProxyType({
     )
 })
 DEFAULT_SET = (CURRENT_SET_ID, 1)
+
+# ---------------------------------------------------------------- v0.143: S2a の続行規約（docs/play-policy-s2a-v0.143.md）
+#
+# 利用者の採用（2026-11-04「5規約をまとめて採用し、S2a-0〜4を一つの実装タスクとして進める案を採用します。」と、その指示の具体的な仕様）。公式の裁定・エラッタ・kyuura の研究上の
+# 解決ではない（研究上の未解決は未解決のまま）。今の挙動の集合（CS-KYUURA-CURRENT@1）には入れず、開発用の部分的な集合 CS-KYUURA-PLAY-S2A@1 だけに入れる。意味の内容
+# （``content``）は場面ごとの処理の決め方で、照合値に入る。根拠の文書は ``references``（照合値に入れない）
+
+S2A_SET_ID = "CS-KYUURA-PLAY-S2A"
+S2A_ADOPTION = "利用者の採用（2026-11-04。S2a の 5 規約を一組として採用）。公式の裁定・エラッタ・kyuura の研究上の解決ではない"
+S2A_REFERENCES = ("docs/play-policy-s2a-v0.143.md", "docs/play-policy-s2a-spec.md")
+
+MULLIGAN_COUNT_ID = "PC-SETUP-MULLIGAN-COUNT"
+PLAY_AS_POKEMON_ID = "PC-SETUP-PLAY-AS-POKEMON"
+SIDE_ORDER_ID = "PC-CHECK-SIDE-ORDER"
+COIN_COUNT_SHORT_ID = "PC-COIN-COUNT-SHORT"
+KO_POINT_ID = "PC-CHECK-KO-POINT"
+
+_S2A_CONVENTIONS = (
+    Convention(MULLIGAN_COUNT_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "準備の切り直しを回ごとに数え、片方のプレイヤーだけが切り直した回 1 回ごとに、もう一方のプレイヤーに補償 1 回（山札から 0〜2 枚を、補償を受けるプレイヤーが選ぶ）を与える。"
+               "両方のプレイヤーが切り直した回は数えない。補償はサイドを置いたあと、ジャンケンの前",
+               content={"adoption": S2A_ADOPTION,
+                        "applies_when": "準備（最初の対戦・サドン・デスの延長戦の区間）の切り直しの回の並びに、両方の回と片方だけの回が両方ある",
+                        "count": "片方だけの回の数（両方の回は数えない）", "per_compensation": "DrawMulliganCards 1 回（0〜rules.mulligan_draw_max_per_mulligan 枚。山札の枚数まで）",
+                        "chooser": "補償を受けるプレイヤー", "timing": "サイドを置いたあと、ジャンケンの前（今の補償と同じ）",
+                        "unchanged": ["両方の回しかない切り直し（どちらも引かない）", "片方だけの回しかない切り直し（今の補償）", "解決済みの初手・補償の処理"]},
+               scenes=("UNRESOLVED_MULLIGAN_COMPENSATION#initial-setup", "UNRESOLVED_MULLIGAN_COMPENSATION#sudden-death-segment"), references=S2A_REFERENCES),
+    Convention(PLAY_AS_POKEMON_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "準備の切り直しの判定と最初のポケモンの配置では、ポケモンとして場に出せるトレーナー（登録の型で識別する）を、たねポケモンカードとして数えない。ほかにたねポケモンカード・"
+               "ベイビィポケモンカードがない手札は切り直す。最初のポケモンに選んだら、規約による不正な操作として拒否する",
+               content={"adoption": S2A_ADOPTION,
+                        "identification": "効果の登録の型 PlayAsPokemon（effects.play_as_pokemon_in_hand が見る、ポケモンとして場に出せるトレーナー）。カード ID では分けない",
+                        "applies_when": ["準備（最初の対戦・延長戦の区間）で、たね・ベイビィのない手札に対象のカードがある", "準備の PlaceStartingPokemon で対象のカードを選んだ"],
+                        "mulligan": "たね・ベイビィのない手札として、今の切り直しと同じく切り直す（回に数える）",
+                        "placement": "IllegalActionError NOT_BASIC_POKEMON（入力の状態・乱数・ログを変えない。未解決の停止とは区別する）",
+                        "unchanged": ["対戦が始まってからベンチに出す処理", "ベイビィの初手の規則（GR-2000-P308-BABY-SETUP）", "たね・ベイビィもある手札（切り直さない）"]},
+               scenes=("UNRESOLVED_PLAY_AS_POKEMON_SETUP#initial-setup", "UNRESOLVED_PLAY_AS_POKEMON_SETUP#sudden-death-segment",
+                       "UNRESOLVED_PLAY_AS_POKEMON_SETUP#setup-placement"), references=S2A_REFERENCES),
+    Convention(SIDE_ORDER_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "ポケモンチェックの同じ段階で両方のプレイヤーが同じ種類のコイン（ねむりのコイン・くろこげマーカーのコイン）を投げるときは、番を終えたプレイヤーの場から先に、次に相手の場の"
+               "順に投げて処理する。それぞれの場はバトル場 → ベンチの並び。ねむりのコインは 1 枚ずつ結果を反映する。順番を選ぶ決定は出さない",
+               content={"adoption": S2A_ADOPTION,
+                        "applies_when": ["ポケモンチェックの 3 で、両方の対戦ポケモンがねむり", "ポケモンチェックの 1 で、両方のプレイヤーの場にくろこげマーカーののったポケモンがある"],
+                        "order": "番を終えたプレイヤー（ポケモンチェックの直前の番のプレイヤー）→ 相手。それぞれの場はバトル場 → ベンチ",
+                        "sleep_reflection": "1 枚（1 匹）ずつ結果を反映する。コインの枚数は投げる直前の場で決める",
+                        "unchanged": ["ポケモンチェックの段階の順序", "片方だけが投げる場合", "きのみの順番（BY1）", "くろこげマーカーのコインの技術的上限",
+                                      "両方のきぜつ", "一般の同時効果", "サイドを取る順番（採用済みの利用者の指定）"]},
+               scenes=("UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER", "UNRESOLVED_POKEMON_CHECK_CHAR_COIN_ORDER"), references=S2A_REFERENCES),
+    Convention(COIN_COUNT_SHORT_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "共通の数量処理のチェック地点で、コインの「おもて」の数で決まった枚数 H が、その時点の対象の枚数 N より多いときは、対象 N 枚をすべて処理する（min(H, N) 枚）。H は丸めずに"
+               "ログに残し、コインを途中で打ち切らない。選ぶ人・対象の判定・防護と無効化は今の処理のまま",
+               content={"adoption": S2A_ADOPTION,
+                        "applies_when": "チェック地点（interruption.check_quantity）で H > N（N = 0 をふくむ）。ファイヤーのドライアップ（DU1）・怪電波マシーン（TW1）の要素だけ",
+                        "process": "min(H, N) 枚", "coins": "H は実際のコインの結果のまま（ナツメのESPのやり直しは最後に確定した並び）",
+                        "unchanged": ["使う前・宣言の前に決まる使用条件（TW2 など）", "選んだ対象で起こる別の未決事項", "途中停止した状態の再開",
+                                      "ほかのカードへの不足の処理の一般化", "怪電波マシーンを使ったら番が終わる"]},
+               scenes=("UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT", "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT"), references=S2A_REFERENCES),
+    Convention(KO_POINT_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "ポケモンチェックでは、1 の「指示されたこと」（くろこげマーカーのコイン・悪エネルギーの効果・くろこげマーカーのダメージ・きのみ）と 2 の「どく」のダメージを終えてから、"
+               "1 回だけきぜつを判定する。1 のあとに HP 以上のダメージになったポケモンも、その判定まで場に残り、2 のどくのダメージを受ける",
+               content={"adoption": S2A_ADOPTION,
+                        "applies_when": "ポケモンチェックの 1 のあとに HP 以上のポケモンがいて、1 と 2 のあいだに判定する読み方と結果が変わる（PK1）",
+                        "judgement": "2 のあとに 1 回（今の処理の順のまま）",
+                        "unchanged": ["両方のきぜつ", "SC1", "AL1・AL3", "PO1〜PO3", "KA1・VS1・DE1", "BY1"]},
+               scenes=("UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT",), references=S2A_REFERENCES),
+)
+S2A_MEMBERS = tuple((c.id, c.version) for c in _S2A_CONVENTIONS)
+
+CONVENTIONS = MappingProxyType({**CONVENTIONS, **{(c.id, c.version): c for c in _S2A_CONVENTIONS}})
+SETS = MappingProxyType({
+    **SETS,
+    (S2A_SET_ID, 1): ConventionSet(S2A_SET_ID, 1, USAGE_DEVELOPMENT, _CURRENT_MEMBERS + S2A_MEMBERS,
+                                   description=("v0.143 の開発用の部分的な集合: 今の挙動の集合の規約 12 件と、S2a の続行規約 5 件。5 規約の場面だけを続け、ほかの未決の場面では今の停止"
+                                                "コードで止める（すべての未決の場面で止まらない完成したプレイ用の集合ではない）")),
+})
+# この版のエンジンが処理を持つ続行規約（``Registry.implemented_continuations``）
+IMPLEMENTED_CONTINUATIONS = frozenset(S2A_MEMBERS)
 # 形式 34 までの書き出し（規約集合の項目がない）に書いてよい集合: 記録のない状態の意味（その版のエンジンの今の挙動）と同じ意味の集合だけ
 IMPLICIT_IN_OLD_FORMATS = frozenset({(CURRENT_SET_ID, 1), (LEGACY_SET_ID, 1)})
 
@@ -224,10 +305,17 @@ PINNED_CONVENTION_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
     ("USER-PRIZE-ORDER-ALWAYS-CHOSEN", 1): "sha256:1b175a1760073605da85e31de2bf2310449b862db9bc257a93ffdd8776415785",
     ("USER-PRIZE-ORDER-PER-PLAYER", 1): "sha256:4a1eed17ff7d90234ce68bb92b8b862cc0e5d32478849553453a3e26104bac60",
     ("CB-IMPLEMENTATION-ASSUMPTIONS", 1): "sha256:347aadfadcc21580ceb1fbf047d66a5d10f92be930499370ae6d3f6534991a6a",
+    # v0.143: S2a の続行規約（利用者の採用。2026-11-04）
+    ("PC-SETUP-MULLIGAN-COUNT", 1): "sha256:8f6191a3dab82e4da776f07e7bb0a7b4dde299118330e363f4ffe6dbeb8e8867",
+    ("PC-SETUP-PLAY-AS-POKEMON", 1): "sha256:38265187c44184466d8b476092a0df05aa9967fd6f98ebf67aafc67d5535e20c",
+    ("PC-CHECK-SIDE-ORDER", 1): "sha256:c8f78ccaf484c12430fdc48e57bbb1f05a0c8d49207c364e0507380054292ba4",
+    ("PC-COIN-COUNT-SHORT", 1): "sha256:6a0554ff17e94934eb5f81aff1533ef5b600b4e59f69a9ca2abd24d3055492c5",
+    ("PC-CHECK-KO-POINT", 1): "sha256:7a91e7fe7f72e35828edb97e2c5661f6d6186b8607584c86631164c69fa8d2ad",
 })
 PINNED_SET_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
     ("CS-KYUURA-CURRENT", 1): "sha256:9a9b95c689d86fa01a5b710984560efda3c08f4dbf1d7c6218094ac8666f3cee",
     ("CS-KYUURA-LEGACY-UNRECORDED", 1): "sha256:abf39e6d87755507a9169537608596246f4ed9a9bf0c2e8794ffa44a97742407",
+    ("CS-KYUURA-PLAY-S2A", 1): "sha256:b317a3f050206577bff35ac05c87fdb4224ee28c6c0222e4e7f8460b5e9410c4",  # v0.143: 開発用の部分的な集合
 })
 
 
@@ -308,7 +396,7 @@ def set_payload(spec: ConventionSet, member_digests: Mapping[tuple[str, int], st
 
 @dataclass(frozen=True)
 class Registry:
-    """規約と集合の登録表。``implemented`` は、この版のエンジンが処理を持つ規約か（続行規約は 1 つもない）。``engine_baseline`` は、エンジンがいつも当てはめる基礎の規約の ID
+    """規約と集合の登録表。``implemented_continuations`` は、この版のエンジンが処理を持つ続行規約（v0.143: S2a の 5 件）。``engine_baseline`` は、エンジンがいつも当てはめる基礎の規約の ID
     （集合から外せない）。"""
 
     conventions: Mapping[tuple[str, int], Convention]
@@ -320,12 +408,12 @@ class Registry:
     engine_baseline: Callable[[], frozenset[str]] = field(default=lambda: frozenset(user_registrations()))
 
 
-DEFAULT_REGISTRY = Registry(CONVENTIONS, SETS, PINNED_CONVENTION_DIGESTS, PINNED_SET_DIGESTS)
+DEFAULT_REGISTRY = Registry(CONVENTIONS, SETS, PINNED_CONVENTION_DIGESTS, PINNED_SET_DIGESTS, implemented_continuations=IMPLEMENTED_CONTINUATIONS)
 
 
 def implemented(convention: Convention, registry: Registry) -> bool:
     """この版のエンジンが、この規約の処理を持つか。基礎の規約は登録の記録があること、今の挙動の記録は同梱の記録があること、続行規約は登録表の ``implemented_continuations``
-    にあること（この版の登録表は空。続行の処理はない）。"""
+    にあること（v0.143 の登録表は S2a の 5 件。``IMPLEMENTED_CONTINUATIONS``）。"""
     if convention.layer == LAYER_BASELINE_USER:
         return convention.source == "user_registrations" and convention.id in registry.engine_baseline()
     if convention.layer == LAYER_CURRENT_BEHAVIOR:
@@ -400,10 +488,15 @@ def validate(spec: ConventionSet, registry: Registry = DEFAULT_REGISTRY, *, for_
             if other in present:
                 problems.append(f"規約 {key[0]}@{key[1]} と {other[0]}@{other[1]} は同じ集合に入れられない（競合）")
     scenes: dict[str, list[str]] = {}
+    known_scenes = {s["id"] for s in scene_index()["scenes"]}
     for key in sorted(present):
         convention = registry.conventions.get(key)
         for scene in (convention.scenes if convention is not None else ()):
             scenes.setdefault(scene, []).append(f"{key[0]}@{key[1]}")
+            if scene not in known_scenes:
+                problems.append(f"規約 {key[0]}@{key[1]} の場面 {scene} が、停止の方針の台帳の場面にない（v0.143。登録の不整合）")
+        if convention is not None and convention.layer == LAYER_CONTINUATION and not convention.scenes:
+            problems.append(f"続行規約 {key[0]}@{key[1]} に場面がない（v0.143）")
     for scene, owners in sorted(scenes.items()):
         if len(owners) > 1:
             problems.append(f"場面 {scene} に 2 つ以上の規約（{'・'.join(owners)}）が当たる（暗黙の優先順位を作らない。競合）")
@@ -589,12 +682,48 @@ def continuation_lookup(identity: ConventionSetIdentity, code: str, case: str | 
 
 
 def stop_without_continuation(state, code: str, case: str | None = None) -> ContinuationLookup:
-    """止める箇所の照会（v0.142）。続行規約がないことを確かめて返す（呼ぶ側はそのまま止める）。この版には続行の処理がないので、規約が見つかればエンジンの不具合（集合の確かめが
-    続行規約を受け付けないはず）。停止の例外を捕まえて無視する仕組みではない（止める前に引くだけ）。"""
+    """止める箇所の照会（v0.142）。続行規約がないことを確かめて返す（呼ぶ側はそのまま止める）。
+
+    v0.143: 続行規約のある場面は、止める理由を作る分岐の手前（``continuation_for``）で続けるので、止める直前にここで規約が見つかればエンジンの不具合（続ける分岐を通らずに
+    止めようとした）。停止の例外を捕まえて無視する仕組みではない（止める前に引くだけ）。"""
     identity, problem = state_conventions(state)
     if identity is None:
         raise UnsupportedError(UNSUPPORTED_CONVENTION_SET_CODE, problem)
     lookup = continuation_lookup(identity, code, case)
     if lookup.convention is not None:
-        raise RuntimeError(f"この版に処理のない続行規約が、止める場面 {lookup.scene} に当たった（エンジンの不具合）")
+        raise RuntimeError(f"続行規約 {lookup.convention[0]}@{lookup.convention[1]} のある場面 {lookup.scene} で止めようとした（続ける分岐を通っていない。エンジンの不具合）")
     return lookup
+
+
+def continuation_for(state, code: str, case: str | None = None) -> ContinuationLookup | None:
+    """v0.143: 止める理由を作る分岐の手前の照会。状態の規約集合に、この場面（停止コード、事例が分かればその事例）の続行規約があり、この版のエンジンが処理を持てば、その照会の結果
+    （``convention`` あり）。なければ None（呼ぶ側は今までどおり止める）。停止コードに 2 つ以上の事例があって事例を渡さなければ、コードだけで規約を決めない（None）。
+
+    規約の名前・カード ID で分岐する呼び方はしない（呼ぶ側は停止コードと事例だけを渡し、規約の意味は呼ぶ側の共通の処理が持つ）。状態の規約集合を扱えなければ
+    ``UnsupportedError``（``UNSUPPORTED_CONVENTION_SET``）。状態を変えない。"""
+    identity, problem = state_conventions(state)
+    if identity is None:
+        raise UnsupportedError(UNSUPPORTED_CONVENTION_SET_CODE, problem)
+    lookup = continuation_lookup(identity, code, case)
+    if lookup.convention is None:
+        return None
+    if lookup.convention not in DEFAULT_REGISTRY.implemented_continuations:
+        raise RuntimeError(f"状態の規約集合の続行規約 {lookup.convention[0]}@{lookup.convention[1]} の処理が、この版にない（集合の確かめを通らないはず。エンジンの不具合）")
+    return lookup
+
+
+# 規約を当てた記録（ログ ``convention_applied``）に書ける項目（全員に見える値だけ。手札・山札などの秘密の情報は書かない）
+APPLIED_FIELDS = frozenset({"players", "player", "rounds_both", "rounds_single", "order", "pokemon_ids", "element", "heads", "available", "processed", "source",
+                            "target_owner", "target"})
+
+
+def record_application(state, lookup: ContinuationLookup, **detail) -> None:
+    """v0.143: 続行規約が実際に処理を決めたときのログ ``convention_applied``（規約 ID・版・場面・停止コードと、追跡に要る公開の値）。先読み・答えの確かめ・拒否した操作は状態の
+    複製の上なので、このログは残らない（受け付けた処理の状態だけに残る）。"""
+    if lookup is None or lookup.convention is None:
+        raise RuntimeError("続行規約のない照会の結果を、規約を当てた記録にしようとした（エンジンの不具合）")
+    unknown = sorted(set(detail) - APPLIED_FIELDS)
+    if unknown:
+        raise RuntimeError(f"規約を当てた記録に、決めていない項目 {unknown} を書こうとした（エンジンの不具合）")
+    convention, version = lookup.convention
+    state.add_event("convention_applied", convention=convention, version=version, scene=lookup.scene, code=lookup.code, **detail)

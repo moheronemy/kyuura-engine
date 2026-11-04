@@ -14,13 +14,21 @@
 
 止めたときは、不足する要素を処理しない（あるだけ処理する・失敗として番を終える・効果なしで続ける、のどれにも決めない）。使用中のトレーナー・固定した変身の姿はそのまま在途として
 残し、番・ポケモンチェック・サイドを進めない。公式の裁定を決めたのではない（kyuura の UQ-STATED-COUNT-SHORT は未解決のまま）。
+
+v0.143（docs/play-policy-s2a-v0.143.md 4.4 節）: 状態の規約集合に、止まった要素の停止コードの場面の続行規約（PC-COIN-COUNT-SHORT@1。ドライアップ・怪電波マシーン）があれば、チェック地点は
+途中停止にせず、規約を当てた記録をログに書いて、処理できる数（あるだけ。min(H, N)）を返す。規約のない集合（今の挙動の集合）では v0.142 までと同じ途中停止。止まった状態を規約で
+再開する操作は設けない（DEC-DEFERRED-RESUME は未決のまま）。
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
 
-from .conventions import stop_without_continuation  # v0.142: 止める前の続行規約の照会
+from .conventions import (  # v0.142: 止める前の続行規約の照会（v0.143: チェック地点の続行規約）
+    continuation_for,
+    record_application,
+    stop_without_continuation,
+)
 from .state import GameState, Halt, Interruption, Phase
 
 # 中断の種類（``Interruption.kind``）。今は説明の枚数に足りない場合（kyuura の UQ-STATED-COUNT-SHORT）だけ
@@ -73,15 +81,26 @@ class DeferredShortage(Exception):  # 終端の状態にする印（エラーで
         self.pending = pending
 
 
-def check_quantity(*, required: int, available: int, **fields) -> None:
-    """共通の数量処理の明示的なチェック地点（v0.127）。説明の数 ``required`` が処理できる数 ``available`` より多ければ ``DeferredShortage`` を投げる（その要素を処理する前）。
-    ``required`` ≤ ``available`` なら何もしない（呼ぶ側が、ちょうど ``required`` 枚の選び方をすべて残して処理する）。``fields`` は ``DeferredShortage`` の残りの項目。"""
+def check_quantity(state: GameState, *, required: int, available: int, **fields) -> int:
+    """共通の数量処理の明示的なチェック地点（v0.127）。処理する数を返す（呼ぶ側は、返した数を処理する）。
+
+    - ``required`` ≤ ``available``: ``required``（呼ぶ側が、ちょうど ``required`` 枚の選び方をすべて残して処理する。v0.142 までと同じ）
+    - ``required`` > ``available``: 状態の規約集合に、この停止コード（``fields["code"]``）の場面の続行規約（v0.143 の PC-COIN-COUNT-SHORT）があれば、規約を当てた記録をログに書いて
+      ``available``（あるだけ。min(H, N)）を返す。なければ ``DeferredShortage`` を投げる（その要素を処理する前。v0.142 までと同じ）
+
+    ``fields`` は ``DeferredShortage`` の残りの項目。``state`` は処理の途中の状態（先読み・答えの確かめでは複製で、記録はそこだけに残る）。"""
     if type(required) is not int or type(available) is not int or required < 0 or available < 0:
         raise RuntimeError(f"数量のチェック地点の数 {required!r}・{available!r} が 0 以上の整数ではない（エンジンの不具合）")
     if fields.get("element") not in ELEMENT_COUNTS:
         raise RuntimeError(f"数量のチェック地点の要素 {fields.get('element')!r} が、途中停止を許す要素ではない（エンジンの不具合）")
-    if required > available:
+    if required <= available:
+        return required
+    lookup = continuation_for(state, fields.get("code"))
+    if lookup is None:
         raise DeferredShortage(required=required, available=available, **fields)
+    record_application(state, lookup, element=fields["element"], heads=required, available=available, processed=available, source=fields.get("source"),
+                       player=fields.get("player"), target_owner=fields.get("target_owner"), target=fields.get("target"))
+    return available
 
 
 def in_transit_cards(state: GameState) -> tuple[int, ...]:

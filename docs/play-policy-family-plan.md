@@ -85,22 +85,22 @@ A の場面でも、続けるのに実装・秘密への非依存の確かめ・
 <!-- generated:plan-counts begin（scripts/build_play_policy_family_plan.py --write が書く。手で直さない） -->
 | 対象 | 件数 |
 |---|---:|
-| 場面（台帳の現在有効な項目。事例のあるコードは事例） | 400 |
-| うち停止コードの場面 | 366 |
+| 場面（台帳の現在有効な項目。事例のあるコードは事例） | 401 |
+| うち停止コードの場面 | 367 |
 | 停止コード（重複を除く） | 357 |
-| 区分 A（研究上の未決場面） | 325 |
+| 区分 A（研究上の未決場面） | 326 |
 | 区分 B（機能不足） | 33 |
 | 区分 C（技術的な制限） | 14 |
 | 区分 D（共通の不具合） | 9 |
 | 区分 E（そのほか） | 19 |
-| A のうち規約案の対象 | 170 |
+| A のうち規約案の対象 | 171 |
 | A のうち個別（共通化しない） | 155 |
 | 規約案 | 27 |
-| 規約案の対象の場面（重複を含む） | 170 |
-| 規約案の対象の場面（重複を除く） | 170 |
+| 規約案の対象の場面（重複を含む） | 171 |
+| 規約案の対象の場面（重複を除く） | 171 |
 | 関連する停止コード（重複を含む） | 166 |
 | 関連する停止コード（重複を除く） | 163 |
-| 規約だけで続けられる場面（full） | 2 |
+| 規約だけで続けられる場面（full） | 3 |
 | 一部だけ扱える場面 | 5 |
 | 追加の実装・秘密の確かめ・不具合の修正が要る場面 | 37 |
 | 続けられるか未確認の場面（unverified） | 126 |
@@ -109,7 +109,7 @@ A の場面でも、続けるのに実装・秘密への非依存の確かめ・
 | うち動的な経路（4 章の一覧）でだけ止める（ほかの場面では拒否） | 12 |
 | 対戦全体を止める場面のうち規約案の対象 | 15 |
 | この調査で見つけた不具合 | 1 |
-| 内部ガード（場面に数えない。D） | 604 |
+| 内部ガード（場面に数えない。D） | 607 |
 <!-- generated:plan-counts end -->
 
 A 以外の場面の内訳（理由ごと）:
@@ -232,7 +232,7 @@ A 以外の場面の内訳（理由ごと）:
 | 規約案 | 名前 | 群 | 全体停止 | 場面 | コード | 続けられ方（場面の数） | 推奨（案） | 判断事項 |
 |---|---|---|:---:|---:|---:|---|---|---|
 | `PC-SETUP-MULLIGAN-COUNT` | 回数の違う切り直しの補償の数え方 | setup | ○ | 2 | 1 | full 2 | 回ごとに数える（片方だけの回 1 回につき補償 1 回） | DEC-MULLIGAN-COMPENSATION |
-| `PC-SETUP-PLAY-AS-POKEMON` | 準備の手札のなにかの化石・ピッピ人形 | setup | ○ | 2 | 1 | question_resolved_other_stops_possible 2 | 数えない（切り直す） | DEC-PLAY-AS-POKEMON |
+| `PC-SETUP-PLAY-AS-POKEMON` | 準備の手札のなにかの化石・ピッピ人形 | setup | ○ | 3 | 1 | full 1・question_resolved_other_stops_possible 2 | 数えない（切り直す） | DEC-PLAY-AS-POKEMON |
 | `PC-CHECK-SIDE-ORDER` | ポケモンチェックで両方のプレイヤーが同じ処理をする順番 | pokemon_check | ○ | 3 | 3 | question_resolved_other_stops_possible 2・unverified 1 | 番を終えたプレイヤーから | DEC-SLEEP-COIN-ORDER・DEC-ORDER-RULE |
 | `PC-CHECK-DOUBLE-KNOCKOUT` | ポケモンチェックの両方のきぜつ | pokemon_check | ○ | 1 | 1 | partial 1 | (1) 同時のきぜつとして扱う。(2)(3) は PC-CHECK-SIDE-ORDER にしたがう | DEC-KNOCKOUT-READINGS・DEC-ORDER-RULE |
 | `PC-CHECK-KO-POINT` | ポケモンチェックの途中のきぜつの判定の時点 | pokemon_check | ○ | 1 | 1 | unverified 1 | 2 のあとに 1 回だけ判定 | DEC-KNOCKOUT-READINGS |
@@ -283,7 +283,7 @@ A 以外の場面の内訳（理由ごと）:
 - **代替案**: 両方の回が一度でもあれば、どちらも引かない（「両方とも」の文を準備全体に当てはめる読み方。補償を受けられない側の不利が大きい）／相手の切り直しの総数ぶん引ける（両方の回も数える）（「両方とも…引かない」の文と合わない（採らない案として記録））
 - **根拠**: docs/rules-2000-02-14.md の p.308 の表（切り直し・補償・両方とも切り直し）と未解決の行／engine.py:513〜528（halt の条件と補償の数え方）／kyuura docs/engine-readiness.md 4 章（読んだだけ）。研究の記録: 裁定 —、kyuura の論点 —
 - **未確認**: 公式資料に回数が違う場合の記述がないことの再確認（研究上は未解決のまま）
-- **判断事項**: DEC-MULLIGAN-COMPENSATION（状態 proposal）
+- **判断事項**: DEC-MULLIGAN-COMPENSATION（状態 adopted）
 
 #### PC-SETUP-PLAY-AS-POKEMON: 準備の手札のなにかの化石・ピッピ人形
 
@@ -302,7 +302,7 @@ A 以外の場面の内訳（理由ごと）:
 - **代替案**: 最初のポケモン（バトル場・ベンチ）として出せる（カードの「たねポケモンとして場に出せる」を準備にも当てはめる読み方。準備で置く処理の実装と、裏向きで置くときの扱いの確かめが要る（needs_implementation））
 - **根拠**: docs/fossil-hidden-info-v0.47.md 3 章（PF1）／engine.py:491〜500。研究の記録: 裁定 PF1、kyuura の論点 UQ-PLAY-AS-POKEMON
 - **未確認**: kyuura の UQ-PLAY-AS-POKEMON の記録の再照合（固定コミットの写しだけを見た）
-- **判断事項**: DEC-PLAY-AS-POKEMON（状態 proposal）
+- **判断事項**: DEC-PLAY-AS-POKEMON（状態 adopted）
 
 #### PC-CHECK-SIDE-ORDER: ポケモンチェックで両方のプレイヤーが同じ処理をする順番
 
@@ -322,7 +322,7 @@ A 以外の場面の内訳（理由ごと）:
 - **代替案**: 番を終えたプレイヤーが順番を選ぶ（決定を出す）（p.325 の決める人を当てはめる読み方。決定が増え、方策・ログが変わる）／次の番のプレイヤーから（席によらないが、根拠が弱い）
 - **根拠**: procedures.py:925〜960（SLEEP_COIN_ORDER）／procedures.py:366〜388（KK1）／docs/pokemon-check-v0.3b.md／docs/marker-check-field-reset-v0.91.md 4 章。研究の記録: 裁定 BY1・KK1・Z29、kyuura の論点 UQ-POKEMON-CHECK-SLEEP-COIN-ORDER
 - **未確認**: BY1 の順番の問いの中身（効果の種類の順番を含む）／勝率の偏りの計測はしていない
-- **判断事項**: DEC-SLEEP-COIN-ORDER・DEC-ORDER-RULE（状態 proposal）
+- **判断事項**: DEC-SLEEP-COIN-ORDER・DEC-ORDER-RULE（状態 adopted）
 
 #### PC-CHECK-DOUBLE-KNOCKOUT: ポケモンチェックの両方のきぜつ
 
@@ -360,7 +360,7 @@ A 以外の場面の内訳（理由ごと）:
 - **代替案**: 1 のあとにも判定する（手順の途中にきぜつの判定を加える読み方）
 - **根拠**: procedures.py の _pokemon_check_plan・docs/darkness-metal-energy-v0.78.md 6 章。研究の記録: 裁定 PK1、kyuura の論点 —
 - **未確認**: mid_check_knockout_divergence のほかの条件
-- **判断事項**: DEC-KNOCKOUT-READINGS（状態 proposal）
+- **判断事項**: DEC-KNOCKOUT-READINGS（状態 adopted）
 
 #### PC-COIN-COUNT-SHORT: コインで決まった枚数が足りないとき（途中停止の 2 つ）
 
@@ -379,7 +379,7 @@ A 以外の場面の内訳（理由ごと）:
 - **代替案**: 効果全体を何もしない（足りなければトラッシュしない）（結果が大きく変わる。根拠が弱い）
 - **根拠**: docs/deferred-shortage-user-promos-v0.127.md 5 章／engine.py の DeferredShortage の捕まえ方。研究の記録: 裁定 DU1・TW1、kyuura の論点 UQ-STATED-COUNT-SHORT
 - **未確認**: 2 つのチェック地点の後の処理（あるだけにしたあとの続き）をコードで確かめていない
-- **判断事項**: DEC-STATED-COUNT-SHORT・DEC-DEFERRED-RESUME（状態 proposal）
+- **判断事項**: DEC-STATED-COUNT-SHORT・DEC-DEFERRED-RESUME（状態 adopted）
 
 #### PC-STATED-COUNT-SHORT: 説明の決まった枚数が公開の枚数より多いとき
 
@@ -942,9 +942,9 @@ PSP-COCOON-DV2-ORACLE（DV2）・PSP-DECK-CONTENT-PRECHECKS の残り（GV1・EV
 <!-- generated:plan-priority begin（scripts/build_play_policy_family_plan.py --write が書く。手で直さない） -->
 | 段階 | 規約案 | 全体停止 | 場面 | コード | HALTED の局 | 拒否（回・局） | 前提になる規約 | 負担 | 危険 | 別の停止・未確認の残る場面 |
 |---|---|:---:|---:|---:|---:|---|---|---|---|---:|
+| S2a | `PC-SETUP-PLAY-AS-POKEMON` | ○ | 3 | 1 | 28＊ | 0・0＊ | — | 小（推奨案）・大（代替案） | 小 | 2 |
 | S2a | `PC-CHECK-SIDE-ORDER` | ○ | 3 | 3 | 37 | 0・0 | PC-CHECK-DOUBLE-KNOCKOUT | 小（2 か所の分岐） | 中（乱数の割り当て・先攻後攻の偏りを測る） | 3 |
 | S2a | `PC-SETUP-MULLIGAN-COUNT` | ○ | 2 | 1 | 17＊ | 0・0＊ | — | 小（1 か所の分岐） | 小（公開・乱数の新しい消費なし） | 0 |
-| S2a | `PC-SETUP-PLAY-AS-POKEMON` | ○ | 2 | 1 | 28＊ | 0・0＊ | — | 小（推奨案）・大（代替案） | 小 | 2 |
 | S2a | `PC-COIN-COUNT-SHORT` | ○ | 2 | 2 | 13 | 0・0 | — | 小（共通のチェック地点） | 小 | 2 |
 | S2a | `PC-CHECK-KO-POINT` | ○ | 1 | 1 | 0 | 0・0 | — | 小 | 中（勝ち負け） | 1 |
 | S2b | `PC-NON-ATTACK-DAMAGE-MODIFIERS` | ○ | 10 | 10 | 0 | 219・85 | — | 中（量の問い合わせの部品） | 小（量だけ） | 10 |

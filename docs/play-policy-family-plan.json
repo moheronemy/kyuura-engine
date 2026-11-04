@@ -19,7 +19,7 @@
   "ledger": {
    "path": "docs/stop-policy-classification.json",
    "base_commit": "3e25ac5eff0f90dbea224045e77c2b60e025bf2d",
-   "entries": 418
+   "entries": 419
   },
   "research": {
    "path": "kyuura_engine/data/research_links.json",
@@ -54,7 +54,8 @@
    "target_without_effect": "対象はあるが、選んでも・使っても何も起こらない"
   },
   "candidate_status": [
-   "proposal"
+   "proposal",
+   "adopted"
   ],
   "note": "plan_class は利用者の依頼の A〜E。台帳の classification（棚卸しの A〜E: A=機能不足・B=技術的制限・C=未裁定・D=独自規約・E=その他）とは別の軸"
  },
@@ -128,10 +129,32 @@
    "unverified": [
     "公式資料に回数が違う場合の記述がないことの再確認（研究上は未解決のまま）"
    ],
-   "status": "proposal",
+   "status": "adopted",
    "codes": [
     "UNRESOLVED_MULLIGAN_COMPENSATION"
    ],
+   "adoption": {
+    "on": "2026-11-04",
+    "by": "user",
+    "version": "0.143.0",
+    "set": [
+     "CS-KYUURA-PLAY-S2A",
+     1
+    ],
+    "document": "docs/play-policy-s2a-v0.143.md",
+    "spec": "docs/play-policy-s2a-spec.md",
+    "not_recorded_as": "公式の裁定・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用）",
+    "convention": [
+     "PC-SETUP-MULLIGAN-COUNT",
+     1
+    ],
+    "excluded_targets": [],
+    "added_scenes": [],
+    "scenes": [
+     "UNRESOLVED_MULLIGAN_COMPENSATION#initial-setup",
+     "UNRESOLVED_MULLIGAN_COMPENSATION#sudden-death-segment"
+    ]
+   },
    "scene_count": 2,
    "code_count": 1,
    "coverage_counts": {
@@ -210,13 +233,43 @@
    "unverified": [
     "kyuura の UQ-PLAY-AS-POKEMON の記録の再照合（固定コミットの写しだけを見た）"
    ],
-   "status": "proposal",
+   "status": "adopted",
    "codes": [
     "UNRESOLVED_PLAY_AS_POKEMON_SETUP"
    ],
-   "scene_count": 2,
+   "adoption": {
+    "on": "2026-11-04",
+    "by": "user",
+    "version": "0.143.0",
+    "set": [
+     "CS-KYUURA-PLAY-S2A",
+     1
+    ],
+    "document": "docs/play-policy-s2a-v0.143.md",
+    "spec": "docs/play-policy-s2a-spec.md",
+    "not_recorded_as": "公式の裁定・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用）",
+    "convention": [
+     "PC-SETUP-PLAY-AS-POKEMON",
+     1
+    ],
+    "excluded_targets": [],
+    "added_scenes": [
+     {
+      "scene": "UNRESOLVED_PLAY_AS_POKEMON_SETUP#setup-placement",
+      "coverage": "full",
+      "note": "v0.143 の採用で加えた場面（準備の配置の拒否。続行側は NOT_BASIC_POKEMON の拒否で、ほかの停止はない）"
+     }
+    ],
+    "scenes": [
+     "UNRESOLVED_PLAY_AS_POKEMON_SETUP#initial-setup",
+     "UNRESOLVED_PLAY_AS_POKEMON_SETUP#setup-placement",
+     "UNRESOLVED_PLAY_AS_POKEMON_SETUP#sudden-death-segment"
+    ]
+   },
+   "scene_count": 3,
    "code_count": 1,
    "coverage_counts": {
+    "full": 1,
     "question_resolved_other_stops_possible": 2
    },
    "ruling_ids": [
@@ -229,7 +282,7 @@
     "docs/fossil-hidden-info-v0.47.md"
    ],
    "reachability_counts": {
-    "constructed_board": 2
+    "constructed_board": 3
    }
   },
   {
@@ -316,12 +369,39 @@
     "BY1 の順番の問いの中身（効果の種類の順番を含む）",
     "勝率の偏りの計測はしていない"
    ],
-   "status": "proposal",
+   "status": "adopted",
    "codes": [
     "UNRESOLVED_POKEMON_CHECK_BERRY_ORDER",
     "UNRESOLVED_POKEMON_CHECK_CHAR_COIN_ORDER",
     "UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER"
    ],
+   "adoption": {
+    "on": "2026-11-04",
+    "by": "user",
+    "version": "0.143.0",
+    "set": [
+     "CS-KYUURA-PLAY-S2A",
+     1
+    ],
+    "document": "docs/play-policy-s2a-v0.143.md",
+    "spec": "docs/play-policy-s2a-spec.md",
+    "not_recorded_as": "公式の裁定・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用）",
+    "convention": [
+     "PC-CHECK-SIDE-ORDER",
+     1
+    ],
+    "excluded_targets": [
+     {
+      "scene": "UNRESOLVED_POKEMON_CHECK_BERRY_ORDER",
+      "reason": "BY1 は効果の種類の順番を含む別の問い（S2a の仕様案 OC-7。採用仕様の除外）"
+     }
+    ],
+    "added_scenes": [],
+    "scenes": [
+     "UNRESOLVED_POKEMON_CHECK_CHAR_COIN_ORDER",
+     "UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER"
+    ]
+   },
    "scene_count": 3,
    "code_count": 3,
    "coverage_counts": {
@@ -343,8 +423,9 @@
     "docs/rocket-snorlax-v0.17b.md"
    ],
    "reachability_counts": {
+    "constructed_board": 1,
     "legal_sequence": 1,
-    "static_only": 2
+    "static_only": 1
    }
   },
   {
@@ -488,10 +569,31 @@
    "unverified": [
     "mid_check_knockout_divergence のほかの条件"
    ],
-   "status": "proposal",
+   "status": "adopted",
    "codes": [
     "UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT"
    ],
+   "adoption": {
+    "on": "2026-11-04",
+    "by": "user",
+    "version": "0.143.0",
+    "set": [
+     "CS-KYUURA-PLAY-S2A",
+     1
+    ],
+    "document": "docs/play-policy-s2a-v0.143.md",
+    "spec": "docs/play-policy-s2a-spec.md",
+    "not_recorded_as": "公式の裁定・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用）",
+    "convention": [
+     "PC-CHECK-KO-POINT",
+     1
+    ],
+    "excluded_targets": [],
+    "added_scenes": [],
+    "scenes": [
+     "UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT"
+    ]
+   },
    "scene_count": 1,
    "code_count": 1,
    "coverage_counts": {
@@ -575,11 +677,33 @@
    "unverified": [
     "2 つのチェック地点の後の処理（あるだけにしたあとの続き）をコードで確かめていない"
    ],
-   "status": "proposal",
+   "status": "adopted",
    "codes": [
     "UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT",
     "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT"
    ],
+   "adoption": {
+    "on": "2026-11-04",
+    "by": "user",
+    "version": "0.143.0",
+    "set": [
+     "CS-KYUURA-PLAY-S2A",
+     1
+    ],
+    "document": "docs/play-policy-s2a-v0.143.md",
+    "spec": "docs/play-policy-s2a-spec.md",
+    "not_recorded_as": "公式の裁定・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用）",
+    "convention": [
+     "PC-COIN-COUNT-SHORT",
+     1
+    ],
+    "excluded_targets": [],
+    "added_scenes": [],
+    "scenes": [
+     "UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT",
+     "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT"
+    ]
+   },
    "scene_count": 2,
    "code_count": 2,
    "coverage_counts": {
@@ -1073,8 +1197,8 @@
     "docs/unown-fossil-retreat-reactions-v0.122.md"
    ],
    "reachability_counts": {
-    "constructed_board": 10,
-    "static_only": 28
+    "constructed_board": 11,
+    "static_only": 27
    }
   },
   {
@@ -3652,7 +3776,7 @@
    "candidate": "PC-SETUP-PLAY-AS-POKEMON",
    "stage": "S2a",
    "whole_game": true,
-   "scenes": 2,
+   "scenes": 3,
    "codes": 1,
    "observed": {
     "halted_games": 28,
@@ -7293,7 +7417,11 @@
     "docs/deferred-shortage-user-promos-v0.127.md"
    ],
    "candidate": "PC-COIN-COUNT-SHORT",
-   "coverage": "unverified"
+   "coverage": "unverified",
+   "adopted_convention": [
+    "PC-COIN-COUNT-SHORT",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE",
@@ -9994,7 +10122,11 @@
     "docs/rules-2000-02-14.md"
    ],
    "candidate": "PC-SETUP-MULLIGAN-COUNT",
-   "coverage": "full"
+   "coverage": "full",
+   "adopted_convention": [
+    "PC-SETUP-MULLIGAN-COUNT",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_MULLIGAN_COMPENSATION#sudden-death-segment",
@@ -10019,7 +10151,11 @@
     "docs/rules-2000-02-14.md"
    ],
    "candidate": "PC-SETUP-MULLIGAN-COUNT",
-   "coverage": "full"
+   "coverage": "full",
+   "adopted_convention": [
+    "PC-SETUP-MULLIGAN-COUNT",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_MULTIPLE_ATTACK_CHECKS",
@@ -10474,7 +10610,11 @@
    ],
    "candidate": "PC-SETUP-PLAY-AS-POKEMON",
    "coverage": "question_resolved_other_stops_possible",
-   "coverage_note": "切り直すと決めても、その後の切り直しの回で PC-SETUP-MULLIGAN-COUNT の場面に当たりうる"
+   "coverage_note": "切り直すと決めても、その後の切り直しの回で PC-SETUP-MULLIGAN-COUNT の場面に当たりうる",
+   "adopted_convention": [
+    "PC-SETUP-PLAY-AS-POKEMON",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_PLAY_AS_POKEMON_SETUP#sudden-death-segment",
@@ -10501,7 +10641,43 @@
     "docs/fossil-hidden-info-v0.47.md"
    ],
    "candidate": "PC-SETUP-PLAY-AS-POKEMON",
-   "coverage": "question_resolved_other_stops_possible"
+   "coverage": "question_resolved_other_stops_possible",
+   "adopted_convention": [
+    "PC-SETUP-PLAY-AS-POKEMON",
+    1
+   ]
+  },
+  {
+   "id": "UNRESOLVED_PLAY_AS_POKEMON_SETUP#setup-placement",
+   "parent": "UNRESOLVED_PLAY_AS_POKEMON_SETUP",
+   "code": "UNRESOLVED_PLAY_AS_POKEMON_SETUP",
+   "entry_kind": "research_stop_code",
+   "family": "PF-SETUP-PLAY-AS-POKEMON",
+   "ledger_classification": "C",
+   "plan_class": "A",
+   "class_reason": "研究上の未決の裁定（固定研究基準の対応表の停止コード）",
+   "mechanisms": [
+    "command_rejection",
+    "setup_halt"
+   ],
+   "reachability": "constructed_board",
+   "whole_game": false,
+   "whole_game_basis": null,
+   "secret_dependency": "public_only",
+   "ruling_ids": [
+    "PF1"
+   ],
+   "kyuura_issue": "UQ-PLAY-AS-POKEMON",
+   "ruling_documents": [
+    "docs/fossil-hidden-info-v0.47.md"
+   ],
+   "candidate": "PC-SETUP-PLAY-AS-POKEMON",
+   "coverage": "full",
+   "coverage_note": "v0.143 の採用で加えた場面（準備の配置の拒否。続行側は NOT_BASIC_POKEMON の拒否で、ほかの停止はない）",
+   "adopted_convention": [
+    "PC-SETUP-PLAY-AS-POKEMON",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_POISON_CHANGE_ORDER",
@@ -10648,7 +10824,7 @@
     "command_rejection",
     "pokemon_check_halt"
    ],
-   "reachability": "static_only",
+   "reachability": "constructed_board",
    "whole_game": true,
    "whole_game_basis": "static_halt",
    "secret_dependency": null,
@@ -10689,7 +10865,11 @@
    ],
    "candidate": "PC-CHECK-SIDE-ORDER",
    "coverage": "question_resolved_other_stops_possible",
-   "coverage_note": "順番を決めても、コインの前の確かめ（どの結果でも BY1・PK1・SC1・両方のきぜつで止めないか）と上限 MAX_CHAR_COINS（UNSUPPORTED_POKEMON_CHECK_CHAR_COINS）が残る"
+   "coverage_note": "順番を決めても、コインの前の確かめ（どの結果でも BY1・PK1・SC1・両方のきぜつで止めないか）と上限 MAX_CHAR_COINS（UNSUPPORTED_POKEMON_CHECK_CHAR_COINS）が残る",
+   "adopted_convention": [
+    "PC-CHECK-SIDE-ORDER",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT",
@@ -10742,7 +10922,11 @@
     "docs/shared-checks-pokemon-reuse-v0.79.md"
    ],
    "candidate": "PC-CHECK-KO-POINT",
-   "coverage": "unverified"
+   "coverage": "unverified",
+   "adopted_convention": [
+    "PC-CHECK-KO-POINT",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER",
@@ -10771,7 +10955,11 @@
    ],
    "candidate": "PC-CHECK-SIDE-ORDER",
    "coverage": "question_resolved_other_stops_possible",
-   "coverage_note": "順番の分岐のあとに、回復したときの止め方（_recovery_stop の MH1・TF1・TF2・DG1）とねむりのコインの数（sleep_check_coins）の処理がある"
+   "coverage_note": "順番の分岐のあとに、回復したときの止め方（_recovery_stop の MH1・TF1・TF2・DG1）とねむりのコインの数（sleep_check_coins）の処理がある",
+   "adopted_convention": [
+    "PC-CHECK-SIDE-ORDER",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_POKEMON_FLUTE_WITHOUT_TARGET",
@@ -13351,7 +13539,11 @@
     "docs/deferred-shortage-user-promos-v0.127.md"
    ],
    "candidate": "PC-COIN-COUNT-SHORT",
-   "coverage": "unverified"
+   "coverage": "unverified",
+   "adopted_convention": [
+    "PC-COIN-COUNT-SHORT",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_THOUGHT_WAVE_MACHINE_WITHOUT_TARGET",
@@ -13365,7 +13557,7 @@
    "mechanisms": [
     "command_rejection"
    ],
-   "reachability": "static_only",
+   "reachability": "constructed_board",
    "whole_game": false,
    "whole_game_basis": null,
    "secret_dependency": null,
@@ -14677,7 +14869,7 @@
     "command_rejection",
     "pokemon_check_halt"
    ],
-   "reachability": "static_only",
+   "reachability": "constructed_board",
    "whole_game": true,
    "whole_game_basis": "static_halt",
    "secret_dependency": null,
@@ -15682,36 +15874,36 @@
    "mode_policy_status": "decision_required"
   }
  ],
- "internal_guard_sites": 604,
+ "internal_guard_sites": 607,
  "counts": {
-  "scenes": 400,
-  "stop_code_scenes": 366,
+  "scenes": 401,
+  "stop_code_scenes": 367,
   "stop_codes": 357,
   "by_plan_class": {
-   "A": 325,
+   "A": 326,
    "B": 33,
    "C": 14,
    "D": 9,
    "E": 19
   },
-  "a_scenes": 325,
-  "a_scenes_with_candidate": 170,
+  "a_scenes": 326,
+  "a_scenes_with_candidate": 171,
   "a_scenes_individual": 155,
   "candidates": 27,
-  "candidate_scenes_with_duplicates": 170,
-  "candidate_scenes_unique": 170,
+  "candidate_scenes_with_duplicates": 171,
+  "candidate_scenes_unique": 171,
   "candidate_codes_with_duplicates": 166,
   "candidate_codes_unique": 163,
   "coverage": {
    "blocked_by_defect": 5,
-   "full": 2,
+   "full": 3,
    "needs_implementation": 22,
    "needs_secret_review": 10,
    "partial": 1,
    "question_resolved_other_stops_possible": 4,
    "unverified": 126
   },
-  "fully_continuable_scenes": 2,
+  "fully_continuable_scenes": 3,
   "partially_continuable_scenes": 5,
   "scenes_needing_other_work": 37,
   "unverified_scenes": 126,
@@ -15734,7 +15926,7 @@
    "PC-REACTION-DOUBLE-KNOCKOUT": 3,
    "PC-RETREAT-COST-PAYMENT": 2,
    "PC-SETUP-MULLIGAN-COUNT": 2,
-   "PC-SETUP-PLAY-AS-POKEMON": 2,
+   "PC-SETUP-PLAY-AS-POKEMON": 3,
    "PC-SPECIAL-ENERGY-CARD-WORDING": 9,
    "PC-STATED-COUNT-SHORT": 9,
    "PC-SUPPRESSION-LATER-POKEMON": 3,
@@ -15749,7 +15941,7 @@
   "whole_game_dynamic_channel_scenes": 12,
   "whole_game_a_scenes_with_candidate": 15,
   "new_findings": 1,
-  "internal_guard_sites_not_listed_as_scenes": 604,
+  "internal_guard_sites_not_listed_as_scenes": 607,
   "note": "場面は台帳の項目（事例のあるコードは事例）。重複を含む数は規約案ごとの対象の合計、重複を除いた数は場面・コードの集合の大きさ。内部ガードは場面に数えない（D。個数だけ）"
  }
 }

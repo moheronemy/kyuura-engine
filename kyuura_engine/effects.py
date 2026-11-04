@@ -48484,7 +48484,8 @@ class CoinsUntilTailsReturnOpponentActiveEnergyThenEndTurn(TrainerEffect):
     - コインはトレーナーのコイン（``coins.flip_until_tails``。上限なく「うら」まで。ナツメのESPはワザのコインだけなので当たらない）。数えるのはカードの枚数（特殊エネルギーも 1 枚）
     - 「おもて」の数 H ≤ はがせる枚数 N なら、使ったプレイヤーがちょうど H 枚を選び（H < N のときだけ決定 ``RETURN_ENERGY``。H = N はすべて、H = 0 はなし）、相手の手札にもどす
       （トラッシュではない。ログ ``trainer_return_energy`` の ``user``）。そのあと ``END_TURN``（エンジンがこのカードをトラッシュしてから番を終える。H = 0 でも番を終える）
-    - H > N は、もどす前に途中停止（TW1。``interruption.check_quantity``）。もどさず、このカードは使用中のまま（片付けない）、番を終えない
+    - H > N は、もどす前に途中停止（TW1。``interruption.check_quantity``）。もどさず、このカードは使用中のまま（片付けない）、番を終えない。v0.143: 規約集合に PC-COIN-COUNT-SHORT@1
+      があれば途中停止にせず、N 枚すべてを相手の手札にもどしてから、H = N と同じく番を終える
     - 錯乱ジムで相手がかわりに使うと「あなたの番」がどの番か決まらない（CH1。``refers_to_user_turn``）"""
 
     text: str
@@ -48524,13 +48525,14 @@ class CoinsUntilTailsReturnOpponentActiveEnergyThenEndTurn(TrainerEffect):
         from .interruption import RETURN_ENERGY_CARDS_TO_HAND, check_quantity
 
         flips = flip_until_tails(state, use.player, source="trainer", effect=use.card_id, card=use.card)
-        heads = flips.heads
         target = self._target(state, use)
         options = self._returnable(state, use)
-        check_quantity(required=heads, available=len(options), code=THOUGHT_WAVE_SHORT_CODE, message=f"「おもて」{heads}・エネルギーカード {len(options)} 枚: {THOUGHT_WAVE_SHORT_REASON}",
-                       references=("kyuura CR-THOUGHT-WAVE-MACHINE-PROCEDURE", "kyuura UQ-STATED-COUNT-SHORT", "docs/deferred-shortage-user-promos-v0.127.md"),
-                       source=f"{use.card_id}/trainer", player=use.player, target_owner=1 - use.player, target=target.pokemon_id, element=RETURN_ENERGY_CARDS_TO_HAND,
-                       pending=(RETURN_ENERGY_CARDS_TO_HAND, "discard_trainer", "end_turn"))
+        # v0.143: ``heads`` は処理する数（コインの「おもて」の数。PC-COIN-COUNT-SHORT で足りないときは、はがせるエネルギーカードの枚数。コインの結果・ログは変えない）
+        heads = check_quantity(state, required=flips.heads, available=len(options), code=THOUGHT_WAVE_SHORT_CODE,
+                               message=f"「おもて」{flips.heads}・エネルギーカード {len(options)} 枚: {THOUGHT_WAVE_SHORT_REASON}",
+                               references=("kyuura CR-THOUGHT-WAVE-MACHINE-PROCEDURE", "kyuura UQ-STATED-COUNT-SHORT", "docs/deferred-shortage-user-promos-v0.127.md"),
+                               source=f"{use.card_id}/trainer", player=use.player, target_owner=1 - use.player, target=target.pokemon_id, element=RETURN_ENERGY_CARDS_TO_HAND,
+                               pending=(RETURN_ENERGY_CARDS_TO_HAND, "discard_trainer", "end_turn"))
         if heads == 0:
             return END_TURN
         if heads == len(options):

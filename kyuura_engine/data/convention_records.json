@@ -1866,6 +1866,7 @@
    ],
    "UNRESOLVED_PLAY_AS_POKEMON_SETUP": [
     "UNRESOLVED_PLAY_AS_POKEMON_SETUP#initial-setup",
+    "UNRESOLVED_PLAY_AS_POKEMON_SETUP#setup-placement",
     "UNRESOLVED_PLAY_AS_POKEMON_SETUP#sudden-death-segment"
    ],
    "UNRESOLVED_POISON_CHANGE_ORDER": [
@@ -3838,6 +3839,13 @@
     ],
     "entry_kind": "research_stop_code",
     "id": "UNRESOLVED_PLAY_AS_POKEMON_SETUP#initial-setup"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_PLAY_AS_POKEMON_SETUP"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_PLAY_AS_POKEMON_SETUP#setup-placement"
    },
    {
     "codes": [

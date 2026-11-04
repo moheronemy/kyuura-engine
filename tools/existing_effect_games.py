@@ -13579,6 +13579,12 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
     result["unresolved_rejections"] = {k: v for k, v in observed.items() if "UNRESOLVED_" in k}
     result["policy"] = dict(counts)
     if state is not None:
+        # v0.143: 続行規約を当てた記録（ログ convention_applied。延長戦の前の区間を含む）を、規約 ID・場面ごとに数える（記録のない局は項目を書かない）
+        applied = Counter(f"{e['convention']}@{e['version']} {e['scene']}" for log in [*(r.log for r in state.segments), state.log] for e in log
+                          if e["kind"] == "convention_applied")
+        if applied:
+            result["conventions_applied"] = dict(applied)
+    if state is not None:
         result["turns"] = state.turn_number
         if state.result is not None:
             result["winner_deck"] = labels[state.result.winner] if state.result.winner is not None else None
@@ -14238,6 +14244,9 @@ def summarize(games):
         for cid, counts in r.get("card_uses", {}).items():
             s["cards"].setdefault(cid, Counter()).update(counts)
             s["games_with"].setdefault(cid, Counter()).update({k: 1 for k, v in counts.items() if v})
+        if r.get("conventions_applied"):  # v0.143: 続行規約を当てた回数・局数（記録のある局だけ。今の挙動の集合の集計の形は変えない）
+            s.setdefault("conventions_applied", Counter()).update(r["conventions_applied"])
+            s.setdefault("conventions_applied_games", Counter()).update({k: 1 for k in r["conventions_applied"]})
     return json.loads(json.dumps(s))
 
 
@@ -14269,9 +14278,13 @@ def main(argv=None):
     parser.add_argument("--start", type=int, default=0, help="最初の seed")
     parser.add_argument("--max-steps", type=int, default=8000)
     parser.add_argument("--out", type=Path, help="1 局ごとの記録と集計を書き出す JSON")
+    parser.add_argument("--conventions", default=None, help="v0.143: 対戦の規約集合（ID@版。省略は今の挙動の集合）。道具だけの選び方で、エンジンの既定は変えない")
     args = parser.parse_args(argv)
     if args.seeds < 1:
         parser.error("--seeds は 1 以上")
+    from tools.convention_choice import use_conventions
+
+    conventions = use_conventions(args.conventions)
     seeds = range(args.start, args.start + args.seeds)
     began = time.time()
     results = run(seeds, max_steps=args.max_steps, pairings=BATCHES[args.batch])
@@ -14279,6 +14292,7 @@ def main(argv=None):
     elapsed = round(time.time() - began, 1)
     if args.out:
         args.out.write_text(json.dumps({"batch": args.batch, "seeds": [args.start, args.start + args.seeds], "elapsed": elapsed,
+                                        **({"conventions": conventions} if conventions else {}),
                                         "planned": len(BATCHES[args.batch]) * 2 * args.seeds, "distinct": sum(len(v["games"]) for v in results.values()),
                                         "runs": results, "total": total},
                                        ensure_ascii=False, indent=1), encoding="utf-8")

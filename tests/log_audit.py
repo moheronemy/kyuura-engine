@@ -10399,6 +10399,7 @@ def log_problems(state) -> list[str]:
             problems.append(f"持続する効果 {key} が、消したあとも状態に残っている")
     problems.extend(coin_gated_effect_problems(state, log))  # v0.76
     problems.extend(v127_problems(state))  # v0.127: ドライアップ・怪電波マシーン・途中停止
+    problems.extend(s2a_problems(state))  # v0.143: S2a の続行規約を当てた記録（エンジンの記録を信じず、ログから組み立てて照らす）
     problems.extend(v129_problems(state))  # v0.129: カツラのクイズ その1
     problems.extend(v130_problems(state))  # v0.130: とりかえっこプリーズと、対戦の中の所有者
     problems.extend(segment_problems(state))  # v0.134: サドン・デスの延長戦の区間（区間の始まり・前の区間の記録・最初のデッキ・サイドの枚数）
@@ -10421,6 +10422,195 @@ def _v127_final_heads(window: list[dict]) -> int | None:
         elif e["kind"] == "esp_redo_declined" and e.get("original"):
             heads = len(e["original"]) - 1
     return heads
+
+
+# ---------------------------------------------------------------- v0.143: S2a の続行規約（docs/play-policy-s2a-v0.143.md 6 章）
+# 監査が独立に持つ表（エンジンの conventions の登録を読まない）。規約 ID → (版, 場面, 書いてよい項目)。化石・人形のカードの一覧も監査が独立に持つ（エンジンの登録の型を読まない）
+S2A_SET = ("CS-KYUURA-PLAY-S2A", 1)
+S2A_RULES = {
+    "PC-SETUP-MULLIGAN-COUNT": (1, {"UNRESOLVED_MULLIGAN_COMPENSATION#initial-setup", "UNRESOLVED_MULLIGAN_COMPENSATION#sudden-death-segment"},
+                                {"rounds_both", "rounds_single", "player"}),
+    "PC-SETUP-PLAY-AS-POKEMON": (1, {"UNRESOLVED_PLAY_AS_POKEMON_SETUP#initial-setup", "UNRESOLVED_PLAY_AS_POKEMON_SETUP#sudden-death-segment",
+                                     "UNRESOLVED_PLAY_AS_POKEMON_SETUP#setup-placement"}, {"players"}),
+    "PC-CHECK-SIDE-ORDER": (1, {"UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER", "UNRESOLVED_POKEMON_CHECK_CHAR_COIN_ORDER"}, {"order"}),
+    "PC-COIN-COUNT-SHORT": (1, {"UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT", "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT"},
+                            {"element", "heads", "available", "processed", "source", "player", "target_owner", "target"}),
+    "PC-CHECK-KO-POINT": (1, {"UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT"}, {"pokemon_ids"}),
+}
+S2A_PLAY_AS_CARDS = frozenset({"PMCG1-091", "PMCG3-046"})  # ピッピ人形・なにかの化石（ポケモンとして場に出せるトレーナー）
+S2A_SHORT_ELEMENTS = {"UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT": "discard_water_energy_cards", "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT": "return_energy_cards_to_hand"}
+
+
+def _s2a_short_count(window: list[dict], heads: int | None, element: str, problems: list[str], turn) -> int | None:
+    """v0.143: ドライアップ・怪電波マシーンの窓で、処理するはずの数。PC-COIN-COUNT-SHORT の記録があれば、その記録が最後の「おもて」の数 H と、処理できる数 N < H を書き、処理した数が N
+    （min(H, N)）であることを確かめて N。記録がなければ H（v0.127 と同じ）。"""
+    applied = [w for w in window if w["kind"] == "convention_applied" and w.get("convention") == "PC-COIN-COUNT-SHORT"]
+    if not applied:
+        return heads
+    if len(applied) > 1:
+        problems.append(f"{turn} 番の 1 回の使用に、枚数の不足の規約の記録が {len(applied)} つある")
+    a = applied[0]
+    if a.get("element") != element or a.get("heads") != heads or not (type(a.get("available")) is int and 0 <= a["available"] < (heads or 0)) \
+            or a.get("processed") != a.get("available"):
+        problems.append(f"{turn} 番の枚数の不足の規約の記録 {dict(a)!r} が、要素 {element}・最後の「おもて」の数 {heads} より少ない対象の数を、あるだけ処理した記録ではない")
+    return a.get("processed")
+
+
+def _s2a_rounds(players: list[int]) -> tuple[list[tuple[int, ...]], str | None]:
+    """v0.143: 準備の切り直しのログ（``mulligan`` のプレイヤーの並び）を回に分ける。両方の回は (0, 1) の 2 つ続き（配る順）で、片方だけの回のあとは同じ 1 人だけが続く。"""
+    rounds: list[tuple[int, ...]] = []
+    i = 0
+    while i < len(players):
+        if not any(len(r) == 1 for r in rounds) and players[i:i + 2] == [0, 1]:
+            rounds.append((0, 1))
+            i += 2
+            continue
+        if any(len(r) == 1 and r[0] != players[i] for r in rounds):
+            return rounds, f"片方だけの回のあとに、別のプレイヤーの切り直し {players}"
+        rounds.append((players[i],))
+        i += 1
+    return rounds, None
+
+
+def _s2a_basic(state, uid: int) -> bool:
+    definition = state.printed_def(uid)
+    return definition.category == "pokemon" and definition.is_baby_or_basic_pokemon
+
+
+def s2a_problems(state) -> list[str]:
+    """v0.143（docs/play-policy-s2a-v0.143.md 6 章）: 続行規約を当てた記録（``convention_applied``）を、ログから組み立てて照らす（エンジンの記録・登録を信じない）。
+
+    - どの記録も、状態の規約集合の規約で、監査の表の規約・版・場面・項目だけ（秘密の情報の項目がない）
+    - 準備（区間ごと）: 切り直しを回に分け、片方だけの回の数 m・両方の回の数 k を数える。k ≥ 1・m ≥ 1 なら、切り直しの補償の規約の記録がちょうど 1 つ（k・m・補償を受けるプレイヤー）
+      あるか、その区間が UNRESOLVED_MULLIGAN_COMPENSATION で止まっている。補償の引く権利（``mulligan_draw``）は補償を受けるプレイヤーだけで m 回まで（準備を終えたら m 回）。
+      化石・人形（監査の一覧）があり、たね・ベイビィのない手札の切り直しの前には、化石・人形の規約の記録（そのプレイヤーを含む）がある。逆に、その記録のあとの切り直しの手札は
+      そうした手札。最初のポケモンに化石・人形はない
+    - ポケモンチェック（``pokemon_check`` から次の番の始まりまで）: 両方のプレイヤーのくろこげマーカーのコイン・両方のねむりのコインの前に、両側のコインの規約の記録（順番は番を
+      終えたプレイヤー → 相手）があり、コインはその順。片方だけなら記録がない。きぜつ判定の規約の記録は、1 の処理のあとでダメージの前にあり、書いたポケモンはそのチェックの中で
+      きぜつする
+    - 枚数の不足の規約は ``v127_problems`` が窓の中で確かめる（あるだけ処理した数）。ここでは記録の場所（ワザ・トレーナーの使用の中）だけ"""
+    problems: list[str] = []
+    identity = getattr(state, "conventions", None)
+    members = {(m, v) for m, v, _ in getattr(identity, "members", ())}
+    logs = [list(r.log) for r in getattr(state, "segments", ())] + [list(state.log)]
+    halts = [getattr(r.result, "halt_code", None) if hasattr(r, "result") else None for r in getattr(state, "segments", ())] + [state.halt.code if state.halt else None]
+    for index, log in enumerate(logs):
+        where = "最初の対戦" if index == 0 else f"延長戦の区間 {index}"
+        case = "initial-setup" if index == 0 else "sudden-death-segment"
+        # 1. 記録の形
+        for e in log:
+            if e["kind"] != "convention_applied":
+                continue
+            rule = S2A_RULES.get(e.get("convention"))
+            if rule is None or e.get("version") != rule[0] or (e.get("convention"), e.get("version")) not in members:
+                problems.append(f"{where} の {e['turn']} 番の規約の記録 {e.get('convention')}@{e.get('version')} が、状態の規約集合の S2a の規約ではない")
+                continue
+            if e.get("scene") not in rule[1] or e.get("code") != str(e.get("scene")).split("#")[0]:
+                problems.append(f"{where} の {e['turn']} 番の規約の記録の場面 {e.get('scene')}・コード {e.get('code')} が、規約 {e['convention']} の場面ではない")
+            extra = set(e) - {"kind", "turn", "convention", "version", "scene", "code"} - rule[2]
+            if extra:
+                problems.append(f"{where} の {e['turn']} 番の規約の記録に、決めていない項目 {sorted(extra)} がある（秘密の情報を書かない）")
+            if "#" in str(e.get("scene")) and not str(e["scene"]).endswith(("#" + case, "#setup-placement")):
+                problems.append(f"{where} の規約の記録の場面 {e['scene']} が、この区間の事例 {case} ではない")
+        # 2. 準備
+        placed = next((i for i, e in enumerate(log) if e["kind"] == "place_starting_pokemon"), len(log))
+        setup = log[:placed]
+        mulligans = [e for e in setup if e["kind"] == "mulligan"]
+        rounds, error = _s2a_rounds([e["player"] for e in mulligans])
+        if error:
+            problems.append(f"{where} の切り直しの並び: {error}")
+        both, single = sum(1 for r in rounds if len(r) == 2), [r[0] for r in rounds if len(r) == 1]
+        counted = [(i, e) for i, e in enumerate(log) if e["kind"] == "convention_applied" and e.get("convention") == "PC-SETUP-MULLIGAN-COUNT"]
+        last_mulligan = max((i for i, e in enumerate(setup) if e["kind"] == "mulligan"), default=-1)
+        if both and single:
+            halted = halts[index] == "UNRESOLVED_MULLIGAN_COMPENSATION" and not counted
+            if not halted and ([(c.get("rounds_both"), c.get("rounds_single"), c.get("player")) for _, c in counted] != [(both, len(single), 1 - single[0])]
+                               or not last_mulligan < counted[0][0] < placed):
+                problems.append(f"{where} の切り直し（両方 {both} 回 → 片方だけ {len(single)} 回）に、補償の規約の記録がちょうど 1 つ・切り直しのあとにない {[dict(c) for _, c in counted]}")
+        elif counted:
+            problems.append(f"{where} の切り直し（両方 {both} 回・片方だけ {len(single)} 回）に、補償の規約の記録がある（両方 → 片方の並びだけ）")
+        draws = [e for e in log if e["kind"] == "mulligan_draw"]
+        receiver = 1 - single[0] if single else None
+        if any(d["player"] != receiver for d in draws) or len(draws) > len(single)                 or (any(e["kind"] == "janken" for e in log) and not (both and single and not counted) and len(draws) != len(single)):
+            problems.append(f"{where} の補償の引く権利 {[(d['player'], d['count']) for d in draws]} が、片方だけの回 {len(single)} 回の相手 {receiver} のものではない")
+        # 化石・人形の規約の記録は、その回の切り直しの直前（記録の位置 → 次の記録までの切り直しが、その回の切り直し）。位置で数える（同じ中身の記録を取り違えない）
+        covered: dict[int, bool] = {}
+        pending: set[int] = set()
+        for i, e in enumerate(setup):
+            if e["kind"] == "convention_applied" and e.get("convention") == "PC-SETUP-PLAY-AS-POKEMON":
+                if pending:
+                    problems.append(f"{where} の化石・人形の規約の記録 {sorted(pending)} のあとに、そのプレイヤーの切り直しがない")
+                pending = set(e.get("players", ()))
+            elif e["kind"] == "mulligan":
+                covered[i] = e["player"] in pending
+                pending.discard(e["player"])
+        if pending:
+            problems.append(f"{where} の化石・人形の規約の記録 {sorted(pending)} のあとに、そのプレイヤーの切り直しがない")
+        for i, e in enumerate(setup):
+            if e["kind"] != "mulligan":
+                continue
+            hand = list(e["revealed_hand"])
+            fossil = any(state.cards[uid].card_id in S2A_PLAY_AS_CARDS for uid in hand)
+            if any(_s2a_basic(state, uid) for uid in hand):
+                problems.append(f"{where} の切り直しで見せた手札（プレイヤー {e['player']}）に、たね・ベイビィがある")
+            if fossil and not covered[i]:
+                problems.append(f"{where} の化石・人形のある手札の切り直し（プレイヤー {e['player']}）の前に、化石・人形の規約の記録がない")
+            if covered[i] and not fossil:
+                problems.append(f"{where} の化石・人形の規約の記録のあとの切り直し（プレイヤー {e['player']}）の手札に、化石・人形がない")
+        for e in log:
+            if e["kind"] == "place_starting_pokemon" and any(state.cards[uid].card_id in S2A_PLAY_AS_CARDS for uid in (e["active"], *e["bench"])):
+                problems.append(f"{where} の最初のポケモンに、化石・人形 {e['active']}・{e['bench']} がある")
+        # 3. ポケモンチェック
+        turn_player = None
+        windows: list[tuple[int, list[dict]]] = []
+        current = None
+        for e in log:
+            if e["kind"] in ("turn_start", "turn_end"):
+                turn_player = e["player"]  # ポケモンチェックの直前の番を終えたプレイヤー（turn_end。盤面を直接作った状態のログにも残る）
+                current = None
+            elif e["kind"] == "pokemon_check":
+                current = (turn_player, [])
+                windows.append(current)
+            elif current is not None:
+                current[1].append(e)
+        inside = {id(x) for _, w in windows for x in w}
+        for e in log:
+            if e["kind"] == "convention_applied" and e.get("convention") in ("PC-CHECK-SIDE-ORDER", "PC-CHECK-KO-POINT") and id(e) not in inside:
+                problems.append(f"{where} の {e['turn']} 番のポケモンチェックの規約の記録が、ポケモンチェックの中にない")
+        for player, window in windows:
+            order = (player, 1 - player) if player is not None else None
+            for kind, effect, code in (("char_check", "char", "UNRESOLVED_POKEMON_CHECK_CHAR_COIN_ORDER"), ("sleep_check", "sleep", "UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER")):
+                checks = [x for x in window if x["kind"] == kind]
+                owners = [x["player"] for x in checks]
+                marks = [(k, x) for k, x in enumerate(window) if x["kind"] == "convention_applied" and x.get("scene") == code]
+                first_coin = next((k for k, x in enumerate(window) if x["kind"] == "coin_flip" and x.get("source") == "pokemon_check" and x.get("effect") == effect), None)
+                if len(set(owners)) > 1:
+                    if len(marks) != 1 or tuple(marks[0][1].get("order", ())) != order or first_coin is None or marks[0][0] > first_coin:
+                        problems.append(f"{where} の両方のプレイヤーの {kind} の前に、番を終えたプレイヤーからの規約の記録がない {[dict(m) for _, m in marks]}")
+                    if owners != sorted(owners, key=lambda o: order.index(o)):
+                        problems.append(f"{where} の両方のプレイヤーの {kind} が、番を終えたプレイヤー → 相手の順ではない {owners}")
+                elif marks:
+                    problems.append(f"{where} の片方だけの {kind} に、両側のコインの規約の記録がある")
+            for j, mark in ((k, x) for k, x in enumerate(window) if x["kind"] == "convention_applied" and x.get("convention") == "PC-CHECK-KO-POINT"):
+                damage = [k for k, x in enumerate(window) if x["kind"] in ("darkness_energy_damage", "darkness_energy_counters", "char_damage", "poison_damage")]
+                if any(k < j for k in damage) or any(x["kind"] == "char_check" for x in window[j:]):
+                    problems.append(f"{where} の {mark['turn']} 番のきぜつ判定の規約の記録が、くろこげマーカーのコインのあと・ダメージの前にない")
+                cards = {x["pokemon_id"]: x["pokemon"] for x in window if "pokemon_id" in x and "pokemon" in x}
+                knocked = {x["pokemon"] for x in window if x["kind"] == "knock_out"}
+                for pid in mark.get("pokemon_ids", ()):
+                    if cards.get(pid) not in knocked:
+                        problems.append(f"{where} の {mark['turn']} 番のきぜつ判定の規約の記録のポケモン {pid} が、そのポケモンチェックできぜつしていない")
+        # 4. 枚数の不足の規約の記録の場所（ワザ・トレーナーの使用のあと、番の終わりの前）
+        last_use = None
+        for e in log:
+            if e["kind"] in ("attack", "play_trainer"):
+                last_use = e
+            elif e["kind"] in ("turn_end", "pokemon_check"):
+                last_use = None
+            elif e["kind"] == "convention_applied" and e.get("convention") == "PC-COIN-COUNT-SHORT" and (
+                    last_use is None or S2A_SHORT_ELEMENTS.get(e.get("code")) != e.get("element") or e.get("player") != last_use.get("player")):
+                problems.append(f"{where} の {e['turn']} 番の枚数の不足の規約の記録が、ドライアップ・怪電波マシーンを使ったプレイヤーの使用の中にない")
+    return problems
 
 
 V129_QUIZ = ("GD5-016",)
@@ -10670,9 +10860,10 @@ def v127_problems(state) -> list[str]:
                 if discards or heads != record.required:
                     problems.append(f"{e['turn']} 番の途中停止したドライアップで、トラッシュがある・必要な数 {record.required} が最後の「おもて」の数 {heads} と違う")
                 continue
-            if len(discards) != heads or len({d["pokemon_id"] for d in discards}) > 1 or any(not state.printed_def(d["energy"]).is_basic_energy
+            expected = _s2a_short_count(window, heads, "discard_water_energy_cards", problems, e["turn"])  # v0.143: あるだけ処理した数（規約がなければ H）
+            if len(discards) != expected or len({d["pokemon_id"] for d in discards}) > 1 or any(not state.printed_def(d["energy"]).is_basic_energy
                                                                                             or state.printed_def(d["energy"]).provides.value != "water" for d in discards):
-                problems.append(f"{e['turn']} 番のドライアップでトラッシュしたカード {[d['energy'] for d in discards]} が、選んだ 1 匹の「水」エネルギーカード「おもて」{heads} 枚ではない")
+                problems.append(f"{e['turn']} 番のドライアップでトラッシュしたカード {[d['energy'] for d in discards]} が、選んだ 1 匹の「水」エネルギーカード {expected} 枚（「おもて」{heads}）ではない")
         elif e["kind"] == "play_trainer" and state.cards[e["card"]].card_id == V127_TWM:
             window = []
             for later in log[i + 1:]:
@@ -10687,7 +10878,8 @@ def v127_problems(state) -> list[str]:
                     problems.append(f"{e['turn']} 番の途中停止した怪電波マシーンで、もどした・使用中のカードがない・必要な数が最後の「おもて」の数と違う")
             elif end.get("kind") == "discard_trainer":
                 rest = log[i + 1 + len(window):]
-                if heads is None or len(returned) != heads:
+                expected = _s2a_short_count(window, heads, "return_energy_cards_to_hand", problems, e["turn"])  # v0.143
+                if heads is None or len(returned) != expected:
                     problems.append(f"{e['turn']} 番の怪電波マシーンでもどした枚数 {len(returned)} が「おもて」の数 {heads} と違う")
                 if rest and not (rest[0]["kind"] == "trainer_turn_end" and rest[0].get("player") == e["player"]):
                     problems.append(f"{e['turn']} 番の怪電波マシーンを使い終えたあと、番を終えていない（{rest[0]['kind']}）")

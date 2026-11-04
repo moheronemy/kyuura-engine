@@ -323,7 +323,7 @@ from . import faceup  # v0.126: おもての山札（フラッシュ）
 from .interruption import DeferredShortage, interrupt, interruption_problems  # v0.127: 途中停止
 from . import cards as cards_module
 from . import sudden_death  # v0.134: サドン・デスの延長戦の開始
-from .conventions import require_state_conventions, resolve_for_new_game, stop_without_continuation  # v0.142: 規約集合
+from .conventions import continuation_for, record_application, require_state_conventions, resolve_for_new_game, stop_without_continuation  # v0.142: 規約集合（v0.143: 続行規約）
 from .coins import CoinSide, flip_coins
 from .rng import copy_rng
 
@@ -478,6 +478,11 @@ def _hand_has_basic(state: GameState, player: int) -> bool:
     return any(state.card_def(uid).is_baby_or_basic_pokemon for uid in state.players[player].hand)
 
 
+# v0.143: 準備の PlaceStartingPokemon で、ポケモンとして場に出せるトレーナーを最初のポケモンに選んだ事例（停止の方針の台帳の UNRESOLVED_PLAY_AS_POKEMON_SETUP#setup-placement。
+# 最初の対戦・延長戦の区間の両方）
+SETUP_PLACEMENT_CASE = "setup-placement"
+
+
 def _setup_case(state: GameState) -> str:
     """v0.142: 準備の停止の事例（停止の方針の台帳の事例 ID の ``#`` のあと）。最初の対戦の準備か、サドン・デスの延長戦の準備か。"""
     return "initial-setup" if not state.segments else "sudden-death-segment"
@@ -504,8 +509,13 @@ def _deal_opening_hands(state: GameState) -> None:
         if not lacking:
             break
         undecided = [p for p in lacking if play_as_pokemon_in_hand(state, p)]
-        if undecided:
-            stop_without_continuation(state, PLAY_AS_POKEMON_SETUP_CODE, _setup_case(state))  # v0.142: 続行規約の照会（この版はいつも「なし」で、今までどおり止める）
+        # v0.143（docs/play-policy-s2a-v0.143.md 4 章）: 化石・人形の初手の続行規約が状態の規約集合にあれば、たね・ベイビィのない手札として今の切り直しと同じく切り直す（規約を当てた
+        # ことをログに書いてから。対象のカードは登録の型 PlayAsPokemon で識別する）。なければ今までどおり切り直す前に止める
+        play_as = continuation_for(state, PLAY_AS_POKEMON_SETUP_CODE, _setup_case(state)) if undecided else None
+        if play_as is not None:
+            record_application(state, play_as, players=tuple(undecided))
+        elif undecided:
+            stop_without_continuation(state, PLAY_AS_POKEMON_SETUP_CODE, _setup_case(state))  # v0.142: 続行規約の照会（規約がないことを確かめて止める）
             # v0.47: たねポケモンがなく、なにかの化石・ピッピ人形がある手札で、切り直すのか、それを最初のポケモンとして出せるのかは決められない（PF1）。切り直す前に
             # 対戦を止める（v0.1 の切り直しの補償と同じ形。推測で決めない）
             state.phase = Phase.HALTED
@@ -528,8 +538,13 @@ def _deal_opening_hands(state: GameState) -> None:
 
     both_rounds = [r for r in rounds if len(r) == 2]
     single_rounds = [r for r in rounds if len(r) == 1]
-    if both_rounds and single_rounds:
-        stop_without_continuation(state, "UNRESOLVED_MULLIGAN_COMPENSATION", _setup_case(state))  # v0.142: 続行規約の照会（この版はいつも「なし」）
+    # v0.143（docs/play-policy-s2a-v0.143.md 4 章）: 両方の回のあとに片方だけの回がある並びは、切り直しの補償の続行規約があれば、片方だけの回の数を、もう一方のプレイヤーの補償の
+    # 回数にする（両方の回は数えない。今の片方だけの補償と同じ式）。補償の時点・選ぶ人・1 回の枚数は今のまま（サイドを置いたあと・DrawMulliganCards）
+    compensation = continuation_for(state, "UNRESOLVED_MULLIGAN_COMPENSATION", _setup_case(state)) if both_rounds and single_rounds else None
+    if compensation is not None:
+        record_application(state, compensation, rounds_both=len(both_rounds), rounds_single=len(single_rounds), player=1 - single_rounds[0][0])
+    elif both_rounds and single_rounds:
+        stop_without_continuation(state, "UNRESOLVED_MULLIGAN_COMPENSATION", _setup_case(state))  # v0.142: 続行規約の照会（規約がないことを確かめて止める）
         state.phase = Phase.HALTED
         state.halt = Halt(
             code="UNRESOLVED_MULLIGAN_COMPENSATION",
@@ -1287,6 +1302,13 @@ def _place_starting_pokemon(state: GameState, cmd: PlaceStartingPokemon) -> None
     for uid in chosen:
         _require_in_hand(state, player, uid)
         if uid in play_as_pokemon_in_hand(state, player):
+            placement = continuation_for(state, PLAY_AS_POKEMON_SETUP_CODE, SETUP_PLACEMENT_CASE)
+            if placement is not None:
+                # v0.143（docs/play-policy-s2a-v0.143.md 4 章）: 化石・人形の初手の続行規約があれば、たねポケモンカードとして数えないので、たねポケモンでないカードと同じ不正な操作
+                # （未解決の停止ではない。入力の状態・乱数・ログは変えない。規約を当てた記録も残さない）
+                raise IllegalActionError("NOT_BASIC_POKEMON", f"カード {uid} はたねポケモンではない（規約 {placement.convention[0]}@{placement.convention[1]}: "
+                                                              "ポケモンとして場に出せるトレーナーを、準備の最初のポケモンとして数えない）")
+            stop_without_continuation(state, PLAY_AS_POKEMON_SETUP_CODE, SETUP_PLACEMENT_CASE)  # v0.143: 拒否の箇所の照会（規約がないことを確かめて拒否する）
             # v0.47: 手札のなにかの化石・ピッピ人形（手札ではトレーナーカード）を、対戦準備で最初のポケモンとして出せるかは決められない（PF1）
             raise UnsupportedError(PLAY_AS_POKEMON_SETUP_CODE, f"カード {uid}（{state.card_def(uid).name_ja}）: {PLAY_AS_POKEMON_SETUP_REASON}")
         if not state.card_def(uid).is_baby_or_basic_pokemon:

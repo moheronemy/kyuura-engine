@@ -700,6 +700,9 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
+    # v0.143（docs/play-policy-s2a-v0.143.md 5 章）: 続行規約を当てた記録（規約 ID・版・場面・停止コードと、切り直しの回の数・投げる順番・ポケモンの番号・コインの「おもて」の数・
+    # 対象の枚数などの公開の値だけ。``conventions.APPLIED_FIELDS``）
+    "convention_applied",
     # v0.134（docs/sudden-death-v0.134.md 8 章）: サドン・デスの延長戦の区間の始まり（区間の番号・準備で置くサイドの枚数だけ。新しい山札の並び・手札・サイドは書かない）
     "sudden_death_started",
     # v0.126: フラッシュでおもてにした山札（並べたプレイヤー・枚数・いちばん上のカードの id。uid は書かない）・いちばん上のおもてのカードが変わった（カードの id・おもての枚数）

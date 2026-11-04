@@ -49,7 +49,9 @@ class PlanInvariantTest(unittest.TestCase):
         self.assertEqual(P.stable(fresh), P.stable(self.plan))
 
     def test_all_proposals(self):
-        self.assertEqual({c["status"] for c in self.plan["candidates"]}, {P.STATUS})
+        # v0.143: S2a の 5 つの案だけが採用（adopted）。ほかは案のまま
+        self.assertEqual({c["id"] for c in self.plan["candidates"] if c["status"] == P.ADOPTED}, set(P.ADOPTIONS))
+        self.assertEqual({c["status"] for c in self.plan["candidates"] if c["id"] not in P.ADOPTIONS}, {P.STATUS})
         broken = _copy(self.plan)
         broken["candidates"][0]["status"] = "approved"
         self.assert_detects(broken, "案だけ")

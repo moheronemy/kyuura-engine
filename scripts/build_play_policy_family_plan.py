@@ -5,6 +5,8 @@
 
 - 場面（事例）の唯一の元は停止の方針の台帳（docs/stop-policy-classification.json）の ``entries``。この設計案は ID で引くだけで、台帳の本文（到達可能性・止め方・研究の記録）を書き換えない。
 - 共通規約の案（``CANDIDATES``）は**どれも案**で、利用者の承認を受けていない（``status`` は proposal だけ）。規約の採用・モードの実装・エンジンの変更はしていない。
+- v0.143 の経過: 5 つの案（``ADOPTIONS``）は、S2a の続行規約として利用者が採用し、開発用の集合 CS-KYUURA-PLAY-S2A@1 に登録した（``status`` は adopted。採用の範囲は
+  ``adoption`` に書き、案の対象（``targets``）は提案の時点のまま残す）。ほかの案は proposal のまま。
 - 各場面の区分（``plan_class``）は、利用者の依頼の A〜E の軸。台帳の ``classification``（棚卸しの A〜E。A=機能不足 …）とは**別の軸**で、同じ文字でも意味が違う。
 - 対戦の道具の発生の記録（``OBSERVATION``）は、リポジトリの外の記録の集計の写し。版・組・方策・seed・分母・数え方を一緒に書く。停止コードの件数から停止率を推定しない。
 """
@@ -38,6 +40,23 @@ BASE = {
 KYUURA = {"pinned_commit": "71d1728938fb4c8fefde9b82779cdef74beb612d", "checkout_observed": "b9e7cff", "read_only": True}
 
 STATUS = "proposal"  # 規約案の状態。承認済みにしない（--check が確かめる）
+ADOPTED = "adopted"  # v0.143: 利用者が採用し、エンジンの規約集合に登録した案（``ADOPTIONS`` だけ。--check がエンジンの登録と範囲を照らす）
+
+# v0.143（docs/play-policy-s2a-v0.143.md）: 採用した案と採用の範囲。案の対象（targets）は提案の時点のまま残し、採用で外した対象（excluded_targets）と加えた場面（added_scenes）を書く。
+# 採用の範囲 = targets − excluded_targets + added_scenes が、登録した規約の場面とちょうど同じ（--check）
+_S2A_ADOPTION = {"on": "2026-11-04", "by": "user", "version": "0.143.0", "set": ["CS-KYUURA-PLAY-S2A", 1], "document": "docs/play-policy-s2a-v0.143.md",
+                 "spec": "docs/play-policy-s2a-spec.md", "not_recorded_as": "公式の裁定・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用）"}
+ADOPTIONS = {
+    "PC-SETUP-MULLIGAN-COUNT": {**_S2A_ADOPTION, "convention": ["PC-SETUP-MULLIGAN-COUNT", 1], "excluded_targets": [], "added_scenes": []},
+    "PC-SETUP-PLAY-AS-POKEMON": {**_S2A_ADOPTION, "convention": ["PC-SETUP-PLAY-AS-POKEMON", 1], "excluded_targets": [],
+                                 "added_scenes": [{"scene": "UNRESOLVED_PLAY_AS_POKEMON_SETUP#setup-placement", "coverage": "full",
+                                                   "note": "v0.143 の採用で加えた場面（準備の配置の拒否。続行側は NOT_BASIC_POKEMON の拒否で、ほかの停止はない）"}]},
+    "PC-CHECK-SIDE-ORDER": {**_S2A_ADOPTION, "convention": ["PC-CHECK-SIDE-ORDER", 1],
+                            "excluded_targets": [{"scene": "UNRESOLVED_POKEMON_CHECK_BERRY_ORDER", "reason": "BY1 は効果の種類の順番を含む別の問い（S2a の仕様案 OC-7。採用仕様の除外）"}],
+                            "added_scenes": []},
+    "PC-COIN-COUNT-SHORT": {**_S2A_ADOPTION, "convention": ["PC-COIN-COUNT-SHORT", 1], "excluded_targets": [], "added_scenes": []},
+    "PC-CHECK-KO-POINT": {**_S2A_ADOPTION, "convention": ["PC-CHECK-KO-POINT", 1], "excluded_targets": [], "added_scenes": []},
+}
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
 # 区分（利用者の依頼の A〜E。台帳の classification とは別の軸）
@@ -999,6 +1018,10 @@ def build() -> dict:
     for cand in CANDIDATES:
         for t in cand["targets"]:
             target_of[t["scene"]].append((cand["id"], t))
+        for t in ADOPTIONS.get(cand["id"], {}).get("added_scenes", []):
+            target_of[t["scene"]].append((cand["id"], t))  # v0.143: 採用で加えた場面
+    adopted_scene = {(t if isinstance(t, str) else t["scene"]): ADOPTIONS[c["id"]]["convention"] for c in CANDIDATES if c["id"] in ADOPTIONS
+                     for t in adoption_scenes(c)}
     whole_game_scenes = {s for ch in WHOLE_GAME_CHANNELS for s in ch["scenes"]}
     scene_rows = []
     for s in scenes:
@@ -1027,6 +1050,8 @@ def build() -> dict:
             row["candidate"] = None
         if len(hits) > 1:
             row["also_candidates"] = [c for c, _ in hits[1:]]
+        if s["id"] in adopted_scene:
+            row["adopted_convention"] = adopted_scene[s["id"]]  # v0.143: 続行側の集合の規約が当たる場面
         scene_rows.append(row)
     for f in NEW_FINDINGS:
         scene_rows.append({"id": f["id"], "parent": None, "code": None, "entry_kind": "new_finding", "family": None, "ledger_classification": None,
@@ -1036,7 +1061,8 @@ def build() -> dict:
     for cand in CANDIDATES:
         rows = [r for r in scene_rows if r.get("candidate") == cand["id"]]
         codes = sorted({r["parent"] or r["code"] for r in rows})
-        c = {**cand, "status": STATUS, "codes": codes,
+        c = {**cand, "status": ADOPTED if cand["id"] in ADOPTIONS else STATUS, "codes": codes,
+             **({"adoption": {**ADOPTIONS[cand["id"]], "scenes": adoption_scenes(cand)}} if cand["id"] in ADOPTIONS else {}),
              "scene_count": len(rows), "code_count": len(codes),
              "coverage_counts": dict(sorted(collections.Counter(r["coverage"] for r in rows).items())),
              "ruling_ids": sorted({rid for r in rows for rid in r["ruling_ids"]}),
@@ -1051,7 +1077,7 @@ def build() -> dict:
         "base": BASE, "kyuura": KYUURA,
         "sources": {"ledger": {"path": "docs/stop-policy-classification.json", "base_commit": ledger["base"]["commit"], "entries": len(ledger["entries"])},
                     "research": {"path": "kyuura_engine/data/research_links.json", "research_commit": research["research_commit"], "stop_codes": len(research["stop_codes"])}},
-        "axes": {"plan_class": PLAN_CLASSES, "coverage": COVERAGE, "shortage_kinds": SHORTAGE_KINDS, "candidate_status": [STATUS],
+        "axes": {"plan_class": PLAN_CLASSES, "coverage": COVERAGE, "shortage_kinds": SHORTAGE_KINDS, "candidate_status": [STATUS, ADOPTED],
                  "note": "plan_class は利用者の依頼の A〜E。台帳の classification（棚卸しの A〜E: A=機能不足・B=技術的制限・C=未裁定・D=独自規約・E=その他）とは別の軸"},
         "candidates": candidates,
         "individual_reason_by_family": INDIVIDUAL_REASON_BY_FAMILY,
@@ -1142,6 +1168,55 @@ NONEMPTY_CANDIDATE_FIELDS = ("name", "question", "statement", "applies_when", "t
 VAGUE_STATEMENTS = ("できるだけ処理", "失敗しても続ける", "適当に", "可能な限り")
 
 
+def adoption_scenes(cand: dict) -> list[str]:
+    """v0.143: 採用の範囲（案の対象 − 採用で外した対象 + 採用で加えた場面）。"""
+    adoption = ADOPTIONS[cand["id"]]
+    excluded = {t["scene"] for t in adoption["excluded_targets"]}
+    return sorted({t["scene"] for t in cand["targets"]} - excluded | {t["scene"] for t in adoption["added_scenes"]})
+
+
+def adoption_problems(plan: dict) -> list[str]:
+    """v0.143: 採用した案が、エンジンの登録（kyuura_engine.conventions）の規約・集合と範囲で一致するか。"""
+    import sys
+
+    sys.path.insert(0, str(ROOT))
+    from kyuura_engine import conventions as C
+
+    problems = []
+    for c in plan["candidates"]:
+        adoption = c.get("adoption")
+        if (c["status"] == ADOPTED) != (c["id"] in ADOPTIONS) or (c["status"] == ADOPTED) != (adoption is not None):
+            problems.append(f"{c['id']}: 状態 {c['status']} と採用の記録が合わない（採用は ADOPTIONS だけ）")
+            continue
+        if adoption is None:
+            continue
+        key = tuple(adoption["convention"])
+        convention = C.CONVENTIONS.get(key)
+        spec = C.SETS.get(tuple(adoption["set"]))
+        if convention is None or spec is None or key not in spec.members:
+            problems.append(f"{c['id']}: 採用の規約 {key} が、エンジンの登録の集合 {adoption['set']} にない")
+            continue
+        if convention.layer != C.LAYER_CONTINUATION or convention.approval != C.APPROVAL_USER_AGREED or spec.usage != C.USAGE_DEVELOPMENT:
+            problems.append(f"{c['id']}: 採用の規約の層・承認・集合の区分が、開発用の集合の採用した続行規約ではない")
+        if sorted(convention.scenes) != adoption["scenes"]:
+            problems.append(f"{c['id']}: 採用の範囲 {adoption['scenes']} が、登録した規約の場面 {sorted(convention.scenes)} と違う")
+        targets = {t["scene"] for t in c["targets"]}
+        for t in adoption["excluded_targets"]:
+            if t["scene"] not in targets or not t.get("reason"):
+                problems.append(f"{c['id']}: 採用で外した {t['scene']} が案の対象にない・理由がない")
+        for t in adoption["added_scenes"]:
+            if t["scene"] in targets:
+                problems.append(f"{c['id']}: 採用で加えた {t['scene']} が、もとから案の対象にある")
+        scenes = {s["id"]: s for s in plan["scenes"]}
+        for sid in adoption["scenes"]:
+            if scenes.get(sid, {}).get("adopted_convention") != list(key):
+                problems.append(f"{c['id']}: 採用の範囲の場面 {sid} に、採用した規約の印がない")
+    registered = {key for key, conv in C.CONVENTIONS.items() if conv.layer == C.LAYER_CONTINUATION}
+    if registered != {tuple(a["convention"]) for a in ADOPTIONS.values()}:
+        problems.append(f"エンジンに登録した続行規約 {sorted(registered)} が、採用した案と対応しない")
+    return problems
+
+
 def check(plan: dict, ledger: dict, fresh: dict | None) -> list[str]:
     problems = []
     entries = {e["id"]: e for e in ledger["entries"]}
@@ -1169,8 +1244,8 @@ def check(plan: dict, ledger: dict, fresh: dict | None) -> list[str]:
         for f in NONEMPTY_CANDIDATE_FIELDS:
             if not c.get(f):
                 problems.append(f"{c['id']}: 項目 {f} が空（適用条件・例外・根拠などの欠け）")
-        if c.get("status") != STATUS:
-            problems.append(f"{c['id']}: 状態が {c.get('status')}（案だけ。承認済みにしない）")
+        if c.get("status") != (ADOPTED if c["id"] in ADOPTIONS else STATUS):
+            problems.append(f"{c['id']}: 状態が {c.get('status')}（採用した案は adopted、ほかは案だけ。承認済みにしない）")
         if any(v in c.get("statement", "") for v in VAGUE_STATEMENTS):
             problems.append(f"{c['id']}: 規約の文が範囲の分からない言い方")
         rec = c.get("recommendation") or {}
@@ -1250,6 +1325,7 @@ def check(plan: dict, ledger: dict, fresh: dict | None) -> list[str]:
     if fresh is not None and stable(fresh) != stable(plan):
         problems.append("台帳・作成スクリプトから作り直した設計案と、書き出した設計案が違う（--write で書き直す）")
     problems += generated_block_problems(plan)
+    problems += adoption_problems(plan)
     return problems
 
 

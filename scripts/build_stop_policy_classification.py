@@ -96,6 +96,27 @@ RULESET_AGREEMENTS = [
     {"id": "AGR-RULESET-DEVELOPMENT", "statement": "規約がそろわない構成は開発用として区別し、通常のプレイ用として完成扱いにしない。",
      "reading": "集合の区分 usage（standard・development・legacy）と完全性の主張（この版は halts_at_undecided だけ。play_complete の判定は未実装で受け付けない）"},
 ]
+# v0.143（docs/play-policy-s2a-v0.143.md 1 章）: S2a の続行規約 5 件の採用（利用者の指示。公式の裁定・エラッタ・kyuura の研究上の解決ではない）。規約集合の設計方針の承認・
+# 進め方の承認（docs/play-policy-s2a-spec.md 2 章）とは別の依頼なので、別の出典で記録する。採用したのは開発用の部分的な集合 CS-KYUURA-PLAY-S2A@1 の 5 規約の中身だけ（厳密側の集合・
+# ほかの未決の場面・未承認の仮定は変えない）
+CONTINUATION_AGREEMENT_SOURCE = {"by": "user", "on": "2026-11-04",
+                                 "where": ("本会話の利用者の指示（作業ブランチ claude/play-policy-s2a-impl の依頼「5規約をまとめて採用し、S2a-0〜4を一つの実装タスクとして進める案を採用します。」"
+                                           "と、その指示の採用仕様）"),
+                                 "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用。厳密側の集合・ほかの未決の場面の判断ではない）"}
+CONTINUATION_AGREEMENTS = [
+    {"id": "AGR-PLAY-S2A-SET", "statement": "続行側として、開発用の部分的な集合 CS-KYUURA-PLAY-S2A@1（今の挙動の集合の規約 12 件と S2a の 5 規約）を登録する。完成したプレイ用とは表示しない。",
+     "reading": "conventions.SETS の CS-KYUURA-PLAY-S2A@1（usage development・completeness halts_at_undecided）。厳密側 CS-KYUURA-CURRENT@1 は同じ ID・版・中身のまま"},
+    {"id": "AGR-PLAY-S2A-MULLIGAN-COUNT", "statement": "PC-SETUP-MULLIGAN-COUNT@1: 片方だけが切り直した回 1 回につき、もう一方に補償 1 回（0〜2 枚・受けるプレイヤーが選ぶ。サイドのあと・ジャンケンの前）。両方の回は数えない。",
+     "reading": "UNRESOLVED_MULLIGAN_COMPENSATION#initial-setup・#sudden-death-segment（engine._deal_opening_hands）"},
+    {"id": "AGR-PLAY-S2A-PLAY-AS-POKEMON", "statement": "PC-SETUP-PLAY-AS-POKEMON@1: ポケモンとして場に出せるトレーナー（登録の型で識別）を初手のたねポケモンに数えず、ほかにたね・ベイビィがなければ切り直す。初期配置で選べば規約による不正な操作として拒否する。",
+     "reading": "UNRESOLVED_PLAY_AS_POKEMON_SETUP#initial-setup・#sudden-death-segment・#setup-placement（engine._deal_opening_hands・_place_starting_pokemon。拒否は NOT_BASIC_POKEMON）"},
+    {"id": "AGR-PLAY-S2A-SIDE-ORDER", "statement": "PC-CHECK-SIDE-ORDER@1: ポケモンチェックの両方のねむり・両方の場のくろこげマーカーのコインは、番を終えたプレイヤーから、それぞれバトル場 → ベンチの順。ねむりは 1 枚ずつ反映。",
+     "reading": "UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER・UNRESOLVED_POKEMON_CHECK_CHAR_COIN_ORDER（procedures）。BY1・コインの上限・両方のきぜつ・一般の同時効果・サイドの順番は対象外"},
+    {"id": "AGR-PLAY-S2A-COIN-COUNT-SHORT", "statement": "PC-COIN-COUNT-SHORT@1: ドライアップ（DU1）・怪電波マシーン（TW1）で、おもての数 H が対象の枚数 N より多ければ min(H, N) 枚を処理する。H は丸めずにログに残す。",
+     "reading": "UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT・UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT（interruption.check_quantity）。TW2・途中停止の再開・ほかのカードへの一般化は対象外"},
+    {"id": "AGR-PLAY-S2A-KO-POINT", "statement": "PC-CHECK-KO-POINT@1: ポケモンチェックの 1 と 2 を終えてから、きぜつを 1 回だけ判定する（HP 以上になっても判定まで場に残る）。",
+     "reading": "UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT（procedures._pokemon_check_plan）。両方のきぜつ・SC1・AL1・AL3・PO1〜PO3・KA1・VS1・DE1・BY1 は対象外"},
+]
 AGREED_CONVENTION_STATUS = "user_agreed"  # 規約（conventions）だけが使える。合意 AGR-MODE-BASELINE-USER で基礎集合に入れた利用者指定。続行規約の採用ではない
 MODE_DEFINITIONS_HISTORY = {
     "STRICT-A": "厳密モードの定義としては採用しない（過去の検討案。AGR-MODE-STRICT・AGR-MODE-BASELINE-USER と合わない）。研究・照合の用途の集合として別に作るかは決めていない",
@@ -124,10 +145,22 @@ DECISION_STATUS = {
     "DEC-LEGACY-STATES": {"status": "agreed", "agreements": ["AGR-RULESET-LEGACY"],
                           "note": ("v0.142（2026-11-04）に承認。分類・設計の時点の推奨案（作成した版が分かる場合だけ、その版の集合に対応付ける）とは違い、旧来の固定集合として扱う。"
                                    "作成した版は推測せず、扱える条件を満たさない状態は拒否する")},
-    "DEC-PLAY-DEBUG-PARTIAL": {"status": "partly_agreed", "agreements": ["AGR-RULESET-DEVELOPMENT"],
-                               "note": "v0.142: 規約がそろわない構成を開発用として区別することは承認。開発用の集合を実際に設けるか・どの規約を入れるかは未決（この版に開発用の集合はない）"},
-    "DEC-PLAY-CONFIG-INCOMPLETE-START": {"status": "partly_agreed", "agreements": ["AGR-RULESET-DEVELOPMENT"],
-                                         "note": "v0.142: 規約がそろわない構成を通常のプレイ用として完成扱いにしないことは承認。そうした構成で対戦を始められるか・止まったときの表示は未決"},
+    "DEC-PLAY-DEBUG-PARTIAL": {"status": "partly_agreed", "agreements": ["AGR-RULESET-DEVELOPMENT", "AGR-PLAY-S2A-SET"],
+                               "note": ("v0.142: 規約がそろわない構成を開発用として区別することは承認。開発用の集合を実際に設けるか・どの規約を入れるかは未決（この版に開発用の集合はない）。"
+                                        "v0.143: 開発用の部分的な集合 CS-KYUURA-PLAY-S2A@1（S2a の 5 規約）を登録した。ほかの開発用の構成は未決")},
+    "DEC-PLAY-CONFIG-INCOMPLETE-START": {"status": "partly_agreed", "agreements": ["AGR-RULESET-DEVELOPMENT", "AGR-PLAY-S2A-SET"],
+                                         "note": ("v0.142: 規約がそろわない構成を通常のプレイ用として完成扱いにしないことは承認。そうした構成で対戦を始められるか・止まったときの表示は未決。"
+                                                  "v0.143: 開発用の集合 CS-KYUURA-PLAY-S2A@1 で対戦を始める（利用者の採用の指示）。止まったときの表示は今の停止と同じ（停止コード）。通常のプレイ用の構成の扱いは未決")},
+    "DEC-MULLIGAN-COMPENSATION": {"status": "partly_agreed", "agreements": ["AGR-PLAY-S2A-MULLIGAN-COUNT"],
+                                  "note": "v0.143: 続行側の集合 CS-KYUURA-PLAY-S2A@1 の規約 PC-SETUP-MULLIGAN-COUNT@1 として採用。厳密側（今の挙動の集合）は今のまま止める。研究上の未解決は未解決のまま"},
+    "DEC-PLAY-AS-POKEMON": {"status": "partly_agreed", "agreements": ["AGR-PLAY-S2A-PLAY-AS-POKEMON"],
+                            "note": "v0.143: PF1（準備）だけを続行側の規約 PC-SETUP-PLAY-AS-POKEMON@1 として採用。PF2（にげる）・PF3（育て屋）・MG2（ちえくらべ）・厳密側は未決のまま"},
+    "DEC-SLEEP-COIN-ORDER": {"status": "partly_agreed", "agreements": ["AGR-PLAY-S2A-SIDE-ORDER"],
+                             "note": "v0.143: 続行側の規約 PC-CHECK-SIDE-ORDER@1（番を終えたプレイヤーから）として採用。厳密側は今のまま止める"},
+    "DEC-STATED-COUNT-SHORT": {"status": "partly_agreed", "agreements": ["AGR-PLAY-S2A-COIN-COUNT-SHORT"],
+                               "note": "v0.143: DU1・TW1 だけを続行側の規約 PC-COIN-COUNT-SHORT@1（あるだけ）として採用。ほかのコード・使う前に決まる不足・厳密側は未決のまま"},
+    "DEC-KNOCKOUT-READINGS": {"status": "partly_agreed", "agreements": ["AGR-PLAY-S2A-KO-POINT"],
+                              "note": "v0.143: PK1（ポケモンチェックの 1 と 2 のあいだ）だけを続行側の規約 PC-CHECK-KO-POINT@1 として採用。ほかのきぜつの読み方・厳密側は未決のまま"},
     "DEC-EXISTING-USER-SPECS": {"status": "partly_agreed", "agreements": ["AGR-MODE-BASELINE-USER"],
                                 "note": "利用者指定（12 件・USER-ID 9 つ）は基礎集合に入れる。エンジンの簡略化・実装上の仮定・データの訂正の扱いは DEC-BASELINE-NONUSER・DEC-CARD-DATA-CORRECTIONS で未決"},
 }
@@ -603,14 +636,22 @@ CASES = {
         {"case": "decision-halt", "sites": ["kyuura_engine/engine.py:874"], "condition": "決定への答えのどれでも FU3 などに当たる", "secret_dependency": "public_only",
          "note": "答えのない決定を残さず、その前の状態で HALTED"},
     ],
+    # v0.143: 準備の 2 つのコードの事例の行は、手書きの行番号（v0.142 で古くなった engine.py:494・515）をやめ、今のコードの止める分岐の行から求める（``_site_line``）
     "UNRESOLVED_MULLIGAN_COMPENSATION": [
-        {"case": "initial-setup", "sites": ["kyuura_engine/engine.py:515"], "condition": "最初の対戦の準備", "secret_dependency": "public_only", "note": "道具の対戦で観測（legal_sequence）"},
-        {"case": "sudden-death-segment", "sites": ["kyuura_engine/engine.py:515"], "condition": "v0.134 の延長戦の区間の準備（同じ処理）", "secret_dependency": "public_only",
+        {"case": "initial-setup", "sites": [lambda: _site_line("kyuura_engine/engine.py", 'stop_without_continuation(state, "UNRESOLVED_MULLIGAN_COMPENSATION"')],
+         "condition": "最初の対戦の準備", "secret_dependency": "public_only", "note": "道具の対戦で観測（legal_sequence）"},
+        {"case": "sudden-death-segment", "sites": [lambda: _site_line("kyuura_engine/engine.py", 'stop_without_continuation(state, "UNRESOLVED_MULLIGAN_COMPENSATION"')],
+         "condition": "v0.134 の延長戦の区間の準備（同じ処理）", "secret_dependency": "public_only",
          "note": "延長戦の区間のまま HALTED。止まった状態からは延長戦を始める操作も受け付けない（docs/sudden-death-v0.134.md 6 章）"},
     ],
     "UNRESOLVED_PLAY_AS_POKEMON_SETUP": [
-        {"case": "initial-setup", "sites": ["kyuura_engine/engine.py:494"], "condition": "最初の対戦の準備で、手札になにかの化石・ピッピ人形がある", "secret_dependency": "public_only", "note": ""},
-        {"case": "sudden-death-segment", "sites": ["kyuura_engine/engine.py:494"], "condition": "延長戦の区間の準備（同じ処理）", "secret_dependency": "public_only", "note": ""},
+        {"case": "initial-setup", "sites": [lambda: _site_line("kyuura_engine/engine.py", "stop_without_continuation(state, PLAY_AS_POKEMON_SETUP_CODE, _setup_case(state))")],
+         "condition": "最初の対戦の準備で、手札になにかの化石・ピッピ人形がある", "secret_dependency": "public_only", "note": ""},
+        {"case": "sudden-death-segment", "sites": [lambda: _site_line("kyuura_engine/engine.py", "stop_without_continuation(state, PLAY_AS_POKEMON_SETUP_CODE, _setup_case(state))")],
+         "condition": "延長戦の区間の準備（同じ処理）", "secret_dependency": "public_only", "note": ""},
+        {"case": "setup-placement", "sites": [lambda: _site_line("kyuura_engine/engine.py", "stop_without_continuation(state, PLAY_AS_POKEMON_SETUP_CODE, SETUP_PLACEMENT_CASE)")],
+         "condition": "準備（最初の対戦・延長戦の区間）の PlaceStartingPokemon で、ポケモンとして場に出せるトレーナーを最初のポケモンに選んだ（拒否）", "secret_dependency": "public_only",
+         "note": "v0.143 で加えた事例（docs/play-policy-s2a-spec.md の proposed_cases）。厳密側は UnsupportedError、続行側（PC-SETUP-PLAY-AS-POKEMON）は NOT_BASIC_POKEMON の拒否"},
     ],
     "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK": [
         {"case": "coin-evolve-self-from-deck", "sites": ["kyuura_engine/effects.py:12383"], "condition": "キョウのスピアーなどの特殊能力の使う前の確かめで、山札の同じ名前のカードを読む",
@@ -754,6 +795,16 @@ UPDATES = [
      "changed_entries": ["decision_status（上の 6 つ）", "停止箇所の行番号（エンジンの編集で動いただけ）"],
      "new_entries": ["ruleset_agreements（AGR-RULESET-* の 7 項目）", "UNSUPPORTED_CONVENTION_SET（PF-RUNTIME-DATA。状態の規約集合を扱えないときの拒否）"],
      "unchanged": "研究の停止コード・事例・問題の項目・族・安全境界・規約（conventions）・方針の案は変えていない。止め方・乱数・選択肢は変えていない"},
+    {"version": "0.143.0", "work": "S2a の続行規約 5 件の採用・実装（開発用の部分的な集合 CS-KYUURA-PLAY-S2A@1）",
+     "document": "docs/play-policy-s2a-v0.143.md",
+     "base": {"commit": "7b1d2dd471675adb9f981d5846c8a21d6d245286", "branch_of_base": "claude/play-policy-s2a-spec（v0.142 の fcb8bc8 と S2a の仕様案を含む。main には未取り込み）"},
+     "approval": ("利用者の採用は continuation_agreements の 6 項目（2026-11-04。続行側の集合の規約の採用で、公式の裁定・kyuura の研究上の解決ではない）。DEC-MULLIGAN-COMPENSATION・"
+                  "DEC-PLAY-AS-POKEMON・DEC-SLEEP-COIN-ORDER・DEC-STATED-COUNT-SHORT・DEC-KNOCKOUT-READINGS を partly_agreed（続行側の対象の場面だけ）にした。厳密側・ほかの未決の場面・"
+                  "未承認の仮定は変えていない"),
+     "changed_entries": ["decision_status（上の 5 つと DEC-PLAY-DEBUG-PARTIAL・DEC-PLAY-CONFIG-INCOMPLETE-START の経過）",
+                         "UNRESOLVED_MULLIGAN_COMPENSATION・UNRESOLVED_PLAY_AS_POKEMON_SETUP の事例の sites（手書きの行番号をやめ、今のコードから求める）", "停止箇所の行番号（エンジンの編集で動いただけ）"],
+     "new_entries": ["continuation_agreements（AGR-PLAY-S2A-* の 6 項目）", "事例 UNRESOLVED_PLAY_AS_POKEMON_SETUP#setup-placement（準備の配置の拒否）"],
+     "unchanged": "研究の停止コードは active のまま（停止コードを修正済みにしない。厳密側では今のまま止まる）。族・安全境界・規約（conventions）・方針の案は変えていない"},
 ]
 # 分類の時点（基点 3e25ac5）の集計（counts）の写し。今の counts は現行コードから作り直した値
 COUNTS_AT_CLASSIFICATION = {"research_stop_codes": 316, "runtime_codes_outside_table": 40, "runtime_codes_outside_table_active": 39, "test_tool_only_codes": 8, "cases": 15, "codes_with_cases": 7, "problems_new": 4, "problems_from_inventory": 28, "conventions": 18, "internal_guard_sites_current": 602, "internal_guard_sites_matched_to_inventory": 600, "internal_guard_sites_new_since_inventory": ["kyuura_engine/engine.py:445", "kyuura_engine/resolution/programs.py:10739"], "safety_boundaries": 8, "families": 23, "decisions": 29, "by_reachability": {"constructed_board": 145, "legal_sequence": 25, "static_only": 185}, "by_family": {"PF-COPY-TRANSFORM": 34, "PF-DAMAGE-SCOPE": 22, "PF-EFFECT-TIMING": 13, "PF-ENERGY-TYPE": 21, "PF-ESP-REDO": 4, "PF-HIDDEN-INFORMATION": 8, "PF-HISTORY-LASTING": 20, "PF-KNOCKOUT-TIMING": 15, "PF-POWER-SUPPRESSION": 11, "PF-PROTECTED-TARGET-EFFECT": 12, "PF-REACTION-DURING-PROCESS": 10, "PF-RUNTIME-CONTINUATION": 15, "PF-RUNTIME-COPY-GAPS": 5, "PF-RUNTIME-DATA": 5, "PF-RUNTIME-GENERIC": 1, "PF-RUNTIME-REGISTRY": 7, "PF-RUNTIME-SEARCH-LIMIT": 6, "PF-SETUP-PLAY-AS-POKEMON": 5, "PF-SIMULTANEOUS-ORDER": 26, "PF-STATED-COUNT-SHORT": 11, "PF-TEXT-READING": 34, "PF-UP-TO-ZERO": 13, "PF-USE-WITHOUT-EFFECT": 57}, "by_play_group": {"1": 316, "2": 39, "3": 89, "4": 6, "5": 20, "6": 1}, "by_mechanism": {"answer_rejection": 13, "command_rejection": 339, "deck_validation": 1, "deferred_interruption": 2, "pokemon_check_halt": 10, "setup_halt": 2}, "by_status": {"active": 402, "fixed": 5, "historical": 2, "unverified": 1}, "note": "停止コード・事例・規約・内部ガードは別の数。事例はコードの下位で、コードの数に足さない。棚卸しと同じ項目は独立した不足として数えない"}
@@ -1011,6 +1062,15 @@ TOOL_EVIDENCE_ROOT = pathlib.Path("C:/dev/kyuura-engine-verification")
 OBSERVATION_KEYS = ("halt_codes", "unresolved_rejections")
 LABEL_CODE_RE = re.compile(r"(?:UNSUPPORTED|UNRESOLVED)_[A-Z0-9_]*[A-Z0-9]")  # 道具の記録のキー（stopped_PlayTrainer_UNRESOLVED_… の形）
 TEST_ASSERT_RE = re.compile(r"assert|Raises|\.code\b")  # 表明らしい行（assert・assertRaises・例外の .code を比べる行）。halt_codes などの一覧の行は数えない
+
+
+def _site_line(path: str, needle: str) -> str:
+    """v0.143: ``path`` の中で ``needle`` をちょうど 1 回含む行の ``path:行番号``（事例の止める分岐の行。手書きの行番号が古くならないように、今のコードから求める）。"""
+    lines = (ROOT / path).read_text(encoding="utf-8").splitlines()
+    found = [i for i, line in enumerate(lines, start=1) if needle in line]
+    if len(found) != 1:
+        raise RuntimeError(f"{path} に {needle!r} の行がちょうど 1 つない（{found}）")
+    return f"{path}:{found[0]}"
 
 
 def sha256(path: pathlib.Path) -> str:
@@ -1286,7 +1346,8 @@ def build() -> dict:
                         "current_stop": [{"mechanism": "not_raised", "sites": [], "basis": "エンジンでは投げない"}]})
     for code, case_list in CASES.items():
         for case in case_list:
-            entries.append({"id": f"{code}#{case['case']}", "entry_kind": "case", "parent": code, "status": "active", "condition": case["condition"], "sites": case["sites"],
+            sites = [site() if callable(site) else site for site in case["sites"]]  # v0.143: 今のコードから求める行
+            entries.append({"id": f"{code}#{case['case']}", "entry_kind": "case", "parent": code, "status": "active", "condition": case["condition"], "sites": sites,
                             "secret_dependency": case["secret_dependency"], "note": case["note"]})
     for problem in PROBLEMS:
         record = dict(problem)
@@ -1399,6 +1460,7 @@ def build() -> dict:
                  "entry_status": {"active": "現在有効", "fixed": "修正済み", "historical": "履歴項目", "unverified": "未確認（候補）"}},
         "mode_agreements": {"source": AGREEMENT_SOURCE, "agreements": AGREEMENTS},
         "ruleset_agreements": {"source": RULESET_AGREEMENT_SOURCE, "agreements": RULESET_AGREEMENTS},
+        "continuation_agreements": {"source": CONTINUATION_AGREEMENT_SOURCE, "agreements": CONTINUATION_AGREEMENTS},
         "mode_definitions": {"strict": next(a["statement"] for a in AGREEMENTS if a["id"] == "AGR-MODE-STRICT"),
                              "play": next(a["statement"] for a in AGREEMENTS if a["id"] == "AGR-MODE-PLAY"),
                              "status": "agreed（AGR-MODE-STRICT・AGR-MODE-PLAY。2026-11-03）",
@@ -1599,6 +1661,13 @@ def agreement_problems(ledger: dict) -> list[str]:
         if not (a.get("statement") and a.get("reading")) or a.get("id") in ids:
             problems.append(f"{a.get('id')}: 設計方針の承認の文・読み方がないか、ID が重複")
     ids = ids + [a.get("id") for a in ruleset.get("agreements", [])]
+    continuation = ledger.get("continuation_agreements") or {}
+    if (continuation.get("source") or {}).get("by") != "user" or "公式" not in (continuation.get("source") or {}).get("not_recorded_as", ""):
+        problems.append("続行規約の採用の出典は利用者の指示で、公式の裁定・kyuura の解決として記録しない")
+    for a in continuation.get("agreements", []):
+        if not (a.get("statement") and a.get("reading")) or a.get("id") in ids:
+            problems.append(f"{a.get('id')}: 続行規約の採用の文・読み方がないか、ID が重複")
+    ids = ids + [a.get("id") for a in continuation.get("agreements", [])]
     statuses = ledger.get("decision_status", {})
     if set(statuses) != set(ledger["decisions"]):
         problems.append("判断事項と判断事項の状態の集合が違う")

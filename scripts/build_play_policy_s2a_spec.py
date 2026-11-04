@@ -64,6 +64,34 @@ SPECIFICATION_APPROVAL = {
     "note": "この仕様案（5 規約の中身・除外・依存・実装の段階）は、利用者の採用の判断を待つ。採用まで、エンジンに登録・有効化しない",
 }
 
+# v0.143 の経過（採用のあとに加えた記録。上の PROCESS_APPROVAL・SPECIFICATION_APPROVAL・規約の状態は提案の時点の記録のまま残す）
+ADOPTION = {
+    "status": "user_agreed",
+    "date": "2026-11-04",
+    "quote": "5規約をまとめて採用し、S2a-0〜4を一つの実装タスクとして進める案を採用します。",
+    "scope": ("この指示と、その依頼に書いた具体的な採用仕様（5 規約の対象・処理・除外）。続行側の開発用の部分的な集合の規約の採用で、公式の裁定・エラッタ・kyuura の研究上の解決ではない。"
+              "厳密側の集合・ほかの未決の場面・未承認の仮定は変えない"),
+    "implemented_in": {"version": "0.143.0", "document": "docs/play-policy-s2a-v0.143.md", "branch": "claude/play-policy-s2a-impl"},
+    "set": ["CS-KYUURA-PLAY-S2A", 1],
+    "open_choices": {
+        "OC-1": "推奨のとおり（片方だけの回 1 回につき補償 1 回）", "OC-2": "推奨のとおり（配置も扱う。新しい事例 #setup-placement）",
+        "OC-3": "推奨のとおり（NOT_BASIC_POKEMON。既存の拒否と同じコードで、理由の文に規約 ID）", "OC-4": "推奨のとおり（登録の型で識別。今の対象の一覧は照合だけ）",
+        "OC-5": "推奨のとおり（1 枚ずつすぐ反映）", "OC-6": "推奨のとおり（番を終えたプレイヤーから）", "OC-7": "推奨のとおり（BY1 は除く）",
+        "OC-8": "推奨のとおり（あるだけ処理）", "OC-9": "推奨のとおり（2 のあとに 1 回だけ）",
+        "OC-10": "development・halts_at_undecided の集合で新しい対戦を始める（採用の指示）", "OC-11": "推奨のとおり（convention_applied を残す。続行側の対戦だけ）",
+    },
+    "differences_from_proposal": [
+        ("PC-CHECK-SIDE-ORDER: ねむりの回復の結果のすべての組の確かめ（4 通り）は、規約そのものではなく技術的な安全の確かめとして区別した（採用仕様）。止める組があればコインの前にその停止コードで"
+         "止める。両方の組だけで止まる盤面は作れていない（到達可能性は未確認）"),
+        ("PC-CHECK-KO-POINT: 仕様案は「規約があれば違いの判定を呼ばない」としていた。実装は違いの判定を呼び、厳密側が止める場面だけを規約の適用として記録する（処理は同じ）。また、場に残る読み方で "
+         "2 のあとにきぜつさせると、そのきぜつの処理で受け付けられない状態（TK1・SC2・MH1・決められない姿）になる場面は、規約を当てずにダメージの前にその停止コードで止める（保守的な制限。"
+         "仕様案の「違いを返す 2 つの条件はどちらも場に残る読み方で決まる」は、きぜつの処理のあとの停止を見ていなかった）"),
+        "PC-COIN-COUNT-SHORT: 仕様案のとおり。チェック地点（interruption.check_quantity）は状態を受け取り、処理する数を返す形にした（呼ぶ側は返した数を処理する）",
+        "PC-SETUP-MULLIGAN-COUNT・PC-SETUP-PLAY-AS-POKEMON: 仕様案のとおり",
+        "台帳の事例の行番号: 手書きをやめ、作成スクリプトが今のコードの止める分岐の行から求める（仕様案 6 章の記録の不具合の修正）",
+    ],
+}
+
 GROUND_RULES = [
     "厳密側の現行集合 CS-KYUURA-CURRENT@1 は、同じ ID・版のまま中身を変えない。未決場面では従来どおり止まる",
     "続行側は、承認された規約の対象の事例だけ続ける。対象でない事例・除外の事例は、続行側でも今の停止コードで止まる",
@@ -664,6 +692,7 @@ def build() -> dict:
         "base": BASE,
         "kyuura": KYUURA,
         "approvals": {"process": PROCESS_APPROVAL, "specification": SPECIFICATION_APPROVAL},
+        "adoption": ADOPTION,
         "ground_rules": GROUND_RULES,
         "conventions": [{**c, "status": SPEC_STATUS, "approval": SPEC_APPROVAL} for c in CONVENTIONS],
         "bundle_summary": bundle_summary(),
@@ -698,6 +727,8 @@ def render(spec: dict) -> str:
     w("")
     w("**これは仕様案です。** 利用者が承認したのは進め方（2026-11-04）で、ここに書いた 5 規約の中身（補償の数・時点・範囲・除外）は承認されていません。エンジンの動作・同梱の規約集合・"
       "カードデータ・固定デッキ・参照データは変えていません。続行の処理の実装・有効化は、この仕様案の採用のあとの別の作業です。")
+    w("")
+    w("**経過（v0.143）**: この仕様案の 5 規約は採用され、開発用の部分的な集合 CS-KYUURA-PLAY-S2A@1 として実装しました（13 章）。1〜12 章は提案の時点の記録のまま残しています。")
     w("")
     w("## 1. 基点と範囲")
     w("")
@@ -852,6 +883,24 @@ def render(spec: dict) -> str:
     for line in spec["unverified"]:
         w(f"- {line}。")
     w("")
+    adoption = spec["adoption"]
+    w("## 13. 採用のあとの経過（v0.143）")
+    w("")
+    w(f"- 採用: `{adoption['status']}`（{adoption['date']}）。利用者の指示「{adoption['quote']}」と、その依頼の採用仕様。{adoption['scope']}。")
+    w(f"- 実装: 版 {adoption['implemented_in']['version']}（{adoption['implemented_in']['document']}・作業ブランチ `{adoption['implemented_in']['branch']}`）。"
+      f"集合 `{adoption['set'][0]}@{adoption['set'][1]}`（開発用・halts_at_undecided）。")
+    w("- 進め方の承認（2 章）と、具体的な続行仕様の採用（この章）は別の記録です。2 章の「具体的な続行仕様の承認: not_approved」は提案の時点の記録で、書き換えていません。")
+    w("")
+    w("| 選択肢 | 採用 |")
+    w("|---|---|")
+    for oc, text in adoption["open_choices"].items():
+        w(f"| {oc} | {_cell(text)} |")
+    w("")
+    w("仕様案からの差:")
+    w("")
+    for line in adoption["differences_from_proposal"]:
+        w(f"- {line}。")
+    w("")
     return "\n".join(out)
 
 
@@ -897,7 +946,12 @@ def check(written: dict, document: str) -> list[str]:
     if spec["approvals"]["process"]["status"] != "user_agreed":
         problems.append("進め方の承認の記録がない")
     if spec["approvals"]["specification"]["status"] != "not_approved":
-        problems.append("具体的な続行仕様を承認済みにしている")
+        problems.append("具体的な続行仕様を承認済みにしている（2 章は提案の時点の記録。採用は adoption に別に書く）")
+    adoption = spec.get("adoption") or {}
+    if adoption.get("status") != "user_agreed" or not adoption.get("quote") or "公式" not in adoption.get("scope", ""):
+        problems.append("採用の記録（利用者の指示・範囲。公式の裁定ではない）がない")
+    if sorted(adoption.get("open_choices", {})) != sorted(o["id"] for o in spec["open_choices"]):
+        problems.append("採用の記録の選択肢が、判断が残る選択肢（8 章）と対応しない")
 
     known_ids = {c["id"] for c in spec["conventions"]}
     owners: dict[str, list[str]] = {}
@@ -909,8 +963,8 @@ def check(written: dict, document: str) -> list[str]:
         cand = candidates.get(c["candidate"])
         if cand is None:
             problems.append(f"{cid}: 設計案の候補 {c['candidate']} がない")
-        elif cand["status"] != "proposal":
-            problems.append(f"{cid}: 設計案の候補 {c['candidate']} の状態が proposal でない（この仕様は候補を書き換えない）")
+        elif cand["status"] != "adopted":
+            problems.append(f"{cid}: 設計案の候補 {c['candidate']} の状態が adopted でない（v0.143 の採用のあと）")
         for code in c["codes"]:
             if code not in entries or entries[code]["entry_kind"] not in ("research_stop_code", "runtime_stop_code"):
                 problems.append(f"{cid}: 停止コード {code} が台帳の停止コードにない")
@@ -929,8 +983,8 @@ def check(written: dict, document: str) -> list[str]:
                 problems.append(f"{cid}: 事例の案 {p['id']} の親 {p['parent']} が、この規約の停止コード・台帳にない")
             if not p["id"].startswith(p["parent"] + "#"):
                 problems.append(f"{cid}: 事例の案 {p['id']} の ID が親のコードから始まらない")
-            if p["id"] in index_scenes or p["id"] in entries:
-                problems.append(f"{cid}: 事例の案 {p['id']} はもう台帳にある（案から外す）")
+            if p["id"] not in index_scenes or p["id"] not in entries:
+                problems.append(f"{cid}: 事例の案 {p['id']} が、採用のあとの台帳・同梱の場面の一覧にない")
         for t in c["targets"]:
             scene = t["scene"]
             owners.setdefault(scene, []).append(cid)
@@ -989,14 +1043,20 @@ def check(written: dict, document: str) -> list[str]:
         if uid not in C.USER_CONVENTION_IDS:
             problems.append(f"利用者の指定 {uid} がエンジンの規約集合にない")
     new_set = (spec["set_proposal"]["continuation"]["id"], spec["set_proposal"]["continuation"]["version"])
-    if new_set in C.SETS:
-        problems.append(f"続行側の集合 {new_set} はもう登録されている（この仕様は登録しない）")
+    registered = C.SETS.get(new_set)
+    if registered is None or list(new_set) != adoption.get("set") or registered.usage != C.USAGE_DEVELOPMENT or registered.completeness != C.COMPLETENESS_HALTS:
+        problems.append(f"続行側の集合 {new_set} が、採用のあとのエンジンの登録（開発用・halts_at_undecided）にない")
+    elif sorted(registered.members) != sorted(C.SETS[C.DEFAULT_SET].members + tuple((c["id"], c["version"]) for c in spec["conventions"])):
+        problems.append(f"続行側の集合 {new_set} の規約が、今の集合の規約と 5 規約でない")
     strict = (spec["set_proposal"]["strict"]["id"], spec["set_proposal"]["strict"]["version"])
     if strict != C.DEFAULT_SET:
         problems.append("厳密側の集合が、エンジンの既定の集合と違う")
-    for cid in known_ids:
-        if any(m == cid for (m, _v) in C.CONVENTIONS):
-            problems.append(f"続行規約 {cid} がもうエンジンに登録されている（この仕様は登録しない）")
+    for c in spec["conventions"]:
+        registered_convention = C.CONVENTIONS.get((c["id"], c["version"]))
+        if registered_convention is None or registered_convention.layer != C.LAYER_CONTINUATION or registered_convention.approval != C.APPROVAL_USER_AGREED:
+            problems.append(f"続行規約 {c['id']}@{c['version']} が、採用のあとのエンジンの登録（続行規約・user_agreed）にない")
+        elif sorted(registered_convention.scenes) != sorted(t["scene"] for t in c["targets"]):
+            problems.append(f"続行規約 {c['id']}@{c['version']} の登録の場面 {sorted(registered_convention.scenes)} が、仕様の対象と違う")
     # 化石・人形の対象カードの一覧（登録の型 PlayAsPokemon）
     found = sorted(set(re.findall(r'"([A-Za-z0-9-]+)":\s*TrainerEntry\(PlayAsPokemon\(', EFFECTS.read_text(encoding="utf-8"))))
     if found != ["PMCG1-091", "PMCG3-046"]:
