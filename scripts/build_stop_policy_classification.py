@@ -760,6 +760,29 @@ V138_NEW_FINDINGS = [
      "impact": "退化スプレーのあと、カードを使わずに（拒否は状態を変えない）、山札にキョウのスピアーがあるかを知れる",
      "play_groups": ["5"], "mode_policy": "両モードで塞ぐ候補（修正は別の作業。v0.138 では変えていない）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
 ]
+# v0.143 の作業で見つけ、v0.144 で直した両モード共通の不具合（壊れた状態。情報漏れではない）
+V144_FIXED_DEFECTS = [
+    {"id": "PSP-SC2-POKEMON-CHECK-INTEGRITY", "entry_kind": "state_integrity_defect", "status": "fixed", "classification": "A",
+     "found_in": "v0.143 の作業（PC-CHECK-KO-POINT の盤面の調べ。基点 7b1d2dd。docs/play-policy-s2a-v0.143.md 10 章）",
+     "fixed_in": "v0.144（docs/sc2-integrity-fix-v0.144.md。基点 7548ba4）",
+     "summary": ("ポケモンチェックのどくでかがくへんかガスの発生源がきぜつし、残りHP「10」で力が消えていた［ずらかる］の力がもどる盤面で、SC2 の問いをどくのダメージのあと（きぜつの判定の窓）に"
+                 "確かめて止めたので、HP 以上のポケモンが場に残った HALTED になり、状態の確かめ（StateIntegrityError）が番を終えるコマンドを受け付けなかった（両方の集合で同じ）"),
+     "trigger": "resolution/flow.py の _pokemon_check（scram_restored_question。ダメージのあと）。ポケモンチェックの 1・2 の確かめ（procedures._pokemon_check_plan）がこの問いを見ていなかった",
+     "related_cards": ["PMCG3-007", "PMCG5-051"], "related_codes": ["UNRESOLVED_SCRAM_POWER_RESTORED"],
+     "fix": ("同じ判定（effects.scram_restored_by_leaving。きぜつの判定の窓の問いと共通）を、ポケモンチェックの 1・2 の確かめで状態の複製の上で行い、ダメージを与える前に同じコード "
+             "UNRESOLVED_SCRAM_POWER_RESTORED で止める（procedures._knockout_scram_restored_stop）。SC2 の答え（はたらくか）は決めない"),
+     "fix_sites": ["kyuura_engine/effects.py scram_restored_by_leaving", "kyuura_engine/procedures.py _pokemon_check_plan・_knockout_scram_restored_stop",
+                   "kyuura_engine/resolution/kernel.py scram_restored_question（判定を共通の関数に移しただけ。問いの文・コードは同じ）"],
+     "intended_difference": ("報告された盤面: 内部エラー（StateIntegrityError）→ ダメージの前の HALTED（UNRESOLVED_SCRAM_POWER_RESTORED）。くろこげマーカーの「うら」で同じ盤面になる組がある"
+                             "ときは、コインの前の確かめが見つけて、コインを投げる前に止める（v0.143 までは「うら」なら内部エラー、「おもて」なら続いた）"),
+     "reachability": {"status": "constructed_board",
+                      "evidence": ["tests/test_sc2_integrity_v0_144.py（構築の盤面。修正の前の木で StateIntegrityError）",
+                                   "docs/sc2-integrity-fix-v0.144.md 3 章（合法な操作の列の探索 1,200 局で再現なし。到達しないとは判断しない）"],
+                      "note": "合法な操作の列での再現はしていない"},
+     "impact": "対戦が内部エラーで進まない（壊れた状態は残らない。コマンドの拒否なので渡した状態は変わらない）。情報漏れではない",
+     "play_groups": ["5"], "mode_policy": "両モードで直した（モードによらない不具合）", "decision_refs": []},
+]
+
 # 分類の後の更新（基点・集計の履歴は BASE・COUNTS_AT_CLASSIFICATION に残し、書き換えない）
 UPDATES = [
     {"version": "0.137.0", "work": "情報漏れ 2 件の修正（PSP-ST1-DECK-ORACLE・PSP-FC1-ENERGY-ARK-ORACLE）", "document": "docs/deck-search-oracle-v0.137.md",
@@ -805,6 +828,16 @@ UPDATES = [
                          "UNRESOLVED_MULLIGAN_COMPENSATION・UNRESOLVED_PLAY_AS_POKEMON_SETUP の事例の sites（手書きの行番号をやめ、今のコードから求める）", "停止箇所の行番号（エンジンの編集で動いただけ）"],
      "new_entries": ["continuation_agreements（AGR-PLAY-S2A-* の 6 項目）", "事例 UNRESOLVED_PLAY_AS_POKEMON_SETUP#setup-placement（準備の配置の拒否）"],
      "unchanged": "研究の停止コードは active のまま（停止コードを修正済みにしない。厳密側では今のまま止まる）。族・安全境界・規約（conventions）・方針の案は変えていない"},
+    {"version": "0.144.0", "work": "SC2 の状態の整合の不具合の修正（両モード共通）と、［ポイズンミスト］とどくの量（PO1〜PO3）の続行規約の仕様案",
+     "document": "docs/sc2-integrity-fix-v0.144.md",
+     "base": {"commit": "7548ba46b37142983414688a215f4cbdef45161e", "branch_of_base": "claude/play-policy-s2a-impl（v0.143 の最後。main には未取り込み）"},
+     "approval": ("利用者の指示は作業の進め方（SC2 の不具合の修正・PO1〜PO3 の仕様案の作成・lockstep の記録の技術課題の記録）だけ（2026-11-05）。PO1〜PO3・TK1・SC2 の裁定、"
+                  "仕様案（docs/poison-mist-play-policy-spec.md。proposal・not_approved）の中身は承認されていない"),
+     "changed_entries": ["UNRESOLVED_SCRAM_POWER_RESTORED の current_stop（ポケモンチェックの HALTED の箇所 procedures._knockout_scram_restored_stop が加わった。コードは同じ）",
+                         "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"],
+     "new_entries": ["PSP-SC2-POKEMON-CHECK-INTEGRITY（fixed。v0.143 で見つけた両モード共通の不具合）"],
+     "unchanged": ("研究の停止コード（SC2 の UNRESOLVED_SCRAM_POWER_RESTORED・PO1〜PO3 を含む）は active のまま。止めるコードは同じで、止める位置だけがダメージの前になった。"
+                   "族・規約・判断事項・方針の案・合意の記録は変えていない。PO の規約は登録していない")},
 ]
 # 分類の時点（基点 3e25ac5）の集計（counts）の写し。今の counts は現行コードから作り直した値
 COUNTS_AT_CLASSIFICATION = {"research_stop_codes": 316, "runtime_codes_outside_table": 40, "runtime_codes_outside_table_active": 39, "test_tool_only_codes": 8, "cases": 15, "codes_with_cases": 7, "problems_new": 4, "problems_from_inventory": 28, "conventions": 18, "internal_guard_sites_current": 602, "internal_guard_sites_matched_to_inventory": 600, "internal_guard_sites_new_since_inventory": ["kyuura_engine/engine.py:445", "kyuura_engine/resolution/programs.py:10739"], "safety_boundaries": 8, "families": 23, "decisions": 29, "by_reachability": {"constructed_board": 145, "legal_sequence": 25, "static_only": 185}, "by_family": {"PF-COPY-TRANSFORM": 34, "PF-DAMAGE-SCOPE": 22, "PF-EFFECT-TIMING": 13, "PF-ENERGY-TYPE": 21, "PF-ESP-REDO": 4, "PF-HIDDEN-INFORMATION": 8, "PF-HISTORY-LASTING": 20, "PF-KNOCKOUT-TIMING": 15, "PF-POWER-SUPPRESSION": 11, "PF-PROTECTED-TARGET-EFFECT": 12, "PF-REACTION-DURING-PROCESS": 10, "PF-RUNTIME-CONTINUATION": 15, "PF-RUNTIME-COPY-GAPS": 5, "PF-RUNTIME-DATA": 5, "PF-RUNTIME-GENERIC": 1, "PF-RUNTIME-REGISTRY": 7, "PF-RUNTIME-SEARCH-LIMIT": 6, "PF-SETUP-PLAY-AS-POKEMON": 5, "PF-SIMULTANEOUS-ORDER": 26, "PF-STATED-COUNT-SHORT": 11, "PF-TEXT-READING": 34, "PF-UP-TO-ZERO": 13, "PF-USE-WITHOUT-EFFECT": 57}, "by_play_group": {"1": 316, "2": 39, "3": 89, "4": 6, "5": 20, "6": 1}, "by_mechanism": {"answer_rejection": 13, "command_rejection": 339, "deck_validation": 1, "deferred_interruption": 2, "pokemon_check_halt": 10, "setup_halt": 2}, "by_status": {"active": 402, "fixed": 5, "historical": 2, "unverified": 1}, "note": "停止コード・事例・規約・内部ガードは別の数。事例はコードの下位で、コードの数に足さない。棚卸しと同じ項目は独立した不足として数えない"}
@@ -847,6 +880,7 @@ PROBLEMS = [
      "play_groups": ["5"], "mode_policy": "比較プローブで確かめるまで、漏れとも安全とも数えない", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
     *V137_NEW_FINDINGS,
     *V138_NEW_FINDINGS,
+    *V144_FIXED_DEFECTS,
     {"id": "SUDDEN_DEATH_NOT_IMPLEMENTED", "entry_kind": "nonprefix_stop", "status": "fixed", "classification": "A", "found_in": "v0.133 の棚卸し（P0）",
      "summary": "v0.134 で StartSuddenDeath を加えた。サドン・デスの状態にほかのコマンドを送ると IllegalActionError SUDDEN_DEATH_NOT_STARTED（UnsupportedError ではない）",
      "trigger": "Phase.SUDDEN_DEATH", "related_cards": [], "related_codes": ["SUDDEN_DEATH_NOT_STARTED", "NOT_SUDDEN_DEATH", "UNSUPPORTED_SUDDEN_DEATH_INITIAL_DECK"],

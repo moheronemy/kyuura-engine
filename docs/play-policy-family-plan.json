@@ -19,7 +19,7 @@
   "ledger": {
    "path": "docs/stop-policy-classification.json",
    "base_commit": "3e25ac5eff0f90dbea224045e77c2b60e025bf2d",
-   "entries": 419
+   "entries": 420
   },
   "research": {
    "path": "kyuura_engine/data/research_links.json",
@@ -12527,11 +12527,12 @@
    "plan_class": "A",
    "class_reason": "研究上の未決の裁定（固定研究基準の対応表の停止コード）",
    "mechanisms": [
-    "command_rejection"
+    "command_rejection",
+    "pokemon_check_halt"
    ],
    "reachability": "legal_sequence",
    "whole_game": true,
-   "whole_game_basis": "listed_channel",
+   "whole_game_basis": "static_halt",
    "secret_dependency": null,
    "ruling_ids": [
     "SC2"
@@ -15937,8 +15938,8 @@
    "PC-USE-WITHOUT-TARGET": 38
   },
   "whole_game_scenes": 28,
-  "whole_game_static_halt_scenes": 16,
-  "whole_game_dynamic_channel_scenes": 12,
+  "whole_game_static_halt_scenes": 17,
+  "whole_game_dynamic_channel_scenes": 11,
   "whole_game_a_scenes_with_candidate": 15,
   "new_findings": 1,
   "internal_guard_sites_not_listed_as_scenes": 607,
