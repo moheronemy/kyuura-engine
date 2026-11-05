@@ -19,7 +19,7 @@
   "ledger": {
    "path": "docs/stop-policy-classification.json",
    "base_commit": "3e25ac5eff0f90dbea224045e77c2b60e025bf2d",
-   "entries": 422
+   "entries": 423
   },
   "research": {
    "path": "kyuura_engine/data/research_links.json",
@@ -1028,8 +1028,8 @@
     },
     {
      "scene": "UNRESOLVED_NINJA_GYM_WITHOUT_TARGET",
-     "coverage": "blocked_by_defect",
-     "note": "使う前の確かめが山札の中身を読む（PSP-NJ1-NINJA-GYM-ORACLE。この調査の比較プローブで確かめた未修正の漏れ）。山札を探すので、直したあとは PC-HIDDEN-SEARCH-EMPTY の対象"
+     "coverage": "needs_secret_review",
+     "note": "使う前の確かめが山札の中身を読む漏れ（PSP-NJ1-NINJA-GYM-ORACLE。この調査の比較プローブで確かめた）。v0.146 で、配分を読まない下限で止めるように直した（提案の時点は blocked_by_defect）。山札を探すので PC-HIDDEN-SEARCH-EMPTY の対象でもあり、規約を採る前に対の比べの確かめ直しが要る（ST1 の #deck と同じ扱い）"
     }
    ],
    "excludes": [
@@ -1123,7 +1123,7 @@
    "scene_count": 38,
    "code_count": 38,
    "coverage_counts": {
-    "blocked_by_defect": 1,
+    "needs_secret_review": 1,
     "unverified": 37
    },
    "ruling_ids": [
@@ -3428,20 +3428,20 @@
   {
    "id": "PSP-NJ1-NINJA-GYM-ORACLE",
    "plan_class": "D",
-   "status": "confirmed_unfixed",
+   "status": "fixed",
    "summary": "キョウの忍者ジム（PR1-067）の使う前の確かめ（CoinBenchOwnerBasicFromDeckStadium.check_activation。effects.py:21276〜21281）が、山札の実際の中身（deck_cards_matching）で NJ1 を判定する。目的の「キョウのたねポケモン」が山札とサイドのどちらにあるかで、受理・拒否が変わる（v0.137 の PSP-ST1-DECK-ORACLE と同じ型）",
    "evidence": "比較プローブ（エンジンは変えない。tests.log_audit.twin_command_problems）: プレイヤー 0 から見て公開の情報が同じ 2 盤面（キョウのアーボ PMCG6-002 が山札の 11 枚目／サイドの 1 枚目）で、UseStadium(0) が受理／UNRESOLVED_NINJA_GYM_WITHOUT_TARGET で拒否。twin_command_problems が段 0 で検出",
    "found_by": "v0.136 の漏れの横断（check_playable・check_usable）の外の check_activation を、AST で同じ型（山札を読んで UnsupportedError）を探した。ほかの check_activation で山札を読むものはエネルギースタジアム（トラッシュ。公開）だけで、山札は読まない",
    "related_scene": "UNRESOLVED_NINJA_GYM_WITHOUT_TARGET",
-   "not_done": "修正・台帳（stop-policy-classification.json）への追加はしていない。DEC-INFO-LEAK-FIXES の判断の材料"
+   "not_done": "修正・台帳（stop-policy-classification.json）への追加はしていない。DEC-INFO-LEAK-FIXES の判断の材料",
+   "fixed_in": "v0.146（docs/play-set-verification-v0.146.md 3 章）: 使う前の確かめを配分を読まない下限（deck_target_lower_bound・bench_entry_unconfirmed）に替え、停止の方針の台帳にfixed で加えた。not_done は提案の時点（調査の時点）の記録"
   }
  ],
  "defect_coupling": {
   "UNRESOLVED_POWER_ZERO_CARDS": "PSP-INCREASE-ENTRY-PW3-ORACLE",
   "UNRESOLVED_EVOLVE_AFTER_DEVOLUTION": "PSP-COCOON-DV2-ORACLE",
   "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK#coin-evolve-self-from-deck": "PSP-DECK-CONTENT-PRECHECKS",
-  "UNRESOLVED_EVOLUTION_HP": "PSP-DECK-CONTENT-PRECHECKS",
-  "UNRESOLVED_NINJA_GYM_WITHOUT_TARGET": "PSP-NJ1-NINJA-GYM-ORACLE"
+  "UNRESOLVED_EVOLUTION_HP": "PSP-DECK-CONTENT-PRECHECKS"
  },
  "whole_game_channels": [
   {
@@ -10321,10 +10321,9 @@
    "ruling_documents": [
     "docs/remaining-stadiums-v0.74.md"
    ],
-   "coupled_defect": "PSP-NJ1-NINJA-GYM-ORACLE",
    "candidate": "PC-USE-WITHOUT-TARGET",
-   "coverage": "blocked_by_defect",
-   "coverage_note": "使う前の確かめが山札の中身を読む（PSP-NJ1-NINJA-GYM-ORACLE。この調査の比較プローブで確かめた未修正の漏れ）。山札を探すので、直したあとは PC-HIDDEN-SEARCH-EMPTY の対象"
+   "coverage": "needs_secret_review",
+   "coverage_note": "使う前の確かめが山札の中身を読む漏れ（PSP-NJ1-NINJA-GYM-ORACLE。この調査の比較プローブで確かめた）。v0.146 で、配分を読まない下限で止めるように直した（提案の時点は blocked_by_defect）。山札を探すので PC-HIDDEN-SEARCH-EMPTY の対象でもあり、規約を採る前に対の比べの確かめ直しが要る（ST1 の #deck と同じ扱い）"
   },
   {
    "id": "UNRESOLVED_NINJA_TRICK_ATTACK_COIN_ORDER",
@@ -15801,7 +15800,7 @@
    "family": null,
    "ledger_classification": null,
    "plan_class": "D",
-   "class_reason": "この調査で見つけた情報漏れ（未修正。台帳には未登録）",
+   "class_reason": "この調査で見つけた情報漏れ（v0.146 で修正し、停止の方針の台帳に fixed で加えた）",
    "mechanisms": [],
    "reachability": "constructed_board",
    "whole_game": false,
@@ -15936,10 +15935,10 @@
   "candidate_codes_with_duplicates": 166,
   "candidate_codes_unique": 163,
   "coverage": {
-   "blocked_by_defect": 5,
+   "blocked_by_defect": 4,
    "full": 3,
    "needs_implementation": 22,
-   "needs_secret_review": 10,
+   "needs_secret_review": 11,
    "partial": 1,
    "question_resolved_other_stops_possible": 4,
    "unverified": 126

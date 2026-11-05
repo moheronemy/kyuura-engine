@@ -10,6 +10,8 @@
 - v0.145 の経過: この設計案の候補ではない別の仕様案（docs/poison-mist-play-policy-spec.md）の続行規約 3 件（``SPEC_ADOPTIONS``）を、利用者が採用し、開発用の集合
   CS-KYUURA-PLAY-PO@1 に登録した。場面の行に採用した規約の印（``adopted_convention``）を付けるだけで、候補の状態は変えない。台帳が PO3 を事例（#source-left・#power-lost）に
   分けたので、場面の ID だけを事例に合わせた（PC-LASTING-SOURCE-CHANGE の対象・経路の一覧）。
+- v0.146 の経過: PSP-NJ1-NINJA-GYM-ORACLE を両モード共通の不具合として直した（``NEW_FINDINGS`` の status を fixed、``DEFECT_COUPLING`` から外し、PC-USE-WITHOUT-TARGET の
+  NJ1 の対象を blocked_by_defect から needs_secret_review にした。候補の対象の組・状態は変えない）。
 - 各場面の区分（``plan_class``）は、利用者の依頼の A〜E の軸。台帳の ``classification``（棚卸しの A〜E。A=機能不足 …）とは**別の軸**で、同じ文字でも意味が違う。
 - 対戦の道具の発生の記録（``OBSERVATION``）は、リポジトリの外の記録の集計の写し。版・組・方策・seed・分母・数え方を一緒に書く。停止コードの件数から停止率を推定しない。
 """
@@ -311,8 +313,9 @@ CANDIDATES = [
             "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_WITHOUT_TARGET", "UNRESOLVED_SUPER_ROD_WITHOUT_TARGET", "UNRESOLVED_SWITCH_WITHOUT_BENCH",
             "UNRESOLVED_THOUGHT_WAVE_MACHINE_WITHOUT_TARGET", "UNRESOLVED_TIME_SHIFT_WITHOUT_TARGET", "UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET#public-zones",
             "UNRESOLVED_TRAINER_WITHOUT_TARGET", "UNRESOLVED_TRANSPORT_WITHOUT_CARDS", "UNRESOLVED_WANT_WITHOUT_TARGET")]
-        + [_t("UNRESOLVED_NINJA_GYM_WITHOUT_TARGET", "blocked_by_defect",
-              "使う前の確かめが山札の中身を読む（PSP-NJ1-NINJA-GYM-ORACLE。この調査の比較プローブで確かめた未修正の漏れ）。山札を探すので、直したあとは PC-HIDDEN-SEARCH-EMPTY の対象")],
+        + [_t("UNRESOLVED_NINJA_GYM_WITHOUT_TARGET", "needs_secret_review",
+              "使う前の確かめが山札の中身を読む漏れ（PSP-NJ1-NINJA-GYM-ORACLE。この調査の比較プローブで確かめた）。v0.146 で、配分を読まない下限で止めるように直した"
+              "（提案の時点は blocked_by_defect）。山札を探すので PC-HIDDEN-SEARCH-EMPTY の対象でもあり、規約を採る前に対の比べの確かめ直しが要る（ST1 の #deck と同じ扱い）")],
         "excludes": ["山札（非公開）を探す場面（PC-HIDDEN-SEARCH-EMPTY）", "対象はあるが何も起こらない場面（PC-USE-WITHOUT-EFFECT・PC-CHOOSE-TARGET-WITHOUT-EFFECT）",
                      "効果の途中で対象がいなくなる場面（PC-TARGET-LOST-MID-EFFECT）", "コストを払えない場面（個別。PW2）", "「最大N」の 0（PC-UP-TO-ZERO）"],
         "exceptions": ["コインだけを投げて使い終われるかの問い（BP1・EN1・FG2・GU1・SX1・WT1・VN1・HF1 など。コインのあとに対象を選ぶ）も、この規約では「使えない」（コインを投げない）",
@@ -812,7 +815,7 @@ OTHER_ID_CLASS = {
 # この調査で見つけた共通の不具合（修正していない。台帳には加えていない: 台帳の作成スクリプトは別の作業で直す）
 NEW_FINDINGS = [
     {
-        "id": "PSP-NJ1-NINJA-GYM-ORACLE", "plan_class": "D", "status": "confirmed_unfixed",
+        "id": "PSP-NJ1-NINJA-GYM-ORACLE", "plan_class": "D", "status": "fixed",
         "summary": "キョウの忍者ジム（PR1-067）の使う前の確かめ（CoinBenchOwnerBasicFromDeckStadium.check_activation。effects.py:21276〜21281）が、山札の実際の中身（deck_cards_matching）で NJ1 を判定する。"
                    "目的の「キョウのたねポケモン」が山札とサイドのどちらにあるかで、受理・拒否が変わる（v0.137 の PSP-ST1-DECK-ORACLE と同じ型）",
         "evidence": "比較プローブ（エンジンは変えない。tests.log_audit.twin_command_problems）: プレイヤー 0 から見て公開の情報が同じ 2 盤面（キョウのアーボ PMCG6-002 が山札の 11 枚目／サイドの 1 枚目）で、"
@@ -821,6 +824,8 @@ NEW_FINDINGS = [
                     "エネルギースタジアム（トラッシュ。公開）だけで、山札は読まない",
         "related_scene": "UNRESOLVED_NINJA_GYM_WITHOUT_TARGET",
         "not_done": "修正・台帳（stop-policy-classification.json）への追加はしていない。DEC-INFO-LEAK-FIXES の判断の材料",
+        "fixed_in": ("v0.146（docs/play-set-verification-v0.146.md 3 章）: 使う前の確かめを配分を読まない下限（deck_target_lower_bound・bench_entry_unconfirmed）に替え、停止の方針の台帳に"
+                     "fixed で加えた。not_done は提案の時点（調査の時点）の記録"),
     },
 ]
 
@@ -830,7 +835,6 @@ DEFECT_COUPLING = {
     "UNRESOLVED_EVOLVE_AFTER_DEVOLUTION": "PSP-COCOON-DV2-ORACLE",
     "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK#coin-evolve-self-from-deck": "PSP-DECK-CONTENT-PRECHECKS",
     "UNRESOLVED_EVOLUTION_HP": "PSP-DECK-CONTENT-PRECHECKS",
-    "UNRESOLVED_NINJA_GYM_WITHOUT_TARGET": "PSP-NJ1-NINJA-GYM-ORACLE",
 }
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1075,7 +1079,9 @@ def build() -> dict:
         scene_rows.append(row)
     for f in NEW_FINDINGS:
         scene_rows.append({"id": f["id"], "parent": None, "code": None, "entry_kind": "new_finding", "family": None, "ledger_classification": None,
-                           "plan_class": f["plan_class"], "class_reason": "この調査で見つけた情報漏れ（未修正。台帳には未登録）", "mechanisms": [], "reachability": "constructed_board",
+                           "plan_class": f["plan_class"],
+                           "class_reason": ("この調査で見つけた情報漏れ（v0.146 で修正し、停止の方針の台帳に fixed で加えた）" if f["status"] == "fixed" else
+                                            "この調査で見つけた情報漏れ（未修正。台帳には未登録）"), "mechanisms": [], "reachability": "constructed_board",
                            "whole_game": False, "whole_game_basis": None, "secret_dependency": None, "ruling_ids": [], "kyuura_issue": None, "ruling_documents": [], "candidate": None})
     candidates = []
     for cand in CANDIDATES:

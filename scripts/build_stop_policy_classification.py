@@ -819,6 +819,29 @@ V144_FIXED_DEFECTS = [
      "play_groups": ["5"], "mode_policy": "両モードで直した（モードによらない不具合）", "decision_refs": []},
 ]
 
+# v0.146 で直した両モード共通の情報漏れ（v0.142 の共通規約の設計案の調査で見つけ、設計案の文書 7 章に記録していたもの。台帳には未登録だった）
+V146_FIXED_LEAKS = [
+    {"id": "PSP-NJ1-NINJA-GYM-ORACLE", "entry_kind": "silent_information_leak", "status": "fixed", "classification": "A",
+     "found_in": "共通規約の設計案の調査（docs/play-policy-family-plan.md 7 章。check_activation の横断の比較プローブ）",
+     "fixed_in": "v0.146（docs/play-set-verification-v0.146.md 3 章。基点 e766149）",
+     "summary": "キョウの忍者ジム（PR1-067）の使う前（コインの前）の NJ1 の拒否が、キョウのたねポケモンが山札とサイドのどちらにあるかで変わる",
+     "trigger": "CoinBenchOwnerBasicFromDeckStadium.check_activation（v0.145 までは実際の山札の候補 deck_cards_matching を読んだ）",
+     "related_cards": ["PR1-067"], "related_codes": ["UNRESOLVED_NINJA_GYM_WITHOUT_TARGET"],
+     "fix": ("山札に選べるカードがあることを、配分を読まない下限（effects.deck_target_lower_bound）で確かめ、1 より少なければ決まった理由の文の NJ1（v0.137 の ST1 と同じ）。"
+             "ベンチに出しても止めない（GG1）カードの確かめも、配分を読まない下限（effects.bench_entry_unconfirmed。v0.138）に替えた。ベンチに空きがないときの NJ1 は今までどおり"),
+     "fix_sites": ["kyuura_engine/effects.py CoinBenchOwnerBasicFromDeckStadium.check_activation"],
+     "fix_limitations": [("実際には山札にキョウのたねポケモンがあっても、下限が 0 なら NJ1（保守的な制限。サイド 6 枚のうらの間は、見えないキョウのたねポケモン 7 枚以上が要る。"
+                          "v0.145 までは山札に 1 枚あれば使えた）"),
+                         ("受理（使った事実は公開）は、相手・観戦者に「使ったプレイヤーの見えないキョウのたねポケモンが C + 1 枚以上ある」ことを伝える（v0.145 までは「山札にある」。"
+                          "相手は試せない）。「おもて」のあとの決定の選べるものは実際の山札（本人が山札をさがして見る私的な情報。観測には出さない）"),
+                         "写しのキョウのたねポケモンはどれも特殊能力を持たないので、GG1 の確かめ（bench_entry_unconfirmed）は今の写しでは止めない（修正の前も届かなかった）"],
+     "reachability": {"status": "legal_sequence",
+                      "evidence": ["tests/test_ninja_gym_oracle_v0_146.py（new_game からの列: seed 1 はキョウのドガースが山札、seed 17 はサイド。修正の前は受理／NJ1。双子で検出）",
+                                   "docs/play-set-verification-v0.146.md 3 章（修正の前後の再現）"]},
+     "impact": "カードを使わずに（拒否は状態を変えない）、毎番、山札にキョウのたねポケモンがあるか（＝サイドにあるか）を知れた",
+     "play_groups": ["5"], "mode_policy": "両モードで直した（モードによらない不具合）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
+]
+
 # 分類の後の更新（基点・集計の履歴は BASE・COUNTS_AT_CLASSIFICATION に残し、書き換えない）
 UPDATES = [
     {"version": "0.137.0", "work": "情報漏れ 2 件の修正（PSP-ST1-DECK-ORACLE・PSP-FC1-ENERGY-ARK-ORACLE）", "document": "docs/deck-search-oracle-v0.137.md",
@@ -883,6 +906,16 @@ UPDATES = [
      "new_entries": ["continuation_agreements（AGR-PLAY-PO-* の 4 項目。項目ごとの出典 source）",
                      "事例 UNRESOLVED_POISON_MIST_SOURCE#source-left・#power-lost（PO3 を 2 つに分けた）"],
      "unchanged": "研究の停止コードは active のまま（厳密側・S2a の集合では今のまま止まる）。族・安全境界・規約（conventions）・方針の案は変えていない"},
+    {"version": "0.146.0", "work": "プレイ用集合の検証基盤（比較の記録の規約集合）・キョウの忍者ジムの情報漏れの修正（両モード共通）・PO の集合の境界の検証",
+     "document": "docs/play-set-verification-v0.146.md",
+     "base": {"commit": "e7661495c5bba4ab14087a58f70281a6d11c5e6a", "branch_of_base": "claude/poison-mist-play-po（v0.145 の最後。main には未取り込み）"},
+     "approval": ("利用者の指示は作業の進め方（比較・再生の記録の規約集合・忍者ジムの漏れの修正・PO の集合の境界の検証）だけ（2026-11-05）。新しい続行規約は採用していない。"
+                  "NJ1 の研究上の問い（対象がないときに使えるか）は決めない"),
+     "changed_entries": ["停止箇所の行番号（エンジンの編集で動いただけ）"],
+     "new_entries": ["PSP-NJ1-NINJA-GYM-ORACLE（fixed。共通規約の設計案の調査で見つけ、台帳に未登録だった情報漏れ）"],
+     "unchanged": ("研究の停止コード（NJ1 の UNRESOLVED_NINJA_GYM_WITHOUT_TARGET を含む）は active のまま。止めるコードは同じで、止める条件が配分を読まない下限になった。"
+                   "PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE は active、PSP-DECK-CONTENT-PRECHECKS は unverified のまま（この版では直していない）。"
+                   "族・規約・判断事項・方針の案・合意の記録は変えていない")},
 ]
 # 分類の時点（基点 3e25ac5）の集計（counts）の写し。今の counts は現行コードから作り直した値
 COUNTS_AT_CLASSIFICATION = {"research_stop_codes": 316, "runtime_codes_outside_table": 40, "runtime_codes_outside_table_active": 39, "test_tool_only_codes": 8, "cases": 15, "codes_with_cases": 7, "problems_new": 4, "problems_from_inventory": 28, "conventions": 18, "internal_guard_sites_current": 602, "internal_guard_sites_matched_to_inventory": 600, "internal_guard_sites_new_since_inventory": ["kyuura_engine/engine.py:445", "kyuura_engine/resolution/programs.py:10739"], "safety_boundaries": 8, "families": 23, "decisions": 29, "by_reachability": {"constructed_board": 145, "legal_sequence": 25, "static_only": 185}, "by_family": {"PF-COPY-TRANSFORM": 34, "PF-DAMAGE-SCOPE": 22, "PF-EFFECT-TIMING": 13, "PF-ENERGY-TYPE": 21, "PF-ESP-REDO": 4, "PF-HIDDEN-INFORMATION": 8, "PF-HISTORY-LASTING": 20, "PF-KNOCKOUT-TIMING": 15, "PF-POWER-SUPPRESSION": 11, "PF-PROTECTED-TARGET-EFFECT": 12, "PF-REACTION-DURING-PROCESS": 10, "PF-RUNTIME-CONTINUATION": 15, "PF-RUNTIME-COPY-GAPS": 5, "PF-RUNTIME-DATA": 5, "PF-RUNTIME-GENERIC": 1, "PF-RUNTIME-REGISTRY": 7, "PF-RUNTIME-SEARCH-LIMIT": 6, "PF-SETUP-PLAY-AS-POKEMON": 5, "PF-SIMULTANEOUS-ORDER": 26, "PF-STATED-COUNT-SHORT": 11, "PF-TEXT-READING": 34, "PF-UP-TO-ZERO": 13, "PF-USE-WITHOUT-EFFECT": 57}, "by_play_group": {"1": 316, "2": 39, "3": 89, "4": 6, "5": 20, "6": 1}, "by_mechanism": {"answer_rejection": 13, "command_rejection": 339, "deck_validation": 1, "deferred_interruption": 2, "pokemon_check_halt": 10, "setup_halt": 2}, "by_status": {"active": 402, "fixed": 5, "historical": 2, "unverified": 1}, "note": "停止コード・事例・規約・内部ガードは別の数。事例はコードの下位で、コードの数に足さない。棚卸しと同じ項目は独立した不足として数えない"}
@@ -926,6 +959,7 @@ PROBLEMS = [
     *V137_NEW_FINDINGS,
     *V138_NEW_FINDINGS,
     *V144_FIXED_DEFECTS,
+    *V146_FIXED_LEAKS,
     {"id": "SUDDEN_DEATH_NOT_IMPLEMENTED", "entry_kind": "nonprefix_stop", "status": "fixed", "classification": "A", "found_in": "v0.133 の棚卸し（P0）",
      "summary": "v0.134 で StartSuddenDeath を加えた。サドン・デスの状態にほかのコマンドを送ると IllegalActionError SUDDEN_DEATH_NOT_STARTED（UnsupportedError ではない）",
      "trigger": "Phase.SUDDEN_DEATH", "related_cards": [], "related_codes": ["SUDDEN_DEATH_NOT_STARTED", "NOT_SUDDEN_DEATH", "UNSUPPORTED_SUDDEN_DEATH_INITIAL_DECK"],
