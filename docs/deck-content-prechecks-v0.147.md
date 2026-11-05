@@ -182,3 +182,13 @@
 | `check_implementation_assumptions --check`・`check_normalization_revalidation --check` | 0 |
 | `check_implementation_assumptions --sites` | 新しい候補箇所 197（基点 194）。この表を書く前の差は 2 つ: `tests/test_preset_decks_v0_20.py` 151 行の版の注記の文が変わって ID が替わったもの（S-db0855041bd0 → S-e0b98bda0b46。v0.146 と同じ）と、この文書の冒頭の「裁定でも利用者の指定でもありません」（S-e3a00a271a99。この版の変更の分類の記述で、新しい仮定ではない）。言い換えはしていない。この表の 2 行（確かめの名前を書いた行と、この行）も、語を引用しているので候補箇所になる（分類の記録そのもので、新しい仮定ではない） |
 | ruff 0.17.2（`ruff check --statistics .`） | 基点・この版とも 492 件で、規則ごとの件数も同じ（新しいテストで出た未使用の変数・import の並びは直した）。加えた抑制（`noqa`）はない |
+
+## v0.148 の追記（本文は変えていない）
+
+[attack-deck-evolution-preflight-v0.148.md](attack-deck-evolution-preflight-v0.148.md) 5 章。
+
+- 3.2 節の「候補 `PSP-DECK-CONTENT-PRECHECKS` を fixed にしました」は、2 章の 8 クラス 10 の場面（比較プローブで確かめて直したもの）の意味です。［うか］の GV1・H1 の経路は、この版の
+  時点では確かめておらず（2 章の限界）、漏れとも安全とも数えていませんでした。v0.148 で、GV1 は許可を手で与えた構築盤面、H1 は判定を差しかえた構築盤面の双子で確かめ、
+  この版の確かめ（`possible_deck_cards` と下限）で配分によらないこと（安全）を確認しました（どちらも今の写しの通常の対戦では起こらない）。台帳には `v0148_followup` を加えました
+- 4 章の `PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE`（active）は v0.148 で直しました。同じ要素の H1・PW4・NB2 の問い（4 章の「未確認の候補」）も、同じ共通処理で直しました
+- 6.1 節の `RemainingAttackLeakTest` は、v0.148 で、漏れがないことを確かめる回帰テストに替えました（漏れを正常な仕様として固定しない）
