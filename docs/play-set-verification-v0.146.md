@@ -247,18 +247,15 @@ PO の実装は変えていないので、v0.145 の PO の集合の計測（19 
 
 ### 6.2 全体のテスト
 
-lockstep のあと、単独で、1 worker・モジュールごとの別プロセスで実行しました（`862c290` の木。文書の変更だけが作業木にある。前の木の指紋を取った）。
+lockstep のあと、単独で、1 worker・モジュールごとの別プロセスで実行しました。
 
-**全体のテストは完了していません。** 269 モジュールのうち 253 モジュールを実行したところで（7,155 テスト・失敗 0・エラー 0・スキップ 1。スキップは既存の
-`test_cross_version_compatibility` の大きな比較で、`KYUURA_COMPAT_BASE` を設定したときだけ）、計算機のメモリ不足で、実行の環境（Claude Code）が実行を止めました。
-残りの 16 モジュール（`test_unown_bear_yield_vanish_give_v0_98` から `test_wrong_phase_message_v0_16d` まで。名前の順で最後の 16）は、プロセスを始められず
-（終了コード 3221225794 = 0xC0000142。テストは 1 つも実行されていない）、あとの木の指紋は取れていません。この実行は全体のテストとして数えません（出力は退避した）。
-失敗をやり直しで消してはいません（失敗はなかった）。利用者の確認なしに、全体のテストをやり直していません。
+| 実行 | 木 | 結果 | 扱い |
+|---|---|---|---|
+| 1 回目 | `862c290`（文書の変更だけが作業木にある） | 269 モジュールのうち 253 モジュールで、計算機のメモリ不足のため実行の環境（Claude Code）が止めた（7,155 テスト・失敗 0・エラー 0）。残りの 16 モジュールはプロセスを始められず（終了コード 3221225794 = 0xC0000142）、あとの指紋なし | 数えない（出力は退避した） |
+| 2 回目（利用者の承認のあと） | `3a6441b`（作業木の変更なし） | **269 モジュール・7,637 テスト・失敗 0・エラー 0・スキップ 1**・0 でない終了コード 0。前後の木の指紋は同じ（`36517ec9…`） | これを全体のテストとする |
 
-この版で変えたコードに対応するテスト（`test_lockstep_conventions_v0_146`・`test_ninja_gym_oracle_v0_146`・`test_po_boundaries_v0_146`・`test_remaining_stadiums_v0_74`・
-`test_lockstep_tool_v0_16`・`test_existing_effect_games_v0_28`・`test_existing_effect_games_v0_29`・`test_stop_policy_classification`・`test_play_policy_family_plan`）は、
-止まる前の 253 モジュールの中で通りました。始められなかった 16 モジュールのうち、この版の変更と関係が近いのは `test_wrong_phase_message_v0_16d`（lockstep の道具の既存のテスト）と
-`test_unresolved_*` です。
+スキップの 1 件は既存の `test_cross_version_compatibility` の大きな比較で、`KYUURA_COMPAT_BASE` を設定したときだけ実行します。1 回目に失敗はなく、失敗をやり直しで消してはいません。
+2 回目のあとの文書の変更（この節・7 章・8 章）では、この文書を読むテストだけをやり直しました。
 
 ### 6.3 確かめの道具
 
@@ -295,12 +292,11 @@ lockstep のあと、単独で、1 worker・モジュールごとの別プロセ
 | `PSP-INCREASE-ENTRY-PW3-ORACLE`・`PSP-COCOON-DV2-ORACLE`・`PSP-DECK-CONTENT-PRECHECKS` | 両モード共通の漏れの候補（停止の方針の台帳） | 範囲を広げず、別の作業として残した（3.5 節） |
 | へんしんで写した特殊能力（`UNSUPPORTED_TRANSFORM_COPIED_POWER`） | エンジンの機能不足 | 変えていない |
 | ポケモンチェックの両方のきぜつ（`UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT`） | 研究上の未決 | 停止を維持 |
-| 全体のテストがメモリ不足で止まった | 実行の環境 | やり直していない（6.2 節） |
+| 全体のテストの 1 回目がメモリ不足で止まった | 実行の環境 | 利用者の承認のあと単独でやり直し、全部が通った（6.2 節） |
 
 ## 8. 次の優先
 
-1. 全体のテストを、メモリに余裕のある状態で、単独でやり直す（6.2 節。止まった実行の結果では数えない）。
-2. 停止の方針の台帳に残る両モード共通の漏れの候補（`PSP-INCREASE-ENTRY-PW3-ORACLE`・`PSP-COCOON-DV2-ORACLE`・`PSP-DECK-CONTENT-PRECHECKS`）を、この版の忍者ジムと同じ方法
+1. 停止の方針の台帳に残る両モード共通の漏れの候補（`PSP-INCREASE-ENTRY-PW3-ORACLE`・`PSP-COCOON-DV2-ORACLE`・`PSP-DECK-CONTENT-PRECHECKS`）を、この版の忍者ジムと同じ方法
    （対の状態・構築と合法な手順の区別・配分を読まない下限）で 1 件ずつ直す。
-3. 続行規約の検証の基盤の残り: 計測の道具（`existing_effect_games`・`sudden_death_games`）の出力の形式にも記録の形式の番号を持たせるか、2 つの道具の比較の契約をそろえる。
-4. 研究上の未決（NJ1・ポケモンチェックの両方のきぜつ・PO3 の #power-lost）は、kyuura の研究の作業として扱う。エンジンで推測で決めない。
+2. 続行規約の検証の基盤の残り: 計測の道具（`existing_effect_games`・`sudden_death_games`）の出力の形式にも記録の形式の番号を持たせるか、2 つの道具の比較の契約をそろえる。
+3. 研究上の未決（NJ1・ポケモンチェックの両方のきぜつ・PO3 の #power-lost）は、kyuura の研究の作業として扱う。エンジンで推測で決めない。
