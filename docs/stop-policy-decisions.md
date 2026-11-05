@@ -140,6 +140,7 @@
 - **材料（2026-11-04。判断はしていない）**: 共通規約の設計案（[play-policy-family-plan.md](play-policy-family-plan.md) 7 章）の調査で、キョウの忍者ジム（PR1-067）の
   使う前の確かめ（NJ1）が、山札の実際の中身で受理・拒否を変える漏れ `PSP-NJ1-NINJA-GYM-ORACLE` を、比較プローブで確かめました（未修正）。
 - **経過（v0.146。[play-set-verification-v0.146.md](play-set-verification-v0.146.md) 3 章）**: 利用者の指示で `PSP-NJ1-NINJA-GYM-ORACLE` を直しました（v0.137 の ST1 と同じ配分を読まない下限。コードは NJ1 のまま、決まった文で止める）。`PSP-INCREASE-ENTRY-PW3-ORACLE`・`PSP-COCOON-DV2-ORACLE`・`PSP-DECK-CONTENT-PRECHECKS` の残りは直していません。この判断事項の状態は変えていません。
+- **経過（v0.147。[deck-content-prechecks-v0.147.md](deck-content-prechecks-v0.147.md)）**: 利用者の指示で、秘密の山札の内容で使う前の受理・拒否・理由が変わる処理を一つの単位として調べ、`PSP-INCREASE-ENTRY-PW3-ORACLE`・`PSP-COCOON-DV2-ORACLE`・`PSP-DECK-CONTENT-PRECHECKS`（と同じ横断の `PSP-POWER-PRECHECK-DECK-ORACLE`）を直しました（配分を読まない下限・山札にあるかもしれないカード）。ワザの宣言の前の先読みの漏れ `PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE` は直していません。この判断事項の状態は変えていません。
 
 ### DEC-SEARCH-LIMITS — 探索・組合せの上限
 

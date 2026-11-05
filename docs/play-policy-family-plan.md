@@ -85,13 +85,13 @@ A の場面でも、続けるのに実装・秘密への非依存の確かめ・
 <!-- generated:plan-counts begin（scripts/build_play_policy_family_plan.py --write が書く。手で直さない） -->
 | 対象 | 件数 |
 |---|---:|
-| 場面（台帳の現在有効な項目。事例のあるコードは事例） | 402 |
+| 場面（台帳の現在有効な項目。事例のあるコードは事例） | 400 |
 | うち停止コードの場面 | 368 |
 | 停止コード（重複を除く） | 357 |
 | 区分 A（研究上の未決場面） | 327 |
 | 区分 B（機能不足） | 33 |
 | 区分 C（技術的な制限） | 14 |
-| 区分 D（共通の不具合） | 9 |
+| 区分 D（共通の不具合） | 7 |
 | 区分 E（そのほか） | 19 |
 | A のうち規約案の対象 | 171 |
 | A のうち個別（共通化しない） | 156 |
@@ -126,10 +126,9 @@ A 以外の場面の内訳（理由ごと）:
 | C | 技術的な上限・探索の fail-open | 7 |
 | C | 探索・組合せの上限（未探索の枝を安全とみなさない） | 6 |
 | C | 表現の上限 | 1 |
-| D | 情報漏れ（未修正） | 2 |
 | D | 先読みの止めすぎ（受け付けてよい操作を拒否する不具合の候補） | 2 |
 | D | 代わりの処理の安全性の見直し（未確認） | 2 |
-| D | 情報漏れの候補（未確認） | 1 |
+| D | 情報漏れ（未修正） | 1 |
 | D | 代替回答探索の fail-open（未探索を受け付ける側に倒す。安全境界 SB-NO-FAIL-OPEN-SEARCH の候補） | 1 |
 | D | この調査で見つけた情報漏れ（v0.146 で修正し、停止の方針の台帳に fixed で加えた） | 1 |
 | E | テスト・道具だけのコード（エンジンでは投げない） | 8 |
@@ -239,10 +238,10 @@ A 以外の場面の内訳（理由ごと）:
 | `PC-COIN-COUNT-SHORT` | コインで決まった枚数が足りないとき（途中停止の 2 つ） | count | ○ | 2 | 2 | unverified 2 | あるだけ処理する | DEC-STATED-COUNT-SHORT・DEC-DEFERRED-RESUME |
 | `PC-STATED-COUNT-SHORT` | 説明の決まった枚数が公開の枚数より多いとき | count |  | 9 | 9 | unverified 9 | 使える（あるだけ処理する） | DEC-STATED-COUNT-SHORT |
 | `PC-USE-WITHOUT-TARGET` | 選ぶ対象が最初からないときに使えるか | target |  | 38 | 38 | needs_secret_review 1・unverified 37 | 使えない | DEC-USE-WITHOUT-EFFECT |
-| `PC-HIDDEN-SEARCH-EMPTY` | 山札を探す効果で、目的のカードが見つからないとき | target |  | 4 | 4 | blocked_by_defect 1・needs_secret_review 3 | 使える（見つからなければ何も選ばない） | DEC-USE-WITHOUT-EFFECT・DEC-INFO-LEAK-FIXES |
+| `PC-HIDDEN-SEARCH-EMPTY` | 山札を探す効果で、目的のカードが見つからないとき | target |  | 4 | 4 | needs_secret_review 4 | 使える（見つからなければ何も選ばない） | DEC-USE-WITHOUT-EFFECT・DEC-INFO-LEAK-FIXES |
 | `PC-USE-WITHOUT-EFFECT` | 使っても何も起こらないときに使えるか | target |  | 7 | 7 | unverified 7 | 使えない | DEC-USE-WITHOUT-EFFECT |
 | `PC-CHOOSE-TARGET-WITHOUT-EFFECT` | 選んでも何も起こらないポケモンを選べるか | target |  | 5 | 5 | unverified 5 | 選べない | DEC-USE-WITHOUT-EFFECT |
-| `PC-UP-TO-ZERO` | 「最大N」「好きなだけ」で 0 を選べるか | count |  | 13 | 13 | blocked_by_defect 1・unverified 12 | 0 を選べる | DEC-UP-TO-ZERO |
+| `PC-UP-TO-ZERO` | 「最大N」「好きなだけ」で 0 を選べるか | count |  | 13 | 13 | needs_secret_review 1・unverified 12 | 0 を選べる | DEC-UP-TO-ZERO |
 | `PC-NON-ATTACK-DAMAGE-MODIFIERS` | ワザ以外のダメージに、ダメージを変える効果を当てはめるか | damage | ○ | 10 | 10 | unverified 10 | 当てはめない | DEC-DAMAGE-READINGS |
 | `PC-UNSTATED-WEAKNESS-RESISTANCE` | 「弱点・抵抗力に関係なく」と書かれていないワザ以外・控えへのダメージの弱点・抵抗力 | damage |  | 2 | 2 | unverified 2 | 計算しない | DEC-DAMAGE-READINGS |
 | `PC-SPECIAL-ENERGY-CARD-WORDING` | 特殊エネルギーカードは「X エネルギーカード」か | energy |  | 9 | 9 | unverified 9 | 基本 X エネルギーカードだけ | DEC-ENERGY-READINGS |
@@ -426,7 +425,7 @@ A 以外の場面の内訳（理由ごと）:
 - **問い**: 山札（非公開）から決まったカードを選ぶ効果を、山札に目的のカードがないかもしれないとき（本人に見えない）に使えるか。見つからなければどうなるか
 - **規約の文（案）**: 山札から決まったカードを選ぶ効果は、山札にカードが 1 枚以上あれば使える（目的のカードの有無で使えるかを変えない）。山札を見て目的のカードがなければ何も選ばず、説明のほかの処理（山札を切るなど）を行う
 - **適用条件**: 使う前の確かめが、山札の中身の下限（effects.deck_target_lower_bound・bench_entry_unconfirmed）で止める場面（事例の secret_dependency が owner_known_pool・depends_on_hidden_static）
-- **対象の場面（続けられ方）**: `UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET#deck`（needs_secret_review）、`UNRESOLVED_STATED_CARDS_SHORT#deck-contents`（needs_secret_review）、`UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET#amplifier-deck`（needs_secret_review）、`UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK#coin-evolve-self-from-deck`（blocked_by_defect）
+- **対象の場面（続けられ方）**: `UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET#deck`（needs_secret_review）、`UNRESOLVED_STATED_CARDS_SHORT#deck-contents`（needs_secret_review）、`UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET#amplifier-deck`（needs_secret_review）、`UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK#coin-evolve-self-from-deck`（needs_secret_review）
 - **除外・対象外の隣の場面**: 公開の領域（トラッシュ）を探す場面（PC-USE-WITHOUT-TARGET）／山札の枚数（公開）が足りない場面（PC-STATED-COUNT-SHORT）
 - **例外**: 山札が 0 枚（公開）のときは PC-USE-WITHOUT-TARGET と同じ（使えない）
 - **依存・関係・競合**: 依存 なし／関係 PC-USE-WITHOUT-TARGET／競合 なし
@@ -485,7 +484,7 @@ A 以外の場面の内訳（理由ごと）:
 - **問い**: 「最大 N 枚」「好きなだけ」で選ぶとき、選べる候補があっても 0 を選べるか
 - **規約の文（案）**: 「最大 N」「好きなだけ」と書かれた選び方では、選べる候補があっても 0 を選べる（0 を選んだら、その選び方の結果の処理だけを行わない）
 - **適用条件**: 答えの確かめが 0 個の答えを止める場面（台帳の PF-UP-TO-ZERO。止め方は answer_rejection）
-- **対象の場面（続けられ方）**: `UNRESOLVED_ATTACH_FROM_DISCARD_ZERO`（unverified）、`UNRESOLVED_BENCH_TARGETS_ZERO_CHOICE`（unverified）、`UNRESOLVED_DISCARD_ANY_NUMBER_ZERO`（unverified）、`UNRESOLVED_DISCARD_UP_TO_ZERO`（unverified）、`UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`（unverified）、`UNRESOLVED_HEAL_UP_TO_ZERO`（unverified）、`UNRESOLVED_NIGHTLY_GARBAGE_RUN_ZERO_CHOICE`（unverified）、`UNRESOLVED_POKEDEX_UP_TO_ZERO`（unverified）、`UNRESOLVED_RECOVER_ZERO_ENERGY`（unverified）、`UNRESOLVED_ROCKETS_TRAP_ZERO_CHOICE`（unverified）、`UNRESOLVED_SUPER_ENERGY_RETRIEVAL_ZERO_CHOICE`（unverified）、`UNRESOLVED_TRAINER_UP_TO_ZERO_CHOICE`（unverified）、`UNRESOLVED_POWER_ZERO_CARDS`（blocked_by_defect）
+- **対象の場面（続けられ方）**: `UNRESOLVED_ATTACH_FROM_DISCARD_ZERO`（unverified）、`UNRESOLVED_BENCH_TARGETS_ZERO_CHOICE`（unverified）、`UNRESOLVED_DISCARD_ANY_NUMBER_ZERO`（unverified）、`UNRESOLVED_DISCARD_UP_TO_ZERO`（unverified）、`UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`（unverified）、`UNRESOLVED_HEAL_UP_TO_ZERO`（unverified）、`UNRESOLVED_NIGHTLY_GARBAGE_RUN_ZERO_CHOICE`（unverified）、`UNRESOLVED_POKEDEX_UP_TO_ZERO`（unverified）、`UNRESOLVED_RECOVER_ZERO_ENERGY`（unverified）、`UNRESOLVED_ROCKETS_TRAP_ZERO_CHOICE`（unverified）、`UNRESOLVED_SUPER_ENERGY_RETRIEVAL_ZERO_CHOICE`（unverified）、`UNRESOLVED_TRAINER_UP_TO_ZERO_CHOICE`（unverified）、`UNRESOLVED_POWER_ZERO_CARDS`（needs_secret_review）
 - **除外・対象外の隣の場面**: 「N 枚」（最大と書かれていない）／選べる候補がない場面（PC-USE-WITHOUT-TARGET）
 - **依存・関係・競合**: 依存 なし／関係 なし／競合 なし
 - **厳密モードとの差**: 厳密は今のまま 0 個の答えを受け付けない（ほかの答えは受け付ける）。プレイ用は 0 個も受け付ける
@@ -976,7 +975,7 @@ PSP-COCOON-DV2-ORACLE（DV2）・PSP-DECK-CONTENT-PRECHECKS の残り（GV1・EV
 <!-- generated:plan-stages begin（scripts/build_play_policy_family_plan.py --write が書く。手で直さない） -->
 | 段階 | 名前 | 規約案 | 先に要るもの | 共通処理の変更の範囲 | 完了の基準 | 残るもの |
 |---|---|---|---|---|---|---|
-| S0 | 両モード共通の不具合の修正（モードと別の版） | — | — | PSP-NJ1-NINJA-GYM-ORACLE（この調査で確認）・PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-DECK-CONTENT-PRECHECKS の残り（未確認） | 対の比べ（twin_command_problems）で漏れがない。blocked_by_defect の場面の規約を採れる状態 | 研究上の論点（NJ1・PW3・DV2・GV1 の裁定）は未解決のまま |
+| S0 | 両モード共通の不具合の修正（モードと別の版） | — | — | PSP-NJ1-NINJA-GYM-ORACLE（この調査で確認）・PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-DECK-CONTENT-PRECHECKS の残り（未確認）。v0.146・v0.147 でこの 4 つを直した（v0.147 の横断で見つけた PSP-POWER-PRECHECK-DECK-ORACLE も）。残りは PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE（v0.147 で見つけた。直していない） | 対の比べ（twin_command_problems）で漏れがない。blocked_by_defect の場面の規約を採れる状態 | 研究上の論点（NJ1・PW3・DV2・GV1 の裁定）は未解決のまま |
 | S1 | 規約集合を受け取る基盤と、今の挙動の保持 | — | DEC-RULESET-IDENTITY・DEC-RULESET-VERSIONING・DEC-CONVENTION-GRANULARITY・DEC-CONVENTION-CONFLICTS・DEC-MODE-CHANGE-DURING-GAME・DEC-LEGACY-STATES・DEC-BASELINE-NONUSER・DEC-CARD-DATA-CORRECTIONS | 規約集合を new_game で受け取り状態に持つ（延長戦は keep）・止める箇所に事例の識別（場面 ID）・規約の照会の入口（登録の側。engine.py・resolution/ にカード ID・モード名の分岐を加えない）・規約による拒否と未決の裁定の停止を区別する記録・構成の検査（ruleset-mode-design.md 6.4 節）・厳密と厳密の比べ | 厳密の集合（基礎集合だけ）で、全体テスト・lockstep・前の版の組・サドン・デスの比べが今と同じ（意図した差 0）。規約の照会がどの場面でも「規約なし」を返し、止め方が今のまま | 続行規約は 1 つも入っていない。保存形式・識別の形は判断のあとに決める（この設計では決めない） |
 | S2a | 対戦全体を止める規約（規約だけで足りるもの） | PC-SETUP-MULLIGAN-COUNT・PC-SETUP-PLAY-AS-POKEMON・PC-CHECK-SIDE-ORDER・PC-COIN-COUNT-SHORT・PC-CHECK-KO-POINT | S1・DEC-PLAY-CONFIG-INCOMPLETE-START | 準備・ポケモンチェック・途中停止の HALTED の分岐を、規約の照会で続行に置きかえる | 規約ごとに、当たる盤面の結果（状態・乱数・ログ・観測）・隣の場面が変わらないこと・厳密との差が規約の当たった歩から始まること・道具の対戦で HALTED の減り方と先攻後攻の偏り | WG-CHECK-PLAN・WG-CHECK-RECOVERY・WG-DECISION-NO-ANSWER のカード固有の停止、技術的な上限（くろこげマーカー・きのみ） |
 | S2b | 対戦全体を止める規約（実装が要るもの） | PC-CHECK-DOUBLE-KNOCKOUT・PC-NON-DAMAGE-HP-KNOCKOUT・PC-NON-ATTACK-DAMAGE-MODIFIERS・PC-LASTING-SOURCE-CHANGE | S2a | ポケモンチェックの続きの両方のサイド・交代の並び、ダメージ以外の HP 低下のきぜつの判定の窓、ワザ以外のダメージの量の問い合わせ | S2a と同じ。両方のきぜつ・サドン・デスへの移り方の比べ | カード固有の時点の問い（SC1・SC2・AL1・AL3・MEW1 など） |
@@ -1076,3 +1075,4 @@ v0.141 の報告の訂正: v0.141 の作業の最後の報告では、停止の�
 - v0.145（[poison-mist-play-po-v0.145.md](poison-mist-play-po-v0.145.md)。2026-11-05）: 別の仕様案の続行規約 3 件（PC-POISON-AMOUNT-ORDER・PC-POISON-MIST-TARGETS・PC-POISON-MIST-SOURCE-LEFT）を利用者が採用し、開発用の集合 CS-KYUURA-PLAY-PO@1 に登録した。この文書の候補ではないので、候補の状態は変えず、場面の行に採用した規約の印を付けた（`SPEC_ADOPTIONS`）。
   台帳が PO3 を事例（#source-left・#power-lost）に分けたので、PC-LASTING-SOURCE-CHANGE の対象と WG-CHECK-PLAN の場面 ID だけを事例に合わせた（提案の時点の対象は UNRESOLVED_POISON_MIST_SOURCE・partial）。集計は事例を分けた差だけ（場面 401 → 402・個別 155 → 156・対戦全体を止める場面 28 → 29）。PC-LASTING-SOURCE-CHANGE は proposal のまま
 - v0.146（[play-set-verification-v0.146.md](play-set-verification-v0.146.md)。2026-11-05）: この文書の 7 章で見つけた `PSP-NJ1-NINJA-GYM-ORACLE` を、両モード共通の不具合として直した（配分を読まない下限）。JSON の調査の項目（`new_findings`）を fixed にし、不具合の対応（`defect_coupling`）から外し、PC-USE-WITHOUT-TARGET の NJ1 の対象を `blocked_by_defect` から `needs_secret_review` にした（ST1 の `#deck` と同じ扱い。規約を採る前に対の比べの確かめ直しが要る）。候補の対象の組・状態は変えていない。7 章の記録は調査の時点のまま
+- v0.147（[deck-content-prechecks-v0.147.md](deck-content-prechecks-v0.147.md)。2026-11-05）: `PSP-INCREASE-ENTRY-PW3-ORACLE`・`PSP-COCOON-DV2-ORACLE`・`PSP-DECK-CONTENT-PRECHECKS` を直した。直した経路だけの対象（PW3・［うか］の GV1 の事例）を`blocked_by_defect` から `needs_secret_review` にし、DV2・H1 の対象は、ワザの宣言の前の先読みの漏れ（`PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE`。直していない）を対応する不具合にして `blocked_by_defect` のままにした。候補の対象の組・状態は変えていない

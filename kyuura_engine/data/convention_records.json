@@ -2463,17 +2463,7 @@
    {
     "codes": [],
     "entry_kind": "silent_information_leak",
-    "id": "PSP-COCOON-DV2-ORACLE"
-   },
-   {
-    "codes": [],
-    "entry_kind": "information_leak_candidate",
-    "id": "PSP-DECK-CONTENT-PRECHECKS"
-   },
-   {
-    "codes": [],
-    "entry_kind": "silent_information_leak",
-    "id": "PSP-INCREASE-ENTRY-PW3-ORACLE"
+    "id": "PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE"
    },
    {
     "codes": [],

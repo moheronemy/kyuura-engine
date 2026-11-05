@@ -12,6 +12,9 @@
   分けたので、場面の ID だけを事例に合わせた（PC-LASTING-SOURCE-CHANGE の対象・経路の一覧）。
 - v0.146 の経過: PSP-NJ1-NINJA-GYM-ORACLE を両モード共通の不具合として直した（``NEW_FINDINGS`` の status を fixed、``DEFECT_COUPLING`` から外し、PC-USE-WITHOUT-TARGET の
   NJ1 の対象を blocked_by_defect から needs_secret_review にした。候補の対象の組・状態は変えない）。
+- v0.147 の経過（docs/deck-content-prechecks-v0.147.md）: PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-DECK-CONTENT-PRECHECKS（と同じ横断の PSP-POWER-PRECHECK-DECK-ORACLE）を直した。
+  直した経路だけの対象（PW3・［うか］の GV1 の事例）を blocked_by_defect から needs_secret_review にした。DV2・H1 の対象は、ワザの宣言の前の先読みの漏れ
+  （PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE。active。直していない）が同じ場面にあるので blocked_by_defect のまま、対応する不具合をその項目にした。候補の対象の組・状態は変えない。
 - 各場面の区分（``plan_class``）は、利用者の依頼の A〜E の軸。台帳の ``classification``（棚卸しの A〜E。A=機能不足 …）とは**別の軸**で、同じ文字でも意味が違う。
 - 対戦の道具の発生の記録（``OBSERVATION``）は、リポジトリの外の記録の集計の写し。版・組・方策・seed・分母・数え方を一緒に書く。停止コードの件数から停止率を推定しない。
 """
@@ -341,7 +344,8 @@ CANDIDATES = [
         "applies_when": "使う前の確かめが、山札の中身の下限（effects.deck_target_lower_bound・bench_entry_unconfirmed）で止める場面（事例の secret_dependency が owner_known_pool・depends_on_hidden_static）",
         "targets": [_t("UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET#deck", "needs_secret_review"), _t("UNRESOLVED_STATED_CARDS_SHORT#deck-contents", "needs_secret_review"),
                     _t("UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET#amplifier-deck", "needs_secret_review"),
-                    _t("UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK#coin-evolve-self-from-deck", "blocked_by_defect", "PSP-DECK-CONTENT-PRECHECKS の残り（GV1 の経路。未確認の漏れの候補）")],
+                    _t("UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK#coin-evolve-self-from-deck", "needs_secret_review",
+                       "v0.147 で山札にあるかもしれないカードで確かめるように直した（提案の時点は blocked_by_defect。PSP-DECK-CONTENT-PRECHECKS の残り。この経路は比較プローブしていない）")],
         "excludes": ["公開の領域（トラッシュ）を探す場面（PC-USE-WITHOUT-TARGET）", "山札の枚数（公開）が足りない場面（PC-STATED-COUNT-SHORT）"],
         "exceptions": ["山札が 0 枚（公開）のときは PC-USE-WITHOUT-TARGET と同じ（使えない）"],
         "depends_on": [], "related": ["PC-USE-WITHOUT-TARGET"], "conflicts_with": [],
@@ -411,7 +415,8 @@ CANDIDATES = [
                                     "UNRESOLVED_DISCARD_UP_TO_ZERO", "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE", "UNRESOLVED_HEAL_UP_TO_ZERO",
                                     "UNRESOLVED_NIGHTLY_GARBAGE_RUN_ZERO_CHOICE", "UNRESOLVED_POKEDEX_UP_TO_ZERO", "UNRESOLVED_RECOVER_ZERO_ENERGY",
                                     "UNRESOLVED_ROCKETS_TRAP_ZERO_CHOICE", "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_ZERO_CHOICE", "UNRESOLVED_TRAINER_UP_TO_ZERO_CHOICE")]
-        + [_t("UNRESOLVED_POWER_ZERO_CARDS", "blocked_by_defect", "PSP-INCREASE-ENTRY-PW3-ORACLE（未修正の漏れ）")],
+        + [_t("UNRESOLVED_POWER_ZERO_CARDS", "needs_secret_review",
+              "v0.147 で配分を読まない下限で止めるように直した（PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-POWER-PRECHECK-DECK-ORACLE。提案の時点は blocked_by_defect）。規約を採る前に対の比べの確かめ直しが要る")],
         "excludes": ["「N 枚」（最大と書かれていない）", "選べる候補がない場面（PC-USE-WITHOUT-TARGET）"],
         "exceptions": [],
         "depends_on": [], "related": [], "conflicts_with": [],
@@ -602,7 +607,8 @@ CANDIDATES = [
         "statement": "ダメージ以外の原因で HP がのっているダメージ以下になったポケモンは、その原因になったコマンドの処理の終わりにきぜつの判定をする（ポケモンチェックの 3・4 で起こったら、ポケモンチェックの終わりに判定する）",
         "applies_when": "max_hp_drops が空でない・進化のあとに HP がダメージ以下（EVOLUTION_HP・DV1）",
         "targets": [_t("UNRESOLVED_MAX_HP_DROP", "needs_implementation", "ポケモンチェック・番の終わりでは HALTED の経路（動的）。判定の時点を加える実装が要る"),
-                    _t("UNRESOLVED_EVOLUTION_HP", "blocked_by_defect", "PSP-DECK-CONTENT-PRECHECKS の残り（EVOLUTION_HP の経路。未確認の漏れの候補）"),
+                    _t("UNRESOLVED_EVOLUTION_HP", "blocked_by_defect",
+                       "［うか］の経路は v0.147 で直した（提案の時点は PSP-DECK-CONTENT-PRECHECKS の残り）。ワザの宣言の前の先読みの H1 の経路は未確認の候補（PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE の範囲）"),
                     _t("UNRESOLVED_DEVOLUTION_INTERMEDIATE_KNOCKOUT", "unverified")],
         "excludes": ["変身がもどるときのきぜつの時点（TK1。個別）", "ワザのダメージによるきぜつ（今のまま）"],
         "exceptions": [], "depends_on": [], "related": [], "conflicts_with": [],
@@ -687,7 +693,8 @@ CANDIDATES = [
         "applies_when": "同じ番の中で、記録のあるカード・ポケモンが入れかわった・もどった・退化した場面（対象の一覧のコード）",
         "targets": [_t("UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT"), _t("UNRESOLVED_STADIUM_REUSE_AFTER_RETURN"), _t("UNRESOLVED_FUCHSIA_GYM_AFTER_REPLACEMENT"),
                     _t("UNRESOLVED_POWER_REUSE_AFTER_DEVOLUTION"),
-                    _t("UNRESOLVED_EVOLVE_AFTER_DEVOLUTION", "blocked_by_defect", "PSP-COCOON-DV2-ORACLE（未修正の漏れ）")],
+                    _t("UNRESOLVED_EVOLVE_AFTER_DEVOLUTION", "blocked_by_defect",
+                       "［うか］の漏れ（PSP-COCOON-DV2-ORACLE）は v0.147 で直した。ワザの宣言の前の先読みの漏れ（PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE。未修正）が残る")],
         "excludes": ["ラッキースタジアムの「くりかえし」（LK1。個別）", "エネルギーをつける回数（R13・BL1。個別）"],
         "exceptions": [], "depends_on": [], "related": [], "conflicts_with": [],
         "strict_difference": "厳密は今のまま拒否。プレイ用は記録を続けて拒否する（使い直せない）",
@@ -831,10 +838,9 @@ NEW_FINDINGS = [
 
 # 未修正・未確認の不具合と、同じ場面に当てる規約（blocked_by_defect の根拠）
 DEFECT_COUPLING = {
-    "UNRESOLVED_POWER_ZERO_CARDS": "PSP-INCREASE-ENTRY-PW3-ORACLE",
-    "UNRESOLVED_EVOLVE_AFTER_DEVOLUTION": "PSP-COCOON-DV2-ORACLE",
-    "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK#coin-evolve-self-from-deck": "PSP-DECK-CONTENT-PRECHECKS",
-    "UNRESOLVED_EVOLUTION_HP": "PSP-DECK-CONTENT-PRECHECKS",
+    # v0.147: PW3（PSP-INCREASE-ENTRY-PW3-ORACLE）・［うか］の GV1 の事例（PSP-DECK-CONTENT-PRECHECKS）は直したので外した。DV2・H1 はワザの先読みの漏れが残る
+    "UNRESOLVED_EVOLVE_AFTER_DEVOLUTION": "PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE",
+    "UNRESOLVED_EVOLUTION_HP": "PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE",
 }
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -906,7 +912,8 @@ WHOLE_GAME_CHANNELS = [
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
 STAGES = {
     "S0": {"name": "両モード共通の不具合の修正（モードと別の版）", "rules": [],
-           "prerequisites": [], "scope": "PSP-NJ1-NINJA-GYM-ORACLE（この調査で確認）・PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-DECK-CONTENT-PRECHECKS の残り（未確認）",
+           "prerequisites": [], "scope": ("PSP-NJ1-NINJA-GYM-ORACLE（この調査で確認）・PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-DECK-CONTENT-PRECHECKS の残り（未確認）。"
+                                          "v0.146・v0.147 でこの 4 つを直した（v0.147 の横断で見つけた PSP-POWER-PRECHECK-DECK-ORACLE も）。残りは PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE（v0.147 で見つけた。直していない）"),
            "done_when": "対の比べ（twin_command_problems）で漏れがない。blocked_by_defect の場面の規約を採れる状態",
            "remains": "研究上の論点（NJ1・PW3・DV2・GV1 の裁定）は未解決のまま"},
     "S1": {"name": "規約集合を受け取る基盤と、今の挙動の保持", "rules": [],

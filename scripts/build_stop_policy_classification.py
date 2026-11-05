@@ -690,8 +690,12 @@ CASES = {
          "note": "v0.143 で加えた事例（docs/play-policy-s2a-spec.md の proposed_cases）。厳密側は UnsupportedError、続行側（PC-SETUP-PLAY-AS-POKEMON）は NOT_BASIC_POKEMON の拒否"},
     ],
     "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK": [
-        {"case": "coin-evolve-self-from-deck", "sites": ["kyuura_engine/effects.py:12383"], "condition": "キョウのスピアーなどの特殊能力の使う前の確かめで、山札の同じ名前のカードを読む",
-         "secret_dependency": "depends_on_hidden_static", "note": "PSP-DECK-CONTENT-PRECHECKS（静的な候補。比較プローブはしていない）"},
+        {"case": "coin-evolve-self-from-deck",
+         "sites": [lambda: _site_line("kyuura_engine/effects.py", "raise UnsupportedError(PERMISSION_FROM_DECK_STOP_CODE, _PERMISSION_FROM_DECK_DETAIL)")],
+         "condition": "キョウのコクーンの［うか］の使う前の確かめで、山札にあるかもしれない同じ名前のカード（effects.possible_deck_cards）と組を作るか",
+         "secret_dependency": "owner_known_pool",
+         "note": ("v0.147 で配分を読まない確かめにした（docs/deck-content-prechecks-v0.147.md。PSP-DECK-CONTENT-PRECHECKS）。v0.146 まで（分類の時点の site は effects.py:12383）は実際の山札を読んだ"
+                  "（depends_on_hidden_static）。この経路は比較プローブで確かめていない（［うか］のキョウのコクーンは「サカキの」ポケモンではなく許可を受けないので、今の写しでは GV1 は起こらない）")},
         {"case": "other", "sites": [], "condition": "そのほかの経路", "secret_dependency": "unchecked_per_site", "note": ""},
     ],
     "UNRESOLVED_SCRAM_TIMING": [
@@ -769,8 +773,38 @@ V137_NEW_FINDINGS = [
      "mode_policy": "両モードで塞ぐ候補（修正は別の作業。v0.137 では変えていない）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
 ]
 # v0.138 の作業で、今回触った共通処理（bench_entry_unresolved）のまわりと PSP-DECK-CONTENT-PRECHECKS の残りを比較プローブで確かめて見つけた項目（修正していない。承認の範囲の外）
+# v0.147（docs/deck-content-prechecks-v0.147.md）: 利用者の指示（2026-11-05「秘密の山札の内容によって、使う前の受理・拒否・理由が変わる処理」を一つの調査・修正単位として、両モード共通の不具合を直す。
+# 新しい続行規約は採用しない）を受けて直した項目の記録。発見の記録（found_in・trigger・reachability・impact）は見つけた版のまま残し、修正の内容・制限・検証を加える
+V147_FIX_COMMON = {
+    "fixed_in": "v0.147（docs/deck-content-prechecks-v0.147.md。基点 b155a7d）",
+    "fix_verification": ["tests/test_deck_content_prechecks_v0_147.py（twin_command_problems に owner_knowledge を加えて、配分だけが違う双子を 3 つの集合で比べる。修正の前の木では failures 40・errors 9）",
+                         "docs/deck-content-prechecks-v0.147.md 2 章（修正の前の再現: 構築盤面の 10 の場面）・6 章（検証）"],
+    "status_basis": "v0.147 で漏れを修正。研究の論点（PW3・DV2・GV1・RB2・GG1・H1）は未解決のまま。新しい続行規約は採用していない",
+}
+V147_LOWER_BOUND_LIMITS = [
+    ("実際には山札に対象があっても、配分を読まない下限が 1 より少なければ使う前に止める（保守的な制限。サイドがうら 6 枚の間は、見えない対象が 7 枚以上要る。"
+     "「アンノーン」・「サカキ」はデッキに 4 枚までなので、サイドを 3 枚以上取るまで使えない）"),
+    ("受理（使った事実は公開）は、相手・観戦者に「使ったプレイヤーの見えない対象のカードが C + 1 枚以上ある」ことを伝える（v0.146 までは「山札にある」。相手は試せない）。"
+     "山札を見たあとの決定の選べるもの・選ぶと止める選択は実際の山札（本人が山札をさがして見る私的な情報。観測には出さない）"),
+    "フラッシュでおもてにした山札のカード・過去に見た山札の内容は数えない（v0.137 の共通処理と同じ。保守的）",
+]
+V147_FIX_INCREASE = {**V147_FIX_COMMON,
+    "fix": ("使う機会の答えの確かめ（accept_problem）を、実際の山札の候補から、配分を読まない下限（effects.deck_target_lower_bound）と、ベンチに出しても止めないカードの下限"
+            "（effects.bench_entry_unconfirmed。v0.138）に替えた（v0.137 の ST1・v0.146 の忍者ジムと同じ共通処理）。1 より少なければ決まった理由の文の PW3、止めないカードを確かめられなければ"
+            "決まった理由の文の GG1 など"),
+    "fix_sites": ["kyuura_engine/effects.py BenchNameGroupFromDeckOnEntry.accept_problem"],
+    "fix_limitations": [*V147_LOWER_BOUND_LIMITS,
+                        "v0.97 の組の対戦（席の両方・seed 0〜3 の 32 局）で［INCREASE］を使った回数は 9 → 0（docs/deck-content-prechecks-v0.147.md 5 章）"]}
+V147_FIX_COCOON = {**V147_FIX_COMMON,
+    "fix": ("使う前（コインの前）の GV1・DV2 の確かめを、実際の山札から、山札にあるかもしれないカード（effects.possible_deck_cards。山札のすべてのカードと山札の外の見えないカード。"
+            "持ち主が知っている集合）に替えた（組を作るカードがあれば止める）。H1（進化したあとの HP がダメージ以下）は、止めるカードがあるかもしれず、止めないカードが山札にあることを"
+            "配分を読まない下限で確かめられなければ止める"),
+    "fix_sites": ["kyuura_engine/effects.py CoinEvolveSelfFromDeck.check_usable"],
+    "fix_limitations": ["実際にはキョウのスピアーがサイドにだけあっても、退化した番の［うか］は DV2 で止める（保守的な制限。v0.146 までは山札になければ使えた）",
+                        "GV1・H1 の経路は比較プローブで確かめていない（GV1 は今の写しでは起こらない。H1 の盤面は通常のダメージでは作れない）。同じ変更で配分を読まない確かめにした"]}
+
 V138_NEW_FINDINGS = [
-    {"id": "PSP-INCREASE-ENTRY-PW3-ORACLE", "entry_kind": "silent_information_leak", "status": "active", "classification": "A",
+    {"id": "PSP-INCREASE-ENTRY-PW3-ORACLE", "entry_kind": "silent_information_leak", "status": "fixed", "classification": "A", **V147_FIX_INCREASE,
      "found_in": "v0.138 の作業（bench_entry_unresolved を使うほかの経路の比較プローブ。基点 903a9bd）",
      "summary": "アンノーンI（neo2-023）の［INCREASE］の使う機会の決定で「使う」を答えると、山札に「アンノーン」がない（サイドにある）ときだけ PW3 で拒否される",
      "trigger": "BenchNameGroupFromDeckOnEntry.accept_problem（実際の山札の候補を読む）→ offer_entry_power の unresolved_choices（観測には出ないが、答えの受理・拒否で分かる）",
@@ -782,8 +816,8 @@ V138_NEW_FINDINGS = [
                       "note": "合法な操作の列での再現はしていない。基点と v0.138 で出力は同じ（v0.138 の修正はこの経路を変えていない）"},
      "impact": "アンノーンI を出すたびに、山札にアンノーンがあるか（＝サイドにあるか）を、拒否のあと「使わない」を答え直すことで、費用なしに知れる。まきちらせ!ベトベトガスなどのもとでは"
                "アンノーンI 自体を出せない（GG1 など）ので、［INCREASE］の「どれも止める」の理由の文の経路には届かない",
-     "play_groups": ["5"], "mode_policy": "両モードで塞ぐ候補（修正は別の作業。v0.138 では変えていない）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
-    {"id": "PSP-COCOON-DV2-ORACLE", "entry_kind": "silent_information_leak", "status": "active", "classification": "A",
+     "play_groups": ["5"], "mode_policy": "両モードで直した（v0.147。v0.138 では変えていなかった）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
+    {"id": "PSP-COCOON-DV2-ORACLE", "entry_kind": "silent_information_leak", "status": "fixed", "classification": "A", **V147_FIX_COCOON,
      "found_in": "v0.138 の作業（PSP-DECK-CONTENT-PRECHECKS の残りの比較プローブ。基点 903a9bd）",
      "summary": "キョウのコクーン（PMCG6-011）の［うか］の使う前の DV2（今の番に退化した）の拒否が、キョウのスピアーが山札とサイドのどちらにあるかで変わる",
      "trigger": "CoinEvolveSelfFromDeck.check_usable（実際の山札の「キョウのスピアー」を deck_evolution_devolved_pairs に渡す。山札になければ組がなく、受理）",
@@ -794,7 +828,7 @@ V138_NEW_FINDINGS = [
                                    "docs/oracle-leak-fixes-v0.138.md 7 章"],
                       "note": "合法な操作の列（new_game から）での再現はしていない。GV1（PERMISSION_FROM_DECK）・UNRESOLVED_EVOLUTION_HP の経路はプローブしていない"},
      "impact": "退化スプレーのあと、カードを使わずに（拒否は状態を変えない）、山札にキョウのスピアーがあるかを知れる",
-     "play_groups": ["5"], "mode_policy": "両モードで塞ぐ候補（修正は別の作業。v0.138 では変えていない）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
+     "play_groups": ["5"], "mode_policy": "両モードで直した（v0.147。v0.138 では変えていなかった）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
 ]
 # v0.143 の作業で見つけ、v0.144 で直した両モード共通の不具合（壊れた状態。情報漏れではない）
 V144_FIXED_DEFECTS = [
@@ -840,6 +874,47 @@ V146_FIXED_LEAKS = [
                                    "docs/play-set-verification-v0.146.md 3 章（修正の前後の再現）"]},
      "impact": "カードを使わずに（拒否は状態を変えない）、毎番、山札にキョウのたねポケモンがあるか（＝サイドにあるか）を知れた",
      "play_groups": ["5"], "mode_policy": "両モードで直した（モードによらない不具合）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
+]
+
+# v0.147 で見つけた項目（docs/deck-content-prechecks-v0.147.md）。使う前の確かめの横断（check_playable・check_usable・accept_problem・check_activation・usage_problem と、そこから呼ぶ同じクラスのメソッド）で
+# 山札の中身を読む 23 のメソッドを挙げ、山札だけを読む 8 クラスを双子の比較プローブで確かめた。v0.138 までに分けた 2 項目のほかの 6 クラスを 1 つの項目にまとめる
+V147_NEW_FINDINGS = [
+    {"id": "PSP-POWER-PRECHECK-DECK-ORACLE", "entry_kind": "silent_information_leak", "status": "fixed", "classification": "A",
+     "found_in": "v0.147 の作業（PSP-DECK-CONTENT-PRECHECKS の残りの横断と比較プローブ。基点 b155a7d）", **V147_FIX_COMMON,
+     "summary": ("特殊能力の使う前（使う宣言・使う機会の答え。コインの前・山札を見る前）の PW3・RB2 の拒否が、対象のカードが山札とサイドのどちらにあるかで変わる"
+                 "（しんかのひかり・てしたをよぶ・［ボスをよぶ］・［FIND］・［JOIN］・［YIELD］・［GIVE］・ファイヤーブースト）"),
+     "trigger": ("SearchEvolutionCardToHand.check_usable・BenchBasicsFromDeckOnEntry.accept_problem・SearchNamedTrainerOnEntry.accept_problem・"
+                 "SearchDeckWithBenchLettersToHand.check_usable・CoinAttachEnergyFromDeckToOwnPokemon.check_usable（実際の山札の候補を読む）、"
+                 "CoinAttachFromDeckOnEntry.accept_problem（実際の山札のレインボーエネルギーを読み、理由の文に uid を書く）"),
+     "related_cards": ["PMCG4-052", "PMCG4-053", "PMCG6-071", "neo2-026", "PRN-034", "neo3-033", "neo4-062", "PF1-006"],
+     "related_codes": ["UNRESOLVED_POWER_ZERO_CARDS", "UNRESOLVED_RAINBOW_ATTACH_AS_TYPE"],
+     "fix": ("山札に対象があることを読む確かめは、配分を読まない下限（effects.deck_lower_bound_where・deck_target_lower_bound）が 1 より少なければ同じコードで止める（理由の文は決まった文）。"
+             "山札にあると止めるレインボーエネルギーは、山札にあるかもしれないカード（effects.possible_deck_cards）にあれば止める（ファイヤーブースト）。［YIELD］は、止めない「超」エネルギーカードを"
+             "下限で確かめられなければ、山札にあるかもしれないカードにレインボーエネルギーがあれば RB2、なければ PW3（どちらも持ち主が知っている集合で決まる）"),
+     "fix_sites": [("kyuura_engine/effects.py SearchEvolutionCardToHand.check_usable・BenchBasicsFromDeckOnEntry.accept_problem・SearchNamedTrainerOnEntry.accept_problem・"
+                    "SearchDeckWithBenchLettersToHand.check_usable・CoinAttachEnergyFromDeckToOwnPokemon.check_usable・CoinAttachFromDeckOnEntry.accept_problem")],
+     "fix_limitations": [*V147_LOWER_BOUND_LIMITS,
+                         "ファイヤーブーストは、レインボーエネルギーがサイドにだけあっても止める（保守的な制限）",
+                         ("たねポケモンの少ないデッキ（v0.43 の L43 はたねポケモン 8 枚）では、サイドがうら 6 枚の間はてしたをよぶをほとんど使えない（v0.43 の組の 48 局のポケモン育て屋さんの"
+                          "経路 2 回は、どちらも使わない答えになった）")],
+     "reachability": {"status": "constructed_board",
+                      "evidence": ["tests/test_deck_content_prechecks_v0_147.py（TwinTest。対象 1 枚が山札／サイド。修正の前の木で受理／PW3 など）", "docs/deck-content-prechecks-v0.147.md 2 章"],
+                      "note": "合法な操作の列（new_game から）での双子の再現はしていない"},
+     "impact": "カードを使わずに（拒否は状態を変えない）、山札に対象のカードがあるか（＝サイドにあるか）を知れた。使う機会の答えは、拒否のあと「使わない」を答え直せた",
+     "play_groups": ["5"], "mode_policy": "両モードで直した（モードによらない不具合）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
+    {"id": "PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE", "entry_kind": "silent_information_leak", "status": "active", "classification": "A",
+     "found_in": "v0.147 の作業（使う前の確かめの横断で、ワザの宣言の前の先読みも山札を読むことを確かめた。基点 b155a7d）",
+     "summary": "山札から進化カードを重ねるワザ（たきのぼりしんかなど）の宣言の拒否（DV2・GV1）が、進化カードが山札とサイドのどちらにあるかで変わる。理由の文に山札の進化カードの uid を書く",
+     "trigger": ("ワザの宣言の前の先読み（resolution/preflight）が、resolution/programs.py の山札から重ねる要素（EvolveFromDeck.run・たきのぼりしんかの run・進化の歌の _pokemon_problem）の"
+                 "deck_evolution_permission_pairs・deck_evolution_devolved_pairs（実際の山札）を通り、問いがあれば宣言を拒否する"),
+     "related_cards": ["PMCG4-020"], "related_codes": ["UNRESOLVED_EVOLVE_AFTER_DEVOLUTION", "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK"],
+     "reachability": {"status": "constructed_board",
+                      "evidence": [("tests/test_deck_content_prechecks_v0_147.py（RemainingAttackLeakTest。ギャラドスを退化スプレーではがしたコイキング（ロケット団）。見えないギャラドス 1 枚が"
+                                    "山札／サイド。たきのぼりしんかの宣言が UNRESOLVED_EVOLVE_AFTER_DEVOLUTION／受理）"), "docs/deck-content-prechecks-v0.147.md 4 章"],
+                      "note": ("合法な操作の列での再現はしていない。H1（HP）・PW4（場に出たときの特殊能力）・NB2（ベイビィ）など、同じ要素の山札の中身を読むほかの問いはプローブしていない"
+                               "（v0.105 の self_deck_evolution_open_question は、必ず重ねるワザの問いを山札によらず決めるが、任意のワザの組で止める経路は変えていない）")},
+     "impact": "ワザを使わずに（拒否は状態を変えない）、山札に進化カードがあるかと、その uid を知れる",
+     "play_groups": ["5"], "mode_policy": "両モードで塞ぐ候補（修正は別の作業。v0.147 では、ワザの先読みの経路は範囲が広がるので変えていない）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
 ]
 
 # 分類の後の更新（基点・集計の履歴は BASE・COUNTS_AT_CLASSIFICATION に残し、書き換えない）
@@ -916,6 +991,16 @@ UPDATES = [
      "unchanged": ("研究の停止コード（NJ1 の UNRESOLVED_NINJA_GYM_WITHOUT_TARGET を含む）は active のまま。止めるコードは同じで、止める条件が配分を読まない下限になった。"
                    "PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE は active、PSP-DECK-CONTENT-PRECHECKS は unverified のまま（この版では直していない）。"
                    "族・規約・判断事項・方針の案・合意の記録は変えていない")},
+    {"version": "0.147.0", "work": "秘密の山札の内容で使う前の受理・拒否・理由が変わる処理の調査・修正（両モード共通）", "document": "docs/deck-content-prechecks-v0.147.md",
+     "base": {"commit": "b155a7de8365909b3d57a5d85551d614027a59c1", "branch_of_base": "claude/play-set-verification-ninja-gym（v0.146 の最後。main には未取り込み）"},
+     "approval": ("利用者の指示は作業の進め方（秘密の山札の内容で使う前の受理・拒否・理由が変わる処理を一つの単位として調べ、同じ原因・共通処理で安全に直せるものを直す）だけ（2026-11-05）。"
+                  "新しい続行規約は採用していない。PW3・DV2・GV1・RB2・GG1・H1 の研究上の問いは決めない"),
+     "changed_entries": ["PSP-INCREASE-ENTRY-PW3-ORACLE（fixed）", "PSP-COCOON-DV2-ORACLE（fixed）", "PSP-DECK-CONTENT-PRECHECKS（fixed。v0147_followup）",
+                         "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK#coin-evolve-self-from-deck（secret_dependency を owner_known_pool に。sites を今のコードから求める）",
+                         "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"],
+     "new_entries": ["PSP-POWER-PRECHECK-DECK-ORACLE（fixed。同じ横断で見つけた 6 クラス）", "PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE（active。修正していない）"],
+     "unchanged": ("研究の停止コード（PW3・DV2・GV1・RB2・GG1・H1 を含む）は active のまま。止めるコードは同じで、止める条件が配分を読まない確かめになった。"
+                   "族・規約・判断事項・方針の案・合意の記録は変えていない")},
 ]
 # 分類の時点（基点 3e25ac5）の集計（counts）の写し。今の counts は現行コードから作り直した値
 COUNTS_AT_CLASSIFICATION = {"research_stop_codes": 316, "runtime_codes_outside_table": 40, "runtime_codes_outside_table_active": 39, "test_tool_only_codes": 8, "cases": 15, "codes_with_cases": 7, "problems_new": 4, "problems_from_inventory": 28, "conventions": 18, "internal_guard_sites_current": 602, "internal_guard_sites_matched_to_inventory": 600, "internal_guard_sites_new_since_inventory": ["kyuura_engine/engine.py:445", "kyuura_engine/resolution/programs.py:10739"], "safety_boundaries": 8, "families": 23, "decisions": 29, "by_reachability": {"constructed_board": 145, "legal_sequence": 25, "static_only": 185}, "by_family": {"PF-COPY-TRANSFORM": 34, "PF-DAMAGE-SCOPE": 22, "PF-EFFECT-TIMING": 13, "PF-ENERGY-TYPE": 21, "PF-ESP-REDO": 4, "PF-HIDDEN-INFORMATION": 8, "PF-HISTORY-LASTING": 20, "PF-KNOCKOUT-TIMING": 15, "PF-POWER-SUPPRESSION": 11, "PF-PROTECTED-TARGET-EFFECT": 12, "PF-REACTION-DURING-PROCESS": 10, "PF-RUNTIME-CONTINUATION": 15, "PF-RUNTIME-COPY-GAPS": 5, "PF-RUNTIME-DATA": 5, "PF-RUNTIME-GENERIC": 1, "PF-RUNTIME-REGISTRY": 7, "PF-RUNTIME-SEARCH-LIMIT": 6, "PF-SETUP-PLAY-AS-POKEMON": 5, "PF-SIMULTANEOUS-ORDER": 26, "PF-STATED-COUNT-SHORT": 11, "PF-TEXT-READING": 34, "PF-UP-TO-ZERO": 13, "PF-USE-WITHOUT-EFFECT": 57}, "by_play_group": {"1": 316, "2": 39, "3": 89, "4": 6, "5": 20, "6": 1}, "by_mechanism": {"answer_rejection": 13, "command_rejection": 339, "deck_validation": 1, "deferred_interruption": 2, "pokemon_check_halt": 10, "setup_halt": 2}, "by_status": {"active": 402, "fixed": 5, "historical": 2, "unverified": 1}, "note": "停止コード・事例・規約・内部ガードは別の数。事例はコードの下位で、コードの数に足さない。棚卸しと同じ項目は独立した不足として数えない"}
@@ -942,7 +1027,13 @@ PROBLEMS = [
      "impact": "カードを使わずに、山札の基本エネルギーカードが 2 枚以上あるかを知れる", "play_groups": ["5", "1"],
      "mode_policy": "両モードで漏れを塞ぐ。数の不足の規約（PF-STATED-COUNT-SHORT）の P-SCS-2 は、この事例では採らない",
      "decision_refs": ["DEC-INFO-LEAK-FIXES", "DEC-STATED-COUNT-SHORT"], "inventory_root_cause": "同上"},
-    {"id": "PSP-DECK-CONTENT-PRECHECKS", "entry_kind": "information_leak_candidate", "status": "unverified", "classification": "A", "found_in": "この分類の作業（静的な横断）",
+    {"id": "PSP-DECK-CONTENT-PRECHECKS", "entry_kind": "information_leak_candidate", "status": "fixed", "classification": "A", "found_in": "この分類の作業（静的な横断）",
+     "fixed_in": "v0.147（docs/deck-content-prechecks-v0.147.md。基点 b155a7d）",
+     "status_basis": ("v0.147 で、横断を accept_problem・check_activation・usage_problem と呼ぶメソッドに広げ、山札だけを読む 8 クラスを比較プローブで確かめて直した"
+                      "（PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-POWER-PRECHECK-DECK-ORACLE）。［うか］の GV1・H1 の経路は比較プローブで確かめていない"
+                      "（漏れとも安全とも数えない。同じ変更で山札を読まない確かめにした）。ワザの宣言の前の先読みの経路は別の項目 PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE（active）"),
+     "v0147_followup": ("docs/deck-content-prechecks-v0.147.md 1 章: 使う前の確かめ 23 のメソッドのうち、山札の枚数・空か・山札とサイドを合わせた集合・公開のおもてのカードだけを読む 15 は配分によらない。"
+                        "山札だけを読む 8 クラス（10 の場面）は、修正の前の木で双子の受理・拒否・コードが違った。v0.146 の忍者ジムは直したもの"),
      "summary": "使う前の確かめ（check_playable・check_usable）が山札の中身を読んで UnsupportedError で止める、ほかの経路（比較プローブはしていない）",
      "trigger": "CoinEvolveSelfFromDeck.check_usable（effects.py:12375。山札の同じ名前のカードで GV1・DV2・UNRESOLVED_EVOLUTION_HP）、BenchNameGroupFromDeckTrainer の bench_entry_unresolved（effects.py:39924。山札の候補のどれもベンチに出すと止めるなら止める）",
      "v0137_followup": ("v0.137 で比較プローブをした: bench_entry_unresolved（遺跡の石版）は受理・コードは配分によらないが、理由の文が山札のカードの名前・uid を書く漏れを確認し、"
@@ -960,6 +1051,7 @@ PROBLEMS = [
     *V138_NEW_FINDINGS,
     *V144_FIXED_DEFECTS,
     *V146_FIXED_LEAKS,
+    *V147_NEW_FINDINGS,
     {"id": "SUDDEN_DEATH_NOT_IMPLEMENTED", "entry_kind": "nonprefix_stop", "status": "fixed", "classification": "A", "found_in": "v0.133 の棚卸し（P0）",
      "summary": "v0.134 で StartSuddenDeath を加えた。サドン・デスの状態にほかのコマンドを送ると IllegalActionError SUDDEN_DEATH_NOT_STARTED（UnsupportedError ではない）",
      "trigger": "Phase.SUDDEN_DEATH", "related_cards": [], "related_codes": ["SUDDEN_DEATH_NOT_STARTED", "NOT_SUDDEN_DEATH", "UNSUPPORTED_SUDDEN_DEATH_INITIAL_DECK"],

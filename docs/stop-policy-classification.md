@@ -273,6 +273,7 @@ v0.135・v0.136 の漏れと同じ型（受理・拒否による漏れ）です�
 - 調査の中で、キョウの忍者ジムの使う前の確かめの情報漏れ（`PSP-NJ1-NINJA-GYM-ORACLE`。比較プローブで確認。修正していない）を見つけました。設計案の文書の 7 章に記録し、
   この台帳にはまだ加えていません。
 - v0.146 の経過（[play-set-verification-v0.146.md](play-set-verification-v0.146.md) 3 章）: `PSP-NJ1-NINJA-GYM-ORACLE` を両モード共通の不具合として直し、この台帳に fixed で加えました（更新の記録 0.146.0）。上の 2 行は調査の時点の記録のままです。
+- v0.147 の経過（[deck-content-prechecks-v0.147.md](deck-content-prechecks-v0.147.md)）: `PSP-INCREASE-ENTRY-PW3-ORACLE`・`PSP-COCOON-DV2-ORACLE`・`PSP-DECK-CONTENT-PRECHECKS` を直して fixed にし、同じ横断で見つけた 6 クラスを `PSP-POWER-PRECHECK-DECK-ORACLE`（fixed）に、ワザの宣言の前の先読みの漏れを `PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE`（active。直していない）に加えました（更新の記録 0.147.0）。
 
 ## 8. プレイ用の規約だけでは解消できない項目
 
