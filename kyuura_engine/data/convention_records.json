@@ -2463,7 +2463,7 @@
    {
     "codes": [],
     "entry_kind": "silent_information_leak",
-    "id": "PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE"
+    "id": "PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE"
    },
    {
     "codes": [],

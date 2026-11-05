@@ -109,7 +109,7 @@ A の場面でも、続けるのに実装・秘密への非依存の確かめ・
 | うち動的な経路（4 章の一覧）でだけ止める（ほかの場面では拒否） | 12 |
 | 対戦全体を止める場面のうち規約案の対象 | 15 |
 | この調査で見つけた不具合 | 1 |
-| 内部ガード（場面に数えない。D） | 608 |
+| 内部ガード（場面に数えない。D） | 610 |
 <!-- generated:plan-counts end -->
 
 A 以外の場面の内訳（理由ごと）:
@@ -250,11 +250,11 @@ A 以外の場面の内訳（理由ごと）:
 | `PC-ORDER-ATTACK-PRECHECK` | ワザのダメージの前の複数のコインの順番 | order |  | 7 | 7 | unverified 7 | 番のプレイヤーが選ぶ | DEC-ORDER-RULE |
 | `PC-ORDER-OVERLAP` | 同じ時点にはたらく複数の効果の当てはめの順番 | order |  | 10 | 10 | unverified 10 | 番のプレイヤーが選ぶ | DEC-ORDER-RULE |
 | `PC-SUPPRESSION-LATER-POKEMON` | 特殊能力を消す効果は、あとから場に出たポケモンにも及ぶか | power |  | 3 | 3 | unverified 3 | 及ぶ | DEC-SUPPRESSION-READINGS |
-| `PC-NON-DAMAGE-HP-KNOCKOUT` | ダメージ以外で HP がのっているダメージ以下になったポケモン | knockout | ○ | 3 | 3 | blocked_by_defect 1・needs_implementation 1・unverified 1 | 原因のコマンドの処理の終わりに判定 | DEC-KNOCKOUT-READINGS |
+| `PC-NON-DAMAGE-HP-KNOCKOUT` | ダメージ以外で HP がのっているダメージ以下になったポケモン | knockout | ○ | 3 | 3 | needs_implementation 1・needs_secret_review 1・unverified 1 | 原因のコマンドの処理の終わりに判定 | DEC-KNOCKOUT-READINGS |
 | `PC-REACTION-DOUBLE-KNOCKOUT` | ワザのダメージと反応のダメージによる両方のきぜつ | knockout |  | 3 | 3 | unverified 3 | 同時のきぜつ | DEC-KNOCKOUT-READINGS |
 | `PC-TARGET-LOST-MID-EFFECT` | 効果の途中で対象・発生源がいなくなったとき | target |  | 4 | 4 | needs_implementation 4 | そのポケモンに関する残りを行わない | DEC-REACTION-READINGS・DEC-COPY-SCOPE |
 | `PC-LASTING-SOURCE-CHANGE` | 持続する効果の発生源が進化・退化・場をはなれたとき | lasting | ○ | 6 | 6 | needs_implementation 6 | 場をはなれたら終わる・進化・退化では続く | DEC-LASTING-READINGS |
-| `PC-ONCE-PER-TURN-IDENTITY` | 「番に 1 回」「その番に〜した」の記録は、入れかわり・もどりで続くか | lasting |  | 5 | 5 | blocked_by_defect 1・needs_implementation 4 | 続く（使い直せない） | DEC-LASTING-READINGS |
+| `PC-ONCE-PER-TURN-IDENTITY` | 「番に 1 回」「その番に〜した」の記録は、入れかわり・もどりで続くか | lasting |  | 5 | 5 | needs_implementation 4・needs_secret_review 1 | 続く（使い直せない） | DEC-LASTING-READINGS |
 | `PC-COPIED-ATTACK-AS-OWN` | 写したワザは、写したポケモンのワザとして説明のすべてを処理するか | copy |  | 7 | 7 | needs_implementation 7 | 写したポケモンのワザとして説明のすべてを処理 | DEC-COPY-SCOPE |
 | `PC-FACE-UP-DECK` | フラッシュでおもてになった山札のカード | hidden | ○ | 7 | 5 | needs_secret_review 7 | おもてのまま・移る時点の公開だけを残す | DEC-FACE-UP-DECK |
 <!-- generated:plan-candidates end -->
@@ -658,7 +658,7 @@ A 以外の場面の内訳（理由ごと）:
 - **問い**: 進化・退化・最大HPを下げる効果など、ダメージ以外の原因で HP がのっているダメージ以下になったポケモンは、いつきぜつするか
 - **規約の文（案）**: ダメージ以外の原因で HP がのっているダメージ以下になったポケモンは、その原因になったコマンドの処理の終わりにきぜつの判定をする（ポケモンチェックの 3・4 で起こったら、ポケモンチェックの終わりに判定する）
 - **適用条件**: max_hp_drops が空でない・進化のあとに HP がダメージ以下（EVOLUTION_HP・DV1）
-- **対象の場面（続けられ方）**: `UNRESOLVED_MAX_HP_DROP`（needs_implementation）、`UNRESOLVED_EVOLUTION_HP`（blocked_by_defect）、`UNRESOLVED_DEVOLUTION_INTERMEDIATE_KNOCKOUT`（unverified）
+- **対象の場面（続けられ方）**: `UNRESOLVED_MAX_HP_DROP`（needs_implementation）、`UNRESOLVED_EVOLUTION_HP`（needs_secret_review）、`UNRESOLVED_DEVOLUTION_INTERMEDIATE_KNOCKOUT`（unverified）
 - **除外・対象外の隣の場面**: 変身がもどるときのきぜつの時点（TK1。個別）／ワザのダメージによるきぜつ（今のまま）
 - **依存・関係・競合**: 依存 なし／関係 なし／競合 なし
 - **厳密モードとの差**: 厳密は今のまま拒否・HALTED。プレイ用はきぜつの判定をして続ける
@@ -736,7 +736,7 @@ A 以外の場面の内訳（理由ごと）:
 - **問い**: スタジアムを入れかえた・トラッシュからもどした、ポケモンが退化したなど、カード・ポケモンが入れかわったとき、同じ番の「1 回」「その番に〜した」の記録は続くか
 - **規約の文（案）**: 「自分の番に 1 回」の使用の記録と「その番に〜した」の記録は、同じ番のうちは、同じ名前のカード・同じポケモン（進化・退化を含む）に続く。入れかえ・もどりで使い直せない
 - **適用条件**: 同じ番の中で、記録のあるカード・ポケモンが入れかわった・もどった・退化した場面（対象の一覧のコード）
-- **対象の場面（続けられ方）**: `UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT`（needs_implementation）、`UNRESOLVED_STADIUM_REUSE_AFTER_RETURN`（needs_implementation）、`UNRESOLVED_FUCHSIA_GYM_AFTER_REPLACEMENT`（needs_implementation）、`UNRESOLVED_POWER_REUSE_AFTER_DEVOLUTION`（needs_implementation）、`UNRESOLVED_EVOLVE_AFTER_DEVOLUTION`（blocked_by_defect）
+- **対象の場面（続けられ方）**: `UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT`（needs_implementation）、`UNRESOLVED_STADIUM_REUSE_AFTER_RETURN`（needs_implementation）、`UNRESOLVED_FUCHSIA_GYM_AFTER_REPLACEMENT`（needs_implementation）、`UNRESOLVED_POWER_REUSE_AFTER_DEVOLUTION`（needs_implementation）、`UNRESOLVED_EVOLVE_AFTER_DEVOLUTION`（needs_secret_review）
 - **除外・対象外の隣の場面**: ラッキースタジアムの「くりかえし」（LK1。個別）／エネルギーをつける回数（R13・BL1。個別）
 - **依存・関係・競合**: 依存 なし／関係 なし／競合 なし
 - **厳密モードとの差**: 厳密は今のまま拒否。プレイ用は記録を続けて拒否する（使い直せない）
@@ -975,7 +975,7 @@ PSP-COCOON-DV2-ORACLE（DV2）・PSP-DECK-CONTENT-PRECHECKS の残り（GV1・EV
 <!-- generated:plan-stages begin（scripts/build_play_policy_family_plan.py --write が書く。手で直さない） -->
 | 段階 | 名前 | 規約案 | 先に要るもの | 共通処理の変更の範囲 | 完了の基準 | 残るもの |
 |---|---|---|---|---|---|---|
-| S0 | 両モード共通の不具合の修正（モードと別の版） | — | — | PSP-NJ1-NINJA-GYM-ORACLE（この調査で確認）・PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-DECK-CONTENT-PRECHECKS の残り（未確認）。v0.146・v0.147 でこの 4 つを直した（v0.147 の横断で見つけた PSP-POWER-PRECHECK-DECK-ORACLE も）。残りは PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE（v0.147 で見つけた。直していない） | 対の比べ（twin_command_problems）で漏れがない。blocked_by_defect の場面の規約を採れる状態 | 研究上の論点（NJ1・PW3・DV2・GV1 の裁定）は未解決のまま |
+| S0 | 両モード共通の不具合の修正（モードと別の版） | — | — | PSP-NJ1-NINJA-GYM-ORACLE（この調査で確認）・PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-DECK-CONTENT-PRECHECKS の残り（未確認）。v0.146・v0.147 でこの 4 つを直した（v0.147 の横断で見つけた PSP-POWER-PRECHECK-DECK-ORACLE も）。v0.147 で見つけた PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE はv0.148 で直した | 対の比べ（twin_command_problems）で漏れがない。blocked_by_defect の場面の規約を採れる状態 | 研究上の論点（NJ1・PW3・DV2・GV1 の裁定）は未解決のまま |
 | S1 | 規約集合を受け取る基盤と、今の挙動の保持 | — | DEC-RULESET-IDENTITY・DEC-RULESET-VERSIONING・DEC-CONVENTION-GRANULARITY・DEC-CONVENTION-CONFLICTS・DEC-MODE-CHANGE-DURING-GAME・DEC-LEGACY-STATES・DEC-BASELINE-NONUSER・DEC-CARD-DATA-CORRECTIONS | 規約集合を new_game で受け取り状態に持つ（延長戦は keep）・止める箇所に事例の識別（場面 ID）・規約の照会の入口（登録の側。engine.py・resolution/ にカード ID・モード名の分岐を加えない）・規約による拒否と未決の裁定の停止を区別する記録・構成の検査（ruleset-mode-design.md 6.4 節）・厳密と厳密の比べ | 厳密の集合（基礎集合だけ）で、全体テスト・lockstep・前の版の組・サドン・デスの比べが今と同じ（意図した差 0）。規約の照会がどの場面でも「規約なし」を返し、止め方が今のまま | 続行規約は 1 つも入っていない。保存形式・識別の形は判断のあとに決める（この設計では決めない） |
 | S2a | 対戦全体を止める規約（規約だけで足りるもの） | PC-SETUP-MULLIGAN-COUNT・PC-SETUP-PLAY-AS-POKEMON・PC-CHECK-SIDE-ORDER・PC-COIN-COUNT-SHORT・PC-CHECK-KO-POINT | S1・DEC-PLAY-CONFIG-INCOMPLETE-START | 準備・ポケモンチェック・途中停止の HALTED の分岐を、規約の照会で続行に置きかえる | 規約ごとに、当たる盤面の結果（状態・乱数・ログ・観測）・隣の場面が変わらないこと・厳密との差が規約の当たった歩から始まること・道具の対戦で HALTED の減り方と先攻後攻の偏り | WG-CHECK-PLAN・WG-CHECK-RECOVERY・WG-DECISION-NO-ANSWER のカード固有の停止、技術的な上限（くろこげマーカー・きのみ） |
 | S2b | 対戦全体を止める規約（実装が要るもの） | PC-CHECK-DOUBLE-KNOCKOUT・PC-NON-DAMAGE-HP-KNOCKOUT・PC-NON-ATTACK-DAMAGE-MODIFIERS・PC-LASTING-SOURCE-CHANGE | S2a | ポケモンチェックの続きの両方のサイド・交代の並び、ダメージ以外の HP 低下のきぜつの判定の窓、ワザ以外のダメージの量の問い合わせ | S2a と同じ。両方のきぜつ・サドン・デスへの移り方の比べ | カード固有の時点の問い（SC1・SC2・AL1・AL3・MEW1 など） |
