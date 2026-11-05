@@ -333,6 +333,24 @@ class RecorderCheckTest(unittest.TestCase):
             self.recorder(PO).check_conventions(changed)
 
 
+class ToolReplayTest(unittest.TestCase):
+    """対戦の道具（tools/existing_effect_games.py）の監査のやり直しは、記録の対戦と同じ集合で始めたことも確かめる（v0.146。ログが同じでも集合の違いを見つける）。"""
+
+    def test_replay_under_another_set_is_a_mismatch(self):
+        from tools import existing_effect_games as G
+        from tools.convention_choice import restore_conventions, use_conventions
+
+        try:
+            use_conventions(PO)
+            result = G.play(("P119", "D119"), 0, keep_state=True)
+            self.assertEqual(result["audit"], {})
+            self.assertEqual(G.audit(result, result["state"], result["commands"]), {})
+            restore_conventions()  # やり直しを今の挙動の集合で始める（記録の対戦は PO）
+            self.assertEqual(G.audit(result, result["state"], result["commands"]).get("replay_mismatch"), 1)
+        finally:
+            restore_conventions()
+
+
 class DocumentTest(unittest.TestCase):
     def test_document_records_the_contract(self):
         text = DOC.read_text(encoding="utf-8")

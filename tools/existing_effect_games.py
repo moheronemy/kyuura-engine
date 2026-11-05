@@ -13703,7 +13703,8 @@ def audit(result, state, commands):
         current = apply_command(current, command)
         if watch:
             failures["observation"] += bool(observation_problems(current))  # v0.47: 受け付けた操作ごとに、プレイヤー・観戦者に渡す観測
-    failures["replay_mismatch"] += [dict(e) for e in current.log] != [dict(e) for e in state.log]
+    # v0.146: やり直しの対戦の規約集合も、記録の対戦と同じこと（ログが同じでも、規約の当たらない局では集合の違いがログに出ないため）
+    failures["replay_mismatch"] += [dict(e) for e in current.log] != [dict(e) for e in state.log] or current.conventions != state.conventions
     failures["v105_shuffle"] += bool(v105_replay_problems(current, deck_before))
     if tyranitar:
         failures["v133"] += bool(v133_problems(state, v133_before))  # v0.133
