@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.146）
+# 実装状況（v0.1〜v0.147）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d`（v0.128 から。v0.129 の種族の身長の写しは別に `9242b9be89be0f747279f39c11875d1ed61763ec`。v0.126〜v0.127 は `57d01f45cfb8b086d03dc0525b329cf6adeff69b`、v0.125 は `134a664c6adf67d5604148a31b58e1a7d26d4d6d`、v0.124 は `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`、v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3819,6 +3819,15 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 338・neo 154・拡張パック以外 184） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistryTest` |
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.147: 秘密の山札の内容で使う前の受理・拒否・理由が変わる処理の修正（両モード共通）
+
+[deck-content-prechecks-v0.147.md](deck-content-prechecks-v0.147.md)。新しい続行規約は採用していない。既存の集合の ID・版・中身・照合値は同じ。研究上の問い（PW3・DV2・GV1・RB2・GG1・H1）は決めていない。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 使う前の確かめの山札の中身を読む 8 クラス（しんかのひかり・てしたをよぶ・［うか］・［ボスをよぶ］・ファイヤーブースト・［INCREASE］・［FIND］・［JOIN］・［YIELD］・［GIVE］）を、配分を読まない下限（`deck_lower_bound_where`）と山札にあるかもしれないカード（`possible_deck_cards`）で確かめる（PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-POWER-PRECHECK-DECK-ORACLE） | 実装済み・テスト済み（構築盤面） | 2・3 章 | test_deck_content_prechecks_v0_147 |
+| ワザの宣言の前の先読みが山札の組で DV2・GV1 を確かめる漏れ（PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE） | 未修正（記録だけ） | 4 章 | 同 `RemainingAttackLeakTest` |
 
 ## v0.146: 比較の記録の規約集合・キョウの忍者ジムの情報漏れの修正・PO の集合の境界の検証
 
