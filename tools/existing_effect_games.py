@@ -10151,7 +10151,8 @@ def _v043_power(state, tried, counts):
     - ほのおをもらう（ロケット団のヒトカゲ）: ほかの自分のポケモンに基本「炎」エネルギーカード（エナジーバーンで「炎」になったものでない）があれば、その 1 枚目
     - ようぶんきゅうしゅう（エリカのマダツボミ）: ほかの自分のポケモンに基本「草」エネルギーカードがあれば
     - エナジーチャージ（バトル場のマチスのレアコイル）: 控えに基本「雷」エネルギーカードがあれば（回数の制限はないが、この手順は 1 番に 1 回）
-    - しんかのひかり（わるいハクリュー）: 山札に進化カードがあれば"""
+    - しんかのひかり（わるいハクリュー）: 山札に進化カードがあれば（v0.147 から、エンジンの使う前の確かめと同じ配分を読まない下限 ``deck_lower_bound_where`` が 1 以上なら。
+      docs/deck-content-prechecks-v0.147.md。v0.146 までは実際の山札を読んだ）"""
     player = state.current_player
     p = state.players[player]
 
@@ -10196,7 +10197,7 @@ def _v043_power(state, tried, counts):
             tried.add(marker)
             counts["v043_power_energy_charge"] += 1
             return UsePokemonPower(player, pid, 0)
-        if card_id == DARK_DRAGONAIR and not used(pokemon) and any(state.card_def(u).is_evolution_pokemon for u in p.deck):
+        if card_id == DARK_DRAGONAIR and not used(pokemon) and E.deck_lower_bound_where(state, player, lambda u: state.card_def(u).is_evolution_pokemon) >= 1:
             counts["v043_power_evolutionary_light"] += 1
             return UsePokemonPower(player, pid, 0)
     return None

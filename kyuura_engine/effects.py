@@ -9063,6 +9063,12 @@ def _power_zero_cards(detail: str) -> UnsupportedError:
     return UnsupportedError(POWER_ZERO_CARDS_CODE, f"{detail}。{POWER_ZERO_CARDS_REASON}")
 
 
+def _power_deck_target_unconfirmed(what: str) -> UnsupportedError:
+    """v0.147（docs/deck-content-prechecks-v0.147.md 3 章）: 特殊能力の使う前（使う宣言・使う機会の答え）に、山札に ``what`` があることを配分を読まない下限
+    （``deck_lower_bound_where``）で確かめられないときの PW3。理由の文は決まった文（カードの名前・uid・枚数・位置を書かない。実際に山札にない場合と、あっても下限が足りない場合の両方）。"""
+    return _power_zero_cards(f"山札に{what}があることを確かめられない。{DECK_TARGET_UNCONFIRMED_DETAIL}")
+
+
 COIN_CONDITION_TEXTS = {
     # わるいクサイハナ（PMCG4-006）の［くさいかふん］
     CONFUSION: ("自分の番ごとに1回使える。コインを投げて「おもて」なら、相手の対戦ポケモンを「こんらん」状態にする。「うら」なら、自分の対戦ポケモンを「こんらん」"
@@ -9393,8 +9399,9 @@ class SearchEvolutionCardToHand(PowerEffect):
         _require_user_not_asleep_paralyzed_confused(state, use)
         _require_no_choices(use)
         require_power_not_used(state, use)
-        if not deck_evolution_cards(state, use.player):
-            raise _power_zero_cards("山札に進化カードがない（山札が 0 枚を含む）")
+        # v0.147（docs/deck-content-prechecks-v0.147.md。PSP-DECK-CONTENT-PRECHECKS）: 配分を読まない下限で確かめる（v0.146 までは実際の山札の進化カードを読んだ）
+        if deck_lower_bound_where(state, use.player, lambda uid: state.card_def(uid).is_evolution_pokemon) < 1:
+            raise _power_deck_target_unconfirmed("進化カード")
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
         push_power_decision(state, use, kind=SEARCH_DECK, player=use.player, options=deck_evolution_cards(state, use.player))
@@ -9691,8 +9698,16 @@ class BenchBasicsFromDeckOnEntry(EntryPower):
     def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
         if len(state.players[use.player].bench) >= bench_limit(state, use.player):
             return _power_zero_cards("ベンチに空きがない")
-        if not deck_basic_pokemon(state, use.player, text_era(use.key.card_id)):
-            return _power_zero_cards("山札にたねポケモンがない（山札が 0 枚を含む）")
+        # v0.147（docs/deck-content-prechecks-v0.147.md。PSP-DECK-CONTENT-PRECHECKS）: 山札にたねポケモンがあることを配分を読まない下限で確かめる（v0.146 までは実際の山札を読んだ）。
+        # たねポケモンか決まらないカード（neo の説明のベイビィポケモンカード。NB1）は、山札にあるかもしれないカードにあれば止める（uid の小さい順の最初のカードの id。配分によらない）
+        era = text_era(use.key.card_id)
+        pokemon = [uid for uid in possible_deck_cards(state, use.player) if state.card_def(uid).category == "pokemon"]
+        undecided = [uid for uid in pokemon if card_is_basic_in_text(state.card_def(uid), era) is None]
+        if undecided:
+            return neo_basic_baby_error(f"山札のたねポケモン（カード {state.card_def(undecided[0]).id}）")
+        if deck_lower_bound_where(state, use.player, lambda uid: state.card_def(uid).category == "pokemon"
+                                  and card_is_basic_in_text(state.card_def(uid), era) is True) < 1:
+            return _power_deck_target_unconfirmed("たねポケモン")
         return None
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
@@ -10735,6 +10750,13 @@ def rainbow_cards_in(state: GameState, uids: Iterable[int]) -> list[int]:
 
 def rainbow_attach_error(energy_type: EnergyType, cards: Iterable[int]) -> UnsupportedError:
     return UnsupportedError(RAINBOW_ATTACH_CODE, f"レインボーエネルギー {list(cards)}: {RAINBOW_ATTACH_REASON.format(type=energy_type.ja)}")
+
+
+def rainbow_possible_in_deck_error(energy_type: EnergyType) -> UnsupportedError:
+    """v0.147（docs/deck-content-prechecks-v0.147.md 3 章）: 山札からつける効果の使う前に、山札にあるかもしれないカード（``possible_deck_cards``）にレインボーエネルギーがあるときの RB2。
+    理由の文は決まった文（カードの uid・枚数・位置を書かない。サイドにあって山札にない場合も含む保守的な制限）。"""
+    return UnsupportedError(RAINBOW_ATTACH_CODE, f"山札にレインボーエネルギーがあるかもしれない（山札とサイドの見えないカードの配分を読まずに、ないと確かめられない。"
+                                                 f"情報漏れを防ぐための保守的な制限。v0.147）: {RAINBOW_ATTACH_REASON.format(type=energy_type.ja)}")
 
 
 def attach_from_hand_problem(state: GameState, player: int, card: int, target: PokemonInPlay) -> tuple[str, str] | None:
@@ -12376,16 +12398,29 @@ class CoinEvolveSelfFromDeck(PowerEffect):
         _require_user_not_asleep_paralyzed_confused(state, use)
         _require_no_choices(use)
         require_power_not_used(state, use)
-        cards = [uid for uid in state.players[use.player].deck if state.card_def(uid).name_ja == self.name]
+        # v0.147（docs/deck-content-prechecks-v0.147.md 3 章。PSP-COCOON-DV2-ORACLE）: 使う前（コインの前）の確かめは、実際の山札ではなく、山札にあるかもしれないカード
+        # （``possible_deck_cards``。持ち主が知っている集合）で行う。v0.146 までは実際の山札の「(name)」を読み、山札とサイドの配分で受理・拒否が変わった
+        cards = [uid for uid in possible_deck_cards(state, use.player) if state.card_def(uid).name_ja == self.name]
         if deck_evolution_permission_pairs(state, use.player, (use.pokemon_id,), cards):
             # GV1（v0.45 から停止コード。このカードは「サカキの」ポケモンではなく許可を受けないので、今の対応カードでは［うか］からは起こらないが、つきのちからと
-            # 同じ問いなので同じコードで止める）
+            # 同じ問いなので同じコードで止める）。山札にあるかもしれないカードに組があれば止める（保守的）
             raise UnsupportedError(PERMISSION_FROM_DECK_STOP_CODE, _PERMISSION_FROM_DECK_DETAIL)
         if deck_evolution_devolved_pairs(state, use.player, (use.pokemon_id,), cards):
-            raise UnsupportedError(DEVOLVED_THIS_TURN_CODE, DEVOLVED_THIS_TURN_REASON)  # v0.50: 今の番に退化したこのカード（DV2。コインの前）
-        candidates = self._candidates(state, use)
-        if candidates and len(self._hp_blocked(state, use, candidates)) == len(candidates):
-            raise UnsupportedError("UNRESOLVED_EVOLUTION_HP", EVOLUTION_HP_REASON)  # 「おもて」なら必ず止める（コインの前に止める）
+            # v0.50: 今の番に退化したこのカード（DV2。コインの前）。v0.147: 山札にあるかもしれないカードに組があれば止める（サイドにある場合も含む保守的な制限）
+            raise UnsupportedError(DEVOLVED_THIS_TURN_CODE, DEVOLVED_THIS_TURN_REASON)
+        _, user = state.find_pokemon(use.pokemon_id)
+
+        def fits(uid: int) -> bool:
+            definition = state.card_def(uid)
+            return (definition.category == "pokemon" and definition.is_evolution_pokemon and definition.supported and definition.name_ja == self.name
+                    and evolution_block(state, user, definition, from_deck=True) is None)
+
+        possible = [uid for uid in cards if fits(uid)]
+        if self._hp_blocked(state, use, possible) and deck_lower_bound_where(
+                state, use.player, lambda uid: fits(uid) and user.damage < evolution_hp(state, user, uid)) < 1:
+            # 「おもて」なら止めるカードを選ぶしかないかもしれない（コインの前に止める）。v0.147: 止めるカードが山札にあるかもしれず、止めないカードが山札にあることを配分を読まない
+            # 下限で確かめられなければ止める（v0.146 までは実際の山札の候補がどれも止めるときだけ。実際には止めないカードが山札にある場合も含む保守的な制限）
+            raise UnsupportedError("UNRESOLVED_EVOLUTION_HP", EVOLUTION_HP_REASON)
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
         if _power_coin(state, use) is not CoinSide.HEADS:
@@ -12459,8 +12494,9 @@ class SearchNamedTrainerOnEntry(EntryPower):
                                  tuple(t.format(name=self.name) for t in CALL_FOR_BOSS_TEXTS))
 
     def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
-        if not deck_named_trainer_cards(state, use.player, self.name):
-            return _power_zero_cards(f"山札に「{self.name}」がない（山札が 0 枚を含む）")
+        # v0.147（docs/deck-content-prechecks-v0.147.md。PSP-DECK-CONTENT-PRECHECKS）: 配分を読まない下限で確かめる（v0.146 までは実際の山札を読んだ）
+        if deck_lower_bound_where(state, use.player, lambda uid: state.card_def(uid).category == "trainer" and state.card_def(uid).name_ja == self.name) < 1:
+            return _power_deck_target_unconfirmed(f"「{self.name}」")
         return None
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
@@ -17183,6 +17219,16 @@ def deck_lower_bound_where(state: GameState, player: int, predicate: Callable[[i
     deck, elsewhere = unseen_card_pool(state, player)
     known = sum(1 for uid in (*deck, *elsewhere) if predicate(uid))
     return max(0, known - len(elsewhere))
+
+
+def possible_deck_cards(state: GameState, player: int) -> tuple[int, ...]:
+    """v0.147（docs/deck-content-prechecks-v0.147.md 3 章）: プレイヤー ``player`` の山札にあるかもしれないカード（uid の小さい順）。山札のすべてのカード（おもてのカードを含む）と、
+    山札の外の見えないカード（``unseen_card_pool`` の 2 つめ。うらのサイド・持ち主に見えない置いておくカード）を合わせたもの。
+
+    合わせたカードの集合は持ち主が知っている（``unseen_card_pool`` の説明と、おもての山札のカード）ので、山札とサイドの配分によらない。山札にあると止めるカードの「あるかもしれない」
+    （ある 1 枚でもあれば止める保守的な確かめ）に使う。並びは uid の小さい順で、山札の並び・配分を写さない。実際に山札にあるかは分からない（サイドにあっても含む）。"""
+    _, elsewhere = unseen_card_pool(state, player)
+    return tuple(sorted((*state.players[player].deck, *elsewhere)))
 
 
 # v0.137: 山札に選べるカードが（決まった枚数）あると、見えないカードの配分を読まずに確かめられないとき、使う前に止める理由の文の後半（ST1・FC1 の共通。docs/deck-search-oracle-v0.137.md）。
@@ -35200,9 +35246,10 @@ class CoinAttachFromDeckOnEntry(EntryPower):
         return problems
 
     def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
-        rainbow = rainbow_cards_in(state, state.players[use.player].deck)
-        if rainbow:
-            return rainbow_attach_error(self.energy_type, rainbow)
+        # v0.147（docs/deck-content-prechecks-v0.147.md。PSP-DECK-CONTENT-PRECHECKS）: 山札にあるかもしれないカード（持ち主が知っている集合）にレインボーエネルギーがあれば止める
+        # （v0.146 までは実際の山札を読み、配分で受理・拒否が変わり、理由の文に uid を書いた）
+        if rainbow_cards_in(state, possible_deck_cards(state, use.player)):
+            return rainbow_possible_in_deck_error(self.energy_type)
         return None
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
@@ -40184,13 +40231,13 @@ class BenchNameGroupFromDeckOnEntry(EntryPower):
         return deck_cards_matching(state, player, CardFilter("basic_pokemon", name_group=self.group))
 
     def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
-        options = self.candidates(state, use.player)
-        if not options:
-            return _power_zero_cards(f"［INCREASE］で、山札に「{self.group}」がない（山札 0 枚を含む。kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例）")
-        blocked, code, reason = bench_entry_unresolved(state, options)
-        if len(blocked) == len(options):
-            return UnsupportedError(code, f"山札の「{self.group}」がどれも、ベンチに出すと止めるカード: {reason}")
-        return None
+        # v0.147（docs/deck-content-prechecks-v0.147.md。PSP-INCREASE-ENTRY-PW3-ORACLE）: 山札に選べるカードがあること・ベンチに出しても止めないカードがあることを、配分を読まない
+        # 下限で確かめる（v0.137 の ST1・v0.138 の遺跡の石版・v0.146 の忍者ジムと同じ共通処理）。v0.146 までは実際の山札の候補を読み、配分で受理・拒否が変わり、
+        # どれも止めるときの理由の文に最後に確かめた山札のカードの名前・uid を書いた
+        target = CardFilter("basic_pokemon", name_group=self.group)
+        if deck_target_lower_bound(state, use.player, target) < 1:
+            return _power_deck_target_unconfirmed(f"「{self.group}」（［INCREASE］。kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例）")
+        return bench_entry_unconfirmed(state, use.player, target)
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
         problem = self.accept_problem(state, use)
@@ -40284,8 +40331,9 @@ class SearchDeckWithBenchLettersToHand(PowerEffect):
         _require_no_choices(use)
         require_power_not_used(state, use)
         require_bench_letters(state, use, self.letters, self.group)  # v0.98: ［GIVE］と共通にした（動きは v0.97 と同じ）
-        if not self.options(state, use):
-            raise _power_zero_cards("山札に選べるカードがない（山札 0 枚を含む。kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例）")
+        # v0.147（docs/deck-content-prechecks-v0.147.md。PSP-DECK-CONTENT-PRECHECKS）: 配分を読まない下限で確かめる（v0.146 までは実際の山札を読んだ）
+        if deck_target_lower_bound(state, use.player, self.target) < 1:
+            raise _power_deck_target_unconfirmed("選べるカード（kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例）")
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
         push_power_decision(state, use, kind=SEARCH_DECK, player=use.player, options=self.options(state, use))
@@ -40545,14 +40593,18 @@ class CoinAttachEnergyFromDeckToOwnPokemon(PowerEffect):
         require_power_not_used(state, use)
         if self.letters:
             require_bench_letters(state, use, self.letters, self.bench_group)
-        cards, rainbow = self.cards(state, use.player)
         targets, hidden = self.targets(state, use.player)
-        if not cards:
-            raise _power_zero_cards("山札に選べるエネルギーカードがない（山札 0 枚を含む。kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例の形）")
+        # v0.147（docs/deck-content-prechecks-v0.147.md。PSP-DECK-CONTENT-PRECHECKS）: 山札に選べて止めないカード（``energy`` のカード）があることを配分を読まない下限で確かめる。
+        # 確かめられないとき、山札にあるかもしれないカードにレインボーエネルギー（選べるが選ぶと止める。RB2）があれば RB2、なければ PW3（どちらも持ち主が知っている集合で決まる）。
+        # v0.146 までは実際の山札の候補を読み、配分で受理・拒否・コードが変わり、RB2 の理由の文に uid を書いた
+        confirmed = deck_target_lower_bound(state, use.player, self.energy) >= 1
+        rainbow_possible = self.energy.energy_type is not None and bool(rainbow_cards_in(state, possible_deck_cards(state, use.player)))
+        if not confirmed and not rainbow_possible:
+            raise _power_deck_target_unconfirmed("選べるエネルギーカード（kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例の形）")
         if not targets:
             raise _power_zero_cards("自分の場に、エネルギーカードをつけられるポケモンがいない（kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例の形）")
-        if len(rainbow) == len(cards):
-            raise rainbow_attach_error(self.energy.energy_type, rainbow)
+        if not confirmed:
+            raise rainbow_possible_in_deck_error(self.energy.energy_type)
         if len(hidden) == len(targets):
             from .errors import HiddenPropertyRead
 

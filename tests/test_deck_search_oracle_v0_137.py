@@ -612,12 +612,33 @@ class AuditPrecisionTest(unittest.TestCase):
 
         return games.play(seat, seed, keep_state=True)
 
+    @staticmethod
+    def _increase_accept_problem_v0_146(effect, state, use):
+        """v0.146 までの［INCREASE］の使う前の確かめ（実際の山札の候補を読む。v0.147 で配分を読まない下限に直した PSP-INCREASE-ENTRY-PW3-ORACLE の形。このテストの対戦を
+        作るためだけに使う）。"""
+        from kyuura_engine.errors import UnsupportedError
+
+        options = effect.candidates(state, use.player)
+        if not options:
+            return E._power_zero_cards(f"［INCREASE］で、山札に「{effect.group}」がない")
+        blocked, code, reason = E.bench_entry_unresolved(state, options)
+        if len(blocked) == len(options):
+            return UnsupportedError(code, reason)
+        return None
+
     def test_card_returned_to_the_deck_can_be_benched_from_the_deck(self):
         """J97 対 F97 の seed 3: 25 番に山札にもどすワザ（PMCG5-066）で山札にもどったアンノーン[N]（カード 3）を、46 番に［INCREASE］で山札からベンチに出す。``uid in ids``（一度でも
-        場に出た）ではなく、今場にあるかで確かめる。今場にあるカードを山札から出したログは、今までどおり問題にする。"""
+        場に出た）ではなく、今場にあるかで確かめる。今場にあるカードを山札から出したログは、今までどおり問題にする。
+
+        監査の精度の回帰テストで、受理の条件のテストではない。v0.147 から［INCREASE］の使う前の確かめは配分を読まない下限（docs/deck-content-prechecks-v0.147.md）で、
+        この対戦の 46 番では使えない（v0.97 のバッチの 32 局で使う局がなくなった）。監査の標本を保つため、対戦を作る間だけ v0.146 までの確かめ（実際の山札を読む）にもどして、
+        同じ対戦（v0.146 までと同じ手順）を作り、監査は今のコードで行う。"""
+        from unittest import mock
+
         from tests.log_audit import log_problems
 
-        result = self.played(("J97", "F97"), 3)
+        with mock.patch.object(E.BenchNameGroupFromDeckOnEntry, "accept_problem", self._increase_accept_problem_v0_146):
+            result = self.played(("J97", "F97"), 3)
         self.assertEqual(result["audit"], {})
         state = result["state"]
         index = next(i for i, e in enumerate(state.log) if e["kind"] == "bench_from_deck" and e.get("power") == "neo2-023@power0" and e["card"] == 3)

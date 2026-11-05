@@ -695,7 +695,7 @@ class EvolutionaryLightTest(unittest.TestCase):
     def test_search_reveal_add_and_shuffle(self):
         """選べるものは山札の進化カード（uid の小さい順）。今進化できるかでしぼらない（エリカのピクシーは場にエリカのピッピがいなくても選べる）。たねポケモン・
         エネルギーは選べない。見せて手札に加え（``reveal_from_deck``。``power``）、山札を切る（``shuffle``。``power``）。"""
-        state = board(mon(DARK_DRAGONAIR, ()), deck=(FIRE, DARK_DRAGONITE, RATTATA, ERIKAS_CLEFABLE, GRASS))
+        state = board(mon(DARK_DRAGONAIR, ()), deck=(FIRE, DARK_DRAGONITE, RATTATA, ERIKAS_CLEFABLE, GRASS), prizes=0)  # v0.147: 山札に対象があることを持ち主が確かめられる盤面（サイド 0 枚。配分を読まない下限 = 山札の対象の枚数。docs/deck-content-prechecks-v0.147.md）
         me = pid_of(state, 0, DARK_DRAGONAIR)
         waiting = power(state, me)
         d = waiting.decision
@@ -713,12 +713,13 @@ class EvolutionaryLightTest(unittest.TestCase):
         assert_rejected(self, done, UsePokemonPower(0, me, 0), "POWER_ALREADY_USED", IllegalActionError)
 
     def test_no_evolution_card_is_pw3(self):
-        """山札に進化カードがない（山札が 0 枚を含む）ときは、宣言の前に止める（PW3）。隣の止まらない場合: 進化カードが 1 枚。"""
+        """山札に進化カードがない（山札が 0 枚を含む）ときは、宣言の前に止める（PW3）。隣の止まらない場合: 進化カードが 1 枚（v0.147 から、サイド 0 枚の盤面。サイドがうらの
+        ときの配分を読まない下限の境界は tests/test_deck_content_prechecks_v0_147.py）。"""
         for deck in ((FIRE, RATTATA), ()):
             with self.subTest(deck=deck):
                 state = board(mon(DARK_DRAGONAIR, ()), deck=deck)
                 assert_rejected(self, state, UsePokemonPower(0, pid_of(state, 0, DARK_DRAGONAIR), 0), PW3, UnsupportedError)
-        state = board(mon(DARK_DRAGONAIR, ()), deck=(FIRE, DARK_GOLBAT))
+        state = board(mon(DARK_DRAGONAIR, ()), deck=(FIRE, DARK_GOLBAT), prizes=0)
         self.assertEqual(len(power(state, pid_of(state, 0, DARK_DRAGONAIR)).decision.options), 1)
 
 
@@ -916,7 +917,7 @@ class SummonMinionsTest(unittest.TestCase):
     DECK = (FIRE, RATTATA, DARK_GOLBAT, DRATINI, GRASS, BULBASAUR)
 
     def evolved(self, *, bench=(RATTATA,), deck=DECK):
-        state = board(mon(DARK_DRAGONAIR, ()), bench=bench, hand=[DARK_DRAGONITE], deck=deck)
+        state = board(mon(DARK_DRAGONAIR, ()), bench=bench, hand=[DARK_DRAGONITE], deck=deck, prizes=0)  # v0.147: 山札に対象があることを持ち主が確かめられる盤面（サイド 0 枚。配分を読まない下限 = 山札の対象の枚数。docs/deck-content-prechecks-v0.147.md）
         return state, evolve(state, DARK_DRAGONITE, DARK_DRAGONAIR)
 
     def test_bench_up_to_two_basics_from_the_deck(self):
@@ -938,7 +939,7 @@ class SummonMinionsTest(unittest.TestCase):
 
     def test_benched_basics_entered_play_this_turn(self):
         """ベンチに出したたねポケモンは、この番に場に出したので、この番には進化できない（p.310。手札から出したときと同じ ``PLAYED_THIS_TURN``）。"""
-        state = board(mon(DARK_DRAGONAIR, ()), hand=[DARK_DRAGONITE, DARK_DRAGONAIR], deck=(FIRE, DRATINI))
+        state = board(mon(DARK_DRAGONAIR, ()), hand=[DARK_DRAGONITE, DARK_DRAGONAIR], deck=(FIRE, DRATINI), prizes=0)  # v0.147: サイド 0 枚
         waiting = evolve(state, DARK_DRAGONITE, DARK_DRAGONAIR)
         done = answer(answer(waiting, waiting.decision.options), (card_of(state, 0, DRATINI, "deck"),))
         dratini = pid_of(done, 0, DRATINI)
@@ -968,7 +969,7 @@ class SummonMinionsTest(unittest.TestCase):
     def test_through_pokemon_breeder_returns_to_the_trainer(self):
         """ポケモン育て屋さんでたねポケモンに重ねたときも「場に出た時」（手札から出した 2 進化カード）。使う機会の決定の ``return_to`` は使っているトレーナーで、
         特殊能力の処理（使う・使わない）のあとにトレーナーの処理（トラッシュ）にもどる。待つ間、トレーナーは使用中のまま。"""
-        state = board(mon(ROCKET_DRATINI, ()), hand=[DARK_DRAGONITE, POKEMON_BREEDER], deck=self.DECK)
+        state = board(mon(ROCKET_DRATINI, ()), hand=[DARK_DRAGONITE, POKEMON_BREEDER], deck=self.DECK, prizes=0)  # v0.147: サイド 0 枚
         current = apply_kernel(state, PlayTrainer(0, card_of(state, 0, POKEMON_BREEDER)))
         while current.decision is not None and current.decision.resume == "trainer":
             current = answer(current, first(current.decision))
@@ -1157,12 +1158,12 @@ class IntegrityTest(unittest.TestCase):
              declared(ROCKET_CHARMANDER, energy=lambda s: s.players[0].bench[0].energy[0], source=lambda s: s.players[0].bench[0].pokemon_id), (), ()),
             (board(mon(ERIKAS_BELLSPROUT_40, ()), bench=(mon(RATTATA, (G, G)),)), declared(ERIKAS_BELLSPROUT_40), (), (lambda d: d.options,)),
             (board(mon(LT_SURGES_MAGNETON, ()), bench=(mon(RATTATA, (L, L)),)), declared(LT_SURGES_MAGNETON), (), (lambda d: d.options,)),
-            (board(mon(DARK_DRAGONAIR, ()), deck=(FIRE, DARK_DRAGONITE)), declared(DARK_DRAGONAIR), (), (first,)),
+            (board(mon(DARK_DRAGONAIR, ()), deck=(FIRE, DARK_DRAGONITE), prizes=0), declared(DARK_DRAGONAIR), (), (first,)),  # v0.147: サイド 0 枚
             (board(mon(ROCKET_ZUBAT, ()), hand=[DARK_GOLBAT], opponent_bench=(mon(RATTATA, (), damage=20),)), evolving(DARK_GOLBAT, ROCKET_ZUBAT), (),
              (lambda d: d.options, lambda d: d.options[-1:], first)),
             (board(mon(ROCKET_SLOWPOKE, ()), hand=[DARK_SLOWBRO], discard=[RATTATA, FIRE, BULBASAUR]), evolving(DARK_SLOWBRO, ROCKET_SLOWPOKE), (),
              (lambda d: d.options, lambda d: d.options)),
-            (board(mon(DARK_DRAGONAIR, ()), hand=[DARK_DRAGONITE], deck=(FIRE, RATTATA, DRATINI)), evolving(DARK_DRAGONITE, DARK_DRAGONAIR), (),
+            (board(mon(DARK_DRAGONAIR, ()), hand=[DARK_DRAGONITE], deck=(FIRE, RATTATA, DRATINI), prizes=0), evolving(DARK_DRAGONITE, DARK_DRAGONAIR), (),
              (lambda d: d.options, lambda d: d.options)),
         )
         for state, command_of, sides, answers in cases:

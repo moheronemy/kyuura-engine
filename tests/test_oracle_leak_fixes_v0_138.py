@@ -316,11 +316,15 @@ class OtherBenchRoutesTest(unittest.TestCase):
         self.assertNotIn("bench_entry_unresolved", source)
         self.assertNotIn("candidates", source)
 
-    def test_increase_is_unchanged_and_recorded(self):
-        """［INCREASE］（BenchNameGroupFromDeckOnEntry.accept_problem）は実際の山札を読む（v0.138 で見つけた別の項目 PSP-INCREASE-ENTRY-PW3-ORACLE。修正していない。docs 7 章）。"""
+    def test_increase_recorded_here_and_fixed_in_v0_147(self):
+        """［INCREASE］（BenchNameGroupFromDeckOnEntry.accept_problem）は、v0.138 では実際の山札を読んだ（v0.138 で見つけた別の項目 PSP-INCREASE-ENTRY-PW3-ORACLE。この版では
+        修正していない。docs 7 章の記録）。v0.147 で配分を読まない下限に直した（docs/deck-content-prechecks-v0.147.md。挙動の確かめは tests/test_deck_content_prechecks_v0_147.py。
+        このテストは v0.146 まで、実際の山札を読むこと（修正していないこと）を確かめていた）。"""
         import inspect
 
-        self.assertIn("self.candidates(state, use.player)", inspect.getsource(E.BenchNameGroupFromDeckOnEntry.accept_problem))
+        source = inspect.getsource(E.BenchNameGroupFromDeckOnEntry.accept_problem)
+        self.assertNotIn("self.candidates(state, use.player)", source)
+        self.assertIn("deck_target_lower_bound", source)
         self.assertIn("PSP-INCREASE-ENTRY-PW3-ORACLE", DOC.read_text(encoding="utf-8"))
 
 

@@ -749,8 +749,9 @@ class GiovanniTest(unittest.TestCase):
 
     def test_call_for_boss_searches_giovanni_when_evolving_from_hand(self):
         """［ボスをよぶ］: 手札から進化させたときに使う機会（使うかは持ち主）。使えば山札のサカキを手札に加え（ログ ``search_deck`` は非公開）、山札を切る。
-        山札にサカキがなければ、使うことを選ぶと止める（PW3）。使わないことは選べる。"""
-        state = board(mon(GIOVANNIS_MEOWTH, ()), hand=[GIOVANNIS_PERSIAN], deck=[GIOVANNI, POTION])
+        山札にサカキがなければ、使うことを選ぶと止める（PW3）。使わないことは選べる。v0.147 から、使える盤面はサイド 0 枚（山札のサカキを持ち主が確かめられる。サイドが
+        うらのときの配分を読まない下限の境界は tests/test_deck_content_prechecks_v0_147.py）。"""
+        state = board(mon(GIOVANNIS_MEOWTH, ()), hand=[GIOVANNIS_PERSIAN], deck=[GIOVANNI, POTION], prizes=0)
         target = state.players[0].active.pokemon_id
         offer = evolve_pid(state, GIOVANNIS_PERSIAN, target)
         d = offer.decision
@@ -928,11 +929,13 @@ class GameTest(unittest.TestCase):
 
     def test_persian_searches_giovanni_then_giovanni_lets_a_new_pokemon_evolve(self):
         """サカキのペルシアンの［ボスをよぶ］で山札から手札に加えたサカキ（同じ uid）を使い、その許可で、その番に場に出した・進化したサカキのポケモンを同じ番に
-        進化させる流れが、正式な対戦（new_game・60 枚・サイド 6 枚）の中で起こる（V44 対 W44 の seed 0・1）。ログの監査・不変条件・書き出し・やり直しも確かめる。"""
+        進化させる流れが、正式な対戦（new_game・60 枚・サイド 6 枚）の中で起こる（V44 と W44 の seed 0・1。v0.147 から両方の席。v0.146 までは V44 が先の席の 2 局で起きたが、
+        v0.147 の配分を読まない下限（サイドがうら 6 枚の間は、見えないサカキ 7 枚以上が要る）で、その 2 局では［ボスをよぶ］を使わなくなった。同じ seed の反対の席の 2 局で起きる。
+        docs/deck-content-prechecks-v0.147.md）。ログの監査・不変条件・書き出し・やり直しも確かめる。"""
         from tools import existing_effect_games as games
 
         found = []
-        for seed, labels in ((0, ("V44", "W44")), (1, ("V44", "W44"))):
+        for seed, labels in ((0, ("V44", "W44")), (1, ("V44", "W44")), (0, ("W44", "V44")), (1, ("W44", "V44"))):
             result = games.play(labels, seed, keep_state=True)
             self.assertEqual(result["audit"], {}, (labels, seed))
             self.assertNotIn(result["outcome"], ("internal_error", "unexpected_rejection", "step_limit"))
