@@ -59,7 +59,7 @@ USER_SUDDEN_DEATH_OWNERSHIP_RESET = UserSpecifiedSegmentRule(
 )
 
 # GameState の項目ごとの、延長戦を始めるときの扱い（v0.134。docs/sudden-death-v0.134.md 5 章）。
-# - "keep": 同じ値を使う（ルールの組・写しの元・最初の seed・カードの定義・デッキリスト・効果の登録表）
+# - "keep": 同じ値を使う（ルールの組・写しの元・最初の seed・カードの定義・デッキリスト・効果の登録表・v0.142 の規約集合）
 # - "continue": 入力の状態から続ける（乱数。最初の seed にもどさない）
 # - "rebuild": 新しい区間の値を作る（カードの表は出所にもどし、プレイヤーは山札だけから、段階は準備、ログは区間の始まりのイベントから、区間の記録は前の区間を加える）
 # - "reset": 項目の既定の値にもどす（ほかのすべて。番・先攻・決定・持続する効果・回数・履歴・所有者の変更・結果・停止など）。準備の処理（切る・配る・切り直し）が
@@ -67,6 +67,7 @@ USER_SUDDEN_DEATH_OWNERSHIP_RESET = UserSpecifiedSegmentRule(
 # GameState に項目を加えたら、ここに分類を加える（tests/test_sudden_death_v0_134.py が、分類のない項目・ない項目の分類を見つける）
 SEGMENT_FIELD_POLICY: dict[str, str] = {
     "rules": "keep", "card_data": "keep", "seed": "keep", "definitions": "keep", "decklists": "keep", "effects": "keep",
+    "conventions": "keep",  # v0.142: 規約集合（同じ集合を引き継ぐ。docs/ruleset-foundation-v0.142.md 3 章）
     "rng": "continue",
     "cards": "rebuild", "players": "rebuild", "phase": "rebuild", "log": "rebuild", "segments": "rebuild",
     "turn_number": "reset", "current_player": "reset", "first_player": "reset", "energy_attachments_this_turn": "reset", "mulligan_rounds": "reset",

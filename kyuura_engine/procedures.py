@@ -34,6 +34,7 @@ from .effects import (
     bench_guard_holders, char_check_targets,
     confusion_damage_calculation, weakness_resistance_log,
 )
+from .conventions import continuation_for, record_application, stop_without_continuation  # v0.142: 止める前の続行規約の照会（v0.143: 分岐の手前の照会と規約を当てた記録）
 from .errors import UnsupportedError
 from .persistent import (KNOCK_OUT, USED, dealt_attack_damage_reductions, knockout_survivals, received_attack_damage_bonuses, remove_expired_persistent_effects, remove_on_damage, remove_persistent_effects,
                          remove_source_left_effects, remove_turn_start_expired_persistent_effects, require_can_leave)
@@ -195,14 +196,21 @@ def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | 
         if stop is not None:
             halt(state, stop)
             return None
+        if len({owner for owner, _, _ in chars}) > 1:
+            # v0.143（PC-CHECK-SIDE-ORDER）: 両方のプレイヤーが投げる。規約の順（番を終えたプレイヤーの場 → 相手の場。それぞれバトル場 → ベンチ。``char_check_targets`` の並び）
+            record_application(state, continuation_for(state, CHAR_COIN_ORDER_CODE), order=order)
         char_damages = _flip_char_coins(state, chars)
-    plan = _pokemon_check_plan(state, order, char_damages)
+    ko_point: list[int] = []
+    plan = _pokemon_check_plan(state, order, char_damages, ko_point)
     if isinstance(plan, Halt):
         if chars:
             raise RuntimeError(f"くろこげマーカーのコインのあとに止める理由 {plan.code} が見つかった（コインの前にすべての結果を確かめた。エンジンの不具合）")
         halt(state, plan)
         return None
     poisoned_ids = plan
+    if ko_point:
+        # v0.143（PC-CHECK-KO-POINT）: 1 のあとに HP 以上のポケモンがいて、1 と 2 のあいだに判定する読み方と結果が変わる。規約により 2 のあとに 1 回だけ判定する（今の処理の順のまま）
+        record_application(state, continuation_for(state, MID_CHECK_KNOCKOUT_CODE), pokemon_ids=tuple(ko_point))
     penalties = darkness_penalties(state, order)
     berries = pokemon_check_berries(state, order)
     per = state.rules.damage_per_counter
@@ -233,6 +241,10 @@ def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | 
         # 止めた（同じ状態で求め直す）
         found = poison_check_amount(state, owner, pokemon)
         amount = found.amount
+        for code, case in found.conventions:
+            # v0.145（docs/poison-mist-play-po-v0.145.md）: どくの量を決めた続行規約ごとに 1 つ、このポケモンの poison_damage の直前に書く（実際の処理だけ。先読み・確かめは書かない）
+            record_application(state, continuation_for(state, code, case), pokemon_id=pokemon.pokemon_id, amount=amount,
+                               **({"ended_mists": found.ended} if case is not None else {"poison_mists": found.mists}))
         pokemon.damage += amount
         state.add_event(
             "poison_damage",
@@ -264,9 +276,14 @@ def _poison_change_log(pokemon: PokemonInPlay, found) -> dict:
     return extra
 
 
-def _pokemon_check_plan(state: GameState, order: tuple[int, int], char_damages: tuple[tuple[int, int], ...] = ()) -> Halt | list[int]:
+def _pokemon_check_plan(state: GameState, order: tuple[int, int], char_damages: tuple[tuple[int, int], ...] = (),
+                        ko_point: list[int] | None = None) -> Halt | list[int]:
     """ポケモンチェックの 1・2 を、状態の複製の上で確かめる（v0.91 に ``pokemon_check_poison`` から分けた。中身は v0.82 までと同じ）。止める理由があれば ``Halt``、なければ 1 のあとに
-    どく状態のポケモンの番号（2 でダメージを受ける）。``char_damages`` は、くろこげマーカーのコインの「うら」で 1 の中でダメージを受けるポケモンの (番号, 量)。状態を変えない。"""
+    どく状態のポケモンの番号（2 でダメージを受ける）。``char_damages`` は、くろこげマーカーのコインの「うら」で 1 の中でダメージを受けるポケモンの (番号, 量)。状態を変えない。
+
+    v0.143（PC-CHECK-KO-POINT）: 1 と 2 のあいだのきぜつの判定の時点で結果が変わる（PK1）とき、状態の規約集合にきぜつ判定の続行規約があれば止めずに、2 のあとに 1 回だけ判定する
+    （今の処理の順のまま）。そのとき ``ko_point`` に 1 のあとに HP 以上のポケモンの番号を入れる（呼ぶ側が規約を当てた記録を書く）。違いの判定（``mid_check_knockout_divergence``）は
+    規約があっても呼ぶ（厳密側が止める場面だけを規約の適用として記録する）。"""
     # v0.81a（docs/berry-maxhp-fixes-v0.81a.md 2 章）: 1 の「指示されたこと」（悪エネルギーの効果・きのみ）を、決まらない順番の読み方ごとに状態の複製の上で処理し、
     # どの効果もそれを処理する時点の場で判断する（回復の前の場で求めた対象・止める理由を、回復のあとに使い回さない）。結果・止める理由が読み方で変わるなら BY1
     try:
@@ -277,6 +294,7 @@ def _pokemon_check_plan(state: GameState, order: tuple[int, int], char_damages: 
     if stop is not None:
         return stop
     canonical = readings[0]  # 悪エネルギーが先（実際の処理の順番。どの読み方でも結果が同じことを確かめた）
+    pk1_halt, ko_point_ids = None, None
     after_one = canonical.state
     poisoned_ids = [p.pokemon_id for o in order for p in after_one.players[o].in_play() if p.conditions.poison is not None]
     amounts = {}
@@ -296,8 +314,11 @@ def _pokemon_check_plan(state: GameState, order: tuple[int, int], char_damages: 
     if canonical.penalties or canonical.chars:  # v0.91: くろこげマーカーのダメージで 1 のあとに HP 以上になるポケモンも
         divergence = mid_check_knockout_divergence(after_one, order)
         if divergence is not None:
-            return Halt(code=MID_CHECK_KNOCKOUT_CODE, message=divergence,
-                        references=("GR-2000-P323-POKEMON-CHECK", "docs/darkness-metal-energy-v0.78.md 6 章", "docs/shared-checks-pokemon-reuse-v0.79.md 2 章"))
+            pk1_halt = Halt(code=MID_CHECK_KNOCKOUT_CODE, message=divergence,
+                            references=("GR-2000-P323-POKEMON-CHECK", "docs/darkness-metal-energy-v0.78.md 6 章", "docs/shared-checks-pokemon-reuse-v0.79.md 2 章"))
+            if continuation_for(state, MID_CHECK_KNOCKOUT_CODE) is None:
+                return pk1_halt
+            ko_point_ids = [p.pokemon_id for o in order for p in after_one.players[o].in_play() if p.damage >= max_hp(after_one, p)]
     # 1・2 の処理ごとの (のっているダメージ, 今有効な最大HP, ［ずらかる］がはたらくか) を、処理する時点の場で記録する（v0.81a: 回復で最大HP・特殊能力が変わる）
     after_two = after_one.clone()
     track = _StepTrack(canonical.track)
@@ -321,7 +342,69 @@ def _pokemon_check_plan(state: GameState, order: tuple[int, int], char_damages: 
     leave_stop = _pokemon_check_leave_lock_stop(after_two, order)
     if leave_stop is not None:
         return leave_stop
+    if ko_point_ids is not None:
+        later = _knockout_stop(after_two, order)
+        if later is not None:
+            # v0.143: 規約で 2 のあとに判定すると、そのきぜつで場をはなれるポケモンのために、受け付けられない状態（決められない姿・最大HPの低下・TK1・残りHP「10」の［ずらかる］の力が
+            # もどる SC2）になる。その停止はダメージのあと（きぜつの処理）に起こり、HP 以上のポケモンが場に残った状態になるので、規約を当てずに、ダメージの前にその停止コードで止める
+            # （保守的。docs/play-policy-s2a-v0.143.md 4.5 節）
+            code, message = later
+            return Halt(code=code, message=(f"ポケモンチェックの 1 のあとに HP 以上になったポケモン {ko_point_ids} を、規約 PC-CHECK-KO-POINT@1 で 2 のあとにきぜつさせると: {message}。"
+                                            "そのきぜつの処理で止まるので、ダメージを与える前に止める"),
+                        references=pk1_halt.references + ("docs/play-policy-s2a-v0.143.md",))
+        if ko_point is not None:
+            ko_point.extend(ko_point_ids)
+    restored = _knockout_scram_restored_stop(after_two, order)
+    if restored is not None:
+        return restored
     return poisoned_ids
+
+
+def _knockout_scram_restored_stop(after: GameState, order: tuple[int, int]) -> Halt | None:
+    """v0.144（docs/sc2-integrity-fix-v0.144.md）: ポケモンチェックの 1・2 のあとの場（状態の複製）で HP 以上のポケモンがきぜつの処理で場をはなれると、残りHPが「10」で消えていた
+    ［ずらかる］の力がもどる（SC2。``effects.scram_restored_by_leaving``）なら、ダメージを与える前に止める ``Halt``。状態を変えない。
+
+    v0.143 まではこの問いをきぜつの判定の窓（ダメージのあと）で確かめていたので、HP 以上のポケモンが場に残った状態で止まり、状態の確かめ（``StateIntegrityError``）がコマンドを
+    受け付けなかった（両方の集合で同じ）。SC2 の答えは決めない（止めるコード・理由は今のまま。止める位置だけをダメージの前にする。v0.48 の MH1・v0.93 の AL1 と同じ形）。"""
+    from .effects import (
+        SCRAM_RESTORED_CODE,
+        SCRAM_RESTORED_REASON,
+        scram_restored_by_leaving,
+    )
+
+    gone = {p.pokemon_id for o in order for p in after.players[o].in_play() if knocked_by_hp(after, p)}
+    if not gone:
+        return None
+    restored = scram_restored_by_leaving(after, gone)
+    if restored is None:
+        return None
+    pid, sources = restored
+    return Halt(code=SCRAM_RESTORED_CODE,
+                message=(f"ポケモンチェックで: ポケモン {pid}（かがくへんかガスのポケモン {sources} がきぜつする）: {SCRAM_RESTORED_REASON}。"
+                         "きぜつの処理で起こるので、ダメージを与える前に止める"),
+                references=("GR-2000-P323-POKEMON-CHECK", "docs/reactive-powers-trainer-damage-v0.61.md", "docs/sc2-integrity-fix-v0.144.md"))
+
+
+def _knockout_stop(after: GameState, order: tuple[int, int]) -> tuple[str, str] | None:
+    """v0.143: ポケモンチェックの 2 のあとの場（状態の複製）で HP 以上のポケモンが場をはなれたとしたら、受け付けられない状態になるなら (コード, 理由の文)。変身の姿が変わって最大HPが
+    下がる TK1（``effects.revert_ko_drop_check``）と、``effects.state_stop_after``（決められない姿・最大HPの低下 MH1・［ずらかる］の力がもどる SC2）。状態を変えない。"""
+    from .effects import max_hp_drops, revert_ko_drop_check
+
+    gone = {p.pokemon_id for o in order for p in after.players[o].in_play() if knocked_by_hp(after, p)}
+    if not gone:
+        return None
+    left = after.clone()
+    for owner in order:
+        player = left.players[owner]
+        if player.active is not None and player.active.pokemon_id in gone:
+            player.active = None
+        player.bench = [p for p in player.bench if p.pokemon_id not in gone]
+    drops = max_hp_drops(after, left)
+    try:
+        revert_ko_drop_check(after, left, drops)
+    except UnsupportedError as error:
+        return error.code, error.message
+    return state_stop_after(after, left)
 
 
 def _pokemon_check_leave_lock_stop(after: GameState, order: tuple[int, int]) -> Halt | None:
@@ -372,7 +455,8 @@ def _char_coin_stop(state: GameState, order: tuple[int, int], chars: list[tuple[
     - どの結果の組でも、1・2 の確かめ（``_pokemon_check_plan``。BY1・PK1・SC1・両方のきぜつ・FA1 など）で止めないこと。止める組があれば、コインの結果で止めるかが変わらないように、
       コインを投げる前に止める（ほかのコイン・状態は変えない）"""
     owners = sorted({owner for owner, _, _ in chars})
-    if len(owners) > 1:
+    if len(owners) > 1 and continuation_for(state, CHAR_COIN_ORDER_CODE) is None:
+        # v0.143: 両方のコインの続行規約（PC-CHECK-SIDE-ORDER）があれば止めない（規約の順に投げる）。上限・結果の組の確かめは今のまま
         return Halt(code=CHAR_COIN_ORDER_CODE,
                     message=("ポケモンチェックの 1 で、両方のプレイヤーが自分の場のくろこげマーカーののったポケモン（"
                              f"{[(owner, pokemon.pokemon_id) for owner, pokemon, _ in chars]}）それぞれに対してコインを投げる。どちらが先に投げるかは、公式ルール 2000.02.14版（p.323。"
@@ -859,7 +943,11 @@ def finish(state: GameState, result: GameResult) -> None:
 
 
 def halt(state: GameState, halt: Halt) -> None:
-    """原典で決められない処理に当たったので、対戦を止める（``Phase.HALTED``。終端）。"""
+    """原典で決められない処理に当たったので、対戦を止める（``Phase.HALTED``。終端）。
+
+    v0.142: 止める前に、規約集合の続行規約を照会する（``conventions.stop_without_continuation``。この版はいつも「なし」で、今までどおり止める。停止コードに 2 つ以上の事例があるコードは、
+    ここでは事例を特定しない）。"""
+    stop_without_continuation(state, halt.code)
     state.phase = Phase.HALTED
     state.halt = halt
     state.decision = None
@@ -921,6 +1009,10 @@ def discard_expired_attachments(state: GameState) -> None:
                 )
 
 
+# ポケモンチェックの 3 で両方の対戦ポケモンがねむり（どちらが先にコインを投げるか）
+SLEEP_COIN_ORDER_CODE = "UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER"
+
+
 def pokemon_check_sleep_and_paralysis(state: GameState) -> None:
     """ポケモンチェックの 3（ねむり）・4（マヒ）をして、次の番を始める（v0.3b。p.322・p.323）。
 
@@ -934,7 +1026,8 @@ def pokemon_check_sleep_and_paralysis(state: GameState) -> None:
        両方のプレイヤーの対戦ポケモンがねむり状態なら、どちらが先にコインを投げるか（順番を決める人がいるか）が
        原典で決まらず、順番で乱数の割り当て（どちらのコインがどの結果になるか）が変わるので、コインを投げる前に
        対戦を止める（``UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER``）。v0.3b の対応カードでは起こらない
-       （docs/pokemon-check-v0.3b.md）。
+       （docs/pokemon-check-v0.3b.md）。v0.143: 状態の規約集合に両側のコインの続行規約（PC-CHECK-SIDE-ORDER@1）があれば止めずに、番を終えたプレイヤーから 1 枚ずつ投げて
+       結果をすぐ反映する（回復の結果のすべての組をコインの前に確かめる）。
     4. マヒ状態のポケモンは、マヒ状態になった番の「次の自分（そのポケモンの持ち主）の番」の終わりのポケモンチェックで
        自動的に回復する（p.322・p.323）。コインは投げない。回復する番は ``conditions.paralysis_recovery_turn``。
     """
@@ -945,11 +1038,12 @@ def pokemon_check_sleep_and_paralysis(state: GameState) -> None:
         for owner in order
         if state.players[owner].active is not None and state.players[owner].active.conditions.asleep
     ]
-    if len(asleep) > 1:
+    side_order = continuation_for(state, SLEEP_COIN_ORDER_CODE) if len(asleep) > 1 else None
+    if len(asleep) > 1 and side_order is None:
         halt(
             state,
             Halt(
-                code="UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER",
+                code=SLEEP_COIN_ORDER_CODE,
                 message=(
                     "ポケモンチェックで、両方のプレイヤーの対戦ポケモンがねむり状態。p.323 の 3 は「ねむり状態になっている"
                     "ポケモンの側のプレイヤーは、コインを投げます」とだけ書き、どちらが先に投げるか（順番を決めるプレイヤー）を"
@@ -970,15 +1064,24 @@ def pokemon_check_sleep_and_paralysis(state: GameState) -> None:
     ]
     # v0.49: 回復すると、決められない姿（［へんしん］がはたらきはじめて写す特殊能力（TF1）・写すカード（TF2）、かがくへんかガスがはたらきはじめて「ばける」が消える
     # （DG1））になる場合も、同じくコインの前に止める（``effects.state_stop_after``。MH1 と合わせて確かめる）
-    for owner, pokemon, recover in [(o, p, recover_from_sleep) for o, p in asleep] + [(o, p, recover_from_paralysis) for o, p in paralyzed_now]:
-        stop = _recovery_stop(state, owner, pokemon, recover)
+    trials = [[(o, p, recover_from_sleep)] for o, p in asleep] + [[(o, p, recover_from_paralysis)] for o, p in paralyzed_now]
+    if side_order is not None:
+        # v0.143（PC-CHECK-SIDE-ORDER）: 両方がねむり。回復の結果のすべての組（規約の順に 1 匹ずつ反映し、この番に回復するマヒも続けて）を複製の上で処理し、どの組の途中でも回復の
+        # 止め方（MH1・TF1・TF2・DG1）で止めないことをコインの前に確かめる（規約ではなく技術的な安全の確かめ。1 匹のときと同じ形で、止める組があればコインの前に止める）
+        trials = [[(o, p, recover_from_sleep) for (o, p), heads in zip(asleep, outcome) if heads] + [(o, p, recover_from_paralysis) for o, p in paralyzed_now]
+                  for outcome in itertools.product((False, True), repeat=len(asleep))]
+        trials = [steps for steps in trials if steps]
+    for steps in trials:
+        stop = _recovery_steps_stop(state, steps)
         if stop is not None:
-            code, message = stop
+            owner, pokemon, (code, message) = stop
             references = (("P43 p.322", "P43 p.323", "GR-2000-P323-POKEMON-CHECK", "GR-2000-P323-KNOCKOUT") if code == MAX_HP_DROP_CODE
                           else ("P43 p.322", "P43 p.323", "GR-2000-P323-POKEMON-CHECK", "docs/virtual-attacks-transformation-v0.49.md"))
             halt(state, Halt(code=code, message=f"ポケモンチェックで、プレイヤー {owner} のポケモン {pokemon.pokemon_id} が回復すると: {message}",
                              references=references))
             return
+    if side_order is not None:
+        record_application(state, side_order, order=tuple(owner for owner, _ in asleep))
     for owner, pokemon in asleep:
         # v0.119（docs/damage-reactions-poison-sleep-v0.119.md 7 章）: ［ふかいねむり］がはたらいていれば、コインの枚数を変え、すべて「おもて」のときだけ回復する（投げる直前の場で決める
         # 共通の問い合わせ ``sleep_check_coins``）。1 枚のときのログの形は v0.118 までと同じ
@@ -1004,6 +1107,22 @@ def pokemon_check_sleep_and_paralysis(state: GameState) -> None:
         if paralysis_recovery_turn(state, owner, pokemon.conditions.exclusive.turn) == state.turn_number:
             recover_from_paralysis(state, owner, pokemon)
     begin_turn(state, 1 - state.current_player)
+
+
+def _recovery_steps_stop(state: GameState, steps) -> tuple[int, PokemonInPlay, tuple[str, str]] | None:
+    """v0.143: 回復の並び ``steps``（(持ち主, ポケモン, 回復の関数) の並び）を複製の上で順に処理し、途中のどこかで受け付けられない状態になれば (持ち主, ポケモン, (コード, 理由の文))。
+    1 つだけの並びは ``_recovery_stop`` と同じ（v0.142 までの 1 匹ずつの確かめ）。状態を変えない。"""
+    if len(steps) == 1:
+        owner, pokemon, recover = steps[0]
+        stop = _recovery_stop(state, owner, pokemon, recover)
+        return None if stop is None else (owner, pokemon, stop)
+    trial = state.clone()
+    for owner, pokemon, recover in steps:
+        recover(trial, owner, trial.players[owner].active)
+        stop = state_stop_after(state, trial)
+        if stop is not None:
+            return owner, pokemon, stop
+    return None
 
 
 def _recovery_stop(state: GameState, owner: int, pokemon: PokemonInPlay, recover) -> tuple[str, str] | None:

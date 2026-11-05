@@ -151,12 +151,18 @@ def main(argv=None) -> int:
     parser.add_argument("--corpus", choices=sorted(CORPORA), required=True)
     parser.add_argument("--seeds", default="0:100", help="start:stop（stop は含まない）")
     parser.add_argument("--out", type=Path)
+    parser.add_argument("--conventions", default=None, help="v0.143: 対戦の規約集合（ID@版。省略は今の挙動の集合）。道具だけの選び方で、エンジンの既定は変えない")
     args = parser.parse_args(argv)
+    from tools.convention_choice import use_conventions
+
+    conventions = use_conventions(args.conventions)
     start, stop = (int(x) for x in args.seeds.split(":"))
     began = time.time()
     games = [play(args.corpus, seed) for seed in range(start, stop)]
     summary = summarize(games)
     summary["elapsed"] = round(time.time() - began, 1)
+    if conventions:
+        summary["conventions"] = conventions
     text = json.dumps({"summary": summary, "games": games}, ensure_ascii=False, indent=1)
     if args.out:
         args.out.write_text(text, encoding="utf-8")

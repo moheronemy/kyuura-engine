@@ -323,6 +323,7 @@ from . import faceup  # v0.126: おもての山札（フラッシュ）
 from .interruption import DeferredShortage, interrupt, interruption_problems  # v0.127: 途中停止
 from . import cards as cards_module
 from . import sudden_death  # v0.134: サドン・デスの延長戦の開始
+from .conventions import continuation_for, record_application, require_state_conventions, resolve_for_new_game, stop_without_continuation  # v0.142: 規約集合（v0.143: 続行規約）
 from .coins import CoinSide, flip_coins
 from .rng import copy_rng
 
@@ -359,12 +360,17 @@ def new_game(
     *,
     rules: RuleSet = RULES_2000_02_14,
     pool: CardPool | None = None,
+    conventions=None,
 ) -> GameState:
     """デッキを検査し、山札を切り、手札を 7 枚ずつ配り、切り直しまで済ませた状態を返す（p.308）。
 
     この後は ``PlaceStartingPokemon`` で両方のプレイヤーがポケモンを出す。
     ``seed`` は 0 以上の整数。切り直しの補償が原文で決められない場合は、``Phase.HALTED`` の状態を返す
     （例外は投げない。``state.phase`` を確かめること）。
+
+    v0.142（docs/ruleset-foundation-v0.142.md 3 章）: ``conventions`` は規約集合（``conventions.ConventionSet``・``"ID@版"``・``ConventionSetIdentity``）。省略すると今の挙動の集合
+    （``CS-KYUURA-CURRENT@1``）。登録した集合と内容が同じでなければ、対戦を始めずに ``conventions.ConventionSetError``（``INVALID_CONVENTION_SET``）。状態には確かめた識別の値だけを置く
+    （渡したオブジェクトは持たない）。この版の集合はどれも未決の場面で止まる（続行規約はない）
     """
     pool = pool or load_card_pool()
     problems = [f"player {p}: {problem}" for p, deck in enumerate((deck0, deck1)) for problem in deck_problems(deck, pool, rules)]
@@ -375,6 +381,7 @@ def new_game(
     if seed < 0:
         # random.Random は負の seed を絶対値として扱うので、-5 と 5 が同じ対戦になってしまう
         raise ValueError("seed は 0 以上の整数")
+    convention_set = resolve_for_new_game(conventions)
 
     cards: dict[int, CardInstance] = {}
     for owner, deck in enumerate((deck0, deck1)):
@@ -393,13 +400,14 @@ def new_game(
         decklists=(tuple(deck0), tuple(deck1)),
         effects=pool.effects,
         segments=(),
+        conventions=convention_set,
     )
     state.add_event("game_created", rules=rules.id, seed=seed, card_data_commit=pool.source["commit"])
     _prepare_segment(state)
     return state
 
 
-def _segment_state(*, rules, card_data, seed, rng, cards: dict[int, CardInstance], definitions, decklists, effects, segments) -> GameState:
+def _segment_state(*, rules, card_data, seed, rng, cards: dict[int, CardInstance], definitions, decklists, effects, segments, conventions) -> GameState:
     """対戦の区間の始まりの状態（v0.134 で ``new_game`` から分けた。サドン・デスの延長戦 ``_start_sudden_death`` と共通）。すべてのカードを持ち主の山札に uid の順に置き、
     ほかの項目は既定の値（番・決定・効果・履歴・結果など）。ログは空（呼ぶ側が始まりのイベントを書く）。"""
     players = [PlayerState(deck=[uid for uid in sorted(cards) if cards[uid].owner == player]) for player in PLAYERS]
@@ -415,6 +423,7 @@ def _segment_state(*, rules, card_data, seed, rng, cards: dict[int, CardInstance
         phase=Phase.SETUP_PLACEMENT,
         effects=effects,
         segments=segments,
+        conventions=conventions,
     )
 
 
@@ -449,7 +458,8 @@ def _start_sudden_death(state: GameState) -> GameState:
     record = sudden_death.archive(state)
     cards = {uid: CardInstance(uid=uid, card_id=card.card_id, owner=owners[uid]) for uid, card in state.cards.items()}
     new = _segment_state(rules=state.rules, card_data=state.card_data, seed=state.seed, rng=copy_rng(state.rng), cards=cards,
-                         definitions=state.definitions, decklists=state.decklists, effects=state.effects, segments=state.segments + (record,))
+                         definitions=state.definitions, decklists=state.decklists, effects=state.effects, segments=state.segments + (record,),
+                         conventions=state.conventions)  # v0.142: 同じ規約集合を引き継ぐ（keep）
     new.add_event("sudden_death_started", segment=new.segment_index, prize_count=new.initial_prize_count)
     _prepare_segment(new)
     return new
@@ -466,6 +476,16 @@ def _draw(state: GameState, player: int, count: int) -> None:
 def _hand_has_basic(state: GameState, player: int) -> bool:
     # v0.114: 最初の手札に、ベイビィポケモンカードかたねポケモンカードがあれば切り直さない（GR-2000-P308-BABY-SETUP。ベイビィだけの手札も切り直さない）
     return any(state.card_def(uid).is_baby_or_basic_pokemon for uid in state.players[player].hand)
+
+
+# v0.143: 準備の PlaceStartingPokemon で、ポケモンとして場に出せるトレーナーを最初のポケモンに選んだ事例（停止の方針の台帳の UNRESOLVED_PLAY_AS_POKEMON_SETUP#setup-placement。
+# 最初の対戦・延長戦の区間の両方）
+SETUP_PLACEMENT_CASE = "setup-placement"
+
+
+def _setup_case(state: GameState) -> str:
+    """v0.142: 準備の停止の事例（停止の方針の台帳の事例 ID の ``#`` のあと）。最初の対戦の準備か、サドン・デスの延長戦の準備か。"""
+    return "initial-setup" if not state.segments else "sudden-death-segment"
 
 
 def _deal_opening_hands(state: GameState) -> None:
@@ -489,7 +509,13 @@ def _deal_opening_hands(state: GameState) -> None:
         if not lacking:
             break
         undecided = [p for p in lacking if play_as_pokemon_in_hand(state, p)]
-        if undecided:
+        # v0.143（docs/play-policy-s2a-v0.143.md 4 章）: 化石・人形の初手の続行規約が状態の規約集合にあれば、たね・ベイビィのない手札として今の切り直しと同じく切り直す（規約を当てた
+        # ことをログに書いてから。対象のカードは登録の型 PlayAsPokemon で識別する）。なければ今までどおり切り直す前に止める
+        play_as = continuation_for(state, PLAY_AS_POKEMON_SETUP_CODE, _setup_case(state)) if undecided else None
+        if play_as is not None:
+            record_application(state, play_as, players=tuple(undecided))
+        elif undecided:
+            stop_without_continuation(state, PLAY_AS_POKEMON_SETUP_CODE, _setup_case(state))  # v0.142: 続行規約の照会（規約がないことを確かめて止める）
             # v0.47: たねポケモンがなく、なにかの化石・ピッピ人形がある手札で、切り直すのか、それを最初のポケモンとして出せるのかは決められない（PF1）。切り直す前に
             # 対戦を止める（v0.1 の切り直しの補償と同じ形。推測で決めない）
             state.phase = Phase.HALTED
@@ -512,7 +538,13 @@ def _deal_opening_hands(state: GameState) -> None:
 
     both_rounds = [r for r in rounds if len(r) == 2]
     single_rounds = [r for r in rounds if len(r) == 1]
-    if both_rounds and single_rounds:
+    # v0.143（docs/play-policy-s2a-v0.143.md 4 章）: 両方の回のあとに片方だけの回がある並びは、切り直しの補償の続行規約があれば、片方だけの回の数を、もう一方のプレイヤーの補償の
+    # 回数にする（両方の回は数えない。今の片方だけの補償と同じ式）。補償の時点・選ぶ人・1 回の枚数は今のまま（サイドを置いたあと・DrawMulliganCards）
+    compensation = continuation_for(state, "UNRESOLVED_MULLIGAN_COMPENSATION", _setup_case(state)) if both_rounds and single_rounds else None
+    if compensation is not None:
+        record_application(state, compensation, rounds_both=len(both_rounds), rounds_single=len(single_rounds), player=1 - single_rounds[0][0])
+    elif both_rounds and single_rounds:
+        stop_without_continuation(state, "UNRESOLVED_MULLIGAN_COMPENSATION", _setup_case(state))  # v0.142: 続行規約の照会（規約がないことを確かめて止める）
         state.phase = Phase.HALTED
         state.halt = Halt(
             code="UNRESOLVED_MULLIGAN_COMPENSATION",
@@ -573,6 +605,7 @@ def _apply(state: GameState, command, context: resolution.Context | None) -> Gam
     v0.67（docs/secret-plan-preflight-v0.67.md 6 章）: 相手のうらのカード（マチスの秘策）があるとき、このコマンドの処理が相手のうらのカードの本当のカードを使ったら
     （おもてにした・おもてにしたら残るかを見た。``zones.IDENTITY_CONSULTED``）、受け付けるか・拒否の理由が本当のカードによらないように、ありうるカードのすべてで同じ
     コマンドを確かめる（``_identity_independent``）。"""
+    require_state_conventions(state)  # v0.142: 状態の規約集合を、この版が扱える（登録の内容と同じ・記録のない旧状態は条件つき）。扱えなければ処理の前に UnsupportedError
     try:
         return _apply_checked(state, command, context)
     except HiddenPropertyRead as exc:
@@ -836,10 +869,10 @@ def supported_decision_error(state: GameState) -> UnsupportedError | None:
 def _require_supported_decision(state: GameState, command) -> None:
     """v0.140: コマンドを処理する前（状態を複製する前）の、保留中の決定の確かめ。
 
-    - この版が扱えない再開先（前の版の決定・後の版の状態の写し）: どのコマンドも ``UnsupportedError``（``UNSUPPORTED_DECISION``）。答えを試してから内部エラーを捕まえる
+    - この版が扱えない再開先（前の版の決定・この版が知らない再開先）: どのコマンドも ``UnsupportedError``（``UNSUPPORTED_DECISION``）。答えを試してから内部エラーを捕まえる
       方式にしない（処理の前に拒否する）
     - 扱える再開先で、決定への答え（``ResolveDecision``・``TakePrize``・``PromoteActive``）のときは、決定の形の不変条件（``_decision_problems``）を処理の前に確かめ、問題があれば
-      ``StateIntegrityError``（続けるのに要る情報が欠ける・合わない状態）
+      ``StateIntegrityError``（続けるのに要る情報が欠ける・合わない状態。欠けるだけなら、前の版で正しく作った写しのこともある。どちらかは状態から分からない）
     どちらも入力の状態・乱数・ログを変えない。"""
     error = supported_decision_error(state)
     if error is not None:
@@ -1269,6 +1302,13 @@ def _place_starting_pokemon(state: GameState, cmd: PlaceStartingPokemon) -> None
     for uid in chosen:
         _require_in_hand(state, player, uid)
         if uid in play_as_pokemon_in_hand(state, player):
+            placement = continuation_for(state, PLAY_AS_POKEMON_SETUP_CODE, SETUP_PLACEMENT_CASE)
+            if placement is not None:
+                # v0.143（docs/play-policy-s2a-v0.143.md 4 章）: 化石・人形の初手の続行規約があれば、たねポケモンカードとして数えないので、たねポケモンでないカードと同じ不正な操作
+                # （未解決の停止ではない。入力の状態・乱数・ログは変えない。規約を当てた記録も残さない）
+                raise IllegalActionError("NOT_BASIC_POKEMON", f"カード {uid} はたねポケモンではない（規約 {placement.convention[0]}@{placement.convention[1]}: "
+                                                              "ポケモンとして場に出せるトレーナーを、準備の最初のポケモンとして数えない）")
+            stop_without_continuation(state, PLAY_AS_POKEMON_SETUP_CODE, SETUP_PLACEMENT_CASE)  # v0.143: 拒否の箇所の照会（規約がないことを確かめて拒否する）
             # v0.47: 手札のなにかの化石・ピッピ人形（手札ではトレーナーカード）を、対戦準備で最初のポケモンとして出せるかは決められない（PF1）
             raise UnsupportedError(PLAY_AS_POKEMON_SETUP_CODE, f"カード {uid}（{state.card_def(uid).name_ja}）: {PLAY_AS_POKEMON_SETUP_REASON}")
         if not state.card_def(uid).is_baby_or_basic_pokemon:
@@ -5887,11 +5927,13 @@ def _prize_first_decision_problems(state: GameState, d, remaining) -> list[str]:
 
 def _prize_first_marker_problems(d, queue: tuple[int, ...]) -> list[str]:
     """v0.140: サイドを取る決定の、先に取るプレイヤーの記録（``context`` の ``"first"``）と並び（決定するプレイヤーと残り）。両方が取る並びは、先に取るプレイヤーを選んだあとにだけあり、
-    そのプレイヤーの分がすべて先にある（USER-PRIZE-ORDER-PER-PLAYER）。記録のない両方の並び（v0.139 で 1 枚ごとに選んだあとの状態など）は、この版では続けない（壊れた状態として扱う）。"""
+    そのプレイヤーの分がすべて先にある（USER-PRIZE-ORDER-PER-PLAYER）。記録のない両方の並びは、続けるのに必要な情報（先に取るプレイヤー）が足りないので、この版では続けない。
+    v0.138・v0.139 が正しく作った同時のきぜつの途中の状態もこの形だが、状態に作った版の記録はなく、書きかえた状態と区別できないので、前の版の状態とも壊れた状態とも決めつけない
+    （v0.141。docs/prize-order-v0140-cleanup-v0.141.md 4 章）。記録が合わない並び（記録があるのに、先に取るプレイヤーの分をまとめていない・値が正しくない）は、矛盾する状態。"""
     first = d.context_value("first")
     if first is None:
         if len(set(queue)) >= 2:
-            return [f"両方がサイドを取る並び {queue} に、先に取るプレイヤーの記録（first）がない（この版では作らない。v0.139 の状態など）"]
+            return [f"両方がサイドを取る並び {queue} に、先に取るプレイヤーの記録（first）がない（続けるのに必要な情報が不足している。どの版で作った状態かは、状態から分からない）"]
         return []
     if first not in PLAYERS:
         return [f"先にサイドを取るプレイヤーの記録 {first!r} が正しくない"]

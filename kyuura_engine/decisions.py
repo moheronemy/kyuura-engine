@@ -413,7 +413,7 @@ SELECT_EXCHANGE_CARD = "select_exchange_card"
 # プレイヤーの番号（0・1）で 1 つ。再開先は "prize_first"。段階は Phase.DECISION（「ふしちょう」の決定と同じく、バトル場が空のことがある）。一方だけが取るなら出さない
 PRIZE_FIRST = "prize_first"
 
-# v0.140: この版では続けない、前の版の決定の種類・再開先（名前 → 理由）。後の版の状態の写しにある知らない種類・再開先と同じく、決定に答える・観測する前に UnsupportedError
+# v0.140: この版では続けない、前の版の決定の種類・再開先（名前 → 理由）。この版が知らない再開先と同じく、決定に答える・観測する前に UnsupportedError
 # （``DECISION_UNSUPPORTED_CODE``）で拒否する。名前は前の版で使った決まった値だけ（拒否の理由の文に、状態の中の文字列をそのまま書かない）
 RETIRED_DECISIONS: dict[str, str] = {
     "prize_order": "v0.139 の、1 枚ごとに次にサイドを取るプレイヤーを選ぶ決定（v0.140 から、先に取るプレイヤーを 1 回選び、そのプレイヤーがまとめて取る prize_first にした）",
@@ -424,18 +424,19 @@ DECISION_UNSUPPORTED_CODE = "UNSUPPORTED_DECISION"
 def unsupported_decision_error(decision: PendingDecision | None, known_resumes) -> UnsupportedError | None:
     """v0.140（docs/prize-order-user-rule-v0.140.md 3 章）: 保留中の決定の再開先を、この版が扱えないなら、拒否の例外（返すだけ。投げるのは呼ぶ側）。扱えるなら None。
 
-    - 前の版の決定（再開先・種類が ``RETIRED_DECISIONS`` の名前）: その理由を書く
-    - この版の知らない再開先（``known_resumes`` にない。後の版の状態の写しなど）: 再開先の文字列は書かない（状態の中の値で、信頼できない）
+    - 前の版の決定（再開先・種類が ``RETIRED_DECISIONS`` の名前）: 前の版で使った決まった名前なので、前の版の決定と分かる。その理由を書く
+    - この版の知らない再開先（``known_resumes`` にない）: どこで作った状態か（後の版・書きかえた状態など）は状態から分からないので、推測して書かない（v0.141）。再開先の文字列も
+      書かない（状態の中の値で、信頼できない）
     再開先の名前は閉じた語彙（エンジンの ``DECISION_RESUMES``）なので、ここで確かめる。決定の種類はカードの実装が加える開いた語彙（試験の登録表の種類もある）なので、ここでは確かめない
-    （知っている再開先の知らない種類は、それぞれの再開先の確かめ・観測の ``OPTION_MEANINGS`` のまま）。知っている再開先で、続けるのに要る情報が欠ける・合わない状態（壊れた状態）は、ここでは
-    なく不変条件（``StateIntegrityError``）で扱う。"""
+    （知っている再開先の知らない種類は、それぞれの再開先の確かめ・観測の ``OPTION_MEANINGS`` のまま）。知っている再開先で、続けるのに要る情報が欠ける・合わない状態は、ここでは
+    なく不変条件（``StateIntegrityError``）で扱う（欠けるだけの状態は、前の版で正しく作った写しのこともあり、壊れているとは限らない。v0.141）。"""
     if decision is None:
         return None
     for name in (decision.resume, decision.kind):
         if isinstance(name, str) and name in RETIRED_DECISIONS:
             return UnsupportedError(DECISION_UNSUPPORTED_CODE, f"この版では続けられない前の版の決定: {RETIRED_DECISIONS[name]}")
     if not (isinstance(decision.resume, str) and decision.resume in known_resumes):
-        return UnsupportedError(DECISION_UNSUPPORTED_CODE, "この版が知らない再開先の決定を待つ状態（後の版の状態の写しなど）は続けられない")
+        return UnsupportedError(DECISION_UNSUPPORTED_CODE, "この版が知らない再開先の決定を待つ状態は続けられない（どこで作った状態かは、状態から分からない）")
     return None
 
 

@@ -262,6 +262,19 @@ v0.135・v0.136 の漏れと同じ型（受理・拒否による漏れ）です�
 - **変えていないこと**: 停止コード・事例・問題の項目（v0.138 の 2 件の修正と、`PSP-INCREASE-ENTRY-PW3-ORACLE`・`PSP-COCOON-DV2-ORACLE` の未修正・`PSP-DECK-CONTENT-PRECHECKS` の残りの
   未確認を含む）・族・族の候補・安全境界。個々の続行規約は 1 つも採っていません。
 
+### 7.7 共通規約の設計案（2026-11-04。7.1〜7.6 の記録・基点・集計は変えていない）
+
+この台帳の場面（現在有効な項目。事例のあるコードは事例）を、少数の共通規約の案に対応付ける設計を
+[play-policy-family-plan.md](play-policy-family-plan.md)（構造化した設計案は [play-policy-family-plan.json](play-policy-family-plan.json)。
+`scripts/build_play_policy_family_plan.py` が、この台帳から作る）に書きました。
+
+- 規約案はどれも案です。規約の採用・モードの実装・エンジンの変更はしていません。
+- この台帳の項目・集計は書き換えていません。
+- 調査の中で、キョウの忍者ジムの使う前の確かめの情報漏れ（`PSP-NJ1-NINJA-GYM-ORACLE`。比較プローブで確認。修正していない）を見つけました。設計案の文書の 7 章に記録し、
+  この台帳にはまだ加えていません。
+- v0.146 の経過（[play-set-verification-v0.146.md](play-set-verification-v0.146.md) 3 章）: `PSP-NJ1-NINJA-GYM-ORACLE` を両モード共通の不具合として直し、この台帳に fixed で加えました（更新の記録 0.146.0）。上の 2 行は調査の時点の記録のままです。
+- v0.147 の経過（[deck-content-prechecks-v0.147.md](deck-content-prechecks-v0.147.md)）: `PSP-INCREASE-ENTRY-PW3-ORACLE`・`PSP-COCOON-DV2-ORACLE`・`PSP-DECK-CONTENT-PRECHECKS` を直して fixed にし、同じ横断で見つけた 6 クラスを `PSP-POWER-PRECHECK-DECK-ORACLE`（fixed）に、ワザの宣言の前の先読みの漏れを `PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE`（active。直していない）に加えました（更新の記録 0.147.0）。
+
 ## 8. プレイ用の規約だけでは解消できない項目
 
 対応群 3・4・5 を含むコードは 110 件です。規約を決めても、実装・計算の改善・保護がなければ続けられません。

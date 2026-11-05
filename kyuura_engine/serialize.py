@@ -1,6 +1,6 @@
 """ゲーム状態を JSON にできる辞書にする（画面やほかの言語に渡すため・テストで比べるため）。
 
-形式は 34 あります（``format_version``）。
+形式は 35 あります（``format_version``）。
 
 - 1（既定）: v0.1 と同じ形。v0.1 の固定値のテストと互換性の参照データは、この形で比べる。
 - 2: 1 に次を加えたもの（v0.2a）。``format_version``、``effects``（効果の登録表の id）、
@@ -178,11 +178,18 @@
   v0.139 の決定 ``prize_order``・v0.140 の決定 ``prize_first`` とサイドの決定の ``context`` の ``first``（先に取るプレイヤー）は、これまでと同じく種類の値と項目を加えただけ（形式は 34 の
   まま。docs/prize-order-user-rule-v0.140.md 4 章）
 
+- 35: 34 の最上位に、規約集合の識別 ``convention_set``（``{"id", "version", "digest", "usage", "completeness", "members"}``。``members`` は ``{"id", "version", "digest"}`` の並び。
+  ``conventions.ConventionSetIdentity.record``）とエンジンの版 ``engine_version`` を加えたもの（v0.142。docs/ruleset-foundation-v0.142.md 7 章）。記録のない旧状態（v0.141 までの写し）は、
+  旧状態として扱える条件を満たすときだけ旧状態用の集合（``CS-KYUURA-LEGACY-UNRECORDED``）を書き、満たさなければ ``ValueError``（推測で書かない）。形式 1〜34 は規約集合の項目を持たないので、
+  記録のない状態の意味（その版のエンジンの今の挙動）と同じ意味の集合（``conventions.IMPLICIT_IN_OLD_FORMATS``: 今の挙動の集合 ``CS-KYUURA-CURRENT@1`` と旧状態用の集合）だけを書ける。
+  ほかの集合（開発用・後の版の集合）は、落とすと意味が変わるので ``ValueError``（なければ形式 1〜34 の書き出しは v0.141 と同じ）
+
 **互換性の約束（v0.140 で明記。docs/prize-order-user-rule-v0.140.md 4 章）**:
 
 - 形式の番号（``format_version``）は、この書き出しの**形**の版。決定の種類・再開先・持続する効果の種類などの**値の語彙**の版ではない。新しい種類の値と項目を加えただけなら、形式の
   番号は変えない。読む側は、知らない形式の番号に加えて、知らない種類の値・項目を拒否すること（同じ形式の番号でも、前の版の読む側が後の版の書き出しを読めるとは約束しない）
-- エンジンにはゲーム状態全体を書き出しから読み込む処理はない（この書き出しは一方向）。書き出しにエンジンの版・必要な機能の記録はない
+- エンジンにはゲーム状態全体を書き出しから読み込む処理はない（この書き出しは一方向）。書き出しの形式 1〜34 にエンジンの版・必要な機能の記録はない（v0.142 の形式 35 から、エンジンの版と
+  規約集合の識別を書く。読み込みの処理は加えていない）
 - Python の状態の写し（``pickle``・``copy.deepcopy``・``GameState.clone``）は、書き出しとは別のもの。後から加えた状態の項目に既定値を持たせ、前の版の写しを後の版で読めるように
   してきた（後方の互換）。後の版の写しを前の版で読む向きは約束しない。pickle は安全な外部のデータ交換の形式ではない（信頼できない写しを読み込まない）
 - v0.140 から、この版が知らない決定の再開先（後の版の写し）・続けない前の版の決定（``decisions.RETIRED_DECISIONS``）を待つ状態は、観測（``observe``）・コマンド（``apply_command``）
@@ -236,6 +243,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from .conventions import IMPLICIT_IN_OLD_FORMATS, ConventionSetIdentity, UnrecordedConventions, state_conventions
 from .interruption import public_record
 from .rng import rng_fingerprint
 from .state import (
@@ -295,7 +303,7 @@ from .state import (
     WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -696,6 +704,7 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
     if format_version < 34 and state.segments:
         # v0.134: サドン・デスの延長戦の状態は、古い形式では準備のサイドの枚数・前の区間の記録が落ち、最初の対戦と区別できなくなるので書かない
         raise ValueError(f"形式 {format_version} は、サドン・デスの延長戦の区間（終わった区間の記録・延長戦のサイドの枚数）を表せない（format_version=34 を使う）")
+    convention_set = _convention_set_for_export(state, format_version)  # v0.142
     if format_version < 31 and state.face_up_deck:
         # v0.126: おもてを上にした山札のカード（フラッシュ）は、今のカードの並びから求め直せないので古い形式に書かない（落とすと、うらの山札と区別できない）
         raise ValueError(f"形式 {format_version} は、おもてを上にして山札に置かれたカード（フラッシュ）を表せない（format_version=31 を使う）")
@@ -865,7 +874,28 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         data["segment"] = state.segment_index  # v0.134
         data["initial_prize_count"] = state.initial_prize_count
         data["segments"] = [segment_record(record) for record in state.segments]
+    if format_version >= 35:
+        from . import __version__
+
+        data["convention_set"] = convention_set.record()  # v0.142
+        data["engine_version"] = __version__
     return data
+
+
+def _convention_set_for_export(state: GameState, format_version: int):
+    """v0.142: 書き出す規約集合の識別。形式 35 は識別を書く（記録のない旧状態は、扱える条件を満たすときだけ旧状態用の集合）。形式 1〜34 は、落としても意味の変わらない集合
+    （``IMPLICIT_IN_OLD_FORMATS``）と記録のない状態だけを書ける。どちらも扱えなければ ``ValueError``。"""
+    value = state.conventions
+    if format_version < 35:
+        if isinstance(value, UnrecordedConventions):
+            return None
+        if not (isinstance(value, ConventionSetIdentity) and value.key in IMPLICIT_IN_OLD_FORMATS):
+            raise ValueError(f"形式 {format_version} は、規約集合の項目を持たないので、今の挙動・旧状態用の集合のほかの規約集合を表せない（format_version=35 を使う）")
+        return None
+    identity, problem = state_conventions(state)
+    if identity is None:
+        raise ValueError(f"規約集合を書き出せない: {problem}")
+    return identity
 
 
 def ownership_change_record(change) -> dict[str, Any]:

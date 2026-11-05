@@ -192,7 +192,10 @@ class DeclaredEntryPowersGamesTest(unittest.TestCase):
                     between = {x["kind"] for x in log[i + 2:end]}
                     self.assertLessEqual(between, {"bench_from_deck", "shuffle"})
                     checked[answer["kind"]] += 1
-        self.assertTrue(checked["pokemon_power"] and checked["entry_power_declined"], checked)
+        # v0.147（docs/deck-content-prechecks-v0.147.md）: てしたをよぶの使う前の確かめが配分を読まない下限になり（サイドがうら 6 枚の間は、見えないたねポケモンが 7 枚以上要る。
+        # L43 のたねポケモンは 8 枚）、48 局のポケモン育て屋さんの経路（2 回）はどちらも使わない答えになった（v0.146 までは使う答えもあった）。使う答えのあとにトレーナーの処理に
+        # もどることは、構築盤面のテスト（test_declared_entry_powers_v0_43 の SummonMinionsTest.test_through_pokemon_breeder_returns_to_the_trainer）が確かめる
+        self.assertTrue(checked["entry_power_declined"], checked)
 
     def test_power_use_never_ends_the_turn(self):
         """特殊能力の宣言・使う機会の答えのあと、同じ番にワザ・番の終わりが続く（こんらんのコインを投げない）。"""

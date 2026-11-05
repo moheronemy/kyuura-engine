@@ -128,6 +128,7 @@ from .effects import (
     COLORS, attack_of, available_attacks, current_form, hand_revealed_by, max_hp, powers_of, resistance_of, type_readings, type_shift_determined, weakness_of,
     attached_units, card_color_readings,
 )
+from .conventions import require_state_conventions  # v0.142
 from .interruption import public_record
 from .serialize import basic_entry_record, super_transform_record, history_record, poison_mist_record, replacement_poison_record, turn_record
 from .state import GameState, PokemonInPlay
@@ -519,7 +520,7 @@ def _chosen_attack(state: GameState, d, value: int) -> tuple[str, int] | None:
 def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
     """``viewer``（0・1・``None`` は観戦者）に見える、その時点の盤面（モジュールの説明の範囲）。状態を変えない。
 
-    v0.140: 保留中の決定の再開先をこの版が扱えない（前の版の決定・後の版の状態の写し）なら、観測を作らずに ``UnsupportedError``（``UNSUPPORTED_DECISION``。
+    v0.140: 保留中の決定の再開先をこの版が扱えない（前の版の決定・この版が知らない再開先）なら、観測を作らずに ``UnsupportedError``（``UNSUPPORTED_DECISION``。
     ``engine.supported_decision_error``。コマンドの入口と同じ確かめ）。v0.139 では、前の版の決定の種類で ``ValueError`` になる場合があった。知っている再開先の知らない種類は、今までどおり
     ``OPTION_MEANINGS`` の ``ValueError``"""
     _check_viewer(viewer)
@@ -527,6 +528,7 @@ def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
     error = supported_decision_error(state)
     if error is not None:
         raise error
+    convention_set = require_state_conventions(state)  # v0.142: 状態の規約集合を扱えなければ観測を作らない（コマンドの入口と同じ確かめ）
     face_down = state.turn_number == 0  # 対戦準備で出したポケモンは、最初の番の前に表にする（ログ reveal_pokemon）
     players = []
     for owner, p in enumerate(state.players):
@@ -585,6 +587,9 @@ def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
         "replacement_poisons": [replacement_poison_record(record) for record in state.replacement_poisons],
         "decision": _decision(state, viewer),
         "result": None if state.result is None else {"outcome": state.result.outcome, "winner": state.result.winner},
+        # v0.142（docs/ruleset-foundation-v0.142.md 7 章）: この対戦の規約集合の識別（全員に見える。両方のプレイヤーが同じ規約で対戦していることを確かめられる。秘密の情報は入らない）。
+        # 記録のない旧状態は、旧状態用の集合（CS-KYUURA-LEGACY-UNRECORDED）
+        "convention_set": convention_set.record(),
         # v0.127（docs/deferred-shortage-user-promos-v0.127.md 8 章）: 途中停止の状態だけ、その記録（全員に見える項目。ワザ・トレーナーを使い終えた盤面ではないことを示す）を加える
         **({"interruption": public_record(state.halt.interruption)} if state.halt is not None and state.halt.interruption is not None else {}),
         # v0.134（docs/sudden-death-v0.134.md 8 章）: サドン・デスの延長戦の区間だけ、今の区間の番号・準備で置いたサイドの枚数と、終わった区間の結果（全員に見える）を加える
@@ -695,6 +700,9 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
+    # v0.143（docs/play-policy-s2a-v0.143.md 5 章）: 続行規約を当てた記録（規約 ID・版・場面・停止コードと、切り直しの回の数・投げる順番・ポケモンの番号・コインの「おもて」の数・
+    # 対象の枚数などの公開の値だけ。``conventions.APPLIED_FIELDS``）
+    "convention_applied",
     # v0.134（docs/sudden-death-v0.134.md 8 章）: サドン・デスの延長戦の区間の始まり（区間の番号・準備で置くサイドの枚数だけ。新しい山札の並び・手札・サイドは書かない）
     "sudden_death_started",
     # v0.126: フラッシュでおもてにした山札（並べたプレイヤー・枚数・いちばん上のカードの id。uid は書かない）・いちばん上のおもてのカードが変わった（カードの id・おもての枚数）

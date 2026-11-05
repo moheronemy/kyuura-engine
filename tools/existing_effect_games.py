@@ -10151,7 +10151,8 @@ def _v043_power(state, tried, counts):
     - ほのおをもらう（ロケット団のヒトカゲ）: ほかの自分のポケモンに基本「炎」エネルギーカード（エナジーバーンで「炎」になったものでない）があれば、その 1 枚目
     - ようぶんきゅうしゅう（エリカのマダツボミ）: ほかの自分のポケモンに基本「草」エネルギーカードがあれば
     - エナジーチャージ（バトル場のマチスのレアコイル）: 控えに基本「雷」エネルギーカードがあれば（回数の制限はないが、この手順は 1 番に 1 回）
-    - しんかのひかり（わるいハクリュー）: 山札に進化カードがあれば"""
+    - しんかのひかり（わるいハクリュー）: 山札に進化カードがあれば（v0.147 から、エンジンの使う前の確かめと同じ配分を読まない下限 ``deck_lower_bound_where`` が 1 以上なら。
+      docs/deck-content-prechecks-v0.147.md。v0.146 までは実際の山札を読んだ）"""
     player = state.current_player
     p = state.players[player]
 
@@ -10196,7 +10197,7 @@ def _v043_power(state, tried, counts):
             tried.add(marker)
             counts["v043_power_energy_charge"] += 1
             return UsePokemonPower(player, pid, 0)
-        if card_id == DARK_DRAGONAIR and not used(pokemon) and any(state.card_def(u).is_evolution_pokemon for u in p.deck):
+        if card_id == DARK_DRAGONAIR and not used(pokemon) and E.deck_lower_bound_where(state, player, lambda u: state.card_def(u).is_evolution_pokemon) >= 1:
             counts["v043_power_evolutionary_light"] += 1
             return UsePokemonPower(player, pid, 0)
     return None
@@ -13579,6 +13580,12 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
     result["unresolved_rejections"] = {k: v for k, v in observed.items() if "UNRESOLVED_" in k}
     result["policy"] = dict(counts)
     if state is not None:
+        # v0.143: 続行規約を当てた記録（ログ convention_applied。延長戦の前の区間を含む）を、規約 ID・場面ごとに数える（記録のない局は項目を書かない）
+        applied = Counter(f"{e['convention']}@{e['version']} {e['scene']}" for log in [*(r.log for r in state.segments), state.log] for e in log
+                          if e["kind"] == "convention_applied")
+        if applied:
+            result["conventions_applied"] = dict(applied)
+    if state is not None:
         result["turns"] = state.turn_number
         if state.result is not None:
             result["winner_deck"] = labels[state.result.winner] if state.result.winner is not None else None
@@ -13697,7 +13704,8 @@ def audit(result, state, commands):
         current = apply_command(current, command)
         if watch:
             failures["observation"] += bool(observation_problems(current))  # v0.47: 受け付けた操作ごとに、プレイヤー・観戦者に渡す観測
-    failures["replay_mismatch"] += [dict(e) for e in current.log] != [dict(e) for e in state.log]
+    # v0.146: やり直しの対戦の規約集合も、記録の対戦と同じこと（ログが同じでも、規約の当たらない局では集合の違いがログに出ないため）
+    failures["replay_mismatch"] += [dict(e) for e in current.log] != [dict(e) for e in state.log] or current.conventions != state.conventions
     failures["v105_shuffle"] += bool(v105_replay_problems(current, deck_before))
     if tyranitar:
         failures["v133"] += bool(v133_problems(state, v133_before))  # v0.133
@@ -14238,6 +14246,9 @@ def summarize(games):
         for cid, counts in r.get("card_uses", {}).items():
             s["cards"].setdefault(cid, Counter()).update(counts)
             s["games_with"].setdefault(cid, Counter()).update({k: 1 for k, v in counts.items() if v})
+        if r.get("conventions_applied"):  # v0.143: 続行規約を当てた回数・局数（記録のある局だけ。今の挙動の集合の集計の形は変えない）
+            s.setdefault("conventions_applied", Counter()).update(r["conventions_applied"])
+            s.setdefault("conventions_applied_games", Counter()).update({k: 1 for k in r["conventions_applied"]})
     return json.loads(json.dumps(s))
 
 
@@ -14269,9 +14280,13 @@ def main(argv=None):
     parser.add_argument("--start", type=int, default=0, help="最初の seed")
     parser.add_argument("--max-steps", type=int, default=8000)
     parser.add_argument("--out", type=Path, help="1 局ごとの記録と集計を書き出す JSON")
+    parser.add_argument("--conventions", default=None, help="v0.143: 対戦の規約集合（ID@版。省略は今の挙動の集合）。道具だけの選び方で、エンジンの既定は変えない")
     args = parser.parse_args(argv)
     if args.seeds < 1:
         parser.error("--seeds は 1 以上")
+    from tools.convention_choice import use_conventions
+
+    conventions = use_conventions(args.conventions)
     seeds = range(args.start, args.start + args.seeds)
     began = time.time()
     results = run(seeds, max_steps=args.max_steps, pairings=BATCHES[args.batch])
@@ -14279,6 +14294,7 @@ def main(argv=None):
     elapsed = round(time.time() - began, 1)
     if args.out:
         args.out.write_text(json.dumps({"batch": args.batch, "seeds": [args.start, args.start + args.seeds], "elapsed": elapsed,
+                                        **({"conventions": conventions} if conventions else {}),
                                         "planned": len(BATCHES[args.batch]) * 2 * args.seeds, "distinct": sum(len(v["games"]) for v in results.values()),
                                         "runs": results, "total": total},
                                        ensure_ascii=False, indent=1), encoding="utf-8")

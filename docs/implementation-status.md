@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.140）
+# 実装状況（v0.1〜v0.147）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d`（v0.128 から。v0.129 の種族の身長の写しは別に `9242b9be89be0f747279f39c11875d1ed61763ec`。v0.126〜v0.127 は `57d01f45cfb8b086d03dc0525b329cf6adeff69b`、v0.125 は `134a664c6adf67d5604148a31b58e1a7d26d4d6d`、v0.124 は `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`、v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3819,6 +3819,92 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 338・neo 154・拡張パック以外 184） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistryTest` |
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.147: 秘密の山札の内容で使う前の受理・拒否・理由が変わる処理の修正（両モード共通）
+
+[deck-content-prechecks-v0.147.md](deck-content-prechecks-v0.147.md)。新しい続行規約は採用していない。既存の集合の ID・版・中身・照合値は同じ。研究上の問い（PW3・DV2・GV1・RB2・GG1・H1）は決めていない。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 使う前の確かめの山札の中身を読む 8 クラス（しんかのひかり・てしたをよぶ・［うか］・［ボスをよぶ］・ファイヤーブースト・［INCREASE］・［FIND］・［JOIN］・［YIELD］・［GIVE］）を、配分を読まない下限（`deck_lower_bound_where`）と山札にあるかもしれないカード（`possible_deck_cards`）で確かめる（PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-POWER-PRECHECK-DECK-ORACLE） | 実装済み・テスト済み（構築盤面） | 2・3 章 | test_deck_content_prechecks_v0_147 |
+| ワザの宣言の前の先読みが山札の組で DV2・GV1 を確かめる漏れ（PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE） | 未修正（記録だけ） | 4 章 | 同 `RemainingAttackLeakTest` |
+
+## v0.146: 比較の記録の規約集合・キョウの忍者ジムの情報漏れの修正・PO の集合の境界の検証
+
+[play-set-verification-v0.146.md](play-set-verification-v0.146.md)。新しい続行規約は採用していない。既存の集合の ID・版・中身・照合値は同じ。エンジンの状態の書き出しの形式は 35 のまま。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 1 歩ごとの比較の道具の記録の形式 2（見出しの規約集合・歩ごとの集合の指紋・集合の不一致の拒否・集合間の比較の明示・形式 1 の記録の扱い） | 実装済み・テスト済み（道具） | 2 章 | test_lockstep_conventions_v0_146 |
+| 対戦の道具の監査のやり直しで規約集合も確かめる | 実装済み・テスト済み（道具） | 2.4 節 | 同 `ToolReplayTest` |
+| キョウの忍者ジムの使う前の確かめを配分を読まない下限で行う（PSP-NJ1-NINJA-GYM-ORACLE。両モード共通。NJ1 の研究上の問いは未解決） | 実装済み・テスト済み | 3 章 | test_ninja_gym_oracle_v0_146・test_remaining_stadiums_v0_74 |
+| PO の集合の境界・組み合わせ（特殊などく 30・複数の発生源・へんしん・続けたあとの停止・保存と復元・延長戦） | テスト済み（構築盤面。PO の実装は変えていない） | 4 章 | test_po_boundaries_v0_146 |
+
+## v0.145: ［ポイズンミスト］とどくの量の続行規約 3 件（開発用の部分的な集合 CS-KYUURA-PLAY-PO@1）
+
+[poison-mist-play-po-v0.145.md](poison-mist-play-po-v0.145.md)。利用者の採用（2026-11-05）。公式の裁定・kyuura の研究上の解決ではない（PO1〜PO3 は未解決のまま）。書き出しの形式は 35 のまま。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 集合 CS-KYUURA-PLAY-PO@1（development・halts_at_undecided。今の挙動の 12 件・S2a の 5 規約・PO の 3 規約） | 実装済み・テスト済み | 2 章 | test_poison_mist_play_po_v0_145 `RegistrationTest` |
+| PC-POISON-AMOUNT-ORDER@1（PO1: 性質 → ［ポイズンミスト］→ 鋼エネルギー） | 実装済み・テスト済み（続行側だけ） | 3.1 節 | 同 `ContinuationTest` |
+| PC-POISON-MIST-TARGETS@1（PO2: 時点でどく状態のすべてのポケモン） | 実装済み・テスト済み（続行側だけ） | 3.2 節 | 同 `ContinuationTest` |
+| PC-POISON-MIST-SOURCE-LEFT@1（PO3 の #source-left: 発生源が場をはなれた記録は当てはめない。記録ごと） | 実装済み・テスト済み（続行側だけ） | 3.3 節・4 章 | 同 `ContinuationTest`・`MultipleSourcesTest` |
+| PO3 の #power-lost（発生源が場にいるまま力が消えた記録） | 未決（どの集合でも止める） | 3.3 節 | 同 `UnchangedStopsTest` |
+| 厳密側・S2a の集合の PO1〜PO3 の停止 | 変えていない | 1 章 | 同 `UnchangedStopsTest`・lockstep（10 章） |
+
+## v0.144: ポケモンチェックの SC2 の状態の整合の修正
+
+[sc2-integrity-fix-v0.144.md](sc2-integrity-fix-v0.144.md)。両モード共通の不具合の修正（技術的な安全対策。SC2 の答えは決めない）。書き出しの形式は 35 のまま。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| ポケモンチェックのどくでガスの発生源がきぜつし、残りHP「10」の［ずらかる］の力がもどる盤面を、ダメージの前に UNRESOLVED_SCRAM_POWER_RESTORED で止める（両方の集合） | 修正済み・テスト済み（構築の盤面。合法な操作の列では再現していない） | 2〜5 章 | test_sc2_integrity_v0_144 |
+| くろこげマーカーの「うら」で同じ盤面になる組を、コインの前に止める | 修正済み・テスト済み | 5 章 | 同 `BoundaryTest` |
+| ［ポイズンミスト］とどくの量（PO1〜PO3）の続行規約 | 仕様案だけ（proposal・未承認。登録・有効化していない） | [poison-mist-play-policy-spec.md](poison-mist-play-policy-spec.md) | test_poison_mist_play_policy_spec（仕様案の確かめ） |
+| lockstep の記録の規約集合 | 技術課題として記録（形式は変えていない） | 9 章 | — |
+
+## v0.143: S2a の続行規約 5 件（開発用の部分的な集合 CS-KYUURA-PLAY-S2A@1）
+
+[play-policy-s2a-v0.143.md](play-policy-s2a-v0.143.md)。利用者の採用（2026-11-04。続行側の集合の規約で、公式の裁定・研究上の解決ではない）。省略したときの集合 `CS-KYUURA-CURRENT@1` の中身・
+挙動は変えていない（旧バッチ・lockstep で基点と同じ）。続行側の集合は 5 規約の場面のほかでは今の停止コードで止まる（完成したプレイ用の集合ではない）。書き出しの形式は 35 のまま。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 続行規約 5 件・集合 `CS-KYUURA-PLAY-S2A@1` の登録（固定の照合値・場面・未実装・重なりの確かめ） | 実装済み・テスト済み | 2 章 | test_play_policy_s2a_v0_143 `RegistrationTest` |
+| 切り直しの補償（両方 → 片方。最初の対戦・延長戦の区間） | 続行側で実装済み・テスト済み（厳密側は今のまま止める） | 4.1 節 | 同 `MulliganCompensationTest`・`SuddenDeathSegmentTest` |
+| 化石・人形の初手（切り直す・配置は NOT_BASIC_POKEMON） | 続行側で実装済み・テスト済み | 4.2 節 | 同 `PlayAsPokemonTest` |
+| ポケモンチェックの両側コイン（ねむり・くろこげマーカー） | 続行側で実装済み・テスト済み（両方のくろこげマーカーは構築の盤面だけ） | 4.3 節 | 同 `SideOrderTest` |
+| コインで決まる枚数の不足（DU1・TW1。あるだけ） | 続行側で実装済み・テスト済み | 4.4 節 | 同 `CoinCountShortTest` |
+| ポケモンチェックでのきぜつ判定（PK1） | 続行側で実装済み・テスト済み（きぜつの処理で TK1・SC2 などになる場面は保守的に止める。構築の盤面だけ） | 4.5 節 | 同 `KnockOutPointTest` |
+| 規約を当てた記録 `convention_applied` と監査 | 実装済み・テスト済み | 3 章・6 章 | 同 `PersistenceTest`・log_audit `s2a_problems` |
+| PO1〜PO3・両方のきぜつ・BY1・PF2・PF3・MG2 ほか | 未採用（続行側でも今のまま止める） | 10 章・11 章 | — |
+
+## v0.142: 規約集合の識別・版の管理と、共通処理基盤 S1
+
+[ruleset-foundation-v0.142.md](ruleset-foundation-v0.142.md)。利用者が承認した設計方針（2026-11-04。エンジンの設計方針で、公式の裁定ではない）で、規約集合を対戦へ渡し状態に持つ基盤を実装した。
+実装した集合は今の挙動の集合と旧状態用の集合だけで、共通規約の案 27 件・続行規約は採用していない。止め方・乱数・選択肢は変えていない。書き出しの形式は 35。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 規約集合の識別（ID・版・規約・照合値）と、同じ ID・版の内容の不変 | 実装済み・テスト済み | 4 章 | test_conventions_v0_142 `IdentityTest` |
+| 構成の検査（未知・重複・競合・依存・未実装・区分・完全性） | 実装済み・テスト済み | 5 章 | 同 `ValidationTest` |
+| `new_game` の受け取り・状態の保持・延長戦・複製・登録の変更の拒否 | 実装済み・テスト済み | 3 章 | 同 `GameTest` |
+| 記録のない旧状態 | 条件つきで旧状態用の集合・判断できなければ拒否 | 6 章 | 同 `LegacyTest` |
+| 書き出しの形式 35・観測の識別 | 実装済み・テスト済み | 7 章 | 同 `ExportTest`・log_audit |
+| 止める箇所の続行規約の照会 | どの場面も「なし」（コマンドの拒否の箇所は未接続） | 8 章 | 同 `test_unresolved_stops_have_no_continuation` |
+| プレイ用の続行規約・完全性の判定 | 未実装（採用していない） | 10 章 | — |
+
+## v0.141: サイドを取る順番の件の最終整理（互換性の例外・期待値・旧状態の拒否）
+
+[prize-order-v0140-cleanup-v0.141.md](prize-order-v0140-cleanup-v0.141.md)。サイドを取る順番の規約（利用者の指定）は変えていない。旧経路の記録と全体では比べない対戦を、規約の変更が加えた差だけに限り、5 つの対戦のテストで prize_first の答えを
+別に数え、旧版の状態と矛盾する状態の拒否の文を書き分けた（例外の種類・コードは同じ）。書き出しの形式は 34 のまま。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 旧経路の記録の例外の対戦 | 規約の変更が加えた差だけを許す | 2 章 | test_prize_order_cleanup_v0_141 `RuleChangedChainTest` |
+| accepted と prize_first の答え | 分けて数える（accepted は v0.139 までの値） | 3 章 | 5 つの対戦のテストの `test_counts` |
+| 前の版の決定・知らない再開先・情報の不足・矛盾 | 書き分けて拒否する（作った版を推測しない） | 4 章 | 同 `StateClassificationTest`・`OldStateOriginTest` |
 
 ## v0.140: サイドを取る順番の利用者の指定と、知らない再開先の決定の拒否
 

@@ -274,7 +274,7 @@ class BearTest(unittest.TestCase):
 
 class YieldTest(unittest.TestCase):
     def test_heads_attaches_a_psychic_energy_from_the_deck_to_an_own_unown(self):
-        state = board(mon(UI), bench=(mon(UY), mon(H.RATTATA)), deck=[W, PS, H.FIRE, PS, H.DARKNESS_ENERGY_NEO1, H.MIRACLE_ENERGY, H.DOUBLE_COLORLESS_ENERGY])
+        state = board(mon(UI), bench=(mon(UY), mon(H.RATTATA)), deck=[W, PS, H.FIRE, PS, H.DARKNESS_ENERGY_NEO1, H.MIRACLE_ENERGY, H.DOUBLE_COLORLESS_ENERGY], prizes=0)  # v0.147: サイド 0 枚
         y = pid(state, UY)
         card = use(state, y, HD)
         self.assertEqual((card.decision.kind, card.decision.min_choices, card.decision.max_choices), (ATTACH_FROM_DECK, 1, 1))
@@ -293,7 +293,7 @@ class YieldTest(unittest.TestCase):
         rejects(self, done, UsePokemonPower(0, y, 0), "POWER_ALREADY_USED", error=IllegalActionError)
 
     def test_hand_attachment_is_not_consumed(self):
-        state = board(mon(UI), bench=(mon(UY),), hand=(W,), deck=[PS, W])
+        state = board(mon(UI), bench=(mon(UY),), hand=(W,), deck=[PS, W], prizes=0)  # v0.147: サイド 0 枚
         y = pid(state, UY)
         card = use(state, y, HD)
         done = answer(answer(card, card.decision.options), (y,))
@@ -301,7 +301,7 @@ class YieldTest(unittest.TestCase):
         self.assertEqual(card_ids(attached, attached.players[0].active.energy), [W])
 
     def test_tails_does_nothing_and_counts_as_used(self):
-        state = board(mon(UI), bench=(mon(UY),), deck=[PS, W])
+        state = board(mon(UI), bench=(mon(UY),), deck=[PS, W], prizes=0)  # v0.147: サイド 0 枚
         done = use(state, pid(state, UY), TL)
         self.assertIsNone(done.decision)
         self.assertEqual(kinds(state, done), ["pokemon_power", "coin_flip"])  # 山札を見ない・つけない・切らない
@@ -314,7 +314,7 @@ class YieldTest(unittest.TestCase):
                 rejects(self, state, UsePokemonPower(0, pid(state, UY), 0), PW3)  # コインを投げない（乱数・ログを変えない）
 
     def test_rainbow_in_the_deck_is_rb2_when_chosen(self):
-        state = board(mon(UI), bench=(mon(UY),), deck=[PS, H.RAINBOW_ENERGY, W])
+        state = board(mon(UI), bench=(mon(UY),), deck=[PS, H.RAINBOW_ENERGY, W], prizes=0)  # v0.147: サイド 0 枚
         card = use(state, pid(state, UY), HD)
         rainbow = next(u for u in card.decision.options if card.cards[u].card_id == H.RAINBOW_ENERGY)
         self.assertEqual((card.decision.context_value("unresolved_choices"), card.decision.context_value("unresolved_code")), ((rainbow,), RB2))
@@ -324,7 +324,7 @@ class YieldTest(unittest.TestCase):
         rejects(self, only, UsePokemonPower(0, pid(only, UY), 0), RB2)  # コインの前
 
     def test_targets_are_own_unowns_that_can_take_energy(self):
-        state = board(mon(UI), bench=(mon(UY), mon(UE)), opponent=mon(UD), deck=[PS])
+        state = board(mon(UI), bench=(mon(UY), mon(UE)), opponent=mon(UD), deck=[PS], prizes=0)  # v0.147: サイド 0 枚
         beam = state.clone()
         beam.turn_number = TURN - 1  # 相手の番に与えた効果（ログの番と合わせる。自然な対戦で起こらない盤面を作るため）
         add_persistent_effect(beam, 0, beam.players[0].active, CannotAttachEnergy(beam.players[1].active.card, 1, TURN - 1, TURN), attack=f"{H.MISTYS_TENTACOOL}#0")
@@ -337,7 +337,7 @@ class YieldTest(unittest.TestCase):
         from tests.test_secret_plan_v0_67 import place
 
         state = place(build_test_state([
-            {"active": mon(UI), "bench": [mon(UY)], "hand": [H.LT_SURGES_SECRET_PLAN, UE], "deck": [PS, W], "prizes": 6},
+            {"active": mon(UI), "bench": [mon(UY)], "hand": [H.LT_SURGES_SECRET_PLAN, UE], "deck": [PS, W], "prizes": 0},  # v0.147: サイド 0 枚
             {"active": mon(H.RATTATA), "deck": [W] * 10, "prizes": 6}], turn_number=TURN), UE)
         hidden = state.players[0].bench[-1]
         self.assertTrue(state.is_face_down(hidden))
@@ -347,11 +347,11 @@ class YieldTest(unittest.TestCase):
         rejects(self, target, ResolveDecision(0, target.decision.id, (hidden.pokemon_id,)), FD1)
 
     def test_status_does_not_block(self):
-        state = board(mon(UY, paralysis=TURN - 1), deck=[PS])
+        state = board(mon(UY, paralysis=TURN - 1), deck=[PS], prizes=0)  # v0.147: サイド 0 枚
         self.assertEqual(use(state, pid(state, UY), HD).decision.kind, ATTACH_FROM_DECK)
 
     def test_invalid_answers_change_nothing(self):
-        state = board(mon(UI), bench=(mon(UY),), deck=[PS, W])
+        state = board(mon(UI), bench=(mon(UY),), deck=[PS, W], prizes=0)  # v0.147: サイド 0 枚
         card = use(state, pid(state, UY), HD)
         wrong = next(u for u in card.players[0].deck if card.cards[u].card_id == W)
         rejects(self, card, ResolveDecision(0, card.decision.id, (wrong,)), "INVALID_CHOICE", error=IllegalActionError)
@@ -480,7 +480,7 @@ class VanishTest(unittest.TestCase):
 
     def test_placed_from_the_deck_or_with_full_bench_paths(self):
         """山札から出した V（［INCREASE］）には手札からの機会がない。"""
-        state = board(mon(H.RATTATA), bench=(), hand=(UI,), deck=[UV, W, W])
+        state = board(mon(H.RATTATA), bench=(), hand=(UI,), deck=[UV, W, W], prizes=0)  # v0.147: サイド 0 枚（［INCREASE］の山札のアンノーンを確かめられる盤面）
         offered = apply_kernel(state, PlayBasicToBench(0, uid(state, UI)))
         bench = answer(offered, offered.decision.options)
         self.assertEqual(bench.decision.kind, BENCH_FROM_DECK)

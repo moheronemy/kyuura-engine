@@ -273,7 +273,8 @@ class UseCountTest(unittest.TestCase):
         state = stadium_use(state, 0, T)
         state = use(state, LUCKY_STADIUM_PRN[1])
         assert_rejects(self, state, UseStadium(0), REUSE)
-        state = placed(LUCKY_STADIUM, hand=[FUCHSIA_CITY_GYM, ENERGY_STADIUM, KOGAS_NINJA_GYM], deck=[GRASS, KOGAS_KOFFING] * 3, discard=[FIRE],
+        # v0.146: 忍者ジムの使う前の確かめは配分を読まない下限（サイド 6 枚のうらの炎エネルギーをこえるキョウのたねポケモン 7 枚で下限 1。docs/play-set-verification-v0.146.md 3 章）
+        state = placed(LUCKY_STADIUM, hand=[FUCHSIA_CITY_GYM, ENERGY_STADIUM, KOGAS_NINJA_GYM], deck=[GRASS] * 3 + [KOGAS_KOFFING] * 7, discard=[FIRE],
                        bench=(KOGAS_EKANS,))
         state = stadium_use(state, 0, T)
         state = use(state, FUCHSIA_CITY_GYM)
@@ -362,14 +363,19 @@ class EnergyStadiumTest(unittest.TestCase):
         self.assertEqual(state_to_dict(state, format_version=max(FORMAT_VERSIONS))["decision"]["resume"], "stadium")
 
 
+# v0.146: 忍者ジムの使う前の確かめは配分を読まない下限（docs/play-set-verification-v0.146.md 3 章）。この盤面のサイドはうらの炎エネルギー 6 枚なので、キョウのたねポケモンを
+# 7 枚以上にして下限を 1 以上にする（v0.145 までは山札の 2 枚で使えた。少ない枚数の拒否は ``test_without_target_or_bench_room`` と v0.146 のテスト）
+KOGA_BASICS = [KOGAS_KOFFING] * 4 + [KOGAS_EKANS] * 4
+
+
 class NinjaGymTest(unittest.TestCase):
     def test_heads_benches_a_kogas_basic_and_shuffles(self):
         """「おもて」: 山札の「キョウのたねポケモン」から 1 枚（ほかの名前のたねポケモン・キョウの進化カードは選べない）を手札を通さずにベンチへ → 山札を 1 回切る。"""
-        state = placed(KOGAS_NINJA_GYM, deck=[KOGAS_KOFFING, RATTATA, KOGAS_ARBOK, GRASS, KOGAS_EKANS])
+        state = placed(KOGAS_NINJA_GYM, deck=[KOGAS_KOFFING, RATTATA, KOGAS_ARBOK, GRASS, KOGAS_EKANS] + KOGA_BASICS)
         state = stadium_use(state, 0, H)
         d = state.decision
         self.assertEqual((d.kind, d.player, d.min_choices, d.max_choices), (BENCH_FROM_DECK, 0, 1, 1))
-        self.assertEqual(sorted(state.cards[u].card_id for u in d.options), sorted([KOGAS_KOFFING, KOGAS_EKANS]))
+        self.assertEqual(sorted(state.cards[u].card_id for u in d.options), sorted([KOGAS_KOFFING, KOGAS_EKANS] + KOGA_BASICS))
         for viewer in (1, None):
             seen = observe(state, viewer)["decision"]
             self.assertNotIn("options", seen)  # 選べるものの数は山札の中身を漏らすので、相手に見せない
@@ -383,13 +389,13 @@ class NinjaGymTest(unittest.TestCase):
         audited(self, after)
 
     def test_benched_pokemon_cannot_evolve_this_turn(self):
-        state = placed(KOGAS_NINJA_GYM, hand=[KOGAS_ARBOK], deck=[KOGAS_EKANS, GRASS])
+        state = placed(KOGAS_NINJA_GYM, hand=[KOGAS_ARBOK], deck=[KOGAS_EKANS, GRASS] + KOGA_BASICS)
         state = answer(stadium_use(state, 0, H), (card_of(state, KOGAS_EKANS, "deck"),))
         target = state.players[0].bench[-1].pokemon_id
         assert_rejects(self, state, EvolvePokemon(0, card_of(state, KOGAS_ARBOK), target), "PLAYED_THIS_TURN", IllegalActionError)
 
     def test_tails_does_not_shuffle(self):
-        state = stadium_use(placed(KOGAS_NINJA_GYM, deck=[KOGAS_EKANS, GRASS]), 0, T)
+        state = stadium_use(placed(KOGAS_NINJA_GYM, deck=[KOGAS_EKANS, GRASS] + KOGA_BASICS), 0, T)
         self.assertEqual(kinds_since(state, "stadium_used"), ["stadium_used", "coin_flip"])
 
     def test_without_target_or_bench_room(self):

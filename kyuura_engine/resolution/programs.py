@@ -15604,7 +15604,10 @@ def shortage_classes(available: int):
     """v0.127（docs 6 章）: 「うら」が出るまで投げるコインの「おもて」の数 h を、処理できる数 ``available``（N）との比べにだけ使う要素（ドライアップ）の組（``unbounded.HeadClasses``）。
     h = 0〜N はそれぞれ別の組（ちょうど h 枚の処理。選び方の決定の形が h で変わる）、N + 1 以上は 1 つの組（代表は N + 1）: h > N では要素が数のチェック地点で必ず途中停止し、それより
     あとの処理（トラッシュ・きぜつの判定）をしないので、h がいくつでも終端の分類（停止コード・止まった要素・処理できる数・在途の状態）は同じ（h はログと記録の必要な数にだけ残り、先読みの
-    範囲では読まれない）。h がダメージなどほかの処理にも使われる要素には使わない。実際のコインの数・ログ・乱数には代表を使わない"""
+    範囲では読まれない）。h がダメージなどほかの処理にも使われる要素には使わない。実際のコインの数・ログ・乱数には代表を使わない。
+
+    v0.143: 規約集合に PC-COIN-COUNT-SHORT@1 があれば、h > N の組はどれも N 枚をトラッシュして通常どおり続く（途中停止しない）。処理は h = N と同じで、h はログ（コイン・規約を当てた
+    記録の heads）にだけ残る（先読みの範囲では読まれない）ので、組の分け方は同じでよい"""
     from .unbounded import HeadClasses
 
     if type(available) is not int or available < 0:
@@ -15621,7 +15624,8 @@ class DiscardChosenTypedEnergyUntilTails(DiscardOpponentEnergy):
     - 選んでからコインを投げる（``AttackRun.flip_until_tails``。上限なく「うら」まで。ナツメのESPのやり直しは一まとまりのあとに 1 回だけ聞き、最後の並びで判断する。最初の並びで止めない）。
       選んだ個体が場をはなれていれば（うらのカードをおもてにしてトラッシュしたなど）処理の対象がないので投げない（p.309。``DiscardOpponentEnergy`` の ``chosen`` と同じ）
     - 処理できる数 N は、選んだポケモンの「水」エネルギーカードの枚数（``E.attached_typed_energy_cards``。コインの前に数え、コインのあいだは変わらない）。「おもて」の数 H を
-      ``interruption.check_quantity`` のチェック地点で比べ、H > N（N = 0 をふくむ）なら、トラッシュする前に途中停止（DU1）
+      ``interruption.check_quantity`` のチェック地点で比べ、H > N（N = 0 をふくむ）なら、トラッシュする前に途中停止（DU1）。v0.143: 状態の規約集合に PC-COIN-COUNT-SHORT@1 が
+      あれば、途中停止にせず N 枚すべてをトラッシュする（コインの H は変えない）
     - H = 0 は何もしない。H = N はすべて（選び方は 1 つなので決定を出さない）。0 < H < N は、ワザを使ったプレイヤーがちょうど H 枚を選ぶ（決定 ``DISCARD_OPPONENT_ENERGY``。すべての組を残す）。
       トラッシュはついている順（``E.discard_energy_from_play``。リサイクルエネルギーなどのもどる処理は既存）。トラッシュする前に効果の到達（``reaches``）を評価する
     - 選ぶと止めるポケモン（``choice_problem``）: 「水」エネルギーカードの数え方が色の読み方で変わる（``transform_energy_question`` の問い）・コインが決めるトラッシュが効果を受けない
@@ -15667,12 +15671,12 @@ class DiscardChosenTypedEnergyUntilTails(DiscardOpponentEnergy):
         target = found[0]
         available = len(self._water(run, target))
         flips = run.flip_until_tails(lambda: shortage_classes(available))
-        heads = flips.heads
-        check_quantity(required=heads, available=available, code=E.DRY_UP_SHORT_CODE,
-                       message=f"ポケモン {target.pokemon_id}・「おもて」{heads}・「{self.energy_type.ja}」エネルギーカード {available} 枚: {E.DRY_UP_SHORT_REASON}",
-                       references=("kyuura CR-DRY-UP-PROCEDURE", "kyuura UQ-STATED-COUNT-SHORT", "docs/deferred-shortage-user-promos-v0.127.md"),
-                       source=str(run.key), player=run.player, target_owner=opponent, target=target.pokemon_id, element=DISCARD_WATER_ENERGY_CARDS,
-                       pending=(DISCARD_WATER_ENERGY_CARDS, "finish_attack", "knockout_check"))
+        heads = check_quantity(run.state, required=flips.heads, available=available, code=E.DRY_UP_SHORT_CODE,
+                               message=f"ポケモン {target.pokemon_id}・「おもて」{flips.heads}・「{self.energy_type.ja}」エネルギーカード {available} 枚: {E.DRY_UP_SHORT_REASON}",
+                               references=("kyuura CR-DRY-UP-PROCEDURE", "kyuura UQ-STATED-COUNT-SHORT", "docs/deferred-shortage-user-promos-v0.127.md"),
+                               source=str(run.key), player=run.player, target_owner=opponent, target=target.pokemon_id, element=DISCARD_WATER_ENERGY_CARDS,
+                               pending=(DISCARD_WATER_ENERGY_CARDS, "finish_attack", "knockout_check"))
+        # v0.143: ``heads`` は処理する数（コインの「おもて」の数。PC-COIN-COUNT-SHORT で足りないときは「水」エネルギーカードの枚数。コインの結果・ログは変えない）
         if heads == 0 or not reaches(run.res, run.fs, opponent, target, E.ENERGY_DISCARD_ELEMENT):
             return False
         void = self._voided(run, target)

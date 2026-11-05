@@ -24,6 +24,7 @@ import json
 import os
 import re
 from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
 
 from kyuura_engine import EngineError, command_to_dict, state_to_dict
@@ -58,13 +59,140 @@ def input_digest(state, command) -> str:
 
 _WRONG_PHASE = re.compile(r"今は (\S+)。この操作は (.+) のときだけ")
 
-# v0.140（docs/prize-order-user-rule-v0.140.md 7 章）: 利用者の指定（USER-PRIZE-ORDER-ALWAYS-CHOSEN）で、両方がサイドを取るときにいつも先に取るプレイヤーの決定（prize_first）を出す
-# ようになり、旧経路（v0.13）の記録と比べられなくなった対戦（対戦の名前 → 理由）。記録（fixtures/legacy_reference_v0_15.json）は変えない・作り直さない。ここに挙げた対戦は、記録と
-# 比べるかわりに、(1) その決定を通ったこと、(2) 記録と違うこと（同じなら挙げる理由がない）を確かめる。そのほかの差がないことは、基点（d631038）との lockstep で確かめた（文書 7 章）
-RULE_CHANGED_CHAINS: dict[str, str] = {
-    "tests.test_event_kernel_games_v0_14.LockstepGamesTest.test_stress_scenarios_in_both_modes_with_mixed_states:stress:wartortle_mixed:0":
-        "v0.140 USER-PRIZE-ORDER-ALWAYS-CHOSEN: 両方がサイドを取る場面に prize_first の決定が加わり、stress の選び方（乱数）がその決定の答えを選ぶので、そこから先の歩が変わる",
+@dataclass(frozen=True)
+class RuleChangedChain:
+    """v0.140 の規約の変更で、記録と全体では比べられなくなった対戦の登録（docs/prize-order-v0140-cleanup-v0.141.md 2 章）。v0.141 から、次をすべて確かめる（記録と違うことだけを
+    成功の条件にしない。``check_rule_changed_chain``）。
+
+    - ``prize_first``: その対戦で、先にサイドを取るプレイヤーの決定（prize_first）を待つ状態に送ったコマンドの列（歩の番号・コマンド）。ほかの歩にその決定が出る・答えが違えば失敗
+    - 従来の順で答えたやり直し（``previous_order_replay``）: prize_first に番のプレイヤー（v0.139 までの、すべてうらのときの順番と同じ）で答え、方策の乱数を使わずに進め、規約の
+      変更が加えた項目（決定の番号・サイドの決定の ``first``）だけを記録の形にもどした連なりが、記録と同じでなければ失敗（規約の変更で説明できない差がある）
+    - ``first_difference``: 記録と違いはじめる歩（その決定を出した歩）。そこより前の歩は、やり直しと同じでなければ失敗。その歩は、やり直しと違わなければ失敗
+    ``first_difference`` より後の歩は、方策がその決定に乱数で答えた（取る順番も変わりうる）別の対戦で、記録と比べない（derived・legacy の lockstep・不変条件だけ）。"""
+
+    reason: str
+    convention: str
+    game: tuple  # ("stress", 組の名前, seed, 歩の数, 拒否されるコマンドの割合)。tools/event_kernel_compare.py の stress_game と同じ
+    prize_first: tuple  # ((歩の番号, コマンドの dict), ...)
+    first_difference: int
+
+
+# v0.140（docs/prize-order-user-rule-v0.140.md 7 章）・v0.141: 利用者の指定（USER-PRIZE-ORDER-ALWAYS-CHOSEN）で、両方がサイドを取るときにいつも先に取るプレイヤーの決定（prize_first）を
+# 出すようになり、旧経路（v0.13）の記録と全体では比べられなくなった対戦。記録（fixtures/legacy_reference_v0_15.json）は変えない・作り直さない
+RULE_CHANGED_CHAINS: dict[str, RuleChangedChain] = {
+    "tests.test_event_kernel_games_v0_14.LockstepGamesTest.test_stress_scenarios_in_both_modes_with_mixed_states:stress:wartortle_mixed:0": RuleChangedChain(
+        reason="両方がサイドを取る場面（歩 259 のワザの結果）に prize_first の決定が加わり、stress の選び方が乱数でその決定に答える（番のプレイヤー 1 が相手 0 を選んだ。従来と違う"
+               "取る順番）ので、歩 260 から先は別の対戦になる",
+        convention="CONV:USER-PRIZE-ORDER-ALWAYS-CHOSEN",
+        game=("stress", "wartortle_mixed", 0, 400, 0.05),
+        prize_first=((260, {"type": "resolve_decision", "player": 1, "decision": 12, "choices": [0]}),),
+        first_difference=259,
+    ),
 }
+
+
+def _previous_order_form(data: dict, answered: int, first: int | None) -> dict:
+    """規約の変更が加えた項目だけを、v0.139 までの形にもどす（``RuleChangedChain`` のやり直しの比べ。ほかの項目は除かない・変えない）。
+
+    - 次に付ける決定の番号・待っている決定の番号: それまでに答えた prize_first の数（``answered``）だけ小さくする
+    - 待っているサイドの決定の ``context`` の ``("first", 番のプレイヤー)``: 除く（やり直しは番のプレイヤーで答えるので、ほかの値なら失敗）"""
+    data = dict(data, next_decision_id=data["next_decision_id"] - answered)
+    decision = data.get("decision")
+    if decision is not None:
+        decision = dict(decision, id=decision["id"] - answered)
+        if decision["kind"] == "take_prize" and "first" in decision["context"]:
+            context = dict(decision["context"])  # 書き出しの形では名前 → 値（serialize.py）
+            if context.pop("first") != first:
+                raise AssertionError(f"やり直しのサイドの決定の先に取るプレイヤー {decision['context']['first']} が、番のプレイヤー {first} と違う")
+            decision["context"] = context
+        data["decision"] = decision
+    return data
+
+
+def _previous_order_digest(state, answered: int) -> str:
+    data = _previous_order_form(with_card_data_commit_before_v0_69(state_to_dict(state, format_version=9)), answered, state.current_player)
+    return hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False, default=repr).encode("utf-8")).hexdigest()[:32]
+
+
+def _previous_order_input(state, command, answered: int) -> str:
+    given = command_to_dict(command)
+    if answered and isinstance(given.get("decision"), int):
+        given = dict(given, decision=given["decision"] - answered)
+    data = json.dumps([_previous_order_digest(state, answered), rng_fingerprint(state.rng), given], sort_keys=True, ensure_ascii=False, default=repr)
+    return hashlib.sha256(data.encode("utf-8")).hexdigest()[:32]
+
+
+class PreviousOrderReplay:
+    """``RuleChangedChain`` の対戦を、prize_first に番のプレイヤー（従来の順番）で答えて進める（``tools/event_kernel_compare.stress_game`` に比べる関数のかわりに渡す）。
+    その決定はその場で答え、方策の乱数を使わず、歩に数えない。歩の連なりは、規約の変更が加えた項目だけを記録の形にもどして作る（``_previous_order_form``）。"""
+
+    def __init__(self, apply):
+        self.apply = apply
+        self.counts: Counter = Counter()
+        self.rows: list[tuple] = []
+        self.answered = 0
+        self._hash = hashlib.sha256()
+
+    def begin(self, game: str) -> None:
+        pass
+
+    def end(self) -> None:
+        pass
+
+    def value(self) -> dict:
+        return {"steps": len(self.rows), "digest": self._hash.hexdigest()[:32]}
+
+    def _add(self, row: tuple) -> None:
+        self.rows.append(row)
+        self._hash.update(json.dumps([row[0], list(row[1])], ensure_ascii=False).encode("utf-8"))
+
+    def __call__(self, state, command):
+        if state.decision is not None and state.decision.kind == "prize_first":
+            raise AssertionError("やり直しで、方策が prize_first に答えようとした（その場で答えるはず）")
+        given = _previous_order_input(state, command, self.answered)
+        try:
+            new = self.apply(state, command)
+        except EngineError as error:
+            self._add((given, error_outcome(error)))
+            raise
+        if new.decision is not None and new.decision.kind == "prize_first":
+            from kyuura_engine import ResolveDecision
+            new = self.apply(new, ResolveDecision(new.decision.player, new.decision.id, (new.current_player,)))
+            self.answered += 1
+        self._add((given, ("ok", _previous_order_digest(new, self.answered))))
+        return new
+
+
+def previous_order_replay(rule: RuleChangedChain, apply=None) -> PreviousOrderReplay:
+    """``rule`` の対戦の、従来の順のやり直し（``tools`` を ``sys.path`` に置いたテストから呼ぶ）。``apply`` はテストが処理を差しかえるときだけ渡す。"""
+    import event_kernel_compare as compare
+    import stress_engine as stress
+
+    kind, name, seed, steps, illegal_rate = rule.game
+    if kind != "stress":
+        raise AssertionError(f"やり直しの対戦の種類 {kind} は扱えない")
+    from kyuura_engine import apply_command
+    replay = PreviousOrderReplay(apply or apply_command)
+    compare.stress_game(replay, next(s for s in stress.ALL_SCENARIOS if s.name == name), seed, steps=steps, illegal_rate=illegal_rate)
+    return replay
+
+
+def check_rule_changed_chain(chain: Chain, rule: RuleChangedChain, entry: dict, value: dict, replay: PreviousOrderReplay) -> None:
+    """``RuleChangedChain`` の確かめ（``Chain.finish`` から。テストが値を変えて、無関係な差を許さないことを確かめるためにも呼ぶ）。"""
+    label = chain.label
+    if list(chain.prize_first) != [(step, dict(command)) for step, command in rule.prize_first]:
+        raise AssertionError(f"対戦 {label} の prize_first の歩・答え {chain.prize_first} が、登録 {rule.prize_first} と違う")
+    if entry == value:
+        raise AssertionError(f"対戦 {label} は記録と同じ（RULE_CHANGED_CHAINS から外す）")
+    previous = replay.value()
+    if previous != entry:
+        raise AssertionError(f"対戦 {label} の従来の順のやり直しが旧経路の記録と違う（記録 {entry}、やり直し {previous}）。規約の変更で説明できない差")
+    n = rule.first_difference
+    if chain.rows[:n] != replay.rows[:n]:
+        bad = next(i for i, (a, b) in enumerate(zip(chain.rows, replay.rows)) if a != b)
+        raise AssertionError(f"対戦 {label} が、登録した違いはじめる歩 {n} より前の歩 {bad} で、従来の順のやり直しと違う")
+    if len(chain.rows) <= n or len(replay.rows) <= n or chain.rows[n] == replay.rows[n]:
+        raise AssertionError(f"対戦 {label} が、登録した違いはじめる歩 {n} で、従来の順のやり直しと違わない（登録を確かめる）")
 
 
 def error_outcome(error: EngineError) -> tuple:
@@ -159,12 +287,19 @@ class Chain:
         self.label = label
         self.steps = 0
         self._hash = hashlib.sha256()
-        self.saw_prize_first = False
+        self.prize_first: list[tuple] = []  # v0.140・v0.141: prize_first を待つ状態に送ったコマンド（歩の番号・コマンドの dict）。RULE_CHANGED_CHAINS の確かめ
+        self.rows: list[tuple] = []  # v0.141: 歩ごとの（盤面の指紋, 結果）。RULE_CHANGED_CHAINS の対戦で、違いはじめる歩より前を比べる
+
+    @property
+    def saw_prize_first(self) -> bool:
+        return bool(self.prize_first)
 
     def add(self, state, command, result: tuple) -> None:
         if state.decision is not None and state.decision.kind == "prize_first":
-            self.saw_prize_first = True  # v0.140: RULE_CHANGED_CHAINS の確かめ
-        self._hash.update(json.dumps([input_digest(state, command), list(result)], ensure_ascii=False).encode("utf-8"))
+            self.prize_first.append((self.steps, command_to_dict(command)))
+        given = input_digest(state, command)
+        self.rows.append((given, tuple(result)))
+        self._hash.update(json.dumps([given, list(result)], ensure_ascii=False).encode("utf-8"))
         self.steps += 1
 
     def finish(self) -> None:
@@ -177,10 +312,8 @@ class Chain:
         if entry is None:
             raise AssertionError(f"参照データに対戦 {self.label} がない（{HOW}）")
         if self.label in RULE_CHANGED_CHAINS:
-            if not self.saw_prize_first:
-                raise AssertionError(f"対戦 {self.label} は記録と比べない理由（{RULE_CHANGED_CHAINS[self.label]}）の決定を通らない")
-            if entry == value:
-                raise AssertionError(f"対戦 {self.label} は記録と同じ（RULE_CHANGED_CHAINS から外す）")
+            rule = RULE_CHANGED_CHAINS[self.label]
+            check_rule_changed_chain(self, rule, entry, value, previous_order_replay(rule))
             return
         if self.saw_prize_first:
             raise AssertionError(f"対戦 {self.label} が先にサイドを取るプレイヤーの決定を通るのに、RULE_CHANGED_CHAINS にない（比べる意味を確かめて加える）")

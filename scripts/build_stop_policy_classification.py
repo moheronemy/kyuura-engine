@@ -75,6 +75,68 @@ AGREEMENTS = [
      "reading": "準備の HALTED・ポケモンチェックの HALTED・途中停止（5 章の 14 コード）を、選択肢を 1 つ減らすだけの拒否より先に扱う。どの規約を採るかは決めていない"},
 ]
 AGREEMENT_IDS = {a["id"] for a in AGREEMENTS}
+# v0.142（docs/ruleset-foundation-v0.142.md 1 章）: 規約集合の識別・版の管理の設計方針の承認（利用者の指示。エンジンの設計方針で、公式の裁定ではない）。モードの定義の合意（AGREEMENTS）とは
+# 別の日・別の依頼の承認なので、別の出典で記録する（モードの定義の 6 項目に加えない）
+RULESET_AGREEMENT_SOURCE = {"by": "user", "on": "2026-11-04",
+                            "where": "本会話の利用者の指示（作業ブランチ claude/ruleset-s1-foundation の依頼の「採用する設計方針」。この指示を設計方針への承認として記録する、と明記）",
+                            "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（エンジンの設計方針。個々の続行規約・未承認の仮定の採用ではない）"}
+RULESET_AGREEMENTS = [
+    {"id": "AGR-RULESET-IDENTITY", "statement": "規約集合は、集合ID・版・含まれる規約IDと各版・内容ハッシュで識別する。",
+     "reading": "conventions.ConventionSetIdentity（集合 ID・版・照合値・区分・含む規約の ID と版と照合値）。照合値は意味の内容の正規化した JSON の SHA-256（内容の識別で、署名・認証ではない）"},
+    {"id": "AGR-RULESET-IMMUTABLE", "statement": "同じ集合IDと版の内容は不変とする。",
+     "reading": "conventions.PINNED_CONVENTION_DIGESTS・PINNED_SET_DIGESTS に固定し、計算した値と違えば構成の誤り（対戦を始めない・状態を続けない）。内容を変えるときは版を上げる"},
+    {"id": "AGR-RULESET-VERSIONING", "statement": "規約の意味の変更と、エンジンの不具合修正を区別する。",
+     "reading": "照合値は規約の意味の記録（利用者の指定の登録の記録・今の挙動の記録）だけに付け、エンジンのコードには付けない。不具合の修正はエンジンの版（書き出しの engine_version）の変更"},
+    {"id": "AGR-RULESET-NO-MIDGAME-CHANGE", "statement": "対戦開始後の規約集合の変更は禁止する。",
+     "reading": "new_game で受け取り GameState.conventions に置く。変えるコマンドを作らない"},
+    {"id": "AGR-RULESET-SUDDEN-DEATH", "statement": "サドン・デスへ同じ規約集合を引き継ぐ。",
+     "reading": "sudden_death.SEGMENT_FIELD_POLICY の keep"},
+    {"id": "AGR-RULESET-LEGACY", "statement": "規約集合の記録がない旧状態は、旧来の固定集合として扱う。現在のプレイ用集合へ自動変換しない。",
+     "reading": "記録のない状態（v0.141 までの pickle）は、扱える条件（new_game で作った対戦のログ）を確かめて CS-KYUURA-LEGACY-UNRECORDED@1 に対応付け、満たさなければ拒否する"},
+    {"id": "AGR-RULESET-DEVELOPMENT", "statement": "規約がそろわない構成は開発用として区別し、通常のプレイ用として完成扱いにしない。",
+     "reading": "集合の区分 usage（standard・development・legacy）と完全性の主張（この版は halts_at_undecided だけ。play_complete の判定は未実装で受け付けない）"},
+]
+# v0.143（docs/play-policy-s2a-v0.143.md 1 章）: S2a の続行規約 5 件の採用（利用者の指示。公式の裁定・エラッタ・kyuura の研究上の解決ではない）。規約集合の設計方針の承認・
+# 進め方の承認（docs/play-policy-s2a-spec.md 2 章）とは別の依頼なので、別の出典で記録する。採用したのは開発用の部分的な集合 CS-KYUURA-PLAY-S2A@1 の 5 規約の中身だけ（厳密側の集合・
+# ほかの未決の場面・未承認の仮定は変えない）
+CONTINUATION_AGREEMENT_SOURCE = {"by": "user", "on": "2026-11-04",
+                                 "where": ("本会話の利用者の指示（作業ブランチ claude/play-policy-s2a-impl の依頼「5規約をまとめて採用し、S2a-0〜4を一つの実装タスクとして進める案を採用します。」"
+                                           "と、その指示の採用仕様）"),
+                                 "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用。厳密側の集合・ほかの未決の場面の判断ではない）"}
+CONTINUATION_AGREEMENTS = [
+    {"id": "AGR-PLAY-S2A-SET", "statement": "続行側として、開発用の部分的な集合 CS-KYUURA-PLAY-S2A@1（今の挙動の集合の規約 12 件と S2a の 5 規約）を登録する。完成したプレイ用とは表示しない。",
+     "reading": "conventions.SETS の CS-KYUURA-PLAY-S2A@1（usage development・completeness halts_at_undecided）。厳密側 CS-KYUURA-CURRENT@1 は同じ ID・版・中身のまま"},
+    {"id": "AGR-PLAY-S2A-MULLIGAN-COUNT", "statement": "PC-SETUP-MULLIGAN-COUNT@1: 片方だけが切り直した回 1 回につき、もう一方に補償 1 回（0〜2 枚・受けるプレイヤーが選ぶ。サイドのあと・ジャンケンの前）。両方の回は数えない。",
+     "reading": "UNRESOLVED_MULLIGAN_COMPENSATION#initial-setup・#sudden-death-segment（engine._deal_opening_hands）"},
+    {"id": "AGR-PLAY-S2A-PLAY-AS-POKEMON", "statement": "PC-SETUP-PLAY-AS-POKEMON@1: ポケモンとして場に出せるトレーナー（登録の型で識別）を初手のたねポケモンに数えず、ほかにたね・ベイビィがなければ切り直す。初期配置で選べば規約による不正な操作として拒否する。",
+     "reading": "UNRESOLVED_PLAY_AS_POKEMON_SETUP#initial-setup・#sudden-death-segment・#setup-placement（engine._deal_opening_hands・_place_starting_pokemon。拒否は NOT_BASIC_POKEMON）"},
+    {"id": "AGR-PLAY-S2A-SIDE-ORDER", "statement": "PC-CHECK-SIDE-ORDER@1: ポケモンチェックの両方のねむり・両方の場のくろこげマーカーのコインは、番を終えたプレイヤーから、それぞれバトル場 → ベンチの順。ねむりは 1 枚ずつ反映。",
+     "reading": "UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER・UNRESOLVED_POKEMON_CHECK_CHAR_COIN_ORDER（procedures）。BY1・コインの上限・両方のきぜつ・一般の同時効果・サイドの順番は対象外"},
+    {"id": "AGR-PLAY-S2A-COIN-COUNT-SHORT", "statement": "PC-COIN-COUNT-SHORT@1: ドライアップ（DU1）・怪電波マシーン（TW1）で、おもての数 H が対象の枚数 N より多ければ min(H, N) 枚を処理する。H は丸めずにログに残す。",
+     "reading": "UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT・UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT（interruption.check_quantity）。TW2・途中停止の再開・ほかのカードへの一般化は対象外"},
+    {"id": "AGR-PLAY-S2A-KO-POINT", "statement": "PC-CHECK-KO-POINT@1: ポケモンチェックの 1 と 2 を終えてから、きぜつを 1 回だけ判定する（HP 以上になっても判定まで場に残る）。",
+     "reading": "UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT（procedures._pokemon_check_plan）。両方のきぜつ・SC1・AL1・AL3・PO1〜PO3・KA1・VS1・DE1・BY1 は対象外"},
+]
+# v0.145（docs/poison-mist-play-po-v0.145.md 1 章）: PO1〜PO3 の続行規約 3 件の採用（利用者の指示。S2a とは別の依頼なので、項目ごとの出典 ``source`` で記録する）。採用したのは
+# 開発用の部分的な集合 CS-KYUURA-PLAY-PO@1 の 3 規約の中身だけ（厳密側・S2a の集合・#power-lost・ほかの未決の場面は変えない）
+PO_AGREEMENT_SOURCE = {"by": "user", "on": "2026-11-05",
+                       "where": ("本会話の利用者の指示（作業ブランチ claude/poison-mist-play-po の依頼「方針を採用します。」と、その指示の採用仕様。仕様案は "
+                                 "docs/poison-mist-play-policy-spec.md）"),
+                       "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用。厳密側の集合・ほかの未決の場面の判断ではない）"}
+CONTINUATION_AGREEMENTS += [
+    {"id": "AGR-PLAY-PO-SET", "source": PO_AGREEMENT_SOURCE,
+     "statement": "続行側として、開発用の部分的な集合 CS-KYUURA-PLAY-PO@1（今の挙動の集合の規約 12 件・S2a の 5 規約・PO の 3 規約）を登録する。完成したプレイ用とは表示しない。",
+     "reading": "conventions.SETS の CS-KYUURA-PLAY-PO@1（usage development・completeness halts_at_undecided）。CS-KYUURA-CURRENT@1・CS-KYUURA-PLAY-S2A@1 は同じ ID・版・中身のまま"},
+    {"id": "AGR-PLAY-PO-AMOUNT-ORDER", "source": PO_AGREEMENT_SOURCE,
+     "statement": "PC-POISON-AMOUNT-ORDER@1: どくの量はポケモンチェックの時点で、どく状態の性質 → ［ポイズンミスト］→ 鋼エネルギーの順に当てはめて決める。",
+     "reading": "UNRESOLVED_POISON_CHANGE_ORDER（effects.poison_check_amount・_poison_orders）。TP3・キョウのどくの順番・KA1・PX1 は対象外"},
+    {"id": "AGR-PLAY-PO-MIST-TARGETS", "source": PO_AGREEMENT_SOURCE,
+     "statement": "PC-POISON-MIST-TARGETS@1: ［ポイズンミスト］は、ポケモンチェックの時点でどく状態のすべてのポケモンに当てはまる（使った時点でどくだったかは問わない）。",
+     "reading": "UNRESOLVED_POISON_MIST_EARLIER_POISON（effects.poison_check_amount）。どく状態になるか自体の未決の停止は対象外"},
+    {"id": "AGR-PLAY-PO-MIST-SOURCE-LEFT", "source": PO_AGREEMENT_SOURCE,
+     "statement": "PC-POISON-MIST-SOURCE-LEFT@1: ［ポイズンミスト］を使ったポケモンが場をはなれたら、その発生源の記録の効果は終わる。発生源が場にいるまま力が消えた記録（#power-lost）は対象外。",
+     "reading": "UNRESOLVED_POISON_MIST_SOURCE#source-left（effects.poison_check_amount）。#power-lost・ほかの特殊能力の発生源・効果の重複の細部は対象外"},
+]
 AGREED_CONVENTION_STATUS = "user_agreed"  # 規約（conventions）だけが使える。合意 AGR-MODE-BASELINE-USER で基礎集合に入れた利用者指定。続行規約の採用ではない
 MODE_DEFINITIONS_HISTORY = {
     "STRICT-A": "厳密モードの定義としては採用しない（過去の検討案。AGR-MODE-STRICT・AGR-MODE-BASELINE-USER と合わない）。研究・照合の用途の集合として別に作るかは決めていない",
@@ -95,6 +157,37 @@ RULESET_DECISIONS = [
 DECISION_STATUS = {
     "DEC-STRICT-DEFINITION": {"status": "agreed", "agreements": ["AGR-MODE-STRICT", "AGR-MODE-PLAY", "AGR-MODE-BASELINE-USER"],
                               "note": "STRICT-A は厳密モードの定義として採用しない（過去の検討案）。STRICT-B は合意済みの定義に置きかえた"},
+    "DEC-RULESET-IDENTITY": {"status": "agreed", "agreements": ["AGR-RULESET-IDENTITY", "AGR-RULESET-IMMUTABLE"],
+                             "note": "v0.142（2026-11-04）に承認。推奨案 D（ID・版・含む規約・照合値）と同じ。綴り・正規化は docs/ruleset-foundation-v0.142.md 4 章"},
+    "DEC-RULESET-VERSIONING": {"status": "agreed", "agreements": ["AGR-RULESET-VERSIONING"], "note": "v0.142（2026-11-04）に承認。推奨案（意味で分ける）と同じ"},
+    "DEC-MODE-CHANGE-DURING-GAME": {"status": "agreed", "agreements": ["AGR-RULESET-NO-MIDGAME-CHANGE", "AGR-RULESET-SUDDEN-DEATH"],
+                                    "note": "v0.142（2026-11-04）に承認。推奨案（変えられない・延長戦は引き継ぐ）と同じ。別の集合での再開は DEC-RESUME-WITH-OTHER-RULESET（未決）"},
+    "DEC-LEGACY-STATES": {"status": "agreed", "agreements": ["AGR-RULESET-LEGACY"],
+                          "note": ("v0.142（2026-11-04）に承認。分類・設計の時点の推奨案（作成した版が分かる場合だけ、その版の集合に対応付ける）とは違い、旧来の固定集合として扱う。"
+                                   "作成した版は推測せず、扱える条件を満たさない状態は拒否する")},
+    "DEC-PLAY-DEBUG-PARTIAL": {"status": "partly_agreed", "agreements": ["AGR-RULESET-DEVELOPMENT", "AGR-PLAY-S2A-SET"],
+                               "note": ("v0.142: 規約がそろわない構成を開発用として区別することは承認。開発用の集合を実際に設けるか・どの規約を入れるかは未決（この版に開発用の集合はない）。"
+                                        "v0.143: 開発用の部分的な集合 CS-KYUURA-PLAY-S2A@1（S2a の 5 規約）を登録した。ほかの開発用の構成は未決")},
+    "DEC-PLAY-CONFIG-INCOMPLETE-START": {"status": "partly_agreed", "agreements": ["AGR-RULESET-DEVELOPMENT", "AGR-PLAY-S2A-SET"],
+                                         "note": ("v0.142: 規約がそろわない構成を通常のプレイ用として完成扱いにしないことは承認。そうした構成で対戦を始められるか・止まったときの表示は未決。"
+                                                  "v0.143: 開発用の集合 CS-KYUURA-PLAY-S2A@1 で対戦を始める（利用者の採用の指示）。止まったときの表示は今の停止と同じ（停止コード）。通常のプレイ用の構成の扱いは未決")},
+    "DEC-MULLIGAN-COMPENSATION": {"status": "partly_agreed", "agreements": ["AGR-PLAY-S2A-MULLIGAN-COUNT"],
+                                  "note": "v0.143: 続行側の集合 CS-KYUURA-PLAY-S2A@1 の規約 PC-SETUP-MULLIGAN-COUNT@1 として採用。厳密側（今の挙動の集合）は今のまま止める。研究上の未解決は未解決のまま"},
+    "DEC-PLAY-AS-POKEMON": {"status": "partly_agreed", "agreements": ["AGR-PLAY-S2A-PLAY-AS-POKEMON"],
+                            "note": "v0.143: PF1（準備）だけを続行側の規約 PC-SETUP-PLAY-AS-POKEMON@1 として採用。PF2（にげる）・PF3（育て屋）・MG2（ちえくらべ）・厳密側は未決のまま"},
+    "DEC-SLEEP-COIN-ORDER": {"status": "partly_agreed", "agreements": ["AGR-PLAY-S2A-SIDE-ORDER"],
+                             "note": "v0.143: 続行側の規約 PC-CHECK-SIDE-ORDER@1（番を終えたプレイヤーから）として採用。厳密側は今のまま止める"},
+    "DEC-STATED-COUNT-SHORT": {"status": "partly_agreed", "agreements": ["AGR-PLAY-S2A-COIN-COUNT-SHORT"],
+                               "note": "v0.143: DU1・TW1 だけを続行側の規約 PC-COIN-COUNT-SHORT@1（あるだけ）として採用。ほかのコード・使う前に決まる不足・厳密側は未決のまま"},
+    "DEC-KNOCKOUT-READINGS": {"status": "partly_agreed", "agreements": ["AGR-PLAY-S2A-KO-POINT"],
+                              "note": "v0.143: PK1（ポケモンチェックの 1 と 2 のあいだ）だけを続行側の規約 PC-CHECK-KO-POINT@1 として採用。ほかのきぜつの読み方・厳密側は未決のまま"},
+    "DEC-DAMAGE-READINGS": {"status": "partly_agreed", "agreements": ["AGR-PLAY-PO-AMOUNT-ORDER"],
+                            "note": "v0.145: PO1（どくの量を変える効果の順番）だけを続行側の規約 PC-POISON-AMOUNT-ORDER@1 として採用。ほかのダメージの読み方・KA1・厳密側は未決のまま"},
+    "DEC-TEXT-READINGS": {"status": "partly_agreed", "agreements": ["AGR-PLAY-PO-MIST-TARGETS"],
+                          "note": "v0.145: PO2（［ポイズンミスト］の当てはまる相手）だけを続行側の規約 PC-POISON-MIST-TARGETS@1 として採用。ほかの文面の読み方・厳密側は未決のまま"},
+    "DEC-LASTING-READINGS": {"status": "partly_agreed", "agreements": ["AGR-PLAY-PO-MIST-SOURCE-LEFT"],
+                             "note": ("v0.145: PO3 の #source-left（発生源が場をはなれた［ポイズンミスト］の記録）だけを続行側の規約 PC-POISON-MIST-SOURCE-LEFT@1 として採用。#power-lost・"
+                                      "ほかの持続する効果の発生源（PC-LASTING-SOURCE-CHANGE の候補）・厳密側は未決のまま")},
     "DEC-EXISTING-USER-SPECS": {"status": "partly_agreed", "agreements": ["AGR-MODE-BASELINE-USER"],
                                 "note": "利用者指定（12 件・USER-ID 9 つ）は基礎集合に入れる。エンジンの簡略化・実装上の仮定・データの訂正の扱いは DEC-BASELINE-NONUSER・DEC-CARD-DATA-CORRECTIONS で未決"},
 }
@@ -527,11 +620,21 @@ RUNTIME_FAMILY = {
     "UNSUPPORTED_QUIZ_HEIGHT_WITHOUT_DEX": "PF-RUNTIME-DATA", "UNSUPPORTED_QUIZ_HEIGHT_NOT_AVAILABLE": "PF-RUNTIME-DATA",
     "UNSUPPORTED_HISTORY_DAMAGE_PLACE_UNKNOWN": "PF-RUNTIME-DATA", "UNSUPPORTED_SUDDEN_DEATH_INITIAL_DECK": "PF-RUNTIME-DATA",
     "UNSUPPORTED_DECISION": "PF-RUNTIME-DATA",  # v0.140: この版が扱えない決定の再開先（後の版・前の版の状態の写し。docs/prize-order-user-rule-v0.140.md 3 章）
+    "UNSUPPORTED_CONVENTION_SET": "PF-RUNTIME-DATA",  # v0.142: この版が扱えない状態の規約集合（登録と合わない・知らない集合・旧状態として扱えない記録なし。docs/ruleset-foundation-v0.142.md 6 章）
     "UNRESOLVED_RULING": "PF-RUNTIME-GENERIC",
 }
 
 # 1 つのコードに、発生条件・対処の違う事例が混在するもの（コードは改名・分割しない。台帳の下位の事例として分ける）
 CASES = {
+    # v0.145（docs/poison-mist-play-po-v0.145.md。docs/poison-mist-play-policy-spec.md の proposed_cases）: PO3 を、発生源が場にいない記録と、場にいるまま力が消えた記録に分ける
+    "UNRESOLVED_POISON_MIST_SOURCE": [
+        {"case": "source-left", "sites": [lambda: _site_line("kyuura_engine/effects.py", '("source", POISON_MIST_SOURCE_CODE, POISON_MIST_SOURCE_LEFT_CASE)')],
+         "condition": "中断のある［ポイズンミスト］の記録の発生源（場の番号）のポケモンが、ポケモンチェックの時点で場にいない", "secret_dependency": "public_only",
+         "note": "続行規約 PC-POISON-MIST-SOURCE-LEFT@1（CS-KYUURA-PLAY-PO@1）の場面。厳密側は今のまま止める。道具の対戦で観測（v0.144 の仕様案の 7 局）"},
+        {"case": "power-lost", "sites": [lambda: _site_line("kyuura_engine/effects.py", 'return "halt", POISON_MIST_SOURCE_CODE')],
+         "condition": "中断のある記録の発生源のポケモンが、ポケモンチェックの時点で場にいる（かがくへんかガス・退化・へんしんなどで力が消えた・消えていた）", "secret_dependency": "public_only",
+         "note": "続行規約はない（両方の集合で止める。QK1 と同じ形の問い）。道具の対戦では観測していない"},
+    ],
     "UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET": [
         {"case": "deck", "sites": ["kyuura_engine/effects.py:17340", "kyuura_engine/effects.py:40040"],
          "condition": "山札に選べるカードがあると、配分を読まない下限（effects.deck_target_lower_bound）で確かめられない（エネルギー転送・ボスのやりかた・タケシの育て方・遺跡の石版）",
@@ -569,18 +672,30 @@ CASES = {
         {"case": "decision-halt", "sites": ["kyuura_engine/engine.py:874"], "condition": "決定への答えのどれでも FU3 などに当たる", "secret_dependency": "public_only",
          "note": "答えのない決定を残さず、その前の状態で HALTED"},
     ],
+    # v0.143: 準備の 2 つのコードの事例の行は、手書きの行番号（v0.142 で古くなった engine.py:494・515）をやめ、今のコードの止める分岐の行から求める（``_site_line``）
     "UNRESOLVED_MULLIGAN_COMPENSATION": [
-        {"case": "initial-setup", "sites": ["kyuura_engine/engine.py:515"], "condition": "最初の対戦の準備", "secret_dependency": "public_only", "note": "道具の対戦で観測（legal_sequence）"},
-        {"case": "sudden-death-segment", "sites": ["kyuura_engine/engine.py:515"], "condition": "v0.134 の延長戦の区間の準備（同じ処理）", "secret_dependency": "public_only",
+        {"case": "initial-setup", "sites": [lambda: _site_line("kyuura_engine/engine.py", 'stop_without_continuation(state, "UNRESOLVED_MULLIGAN_COMPENSATION"')],
+         "condition": "最初の対戦の準備", "secret_dependency": "public_only", "note": "道具の対戦で観測（legal_sequence）"},
+        {"case": "sudden-death-segment", "sites": [lambda: _site_line("kyuura_engine/engine.py", 'stop_without_continuation(state, "UNRESOLVED_MULLIGAN_COMPENSATION"')],
+         "condition": "v0.134 の延長戦の区間の準備（同じ処理）", "secret_dependency": "public_only",
          "note": "延長戦の区間のまま HALTED。止まった状態からは延長戦を始める操作も受け付けない（docs/sudden-death-v0.134.md 6 章）"},
     ],
     "UNRESOLVED_PLAY_AS_POKEMON_SETUP": [
-        {"case": "initial-setup", "sites": ["kyuura_engine/engine.py:494"], "condition": "最初の対戦の準備で、手札になにかの化石・ピッピ人形がある", "secret_dependency": "public_only", "note": ""},
-        {"case": "sudden-death-segment", "sites": ["kyuura_engine/engine.py:494"], "condition": "延長戦の区間の準備（同じ処理）", "secret_dependency": "public_only", "note": ""},
+        {"case": "initial-setup", "sites": [lambda: _site_line("kyuura_engine/engine.py", "stop_without_continuation(state, PLAY_AS_POKEMON_SETUP_CODE, _setup_case(state))")],
+         "condition": "最初の対戦の準備で、手札になにかの化石・ピッピ人形がある", "secret_dependency": "public_only", "note": ""},
+        {"case": "sudden-death-segment", "sites": [lambda: _site_line("kyuura_engine/engine.py", "stop_without_continuation(state, PLAY_AS_POKEMON_SETUP_CODE, _setup_case(state))")],
+         "condition": "延長戦の区間の準備（同じ処理）", "secret_dependency": "public_only", "note": ""},
+        {"case": "setup-placement", "sites": [lambda: _site_line("kyuura_engine/engine.py", "stop_without_continuation(state, PLAY_AS_POKEMON_SETUP_CODE, SETUP_PLACEMENT_CASE)")],
+         "condition": "準備（最初の対戦・延長戦の区間）の PlaceStartingPokemon で、ポケモンとして場に出せるトレーナーを最初のポケモンに選んだ（拒否）", "secret_dependency": "public_only",
+         "note": "v0.143 で加えた事例（docs/play-policy-s2a-spec.md の proposed_cases）。厳密側は UnsupportedError、続行側（PC-SETUP-PLAY-AS-POKEMON）は NOT_BASIC_POKEMON の拒否"},
     ],
     "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK": [
-        {"case": "coin-evolve-self-from-deck", "sites": ["kyuura_engine/effects.py:12383"], "condition": "キョウのスピアーなどの特殊能力の使う前の確かめで、山札の同じ名前のカードを読む",
-         "secret_dependency": "depends_on_hidden_static", "note": "PSP-DECK-CONTENT-PRECHECKS（静的な候補。比較プローブはしていない）"},
+        {"case": "coin-evolve-self-from-deck",
+         "sites": [lambda: _site_line("kyuura_engine/effects.py", "raise UnsupportedError(PERMISSION_FROM_DECK_STOP_CODE, _PERMISSION_FROM_DECK_DETAIL)")],
+         "condition": "キョウのコクーンの［うか］の使う前の確かめで、山札にあるかもしれない同じ名前のカード（effects.possible_deck_cards）と組を作るか",
+         "secret_dependency": "owner_known_pool",
+         "note": ("v0.147 で配分を読まない確かめにした（docs/deck-content-prechecks-v0.147.md。PSP-DECK-CONTENT-PRECHECKS）。v0.146 まで（分類の時点の site は effects.py:12383）は実際の山札を読んだ"
+                  "（depends_on_hidden_static）。この経路は比較プローブで確かめていない（［うか］のキョウのコクーンは「サカキの」ポケモンではなく許可を受けないので、今の写しでは GV1 は起こらない）")},
         {"case": "other", "sites": [], "condition": "そのほかの経路", "secret_dependency": "unchecked_per_site", "note": ""},
     ],
     "UNRESOLVED_SCRAM_TIMING": [
@@ -658,8 +773,38 @@ V137_NEW_FINDINGS = [
      "mode_policy": "両モードで塞ぐ候補（修正は別の作業。v0.137 では変えていない）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
 ]
 # v0.138 の作業で、今回触った共通処理（bench_entry_unresolved）のまわりと PSP-DECK-CONTENT-PRECHECKS の残りを比較プローブで確かめて見つけた項目（修正していない。承認の範囲の外）
+# v0.147（docs/deck-content-prechecks-v0.147.md）: 利用者の指示（2026-11-05「秘密の山札の内容によって、使う前の受理・拒否・理由が変わる処理」を一つの調査・修正単位として、両モード共通の不具合を直す。
+# 新しい続行規約は採用しない）を受けて直した項目の記録。発見の記録（found_in・trigger・reachability・impact）は見つけた版のまま残し、修正の内容・制限・検証を加える
+V147_FIX_COMMON = {
+    "fixed_in": "v0.147（docs/deck-content-prechecks-v0.147.md。基点 b155a7d）",
+    "fix_verification": ["tests/test_deck_content_prechecks_v0_147.py（twin_command_problems に owner_knowledge を加えて、配分だけが違う双子を 3 つの集合で比べる。修正の前の木では failures 40・errors 9）",
+                         "docs/deck-content-prechecks-v0.147.md 2 章（修正の前の再現: 構築盤面の 10 の場面）・6 章（検証）"],
+    "status_basis": "v0.147 で漏れを修正。研究の論点（PW3・DV2・GV1・RB2・GG1・H1）は未解決のまま。新しい続行規約は採用していない",
+}
+V147_LOWER_BOUND_LIMITS = [
+    ("実際には山札に対象があっても、配分を読まない下限が 1 より少なければ使う前に止める（保守的な制限。サイドがうら 6 枚の間は、見えない対象が 7 枚以上要る。"
+     "「アンノーン」・「サカキ」はデッキに 4 枚までなので、サイドを 3 枚以上取るまで使えない）"),
+    ("受理（使った事実は公開）は、相手・観戦者に「使ったプレイヤーの見えない対象のカードが C + 1 枚以上ある」ことを伝える（v0.146 までは「山札にある」。相手は試せない）。"
+     "山札を見たあとの決定の選べるもの・選ぶと止める選択は実際の山札（本人が山札をさがして見る私的な情報。観測には出さない）"),
+    "フラッシュでおもてにした山札のカード・過去に見た山札の内容は数えない（v0.137 の共通処理と同じ。保守的）",
+]
+V147_FIX_INCREASE = {**V147_FIX_COMMON,
+    "fix": ("使う機会の答えの確かめ（accept_problem）を、実際の山札の候補から、配分を読まない下限（effects.deck_target_lower_bound）と、ベンチに出しても止めないカードの下限"
+            "（effects.bench_entry_unconfirmed。v0.138）に替えた（v0.137 の ST1・v0.146 の忍者ジムと同じ共通処理）。1 より少なければ決まった理由の文の PW3、止めないカードを確かめられなければ"
+            "決まった理由の文の GG1 など"),
+    "fix_sites": ["kyuura_engine/effects.py BenchNameGroupFromDeckOnEntry.accept_problem"],
+    "fix_limitations": [*V147_LOWER_BOUND_LIMITS,
+                        "v0.97 の組の対戦（席の両方・seed 0〜3 の 32 局）で［INCREASE］を使った回数は 9 → 0（docs/deck-content-prechecks-v0.147.md 5 章）"]}
+V147_FIX_COCOON = {**V147_FIX_COMMON,
+    "fix": ("使う前（コインの前）の GV1・DV2 の確かめを、実際の山札から、山札にあるかもしれないカード（effects.possible_deck_cards。山札のすべてのカードと山札の外の見えないカード。"
+            "持ち主が知っている集合）に替えた（組を作るカードがあれば止める）。H1（進化したあとの HP がダメージ以下）は、止めるカードがあるかもしれず、止めないカードが山札にあることを"
+            "配分を読まない下限で確かめられなければ止める"),
+    "fix_sites": ["kyuura_engine/effects.py CoinEvolveSelfFromDeck.check_usable"],
+    "fix_limitations": ["実際にはキョウのスピアーがサイドにだけあっても、退化した番の［うか］は DV2 で止める（保守的な制限。v0.146 までは山札になければ使えた）",
+                        "GV1・H1 の経路は比較プローブで確かめていない（GV1 は今の写しでは起こらない。H1 の盤面は通常のダメージでは作れない）。同じ変更で配分を読まない確かめにした"]}
+
 V138_NEW_FINDINGS = [
-    {"id": "PSP-INCREASE-ENTRY-PW3-ORACLE", "entry_kind": "silent_information_leak", "status": "active", "classification": "A",
+    {"id": "PSP-INCREASE-ENTRY-PW3-ORACLE", "entry_kind": "silent_information_leak", "status": "fixed", "classification": "A", **V147_FIX_INCREASE,
      "found_in": "v0.138 の作業（bench_entry_unresolved を使うほかの経路の比較プローブ。基点 903a9bd）",
      "summary": "アンノーンI（neo2-023）の［INCREASE］の使う機会の決定で「使う」を答えると、山札に「アンノーン」がない（サイドにある）ときだけ PW3 で拒否される",
      "trigger": "BenchNameGroupFromDeckOnEntry.accept_problem（実際の山札の候補を読む）→ offer_entry_power の unresolved_choices（観測には出ないが、答えの受理・拒否で分かる）",
@@ -671,8 +816,8 @@ V138_NEW_FINDINGS = [
                       "note": "合法な操作の列での再現はしていない。基点と v0.138 で出力は同じ（v0.138 の修正はこの経路を変えていない）"},
      "impact": "アンノーンI を出すたびに、山札にアンノーンがあるか（＝サイドにあるか）を、拒否のあと「使わない」を答え直すことで、費用なしに知れる。まきちらせ!ベトベトガスなどのもとでは"
                "アンノーンI 自体を出せない（GG1 など）ので、［INCREASE］の「どれも止める」の理由の文の経路には届かない",
-     "play_groups": ["5"], "mode_policy": "両モードで塞ぐ候補（修正は別の作業。v0.138 では変えていない）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
-    {"id": "PSP-COCOON-DV2-ORACLE", "entry_kind": "silent_information_leak", "status": "active", "classification": "A",
+     "play_groups": ["5"], "mode_policy": "両モードで直した（v0.147。v0.138 では変えていなかった）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
+    {"id": "PSP-COCOON-DV2-ORACLE", "entry_kind": "silent_information_leak", "status": "fixed", "classification": "A", **V147_FIX_COCOON,
      "found_in": "v0.138 の作業（PSP-DECK-CONTENT-PRECHECKS の残りの比較プローブ。基点 903a9bd）",
      "summary": "キョウのコクーン（PMCG6-011）の［うか］の使う前の DV2（今の番に退化した）の拒否が、キョウのスピアーが山札とサイドのどちらにあるかで変わる",
      "trigger": "CoinEvolveSelfFromDeck.check_usable（実際の山札の「キョウのスピアー」を deck_evolution_devolved_pairs に渡す。山札になければ組がなく、受理）",
@@ -683,8 +828,95 @@ V138_NEW_FINDINGS = [
                                    "docs/oracle-leak-fixes-v0.138.md 7 章"],
                       "note": "合法な操作の列（new_game から）での再現はしていない。GV1（PERMISSION_FROM_DECK）・UNRESOLVED_EVOLUTION_HP の経路はプローブしていない"},
      "impact": "退化スプレーのあと、カードを使わずに（拒否は状態を変えない）、山札にキョウのスピアーがあるかを知れる",
-     "play_groups": ["5"], "mode_policy": "両モードで塞ぐ候補（修正は別の作業。v0.138 では変えていない）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
+     "play_groups": ["5"], "mode_policy": "両モードで直した（v0.147。v0.138 では変えていなかった）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
 ]
+# v0.143 の作業で見つけ、v0.144 で直した両モード共通の不具合（壊れた状態。情報漏れではない）
+V144_FIXED_DEFECTS = [
+    {"id": "PSP-SC2-POKEMON-CHECK-INTEGRITY", "entry_kind": "state_integrity_defect", "status": "fixed", "classification": "A",
+     "found_in": "v0.143 の作業（PC-CHECK-KO-POINT の盤面の調べ。基点 7b1d2dd。docs/play-policy-s2a-v0.143.md 10 章）",
+     "fixed_in": "v0.144（docs/sc2-integrity-fix-v0.144.md。基点 7548ba4）",
+     "summary": ("ポケモンチェックのどくでかがくへんかガスの発生源がきぜつし、残りHP「10」で力が消えていた［ずらかる］の力がもどる盤面で、SC2 の問いをどくのダメージのあと（きぜつの判定の窓）に"
+                 "確かめて止めたので、HP 以上のポケモンが場に残った HALTED になり、状態の確かめ（StateIntegrityError）が番を終えるコマンドを受け付けなかった（両方の集合で同じ）"),
+     "trigger": "resolution/flow.py の _pokemon_check（scram_restored_question。ダメージのあと）。ポケモンチェックの 1・2 の確かめ（procedures._pokemon_check_plan）がこの問いを見ていなかった",
+     "related_cards": ["PMCG3-007", "PMCG5-051"], "related_codes": ["UNRESOLVED_SCRAM_POWER_RESTORED"],
+     "fix": ("同じ判定（effects.scram_restored_by_leaving。きぜつの判定の窓の問いと共通）を、ポケモンチェックの 1・2 の確かめで状態の複製の上で行い、ダメージを与える前に同じコード "
+             "UNRESOLVED_SCRAM_POWER_RESTORED で止める（procedures._knockout_scram_restored_stop）。SC2 の答え（はたらくか）は決めない"),
+     "fix_sites": ["kyuura_engine/effects.py scram_restored_by_leaving", "kyuura_engine/procedures.py _pokemon_check_plan・_knockout_scram_restored_stop",
+                   "kyuura_engine/resolution/kernel.py scram_restored_question（判定を共通の関数に移しただけ。問いの文・コードは同じ）"],
+     "intended_difference": ("報告された盤面: 内部エラー（StateIntegrityError）→ ダメージの前の HALTED（UNRESOLVED_SCRAM_POWER_RESTORED）。くろこげマーカーの「うら」で同じ盤面になる組がある"
+                             "ときは、コインの前の確かめが見つけて、コインを投げる前に止める（v0.143 までは「うら」なら内部エラー、「おもて」なら続いた）"),
+     "reachability": {"status": "constructed_board",
+                      "evidence": ["tests/test_sc2_integrity_v0_144.py（構築の盤面。修正の前の木で StateIntegrityError）",
+                                   "docs/sc2-integrity-fix-v0.144.md 3 章（合法な操作の列の探索 1,200 局で再現なし。到達しないとは判断しない）"],
+                      "note": "合法な操作の列での再現はしていない"},
+     "impact": "対戦が内部エラーで進まない（壊れた状態は残らない。コマンドの拒否なので渡した状態は変わらない）。情報漏れではない",
+     "play_groups": ["5"], "mode_policy": "両モードで直した（モードによらない不具合）", "decision_refs": []},
+]
+
+# v0.146 で直した両モード共通の情報漏れ（v0.142 の共通規約の設計案の調査で見つけ、設計案の文書 7 章に記録していたもの。台帳には未登録だった）
+V146_FIXED_LEAKS = [
+    {"id": "PSP-NJ1-NINJA-GYM-ORACLE", "entry_kind": "silent_information_leak", "status": "fixed", "classification": "A",
+     "found_in": "共通規約の設計案の調査（docs/play-policy-family-plan.md 7 章。check_activation の横断の比較プローブ）",
+     "fixed_in": "v0.146（docs/play-set-verification-v0.146.md 3 章。基点 e766149）",
+     "summary": "キョウの忍者ジム（PR1-067）の使う前（コインの前）の NJ1 の拒否が、キョウのたねポケモンが山札とサイドのどちらにあるかで変わる",
+     "trigger": "CoinBenchOwnerBasicFromDeckStadium.check_activation（v0.145 までは実際の山札の候補 deck_cards_matching を読んだ）",
+     "related_cards": ["PR1-067"], "related_codes": ["UNRESOLVED_NINJA_GYM_WITHOUT_TARGET"],
+     "fix": ("山札に選べるカードがあることを、配分を読まない下限（effects.deck_target_lower_bound）で確かめ、1 より少なければ決まった理由の文の NJ1（v0.137 の ST1 と同じ）。"
+             "ベンチに出しても止めない（GG1）カードの確かめも、配分を読まない下限（effects.bench_entry_unconfirmed。v0.138）に替えた。ベンチに空きがないときの NJ1 は今までどおり"),
+     "fix_sites": ["kyuura_engine/effects.py CoinBenchOwnerBasicFromDeckStadium.check_activation"],
+     "fix_limitations": [("実際には山札にキョウのたねポケモンがあっても、下限が 0 なら NJ1（保守的な制限。サイド 6 枚のうらの間は、見えないキョウのたねポケモン 7 枚以上が要る。"
+                          "v0.145 までは山札に 1 枚あれば使えた）"),
+                         ("受理（使った事実は公開）は、相手・観戦者に「使ったプレイヤーの見えないキョウのたねポケモンが C + 1 枚以上ある」ことを伝える（v0.145 までは「山札にある」。"
+                          "相手は試せない）。「おもて」のあとの決定の選べるものは実際の山札（本人が山札をさがして見る私的な情報。観測には出さない）"),
+                         "写しのキョウのたねポケモンはどれも特殊能力を持たないので、GG1 の確かめ（bench_entry_unconfirmed）は今の写しでは止めない（修正の前も届かなかった）"],
+     "reachability": {"status": "legal_sequence",
+                      "evidence": ["tests/test_ninja_gym_oracle_v0_146.py（new_game からの列: seed 1 はキョウのドガースが山札、seed 17 はサイド。修正の前は受理／NJ1。双子で検出）",
+                                   "docs/play-set-verification-v0.146.md 3 章（修正の前後の再現）"]},
+     "impact": "カードを使わずに（拒否は状態を変えない）、毎番、山札にキョウのたねポケモンがあるか（＝サイドにあるか）を知れた",
+     "play_groups": ["5"], "mode_policy": "両モードで直した（モードによらない不具合）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
+]
+
+# v0.147 で見つけた項目（docs/deck-content-prechecks-v0.147.md）。使う前の確かめの横断（check_playable・check_usable・accept_problem・check_activation・usage_problem と、そこから呼ぶ同じクラスのメソッド）で
+# 山札の中身を読む 23 のメソッドを挙げ、山札だけを読む 8 クラスを双子の比較プローブで確かめた。v0.138 までに分けた 2 項目のほかの 6 クラスを 1 つの項目にまとめる
+V147_NEW_FINDINGS = [
+    {"id": "PSP-POWER-PRECHECK-DECK-ORACLE", "entry_kind": "silent_information_leak", "status": "fixed", "classification": "A",
+     "found_in": "v0.147 の作業（PSP-DECK-CONTENT-PRECHECKS の残りの横断と比較プローブ。基点 b155a7d）", **V147_FIX_COMMON,
+     "summary": ("特殊能力の使う前（使う宣言・使う機会の答え。コインの前・山札を見る前）の PW3・RB2 の拒否が、対象のカードが山札とサイドのどちらにあるかで変わる"
+                 "（しんかのひかり・てしたをよぶ・［ボスをよぶ］・［FIND］・［JOIN］・［YIELD］・［GIVE］・ファイヤーブースト）"),
+     "trigger": ("SearchEvolutionCardToHand.check_usable・BenchBasicsFromDeckOnEntry.accept_problem・SearchNamedTrainerOnEntry.accept_problem・"
+                 "SearchDeckWithBenchLettersToHand.check_usable・CoinAttachEnergyFromDeckToOwnPokemon.check_usable（実際の山札の候補を読む）、"
+                 "CoinAttachFromDeckOnEntry.accept_problem（実際の山札のレインボーエネルギーを読み、理由の文に uid を書く）"),
+     "related_cards": ["PMCG4-052", "PMCG4-053", "PMCG6-071", "neo2-026", "PRN-034", "neo3-033", "neo4-062", "PF1-006"],
+     "related_codes": ["UNRESOLVED_POWER_ZERO_CARDS", "UNRESOLVED_RAINBOW_ATTACH_AS_TYPE"],
+     "fix": ("山札に対象があることを読む確かめは、配分を読まない下限（effects.deck_lower_bound_where・deck_target_lower_bound）が 1 より少なければ同じコードで止める（理由の文は決まった文）。"
+             "山札にあると止めるレインボーエネルギーは、山札にあるかもしれないカード（effects.possible_deck_cards）にあれば止める（ファイヤーブースト）。［YIELD］は、止めない「超」エネルギーカードを"
+             "下限で確かめられなければ、山札にあるかもしれないカードにレインボーエネルギーがあれば RB2、なければ PW3（どちらも持ち主が知っている集合で決まる）"),
+     "fix_sites": [("kyuura_engine/effects.py SearchEvolutionCardToHand.check_usable・BenchBasicsFromDeckOnEntry.accept_problem・SearchNamedTrainerOnEntry.accept_problem・"
+                    "SearchDeckWithBenchLettersToHand.check_usable・CoinAttachEnergyFromDeckToOwnPokemon.check_usable・CoinAttachFromDeckOnEntry.accept_problem")],
+     "fix_limitations": [*V147_LOWER_BOUND_LIMITS,
+                         "ファイヤーブーストは、レインボーエネルギーがサイドにだけあっても止める（保守的な制限）",
+                         ("たねポケモンの少ないデッキ（v0.43 の L43 はたねポケモン 8 枚）では、サイドがうら 6 枚の間はてしたをよぶをほとんど使えない（v0.43 の組の 48 局のポケモン育て屋さんの"
+                          "経路 2 回は、どちらも使わない答えになった）")],
+     "reachability": {"status": "constructed_board",
+                      "evidence": ["tests/test_deck_content_prechecks_v0_147.py（TwinTest。対象 1 枚が山札／サイド。修正の前の木で受理／PW3 など）", "docs/deck-content-prechecks-v0.147.md 2 章"],
+                      "note": "合法な操作の列（new_game から）での双子の再現はしていない"},
+     "impact": "カードを使わずに（拒否は状態を変えない）、山札に対象のカードがあるか（＝サイドにあるか）を知れた。使う機会の答えは、拒否のあと「使わない」を答え直せた",
+     "play_groups": ["5"], "mode_policy": "両モードで直した（モードによらない不具合）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
+    {"id": "PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE", "entry_kind": "silent_information_leak", "status": "active", "classification": "A",
+     "found_in": "v0.147 の作業（使う前の確かめの横断で、ワザの宣言の前の先読みも山札を読むことを確かめた。基点 b155a7d）",
+     "summary": "山札から進化カードを重ねるワザ（たきのぼりしんかなど）の宣言の拒否（DV2・GV1）が、進化カードが山札とサイドのどちらにあるかで変わる。理由の文に山札の進化カードの uid を書く",
+     "trigger": ("ワザの宣言の前の先読み（resolution/preflight）が、resolution/programs.py の山札から重ねる要素（EvolveFromDeck.run・たきのぼりしんかの run・進化の歌の _pokemon_problem）の"
+                 "deck_evolution_permission_pairs・deck_evolution_devolved_pairs（実際の山札）を通り、問いがあれば宣言を拒否する"),
+     "related_cards": ["PMCG4-020"], "related_codes": ["UNRESOLVED_EVOLVE_AFTER_DEVOLUTION", "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK"],
+     "reachability": {"status": "constructed_board",
+                      "evidence": [("tests/test_deck_content_prechecks_v0_147.py（RemainingAttackLeakTest。ギャラドスを退化スプレーではがしたコイキング（ロケット団）。見えないギャラドス 1 枚が"
+                                    "山札／サイド。たきのぼりしんかの宣言が UNRESOLVED_EVOLVE_AFTER_DEVOLUTION／受理）"), "docs/deck-content-prechecks-v0.147.md 4 章"],
+                      "note": ("合法な操作の列での再現はしていない。H1（HP）・PW4（場に出たときの特殊能力）・NB2（ベイビィ）など、同じ要素の山札の中身を読むほかの問いはプローブしていない"
+                               "（v0.105 の self_deck_evolution_open_question は、必ず重ねるワザの問いを山札によらず決めるが、任意のワザの組で止める経路は変えていない）")},
+     "impact": "ワザを使わずに（拒否は状態を変えない）、山札に進化カードがあるかと、その uid を知れる",
+     "play_groups": ["5"], "mode_policy": "両モードで塞ぐ候補（修正は別の作業。v0.147 では、ワザの先読みの経路は範囲が広がるので変えていない）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
+]
+
 # 分類の後の更新（基点・集計の履歴は BASE・COUNTS_AT_CLASSIFICATION に残し、書き換えない）
 UPDATES = [
     {"version": "0.137.0", "work": "情報漏れ 2 件の修正（PSP-ST1-DECK-ORACLE・PSP-FC1-ENERGY-ARK-ORACLE）", "document": "docs/deck-search-oracle-v0.137.md",
@@ -712,6 +944,63 @@ UPDATES = [
                          "conventions の user_ids（簡略ルールの 4 対象を登録と同じ 1 つずつに直した）", "decision_status（DEC-STRICT-DEFINITION は agreed、DEC-EXISTING-USER-SPECS は partly_agreed）"],
      "new_entries": ["mode_agreements（AGR-MODE-* の 6 項目）", "判断事項 8 つ（DEC-RULESET-VERSIONING ほか。docs/ruleset-mode-decisions.md）"],
      "unchanged": "停止コード・事例・問題の項目・族・安全境界・方針の案は変えていない。エンジン・既存のテスト・カードデータ・保存形式は変えていない"},
+    {"version": "0.142.0", "work": "規約集合の識別・版の管理の確定と、共通処理基盤 S1（規約集合を対戦へ渡し状態に持つ。今の挙動の集合だけ）",
+     "document": "docs/ruleset-foundation-v0.142.md",
+     "base": {"commit": "0a3ee994f3d9a89a5e3a536e7b0ab9be9900a5fa", "branch_of_base": "claude/play-policy-family-plan（v0.141 の 8164194 と共通規約の設計案を含む。main には未取り込み）"},
+     "approval": ("利用者の承認は ruleset_agreements の 7 項目（2026-11-04。エンジンの設計方針）。DEC-RULESET-IDENTITY・DEC-RULESET-VERSIONING・DEC-MODE-CHANGE-DURING-GAME・"
+                  "DEC-LEGACY-STATES は agreed、DEC-PLAY-DEBUG-PARTIAL・DEC-PLAY-CONFIG-INCOMPLETE-START は partly_agreed。個々の続行規約・共通規約の案 27 件・未承認の仮定は採用していない"),
+     "changed_entries": ["decision_status（上の 6 つ）", "停止箇所の行番号（エンジンの編集で動いただけ）"],
+     "new_entries": ["ruleset_agreements（AGR-RULESET-* の 7 項目）", "UNSUPPORTED_CONVENTION_SET（PF-RUNTIME-DATA。状態の規約集合を扱えないときの拒否）"],
+     "unchanged": "研究の停止コード・事例・問題の項目・族・安全境界・規約（conventions）・方針の案は変えていない。止め方・乱数・選択肢は変えていない"},
+    {"version": "0.143.0", "work": "S2a の続行規約 5 件の採用・実装（開発用の部分的な集合 CS-KYUURA-PLAY-S2A@1）",
+     "document": "docs/play-policy-s2a-v0.143.md",
+     "base": {"commit": "7b1d2dd471675adb9f981d5846c8a21d6d245286", "branch_of_base": "claude/play-policy-s2a-spec（v0.142 の fcb8bc8 と S2a の仕様案を含む。main には未取り込み）"},
+     "approval": ("利用者の採用は continuation_agreements の 6 項目（2026-11-04。続行側の集合の規約の採用で、公式の裁定・kyuura の研究上の解決ではない）。DEC-MULLIGAN-COMPENSATION・"
+                  "DEC-PLAY-AS-POKEMON・DEC-SLEEP-COIN-ORDER・DEC-STATED-COUNT-SHORT・DEC-KNOCKOUT-READINGS を partly_agreed（続行側の対象の場面だけ）にした。厳密側・ほかの未決の場面・"
+                  "未承認の仮定は変えていない"),
+     "changed_entries": ["decision_status（上の 5 つと DEC-PLAY-DEBUG-PARTIAL・DEC-PLAY-CONFIG-INCOMPLETE-START の経過）",
+                         "UNRESOLVED_MULLIGAN_COMPENSATION・UNRESOLVED_PLAY_AS_POKEMON_SETUP の事例の sites（手書きの行番号をやめ、今のコードから求める）", "停止箇所の行番号（エンジンの編集で動いただけ）"],
+     "new_entries": ["continuation_agreements（AGR-PLAY-S2A-* の 6 項目）", "事例 UNRESOLVED_PLAY_AS_POKEMON_SETUP#setup-placement（準備の配置の拒否）"],
+     "unchanged": "研究の停止コードは active のまま（停止コードを修正済みにしない。厳密側では今のまま止まる）。族・安全境界・規約（conventions）・方針の案は変えていない"},
+    {"version": "0.144.0", "work": "SC2 の状態の整合の不具合の修正（両モード共通）と、［ポイズンミスト］とどくの量（PO1〜PO3）の続行規約の仕様案",
+     "document": "docs/sc2-integrity-fix-v0.144.md",
+     "base": {"commit": "7548ba46b37142983414688a215f4cbdef45161e", "branch_of_base": "claude/play-policy-s2a-impl（v0.143 の最後。main には未取り込み）"},
+     "approval": ("利用者の指示は作業の進め方（SC2 の不具合の修正・PO1〜PO3 の仕様案の作成・lockstep の記録の技術課題の記録）だけ（2026-11-05）。PO1〜PO3・TK1・SC2 の裁定、"
+                  "仕様案（docs/poison-mist-play-policy-spec.md。proposal・not_approved）の中身は承認されていない"),
+     "changed_entries": ["UNRESOLVED_SCRAM_POWER_RESTORED の current_stop（ポケモンチェックの HALTED の箇所 procedures._knockout_scram_restored_stop が加わった。コードは同じ）",
+                         "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"],
+     "new_entries": ["PSP-SC2-POKEMON-CHECK-INTEGRITY（fixed。v0.143 で見つけた両モード共通の不具合）"],
+     "unchanged": ("研究の停止コード（SC2 の UNRESOLVED_SCRAM_POWER_RESTORED・PO1〜PO3 を含む）は active のまま。止めるコードは同じで、止める位置だけがダメージの前になった。"
+                   "族・規約・判断事項・方針の案・合意の記録は変えていない。PO の規約は登録していない")},
+    {"version": "0.145.0", "work": "PO1〜PO3 の続行規約 3 件の採用・実装（開発用の部分的な集合 CS-KYUURA-PLAY-PO@1）",
+     "document": "docs/poison-mist-play-po-v0.145.md",
+     "base": {"commit": "f03238c39067502909dbfccb46ace3e8f0b6ca96", "branch_of_base": "claude/sc2-integrity-poison-mist-spec（v0.144。S2a と PO の仕様案を含む。main には未取り込み）"},
+     "approval": ("利用者の採用は continuation_agreements の AGR-PLAY-PO-* の 4 項目（2026-11-05。続行側の集合の規約の採用で、公式の裁定・kyuura の研究上の解決ではない）。"
+                  "DEC-DAMAGE-READINGS・DEC-TEXT-READINGS・DEC-LASTING-READINGS を partly_agreed（続行側の対象の場面だけ）にした。厳密側・S2a の集合・#power-lost・ほかの未決の場面は変えていない"),
+     "changed_entries": ["decision_status（上の 3 つ）", "停止箇所の行番号（エンジンの編集で動いただけ）"],
+     "new_entries": ["continuation_agreements（AGR-PLAY-PO-* の 4 項目。項目ごとの出典 source）",
+                     "事例 UNRESOLVED_POISON_MIST_SOURCE#source-left・#power-lost（PO3 を 2 つに分けた）"],
+     "unchanged": "研究の停止コードは active のまま（厳密側・S2a の集合では今のまま止まる）。族・安全境界・規約（conventions）・方針の案は変えていない"},
+    {"version": "0.146.0", "work": "プレイ用集合の検証基盤（比較の記録の規約集合）・キョウの忍者ジムの情報漏れの修正（両モード共通）・PO の集合の境界の検証",
+     "document": "docs/play-set-verification-v0.146.md",
+     "base": {"commit": "e7661495c5bba4ab14087a58f70281a6d11c5e6a", "branch_of_base": "claude/poison-mist-play-po（v0.145 の最後。main には未取り込み）"},
+     "approval": ("利用者の指示は作業の進め方（比較・再生の記録の規約集合・忍者ジムの漏れの修正・PO の集合の境界の検証）だけ（2026-11-05）。新しい続行規約は採用していない。"
+                  "NJ1 の研究上の問い（対象がないときに使えるか）は決めない"),
+     "changed_entries": ["停止箇所の行番号（エンジンの編集で動いただけ）"],
+     "new_entries": ["PSP-NJ1-NINJA-GYM-ORACLE（fixed。共通規約の設計案の調査で見つけ、台帳に未登録だった情報漏れ）"],
+     "unchanged": ("研究の停止コード（NJ1 の UNRESOLVED_NINJA_GYM_WITHOUT_TARGET を含む）は active のまま。止めるコードは同じで、止める条件が配分を読まない下限になった。"
+                   "PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE は active、PSP-DECK-CONTENT-PRECHECKS は unverified のまま（この版では直していない）。"
+                   "族・規約・判断事項・方針の案・合意の記録は変えていない")},
+    {"version": "0.147.0", "work": "秘密の山札の内容で使う前の受理・拒否・理由が変わる処理の調査・修正（両モード共通）", "document": "docs/deck-content-prechecks-v0.147.md",
+     "base": {"commit": "b155a7de8365909b3d57a5d85551d614027a59c1", "branch_of_base": "claude/play-set-verification-ninja-gym（v0.146 の最後。main には未取り込み）"},
+     "approval": ("利用者の指示は作業の進め方（秘密の山札の内容で使う前の受理・拒否・理由が変わる処理を一つの単位として調べ、同じ原因・共通処理で安全に直せるものを直す）だけ（2026-11-05）。"
+                  "新しい続行規約は採用していない。PW3・DV2・GV1・RB2・GG1・H1 の研究上の問いは決めない"),
+     "changed_entries": ["PSP-INCREASE-ENTRY-PW3-ORACLE（fixed）", "PSP-COCOON-DV2-ORACLE（fixed）", "PSP-DECK-CONTENT-PRECHECKS（fixed。v0147_followup）",
+                         "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK#coin-evolve-self-from-deck（secret_dependency を owner_known_pool に。sites を今のコードから求める）",
+                         "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"],
+     "new_entries": ["PSP-POWER-PRECHECK-DECK-ORACLE（fixed。同じ横断で見つけた 6 クラス）", "PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE（active。修正していない）"],
+     "unchanged": ("研究の停止コード（PW3・DV2・GV1・RB2・GG1・H1 を含む）は active のまま。止めるコードは同じで、止める条件が配分を読まない確かめになった。"
+                   "族・規約・判断事項・方針の案・合意の記録は変えていない")},
 ]
 # 分類の時点（基点 3e25ac5）の集計（counts）の写し。今の counts は現行コードから作り直した値
 COUNTS_AT_CLASSIFICATION = {"research_stop_codes": 316, "runtime_codes_outside_table": 40, "runtime_codes_outside_table_active": 39, "test_tool_only_codes": 8, "cases": 15, "codes_with_cases": 7, "problems_new": 4, "problems_from_inventory": 28, "conventions": 18, "internal_guard_sites_current": 602, "internal_guard_sites_matched_to_inventory": 600, "internal_guard_sites_new_since_inventory": ["kyuura_engine/engine.py:445", "kyuura_engine/resolution/programs.py:10739"], "safety_boundaries": 8, "families": 23, "decisions": 29, "by_reachability": {"constructed_board": 145, "legal_sequence": 25, "static_only": 185}, "by_family": {"PF-COPY-TRANSFORM": 34, "PF-DAMAGE-SCOPE": 22, "PF-EFFECT-TIMING": 13, "PF-ENERGY-TYPE": 21, "PF-ESP-REDO": 4, "PF-HIDDEN-INFORMATION": 8, "PF-HISTORY-LASTING": 20, "PF-KNOCKOUT-TIMING": 15, "PF-POWER-SUPPRESSION": 11, "PF-PROTECTED-TARGET-EFFECT": 12, "PF-REACTION-DURING-PROCESS": 10, "PF-RUNTIME-CONTINUATION": 15, "PF-RUNTIME-COPY-GAPS": 5, "PF-RUNTIME-DATA": 5, "PF-RUNTIME-GENERIC": 1, "PF-RUNTIME-REGISTRY": 7, "PF-RUNTIME-SEARCH-LIMIT": 6, "PF-SETUP-PLAY-AS-POKEMON": 5, "PF-SIMULTANEOUS-ORDER": 26, "PF-STATED-COUNT-SHORT": 11, "PF-TEXT-READING": 34, "PF-UP-TO-ZERO": 13, "PF-USE-WITHOUT-EFFECT": 57}, "by_play_group": {"1": 316, "2": 39, "3": 89, "4": 6, "5": 20, "6": 1}, "by_mechanism": {"answer_rejection": 13, "command_rejection": 339, "deck_validation": 1, "deferred_interruption": 2, "pokemon_check_halt": 10, "setup_halt": 2}, "by_status": {"active": 402, "fixed": 5, "historical": 2, "unverified": 1}, "note": "停止コード・事例・規約・内部ガードは別の数。事例はコードの下位で、コードの数に足さない。棚卸しと同じ項目は独立した不足として数えない"}
@@ -738,7 +1027,13 @@ PROBLEMS = [
      "impact": "カードを使わずに、山札の基本エネルギーカードが 2 枚以上あるかを知れる", "play_groups": ["5", "1"],
      "mode_policy": "両モードで漏れを塞ぐ。数の不足の規約（PF-STATED-COUNT-SHORT）の P-SCS-2 は、この事例では採らない",
      "decision_refs": ["DEC-INFO-LEAK-FIXES", "DEC-STATED-COUNT-SHORT"], "inventory_root_cause": "同上"},
-    {"id": "PSP-DECK-CONTENT-PRECHECKS", "entry_kind": "information_leak_candidate", "status": "unverified", "classification": "A", "found_in": "この分類の作業（静的な横断）",
+    {"id": "PSP-DECK-CONTENT-PRECHECKS", "entry_kind": "information_leak_candidate", "status": "fixed", "classification": "A", "found_in": "この分類の作業（静的な横断）",
+     "fixed_in": "v0.147（docs/deck-content-prechecks-v0.147.md。基点 b155a7d）",
+     "status_basis": ("v0.147 で、横断を accept_problem・check_activation・usage_problem と呼ぶメソッドに広げ、山札だけを読む 8 クラスを比較プローブで確かめて直した"
+                      "（PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-POWER-PRECHECK-DECK-ORACLE）。［うか］の GV1・H1 の経路は比較プローブで確かめていない"
+                      "（漏れとも安全とも数えない。同じ変更で山札を読まない確かめにした）。ワザの宣言の前の先読みの経路は別の項目 PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE（active）"),
+     "v0147_followup": ("docs/deck-content-prechecks-v0.147.md 1 章: 使う前の確かめ 23 のメソッドのうち、山札の枚数・空か・山札とサイドを合わせた集合・公開のおもてのカードだけを読む 15 は配分によらない。"
+                        "山札だけを読む 8 クラス（10 の場面）は、修正の前の木で双子の受理・拒否・コードが違った。v0.146 の忍者ジムは直したもの"),
      "summary": "使う前の確かめ（check_playable・check_usable）が山札の中身を読んで UnsupportedError で止める、ほかの経路（比較プローブはしていない）",
      "trigger": "CoinEvolveSelfFromDeck.check_usable（effects.py:12375。山札の同じ名前のカードで GV1・DV2・UNRESOLVED_EVOLUTION_HP）、BenchNameGroupFromDeckTrainer の bench_entry_unresolved（effects.py:39924。山札の候補のどれもベンチに出すと止めるなら止める）",
      "v0137_followup": ("v0.137 で比較プローブをした: bench_entry_unresolved（遺跡の石版）は受理・コードは配分によらないが、理由の文が山札のカードの名前・uid を書く漏れを確認し、"
@@ -754,6 +1049,9 @@ PROBLEMS = [
      "play_groups": ["5"], "mode_policy": "比較プローブで確かめるまで、漏れとも安全とも数えない", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
     *V137_NEW_FINDINGS,
     *V138_NEW_FINDINGS,
+    *V144_FIXED_DEFECTS,
+    *V146_FIXED_LEAKS,
+    *V147_NEW_FINDINGS,
     {"id": "SUDDEN_DEATH_NOT_IMPLEMENTED", "entry_kind": "nonprefix_stop", "status": "fixed", "classification": "A", "found_in": "v0.133 の棚卸し（P0）",
      "summary": "v0.134 で StartSuddenDeath を加えた。サドン・デスの状態にほかのコマンドを送ると IllegalActionError SUDDEN_DEATH_NOT_STARTED（UnsupportedError ではない）",
      "trigger": "Phase.SUDDEN_DEATH", "related_cards": [], "related_codes": ["SUDDEN_DEATH_NOT_STARTED", "NOT_SUDDEN_DEATH", "UNSUPPORTED_SUDDEN_DEATH_INITIAL_DECK"],
@@ -969,6 +1267,15 @@ TOOL_EVIDENCE_ROOT = pathlib.Path("C:/dev/kyuura-engine-verification")
 OBSERVATION_KEYS = ("halt_codes", "unresolved_rejections")
 LABEL_CODE_RE = re.compile(r"(?:UNSUPPORTED|UNRESOLVED)_[A-Z0-9_]*[A-Z0-9]")  # 道具の記録のキー（stopped_PlayTrainer_UNRESOLVED_… の形）
 TEST_ASSERT_RE = re.compile(r"assert|Raises|\.code\b")  # 表明らしい行（assert・assertRaises・例外の .code を比べる行）。halt_codes などの一覧の行は数えない
+
+
+def _site_line(path: str, needle: str) -> str:
+    """v0.143: ``path`` の中で ``needle`` をちょうど 1 回含む行の ``path:行番号``（事例の止める分岐の行。手書きの行番号が古くならないように、今のコードから求める）。"""
+    lines = (ROOT / path).read_text(encoding="utf-8").splitlines()
+    found = [i for i, line in enumerate(lines, start=1) if needle in line]
+    if len(found) != 1:
+        raise RuntimeError(f"{path} に {needle!r} の行がちょうど 1 つない（{found}）")
+    return f"{path}:{found[0]}"
 
 
 def sha256(path: pathlib.Path) -> str:
@@ -1244,7 +1551,8 @@ def build() -> dict:
                         "current_stop": [{"mechanism": "not_raised", "sites": [], "basis": "エンジンでは投げない"}]})
     for code, case_list in CASES.items():
         for case in case_list:
-            entries.append({"id": f"{code}#{case['case']}", "entry_kind": "case", "parent": code, "status": "active", "condition": case["condition"], "sites": case["sites"],
+            sites = [site() if callable(site) else site for site in case["sites"]]  # v0.143: 今のコードから求める行
+            entries.append({"id": f"{code}#{case['case']}", "entry_kind": "case", "parent": code, "status": "active", "condition": case["condition"], "sites": sites,
                             "secret_dependency": case["secret_dependency"], "note": case["note"]})
     for problem in PROBLEMS:
         record = dict(problem)
@@ -1356,6 +1664,8 @@ def build() -> dict:
                  "mode_policy_status": list(MODE_POLICY_STATUS), "existing_behavior_status": list(EXISTING_BEHAVIOR_STATUS),
                  "entry_status": {"active": "現在有効", "fixed": "修正済み", "historical": "履歴項目", "unverified": "未確認（候補）"}},
         "mode_agreements": {"source": AGREEMENT_SOURCE, "agreements": AGREEMENTS},
+        "ruleset_agreements": {"source": RULESET_AGREEMENT_SOURCE, "agreements": RULESET_AGREEMENTS},
+        "continuation_agreements": {"source": CONTINUATION_AGREEMENT_SOURCE, "agreements": CONTINUATION_AGREEMENTS},
         "mode_definitions": {"strict": next(a["statement"] for a in AGREEMENTS if a["id"] == "AGR-MODE-STRICT"),
                              "play": next(a["statement"] for a in AGREEMENTS if a["id"] == "AGR-MODE-PLAY"),
                              "status": "agreed（AGR-MODE-STRICT・AGR-MODE-PLAY。2026-11-03）",
@@ -1549,6 +1859,23 @@ def agreement_problems(ledger: dict) -> list[str]:
     for a in block.get("agreements", []):
         if not (a.get("statement") and a.get("reading")):
             problems.append(f"{a.get('id')}: 合意の文・読み方がない")
+    ruleset = ledger.get("ruleset_agreements") or {}
+    if (ruleset.get("source") or {}).get("by") != "user" or "公式" not in (ruleset.get("source") or {}).get("not_recorded_as", ""):
+        problems.append("規約集合の設計方針の承認の出典は利用者の指示で、公式の裁定・kyuura の解決として記録しない")
+    for a in ruleset.get("agreements", []):
+        if not (a.get("statement") and a.get("reading")) or a.get("id") in ids:
+            problems.append(f"{a.get('id')}: 設計方針の承認の文・読み方がないか、ID が重複")
+    ids = ids + [a.get("id") for a in ruleset.get("agreements", [])]
+    continuation = ledger.get("continuation_agreements") or {}
+    if (continuation.get("source") or {}).get("by") != "user" or "公式" not in (continuation.get("source") or {}).get("not_recorded_as", ""):
+        problems.append("続行規約の採用の出典は利用者の指示で、公式の裁定・kyuura の解決として記録しない")
+    for a in continuation.get("agreements", []):
+        if not (a.get("statement") and a.get("reading")) or a.get("id") in ids:
+            problems.append(f"{a.get('id')}: 続行規約の採用の文・読み方がないか、ID が重複")
+        own = a.get("source")  # v0.145: 項目ごとの出典（別の依頼で採用した規約）
+        if own is not None and (own.get("by") != "user" or not own.get("on") or "公式" not in own.get("not_recorded_as", "")):
+            problems.append(f"{a.get('id')}: 続行規約の採用の出典は利用者の指示（日付つき）で、公式の裁定・kyuura の解決として記録しない")
+    ids = ids + [a.get("id") for a in continuation.get("agreements", [])]
     statuses = ledger.get("decision_status", {})
     if set(statuses) != set(ledger["decisions"]):
         problems.append("判断事項と判断事項の状態の集合が違う")

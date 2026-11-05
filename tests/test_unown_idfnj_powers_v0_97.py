@@ -233,7 +233,8 @@ def play_i(state, player=0):
 
 class IncreaseTest(unittest.TestCase):
     def test_from_hand_benches_one_unown_from_the_deck_and_shuffles(self):
-        state = board(mon(H.RATTATA), bench=(), hand=(UI,), deck=[UF, W, UN, W, W])
+        # v0.147: 山札のアンノーンを持ち主が確かめられる盤面（サイド 0 枚。サイドがうらのときの配分を読まない下限の境界は tests/test_deck_content_prechecks_v0_147.py）
+        state = board(mon(H.RATTATA), bench=(), hand=(UI,), deck=[UF, W, UN, W, W], prizes=0)
         offered = play_i(state)
         self.assertEqual((offered.decision.kind, offered.decision.min_choices, offered.decision.max_choices), (ENTRY_POWER, 0, 1))
         self.assertEqual(offered.decision.context_value("unresolved_choices", ()), ())
@@ -251,7 +252,7 @@ class IncreaseTest(unittest.TestCase):
         """山札から出した I・E・R には、手札から場に出したときの特殊能力の機会がない（v0.96 の遺跡の石版と同じ）。"""
         for card in (UI, UE, UR):
             with self.subTest(card=card):
-                state = board(mon(H.RATTATA), bench=(), hand=(UI,), deck=[card, W, W])
+                state = board(mon(H.RATTATA), bench=(), hand=(UI,), deck=[card, W, W], prizes=0)  # v0.147: サイド 0 枚
                 used = answer(play_i(state), play_i(state).decision.options)
                 done = answer(used, used.decision.options)
                 self.assertIsNone(done.decision)
@@ -292,8 +293,9 @@ class IncreaseTest(unittest.TestCase):
 
     def test_bench_entry_stops_are_kept(self):
         """まきちらせ!ベトベトガスのはたらく間、特殊能力を持つカードを場に出すと止まる（GG1）。このカード自身も止まるので、使う機会のあとにガスが来たときの確かめ（``accept_problem``）
-        で、山札のアンノーンがどれも出すと止めるカードなら使うを選ぶと止めることを確かめる（v0.96 の遺跡の石版と同じ）。"""
-        state = board(mon(H.RATTATA), bench=(), hand=(UI, H.GOOP_GAS_ATTACK), deck=[UF, W, W])
+        で、山札のアンノーンがどれも出すと止めるカードなら使うを選ぶと止めることを確かめる（v0.96 の遺跡の石版と同じ）。v0.147 から、山札にアンノーンがあることを持ち主が
+        確かめられる盤面（サイド 0 枚）で、ベンチに出しても止めないカードを配分を読まない下限で確かめられない GG1（``bench_entry_unconfirmed``。理由の文は決まった文）。"""
+        state = board(mon(H.RATTATA), bench=(), hand=(UI, H.GOOP_GAS_ATTACK), deck=[UF, W, W], prizes=0)
         rejects(self, apply_kernel(state, PlayTrainer(0, uid(state, H.GOOP_GAS_ATTACK))), PlayBasicToBench(0, uid(state, UI)), GG1)
         declined = answer(play_i(state), ())
         gas = apply_kernel(declined, PlayTrainer(0, uid(declined, H.GOOP_GAS_ATTACK)))
@@ -302,7 +304,7 @@ class IncreaseTest(unittest.TestCase):
 
     def test_erikas_perfume_offers_the_owner(self):
         """エリカの香水（相手の手札のたねポケモンを相手のベンチに出させる）で手札から出た I: 持ち主（相手）に機会があり、持ち主の山札から出す（既存の経路）。"""
-        state = board(mon(H.RATTATA), hand=(H.ERIKAS_PERFUME, W), opponent_hand=(UI, W, W), opponent_deck=[UN, W, W, W])
+        state = board(mon(H.RATTATA), hand=(H.ERIKAS_PERFUME, W), opponent_hand=(UI, W, W), opponent_deck=[UN, W, W, W], opponent_prizes=0)  # v0.147: 持ち主のサイド 0 枚
         step = apply_kernel(state, PlayTrainer(0, uid(state, H.ERIKAS_PERFUME)))
         while step.decision is not None and step.decision.kind != ENTRY_POWER:
             step = answer(step, step.decision.options[:1])
@@ -315,7 +317,7 @@ class IncreaseTest(unittest.TestCase):
         audited(self, done)
 
     def test_invalid_answers_change_nothing(self):
-        state = board(mon(H.RATTATA), bench=(), hand=(UI,), deck=[UF, W, W])
+        state = board(mon(H.RATTATA), bench=(), hand=(UI,), deck=[UF, W, W], prizes=0)  # v0.147: サイド 0 枚
         used = answer(play_i(state), play_i(state).decision.options)
         wrong = next(u for u in used.players[0].deck if used.cards[u].card_id == W)
         rejects(self, used, ResolveDecision(0, used.decision.id, (wrong,)), "INVALID_CHOICE", error=IllegalActionError)
@@ -328,6 +330,7 @@ class IncreaseTest(unittest.TestCase):
 
 class FindJoinTest(unittest.TestCase):
     def find_board(self, deck, bench=None, **kw):
+        kw.setdefault("prizes", 0)  # v0.147: 山札の選べるカードを持ち主が確かめられる盤面（サイド 0 枚。下限の境界は tests/test_deck_content_prechecks_v0_147.py）
         return board(mon(H.RATTATA), bench=bench if bench is not None else (mon(UF), mon(UI), mon(UN), mon(UD)), deck=deck, **kw)
 
     def test_find_reveals_any_trainer_and_shuffles(self):
@@ -349,7 +352,7 @@ class FindJoinTest(unittest.TestCase):
 
     def test_join_picks_basic_or_evolution_cards_only(self):
         deck = [H.RATTATA, H.IVYSAUR, FOSSIL, DOLL, H.POTION, W]
-        state = board(mon(H.RATTATA), bench=(mon(UJ), mon(UO), mon(UI), mon(UN)), deck=deck)
+        state = board(mon(H.RATTATA), bench=(mon(UJ), mon(UO), mon(UI), mon(UN)), deck=deck, prizes=0)  # v0.147: サイド 0 枚
         used = power(state, state.players[0].bench[0].pokemon_id)
         self.assertEqual(sorted(used.cards[o].card_id for o in used.decision.options), sorted([H.RATTATA, H.IVYSAUR]))  # 化石・人形は山札ではトレーナー
         done = answer(used, used.decision.options[:1])
@@ -377,7 +380,7 @@ class FindJoinTest(unittest.TestCase):
         rejects(self, join, UsePokemonPower(0, join.players[0].bench[0].pokemon_id, 0), PW3)
 
     def test_status_does_not_block_but_suppression_does(self):
-        asleep = board(mon(H.RATTATA, sleep=True), bench=(mon(UF), mon(UI), mon(UN), mon(UD)), deck=[H.POTION])
+        asleep = board(mon(H.RATTATA, sleep=True), bench=(mon(UF), mon(UI), mon(UN), mon(UD)), deck=[H.POTION], prizes=0)  # v0.147: サイド 0 枚
         self.assertEqual(power(asleep, asleep.players[0].bench[0].pokemon_id).decision.kind, SEARCH_DECK)
         gas = self.find_board([H.POTION], opponent=mon(H.MUK, evolved_from=H.GRIMER))
         rejects(self, gas, UsePokemonPower(0, gas.players[0].bench[0].pokemon_id, 0), "POWER_SUPPRESSED", error=IllegalActionError)
@@ -388,7 +391,7 @@ class FindJoinTest(unittest.TestCase):
 
         def secret(bench, hidden):
             return place(build_test_state([
-                {"active": mon(H.RATTATA), "bench": list(bench), "hand": [H.LT_SURGES_SECRET_PLAN, hidden], "deck": [H.POTION, W], "prizes": 6},
+                {"active": mon(H.RATTATA), "bench": list(bench), "hand": [H.LT_SURGES_SECRET_PLAN, hidden], "deck": [H.POTION, W], "prizes": 0},  # v0.147: サイド 0 枚
                 {"active": mon(H.RATTATA), "deck": [W] * 10, "prizes": 6}], turn_number=TURN), hidden)
 
         missing = secret((mon(UF), mon(UI), mon(UN)), UD)

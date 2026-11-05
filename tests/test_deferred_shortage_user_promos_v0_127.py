@@ -317,13 +317,14 @@ class FoundationTest(unittest.TestCase):
     def test_checkpoint_only_raises_on_shortage(self):
         fields = {"code": "UNRESOLVED_X", "message": "m", "references": (), "source": "s", "player": 0, "target_owner": 1, "target": 1,
                   "element": "discard_water_energy_cards", "pending": ("p",)}
-        self.assertIsNone(check_quantity(required=2, available=2, **fields))
-        self.assertIsNone(check_quantity(required=0, available=0, **fields))
+        state = dry_board(2)  # v0.143: チェック地点は状態の規約集合を引く（今の挙動の集合。続行規約はない）。処理する数を返す
+        self.assertEqual(check_quantity(state, required=2, available=2, **fields), 2)
+        self.assertEqual(check_quantity(state, required=0, available=0, **fields), 0)
         with self.assertRaises(DeferredShortage) as caught:
-            check_quantity(required=3, available=2, **fields)
+            check_quantity(state, required=3, available=2, **fields)
         self.assertNotIsInstance(caught.exception, UnsupportedError)
         with self.assertRaises(RuntimeError):
-            check_quantity(required=3, available=2, **{**fields, "element": "other"})  # 途中停止を許す要素だけ
+            check_quantity(state, required=3, available=2, **{**fields, "element": "other"})  # 途中停止を許す要素だけ
 
     def test_terminal_state_keeps_coins_and_rng(self):
         state = declare(dry_board(2))
@@ -371,7 +372,7 @@ class FoundationTest(unittest.TestCase):
         data = state_to_dict(halted, format_version=32)
         self.assertEqual(data["halt"]["interruption"]["required"], 2)
         self.assertEqual(data["user_simplifications"], [])
-        self.assertEqual(max(FORMAT_VERSIONS), 34)  # v0.130: 形式 33（所有者の変更）、v0.134: 形式 34（延長戦の区間）を加えた。形式 32 の項目は変わらない
+        self.assertEqual(max(FORMAT_VERSIONS), 35)  # v0.130: 形式 33（所有者の変更）、v0.134: 形式 34（延長戦の区間）、v0.142: 形式 35（規約集合の識別）を加えた。形式 32 の項目は変わらない
         for version in (1, 9, 31):
             with self.assertRaises(ValueError):
                 state_to_dict(halted, format_version=version)

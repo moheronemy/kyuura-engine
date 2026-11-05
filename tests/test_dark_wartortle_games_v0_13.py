@@ -190,7 +190,11 @@ def play_game(seed, *, cure=True, max_steps=10000):
         problems = check_invariants(new)
         if problems:
             raise AssertionError(problems)
-        observed["accepted"] += 1
+        if state.decision is not None and state.decision.kind == "prize_first":
+            # v0.141（docs/prize-order-v0140-cleanup-v0.141.md 3 章）: 先にサイドを取るプレイヤーの決定（prize_first。v0.140）への答えは別に数える（accepted は v0.139 までと同じ操作を数える）
+            observed["prize_first_answered"] += 1
+        else:
+            observed["accepted"] += 1
         observe(state, new, observed)
         commands.append(command)
         state = new
@@ -290,8 +294,9 @@ def count_events(state):
 # 効果がきぜつで消えた 41 回 = 40 + 1）。効果が期限で消えた 358 回・ふきとばしで消えた 3 回。S37（W24 と同じコード）で止めたワザ 34 回
 # （「ほのおのかべ」では 6 回）。「ほのおのかべ」は 28 回はたらき、どれも 10 を返した。
 EXPECTED_COUNTS = {
-    # v0.140（docs/prize-order-user-rule-v0.140.md 7 章）: 両方がサイドを取る 3 回の場面ごとに、先に取るプレイヤーの決定（prize_first）への答えが 1 つ増えた（11281 → 11284）。ほかの数は同じ
-    "accepted": 11284, "attack_おうふくびんた": 334, "attack_こうらがえし": 409, "counterattack_after_shell": 1, "decisive": 99,
+    # v0.140 で accepted が 11281 → 11284（prize_first の答え 3 回）になった。v0.141（docs/prize-order-v0140-cleanup-v0.141.md 3 章）からその答えを prize_first_answered に分けて数え、
+    # accepted は v0.139 までの値にもどす（基点 d631038 の木で同じ seed の対戦を走らせ、答えを除いた操作の列・ログ・ほかの数が同じことを確かめた）
+    "accepted": 11281, "prize_first_answered": 3, "attack_おうふくびんた": 334, "attack_こうらがえし": 409, "counterattack_after_shell": 1, "decisive": 99,
     "effect_added_prevent_damage": 6, "effect_added_retaliation": 52, "effect_added_retaliation_received_damage": 409,
     "effect_removed_prevent_damage_expired": 6, "effect_removed_retaliation_expired": 36, "effect_removed_retaliation_knock_out": 7,
     "effect_removed_retaliation_received_damage_expired": 358, "effect_removed_retaliation_received_damage_forced_switch": 3,

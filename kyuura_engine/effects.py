@@ -9063,6 +9063,12 @@ def _power_zero_cards(detail: str) -> UnsupportedError:
     return UnsupportedError(POWER_ZERO_CARDS_CODE, f"{detail}。{POWER_ZERO_CARDS_REASON}")
 
 
+def _power_deck_target_unconfirmed(what: str) -> UnsupportedError:
+    """v0.147（docs/deck-content-prechecks-v0.147.md 3 章）: 特殊能力の使う前（使う宣言・使う機会の答え）に、山札に ``what`` があることを配分を読まない下限
+    （``deck_lower_bound_where``）で確かめられないときの PW3。理由の文は決まった文（カードの名前・uid・枚数・位置を書かない。実際に山札にない場合と、あっても下限が足りない場合の両方）。"""
+    return _power_zero_cards(f"山札に{what}があることを確かめられない。{DECK_TARGET_UNCONFIRMED_DETAIL}")
+
+
 COIN_CONDITION_TEXTS = {
     # わるいクサイハナ（PMCG4-006）の［くさいかふん］
     CONFUSION: ("自分の番ごとに1回使える。コインを投げて「おもて」なら、相手の対戦ポケモンを「こんらん」状態にする。「うら」なら、自分の対戦ポケモンを「こんらん」"
@@ -9393,8 +9399,9 @@ class SearchEvolutionCardToHand(PowerEffect):
         _require_user_not_asleep_paralyzed_confused(state, use)
         _require_no_choices(use)
         require_power_not_used(state, use)
-        if not deck_evolution_cards(state, use.player):
-            raise _power_zero_cards("山札に進化カードがない（山札が 0 枚を含む）")
+        # v0.147（docs/deck-content-prechecks-v0.147.md。PSP-DECK-CONTENT-PRECHECKS）: 配分を読まない下限で確かめる（v0.146 までは実際の山札の進化カードを読んだ）
+        if deck_lower_bound_where(state, use.player, lambda uid: state.card_def(uid).is_evolution_pokemon) < 1:
+            raise _power_deck_target_unconfirmed("進化カード")
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
         push_power_decision(state, use, kind=SEARCH_DECK, player=use.player, options=deck_evolution_cards(state, use.player))
@@ -9691,8 +9698,16 @@ class BenchBasicsFromDeckOnEntry(EntryPower):
     def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
         if len(state.players[use.player].bench) >= bench_limit(state, use.player):
             return _power_zero_cards("ベンチに空きがない")
-        if not deck_basic_pokemon(state, use.player, text_era(use.key.card_id)):
-            return _power_zero_cards("山札にたねポケモンがない（山札が 0 枚を含む）")
+        # v0.147（docs/deck-content-prechecks-v0.147.md。PSP-DECK-CONTENT-PRECHECKS）: 山札にたねポケモンがあることを配分を読まない下限で確かめる（v0.146 までは実際の山札を読んだ）。
+        # たねポケモンか決まらないカード（neo の説明のベイビィポケモンカード。NB1）は、山札にあるかもしれないカードにあれば止める（uid の小さい順の最初のカードの id。配分によらない）
+        era = text_era(use.key.card_id)
+        pokemon = [uid for uid in possible_deck_cards(state, use.player) if state.card_def(uid).category == "pokemon"]
+        undecided = [uid for uid in pokemon if card_is_basic_in_text(state.card_def(uid), era) is None]
+        if undecided:
+            return neo_basic_baby_error(f"山札のたねポケモン（カード {state.card_def(undecided[0]).id}）")
+        if deck_lower_bound_where(state, use.player, lambda uid: state.card_def(uid).category == "pokemon"
+                                  and card_is_basic_in_text(state.card_def(uid), era) is True) < 1:
+            return _power_deck_target_unconfirmed("たねポケモン")
         return None
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
@@ -10735,6 +10750,13 @@ def rainbow_cards_in(state: GameState, uids: Iterable[int]) -> list[int]:
 
 def rainbow_attach_error(energy_type: EnergyType, cards: Iterable[int]) -> UnsupportedError:
     return UnsupportedError(RAINBOW_ATTACH_CODE, f"レインボーエネルギー {list(cards)}: {RAINBOW_ATTACH_REASON.format(type=energy_type.ja)}")
+
+
+def rainbow_possible_in_deck_error(energy_type: EnergyType) -> UnsupportedError:
+    """v0.147（docs/deck-content-prechecks-v0.147.md 3 章）: 山札からつける効果の使う前に、山札にあるかもしれないカード（``possible_deck_cards``）にレインボーエネルギーがあるときの RB2。
+    理由の文は決まった文（カードの uid・枚数・位置を書かない。サイドにあって山札にない場合も含む保守的な制限）。"""
+    return UnsupportedError(RAINBOW_ATTACH_CODE, f"山札にレインボーエネルギーがあるかもしれない（山札とサイドの見えないカードの配分を読まずに、ないと確かめられない。"
+                                                 f"情報漏れを防ぐための保守的な制限。v0.147）: {RAINBOW_ATTACH_REASON.format(type=energy_type.ja)}")
 
 
 def attach_from_hand_problem(state: GameState, player: int, card: int, target: PokemonInPlay) -> tuple[str, str] | None:
@@ -12376,16 +12398,29 @@ class CoinEvolveSelfFromDeck(PowerEffect):
         _require_user_not_asleep_paralyzed_confused(state, use)
         _require_no_choices(use)
         require_power_not_used(state, use)
-        cards = [uid for uid in state.players[use.player].deck if state.card_def(uid).name_ja == self.name]
+        # v0.147（docs/deck-content-prechecks-v0.147.md 3 章。PSP-COCOON-DV2-ORACLE）: 使う前（コインの前）の確かめは、実際の山札ではなく、山札にあるかもしれないカード
+        # （``possible_deck_cards``。持ち主が知っている集合）で行う。v0.146 までは実際の山札の「(name)」を読み、山札とサイドの配分で受理・拒否が変わった
+        cards = [uid for uid in possible_deck_cards(state, use.player) if state.card_def(uid).name_ja == self.name]
         if deck_evolution_permission_pairs(state, use.player, (use.pokemon_id,), cards):
             # GV1（v0.45 から停止コード。このカードは「サカキの」ポケモンではなく許可を受けないので、今の対応カードでは［うか］からは起こらないが、つきのちからと
-            # 同じ問いなので同じコードで止める）
+            # 同じ問いなので同じコードで止める）。山札にあるかもしれないカードに組があれば止める（保守的）
             raise UnsupportedError(PERMISSION_FROM_DECK_STOP_CODE, _PERMISSION_FROM_DECK_DETAIL)
         if deck_evolution_devolved_pairs(state, use.player, (use.pokemon_id,), cards):
-            raise UnsupportedError(DEVOLVED_THIS_TURN_CODE, DEVOLVED_THIS_TURN_REASON)  # v0.50: 今の番に退化したこのカード（DV2。コインの前）
-        candidates = self._candidates(state, use)
-        if candidates and len(self._hp_blocked(state, use, candidates)) == len(candidates):
-            raise UnsupportedError("UNRESOLVED_EVOLUTION_HP", EVOLUTION_HP_REASON)  # 「おもて」なら必ず止める（コインの前に止める）
+            # v0.50: 今の番に退化したこのカード（DV2。コインの前）。v0.147: 山札にあるかもしれないカードに組があれば止める（サイドにある場合も含む保守的な制限）
+            raise UnsupportedError(DEVOLVED_THIS_TURN_CODE, DEVOLVED_THIS_TURN_REASON)
+        _, user = state.find_pokemon(use.pokemon_id)
+
+        def fits(uid: int) -> bool:
+            definition = state.card_def(uid)
+            return (definition.category == "pokemon" and definition.is_evolution_pokemon and definition.supported and definition.name_ja == self.name
+                    and evolution_block(state, user, definition, from_deck=True) is None)
+
+        possible = [uid for uid in cards if fits(uid)]
+        if self._hp_blocked(state, use, possible) and deck_lower_bound_where(
+                state, use.player, lambda uid: fits(uid) and user.damage < evolution_hp(state, user, uid)) < 1:
+            # 「おもて」なら止めるカードを選ぶしかないかもしれない（コインの前に止める）。v0.147: 止めるカードが山札にあるかもしれず、止めないカードが山札にあることを配分を読まない
+            # 下限で確かめられなければ止める（v0.146 までは実際の山札の候補がどれも止めるときだけ。実際には止めないカードが山札にある場合も含む保守的な制限）
+            raise UnsupportedError("UNRESOLVED_EVOLUTION_HP", EVOLUTION_HP_REASON)
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
         if _power_coin(state, use) is not CoinSide.HEADS:
@@ -12459,8 +12494,9 @@ class SearchNamedTrainerOnEntry(EntryPower):
                                  tuple(t.format(name=self.name) for t in CALL_FOR_BOSS_TEXTS))
 
     def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
-        if not deck_named_trainer_cards(state, use.player, self.name):
-            return _power_zero_cards(f"山札に「{self.name}」がない（山札が 0 枚を含む）")
+        # v0.147（docs/deck-content-prechecks-v0.147.md。PSP-DECK-CONTENT-PRECHECKS）: 配分を読まない下限で確かめる（v0.146 までは実際の山札を読んだ）
+        if deck_lower_bound_where(state, use.player, lambda uid: state.card_def(uid).category == "trainer" and state.card_def(uid).name_ja == self.name) < 1:
+            return _power_deck_target_unconfirmed(f"「{self.name}」")
         return None
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
@@ -17185,6 +17221,16 @@ def deck_lower_bound_where(state: GameState, player: int, predicate: Callable[[i
     return max(0, known - len(elsewhere))
 
 
+def possible_deck_cards(state: GameState, player: int) -> tuple[int, ...]:
+    """v0.147（docs/deck-content-prechecks-v0.147.md 3 章）: プレイヤー ``player`` の山札にあるかもしれないカード（uid の小さい順）。山札のすべてのカード（おもてのカードを含む）と、
+    山札の外の見えないカード（``unseen_card_pool`` の 2 つめ。うらのサイド・持ち主に見えない置いておくカード）を合わせたもの。
+
+    合わせたカードの集合は持ち主が知っている（``unseen_card_pool`` の説明と、おもての山札のカード）ので、山札とサイドの配分によらない。山札にあると止めるカードの「あるかもしれない」
+    （ある 1 枚でもあれば止める保守的な確かめ）に使う。並びは uid の小さい順で、山札の並び・配分を写さない。実際に山札にあるかは分からない（サイドにあっても含む）。"""
+    _, elsewhere = unseen_card_pool(state, player)
+    return tuple(sorted((*state.players[player].deck, *elsewhere)))
+
+
 # v0.137: 山札に選べるカードが（決まった枚数）あると、見えないカードの配分を読まずに確かめられないとき、使う前に止める理由の文の後半（ST1・FC1 の共通。docs/deck-search-oracle-v0.137.md）。
 # 実際の山札の中身・サイドとの配分によらない決まった文（カードの名前・枚数・位置を書かない）
 DECK_TARGET_UNCONFIRMED_DETAIL = (
@@ -20232,6 +20278,28 @@ def scram_restored_error(pokemon_ids) -> UnsupportedError:
     return UnsupportedError(SCRAM_RESTORED_CODE, f"ポケモン {list(pokemon_ids)}: {SCRAM_RESTORED_REASON}")
 
 
+def scram_restored_by_leaving(state: GameState, gone_ids) -> tuple[int, list[int]] | None:
+    """v0.61（SC2）・v0.144: ``gone_ids`` のポケモンがきぜつの処理で場をはなれると、残りHPが［ずらかる］の数で力が消えていた場のポケモンの力がもどる（かがくへんかガスの発生源が
+    すべて ``gone_ids`` の中）なら、最初のそのポケモンの (番号, 発生源の番号)。なければ None。状態を変えない。
+
+    きぜつの判定の窓の問い（``resolution.kernel.scram_restored_question``）と、ポケモンチェックのダメージの前の確かめ（``procedures._pokemon_check_plan``。v0.144）が同じ判定を使う。
+    まきちらせ!ベトベトガス・オールクリアのワザを使っているあいだ（v0.91）・やみのはどう（v0.92）の抑止はきぜつで消えないので見ない。"""
+    from .continuous import field_powers_suppressed, suppressors_of
+
+    gone_ids = set(gone_ids)
+    if field_powers_suppressed(state):
+        return None
+    for _, pokemon, slot in scram_slots(state):
+        if pokemon.pokemon_id in gone_ids or not scram_due(state, pokemon, slot) or scram_working(state, pokemon, slot):
+            continue
+        if not slot.effect.is_able(pokemon):
+            continue
+        sources = suppressors_of(state, slot.power)
+        if sources and all(pid in gone_ids for pid in sources):
+            return pokemon.pokemon_id, list(sources)
+    return None
+
+
 def scram_unsettled(state: GameState) -> list[int]:
     """v0.61: 残りHPが［ずらかる］の数で、力がはたらいている場のポケモンの番号（処理の決まった時点のあとに残っていればエンジンの不具合。SC2 は ``scram_restored``）。"""
     return [pokemon.pokemon_id for _, pokemon, slot in scram_slots(state) if scram_due(state, pokemon, slot) and scram_working(state, pokemon, slot)]
@@ -21236,8 +21304,11 @@ class CoinBenchOwnerBasicFromDeckStadium(StadiumEffect):
 
     - 選べるものは、山札の、名前が「(``owner``)の」で始まるたねポケモンのカード（``CardFilter("basic_pokemon", name_prefix=…)``。山札にある間の印刷の定義。進化カード・ほかの
       名前のたねポケモンは選べない。uid の小さい順で、山札の並びを決定に写さない）
-    - 山札に選べるカードがない・ベンチに空きがない（``stadiums.bench_limit``）ときは NJ1（コインの前。ほかのカードの「ベンチに空きがない時、使えない」を写さない）。
-      まきちらせ!ベトベトガスのはたらく間の特殊能力を持つカードは GG1（選べるが選ぶと止める。どれもそうならコインの前）
+    - ベンチに空きがない（``stadiums.bench_limit``）ときは NJ1（コインの前。ほかのカードの「ベンチに空きがない時、使えない」を写さない）。山札に選べるカードがあることは、
+      v0.146 から配分を読まない下限（``deck_target_lower_bound``。本人に見えない自分のカードのうち選べるカードの枚数 − サイドなど山札の外の見えないカードの枚数）で確かめ、
+      1 より少なければ NJ1（実際には山札にある場合も含む保守的な制限。v0.145 までは実際の山札を読んだ。PSP-NJ1-NINJA-GYM-ORACLE）。
+      まきちらせ!ベトベトガスのはたらく間の特殊能力を持つカードは GG1（選べるが選ぶと止める。ベンチに出しても止めないカードが山札にあることを、同じく配分を読まない下限
+      ``bench_entry_unconfirmed`` で確かめられなければコインの前に止める。理由の文は決まった文）
     - 「おもて」なら、ちょうど 1 枚（決定 ``BENCH_FROM_DECK``。再開先 ``"stadium"``。段階 ``ninja_gym``。任意なのはコインを投げることで、出す数は省略できない）→ 手札を通さずに
       ベンチへ（``zones.bench_from_deck``。場に出た番は今の番で、その番には進化できない。手札から出したことにしない。ログ ``stadium_bench_from_deck`` は公開）→ 山札を 1 回切る。
       「うら」なら何もしない（山札を切らない）
@@ -21276,14 +21347,22 @@ class CoinBenchOwnerBasicFromDeckStadium(StadiumEffect):
     def check_activation(self, state, player, energy, stadium):
         _no_stadium_choice(energy)
         _check_stadium_use_count(state, player, stadium, once_stated=True)
-        candidates = self.candidates(state, player)
-        if not candidates or not bench_has_room(state, player):
+        if not bench_has_room(state, player):
             raise UnsupportedError(NINJA_GYM_WITHOUT_TARGET_CODE, NINJA_GYM_WITHOUT_TARGET_REASON)
-        for card in candidates:
-            placed_entry_power_guard(state, card)  # 場に出たときの特殊能力を持つたねポケモンは写しにない（来たらエンジンの不具合）
-        blocked, error = self._blocked(state, candidates)
-        if len(blocked) == len(candidates):
-            raise error
+        # v0.146（docs/play-set-verification-v0.146.md 3 章。PSP-NJ1-NINJA-GYM-ORACLE）: 山札に選べるカードがあることを、配分を読まない下限（``deck_target_lower_bound``）で
+        # 確かめる。v0.145 までは実際の山札の候補を読んだので、キョウのたねポケモンが山札とサイドのどちらにあるかが、使う前の受理・NJ1 で分かった（コインの前。状態を変えない拒否なので
+        # くりかえせた）。ST1（v0.137）・遺跡の石版（v0.138）と同じ確かめ方。NJ1 の研究上の問い（対象がないときに使えるか）は決めない
+        if deck_target_lower_bound(state, player, self.target()) < 1:
+            raise UnsupportedError(NINJA_GYM_WITHOUT_TARGET_CODE, f"{NINJA_GYM_WITHOUT_TARGET_REASON}。{DECK_TARGET_UNCONFIRMED_DETAIL}")
+        _, elsewhere = unseen_card_pool(state, player)
+        for card in (*state.players[player].deck, *elsewhere):
+            if self.target().matches(state.card_def(card)):
+                placed_entry_power_guard(state, card)  # 場に出たときの特殊能力を持つたねポケモンは写しにない（来たらエンジンの不具合。山札とサイドの配分によらず確かめる）
+        # v0.146: ベンチに出しても止めない（GG1）カードが山札にあることも、配分を読まない下限で確かめる（v0.145 までは実際の山札の候補がどれも止めるかを読み、理由の文に最後に
+        # 確かめた山札のカードの名前・uid を書いた。v0.138 の遺跡の石版と同じ修正）
+        problem = bench_entry_unconfirmed(state, player, self.target())
+        if problem is not None:
+            raise problem
 
     def activate(self, state, player, energy, stadium):
         if not _stadium_coin(state, player, stadium):
@@ -35167,9 +35246,10 @@ class CoinAttachFromDeckOnEntry(EntryPower):
         return problems
 
     def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
-        rainbow = rainbow_cards_in(state, state.players[use.player].deck)
-        if rainbow:
-            return rainbow_attach_error(self.energy_type, rainbow)
+        # v0.147（docs/deck-content-prechecks-v0.147.md。PSP-DECK-CONTENT-PRECHECKS）: 山札にあるかもしれないカード（持ち主が知っている集合）にレインボーエネルギーがあれば止める
+        # （v0.146 までは実際の山札を読み、配分で受理・拒否が変わり、理由の文に uid を書いた）
+        if rainbow_cards_in(state, possible_deck_cards(state, use.player)):
+            return rainbow_possible_in_deck_error(self.energy_type)
         return None
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
@@ -40151,13 +40231,13 @@ class BenchNameGroupFromDeckOnEntry(EntryPower):
         return deck_cards_matching(state, player, CardFilter("basic_pokemon", name_group=self.group))
 
     def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
-        options = self.candidates(state, use.player)
-        if not options:
-            return _power_zero_cards(f"［INCREASE］で、山札に「{self.group}」がない（山札 0 枚を含む。kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例）")
-        blocked, code, reason = bench_entry_unresolved(state, options)
-        if len(blocked) == len(options):
-            return UnsupportedError(code, f"山札の「{self.group}」がどれも、ベンチに出すと止めるカード: {reason}")
-        return None
+        # v0.147（docs/deck-content-prechecks-v0.147.md。PSP-INCREASE-ENTRY-PW3-ORACLE）: 山札に選べるカードがあること・ベンチに出しても止めないカードがあることを、配分を読まない
+        # 下限で確かめる（v0.137 の ST1・v0.138 の遺跡の石版・v0.146 の忍者ジムと同じ共通処理）。v0.146 までは実際の山札の候補を読み、配分で受理・拒否が変わり、
+        # どれも止めるときの理由の文に最後に確かめた山札のカードの名前・uid を書いた
+        target = CardFilter("basic_pokemon", name_group=self.group)
+        if deck_target_lower_bound(state, use.player, target) < 1:
+            return _power_deck_target_unconfirmed(f"「{self.group}」（［INCREASE］。kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例）")
+        return bench_entry_unconfirmed(state, use.player, target)
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
         problem = self.accept_problem(state, use)
@@ -40251,8 +40331,9 @@ class SearchDeckWithBenchLettersToHand(PowerEffect):
         _require_no_choices(use)
         require_power_not_used(state, use)
         require_bench_letters(state, use, self.letters, self.group)  # v0.98: ［GIVE］と共通にした（動きは v0.97 と同じ）
-        if not self.options(state, use):
-            raise _power_zero_cards("山札に選べるカードがない（山札 0 枚を含む。kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例）")
+        # v0.147（docs/deck-content-prechecks-v0.147.md。PSP-DECK-CONTENT-PRECHECKS）: 配分を読まない下限で確かめる（v0.146 までは実際の山札を読んだ）
+        if deck_target_lower_bound(state, use.player, self.target) < 1:
+            raise _power_deck_target_unconfirmed("選べるカード（kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例）")
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
         push_power_decision(state, use, kind=SEARCH_DECK, player=use.player, options=self.options(state, use))
@@ -40512,14 +40593,18 @@ class CoinAttachEnergyFromDeckToOwnPokemon(PowerEffect):
         require_power_not_used(state, use)
         if self.letters:
             require_bench_letters(state, use, self.letters, self.bench_group)
-        cards, rainbow = self.cards(state, use.player)
         targets, hidden = self.targets(state, use.player)
-        if not cards:
-            raise _power_zero_cards("山札に選べるエネルギーカードがない（山札 0 枚を含む。kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例の形）")
+        # v0.147（docs/deck-content-prechecks-v0.147.md。PSP-DECK-CONTENT-PRECHECKS）: 山札に選べて止めないカード（``energy`` のカード）があることを配分を読まない下限で確かめる。
+        # 確かめられないとき、山札にあるかもしれないカードにレインボーエネルギー（選べるが選ぶと止める。RB2）があれば RB2、なければ PW3（どちらも持ち主が知っている集合で決まる）。
+        # v0.146 までは実際の山札の候補を読み、配分で受理・拒否・コードが変わり、RB2 の理由の文に uid を書いた
+        confirmed = deck_target_lower_bound(state, use.player, self.energy) >= 1
+        rainbow_possible = self.energy.energy_type is not None and bool(rainbow_cards_in(state, possible_deck_cards(state, use.player)))
+        if not confirmed and not rainbow_possible:
+            raise _power_deck_target_unconfirmed("選べるエネルギーカード（kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例の形）")
         if not targets:
             raise _power_zero_cards("自分の場に、エネルギーカードをつけられるポケモンがいない（kyuura の UQ-CARD-USE-WITHOUT-TARGET の事例の形）")
-        if len(rainbow) == len(cards):
-            raise rainbow_attach_error(self.energy.energy_type, rainbow)
+        if not confirmed:
+            raise rainbow_possible_in_deck_error(self.energy.energy_type)
         if len(hidden) == len(targets):
             from .errors import HiddenPropertyRead
 
@@ -46077,6 +46162,9 @@ POISON_MIST_SOURCE_CODE = "UNRESOLVED_POISON_MIST_SOURCE"  # PO3
 POISON_MIST_SOURCE_REASON = (
     "［ポイズンミスト］を使ったポケモンが場をはなれた・その特殊能力が消えた（かがくへんかガス・退化など）あとも、「次の自分の番の始めまで」の効果が続くか（説明は「ねむり・マヒ・"
     "こんらん」状態で効果が消えることだけを書く）は、印刷の文面・kyuura の記録から決められない（効果が続くかで量が変わるときだけ止める。PO3。QK1 と同じ形の、別の特殊能力の問い）")
+# v0.145（docs/poison-mist-play-po-v0.145.md）: PO3 の事例（停止の方針の台帳の UNRESOLVED_POISON_MIST_SOURCE の下位）。続行規約 PC-POISON-MIST-SOURCE-LEFT@1 は ``source-left`` だけ
+POISON_MIST_SOURCE_LEFT_CASE = "source-left"  # 記録の発生源（場の番号）のポケモンが、ポケモンチェックの時点で場にいない
+POISON_MIST_POWER_LOST_CASE = "power-lost"  # 発生源は場にいるが、記録に中断がある（特殊能力が消えた・消えていた。続行側でも止める）
 
 
 @dataclass(frozen=True)
@@ -46176,13 +46264,20 @@ class PoisonCheckAmount:
     cards: tuple[int, ...]
     mists: tuple[int, ...]
     multiplier: int
+    # v0.145: 量を決めた続行規約の場面（停止コード, 事例）。規約の順（発生源 → 当てはまる相手 → 順番）。空なら規約を使っていない（厳密側と同じ量・記録）
+    conventions: tuple[tuple[str, str | None], ...] = ()
+    ended: tuple[int, ...] = ()  # v0.145: PC-POISON-MIST-SOURCE-LEFT で当てはめなかった記録の発生源の場の番号（規約を当てたときだけ）
 
 
-def _poison_orders(state: GameState, pokemon: PokemonInPlay, special: int | None, multiplier: int, mist: int | None) -> dict[tuple[str, ...], tuple[int, int, tuple[int, ...]]]:
+def _poison_orders(state: GameState, pokemon: PokemonInPlay, special: int | None, multiplier: int, mist: int | None,
+                   *, fixed_order: bool = False) -> dict[tuple[str, ...], tuple[int, int, tuple[int, ...]]]:
     """v0.119: どくの量を変える効果の当てはめ方（順番。効果の名前の並び）ごとの (受けるダメージ, 鋼エネルギーの前の量, 減らしたカード)。基本は通常のどくの 10（p.322）。効果は、特殊などくの
     決まった量（``special``。その数にする）・ダメージカウンターの数にかける数（``multiplier``）・［ポイズンミスト］（``mist``。その数にする）・鋼エネルギー（受けるダメージの「-10」）。
     特殊などく・［ポイズンミスト］は鋼エネルギーより先（v0.78 からの既存の量の扱い。特殊などくの説明と［ポイズンミスト］の説明は同じ「受ける「どく」のダメージは」の書き方）。ほかの順番は
-    決めない（並べかえのすべて）。最初の並びは、鋼エネルギーを最後に当てはめる並び（記録に書く値）。"""
+    決めない（並べかえのすべて）。最初の並びは、鋼エネルギーを最後に当てはめる並び（記録に書く値）。
+
+    v0.145（PC-POISON-AMOUNT-ORDER@1。``fixed_order``）: どく状態の性質（特殊などく・かける数）→ ［ポイズンミスト］→ 鋼エネルギーの並びだけ。性質の 2 つ（特殊などくとかける数）の
+    あいだの順番は決めない（今の写しでは同時に持たない）。"""
     per = state.rules.damage_per_counter
     steps = []
     if special is not None:
@@ -46197,6 +46292,10 @@ def _poison_orders(state: GameState, pokemon: PokemonInPlay, special: int | None
         names = tuple(name for name, _ in order)
         if any(name in names and names.index(name) > names.index("metal") for name in ("special", "mist")):
             continue
+        if fixed_order and any(name in names and "mist" in names and names.index(name) > names.index("mist") for name in ("special", "multiply")):
+            continue
+        if fixed_order and "multiply" in names and names.index("multiply") > names.index("metal"):
+            continue
         value, before, cards = 10, 10, ()
         for name, amount in order:
             if name == "metal":
@@ -46210,6 +46309,48 @@ def _poison_orders(state: GameState, pokemon: PokemonInPlay, special: int | None
     return found
 
 
+def _poison_outcome(state: GameState, pokemon: PokemonInPlay, special: int | None, multiplier: int, amount: int | None, working: list, left: list, lost: list,
+                    fixed: frozenset[str]) -> tuple:
+    """v0.145: 読み方の組ごとの量を求め、決まらなければ ("halt", 停止コード, 文)、決まれば ("amount", (受けるダメージ, 鋼エネルギーの前, 減らしたカード), 当てはめた記録の発生源)。
+    状態を変えない。
+
+    ``fixed`` は続行規約で決めた問い（``"source"``: 発生源が場にいない記録は当てはめない・``"targets"``: 使う前からどく状態のポケモンにも当てはめる・``"order"``: 量を変える効果の順番）。
+    空なら v0.119 からの厳密側の判断と同じ（読み方の組を調べる順・止める順・文・記録に書く値）。決まらない記録は、``"source"`` がなければ場にいない記録と力の消えた記録を一組で、
+    あれば力の消えた記録だけで比べる。"""
+    unsure = [r for r in state.poison_mists if r in lost or ("source" not in fixed and r in left)]  # 記録の並び（v0.119 と同じ順）
+    earlier_options = (True,) if "targets" in fixed else (True, False)
+    results = {}
+    for earlier in earlier_options:
+        for unsure_on in ((False, True) if unsure else (False,)):
+            used = [r for r in working + (unsure if unsure_on else []) if earlier or pokemon.pokemon_id not in r.poisoned_before]
+            found = _poison_orders(state, pokemon, special, multiplier, amount if used else None, fixed_order="order" in fixed)
+            values = {value for value, _, _ in found.values()}
+            if len(values) > 1:
+                if "order" in fixed:
+                    raise RuntimeError(f"特殊などくの量とかける数を同時に持つどく状態（ポケモン {pokemon.pokemon_id}）の量の順番が決まらない（今の写しでは起こらない。エンジンの不具合）")
+                shown = {"→".join(names): value for names, (value, _, _) in found.items()}
+                return "halt", POISON_CHANGE_ORDER_CODE, f"{POISON_CHANGE_ORDER_REASON}。ポケモン {pokemon.pokemon_id}・当てはめ方ごとの量 {shown}"
+            results[(earlier, unsure_on)] = (next(iter(found.values())), tuple(r.pokemon_id for r in used))
+    finals = {key: canonical[0] for key, (canonical, _) in results.items()}
+    if unsure and any(finals[(earlier, False)] != finals[(earlier, True)] for earlier in earlier_options):
+        return "halt", POISON_MIST_SOURCE_CODE, f"{POISON_MIST_SOURCE_REASON}。ポケモン {pokemon.pokemon_id}・［ポイズンミスト］の記録 {[r.pokemon_id for r in unsure]}"
+    if "targets" not in fixed and finals[(True, False)] != finals[(False, False)]:
+        return "halt", POISON_MIST_EARLIER_CODE, (f"{POISON_MIST_EARLIER_REASON}。ポケモン {pokemon.pokemon_id}（当てはめる {finals[(True, False)]}・当てはめない "
+                                                  f"{finals[(False, False)]}）")
+    # どの読み方・当てはめ方でも量は同じ。記録には、鋼エネルギーを最後に当てはめる並び（既存の順番）の値を書き、当てはめた［ポイズンミスト］は、使う前からどく状態のポケモンをふくめない
+    # 読み方（``"targets"`` で決めたなら、ふくめる読み方）で当てはまるもの（量を変えたかによらない）
+    canonical, used = results[(earlier_options[-1], False)]
+    return "amount", canonical, used
+
+
+# v0.145: 続行規約を試す順（発生源 → 当てはまる相手 → 順番）。(問い, 停止コード, 事例)
+_POISON_CONTINUATIONS = (
+    ("source", POISON_MIST_SOURCE_CODE, POISON_MIST_SOURCE_LEFT_CASE),
+    ("targets", POISON_MIST_EARLIER_CODE, None),
+    ("order", POISON_CHANGE_ORDER_CODE, None),
+)
+
+
 def poison_check_amount(state: GameState, owner: int, pokemon: PokemonInPlay) -> PoisonCheckAmount:
     """v0.119（docs/damage-reactions-poison-sleep-v0.119.md 5 章）: ポケモンチェックの 2 の「どく」で ``pokemon``（持ち主 ``owner``。どく状態）が受けるダメージ。実際の処理
     （``procedures.pokemon_check_poison``）と、その前の確かめ（KA1・きぜつ・［ずらかる］・PK1 の見積もり）が同じ問い合わせを使う（どくの量を直接読まない）。状態を変えず、乱数を使わない。
@@ -46217,7 +46358,13 @@ def poison_check_amount(state: GameState, owner: int, pokemon: PokemonInPlay) ->
     - 量を変える効果: どく状態の性質（特殊などくの決まった量・「どくどくエキス」のダメージカウンターの数の倍）・［ポイズンミスト］（今の場の記録。``poison_mists``）・鋼エネルギー（NIP1X-010）
     - 当てはめる順番で量が変わるなら PO1（``_poison_orders``）、［ポイズンミスト］が使う前からどく状態のポケモンに当てはまるかで変わるなら PO2、使ったポケモンが場をはなれた・特殊能力が
       消えたあとの効果が続くかで変わるなら PO3 で、``UnsupportedError``（呼ぶ側がダメージを与える前に止める）。量が同じなら止めない
-    - 2 つ以上の［ポイズンミスト］は足さない（どれも「20 ダメージになる」）"""
+    - 2 つ以上の［ポイズンミスト］は足さない（どれも「20 ダメージになる」）
+
+    v0.145（docs/poison-mist-play-po-v0.145.md）: 厳密側の判断（続行規約なし）で量が決まれば、それを返す（どの規約集合でも同じ量・記録）。決まらず、状態の規約集合に続行規約があれば、
+    PC-POISON-MIST-SOURCE-LEFT（記録の発生源が場にいない記録は当てはめない。場にいない記録があるときだけ）→ PC-POISON-MIST-TARGETS（ポケモンチェックの時点でどく状態のすべての
+    ポケモンに当てはめる）→ PC-POISON-AMOUNT-ORDER（性質 → ［ポイズンミスト］→ 鋼エネルギー）の順に 1 つずつ加えて求め直し、量が決まったところでやめる。加えた規約のうち、それを
+    除くと結果（停止コード・量）が変わる規約だけを ``conventions`` に入れる（呼ぶ側の実際の処理が規約を当てた記録を書く。先読み・確かめは書かない）。発生源が場にいて力が消えた記録（``power-lost``）で量が変わるなら、
+    続行側でも PO3 で止める。記録は発生源ごと（``PoisonMist`` 1 つずつ）に分けて判断し、場にいない発生源の記録だけを当てはめない（ほかの発生源の記録は消さない）。"""
     poison = pokemon.conditions.poison
     if poison is None:
         raise RuntimeError(f"どく状態でないポケモン {pokemon.pokemon_id} のどくのダメージを求めた（エンジンの不具合）")
@@ -46227,28 +46374,35 @@ def poison_check_amount(state: GameState, owner: int, pokemon: PokemonInPlay) ->
     if any(poison_mist_effect(state, record).amount != amount for record in records):
         raise RuntimeError("量の違う［ポイズンミスト］の記録がある（今の写しでは起こらない。エンジンの不具合）")
     working = [r for r in records if not r.interrupted and poison_mist_working(state, r)]
-    unsure = [r for r in records if r not in working]
+    left = [r for r in records if r not in working and state.find_pokemon(r.pokemon_id) is None]
+    lost = [r for r in records if r not in working and r not in left]
+    def solve(questions: frozenset[str]) -> tuple:
+        return _poison_outcome(state, pokemon, special, poison.multiplier, amount, working, left, lost, questions)
 
-    def outcome(earlier: bool, unsure_on: bool):
-        used = [r for r in working + (unsure if unsure_on else []) if earlier or pokemon.pokemon_id not in r.poisoned_before]
-        found = _poison_orders(state, pokemon, special, poison.multiplier, amount if used else None)
-        values = {value for value, _, _ in found.values()}
-        if len(values) > 1:
-            shown = {"→".join(names): value for names, (value, _, _) in found.items()}
-            raise UnsupportedError(POISON_CHANGE_ORDER_CODE, f"{POISON_CHANGE_ORDER_REASON}。ポケモン {pokemon.pokemon_id}・当てはめ方ごとの量 {shown}")
-        return next(iter(found.values())), tuple(r.pokemon_id for r in used)
+    def result_key(found: tuple) -> tuple:
+        return found[:2] if found[0] == "halt" else ("amount", found[1][:2])  # 止まるなら停止コード、決まるなら (受けるダメージ, 鋼エネルギーの前)
 
-    results = {(earlier, on): outcome(earlier, on) for earlier in (True, False) for on in ((False, True) if unsure else (False,))}
-    finals = {key: canonical[0] for key, (canonical, _) in results.items()}
-    if unsure and (finals[(True, False)] != finals[(True, True)] or finals[(False, False)] != finals[(False, True)]):
-        raise UnsupportedError(POISON_MIST_SOURCE_CODE, f"{POISON_MIST_SOURCE_REASON}。ポケモン {pokemon.pokemon_id}・［ポイズンミスト］の記録 {[r.pokemon_id for r in unsure]}")
-    if finals[(True, False)] != finals[(False, False)]:
-        raise UnsupportedError(POISON_MIST_EARLIER_CODE, f"{POISON_MIST_EARLIER_REASON}。ポケモン {pokemon.pokemon_id}（当てはめる {finals[(True, False)]}・当てはめない "
-                               f"{finals[(False, False)]}）")
-    (value, before, cards), used = results[(False, False)]
-    # どの読み方・当てはめ方でも量は同じ。記録には、鋼エネルギーを最後に当てはめる並び（既存の順番）の値を書き、当てはめた［ポイズンミスト］は、使う前からどく状態のポケモンをふくめない
-    # 読み方で当てはまるもの（量を変えたかによらない）
-    return PoisonCheckAmount(value, before, cards, used, poison.multiplier)
+    fixed: frozenset[str] = frozenset()
+    applied: list[tuple[str, str | None]] = []
+    outcome = solve(fixed)
+    if outcome[0] == "halt":
+        from .conventions import continuation_for
+
+        for question, code, case in _POISON_CONTINUATIONS:
+            if (question == "source" and not left) or continuation_for(state, code, case) is None:
+                continue
+            fixed = fixed | {question}
+            outcome = solve(fixed)
+            if outcome[0] == "amount":
+                break
+        if outcome[0] == "amount":
+            # 量を決めた規約: 加えた規約の組から 1 つを除くと結果（停止コード・量）が変わるもの。最後に加えた規約は、いつも入る（それを除くと止まる）
+            applied = [(code, case) for question, code, case in _POISON_CONTINUATIONS if question in fixed and result_key(solve(fixed - {question})) != result_key(outcome)]
+    if outcome[0] == "halt":
+        raise UnsupportedError(outcome[1], outcome[2])
+    _, (value, before, cards), used = outcome
+    ended = tuple(r.pokemon_id for r in left) if (POISON_MIST_SOURCE_CODE, POISON_MIST_SOURCE_LEFT_CASE) in applied else ()
+    return PoisonCheckAmount(value, before, cards, used, poison.multiplier, tuple(applied), ended)
 
 
 PULL_IN_TEXT = "相手を「ねむり」状態にする。のぞむなら、ダメージと効果を与える前に、相手の控えポケモンを1匹選び、相手と入れ替えてよい。"
@@ -48484,7 +48638,8 @@ class CoinsUntilTailsReturnOpponentActiveEnergyThenEndTurn(TrainerEffect):
     - コインはトレーナーのコイン（``coins.flip_until_tails``。上限なく「うら」まで。ナツメのESPはワザのコインだけなので当たらない）。数えるのはカードの枚数（特殊エネルギーも 1 枚）
     - 「おもて」の数 H ≤ はがせる枚数 N なら、使ったプレイヤーがちょうど H 枚を選び（H < N のときだけ決定 ``RETURN_ENERGY``。H = N はすべて、H = 0 はなし）、相手の手札にもどす
       （トラッシュではない。ログ ``trainer_return_energy`` の ``user``）。そのあと ``END_TURN``（エンジンがこのカードをトラッシュしてから番を終える。H = 0 でも番を終える）
-    - H > N は、もどす前に途中停止（TW1。``interruption.check_quantity``）。もどさず、このカードは使用中のまま（片付けない）、番を終えない
+    - H > N は、もどす前に途中停止（TW1。``interruption.check_quantity``）。もどさず、このカードは使用中のまま（片付けない）、番を終えない。v0.143: 規約集合に PC-COIN-COUNT-SHORT@1
+      があれば途中停止にせず、N 枚すべてを相手の手札にもどしてから、H = N と同じく番を終える
     - 錯乱ジムで相手がかわりに使うと「あなたの番」がどの番か決まらない（CH1。``refers_to_user_turn``）"""
 
     text: str
@@ -48524,13 +48679,14 @@ class CoinsUntilTailsReturnOpponentActiveEnergyThenEndTurn(TrainerEffect):
         from .interruption import RETURN_ENERGY_CARDS_TO_HAND, check_quantity
 
         flips = flip_until_tails(state, use.player, source="trainer", effect=use.card_id, card=use.card)
-        heads = flips.heads
         target = self._target(state, use)
         options = self._returnable(state, use)
-        check_quantity(required=heads, available=len(options), code=THOUGHT_WAVE_SHORT_CODE, message=f"「おもて」{heads}・エネルギーカード {len(options)} 枚: {THOUGHT_WAVE_SHORT_REASON}",
-                       references=("kyuura CR-THOUGHT-WAVE-MACHINE-PROCEDURE", "kyuura UQ-STATED-COUNT-SHORT", "docs/deferred-shortage-user-promos-v0.127.md"),
-                       source=f"{use.card_id}/trainer", player=use.player, target_owner=1 - use.player, target=target.pokemon_id, element=RETURN_ENERGY_CARDS_TO_HAND,
-                       pending=(RETURN_ENERGY_CARDS_TO_HAND, "discard_trainer", "end_turn"))
+        # v0.143: ``heads`` は処理する数（コインの「おもて」の数。PC-COIN-COUNT-SHORT で足りないときは、はがせるエネルギーカードの枚数。コインの結果・ログは変えない）
+        heads = check_quantity(state, required=flips.heads, available=len(options), code=THOUGHT_WAVE_SHORT_CODE,
+                               message=f"「おもて」{flips.heads}・エネルギーカード {len(options)} 枚: {THOUGHT_WAVE_SHORT_REASON}",
+                               references=("kyuura CR-THOUGHT-WAVE-MACHINE-PROCEDURE", "kyuura UQ-STATED-COUNT-SHORT", "docs/deferred-shortage-user-promos-v0.127.md"),
+                               source=f"{use.card_id}/trainer", player=use.player, target_owner=1 - use.player, target=target.pokemon_id, element=RETURN_ENERGY_CARDS_TO_HAND,
+                               pending=(RETURN_ENERGY_CARDS_TO_HAND, "discard_trainer", "end_turn"))
         if heads == 0:
             return END_TURN
         if heads == len(options):

@@ -90,7 +90,7 @@ class CatalogContractTest(unittest.TestCase):
     def test_current_format_and_audit_agree(self):
         # Keep the audit's independently maintained schema check. Deriving its
         # version from the serializer would hide missing audit field coverage.
-        self.assertEqual(LATEST_FORMAT, 34)  # v0.130: 所有者の変更（docs/trade-please-ownership-v0.130.md 7 章）で 33。v0.134: サドン・デスの延長戦の区間（docs/sudden-death-v0.134.md 7 章）
+        self.assertEqual(LATEST_FORMAT, 35)  # v0.130: 所有者の変更（docs/trade-please-ownership-v0.130.md 7 章）で 33。v0.134: サドン・デスの延長戦の区間（docs/sudden-death-v0.134.md 7 章）。v0.142: 規約集合の識別（docs/ruleset-foundation-v0.142.md 7 章）で 35
         self.assertEqual(FORMAT_VERSIONS, tuple(range(1, LATEST_FORMAT + 1)))
 
     def test_target_universe_and_current_unsupported_totals(self):
