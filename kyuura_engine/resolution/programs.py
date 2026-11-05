@@ -4317,6 +4317,33 @@ class EvolveChosenFromDeck(Element):
             return [answer for answer in card_id_answers(run.state, decision, (decision.max_choices,)) if not blocked & set(answer)]
         return [answer for answer in all_answers(decision) if not blocked & set(answer)]
 
+    def _possible_only_stops(self, run: AttackRun, chosen: tuple[int, ...]) -> None:
+        """v0.148（docs/attack-deck-evolution-preflight-v0.148.md 3 章）: 選んだポケモン ``chosen``（重ねる順）のどれかで、山札を見たときに選べるカードがどれも選ぶと止めるもの
+        （H1・場に出たときの特殊能力の PW4）になるかもしれなければ、山札を見る前に止める（``effects.deck_choice_may_only_stop``。配分を読まない）。先に重ねるポケモン k 匹が
+        止めないカードを 1 枚ずつ使うかもしれないので、k + 1 枚を下限で確かめる（``reserve``）。v0.147 までは山札を見たあと（``_next``）に実際の山札の候補で止め、宣言の前の先読みが
+        その枝を試すので、止めるカードが山札とサイドのどちらにあるかによって宣言の受理・拒否が変わった。"""
+        state = run.state
+        for k, pid in enumerate(chosen):
+            found = state.find_pokemon(pid)
+            if found is None or found[0] != run.player:
+                continue
+            target = found[1]
+
+            def fits(uid: int, target: PokemonInPlay = target) -> bool:
+                return E.evolution_card_fits(state, target, uid)
+
+            def hp(uid: int, target: PokemonInPlay = target) -> bool:
+                return target.damage >= E.evolution_hp(state, target, uid)
+
+            def entry(uid: int, hp=hp) -> bool:
+                return not hp(uid) and E.applicable_entry_power(state, uid, from_hand=False) is not None
+
+            if E.deck_choice_may_only_stop(state, run.player, fits, lambda uid, hp=hp, entry=entry: hp(uid) or entry(uid), reserve=k):
+                possible = [uid for uid in E.searchable_deck_cards(state, run.player) if fits(uid)]
+                if any(entry(uid) for uid in possible):
+                    raise run.res.question("entry_power_during_attack", f"場のポケモン {pid}（{E.POSSIBLE_DECK_EVOLUTION_DETAIL}）")
+                raise run.res.question("evolution_hp_every_card", f"場のポケモン {pid}（{E.POSSIBLE_DECK_EVOLUTION_DETAIL}）")
+
     def _next(self, run: AttackRun, remaining: tuple[int, ...], looked: bool) -> bool:
         """選んだポケモン ``remaining`` の順に、山札を見て進化カードを選ぶ決定を出す（出したら True）。すべて終えたら、見たときだけ山札を切る。"""
         state = run.state
@@ -4338,9 +4365,10 @@ class EvolveChosenFromDeck(Element):
             blocked = tuple(uid for uid in candidates if target.damage >= E.evolution_hp(state, target, uid))
             entry = tuple(uid for uid in candidates if uid not in blocked and E.applicable_entry_power(state, uid, from_hand=False) is not None)
             if len(blocked) + len(entry) == len(candidates):
-                if entry:
-                    raise run.res.question("entry_power_during_attack", f"山札の進化カード {list(entry)}")
-                raise run.res.question("evolution_hp_every_card", f"山札の進化カード {list(blocked)}")
+                # v0.148: 選んだときの確かめ（``_possible_only_stops``）を通ったなら、先に重ねたカードを除いても止めないカードが山札に 1 枚以上あるので、ふつうは起こらない。
+                # 先に重ねた進化カードが場の効果を変えて、止める条件が変わった場合だけ。理由の文に山札のカードを書かない
+                question = "entry_power_during_attack" if entry else "evolution_hp_every_card"
+                raise run.res.question(question, f"場のポケモン {pid}（{E.POSSIBLE_DECK_EVOLUTION_DETAIL}）")
             if blocked:
                 extra += (("unresolved_choices", blocked), ("unresolved_code", "UNRESOLVED_EVOLUTION_HP"), ("unresolved_reason", E.EVOLUTION_HP_REASON))
             if entry:
@@ -4361,6 +4389,7 @@ class EvolveChosenFromDeck(Element):
                 )
             order = [p.pokemon_id for p in state.players[run.player].in_play()]
             chosen = tuple(sorted(choices, key=order.index))
+            self._possible_only_stops(run, chosen)
             state.add_event("evolve_targets", player=run.player, pokemon_id=run.fs.frame.source_pid, effect=str(run.key), targets=chosen)
             self._next(run, chosen, False)
             return
@@ -6569,15 +6598,31 @@ class EvolveFromDeck(Element):
     def run(self, run: AttackRun) -> bool:
         if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
             return False
-        permitted = E.deck_evolution_permission_pairs(run.state, run.player)
+        # v0.148（docs/attack-deck-evolution-preflight-v0.148.md。PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE）: 山札を見る前の確かめ（GV1・DV2・どのカードも選ぶと止める H1・PW4）は、
+        # 実際の山札ではなく、山札にあるかもしれないカード（``searchable_deck_cards``。持ち主が知っている集合）と配分を読まない下限で行う。v0.147 までは実際の山札を読み、宣言の前の
+        # 先読み（コインの「おもて」の枝）で、進化カードが山札とサイドのどちらにあるかによって宣言の受理・拒否が変わり、理由の文に山札のカードの uid を書いた
+        possible = E.searchable_deck_cards(run.state, run.player)
+        permitted = E.deck_evolution_permission_pairs(run.state, run.player, None, possible)
         if permitted:
             # v0.44: トレーナー「サカキ」の許可だけで重ねられる組がある（GV1）。重ねられるかで選べるものが変わるので、決定を出す前に止める（v0.45 から停止コード
             # ``UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK``。v0.44 はコードのない問いで、自分の場のサカキのコイキングに許可があると内部エラーになっていた）
-            raise run.res.question("evolution_permission_from_deck", f"山札の進化カードと場のポケモン {list(permitted)}")
-        devolved = E.deck_evolution_devolved_pairs(run.state, run.player)
+            raise run.res.question("evolution_permission_from_deck", E.possible_pair_detail(permitted))
+        devolved = E.deck_evolution_devolved_pairs(run.state, run.player, None, possible)
         if devolved:
             # v0.50: 今の番に退化したポケモンに重ねられる組（DV2）。GV1 と同じく、選べるものが変わるので決定を出す前に止める
-            raise run.res.question("evolve_after_devolution", f"山札の進化カードと場のポケモン {list(devolved)}")
+            raise run.res.question("evolve_after_devolution", E.possible_pair_detail(devolved))
+        possible_map = E.deck_evolution_candidates(run.state, run.player, possible)
+        possible_blocked = tuple(card for card, targets in possible_map.items()
+                                 if len(E.evolution_hp_problem_targets(run.state, card, targets)) == len(targets))
+        possible_entry = E.deck_evolution_entry_cards(run.state, run.player, possible_map, possible_blocked)
+        possible_stops = {*possible_blocked, *possible_entry}
+        if E.deck_choice_may_only_stop(run.state, run.player, lambda uid: E.deck_evolution_candidates(run.state, run.player, (uid,)) != {},
+                                       lambda uid: uid in possible_stops):
+            # どの進化カードも選ぶと止めるかもしれない（v0.42 では、先読みが選べる答えのない決定で内部エラーになっていた。docs/declared-entry-powers-v0.43.md 4.3）。
+            # ``possible_stops`` は、山札にあるかもしれないカード（そのカードの定義と公開の場で決まる）の表。条件は配分を読まない
+            if possible_entry:
+                raise run.res.question("entry_power_during_attack", E.POSSIBLE_DECK_EVOLUTION_DETAIL)
+            raise run.res.question("evolution_hp_every_card", E.POSSIBLE_DECK_EVOLUTION_DETAIL)
         candidates = E.deck_evolution_candidates(run.state, run.player)
         if not candidates:
             run.state.add_event("evolve_from_deck_none", player=run.player, pokemon_id=run.fs.frame.source_pid, effect=str(run.key))
@@ -6590,10 +6635,8 @@ class EvolveFromDeck(Element):
         # v0.86: 重ねられるポケモンがどれも、ほかのポケモンの［れんさしんか］の機会が来るポケモンのカードも同じ（PW4。``effects.deck_evolution_entry_cards``）
         entry = E.deck_evolution_entry_cards(run.state, run.player, candidates, blocked)
         if len(blocked) + len(entry) == len(candidates):
-            # どの進化カードも選ぶと止める（v0.42 では、先読みが選べる答えのない決定で内部エラーになっていた。docs/declared-entry-powers-v0.43.md 4.3）
-            if entry:
-                raise run.res.question("entry_power_during_attack", f"山札の進化カード {list(entry)}")
-            raise run.res.question("evolution_hp_every_card", f"山札の進化カード {list(blocked)}")
+            # v0.148: 上の確かめを通ったなら、止めないカードが山札に 1 枚以上ある（配分を読まない下限）ので起こらない
+            raise RuntimeError(f"山札の選べる進化カードがどれも選ぶと止めるもの（{run.key}。山札を見る前の確かめの漏れ。エンジンの不具合）")
         extra: tuple = ()
         if blocked:
             extra = (("unresolved_choices", blocked), ("unresolved_code", "UNRESOLVED_EVOLUTION_HP"), ("unresolved_reason", E.EVOLUTION_HP_REASON))
@@ -6904,6 +6947,27 @@ class EvolveAttackerFromDeck(Element):
     def candidates(self, run: AttackRun) -> list[int]:
         return E.self_deck_evolution_cards(run.state, run.player, run.attacker(), evolves_from=self.evolves_from, name=self.card_name)
 
+    def _possible_only_stops(self, run: AttackRun, attacker: PokemonInPlay) -> None:
+        """v0.148（docs/attack-deck-evolution-preflight-v0.148.md 3 章）: ``required`` で、山札を見る前に、選べるカードがどれも選ぶと止めるもの（H1・場に出たときの特殊能力の PW4）に
+        なるかもしれなければ止める（``effects.deck_choice_may_only_stop``。配分を読まない）。v0.147 までは実際の山札の候補がどれも止めるときだけ止め、宣言の前の先読みで、止める
+        カードが山札とサイドのどちらにあるかによって宣言の受理・拒否が変わった。"""
+        state = run.state
+
+        def fits(uid: int) -> bool:
+            return E.evolution_card_fits(state, attacker, uid, evolves_from=self.evolves_from, name=self.card_name)
+
+        def hp(uid: int) -> bool:
+            return attacker.damage >= E.evolution_hp(state, attacker, uid)
+
+        def entry(uid: int) -> bool:
+            return not hp(uid) and E.applicable_entry_power(state, uid, from_hand=False) is not None
+
+        if E.deck_choice_may_only_stop(state, run.player, fits, lambda uid: hp(uid) or entry(uid)):
+            possible = [uid for uid in E.searchable_deck_cards(state, run.player) if fits(uid)]
+            if any(entry(uid) for uid in possible):
+                raise run.res.question("entry_power_during_attack", E.POSSIBLE_DECK_EVOLUTION_DETAIL)
+            raise run.res.question("evolution_hp_every_card", E.POSSIBLE_DECK_EVOLUTION_DETAIL)
+
     def _none(self, run: AttackRun, attacker: PokemonInPlay) -> None:
         run.state.add_event("evolve_from_deck_none", player=run.player, pokemon_id=attacker.pokemon_id, effect=str(run.key))
         if not self.shuffle_if_looked or run.state.players[run.player].deck:
@@ -6922,6 +6986,7 @@ class EvolveAttackerFromDeck(Element):
         question = E.self_deck_evolution_open_question(state, run.player, attacker, self.evolves_from)
         if question is not None:
             raise run.res.question(*question)
+        self._possible_only_stops(run, attacker)
         candidates = self.candidates(run)
         if not candidates:
             # 山札を見たが、選べるカードがない。選べるもののない決定を出して答えを待つ（v0.84 の A3）。答えのあとに切る
@@ -6930,9 +6995,8 @@ class EvolveAttackerFromDeck(Element):
         blocked = tuple(uid for uid in candidates if attacker.damage >= E.evolution_hp(state, attacker, uid))
         entry = tuple(uid for uid in candidates if uid not in blocked and E.applicable_entry_power(state, uid, from_hand=False) is not None)
         if len(blocked) + len(entry) == len(candidates):
-            if entry:
-                raise run.res.question("entry_power_during_attack", f"山札の進化カード {list(entry)}")
-            raise run.res.question("evolution_hp_every_card", f"山札の進化カード {list(blocked)}")
+            # v0.148: ``_possible_only_stops`` を通ったなら、止めないカードが山札に 1 枚以上ある（配分を読まない下限）ので起こらない
+            raise RuntimeError(f"山札の選べる進化カードがどれも選ぶと止めるもの（{run.key}。山札を見る前の確かめの漏れ。エンジンの不具合）")
         extra: tuple = ()
         if blocked:
             extra = (("unresolved_choices", blocked), ("unresolved_code", "UNRESOLVED_EVOLUTION_HP"), ("unresolved_reason", E.EVOLUTION_HP_REASON))
@@ -6948,14 +7012,17 @@ class EvolveAttackerFromDeck(Element):
             return self._required_run(run)
         state = run.state
         attacker = run.attacker()
-        cards = [uid for uid in state.players[run.player].deck if state.card_def(uid).evolves_from == self.evolves_from
+        # v0.148（docs/attack-deck-evolution-preflight-v0.148.md。PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE）: 山札を見る前の組（GV1・DV2）の確かめは、実際の山札ではなく、山札に
+        # あるかもしれないカード（``searchable_deck_cards``。持ち主が知っている集合）で行う。v0.147 までは実際の山札の進化カードを読み、宣言の前の先読みで、進化カードが山札と
+        # サイドのどちらにあるかによって宣言の受理・拒否が変わり、理由の文に山札のカードの uid を書いた
+        cards = [uid for uid in E.searchable_deck_cards(state, run.player) if state.card_def(uid).evolves_from == self.evolves_from
                  and (self.card_name is None or state.card_def(uid).name_ja == self.card_name)]
         permitted = E.deck_evolution_permission_pairs(state, run.player, (attacker.pokemon_id,), cards)
         if permitted:
-            raise run.res.question("evolution_permission_from_deck", f"山札の進化カードと場のポケモン {list(permitted)}")
+            raise run.res.question("evolution_permission_from_deck", E.possible_pair_detail(permitted))
         devolved = E.deck_evolution_devolved_pairs(state, run.player, (attacker.pokemon_id,), cards)
         if devolved:
-            raise run.res.question("evolve_after_devolution", f"山札の進化カードと場のポケモン {list(devolved)}")  # v0.50: DV2
+            raise run.res.question("evolve_after_devolution", E.possible_pair_detail(devolved))  # v0.50: DV2
         candidates = self.candidates(run)
         if not candidates:
             self._none(run, attacker)
@@ -9697,11 +9764,14 @@ class OpponentMayDraw(EachPlayerDraws):
 
 
 def baby_evolution_cards_possible(state: GameState, owner: int, pokemon: PokemonInPlay) -> bool:
-    """v0.114: ``owner`` の山札・サイド（持ち主に見えないカード）に、場のベイビィポケモン ``pokemon`` の進化先（印刷の名前）のたねポケモンカードがあるか。"""
+    """v0.114: ``owner`` の山札・サイド（持ち主に見えないカード）に、場のベイビィポケモン ``pokemon`` の進化先（印刷の名前）のたねポケモンカードがあるか。
+    v0.148（docs/attack-deck-evolution-preflight-v0.148.md）: 山札・サイドの代わりに、山札にあるかもしれないカード（``effects.searchable_deck_cards``。山札・うらのサイド・持ち主に
+    見えない置いておくカード。山札にうらのカードがなければ山札だけ）で決める。v0.147 までの山札とサイドを合わせた集合は、持ち主に見えない置いておくカードと山札の配分によって
+    変わりえた（おもてのサイドは山札にないので含めない）。"""
     current = state.card_def(pokemon.card)
     if state.is_face_down(pokemon) or not current.is_baby_pokemon:
         return False
-    hidden = (*state.players[owner].deck, *state.players[owner].prizes)
+    hidden = E.searchable_deck_cards(state, owner)
     return any(state.card_def(uid).is_basic_pokemon and state.card_def(uid).name_ja in current.evolves_to for uid in hidden)
 
 
@@ -9742,15 +9812,19 @@ class EachPlayerEvolvesFromDeck(EachPlayerStep):
         return kind in (EVOLUTION_SONG_POKEMON, SEARCH_DECK, EVOLUTION_HEAL)
 
     def _pokemon_problem(self, run: AttackRun, owner: int, pokemon: PokemonInPlay) -> tuple[str, str] | None:
+        """1 つめの決定（山札を見る前）で、ポケモンを選ぶと止める理由。v0.148（docs/attack-deck-evolution-preflight-v0.148.md。PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE）: 組（GV1・
+        DV2）・ベイビィ（NB2）・どのカードも選ぶと止める（H1・PW4）は、実際の山札ではなく、山札にあるかもしれないカード（``searchable_deck_cards``。持ち主が知っている集合）と
+        配分を読まない下限で決める（v0.147 までは実際の山札（ベイビィは山札とサイド）を読み、選ぶと止めるポケモン・理由の文が配分で変わった。理由の文には山札のカードの uid を書いた）。"""
         state = run.state
-        permitted = E.deck_evolution_permission_pairs(state, owner, (pokemon.pokemon_id,))
+        possible = E.searchable_deck_cards(state, owner)
+        permitted = E.deck_evolution_permission_pairs(state, owner, (pokemon.pokemon_id,), possible)
         if permitted:
             question = QUESTIONS["evolution_permission_from_deck"]
-            return question.code, f"{question.message}（山札の進化カードと場のポケモン {list(permitted)}）"
-        devolved = E.deck_evolution_devolved_pairs(state, owner, (pokemon.pokemon_id,))
+            return question.code, f"{question.message}（{E.possible_pair_detail(permitted)}）"
+        devolved = E.deck_evolution_devolved_pairs(state, owner, (pokemon.pokemon_id,), possible)
         if devolved:
             question = QUESTIONS["evolve_after_devolution"]
-            return question.code, f"{question.message}（山札の進化カードと場のポケモン {list(devolved)}）"
+            return question.code, f"{question.message}（{E.possible_pair_detail(devolved)}）"
         if E.chain_evolution_targets(state, owner, (pokemon.pokemon_id,)):
             # v0.86: 進化させると、そのプレイヤーのほかのポケモンの［れんさしんか］の機会が来る（ワザの最中の宣言。PW4）
             question = QUESTIONS["entry_power_during_attack"]
@@ -9759,11 +9833,20 @@ class EachPlayerEvolvesFromDeck(EachPlayerStep):
         if baby:
             # v0.114（NB2）: 選んだベイビィポケモンから進化する、山札の進化先のたねポケモンカードを、neo の説明の「進化カード」にふくむかは決まらない（UQ-NEO-TEXT-BABY-CATEGORIES）。
             # 山札の中身で受け付けるかを変えないよう、持ち主に見えないカード（山札・サイド）に進化先のたねポケモンカードがあれば、ポケモンを選ぶと止める
-            return E.NEO_EVOLUTION_CARD_BABY_CODE, f"ポケモン {pokemon.pokemon_id}（山札・サイドの進化先のたねポケモンカード）: {E.NEO_EVOLUTION_CARD_BABY_REASON}"
-        cards = evolution_song_cards(state, owner, pokemon)
-        blocked = [card for card in cards if card in self._blocked_cards(run, owner, pokemon, cards)]
-        if cards and len(blocked) == len(cards):
-            return self._card_problem(run, owner, pokemon, blocked[0])
+            return E.NEO_EVOLUTION_CARD_BABY_CODE, f"ポケモン {pokemon.pokemon_id}（山札にあるかもしれない進化先のたねポケモンカード）: {E.NEO_EVOLUTION_CARD_BABY_REASON}"
+
+        def fits(uid: int) -> bool:
+            return E.evolution_card_fits(state, pokemon, uid)
+
+        def stops(uid: int) -> bool:
+            return self._card_problem(run, owner, pokemon, uid) is not None
+
+        if E.deck_choice_may_only_stop(state, owner, fits, stops):
+            stopping = [uid for uid in possible if fits(uid) and stops(uid)]
+            if any(E.applicable_entry_power(state, uid, from_hand=False) is not None and pokemon.damage < E.evolution_hp(state, pokemon, uid) for uid in stopping):
+                question = QUESTIONS["entry_power_during_attack"]
+                return question.code, f"{question.message}（PW4。ポケモン {pokemon.pokemon_id}。{E.POSSIBLE_DECK_EVOLUTION_DETAIL}）"
+            return "UNRESOLVED_EVOLUTION_HP", f"{E.EVOLUTION_HP_REASON}（ポケモン {pokemon.pokemon_id}。{E.POSSIBLE_DECK_EVOLUTION_DETAIL}）"
         return None
 
     def _blocked_cards(self, run: AttackRun, owner: int, pokemon: PokemonInPlay, cards) -> tuple[int, ...]:

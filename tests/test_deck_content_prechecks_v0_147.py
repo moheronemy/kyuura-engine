@@ -365,10 +365,13 @@ class KeptStopsTest(unittest.TestCase):
 
 
 class RemainingAttackLeakTest(unittest.TestCase):
-    """直していない漏れの記録（PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE。docs 4 章）: 山札から進化カードを重ねるワザの宣言の前の先読みは、実際の山札の組で DV2 を確かめる
-    （resolution/programs.py。この版では変えていない）。直したら、このテストを修正の確かめに替える。"""
+    """v0.147 の時点で直していなかった漏れ（PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE。docs 4 章）: 山札から進化カードを重ねるワザの宣言の前の先読みが、実際の山札の組で DV2 を
+    確かめていた（v0.147 では、ギャラドスが山札なら DV2、サイドなら受理。このテストはその漏れを記録していた）。
 
-    def test_waterfall_evolution_declaration_still_depends_on_the_deck(self):
+    v0.148（docs/attack-deck-evolution-preflight-v0.148.md）で直したので、同じ盤面で漏れがないことを確かめる回帰テストに替えた（漏れを正常な仕様として固定しない）。止めるコードは
+    同じ DV2 で、ギャラドスがサイドにだけあっても止める（保守的な制限）。ほかの要素の確かめは tests/test_attack_deck_evolution_preflight_v0_148.py。"""
+
+    def test_waterfall_evolution_declaration_no_longer_depends_on_the_deck(self):
         from kyuura_engine import UseAttack
 
         s = state_of({"active": mon(H.GYARADOS, (W, W, W), evolved_from=[H.ROCKET_MAGIKARP]), "hand": [H.DEVOLUTION_SPRAY], "deck": [H.GYARADOS] + [W] * 5,
@@ -378,9 +381,10 @@ class RemainingAttackLeakTest(unittest.TestCase):
         s = apply_command(s, ResolveDecision(0, s.decision.id, (1,)))
         self.assertEqual(s.cards[s.players[0].active.card].card_id, H.ROCKET_MAGIKARP)
         twin = swap_hidden(s, H.GYARADOS)
-        outcomes = [command_outcome(x, UseAttack(0, 1))[0][:2] for x in (s, twin)]
-        self.assertEqual(outcomes, [("UnsupportedError", DV2), ("accepted",)])
-        self.assertTrue(twin_command_problems([s, twin], [UseAttack(0, 1)], owner_knowledge=True))
+        outcomes = [command_outcome(x, UseAttack(0, 1))[0] for x in (s, twin)]
+        self.assertEqual([o[:2] for o in outcomes], [("UnsupportedError", DV2)] * 2)
+        self.assertEqual(outcomes[0], outcomes[1])  # 理由の文も同じ（山札のカードの uid を書かない）
+        self.assertEqual(twin_command_problems([s, twin], [UseAttack(0, 1)], owner_knowledge=True), [])
 
 
 P_TYPE = E.EnergyType.PSYCHIC

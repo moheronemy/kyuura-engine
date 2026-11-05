@@ -6009,13 +6009,14 @@ class AttachEnergyFromDeckToSelf(AttackEffect):
         return _decision_form(decision, _label(state, use), kind=ATTACH_FROM_DECK, player=use.player, choices=(0, 1), options=candidates)
 
 
-def deck_evolution_candidates(state: GameState, player: int) -> dict[int, list[int]]:
+def deck_evolution_candidates(state: GameState, player: int, cards: Iterable[int] | None = None) -> dict[int, list[int]]:
     """プレイヤーの山札の進化カード（uid の小さい順。山札の並びを決定に写さない）と、そのカードを今重ねられる自分の場のポケモンの番号（バトル場 → ベンチ）
     （v0.42。エリカのピッピの「つきのちから」）。重ねられるかは通常の進化と同じ ``evolution.evolution_block``（おたがいの最初の番・名前・その番の最初から
     場にいたか・段階。p.310。ワザによる進化でも免除しない）。重ねられるポケモンのないカードは含めない。進化したあとの HP がダメージ以下になる組
-    （``UNRESOLVED_EVOLUTION_HP``）は含めたまま（呼ぶ側が選ぶと止める選択にする）。対応していない進化カード（デッキには入らない）は含めない。"""
+    （``UNRESOLVED_EVOLUTION_HP``）は含めたまま（呼ぶ側が選ぶと止める選択にする）。対応していない進化カード（デッキには入らない）は含めない。
+    v0.148: ``cards`` なら、山札の代わりにそのカード（山札を見る前の確かめの、山札にあるかもしれないカード ``searchable_deck_cards``）で同じ表を作る。"""
     found: dict[int, list[int]] = {}
-    for uid in sorted(state.players[player].deck):
+    for uid in sorted(state.players[player].deck if cards is None else cards):
         definition = state.card_def(uid)
         if definition.category != "pokemon" or not definition.is_evolution_pokemon or not definition.supported:
             continue
@@ -17229,6 +17230,61 @@ def possible_deck_cards(state: GameState, player: int) -> tuple[int, ...]:
     （ある 1 枚でもあれば止める保守的な確かめ）に使う。並びは uid の小さい順で、山札の並び・配分を写さない。実際に山札にあるかは分からない（サイドにあっても含む）。"""
     _, elsewhere = unseen_card_pool(state, player)
     return tuple(sorted((*state.players[player].deck, *elsewhere)))
+
+
+def searchable_deck_cards(state: GameState, player: int) -> tuple[int, ...]:
+    """v0.148（docs/attack-deck-evolution-preflight-v0.148.md 3 章）: 山札をさがす効果で、山札から選べるかもしれないカード（uid の小さい順）。山札にうらのカードがあれば
+    ``possible_deck_cards``（山札のすべてのカードと山札の外の見えないカード）、なければ山札のカード（どれもおもてで、山札にあることが分かっている）だけ。
+
+    山札のうらのカードの枚数・おもてのカードは公開なので、どちらを使うかも配分によらない。山札にうらのカードがないとき、サイドなどの見えないカードは山札にありえないので、
+    ``possible_deck_cards`` の保守的な含め方（山札が 0 枚でもサイドのカードを含む）で、使えたはずのワザを止めないようにする。"""
+    deck, _ = unseen_card_pool(state, player)
+    if not deck:
+        return tuple(sorted(state.players[player].deck))
+    return possible_deck_cards(state, player)
+
+
+def deck_choice_may_only_stop(state: GameState, player: int, fits: Callable[[int], bool], stops: Callable[[int], bool], *, reserve: int = 0) -> bool:
+    """v0.148（docs/attack-deck-evolution-preflight-v0.148.md 3 章）: 山札を見て、選べるカード（``fits``）があれば必ず 1 枚を選ぶ決定で、選べるカードが山札にあって、そのどれもが
+    選ぶと止めるもの（``stops``）になる配分が、持ち主の知識と矛盾しないか（真なら、山札を見る前に止める）。
+
+    - 止めるカードが山札にあるかもしれない（``searchable_deck_cards`` に ``fits`` かつ ``stops`` のカードがある）
+    - かつ、止めないカード（``fits`` かつ ``stops`` でない）が山札に ``reserve`` + 1 枚以上あることを、配分を読まない下限（``deck_lower_bound_where``）で確かめられない
+
+    このとき、止めないカードをすべてサイドなど山札の外に置き、止めるカードを山札に置く配分がありうる（下限が 0 なら止めないカードはすべて山札の外に置ける。止めるカードは山札の
+    うらのカードと入れかえられる）。逆に、どちらかが成り立たなければ、どの配分でも止めないカードが山札にあるか、止めるカードが山札にない。結果は持ち主の知っている集合と公開の
+    枚数だけで決まり、実際の配分によらない。実際には止めないカードが山札にあっても止める（保守的）。``reserve`` は、同じ効果で先に山札から重ねるカードの枚数の上限（しんかのほうし。
+    先に重ねたカードが止めないカードを使い切るかもしれない）。
+
+    ``fits``・``stops`` は、カードがどこ（山札・サイド・置いておくカード）にあるかを読まず、カードの定義と公開の状態だけで決まる条件にすること（呼ぶ側の責任）。"""
+    if not any(fits(uid) and stops(uid) for uid in searchable_deck_cards(state, player)):
+        return False
+    return deck_lower_bound_where(state, player, lambda uid: fits(uid) and not stops(uid)) < 1 + reserve
+
+
+def evolution_card_fits(state: GameState, pokemon: PokemonInPlay, card: int, *, evolves_from: str | None = None, name: str | None = None) -> bool:
+    """v0.148: カード ``card`` が、場のポケモン ``pokemon`` に山札から今重ねられる進化カードか（``self_deck_evolution_cards`` の 1 枚ずつの条件。カードの定義と公開の状態だけで決まり、
+    カードがどこにあるかを読まない）。"""
+    definition = state.card_def(card)
+    if definition.category != "pokemon" or not definition.is_evolution_pokemon or not definition.supported:
+        return False
+    if evolves_from is not None and definition.evolves_from != evolves_from:
+        return False
+    if name is not None and definition.name_ja != name:
+        return False
+    return evolution_block(state, pokemon, definition, from_deck=True) is None
+
+
+def possible_pair_detail(pairs: Iterable[tuple[int, int]]) -> str:
+    """v0.148: 山札にあるかもしれない進化カードと場のポケモンの組（GV1・DV2）で止める理由の文の後半。場のポケモンの番号（公開）だけを書き、カードの uid・名前・枚数・位置を書かない。"""
+    pokemon_ids = sorted({pokemon_id for _, pokemon_id in pairs})
+    return f"場のポケモン {pokemon_ids}（{POSSIBLE_DECK_EVOLUTION_DETAIL}）"
+
+
+# v0.148（docs/attack-deck-evolution-preflight-v0.148.md）: 山札から進化カードを重ねる効果を、山札を見る前に止める理由の文の後半。実際の山札の中身・サイドとの配分によらない決まった文
+POSSIBLE_DECK_EVOLUTION_DETAIL = (
+    "山札にあるかもしれない進化カードで決める。山札とサイドの見えないカードの配分を読まない、情報漏れを防ぐための保守的な確かめで、実際には山札にない場合も含む。v0.148"
+)
 
 
 # v0.137: 山札に選べるカードが（決まった枚数）あると、見えないカードの配分を読まずに確かめられないとき、使う前に止める理由の文の後半（ST1・FC1 の共通。docs/deck-search-oracle-v0.137.md）。
