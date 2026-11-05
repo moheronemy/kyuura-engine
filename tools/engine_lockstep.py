@@ -456,6 +456,11 @@ def record_conventions(path: str, games: dict, summary: dict | None, header: dic
         for item in items:
             if "error" in item:
                 continue
+            if "h" not in item:
+                # 拒否された歩（状態がない）は指紋 h も集合の指紋 k も持たない（v0.146 の確かめで分かった。k は h のある歩だけに書く）
+                if "k" in item or "x" in item:
+                    raise RecordFormatError(f"{path}: {game} 歩 {item.get('i')} に、状態の指紋 h がないのに k か x がある")
+                continue
             if item.get("k") != expected:
                 raise RecordFormatError(f"{path}: {game} 歩 {item.get('i')} の集合の指紋 k が見出しの集合と合わない（記録の改変か、集合の違う対戦）")
             if ("h" in item) != ("x" in item) and with_x:

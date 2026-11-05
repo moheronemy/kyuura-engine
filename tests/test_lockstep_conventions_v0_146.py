@@ -34,8 +34,8 @@ CURRENT, S2A, PO = "CS-KYUURA-CURRENT@1", "CS-KYUURA-PLAY-S2A@1", "CS-KYUURA-PLA
 TMP = None
 
 
-def record_args(out, conventions=None, *, save_every=0, digest_format=None, corpus="all"):
-    return argparse.Namespace(root=str(ROOT), route=None, preflight=None, corpus=corpus, modules="test_coin_games", scenarios="basics", seeds=1,
+def record_args(out, conventions=None, *, save_every=0, digest_format=None, corpus="all", modules="test_coin_games"):
+    return argparse.Namespace(root=str(ROOT), route=None, preflight=None, corpus=corpus, modules=modules, scenarios="basics", seeds=1,
                               stress_seeds=1, start=0, steps=120, illegal_rate=0.05, save_every=save_every, timing=False, card_data_commit="",
                               conventions=conventions, digest_format=digest_format, out=str(out))
 
@@ -125,6 +125,27 @@ class RecordFormatTest(unittest.TestCase):
                 summary = lines[-1]
                 self.assertEqual((summary["errors"], summary["record_format"], summary["conventions"]), (0, 2, f"{identity.set_id}@{identity.version}"))
                 self.assertGreater(summary["summary"]["conventions_checked"], len(steps) - 1)
+
+    def test_rejected_steps_carry_no_set_digest(self):
+        """拒否された歩（状態がない）は h も k も持たず、比べられる（v0.146 の確かめの最初の実行で、k を全部の歩に求めて全部の比較を拒否した道具の誤りの再発防止）。
+        拒否された歩に k を書きこんだ記録は改変として拒否する。"""
+        for name, conventions in (("rejects_current", None), ("rejects_po", PO)):
+            with self.subTest(name):
+                source = make(name, conventions, corpus="natural", modules="test_alakazam_games_v0_7")
+                lines = read_lines(source)
+                rejected = [line for line in lines[1:] if line.get("o") not in (None, "ok")]
+                self.assertTrue(rejected)
+                self.assertTrue(all("h" not in line and "k" not in line and "x" not in line for line in rejected))
+                rc, text = compare(source, make(f"{name}_again", conventions, corpus="natural", modules="test_alakazam_games_v0_7"))
+                self.assertEqual(rc, 0, text)
+
+                def k_on_rejected(lines):
+                    next(line for line in lines[1:] if line.get("o") not in (None, "ok"))["k"] = lines[1]["k"]
+                    return lines
+
+                rc, text = compare(source, rewritten(source, f"{name}_k_on_rejected", change_line=k_on_rejected))
+                self.assertEqual(rc, 2, text)
+                self.assertIn("REFUSED 記録の形式", text)
 
     def test_unknown_set_and_unrepresentable_digest_stop_before_recording(self):
         """知らない集合・形式 9 で書き出せない集合は、記録を始める前に止める（推測で既定の集合にしない）。"""
