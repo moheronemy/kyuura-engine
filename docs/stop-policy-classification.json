@@ -17207,7 +17207,7 @@
    ],
    "tests": {
     "assert_like_lines": 15,
-    "mention_lines": 18,
+    "mention_lines": 20,
     "files": [
      "tests/test_barrier_resume_coin_bonus_v0_34.py",
      "tests/test_barrier_resume_coin_bonus_v0_34_games.py",
@@ -17222,15 +17222,15 @@
      "tests/test_heal_counter_status_v0_41_games.py",
      "tests/test_marker_check_field_reset_v0_91.py",
      "tests/test_play_policy_s2a_v0_143.py",
+     "tests/test_po_boundaries_v0_146.py",
      "tests/test_pokemon_check.py",
      "tests/test_pokemon_check_v0_3b.py",
      "tests/test_power_decisions_v0_42_games.py",
      "tests/test_sand_attack_retreat_lock_v0_36_games.py",
      "tests/test_selfdestruct_spread_count_v0_39_games.py",
-     "tests/test_sleep_paralysis_games.py",
-     "tests/test_status_games_v0_3d.py"
+     "tests/test_sleep_paralysis_games.py"
     ],
-    "files_total": 23,
+    "files_total": 24,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -28904,14 +28904,15 @@
     }
    ],
    "tests": {
-    "assert_like_lines": 2,
-    "mention_lines": 2,
+    "assert_like_lines": 3,
+    "mention_lines": 4,
     "files": [
+     "tests/test_po_boundaries_v0_146.py",
      "tests/test_virtual_attacks_transformation_v0_49.py",
      "tests/test_wigglytuff_helping_hand_v0_125.py",
      "tests/v017_games.py"
     ],
-    "files_total": 3,
+    "files_total": 4,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -28927,6 +28928,7 @@
    "reachability": {
     "status": "constructed_board",
     "evidence": [
+     "tests/test_po_boundaries_v0_146.py",
      "tests/test_virtual_attacks_transformation_v0_49.py",
      "tests/test_wigglytuff_helping_hand_v0_125.py",
      "tests/v017_games.py"
