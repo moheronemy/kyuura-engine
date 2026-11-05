@@ -1979,6 +1979,21 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   SX1・TN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形の別のカードの問い）。v0.66 の「ナツメのESPと「うら」が出るまでのコインは起こらない」はエンジンの前提の誤りで、研究の論点ではない（kyuura は
   変えていない）。
 
+## v0.145: PO1〜PO3 の続行規約 3 件の採用・実装
+
+[poison-mist-play-po-v0.145.md](poison-mist-play-po-v0.145.md)。写しの元・研究の基準は kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d` のまま。カードの写し・採用の記録・研究の対応表は
+変えていない。kyuura は読んでいない（変更・コミット・push もしていない）。
+
+- エンジンの事例と kyuura の研究記録の区別: PO1（`UNRESOLVED_POISON_CHANGE_ORDER`）・PO2（`UNRESOLVED_POISON_MIST_EARLIER_POISON`）・PO3（`UNRESOLVED_POISON_MIST_SOURCE`。この版で事例
+  `#source-left`・`#power-lost` に分けた）はエンジンの裁定の記録（docs/damage-reactions-poison-sleep-v0.119.md）で、kyuura の未解決の一覧にない（`not_in_kyuura`）。
+- 採用した 3 規約は、開発用の集合 CS-KYUURA-PLAY-PO@1 だけの続行規約（利用者の指定）で、研究上の解決ではない。厳密側の集合では今までどおり止める。
+- 報告事項（kyuura の作業。この作業では kyuura を変えない）:
+  - PO1〜PO3 の論点は kyuura の未解決の一覧にない。研究として扱うなら、(1) どくの量を変える効果（特殊などくの量・ダメージカウンターの数の倍・［ポイズンミスト］の「20ダメージになる」・
+    鋼エネルギーの「-10」）の当てはめる順番、(2) ［ポイズンミスト］（ES3-007）の「「どく」状態になったポケモン」が使う前からどく状態のポケモンをふくむか、(3) 使ったポケモンが場をはなれた・
+    力が消えた（かがくへんかガス・退化・へんしん）あとに効果が続くか、が論点になる。
+  - エンジンの続行規約（順番: 性質 → ［ポイズンミスト］→ 鋼エネルギー・時点でどく状態のすべてのポケモン・場をはなれたら終わる）は利用者が開発用の集合に採用した扱いで、研究上の解決として
+    写さないこと。#power-lost は扱っていない。
+
 ## v0.144: SC2 の状態の整合の修正と、PO1〜PO3 の続行規約の仕様案
 
 [sc2-integrity-fix-v0.144.md](sc2-integrity-fix-v0.144.md)・[poison-mist-play-policy-spec.md](poison-mist-play-policy-spec.md)。写しの元・研究の基準は kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d` のまま。

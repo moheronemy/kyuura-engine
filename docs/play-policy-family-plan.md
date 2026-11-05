@@ -1073,3 +1073,5 @@ v0.141 の報告の訂正: v0.141 の作業の最後の報告では、停止の�
 - v0.144（[sc2-integrity-fix-v0.144.md](sc2-integrity-fix-v0.144.md)・[poison-mist-play-policy-spec.md](poison-mist-play-policy-spec.md)。2026-11-05）: 両モード共通の不具合（ポケモンチェックのどくのきぜつで［ずらかる］の力がもどる SC2 が StateIntegrityError）を直し、ダメージの前に同じコードで止める。
   台帳から作り直した集計は、SC2 が静的な Halt の場面に加わった差だけ（3 章の 16 → 17・12 → 11）。PO1〜PO3 の続行規約の仕様案（PC-POISON-AMOUNT-ORDER・PC-POISON-MIST-TARGETS・PC-POISON-MIST-SOURCE-LEFT。proposal・未承認）を別の文書にした。
   この文書の候補（PC-LASTING-SOURCE-CHANGE・PC-ORDER-OVERLAP ほか）の状態・記述は変えていない。上の章の案・調査の記録は当時のまま
+- v0.145（[poison-mist-play-po-v0.145.md](poison-mist-play-po-v0.145.md)。2026-11-05）: 別の仕様案の続行規約 3 件（PC-POISON-AMOUNT-ORDER・PC-POISON-MIST-TARGETS・PC-POISON-MIST-SOURCE-LEFT）を利用者が採用し、開発用の集合 CS-KYUURA-PLAY-PO@1 に登録した。この文書の候補ではないので、候補の状態は変えず、場面の行に採用した規約の印を付けた（`SPEC_ADOPTIONS`）。
+  台帳が PO3 を事例（#source-left・#power-lost）に分けたので、PC-LASTING-SOURCE-CHANGE の対象と WG-CHECK-PLAN の場面 ID だけを事例に合わせた（提案の時点の対象は UNRESOLVED_POISON_MIST_SOURCE・partial）。集計は事例を分けた差だけ（場面 401 → 402・個別 155 → 156・対戦全体を止める場面 28 → 29）。PC-LASTING-SOURCE-CHANGE は proposal のまま

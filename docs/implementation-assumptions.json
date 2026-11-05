@@ -49852,6 +49852,17 @@
     "IA-PRIZE-TAKE-ORDER-SIMULTANEOUS-KO"
    ],
    "summary": "v0.140 の後の整理（規約は変えていない）: 旧経路の記録と全体では比べない対戦を、規約の変更が加えた差（決定の番号・first・prize_first の歩）だけに限り、従来の順のやり直しが記録と同じことを求める。対戦のテストの accepted の増加が prize_first の答えの数と同じことを基点の木で確かめ、答えを別に数える。両方が取る並びに first がない状態は、前の版で正しく作った状態と区別できないので、ADD-V0140-UNSUPPORTED-DECISION-FIX の「壊れた状態」ではなく、続けるのに必要な情報の不足として拒否する（StateIntegrityError のまま。文だけ変えた）。比べて観測した差と仕様上起こりうる差（取る順番で後の情報・選択・勝敗が変わりうる）を分けて記録した。この項目の記載・状態・集計・前の追記は元のまま"
+  },
+  {
+   "id": "ADD-V0145-POISON-MIST-PLAY-PO",
+   "kind": "followup",
+   "on": "2026-11-05",
+   "base_commit": "f03238c39067502909dbfccb46ace3e8f0b6ca96",
+   "ref": "docs/poison-mist-play-po-v0.145.md",
+   "item_ids": [
+    "IA-READINGS-DAMAGE-REACTIONS-POISON-SLEEP"
+   ],
+   "summary": "v0.145 で、この項目のどくの量の読み方（特殊などく・［ポイズンミスト］を鋼エネルギーより先・ほかの順番は決めない・2 つ以上を足さない）が止めていた PO1〜PO3 のうち、PO1・PO2・PO3 の #source-left を、利用者が採用した続行規約（PC-POISON-AMOUNT-ORDER@1・PC-POISON-MIST-TARGETS@1・PC-POISON-MIST-SOURCE-LEFT@1）として、開発用の集合 CS-KYUURA-PLAY-PO@1 だけで続ける。厳密側（既定）・S2a の集合の挙動は今のまま止める。2 つ以上の記録を足さないのは v0.119 の扱いのまま（新しい裁定ではない）。PO3 の #power-lost は続行側でも止める。この項目の記載・状態（承認なし）・集計・前の追記は元のまま"
   }
  ]
 }

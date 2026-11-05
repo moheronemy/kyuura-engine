@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.144）
+# 実装状況（v0.1〜v0.145）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d`（v0.128 から。v0.129 の種族の身長の写しは別に `9242b9be89be0f747279f39c11875d1ed61763ec`。v0.126〜v0.127 は `57d01f45cfb8b086d03dc0525b329cf6adeff69b`、v0.125 は `134a664c6adf67d5604148a31b58e1a7d26d4d6d`、v0.124 は `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`、v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3819,6 +3819,19 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 338・neo 154・拡張パック以外 184） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistryTest` |
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.145: ［ポイズンミスト］とどくの量の続行規約 3 件（開発用の部分的な集合 CS-KYUURA-PLAY-PO@1）
+
+[poison-mist-play-po-v0.145.md](poison-mist-play-po-v0.145.md)。利用者の採用（2026-11-05）。公式の裁定・kyuura の研究上の解決ではない（PO1〜PO3 は未解決のまま）。書き出しの形式は 35 のまま。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 集合 CS-KYUURA-PLAY-PO@1（development・halts_at_undecided。今の挙動の 12 件・S2a の 5 規約・PO の 3 規約） | 実装済み・テスト済み | 2 章 | test_poison_mist_play_po_v0_145 `RegistrationTest` |
+| PC-POISON-AMOUNT-ORDER@1（PO1: 性質 → ［ポイズンミスト］→ 鋼エネルギー） | 実装済み・テスト済み（続行側だけ） | 3.1 節 | 同 `ContinuationTest` |
+| PC-POISON-MIST-TARGETS@1（PO2: 時点でどく状態のすべてのポケモン） | 実装済み・テスト済み（続行側だけ） | 3.2 節 | 同 `ContinuationTest` |
+| PC-POISON-MIST-SOURCE-LEFT@1（PO3 の #source-left: 発生源が場をはなれた記録は当てはめない。記録ごと） | 実装済み・テスト済み（続行側だけ） | 3.3 節・4 章 | 同 `ContinuationTest`・`MultipleSourcesTest` |
+| PO3 の #power-lost（発生源が場にいるまま力が消えた記録） | 未決（どの集合でも止める） | 3.3 節 | 同 `UnchangedStopsTest` |
+| 厳密側・S2a の集合の PO1〜PO3 の停止 | 変えていない | 1 章 | 同 `UnchangedStopsTest`・lockstep（10 章） |
 
 ## v0.144: ポケモンチェックの SC2 の状態の整合の修正
 
