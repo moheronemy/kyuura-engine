@@ -21258,8 +21258,11 @@ class CoinBenchOwnerBasicFromDeckStadium(StadiumEffect):
 
     - 選べるものは、山札の、名前が「(``owner``)の」で始まるたねポケモンのカード（``CardFilter("basic_pokemon", name_prefix=…)``。山札にある間の印刷の定義。進化カード・ほかの
       名前のたねポケモンは選べない。uid の小さい順で、山札の並びを決定に写さない）
-    - 山札に選べるカードがない・ベンチに空きがない（``stadiums.bench_limit``）ときは NJ1（コインの前。ほかのカードの「ベンチに空きがない時、使えない」を写さない）。
-      まきちらせ!ベトベトガスのはたらく間の特殊能力を持つカードは GG1（選べるが選ぶと止める。どれもそうならコインの前）
+    - ベンチに空きがない（``stadiums.bench_limit``）ときは NJ1（コインの前。ほかのカードの「ベンチに空きがない時、使えない」を写さない）。山札に選べるカードがあることは、
+      v0.146 から配分を読まない下限（``deck_target_lower_bound``。本人に見えない自分のカードのうち選べるカードの枚数 − サイドなど山札の外の見えないカードの枚数）で確かめ、
+      1 より少なければ NJ1（実際には山札にある場合も含む保守的な制限。v0.145 までは実際の山札を読んだ。PSP-NJ1-NINJA-GYM-ORACLE）。
+      まきちらせ!ベトベトガスのはたらく間の特殊能力を持つカードは GG1（選べるが選ぶと止める。ベンチに出しても止めないカードが山札にあることを、同じく配分を読まない下限
+      ``bench_entry_unconfirmed`` で確かめられなければコインの前に止める。理由の文は決まった文）
     - 「おもて」なら、ちょうど 1 枚（決定 ``BENCH_FROM_DECK``。再開先 ``"stadium"``。段階 ``ninja_gym``。任意なのはコインを投げることで、出す数は省略できない）→ 手札を通さずに
       ベンチへ（``zones.bench_from_deck``。場に出た番は今の番で、その番には進化できない。手札から出したことにしない。ログ ``stadium_bench_from_deck`` は公開）→ 山札を 1 回切る。
       「うら」なら何もしない（山札を切らない）
@@ -21298,14 +21301,22 @@ class CoinBenchOwnerBasicFromDeckStadium(StadiumEffect):
     def check_activation(self, state, player, energy, stadium):
         _no_stadium_choice(energy)
         _check_stadium_use_count(state, player, stadium, once_stated=True)
-        candidates = self.candidates(state, player)
-        if not candidates or not bench_has_room(state, player):
+        if not bench_has_room(state, player):
             raise UnsupportedError(NINJA_GYM_WITHOUT_TARGET_CODE, NINJA_GYM_WITHOUT_TARGET_REASON)
-        for card in candidates:
-            placed_entry_power_guard(state, card)  # 場に出たときの特殊能力を持つたねポケモンは写しにない（来たらエンジンの不具合）
-        blocked, error = self._blocked(state, candidates)
-        if len(blocked) == len(candidates):
-            raise error
+        # v0.146（docs/play-set-verification-v0.146.md 3 章。PSP-NJ1-NINJA-GYM-ORACLE）: 山札に選べるカードがあることを、配分を読まない下限（``deck_target_lower_bound``）で
+        # 確かめる。v0.145 までは実際の山札の候補を読んだので、キョウのたねポケモンが山札とサイドのどちらにあるかが、使う前の受理・NJ1 で分かった（コインの前。状態を変えない拒否なので
+        # くりかえせた）。ST1（v0.137）・遺跡の石版（v0.138）と同じ確かめ方。NJ1 の研究上の問い（対象がないときに使えるか）は決めない
+        if deck_target_lower_bound(state, player, self.target()) < 1:
+            raise UnsupportedError(NINJA_GYM_WITHOUT_TARGET_CODE, f"{NINJA_GYM_WITHOUT_TARGET_REASON}。{DECK_TARGET_UNCONFIRMED_DETAIL}")
+        _, elsewhere = unseen_card_pool(state, player)
+        for card in (*state.players[player].deck, *elsewhere):
+            if self.target().matches(state.card_def(card)):
+                placed_entry_power_guard(state, card)  # 場に出たときの特殊能力を持つたねポケモンは写しにない（来たらエンジンの不具合。山札とサイドの配分によらず確かめる）
+        # v0.146: ベンチに出しても止めない（GG1）カードが山札にあることも、配分を読まない下限で確かめる（v0.145 までは実際の山札の候補がどれも止めるかを読み、理由の文に最後に
+        # 確かめた山札のカードの名前・uid を書いた。v0.138 の遺跡の石版と同じ修正）
+        problem = bench_entry_unconfirmed(state, player, self.target())
+        if problem is not None:
+            raise problem
 
     def activate(self, state, player, energy, stadium):
         if not _stadium_coin(state, player, stadium):
