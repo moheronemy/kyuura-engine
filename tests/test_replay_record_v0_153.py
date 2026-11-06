@@ -427,8 +427,12 @@ class DocumentTest(unittest.TestCase):
                                    "D-VERSIONS"})
         status = {d["id"]: d["status"] for d in spec["decisions"]}
         self.assertEqual((status["D-SNAPSHOT-BASE"], status["D-HALT-SNAPSHOT"]), ("pending", "pending"))
+        # v0.154: 後の承認（ADOPT-U4）で U4 も実装済みになった。v0.153 の採用の記録（ADOPT-U3）が持つのは U3 と 4 つの判断事項だけ
+        u3 = next(a for a in spec["adoptions"] if a["id"] == "ADOPT-U3")
+        self.assertEqual((u3["units"], set(u3["decisions"])), (["U3"], {"D-IMPLEMENTATION-ID", "D-RUNTIME", "D-CHECK-DENSITY", "D-VERSIONS"}))
         units = {u["id"]: u["status"] for u in spec["units"]}
-        self.assertEqual(units, {"U1": "implemented", "U2": "implemented", "U3": "implemented", "U4": "planned", "U5": "planned", "U6": "planned", "U7": "planned"})
+        self.assertEqual(units["U3"], "implemented")
+        self.assertEqual({u for u, st in units.items() if st == "implemented"}, {u for a in spec["adoptions"] for u in a["units"]})
 
 
 if __name__ == "__main__":
