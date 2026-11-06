@@ -438,7 +438,7 @@ class DocumentTest(unittest.TestCase):
     def test_spec(self):
         spec = json.loads(SPEC.read_text(encoding="utf-8"))
         units = {u["id"]: u["status"] for u in spec["units"]}
-        self.assertEqual((units["U5"], units["U6"], units["U7"]), ("implemented", "planned", "planned"))
+        self.assertEqual((units["U5"], units["U7"]), ("implemented", "planned"))  # v0.158: U6 の状態は後の版で変わる（partial・implemented。test_state_snapshot_design が見る）
         # v0.156: D-SNAPSHOT-BASE・D-HALT-SNAPSHOT は、後の原則の採用（ADOPT-U6-PRINCIPLES）だけで決まった（この版の採用では決めていない）
         later = next(a for a in spec["adoptions"] if a["id"] == "ADOPT-U6-PRINCIPLES")
         decided = {d["id"]: d for d in spec["decisions"]}

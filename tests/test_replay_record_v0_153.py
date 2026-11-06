@@ -436,7 +436,8 @@ class DocumentTest(unittest.TestCase):
         self.assertEqual((u3["units"], set(u3["decisions"])), (["U3"], {"D-IMPLEMENTATION-ID", "D-RUNTIME", "D-CHECK-DENSITY", "D-VERSIONS"}))
         units = {u["id"]: u["status"] for u in spec["units"]}
         self.assertEqual(units["U3"], "implemented")
-        self.assertEqual({u for u, st in units.items() if st == "implemented"}, {u for a in spec["adoptions"] for u in a["units"]})
+        # v0.158: 採用の記録の単位には、部分の単位（"U6/S1" の形。U6 は partial）もある。全体を実装した単位だけを比べる
+        self.assertEqual({u for u, st in units.items() if st == "implemented"}, {u for a in spec["adoptions"] for u in a["units"] if "/" not in u})
 
 
 if __name__ == "__main__":
