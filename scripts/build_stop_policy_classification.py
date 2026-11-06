@@ -957,6 +957,49 @@ V149_FIX_POOL = {
                            "修正の前の木（c399045）で、山札と置いておくカードの双子は 4 つとも受理・拒否が違い、山札とサイドの双子は 4 つとも同じ）"),
                           "docs/optional-deck-evolution-presence-v0.149.md 3 章・4 章"],
 }
+V150_FIX_PRESENCE = {
+    "fixed_in": "v0.150（docs/deck-search-decision-presence-v0.150.md 3 章。基点 c4b90b4。v0.149 の最後）",
+    "status_basis": ("v0.150 で漏れを修正。新しい続行規約は採用していない。研究の論点は決めていない。山札にカードがあれば（実際にさがすとき）、選べるカードがなくても決定を出して答えを待つ"
+                     "（v0.84 の A3・v0.149 と同じ）。山札が 0 枚・コインの「うら」・控えがいない・つけられない（クリスタルビーム）など、公開の情報だけで決まる「さがさない」は今までどおり決定を出さない"),
+    "fix": ("resolution/programs.py の BenchFromDeck・RevealPokemonFromDeck・RevealNamedPokemonFromDeck・RevealTrainerFromDeck・ReturnHandThenRevealEnergy（段階 2）・AttachFromDeck・"
+            "AttachFromDeckToBench（両方の順番）と、effects.py の CoinEvolveSelfFromDeck（［うか］）を、山札にカードがあれば選べるカードがなくても決定を出す形にした。必ず選ぶ説明は、選べるものが"
+            "あれば今までどおり（1〜1 など）、なければ選べるもののない決定（0〜0。effects.required_search_choices）。「てよい」の説明は 0〜1 のまま（最大の数を選べるものの数で小さくしない。"
+            "「好きなだけ」「最大N枚」は今までどおり 0〜選べるものの数。選ぶ数は HIDDEN_COUNT_KINDS で決めるプレイヤーだけ）。「てよい」の 0 枚の答えは、選ばなかった・選べるものがなかったを"
+            "同じ公開のログにし（bench_from_deck_declined・reveal_from_deck_declined・attach_energy_from_deck_none）、理由（reason）は本人だけが見る（observation.PRIVATE_FIELDS。"
+            "attach_energy_from_deck_none は declined・no_candidates だけ本人だけ。公開の情報で決まる理由は全員に見える）。必ず選ぶ説明の選べるもののない決定の答えのあとは、今までどおり "
+            "…_none と切る。決定の形の確かめ（各 AttackEffect.decision_problems・CoinEvolveSelfFromDeck.decision_problems）に、選べるもののない決定と、山札が 0 枚のときの決定の禁止"
+            "（effects.empty_search_problems）を加えた"),
+    "fix_sites": [("kyuura_engine/resolution/programs.py BenchFromDeck・RevealPokemonFromDeck・RevealNamedPokemonFromDeck・RevealTrainerFromDeck・ReturnHandThenRevealEnergy・AttachFromDeck・"
+                   "AttachFromDeckToBench（run・resume・dry_choices）"),
+                  "kyuura_engine/effects.py CoinEvolveSelfFromDeck（resolve・resume・decision_problems）・required_search_choices・empty_search_problems・16 の AttackEffect.decision_problems",
+                  ("kyuura_engine/observation.py PRIVATE_FIELDS（bench_from_deck_declined・reveal_from_deck_declined の reason、attach_energy_from_deck_none の reason の一部）・PUBLIC_EVENTS"
+                   "（3 つを移した）")],
+    "path_classification": [
+        ("再現して修正（構築盤面の双子。修正の前の木 c4b90b4 で決定の有無が違った）: BenchFromDeck（bench_from_deck_none の 1 か所。なかまをよぶ 5 枚・たすけをよぶ（闘）・ヤミカラス・"
+        "ハネッコ・いっしょにあそぼ（必ず）・たすけをよぶ（タケシ・カスミ。「てよい」・コイン））、RevealTrainerFromDeck（おつかい 4 枚・おつきみ（「てよい」）・ひらめく（必ず））、"
+        "RevealNamedPokemonFromDeck（くらげのむれ（「てよい」）・りゅうのきずな 2 枚（必ず））、RevealPokemonFromDeck（でんれい。必ず）、ReturnHandThenRevealEnergy（てじなの段階 2。必ず）、"
+        "AttachFromDeck（ひなたぼっこ・じゅうでん 2 枚（「てよい」）・もえあがる 2 枚（必ず）・しおまねき（「最大3枚」。コイン））、AttachFromDeckToBench（エナジーサポート・あたためる。必ず）、"
+        "CoinEvolveSelfFromDeck（［うか］。必ず。v0.149 で再現）"),
+        ("調べた範囲で問題なし（修正の前から決定の有無が山札の中身によらない。v0.84 の A3 の形。双子で確かめた）: AttachFromDeckUpToNamedCount（せいでんき。attach_energy_from_deck_none の 2 か所は"
+        "公開の情報（数 0・つけられない）と 0 枚の答え）、RevealTrainerFromDeck の heads_of（みんなでおどる）。AttachFromDeckByHeads（ゆうでん）・AttachBasicEnergyFromDeckToSelf（はらだいこ）"
+        "の決定の有無も A3 の形（ただし宣言の前の FC1・RB2 が実際の山札を読む。別件 PSP-DECK-SEARCH-STOP-ORACLES）"),
+        ("数え直し: attach_energy_from_deck_none は 6 か所で 5 つの要素（AttachFromDeck._none・AttachFromDeckToBench._none・AttachFromDeckUpToNamedCount の 2 か所・AttachFromDeckByHeads._none・"
+        "AttachBasicEnergyFromDeckToSelf._none）。bench_from_deck_none は 1 か所（BenchFromDeck。12 のワザ）。reveal_from_deck_none は 4 か所（おつかいの RevealTrainerFromDeck を含む。"
+        "v0.149 の「ほかの 3 か所」は RevealPokemonFromDeck・RevealNamedPokemonFromDeck・ReturnHandThenRevealEnergy）。同じ要素を使うワザは 1 つの経路として数えた"),
+    ],
+    "fix_limitations": [
+        ("対戦の流れの変化: 山札にカードがあって選べるカードがないとき、上の経路は決定を 1 つ待つ（v0.149 までは決定なしで進んだ）。対戦の記録のコマンドの並びが 1 つ増える。「てよい」の経路の"
+         "この場合のログは …_none から …_declined（reason no_target。ひなたぼっこ・じゅうでんは attach_energy_from_deck_none の reason no_candidates のまま）に変わった"),
+        "決定の観測は、相手・観戦者には種類と決めるプレイヤーだけ（BENCH_FROM_DECK・SEARCH_DECK・ATTACH_FROM_DECK は HIDDEN_COUNT_KINDS。v0.149 までと同じ）",
+        ("必ず選ぶ経路の答えのあとの結果（出した・加えた・つけた・進化した／しなかった）は、相手・観戦者に見える。選べるカードがあれば必ず選ぶので、この違いは原文の処理が公開する結果"
+         "（v0.84 の A3・v0.149 のつきのちからと同じ区別）で、修正の対象ではない"),
+        "ひなたぼっこ・じゅうでんの理由 declined・no_candidates が相手・観戦者に見えなくなった（公開の情報で決まる理由 attach_prevented・no_bench・no_heads・no_target・no_count は見える）",
+    ],
+    "fix_verification": [("tests/test_deck_search_decision_presence_v0_150.py（18 の経路の双子を 3 つの集合で比べる。山札とサイド・山札と持ち主に見えない置いておくカード（代表 3 つ）。"
+                           "修正の前の木（c4b90b4）で決定の有無が違う）"),
+                          ("tests/test_optional_deck_evolution_presence_v0_149.py OtherDecisionPresenceNoLeakTest（v0.149 の RemainingDecisionPresenceLeakTest。expectedFailure の印を外した）"),
+                          "docs/deck-search-decision-presence-v0.150.md 2 章（経路の表）・4 章（再現）・5 章（検証）"],
+}
 # v0.147 で見つけた項目（docs/deck-content-prechecks-v0.147.md）。使う前の確かめの横断（check_playable・check_usable・accept_problem・check_activation・usage_problem と、そこから呼ぶ同じクラスのメソッド）で
 # 山札の中身を読む 23 のメソッドを挙げ、山札だけを読む 8 クラスを双子の比較プローブで確かめた。v0.138 までに分けた 2 項目のほかの 6 クラスを 1 つの項目にまとめる
 V147_NEW_FINDINGS = [
@@ -1031,8 +1074,10 @@ V149_NEW_FINDINGS = [
                                "山札とサイドだけの双子では、修正の前の木でも 4 つとも同じ（山札とサイドを合わせて読むので配分によらない）")},
      "impact": "カードを使わずに（拒否は状態を変えない）、くすぐりマシーンで置かれた手札の中身（止めるカードがあるか）と山札の中身の関係を知れた。理由の文から見えないカードの uid を知れた",
      "play_groups": ["5"], "mode_policy": "両モードで直した（モードによらない不具合）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
-    {"id": "PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS", "entry_kind": "silent_information_leak", "status": "active", "classification": "A",
-     "found_in": "v0.149 の作業（PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE と同じ形の分岐の横断。基点 c399045）",
+    {"id": "PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS", "entry_kind": "silent_information_leak", "status": "fixed", "classification": "A",
+     "found_in": "v0.149 の作業（PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE と同じ形の分岐の横断。基点 c399045）", **V150_FIX_PRESENCE,
+     "v0150_followup": ("v0.150 で、v0.149 の静的な候補（attach_energy_from_deck_none・bench_from_deck_none・ほかの reveal_from_deck_none）を現行コードで数え直し、呼び出し元ごとに構築盤面の"
+                        "双子で確かめた（path_classification）。v0.149 の summary・trigger・reachability は v0.149 の時点の記録として残す"),
      "summary": ("山札をさがす・山札から重ねるほかの効果も、山札に選べるカードがなければ決定を出さずに …_none で進む。決定の有無・ログが相手・観戦者に見える。構築盤面の双子で確かめたのは"
                  "エリカのフシギダネの「おつかい」（RevealTrainerFromDeck。任意。0 枚の答えの reveal_from_deck_declined と reveal_from_deck_none も公開で違う）と、キョウのコクーンの［うか］"
                  "（CoinEvolveSelfFromDeck。必ず重ねるので答えのあとの結果は公開されるが、決定の有無はその前に分かれる）"),
@@ -1044,7 +1089,27 @@ V149_NEW_FINDINGS = [
                                     "受理のあとの相手の公開の情報が違う）"), "docs/optional-deck-evolution-presence-v0.149.md 6 章"],
                       "note": "合法な操作の列での再現はしていない。挙げた同じ形の候補は静的な横断だけで、漏れとも安全とも数えない"},
      "impact": "相手・観戦者が、効果を使ったプレイヤーの山札に選べるカードがあるか（なければサイドなどにある）を知れる。使ったプレイヤー本人は山札を見るので、本人への漏れではない",
-     "play_groups": ["5"], "mode_policy": "両モードで塞ぐ候補（修正は別の作業。v0.149 の範囲（任意の山札からの進化のワザ・秘密領域の候補集合）の外）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
+     "play_groups": ["5"], "mode_policy": "両モードで直した（v0.150。v0.149 では範囲（任意の山札からの進化のワザ・秘密領域の候補集合）の外なので記録だけ）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
+]
+# v0.150 で見つけた項目（docs/deck-search-decision-presence-v0.150.md 6 章）。決定の有無の経路の確かめの途中で、同じ要素の研究上の停止が実際の山札を読むことを見つけた（修正していない）
+V150_NEW_FINDINGS = [
+    {"id": "PSP-DECK-SEARCH-STOP-ORACLES", "entry_kind": "silent_information_leak", "status": "active", "classification": "A",
+     "found_in": "v0.150 の作業（PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS の経路の確かめ。基点 c4b90b4）",
+     "summary": ("山札から決まったカードをつける・加えるワザの、山札をさがす前の研究上の停止（RB2・FC1）が実際の山札を読み、山札とサイドの配分で宣言・答えの受理・拒否が変わる。理由の文に"
+                 "山札のレインボーエネルギーの uid・山札の基本エネルギーカードの枚数を書く。決定の有無の漏れとは別の形（v0.147・v0.148 の使う前の確かめの形）"),
+     "trigger": ("resolution/programs.py rainbow_attach_question（AttachFromDeck・AttachFromDeckToBench・AttachFromDeckUpToNamedCount の candidates、AttachFromDeckByHeads.run。宣言の前の"
+                 "先読みが通る）、AttachBasicEnergyFromDeckToSelf.run・AttachFromDeckByHeads.run の stated_cards_short（FC1。先読みが通る）、ReturnHandThenRevealEnergy.resume の段階 1 の FC1"
+                 "（手札をもどす答え。山札を見る前。決定は待ったまま）"),
+     "related_cards": ["PMCG4-032", "neo2-016", "neo3-028", "PMCG6-046"], "related_codes": ["UNRESOLVED_RAINBOW_ATTACH_AS_TYPE", "UNRESOLVED_STATED_CARDS_SHORT"],
+     "reachability": {"status": "constructed_board",
+                      "evidence": [("tests/test_deck_search_decision_presence_v0_150.py SeparateStopOracleTest（expectedFailure。ひなたぼっこのレインボーエネルギー・はらだいこの基本エネルギーカード・"
+                                    "てじなの基本エネルギーカード 1 枚が山札／サイド。宣言・段階 1 の答えが RB2・FC1 で拒否／受理）"), "docs/deck-search-decision-presence-v0.150.md 6 章"],
+                      "note": ("合法な操作の列での再現はしていない。ゆうでんの FC1 は比較プローブだけ（テストにしていない）。同じ rainbow_attach_question を通るほかのワザ（じゅうでん・もえあがる・"
+                               "しおまねき・エナジーサポート・あたためる・せいでんき・ゆうでん）の RB2 は個別に確かめていない。続行規約の集合（CS-KYUURA-PLAY-S2A@1 の FC1 の規約など）での違いは"
+                               "確かめていない")},
+     "impact": "ワザを使わずに（宣言の拒否は状態を変えない）、または答えを選び直して、山札にレインボーエネルギー・基本エネルギーカードがあるか・何枚あるかと、その uid を知れる。拒否は本人だけに返る",
+     "play_groups": ["5"], "mode_policy": "両モードで塞ぐ候補（修正は別の作業。決定の有無の範囲の外。v0.147・v0.148 の共通処理（possible_deck_cards・deck_lower_bound_where）の形で直す候補）",
+     "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
 ]
 
 # 分類の後の更新（基点・集計の履歴は BASE・COUNTS_AT_CLASSIFICATION に残し、書き換えない）
@@ -1151,6 +1216,15 @@ UPDATES = [
                          "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"],
      "new_entries": ["PSP-HIDDEN-SET-ASIDE-DECK-POOL（fixed）", "PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS（active。修正していない。おつかい・［うか］で再現。ほかは静的な候補）"],
      "unchanged": "研究の停止コード（FV1・RB1・NB1 を含む）は active のまま。止めるコードは同じ。族・規約・判断事項・合意の記録は変えていない"},
+    {"version": "0.150.0", "work": "山札をさがす効果の決定の有無による情報漏れの、処理の種類ごとの修正（両モード共通）",
+     "document": "docs/deck-search-decision-presence-v0.150.md",
+     "base": {"commit": "c4b90b473c7ad9a1827f99304b1476a9997963e6", "branch_of_base": "claude/optional-deck-evolution-presence（v0.149 の最後。main には未マージ）"},
+     "approval": ("利用者の指示は作業の進め方（山札検索の決定の有無による漏れを処理の種類ごとにまとめて監査・修正する）だけ（2026-11-06）。新しい続行規約は採用していない。"
+                  "FC1・RB2 などの研究上の問いは決めない"),
+     "changed_entries": ["PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS（fixed。v0150_followup・path_classification）",
+                         "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"],
+     "new_entries": ["PSP-DECK-SEARCH-STOP-ORACLES（active。修正していない。RB2・FC1 の研究上の停止が実際の山札を読む）"],
+     "unchanged": "研究の停止コード（FC1・RB2 を含む）は active のまま。止めるコード・条件は変えていない。族・規約・判断事項・合意の記録は変えていない"},
 ]
 # 分類の時点（基点 3e25ac5）の集計（counts）の写し。今の counts は現行コードから作り直した値
 COUNTS_AT_CLASSIFICATION = {"research_stop_codes": 316, "runtime_codes_outside_table": 40, "runtime_codes_outside_table_active": 39, "test_tool_only_codes": 8, "cases": 15, "codes_with_cases": 7, "problems_new": 4, "problems_from_inventory": 28, "conventions": 18, "internal_guard_sites_current": 602, "internal_guard_sites_matched_to_inventory": 600, "internal_guard_sites_new_since_inventory": ["kyuura_engine/engine.py:445", "kyuura_engine/resolution/programs.py:10739"], "safety_boundaries": 8, "families": 23, "decisions": 29, "by_reachability": {"constructed_board": 145, "legal_sequence": 25, "static_only": 185}, "by_family": {"PF-COPY-TRANSFORM": 34, "PF-DAMAGE-SCOPE": 22, "PF-EFFECT-TIMING": 13, "PF-ENERGY-TYPE": 21, "PF-ESP-REDO": 4, "PF-HIDDEN-INFORMATION": 8, "PF-HISTORY-LASTING": 20, "PF-KNOCKOUT-TIMING": 15, "PF-POWER-SUPPRESSION": 11, "PF-PROTECTED-TARGET-EFFECT": 12, "PF-REACTION-DURING-PROCESS": 10, "PF-RUNTIME-CONTINUATION": 15, "PF-RUNTIME-COPY-GAPS": 5, "PF-RUNTIME-DATA": 5, "PF-RUNTIME-GENERIC": 1, "PF-RUNTIME-REGISTRY": 7, "PF-RUNTIME-SEARCH-LIMIT": 6, "PF-SETUP-PLAY-AS-POKEMON": 5, "PF-SIMULTANEOUS-ORDER": 26, "PF-STATED-COUNT-SHORT": 11, "PF-TEXT-READING": 34, "PF-UP-TO-ZERO": 13, "PF-USE-WITHOUT-EFFECT": 57}, "by_play_group": {"1": 316, "2": 39, "3": 89, "4": 6, "5": 20, "6": 1}, "by_mechanism": {"answer_rejection": 13, "command_rejection": 339, "deck_validation": 1, "deferred_interruption": 2, "pokemon_check_halt": 10, "setup_halt": 2}, "by_status": {"active": 402, "fixed": 5, "historical": 2, "unverified": 1}, "note": "停止コード・事例・規約・内部ガードは別の数。事例はコードの下位で、コードの数に足さない。棚卸しと同じ項目は独立した不足として数えない"}
@@ -1214,6 +1288,7 @@ PROBLEMS = [
     *V147_NEW_FINDINGS,
     *V148_NEW_FINDINGS,
     *V149_NEW_FINDINGS,
+    *V150_NEW_FINDINGS,
     {"id": "SUDDEN_DEATH_NOT_IMPLEMENTED", "entry_kind": "nonprefix_stop", "status": "fixed", "classification": "A", "found_in": "v0.133 の棚卸し（P0）",
      "summary": "v0.134 で StartSuddenDeath を加えた。サドン・デスの状態にほかのコマンドを送ると IllegalActionError SUDDEN_DEATH_NOT_STARTED（UnsupportedError ではない）",
      "trigger": "Phase.SUDDEN_DEATH", "related_cards": [], "related_codes": ["SUDDEN_DEATH_NOT_STARTED", "NOT_SUDDEN_DEATH", "UNSUPPORTED_SUDDEN_DEATH_INITIAL_DECK"],

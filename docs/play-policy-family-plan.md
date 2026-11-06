@@ -109,7 +109,7 @@ A の場面でも、続けるのに実装・秘密への非依存の確かめ・
 | うち動的な経路（4 章の一覧）でだけ止める（ほかの場面では拒否） | 12 |
 | 対戦全体を止める場面のうち規約案の対象 | 15 |
 | この調査で見つけた不具合 | 1 |
-| 内部ガード（場面に数えない。D） | 611 |
+| 内部ガード（場面に数えない。D） | 616 |
 <!-- generated:plan-counts end -->
 
 A 以外の場面の内訳（理由ごと）:
@@ -975,7 +975,7 @@ PSP-COCOON-DV2-ORACLE（DV2）・PSP-DECK-CONTENT-PRECHECKS の残り（GV1・EV
 <!-- generated:plan-stages begin（scripts/build_play_policy_family_plan.py --write が書く。手で直さない） -->
 | 段階 | 名前 | 規約案 | 先に要るもの | 共通処理の変更の範囲 | 完了の基準 | 残るもの |
 |---|---|---|---|---|---|---|
-| S0 | 両モード共通の不具合の修正（モードと別の版） | — | — | PSP-NJ1-NINJA-GYM-ORACLE（この調査で確認）・PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-DECK-CONTENT-PRECHECKS の残り（未確認）。v0.146・v0.147 でこの 4 つを直した（v0.147 の横断で見つけた PSP-POWER-PRECHECK-DECK-ORACLE も）。v0.147 で見つけた PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE はv0.148 で直した。v0.148 で見つけた PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE と、v0.149 で見つけた PSP-HIDDEN-SET-ASIDE-DECK-POOL は v0.149 で直した。PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS（v0.149 で見つけた。active）が残る | 対の比べ（twin_command_problems）で漏れがない。blocked_by_defect の場面の規約を採れる状態 | 研究上の論点（NJ1・PW3・DV2・GV1 の裁定）は未解決のまま |
+| S0 | 両モード共通の不具合の修正（モードと別の版） | — | — | PSP-NJ1-NINJA-GYM-ORACLE（この調査で確認）・PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-DECK-CONTENT-PRECHECKS の残り（未確認）。v0.146・v0.147 でこの 4 つを直した（v0.147 の横断で見つけた PSP-POWER-PRECHECK-DECK-ORACLE も）。v0.147 で見つけた PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE はv0.148 で直した。v0.148 で見つけた PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE と、v0.149 で見つけた PSP-HIDDEN-SET-ASIDE-DECK-POOL は v0.149 で直した。PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS（v0.149 で見つけた）は v0.150 で直した。v0.150 で見つけた PSP-DECK-SEARCH-STOP-ORACLES（active）が残る | 対の比べ（twin_command_problems）で漏れがない。blocked_by_defect の場面の規約を採れる状態 | 研究上の論点（NJ1・PW3・DV2・GV1 の裁定）は未解決のまま |
 | S1 | 規約集合を受け取る基盤と、今の挙動の保持 | — | DEC-RULESET-IDENTITY・DEC-RULESET-VERSIONING・DEC-CONVENTION-GRANULARITY・DEC-CONVENTION-CONFLICTS・DEC-MODE-CHANGE-DURING-GAME・DEC-LEGACY-STATES・DEC-BASELINE-NONUSER・DEC-CARD-DATA-CORRECTIONS | 規約集合を new_game で受け取り状態に持つ（延長戦は keep）・止める箇所に事例の識別（場面 ID）・規約の照会の入口（登録の側。engine.py・resolution/ にカード ID・モード名の分岐を加えない）・規約による拒否と未決の裁定の停止を区別する記録・構成の検査（ruleset-mode-design.md 6.4 節）・厳密と厳密の比べ | 厳密の集合（基礎集合だけ）で、全体テスト・lockstep・前の版の組・サドン・デスの比べが今と同じ（意図した差 0）。規約の照会がどの場面でも「規約なし」を返し、止め方が今のまま | 続行規約は 1 つも入っていない。保存形式・識別の形は判断のあとに決める（この設計では決めない） |
 | S2a | 対戦全体を止める規約（規約だけで足りるもの） | PC-SETUP-MULLIGAN-COUNT・PC-SETUP-PLAY-AS-POKEMON・PC-CHECK-SIDE-ORDER・PC-COIN-COUNT-SHORT・PC-CHECK-KO-POINT | S1・DEC-PLAY-CONFIG-INCOMPLETE-START | 準備・ポケモンチェック・途中停止の HALTED の分岐を、規約の照会で続行に置きかえる | 規約ごとに、当たる盤面の結果（状態・乱数・ログ・観測）・隣の場面が変わらないこと・厳密との差が規約の当たった歩から始まること・道具の対戦で HALTED の減り方と先攻後攻の偏り | WG-CHECK-PLAN・WG-CHECK-RECOVERY・WG-DECISION-NO-ANSWER のカード固有の停止、技術的な上限（くろこげマーカー・きのみ） |
 | S2b | 対戦全体を止める規約（実装が要るもの） | PC-CHECK-DOUBLE-KNOCKOUT・PC-NON-DAMAGE-HP-KNOCKOUT・PC-NON-ATTACK-DAMAGE-MODIFIERS・PC-LASTING-SOURCE-CHANGE | S2a | ポケモンチェックの続きの両方のサイド・交代の並び、ダメージ以外の HP 低下のきぜつの判定の窓、ワザ以外のダメージの量の問い合わせ | S2a と同じ。両方のきぜつ・サドン・デスへの移り方の比べ | カード固有の時点の問い（SC1・SC2・AL1・AL3・MEW1 など） |

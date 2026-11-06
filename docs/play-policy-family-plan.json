@@ -19,7 +19,7 @@
   "ledger": {
    "path": "docs/stop-policy-classification.json",
    "base_commit": "3e25ac5eff0f90dbea224045e77c2b60e025bf2d",
-   "entries": 428
+   "entries": 429
   },
   "research": {
    "path": "kyuura_engine/data/research_links.json",
@@ -2075,9 +2075,9 @@
     "docs/type-energy-colors-v0.88.md"
    ],
    "reachability_counts": {
-    "constructed_board": 3,
+    "constructed_board": 4,
     "legal_sequence": 1,
-    "static_only": 5
+    "static_only": 4
    }
   },
   {
@@ -3654,7 +3654,7 @@
    "name": "両モード共通の不具合の修正（モードと別の版）",
    "rules": [],
    "prerequisites": [],
-   "scope": "PSP-NJ1-NINJA-GYM-ORACLE（この調査で確認）・PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-DECK-CONTENT-PRECHECKS の残り（未確認）。v0.146・v0.147 でこの 4 つを直した（v0.147 の横断で見つけた PSP-POWER-PRECHECK-DECK-ORACLE も）。v0.147 で見つけた PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE はv0.148 で直した。v0.148 で見つけた PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE と、v0.149 で見つけた PSP-HIDDEN-SET-ASIDE-DECK-POOL は v0.149 で直した。PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS（v0.149 で見つけた。active）が残る",
+   "scope": "PSP-NJ1-NINJA-GYM-ORACLE（この調査で確認）・PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-DECK-CONTENT-PRECHECKS の残り（未確認）。v0.146・v0.147 でこの 4 つを直した（v0.147 の横断で見つけた PSP-POWER-PRECHECK-DECK-ORACLE も）。v0.147 で見つけた PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE はv0.148 で直した。v0.148 で見つけた PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE と、v0.149 で見つけた PSP-HIDDEN-SET-ASIDE-DECK-POOL は v0.149 で直した。PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS（v0.149 で見つけた）は v0.150 で直した。v0.150 で見つけた PSP-DECK-SEARCH-STOP-ORACLES（active）が残る",
    "done_when": "対の比べ（twin_command_problems）で漏れがない。blocked_by_defect の場面の規約を採れる状態",
    "remains": "研究上の論点（NJ1・PW3・DV2・GV1 の裁定）は未解決のまま"
   },
@@ -9714,7 +9714,7 @@
    "mechanisms": [
     "command_rejection"
    ],
-   "reachability": "static_only",
+   "reachability": "constructed_board",
    "whole_game": false,
    "whole_game_basis": null,
    "secret_dependency": null,
@@ -15308,7 +15308,7 @@
    "candidate": null
   },
   {
-   "id": "PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS",
+   "id": "PSP-DECK-SEARCH-STOP-ORACLES",
    "parent": null,
    "code": null,
    "entry_kind": "silent_information_leak",
@@ -15866,7 +15866,7 @@
    "mode_policy_status": "decision_required"
   }
  ],
- "internal_guard_sites": 611,
+ "internal_guard_sites": 616,
  "counts": {
   "scenes": 400,
   "stop_code_scenes": 368,
@@ -15932,7 +15932,7 @@
   "whole_game_dynamic_channel_scenes": 12,
   "whole_game_a_scenes_with_candidate": 15,
   "new_findings": 1,
-  "internal_guard_sites_not_listed_as_scenes": 611,
+  "internal_guard_sites_not_listed_as_scenes": 616,
   "note": "場面は台帳の項目（事例のあるコードは事例）。重複を含む数は規約案ごとの対象の合計、重複を除いた数は場面・コードの集合の大きさ。内部ガードは場面に数えない（D。個数だけ）"
  }
 }
