@@ -172,3 +172,12 @@ replay(aborted_record)       # 失敗の行で同じ失敗が起きれば 'recor
 - U4 の `replay` で、閲覧用記録の元にした完全な記録が再現できることを、U5 の確かめの前提にできる
 - 残る判断: D-SNAPSHOT-BASE・D-HALT-SNAPSHOT（保留）、閲覧用記録の版の決め方（D-VERSIONS の採用は再現用記録の部分だけ）、`pending_moves` の不変条件の関数がないことを直すか
 - 未確認: 異なる OS・Python の版での確認値、長い対戦・多数の記録での再実行（全 108 組・4,356 局・lockstep は実行していない）
+
+## 追記（v0.155 の整合確認）
+
+v0.154 の報告の説明を、実際の差分（`git diff 6d659d0 a8ad207 -- kyuura_engine`）と照らしました。
+
+- 「書き出しの決定に `resume` と `context` が入る」: v0.154 で加えたのではなく、**既に入っていることを確かめただけ**です。`serialize.py` は v0.154 で変えていません（決定の `context` の書き出しは v0.2a の `ab8fc6f` からある）。5 章の「決定の `context` は形式 35 の書き出しに入る」は、この既存の書き出しのことです
+- 「確認値の方式は変えていない」: そのとおり（`replay_record.py` の `STATE_CHECK_METHOD`・`RNG_CHECK_METHOD` と、`checks` の中身は v0.154 で変わっていない）。v0.153 で作った記録の確認値の意味は同じです
+- 「エンジン側の差分は版の番号と新しいモジュールだけ」: そのとおり（`kyuura_engine/__init__.py` の版と、新しい `kyuura_engine/replay_run.py` だけ）
+- `state.py` の `pending_moves` の注釈が存在しない関数を指していた件は、v0.155 で注釈を事実に合わせて直しました（不変条件の関数は加えていない。`replay_run` の境界の確かめは変えずに残す）。注釈の変更はソースの内容の変更なので、実装の識別（`behavior_digest`）は変わります（v0.155 は版も変わる）

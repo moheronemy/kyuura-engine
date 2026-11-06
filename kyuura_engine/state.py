@@ -2592,7 +2592,7 @@ class GameState:
     ownership_changes: tuple[OwnershipChange, ...] = ()
     # v0.87（docs/movement-damage-reactions-v0.87.md 3 章）: 場の移動（控え → バトル場・バトル場 → ベンチ・手札からの登場）の事実への、まだ処理していない反応の段（``movement``。
     # ``reactions`` の ``("same", …)`` の段の並び）。事実を起こした処理の流れが、同じコマンドの中で処理する（ワザの要素のあいだ・トレーナー・特殊能力を使い終える前・にげるのあと・
-    # バトル場に出したあと）。コマンドの終わり・決定を待つ間は空（決定をまたぐ続きは決定の ``context`` に移す）。書き出さない（不変条件 ``engine._pending_moves_problems``）
+    # バトル場に出したあと）。コマンドの終わり・決定を待つ間は空（決定をまたぐ続きは決定の ``context`` に移す）。書き出さない。v0.155 の訂正: この注釈が指していた不変条件の関数 ``engine._pending_moves_problems`` は現行のコードになく、``check_invariants`` は空であることを確かめない（再現用記録の再実行 ``replay_run`` が境界ごとに確かめる）
     pending_moves: tuple = ()
     # v0.134（docs/sudden-death-v0.134.md 4 章）: 終わった対戦の区間（``SegmentRecord`` の並び。古い順）。サドン・デスの延長戦を始めたときに、それまでの区間（ログ・結果・
     # 所有者の変更など）を移す。空なら最初の対戦の中（v0.133 までと同じ値）。今の区間の番号は ``segment_index``、準備で置くサイドの枚数は ``initial_prize_count``。書き出しは
