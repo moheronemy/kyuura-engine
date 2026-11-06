@@ -58,6 +58,25 @@
     "U3"
    ],
    "implemented_in": "v0.153（docs/replay-record-v0.153.md）"
+  },
+  {
+   "id": "ADOPT-U4",
+   "date": "2026-11-06",
+   "by": "利用者",
+   "scope": "U4（完全な再現用記録からの再実行と確認値の照合）の実装と限定検証だけ。閲覧用記録・スナップショットの復元・異なる版と規約集合の比べ（compare_runs）・未決の判断事項の承認ではない",
+   "policies": [
+    "初期状態を含む確認値を照らす",
+    "拒否を含む記録は seq の順に処理する（受理だけを先に送らない）",
+    "失敗・不完全な記録と、正常な再現の成功を区別する",
+    "PYTHONHASHSEED による影響を確かめる",
+    "操作を受理した結果として停止する経路を確かめる",
+    "確認値から pending_moves などを除いている根拠を確かめ直す"
+   ],
+   "decisions": [],
+   "units": [
+    "U4"
+   ],
+   "implemented_in": "v0.154（docs/replay-run-v0.154.md）"
   }
  ],
  "documents": {
@@ -338,8 +357,8 @@
     "tests/helpers.py::replay"
    ],
    "provides": "記録の収集（ReplayCollector）・JSON の読み書き・構造の検証（v0.153）。テストの replay はコマンドの列を順に送るだけ",
-   "reuse": "U4 は記録の受理した操作の列を再実行し、確認値と照らす",
-   "limits": "再実行して照らすこと（U4）はない"
+   "reuse": "U4（v0.154。kyuura_engine/replay_run.py の replay）が記録の行を seq の順に再実行し、確認値と照らす",
+   "limits": "異なる版・規約集合の比べ（compare_runs）はない"
   },
   {
    "id": "NI-VIEW-RECORD",
@@ -1355,13 +1374,14 @@
  "replay_functions": [
   {
    "id": "replay_from_start",
-   "meaning": "記録の見出しの初期の条件から new_game を作り、受理した操作を順に送り直す（方策を再実行しない）",
+   "meaning": "記録の見出しの初期の条件から new_game を作り、記録の行を seq の順に（拒否・失敗の行も）送り直す（方策を再実行しない。v0.154 で replay_run.replay として実装。v0.153 までの「受理した操作を順に」は seq の順に訂正した）",
    "uses": [
     "replay_full"
    ],
    "results": [
     "succeeded",
     "incomplete",
+    "recorded_failure",
     "unsupported",
     "invalid_record",
     "diverged",
@@ -1377,6 +1397,7 @@
    "results": [
     "succeeded",
     "incomplete",
+    "recorded_failure",
     "unsupported",
     "invalid_record",
     "diverged",
@@ -1420,6 +1441,10 @@
   {
    "id": "incomplete",
    "meaning": "終わりの印のない記録で、ある歩までは同じ（どこまで確かめたかを返す。成功に数えない）"
+  },
+  {
+   "id": "recorded_failure",
+   "meaning": "aborted の記録で、失敗の行まで同じで、同じ失敗がもう一度起きた（失敗を含む結果。成功に数えない。v0.154）"
   },
   {
    "id": "unsupported",
@@ -2198,7 +2223,7 @@
   },
   {
    "id": "U4",
-   "status": "planned",
+   "status": "implemented",
    "title": "再現インターフェース",
    "depends": [
     "U3"

@@ -34,7 +34,7 @@ OUTCOMES = ("accepted", "rejected", "failed")
 STATUSES = ("in_progress", "awaiting_decision", "halted", "game_over", "sudden_death_pending", "not_started", "unavailable")
 FEATURE_STATUS = ("implemented", "internal_only", "tool_only", "not_implemented")
 ADAPTER_IDS = ("DIAGNOSTIC_UNMAPPED", "INTERNAL_ERROR", "SUBMITTER_MISMATCH", "INVALID_SEED")
-REPLAY_STATUS = ("succeeded", "incomplete", "unsupported", "invalid_record", "diverged", "internal_error")
+REPLAY_STATUS = ("succeeded", "incomplete", "recorded_failure", "unsupported", "invalid_record", "diverged", "internal_error")
 NEW_VERSION_KEYS = ("kyuura_diagnostic_schema", "kyuura_replay_format", "kyuura_view_format", "kyuura_snapshot_format")
 EXISTING_VERSION_KEYS = ("format_version", "record_format", "digest_format", "engine_version", "version")
 VERIFIER_ONLY_FIELDS = ("developer_detail", "seed", "rng_state", "rng_fingerprint", "state_digest", "initial_deck_order", "halt_message", "trace", "engine_code",
@@ -74,6 +74,24 @@ ADOPTION_U3 = {
     "implemented_in": "v0.153（docs/replay-record-v0.153.md）",
 }
 
+ADOPTION_U4 = {
+    "id": "ADOPT-U4",
+    "date": "2026-11-06",
+    "by": "利用者",
+    "scope": "U4（完全な再現用記録からの再実行と確認値の照合）の実装と限定検証だけ。閲覧用記録・スナップショットの復元・異なる版と規約集合の比べ（compare_runs）・未決の判断事項の承認ではない",
+    "policies": [
+        "初期状態を含む確認値を照らす",
+        "拒否を含む記録は seq の順に処理する（受理だけを先に送らない）",
+        "失敗・不完全な記録と、正常な再現の成功を区別する",
+        "PYTHONHASHSEED による影響を確かめる",
+        "操作を受理した結果として停止する経路を確かめる",
+        "確認値から pending_moves などを除いている根拠を確かめ直す",
+    ],
+    "decisions": [],
+    "units": ["U4"],
+    "implemented_in": "v0.154（docs/replay-run-v0.154.md）",
+}
+
 BASE = {
     "commit": "7e4a875681f15745cfe42a2b95c00f0e4f557324",
     "engine_version": "0.151.0",
@@ -90,7 +108,7 @@ SPEC = {
     "request": ("利用者の依頼（2026-11-06）は、v0.151 までの山札をさがす効果の情報漏れの監査を踏まえた仕様の作成。エンジンの動作・API・保存と復元の実装、続行規約の採用はしない。"
                 "仕様の作成の依頼を、仕様の中身の承認として扱わない"),
     "base": BASE,
-    "adoptions": [ADOPTION, ADOPTION_U3],
+    "adoptions": [ADOPTION, ADOPTION_U3, ADOPTION_U4],
     "documents": {"design": "docs/diagnostics-replay-api-design.md", "plan": "docs/diagnostics-replay-api-implementation-plan.md",
                   "generator": "scripts/build_diagnostics_replay_api_design.py", "test": "tests/test_diagnostics_replay_api_design.py"},
     "sources": {"stop_ledger": "docs/stop-policy-classification.json", "scene_index": "kyuura_engine/data/convention_records.json"},
@@ -200,7 +218,7 @@ SPEC = {
         {"id": "NI-REPLAY-RECORD", "name": "完全な再現用記録（v0.153 で U3 として収集・読み書き・構造の検証を実装。再現は未実装）", "status": "implemented",
          "refs": ["kyuura_engine/replay_record.py::ReplayCollector", "kyuura_engine/replay_record.py::validate_record", "tests/helpers.py::replay"],
          "provides": "記録の収集（ReplayCollector）・JSON の読み書き・構造の検証（v0.153）。テストの replay はコマンドの列を順に送るだけ",
-         "reuse": "U4 は記録の受理した操作の列を再実行し、確認値と照らす", "limits": "再実行して照らすこと（U4）はない"},
+         "reuse": "U4（v0.154。kyuura_engine/replay_run.py の replay）が記録の行を seq の順に再実行し、確認値と照らす", "limits": "異なる版・規約集合の比べ（compare_runs）はない"},
         {"id": "NI-VIEW-RECORD", "name": "閲覧用記録", "status": "not_implemented", "refs": [],
          "provides": "ない（観測・ログの写しの部品はある）", "reuse": "U5 で作る", "limits": ""},
         {"id": "NI-HALT-RESUME", "name": "停止からの再開", "status": "not_implemented", "refs": [],
@@ -464,10 +482,11 @@ SPEC = {
 
     # ------------------------------------------------------------ 再現インターフェース
     "replay_functions": [
-        {"id": "replay_from_start", "meaning": "記録の見出しの初期の条件から new_game を作り、受理した操作を順に送り直す（方策を再実行しない）", "uses": ["replay_full"],
-         "results": ["succeeded", "incomplete", "unsupported", "invalid_record", "diverged", "internal_error"]},
+        {"id": "replay_from_start", "meaning": ("記録の見出しの初期の条件から new_game を作り、記録の行を seq の順に（拒否・失敗の行も）送り直す（方策を再実行しない。"
+                                                "v0.154 で replay_run.replay として実装。v0.153 までの「受理した操作を順に」は seq の順に訂正した）"), "uses": ["replay_full"],
+         "results": ["succeeded", "incomplete", "recorded_failure", "unsupported", "invalid_record", "diverged", "internal_error"]},
         {"id": "verify_record", "meaning": "記録の形・見出し・依存を確かめ、再実行して各歩の確認値（受理・拒否・コード・状態の指紋・コイン・決定）と比べる。ログの監査は追加の確かめ",
-         "uses": ["replay_full"], "results": ["succeeded", "incomplete", "unsupported", "invalid_record", "diverged", "internal_error"]},
+         "uses": ["replay_full"], "results": ["succeeded", "incomplete", "recorded_failure", "unsupported", "invalid_record", "diverged", "internal_error"]},
         {"id": "resume_from_snapshot", "meaning": "スナップショットを復元し、確かめ（不変条件・規約集合・再開先）を通してから続きの操作を送る", "uses": ["snapshot", "replay_full"],
          "results": ["succeeded", "unsupported", "invalid_record", "diverged", "internal_error"]},
         {"id": "compare_runs", "meaning": "異なる版・規約集合の 2 つの記録を、同じ初期の条件・同じ操作の列で比べ、最初の差を返す（同一実行の再現とは別。成功を返さない）",
@@ -476,6 +495,7 @@ SPEC = {
     "replay_results": [
         {"id": "succeeded", "meaning": "最後まで確認値と同じ（記録が完全）"},
         {"id": "incomplete", "meaning": "終わりの印のない記録で、ある歩までは同じ（どこまで確かめたかを返す。成功に数えない）"},
+        {"id": "recorded_failure", "meaning": "aborted の記録で、失敗の行まで同じで、同じ失敗がもう一度起きた（失敗を含む結果。成功に数えない。v0.154）"},
         {"id": "unsupported", "meaning": "記録の形式の版・実装・依存・規約集合・実行環境を、この実装が扱えない（理由の項目を返す）"},
         {"id": "invalid_record", "meaning": "記録の形が不正・項目が足りない・見出しと歩が合わない・番号が飛ぶ"},
         {"id": "diverged", "meaning": "最初に違った歩（区間・番号・操作）と比較項目（outcome・code・state_digest・coins・decision・status・log_length）と、記録の値・再実行の値"},
@@ -662,7 +682,7 @@ SPEC = {
          "reuse": ["EX-LOCKSTEP", "EX-COMMAND-CODEC", "EX-STATE-EXPORT", "EX-CONVENTION-ID", "EX-SUDDEN-DEATH"],
          "tests": ["見出しの必須の項目が欠けた記録・番号の飛んだ記録・終わりの印のない記録の区別", "サドン・デスの区間の境界", "拒否の歩を記録しても再現の入力に入らない"],
          "done": ["記録が lockstep の記録と別の形式（kyuura_replay_format）で、どちらも黙って読み替えない"]},
-        {"id": "U4", "status": "planned", "title": "再現インターフェース", "depends": ["U3"],
+        {"id": "U4", "status": "implemented", "title": "再現インターフェース", "depends": ["U3"],
          "scope": ["replay_from_start・verify_record・compare_runs"],
          "reuse": ["EX-LOCKSTEP", "EX-LOG-AUDIT"],
          "tests": ["固定の少数の対戦（seed と目的を先に決める）で succeeded", "1 歩を書き換えた記録で diverged と最初の歩・項目", "実装の識別・規約集合を変えた記録で unsupported",

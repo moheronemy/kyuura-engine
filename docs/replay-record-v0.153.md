@@ -157,6 +157,8 @@ validate_record(changed).status          # 'unsupported'
 
 ## 9. U4 への引き継ぎと残る判断
 
+**v0.154 の訂正**: 下の 1 つ目の項目と 3 章の表の「受理した操作の `command`（`accepted_index` の順）」は、再現の入力が受理した行のコマンドであることの説明で、送る順は`seq` の順（拒否・失敗の行を含む記録の行の順）です。U4（[replay-run-v0.154.md](replay-run-v0.154.md)）は、受理した行だけを先に送ってから拒否を確かめることはせず、記録の行を `seq` の順に送ります。`accepted_index` は受理の連番の照合に使います。下の記述は v0.153 の時点の記録として残します。
+
 - U4 の入力: `header.initial` で `new_game` を作り、`outcome` が `accepted` の操作を `accepted_index` の順に `adapter.submit`（または `apply_command`）で送る。各操作のあとに `checks` を計算し、記録の `check` と比べて、最初に違った操作（`seq`・`accepted_index`）と項目（`state`・`rng`・`log_length`・`segment`・`status`・`decision`・`halt`）を返す。拒否の行を含む記録なら、同じ状態に送って、同じ診断の識別・元のコードの拒否になり状態が変わらないことを確かめる。失敗の行は、同じ失敗になるかを確かめる（成功に数えない）
 - 扱えるかは U4 の最初に `support_problems` で確かめる（unsupported なら再実行しない）。乱数を各操作の前へ戻さない
 - 未確認: 異なる OS で同じ確認値になるか（改行・パスは識別から除いたが、実行の結果は確かめていない）、文字列のハッシュの乱数化（`PYTHONHASHSEED`）が確認値に影響しないか（形式 35 の書き出しは鍵の順を決めて比べるが、集合の並びに依る値がないことは確かめていない）

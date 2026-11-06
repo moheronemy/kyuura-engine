@@ -1,6 +1,6 @@
 # 診断 API と対戦記録・再現インターフェースの仕様案
 
-この文書は**仕様案**です（状態 `proposed`、承認 `not_approved`）。v0.152 で、利用者が U1（診断の型と情報境界）・U2（コマンド実行結果のアダプタ）と 6 つの方針だけを採用し、実装しました（[diagnostics-adapter-v0.152.md](diagnostics-adapter-v0.152.md)。採用の記録は下の「採用の記録」）。v0.153 で、利用者が U3（完全な再現用記録の収集・形式・構造の検証）と 4 つの方針（実装の識別・実行環境・確認値の密度・形式の版）を採用し、実装しました（[replay-record-v0.153.md](replay-record-v0.153.md)）。再実行による再現（U4）・閲覧用記録・保存と復元・合法手の一覧は、仕様案のままで実装していません。9 章の例は形の例示です（`api_status` は `illustrative`。実際の出力の例は v0.152 の文書）。実装の単位と順は [実装計画](diagnostics-replay-api-implementation-plan.md) に、利用者の判断が要る事項もそこに書きます。
+この文書は**仕様案**です（状態 `proposed`、承認 `not_approved`）。v0.152 で、利用者が U1（診断の型と情報境界）・U2（コマンド実行結果のアダプタ）と 6 つの方針だけを採用し、実装しました（[diagnostics-adapter-v0.152.md](diagnostics-adapter-v0.152.md)。採用の記録は下の「採用の記録」）。v0.153 で、利用者が U3（完全な再現用記録の収集・形式・構造の検証）と 4 つの方針（実装の識別・実行環境・確認値の密度・形式の版）を採用し、実装しました（[replay-record-v0.153.md](replay-record-v0.153.md)）。v0.154 で、利用者が U4（記録からの再実行と確認値の照合）の実装と限定検証を承認し、実装しました（[replay-run-v0.154.md](replay-run-v0.154.md)）。閲覧用記録（U5）・状態の保存と復元（U6）・合法手の一覧（U7）・異なる版と規約集合の比べは、仕様案のままで実装していません。9 章の例は形の例示です（`api_status` は `illustrative`。実際の出力の例は v0.152 の文書）。実装の単位と順は [実装計画](diagnostics-replay-api-implementation-plan.md) に、利用者の判断が要る事項もそこに書きます。
 
 構造化した仕様は [diagnostics-replay-api-design.json](diagnostics-replay-api-design.json) です。この文書の表と例（`<!-- generated:… -->` の区画）は、JSON と同じ元（`scripts/build_diagnostics_replay_api_design.py` の `SPEC`）から作ります。区画の中を手で直さないでください（`--check` が違いを見つけます）。区画の外の説明は手で書いています。
 
@@ -25,6 +25,16 @@
     - 形式の版: 再現用記録の形式の版を独立して設ける。診断の形式・状態の形式・規約集合の版はそれぞれ参照する。新しい版の管理の方法を、保留中のほかの形式へ一括で当てはめない
   - 判断事項: D-IMPLEMENTATION-ID、D-RUNTIME、D-CHECK-DENSITY、D-VERSIONS
   - 実装単位: U3
+- `ADOPT-U4`（2026-11-06・利用者）: U4（完全な再現用記録からの再実行と確認値の照合）の実装と限定検証だけ。閲覧用記録・スナップショットの復元・異なる版と規約集合の比べ（compare_runs）・未決の判断事項の承認ではない。実装: v0.154（docs/replay-run-v0.154.md）
+  - 方針:
+    - 初期状態を含む確認値を照らす
+    - 拒否を含む記録は seq の順に処理する（受理だけを先に送らない）
+    - 失敗・不完全な記録と、正常な再現の成功を区別する
+    - PYTHONHASHSEED による影響を確かめる
+    - 操作を受理した結果として停止する経路を確かめる
+    - 確認値から pending_moves などを除いている根拠を確かめ直す
+  - 判断事項: 
+  - 実装単位: U4
 <!-- generated:adoptions end -->
 
 採用は、この記録の範囲だけです。v0.152 の時点では実装の識別・Python の環境・確認値の密度・版の分け方も保留でしたが、v0.153 の採用（`ADOPT-U3`）で決めました。スナップショットの形式（D-SNAPSHOT-BASE）と停止状態のスナップショット（D-HALT-SNAPSHOT）は保留（`pending`）のままです。
@@ -74,7 +84,7 @@ v0.135〜v0.151 の情報漏れの修正では、「受理・拒否・拒否の�
 | NI-STATE-RESTORE | 状態の読み込み（state_from_dict など） | not_implemented |  | ない（v0.1 から未実装） | U6 で新しく作る | 形式 35 を読み込み用に読み替えない |
 | NI-LEGAL-MOVES | 合法手の一覧 | not_implemented | `tools/stress_engine.py::choose_command` | ない（ストレス実行の操作の選び方は検証用の道具で、合法手の一覧ではない） | U7 で境界だけを決める | でたらめな操作を混ぜる道具 |
 | NI-DIAGNOSTIC | 構造化した診断（v0.152 で U1・U2 として実装） | implemented | `kyuura_engine/diagnostics.py::classify_error`<br>`kyuura_engine/adapter.py::submit`<br>`kyuura_engine/data/diagnostic_catalog.json`<br>`scripts/build_diagnostic_catalog.py` | コード表による分類・見る人ごとの結果（本人・相手と観戦者）・検証者用の記録・コマンド実行結果のアダプタ（v0.152） | U3 以後の記録・再現は submit の結果（CommandResult）を受け取る | 記録・再現・合法手の一覧はない |
-| NI-REPLAY-RECORD | 完全な再現用記録（v0.153 で U3 として収集・読み書き・構造の検証を実装。再現は未実装） | implemented | `kyuura_engine/replay_record.py::ReplayCollector`<br>`kyuura_engine/replay_record.py::validate_record`<br>`tests/helpers.py::replay` | 記録の収集（ReplayCollector）・JSON の読み書き・構造の検証（v0.153）。テストの replay はコマンドの列を順に送るだけ | U4 は記録の受理した操作の列を再実行し、確認値と照らす | 再実行して照らすこと（U4）はない |
+| NI-REPLAY-RECORD | 完全な再現用記録（v0.153 で U3 として収集・読み書き・構造の検証を実装。再現は未実装） | implemented | `kyuura_engine/replay_record.py::ReplayCollector`<br>`kyuura_engine/replay_record.py::validate_record`<br>`tests/helpers.py::replay` | 記録の収集（ReplayCollector）・JSON の読み書き・構造の検証（v0.153）。テストの replay はコマンドの列を順に送るだけ | U4（v0.154。kyuura_engine/replay_run.py の replay）が記録の行を seq の順に再実行し、確認値と照らす | 異なる版・規約集合の比べ（compare_runs）はない |
 | NI-VIEW-RECORD | 閲覧用記録 | not_implemented |  | ない（観測・ログの写しの部品はある） | U5 で作る |  |
 | NI-HALT-RESUME | 停止からの再開 | not_implemented |  | ない（GAP-DEFERRED-HALT-NO-RESUME） | この仕様の範囲の外（続行規約の採用は別の判断） |  |
 <!-- generated:existing end -->
@@ -375,8 +385,8 @@ v0.152 の採用: 本人向けの説明は、エンジンの生の文ではな�
 <!-- generated:replay begin -->
 | 関数 | 意味 | 使う記録 | 返しうる結果 |
 |---|---|---|---|
-| `replay_from_start` | 記録の見出しの初期の条件から new_game を作り、受理した操作を順に送り直す（方策を再実行しない） | replay_full | succeeded, incomplete, unsupported, invalid_record, diverged, internal_error |
-| `verify_record` | 記録の形・見出し・依存を確かめ、再実行して各歩の確認値（受理・拒否・コード・状態の指紋・コイン・決定）と比べる。ログの監査は追加の確かめ | replay_full | succeeded, incomplete, unsupported, invalid_record, diverged, internal_error |
+| `replay_from_start` | 記録の見出しの初期の条件から new_game を作り、記録の行を seq の順に（拒否・失敗の行も）送り直す（方策を再実行しない。v0.154 で replay_run.replay として実装。v0.153 までの「受理した操作を順に」は seq の順に訂正した） | replay_full | succeeded, incomplete, recorded_failure, unsupported, invalid_record, diverged, internal_error |
+| `verify_record` | 記録の形・見出し・依存を確かめ、再実行して各歩の確認値（受理・拒否・コード・状態の指紋・コイン・決定）と比べる。ログの監査は追加の確かめ | replay_full | succeeded, incomplete, recorded_failure, unsupported, invalid_record, diverged, internal_error |
 | `resume_from_snapshot` | スナップショットを復元し、確かめ（不変条件・規約集合・再開先）を通してから続きの操作を送る | snapshot, replay_full | succeeded, unsupported, invalid_record, diverged, internal_error |
 | `compare_runs` | 異なる版・規約集合の 2 つの記録を、同じ初期の条件・同じ操作の列で比べ、最初の差を返す（同一実行の再現とは別。成功を返さない） | replay_full | unsupported, invalid_record, diverged, internal_error |
 
@@ -384,6 +394,7 @@ v0.152 の採用: 本人向けの説明は、エンジンの生の文ではな�
 |---|---|
 | `succeeded` | 最後まで確認値と同じ（記録が完全） |
 | `incomplete` | 終わりの印のない記録で、ある歩までは同じ（どこまで確かめたかを返す。成功に数えない） |
+| `recorded_failure` | aborted の記録で、失敗の行まで同じで、同じ失敗がもう一度起きた（失敗を含む結果。成功に数えない。v0.154） |
 | `unsupported` | 記録の形式の版・実装・依存・規約集合・実行環境を、この実装が扱えない（理由の項目を返す） |
 | `invalid_record` | 記録の形が不正・項目が足りない・見出しと歩が合わない・番号が飛ぶ |
 | `diverged` | 最初に違った歩（区間・番号・操作）と比較項目（outcome・code・state_digest・coins・decision・status・log_length）と、記録の値・再実行の値 |
