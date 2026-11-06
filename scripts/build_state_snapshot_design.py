@@ -364,20 +364,33 @@ def _table(headers, rows) -> list[str]:
     return ["| " + " | ".join(headers) + " |", "|" + "---|" * len(headers)] + ["| " + " | ".join(_cell(c) for c in row) + " |" for row in rows]
 
 
+COUNT_KINDS = {"fields": "状態の dataclass の項目", "non_field": "項目でない属性（一時的な属性・モジュールの変数）", "metadata": "見出しの補助情報"}
+
+
+def category_counts(spec: dict) -> dict[str, dict[str, int]]:
+    """分類ごとの数を、状態の dataclass の項目（state.py の dataclass と RuleSet）・項目でない属性・見出しの補助情報に分けて数える（別のものを 1 つの数に足さない）。"""
+    counts = {c: dict.fromkeys(COUNT_KINDS, 0) for c in spec["categories"]}
+    for fields in spec["explicit_types"].values():
+        for item in fields.values():
+            counts[item["category"]]["fields"] += 1
+    counts["value"]["fields"] += sum(len(v) for v in spec["value_record_types"].values())
+    for item in spec["non_field_attributes"]:
+        counts[item["category"]]["non_field"] += 1
+    for item in spec["snapshot_metadata"]:
+        counts[item["category"]]["metadata"] += 1
+    return counts
+
+
 def blocks(spec: dict) -> dict[str, list[str]]:
     out: dict[str, list[str]] = {}
     a = spec["adoption"]
     out["adoption"] = [f"- `{a['id']}`（{a['date']}・{a['by']}）: {a['scope']}", "  - 原則:"] + [f"    - {p}" for p in a["principles"]] + [
         f"  - 仕様案（diagnostics-replay-api-design.json）の判断事項: {'、'.join(a['decisions_in_diagnostics_spec'])}"]
-    counts = {c: 0 for c in spec["categories"]}
-    for fields in spec["explicit_types"].values():
-        for item in fields.values():
-            counts[item["category"]] += 1
-    counts["value"] += sum(len(v) for v in spec["value_record_types"].values())
-    for item in spec["non_field_attributes"] + spec["snapshot_metadata"]:
-        counts[item["category"]] += 1
-    out["categories"] = _table(["分類", "意味", "項目の数（主要な型・値の記録の型・項目でない属性・説明用の見出し）"],
-                               [[f"`{c}`", label, counts[c]] for c, label in spec["categories"].items()])
+    counts = category_counts(spec)
+    totals = {kind: sum(c[kind] for c in counts.values()) for kind in COUNT_KINDS}
+    out["categories"] = _table(["分類", "意味", *COUNT_KINDS.values(), "計"],
+                               [[f"`{c}`", label, *(counts[c][k] for k in COUNT_KINDS), sum(counts[c].values())] for c, label in spec["categories"].items()]
+                               + [["計", "", *(totals[k] for k in COUNT_KINDS), sum(totals.values())]])
     out["game-state"] = _table(["GameState の項目", "分類", "根拠", "確かめ"],
                                [[f"`{name}`", item["category"], item["basis"], item["verify"]] for name, item in spec["explicit_types"]["GameState"].items()])
     rows = []

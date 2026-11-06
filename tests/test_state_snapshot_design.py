@@ -53,6 +53,15 @@ class CoverageTest(unittest.TestCase):
         self.assertIn("PendingDecision.context の分類があるが、コードにない", problems)
         self.assertIn("型 FutureEffectForTest に分類がない（コードに加わった型）", problems)
 
+    def test_counts_keep_fields_attributes_and_metadata_apart(self):
+        # 状態の項目・項目でない属性・見出しの補助情報を 1 つの数に足さない。項目の数はコードの項目の名前の数と同じ
+        counts = B.category_counts(written())
+        code = B.code_fields()
+        self.assertEqual(sum(c["fields"] for c in counts.values()), sum(len(fields) for fields in code.values()))
+        self.assertEqual(sum(c["non_field"] for c in counts.values()), len(written()["non_field_attributes"]))
+        self.assertEqual(sum(c["metadata"] for c in counts.values()), len(written()["snapshot_metadata"]))
+        self.assertEqual(counts["descriptive"]["fields"], 0)
+
     def test_same_field_count_but_renamed_is_detected(self):
         # 件数が同じでも、名前が変われば見つける
         code = B.code_fields()
