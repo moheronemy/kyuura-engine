@@ -20,13 +20,14 @@ from . import __version__
 from . import diagnostics as D
 from .adapter import CommandResult, HostedGame, start_game
 from .observation import observe, visible_log, visible_segment_logs
-from .replay_record import FORMAT_KEY as REPLAY_FORMAT_KEY
 from .replay_record import (
+    EXTENSION_CONNECTION_CHECK,
     RecordFormatError,
     ReplayCollector,
     ReplayRecord,
     read_json_object,
 )
+from .replay_record import FORMAT_KEY as REPLAY_FORMAT_KEY
 from .state import GameState
 
 VIEW_FORMAT = 1
@@ -53,7 +54,9 @@ END_KEYS = frozenset({"state", "entries", "status"})
 # 閲覧用記録のどこにも入ってはいけない項目の名前（ログの ``hidden`` の中の名前は、隠した項目の名前なので除く）
 FORBIDDEN_KEYS = frozenset({"seed", "rng", "rng_state", "rng_state_sha256", "rng_fingerprint", "state_digest", "check", "engine_code", "raw_message", "traceback",
                             "problems", "operation_id", "seq", "accepted_index", "command", "verifier", "decklists", "resume", "context", "halt_message",
-                            "halt_references", REPLAY_FORMAT_KEY})
+                            "halt_references", REPLAY_FORMAT_KEY,
+                            # v0.159: v0.158 の完全な状態の接続用確認値（完全な記録の任意の拡張）と、スナップショットの形式の鍵（どちらも検証者用。閲覧用記録の作り方は変えていない）
+                            EXTENSION_CONNECTION_CHECK, "kyuura_snapshot_format"})
 
 MALFORMED = "malformed"
 INCONSISTENT = "inconsistent"

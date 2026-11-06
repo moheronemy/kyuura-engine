@@ -15,7 +15,7 @@ S5（完全な再現用記録の途中から再開して U4 で照らす）は�
 
 | API | 責任 | 失敗のとき |
 |---|---|---|
-| `save_snapshot(state, *, origin=None, label=None, include_git=False)` | 書き出し（S1）。保存の境界と登録・型の表現を確かめ、全項目を JSON の値にする。状態・乱数・ログを変えない | `SnapshotSaveError`（`code`・`kind`・`path`。部分的な結果を返さない） |
+| `save_snapshot(state, *, origin=None, label=None, include_git=False)` | 書き出し（S1）。保存の境界と登録・型の表現を確かめ、全項目を JSON の値にする。状態・乱数・ログを変えない | `SnapshotSaveError`（`code`・`kind`・`path`。部分的な結果を返さない）。`origin`・`label` の形の誤りは `ValueError`。v0.159 で優先を統一: 状態を保存できなければ（深さ・大きさの上限を含む）`origin`・`label` の形によらず `SnapshotSaveError`（[総合検証](integration-verification-v0.159.md) 2 章） |
 | `dumps_snapshot(snapshot)` | JSON の文字列（鍵の順は保存した順。ログのイベントの鍵の順を保つため並べかえない） | — |
 | `loads_snapshot(text)` | 安全な読み取り（段 1。`replay_record.read_json_object`） | `replay_record.RecordFormatError` |
 | `restore_snapshot(snapshot_or_text)` | 復元（段 1〜7）。不正な入力で例外を投げない | `RestoreReport` の `status`（restored 以外では `state` は None） |

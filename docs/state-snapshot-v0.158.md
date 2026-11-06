@@ -51,7 +51,8 @@ collector, _ = R.ReplayCollector.start(deck0, deck1, seed, connection_checks=Tru
 quick = SR.replay_from_snapshot(collector.close(), snap, position, replay_prefix=False)
 assert quick.scope == "from_connection" and not quick.replay_verified
 
-# 旧記録（拡張のない記録）: 前半を再実行して確かめる。再実行しないなら検証済みとして続けない
+# 旧記録（今の実装で作った、拡張のない記録）: 前半を再実行して確かめる。再実行しないなら検証済みとして続けない
+# （過去の実装で作った記録は、実装の識別が違うので、どちらでも unsupported。v0.159 の訂正）
 old = SR.replay_from_snapshot(old_record, snap, position, replay_prefix=False)
 assert old.status == "unsupported"               # problems のコードは connection_check_absent
 ```
@@ -113,7 +114,8 @@ assert old.status == "unsupported"               # problems のコードは conn
 - `ReplayCollector.start(..., connection_checks=True)` のときだけ、見出しに `"extensions": {"connection_check": "kyuura-snapshot-state-sha256/1"}` を書き、`header.start` と受理した行ごとに `connection_check`（64 桁の 16 進、または作れなかった位置の None）を残す。既定は偽で、v0.157 までと同じ記録
 - 構造の検証: 知らない拡張の名前・方式は `unsupported`（`extension_unknown`・`extension_method_unknown`）。拡張を明示したのに値がない・形が違えば `malformed`（`connection_check_missing`・`connection_check_bad`）。明示していないのに値があれば `inconsistent`（`connection_check_undeclared`）。受理でない行に値があれば `inconsistent`（`check_on_non_accepted`）
 - U4（`replay_run.replay`）は、拡張のある記録では開始と受理した行ごとに接続用確認値も照らす（違えば項目 `connection_check`）。拡張のない記録の結果は v0.157 と同じ。知らない拡張の記録は、途中で切れていても `unsupported`
-- 旧記録（拡張のない記録。v0.157 までの記録を含む）は黙って読みかえない（値があるものとして補わない）。初期の条件から接続位置まで再実行して得た状態と、スナップショットの全項目を比べる方法で扱う（既定）。前半を再実行しないなら `unsupported`（`connection_check_absent`）。拡張のある記録でも、その位置の値が None なら同じ（`connection_check_unavailable`）
+- 旧記録（拡張のない記録）は黙って読みかえない（値があるものとして補わない）。初期の条件から接続位置まで再実行して得た状態と、スナップショットの全項目を比べる方法で扱う（既定）。前半を再実行しないなら `unsupported`（`connection_check_absent`）。拡張のある記録でも、その位置の値が None なら同じ（`connection_check_unavailable`）
+- v0.159 の訂正: v0.158 はこの項目に「v0.157 までの記録を含む」と書いていたが誤り。ここで扱えるのは、今の実装（同じ `behavior_digest`・版）で作った拡張のない記録だけ。v0.157 以前の実装で作った記録は、拡張の有無・前半の再実行によらず、実装の識別の対応の確かめ（4 章の 2）で `unsupported`（`implementation_differs`・`engine_version_differs`）になる。形式上の出力が同じこと（既定の収集は v0.157 と同じ形）と、過去の実装の記録を今の実装で扱えることは別（[総合検証](integration-verification-v0.159.md) 2 章）
 - 古い実装（v0.157 以前）は見出しの `extensions` と行の `connection_check` を知らないが、実装の識別が違うので、v0.158 の記録は古い実装では `unsupported` になる（拡張の値を読み飛ばして照合したことにはならない）
 - 前半を省いた接続は速いが、照らす範囲は接続位置のあとだけ（`from_connection`）。前半の行は今回照らしていない
 

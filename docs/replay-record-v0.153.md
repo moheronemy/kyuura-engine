@@ -69,7 +69,7 @@
 ## 4. 実装・データ・環境の識別
 
 - 範囲: パッケージ `kyuura_engine` の中の `*.py`（`__pycache__` を除く）と `data/*.json`。エンジンの処理・効果の登録・ルールの組・解決の基盤（`resolution/`）・カードデータ（`kyuura_cards.json`）・規約集合の記録（`convention_records.json`）など、実行時に読むものはすべてこの中にある（`load_card_pool` は同梱の写しを読む。kyuura の木は実行時に読まない）。挙動に関わらないかもしれない同梱データ（`research_links.json` など）も、外して見落とすより入れる側に倒した（変わると識別が変わり、U4 は unsupported を返す）
-- 分け方: `behavior_digest` はゲームの挙動の識別（上の範囲から記録と診断の部品を除いたもの）。`instrumentation_digest` は記録と診断の部品（`adapter.py`・`diagnostics.py`・`replay_record.py`・`data/diagnostic_catalog.json`）。診断の表を直してもゲームの挙動の識別は変わらない。扱えるかの判定は `behavior_digest` で行い、`instrumentation_digest` は調査の補助
+- 分け方: `behavior_digest` はゲームの挙動の識別（上の範囲から記録と診断の部品を除いたもの）。`instrumentation_digest` は記録と診断の部品（`adapter.py`・`diagnostics.py`・`replay_record.py`・`data/diagnostic_catalog.json`）。診断の表を直してもゲームの挙動の識別は変わらない。扱えるかの判定は `behavior_digest` で行い、`instrumentation_digest` は調査の補助。v0.159 の注: `instrumentation_digest` の部品の一覧はこの 4 つのままで、あとの版で加えた検証者用のモジュール（v0.154 の `replay_run.py`・v0.155 の `view_record.py`・v0.157 の `snapshot.py`・v0.158 の `snapshot_replay.py`）は `behavior_digest` の側に入る。これらを直すと、ゲームの処理が同じでも、それまでの記録は `unsupported` になる（安全側。分け方を変えるかは利用者の判断。[総合検証](integration-verification-v0.159.md) 2 章）
 - そろえ方（`kyuura-package-files-sha256/1`）: ファイルはパッケージの中の相対パス（`/` 区切り）の辞書順。中身は UTF-8 として読み、先頭の BOM を除き、改行（CRLF・CR）を LF にそろえてから sha256。全体は「パス・中身の sha256」の並びの sha256。チェックアウトの場所・改行・Git の有無によらない。コメントだけの変更も別の識別になる（内容のハッシュなので、意味の違いを判定しない）
 - 規約集合の照合値（`ConventionSetIdentity.digest`）とは役割が違う（そちらは規約の意味の内容の識別）。既存の指紋（lockstep の追跡ファイルの sha256、形式 35 の書き出し）は流用していない
 - Git のコミット（`engine.git_commit`）は補助の情報で、識別にも扱えるかの判定にも使わない（`include_git=False` なら書かない）

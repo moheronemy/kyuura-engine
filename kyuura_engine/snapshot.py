@@ -524,13 +524,12 @@ def connection_check(state: GameState) -> str:
 def save_snapshot(state: GameState, *, origin: dict[str, Any] | None = None, label: str | None = None, include_git: bool = False) -> StateSnapshot:
     """安定した状態を保存する（書き出し。S1）。保存できなければ ``SnapshotSaveError``。渡した状態・乱数・ログは変えない。
 
-    ``origin`` は完全な再現用記録との対応の補助情報（``game_id``・``seq``。DS-RECORD-LINK。復元には使わない）、``label`` はホストの説明。どちらも確かめない説明用で、
-    ここに秘密の値を書かないのはホストの責任。"""
+    ``origin`` は完全な再現用記録との対応の補助情報（``game_id``・``seq``。DS-RECORD-LINK。復元には使わない）、``label`` はホストの説明。どちらも形だけを確かめ
+    （形が違えば ``ValueError``）、内容が正しいかは確かめない説明用で、ここに秘密の値を書かないのはホストの責任。
+
+    誤りの優先（v0.159 で統一）: 状態そのものを保存できない（型の対応表・保存の境界・表せない値・状態の深さと大きさの上限）なら、``origin``・``label`` の形によらず
+    ``SnapshotSaveError``。状態を保存できるときだけ ``origin``・``label`` の形を確かめる（``ValueError``）。補助の情報を加えた書き出しが大きさの上限を超えれば ``SnapshotSaveError``（too_large）。"""
     encoded = state_items(state)
-    if origin is not None and not _origin_ok(origin):
-        raise ValueError("origin は game_id（文字列）・seq（0 以上の整数）だけを持つ辞書")
-    if label is not None and not (type(label) is str and len(label) <= MAX_LABEL):
-        raise ValueError(f"label は {MAX_LABEL} 文字までの文字列")
     pool = load_card_pool()
     data: dict[str, Any] = {
         FORMAT_KEY: SNAPSHOT_FORMAT,
@@ -544,17 +543,25 @@ def save_snapshot(state: GameState, *, origin: dict[str, Any] | None = None, lab
         "check": checks(state),
         "state": encoded,
     }
-    if origin is not None:
-        data["origin"] = dict(origin)
-    if label is not None:
-        data["label"] = label
-    if include_git:
-        data["git_commit"] = git_commit()
-    if _depth(data) > MAX_DEPTH:
+    if _depth(data) > MAX_DEPTH:  # 状態の深さ（補助の情報は最上位の浅い値なので、深さを変えない）
         raise SnapshotSaveError("too_deep")
     text = _text(data)
-    if len(text.encode("utf-8")) > MAX_RECORD_BYTES:
+    if len(text.encode("utf-8")) > MAX_RECORD_BYTES:  # 状態だけの書き出しの大きさ
         raise SnapshotSaveError("too_large")
+    if origin is not None and not _origin_ok(origin):
+        raise ValueError("origin は game_id（文字列）・seq（0 以上の整数）だけを持つ辞書")
+    if label is not None and not (type(label) is str and len(label) <= MAX_LABEL):
+        raise ValueError(f"label は {MAX_LABEL} 文字までの文字列")
+    if origin is not None or label is not None or include_git:
+        if origin is not None:
+            data["origin"] = dict(origin)
+        if label is not None:
+            data["label"] = label
+        if include_git:
+            data["git_commit"] = git_commit()
+        text = _text(data)
+        if len(text.encode("utf-8")) > MAX_RECORD_BYTES:  # 補助の情報を加えた書き出しの大きさ
+            raise SnapshotSaveError("too_large")
     return StateSnapshot(json.loads(text))
 
 
