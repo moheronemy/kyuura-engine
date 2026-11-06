@@ -17,6 +17,8 @@
   （PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE。active。直していない）が同じ場面にあるので blocked_by_defect のまま、対応する不具合をその項目にした。候補の対象の組・状態は変えない。
 - v0.148 の経過（docs/attack-deck-evolution-preflight-v0.148.md）: PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE を両モード共通の不具合として直した（``DEFECT_COUPLING`` から外し、DV2・H1 の
   対象を blocked_by_defect から needs_secret_review にした。v0.146・v0.147 と同じ扱い）。候補の対象の組・状態は変えない。規約は採っていない。
+- v0.149 の経過（docs/optional-deck-evolution-presence-v0.149.md）: PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE・PSP-HIDDEN-SET-ASIDE-DECK-POOL を両モード共通の不具合として直し、同じ形の別の漏れ
+  PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS（active。直していない）を台帳に加えた。どれも研究の停止コードの場面と組にしない（``DEFECT_COUPLING`` は空のまま）。候補の対象の組・状態は変えない。規約は採っていない。
 - 各場面の区分（``plan_class``）は、利用者の依頼の A〜E の軸。台帳の ``classification``（棚卸しの A〜E。A=機能不足 …）とは**別の軸**で、同じ文字でも意味が違う。
 - 対戦の道具の発生の記録（``OBSERVATION``）は、リポジトリの外の記録の集計の写し。版・組・方策・seed・分母・数え方を一緒に書く。停止コードの件数から停止率を推定しない。
 """
@@ -918,7 +920,8 @@ STAGES = {
     "S0": {"name": "両モード共通の不具合の修正（モードと別の版）", "rules": [],
            "prerequisites": [], "scope": ("PSP-NJ1-NINJA-GYM-ORACLE（この調査で確認）・PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-DECK-CONTENT-PRECHECKS の残り（未確認）。"
                                           "v0.146・v0.147 でこの 4 つを直した（v0.147 の横断で見つけた PSP-POWER-PRECHECK-DECK-ORACLE も）。v0.147 で見つけた PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE は"
-                                          "v0.148 で直した"),
+                                          "v0.148 で直した。v0.148 で見つけた PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE と、v0.149 で見つけた PSP-HIDDEN-SET-ASIDE-DECK-POOL は v0.149 で直した。"
+                                          "PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS（v0.149 で見つけた。active）が残る"),
            "done_when": "対の比べ（twin_command_problems）で漏れがない。blocked_by_defect の場面の規約を採れる状態",
            "remains": "研究上の論点（NJ1・PW3・DV2・GV1 の裁定）は未解決のまま"},
     "S1": {"name": "規約集合を受け取る基盤と、今の挙動の保持", "rules": [],
