@@ -133,6 +133,25 @@ ADOPTION_U6 = {
     "implemented_in": "仕様だけ（docs/state-snapshot-design.md・docs/state-snapshot-implementation-plan.md）。U6 は未実装",
 }
 
+ADOPTION_U6_IMPL = {
+    "id": "ADOPT-U6-IMPL",
+    "date": "2026-11-07",
+    "by": "利用者",
+    "scope": ("U6 の S1〜S4・S6（状態スナップショットの書き出し・読み取り・復元・継続の一致・最小のホストへの接続）の実装と、スナップショットの仕様の判断事項 6 件"
+              "（DS-CONSTRUCTED・DS-HALT-TEXT・DS-CHECK・DS-DEPTH・DS-RECORD-LINK・DS-INSTRUMENTATION。docs/state-snapshot-design.json）。S5（完全な記録の途中から再開して U4 で照らす）は別の作業"),
+    "policies": [
+        "構築盤面も、保存の境界と整合の確かめを満たせば保存できる（new_game から合法に到達できることは保証しない）",
+        "停止の理由の文も保存する。閲覧者への表示は診断 API の安全な文",
+        "保存したときの確認値を入れる（照らすためのもので、署名・認証・改ざんの防止ではない）",
+        "入れ子の深さの上限を固定し、同じ上限を保存と読み取りに当てる",
+        "完全な再現用記録への対応は任意の補助情報",
+        "初版は記録・診断の部品の識別も一致を求め、違えば非対応",
+    ],
+    "decisions": [],
+    "units": [],
+    "implemented_in": "v0.157（kyuura_engine/snapshot.py。docs/state-snapshot-v0.157.md）。S5 が未実装なので、この表の U6 は planned のまま",
+}
+
 BASE = {
     "commit": "7e4a875681f15745cfe42a2b95c00f0e4f557324",
     "engine_version": "0.151.0",
@@ -149,7 +168,7 @@ SPEC = {
     "request": ("利用者の依頼（2026-11-06）は、v0.151 までの山札をさがす効果の情報漏れの監査を踏まえた仕様の作成。エンジンの動作・API・保存と復元の実装、続行規約の採用はしない。"
                 "仕様の作成の依頼を、仕様の中身の承認として扱わない"),
     "base": BASE,
-    "adoptions": [ADOPTION, ADOPTION_U3, ADOPTION_U4, ADOPTION_U5, ADOPTION_U6],
+    "adoptions": [ADOPTION, ADOPTION_U3, ADOPTION_U4, ADOPTION_U5, ADOPTION_U6, ADOPTION_U6_IMPL],
     "documents": {"design": "docs/diagnostics-replay-api-design.md", "plan": "docs/diagnostics-replay-api-implementation-plan.md",
                   "generator": "scripts/build_diagnostics_replay_api_design.py", "test": "tests/test_diagnostics_replay_api_design.py"},
     "sources": {"stop_ledger": "docs/stop-policy-classification.json", "scene_index": "kyuura_engine/data/convention_records.json"},
@@ -247,9 +266,11 @@ SPEC = {
          "provides": "ワザ・番の終わりの解決の記録（先読みの枝を含む）。状態に保存しない",
          "reuse": "開発用の詳細（developer_detail）の候補。検証者だけ",
          "limits": "公開の API ではない。秘密の配分を含む"},
-        {"id": "NI-STATE-RESTORE", "name": "状態の読み込み（state_from_dict など）", "status": "not_implemented",
-         "refs": ["docs/state-snapshot-design.md", "docs/state-snapshot-implementation-plan.md"],
-         "provides": "ない（v0.1 から未実装）。v0.156 で仕様案と実装計画（案）だけを作った", "reuse": "U6 で新しく作る（docs/state-snapshot-design.md）", "limits": "形式 35 を読み込み用に読み替えない"},
+        {"id": "NI-STATE-RESTORE", "name": "状態の保存・復元（v0.157 で U6 の S1〜S4・S6 として実装。形式 kyuura_snapshot_format）", "status": "implemented",
+         "refs": ["kyuura_engine/snapshot.py::save_snapshot", "kyuura_engine/snapshot.py::restore_snapshot", "kyuura_engine/snapshot.py::RestoredGame",
+                  "docs/state-snapshot-design.md", "docs/state-snapshot-implementation-plan.md"],
+         "provides": "ホスト用のスナップショットの書き出し・安全な読み取り・7 段の復元と結果の分類・復元した状態から HostedGame で続ける入口（v0.157）",
+         "reuse": "S5（完全な記録の途中から再開して U4 で照らす）が使う", "limits": "形式 35 を読み込み用に読み替えない。同じ実装・依存データ・規約集合だけ。完全な記録との接続（S5）はない"},
         {"id": "NI-LEGAL-MOVES", "name": "合法手の一覧", "status": "not_implemented", "refs": ["tools/stress_engine.py::choose_command"],
          "provides": "ない（ストレス実行の操作の選び方は検証用の道具で、合法手の一覧ではない）", "reuse": "U7 で境界だけを決める", "limits": "でたらめな操作を混ぜる道具"},
         {"id": "NI-DIAGNOSTIC", "name": "構造化した診断（v0.152 で U1・U2 として実装）", "status": "implemented",
@@ -748,7 +769,8 @@ SPEC = {
          "done": ["閲覧用記録から完全な記録を作る関数を作らない"]},
         {"id": "U6", "status": "planned", "title": "JSON の保存・復元への接続", "depends": ["U3", "U4"],
          "scope": ["形式 35 から状態をもどせるかの監査（D-SNAPSHOT-BASE の材料。v0.156 の原則の採用で、形式 35 は使わない独立の形式に決まった）",
-                   "スナップショットの書き出し・読み込み・確かめ（仕様案と実装計画: docs/state-snapshot-design.md・docs/state-snapshot-implementation-plan.md）"],
+                   ("スナップショットの書き出し・読み込み・確かめ（仕様と実装計画: docs/state-snapshot-design.md・docs/state-snapshot-implementation-plan.md）。"
+                    "v0.157 で S1〜S4・S6 を実装（docs/state-snapshot-v0.157.md）。S5 が残るので U6 は planned のまま")],
          "reuse": ["EX-RNG-JSON", "EX-RESUME-GUARD", "EX-CONVENTION-ID", "EX-STATE-EXPORT"],
          "tests": ["保存して復元し、続きを送った結果が保存しなかった場合と同じ（固定の少数の対戦・決定待ち・区間の途中）", "知らない形式・項目・再開先・規約集合の拒否",
                    "壊したスナップショットが StateIntegrityError か invalid_record になる"],
