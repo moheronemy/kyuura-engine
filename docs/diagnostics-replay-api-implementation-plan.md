@@ -21,7 +21,7 @@
 | U3 | implemented | 完全な再現用記録の収集と検証 | U2 | アダプタの結果から記録を作る収集器<br>記録の形・見出し・歩の番号・終わりの印の検証 | EX-LOCKSTEP, EX-COMMAND-CODEC, EX-STATE-EXPORT, EX-CONVENTION-ID, EX-SUDDEN-DEATH | 見出しの必須の項目が欠けた記録・番号の飛んだ記録・終わりの印のない記録の区別<br>サドン・デスの区間の境界<br>拒否の歩を記録しても再現の入力に入らない | 記録が lockstep の記録と別の形式（kyuura_replay_format）で、どちらも黙って読み替えない |
 | U4 | implemented | 再現インターフェース | U3 | replay_from_start・verify_record・compare_runs | EX-LOCKSTEP, EX-LOG-AUDIT | 固定の少数の対戦（seed と目的を先に決める）で succeeded<br>1 歩を書き換えた記録で diverged と最初の歩・項目<br>実装の識別・規約集合を変えた記録で unsupported<br>内部エラーを diverged にしない<br>方策を再実行しない（記録のコマンドだけで進む） | 同じ実装・同じ依存・同じ規約集合・同じ初期の条件・同じ操作列で、各歩の確認値と同じ<br>compare_runs が成功を返さない |
 | U5 | implemented | 閲覧用記録 | U1, U3 | 完全な記録（または進行中の状態）から見る人ごとの記録を作る | EX-OBSERVE, EX-DECISION, EX-SUDDEN-DEATH | 閲覧用記録が対戦中の観測・ログの写しと同じ<br>seed・乱数・状態の指紋・相手のコマンド・相手の拒否が入らない<br>双子の完全な記録から作った相手・観戦者の閲覧用記録が同じ | 閲覧用記録から完全な記録を作る関数を作らない |
-| U6 | planned | JSON の保存・復元への接続 | U3, U4 | 形式 35 から状態をもどせるかの監査（D-SNAPSHOT-BASE の材料）<br>スナップショットの書き出し・読み込み・確かめ | EX-RNG-JSON, EX-RESUME-GUARD, EX-CONVENTION-ID, EX-STATE-EXPORT | 保存して復元し、続きを送った結果が保存しなかった場合と同じ（固定の少数の対戦・決定待ち・区間の途中）<br>知らない形式・項目・再開先・規約集合の拒否<br>壊したスナップショットが StateIntegrityError か invalid_record になる | pickle を保存の形式にしない<br>形式 35 の意味を変えない |
+| U6 | planned | JSON の保存・復元への接続 | U3, U4 | 形式 35 から状態をもどせるかの監査（D-SNAPSHOT-BASE の材料。v0.156 の原則の採用で、形式 35 は使わない独立の形式に決まった）<br>スナップショットの書き出し・読み込み・確かめ（仕様案と実装計画: docs/state-snapshot-design.md・docs/state-snapshot-implementation-plan.md） | EX-RNG-JSON, EX-RESUME-GUARD, EX-CONVENTION-ID, EX-STATE-EXPORT | 保存して復元し、続きを送った結果が保存しなかった場合と同じ（固定の少数の対戦・決定待ち・区間の途中）<br>知らない形式・項目・再開先・規約集合の拒否<br>壊したスナップショットが StateIntegrityError か invalid_record になる | pickle を保存の形式にしない<br>形式 35 の意味を変えない |
 | U7 | planned | 合法手 API・GUI アダプタへの接続 | U2, U5 | 合法手の一覧の境界（見る人の知る情報だけで作る。秘密の配分で候補が変わらない）<br>GUI・AI・オンライン対戦が使う境界の文書（実装は採用の判断のあと） | EX-OBSERVE, EX-DECISION, EX-TWIN-AUDIT | 双子で合法手の一覧が同じ<br>一覧の手がアダプタで rejected にならない（または理由が分類で説明できる） | オンライン対戦・本格的な画面を作らない（境界だけ） |
 <!-- generated:units end -->
 
@@ -60,14 +60,16 @@ U1 診断の型と情報境界
 | D-RUNTIME | Python の版が違う環境での再現を、保証の範囲に入れるか | 同じ版だけ（違えば unsupported）<br>記録するが拒否しない（結果に環境の違いを書く） | 記録し、違えば結果に環境の違いを書いて再実行する（拒否しない）。保証は同じ実装・同じ依存までにする（api-review の Python 3.11〜3.13 の確認は過去の確認） | adopted | 推奨案ではなく、対応する Python の実装と版（major・minor）に保証を限る（違えば unsupported）。micro の違い・OS・パス・改行では非対応にしない |
 | D-POSTGAME | 対戦が終わったあと、閲覧用記録で相手のデッキリスト・seed などを公開するか | 公開しない（対戦中と同じ）<br>対戦の終わりに公開する（別の承認の記録が要る） | 公開しない。公開するなら閲覧用記録の版と、公開の時点を決める | adopted | 対戦後も情報の公開範囲を自動では広げない |
 | D-VERSIONS | 新しい 4 つの版（診断・再現用記録・閲覧用記録・スナップショット）を分けるか | 4 つに分ける<br>診断と閲覧用記録を 1 つにまとめ、3 つにする | 4 つに分ける。どれも整数 1 つで、形が変わったときだけ上げる。値の語彙を足すだけでは上げない（serialize の約束と同じ） | adopted | 再現用記録の形式の版（kyuura_replay_format）だけを独立して設け、診断の形式・状態の形式・規約集合の版は記録の中で参照する。閲覧用記録・スナップショットの版の決め方は決めていない（一括で当てはめない） |
-| D-SNAPSHOT-BASE | スナップショットを形式 35 の書き出しに乱数の状態を足したものにするか、別の形にするか | 形式 35 + 乱数（形式 35 が落とさず表すことを U6 で確かめたうえで）<br>新しい形（状態の項目から直接） | U6 の最初に、形式 35 から状態をもどせるかの監査をしてから決める。監査の前に形式 35 を読み込みの形式として約束しない | pending |  |
-| D-HALT-SNAPSHOT | HALTED の状態のスナップショットを作れるようにするか | 作れる（再開はしない。調査・表示用）<br>作らない | 作れる。ただし再開の API はなく、続行規約の採用で再開することは別の判断 | pending |  |
+| D-SNAPSHOT-BASE | スナップショットを形式 35 の書き出しに乱数の状態を足したものにするか、別の形にするか | 形式 35 + 乱数（形式 35 が落とさず表すことを U6 で確かめたうえで）<br>新しい形（状態の項目から直接） | U6 の最初に、形式 35 から状態をもどせるかの監査をしてから決める。監査の前に形式 35 を読み込みの形式として約束しない | adopted | 形式 35 をそのまま使わず、必要な全状態を明示した独立の形式（kyuura_snapshot_format）にする。具体的なスキーマは docs/state-snapshot-design.md の仕様案（未採用） |
+| D-HALT-SNAPSHOT | HALTED の状態のスナップショットを作れるようにするか | 作れる（再開はしない。調査・表示用）<br>作らない | 作れる。ただし再開の API はなく、続行規約の採用で再開することは別の判断 | adopted | HALTED・途中停止も保存・復元できる設計にする。停止の解除・未対応の続行は認めない |
 | D-STATE-INTEGRITY-VIEW | 状態の不整合（state_integrity）を、プレイヤーに内部エラーと同じ見え方で返すか | 同じ（対戦を止める。内容は検証者だけ）<br>別の表示（壊れた保存の可能性を伝える） | 対戦を止めることは同じにし、分類の名前は分けて返す | adopted | 本人にも一般的な説明だけを返す（内部の値・カードの識別を出さない）。分類は state_integrity のまま（内部エラー・未対応に変えない） |
 <!-- generated:decisions end -->
 
 （v0.152 の前の記述）判断がなくても始められるもの: U1 の分類と情報境界は、D-MESSAGE（本人への文の扱い）のほかの判断に依存しません。D-MESSAGE は、推奨案（生の文を本人と検証者だけに）で始め、決まった文の表を選んだときに、写しの関数だけを変えれば済む形にします。
 
 ## 6. 最初に実装する単位と完了基準
+
+v0.156: U6 の原則だけを採用し、仕様案と実装計画（案）を作った（[state-snapshot-design.md](state-snapshot-design.md)・[state-snapshot-implementation-plan.md](state-snapshot-implementation-plan.md)）。U6 は未実装。
 
 v0.155 の結果: U5 を実装した（[view-record-v0.155.md](view-record-v0.155.md)。実行時の収集と、U4 の検証つきの再実行からの変換）。次の単位は U6（JSON の保存・復元）で、D-SNAPSHOT-BASE・D-HALT-SNAPSHOT は保留のまま。
 

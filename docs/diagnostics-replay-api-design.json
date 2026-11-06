@@ -98,6 +98,29 @@
     "U5"
    ],
    "implemented_in": "v0.155（docs/view-record-v0.155.md）"
+  },
+  {
+   "id": "ADOPT-U6-PRINCIPLES",
+   "date": "2026-11-06",
+   "by": "利用者",
+   "scope": "U6（JSON の状態の保存・復元）の仕様の作成と原則だけ（docs/state-snapshot-design.md 3 章）。スキーマの細部・自動移行の方法・U6 の実装の承認ではない",
+   "policies": [
+    "形式 35 をそのまま復元の形式に使わず、必要な全状態を明示した独立の形式にする",
+    "初めの対応範囲は、同じ実装・依存データ・規約集合に限る",
+    "カード定義・規約は、原則として識別から登録済みのものを解決する",
+    "乱数の状態を正確に保存・復元する",
+    "決定待ちを保存・復元の対象に含める",
+    "HALTED・途中停止も保存・復元できる設計にする。停止の解除・未対応の続行は認めない",
+    "不正・未知の状態を推測で補ったり移したりしない",
+    "スナップショットは完全な情報を持つホスト用で、閲覧用記録と分ける",
+    "完了の基準は、復元のあとの同じ操作の列で状態・乱数・ログ・観測が同じこと"
+   ],
+   "decisions": [
+    "D-SNAPSHOT-BASE",
+    "D-HALT-SNAPSHOT"
+   ],
+   "units": [],
+   "implemented_in": "仕様だけ（docs/state-snapshot-design.md・docs/state-snapshot-implementation-plan.md）。U6 は未実装"
   }
  ],
  "documents": {
@@ -338,9 +361,12 @@
    "id": "NI-STATE-RESTORE",
    "name": "状態の読み込み（state_from_dict など）",
    "status": "not_implemented",
-   "refs": [],
-   "provides": "ない（v0.1 から未実装）",
-   "reuse": "U6 で新しく作る",
+   "refs": [
+    "docs/state-snapshot-design.md",
+    "docs/state-snapshot-implementation-plan.md"
+   ],
+   "provides": "ない（v0.1 から未実装）。v0.156 で仕様案と実装計画（案）だけを作った",
+   "reuse": "U6 で新しく作る（docs/state-snapshot-design.md）",
    "limits": "形式 35 を読み込み用に読み替えない"
   },
   {
@@ -2148,7 +2174,9 @@
     "新しい形（状態の項目から直接）"
    ],
    "recommendation": "U6 の最初に、形式 35 から状態をもどせるかの監査をしてから決める。監査の前に形式 35 を読み込みの形式として約束しない",
-   "status": "pending"
+   "status": "adopted",
+   "adopted": "形式 35 をそのまま使わず、必要な全状態を明示した独立の形式（kyuura_snapshot_format）にする。具体的なスキーマは docs/state-snapshot-design.md の仕様案（未採用）",
+   "adoption": "ADOPT-U6-PRINCIPLES"
   },
   {
    "id": "D-HALT-SNAPSHOT",
@@ -2158,7 +2186,9 @@
     "作らない"
    ],
    "recommendation": "作れる。ただし再開の API はなく、続行規約の採用で再開することは別の判断",
-   "status": "pending"
+   "status": "adopted",
+   "adopted": "HALTED・途中停止も保存・復元できる設計にする。停止の解除・未対応の続行は認めない",
+   "adoption": "ADOPT-U6-PRINCIPLES"
   },
   {
    "id": "D-STATE-INTEGRITY-VIEW",
@@ -2314,8 +2344,8 @@
     "U4"
    ],
    "scope": [
-    "形式 35 から状態をもどせるかの監査（D-SNAPSHOT-BASE の材料）",
-    "スナップショットの書き出し・読み込み・確かめ"
+    "形式 35 から状態をもどせるかの監査（D-SNAPSHOT-BASE の材料。v0.156 の原則の採用で、形式 35 は使わない独立の形式に決まった）",
+    "スナップショットの書き出し・読み込み・確かめ（仕様案と実装計画: docs/state-snapshot-design.md・docs/state-snapshot-implementation-plan.md）"
    ],
    "reuse": [
     "EX-RNG-JSON",

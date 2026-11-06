@@ -439,8 +439,12 @@ class DocumentTest(unittest.TestCase):
         spec = json.loads(SPEC.read_text(encoding="utf-8"))
         units = {u["id"]: u["status"] for u in spec["units"]}
         self.assertEqual((units["U5"], units["U6"], units["U7"]), ("implemented", "planned", "planned"))
-        status = {d["id"]: d["status"] for d in spec["decisions"]}
-        self.assertEqual((status["D-SNAPSHOT-BASE"], status["D-HALT-SNAPSHOT"]), ("pending", "pending"))
+        # v0.156: D-SNAPSHOT-BASE・D-HALT-SNAPSHOT は、後の原則の採用（ADOPT-U6-PRINCIPLES）だけで決まった（この版の採用では決めていない）
+        later = next(a for a in spec["adoptions"] if a["id"] == "ADOPT-U6-PRINCIPLES")
+        decided = {d["id"]: d for d in spec["decisions"]}
+        for key in ("D-SNAPSHOT-BASE", "D-HALT-SNAPSHOT"):
+            self.assertEqual((decided[key]["status"], decided[key]["adoption"]), ("adopted", "ADOPT-U6-PRINCIPLES"))
+            self.assertIn(key, later["decisions"])
 
 
 if __name__ == "__main__":

@@ -118,7 +118,8 @@ class BrokenSpecTest(unittest.TestCase):
         # v0.152: 採用は adoptions の記録に範囲を限って書く。記録のない判断事項を adopted にする・単位を実装済みにする・仕様案全体を承認済みにすると見つける
         def edit(spec):
             spec["approval"] = "approved"
-            next(d for d in spec["decisions"] if d["status"] == "pending")["status"] = "adopted"
+            # v0.156: 判断事項はすべて採用の記録つきになったので、記録のない判断事項をテストで加えて adopted にする
+            spec["decisions"].append({"id": "D-TEST-ONLY", "question": "x", "options": ["x"], "recommendation": "x", "status": "adopted", "adopted": "x"})
             next(u for u in spec["units"] if u["status"] == "planned")["status"] = "implemented"
         problems = self.broken(edit)
         self.assertTrue(any("承認" in p for p in problems), problems)

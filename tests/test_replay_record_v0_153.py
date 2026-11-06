@@ -422,11 +422,15 @@ class DocumentTest(unittest.TestCase):
 
     def test_spec_adoptions(self):
         spec = json.loads(SPEC.read_text(encoding="utf-8"))
-        adopted = {d["id"] for d in spec["decisions"] if d["status"] == "adopted"}
+        adopted = {d["id"] for d in spec["decisions"] if d["status"] == "adopted" and d["adoption"] != "ADOPT-U6-PRINCIPLES"}
         self.assertEqual(adopted, {"D-MESSAGE", "D-REJECTED", "D-POSTGAME", "D-STATE-INTEGRITY-VIEW", "D-IMPLEMENTATION-ID", "D-RUNTIME", "D-CHECK-DENSITY",
                                    "D-VERSIONS"})
-        status = {d["id"]: d["status"] for d in spec["decisions"]}
-        self.assertEqual((status["D-SNAPSHOT-BASE"], status["D-HALT-SNAPSHOT"]), ("pending", "pending"))
+        # v0.156: D-SNAPSHOT-BASE・D-HALT-SNAPSHOT は、後の原則の採用（ADOPT-U6-PRINCIPLES）だけで決まった（この版の採用では決めていない）
+        later = next(a for a in spec["adoptions"] if a["id"] == "ADOPT-U6-PRINCIPLES")
+        decided = {d["id"]: d for d in spec["decisions"]}
+        for key in ("D-SNAPSHOT-BASE", "D-HALT-SNAPSHOT"):
+            self.assertEqual((decided[key]["status"], decided[key]["adoption"]), ("adopted", "ADOPT-U6-PRINCIPLES"))
+            self.assertIn(key, later["decisions"])
         # v0.154: 後の承認（ADOPT-U4）で U4 も実装済みになった。v0.153 の採用の記録（ADOPT-U3）が持つのは U3 と 4 つの判断事項だけ
         u3 = next(a for a in spec["adoptions"] if a["id"] == "ADOPT-U3")
         self.assertEqual((u3["units"], set(u3["decisions"])), (["U3"], {"D-IMPLEMENTATION-ID", "D-RUNTIME", "D-CHECK-DENSITY", "D-VERSIONS"}))
