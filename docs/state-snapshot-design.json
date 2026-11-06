@@ -1868,5 +1868,18 @@
     "見る人の値で検証者の情報が取れない"
    ]
   }
- ]
+ ],
+ "completion": {
+  "status": "partial",
+  "implemented": [
+   "S1",
+   "S2",
+   "S3",
+   "S4",
+   "S6"
+  ],
+  "planned": [
+   "S5"
+  ]
+ }
 }

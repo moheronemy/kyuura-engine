@@ -135,8 +135,11 @@ class DocumentTest(unittest.TestCase):
         spec = json.loads((ROOT / "docs" / "diagnostics-replay-api-design.json").read_text(encoding="utf-8"))
         status = {d["id"]: d["status"] for d in spec["decisions"]}
         self.assertEqual((status["D-SNAPSHOT-BASE"], status["D-HALT-SNAPSHOT"]), ("adopted", "adopted"))
-        self.assertEqual({u["id"]: u["status"] for u in spec["units"]}["U6"], "planned")  # S5 が未実装なので、U6 全体は planned のまま
+        u6 = {u["id"]: u for u in spec["units"]}["U6"]
+        self.assertEqual(u6["status"], "partial")  # S5 が未実装なので、U6 全体は partial（v0.157 は planned と書いていた）
         snapshot_spec = written()
+        self.assertEqual({p["id"]: p["status"] for p in u6["parts"]}, {u["id"]: u["status"] for u in snapshot_spec["units"]})  # 部分の単位はスナップショットの実装計画と同じ
+        self.assertEqual(snapshot_spec["completion"], {"status": "partial", "implemented": ["S1", "S2", "S3", "S4", "S6"], "planned": ["S5"]})
         self.assertEqual({u["id"]: u["status"] for u in snapshot_spec["units"]},
                          {"S1": "implemented", "S2": "implemented", "S3": "implemented", "S4": "implemented", "S5": "planned", "S6": "implemented"})
         self.assertEqual({d["id"]: d["status"] for d in snapshot_spec["decisions"]}, dict.fromkeys(snapshot_spec["implementation_adoption"]["decisions"], "adopted"))

@@ -21,7 +21,7 @@
 | U3 | implemented | 完全な再現用記録の収集と検証 | U2 | アダプタの結果から記録を作る収集器<br>記録の形・見出し・歩の番号・終わりの印の検証 | EX-LOCKSTEP, EX-COMMAND-CODEC, EX-STATE-EXPORT, EX-CONVENTION-ID, EX-SUDDEN-DEATH | 見出しの必須の項目が欠けた記録・番号の飛んだ記録・終わりの印のない記録の区別<br>サドン・デスの区間の境界<br>拒否の歩を記録しても再現の入力に入らない | 記録が lockstep の記録と別の形式（kyuura_replay_format）で、どちらも黙って読み替えない |
 | U4 | implemented | 再現インターフェース | U3 | replay_from_start・verify_record・compare_runs | EX-LOCKSTEP, EX-LOG-AUDIT | 固定の少数の対戦（seed と目的を先に決める）で succeeded<br>1 歩を書き換えた記録で diverged と最初の歩・項目<br>実装の識別・規約集合を変えた記録で unsupported<br>内部エラーを diverged にしない<br>方策を再実行しない（記録のコマンドだけで進む） | 同じ実装・同じ依存・同じ規約集合・同じ初期の条件・同じ操作列で、各歩の確認値と同じ<br>compare_runs が成功を返さない |
 | U5 | implemented | 閲覧用記録 | U1, U3 | 完全な記録（または進行中の状態）から見る人ごとの記録を作る | EX-OBSERVE, EX-DECISION, EX-SUDDEN-DEATH | 閲覧用記録が対戦中の観測・ログの写しと同じ<br>seed・乱数・状態の指紋・相手のコマンド・相手の拒否が入らない<br>双子の完全な記録から作った相手・観戦者の閲覧用記録が同じ | 閲覧用記録から完全な記録を作る関数を作らない |
-| U6 | planned | JSON の保存・復元への接続 | U3, U4 | 形式 35 から状態をもどせるかの監査（D-SNAPSHOT-BASE の材料。v0.156 の原則の採用で、形式 35 は使わない独立の形式に決まった）<br>スナップショットの書き出し・読み込み・確かめ（仕様と実装計画: docs/state-snapshot-design.md・docs/state-snapshot-implementation-plan.md）。v0.157 で S1〜S4・S6 を実装（docs/state-snapshot-v0.157.md）。S5 が残るので U6 は planned のまま | EX-RNG-JSON, EX-RESUME-GUARD, EX-CONVENTION-ID, EX-STATE-EXPORT | 保存して復元し、続きを送った結果が保存しなかった場合と同じ（固定の少数の対戦・決定待ち・区間の途中）<br>知らない形式・項目・再開先・規約集合の拒否<br>壊したスナップショットが StateIntegrityError か invalid_record になる | pickle を保存の形式にしない<br>形式 35 の意味を変えない |
+| U6 | partial（implemented: S1, S2, S3, S4, S6／planned: S5） | JSON の保存・復元への接続 | U3, U4 | 形式 35 から状態をもどせるかの監査（D-SNAPSHOT-BASE の材料。v0.156 の原則の採用で、形式 35 は使わない独立の形式に決まった）<br>スナップショットの書き出し・読み込み・確かめ（仕様と実装計画: docs/state-snapshot-design.md・docs/state-snapshot-implementation-plan.md）。v0.157 で S1〜S4・S6 を実装（docs/state-snapshot-v0.157.md）。S5 が残るので U6 は partial（部分の単位の状態は parts。docs/state-snapshot-implementation-plan.md の単位と同じ） | EX-RNG-JSON, EX-RESUME-GUARD, EX-CONVENTION-ID, EX-STATE-EXPORT | 保存して復元し、続きを送った結果が保存しなかった場合と同じ（固定の少数の対戦・決定待ち・区間の途中）<br>知らない形式・項目・再開先・規約集合の拒否<br>壊したスナップショットが StateIntegrityError か invalid_record になる | pickle を保存の形式にしない<br>形式 35 の意味を変えない |
 | U7 | planned | 合法手 API・GUI アダプタへの接続 | U2, U5 | 合法手の一覧の境界（見る人の知る情報だけで作る。秘密の配分で候補が変わらない）<br>GUI・AI・オンライン対戦が使う境界の文書（実装は採用の判断のあと） | EX-OBSERVE, EX-DECISION, EX-TWIN-AUDIT | 双子で合法手の一覧が同じ<br>一覧の手がアダプタで rejected にならない（または理由が分類で説明できる） | オンライン対戦・本格的な画面を作らない（境界だけ） |
 <!-- generated:units end -->
 
@@ -69,7 +69,7 @@ U1 診断の型と情報境界
 
 ## 6. 最初に実装する単位と完了基準
 
-v0.157: U6 の S1〜S4・S6 を実装した（[state-snapshot-v0.157.md](state-snapshot-v0.157.md)。判断事項 6 件を採用。S5 は未実装なので U6 は planned のまま）。
+v0.157: U6 の S1〜S4・S6 を実装した（[state-snapshot-v0.157.md](state-snapshot-v0.157.md)。判断事項 6 件を採用。S5 は未実装。v0.158 で U6 の全体の状態を partial、部分の単位の状態を parts に分けて記録した）。
 
 v0.156: U6 の原則だけを採用し、仕様案と実装計画（案）を作った（[state-snapshot-design.md](state-snapshot-design.md)・[state-snapshot-implementation-plan.md](state-snapshot-implementation-plan.md)）。U6 は未実装。
 

@@ -1,6 +1,6 @@
 # 診断 API と対戦記録・再現インターフェースの仕様案
 
-この文書は**仕様案**です（状態 `proposed`、承認 `not_approved`）。v0.152 で、利用者が U1（診断の型と情報境界）・U2（コマンド実行結果のアダプタ）と 6 つの方針だけを採用し、実装しました（[diagnostics-adapter-v0.152.md](diagnostics-adapter-v0.152.md)。採用の記録は下の「採用の記録」）。v0.153 で、利用者が U3（完全な再現用記録の収集・形式・構造の検証）と 4 つの方針（実装の識別・実行環境・確認値の密度・形式の版）を採用し、実装しました（[replay-record-v0.153.md](replay-record-v0.153.md)）。v0.154 で、利用者が U4（記録からの再実行と確認値の照合）の実装と限定検証を承認し、実装しました（[replay-run-v0.154.md](replay-run-v0.154.md)）。v0.155 で、利用者が U5（閲覧用記録）と方針を採用し、実装しました（[view-record-v0.155.md](view-record-v0.155.md)）。状態の保存と復元（U6）は、v0.156 で原則だけを採用し、仕様案と実装計画（案）を作りました（[state-snapshot-design.md](state-snapshot-design.md)・[state-snapshot-implementation-plan.md](state-snapshot-implementation-plan.md)）。v0.157 で、利用者が判断事項 6 件を採用し、S1〜S4・S6（書き出し・読み取り・復元・継続の一致・最小のホストへの接続）を実装しました（[state-snapshot-v0.157.md](state-snapshot-v0.157.md)。S5 は未実装なので、U6 全体は planned のまま）。合法手の一覧（U7）・異なる版と規約集合の比べは、仕様案のままで実装していません。9 章の例は形の例示です（`api_status` は `illustrative`。実際の出力の例は v0.152 の文書）。実装の単位と順は [実装計画](diagnostics-replay-api-implementation-plan.md) に、利用者の判断が要る事項もそこに書きます。
+この文書は**仕様案**です（状態 `proposed`、承認 `not_approved`）。v0.152 で、利用者が U1（診断の型と情報境界）・U2（コマンド実行結果のアダプタ）と 6 つの方針だけを採用し、実装しました（[diagnostics-adapter-v0.152.md](diagnostics-adapter-v0.152.md)。採用の記録は下の「採用の記録」）。v0.153 で、利用者が U3（完全な再現用記録の収集・形式・構造の検証）と 4 つの方針（実装の識別・実行環境・確認値の密度・形式の版）を採用し、実装しました（[replay-record-v0.153.md](replay-record-v0.153.md)）。v0.154 で、利用者が U4（記録からの再実行と確認値の照合）の実装と限定検証を承認し、実装しました（[replay-run-v0.154.md](replay-run-v0.154.md)）。v0.155 で、利用者が U5（閲覧用記録）と方針を採用し、実装しました（[view-record-v0.155.md](view-record-v0.155.md)）。状態の保存と復元（U6）は、v0.156 で原則だけを採用し、仕様案と実装計画（案）を作りました（[state-snapshot-design.md](state-snapshot-design.md)・[state-snapshot-implementation-plan.md](state-snapshot-implementation-plan.md)）。v0.157 で、利用者が判断事項 6 件を採用し、S1〜S4・S6（書き出し・読み取り・復元・継続の一致・最小のホストへの接続）を実装しました（[state-snapshot-v0.157.md](state-snapshot-v0.157.md)。S5 は未実装なので、U6 全体は partial。v0.157 の文書と仕様は planned と書いていたが、v0.158 で部分の単位ごとの状態と全体の状態を分けて記録した）。合法手の一覧（U7）・異なる版と規約集合の比べは、仕様案のままで実装していません。9 章の例は形の例示です（`api_status` は `illustrative`。実際の出力の例は v0.152 の文書）。実装の単位と順は [実装計画](diagnostics-replay-api-implementation-plan.md) に、利用者の判断が要る事項もそこに書きます。
 
 構造化した仕様は [diagnostics-replay-api-design.json](diagnostics-replay-api-design.json) です。この文書の表と例（`<!-- generated:… -->` の区画）は、JSON と同じ元（`scripts/build_diagnostics_replay_api_design.py` の `SPEC`）から作ります。区画の中を手で直さないでください（`--check` が違いを見つけます）。区画の外の説明は手で書いています。
 
@@ -60,7 +60,7 @@
     - 完了の基準は、復元のあとの同じ操作の列で状態・乱数・ログ・観測が同じこと
   - 判断事項: D-SNAPSHOT-BASE、D-HALT-SNAPSHOT
   - 実装単位: 
-- `ADOPT-U6-IMPL`（2026-11-07・利用者）: U6 の S1〜S4・S6（状態スナップショットの書き出し・読み取り・復元・継続の一致・最小のホストへの接続）の実装と、スナップショットの仕様の判断事項 6 件（DS-CONSTRUCTED・DS-HALT-TEXT・DS-CHECK・DS-DEPTH・DS-RECORD-LINK・DS-INSTRUMENTATION。docs/state-snapshot-design.json）。S5（完全な記録の途中から再開して U4 で照らす）は別の作業。実装: v0.157（kyuura_engine/snapshot.py。docs/state-snapshot-v0.157.md）。S5 が未実装なので、この表の U6 は planned のまま
+- `ADOPT-U6-IMPL`（2026-11-07・利用者）: U6 の S1〜S4・S6（状態スナップショットの書き出し・読み取り・復元・継続の一致・最小のホストへの接続）の実装と、スナップショットの仕様の判断事項 6 件（DS-CONSTRUCTED・DS-HALT-TEXT・DS-CHECK・DS-DEPTH・DS-RECORD-LINK・DS-INSTRUMENTATION。docs/state-snapshot-design.json）。S5（完全な記録の途中から再開して U4 で照らす）は別の作業。実装: v0.157（kyuura_engine/snapshot.py。docs/state-snapshot-v0.157.md）。S5 が未実装なので、この表の U6 は partial（一部の単位だけ実装）
   - 方針:
     - 構築盤面も、保存の境界と整合の確かめを満たせば保存できる（new_game から合法に到達できることは保証しない）
     - 停止の理由の文も保存する。閲覧者への表示は診断 API の安全な文
@@ -69,7 +69,7 @@
     - 完全な再現用記録への対応は任意の補助情報
     - 初版は記録・診断の部品の識別も一致を求め、違えば非対応
   - 判断事項: 
-  - 実装単位: 
+  - 実装単位: U6/S1、U6/S2、U6/S3、U6/S4、U6/S6
 <!-- generated:adoptions end -->
 
 採用は、この記録の範囲だけです。v0.152 の時点では実装の識別・Python の環境・確認値の密度・版の分け方も保留でしたが、v0.153 の採用（`ADOPT-U3`）で決めました。スナップショットの形式（D-SNAPSHOT-BASE）と停止状態のスナップショット（D-HALT-SNAPSHOT）は保留（`pending`）のままです。v0.156 の原則の採用（`ADOPT-U6-PRINCIPLES`）で、この 2 つは決まりました（形式 35 を使わない独立の形式・停止も保存できるが解除しない）。具体的なスキーマは[state-snapshot-design.md](state-snapshot-design.md) で、v0.157 の採用（`ADOPT-U6-IMPL`）で判断事項を決めて実装しました。

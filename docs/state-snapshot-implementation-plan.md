@@ -3,6 +3,7 @@
 [仕様](state-snapshot-design.md)を実装するときの単位・依存・回帰テスト・完了基準です。v0.156 で案として作り、v0.157 で判断事項 6 件を採用して（`ADOPT-U6-IMPL`）、S1〜S4・S6 を実装しました（[state-snapshot-v0.157.md](state-snapshot-v0.157.md)）。S5 は実装していません（別の作業）。
 
 <!-- generated:implementation-adoption begin -->
+- U6 全体の状態: `partial`（implemented: S1, S2, S3, S4, S6／planned: S5。全体の状態は単位の状態から決まり、一部だけなら partial）
 - `ADOPT-U6-IMPL`（2026-11-07・利用者）: U6 の S1〜S4・S6 の実装と、判断事項 6 件の採用（採用した内容は 8 章・実装計画 5 章の表）。S5（完全な記録の途中から再開して U4 で照らす）は別の作業
   - 判断事項: DS-CONSTRUCTED、DS-HALT-TEXT、DS-CHECK、DS-DEPTH、DS-RECORD-LINK、DS-INSTRUMENTATION
   - 実装した単位: S1、S2、S3、S4、S6（v0.157（kyuura_engine/snapshot.py。docs/state-snapshot-v0.157.md））

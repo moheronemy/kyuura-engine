@@ -148,8 +148,8 @@ ADOPTION_U6_IMPL = {
         "初版は記録・診断の部品の識別も一致を求め、違えば非対応",
     ],
     "decisions": [],
-    "units": [],
-    "implemented_in": "v0.157（kyuura_engine/snapshot.py。docs/state-snapshot-v0.157.md）。S5 が未実装なので、この表の U6 は planned のまま",
+    "units": ["U6/S1", "U6/S2", "U6/S3", "U6/S4", "U6/S6"],  # v0.158: 実装した U6 の部分の単位（v0.157 は空で書き、U6 全体を planned と書いていた）
+    "implemented_in": "v0.157（kyuura_engine/snapshot.py。docs/state-snapshot-v0.157.md）。S5 が未実装なので、この表の U6 は partial（一部の単位だけ実装）",
 }
 
 BASE = {
@@ -767,10 +767,12 @@ SPEC = {
          "reuse": ["EX-OBSERVE", "EX-DECISION", "EX-SUDDEN-DEATH"],
          "tests": ["閲覧用記録が対戦中の観測・ログの写しと同じ", "seed・乱数・状態の指紋・相手のコマンド・相手の拒否が入らない", "双子の完全な記録から作った相手・観戦者の閲覧用記録が同じ"],
          "done": ["閲覧用記録から完全な記録を作る関数を作らない"]},
-        {"id": "U6", "status": "planned", "title": "JSON の保存・復元への接続", "depends": ["U3", "U4"],
+        {"id": "U6", "status": "partial", "title": "JSON の保存・復元への接続", "depends": ["U3", "U4"],
+         "parts": [{"id": "S1", "status": "implemented"}, {"id": "S2", "status": "implemented"}, {"id": "S3", "status": "implemented"},
+                   {"id": "S4", "status": "implemented"}, {"id": "S5", "status": "planned"}, {"id": "S6", "status": "implemented"}],
          "scope": ["形式 35 から状態をもどせるかの監査（D-SNAPSHOT-BASE の材料。v0.156 の原則の採用で、形式 35 は使わない独立の形式に決まった）",
                    ("スナップショットの書き出し・読み込み・確かめ（仕様と実装計画: docs/state-snapshot-design.md・docs/state-snapshot-implementation-plan.md）。"
-                    "v0.157 で S1〜S4・S6 を実装（docs/state-snapshot-v0.157.md）。S5 が残るので U6 は planned のまま")],
+                    "v0.157 で S1〜S4・S6 を実装（docs/state-snapshot-v0.157.md）。S5 が残るので U6 は partial（部分の単位の状態は parts。docs/state-snapshot-implementation-plan.md の単位と同じ）")],
          "reuse": ["EX-RNG-JSON", "EX-RESUME-GUARD", "EX-CONVENTION-ID", "EX-STATE-EXPORT"],
          "tests": ["保存して復元し、続きを送った結果が保存しなかった場合と同じ（固定の少数の対戦・決定待ち・区間の途中）", "知らない形式・項目・再開先・規約集合の拒否",
                    "壊したスナップショットが StateIntegrityError か invalid_record になる"],
@@ -785,6 +787,18 @@ SPEC = {
 
 
 # ------------------------------------------------------------ 生成
+
+
+UNIT_STATUSES = ("implemented", "partial", "planned")  # partial: 部分の単位（parts）の一部だけ実装した
+
+
+def _unit_status(unit: dict) -> str:
+    if not unit.get("parts"):
+        return unit["status"]
+    groups = {}
+    for part in unit["parts"]:
+        groups.setdefault(part["status"], []).append(part["id"])
+    return f"{unit['status']}（" + "／".join(f"{k}: {', '.join(v)}" for k, v in groups.items()) + "）"
 
 
 def build() -> dict:
@@ -856,7 +870,7 @@ def blocks(spec: dict) -> dict[str, list[str]]:
             lines += ["見る人ごとの写し（null は送らない）:", "", "```json", json.dumps(e["views"], ensure_ascii=False, indent=1), "```", ""]
     out["examples"] = lines[:-1]
     out["units"] = _table(["単位", "状態", "内容", "依存", "変更範囲", "再利用", "回帰テスト", "完了基準"],
-                          [[u["id"], u["status"], u["title"], ", ".join(u["depends"]) or "なし", u["scope"], ", ".join(u["reuse"]), u["tests"], u["done"]]
+                          [[u["id"], _unit_status(u), u["title"], ", ".join(u["depends"]) or "なし", u["scope"], ", ".join(u["reuse"]), u["tests"], u["done"]]
                            for u in spec["units"]])
     out["decisions"] = _table(["ID", "問い", "選択肢", "推奨", "状態", "採用した内容"],
                               [[d["id"], d["question"], d["options"], d["recommendation"], d["status"], d.get("adopted", "")] for d in spec["decisions"]])
@@ -947,10 +961,24 @@ def spec_problems(spec: dict) -> list[str]:
     for d in adopted_decisions - {d["id"] for d in spec["decisions"] if d.get("status") == "adopted"}:
         problems.append(f"採用の記録の判断事項 {d} が adopted になっていない")
     for u in spec["units"]:
-        if u.get("status") not in ("implemented", "planned"):
+        if u.get("status") not in UNIT_STATUSES:
             problems.append(f"実装単位 {u['id']} の状態 {u.get('status')} が語彙にない")
-        if (u.get("status") == "implemented") != (u["id"] in adopted_units):
-            problems.append(f"実装単位 {u['id']} の状態が、採用の記録の単位と合わない")
+        parts = u.get("parts")
+        if parts is None:
+            if u.get("status") == "partial" or (u.get("status") == "implemented") != (u["id"] in adopted_units):
+                problems.append(f"実装単位 {u['id']} の状態が、採用の記録の単位と合わない")
+            continue
+        # 部分の単位を持つ単位（U6）: 部分ごとに採用の記録（"U6/S1" の形）と合わせ、全体の状態は部分から決まる（一部だけなら partial）
+        for part in parts:
+            if part.get("status") not in ("implemented", "planned") or (part["status"] == "implemented") != (f"{u['id']}/{part['id']}" in adopted_units):
+                problems.append(f"実装単位 {u['id']} の部分 {part['id']} の状態が、採用の記録の単位と合わない")
+        done = [p["status"] == "implemented" for p in parts]
+        overall = "implemented" if all(done) else "partial" if any(done) else "planned"
+        if u.get("status") != overall or u["id"] in adopted_units:
+            problems.append(f"実装単位 {u['id']} の全体の状態が、部分の単位の状態（{overall}）と合わない")
+    known_parts = {f"{u['id']}/{p['id']}" for u in spec["units"] for p in u.get("parts", [])}
+    for name in sorted(n for n in adopted_units if "/" in n and n not in known_parts):
+        problems.append(f"採用の記録の単位 {name} が、実装単位の部分にない")
     for e in spec["examples"]:
         if e.get("api_status") != "illustrative":
             problems.append(f"例 {e['id']} が例示（illustrative）になっていない（実際の出力の例は版の文書に書く）")

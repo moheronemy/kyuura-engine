@@ -126,6 +126,21 @@ class BrokenSpecTest(unittest.TestCase):
         self.assertTrue(any("採用の記録（adoptions）にない" in p for p in problems), problems)
         self.assertTrue(any("採用の記録の単位と合わない" in p for p in problems), problems)
 
+    def test_partial_unit_follows_its_parts(self):
+        # v0.158: 部分の単位（parts）を持つ単位の全体の状態は部分から決まる（一部だけなら partial）。部分の状態は採用の記録（"U6/S1" の形）と合わせる
+        def planned_whole(spec):
+            next(u for u in spec["units"] if u["id"] == "U6")["status"] = "planned"
+        self.assertTrue(any("全体の状態" in p for p in self.broken(planned_whole)))
+
+        def unrecorded_part(spec):
+            next(p for u in spec["units"] if u["id"] == "U6" for p in u["parts"] if p["status"] == "planned")["status"] = "implemented"
+        problems = self.broken(unrecorded_part)
+        self.assertTrue(any("部分" in p and "採用の記録の単位と合わない" in p for p in problems), problems)
+
+        def unknown_part(spec):
+            spec["adoptions"][-1]["units"].append("U6/S9")
+        self.assertTrue(any("U6/S9" in p for p in self.broken(unknown_part)))
+
     def test_adopted_decision_without_record(self):
         def edit(spec):
             spec["adoptions"][0]["decisions"].remove("D-MESSAGE")

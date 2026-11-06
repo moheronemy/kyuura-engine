@@ -136,8 +136,14 @@
     "初版は記録・診断の部品の識別も一致を求め、違えば非対応"
    ],
    "decisions": [],
-   "units": [],
-   "implemented_in": "v0.157（kyuura_engine/snapshot.py。docs/state-snapshot-v0.157.md）。S5 が未実装なので、この表の U6 は planned のまま"
+   "units": [
+    "U6/S1",
+    "U6/S2",
+    "U6/S3",
+    "U6/S4",
+    "U6/S6"
+   ],
+   "implemented_in": "v0.157（kyuura_engine/snapshot.py。docs/state-snapshot-v0.157.md）。S5 が未実装なので、この表の U6 は partial（一部の単位だけ実装）"
   }
  ],
  "documents": {
@@ -2357,15 +2363,41 @@
   },
   {
    "id": "U6",
-   "status": "planned",
+   "status": "partial",
    "title": "JSON の保存・復元への接続",
    "depends": [
     "U3",
     "U4"
    ],
+   "parts": [
+    {
+     "id": "S1",
+     "status": "implemented"
+    },
+    {
+     "id": "S2",
+     "status": "implemented"
+    },
+    {
+     "id": "S3",
+     "status": "implemented"
+    },
+    {
+     "id": "S4",
+     "status": "implemented"
+    },
+    {
+     "id": "S5",
+     "status": "planned"
+    },
+    {
+     "id": "S6",
+     "status": "implemented"
+    }
+   ],
    "scope": [
     "形式 35 から状態をもどせるかの監査（D-SNAPSHOT-BASE の材料。v0.156 の原則の採用で、形式 35 は使わない独立の形式に決まった）",
-    "スナップショットの書き出し・読み込み・確かめ（仕様と実装計画: docs/state-snapshot-design.md・docs/state-snapshot-implementation-plan.md）。v0.157 で S1〜S4・S6 を実装（docs/state-snapshot-v0.157.md）。S5 が残るので U6 は planned のまま"
+    "スナップショットの書き出し・読み込み・確かめ（仕様と実装計画: docs/state-snapshot-design.md・docs/state-snapshot-implementation-plan.md）。v0.157 で S1〜S4・S6 を実装（docs/state-snapshot-v0.157.md）。S5 が残るので U6 は partial（部分の単位の状態は parts。docs/state-snapshot-implementation-plan.md の単位と同じ）"
    ],
    "reuse": [
     "EX-RNG-JSON",

@@ -374,7 +374,9 @@ SPEC = {
 
 
 def build() -> dict:
-    return json.loads(json.dumps(SPEC, ensure_ascii=False))
+    spec = json.loads(json.dumps(SPEC, ensure_ascii=False))
+    spec["completion"] = completion(spec)  # v0.158: U6 全体の状態（単位の状態から決まる。--check が照らす）
+    return spec
 
 
 def dump(data: dict) -> str:
@@ -452,9 +454,19 @@ def blocks(spec: dict) -> dict[str, list[str]]:
                               [[d["id"], d["question"], d["options"], d["recommendation"], f"{d['status']}（{d['adoption']}）" if d.get("adoption") else d["status"],
                                 d.get("adopted", "")] for d in spec["decisions"]])
     impl = spec["implementation_adoption"]
-    out["implementation-adoption"] = [f"- `{impl['id']}`（{impl['date']}・{impl['by']}）: {impl['scope']}", f"  - 判断事項: {'、'.join(impl['decisions'])}",
+    status = completion(spec)
+    out["implementation-adoption"] = [f"- U6 全体の状態: `{status['status']}`（implemented: {', '.join(status['implemented']) or 'なし'}／planned: {', '.join(status['planned']) or 'なし'}。"
+                                      "全体の状態は単位の状態から決まり、一部だけなら partial）"] + [f"- `{impl['id']}`（{impl['date']}・{impl['by']}）: {impl['scope']}", f"  - 判断事項: {'、'.join(impl['decisions'])}",
                                       f"  - 実装した単位: {'、'.join(impl['units'])}（{impl['implemented_in']}）", f"  - 実装しない単位: {'、'.join(impl['not_implemented'])}"]
     return out
+
+
+def completion(spec: dict) -> dict:
+    """U6 全体の状態（単位の状態から決まる。すべて implemented なら implemented、一部なら partial、なければ planned）。"""
+    implemented = [u["id"] for u in spec["units"] if u.get("status") == "implemented"]
+    planned = [u["id"] for u in spec["units"] if u.get("status") != "implemented"]
+    status = "implemented" if not planned else "partial" if implemented else "planned"
+    return {"status": status, "implemented": implemented, "planned": planned}
 
 
 DESIGN_BLOCKS = ("adoption", "categories", "game-state", "explicit-types", "value-records", "non-field", "json-types", "header", "limits", "boundary", "states",
@@ -581,6 +593,8 @@ def spec_problems(spec: dict) -> list[str]:
         problems.append("実装した単位と、採用の記録の単位が違う")
     if any(u.get("status") not in ("implemented", "planned") for u in spec["units"]):
         problems.append("単位の状態が implemented・planned でない")
+    if spec.get("completion") != completion(spec):
+        problems.append("U6 全体の状態（completion）が、単位の状態から決まるものと違う")
     units = {u["id"]: u for u in spec["units"]}
     order = [u["id"] for u in spec["units"]]
     for u in spec["units"]:
