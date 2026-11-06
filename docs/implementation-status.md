@@ -81,7 +81,7 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 - サドン・デスの延長戦（サイド 1 枚でやり直す。v0.134 で実装した。[sudden-death-v0.134.md](sudden-death-v0.134.md)）
 - 旧裏の複数の時期のルールの切り替え（`RuleSet` は 2000.02.14版だけ）
 - 公式大会のレギュレーション（サイド 4 枚など）
-- 状態の JSON の読み込み（スナップショット）・合法手の一覧。仕様案だけ（閲覧用記録は v0.155 で実装した。[view-record-v0.155.md](view-record-v0.155.md)。記録の再実行による再現は v0.154 で実装した。[replay-run-v0.154.md](replay-run-v0.154.md)。完全な再現用記録の収集と構造の検証は v0.153 で実装した。[replay-record-v0.153.md](replay-record-v0.153.md)。診断の型とコマンド実行結果のアダプタは v0.152 で実装した。[diagnostics-adapter-v0.152.md](diagnostics-adapter-v0.152.md)）（未承認。[diagnostics-replay-api-design.md](diagnostics-replay-api-design.md)・[実装計画](diagnostics-replay-api-implementation-plan.md)）
+- 状態の JSON の読み込み（スナップショット）・合法手の一覧。仕様案だけ（スナップショットは v0.155 のあとに原則の採用と仕様案・実装計画（案）を作った。[state-snapshot-design.md](state-snapshot-design.md)。閲覧用記録は v0.155 で実装した。[view-record-v0.155.md](view-record-v0.155.md)。記録の再実行による再現は v0.154 で実装した。[replay-run-v0.154.md](replay-run-v0.154.md)。完全な再現用記録の収集と構造の検証は v0.153 で実装した。[replay-record-v0.153.md](replay-record-v0.153.md)。診断の型とコマンド実行結果のアダプタは v0.152 で実装した。[diagnostics-adapter-v0.152.md](diagnostics-adapter-v0.152.md)）（未承認。[diagnostics-replay-api-design.md](diagnostics-replay-api-design.md)・[実装計画](diagnostics-replay-api-implementation-plan.md)）
 - 画面、AI、通信（隠れた情報の管理は、v0.47 でプレイヤーに渡す観測 `observe`・`visible_log` を加えた。状態とログは内部の完全な記録のまま。[fossil-hidden-info-v0.47.md](fossil-hidden-info-v0.47.md) 5.1 節）
 
 ## 原典未確認
