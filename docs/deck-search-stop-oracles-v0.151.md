@@ -122,7 +122,16 @@ v0.150 の `SeparateStopOracleTest`（`expectedFailure` 3 つ）は、修正の�
 
 ### 5.5 全体テスト
 
-（全体テストの結果は実行のあとに書く。）
+[testing](testing.md) に従い 1 回だけ実行した。
+
+- 実行した木: コミット `3d23328`（作業ツリーに変更なし。追跡ファイル 664 件の内容の sha256 `6b7cd0b8c0b15c1e50549ee33b10072cb2337a55663d9b7d95b36b3b07e8f60b`。実行の前後で HEAD・状態・内容の指紋が同じ）。Python 3.14.6・
+  `PYTHONUTF8=1`・1 worker・モジュールごとに別プロセス（`python -m unittest -v <モジュール>`。収集は `python -m unittest` と同じ）。モジュールごとの時間切れは 3600 秒
+- 結果: 274 モジュール・7,742 件（収集した数と同じ）。失敗 1・エラー 2（2 モジュール）・skip 1（「大きな比較は KYUURA_COMPAT_BASE=4bd97bf を設定したときだけ」）・時間切れ 0・
+  expectedFailure 0。所要 約 78 分（最長は `test_card_sources` の 481 秒）。監視側・実行器の中断はない
+- 失敗・エラーの原因は環境: `tests.test_species_heights_v0_129`（`test_pinned_commit`・`test_extract_check`）と `tests.test_super_transform_dark_pulse_v0_124`
+  （`test_research_commit_tree_is_the_research_branch`）。PATH の先頭の msys2 の git が引数の `^{tree}` の波括弧を展開し、`^tree` として kyuura のコミットを読めなかった（コミットは
+  kyuura にある）。この版はこの 2 つのテストと `scripts/extract_species_heights.py` を変えていない
+- 2 つのモジュールだけを、同じ木で `MSYS=noglob`（msys2 の引数の展開を止める）を設定して再実行した: 11 件 OK・44 件 OK（終了コード 0）。全体の再実行はしていない
 
 ## 6. 増えた制限・維持した経路・残る選択肢
 
