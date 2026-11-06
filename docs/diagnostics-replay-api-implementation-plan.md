@@ -20,7 +20,7 @@
 | U2 | implemented | コマンド実行結果のアダプタ | U1 | apply_command を包む関数（状態・コマンド・操作するプレイヤー → 結果と診断）<br>new_game の前の入力の確かめ（seed の型・範囲を invalid_input にする） | EX-APPLY-COMMAND, EX-RESUME-GUARD, EX-CONVENTION-ID | rejected で状態・乱数・ログが変わらない（command_outcome と同じ確かめ）<br>受理・拒否・失敗の 3 つと status の 5 つの組み合わせ<br>決定待ち・HALTED・サドン・デスの status と next<br>古い状態への操作を、アダプタが持つ今の状態と違えば受け付けない（P-NO-FREE-REDO） | apply_command の結果と、アダプタの受理・拒否が一致（同じ入力で）<br>例外を広く捕まえない（EngineError だけを診断にし、ほかは internal_error として記録して投げ直す） |
 | U3 | implemented | 完全な再現用記録の収集と検証 | U2 | アダプタの結果から記録を作る収集器<br>記録の形・見出し・歩の番号・終わりの印の検証 | EX-LOCKSTEP, EX-COMMAND-CODEC, EX-STATE-EXPORT, EX-CONVENTION-ID, EX-SUDDEN-DEATH | 見出しの必須の項目が欠けた記録・番号の飛んだ記録・終わりの印のない記録の区別<br>サドン・デスの区間の境界<br>拒否の歩を記録しても再現の入力に入らない | 記録が lockstep の記録と別の形式（kyuura_replay_format）で、どちらも黙って読み替えない |
 | U4 | implemented | 再現インターフェース | U3 | replay_from_start・verify_record・compare_runs | EX-LOCKSTEP, EX-LOG-AUDIT | 固定の少数の対戦（seed と目的を先に決める）で succeeded<br>1 歩を書き換えた記録で diverged と最初の歩・項目<br>実装の識別・規約集合を変えた記録で unsupported<br>内部エラーを diverged にしない<br>方策を再実行しない（記録のコマンドだけで進む） | 同じ実装・同じ依存・同じ規約集合・同じ初期の条件・同じ操作列で、各歩の確認値と同じ<br>compare_runs が成功を返さない |
-| U5 | planned | 閲覧用記録 | U1, U3 | 完全な記録（または進行中の状態）から見る人ごとの記録を作る | EX-OBSERVE, EX-DECISION, EX-SUDDEN-DEATH | 閲覧用記録が対戦中の観測・ログの写しと同じ<br>seed・乱数・状態の指紋・相手のコマンド・相手の拒否が入らない<br>双子の完全な記録から作った相手・観戦者の閲覧用記録が同じ | 閲覧用記録から完全な記録を作る関数を作らない |
+| U5 | implemented | 閲覧用記録 | U1, U3 | 完全な記録（または進行中の状態）から見る人ごとの記録を作る | EX-OBSERVE, EX-DECISION, EX-SUDDEN-DEATH | 閲覧用記録が対戦中の観測・ログの写しと同じ<br>seed・乱数・状態の指紋・相手のコマンド・相手の拒否が入らない<br>双子の完全な記録から作った相手・観戦者の閲覧用記録が同じ | 閲覧用記録から完全な記録を作る関数を作らない |
 | U6 | planned | JSON の保存・復元への接続 | U3, U4 | 形式 35 から状態をもどせるかの監査（D-SNAPSHOT-BASE の材料）<br>スナップショットの書き出し・読み込み・確かめ | EX-RNG-JSON, EX-RESUME-GUARD, EX-CONVENTION-ID, EX-STATE-EXPORT | 保存して復元し、続きを送った結果が保存しなかった場合と同じ（固定の少数の対戦・決定待ち・区間の途中）<br>知らない形式・項目・再開先・規約集合の拒否<br>壊したスナップショットが StateIntegrityError か invalid_record になる | pickle を保存の形式にしない<br>形式 35 の意味を変えない |
 | U7 | planned | 合法手 API・GUI アダプタへの接続 | U2, U5 | 合法手の一覧の境界（見る人の知る情報だけで作る。秘密の配分で候補が変わらない）<br>GUI・AI・オンライン対戦が使う境界の文書（実装は採用の判断のあと） | EX-OBSERVE, EX-DECISION, EX-TWIN-AUDIT | 双子で合法手の一覧が同じ<br>一覧の手がアダプタで rejected にならない（または理由が分類で説明できる） | オンライン対戦・本格的な画面を作らない（境界だけ） |
 <!-- generated:units end -->
@@ -68,6 +68,8 @@ U1 診断の型と情報境界
 （v0.152 の前の記述）判断がなくても始められるもの: U1 の分類と情報境界は、D-MESSAGE（本人への文の扱い）のほかの判断に依存しません。D-MESSAGE は、推奨案（生の文を本人と検証者だけに）で始め、決まった文の表を選んだときに、写しの関数だけを変えれば済む形にします。
 
 ## 6. 最初に実装する単位と完了基準
+
+v0.155 の結果: U5 を実装した（[view-record-v0.155.md](view-record-v0.155.md)。実行時の収集と、U4 の検証つきの再実行からの変換）。次の単位は U6（JSON の保存・復元）で、D-SNAPSHOT-BASE・D-HALT-SNAPSHOT は保留のまま。
 
 v0.154 の結果: U4 を実装した（[replay-run-v0.154.md](replay-run-v0.154.md)。記録の行を seq の順に再実行し、確認値を照らす。`compare_runs` は実装していない）。次の単位は U5（閲覧用記録）。
 

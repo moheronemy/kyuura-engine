@@ -77,6 +77,27 @@
     "U4"
    ],
    "implemented_in": "v0.154（docs/replay-run-v0.154.md）"
+  },
+  {
+   "id": "ADOPT-U5",
+   "date": "2026-11-06",
+   "by": "利用者",
+   "scope": "U5（閲覧用記録）の実装と次の方針だけ。スナップショットの形式・停止状態からの再開・対戦後の完全な情報の公開の承認ではない",
+   "policies": [
+    "閲覧用記録に、完全な再現用記録とは別の形式の版を設ける（kyuura_view_format）",
+    "各時点の observe・閲覧用ログ・view_for を元に作る",
+    "最後の状態の知識を過去の場面へ遡って入れない",
+    "拒否した操作は本人の記録だけに入れ、相手・観戦者には存在も知らせない",
+    "完全な記録の seq を、閲覧用記録に出さない",
+    "seed・乱数の状態・完全な状態の確認値・非公開の初期の条件・完全なコマンドを写さない",
+    "閲覧用記録からの再実行・状態の復元は保証しない",
+    "対戦が終わったあとも閲覧の範囲を自動では広げない"
+   ],
+   "decisions": [],
+   "units": [
+    "U5"
+   ],
+   "implemented_in": "v0.155（docs/view-record-v0.155.md）"
   }
  ],
  "documents": {
@@ -362,12 +383,17 @@
   },
   {
    "id": "NI-VIEW-RECORD",
-   "name": "閲覧用記録",
-   "status": "not_implemented",
-   "refs": [],
-   "provides": "ない（観測・ログの写しの部品はある）",
-   "reuse": "U5 で作る",
-   "limits": ""
+   "name": "閲覧用記録（v0.155 で U5 として実装）",
+   "status": "implemented",
+   "refs": [
+    "kyuura_engine/view_record.py::ViewHost",
+    "kyuura_engine/view_record.py::ViewRecorder",
+    "kyuura_engine/view_record.py::view_records_from_replay",
+    "kyuura_engine/view_record.py::validate_view_record"
+   ],
+   "provides": "閲覧者を固定した収集（実行時の収集と、U4 の検証つきの再実行からの変換）・JSON の読み書き・構造の検証（v0.155）",
+   "reuse": "GUI・通信は、閲覧用記録の項目（観測・ログの写し・状態の知らせ）をそのまま使える",
+   "limits": "閲覧用記録からの再実行・状態の復元はない"
   },
   {
    "id": "NI-HALT-RESUME",
@@ -1250,57 +1276,64 @@
      "name": "kyuura_view_format",
      "required": true,
      "role": "format",
-     "meaning": "閲覧用記録の形式の版"
+     "meaning": "閲覧用記録の形式の版（再現用記録の形式とは別の番号。v0.155 は 1）"
     },
     {
-     "name": "header.viewer",
+     "name": "header.viewer・role・origin",
      "required": true,
      "role": "reference",
-     "meaning": "見る人（0・1・観戦者）"
+     "meaning": "閲覧者（0・1・観戦者。作るときに固定）・player か spectator・記録の始まり（new_game か、途中から始めた attached）"
     },
     {
-     "name": "header.engine・convention_set",
+     "name": "header.engine_version・convention_set・diagnostic_schema",
      "required": true,
      "role": "reference",
-     "meaning": "エンジンの版・実装の識別・規約集合の識別（全員に見える値）"
+     "meaning": "エンジンの版・規約集合の識別（ID・版・照合値）・診断の形式（全員に見える値）"
     },
     {
      "name": "header.own_decklist",
-     "required": false,
+     "required": true,
      "role": "reference",
-     "meaning": "プレイヤーの記録だけ。自分のデッキリスト"
+     "meaning": "プレイヤーの記録だけ。自分のデッキのカードの組（並びではない）。観戦者は null"
+    },
+    {
+     "name": "entries[].n・kind・segment",
+     "required": true,
+     "role": "reference",
+     "meaning": "その閲覧者の記録に出した項目だけで連続する番号・種類（start・update・own_rejection・unavailable）・区間"
     },
     {
      "name": "entries[].events",
-     "required": true,
-     "role": "reference",
-     "meaning": "受理した操作ごとの visible_log の差分（区間ごとに visible_segment_logs）"
-    },
-    {
-     "name": "entries[].decision",
      "required": false,
      "role": "reference",
-     "meaning": "その時点の観測の決定（選べるものは決めるプレイヤーの記録だけ）"
+     "meaning": "その時点の閲覧用ログの新しいイベント（区間の番号・ログの位置・イベント）。あとで遡って変えない"
     },
     {
-     "name": "entries[].own_rejections",
+     "name": "entries[].observation",
      "required": false,
      "role": "reference",
-     "meaning": "本人の記録だけ。本人が送って拒否された操作と、本人向けの診断"
+     "meaning": "その時点の observe（選べるものは決めるプレイヤーの記録だけ）"
     },
     {
-     "name": "segments[]・result",
+     "name": "entries[].notice",
      "required": true,
      "role": "reference",
-     "meaning": "区間の番号・結果・最後の結果（全員に見える）"
+     "meaning": "その時点の view_for（本人は結果と診断、相手・観戦者は状態の知らせ）。operation_id は入れない。拒否は本人の記録だけ"
+    },
+    {
+     "name": "end",
+     "required": true,
+     "role": "reference",
+     "meaning": "記録の閉じ方（closed・aborted）・項目の数・最後の status。ないなら途中の記録"
     }
    ],
    "guarantees": [
-    "その見る人が対戦中に観測・ログの写しで見たものと同じ"
+    "その見る人が対戦中に観測・ログの写しで見たものと同じ（収集した時点の値で固定）"
    ],
    "not_guaranteed": [
-    "完全な再現用記録・スナップショットの復元",
-    "ほかの見る人の記録の作り直し"
+    "完全な再現用記録・スナップショットの復元・閲覧用記録からの再実行",
+    "ほかの見る人の記録の作り直し",
+    "手で作った記録の内容が安全な投影から作られたこと（構造の検証は認証ではない）"
    ]
   },
   {
@@ -1516,14 +1549,14 @@
    "status": "proposed",
    "owner": "完全な再現用記録（U3）",
    "changes_when": "記録の形が変わるとき",
-   "note": "1 から"
+   "note": "1 から（v0.153 で実装）"
   },
   {
    "key": "kyuura_view_format",
    "status": "proposed",
    "owner": "閲覧用記録（U5）",
    "changes_when": "閲覧用記録の形が変わるとき",
-   "note": "1 から（診断の版と合わせるかは D-VERSIONS）"
+   "note": "1 から（v0.155 で実装。再現用記録とは別の番号。診断の形式は header.diagnostic_schema で参照する）"
   },
   {
    "key": "kyuura_snapshot_format",
@@ -2249,7 +2282,7 @@
   },
   {
    "id": "U5",
-   "status": "planned",
+   "status": "implemented",
    "title": "閲覧用記録",
    "depends": [
     "U1",

@@ -1,6 +1,6 @@
 # 診断 API と対戦記録・再現インターフェースの仕様案
 
-この文書は**仕様案**です（状態 `proposed`、承認 `not_approved`）。v0.152 で、利用者が U1（診断の型と情報境界）・U2（コマンド実行結果のアダプタ）と 6 つの方針だけを採用し、実装しました（[diagnostics-adapter-v0.152.md](diagnostics-adapter-v0.152.md)。採用の記録は下の「採用の記録」）。v0.153 で、利用者が U3（完全な再現用記録の収集・形式・構造の検証）と 4 つの方針（実装の識別・実行環境・確認値の密度・形式の版）を採用し、実装しました（[replay-record-v0.153.md](replay-record-v0.153.md)）。v0.154 で、利用者が U4（記録からの再実行と確認値の照合）の実装と限定検証を承認し、実装しました（[replay-run-v0.154.md](replay-run-v0.154.md)）。閲覧用記録（U5）・状態の保存と復元（U6）・合法手の一覧（U7）・異なる版と規約集合の比べは、仕様案のままで実装していません。9 章の例は形の例示です（`api_status` は `illustrative`。実際の出力の例は v0.152 の文書）。実装の単位と順は [実装計画](diagnostics-replay-api-implementation-plan.md) に、利用者の判断が要る事項もそこに書きます。
+この文書は**仕様案**です（状態 `proposed`、承認 `not_approved`）。v0.152 で、利用者が U1（診断の型と情報境界）・U2（コマンド実行結果のアダプタ）と 6 つの方針だけを採用し、実装しました（[diagnostics-adapter-v0.152.md](diagnostics-adapter-v0.152.md)。採用の記録は下の「採用の記録」）。v0.153 で、利用者が U3（完全な再現用記録の収集・形式・構造の検証）と 4 つの方針（実装の識別・実行環境・確認値の密度・形式の版）を採用し、実装しました（[replay-record-v0.153.md](replay-record-v0.153.md)）。v0.154 で、利用者が U4（記録からの再実行と確認値の照合）の実装と限定検証を承認し、実装しました（[replay-run-v0.154.md](replay-run-v0.154.md)）。v0.155 で、利用者が U5（閲覧用記録）と方針を採用し、実装しました（[view-record-v0.155.md](view-record-v0.155.md)）。状態の保存と復元（U6）・合法手の一覧（U7）・異なる版と規約集合の比べは、仕様案のままで実装していません。9 章の例は形の例示です（`api_status` は `illustrative`。実際の出力の例は v0.152 の文書）。実装の単位と順は [実装計画](diagnostics-replay-api-implementation-plan.md) に、利用者の判断が要る事項もそこに書きます。
 
 構造化した仕様は [diagnostics-replay-api-design.json](diagnostics-replay-api-design.json) です。この文書の表と例（`<!-- generated:… -->` の区画）は、JSON と同じ元（`scripts/build_diagnostics_replay_api_design.py` の `SPEC`）から作ります。区画の中を手で直さないでください（`--check` が違いを見つけます）。区画の外の説明は手で書いています。
 
@@ -35,6 +35,18 @@
     - 確認値から pending_moves などを除いている根拠を確かめ直す
   - 判断事項: 
   - 実装単位: U4
+- `ADOPT-U5`（2026-11-06・利用者）: U5（閲覧用記録）の実装と次の方針だけ。スナップショットの形式・停止状態からの再開・対戦後の完全な情報の公開の承認ではない。実装: v0.155（docs/view-record-v0.155.md）
+  - 方針:
+    - 閲覧用記録に、完全な再現用記録とは別の形式の版を設ける（kyuura_view_format）
+    - 各時点の observe・閲覧用ログ・view_for を元に作る
+    - 最後の状態の知識を過去の場面へ遡って入れない
+    - 拒否した操作は本人の記録だけに入れ、相手・観戦者には存在も知らせない
+    - 完全な記録の seq を、閲覧用記録に出さない
+    - seed・乱数の状態・完全な状態の確認値・非公開の初期の条件・完全なコマンドを写さない
+    - 閲覧用記録からの再実行・状態の復元は保証しない
+    - 対戦が終わったあとも閲覧の範囲を自動では広げない
+  - 判断事項: 
+  - 実装単位: U5
 <!-- generated:adoptions end -->
 
 採用は、この記録の範囲だけです。v0.152 の時点では実装の識別・Python の環境・確認値の密度・版の分け方も保留でしたが、v0.153 の採用（`ADOPT-U3`）で決めました。スナップショットの形式（D-SNAPSHOT-BASE）と停止状態のスナップショット（D-HALT-SNAPSHOT）は保留（`pending`）のままです。
@@ -85,7 +97,7 @@ v0.135〜v0.151 の情報漏れの修正では、「受理・拒否・拒否の�
 | NI-LEGAL-MOVES | 合法手の一覧 | not_implemented | `tools/stress_engine.py::choose_command` | ない（ストレス実行の操作の選び方は検証用の道具で、合法手の一覧ではない） | U7 で境界だけを決める | でたらめな操作を混ぜる道具 |
 | NI-DIAGNOSTIC | 構造化した診断（v0.152 で U1・U2 として実装） | implemented | `kyuura_engine/diagnostics.py::classify_error`<br>`kyuura_engine/adapter.py::submit`<br>`kyuura_engine/data/diagnostic_catalog.json`<br>`scripts/build_diagnostic_catalog.py` | コード表による分類・見る人ごとの結果（本人・相手と観戦者）・検証者用の記録・コマンド実行結果のアダプタ（v0.152） | U3 以後の記録・再現は submit の結果（CommandResult）を受け取る | 記録・再現・合法手の一覧はない |
 | NI-REPLAY-RECORD | 完全な再現用記録（v0.153 で U3 として収集・読み書き・構造の検証を実装。再現は未実装） | implemented | `kyuura_engine/replay_record.py::ReplayCollector`<br>`kyuura_engine/replay_record.py::validate_record`<br>`tests/helpers.py::replay` | 記録の収集（ReplayCollector）・JSON の読み書き・構造の検証（v0.153）。テストの replay はコマンドの列を順に送るだけ | U4（v0.154。kyuura_engine/replay_run.py の replay）が記録の行を seq の順に再実行し、確認値と照らす | 異なる版・規約集合の比べ（compare_runs）はない |
-| NI-VIEW-RECORD | 閲覧用記録 | not_implemented |  | ない（観測・ログの写しの部品はある） | U5 で作る |  |
+| NI-VIEW-RECORD | 閲覧用記録（v0.155 で U5 として実装） | implemented | `kyuura_engine/view_record.py::ViewHost`<br>`kyuura_engine/view_record.py::ViewRecorder`<br>`kyuura_engine/view_record.py::view_records_from_replay`<br>`kyuura_engine/view_record.py::validate_view_record` | 閲覧者を固定した収集（実行時の収集と、U4 の検証つきの再実行からの変換）・JSON の読み書き・構造の検証（v0.155） | GUI・通信は、閲覧用記録の項目（観測・ログの写し・状態の知らせ）をそのまま使える | 閲覧用記録からの再実行・状態の復元はない |
 | NI-HALT-RESUME | 停止からの再開 | not_implemented |  | ない（GAP-DEFERRED-HALT-NO-RESUME） | この仕様の範囲の外（続行規約の採用は別の判断） |  |
 <!-- generated:existing end -->
 
@@ -336,19 +348,20 @@ v0.152 の採用: 本人向けの説明は、エンジンの生の文ではな�
 - 秘密の情報を含む: いいえ
 - 再現の入力: なし
 - 確認値: なし
-- 保証: その見る人が対戦中に観測・ログの写しで見たものと同じ
-- 保証しない: 完全な再現用記録・スナップショットの復元。ほかの見る人の記録の作り直し
+- 保証: その見る人が対戦中に観測・ログの写しで見たものと同じ（収集した時点の値で固定）
+- 保証しない: 完全な再現用記録・スナップショットの復元・閲覧用記録からの再実行。ほかの見る人の記録の作り直し。手で作った記録の内容が安全な投影から作られたこと（構造の検証は認証ではない）
 
 | 項目 | 必須 | 役割 | 意味 |
 |---|---|---|---|
-| `kyuura_view_format` | はい | format | 閲覧用記録の形式の版 |
-| `header.viewer` | はい | reference | 見る人（0・1・観戦者） |
-| `header.engine・convention_set` | はい | reference | エンジンの版・実装の識別・規約集合の識別（全員に見える値） |
-| `header.own_decklist` | いいえ | reference | プレイヤーの記録だけ。自分のデッキリスト |
-| `entries[].events` | はい | reference | 受理した操作ごとの visible_log の差分（区間ごとに visible_segment_logs） |
-| `entries[].decision` | いいえ | reference | その時点の観測の決定（選べるものは決めるプレイヤーの記録だけ） |
-| `entries[].own_rejections` | いいえ | reference | 本人の記録だけ。本人が送って拒否された操作と、本人向けの診断 |
-| `segments[]・result` | はい | reference | 区間の番号・結果・最後の結果（全員に見える） |
+| `kyuura_view_format` | はい | format | 閲覧用記録の形式の版（再現用記録の形式とは別の番号。v0.155 は 1） |
+| `header.viewer・role・origin` | はい | reference | 閲覧者（0・1・観戦者。作るときに固定）・player か spectator・記録の始まり（new_game か、途中から始めた attached） |
+| `header.engine_version・convention_set・diagnostic_schema` | はい | reference | エンジンの版・規約集合の識別（ID・版・照合値）・診断の形式（全員に見える値） |
+| `header.own_decklist` | はい | reference | プレイヤーの記録だけ。自分のデッキのカードの組（並びではない）。観戦者は null |
+| `entries[].n・kind・segment` | はい | reference | その閲覧者の記録に出した項目だけで連続する番号・種類（start・update・own_rejection・unavailable）・区間 |
+| `entries[].events` | いいえ | reference | その時点の閲覧用ログの新しいイベント（区間の番号・ログの位置・イベント）。あとで遡って変えない |
+| `entries[].observation` | いいえ | reference | その時点の observe（選べるものは決めるプレイヤーの記録だけ） |
+| `entries[].notice` | はい | reference | その時点の view_for（本人は結果と診断、相手・観戦者は状態の知らせ）。operation_id は入れない。拒否は本人の記録だけ |
+| `end` | はい | reference | 記録の閉じ方（closed・aborted）・項目の数・最後の status。ないなら途中の記録 |
 
 #### C. 状態スナップショット（`kyuura_snapshot_format`）
 
@@ -422,8 +435,8 @@ v0.152 の採用: 本人向けの説明は、エンジンの生の文ではな�
 | `format_version` | existing | serialize.FORMAT_VERSIONS（1〜35） | 書き出しの形が変わるとき（値の語彙を足すだけなら変えない） | 一方向の書き出し。スナップショットの形式と別の番号にする |
 | `record_format` | existing | tools/engine_lockstep.py（1・2） | 道具の記録の形が変わるとき | 検証用の道具の形式。再現用記録の形式として読み替えない |
 | `kyuura_diagnostic_schema` | proposed | 診断の型（U1） | 診断の項目の形・分類の語彙が変わるとき | 1 から |
-| `kyuura_replay_format` | proposed | 完全な再現用記録（U3） | 記録の形が変わるとき | 1 から |
-| `kyuura_view_format` | proposed | 閲覧用記録（U5） | 閲覧用記録の形が変わるとき | 1 から（診断の版と合わせるかは D-VERSIONS） |
+| `kyuura_replay_format` | proposed | 完全な再現用記録（U3） | 記録の形が変わるとき | 1 から（v0.153 で実装） |
+| `kyuura_view_format` | proposed | 閲覧用記録（U5） | 閲覧用記録の形が変わるとき | 1 から（v0.155 で実装。再現用記録とは別の番号。診断の形式は header.diagnostic_schema で参照する） |
 | `kyuura_snapshot_format` | proposed | 状態スナップショット（U6） | スナップショットの形が変わるとき | 1 から |
 
 - 知らない形式の版・知らない項目・知らない値（決定の種類・再開先・イベントの種類・持続する効果の種類）は拒否する（compatibility）。形式の番号が同じでも、前の版の読む側が後の版の書き出しを読めるとは約束しない（serialize の互換性の約束と同じ）
