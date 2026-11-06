@@ -87,7 +87,9 @@ class BrokenSpecTest(unittest.TestCase):
             (lambda s: s["format"].update(key="format_version"), "形式の版の名前"),
             (lambda s: next(x for x in s["states"] if "HALTED" in x["state"]).update(save=False), "停止"),
             (lambda s: s.update(approval="approved"), "承認"),
-            (lambda s: s["decisions"][0].update(status="adopted"), "pending"),
+            (lambda s: s["decisions"][0].update(status="maybe"), "pending・adopted でない"),
+            (lambda s: s["decisions"][0].pop("adopted"), "採用の記録"),
+            (lambda s: s["units"][4].update(status="implemented"), "実装した単位"),
         ]
         for edit, word in cases:
             with self.subTest(word):
@@ -106,6 +108,24 @@ class BrokenSpecTest(unittest.TestCase):
                 self.assertTrue(any(word in p for p in self.broken(edit)), word)
 
 
+class CodecCoverageTest(unittest.TestCase):
+    """分類表と、実装の型の対応表（kyuura_engine.snapshot）を名前で照らす。"""
+
+    def test_codec_matches(self):
+        self.assertEqual(B.codec_problems(written()), [])
+
+    def test_codec_difference_is_detected(self):
+        from kyuura_engine import snapshot
+
+        codec = copy.deepcopy(snapshot.codec_fields())
+        codec["GameState"]["pending_moves"] = "value"
+        codec["PoisonMist"]["future_flag_for_test"] = "value"
+        del codec["Asleep"]
+        problems = B.codec_problems(written(), codec)
+        for name in ("GameState", "PoisonMist", "Asleep"):
+            self.assertTrue(any(name in p for p in problems), name)
+
+
 class DocumentTest(unittest.TestCase):
     def test_cross_references(self):
         design = (ROOT / "docs" / "diagnostics-replay-api-design.md").read_text(encoding="utf-8")
@@ -115,7 +135,11 @@ class DocumentTest(unittest.TestCase):
         spec = json.loads((ROOT / "docs" / "diagnostics-replay-api-design.json").read_text(encoding="utf-8"))
         status = {d["id"]: d["status"] for d in spec["decisions"]}
         self.assertEqual((status["D-SNAPSHOT-BASE"], status["D-HALT-SNAPSHOT"]), ("adopted", "adopted"))
-        self.assertEqual({u["id"]: u["status"] for u in spec["units"]}["U6"], "planned")
+        self.assertEqual({u["id"]: u["status"] for u in spec["units"]}["U6"], "planned")  # S5 が未実装なので、U6 全体は planned のまま
+        snapshot_spec = written()
+        self.assertEqual({u["id"]: u["status"] for u in snapshot_spec["units"]},
+                         {"S1": "implemented", "S2": "implemented", "S3": "implemented", "S4": "implemented", "S5": "planned", "S6": "implemented"})
+        self.assertEqual({d["id"]: d["status"] for d in snapshot_spec["decisions"]}, dict.fromkeys(snapshot_spec["implementation_adoption"]["decisions"], "adopted"))
 
 
 if __name__ == "__main__":

@@ -227,6 +227,14 @@ SPEC = {
     },
     "format": {"key": "kyuura_snapshot_format", "name": "kyuura state snapshot", "version": 1, "status": "proposed",
                "note": "仕様案 docs/diagnostics-replay-api-design.json の版の表の kyuura_snapshot_format。形式 35（format_version）・再現用記録（kyuura_replay_format）・閲覧用記録（kyuura_view_format）とは別の番号"},
+    "implementation_adoption": {
+        "id": "ADOPT-U6-IMPL", "date": "2026-11-07", "by": "利用者",
+        "scope": "U6 の S1〜S4・S6 の実装と、判断事項 6 件の採用（採用した内容は 8 章・実装計画 5 章の表）。S5（完全な記録の途中から再開して U4 で照らす）は別の作業",
+        "decisions": ["DS-CONSTRUCTED", "DS-HALT-TEXT", "DS-CHECK", "DS-DEPTH", "DS-RECORD-LINK", "DS-INSTRUMENTATION"],
+        "units": ["S1", "S2", "S3", "S4", "S6"],
+        "not_implemented": ["S5"],
+        "implemented_in": "v0.157（kyuura_engine/snapshot.py。docs/state-snapshot-v0.157.md）",
+    },
     "categories": CATEGORIES,
     "explicit_types": EXPLICIT_TYPES,
     "value_record_types": {name: list(fields) for name, fields in VALUE_RECORD_TYPES.items()},
@@ -239,7 +247,9 @@ SPEC = {
         {"python": "Mapping（cards・log のイベント）", "json": "cards は CardInstance の配列（対応表の並びの順）、イベントはオブジェクト（鍵の順を保つ）",
          "restore": "cards は配列の順に、各 CardInstance.uid を鍵にした読み取り専用の対応表に（uid の重なりは不正）。イベントは MappingProxyType に"},
         {"python": "enum（Phase・EnergyType の値をもつ項目）", "json": "値の文字列", "restore": "項目ごとに決めた列挙型の値として読む。知らない値は不正"},
-        {"python": "dataclass（値の記録）", "json": "オブジェクト（\"type\" に dataclass の名前）", "restore": "許した名前の一覧（state.py の dataclass）からだけ作る。ほかの名前・import は使わない"},
+        {"python": "dataclass（値の記録・主要な型）", "json": "オブジェクト {\"type\": dataclass の名前, \"fields\": 項目}", "restore": "許した名前の一覧（state.py の dataclass）からだけ作る。項目の注釈が名前を決める位置では、その型（union ならその中の型）だけを受ける。ほかの名前・import は使わない"},
+        {"python": "注釈が Any の位置（ログのイベントの値・決定の context の値・持続する効果・履歴）", "json": "配列（タプル）・整数・文字列・真偽値・null・型の印つきのオブジェクト",
+         "restore": "配列はタプルに、{\"type\", \"fields\"} は値の記録に、{\"enum\", \"value\"} は Phase・EnergyType に。リスト・辞書・浮動小数・ほかの型は表さない（保存を拒む）"},
         {"python": "random.Random", "json": "rng_state_to_json の形", "restore": "rng_from_json（知らない形式は不正）"},
         {"python": "int・str・bool・None", "json": "同じ", "restore": "真偽値と整数を取り違えない（bool は int として受けない）。浮動小数・NaN は受けない"},
     ],
@@ -254,14 +264,17 @@ SPEC = {
         {"item": "state", "required": True, "meaning": "状態の値（分類 1 の項目と、分類 2 の識別）。分類 3・4 は入れない"},
         {"item": "origin・label・git_commit", "required": False, "meaning": "説明用（分類 5）"},
     ],
-    "limits": {"max_bytes": "64 MiB（replay_record.MAX_RECORD_BYTES と同じ）", "max_depth": "64 を基本にする。状態の入れ子（決定の context・ログのタプル）の最大の深さを U6-S1 で測り、足りなければ判断事項 DS-DEPTH",
+    "limits": {"max_bytes": "64 MiB（replay_record.MAX_RECORD_BYTES と同じ）。保存も同じ上限で拒む（too_large）",
+               "max_depth": ("64（replay_record.MAX_DEPTH と同じ。DS-DEPTH）。保存も同じ数え方・同じ上限で拒む（too_deep）。v0.157 の限定の監査で、実際のスナップショットの深さは最大 13"
+                             "（テストの盤面と new_game からの対戦。上限の半分以下であることをテストで確かめる）"),
                "reader": "replay_record.read_json_object（重なった鍵・NaN・UTF-8 でないもの・最上位が辞書でないものを拒む。誤りの文に入力の値を入れない）",
                "unknown": "知らない項目・知らない値（列挙・決定の種類・再開先・持続する効果の型の名前）・知らない形式の版は拒む。今の既定の値で補わない"},
     "boundary": [
         "保存できるのは、ホストが持つ安定した状態だけ: new_game・adapter.start_game の結果、受理した操作（apply_command・adapter.submit・HostedGame・ReplayCollector）のあとの状態、拒否の結果の元の状態",
         "コマンドの処理の途中の内部の状態（解決の基盤の途中・先読みの複製・決定の答えの処理の途中）は保存しない",
         ("保存の前の確かめ: check_invariants が空、pending_moves が空、__dict__ に dataclass の項目のほかの名前がない、規約集合の識別が記録されている（UNRECORDED でない）、"
-         "保留中の決定の再開先をこの版が扱える、カードプールが既定のもの。どれかを満たさなければ保存を拒む（エンジンの不変条件を緩めない）"),
+         "保留中の決定の再開先をこの版が扱える、カードプール（写しの元・定義）が既定のもの、効果の登録表が既定のカードプールの登録表そのもの、ルールの組が登録のもの、"
+         "structure_problems が空、すべての項目を型の対応表で表せる、深さ・大きさが上限の中。どれかを満たさなければ保存を拒む（エンジンの不変条件を緩めない。保存のために状態を変えない・正規化しない）"),
         "失敗（failed）のあとの状態は保存しない（adapter が状態を返さない）",
     ],
     "states": [
@@ -280,13 +293,18 @@ SPEC = {
     ],
     "restore_steps": [
         {"step": 1, "name": "安全な JSON の読み取り", "detail": "replay_record.read_json_object", "failure": "read_error（RecordFormatError）"},
-        {"step": 2, "name": "形式・型・必須の項目", "detail": "形式の版、見出し・状態の項目の過不足と型、型の印の名前、列挙の値、JSON の型（bool と int・浮動小数）", "failure": "malformed"},
+        {"step": 2, "name": "形式・型・必須の項目", "detail": "形式の版（知らない版は unsupported）、見出しの項目の過不足と型、確認値の形、origin・label の形（状態の項目の型は段 5 で読む）",
+         "failure": "malformed・unsupported（形式の版）"},
         {"step": 3, "name": "実装・依存・環境・規約の対応", "detail": "behavior_digest・Python の実装と major・minor・乱数の方式・ルールの組の id・カードデータ・効果の登録表・規約集合（登録と照合値）・確認値の方式",
          "failure": "unsupported（状態を組み立てない）"},
-        {"step": 4, "name": "登録済みのデータの解決", "detail": "ルールの組・カードの定義（cards の card_id から）・効果の登録表・規約集合の識別。知らない card_id は unsupported", "failure": "unsupported"},
-        {"step": 5, "name": "状態の組み立て", "detail": "GameState を項目の値から新しく作る（pickle・__setstate__ を使わない。既定の値で補わない）。乱数は rng_from_json", "failure": "malformed（型の誤り）・internal_error"},
-        {"step": 6, "name": "不変条件と領域をまたぐ整合", "detail": "check_invariants が空、require_state_conventions・supported_decision_error、pending_moves が空、decklists と cards の一致、"
-         "確認値（state・rng・log_length・segment・status・decision・halt）が見出しの check と同じ、もう一度保存した JSON が入力と同じ", "failure": "inconsistent（状態の不整合）"},
+        {"step": 4, "name": "登録済みのデータの解決", "detail": ("状態の項目の過不足（malformed）、状態の識別と見出しの依存の一致（違えば inconsistent）、ルールの組・カードの定義（definitions の card_id から）・"
+                                                              "効果の登録表・規約集合の識別。知らない card_id は unsupported"), "failure": "unsupported・malformed・inconsistent"},
+        {"step": 5, "name": "状態の組み立て", "detail": ("項目の値を型の対応表で読み（bool と int・浮動小数・列挙の値・型の印・uid の重なり）、GameState を新しく作る（pickle・__setstate__ を使わない。"
+                                                       "既定の値で補わない。pending_moves は境界で空）。乱数は形式・625 個の整数を確かめて setstate"), "failure": "malformed（型の誤り）・internal_error"},
+        {"step": 6, "name": "不変条件と領域をまたぐ整合", "detail": ("知らない再開先（unsupported）、check_invariants（カードの保存則・uid の参照先・所有者・場の形・decklists と cards）、"
+                                                              "structure_problems（cards の鍵と uid・definitions と cards の card_id・決定と場のポケモンの番号と採番の状態・区間の番号）、規約集合、"
+                                                              "確認値（state・rng・log_length・segment・status・decision・halt）が見出しの check と同じ、もう一度保存した JSON が入力と同じ。"
+                                                              "確認値だけで正常としない（構造の確かめを先にする）"), "failure": "inconsistent（状態の不整合）・unsupported（再開先）"},
         {"step": 7, "name": "ホストへ返す", "detail": "ホスト用の結果（復元した状態と、確かめの記録）。閲覧者には渡さない。どれかの段で止まったら状態を返さない（部分的な状態を通常の対戦に使わせない）", "failure": "—"},
     ],
     "results": [
@@ -318,29 +336,35 @@ SPEC = {
     ],
     "decisions": [
         {"id": "DS-CONSTRUCTED", "question": "構築した盤面（new_game からでない状態）の保存を許すか", "options": ["許す（ホスト・テスト用。origin に印）", "new_game からの状態だけ"],
-         "recommendation": "許す。復元の確かめは同じ。完全な記録との対応は origin で表す", "status": "pending"},
+         "recommendation": "許す。復元の確かめは同じ。完全な記録との対応は origin で表す", "status": "adopted", "adoption": "ADOPT-U6-IMPL",
+         "adopted": "構築盤面も、保存の境界と整合の確かめを満たせば保存できる。保存・復元できることと、new_game から合法に到達できることは別（到達できることは保証しない）。任意のカード定義・処理を入力から登録できる意味ではない"},
         {"id": "DS-HALT-TEXT", "question": "停止の診断用の文（Halt.message・references）を保存するか", "options": ["保存する（状態の一部）", "保存せず復元で空にする"],
-         "recommendation": "保存する（状態の一致を保つ。ホスト用なので閲覧者に出ない）", "status": "pending"},
-        {"id": "DS-CHECK", "question": "スナップショットに確認値（期待値）を入れるか", "options": ["入れる（U3 の checks）", "入れない"], "recommendation": "入れる（復元の段 6 で照らす。入力ではない）", "status": "pending"},
-        {"id": "DS-DEPTH", "question": "入れ子の深さの上限", "options": ["64（U3 と同じ）", "状態に合わせて上げる"], "recommendation": "U6-S1 で状態の最大の深さを測ってから決める", "status": "pending"},
+         "recommendation": "保存する（状態の一致を保つ。ホスト用なので閲覧者に出ない）", "status": "adopted", "adoption": "ADOPT-U6-IMPL",
+         "adopted": "停止の理由の文（Halt.message・references）も完全な情報の一部として保存する。閲覧者への表示は診断 API の安全な文（public_halt）を使い、保存した文をそのまま見せない"},
+        {"id": "DS-CHECK", "question": "スナップショットに確認値（期待値）を入れるか", "options": ["入れる（U3 の checks）", "入れない"], "recommendation": "入れる（復元の段 6 で照らす。入力ではない）", "status": "adopted", "adoption": "ADOPT-U6-IMPL",
+         "adopted": "保存したときの確認値を入れる。復元の結果を照らすためのもので、署名・認証・改ざんの防止ではない（作り直せるので、構造・不変条件の確かめの代わりにしない）"},
+        {"id": "DS-DEPTH", "question": "入れ子の深さの上限", "options": ["64（U3 と同じ）", "状態に合わせて上げる"], "recommendation": "U6-S1 で状態の最大の深さを測ってから決める", "status": "adopted", "adoption": "ADOPT-U6-IMPL",
+         "adopted": "実際の入れ子とエンコードの方式を確かめて固定の上限を決め、同じ上限を保存と読み取りに当てる（書き出せたものが上限で読めない状態を作らない）。決めた値は 5 章の limits"},
         {"id": "DS-RECORD-LINK", "question": "スナップショットと完全な再現用記録の対応", "options": ["origin に game_id・seq を書く（説明用）", "記録の中にスナップショットを入れる"],
-         "recommendation": "origin に書くだけ（記録の形式は変えない）。記録の途中から再開する機能は U6-S5 で別に作る", "status": "pending"},
+         "recommendation": "origin に書くだけ（記録の形式は変えない）。記録の途中から再開する機能は U6-S5 で別に作る", "status": "adopted", "adoption": "ADOPT-U6-IMPL",
+         "adopted": "完全な再現用記録との対応は任意の補助情報（origin の game_id・seq）。スナップショットだけの復元に完全な記録を求めない"},
         {"id": "DS-INSTRUMENTATION", "question": "記録・診断の部品の識別（instrumentation_digest）の違いを非対応にするか", "options": ["しない（U3 と同じ）", "する"],
-         "recommendation": "しない（ゲームの挙動の識別だけで決める）", "status": "pending"},
+         "recommendation": "しない（ゲームの挙動の識別だけで決める）", "status": "adopted", "adoption": "ADOPT-U6-IMPL",
+         "adopted": "初版は記録・診断の部品の識別（instrumentation_digest）も一致を求め、違えば unsupported。互換性を推測しない（推奨と違う選択肢を採用）"},
     ],
     "units": [
-        {"id": "S1", "title": "型の対応表と書き出し（保存）", "depends": [], "scope": "分類表から作る型の対応（型の印・列挙・タプルとリスト）、保存の前の境界の確かめ、書き出し",
+        {"id": "S1", "status": "implemented", "title": "型の対応表と書き出し（保存）", "depends": [], "scope": "分類表から作る型の対応（型の印・列挙・タプルとリスト）、保存の前の境界の確かめ、書き出し",
          "tests": ["分類表とコードの項目が名前で一致（この仕様の --check と同じ）", "境界の外の状態（pending_moves・一時的な属性・不変条件）の保存を拒む", "状態の最大の深さ（DS-DEPTH の材料）"],
          "done": ["3 つの集合・F1〜F8 の盤面の状態を書き出せる", "書き出しが状態を変えない"]},
-        {"id": "S2", "title": "読み取りと段 1〜4", "depends": ["S1"], "scope": "安全な読み取り、形式と型、対応、登録データの解決",
+        {"id": "S2", "status": "implemented", "title": "読み取りと段 1〜4", "depends": ["S1"], "scope": "安全な読み取り、形式と型、対応、登録データの解決",
          "tests": ["F9 の不正・未知・非対応の入力を、段ごとに決めた結果で拒む", "誤りの文に入力の値がない"], "done": ["非対応・不正な入力で状態を作らない"]},
-        {"id": "S3", "title": "組み立てと段 5〜7", "depends": ["S2"], "scope": "GameState を値から組み立て、不変条件・整合・確認値・往復で確かめ、ホストへ返す",
+        {"id": "S3", "status": "implemented", "title": "組み立てと段 5〜7", "depends": ["S2"], "scope": "GameState を値から組み立て、不変条件・整合・確認値・往復で確かめ、ホストへ返す",
          "tests": ["往復で JSON が同じ", "確認値・不変条件の違いを inconsistent で見つける"], "done": ["部分的な状態を返さない", "pickle・__setstate__ を使わない"]},
-        {"id": "S4", "title": "継続一致の検証", "depends": ["S3"], "scope": "保存しない状態と、保存して復元した状態から同じ操作の列で続け、各境界で比べる（F の比べ）",
+        {"id": "S4", "status": "implemented", "title": "継続一致の検証", "depends": ["S3"], "scope": "保存しない状態と、保存して復元した状態から同じ操作の列で続け、各境界で比べる（F の比べ）",
          "tests": ["F1〜F8 の各境界で、保存した全項目・確認値・ログ・観測・診断が同じ"], "done": ["3 つの集合で同じ"]},
-        {"id": "S5", "title": "記録との接続", "depends": ["S4"], "scope": "完全な再現用記録の途中の行から、スナップショットで再開して残りを U4 で照らす（resume_from_snapshot）",
+        {"id": "S5", "status": "planned", "title": "記録との接続", "depends": ["S4"], "scope": "完全な再現用記録の途中の行から、スナップショットで再開して残りを U4 で照らす（resume_from_snapshot）",
          "tests": ["記録の k 行目のあとで保存→復元→残りの行が一致", "違う記録・違う位置を見つける"], "done": ["U4 の結果の語彙に合わせる"]},
-        {"id": "S6", "title": "ホストへの接続", "depends": ["S3"], "scope": "HostedGame・ReplayCollector・ViewHost から保存・復元する入口（閲覧者には渡さない）",
+        {"id": "S6", "status": "implemented", "title": "ホストへの接続", "depends": ["S3"], "scope": "HostedGame・ReplayCollector・ViewHost から保存・復元する入口（閲覧者には渡さない）",
          "tests": ["閲覧用記録・view_for にスナップショットの値が出ない", "復元した対戦を続けた閲覧用記録が、保存しなかった場合と同じ"], "done": ["見る人の値で検証者の情報が取れない"]},
     ],
 }
@@ -422,15 +446,20 @@ def blocks(spec: dict) -> dict[str, list[str]]:
                             + [""] + _table(["結果", "意味"], [[f"`{r['id']}`", r["meaning"]] for r in spec["results"]]) + ["", f"- 文: {spec['messages']}"])
     out["verification"] = (_table(["ID", "場面", "盤面"], [[v["id"], v["case"], v["fixture"]] for v in spec["verification"]]) + [""]
                            + [f"- {c}" for c in spec["comparison"]])
-    out["units"] = _table(["単位", "内容", "依存", "範囲", "回帰テスト", "完了基準"],
-                          [[u["id"], u["title"], ", ".join(u["depends"]) or "なし", u["scope"], u["tests"], u["done"]] for u in spec["units"]])
-    out["decisions"] = _table(["ID", "問い", "選択肢", "推奨", "状態"], [[d["id"], d["question"], d["options"], d["recommendation"], d["status"]] for d in spec["decisions"]])
+    out["units"] = _table(["単位", "状態", "内容", "依存", "範囲", "回帰テスト", "完了基準"],
+                          [[u["id"], u["status"], u["title"], ", ".join(u["depends"]) or "なし", u["scope"], u["tests"], u["done"]] for u in spec["units"]])
+    out["decisions"] = _table(["ID", "問い", "選択肢", "推奨（仕様案の作成者の提案）", "状態", "採用した内容"],
+                              [[d["id"], d["question"], d["options"], d["recommendation"], f"{d['status']}（{d['adoption']}）" if d.get("adoption") else d["status"],
+                                d.get("adopted", "")] for d in spec["decisions"]])
+    impl = spec["implementation_adoption"]
+    out["implementation-adoption"] = [f"- `{impl['id']}`（{impl['date']}・{impl['by']}）: {impl['scope']}", f"  - 判断事項: {'、'.join(impl['decisions'])}",
+                                      f"  - 実装した単位: {'、'.join(impl['units'])}（{impl['implemented_in']}）", f"  - 実装しない単位: {'、'.join(impl['not_implemented'])}"]
     return out
 
 
 DESIGN_BLOCKS = ("adoption", "categories", "game-state", "explicit-types", "value-records", "non-field", "json-types", "header", "limits", "boundary", "states",
                  "restore-steps", "verification")
-PLAN_BLOCKS = ("units", "decisions")
+PLAN_BLOCKS = ("implementation-adoption", "units", "decisions")
 _BLOCK = re.compile(r"(<!-- generated:(?P<name>[a-z-]+) begin -->\n)(?P<body>.*?)(<!-- generated:(?P=name) end -->)", re.DOTALL)
 
 
@@ -479,6 +508,27 @@ def coverage_problems(spec: dict, code: dict[str, list[str]] | None = None) -> l
     return problems
 
 
+def codec_problems(spec: dict, codec: dict[str, dict[str, str]] | None = None) -> list[str]:
+    """分類表と、実装の型の対応表（kyuura_engine.snapshot.codec_fields）の照合。型・項目・扱い（value・resolve・absent）が名前で同じこと。"""
+    if codec is None:
+        from kyuura_engine import snapshot
+
+        codec = snapshot.codec_fields()
+    problems = []
+    expected: dict[str, dict[str, str]] = {name: dict.fromkeys(fields, "value") for name, fields in spec["value_record_types"].items()}
+    for name, fields in spec["explicit_types"].items():
+        if name != "RuleSet":  # GameState.rules の識別から解決する（値の型の対応表に入れない）
+            expected[name] = {field: item["category"] for field, item in fields.items()}
+    for name in sorted(set(expected) | set(codec)):
+        if name not in codec:
+            problems.append(f"型 {name} が実装の型の対応表にない")
+        elif name not in expected:
+            problems.append(f"実装の型の対応表の型 {name} に分類がない")
+        elif codec[name] != expected[name]:
+            problems.append(f"型 {name} の項目・扱いが、分類表と実装の型の対応表で違う")
+    return problems
+
+
 def spec_problems(spec: dict) -> list[str]:
     problems = []
     if spec.get("approval") != "not_approved" or spec.get("status") != "proposed":
@@ -521,8 +571,16 @@ def spec_problems(spec: dict) -> list[str]:
     if "internal_error" not in results:
         problems.append("内部エラーの結果がない")
     for d in spec["decisions"]:
-        if d.get("status") != "pending":
-            problems.append(f"判断事項 {d['id']} が pending でない")
+        if d.get("status") == "adopted":
+            if d.get("adoption") != spec["implementation_adoption"]["id"] or d["id"] not in spec["implementation_adoption"]["decisions"] or not d.get("adopted"):
+                problems.append(f"判断事項 {d['id']} の採用の記録（adoption・adopted）がない")
+        elif d.get("status") != "pending":
+            problems.append(f"判断事項 {d['id']} の状態 {d.get('status')} が pending・adopted でない")
+    impl = spec["implementation_adoption"]
+    if {u["id"] for u in spec["units"] if u.get("status") == "implemented"} != set(impl["units"]):
+        problems.append("実装した単位と、採用の記録の単位が違う")
+    if any(u.get("status") not in ("implemented", "planned") for u in spec["units"]):
+        problems.append("単位の状態が implemented・planned でない")
     units = {u["id"]: u for u in spec["units"]}
     order = [u["id"] for u in spec["units"]]
     for u in spec["units"]:
@@ -537,7 +595,7 @@ def spec_problems(spec: dict) -> list[str]:
     for key in ("CS-KYUURA-CURRENT@1", "CS-KYUURA-PLAY-S2A@1", "CS-KYUURA-PLAY-PO@1"):
         if key not in sets:
             problems.append(f"検証の計画に集合 {key} がない")
-    return problems + coverage_problems(spec)
+    return problems + coverage_problems(spec) + codec_problems(spec)
 
 
 def check(written: dict, design: str, plan: str) -> list[str]:

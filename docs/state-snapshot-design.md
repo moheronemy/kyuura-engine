@@ -1,6 +1,6 @@
 # 状態スナップショット（U6）の仕様案
 
-この文書は U6「JSON の状態の保存・復元」の**仕様案**です（状態 `proposed`、承認 `not_approved`）。保存・復元の機能はまだ実装していません。利用者が採用したのは 3 章の原則だけで、スキーマの細部・自動移行の方法・実装は採用していません（8 章の判断事項と、[実装計画](state-snapshot-implementation-plan.md)）。
+この文書は U6「JSON の状態の保存・復元」の仕様です（JSON の状態は `proposed`・`not_approved` のまま。採用は範囲を限った採用の記録に書く）。v0.156 で 3 章の原則を採用し（`ADOPT-U6-PRINCIPLES`）、v0.157 で判断事項 6 件を採用して S1〜S4・S6 を実装しました（`ADOPT-U6-IMPL`。[実装計画](state-snapshot-implementation-plan.md)・[state-snapshot-v0.157.md](state-snapshot-v0.157.md)）。S5（完全な記録の途中から再開）と自動移行は実装していません。
 
 構造化した仕様は [state-snapshot-design.json](state-snapshot-design.json) です。この文書の表（`<!-- generated:… -->` の区画）は、JSON と同じ元（`scripts/build_state_snapshot_design.py` の `SPEC`）から作ります。区画の中を手で直さないでください（`--check` が違いと、コードの項目との食い違いを見つけます）。
 
@@ -344,7 +344,8 @@ U3・U4 で確かめたこととの関係:
 | list | 配列 | PlayerState の領域・PokemonInPlay.energy・trainers・GameState.players はリストにもどす（v0.156 の調べで、リストとタプルが混ざる） |
 | Mapping（cards・log のイベント） | cards は CardInstance の配列（対応表の並びの順）、イベントはオブジェクト（鍵の順を保つ） | cards は配列の順に、各 CardInstance.uid を鍵にした読み取り専用の対応表に（uid の重なりは不正）。イベントは MappingProxyType に |
 | enum（Phase・EnergyType の値をもつ項目） | 値の文字列 | 項目ごとに決めた列挙型の値として読む。知らない値は不正 |
-| dataclass（値の記録） | オブジェクト（"type" に dataclass の名前） | 許した名前の一覧（state.py の dataclass）からだけ作る。ほかの名前・import は使わない |
+| dataclass（値の記録・主要な型） | オブジェクト {"type": dataclass の名前, "fields": 項目} | 許した名前の一覧（state.py の dataclass）からだけ作る。項目の注釈が名前を決める位置では、その型（union ならその中の型）だけを受ける。ほかの名前・import は使わない |
+| 注釈が Any の位置（ログのイベントの値・決定の context の値・持続する効果・履歴） | 配列（タプル）・整数・文字列・真偽値・null・型の印つきのオブジェクト | 配列はタプルに、{"type", "fields"} は値の記録に、{"enum", "value"} は Phase・EnergyType に。リスト・辞書・浮動小数・ほかの型は表さない（保存を拒む） |
 | random.Random | rng_state_to_json の形 | rng_from_json（知らない形式は不正） |
 | int・str・bool・None | 同じ | 真偽値と整数を取り違えない（bool は int として受けない）。浮動小数・NaN は受けない |
 <!-- generated:json-types end -->
@@ -353,8 +354,8 @@ U3・U4 で確かめたこととの関係:
 
 <!-- generated:limits begin -->
 - 形式: `kyuura_snapshot_format` = 1（kyuura state snapshot。proposed）。仕様案 docs/diagnostics-replay-api-design.json の版の表の kyuura_snapshot_format。形式 35（format_version）・再現用記録（kyuura_replay_format）・閲覧用記録（kyuura_view_format）とは別の番号
-- max_bytes: 64 MiB（replay_record.MAX_RECORD_BYTES と同じ）
-- max_depth: 64 を基本にする。状態の入れ子（決定の context・ログのタプル）の最大の深さを U6-S1 で測り、足りなければ判断事項 DS-DEPTH
+- max_bytes: 64 MiB（replay_record.MAX_RECORD_BYTES と同じ）。保存も同じ上限で拒む（too_large）
+- max_depth: 64（replay_record.MAX_DEPTH と同じ。DS-DEPTH）。保存も同じ数え方・同じ上限で拒む（too_deep）。v0.157 の限定の監査で、実際のスナップショットの深さは最大 13（テストの盤面と new_game からの対戦。上限の半分以下であることをテストで確かめる）
 - reader: replay_record.read_json_object（重なった鍵・NaN・UTF-8 でないもの・最上位が辞書でないものを拒む。誤りの文に入力の値を入れない）
 - unknown: 知らない項目・知らない値（列挙・決定の種類・再開先・持続する効果の型の名前）・知らない形式の版は拒む。今の既定の値で補わない
 <!-- generated:limits end -->
@@ -380,7 +381,7 @@ U3・U4 で確かめたこととの関係:
 <!-- generated:boundary begin -->
 - 保存できるのは、ホストが持つ安定した状態だけ: new_game・adapter.start_game の結果、受理した操作（apply_command・adapter.submit・HostedGame・ReplayCollector）のあとの状態、拒否の結果の元の状態
 - コマンドの処理の途中の内部の状態（解決の基盤の途中・先読みの複製・決定の答えの処理の途中）は保存しない
-- 保存の前の確かめ: check_invariants が空、pending_moves が空、__dict__ に dataclass の項目のほかの名前がない、規約集合の識別が記録されている（UNRECORDED でない）、保留中の決定の再開先をこの版が扱える、カードプールが既定のもの。どれかを満たさなければ保存を拒む（エンジンの不変条件を緩めない）
+- 保存の前の確かめ: check_invariants が空、pending_moves が空、__dict__ に dataclass の項目のほかの名前がない、規約集合の識別が記録されている（UNRECORDED でない）、保留中の決定の再開先をこの版が扱える、カードプール（写しの元・定義）が既定のもの、効果の登録表が既定のカードプールの登録表そのもの、ルールの組が登録のもの、structure_problems が空、すべての項目を型の対応表で表せる、深さ・大きさが上限の中。どれかを満たさなければ保存を拒む（エンジンの不変条件を緩めない。保存のために状態を変えない・正規化しない）
 - 失敗（failed）のあとの状態は保存しない（adapter が状態を返さない）
 <!-- generated:boundary end -->
 
@@ -412,11 +413,11 @@ U3・U4 で確かめたこととの関係:
 | 段 | 名前 | 内容 | 止まったときの結果 |
 |---|---|---|---|
 | 1 | 安全な JSON の読み取り | replay_record.read_json_object | read_error（RecordFormatError） |
-| 2 | 形式・型・必須の項目 | 形式の版、見出し・状態の項目の過不足と型、型の印の名前、列挙の値、JSON の型（bool と int・浮動小数） | malformed |
+| 2 | 形式・型・必須の項目 | 形式の版（知らない版は unsupported）、見出しの項目の過不足と型、確認値の形、origin・label の形（状態の項目の型は段 5 で読む） | malformed・unsupported（形式の版） |
 | 3 | 実装・依存・環境・規約の対応 | behavior_digest・Python の実装と major・minor・乱数の方式・ルールの組の id・カードデータ・効果の登録表・規約集合（登録と照合値）・確認値の方式 | unsupported（状態を組み立てない） |
-| 4 | 登録済みのデータの解決 | ルールの組・カードの定義（cards の card_id から）・効果の登録表・規約集合の識別。知らない card_id は unsupported | unsupported |
-| 5 | 状態の組み立て | GameState を項目の値から新しく作る（pickle・__setstate__ を使わない。既定の値で補わない）。乱数は rng_from_json | malformed（型の誤り）・internal_error |
-| 6 | 不変条件と領域をまたぐ整合 | check_invariants が空、require_state_conventions・supported_decision_error、pending_moves が空、decklists と cards の一致、確認値（state・rng・log_length・segment・status・decision・halt）が見出しの check と同じ、もう一度保存した JSON が入力と同じ | inconsistent（状態の不整合） |
+| 4 | 登録済みのデータの解決 | 状態の項目の過不足（malformed）、状態の識別と見出しの依存の一致（違えば inconsistent）、ルールの組・カードの定義（definitions の card_id から）・効果の登録表・規約集合の識別。知らない card_id は unsupported | unsupported・malformed・inconsistent |
+| 5 | 状態の組み立て | 項目の値を型の対応表で読み（bool と int・浮動小数・列挙の値・型の印・uid の重なり）、GameState を新しく作る（pickle・__setstate__ を使わない。既定の値で補わない。pending_moves は境界で空）。乱数は形式・625 個の整数を確かめて setstate | malformed（型の誤り）・internal_error |
+| 6 | 不変条件と領域をまたぐ整合 | 知らない再開先（unsupported）、check_invariants（カードの保存則・uid の参照先・所有者・場の形・decklists と cards）、structure_problems（cards の鍵と uid・definitions と cards の card_id・決定と場のポケモンの番号と採番の状態・区間の番号）、規約集合、確認値（state・rng・log_length・segment・status・decision・halt）が見出しの check と同じ、もう一度保存した JSON が入力と同じ。確認値だけで正常としない（構造の確かめを先にする） | inconsistent（状態の不整合）・unsupported（再開先） |
 | 7 | ホストへ返す | ホスト用の結果（復元した状態と、確かめの記録）。閲覧者には渡さない。どれかの段で止まったら状態を返さない（部分的な状態を通常の対戦に使わせない） | — |
 
 | 結果 | 意味 |
@@ -459,6 +460,8 @@ U3・U4 で確かめたこととの関係:
 実装の単位・依存・完了基準と、新しく判断が要る事項は [実装計画](state-snapshot-implementation-plan.md) にあります。
 
 ## 9. 検証と未確認
+
+v0.157 の実装の検証と未確認は [state-snapshot-v0.157.md](state-snapshot-v0.157.md) の 8 章にあります。この章は v0.156（仕様だけの作業）の記録です。
 
 - `python scripts/build_state_snapshot_design.py --check`: JSON・生成区画が同じ元から作ったものか、分類表とコードの型・項目が名前で一致するか、原則に反する分類（乱数を保存しない・pending_moves を許す・登録から解決しない・決定を保存しない）・停止の扱い・復元の段と結果の語彙・単位の依存・3 つの集合の計画を確かめる。`tests/test_state_snapshot_design.py` は、壊した仕様と、項目を加えた・消したコードの代わりの値で、これらの確かめが問題を見つけることを確かめる
 - この作業で実行した確かめ（限定。全体テスト・全 108 組・4,356 局・lockstep・ストレス実行はしていない。終了コードは確かめの本体から）:
