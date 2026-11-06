@@ -1979,6 +1979,14 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   SX1・TN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形の別のカードの問い）。v0.66 の「ナツメのESPと「うら」が出るまでのコインは起こらない」はエンジンの前提の誤りで、研究の論点ではない（kyuura は
   変えていない）。
 
+## v0.151: 山札をさがす前の研究上の停止（RB2・FC1）が実際の山札を読む情報漏れの修正
+
+[deck-search-stop-oracles-v0.151.md](deck-search-stop-oracles-v0.151.md)。写しの元・研究の基準は kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d` のまま。カードの写し・採用の記録・研究の対応表・固定デッキ・過去の参照データは変えていない。
+kyuura は読んでいない（変更・コミット・push もしていない）。
+
+- エンジンの事例と kyuura の研究記録の区別: この版の修正は、山札を見る前の止める判定の情報漏れの修正（実装上の安全対策）で、研究の答えではない。RB2（UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY）・FC1（UQ-STATED-COUNT-SHORT）は未解決のまま。
+- 報告事項（kyuura の作業。この作業では kyuura を変えない）: 新しい研究上の論点はない。山札にあるかもしれないカード・配分を読まない下限で止めることはエンジンの安全対策で、カードの扱いの研究上の答えとして写さないこと。
+
 ## v0.150: 山札をさがす効果の決定の有無による情報漏れの修正
 
 [deck-search-decision-presence-v0.150.md](deck-search-decision-presence-v0.150.md)。写しの元・研究の基準は kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d` のまま。カードの写し・採用の記録・研究の対応表・固定デッキ・過去の参照データは変えていない。

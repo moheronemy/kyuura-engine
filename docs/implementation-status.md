@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.150）
+# 実装状況（v0.1〜v0.151）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d`（v0.128 から。v0.129 の種族の身長の写しは別に `9242b9be89be0f747279f39c11875d1ed61763ec`。v0.126〜v0.127 は `57d01f45cfb8b086d03dc0525b329cf6adeff69b`、v0.125 は `134a664c6adf67d5604148a31b58e1a7d26d4d6d`、v0.124 は `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`、v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3820,6 +3820,16 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
 
+## v0.151: 山札をさがす前の研究上の停止（RB2・FC1）が実際の山札を読む情報漏れの修正（両モード共通）
+
+[deck-search-stop-oracles-v0.151.md](deck-search-stop-oracles-v0.151.md)。新しい続行規約は採用していない。既存の集合の ID・版・中身・照合値は同じ。研究上の問い（FC1・RB2）は決めていない。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 山札からつける 7 つのワザの RB2 を、山札にあるかもしれないカード（うらのサイド・持ち主に見えない置いておくカードを含む）で宣言の前に決める（理由の文は決まった文）（PSP-DECK-SEARCH-STOP-ORACLES） | 修正（保守的に止める場合が増えた） | 2・3・6 章 | tests/test_deck_search_stop_oracles_v0_151.py |
+| ゆうでん・はらだいこの宣言の前、てじなの段階 1 の答えの FC1（ゆうでんは RB2 も）を、配分を読まない下限で決める | 修正（保守的に止める場合が増えた） | 2・3・6 章 | 同上・test_deck_search_decision_presence_v0_150 `SeparateStopOracleTest` |
+| 道具の予期した停止とてじなの方策を、エンジンと同じ配分を読まない条件にした | 修正 | 4 章 | test_variable_coins_search_attachments_v0_113 など |
+
 ## v0.150: 山札をさがす効果の決定の有無による情報漏れの修正（両モード共通）
 
 [deck-search-decision-presence-v0.150.md](deck-search-decision-presence-v0.150.md)。新しい続行規約は採用していない。既存の集合の ID・版・中身・照合値は同じ。研究上の問い（FC1・RB2・HC7 など）は決めていない。
@@ -3828,7 +3838,7 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 |---|---|---|---|
 | ベンチに出す・見せて手札に加える・山札からつけるワザと［うか］は、山札にカードがあれば選べるカードがなくても決定を出す（必ず選ぶ説明は 0〜0、「てよい」は 0〜1 のまま。「てよい」の 0 枚の答えのログは選ばなかったときと同じで、理由は本人だけ）（PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS） | 修正（決定が 1 つ増える場合がある） | 2・3 章 | tests/test_deck_search_decision_presence_v0_150.py・test_optional_deck_evolution_presence_v0_149 `OtherDecisionPresenceNoLeakTest` |
 | ［おたけび］のミラクルエネルギーの確かめ（v0.149 の未確認事項） | 調べた範囲で問題なし（双子で確認） | 5.1 節 | 同 `HowlMiracleEnergyTwinTest` |
-| 山札をさがす前の RB2・FC1 が実際の山札を読む（ひなたぼっこ・はらだいこ・てじななど。PSP-DECK-SEARCH-STOP-ORACLES） | 未修正（記録だけ） | 6 章 | 同 `SeparateStopOracleTest`（expectedFailure） |
+| 山札をさがす前の RB2・FC1 が実際の山札を読む（ひなたぼっこ・はらだいこ・てじななど。PSP-DECK-SEARCH-STOP-ORACLES） | 未修正（記録だけ）。v0.151 で修正 | 6 章 | 同 `SeparateStopOracleTest`（expectedFailure） |
 
 ## v0.149: 任意の山札進化の決定の有無と、秘密領域の候補集合の情報漏れの修正（両モード共通）
 

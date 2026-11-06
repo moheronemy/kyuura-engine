@@ -144,6 +144,7 @@
 - **経過（v0.148。[attack-deck-evolution-preflight-v0.148.md](attack-deck-evolution-preflight-v0.148.md)）**: 利用者の指示で `PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE` を、同じ先読みの経路の要素とまとめて直しました（山札にあるかもしれないカード・配分を読まない下限）。受理のあとの決定の有無の漏れ `PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE` を見つけて記録しました（直していない）。この判断事項の状態は変えていません。
 - **経過（v0.149。[optional-deck-evolution-presence-v0.149.md](optional-deck-evolution-presence-v0.149.md)）**: 利用者の指示で `PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE`（山札にカードがあれば選べるカードがなくても決定を出す）と、見つけた `PSP-HIDDEN-SET-ASIDE-DECK-POOL`（候補集合に持ち主に見えない置いておくカードを含める）を直しました。同じ形のほかの経路の漏れ `PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS` を見つけて記録しました（直していない）。この判断事項の状態は変えていません。
 - **経過（v0.150。[deck-search-decision-presence-v0.150.md](deck-search-decision-presence-v0.150.md)）**: 利用者の指示で `PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS`（ベンチに出す・見せて手札に加える・山札からつけるワザと［うか］。山札にカードがあれば選べるカードがなくても決定を出す）を直しました。同じ要素の研究上の停止が山札を見る前に実際の山札を読む別の漏れ `PSP-DECK-SEARCH-STOP-ORACLES` を見つけて記録しました（直していない）。この判断事項の状態は変えていません。
+- **経過（v0.151。[deck-search-stop-oracles-v0.151.md](deck-search-stop-oracles-v0.151.md)）**: 利用者の指示で `PSP-DECK-SEARCH-STOP-ORACLES`（山札からつけるワザの RB2、ゆうでん・はらだいこ・てじなの段階 1 の FC1。山札を見る前の判定を持ち主の知っている集合と配分を読まない下限で決める）を直しました。保守的に止める場合が増えました（文書 6 章）。この判断事項の状態は変えていません。
 
 ### DEC-SEARCH-LIMITS — 探索・組合せの上限
 
