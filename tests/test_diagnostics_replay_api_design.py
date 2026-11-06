@@ -132,8 +132,8 @@ class BrokenSpecTest(unittest.TestCase):
             next(u for u in spec["units"] if u["id"] == "U6")["status"] = "planned"
         self.assertTrue(any("全体の状態" in p for p in self.broken(planned_whole)))
 
-        def unrecorded_part(spec):
-            next(p for u in spec["units"] if u["id"] == "U6" for p in u["parts"] if p["status"] == "planned")["status"] = "implemented"
+        def unrecorded_part(spec):  # v0.158: 部分はすべて実装済み。採用の記録から 1 つ除くと、記録のない implemented になる
+            next(a for a in spec["adoptions"] if a["id"] == "ADOPT-U6-S5")["units"].remove("U6/S5")
         problems = self.broken(unrecorded_part)
         self.assertTrue(any("部分" in p and "採用の記録の単位と合わない" in p for p in problems), problems)
 

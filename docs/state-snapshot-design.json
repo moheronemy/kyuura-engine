@@ -61,6 +61,25 @@
   ],
   "implemented_in": "v0.157（kyuura_engine/snapshot.py。docs/state-snapshot-v0.157.md）"
  },
+ "s5_adoption": {
+  "id": "ADOPT-U6-S5",
+  "date": "2026-11-07",
+  "by": "利用者",
+  "scope": "U6 の S5（完全な再現用記録の決まった位置にスナップショットをつなぎ、残りの行を U4 と同じ処理で照らす）の実装と、次の契約だけ",
+  "contracts": [
+   "接続位置は、完全な記録の初期の状態（seq 0）か、特定の操作の行の直後（seq）。accepted_index だけで位置を決めない。失敗の行の直後からは続けない",
+   "実装・環境・依存データ・規約集合と、接続位置の状態・乱数を確かめてから続ける",
+   "残りの行は、拒否の行も含めて元の seq の順に処理する（U4 の処理を使う）",
+   "接続位置のあとの一致（from_connection）と、記録の全体の一致（whole_record）を区別する。全体を照らしていなければ replay_verified を真にしない",
+   "確認値の一致を、出所の認証や過去に実際に作られたことの証明としない",
+   "ReplayCollector は新しい対戦からの収集だけ（途中から始めない・記録を継ぎ足さない）",
+   "既存の確認値に不足があれば、新しい接続用確認値の方式（kyuura-snapshot-state-sha256/1）を別の名前で明示する。既存の方式の名前の意味を変えない。記録には任意の拡張（extensions.connection_check）として明示したときだけ入れ、旧記録を読みかえない（前半の再実行で扱う）"
+  ],
+  "units": [
+   "S5"
+  ],
+  "implemented_in": "v0.158（kyuura_engine/snapshot_replay.py。docs/state-snapshot-v0.158.md）"
+ },
  "categories": {
   "value": "1. JSON に値を保存する",
   "resolve": "2. 固定した登録・依存データから解決する",
@@ -1838,18 +1857,21 @@
   },
   {
    "id": "S5",
-   "status": "planned",
+   "status": "implemented",
    "title": "記録との接続",
    "depends": [
     "S4"
    ],
-   "scope": "完全な再現用記録の途中の行から、スナップショットで再開して残りを U4 で照らす（resume_from_snapshot）",
+   "scope": "完全な再現用記録の決まった位置（初期の状態・seq の行の直後）にスナップショットをつなぎ、残りの行を U4 と同じ処理で照らす（v0.158 で snapshot_replay.replay_from_snapshot として実装。v0.156 の案の名前 resume_from_snapshot は使わなかった）",
    "tests": [
-    "記録の k 行目のあとで保存→復元→残りの行が一致",
-    "違う記録・違う位置を見つける"
+    "初期の状態・受理の行の直後・拒否の行の直後から接続して残りの行が一致",
+    "違う記録・違う seq・違う区間・違う状態を見つける（自己確認値を作り直しても）",
+    "既存の確認値の対象外の保存項目の違いを見つける",
+    "前半を再実行した全体の検証と、接続位置のあとだけの検証を区別する"
    ],
    "done": [
-    "U4 の結果の語彙に合わせる"
+    "U4 の結果の語彙に、接続位置・スナップショット・接続の不一致を加えて合わせる",
+    "全体を照らしていない結果で replay_verified を真にしない"
    ]
   },
   {
@@ -1870,16 +1892,15 @@
   }
  ],
  "completion": {
-  "status": "partial",
+  "status": "implemented",
   "implemented": [
    "S1",
    "S2",
    "S3",
    "S4",
+   "S5",
    "S6"
   ],
-  "planned": [
-   "S5"
-  ]
+  "planned": []
  }
 }

@@ -89,7 +89,7 @@ class BrokenSpecTest(unittest.TestCase):
             (lambda s: s.update(approval="approved"), "承認"),
             (lambda s: s["decisions"][0].update(status="maybe"), "pending・adopted でない"),
             (lambda s: s["decisions"][0].pop("adopted"), "採用の記録"),
-            (lambda s: s["units"][4].update(status="implemented"), "実装した単位"),
+            (lambda s: s["units"][4].update(status="planned"), "実装した単位"),  # v0.158: S5 は実装済み。採用の記録と食い違う状態にする
         ]
         for edit, word in cases:
             with self.subTest(word):
@@ -136,12 +136,13 @@ class DocumentTest(unittest.TestCase):
         status = {d["id"]: d["status"] for d in spec["decisions"]}
         self.assertEqual((status["D-SNAPSHOT-BASE"], status["D-HALT-SNAPSHOT"]), ("adopted", "adopted"))
         u6 = {u["id"]: u for u in spec["units"]}["U6"]
-        self.assertEqual(u6["status"], "partial")  # S5 が未実装なので、U6 全体は partial（v0.157 は planned と書いていた）
+        self.assertEqual(u6["status"], "implemented")  # v0.158 で S5 を実装し、U6 全体は implemented（v0.157 の時点は partial。v0.157 は planned と書いていた）
         snapshot_spec = written()
         self.assertEqual({p["id"]: p["status"] for p in u6["parts"]}, {u["id"]: u["status"] for u in snapshot_spec["units"]})  # 部分の単位はスナップショットの実装計画と同じ
-        self.assertEqual(snapshot_spec["completion"], {"status": "partial", "implemented": ["S1", "S2", "S3", "S4", "S6"], "planned": ["S5"]})
+        self.assertEqual(snapshot_spec["completion"], {"status": "implemented", "implemented": ["S1", "S2", "S3", "S4", "S5", "S6"], "planned": []})
+        self.assertEqual((snapshot_spec["s5_adoption"]["id"], snapshot_spec["s5_adoption"]["units"]), ("ADOPT-U6-S5", ["S5"]))
         self.assertEqual({u["id"]: u["status"] for u in snapshot_spec["units"]},
-                         {"S1": "implemented", "S2": "implemented", "S3": "implemented", "S4": "implemented", "S5": "planned", "S6": "implemented"})
+                         {"S1": "implemented", "S2": "implemented", "S3": "implemented", "S4": "implemented", "S5": "implemented", "S6": "implemented"})
         self.assertEqual({d["id"]: d["status"] for d in snapshot_spec["decisions"]}, dict.fromkeys(snapshot_spec["implementation_adoption"]["decisions"], "adopted"))
 
 

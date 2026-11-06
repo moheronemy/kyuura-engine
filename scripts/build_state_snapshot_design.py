@@ -235,6 +235,22 @@ SPEC = {
         "not_implemented": ["S5"],
         "implemented_in": "v0.157（kyuura_engine/snapshot.py。docs/state-snapshot-v0.157.md）",
     },
+    "s5_adoption": {
+        "id": "ADOPT-U6-S5", "date": "2026-11-07", "by": "利用者",
+        "scope": "U6 の S5（完全な再現用記録の決まった位置にスナップショットをつなぎ、残りの行を U4 と同じ処理で照らす）の実装と、次の契約だけ",
+        "contracts": [
+            "接続位置は、完全な記録の初期の状態（seq 0）か、特定の操作の行の直後（seq）。accepted_index だけで位置を決めない。失敗の行の直後からは続けない",
+            "実装・環境・依存データ・規約集合と、接続位置の状態・乱数を確かめてから続ける",
+            "残りの行は、拒否の行も含めて元の seq の順に処理する（U4 の処理を使う）",
+            "接続位置のあとの一致（from_connection）と、記録の全体の一致（whole_record）を区別する。全体を照らしていなければ replay_verified を真にしない",
+            "確認値の一致を、出所の認証や過去に実際に作られたことの証明としない",
+            "ReplayCollector は新しい対戦からの収集だけ（途中から始めない・記録を継ぎ足さない）",
+            ("既存の確認値に不足があれば、新しい接続用確認値の方式（kyuura-snapshot-state-sha256/1）を別の名前で明示する。既存の方式の名前の意味を変えない。"
+             "記録には任意の拡張（extensions.connection_check）として明示したときだけ入れ、旧記録を読みかえない（前半の再実行で扱う）"),
+        ],
+        "units": ["S5"],
+        "implemented_in": "v0.158（kyuura_engine/snapshot_replay.py。docs/state-snapshot-v0.158.md）",
+    },
     "categories": CATEGORIES,
     "explicit_types": EXPLICIT_TYPES,
     "value_record_types": {name: list(fields) for name, fields in VALUE_RECORD_TYPES.items()},
@@ -362,8 +378,12 @@ SPEC = {
          "tests": ["往復で JSON が同じ", "確認値・不変条件の違いを inconsistent で見つける"], "done": ["部分的な状態を返さない", "pickle・__setstate__ を使わない"]},
         {"id": "S4", "status": "implemented", "title": "継続一致の検証", "depends": ["S3"], "scope": "保存しない状態と、保存して復元した状態から同じ操作の列で続け、各境界で比べる（F の比べ）",
          "tests": ["F1〜F8 の各境界で、保存した全項目・確認値・ログ・観測・診断が同じ"], "done": ["3 つの集合で同じ"]},
-        {"id": "S5", "status": "planned", "title": "記録との接続", "depends": ["S4"], "scope": "完全な再現用記録の途中の行から、スナップショットで再開して残りを U4 で照らす（resume_from_snapshot）",
-         "tests": ["記録の k 行目のあとで保存→復元→残りの行が一致", "違う記録・違う位置を見つける"], "done": ["U4 の結果の語彙に合わせる"]},
+        {"id": "S5", "status": "implemented", "title": "記録との接続", "depends": ["S4"],
+         "scope": ("完全な再現用記録の決まった位置（初期の状態・seq の行の直後）にスナップショットをつなぎ、残りの行を U4 と同じ処理で照らす"
+                   "（v0.158 で snapshot_replay.replay_from_snapshot として実装。v0.156 の案の名前 resume_from_snapshot は使わなかった）"),
+         "tests": ["初期の状態・受理の行の直後・拒否の行の直後から接続して残りの行が一致", "違う記録・違う seq・違う区間・違う状態を見つける（自己確認値を作り直しても）",
+                   "既存の確認値の対象外の保存項目の違いを見つける", "前半を再実行した全体の検証と、接続位置のあとだけの検証を区別する"],
+         "done": ["U4 の結果の語彙に、接続位置・スナップショット・接続の不一致を加えて合わせる", "全体を照らしていない結果で replay_verified を真にしない"]},
         {"id": "S6", "status": "implemented", "title": "ホストへの接続", "depends": ["S3"], "scope": "HostedGame・ReplayCollector・ViewHost から保存・復元する入口（閲覧者には渡さない）",
          "tests": ["閲覧用記録・view_for にスナップショットの値が出ない", "復元した対戦を続けた閲覧用記録が、保存しなかった場合と同じ"], "done": ["見る人の値で検証者の情報が取れない"]},
     ],
@@ -455,9 +475,13 @@ def blocks(spec: dict) -> dict[str, list[str]]:
                                 d.get("adopted", "")] for d in spec["decisions"]])
     impl = spec["implementation_adoption"]
     status = completion(spec)
-    out["implementation-adoption"] = [f"- U6 全体の状態: `{status['status']}`（implemented: {', '.join(status['implemented']) or 'なし'}／planned: {', '.join(status['planned']) or 'なし'}。"
-                                      "全体の状態は単位の状態から決まり、一部だけなら partial）"] + [f"- `{impl['id']}`（{impl['date']}・{impl['by']}）: {impl['scope']}", f"  - 判断事項: {'、'.join(impl['decisions'])}",
-                                      f"  - 実装した単位: {'、'.join(impl['units'])}（{impl['implemented_in']}）", f"  - 実装しない単位: {'、'.join(impl['not_implemented'])}"]
+    s5 = spec["s5_adoption"]
+    out["implementation-adoption"] = [(f"- U6 全体の状態: `{status['status']}`（implemented: {', '.join(status['implemented']) or 'なし'}／planned: {', '.join(status['planned']) or 'なし'}。"
+                                       "全体の状態は単位の状態から決まり、一部だけなら partial）"),
+                                      f"- `{impl['id']}`（{impl['date']}・{impl['by']}）: {impl['scope']}", f"  - 判断事項: {'、'.join(impl['decisions'])}",
+                                      f"  - 実装した単位: {'、'.join(impl['units'])}（{impl['implemented_in']}）", f"  - この採用で実装しなかった単位: {'、'.join(impl['not_implemented'])}",
+                                      f"- `{s5['id']}`（{s5['date']}・{s5['by']}）: {s5['scope']}", "  - 契約:", *[f"    - {c}" for c in s5["contracts"]],
+                                      f"  - 実装した単位: {'、'.join(s5['units'])}（{s5['implemented_in']}）"]
     return out
 
 
@@ -589,8 +613,11 @@ def spec_problems(spec: dict) -> list[str]:
         elif d.get("status") != "pending":
             problems.append(f"判断事項 {d['id']} の状態 {d.get('status')} が pending・adopted でない")
     impl = spec["implementation_adoption"]
-    if {u["id"] for u in spec["units"] if u.get("status") == "implemented"} != set(impl["units"]):
+    adopted_units = set(impl["units"]) | set(spec["s5_adoption"]["units"])
+    if {u["id"] for u in spec["units"] if u.get("status") == "implemented"} != adopted_units:
         problems.append("実装した単位と、採用の記録の単位が違う")
+    if set(impl["units"]) & set(spec["s5_adoption"]["units"]):
+        problems.append("同じ単位を 2 つの採用の記録が実装したことになっている")
     if any(u.get("status") not in ("implemented", "planned") for u in spec["units"]):
         problems.append("単位の状態が implemented・planned でない")
     if spec.get("completion") != completion(spec):

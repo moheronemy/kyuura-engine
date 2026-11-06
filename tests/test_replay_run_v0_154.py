@@ -387,8 +387,9 @@ class DocumentTest(unittest.TestCase):
         self.assertEqual((u4["units"], u4["decisions"]), (["U4"], []))
         units = {u["id"]: u["status"] for u in spec["units"]}
         self.assertEqual(units["U4"], "implemented")
-        # v0.158: 採用の記録の単位には、部分の単位（"U6/S1" の形。U6 は partial）もある。全体を実装した単位だけを比べる
-        self.assertEqual({u for u, st in units.items() if st == "implemented"}, {u for a in spec["adoptions"] for u in a["units"] if "/" not in u})
+        # v0.158: 部分の単位（parts）を持つ単位（U6）は、部分ごとに採用の記録（"U6/S1" の形）を持つ。部分のない単位だけを、単位の名前の採用の記録と比べる
+        whole = {u["id"] for u in spec["units"] if not u.get("parts")}
+        self.assertEqual({u for u, st in units.items() if st == "implemented" and u in whole}, {u for a in spec["adoptions"] for u in a["units"] if "/" not in u})
         # v0.156: D-SNAPSHOT-BASE・D-HALT-SNAPSHOT は、後の原則の採用（ADOPT-U6-PRINCIPLES）だけで決まった（この版の採用では決めていない）
         later = next(a for a in spec["adoptions"] if a["id"] == "ADOPT-U6-PRINCIPLES")
         decided = {d["id"]: d for d in spec["decisions"]}

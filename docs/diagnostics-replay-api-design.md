@@ -1,6 +1,6 @@
 # 診断 API と対戦記録・再現インターフェースの仕様案
 
-この文書は**仕様案**です（状態 `proposed`、承認 `not_approved`）。v0.152 で、利用者が U1（診断の型と情報境界）・U2（コマンド実行結果のアダプタ）と 6 つの方針だけを採用し、実装しました（[diagnostics-adapter-v0.152.md](diagnostics-adapter-v0.152.md)。採用の記録は下の「採用の記録」）。v0.153 で、利用者が U3（完全な再現用記録の収集・形式・構造の検証）と 4 つの方針（実装の識別・実行環境・確認値の密度・形式の版）を採用し、実装しました（[replay-record-v0.153.md](replay-record-v0.153.md)）。v0.154 で、利用者が U4（記録からの再実行と確認値の照合）の実装と限定検証を承認し、実装しました（[replay-run-v0.154.md](replay-run-v0.154.md)）。v0.155 で、利用者が U5（閲覧用記録）と方針を採用し、実装しました（[view-record-v0.155.md](view-record-v0.155.md)）。状態の保存と復元（U6）は、v0.156 で原則だけを採用し、仕様案と実装計画（案）を作りました（[state-snapshot-design.md](state-snapshot-design.md)・[state-snapshot-implementation-plan.md](state-snapshot-implementation-plan.md)）。v0.157 で、利用者が判断事項 6 件を採用し、S1〜S4・S6（書き出し・読み取り・復元・継続の一致・最小のホストへの接続）を実装しました（[state-snapshot-v0.157.md](state-snapshot-v0.157.md)。S5 は未実装なので、U6 全体は partial。v0.157 の文書と仕様は planned と書いていたが、v0.158 で部分の単位ごとの状態と全体の状態を分けて記録した）。合法手の一覧（U7）・異なる版と規約集合の比べは、仕様案のままで実装していません。9 章の例は形の例示です（`api_status` は `illustrative`。実際の出力の例は v0.152 の文書）。実装の単位と順は [実装計画](diagnostics-replay-api-implementation-plan.md) に、利用者の判断が要る事項もそこに書きます。
+この文書は**仕様案**です（状態 `proposed`、承認 `not_approved`）。v0.152 で、利用者が U1（診断の型と情報境界）・U2（コマンド実行結果のアダプタ）と 6 つの方針だけを採用し、実装しました（[diagnostics-adapter-v0.152.md](diagnostics-adapter-v0.152.md)。採用の記録は下の「採用の記録」）。v0.153 で、利用者が U3（完全な再現用記録の収集・形式・構造の検証）と 4 つの方針（実装の識別・実行環境・確認値の密度・形式の版）を採用し、実装しました（[replay-record-v0.153.md](replay-record-v0.153.md)）。v0.154 で、利用者が U4（記録からの再実行と確認値の照合）の実装と限定検証を承認し、実装しました（[replay-run-v0.154.md](replay-run-v0.154.md)）。v0.155 で、利用者が U5（閲覧用記録）と方針を採用し、実装しました（[view-record-v0.155.md](view-record-v0.155.md)）。状態の保存と復元（U6）は、v0.156 で原則だけを採用し、仕様案と実装計画（案）を作りました（[state-snapshot-design.md](state-snapshot-design.md)・[state-snapshot-implementation-plan.md](state-snapshot-implementation-plan.md)）。v0.157 で、利用者が判断事項 6 件を採用し、S1〜S4・S6（書き出し・読み取り・復元・継続の一致・最小のホストへの接続）を実装しました（[state-snapshot-v0.157.md](state-snapshot-v0.157.md)。S5 は未実装で、U6 全体は partial だった。v0.157 の文書と仕様は planned と書いていたが、v0.158 で部分の単位ごとの状態と全体の状態を分けて記録した）。v0.158 で、利用者が S5 の契約を採用し、完全な再現用記録とスナップショットの接続を実装しました（[state-snapshot-v0.158.md](state-snapshot-v0.158.md)。U6 全体は implemented）。合法手の一覧（U7）・異なる版と規約集合の比べは、仕様案のままで実装していません。9 章の例は形の例示です（`api_status` は `illustrative`。実際の出力の例は v0.152 の文書）。実装の単位と順は [実装計画](diagnostics-replay-api-implementation-plan.md) に、利用者の判断が要る事項もそこに書きます。
 
 構造化した仕様は [diagnostics-replay-api-design.json](diagnostics-replay-api-design.json) です。この文書の表と例（`<!-- generated:… -->` の区画）は、JSON と同じ元（`scripts/build_diagnostics_replay_api_design.py` の `SPEC`）から作ります。区画の中を手で直さないでください（`--check` が違いを見つけます）。区画の外の説明は手で書いています。
 
@@ -70,6 +70,15 @@
     - 初版は記録・診断の部品の識別も一致を求め、違えば非対応
   - 判断事項: 
   - 実装単位: U6/S1、U6/S2、U6/S3、U6/S4、U6/S6
+- `ADOPT-U6-S5`（2026-11-07・利用者）: U6 の S5（完全な再現用記録の決まった位置にスナップショットをつなぎ、残りの行を U4 と同じ処理で照らす）の実装と、その契約（docs/state-snapshot-design.json の s5_adoption）。ReplayCollector の途中開始・記録の継ぎ足し・閲覧用記録の開始前の知識の復元・異なる規約集合での再開は含まない。実装: v0.158（kyuura_engine/snapshot_replay.py。docs/state-snapshot-v0.158.md）。U6 の部分の単位がすべて implemented になり、U6 全体も implemented
+  - 方針:
+    - 接続位置は初期の状態か特定の操作の行の直後（seq）。accepted_index だけで位置を決めない
+    - 実装・環境・依存データ・規約集合と、接続位置の状態・乱数を確かめてから続け、残りの行は拒否の行も含めて元の seq の順に処理する
+    - 接続位置のあとの一致と記録の全体の一致を区別する
+    - 確認値の一致を出所の認証・過去に実際に作られたことの証明としない
+    - 既存の確認値の方式の意味を変えず、接続用確認値は新しい方式（kyuura-snapshot-state-sha256/1）として記録の任意の拡張に明示する
+  - 判断事項: 
+  - 実装単位: U6/S5
 <!-- generated:adoptions end -->
 
 採用は、この記録の範囲だけです。v0.152 の時点では実装の識別・Python の環境・確認値の密度・版の分け方も保留でしたが、v0.153 の採用（`ADOPT-U3`）で決めました。スナップショットの形式（D-SNAPSHOT-BASE）と停止状態のスナップショット（D-HALT-SNAPSHOT）は保留（`pending`）のままです。v0.156 の原則の採用（`ADOPT-U6-PRINCIPLES`）で、この 2 つは決まりました（形式 35 を使わない独立の形式・停止も保存できるが解除しない）。具体的なスキーマは[state-snapshot-design.md](state-snapshot-design.md) で、v0.157 の採用（`ADOPT-U6-IMPL`）で判断事項を決めて実装しました。
@@ -116,7 +125,7 @@ v0.135〜v0.151 の情報漏れの修正では、「受理・拒否・拒否の�
 | EX-TWIN-AUDIT | 双子の比較（拒否による情報漏れ） | tool_only | `tests/log_audit.py::twin_command_problems`<br>`tests/log_audit.py::command_outcome`<br>`tests/log_audit.py::public_view`<br>`tests/log_audit.py::owned_card_ids` | 公開の情報が同じで見えない配分だけが違う状態に同じ操作を送り、受理・拒否・コード・理由の文が変わらないかを比べる | 診断の写し（見る人ごと）が配分によらないことの回帰テスト（U1・U2）に使う | テストの道具。双子を作る swap_hidden・swap_set_aside は各版のテストにある |
 | EX-STOP-LEDGER | 停止の方針の台帳と場面の索引 | implemented | `docs/stop-policy-classification.json`<br>`kyuura_engine/data/convention_records.json`<br>`kyuura_engine/conventions.py::scenes_for_code`<br>`kyuura_engine/conventions.py::continuation_lookup` | 停止コードごとの分類（A エンジン機能不足・B 技術的制限・C 未裁定・E 内部ガードなど）・止め方・事例（コード#事例）。同梱の索引はコードから場面を引く | 診断の分類と事例 ID の元にする（新しいコード表を手で作らない） | 台帳は文書で、エンジンは実行中に読まない（同梱の場面の索引だけを読む）。事例を特定できるのは事例が 1 つのコードか、照会で事例を渡す場所だけ |
 | EX-TRACE | 解決の記録（内部の入口） | internal_only | `kyuura_engine/engine.py::apply_command_traced` | ワザ・番の終わりの解決の記録（先読みの枝を含む）。状態に保存しない | 開発用の詳細（developer_detail）の候補。検証者だけ | 公開の API ではない。秘密の配分を含む |
-| NI-STATE-RESTORE | 状態の保存・復元（v0.157 で U6 の S1〜S4・S6 として実装。形式 kyuura_snapshot_format） | implemented | `kyuura_engine/snapshot.py::save_snapshot`<br>`kyuura_engine/snapshot.py::restore_snapshot`<br>`kyuura_engine/snapshot.py::RestoredGame`<br>`docs/state-snapshot-design.md`<br>`docs/state-snapshot-implementation-plan.md` | ホスト用のスナップショットの書き出し・安全な読み取り・7 段の復元と結果の分類・復元した状態から HostedGame で続ける入口（v0.157） | S5（完全な記録の途中から再開して U4 で照らす）が使う | 形式 35 を読み込み用に読み替えない。同じ実装・依存データ・規約集合だけ。完全な記録との接続（S5）はない |
+| NI-STATE-RESTORE | 状態の保存・復元（v0.157 で U6 の S1〜S4・S6、v0.158 で S5 として実装。形式 kyuura_snapshot_format） | implemented | `kyuura_engine/snapshot.py::save_snapshot`<br>`kyuura_engine/snapshot.py::restore_snapshot`<br>`kyuura_engine/snapshot.py::RestoredGame`<br>`kyuura_engine/snapshot.py::connection_check`<br>`kyuura_engine/snapshot_replay.py::replay_from_snapshot`<br>`docs/state-snapshot-design.md`<br>`docs/state-snapshot-implementation-plan.md` | ホスト用のスナップショットの書き出し・安全な読み取り・7 段の復元と結果の分類・復元した状態から HostedGame で続ける入口（v0.157）。完全な再現用記録の決まった位置への接続と残りの行の照合（v0.158。接続用確認値 kyuura-snapshot-state-sha256/1） | 総合検証・閲覧用の再開（別の作業） | 形式 35 を読み込み用に読み替えない。同じ実装・依存データ・規約集合だけ。ReplayCollector の途中開始・記録の継ぎ足し・異なる規約集合での再開はない |
 | NI-LEGAL-MOVES | 合法手の一覧 | not_implemented | `tools/stress_engine.py::choose_command` | ない（ストレス実行の操作の選び方は検証用の道具で、合法手の一覧ではない） | U7 で境界だけを決める | でたらめな操作を混ぜる道具 |
 | NI-DIAGNOSTIC | 構造化した診断（v0.152 で U1・U2 として実装） | implemented | `kyuura_engine/diagnostics.py::classify_error`<br>`kyuura_engine/adapter.py::submit`<br>`kyuura_engine/data/diagnostic_catalog.json`<br>`scripts/build_diagnostic_catalog.py` | コード表による分類・見る人ごとの結果（本人・相手と観戦者）・検証者用の記録・コマンド実行結果のアダプタ（v0.152） | U3 以後の記録・再現は submit の結果（CommandResult）を受け取る | 記録・再現・合法手の一覧はない |
 | NI-REPLAY-RECORD | 完全な再現用記録（v0.153 で U3 として収集・読み書き・構造の検証を実装。再現は未実装） | implemented | `kyuura_engine/replay_record.py::ReplayCollector`<br>`kyuura_engine/replay_record.py::validate_record`<br>`tests/helpers.py::replay` | 記録の収集（ReplayCollector）・JSON の読み書き・構造の検証（v0.153）。テストの replay はコマンドの列を順に送るだけ | U4（v0.154。kyuura_engine/replay_run.py の replay）が記録の行を seq の順に再実行し、確認値と照らす | 異なる版・規約集合の比べ（compare_runs）はない |
@@ -458,7 +467,7 @@ v0.152 の採用: 本人向けの説明は、エンジンの生の文ではな�
 | `format_version` | existing | serialize.FORMAT_VERSIONS（1〜35） | 書き出しの形が変わるとき（値の語彙を足すだけなら変えない） | 一方向の書き出し。スナップショットの形式と別の番号にする |
 | `record_format` | existing | tools/engine_lockstep.py（1・2） | 道具の記録の形が変わるとき | 検証用の道具の形式。再現用記録の形式として読み替えない |
 | `kyuura_diagnostic_schema` | proposed | 診断の型（U1） | 診断の項目の形・分類の語彙が変わるとき | 1 から |
-| `kyuura_replay_format` | proposed | 完全な再現用記録（U3） | 記録の形が変わるとき | 1 から（v0.153 で実装） |
+| `kyuura_replay_format` | proposed | 完全な再現用記録（U3） | 記録の形が変わるとき | 1 から（v0.153 で実装）。v0.158 の接続用確認値は版を変えない任意の拡張（header.extensions.connection_check = kyuura-snapshot-state-sha256/1）で、明示した記録だけが値を持つ。知らない拡張は unsupported |
 | `kyuura_view_format` | proposed | 閲覧用記録（U5） | 閲覧用記録の形が変わるとき | 1 から（v0.155 で実装。再現用記録とは別の番号。診断の形式は header.diagnostic_schema で参照する） |
 | `kyuura_snapshot_format` | proposed | 状態スナップショット（U6） | スナップショットの形が変わるとき | 1 から |
 

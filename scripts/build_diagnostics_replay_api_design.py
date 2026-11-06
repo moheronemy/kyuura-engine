@@ -152,6 +152,24 @@ ADOPTION_U6_IMPL = {
     "implemented_in": "v0.157（kyuura_engine/snapshot.py。docs/state-snapshot-v0.157.md）。S5 が未実装なので、この表の U6 は partial（一部の単位だけ実装）",
 }
 
+ADOPTION_U6_S5 = {
+    "id": "ADOPT-U6-S5",
+    "date": "2026-11-07",
+    "by": "利用者",
+    "scope": ("U6 の S5（完全な再現用記録の決まった位置にスナップショットをつなぎ、残りの行を U4 と同じ処理で照らす）の実装と、その契約"
+              "（docs/state-snapshot-design.json の s5_adoption）。ReplayCollector の途中開始・記録の継ぎ足し・閲覧用記録の開始前の知識の復元・異なる規約集合での再開は含まない"),
+    "policies": [
+        "接続位置は初期の状態か特定の操作の行の直後（seq）。accepted_index だけで位置を決めない",
+        "実装・環境・依存データ・規約集合と、接続位置の状態・乱数を確かめてから続け、残りの行は拒否の行も含めて元の seq の順に処理する",
+        "接続位置のあとの一致と記録の全体の一致を区別する",
+        "確認値の一致を出所の認証・過去に実際に作られたことの証明としない",
+        "既存の確認値の方式の意味を変えず、接続用確認値は新しい方式（kyuura-snapshot-state-sha256/1）として記録の任意の拡張に明示する",
+    ],
+    "decisions": [],
+    "units": ["U6/S5"],
+    "implemented_in": "v0.158（kyuura_engine/snapshot_replay.py。docs/state-snapshot-v0.158.md）。U6 の部分の単位がすべて implemented になり、U6 全体も implemented",
+}
+
 BASE = {
     "commit": "7e4a875681f15745cfe42a2b95c00f0e4f557324",
     "engine_version": "0.151.0",
@@ -168,7 +186,7 @@ SPEC = {
     "request": ("利用者の依頼（2026-11-06）は、v0.151 までの山札をさがす効果の情報漏れの監査を踏まえた仕様の作成。エンジンの動作・API・保存と復元の実装、続行規約の採用はしない。"
                 "仕様の作成の依頼を、仕様の中身の承認として扱わない"),
     "base": BASE,
-    "adoptions": [ADOPTION, ADOPTION_U3, ADOPTION_U4, ADOPTION_U5, ADOPTION_U6, ADOPTION_U6_IMPL],
+    "adoptions": [ADOPTION, ADOPTION_U3, ADOPTION_U4, ADOPTION_U5, ADOPTION_U6, ADOPTION_U6_IMPL, ADOPTION_U6_S5],
     "documents": {"design": "docs/diagnostics-replay-api-design.md", "plan": "docs/diagnostics-replay-api-implementation-plan.md",
                   "generator": "scripts/build_diagnostics_replay_api_design.py", "test": "tests/test_diagnostics_replay_api_design.py"},
     "sources": {"stop_ledger": "docs/stop-policy-classification.json", "scene_index": "kyuura_engine/data/convention_records.json"},
@@ -266,11 +284,14 @@ SPEC = {
          "provides": "ワザ・番の終わりの解決の記録（先読みの枝を含む）。状態に保存しない",
          "reuse": "開発用の詳細（developer_detail）の候補。検証者だけ",
          "limits": "公開の API ではない。秘密の配分を含む"},
-        {"id": "NI-STATE-RESTORE", "name": "状態の保存・復元（v0.157 で U6 の S1〜S4・S6 として実装。形式 kyuura_snapshot_format）", "status": "implemented",
+        {"id": "NI-STATE-RESTORE", "name": "状態の保存・復元（v0.157 で U6 の S1〜S4・S6、v0.158 で S5 として実装。形式 kyuura_snapshot_format）", "status": "implemented",
          "refs": ["kyuura_engine/snapshot.py::save_snapshot", "kyuura_engine/snapshot.py::restore_snapshot", "kyuura_engine/snapshot.py::RestoredGame",
+                  "kyuura_engine/snapshot.py::connection_check", "kyuura_engine/snapshot_replay.py::replay_from_snapshot",
                   "docs/state-snapshot-design.md", "docs/state-snapshot-implementation-plan.md"],
-         "provides": "ホスト用のスナップショットの書き出し・安全な読み取り・7 段の復元と結果の分類・復元した状態から HostedGame で続ける入口（v0.157）",
-         "reuse": "S5（完全な記録の途中から再開して U4 で照らす）が使う", "limits": "形式 35 を読み込み用に読み替えない。同じ実装・依存データ・規約集合だけ。完全な記録との接続（S5）はない"},
+         "provides": ("ホスト用のスナップショットの書き出し・安全な読み取り・7 段の復元と結果の分類・復元した状態から HostedGame で続ける入口（v0.157）。"
+                      "完全な再現用記録の決まった位置への接続と残りの行の照合（v0.158。接続用確認値 kyuura-snapshot-state-sha256/1）"),
+         "reuse": "総合検証・閲覧用の再開（別の作業）",
+         "limits": "形式 35 を読み込み用に読み替えない。同じ実装・依存データ・規約集合だけ。ReplayCollector の途中開始・記録の継ぎ足し・異なる規約集合での再開はない"},
         {"id": "NI-LEGAL-MOVES", "name": "合法手の一覧", "status": "not_implemented", "refs": ["tools/stress_engine.py::choose_command"],
          "provides": "ない（ストレス実行の操作の選び方は検証用の道具で、合法手の一覧ではない）", "reuse": "U7 で境界だけを決める", "limits": "でたらめな操作を混ぜる道具"},
         {"id": "NI-DIAGNOSTIC", "name": "構造化した診断（v0.152 で U1・U2 として実装）", "status": "implemented",
@@ -590,7 +611,9 @@ SPEC = {
         {"key": "record_format", "status": "existing", "owner": "tools/engine_lockstep.py（1・2）", "changes_when": "道具の記録の形が変わるとき",
          "note": "検証用の道具の形式。再現用記録の形式として読み替えない"},
         {"key": "kyuura_diagnostic_schema", "status": "proposed", "owner": "診断の型（U1）", "changes_when": "診断の項目の形・分類の語彙が変わるとき", "note": "1 から"},
-        {"key": "kyuura_replay_format", "status": "proposed", "owner": "完全な再現用記録（U3）", "changes_when": "記録の形が変わるとき", "note": "1 から（v0.153 で実装）"},
+        {"key": "kyuura_replay_format", "status": "proposed", "owner": "完全な再現用記録（U3）", "changes_when": "記録の形が変わるとき",
+         "note": ("1 から（v0.153 で実装）。v0.158 の接続用確認値は版を変えない任意の拡張（header.extensions.connection_check = kyuura-snapshot-state-sha256/1）で、"
+                  "明示した記録だけが値を持つ。知らない拡張は unsupported")},
         {"key": "kyuura_view_format", "status": "proposed", "owner": "閲覧用記録（U5）", "changes_when": "閲覧用記録の形が変わるとき",
          "note": "1 から（v0.155 で実装。再現用記録とは別の番号。診断の形式は header.diagnostic_schema で参照する）"},
         {"key": "kyuura_snapshot_format", "status": "proposed", "owner": "状態スナップショット（U6）", "changes_when": "スナップショットの形が変わるとき", "note": "1 から"},
@@ -767,12 +790,13 @@ SPEC = {
          "reuse": ["EX-OBSERVE", "EX-DECISION", "EX-SUDDEN-DEATH"],
          "tests": ["閲覧用記録が対戦中の観測・ログの写しと同じ", "seed・乱数・状態の指紋・相手のコマンド・相手の拒否が入らない", "双子の完全な記録から作った相手・観戦者の閲覧用記録が同じ"],
          "done": ["閲覧用記録から完全な記録を作る関数を作らない"]},
-        {"id": "U6", "status": "partial", "title": "JSON の保存・復元への接続", "depends": ["U3", "U4"],
+        {"id": "U6", "status": "implemented", "title": "JSON の保存・復元への接続", "depends": ["U3", "U4"],
          "parts": [{"id": "S1", "status": "implemented"}, {"id": "S2", "status": "implemented"}, {"id": "S3", "status": "implemented"},
-                   {"id": "S4", "status": "implemented"}, {"id": "S5", "status": "planned"}, {"id": "S6", "status": "implemented"}],
+                   {"id": "S4", "status": "implemented"}, {"id": "S5", "status": "implemented"}, {"id": "S6", "status": "implemented"}],
          "scope": ["形式 35 から状態をもどせるかの監査（D-SNAPSHOT-BASE の材料。v0.156 の原則の採用で、形式 35 は使わない独立の形式に決まった）",
                    ("スナップショットの書き出し・読み込み・確かめ（仕様と実装計画: docs/state-snapshot-design.md・docs/state-snapshot-implementation-plan.md）。"
-                    "v0.157 で S1〜S4・S6 を実装（docs/state-snapshot-v0.157.md）。S5 が残るので U6 は partial（部分の単位の状態は parts。docs/state-snapshot-implementation-plan.md の単位と同じ）")],
+                    "v0.157 で S1〜S4・S6 を実装（docs/state-snapshot-v0.157.md）。v0.158 で S5（記録との接続。docs/state-snapshot-v0.158.md）を実装し、U6 全体は implemented"
+                    "（部分の単位の状態は parts。docs/state-snapshot-implementation-plan.md の単位と同じ）")],
          "reuse": ["EX-RNG-JSON", "EX-RESUME-GUARD", "EX-CONVENTION-ID", "EX-STATE-EXPORT"],
          "tests": ["保存して復元し、続きを送った結果が保存しなかった場合と同じ（固定の少数の対戦・決定待ち・区間の途中）", "知らない形式・項目・再開先・規約集合の拒否",
                    "壊したスナップショットが StateIntegrityError か invalid_record になる"],

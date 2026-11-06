@@ -1,6 +1,6 @@
 # 状態スナップショット（U6）の仕様案
 
-この文書は U6「JSON の状態の保存・復元」の仕様です（JSON の状態は `proposed`・`not_approved` のまま。採用は範囲を限った採用の記録に書く）。v0.156 で 3 章の原則を採用し（`ADOPT-U6-PRINCIPLES`）、v0.157 で判断事項 6 件を採用して S1〜S4・S6 を実装しました（`ADOPT-U6-IMPL`。[実装計画](state-snapshot-implementation-plan.md)・[state-snapshot-v0.157.md](state-snapshot-v0.157.md)）。S5（完全な記録の途中から再開）と自動移行は実装していません。
+この文書は U6「JSON の状態の保存・復元」の仕様です（JSON の状態は `proposed`・`not_approved` のまま。採用は範囲を限った採用の記録に書く）。v0.156 で 3 章の原則を採用し（`ADOPT-U6-PRINCIPLES`）、v0.157 で判断事項 6 件を採用して S1〜S4・S6 を実装しました（`ADOPT-U6-IMPL`。[実装計画](state-snapshot-implementation-plan.md)・[state-snapshot-v0.157.md](state-snapshot-v0.157.md)）。v0.158 で S5（完全な再現用記録の決まった位置への接続と残りの行の照合）を実装し（`ADOPT-U6-S5`。[state-snapshot-v0.158.md](state-snapshot-v0.158.md)）、U6 の単位はすべて実装済みです。自動移行・異なる規約集合での再開は実装していません。
 
 構造化した仕様は [state-snapshot-design.json](state-snapshot-design.json) です。この文書の表（`<!-- generated:… -->` の区画）は、JSON と同じ元（`scripts/build_state_snapshot_design.py` の `SPEC`）から作ります。区画の中を手で直さないでください（`--check` が違いと、コードの項目との食い違いを見つけます）。
 

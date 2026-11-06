@@ -144,6 +144,24 @@
     "U6/S6"
    ],
    "implemented_in": "v0.157（kyuura_engine/snapshot.py。docs/state-snapshot-v0.157.md）。S5 が未実装なので、この表の U6 は partial（一部の単位だけ実装）"
+  },
+  {
+   "id": "ADOPT-U6-S5",
+   "date": "2026-11-07",
+   "by": "利用者",
+   "scope": "U6 の S5（完全な再現用記録の決まった位置にスナップショットをつなぎ、残りの行を U4 と同じ処理で照らす）の実装と、その契約（docs/state-snapshot-design.json の s5_adoption）。ReplayCollector の途中開始・記録の継ぎ足し・閲覧用記録の開始前の知識の復元・異なる規約集合での再開は含まない",
+   "policies": [
+    "接続位置は初期の状態か特定の操作の行の直後（seq）。accepted_index だけで位置を決めない",
+    "実装・環境・依存データ・規約集合と、接続位置の状態・乱数を確かめてから続け、残りの行は拒否の行も含めて元の seq の順に処理する",
+    "接続位置のあとの一致と記録の全体の一致を区別する",
+    "確認値の一致を出所の認証・過去に実際に作られたことの証明としない",
+    "既存の確認値の方式の意味を変えず、接続用確認値は新しい方式（kyuura-snapshot-state-sha256/1）として記録の任意の拡張に明示する"
+   ],
+   "decisions": [],
+   "units": [
+    "U6/S5"
+   ],
+   "implemented_in": "v0.158（kyuura_engine/snapshot_replay.py。docs/state-snapshot-v0.158.md）。U6 の部分の単位がすべて implemented になり、U6 全体も implemented"
   }
  ],
  "documents": {
@@ -382,18 +400,20 @@
   },
   {
    "id": "NI-STATE-RESTORE",
-   "name": "状態の保存・復元（v0.157 で U6 の S1〜S4・S6 として実装。形式 kyuura_snapshot_format）",
+   "name": "状態の保存・復元（v0.157 で U6 の S1〜S4・S6、v0.158 で S5 として実装。形式 kyuura_snapshot_format）",
    "status": "implemented",
    "refs": [
     "kyuura_engine/snapshot.py::save_snapshot",
     "kyuura_engine/snapshot.py::restore_snapshot",
     "kyuura_engine/snapshot.py::RestoredGame",
+    "kyuura_engine/snapshot.py::connection_check",
+    "kyuura_engine/snapshot_replay.py::replay_from_snapshot",
     "docs/state-snapshot-design.md",
     "docs/state-snapshot-implementation-plan.md"
    ],
-   "provides": "ホスト用のスナップショットの書き出し・安全な読み取り・7 段の復元と結果の分類・復元した状態から HostedGame で続ける入口（v0.157）",
-   "reuse": "S5（完全な記録の途中から再開して U4 で照らす）が使う",
-   "limits": "形式 35 を読み込み用に読み替えない。同じ実装・依存データ・規約集合だけ。完全な記録との接続（S5）はない"
+   "provides": "ホスト用のスナップショットの書き出し・安全な読み取り・7 段の復元と結果の分類・復元した状態から HostedGame で続ける入口（v0.157）。完全な再現用記録の決まった位置への接続と残りの行の照合（v0.158。接続用確認値 kyuura-snapshot-state-sha256/1）",
+   "reuse": "総合検証・閲覧用の再開（別の作業）",
+   "limits": "形式 35 を読み込み用に読み替えない。同じ実装・依存データ・規約集合だけ。ReplayCollector の途中開始・記録の継ぎ足し・異なる規約集合での再開はない"
   },
   {
    "id": "NI-LEGAL-MOVES",
@@ -1601,7 +1621,7 @@
    "status": "proposed",
    "owner": "完全な再現用記録（U3）",
    "changes_when": "記録の形が変わるとき",
-   "note": "1 から（v0.153 で実装）"
+   "note": "1 から（v0.153 で実装）。v0.158 の接続用確認値は版を変えない任意の拡張（header.extensions.connection_check = kyuura-snapshot-state-sha256/1）で、明示した記録だけが値を持つ。知らない拡張は unsupported"
   },
   {
    "key": "kyuura_view_format",
@@ -2363,7 +2383,7 @@
   },
   {
    "id": "U6",
-   "status": "partial",
+   "status": "implemented",
    "title": "JSON の保存・復元への接続",
    "depends": [
     "U3",
@@ -2388,7 +2408,7 @@
     },
     {
      "id": "S5",
-     "status": "planned"
+     "status": "implemented"
     },
     {
      "id": "S6",
@@ -2397,7 +2417,7 @@
    ],
    "scope": [
     "形式 35 から状態をもどせるかの監査（D-SNAPSHOT-BASE の材料。v0.156 の原則の採用で、形式 35 は使わない独立の形式に決まった）",
-    "スナップショットの書き出し・読み込み・確かめ（仕様と実装計画: docs/state-snapshot-design.md・docs/state-snapshot-implementation-plan.md）。v0.157 で S1〜S4・S6 を実装（docs/state-snapshot-v0.157.md）。S5 が残るので U6 は partial（部分の単位の状態は parts。docs/state-snapshot-implementation-plan.md の単位と同じ）"
+    "スナップショットの書き出し・読み込み・確かめ（仕様と実装計画: docs/state-snapshot-design.md・docs/state-snapshot-implementation-plan.md）。v0.157 で S1〜S4・S6 を実装（docs/state-snapshot-v0.157.md）。v0.158 で S5（記録との接続。docs/state-snapshot-v0.158.md）を実装し、U6 全体は implemented（部分の単位の状態は parts。docs/state-snapshot-implementation-plan.md の単位と同じ）"
    ],
    "reuse": [
     "EX-RNG-JSON",
