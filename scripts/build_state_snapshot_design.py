@@ -128,7 +128,8 @@ GAME_STATE = {
     "card_data": f(V, "カードデータの写しの元（repository・commit・path）。カードの定義は持たない", "既定のカードプールの写しの元と同じでなければ unsupported"),
     "seed": f(V, "new_game の seed。延長戦の開始でも保持する（sudden_death の keep）。乱数は seed から作り直さない（rng を保存する）"),
     "rng": f(V, "乱数の状態そのもの（rng.rng_state_to_json。形式 python-random-mt19937-v3）。指紋ではなく、正確な続きのために必要", "復元のあと rng_fingerprint が保存した確認値と同じ。継続のコイン・山札の切り方が同じ（F）"),
-    "cards": f(V, "カードの uid → (card_id・owner・origin)。uid は並びの鍵で、CardInstance.uid と同じ値", "uid の重なり・欠けがない。cards の uid と、領域・場・置いておくカードに出てくる uid が同じ集まり（check_invariants）"),
+    "cards": f(V, "カードの対応表。CardInstance（uid・card_id・owner・origin）を対応表の並びの順に配列で保存する。鍵は各 CardInstance.uid から作り直す（項目でない値の表の derive）",
+               "uid の重なりは不正（対応表にする前に見つける。重なりを後の値で上書きしない）。鍵と CardInstance.uid が同じ。cards の uid と、領域・場・置いておくカードに出てくる uid が同じ集まり（check_invariants）"),
     "definitions": f("resolve", "カード id → CardDefinition。new_game がカードプールから作り、返す状態では変えない（v0.154 の確かめ。engine.py の代入は new_game・区間の開始の引き継ぎと、返さない複製だけ）。"
                      "保存しない。cards に出てくる card_id から、既定のカードプール（load_card_pool）で解決する", "解決した定義の card_id の集まりが cards の card_id の集まりと同じ。知らない card_id は unsupported"),
     "decklists": f(V, "対戦開始時のデッキリスト（並び。uid の付け方を決め、延長戦で最初のデッキにもどすのに使う。sudden_death.initial_deck_owners）。cards から作り直せるのは並びの一部だけなので値で保存する",
@@ -163,7 +164,10 @@ EXPLICIT_TYPES = {
     "PokemonInPlay": value_all(("card", "energy", "damage", "pokemon_id", "trainers", "conditions", "retreat_failed_turn", "evolution_stack", "played_turn", "evolved_turn",
                                 "persistent_effects", "attacks_used_once", "evolution_permission_turn", "type_shift", "disguise", "devolved_turn", "history", "markers", "basic_entry",
                                 "super_transform"), "場のポケモン（重なり・ついているカード・持続する効果・履歴・マーカー）。持続する効果・履歴は型の印つき"),
-    "CardInstance": {"uid": f("derive", "cards の鍵（uid）から作り直す（同じ値を 2 か所に書かない）", "鍵と値の uid が同じ"),
+    "CardInstance": {"uid": f(V, ("カードの識別。領域・場・決定の options と context・持続する効果・マーカー・履歴・ログ・過去の区間が同じ整数で同じカードを指す。new_game が deck0・deck1 の"
+                              "並びの位置（0 から）で付け、延長戦の開始（sudden_death）・とりかえっこプリーズの交換（zones の所有者の変更）でも付け直さない。次の uid のような採番の状態を"
+                              "持つ項目はない（カードは new_game のあとに増えない）。構築盤面（デッキリストが空）は並びから作り直せないので、カードごとに値で保存する。名前・場所から付け直さない"),
+                              "uid が重ならない・対応表の鍵と同じ。同名のカードが複数ある盤面・領域の移動・所有者の交換のあとも、保存の前と同じ uid が同じ card_id・owner・origin を持つ（往復と継続の比べ）"),
                      "card_id": f(V, "カード id"), "owner": f(V, "対戦の中の所有者"), "origin": f(V, "対戦開始時のデッキのプレイヤー（変更があったカードだけ）")},
     "PendingDecision": value_all(("id", "kind", "player", "options", "min_choices", "max_choices", "resume", "context"),
                                  "保留中の決定。resume は再開先の名前、context は続きの情報（値は整数・文字列とそのタプル）。知らない再開先は supported_decision_error で unsupported"),
@@ -187,6 +191,8 @@ TYPE_MODULES = {"RuleSet": "kyuura_engine.rules"}
 VALUE_RECORD_BASIS = "値の記録（持続する効果・マーカー・履歴・効果の記録など）。すべての項目を値で保存し、型の名前の印（state.py の dataclass の名前の許した一覧）で作り直す"
 
 NON_FIELD_ATTRIBUTES = [
+    {"name": "GameState.cards の鍵", "category": "derive", "basis": "対応表の鍵は、配列で保存した CardInstance.uid から作り直す（同じ値を 2 か所に書かない。v0.157 の訂正で、uid そのものは CardInstance の値で保存する）",
+     "verify": "保存の前に鍵と CardInstance.uid が同じこと。復元で uid が重なれば malformed"},
     {"name": "GameState._history_probe", "category": "absent", "basis": "history.open_probe が setattr で置き、close_probe がコマンドの終わりに取り除く一時的な属性（dataclass の項目ではない）",
      "verify": "保存の前に、状態の __dict__ に dataclass の項目のほかの名前があれば保存を拒む"},
     {"name": "zones.IDENTITY_CONSULTED", "category": "absent", "basis": "モジュールの変数（受け付けるかを確かめる間だけ使う）。状態ではない", "verify": "保存・復元で扱わない（コマンドの外では None）"},
@@ -230,7 +236,8 @@ SPEC = {
     "json_types": [
         {"python": "tuple", "json": "配列", "restore": "項目の型（スキーマ）がタプルなら、入れ子までタプルにもどす（ログ・決定の context の値は、入れ子の配列をすべてタプルに）"},
         {"python": "list", "json": "配列", "restore": "PlayerState の領域・PokemonInPlay.energy・trainers・GameState.players はリストにもどす（v0.156 の調べで、リストとタプルが混ざる）"},
-        {"python": "Mapping（cards・log のイベント）", "json": "オブジェクト（cards は uid の配列）", "restore": "cards は uid の昇順の配列から読み取り専用の対応表に。イベントは MappingProxyType に"},
+        {"python": "Mapping（cards・log のイベント）", "json": "cards は CardInstance の配列（対応表の並びの順）、イベントはオブジェクト（鍵の順を保つ）",
+         "restore": "cards は配列の順に、各 CardInstance.uid を鍵にした読み取り専用の対応表に（uid の重なりは不正）。イベントは MappingProxyType に"},
         {"python": "enum（Phase・EnergyType の値をもつ項目）", "json": "値の文字列", "restore": "項目ごとに決めた列挙型の値として読む。知らない値は不正"},
         {"python": "dataclass（値の記録）", "json": "オブジェクト（\"type\" に dataclass の名前）", "restore": "許した名前の一覧（state.py の dataclass）からだけ作る。ほかの名前・import は使わない"},
         {"python": "random.Random", "json": "rng_state_to_json の形", "restore": "rng_from_json（知らない形式は不正）"},
@@ -364,7 +371,7 @@ def _table(headers, rows) -> list[str]:
     return ["| " + " | ".join(headers) + " |", "|" + "---|" * len(headers)] + ["| " + " | ".join(_cell(c) for c in row) + " |" for row in rows]
 
 
-COUNT_KINDS = {"fields": "状態の dataclass の項目", "non_field": "項目でない属性（一時的な属性・モジュールの変数）", "metadata": "見出しの補助情報"}
+COUNT_KINDS = {"fields": "状態の dataclass の項目", "non_field": "項目でない値（対応表の鍵・一時的な属性・モジュールの変数）", "metadata": "見出しの補助情報"}
 
 
 def category_counts(spec: dict) -> dict[str, dict[str, int]]:
@@ -494,6 +501,8 @@ def spec_problems(spec: dict) -> list[str]:
     for name in ("definitions", "effects", "rules", "conventions"):
         if gs[name]["category"] != "resolve":
             problems.append(f"GameState.{name} を登録から解決していない（入力からオブジェクトを作らない原則）")
+    if spec["explicit_types"]["CardInstance"]["uid"]["category"] != "value":
+        problems.append("カードの uid を値で保存しない（構築盤面では作り直せない。名前・場所から付け直さない）")
     if gs["decision"]["category"] != "value" or spec["explicit_types"]["PendingDecision"]["context"]["category"] != "value":
         problems.append("決定待ち（決定と context）を保存しない")
     if spec["format"]["key"] in ("format_version", "kyuura_replay_format", "kyuura_view_format"):

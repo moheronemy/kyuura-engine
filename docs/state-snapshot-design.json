@@ -67,8 +67,8 @@
    },
    "cards": {
     "category": "value",
-    "basis": "カードの uid → (card_id・owner・origin)。uid は並びの鍵で、CardInstance.uid と同じ値",
-    "verify": "uid の重なり・欠けがない。cards の uid と、領域・場・置いておくカードに出てくる uid が同じ集まり（check_invariants）"
+    "basis": "カードの対応表。CardInstance（uid・card_id・owner・origin）を対応表の並びの順に配列で保存する。鍵は各 CardInstance.uid から作り直す（項目でない値の表の derive）",
+    "verify": "uid の重なりは不正（対応表にする前に見つける。重なりを後の値で上書きしない）。鍵と CardInstance.uid が同じ。cards の uid と、領域・場・置いておくカードに出てくる uid が同じ集まり（check_invariants）"
    },
    "definitions": {
     "category": "resolve",
@@ -422,9 +422,9 @@
   },
   "CardInstance": {
    "uid": {
-    "category": "derive",
-    "basis": "cards の鍵（uid）から作り直す（同じ値を 2 か所に書かない）",
-    "verify": "鍵と値の uid が同じ"
+    "category": "value",
+    "basis": "カードの識別。領域・場・決定の options と context・持続する効果・マーカー・履歴・ログ・過去の区間が同じ整数で同じカードを指す。new_game が deck0・deck1 の並びの位置（0 から）で付け、延長戦の開始（sudden_death）・とりかえっこプリーズの交換（zones の所有者の変更）でも付け直さない。次の uid のような採番の状態を持つ項目はない（カードは new_game のあとに増えない）。構築盤面（デッキリストが空）は並びから作り直せないので、カードごとに値で保存する。名前・場所から付け直さない",
+    "verify": "uid が重ならない・対応表の鍵と同じ。同名のカードが複数ある盤面・領域の移動・所有者の交換のあとも、保存の前と同じ uid が同じ card_id・owner・origin を持つ（往復と継続の比べ）"
    },
    "card_id": {
     "category": "value",
@@ -1355,6 +1355,12 @@
  "value_record_basis": "値の記録（持続する効果・マーカー・履歴・効果の記録など）。すべての項目を値で保存し、型の名前の印（state.py の dataclass の名前の許した一覧）で作り直す",
  "non_field_attributes": [
   {
+   "name": "GameState.cards の鍵",
+   "category": "derive",
+   "basis": "対応表の鍵は、配列で保存した CardInstance.uid から作り直す（同じ値を 2 か所に書かない。v0.157 の訂正で、uid そのものは CardInstance の値で保存する）",
+   "verify": "保存の前に鍵と CardInstance.uid が同じこと。復元で uid が重なれば malformed"
+  },
+  {
    "name": "GameState._history_probe",
    "category": "absent",
    "basis": "history.open_probe が setattr で置き、close_probe がコマンドの終わりに取り除く一時的な属性（dataclass の項目ではない）",
@@ -1397,8 +1403,8 @@
   },
   {
    "python": "Mapping（cards・log のイベント）",
-   "json": "オブジェクト（cards は uid の配列）",
-   "restore": "cards は uid の昇順の配列から読み取り専用の対応表に。イベントは MappingProxyType に"
+   "json": "cards は CardInstance の配列（対応表の並びの順）、イベントはオブジェクト（鍵の順を保つ）",
+   "restore": "cards は配列の順に、各 CardInstance.uid を鍵にした読み取り専用の対応表に（uid の重なりは不正）。イベントは MappingProxyType に"
   },
   {
    "python": "enum（Phase・EnergyType の値をもつ項目）",

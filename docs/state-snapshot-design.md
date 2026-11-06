@@ -49,17 +49,25 @@
 対象: `kyuura_engine/state.py` の dataclass のすべて（`GameState` から参照される型と、持続する効果・履歴・マーカーなどの値の記録の型）と `rules.RuleSet`。`GameState` の型ヒントは前方参照（`EffectRegistry` など）を含むので、参照をたどるのではなく、`state.py` で定義した dataclass をすべて対象にした（`tuple[Any, ...]` の項目に入る型も、ここで漏れなく数える）。`--check` は、分類表とコードの型・項目を**名前で**照らす（件数では照らさない）。コードに型・項目が加わると、分類がないものとして見つける。
 
 <!-- generated:categories begin -->
-| 分類 | 意味 | 状態の dataclass の項目 | 項目でない属性（一時的な属性・モジュールの変数） | 見出しの補助情報 | 計 |
+| 分類 | 意味 | 状態の dataclass の項目 | 項目でない値（対応表の鍵・一時的な属性・モジュールの変数） | 見出しの補助情報 | 計 |
 |---|---|---|---|---|---|
-| `value` | 1. JSON に値を保存する | 525 | 0 | 0 | 525 |
+| `value` | 1. JSON に値を保存する | 526 | 0 | 0 | 526 |
 | `resolve` | 2. 固定した登録・依存データから解決する | 18 | 0 | 0 | 18 |
-| `derive` | 3. ほかの保存値から作り直す | 1 | 0 | 0 | 1 |
+| `derive` | 3. ほかの保存値から作り直す | 0 | 1 | 0 | 1 |
 | `absent` | 4. 保存の境界では存在してはいけない | 1 | 2 | 0 | 3 |
 | `descriptive` | 5. 説明用で復元には使わない | 0 | 0 | 3 | 3 |
-| 計 |  | 545 | 2 | 3 | 550 |
+| 計 |  | 545 | 3 | 3 | 551 |
 <!-- generated:categories end -->
 
 数の訂正（v0.157 の最初）: v0.156 の報告は、分類ごとの数（525＋18＋1＋3＋3＝550）と「545 項目」を同じ表の数のように書いていた。545 は**状態の dataclass の項目**（state.py の dataclass 86 型の 531 項目と RuleSet の 14 項目）の数で、550 はそれに**項目でない属性**（`GameState._history_probe`・`zones.IDENTITY_CONSULTED` の 2 つ）と**見出しの補助情報**（3 つ）を足した数。別のものを 1 つの数に足さないよう、表を 3 つの列に分けた（分類は変えていない）。状態の dataclass の項目の数は、コードの項目の名前と照らした数と同じ（`tests/test_state_snapshot_design.py`）。
+
+uid の訂正（v0.157 の最初。数の訂正とは別のコミット）: v0.156 は `CardInstance.uid` を「cards の鍵から作り直す（derive）」にしていた。確かめた結果:
+
+- uid は、領域（山札・手札・サイド・トラッシュ・場）・ついているカード・決定の `options` と `context`・持続する効果の `source_card`・マーカー・履歴・ログ・過去の区間のログが、同じ整数で同じカードを指す識別。同名のカードが複数あっても uid で区別する
+- `new_game` は deck0・deck1 の並びの位置（0 から）で付け（`engine.new_game`）、延長戦の開始（`_start_sudden_death`）も、とりかえっこプリーズの所有者の交換（`zones` の交換）も付け直さない。次の uid のような採番の状態を持つ項目はない（カードは対戦の途中で増えない）
+- `new_game` の状態ではデッキリストの並びから作り直せるが、構築盤面（デッキリストが空）では作り直せない
+
+そのため、uid は `CardInstance` の値として**カードごとに明示して保存する**（分類を value に訂正）。作り直すのは対応表の鍵だけで（4.4 の表の derive）、鍵と uid が同じこと・uid が重ならないことを保存の前と復元で確かめる。名前・今の場所から付け直さない。分類の数は、状態の dataclass の項目の value が 1 増え、derive が項目でない値に移った。
 
 ### 4.1 GameState の項目
 
@@ -70,7 +78,7 @@
 | `card_data` | value | カードデータの写しの元（repository・commit・path）。カードの定義は持たない | 既定のカードプールの写しの元と同じでなければ unsupported |
 | `seed` | value | new_game の seed。延長戦の開始でも保持する（sudden_death の keep）。乱数は seed から作り直さない（rng を保存する） | 保存して復元した状態を、もう一度保存した JSON が同じ（往復）。継続の比べ（F） |
 | `rng` | value | 乱数の状態そのもの（rng.rng_state_to_json。形式 python-random-mt19937-v3）。指紋ではなく、正確な続きのために必要 | 復元のあと rng_fingerprint が保存した確認値と同じ。継続のコイン・山札の切り方が同じ（F） |
-| `cards` | value | カードの uid → (card_id・owner・origin)。uid は並びの鍵で、CardInstance.uid と同じ値 | uid の重なり・欠けがない。cards の uid と、領域・場・置いておくカードに出てくる uid が同じ集まり（check_invariants） |
+| `cards` | value | カードの対応表。CardInstance（uid・card_id・owner・origin）を対応表の並びの順に配列で保存する。鍵は各 CardInstance.uid から作り直す（項目でない値の表の derive） | uid の重なりは不正（対応表にする前に見つける。重なりを後の値で上書きしない）。鍵と CardInstance.uid が同じ。cards の uid と、領域・場・置いておくカードに出てくる uid が同じ集まり（check_invariants） |
 | `definitions` | resolve | カード id → CardDefinition。new_game がカードプールから作り、返す状態では変えない（v0.154 の確かめ。engine.py の代入は new_game・区間の開始の引き継ぎと、返さない複製だけ）。保存しない。cards に出てくる card_id から、既定のカードプール（load_card_pool）で解決する | 解決した定義の card_id の集まりが cards の card_id の集まりと同じ。知らない card_id は unsupported |
 | `decklists` | value | 対戦開始時のデッキリスト（並び。uid の付け方を決め、延長戦で最初のデッキにもどすのに使う。sudden_death.initial_deck_owners）。cards から作り直せるのは並びの一部だけなので値で保存する | cards の uid の並び・出所（deck_owner）と同じ組であること |
 | `players` | value | 2 人のプレイヤーの領域（PlayerState） | 保存して復元した状態を、もう一度保存した JSON が同じ（往復）。継続の比べ（F） |
@@ -155,7 +163,7 @@ U3・U4 で確かめたこととの関係:
 | `PokemonInPlay.markers` | value | 場のポケモン（重なり・ついているカード・持続する効果・履歴・マーカー）。持続する効果・履歴は型の印つき |
 | `PokemonInPlay.basic_entry` | value | 場のポケモン（重なり・ついているカード・持続する効果・履歴・マーカー）。持続する効果・履歴は型の印つき |
 | `PokemonInPlay.super_transform` | value | 場のポケモン（重なり・ついているカード・持続する効果・履歴・マーカー）。持続する効果・履歴は型の印つき |
-| `CardInstance.uid` | derive | cards の鍵（uid）から作り直す（同じ値を 2 か所に書かない） |
+| `CardInstance.uid` | value | カードの識別。領域・場・決定の options と context・持続する効果・マーカー・履歴・ログ・過去の区間が同じ整数で同じカードを指す。new_game が deck0・deck1 の並びの位置（0 から）で付け、延長戦の開始（sudden_death）・とりかえっこプリーズの交換（zones の所有者の変更）でも付け直さない。次の uid のような採番の状態を持つ項目はない（カードは new_game のあとに増えない）。構築盤面（デッキリストが空）は並びから作り直せないので、カードごとに値で保存する。名前・場所から付け直さない |
 | `CardInstance.card_id` | value | カード id |
 | `CardInstance.owner` | value | 対戦の中の所有者 |
 | `CardInstance.origin` | value | 対戦開始時のデッキのプレイヤー（変更があったカードだけ） |
@@ -317,6 +325,7 @@ U3・U4 で確かめたこととの関係:
 <!-- generated:non-field begin -->
 | 名前 | 分類 | 根拠 | 確かめ |
 |---|---|---|---|
+| `GameState.cards の鍵` | derive | 対応表の鍵は、配列で保存した CardInstance.uid から作り直す（同じ値を 2 か所に書かない。v0.157 の訂正で、uid そのものは CardInstance の値で保存する） | 保存の前に鍵と CardInstance.uid が同じこと。復元で uid が重なれば malformed |
 | `GameState._history_probe` | absent | history.open_probe が setattr で置き、close_probe がコマンドの終わりに取り除く一時的な属性（dataclass の項目ではない） | 保存の前に、状態の __dict__ に dataclass の項目のほかの名前があれば保存を拒む |
 | `zones.IDENTITY_CONSULTED` | absent | モジュールの変数（受け付けるかを確かめる間だけ使う）。状態ではない | 保存・復元で扱わない（コマンドの外では None） |
 | `header.git_commit` | descriptive | 補助の情報（U3 と同じ。識別に使わない） |  |
@@ -333,7 +342,7 @@ U3・U4 で確かめたこととの関係:
 |---|---|---|
 | tuple | 配列 | 項目の型（スキーマ）がタプルなら、入れ子までタプルにもどす（ログ・決定の context の値は、入れ子の配列をすべてタプルに） |
 | list | 配列 | PlayerState の領域・PokemonInPlay.energy・trainers・GameState.players はリストにもどす（v0.156 の調べで、リストとタプルが混ざる） |
-| Mapping（cards・log のイベント） | オブジェクト（cards は uid の配列） | cards は uid の昇順の配列から読み取り専用の対応表に。イベントは MappingProxyType に |
+| Mapping（cards・log のイベント） | cards は CardInstance の配列（対応表の並びの順）、イベントはオブジェクト（鍵の順を保つ） | cards は配列の順に、各 CardInstance.uid を鍵にした読み取り専用の対応表に（uid の重なりは不正）。イベントは MappingProxyType に |
 | enum（Phase・EnergyType の値をもつ項目） | 値の文字列 | 項目ごとに決めた列挙型の値として読む。知らない値は不正 |
 | dataclass（値の記録） | オブジェクト（"type" に dataclass の名前） | 許した名前の一覧（state.py の dataclass）からだけ作る。ほかの名前・import は使わない |
 | random.Random | rng_state_to_json の形 | rng_from_json（知らない形式は不正） |

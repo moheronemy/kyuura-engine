@@ -83,6 +83,7 @@ class BrokenSpecTest(unittest.TestCase):
             (lambda s: s["explicit_types"]["GameState"]["pending_moves"].update(category="value"), "pending_moves"),
             (lambda s: s["explicit_types"]["GameState"]["definitions"].update(category="value"), "definitions"),
             (lambda s: s["explicit_types"]["PendingDecision"]["context"].update(category="absent"), "決定待ち"),
+            (lambda s: s["explicit_types"]["CardInstance"]["uid"].update(category="derive"), "uid"),
             (lambda s: s["format"].update(key="format_version"), "形式の版の名前"),
             (lambda s: next(x for x in s["states"] if "HALTED" in x["state"]).update(save=False), "停止"),
             (lambda s: s.update(approval="approved"), "承認"),
