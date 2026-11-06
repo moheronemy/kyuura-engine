@@ -1091,10 +1091,55 @@ V149_NEW_FINDINGS = [
      "impact": "相手・観戦者が、効果を使ったプレイヤーの山札に選べるカードがあるか（なければサイドなどにある）を知れる。使ったプレイヤー本人は山札を見るので、本人への漏れではない",
      "play_groups": ["5"], "mode_policy": "両モードで直した（v0.150。v0.149 では範囲（任意の山札からの進化のワザ・秘密領域の候補集合）の外なので記録だけ）", "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
 ]
-# v0.150 で見つけた項目（docs/deck-search-decision-presence-v0.150.md 6 章）。決定の有無の経路の確かめの途中で、同じ要素の研究上の停止が実際の山札を読むことを見つけた（修正していない）
+V151_FIX_STOP_ORACLES = {
+    "fixed_in": "v0.151（docs/deck-search-stop-oracles-v0.151.md 3 章。基点 144d4c5。v0.150 の最後）",
+    "status_basis": ("v0.151 で漏れを修正。新しい続行規約は採用していない。RB2・FC1 の研究上の問いは決めていない（止めるコードは同じ。止める条件が、実際の山札ではなく持ち主の知っている集合と"
+                     "配分を読まない下限で決まるようになった）。山札を見る前の止める判定は、持ち主がその時点で知る情報（山札にあるかもしれないカード・公開の枚数）だけで決める"),
+    "fix": ("effects.py に deck_rainbow_possible（山札にあるかもしれないカード searchable_deck_cards にレインボーエネルギーがあるか）と deck_count_may_fall_short（山札の対象の枚数が 1 枚以上"
+            "説明の枚数より少なくなる配分がありうるか。配分を読まない下限 deck_lower_bound_where と、山札にあるかもしれない枚数で決める）を加えた。resolution/programs.py の RB2 は、山札から"
+            "つける 3 つの要素（AttachFromDeck・AttachFromDeckToBench・AttachFromDeckUpToNamedCount の candidates）で rainbow_deck_attach_question（決まった理由の文）にした。ゆうでん"
+            "（AttachFromDeckByHeads.run）は、下限が「おもて」の数より少ないときだけ、レインボーエネルギーがあるかもしれなければ RB2、なければ足りないかもしれなければ FC1。はらだいこ"
+            "（AttachBasicEnergyFromDeckToSelf.run）の FC1 と、てじなの段階 1（ReturnHandThenRevealEnergy.resume。もどすカードの基本エネルギーカードは山札に入ることが分かっている）の FC1 も"
+            "同じ確かめにし、先読みの答えの候補（dry_choices）も同じ確かめで除く。確かめを通ったのに実際の山札が足りないことは起こらない（不変条件として RuntimeError）。理由の文に uid・"
+            "山札の枚数を書かない"),
+    "fix_sites": [("kyuura_engine/resolution/programs.py rainbow_deck_attach_question・DECK_PRECHECK_NOTE・AttachFromDeck.candidates・AttachFromDeckToBench.candidates・"
+                   "AttachFromDeckUpToNamedCount.candidates・AttachFromDeckByHeads.run・AttachBasicEnergyFromDeckToSelf.run・ReturnHandThenRevealEnergy（_may_fall_short・resume・dry_choices）"),
+                  "kyuura_engine/effects.py deck_rainbow_possible・deck_count_may_fall_short",
+                  ("tools/existing_effect_games.py（道具の予期した停止 _v113_attract_short・_v113_static_rainbow・_v116_belly_drum_short と、てじなのもどす枚数の方策を、エンジンと同じ配分を"
+                   "読まない条件にした。v0.150 までは実際の山札を数えた）")],
+    "path_classification": [
+        ("再現して修正（構築盤面の双子。修正の前の木 144d4c5 で受理・拒否・理由の文が違った）: RB2 の宣言（ひなたぼっこ・じゅうでん・もえあがる・しおまねき（コイン）・エナジーサポート・"
+         "あたためる（控えが先）・せいでんき・ゆうでん（コイン 3 枚）。山札とうらのサイド・山札と持ち主に見えない置いておくカード）、FC1 の宣言（はらだいこ・ゆうでん）、FC1 の段階 1 の答え"
+         "（てじな。答えを選び直す問い合わせを含む）"),
+        ("比べた: ゆうでんは v0.150 の比較プローブだけだったが、双子で再現して同じ確かめにした（RB2・FC1 とも）。せいでんき・じゅうでん・もえあがる・しおまねき・エナジーサポート・あたためるは"
+         "v0.150 の未確認（同じ rainbow_attach_question）で、双子で再現した"),
+        ("範囲の外（変えていない）: rainbow_attach_question のトラッシュ・手札の呼び出し元（公開・本人に見えるカード）、FC1 の公開の枚数の呼び出し元（相手のエネルギー・控え・手札の枚数・"
+         "自分の手札・トラッシュ）。FC1・RB2 の停止コード全体の監査はしていない"),
+    ],
+    "fix_limitations": [
+        ("保守的な停止が増えた: RB2 は、持ち主のレインボーエネルギーがうらのサイド・持ち主に見えない置いておくカードにあって山札にないときも、山札からつける 7 つのワザ（ゆうでんを除く）で"
+         "宣言の前に止める（v0.150 までは実際に山札にあるときだけ）。ゆうでんの RB2・FC1 と、はらだいこ・てじなの FC1 は、配分を読まない下限（見えない対象の枚数 − 山札の外の見えない枚数）が"
+         "説明の枚数（ゆうでんはコインの枚数 3。はらだいこは 2。てじなはもどす枚数）より少なく、山札に対象があるかもしれなければ止める（実際に山札に足りていても止める）。てじなの 1 枚を"
+         "もどす答えと、対象がどこにもない（持ち主に分かる）場合は、配分によらず受理する"),
+        ("使える範囲への影響: うらのサイドが 6 枚なら、ゆうでんは見えない「雷」の基本エネルギーカードが 9 枚以上、はらだいこは見えない基本エネルギーカードが 8 枚以上、てじなで 2 枚・3 枚を"
+         "もどすには見えない基本エネルギーカード（もどすものを除く）が 8 枚・9 枚以上（もどすカードの基本エネルギーカードの枚数ぶん少なくてよい）ないと使えない。サイドが減ると下限が上がる。"
+         "道具の自然対戦（L113 対 D113・seed 103）では、せいでんきが止まって流れが変わった（v0.113 のテストの seed を 106 にした。5.4 節）"),
+        ("止める理由の選び方は変えていない: 選ぶと止める選択肢として山札のレインボーエネルギーを出す形（ゆうでん）を、ほかの山札からつけるワザに広げることは、研究上の停止の範囲を変えるので"
+         "していない（残る選択肢として文書の 6 章に書いた）"),
+    ],
+    "fix_verification": [("tests/test_deck_search_stop_oracles_v0_151.py（8 つの RB2 の経路・はらだいこ・ゆうでん・てじなの双子を 3 つの集合で比べる。修正の前の木（144d4c5）で双子の違い 73 件の"
+                           "失敗、新しい関数・文書がないエラー 24 件）"),
+                          "tests/test_deck_search_decision_presence_v0_150.py SeparateStopOracleTest（v0.150 の expectedFailure の印を外した）",
+                          "docs/deck-search-stop-oracles-v0.151.md 2 章・5 章"],
+}
+
+# v0.150 で見つけた項目（docs/deck-search-decision-presence-v0.150.md 6 章）。決定の有無の経路の確かめの途中で、同じ要素の研究上の停止が実際の山札を読むことを見つけた（v0.150 では修正して
+# いない。v0.151 で修正。v0.150 の summary・trigger・reachability は v0.150 の時点の記録として残す）
 V150_NEW_FINDINGS = [
-    {"id": "PSP-DECK-SEARCH-STOP-ORACLES", "entry_kind": "silent_information_leak", "status": "active", "classification": "A",
-     "found_in": "v0.150 の作業（PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS の経路の確かめ。基点 c4b90b4）",
+    {"id": "PSP-DECK-SEARCH-STOP-ORACLES", "entry_kind": "silent_information_leak", "status": "fixed", "classification": "A",
+     "found_in": "v0.150 の作業（PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS の経路の確かめ。基点 c4b90b4）", **V151_FIX_STOP_ORACLES,
+     "v0151_followup": ("v0.151 で、各呼び出し元（ワザと処理段階）ごとに構築盤面の双子で再現し、持ち主の知っている集合と配分を読まない下限で決める形に直した（path_classification）。"
+                        "v0.150 の summary・trigger・reachability・mode_policy の記録は v0.150 の時点のもの。停止コード全体（FC1・RB2）とは組にしない（DEFECT_COUPLING は変えない）"),
      "summary": ("山札から決まったカードをつける・加えるワザの、山札をさがす前の研究上の停止（RB2・FC1）が実際の山札を読み、山札とサイドの配分で宣言・答えの受理・拒否が変わる。理由の文に"
                  "山札のレインボーエネルギーの uid・山札の基本エネルギーカードの枚数を書く。決定の有無の漏れとは別の形（v0.147・v0.148 の使う前の確かめの形）"),
      "trigger": ("resolution/programs.py rainbow_attach_question（AttachFromDeck・AttachFromDeckToBench・AttachFromDeckUpToNamedCount の candidates、AttachFromDeckByHeads.run。宣言の前の"
@@ -1108,7 +1153,8 @@ V150_NEW_FINDINGS = [
                                "しおまねき・エナジーサポート・あたためる・せいでんき・ゆうでん）の RB2 は個別に確かめていない。続行規約の集合（CS-KYUURA-PLAY-S2A@1 の FC1 の規約など）での違いは"
                                "確かめていない")},
      "impact": "ワザを使わずに（宣言の拒否は状態を変えない）、または答えを選び直して、山札にレインボーエネルギー・基本エネルギーカードがあるか・何枚あるかと、その uid を知れる。拒否は本人だけに返る",
-     "play_groups": ["5"], "mode_policy": "両モードで塞ぐ候補（修正は別の作業。決定の有無の範囲の外。v0.147・v0.148 の共通処理（possible_deck_cards・deck_lower_bound_where）の形で直す候補）",
+     "play_groups": ["5"], "mode_policy": ("両モードで直した（v0.151。v0.150 では両モードで塞ぐ候補として記録だけ（決定の有無の範囲の外。v0.147・v0.148 の共通処理"
+                                            "（possible_deck_cards・deck_lower_bound_where）の形で直す候補））"),
      "decision_refs": ["DEC-INFO-LEAK-FIXES"]},
 ]
 
@@ -1225,6 +1271,16 @@ UPDATES = [
                          "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"],
      "new_entries": ["PSP-DECK-SEARCH-STOP-ORACLES（active。修正していない。RB2・FC1 の研究上の停止が実際の山札を読む）"],
      "unchanged": "研究の停止コード（FC1・RB2 を含む）は active のまま。止めるコード・条件は変えていない。族・規約・判断事項・合意の記録は変えていない"},
+    {"version": "0.151.0", "work": "山札をさがす前の研究上の停止（RB2・FC1）が実際の山札を読む情報漏れの修正（両モード共通）",
+     "document": "docs/deck-search-stop-oracles-v0.151.md",
+     "base": {"commit": "144d4c57188302a93c60f61d71fb88468b00c843", "branch_of_base": "claude/deck-search-decision-presence（v0.150 の最後。main には未マージ）"},
+     "approval": ("利用者の指示は作業の進め方（v0.150 で残った PSP-DECK-SEARCH-STOP-ORACLES を調査・修正し、全体テストを 1 回実行する）だけ（2026-11-06）。新しい続行規約は採用していない。"
+                  "FC1・RB2 などの研究上の問いは決めない"),
+     "changed_entries": ["PSP-DECK-SEARCH-STOP-ORACLES（fixed。v0151_followup・path_classification）",
+                         "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"],
+     "new_entries": [],
+     "unchanged": ("研究の停止コード（FC1・RB2 を含む）は active のまま。止めるコードは同じで、山札を見る前の止める条件が配分を読まない確かめになった（保守的に止める場合が増えた）。"
+                   "族・規約・判断事項・合意の記録は変えていない")},
 ]
 # 分類の時点（基点 3e25ac5）の集計（counts）の写し。今の counts は現行コードから作り直した値
 COUNTS_AT_CLASSIFICATION = {"research_stop_codes": 316, "runtime_codes_outside_table": 40, "runtime_codes_outside_table_active": 39, "test_tool_only_codes": 8, "cases": 15, "codes_with_cases": 7, "problems_new": 4, "problems_from_inventory": 28, "conventions": 18, "internal_guard_sites_current": 602, "internal_guard_sites_matched_to_inventory": 600, "internal_guard_sites_new_since_inventory": ["kyuura_engine/engine.py:445", "kyuura_engine/resolution/programs.py:10739"], "safety_boundaries": 8, "families": 23, "decisions": 29, "by_reachability": {"constructed_board": 145, "legal_sequence": 25, "static_only": 185}, "by_family": {"PF-COPY-TRANSFORM": 34, "PF-DAMAGE-SCOPE": 22, "PF-EFFECT-TIMING": 13, "PF-ENERGY-TYPE": 21, "PF-ESP-REDO": 4, "PF-HIDDEN-INFORMATION": 8, "PF-HISTORY-LASTING": 20, "PF-KNOCKOUT-TIMING": 15, "PF-POWER-SUPPRESSION": 11, "PF-PROTECTED-TARGET-EFFECT": 12, "PF-REACTION-DURING-PROCESS": 10, "PF-RUNTIME-CONTINUATION": 15, "PF-RUNTIME-COPY-GAPS": 5, "PF-RUNTIME-DATA": 5, "PF-RUNTIME-GENERIC": 1, "PF-RUNTIME-REGISTRY": 7, "PF-RUNTIME-SEARCH-LIMIT": 6, "PF-SETUP-PLAY-AS-POKEMON": 5, "PF-SIMULTANEOUS-ORDER": 26, "PF-STATED-COUNT-SHORT": 11, "PF-TEXT-READING": 34, "PF-UP-TO-ZERO": 13, "PF-USE-WITHOUT-EFFECT": 57}, "by_play_group": {"1": 316, "2": 39, "3": 89, "4": 6, "5": 20, "6": 1}, "by_mechanism": {"answer_rejection": 13, "command_rejection": 339, "deck_validation": 1, "deferred_interruption": 2, "pokemon_check_halt": 10, "setup_halt": 2}, "by_status": {"active": 402, "fixed": 5, "historical": 2, "unverified": 1}, "note": "停止コード・事例・規約・内部ガードは別の数。事例はコードの下位で、コードの数に足さない。棚卸しと同じ項目は独立した不足として数えない"}

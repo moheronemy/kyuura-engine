@@ -2462,11 +2462,6 @@
    },
    {
     "codes": [],
-    "entry_kind": "silent_information_leak",
-    "id": "PSP-DECK-SEARCH-STOP-ORACLES"
-   },
-   {
-    "codes": [],
     "entry_kind": "metadata_limitation",
     "id": "RESEARCH-ALIGNMENT-NOT-LATEST"
    },

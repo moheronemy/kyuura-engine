@@ -3654,7 +3654,7 @@
    "name": "両モード共通の不具合の修正（モードと別の版）",
    "rules": [],
    "prerequisites": [],
-   "scope": "PSP-NJ1-NINJA-GYM-ORACLE（この調査で確認）・PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-DECK-CONTENT-PRECHECKS の残り（未確認）。v0.146・v0.147 でこの 4 つを直した（v0.147 の横断で見つけた PSP-POWER-PRECHECK-DECK-ORACLE も）。v0.147 で見つけた PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE はv0.148 で直した。v0.148 で見つけた PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE と、v0.149 で見つけた PSP-HIDDEN-SET-ASIDE-DECK-POOL は v0.149 で直した。PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS（v0.149 で見つけた）は v0.150 で直した。v0.150 で見つけた PSP-DECK-SEARCH-STOP-ORACLES（active）が残る",
+   "scope": "PSP-NJ1-NINJA-GYM-ORACLE（この調査で確認）・PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-DECK-CONTENT-PRECHECKS の残り（未確認）。v0.146・v0.147 でこの 4 つを直した（v0.147 の横断で見つけた PSP-POWER-PRECHECK-DECK-ORACLE も）。v0.147 で見つけた PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE はv0.148 で直した。v0.148 で見つけた PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE と、v0.149 で見つけた PSP-HIDDEN-SET-ASIDE-DECK-POOL は v0.149 で直した。PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS（v0.149 で見つけた）は v0.150 で直した。v0.150 で見つけた PSP-DECK-SEARCH-STOP-ORACLES は v0.151 で直した",
    "done_when": "対の比べ（twin_command_problems）で漏れがない。blocked_by_defect の場面の規約を採れる状態",
    "remains": "研究上の論点（NJ1・PW3・DV2・GV1 の裁定）は未解決のまま"
   },
@@ -15308,25 +15308,6 @@
    "candidate": null
   },
   {
-   "id": "PSP-DECK-SEARCH-STOP-ORACLES",
-   "parent": null,
-   "code": null,
-   "entry_kind": "silent_information_leak",
-   "family": null,
-   "ledger_classification": "A",
-   "plan_class": "D",
-   "class_reason": "情報漏れ（未修正）",
-   "mechanisms": [],
-   "reachability": "constructed_board",
-   "whole_game": false,
-   "whole_game_basis": null,
-   "secret_dependency": null,
-   "ruling_ids": [],
-   "kyuura_issue": null,
-   "ruling_documents": [],
-   "candidate": null
-  },
-  {
    "id": "RESEARCH:ko_prevention_self_effect",
    "parent": null,
    "code": null,
@@ -15866,16 +15847,16 @@
    "mode_policy_status": "decision_required"
   }
  ],
- "internal_guard_sites": 616,
+ "internal_guard_sites": 619,
  "counts": {
-  "scenes": 400,
+  "scenes": 399,
   "stop_code_scenes": 368,
   "stop_codes": 357,
   "by_plan_class": {
    "A": 327,
    "B": 33,
    "C": 14,
-   "D": 7,
+   "D": 6,
    "E": 19
   },
   "a_scenes": 327,
@@ -15932,7 +15913,7 @@
   "whole_game_dynamic_channel_scenes": 12,
   "whole_game_a_scenes_with_candidate": 15,
   "new_findings": 1,
-  "internal_guard_sites_not_listed_as_scenes": 616,
+  "internal_guard_sites_not_listed_as_scenes": 619,
   "note": "場面は台帳の項目（事例のあるコードは事例）。重複を含む数は規約案ごとの対象の合計、重複を除いた数は場面・コードの集合の大きさ。内部ガードは場面に数えない（D。個数だけ）"
  }
 }
