@@ -634,7 +634,10 @@ class RequiredTrainerSearchTest(unittest.TestCase):
 
     def test_no_trainer_and_tails(self):
         state = _with_deck(board(active=evolved(H_.SLOWKING_SI, SLOWPOKE, energy=[PSYCHIC]), opponent_active=mon(HITMONCHAN)), 0, [WATER] * 4)
-        after = attack(state, 0, H)
+        # v0.150（docs/deck-search-decision-presence-v0.150.md 5.4 節）: 山札にカードがあれば、選べるもののない決定（0〜0 枚。「手札に加える」）に答えてから、加えずに切る
+        asked = attack(state, 0, H)
+        self.assertEqual((asked.decision.options, asked.decision.min_choices, asked.decision.max_choices), ((), 0, 0))
+        after = answer(asked, ())
         self.assertIsNone(after.decision)
         self.assertEqual([e["kind"] for e in new_events(state, after, "reveal_from_deck_none", "shuffle")], ["reveal_from_deck_none", "shuffle"])
         tails = attack(state, 0, T)

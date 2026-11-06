@@ -641,7 +641,10 @@ class CallForFamilyTest(unittest.TestCase):
     def test_no_candidates_is_not_a_failure(self):
         """山札にヤミカラスがないのは処理の対象がない（p.309。出さずに切る）で、ワザの失敗とは別の理由。"""
         state = board(mon(MURKROW, (W,)), opponent=mon(CHANSEY), deck=[H.RATTATA, W])
-        done = attack(state, 0)
+        # v0.150（docs/deck-search-decision-presence-v0.150.md 5.4 節）: 山札にカードがあれば、選べるもののない決定（0〜0 匹）に答えてから、出さずに切る
+        asked = attack(state, 0)
+        self.assertEqual((asked.decision.kind, asked.decision.options, asked.decision.min_choices, asked.decision.max_choices), (BENCH_FROM_DECK, (), 0, 0))
+        done = answer(asked, ())
         self.assertEqual(kinds(state, done, "bench_from_deck_none", "attack_failed", "shuffle"), ["bench_from_deck_none", "shuffle"])
 
     def test_full_bench_fails_after_the_declaration(self):

@@ -3176,8 +3176,9 @@ class PutBasicFromDeckOntoBench(AttackEffect):
         return None
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
-        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=(1, 1),
-                              options=bench_from_deck_candidates(state, use.player, self.names))
+        options = bench_from_deck_candidates(state, use.player, self.names)
+        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=required_search_choices(options),
+                              options=options) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 @dataclass(frozen=True)
@@ -3722,8 +3723,9 @@ class PutTypeBasicFromDeckOntoBench(AttackEffect):
         return None
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
-        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=(1, 1),
-                              options=bench_from_deck_candidates(state, use.player, (), self.pokemon_type, era=text_era(use.key.card_id)))
+        options = bench_from_deck_candidates(state, use.player, (), self.pokemon_type, era=text_era(use.key.card_id))
+        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=required_search_choices(options),
+                              options=options) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 # ---------------------------------------------------------------- v0.35: 可変枚数のコインの先読み・ダメージの計算の順番の決定と合わせて加えた 5 枚
@@ -4668,8 +4670,9 @@ class ReturnSelfToDeckThenSearchPokemon(AttackEffect):
             if p.active is not None:
                 problems.append("かわりの対戦ポケモンを出す決定なのに、バトル場が空いていない")
             return problems
-        return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=(1, 1),
-                              options=deck_pokemon_candidates(state, use.player, self.excluded))
+        options = deck_pokemon_candidates(state, use.player, self.excluded)
+        return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=required_search_choices(options),
+                              options=options) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 # ---------------------------------------------------------------- v0.39（docs/selfdestruct-spread-count-v0.39.md）
@@ -6006,7 +6009,7 @@ class AttachEnergyFromDeckToSelf(AttackEffect):
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         candidates = deck_energy_candidates(state, use.player, self.energy_type)
-        return _decision_form(decision, _label(state, use), kind=ATTACH_FROM_DECK, player=use.player, choices=(0, 1), options=candidates)
+        return _decision_form(decision, _label(state, use), kind=ATTACH_FROM_DECK, player=use.player, choices=(0, 1), options=candidates) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 def deck_evolution_candidates(state: GameState, player: int, cards: Iterable[int] | None = None) -> dict[int, list[int]]:
@@ -11219,7 +11222,7 @@ class SearchTrainerOnHeads(AttackEffect):
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=(0, 1),
-                              options=deck_trainer_cards(state, use.player))
+                              options=deck_trainer_cards(state, use.player)) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 @dataclass(frozen=True)
@@ -11436,8 +11439,10 @@ class ReturnHandThenRevealBasicEnergy(AttackEffect):
         count = decision.context_value("count")
         if type(count) is not int or not 1 <= count <= self.max_cards:
             return [f"「{label}」の段階 2 の枚数 {count!r} が 1〜{self.max_cards} ではない"]
-        return _decision_form(decision, label, kind=SEARCH_DECK, player=use.player, choices=(count, count),
-                              options=deck_basic_energy_cards(state, use.player))
+        options = deck_basic_energy_cards(state, use.player)
+        # v0.150: もどしたあとの山札に基本エネルギーカードがなければ、選べるもののない決定（0〜0 枚）
+        return _decision_form(decision, label, kind=SEARCH_DECK, player=use.player, choices=required_search_choices(options, count),
+                              options=options) + empty_search_problems(state, use.player, label, decision)
 
 
 @dataclass(frozen=True)
@@ -12139,7 +12144,7 @@ class RevealBasicEnergyFromDeck(AttackEffect):
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=(0, 1),
-                              options=deck_basic_energy_cards(state, use.player))
+                              options=deck_basic_energy_cards(state, use.player)) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 # ---------------------------------------------------------------- v0.64（docs/geodude-line-unbounded-coins-v0.64.md）
@@ -12313,7 +12318,7 @@ class PutOwnerBasicFromDeckOntoBenchOnHeads(AttackEffect):
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=(0, 1),
-                              options=deck_owner_basic_pokemon(state, use.player, self.owner))
+                              options=deck_owner_basic_pokemon(state, use.player, self.owner)) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 @dataclass(frozen=True)
@@ -12430,16 +12435,26 @@ class CoinEvolveSelfFromDeck(PowerEffect):
         if _power_coin(state, use) is not CoinSide.HEADS:
             return
         candidates = self._candidates(state, use)
-        _, user = state.find_pokemon(use.pokemon_id)
-        if not candidates:
-            state.add_event("evolve_from_deck_none", player=use.player, pokemon_id=user.pokemon_id, power=str(use.key))
-            shuffle_deck(state, use.player, power=str(use.key))
+        if not state.players[use.player].deck:
+            self._none(state, use)  # v0.150: 山札が 0 枚（枚数は公開）。さがさないので決定を出さない
             return
+        # v0.150（docs/deck-search-decision-presence-v0.150.md 3 章）: 山札にカードがあれば、選べるカードがなくても選べるもののない決定（0〜0 枚）を出して答えを待つ（v0.84 の A3。
+        # 山札の中身で決定の有無を変えない。答えのあとの「進化しなかった」は、必ず重ねる説明の公開の結果）
         blocked = self._hp_blocked(state, use, candidates)
         extra = {} if not blocked else {"unresolved_choices": blocked, "unresolved_code": "UNRESOLVED_EVOLUTION_HP", "unresolved_reason": EVOLUTION_HP_REASON}
-        push_power_decision(state, use, kind=SEARCH_DECK, player=use.player, options=candidates, **extra)
+        count = 1 if candidates else 0
+        push_power_decision(state, use, kind=SEARCH_DECK, player=use.player, options=candidates, min_choices=count, max_choices=count, **extra)
+
+    def _none(self, state: GameState, use: PowerUse) -> None:
+        state.add_event("evolve_from_deck_none", player=use.player, pokemon_id=use.pokemon_id, power=str(use.key))
+        shuffle_deck(state, use.player, power=str(use.key))
 
     def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if not choices:
+            if self._candidates(state, use):
+                raise RuntimeError("［うか］で、山札に重ねられるカードがあるのに選ばなかった（1 枚を選ぶ決定。エンジンの不具合）")
+            self._none(state, use)  # v0.150: 選べるもののない決定の答え
+            return None
         card = choices[0]
         if card not in self._candidates(state, use) or card in self._hp_blocked(state, use, [card]):
             raise RuntimeError(f"［うか］で選んだカード {choices} が、このカードに重ねられる山札のカードではない（エンジンの不具合）")
@@ -12461,7 +12476,9 @@ class CoinEvolveSelfFromDeck(PowerEffect):
 
     def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
         candidates = self._candidates(state, use)
-        return _power_decision_form(decision, use, kind=SEARCH_DECK, choices=(1, 1), options=candidates, unresolved=self._hp_blocked(state, use, candidates))
+        return (_power_decision_form(decision, use, kind=SEARCH_DECK, choices=required_search_choices(candidates), options=candidates,
+                                     unresolved=self._hp_blocked(state, use, candidates))
+                + empty_search_problems(state, use.player, f"特殊能力 {use.key}", decision))
 
 
 # v0.45: GV1 の停止コード（v0.44 はコードのない問い。つきのちからで起こるので停止コードにした。``resolution.questions`` の ``evolution_permission_from_deck`` と同じ）
@@ -17245,6 +17262,19 @@ def searchable_deck_cards(state: GameState, player: int) -> tuple[int, ...]:
     if not deck:
         return tuple(sorted(state.players[player].deck))
     return possible_deck_cards(state, player)
+
+
+def required_search_choices(options, count: int = 1) -> tuple[int, int]:
+    """v0.150（docs/deck-search-decision-presence-v0.150.md 3 章）: 山札をさがして、選べるカードがあれば必ず ``count`` 枚を選ぶ決定の選ぶ数。選べるものがなければ選べるもののない
+    決定（0〜0 枚。v0.84 の A3）。山札にカードがあれば、選べるものの有無によらず決定を出す（決定の有無で山札の中身を相手・観戦者に伝えない）。"""
+    return (count, count) if options else (0, 0)
+
+
+def empty_search_problems(state: GameState, player: int, label: str, decision: PendingDecision) -> list[str]:
+    """v0.150: 選べるもののない山札の決定は、山札にカードがあるとき（実際にさがすとき）だけ出す。山札が 0 枚（公開の枚数）なら、さがさないので決定を出さない。"""
+    if not decision.options and not state.players[player].deck:
+        return [f"「{label}」の選べるもののない決定が、山札が 0 枚のときに出ている（0 枚なら決定を出さない）"]
+    return []
 
 
 def deck_choice_may_only_stop(state: GameState, player: int, fits: Callable[[int], bool], stops: Callable[[int], bool], *, reserve: int = 0) -> bool:
@@ -29840,7 +29870,7 @@ class RevealNamedPokemonFromDeckAny(AttackEffect):
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         options = deck_named_pokemon(state, use.player, self.names)
-        return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=(0, len(options)), options=options)
+        return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=(0, len(options)), options=options) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 CALL_WILL_O_THE_WISP_TEXT = "コインを{coins}枚投げ、「おもて」の数ぶんの「{type}」エネルギーカードを自分のトラッシュから選び出し、手札に加える。"
@@ -29888,8 +29918,9 @@ class AttachEnergyFromDeckToSelfExactly(AttackEffect):
         return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, tuple(text.format(type=self.energy_type.ja) for text in STOKE_TEXTS))
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
-        return _decision_form(decision, _label(state, use), kind=ATTACH_FROM_DECK, player=use.player, choices=(1, 1),
-                              options=deck_energy_candidates(state, use.player, self.energy_type))
+        options = deck_energy_candidates(state, use.player, self.energy_type)
+        return _decision_form(decision, _label(state, use), kind=ATTACH_FROM_DECK, player=use.player, choices=required_search_choices(options),
+                              options=options) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 ENERGY_SUPPORT_TEXT = "自分の山札から「{type}」エネルギーカードを1枚選び出し、自分の控えポケモンにつける。その後、山札をよく切る。"
@@ -29913,8 +29944,9 @@ class AttachEnergyFromDeckToBench(AttackEffect):
         stage = decision.context_value("stage")
         bench = [p.pokemon_id for p in state.players[use.player].bench if energy_attach_block(state, p) is None]
         if stage == "card":
-            return _decision_form(decision, label, kind=ATTACH_FROM_DECK, player=use.player, choices=(1, 1),
-                                  options=deck_energy_candidates(state, use.player, self.energy_type))
+            options = deck_energy_candidates(state, use.player, self.energy_type)
+            return (_decision_form(decision, label, kind=ATTACH_FROM_DECK, player=use.player, choices=required_search_choices(options), options=options)
+                    + empty_search_problems(state, use.player, label, decision))
         if stage == "bench":
             problems = _decision_form(decision, label, kind=ATTACH_TO_BENCH, player=use.player, choices=(1, 1), options=bench)
             if decision.context_value("card") not in deck_energy_candidates(state, use.player, self.energy_type):
@@ -29946,7 +29978,8 @@ class CoinAttachEnergyFromDeckToSelf(AttackEffect):
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         options = deck_energy_candidates(state, use.player, self.energy_type)
-        return _decision_form(decision, _label(state, use), kind=ATTACH_FROM_DECK, player=use.player, choices=(0, min(self.max_cards, len(options))), options=options)
+        return _decision_form(decision, _label(state, use), kind=ATTACH_FROM_DECK, player=use.player, choices=(0, min(self.max_cards, len(options))),
+                              options=options) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 @dataclass(frozen=True)
@@ -30791,8 +30824,9 @@ class SearchTrainerRequiredOnHeads(AttackEffect):
         return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (REQUIRED_TRAINER_SEARCH_TEXT,))
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
-        return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=(1, 1),
-                              options=deck_trainer_cards(state, use.player))
+        options = deck_trainer_cards(state, use.player)
+        return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=required_search_choices(options),
+                              options=options) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 SNATCH_TRAINERS_TEXT = "コインを投げて「おもて」なら、相手の場のポケモン全員についている「トレーナーカード」を、すべてトラッシュする。"
@@ -33306,8 +33340,9 @@ class ChooseBenchThenAttachFromDeck(AttackEffect):
         label = _label(state, use)
         bench = [p.pokemon_id for p in state.players[use.player].bench]
         if decision.context_value("stage") == "card":
-            problems = _decision_form(decision, label, kind=ATTACH_FROM_DECK, player=use.player, choices=(1, 1),
-                                      options=deck_energy_candidates(state, use.player, self.energy_type))
+            options = deck_energy_candidates(state, use.player, self.energy_type)
+            problems = (_decision_form(decision, label, kind=ATTACH_FROM_DECK, player=use.player, choices=required_search_choices(options), options=options)
+                        + empty_search_problems(state, use.player, label, decision))
             if decision.context_value("target") not in bench:
                 problems.append(f"「{label}」でつける控えポケモン {decision.context_value('target')!r} が控えにいない")
             return problems
@@ -33539,7 +33574,8 @@ class RevealOneNamedPokemonFromDeck(AttackEffect):
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         options = deck_named_pokemon(state, use.player, self.names)
-        return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=(1, 1), options=options)
+        return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=required_search_choices(options),
+                              options=options) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 OUTRAGE_TEXT = "コインを投げて「うら」なら、このワザは失敗する。「おもて」なら、自分にのっているダメージカウンターの数×{per}のダメージを追加する。"
@@ -43029,8 +43065,9 @@ class PutNamedBasicFromDeckOntoBenchOrFail(AttackEffect):
             attack, what, (CALL_FOR_FAMILY_OR_FAIL_TEXT.format(name=self.names[0]), MULTIPLY_OR_FAIL_TEXT.format(name=self.names[0])))
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
-        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=(1, 1),
-                              options=bench_from_deck_candidates(state, use.player, self.names))
+        options = bench_from_deck_candidates(state, use.player, self.names)
+        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=required_search_choices(options),
+                              options=options) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 @dataclass(frozen=True)
@@ -43384,7 +43421,9 @@ class PutBabyFromDeckOntoBenchOrFail(AttackEffect):
         return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (PLAY_TOGETHER_TEXT,))
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
-        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=(1, 1), options=deck_baby_pokemon(state, use.player))
+        options = deck_baby_pokemon(state, use.player)
+        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=required_search_choices(options),
+                              options=options) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 @dataclass(frozen=True)

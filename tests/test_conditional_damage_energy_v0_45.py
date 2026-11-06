@@ -1071,8 +1071,12 @@ class BrocksGeodudeTest(unittest.TestCase):
 
     def test_call_for_family_without_candidates_or_bench_space(self):
         state = board(mon(BROCKS_GEODUDE_40, (F,)), mon(CHANSEY, (F,)), deck=[RATTATA, F])
-        done = audited(self, attack(state, 0, H))
-        self.assertEqual(kinds(done, len(state.log))[:4], ["attack", "coin_flip", "bench_from_deck_none", "shuffle"])
+        # v0.150（docs/deck-search-decision-presence-v0.150.md 5.4 節）: 山札にカードがあれば、選べるもののない決定（0〜1 匹。「出してよい」）に答えてから。ログは出さなかったときと同じ bench_from_deck_declined（理由 no_target は本人だけ）
+        waiting = attack(state, 0, H)
+        self.assertEqual((waiting.decision.kind, waiting.decision.options, waiting.decision.min_choices, waiting.decision.max_choices), (BENCH_FROM_DECK, (), 0, 1))
+        done = audited(self, answer(waiting, ()))
+        self.assertEqual(kinds(done, len(state.log))[:4], ["attack", "coin_flip", "bench_from_deck_declined", "shuffle"])
+        self.assertEqual([e["reason"] for e in done.log[len(state.log):] if e["kind"] == "bench_from_deck_declined"], ["no_target"])
         full_bench = board(mon(BROCKS_GEODUDE_40, (F,)), mon(CHANSEY, (F,)), bench=(RATTATA,) * 5, deck=[BROCKS_ONIX])
         assert_rejected(self, full_bench, UseAttack(0, 0), "BENCH_FULL", exception=IllegalActionError)
 

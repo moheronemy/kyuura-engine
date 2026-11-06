@@ -827,9 +827,12 @@ class MessengerTest(unittest.TestCase):
         self.assertEqual(kinds(done, len(state.log))[-3:], ["reveal_from_deck", "shuffle", "game_end"])
 
     def test_no_candidates_shuffles_once_without_a_decision(self):
-        """山札に選べるポケモンがなければ（キョウのポッポとエネルギーだけ）、加えずに切る（ログ reveal_from_deck_none。p.309）。"""
+        """山札に選べるポケモンがなければ（キョウのポッポとエネルギーだけ）、加えずに切る（ログ reveal_from_deck_none。p.309）。v0.150（docs/deck-search-decision-presence-v0.150.md
+        5.4 節）: 山札にカードがあるので、選べるもののない決定（0〜0 枚）に答えてから。テストの名前は v0.38 のまま（決定の有無で山札の中身を伝えない形に変えた）。"""
         state = self.board(deck=(KOGAS_PIDGEY, GRASS, GRASS))
-        after = attack(state, 0, answers=[first])
+        promoted = attack(state, 0, answers=[first])
+        self.assertEqual((promoted.decision.kind, promoted.decision.options, promoted.decision.min_choices, promoted.decision.max_choices), (SEARCH_DECK, (), 0, 0))
+        after = apply_kernel(promoted, ResolveDecision(0, promoted.decision.id, ()))
         log = kinds(after, len(state.log))
         self.assertEqual(log[:5], ["attack", "return_in_play_to_deck", "promote_active", "reveal_from_deck_none", "shuffle"])
 

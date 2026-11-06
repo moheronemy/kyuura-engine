@@ -323,7 +323,10 @@ class DragonBondTest(unittest.TestCase):
 
     def test_no_target_shuffles_without_revealing(self):
         state = board(mon(H.SHINING_MAGIKARP, (P,)), deck=[W, H.MAGIKARP])
-        done = attack(state, 1)
+        # v0.150（docs/deck-search-decision-presence-v0.150.md 5.4 節）: 山札にカードがあれば、選べるもののない決定（0〜0 枚。ちょうど 1 枚）に答えてから、加えずに切る
+        asked = attack(state, 1)
+        self.assertEqual((asked.decision.options, asked.decision.min_choices, asked.decision.max_choices), ((), 0, 0))
+        done = answer(asked, ())
         self.assertEqual([e["kind"] for e in new_events(state, done)][1:3], ["reveal_from_deck_none", "shuffle"])
 
 

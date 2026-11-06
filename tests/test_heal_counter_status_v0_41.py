@@ -1011,7 +1011,10 @@ class SunbathTest(unittest.TestCase):
         self.assertEqual(none["reason"], "declined")
         self.assertEqual(len(done.players[0].active.energy), 1)
         state = board(mon(ROCKET_SLOWPOKE), deck=(RATTATA, GRASS))
-        done = attack(state, 0)
+        # v0.150（docs/deck-search-decision-presence-v0.150.md 5.4 節）: 山札にカードがあれば、選べるもののない決定（0〜1 枚。「つけてよい」）に答えてから、つけずに切る
+        waiting = attack(state, 0)
+        self.assertEqual((waiting.decision.kind, waiting.decision.options, waiting.decision.min_choices, waiting.decision.max_choices), (ATTACH_FROM_DECK, (), 0, 1))
+        done = answer(waiting, ())
         self.assertIsNone(done.decision)
         [none] = events(done, len(state.log), "attach_energy_from_deck_none")
         self.assertEqual(none["reason"], "no_candidates")

@@ -411,19 +411,17 @@ class SetAsideBoundaryTest(unittest.TestCase):
         self.assertEqual(run_steps(s, (play(H.FERVOR),))[-1], ("accepted",))
 
 
-class RemainingDecisionPresenceLeakTest(unittest.TestCase):
-    """直していない別の漏れ（PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS。docs 6 章）: 同じ形（山札に選べるカードがなければ決定を出さずに ``…_none`` で進む）のほかの経路のうち、構築盤面の
-    双子で確かめた 2 つ。漏れがないこと（相手・観戦者の公開の情報が配分によらない）を確かめるテストを ``expectedFailure`` で置く（漏れを正常な仕様として固定しない。直したら、この
-    テストが「予期しない成功」になるので、印を外す）。この版の範囲（任意の山札からの進化のワザ・秘密領域の候補集合）の外なので、直していない。"""
+class OtherDecisionPresenceNoLeakTest(unittest.TestCase):
+    """v0.149 で見つけた別の漏れ（PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS。docs 6 章）: 同じ形（山札に選べるカードがなければ決定を出さずに ``…_none`` で進む）のほかの経路のうち、
+    構築盤面の双子で確かめた 2 つ。v0.149 では ``expectedFailure``（クラス名 ``RemainingDecisionPresenceLeakTest``）で置いた。v0.150
+    （docs/deck-search-decision-presence-v0.150.md）で直したので、漏れがないこと（相手・観戦者の公開の情報が配分によらない）を確かめる通常のテストにした。"""
 
-    @unittest.expectedFailure
     def test_errand_decision_presence_does_not_depend_on_the_deck(self):
         # エリカのフシギダネの「おつかい」（RevealTrainerFromDeck。「加えてよい」の任意）。山札にキズぐすり 1 枚（双子はサイド）
         s = heads(state_of({"active": mon(H.ERIKAS_BULBASAUR, (H.GRASS, H.GRASS)), "deck": [H.POTION] + [W] * 5, "prizes": list(HIDDEN)}))
         after = [apply_command(x, UseAttack(0, 1)) for x in (s, swap_hidden(s, H.POTION))]
         self.assertEqual(opponent_views(after[0]), opponent_views(after[1]))
 
-    @unittest.expectedFailure
     def test_cocoon_decision_presence_does_not_depend_on_the_deck(self):
         # キョウのコクーンの［うか］（CoinEvolveSelfFromDeck。「のせて進化させる」の必ず重ねる特殊能力）。山札にキョウのスピアー 1 枚（双子はサイド）。必ず重ねるので、答えのあとの
         # 結果（進化した・しなかった）は公開されるが、決定の有無はその前に分かれる（v0.84 の A3 の考え方と合わない）

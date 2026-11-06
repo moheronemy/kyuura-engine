@@ -925,8 +925,9 @@ class MarowakTest(unittest.TestCase):
         assert_stops(self, state, UseAttack(0, 1), "BENCH_FULL", exception=IllegalActionError)
 
     def test_no_candidate_shuffles_without_benching(self):
+        # v0.150（docs/deck-search-decision-presence-v0.150.md 5.4 節）: 山札にカードがあれば、選べるもののない決定（0〜0 匹）に答えてから、出さずに切る
         state = board(mon(MAROWAK, (FIGHTING, FIGHTING, FIGHTING)), deck=[CHARMANDER, MAROWAK, FIGHTING])
-        new = play(state, UseAttack(0, 1))
+        new = play(state, UseAttack(0, 1), [()])
         none = events(new, len(state.log), "bench_from_deck_none")
         self.assertEqual(len(none), 1)
         self.assertEqual(none[0]["pokemon_type"], "fighting")

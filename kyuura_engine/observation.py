@@ -649,6 +649,16 @@ def _taken_deck_top(event, viewer) -> bool:
     return event.get("destination") == "discard" or (viewer is not None and viewer in (event.get("looker"), event.get("player")))
 
 
+# v0.150: 山札をさがしたあとの、つけなかった理由のうち山札の中身の情報（選ばなかった・選べるカードがなかった）
+DECK_SEARCH_REASONS = frozenset({"declined", "no_candidates"})
+
+
+def _deck_search_reason(event, viewer) -> bool:
+    """v0.150（docs/deck-search-decision-presence-v0.150.md 3 章）: 山札からつけなかった理由（``attach_energy_from_deck_none`` の ``reason``）。山札の中身の情報（``declined``・
+    ``no_candidates``）は本人だけ。公開の情報で決まる理由（``attach_prevented``・``no_bench``・``no_heads``・``no_target``・``no_count``）は全員に見える（v0.149 までと同じ）。"""
+    return event.get("reason") not in DECK_SEARCH_REASONS or viewer == event.get("player")
+
+
 # 見えない項目のあるイベント: 種類 → (見えない項目, その項目が見える人か)
 PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], bool]]] = {
     "game_created": (("seed",), _nobody),  # seed から山札の並び・コインがわかる
@@ -689,6 +699,11 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
     "deck_top_take_declined": (("reason",), _only_player),
     # v0.149（docs/optional-deck-evolution-presence-v0.149.md 2 章）: たきのぼりしんかで山札から重ねなかった理由（選ばなかった・選べるカードがなかった。山札の中身の情報なので本人だけ）
     "evolve_from_deck_declined": (("reason",), _only_player),
+    # v0.150（docs/deck-search-decision-presence-v0.150.md 3 章）: 山札をさがして「てよい」で選ばなかった理由（選ばなかった・選べるカードがなかった。山札の中身の情報なので本人だけ）。
+    # つけなかった理由は、山札の中身の情報のときだけ本人だけ（``_deck_search_reason``）
+    "bench_from_deck_declined": (("reason",), _only_player),
+    "reveal_from_deck_declined": (("reason",), _only_player),
+    "attach_energy_from_deck_none": (("reason",), _deck_search_reason),
     # v0.95: 受けなかったダメージの量（「とうめい」・「かげぶんしん」・「リフレクトシールド」）。ゴーストの「ポルターガイスト」のように基本となるダメージが見た手札の中身で
     # 決まるワザなら、観戦者には量を見せない（のせたダメージはワザの結果で公開）。ほかのワザのログは全員に見える（v0.94 までは見えない項目のないイベント）
     "attack_evaded": (("amount",), _amount_unless_private),
@@ -766,9 +781,9 @@ PUBLIC_EVENTS = frozenset({
     "digger_result", "trainer_damage", "trainer_damage_prevented",
     # v0.62: オウムがえし（受けた記録は表の情報）
     "mirror_move_none", "reflect_received",
-    "attach_energy", "energy_conversion", "bench_coin_results", "rebellion_check", "attach_energy_from_deck", "attach_energy_from_deck_none", "attach_energy_from_discard",
+    "attach_energy", "energy_conversion", "bench_coin_results", "rebellion_check", "attach_energy_from_deck", "attach_energy_from_discard",  # v0.150: attach_energy_from_deck_none は PRIVATE_FIELDS
     "attach_energy_from_hand", "attach_trainer", "attack", "attack_attach_energy", "attack_check", "attack_failed", "attack_heal",
-    "bench_from_deck", "bench_from_deck_declined", "bench_from_deck_none",
+    "bench_from_deck", "bench_from_deck_none",  # v0.150: bench_from_deck_declined は PRIVATE_FIELDS
     "bench_from_discard", "bench_from_discard_declined", "bench_from_discard_none",  # v0.51: トラッシュと場は公開の情報
     "coin_flip", "confusion_check", "confusion_damage", "copy_attack",
     "counterattack", "counterattack_skipped", "damage", "damage_prevented", "deck_out", "destiny_bond", "devolve", "devolve_declined", "devolve_none",
@@ -795,7 +810,7 @@ PUBLIC_EVENTS = frozenset({
     # ［わるぢえ］で見た山札を切らなかった（山札の並びは変わらない）
     "attached_trainer_to_deck", "deck_top_returned", "shuffle_declined",
     "hand_return_declined",  # v0.96: ［ENGAGE］で手札を山札にもどさなかった（手札・山札の枚数は公開）
-    "return_to_deck", "return_to_hand", "reveal_from_deck", "reveal_from_deck_declined", "reveal_from_deck_none",
+    "return_to_deck", "return_to_hand", "reveal_from_deck", "reveal_from_deck_none",  # v0.150: reveal_from_deck_declined は PRIVATE_FIELDS
     "reveal_pokemon", "set_prizes", "shuffle", "sleep_check", "special_condition", "special_condition_prevented", "special_conditions_removed",
     "swap_damage_counters", "swap_prize_with_deck_top", "switch", "switch_declined", "trainer_lock_added", "trainer_lock_removed", "turn_end",
     "turn_start", "type_shift",

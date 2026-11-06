@@ -635,7 +635,10 @@ class WarmUpTest(unittest.TestCase):
     def test_no_fire_in_deck_attaches_nothing_but_shuffles(self):
         state = board(mon(FLAREON, (F,), evolved_from=EEVEE), deck=[W, W])
         choosing = attack(state, 0)
-        done = answer(choosing, (choosing.decision.options[0],))
+        # v0.150（docs/deck-search-decision-presence-v0.150.md 5.4 節）: 控えを選んだあと、山札にカードがあれば選べるもののない決定（0〜0 枚）に答えてから、つけずに切る
+        asked = answer(choosing, (choosing.decision.options[0],))
+        self.assertEqual((asked.decision.options, asked.decision.min_choices, asked.decision.max_choices), ((), 0, 0))
+        done = answer(asked, ())
         self.assertEqual([e["reason"] for e in new_events(choosing, done, "attach_energy_from_deck_none")], ["no_candidates"])
         self.assertEqual(len(new_events(choosing, done, "shuffle")), 1)
 

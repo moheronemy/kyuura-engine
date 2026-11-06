@@ -383,9 +383,12 @@ class JellyfishPodTest(unittest.TestCase):
 
     def test_no_candidates(self):
         state = self.board([RATTATA, FIRE])
-        after = attack(state, 1)
+        # v0.150（docs/deck-search-decision-presence-v0.150.md 5.4 節）: 山札にカードがあれば、選べるもののない決定（0〜0 枚）に答えてから。ログは選ばなかったときと同じ reveal_from_deck_declined（理由 no_target は本人だけ）
+        asked = attack(state, 1)
+        self.assertEqual((asked.decision.options, asked.decision.min_choices, asked.decision.max_choices), ((), 0, 0))
+        after = answer(asked, ())
         self.assertIsNone(after.decision)
-        self.assertEqual(kinds_after(after, state)[:3], ["attack", "reveal_from_deck_none", "shuffle"])
+        self.assertEqual(kinds_after(after, state)[:3], ["attack", "reveal_from_deck_declined", "shuffle"])
 
     def test_preflight_grouping_matches_full_enumeration(self):
         """先読みの答え（card_id_answers）は、すべての答え（all_answers）と同じ結果の集まりを作る（同じカード id のカードの uid を入れかえた形・選んだ順によらない）。"""
@@ -461,7 +464,10 @@ class AttachFromDeckTest(unittest.TestCase):
         after = answer(waiting, waiting.decision.options[:1])
         self.assertEqual(ids(after, after.players[0].active.energy), [FIRE, FIRE])
         self.assertEqual(after.players[0].energy_attachments_this_turn if hasattr(after.players[0], "energy_attachments_this_turn") else 0, 0)
-        none = attack(board([], active=m(BLAINES_GROWLITHE_GD5, (FIRE,)), deck=[WATER]), 0)
+        asked = attack(board([], active=m(BLAINES_GROWLITHE_GD5, (FIRE,)), deck=[WATER]), 0)
+        # v0.150（docs/deck-search-decision-presence-v0.150.md 5.4 節）: 山札にカードがあれば、選べるもののない決定（0〜0 枚）に答えてから、つけずに切る
+        self.assertEqual((asked.decision.kind, asked.decision.options, asked.decision.min_choices, asked.decision.max_choices), (ATTACH_FROM_DECK, (), 0, 0))
+        none = answer(asked, ())
         self.assertEqual(since(none, "attach_energy_from_deck_none")[:2], ["attach_energy_from_deck_none", "shuffle"])
 
     def test_recharge_optional(self):
