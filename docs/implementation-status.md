@@ -81,6 +81,7 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 - サドン・デスの延長戦（サイド 1 枚でやり直す。v0.134 で実装した。[sudden-death-v0.134.md](sudden-death-v0.134.md)）
 - 旧裏の複数の時期のルールの切り替え（`RuleSet` は 2000.02.14版だけ）
 - 公式大会のレギュレーション（サイド 4 枚など）
+- 診断 API（構造化した拒否・停止の分類と見る人ごとの写し）・完全な再現用記録と再現・閲覧用記録・状態の JSON の読み込み（スナップショット）・合法手の一覧。仕様案だけ（未承認。[diagnostics-replay-api-design.md](diagnostics-replay-api-design.md)・[実装計画](diagnostics-replay-api-implementation-plan.md)）
 - 画面、AI、通信（隠れた情報の管理は、v0.47 でプレイヤーに渡す観測 `observe`・`visible_log` を加えた。状態とログは内部の完全な記録のまま。[fossil-hidden-info-v0.47.md](fossil-hidden-info-v0.47.md) 5.1 節）
 
 ## 原典未確認
