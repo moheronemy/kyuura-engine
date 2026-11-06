@@ -444,8 +444,9 @@ class SearchTest(unittest.TestCase):
 class HandToDeckTest(unittest.TestCase):
     """てじな（最大 3 枚もどし、同じ枚数の基本エネルギーを見せて手札に加える）・ラッキーたまご（「うら」なら 2 枚もどす）。"""
 
-    def mime(self, hand, deck):
-        return board(mon(SABRINAS_MR_MIME, (P,)), hand=hand, deck=deck)
+    def mime(self, hand, deck, prizes=6):
+        # v0.151（docs/deck-search-stop-oracles-v0.151.md 5.4 節）: ``prizes`` を加えた（既定は今までと同じ）
+        return board(mon(SABRINAS_MR_MIME, (P,)), hand=hand, deck=deck, prizes=prizes)
 
     def test_sleight_returns_cards_and_reveals_as_many_basic_energies(self):
         """もどしたのと同じ枚数の基本エネルギーカードを山札から選び、見せて手札に加え、山札を切る。もどしたカードは山札に入る（選べる）。"""
@@ -473,7 +474,10 @@ class HandToDeckTest(unittest.TestCase):
             with self.subTest(choices=choices):
                 assert_rejected(self, waiting, ResolveDecision(0, d.id, choices), code, exception=UnsupportedError)
         audited(self, answer(answer(waiting, tuple(d.options[:1])), (card_of(waiting, 0, GRASS, "deck"),)))
-        none = self.mime([POTION, SWITCH], [RATTATA])
+        # v0.151（docs/deck-search-stop-oracles-v0.151.md 5.4 節）: 基本エネルギーカードがどこにもない（うらのサイドもコラッタ）と分かるときだけ、2 枚をもどす答えを受理する。サイドが炎エネルギーなら山札を見る前に FC1
+        none = self.mime([POTION, SWITCH], [RATTATA], prizes=[RATTATA] * 6)
+        waiting = attack(self.mime([POTION, SWITCH], [RATTATA]), 0)
+        assert_rejected(self, waiting, ResolveDecision(0, waiting.decision.id, tuple(waiting.decision.options)), FC1, exception=UnsupportedError)
         waiting = attack(none, 0)
         # v0.150（docs/deck-search-decision-presence-v0.150.md 5.4 節）: もどしたあとの山札に基本エネルギーカードがなくても、段階 2 の選べるもののない決定（0〜0 枚）に答えてから
         stage2 = answer(waiting, tuple(waiting.decision.options))

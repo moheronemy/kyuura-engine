@@ -106,8 +106,9 @@ def mon(card, energy=(), **extra):
 
 
 def board(active, *, bench=(H.RATTATA,), opponent=None, opponent_bench=(H.RATTATA,), hand=(), opponent_hand=(), deck=None, discard=(), opponent_deck=None,
-          opponent_discard=(), current=0, turn=TURN):
-    me = {"active": active, "bench": list(bench), "hand": list(hand), "deck": list(deck if deck is not None else [W] * 10), "discard": list(discard), "prizes": 6}
+          opponent_discard=(), current=0, turn=TURN, prizes=6):
+    # v0.151（docs/deck-search-stop-oracles-v0.151.md 5.4 節）: ``prizes`` を加えた（既定は今までと同じ 6 枚の炎エネルギー）
+    me = {"active": active, "bench": list(bench), "hand": list(hand), "deck": list(deck if deck is not None else [W] * 10), "discard": list(discard), "prizes": prizes}
     them = {"active": opponent or mon(H.HITMONCHAN), "bench": list(opponent_bench), "hand": list(opponent_hand),
             "deck": list(opponent_deck if opponent_deck is not None else [W] * 10), "discard": list(opponent_discard), "prizes": 6}
     return build_test_state([me, them], turn_number=turn, current_player=current)
@@ -716,7 +717,9 @@ class BellyDrumTest(unittest.TestCase):
         knocked = attack(ko, 0)
         self.assertFalse(new_events(ko, knocked, "attach_energy_from_deck", "shuffle"))
         self.assertIn("knock_out", kinds(ko, knocked))
-        empty = board(mon(POLIWHIRL, (W,)), deck=[H.RATTATA, H.RATTATA])
+        # v0.151（docs/deck-search-stop-oracles-v0.151.md 5.4 節）: 基本エネルギーカードがどこにもない（うらのサイドもコラッタ）と分かるときだけ、選べるもののない決定。サイドが炎エネルギーなら山札にあるかもしれず、山札を見る前に FC1
+        empty = board(mon(POLIWHIRL, (W,)), deck=[H.RATTATA, H.RATTATA], prizes=[H.RATTATA] * 6)
+        rejects(self, board(mon(POLIWHIRL, (W,)), deck=[H.RATTATA, H.RATTATA]), UseAttack(0, 0), "UNRESOLVED_STATED_CARDS_SHORT")
         none = attack(empty, 0)
         self.assertEqual((none.decision.options, none.decision.min_choices, none.decision.max_choices), ((), 0, 0))
         short = board(mon(POLIWHIRL, (W,)), deck=[F, H.RATTATA])

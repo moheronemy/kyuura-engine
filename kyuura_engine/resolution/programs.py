@@ -1337,6 +1337,18 @@ def rainbow_attach_question(run: AttackRun, uids, energy_type: EnergyType) -> No
         raise run.res.question("rainbow_attach_type", f"レインボーエネルギー {cards}・「{energy_type.ja}」エネルギーカード")
 
 
+# v0.151: 山札を見る前の止める判定の理由の文に添える決まった文（カードの uid・枚数・位置を書かない）
+DECK_PRECHECK_NOTE = "山札を見る前に、山札とサイドなどの見えないカードの配分を読まずに確かめられない。情報漏れを防ぐための保守的な制限。v0.151"
+
+
+def rainbow_deck_attach_question(run: AttackRun, energy_type: EnergyType) -> None:
+    """v0.151（docs/deck-search-stop-oracles-v0.151.md 3 章）: 山札から「○」エネルギーカードをつけるワザの RB2 を、山札にあるかもしれないカード（``effects.deck_rainbow_possible``。
+    持ち主が知っている集合）で決める。山札を見る前（宣言の前の先読み）と、見たあと（答えの確かめ）で同じ結果になる。v0.150 までは実際の山札のレインボーエネルギーを読み
+    （``rainbow_attach_question``）、宣言の前の先読みで、山札とサイドの配分で宣言の受理・拒否と理由の文（uid）が変わった（PSP-DECK-SEARCH-STOP-ORACLES）。理由の文は決まった文。"""
+    if E.deck_rainbow_possible(run.state, run.player):
+        raise run.res.question("rainbow_attach_type", f"山札にレインボーエネルギーがあるかもしれない（{DECK_PRECHECK_NOTE}）・「{energy_type.ja}」エネルギーカード")
+
+
 @dataclass(frozen=True)
 class ExtraEnergy:
     energy_type: EnergyType
@@ -6108,7 +6120,7 @@ class AttachFromDeck(Element):
     decision_kind: ClassVar[str] = ATTACH_FROM_DECK
 
     def candidates(self, run: AttackRun) -> list[int]:
-        rainbow_attach_question(run, run.state.players[run.player].deck, self.energy_type)  # v0.58: RB2
+        rainbow_deck_attach_question(run, self.energy_type)  # v0.58: RB2。v0.151: 山札を見る前は、山札にあるかもしれないカードで決める（配分を読まない）
         return E.deck_energy_candidates(run.state, run.player, self.energy_type)
 
     def has_target(self, run: AttackRun) -> bool:
@@ -6219,7 +6231,7 @@ class AttachFromDeckToBench(Element):
         return kind in (ATTACH_FROM_DECK, ATTACH_TO_BENCH)
 
     def candidates(self, run: AttackRun) -> list[int]:
-        rainbow_attach_question(run, run.state.players[run.player].deck, self.energy_type)  # v0.58: RB2
+        rainbow_deck_attach_question(run, self.energy_type)  # v0.58: RB2。v0.151: 山札を見る前は、山札にあるかもしれないカードで決める（配分を読まない）
         return E.deck_energy_candidates(run.state, run.player, self.energy_type)
 
     def targets(self, run: AttackRun) -> list[PokemonInPlay]:
@@ -7293,6 +7305,15 @@ class ReturnHandThenRevealEnergy(Element):
         run.suspend(kind=HAND_TO_DECK, player=run.player, options=list(hand), min_choices=0, max_choices=min(self.max_cards, len(hand)))
         return True
 
+    def _may_fall_short(self, run: AttackRun, choices: tuple[int, ...]) -> bool:
+        """v0.151（docs/deck-search-stop-oracles-v0.151.md 3 章）: 段階 1 の答え ``choices``（山札を見る前）で、もどしたあとの山札の基本エネルギーカードがもどした枚数より少なく 1 枚以上
+        （FC1）になるかもしれないか。実際の山札ではなく、配分を読まない下限と山札にあるかもしれないカード（``effects.deck_count_may_fall_short``。もどすカードの基本エネルギーカードは
+        山札に入ることが分かっている）で決める。v0.150 までは実際の山札の枚数を読み（``_available``）、答えの拒否（決定は待ったまま）と理由の文の枚数から、答えを選び直して山札の
+        枚数を探れた（PSP-DECK-SEARCH-STOP-ORACLES）。"""
+        state = run.state
+        returned = sum(1 for uid in choices if state.card_def(uid).is_basic_energy)
+        return E.deck_count_may_fall_short(state, run.player, lambda uid: state.card_def(uid).is_basic_energy, len(choices), added=returned)
+
     def _available(self, run: AttackRun, choices: tuple[int, ...]) -> int:
         """段階 1 の答え ``choices`` でもどしたあとの、山札の基本エネルギーカードの枚数（もどしたカードを含む）。"""
         state = run.state
@@ -7308,9 +7329,12 @@ class ReturnHandThenRevealEnergy(Element):
                     "（v0.39 の GS1 と同じ問い。ワザの説明の「最大N」が 0 を含むか）。1 枚以上を選ぶ",
                 )
             count = len(choices)
+            if self._may_fall_short(run, choices):
+                raise UnsupportedError(E.STATED_CARDS_SHORT_CODE, f"{E.STATED_CARDS_SHORT_REASON}（FC1。もどす {count} 枚。もどしたあとの山札の基本エネルギーカードが {count} 枚より"
+                                                                  f"少ないかもしれない。{DECK_PRECHECK_NOTE}）")
             available = self._available(run, choices)
             if 0 < available < count:
-                raise UnsupportedError(E.STATED_CARDS_SHORT_CODE, f"{E.STATED_CARDS_SHORT_REASON}（FC1。もどす {count} 枚、山札の基本エネルギーカード {available} 枚）")
+                raise RuntimeError(f"てじなの山札を見る前の確かめを通ったのに、山札の基本エネルギーカード {available} 枚がもどす {count} 枚より少ない（エンジンの不具合）")
             _hand_to_deck(run, choices)
             # v0.150（docs/deck-search-decision-presence-v0.150.md 3 章）: もどしたあとの山札（1 枚以上ある）の基本エネルギーカードが 0 枚でも、選べるもののない決定（0〜0 枚）を出して
             # 答えを待つ（v0.84 の A3。山札の中身で決定の有無を変えない）。答えのあとログ ``reveal_from_deck_none``
@@ -7333,8 +7357,8 @@ class ReturnHandThenRevealEnergy(Element):
     def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
         if decision.kind == HAND_TO_DECK:
             # 0 枚（GS1）と、足りない枚数（FC1）は答えのときに止めるもので、ワザの宣言を止める理由ではない（1 枚を選べば、どちらにも当たらない）
-            return [answer for answer in card_id_answers(run.state, decision, range(1, decision.max_choices + 1))
-                    if not 0 < self._available(run, answer) < len(answer)]
+            # v0.151: 足りないかもしれない答えも、実際の山札ではなく配分を読まない確かめ（``_may_fall_short``）で除く
+            return [answer for answer in card_id_answers(run.state, decision, range(1, decision.max_choices + 1)) if not self._may_fall_short(run, answer)]
         return card_id_answers(run.state, decision, (decision.min_choices,))
 
 
@@ -10245,7 +10269,7 @@ class AttachFromDeckUpToNamedCount(Element):
                    if not run.state.is_face_down(p) and E.field_name_matches(run.state, p, (self.name,)))  # v0.124: 両方の名前
 
     def candidates(self, run: AttackRun) -> list[int]:
-        rainbow_attach_question(run, run.state.players[run.player].deck, self.energy_type)  # v0.58: RB2
+        rainbow_deck_attach_question(run, self.energy_type)  # v0.58: RB2。v0.151: 山札を見る前は、山札にあるかもしれないカードで決める（配分を読まない）
         return E.deck_energy_candidates(run.state, run.player, self.energy_type)
 
     def run(self, run: AttackRun) -> bool:
@@ -13439,11 +13463,22 @@ class AttachFromDeckByHeads(Element):
             raise UnsupportedError(stops[0][1], stops[0][2])  # 止めないつけ先がない（FD1・VS1 など。答えのない決定を出さない）
         cards, rainbow = self.cards(run)
         usable = len(cards) - len(rainbow)
-        if usable < heads:
-            if rainbow:
-                rainbow_attach_question(run, rainbow, self.energy_type)  # RB2（レインボーエネルギーを選ばないと H 枚にならない）
-            if usable:
-                raise run.res.question("stated_cards_short", f"山札の「{self.energy_type.ja}」エネルギーカード {usable} 枚（「おもて」の数 {heads}）")
+        # v0.151（docs/deck-search-stop-oracles-v0.151.md 3 章）: 山札を見る前（宣言の前の先読みが試すコインの面を含む）の RB2・FC1 は、実際の山札ではなく、山札にあるかもしれない
+        # カード（``effects.deck_rainbow_possible``）と配分を読まない下限（``deck_lower_bound_where``・``deck_count_may_fall_short``）で決める。v0.150 までは実際の山札の枚数・
+        # レインボーエネルギーを読み、配分で宣言の受理・拒否と理由の文（枚数・uid）が変わった（PSP-DECK-SEARCH-STOP-ORACLES）。下限が H 以上なら、山札のレインボーエネルギーは
+        # 今までどおり選ぶと止める選択肢として出す
+        state = run.state
+        def fits(uid: int) -> bool:  # ``deck_energy_candidates`` の 1 枚ずつの条件（カードの定義だけで決まる）
+            return state.card_def(uid).is_basic_energy and state.card_def(uid).provides is self.energy_type
+
+        if E.deck_lower_bound_where(state, run.player, fits) < heads:
+            if E.deck_rainbow_possible(state, run.player):
+                raise run.res.question("rainbow_attach_type", f"山札にレインボーエネルギーがあるかもしれず、それを選ばないと「おもて」の数 {heads} 枚にならないかもしれない（"
+                                                              f"{DECK_PRECHECK_NOTE}）・「{self.energy_type.ja}」エネルギーカード")
+            if E.deck_count_may_fall_short(state, run.player, fits, heads):
+                raise run.res.question("stated_cards_short", f"山札の「{self.energy_type.ja}」エネルギーカードが「おもて」の数 {heads} 枚より少ないかもしれない（{DECK_PRECHECK_NOTE}）")
+        if 0 < usable < heads or (usable < heads and rainbow):
+            raise RuntimeError(f"ワザ {run.key} の山札を見る前の確かめを通ったのに、山札の選べるカードが「おもて」の数 {heads} 枚より少ない（エンジンの不具合）")
         low = heads if usable >= heads else 0
         extra = (("stage", "card"), ("heads", heads)) + _unresolved_extra(rainbow, E.RAINBOW_ATTACH_CODE, E.RAINBOW_ATTACH_REASON.format(type=self.energy_type.ja))
         run.suspend(kind=ATTACH_FROM_DECK, player=run.player, options=cards, min_choices=low, max_choices=heads, carry=True, extra=extra)
@@ -14278,8 +14313,12 @@ class AttachBasicEnergyFromDeckToSelf(Element):
             self._none(run, attacker, "attach_prevented")
             return False
         options = E.deck_basic_energy_cards(state, run.player)
+        # v0.151（docs/deck-search-stop-oracles-v0.151.md 3 章）: 山札を見る前（宣言の前の先読み）の FC1 は、実際の山札の枚数ではなく、配分を読まない下限と山札にあるかもしれないカード
+        # （``effects.deck_count_may_fall_short``）で決める。v0.150 までは実際の山札の枚数を読み、配分で宣言の受理・拒否と理由の文（枚数）が変わった（PSP-DECK-SEARCH-STOP-ORACLES）
+        if E.deck_count_may_fall_short(state, run.player, lambda uid: state.card_def(uid).is_basic_energy, self.cards):
+            raise run.res.question("stated_cards_short", f"山札の基本エネルギーカードが {self.cards} 枚より少ないかもしれない（{DECK_PRECHECK_NOTE}）")
         if 0 < len(options) < self.cards:
-            raise run.res.question("stated_cards_short", f"山札の基本エネルギーカード {len(options)} 枚（{self.cards} 枚を選び出す）")
+            raise RuntimeError(f"ワザ {run.key} の山札を見る前の確かめを通ったのに、山札の基本エネルギーカードが {self.cards} 枚より少ない（エンジンの不具合）")
         count = self.cards if len(options) >= self.cards else 0
         run.suspend(kind=ATTACH_FROM_DECK, player=run.player, options=options, min_choices=count, max_choices=count, carry=True)
         return True

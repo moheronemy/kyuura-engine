@@ -446,9 +446,9 @@ class HowlMiracleEnergyTwinTest(unittest.TestCase):
 
 
 class SeparateStopOracleTest(unittest.TestCase):
-    """別件（PSP-DECK-SEARCH-STOP-ORACLES。docs 6 章。直していない）: 山札をさがす前の研究上の停止（RB2・FC1）が実際の山札を読み、山札とサイドの配分で宣言・答えの受理・拒否と
-    理由の文（uid・枚数）が変わる。決定の有無の漏れとは別の形（v0.147・v0.148 の使う前の確かめの形）。漏れがないことを確かめるテストを ``expectedFailure`` で置く（漏れを正常な仕様
-    として固定しない）。"""
+    """別件（PSP-DECK-SEARCH-STOP-ORACLES。docs 6 章）: 山札をさがす前の研究上の停止（RB2・FC1）が実際の山札を読み、山札とサイドの配分で宣言・答えの受理・拒否と
+    理由の文（uid・枚数）が変わる。決定の有無の漏れとは別の形（v0.147・v0.148 の使う前の確かめの形）。v0.150 では漏れがないことを確かめるテストを ``expectedFailure`` で置いた。
+    v0.151（docs/deck-search-stop-oracles-v0.151.md）で直したので、通常のテストにした（``expectedFailure`` を外しただけで、確かめる内容は同じ）。"""
 
     def assert_same(self, states, steps):
         outcomes = []
@@ -464,19 +464,16 @@ class SeparateStopOracleTest(unittest.TestCase):
             outcomes.append(result)
         self.assertEqual(outcomes[0], outcomes[1])
 
-    @unittest.expectedFailure
     def test_attach_rainbow_rb2_at_declaration(self):
         # ひなたぼっこ（AttachFromDeck の rainbow_attach_question）: 山札のレインボーエネルギーで宣言を RB2 で拒否（理由の文に uid）。サイドにあれば受理
         s = state_of({"active": attacker("PMCG4-032", 0), "deck": [H.RAINBOW_ENERGY] + [P] * 5, "prizes": [P] * 6})
         self.assert_same([s, swap_hidden(s, H.RAINBOW_ENERGY)], [UseAttack(0, 0)])
 
-    @unittest.expectedFailure
     def test_belly_drum_fc1_at_declaration(self):
         # はらだいこ（AttachBasicEnergyFromDeckToSelf）: 山札の基本エネルギーカードが 1 枚（2 枚を選ぶ）なら宣言の前の先読みが FC1 で拒否。2 枚あれば受理
         s = state_of({"active": attacker("neo2-016", 0), "deck": [H.GRASS, H.GRASS] + [P] * 5, "prizes": [P] * 6})
         self.assert_same([s, swap_hidden(s, H.GRASS)], [UseAttack(0, 0)])
 
-    @unittest.expectedFailure
     def test_trick_fc1_at_return_answer(self):
         # てじな（ReturnHandThenRevealEnergy）: 手札をもどす答え（山札を見る前）が、山札の基本エネルギーカードの枚数で FC1 の拒否（理由の文に枚数。決定は待ったまま）になる
         s = state_of({"active": attacker("PMCG6-046", 0), "deck": [H.GRASS] + [P] * 5, "prizes": [P] * 6, "hand": [P, P]})

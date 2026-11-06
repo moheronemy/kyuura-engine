@@ -2332,23 +2332,45 @@ def _attack_definition(state, command):
     return state.definitions[option.card_id] if option is not None else state.card_def(_attacker(state, command).card)
 
 
+def _v151_short_possible(state, player, fits, count, *, added=0) -> bool:
+    """v0.151（docs/deck-search-stop-oracles-v0.151.md 4 章）: 山札を見る前に、山札の ``fits`` のカードの枚数が 1 枚以上 ``count`` 枚より少なくなる配分がありうるか（エンジンの
+    FC1 の確かめと同じ条件を、道具が v0.147・v0.148 の山札にあるかもしれないカード ``searchable_deck_cards`` と配分を読まない下限 ``deck_lower_bound_where`` から数える。
+    v0.150 までは実際の山札を数えた）。``added`` は山札に入ることが分かっている ``fits`` のカードの枚数（てじなでもどすカード）。"""
+    possible = sum(1 for uid in E.searchable_deck_cards(state, player) if fits(uid))
+    upper = min(possible, len(state.players[player].deck)) + added
+    lower = E.deck_lower_bound_where(state, player, fits) + added
+    return max(lower, 1) <= min(upper, count - 1)
+
+
+def _v151_rainbow_possible(state, player) -> bool:
+    """v0.151: 山札にレインボーエネルギーがあるかもしれない（山札にあるかもしれないカード ``searchable_deck_cards``。サイドにあって山札にない場合も。エンジンの RB2 の確かめと同じ条件）。"""
+    return any(state.cards[uid].card_id == RAINBOW_ENERGY for uid in E.searchable_deck_cards(state, player))
+
+
 def _v113_attract_short(state, command, *, rainbow=False) -> bool:
     """v0.113: ゆうでん（相手のワザとして使うものも）を、山札の「雷」の基本エネルギーカードがコインの枚数（3）より少ない（``rainbow`` なら、山札にレインボーエネルギーもある。そうでなければ
-    1 枚以上ある）ときに宣言した（FC1・RB2。「おもて」の数によっては H 枚を選べない）。道具が山札を数える（エンジンの問い合わせを読まない）。"""
+    1 枚以上ある）ときに宣言した（FC1・RB2。「おもて」の数によっては H 枚を選べない）。道具が山札を数える（エンジンの問い合わせを読まない）。
+
+    v0.151（docs/deck-search-stop-oracles-v0.151.md）: エンジンは山札を見る前の確かめを配分を読まずに行うので、道具も同じ条件で数える: 配分を読まない下限が 3 より少なく、
+    レインボーエネルギーが山札にあるかもしれなければ RB2、なければ 1 枚以上 3 枚より少ない配分がありうるとき FC1。"""
     if "DamageThenCoinsAttachTypedEnergyFromDeck" not in _attack_and_copied_types(state, command):
         return False
-    deck = state.players[command.player].deck
-    lightning = sum(1 for uid in deck if _v113_basic(state, uid, EnergyType.LIGHTNING))
+    player = command.player
+
+    def lightning(uid):
+        return _v113_basic(state, uid, EnergyType.LIGHTNING)
+
+    if E.deck_lower_bound_where(state, player, lightning) >= 3:
+        return False
     if rainbow:
-        return lightning < 3 and any(state.cards[uid].card_id == RAINBOW_ENERGY for uid in deck)
-    return 0 < lightning < 3
+        return _v151_rainbow_possible(state, player)
+    return not _v151_rainbow_possible(state, player) and _v151_short_possible(state, player, lightning, 3)
 
 
 def _v113_static_rainbow(state, command) -> bool:
     """v0.113: メリープ（neo1-038）のせいでんき（既存の ``AttachFromDeckUpToNamedCount``）を、山札にレインボーエネルギーがあるときに宣言した（既存の RB2。v0.113 の L113 のデッキに
-    レインボーエネルギーを入れたので起こる。それまでのデッキでは起こらなかった）。"""
-    return "AttachFromDeckUpToNamedCount" in _attack_and_copied_types(state, command) and any(
-        state.cards[uid].card_id == RAINBOW_ENERGY for uid in state.players[command.player].deck)
+    レインボーエネルギーを入れたので起こる。それまでのデッキでは起こらなかった）。v0.151: 山札にあるかもしれない（サイドにあって山札にない場合も。エンジンと同じ配分を読まない条件）。"""
+    return "AttachFromDeckUpToNamedCount" in _attack_and_copied_types(state, command) and _v151_rainbow_possible(state, command.player)
 
 
 def _v113_discard_rainbow(state, command) -> bool:
@@ -3562,14 +3584,15 @@ def _v044_decision(state, counts):
         counts[f"v044_optional_{card_id}"] += 1
         return answer(() if decline else options[:1], f"{'declined' if decline else 'chosen'}_{card_id}")
     if card_id == SABRINAS_MR_MIME and d.kind == HAND_TO_DECK:
-        energy_in_deck = sum(1 for u in state.players[d.player].deck if state.card_def(u).is_basic_energy)
+        # v0.151（docs/deck-search-stop-oracles-v0.151.md）: もどす枚数は、エンジンの段階 1 の確かめと同じ配分を読まない条件（持ち主の知っている集合）で、足りないかもしれない枚数を
+        # 避ける。v0.150 までは実際の山札の基本エネルギーカードを数えた（方策が秘密の配分を読んだ）。1 枚は配分によらず受理される
         wanted = 1 + counts["v044_sleight"] % 3
         counts["v044_sleight"] += 1
         hand = list(d.options)
         for count in range(min(wanted, d.max_choices), 0, -1):
             chosen = hand[:count]
-            available = energy_in_deck + sum(1 for u in chosen if state.card_def(u).is_basic_energy)
-            if available >= count or available == 0:
+            returned = sum(1 for u in chosen if state.card_def(u).is_basic_energy)
+            if not _v151_short_possible(state, d.player, lambda u: state.card_def(u).is_basic_energy, count, added=returned):
                 return answer(chosen, f"sleight_return_{count}")
         return None
     if card_id == SABRINAS_MR_MIME and d.kind == SEARCH_DECK:
@@ -10677,7 +10700,8 @@ def _v116_belly_drum_short(state, command) -> bool:
     （エンジンの問い合わせを読まない。のせるダメージカウンターで HP 以上になるなら山札を見ないので止まらない）。"""
     if "SelfCountersThenAttachBasicEnergyFromDeck" not in _attack_and_copied_types(state, command):
         return False
-    return sum(1 for uid in state.players[command.player].deck if state.card_def(uid).is_basic_energy) == 1
+    # v0.151（docs/deck-search-stop-oracles-v0.151.md）: エンジンと同じ配分を読まない条件（1 枚以上 2 枚より少ない配分がありうる）。v0.150 までは実際の山札の枚数が 1 枚
+    return _v151_short_possible(state, command.player, lambda uid: state.card_def(uid).is_basic_energy, 2)
 
 
 def _v116_primal_drop_stopped(state, command) -> bool:

@@ -17295,6 +17295,25 @@ def deck_choice_may_only_stop(state: GameState, player: int, fits: Callable[[int
     return deck_lower_bound_where(state, player, lambda uid: fits(uid) and not stops(uid)) < 1 + reserve
 
 
+def deck_rainbow_possible(state: GameState, player: int) -> bool:
+    """v0.151（docs/deck-search-stop-oracles-v0.151.md 3 章）: 山札をさがす前に、山札にあるかもしれないカード（``searchable_deck_cards``。山札・うらのサイド・持ち主に見えない置いておく
+    カード）にレインボーエネルギー（RB2）があるか。持ち主の知っている集合と公開の枚数だけで決まり、実際の配分によらない（サイドにあって山札にない場合も真。保守的）。山札が 0 枚なら偽。"""
+    return bool(rainbow_cards_in(state, searchable_deck_cards(state, player)))
+
+
+def deck_count_may_fall_short(state: GameState, player: int, fits: Callable[[int], bool], count: int, *, added: int = 0) -> bool:
+    """v0.151（docs/deck-search-stop-oracles-v0.151.md 3 章）: 山札をさがす前に、山札の ``fits`` のカードの枚数 c が 0 < c < ``count``（FC1。説明の枚数より少ない）になる配分が、
+    持ち主の知識と矛盾しないか（真なら、山札を見る前に止める）。``added`` は、さがす前に山札に入ることが持ち主に分かっている ``fits`` のカードの枚数（てじなでもどすカード）。
+
+    c は「配分を読まない下限（``deck_lower_bound_where``）+ ``added``」以上、「山札にあるかもしれない ``fits`` のカードの枚数（``searchable_deck_cards``。山札の枚数を超えない）+ ``added``」
+    以下のどれにもなりうる（見えないカードを 1 枚ずつ入れかえられる）とみなし、範囲が 1〜``count`` - 1 と重なれば真。結果は持ち主の知っている集合と公開の枚数だけで決まり、実際の
+    配分によらない。実際には足りていても止める（保守的）。``fits`` は ``deck_lower_bound_where`` と同じく、カードの定義と公開の状態だけで決まる条件にすること（呼ぶ側の責任）。"""
+    possible = sum(1 for uid in searchable_deck_cards(state, player) if fits(uid))
+    upper = min(possible, len(state.players[player].deck)) + added
+    lower = deck_lower_bound_where(state, player, fits) + added
+    return max(lower, 1) <= min(upper, count - 1)
+
+
 def evolution_card_fits(state: GameState, pokemon: PokemonInPlay, card: int, *, evolves_from: str | None = None, name: str | None = None) -> bool:
     """v0.148: カード ``card`` が、場のポケモン ``pokemon`` に山札から今重ねられる進化カードか（``self_deck_evolution_cards`` の 1 枚ずつの条件。カードの定義と公開の状態だけで決まり、
     カードがどこにあるかを読まない）。"""
