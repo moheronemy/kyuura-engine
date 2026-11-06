@@ -7593,7 +7593,10 @@ class EvolveFromDeckOnHeads(AttackEffect):
         label = _label(state, use)
         candidates = deck_evolution_candidates(state, use.player)
         if decision.kind == SEARCH_DECK:
-            problems = _decision_form(decision, label, kind=SEARCH_DECK, player=use.player, choices=(1, 1), options=tuple(candidates))
+            # v0.149: 選べるカードがなければ選べるもののない決定（0〜0 枚。山札にカードがあるときだけ出す。v0.84 の A3）
+            problems = _decision_form(decision, label, kind=SEARCH_DECK, player=use.player, choices=(1, 1) if candidates else (0, 0), options=tuple(candidates))
+            if not candidates and not state.players[use.player].deck:
+                problems.append(f"「{label}」の選べるもののない決定が、山札が 0 枚のときに出ている（0 枚なら決定を出さない）")
             # v0.43: 場に出たときに使える特殊能力を持つ進化カードは、選べるが選ぶと止める（PW4。HP で止めるカードを除く）
             blocked = set(decision.context_value("unresolved_choices", ()))
             entry = deck_evolution_entry_cards(state, use.player, candidates, blocked)  # v0.86: ［れんさしんか］の機会が来るカードも
@@ -29349,7 +29352,9 @@ class DiscardDeckTopThenReturnTypeEnergy(TrainerEffect):
                                    f"（HC6。熱血!で山札が {len(p.deck)} 枚）")
         if discard_to_hand_suppressor(state) is not None:
             return  # v0.74: ポケモンタワーで手札に加える部分が消える（レインボーエネルギーを「炎」エネルギーカードとして加えるかを決める必要がない。FV1 で止めない。HC6 は別の問い）
-        hidden = rainbow_cards_in(state, (*p.deck, *(uid for uid in p.prizes if uid is not None)))
+        # v0.149（docs/optional-deck-evolution-presence-v0.149.md 4 章）: 山札にあるかもしれないカード（``searchable_deck_cards``。うらのサイドと持ち主に見えない置いておくカードを含み、
+        # おもてのサイドを含まない）で確かめる。v0.148 までは山札とすべてのサイドだけで、山札と持ち主に見えない置いておくカードの配分で受理・拒否が変わった
+        hidden = rainbow_cards_in(state, searchable_deck_cards(state, use.player))
         if hidden:
             raise UnsupportedError(FERVOR_RAINBOW_CODE, FERVOR_RAINBOW_REASON)
 
@@ -29413,7 +29418,9 @@ class LookTopTakePokemonThenShuffle(TrainerEffect):
             # v0.114（NB1）: neo の説明の「たねポケモン」（イントロパック★neo の印刷。UQ-NEO-TEXT-BABY-CATEGORIES の事例）。見る 7 枚にベイビィポケモンカードがあれば、選べるか（選べるカードが
             # あるか）が決まらない。見る前には分からないので、使ったプレイヤーに見えないカード（山札・サイド）にベイビィポケモンカードがあれば、使う前に止める（見る 7 枚の中身で受け付けるかを
             # 変えない。使ったプレイヤーが知っているのは、山札とサイドを合わせたカードまで）
-            hidden = (*state.players[use.player].deck, *state.players[use.player].prizes)
+            # v0.149（docs/optional-deck-evolution-presence-v0.149.md 4 章）: 山札にあるかもしれないカード（``searchable_deck_cards``。持ち主に見えない置いておくカードを含み、おもての
+            # サイドを含まない）。v0.148 までは山札とすべてのサイドだけで、山札と持ち主に見えない置いておくカードの配分で受理・拒否が変わった
+            hidden = searchable_deck_cards(state, use.player)
             if any(state.card_def(uid).is_baby_pokemon for uid in hidden):
                 raise neo_basic_baby_error(f"{use.card_id} の見る {self.look} 枚に、ベイビィポケモンカードがありうる（山札・サイド）")
 
@@ -36455,10 +36462,11 @@ class DiscardDeckTopAttachTypeEnergyThenEndTurn(EntryPower):
             return UnsupportedError(DECK_SHORT_CODE, f"［おたけび］で山札の上から {self.count} 枚をトラッシュする（山札の枚数 {len(state.players[use.player].deck)}）: {DECK_SHORT_REASON}")
         if discard_protection(state):
             return None  # v0.119: ［アレルギーほうし］でつけないので、つけるカード・つける先は決めない
-        hidden = tuple(state.players[use.player].deck) + tuple(state.players[use.player].prizes)
-        rainbow = rainbow_cards_in(state, hidden)
-        if rainbow:
-            return rainbow_attach_error(self.energy_type, rainbow)
+        # v0.149（docs/optional-deck-evolution-presence-v0.149.md 4 章）: 山札にあるかもしれないカード（``searchable_deck_cards``。持ち主に見えない置いておくカードを含み、おもての
+        # サイドを含まない）。v0.148 までは山札とすべてのサイドだけで、山札と持ち主に見えない置いておくカードの配分で受理・拒否が変わり、理由の文に見えないカードの uid を書いた
+        hidden = searchable_deck_cards(state, use.player)
+        if rainbow_cards_in(state, hidden):
+            return rainbow_possible_in_deck_error(self.energy_type)
         miracle = [uid for uid in hidden if _miracle_effect(state, uid)]
         if miracle:
             return UnsupportedError(MIRACLE_TYPE_CODE, f"［おたけび］でトラッシュするかもしれないミラクルエネルギー: {MIRACLE_TYPE_REASON.format(type=self.energy_type.ja)}")

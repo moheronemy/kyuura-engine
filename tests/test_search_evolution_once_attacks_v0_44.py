@@ -557,13 +557,18 @@ class DeckEvolutionTest(unittest.TestCase):
         self.assertIn("evolve_from_deck_declined", kinds(declined, len(waiting.log)))
 
     def test_waterfall_evolution_keeps_the_normal_restrictions(self):
-        """この番に場に出したコイキング・おたがいの最初の番は進化できない（重ねられるカードがなく、山札を切るだけ）。"""
+        """この番に場に出したコイキング・おたがいの最初の番は進化できない（重ねられるカードがなく、山札を切るだけ）。
+
+        v0.149（docs/optional-deck-evolution-presence-v0.149.md 2 章）: 山札にカードがあれば、選べるカードがなくても決定（0〜1 枚。選べるものは空）を出して答えを待つ（v0.148 までは
+        決定を出さずに evolve_from_deck_none）。0 枚の答えのログは evolve_from_deck_declined（理由 no_target は本人だけ）。進化の制限（選べるものが空）は変えない。"""
         for spec, turn in (({"played_turn": TURN}, TURN), ({}, 1)):
             with self.subTest(spec=spec, turn=turn):
                 state = board(mon(ROCKET_MAGIKARP, (W, W, W), **spec), deck=[GYARADOS], turn=turn)
-                done = audited(self, attack(state, 1))
+                waiting = attack(state, 1)
+                self.assertEqual((waiting.decision.kind, waiting.decision.options), (SEARCH_DECK, ()))
+                done = audited(self, answer(waiting, ()))
                 self.assertEqual(done.cards[done.players[0].active.card].card_id, ROCKET_MAGIKARP)
-                self.assertIn("evolve_from_deck_none", kinds(done, len(state.log)))
+                self.assertEqual([e["reason"] for e in events(done, len(waiting.log), "evolve_from_deck_declined")], ["no_target"])
 
     def test_metamorphosis_power(self):
         """［うか］: 自分の番ごとに 1 回、コイン「おもて」でキョウのスピアーを山札から重ね、山札を切る。特殊能力なので番は終わらない。「うら」でも使ったことになる。"""

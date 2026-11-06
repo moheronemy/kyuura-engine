@@ -687,6 +687,8 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
     "trainer_bench_from_deck_declined": (("reason",), _only_player),
     # v0.83: やさしいゴルダックの「みずかき」で、見た山札の上から選ばなかった理由（選べるカードがなかった・選ばなかった。山札の上の中身の情報なので、見たプレイヤーだけ）
     "deck_top_take_declined": (("reason",), _only_player),
+    # v0.149（docs/optional-deck-evolution-presence-v0.149.md 2 章）: たきのぼりしんかで山札から重ねなかった理由（選ばなかった・選べるカードがなかった。山札の中身の情報なので本人だけ）
+    "evolve_from_deck_declined": (("reason",), _only_player),
     # v0.95: 受けなかったダメージの量（「とうめい」・「かげぶんしん」・「リフレクトシールド」）。ゴーストの「ポルターガイスト」のように基本となるダメージが見た手札の中身で
     # 決まるワザなら、観戦者には量を見せない（のせたダメージはワザの結果で公開）。ほかのワザのログは全員に見える（v0.94 までは見えない項目のないイベント）
     "attack_evaded": (("amount",), _amount_unless_private),
@@ -773,7 +775,7 @@ PUBLIC_EVENTS = frozenset({
     "discard_attached_cards",
     "discard_attached_energy", "discard_attached_trainer", "discard_energy", "discard_energy_failed", "discard_from_deck", "discard_from_hand",
     "bench_guard", "flee", "flee_declined", "flee_effect_skipped", "ninja_trick", "ninja_trick_declined", "discard_from_play", "discard_hand", "discard_trainer", "disguise", "disguise_removed", "drain_heal", "drain_heal_skipped", "drain_heal_declined", "attack_heal_declined", "effect_prevented", "effect_skipped",
-    "end_turn_without_attack", "energy_burn", "entry_power_declined", "evade_check", "evolution_permission", "evolve", "evolve_from_deck_declined",
+    "end_turn_without_attack", "energy_burn", "entry_power_declined", "evade_check", "evolution_permission", "evolve",
     "evolve_from_deck_none", "forced_switch", "forced_switch_skipped", "game_end", "halted", "janken", "knock_out", "ko_prevented",
     "ko_prevention_declared", "ko_prevention_declined", "ko_prevention_failed", "look_at_deck_top_none", "move_damage_counter", "move_energy",
     "move_opponent_energy", "mulligan", "mulligan_draw", "once_attack_recorded", "persistent_effect_added", "persistent_effect_removed",

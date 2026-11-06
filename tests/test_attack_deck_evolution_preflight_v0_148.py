@@ -208,8 +208,10 @@ class BoundaryTest(unittest.TestCase):
     def test_devolved_without_any_possible_card_is_accepted(self):
         # 退化したコイキングでも、見えないカードにギャラドスがなければ（コイキングから進化するカードがない）受理し、選べるもののない決定にはならない
         s = waterfall_devolved(n=0)
-        done = apply_command(s, UseAttack(0, WATERFALL))
-        self.assertTrue([e for e in done.log[len(s.log):] if e["kind"] == "evolve_from_deck_none"])
+        waiting = apply_command(s, UseAttack(0, WATERFALL))
+        self.assertEqual((waiting.decision.kind, waiting.decision.options), (SEARCH_DECK, ()))  # v0.149: 選べるもののない決定（0〜1 枚）
+        done = apply_command(waiting, ResolveDecision(0, waiting.decision.id, ()))
+        self.assertTrue([e for e in done.log[len(waiting.log):] if e["kind"] == "evolve_from_deck_declined"])
 
     def test_empty_deck_does_not_count_prize_cards(self):
         # 山札にうらのカードがなければ、サイドのギャラドスは山札にありえない（``searchable_deck_cards``）。山札 0 枚の退化したコイキングは受理
@@ -245,12 +247,16 @@ class AcceptedPathTest(unittest.TestCase):
                 if not in_deck:
                     s = swap_hidden(s, H.GYARADOS)
                 waiting = apply_command(s, UseAttack(0, WATERFALL))
+                # v0.149: どちらも決定（0〜1 枚）を出す（v0.148 までは、山札にギャラドスがなければ決定を出さずに evolve_from_deck_none で進んだ。
+                # PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE。tests/test_optional_deck_evolution_presence_v0_149.py）
+                self.assertEqual((waiting.decision.kind, waiting.decision.min_choices, waiting.decision.max_choices), (SEARCH_DECK, 0, 1))
                 if in_deck:
-                    self.assertEqual((waiting.decision.kind, waiting.decision.min_choices), (SEARCH_DECK, 0))
                     done = apply_command(waiting, ResolveDecision(0, waiting.decision.id, waiting.decision.options))
                     self.assertEqual(done.cards[done.players[0].active.card].card_id, H.GYARADOS)
                 else:
-                    self.assertTrue([e for e in waiting.log[len(s.log):] if e["kind"] == "evolve_from_deck_none"])
+                    self.assertEqual(waiting.decision.options, ())
+                    done = apply_command(waiting, ResolveDecision(0, waiting.decision.id, ()))
+                    self.assertEqual([e["reason"] for e in done.log[len(waiting.log):] if e["kind"] == "evolve_from_deck_declined"], ["no_target"])
 
     def test_declining_the_optional_evolution(self):
         s = waterfall()
@@ -319,8 +325,10 @@ class KeptStopsTest(unittest.TestCase):
     def test_normal_evolution_limits_still_apply(self):
         # 今の番に場に出したコイキング（許可なし）は、山札にギャラドスがあっても選べない（通常の進化の制限）。決定は選べるもののない形
         s = state_of({"active": mon(H.ROCKET_MAGIKARP, (W, W, W), played_turn=7), "deck": [H.GYARADOS] + [W] * 5, "prizes": list(HIDDEN)})
-        done = apply_command(s, UseAttack(0, WATERFALL))
-        self.assertTrue([e for e in done.log[len(s.log):] if e["kind"] == "evolve_from_deck_none"])
+        waiting = apply_command(s, UseAttack(0, WATERFALL))
+        self.assertEqual(waiting.decision.options, ())  # v0.149: 決定は出す（選べるものはない）
+        done = apply_command(waiting, ResolveDecision(0, waiting.decision.id, ()))
+        self.assertEqual(done.cards[done.players[0].active.card].card_id, H.ROCKET_MAGIKARP)
 
     def test_song_baby_counts_owner_hidden_set_aside_cards(self):
         # 補助関数だけの確かめ（構築盤面）: しんかのうたの NB2 の「山札にあるかもしれない」に、持ち主に見えない置いておくカードを含める（v0.147 までは山札とサイドだけ）
@@ -368,31 +376,29 @@ class PowerCocoonTest(unittest.TestCase):
             self.assertEqual(twin_command_problems([s, twin], [declare], owner_knowledge=True), [])
 
 
-class RemainingDecisionPresenceLeakTest(unittest.TestCase):
-    """直していない別の漏れ（PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE。docs 6 章）: 任意の山札からの進化（たきのぼりしんか・つきのちから）は、宣言を受理したあと（山札を
-    さがし始めたあと）、山札に選べる進化カードがなければ決定を出さずに ``evolve_from_deck_none`` で進む。決定があるかとログが相手・観戦者に見えるので、選べるカードが山札にあるかが
-    伝わる（必ず重ねるワザは v0.84 の A3 で、選べるもののない決定を出して答えを待つ）。宣言の前の先読みの漏れではなく、この版では直していない。
+class DecisionPresenceNoLeakTest(unittest.TestCase):
+    """v0.148 で直していなかった別の漏れ（PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE。docs 6 章）の回帰テスト。v0.148 では ``expectedFailure`` で置いた（クラス名
+    ``RemainingDecisionPresenceLeakTest``）。v0.149（docs/optional-deck-evolution-presence-v0.149.md）で直したので、印を外して漏れがないことを確かめる通常のテストにした: 任意の
+    山札からの進化（たきのぼりしんか）・つきのちから（「おもて」）は、山札にカードがあれば、選べる進化カードがなくても決定を出すので、宣言を受理したあとの相手・観戦者の公開の情報
+    （観測とログの写し）は、進化カードが山札とサイドのどちらにあるかによらない。"""
 
-    漏れがないこと（相手・観戦者の公開の情報が配分によらない）を確かめるテストを ``expectedFailure`` で置く（漏れを正常な仕様として固定しない。直したら、このテストが
-    「予期しない成功」になるので、印を外す）。"""
-
-    @unittest.expectedFailure
     def test_waterfall_evolution_decision_presence_does_not_depend_on_the_deck(self):
         from tests.log_audit import public_view
 
         s = waterfall()
         twin = swap_hidden(s, H.GYARADOS)
         after = [apply_command(x, UseAttack(0, WATERFALL)) for x in (s, twin)]
-        self.assertEqual(public_view(after[0], 1), public_view(after[1], 1))
+        for viewer in (1, None):
+            self.assertEqual(public_view(after[0], viewer), public_view(after[1], viewer))
 
-    @unittest.expectedFailure
     def test_moon_power_decision_presence_does_not_depend_on_the_deck(self):
         from tests.log_audit import public_view
 
         s = state_of({"active": mon(H.ERIKAS_CLEFAIRY, (W,)), "bench": [], "deck": [H.ERIKAS_CLEFABLE] + [W] * 5, "prizes": list(HIDDEN)})
         twin = swap_hidden(s, H.ERIKAS_CLEFABLE)
         after = [apply_command(with_coin_results(x, CoinSide.HEADS), UseAttack(0, MOON)) for x in (s, twin)]
-        self.assertEqual(public_view(after[0], 1), public_view(after[1], 1))
+        for viewer in (1, None):
+            self.assertEqual(public_view(after[0], viewer), public_view(after[1], viewer))
 
 
 class DocumentTest(unittest.TestCase):

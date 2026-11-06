@@ -3038,9 +3038,12 @@ class PerMilledEnergy:
 
 def hidden_deck_pool(run: AttackRun, milled: tuple[int, ...]) -> tuple[int, ...]:
     """v0.95: ワザを使ったプレイヤーが、山札の上からトラッシュする前に見えなかった自分のカード（今トラッシュした ``milled`` と、残りの山札・サイド）。中身は持ち主が知っている
-    （デッキから見えているカードを除いたもの）が、どのカードが山札の上にあったかは知らない（v0.73 の熱血!の FV1 と同じ範囲）。"""
-    p = run.state.players[run.player]
-    return (*milled, *p.deck, *(uid for uid in p.prizes if uid is not None))
+    （デッキから見えているカードを除いたもの）が、どのカードが山札の上にあったかは知らない（v0.73 の熱血!の FV1 と同じ範囲）。
+
+    v0.149（docs/optional-deck-evolution-presence-v0.149.md 4 章）: 残りは ``effects.possible_deck_cards``（残りの山札・うらのサイド・持ち主に見えない置いておくカード）。v0.148 までは
+    残りの山札とすべてのサイドで、持ち主に見えない置いておくカードを含まず（山札とその置いておくカードの配分で先読みの受理・拒否が変わった）、おもてのサイド（山札の上にありえない）を
+    含んだ。トラッシュしたあとの山札にうらのカードがなくても、トラッシュする前はあったので、``searchable_deck_cards`` ではなく ``possible_deck_cards`` を使う（合わせた集合が配分によらない）"""
+    return (*milled, *E.possible_deck_cards(run.state, run.player))
 
 
 def _typed_basic_energy(state: GameState, uid: int, energy_type: EnergyType) -> bool:
@@ -3056,7 +3059,8 @@ def milled_type_energy(run: AttackRun, milled: tuple[int, ...], energy_type: Ene
     - 特殊エネルギーのうち、その色を出さないもの（無色2個エネルギーなど）は当たらない。ミラクルエネルギーは場の外では色がない（v0.85 の読み方。``rainbow_cards_in`` と同じ）"""
     rainbow = E.rainbow_cards_in(run.state, hidden_deck_pool(run, milled))
     if rainbow:
-        raise run.res.question("milled_rainbow_energy", f"ワザ {run.key}・山札・サイドのレインボーエネルギー {rainbow}・「{energy_type.ja}」エネルギーカード")
+        # v0.149: 理由の文に見えないカードの uid を書かない（山札にあるかもしれないレインボーエネルギーがあることだけ）
+        raise run.res.question("milled_rainbow_energy", f"ワザ {run.key}・山札にあるかもしれないレインボーエネルギー・「{energy_type.ja}」エネルギーカード")
     return tuple(uid for uid in milled if _typed_basic_energy(run.state, uid, energy_type))
 
 
@@ -6587,6 +6591,8 @@ class EvolveFromDeck(Element):
       ら、ワザの残り（山札を切る）のあと、番は終わる
     - 選べる進化カードがない（山札に進化カードがない・重ねられるポケモンがいない・最初の番）なら、出さない（ログ ``evolve_from_deck_none``）。どの場合も、コインが
       ``local_coin`` なら山札を切る（1 回。説明の「その後、その山札をよく切る」）。先読みでは切らない（``shuffle_in_attack``）
+    - v0.149: 山札にカードがあれば、選べる進化カードがなくても選べるもののない決定（``SEARCH_DECK`` の 0〜0 枚）を出して答えを待ち、答えのあとに ``evolve_from_deck_none`` と
+      切る（v0.84 の A3。決定の有無を山札の中身で変えない。選べるものの数は観測で決めるプレイヤーだけ）。山札が 0 枚なら決定を出さない（枚数は公開）
     """
 
     local_coin: CoinSide | None = HEADS
@@ -6625,8 +6631,14 @@ class EvolveFromDeck(Element):
             raise run.res.question("evolution_hp_every_card", E.POSSIBLE_DECK_EVOLUTION_DETAIL)
         candidates = E.deck_evolution_candidates(run.state, run.player)
         if not candidates:
+            if run.state.players[run.player].deck:
+                # v0.149（docs/optional-deck-evolution-presence-v0.149.md 2 章。PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE）: 山札にカードがあれば、選べる進化カードがなくても
+                # 選べるもののない決定（0〜0 枚）を出して答えを待つ（v0.84 の A3。必ず重ねる ``EvolveAttackerFromDeck`` の ``required`` と同じ）。v0.148 までは決定を出さずに
+                # ``evolve_from_deck_none`` で進み、決定があるかで、山札に重ねられる進化カードがあるかが相手・観戦者に伝わった。答えのあとにログと切る
+                run.suspend(kind=SEARCH_DECK, player=run.player, options=(), min_choices=0, max_choices=0)
+                return True
             run.state.add_event("evolve_from_deck_none", player=run.player, pokemon_id=run.fs.frame.source_pid, effect=str(run.key))
-            shuffle_in_attack(run, self, run.player)
+            shuffle_in_attack(run, self, run.player)  # 山札が 0 枚（枚数は公開。見るカードがない）
             return False
         blocked = tuple(card for card, targets in candidates.items()
                         if len(E.evolution_hp_problem_targets(run.state, card, targets)) == len(targets))
@@ -6651,6 +6663,13 @@ class EvolveFromDeck(Element):
             return
         candidates = E.deck_evolution_candidates(run.state, run.player)
         if decision.kind == SEARCH_DECK:
+            if not choices:
+                # v0.149: 選べるもののない決定（0〜0 枚）の答え。選べるカードがあれば 1 枚の決定なので、0 枚の答えは来ない
+                if candidates:
+                    raise RuntimeError(f"つきのちからの山札の進化カードの決定に、0 枚の答え（{run.key}。決定の形の誤り。エンジンの不具合）")
+                run.state.add_event("evolve_from_deck_none", player=run.player, pokemon_id=run.fs.frame.source_pid, effect=str(run.key))
+                shuffle_in_attack(run, self, run.player)
+                return
             card = choices[0]
             if card not in candidates:
                 raise RuntimeError(f"つきのちからで選んだカード {choices} が、山札の重ねられる進化カードではない（エンジンの不具合）")
@@ -6915,11 +6934,13 @@ class EvolveAttackerFromDeck(Element):
     このカードだけで、選ばないこともできる点が違う。
 
     - 選べるのは山札の進化カードで、「○○○○から進化」の名前が ``evolves_from`` のもののうち、このカードに今重ねられるもの（``effects.self_deck_evolution_cards``。
-      通常の進化と同じ制限。効果による進化だからという理由で免除しない）。決定 ``SEARCH_DECK``（0〜1 枚）。0 枚ならログ ``evolve_from_deck_declined``
+      通常の進化と同じ制限。効果による進化だからという理由で免除しない）。決定 ``SEARCH_DECK``（0〜1 枚）。0 枚ならログ ``evolve_from_deck_declined``。v0.149: 山札にカードがあれば、
+      選べるカードがなくても同じ決定（0〜1 枚。選べるものは空）を出して答えを待つ（0 枚の答えのログも ``evolve_from_deck_declined``。理由 ``reason`` の ``declined``・``no_target`` は
+      本人だけが見る）。山札が 0 枚なら決定を出さない（ログ ``evolve_from_deck_none``。枚数は公開）
     - 進化したあとの HP がダメージ以下になるカードは選べるが選ぶと止める（v0.4a の H1）。場に出たときに使える特殊能力を持つカード（「場に出た時」）は PW4（v0.43）
     - トレーナー「サカキ」の許可だけで重ねられるカードがあれば GV1（決定の前に止める）
     - 重ねる前に「とうめい」を評価する（自分への効果。``reaches`` の ``evolve``）。進化は通常の進化と同じ手順（``evolution.place_evolution_card``。山札から。ログ
-      ``evolve`` の ``effect``・``source_zone``）。選べるものがない（ログ ``evolve_from_deck_none``）・選ばないときも、そのあと山札を切る（1 回）
+      ``evolve`` の ``effect``・``source_zone``）。山札が 0 枚（ログ ``evolve_from_deck_none``）・選ばない・選べるものがないときも、そのあと山札を切る（1 回）
 
     v0.105（docs/recovery-evolution-coin-branches-v0.105.md 4 章。トランセル（neo2-006）の「からやぶりしんか」・ヒマナッツ（neo4-003）の「ひざしをあびる」の「その後、自分の山札から…
     「進化カード」を1枚選び出し、この…の上にのせ、進化させる。山札を見た場合は、その山札をよく切る。」）。どれも既定ではたきのぼりしんか（v0.44）と同じ:
@@ -7023,10 +7044,13 @@ class EvolveAttackerFromDeck(Element):
         devolved = E.deck_evolution_devolved_pairs(state, run.player, (attacker.pokemon_id,), cards)
         if devolved:
             raise run.res.question("evolve_after_devolution", E.possible_pair_detail(devolved))  # v0.50: DV2
-        candidates = self.candidates(run)
-        if not candidates:
-            self._none(run, attacker)
+        if not state.players[run.player].deck:
+            self._none(run, attacker)  # 山札が 0 枚（枚数は公開。さがすカードがない）
             return False
+        # v0.149（docs/optional-deck-evolution-presence-v0.149.md 2 章。PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE）: 山札にカードがあれば、選べるカードがなくても決定（0〜1 枚。
+        # 選べるものが空でも最大の枚数は 1 のまま）を出して答えを待つ。v0.148 までは選べるカードがなければ決定を出さずに ``evolve_from_deck_none`` で進み、決定があるかとログで、
+        # 山札に選べる進化カードがあるかが相手・観戦者に伝わった。0 枚の答えのログは選ばなかった・選べるカードがなかったのどちらも ``evolve_from_deck_declined``（理由は本人だけ）
+        candidates = self.candidates(run)
         blocked = tuple(uid for uid in candidates if attacker.damage >= E.evolution_hp(state, attacker, uid))  # v0.48
         chain = bool(E.chain_evolution_targets(state, run.player, (attacker.pokemon_id,)))  # v0.86: ほかのポケモンの［れんさしんか］の機会が来る（PW4）
         entry = tuple(uid for uid in candidates if uid not in blocked and (chain or E.applicable_entry_power(state, uid, from_hand=False) is not None))
@@ -7053,7 +7077,9 @@ class EvolveAttackerFromDeck(Element):
                     raise RuntimeError(f"必ず選ぶ山札の進化カードの決定に、0 枚の答え（{run.key}。決定の形の誤り。エンジンの不具合）")
                 self._none(run, attacker)  # 選べるもののない決定の答え（山札は見たので切る）
                 return
-            state.add_event("evolve_from_deck_declined", player=run.player, pokemon_id=attacker.pokemon_id, effect=str(run.key))
+            # v0.149: 理由（選ばなかった・選べるカードがなかった）は山札の中身の情報なので、本人だけが見る（観測の非公開の項目。v0.84 のみずかきの ``deck_top_take_declined`` と同じ）
+            reason = "declined" if self.candidates(run) else "no_target"
+            state.add_event("evolve_from_deck_declined", player=run.player, pokemon_id=attacker.pokemon_id, effect=str(run.key), reason=reason)
             shuffle_in_attack(run, self, run.player)
             return
         card = choices[0]
