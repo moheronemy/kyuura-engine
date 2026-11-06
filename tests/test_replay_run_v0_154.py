@@ -382,8 +382,12 @@ class DocumentTest(unittest.TestCase):
 
     def test_spec(self):
         spec = json.loads(SPEC.read_text(encoding="utf-8"))
+        # v0.155: 後の採用（ADOPT-U5）で U5 も実装済みになった。v0.154 の承認の記録（ADOPT-U4）が持つのは U4 だけ
+        u4 = next(a for a in spec["adoptions"] if a["id"] == "ADOPT-U4")
+        self.assertEqual((u4["units"], u4["decisions"]), (["U4"], []))
         units = {u["id"]: u["status"] for u in spec["units"]}
-        self.assertEqual((units["U4"], units["U5"], units["U6"], units["U7"]), ("implemented", "planned", "planned", "planned"))
+        self.assertEqual(units["U4"], "implemented")
+        self.assertEqual({u for u, st in units.items() if st == "implemented"}, {u for a in spec["adoptions"] for u in a["units"]})
         status = {d["id"]: d["status"] for d in spec["decisions"]}
         self.assertEqual((status["D-SNAPSHOT-BASE"], status["D-HALT-SNAPSHOT"]), ("pending", "pending"))
         self.assertIn("recorded_failure", {r["id"] for r in spec["replay_results"]})
