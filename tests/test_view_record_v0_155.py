@@ -208,8 +208,14 @@ class PastLogBoundaryTest(unittest.TestCase):
     ログの位置の内容を固定し、同じ位置を後の項目に出し直さない（構築盤面から合法な操作。マチスの秘策）。"""
 
     def run_secret_plan(self, viewers=VIEWERS):
-        from tests.test_secret_plan_v0_67 import DIGLETT, LT_SURGES_SECRET_PLAN, board, face_down, uid_of
         from kyuura_engine import AttachEnergy, PlayTrainer, RevealFaceDown
+        from tests.test_secret_plan_v0_67 import (
+            DIGLETT,
+            LT_SURGES_SECRET_PLAN,
+            board,
+            face_down,
+            uid_of,
+        )
 
         state = board(hand=(DIGLETT, H.FIGHTING))
         recorders = {v: V.ViewRecorder.attach(v, state) for v in viewers}
@@ -250,7 +256,7 @@ class PastLogBoundaryTest(unittest.TestCase):
 
     def test_attached_start_fixes_the_projection_at_the_start(self):
         # 途中から始めた記録: 始まりの項目の過去のログは、始めた時点の投影（イベントが起きた時点の投影ではない）
-        state, _, hidden, placed_index = self.run_secret_plan(viewers=())
+        state, _, _hidden, placed_index = self.run_secret_plan(viewers=())
         from kyuura_engine import visible_log
         late = V.ViewRecorder.attach(1, state).close().data
         start_events = late["entries"][0]["events"]
