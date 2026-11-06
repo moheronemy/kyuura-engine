@@ -25,6 +25,7 @@ from .commands import command_from_dict
 from .errors import EngineError
 from .replay_record import (
     END_ABORTED,
+    EXTENSION_CONNECTION_CHECK,
     INCONSISTENT,
     MALFORMED,
     UNSUPPORTED,
@@ -32,6 +33,8 @@ from .replay_record import (
     RecordReport,
     ReplayRecord,
     checks,
+    connection_declared,
+    connection_value,
     support_problems,
     validate_record,
 )
@@ -138,8 +141,8 @@ def replay(record: ReplayRecord | dict[str, Any], *, observer=None) -> ReplayRun
     structure = validate_record(data, check_support=False)
     if structure.status in (MALFORMED, INCONSISTENT):
         return _Run(structure, ()).report(INVALID_RECORD, executed=False, problems=structure.problems)
-    if structure.status == UNSUPPORTED:  # 知らない形式の版
-        return _Run(structure, ()).report(NOT_SUPPORTED, executed=False, problems=structure.problems)
+    if structure.status == UNSUPPORTED or any(p.kind == UNSUPPORTED for p in structure.problems):  # 知らない形式の版・知らない拡張（v0.158。途中で切れた記録でも）
+        return _Run(structure, ()).report(NOT_SUPPORTED, executed=False, problems=tuple(p for p in structure.problems if p.kind == UNSUPPORTED))
     support = tuple(support_problems(data))
     run = _Run(structure, support)
     if support:
@@ -156,31 +159,65 @@ def replay(record: ReplayRecord | dict[str, Any], *, observer=None) -> ReplayRun
 
 
 def _execute(run: _Run, data: dict[str, Any], observer=None) -> ReplayRunReport:
+    report, state = run_start(run, data, observer)
+    if report is not None:
+        return report
+    report, state, accepted = run_rows(run, data, state, 0, len(data["operations"]), 0, observer)
+    if report is not None:
+        return report
+    return run_end(run, data, state, accepted)
+
+
+def _connection_items(header: Mapping[str, Any], holder: Mapping[str, Any], state: GameState) -> tuple[tuple[str, ...], dict[str, Any], dict[str, Any]]:
+    """v0.158: 拡張 ``connection_check`` を明示した記録で、記録した接続用確認値（None でないもの）と再実行の状態の値を比べる。
+    違えば (("connection_check",), 記録の値, 再実行の値)。拡張のない記録・None の位置では比べない（値を作り出さない）。"""
+    recorded = holder.get(EXTENSION_CONNECTION_CHECK)
+    if not connection_declared(header) or recorded is None:
+        return (), {}, {}
+    replayed = connection_value(state)
+    if replayed == recorded:
+        return (), {}, {}
+    return (EXTENSION_CONNECTION_CHECK,), {EXTENSION_CONNECTION_CHECK: recorded}, {EXTENSION_CONNECTION_CHECK: replayed}
+
+
+def run_start(run: _Run, data: dict[str, Any], observer=None) -> tuple[ReplayRunReport | None, GameState | None]:
+    """記録の初期の条件から対戦を作り、開始の確認値を照らす（U4 の最初の段。U6-S5 の前半の再実行も使う）。一致しなければ (結果, None)。"""
     header = data["header"]
     initial = header["initial"]
     start = start_game(initial["decklists"][0], initial["decklists"][1], initial["seed"], conventions=initial["conventions"],
                        operation_id=header["start"].get("operation_id"))
     if start.outcome == D.FAILED:
         return run.report(INTERNAL_ERROR, mismatch=Mismatch(LOCATION_START, None, None, ("outcome",), {"outcome": D.ACCEPTED}, {"outcome": start.outcome}),
-                          failure=start.verifier)
+                          failure=start.verifier), None
     if start.outcome != D.ACCEPTED:
         return run.report(DIVERGED, mismatch=Mismatch(LOCATION_START, None, None, ("outcome",), {"outcome": D.ACCEPTED},
-                                                      {"outcome": start.outcome, "diagnostic_id": start.diagnosis.diagnostic_id}))
+                                                      {"outcome": start.outcome, "diagnostic_id": start.diagnosis.diagnostic_id})), None
     state = start.state
     recorded, replayed = dict(header["start"]["check"]), checks(state)
-    items = _diff_checks(recorded, replayed) + (("status_field",) if header["start"]["status"] != start.status else ()) + tuple(boundary_items(state))
+    extra, recorded_extra, replayed_extra = _connection_items(header, header["start"], state)
+    items = _diff_checks(recorded, replayed) + (("status_field",) if header["start"]["status"] != start.status else ()) + tuple(boundary_items(state)) + extra
     if items:
-        return run.report(DIVERGED, mismatch=Mismatch(LOCATION_START, None, None, items, recorded, {**replayed, **boundary_items(state)}))
+        return run.report(DIVERGED, mismatch=Mismatch(LOCATION_START, None, None, items, {**recorded, **recorded_extra},
+                                                      {**replayed, **boundary_items(state), **replayed_extra})), None
     run.start_verified = True
     if observer is not None:
         observer(start)
-    accepted = 0
-    for op in data["operations"]:
+    return None, state
+
+
+def run_rows(run: _Run, data: dict[str, Any], state: GameState, first: int, stop: int, accepted: int,
+             observer=None) -> tuple[ReplayRunReport | None, GameState, int]:
+    """記録の行 ``operations[first:stop]`` を seq の順に送り、結果と確認値を照らす（U4 の行の処理。U6-S5 の前半・後半の再実行も同じ処理を使う）。
+
+    ``state`` はその行の前の状態、``accepted`` はそれまでに受理した操作の数（受理した行の ``accepted_index`` の照合に使う）。最初の不一致・記録された失敗・内部エラーで
+    (結果, 状態, 数) を返し、最後まで一致すれば (None, 状態, 数)。乱数を各操作の前へ戻さず、コインの結果を入れず、方策を再実行しない。"""
+    header = data["header"]
+    for op in data["operations"][first:stop]:
         seq = op["seq"]
         try:
             command = command_from_dict(dict(op["command"]))
         except EngineError:
-            return run.report(INVALID_RECORD, problems=(Problem(MALFORMED, "command_not_replayable", f"$.operations[{seq - 1}].command"),))
+            return run.report(INVALID_RECORD, problems=(Problem(MALFORMED, "command_not_replayable", f"$.operations[{seq - 1}].command"),)), state, accepted
         before = checks(state) if op["outcome"] != D.ACCEPTED else None
         result = submit(state, command, submitter=op["submitter"], operation_id=op["operation_id"])
         index = accepted + 1 if op["outcome"] == D.ACCEPTED else None
@@ -188,8 +225,8 @@ def _execute(run: _Run, data: dict[str, Any], observer=None) -> ReplayRunReport:
             mismatch = Mismatch(LOCATION_OPERATION, seq, index, ("outcome",), {"outcome": op["outcome"], **({"diagnostic": op["diagnostic"]} if "diagnostic" in op else {})},
                                 {"outcome": result.outcome, **({"diagnostic": _diagnostic(result)} if result.diagnosis is not None else {})})
             if result.outcome == D.FAILED:
-                return run.report(INTERNAL_ERROR, mismatch=mismatch, failure=result.verifier)
-            return run.report(DIVERGED, mismatch=mismatch)
+                return run.report(INTERNAL_ERROR, mismatch=mismatch, failure=result.verifier), state, accepted
+            return run.report(DIVERGED, mismatch=mismatch), state, accepted
         differ = []
         if result.status != op["status"]:
             differ.append("status_field")
@@ -197,11 +234,14 @@ def _execute(run: _Run, data: dict[str, Any], observer=None) -> ReplayRunReport:
             differ.append("actor")
         if result.outcome == D.ACCEPTED:
             accepted += 1
+            if op.get("accepted_index") != accepted:  # 構造の検証で順を確かめている。途中から照らすとき（U6-S5）の数の食い違いも見つける
+                differ.append("accepted_index")
             replayed = checks(result.state)
-            differ = list(_diff_checks(op["check"], replayed)) + differ + list(boundary_items(result.state))
+            extra, recorded_extra, replayed_extra = _connection_items(header, op, result.state)
+            differ = list(_diff_checks(op["check"], replayed)) + differ + list(boundary_items(result.state)) + list(extra)
             if differ:
-                return run.report(DIVERGED, mismatch=Mismatch(LOCATION_OPERATION, seq, accepted, tuple(differ), dict(op["check"]),
-                                                              {**replayed, **boundary_items(result.state)}))
+                return run.report(DIVERGED, mismatch=Mismatch(LOCATION_OPERATION, seq, accepted, tuple(differ), {**op["check"], **recorded_extra},
+                                                              {**replayed, **boundary_items(result.state), **replayed_extra})), state, accepted
             state = result.state
         else:
             got = _diagnostic(result)
@@ -210,14 +250,19 @@ def _execute(run: _Run, data: dict[str, Any], observer=None) -> ReplayRunReport:
                 differ.append("state_changed_by_rejection")
             if differ:
                 return run.report(DIVERGED, mismatch=Mismatch(LOCATION_OPERATION, seq, None, tuple(differ), {**op["diagnostic"], "status": op["status"]},
-                                                              {**got, "status": result.status}))
+                                                              {**got, "status": result.status})), state, accepted
             if result.outcome == D.FAILED:
                 run.verified_seq = seq
-                return run.report(RECORDED_FAILURE, failure=result.verifier)
+                return run.report(RECORDED_FAILURE, failure=result.verifier), state, accepted
         run.verified_seq = seq
         run.verified_accepted = accepted
         if observer is not None:
             observer(result)
+    return None, state, accepted
+
+
+def run_end(run: _Run, data: dict[str, Any], state: GameState, accepted: int) -> ReplayRunReport:
+    """終わりの情報を照らす（U4 の最後の段。終わりの情報がなければ incomplete）。"""
     end = data.get("end")
     if end is None:
         return run.report(INCOMPLETE)

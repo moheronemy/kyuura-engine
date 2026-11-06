@@ -45,7 +45,12 @@ STATE_CHECK_METHOD = "state-export-35-sha256/1"  # state_to_dict(形式 35) か�
 RNG_CHECK_METHOD = "python-random-getstate-sha256/1"  # rng.rng_fingerprint（random.Random.getstate() の repr の sha256）
 IDENTITY_METHOD = "kyuura-package-files-sha256/1"
 CHECK_METHODS = {"state": STATE_CHECK_METHOD, "rng": RNG_CHECK_METHOD}
-STATE_CHECK_EXCLUDED = ("engine_version",)  # 見出しにある（lockstep の DIGEST_EXCLUDED と同じ扱い）
+STATE_CHECK_EXCLUDED = ("engine_version",)
+# v0.158（U6-S5）: 接続用確認値の方式（snapshot.connection_check。スナップショットの保存する全項目の sha256）。既存の方式（CHECK_METHODS）とは別の名前で、
+# 意味を変えない。記録には任意の拡張（見出しの extensions）として明示したときだけ入る（形式の版は 1 のまま。拡張のない記録を、値があるものとして読みかえない）
+CONNECTION_CHECK_METHOD = "kyuura-snapshot-state-sha256/1"
+EXTENSION_CONNECTION_CHECK = "connection_check"
+KNOWN_EXTENSIONS = {EXTENSION_CONNECTION_CHECK: (CONNECTION_CHECK_METHOD,)}  # 見出しにある（lockstep の DIGEST_EXCLUDED と同じ扱い）
 MAX_RECORD_BYTES = 64 * 1024 * 1024
 MAX_DEPTH = 64
 
@@ -166,6 +171,19 @@ def checks(state: GameState) -> dict[str, Any]:
             "halt": None if state.halt is None else state.halt.code}
 
 
+def connection_value(state: GameState) -> str | None:
+    """接続用確認値（``snapshot.connection_check``）。保存の境界・型の対応を満たさない状態では None（その位置は接続用確認値で確かめられない。値を作り出さない）。"""
+    from .snapshot import (  # snapshot は replay_record を読み込むので、ここで読み込む
+        SnapshotSaveError,
+        connection_check,
+    )
+
+    try:
+        return connection_check(state)
+    except SnapshotSaveError:
+        return None
+
+
 # ---------------------------------------------------------------- 記録
 
 
@@ -258,6 +276,8 @@ class ReplayCollector:
     """信頼されたホストが、対戦の開始から操作の送信・記録まで一体で扱う収集器。``start`` だけで作る（途中の状態から作らない）。
 
     - 拒否した操作は ``record_rejections`` が真のときだけ記録する（受理した操作の順は ``accepted_index`` で決まる）
+    - v0.158: ``connection_checks`` が真のときだけ、見出しに任意の拡張 ``extensions.connection_check`` を書き、開始と受理した操作ごとに接続用確認値
+      （``connection_check``。U6-S5 のスナップショットとの接続に使う）を残す。既定は偽（v0.157 までと同じ記録）
     - 処理できない結果（failed）を記録したら収集を止める（``end.state`` が aborted）。そのあとの操作は ``CollectorStoppedError``
     - ``close`` は記録を閉じる（対戦の終局とは別）。閉じたあとの操作は ``CollectorStoppedError``
     - 見る人には ``view``（観測）と ``CommandResult.view_for`` の結果だけを渡す。記録（``record``・``close`` の値）は渡さない"""
@@ -268,6 +288,7 @@ class ReplayCollector:
         self._game = game
         self._header = header
         self._record_rejections = record_rejections
+        self._connection_checks = EXTENSION_CONNECTION_CHECK in header.get("extensions", {})
         self._operations: list[dict[str, Any]] = []
         self._accepted = 0
         self._last_check = header["start"]["check"]
@@ -276,8 +297,9 @@ class ReplayCollector:
 
     @classmethod
     def start(cls, deck0, deck1, seed, *, conventions=None, game_id: str | None = None, record_rejections: bool = True,
-              operation_id: str | None = None, include_git: bool = True) -> tuple[ReplayCollector | None, CommandResult]:
-        """``adapter.start_game`` で対戦を始める（既定のカードプールとルールの組だけ）。開始が拒否・処理できなければ (None, 結果)。"""
+              operation_id: str | None = None, include_git: bool = True, connection_checks: bool = False) -> tuple[ReplayCollector | None, CommandResult]:
+        """``adapter.start_game`` で対戦を始める（既定のカードプールとルールの組だけ）。開始が拒否・処理できなければ (None, 結果)。
+        ``connection_checks`` は v0.158 の任意の拡張（接続用確認値を残す。クラスの説明）。"""
         options = {} if conventions is None else {"conventions": conventions}
         result = start_game(deck0, deck1, seed, operation_id=operation_id, **options)
         if result.outcome != D.ACCEPTED:
@@ -302,6 +324,9 @@ class ReplayCollector:
             "rejections_recorded": bool(record_rejections),
             "start": {"operation_id": operation_id, "status": result.status, "check": checks(state)},
         }
+        if connection_checks:
+            header["extensions"] = {EXTENSION_CONNECTION_CHECK: CONNECTION_CHECK_METHOD}
+            header["start"][EXTENSION_CONNECTION_CHECK] = connection_value(state)
         return cls(_START_TOKEN, HostedGame(state), header, record_rejections), result
 
     @property
@@ -332,6 +357,8 @@ class ReplayCollector:
             self._accepted += 1
             entry["accepted_index"] = self._accepted
             entry["check"] = checks(result.state)
+            if self._connection_checks:
+                entry[EXTENSION_CONNECTION_CHECK] = connection_value(result.state)
             self._last_check = entry["check"]
         else:
             entry["diagnostic"] = {"diagnostic_id": result.diagnosis.diagnostic_id, "category": result.diagnosis.category,
@@ -432,11 +459,44 @@ def _check_shape(c: _Checker, check, path) -> bool:
     return ok
 
 
+def declared_extensions(header) -> dict[str, str]:
+    """見出しが明示した任意の拡張（v0.158）。ない・形が違えば空（形の誤りは構造の検証が見つける）。"""
+    ext = header.get("extensions") if isinstance(header, dict) else None
+    return dict(ext) if isinstance(ext, dict) else {}
+
+
+def _check_extensions(c: _Checker, header) -> None:
+    if not isinstance(header, dict) or "extensions" not in header:
+        return
+    ext = header["extensions"]
+    if not isinstance(ext, dict) or not ext or not all(isinstance(v, str) for v in ext.values()):
+        c.add(MALFORMED, "extensions_bad", "$.header.extensions")
+        return
+    for name in sorted(ext):
+        if name not in KNOWN_EXTENSIONS:
+            c.add(UNSUPPORTED, "extension_unknown", f"$.header.extensions.{name}")
+        elif ext[name] not in KNOWN_EXTENSIONS[name]:
+            c.add(UNSUPPORTED, "extension_method_unknown", f"$.header.extensions.{name}")
+
+
+def _check_connection_value(c: _Checker, holder: dict, declared: bool, path: str) -> None:
+    """接続用確認値（拡張を明示したときだけ。64 桁の 16 進か None。明示していないのに値があれば矛盾）。"""
+    if not declared:
+        if EXTENSION_CONNECTION_CHECK in holder:
+            c.add(INCONSISTENT, "connection_check_undeclared", f"{path}.{EXTENSION_CONNECTION_CHECK}")
+        return
+    if EXTENSION_CONNECTION_CHECK not in holder:
+        c.add(MALFORMED, "connection_check_missing", f"{path}.{EXTENSION_CONNECTION_CHECK}")
+    elif holder[EXTENSION_CONNECTION_CHECK] is not None and not _is_hex64(holder[EXTENSION_CONNECTION_CHECK]):
+        c.add(MALFORMED, "connection_check_bad", f"{path}.{EXTENSION_CONNECTION_CHECK}")
+
+
 def _check_header(c: _Checker, header) -> bool:
     if not isinstance(header, dict):
         c.add(MALFORMED, "header_missing", "$.header")
         return False
     p = "$.header"
+    _check_extensions(c, header)
     ok = c.need(header, "engine", p, lambda v: isinstance(v, dict) and isinstance(v.get("version"), str) and v.get("method") == IDENTITY_METHOD
                 and _is_hex64(v.get("behavior_digest")) and _is_hex64(v.get("instrumentation_digest")))
     ok &= c.need(header, "runtime", p, lambda v: isinstance(v, dict) and isinstance(v.get("python_implementation"), str)
@@ -474,6 +534,8 @@ def _check_header(c: _Checker, header) -> bool:
         ok = False
     elif start.get("status") != start["check"]["status"]:
         c.add(INCONSISTENT, "start_status_mismatch", f"{p}.start.status")
+    if isinstance(start, dict):
+        _check_connection_value(c, start, connection_declared(header), f"{p}.start")
     return ok
 
 
@@ -542,6 +604,7 @@ def _structure(data) -> tuple[list[Problem], bool, str | None]:
                 c.add(INCONSISTENT, "accepted_index_out_of_order", f"{path}.accepted_index")
             if "diagnostic" in op:
                 c.add(INCONSISTENT, "accepted_with_diagnostic", path)
+            _check_connection_value(c, op, connection_declared(header), path)
             if not _check_shape(c, op.get("check"), f"{path}.check"):
                 continue
             check = op["check"]
@@ -570,7 +633,7 @@ def _structure(data) -> tuple[list[Problem], bool, str | None]:
                 segments.append({"index": check["segment"], "start_seq": op["seq"]})
             last = dict(check)
         else:
-            if "check" in op or "accepted_index" in op:
+            if "check" in op or "accepted_index" in op or EXTENSION_CONNECTION_CHECK in op:
                 c.add(INCONSISTENT, "check_on_non_accepted", path)
             diag = op.get("diagnostic")
             if not isinstance(diag, dict) or not isinstance(diag.get("diagnostic_id"), str) or diag.get("category") not in D.CATEGORIES:
@@ -608,6 +671,11 @@ def _structure(data) -> tuple[list[Problem], bool, str | None]:
         if (end_state == END_ABORTED) != (failed_at is not None):
             c.add(INCONSISTENT, "end_state_failure_mismatch", "$.end.state")
     return c.problems, end_state is not None and not any(p.kind == INCOMPLETE for p in c.problems), end_state
+
+
+def connection_declared(header) -> bool:
+    """接続用確認値の拡張を、知っている方式で明示しているか。"""
+    return declared_extensions(header).get(EXTENSION_CONNECTION_CHECK) in KNOWN_EXTENSIONS[EXTENSION_CONNECTION_CHECK]
 
 
 def support_problems(data: dict[str, Any], *, identity: dict[str, Any] | None = None, runtime: dict[str, Any] | None = None) -> list[Problem]:

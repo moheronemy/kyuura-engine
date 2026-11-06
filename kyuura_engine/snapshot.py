@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 import dataclasses
+import hashlib
 import json
 import random
 import traceback as _traceback
@@ -42,6 +43,7 @@ from .engine import check_invariants, supported_decision_error
 from .observation import observe
 from .replay_record import (
     CHECK_METHODS,
+    CONNECTION_CHECK_METHOD,
     IDENTITY_METHOD,
     KNOWN_RULES,
     MAX_DEPTH,
@@ -491,25 +493,44 @@ def _text(data: dict[str, Any]) -> str:
     return json.dumps(data, ensure_ascii=False, separators=(",", ":"), allow_nan=False) + "\n"
 
 
+def state_items(state: GameState) -> dict[str, Any]:
+    """保存の境界・登録・型の対応を確かめて、状態の保存する全項目を JSON の値にする（スナップショットの ``state`` と同じ値。v0.158 で ``save_snapshot`` から分けた）。
+    保存できなければ ``SnapshotSaveError``。状態を変えない。"""
+    if codec_problems():
+        raise SnapshotSaveError("unrepresentable_value")
+    error = _boundary_problem(state)
+    if error is not None:
+        raise error
+    try:
+        return _encode_state(state)
+    except _Unrepresentable as gap:
+        raise SnapshotSaveError("unrepresentable_value", gap.path) from None
+
+
+def connection_check(state: GameState) -> str:
+    """接続用確認値（v0.158。U6-S5。方式 ``replay_record.CONNECTION_CHECK_METHOD``）。
+
+    対象は、スナップショットが保存する意味のある全項目（``state_items``。登録データ・依存の識別 rules・definitions・effects・conventions・card_data を含む）と、
+    カードプールの識別（default）。項目の順は保存の順（dataclass の項目の順・ログのイベントの鍵の順）のまま、鍵を並べかえずに sha256 を取る（型は型の対応表が決めた形で、
+    タプルとリスト・値の記録の型の印・列挙を区別する）。
+    除くもの: スナップショットの ``check``（状態から求める値で、自分を含む確認値にしない）・実装と環境の識別（照合値でなく対応の確かめで扱う）・``origin``・``label``・``git_commit``
+    （補助の情報）・``pending_moves``（保存の境界で空）。
+
+    内容を見分けるための値で、署名・出所の認証・過去に実際に作られたことの証明ではない。保存できない状態では ``SnapshotSaveError``。"""
+    payload = {"method": CONNECTION_CHECK_METHOD, "card_pool": CARD_POOL_DEFAULT, "state": state_items(state)}
+    return hashlib.sha256(json.dumps(payload, ensure_ascii=False, separators=(",", ":"), allow_nan=False).encode("utf-8")).hexdigest()
+
+
 def save_snapshot(state: GameState, *, origin: dict[str, Any] | None = None, label: str | None = None, include_git: bool = False) -> StateSnapshot:
     """安定した状態を保存する（書き出し。S1）。保存できなければ ``SnapshotSaveError``。渡した状態・乱数・ログは変えない。
 
     ``origin`` は完全な再現用記録との対応の補助情報（``game_id``・``seq``。DS-RECORD-LINK。復元には使わない）、``label`` はホストの説明。どちらも確かめない説明用で、
     ここに秘密の値を書かないのはホストの責任。"""
-    problems = codec_problems()
-    if problems:
-        raise SnapshotSaveError("unrepresentable_value")
-    error = _boundary_problem(state)
-    if error is not None:
-        raise error
+    encoded = state_items(state)
     if origin is not None and not _origin_ok(origin):
         raise ValueError("origin は game_id（文字列）・seq（0 以上の整数）だけを持つ辞書")
     if label is not None and not (type(label) is str and len(label) <= MAX_LABEL):
         raise ValueError(f"label は {MAX_LABEL} 文字までの文字列")
-    try:
-        encoded = _encode_state(state)
-    except _Unrepresentable as gap:
-        raise SnapshotSaveError("unrepresentable_value", gap.path) from None
     pool = load_card_pool()
     data: dict[str, Any] = {
         FORMAT_KEY: SNAPSHOT_FORMAT,
@@ -964,7 +985,7 @@ class RestoredGame:
 
     - 復元に成功した結果（restored）だけから作る。停止・終局の状態も作れるが、状態の知らせ（``status``）はその状態のまま（活動中とみなさない）。操作の受理・拒否はエンジンが決める
     - 規約集合を差し替える API はない（状態の規約集合のまま）
-    - 完全な再現用記録は持たない（``full_record`` はいつも None。保存の前からの記録を持つようには扱わない。完全な記録との接続は U6-S5 の別の作業）
+    - 完全な再現用記録は持たない（``full_record`` はいつも None。保存の前からの記録を持つようには扱わない。完全な記録の位置との接続と残りの照合は、v0.158 の snapshot_replay.replay_from_snapshot が検証者として別に行う。この入口から記録を継ぎ足さない）
     - 閲覧用記録は、復元した時点から ``ViewRecorder.attach`` で始める（``origin`` は attached。復元の前の各イベントの時点の知識は復元しない）
     - 見る人には ``view``（観測）・``view_record``・``CommandResult.view_for`` の結果だけを渡す。``state``・スナップショットはホストの中だけ
     """
