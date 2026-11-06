@@ -153,7 +153,12 @@ assert old.status == "unsupported"               # problems のコードは conn
 | 実行 | 結果 |
 |---|---|
 | 新しいテスト `tests/test_snapshot_replay_v0_158.py` | 28 件 OK |
-| スナップショット（`test_state_snapshot_v0_157`）・U3〜U5 の直接関係するテスト | 下の版の文書の表 |
+| 新しいテストと、直接関係するテスト（`test_state_snapshot_v0_157`・`test_replay_record_v0_153`・`test_replay_run_v0_154`・`test_view_record_v0_155`・`test_diagnostics_adapter_v0_152`・`test_state_snapshot_design`・`test_diagnostics_replay_api_design`・版のテスト `test_preset_decks_v0_20`）を 1 つのプロセスで順に | 222 件 OK（終了コード 0） |
+| 生成物の `--check` 8 本（スナップショットの仕様・診断の仕様・診断のコード表・停止の方針の台帳・同梱の規約集合の記録・実装上の仮定・正規化の再確認・共通規約の設計案） | すべて終了コード 0 |
+| ruff（変えた・加えたモジュール・テスト・スクリプト） | 指摘なし。新しい抑制なし。停止の台帳の語と `RuntimeError` の送出を加えていない（テストが差し込む例外は専用の `InjectedError`） |
+| `check_implementation_assumptions.py --sites`（終了コード 0。基点 `d832635` の木と走査の結果を比べた差） | 2 件増・1 件減（下の分類） |
+
+`--sites` の差の分類（文面は変えていない）: 増えた 1 件は、この文書の 2 章の「`replay` の結果は同じ」（U4 の処理を分けても再実行の結果が変わらないことの説明）で、実装上の仮定ではない。残りの 1 件増・1 件減は、版のテストの経緯の注釈の行（`tests/test_preset_decks_v0_20.py` の 151 行。v0.132 の利用者指定の経緯を含む既存の行）に 0.158.0 を書き足して識別が変わったもの。
 
 テストの盤面（new_game からの合法な操作の列と構築盤面を分ける）と確かめたこと:
 

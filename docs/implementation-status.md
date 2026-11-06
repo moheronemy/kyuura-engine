@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.157）
+# 実装状況（v0.1〜v0.158）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d`（v0.128 から。v0.129 の種族の身長の写しは別に `9242b9be89be0f747279f39c11875d1ed61763ec`。v0.126〜v0.127 は `57d01f45cfb8b086d03dc0525b329cf6adeff69b`、v0.125 は `134a664c6adf67d5604148a31b58e1a7d26d4d6d`、v0.124 は `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`、v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -81,7 +81,7 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 - サドン・デスの延長戦（サイド 1 枚でやり直す。v0.134 で実装した。[sudden-death-v0.134.md](sudden-death-v0.134.md)）
 - 旧裏の複数の時期のルールの切り替え（`RuleSet` は 2000.02.14版だけ）
 - 公式大会のレギュレーション（サイド 4 枚など）
-- 合法手の一覧。仕様案だけ（状態のスナップショットの保存・復元は v0.157 で S1〜S4・S6 を実装した。完全な記録の途中から再開する S5 は未実装。[state-snapshot-v0.157.md](state-snapshot-v0.157.md)・[state-snapshot-design.md](state-snapshot-design.md)。閲覧用記録は v0.155 で実装した。[view-record-v0.155.md](view-record-v0.155.md)。記録の再実行による再現は v0.154 で実装した。[replay-run-v0.154.md](replay-run-v0.154.md)。完全な再現用記録の収集と構造の検証は v0.153 で実装した。[replay-record-v0.153.md](replay-record-v0.153.md)。診断の型とコマンド実行結果のアダプタは v0.152 で実装した。[diagnostics-adapter-v0.152.md](diagnostics-adapter-v0.152.md)）（未承認。[diagnostics-replay-api-design.md](diagnostics-replay-api-design.md)・[実装計画](diagnostics-replay-api-implementation-plan.md)）
+- 合法手の一覧。仕様案だけ（状態のスナップショットの保存・復元は v0.157 で S1〜S4・S6 を、v0.158 で完全な再現用記録との接続の S5 を実装した。[state-snapshot-v0.158.md](state-snapshot-v0.158.md)・[state-snapshot-v0.157.md](state-snapshot-v0.157.md)・[state-snapshot-design.md](state-snapshot-design.md)。閲覧用記録は v0.155 で実装した。[view-record-v0.155.md](view-record-v0.155.md)。記録の再実行による再現は v0.154 で実装した。[replay-run-v0.154.md](replay-run-v0.154.md)。完全な再現用記録の収集と構造の検証は v0.153 で実装した。[replay-record-v0.153.md](replay-record-v0.153.md)。診断の型とコマンド実行結果のアダプタは v0.152 で実装した。[diagnostics-adapter-v0.152.md](diagnostics-adapter-v0.152.md)）（未承認。[diagnostics-replay-api-design.md](diagnostics-replay-api-design.md)・[実装計画](diagnostics-replay-api-implementation-plan.md)）
 - 画面、AI、通信（隠れた情報の管理は、v0.47 でプレイヤーに渡す観測 `observe`・`visible_log` を加えた。状態とログは内部の完全な記録のまま。[fossil-hidden-info-v0.47.md](fossil-hidden-info-v0.47.md) 5.1 節）
 
 ## 原典未確認
@@ -3821,6 +3821,18 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
 
+## v0.158: 完全な再現用記録とスナップショットの接続（U6 の S5）
+
+[state-snapshot-v0.158.md](state-snapshot-v0.158.md)。エンジンの処理は変えていない（新しいモジュール `kyuura_engine/snapshot_replay.py`、`snapshot.py` の接続用確認値、`replay_record.py` の任意の拡張、`replay_run.py` の処理の分割だけ）。規約集合の ID・版・中身・照合値は同じ。採用は S5 の契約（[仕様](state-snapshot-design.md)・[実装計画](state-snapshot-implementation-plan.md)の `ADOPT-U6-S5`）。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| U6 の実装の状態の記録（部分の単位ごとの状態と全体の状態）・v0.157 の監査の記録の訂正 | 実装済み | 1 章 | tests/test_state_snapshot_design.py・tests/test_diagnostics_replay_api_design.py |
+| 接続位置と記録の識別（`RecordPosition`・`record_identity`） | 実装済み | 3 章 | tests/test_snapshot_replay_v0_158.py |
+| 接続の確かめ（構造・対応・位置・復元・初期の条件・確認値・保存する全項目）と残りの行の照合（`replay_from_snapshot`） | 実装済み | 4・6 章 | 同上 |
+| 接続用確認値（`kyuura-snapshot-state-sha256/1`）と記録の任意の拡張（`connection_checks`）・U4 の照合 | 実装済み | 5 章 | 同上 |
+| ReplayCollector の途中開始・記録の継ぎ足し・閲覧用記録の開始前の知識の復元・異なる規約集合での再開・合法手の一覧（U7） | 未実装 | 9 章 | — |
+
 ## v0.157: 状態スナップショット（U6 の S1〜S4・S6）
 
 [state-snapshot-v0.157.md](state-snapshot-v0.157.md)。エンジンの処理は変えていない（新しいモジュール `kyuura_engine/snapshot.py` だけ）。規約集合の ID・版・中身・照合値は同じ。採用は判断事項 6 件と S1〜S4・S6 の実装（[仕様](state-snapshot-design.md)・[実装計画](state-snapshot-implementation-plan.md)の `ADOPT-U6-IMPL`）。v0.156 は仕様だけの作業で、版は 0.155.0 のままだった。
@@ -3832,7 +3844,7 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 安全な読み取り・対応の確かめ・組み立て・整合の確かめ（`restore_snapshot`・結果 6 種類） | 実装済み | 4 章 | 同上 |
 | 保存・復元のあとの継続の一致（3 つの規約集合・F1〜F9） | 実装済み | 5・6 章 | 同上 |
 | 最小のホストへの接続（`RestoredGame`） | 実装済み | 7 章 | 同上 |
-| 完全な記録の途中から再開して U4 で照らす（S5）・合法手の一覧（U7） | 未実装 | 9 章 | — |
+| 完全な記録の途中から再開して U4 で照らす（S5。v0.158 で実装）・合法手の一覧（U7） | 未実装 | 9 章 | — |
 
 ## v0.155: 閲覧用記録（U5）
 
