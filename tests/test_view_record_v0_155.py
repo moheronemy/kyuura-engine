@@ -203,6 +203,61 @@ class KnowledgeTest(unittest.TestCase):
         self.assertEqual(entries[1]["events"][0]["log_index"], len(state.log))
 
 
+class PastLogBoundaryTest(unittest.TestCase):
+    """v0.156（docs/state-snapshot-design.md 2 章）: うらのカードがあとでおもてになると、visible_log は過去のイベントの uid も見せる（v0.67）。閲覧用記録は、初めて記録した
+    ログの位置の内容を固定し、同じ位置を後の項目に出し直さない（構築盤面から合法な操作。マチスの秘策）。"""
+
+    def run_secret_plan(self, viewers=VIEWERS):
+        from tests.test_secret_plan_v0_67 import DIGLETT, LT_SURGES_SECRET_PLAN, board, face_down, uid_of
+        from kyuura_engine import AttachEnergy, PlayTrainer, RevealFaceDown
+
+        state = board(hand=(DIGLETT, H.FIGHTING))
+        recorders = {v: V.ViewRecorder.attach(v, state) for v in viewers}
+
+        def send(command):
+            nonlocal state
+            result = A.submit(state, command)
+            self.assertEqual(result.outcome, D.ACCEPTED)
+            for r in recorders.values():
+                r.add(result)
+            state = result.state
+        send(PlayTrainer(0, uid_of(state, LT_SURGES_SECRET_PLAN)))
+        send(ResolveDecision(0, state.decision.id, (uid_of(state, DIGLETT),)))
+        hidden = state.face_down_cards[0]
+        send(AttachEnergy(0, uid_of(state, H.FIGHTING), hidden))  # うらのポケモンにつける: 相手のログの写しでは target の uid を伏せる（v0.67 の _mask_face_down）
+        attach_index = next(i for i, e in enumerate(state.log) if e["kind"] == "attach_energy" and e["target"] == hidden)
+        send(RevealFaceDown(0, face_down(state)[0].pokemon_id))
+        return state, recorders, hidden, attach_index
+
+    def test_revealed_face_down_card_is_not_backfilled(self):
+        state, recorders, hidden, placed_index = self.run_secret_plan()
+        from kyuura_engine import visible_log
+        # 今の visible_log は過去のイベントでも uid を見せる（取り直すと漏れる経路が実際にある）
+        self.assertIn(hidden, [v for v in visible_log(state, 1)[placed_index].values() if type(v) is int])
+        for viewer in (1, None):
+            data = recorders[viewer].close().data
+            positions = [(item["segment"], item["log_index"]) for e in data["entries"] for item in e.get("events", [])]
+            self.assertEqual(len(positions), len(set(positions)))  # 同じ位置を 2 回出さない
+            self.assertEqual(sorted(positions), [(0, i) for i in range(len(state.log))])
+            first = next(item["event"] for e in data["entries"] for item in e.get("events", []) if item["log_index"] == placed_index)
+            self.assertNotIn(hidden, [v for v in first.values() if type(v) is int])  # 記録した時点は伏せたまま
+            reveal_entry = data["entries"][-1]
+            self.assertTrue(all(item["log_index"] > placed_index for item in reveal_entry["events"]))
+            self.assertIn(f'"card": {hidden}', json.dumps(reveal_entry["events"], ensure_ascii=False))  # おもてにしたイベント自体はその時点で見える
+        owner = recorders[0].close().data
+        first = next(item["event"] for e in owner["entries"] for item in e.get("events", []) if item["log_index"] == placed_index)
+        self.assertIn(hidden, [v for v in first.values() if type(v) is int])  # 持ち主は記録した時点から見える
+
+    def test_attached_start_fixes_the_projection_at_the_start(self):
+        # 途中から始めた記録: 始まりの項目の過去のログは、始めた時点の投影（イベントが起きた時点の投影ではない）
+        state, _, hidden, placed_index = self.run_secret_plan(viewers=())
+        from kyuura_engine import visible_log
+        late = V.ViewRecorder.attach(1, state).close().data
+        start_events = late["entries"][0]["events"]
+        self.assertEqual(start_events[placed_index]["event"], visible_log(state, 1)[placed_index])
+        self.assertEqual(late["header"]["origin"], V.ORIGIN_ATTACHED)
+
+
 class TwinTest(unittest.TestCase):
     """構築盤面の双子（見る人に同じ情報が見えて、見えない配分だけが違う）で、閲覧用記録も同じ。本人が正当に山札を見たあとは比べない。"""
 
