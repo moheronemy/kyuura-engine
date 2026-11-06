@@ -143,6 +143,7 @@
 - **経過（v0.147。[deck-content-prechecks-v0.147.md](deck-content-prechecks-v0.147.md)）**: 利用者の指示で、秘密の山札の内容で使う前の受理・拒否・理由が変わる処理を一つの単位として調べ、`PSP-INCREASE-ENTRY-PW3-ORACLE`・`PSP-COCOON-DV2-ORACLE`・`PSP-DECK-CONTENT-PRECHECKS`（と同じ横断の `PSP-POWER-PRECHECK-DECK-ORACLE`）を直しました（配分を読まない下限・山札にあるかもしれないカード）。ワザの宣言の前の先読みの漏れ `PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE` は直していません。この判断事項の状態は変えていません。
 - **経過（v0.148。[attack-deck-evolution-preflight-v0.148.md](attack-deck-evolution-preflight-v0.148.md)）**: 利用者の指示で `PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE` を、同じ先読みの経路の要素とまとめて直しました（山札にあるかもしれないカード・配分を読まない下限）。受理のあとの決定の有無の漏れ `PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE` を見つけて記録しました（直していない）。この判断事項の状態は変えていません。
 - **経過（v0.149。[optional-deck-evolution-presence-v0.149.md](optional-deck-evolution-presence-v0.149.md)）**: 利用者の指示で `PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE`（山札にカードがあれば選べるカードがなくても決定を出す）と、見つけた `PSP-HIDDEN-SET-ASIDE-DECK-POOL`（候補集合に持ち主に見えない置いておくカードを含める）を直しました。同じ形のほかの経路の漏れ `PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS` を見つけて記録しました（直していない）。この判断事項の状態は変えていません。
+- **経過（v0.150。[deck-search-decision-presence-v0.150.md](deck-search-decision-presence-v0.150.md)）**: 利用者の指示で `PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS`（ベンチに出す・見せて手札に加える・山札からつけるワザと［うか］。山札にカードがあれば選べるカードがなくても決定を出す）を直しました。同じ要素の研究上の停止が山札を見る前に実際の山札を読む別の漏れ `PSP-DECK-SEARCH-STOP-ORACLES` を見つけて記録しました（直していない）。この判断事項の状態は変えていません。
 
 ### DEC-SEARCH-LIMITS — 探索・組合せの上限
 

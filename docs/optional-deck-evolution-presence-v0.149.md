@@ -258,3 +258,7 @@ test_search_recovery_trainers_v0_73 の 2 つは、この環境（Windows の既
 
 この情報漏れの監査を一区切りにできるか: A・B の範囲は一区切りにできる（双子で再現したものは直し、未確認のものは記録した）。ただし、同じ形の決定の有無の漏れ
 （`PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS`）が active で、静的な候補も残るので、山札をさがす効果の決定の有無の監査は一区切りにできない。
+
+## 追記（v0.150）
+
+6.6 節の `PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS` は v0.150（[deck-search-decision-presence-v0.150.md](deck-search-decision-presence-v0.150.md)）で直しました（山札にカードがあれば選べるカードがなくても決定を出す。静的な候補は現行コードで数え直し、呼び出し元ごとに双子で確かめた）。`RemainingDecisionPresenceLeakTest`（`expectedFailure`）は、`OtherDecisionPresenceNoLeakTest` に名前を変えて、漏れがないことを確かめる通常のテストにしました。8 章の［おたけび］のミラクルエネルギーの確かめは、v0.150 で双子で確かめて問題がないことを確認しました（`HowlMiracleEnergyTwinTest`）。この文書の上の記述は v0.149 の時点の記録として残します。
