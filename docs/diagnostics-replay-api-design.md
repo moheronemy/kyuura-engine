@@ -1,6 +1,6 @@
 # 診断 API と対戦記録・再現インターフェースの仕様案
 
-この文書は**仕様案**です（状態 `proposed`、承認 `not_approved`）。v0.152 で、利用者が U1（診断の型と情報境界）・U2（コマンド実行結果のアダプタ）と 6 つの方針だけを採用し、実装しました（[diagnostics-adapter-v0.152.md](diagnostics-adapter-v0.152.md)。採用の記録は下の「採用の記録」）。ほかの判断事項・記録・再現・保存と復元は、仕様案のままで実装していません。9 章の例は形の例示です（`api_status` は `illustrative`。実際の出力の例は v0.152 の文書）。実装の単位と順は [実装計画](diagnostics-replay-api-implementation-plan.md) に、利用者の判断が要る事項もそこに書きます。
+この文書は**仕様案**です（状態 `proposed`、承認 `not_approved`）。v0.152 で、利用者が U1（診断の型と情報境界）・U2（コマンド実行結果のアダプタ）と 6 つの方針だけを採用し、実装しました（[diagnostics-adapter-v0.152.md](diagnostics-adapter-v0.152.md)。採用の記録は下の「採用の記録」）。v0.153 で、利用者が U3（完全な再現用記録の収集・形式・構造の検証）と 4 つの方針（実装の識別・実行環境・確認値の密度・形式の版）を採用し、実装しました（[replay-record-v0.153.md](replay-record-v0.153.md)）。再実行による再現（U4）・閲覧用記録・保存と復元・合法手の一覧は、仕様案のままで実装していません。9 章の例は形の例示です（`api_status` は `illustrative`。実際の出力の例は v0.152 の文書）。実装の単位と順は [実装計画](diagnostics-replay-api-implementation-plan.md) に、利用者の判断が要る事項もそこに書きます。
 
 構造化した仕様は [diagnostics-replay-api-design.json](diagnostics-replay-api-design.json) です。この文書の表と例（`<!-- generated:… -->` の区画）は、JSON と同じ元（`scripts/build_diagnostics_replay_api_design.py` の `SPEC`）から作ります。区画の中を手で直さないでください（`--check` が違いを見つけます）。区画の外の説明は手で書いています。
 
@@ -17,9 +17,17 @@
     - 対戦後も情報の公開範囲を自動では広げない
   - 判断事項: D-MESSAGE、D-STATE-INTEGRITY-VIEW、D-REJECTED、D-POSTGAME
   - 実装単位: U1、U2
+- `ADOPT-U3`（2026-11-06・利用者）: U3（完全な再現用記録の収集・形式・構造の検証）の実装と、次の 4 つの方針だけ。スナップショットの形式・停止状態の保存・U4 以後の承認ではない。実装: v0.153（docs/replay-record-v0.153.md）
+  - 方針:
+    - 実装の識別: エンジンの版に加え、挙動に関係するソースと同梱データの内容のハッシュを記録する。Git のコミットは補助の情報で、Git がなくても識別できる
+    - 実行環境: 再現の保証を、対応する Python の実装・版に限る。異なる環境で同じ結果になるとは保証しない。OS・パス・改行など意味に影響しない違いまで無条件に非対応にしない
+    - 確認値の密度: 受理した操作ごとに、状態と乱数の確認値を残す（U4 で最初の不一致を特定できるように）
+    - 形式の版: 再現用記録の形式の版を独立して設ける。診断の形式・状態の形式・規約集合の版はそれぞれ参照する。新しい版の管理の方法を、保留中のほかの形式へ一括で当てはめない
+  - 判断事項: D-IMPLEMENTATION-ID、D-RUNTIME、D-CHECK-DENSITY、D-VERSIONS
+  - 実装単位: U3
 <!-- generated:adoptions end -->
 
-採用は、この記録の範囲だけです。仕様案のほかの判断事項（実装の識別・Python の環境をまたぐ再現・確認値の密度・スナップショットの形式など）は保留（`pending`）のままです。
+採用は、この記録の範囲だけです。v0.152 の時点では実装の識別・Python の環境・確認値の密度・版の分け方も保留でしたが、v0.153 の採用（`ADOPT-U3`）で決めました。スナップショットの形式（D-SNAPSHOT-BASE）と停止状態のスナップショット（D-HALT-SNAPSHOT）は保留（`pending`）のままです。
 
 ## 1. 目的と範囲
 
@@ -66,7 +74,7 @@ v0.135〜v0.151 の情報漏れの修正では、「受理・拒否・拒否の�
 | NI-STATE-RESTORE | 状態の読み込み（state_from_dict など） | not_implemented |  | ない（v0.1 から未実装） | U6 で新しく作る | 形式 35 を読み込み用に読み替えない |
 | NI-LEGAL-MOVES | 合法手の一覧 | not_implemented | `tools/stress_engine.py::choose_command` | ない（ストレス実行の操作の選び方は検証用の道具で、合法手の一覧ではない） | U7 で境界だけを決める | でたらめな操作を混ぜる道具 |
 | NI-DIAGNOSTIC | 構造化した診断（v0.152 で U1・U2 として実装） | implemented | `kyuura_engine/diagnostics.py::classify_error`<br>`kyuura_engine/adapter.py::submit`<br>`kyuura_engine/data/diagnostic_catalog.json`<br>`scripts/build_diagnostic_catalog.py` | コード表による分類・見る人ごとの結果（本人・相手と観戦者）・検証者用の記録・コマンド実行結果のアダプタ（v0.152） | U3 以後の記録・再現は submit の結果（CommandResult）を受け取る | 記録・再現・合法手の一覧はない |
-| NI-REPLAY-RECORD | 完全な再現用記録と再現 | not_implemented | `tests/helpers.py::replay` | ない（テストの replay はコマンドの列を順に送るだけ） | U3・U4 で作る |  |
+| NI-REPLAY-RECORD | 完全な再現用記録（v0.153 で U3 として収集・読み書き・構造の検証を実装。再現は未実装） | implemented | `kyuura_engine/replay_record.py::ReplayCollector`<br>`kyuura_engine/replay_record.py::validate_record`<br>`tests/helpers.py::replay` | 記録の収集（ReplayCollector）・JSON の読み書き・構造の検証（v0.153）。テストの replay はコマンドの列を順に送るだけ | U4 は記録の受理した操作の列を再実行し、確認値と照らす | 再実行して照らすこと（U4）はない |
 | NI-VIEW-RECORD | 閲覧用記録 | not_implemented |  | ない（観測・ログの写しの部品はある） | U5 で作る |  |
 | NI-HALT-RESUME | 停止からの再開 | not_implemented |  | ない（GAP-DEFERRED-HALT-NO-RESUME） | この仕様の範囲の外（続行規約の採用は別の判断） |  |
 <!-- generated:existing end -->
@@ -282,34 +290,34 @@ v0.152 の採用: 本人向けの説明は、エンジンの生の文ではな�
 3 つの記録は用途も持つ側も違うので、1 つのデータ構造にまとめません。共通なのは識別の見出しだけです。
 
 <!-- generated:records begin -->
-#### A. 完全な再現用記録（`kyuura_replay_format`）
+#### A. 完全な再現用記録（v0.153 で実装）（`kyuura_replay_format`）
 
 - 用途: 不具合調査・検証・同一実行の再現
 - 持つ側: 検証者（対戦を進める権限の側）
 - 秘密の情報を含む: はい
-- 再現の入力: header.engine、header.dependencies、header.convention_set、header.initial、steps[].command（受理したもの）
-- 確認値: steps[].outcome、steps[].check、steps[].coins、footer
-- 保証: 同じ実装・同じ依存・同じ規約集合・同じ初期の条件・同じ受理した操作の列から、各歩の確認値と同じ結果になる（U4 で確かめる）
-- 保証しない: 実装・依存・規約集合が違うときの再現（比べは compare_runs の別の機能）。seed だけからの、版をまたぐ再現。方策の再実行で同じ操作の列になること
+- 再現の入力: header.initial、header.engine（扱えるかの条件）、header.runtime（扱えるかの条件）、header.dependencies、header.convention_set、operations[].command（outcome が accepted のもの、accepted_index の順）
+- 確認値: header.start.check、operations[].outcome・diagnostic・status、operations[].check、end
+- 保証: 構造の検証（形・順序・前後の矛盾・完結・扱える範囲）。再実行して確認値と一致すること（同一実行の再現）は U4 で確かめる
+- 保証しない: 実装・依存・規約集合・Python の実装と版が違うときの再現（比べは compare_runs の別の機能）。seed だけからの、版をまたぐ再現。方策の再実行で同じ操作の列になること。閉じた記録・停止した記録からの対戦の再開
 
 | 項目 | 必須 | 役割 | 意味 |
 |---|---|---|---|
 | `kyuura_replay_format` | はい | format | 記録の形式の版（整数。状態の形式・lockstep の record_format とは別の番号） |
-| `header.engine` | はい | input | エンジンの版（__version__）と実装の識別（implementation_digest。D-IMPLEMENTATION-ID） |
-| `header.runtime` | はい | environment | Python の実装と版（再現の保証の条件は D-RUNTIME） |
-| `header.dependencies` | はい | input | ルールの組の id（RuleSet.id）・カードデータの写しの元（repository・commit・path）と内容の照合値・効果の登録表の id（state.effects.id） |
+| `header.engine` | はい | input | エンジンの版と実装の識別（behavior_digest: 挙動に関係するソース・同梱データ、instrumentation_digest: 記録・診断の部品）。git_commit は補助の情報 |
+| `header.runtime` | はい | environment | Python の実装と版・乱数の方式（rng.RNG_FORMAT と getstate の版）。OS・パスは入れない |
+| `header.dependencies` | はい | input | ルールの組の id・カードプール（default だけ）・カードデータの写しの元・効果の登録表の id |
 | `header.convention_set` | はい | input | ConventionSetIdentity.record（ID・版・照合値・構成） |
-| `header.initial` | はい | input | デッキリスト 2 つ・seed・乱数の方式（rng.RNG_FORMAT と new_game の切り方）。初期の山札の並びは seed から決まるので入れない（入れるなら確認値） |
-| `header.game_id` | はい | reference | 対戦の識別（記録の中だけで一意） |
-| `header.policy` | いいえ | reference | 操作を選んだ AI・道具の名前と方策の乱数（参考。再現の入力にしない） |
-| `steps[].index・segment・actor` | はい | input | 送った順の番号・区間の番号・操作したプレイヤー |
-| `steps[].command` | はい | input | command_to_dict の形。拒否された操作も記録する（D-REJECTED）が、再現の入力は受理したものだけ |
-| `steps[].decision_id` | いいえ | expected | 答えた決定の id（決定への答えのとき） |
-| `steps[].outcome` | はい | expected | accepted・rejected・failed、例外の種類・コード・理由の文の指紋 |
-| `steps[].check` | はい | expected | 受理した歩のあとの確認値: 状態の指紋（形式 35 の sha256。engine_version を除く）・ログの長さ・status・保留中の決定の id と種類（D-CHECK-DENSITY） |
-| `steps[].coins` | いいえ | expected | その歩で投げたコインの結果（ログから取った確認値。入力ではない） |
-| `segments[]` | はい | expected | 区間の境界: 番号・始まった歩（StartSuddenDeath の歩）・サイドの枚数・終えた結果 |
-| `footer` | はい | expected | 終わりの印: 終わった理由（game_over・halted・failed・abandoned）・歩の数・最後の状態の指紋。ないなら途中で切れた記録（incomplete） |
+| `header.formats` | はい | reference | 参照する形式: 状態の書き出しの形式（35）・確認値の方式・診断の形式 |
+| `header.initial` | はい | input | デッキリスト 2 つ・seed・ルールの組・規約集合・カードプール（new_game の入力。先攻はジャンケンの結果の操作として操作の列に入る） |
+| `header.start` | はい | expected | new_game の結果の status と確認値 |
+| `header.game_id・rejections_recorded` | はい | reference | 対戦の識別（任意）と、拒否した操作を記録したか |
+| `operations[].seq・accepted_index` | はい | reference | 記録の中の連番（1 から欠けなし）と、受理した操作の中の順（拒否を省いても受理の順が決まる）。operation_id（ホストが付ける）とは別 |
+| `operations[].actor・submitter・segment` | はい | reference | 結果を受けるプレイヤー・ホストが確かめた送り手・操作の前の区間 |
+| `operations[].command` | はい | input | command_to_dict の形。受理したものだけが再現の入力 |
+| `operations[].answers_decision` | いいえ | reference | 答えた決定の id（決定への答えのとき） |
+| `operations[].outcome・status・diagnostic` | はい | expected | accepted・rejected・failed と、操作のあとの status、拒否・失敗の診断の識別・分類・元のコード（生の文は入れない） |
+| `operations[].check` | いいえ | expected | 受理した操作のあとの確認値（状態の指紋・乱数の指紋・ログの長さ・区間・status・決定・停止のコード）。受理したものだけ（D-CHECK-DENSITY） |
+| `end` | はい | expected | 記録の終わり: closed（ホストが閉じた）・aborted（処理できない結果で止めた）、操作の数・受理の数・status・最後の確認値・区間の境界。ないなら途中で切れた記録 |
 
 #### B. 本人・相手・観戦者向けの閲覧用記録（`kyuura_view_format`）
 

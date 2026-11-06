@@ -91,9 +91,9 @@ class BrokenSpecTest(unittest.TestCase):
         self.assertTrue(any("no_such_function_for_test" in p for p in self.broken(edit)))
 
     def test_coin_as_replay_input(self):
+        # v0.153: 記録の項目にコインの結果の行はない（コインは状態の確認値に入る）。コインの結果を入力の項目として加えると見つける
         def edit(spec):
-            field = next(f for f in spec["records"][0]["fields"] if "coins" in f["name"])
-            field["role"] = "input"
+            spec["records"][0]["fields"].append({"name": "operations[].coins", "required": False, "role": "input", "meaning": "x"})
         self.assertTrue(any("コイン" in p for p in self.broken(edit)))
 
     def test_secret_field_in_view_record(self):

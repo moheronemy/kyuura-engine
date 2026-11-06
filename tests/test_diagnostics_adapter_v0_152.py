@@ -537,12 +537,14 @@ class DocumentTest(unittest.TestCase):
             self.assertIn(needle, text)
 
     def test_spec_records_only_the_adopted_policies(self):
+        # v0.153: 後の採用（ADOPT-U3）で採用した判断事項が増えた。v0.152 の採用の記録（ADOPT-U1-U2）が持つのは、この 4 つだけ
         spec = json.loads(SPEC.read_text(encoding="utf-8"))
-        adopted = {d["id"] for d in spec["decisions"] if d["status"] == "adopted"}
-        self.assertEqual(adopted, {"D-MESSAGE", "D-REJECTED", "D-POSTGAME", "D-STATE-INTEGRITY-VIEW"})
+        u1u2 = next(a for a in spec["adoptions"] if a["id"] == "ADOPT-U1-U2")
+        self.assertEqual(set(u1u2["decisions"]), {"D-MESSAGE", "D-REJECTED", "D-POSTGAME", "D-STATE-INTEGRITY-VIEW"})
+        self.assertEqual(u1u2["units"], ["U1", "U2"])
+        adopted = {d for a in spec["adoptions"] for d in a["decisions"]}
         for d in spec["decisions"]:
-            if d["id"] not in adopted:
-                self.assertEqual(d["status"], "pending", d["id"])
+            self.assertEqual(d["status"], "adopted" if d["id"] in adopted else "pending", d["id"])
         self.assertEqual(spec["approval"], "not_approved")
 
 

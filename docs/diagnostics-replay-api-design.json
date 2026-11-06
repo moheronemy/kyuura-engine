@@ -36,6 +36,28 @@
     "U2"
    ],
    "implemented_in": "v0.152（docs/diagnostics-adapter-v0.152.md）"
+  },
+  {
+   "id": "ADOPT-U3",
+   "date": "2026-11-06",
+   "by": "利用者",
+   "scope": "U3（完全な再現用記録の収集・形式・構造の検証）の実装と、次の 4 つの方針だけ。スナップショットの形式・停止状態の保存・U4 以後の承認ではない",
+   "policies": [
+    "実装の識別: エンジンの版に加え、挙動に関係するソースと同梱データの内容のハッシュを記録する。Git のコミットは補助の情報で、Git がなくても識別できる",
+    "実行環境: 再現の保証を、対応する Python の実装・版に限る。異なる環境で同じ結果になるとは保証しない。OS・パス・改行など意味に影響しない違いまで無条件に非対応にしない",
+    "確認値の密度: 受理した操作ごとに、状態と乱数の確認値を残す（U4 で最初の不一致を特定できるように）",
+    "形式の版: 再現用記録の形式の版を独立して設ける。診断の形式・状態の形式・規約集合の版はそれぞれ参照する。新しい版の管理の方法を、保留中のほかの形式へ一括で当てはめない"
+   ],
+   "decisions": [
+    "D-IMPLEMENTATION-ID",
+    "D-RUNTIME",
+    "D-CHECK-DENSITY",
+    "D-VERSIONS"
+   ],
+   "units": [
+    "U3"
+   ],
+   "implemented_in": "v0.153（docs/replay-record-v0.153.md）"
   }
  ],
  "documents": {
@@ -308,14 +330,16 @@
   },
   {
    "id": "NI-REPLAY-RECORD",
-   "name": "完全な再現用記録と再現",
-   "status": "not_implemented",
+   "name": "完全な再現用記録（v0.153 で U3 として収集・読み書き・構造の検証を実装。再現は未実装）",
+   "status": "implemented",
    "refs": [
+    "kyuura_engine/replay_record.py::ReplayCollector",
+    "kyuura_engine/replay_record.py::validate_record",
     "tests/helpers.py::replay"
    ],
-   "provides": "ない（テストの replay はコマンドの列を順に送るだけ）",
-   "reuse": "U3・U4 で作る",
-   "limits": ""
+   "provides": "記録の収集（ReplayCollector）・JSON の読み書き・構造の検証（v0.153）。テストの replay はコマンドの列を順に送るだけ",
+   "reuse": "U4 は記録の受理した操作の列を再実行し、確認値と照らす",
+   "limits": "再実行して照らすこと（U4）はない"
   },
   {
    "id": "NI-VIEW-RECORD",
@@ -1066,23 +1090,24 @@
  "records": [
   {
    "id": "replay_full",
-   "label": "A. 完全な再現用記録",
+   "label": "A. 完全な再現用記録（v0.153 で実装）",
    "version_key": "kyuura_replay_format",
    "purpose": "不具合調査・検証・同一実行の再現",
    "holder": "検証者（対戦を進める権限の側）",
    "contains_secrets": true,
    "inputs": [
-    "header.engine",
+    "header.initial",
+    "header.engine（扱えるかの条件）",
+    "header.runtime（扱えるかの条件）",
     "header.dependencies",
     "header.convention_set",
-    "header.initial",
-    "steps[].command（受理したもの）"
+    "operations[].command（outcome が accepted のもの、accepted_index の順）"
    ],
    "expected": [
-    "steps[].outcome",
-    "steps[].check",
-    "steps[].coins",
-    "footer"
+    "header.start.check",
+    "operations[].outcome・diagnostic・status",
+    "operations[].check",
+    "end"
    ],
    "fields": [
     {
@@ -1095,19 +1120,19 @@
      "name": "header.engine",
      "required": true,
      "role": "input",
-     "meaning": "エンジンの版（__version__）と実装の識別（implementation_digest。D-IMPLEMENTATION-ID）"
+     "meaning": "エンジンの版と実装の識別（behavior_digest: 挙動に関係するソース・同梱データ、instrumentation_digest: 記録・診断の部品）。git_commit は補助の情報"
     },
     {
      "name": "header.runtime",
      "required": true,
      "role": "environment",
-     "meaning": "Python の実装と版（再現の保証の条件は D-RUNTIME）"
+     "meaning": "Python の実装と版・乱数の方式（rng.RNG_FORMAT と getstate の版）。OS・パスは入れない"
     },
     {
      "name": "header.dependencies",
      "required": true,
      "role": "input",
-     "meaning": "ルールの組の id（RuleSet.id）・カードデータの写しの元（repository・commit・path）と内容の照合値・効果の登録表の id（state.effects.id）"
+     "meaning": "ルールの組の id・カードプール（default だけ）・カードデータの写しの元・効果の登録表の id"
     },
     {
      "name": "header.convention_set",
@@ -1116,79 +1141,80 @@
      "meaning": "ConventionSetIdentity.record（ID・版・照合値・構成）"
     },
     {
+     "name": "header.formats",
+     "required": true,
+     "role": "reference",
+     "meaning": "参照する形式: 状態の書き出しの形式（35）・確認値の方式・診断の形式"
+    },
+    {
      "name": "header.initial",
      "required": true,
      "role": "input",
-     "meaning": "デッキリスト 2 つ・seed・乱数の方式（rng.RNG_FORMAT と new_game の切り方）。初期の山札の並びは seed から決まるので入れない（入れるなら確認値）"
+     "meaning": "デッキリスト 2 つ・seed・ルールの組・規約集合・カードプール（new_game の入力。先攻はジャンケンの結果の操作として操作の列に入る）"
     },
     {
-     "name": "header.game_id",
+     "name": "header.start",
      "required": true,
-     "role": "reference",
-     "meaning": "対戦の識別（記録の中だけで一意）"
-    },
-    {
-     "name": "header.policy",
-     "required": false,
-     "role": "reference",
-     "meaning": "操作を選んだ AI・道具の名前と方策の乱数（参考。再現の入力にしない）"
-    },
-    {
-     "name": "steps[].index・segment・actor",
-     "required": true,
-     "role": "input",
-     "meaning": "送った順の番号・区間の番号・操作したプレイヤー"
-    },
-    {
-     "name": "steps[].command",
-     "required": true,
-     "role": "input",
-     "meaning": "command_to_dict の形。拒否された操作も記録する（D-REJECTED）が、再現の入力は受理したものだけ"
-    },
-    {
-     "name": "steps[].decision_id",
-     "required": false,
      "role": "expected",
+     "meaning": "new_game の結果の status と確認値"
+    },
+    {
+     "name": "header.game_id・rejections_recorded",
+     "required": true,
+     "role": "reference",
+     "meaning": "対戦の識別（任意）と、拒否した操作を記録したか"
+    },
+    {
+     "name": "operations[].seq・accepted_index",
+     "required": true,
+     "role": "reference",
+     "meaning": "記録の中の連番（1 から欠けなし）と、受理した操作の中の順（拒否を省いても受理の順が決まる）。operation_id（ホストが付ける）とは別"
+    },
+    {
+     "name": "operations[].actor・submitter・segment",
+     "required": true,
+     "role": "reference",
+     "meaning": "結果を受けるプレイヤー・ホストが確かめた送り手・操作の前の区間"
+    },
+    {
+     "name": "operations[].command",
+     "required": true,
+     "role": "input",
+     "meaning": "command_to_dict の形。受理したものだけが再現の入力"
+    },
+    {
+     "name": "operations[].answers_decision",
+     "required": false,
+     "role": "reference",
      "meaning": "答えた決定の id（決定への答えのとき）"
     },
     {
-     "name": "steps[].outcome",
+     "name": "operations[].outcome・status・diagnostic",
      "required": true,
      "role": "expected",
-     "meaning": "accepted・rejected・failed、例外の種類・コード・理由の文の指紋"
+     "meaning": "accepted・rejected・failed と、操作のあとの status、拒否・失敗の診断の識別・分類・元のコード（生の文は入れない）"
     },
     {
-     "name": "steps[].check",
-     "required": true,
-     "role": "expected",
-     "meaning": "受理した歩のあとの確認値: 状態の指紋（形式 35 の sha256。engine_version を除く）・ログの長さ・status・保留中の決定の id と種類（D-CHECK-DENSITY）"
-    },
-    {
-     "name": "steps[].coins",
+     "name": "operations[].check",
      "required": false,
      "role": "expected",
-     "meaning": "その歩で投げたコインの結果（ログから取った確認値。入力ではない）"
+     "meaning": "受理した操作のあとの確認値（状態の指紋・乱数の指紋・ログの長さ・区間・status・決定・停止のコード）。受理したものだけ（D-CHECK-DENSITY）"
     },
     {
-     "name": "segments[]",
+     "name": "end",
      "required": true,
      "role": "expected",
-     "meaning": "区間の境界: 番号・始まった歩（StartSuddenDeath の歩）・サイドの枚数・終えた結果"
-    },
-    {
-     "name": "footer",
-     "required": true,
-     "role": "expected",
-     "meaning": "終わりの印: 終わった理由（game_over・halted・failed・abandoned）・歩の数・最後の状態の指紋。ないなら途中で切れた記録（incomplete）"
+     "meaning": "記録の終わり: closed（ホストが閉じた）・aborted（処理できない結果で止めた）、操作の数・受理の数・status・最後の確認値・区間の境界。ないなら途中で切れた記録"
     }
    ],
    "guarantees": [
-    "同じ実装・同じ依存・同じ規約集合・同じ初期の条件・同じ受理した操作の列から、各歩の確認値と同じ結果になる（U4 で確かめる）"
+    "構造の検証（形・順序・前後の矛盾・完結・扱える範囲）。再実行して確認値と一致すること（同一実行の再現）は U4 で確かめる"
    ],
    "not_guaranteed": [
-    "実装・依存・規約集合が違うときの再現（比べは compare_runs の別の機能）",
+    "実装・依存・規約集合・Python の実装と版が違うときの再現（比べは compare_runs の別の機能）",
     "seed だけからの、版をまたぐ再現",
-    "方策の再実行で同じ操作の列になること"
+    "方策の再実行で同じ操作の列になること",
+    "閉じた記録・停止した記録からの対戦の再開"
    ]
   },
   {
@@ -2003,7 +2029,9 @@
     "決定・区間の境界・終わりだけ"
    ],
    "recommendation": "毎歩。最初に違った歩を返すのに要る。大きさが問題になったら間引く選択肢を形式の版で加える",
-   "status": "pending"
+   "status": "adopted",
+   "adopted": "受理した操作ごとに状態と乱数の確認値を残す（拒否した操作には確認値を付けない）",
+   "adoption": "ADOPT-U3"
   },
   {
    "id": "D-IMPLEMENTATION-ID",
@@ -2014,7 +2042,9 @@
     "エンジンの版の番号だけ"
    ],
    "recommendation": "内容の sha256 を必須にし、分かれば git のコミットを参考に書く。版の番号だけでは同じ版の別のコミットを区別できない",
-   "status": "pending"
+   "status": "adopted",
+   "adopted": "エンジンの版と、挙動に関係するソース・同梱データの内容のハッシュ（改行・BOM をそろえ、パッケージの中の相対パスの順）。Git のコミットは補助の情報",
+   "adoption": "ADOPT-U3"
   },
   {
    "id": "D-RUNTIME",
@@ -2024,7 +2054,9 @@
     "記録するが拒否しない（結果に環境の違いを書く）"
    ],
    "recommendation": "記録し、違えば結果に環境の違いを書いて再実行する（拒否しない）。保証は同じ実装・同じ依存までにする（api-review の Python 3.11〜3.13 の確認は過去の確認）",
-   "status": "pending"
+   "status": "adopted",
+   "adopted": "推奨案ではなく、対応する Python の実装と版（major・minor）に保証を限る（違えば unsupported）。micro の違い・OS・パス・改行では非対応にしない",
+   "adoption": "ADOPT-U3"
   },
   {
    "id": "D-POSTGAME",
@@ -2046,7 +2078,9 @@
     "診断と閲覧用記録を 1 つにまとめ、3 つにする"
    ],
    "recommendation": "4 つに分ける。どれも整数 1 つで、形が変わったときだけ上げる。値の語彙を足すだけでは上げない（serialize の約束と同じ）",
-   "status": "pending"
+   "status": "adopted",
+   "adopted": "再現用記録の形式の版（kyuura_replay_format）だけを独立して設け、診断の形式・状態の形式・規約集合の版は記録の中で参照する。閲覧用記録・スナップショットの版の決め方は決めていない（一括で当てはめない）",
+   "adoption": "ADOPT-U3"
   },
   {
    "id": "D-SNAPSHOT-BASE",
@@ -2137,7 +2171,7 @@
   },
   {
    "id": "U3",
-   "status": "planned",
+   "status": "implemented",
    "title": "完全な再現用記録の収集と検証",
    "depends": [
     "U2"
