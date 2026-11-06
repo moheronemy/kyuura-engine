@@ -257,3 +257,7 @@ v0.115（ばくれつしんか）・v0.120（しんかのほうし）の組を `
 - 熱血!・［おたけび］・マスターボールの「山札とサイドを合わせた集合」と、`hidden_deck_pool`（FV1）: 見えない置いておくカードを含まない（未確認。範囲の外）
 - しんかのほうしの `_next` の確かめ（先に重ねた進化カードが場の効果を変えた場合だけ。当たる組み合わせは見つけていない）
 - `new_game` からの合法な操作の列での双子の再現
+
+## 追記（v0.149）
+
+6.3 節の `PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE` は v0.149（[optional-deck-evolution-presence-v0.149.md](optional-deck-evolution-presence-v0.149.md)）で直しました（山札にカードがあれば選べる進化カードがなくても決定を出す）。`RemainingDecisionPresenceLeakTest`（`expectedFailure`）は、`DecisionPresenceNoLeakTest` に名前を変えて、漏れがないことを確かめる通常のテストにしました。8 章の「熱血!・おたけび・マスターボール・`hidden_deck_pool` は見えない置いておくカードを数えない」は、v0.149 で双子で確かめて直しました（`PSP-HIDDEN-SET-ASIDE-DECK-POOL`）。この文書の上の記述は v0.148 の時点の記録として残します。
