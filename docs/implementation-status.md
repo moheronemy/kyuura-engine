@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.151）
+# 実装状況（v0.1〜v0.152）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d`（v0.128 から。v0.129 の種族の身長の写しは別に `9242b9be89be0f747279f39c11875d1ed61763ec`。v0.126〜v0.127 は `57d01f45cfb8b086d03dc0525b329cf6adeff69b`、v0.125 は `134a664c6adf67d5604148a31b58e1a7d26d4d6d`、v0.124 は `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`、v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -81,7 +81,7 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 - サドン・デスの延長戦（サイド 1 枚でやり直す。v0.134 で実装した。[sudden-death-v0.134.md](sudden-death-v0.134.md)）
 - 旧裏の複数の時期のルールの切り替え（`RuleSet` は 2000.02.14版だけ）
 - 公式大会のレギュレーション（サイド 4 枚など）
-- 診断 API（構造化した拒否・停止の分類と見る人ごとの写し）・完全な再現用記録と再現・閲覧用記録・状態の JSON の読み込み（スナップショット）・合法手の一覧。仕様案だけ（未承認。[diagnostics-replay-api-design.md](diagnostics-replay-api-design.md)・[実装計画](diagnostics-replay-api-implementation-plan.md)）
+- 完全な再現用記録と再現・閲覧用記録・状態の JSON の読み込み（スナップショット）・合法手の一覧。仕様案だけ（診断の型とコマンド実行結果のアダプタは v0.152 で実装した。[diagnostics-adapter-v0.152.md](diagnostics-adapter-v0.152.md)）（未承認。[diagnostics-replay-api-design.md](diagnostics-replay-api-design.md)・[実装計画](diagnostics-replay-api-implementation-plan.md)）
 - 画面、AI、通信（隠れた情報の管理は、v0.47 でプレイヤーに渡す観測 `observe`・`visible_log` を加えた。状態とログは内部の完全な記録のまま。[fossil-hidden-info-v0.47.md](fossil-hidden-info-v0.47.md) 5.1 節）
 
 ## 原典未確認
@@ -3820,6 +3820,17 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 338・neo 154・拡張パック以外 184） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistryTest` |
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.152: 診断の型と情報境界・コマンド実行結果のアダプタ（U1・U2）
+
+[diagnostics-adapter-v0.152.md](diagnostics-adapter-v0.152.md)。エンジンの処理（受理の条件・状態・乱数・ログ・観測）は変えていない。規約集合の ID・版・中身・照合値は同じ。採用は U1・U2 と 6 つの方針だけ（[仕様案](diagnostics-replay-api-design.md)の採用の記録）。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| コマンド実行結果のアダプタ（`adapter.submit`・`start_game`・`HostedGame`。結果と状態の区別・次の操作の種類・続けられるか） | 実装済み | 2 章 | tests/test_diagnostics_adapter_v0_152.py |
+| 診断のコード表（台帳の停止コードと台帳の外のコード。表にないコードは対応漏れ）と決まった文 | 実装済み | 3 章 | 同上・scripts/build_diagnostic_catalog.py --check |
+| 見る人ごとの結果（本人・相手と観戦者）と検証者用の記録の分離 | 実装済み | 4 章 | 同上 |
+| 対戦記録の収集・再現・JSON の状態の読み込み・合法手の一覧 | 未実装（仕様案のまま） | 7 章 | — |
 
 ## v0.151: 山札をさがす前の研究上の停止（RB2・FC1）が実際の山札を読む情報漏れの修正（両モード共通）
 

@@ -1979,6 +1979,12 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   SX1・TN1 は UQ-CARD-USE-WITHOUT-TARGET と同じ形の別のカードの問い）。v0.66 の「ナツメのESPと「うら」が出るまでのコインは起こらない」はエンジンの前提の誤りで、研究の論点ではない（kyuura は
   変えていない）。
 
+## v0.152: 診断の型と情報境界・コマンド実行結果のアダプタ
+
+[diagnostics-adapter-v0.152.md](diagnostics-adapter-v0.152.md)。写しの元・研究の基準は kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d` のまま。カードの写し・採用の記録・研究の対応表・固定デッキ・過去の参照データは変えていない。kyuura は読んでいない（変更・コミット・push もしていない）。
+
+- 新しい同梱のデータ `kyuura_engine/data/diagnostic_catalog.json` は、停止の方針の台帳・場面の索引・エンジンのソースから `scripts/build_diagnostic_catalog.py` が作る診断の表で、カードデータ・研究の記録ではない。表の分類（未裁定・未対応など）は台帳の分類の写しで、研究上の答えではない
+
 ## v0.151: 山札をさがす前の研究上の停止（RB2・FC1）が実際の山札を読む情報漏れの修正
 
 [deck-search-stop-oracles-v0.151.md](deck-search-stop-oracles-v0.151.md)。写しの元・研究の基準は kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d` のまま。カードの写し・採用の記録・研究の対応表・固定デッキ・過去の参照データは変えていない。
