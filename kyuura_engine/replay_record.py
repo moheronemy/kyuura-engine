@@ -221,6 +221,11 @@ def _depth_ok(value) -> bool:
 def loads_record(text: str | bytes) -> ReplayRecord:
     """記録の JSON を読む（JSON の値だけ。pickle などには変えない）。大きさ・深さ・重なった鍵・数でない数・最上位が辞書でないものは ``RecordFormatError``。
     中身の検証は ``validate_record``。"""
+    return ReplayRecord(read_json_object(text))
+
+
+def read_json_object(text: str | bytes) -> dict[str, Any]:
+    """記録の JSON の安全な読み取り（v0.155 で ``loads_record`` から分けた。閲覧用記録の読み取りも使う）。誤りは ``RecordFormatError``（入力の値を文に入れない）。"""
     raw = text if isinstance(text, bytes) else text.encode("utf-8")
     if len(raw) > MAX_RECORD_BYTES:
         raise RecordFormatError("too_large")
@@ -236,7 +241,7 @@ def loads_record(text: str | bytes) -> ReplayRecord:
         raise RecordFormatError("not_object")
     if not _depth_ok(data):
         raise RecordFormatError("too_deep")
-    return ReplayRecord(data)
+    return data
 
 
 # ---------------------------------------------------------------- 収集

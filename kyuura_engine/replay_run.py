@@ -129,8 +129,11 @@ def _diagnostic(result) -> dict[str, Any]:
     return {"diagnostic_id": result.diagnosis.diagnostic_id, "category": result.diagnosis.category, "engine_code": result.verifier.engine_code}
 
 
-def replay(record: ReplayRecord | dict[str, Any]) -> ReplayRunReport:
-    """記録を再実行して照らす（docs 2 章の流れ）。"""
+def replay(record: ReplayRecord | dict[str, Any], *, observer=None) -> ReplayRunReport:
+    """記録を再実行して照らす（docs 2 章の流れ）。
+
+    v0.155: ``observer`` を渡すと、照合に通った開始の結果と各行の結果（``CommandResult``）を、その時点で順に渡す（閲覧用記録の変換 ``view_record.view_records_from_replay`` が使う）。
+    照合に通らなかった結果は渡さない。最後まで成功したかは、返す結果の ``status`` で決まる（渡した結果だけで判断しない）。"""
     data = record.data if isinstance(record, ReplayRecord) else record
     structure = validate_record(data, check_support=False)
     if structure.status in (MALFORMED, INCONSISTENT):
@@ -142,7 +145,7 @@ def replay(record: ReplayRecord | dict[str, Any]) -> ReplayRunReport:
     if support:
         return run.report(NOT_SUPPORTED, executed=False, problems=support)
     try:
-        return _execute(run, data)
+        return _execute(run, data, observer)
     except Exception as error:  # 再実行の境界: 記録にない例外は内部エラーの結果（未対応・不一致に変えない。traceback は検証者用）
         if isinstance(error, MemoryError):
             raise
@@ -152,7 +155,7 @@ def replay(record: ReplayRecord | dict[str, Any]) -> ReplayRunReport:
         return run.report(INTERNAL_ERROR, failure=failure)
 
 
-def _execute(run: _Run, data: dict[str, Any]) -> ReplayRunReport:
+def _execute(run: _Run, data: dict[str, Any], observer=None) -> ReplayRunReport:
     header = data["header"]
     initial = header["initial"]
     start = start_game(initial["decklists"][0], initial["decklists"][1], initial["seed"], conventions=initial["conventions"],
@@ -169,6 +172,8 @@ def _execute(run: _Run, data: dict[str, Any]) -> ReplayRunReport:
     if items:
         return run.report(DIVERGED, mismatch=Mismatch(LOCATION_START, None, None, items, recorded, {**replayed, **boundary_items(state)}))
     run.start_verified = True
+    if observer is not None:
+        observer(start)
     accepted = 0
     for op in data["operations"]:
         seq = op["seq"]
@@ -211,6 +216,8 @@ def _execute(run: _Run, data: dict[str, Any]) -> ReplayRunReport:
                 return run.report(RECORDED_FAILURE, failure=result.verifier)
         run.verified_seq = seq
         run.verified_accepted = accepted
+        if observer is not None:
+            observer(result)
     end = data.get("end")
     if end is None:
         return run.report(INCOMPLETE)
