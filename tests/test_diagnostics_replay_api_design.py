@@ -115,12 +115,20 @@ class BrokenSpecTest(unittest.TestCase):
         self.assertTrue(any("U99" in p for p in problems), problems)
 
     def test_approval_cannot_be_recorded(self):
+        # v0.152: 採用は adoptions の記録に範囲を限って書く。記録のない判断事項を adopted にする・単位を実装済みにする・仕様案全体を承認済みにすると見つける
         def edit(spec):
             spec["approval"] = "approved"
-            spec["decisions"][0]["status"] = "adopted"
+            next(d for d in spec["decisions"] if d["status"] == "pending")["status"] = "adopted"
+            next(u for u in spec["units"] if u["status"] == "planned")["status"] = "implemented"
         problems = self.broken(edit)
         self.assertTrue(any("承認" in p for p in problems), problems)
-        self.assertTrue(any("pending" in p for p in problems), problems)
+        self.assertTrue(any("採用の記録（adoptions）にない" in p for p in problems), problems)
+        self.assertTrue(any("採用の記録の単位と合わない" in p for p in problems), problems)
+
+    def test_adopted_decision_without_record(self):
+        def edit(spec):
+            spec["adoptions"][0]["decisions"].remove("D-MESSAGE")
+        self.assertTrue(any("D-MESSAGE" in p for p in self.broken(edit)))
 
     def test_new_version_key_cannot_reuse_existing_name(self):
         def edit(spec):
@@ -146,7 +154,7 @@ class LedgerAgreementTest(unittest.TestCase):
     def test_technical_limit_codes_in_the_ledger_are_category_b(self):
         ledger = json.loads(B.LEDGER.read_text(encoding="utf-8"))
         b_codes = {e["id"] for e in ledger["entries"] if e["entry_kind"] == "runtime_stop_code" and e.get("classification") == "B"}
-        example_limits = {e["payload"]["code"] for e in written()["examples"] if e["payload"].get("category") == "technical_limit"}
+        example_limits = {e["payload"]["diagnostic_id"] for e in written()["examples"] if e["payload"].get("category") == "technical_limit"}
         self.assertTrue(example_limits)
         self.assertLessEqual(example_limits, b_codes)
 

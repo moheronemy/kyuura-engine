@@ -29,14 +29,34 @@ RECORDS = ROOT / "kyuura_engine" / "data" / "convention_records.json"
 
 ROLES = ("actor", "opponent", "spectator", "verifier")
 VISIBILITY = ("yes", "no", "own", "decider", "derived")  # own: 本人に関わるものだけ。decider: 決めるプレイヤーだけ。derived: 観測・ログの写しを通した形だけ
-CATEGORIES = ("invalid_input", "unresolved_ruling", "unsupported", "technical_limit", "state_integrity", "compatibility", "internal_error")
+CATEGORIES = ("invalid_input", "unresolved_ruling", "unsupported", "technical_limit", "state_integrity", "compatibility", "internal_error", "unmapped")
 OUTCOMES = ("accepted", "rejected", "failed")
-STATUSES = ("in_progress", "awaiting_decision", "halted", "game_over", "sudden_death_pending")
+STATUSES = ("in_progress", "awaiting_decision", "halted", "game_over", "sudden_death_pending", "not_started", "unavailable")
 FEATURE_STATUS = ("implemented", "internal_only", "tool_only", "not_implemented")
+ADAPTER_IDS = ("DIAGNOSTIC_UNMAPPED", "INTERNAL_ERROR", "SUBMITTER_MISMATCH", "INVALID_SEED")
 REPLAY_STATUS = ("succeeded", "incomplete", "unsupported", "invalid_record", "diverged", "internal_error")
 NEW_VERSION_KEYS = ("kyuura_diagnostic_schema", "kyuura_replay_format", "kyuura_view_format", "kyuura_snapshot_format")
 EXISTING_VERSION_KEYS = ("format_version", "record_format", "digest_format", "engine_version", "version")
-VERIFIER_ONLY_FIELDS = ("developer_detail", "seed", "rng_state", "rng_fingerprint", "state_digest", "initial_deck_order", "halt_message", "trace")
+VERIFIER_ONLY_FIELDS = ("developer_detail", "seed", "rng_state", "rng_fingerprint", "state_digest", "initial_deck_order", "halt_message", "trace", "engine_code",
+                        "raw_message", "traceback", "problems", "exception_type")
+
+ADOPTION = {
+    "id": "ADOPT-U1-U2",
+    "date": "2026-11-06",
+    "by": "利用者",
+    "scope": "U1（診断の型と情報境界）と U2（コマンド実行結果のアダプタ）の実装と、次の方針だけ。仕様案のほかの判断事項・仕様案の全体の承認ではない",
+    "policies": [
+        "本人向けの説明は、原則としてコードに対応する安全な定型文とする",
+        "生の例外文と内部の詳細は検証者用とし、通常の閲覧者へ渡さない",
+        "状態の不整合は、本人にも一般的な説明だけを返す",
+        "未登録コードを推測で未裁定・未対応へ分類しない。診断の対応漏れとして検出する",
+        "拒否された操作は、将来の完全記録へ任意で残せる設計にする。受理した操作の再現とは区別する",
+        "対戦後も情報の公開範囲を自動では広げない",
+    ],
+    "decisions": ["D-MESSAGE", "D-STATE-INTEGRITY-VIEW", "D-REJECTED", "D-POSTGAME"],
+    "units": ["U1", "U2"],
+    "implemented_in": "v0.152（docs/diagnostics-adapter-v0.152.md）",
+}
 
 BASE = {
     "commit": "7e4a875681f15745cfe42a2b95c00f0e4f557324",
@@ -54,6 +74,7 @@ SPEC = {
     "request": ("利用者の依頼（2026-11-06）は、v0.151 までの山札をさがす効果の情報漏れの監査を踏まえた仕様の作成。エンジンの動作・API・保存と復元の実装、続行規約の採用はしない。"
                 "仕様の作成の依頼を、仕様の中身の承認として扱わない"),
     "base": BASE,
+    "adoptions": [ADOPTION],
     "documents": {"design": "docs/diagnostics-replay-api-design.md", "plan": "docs/diagnostics-replay-api-implementation-plan.md",
                   "generator": "scripts/build_diagnostics_replay_api_design.py", "test": "tests/test_diagnostics_replay_api_design.py"},
     "sources": {"stop_ledger": "docs/stop-policy-classification.json", "scene_index": "kyuura_engine/data/convention_records.json"},
@@ -155,8 +176,11 @@ SPEC = {
          "provides": "ない（v0.1 から未実装）", "reuse": "U6 で新しく作る", "limits": "形式 35 を読み込み用に読み替えない"},
         {"id": "NI-LEGAL-MOVES", "name": "合法手の一覧", "status": "not_implemented", "refs": ["tools/stress_engine.py::choose_command"],
          "provides": "ない（ストレス実行の操作の選び方は検証用の道具で、合法手の一覧ではない）", "reuse": "U7 で境界だけを決める", "limits": "でたらめな操作を混ぜる道具"},
-        {"id": "NI-DIAGNOSTIC", "name": "構造化した診断", "status": "not_implemented", "refs": [],
-         "provides": "ない", "reuse": "U1・U2 で作る", "limits": ""},
+        {"id": "NI-DIAGNOSTIC", "name": "構造化した診断（v0.152 で U1・U2 として実装）", "status": "implemented",
+         "refs": ["kyuura_engine/diagnostics.py::classify_error", "kyuura_engine/adapter.py::submit", "kyuura_engine/data/diagnostic_catalog.json",
+                  "scripts/build_diagnostic_catalog.py"],
+         "provides": "コード表による分類・見る人ごとの結果（本人・相手と観戦者）・検証者用の記録・コマンド実行結果のアダプタ（v0.152）",
+         "reuse": "U3 以後の記録・再現は submit の結果（CommandResult）を受け取る", "limits": "記録・再現・合法手の一覧はない"},
         {"id": "NI-REPLAY-RECORD", "name": "完全な再現用記録と再現", "status": "not_implemented", "refs": ["tests/helpers.py::replay"],
          "provides": "ない（テストの replay はコマンドの列を順に送るだけ）", "reuse": "U3・U4 で作る", "limits": ""},
         {"id": "NI-VIEW-RECORD", "name": "閲覧用記録", "status": "not_implemented", "refs": [],
@@ -195,6 +219,10 @@ SPEC = {
          "sources": "EngineError でない例外（RuntimeError・ValueError・KeyError・TypeError など。不変条件の RuntimeError を含む）",
          "subkinds": [], "state_effect": "保証しない（apply_command は複製で処理するが、内部エラーについては約束していない）", "continuable": False,
          "note": "未対応・未裁定に変換しない。開発用の詳細は検証者だけに渡し、ほかの見る人には分類だけを返す"},
+        {"id": "unmapped", "label": "診断の対応漏れ（v0.152 の採用）",
+         "sources": "コード表にないコード・表と違う例外の型で来たコード（EngineError）、表にない停止のコード",
+         "subkinds": [], "state_effect": "EngineError なので渡した状態は変わらない（拒否）。停止のコードなら受理した結果の停止", "continuable": True,
+         "note": "接頭辞・例外の型の名前から未裁定・未対応へ推測で分類しない。元のコードは検証者用の記録だけに置き、表の生成の検査（--check）とテストで漏れを見つける"},
     ],
     "classification_rules": [
         {"order": 1, "when": "EngineError でない例外", "category": "internal_error", "basis": "例外の型（EngineError の子でない）"},
@@ -206,8 +234,8 @@ SPEC = {
          "basis": "台帳の分類（接頭辞だけで決めない）"},
         {"order": 6, "when": "同じく、台帳の分類が B", "category": "technical_limit", "basis": "台帳の分類"},
         {"order": 7, "when": "同じく、台帳の分類が A・E（UNSUPPORTED_CARD を含む）", "category": "unsupported", "basis": "台帳の分類"},
-        {"order": 8, "when": "UnsupportedError で、台帳にないコード", "category": "unsupported",
-         "basis": "catalog_status を unlisted にして返す（拒否であることは例外の型で分かる）。台帳の作り直しを促す回帰テスト（U1）で 0 件を保つ"},
+        {"order": 8, "when": "EngineError で、コード表にないコード、または表の行の例外の型の区分（raised_as）と合わない", "category": "unmapped",
+         "basis": "v0.152 の採用（推測で分類しない）。コード表は台帳と台帳の外のコード（不正な操作・状態の不整合など）を合わせたもので、台帳には加えない"},
     ],
     "compatibility_codes": ["UNSUPPORTED_CONVENTION_SET", "UNSUPPORTED_DECISION", "UNSUPPORTED_HISTORY_DAMAGE_PLACE_UNKNOWN"],
     "unresolved_generic_codes": ["UNRESOLVED_RULING"],
@@ -215,7 +243,7 @@ SPEC = {
         {"id": "accepted", "meaning": "操作を受け付けた。新しい状態に置きかわる（乱数・ログが進むことがある）", "state": "new", "categories": [],
          "next": "結果の status による（in_progress・awaiting_decision・halted・game_over・sudden_death_pending）"},
         {"id": "rejected", "meaning": "操作を拒否し、元の状態を保った（状態・乱数・ログは変わらない）", "state": "kept",
-         "categories": ["invalid_input", "unresolved_ruling", "unsupported", "technical_limit", "compatibility"],
+         "categories": ["invalid_input", "unresolved_ruling", "unsupported", "technical_limit", "compatibility", "unmapped"],
          "next": "同じ状態に別の操作を送れる（compatibility なら、この実装ではどの操作も同じ拒否）。同じ操作は同じ拒否になる"},
         {"id": "failed", "meaning": "処理できなかった。元の状態で続けることを保証しない", "state": "untrusted", "categories": ["state_integrity", "internal_error"],
          "next": "対戦を止め、検証者が調べる（自動で続けない）"},
@@ -226,36 +254,45 @@ SPEC = {
         {"id": "halted", "meaning": "操作の結果として停止した（終端。halt.code は全員に見え、途中停止なら interruption の公開の記録がある。再開の API はない）", "public": True},
         {"id": "game_over", "meaning": "勝ち負けが決まった（終端）", "public": True},
         {"id": "sudden_death_pending", "meaning": "サドン・デスに移り、延長戦を始める操作（StartSuddenDeath）だけを受け付ける", "public": True},
+        {"id": "not_started", "meaning": "対戦を始める前の拒否（start_game。状態はない。v0.152）", "public": True},
+        {"id": "unavailable", "meaning": "処理できなかった結果（failed）。状態を返さない（v0.152）", "public": True},
     ],
     "stages": [
         {"id": "setup", "meaning": "new_game・準備（切り直し・ポケモンを出す・ジャンケン）"},
-        {"id": "action_declaration", "meaning": "番の操作の宣言（ワザ・トレーナー・特殊能力・にげる・エネルギーなど）の受付と、宣言の前の先読み"},
+        {"id": "turn_action", "meaning": "番の操作の宣言（ワザ・トレーナー・特殊能力・にげる・エネルギー・番の終わりなど）の受付と、宣言の前の先読み（v0.152 の名前。仕様案の action_declaration・between_turns をまとめた）"},
         {"id": "decision_answer", "meaning": "保留中の決定への答え（決定の種類・処理の段階は決定の kind と、本人に見える context から）"},
-        {"id": "between_turns", "meaning": "番の終わり・ポケモンチェック"},
         {"id": "segment_start", "meaning": "サドン・デスの延長戦を始める操作"},
-        {"id": "state_load", "meaning": "観測・コマンドの前の状態の確かめ（規約集合・再開先）と、スナップショットの復元"},
-        {"id": "record_check", "meaning": "記録の形式・見出し・依存の確かめ（再現の前）"},
+        {"id": "state_check", "meaning": "観測・コマンドの前の状態の確かめ（規約集合・再開先）。将来のスナップショットの復元もここ"},
+        {"id": "submission", "meaning": "ホストが確かめた送り手とコマンドのプレイヤーの照合（v0.152。エンジンを呼ぶ前）"},
+        {"id": "record_check", "meaning": "記録の形式・見出し・依存の確かめ（再現の前。U3 以後）"},
     ],
 
     # ------------------------------------------------------------ 診断の項目
     "diagnostic_fields": [
-        {"field": "kyuura_diagnostic_schema", "stability": "fixed", "required": True, "meaning": "診断の形の版（整数）"},
-        {"field": "outcome", "stability": "fixed", "required": True, "meaning": "accepted・rejected・failed"},
-        {"field": "category", "stability": "fixed", "required": True, "meaning": "診断の分類（accepted なら null。accepted で status が halted なら halt.code の分類を halt.category に書く）"},
-        {"field": "subkind", "stability": "fixed", "required": False, "meaning": "分類の下の区分（command・answer・setup など）"},
-        {"field": "code", "stability": "fixed", "required": True, "meaning": "エンジンのコード（例外の code・halt.code）。一度出したコードの意味を変えず、同じ文字列を別の意味に使わない"},
-        {"field": "case_id", "stability": "fixed", "required": False, "meaning": "特定できるときの事例 ID（台帳の「コード#事例」か、場面の索引の場面 ID）。特定できなければ null"},
-        {"field": "case_status", "stability": "fixed", "required": True, "meaning": "identified・not_identified・unknown_scene（conventions.ContinuationLookup の status と同じ語彙）"},
-        {"field": "catalog_status", "stability": "fixed", "required": True, "meaning": "listed・unlisted（台帳にないコード）"},
-        {"field": "stage", "stability": "fixed", "required": True, "meaning": "発生した処理段階（stages の語彙）"},
-        {"field": "ref", "stability": "fixed", "required": True, "meaning": "対戦・区間・操作との対応（game_id・segment・step・decision_id）"},
-        {"field": "convention_set", "stability": "fixed", "required": True, "meaning": "適用中の規約集合の ID・版・照合値（ConventionSetIdentity.record の id・version・digest）"},
-        {"field": "status", "stability": "fixed", "required": True, "meaning": "操作のあとの状態（rejected なら元の状態の status）"},
-        {"field": "continuable", "stability": "fixed", "required": True, "meaning": "今の状態で、この実装が次の操作を受け付けうるか"},
-        {"field": "next", "stability": "fixed", "required": True, "meaning": "許される次の操作の種類（決定への答え・延長戦の開始・番の操作・なし）。合法手の一覧ではない（U7）"},
-        {"field": "message", "stability": "explanatory", "required": False, "meaning": "利用者向けの説明。版で変わりうる。プログラムで判定しない"},
-        {"field": "detail_ref", "stability": "explanatory", "required": False, "meaning": "検証用の詳細の参照（検証者の保管場所の中だけで意味を持つ）"},
-        {"field": "developer_detail", "stability": "explanatory", "required": False, "meaning": "例外の生の文・halt.message・references・不変条件の problems・解決の記録・実装の場所"},
+        {"field": "kyuura_diagnostic_schema", "stability": "fixed", "required": True, "audience": "viewer", "meaning": "診断の形の版（整数。v0.152 は 1）"},
+        {"field": "role", "stability": "fixed", "required": True, "audience": "viewer", "meaning": "actor（本人への結果）・observer（相手・観戦者への今の状態の知らせ）"},
+        {"field": "viewer", "stability": "fixed", "required": True, "audience": "viewer", "meaning": "見る人（0・1・null）"},
+        {"field": "outcome", "stability": "fixed", "required": True, "audience": "actor", "meaning": "accepted・rejected・failed（本人だけ）"},
+        {"field": "status", "stability": "fixed", "required": True, "audience": "viewer", "meaning": "操作のあとの状態（statuses の語彙）"},
+        {"field": "stage", "stability": "fixed", "required": True, "audience": "actor", "meaning": "送った操作の処理段階（コマンドの種類と公開の段階から決まる）"},
+        {"field": "continuable", "stability": "fixed", "required": True, "audience": "viewer", "meaning": "実際の状態で、この版が次の操作を処理しうるか（分類から推測しない）"},
+        {"field": "next", "stability": "fixed", "required": True, "audience": "viewer", "meaning": "次に受け付けうる操作の種類と送るプレイヤー（合法手の一覧ではない）"},
+        {"field": "diagnostic_id", "stability": "fixed", "required": True, "audience": "actor",
+         "meaning": "API として安定した診断の識別。コード表で対応付けたコードはそのコード、アダプタが作るものは DIAGNOSTIC_UNMAPPED・INTERNAL_ERROR・SUBMITTER_MISMATCH・INVALID_SEED"},
+        {"field": "category", "stability": "fixed", "required": True, "audience": "actor", "meaning": "診断の分類（accepted なら null）"},
+        {"field": "subkind", "stability": "fixed", "required": False, "audience": "actor", "meaning": "不正な入力の区分（command・answer・setup）"},
+        {"field": "case_id", "stability": "fixed", "required": False, "audience": "actor", "meaning": "コードの場面が 1 つのときの事例 ID。2 つ以上なら null"},
+        {"field": "case_status", "stability": "fixed", "required": True, "audience": "actor", "meaning": "identified・not_identified・not_applicable"},
+        {"field": "message", "stability": "explanatory", "required": False, "audience": "actor", "meaning": "コードに対応する安全な定型文（埋め込みなし。v0.152 の採用）。プログラムで判定しない"},
+        {"field": "halt", "stability": "fixed", "required": False, "audience": "viewer", "meaning": "停止した状態の公開の診断（識別・分類・事例・停止の定型文・途中停止か）"},
+        {"field": "operation_id", "stability": "fixed", "required": False, "audience": "actor", "meaning": "ホストが付けた操作の識別（将来の記録との対応。本人だけ）"},
+        {"field": "convention_set", "stability": "fixed", "required": True, "audience": "viewer", "meaning": "適用中の規約集合の ID・版・照合値"},
+        {"field": "engine_code", "stability": "fixed", "required": False, "audience": "verifier", "meaning": "エンジンが返した元のコード（対応漏れのときも）"},
+        {"field": "raw_message", "stability": "explanatory", "required": False, "audience": "verifier", "meaning": "例外の生の文"},
+        {"field": "traceback", "stability": "explanatory", "required": False, "audience": "verifier", "meaning": "例外の traceback"},
+        {"field": "problems", "stability": "explanatory", "required": False, "audience": "verifier", "meaning": "状態の不整合の問題の文"},
+        {"field": "halt_message", "stability": "explanatory", "required": False, "audience": "verifier", "meaning": "停止の診断用の文・references"},
+        {"field": "command", "stability": "explanatory", "required": False, "audience": "verifier", "meaning": "送ったコマンド（command_to_dict）"},
     ],
 
     # ------------------------------------------------------------ 情報境界（見る人ごと）
@@ -274,7 +311,7 @@ SPEC = {
         {"item": "diagnostic.case_id", "group": "diagnostic", "actor": "yes", "opponent": "no", "spectator": "no", "verifier": "yes",
          "basis": "事例は止まった場所（コードの区別）で決まり、秘密の配分で決めない。配分で事例が変わる場所は事例を出さない（not_identified）"},
         {"item": "diagnostic.message", "group": "diagnostic", "actor": "yes", "opponent": "no", "spectator": "no", "verifier": "yes",
-         "basis": "本人の知る情報だけの文。配分によらないことを確かめた範囲（v0.135〜v0.151 の対象群）の外は、判断事項 D-MESSAGE"},
+         "basis": "コードに対応する安全な定型文だけ（v0.152 の採用。D-MESSAGE）。生の文は検証者用"},
         {"item": "diagnostic.developer_detail・detail_ref", "group": "diagnostic", "actor": "no", "opponent": "no", "spectator": "no", "verifier": "yes",
          "basis": "例外の生の文・halt.message・解決の記録は実際の配分を含みうる"},
         {"item": "halt.code（停止した状態）", "group": "diagnostic", "actor": "yes", "opponent": "yes", "spectator": "yes", "verifier": "yes",
@@ -457,47 +494,47 @@ SPEC = {
 
     # ------------------------------------------------------------ 例（未実装の API の形の例示）
     "examples": [
-        {"id": "EX1-ACCEPTED", "title": "通常の操作の成功", "api_status": "not_implemented",
+        {"id": "EX1-ACCEPTED", "title": "通常の操作の成功", "api_status": "illustrative",
          "situation": "番のプレイヤー 0 が手札の基本エネルギーカードをバトル場のポケモンにつける",
-         "payload": {"kyuura_diagnostic_schema": 1, "outcome": "accepted", "category": None, "code": None, "case_id": None, "case_status": "identified",
-                     "catalog_status": "listed", "stage": "action_declaration", "status": "in_progress", "continuable": True, "next": ["action"],
+         "payload": {"kyuura_diagnostic_schema": 1, "outcome": "accepted", "category": None, "diagnostic_id": None, "case_id": None, "case_status": None,
+                     "stage": "turn_action", "status": "in_progress", "continuable": True, "next": [{"kind": "turn_action", "player": 0}],
                      "ref": {"game_id": "g-0001", "segment": 0, "step": 12, "decision_id": None},
                      "convention_set": {"id": "CS-KYUURA-CURRENT", "version": 1, "digest": "<照合値>"}},
          "views": {"actor": {"outcome": "accepted", "status": "in_progress"}, "opponent": {"events": ["attach_energy"]}, "spectator": {"events": ["attach_energy"]}}},
-        {"id": "EX2-ILLEGAL", "title": "不正な操作による拒否", "api_status": "not_implemented",
+        {"id": "EX2-ILLEGAL", "title": "不正な操作による拒否", "api_status": "illustrative",
          "situation": "番でないプレイヤー 1 が番の終わりを送る",
-         "payload": {"kyuura_diagnostic_schema": 1, "outcome": "rejected", "category": "invalid_input", "subkind": "command", "code": "NOT_YOUR_TURN",
-                     "case_id": None, "case_status": "not_identified", "catalog_status": "listed", "stage": "action_declaration", "status": "in_progress",
-                     "continuable": True, "next": ["action"], "message": "（エンジンの理由の文。説明用で版で変わりうる）",
+         "payload": {"kyuura_diagnostic_schema": 1, "outcome": "rejected", "category": "invalid_input", "subkind": "command", "diagnostic_id": "NOT_YOUR_TURN",
+                     "case_id": None, "case_status": "not_applicable", "stage": "turn_action", "status": "in_progress",
+                     "continuable": True, "next": [{"kind": "turn_action", "player": 0}], "message": "今はあなたの番ではありません。",
                      "ref": {"game_id": "g-0001", "segment": 0, "step": 13, "decision_id": None},
                      "convention_set": {"id": "CS-KYUURA-CURRENT", "version": 1, "digest": "<照合値>"}},
-         "views": {"actor": {"outcome": "rejected", "category": "invalid_input", "code": "NOT_YOUR_TURN"}, "opponent": None, "spectator": None}},
-        {"id": "EX3-UNRESOLVED", "title": "未裁定での停止（宣言の拒否）", "api_status": "not_implemented",
+         "views": {"actor": {"outcome": "rejected", "category": "invalid_input", "diagnostic_id": "NOT_YOUR_TURN"}, "opponent": None, "spectator": None}},
+        {"id": "EX3-UNRESOLVED", "title": "未裁定での停止（宣言の拒否）", "api_status": "illustrative",
          "situation": "はらだいこを宣言したが、配分を読まない下限が 2 より小さく、山札に基本エネルギーカードがあるかもしれない（v0.151 の保守的な停止）",
-         "payload": {"kyuura_diagnostic_schema": 1, "outcome": "rejected", "category": "unresolved_ruling", "code": "UNRESOLVED_STATED_CARDS_SHORT",
-                     "case_id": "UNRESOLVED_STATED_CARDS_SHORT#deck-contents", "case_status": "identified", "catalog_status": "listed", "stage": "action_declaration",
-                     "status": "in_progress", "continuable": True, "next": ["action"],
-                     "message": "（決まった文。山札を見る前に、見えないカードの配分を読まずに確かめられない…）",
+         "payload": {"kyuura_diagnostic_schema": 1, "outcome": "rejected", "category": "unresolved_ruling", "diagnostic_id": "UNRESOLVED_STATED_CARDS_SHORT",
+                     "case_id": None, "case_status": "not_identified", "stage": "turn_action",
+                     "status": "in_progress", "continuable": True, "next": [{"kind": "turn_action", "player": 0}],
+                     "message": "この場面の扱いは、基準のルールと記録からは決まらないため、エンジンはこの操作を受け付けません。",
                      "ref": {"game_id": "g-0002", "segment": 0, "step": 40, "decision_id": None},
                      "convention_set": {"id": "CS-KYUURA-CURRENT", "version": 1, "digest": "<照合値>"}},
-         "views": {"actor": {"outcome": "rejected", "category": "unresolved_ruling", "code": "UNRESOLVED_STATED_CARDS_SHORT",
-                             "case_id": "UNRESOLVED_STATED_CARDS_SHORT#deck-contents"}, "opponent": None, "spectator": None}},
-        {"id": "EX4-LIMIT", "title": "技術的上限による非対応", "api_status": "not_implemented",
+         "views": {"actor": {"outcome": "rejected", "category": "unresolved_ruling", "diagnostic_id": "UNRESOLVED_STATED_CARDS_SHORT",
+                             "case_status": "not_identified"}, "opponent": None, "spectator": None}},
+        {"id": "EX4-LIMIT", "title": "技術的上限による非対応", "api_status": "illustrative",
          "situation": "相手のうらのカード（マチスの秘策）を 2 枚以上指定する操作で、受け付けるかを本当のカードによらず確かめる回数の上限を超える",
-         "payload": {"kyuura_diagnostic_schema": 1, "outcome": "rejected", "category": "technical_limit", "code": "UNSUPPORTED_SECRET_PLAN_IDENTITIES",
-                     "case_id": None, "case_status": "not_identified", "catalog_status": "listed", "stage": "action_declaration", "status": "in_progress",
-                     "continuable": True, "next": ["action"], "ref": {"game_id": "g-0003", "segment": 0, "step": 21, "decision_id": None},
+         "payload": {"kyuura_diagnostic_schema": 1, "outcome": "rejected", "category": "technical_limit", "diagnostic_id": "UNSUPPORTED_SECRET_PLAN_IDENTITIES",
+                     "case_id": "UNSUPPORTED_SECRET_PLAN_IDENTITIES", "case_status": "identified", "stage": "turn_action", "status": "in_progress",
+                     "continuable": True, "next": [{"kind": "turn_action", "player": 0}], "ref": {"game_id": "g-0003", "segment": 0, "step": 21, "decision_id": None},
                      "convention_set": {"id": "CS-KYUURA-CURRENT", "version": 1, "digest": "<照合値>"}},
-         "views": {"actor": {"outcome": "rejected", "category": "technical_limit", "code": "UNSUPPORTED_SECRET_PLAN_IDENTITIES"}, "opponent": None, "spectator": None}},
-        {"id": "EX5-DEV-VS-SAFE", "title": "秘密情報を含む開発用診断と、安全な閲覧者向け診断", "api_status": "not_implemented",
+         "views": {"actor": {"outcome": "rejected", "category": "technical_limit", "diagnostic_id": "UNSUPPORTED_SECRET_PLAN_IDENTITIES"}, "opponent": None, "spectator": None}},
+        {"id": "EX5-DEV-VS-SAFE", "title": "秘密情報を含む開発用診断と、安全な閲覧者向け診断", "api_status": "illustrative",
          "situation": "EX3 と同じ拒否。検証者の詳細には実際の山札の枚数・解決の記録が入りうるが、本人には決まった文、相手・観戦者には何も送らない",
-         "payload": {"verifier": {"outcome": "rejected", "category": "unresolved_ruling", "code": "UNRESOLVED_STATED_CARDS_SHORT",
-                                  "developer_detail": {"raw_message": "<例外の生の文>", "trace": "<apply_command_traced の解決の記録>",
-                                                       "secret_note": "実際の山札の基本エネルギーカード 3 枚・うらのサイド 4 枚（例示）"},
-                                  "state_digest": "<形式 35 の sha256>"}},
-         "views": {"actor": {"outcome": "rejected", "category": "unresolved_ruling", "code": "UNRESOLVED_STATED_CARDS_SHORT", "message": "<決まった文>"},
+         "payload": {"verifier": {"mapped": True, "engine_code": "UNRESOLVED_STATED_CARDS_SHORT", "exception_type": "UnsupportedError",
+                                  "raw_message": "<例外の生の文>", "traceback": "<traceback>", "command": {"type": "use_attack", "player": 0, "attack": 0},
+                                  "developer_detail": {"trace": "<apply_command_traced の解決の記録（v0.152 では作らない）>",
+                                                       "secret_note": "実際の山札の基本エネルギーカード 3 枚・うらのサイド 4 枚（例示）"}}},
+         "views": {"actor": {"outcome": "rejected", "category": "unresolved_ruling", "diagnostic_id": "UNRESOLVED_STATED_CARDS_SHORT", "message": "<コードに対応する定型文>"},
                    "opponent": None, "spectator": None}},
-        {"id": "EX6-DECISION-RECORD", "title": "決定待ちを含む再現用記録", "api_status": "not_implemented",
+        {"id": "EX6-DECISION-RECORD", "title": "決定待ちを含む再現用記録", "api_status": "illustrative",
          "situation": "パソコン通信で山札をさがす決定が出て、次の歩で答える（記録は検証者だけ）",
          "payload": {"kyuura_replay_format": 1,
                      "header": {"engine": {"version": "0.151.0", "implementation_digest": "<sha256>"}, "runtime": {"python": "CPython 3.14.6"},
@@ -512,7 +549,7 @@ SPEC = {
                           "outcome": {"result": "accepted"}, "check": {"state_digest": "<sha256>", "log_length": 215, "status": "in_progress", "decision": None}}],
                      "footer": None},
          "views": {"opponent": {"decision": {"id": 9, "kind": "search_deck", "player": 0, "options": None}}}},
-        {"id": "EX7-SUDDEN-DEATH", "title": "サドン・デスの区間を含む記録", "api_status": "not_implemented",
+        {"id": "EX7-SUDDEN-DEATH", "title": "サドン・デスの区間を含む記録", "api_status": "illustrative",
          "situation": "同時のきぜつでサドン・デスに移り、StartSuddenDeath で延長戦（サイド 1 枚）を始め、延長戦で勝ちが決まる",
          "payload": {"kyuura_replay_format": 1,
                      "steps": [{"index": 88, "segment": 0, "actor": 1, "command": {"type": "use_attack", "player": 1, "attack": 0},
@@ -523,21 +560,23 @@ SPEC = {
                                   {"index": 1, "start_step": 89, "prize_count": 1, "result": {"outcome": "win", "winner": 0}}],
                      "footer": {"reason": "game_over", "steps": 140, "final_state_digest": "<sha256>"}},
          "views": {"spectator": {"segment": {"index": 1, "prize_count": 1, "previous": [{"index": 0, "outcome": "sudden_death"}]}}}},
-        {"id": "EX8-REPLAY-REFUSED", "title": "非対応の版・規約による再現の拒否", "api_status": "not_implemented",
+        {"id": "EX8-REPLAY-REFUSED", "title": "非対応の版・規約による再現の拒否", "api_status": "illustrative",
          "situation": "記録の規約集合 CS-KYUURA-PLAY-S2A@1 の照合値が、この実装の登録と違う（または記録の形式の版 2 をこの実装が知らない）",
          "payload": {"replay": "unsupported", "reasons": [{"item": "convention_set.digest", "recorded": "<記録の照合値>", "expected": "<登録の照合値>"},
                                                          {"item": "kyuura_replay_format", "recorded": 2, "supported": [1]}],
-                     "category": "compatibility", "code": "UNSUPPORTED_CONVENTION_SET"},
+                     "category": "compatibility", "diagnostic_id": "UNSUPPORTED_CONVENTION_SET"},
          "views": {}},
-        {"id": "EX9-HALTED", "title": "操作の結果として停止した状態", "api_status": "not_implemented",
+        {"id": "EX9-HALTED", "title": "操作の結果として停止した状態", "api_status": "illustrative",
          "situation": "番の終わりを受け付け、ポケモンチェックで未裁定の場面に当たって HALTED になる（拒否ではない）",
-         "payload": {"kyuura_diagnostic_schema": 1, "outcome": "accepted", "category": None, "code": None, "status": "halted",
-                     "halt": {"category": "unresolved_ruling", "code": "UNRESOLVED_SCRAM_TIMING", "case_id": "UNRESOLVED_SCRAM_TIMING#pokemon-check"},
-                     "case_status": "identified", "catalog_status": "listed", "stage": "between_turns", "continuable": False, "next": [],
+         "payload": {"kyuura_diagnostic_schema": 1, "outcome": "accepted", "category": None, "diagnostic_id": None, "status": "halted",
+                     "halt": {"category": "unresolved_ruling", "diagnostic_id": "UNRESOLVED_SCRAM_TIMING", "case_id": None, "case_status": "not_identified",
+                              "message": "この場面の扱いは、基準のルールと記録からは決まらないため、エンジンは対戦を止めました。", "interrupted": False},
+                     "case_status": None, "stage": "turn_action", "continuable": False, "next": [],
                      "ref": {"game_id": "g-0005", "segment": 0, "step": 77, "decision_id": None},
                      "convention_set": {"id": "CS-KYUURA-CURRENT", "version": 1, "digest": "<照合値>"}},
-         "views": {"actor": {"status": "halted", "halt": {"code": "UNRESOLVED_SCRAM_TIMING"}}, "opponent": {"status": "halted", "halt": {"code": "UNRESOLVED_SCRAM_TIMING"}},
-                   "spectator": {"status": "halted", "halt": {"code": "UNRESOLVED_SCRAM_TIMING"}}}},
+         "views": {"actor": {"status": "halted", "halt": {"diagnostic_id": "UNRESOLVED_SCRAM_TIMING"}},
+                   "opponent": {"status": "halted", "halt": {"diagnostic_id": "UNRESOLVED_SCRAM_TIMING"}},
+                   "spectator": {"status": "halted", "halt": {"diagnostic_id": "UNRESOLVED_SCRAM_TIMING"}}}},
     ],
 
     # ------------------------------------------------------------ 利用者の判断事項（どれも pending）
@@ -545,10 +584,13 @@ SPEC = {
         {"id": "D-MESSAGE", "question": "本人に返す拒否の理由の文を、エンジンの生の文にするか、コードごとの決まった文にするか",
          "options": ["生の文（今の apply_command の呼び出し元が受け取る文と同じ）", "コードごとの決まった文の表（文の秘密の検査がいらない）"],
          "recommendation": "最初は生の文を本人と検証者だけに返し、プログラムでは code で判定する。v0.135〜v0.151 の対象群の外で文が配分によるかは未確認なので、双子の比較の対象を広げるまで、オンラインの相手には送らない",
-         "status": "pending"},
+         "status": "adopted", "adopted": "本人向けは、原則としてコードに対応する安全な定型文。生の例外文と内部の詳細は検証者用（推奨案ではなく、決まった文の表を採用）",
+         "adoption": "ADOPT-U1-U2"},
         {"id": "D-REJECTED", "question": "完全な再現用記録に、拒否された操作を記録するか",
          "options": ["すべて記録する（確認値として。再現の入力ではない）", "記録しない（受理した操作だけ）"],
-         "recommendation": "すべて記録する。拒否の結果（コード・文の指紋）は情報漏れの調査に要る。再現は受理した操作だけで行い、拒否の歩は同じ拒否になるかを確かめる", "status": "pending"},
+         "recommendation": "すべて記録する。拒否の結果（コード・文の指紋）は情報漏れの調査に要る。再現は受理した操作だけで行い、拒否の歩は同じ拒否になるかを確かめる", "status": "adopted",
+         "adopted": "将来の完全記録へ任意で残せる設計にする（受理した操作の再現とは区別する）。v0.152 は操作との対応（operation_id・結果・検証者用の記録）の境界だけで、記録はしない",
+         "adoption": "ADOPT-U1-U2"},
         {"id": "D-CHECK-DENSITY", "question": "確認値（状態の指紋）を毎歩書くか、間引くか",
          "options": ["毎歩（lockstep と同じ）", "決定・区間の境界・終わりだけ"], "recommendation": "毎歩。最初に違った歩を返すのに要る。大きさが問題になったら間引く選択肢を形式の版で加える",
          "status": "pending"},
@@ -561,7 +603,7 @@ SPEC = {
          "status": "pending"},
         {"id": "D-POSTGAME", "question": "対戦が終わったあと、閲覧用記録で相手のデッキリスト・seed などを公開するか",
          "options": ["公開しない（対戦中と同じ）", "対戦の終わりに公開する（別の承認の記録が要る）"], "recommendation": "公開しない。公開するなら閲覧用記録の版と、公開の時点を決める",
-         "status": "pending"},
+         "status": "adopted", "adopted": "対戦後も情報の公開範囲を自動では広げない", "adoption": "ADOPT-U1-U2"},
         {"id": "D-VERSIONS", "question": "新しい 4 つの版（診断・再現用記録・閲覧用記録・スナップショット）を分けるか",
          "options": ["4 つに分ける", "診断と閲覧用記録を 1 つにまとめ、3 つにする"],
          "recommendation": "4 つに分ける。どれも整数 1 つで、形が変わったときだけ上げる。値の語彙を足すだけでは上げない（serialize の約束と同じ）", "status": "pending"},
@@ -571,47 +613,48 @@ SPEC = {
         {"id": "D-HALT-SNAPSHOT", "question": "HALTED の状態のスナップショットを作れるようにするか",
          "options": ["作れる（再開はしない。調査・表示用）", "作らない"], "recommendation": "作れる。ただし再開の API はなく、続行規約の採用で再開することは別の判断", "status": "pending"},
         {"id": "D-STATE-INTEGRITY-VIEW", "question": "状態の不整合（state_integrity）を、プレイヤーに内部エラーと同じ見え方で返すか",
-         "options": ["同じ（対戦を止める。内容は検証者だけ）", "別の表示（壊れた保存の可能性を伝える）"], "recommendation": "対戦を止めることは同じにし、分類の名前は分けて返す", "status": "pending"},
+         "options": ["同じ（対戦を止める。内容は検証者だけ）", "別の表示（壊れた保存の可能性を伝える）"], "recommendation": "対戦を止めることは同じにし、分類の名前は分けて返す", "status": "adopted",
+         "adopted": "本人にも一般的な説明だけを返す（内部の値・カードの識別を出さない）。分類は state_integrity のまま（内部エラー・未対応に変えない）", "adoption": "ADOPT-U1-U2"},
     ],
 
     # ------------------------------------------------------------ 実装単位
     "units": [
-        {"id": "U1", "title": "診断の共通データ型と情報境界", "depends": [],
+        {"id": "U1", "title": "診断の共通データ型と情報境界", "depends": [], "status": "implemented",
          "scope": ["kyuura_engine の新しいモジュール（診断の型・分類・見る人ごとの写し）", "台帳から作る同梱のコード表（停止コード → 分類・事例。台帳の生成元から作り、手で書かない）"],
          "reuse": ["EX-ERRORS", "EX-STOP-LEDGER", "EX-HALT"],
          "tests": ["台帳のすべての停止コード（scan の engine_prefixed_codes）が分類に入り、unlisted が 0", "内部エラー（EngineError でない例外）が internal_error 以外にならない",
                    "見る人ごとの写しに、検証者だけの項目（developer_detail・seed・乱数・状態の指紋）が入らない",
                    "v0.147〜v0.151 の双子で、本人・相手・観戦者の診断の写しが同じ（twin_command_problems を写しに当てる）"],
          "done": ["分類の規則が仕様の classification_rules と同じ", "エンジンの動作・既存の公開 API を変えていない", "既存の双子のテストが通る"]},
-        {"id": "U2", "title": "コマンド実行結果のアダプタ", "depends": ["U1"],
+        {"id": "U2", "title": "コマンド実行結果のアダプタ", "depends": ["U1"], "status": "implemented",
          "scope": ["apply_command を包む関数（状態・コマンド・操作するプレイヤー → 結果と診断）", "new_game の前の入力の確かめ（seed の型・範囲を invalid_input にする）"],
          "reuse": ["EX-APPLY-COMMAND", "EX-RESUME-GUARD", "EX-CONVENTION-ID"],
          "tests": ["rejected で状態・乱数・ログが変わらない（command_outcome と同じ確かめ）", "受理・拒否・失敗の 3 つと status の 5 つの組み合わせ",
                    "決定待ち・HALTED・サドン・デスの status と next", "古い状態への操作を、アダプタが持つ今の状態と違えば受け付けない（P-NO-FREE-REDO）"],
          "done": ["apply_command の結果と、アダプタの受理・拒否が一致（同じ入力で）", "例外を広く捕まえない（EngineError だけを診断にし、ほかは internal_error として記録して投げ直す）"]},
-        {"id": "U3", "title": "完全な再現用記録の収集と検証", "depends": ["U2"],
+        {"id": "U3", "status": "planned", "title": "完全な再現用記録の収集と検証", "depends": ["U2"],
          "scope": ["アダプタの結果から記録を作る収集器", "記録の形・見出し・歩の番号・終わりの印の検証"],
          "reuse": ["EX-LOCKSTEP", "EX-COMMAND-CODEC", "EX-STATE-EXPORT", "EX-CONVENTION-ID", "EX-SUDDEN-DEATH"],
          "tests": ["見出しの必須の項目が欠けた記録・番号の飛んだ記録・終わりの印のない記録の区別", "サドン・デスの区間の境界", "拒否の歩を記録しても再現の入力に入らない"],
          "done": ["記録が lockstep の記録と別の形式（kyuura_replay_format）で、どちらも黙って読み替えない"]},
-        {"id": "U4", "title": "再現インターフェース", "depends": ["U3"],
+        {"id": "U4", "status": "planned", "title": "再現インターフェース", "depends": ["U3"],
          "scope": ["replay_from_start・verify_record・compare_runs"],
          "reuse": ["EX-LOCKSTEP", "EX-LOG-AUDIT"],
          "tests": ["固定の少数の対戦（seed と目的を先に決める）で succeeded", "1 歩を書き換えた記録で diverged と最初の歩・項目", "実装の識別・規約集合を変えた記録で unsupported",
                    "内部エラーを diverged にしない", "方策を再実行しない（記録のコマンドだけで進む）"],
          "done": ["同じ実装・同じ依存・同じ規約集合・同じ初期の条件・同じ操作列で、各歩の確認値と同じ", "compare_runs が成功を返さない"]},
-        {"id": "U5", "title": "閲覧用記録", "depends": ["U1", "U3"],
+        {"id": "U5", "status": "planned", "title": "閲覧用記録", "depends": ["U1", "U3"],
          "scope": ["完全な記録（または進行中の状態）から見る人ごとの記録を作る"],
          "reuse": ["EX-OBSERVE", "EX-DECISION", "EX-SUDDEN-DEATH"],
          "tests": ["閲覧用記録が対戦中の観測・ログの写しと同じ", "seed・乱数・状態の指紋・相手のコマンド・相手の拒否が入らない", "双子の完全な記録から作った相手・観戦者の閲覧用記録が同じ"],
          "done": ["閲覧用記録から完全な記録を作る関数を作らない"]},
-        {"id": "U6", "title": "JSON の保存・復元への接続", "depends": ["U3", "U4"],
+        {"id": "U6", "status": "planned", "title": "JSON の保存・復元への接続", "depends": ["U3", "U4"],
          "scope": ["形式 35 から状態をもどせるかの監査（D-SNAPSHOT-BASE の材料）", "スナップショットの書き出し・読み込み・確かめ"],
          "reuse": ["EX-RNG-JSON", "EX-RESUME-GUARD", "EX-CONVENTION-ID", "EX-STATE-EXPORT"],
          "tests": ["保存して復元し、続きを送った結果が保存しなかった場合と同じ（固定の少数の対戦・決定待ち・区間の途中）", "知らない形式・項目・再開先・規約集合の拒否",
                    "壊したスナップショットが StateIntegrityError か invalid_record になる"],
          "done": ["pickle を保存の形式にしない", "形式 35 の意味を変えない"]},
-        {"id": "U7", "title": "合法手 API・GUI アダプタへの接続", "depends": ["U2", "U5"],
+        {"id": "U7", "status": "planned", "title": "合法手 API・GUI アダプタへの接続", "depends": ["U2", "U5"],
          "scope": ["合法手の一覧の境界（見る人の知る情報だけで作る。秘密の配分で候補が変わらない）", "GUI・AI・オンライン対戦が使う境界の文書（実装は採用の判断のあと）"],
          "reuse": ["EX-OBSERVE", "EX-DECISION", "EX-TWIN-AUDIT"],
          "tests": ["双子で合法手の一覧が同じ", "一覧の手がアダプタで rejected にならない（または理由が分類で説明できる）"],
@@ -662,8 +705,8 @@ def blocks(spec: dict) -> dict[str, list[str]]:
     out["outcomes"] = (_table(["結果", "意味", "状態", "分類", "次"], [[f"`{o['id']}`", o["meaning"], o["state"], ", ".join(o["categories"]), o["next"]] for o in spec["outcomes"]])
                        + [""] + _table(["status", "意味"], [[f"`{s['id']}`", s["meaning"]] for s in spec["statuses"]])
                        + [""] + _table(["stage", "意味"], [[f"`{s['id']}`", s["meaning"]] for s in spec["stages"]]))
-    out["diagnostic-fields"] = _table(["項目", "固定か説明用か", "必須", "意味"],
-                                      [[f"`{f['field']}`", f["stability"], f["required"], f["meaning"]] for f in spec["diagnostic_fields"]])
+    out["diagnostic-fields"] = _table(["項目", "固定か説明用か", "必須", "渡す相手", "意味"],
+                                      [[f"`{f['field']}`", f["stability"], f["required"], f["audience"], f["meaning"]] for f in spec["diagnostic_fields"]])
     out["roles"] = _table(["権限", "意味", "持つもの"], [[f"`{r['id']}`", r["meaning"], r["holder"]] for r in spec["roles"]])
     out["visibility"] = _table(["項目", "群", "本人", "相手", "観戦者", "検証者", "根拠"],
                                [[v["item"], v["group"], v["actor"], v["opponent"], v["spectator"], v["verifier"], v["basis"]] for v in spec["visibility"]])
@@ -691,14 +734,21 @@ def blocks(spec: dict) -> dict[str, list[str]]:
         if e["views"]:
             lines += ["見る人ごとの写し（null は送らない）:", "", "```json", json.dumps(e["views"], ensure_ascii=False, indent=1), "```", ""]
     out["examples"] = lines[:-1]
-    out["units"] = _table(["単位", "内容", "依存", "変更範囲", "再利用", "回帰テスト", "完了基準"],
-                          [[u["id"], u["title"], ", ".join(u["depends"]) or "なし", u["scope"], ", ".join(u["reuse"]), u["tests"], u["done"]] for u in spec["units"]])
-    out["decisions"] = _table(["ID", "問い", "選択肢", "推奨", "状態"],
-                              [[d["id"], d["question"], d["options"], d["recommendation"], d["status"]] for d in spec["decisions"]])
+    out["units"] = _table(["単位", "状態", "内容", "依存", "変更範囲", "再利用", "回帰テスト", "完了基準"],
+                          [[u["id"], u["status"], u["title"], ", ".join(u["depends"]) or "なし", u["scope"], ", ".join(u["reuse"]), u["tests"], u["done"]]
+                           for u in spec["units"]])
+    out["decisions"] = _table(["ID", "問い", "選択肢", "推奨", "状態", "採用した内容"],
+                              [[d["id"], d["question"], d["options"], d["recommendation"], d["status"], d.get("adopted", "")] for d in spec["decisions"]])
+    a_lines = []
+    for a in spec["adoptions"]:
+        a_lines += [f"- `{a['id']}`（{a['date']}・{a['by']}）: {a['scope']}。実装: {a['implemented_in']}", "  - 方針:"]
+        a_lines += [f"    - {p}" for p in a["policies"]]
+        a_lines += [f"  - 判断事項: {'、'.join(a['decisions'])}", f"  - 実装単位: {'、'.join(a['units'])}"]
+    out["adoptions"] = a_lines
     return out
 
 
-DESIGN_BLOCKS = ("existing", "categories", "classification-rules", "outcomes", "diagnostic-fields", "roles", "visibility", "principles", "records", "replay",
+DESIGN_BLOCKS = ("adoptions", "existing", "categories", "classification-rules", "outcomes", "diagnostic-fields", "roles", "visibility", "principles", "records", "replay",
                  "versions", "examples")
 PLAN_BLOCKS = ("units", "decisions")
 _BLOCK = re.compile(r"(<!-- generated:(?P<name>[a-z-]+) begin -->\n)(?P<body>.*?)(<!-- generated:(?P=name) end -->)", re.DOTALL)
@@ -763,13 +813,26 @@ def spec_problems(spec: dict) -> list[str]:
     """JSON に書いた仕様の中身の矛盾（文書との一致は ``check`` が別に見る）。"""
     problems: list[str] = []
     if spec.get("approval") != "not_approved" or spec.get("status") != "proposed":
-        problems.append("仕様案が承認済みになっている（approval は not_approved、status は proposed のまま）")
+        problems.append("仕様案が承認済みになっている（approval は not_approved、status は proposed のまま。採用は adoptions に範囲を限って書く）")
+    adoptions = {a["id"]: a for a in spec.get("adoptions", [])}
+    adopted_decisions = {d for a in adoptions.values() for d in a["decisions"]}
+    adopted_units = {u for a in adoptions.values() for u in a["units"]}
     for d in spec["decisions"]:
-        if d.get("status") != "pending":
-            problems.append(f"判断事項 {d['id']} が pending でない（利用者の判断の前）")
+        if d.get("status") == "adopted":
+            if d.get("adoption") not in adoptions or d["id"] not in adoptions[d["adoption"]]["decisions"] or not d.get("adopted"):
+                problems.append(f"判断事項 {d['id']} が、採用の記録（adoptions）にないのに adopted になっている")
+        elif d.get("status") != "pending":
+            problems.append(f"判断事項 {d['id']} が pending・adopted でない")
+    for d in adopted_decisions - {d["id"] for d in spec["decisions"] if d.get("status") == "adopted"}:
+        problems.append(f"採用の記録の判断事項 {d} が adopted になっていない")
+    for u in spec["units"]:
+        if u.get("status") not in ("implemented", "planned"):
+            problems.append(f"実装単位 {u['id']} の状態 {u.get('status')} が語彙にない")
+        if (u.get("status") == "implemented") != (u["id"] in adopted_units):
+            problems.append(f"実装単位 {u['id']} の状態が、採用の記録の単位と合わない")
     for e in spec["examples"]:
-        if e.get("api_status") != "not_implemented":
-            problems.append(f"例 {e['id']} が未実装の API の例示になっていない")
+        if e.get("api_status") != "illustrative":
+            problems.append(f"例 {e['id']} が例示（illustrative）になっていない（実際の出力の例は版の文書に書く）")
 
     # 参照
     for e in spec["existing"]:
@@ -833,13 +896,13 @@ def spec_problems(spec: dict) -> list[str]:
     status_ids = set(STATUSES)
     for e in spec["examples"]:
         for path, key, value in _walk(e["payload"]):
-            if key == "code" and value is not None and value not in literals and value not in entries:
-                problems.append(f"例 {e['id']} の {path}: コード {value} がエンジン・台帳にない")
+            if key in ("code", "diagnostic_id", "engine_code") and value is not None and value not in literals and value not in entries and value not in ADAPTER_IDS:
+                problems.append(f"例 {e['id']} の {path}: コード {value} がエンジン・台帳・アダプタの識別にない")
             if key == "case_id" and value is not None and value not in cases:
                 problems.append(f"例 {e['id']} の {path}: 事例 {value} が台帳・場面の索引にない")
             if key == "category" and value is not None and value not in CATEGORIES:
                 problems.append(f"例 {e['id']} の {path}: 分類 {value} が分類にない")
-            if key == "stage" and value not in stage_ids:
+            if key == "stage" and value is not None and value not in stage_ids:
                 problems.append(f"例 {e['id']} の {path}: 処理段階 {value} が語彙にない")
             if key == "status" and isinstance(value, str) and value not in status_ids:
                 problems.append(f"例 {e['id']} の {path}: status {value} が語彙にない")

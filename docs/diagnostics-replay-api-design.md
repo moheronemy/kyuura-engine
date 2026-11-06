@@ -1,8 +1,25 @@
 # 診断 API と対戦記録・再現インターフェースの仕様案
 
-この文書は**仕様案**です（状態 `proposed`、承認 `not_approved`）。エンジンの動作・公開 API は変えていません。ここに書いた API・記録の形・例は、どれも**まだ実装していません**（例の `api_status` は `not_implemented`）。実装の単位と順は [実装計画](diagnostics-replay-api-implementation-plan.md) に、利用者の判断が要る事項もそこに書きます。
+この文書は**仕様案**です（状態 `proposed`、承認 `not_approved`）。v0.152 で、利用者が U1（診断の型と情報境界）・U2（コマンド実行結果のアダプタ）と 6 つの方針だけを採用し、実装しました（[diagnostics-adapter-v0.152.md](diagnostics-adapter-v0.152.md)。採用の記録は下の「採用の記録」）。ほかの判断事項・記録・再現・保存と復元は、仕様案のままで実装していません。9 章の例は形の例示です（`api_status` は `illustrative`。実際の出力の例は v0.152 の文書）。実装の単位と順は [実装計画](diagnostics-replay-api-implementation-plan.md) に、利用者の判断が要る事項もそこに書きます。
 
 構造化した仕様は [diagnostics-replay-api-design.json](diagnostics-replay-api-design.json) です。この文書の表と例（`<!-- generated:… -->` の区画）は、JSON と同じ元（`scripts/build_diagnostics_replay_api_design.py` の `SPEC`）から作ります。区画の中を手で直さないでください（`--check` が違いを見つけます）。区画の外の説明は手で書いています。
+
+## 採用の記録
+
+<!-- generated:adoptions begin -->
+- `ADOPT-U1-U2`（2026-11-06・利用者）: U1（診断の型と情報境界）と U2（コマンド実行結果のアダプタ）の実装と、次の方針だけ。仕様案のほかの判断事項・仕様案の全体の承認ではない。実装: v0.152（docs/diagnostics-adapter-v0.152.md）
+  - 方針:
+    - 本人向けの説明は、原則としてコードに対応する安全な定型文とする
+    - 生の例外文と内部の詳細は検証者用とし、通常の閲覧者へ渡さない
+    - 状態の不整合は、本人にも一般的な説明だけを返す
+    - 未登録コードを推測で未裁定・未対応へ分類しない。診断の対応漏れとして検出する
+    - 拒否された操作は、将来の完全記録へ任意で残せる設計にする。受理した操作の再現とは区別する
+    - 対戦後も情報の公開範囲を自動では広げない
+  - 判断事項: D-MESSAGE、D-STATE-INTEGRITY-VIEW、D-REJECTED、D-POSTGAME
+  - 実装単位: U1、U2
+<!-- generated:adoptions end -->
+
+採用は、この記録の範囲だけです。仕様案のほかの判断事項（実装の識別・Python の環境をまたぐ再現・確認値の密度・スナップショットの形式など）は保留（`pending`）のままです。
 
 ## 1. 目的と範囲
 
@@ -48,7 +65,7 @@ v0.135〜v0.151 の情報漏れの修正では、「受理・拒否・拒否の�
 | EX-TRACE | 解決の記録（内部の入口） | internal_only | `kyuura_engine/engine.py::apply_command_traced` | ワザ・番の終わりの解決の記録（先読みの枝を含む）。状態に保存しない | 開発用の詳細（developer_detail）の候補。検証者だけ | 公開の API ではない。秘密の配分を含む |
 | NI-STATE-RESTORE | 状態の読み込み（state_from_dict など） | not_implemented |  | ない（v0.1 から未実装） | U6 で新しく作る | 形式 35 を読み込み用に読み替えない |
 | NI-LEGAL-MOVES | 合法手の一覧 | not_implemented | `tools/stress_engine.py::choose_command` | ない（ストレス実行の操作の選び方は検証用の道具で、合法手の一覧ではない） | U7 で境界だけを決める | でたらめな操作を混ぜる道具 |
-| NI-DIAGNOSTIC | 構造化した診断 | not_implemented |  | ない | U1・U2 で作る |  |
+| NI-DIAGNOSTIC | 構造化した診断（v0.152 で U1・U2 として実装） | implemented | `kyuura_engine/diagnostics.py::classify_error`<br>`kyuura_engine/adapter.py::submit`<br>`kyuura_engine/data/diagnostic_catalog.json`<br>`scripts/build_diagnostic_catalog.py` | コード表による分類・見る人ごとの結果（本人・相手と観戦者）・検証者用の記録・コマンド実行結果のアダプタ（v0.152） | U3 以後の記録・再現は submit の結果（CommandResult）を受け取る | 記録・再現・合法手の一覧はない |
 | NI-REPLAY-RECORD | 完全な再現用記録と再現 | not_implemented | `tests/helpers.py::replay` | ない（テストの replay はコマンドの列を順に送るだけ） | U3・U4 で作る |  |
 | NI-VIEW-RECORD | 閲覧用記録 | not_implemented |  | ない（観測・ログの写しの部品はある） | U5 で作る |  |
 | NI-HALT-RESUME | 停止からの再開 | not_implemented |  | ない（GAP-DEFERRED-HALT-NO-RESUME） | この仕様の範囲の外（続行規約の採用は別の判断） |  |
@@ -86,6 +103,7 @@ v0.135〜v0.151 の情報漏れの修正では、「受理・拒否・拒否の�
 | `state_integrity` | 状態の不整合 | StateIntegrityError（STATE_INTEGRITY）。処理の前の入力の確かめ（壊れた状態・情報の足りない状態）と処理の後の不変条件 | input, result | 渡した状態は変わらないが、その状態で続けることは保証しない | いいえ |
 | `compatibility` | 未知・非対応の規約集合や互換性 | UNSUPPORTED_CONVENTION_SET・UNSUPPORTED_DECISION・UNSUPPORTED_HISTORY_DAMAGE_PLACE_UNKNOWN（前の版の記録）と、記録・スナップショットの知らない形式・項目・版 | conventions, decision, legacy_state, record_format | 状態は変わらない | いいえ |
 | `internal_error` | 内部エラー | EngineError でない例外（RuntimeError・ValueError・KeyError・TypeError など。不変条件の RuntimeError を含む） |  | 保証しない（apply_command は複製で処理するが、内部エラーについては約束していない） | いいえ |
+| `unmapped` | 診断の対応漏れ（v0.152 の採用） | コード表にないコード・表と違う例外の型で来たコード（EngineError）、表にない停止のコード |  | EngineError なので渡した状態は変わらない（拒否）。停止のコードなら受理した結果の停止 | はい |
 <!-- generated:categories end -->
 
 ### 4.3 分類の決め方
@@ -100,16 +118,17 @@ v0.135〜v0.151 の情報漏れの修正では、「受理・拒否・拒否の�
 | 5 | UnsupportedError・HALTED の halt.code・デッキの検査の UNSUPPORTED_CARD で、台帳の分類が C（または UNRESOLVED_RULING） | `unresolved_ruling` | 台帳の分類（接頭辞だけで決めない） |
 | 6 | 同じく、台帳の分類が B | `technical_limit` | 台帳の分類 |
 | 7 | 同じく、台帳の分類が A・E（UNSUPPORTED_CARD を含む） | `unsupported` | 台帳の分類 |
-| 8 | UnsupportedError で、台帳にないコード | `unsupported` | catalog_status を unlisted にして返す（拒否であることは例外の型で分かる）。台帳の作り直しを促す回帰テスト（U1）で 0 件を保つ |
+| 8 | EngineError で、コード表にないコード、または表の行の例外の型の区分（raised_as）と合わない | `unmapped` | v0.152 の採用（推測で分類しない）。コード表は台帳と台帳の外のコード（不正な操作・状態の不整合など）を合わせたもので、台帳には加えない |
 
 互換性の表（compatibility_codes）: `UNSUPPORTED_CONVENTION_SET`、`UNSUPPORTED_DECISION`、`UNSUPPORTED_HISTORY_DAMAGE_PLACE_UNKNOWN`
 <!-- generated:classification-rules end -->
 
 - 例外の名前の文字列だけでは決めません。`UnsupportedError` は、未裁定（UNRESOLVED_ の研究上の停止）・未対応・技術的制限（`UNSUPPORTED_PREFLIGHT_LIMIT` など）・互換性（`UNSUPPORTED_CONVENTION_SET`・`UNSUPPORTED_DECISION`）を同じ型で表すからです。区別は、停止の方針の台帳の分類（A エンジン機能不足・B 技術的制限・C 公式情報から未裁定・E 内部ガードなど）と止め方から決めます。台帳は「接頭辞だけで公式の不存在を証明しない」と書いており、分類もコードの接頭辞では決めません
-- 台帳の実行時の停止コード（`runtime_stop_code`）は、分類 A が 34・B が 5・E が 3（うち 1 つは履歴だけ）、研究上の停止コード（`research_stop_code`）316 はどれも C です（基点の台帳）。B の 5 つ（`UNSUPPORTED_BERRY_ORDER_LIMIT`・`UNSUPPORTED_COLOR_READINGS_LIMIT`・`UNSUPPORTED_POKEMON_CHECK_CHAR_COINS`・`UNSUPPORTED_PREFLIGHT_LIMIT`・`UNSUPPORTED_SECRET_PLAN_IDENTITIES`）は技術的制限です。E の `UNRESOLVED_RULING` は事例を持たない共通の既定のコードなので、未裁定として扱い、事例は `not_identified` にします。E の `UNSUPPORTED_CARD` はデッキの検査の問題の文で、未対応として扱います
+- 台帳の実行時の停止コード（`runtime_stop_code`）は、分類 A が 34・B が 5・E が 3（うち 1 つは履歴だけ）、研究上の停止コード（`research_stop_code`）316 はどれも C です（基点の台帳）。B の 5 つ（`UNSUPPORTED_BERRY_ORDER_LIMIT`・`UNSUPPORTED_COLOR_READINGS_LIMIT`・`UNSUPPORTED_POKEMON_CHECK_CHAR_COINS`・`UNSUPPORTED_PREFLIGHT_LIMIT`・`UNSUPPORTED_SECRET_PLAN_IDENTITIES`）は技術的制限です。E の `UNRESOLVED_RULING` は事例を持たない共通の既定のコードなので、未裁定として扱い、事例は `not_identified` にします。E の `UNSUPPORTED_CARD` はデッキの検査の問題の文の中だけにあり、例外のコードとしては投げません（v0.152 のコード表には入れず、デッキの拒否は `INVALID_DECK`）
 - 互換性の 3 つのコードは、台帳では分類 A ですが、「この実装がその状態を扱えない」意味なので互換性に分けます（表の `compatibility_codes`）
 - 内部エラーは最初の規則で決めます。EngineError でない例外を、未対応・未裁定に変換しません。今のエンジンの `except` は不変条件の確かめの中だけで（`engine.py` の `_bench_limit_or_default` など）、内部エラーを `UnsupportedError` に変える経路は見つかりませんでした
 - `new_game` は、負の seed に `ValueError`、整数でない seed に `TypeError` を投げます（EngineError ではない）。このまま規則 1 に当てると内部エラーになるので、アダプタ（U2）が `new_game` の前に入力を確かめ、`invalid_input`（`setup`）にします。エンジンの例外を書き換えるのではありません
+- v0.152 の採用: コード表（`kyuura_engine/data/diagnostic_catalog.json`。`scripts/build_diagnostic_catalog.py` が台帳・場面の索引・エンジンのソースから作る）にないコードと、表の行の例外の型の区分と合わない例外は、推測で未裁定・未対応にせず、診断の対応漏れ（`unmapped`）にします。元のコードは検証者用の記録だけに置きます。コード表は、停止の方針の台帳の停止コードと、台帳の外のコード（不正な操作・状態の不整合・デッキの検査・規約集合の構成）を合わせたもので、台帳には加えません。上の規則 8 の前の案（台帳にないコードを `unsupported` にする）は採らなかった
 
 事例 ID: 台帳の事例（`コード#事例`。基点で 9 コード・20 事例）と同梱の場面の索引の場面 ID を使います。今の例外は事例を持たないので、事例を特定できるのは、そのコードの場面が 1 つのときと、続行規約の照会（`conventions.continuation_lookup`）で事例を渡す場所だけです。特定できなければ `case_status` を `not_identified` にします（`ContinuationLookup` の語彙と同じ）。例外に事例を持たせることは、エンジンの変更なので U1 の範囲の外です（必要なら別の判断）。
 
@@ -119,7 +138,7 @@ v0.135〜v0.151 の情報漏れの修正では、「受理・拒否・拒否の�
 | 結果 | 意味 | 状態 | 分類 | 次 |
 |---|---|---|---|---|
 | `accepted` | 操作を受け付けた。新しい状態に置きかわる（乱数・ログが進むことがある） | new |  | 結果の status による（in_progress・awaiting_decision・halted・game_over・sudden_death_pending） |
-| `rejected` | 操作を拒否し、元の状態を保った（状態・乱数・ログは変わらない） | kept | invalid_input, unresolved_ruling, unsupported, technical_limit, compatibility | 同じ状態に別の操作を送れる（compatibility なら、この実装ではどの操作も同じ拒否）。同じ操作は同じ拒否になる |
+| `rejected` | 操作を拒否し、元の状態を保った（状態・乱数・ログは変わらない） | kept | invalid_input, unresolved_ruling, unsupported, technical_limit, compatibility, unmapped | 同じ状態に別の操作を送れる（compatibility なら、この実装ではどの操作も同じ拒否）。同じ操作は同じ拒否になる |
 | `failed` | 処理できなかった。元の状態で続けることを保証しない | untrusted | state_integrity, internal_error | 対戦を止め、検証者が調べる（自動で続けない） |
 
 | status | 意味 |
@@ -129,16 +148,18 @@ v0.135〜v0.151 の情報漏れの修正では、「受理・拒否・拒否の�
 | `halted` | 操作の結果として停止した（終端。halt.code は全員に見え、途中停止なら interruption の公開の記録がある。再開の API はない） |
 | `game_over` | 勝ち負けが決まった（終端） |
 | `sudden_death_pending` | サドン・デスに移り、延長戦を始める操作（StartSuddenDeath）だけを受け付ける |
+| `not_started` | 対戦を始める前の拒否（start_game。状態はない。v0.152） |
+| `unavailable` | 処理できなかった結果（failed）。状態を返さない（v0.152） |
 
 | stage | 意味 |
 |---|---|
 | `setup` | new_game・準備（切り直し・ポケモンを出す・ジャンケン） |
-| `action_declaration` | 番の操作の宣言（ワザ・トレーナー・特殊能力・にげる・エネルギーなど）の受付と、宣言の前の先読み |
+| `turn_action` | 番の操作の宣言（ワザ・トレーナー・特殊能力・にげる・エネルギー・番の終わりなど）の受付と、宣言の前の先読み（v0.152 の名前。仕様案の action_declaration・between_turns をまとめた） |
 | `decision_answer` | 保留中の決定への答え（決定の種類・処理の段階は決定の kind と、本人に見える context から） |
-| `between_turns` | 番の終わり・ポケモンチェック |
 | `segment_start` | サドン・デスの延長戦を始める操作 |
-| `state_load` | 観測・コマンドの前の状態の確かめ（規約集合・再開先）と、スナップショットの復元 |
-| `record_check` | 記録の形式・見出し・依存の確かめ（再現の前） |
+| `state_check` | 観測・コマンドの前の状態の確かめ（規約集合・再開先）。将来のスナップショットの復元もここ |
+| `submission` | ホストが確かめた送り手とコマンドのプレイヤーの照合（v0.152。エンジンを呼ぶ前） |
+| `record_check` | 記録の形式・見出し・依存の確かめ（再現の前。U3 以後） |
 <!-- generated:outcomes end -->
 
 同じ状態に同じ操作を送ると、同じ結果になります（拒否は乱数を使わず、受理は同じ乱数の続きを使う）。拒否のあとに「やり直し」で得をすることはありませんが、受理のあとに前の状態から操作をやり直すと、コインの結果を見てから選び直せてしまいます。これを防ぐのは、状態を持つ側（5.1 節）の責任です。
@@ -146,25 +167,31 @@ v0.135〜v0.151 の情報漏れの修正では、「受理・拒否・拒否の�
 ### 4.5 診断の項目と安定性
 
 <!-- generated:diagnostic-fields begin -->
-| 項目 | 固定か説明用か | 必須 | 意味 |
-|---|---|---|---|
-| `kyuura_diagnostic_schema` | fixed | はい | 診断の形の版（整数） |
-| `outcome` | fixed | はい | accepted・rejected・failed |
-| `category` | fixed | はい | 診断の分類（accepted なら null。accepted で status が halted なら halt.code の分類を halt.category に書く） |
-| `subkind` | fixed | いいえ | 分類の下の区分（command・answer・setup など） |
-| `code` | fixed | はい | エンジンのコード（例外の code・halt.code）。一度出したコードの意味を変えず、同じ文字列を別の意味に使わない |
-| `case_id` | fixed | いいえ | 特定できるときの事例 ID（台帳の「コード#事例」か、場面の索引の場面 ID）。特定できなければ null |
-| `case_status` | fixed | はい | identified・not_identified・unknown_scene（conventions.ContinuationLookup の status と同じ語彙） |
-| `catalog_status` | fixed | はい | listed・unlisted（台帳にないコード） |
-| `stage` | fixed | はい | 発生した処理段階（stages の語彙） |
-| `ref` | fixed | はい | 対戦・区間・操作との対応（game_id・segment・step・decision_id） |
-| `convention_set` | fixed | はい | 適用中の規約集合の ID・版・照合値（ConventionSetIdentity.record の id・version・digest） |
-| `status` | fixed | はい | 操作のあとの状態（rejected なら元の状態の status） |
-| `continuable` | fixed | はい | 今の状態で、この実装が次の操作を受け付けうるか |
-| `next` | fixed | はい | 許される次の操作の種類（決定への答え・延長戦の開始・番の操作・なし）。合法手の一覧ではない（U7） |
-| `message` | explanatory | いいえ | 利用者向けの説明。版で変わりうる。プログラムで判定しない |
-| `detail_ref` | explanatory | いいえ | 検証用の詳細の参照（検証者の保管場所の中だけで意味を持つ） |
-| `developer_detail` | explanatory | いいえ | 例外の生の文・halt.message・references・不変条件の problems・解決の記録・実装の場所 |
+| 項目 | 固定か説明用か | 必須 | 渡す相手 | 意味 |
+|---|---|---|---|---|
+| `kyuura_diagnostic_schema` | fixed | はい | viewer | 診断の形の版（整数。v0.152 は 1） |
+| `role` | fixed | はい | viewer | actor（本人への結果）・observer（相手・観戦者への今の状態の知らせ） |
+| `viewer` | fixed | はい | viewer | 見る人（0・1・null） |
+| `outcome` | fixed | はい | actor | accepted・rejected・failed（本人だけ） |
+| `status` | fixed | はい | viewer | 操作のあとの状態（statuses の語彙） |
+| `stage` | fixed | はい | actor | 送った操作の処理段階（コマンドの種類と公開の段階から決まる） |
+| `continuable` | fixed | はい | viewer | 実際の状態で、この版が次の操作を処理しうるか（分類から推測しない） |
+| `next` | fixed | はい | viewer | 次に受け付けうる操作の種類と送るプレイヤー（合法手の一覧ではない） |
+| `diagnostic_id` | fixed | はい | actor | API として安定した診断の識別。コード表で対応付けたコードはそのコード、アダプタが作るものは DIAGNOSTIC_UNMAPPED・INTERNAL_ERROR・SUBMITTER_MISMATCH・INVALID_SEED |
+| `category` | fixed | はい | actor | 診断の分類（accepted なら null） |
+| `subkind` | fixed | いいえ | actor | 不正な入力の区分（command・answer・setup） |
+| `case_id` | fixed | いいえ | actor | コードの場面が 1 つのときの事例 ID。2 つ以上なら null |
+| `case_status` | fixed | はい | actor | identified・not_identified・not_applicable |
+| `message` | explanatory | いいえ | actor | コードに対応する安全な定型文（埋め込みなし。v0.152 の採用）。プログラムで判定しない |
+| `halt` | fixed | いいえ | viewer | 停止した状態の公開の診断（識別・分類・事例・停止の定型文・途中停止か） |
+| `operation_id` | fixed | いいえ | actor | ホストが付けた操作の識別（将来の記録との対応。本人だけ） |
+| `convention_set` | fixed | はい | viewer | 適用中の規約集合の ID・版・照合値 |
+| `engine_code` | fixed | いいえ | verifier | エンジンが返した元のコード（対応漏れのときも） |
+| `raw_message` | explanatory | いいえ | verifier | 例外の生の文 |
+| `traceback` | explanatory | いいえ | verifier | 例外の traceback |
+| `problems` | explanatory | いいえ | verifier | 状態の不整合の問題の文 |
+| `halt_message` | explanatory | いいえ | verifier | 停止の診断用の文・references |
+| `command` | explanatory | いいえ | verifier | 送ったコマンド（command_to_dict） |
 <!-- generated:diagnostic-fields end -->
 
 API として固定するもの（`fixed`）と、説明用で版によって変わりうるもの（`explanatory`）を分けます。
@@ -202,7 +229,7 @@ API として固定するもの（`fixed`）と、説明用で版によって変
 | diagnostic.outcome（拒否された操作） | diagnostic | yes | no | no | yes | 拒否は状態を変えずログにも残らない。相手に試した操作を知らせない（本人の手札などを含む操作の内容が漏れる） |
 | diagnostic.category・code・subkind・stage | diagnostic | yes | no | no | yes | 受理・拒否と同じ境界（v0.135〜v0.151 の双子の比較の対象） |
 | diagnostic.case_id | diagnostic | yes | no | no | yes | 事例は止まった場所（コードの区別）で決まり、秘密の配分で決めない。配分で事例が変わる場所は事例を出さない（not_identified） |
-| diagnostic.message | diagnostic | yes | no | no | yes | 本人の知る情報だけの文。配分によらないことを確かめた範囲（v0.135〜v0.151 の対象群）の外は、判断事項 D-MESSAGE |
+| diagnostic.message | diagnostic | yes | no | no | yes | コードに対応する安全な定型文だけ（v0.152 の採用。D-MESSAGE）。生の文は検証者用 |
 | diagnostic.developer_detail・detail_ref | diagnostic | no | no | no | yes | 例外の生の文・halt.message・解決の記録は実際の配分を含みうる |
 | halt.code（停止した状態） | diagnostic | yes | yes | yes | yes | ログ halted と同じ（全員に見えるイベント） |
 | halt.message・references | diagnostic | no | no | no | yes | 診断用の文（観測に入らない） |
@@ -247,6 +274,8 @@ API として固定するもの（`fixed`）と、説明用で版によって変
 <!-- generated:principles end -->
 
 本人に返す理由の文（`message`）について: v0.135〜v0.151 で双子の比較で確かめたのは、対象群（クイズの答え、山札をさがす効果の使う前の確かめ・先読み・決定の有無・研究上の停止など）の受理・拒否と文です。そのほかの拒否の文が配分によらないことは、まだ確かめていません。そのため、文は本人と検証者だけに返し（相手・観戦者には送らない）、プログラムは `code` で判定する形を推奨します（判断事項 D-MESSAGE）。
+
+v0.152 の採用: 本人向けの説明は、エンジンの生の文ではなく、コードに対応する安全な定型文（コード表の文。カード名・uid・枚数を埋め込まない）にしました。生の例外文・traceback・停止の診断用の文は、検証者用の記録（`VerifierReport`）だけに置きます。上の推奨（生の文を本人に返す）は採りませんでした。
 
 ## 6. 記録の種類
 
@@ -399,7 +428,7 @@ API として固定するもの（`fixed`）と、説明用で版によって変
 ここの例は、**未実装の API の形の例示**です。実在の関数の出力ではありません。`<照合値>`・`<sha256>` などは値の置き場所で、実際の値ではありません。コードと事例 ID は、実在のもの（エンジンのソース・台帳・場面の索引にあるもの）だけを使っています（`--check` が確かめます）。
 
 <!-- generated:examples begin -->
-#### EX1-ACCEPTED: 通常の操作の成功（`api_status`: not_implemented）
+#### EX1-ACCEPTED: 通常の操作の成功（`api_status`: illustrative）
 
 番のプレイヤー 0 が手札の基本エネルギーカードをバトル場のポケモンにつける
 
@@ -408,15 +437,17 @@ API として固定するもの（`fixed`）と、説明用で版によって変
  "kyuura_diagnostic_schema": 1,
  "outcome": "accepted",
  "category": null,
- "code": null,
+ "diagnostic_id": null,
  "case_id": null,
- "case_status": "identified",
- "catalog_status": "listed",
- "stage": "action_declaration",
+ "case_status": null,
+ "stage": "turn_action",
  "status": "in_progress",
  "continuable": true,
  "next": [
-  "action"
+  {
+   "kind": "turn_action",
+   "player": 0
+  }
  ],
  "ref": {
   "game_id": "g-0001",
@@ -453,7 +484,7 @@ API として固定するもの（`fixed`）と、説明用で版によって変
 }
 ```
 
-#### EX2-ILLEGAL: 不正な操作による拒否（`api_status`: not_implemented）
+#### EX2-ILLEGAL: 不正な操作による拒否（`api_status`: illustrative）
 
 番でないプレイヤー 1 が番の終わりを送る
 
@@ -463,17 +494,19 @@ API として固定するもの（`fixed`）と、説明用で版によって変
  "outcome": "rejected",
  "category": "invalid_input",
  "subkind": "command",
- "code": "NOT_YOUR_TURN",
+ "diagnostic_id": "NOT_YOUR_TURN",
  "case_id": null,
- "case_status": "not_identified",
- "catalog_status": "listed",
- "stage": "action_declaration",
+ "case_status": "not_applicable",
+ "stage": "turn_action",
  "status": "in_progress",
  "continuable": true,
  "next": [
-  "action"
+  {
+   "kind": "turn_action",
+   "player": 0
+  }
  ],
- "message": "（エンジンの理由の文。説明用で版で変わりうる）",
+ "message": "今はあなたの番ではありません。",
  "ref": {
   "game_id": "g-0001",
   "segment": 0,
@@ -495,14 +528,14 @@ API として固定するもの（`fixed`）と、説明用で版によって変
  "actor": {
   "outcome": "rejected",
   "category": "invalid_input",
-  "code": "NOT_YOUR_TURN"
+  "diagnostic_id": "NOT_YOUR_TURN"
  },
  "opponent": null,
  "spectator": null
 }
 ```
 
-#### EX3-UNRESOLVED: 未裁定での停止（宣言の拒否）（`api_status`: not_implemented）
+#### EX3-UNRESOLVED: 未裁定での停止（宣言の拒否）（`api_status`: illustrative）
 
 はらだいこを宣言したが、配分を読まない下限が 2 より小さく、山札に基本エネルギーカードがあるかもしれない（v0.151 の保守的な停止）
 
@@ -511,17 +544,19 @@ API として固定するもの（`fixed`）と、説明用で版によって変
  "kyuura_diagnostic_schema": 1,
  "outcome": "rejected",
  "category": "unresolved_ruling",
- "code": "UNRESOLVED_STATED_CARDS_SHORT",
- "case_id": "UNRESOLVED_STATED_CARDS_SHORT#deck-contents",
- "case_status": "identified",
- "catalog_status": "listed",
- "stage": "action_declaration",
+ "diagnostic_id": "UNRESOLVED_STATED_CARDS_SHORT",
+ "case_id": null,
+ "case_status": "not_identified",
+ "stage": "turn_action",
  "status": "in_progress",
  "continuable": true,
  "next": [
-  "action"
+  {
+   "kind": "turn_action",
+   "player": 0
+  }
  ],
- "message": "（決まった文。山札を見る前に、見えないカードの配分を読まずに確かめられない…）",
+ "message": "この場面の扱いは、基準のルールと記録からは決まらないため、エンジンはこの操作を受け付けません。",
  "ref": {
   "game_id": "g-0002",
   "segment": 0,
@@ -543,15 +578,15 @@ API として固定するもの（`fixed`）と、説明用で版によって変
  "actor": {
   "outcome": "rejected",
   "category": "unresolved_ruling",
-  "code": "UNRESOLVED_STATED_CARDS_SHORT",
-  "case_id": "UNRESOLVED_STATED_CARDS_SHORT#deck-contents"
+  "diagnostic_id": "UNRESOLVED_STATED_CARDS_SHORT",
+  "case_status": "not_identified"
  },
  "opponent": null,
  "spectator": null
 }
 ```
 
-#### EX4-LIMIT: 技術的上限による非対応（`api_status`: not_implemented）
+#### EX4-LIMIT: 技術的上限による非対応（`api_status`: illustrative）
 
 相手のうらのカード（マチスの秘策）を 2 枚以上指定する操作で、受け付けるかを本当のカードによらず確かめる回数の上限を超える
 
@@ -560,15 +595,17 @@ API として固定するもの（`fixed`）と、説明用で版によって変
  "kyuura_diagnostic_schema": 1,
  "outcome": "rejected",
  "category": "technical_limit",
- "code": "UNSUPPORTED_SECRET_PLAN_IDENTITIES",
- "case_id": null,
- "case_status": "not_identified",
- "catalog_status": "listed",
- "stage": "action_declaration",
+ "diagnostic_id": "UNSUPPORTED_SECRET_PLAN_IDENTITIES",
+ "case_id": "UNSUPPORTED_SECRET_PLAN_IDENTITIES",
+ "case_status": "identified",
+ "stage": "turn_action",
  "status": "in_progress",
  "continuable": true,
  "next": [
-  "action"
+  {
+   "kind": "turn_action",
+   "player": 0
+  }
  ],
  "ref": {
   "game_id": "g-0003",
@@ -591,29 +628,34 @@ API として固定するもの（`fixed`）と、説明用で版によって変
  "actor": {
   "outcome": "rejected",
   "category": "technical_limit",
-  "code": "UNSUPPORTED_SECRET_PLAN_IDENTITIES"
+  "diagnostic_id": "UNSUPPORTED_SECRET_PLAN_IDENTITIES"
  },
  "opponent": null,
  "spectator": null
 }
 ```
 
-#### EX5-DEV-VS-SAFE: 秘密情報を含む開発用診断と、安全な閲覧者向け診断（`api_status`: not_implemented）
+#### EX5-DEV-VS-SAFE: 秘密情報を含む開発用診断と、安全な閲覧者向け診断（`api_status`: illustrative）
 
 EX3 と同じ拒否。検証者の詳細には実際の山札の枚数・解決の記録が入りうるが、本人には決まった文、相手・観戦者には何も送らない
 
 ```json
 {
  "verifier": {
-  "outcome": "rejected",
-  "category": "unresolved_ruling",
-  "code": "UNRESOLVED_STATED_CARDS_SHORT",
-  "developer_detail": {
-   "raw_message": "<例外の生の文>",
-   "trace": "<apply_command_traced の解決の記録>",
-   "secret_note": "実際の山札の基本エネルギーカード 3 枚・うらのサイド 4 枚（例示）"
+  "mapped": true,
+  "engine_code": "UNRESOLVED_STATED_CARDS_SHORT",
+  "exception_type": "UnsupportedError",
+  "raw_message": "<例外の生の文>",
+  "traceback": "<traceback>",
+  "command": {
+   "type": "use_attack",
+   "player": 0,
+   "attack": 0
   },
-  "state_digest": "<形式 35 の sha256>"
+  "developer_detail": {
+   "trace": "<apply_command_traced の解決の記録（v0.152 では作らない）>",
+   "secret_note": "実際の山札の基本エネルギーカード 3 枚・うらのサイド 4 枚（例示）"
+  }
  }
 }
 ```
@@ -625,15 +667,15 @@ EX3 と同じ拒否。検証者の詳細には実際の山札の枚数・解決�
  "actor": {
   "outcome": "rejected",
   "category": "unresolved_ruling",
-  "code": "UNRESOLVED_STATED_CARDS_SHORT",
-  "message": "<決まった文>"
+  "diagnostic_id": "UNRESOLVED_STATED_CARDS_SHORT",
+  "message": "<コードに対応する定型文>"
  },
  "opponent": null,
  "spectator": null
 }
 ```
 
-#### EX6-DECISION-RECORD: 決定待ちを含む再現用記録（`api_status`: not_implemented）
+#### EX6-DECISION-RECORD: 決定待ちを含む再現用記録（`api_status`: illustrative）
 
 パソコン通信で山札をさがす決定が出て、次の歩で答える（記録は検証者だけ）
 
@@ -737,7 +779,7 @@ EX3 と同じ拒否。検証者の詳細には実際の山札の枚数・解決�
 }
 ```
 
-#### EX7-SUDDEN-DEATH: サドン・デスの区間を含む記録（`api_status`: not_implemented）
+#### EX7-SUDDEN-DEATH: サドン・デスの区間を含む記録（`api_status`: illustrative）
 
 同時のきぜつでサドン・デスに移り、StartSuddenDeath で延長戦（サイド 1 枚）を始め、延長戦で勝ちが決まる
 
@@ -824,7 +866,7 @@ EX3 と同じ拒否。検証者の詳細には実際の山札の枚数・解決�
 }
 ```
 
-#### EX8-REPLAY-REFUSED: 非対応の版・規約による再現の拒否（`api_status`: not_implemented）
+#### EX8-REPLAY-REFUSED: 非対応の版・規約による再現の拒否（`api_status`: illustrative）
 
 記録の規約集合 CS-KYUURA-PLAY-S2A@1 の照合値が、この実装の登録と違う（または記録の形式の版 2 をこの実装が知らない）
 
@@ -846,11 +888,11 @@ EX3 と同じ拒否。検証者の詳細には実際の山札の枚数・解決�
   }
  ],
  "category": "compatibility",
- "code": "UNSUPPORTED_CONVENTION_SET"
+ "diagnostic_id": "UNSUPPORTED_CONVENTION_SET"
 }
 ```
 
-#### EX9-HALTED: 操作の結果として停止した状態（`api_status`: not_implemented）
+#### EX9-HALTED: 操作の結果として停止した状態（`api_status`: illustrative）
 
 番の終わりを受け付け、ポケモンチェックで未裁定の場面に当たって HALTED になる（拒否ではない）
 
@@ -859,16 +901,18 @@ EX3 と同じ拒否。検証者の詳細には実際の山札の枚数・解決�
  "kyuura_diagnostic_schema": 1,
  "outcome": "accepted",
  "category": null,
- "code": null,
+ "diagnostic_id": null,
  "status": "halted",
  "halt": {
   "category": "unresolved_ruling",
-  "code": "UNRESOLVED_SCRAM_TIMING",
-  "case_id": "UNRESOLVED_SCRAM_TIMING#pokemon-check"
+  "diagnostic_id": "UNRESOLVED_SCRAM_TIMING",
+  "case_id": null,
+  "case_status": "not_identified",
+  "message": "この場面の扱いは、基準のルールと記録からは決まらないため、エンジンは対戦を止めました。",
+  "interrupted": false
  },
- "case_status": "identified",
- "catalog_status": "listed",
- "stage": "between_turns",
+ "case_status": null,
+ "stage": "turn_action",
  "continuable": false,
  "next": [],
  "ref": {
@@ -892,19 +936,19 @@ EX3 と同じ拒否。検証者の詳細には実際の山札の枚数・解決�
  "actor": {
   "status": "halted",
   "halt": {
-   "code": "UNRESOLVED_SCRAM_TIMING"
+   "diagnostic_id": "UNRESOLVED_SCRAM_TIMING"
   }
  },
  "opponent": {
   "status": "halted",
   "halt": {
-   "code": "UNRESOLVED_SCRAM_TIMING"
+   "diagnostic_id": "UNRESOLVED_SCRAM_TIMING"
   }
  },
  "spectator": {
   "status": "halted",
   "halt": {
-   "code": "UNRESOLVED_SCRAM_TIMING"
+   "diagnostic_id": "UNRESOLVED_SCRAM_TIMING"
   }
  }
 }
