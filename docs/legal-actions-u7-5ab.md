@@ -148,7 +148,7 @@
   - 表示名: 「ばけるをもどす」「化石・人形をすてる」「うらのカードをおもてにする」など
   - うらの対象は `face_down: true` で、画像を出さずにうらの表示にします。`eligible: false` の選べるもの（FD1）は「処理できない（ゲーム上の禁止ではない）」と表示します
 - **送信と表示**: 送る前に `check` を呼び、受理のあとは `promote_active`・`answer_decision` の候補で続けます。`refused`・`rejected`・`accepted` を分けて表示してください
-- **固定するコミット**: 通常のインストールとスモークテストで確かめたコミットを、この節に記録します（10 章）
+- **固定するコミット**: `kyuura-engine @ git+https://github.com/moheronemy/kyuura-engine@669f3cafbffdc3a13c05b5f76c96e5a6925fca06`（版 0.167.0）。クリーンな仮想環境に Git の URL から通常のインストール（編集可能なインストール・PYTHONPATH なし）をして、`direct_url.json` のコミットが一致し、site-packages からの読み込み・`client_api` の番の候補・ワザの宣言・ピッピ人形の `discard_from_play` の受理をスモークテストで確かめました。実装の識別の `behavior_digest` はソースの木と同じ（`89746bc6456f8f2a3c383680064efd0bdc4d787f4dced1d2ff9688f918dd1261`）。配布物の中身の検査は required=62・problems=0
 
 ## 9. 次の作業
 
@@ -162,4 +162,4 @@
   - `leave_lock` による拒否（エンジンの既存のテストだけ。U7 の盤面では確かめていない）
   - タケシのキュウコンの「ばける」と new_game からの列
   - TK1 の代表
-- 固定するコミット: 最終の報告と実装状況に記録します（`9f5da53` からの作業ブランチ `claude/u7-5ab-board-ops`）
+- 固定するコミット: `669f3cafbffdc3a13c05b5f76c96e5a6925fca06`（8 章。`9f5da53` からの作業ブランチ `claude/u7-5ab-board-ops`）

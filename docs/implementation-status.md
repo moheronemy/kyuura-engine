@@ -5181,4 +5181,5 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 番の候補は partial（`play_trainer`・`use_power`・`use_stadium`・`check_face_up_deck` が未対応）。`scope_kinds` は `MAIN_KINDS` の順のまま。`client_api` は同じ要求の形（契約 `kyuura-client-api`・形式 1）
 - 採用の記録 ADOPT-U7-5AB と仕様の訂正（CORR-1: 情報源が未確認の経路は入力を返さない、CORR-2: GUI のコミットと固定するエンジンを分ける）を [legal-actions-u7-5-design.md](legal-actions-u7-5-design.md) に記録した。錯乱ジムの情報漏れ F-1 は、トレーナー（U7-5c）の前の独立した修正の作業 T-F1（今回は直していない）
 - 停止の台帳（`docs/stop-policy-classification.json`）は `engine.py` の行番号だけが変わった
+- GUI が固定するコミット: `669f3cafbffdc3a13c05b5f76c96e5a6925fca06`（版 0.167.0。Git の URL からの通常のインストールとスモークテストで確かめた。[legal-actions-u7-5ab.md](legal-actions-u7-5ab.md) 8 章）
 - 詳細: [legal-actions-u7-5ab.md](legal-actions-u7-5ab.md)
