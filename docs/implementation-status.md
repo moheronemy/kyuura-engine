@@ -5168,4 +5168,5 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 対象・トラッシュするエネルギー・山札から選ぶカード・写すワザは受理のあとの既存の決定（`answer_decision`）。コインの結果を選ばせない
 - `client_api` は同じ要求の形のまま扱う（契約 `kyuura-client-api`・形式 1、`kyuura_legal_actions_format` 1）。応答の形の追加だけ。番の候補は partial（7 種類が未対応）
 - 停止の台帳（`docs/stop-policy-classification.json`）は `resolution/flow.py` の行番号だけが変わった
+- GUI が固定するコミット: `9506d6305e90ec262fbe77740d9aa57f04b980b6`（版 0.166.0。Git の URL からの通常のインストールとスモークテストで確かめた。[legal-actions-u7-4.md](legal-actions-u7-4.md) 8 章）
 - 詳細: [legal-actions-u7-4.md](legal-actions-u7-4.md)

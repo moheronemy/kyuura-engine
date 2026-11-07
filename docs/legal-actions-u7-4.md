@@ -178,6 +178,8 @@
 
 ## 8. GUI 側の追従（GUI リポジトリは変更していない）
 
+- 固定するコミット: `9506d6305e90ec262fbe77740d9aa57f04b980b6`（ブランチ `claude/u7-4-attacks`。版 0.166.0。依存は `kyuura-engine @ git+https://github.com/moheronemy/kyuura-engine@9506d6305e90ec262fbe77740d9aa57f04b980b6`）。このコミットをクリーンな仮想環境へ Git の URL から通常のインストールで入れ、`scripts/smoke_installed_package.py` で `client_api` 経由のワザの宣言の受理を確かめた（編集可能インストール・PYTHONPATH は使っていない）。このあとのコミットは、この記録だけの文書の変更
+- 契約: `kyuura-client-api`・形式 1、`kyuura_legal_actions_format` 1（変えていない。応答の形を加えただけ。既存の GUI がワザの候補を扱えるとは保証しない）
 - 型: 候補の `kind: use_attack`、段の `role: attack`・`declaration_options`、`meaning: attack`・`declaration_option`、選べるものの `attack_index`・`route`・`provider`・`payer`・
   `grantors`・`name_ja`・`cost`・`damage`・`text_ja`・`addon`・`power`・`face_down`、`options_by_choice`（U7-3 と同じ形）
 - 検証: 1 段目は 1 個、2 段目は `options_by_choice[1 段目の番号]` の中から 0 個以上・重なりなし。並びは送るまで変えない。送る前に `check` を呼ぶ
