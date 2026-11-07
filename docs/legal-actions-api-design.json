@@ -1,0 +1,893 @@
+{
+ "id": "LEGAL-ACTIONS-API-DESIGN",
+ "status": "proposed",
+ "approval": "not_approved",
+ "adoption": {
+  "id": "ADOPT-U7-PRINCIPLES",
+  "date": "2026-11-07",
+  "by": "利用者",
+  "scope": "U7 で、操作候補（本人が知る情報から提示できる操作）・必要な入力（対象・枚数などの段階的な選択）・処理可能性（今の規約集合と実装で扱える範囲）を区別すること。候補に載ることと、そのあとの全分岐が完走することは別の保証。実際の秘密の状態にコマンドを試し、通るものだけを一覧にする設計は採らない。最終の判定は apply_command に残す"
+ },
+ "principles": [
+  {
+   "id": "P-ACTOR",
+   "kind": "adopted",
+   "text": "ホストが認証した操作主体（本人）にだけ、その時点の操作候補と必要な入力を返す。プレイヤーの番号を送るだけで、他人の候補・秘密の選択肢を取れない"
+  },
+  {
+   "id": "P-NOT-NEXT",
+   "kind": "adopted",
+   "text": "U2 の next（次の操作の種類の手がかり）を合法手の一覧へ読み替えない。U7 は新しい契約"
+  },
+  {
+   "id": "P-FINAL",
+   "kind": "adopted",
+   "text": "実行の最終の判定は apply_command。候補を取ったことは、あとの操作が受理される保証ではない"
+  },
+  {
+   "id": "P-NO-TRIAL",
+   "kind": "adopted",
+   "text": "実際の秘密の状態にコマンドを試し、通るものだけを一覧にしない（候補の作成は apply_command・先読みを呼ばない）"
+  },
+  {
+   "id": "P-SEPARATE",
+   "kind": "adopted",
+   "text": "候補に載ること・必要な入力・処理可能性を別の項目にする。候補に載ることは、そのあとの全分岐が完走する保証ではない"
+  },
+  {
+   "id": "P-STAGED",
+   "kind": "adopted",
+   "text": "大量の組み合わせを全展開しない。段階的な入力（ワザ → 対象、トレーナー → 枚数とカード）で表す"
+  },
+  {
+   "id": "P-NO-SIDE-EFFECT",
+   "kind": "adopted",
+   "text": "候補の取得で、ゲーム上の決定を作らない。状態・乱数・ログを変えない"
+  },
+  {
+   "id": "P-TWIN",
+   "kind": "adopted",
+   "text": "同じ本人の知識と公開の情報を持つ双子の状態では、候補の一覧・理由・入力の制約から秘密の配分を区別できない（正当に始まった山札の検索の選択肢だけは実際の山札による）"
+  },
+  {
+   "id": "P-NOT-HIDDEN",
+   "kind": "adopted",
+   "text": "エンジンの未対応を、候補から黙って消してゲームの禁止に見せない（処理可能性で表す）"
+  },
+  {
+   "id": "P-COMPLETENESS",
+   "kind": "adopted",
+   "text": "上限を超えたとき、一部だけを返して完全な一覧と称さない。完全な列挙・部分的な候補・判定未確定を区別する。初版で保証できない完全性は保証しないと書く"
+  },
+  {
+   "id": "P-NO-MODE-BRANCH",
+   "kind": "adopted",
+   "text": "3 つの規約集合の違いは、状態の規約集合の登録（続行規約の参照）から受け取る。モードの名前・カードの ID の分岐を engine.py・resolution/ に加えない"
+  },
+  {
+   "id": "P-NO-VERIFIER-DATA",
+   "kind": "adopted",
+   "text": "検証者用の記録・スナップショット・確認値を、通常の API の応答に使わない"
+  },
+  {
+   "id": "P-REVISION",
+   "kind": "adopted",
+   "text": "完全な状態のハッシュ・乱数の確認値を、公開の更新番号に使わない。ホストが管理する、秘密の状態を推測できない対応を使う"
+  }
+ ],
+ "phases": [
+  {
+   "phase": "setup_placement",
+   "status": "in_progress",
+   "actors": "両方のプレイヤー（まだ置いていない人）",
+   "candidates": [
+    "place_starting"
+   ],
+   "complete_v1": true
+  },
+  {
+   "phase": "setup_mulligan_draw",
+   "status": "in_progress",
+   "actors": "引く枚数の残るプレイヤー",
+   "candidates": [
+    "mulligan_draw"
+   ],
+   "complete_v1": true
+  },
+  {
+   "phase": "setup_first_player",
+   "status": "in_progress",
+   "actors": "ホスト（ジャンケンはエンジンの外の出来事）",
+   "candidates": [
+    "report_janken"
+   ],
+   "complete_v1": true
+  },
+  {
+   "phase": "main",
+   "status": "in_progress",
+   "actors": "番のプレイヤー",
+   "candidates": [
+    "end_turn",
+    "play_basic",
+    "attach_energy",
+    "evolve",
+    "retreat",
+    "use_attack",
+    "play_trainer",
+    "use_power",
+    "use_stadium",
+    "remove_disguise",
+    "discard_from_play",
+    "reveal_face_down",
+    "check_face_up_deck"
+   ],
+   "complete_v1": false
+  },
+  {
+   "phase": "take_prize",
+   "status": "awaiting_decision",
+   "actors": "決定のプレイヤー",
+   "candidates": [
+    "take_prize"
+   ],
+   "complete_v1": true
+  },
+  {
+   "phase": "promote_active",
+   "status": "awaiting_decision",
+   "actors": "決定のプレイヤー",
+   "candidates": [
+    "promote_active"
+   ],
+   "complete_v1": true
+  },
+  {
+   "phase": "decision",
+   "status": "awaiting_decision",
+   "actors": "決定のプレイヤー",
+   "candidates": [
+    "answer_decision"
+   ],
+   "complete_v1": true
+  },
+  {
+   "phase": "sudden_death",
+   "status": "sudden_death_pending",
+   "actors": "ホスト（対戦の進行の操作。どちらかのプレイヤーの選択ではない）",
+   "candidates": [
+    "start_sudden_death"
+   ],
+   "complete_v1": true
+  },
+  {
+   "phase": "game_over",
+   "status": "game_over",
+   "actors": "なし",
+   "candidates": [],
+   "complete_v1": true
+  },
+  {
+   "phase": "halted",
+   "status": "halted",
+   "actors": "なし（再開する API はない）",
+   "candidates": [],
+   "complete_v1": true
+  }
+ ],
+ "operations": [
+  {
+   "kind": "place_starting",
+   "command": "PlaceStartingPokemon",
+   "actor": "player",
+   "inputs": [
+    "choose_cards:active(1)",
+    "choose_cards:bench(0..5)"
+   ],
+   "unit": "U7-2"
+  },
+  {
+   "kind": "mulligan_draw",
+   "command": "DrawMulliganCards",
+   "actor": "player",
+   "inputs": [
+    "choose_count"
+   ],
+   "unit": "U7-2"
+  },
+  {
+   "kind": "report_janken",
+   "command": "ReportJankenResult",
+   "actor": "host",
+   "inputs": [
+    "choose_player"
+   ],
+   "unit": "U7-2"
+  },
+  {
+   "kind": "play_basic",
+   "command": "PlayBasicToBench",
+   "actor": "player",
+   "inputs": [],
+   "unit": "U7-3"
+  },
+  {
+   "kind": "attach_energy",
+   "command": "AttachEnergy",
+   "actor": "player",
+   "inputs": [
+    "choose_pokemon"
+   ],
+   "unit": "U7-3"
+  },
+  {
+   "kind": "retreat",
+   "command": "Retreat",
+   "actor": "player",
+   "inputs": [
+    "choose_pokemon:new_active",
+    "choose_energies:cost"
+   ],
+   "unit": "U7-3"
+  },
+  {
+   "kind": "evolve",
+   "command": "EvolvePokemon",
+   "actor": "player",
+   "inputs": [
+    "choose_pokemon"
+   ],
+   "unit": "U7-3"
+  },
+  {
+   "kind": "end_turn",
+   "command": "EndTurn",
+   "actor": "player",
+   "inputs": [],
+   "unit": "U7-1"
+  },
+  {
+   "kind": "use_attack",
+   "command": "UseAttack",
+   "actor": "player",
+   "inputs": [
+    "choose_attack",
+    "options:attack_modifiers（stadium_coin・attack_power・with_power(s)）",
+    "after_acceptance:decision"
+   ],
+   "unit": "U7-4"
+  },
+  {
+   "kind": "take_prize",
+   "command": "TakePrize",
+   "actor": "player",
+   "inputs": [
+    "choose_option:position"
+   ],
+   "unit": "U7-1"
+  },
+  {
+   "kind": "promote_active",
+   "command": "PromoteActive",
+   "actor": "player",
+   "inputs": [
+    "choose_option:pokemon"
+   ],
+   "unit": "U7-1"
+  },
+  {
+   "kind": "answer_decision",
+   "command": "ResolveDecision",
+   "actor": "player",
+   "inputs": [
+    "choose_option:decision（observe の decision をそのまま使う）"
+   ],
+   "unit": "U7-1"
+  },
+  {
+   "kind": "play_trainer",
+   "command": "PlayTrainer",
+   "actor": "player",
+   "inputs": [
+    "after_acceptance:decision（枚数・カードは使ったあとの決定）"
+   ],
+   "unit": "U7-5"
+  },
+  {
+   "kind": "use_power",
+   "command": "UsePokemonPower",
+   "actor": "player",
+   "inputs": [
+    "choose_power",
+    "registered:power_inputs（energy・source・target・card。カードの登録が決める）"
+   ],
+   "unit": "U7-5"
+  },
+  {
+   "kind": "use_stadium",
+   "command": "UseStadium",
+   "actor": "player",
+   "inputs": [
+    "registered:stadium_inputs（energy）"
+   ],
+   "unit": "U7-5"
+  },
+  {
+   "kind": "remove_disguise",
+   "command": "RemoveDisguise",
+   "actor": "player",
+   "inputs": [
+    "choose_pokemon"
+   ],
+   "unit": "U7-5"
+  },
+  {
+   "kind": "discard_from_play",
+   "command": "DiscardFromPlay",
+   "actor": "player",
+   "inputs": [
+    "choose_pokemon"
+   ],
+   "unit": "U7-5"
+  },
+  {
+   "kind": "reveal_face_down",
+   "command": "RevealFaceDown",
+   "actor": "player",
+   "inputs": [
+    "choose_pokemon"
+   ],
+   "unit": "U7-5"
+  },
+  {
+   "kind": "check_face_up_deck",
+   "command": "CheckFaceUpDeckCard",
+   "actor": "player",
+   "inputs": [
+    "choose_option:face_up_position（公開のおもての山札のカード）"
+   ],
+   "unit": "U7-5"
+  },
+  {
+   "kind": "start_sudden_death",
+   "command": "StartSuddenDeath",
+   "actor": "host",
+   "inputs": [],
+   "unit": "U7-2"
+  }
+ ],
+ "next_map": {
+  "place_starting_pokemon": [
+   "place_starting"
+  ],
+  "draw_mulligan_cards": [
+   "mulligan_draw"
+  ],
+  "report_janken_result": [
+   "report_janken"
+  ],
+  "turn_action": [
+   "end_turn",
+   "play_basic",
+   "attach_energy",
+   "evolve",
+   "retreat",
+   "use_attack",
+   "play_trainer",
+   "use_power",
+   "use_stadium",
+   "remove_disguise",
+   "discard_from_play",
+   "reveal_face_down",
+   "check_face_up_deck"
+  ],
+  "answer_decision": [
+   "answer_decision",
+   "take_prize",
+   "promote_active"
+  ],
+  "start_sudden_death": [
+   "start_sudden_death"
+  ]
+ },
+ "input_kinds": [
+  {
+   "id": "choose_option",
+   "meaning": "今の決定の選べるもの（observe(state, actor) の decision.options の value）から min_choices〜max_choices 個",
+   "constraint": "個数・重複なし",
+   "source": "既存の決定（再利用）"
+  },
+  {
+   "id": "choose_cards",
+   "meaning": "本人に見えるカード（observe の card。uid）から選ぶ",
+   "constraint": "個数・条件（たねポケモンなど。カードの定義と公開の状態だけで決まるもの）",
+   "source": "本人の知識"
+  },
+  {
+   "id": "choose_pokemon",
+   "meaning": "場のポケモンの番号（公開）から選ぶ",
+   "constraint": "個数・条件",
+   "source": "公開"
+  },
+  {
+   "id": "choose_energies",
+   "meaning": "ついているエネルギー（公開）から、費用を満たす組を選ぶ",
+   "constraint": "費用（数・色）の条件で表し、組を全展開しない",
+   "source": "公開"
+  },
+  {
+   "id": "choose_attack",
+   "meaning": "ワザの位置（印刷・今の姿のワザ。公開）",
+   "constraint": "1 つ",
+   "source": "公開"
+  },
+  {
+   "id": "choose_power",
+   "meaning": "ポケモンパワーの位置（公開）",
+   "constraint": "1 つ",
+   "source": "公開"
+  },
+  {
+   "id": "choose_count",
+   "meaning": "数（0〜上限。上限は公開の枚数から）",
+   "constraint": "範囲",
+   "source": "公開"
+  },
+  {
+   "id": "choose_player",
+   "meaning": "プレイヤー（0・1）",
+   "constraint": "1 つ",
+   "source": "ホストの入力"
+  },
+  {
+   "id": "options",
+   "meaning": "操作の任意の指定（ワザの宣言のスタジアムのコイン・パワーを使う宣言など）",
+   "constraint": "真偽・指定の組",
+   "source": "公開"
+  },
+  {
+   "id": "registered",
+   "meaning": "カードの登録（effects の登録表）が宣言する入力。共通の処理はカードの ID で分岐しない",
+   "constraint": "登録が宣言する種類（上の語彙のどれか）",
+   "source": "カードの登録"
+  },
+  {
+   "id": "after_acceptance",
+   "meaning": "受理したあとに、エンジンが決定として尋ねる入力（候補の取得では決定を作らない）",
+   "constraint": "そのときの決定（choose_option）",
+   "source": "受理のあとの決定"
+  },
+  {
+   "id": "decline",
+   "meaning": "任意の辞退（min_choices が 0 の決定・「てよい」の効果）",
+   "constraint": "選ばないことを明示する（空の選択とは別の印にしない。既存の ResolveDecision の空の choices）",
+   "source": "既存の決定"
+  }
+ ],
+ "option_meaning_map": {
+  "card": "choose_option",
+  "pokemon": "choose_option",
+  "position": "choose_option",
+  "number": "choose_option",
+  "color": "choose_option",
+  "name": "choose_option",
+  "janken": "choose_option",
+  "peek_target": "choose_option",
+  "value": "choose_option"
+ },
+ "processability": [
+  {
+   "id": "supported",
+   "meaning": "今の規約集合と実装で、宣言の前の確かめが扱える（そのあとの分岐の完走は保証しない）",
+   "display": "表示",
+   "executable": true,
+   "derived_from": "本人の知識と公開の情報だけで決まる確かめ"
+  },
+  {
+   "id": "may_stop_later",
+   "meaning": "受理のあと、条件しだいで研究上の停止・エンジンの未対応で止まりうる（止まるかは秘密の情報・コイン・相手の選択による）",
+   "display": "表示（止まりうる注意）",
+   "executable": true,
+   "derived_from": "カードの登録が宣言する停止の可能性（UNRESOLVED の場面の索引）。実際の配分を読まない"
+  },
+  {
+   "id": "unresolved_ruling",
+   "meaning": "記録で決まらない裁定のため、今の規約集合では処理できない（研究上の未解決）",
+   "display": "表示（実行できない。ゲーム上の禁止ではない）",
+   "executable": false,
+   "derived_from": "診断のコード表の分類（未裁定）と、状態の規約集合の続行規約の参照"
+  },
+  {
+   "id": "not_implemented",
+   "meaning": "エンジンが未対応（研究上の未解決とは別）",
+   "display": "表示（実行できない。ゲーム上の禁止ではない）",
+   "executable": false,
+   "derived_from": "診断のコード表の分類（未対応）"
+  },
+  {
+   "id": "technical_limit",
+   "meaning": "先読み・読み方の組などの上限を超える（MAX_BRANCHES・COLOR_READINGS_LIMIT など）",
+   "display": "表示（実行できない理由として）",
+   "executable": false,
+   "derived_from": "上限が公開の情報だけで決まるときだけ。秘密の配分で決まる上限は unverified"
+  },
+  {
+   "id": "unverified",
+   "meaning": "候補の作成の時点で、本人の知識から処理可能性を決められない（判定未確定）",
+   "display": "表示（送れば apply_command が判定する）",
+   "executable": true,
+   "derived_from": "上のどれにも決められないとき。拒否されても理由は双子で同じ（v0.135 以後の拒否の検査）"
+  }
+ ],
+ "completeness": [
+  {
+   "id": "complete",
+   "meaning": "契約の範囲（その段階の候補の種類）で、本人に提示できる候補をすべて含む"
+  },
+  {
+   "id": "partial",
+   "meaning": "一部だけを含む（上限・初版の範囲の外）。理由のコードと、含めた種類を示す"
+  },
+  {
+   "id": "undetermined",
+   "meaning": "完全かどうかを決められない（判定未確定の候補を含むなど）"
+  }
+ ],
+ "response": [
+  {
+   "field": "kyuura_legal_actions_format",
+   "meaning": "応答の形式の版（1 から）",
+   "source": "固定"
+  },
+  {
+   "field": "game",
+   "meaning": "ホストが発行した対戦の取っ手（不透明な文字列。seed・記録の識別ではない）",
+   "source": "ホスト"
+  },
+  {
+   "field": "actor",
+   "meaning": "ホストが認証した操作主体（0・1・host）",
+   "source": "ホスト"
+  },
+  {
+   "field": "revision",
+   "meaning": "候補を作った状態との対応の取っ手（ホストが発行する不透明な値。状態のハッシュ・乱数の確認値・決定の通し番号ではない）",
+   "source": "ホスト"
+  },
+  {
+   "field": "status",
+   "meaning": "状態の区分（diagnostics.status_of と同じ語彙）",
+   "source": "公開"
+  },
+  {
+   "field": "completeness",
+   "meaning": "complete・partial・undetermined",
+   "source": "契約"
+  },
+  {
+   "field": "scope",
+   "meaning": "含めた候補の種類（partial の理由のコードを含む）",
+   "source": "契約"
+  },
+  {
+   "field": "candidates",
+   "meaning": "候補の並び（id・kind・source・inputs・processability・reasons）。並びは公開の値の順（カードは observe の並び、種類は OPERATIONS の順）",
+   "source": "本人の知識と公開"
+  }
+ ],
+ "candidate_fields": [
+  {
+   "field": "id",
+   "meaning": "応答の中だけの候補の番号（c1, c2, …。並びの順。秘密の値から作らない）"
+  },
+  {
+   "field": "kind",
+   "meaning": "操作の種類（OPERATIONS の kind）"
+  },
+  {
+   "field": "source",
+   "meaning": "操作に使うもの（本人に見えるカードの uid・場のポケモンの番号・ワザの位置。見えないカードの uid は入れない）"
+  },
+  {
+   "field": "inputs",
+   "meaning": "必要な入力の段（INPUT_KINDS。段ごとに種類・制約・選べるもの）。after_acceptance の段は受理のあとの決定で尋ねる"
+  },
+  {
+   "field": "processability",
+   "meaning": "PROCESSABILITY の 1 つ"
+  },
+  {
+   "field": "reasons",
+   "meaning": "理由のコード（決まった語彙。文は表示の側がコードから作る。実行時の例外の文・カードの位置を入れない）"
+  }
+ ],
+ "info_boundary": [
+  {
+   "channel": "count",
+   "rule": "候補の数・選べるものの数は、本人の知識と公開の情報だけで決まる"
+  },
+  {
+   "channel": "order",
+   "rule": "並びは公開の値の順（uid の順で山札の中身を伝えない）"
+  },
+  {
+   "channel": "missing",
+   "rule": "候補を落とすかは本人の知識だけで決まる。決められないものは落とさず unverified にする"
+  },
+  {
+   "channel": "reason",
+   "rule": "理由は決まった語彙のコード。双子で同じ"
+  },
+  {
+   "channel": "identifier",
+   "rule": "候補の番号は並びの順。見えないカードの uid・秘密の値から作った識別を入れない"
+  },
+  {
+   "channel": "invalid_query",
+   "rule": "不正な入力（知らない候補・見えないカード・範囲の外の数）を試す問い合わせも、決まったエラーで答え、秘密の情報で変わらない"
+  },
+  {
+   "channel": "started_search",
+   "rule": "正当に始まった山札の検索（DECK_REVEALING_KINDS の決定）の選択肢だけは、実際の山札による。始まっていない検索の候補に実際の山札を使わない"
+  },
+  {
+   "channel": "other_viewers",
+   "rule": "本人の候補を相手・観戦者に配らない（ホストの責任）"
+  },
+  {
+   "channel": "verifier_data",
+   "rule": "検証者用の記録・スナップショット・確認値を応答に使わない"
+  }
+ ],
+ "knowledge": [
+  {
+   "id": "public",
+   "meaning": "全員に見える情報（観測の公開の項目）",
+   "allowed": "いつも"
+  },
+  {
+   "id": "actor_knowledge",
+   "meaning": "本人が知る情報（自分の手札・デッキリスト・所有するカードの多重集合・見たカード）",
+   "allowed": "いつも"
+  },
+  {
+   "id": "started_search",
+   "meaning": "正当に始まった検索で本人が見ているカード（決定の選べるもの）",
+   "allowed": "その決定の入力だけ"
+  },
+  {
+   "id": "secret",
+   "meaning": "本人が知らない配分（山札・サイドの並び、相手の手札）",
+   "allowed": "使わない"
+  }
+ ],
+ "revision": {
+  "source": "host_token",
+  "forbidden_sources": [
+   "state_hash",
+   "rng_check",
+   "decision_id",
+   "log_length",
+   "record_identity"
+  ],
+  "design": "ホストが対戦・操作主体ごとに不透明な取っ手（乱数の 128 ビットの値）を発行し、ホストの中で（対戦, 操作主体, 状態の内部の版）と対応づける。受理した操作（どのプレイヤーの操作でも）で、その対戦の取っ手はすべて古くなる。拒否は状態を変えないので取っ手を変えない",
+  "rejections": [
+   {
+    "case": "古い取っ手（状態が変わった）",
+    "code": "CANDIDATES_STALE",
+    "then": "候補を取り直す"
+   },
+   {
+    "case": "別の対戦の取っ手",
+    "code": "CANDIDATES_WRONG_GAME",
+    "then": "その対戦の候補を取る"
+   },
+   {
+    "case": "別の操作主体の取っ手",
+    "code": "CANDIDATES_WRONG_ACTOR",
+    "then": "自分の候補を取る（他人の候補の中身を答えない）"
+   },
+   {
+    "case": "知らない候補・入力",
+    "code": "CANDIDATE_UNKNOWN",
+    "then": "候補を取り直す（理由は決まった文）"
+   }
+  ],
+  "note": "取っ手を使わない直接のコマンドの送信（今の submit）は、そのまま使える。取っ手の確かめはホストの段で、エンジンに渡す前。受理するかの判定は apply_command"
+ },
+ "host": [
+  "操作主体の認証（ログイン・接続）と権限の確かめ。API はホストが確かめた操作主体を受け取り、要求に書かれたプレイヤーの番号を信じない",
+  "応答を本人だけに渡す（相手・観戦者・記録に入れない）",
+  "取っ手（game・revision）の発行・対応づけ・失効",
+  "ホストの操作（ジャンケンの結果・延長戦の開始）は、ホストの操作主体だけに候補として出す"
+ ],
+ "leak_tests": [
+  {
+   "id": "T-TWIN-RESPONSE",
+   "what": "持ち主の知識が同じで山札・サイドの配分だけが違う双子（twin_command_problems の owner_knowledge と同じ前提）で、各操作主体の応答（候補・数・並び・理由・入力の制約・completeness）が同じ"
+  },
+  {
+   "id": "T-TWIN-REFINE",
+   "what": "双子で、段階的な入力の問い合わせ（正しい入力・不正な入力）の答えが同じ"
+  },
+  {
+   "id": "T-STARTED-SEARCH",
+   "what": "山札の検索が始まったあとの決定の選択肢は実際の山札による（双子で違ってよい）。始まる前の候補は同じ"
+  },
+  {
+   "id": "T-NO-SIDE-EFFECT",
+   "what": "候補を何度取っても、状態・乱数・ログ・決定の通し番号が変わらない"
+  },
+  {
+   "id": "T-OTHER-ACTOR",
+   "what": "相手・観戦者として問い合わせても、本人の候補・選べるもの・数が出ない"
+  },
+  {
+   "id": "T-STALE",
+   "what": "古い・別の対戦・別の操作主体の取っ手を拒み、拒否の答えが秘密の情報で変わらない"
+  },
+  {
+   "id": "T-NOT-HIDDEN",
+   "what": "未裁定・未対応の操作は候補から消えず、processability で表される"
+  },
+  {
+   "id": "T-NO-VERIFIER",
+   "what": "応答に検証者用の値（確認値・seed・乱数・スナップショットの鍵）が入らない（閲覧用記録と同じ入ってはいけない項目の検査）"
+  }
+ ],
+ "units": [
+  {
+   "id": "U7-1",
+   "name": "枠組みと決定への回答（最初の縦の単位）",
+   "depends": [],
+   "scope": [
+    "応答の形式・取っ手（game・revision）・ホストの認証の境界・古い取っ手の拒否",
+    "決定への回答（ResolveDecision・TakePrize・PromoteActive）を observe の decision から作る（complete）",
+    "番を終える（EndTurn）",
+    "番でない・終局・停止は空の候補（complete）"
+   ],
+   "tests": [
+    "T-TWIN-RESPONSE（決定）",
+    "T-STARTED-SEARCH",
+    "T-NO-SIDE-EFFECT",
+    "T-OTHER-ACTOR",
+    "T-STALE",
+    "T-NO-VERIFIER",
+    "候補どおりに送った回答を apply_command が受理する（既存の対戦の決定で）"
+   ],
+   "done": "決定待ちのすべての種類（OPTION_MEANINGS の語彙）で候補ができ、漏れの回帰テストが通る。実装の識別の分類に legal_actions のファイルを加え、識別の設計の --check が通る"
+  },
+  {
+   "id": "U7-2",
+   "name": "準備とホストの操作",
+   "depends": [
+    "U7-1"
+   ],
+   "scope": [
+    "PlaceStartingPokemon（たねポケモンの手札から。段: バトル場 → ベンチ）",
+    "DrawMulliganCards",
+    "ReportJankenResult・StartSuddenDeath（ホストの操作主体だけ）"
+   ],
+   "tests": [
+    "T-TWIN-RESPONSE（準備）",
+    "準備の候補から作った操作で、固定デッキの対戦が始まる"
+   ],
+   "done": "準備の段階が complete"
+  },
+  {
+   "id": "U7-3",
+   "name": "通常の操作（ワザ・トレーナー・パワーの外）",
+   "depends": [
+    "U7-2"
+   ],
+   "scope": [
+    "PlayBasicToBench・AttachEnergy・EvolvePokemon・Retreat（費用は条件で表す）"
+   ],
+   "tests": [
+    "T-TWIN-RESPONSE（通常の操作）",
+    "T-NOT-HIDDEN"
+   ],
+   "done": "これらの種類について、本人の知識だけで決まる確かめを候補の作成に使う。scope に含めた種類を示し、main は partial"
+  },
+  {
+   "id": "U7-4",
+   "name": "ワザ",
+   "depends": [
+    "U7-3"
+   ],
+   "scope": [
+    "UseAttack（ワザ → 任意の指定。対象は受理のあとの決定）",
+    "宣言の前の確かめのうち、本人の知識だけで決まるもの（v0.147〜v0.151 の持ち主の知識の関数）を processability に使う"
+   ],
+   "tests": [
+    "T-TWIN-RESPONSE（v0.147〜v0.151 の双子の盤面）",
+    "T-TWIN-REFINE",
+    "T-NOT-HIDDEN（未裁定のワザ）"
+   ],
+   "done": "ワザの候補で、先読みを呼ばない。決められないものは unverified"
+  },
+  {
+   "id": "U7-5",
+   "name": "トレーナー・パワー・スタジアムとその他",
+   "depends": [
+    "U7-4"
+   ],
+   "scope": [
+    "PlayTrainer・UsePokemonPower・UseStadium・RemoveDisguise・DiscardFromPlay・RevealFaceDown・CheckFaceUpDeckCard",
+    "入力はカードの登録が宣言する（共通の処理にカード ID の分岐を加えない）"
+   ],
+   "tests": [
+    "T-TWIN-RESPONSE（トレーナー・パワー）",
+    "登録のないカードは unverified（消さない）"
+   ],
+   "done": "すべてのコマンドの型に候補の種類がある。main が complete と称せるかは D-U7-COMPLETENESS"
+  },
+  {
+   "id": "U7-6",
+   "name": "GUI・ルールベースの AI への接続",
+   "depends": [
+    "U7-1"
+   ],
+   "scope": [
+    "API だけを使う方策（内部の状態・秘密の配分を読まない）",
+    "GUI の表示（processability ごとの表示）",
+    "既存の方策（tests/helpers の trainer_policy_command など）は内部の状態を読むので、公開の API に流用しない"
+   ],
+   "tests": [
+    "API だけを使う方策で固定デッキの対戦が終局・停止まで進む",
+    "方策が受け取る値が応答だけであること"
+   ],
+   "done": "決定・準備は U7-1・U7-2 のあとに接続できる。通常の操作は単位ごとに広げる"
+  }
+ ],
+ "decisions": [
+  {
+   "id": "D-U7-API",
+   "question": "入口の形（HostedGame.legal_actions(actor) と、状態を受け取る関数 legal_actions(state, actor) を両方にするか）",
+   "recommendation": "ホストの入口を正とし、状態を受け取る関数はホストの中とテストだけ（取っ手を持たない）",
+   "status": "pending"
+  },
+  {
+   "id": "D-U7-TOKEN",
+   "question": "revision を乱数の不透明な値にするか、ホストの中の数（受理の数）を外に出すか",
+   "recommendation": "不透明な値（受理の数は相手の見えない操作の数を伝えうる）",
+   "status": "pending"
+  },
+  {
+   "id": "D-U7-REFINE",
+   "question": "段階的な入力を、問い合わせ（refine）で次の段を取る形にするか、候補に全段の制約を書く形にするか",
+   "recommendation": "初版は候補に段の制約を書く（ワザの対象・トレーナーの枚数は受理のあとの決定）。問い合わせは U7-4 で必要になったときに加える",
+   "status": "pending"
+  },
+  {
+   "id": "D-U7-DISPLAY",
+   "question": "処理可能性ごとの表示・実行の扱い（PROCESSABILITY の表）",
+   "recommendation": "表のとおり。どれも候補から消さない",
+   "status": "pending"
+  },
+  {
+   "id": "D-U7-UNVERIFIED",
+   "question": "判定未確定（unverified）の候補を実行できる候補にするか",
+   "recommendation": "する（送れば apply_command が判定する。拒否の理由は双子で同じ）",
+   "status": "pending"
+  },
+  {
+   "id": "D-U7-COMPLETENESS",
+   "question": "初版で main の候補を complete と称する範囲",
+   "recommendation": "称さない（partial と scope）。決定・準備・延長戦の開始・終局・停止だけ complete",
+   "status": "pending"
+  },
+  {
+   "id": "D-U7-HOST-OPS",
+   "question": "ジャンケンの結果・延長戦の開始をホストの操作主体の候補にするか",
+   "recommendation": "する（プレイヤーの候補には出さない）",
+   "status": "pending"
+  },
+  {
+   "id": "D-U7-DECISION-UID",
+   "question": "決定の選べるもの（observe の decision.options の value）に、決める人に見えないカードの uid が入る種類があるか",
+   "recommendation": "U7-1 の前に確かめる（未確認）。入るなら、U7 の応答では見えないカードを値の番号で表し、uid を入れない",
+   "status": "pending"
+  }
+ ]
+}
