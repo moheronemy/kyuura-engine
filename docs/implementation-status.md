@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.168）
+# 実装状況（v0.1〜v0.169）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d`（v0.128 から。v0.129 の種族の身長の写しは別に `9242b9be89be0f747279f39c11875d1ed61763ec`。v0.126〜v0.127 は `57d01f45cfb8b086d03dc0525b329cf6adeff69b`、v0.125 は `134a664c6adf67d5604148a31b58e1a7d26d4d6d`、v0.124 は `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`、v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -5194,3 +5194,13 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - U7-5 の設計の F-1・F-8 を fixed、T-F1 を implemented にし、U7-5c の依存が満たされたことを記録した（U7-5c は未実装）
 - 配布の確かめ: コミット `6e9d22098efd4c6e3c545f04dd6bbaae936a5dda`（版 0.168.0）を、クリーンな仮想環境に Git の URL から通常のインストールをして、リポジトリの外からスモークテストした（錯乱ジムの「使う」の拒否と「使わない」を含む。`behavior_digest` はソースの木と同じ）。配布物の中身の検査は required=62・problems=0
 - 詳細: [chaos-gym-borrow-t-f1.md](chaos-gym-borrow-t-f1.md)
+
+## v0.169: 合法手 API の手札のトレーナー（U7-5c）
+
+- 新しい候補の種類 `play_trainer`: 本人の手札から既存の `PlayTrainer` を送る（1 段。入力は手札のトレーナーカード 1 枚）。対象・枚数・費用・検索・錯乱ジム・［ちえくらべ］・サイキックコントロールは受理のあとの既存の決定（`answer_decision`）
+- `engine.check_play_trainer`: `_play_trainer` の手札から出す前の確かめを、同じ順番・同じコード・同じ文のまま関数にした（エンジンの動作は同じ）。`use_condition` が偽なら、カードごとの使うための条件だけを呼ばない
+- カードごとの使うための条件: A・A-own と、場だけを試す 6 つ（`PLAYABLE_BOARD_TRIALS`。読む値をたどった）は候補の作成で呼ぶ。実際の山札から引いて試す 5 つ（`PLAYABLE_NOT_EVALUATED`）は呼ばず `unverified`（理由 `use_condition_not_evaluated`）
+- トレーナーの候補は `supported` にしない（受理の前の先読み・受理のあとを評価していない）。番の候補は partial のまま（`use_power`・`use_stadium`・`check_face_up_deck` が未対応。R-1・R-2 が残る）
+- U7-5 の設計の U7-5c を implemented にした（U7-5d 以降は未実装）。既存の U7 のテストの coverage の期待から `play_trainer` を外した（意図した差）
+- T-F1 の検証記録の訂正（[chaos-gym-borrow-t-f1.md](chaos-gym-borrow-t-f1.md) 7 章。124 件は成功 123・失敗 1、期待を直したあとの 53 件の実行は失敗 3）
+- 詳細: [legal-actions-u7-5c.md](legal-actions-u7-5c.md)

@@ -32,7 +32,8 @@ U7-5 の対象の 7 種類のコマンド（`PlayTrainer`・`UsePokemonPower`・
     - `D-U75-FACE-UP`: CheckFaceUpDeckCard は FU2 による未対応として表示し、送れない（U7-5f で実装）
     - `D-U75-CHAOS`: F-1 は両モード共通の不具合として別の作業 T-F1 で直す（トレーナーの前）。U7-5a・b では裁定・動作を変えない
     - `D-U75-ENERGY2`: カツラの 2 枚目（AttachEnergy.energy2）は U7-5g に含める
-  - 実装した単位: `U7-5a`、`U7-5b`、`T-F1`
+    - `D-U75-TRAINER`: U7-5c（2026-11-08 の依頼）: 手札の PlayTrainer だけを扱い、UsePokemonPower・UseStadium・CheckFaceUpDeckCard・energy2 は実装しない。カードの選択の表示は本人の手札だけで決まるので返す。読む情報を確かめていない使うための条件は呼ばず、処理可能性で示す（unverified）。F-9 の今の扱い（公開の情報だけで使えない場合も決定を出す）は変えない
+  - 実装した単位: `U7-5a`、`U7-5b`、`T-F1`、`U7-5c`
   - 仕様の訂正:
     - `CORR-1`（E 群の意味）: 情報源が未確認の経路を、処理可能性の unverified だけで公開してよいと扱わない。処理可能性と入力の公開の安全性は別の軸。選べるもの・件数・理由を公開して安全と確かめられないなら、入力は返さない（unconfirmed）。型・生成箇所の登録だけで安全と認めない
     - `CORR-2`（GUI への影響の比べる相手）: 設計の報告の d0c5cfa はエンジンのコミット（GUI の main が固定するエンジン）で、GUI のコミットではない。公開されている最新の GUI は feature/engine-u7-4-attacks の 3649946（エンジン 9506d63・0.166.0 を固定）。GUI のコミットと固定するエンジンを分けて書く（GUI_REF）
@@ -159,7 +160,8 @@ U7-5 の対象の 7 種類のコマンド（`PlayTrainer`・`UsePokemonPower`・
 | PT-4 | `PlayTrainer` | `kyuura_engine/effects.py::EffectRegistry.trainer_effect` | `A` | `candidates` | 登録の有無（本人の手札のカードの定義と登録表） |
 | PT-5 | `PlayTrainer` | `kyuura_engine/effects.py::TrainerEffect.check_playable` | `A` | `candidates` | 77 の実装のうち、下の 2 群を除くもの（場・トラッシュ・枚数・本人の手札） |
 | PT-5o | `PlayTrainer` | `kyuura_engine/effects.py::deck_target_lower_bound` | `A-own` | `candidates` | 持ち主の知識の関数を呼ぶ 6 の実装（scan.check_playable.owner_knowledge） |
-| PT-5e | `PlayTrainer` | `kyuura_engine/effects.py::state_stop_after` | `E` | `none` | 状態の複製の上で効果を試す 11 の実装（scan.check_playable.trials）。引く・クイズなど、実際の山札の並びを読みうる試行があり、たどっていない |
+| PT-5e | `PlayTrainer` | `kyuura_engine/effects.py::quiz_draw_outcome_stop` | `E` | `none` | 状態の複製の上で効果を試す 11 の実装（scan.check_playable.trials）のうち、実際の山札から引いて試す 5 つ（クイズ 4 種・とりかえっこプリーズ。legal_actions.PLAYABLE_NOT_EVALUATED）。たどっていない。v0.169: 候補・inputs・check で呼ばず unverified（入力は本人の手札だけで決まる） |
+| PT-5t | `PlayTrainer` | `kyuura_engine/effects.py::switch_max_hp_drop_check` | `A` | `candidates` | v0.169: 11 の試行のうち、試すのが場の処理だけ（入れ替え・特殊状態・回復）の 6 つ（legal_actions.PLAYABLE_BOARD_TRIALS）。effects.py の閉包と、呼ぶ別のモジュールの関数の1 段目までをたどり、山札・サイド・手札・うらのカードの中身を読まないことを確かめた（うらのカードの定義は本当のカードによらず FD1。docs/legal-actions-u7-5c.md 4 章） |
 | PT-6 | `PlayTrainer` | `kyuura_engine/effects.py::stadium_trainer_cost` | `A` | `candidates` | リムーブ禁止ジム（本人の手札の枚数） |
 | PT-7 | `PlayTrainer` | `kyuura_engine/effects.py::trainer_reaction_sources` | `A` | `candidates` | 相手の場の［ちえくらべ］と錯乱ジム（MG1） |
 | PT-8 | `PlayTrainer` | `kyuura_engine/engine.py::_trainer_reaction_decline_check` | `D` | `none` | 使わない答えの続きを実際の状態の複製で処理する |
@@ -191,7 +193,7 @@ U7-5 の対象の 7 種類のコマンド（`PlayTrainer`・`UsePokemonPower`・
 コマンドごとの確かめの ID:
 
 <!-- generated:rest-command-index begin -->
-- `PlayTrainer`: PT-1・PT-2・PT-3・PT-4・PT-5・PT-5o・PT-5e・PT-6・PT-7・PT-8・PT-9・PT-10
+- `PlayTrainer`: PT-1・PT-2・PT-3・PT-4・PT-5・PT-5o・PT-5e・PT-5t・PT-6・PT-7・PT-8・PT-9・PT-10
 - `UsePokemonPower`: UP-0・UP-1・UP-2・UP-3・UP-4・UP-5・UP-5o・UP-5e・UP-6
 - `UseStadium`: US-1・US-2・US-3
 - `RemoveDisguise`: RD-1・RD-2

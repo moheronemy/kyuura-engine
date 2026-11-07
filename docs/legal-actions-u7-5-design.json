@@ -538,10 +538,18 @@
   {
    "id": "PT-5e",
    "command": "PlayTrainer",
-   "ref": "kyuura_engine/effects.py::state_stop_after",
+   "ref": "kyuura_engine/effects.py::quiz_draw_outcome_stop",
    "source": "E",
    "use": "none",
-   "note": "状態の複製の上で効果を試す 11 の実装（scan.check_playable.trials）。引く・クイズなど、実際の山札の並びを読みうる試行があり、たどっていない"
+   "note": "状態の複製の上で効果を試す 11 の実装（scan.check_playable.trials）のうち、実際の山札から引いて試す 5 つ（クイズ 4 種・とりかえっこプリーズ。legal_actions.PLAYABLE_NOT_EVALUATED）。たどっていない。v0.169: 候補・inputs・check で呼ばず unverified（入力は本人の手札だけで決まる）"
+  },
+  {
+   "id": "PT-5t",
+   "command": "PlayTrainer",
+   "ref": "kyuura_engine/effects.py::switch_max_hp_drop_check",
+   "source": "A",
+   "use": "candidates",
+   "note": "v0.169: 11 の試行のうち、試すのが場の処理だけ（入れ替え・特殊状態・回復）の 6 つ（legal_actions.PLAYABLE_BOARD_TRIALS）。effects.py の閉包と、呼ぶ別のモジュールの関数の1 段目までをたどり、山札・サイド・手札・うらのカードの中身を読まないことを確かめた（うらのカードの定義は本当のカードによらず FD1。docs/legal-actions-u7-5c.md 4 章）"
   },
   {
    "id": "PT-6",
@@ -1410,14 +1418,17 @@
     "T-F1"
    ],
    "first": false,
-   "dependencies_met": "T-F1 は v0.168 で実装（U7-5b は v0.167）。U7-5c は未実装",
+   "dependencies_met": "T-F1 は v0.168 で実装（U7-5b は v0.167）",
+   "status": "implemented",
+   "implemented_in": "v0.169（docs/legal-actions-u7-5c.md）",
    "basis": [
     "宣言の入力は card だけ。対象・枚数・検索はすべて受理のあとの決定（answer_decision で答えられる）",
-    "受理の前の確かめ（PT-1〜PT-7）は A・A-own で、カードごとの確かめの 11 の実装（試行）だけが E"
+    "受理の前の確かめ（PT-1〜PT-7）は A・A-own で、カードごとの確かめの 11 の実装（試行）だけが E",
+    "v0.169: E の 11 のうち、試すのが場の処理だけの 6 は読む値をたどって候補の作成で呼ぶ（PT-5t）。実際の山札から引いて試す 5 は呼ばない（PT-5e。unverified）"
    ],
    "changes": [
-    "engine.py: _play_trainer の手札から出す前の部分を check_play_trainer にする",
-    "legal_actions.py: 1 段の候補。E の 11 の実装は入力を返さない（CORR-1）、登録なしは not_implemented、停止は診断のコード表の分類"
+    "engine.py: _play_trainer の手札から出す前の部分を check_play_trainer にする（同じ順番・同じコード・同じ文。use_condition が偽なら使うための条件だけを呼ばない）",
+    "legal_actions.py: 1 段の候補 play_trainer（選べるものは本人の手札のトレーナーカード）。登録なしは not_implemented、停止は診断のコード表の分類。使うための条件を呼ばないカード（PLAYABLE_NOT_EVALUATED）は unverified（入力は本人の手札だけで決まるので返す。条件の結果で選べるものを選り分けない）"
    ],
    "tests": [
     [
@@ -1474,10 +1485,11 @@
     "tests/test_stadiums_v0_57.py（錯乱ジム・リムーブ禁止ジム）",
     "tests/test_slowking_mind_games_v0_132.py（［ちえくらべ］）"
    ],
-   "done": "A-own の 6 の実装で双子が通る。錯乱ジムの「うら」・［ちえくらべ］・サイキックコントロールは受理のあとの決定として new_game からの列でつながる。E の 11 の実装は、たどるまで入力を返さない（CORR-1。対応済みに数えない）",
+   "done": "A-own の 6 の実装で双子が通る。錯乱ジムの「うら」・［ちえくらべ］・サイキックコントロールは受理のあとの決定として new_game からの列でつながる。E のうち読む値をたどっていない 5 の実装は、使うための条件を呼ばず unverified（対応済みに数えない）",
    "gui": "1 段。受理のあとの決定の種類が多い（検索・見たカード。U7-1 の DECK_REVEALING_KINDS の契約の例外）",
    "open": [
-    "PT-5e の 11 の実装の読む値をたどる"
+    "PT-5e の 5 の実装（実際の山札から引いて試す）の読む値をたどる",
+    "effects.py の外の閉包（PT-5t・A 群の呼ぶ別のモジュールの関数の 2 段目より先）"
    ]
   },
   {
@@ -1988,12 +2000,17 @@
    {
     "id": "D-U75-ENERGY2",
     "decision": "カツラの 2 枚目（AttachEnergy.energy2）は U7-5g に含める"
+   },
+   {
+    "id": "D-U75-TRAINER",
+    "decision": "U7-5c（2026-11-08 の依頼）: 手札の PlayTrainer だけを扱い、UsePokemonPower・UseStadium・CheckFaceUpDeckCard・energy2 は実装しない。カードの選択の表示は本人の手札だけで決まるので返す。読む情報を確かめていない使うための条件は呼ばず、処理可能性で示す（unverified）。F-9 の今の扱い（公開の情報だけで使えない場合も決定を出す）は変えない"
    }
   ],
   "implemented_units": [
    "U7-5a",
    "U7-5b",
-   "T-F1"
+   "T-F1",
+   "U7-5c"
   ],
   "corrections": [
    {
