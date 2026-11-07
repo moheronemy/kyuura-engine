@@ -1109,10 +1109,9 @@ def _reveal_for_action(state: GameState, command, context: resolution.Context) -
     return False
 
 
-def _reveal_face_down(state: GameState, cmd: RevealFaceDown, context: resolution.Context) -> None:
-    """うらにしてベンチに出したカード（マチスの秘策）を、自分の番におもてにする（v0.67。``RevealFaceDown``）。自分の番の ``Phase.MAIN`` だけ（決定を待つあいだ・処理の
-    途中には割りこまない）。本当のカードが「たねポケモン」でなければ、ついているカードといっしょにトラッシュし（きぜつではない）、空いたバトル場の勝ち負け・交代のあと
-    番にもどる（特殊能力のあとと同じ使用後の処理。``resolution.after_power``）。"""
+def check_reveal_face_down(state: GameState, cmd: RevealFaceDown) -> PokemonInPlay:
+    """``RevealFaceDown`` を受け付ける前の確かめ（U7-5b。``_reveal_face_down`` の前半を、同じ順番・同じコード・同じ文のまま移した）。状態・乱数・ログを変えない。
+    読むのは番・段階・自分の場のポケモンの番号・うらであること（どれも公開）だけで、うらのカードの本当のカードを読まない。おもてにするポケモンを返す。"""
     p = _require_turn(state, cmd.player)
     pokemon = p.find_by_pokemon_id(cmd.pokemon)
     if pokemon is None:
@@ -1121,6 +1120,14 @@ def _reveal_face_down(state: GameState, cmd: RevealFaceDown, context: resolution
         raise IllegalActionError("POKEMON_NOT_IN_PLAY", f"場のポケモンの番号 {cmd.pokemon!r} は自分の場にいない")
     if not state.is_face_down(pokemon):
         raise IllegalActionError("NOT_FACE_DOWN", f"場のポケモン {pokemon.pokemon_id} はうらにしてベンチに出したカードではない")
+    return pokemon
+
+
+def _reveal_face_down(state: GameState, cmd: RevealFaceDown, context: resolution.Context) -> None:
+    """うらにしてベンチに出したカード（マチスの秘策）を、自分の番におもてにする（v0.67。``RevealFaceDown``）。自分の番の ``Phase.MAIN`` だけ（決定を待つあいだ・処理の
+    途中には割りこまない）。本当のカードが「たねポケモン」でなければ、ついているカードといっしょにトラッシュし（きぜつではない）、空いたバトル場の勝ち負け・交代のあと
+    番にもどる（特殊能力のあとと同じ使用後の処理。``resolution.after_power``）。"""
+    pokemon = check_reveal_face_down(state, cmd)
     reveal_face_down(state, cmd.player, pokemon, cause="choice")
     resolution.after_power(state, context, knock_outs=False)
 
@@ -2622,17 +2629,10 @@ def _check_face_up_deck_card(state: GameState, cmd: CheckFaceUpDeckCard) -> None
     raise faceup.stop(faceup.FACE_UP_DECK_CHECK_CODE, f"プレイヤー {cmd.player} が、プレイヤー {cmd.owner} の山札の上から {cmd.position + 1} 枚目のおもてのカードを確かめる")
 
 
-def _discard_from_play(state: GameState, cmd: DiscardFromPlay, context: resolution.Context) -> None:
-    """自分の場のなにかの化石・ピッピ人形（進化カードがのっていないもの）を、自分の番の好きなときにトラッシュにすてる（v0.47。カードの文面「自分の番の好きなときに
-    （自分のトラッシュに）すてることができる」。docs/fossil-hidden-info-v0.47.md 3 章）。
-
-    - 自分の番（``Phase.MAIN``）だけ。トレーナーカードを使うことでも、特殊能力でもない（宣言しない。トレーナーの使用の禁止・かがくへんかガス・特殊状態は関係しない。
-      説明に制限がない）
-    - すてられるのは、いちばん上のカードが、ポケモンとして場に出したトレーナーカード（``PlayAsPokemon``。``discardable_from_play``）の場のポケモンだけ。進化カードが
-      のっていれば（いちばん上が進化カード）すてられない（なにかの化石の「進化カードがのっていないときに限り」。ピッピ人形は進化カードを重ねられない）
-    - ついているカードもいっしょにトラッシュする（``zones.discard_from_play``）。持続する効果は理由 ``discard_from_play`` で消す。きぜつではない（サイドはない）
-    - バトル場が空いたら、特殊能力のあとと同じ使用後の処理（``resolution.after_power``。勝ち負けの判定（場にポケモンがいない。p.311）→ バトル場に出す決定）の
-      あと、自分の番にもどる。確かめることはどれもトラッシュの前に済ませる（拒否したら状態・乱数・ログは変わらない）"""
+def check_discard_from_play(state: GameState, cmd: DiscardFromPlay) -> PokemonInPlay:
+    """``DiscardFromPlay`` を受け付ける前の確かめ（U7-5a。``_discard_from_play`` の前半を、同じ順番・同じコード・同じ文のまま移した）。状態・乱数・ログを変えない。
+    読むのは番・段階・自分の場のポケモン・場での役割（おもての化石・人形）・バトル場をはなれられない効果（どれも公開）。本人のうらのカードを指すと、理由の文で名前を読むので、
+    ``NOT_DISCARDABLE`` ではなく FD1（``HiddenPropertyRead``。本当のカードによらない）で拒否する（v0.67 からの挙動のまま）。すてるポケモンを返す。"""
     p = _require_turn(state, cmd.player)
     pokemon = p.find_by_pokemon_id(cmd.pokemon)
     if pokemon is None:
@@ -2649,9 +2649,39 @@ def _discard_from_play(state: GameState, cmd: DiscardFromPlay, context: resoluti
     if leave_lock(state, cmd.player, pokemon) is not None:
         # v0.93: バトル場の「バトル場をはなれられない」効果を受けたなにかの化石・ピッピ人形は、すててバトル場をはなれることもできない（「にげる」と同じく、すてる前に拒否する）
         raise IllegalActionError(LEAVE_ACTIVE_PREVENTED, f"バトル場のポケモン {pokemon.pokemon_id} は、バトル場をはなれられない（相手のワザの効果）のですてられない")
+    return pokemon
+
+
+def _discard_from_play(state: GameState, cmd: DiscardFromPlay, context: resolution.Context) -> None:
+    """自分の場のなにかの化石・ピッピ人形（進化カードがのっていないもの）を、自分の番の好きなときにトラッシュにすてる（v0.47。カードの文面「自分の番の好きなときに
+    （自分のトラッシュに）すてることができる」。docs/fossil-hidden-info-v0.47.md 3 章）。
+
+    - 自分の番（``Phase.MAIN``）だけ。トレーナーカードを使うことでも、特殊能力でもない（宣言しない。トレーナーの使用の禁止・かがくへんかガス・特殊状態は関係しない。
+      説明に制限がない）
+    - すてられるのは、いちばん上のカードが、ポケモンとして場に出したトレーナーカード（``PlayAsPokemon``。``discardable_from_play``）の場のポケモンだけ。進化カードが
+      のっていれば（いちばん上が進化カード）すてられない（なにかの化石の「進化カードがのっていないときに限り」。ピッピ人形は進化カードを重ねられない）
+    - ついているカードもいっしょにトラッシュする（``zones.discard_from_play``）。持続する効果は理由 ``discard_from_play`` で消す。きぜつではない（サイドはない）
+    - バトル場が空いたら、特殊能力のあとと同じ使用後の処理（``resolution.after_power``。勝ち負けの判定（場にポケモンがいない。p.311）→ バトル場に出す決定）の
+      あと、自分の番にもどる。確かめることはどれもトラッシュの前に済ませる（拒否したら状態・乱数・ログは変わらない）"""
+    pokemon = check_discard_from_play(state, cmd)
     discard_from_play(state, cmd.player, pokemon)
     remove_persistent_effects(state, cmd.player, pokemon, DISCARD_FROM_PLAY)
     resolution.after_power(state, context, knock_outs=False)
+
+
+def check_remove_disguise(state: GameState, cmd: RemoveDisguise) -> PokemonInPlay:
+    """``RemoveDisguise`` を受け付ける前の確かめ（U7-5a。``_remove_disguise`` の前半を、同じ順番・同じコード・同じ文のまま移した）。状態・乱数・ログを変えない。
+    読むのは番・段階・自分の場のポケモン・「ばける」でのせたカードがあること（どれも公開）。元の姿の最大HP（MH1・TK1）は処理のあとの確かめで、ここでは見ない。
+    のせたカードをトラッシュするポケモンを返す。"""
+    p = _require_turn(state, cmd.player)
+    pokemon = p.find_by_pokemon_id(cmd.pokemon)
+    if pokemon is None:
+        if state.players[1 - cmd.player].find_by_pokemon_id(cmd.pokemon) is not None:
+            raise IllegalActionError("POKEMON_NOT_YOURS", "相手の場のポケモンの、のせたカードはトラッシュできない")
+        raise IllegalActionError("POKEMON_NOT_IN_PLAY", f"場のポケモンの番号 {cmd.pokemon!r} は自分の場にいない")
+    if pokemon.disguise is None:
+        raise IllegalActionError("NOT_DISGUISED", f"場のポケモン {pokemon.pokemon_id} の上に「ばける」でのせたカードはない")
+    return pokemon
 
 
 def _remove_disguise(state: GameState, cmd: RemoveDisguise) -> None:
@@ -2664,14 +2694,7 @@ def _remove_disguise(state: GameState, cmd: RemoveDisguise) -> None:
     - のせたカードを持ち主のトラッシュに置き、元の姿にもどす（``zones.remove_disguise``。ログ ``disguise_removed`` の ``reason`` は ``revert``）。ダメージ・エネルギー・
       ついているトレーナー・持続する効果・特殊状態・場のポケモンの番号は変えない。元の姿の最大HPがのっているダメージ以下になるなら、きぜつの判定の時点が決まらない
       ので受け付けない（MH1。``_apply``）"""
-    p = _require_turn(state, cmd.player)
-    pokemon = p.find_by_pokemon_id(cmd.pokemon)
-    if pokemon is None:
-        if state.players[1 - cmd.player].find_by_pokemon_id(cmd.pokemon) is not None:
-            raise IllegalActionError("POKEMON_NOT_YOURS", "相手の場のポケモンの、のせたカードはトラッシュできない")
-        raise IllegalActionError("POKEMON_NOT_IN_PLAY", f"場のポケモンの番号 {cmd.pokemon!r} は自分の場にいない")
-    if pokemon.disguise is None:
-        raise IllegalActionError("NOT_DISGUISED", f"場のポケモン {pokemon.pokemon_id} の上に「ばける」でのせたカードはない")
+    pokemon = check_remove_disguise(state, cmd)
     remove_disguise(state, cmd.player, pokemon, reason=DISGUISE_REVERT)
 
 
