@@ -110,7 +110,7 @@ class MappingTest(unittest.TestCase):
         cov = r["coverage"]
         self.assertEqual(cov["completeness"], L.PARTIAL)
         self.assertEqual(cov["scope_kinds"], list(L.MAIN_KINDS))
-        self.assertEqual(cov["not_covered_kinds"], ["play_trainer", "use_power", "use_stadium", "check_face_up_deck"])
+        self.assertEqual(cov["not_covered_kinds"], ["use_power", "use_stadium", "check_face_up_deck"])  # v0.169（U7-5c）: play_trainer は対応した種類
         for kind in L.BOARD_KINDS:
             self.assertIn(kind, cov["implemented_kinds"])
         self.assertEqual(L.BOARD_KINDS, ("remove_disguise", "discard_from_play", "reveal_face_down"))
@@ -120,7 +120,7 @@ class MappingTest(unittest.TestCase):
     def test_kinds_absent_when_impossible(self):
         r = host_of(F.board(F.mon(F.HITMONCHAN), bench=[F.RATTATA])).session(0).candidates()
         self.assertFalse(set(L.BOARD_KINDS) & {c["kind"] for c in r["candidates"]})  # ゲーム上できない種類は候補を作らない
-        self.assertEqual(r["coverage"]["not_covered_kinds"], ["play_trainer", "use_power", "use_stadium", "check_face_up_deck"])
+        self.assertEqual(r["coverage"]["not_covered_kinds"], ["use_power", "use_stadium", "check_face_up_deck"])  # v0.169（U7-5c）: play_trainer は対応した種類
 
     def test_not_the_turn_player(self):
         for state in (disguised(), dolls(), face_down(S.DIGLETT)):
