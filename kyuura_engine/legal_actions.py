@@ -1,7 +1,8 @@
 """合法手 API の最小の実装（U7-1。docs/legal-actions-u7-1.md。仕様案 docs/legal-actions-api-design.md）。
 
 対象は決定への回答（サイドを取る・バトル場に出す・ほかの決定）と「番を終える」（U7-1）、対戦の準備（初期配置・切り直しの補償の引く枚数）と、ホストの操作（ジャンケンの結果・
-延長戦の開始。U7-2。docs/legal-actions-u7-2.md）。ほかの操作の種類（番の通常の操作）は候補に出さず、対応していない種類として示す（ゲーム上できないこととは別）。
+延長戦の開始。U7-2。docs/legal-actions-u7-2.md）、番の基本の操作（ベンチに出す・エネルギーをつける・進化させる・にげる。U7-3。docs/legal-actions-u7-3.md）。ほかの操作の
+種類（ワザ・トレーナー・特殊能力など）は候補に出さず、対応していない種類として示す（ゲーム上できないこととは別）。
 
 境界:
 
@@ -20,29 +21,48 @@ from __future__ import annotations
 import json
 import secrets
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from . import diagnostics as D
 from .adapter import CommandResult, HostedGame, HostStoppedError
 from .commands import (
+    AttachEnergy,
     DrawMulliganCards,
     EndTurn,
+    EvolvePokemon,
     PlaceStartingPokemon,
+    PlayBasicToBench,
     ReportJankenResult,
     ResolveDecision,
+    Retreat,
     StartSuddenDeath,
 )
 from .conventions import continuation_for
 from .decisions import ARRANGE_DECK_TOP, value_range
-from .effects import PLAY_AS_POKEMON_SETUP_CODE, play_as_pokemon_in_hand
-from .engine import SETUP_PLACEMENT_CASE
+from .effects import (
+    PLAY_AS_POKEMON_SETUP_CODE,
+    energy_unit_count,
+    play_as_pokemon_in_hand,
+    powers_of,
+    retreat_cost,
+)
+from .engine import (
+    SETUP_PLACEMENT_CASE,
+    check_attach_energy,
+    check_evolve,
+    check_play_basic,
+    check_retreat,
+    check_retreat_declaration,
+)
+from .errors import IllegalActionError, UnsupportedError
 from .observation import (
     DECK_REVEALING_KINDS,
     LOOKED_HAND_KINDS,
     OPTION_MEANINGS,
     observe,
 )
+from .stadiums import bench_limit
 from .state import GameState, Phase
 
 FORMAT_KEY = "kyuura_legal_actions_format"
@@ -120,7 +140,12 @@ KIND_PLACE_STARTING = "place_starting"  # U7-2: 本人の初期配置（PlaceSta
 KIND_MULLIGAN_DRAW = "mulligan_draw"  # U7-2: 本人の切り直しの補償の引く枚数（DrawMulliganCards）
 KIND_REPORT_JANKEN = "report_janken"  # U7-2: ホストの操作。ジャンケンの勝者（先攻）を伝える（ReportJankenResult。エンジンは乱数で決めない）
 KIND_START_SUDDEN_DEATH = "start_sudden_death"  # U7-2: ホストの操作。延長戦を始める（StartSuddenDeath。player を持たない）
-PLAYER_KINDS = (KIND_TAKE_PRIZE, KIND_PROMOTE_ACTIVE, KIND_ANSWER_DECISION, KIND_END_TURN, KIND_PLACE_STARTING, KIND_MULLIGAN_DRAW)
+KIND_PLAY_BASIC = "play_basic"  # U7-3: 手札のたね・ベイビィポケモンのカードをベンチに出す（PlayBasicToBench）
+KIND_ATTACH_ENERGY = "attach_energy"  # U7-3: 手札のエネルギーカードを自分の場のポケモンにつける（AttachEnergy。1 枚。カツラの 2 枚目 energy2 は使わない）
+KIND_EVOLVE = "evolve"  # U7-3: 手札の進化カード（ベイビィからはたねポケモンのカード）を自分の場のポケモンに重ねる（EvolvePokemon）
+KIND_RETREAT = "retreat"  # U7-3: バトル場のポケモンをにがす（Retreat）
+TURN_KINDS = (KIND_PLAY_BASIC, KIND_ATTACH_ENERGY, KIND_EVOLVE, KIND_RETREAT)
+PLAYER_KINDS = (KIND_TAKE_PRIZE, KIND_PROMOTE_ACTIVE, KIND_ANSWER_DECISION, KIND_END_TURN, KIND_PLACE_STARTING, KIND_MULLIGAN_DRAW, *TURN_KINDS)
 HOST_KINDS = (KIND_REPORT_JANKEN, KIND_START_SUDDEN_DEATH)
 IMPLEMENTED_KINDS = PLAYER_KINDS + HOST_KINDS
 HOST = "host"  # ホストの入口の操作主体（プレイヤーの番号ではない）
@@ -185,6 +210,15 @@ GUARANTEE_SUDDEN_DEATH = {
     "preconditions": "サドン・デスに移った状態（status が sudden_death_pending）であること。整合の確かめ（不変条件・最初のデッキの復元）は apply_command が行う",
     "acceptance": "保証しない（整合しない状態は処理できない結果になる）",
     "after_acceptance": "評価していない（延長戦の準備で、切り直しの補償・化石の手札などで止まりうる。乱数は今の状態から続ける）",
+}
+GUARANTEE_TURN_ACTION = {
+    "preconditions": "番・段階と、選べるもの・組ごとに、エンジンが受け付ける前の確かめ（engine.check_play_basic・check_attach_energy・check_evolve・check_retreat_declaration。コマンドの"
+                     "処理と同じ関数・同じ順番）を候補の作成に使う。にげるの入れ替える控えとトラッシュするエネルギーの組は、入力の検査で engine.check_retreat を呼ぶ",
+    "acceptance": "eligible の選べるもの（2 段の操作は options_by_choice の eligible の組）だけで作り、入力の検査に合った入力は、エンジンが受け付ける前の確かめを満たす"
+                  "（最終の判定は apply_command。うらのカードをおもてにする処理・コマンドの項目の確かめはエンジンの入口）",
+    "after_acceptance": "supported は、受理のあとの反応・決定・停止のもと（特殊能力・ついているトレーナー・スタジアム・マーカー・持続する効果・特殊エネルギー・うらのカード・番の効果など）が"
+                        "場にないことを公開の情報で確かめた場合だけ。ほかは may_stop_later（受理のあとを評価していない）",
+    "supported_scope": "supported は上の条件の範囲の保証で、受理のあとの全分岐の完走の保証ではない（こんらんのコインなど、乱数で決まる続きを含む）",
 }
 GUARANTEE_END_TURN = {
     "preconditions": "番のプレイヤーの main の段階（require_turn と同じ公開の条件）だけを確かめた",
@@ -260,6 +294,9 @@ class _Candidate:
     min_choices: int = 0
     max_choices: int = 0
     bench_max: int = 0  # 初期配置のベンチの上限（U7-2）
+    ids: dict[str, tuple[int, int]] = field(default_factory=dict)  # U7-3 の 2 段の操作: 選ぶものの番号 → (段, 値)
+    pairs: dict[tuple[str, str], bool] = field(default_factory=dict)  # U7-3 のエネルギー・進化: (1 段目, 2 段目) の組 → 実行できるか（ない組はゲーム上できない）
+    verify: Any = None  # U7-3 のにげる: 入力の検査でエンジンの確かめを呼ぶ（候補を作った状態に結びつける。取っ手が同じ状態を確かめてから呼ぶ）
 
     def blocked(self) -> bool:
         return self.public.get("processability") not in EXECUTABLE
@@ -461,7 +498,8 @@ class HostSession(_Session):
 
 def _candidates(host: ActionHost, actor: int | str) -> dict[str, Any]:
     state = host._state()
-    situation, candidates, offered, not_covered, completeness, empty = _build_host(state) if actor == HOST else _build(state, actor)
+    situation, candidates, evaluated, not_covered, completeness, empty = _build_host(state) if actor == HOST else _build(state, actor)
+    offered = list(dict.fromkeys(c.kind for c in candidates))  # 候補がある種類（evaluated のうち。ゲーム上できない種類は候補がない）
     token = host._issue(actor, state, candidates)
     withheld = [c.id for c in candidates if c.disclosure == DISCLOSURE_UNCONFIRMED]
     return _copy({
@@ -472,7 +510,7 @@ def _candidates(host: ActionHost, actor: int | str) -> dict[str, Any]:
         "status": D.status_of(state),
         "situation": situation,
         "empty_reason": None if candidates else empty,
-        "coverage": {"implemented_kinds": list(IMPLEMENTED_KINDS), "scope_kinds": offered + not_covered, "offered_kinds": offered,
+        "coverage": {"implemented_kinds": list(IMPLEMENTED_KINDS), "scope_kinds": evaluated + not_covered, "offered_kinds": offered,
                      "not_covered_kinds": not_covered, "withheld_input_candidates": withheld, "completeness": completeness,
                      "completeness_scope": "scope_kinds（この応答に明示した種類だけ。全コマンドの合法手ではない）"},
         "candidates": [{"id": c.id, "kind": c.kind, **c.public, "input_disclosure": c.disclosure,
@@ -508,6 +546,14 @@ def _command(found: _Candidate, actor, values: tuple[int, ...]):
         return ReportJankenResult(values[0])
     if found.kind == KIND_START_SUDDEN_DEATH:
         return StartSuddenDeath()
+    if found.kind == KIND_PLAY_BASIC:
+        return PlayBasicToBench(actor, values[0])
+    if found.kind == KIND_ATTACH_ENERGY:
+        return AttachEnergy(actor, values[0], values[1])  # つけるカード, つける場のポケモン（いちばん上のカードの uid）
+    if found.kind == KIND_EVOLVE:
+        return EvolvePokemon(actor, values[0], values[1])  # 進化カード, 進化させる場のポケモンの番号
+    if found.kind == KIND_RETREAT:
+        return Retreat(actor, tuple(values[1:]), values[0])  # トラッシュするカード（選んだ順）, 入れ替える控え（いちばん上のカードの uid）
     return ResolveDecision(actor, found.decision_id, values)
 
 
@@ -560,10 +606,17 @@ def _build(state: GameState, actor: int):
         if state.current_player != actor:
             return WAITING_FOR_PLAYER, [], [], [], COMPLETE, EMPTY_NOT_ACTOR
         public = {"processability": MAY_STOP_LATER, "reasons": ["checkup_not_evaluated"], "guarantees": dict(GUARANTEE_END_TURN)}
-        if not D.state_usable(state):
+        usable = D.state_usable(state)
+        if not usable:
             public = {"processability": NOT_IMPLEMENTED, "reasons": ["state_not_supported"], "guarantees": dict(GUARANTEE_END_TURN)}
-        candidate = _Candidate("c1", KIND_END_TURN, public, [])
-        return ACTOR_TO_ACT, [candidate], [KIND_END_TURN], [k for k in MAIN_KINDS if k != KIND_END_TURN], PARTIAL, None
+        candidates = [_Candidate("c1", KIND_END_TURN, public, [])]
+        candidates += _turn_candidates(state, actor) if usable else [
+            _Candidate("", kind, {"processability": NOT_IMPLEMENTED, "reasons": ["state_not_supported"], "guarantees": dict(GUARANTEE_TURN_ACTION)}, [],
+                       disclosure=DISCLOSURE_UNCONFIRMED) for kind in TURN_KINDS]
+        for number, candidate in enumerate(candidates, 1):
+            candidate.id = f"c{number}"  # 種類の並び（MAIN_KINDS の順）。番号は応答ごと（取っ手と組で使う）
+        evaluated = [KIND_END_TURN, *TURN_KINDS]
+        return ACTOR_TO_ACT, candidates, evaluated, [k for k in MAIN_KINDS if k not in evaluated], PARTIAL, None
     return WAITING_FOR_PLAYER, [], [], [], UNDETERMINED, None  # 知らない段階（状態の区分と段階の組が上のどれでもない）は完全と称さない
 
 
@@ -712,6 +765,8 @@ def _input_problem(found: _Candidate, choices) -> tuple[str | None, tuple[int, .
         if len(choices) != 1 or type(choices[0]) is not int or not found.value_bounds[0] <= choices[0] <= found.value_bounds[1]:
             return CANDIDATE_INPUT_INVALID, ()
         return None, choices
+    if found.kind in (KIND_ATTACH_ENERGY, KIND_EVOLVE, KIND_RETREAT):
+        return _turn_input_problem(found, choices)
     if found.kind == KIND_PLACE_STARTING:
         indexes = [found.option_index(choice) for choice in choices]  # 1 つめがバトル場、残りがベンチ（選んだ順）
         if not choices or None in indexes or len(set(indexes)) != len(indexes) or len(indexes) - 1 > found.bench_max:
@@ -725,3 +780,244 @@ def _input_problem(found: _Candidate, choices) -> tuple[str | None, tuple[int, .
     if not all(found.executable[i] for i in indexes):
         return CANDIDATE_NOT_EXECUTABLE, ()
     return None, tuple(found.values[i] for i in indexes)
+
+
+# ---------------------------------------------------------------- 番の基本の操作（U7-3。docs/legal-actions-u7-3.md）
+
+ILLEGAL = "illegal"  # エンジンの確かめが IllegalActionError（ゲーム上できない。候補・組に出さない）
+STOP = "stop"  # エンジンの確かめが UnsupportedError（未裁定・未対応。選べるものとして示し、実行できない区分にする）
+REASON_REACTIONS = "reactions_not_evaluated"  # 受理のあとの反応・決定・停止のもとが場にある（評価していない）
+REASON_FACE_DOWN = "face_down_reveal_not_evaluated"  # 自分のうらのカード（マチスの秘策）がする操作。エンジンがおもてにしてから確かめる（候補の作成では確かめていない）
+REASON_STOPS = "stops_before_acceptance"  # エンジンが受け付ける前に止める（未裁定・未対応）
+# 候補の処理可能性を、選べるもの・組の中のいちばん進めやすい区分で示す順
+_RANK = (SUPPORTED, MAY_STOP_LATER, UNVERIFIED, RULING_UNRESOLVED, NOT_IMPLEMENTED, TECHNICAL_LIMIT)
+# 受理のあとに反応・決定・停止のもとになりうる、状態の番の効果・場の外の記録（公開の情報。あれば supported にしない）
+_EFFECT_FIELDS = ("face_down_cards", "face_up_deck", "trainer_effects", "energy_burn", "energy_roles", "color_effects", "poison_mists", "replacement_poisons",
+                  "frozen_forms", "set_aside", "trainer_locks", "recalls", "pending_moves")
+
+
+def _probe(check, *args) -> tuple[str | None, str | None]:
+    """エンジンが受け付ける前の確かめ（``engine.check_*``。状態・乱数・ログを変えない）を呼び、(ILLEGAL・STOP・None, コード) にする。理由の文は返さない。"""
+    try:
+        check(*args)
+    except IllegalActionError as error:
+        return ILLEGAL, error.code
+    except UnsupportedError as error:
+        return STOP, error.code
+    return None, None
+
+
+def _quiet(state: GameState) -> bool:
+    """受理のあとの反応・決定・停止のもとが場にない（supported の条件。公開の情報だけ。うらのカードがあれば偽なので、本当のカードを読まない）。十分条件で、偽でも止まるとは限らない。"""
+    if state.stadium is not None or state.energy_attached_by_powers_this_turn or any(getattr(state, name) for name in _EFFECT_FIELDS):
+        return False
+    for side in state.players:
+        for pokemon in side.in_play():
+            if (pokemon.trainers or pokemon.markers or pokemon.persistent_effects or pokemon.type_shift is not None or pokemon.disguise is not None
+                    or powers_of(state, pokemon)):
+                return False
+    return True
+
+
+def _after(quiet: bool) -> tuple[str, list[str]]:
+    return (SUPPORTED, []) if quiet else (MAY_STOP_LATER, [REASON_REACTIONS])
+
+
+def _verdict(verdict: str | None, code: str | None, quiet: bool) -> tuple[str, list[str]] | None:
+    """確かめの結果から (処理可能性, 理由)。ゲーム上できないなら None。"""
+    if verdict == ILLEGAL:
+        return None
+    if verdict == STOP:
+        return _stop_processability(code), [REASON_STOPS]
+    return _after(quiet)
+
+
+def _best(items: list[tuple[str, list[str]]]) -> tuple[str, list[str]]:
+    best = min((item[0] for item in items), key=_RANK.index)
+    return best, sorted({reason for proc, reasons in items if proc == best for reason in reasons})
+
+
+def _option(base: dict[str, Any], processability: str, reasons: list[str]) -> dict[str, Any]:
+    option = {**base, "eligible": processability in EXECUTABLE, "processability": processability}
+    if reasons:
+        option["reasons"] = list(reasons)
+    return option
+
+
+def _card_option(state: GameState, uid: int) -> dict[str, Any]:
+    """本人の手札のカード（本人に見える）。"""
+    definition = state.card_def(uid)
+    option = {"card": uid, "card_id": state.cards[uid].card_id}
+    if definition.category == "energy":
+        option["special"] = definition.is_special_energy
+    return option
+
+
+def _pokemon_option(state: GameState, pokemon, zone: str, index: int | None) -> dict[str, Any]:
+    """本人の場のポケモン（公開。本人のうらのカードは face_down で示し、カード id を出さない）。"""
+    option = {"pokemon": pokemon.pokemon_id, "card": pokemon.card, "zone": zone}
+    if index is not None:
+        option["bench_index"] = index
+    if state.is_face_down(pokemon):
+        option["face_down"] = True
+    else:
+        option["card_id"] = state.cards[pokemon.card].card_id
+    return option
+
+
+def _field(state: GameState, actor: int) -> list[tuple[Any, dict[str, Any]]]:
+    p = state.players[actor]
+    return [(p.active, _pokemon_option(state, p.active, "active", None))] + [(q, _pokemon_option(state, q, "bench", i)) for i, q in enumerate(p.bench)]
+
+
+def _turn_candidates(state: GameState, actor: int) -> list[_Candidate]:
+    """番の基本の操作の候補（種類の順。ゲーム上できない種類は候補を作らない）。手札・場の並びは本人に見える並びのまま。"""
+    quiet = _quiet(state)
+    built = [_play_basic_candidate(state, actor, quiet), _attach_candidate(state, actor, quiet), _evolve_candidate(state, actor, quiet),
+             _retreat_candidate(state, actor, quiet)]
+    return [c for c in built if c is not None]
+
+
+def _play_basic_candidate(state: GameState, actor: int, quiet: bool) -> _Candidate | None:
+    """手札からベンチに出す（1 段。手札のカード 1 枚）。場の並び・場のポケモンの番号はエンジンが決める。"""
+    p = state.players[actor]
+    options, values, executable, found_all = [], [], [], []
+    for uid in p.hand:
+        found = _verdict(*_probe(check_play_basic, state, PlayBasicToBench(actor, uid)), quiet and not state.card_def(uid).powers)
+        if found is None:
+            continue
+        values.append(uid)
+        executable.append(found[0] in EXECUTABLE)
+        found_all.append(found)
+        options.append(_option({"id": f"o{len(values)}", **_card_option(state, uid)}, *found))
+    if not options:
+        return None  # たねポケモン・ベイビィのカードがない・ベンチに空きがない（ゲーム上できない）
+    processability, reasons = _best(found_all)
+    stage = {"stage": 1, "input": INPUT_CHOOSE_OPTION, "role": "bench", "meaning": "card", "count": {"min": 1, "max": 1}, "options": options,
+             "order": ORDER_NOT_APPLICABLE, "bench": {"count": len(p.bench), "limit": bench_limit(state, actor)}}
+    public = {"processability": processability, "reasons": reasons, "guarantees": dict(GUARANTEE_TURN_ACTION), "choices_format": "[手札のカードの番号]"}
+    return _Candidate("", KIND_PLAY_BASIC, public, [stage], disclosure=DISCLOSURE_CONFIRMED, values=tuple(values), executable=tuple(executable),
+                      min_choices=1, max_choices=1)
+
+
+def _pair_candidate(kind: str, firsts, seconds, evaluate, roles: tuple[str, str], choices_format: str) -> _Candidate | None:
+    """2 段の操作（手札のカード → 場のポケモン）。組ごとの確かめの結果を options_by_choice に置く（組の条件は 2 段目の選べるものだけでは表せない）。"""
+    pairs = {}
+    for i, (first, _) in enumerate(firsts):
+        for j, (second, _) in enumerate(seconds):
+            found = evaluate(first, second)
+            if found is not None:
+                pairs[(i, j)] = found
+    if not pairs:
+        return None
+    used_first = sorted({i for i, _ in pairs})
+    used_second = sorted({j for _, j in pairs})
+    names = {("a", i): f"o{n}" for n, i in enumerate(used_first, 1)}
+    names.update({("b", j): f"o{len(used_first) + n}" for n, j in enumerate(used_second, 1)})
+    ids = {names[("a", i)]: (1, firsts[i][0]) for i in used_first}
+    ids.update({names[("b", j)]: (2, seconds[j][0]) for j in used_second})
+    first_options = [_option({"id": names[("a", i)], **firsts[i][1]}, *_best([v for k, v in pairs.items() if k[0] == i])) for i in used_first]
+    second_options = [_option({"id": names[("b", j)], **seconds[j][1]}, *_best([v for k, v in pairs.items() if k[1] == j])) for j in used_second]
+    by_choice = {names[("a", i)]: [_option({"option": names[("b", j)]}, *pairs[(i, j)]) for j in used_second if (i, j) in pairs] for i in used_first}
+    stages = [{"stage": 1, "input": INPUT_CHOOSE_OPTION, "role": roles[0], "meaning": "card", "count": {"min": 1, "max": 1}, "options": first_options,
+               "order": ORDER_NOT_APPLICABLE},
+              {"stage": 2, "input": INPUT_CHOOSE_OPTION, "role": roles[1], "meaning": "pokemon", "count": {"min": 1, "max": 1}, "options": second_options,
+               "order": ORDER_NOT_APPLICABLE, "depends_on_stage": 1, "options_by_choice": by_choice,
+               "note": "選べる組は options_by_choice（1 段目の番号ごと）。options は組のどれかにある場のポケモン"}]
+    processability, reasons = _best(list(pairs.values()))
+    public = {"processability": processability, "reasons": reasons, "guarantees": dict(GUARANTEE_TURN_ACTION), "choices_format": choices_format}
+    return _Candidate("", kind, public, stages, disclosure=DISCLOSURE_CONFIRMED, ids=ids, min_choices=2, max_choices=2,
+                      pairs={(names[("a", i)], names[("b", j)]): found[0] in EXECUTABLE for (i, j), found in pairs.items()})
+
+
+def _attach_candidate(state: GameState, actor: int, quiet: bool) -> _Candidate | None:
+    """手札からエネルギーをつける（エネルギーカード → つける場のポケモン）。その番につけた数・つける先の制限・特殊エネルギーの確かめはエンジンの確かめ。"""
+    p = state.players[actor]
+    firsts = [(uid, _card_option(state, uid)) for uid in p.hand if state.card_def(uid).category == "energy"]
+    seconds = [(pokemon.card, option) for pokemon, option in _field(state, actor)]
+
+    def evaluate(energy, target):
+        return _verdict(*_probe(check_attach_energy, state, AttachEnergy(actor, energy, target)), quiet and not state.card_def(energy).is_special_energy)
+
+    return _pair_candidate(KIND_ATTACH_ENERGY, firsts, seconds, evaluate, ("energy", "target"), "[エネルギーカードの番号, つける場のポケモンの番号]")
+
+
+def _evolve_candidate(state: GameState, actor: int, quiet: bool) -> _Candidate | None:
+    """手札から進化させる（進化カード → 進化させる場のポケモン）。名前・段階・その番の制限・退化・ベイビィの確かめはエンジンの確かめ（evolution_block を含む）。"""
+    p = state.players[actor]
+    firsts = [(uid, _card_option(state, uid)) for uid in p.hand if state.card_def(uid).category == "pokemon"]
+    field_by_id = {pokemon.pokemon_id: pokemon for pokemon, _ in _field(state, actor)}
+    seconds = [(pokemon.pokemon_id, option) for pokemon, option in _field(state, actor)]
+
+    def evaluate(card, pokemon_id):
+        if state.is_face_down(field_by_id[pokemon_id]):
+            # 自分のうらのカード: エンジンがおもてにしてから確かめる（本当のカードを候補の作成では読まない）。進化カードとの組だけ示す
+            return (UNVERIFIED, [REASON_FACE_DOWN]) if state.card_def(card).stage in ("stage1", "stage2") else None
+        return _verdict(*_probe(check_evolve, state, EvolvePokemon(actor, card, pokemon_id)), quiet and not state.card_def(card).powers)
+
+    return _pair_candidate(KIND_EVOLVE, firsts, seconds, evaluate, ("evolution_card", "target"), "[進化カードの番号, 進化させる場のポケモンの番号]")
+
+
+def _retreat_candidate(state: GameState, actor: int, quiet: bool) -> _Candidate | None:
+    """にげる（入れ替える控え → トラッシュするエネルギー）。全部の組を並べず、エネルギーの個数の条件で示す。組の確かめは入力の検査で engine.check_retreat。"""
+    p = state.players[actor]
+    if not p.bench:
+        return None  # 控えがいない（ゲーム上できない）
+    active = p.active
+    face_down = state.is_face_down(active)
+    if face_down:
+        processability, reasons = UNVERIFIED, [REASON_FACE_DOWN]
+    else:
+        found = _verdict(*_probe(check_retreat_declaration, state, actor), quiet and not any(state.card_def(uid).is_special_energy for uid in active.energy))
+        if found is None:
+            return None  # ねむり・マヒ・にげられない効果・こんらんで失敗した番（ゲーム上できない）
+        processability, reasons = found
+    cost = retreat_cost(state, actor)
+    ids, bench_options, energy_options = {}, [], []
+    for index, pokemon in enumerate(p.bench):
+        oid = f"o{len(ids) + 1}"
+        ids[oid] = (1, pokemon.card)
+        bench_options.append(_option({"id": oid, **_pokemon_option(state, pokemon, "bench", index)}, processability, reasons))
+    for uid in active.energy:
+        oid = f"o{len(ids) + 1}"
+        ids[oid] = (2, uid)
+        energy_options.append({"id": oid, "card": uid, "card_id": state.cards[uid].card_id, "special": state.card_def(uid).is_special_energy,
+                               "units": energy_unit_count(state, (uid,), active), "processability": processability})
+    stages = [{"stage": 1, "input": INPUT_CHOOSE_OPTION, "role": "new_active", "meaning": "pokemon", "count": {"min": 1, "max": 1}, "options": bench_options,
+               "order": ORDER_NOT_APPLICABLE},
+              {"stage": 2, "input": INPUT_CHOOSE_OPTION, "role": "discard", "meaning": "card", "count": {"min": 0, "max": len(energy_options)},
+               "options": energy_options, "distinct": True, "order": ORDER_SIGNIFICANT, "order_preserved": True,
+               "total_units": {"min": cost.minimum, "max": cost.maximum},
+               "note": "トラッシュするカードの出すエネルギーの個数（units。カードの枚数ではない）の合計が total_units の範囲。1 枚で 2 個のカードは分けられない。トラッシュの並びは"
+                       "選んだ順。余る個数・読み方で変わる数・入れ替えの前後で変わる効果は、入力の検査（エンジンの確かめ）が止める",
+               **({"confused": True} if active.conditions.confused else {})}]
+    public = {"processability": processability, "reasons": reasons, "guarantees": dict(GUARANTEE_TURN_ACTION),
+              "choices_format": "[入れ替える控えの番号, トラッシュするエネルギーの番号, ...]（エネルギーは選んだ順）"}
+
+    def verify(values):
+        if face_down:
+            return None  # エンジンがおもてにしてから確かめる（最終の判定は apply_command）
+        verdict, _ = _probe(check_retreat, state, Retreat(actor, tuple(values[1:]), values[0]))
+        return None if verdict is None else CANDIDATE_INPUT_INVALID if verdict == ILLEGAL else CANDIDATE_NOT_EXECUTABLE
+
+    return _Candidate("", KIND_RETREAT, public, stages, disclosure=DISCLOSURE_CONFIRMED, ids=ids, min_choices=1, max_choices=1 + len(energy_options),
+                      verify=verify)
+
+
+def _turn_input_problem(found: _Candidate, choices: tuple) -> tuple[str | None, tuple[int, ...]]:
+    """2 段の番の操作の入力（選ぶものの番号だけ。並びは変えない）。"""
+    if not choices or any(type(choice) is not str or choice not in found.ids for choice in choices):
+        return CANDIDATE_INPUT_INVALID, ()
+    stages = [found.ids[choice][0] for choice in choices]
+    if found.kind == KIND_RETREAT:
+        rest = choices[1:]
+        if stages[0] != 1 or any(stage != 2 for stage in stages[1:]) or len(set(rest)) != len(rest):
+            return CANDIDATE_INPUT_INVALID, ()
+        values = tuple(found.ids[choice][1] for choice in choices)
+        code = found.verify(values)
+        return (code, ()) if code is not None else (None, values)
+    if len(choices) != 2 or stages != [1, 2] or tuple(choices) not in found.pairs:
+        return CANDIDATE_INPUT_INVALID, ()  # 組にない（ゲーム上できない組・数・段の並びが違う）
+    if not found.pairs[tuple(choices)]:
+        return CANDIDATE_NOT_EXECUTABLE, ()
+    return None, tuple(found.ids[choice][1] for choice in choices)

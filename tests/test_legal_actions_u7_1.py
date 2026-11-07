@@ -409,9 +409,10 @@ class EndTurnTest(unittest.TestCase):
         host = L.ActionHost(A.HostedGame(self.poisoned()))
         p0, p1 = host.session(0), host.session(1)
         r = p0.candidates()
-        (cand,) = r["candidates"]
+        cand = r["candidates"][0]  # v0.165（U7-3）: 番を終える（c1）に続けて番の基本の操作（ここでは手札の炎エネルギーをつける）
+        self.assertEqual([c["kind"] for c in r["candidates"]], [L.KIND_END_TURN, L.KIND_ATTACH_ENERGY])
         self.assertEqual((cand["kind"], cand["processability"], cand["reasons"]), (L.KIND_END_TURN, L.MAY_STOP_LATER, ["checkup_not_evaluated"]))
-        self.assertEqual(r["coverage"]["completeness"], L.PARTIAL)  # 番の操作は番を終えるだけ。全合法手と称さない
+        self.assertEqual(r["coverage"]["completeness"], L.PARTIAL)  # 番の操作は一部だけ。全合法手と称さない
         self.assertIn("use_attack", r["coverage"]["not_covered_kinds"])
         self.assertIn("保証しない", cand["guarantees"]["acceptance"])
         self.assertEqual(p1.candidates()["situation"], L.WAITING_FOR_PLAYER)
