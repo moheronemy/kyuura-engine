@@ -67,41 +67,41 @@
 | `allocate_damage` | number | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `arrange_deck_top` | card | confirmed | 始まった検索・見たカード（DECK_REVEALING_KINDS・LOOKED_HAND_KINDS。決定は効果が見たあとに出る。契約の例外として実際のカードを示す） | significant | 種類・決める人・選ぶ数・選べるものの数 |
 | `attach_from_deck` | card | confirmed | 始まった検索・見たカード（DECK_REVEALING_KINDS・LOOKED_HAND_KINDS。決定は効果が見たあとに出る。契約の例外として実際のカードを示す） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
-| `attach_from_discard` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `attach_from_hand` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
-| `attach_to_bench` | pokemon | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `attach_from_discard` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | not_significant | 種類・決める人・選ぶ数・選べるものの数 |
+| `attach_from_hand` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | not_significant | 種類・決める人だけ |
+| `attach_to_bench` | pokemon | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `bench_from_deck` | card | confirmed | 始まった検索・見たカード（DECK_REVEALING_KINDS・LOOKED_HAND_KINDS。決定は効果が見たあとに出る。契約の例外として実際のカードを示す） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
 | `bench_from_deck_or_hand` | card | confirmed | 始まった検索・見たカード（DECK_REVEALING_KINDS・LOOKED_HAND_KINDS。決定は効果が見たあとに出る。契約の例外として実際のカードを示す） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
-| `bench_from_discard` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `bench_guard` | pokemon | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `bench_from_discard` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `bench_guard` | pokemon | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | significant | 種類・決める人・選ぶ数・選べるものの数 |
 | `challenge_bench` | card | confirmed | 始まった検索・見たカード（DECK_REVEALING_KINDS・LOOKED_HAND_KINDS。決定は効果が見たあとに出る。契約の例外として実際のカードを示す） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
 | `damage_option` | pokemon | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `damage_reduction` | number | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `damage_reduction` | number | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `damage_step_order` | number | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `deck_top_from_hand` | card | confirmed | 選べるものの式が本人の手札・トラッシュ・場のスタジアムだけ（どれも本人に見えるカード） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
-| `discard_energy` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `discard_energy` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | significant | 種類・決める人・選ぶ数・選べるものの数 |
 | `discard_from_hand` | card | confirmed | 選べるものの式が本人の手札・トラッシュ・場のスタジアムだけ（どれも本人に見えるカード） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
-| `discard_opponent_energy` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `discard_opponent_energy` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | not_significant | 種類・決める人・選ぶ数・選べるものの数 |
 | `discard_stadium` | card | confirmed | 選べるものの式が本人の手札・トラッシュ・場のスタジアムだけ（どれも本人に見えるカード） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `discard_to_deck` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `discard_to_deck` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | not_significant | 種類・決める人・選ぶ数・選べるものの数 |
 | `discard_to_deck_top` | card | confirmed | 選べるものの式が本人の手札・トラッシュ・場のスタジアムだけ（どれも本人に見えるカード） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `energy_drain_discard` | card | confirmed | ダメージを与えたポケモン（場）についているエネルギーカード（resolution.kernel.drain_energy_from_damage_source の tuple(source.energy)）。決めるのは［だつりょくえき］の持ち主（相手の番の決定）。選ぶと止めるカードは energy_discard_problem（カードの定義と場の状態） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `entry_power` | pokemon | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `esp_redo` | number | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `evolution_heal` | pokemon | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `evolution_song_pokemon` | pokemon | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
+| `evolution_song_pokemon` | pokemon | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
 | `exp_all_energy` | card | confirmed | きぜつするバトル場のポケモン（場）についている基本エネルギーとレインボーエネルギー（resolution.kernel.exp_all_options）。決めるのは学習装置の持ち主（相手の番の決定）。選ぶと止めるカードは exp_all_unresolved（場の状態） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `forced_switch` | pokemon | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `forced_switch` | pokemon | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `hand_to_active` | card | confirmed | 選べるものの式が本人の手札・トラッシュ・場のスタジアムだけ（どれも本人に見えるカード） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
 | `hand_to_deck` | card | confirmed | 選べるものの式が本人の手札・トラッシュ・場のスタジアムだけ（どれも本人に見えるカード） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `heal_allocation` | number | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `janken_hand` | janken | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `knock_out_power` | pokemon | confirmed | 選べるものはきぜつするポケモンの番号 1 つ（resolution.codec.ko_check_decision の (pokemon_id,)） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `ko_prevention` | pokemon | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `ko_prevention` | pokemon | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `magma_pool_energy` | card | confirmed | ［やけのこり］の持ち主の場のポケモン（holder）についているエネルギーカード（effects.magma_candidates の holder.energy）。決めるのは持ち主。選ぶと止めるカードはカードの定義と場の色の効果 | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `move_energy` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `move_opponent_energy` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `ninja_trick` | pokemon | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `move_energy` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | significant | 種類・決める人・選ぶ数・選べるものの数 |
+| `move_opponent_energy` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `ninja_trick` | pokemon | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `opponent_hand_to_bench` | card | confirmed | 始まった検索・見たカード（DECK_REVEALING_KINDS・LOOKED_HAND_KINDS。決定は効果が見たあとに出る。契約の例外として実際のカードを示す） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
 | `opponent_hand_to_deck` | card | confirmed | 始まった検索・見たカード（DECK_REVEALING_KINDS・LOOKED_HAND_KINDS。決定は効果が見たあとに出る。契約の例外として実際のカードを示す） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
 | `optional_coin` | number | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
@@ -110,55 +110,55 @@
 | `optional_heal` | pokemon | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `optional_shuffle` | number | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `peek_card` | peek_target | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `post_knockout_power` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `post_knockout_power` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `prize_first` | number | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `promote_active` | pokemon | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `quiz_answer` | name | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `quiz_attack` | number | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
-| `quiz_card` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
+| `quiz_card` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
 | `quiz_height_answer` | value | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `reaction_order` | number | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `reaction_power` | pokemon | confirmed | 選べるものは反応するポケモンの番号 1 つ（reactions.py の (pid,)） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `reaction_switch` | pokemon | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `recover_energy` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `recover_pokemon` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `recover_trainer` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `reaction_switch` | pokemon | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `recover_energy` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | significant | 種類・決める人・選ぶ数・選べるものの数 |
+| `recover_pokemon` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | not_significant | 種類・決める人・選ぶ数・選べるものの数 |
+| `recover_trainer` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | not_significant | 種類・決める人・選ぶ数・選べるものの数 |
 | `remove_counters` | number | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `retrieve_energy` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `return_energy` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `return_to_deck` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
-| `revive_source` | number | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
+| `retrieve_energy` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | not_significant | 種類・決める人・選ぶ数・選べるものの数 |
+| `return_energy` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | significant | 種類・決める人・選ぶ数・選べるものの数 |
+| `return_to_deck` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
+| `revive_source` | number | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
 | `search_deck` | card | confirmed | 始まった検索・見たカード（DECK_REVEALING_KINDS・LOOKED_HAND_KINDS。決定は効果が見たあとに出る。契約の例外として実際のカードを示す） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
 | `search_deck_or_discard` | card | confirmed | 始まった検索・見たカード（DECK_REVEALING_KINDS・LOOKED_HAND_KINDS。決定は効果が見たあとに出る。契約の例外として実際のカードを示す） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
-| `secret_plan_card` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `select_attached_special_energy` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `select_attached_trainer` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `select_attack` | number | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `select_color` | color | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `secret_plan_card` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `select_attached_special_energy` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `select_attached_trainer` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `select_attack` | number | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `select_color` | color | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `select_counter_count` | number | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `select_deck_owner` | number | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `select_deck_owner` | number | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `select_devolve_count` | number | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `select_draw_count` | number | confirmed | 山札の枚数（公開）までの範囲（effects の _options・range(min(max_draw, len(deck)) + 1)） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `select_evolution_card` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
+| `select_evolution_card` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
 | `select_exchange_card` | card | confirmed | 始まった検索・見たカード（DECK_REVEALING_KINDS・LOOKED_HAND_KINDS。決定は効果が見たあとに出る。契約の例外として実際のカードを示す） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `select_hand_card` | position | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `select_hand_positions` | position | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `select_hand_positions` | position | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | not_significant | 種類・決める人・選ぶ数・選べるものの数 |
 | `select_look_count` | number | confirmed | 山札の枚数（公開）までの範囲（effects の _count_options・programs の range(min(max_cards, len(deck)) + 1)） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `select_marker_count` | number | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `select_marker_count` | number | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `select_opponent_attack` | number | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `select_opponent_prize` | position | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `select_pokemon` | pokemon | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `select_opponent_prize` | position | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `select_pokemon` | pokemon | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | significant | 種類・決める人・選ぶ数・選べるものの数 |
 | `select_prize_card` | position | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `select_special_condition` | number | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `select_special_condition` | number | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `split_from_deck` | card | confirmed | 始まった検索・見たカード（DECK_REVEALING_KINDS・LOOKED_HAND_KINDS。決定は効果が見たあとに出る。契約の例外として実際のカードを示す） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
-| `stadium_from_discard` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `stadium_from_discard` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `stadium_return_bench` | pokemon | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `swap_with_prize` | card | confirmed | 選べるものの式が本人の手札・トラッシュ・場のスタジアムだけ（どれも本人に見えるカード） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 | `take_looked_cards` | card | confirmed | 始まった検索・見たカード（DECK_REVEALING_KINDS・LOOKED_HAND_KINDS。決定は効果が見たあとに出る。契約の例外として実際のカードを示す） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
 | `take_looked_pokemon` | card | confirmed | 始まった検索・見たカード（DECK_REVEALING_KINDS・LOOKED_HAND_KINDS。決定は効果が見たあとに出る。契約の例外として実際のカードを示す） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
 | `take_looked_trainer` | card | confirmed | 始まった検索・見たカード（DECK_REVEALING_KINDS・LOOKED_HAND_KINDS。決定は効果が見たあとに出る。契約の例外として実際のカードを示す） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人だけ |
 | `take_prize` | position | confirmed | 選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
-| `use_discard_trainer` | card | unconfirmed | 決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
+| `use_discard_trainer` | card | confirmed | v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ） | unconfirmed（選ぶ数が 1 以下なら not_applicable） | 種類・決める人・選ぶ数・選べるものの数 |
 <!-- generated:decision-kinds end -->
 
 ## 3. 対応する操作と完全性
@@ -270,6 +270,8 @@ r = alice.candidates()
 ### 9.2 決定の種類ごとの情報境界
 
 決定を出す箇所の options の式を種類ごとに抜き出し、公開の値だけから決まる式（場のポケモンの番号・公開の枚数の範囲・決まった語彙・本人の手札とトラッシュ）だけの種類を confirmed、読み切っていない式（`options`・`candidates`・`self._…` など）を含む種類を unconfirmed にしました（2 章の表。`scripts/build_legal_actions_api_design.py` の `DISCLOSURE` と `legal_actions.DISCLOSURE_CONFIRMED_KINDS` を `--check` が照らす）。unconfirmed の種類は U7 で入力を返さず、ホストが直接送れます（U7 の外。エンジンの決定は変えていない）。unconfirmed を減らすのは U7-2 以後の作業です。
+
+v0.162: 未確認だった 39 種類を、決定を出すすべての箇所（AST の走査）について調べ直し、すべて確かめた種類に加えた（[legal-actions-decision-audit.md](legal-actions-decision-audit.md)）。未確認の種類で入力を返さない仕組みと、実行時の見えないカードの確かめはそのまま残す。v0.161 の式の形の分類は、動的な出し方を数えていなかった（同じ文書 8 章）。
 
 ### 9.3 答えの並び
 

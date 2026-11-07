@@ -24,6 +24,10 @@ OUTPUT = ROOT / "docs" / "legal-actions-api-design.json"
 DESIGN = ROOT / "docs" / "legal-actions-api-design.md"
 PLAN = ROOT / "docs" / "legal-actions-api-implementation-plan.md"
 U7_1 = ROOT / "docs" / "legal-actions-u7-1.md"
+AUDIT_DOC = ROOT / "docs" / "legal-actions-decision-audit.md"
+_sites_spec = importlib.util.spec_from_file_location("legal_actions_decision_sites", ROOT / "scripts" / "legal_actions_decision_sites.py")
+SITES = importlib.util.module_from_spec(_sites_spec)
+_sites_spec.loader.exec_module(SITES)
 
 _helpers_spec = importlib.util.spec_from_file_location("build_state_snapshot_design", ROOT / "scripts" / "build_state_snapshot_design.py")
 _H = importlib.util.module_from_spec(_helpers_spec)
@@ -61,7 +65,8 @@ ADOPTION_U7_1 = {
 # confirmed の一覧は kyuura_engine/legal_actions.DISCLOSURE_CONFIRMED_KINDS と同じ（--check が照らす）。ここにない種類・unconfirmed は、U7 で入力を返さない
 _PUBLIC_VALUES = "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
 _OWN_CARDS = "選べるものの式が本人の手札・トラッシュ・場のスタジアムだけ（どれも本人に見えるカード）"
-_UNREAD = "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+_AUDITED = ("v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。"
+            "公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）")
 DISCLOSURE = {
     **{k: ("confirmed", _PUBLIC_VALUES) for k in (
         "accept_request", "allocate_damage", "damage_option", "damage_step_order", "entry_power", "esp_redo", "evolution_heal", "heal_allocation", "janken_hand",
@@ -80,7 +85,7 @@ DISCLOSURE = {
                                     "決めるのは学習装置の持ち主（相手の番の決定）。選ぶと止めるカードは exp_all_unresolved（場の状態）")),
     "magma_pool_energy": ("confirmed", ("［やけのこり］の持ち主の場のポケモン（holder）についているエネルギーカード（effects.magma_candidates の holder.energy）。"
                                        "決めるのは持ち主。選ぶと止めるカードはカードの定義と場の色の効果")),
-    **{k: ("unconfirmed", _UNREAD) for k in (
+    **{k: ("confirmed", _AUDITED) for k in (
         "attach_from_discard", "attach_from_hand", "bench_from_discard", "discard_energy", "discard_opponent_energy", "discard_to_deck", "move_energy",
         "move_opponent_energy", "post_knockout_power", "quiz_card", "recover_energy", "recover_pokemon", "recover_trainer", "retrieve_energy", "return_energy",
         "return_to_deck", "secret_plan_card", "select_attached_special_energy", "select_attached_trainer", "select_evolution_card", "stadium_from_discard",
@@ -93,6 +98,21 @@ DISCLOSURE_BY_CONTRACT = "始まった検索・見たカード（DECK_REVEALING_
 # 答えの並びの意味（確かめた分類だけ。legal_actions.ORDER_SIGNIFICANT_KINDS と同じ）
 ORDER = {
     "arrange_deck_top": ("significant", "答えの並びが山札の上の新しい並び（effects・programs のどの出し方も deck[:count] = list(choices)）"),
+    # v0.162: 回答の適用まで読んだ分類（docs/legal-actions-decision-audit.md 3 章）
+    "bench_guard": ("significant", "かわりに受けるサイドンを答えの並びのまま処理する（kernel.bench_guard_answer の tuple(guard)。ログ・ダメージの順）"),
+    "discard_energy": ("significant", "ワザの DiscardOwnEnergy._discard が答えの並びのままトラッシュに置く（トラッシュとログの順）。ほかの出し方は場の並びに直す"),
+    "move_energy": ("significant", "バブルジャンプ（BubbleJump._move）が答えの並びのままつけ替える（ついている順・ログ）。ほかの出し方は決定の選べるものの並びに直す"),
+    "recover_energy": ("significant", "ワザの RecoverEnergy が答えの並びのまま手札に加える（zones.return_discard_to_hand。手札の順・ログ）。コインの出し方はトラッシュの並びに直す"),
+    "return_energy": ("significant", "ワザの ReturnOwnEnergyToHand._discard が答えの並びのまま手札にもどす（手札の順・ログ）。トレーナーの出し方はついている並びに直す"),
+    "select_pokemon": ("significant", "ChosenBenchDamages が答えの並びのままダメージを与える（ダメージ・きぜつ・ログの順）。ほかの複数選択の出し方は場・決まった並びに直す"),
+    "attach_from_discard": ("not_significant", "トラッシュの並びの順につける（AttachFromDiscard。ほかの出し方は 1 枚）"),
+    "attach_from_hand": ("not_significant", "手札の並びの順につける（AttachFromHand・AttachFromHandToChosen）"),
+    "discard_opponent_energy": ("not_significant", "ついている並びの順にトラッシュする（zones._attached_energy_cards・target.energy の並び）"),
+    "discard_to_deck": ("not_significant", "トラッシュの並びの順に山札にもどす（zones.return_discard_to_deck・TakeFromDiscardTrainer・EachPlayerRecoversFromDiscard）"),
+    "recover_pokemon": ("not_significant", "トラッシュの並びの順に手札に加える（RecoverPokemonFromDiscardOnEntry・EachPlayerRecoversFromDiscard。ほかは 1 枚）"),
+    "recover_trainer": ("not_significant", "トラッシュの並びの順に手札に加える（TakeFromDiscardTrainer。ほかの出し方は 1 枚）"),
+    "retrieve_energy": ("not_significant", "トラッシュの並びの順に手札に加える（DiscardFromHandThenRetrieveEnergy。スタジアムは 1 枚）"),
+    "select_hand_positions": ("not_significant", "位置を小さい順に直して山札にもどす（zones.hand_positions_to_deck の sorted）"),
 }
 
 PRINCIPLES = [
@@ -327,11 +347,37 @@ SPEC = {
     "revision": REVISION, "host": HOST, "leak_tests": LEAK_TESTS, "units": UNITS, "decisions": DECISIONS, "u7_1_adoption": ADOPTION_U7_1,
     "disclosure": {k: {"status": v[0], "basis": v[1]} for k, v in sorted(DISCLOSURE.items())}, "disclosure_by_contract": DISCLOSURE_BY_CONTRACT,
     "order": {k: {"status": v[0], "basis": v[1]} for k, v in sorted(ORDER.items())},
+    "audit_categories": {
+        "public": "公開の値（場のポケモン・ついているカード・トラッシュ・公開の枚数・決まった語彙）",
+        "own_cards": "本人の手札と本人に見えるカード（決める人が持ち主）",
+        "started_search": "正当に始まった検索・閲覧で本人が見ているカード（契約の例外）",
+        "owner_knowledge": "選べるものは公開・本人のカード。選ぶと止める選択は持ち主の知識だけで決まる関数（searchable_deck_cards・deck_target_lower_bound など）",
+        "inherits": "退避した決定を同じ種類・選べるもので戻す（元の出し方の情報源を引き継ぐ）",
+    },
+    "audit_orders": {"single": "選ぶ数が 1 以下", "significant": "答えの並びが結果（ゾーンの並び・ログ・解決の順）に入る", "not_significant": "適用の前に決まった並びに直す",
+                     "unconfirmed": "確かめていない（v0.162 の対象の 39 種類の外）"},
 }
 
 
+def decision_sites() -> list[dict]:
+    """走査した出し方（コード）と監査の判定（SITES.AUDIT）を合わせた一覧（(種類, ファイル, クラス, 関数) ごと。同じ関数の出し方はまとめる）。"""
+    rows = {}
+    for site in SITES.scan(ROOT):
+        key = (site["kind"], site["file"], site["class"], site["func"])
+        row = rows.setdefault(key, {"kind": key[0], "file": key[1], "class": key[2], "func": key[3], "player": site["player"], "options": [], "max": []})
+        if site["options"] and site["options"] not in row["options"]:
+            row["options"].append(site["options"])
+        if site["max"] not in row["max"]:
+            row["max"].append(site["max"])
+        audit = SITES.AUDIT.get(key)
+        row["category"], row["order"] = (audit if audit is not None else (None, None))
+    return [rows[k] for k in sorted(rows, key=lambda k: (k[0], k[1], str(k[2]), str(k[3])))]
+
+
 def build() -> dict:
-    return json.loads(json.dumps(SPEC, ensure_ascii=False))
+    data = json.loads(json.dumps(SPEC, ensure_ascii=False))
+    data["decision_sites"] = decision_sites()
+    return data
 
 
 def blocks(spec: dict) -> dict[str, list[str]]:
@@ -366,7 +412,31 @@ def blocks(spec: dict) -> dict[str, list[str]]:
                           "  - 方針:"] + [f"    - {x}" for x in spec["u7_1_adoption"]["policies"]]
                          + ["  - 判断事項: " + "、".join(spec["u7_1_adoption"]["decisions"]), "  - 実装単位: " + "、".join(spec["u7_1_adoption"]["units"])],
         "decision-kinds": _decision_kind_rows(spec),
+        "audit-categories": _table(["区分", "意味"], [[f"`{k}`", v] for k, v in spec["audit_categories"].items()])
+                            + [""] + _table(["答えの並び", "意味"], [[f"`{k}`", v] for k, v in spec["audit_orders"].items()]),
+        "audit-kinds": _audit_kind_rows(spec),
+        "audit-sites": _table(["決定の種類", "出し方（ファイル・クラス.関数）", "決める人", "選べるものの式", "選ぶ数の上限", "情報源", "答えの並び"],
+                              [[f"`{r['kind']}`", f"`{r['file'].removeprefix('kyuura_engine/')}` {r['class'] or ''}.{r['func']}", f"`{r['player']}`" if r["player"] else "",
+                                [f"`{o}`" for o in r["options"]], [f"`{m}`" for m in r["max"]], r["category"], r["order"]] for r in spec["decision_sites"]]),
     }
+
+
+def _audit_kind_rows(spec: dict) -> list[str]:
+    """種類ごとの出し方の数（情報源の区分ごと）・情報境界・答えの並び（出し方の一覧から作る）。"""
+    from collections import Counter
+
+    by: dict[str, list[dict]] = {}
+    for r in spec["decision_sites"]:
+        by.setdefault(r["kind"], []).append(r)
+    rows = []
+    for kind in sorted(by):
+        if kind == "restore":
+            continue
+        counts = Counter(r["category"] for r in by[kind])
+        disclosure = spec["disclosure"].get(kind, {"status": "confirmed（契約の例外）"})["status"]
+        order = spec["order"].get(kind, {"status": "unconfirmed" if any(r["order"] == "unconfirmed" for r in by[kind]) else "single"})["status"]
+        rows.append([f"`{kind}`", len(by[kind]), "・".join(f"{c} {n}" for c, n in sorted(counts.items())), disclosure, order])
+    return _table(["決定の種類", "出し方の数", "情報源の区分", "U7 の入力", "答えの並び"], rows)
 
 
 def _decision_kind_rows(spec: dict) -> list[str]:
@@ -390,6 +460,7 @@ DESIGN_BLOCKS = ("adoption", "principles", "phases", "operations", "next", "inpu
                  "revision", "host", "leak-tests", "decisions")
 PLAN_BLOCKS = ("units",)
 U7_1_BLOCKS = ("unit-adoption", "decision-kinds")
+AUDIT_BLOCKS = ("audit-categories", "audit-kinds", "audit-sites")
 
 # ---------------------------------------------------------------- 確かめ
 
@@ -411,6 +482,7 @@ def code_vocabulary() -> dict[str, list[str]]:
         "plain_kinds": sorted(k for k in OPTION_MEANINGS if k not in O.DECK_REVEALING_KINDS and k not in O.LOOKED_HAND_KINDS),
         "confirmed_kinds": set(LA.DISCLOSURE_CONFIRMED_KINDS) - set(O.DECK_REVEALING_KINDS) - set(O.LOOKED_HAND_KINDS),
         "order_significant": set(LA.ORDER_SIGNIFICANT_KINDS),
+        "order_not_significant": set(LA.ORDER_NOT_SIGNIFICANT_KINDS),
     }
 
 
@@ -435,6 +507,41 @@ def coverage_problems(spec: dict, code: dict[str, list[str]] | None = None) -> l
             problems.append(f"情報境界を確かめた種類が、legal_actions.DISCLOSURE_CONFIRMED_KINDS と違う（{sorted(written ^ code['confirmed_kinds'])}）")
     if "order_significant" in code and {k for k, v in spec["order"].items() if v["status"] == "significant"} != code["order_significant"]:
         problems.append("答えの並びに意味がある種類が、legal_actions.ORDER_SIGNIFICANT_KINDS と違う")
+    if "order_not_significant" in code and {k for k, v in spec["order"].items() if v["status"] == "not_significant"} != code["order_not_significant"]:
+        problems.append("答えの並びに意味がない種類が、legal_actions.ORDER_NOT_SIGNIFICANT_KINDS と違う")
+    return problems + site_problems(spec)
+
+
+def site_problems(spec: dict, scanned: set | None = None) -> list[str]:
+    """出し方の一覧（監査の判定）と、コードの走査を (種類, ファイル, クラス, 関数) の組で照らす。種類ごとの情報境界・答えの並びが出し方の判定から決まること。"""
+    from kyuura_engine import observation as O
+
+    problems = []
+    scanned = SITES.site_keys(SITES.scan(ROOT)) if scanned is None else scanned
+    audited = set(SITES.AUDIT)
+    problems += [f"決定の出し方 {k} に監査の判定がない（コードに加わった出し方）" for k in sorted(scanned - audited, key=str)]
+    problems += [f"監査の判定の出し方 {k} がコードにない" for k in sorted(audited - scanned, key=str)]
+    cats, orders = set(spec["audit_categories"]), set(spec["audit_orders"])
+    for key, (cat, order) in sorted(SITES.AUDIT.items(), key=str):
+        if cat not in cats or order not in orders:
+            problems.append(f"出し方 {key} の判定 ({cat}, {order}) が語彙にない")
+        if key[0] in (O.DECK_REVEALING_KINDS | O.LOOKED_HAND_KINDS) and cat != "started_search":
+            problems.append(f"出し方 {key} は始まった検索の種類だが、情報源が started_search でない")
+    by: dict[str, list] = {}
+    for key, value in SITES.AUDIT.items():
+        by.setdefault(key[0], []).append(value)
+    for kind, item in spec["disclosure"].items():
+        if item["status"] == "confirmed" and kind not in by:
+            problems.append(f"情報境界を確かめた種類 {kind} に、監査した出し方がない")
+    for kind, item in spec["order"].items():
+        site_orders = {o for _, o in by.get(kind, [])}
+        if item["status"] == "significant" and "significant" not in site_orders:
+            problems.append(f"答えの並びに意味がある種類 {kind} に、意味がある出し方がない")
+        if item["status"] == "not_significant" and (site_orders - {"single", "not_significant"} or "not_significant" not in site_orders):
+            problems.append(f"答えの並びに意味がない種類 {kind} の出し方の判定が {sorted(site_orders)}（意味がない・1 以下だけであること）")
+    for kind, values in by.items():
+        if "significant" in {o for _, o in values} and spec["order"].get(kind, {}).get("status") != "significant":
+            problems.append(f"種類 {kind} に答えの並びに意味がある出し方があるが、種類の分類が significant でない")
     return problems
 
 
@@ -534,14 +641,16 @@ def spec_problems(spec: dict) -> list[str]:
     return problems + coverage_problems(spec)
 
 
-def check(written: dict, design: str, plan: str, u7_1: str | None = None) -> list[str]:
+def check(written: dict, design: str, plan: str, u7_1: str | None = None, audit: str | None = None) -> list[str]:
     spec = build()
     problems = []
     if written != spec:
         problems.append("書いた JSON が、作り直した仕様案と違う（--write で作り直す）")
     rendered = blocks(spec)
     u7_1 = U7_1.read_text(encoding="utf-8") if u7_1 is None else u7_1
-    for label, text, names in (("設計の文書", design, DESIGN_BLOCKS), ("実装計画の文書", plan, PLAN_BLOCKS), ("U7-1 の文書", u7_1, U7_1_BLOCKS)):
+    audit = AUDIT_DOC.read_text(encoding="utf-8") if audit is None else audit
+    for label, text, names in (("設計の文書", design, DESIGN_BLOCKS), ("実装計画の文書", plan, PLAN_BLOCKS), ("U7-1 の文書", u7_1, U7_1_BLOCKS),
+                               ("監査の文書", audit, AUDIT_BLOCKS)):
         new, block_problems = render_into(text, rendered, names)
         problems += [f"{label}: {p}" for p in block_problems]
         if new != text:
@@ -563,7 +672,7 @@ def main() -> int:
             return 1
         OUTPUT.write_text(dump(spec), encoding="utf-8", newline="\n")
         rendered = blocks(spec)
-        for path, names in ((DESIGN, DESIGN_BLOCKS), (PLAN, PLAN_BLOCKS), (U7_1, U7_1_BLOCKS)):
+        for path, names in ((DESIGN, DESIGN_BLOCKS), (PLAN, PLAN_BLOCKS), (U7_1, U7_1_BLOCKS), (AUDIT_DOC, AUDIT_BLOCKS)):
             text, block_problems = render_into(path.read_text(encoding="utf-8"), rendered, names)
             if block_problems:
                 print("\n".join(f"{path.name}: {p}" for p in block_problems))

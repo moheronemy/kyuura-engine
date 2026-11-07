@@ -946,32 +946,32 @@
    "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
   },
   "attach_from_discard": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "attach_from_hand": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "attach_to_bench": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "bench_from_discard": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "bench_guard": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "damage_option": {
    "status": "confirmed",
    "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
   },
   "damage_reduction": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "damage_step_order": {
    "status": "confirmed",
@@ -982,24 +982,24 @@
    "basis": "選べるものの式が本人の手札・トラッシュ・場のスタジアムだけ（どれも本人に見えるカード）"
   },
   "discard_energy": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "discard_from_hand": {
    "status": "confirmed",
    "basis": "選べるものの式が本人の手札・トラッシュ・場のスタジアムだけ（どれも本人に見えるカード）"
   },
   "discard_opponent_energy": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "discard_stadium": {
    "status": "confirmed",
    "basis": "選べるものの式が本人の手札・トラッシュ・場のスタジアムだけ（どれも本人に見えるカード）"
   },
   "discard_to_deck": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "discard_to_deck_top": {
    "status": "confirmed",
@@ -1022,16 +1022,16 @@
    "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
   },
   "evolution_song_pokemon": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "exp_all_energy": {
    "status": "confirmed",
    "basis": "きぜつするバトル場のポケモン（場）についている基本エネルギーとレインボーエネルギー（resolution.kernel.exp_all_options）。決めるのは学習装置の持ち主（相手の番の決定）。選ぶと止めるカードは exp_all_unresolved（場の状態）"
   },
   "forced_switch": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "hand_to_active": {
    "status": "confirmed",
@@ -1054,24 +1054,24 @@
    "basis": "選べるものはきぜつするポケモンの番号 1 つ（resolution.codec.ko_check_decision の (pokemon_id,)）"
   },
   "ko_prevention": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "magma_pool_energy": {
    "status": "confirmed",
    "basis": "［やけのこり］の持ち主の場のポケモン（holder）についているエネルギーカード（effects.magma_candidates の holder.energy）。決めるのは持ち主。選ぶと止めるカードはカードの定義と場の色の効果"
   },
   "move_energy": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "move_opponent_energy": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "ninja_trick": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "optional_coin": {
    "status": "confirmed",
@@ -1098,8 +1098,8 @@
    "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
   },
   "post_knockout_power": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "prize_first": {
    "status": "confirmed",
@@ -1118,8 +1118,8 @@
    "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
   },
   "quiz_card": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "quiz_height_answer": {
    "status": "confirmed",
@@ -1134,68 +1134,68 @@
    "basis": "選べるものは反応するポケモンの番号 1 つ（reactions.py の (pid,)）"
   },
   "reaction_switch": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "recover_energy": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "recover_pokemon": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "recover_trainer": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "remove_counters": {
    "status": "confirmed",
    "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
   },
   "retrieve_energy": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "return_energy": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "return_to_deck": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "revive_source": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "secret_plan_card": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "select_attached_special_energy": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "select_attached_trainer": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "select_attack": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "select_color": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "select_counter_count": {
    "status": "confirmed",
    "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
   },
   "select_deck_owner": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "select_devolve_count": {
    "status": "confirmed",
@@ -1206,48 +1206,48 @@
    "basis": "山札の枚数（公開）までの範囲（effects の _options・range(min(max_draw, len(deck)) + 1)）"
   },
   "select_evolution_card": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "select_hand_card": {
    "status": "confirmed",
    "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
   },
   "select_hand_positions": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "select_look_count": {
    "status": "confirmed",
    "basis": "山札の枚数（公開）までの範囲（effects の _count_options・programs の range(min(max_cards, len(deck)) + 1)）"
   },
   "select_marker_count": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "select_opponent_attack": {
    "status": "confirmed",
    "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
   },
   "select_opponent_prize": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "select_pokemon": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "select_prize_card": {
    "status": "confirmed",
    "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
   },
   "select_special_condition": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "stadium_from_discard": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   },
   "stadium_return_bench": {
    "status": "confirmed",
@@ -1262,8 +1262,8 @@
    "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
   },
   "use_discard_trainer": {
-   "status": "unconfirmed",
-   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+   "status": "confirmed",
+   "basis": "v0.162 の監査で、生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった（docs/legal-actions-decision-audit.md。公開の値・本人のカード・始まった検索・持ち主の知識の関数だけ）"
   }
  },
  "disclosure_by_contract": "始まった検索・見たカード（DECK_REVEALING_KINDS・LOOKED_HAND_KINDS。決定は効果が見たあとに出る。契約の例外として実際のカードを示す）",
@@ -1271,6 +1271,4708 @@
   "arrange_deck_top": {
    "status": "significant",
    "basis": "答えの並びが山札の上の新しい並び（effects・programs のどの出し方も deck[:count] = list(choices)）"
+  },
+  "attach_from_discard": {
+   "status": "not_significant",
+   "basis": "トラッシュの並びの順につける（AttachFromDiscard。ほかの出し方は 1 枚）"
+  },
+  "attach_from_hand": {
+   "status": "not_significant",
+   "basis": "手札の並びの順につける（AttachFromHand・AttachFromHandToChosen）"
+  },
+  "bench_guard": {
+   "status": "significant",
+   "basis": "かわりに受けるサイドンを答えの並びのまま処理する（kernel.bench_guard_answer の tuple(guard)。ログ・ダメージの順）"
+  },
+  "discard_energy": {
+   "status": "significant",
+   "basis": "ワザの DiscardOwnEnergy._discard が答えの並びのままトラッシュに置く（トラッシュとログの順）。ほかの出し方は場の並びに直す"
+  },
+  "discard_opponent_energy": {
+   "status": "not_significant",
+   "basis": "ついている並びの順にトラッシュする（zones._attached_energy_cards・target.energy の並び）"
+  },
+  "discard_to_deck": {
+   "status": "not_significant",
+   "basis": "トラッシュの並びの順に山札にもどす（zones.return_discard_to_deck・TakeFromDiscardTrainer・EachPlayerRecoversFromDiscard）"
+  },
+  "move_energy": {
+   "status": "significant",
+   "basis": "バブルジャンプ（BubbleJump._move）が答えの並びのままつけ替える（ついている順・ログ）。ほかの出し方は決定の選べるものの並びに直す"
+  },
+  "recover_energy": {
+   "status": "significant",
+   "basis": "ワザの RecoverEnergy が答えの並びのまま手札に加える（zones.return_discard_to_hand。手札の順・ログ）。コインの出し方はトラッシュの並びに直す"
+  },
+  "recover_pokemon": {
+   "status": "not_significant",
+   "basis": "トラッシュの並びの順に手札に加える（RecoverPokemonFromDiscardOnEntry・EachPlayerRecoversFromDiscard。ほかは 1 枚）"
+  },
+  "recover_trainer": {
+   "status": "not_significant",
+   "basis": "トラッシュの並びの順に手札に加える（TakeFromDiscardTrainer。ほかの出し方は 1 枚）"
+  },
+  "retrieve_energy": {
+   "status": "not_significant",
+   "basis": "トラッシュの並びの順に手札に加える（DiscardFromHandThenRetrieveEnergy。スタジアムは 1 枚）"
+  },
+  "return_energy": {
+   "status": "significant",
+   "basis": "ワザの ReturnOwnEnergyToHand._discard が答えの並びのまま手札にもどす（手札の順・ログ）。トレーナーの出し方はついている並びに直す"
+  },
+  "select_hand_positions": {
+   "status": "not_significant",
+   "basis": "位置を小さい順に直して山札にもどす（zones.hand_positions_to_deck の sorted）"
+  },
+  "select_pokemon": {
+   "status": "significant",
+   "basis": "ChosenBenchDamages が答えの並びのままダメージを与える（ダメージ・きぜつ・ログの順）。ほかの複数選択の出し方は場・決まった並びに直す"
   }
- }
+ },
+ "audit_categories": {
+  "public": "公開の値（場のポケモン・ついているカード・トラッシュ・公開の枚数・決まった語彙）",
+  "own_cards": "本人の手札と本人に見えるカード（決める人が持ち主）",
+  "started_search": "正当に始まった検索・閲覧で本人が見ているカード（契約の例外）",
+  "owner_knowledge": "選べるものは公開・本人のカード。選ぶと止める選択は持ち主の知識だけで決まる関数（searchable_deck_cards・deck_target_lower_bound など）",
+  "inherits": "退避した決定を同じ種類・選べるもので戻す（元の出し方の情報源を引き継ぐ）"
+ },
+ "audit_orders": {
+  "single": "選ぶ数が 1 以下",
+  "significant": "答えの並びが結果（ゾーンの並び・ログ・解決の順）に入る",
+  "not_significant": "適用の前に決まった並びに直す",
+  "unconfirmed": "確かめていない（v0.162 の対象の 39 種類の外）"
+ },
+ "decision_sites": [
+  {
+   "kind": "accept_request",
+   "file": "kyuura_engine/effects.py",
+   "class": "EachPlayerMayReturnHandThenDrawOnEntry",
+   "func": "_ask",
+   "player": "player",
+   "options": [
+    "(1,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "accept_request",
+   "file": "kyuura_engine/effects.py",
+   "class": "EachPlayerSearchToolOnEntry",
+   "func": "_ask",
+   "player": "self._chooser(use, stage)",
+   "options": [
+    "(1,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "accept_request",
+   "file": "kyuura_engine/effects.py",
+   "class": "LookOpponentPrizesMayRedeal",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "(1,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "accept_request",
+   "file": "kyuura_engine/effects.py",
+   "class": null,
+   "func": "_ask_opponent",
+   "player": "1 - use.player",
+   "options": [
+    "(1,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "accept_request",
+   "file": "kyuura_engine/effects.py",
+   "class": "SwapPleaseTrainer",
+   "func": "resume",
+   "player": "opponent",
+   "options": [
+    "(1,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "accept_request",
+   "file": "kyuura_engine/engine.py",
+   "class": null,
+   "func": "_chaos_tails",
+   "player": "borrower",
+   "options": [
+    "(1,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "allocate_damage",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "AllocateDamage",
+   "func": "run",
+   "player": "chooser",
+   "options": [
+    "tuple(range(len(table)))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "arrange_deck_top",
+   "file": "kyuura_engine/effects.py",
+   "class": "ArrangeOwnDeckTopTrainer",
+   "func": "resume",
+   "player": "use.player",
+   "options": [
+    "cards"
+   ],
+   "max": [
+    "count"
+   ],
+   "category": "started_search",
+   "order": "significant"
+  },
+  {
+   "kind": "arrange_deck_top",
+   "file": "kyuura_engine/effects.py",
+   "class": "FlashTrainer",
+   "func": "_offer",
+   "player": "player",
+   "options": [
+    "cards"
+   ],
+   "max": [
+    "FLASH_COUNT"
+   ],
+   "category": "started_search",
+   "order": "significant"
+  },
+  {
+   "kind": "arrange_deck_top",
+   "file": "kyuura_engine/effects.py",
+   "class": "ShuffleThenArrangeDeckTop",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "cards"
+   ],
+   "max": [
+    "self.look"
+   ],
+   "category": "started_search",
+   "order": "significant"
+  },
+  {
+   "kind": "arrange_deck_top",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "ArrangeDeckTop",
+   "func": "_look",
+   "player": "run.player",
+   "options": [
+    "cards"
+   ],
+   "max": [
+    "count"
+   ],
+   "category": "started_search",
+   "order": "significant"
+  },
+  {
+   "kind": "attach_from_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinAttachEnergyFromDeckToOwnPokemon",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "cards"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "attach_from_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinAttachFromDeckOnEntry",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "self.max_cards"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "attach_from_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "AttachBasicEnergyFromDeckToSelf",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "count"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "attach_from_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "AttachFromDeck",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "high"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "attach_from_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "AttachFromDeckByHeads",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "cards"
+   ],
+   "max": [
+    "heads"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "attach_from_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "AttachFromDeckToBench",
+   "func": "_bench_first_resume",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "1 if candidates else 0"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "attach_from_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "AttachFromDeckToBench",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "1 if candidates else 0"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "attach_from_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "AttachFromDeckUpToNamedCount",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "self.candidates(run)"
+   ],
+   "max": [
+    "count"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "attach_from_discard",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinAttachFromDiscardToTypePokemon",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "cards"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "attach_from_discard",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "AttachFromDiscard",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "count"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "attach_from_hand",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "AttachFromHand",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "min(self.max_cards, len(candidates))"
+   ],
+   "category": "own_cards",
+   "order": "not_significant"
+  },
+  {
+   "kind": "attach_from_hand",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "AttachFromHandToChosen",
+   "func": "resume",
+   "player": "run.player",
+   "options": [
+    "cards"
+   ],
+   "max": [
+    "min(self.max_cards, len(cards))"
+   ],
+   "category": "own_cards",
+   "order": "not_significant"
+  },
+  {
+   "kind": "attach_to_bench",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "AttachFromDeckToBench",
+   "func": "_bench_first_run",
+   "player": "run.player",
+   "options": [
+    "[p.pokemon_id for p in self.targets(run)]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "attach_to_bench",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "AttachFromDeckToBench",
+   "func": "resume",
+   "player": "run.player",
+   "options": [
+    "[p.pokemon_id for p in self.targets(run)]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "attach_to_bench",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "MoveOneEnergyToBench",
+   "func": "resume",
+   "player": "run.player",
+   "options": [
+    "[p.pokemon_id for p in bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "attach_to_bench",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "MoveOwnEnergyToBench",
+   "func": "_next",
+   "player": "run.player",
+   "options": [
+    "[p.pokemon_id for p in run.state.players[run.player].bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "bench_from_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "BenchBasicsFromDeckOnEntry",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "deck_basic_pokemon(state, use.player, text_era(use.key.card_id))"
+   ],
+   "max": [
+    "self._limit(state, use)"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "bench_from_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "BenchNameGroupFromDeckOnEntry",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "bench_from_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "BenchNameGroupFromDeckTrainer",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "bench_from_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinBenchNamedFromDeck",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1 if options else 0"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "bench_from_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinBenchOwnerBasicFromDeckStadium",
+   "func": "activate",
+   "player": "player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "bench_from_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinReviveFromDeck",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1 if options else 0"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "bench_from_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "EachPlayerMayBenchBasicFromDeck",
+   "func": "_offer",
+   "player": "player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "bench_from_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "BenchFromDeck",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "high"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "bench_from_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "BenchFromDeckAny",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "min(space, len(candidates))"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "bench_from_deck_or_hand",
+   "file": "kyuura_engine/effects.py",
+   "class": "FossilEggRevive",
+   "func": "resume",
+   "player": null,
+   "options": [
+    "revival_deck_cards(state, use.player, REVIVE_FOSSIL) + hand"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "bench_from_discard",
+   "file": "kyuura_engine/effects.py",
+   "class": "BenchBasicFromOwnDiscardThenCounters",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "self.candidates(state, use)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "bench_from_discard",
+   "file": "kyuura_engine/effects.py",
+   "class": "DiscardEnergyThenBenchBasicFromDiscard",
+   "func": "resume",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "bench_from_discard",
+   "file": "kyuura_engine/effects.py",
+   "class": "_BenchBasicFromDiscardTrainer",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "self.candidates(state, use)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "bench_from_discard",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "BenchBabyOrBasicFromOwnDiscard",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "bench_from_discard",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "BenchFromEitherDiscard",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "bench_from_discard",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "BenchFromOpponentDiscard",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "bench_guard",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "CoinPerOpponentPokemon",
+   "func": "_deal",
+   "player": "request.owner",
+   "options": [
+    "list(request.options)"
+   ],
+   "max": [
+    "request.max_choices"
+   ],
+   "category": "public",
+   "order": "significant"
+  },
+  {
+   "kind": "bench_guard",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": null,
+   "func": "guarded_damages",
+   "player": "request.owner",
+   "options": [
+    "list(request.options)"
+   ],
+   "max": [
+    "request.max_choices"
+   ],
+   "category": "public",
+   "order": "significant"
+  },
+  {
+   "kind": "challenge_bench",
+   "file": "kyuura_engine/effects.py",
+   "class": "ChallengeBenchFromDecks",
+   "func": "_offer",
+   "player": "chooser",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "min(room, len(candidates))"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "damage_option",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": null,
+   "func": "guarded_damages",
+   "player": "owner",
+   "options": [
+    "(receiver.pokemon_id,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "damage_option",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": null,
+   "func": "suspend_damage_option",
+   "player": "owner",
+   "options": [
+    "(receiver.pokemon_id,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "damage_reduction",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": null,
+   "func": "suspend_damage_reduction",
+   "player": "run.player",
+   "options": [
+    "tuple(need.choices)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "damage_step_order",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": null,
+   "func": "suspend_step_order",
+   "player": "chooser",
+   "options": [
+    "tuple(range(len(permutations)))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "deck_top_from_hand",
+   "file": "kyuura_engine/effects.py",
+   "class": "DrawThenPutHandCardOnDeckTop",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "tuple(side.hand)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "own_cards",
+   "order": "single"
+  },
+  {
+   "kind": "discard_energy",
+   "file": "kyuura_engine/effects.py",
+   "class": "DiscardAttachedEnergyTrainer",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "_attached_cards(state.players[use.player].in_play())"
+   ],
+   "max": [
+    "self.own_cost"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "discard_energy",
+   "file": "kyuura_engine/effects.py",
+   "class": "DiscardEnergyThenHealTrainer",
+   "func": "resume",
+   "player": "use.player",
+   "options": [
+    "tuple(target.energy)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "discard_energy",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "DiscardEachType",
+   "func": "_ask",
+   "player": "run.player",
+   "options": [
+    "self.options(run, index)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "discard_energy",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "DiscardOwnEnergy",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "len(candidates)",
+    "needed"
+   ],
+   "category": "public",
+   "order": "significant"
+  },
+  {
+   "kind": "discard_energy",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "OptionalDiscardBenchDamage",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "discard_energy",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "OptionalDiscardForBonus",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "top"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "discard_from_hand",
+   "file": "kyuura_engine/effects.py",
+   "class": "DiscardEnergyThenBenchBasicFromDiscard",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "_energy_cards_in_hand(state, use)"
+   ],
+   "max": [
+    "self.discard"
+   ],
+   "category": "own_cards",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "discard_from_hand",
+   "file": "kyuura_engine/effects.py",
+   "class": "DiscardFromHandThenDrawTrainer",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "hand"
+   ],
+   "max": [
+    "len(hand)"
+   ],
+   "category": "own_cards",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "discard_from_hand",
+   "file": "kyuura_engine/effects.py",
+   "class": "DiscardFromHandThenRetrieveEnergy",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "state.players[use.player].hand"
+   ],
+   "max": [
+    "self.discard"
+   ],
+   "category": "own_cards",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "discard_from_hand",
+   "file": "kyuura_engine/effects.py",
+   "class": "DiscardFromHandThenSearchDeck",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "state.players[use.player].hand"
+   ],
+   "max": [
+    "self.discard"
+   ],
+   "category": "own_cards",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "discard_from_hand",
+   "file": "kyuura_engine/effects.py",
+   "class": "DiscardThenDraw",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "tuple(state.players[use.player].hand)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "own_cards",
+   "order": "single"
+  },
+  {
+   "kind": "discard_from_hand",
+   "file": "kyuura_engine/effects.py",
+   "class": "ReturnHandsToDeckTrainer",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "state.players[use.player].hand"
+   ],
+   "max": [
+    "self.discard_cost"
+   ],
+   "category": "own_cards",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "discard_from_hand",
+   "file": "kyuura_engine/effects.py",
+   "class": "SearchDeckTrainer",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "hand"
+   ],
+   "max": [
+    "self.discard_cost"
+   ],
+   "category": "own_cards",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "discard_from_hand",
+   "file": "kyuura_engine/effects.py",
+   "class": "TakeFromDiscardTrainer",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "state.players[use.player].hand"
+   ],
+   "max": [
+    "self.discard_cost"
+   ],
+   "category": "own_cards",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "discard_from_hand",
+   "file": "kyuura_engine/effects.py",
+   "class": "TrainerTurnEffectTrainer",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "state.players[use.player].hand"
+   ],
+   "max": [
+    "self.discard_cost"
+   ],
+   "category": "own_cards",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "discard_from_hand",
+   "file": "kyuura_engine/engine.py",
+   "class": null,
+   "func": "_start_trainer_use",
+   "player": "use.player",
+   "options": [
+    "tuple(state.players[use.player].hand)"
+   ],
+   "max": [
+    "extra_cost[1].discard"
+   ],
+   "category": "own_cards",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "discard_opponent_energy",
+   "file": "kyuura_engine/effects.py",
+   "class": "DiscardAttachedEnergyTrainer",
+   "func": "_opponent_stage",
+   "player": "use.player",
+   "options": [
+    "_attached_cards(self._removable(state, use))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "discard_opponent_energy",
+   "file": "kyuura_engine/effects.py",
+   "class": "DiscardAttachedEnergyTrainer",
+   "func": "resume",
+   "player": "use.player",
+   "options": [
+    "tuple(target.energy)"
+   ],
+   "max": [
+    "self.opponent_cards"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "discard_opponent_energy",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "DiscardChosenTypedEnergyUntilTails",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "heads"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "discard_opponent_energy",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "DiscardOpponentEnergy",
+   "func": "_next",
+   "player": "run.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "discard_opponent_energy",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "DiscardOpponentEnergyByHeads",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "heads"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "discard_opponent_energy",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "DiscardOpponentEnergyUpToHeads",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "count"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "discard_stadium",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "OptionalDiscardStadium",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "(stadium.card,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "discard_to_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinReturnEnergyFromDiscardToDeck",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "min(self.count, len(options))"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "discard_to_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "EachPlayerReturnDiscardToDeckThenHandLock",
+   "func": "_offer",
+   "player": "player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "min(self.max_count, len(options))"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "discard_to_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "TakeFromDiscardTrainer",
+   "func": "_choose",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "high"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "discard_to_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "CoinDiscardCardToDeckThenShuffle",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "discard"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "discard_to_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "EachPlayerStep",
+   "func": "_offer",
+   "player": "player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "high"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "discard_to_deck_top",
+   "file": "kyuura_engine/effects.py",
+   "class": "TakeFromDiscardTrainer",
+   "func": "_choose",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "high"
+   ],
+   "category": "public",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "discard_to_deck_top",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "OpponentDiscardToDeckTop",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "list(run.state.players[1 - run.player].discard)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "energy_drain_discard",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": null,
+   "func": "fire_or_suspend",
+   "player": "request.entry[0]",
+   "options": [
+    "list(request.options)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "entry_power",
+   "file": "kyuura_engine/effects.py",
+   "class": null,
+   "func": "offer_entry_power",
+   "player": "owner",
+   "options": [
+    "(pokemon.pokemon_id,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "esp_redo",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": null,
+   "func": "suspend_esp_redo",
+   "player": "run.player",
+   "options": [
+    "(1,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "evolution_heal",
+   "file": "kyuura_engine/effects.py",
+   "class": null,
+   "func": "offer_evolution_heal",
+   "player": "owner",
+   "options": [
+    "(pokemon.pokemon_id,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "evolution_heal",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "EachPlayerEvolvesFromDeck",
+   "func": "resume",
+   "player": "player",
+   "options": [
+    "(pokemon.pokemon_id,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "evolution_heal",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "EvolveChosenFromDeck",
+   "func": "resume",
+   "player": "run.player",
+   "options": [
+    "(target.pokemon_id,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "evolution_heal",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": null,
+   "func": "suspend_evolution_heal",
+   "player": "owner",
+   "options": [
+    "(pokemon.pokemon_id,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "evolution_song_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "EachPlayerEvolvesFromDeck",
+   "func": "_offer",
+   "player": "player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "owner_knowledge",
+   "order": "single"
+  },
+  {
+   "kind": "evolution_song_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "EachPlayerStep",
+   "func": "_offer",
+   "player": "player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "high"
+   ],
+   "category": "owner_knowledge",
+   "order": "single"
+  },
+  {
+   "kind": "exp_all_energy",
+   "file": "kyuura_engine/resolution/codec.py",
+   "class": null,
+   "func": "exp_all_decision",
+   "player": "player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "exp_all_energy",
+   "file": "kyuura_engine/resolution/flow.py",
+   "class": null,
+   "func": "_finish_attack",
+   "player": "owner",
+   "options": [
+    "exp_all_options(state, active)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "forced_switch",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "ForceSwitch",
+   "func": "run",
+   "player": "chooser",
+   "options": [
+    "list(options)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "hand_to_active",
+   "file": "kyuura_engine/effects.py",
+   "class": "BenchActiveThenHandBasicToActive",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "_hand_basics(state, use.player, text_era(use.card_id))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "own_cards",
+   "order": "single"
+  },
+  {
+   "kind": "hand_to_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "DrawThenReturnHandCardsToDeck",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "state.players[use.player].hand"
+   ],
+   "max": [
+    "self.count"
+   ],
+   "category": "own_cards",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "hand_to_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "ReturnHandToDeckThenDraw",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "state.players[use.player].hand"
+   ],
+   "max": [
+    "self.count"
+   ],
+   "category": "own_cards",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "hand_to_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "SearchDeckTrainer",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "hand"
+   ],
+   "max": [
+    "self.return_cost"
+   ],
+   "category": "own_cards",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "hand_to_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "ReturnHandThenRevealEnergy",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "list(hand)"
+   ],
+   "max": [
+    "min(self.max_cards, len(hand))"
+   ],
+   "category": "own_cards",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "hand_to_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "ReturnHandToDeck",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "list(hand)"
+   ],
+   "max": [
+    "self.count"
+   ],
+   "category": "own_cards",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "heal_allocation",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "AllocateHeal",
+   "func": "run",
+   "player": "self.owner(run)",
+   "options": [
+    "tuple(range(len(table)))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "janken_hand",
+   "file": "kyuura_engine/effects.py",
+   "class": "RockPaperScissorsRefreshHand",
+   "func": "_ask",
+   "player": "use.player",
+   "options": [
+    "range(len(JANKEN_HANDS))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "janken_hand",
+   "file": "kyuura_engine/effects.py",
+   "class": "RockPaperScissorsRefreshHand",
+   "func": "resume",
+   "player": "1 - use.player",
+   "options": [
+    "range(len(JANKEN_HANDS))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "knock_out_power",
+   "file": "kyuura_engine/resolution/flow.py",
+   "class": null,
+   "func": "_finish_attack",
+   "player": "owner",
+   "options": [],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "ko_prevention",
+   "file": "kyuura_engine/resolution/flow.py",
+   "class": null,
+   "func": "_finish_attack",
+   "player": "owner",
+   "options": [],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "magma_pool_energy",
+   "file": "kyuura_engine/reactions.py",
+   "class": null,
+   "func": "process",
+   "player": "choice.player",
+   "options": [
+    "choice.options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "magma_pool_energy",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": null,
+   "func": "_apply_move",
+   "player": "choice.player",
+   "options": [
+    "list(choice.options)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "move_energy",
+   "file": "kyuura_engine/effects.py",
+   "class": "ChargeBenchEnergyToSelf",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "len(options)"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "move_energy",
+   "file": "kyuura_engine/effects.py",
+   "class": "GatherTypeEnergyCardsToSelf",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "min(self.max_cards, len(options))"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "move_energy",
+   "file": "kyuura_engine/effects.py",
+   "class": "TakeEnergiesToSelf",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "min(self.max_cards, len(options))"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "move_energy",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "BubbleJump",
+   "func": "resume",
+   "player": "run.player",
+   "options": [
+    "tuple(attacker.energy)"
+   ],
+   "max": [
+    "self.count"
+   ],
+   "category": "public",
+   "order": "significant"
+  },
+  {
+   "kind": "move_energy",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "MoveOneEnergyToBench",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "move_opponent_energy",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "MoveOpponentEnergyToBench",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "energies"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "move_opponent_energy",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "MoveOpponentFieldEnergy",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "ninja_trick",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": null,
+   "func": "offer_ninja_trick",
+   "player": "owner",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "opponent_hand_to_bench",
+   "file": "kyuura_engine/effects.py",
+   "class": "LookOpponentHandThenBenchBasics",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "min(space, len(options))"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "opponent_hand_to_bench",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "EachPlayerHandToBench",
+   "func": "_stage",
+   "player": "chooser",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "min(space, len(candidates))"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "opponent_hand_to_bench",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "OpponentHandToBenchThenSwitch",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "opponent_hand_to_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinLookOpponentHandMayReturnTrainer",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "trainers"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "opponent_hand_to_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "LookOpponentHandReturnOneThenMayDraw",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "state.players[opponent].hand"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "opponent_hand_to_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "OpponentHandTrainerToDeck",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "opponent_hand_to_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "LookHandTrainerToDeck",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "trainers"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "optional_coin",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "OptionalCoin",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "(1,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "optional_discard_all",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "OptionalDiscardAll",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "(1,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "optional_drain",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "Drain",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "(attacker.pokemon_id,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "optional_heal",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "OptionalHealSelf",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "(attacker.pokemon_id,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "optional_shuffle",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinPeekOpponentDeckTopMayShuffle",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "(opponent,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "peek_card",
+   "file": "kyuura_engine/effects.py",
+   "class": "PeekCard",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "range(len(targets))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "own_cards",
+   "order": "single"
+  },
+  {
+   "kind": "post_knockout_power",
+   "file": "kyuura_engine/resolution/codec.py",
+   "class": null,
+   "func": "post_knockout_decision",
+   "player": "owner",
+   "options": [
+    "(card,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "post_knockout_power",
+   "file": "kyuura_engine/resolution/flow.py",
+   "class": null,
+   "func": "_offer_post_knockout",
+   "player": null,
+   "options": [],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "prize_first",
+   "file": "kyuura_engine/resolution/codec.py",
+   "class": null,
+   "func": "prize_first_decision",
+   "player": "state.current_player",
+   "options": [
+    "sorted(set(cont.remaining))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "prize_first",
+   "file": "kyuura_engine/resolution/flow.py",
+   "class": null,
+   "func": "_next_prize_or_judge",
+   "player": null,
+   "options": [],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "promote_active",
+   "file": "kyuura_engine/resolution/codec.py",
+   "class": null,
+   "func": "promote_decision",
+   "player": "player",
+   "options": [
+    "[p.pokemon_id for p in state.players[player].bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "promote_active",
+   "file": "kyuura_engine/resolution/flow.py",
+   "class": null,
+   "func": "_next_promotion_or_end",
+   "player": null,
+   "options": [],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "quiz_answer",
+   "file": "kyuura_engine/effects.py",
+   "class": "BlainesQuiz",
+   "func": "resume",
+   "player": "1 - use.player",
+   "options": [
+    "range(len(names))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "quiz_answer",
+   "file": "kyuura_engine/effects.py",
+   "class": "GuessOpponentPrizeKind",
+   "func": "resume",
+   "player": "use.player",
+   "options": [
+    "range(len(FLIP_KIND_NAMES))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "quiz_answer",
+   "file": "kyuura_engine/effects.py",
+   "class": "SetAsideGuessKindQuiz",
+   "func": "resume",
+   "player": "1 - use.player",
+   "options": [
+    "range(len(self.names()))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "quiz_attack",
+   "file": "kyuura_engine/effects.py",
+   "class": "BlainesQuiz",
+   "func": "resume",
+   "player": "use.player",
+   "options": [
+    "range(len(attacks))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "quiz_card",
+   "file": "kyuura_engine/effects.py",
+   "class": "BlainesHeightQuiz",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "own_cards",
+   "order": "single"
+  },
+  {
+   "kind": "quiz_card",
+   "file": "kyuura_engine/effects.py",
+   "class": "BlainesQuiz",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "quiz_candidates(state, use.player)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "own_cards",
+   "order": "single"
+  },
+  {
+   "kind": "quiz_card",
+   "file": "kyuura_engine/effects.py",
+   "class": "SetAsideGuessKindQuiz",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "self.candidates(state, use)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "own_cards",
+   "order": "single"
+  },
+  {
+   "kind": "quiz_height_answer",
+   "file": "kyuura_engine/effects.py",
+   "class": "BlainesHeightQuiz",
+   "func": "resume",
+   "player": "1 - use.player",
+   "options": [
+    "()"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "reaction_order",
+   "file": "kyuura_engine/reactions.py",
+   "class": null,
+   "func": "_process_same",
+   "player": "state.current_player",
+   "options": [
+    "range(len(order))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "reaction_order",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": null,
+   "func": "_settle_move_step",
+   "player": "state.current_player",
+   "options": [
+    "list(range(len(live)))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "reaction_power",
+   "file": "kyuura_engine/engine.py",
+   "class": null,
+   "func": "_offer_trainer_reaction",
+   "player": "owner",
+   "options": [
+    "(holder.pokemon_id,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "reaction_power",
+   "file": "kyuura_engine/reactions.py",
+   "class": null,
+   "func": "_offer_use",
+   "player": "owner",
+   "options": [
+    "(pid,)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "reaction_switch",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": null,
+   "func": "offer_flee",
+   "player": "owner",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "recover_energy",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "RecoverEnergy",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "min(self.max_cards, len(candidates))"
+   ],
+   "category": "public",
+   "order": "significant"
+  },
+  {
+   "kind": "recover_energy",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "RecoverEnergyByHeads",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "heads"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "recover_energy",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "RecoverSpecialEnergy",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "recover_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinTakeEvolutionOrBasicFromDiscard",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "recover_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinsTakePokemonOrTrainerFromDiscard",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "discard_cards_matching(state, use.player, target)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "recover_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "RecoverPokemonFromDiscardOnEntry",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "cards"
+   ],
+   "max": [
+    "min(self.max_cards, len(cards))"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "recover_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "EachPlayerStep",
+   "func": "_offer",
+   "player": "player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "high"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "recover_trainer",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinRecoverNamedFromDiscard",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "self.options(state, use)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "recover_trainer",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinRecoverTrainerWithBenchLetters",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "self.options(state, use)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "recover_trainer",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinsTakePokemonOrTrainerFromDiscard",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "discard_cards_matching(state, use.player, target)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "recover_trainer",
+   "file": "kyuura_engine/effects.py",
+   "class": "TakeFromDiscardTrainer",
+   "func": "_choose",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "high"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "recover_trainer",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "RecoverTrainer",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "remove_counters",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "ChosenOpponentHealThenDraw",
+   "func": "resume",
+   "player": "run.player",
+   "options": [
+    "range(counters + 1)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "restore",
+   "file": "kyuura_engine/reactions.py",
+   "class": null,
+   "func": "_run_step",
+   "player": "player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "high"
+   ],
+   "category": "inherits",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "retrieve_energy",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinRetrieveBasicEnergyStadium",
+   "func": "activate",
+   "player": "player",
+   "options": [
+    "self.candidates(state, player)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "retrieve_energy",
+   "file": "kyuura_engine/effects.py",
+   "class": "DiscardFromHandThenRetrieveEnergy",
+   "func": "resume",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "min(self.retrieve, len(options))"
+   ],
+   "category": "own_cards",
+   "order": "not_significant"
+  },
+  {
+   "kind": "return_energy",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinsUntilTailsReturnOpponentActiveEnergyThenEndTurn",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "tuple(options)"
+   ],
+   "max": [
+    "heads"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "return_energy",
+   "file": "kyuura_engine/effects.py",
+   "class": "ReturnBasicEnergyToHandTrainer",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "len(options)"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "return_energy",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "DiscardOwnEnergy",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "len(candidates)",
+    "needed"
+   ],
+   "category": "public",
+   "order": "significant"
+  },
+  {
+   "kind": "return_to_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "ReturnHandEnergyThenCoinSearchBasicEnergy",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "owner_knowledge",
+   "order": "single"
+  },
+  {
+   "kind": "return_to_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "TradePokemonWithDeck",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "own_cards",
+   "order": "single"
+  },
+  {
+   "kind": "revive_source",
+   "file": "kyuura_engine/effects.py",
+   "class": "FossilEggRevive",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "own_cards",
+   "order": "single"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "BreederCoupleSearch",
+   "func": "_next",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1 if options else 0"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinEvolveSelfFromDeck",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "count"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinsSearchBasicEnergyPerHeads",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "deck_cards_matching(state, use.player, self.TARGET)"
+   ],
+   "max": [
+    "heads"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "DiscardFromHandThenSearchDeck",
+   "func": "resume",
+   "player": "use.player",
+   "options": [
+    "sorted(state.players[use.player].deck)"
+   ],
+   "max": [
+    "self.search"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "EachPlayerSearchToolOnEntry",
+   "func": "resume",
+   "player": "player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1 if options else 0"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "ReturnHandEnergyThenCoinSearchBasicEnergy",
+   "func": "resume",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "min(self.count, len(options))"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "SearchDeckTrainer",
+   "func": "_search",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "min(self.count, len(options))"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "SearchDeckWithBenchLettersToHand",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "self.options(state, use)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "SearchEvolutionCardToHand",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "deck_evolution_cards(state, use.player)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "SearchNamedTrainerOnEntry",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "deck_named_trainer_cards(state, use.player, self.name)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/effects.py",
+   "class": "TradePokemonWithDeck",
+   "func": "resume",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/reactions.py",
+   "class": null,
+   "func": "_offer_search",
+   "player": "owner",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "count"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "EachPlayerEvolvesFromDeck",
+   "func": "resume",
+   "player": "player",
+   "options": [
+    "cards"
+   ],
+   "max": [
+    "1 if cards else 0"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "EvolveAttackerFromDeck",
+   "func": "_required_run",
+   "player": "run.player",
+   "options": [
+    "()",
+    "candidates"
+   ],
+   "max": [
+    "0",
+    "1"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "EvolveAttackerFromDeck",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "EvolveChosenFromDeck",
+   "func": "_next",
+   "player": "run.player",
+   "options": [
+    "()",
+    "candidates"
+   ],
+   "max": [
+    "0",
+    "1"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "EvolveFromDeck",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "()",
+    "tuple(candidates)"
+   ],
+   "max": [
+    "0",
+    "1"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "ReturnHandThenRevealEnergy",
+   "func": "resume",
+   "player": "run.player",
+   "options": [
+    "E.deck_basic_energy_cards(state, run.player)"
+   ],
+   "max": [
+    "wanted"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "RevealNamedPokemonFromDeck",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "high"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "RevealPokemonFromDeck",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "1 if candidates else 0"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "search_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "RevealTrainerFromDeck",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "self.candidates(run)",
+    "candidates"
+   ],
+   "max": [
+    "heads",
+    "high"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "search_deck_or_discard",
+   "file": "kyuura_engine/effects.py",
+   "class": "SearchNamedFromDeckOrDiscard",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "secret_plan_card",
+   "file": "kyuura_engine/effects.py",
+   "class": "PlaceFaceDownOnBench",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "own_cards",
+   "order": "single"
+  },
+  {
+   "kind": "select_attached_special_energy",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "ReturnAttachedSpecialEnergyToDeck",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_attached_trainer",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "ReturnAttachedTrainerToDeck",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_attack",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "CopyChosenAttack",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_attack",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "CopyOpponentAttack",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_color",
+   "file": "kyuura_engine/effects.py",
+   "class": "ConvertBasicEnergyColor",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "NON_COLORLESS_CHOICES"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_color",
+   "file": "kyuura_engine/effects.py",
+   "class": "ConvertSelfToEnergy",
+   "func": "resume",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_color",
+   "file": "kyuura_engine/effects.py",
+   "class": "ShiftColor",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "sorted(sure | maybe)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_color",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "ChooseColor",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_color",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "OpponentWeaknessColor",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "E.NON_COLORLESS_CHOICES"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_color",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "SelfResistanceColor",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "E.NON_COLORLESS_CHOICES"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_counter_count",
+   "file": "kyuura_engine/effects.py",
+   "class": "DiscardEnergyThenHealTrainer",
+   "func": "resume",
+   "player": "use.player",
+   "options": [
+    "tuple(range(min(self.max_counters, target.damage // per) + 1))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_counter_count",
+   "file": "kyuura_engine/effects.py",
+   "class": "HealNamedPokemonUpTo",
+   "func": "resume",
+   "player": "use.player",
+   "options": [
+    "tuple(range(min(self.counters, target.damage // per) + 1))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_deck_owner",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "ArrangeDeckTop",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "owners"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_devolve_count",
+   "file": "kyuura_engine/effects.py",
+   "class": "DevolveOwnPokemon",
+   "func": "resume",
+   "player": "use.player",
+   "options": [
+    "range(len(pokemon.evolution_stack) + 1)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_draw_count",
+   "file": "kyuura_engine/effects.py",
+   "class": "EachPlayerMayDraw",
+   "func": "_offer",
+   "player": "player",
+   "options": [
+    "self._options(state, player)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_draw_count",
+   "file": "kyuura_engine/effects.py",
+   "class": "LookOpponentHandReturnOneThenMayDraw",
+   "func": "resume",
+   "player": "opponent",
+   "options": [
+    "range(min(self.max_draw, len(state.players[opponent].deck)) + 1)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_draw_count",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "EachPlayerStep",
+   "func": "_offer",
+   "player": "player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "high"
+   ],
+   "category": "public",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "select_evolution_card",
+   "file": "kyuura_engine/effects.py",
+   "class": "EvolveBasicToStage2",
+   "func": "resume",
+   "player": "use.player",
+   "options": [
+    "[uid for uid, _ in entries]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "own_cards",
+   "order": "single"
+  },
+  {
+   "kind": "select_evolution_card",
+   "file": "kyuura_engine/effects.py",
+   "class": "FossilEggRevive",
+   "func": "resolve",
+   "player": null,
+   "options": [
+    "hand"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "own_cards",
+   "order": "single"
+  },
+  {
+   "kind": "select_evolution_card",
+   "file": "kyuura_engine/effects.py",
+   "class": "FossilEggRevive",
+   "func": "resume",
+   "player": null,
+   "options": [
+    "hand"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "own_cards",
+   "order": "single"
+  },
+  {
+   "kind": "select_evolution_card",
+   "file": "kyuura_engine/effects.py",
+   "class": "Shapeshift",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "own_cards",
+   "order": "single"
+  },
+  {
+   "kind": "select_exchange_card",
+   "file": "kyuura_engine/effects.py",
+   "class": "SwapPleaseTrainer",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "state.players[opponent].hand"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "select_exchange_card",
+   "file": "kyuura_engine/effects.py",
+   "class": "SwapPleaseTrainer",
+   "func": "resume",
+   "player": "opponent",
+   "options": [
+    "state.players[use.player].hand"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "select_hand_card",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "LookHandCardToDeck",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "tuple(range(len(hand)))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_hand_positions",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinReturnOpponentHandPositions",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "range(size)"
+   ],
+   "max": [
+    "min(self.count, size)"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "select_look_count",
+   "file": "kyuura_engine/effects.py",
+   "class": "ArrangeOwnDeckTopTrainer",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "self._count_options(state, use)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_look_count",
+   "file": "kyuura_engine/effects.py",
+   "class": "LookDeckTopStadium",
+   "func": "activate",
+   "player": "player",
+   "options": [
+    "self.counts(state, player)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_look_count",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "ArrangeDeckTop",
+   "func": "resume",
+   "player": "run.player",
+   "options": [
+    "tuple(range(min(self.max_cards, len(deck)) + 1))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_marker_count",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "OptionalRemoveOwnMarkers",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "tuple(range(top + 1))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_opponent_attack",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "OpponentAttackLock",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "tuple(range(len(entries)))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_opponent_prize",
+   "file": "kyuura_engine/effects.py",
+   "class": "GuessOpponentPrizeKind",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "self.positions(state, use)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "AttachedDamageReduction",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "[pokemon.pokemon_id for pokemon in own]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "AttachedEffectGuard",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "[pokemon.pokemon_id for pokemon in own]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "BreederCoupleSearch",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "targets"
+   ],
+   "max": [
+    "min(2, len(targets))"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "ChooseFossilEvolvedThenCoinDevolveAll",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "ChooseOwnPokemonCoinsHeal",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "[p.pokemon_id for p in own]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinAttachEnergyFromDeckToOwnPokemon",
+   "func": "resume",
+   "player": "use.player",
+   "options": [
+    "targets"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinAttachFromDiscardToTypePokemon",
+   "func": "resume",
+   "player": "use.player",
+   "options": [
+    "targets"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinReturnOpponentPokemonToHandOnEntry",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinReturnOtherGroupToHandOnEntry",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "self.options(state, use.player, use.pokemon_id)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinReturnOwnPokemonWithAttachedToHand",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinReturnOwnerPokemonStadium",
+   "func": "activate",
+   "player": "player",
+   "options": [
+    "self.targets(state, player)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinsReturnOpponentBenchElseEndTurn",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "[p.pokemon_id for p in state.players[1 - use.player].bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "ConvertSelfToEnergy",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "DamageOpponentPokemonOnEntry",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "[p.pokemon_id for p in state.players[1 - use.player].in_play()]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "DevolveOneToHandWithBan",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "DevolveOwnPokemon",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "candidates"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "DiscardAttachedEnergyTrainer",
+   "func": "_opponent_stage",
+   "player": "use.player",
+   "options": [
+    "[p.pokemon_id for p in opponent]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "DiscardDeckTopAttachTypeEnergyThenEndTurn",
+   "func": "_next",
+   "player": "use.player",
+   "options": [
+    "targets"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "DiscardEnergyThenHealTrainer",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "[p.pokemon_id for p in targets]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "EvolutionPermissionForOwnerPokemon",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "owner_pokemon(state, use.player, self.owner)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "EvolveBasicToStage2",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "own_cards",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "HealNamedPokemonUpTo",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "HealOwnPokemonOnHeads",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "_damaged_own_pokemon(state, use.player)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "HealOwnerPokemonThenDiscardHand",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "self._targets(state, use)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "MoveAllEnergyBetweenOwnerPokemon",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "self._targets(state, use)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "MoveAllEnergyBetweenOwnerPokemon",
+   "func": "resume",
+   "player": "use.player",
+   "options": [
+    "[pid for pid in self._targets(state, use) if pid != choices[0]]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "OpponentChoosesMySwitchThenISwitchTheirs",
+   "func": "_offer",
+   "player": "chooser",
+   "options": [
+    "[p.pokemon_id for p in bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "PinpointLens",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "[pokemon.pokemon_id for pokemon in own]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "PokemonToolEffect",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "tool_targets(state, use.player)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "ProtectAttachedEnergy",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "self._targets(state, use)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "RedoAttackCoins",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "self._targets(state, use.player)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "RemoveDamageCounters",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "[pokemon.pokemon_id for pokemon in own]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "ReturnBenchedPokemonToDeck",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "self._candidates(state, use.player)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "ReturnOwnPokemonBasicToHand",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "self._candidates(state, use.player)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "SuperTransformPower",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "SwitchBothActivesTrainer",
+   "func": "_offer",
+   "player": "player",
+   "options": [
+    "[p.pokemon_id for p in bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "SwitchOpponentChosenByOpponent",
+   "func": "resolve",
+   "player": "1 - use.player",
+   "options": [
+    "[p.pokemon_id for p in state.players[1 - use.player].bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "SwitchOpponentOnHeads",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "[pokemon.pokemon_id for pokemon in bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "SwitchOpponentWithBench",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "[pokemon.pokemon_id for pokemon in bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "SwitchWithBench",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "[pokemon.pokemon_id for pokemon in bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/reactions.py",
+   "class": null,
+   "func": "_lightning_burst",
+   "player": "opponent",
+   "options": [
+    "[p.pokemon_id for p in state.players[opponent].bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/reactions.py",
+   "class": null,
+   "func": "_vine_pull",
+   "player": "opponent",
+   "options": [
+    "[p.pokemon_id for p in state.players[opponent].bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "AttachFromDeckByHeads",
+   "func": "_ask_target",
+   "player": "run.player",
+   "options": [
+    "targets"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "AttachFromHandToChosen",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "BatonPass",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "BubbleJump",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "[p.pokemon_id for p in state.players[run.player].bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "ChooseOpponentBench",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "[p.pokemon_id for p in bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "ChooseTarget",
+   "func": "run",
+   "player": "player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "ChosenBenchCoinDamage",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "[p.pokemon_id for p in bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "ChosenBenchDamage",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "[p.pokemon_id for p in bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "ChosenBenchDamages",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "[p.pokemon_id for p in bench]"
+   ],
+   "max": [
+    "min(self.max_targets, len(bench))"
+   ],
+   "category": "public",
+   "order": "significant"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "ChosenOpponentHealThenDraw",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "[p.pokemon_id for p in pokemon]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "CoinChosenSideHeal",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "DevolveChosenPokemon",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "DevolveOpponentToDeck",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "EvolveChosenFromDeck",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "targets"
+   ],
+   "max": [
+    "len(targets)"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "EvolveFromDeck",
+   "func": "resume",
+   "player": "run.player",
+   "options": [
+    "targets"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "HealChosenOwnBench",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "[p.pokemon_id for p in bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "MoveOpponentEnergyToBench",
+   "func": "resume",
+   "player": "run.player",
+   "options": [
+    "[pokemon.pokemon_id for pokemon in p.bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "MoveOpponentFieldEnergy",
+   "func": "resume",
+   "player": "run.player",
+   "options": [
+    "[pokemon.pokemon_id for pokemon in p.in_play()]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "OptionalDiscardBenchDamage",
+   "func": "resume",
+   "player": "run.player",
+   "options": [
+    "[p.pokemon_id for p in bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "PromoteFromBench",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "[pokemon.pokemon_id for pokemon in p.bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "ReturnOwnBenchToDeck",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "[p.pokemon_id for p in bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "ReturnOwnPokemonToHand",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "len(options)"
+   ],
+   "category": "public",
+   "order": "not_significant"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "SelfSwitch",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "[p.pokemon_id for p in bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "SwitchSelfThenStatusGuard",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "[p.pokemon_id for p in bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_pokemon",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "WashOwnBench",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "[p.pokemon_id for p in bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_prize_card",
+   "file": "kyuura_engine/effects.py",
+   "class": "AskOpponentEachTakePrizeElseDraw",
+   "func": "_offer_prize",
+   "player": "player",
+   "options": [
+    "range(len(state.players[player].prizes))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_prize_card",
+   "file": "kyuura_engine/effects.py",
+   "class": "LookOwnPrizeCard",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "range(len(state.players[use.player].prizes))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_prize_card",
+   "file": "kyuura_engine/effects.py",
+   "class": "LookPrizeAskSwapElseDraw",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "range(len(state.players[use.player].prizes))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_prize_card",
+   "file": "kyuura_engine/effects.py",
+   "class": "SwapPrizeWithDeckTop",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "range(len(state.players[use.player].prizes))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_special_condition",
+   "file": "kyuura_engine/effects.py",
+   "class": "ConditionOwnActiveTrainer",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "range(len(DANCE_CONDITIONS))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "select_special_condition",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "ChosenStatus",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "self.choices()"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "split_from_deck",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": null,
+   "func": "fire_or_suspend",
+   "player": "request.entry[0]",
+   "options": [
+    "list(request.options)"
+   ],
+   "max": [
+    "1 if request.options else 0"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "stadium_from_discard",
+   "file": "kyuura_engine/effects.py",
+   "class": "CoinPutStadiumFromDiscard",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "self.candidates(state, use.player)"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "stadium_return_bench",
+   "file": "kyuura_engine/effects.py",
+   "class": "BenchLimitStadium",
+   "func": "_ask",
+   "player": "player",
+   "options": [
+    "[p.pokemon_id for p in state.players[player].bench]"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "swap_with_prize",
+   "file": "kyuura_engine/effects.py",
+   "class": "LookPrizeAskSwapElseDraw",
+   "func": "resume",
+   "player": "use.player",
+   "options": [
+    "state.players[use.player].hand"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "own_cards",
+   "order": "single"
+  },
+  {
+   "kind": "take_looked_cards",
+   "file": "kyuura_engine/effects.py",
+   "class": "LookTopTakeRestDiscardTrainer",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "cards"
+   ],
+   "max": [
+    "self.take"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "take_looked_cards",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "EachPlayerLooksTakesBasicEnergy",
+   "func": "_offer",
+   "player": "player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "len(options)"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "take_looked_cards",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "EachPlayerStep",
+   "func": "_offer",
+   "player": "player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "high"
+   ],
+   "category": "started_search",
+   "order": "unconfirmed"
+  },
+  {
+   "kind": "take_looked_cards",
+   "file": "kyuura_engine/resolution/programs.py",
+   "class": "LookTopTakeOne",
+   "func": "run",
+   "player": "run.player",
+   "options": [
+    "looked"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "take_looked_pokemon",
+   "file": "kyuura_engine/effects.py",
+   "class": "LookTopTakePokemonThenShuffle",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "take_looked_trainer",
+   "file": "kyuura_engine/effects.py",
+   "class": "LookTopTakeTrainerThenShuffleLock",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "started_search",
+   "order": "single"
+  },
+  {
+   "kind": "take_prize",
+   "file": "kyuura_engine/resolution/codec.py",
+   "class": null,
+   "func": "prize_decision",
+   "player": "player",
+   "options": [
+    "range(len(state.players[player].prizes))"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "take_prize",
+   "file": "kyuura_engine/resolution/flow.py",
+   "class": null,
+   "func": "_next_prize_or_judge",
+   "player": null,
+   "options": [],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "take_prize",
+   "file": "kyuura_engine/resolution/flow.py",
+   "class": null,
+   "func": "_resume_prize_first",
+   "player": null,
+   "options": [],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  },
+  {
+   "kind": "use_discard_trainer",
+   "file": "kyuura_engine/effects.py",
+   "class": "UseOpponentDiscardTrainer",
+   "func": "resolve",
+   "player": "use.player",
+   "options": [
+    "options"
+   ],
+   "max": [
+    "1"
+   ],
+   "category": "public",
+   "order": "single"
+  }
+ ]
 }
