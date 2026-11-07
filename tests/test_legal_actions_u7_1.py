@@ -19,9 +19,11 @@ import unittest
 from unittest import mock
 
 from kyuura_engine import adapter as A
+from kyuura_engine import apply_command
 from kyuura_engine import diagnostics as D
 from kyuura_engine import legal_actions as L
 from kyuura_engine import snapshot as SN
+from kyuura_engine.coins import CoinSide
 from kyuura_engine.commands import (
     EndTurn,
     PlayTrainer,
@@ -29,6 +31,7 @@ from kyuura_engine.commands import (
     ResolveDecision,
     StartSuddenDeath,
     TakePrize,
+    UseAttack,
 )
 from kyuura_engine.observation import OPTION_MEANINGS
 from kyuura_engine.rng import rng_fingerprint
@@ -36,6 +39,9 @@ from kyuura_engine.serialize import state_to_dict
 from kyuura_engine.state import Phase
 from kyuura_engine.view_record import FORBIDDEN_KEYS
 from tests import helpers as H
+from tests import test_final_pmcg_cards_v0_68 as T68
+from tests import test_movement_damage_reactions_v0_87 as T87
+from tests import test_pokemon_tools_stadiums_v0_81 as T81
 from tests.log_audit import owned_card_ids, public_view
 from tests.test_replay_record_v0_153 import DECKS, HALT_DECK
 from tests.test_replay_run_v0_154 import DRY_DECKS, dry_command
@@ -117,9 +123,15 @@ def u7_send(host, command):
         values = tuple(p.pokemon_id for p in state.players[command.player].bench if p.card == command.pokemon)
     session = host.session(d.player)
     r, inputs = fetch(session)
+    if "withheld" in inputs:  # 情報境界を確かめていない決定: U7 は入力を返さない。ホストが直接送る（U7 の外）
+        WITHHELD.add(d.kind)
+        return None
     stage = inputs["stages"][0]
     choices = list(values) if stage["input"] == L.INPUT_CHOOSE_VALUE else [f"o{d.options.index(v) + 1}" for v in values]
     return session.submit(r["game"], r["revision"], r["candidates"][0]["id"], choices)
+
+
+WITHHELD: set[str] = set()
 
 
 def drive(seed, *, use_u7, conventions=None, deck=None, max_steps=4000, until=None):
@@ -265,17 +277,12 @@ class OptionalAndStopTest(unittest.TestCase):
         self.assertEqual((inputs["stages"][0]["meaning"], [o["value"] for o in inputs["stages"][0]["options"]]), ("number", [0, 1, 2, 3]))
 
     def test_decline_shown_but_engine_stops(self):
-        """辞退は候補の制約（min 0）では送れるが、エンジンが未裁定で拒否する場面（エネルギー回収の 0 枚）。候補は受理を保証しない（may_stop_later）。状態は変わらない。"""
-        state = search_board((H.FIRE,), trainer=H.ENERGY_RETRIEVAL)
-        state.players[0].discard = [u for u in state.players[0].deck if state.cards[u].card_id == H.WATER]
-        state.players[0].deck = [u for u in state.players[0].deck if u not in state.players[0].discard]
-        host = host_after_trainer(state)
+        """辞退は候補の制約（min 0）では送れるが、エンジンが未裁定で拒否する場面（カツラのギャンブルの 0 枚。PMCG6-076）。候補は受理を保証しない（may_stop_later）。状態は変わらない。"""
+        host = host_after_trainer(search_board((H.FIRE, H.WATER), trainer="PMCG6-076"))
         p0 = host.session(0)
-        r, _ = fetch(p0)
-        self.assertEqual(p0.submit(r["game"], r["revision"], "c1", ["o1"]).outcome, D.ACCEPTED)  # 手札から 1 枚トラッシュ
         r, inputs = fetch(p0)
         stage = inputs["stages"][0]
-        self.assertEqual((stage["decision_kind"], stage["decline"], stage["count"]["min"]), ("retrieve_energy", True, 0))
+        self.assertEqual((stage["decision_kind"], stage["decline"], stage["count"]["min"]), ("discard_from_hand", True, 0))
         self.assertEqual(r["candidates"][0]["processability"], L.MAY_STOP_LATER)
         before = snap(host.game.state)
         result = p0.submit(r["game"], r["revision"], "c1", [])
@@ -296,18 +303,56 @@ class OptionalAndStopTest(unittest.TestCase):
         self.assertEqual(p0.submit(r["game"], r["revision"], "c1", ["o1", "o2"]).refusal.code, L.CANDIDATE_NOT_EXECUTABLE)
         self.assertEqual(p0.submit(r["game"], r["revision"], "c1", ["o2", "o3"]).outcome, D.ACCEPTED)
 
-    def test_option_card_not_visible_is_not_transcribed(self):
-        """実行時の確かめ: 見えないカードが選べるものに来たら uid を出さず unverified（コードを読んだ範囲では起こらない）。"""
+    def test_unverified_is_processability_not_disclosure(self):
+        """分類のない停止のコードの選択は unverified（処理できるか不明）。入力の情報境界は確かめてあるので、選べるものは返す（2 つの軸は別）。"""
+        host = host_after_trainer(search_board((H.FIRE, H.FIRE, H.PONYTA)))
+        state = host.game.state
+        context = state.decision.context + (("unresolved_choices", (state.decision.options[0],)), ("unresolved_code", "FUTURE_STOP_FOR_TEST"))
+        host.replace_game(A.HostedGame(with_decision(state, context=context)))
+        r, inputs = fetch(host.session(0))
+        self.assertEqual(r["candidates"][0]["input_disclosure"], L.DISCLOSURE_CONFIRMED)
+        options = inputs["stages"][0]["options"]
+        self.assertEqual((options[0]["processability"], "card_id" in options[0]), (L.UNVERIFIED, True))
+
+    def test_option_card_not_visible_withholds_the_whole_input(self):
+        """実行時の確かめ: 見えないカードが選べるものに来たら、uid だけでなく選べるもの・数・並びも返さない（コードを読んだ範囲では起こらない）。"""
         host = host_after_trainer(search_board((H.FIRE, H.FIRE, H.PONYTA)))
         state = host.game.state
         hidden = state.players[0].deck[0]
         host.replace_game(A.HostedGame(with_decision(state, options=(hidden,) + state.decision.options[1:])))
-        r, inputs = fetch(host.session(0))
-        option = inputs["stages"][0]["options"][0]
-        self.assertNotIn("card", option)
-        self.assertNotIn("card_id", option)
-        self.assertEqual(option["processability"], L.UNVERIFIED)
-        self.assertEqual((r["candidates"][0]["processability"], r["candidates"][0]["reasons"][-1]), (L.UNVERIFIED, "option_not_visible"))
+        session = host.session(0)
+        r, inputs = fetch(session)
+        self.assert_withheld(session, r, inputs)
+
+    def assert_withheld(self, session, r, inputs):
+        cand = r["candidates"][0]
+        self.assertEqual(cand["input_disclosure"], L.DISCLOSURE_UNCONFIRMED)
+        self.assertEqual(cand["processability"], L.MAY_STOP_LATER)  # 処理できるかの軸は別（公開してよいかが未確認）
+        self.assertEqual(r["coverage"]["withheld_input_candidates"], [cand["id"]])
+        self.assertEqual((inputs["withheld"]["code"], inputs["stages"]), (L.INPUT_BOUNDARY_UNCONFIRMED, []))
+        text = json.dumps([r, inputs])
+        for key in ("options", "count", "card_id", "order", "decline", '"card"'):
+            self.assertNotIn(key if key.startswith('"') else f'"{key}"', text)
+        for choices in ([], ["o1"], ["o1", "o2"]):
+            self.assertEqual(session.check(r["game"], r["revision"], cand["id"], choices)["refusal"]["code"], L.INPUT_BOUNDARY_UNCONFIRMED)
+            self.assertEqual(session.submit(r["game"], r["revision"], cand["id"], choices).refusal.code, L.INPUT_BOUNDARY_UNCONFIRMED)
+
+    def test_unconfirmed_kind_withholds_inputs(self):
+        """情報境界を確かめていない種類（エネルギー回収のトラッシュから選ぶ決定）: 入力を返さない。ホストは直接送れる（U7 の外）。"""
+        state = search_board((H.FIRE,), trainer=H.ENERGY_RETRIEVAL)
+        state.players[0].discard = [u for u in state.players[0].deck if state.cards[u].card_id == H.WATER]
+        state.players[0].deck = [u for u in state.players[0].deck if u not in state.players[0].discard]
+        host = host_after_trainer(state)
+        p0 = host.session(0)
+        r, _ = fetch(p0)
+        self.assertEqual(p0.submit(r["game"], r["revision"], "c1", ["o1"]).outcome, D.ACCEPTED)  # 手札から 1 枚トラッシュ（確かめた種類）
+        r, inputs = fetch(p0)
+        self.assertNotIn("retrieve_energy", L.DISCLOSURE_CONFIRMED_KINDS)
+        before = snap(host.game.state)
+        self.assert_withheld(p0, r, inputs)
+        self.assertEqual(snap(host.game.state), before)
+        d = host.game.state.decision
+        self.assertEqual(host.game.submit(ResolveDecision(0, d.id, d.options[:1]), submitter=0).outcome, D.ACCEPTED)
 
 
 class TwinTest(unittest.TestCase):
@@ -396,8 +441,7 @@ class EndTurnTest(unittest.TestCase):
             command = dry_command(host.game.state)
             last = u7_send(host, command) or host.game.submit(command, submitter=submitter(command))
             self.assertEqual(last.outcome, D.ACCEPTED)
-        self.assertEqual(host.game.state.phase, Phase.HALTED)
-        self.assertEqual(last.view.status, D.HALTED)
+        self.assertEqual(host.game.state.phase, Phase.HALTED)  # 受理した結果として停止した（ドライアップの対象を選ぶ決定は U7 の外でホストが送る場合を含む）
         for actor in (0, 1):
             r = host.session(actor).candidates()
             self.assertEqual((r["situation"], r["candidates"], r["coverage"]["completeness"]), (L.HALTED, [], L.COMPLETE))
@@ -521,6 +565,158 @@ class HandleTest(unittest.TestCase):
         self.assertEqual((result.outcome, result.view.status), (D.FAILED, D.UNAVAILABLE))
         with self.assertRaises(A.HostStoppedError):
             self.p0.candidates()
+
+
+class ThreeDecisionsTest(unittest.TestCase):
+    """v0.160 で未確認だった 3 種類（構築盤面。既存のテストの盤面）: 選べるものは場のカードで、決める人に見える。相手の番の決定も含む。"""
+
+    def check_decision(self, pending, kind, decider):
+        host = L.ActionHost.from_state(pending)
+        state = host.game.state
+        d = state.decision
+        self.assertEqual((d.kind, d.player), (kind, decider))
+        self.assertIn(kind, L.DISCLOSURE_CONFIRMED_KINDS)
+        me, other = host.session(decider), host.session(1 - decider)
+        r, inputs = fetch(me)
+        self.assertEqual((r["situation"], r["candidates"][0]["input_disclosure"]), (L.ACTOR_TO_ACT, L.DISCLOSURE_CONFIRMED))
+        stage = inputs["stages"][0]
+        self.assertEqual([o["card"] for o in stage["options"]], list(d.options))
+        for o in stage["options"]:
+            self.assertEqual(o["card_id"], state.cards[o["card"]].card_id)
+            self.assertTrue(any(o["card"] in p.energy for pl in state.players for p in pl.in_play()))  # 場についているカード（公開）
+        r_other = other.candidates()
+        self.assertEqual((r_other["situation"], r_other["candidates"], r_other["empty_reason"]), (L.WAITING_FOR_PLAYER, [], L.EMPTY_NOT_ACTOR))
+        self.assertNotIn('"card"', json.dumps(r_other))
+        before = snap(state)
+        for bad in (["o9"], ["o1", "o1"], [str(d.options[0])]):
+            self.assertEqual(me.check(r["game"], r["revision"], "c1", bad)["refusal"]["code"], L.CANDIDATE_INPUT_INVALID)
+        self.assertEqual(snap(state), before)
+        executable = [o["id"] for o in stage["options"] if o["processability"] in L.EXECUTABLE]
+        direct = A.submit(state, ResolveDecision(decider, d.id, (d.options[int(executable[0][1:]) - 1],)), submitter=decider)
+        result = me.submit(r["game"], r["revision"], "c1", executable[:1])
+        self.assertEqual((result.outcome, result.view), (direct.outcome, direct.view_for(decider)))
+        if direct.outcome == D.ACCEPTED:
+            self.assertEqual(snap(host.game.state), snap(direct.state))
+        return stage
+
+    def test_energy_drain_discard(self):
+        pending = apply_command(H.with_coin_results(T68.muk_board(), CoinSide.HEADS), UseAttack(0, 0))
+        self.assertEqual(pending.current_player, 0)  # 番はプレイヤー 0、決めるのはプレイヤー 1（相手の操作への反応）
+        stage = self.check_decision(pending, "energy_drain_discard", 1)
+        self.assertEqual(stage["count"], {"min": 1, "max": 1})
+
+    def test_exp_all_energy(self):
+        state = T81.ExpAllTest("test_move_one_basic_energy_then_discard")._board()
+        stage = self.check_decision(T81.attack(state, 1), "exp_all_energy", 1)
+        self.assertEqual((stage["count"], stage["decline"]), ({"min": 0, "max": 1}, True))
+
+    def test_magma_pool_energy(self):
+        state = T87.board(T87.magcargo((T87.F,) * 5), bench=(H.CHARMANDER,))
+        stage = self.check_decision(T87.retreat(state, 3), "magma_pool_energy", 0)
+        self.assertEqual(len(stage["options"]), 2)
+
+
+class OrderTest(unittest.TestCase):
+    def pokedex(self):
+        state = search_board((H.FIRE,), deck=(H.WATER, H.SEEL, H.BILL, H.FIRE, H.PONYTA), trainer="PMCG1-082")
+        host = host_after_trainer(state)
+        p0 = host.session(0)
+        r, inputs = fetch(p0)
+        stage = inputs["stages"][0]
+        self.assertEqual(stage["decision_kind"], "select_look_count")
+        three = next(o["id"] for o in stage["options"] if o["value"] == 3)
+        self.assertEqual(p0.submit(r["game"], r["revision"], "c1", [three]).outcome, D.ACCEPTED)
+        return host
+
+    def test_order_changes_the_result_and_is_kept(self):
+        """ポケモン図鑑の並べかえ（答えの並びが山札の上の新しい並び）: 並びを変えると結果が変わる。U7 は並びを変えず、直接の送信と同じ結果。"""
+        finals = []
+        for order in (["o1", "o2", "o3"], ["o3", "o1", "o2"]):
+            host = self.pokedex()
+            state = host.game.state
+            p0 = host.session(0)
+            r, inputs = fetch(p0)
+            stage = inputs["stages"][0]
+            self.assertEqual((stage["decision_kind"], stage["order"], stage["order_preserved"]), ("arrange_deck_top", L.ORDER_SIGNIFICANT, True))
+            values = tuple(state.decision.options[int(o[1:]) - 1] for o in order)
+            direct = A.submit(state, ResolveDecision(0, state.decision.id, values), submitter=0)
+            self.assertTrue(p0.check(r["game"], r["revision"], "c1", order)["valid"])
+            self.assertEqual(p0.submit(r["game"], r["revision"], "c1", order).outcome, D.ACCEPTED)
+            self.assertEqual(snap(host.game.state), snap(direct.state))
+            self.assertEqual(tuple(host.game.state.players[0].deck[:3]), values)
+            finals.append(snap(host.game.state))
+        self.assertNotEqual(finals[0], finals[1])
+
+    def test_unconfirmed_order_is_not_called_unordered(self):
+        host = host_after_trainer(search_board((H.FIRE, H.FIRE, H.PONYTA)))
+        _, inputs = fetch(host.session(0))
+        self.assertEqual(inputs["stages"][0]["order"], L.ORDER_UNCONFIRMED)  # 手札をトラッシュする 2 枚（確かめていない。順不同と称さない）
+        host = self.pokedex()
+        state = search_board((H.FIRE, H.WATER), trainer="PMCG5-083")
+        _, inputs = fetch(host_after_trainer(state).session(0))
+        self.assertEqual(inputs["stages"][0]["order"], L.ORDER_NOT_APPLICABLE)  # 選ぶ数が 1
+
+
+class CoverageTest(unittest.TestCase):
+    def test_reasons_for_empty_candidates(self):
+        cases = [(OVER, L.GAME_OVER, L.EMPTY_GAME_ENDED), (SUDDEN, L.WAITING_FOR_HOST, L.EMPTY_HOST_OPERATION)]
+        halted, _ = L.ActionHost.start(HALT_DECK, HALT_DECK, 1)
+        cases.append((halted, L.HALTED, L.EMPTY_GAME_ENDED))
+        for host, situation, reason in cases:
+            for actor in (0, 1):
+                r = host.session(actor).candidates()
+                self.assertEqual((r["situation"], r["empty_reason"], r["coverage"]["scope_kinds"], r["coverage"]["completeness"]), (situation, reason, [], L.COMPLETE))
+        setup, _ = L.ActionHost.start(*DECKS, 3)
+        r = setup.session(0).candidates()
+        self.assertEqual((r["empty_reason"], r["coverage"]["scope_kinds"], r["coverage"]["completeness"]), (L.EMPTY_NOT_COVERED, ["place_starting"], L.PARTIAL))
+
+    def test_decision_answerer_has_priority_over_the_turn(self):
+        pending = apply_command(H.with_coin_results(T68.muk_board(), CoinSide.HEADS), UseAttack(0, 0))
+        host = L.ActionHost.from_state(pending)
+        r1, r0 = host.session(1).candidates(), host.session(0).candidates()
+        self.assertEqual((r1["situation"], r1["candidates"][0]["kind"], r1["coverage"]["completeness"]), (L.ACTOR_TO_ACT, L.KIND_ANSWER_DECISION, L.COMPLETE))
+        self.assertEqual((r0["situation"], r0["empty_reason"]), (L.WAITING_FOR_PLAYER, L.EMPTY_NOT_ACTOR))  # 番のプレイヤーでも、今は決定の回答者でない
+
+    def test_complete_means_the_listed_scope(self):
+        host = host_after_trainer(search_board((H.FIRE, H.FIRE, H.PONYTA)))
+        r = host.session(0).candidates()
+        self.assertEqual((r["coverage"]["scope_kinds"], r["coverage"]["completeness"]), ([L.KIND_ANSWER_DECISION], L.COMPLETE))
+        self.assertIn("全コマンドの合法手ではない", r["coverage"]["completeness_scope"])
+
+
+class OwnershipTest(unittest.TestCase):
+    def test_returned_values_are_copies(self):
+        host = host_after_trainer(search_board((H.FIRE, H.FIRE, H.PONYTA)))
+        p0 = host.session(0)
+        r, inputs = fetch(p0)
+        expected = copy.deepcopy(p0.inputs(r["game"], r["revision"], "c1"))
+        r["candidates"][0]["processability"] = L.NOT_IMPLEMENTED
+        r["candidates"][0]["reasons"].append("changed")
+        inputs["stages"][0]["options"].clear()
+        inputs["stages"][0]["count"]["max"] = 9
+        self.assertEqual(p0.inputs(r["game"], r["revision"], "c1"), expected)
+        self.assertEqual(p0.check(r["game"], r["revision"], "c1", ["o1", "o2", "o3"])["refusal"]["code"], L.CANDIDATE_INPUT_INVALID)
+        self.assertEqual(p0.submit(r["game"], r["revision"], "c1", ["o1", "o2"]).outcome, D.ACCEPTED)
+
+    def test_session_exposes_no_host_or_state(self):
+        host = host_after_trainer(search_board((H.FIRE, H.FIRE, H.PONYTA)))
+        session = host.session(0)
+        self.assertFalse(hasattr(session, "__dict__"))
+        self.assertEqual({n for n in dir(session) if not n.startswith("__")}, {"_link", "_actor", "actor", "candidates", "inputs", "check", "submit"})
+        self.assertFalse(hasattr(session._link, "__dict__"))
+        r = session.candidates()
+        result = session.submit(r["game"], r["revision"], "c1", ["o1", "o2"])
+        self.assertFalse(hasattr(result, "state"))
+
+    def test_from_state_isolates_external_alias(self):
+        state = host_after_trainer(search_board((H.FIRE, H.FIRE, H.PONYTA))).game.state
+        host = L.ActionHost.from_state(state)
+        before = snap(host.game.state)
+        state.players[0].hand.clear()  # 外の別名を変えても、ホストの対戦は変わらない（複製した）
+        self.assertEqual(snap(host.game.state), before)
+        self.assertIsNot(host.game.state, state)
+        r = host.session(0).candidates()
+        self.assertEqual(host.session(0).submit(r["game"], r["revision"], "c1", ["o1", "o2"]).outcome, D.ACCEPTED)
 
 
 class DocumentTest(unittest.TestCase):
