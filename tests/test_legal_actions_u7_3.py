@@ -127,8 +127,8 @@ class MappingTest(unittest.TestCase):
         self.assertEqual(cov["offered_kinds"], [L.KIND_END_TURN])  # 手札がなく控えもいない: 番の基本の操作はどれもゲーム上できない（候補なし）
         self.assertEqual(cov["scope_kinds"], list(L.MAIN_KINDS))  # 評価した種類と、対応しない種類
         self.assertEqual(cov["not_covered_kinds"], ["play_trainer",  # v0.166（U7-4）: use_attack は対応した種類（ここではエネルギーがなくワザの候補はない）
-                                                    "use_power", "use_stadium", "remove_disguise", "discard_from_play",
-                                                    "reveal_face_down", "check_face_up_deck"])
+                                                    "use_power", "use_stadium",  # v0.167（U7-5a・U7-5b）: 場のポケモン 1 匹を指す 3 種類は対応した種類
+                                                    "check_face_up_deck"])
         for kind in L.TURN_KINDS:
             self.assertIn(kind, cov["implemented_kinds"])
 

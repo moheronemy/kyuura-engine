@@ -2,7 +2,8 @@
 
 対象は決定への回答（サイドを取る・バトル場に出す・ほかの決定）と「番を終える」（U7-1）、対戦の準備（初期配置・切り直しの補償の引く枚数）と、ホストの操作（ジャンケンの結果・
 延長戦の開始。U7-2。docs/legal-actions-u7-2.md）、番の基本の操作（ベンチに出す・エネルギーをつける・進化させる・にげる。U7-3。docs/legal-actions-u7-3.md）、ワザの宣言
-（U7-4。docs/legal-actions-u7-4.md）。ほかの操作の種類（トレーナー・特殊能力など）は候補に出さず、対応していない種類として示す（ゲーム上できないこととは別）。
+（U7-4。docs/legal-actions-u7-4.md）、場のポケモン 1 匹を指す操作（「ばける」でのせたカードをトラッシュする・なにかの化石・ピッピ人形をすてる・うらのカードを
+おもてにする。U7-5a・U7-5b。docs/legal-actions-u7-5ab.md）。ほかの操作の種類（トレーナー・特殊能力など）は候補に出さず、対応していない種類として示す（ゲーム上できないこととは別）。
 
 境界:
 
@@ -28,14 +29,17 @@ from . import diagnostics as D
 from .adapter import CommandResult, HostedGame, HostStoppedError
 from .commands import (
     AttachEnergy,
+    DiscardFromPlay,
     DrawMulliganCards,
     EndTurn,
     EvolvePokemon,
     PlaceStartingPokemon,
     PlayBasicToBench,
+    RemoveDisguise,
     ReportJankenResult,
     ResolveDecision,
     Retreat,
+    RevealFaceDown,
     StartSuddenDeath,
     UseAttack,
 )
@@ -56,12 +60,15 @@ from .effects import (
 from .engine import (
     SETUP_PLACEMENT_CASE,
     check_attach_energy,
+    check_discard_from_play,
     check_evolve,
     check_play_basic,
+    check_remove_disguise,
     check_retreat,
     check_retreat_declaration,
+    check_reveal_face_down,
 )
-from .errors import IllegalActionError, UnsupportedError
+from .errors import HiddenPropertyRead, IllegalActionError, UnsupportedError
 from .observation import (
     DECK_REVEALING_KINDS,
     LOOKED_HAND_KINDS,
@@ -153,7 +160,12 @@ KIND_EVOLVE = "evolve"  # U7-3: 手札の進化カード（ベイビィからは
 KIND_RETREAT = "retreat"  # U7-3: バトル場のポケモンをにがす（Retreat）
 TURN_KINDS = (KIND_PLAY_BASIC, KIND_ATTACH_ENERGY, KIND_EVOLVE, KIND_RETREAT)
 KIND_USE_ATTACK = "use_attack"  # U7-4: バトル場のポケモンのワザを宣言する（UseAttack。宣言といっしょに選ぶもの: クチバシティジムのコイン・ワザといっしょに使う特殊能力）
-PLAYER_KINDS = (KIND_TAKE_PRIZE, KIND_PROMOTE_ACTIVE, KIND_ANSWER_DECISION, KIND_END_TURN, KIND_PLACE_STARTING, KIND_MULLIGAN_DRAW, *TURN_KINDS, KIND_USE_ATTACK)
+KIND_REMOVE_DISGUISE = "remove_disguise"  # U7-5a: 「ばける」でのせた進化カードをトラッシュして元の姿にもどす（RemoveDisguise）
+KIND_DISCARD_FROM_PLAY = "discard_from_play"  # U7-5a: 自分の場のなにかの化石・ピッピ人形をすてる（DiscardFromPlay）
+KIND_REVEAL_FACE_DOWN = "reveal_face_down"  # U7-5b: 自分の場のうらのカード（マチスの秘策）をおもてにする（RevealFaceDown）
+BOARD_KINDS = (KIND_REMOVE_DISGUISE, KIND_DISCARD_FROM_PLAY, KIND_REVEAL_FACE_DOWN)  # 場のポケモン 1 匹を指す操作（MAIN_KINDS の順）
+PLAYER_KINDS = (KIND_TAKE_PRIZE, KIND_PROMOTE_ACTIVE, KIND_ANSWER_DECISION, KIND_END_TURN, KIND_PLACE_STARTING, KIND_MULLIGAN_DRAW, *TURN_KINDS, KIND_USE_ATTACK,
+                *BOARD_KINDS)
 HOST_KINDS = (KIND_REPORT_JANKEN, KIND_START_SUDDEN_DEATH)
 IMPLEMENTED_KINDS = PLAYER_KINDS + HOST_KINDS
 HOST = "host"  # ホストの入口の操作主体（プレイヤーの番号ではない）
@@ -527,7 +539,7 @@ def _candidates(host: ActionHost, actor: int | str) -> dict[str, Any]:
         "status": D.status_of(state),
         "situation": situation,
         "empty_reason": None if candidates else empty,
-        "coverage": {"implemented_kinds": list(IMPLEMENTED_KINDS), "scope_kinds": evaluated + not_covered, "offered_kinds": offered,
+        "coverage": {"implemented_kinds": list(IMPLEMENTED_KINDS), "scope_kinds": _scope_kinds(evaluated + not_covered), "offered_kinds": offered,
                      "not_covered_kinds": not_covered, "withheld_input_candidates": withheld, "completeness": completeness,
                      "completeness_scope": "scope_kinds（この応答に明示した種類だけ。全コマンドの合法手ではない）"},
         "candidates": [{"id": c.id, "kind": c.kind, **c.public, "input_disclosure": c.disclosure,
@@ -542,6 +554,13 @@ def _inputs(host: ActionHost, actor: int | str, game, revision, candidate) -> di
     if found.disclosure == DISCLOSURE_UNCONFIRMED:
         return _copy({"candidate": found.id, "kind": found.kind, "withheld": _refusal(INPUT_BOUNDARY_UNCONFIRMED), "stages": []})
     return _copy({"candidate": found.id, "kind": found.kind, "stages": found.inputs})
+
+
+def _scope_kinds(kinds: list[str]) -> list[str]:
+    """応答の範囲の種類。番の操作（MAIN_KINDS）なら MAIN_KINDS の順（U7-4 までと同じ並び。U7-5a・U7-5b で評価する種類が MAIN_KINDS の途中に加わっても変えない）。"""
+    if kinds and all(k in MAIN_KINDS for k in kinds):
+        return sorted(kinds, key=MAIN_KINDS.index)
+    return kinds
 
 
 def _check(host: ActionHost, actor: int | str, game, revision, candidate, choices) -> dict[str, Any]:
@@ -573,6 +592,8 @@ def _command(found: _Candidate, actor, values: tuple[int, ...]):
         return Retreat(actor, tuple(values[1:]), values[0])  # トラッシュするカード（選んだ順）, 入れ替える控え（いちばん上のカードの uid）
     if found.kind == KIND_USE_ATTACK:
         return _attack_command(actor, values)
+    if found.kind in _BOARD_COMMANDS:
+        return _BOARD_COMMANDS[found.kind](actor, values[0])  # 場のポケモンの番号（pokemon_id）
     return ResolveDecision(actor, found.decision_id, values)
 
 
@@ -633,13 +654,14 @@ def _build(state: GameState, actor: int):
             candidates += _turn_candidates(state, actor)
             attack = _attack_candidate(state, actor)
             candidates += [] if attack is None else [attack]
+            candidates += _board_candidates(state, actor)
         else:
             candidates += [_Candidate("", kind, {"processability": NOT_IMPLEMENTED, "reasons": ["state_not_supported"],
-                                                 "guarantees": dict(GUARANTEE_ATTACK if kind == KIND_USE_ATTACK else GUARANTEE_TURN_ACTION)}, [],
-                                      disclosure=DISCLOSURE_UNCONFIRMED) for kind in (*TURN_KINDS, KIND_USE_ATTACK)]
+                                                 "guarantees": dict(_UNUSABLE_GUARANTEES.get(kind, GUARANTEE_TURN_ACTION))}, [],
+                                      disclosure=DISCLOSURE_UNCONFIRMED) for kind in (*TURN_KINDS, KIND_USE_ATTACK, *BOARD_KINDS)]
         for number, candidate in enumerate(candidates, 1):
             candidate.id = f"c{number}"  # 種類の並び（MAIN_KINDS の順）。番号は応答ごと（取っ手と組で使う）
-        evaluated = [KIND_END_TURN, *TURN_KINDS, KIND_USE_ATTACK]
+        evaluated = [k for k in MAIN_KINDS if k in (KIND_END_TURN, *TURN_KINDS, KIND_USE_ATTACK, *BOARD_KINDS)]  # MAIN_KINDS の順（scope_kinds は MAIN_KINDS のまま）
         return ACTOR_TO_ACT, candidates, evaluated, [k for k in MAIN_KINDS if k not in evaluated], PARTIAL, None
     return WAITING_FOR_PLAYER, [], [], [], UNDETERMINED, None  # 知らない段階（状態の区分と段階の組が上のどれでもない）は完全と称さない
 
@@ -998,7 +1020,24 @@ def _retreat_candidate(state: GameState, actor: int, quiet: bool) -> _Candidate 
         if found is None:
             return None  # ねむり・マヒ・にげられない効果・こんらんで失敗した番（ゲーム上できない）
         processability, reasons = found
-    cost = retreat_cost(state, actor)
+    try:
+        cost = retreat_cost(state, actor)
+    except HiddenPropertyRead:
+        if not face_down:
+            raise
+        # U7-5b で直した: 自分のうらのバトル場のポケモンは、にげるエネルギーがうらのあいだ決まらない（FD1。本当のカードによらない）。v0.166 までは候補の取得そのものが
+        # 例外で失敗していた。費用・トラッシュするエネルギーの段を示せないので、入力を返さない（INPUT_BOUNDARY_UNCONFIRMED。送ればエンジンがおもてにしてから確かめる）
+        public = {"processability": processability, "reasons": reasons, "guarantees": dict(GUARANTEE_TURN_ACTION),
+                  "choices_format": "[入れ替える控えの番号, トラッシュするエネルギーの番号, ...]（エネルギーは選んだ順）"}
+        return _Candidate("", KIND_RETREAT, public, [], disclosure=DISCLOSURE_UNCONFIRMED)
+    except UnsupportedError:
+        if processability in EXECUTABLE:
+            raise  # 宣言の確かめを通ったのに費用が決まらない（エンジンの不具合。ここで隠さない）
+        # U7-5a で直した: 宣言の確かめが止める（バトル場のなにかの化石・ピッピ人形の PF2 など）とき、費用も同じ理由で決まらない。v0.166 までは候補の取得そのものが
+        # 例外で失敗していた。選べるものを示さない、実行できない候補にする（U7-4 の印刷のワザのないうらのカードと同じ形）
+        public = {"processability": processability, "reasons": reasons, "guarantees": dict(GUARANTEE_TURN_ACTION),
+                  "choices_format": "[入れ替える控えの番号, トラッシュするエネルギーの番号, ...]（エネルギーは選んだ順）"}
+        return _Candidate("", KIND_RETREAT, public, [], disclosure=DISCLOSURE_CONFIRMED)
     ids, bench_options, energy_options = {}, [], []
     for index, pokemon in enumerate(p.bench):
         oid = f"o{len(ids) + 1}"
@@ -1214,3 +1253,61 @@ def _attack_input_problem(found: _Candidate, choices: tuple) -> tuple[str | None
     values = tuple(found.ids[choice][1] for choice in choices)
     code = found.verify(values)
     return (code, ()) if code is not None else (None, values)
+
+
+# ---------------------------------------------------------------- 場のポケモン 1 匹を指す操作（U7-5a・U7-5b。docs/legal-actions-u7-5ab.md）
+
+GUARANTEE_BOARD_ACTION = {
+    "preconditions": "番・段階と、選べる場のポケモンごとに、エンジンが受け付ける前の確かめ（engine.check_remove_disguise・check_discard_from_play・check_reveal_face_down。"
+                     "コマンドの処理と同じ関数・同じ順番。読むのは番・自分の場・「ばける」でのせたカード・場での役割・バトル場をはなれられない効果・うらであること）を候補の作成に使う",
+    "acceptance": "eligible の選べるものだけで作り、入力の検査に合った入力は、エンジンが受け付ける前の確かめを満たす（最終の判定は apply_command。コマンドの項目の確かめ・"
+                  "うらのカードの割り当ての確かめはエンジンの入口）",
+    "after_acceptance": "「ばける」の解除は、元の姿の最大HPの確かめ（MH1・TK1）と反応を評価していない。おもてにする操作は、本当のカードで残るか・トラッシュするかが決まり、"
+                        "それを評価・予告しない。すてる・トラッシュでバトル場が空けば、勝ち負けとバトル場に出す決定（promote_active の候補）に進む",
+    "supported_scope": "supported は、なにかの化石・ピッピ人形をすてる操作で、受理のあとの反応・決定・停止のもとが場にないことを公開の情報で確かめた場合だけ（U7-3 と同じ条件）。"
+                       "ほかは may_stop_later",
+}
+_UNUSABLE_GUARANTEES = {KIND_USE_ATTACK: GUARANTEE_ATTACK, **dict.fromkeys(BOARD_KINDS, GUARANTEE_BOARD_ACTION)}
+_BOARD_COMMANDS = {KIND_REMOVE_DISGUISE: RemoveDisguise, KIND_DISCARD_FROM_PLAY: DiscardFromPlay, KIND_REVEAL_FACE_DOWN: RevealFaceDown}
+# 種類ごとの (エンジンの確かめ, 段の role)。処理可能性の理由はどれも既存の語彙（GUI の契約の reason_codes にある語）
+_BOARD_CHECKS = {KIND_REMOVE_DISGUISE: (check_remove_disguise, "disguised"), KIND_DISCARD_FROM_PLAY: (check_discard_from_play, "discard"),
+                 KIND_REVEAL_FACE_DOWN: (check_reveal_face_down, "face_down")}
+
+
+def _board_after(kind: str, quiet: bool) -> tuple[str, list[str]]:
+    """確かめを通ったときの処理可能性。受理のあとを評価していないものは may_stop_later（根拠のない supported にしない）。"""
+    if kind == KIND_REMOVE_DISGUISE:
+        return MAY_STOP_LATER, [REASON_CONTINUATION]  # 元の姿の最大HP（MH1・TK1）・反応は処理のあとの確かめ
+    if kind == KIND_REVEAL_FACE_DOWN:
+        return MAY_STOP_LATER, [REASON_FACE_DOWN]  # 残るか・トラッシュするかは本当のカードで決まる（候補では評価・予告しない）
+    return _after(quiet)  # すてる操作: U7-3 と同じ条件
+
+
+def _board_candidates(state: GameState, actor: int) -> list[_Candidate]:
+    """場のポケモン 1 匹を指す操作の候補（種類の順。ゲーム上できない種類は候補を作らない）。選べるものは本人の場の並び（バトル場 → ベンチ）。
+
+    選べるものは公開の値だけで作る（``_pokemon_option``。本人のうらのカードは ``face_down`` で示し、カード id・名前を出さない）。エンジンの確かめが UnsupportedError
+    （本人のうらのカードをすてようとしたときの FD1 など）なら、選べるものとして示し、実行できない区分にする（ゲーム上の禁止とは別。U7-3 と同じ）。"""
+    quiet = _quiet(state)
+    out = []
+    for kind in BOARD_KINDS:
+        check, role = _BOARD_CHECKS[kind]
+        options, values, executable, found_all = [], [], [], []
+        for pokemon, base in _field(state, actor):
+            verdict, code = _probe(check, state, _BOARD_COMMANDS[kind](actor, pokemon.pokemon_id))
+            if verdict == ILLEGAL:
+                continue
+            found = (_stop_processability(code), [REASON_STOPS]) if verdict == STOP else _board_after(kind, quiet)
+            values.append(pokemon.pokemon_id)
+            executable.append(found[0] in EXECUTABLE)
+            found_all.append(found)
+            options.append(_option({"id": f"o{len(values)}", **base}, *found))
+        if not options:
+            continue
+        processability, reasons = _best(found_all)
+        stage = {"stage": 1, "input": INPUT_CHOOSE_OPTION, "role": role, "meaning": "pokemon", "count": {"min": 1, "max": 1}, "options": options,
+                 "order": ORDER_NOT_APPLICABLE}
+        public = {"processability": processability, "reasons": reasons, "guarantees": dict(GUARANTEE_BOARD_ACTION), "choices_format": "[場のポケモンの番号]"}
+        out.append(_Candidate("", kind, public, [stage], disclosure=DISCLOSURE_CONFIRMED, values=tuple(values), executable=tuple(executable),
+                              min_choices=1, max_choices=1))
+    return out
