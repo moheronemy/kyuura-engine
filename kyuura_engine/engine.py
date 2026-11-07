@@ -1381,8 +1381,9 @@ def _report_janken_result(state: GameState, cmd: ReportJankenResult) -> None:
 # ---------------------------------------------------------------- 番の進行
 
 
-def _play_basic_to_bench(state: GameState, cmd: PlayBasicToBench, context: resolution.Context) -> None:
-    """手札のたねポケモンをベンチに出す。ベンチは 5 匹まで。1 番に出す数の制限はない（p.309）。"""
+def check_play_basic(state: GameState, cmd: PlayBasicToBench) -> PlayerState:
+    """手札のたねポケモンをベンチに出す操作を受け付けるかの確かめ（v0.165。``_play_basic_to_bench`` のカードを動かす前までを、同じ順番・同じコード・同じ文のまま
+    関数にした。合法手 API の候補の作成と共通）。状態・乱数・ログを変えない。"""
     p = _require_turn(state, cmd.player)
     _require_in_hand(state, cmd.player, cmd.card)
     if not state.card_def(cmd.card).is_baby_or_basic_pokemon:
@@ -1391,6 +1392,12 @@ def _play_basic_to_bench(state: GameState, cmd: PlayBasicToBench, context: resol
     if len(p.bench) >= bench_limit(state, cmd.player):
         # v0.57: 場のスタジアムの「ベンチに出しておける控えポケモンの数」（せまいジム）を当てはめた数（``stadiums.bench_limit``。なければ共通のルールの 5 匹）
         raise IllegalActionError("BENCH_FULL", f"ベンチは {bench_limit(state, cmd.player)} 匹まで")
+    return p
+
+
+def _play_basic_to_bench(state: GameState, cmd: PlayBasicToBench, context: resolution.Context) -> None:
+    """手札のたねポケモンをベンチに出す。ベンチは 5 匹まで。1 番に出す数の制限はない（p.309）。"""
+    p = check_play_basic(state, cmd)
     p.hand.remove(cmd.card)
     pokemon = _enter_play(state, cmd.card)
     p.bench.append(pokemon)
@@ -1408,6 +1415,55 @@ def _play_basic_to_bench(state: GameState, cmd: PlayBasicToBench, context: resol
     # v0.86: 手札から場に出したときに使える特殊能力（エンテイの［おたけび］）。使うかは持ち主が決める（決定 ENTRY_POWER。再開先 "power"。docs/entry-energy-evolution-reactions-v0.86.md 4 章）
     if pokemon in p.bench:
         offer_entry_power(state, cmd.player, pokemon, from_hand=True)
+
+
+def check_evolve(state: GameState, cmd: EvolvePokemon) -> PokemonInPlay:
+    """手札から進化させる操作を受け付けるかの確かめ（v0.165。``_evolve_pokemon`` の進化カードを重ねる前までを、同じ順番・同じコード・同じ文のまま関数にした。
+    合法手 API の候補の作成と共通）。進化させるポケモンを返す。状態・乱数・ログを変えない。"""
+    p = _require_turn(state, cmd.player)
+    _require_in_hand(state, cmd.player, cmd.card)
+    definition = state.card_def(cmd.card)
+    if definition.category != "pokemon" or definition.is_baby_pokemon:
+        raise IllegalActionError("NOT_EVOLUTION_CARD", f"カード {cmd.card}（{definition.name_ja}）は進化カードではない")
+    if definition.is_basic_pokemon:
+        # v0.114: たねポケモンカードは、場のベイビィポケモンの進化先にその名前があるときだけ、その上に重ねられる（GR-2000-P310-BABY-EVOLUTION。p.324「書かれていない組み合わせで
+        # カードを重ねてはいけません」）。ベイビィでない場のポケモン・相手の場・場にいない番号は、今までどおり進化カードではない（NOT_EVOLUTION_CARD）として拒否する
+        located = state.find_pokemon(cmd.target)
+        if located is None or not state.card_def(located[1].card).is_baby_pokemon:
+            raise IllegalActionError("NOT_EVOLUTION_CARD", f"カード {cmd.card}（{definition.name_ja}）は進化カードではない")  # 拒否の文は v0.113 と同じ
+    if not definition.supported:
+        reasons = "; ".join(definition.unsupported_reasons) or f"{definition.stage} の進化は未実装"
+        raise UnsupportedError("UNSUPPORTED_EVOLUTION", f"進化カード「{definition.name_ja}」は未対応（{reasons}）")
+    target = p.find_by_pokemon_id(cmd.target)
+    if target is None:
+        if state.players[1 - cmd.player].find_by_pokemon_id(cmd.target) is not None:
+            raise IllegalActionError("TARGET_NOT_YOURS", "相手の場のポケモンは進化させられない")
+        raise IllegalActionError("TARGET_NOT_IN_PLAY", f"場のポケモンの番号 {cmd.target!r} は自分の場にいない")
+    # v0.42: 番・名前・その番の最初から場にいたか・段階の確認は、ワザによる進化（つきのちから）と共通の ``evolution.evolution_block``（v0.41 までと同じ順番・
+    # 同じコード・同じ文）
+    block = evolution_block(state, target, definition)
+    if block is not None:
+        if block[0] == DEVOLVED_THIS_TURN_CODE:
+            raise UnsupportedError(*block)  # v0.50: 今の番に退化したポケモン（DV2。ほかの確かめがすべて通ったあと）
+        raise IllegalActionError(*block)
+    hot_plate = hot_plate_baby_evolution_error(state, cmd.card)  # v0.114（HP2）: ベイビィポケモンにたねポケモンカードを重ねる進化と［ヒートプレート］
+    if hot_plate is not None:
+        raise hot_plate
+    # v0.48: 進化したあとの最大HP（重ねるカードの HP と、そのカードのはたらく常にはたらく特殊能力。``effects.evolution_hp``）。進化すると持続する効果（きょだいか）は
+    # 消える。ナツメのゴースの［ガスのからだ］で大きくなっていた最大HPは、ナツメのゴーストに進化するともとにもどる（v0.4a の H1 と同じ問い。進化が原因の場合だけ）
+    evolved_hp = evolution_hp(state, target, cmd.card)
+    if target.damage >= evolved_hp:
+        raise UnsupportedError(
+            "UNRESOLVED_EVOLUTION_HP",
+            f"進化すると HP（{evolved_hp}）がのっているダメージ（{target.damage}）以下になる。そのときにきぜつするか"
+            "（いつきぜつの判定をするか）は『オフィシャルブック2000』（p.310・p.323）から決められないので扱わない",
+        )
+
+    # 1〜5. 手札から出して見せ、進化するポケモンの上に置き、特殊状態・持続する効果・にげるの失敗の記録を消す（v0.25 から、
+    # 1 進化を飛ばして進化させるトレーナーの効果と共通の ``evolution.place_evolution_card``。動き・ログは v0.24 と同じ）
+    # v0.85: かならずはたらく特殊能力（［あばれんぼう］）を処理できない（HC6）なら、場に出す前に止める
+    forced_entry_check(state, cmd.player, cmd.card)
+    return target
 
 
 def _evolve_pokemon(state: GameState, cmd: EvolvePokemon, context: resolution.Context) -> None:
@@ -1456,49 +1512,7 @@ def _evolve_pokemon(state: GameState, cmd: EvolvePokemon, context: resolution.Co
     進化は乱数を使わず、決定も出さない。ログ ``evolve``（``player``・``pokemon_id``・進化前と進化後のカードの uid と
     カード id）。
     """
-    p = _require_turn(state, cmd.player)
-    _require_in_hand(state, cmd.player, cmd.card)
-    definition = state.card_def(cmd.card)
-    if definition.category != "pokemon" or definition.is_baby_pokemon:
-        raise IllegalActionError("NOT_EVOLUTION_CARD", f"カード {cmd.card}（{definition.name_ja}）は進化カードではない")
-    if definition.is_basic_pokemon:
-        # v0.114: たねポケモンカードは、場のベイビィポケモンの進化先にその名前があるときだけ、その上に重ねられる（GR-2000-P310-BABY-EVOLUTION。p.324「書かれていない組み合わせで
-        # カードを重ねてはいけません」）。ベイビィでない場のポケモン・相手の場・場にいない番号は、今までどおり進化カードではない（NOT_EVOLUTION_CARD）として拒否する
-        located = state.find_pokemon(cmd.target)
-        if located is None or not state.card_def(located[1].card).is_baby_pokemon:
-            raise IllegalActionError("NOT_EVOLUTION_CARD", f"カード {cmd.card}（{definition.name_ja}）は進化カードではない")  # 拒否の文は v0.113 と同じ
-    if not definition.supported:
-        reasons = "; ".join(definition.unsupported_reasons) or f"{definition.stage} の進化は未実装"
-        raise UnsupportedError("UNSUPPORTED_EVOLUTION", f"進化カード「{definition.name_ja}」は未対応（{reasons}）")
-    target = p.find_by_pokemon_id(cmd.target)
-    if target is None:
-        if state.players[1 - cmd.player].find_by_pokemon_id(cmd.target) is not None:
-            raise IllegalActionError("TARGET_NOT_YOURS", "相手の場のポケモンは進化させられない")
-        raise IllegalActionError("TARGET_NOT_IN_PLAY", f"場のポケモンの番号 {cmd.target!r} は自分の場にいない")
-    # v0.42: 番・名前・その番の最初から場にいたか・段階の確認は、ワザによる進化（つきのちから）と共通の ``evolution.evolution_block``（v0.41 までと同じ順番・
-    # 同じコード・同じ文）
-    block = evolution_block(state, target, definition)
-    if block is not None:
-        if block[0] == DEVOLVED_THIS_TURN_CODE:
-            raise UnsupportedError(*block)  # v0.50: 今の番に退化したポケモン（DV2。ほかの確かめがすべて通ったあと）
-        raise IllegalActionError(*block)
-    hot_plate = hot_plate_baby_evolution_error(state, cmd.card)  # v0.114（HP2）: ベイビィポケモンにたねポケモンカードを重ねる進化と［ヒートプレート］
-    if hot_plate is not None:
-        raise hot_plate
-    # v0.48: 進化したあとの最大HP（重ねるカードの HP と、そのカードのはたらく常にはたらく特殊能力。``effects.evolution_hp``）。進化すると持続する効果（きょだいか）は
-    # 消える。ナツメのゴースの［ガスのからだ］で大きくなっていた最大HPは、ナツメのゴーストに進化するともとにもどる（v0.4a の H1 と同じ問い。進化が原因の場合だけ）
-    evolved_hp = evolution_hp(state, target, cmd.card)
-    if target.damage >= evolved_hp:
-        raise UnsupportedError(
-            "UNRESOLVED_EVOLUTION_HP",
-            f"進化すると HP（{evolved_hp}）がのっているダメージ（{target.damage}）以下になる。そのときにきぜつするか"
-            "（いつきぜつの判定をするか）は『オフィシャルブック2000』（p.310・p.323）から決められないので扱わない",
-        )
-
-    # 1〜5. 手札から出して見せ、進化するポケモンの上に置き、特殊状態・持続する効果・にげるの失敗の記録を消す（v0.25 から、
-    # 1 進化を飛ばして進化させるトレーナーの効果と共通の ``evolution.place_evolution_card``。動き・ログは v0.24 と同じ）
-    # v0.85: かならずはたらく特殊能力（［あばれんぼう］）を処理できない（HC6）なら、場に出す前に止める
-    forced_entry_check(state, cmd.player, cmd.card)
+    target = check_evolve(state, cmd)
     before_name = form_def(state, target).name_ja
     place_evolution_card(state, cmd.player, target, cmd.card)
     if reactions.has_chain_reactions(state, cmd.player, target):
@@ -1519,15 +1533,9 @@ def _evolve_pokemon(state: GameState, cmd: EvolvePokemon, context: resolution.Co
     offer_entry_power(state, cmd.player, target, from_hand=True)
 
 
-def _attach_energy(state: GameState, cmd: AttachEnergy, context: resolution.Context) -> None:
-    """エネルギーカードを 1 番に 1 枚、自分の場のポケモンにつける（p.310）。
-
-    v0.6: この番に、ポケモンパワー（「あまごい」）の効果で手札からエネルギーをつけていて、通常の操作ではまだつけていなければ、
-    この操作を受け付けるかは原典で決められない（p.310「ポケモンにつけることのできるエネルギーカードの数は、1回の自分の番ごとに
-    1枚だけです」が、パワーでつけたカードも数えるのかが書かれていない。p.307・p.90。docs/rain-dance-v0.6.md の R13）。
-    ほかの確認がすべて通ったあと、状態を変える前に ``UnsupportedError``（``UNRESOLVED_ATTACH_AFTER_POWER_ATTACH``）で止める。
-    通常の操作でつけたあとの「あまごい」は受け付ける（どちらの読み方でも同じ。R12）。
-    """
+def check_attach_energy(state: GameState, cmd: AttachEnergy) -> tuple[PokemonInPlay, tuple[int, ...]]:
+    """手札からエネルギーをつける操作を受け付けるかの確かめ（v0.165。``_attach_energy`` のカードを動かす前までを、同じ順番・同じコード・同じ文のまま関数にした。
+    合法手 API の候補の作成と共通）。(つけるポケモン, つけるカード) を返す。状態・乱数・ログを変えない。"""
     p = _require_turn(state, cmd.player)
     _require_in_hand(state, cmd.player, cmd.energy)
     if state.card_def(cmd.energy).category != "energy":
@@ -1576,6 +1584,19 @@ def _attach_energy(state: GameState, cmd: AttachEnergy, context: resolution.Cont
         if problem is not None:
             # v0.58: 特殊エネルギーの、手札から出してつけたときの効果が決められない（RB1・RB4）。カードを動かす前
             raise UnsupportedError(*problem)
+    return target, cards
+
+
+def _attach_energy(state: GameState, cmd: AttachEnergy, context: resolution.Context) -> None:
+    """エネルギーカードを 1 番に 1 枚、自分の場のポケモンにつける（p.310）。
+
+    v0.6: この番に、ポケモンパワー（「あまごい」）の効果で手札からエネルギーをつけていて、通常の操作ではまだつけていなければ、
+    この操作を受け付けるかは原典で決められない（p.310「ポケモンにつけることのできるエネルギーカードの数は、1回の自分の番ごとに
+    1枚だけです」が、パワーでつけたカードも数えるのかが書かれていない。p.307・p.90。docs/rain-dance-v0.6.md の R13）。
+    ほかの確認がすべて通ったあと、状態を変える前に ``UnsupportedError``（``UNRESOLVED_ATTACH_AFTER_POWER_ATTACH``）で止める。
+    通常の操作でつけたあとの「あまごい」は受け付ける（どちらの読み方でも同じ。R12）。
+    """
+    target, cards = check_attach_energy(state, cmd)
     knocks_out = False
     pre_status = (int(target.conditions.asleep), int(target.conditions.paralyzed), int(target.conditions.confused))  # v0.86: 「つけるときすでに」
     for card in cards:
@@ -1603,23 +1624,9 @@ def _attach_energy(state: GameState, cmd: AttachEnergy, context: resolution.Cont
 LEAVE_ACTIVE_PREVENTED = "LEAVE_ACTIVE_PREVENTED"
 
 
-def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> None:
-    """にげる（pp.310-311）。1 番に何度でも。控えがいなければ宣言できない。
-
-    にげるエネルギーの数ぶん、そのポケモンについているエネルギーを選んでトラッシュし、控えと入れ替える。
-    ベンチに戻ったポケモンの特殊状態はすべて消える（p.311・p.322）。どく状態でもにげられる。
-    ねむり状態・マヒ状態のポケモンは「にげる」を宣言できない（p.311・p.322。v0.3b）。宣言できないので、エネルギーを
-    トラッシュする前に拒否する（``POKEMON_ASLEEP``・``POKEMON_PARALYZED``）。「ポケモンいれかえ」はにげるではない
-    （p.325）ので、この制限を受けない。
-
-    こんらん状態（v0.3c。p.310〜311 の手順）: 1. 宣言 → 2. にげるエネルギーの数ぶんトラッシュ → 3. 持ち主がコインを 1 枚
-    投げ、「うら」なら「にげる」は失敗（トラッシュしたエネルギーは取り戻せない）→ 4. 失敗でなければ控えと入れ替える。
-    失敗したら入れ替えず（こんらん・ダメージ・ついているカードはそのまま）、そのポケモンは今の番ではもう「にげる」を宣言
-    できない（``retreat_failed_turn``。番の終わりに消す）。番は終わらない。失敗は宣言した「にげる」の結果で、不正な
-    コマンドではない（エネルギーのトラッシュとコインは状態に残る）。にげるエネルギーが 0 でもコインは投げる（手順 3 に
-    例外がない）。入れ替える控え（手順 4 で選ぶ）はコマンドで先に指定するが、コインの結果で選べるものは変わらない。
-    """
-    p = _require_turn(state, cmd.player)
+def check_retreat_declaration(state: GameState, player: int) -> tuple[PlayerState, PokemonInPlay]:
+    """「にげる」を宣言できるかの確かめ（v0.165。``_retreat`` の前半を、同じ順番・同じコード・同じ文のまま関数にした。合法手 API の候補の作成と共通）。状態・乱数・ログを変えない。"""
+    p = _require_turn(state, player)
     active = p.active
     if not p.bench:
         raise IllegalActionError("NO_BENCH", "控えポケモンがいないので、にげるを宣言できない")
@@ -1627,7 +1634,7 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
     if state.card_def(active.card).play_role is not None:
         # v0.47: バトル場のなにかの化石・ピッピ人形が「にげる」ことができるか（にげるエネルギーの数）は決められない（PF2）。エネルギーのトラッシュ・こんらんのコインの前
         raise UnsupportedError(PLAY_AS_POKEMON_RETREAT_CODE, f"バトル場のポケモン {active.pokemon_id}: {PLAY_AS_POKEMON_RETREAT_REASON}")
-    if leave_lock(state, cmd.player, active) is not None:
+    if leave_lock(state, player, active) is not None:
         # v0.93（docs/active-leave-locks-v0.93.md 4 章）: 「バトル場をはなれられない」効果（からまるいと・からみつく・ねばるみつ・くいつく・どくしばり）を受けた。「にげる」でバトル場を
         # はなれることもできないので、宣言を拒否する（エネルギーのトラッシュ・こんらんのコインの前。状態・乱数・ログは変わらない）。「にげる」だけを止める効果とは別のコード
         raise IllegalActionError(
@@ -1641,7 +1648,7 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
         raise IllegalActionError(
             "RETREAT_PREVENTED", f"バトル場のポケモン {active.pokemon_id} は、この番は「にげる」ことができない（相手のワザの効果）"
         )
-    guards = retreat_guards(state, cmd.player)
+    guards = retreat_guards(state, player)
     if guards:
         # v0.87: 相手のバトル場の［とおせんぼ］（カビゴン）。「アイスバーン」と同じく宣言できないので、エネルギーのトラッシュ・こんらんのコインの前に拒否する
         _, holder, key, _ = guards[0]
@@ -1662,6 +1669,13 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
             "p.311「一度「にげる」に失敗したこんらん状態のポケモンは、今の自分の番では、もう「にげる」を宣言することができません」が"
             "こんらんでなくなったポケモンにもかかるかは『オフィシャルブック2000』から決められないので扱わない",
         )
+    return p, active
+
+
+def check_retreat(state: GameState, cmd: Retreat) -> tuple:
+    """「にげる」を受け付けるかの確かめ（v0.165。``_retreat`` のエネルギーのトラッシュ・こんらんのコインの前までを、同じ順番・同じコード・同じ文のまま関数にした）。
+    (プレイヤー, バトル場のポケモン, 入れ替える控えの位置, にげるエネルギーの数, トラッシュするカード, 相手の［CHASE］, 受けているおいうち（入れ替えの前に写した値）) を返す。状態・乱数・ログを変えない（確かめは複製の上で行う）。"""
+    p, active = check_retreat_declaration(state, cmd.player)
     index = p.bench_index(cmd.new_active)
     if index is None:
         raise IllegalActionError("NOT_ON_BENCH", f"{cmd.new_active!r} は自分のベンチにいない")
@@ -1734,6 +1748,26 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
         # v0.81（BB1）: ふうせんのみの「「にげる」とき、このカードをトラッシュする」が、こんらんのコインの「うら」で失敗した「にげる」にも当てはまるかは決まらない。
         # コインの結果で受け付けるかを変えないよう、エネルギーのトラッシュ・コインの前に止める
         raise UnsupportedError(BALLOON_BERRY_FAILED_RETREAT_CODE, f"こんらん状態のポケモン {active.pokemon_id}（ふうせんのみ {list(cost.zeroed)}）: {BALLOON_BERRY_FAILED_RETREAT_REASON}")
+    return p, active, index, cost, discard, chases, pursuits
+
+
+def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> None:
+    """にげる（pp.310-311）。1 番に何度でも。控えがいなければ宣言できない。
+
+    にげるエネルギーの数ぶん、そのポケモンについているエネルギーを選んでトラッシュし、控えと入れ替える。
+    ベンチに戻ったポケモンの特殊状態はすべて消える（p.311・p.322）。どく状態でもにげられる。
+    ねむり状態・マヒ状態のポケモンは「にげる」を宣言できない（p.311・p.322。v0.3b）。宣言できないので、エネルギーを
+    トラッシュする前に拒否する（``POKEMON_ASLEEP``・``POKEMON_PARALYZED``）。「ポケモンいれかえ」はにげるではない
+    （p.325）ので、この制限を受けない。
+
+    こんらん状態（v0.3c。p.310〜311 の手順）: 1. 宣言 → 2. にげるエネルギーの数ぶんトラッシュ → 3. 持ち主がコインを 1 枚
+    投げ、「うら」なら「にげる」は失敗（トラッシュしたエネルギーは取り戻せない）→ 4. 失敗でなければ控えと入れ替える。
+    失敗したら入れ替えず（こんらん・ダメージ・ついているカードはそのまま）、そのポケモンは今の番ではもう「にげる」を宣言
+    できない（``retreat_failed_turn``。番の終わりに消す）。番は終わらない。失敗は宣言した「にげる」の結果で、不正な
+    コマンドではない（エネルギーのトラッシュとコインは状態に残る）。にげるエネルギーが 0 でもコインは投げる（手順 3 に
+    例外がない）。入れ替える控え（手順 4 で選ぶ）はコマンドで先に指定するが、コインの結果で選べるものは変わらない。
+    """
+    p, active, index, cost, discard, chases, pursuits = check_retreat(state, cmd)
     returns = energy_discard_plan(state, active, discard, cause=DISCARD_BY_RETREAT)  # v0.82: リサイクルエネルギー（トラッシュに置いたあと、ログ retreat のあとにもどす）
     for uid in discard:
         active.energy.remove(uid)
