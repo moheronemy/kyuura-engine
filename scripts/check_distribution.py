@@ -1,4 +1,4 @@
-"""配布物（wheel・sdist）の中身を、ソースの木のパッケージのファイルと名前で照らす（v0.165。docs/installation.md）。
+"""配布物（wheel・sdist）の中身を、ソースの木のパッケージのファイルと名前で照らす（v0.164 の配布の修正。docs/installation.md）。
 
     python scripts/check_distribution.py --wheel dist/kyuura_engine-X-py3-none-any.whl --sdist dist/kyuura_engine-X.tar.gz
 

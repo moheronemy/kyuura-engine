@@ -1,4 +1,4 @@
-"""配布物の構成の確かめ（v0.165。docs/installation.md）。
+"""配布物の構成の確かめ（v0.164 の配布の修正。docs/installation.md）。
 
 v0.164 の ``pyproject.toml`` は ``packages = ["kyuura_engine"]`` だけで、サブパッケージ ``kyuura_engine.resolution`` が wheel・sdist に入らず、通常のインストールで
 ``import kyuura_engine`` が失敗した。ここでは、パッケージの設定がすべての実行時のサブパッケージと同梱のデータを入れることと、配布物の照合（scripts/check_distribution.py）が

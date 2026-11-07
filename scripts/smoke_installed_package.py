@@ -1,4 +1,4 @@
-"""通常のインストール（wheel・Git の URL）で入れた kyuura_engine の小さな確かめ（v0.165。docs/installation.md）。
+"""通常のインストール（wheel・Git の URL）で入れた kyuura_engine の小さな確かめ（v0.164 の配布の修正。docs/installation.md）。
 
     <仮想環境>/python <このファイル>        # リポジトリの外を作業ディレクトリにして実行する
 
