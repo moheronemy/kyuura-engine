@@ -16711,20 +16711,21 @@
    ],
    "tests": {
     "assert_like_lines": 6,
-    "mention_lines": 8,
+    "mention_lines": 9,
     "files": [
      "tests/helpers.py",
      "tests/log_audit.py",
      "tests/test_fossil_hidden_info_v0_47.py",
      "tests/test_hand_deck_trainers_v0_54.py",
      "tests/test_instant_trainers_v0_55.py",
+     "tests/test_legal_actions_u7_2.py",
      "tests/test_play_policy_s2a_v0_143.py",
      "tests/test_sketch_perish_song_history_v0_100.py",
      "tests/test_sudden_death_v0_134.py",
      "tests/test_trainer_decisions_turn_effects_v0_56.py",
      "tests/test_unresolved_boundaries_v0_4e.py"
     ],
-    "files_total": 10,
+    "files_total": 11,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },

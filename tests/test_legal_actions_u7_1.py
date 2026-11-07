@@ -459,15 +459,16 @@ class PhaseTest(unittest.TestCase):
         host, _ = L.ActionHost.start(*DECKS, 3)
         for actor in (0, 1):
             r = host.session(actor).candidates()
-            self.assertEqual((r["situation"], r["candidates"], r["coverage"]["not_covered_kinds"], r["coverage"]["completeness"]),
-                             (L.ACTOR_TO_ACT, [], ["place_starting"], L.PARTIAL))  # 未対応の種類（ゲーム上できないのではない）
+            # v0.163（U7-2）: 初期配置は対応した種類（v0.160〜v0.162 は未対応の種類として示していた）
+            self.assertEqual(([c["kind"] for c in r["candidates"]], r["coverage"]["not_covered_kinds"], r["coverage"]["completeness"]),
+                             ([L.KIND_PLACE_STARTING], [], L.COMPLETE))
         seen = set()
         while host.game.state.phase is not Phase.MAIN:
             state = host.game.state
             for actor in (0, 1):
                 r = host.session(actor).candidates()
                 seen.add((state.phase, r["situation"]))
-                self.assertEqual(r["candidates"], [])
+                self.assertTrue({c["kind"] for c in r["candidates"]} <= {L.KIND_PLACE_STARTING, L.KIND_MULLIGAN_DRAW})
                 if state.phase == Phase.SETUP_FIRST_PLAYER:
                     self.assertEqual((r["situation"], r["coverage"]["completeness"]), (L.WAITING_FOR_HOST, L.COMPLETE))
             command = H.trainer_policy_command(state)
@@ -482,9 +483,9 @@ class PhaseTest(unittest.TestCase):
             for actor in (0, 1):
                 r = host.session(actor).candidates()
                 self.assertEqual((r["situation"], r["candidates"], r["coverage"]["completeness"]), (situation, [], L.COMPLETE))
-        self.assertEqual(SUDDEN.game.submit(StartSuddenDeath()).outcome, D.ACCEPTED)  # ホストの操作（U7-2）はホストが直接送る
+        self.assertEqual(SUDDEN.game.submit(StartSuddenDeath()).outcome, D.ACCEPTED)  # 直接の送信（U7-2 のホストの入口は test_legal_actions_u7_2）
         r = SUDDEN.session(0).candidates()
-        self.assertEqual(r["coverage"]["not_covered_kinds"], ["place_starting"])
+        self.assertEqual((r["coverage"]["not_covered_kinds"], [c["kind"] for c in r["candidates"]]), ([], [L.KIND_PLACE_STARTING]))
 
     def test_same_result_as_direct_submission(self):
         direct = drive(0, use_u7=False)
@@ -668,7 +669,8 @@ class CoverageTest(unittest.TestCase):
                 self.assertEqual((r["situation"], r["empty_reason"], r["coverage"]["scope_kinds"], r["coverage"]["completeness"]), (situation, reason, [], L.COMPLETE))
         setup, _ = L.ActionHost.start(*DECKS, 3)
         r = setup.session(0).candidates()
-        self.assertEqual((r["empty_reason"], r["coverage"]["scope_kinds"], r["coverage"]["completeness"]), (L.EMPTY_NOT_COVERED, ["place_starting"], L.PARTIAL))
+        # v0.163（U7-2）: 初期配置は対応した種類（候補がある。完全性は scope の種類だけ）
+        self.assertEqual((r["empty_reason"], r["coverage"]["scope_kinds"], r["coverage"]["completeness"]), (None, ["place_starting"], L.COMPLETE))
 
     def test_decision_answerer_has_priority_over_the_turn(self):
         pending = apply_command(H.with_coin_results(T68.muk_board(), CoinSide.HEADS), UseAttack(0, 0))
