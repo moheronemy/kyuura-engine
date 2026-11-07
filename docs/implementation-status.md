@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.164）
+# 実装状況（v0.1〜v0.165）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d`（v0.128 から。v0.129 の種族の身長の写しは別に `9242b9be89be0f747279f39c11875d1ed61763ec`。v0.126〜v0.127 は `57d01f45cfb8b086d03dc0525b329cf6adeff69b`、v0.125 は `134a664c6adf67d5604148a31b58e1a7d26d4d6d`、v0.124 は `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`、v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -5150,3 +5150,12 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - `pyproject.toml` の `packages = ["kyuura_engine"]` の固定の一覧では `kyuura_engine.resolution` が wheel・sdist に入らず、通常のインストールで `import kyuura_engine` が失敗した。`[tool.setuptools.packages.find]`（`kyuura_engine`・`kyuura_engine.*`。`namespaces = false`）で探し、sdist から `tests` を除く（`MANIFEST.in`）。`kyuura_engine` の中身・実装の識別は変えていない
 - 配布物を名前で照らす `scripts/check_distribution.py`、インストール先の確かめ `scripts/smoke_installed_package.py`、回帰テスト `tests/test_distribution.py`
 - 詳細と GUI が暫定の回避（`-e`）を外す手順: [installation.md](installation.md)
+
+## v0.165: 合法手 API の番の基本の操作（U7-3）
+
+- `legal_actions`: 自分の番の MAIN で、手札からベンチに出す（`play_basic`）・手札からエネルギーをつける（`attach_energy`）・手札から進化させる（`evolve`）・にげる（`retreat`）の候補を、番を終える候補に続けて出す。入力は段ごと（エネルギー・進化はカード → 場のポケモンの組を `options_by_choice`、にげるは控え → トラッシュするエネルギーで、費用は出すエネルギーの個数 `total_units`）
+- 選べるもの・組の確かめは `engine.py` のコマンドの処理の前半を関数にした `check_play_basic`・`check_attach_energy`・`check_evolve`・`check_retreat_declaration`・`check_retreat`（同じ順番・同じコード・同じ文。状態・乱数・ログを変えない）。ゲーム上できない選べるもの・組は出さず、未裁定・未対応は実行できない区分で示す
+- `supported` は受理のあとの反応・決定・停止のもとが場にないことを公開の情報で確かめた場合だけ（ほかは `may_stop_later`。自分のうらのカードの進化・にげるは `unverified`）
+- `client_api` は同じ要求の形のまま扱う（契約 `kyuura-client-api`・形式 1、`kyuura_legal_actions_format` 1）。応答の形の追加だけ
+- 停止の台帳（`docs/stop-policy-classification.json`）はエンジンの行番号だけが変わった。診断のコード表の生成の動的な呼び出し箇所を `check_evolve` に直した（コード表は同じ）
+- 詳細: [legal-actions-u7-3.md](legal-actions-u7-3.md)

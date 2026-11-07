@@ -25,6 +25,7 @@ DESIGN = ROOT / "docs" / "legal-actions-api-design.md"
 PLAN = ROOT / "docs" / "legal-actions-api-implementation-plan.md"
 U7_1 = ROOT / "docs" / "legal-actions-u7-1.md"
 U7_2 = ROOT / "docs" / "legal-actions-u7-2.md"
+U7_3 = ROOT / "docs" / "legal-actions-u7-3.md"
 AUDIT_DOC = ROOT / "docs" / "legal-actions-decision-audit.md"
 _sites_spec = importlib.util.spec_from_file_location("legal_actions_decision_sites", ROOT / "scripts" / "legal_actions_decision_sites.py")
 SITES = importlib.util.module_from_spec(_sites_spec)
@@ -128,6 +129,21 @@ ADOPTION_U7_2 = {
     ],
     "decisions": [],
     "units": ["U7-2"],
+}
+ADOPTION_U7_3 = {
+    "id": "ADOPT-U7-3", "date": "2026-11-07", "by": "利用者",
+    "scope": "U7-3（番の基本の操作。手札からベンチに出す・手札からエネルギーをつける・手札から進化させる・にげる）の実装だけ。既存のコマンドの意味・受け付ける条件・状態の移り変わり・"
+             "乱数・ログ・観測・続行規約・停止の扱いは変えない。ワザ（U7-4）・トレーナー・特殊能力・スタジアム（U7-5）・識別の方式の移行・GUI の変更の承認ではない。"
+             "実装: v0.165（docs/legal-actions-u7-3.md）",
+    "policies": [
+        "4 種類の範囲はコマンドと処理で決める（PlayBasicToBench・AttachEnergy（energy2 なし）・EvolvePokemon・Retreat）。カードの名前から似た効果を含めない",
+        "候補の作成と入力の検査は、エンジンのコマンドの処理の前半と同じ関数（engine.check_*。状態を変えない）を使い、apply_command を試さない。秘密の状態・乱数を読む先読みを使わない",
+        "ゲーム上できない選べるもの・組は出さず、未裁定・未対応は消さずに実行できない区分で示す。受理のあとの反応を評価していないものを supported にしない",
+        "にげるの費用は組を並べず、出すエネルギーの個数の条件で示す（カードの枚数と個数を分ける。費用不足と判定の未確定を分ける）",
+        "U7-1・U7-2 の取っ手・結果・coverage・client_api の契約を使う（番の候補は partial）",
+    ],
+    "decisions": [],
+    "units": ["U7-3"],
 }
 
 PRINCIPLES = [
@@ -320,7 +336,7 @@ UNITS = [
      "done": "決定待ちのすべての種類（OPTION_MEANINGS の語彙）で候補ができ、漏れの回帰テストが通る。実装の識別の分類に legal_actions のファイルを加え、識別の設計の --check が通る"},
     {"id": "U7-2", "status": "implemented", "name": "準備とホストの操作", "depends": ["U7-1"], "scope": ["PlaceStartingPokemon（たねポケモンの手札から。段: バトル場 → ベンチ）", "DrawMulliganCards", "ReportJankenResult・StartSuddenDeath（ホストの操作主体だけ）"],
      "tests": ["T-TWIN-RESPONSE（準備）", "準備の候補から作った操作で、固定デッキの対戦が始まる"], "done": "準備の段階が complete"},
-    {"id": "U7-3", "status": "planned", "name": "通常の操作（ワザ・トレーナー・パワーの外）", "depends": ["U7-2"], "scope": ["PlayBasicToBench・AttachEnergy・EvolvePokemon・Retreat（費用は条件で表す）"],
+    {"id": "U7-3", "status": "implemented", "name": "通常の操作（ワザ・トレーナー・パワーの外）", "depends": ["U7-2"], "scope": ["PlayBasicToBench・AttachEnergy・EvolvePokemon・Retreat（費用は条件で表す）"],
      "tests": ["T-TWIN-RESPONSE（通常の操作）", "T-NOT-HIDDEN"], "done": "これらの種類について、本人の知識だけで決まる確かめを候補の作成に使う。scope に含めた種類を示し、main は partial"},
     {"id": "U7-4", "status": "planned", "name": "ワザ", "depends": ["U7-3"], "scope": ["UseAttack（ワザ → 任意の指定。対象は受理のあとの決定）", "宣言の前の確かめのうち、本人の知識だけで決まるもの（v0.147〜v0.151 の持ち主の知識の関数）を processability に使う"],
      "tests": ["T-TWIN-RESPONSE（v0.147〜v0.151 の双子の盤面）", "T-TWIN-REFINE", "T-NOT-HIDDEN（未裁定のワザ）"], "done": "ワザの候補で、先読みを呼ばない。決められないものは unverified"},
@@ -359,7 +375,7 @@ SPEC = {
     "id": "LEGAL-ACTIONS-API-DESIGN", "status": "proposed", "approval": "not_approved", "adoption": ADOPTION, "principles": PRINCIPLES, "phases": PHASES,
     "operations": OPERATIONS, "next_map": NEXT_MAP, "input_kinds": INPUT_KINDS, "option_meaning_map": OPTION_MEANING_MAP, "processability": PROCESSABILITY,
     "completeness": COMPLETENESS, "response": RESPONSE, "candidate_fields": CANDIDATE_FIELDS, "info_boundary": INFO_BOUNDARY, "knowledge": KNOWLEDGE,
-    "revision": REVISION, "host": HOST, "leak_tests": LEAK_TESTS, "units": UNITS, "decisions": DECISIONS, "u7_1_adoption": ADOPTION_U7_1, "u7_2_adoption": ADOPTION_U7_2,
+    "revision": REVISION, "host": HOST, "leak_tests": LEAK_TESTS, "units": UNITS, "decisions": DECISIONS, "u7_1_adoption": ADOPTION_U7_1, "u7_2_adoption": ADOPTION_U7_2, "u7_3_adoption": ADOPTION_U7_3,
     "disclosure": {k: {"status": v[0], "basis": v[1]} for k, v in sorted(DISCLOSURE.items())}, "disclosure_by_contract": DISCLOSURE_BY_CONTRACT,
     "order": {k: {"status": v[0], "basis": v[1]} for k, v in sorted(ORDER.items())},
     "audit_categories": {
@@ -427,6 +443,10 @@ def blocks(spec: dict) -> dict[str, list[str]]:
                            "  - 方針:"] + [f"    - {x}" for x in spec["u7_2_adoption"]["policies"]]
                           + ["  - 判断事項: " + ("、".join(spec["u7_2_adoption"]["decisions"]) or "なし（新しく採用した判断事項はない）"),
                              "  - 実装単位: " + "、".join(spec["u7_2_adoption"]["units"])],
+        "turn-adoption": [f"- `{spec['u7_3_adoption']['id']}`（{spec['u7_3_adoption']['date']}・{spec['u7_3_adoption']['by']}）: {spec['u7_3_adoption']['scope']}",
+                          "  - 方針:"] + [f"    - {x}" for x in spec["u7_3_adoption"]["policies"]]
+                         + ["  - 判断事項: " + ("、".join(spec["u7_3_adoption"]["decisions"]) or "なし（新しく採用した判断事項はない）"),
+                            "  - 実装単位: " + "、".join(spec["u7_3_adoption"]["units"])],
         "unit-adoption": [f"- `{spec['u7_1_adoption']['id']}`（{spec['u7_1_adoption']['date']}・{spec['u7_1_adoption']['by']}）: {spec['u7_1_adoption']['scope']}",
                           "  - 方針:"] + [f"    - {x}" for x in spec["u7_1_adoption"]["policies"]]
                          + ["  - 判断事項: " + "、".join(spec["u7_1_adoption"]["decisions"]), "  - 実装単位: " + "、".join(spec["u7_1_adoption"]["units"])],
@@ -480,6 +500,7 @@ DESIGN_BLOCKS = ("adoption", "principles", "phases", "operations", "next", "inpu
 PLAN_BLOCKS = ("units",)
 U7_1_BLOCKS = ("unit-adoption", "decision-kinds")
 U7_2_BLOCKS = ("setup-adoption",)
+U7_3_BLOCKS = ("turn-adoption",)
 AUDIT_BLOCKS = ("audit-categories", "audit-kinds", "audit-sites")
 
 # ---------------------------------------------------------------- 確かめ
@@ -654,17 +675,18 @@ def spec_problems(spec: dict) -> list[str]:
     for need in ("D-U7-DISPLAY", "D-U7-COMPLETENESS"):
         if next((d for d in spec["decisions"] if d["id"] == need), {}).get("status") != "pending":
             problems.append(f"判断事項 {need} は U7-1 で採用していない（pending のまま）")
-    adopted_units = set(adoption["units"]) | set(spec["u7_2_adoption"]["units"])
+    records = [adoption["units"], spec["u7_2_adoption"]["units"], spec["u7_3_adoption"]["units"]]
+    adopted_units = set().union(*map(set, records))
     if {u["id"] for u in spec["units"] if u.get("status") == "implemented"} != adopted_units:
-        problems.append("実装した単位と、U7-1・U7-2 の採用の記録の単位が違う")
-    if set(adoption["units"]) & set(spec["u7_2_adoption"]["units"]):
+        problems.append("実装した単位と、U7-1・U7-2・U7-3 の採用の記録の単位が違う")
+    if sum(len(set(r)) for r in records) != len(adopted_units):
         problems.append("同じ単位を 2 つの採用の記録が実装したことになっている")
     if any(u.get("status") not in ("implemented", "planned") for u in spec["units"]):
         problems.append("単位の状態が implemented・planned でない")
     return problems + coverage_problems(spec)
 
 
-def check(written: dict, design: str, plan: str, u7_1: str | None = None, audit: str | None = None, u7_2: str | None = None) -> list[str]:
+def check(written: dict, design: str, plan: str, u7_1: str | None = None, audit: str | None = None, u7_2: str | None = None, u7_3: str | None = None) -> list[str]:
     spec = build()
     problems = []
     if written != spec:
@@ -673,8 +695,9 @@ def check(written: dict, design: str, plan: str, u7_1: str | None = None, audit:
     u7_1 = U7_1.read_text(encoding="utf-8") if u7_1 is None else u7_1
     audit = AUDIT_DOC.read_text(encoding="utf-8") if audit is None else audit
     u7_2 = U7_2.read_text(encoding="utf-8") if u7_2 is None else u7_2
+    u7_3 = U7_3.read_text(encoding="utf-8") if u7_3 is None else u7_3
     for label, text, names in (("設計の文書", design, DESIGN_BLOCKS), ("実装計画の文書", plan, PLAN_BLOCKS), ("U7-1 の文書", u7_1, U7_1_BLOCKS),
-                               ("監査の文書", audit, AUDIT_BLOCKS), ("U7-2 の文書", u7_2, U7_2_BLOCKS)):
+                               ("監査の文書", audit, AUDIT_BLOCKS), ("U7-2 の文書", u7_2, U7_2_BLOCKS), ("U7-3 の文書", u7_3, U7_3_BLOCKS)):
         new, block_problems = render_into(text, rendered, names)
         problems += [f"{label}: {p}" for p in block_problems]
         if new != text:
@@ -696,7 +719,7 @@ def main() -> int:
             return 1
         OUTPUT.write_text(dump(spec), encoding="utf-8", newline="\n")
         rendered = blocks(spec)
-        for path, names in ((DESIGN, DESIGN_BLOCKS), (PLAN, PLAN_BLOCKS), (U7_1, U7_1_BLOCKS), (AUDIT_DOC, AUDIT_BLOCKS), (U7_2, U7_2_BLOCKS)):
+        for path, names in ((DESIGN, DESIGN_BLOCKS), (PLAN, PLAN_BLOCKS), (U7_1, U7_1_BLOCKS), (AUDIT_DOC, AUDIT_BLOCKS), (U7_2, U7_2_BLOCKS), (U7_3, U7_3_BLOCKS)):
             text, block_problems = render_into(path.read_text(encoding="utf-8"), rendered, names)
             if block_problems:
                 print("\n".join(f"{path.name}: {p}" for p in block_problems))

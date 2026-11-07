@@ -4,7 +4,7 @@
 
 - ソースの木を読み込まない（``sys.path`` を変えない。読み込んだ ``kyuura_engine`` が site-packages の下になければ止める）
 - 公開の API だけを使う: 全サブパッケージの読み込み・版・同梱のカードデータと登録データ・規約集合の識別・``new_game``・``ClientHub`` の開始と
-  本人・相手・観戦者・ホストの入口・初期配置の操作・記録と保存の部品の読み込み・実装の識別
+  本人・相手・観戦者・ホストの入口・初期配置の操作・ホストのジャンケンの結果・番の基本の操作（v0.165。U7-3）・記録と保存の部品の読み込み・実装の識別
 - 結果を JSON で出す（``implementation_identity`` をソースの木の値と比べるのは呼ぶ側）。問題があれば終了コード 1
 """
 
@@ -35,6 +35,48 @@ def check(problems: list[str], condition: bool, message: str) -> None:
 def placement_choices(stages: list) -> list:
     eligible = [o["id"] for o in stages[0]["options"] if o.get("eligible")]
     return eligible[:1]
+
+
+TURN_KINDS = ("play_basic", "attach_energy", "evolve", "retreat")
+
+
+def request(endpoint, kind: str, **fields) -> dict:
+    return endpoint.handle({**CONTRACT, "type": kind, **fields})
+
+
+def turn_action_choices(kind: str, stages: list) -> list | None:
+    """番の基本の操作の入力（候補の制約だけから。1 段目の eligible → 2 段目は options_by_choice の eligible。にげるは個数の下限まで）。"""
+    first = next((o for o in stages[0]["options"] if o.get("eligible")), None)
+    if first is None:
+        return None
+    if kind == "play_basic":
+        return [first["id"]]
+    if kind == "retreat":
+        choices, units = [first["id"]], 0
+        for option in stages[1]["options"]:
+            if units >= stages[1]["total_units"]["min"]:
+                break
+            choices.append(option["id"])
+            units += option["units"]
+        return choices
+    pair = next((p for p in stages[1]["options_by_choice"][first["id"]] if p["eligible"]), None)
+    return None if pair is None else [first["id"], pair["option"]]
+
+
+def to_first_turn(endpoints) -> None:
+    """準備の残り（補償の引く枚数）を候補だけで進め、ホストの入口でジャンケンの結果（プレイヤー 0 が先攻）を送る。"""
+    for _ in range(20):
+        for name in ("0", "1"):
+            answer = request(endpoints[name], "candidates")["response"]
+            for cand in answer["candidates"]:
+                if cand["kind"] == "mulligan_draw":
+                    fields = {"game": answer["game"], "revision": answer["revision"], "candidate": cand["id"]}
+                    stage = request(endpoints[name], "inputs", **fields)["response"]["stages"][0]
+                    request(endpoints[name], "submit", **fields, choices=[stage["range"]["max"]])
+    answer = request(endpoints["host"], "candidates")["response"]
+    for cand in answer["candidates"]:
+        if cand["kind"] == "report_janken":
+            request(endpoints["host"], "submit", game=answer["game"], revision=answer["revision"], candidate=cand["id"], choices=[0])
 
 
 def main() -> int:
@@ -106,6 +148,21 @@ def main() -> int:
         numbers = {name: [u["number"] for u in endpoints[name].handle({**CONTRACT, "type": "updates"})["updates"]] for name in ("0", "1", "spectator")}
         report["update_numbers"] = numbers
         check(problems, all(n == [1, 2] for n in numbers.values()), "閲覧者ごとの公開の更新が受理の数と合わない")
+        to_first_turn(endpoints)
+        answer = request(endpoints["0"], "candidates")["response"]
+        offered = [c["kind"] for c in answer["candidates"]]
+        report["turn_offered"] = offered
+        check(problems, "end_turn" in offered and any(kind in offered for kind in TURN_KINDS), "番の基本の操作の候補がない")
+        sent = None
+        for cand in answer["candidates"]:
+            if cand["kind"] in TURN_KINDS and cand["processability"] in ("supported", "may_stop_later", "unverified"):
+                fields = {"game": answer["game"], "revision": answer["revision"], "candidate": cand["id"]}
+                choices = turn_action_choices(cand["kind"], request(endpoints["0"], "inputs", **fields)["response"]["stages"])
+                if choices is not None and request(endpoints["0"], "check", **fields, choices=choices)["response"]["valid"]:
+                    sent = (cand["kind"], request(endpoints["0"], "submit", **fields, choices=choices)["outcome"])
+                    break
+        report["turn_action"] = sent
+        check(problems, sent is not None and sent[1] == "accepted", "番の基本の操作が受理されない")
 
     report["implementation_identity"] = replay_record.implementation_identity()
     report["problems"] = problems
