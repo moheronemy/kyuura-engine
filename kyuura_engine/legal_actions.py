@@ -1,8 +1,8 @@
 """合法手 API の最小の実装（U7-1。docs/legal-actions-u7-1.md。仕様案 docs/legal-actions-api-design.md）。
 
 対象は決定への回答（サイドを取る・バトル場に出す・ほかの決定）と「番を終える」（U7-1）、対戦の準備（初期配置・切り直しの補償の引く枚数）と、ホストの操作（ジャンケンの結果・
-延長戦の開始。U7-2。docs/legal-actions-u7-2.md）、番の基本の操作（ベンチに出す・エネルギーをつける・進化させる・にげる。U7-3。docs/legal-actions-u7-3.md）。ほかの操作の
-種類（ワザ・トレーナー・特殊能力など）は候補に出さず、対応していない種類として示す（ゲーム上できないこととは別）。
+延長戦の開始。U7-2。docs/legal-actions-u7-2.md）、番の基本の操作（ベンチに出す・エネルギーをつける・進化させる・にげる。U7-3。docs/legal-actions-u7-3.md）、ワザの宣言
+（U7-4。docs/legal-actions-u7-4.md）。ほかの操作の種類（トレーナー・特殊能力など）は候補に出さず、対応していない種類として示す（ゲーム上できないこととは別）。
 
 境界:
 
@@ -37,15 +37,21 @@ from .commands import (
     ResolveDecision,
     Retreat,
     StartSuddenDeath,
+    UseAttack,
 )
 from .conventions import continuation_for
 from .decisions import ARRANGE_DECK_TOP, value_range
 from .effects import (
     PLAY_AS_POKEMON_SETUP_CODE,
+    AttackCoinStadium,
+    attack_power_slot,
+    available_attacks,
     energy_unit_count,
+    group_attack_power_slot,
     play_as_pokemon_in_hand,
     powers_of,
     retreat_cost,
+    stadium_of,
 )
 from .engine import (
     SETUP_PLACEMENT_CASE,
@@ -62,6 +68,7 @@ from .observation import (
     OPTION_MEANINGS,
     observe,
 )
+from .resolution.flow import check_use_attack
 from .stadiums import bench_limit
 from .state import GameState, Phase
 
@@ -145,7 +152,8 @@ KIND_ATTACH_ENERGY = "attach_energy"  # U7-3: 手札のエネルギーカード�
 KIND_EVOLVE = "evolve"  # U7-3: 手札の進化カード（ベイビィからはたねポケモンのカード）を自分の場のポケモンに重ねる（EvolvePokemon）
 KIND_RETREAT = "retreat"  # U7-3: バトル場のポケモンをにがす（Retreat）
 TURN_KINDS = (KIND_PLAY_BASIC, KIND_ATTACH_ENERGY, KIND_EVOLVE, KIND_RETREAT)
-PLAYER_KINDS = (KIND_TAKE_PRIZE, KIND_PROMOTE_ACTIVE, KIND_ANSWER_DECISION, KIND_END_TURN, KIND_PLACE_STARTING, KIND_MULLIGAN_DRAW, *TURN_KINDS)
+KIND_USE_ATTACK = "use_attack"  # U7-4: バトル場のポケモンのワザを宣言する（UseAttack。宣言といっしょに選ぶもの: クチバシティジムのコイン・ワザといっしょに使う特殊能力）
+PLAYER_KINDS = (KIND_TAKE_PRIZE, KIND_PROMOTE_ACTIVE, KIND_ANSWER_DECISION, KIND_END_TURN, KIND_PLACE_STARTING, KIND_MULLIGAN_DRAW, *TURN_KINDS, KIND_USE_ATTACK)
 HOST_KINDS = (KIND_REPORT_JANKEN, KIND_START_SUDDEN_DEATH)
 IMPLEMENTED_KINDS = PLAYER_KINDS + HOST_KINDS
 HOST = "host"  # ホストの入口の操作主体（プレイヤーの番号ではない）
@@ -219,6 +227,15 @@ GUARANTEE_TURN_ACTION = {
     "after_acceptance": "supported は、受理のあとの反応・決定・停止のもと（特殊能力・ついているトレーナー・スタジアム・マーカー・持続する効果・特殊エネルギー・うらのカード・番の効果など）が"
                         "場にないことを公開の情報で確かめた場合だけ。ほかは may_stop_later（受理のあとを評価していない）",
     "supported_scope": "supported は上の条件の範囲の保証で、受理のあとの全分岐の完走の保証ではない（こんらんのコインなど、乱数で決まる続きを含む）",
+}
+GUARANTEE_ATTACK = {
+    "preconditions": "番・段階と、ワザ・宣言といっしょに選ぶものごとに、エンジンが宣言を受け付ける前の確かめ（resolution.flow.check_use_attack。checks.attack_request・要素の並び・"
+                     "クチバシティジムのコイン・ワザといっしょに使う特殊能力の確かめ。コマンドの処理と同じ関数・同じ順番）を候補の作成と入力の検査に使う",
+    "acceptance": "保証しない。エンジンは宣言の前に先読み（コインの結果・ワザの途中の決定の答えを状態の複製の上で試す）をして、原典で決められない場合・未対応に当たれば宣言を拒否する"
+                  "（状態は変わらない）。候補の作成・入力の検査は、この先読みを呼ばない（秘密の山札・サイドの配分・乱数を読まない）。最終の判定は apply_command。うらのカードを"
+                  "おもてにする処理・コマンドの項目の確かめはエンジンの入口",
+    "after_acceptance": "評価していない（コイン・ワザの途中の決定・きぜつ・サイド・バトル場に出す決定・反応で、決定待ち・停止がありうる。決定は受理のあと answer_decision の候補で答える）",
+    "supported_scope": "ワザの候補は supported にしない（宣言の前の先読みと受理のあとを評価していないため）",
 }
 GUARANTEE_END_TURN = {
     "preconditions": "番のプレイヤーの main の段階（require_turn と同じ公開の条件）だけを確かめた",
@@ -554,6 +571,8 @@ def _command(found: _Candidate, actor, values: tuple[int, ...]):
         return EvolvePokemon(actor, values[0], values[1])  # 進化カード, 進化させる場のポケモンの番号
     if found.kind == KIND_RETREAT:
         return Retreat(actor, tuple(values[1:]), values[0])  # トラッシュするカード（選んだ順）, 入れ替える控え（いちばん上のカードの uid）
+    if found.kind == KIND_USE_ATTACK:
+        return _attack_command(actor, values)
     return ResolveDecision(actor, found.decision_id, values)
 
 
@@ -610,12 +629,17 @@ def _build(state: GameState, actor: int):
         if not usable:
             public = {"processability": NOT_IMPLEMENTED, "reasons": ["state_not_supported"], "guarantees": dict(GUARANTEE_END_TURN)}
         candidates = [_Candidate("c1", KIND_END_TURN, public, [])]
-        candidates += _turn_candidates(state, actor) if usable else [
-            _Candidate("", kind, {"processability": NOT_IMPLEMENTED, "reasons": ["state_not_supported"], "guarantees": dict(GUARANTEE_TURN_ACTION)}, [],
-                       disclosure=DISCLOSURE_UNCONFIRMED) for kind in TURN_KINDS]
+        if usable:
+            candidates += _turn_candidates(state, actor)
+            attack = _attack_candidate(state, actor)
+            candidates += [] if attack is None else [attack]
+        else:
+            candidates += [_Candidate("", kind, {"processability": NOT_IMPLEMENTED, "reasons": ["state_not_supported"],
+                                                 "guarantees": dict(GUARANTEE_ATTACK if kind == KIND_USE_ATTACK else GUARANTEE_TURN_ACTION)}, [],
+                                      disclosure=DISCLOSURE_UNCONFIRMED) for kind in (*TURN_KINDS, KIND_USE_ATTACK)]
         for number, candidate in enumerate(candidates, 1):
             candidate.id = f"c{number}"  # 種類の並び（MAIN_KINDS の順）。番号は応答ごと（取っ手と組で使う）
-        evaluated = [KIND_END_TURN, *TURN_KINDS]
+        evaluated = [KIND_END_TURN, *TURN_KINDS, KIND_USE_ATTACK]
         return ACTOR_TO_ACT, candidates, evaluated, [k for k in MAIN_KINDS if k not in evaluated], PARTIAL, None
     return WAITING_FOR_PLAYER, [], [], [], UNDETERMINED, None  # 知らない段階（状態の区分と段階の組が上のどれでもない）は完全と称さない
 
@@ -767,6 +791,8 @@ def _input_problem(found: _Candidate, choices) -> tuple[str | None, tuple[int, .
         return None, choices
     if found.kind in (KIND_ATTACH_ENERGY, KIND_EVOLVE, KIND_RETREAT):
         return _turn_input_problem(found, choices)
+    if found.kind == KIND_USE_ATTACK:
+        return _attack_input_problem(found, choices)
     if found.kind == KIND_PLACE_STARTING:
         indexes = [found.option_index(choice) for choice in choices]  # 1 つめがバトル場、残りがベンチ（選んだ順）
         if not choices or None in indexes or len(set(indexes)) != len(indexes) or len(indexes) - 1 > found.bench_max:
@@ -1021,3 +1047,170 @@ def _turn_input_problem(found: _Candidate, choices: tuple) -> tuple[str | None, 
     if not found.pairs[tuple(choices)]:
         return CANDIDATE_NOT_EXECUTABLE, ()
     return None, tuple(found.ids[choice][1] for choice in choices)
+
+
+# ---------------------------------------------------------------- ワザの宣言（U7-4。docs/legal-actions-u7-4.md）
+
+REASON_PREFLIGHT = "preflight_not_evaluated"  # エンジンの宣言の前の先読み（コインの結果・ワザの途中の決定を試す）を、候補の作成・入力の検査では呼ばない（宣言の受理を保証しない）
+REASON_CONTINUATION = "continuation_not_evaluated"  # 受理のあと（コイン・ワザの途中の決定・きぜつ・反応）を評価していない
+REASON_NO_PRINTED_ATTACK = "no_printed_attack"  # 自分のうらのバトル場のカードに印刷のワザがない（おもてにする処理だけになる。U7-4 は入力の形を作らない）
+ADDON_STADIUM_COIN = "stadium_coin"  # UseAttack.stadium_coin（クチバシティジムのコインを投げる）
+ADDON_ATTACK_POWER = "attack_power"  # UseAttack.attack_power（ワザを使うポケモン自身の、そのワザといっしょに使える特殊能力）
+ADDON_WITH_POWER = "with_power"  # UseAttack.with_power・with_powers（自分の場のポケモンの、ワザといっしょに使う特殊能力。選んだ順に宣言する）
+
+
+def _attack_command(actor: int, specs) -> UseAttack:
+    """ワザ（("attack", 位置, 印刷したカード)）と、宣言といっしょに選ぶもの（選んだ順）から UseAttack を作る。力を持つポケモンが 1 匹なら with_power（v0.118 の形）、2 匹以上なら
+    with_powers（v0.122 の形。選んだ順）。"""
+    _, index, card = specs[0]
+    kinds = [spec[0] for spec in specs[1:]]
+    holders = tuple(spec[1] for spec in specs[1:] if spec[0] == ADDON_WITH_POWER)
+    return UseAttack(actor, index, card, stadium_coin=ADDON_STADIUM_COIN in kinds, attack_power=ADDON_ATTACK_POWER in kinds,
+                     with_power=holders[0] if len(holders) == 1 else None, with_powers=holders if len(holders) > 1 else ())
+
+
+def _attack_public(attack, base: dict[str, Any]) -> dict[str, Any]:
+    """ワザの表示（印刷の情報。名前・必要なエネルギー・ダメージの表示・説明）。"""
+    return {**base, "name_ja": attack.name_ja, "cost": [energy.value for energy in attack.cost], "damage": attack.damage_display, "text_ja": attack.text_ja}
+
+
+def _attack_verdict(verdict: str | None, code: str | None) -> tuple[str, list[str]]:
+    if verdict == STOP:
+        return _stop_processability(code), [REASON_STOPS]
+    return MAY_STOP_LATER, [REASON_CONTINUATION, REASON_PREFLIGHT]  # _best と同じ並び（名前の順）
+
+
+def _attack_candidate(state: GameState, actor: int) -> _Candidate | None:
+    """ワザの宣言（1 段目: バトル場のポケモンが今持つワザ、2 段目: 宣言といっしょに選ぶもの（0 個以上・選んだ順））。ゲーム上宣言できるワザがなければ候補を作らない。
+
+    選べるワザは ``effects.available_attacks``（今の姿・「思い出させる」・［サイコリンク］・許可で使えるワザ。公開の場から決まる）。ワザ・組ごとに ``check_use_attack``
+    （エンジンが宣言を受け付ける前の確かめ。宣言の前の先読みは含まない）を呼ぶ。IllegalActionError のワザ・組は出さず、UnsupportedError は実行できない区分で示す。"""
+    active = state.players[actor].active
+    if active is None:
+        return None
+    guarantees = dict(GUARANTEE_ATTACK)
+    if state.is_face_down(active):
+        return _face_down_attack_candidate(state, active, guarantees)
+    specs: dict[str, tuple] = {}
+    attack_options, verdicts = [], {}
+    for option in available_attacks(state, active):
+        spec = ("attack", option.attack_index, option.card)
+        verdict, code = _probe(check_use_attack, state, _attack_command(actor, (spec,)))
+        if verdict == ILLEGAL:
+            continue
+        oid = f"o{len(specs) + 1}"
+        specs[oid] = spec
+        verdicts[oid] = _attack_verdict(verdict, code)
+        # card_id はワザの登録の定義（AttackOption.card_id。state.card_def から決まる。うらのカードの本当のカードを読まない）
+        base = {"id": oid, "card": option.card, "card_id": option.card_id, "attack_index": option.attack_index, "route": option.route}
+        for name in ("provider", "payer"):
+            if getattr(option, name) is not None:
+                base[name] = getattr(option, name)
+        if option.grantors:
+            base["grantors"] = list(option.grantors)
+        attack_options.append(_option(_attack_public(state.definitions[option.card_id].attacks[option.attack_index], base), *verdicts[oid]))
+    if not attack_options:
+        return None  # ねむり・マヒ・ワザを使えない効果・エネルギーが足りないなど（ゲーム上宣言できない）
+    addons = _addon_specs(state, actor, active)
+    addon_ids = {}
+    for spec, _shown in addons:
+        addon_ids[spec] = f"o{len(specs) + len(addon_ids) + 1}"
+    pairs: dict[tuple[str, str], bool] = {}
+    by_choice: dict[str, list[dict[str, Any]]] = {}
+    used: dict[tuple, list[tuple[str, list[str]]]] = {}
+    for aid, found in verdicts.items():
+        by_choice[aid] = []
+        pairs[(aid, "")] = found[0] in EXECUTABLE
+        if found[0] not in EXECUTABLE:
+            continue  # 選ぶと止めるワザ: いっしょに選ぶものを確かめない（ワザごと実行できない）
+        for spec, _shown in addons:
+            verdict, code = _probe(check_use_attack, state, _attack_command(actor, (specs[aid], spec)))
+            if verdict == ILLEGAL:
+                continue
+            pair = _attack_verdict(verdict, code)
+            pairs[(aid, addon_ids[spec])] = pair[0] in EXECUTABLE
+            used.setdefault(spec, []).append(pair)
+            by_choice[aid].append(_option({"option": addon_ids[spec]}, *pair))
+    addon_options = []
+    for spec, shown in addons:
+        if spec in used:  # どのワザともいっしょに選べないもの（ゲーム上できない）は出さない（番号は欠番のまま）
+            specs[addon_ids[spec]] = spec
+            addon_options.append(_option({"id": addon_ids[spec], **shown}, *_best(used[spec])))
+    stages = [{"stage": 1, "input": INPUT_CHOOSE_OPTION, "role": "attack", "meaning": "attack", "count": {"min": 1, "max": 1}, "options": attack_options,
+               "order": ORDER_NOT_APPLICABLE},
+              {"stage": 2, "input": INPUT_CHOOSE_OPTION, "role": "declaration_options", "meaning": "declaration_option",
+               "count": {"min": 0, "max": len(addon_options)}, "options": addon_options, "depends_on_stage": 1, "options_by_choice": by_choice, "distinct": True,
+               "decline": True, "order": ORDER_SIGNIFICANT, "order_preserved": True,
+               "note": "宣言といっしょに選ぶもの（0 個でもよい）。選べるのは options_by_choice（1 段目の番号ごと）。with_power は選んだ順に宣言する。組み合わせは入力の検査"
+                       "（エンジンの確かめ）が確かめる。ワザの対象・トラッシュするエネルギー・山札から選ぶカードなどは、受理のあとの決定で答える"}]
+    processability, reasons = _best(list(verdicts.values()))
+    public = {"processability": processability, "reasons": reasons, "guarantees": guarantees,
+              "choices_format": "[ワザの番号, 宣言といっしょに選ぶものの番号, ...]（いっしょに選ぶものは選んだ順。0 個でもよい）"}
+
+    def verify(values):
+        verdict, _ = _probe(check_use_attack, state, _attack_command(actor, values))
+        return None if verdict is None else CANDIDATE_INPUT_INVALID if verdict == ILLEGAL else CANDIDATE_NOT_EXECUTABLE
+
+    ids = {oid: (1 if spec[0] == "attack" else 2, spec) for oid, spec in specs.items()}
+    return _Candidate("", KIND_USE_ATTACK, public, stages, disclosure=DISCLOSURE_CONFIRMED, ids=ids, pairs=pairs, min_choices=1,
+                      max_choices=1 + len(addon_options), verify=verify)
+
+
+def _addon_specs(state: GameState, actor: int, active) -> list[tuple[tuple, dict[str, Any]]]:
+    """宣言といっしょに選べるかもしれないもの（公開の場から。選べるかはワザごとにエンジンの確かめで決める）。並びは コイン → 自身の特殊能力 → 場の並び（バトル場 → ベンチ）。"""
+    found: list[tuple[tuple, dict[str, Any]]] = []
+    stadium = stadium_of(state, AttackCoinStadium)
+    if stadium is not None:
+        found.append(((ADDON_STADIUM_COIN,), {"addon": ADDON_STADIUM_COIN, "card": stadium[0].card, "card_id": state.cards[stadium[0].card].card_id}))
+    if any(attack_power_slot(state, active, option.key) is not None for option in available_attacks(state, active)):
+        found.append(((ADDON_ATTACK_POWER,), {"addon": ADDON_ATTACK_POWER, "pokemon": active.pokemon_id}))
+    for pokemon, shown in _field(state, actor):
+        slot = None if state.is_face_down(pokemon) else group_attack_power_slot(state, pokemon)
+        if slot is not None:
+            found.append(((ADDON_WITH_POWER, pokemon.pokemon_id), {"addon": ADDON_WITH_POWER, **shown, "power": slot.power.name_ja}))
+    return found
+
+
+def _face_down_attack_candidate(state: GameState, active, guarantees) -> _Candidate:
+    """自分のうらのバトル場のポケモン（マチスの秘策）: エンジンがおもてにしてから確かめる（「たねポケモン」でなければトラッシュし、ワザは使わない）。選べるワザは本人が知る本当の
+    カード（観測の real。本人だけに見える）の印刷のワザで、エンジンの確かめは呼ばない（unverified）。宣言といっしょに選ぶものは示さない。"""
+    definition = state.printed_def(active.card)
+    options, specs = [], {}
+    for attack in definition.attacks if definition.category == "pokemon" else ():
+        oid = f"o{len(specs) + 1}"
+        specs[oid] = ("attack", attack.index, None)
+        options.append(_option(_attack_public(attack, {"id": oid, "card": active.card, "card_id": definition.id, "attack_index": attack.index, "face_down": True}),
+                               UNVERIFIED, [REASON_FACE_DOWN]))
+    if not options:
+        public = {"processability": NOT_IMPLEMENTED, "reasons": [REASON_FACE_DOWN, REASON_NO_PRINTED_ATTACK], "guarantees": guarantees}
+        return _Candidate("", KIND_USE_ATTACK, public, [], disclosure=DISCLOSURE_CONFIRMED)
+    stages = [{"stage": 1, "input": INPUT_CHOOSE_OPTION, "role": "attack", "meaning": "attack", "count": {"min": 1, "max": 1}, "options": options,
+               "order": ORDER_NOT_APPLICABLE},
+              {"stage": 2, "input": INPUT_CHOOSE_OPTION, "role": "declaration_options", "meaning": "declaration_option", "count": {"min": 0, "max": 0},
+               "options": [], "depends_on_stage": 1, "options_by_choice": {oid: [] for oid in specs}, "distinct": True, "decline": True,
+               "order": ORDER_NOT_APPLICABLE, "note": "うらのカードのワザといっしょに選ぶものは示さない（おもてにする前に確かめられない）"}]
+    public = {"processability": UNVERIFIED, "reasons": [REASON_FACE_DOWN], "guarantees": guarantees, "choices_format": "[ワザの番号]"}
+    return _Candidate("", KIND_USE_ATTACK, public, stages, disclosure=DISCLOSURE_CONFIRMED, ids={oid: (1, spec) for oid, spec in specs.items()},
+                      pairs={(oid, ""): True for oid in specs}, min_choices=1, max_choices=1, verify=_not_checked)
+
+
+def _not_checked(values) -> str | None:
+    """うらのカードのワザ: エンジンがおもてにしてから確かめる（最終の判定は apply_command）。"""
+    return None
+
+
+def _attack_input_problem(found: _Candidate, choices: tuple) -> tuple[str | None, tuple]:
+    """ワザの宣言の入力（[ワザ, 宣言といっしょに選ぶもの...]。並びは変えない）。組にない・重なり・段の並びの誤りは CANDIDATE_INPUT_INVALID。組み合わせはエンジンの確かめ。"""
+    if not choices or any(type(choice) is not str or choice not in found.ids for choice in choices):
+        return CANDIDATE_INPUT_INVALID, ()
+    stages = [found.ids[choice][0] for choice in choices]
+    if stages[0] != 1 or any(stage != 2 for stage in stages[1:]) or len(set(choices)) != len(choices):
+        return CANDIDATE_INPUT_INVALID, ()
+    attack = choices[0]
+    if any((attack, choice) not in found.pairs for choice in choices[1:]):
+        return CANDIDATE_INPUT_INVALID, ()  # そのワザといっしょに選べない（ゲーム上できない組）
+    if not found.pairs[(attack, "")] or not all(found.pairs[(attack, choice)] for choice in choices[1:]):
+        return CANDIDATE_NOT_EXECUTABLE, ()
+    values = tuple(found.ids[choice][1] for choice in choices)
+    code = found.verify(values)
+    return (code, ()) if code is not None else (None, values)

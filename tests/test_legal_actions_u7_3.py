@@ -126,7 +126,8 @@ class MappingTest(unittest.TestCase):
         self.assertEqual(cov["completeness"], L.PARTIAL)
         self.assertEqual(cov["offered_kinds"], [L.KIND_END_TURN])  # 手札がなく控えもいない: 番の基本の操作はどれもゲーム上できない（候補なし）
         self.assertEqual(cov["scope_kinds"], list(L.MAIN_KINDS))  # 評価した種類と、対応しない種類
-        self.assertEqual(cov["not_covered_kinds"], ["use_attack", "play_trainer", "use_power", "use_stadium", "remove_disguise", "discard_from_play",
+        self.assertEqual(cov["not_covered_kinds"], ["play_trainer",  # v0.166（U7-4）: use_attack は対応した種類（ここではエネルギーがなくワザの候補はない）
+                                                    "use_power", "use_stadium", "remove_disguise", "discard_from_play",
                                                     "reveal_face_down", "check_face_up_deck"])
         for kind in L.TURN_KINDS:
             self.assertIn(kind, cov["implemented_kinds"])
@@ -417,7 +418,7 @@ class ClientApiTest(unittest.TestCase):
         hub = ClientHub.from_state(state)
         me, spectator = hub.player(0), hub.spectator()
         r = me.handle({**CONTRACT, "type": "candidates"})["response"]
-        self.assertEqual([c["kind"] for c in r["candidates"]], [L.KIND_END_TURN, *L.TURN_KINDS])
+        self.assertEqual([c["kind"] for c in r["candidates"]], [L.KIND_END_TURN, *L.TURN_KINDS, L.KIND_USE_ATTACK])  # v0.166（U7-4）: ワザの候補が続く
         c = cand(r, L.KIND_ATTACH_ENERGY)
         fields = {"game": r["game"], "revision": r["revision"], "candidate": c["id"]}
         stages = me.handle({**CONTRACT, "type": "inputs", **fields})["response"]["stages"]

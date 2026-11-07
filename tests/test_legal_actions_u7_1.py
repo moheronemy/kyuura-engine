@@ -413,7 +413,7 @@ class EndTurnTest(unittest.TestCase):
         self.assertEqual([c["kind"] for c in r["candidates"]], [L.KIND_END_TURN, L.KIND_ATTACH_ENERGY])
         self.assertEqual((cand["kind"], cand["processability"], cand["reasons"]), (L.KIND_END_TURN, L.MAY_STOP_LATER, ["checkup_not_evaluated"]))
         self.assertEqual(r["coverage"]["completeness"], L.PARTIAL)  # 番の操作は一部だけ。全合法手と称さない
-        self.assertIn("use_attack", r["coverage"]["not_covered_kinds"])
+        self.assertIn("play_trainer", r["coverage"]["not_covered_kinds"])  # v0.166（U7-4）: ワザは対応した種類（ここではエネルギーがなく候補はない）
         self.assertIn("保証しない", cand["guarantees"]["acceptance"])
         self.assertEqual(p1.candidates()["situation"], L.WAITING_FOR_PLAYER)
         self.assertEqual(p0.check(r["game"], r["revision"], "c1", ["o1"])["refusal"]["code"], L.CANDIDATE_INPUT_INVALID)
