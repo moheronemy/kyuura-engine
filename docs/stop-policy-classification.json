@@ -26900,9 +26900,9 @@
     "kyuura_engine/resolution/contract.py:1",
     "kyuura_engine/resolution/contract.py:59",
     "kyuura_engine/resolution/contract.py:67",
-    "kyuura_engine/resolution/flow.py:133",
-    "kyuura_engine/resolution/flow.py:140",
-    "kyuura_engine/resolution/flow.py:148"
+    "kyuura_engine/resolution/flow.py:130",
+    "kyuura_engine/resolution/flow.py:137",
+    "kyuura_engine/resolution/flow.py:145"
    ],
    "implementation_sites_total": 7,
    "current_stop": [
@@ -26913,9 +26913,9 @@
       "kyuura_engine/resolution/contract.py:1",
       "kyuura_engine/resolution/contract.py:59",
       "kyuura_engine/resolution/contract.py:67",
-      "kyuura_engine/resolution/flow.py:133",
-      "kyuura_engine/resolution/flow.py:140",
-      "kyuura_engine/resolution/flow.py:148"
+      "kyuura_engine/resolution/flow.py:130",
+      "kyuura_engine/resolution/flow.py:137",
+      "kyuura_engine/resolution/flow.py:145"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -28113,14 +28113,14 @@
     "note": "研究の対応表の外（エンジンの未対応・技術上限・データ・汎用）"
    },
    "implementation_sites": [
-    "kyuura_engine/resolution/flow.py:176"
+    "kyuura_engine/resolution/flow.py:186"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/resolution/flow.py:176"
+      "kyuura_engine/resolution/flow.py:186"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -28145,7 +28145,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/resolution/flow.py:176"
+     "kyuura_engine/resolution/flow.py:186"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -28557,7 +28557,7 @@
    },
    "implementation_sites": [
     "kyuura_engine/effects.py:3648",
-    "kyuura_engine/resolution/flow.py:169",
+    "kyuura_engine/resolution/flow.py:179",
     "kyuura_engine/resolution/preflight.py:1",
     "kyuura_engine/resolution/programs.py:15917",
     "kyuura_engine/resolution/programs.py:2419",
@@ -28569,7 +28569,7 @@
      "mechanism": "command_rejection",
      "sites": [
       "kyuura_engine/effects.py:3648",
-      "kyuura_engine/resolution/flow.py:169",
+      "kyuura_engine/resolution/flow.py:179",
       "kyuura_engine/resolution/preflight.py:1",
       "kyuura_engine/resolution/programs.py:15917",
       "kyuura_engine/resolution/programs.py:2419",
