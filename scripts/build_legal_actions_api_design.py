@@ -57,19 +57,42 @@ ADOPTION_U7_1 = {
     "units": ["U7-1"],
 }
 
-# D-U7-DECISION-UID の確かめ（コードを読んだ判断）: 選べるものの意味が card で、山札をさがす決定（DECK_REVEALING_KINDS）・見た手札の決定（LOOKED_HAND_KINDS）でない種類の
-# 選べるものの出どころ（決定を出す箇所の options）。--check が、コードのその種類の一覧と照らす（加わった種類は分類を書くまで失敗する）
-CARD_OPTION_SOURCES = {
-    "attach_from_discard": "自分のトラッシュ", "attach_from_hand": "自分の手札", "bench_from_discard": "自分のトラッシュ", "deck_top_from_hand": "自分の手札",
-    "discard_energy": "場のポケモンについているエネルギー（公開）", "discard_from_hand": "自分の手札", "discard_opponent_energy": "相手の場のエネルギー（公開）",
-    "discard_stadium": "場のスタジアム（公開）", "discard_to_deck": "トラッシュ（公開）", "discard_to_deck_top": "相手のトラッシュ（公開）",
-    "energy_drain_discard": "未確認（効果の要求の options。実行時の確かめに任せる）", "exp_all_energy": "未確認（続きの情報の options。実行時の確かめに任せる）",
-    "hand_to_active": "自分の手札", "hand_to_deck": "自分の手札", "magma_pool_energy": "未確認（反応の選択の options。実行時の確かめに任せる）",
-    "move_energy": "場のポケモンについているエネルギー（公開）", "move_opponent_energy": "相手の場のエネルギー（公開）", "post_knockout_power": "きぜつしたカード（トラッシュ。公開）",
-    "quiz_card": "自分の手札", "recover_energy": "トラッシュ（公開）", "recover_pokemon": "トラッシュ（公開）", "recover_trainer": "トラッシュ（公開）",
-    "retrieve_energy": "トラッシュ（公開）", "return_energy": "場のポケモンについているエネルギー（公開）", "return_to_deck": "自分の手札", "secret_plan_card": "自分の手札",
-    "select_attached_special_energy": "相手の場の特殊エネルギー（公開）", "select_attached_trainer": "相手の場のついているトレーナー（公開）", "select_evolution_card": "自分の手札",
-    "stadium_from_discard": "トラッシュ（公開）", "swap_with_prize": "自分の手札", "use_discard_trainer": "トラッシュ（公開）",
+# 決定の選べるものの情報境界（v0.160 の補完。docs/legal-actions-u7-1.md 2 章。コードを読んだ判断）。決定を出す箇所の options の式を種類ごとに調べた。
+# confirmed の一覧は kyuura_engine/legal_actions.DISCLOSURE_CONFIRMED_KINDS と同じ（--check が照らす）。ここにない種類・unconfirmed は、U7 で入力を返さない
+_PUBLIC_VALUES = "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+_OWN_CARDS = "選べるものの式が本人の手札・トラッシュ・場のスタジアムだけ（どれも本人に見えるカード）"
+_UNREAD = "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+DISCLOSURE = {
+    **{k: ("confirmed", _PUBLIC_VALUES) for k in (
+        "accept_request", "allocate_damage", "damage_option", "damage_step_order", "entry_power", "esp_redo", "evolution_heal", "heal_allocation", "janken_hand",
+        "optional_coin", "optional_discard_all", "optional_drain", "optional_heal", "optional_shuffle", "peek_card", "prize_first", "promote_active", "quiz_answer",
+        "quiz_attack", "quiz_height_answer", "reaction_order", "remove_counters", "select_counter_count", "select_devolve_count", "select_hand_card",
+        "select_opponent_attack", "select_prize_card", "stadium_return_bench", "take_prize")},
+    "knock_out_power": ("confirmed", "選べるものはきぜつするポケモンの番号 1 つ（resolution.codec.ko_check_decision の (pokemon_id,)）"),
+    "reaction_power": ("confirmed", "選べるものは反応するポケモンの番号 1 つ（reactions.py の (pid,)）"),
+    "select_look_count": ("confirmed", "山札の枚数（公開）までの範囲（effects の _count_options・programs の range(min(max_cards, len(deck)) + 1)）"),
+    "select_draw_count": ("confirmed", "山札の枚数（公開）までの範囲（effects の _options・range(min(max_draw, len(deck)) + 1)）"),
+    **{k: ("confirmed", _OWN_CARDS) for k in ("deck_top_from_hand", "discard_from_hand", "discard_stadium", "discard_to_deck_top", "hand_to_active", "hand_to_deck",
+                                                "swap_with_prize")},
+    "energy_drain_discard": ("confirmed", ("ダメージを与えたポケモン（場）についているエネルギーカード（resolution.kernel.drain_energy_from_damage_source の tuple(source.energy)）。"
+                                          "決めるのは［だつりょくえき］の持ち主（相手の番の決定）。選ぶと止めるカードは energy_discard_problem（カードの定義と場の状態）")),
+    "exp_all_energy": ("confirmed", ("きぜつするバトル場のポケモン（場）についている基本エネルギーとレインボーエネルギー（resolution.kernel.exp_all_options）。"
+                                    "決めるのは学習装置の持ち主（相手の番の決定）。選ぶと止めるカードは exp_all_unresolved（場の状態）")),
+    "magma_pool_energy": ("confirmed", ("［やけのこり］の持ち主の場のポケモン（holder）についているエネルギーカード（effects.magma_candidates の holder.energy）。"
+                                       "決めるのは持ち主。選ぶと止めるカードはカードの定義と場の色の効果")),
+    **{k: ("unconfirmed", _UNREAD) for k in (
+        "attach_from_discard", "attach_from_hand", "bench_from_discard", "discard_energy", "discard_opponent_energy", "discard_to_deck", "move_energy",
+        "move_opponent_energy", "post_knockout_power", "quiz_card", "recover_energy", "recover_pokemon", "recover_trainer", "retrieve_energy", "return_energy",
+        "return_to_deck", "secret_plan_card", "select_attached_special_energy", "select_attached_trainer", "select_evolution_card", "stadium_from_discard",
+        "use_discard_trainer", "attach_to_bench", "bench_guard", "damage_reduction", "evolution_song_pokemon", "forced_switch", "revive_source", "select_attack",
+        "select_color", "select_deck_owner", "select_hand_positions", "select_marker_count", "select_opponent_prize", "select_pokemon", "select_special_condition",
+        "ko_prevention", "ninja_trick", "reaction_switch")},
+}
+DISCLOSURE_BY_CONTRACT = "始まった検索・見たカード（DECK_REVEALING_KINDS・LOOKED_HAND_KINDS。決定は効果が見たあとに出る。契約の例外として実際のカードを示す）"
+
+# 答えの並びの意味（確かめた分類だけ。legal_actions.ORDER_SIGNIFICANT_KINDS と同じ）
+ORDER = {
+    "arrange_deck_top": ("significant", "答えの並びが山札の上の新しい並び（effects・programs のどの出し方も deck[:count] = list(choices)）"),
 }
 
 PRINCIPLES = [
@@ -292,8 +315,9 @@ DECISIONS = [
      "adopted": "操作主体のある操作とホストの操作を区別する（プレイヤーには waiting_for_host を返す）。ホストの操作の入口は U7-2"},
     {"id": "D-U7-DECISION-UID", "question": "決定の選べるもの（observe の decision.options の value）に、決める人に見えないカードの uid が入る種類があるか", "recommendation":
      "U7-1 の前に確かめる（未確認）。入るなら、U7 の応答では見えないカードを値の番号で表し、uid を入れない", "status": "checked",
-     "result": "コードを読んだ範囲（docs/legal-actions-u7-1.md 2 章）では入る種類はない。U7 は選ぶものを番号（o1…）で表し、uid は観測が card_id を渡すカードだけに付ける。"
-               "見えないカードが来たら uid を出さず unverified にする（実行時の確かめ）。3 種類の出どころは未確認"},
+     "result": "v0.160 の補完で種類ごとに options の式を調べ直した（docs/legal-actions-u7-1.md 2 章）。見えないカードの uid が入る種類は見つからない。情報境界を確かめた種類だけ入力を返し、"
+               "確かめていない種類（unconfirmed）と、実行時に見えないカードが選べるものに来た場面は、選べるもの・数・並びを返さない（INPUT_BOUNDARY_UNCONFIRMED）。"
+               "番号に置きかえるだけでは数・並びの漏れが消えないため"},
 ]
 
 SPEC = {
@@ -301,7 +325,8 @@ SPEC = {
     "operations": OPERATIONS, "next_map": NEXT_MAP, "input_kinds": INPUT_KINDS, "option_meaning_map": OPTION_MEANING_MAP, "processability": PROCESSABILITY,
     "completeness": COMPLETENESS, "response": RESPONSE, "candidate_fields": CANDIDATE_FIELDS, "info_boundary": INFO_BOUNDARY, "knowledge": KNOWLEDGE,
     "revision": REVISION, "host": HOST, "leak_tests": LEAK_TESTS, "units": UNITS, "decisions": DECISIONS, "u7_1_adoption": ADOPTION_U7_1,
-    "card_option_sources": CARD_OPTION_SOURCES,
+    "disclosure": {k: {"status": v[0], "basis": v[1]} for k, v in sorted(DISCLOSURE.items())}, "disclosure_by_contract": DISCLOSURE_BY_CONTRACT,
+    "order": {k: {"status": v[0], "basis": v[1]} for k, v in sorted(ORDER.items())},
 }
 
 
@@ -345,22 +370,20 @@ def blocks(spec: dict) -> dict[str, list[str]]:
 
 
 def _decision_kind_rows(spec: dict) -> list[str]:
-    """決定の種類ごとの情報の範囲（コードの語彙から作る。card の出どころだけは CARD_OPTION_SOURCES）。"""
+    """決定の種類ごとの情報の範囲と答えの並び（コードの語彙と DISCLOSURE・ORDER から作る）。"""
     from kyuura_engine import observation as O
 
     rows = []
     for kind, meaning in sorted(O.OPTION_MEANINGS.items()):
-        if kind in O.DECK_REVEALING_KINDS:
-            source, when = "始まった検索・見たカード（決定は効果が山札を見たあとに出る）", "決定が出た時点（検索の開始のあと）"
-        elif kind in O.LOOKED_HAND_KINDS:
-            source, when = "効果で見た相手の手札", "決定が出た時点（見たあと）"
-        elif meaning == "card":
-            source, when = spec["card_option_sources"].get(kind, "分類なし"), "もとから見える（観測が card_id を渡すときだけ uid を付ける）"
+        if kind in O.DECK_REVEALING_KINDS or kind in O.LOOKED_HAND_KINDS:
+            status, basis = "confirmed", spec["disclosure_by_contract"]
         else:
-            source, when = "カードでない値（" + meaning + "）", "—"
+            item = spec["disclosure"].get(kind, {"status": "分類なし", "basis": ""})
+            status, basis = item["status"], item["basis"]
+        order = spec["order"].get(kind, {"status": "unconfirmed（選ぶ数が 1 以下なら not_applicable）"})["status"]
         others = "種類・決める人だけ" if kind in O.HIDDEN_COUNT_KINDS else "種類・決める人・選ぶ数・選べるものの数"
-        rows.append([f"`{kind}`", meaning, source, when, others])
-    return _table(["決定の種類", "選べるものの意味", "選べるものの出どころ", "決める人が uid を知ってよい時点", "相手・観戦者に見えるもの"], rows)
+        rows.append([f"`{kind}`", meaning, status, basis, order, others])
+    return _table(["決定の種類", "選べるものの意味", "U7 の入力の情報境界", "根拠", "答えの並び", "相手・観戦者に見えるもの（観測）"], rows)
 
 
 DESIGN_BLOCKS = ("adoption", "principles", "phases", "operations", "next", "inputs", "processability", "completeness", "response", "candidate", "boundary", "knowledge",
@@ -374,6 +397,7 @@ U7_1_BLOCKS = ("unit-adoption", "decision-kinds")
 def code_vocabulary() -> dict[str, list[str]]:
     from kyuura_engine import commands as C
     from kyuura_engine import diagnostics as D
+    from kyuura_engine import legal_actions as LA
     from kyuura_engine import observation as O
     from kyuura_engine.observation import OPTION_MEANINGS
     from kyuura_engine.state import Phase
@@ -384,7 +408,9 @@ def code_vocabulary() -> dict[str, list[str]]:
         "next": [v for k, v in vars(D).items() if k.startswith("NEXT_") and isinstance(v, str)],
         "statuses": list(D.STATE_STATUSES),
         "meanings": sorted(set(OPTION_MEANINGS.values())),
-        "plain_card_kinds": sorted(k for k, m in OPTION_MEANINGS.items() if m == "card" and k not in O.DECK_REVEALING_KINDS and k not in O.LOOKED_HAND_KINDS),
+        "plain_kinds": sorted(k for k in OPTION_MEANINGS if k not in O.DECK_REVEALING_KINDS and k not in O.LOOKED_HAND_KINDS),
+        "confirmed_kinds": set(LA.DISCLOSURE_CONFIRMED_KINDS) - set(O.DECK_REVEALING_KINDS) - set(O.LOOKED_HAND_KINDS),
+        "order_significant": set(LA.ORDER_SIGNIFICANT_KINDS),
     }
 
 
@@ -401,8 +427,14 @@ def coverage_problems(spec: dict, code: dict[str, list[str]] | None = None) -> l
     problems += [f"next の種類 {n} の対応がない" for n in code["next"] if n not in spec["next_map"]]
     problems += [f"next の対応 {n} がコードにない" for n in spec["next_map"] if n not in code["next"]]
     problems += [f"決定の選べるものの意味 {m} に入力の種類の対応がない" for m in code["meanings"] if m not in spec["option_meaning_map"]]
-    problems += [f"カードを選ぶ決定 {k} の選べるものの出どころがない（D-U7-DECISION-UID）" for k in code.get("plain_card_kinds", []) if k not in spec["card_option_sources"]]
-    problems += [f"選べるものの出どころの決定 {k} がコードにない" for k in spec["card_option_sources"] if k not in code.get("plain_card_kinds", [])]
+    problems += [f"決定 {k} の情報境界の分類がない（D-U7-DECISION-UID）" for k in code.get("plain_kinds", []) if k not in spec["disclosure"]]
+    problems += [f"情報境界の分類の決定 {k} がコードにない" for k in spec["disclosure"] if k not in code.get("plain_kinds", [])]
+    if "confirmed_kinds" in code:
+        written = {k for k, v in spec["disclosure"].items() if v["status"] == "confirmed"}
+        if written != code["confirmed_kinds"]:
+            problems.append(f"情報境界を確かめた種類が、legal_actions.DISCLOSURE_CONFIRMED_KINDS と違う（{sorted(written ^ code['confirmed_kinds'])}）")
+    if "order_significant" in code and {k for k, v in spec["order"].items() if v["status"] == "significant"} != code["order_significant"]:
+        problems.append("答えの並びに意味がある種類が、legal_actions.ORDER_SIGNIFICANT_KINDS と違う")
     return problems
 
 

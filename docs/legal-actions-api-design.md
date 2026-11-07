@@ -266,11 +266,11 @@ v0.159（U1〜U6 の総合検証）のあとの仕様案です。v0.160 で U7-1
 | `D-U7-UNVERIFIED` | 判定未確定（unverified）の候補を実行できる候補にするか | する（送れば apply_command が判定する。拒否の理由は双子で同じ） | adopted（ADOPT-U7-1） | unverified は保証がないことを示して送信を許す |
 | `D-U7-COMPLETENESS` | 初版で main の候補を complete と称する範囲 | 称さない（partial と scope）。決定・準備・延長戦の開始・終局・停止だけ complete | pending |  |
 | `D-U7-HOST-OPS` | ジャンケンの結果・延長戦の開始をホストの操作主体の候補にするか | する（プレイヤーの候補には出さない） | adopted（ADOPT-U7-1） | 操作主体のある操作とホストの操作を区別する（プレイヤーには waiting_for_host を返す）。ホストの操作の入口は U7-2 |
-| `D-U7-DECISION-UID` | 決定の選べるもの（observe の decision.options の value）に、決める人に見えないカードの uid が入る種類があるか | U7-1 の前に確かめる（未確認）。入るなら、U7 の応答では見えないカードを値の番号で表し、uid を入れない | checked | コードを読んだ範囲（docs/legal-actions-u7-1.md 2 章）では入る種類はない。U7 は選ぶものを番号（o1…）で表し、uid は観測が card_id を渡すカードだけに付ける。見えないカードが来たら uid を出さず unverified にする（実行時の確かめ）。3 種類の出どころは未確認 |
+| `D-U7-DECISION-UID` | 決定の選べるもの（observe の decision.options の value）に、決める人に見えないカードの uid が入る種類があるか | U7-1 の前に確かめる（未確認）。入るなら、U7 の応答では見えないカードを値の番号で表し、uid を入れない | checked | v0.160 の補完で種類ごとに options の式を調べ直した（docs/legal-actions-u7-1.md 2 章）。見えないカードの uid が入る種類は見つからない。情報境界を確かめた種類だけ入力を返し、確かめていない種類（unconfirmed）と、実行時に見えないカードが選べるものに来た場面は、選べるもの・数・並びを返さない（INPUT_BOUNDARY_UNCONFIRMED）。番号に置きかえるだけでは数・並びの漏れが消えないため |
 <!-- generated:decisions end -->
 
 ## 10. 検証と未確認
 
 - `python scripts/build_legal_actions_api_design.py --check`: JSON と生成区画の一致、コードの語彙（コマンドの型・段階・next・状態の区分・決定の意味）の対応、原則に反する値（main を complete と称する・候補を表示しない処理可能性・状態のハッシュを revision にする・情報境界の経路の欠け）
 - テスト `tests/test_legal_actions_api_design.py`: 上の確かめを、わざと壊した値で見つけることを確かめる
-- 確かめていないこと: 決定の選べるものに、決める人に見えないカードの uid が入る種類があるか（D-U7-DECISION-UID。U7-1 の前に確かめる）、候補の作成の費用、GUI の表示
+- 確かめていないこと: 決定の種類のうち情報境界が unconfirmed のもの（docs/legal-actions-u7-1.md 2 章の表。U7 は入力を返さない）、候補の作成の費用、GUI の表示

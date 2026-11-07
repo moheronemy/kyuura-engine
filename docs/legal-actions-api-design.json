@@ -904,7 +904,7 @@
    "question": "決定の選べるもの（observe の decision.options の value）に、決める人に見えないカードの uid が入る種類があるか",
    "recommendation": "U7-1 の前に確かめる（未確認）。入るなら、U7 の応答では見えないカードを値の番号で表し、uid を入れない",
    "status": "checked",
-   "result": "コードを読んだ範囲（docs/legal-actions-u7-1.md 2 章）では入る種類はない。U7 は選ぶものを番号（o1…）で表し、uid は観測が card_id を渡すカードだけに付ける。見えないカードが来たら uid を出さず unverified にする（実行時の確かめ）。3 種類の出どころは未確認"
+   "result": "v0.160 の補完で種類ごとに options の式を調べ直した（docs/legal-actions-u7-1.md 2 章）。見えないカードの uid が入る種類は見つからない。情報境界を確かめた種類だけ入力を返し、確かめていない種類（unconfirmed）と、実行時に見えないカードが選べるものに来た場面は、選べるもの・数・並びを返さない（INPUT_BOUNDARY_UNCONFIRMED）。番号に置きかえるだけでは数・並びの漏れが消えないため"
   }
  ],
  "u7_1_adoption": {
@@ -936,38 +936,341 @@
    "U7-1"
   ]
  },
- "card_option_sources": {
-  "attach_from_discard": "自分のトラッシュ",
-  "attach_from_hand": "自分の手札",
-  "bench_from_discard": "自分のトラッシュ",
-  "deck_top_from_hand": "自分の手札",
-  "discard_energy": "場のポケモンについているエネルギー（公開）",
-  "discard_from_hand": "自分の手札",
-  "discard_opponent_energy": "相手の場のエネルギー（公開）",
-  "discard_stadium": "場のスタジアム（公開）",
-  "discard_to_deck": "トラッシュ（公開）",
-  "discard_to_deck_top": "相手のトラッシュ（公開）",
-  "energy_drain_discard": "未確認（効果の要求の options。実行時の確かめに任せる）",
-  "exp_all_energy": "未確認（続きの情報の options。実行時の確かめに任せる）",
-  "hand_to_active": "自分の手札",
-  "hand_to_deck": "自分の手札",
-  "magma_pool_energy": "未確認（反応の選択の options。実行時の確かめに任せる）",
-  "move_energy": "場のポケモンについているエネルギー（公開）",
-  "move_opponent_energy": "相手の場のエネルギー（公開）",
-  "post_knockout_power": "きぜつしたカード（トラッシュ。公開）",
-  "quiz_card": "自分の手札",
-  "recover_energy": "トラッシュ（公開）",
-  "recover_pokemon": "トラッシュ（公開）",
-  "recover_trainer": "トラッシュ（公開）",
-  "retrieve_energy": "トラッシュ（公開）",
-  "return_energy": "場のポケモンについているエネルギー（公開）",
-  "return_to_deck": "自分の手札",
-  "secret_plan_card": "自分の手札",
-  "select_attached_special_energy": "相手の場の特殊エネルギー（公開）",
-  "select_attached_trainer": "相手の場のついているトレーナー（公開）",
-  "select_evolution_card": "自分の手札",
-  "stadium_from_discard": "トラッシュ（公開）",
-  "swap_with_prize": "自分の手札",
-  "use_discard_trainer": "トラッシュ（公開）"
+ "disclosure": {
+  "accept_request": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "allocate_damage": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "attach_from_discard": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "attach_from_hand": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "attach_to_bench": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "bench_from_discard": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "bench_guard": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "damage_option": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "damage_reduction": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "damage_step_order": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "deck_top_from_hand": {
+   "status": "confirmed",
+   "basis": "選べるものの式が本人の手札・トラッシュ・場のスタジアムだけ（どれも本人に見えるカード）"
+  },
+  "discard_energy": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "discard_from_hand": {
+   "status": "confirmed",
+   "basis": "選べるものの式が本人の手札・トラッシュ・場のスタジアムだけ（どれも本人に見えるカード）"
+  },
+  "discard_opponent_energy": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "discard_stadium": {
+   "status": "confirmed",
+   "basis": "選べるものの式が本人の手札・トラッシュ・場のスタジアムだけ（どれも本人に見えるカード）"
+  },
+  "discard_to_deck": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "discard_to_deck_top": {
+   "status": "confirmed",
+   "basis": "選べるものの式が本人の手札・トラッシュ・場のスタジアムだけ（どれも本人に見えるカード）"
+  },
+  "energy_drain_discard": {
+   "status": "confirmed",
+   "basis": "ダメージを与えたポケモン（場）についているエネルギーカード（resolution.kernel.drain_energy_from_damage_source の tuple(source.energy)）。決めるのは［だつりょくえき］の持ち主（相手の番の決定）。選ぶと止めるカードは energy_discard_problem（カードの定義と場の状態）"
+  },
+  "entry_power": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "esp_redo": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "evolution_heal": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "evolution_song_pokemon": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "exp_all_energy": {
+   "status": "confirmed",
+   "basis": "きぜつするバトル場のポケモン（場）についている基本エネルギーとレインボーエネルギー（resolution.kernel.exp_all_options）。決めるのは学習装置の持ち主（相手の番の決定）。選ぶと止めるカードは exp_all_unresolved（場の状態）"
+  },
+  "forced_switch": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "hand_to_active": {
+   "status": "confirmed",
+   "basis": "選べるものの式が本人の手札・トラッシュ・場のスタジアムだけ（どれも本人に見えるカード）"
+  },
+  "hand_to_deck": {
+   "status": "confirmed",
+   "basis": "選べるものの式が本人の手札・トラッシュ・場のスタジアムだけ（どれも本人に見えるカード）"
+  },
+  "heal_allocation": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "janken_hand": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "knock_out_power": {
+   "status": "confirmed",
+   "basis": "選べるものはきぜつするポケモンの番号 1 つ（resolution.codec.ko_check_decision の (pokemon_id,)）"
+  },
+  "ko_prevention": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "magma_pool_energy": {
+   "status": "confirmed",
+   "basis": "［やけのこり］の持ち主の場のポケモン（holder）についているエネルギーカード（effects.magma_candidates の holder.energy）。決めるのは持ち主。選ぶと止めるカードはカードの定義と場の色の効果"
+  },
+  "move_energy": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "move_opponent_energy": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "ninja_trick": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "optional_coin": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "optional_discard_all": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "optional_drain": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "optional_heal": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "optional_shuffle": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "peek_card": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "post_knockout_power": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "prize_first": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "promote_active": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "quiz_answer": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "quiz_attack": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "quiz_card": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "quiz_height_answer": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "reaction_order": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "reaction_power": {
+   "status": "confirmed",
+   "basis": "選べるものは反応するポケモンの番号 1 つ（reactions.py の (pid,)）"
+  },
+  "reaction_switch": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "recover_energy": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "recover_pokemon": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "recover_trainer": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "remove_counters": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "retrieve_energy": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "return_energy": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "return_to_deck": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "revive_source": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "secret_plan_card": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "select_attached_special_energy": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "select_attached_trainer": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "select_attack": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "select_color": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "select_counter_count": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "select_deck_owner": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "select_devolve_count": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "select_draw_count": {
+   "status": "confirmed",
+   "basis": "山札の枚数（公開）までの範囲（effects の _options・range(min(max_draw, len(deck)) + 1)）"
+  },
+  "select_evolution_card": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "select_hand_card": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "select_hand_positions": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "select_look_count": {
+   "status": "confirmed",
+   "basis": "山札の枚数（公開）までの範囲（effects の _count_options・programs の range(min(max_cards, len(deck)) + 1)）"
+  },
+  "select_marker_count": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "select_opponent_attack": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "select_opponent_prize": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "select_pokemon": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "select_prize_card": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "select_special_condition": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "stadium_from_discard": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  },
+  "stadium_return_bench": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "swap_with_prize": {
+   "status": "confirmed",
+   "basis": "選べるものの式が本人の手札・トラッシュ・場のスタジアムだけ（どれも本人に見えるカード）"
+  },
+  "take_prize": {
+   "status": "confirmed",
+   "basis": "選べるものの式が公開の値だけから決まる（場のポケモンの番号・公開の枚数の範囲・決まった語彙・(1,) などの決まった値）"
+  },
+  "use_discard_trainer": {
+   "status": "unconfirmed",
+   "basis": "決定を出す箇所の options の式（options・candidates・self._… など）を読み切っていない"
+  }
+ },
+ "disclosure_by_contract": "始まった検索・見たカード（DECK_REVEALING_KINDS・LOOKED_HAND_KINDS。決定は効果が見たあとに出る。契約の例外として実際のカードを示す）",
+ "order": {
+  "arrange_deck_top": {
+   "status": "significant",
+   "basis": "答えの並びが山札の上の新しい並び（effects・programs のどの出し方も deck[:count] = list(choices)）"
+  }
  }
 }
