@@ -52,10 +52,14 @@ DISCLOSURE_UNCONFIRMED = "unconfirmed"
 DISCLOSURE_NONE = "no_input"
 
 # 選んだ順の意味（確かめた分類だけ。未確認を順不同と扱わない）
-ORDER_SIGNIFICANT = "significant"  # 答えの並びが結果に入る（確かめた種類）
+ORDER_SIGNIFICANT = "significant"  # 答えの並びが結果（ゾーンの並び・ログ・解決の順）に入る（確かめた種類）
+ORDER_NOT_SIGNIFICANT = "not_significant"  # 適用の前に決まった並び（場・トラッシュ・手札の並び）に直す（確かめた種類）
 ORDER_NOT_APPLICABLE = "not_applicable"  # 選ぶ数が 1 以下（並びがない）
 ORDER_UNCONFIRMED = "unconfirmed"  # 確かめていない（U7 は並びをそのまま送る）
-ORDER_SIGNIFICANT_KINDS = frozenset({ARRANGE_DECK_TOP})  # 答えの並びが山札の上の新しい並び（deck[:count] = list(choices)。どの出し方も同じ）
+# 答えの並びを確かめた種類（docs/legal-actions-decision-audit.md 3 章。scripts/build_legal_actions_api_design.py の ORDER と --check が照らす）。どれも U7 は並びを変えずに送る
+ORDER_SIGNIFICANT_KINDS = frozenset({ARRANGE_DECK_TOP, "bench_guard", "discard_energy", "move_energy", "recover_energy", "return_energy", "select_pokemon"})
+ORDER_NOT_SIGNIFICANT_KINDS = frozenset({"attach_from_discard", "attach_from_hand", "discard_opponent_energy", "discard_to_deck", "recover_pokemon", "recover_trainer",
+                                         "retrieve_energy", "select_hand_positions"})
 
 # 選べるものの情報境界を確かめた決定の種類（docs/legal-actions-u7-1.md 2 章。scripts/build_legal_actions_api_design.py の DISCLOSURE が同じ一覧を持ち、--check が照らす）。
 # 山札をさがす決定・見た手札の決定は、始まった検索・見たカードの本人の選択肢として実際のカードを示してよい（契約の例外）
@@ -68,6 +72,12 @@ DISCLOSURE_CONFIRMED_KINDS = frozenset({
     # カード（選べるものが本人の手札・トラッシュ・場のカードだけから決まる）
     "deck_top_from_hand", "discard_from_hand", "discard_stadium", "discard_to_deck_top", "hand_to_active", "hand_to_deck", "swap_with_prize",
     "energy_drain_discard", "exp_all_energy", "magma_pool_energy",
+    # v0.162 の監査（docs/legal-actions-decision-audit.md。生成箇所ごとに選べるもの・選ぶと止める選択・選ぶ数の式の情報源をたどった）
+    "attach_from_discard", "attach_from_hand", "attach_to_bench", "bench_from_discard", "bench_guard", "damage_reduction", "discard_energy", "discard_opponent_energy",
+    "discard_to_deck", "evolution_song_pokemon", "forced_switch", "ko_prevention", "move_energy", "move_opponent_energy", "ninja_trick", "post_knockout_power",
+    "quiz_card", "reaction_switch", "recover_energy", "recover_pokemon", "recover_trainer", "retrieve_energy", "return_energy", "return_to_deck", "revive_source",
+    "secret_plan_card", "select_attached_special_energy", "select_attached_trainer", "select_attack", "select_color", "select_deck_owner", "select_evolution_card",
+    "select_hand_positions", "select_marker_count", "select_opponent_prize", "select_pokemon", "select_special_condition", "stadium_from_discard", "use_discard_trainer",
 }) | DECK_REVEALING_KINDS | LOOKED_HAND_KINDS
 
 # 完全性（その応答の scope に明示した操作の種類の範囲だけ。全コマンドの合法手ではない）
@@ -502,7 +512,8 @@ def _answer_candidate(state: GameState) -> _Candidate:
     if d.max_choices <= 1:
         order = ORDER_NOT_APPLICABLE
     else:
-        order = ORDER_SIGNIFICANT if d.kind in ORDER_SIGNIFICANT_KINDS else ORDER_UNCONFIRMED
+        order = (ORDER_SIGNIFICANT if d.kind in ORDER_SIGNIFICANT_KINDS else ORDER_NOT_SIGNIFICANT if d.kind in ORDER_NOT_SIGNIFICANT_KINDS
+                 else ORDER_UNCONFIRMED)
     stage = {"stage": 1, "input": INPUT_CHOOSE_OPTION, "decision_kind": d.kind, "meaning": meaning, "count": {"min": d.min_choices, "max": d.max_choices},
              "distinct": True, "order": order, "order_preserved": True, "decline": d.min_choices == 0, "options": options}
     public = {"processability": MAY_STOP_LATER, "reasons": ["continuation_not_evaluated"], "guarantees": guarantees}

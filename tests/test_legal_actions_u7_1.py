@@ -338,7 +338,7 @@ class OptionalAndStopTest(unittest.TestCase):
             self.assertEqual(session.submit(r["game"], r["revision"], cand["id"], choices).refusal.code, L.INPUT_BOUNDARY_UNCONFIRMED)
 
     def test_unconfirmed_kind_withholds_inputs(self):
-        """情報境界を確かめていない種類（エネルギー回収のトラッシュから選ぶ決定）: 入力を返さない。ホストは直接送れる（U7 の外）。"""
+        """情報境界を確かめていない種類: 入力を返さない。ホストは直接送れる（U7 の外）。v0.162 で全種類を確かめたので、確かめた一覧から 1 つを外して確かめる（補助の作り）。"""
         state = search_board((H.FIRE,), trainer=H.ENERGY_RETRIEVAL)
         state.players[0].discard = [u for u in state.players[0].deck if state.cards[u].card_id == H.WATER]
         state.players[0].deck = [u for u in state.players[0].deck if u not in state.players[0].discard]
@@ -346,11 +346,11 @@ class OptionalAndStopTest(unittest.TestCase):
         p0 = host.session(0)
         r, _ = fetch(p0)
         self.assertEqual(p0.submit(r["game"], r["revision"], "c1", ["o1"]).outcome, D.ACCEPTED)  # 手札から 1 枚トラッシュ（確かめた種類）
-        r, inputs = fetch(p0)
-        self.assertNotIn("retrieve_energy", L.DISCLOSURE_CONFIRMED_KINDS)
-        before = snap(host.game.state)
-        self.assert_withheld(p0, r, inputs)
-        self.assertEqual(snap(host.game.state), before)
+        with mock.patch.object(L, "DISCLOSURE_CONFIRMED_KINDS", L.DISCLOSURE_CONFIRMED_KINDS - {"retrieve_energy"}):
+            r, inputs = fetch(p0)
+            before = snap(host.game.state)
+            self.assert_withheld(p0, r, inputs)
+            self.assertEqual(snap(host.game.state), before)
         d = host.game.state.decision
         self.assertEqual(host.game.submit(ResolveDecision(0, d.id, d.options[:1]), submitter=0).outcome, D.ACCEPTED)
 
