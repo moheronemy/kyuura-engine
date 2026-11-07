@@ -154,6 +154,15 @@
    ],
    "role": "合法手 API（U7。docs/legal-actions-api-design.md）の操作候補・必要な入力の作成と、候補からの送信（U7-1 は決定への回答と番を終える。docs/legal-actions-u7-1.md）",
    "note": "v0.160 で加えた。U2 の HostedGame・CommandResult と observe を使う（別の実行器を持たない）。現行の方式では behavior_digest に入る"
+  },
+  {
+   "id": "client_api",
+   "layer": "api_format",
+   "files": [
+    "client_api.py"
+   ],
+   "role": "クライアント向けの最小のアダプタ（JSON にできる要求・応答と、閲覧者ごとの公開の更新。docs/client-api-v0.164.md）",
+   "note": "v0.164 で加えた。U7 の入口（legal_actions）と observe・診断を使い、別の実行器を持たない。保存した値を読まない（記録・スナップショットの互換の判定に関わらない）。現行の方式では behavior_digest に入る"
   }
  ],
  "current": {
@@ -387,7 +396,8 @@
     "snapshot",
     "snapshot_replay",
     "public_facade",
-    "legal_actions"
+    "legal_actions",
+    "client_api"
    ],
    "formats": [
     "replay_format",
@@ -424,7 +434,8 @@
     "view_record",
     "snapshot_replay",
     "public_facade",
-    "legal_actions"
+    "legal_actions",
+    "client_api"
    ],
    "formats": [
     "snapshot_format",
@@ -462,7 +473,8 @@
    "unused": [
     "view_record",
     "public_facade",
-    "legal_actions"
+    "legal_actions",
+    "client_api"
    ],
    "formats": [
     "replay_format",
@@ -503,7 +515,8 @@
     "snapshot",
     "snapshot_replay",
     "public_facade",
-    "legal_actions"
+    "legal_actions",
+    "client_api"
    ],
    "formats": [
     "replay_format",
@@ -538,7 +551,8 @@
     "snapshot",
     "snapshot_replay",
     "public_facade",
-    "legal_actions"
+    "legal_actions",
+    "client_api"
    ],
    "formats": [
     "view_format",
@@ -566,7 +580,8 @@
     "view_record",
     "snapshot",
     "snapshot_replay",
-    "public_facade"
+    "public_facade",
+    "client_api"
    ],
    "formats": [
     "convention_set"
