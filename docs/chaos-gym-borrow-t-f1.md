@@ -127,6 +127,12 @@ U7-5 の設計で見つけた F-1（[legal-actions-u7-5-design](legal-actions-u7
   - `scripts/build_*.py --check` の 11 個・`check_implementation_assumptions --check`・`check_normalization_revalidation --check`・`check_card_sources`・`check_research_links` は、すべて終了コード 0
   - `check_implementation_assumptions --sites` の出力は、基点（`c63594d`）と同じ
 - **lint**（ruff 0.17.2）: 新しいファイルと U7-5 の生成器は指摘なし。ほかの変更したファイルの指摘の数は基点と同じ
+- **配布と通常のインストール**（コミット `6e9d22098efd4c6e3c545f04dd6bbaae936a5dda`。版 0.168.0）
+  - `git archive` の木から作った wheel・sdist の中身の検査（`scripts/check_distribution.py`）: required=62・problems=0
+  - クリーンな仮想環境に、Git の URL から通常のインストール（編集可能なインストール・PYTHONPATH なし）: `kyuura-engine @ git+https://github.com/moheronemy/kyuura-engine@6e9d22098efd4c6e3c545f04dd6bbaae936a5dda`。`direct_url.json` のコミットが一致
+  - リポジトリの外から `python -I` でスモークテスト（site-packages からの読み込み・全サブパッケージ・3 つの規約集合の照合値・client_api の初期配置・番の操作・ワザの宣言・ピッピ人形の `discard_from_play`）。問題 0
+  - 錯乱ジムの確かめ（公開の API だけ。new_game・seed 8）: 「うら」で、手札にポケモンのない相手に `ACCEPT_REQUEST`（候補 `answer_decision`）が出る。client_api の「使う」は 2 回とも `rejected`（状態は変わらず、使ったプレイヤー・観戦者への更新 0）。選べるものにない答えも `rejected`。「使わない」は `accepted` で、ポケモン交換おじさんは持ち主のトラッシュへ
+  - 実装の識別の `behavior_digest` は、インストールしたものとソースの木で同じ（`b6e4973a2632672bd2a8ffb9c866bba5d04c4d609d6aa066326add25b73fcada`）
 
 ## 8. 規約集合・既存 API への影響
 
