@@ -209,8 +209,10 @@
 ```sh
 git clone https://github.com/moheronemy/kyuura-engine.git
 cd kyuura-engine
-python3 -m pip install -e .   # 任意。リポジトリの直下で使うだけなら不要
+python3 -m pip install -e .   # 任意。開発用（編集可能）。リポジトリの直下で使うだけなら不要
 ```
+
+別のリポジトリ（GUI など）から使うときは、編集可能ではなく通常のインストールで、完全なコミットハッシュに固定します（`python -m pip install "kyuura-engine @ git+https://github.com/moheronemy/kyuura-engine@<コミット>"`）。v0.164 までの配布物には `kyuura_engine.resolution` が入らず、通常のインストールでは読み込めませんでした（`e8c518f` で修正）。手順・wheel からの導入・確かめ方: [docs/installation.md](docs/installation.md)
 
 ## テストの実行
 

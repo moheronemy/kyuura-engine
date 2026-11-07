@@ -120,7 +120,7 @@ admin = hub.host()           # ホストの操作（信頼されたアプリケ�
 
 ## 8. 導入（別リポジトリの GUI から）
 
-- 依存の方法（推奨）: このリポジトリの固定したコミットを Python のパッケージとして入れる（`pyproject.toml` の `kyuura-engine`。依存のパッケージはない。Python 3.11 以上）。例: `pip install "kyuura-engine @ git+https://github.com/moheronemy/kyuura-engine@<commit>"`。開発中は、手元の作業ツリーを編集可能でインストールする（`pip install -e <path>`）。パッケージの公開（PyPI など）はしていない
+- 依存の方法（推奨）: このリポジトリの固定したコミットを Python のパッケージとして入れる（`pyproject.toml` の `kyuura-engine`。依存のパッケージはない。Python 3.11 以上）。例: `pip install "kyuura-engine @ git+https://github.com/moheronemy/kyuura-engine@<commit>"`。**訂正**: v0.164 の最終コミット `d0c5cfa` までは配布物に `kyuura_engine.resolution` が入らず、この通常のインストールでは `import kyuura_engine` が失敗した。`e8c518f` 以降のコミットを固定する（[installation.md](installation.md)）。編集可能インストール（`pip install -e <path>`）はエンジンの開発用で、GUI の必須の手段ではない。パッケージの公開（PyPI など）はしていない
 - 同じプロセスで使う: ホストの側で `ClientHub` を作り、入口を GUI の部品へ配る。要求・応答は JSON のオブジェクト（`dict`）
 - 別のプロセス・通信で使う: 要求・応答をそのまま JSON の文字列にして通す（通信の方式・認証・再送はホストするアプリケーションが作る）
 - 契約の識別と形式の版（`kyuura-client-api`・1）を GUI の側でも確かめる。形式の版が変わったら、知らない版として扱う

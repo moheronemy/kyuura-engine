@@ -5144,3 +5144,9 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - `examples/headless_client.py`: JSON の要求・応答だけで進める参照クライアント（番を終えるだけで山札がなくなって終局する）
 - 新しいファイルは識別の設計の部品 `client_api`（層 `api_format`）。識別の方式の移行・3 つの規約集合の変更はない。エンジンの処理は変えていない
 - 詳細: [client-api-v0.164.md](client-api-v0.164.md)
+
+### v0.164 の配布の修正（版は 0.164.0 のまま）
+
+- `pyproject.toml` の `packages = ["kyuura_engine"]` の固定の一覧では `kyuura_engine.resolution` が wheel・sdist に入らず、通常のインストールで `import kyuura_engine` が失敗した。`[tool.setuptools.packages.find]`（`kyuura_engine`・`kyuura_engine.*`。`namespaces = false`）で探し、sdist から `tests` を除く（`MANIFEST.in`）。`kyuura_engine` の中身・実装の識別は変えていない
+- 配布物を名前で照らす `scripts/check_distribution.py`、インストール先の確かめ `scripts/smoke_installed_package.py`、回帰テスト `tests/test_distribution.py`
+- 詳細と GUI が暫定の回避（`-e`）を外す手順: [installation.md](installation.md)
