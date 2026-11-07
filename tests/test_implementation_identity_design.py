@@ -34,10 +34,10 @@ class GeneratedTest(unittest.TestCase):
 
 class CoverageTest(unittest.TestCase):
     def test_added_and_removed_files_are_detected(self):
-        files = B.package_files() + ["legal_actions.py"]
+        files = B.package_files() + ["future_module_for_test.py"]
         files.remove("snapshot.py")
         problems = B.coverage_problems(written(), files)
-        self.assertIn("legal_actions.py に分類がない（パッケージに加わったファイル）", problems)
+        self.assertIn("future_module_for_test.py に分類がない（パッケージに加わったファイル）", problems)
         self.assertIn("snapshot.py の分類があるが、パッケージにない", problems)
 
     def test_file_in_two_components_is_detected(self):

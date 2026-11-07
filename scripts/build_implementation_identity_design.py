@@ -70,8 +70,9 @@ COMPONENTS = [
     {"id": "public_facade", "layer": "api_format", "files": ["__init__.py"],
      "role": "パッケージの公開の名前（import と __all__）と、エンジンの版の文字列（__version__）",
      "note": "処理を持たない（--check が import・代入・説明の文だけであることを確かめる）。版の文字列はここにあるので、今は版を上げるたびに behavior_digest が変わる（4 章）"},
-    {"id": "legal_actions", "layer": "api_format", "files": [], "status": "planned",
-     "role": "合法手 API（U7。docs/legal-actions-api-design.md）の操作候補・必要な入力の作成", "note": "まだファイルがない（実装のときに分類する）"},
+    {"id": "legal_actions", "layer": "api_format", "files": ["legal_actions.py"],
+     "role": "合法手 API（U7。docs/legal-actions-api-design.md）の操作候補・必要な入力の作成と、候補からの送信（U7-1 は決定への回答と番を終える。docs/legal-actions-u7-1.md）",
+     "note": "v0.160 で加えた。U2 の HostedGame・CommandResult と observe を使う（別の実行器を持たない）。現行の方式では behavior_digest に入る"},
 ]
 
 # 現行の方式（変えない）。--check がコードの値と照らす
@@ -161,10 +162,10 @@ FEATURES = [
      "auxiliary": ["engine_version", "convention_set"],
      "note": "表示用の記録で、再現の確かめではない（replay_verified はいつも偽）。形式の版と構造で読む。実装の識別の一致は求めない（今と同じ）。作った側の部品の識別は表示の補助"},
     {"id": "U7", "name": "将来の合法手 API（操作候補・必要な入力）",
-     "required": ["game_behavior", "diagnostics", "legal_actions"], "reader": [], "unused": ["adapter", "replay_record", "replay_run", "view_record", "snapshot", "snapshot_replay", "public_facade"],
+     "required": ["game_behavior", "diagnostics", "adapter", "legal_actions"], "reader": [], "unused": ["replay_record", "replay_run", "view_record", "snapshot", "snapshot_replay", "public_facade"],
      "formats": ["convention_set"],
      "auxiliary": ["engine_version"],
-     "note": "処理可能性の区分に診断のコード表を使う。候補はホストの中で、その時点の状態と動いている実装から作り、保存して別の実装で使わない（docs/legal-actions-api-design.md の状態との対応）。"
+     "note": "処理可能性の区分に診断のコード表を使い、送信は U2 のアダプタ（HostedGame・CommandResult）を通す。候補はホストの中で、その時点の状態と動いている実装から作り、保存して別の実装で使わない（docs/legal-actions-api-design.md の状態との対応）。"
              "候補の応答の形式の版は U7 で新しく設ける（legal_actions_format）。保存した候補を別の実装で読むことは対応しない"},
 ]
 

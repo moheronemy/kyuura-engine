@@ -52,7 +52,7 @@ v0.159（U1〜U6 の総合検証）のあとの設計案です。**設計と移�
 | `snapshot` | record_verification | 1 | 状態スナップショットの保存・復元の符号化（コーデック）・接続用確認値（U6） | 符号化の対応表は SNAPSHOT_FORMAT の中身で、名前のついた方式を持たない（初版は部品の識別の一致で守る） |
 | `snapshot_replay` | record_verification | 1 | 完全な記録とスナップショットの接続（U6-S5） | 読む側だけ |
 | `public_facade` | api_format | 1 | パッケージの公開の名前（import と __all__）と、エンジンの版の文字列（__version__） | 処理を持たない（--check が import・代入・説明の文だけであることを確かめる）。版の文字列はここにあるので、今は版を上げるたびに behavior_digest が変わる（4 章） |
-| `legal_actions`（予定） | api_format | 0 | 合法手 API（U7。docs/legal-actions-api-design.md）の操作候補・必要な入力の作成 | まだファイルがない（実装のときに分類する） |
+| `legal_actions` | api_format | 1 | 合法手 API（U7。docs/legal-actions-api-design.md）の操作候補・必要な入力の作成と、候補からの送信（U7-1 は決定への回答と番を終える。docs/legal-actions-u7-1.md） | v0.160 で加えた。U2 の HostedGame・CommandResult と observe を使う（別の実行器を持たない）。現行の方式では behavior_digest に入る |
 <!-- generated:components end -->
 
 ### 2.1 ファイルの分類
@@ -92,6 +92,7 @@ v0.159（U1〜U6 の総合検証）のあとの設計案です。**設計と移�
 | `history.py` | game_behavior | game_behavior |
 | `interruption.py` | game_behavior | game_behavior |
 | `judge.py` | game_behavior | game_behavior |
+| `legal_actions.py` | legal_actions | api_format |
 | `markers.py` | game_behavior | game_behavior |
 | `movement.py` | game_behavior | game_behavior |
 | `observation.py` | game_behavior | game_behavior |
@@ -194,7 +195,7 @@ v0.159（U1〜U6 の総合検証）のあとの設計案です。**設計と移�
 | S5 の接続の再現（replay_from_snapshot） | `game_behavior`<br>`diagnostics`<br>`adapter`<br>`replay_record`<br>`snapshot` | `replay_run`<br>`snapshot_replay` | `view_record`<br>`public_facade`<br>`legal_actions` | `replay_format`<br>`snapshot_format`<br>`state_export_format`<br>`state_check_method`<br>`rng_check_method`<br>`connection_check_method`<br>`record_identity_method`<br>`diagnostic_schema`<br>`rng_format`<br>`runtime`<br>`dependencies`<br>`convention_set` | engine_version<br>git_commit<br>origin<br>label | 記録の条件（U4）とスナップショットの条件の和。記録とスナップショットの部品の識別も互いに同じこと。from_connection は whole_record とは別の保証のまま |
 | 完全な記録からの閲覧用記録の作成（view_records_from_replay） | `game_behavior`<br>`diagnostics`<br>`adapter`<br>`replay_record` | `replay_run`<br>`view_record` | `snapshot`<br>`snapshot_replay`<br>`public_facade`<br>`legal_actions` | `replay_format`<br>`state_export_format`<br>`state_check_method`<br>`rng_check_method`<br>`diagnostic_schema`<br>`rng_format`<br>`runtime`<br>`dependencies`<br>`convention_set` | engine_version<br>git_commit | U4 が succeeded のときだけ作る。作った閲覧用記録は今の view_record の形式で、見出しに作った側の部品の識別を書く（観測は game_behavior に入るので、観測の違いは U4 の条件で拒む） |
 | 閲覧用記録の読み取り（validate_view_record・表示） | なし | `view_record` | `game_behavior`<br>`diagnostics`<br>`adapter`<br>`replay_record`<br>`replay_run`<br>`snapshot`<br>`snapshot_replay`<br>`public_facade`<br>`legal_actions` | `view_format`<br>`diagnostic_schema` | engine_version<br>convention_set | 表示用の記録で、再現の確かめではない（replay_verified はいつも偽）。形式の版と構造で読む。実装の識別の一致は求めない（今と同じ）。作った側の部品の識別は表示の補助 |
-| 将来の合法手 API（操作候補・必要な入力） | `game_behavior`<br>`diagnostics`<br>`legal_actions` | なし | `adapter`<br>`replay_record`<br>`replay_run`<br>`view_record`<br>`snapshot`<br>`snapshot_replay`<br>`public_facade` | `convention_set` | engine_version | 処理可能性の区分に診断のコード表を使う。候補はホストの中で、その時点の状態と動いている実装から作り、保存して別の実装で使わない（docs/legal-actions-api-design.md の状態との対応）。候補の応答の形式の版は U7 で新しく設ける（legal_actions_format）。保存した候補を別の実装で読むことは対応しない |
+| 将来の合法手 API（操作候補・必要な入力） | `game_behavior`<br>`diagnostics`<br>`adapter`<br>`legal_actions` | なし | `replay_record`<br>`replay_run`<br>`view_record`<br>`snapshot`<br>`snapshot_replay`<br>`public_facade` | `convention_set` | engine_version | 処理可能性の区分に診断のコード表を使い、送信は U2 のアダプタ（HostedGame・CommandResult）を通す。候補はホストの中で、その時点の状態と動いている実装から作り、保存して別の実装で使わない（docs/legal-actions-api-design.md の状態との対応）。候補の応答の形式の版は U7 で新しく設ける（legal_actions_format）。保存した候補を別の実装で読むことは対応しない |
 <!-- generated:features end -->
 
 - **一致が要る**: 記録・スナップショットの値（受理・拒否・コード・status・確認値・符号化した状態）を作った部品。記録の見出しの部品の識別と、今の実装の識別が同じこと
@@ -244,7 +245,7 @@ v0.159（U1〜U6 の総合検証）のあとの設計案です。**設計と移�
 
 - 現行の方式（形式 1 の記録・スナップショット）の判定は、どの段でも変えません。形式 1 の記録を新しい方式で読み替えません（部品の識別がないので、分けた判定に入れられない）
 - 新しい方式の記録を、現行の方式の判定で読みません（形式の版で分ける）
-- 合法手 API（U7）は、M3（部品の識別の計算）のあとに `legal_actions` の部品を分類に加えます。U7 の初版は保存した候補を扱わないので、M4 以後を待ちません（[legal-actions-api-implementation-plan.md](legal-actions-api-implementation-plan.md)）
+- 合法手 API（U7）は、保存した候補を扱わないので、M3 以後を待ちません（[legal-actions-api-implementation-plan.md](legal-actions-api-implementation-plan.md)）。v0.160（U7-1）で `kyuura_engine/legal_actions.py` を部品 `legal_actions` に分類しました（新しい方式は実装していない。現行の方式では `behavior_digest` に入るので、v0.159 までの記録・スナップショットは v0.160 では unsupported。いつもの版の更新と同じ）
 
 ## 9. 判断事項（利用者の判断が要る）
 

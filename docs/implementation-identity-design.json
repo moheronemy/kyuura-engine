@@ -149,10 +149,11 @@
   {
    "id": "legal_actions",
    "layer": "api_format",
-   "files": [],
-   "status": "planned",
-   "role": "合法手 API（U7。docs/legal-actions-api-design.md）の操作候補・必要な入力の作成",
-   "note": "まだファイルがない（実装のときに分類する）"
+   "files": [
+    "legal_actions.py"
+   ],
+   "role": "合法手 API（U7。docs/legal-actions-api-design.md）の操作候補・必要な入力の作成と、候補からの送信（U7-1 は決定への回答と番を終える。docs/legal-actions-u7-1.md）",
+   "note": "v0.160 で加えた。U2 の HostedGame・CommandResult と observe を使う（別の実行器を持たない）。現行の方式では behavior_digest に入る"
   }
  ],
  "current": {
@@ -555,11 +556,11 @@
    "required": [
     "game_behavior",
     "diagnostics",
+    "adapter",
     "legal_actions"
    ],
    "reader": [],
    "unused": [
-    "adapter",
     "replay_record",
     "replay_run",
     "view_record",
@@ -573,7 +574,7 @@
    "auxiliary": [
     "engine_version"
    ],
-   "note": "処理可能性の区分に診断のコード表を使う。候補はホストの中で、その時点の状態と動いている実装から作り、保存して別の実装で使わない（docs/legal-actions-api-design.md の状態との対応）。候補の応答の形式の版は U7 で新しく設ける（legal_actions_format）。保存した候補を別の実装で読むことは対応しない"
+   "note": "処理可能性の区分に診断のコード表を使い、送信は U2 のアダプタ（HostedGame・CommandResult）を通す。候補はホストの中で、その時点の状態と動いている実装から作り、保存して別の実装で使わない（docs/legal-actions-api-design.md の状態との対応）。候補の応答の形式の版は U7 で新しく設ける（legal_actions_format）。保存した候補を別の実装で読むことは対応しない"
   }
  ],
  "dependency_exceptions": [
