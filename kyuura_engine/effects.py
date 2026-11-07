@@ -21867,7 +21867,25 @@ class TrainerCoinStadium(StadiumEffect):
 
 def borrow_unusable_reason(state: GameState, effect: TrainerEffect, use: TrainerUse) -> str | None:
     """錯乱ジムで、相手プレイヤー（``use.player``）がかわりに使えない理由（ポケモンにつけて使う・場に出して使うカード・使うための条件を満たせない・トレーナーの使用の禁止）。
-    使えるなら None。決められない（使うための条件の確認が ``UnsupportedError``）なら、その例外をそのまま投げる（呼ぶ側が、使うことを選ぶと止める選択にする）。"""
+    使えるなら None。決められない（使うための条件の確認が ``UnsupportedError``）なら、その例外をそのまま投げる（呼ぶ側が、使うことを選ぶと止める選択にする）。
+
+    v0.168（T-F1。docs/chaos-gym-borrow-t-f1.md）: 公開の情報で決まる部分（``borrow_public_unusable_reason``）と、使う人の手札・山札を読みうる使うための条件
+    （``check_playable``）を合わせた判定。後の部分は使う人だけが知る情報で決まるので、その結果を公開の分岐（決定を出すか・選べるものの数・公開のログ）に使わない。
+    v0.168 からエンジンの分岐には使わない（使う人だけが知る情報を含む判定として残す。答えたときの確かめは ``require_borrow_playable``）"""
+    reason = borrow_public_unusable_reason(state, effect, use)
+    if reason is not None:
+        return reason
+    try:
+        effect.check_playable(state, use)
+    except IllegalActionError as error:
+        return f"使うための条件を満たせない（{error.code}）"
+    return None
+
+
+def borrow_public_unusable_reason(state: GameState, effect: TrainerEffect, use: TrainerUse) -> str | None:
+    """v0.168（T-F1）: 錯乱ジム・サイキックコントロールで、相手のカードをかわりに使えない理由のうち、公開の情報だけで決まるもの（カードの性質: ポケモンにつけて使う・
+    場に出して使う・スタジアム。場の力・期限のある禁止によるトレーナーの使用の禁止）。なければ None。手札から出して使う禁止（TL1）は決められないので ``UnsupportedError``。
+    使うための条件（``check_playable``。使う人の手札・山札を読みうる）は見ない（``borrow_unusable_reason``）。"""
     if effect.stays_in_play or effect.enters_play or effect.is_stadium:
         return "ポケモンにつけて使うカード・場に出して使うカード"
     if trainer_use_blockers(state, use.player, from_hand=False):
@@ -21875,11 +21893,25 @@ def borrow_unusable_reason(state: GameState, effect: TrainerEffect, use: Trainer
     if trainer_use_blockers(state, use.player):
         # v0.80（TL1）: 「手札から「トレーナーカード」を出して使うことができない」プレイヤーが、錯乱ジムで相手の手札から出たカードをかわりに使えるか
         raise UnsupportedError(HAND_TRAINER_LOCK_BORROW_CODE, HAND_TRAINER_LOCK_BORROW_REASON)
+    return None
+
+
+def borrow_condition_stop(state: GameState, effect: TrainerEffect, use: TrainerUse) -> UnsupportedError | None:
+    """v0.168（T-F1）: 使う人（``use.player``）の使うための条件の確かめが決められない（``UnsupportedError``）なら、その例外（使うことを選ぶと止める選択にする。決定の続きの
+    情報で、答える人だけに見える）。満たせない（``IllegalActionError``）・満たせるなら None（満たせないことは、使う人が「使う」と答えたときに拒否する。公開の分岐にしない）。"""
     try:
         effect.check_playable(state, use)
-    except IllegalActionError as error:
-        return f"使うための条件を満たせない（{error.code}）"
+    except UnsupportedError as error:
+        return error
+    except IllegalActionError:
+        return None
     return None
+
+
+def require_borrow_playable(state: GameState, effect: TrainerEffect, use: TrainerUse) -> None:
+    """v0.168（T-F1）: 使う人が、相手のカードを「使う」と答えたときの使うための条件の確かめ。満たせなければ、そのカードの確かめの ``IllegalActionError`` をそのまま上げる
+    （答えの拒否。状態・乱数・ログを変えない。拒否は答えた人にだけ返り、相手・観戦者への公開の更新を作らない）。"""
+    effect.check_playable(state, use)
 
 
 # ---------------------------------------------------------------- v0.58 ナツメのサイキックコントロール（docs/stadium-reuse-special-energy-v0.58.md 4 章）
@@ -21905,7 +21937,9 @@ def discard_trainer_use_choices(state: GameState, user: int) -> tuple[tuple[int,
     - 相手のトラッシュのトレーナーカード（トラッシュにある間の印刷の分類。なにかの化石・ピッピ人形もトレーナーカード）で、効果の登録表に実装があるもの
     - ポケモンにつけて使うカード（``stays_in_play``）・場に出して使うカード（``enters_play``。ポケモンとして出す。``is_stadium``。スタジアムもバトル場の横に出して使う）は
       除く（効果の性質で決める。カード id で決めない。錯乱ジムの ``borrow_unusable_reason`` と同じ確かめ）
-    - 使うための条件（``check_playable``）を、使うプレイヤー ``user`` の手札・場で満たせないカードは除く（「満たせない時も、使うことができない」）。場のリムーブ禁止ジムの追加の
+    - v0.168（T-F1）: 使うための条件（``check_playable``）は使うプレイヤーの手札・山札を読みうるので、選べるもの（数は相手にも見える）を選り分けるのに使わない。
+      満たせないカードを選んだ答えは拒否する（``UseOpponentDiscardTrainer.resume``。「満たせない時も、使うことができない」）。v0.167 までは除いていた（相手に手札の中身が伝わった）
+    - （v0.167 までの説明）使うための条件（``check_playable``）を、使うプレイヤー ``user`` の手札・場で満たせないカードは除く（「満たせない時も、使うことができない」）。場のリムーブ禁止ジムの追加の
       条件（手札から 2 枚。このカードは手札にないので、手札の枚数そのもので数える）も条件に含める。決められない（``UnsupportedError``）なら選ぶと止める
     - 使うプレイヤーが番のプレイヤーでない（錯乱ジムで相手がサイキックコントロールを借りて使った）とき、説明が使ったプレイヤーの番を書くカード（``refers_to_user_turn``）は
       CH1（選ぶと止める）。自分の番に使うなら、借りたことだけで CH1 にしない
@@ -21921,12 +21955,17 @@ def discard_trainer_use_choices(state: GameState, user: int) -> tuple[tuple[int,
             continue
         use = TrainerUse(user, uid, definition.id)
         try:
-            reason = borrow_unusable_reason(state, effect, use)
+            reason = borrow_public_unusable_reason(state, effect, use)
         except UnsupportedError as error:
             options.append(uid)
             stops.append((uid, error.code, error.message))
             continue
         if reason is not None:
+            continue
+        stop = borrow_condition_stop(state, effect, use)  # 決められない使うための条件は選ぶと止める（答える人だけに見える）。満たせないカードは選べるものに残す
+        if stop is not None:
+            options.append(uid)
+            stops.append((uid, stop.code, stop.message))
             continue
         extra = stadium_trainer_cost(state, definition)
         if extra is not None and len(state.players[user].hand) < extra[1].discard:
@@ -21982,6 +22021,9 @@ class UseOpponentDiscardTrainer(TrainerEffect):
         options, _ = discard_trainer_use_choices(state, use.player)
         if card not in options:
             raise RuntimeError(f"サイキックコントロールで選んだカード {card} が、使えるカードではない（エンジンの不具合）")
+        # v0.168（T-F1）: 使うための条件は、選んだときに確かめる（満たせなければ答えの拒否。状態・乱数・ログを変えない）
+        definition = state.card_def(card)
+        require_borrow_playable(state, state.effects.trainer_effect(definition), TrainerUse(use.player, card, definition.id))
         return UseDiscardTrainer(card)
 
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:

@@ -177,7 +177,9 @@ from .effects import (
     EvolutionHealStadium,
     apply_evolution_heal,
     bench_entry_damage,
-    borrow_unusable_reason,
+    borrow_condition_stop,
+    borrow_public_unusable_reason,
+    require_borrow_playable,
     offer_evolution_heal,
     stadium_of,
     pay_stadium_trainer_cost,
@@ -2178,16 +2180,23 @@ def _play_stadium(state: GameState, player: int, card: int, effect) -> None:
 
 def _chaos_tails(state: GameState, use: TrainerUse, effect, stadium, context: resolution.Context) -> None:
     """錯乱ジムのコインが「うら」（v0.57。docs/stadiums-v0.57.md 7 章）: 使ったプレイヤーはそのカードを使えない（使うための条件を払わない）。相手プレイヤーがかわりに使えるか
-    （``effects.borrow_unusable_reason``）を確かめ、使えるなら相手プレイヤーに聞く（決定 ``ACCEPT_REQUEST``。続きの情報の ``chaos``）。使えないなら、カードを持ち主の
+    （v0.168 から、公開の情報で決まる部分 ``effects.borrow_public_unusable_reason`` だけで分ける。使うための条件は「使う」と答えたときに確かめる）を確かめ、使えるなら相手プレイヤーに聞く（決定 ``ACCEPT_REQUEST``。続きの情報の ``chaos``）。使えないなら、カードを持ち主の
     トラッシュにすてる（ログ ``chaos_not_borrowable``）。相手が使うことを選ぶと決められない（CH1 など）カード・決められない使うための条件は、選ぶと止める選択にする。"""
     borrower = 1 - use.player  # v0.58: 使うプレイヤーの相手（手札から使うなら持ち主の相手。外側のトレーナーの効果で使うなら、使うプレイヤーの相手 = カードの持ち主）
     borrowed = TrainerUse(borrower, use.card, use.card_id)
     unresolved: dict = {}
+    # v0.168（T-F1。docs/chaos-gym-borrow-t-f1.md）: 聞かずにトラッシュするのは、公開の情報だけで使えないと決まるとき（カードの性質・トレーナーの使用の禁止）だけ。
+    # 使うための条件（相手の手札・山札を読みうる）を満たせるかで、聞くか・公開のログを分けない（v0.167 までは分けていたので、相手の手札の中身が使ったプレイヤーに伝わった）。
+    # 満たせないのに「使う」と答えたら、答えを拒否する（``_resume_trainer``。「使わない」はいつも答えになる）
     try:
-        reason = borrow_unusable_reason(state, effect, borrowed)
+        reason = borrow_public_unusable_reason(state, effect, borrowed)
     except UnsupportedError as error:
         reason = None
         unresolved = {"unresolved_choices": (1,), "unresolved_code": error.code, "unresolved_reason": error.message}
+    if reason is None and not unresolved:
+        stop = borrow_condition_stop(state, effect, borrowed)  # 決められない使うための条件は、使うことを選ぶと止める（決定の続きの情報。答える人だけに見える）
+        if stop is not None:
+            unresolved = {"unresolved_choices": (1,), "unresolved_code": stop.code, "unresolved_reason": stop.message}
     if reason is not None:
         state.add_event("chaos_not_borrowable", player=borrower, card=use.card, owner=use.player, reason=reason)
         _finish_trainer(state, effect, context, discard_only=True)
@@ -2303,6 +2312,8 @@ def _resume_trainer(state: GameState, decision, choices: tuple[int, ...], contex
         if not choices:
             _finish_trainer(state, entry.effect, context, discard_only=True)
             return
+        # v0.168（T-F1）: 使うための条件は、使うと答えたときに確かめる（満たせなければ、この答えを拒否する。状態・乱数・ログは変わらない。拒否は答えた人にだけ返る）
+        require_borrow_playable(state, entry.effect, TrainerUse(borrower, card, card_id))
         # v0.58: 持ち主・外側の使用（``via``）は変えず、使うプレイヤーだけを変える（外側のトレーナーの効果で使っているカードでは、借りるのが持ち主自身のことがある）
         current = state.trainer_in_use
         state.trainer_in_use = TrainerInUse(current.player, card, user=None if borrower == current.player else borrower, via=current.via)
