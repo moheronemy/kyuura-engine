@@ -1,0 +1,2 @@
+# sdist に入れないもの（setuptools が既定で入れる tests/test*.py。テストはリポジトリの docs・scripts などに依存し、配布物だけでは動かない）
+prune tests

@@ -10,8 +10,10 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = []
 
-[tool.setuptools]
-packages = ["kyuura_engine"]
+# 実行時のパッケージ（kyuura_engine と、__init__.py のあるサブパッケージ。resolution など）を探して入れる。tests・scripts・tools・examples は入れない
+[tool.setuptools.packages.find]
+include = ["kyuura_engine", "kyuura_engine.*"]
+namespaces = false
 
 [tool.setuptools.package-data]
 kyuura_engine = ["data/*.json"]
