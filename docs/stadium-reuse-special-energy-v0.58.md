@@ -107,6 +107,7 @@ pcg-search.com の同じ版のページとの照合（`card_sources.json` の `e
 - 使えるカード: 相手のトラッシュのトレーナーカード（トラッシュにある間の印刷の分類）で、登録があり、ポケモンにつけて使う（`stays_in_play`）・場に出して使う
   （`enters_play`。なにかの化石・ピッピ人形）・スタジアム（`is_stadium`）でないもの。使うための条件（`check_playable`）を使ったプレイヤーの手札・場で満たせないカードは
   除く。場のリムーブ禁止ジムの追加の 2 枚も使ったプレイヤーの手札で数える。条件の確認が決められない（`UnsupportedError`）カードは、選べるが選ぶと止める。
+  - v0.168（T-F1。[chaos-gym-borrow-t-f1.md](chaos-gym-borrow-t-f1.md)）: 使うための条件を満たせないカードは選べるものから除かず、選んだ答えを拒否する（選べるものの数は相手にも見えるので、使ったプレイヤーの手札の中身で変えない）
 - 選んだら、外側の使用を `GameState.trainer_stack` に積み、カードを相手のトラッシュから使用中の場所（`trainer_in_use`）に移す（同じ uid・持ち主のまま。複製しない・
   使ったプレイヤーの手札に移さない）。`TrainerInUse.via` は外側のカード、`user` は使うプレイヤー（持ち主と違うとき）。ログ `play_trainer` の `player` は使うプレイヤー、
   `owner` は持ち主、`source_zone` は `discard`、`via` は外側のカード。英語版の「The card stays in your opponent's discard pile」は根拠にしない（日本語の「手札にあるものと

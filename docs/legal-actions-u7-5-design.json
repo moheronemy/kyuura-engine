@@ -1335,11 +1335,14 @@
     "U7-5b"
    ],
    "first": false,
+   "status": "implemented",
+   "implemented_in": "v0.168（docs/chaos-gym-borrow-t-f1.md。サイキックコントロールの F-8 もいっしょに直した）",
    "basis": [
     "F-1: 錯乱ジムの「うら」で、相手がかわりに使えるかの確かめが相手の手札の中身を読み、その結果が公開のログと決定の有無で伝わる（再現済み）"
    ],
    "changes": [
-    "engine.py・effects.py: 相手がかわりに使えるかの扱い（裁定・原典の記録と照らして別の作業で決める。U7-5a・b では変えない）"
+    "effects.py: borrow_public_unusable_reason・borrow_condition_stop・require_borrow_playable（公開の部分と、使う人だけが知る使うための条件を分ける）。サイキックコントロールの選べるもの・答えの確かめ",
+    "engine.py: _chaos_tails（公開の分岐）・_resume_trainer（「使う」の答えの確かめ）"
    ],
    "tests": [
     [
@@ -1391,9 +1394,9 @@
     "tests/test_stadiums_v0_57.py（錯乱ジム）"
    ],
    "done": "相手の手札の中身だけを変えた双子で、使ったプレイヤー・観戦者が受け取る公開の情報が一致する。2 つのモードで同じ扱い",
-   "gui": "錯乱ジムの「うら」のあとの決定・ログの表示（扱いが決まってから）",
+   "gui": "錯乱ジムの「うら」のあとは、使えない人にも決定が出る。「使う」の拒否は答えた人にだけ返る",
    "open": [
-    "扱いの決定（推測で裁定にしない）"
+    "F-9（公開の情報だけで満たせないと分かる使うための条件を、公開の分岐に戻すかの判断と監査）"
    ]
   },
   {
@@ -1407,6 +1410,7 @@
     "T-F1"
    ],
    "first": false,
+   "dependencies_met": "T-F1 は v0.168 で実装（U7-5b は v0.167）。U7-5c は未実装",
    "basis": [
     "宣言の入力は card だけ。対象・枚数・検索はすべて受理のあとの決定（answer_decision で答えられる）",
     "受理の前の確かめ（PT-1〜PT-7）は A・A-own で、カードごとの確かめの 11 の実装（試行）だけが E"
@@ -1781,15 +1785,20 @@
  "findings": [
   {
    "id": "F-1",
-   "kind": "情報境界（要判断）",
-   "status": "reproduced",
+   "kind": "情報境界",
+   "status": "fixed",
+   "history": [
+    "v0.166 のあとの U7-5 の設計の調査で見つけ、作業用のスクリプトの双子で再現した（2026-11-08）",
+    "T-F1 で、修正の前の木に回帰テスト（tests/test_chaos_gym_borrow_t_f1.py）を加えて再び再現した（漏れを見つけた失敗 4 件）",
+    "v0.168（T-F1。docs/chaos-gym-borrow-t-f1.md）で直した: 公開の分岐を公開の情報だけで決め、使うための条件は「使う」と答えたときに確かめる"
+   ],
    "summary": "錯乱ジムの「うら」で、相手がかわりに使えるかの確かめ（borrow_unusable_reason → check_playable）が相手の手札の中身を読み、その結果が公開のログ chaos_not_borrowable（理由にコード）と、決定 ACCEPT_REQUEST が出るかで、使ったプレイヤーに伝わる",
    "evidence": "双子（使ったプレイヤーの手札にポケモン育て屋さんとリザードン、場にヒトカゲ。相手のバトル場もヒトカゲ。相手の手札 1 枚がリザードンか水エネルギーかだけが違う）で、片方は ACCEPT_REQUEST（相手）、片方は chaos_not_borrowable（NO_EVOLUTION_TARGET）",
    "refs": [
     "kyuura_engine/engine.py::_chaos_tails",
     "kyuura_engine/effects.py::borrow_unusable_reason"
    ],
-   "impact": "U7 の候補は作らないが、受理のあとの決定と公開のログで起こる。両モード共通の不具合として、トレーナー（U7-5c）の前に独立の作業 T-F1 で直す（ADOPT-U7-5AB）。U7-5a・b では裁定・動作を変えない"
+   "impact": "U7 の候補は作らないが、受理のあとの決定と公開のログで起こる。両モード共通の不具合として、トレーナー（U7-5c）の前の独立の作業 T-F1 で直した（v0.168）。処理の段階: トレーナーを使う手順の錯乱ジムの「うら」のあと（engine._chaos_tails）。停止のコード（CH1・MG1・TL1）は不具合ではなく、変えていない"
   },
   {
    "id": "F-2",
@@ -1848,6 +1857,30 @@
     "kyuura_engine/engine.py::_check_face_up_deck_card"
    ],
    "impact": "番でない主体の候補に出すかは D-U75-FACE-UP"
+  },
+  {
+   "id": "F-8",
+   "kind": "情報境界（F-1 と同じ共通の経路）",
+   "status": "fixed",
+   "summary": "ナツメのサイキックコントロールの選べるもの（相手のトラッシュのトレーナー）を、使う人の使うための条件（手札・山札を読みうる）で選り分けていたので、選べるものの数（相手にも見える option_count）と、選べるものがないときの公開のログ discard_trainer_use_none が、使う人の手札の中身で変わった",
+   "evidence": "T-F1 の回帰テストの双子（使う人の手札の 1 枚がヒトカゲか水エネルギーか。相手のトラッシュにポケモン交換おじさん）で、修正の前は相手の観測が違った",
+   "refs": [
+    "kyuura_engine/effects.py::discard_trainer_use_choices",
+    "kyuura_engine/effects.py::UseOpponentDiscardTrainer.resume"
+   ],
+   "impact": "v0.168（T-F1）で直した。選べるものは公開の情報だけで作り、満たせないカードを選んだ答えを拒否する"
+  },
+  {
+   "id": "F-9",
+   "kind": "未対応（判断が要る）",
+   "status": "code_basis",
+   "summary": "公開の情報だけで満たせないと分かる使うための条件（自分のポケモンにエネルギーがない超エネルギーリムーブなど）も、T-F1 のあとは決定（または選べるもの）に残り、答えで拒否する。check_playable が、読む情報が公開か本人だけのものかを返さないため",
+   "evidence": "tests/test_stadium_reuse_special_energy_v0_58.py の期待を直した（意図した差）",
+   "refs": [
+    "kyuura_engine/effects.py::TrainerEffect.check_playable",
+    "kyuura_engine/effects.py::borrow_public_unusable_reason"
+   ],
+   "impact": "公開の分岐に戻すには、77 の実装を型ごとに「公開の情報だけ」と宣言してテストで確かめる監査が要る。監査して戻すか、一様な扱いのままにするかは利用者の判断"
   },
   {
    "id": "F-7",
@@ -1959,7 +1992,8 @@
   ],
   "implemented_units": [
    "U7-5a",
-   "U7-5b"
+   "U7-5b",
+   "T-F1"
   ],
   "corrections": [
    {

@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.167）
+# 実装状況（v0.1〜v0.168）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d`（v0.128 から。v0.129 の種族の身長の写しは別に `9242b9be89be0f747279f39c11875d1ed61763ec`。v0.126〜v0.127 は `57d01f45cfb8b086d03dc0525b329cf6adeff69b`、v0.125 は `134a664c6adf67d5604148a31b58e1a7d26d4d6d`、v0.124 は `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`、v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -5183,3 +5183,13 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 停止の台帳（`docs/stop-policy-classification.json`）は `engine.py` の行番号だけが変わった
 - GUI が固定するコミット: `669f3cafbffdc3a13c05b5f76c96e5a6925fca06`（版 0.167.0。Git の URL からの通常のインストールとスモークテストで確かめた。[legal-actions-u7-5ab.md](legal-actions-u7-5ab.md) 8 章）
 - 詳細: [legal-actions-u7-5ab.md](legal-actions-u7-5ab.md)
+
+## v0.168: 錯乱ジムで相手がかわりに使えるかの判定からの情報漏れの修正（T-F1）
+
+- 錯乱ジムの「うら」: 聞かずにトラッシュする（ログ `chaos_not_borrowable`）のは、公開の情報だけで使えないと決まるとき（カードの性質・トレーナーの使用の禁止）だけにした。ほかは、いつも相手に `ACCEPT_REQUEST` を出す。相手が使うための条件を満たせないのに「使う」と答えたら、答えを拒否する（状態・乱数・ログを変えない。拒否は答えた人にだけ返る）
+- ナツメのサイキックコントロール: 選べるものを公開の情報だけで作り、使うための条件を満たせないカードを選んだ答えを拒否する（選べるものの数・`discard_trainer_use_none` が使う人の手札の中身で変わっていた。F-8）
+- 新しい関数: `effects.borrow_public_unusable_reason`・`borrow_condition_stop`・`require_borrow_playable`。CH1・MG1・TL1 の止め方、使う前の確かめ・コイン・費用・効果の順は変えていない。続行規約・カード ID の分岐は加えていない
+- 意図した差: 相手が使うための条件を満たせない場面で、決定が出て「使わない」と答える操作列になる（v0.167 までは聞かずにトラッシュ）。公開の情報だけで満たせないと分かる条件も同じ扱い（F-9。戻すには型ごとの監査が要る）。既存のテストの期待を 1 か所直した
+- 停止の台帳（`docs/stop-policy-classification.json`）は `engine.py`・`effects.py` の行番号だけが変わった
+- U7-5 の設計の F-1・F-8 を fixed、T-F1 を implemented にし、U7-5c の依存が満たされたことを記録した（U7-5c は未実装）
+- 詳細: [chaos-gym-borrow-t-f1.md](chaos-gym-borrow-t-f1.md)

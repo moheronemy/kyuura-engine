@@ -41,8 +41,9 @@ class CheckTest(unittest.TestCase):
 
     def test_only_adopted_units_are_implemented(self):
         spec = written()
-        self.assertEqual([u["id"] for u in spec["units"] if u.get("status") == "implemented"], ["U7-5a", "U7-5b"])
-        self.assertEqual(spec["adoption_record"]["implemented_units"], ["U7-5a", "U7-5b"])
+        self.assertEqual([u["id"] for u in spec["units"] if u.get("status") == "implemented"], ["U7-5a", "U7-5b", "T-F1"])  # T-F1 は v0.168
+        self.assertEqual(spec["adoption_record"]["implemented_units"], ["U7-5a", "U7-5b", "T-F1"])
+        self.assertEqual(next(f for f in spec["findings"] if f["id"] == "F-1")["status"], "fixed")
         self.assertEqual([u["id"] for u in spec["units"] if u["first"]], ["U7-5a"])
         self.assertEqual(spec["adoption"]["approval"], "not_approved")
         self.assertIn("T-F1", next(u for u in spec["units"] if u["id"] == "U7-5c")["depends"])  # F-1 はトレーナーの前に直す

@@ -389,13 +389,17 @@ UNITS = [
      "gui": "1 段。おもてにしたあとの公開のログ（secret_plan_revealed・secret_plan_discarded）の表示", "open": [], "status": "implemented",
      "implemented_in": "v0.167（docs/legal-actions-u7-5ab.md）"},
     {"id": "T-F1", "name": "錯乱ジムの情報漏れ F-1 の修正（両モード共通の不具合。トレーナーの前の独立した作業）", "commands": [], "depends": ["U7-5b"], "first": False,
+     "status": "implemented", "implemented_in": "v0.168（docs/chaos-gym-borrow-t-f1.md。サイキックコントロールの F-8 もいっしょに直した）",
      "basis": ["F-1: 錯乱ジムの「うら」で、相手がかわりに使えるかの確かめが相手の手札の中身を読み、その結果が公開のログと決定の有無で伝わる（再現済み）"],
-     "changes": ["engine.py・effects.py: 相手がかわりに使えるかの扱い（裁定・原典の記録と照らして別の作業で決める。U7-5a・b では変えない）"],
+     "changes": ["effects.py: borrow_public_unusable_reason・borrow_condition_stop・require_borrow_playable（公開の部分と、使う人だけが知る使うための条件を分ける）。サイキックコントロールの選べるもの・答えの確かめ",
+                 "engine.py: _chaos_tails（公開の分岐）・_resume_trainer（「使う」の答えの確かめ）"],
      "tests": [["V-NORMAL", "board"], ["V-NONTURN", "board"], ["V-NOSIDE", "board"], ["V-BADQUERY", "helper"], ["V-PARITY", "board"], ["V-HANDLE", "board"],
                ["V-CONV", "sequence"], ["V-TWIN", "board"], ["V-INSTALL", "sequence"], ["V-REGRESS", "board"], ["V-JSON", "helper"]],
      "boards": ["tests/test_stadiums_v0_57.py（錯乱ジム）"], "done": "相手の手札の中身だけを変えた双子で、使ったプレイヤー・観戦者が受け取る公開の情報が一致する。2 つのモードで同じ扱い",
-     "gui": "錯乱ジムの「うら」のあとの決定・ログの表示（扱いが決まってから）", "open": ["扱いの決定（推測で裁定にしない）"]},
+     "gui": "錯乱ジムの「うら」のあとは、使えない人にも決定が出る。「使う」の拒否は答えた人にだけ返る",
+     "open": ["F-9（公開の情報だけで満たせないと分かる使うための条件を、公開の分岐に戻すかの判断と監査）"]},
     {"id": "U7-5c", "name": "手札のトレーナー（PlayTrainer）", "commands": ["PlayTrainer"], "depends": ["U7-5b", "T-F1"], "first": False,
+     "dependencies_met": "T-F1 は v0.168 で実装（U7-5b は v0.167）。U7-5c は未実装",
      "basis": ["宣言の入力は card だけ。対象・枚数・検索はすべて受理のあとの決定（answer_decision で答えられる）",
                "受理の前の確かめ（PT-1〜PT-7）は A・A-own で、カードごとの確かめの 11 の実装（試行）だけが E"],
      "changes": ["engine.py: _play_trainer の手札から出す前の部分を check_play_trainer にする",
@@ -442,14 +446,17 @@ UNITS = [
 # ---------------------------------------------------------------- 調査で見つけたこと（エンジンは直さない）
 
 FINDINGS = [
-    {"id": "F-1", "kind": "情報境界（要判断）", "status": "reproduced",
+    {"id": "F-1", "kind": "情報境界", "status": "fixed",
+     "history": ["v0.166 のあとの U7-5 の設計の調査で見つけ、作業用のスクリプトの双子で再現した（2026-11-08）",
+                 "T-F1 で、修正の前の木に回帰テスト（tests/test_chaos_gym_borrow_t_f1.py）を加えて再び再現した（漏れを見つけた失敗 4 件）",
+                 "v0.168（T-F1。docs/chaos-gym-borrow-t-f1.md）で直した: 公開の分岐を公開の情報だけで決め、使うための条件は「使う」と答えたときに確かめる"],
      "summary": "錯乱ジムの「うら」で、相手がかわりに使えるかの確かめ（borrow_unusable_reason → check_playable）が相手の手札の中身を読み、その結果が公開のログ "
                 "chaos_not_borrowable（理由にコード）と、決定 ACCEPT_REQUEST が出るかで、使ったプレイヤーに伝わる",
      "evidence": "双子（使ったプレイヤーの手札にポケモン育て屋さんとリザードン、場にヒトカゲ。相手のバトル場もヒトカゲ。相手の手札 1 枚がリザードンか水エネルギーかだけが違う）で、"
                  "片方は ACCEPT_REQUEST（相手）、片方は chaos_not_borrowable（NO_EVOLUTION_TARGET）",
      "refs": [f"{ENGINE}::_chaos_tails", f"{EFFECTS}::borrow_unusable_reason"],
-     "impact": "U7 の候補は作らないが、受理のあとの決定と公開のログで起こる。両モード共通の不具合として、トレーナー（U7-5c）の前に独立の作業 T-F1 で直す（ADOPT-U7-5AB）。"
-               "U7-5a・b では裁定・動作を変えない"},
+     "impact": "U7 の候補は作らないが、受理のあとの決定と公開のログで起こる。両モード共通の不具合として、トレーナー（U7-5c）の前の独立の作業 T-F1 で直した（v0.168）。"
+               "処理の段階: トレーナーを使う手順の錯乱ジムの「うら」のあと（engine._chaos_tails）。停止のコード（CH1・MG1・TL1）は不具合ではなく、変えていない"},
     {"id": "F-2", "kind": "拒否のコードの不一致", "status": "reproduced",
      "summary": "本人のうらのカードを DiscardFromPlay で指すと、NOT_DISCARDABLE ではなく FD1（HiddenPropertyRead）で拒否する（理由の文を作るときに名前を読む）",
      "evidence": "マチスの秘策でうらにしたディグダ・プラスパワー・ユンゲラーのどれでも同じ FD1（本当のカードによらない。漏れではない）",
@@ -472,6 +479,18 @@ FINDINGS = [
     {"id": "F-6", "kind": "入口の確かめの範囲", "status": "code_basis",
      "summary": "CheckFaceUpDeckCard は番・段階を確かめない（どの場合も受け付けないので、状態は変わらない）",
      "evidence": "engine.py の _check_face_up_deck_card", "refs": [f"{ENGINE}::_check_face_up_deck_card"], "impact": "番でない主体の候補に出すかは D-U75-FACE-UP"},
+    {"id": "F-8", "kind": "情報境界（F-1 と同じ共通の経路）", "status": "fixed",
+     "summary": "ナツメのサイキックコントロールの選べるもの（相手のトラッシュのトレーナー）を、使う人の使うための条件（手札・山札を読みうる）で選り分けていたので、"
+                "選べるものの数（相手にも見える option_count）と、選べるものがないときの公開のログ discard_trainer_use_none が、使う人の手札の中身で変わった",
+     "evidence": "T-F1 の回帰テストの双子（使う人の手札の 1 枚がヒトカゲか水エネルギーか。相手のトラッシュにポケモン交換おじさん）で、修正の前は相手の観測が違った",
+     "refs": [f"{EFFECTS}::discard_trainer_use_choices", f"{EFFECTS}::UseOpponentDiscardTrainer.resume"],
+     "impact": "v0.168（T-F1）で直した。選べるものは公開の情報だけで作り、満たせないカードを選んだ答えを拒否する"},
+    {"id": "F-9", "kind": "未対応（判断が要る）", "status": "code_basis",
+     "summary": "公開の情報だけで満たせないと分かる使うための条件（自分のポケモンにエネルギーがない超エネルギーリムーブなど）も、T-F1 のあとは決定（または選べるもの）に残り、"
+                "答えで拒否する。check_playable が、読む情報が公開か本人だけのものかを返さないため",
+     "evidence": "tests/test_stadium_reuse_special_energy_v0_58.py の期待を直した（意図した差）",
+     "refs": [f"{EFFECTS}::TrainerEffect.check_playable", f"{EFFECTS}::borrow_public_unusable_reason"],
+     "impact": "公開の分岐に戻すには、77 の実装を型ごとに「公開の情報だけ」と宣言してテストで確かめる監査が要る。監査して戻すか、一様な扱いのままにするかは利用者の判断"},
     {"id": "F-7", "kind": "候補の取得の失敗（U7-3。直した）", "status": "reproduced",
      "summary": "にげるの候補が、バトル場のなにかの化石・ピッピ人形（PF2）と自分のうらのバトル場のポケモン（FD1）で、にげるエネルギーを求めて例外になり、"
                 "候補の取得そのものが失敗していた（v0.165〜v0.166）",
@@ -511,7 +530,7 @@ ADOPTION_RECORD = {
         {"id": "D-U75-CHAOS", "decision": "F-1 は両モード共通の不具合として別の作業 T-F1 で直す（トレーナーの前）。U7-5a・b では裁定・動作を変えない"},
         {"id": "D-U75-ENERGY2", "decision": "カツラの 2 枚目（AttachEnergy.energy2）は U7-5g に含める"},
     ],
-    "implemented_units": ["U7-5a", "U7-5b"],
+    "implemented_units": ["U7-5a", "U7-5b", "T-F1"],  # T-F1 は 2026-11-08 の依頼で v0.168 に実装（進め方の 2 番目）
     "corrections": [
         {"id": "CORR-1", "subject": "E 群の意味", "text": "情報源が未確認の経路を、処理可能性の unverified だけで公開してよいと扱わない。処理可能性と入力の公開の安全性は別の軸。"
          "選べるもの・件数・理由を公開して安全と確かめられないなら、入力は返さない（unconfirmed）。型・生成箇所の登録だけで安全と認めない"},
@@ -782,7 +801,7 @@ def spec_problems(spec: dict) -> list[str]:
         if set(u["commands"]) & e_commands and not u["open"]:
             problems.append(f"{u['id']}: 情報源が未確認（E）の確かめがあるのに、残る事項（open）がない")
     for f in spec["findings"]:
-        if f["status"] not in ("reproduced", "code_basis", "unconfirmed") or not f["evidence"] or not f["impact"]:
+        if f["status"] not in ("reproduced", "code_basis", "unconfirmed", "fixed") or not f["evidence"] or not f["impact"]:
             problems.append(f"{f['id']}: 再現・根拠・影響範囲がない")
     if {d["id"] for d in spec["decision_scope"]} != {"D-U7-COMPLETENESS", "D-U7-DISPLAY"}:
         problems.append("D-U7-COMPLETENESS・D-U7-DISPLAY の範囲の分け方がない")
@@ -833,7 +852,8 @@ def blocks(spec: dict) -> dict[str, list[str]]:
         "rest-completion": _table(["ID", "基準"], [[c["id"], c["criterion"]] for c in spec["completion"]])
                           + [""] + _table(["判断事項", "今回決める部分", "保留できる部分"], [[f"`{d['id']}`", d["now"], d["later"]] for d in spec["decision_scope"]]),
         "rest-findings": _table(["ID", "種類", "状態", "内容", "再現・根拠", "参照", "影響範囲"],
-                               [[f["id"], f["kind"], f"`{f['status']}`", f["summary"], f["evidence"], [_src(r) for r in f["refs"]], f["impact"]] for f in spec["findings"]]),
+                               [[f["id"], f["kind"], f"`{f['status']}`", f["summary"], [f["evidence"], *(f"履歴: {h}" for h in f.get("history", ()))], [_src(r) for r in f["refs"]],
+                                 f["impact"]] for f in spec["findings"]]),
         "rest-adoption-needed": _table(["ID", "問い", "推奨"], [[f"`{d['id']}`", d["question"], d["recommendation"]] for d in spec["adoption_needed"]]),
         "rest-units": _table(["単位", "状態", "名前", "コマンド", "依存", "変更範囲", "完了の基準", "GUI への引き継ぎ", "残る事項"],
                             [[f"`{u['id']}`" + ("（最初）" if u["first"] else ""), f"`{u.get('status', 'planned')}`" + (f"（{u['implemented_in']}）" if u.get("implemented_in") else ""),
