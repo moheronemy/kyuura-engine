@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.166）
+# 実装状況（v0.1〜v0.167）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d`（v0.128 から。v0.129 の種族の身長の写しは別に `9242b9be89be0f747279f39c11875d1ed61763ec`。v0.126〜v0.127 は `57d01f45cfb8b086d03dc0525b329cf6adeff69b`、v0.125 は `134a664c6adf67d5604148a31b58e1a7d26d4d6d`、v0.124 は `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`、v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -5170,3 +5170,15 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 停止の台帳（`docs/stop-policy-classification.json`）は `resolution/flow.py` の行番号だけが変わった
 - GUI が固定するコミット: `9506d6305e90ec262fbe77740d9aa57f04b980b6`（版 0.166.0。Git の URL からの通常のインストールとスモークテストで確かめた。[legal-actions-u7-4.md](legal-actions-u7-4.md) 8 章）
 - 詳細: [legal-actions-u7-4.md](legal-actions-u7-4.md)
+
+## v0.167: 合法手 API の場のポケモン 1 匹を指す操作（U7-5a・U7-5b）
+
+- `legal_actions`: 自分の番の MAIN で、`remove_disguise`（既存の `RemoveDisguise`）・`discard_from_play`（`DiscardFromPlay`）・`reveal_face_down`（`RevealFaceDown`）の候補を、ワザの候補に続けて出す。1 段の `choose_option`（自分の場のポケモンの番号）
+- 受け付ける前の確かめは、`engine.py` の 3 つの処理の前半を、同じ順番・同じコード・同じ文のまま関数にした `check_remove_disguise`・`check_discard_from_play`・`check_reveal_face_down`（状態・乱数・ログを変えない。読むのは公開の値だけ）。処理は変えていない
+- 処理可能性: `remove_disguise` は `may_stop_later`（MH1・TK1 は処理のあとの確かめ）、`discard_from_play` は U7-3 と同じ条件で `supported`、`reveal_face_down` は `may_stop_later`（おもてにした結果を予告しない）。本人のうらのカードをすてる選べるものは FD1 の停止として示し、送る前に断る（直接のコマンドはエンジンが拒否する。意図した差）
+- うらのカードの本当のカードだけが違う双子で、実行前の候補・入力・件数・並び・制約・理由・不正な入力への応答が同じ
+- U7-3 のにげるの候補が、バトル場のなにかの化石・ピッピ人形（PF2）と自分のうらのバトル場のポケモン（FD1）で、候補の取得ごと失敗していたのを直した（`legal_actions.py` だけ）
+- 番の候補は partial（`play_trainer`・`use_power`・`use_stadium`・`check_face_up_deck` が未対応）。`scope_kinds` は `MAIN_KINDS` の順のまま。`client_api` は同じ要求の形（契約 `kyuura-client-api`・形式 1）
+- 採用の記録 ADOPT-U7-5AB と仕様の訂正（CORR-1: 情報源が未確認の経路は入力を返さない、CORR-2: GUI のコミットと固定するエンジンを分ける）を [legal-actions-u7-5-design.md](legal-actions-u7-5-design.md) に記録した。錯乱ジムの情報漏れ F-1 は、トレーナー（U7-5c）の前の独立した修正の作業 T-F1（今回は直していない）
+- 停止の台帳（`docs/stop-policy-classification.json`）は `engine.py` の行番号だけが変わった
+- 詳細: [legal-actions-u7-5ab.md](legal-actions-u7-5ab.md)
