@@ -813,7 +813,7 @@
   {
    "id": "U7-5",
    "status": "planned",
-   "name": "トレーナー・パワー・スタジアムとその他",
+   "name": "トレーナー・パワー・スタジアムとその他（U7-5a〜U7-5g に分けた。U7-5a・U7-5b は v0.167 で実装: docs/legal-actions-u7-5ab.md。単位の状態は docs/legal-actions-u7-5-design.json）",
    "depends": [
     "U7-4"
    ],

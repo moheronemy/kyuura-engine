@@ -27,21 +27,27 @@ class CheckTest(unittest.TestCase):
         design, plan = texts()
         self.assertEqual(G.check(written(), design, plan), [])
 
-    def test_seven_commands_are_exactly_the_kinds_without_candidates(self):
+    def test_seven_commands_and_implemented_kinds(self):
+        """7 種類のうち、v0.167 で実装したのは U7-5a・U7-5b の 3 種類だけ。ほかの 4 種類は候補の種類がない。"""
         from kyuura_engine import commands, legal_actions
 
-        names = {c["command"] for c in written()["commands"]}
-        self.assertEqual(len(names), 7)
-        for name in names:
-            kind = next(c["kind"] for c in written()["commands"] if c["command"] == name)
-            self.assertNotIn(kind, legal_actions.IMPLEMENTED_KINDS)
-            self.assertIn(name, {cls.__name__ for cls in commands.COMMAND_TYPES.values()})
-
-    def test_no_unit_is_implemented_and_one_first_unit(self):
         spec = written()
-        self.assertTrue(all(u.get("status", "planned") == "planned" for u in spec["units"]))
+        done = {c for u in spec["units"] if u.get("status") == "implemented" for c in u["commands"]}
+        self.assertEqual(done, {"RemoveDisguise", "DiscardFromPlay", "RevealFaceDown"})
+        self.assertEqual(len(spec["commands"]), 7)
+        for c in spec["commands"]:
+            self.assertEqual(c["kind"] in legal_actions.IMPLEMENTED_KINDS, c["command"] in done, c["command"])
+            self.assertIn(c["command"], {cls.__name__ for cls in commands.COMMAND_TYPES.values()})
+
+    def test_only_adopted_units_are_implemented(self):
+        spec = written()
+        self.assertEqual([u["id"] for u in spec["units"] if u.get("status") == "implemented"], ["U7-5a", "U7-5b"])
+        self.assertEqual(spec["adoption_record"]["implemented_units"], ["U7-5a", "U7-5b"])
         self.assertEqual([u["id"] for u in spec["units"] if u["first"]], ["U7-5a"])
         self.assertEqual(spec["adoption"]["approval"], "not_approved")
+        self.assertIn("T-F1", next(u for u in spec["units"] if u["id"] == "U7-5c")["depends"])  # F-1 はトレーナーの前に直す
+        self.assertEqual({c["id"] for c in spec["adoption_record"]["corrections"]}, {"CORR-1", "CORR-2"})
+        self.assertNotEqual(spec["gui_ref"]["commit"], spec["gui_ref"]["pinned_engine"])  # GUI のコミットと固定するエンジンを分ける
 
 
 class BrokenSpecTest(unittest.TestCase):
@@ -73,8 +79,19 @@ class BrokenSpecTest(unittest.TestCase):
 
     def test_unit_counted_as_implemented(self):
         def mutate(spec):
-            spec["units"][0]["status"] = "implemented"
-        self.assert_found(mutate, "planned でない")
+            next(u for u in spec["units"] if u["id"] == "U7-5c")["status"] = "implemented"
+        self.assert_found(mutate, "採用の記録にない単位")
+
+    def test_implemented_unit_without_kind(self):
+        def mutate(spec):
+            next(u for u in spec["units"] if u["id"] == "U7-5f")["status"] = "implemented"
+            spec["adoption_record"]["implemented_units"].append("U7-5f")
+        self.assert_found(mutate, "IMPLEMENTED_KINDS")
+
+    def test_unknown_unit_status(self):
+        def mutate(spec):
+            spec["units"][0]["status"] = "done"
+        self.assert_found(mutate, "planned・implemented でない")
 
     def test_unit_without_required_verification(self):
         def mutate(spec):

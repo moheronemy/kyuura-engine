@@ -357,7 +357,8 @@ UNITS = [
      "tests": ["T-TWIN-RESPONSE（通常の操作）", "T-NOT-HIDDEN"], "done": "これらの種類について、本人の知識だけで決まる確かめを候補の作成に使う。scope に含めた種類を示し、main は partial"},
     {"id": "U7-4", "status": "implemented", "name": "ワザ", "depends": ["U7-3"], "scope": ["UseAttack（ワザ → 任意の指定。対象は受理のあとの決定）", "宣言の前の確かめのうち、本人の知識だけで決まるもの（v0.147〜v0.151 の持ち主の知識の関数）を processability に使う"],
      "tests": ["T-TWIN-RESPONSE（v0.147〜v0.151 の双子の盤面）", "T-TWIN-REFINE", "T-NOT-HIDDEN（未裁定のワザ）"], "done": "ワザの候補で、先読みを呼ばない。決められないものは unverified"},
-    {"id": "U7-5", "status": "planned", "name": "トレーナー・パワー・スタジアムとその他", "depends": ["U7-4"], "scope": ["PlayTrainer・UsePokemonPower・UseStadium・RemoveDisguise・DiscardFromPlay・RevealFaceDown・CheckFaceUpDeckCard",
+    {"id": "U7-5", "status": "planned", "name": "トレーナー・パワー・スタジアムとその他（U7-5a〜U7-5g に分けた。U7-5a・U7-5b は v0.167 で実装: docs/legal-actions-u7-5ab.md。"
+     "単位の状態は docs/legal-actions-u7-5-design.json）", "depends": ["U7-4"], "scope": ["PlayTrainer・UsePokemonPower・UseStadium・RemoveDisguise・DiscardFromPlay・RevealFaceDown・CheckFaceUpDeckCard",
      "入力はカードの登録が宣言する（共通の処理にカード ID の分岐を加えない）"], "tests": ["T-TWIN-RESPONSE（トレーナー・パワー）", "登録のないカードは unverified（消さない）"],
      "done": "すべてのコマンドの型に候補の種類がある。main が complete と称せるかは D-U7-COMPLETENESS"},
     {"id": "U7-6", "status": "planned", "name": "GUI・ルールベースの AI への接続", "depends": ["U7-1"], "scope": ["API だけを使う方策（内部の状態・秘密の配分を読まない）", "GUI の表示（processability ごとの表示）",

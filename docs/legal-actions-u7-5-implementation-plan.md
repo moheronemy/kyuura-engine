@@ -1,19 +1,42 @@
-# U7-5: 実装計画（承認前）
+# U7-5: 実装計画（ADOPT-U7-5AB。U7-5a・U7-5b は v0.167 で実装）
 
-[legal-actions-u7-5-design](legal-actions-u7-5-design.md) の仕様を、安全に実装できる単位に分けた計画です。表は `scripts/build_legal_actions_u7_5_design.py` が作ります。どの単位も `planned` で、この計画では実装していません。情報源が未確認（E）の経路は、対応済みに数えません。
+[legal-actions-u7-5-design](legal-actions-u7-5-design.md) の仕様を、安全に実装できる単位に分けた計画です。表は `scripts/build_legal_actions_u7_5_design.py` が作ります。U7-5a・U7-5b は v0.167 で実装しました（[legal-actions-u7-5ab](legal-actions-u7-5ab.md)）。ほかの単位は `planned` です。情報源が未確認（E）の経路は、対応済みに数えません。
+
+<!-- generated:rest-record begin -->
+- `ADOPT-U7-5AB`（2026-11-08・利用者）: U7-5 の進め方と、U7-5a＋U7-5b の実装
+  - 進め方:
+    1. U7-5a＋U7-5b を 1 つの作業で実装
+    2. 錯乱ジムの情報漏れ F-1 を別の作業 T-F1 で直す（両モード共通の不具合。トレーナーの前）
+    3. U7-5c → U7-5d → U7-5e → U7-5f → U7-5g
+  - 採用した判断:
+    - `D-U75-ORDER`: 上の順（a＋b をまとめる。F-1 を c の前に直す）
+    - `D-U75-FIRST`: 最初の実装は U7-5a＋U7-5b（RemoveDisguise・DiscardFromPlay・RevealFaceDown）
+    - `D-U75-CHAINED`: 3 段の入力を認める。前の段を変えたら、それに依存する後の段をすべて無効にする（U7-5e で実装）
+    - `D-U75-INPUT-DECL`: 型ごとの宣言の入力の記述（メタデータ）を設け、コマンドの作成・確かめとの対応をテストする（U7-5e で実装）
+    - `D-U75-POWER-FACE-DOWN`: 相手のうらのカードは公開された位置・識別だけで扱い、隠れた定義を候補の作成に使わない（U7-5e で実装）
+    - `D-U75-REVEAL-OUTCOME`: RevealFaceDown では、おもてにしたあとに場に残るかを候補で予告しない（U7-5b で実装）
+    - `D-U75-FACE-UP`: CheckFaceUpDeckCard は FU2 による未対応として表示し、送れない（U7-5f で実装）
+    - `D-U75-CHAOS`: F-1 は両モード共通の不具合として別の作業 T-F1 で直す（トレーナーの前）。U7-5a・b では裁定・動作を変えない
+    - `D-U75-ENERGY2`: カツラの 2 枚目（AttachEnergy.energy2）は U7-5g に含める
+  - 実装した単位: `U7-5a`、`U7-5b`
+  - 仕様の訂正:
+    - `CORR-1`（E 群の意味）: 情報源が未確認の経路を、処理可能性の unverified だけで公開してよいと扱わない。処理可能性と入力の公開の安全性は別の軸。選べるもの・件数・理由を公開して安全と確かめられないなら、入力は返さない（unconfirmed）。型・生成箇所の登録だけで安全と認めない
+    - `CORR-2`（GUI への影響の比べる相手）: 設計の報告の d0c5cfa はエンジンのコミット（GUI の main が固定するエンジン）で、GUI のコミットではない。公開されている最新の GUI は feature/engine-u7-4-attacks の 3649946（エンジン 9506d63・0.166.0 を固定）。GUI のコミットと固定するエンジンを分けて書く（GUI_REF）
+<!-- generated:rest-record end -->
 
 ## 1. 単位
 
 <!-- generated:rest-units begin -->
-| 単位 | 名前 | コマンド | 依存 | 変更範囲 | 完了の基準 | GUI への引き継ぎ | 残る事項 |
-|---|---|---|---|---|---|---|---|
-| `U7-5a`（最初） | 場のポケモン 1 匹を指す操作（RemoveDisguise・DiscardFromPlay） | `RemoveDisguise`<br>`DiscardFromPlay` | U7-4 | engine.py: 2 つの処理の受理の前の部分を、同じ順番・同じコード・同じ文のまま check_remove_disguise・check_discard_from_play にする（U7-3 の check_* と同じ）<br>legal_actions.py: 2 種類の候補（1 段・choose_option・場のポケモンの番号）。うらのカードは DiscardFromPlay の候補に出さない（F-2 の FD1 に当てない） | 2 種類が evaluated になり、MH1・TK1 に当たる候補は may_stop_later、DiscardFromPlay は U7-3 と同じ条件でだけ supported。直接のコマンドとの一致・双子（うらのカードの本当のカード）が通る | 1 段の choose_option（場のポケモンの番号）。決定への接続は promote_active の候補（空いたバトル場） | なし |
-| `U7-5b` | うらのカード（RevealFaceDown） | `RevealFaceDown` | U7-5a | engine.py: _reveal_face_down の受理の前の部分を check_reveal_face_down にする<br>legal_actions.py: 1 段の候補。候補に結果（残るか）を書くかは D-U75-REVEAL-OUTCOME | 相手・観戦者の応答が、本人のうらのカードの本当のカードで変わらない双子（たね・たねでない）が通る。おもてにしたあとのログが観測の規則どおり | 1 段。おもてにしたあとの公開のログ（secret_plan_revealed・secret_plan_discarded）の表示 | なし |
-| `U7-5c` | 手札のトレーナー（PlayTrainer） | `PlayTrainer` | U7-5a | engine.py: _play_trainer の手札から出す前の部分を check_play_trainer にする<br>legal_actions.py: 1 段の候補。E の 11 の実装は unverified、登録なしは not_implemented、停止は診断のコード表の分類 | A-own の 6 の実装で双子が通る。錯乱ジムの「うら」・［ちえくらべ］・サイキックコントロールは受理のあとの決定として new_game からの列でつながる。E の 11 の実装は unverified のまま数える | 1 段。受理のあとの決定の種類が多い（検索・見たカード。U7-1 の DECK_REVEALING_KINDS の契約の例外） | PT-5e の 11 の実装の読む値をたどる<br>F-1 の扱い（D-U75-CHAOS） |
-| `U7-5d` | 場のスタジアム（UseStadium） | `UseStadium` | U7-5a | engine.py: _use_stadium の check_activation までを check_use_stadium にする<br>legal_actions.py: 選ばせるもののない候補と、energy の 1 段の候補 | 持ち主でないプレイヤーの使用・同じ番の 2 回目（STADIUM_ALREADY_USED・LK1）・キョウの忍者ジムの双子が通る | 選ばせるもののない候補と 1 段の候補 | なし |
-| `U7-5e` | 宣言する特殊能力（UsePokemonPower） | `UsePokemonPower` | U7-5b<br>U7-5d | effects.py: 型ごとの選ばせるものの宣言（D-U75-INPUT-DECL。挙動は変えない）<br>engine.py: _use_pokemon_power の宣言の前の部分を check_use_pokemon_power にする（_reveal_for_action の扱いは D-U75-POWER-FACE-DOWN）<br>legal_actions.py: 特殊能力 → 選ばせるもの（2〜3 段） | 形ごとに 1 つ以上の代表で、宣言の入力・受理のあとの決定・回数の制限が通る。相手のうらのカードを指す選択は unverified。E の 7 の実装は unverified | 2〜3 段（depends_on_stage = 2 の提案） | UP-5e の 7 の実装の読む値をたどる<br>D-U75-INPUT-DECL<br>D-U75-POWER-FACE-DOWN |
-| `U7-5f` | おもての山札の確かめ（CheckFaceUpDeckCard） | `CheckFaceUpDeckCard` | U7-5a | legal_actions.py: 相手の山札のおもての 2 枚目より下の位置を unresolved_ruling で示す（送れない） | 候補の位置が、おもての枚数（公開）だけで決まる双子（おもてのカードの中身を変える）が通る | 表示だけ（送信のボタンを出さない） | なし |
-| `U7-5g` | 残りの経路と coverage の閉じ方 | なし | U7-5c<br>U7-5e<br>U7-5f | R-1・R-2 の扱い（D-U75-ENERGY2）<br>段階・主体ごとの coverage の表し方（C-6） | C-1〜C-6 を満たすかを、単位ごとの結果から判断できる | coverage の表示 | D-U7-COMPLETENESS |
+| 単位 | 状態 | 名前 | コマンド | 依存 | 変更範囲 | 完了の基準 | GUI への引き継ぎ | 残る事項 |
+|---|---|---|---|---|---|---|---|---|
+| `U7-5a`（最初） | `implemented`（v0.167（docs/legal-actions-u7-5ab.md）） | 場のポケモン 1 匹を指す操作（RemoveDisguise・DiscardFromPlay） | `RemoveDisguise`<br>`DiscardFromPlay` | U7-4 | engine.py: 2 つの処理の受理の前の部分を、同じ順番・同じコード・同じ文のまま check_remove_disguise・check_discard_from_play にする（U7-3 の check_* と同じ）<br>legal_actions.py: 2 種類の候補（1 段・choose_option・場のポケモンの番号）。うらのカードは DiscardFromPlay の候補に出さない（F-2 の FD1 に当てない） | 2 種類が evaluated になり、MH1・TK1 に当たる候補は may_stop_later、DiscardFromPlay は U7-3 と同じ条件でだけ supported。直接のコマンドとの一致・双子（うらのカードの本当のカード）が通る | 1 段の choose_option（場のポケモンの番号）。決定への接続は promote_active の候補（空いたバトル場） | なし |
+| `U7-5b` | `implemented`（v0.167（docs/legal-actions-u7-5ab.md）） | うらのカード（RevealFaceDown） | `RevealFaceDown` | U7-5a | engine.py: _reveal_face_down の受理の前の部分を check_reveal_face_down にする<br>legal_actions.py: 1 段の候補。候補に結果（残るか）を書くかは D-U75-REVEAL-OUTCOME | 相手・観戦者の応答が、本人のうらのカードの本当のカードで変わらない双子（たね・たねでない）が通る。おもてにしたあとのログが観測の規則どおり | 1 段。おもてにしたあとの公開のログ（secret_plan_revealed・secret_plan_discarded）の表示 | なし |
+| `T-F1` | `planned` | 錯乱ジムの情報漏れ F-1 の修正（両モード共通の不具合。トレーナーの前の独立した作業） | なし | U7-5b | engine.py・effects.py: 相手がかわりに使えるかの扱い（裁定・原典の記録と照らして別の作業で決める。U7-5a・b では変えない） | 相手の手札の中身だけを変えた双子で、使ったプレイヤー・観戦者が受け取る公開の情報が一致する。2 つのモードで同じ扱い | 錯乱ジムの「うら」のあとの決定・ログの表示（扱いが決まってから） | 扱いの決定（推測で裁定にしない） |
+| `U7-5c` | `planned` | 手札のトレーナー（PlayTrainer） | `PlayTrainer` | U7-5b<br>T-F1 | engine.py: _play_trainer の手札から出す前の部分を check_play_trainer にする<br>legal_actions.py: 1 段の候補。E の 11 の実装は入力を返さない（CORR-1）、登録なしは not_implemented、停止は診断のコード表の分類 | A-own の 6 の実装で双子が通る。錯乱ジムの「うら」・［ちえくらべ］・サイキックコントロールは受理のあとの決定として new_game からの列でつながる。E の 11 の実装は、たどるまで入力を返さない（CORR-1。対応済みに数えない） | 1 段。受理のあとの決定の種類が多い（検索・見たカード。U7-1 の DECK_REVEALING_KINDS の契約の例外） | PT-5e の 11 の実装の読む値をたどる |
+| `U7-5d` | `planned` | 場のスタジアム（UseStadium） | `UseStadium` | U7-5a | engine.py: _use_stadium の check_activation までを check_use_stadium にする<br>legal_actions.py: 選ばせるもののない候補と、energy の 1 段の候補 | 持ち主でないプレイヤーの使用・同じ番の 2 回目（STADIUM_ALREADY_USED・LK1）・キョウの忍者ジムの双子が通る | 選ばせるもののない候補と 1 段の候補 | なし |
+| `U7-5e` | `planned` | 宣言する特殊能力（UsePokemonPower） | `UsePokemonPower` | U7-5b<br>U7-5d | effects.py: 型ごとの選ばせるものの宣言（D-U75-INPUT-DECL。挙動は変えない）<br>engine.py: _use_pokemon_power の宣言の前の部分を check_use_pokemon_power にする（_reveal_for_action の扱いは D-U75-POWER-FACE-DOWN）<br>legal_actions.py: 特殊能力 → 選ばせるもの（2〜3 段） | 形ごとに 1 つ以上の代表で、宣言の入力・受理のあとの決定・回数の制限が通る。相手のうらのカードは公開の位置・識別だけで扱う（ADOPT-U7-5AB）。E の 7 の実装は、たどるまで入力を返さない（CORR-1） | 2〜3 段（depends_on_stage = 2。前の段を変えたら、それに依存する後の段をすべて無効にする。ADOPT-U7-5AB） | UP-5e の 7 の実装の読む値をたどる<br>型ごとの入力の宣言の作成と、コマンドの作成・確かめとの対応のテスト（ADOPT-U7-5AB） |
+| `U7-5f` | `planned` | おもての山札の確かめ（CheckFaceUpDeckCard） | `CheckFaceUpDeckCard` | U7-5a | legal_actions.py: 相手の山札のおもての 2 枚目より下の位置を unresolved_ruling で示す（送れない） | 候補の位置が、おもての枚数（公開）だけで決まる双子（おもてのカードの中身を変える）が通る | 表示だけ（送信のボタンを出さない） | なし |
+| `U7-5g` | `planned` | 残りの経路と coverage の閉じ方 | なし | U7-5c<br>U7-5e<br>U7-5f | R-1（カツラの 2 枚目）を attach_energy の任意の段として加える（ADOPT-U7-5AB で採用）・R-2 の見直し<br>段階・主体ごとの coverage の表し方（C-6） | C-1〜C-6 を満たすかを、単位ごとの結果から判断できる | coverage の表示 | D-U7-COMPLETENESS |
 <!-- generated:rest-units end -->
 
 ## 2. 推奨順序と根拠
@@ -30,7 +53,9 @@
 
 GUI の対戦への効果だけなら U7-5c（トレーナー）が先ですが、a・b で「処理の前半を関数にする」「本人のうらのカードの双子」の型を小さく固めてから c・e に進みます。c は宣言の入力が 1 つなので、e より先にします。
 
-## 3. 最初の単位: U7-5a（RemoveDisguise・DiscardFromPlay）
+## 3. 最初の単位: U7-5a（RemoveDisguise・DiscardFromPlay）。v0.167 で U7-5b といっしょに実装
+
+この章は実装の前に書いた具体化です。実装の結果（意図した差・直した U7-3 の候補の失敗 F-7・JSON の実例）は [legal-actions-u7-5ab](legal-actions-u7-5ab.md) にあります。実装では、本人のうらのカードを `DiscardFromPlay` の選べるものから除かず、エンジンの確かめの判定（FD1 の `UnsupportedError`）どおり実行できない区分で示しました（ゲーム上の禁止として消さない）。
 
 コード上の根拠:
 
@@ -50,7 +75,7 @@ GUI の対戦への効果だけなら U7-5c（トレーナー）が先ですが�
   - 停止の台帳（`docs/stop-policy-classification.json`）は行番号だけが変わる見込みです。作り直して、ほかの差がないことを確かめます
 - **候補**（`legal_actions.py`）
   - 種類 `remove_disguise`・`discard_from_play`。1 段（`choose_option`・`meaning: pokemon`・`count 1..1`・`order: not_applicable`）
-  - 選べるものは自分の場のポケモンで、関数の確かめで ILLEGAL のものは出しません。`DiscardFromPlay` は本人のうらのカードを選べるものに出しません（`state.is_face_down` は公開。F-2 の FD1 に当てない）
+  - 選べるものは自分の場のポケモンで、関数の確かめで ILLEGAL のものは出しません（実装では、本人のうらのカードはエンジンの判定どおり FD1 の停止として示した）
   - `RemoveDisguise` は `may_stop_later`（理由: 処理のあとの MH1・TK1 を評価していない）。`DiscardFromPlay` は U7-3 の `supported` の条件（受理のあとの停止のもとが場にないことを公開の情報で確かめた）を使い、ほかは `may_stop_later`
 - **入力の検査と送信**: `check` で関数をもう一度呼び、ILLEGAL は `CANDIDATE_INPUT_INVALID`。送信は既存のアダプタ（最終の判定は `apply_command`）
 - **JSON の例**（U7-4 の 7.1 節と同じ形の案。値は例。まだ実装していない）:
@@ -99,6 +124,7 @@ GUI の対戦への効果だけなら U7-5c（トレーナー）が先ですが�
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | `U7-5a` | 構築盤面（build_test_state） |  | 構築盤面（build_test_state） |  | 構築盤面（build_test_state） | 構築盤面（build_test_state） | 補助関数だけの確かめ（候補の作成を直接呼ぶ） | 構築盤面（build_test_state） | 構築盤面（build_test_state） | new_game からの合法な操作列 | new_game からの合法な操作列 | 構築盤面（build_test_state） | 補助関数だけの確かめ（候補の作成を直接呼ぶ） |
 | `U7-5b` | 構築盤面（build_test_state） |  | 構築盤面（build_test_state） |  | 構築盤面（build_test_state） | 構築盤面（build_test_state） | 補助関数だけの確かめ（候補の作成を直接呼ぶ） | 構築盤面（build_test_state） | 構築盤面（build_test_state） | new_game からの合法な操作列 | new_game からの合法な操作列 | 構築盤面（build_test_state） | 補助関数だけの確かめ（候補の作成を直接呼ぶ） |
+| `T-F1` | 構築盤面（build_test_state） |  | 構築盤面（build_test_state） |  | 構築盤面（build_test_state） | 構築盤面（build_test_state） | 補助関数だけの確かめ（候補の作成を直接呼ぶ） | 構築盤面（build_test_state） | 構築盤面（build_test_state） | new_game からの合法な操作列 | new_game からの合法な操作列 | 構築盤面（build_test_state） | 補助関数だけの確かめ（候補の作成を直接呼ぶ） |
 | `U7-5c` | 構築盤面（build_test_state） | 構築盤面（build_test_state） | 構築盤面（build_test_state） |  | 構築盤面（build_test_state） | 構築盤面（build_test_state） | 補助関数だけの確かめ（候補の作成を直接呼ぶ） | 構築盤面（build_test_state） | 構築盤面（build_test_state） | new_game からの合法な操作列 | new_game からの合法な操作列 | 構築盤面（build_test_state） | 補助関数だけの確かめ（候補の作成を直接呼ぶ） |
 | `U7-5d` | 構築盤面（build_test_state） | 構築盤面（build_test_state） | 構築盤面（build_test_state） | 構築盤面（build_test_state） | 構築盤面（build_test_state） | 構築盤面（build_test_state） | 補助関数だけの確かめ（候補の作成を直接呼ぶ） | 構築盤面（build_test_state） | 構築盤面（build_test_state） | new_game からの合法な操作列 | new_game からの合法な操作列 | 構築盤面（build_test_state） | 補助関数だけの確かめ（候補の作成を直接呼ぶ） |
 | `U7-5e` | 構築盤面（build_test_state） | 構築盤面（build_test_state） | 構築盤面（build_test_state） | 構築盤面（build_test_state） | 構築盤面（build_test_state） | 構築盤面（build_test_state） | 補助関数だけの確かめ（候補の作成を直接呼ぶ） | 構築盤面（build_test_state） | 構築盤面（build_test_state） | new_game からの合法な操作列 | new_game からの合法な操作列 | 構築盤面（build_test_state） | 補助関数だけの確かめ（候補の作成を直接呼ぶ） |

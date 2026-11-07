@@ -4,7 +4,8 @@
 
 - ソースの木を読み込まない（``sys.path`` を変えない。読み込んだ ``kyuura_engine`` が site-packages の下になければ止める）
 - 公開の API だけを使う: 全サブパッケージの読み込み・版・同梱のカードデータと登録データ・規約集合の識別・``new_game``・``ClientHub`` の開始と
-  本人・相手・観戦者・ホストの入口・初期配置の操作・ホストのジャンケンの結果・番の基本の操作（v0.165。U7-3）・ワザの宣言（v0.166。U7-4）・記録と保存の部品の
+  本人・相手・観戦者・ホストの入口・初期配置の操作・ホストのジャンケンの結果・番の基本の操作（v0.165。U7-3）・ワザの宣言（v0.166。U7-4）・
+  場のポケモン 1 匹を指す操作（v0.167。U7-5a・U7-5b。ピッピ人形を直接のコマンドで出し、client_api ですてる）・記録と保存の部品の
   読み込み・実装の識別
 - 結果を JSON で出す（``implementation_identity`` をソースの木の値と比べるのは呼ぶ側）。問題があれば終了コード 1
 """
@@ -113,6 +114,58 @@ def declare_attack(endpoints, turns: int = 6) -> dict | None:
     return None
 
 
+# v0.167: 場のポケモン 1 匹を指す操作の確かめのデッキ（炎のたね・進化 32 枚・炎エネルギー 24 枚・ピッピ人形 4 枚。カード id は同梱のカードデータのもの）
+FIRE_LINE = ("PMCG1-014", "PMCG1-017", "PMCG1-018", "PMCG1-019", "PMCG1-015", "PMCG1-022", "PMCG1-016", "PMCG1-020")
+FIRE_ENERGY, CLEFAIRY_DOLL = "PMCG1-098", "PMCG1-091"
+DOLL_DECK = [card for card in FIRE_LINE for _ in range(4)] + [FIRE_ENERGY] * 24 + [CLEFAIRY_DOLL] * 4
+
+
+def setup_endpoints(hub) -> dict:
+    endpoints = {"0": hub.player(0), "1": hub.player(1), "spectator": hub.spectator(), "host": hub.host()}
+    for name in ("0", "1"):
+        answer = request(endpoints[name], "candidates")["response"]
+        cand = next((c for c in answer["candidates"] if c["kind"] == "place_starting"), None)
+        if cand is not None:
+            fields = {"game": answer["game"], "revision": answer["revision"], "candidate": cand["id"]}
+            stages = request(endpoints[name], "inputs", **fields)["response"]["stages"]
+            request(endpoints[name], "submit", **fields, choices=placement_choices(stages))
+    to_first_turn(endpoints)
+    return endpoints
+
+
+def discard_doll(seeds: int = 8) -> dict | None:
+    """v0.167（U7-5a）: 先攻の最初の番の手札にピッピ人形がある seed を順に探し（公開の new_game と同じ手順。数回まで）、人形を直接のコマンドで出して（トレーナーは U7-5c）、
+    client_api の discard_from_play の候補・入力・検査・送信ですてる。"""
+    from kyuura_engine import adapter
+    from kyuura_engine.client_api import ClientHub
+    from kyuura_engine.commands import PlayTrainer
+
+    for seed in range(seeds):
+        start = adapter.start_game(DOLL_DECK, DOLL_DECK, seed)
+        if start.outcome != "accepted":
+            return {"seed": seed, "outcome": start.outcome}
+        game = adapter.HostedGame(start.state)
+        endpoints = setup_endpoints(ClientHub(game))
+        state = game.state
+        dolls = [u for u in state.players[0].hand if state.cards[u].card_id == CLEFAIRY_DOLL]
+        if state.phase.name != "MAIN" or state.current_player != 0 or not dolls:
+            continue
+        if game.submit(PlayTrainer(0, dolls[0]), submitter=0).outcome != "accepted":
+            return {"seed": seed, "outcome": "play_trainer_rejected"}
+        answer = request(endpoints["0"], "candidates")["response"]
+        cand = next((c for c in answer["candidates"] if c["kind"] == "discard_from_play"), None)
+        if cand is None:
+            return {"seed": seed, "outcome": "no_candidate"}
+        fields = {"game": answer["game"], "revision": answer["revision"], "candidate": cand["id"]}
+        stage = request(endpoints["0"], "inputs", **fields)["response"]["stages"][0]
+        option = next(o for o in stage["options"] if o.get("card") == dolls[0])
+        valid = request(endpoints["0"], "check", **fields, choices=[option["id"]])["response"]["valid"]
+        sent = request(endpoints["0"], "submit", **fields, choices=[option["id"]])
+        return {"seed": seed, "kinds": [c["kind"] for c in answer["candidates"]], "processability": cand["processability"], "check": valid, "outcome": sent["outcome"],
+                "in_discard": dolls[0] in game.state.players[0].discard}
+    return None
+
+
 def main() -> int:
     problems: list[str] = []
     import kyuura_engine
@@ -199,6 +252,9 @@ def main() -> int:
         check(problems, sent is not None and sent[1] == "accepted", "番の基本の操作が受理されない")
         report["attack"] = declare_attack(endpoints)
         check(problems, report["attack"] is not None and report["attack"]["outcome"] == "accepted", "ワザの宣言が受理されない")
+    report["board_operation"] = discard_doll()
+    check(problems, report["board_operation"] is not None and report["board_operation"].get("outcome") == "accepted" and report["board_operation"].get("in_discard") is True,
+          "ピッピ人形を client_api ですてられない（discard_from_play）")
 
     report["implementation_identity"] = replay_record.implementation_identity()
     report["problems"] = problems

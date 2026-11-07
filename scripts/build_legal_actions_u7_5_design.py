@@ -55,7 +55,9 @@ SOURCES = [
     {"id": "D", "meaning": "秘密の状態を読む・実際の状態の上で処理を試すので、候補 API に使えない（処理のあとの確かめ・うらのカードの割り当ての試行・答えの続きの試行）",
      "candidate_use": "使わない。この確かめで止まりうる候補は may_stop_later（または unverified）"},
     {"id": "E", "meaning": "情報源・安全性が未確認（状態の複製の上で効果を試す事前確認で、読む値をたどっていないもの・他のモジュールへの呼び出しをたどっていないもの）",
-     "candidate_use": "公開してよいと仮定しない。たどるまで、その確かめに当たる候補は unverified（実装計画で対応済みに数えない）"},
+     "candidate_use": "公開してよいと仮定しない（CORR-1）。処理可能性の unverified と、入力を示して安全か（input_disclosure）は別の軸で、unverified にするだけでは"
+                      "選べるもの・件数・理由を返してよいことにならない。たどって安全と確かめるまで、その確かめに当たる候補は入力を返さない（unconfirmed・"
+                      "INPUT_BOUNDARY_UNCONFIRMED）。型・生成箇所の登録だけで安全と認めない。実装計画で対応済みに数えない"},
 ]
 SOURCE_IDS = {s["id"] for s in SOURCES}
 
@@ -162,7 +164,7 @@ CHECKS = [
     {"id": "PT-5", "command": "PlayTrainer", "ref": f"{EFFECTS}::TrainerEffect.check_playable", "source": "A", "use": "candidates",
      "note": "77 の実装のうち、下の 2 群を除くもの（場・トラッシュ・枚数・本人の手札）"},
     {"id": "PT-5o", "command": "PlayTrainer", "ref": f"{EFFECTS}::deck_target_lower_bound", "source": "A-own", "use": "candidates", "note": "持ち主の知識の関数を呼ぶ 6 の実装（scan.check_playable.owner_knowledge）"},
-    {"id": "PT-5e", "command": "PlayTrainer", "ref": f"{EFFECTS}::state_stop_after", "source": "E", "use": "none",
+    {"id": "PT-5e", "command": "PlayTrainer", "ref": f"{EFFECTS}::state_stop_after", "source": "E", "use": "none",  # CORR-1: たどるまで入力を返さない
      "note": "状態の複製の上で効果を試す 11 の実装（scan.check_playable.trials）。引く・クイズなど、実際の山札の並びを読みうる試行があり、たどっていない"},
     {"id": "PT-6", "command": "PlayTrainer", "ref": f"{EFFECTS}::stadium_trainer_cost", "source": "A", "use": "candidates", "note": "リムーブ禁止ジム（本人の手札の枚数）"},
     {"id": "PT-7", "command": "PlayTrainer", "ref": f"{EFFECTS}::trainer_reaction_sources", "source": "A", "use": "candidates", "note": "相手の場の［ちえくらべ］と錯乱ジム（MG1）"},
@@ -284,22 +286,33 @@ INPUT_RULES = [
     ("選ばせるものの形の宣言は今の登録にない（check_usable の中にだけある）。最小の拡張: PowerEffect・StadiumEffect の型に、選ばせるもの（項目・指す場所）の宣言を加え、"
     "check_usable と食い違わないことを型ごとのテストで確かめる（D-U75-INPUT-DECL。エンジンの挙動は変えない）"),
 ]
+# CORR-2: 比べる相手は GUI のコミット（GUI のリポジトリ）。GUI が固定するエンジンのコミットとは別に書く。読み取りだけで確かめた（GUI は実行していない）
+GUI_REF = {"repository": "kyuura-engine-gui", "branch": "feature/engine-u7-4-attacks", "commit": "36499462cbdd68fe9e4b18b0c73428c9d628ddf3",
+           "pinned_engine": "9506d6305e90ec262fbe77740d9aa57f04b980b6", "pinned_engine_version": "0.166.0",
+           "main_commit": "7660ab4d4c4064334952b2d3c9a01ede33c4973b", "main_pinned_engine": "d0c5cfa9483aacae0cce2fd8d28166b1d8465500",
+           "checked": "2026-11-08 に git fetch して、contract/kyuura-client-api-v1.json と web/src・server/tests の該当箇所を git show・git grep で読んだ（作業ツリーは変えていない）",
+           "limit": "公開されている GUI のブランチのうち最新のコミット。GUI を実行していないので、画面で動くことは確かめていない。これより新しい未公開の作業は確かめられない"}
 GUI_INPUTS = [
-    {"item": "入力の種類", "gui": "choose_option・choose_value（contract/kyuura-client-api-v1.json）", "u7_5": "choose_option だけ", "same": True},
-    {"item": "2 段と options_by_choice", "gui": "固定コミット d0c5cfa（v0.164）の GUI は U7-3・U7-4 の候補を知らない（実装された種類は決定・準備・番を終えるだけ）", "u7_5": "使う", "same": False},
-    {"item": "3 段目の depends_on_stage = 2", "gui": "未対応（前提がない）", "u7_5": "特殊能力の E → T で使う（提案）", "same": False},
-    {"item": "処理可能性・input_disclosure の語彙", "gui": "契約の表と同じ 6 区分・3 区分", "u7_5": "変えない", "same": True},
-    {"item": "候補の種類", "gui": "turn_kinds_not_covered に 12 種類（エンジンを更新すると契約のテストが食い違う）", "u7_5": "7 種類を足す", "same": False},
+    {"item": "入力の種類", "gui": "choose_option・choose_value（contract の input_kinds）", "u7_5": "choose_option だけ", "same": True},
+    {"item": "2 段と options_by_choice", "gui": "U7-3・U7-4 の候補を入力の画面で扱う（gui_operable_kinds に play_basic〜use_attack）", "u7_5": "使う（U7-5d・e）", "same": True},
+    {"item": "3 段目の depends_on_stage = 2", "gui": "未確認（stage_keys に depends_on_stage はあるが、2 段目を前提にした画面は確かめていない）", "u7_5": "特殊能力の E → T で使う（U7-5e）",
+     "same": False},
+    {"item": "処理可能性・input_disclosure・理由の語彙", "gui": "契約の表の 6 区分・3 区分・reason_codes（13 語）", "u7_5": "U7-5a・b は既存の語だけを使う", "same": True},
+    {"item": "候補の種類", "gui": "turn_kinds_not_covered に 7 種類。gui_operable_kinds にない種類は表示だけで選べない", "u7_5": "3 種類を足す（U7-5a・b）。GUI の契約の表を直すまで表示だけ",
+     "same": False},
+    {"item": "段の role", "gui": "stage_roles は use_attack だけ（ほかの種類の role の並びを決めていない）", "u7_5": "disguised・discard・face_down（1 段）", "same": False},
+    {"item": "coverage の scope_kinds の並び", "gui": "server/tests/test_contract.py が main_kinds と同じ並びを確かめる", "u7_5": "MAIN_KINDS の順のまま（_scope_kinds）", "same": True},
 ]
 
 # ---------------------------------------------------------------- 処理可能性の 4 つの軸
 
 AXES = [
     {"command": "PlayTrainer", "display": "本人の手札のトレーナーごと（ゲーム上できないものは出さない。登録なし・未裁定は消さずに表示）",
-     "input_disclosure": "confirmed（手札のカードの番号だけ）", "submit": "may_stop_later・unverified（試行の 11 の実装）・not_implemented と停止は送れない",
+     "input_disclosure": "confirmed（手札のカードの番号だけ）。E の 11 の実装に当たるカードは、たどるまで入力を返さない（unconfirmed。CORR-1）",
+     "submit": "may_stop_later。not_implemented と停止は送れない",
      "after": "コイン・決定・［ちえくらべ］・使わない答えの続きの確かめ（D）で止まりうる。supported にしない"},
     {"command": "UsePokemonPower", "display": "自分の場のポケモンの宣言する特殊能力ごと（決定・ワザといっしょの特殊能力は出さない）",
-     "input_disclosure": "形の宣言がある型は confirmed、ない型は unconfirmed（INPUT_BOUNDARY_UNCONFIRMED）", "submit": "may_stop_later・unverified",
+     "input_disclosure": "形の宣言がある型は confirmed、ない型・E の 7 の実装は unconfirmed（INPUT_BOUNDARY_UNCONFIRMED。CORR-1）", "submit": "may_stop_later",
      "after": "コイン・決定・反応・相手のうらのカードの割り当ての試行（D）"},
     {"command": "UseStadium", "display": "場のスタジアムに使ってよい効果があるとき（番のプレイヤーだけ）", "input_disclosure": "confirmed（energy の 2 の実装）・no_input",
      "submit": "may_stop_later（コインのあとの決定）", "after": "コイン・決定・空いたバトル場"},
@@ -365,7 +378,7 @@ UNITS = [
                 "tests/test_active_leave_locks_v0_93.py（バトル場をはなれられない）"],
      "done": "2 種類が evaluated になり、MH1・TK1 に当たる候補は may_stop_later、DiscardFromPlay は U7-3 と同じ条件でだけ supported。直接のコマンドとの一致・双子（うらのカードの本当のカード）が通る",
      "gui": "1 段の choose_option（場のポケモンの番号）。決定への接続は promote_active の候補（空いたバトル場）",
-     "open": []},
+     "open": [], "status": "implemented", "implemented_in": "v0.167（docs/legal-actions-u7-5ab.md）"},
     {"id": "U7-5b", "name": "うらのカード（RevealFaceDown）", "commands": ["RevealFaceDown"], "depends": ["U7-5a"], "first": False,
      "basis": ["受理の前の確かめは公開の値だけ（RF-1）。結果（残る・トラッシュ）は本人の本当のカードで決まり、本人は観測の real で知っている"],
      "changes": ["engine.py: _reveal_face_down の受理の前の部分を check_reveal_face_down にする", "legal_actions.py: 1 段の候補。候補に結果（残るか）を書くかは D-U75-REVEAL-OUTCOME"],
@@ -373,16 +386,26 @@ UNITS = [
                ["V-CONV", "sequence"], ["V-TWIN", "board"], ["V-INSTALL", "sequence"], ["V-REGRESS", "board"], ["V-JSON", "helper"]],
      "boards": ["tests/test_secret_plan_v0_67.py（マチスの秘策）"],
      "done": "相手・観戦者の応答が、本人のうらのカードの本当のカードで変わらない双子（たね・たねでない）が通る。おもてにしたあとのログが観測の規則どおり",
-     "gui": "1 段。おもてにしたあとの公開のログ（secret_plan_revealed・secret_plan_discarded）の表示", "open": []},
-    {"id": "U7-5c", "name": "手札のトレーナー（PlayTrainer）", "commands": ["PlayTrainer"], "depends": ["U7-5a"], "first": False,
+     "gui": "1 段。おもてにしたあとの公開のログ（secret_plan_revealed・secret_plan_discarded）の表示", "open": [], "status": "implemented",
+     "implemented_in": "v0.167（docs/legal-actions-u7-5ab.md）"},
+    {"id": "T-F1", "name": "錯乱ジムの情報漏れ F-1 の修正（両モード共通の不具合。トレーナーの前の独立した作業）", "commands": [], "depends": ["U7-5b"], "first": False,
+     "basis": ["F-1: 錯乱ジムの「うら」で、相手がかわりに使えるかの確かめが相手の手札の中身を読み、その結果が公開のログと決定の有無で伝わる（再現済み）"],
+     "changes": ["engine.py・effects.py: 相手がかわりに使えるかの扱い（裁定・原典の記録と照らして別の作業で決める。U7-5a・b では変えない）"],
+     "tests": [["V-NORMAL", "board"], ["V-NONTURN", "board"], ["V-NOSIDE", "board"], ["V-BADQUERY", "helper"], ["V-PARITY", "board"], ["V-HANDLE", "board"],
+               ["V-CONV", "sequence"], ["V-TWIN", "board"], ["V-INSTALL", "sequence"], ["V-REGRESS", "board"], ["V-JSON", "helper"]],
+     "boards": ["tests/test_stadiums_v0_57.py（錯乱ジム）"], "done": "相手の手札の中身だけを変えた双子で、使ったプレイヤー・観戦者が受け取る公開の情報が一致する。2 つのモードで同じ扱い",
+     "gui": "錯乱ジムの「うら」のあとの決定・ログの表示（扱いが決まってから）", "open": ["扱いの決定（推測で裁定にしない）"]},
+    {"id": "U7-5c", "name": "手札のトレーナー（PlayTrainer）", "commands": ["PlayTrainer"], "depends": ["U7-5b", "T-F1"], "first": False,
      "basis": ["宣言の入力は card だけ。対象・枚数・検索はすべて受理のあとの決定（answer_decision で答えられる）",
                "受理の前の確かめ（PT-1〜PT-7）は A・A-own で、カードごとの確かめの 11 の実装（試行）だけが E"],
-     "changes": ["engine.py: _play_trainer の手札から出す前の部分を check_play_trainer にする", "legal_actions.py: 1 段の候補。E の 11 の実装は unverified、登録なしは not_implemented、停止は診断のコード表の分類"],
+     "changes": ["engine.py: _play_trainer の手札から出す前の部分を check_play_trainer にする",
+                 "legal_actions.py: 1 段の候補。E の 11 の実装は入力を返さない（CORR-1）、登録なしは not_implemented、停止は診断のコード表の分類"],
      "tests": [["V-NORMAL", "board"], ["V-DECL", "board"], ["V-NONTURN", "board"], ["V-NOSIDE", "board"], ["V-BADQUERY", "helper"], ["V-PARITY", "board"],
                ["V-HANDLE", "board"], ["V-CONV", "sequence"], ["V-TWIN", "board"], ["V-INSTALL", "sequence"], ["V-REGRESS", "board"], ["V-JSON", "helper"]],
      "boards": ["tests/test_instant_trainers_v0_55.py", "tests/test_stadiums_v0_57.py（錯乱ジム・リムーブ禁止ジム）", "tests/test_slowking_mind_games_v0_132.py（［ちえくらべ］）"],
-     "done": "A-own の 6 の実装で双子が通る。錯乱ジムの「うら」・［ちえくらべ］・サイキックコントロールは受理のあとの決定として new_game からの列でつながる。E の 11 の実装は unverified のまま数える",
-     "gui": "1 段。受理のあとの決定の種類が多い（検索・見たカード。U7-1 の DECK_REVEALING_KINDS の契約の例外）", "open": ["PT-5e の 11 の実装の読む値をたどる", "F-1 の扱い（D-U75-CHAOS）"]},
+     "done": "A-own の 6 の実装で双子が通る。錯乱ジムの「うら」・［ちえくらべ］・サイキックコントロールは受理のあとの決定として new_game からの列でつながる。"
+             "E の 11 の実装は、たどるまで入力を返さない（CORR-1。対応済みに数えない）",
+     "gui": "1 段。受理のあとの決定の種類が多い（検索・見たカード。U7-1 の DECK_REVEALING_KINDS の契約の例外）", "open": ["PT-5e の 11 の実装の読む値をたどる"]},
     {"id": "U7-5d", "name": "場のスタジアム（UseStadium）", "commands": ["UseStadium"], "depends": ["U7-5a"], "first": False,
      "basis": ["9 の実装のうち energy を選ばせるのは 2 つ。ほかは選ばせるものがない。キョウの忍者ジムだけ A-own"],
      "changes": ["engine.py: _use_stadium の check_activation までを check_use_stadium にする", "legal_actions.py: 選ばせるもののない候補と、energy の 1 段の候補"],
@@ -397,8 +420,10 @@ UNITS = [
      "tests": [["V-NORMAL", "board"], ["V-DECL", "board"], ["V-NONTURN", "board"], ["V-LIMIT", "board"], ["V-NOSIDE", "board"], ["V-BADQUERY", "helper"],
                ["V-PARITY", "board"], ["V-HANDLE", "board"], ["V-CONV", "sequence"], ["V-TWIN", "board"], ["V-INSTALL", "sequence"], ["V-REGRESS", "board"], ["V-JSON", "helper"]],
      "boards": ["tests/test_power_decisions_v0_42.py", "tests/test_pokemon_powers_v0_5.py（エナジートランス）", "tests/test_rain_dance_v0_6.py"],
-     "done": "形ごとに 1 つ以上の代表で、宣言の入力・受理のあとの決定・回数の制限が通る。相手のうらのカードを指す選択は unverified。E の 7 の実装は unverified",
-     "gui": "2〜3 段（depends_on_stage = 2 の提案）", "open": ["UP-5e の 7 の実装の読む値をたどる", "D-U75-INPUT-DECL", "D-U75-POWER-FACE-DOWN"]},
+     "done": "形ごとに 1 つ以上の代表で、宣言の入力・受理のあとの決定・回数の制限が通る。相手のうらのカードは公開の位置・識別だけで扱う（ADOPT-U7-5AB）。"
+             "E の 7 の実装は、たどるまで入力を返さない（CORR-1）",
+     "gui": "2〜3 段（depends_on_stage = 2。前の段を変えたら、それに依存する後の段をすべて無効にする。ADOPT-U7-5AB）",
+     "open": ["UP-5e の 7 の実装の読む値をたどる", "型ごとの入力の宣言の作成と、コマンドの作成・確かめとの対応のテスト（ADOPT-U7-5AB）"]},
     {"id": "U7-5f", "name": "おもての山札の確かめ（CheckFaceUpDeckCard）", "commands": ["CheckFaceUpDeckCard"], "depends": ["U7-5a"], "first": False,
      "basis": ["どの場合も受け付けない。表示するのは FU2 の位置だけ（D-U75-FACE-UP）"],
      "changes": ["legal_actions.py: 相手の山札のおもての 2 枚目より下の位置を unresolved_ruling で示す（送れない）"],
@@ -408,7 +433,7 @@ UNITS = [
      "done": "候補の位置が、おもての枚数（公開）だけで決まる双子（おもてのカードの中身を変える）が通る", "gui": "表示だけ（送信のボタンを出さない）", "open": []},
     {"id": "U7-5g", "name": "残りの経路と coverage の閉じ方", "commands": [], "depends": ["U7-5c", "U7-5e", "U7-5f"], "first": False,
      "basis": ["7 種類で説明できない経路（R-1・R-2）が残る"],
-     "changes": ["R-1・R-2 の扱い（D-U75-ENERGY2）", "段階・主体ごとの coverage の表し方（C-6）"],
+     "changes": ["R-1（カツラの 2 枚目）を attach_energy の任意の段として加える（ADOPT-U7-5AB で採用）・R-2 の見直し", "段階・主体ごとの coverage の表し方（C-6）"],
      "tests": [["V-NORMAL", "board"], ["V-NONTURN", "board"], ["V-NOSIDE", "board"], ["V-BADQUERY", "helper"], ["V-PARITY", "board"], ["V-HANDLE", "board"],
                ["V-CONV", "sequence"], ["V-INSTALL", "sequence"], ["V-REGRESS", "board"], ["V-JSON", "helper"]],
      "boards": [], "done": "C-1〜C-6 を満たすかを、単位ごとの結果から判断できる", "gui": "coverage の表示", "open": ["D-U7-COMPLETENESS"]},
@@ -423,12 +448,14 @@ FINDINGS = [
      "evidence": "双子（使ったプレイヤーの手札にポケモン育て屋さんとリザードン、場にヒトカゲ。相手のバトル場もヒトカゲ。相手の手札 1 枚がリザードンか水エネルギーかだけが違う）で、"
                  "片方は ACCEPT_REQUEST（相手）、片方は chaos_not_borrowable（NO_EVOLUTION_TARGET）",
      "refs": [f"{ENGINE}::_chaos_tails", f"{EFFECTS}::borrow_unusable_reason"],
-     "impact": "U7 の候補は作らないが、受理のあとの決定と公開のログで起こる。U7-5c の双子はこの経路を含めない（含めると一致しない）。裁定・規約として扱わない（D-U75-CHAOS）"},
+     "impact": "U7 の候補は作らないが、受理のあとの決定と公開のログで起こる。両モード共通の不具合として、トレーナー（U7-5c）の前に独立の作業 T-F1 で直す（ADOPT-U7-5AB）。"
+               "U7-5a・b では裁定・動作を変えない"},
     {"id": "F-2", "kind": "拒否のコードの不一致", "status": "reproduced",
      "summary": "本人のうらのカードを DiscardFromPlay で指すと、NOT_DISCARDABLE ではなく FD1（HiddenPropertyRead）で拒否する（理由の文を作るときに名前を読む）",
      "evidence": "マチスの秘策でうらにしたディグダ・プラスパワー・ユンゲラーのどれでも同じ FD1（本当のカードによらない。漏れではない）",
      "refs": [f"{ENGINE}::_discard_from_play", f"{EFFECTS}::play_as_pokemon_effect"],
-     "impact": "U7-5a はうらのカードを候補に出さず、この確かめに当てない。エンジンの拒否のコードは変えない"},
+     "impact": "エンジンの拒否は変えない。U7-5a はエンジンの確かめの判定（UnsupportedError）どおり、選べるものとして示して実行できない区分にする（送る前に CANDIDATE_NOT_EXECUTABLE）。"
+               "ゲーム上の禁止として消さない"},
     {"id": "F-3", "kind": "保守的な停止", "status": "code_basis",
      "summary": "セキチクシティジムの対象を調べる途中で、本人の場にうらのカードがあると、ほかに対象があっても FD1 で止まりうる",
      "evidence": "監査で CoinReturnOwnerPokemonStadium.check_activation の対象の走査が form_def(...).name_ja を読むことを確かめた（再現はしていない）",
@@ -445,6 +472,12 @@ FINDINGS = [
     {"id": "F-6", "kind": "入口の確かめの範囲", "status": "code_basis",
      "summary": "CheckFaceUpDeckCard は番・段階を確かめない（どの場合も受け付けないので、状態は変わらない）",
      "evidence": "engine.py の _check_face_up_deck_card", "refs": [f"{ENGINE}::_check_face_up_deck_card"], "impact": "番でない主体の候補に出すかは D-U75-FACE-UP"},
+    {"id": "F-7", "kind": "候補の取得の失敗（U7-3。直した）", "status": "reproduced",
+     "summary": "にげるの候補が、バトル場のなにかの化石・ピッピ人形（PF2）と自分のうらのバトル場のポケモン（FD1）で、にげるエネルギーを求めて例外になり、"
+                "候補の取得そのものが失敗していた（v0.165〜v0.166）",
+     "evidence": "v0.47 の盤面（バトル場のなにかの化石）と、v0.67 の盤面でうらのカードをバトル場にした盤面で、candidates() が UnsupportedError・HiddenPropertyRead を上げた",
+     "refs": ["kyuura_engine/legal_actions.py::_retreat_candidate", f"{EFFECTS}::retreat_cost"],
+     "impact": "U7-5a・b で legal_actions だけを直した（エンジンは変えない）。PF2 は実行できない候補（選べるものなし）、FD1 は unverified で入力を返さない"},
 ]
 
 ADOPTION_NEEDED = [
@@ -462,12 +495,37 @@ ADOPTION_NEEDED = [
 ADOPTION = {"id": "U7-5-DESIGN", "date": "2026-11-08", "status": "proposed", "approval": "not_approved", "base": BASE_COMMIT,
             "scope": "U7-5 の調査・仕様・実装計画（候補の追加・エンジンの動作の変更はしない）"}
 
+# 利用者の採用（実装とは別の記録）。後の単位の判断は採用の範囲の記録だけで、先に実装しない
+ADOPTION_RECORD = {
+    "id": "ADOPT-U7-5AB", "date": "2026-11-08", "by": "利用者",
+    "scope": "U7-5 の進め方と、U7-5a＋U7-5b の実装",
+    "order": ["U7-5a＋U7-5b を 1 つの作業で実装", "錯乱ジムの情報漏れ F-1 を別の作業 T-F1 で直す（両モード共通の不具合。トレーナーの前）", "U7-5c → U7-5d → U7-5e → U7-5f → U7-5g"],
+    "adopted": [
+        {"id": "D-U75-ORDER", "decision": "上の順（a＋b をまとめる。F-1 を c の前に直す）"},
+        {"id": "D-U75-FIRST", "decision": "最初の実装は U7-5a＋U7-5b（RemoveDisguise・DiscardFromPlay・RevealFaceDown）"},
+        {"id": "D-U75-CHAINED", "decision": "3 段の入力を認める。前の段を変えたら、それに依存する後の段をすべて無効にする（U7-5e で実装）"},
+        {"id": "D-U75-INPUT-DECL", "decision": "型ごとの宣言の入力の記述（メタデータ）を設け、コマンドの作成・確かめとの対応をテストする（U7-5e で実装）"},
+        {"id": "D-U75-POWER-FACE-DOWN", "decision": "相手のうらのカードは公開された位置・識別だけで扱い、隠れた定義を候補の作成に使わない（U7-5e で実装）"},
+        {"id": "D-U75-REVEAL-OUTCOME", "decision": "RevealFaceDown では、おもてにしたあとに場に残るかを候補で予告しない（U7-5b で実装）"},
+        {"id": "D-U75-FACE-UP", "decision": "CheckFaceUpDeckCard は FU2 による未対応として表示し、送れない（U7-5f で実装）"},
+        {"id": "D-U75-CHAOS", "decision": "F-1 は両モード共通の不具合として別の作業 T-F1 で直す（トレーナーの前）。U7-5a・b では裁定・動作を変えない"},
+        {"id": "D-U75-ENERGY2", "decision": "カツラの 2 枚目（AttachEnergy.energy2）は U7-5g に含める"},
+    ],
+    "implemented_units": ["U7-5a", "U7-5b"],
+    "corrections": [
+        {"id": "CORR-1", "subject": "E 群の意味", "text": "情報源が未確認の経路を、処理可能性の unverified だけで公開してよいと扱わない。処理可能性と入力の公開の安全性は別の軸。"
+         "選べるもの・件数・理由を公開して安全と確かめられないなら、入力は返さない（unconfirmed）。型・生成箇所の登録だけで安全と認めない"},
+        {"id": "CORR-2", "subject": "GUI への影響の比べる相手", "text": "設計の報告の d0c5cfa はエンジンのコミット（GUI の main が固定するエンジン）で、GUI のコミットではない。"
+         "公開されている最新の GUI は feature/engine-u7-4-attacks の 3649946（エンジン 9506d63・0.166.0 を固定）。GUI のコミットと固定するエンジンを分けて書く（GUI_REF）"},
+    ],
+}
+
 SPEC = {
     "id": "LEGAL-ACTIONS-U7-5-DESIGN", "adoption": ADOPTION, "sources": SOURCES, "commands": COMMANDS, "residual_paths": RESIDUAL_PATHS, "checks": CHECKS,
     "owner_knowledge_functions": list(OWNER_KNOWLEDGE_FUNCS), "scan": SCAN, "registry": REGISTRY, "power_shapes": POWER_SHAPES, "power_not_by_command": POWER_NOT_BY_COMMAND,
     "power_not_by_command_bases": POWER_NOT_BY_COMMAND_BASES, "stadium_shapes": STADIUM_SHAPES, "input_reuse": INPUT_REUSE, "input_rules": INPUT_RULES, "gui_inputs": GUI_INPUTS,
     "axes": AXES, "completion": COMPLETION, "decision_scope": DECISION_SCOPE, "verify": VERIFY, "every_unit": list(EVERY_UNIT), "test_kinds": TEST_KINDS, "units": UNITS,
-    "findings": FINDINGS, "adoption_needed": ADOPTION_NEEDED,
+    "findings": FINDINGS, "adoption_needed": ADOPTION_NEEDED, "adoption_record": ADOPTION_RECORD, "gui_ref": GUI_REF,
 }
 
 
@@ -640,9 +698,13 @@ def code_problems(spec: dict) -> list[str]:
     main_spec = json.loads((ROOT / "docs" / "legal-actions-api-design.json").read_text(encoding="utf-8"))
     kind_of = {o["command"]: o["kind"] for o in main_spec["operations"]}
     remaining = sorted(name for name, cls in commands.COMMAND_TYPES.items() if kind_of.get(cls.__name__) not in implemented)
-    listed = sorted(commands._TYPE_NAMES[getattr(commands, c["command"])] for c in spec["commands"])
+    done = {c for u in spec["units"] if u.get("status") == "implemented" for c in u["commands"]}
+    listed = sorted(commands._TYPE_NAMES[getattr(commands, c["command"])] for c in spec["commands"] if c["command"] not in done)
     if remaining != listed:
-        problems.append(f"候補の種類のないコマンドの型 {remaining} と、調べた 7 種類 {listed} が違う")
+        problems.append(f"候補の種類のないコマンドの型 {remaining} と、調べた 7 種類のうち実装していないもの {listed} が違う")
+    for c in spec["commands"]:
+        if c["command"] in done and c["kind"] not in implemented:
+            problems.append(f"{c['command']}: 実装済みの単位のコマンドなのに、legal_actions.IMPLEMENTED_KINDS に種類 {c['kind']} がない")
     for command in spec["commands"]:
         if kind_of.get(command["command"]) != command["kind"]:
             problems.append(f"{command['command']}: 種類 {command['kind']} が U7 の仕様案の operations と違う")
@@ -705,8 +767,10 @@ def spec_problems(spec: dict) -> list[str]:
             problems.append(f"{u['id']}: 構築盤面と new_game からの列の両方がない")
         if any(d not in units and d not in ("U7-4",) for d in u["depends"]):
             problems.append(f"{u['id']}: 知らない依存 {u['depends']}")
-        if u.get("status", "planned") != "planned":
-            problems.append(f"{u['id']}: 状態が planned でない（この仕様では実装しない）")
+        if u.get("status", "planned") not in ("planned", "implemented"):
+            problems.append(f"{u['id']}: 状態が planned・implemented でない")
+        if u.get("status") == "implemented" and u["id"] not in spec["adoption_record"]["implemented_units"]:
+            problems.append(f"{u['id']}: 採用の記録にない単位を実装済みにしている")
         if not u["done"] or not u["gui"] or not u["changes"]:
             problems.append(f"{u['id']}: 変更範囲・完了の基準・GUI への引き継ぎがない")
     if covered != commands:
@@ -759,7 +823,11 @@ def blocks(spec: dict) -> dict[str, list[str]]:
         "rest-stadium-shapes": _table(["宣言の入力の形", "型"], [[f"`{k}`", [f"`{x}`" for x in v]] for k, v in spec["stadium_shapes"].items()]),
         "rest-inputs": _table(["必要な入力", "既存の形", "変更"], [[r["need"], r["existing"], r["change"]] for r in spec["input_reuse"]])
                       + [""] + [f"- {r}" for r in spec["input_rules"]],
-        "rest-gui": _table(["項目", "GUI（固定コミット d0c5cfa）", "U7-5", "共通"], [[g["item"], g["gui"], g["u7_5"], g["same"]] for g in spec["gui_inputs"]]),
+        "rest-gui": [f"- GUI のコミット: `{spec['gui_ref']['commit']}`（{spec['gui_ref']['repository']} の `{spec['gui_ref']['branch']}`）",
+                     f"- その GUI が固定するエンジン: `{spec['gui_ref']['pinned_engine']}`（版 {spec['gui_ref']['pinned_engine_version']}）",
+                     f"- GUI の main: `{spec['gui_ref']['main_commit']}`（固定するエンジン `{spec['gui_ref']['main_pinned_engine']}`）",
+                     f"- 確かめ方: {spec['gui_ref']['checked']}", f"- 限界: {spec['gui_ref']['limit']}", ""]
+                    + _table(["項目", "GUI（3649946）", "U7-5", "共通"], [[g["item"], g["gui"], g["u7_5"], g["same"]] for g in spec["gui_inputs"]]),
         "rest-axes": _table(["コマンド", "候補として表示", "入力を公開", "エンジンへ送信", "受理のあとに停止しうる"],
                            [[f"`{x['command']}`", x["display"], x["input_disclosure"], x["submit"], x["after"]] for x in spec["axes"]]),
         "rest-completion": _table(["ID", "基準"], [[c["id"], c["criterion"]] for c in spec["completion"]])
@@ -767,9 +835,10 @@ def blocks(spec: dict) -> dict[str, list[str]]:
         "rest-findings": _table(["ID", "種類", "状態", "内容", "再現・根拠", "参照", "影響範囲"],
                                [[f["id"], f["kind"], f"`{f['status']}`", f["summary"], f["evidence"], [_src(r) for r in f["refs"]], f["impact"]] for f in spec["findings"]]),
         "rest-adoption-needed": _table(["ID", "問い", "推奨"], [[f"`{d['id']}`", d["question"], d["recommendation"]] for d in spec["adoption_needed"]]),
-        "rest-units": _table(["単位", "名前", "コマンド", "依存", "変更範囲", "完了の基準", "GUI への引き継ぎ", "残る事項"],
-                            [[f"`{u['id']}`" + ("（最初）" if u["first"] else ""), u["name"], [f"`{c}`" for c in u["commands"]] or "なし", u["depends"], u["changes"], u["done"], u["gui"],
-                              u["open"] or "なし"] for u in spec["units"]]),
+        "rest-units": _table(["単位", "状態", "名前", "コマンド", "依存", "変更範囲", "完了の基準", "GUI への引き継ぎ", "残る事項"],
+                            [[f"`{u['id']}`" + ("（最初）" if u["first"] else ""), f"`{u.get('status', 'planned')}`" + (f"（{u['implemented_in']}）" if u.get("implemented_in") else ""),
+                              u["name"], [f"`{c}`" for c in u["commands"]] or "なし", u["depends"], u["changes"], u["done"], u["gui"], u["open"] or "なし"] for u in spec["units"]]),
+        "rest-record": _record_lines(spec["adoption_record"]),
         "rest-first": [f"- {b}" for b in next(u for u in spec["units"] if u["first"])["basis"]]
                      + ["- 代表の盤面: " + "、".join(next(u for u in spec["units"] if u["first"])["boards"])],
         "rest-verify": _table(["確かめ", "意味"], [[f"`{v['id']}`", v["what"]] for v in spec["verify"]])
@@ -780,9 +849,16 @@ def blocks(spec: dict) -> dict[str, list[str]]:
     }
 
 
-DESIGN_BLOCKS = ("rest-adoption", "rest-sources", "rest-commands", "rest-fields", "rest-stops", "rest-residual", "rest-checks", "rest-command-index", "rest-scan", "rest-power-shapes",
+def _record_lines(r: dict) -> list[str]:
+    return ([f"- `{r['id']}`（{r['date']}・{r['by']}）: {r['scope']}", "  - 進め方:"] + [f"    {i}. {x}" for i, x in enumerate(r["order"], 1)]
+            + ["  - 採用した判断:"] + [f"    - `{d['id']}`: {d['decision']}" for d in r["adopted"]]
+            + ["  - 実装した単位: " + "、".join(f"`{u}`" for u in r["implemented_units"]), "  - 仕様の訂正:"]
+            + [f"    - `{c['id']}`（{c['subject']}）: {c['text']}" for c in r["corrections"]])
+
+
+DESIGN_BLOCKS = ("rest-adoption", "rest-record", "rest-sources", "rest-commands", "rest-fields", "rest-stops", "rest-residual", "rest-checks", "rest-command-index", "rest-scan", "rest-power-shapes",
                  "rest-stadium-shapes", "rest-inputs", "rest-gui", "rest-axes", "rest-completion", "rest-findings", "rest-adoption-needed")
-PLAN_BLOCKS = ("rest-units", "rest-first", "rest-verify")
+PLAN_BLOCKS = ("rest-record", "rest-units", "rest-first", "rest-verify")
 
 
 def text_problems(label: str, text: str) -> list[str]:

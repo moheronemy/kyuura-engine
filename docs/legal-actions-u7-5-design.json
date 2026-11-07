@@ -37,7 +37,7 @@
   {
    "id": "E",
    "meaning": "情報源・安全性が未確認（状態の複製の上で効果を試す事前確認で、読む値をたどっていないもの・他のモジュールへの呼び出しをたどっていないもの）",
-   "candidate_use": "公開してよいと仮定しない。たどるまで、その確かめに当たる候補は unverified（実装計画で対応済みに数えない）"
+   "candidate_use": "公開してよいと仮定しない（CORR-1）。処理可能性の unverified と、入力を示して安全か（input_disclosure）は別の軸で、unverified にするだけでは選べるもの・件数・理由を返してよいことにならない。たどって安全と確かめるまで、その確かめに当たる候補は入力を返さない（unconfirmed・INPUT_BOUNDARY_UNCONFIRMED）。型・生成箇所の登録だけで安全と認めない。実装計画で対応済みに数えない"
   }
  ],
  "commands": [
@@ -975,48 +975,60 @@
  "gui_inputs": [
   {
    "item": "入力の種類",
-   "gui": "choose_option・choose_value（contract/kyuura-client-api-v1.json）",
+   "gui": "choose_option・choose_value（contract の input_kinds）",
    "u7_5": "choose_option だけ",
    "same": true
   },
   {
    "item": "2 段と options_by_choice",
-   "gui": "固定コミット d0c5cfa（v0.164）の GUI は U7-3・U7-4 の候補を知らない（実装された種類は決定・準備・番を終えるだけ）",
-   "u7_5": "使う",
-   "same": false
+   "gui": "U7-3・U7-4 の候補を入力の画面で扱う（gui_operable_kinds に play_basic〜use_attack）",
+   "u7_5": "使う（U7-5d・e）",
+   "same": true
   },
   {
    "item": "3 段目の depends_on_stage = 2",
-   "gui": "未対応（前提がない）",
-   "u7_5": "特殊能力の E → T で使う（提案）",
+   "gui": "未確認（stage_keys に depends_on_stage はあるが、2 段目を前提にした画面は確かめていない）",
+   "u7_5": "特殊能力の E → T で使う（U7-5e）",
    "same": false
   },
   {
-   "item": "処理可能性・input_disclosure の語彙",
-   "gui": "契約の表と同じ 6 区分・3 区分",
-   "u7_5": "変えない",
+   "item": "処理可能性・input_disclosure・理由の語彙",
+   "gui": "契約の表の 6 区分・3 区分・reason_codes（13 語）",
+   "u7_5": "U7-5a・b は既存の語だけを使う",
    "same": true
   },
   {
    "item": "候補の種類",
-   "gui": "turn_kinds_not_covered に 12 種類（エンジンを更新すると契約のテストが食い違う）",
-   "u7_5": "7 種類を足す",
+   "gui": "turn_kinds_not_covered に 7 種類。gui_operable_kinds にない種類は表示だけで選べない",
+   "u7_5": "3 種類を足す（U7-5a・b）。GUI の契約の表を直すまで表示だけ",
    "same": false
+  },
+  {
+   "item": "段の role",
+   "gui": "stage_roles は use_attack だけ（ほかの種類の role の並びを決めていない）",
+   "u7_5": "disguised・discard・face_down（1 段）",
+   "same": false
+  },
+  {
+   "item": "coverage の scope_kinds の並び",
+   "gui": "server/tests/test_contract.py が main_kinds と同じ並びを確かめる",
+   "u7_5": "MAIN_KINDS の順のまま（_scope_kinds）",
+   "same": true
   }
  ],
  "axes": [
   {
    "command": "PlayTrainer",
    "display": "本人の手札のトレーナーごと（ゲーム上できないものは出さない。登録なし・未裁定は消さずに表示）",
-   "input_disclosure": "confirmed（手札のカードの番号だけ）",
-   "submit": "may_stop_later・unverified（試行の 11 の実装）・not_implemented と停止は送れない",
+   "input_disclosure": "confirmed（手札のカードの番号だけ）。E の 11 の実装に当たるカードは、たどるまで入力を返さない（unconfirmed。CORR-1）",
+   "submit": "may_stop_later。not_implemented と停止は送れない",
    "after": "コイン・決定・［ちえくらべ］・使わない答えの続きの確かめ（D）で止まりうる。supported にしない"
   },
   {
    "command": "UsePokemonPower",
    "display": "自分の場のポケモンの宣言する特殊能力ごと（決定・ワザといっしょの特殊能力は出さない）",
-   "input_disclosure": "形の宣言がある型は confirmed、ない型は unconfirmed（INPUT_BOUNDARY_UNCONFIRMED）",
-   "submit": "may_stop_later・unverified",
+   "input_disclosure": "形の宣言がある型は confirmed、ない型・E の 7 の実装は unconfirmed（INPUT_BOUNDARY_UNCONFIRMED。CORR-1）",
+   "submit": "may_stop_later",
    "after": "コイン・決定・反応・相手のうらのカードの割り当ての試行（D）"
   },
   {
@@ -1239,7 +1251,9 @@
    ],
    "done": "2 種類が evaluated になり、MH1・TK1 に当たる候補は may_stop_later、DiscardFromPlay は U7-3 と同じ条件でだけ supported。直接のコマンドとの一致・双子（うらのカードの本当のカード）が通る",
    "gui": "1 段の choose_option（場のポケモンの番号）。決定への接続は promote_active の候補（空いたバトル場）",
-   "open": []
+   "open": [],
+   "status": "implemented",
+   "implemented_in": "v0.167（docs/legal-actions-u7-5ab.md）"
   },
   {
    "id": "U7-5b",
@@ -1309,7 +1323,78 @@
    ],
    "done": "相手・観戦者の応答が、本人のうらのカードの本当のカードで変わらない双子（たね・たねでない）が通る。おもてにしたあとのログが観測の規則どおり",
    "gui": "1 段。おもてにしたあとの公開のログ（secret_plan_revealed・secret_plan_discarded）の表示",
-   "open": []
+   "open": [],
+   "status": "implemented",
+   "implemented_in": "v0.167（docs/legal-actions-u7-5ab.md）"
+  },
+  {
+   "id": "T-F1",
+   "name": "錯乱ジムの情報漏れ F-1 の修正（両モード共通の不具合。トレーナーの前の独立した作業）",
+   "commands": [],
+   "depends": [
+    "U7-5b"
+   ],
+   "first": false,
+   "basis": [
+    "F-1: 錯乱ジムの「うら」で、相手がかわりに使えるかの確かめが相手の手札の中身を読み、その結果が公開のログと決定の有無で伝わる（再現済み）"
+   ],
+   "changes": [
+    "engine.py・effects.py: 相手がかわりに使えるかの扱い（裁定・原典の記録と照らして別の作業で決める。U7-5a・b では変えない）"
+   ],
+   "tests": [
+    [
+     "V-NORMAL",
+     "board"
+    ],
+    [
+     "V-NONTURN",
+     "board"
+    ],
+    [
+     "V-NOSIDE",
+     "board"
+    ],
+    [
+     "V-BADQUERY",
+     "helper"
+    ],
+    [
+     "V-PARITY",
+     "board"
+    ],
+    [
+     "V-HANDLE",
+     "board"
+    ],
+    [
+     "V-CONV",
+     "sequence"
+    ],
+    [
+     "V-TWIN",
+     "board"
+    ],
+    [
+     "V-INSTALL",
+     "sequence"
+    ],
+    [
+     "V-REGRESS",
+     "board"
+    ],
+    [
+     "V-JSON",
+     "helper"
+    ]
+   ],
+   "boards": [
+    "tests/test_stadiums_v0_57.py（錯乱ジム）"
+   ],
+   "done": "相手の手札の中身だけを変えた双子で、使ったプレイヤー・観戦者が受け取る公開の情報が一致する。2 つのモードで同じ扱い",
+   "gui": "錯乱ジムの「うら」のあとの決定・ログの表示（扱いが決まってから）",
+   "open": [
+    "扱いの決定（推測で裁定にしない）"
+   ]
   },
   {
    "id": "U7-5c",
@@ -1318,7 +1403,8 @@
     "PlayTrainer"
    ],
    "depends": [
-    "U7-5a"
+    "U7-5b",
+    "T-F1"
    ],
    "first": false,
    "basis": [
@@ -1327,7 +1413,7 @@
    ],
    "changes": [
     "engine.py: _play_trainer の手札から出す前の部分を check_play_trainer にする",
-    "legal_actions.py: 1 段の候補。E の 11 の実装は unverified、登録なしは not_implemented、停止は診断のコード表の分類"
+    "legal_actions.py: 1 段の候補。E の 11 の実装は入力を返さない（CORR-1）、登録なしは not_implemented、停止は診断のコード表の分類"
    ],
    "tests": [
     [
@@ -1384,11 +1470,10 @@
     "tests/test_stadiums_v0_57.py（錯乱ジム・リムーブ禁止ジム）",
     "tests/test_slowking_mind_games_v0_132.py（［ちえくらべ］）"
    ],
-   "done": "A-own の 6 の実装で双子が通る。錯乱ジムの「うら」・［ちえくらべ］・サイキックコントロールは受理のあとの決定として new_game からの列でつながる。E の 11 の実装は unverified のまま数える",
+   "done": "A-own の 6 の実装で双子が通る。錯乱ジムの「うら」・［ちえくらべ］・サイキックコントロールは受理のあとの決定として new_game からの列でつながる。E の 11 の実装は、たどるまで入力を返さない（CORR-1。対応済みに数えない）",
    "gui": "1 段。受理のあとの決定の種類が多い（検索・見たカード。U7-1 の DECK_REVEALING_KINDS の契約の例外）",
    "open": [
-    "PT-5e の 11 の実装の読む値をたどる",
-    "F-1 の扱い（D-U75-CHAOS）"
+    "PT-5e の 11 の実装の読む値をたどる"
    ]
   },
   {
@@ -1550,12 +1635,11 @@
     "tests/test_pokemon_powers_v0_5.py（エナジートランス）",
     "tests/test_rain_dance_v0_6.py"
    ],
-   "done": "形ごとに 1 つ以上の代表で、宣言の入力・受理のあとの決定・回数の制限が通る。相手のうらのカードを指す選択は unverified。E の 7 の実装は unverified",
-   "gui": "2〜3 段（depends_on_stage = 2 の提案）",
+   "done": "形ごとに 1 つ以上の代表で、宣言の入力・受理のあとの決定・回数の制限が通る。相手のうらのカードは公開の位置・識別だけで扱う（ADOPT-U7-5AB）。E の 7 の実装は、たどるまで入力を返さない（CORR-1）",
+   "gui": "2〜3 段（depends_on_stage = 2。前の段を変えたら、それに依存する後の段をすべて無効にする。ADOPT-U7-5AB）",
    "open": [
     "UP-5e の 7 の実装の読む値をたどる",
-    "D-U75-INPUT-DECL",
-    "D-U75-POWER-FACE-DOWN"
+    "型ごとの入力の宣言の作成と、コマンドの作成・確かめとの対応のテスト（ADOPT-U7-5AB）"
    ]
   },
   {
@@ -1641,7 +1725,7 @@
     "7 種類で説明できない経路（R-1・R-2）が残る"
    ],
    "changes": [
-    "R-1・R-2 の扱い（D-U75-ENERGY2）",
+    "R-1（カツラの 2 枚目）を attach_energy の任意の段として加える（ADOPT-U7-5AB で採用）・R-2 の見直し",
     "段階・主体ごとの coverage の表し方（C-6）"
    ],
    "tests": [
@@ -1705,7 +1789,7 @@
     "kyuura_engine/engine.py::_chaos_tails",
     "kyuura_engine/effects.py::borrow_unusable_reason"
    ],
-   "impact": "U7 の候補は作らないが、受理のあとの決定と公開のログで起こる。U7-5c の双子はこの経路を含めない（含めると一致しない）。裁定・規約として扱わない（D-U75-CHAOS）"
+   "impact": "U7 の候補は作らないが、受理のあとの決定と公開のログで起こる。両モード共通の不具合として、トレーナー（U7-5c）の前に独立の作業 T-F1 で直す（ADOPT-U7-5AB）。U7-5a・b では裁定・動作を変えない"
   },
   {
    "id": "F-2",
@@ -1717,7 +1801,7 @@
     "kyuura_engine/engine.py::_discard_from_play",
     "kyuura_engine/effects.py::play_as_pokemon_effect"
    ],
-   "impact": "U7-5a はうらのカードを候補に出さず、この確かめに当てない。エンジンの拒否のコードは変えない"
+   "impact": "エンジンの拒否は変えない。U7-5a はエンジンの確かめの判定（UnsupportedError）どおり、選べるものとして示して実行できない区分にする（送る前に CANDIDATE_NOT_EXECUTABLE）。ゲーム上の禁止として消さない"
   },
   {
    "id": "F-3",
@@ -1764,6 +1848,18 @@
     "kyuura_engine/engine.py::_check_face_up_deck_card"
    ],
    "impact": "番でない主体の候補に出すかは D-U75-FACE-UP"
+  },
+  {
+   "id": "F-7",
+   "kind": "候補の取得の失敗（U7-3。直した）",
+   "status": "reproduced",
+   "summary": "にげるの候補が、バトル場のなにかの化石・ピッピ人形（PF2）と自分のうらのバトル場のポケモン（FD1）で、にげるエネルギーを求めて例外になり、候補の取得そのものが失敗していた（v0.165〜v0.166）",
+   "evidence": "v0.47 の盤面（バトル場のなにかの化石）と、v0.67 の盤面でうらのカードをバトル場にした盤面で、candidates() が UnsupportedError・HiddenPropertyRead を上げた",
+   "refs": [
+    "kyuura_engine/legal_actions.py::_retreat_candidate",
+    "kyuura_engine/effects.py::retreat_cost"
+   ],
+   "impact": "U7-5a・b で legal_actions だけを直した（エンジンは変えない）。PF2 は実行できない候補（選べるものなし）、FD1 は unverified で入力を返さない"
   }
  ],
  "adoption_needed": [
@@ -1812,5 +1908,81 @@
    "question": "R-1（カツラの 2 枚目）を U7-5g で attach_energy の任意の段として加えるか",
    "recommendation": "加える（U7-3 の候補に任意の 3 段目。追加だけ）"
   }
- ]
+ ],
+ "adoption_record": {
+  "id": "ADOPT-U7-5AB",
+  "date": "2026-11-08",
+  "by": "利用者",
+  "scope": "U7-5 の進め方と、U7-5a＋U7-5b の実装",
+  "order": [
+   "U7-5a＋U7-5b を 1 つの作業で実装",
+   "錯乱ジムの情報漏れ F-1 を別の作業 T-F1 で直す（両モード共通の不具合。トレーナーの前）",
+   "U7-5c → U7-5d → U7-5e → U7-5f → U7-5g"
+  ],
+  "adopted": [
+   {
+    "id": "D-U75-ORDER",
+    "decision": "上の順（a＋b をまとめる。F-1 を c の前に直す）"
+   },
+   {
+    "id": "D-U75-FIRST",
+    "decision": "最初の実装は U7-5a＋U7-5b（RemoveDisguise・DiscardFromPlay・RevealFaceDown）"
+   },
+   {
+    "id": "D-U75-CHAINED",
+    "decision": "3 段の入力を認める。前の段を変えたら、それに依存する後の段をすべて無効にする（U7-5e で実装）"
+   },
+   {
+    "id": "D-U75-INPUT-DECL",
+    "decision": "型ごとの宣言の入力の記述（メタデータ）を設け、コマンドの作成・確かめとの対応をテストする（U7-5e で実装）"
+   },
+   {
+    "id": "D-U75-POWER-FACE-DOWN",
+    "decision": "相手のうらのカードは公開された位置・識別だけで扱い、隠れた定義を候補の作成に使わない（U7-5e で実装）"
+   },
+   {
+    "id": "D-U75-REVEAL-OUTCOME",
+    "decision": "RevealFaceDown では、おもてにしたあとに場に残るかを候補で予告しない（U7-5b で実装）"
+   },
+   {
+    "id": "D-U75-FACE-UP",
+    "decision": "CheckFaceUpDeckCard は FU2 による未対応として表示し、送れない（U7-5f で実装）"
+   },
+   {
+    "id": "D-U75-CHAOS",
+    "decision": "F-1 は両モード共通の不具合として別の作業 T-F1 で直す（トレーナーの前）。U7-5a・b では裁定・動作を変えない"
+   },
+   {
+    "id": "D-U75-ENERGY2",
+    "decision": "カツラの 2 枚目（AttachEnergy.energy2）は U7-5g に含める"
+   }
+  ],
+  "implemented_units": [
+   "U7-5a",
+   "U7-5b"
+  ],
+  "corrections": [
+   {
+    "id": "CORR-1",
+    "subject": "E 群の意味",
+    "text": "情報源が未確認の経路を、処理可能性の unverified だけで公開してよいと扱わない。処理可能性と入力の公開の安全性は別の軸。選べるもの・件数・理由を公開して安全と確かめられないなら、入力は返さない（unconfirmed）。型・生成箇所の登録だけで安全と認めない"
+   },
+   {
+    "id": "CORR-2",
+    "subject": "GUI への影響の比べる相手",
+    "text": "設計の報告の d0c5cfa はエンジンのコミット（GUI の main が固定するエンジン）で、GUI のコミットではない。公開されている最新の GUI は feature/engine-u7-4-attacks の 3649946（エンジン 9506d63・0.166.0 を固定）。GUI のコミットと固定するエンジンを分けて書く（GUI_REF）"
+   }
+  ]
+ },
+ "gui_ref": {
+  "repository": "kyuura-engine-gui",
+  "branch": "feature/engine-u7-4-attacks",
+  "commit": "36499462cbdd68fe9e4b18b0c73428c9d628ddf3",
+  "pinned_engine": "9506d6305e90ec262fbe77740d9aa57f04b980b6",
+  "pinned_engine_version": "0.166.0",
+  "main_commit": "7660ab4d4c4064334952b2d3c9a01ede33c4973b",
+  "main_pinned_engine": "d0c5cfa9483aacae0cce2fd8d28166b1d8465500",
+  "checked": "2026-11-08 に git fetch して、contract/kyuura-client-api-v1.json と web/src・server/tests の該当箇所を git show・git grep で読んだ（作業ツリーは変えていない）",
+  "limit": "公開されている GUI のブランチのうち最新のコミット。GUI を実行していないので、画面で動くことは確かめていない。これより新しい未公開の作業は確かめられない"
+ }
 }
