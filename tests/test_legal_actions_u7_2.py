@@ -86,7 +86,7 @@ def setup_via_u7(test, host):
         direct = A.submit(state, command, submitter=None if session.actor == L.HOST else session.actor)
         result = session.submit(r["game"], r["revision"], cand["id"], choices)
         test.assertEqual(result.outcome, D.ACCEPTED)
-        test.assertEqual(result.view, direct.view_for(None if session.actor == L.HOST else session.actor))
+        test.assertEqual(result.view, L._host_notice(direct) if session.actor == L.HOST else direct.view_for(session.actor))
         test.assertEqual(full_snap(host.game.state), full_snap(direct.state))
     raise AssertionError("準備が終わらない")
 
@@ -273,7 +273,7 @@ class HostTest(unittest.TestCase):
             rr = t.candidates()
             direct = A.submit(state, ReportJankenResult(winner))
             result = t.submit(rr["game"], rr["revision"], "c1", [winner])
-            self.assertEqual((result.outcome, result.view), (D.ACCEPTED, direct.view_for(None)))
+            self.assertEqual((result.outcome, result.view), (D.ACCEPTED, L._host_notice(direct)))
             self.assertEqual(full_snap(twin.game.state), full_snap(direct.state))
             self.assertEqual(twin.game.state.current_player, winner)
 
@@ -303,6 +303,17 @@ class HostTest(unittest.TestCase):
         self.assertEqual(hs.inputs(rh["game"], rh["revision"], "c1")["refusal"]["code"], L.CANDIDATES_STALE)
         other = L.ActionHost.from_state(host.game.state)
         self.assertEqual(other.host_session().inputs(rh["game"], rh["revision"], "c1")["refusal"]["code"], L.CANDIDATES_WRONG_GAME)
+
+    def test_host_rejection_is_answered_only_to_the_host(self):
+        """v0.164: エンジンが拒否したホストの操作でも、ホストは定型の診断を受け取る（HostNotice）。全員向けの知らせ（view_for(None)）は拒否では None のまま。"""
+        host = self.janken_host()
+        main = host.game.state
+        rejected = A.submit(main, StartSuddenDeath())  # 先攻を決める段階での延長戦の開始（エンジンの拒否）
+        self.assertEqual(rejected.outcome, D.REJECTED)
+        notice = L._host_notice(rejected)
+        self.assertEqual((notice.outcome, notice.category is not None, notice.message is not None), (D.REJECTED, True, True))
+        self.assertIsNone(rejected.view_for(None))
+        self.assertEqual(json.loads(json.dumps(notice.to_dict()))["role"], "host")
 
     def test_internal_error_stops_the_host(self):
         host = self.janken_host()
@@ -346,7 +357,7 @@ class SuddenDeathTest(unittest.TestCase):
         self.assertEqual(hs.check(r["game"], r["revision"], "c1", [0])["refusal"]["code"], L.CANDIDATE_INPUT_INVALID)
         direct = A.submit(state, StartSuddenDeath())
         result = hs.submit(r["game"], r["revision"], "c1")
-        self.assertEqual((result.outcome, result.view), (direct.outcome, direct.view_for(None)))
+        self.assertEqual((result.outcome, result.view), (direct.outcome, L._host_notice(direct)))
         self.assertEqual(full_snap(host.game.state), full_snap(direct.state))
         new = host.game.state
         self.assertEqual(new.segment_index, 1)
@@ -364,7 +375,7 @@ class SuddenDeathTest(unittest.TestCase):
                 hs = host.host_session()
                 r = hs.candidates()
                 result = hs.submit(r["game"], r["revision"], "c1")
-                self.assertEqual((result.outcome, result.view), (D.ACCEPTED, direct.view_for(None)))
+                self.assertEqual((result.outcome, result.view), (D.ACCEPTED, L._host_notice(direct)))
                 self.assertEqual(result.view.status, D.HALTED)  # 延長戦の準備で止まった（既存の診断）
                 for session in (hs, host.session(0)):
                     self.assertEqual(session.candidates()["situation"], L.HALTED)

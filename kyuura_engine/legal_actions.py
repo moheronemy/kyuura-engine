@@ -167,8 +167,9 @@ GUARANTEE_ANSWER = {
 }
 GUARANTEE_PLACEMENT = {
     "preconditions": "準備の段階・まだ置いていないこと・手札にあること・重なり・ベンチの上限・たねポケモン／ベイビィであること・化石と人形の扱い（_place_starting_pokemon と同じ述語と規約の照会）を、入力の検査で確かめる",
-    "acceptance": "入力の検査に合えば、エンジンの受理の条件を満たす（最終の判定は apply_command）",
+    "acceptance": "eligible の選べるものだけで作り、入力の検査に合った入力は、エンジンの受理の条件を満たす（最終の判定は apply_command）。eligible が偽の選べるもの（化石・人形）を含む入力は送れない",
     "after_acceptance": "両方が置いたら、サイドを置いて切り直しの補償か先攻を決める段階に進む（止まる処理はない）",
+    "supported_scope": "候補の supported は、eligible の選べるものだけで作った入力の範囲の保証（表示した化石・人形まで実行できるという意味ではない）",
 }
 GUARANTEE_MULLIGAN = {
     "preconditions": "補償の段階・本人に補償が残ること・引く枚数（0〜1 回の上限・山札の枚数まで。_draw_mulligan_cards と同じ値）を、入力の検査で確かめる",
@@ -206,12 +207,40 @@ class Refusal:
 
 
 @dataclass(frozen=True)
+class HostNotice:
+    """ホストの操作の送り手（ホスト）だけへの結果（v0.164）。拒否・処理できない結果の定型の診断を持つ。全員へ配る知らせではない（配る更新は client_api の更新）。"""
+
+    outcome: str
+    status: str
+    continuable: bool
+    next: tuple[D.NextAction, ...]
+    diagnostic_id: str | None
+    category: str | None
+    message: str | None
+    halt: D.PublicHalt | None
+    operation_id: str | None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"role": "host", "outcome": self.outcome, "status": self.status, "continuable": self.continuable, "next": [a.to_dict() for a in self.next],
+                "diagnostic_id": self.diagnostic_id, "category": self.category, "message": self.message,
+                "halt": None if self.halt is None else self.halt.to_dict(), "operation_id": self.operation_id}
+
+
+def _host_notice(result: CommandResult) -> HostNotice:
+    d = result.diagnosis
+    return HostNotice(outcome=result.outcome, status=result.status, continuable=result.continuable, next=result.next,
+                      diagnostic_id=None if d is None else d.diagnostic_id, category=None if d is None else d.category, message=None if d is None else d.message,
+                      halt=result.halt, operation_id=result.operation_id)
+
+
+@dataclass(frozen=True)
 class ActionResult:
-    """クライアントに返す送信の結果。``view`` は U2 の ``CommandResult.view_for(本人)``（凍結した値）。状態・コマンド・検証者用の値を持たない。"""
+    """送り手に返す送信の結果（送り手だけへの応答。全員へ配る知らせではない）。``view`` は、プレイヤーなら U2 の ``CommandResult.view_for(本人)``、ホストなら
+    ``HostNotice``（v0.164。v0.163 は全員向けの ``view_for(None)`` を返していたので、拒否のときホストが理由を受け取れなかった）。状態・コマンド・検証者用の値を持たない。"""
 
     outcome: str  # accepted・rejected・failed（エンジンの結果）か refused（ホストの段の拒否）
     refusal: Refusal | None
-    view: D.ActorDiagnostic | None
+    view: D.ActorDiagnostic | HostNotice | None
 
 
 REFUSED = "refused"
@@ -495,8 +524,8 @@ def _submit(host: ActionHost, actor: int | str, game, revision, candidate, choic
         host.invalidate()  # 受理: その対戦の取っ手をすべて失効させる（拒否では変えない）
     if host._on_result is not None:
         host._on_result(actor, result)
-    # ホストの操作の結果は、全員に見える状態の知らせ（view_for(None)）。CommandResult そのものはホストだけが on_result で受け取る
-    return ActionResult(result.outcome, None, result.view_for(None if is_host else actor))
+    # 送り手だけへの応答（ホストは HostNotice。拒否を全員へ配る知らせにしない）。CommandResult そのものはホストだけが on_result で受け取る
+    return ActionResult(result.outcome, None, _host_notice(result) if is_host else result.view_for(actor))
 
 
 # ---------------------------------------------------------------- 候補の作成（観測と公開の状態だけを読む）
