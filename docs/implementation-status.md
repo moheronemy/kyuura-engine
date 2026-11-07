@@ -5203,4 +5203,5 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - トレーナーの候補は `supported` にしない（受理の前の先読み・受理のあとを評価していない）。番の候補は partial のまま（`use_power`・`use_stadium`・`check_face_up_deck` が未対応。R-1・R-2 が残る）
 - U7-5 の設計の U7-5c を implemented にした（U7-5d 以降は未実装）。既存の U7 のテストの coverage の期待から `play_trainer` を外した（意図した差）
 - T-F1 の検証記録の訂正（[chaos-gym-borrow-t-f1.md](chaos-gym-borrow-t-f1.md) 7 章。124 件は成功 123・失敗 1、期待を直したあとの 53 件の実行は失敗 3）
+- 配布の確かめ: コミット `3fc95d9ea9134794eb0f6c546f58299a1693d520`（版 0.169.0）を、クリーンな仮想環境に Git の URL から通常のインストールをして、リポジトリの外から client_api の `play_trainer` でトレーナーを使うスモークテストをした（`behavior_digest` はソースの木と同じ）。配布物の中身の検査は required=62・problems=0
 - 詳細: [legal-actions-u7-5c.md](legal-actions-u7-5c.md)

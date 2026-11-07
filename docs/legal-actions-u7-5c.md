@@ -127,7 +127,7 @@ U7-5 の設計の静的な走査（`scan.check_playable`。effects.py の 77 の
   - 段の `role: "trainer"`
   - 理由 `use_condition_not_evaluated`
   - 項目の追加はない（選べるものは U7-3 の手札のカードと同じ `card`・`card_id`・`eligible`・`processability`・`reasons`）
-- **固定して導入確認した完全コミット**: このコミットのあとの文書だけのコミットで、10 章に記録します
+- **固定して導入確認した完全コミット**: `kyuura-engine @ git+https://github.com/moheronemy/kyuura-engine@3fc95d9ea9134794eb0f6c546f58299a1693d520`（版 0.169.0。9 章）。GUI の固定はこのコミットに更新する（GUI のコミットとは別。GUI は変えていない）
 
 ### 8.1 card の選択から check・submit まで（錯乱ジムを場に出す例。client_api の実際の応答から短くした）
 
@@ -174,7 +174,16 @@ U7-5 の設計の静的な走査（`scan.check_playable`。effects.py の 77 の
   - 停止の台帳は作り直して、`engine.py` の行番号だけが変わりました（18 行。ほかの項目の変化なし）
   - `check_implementation_assumptions --sites` の出力は基点 `8de0e21` と同じ（56 行）
 - **lint**（ruff 0.17.2）: 新しいファイル・`legal_actions.py`・U7 のテスト・U7-5 の生成器は指摘なし。`engine.py`・`__init__.py`・`test_preset_decks_v0_20.py` の指摘の数は基点と同じ
-- **配布と通常のインストール**: 10 章のあとの文書だけのコミットで記録します
+- **配布と通常のインストール**（コミット `3fc95d9ea9134794eb0f6c546f58299a1693d520`。版 0.169.0）
+  - `git archive` の木から作った wheel・sdist の中身の検査（`scripts/check_distribution.py`）: required=62・problems=0
+  - クリーンな仮想環境に、Git の URL から通常のインストール（編集可能なインストール・PYTHONPATH なし）。`direct_url.json` のコミットが一致
+  - リポジトリの外から `python -I` でスモークテスト（site-packages からの読み込み・全サブパッケージ・3 つの規約集合の照合値・初期配置・番の操作・ワザの宣言）。問題 0
+  - client_api の `play_trainer` の候補・入力・検査・送信で、トレーナーを 3 枚使った（どれも `role: "trainer"`・`may_stop_later`・検査が有効・受理）
+    - ピッピ人形（場に出す。そのあと `discard_from_play` ですてる）
+    - 錯乱ジム（場に出す）
+    - ポケモン交換おじさん（`awaiting_decision`。相手の `ACCEPT_REQUEST`）
+  - 錯乱ジムの相手の答え: 「使う」は 2 回とも `rejected`（使ったプレイヤー・観戦者への更新 0、状態は変わらない）、選べるものにない答えも `rejected`、「使わない」は `accepted`
+  - 実装の識別の `behavior_digest` は、インストールしたものとソースの木で同じ（`57ee690c787a7ccb1f69588d0e371e23cd7048209aa2a7688f23112c738d8960`）
 
 ## 10. 未確認・未対応
 
