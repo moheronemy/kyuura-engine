@@ -3176,8 +3176,9 @@ class PutBasicFromDeckOntoBench(AttackEffect):
         return None
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
-        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=(1, 1),
-                              options=bench_from_deck_candidates(state, use.player, self.names))
+        options = bench_from_deck_candidates(state, use.player, self.names)
+        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=required_search_choices(options),
+                              options=options) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 @dataclass(frozen=True)
@@ -3722,8 +3723,9 @@ class PutTypeBasicFromDeckOntoBench(AttackEffect):
         return None
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
-        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=(1, 1),
-                              options=bench_from_deck_candidates(state, use.player, (), self.pokemon_type, era=text_era(use.key.card_id)))
+        options = bench_from_deck_candidates(state, use.player, (), self.pokemon_type, era=text_era(use.key.card_id))
+        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=required_search_choices(options),
+                              options=options) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 # ---------------------------------------------------------------- v0.35: 可変枚数のコインの先読み・ダメージの計算の順番の決定と合わせて加えた 5 枚
@@ -4668,8 +4670,9 @@ class ReturnSelfToDeckThenSearchPokemon(AttackEffect):
             if p.active is not None:
                 problems.append("かわりの対戦ポケモンを出す決定なのに、バトル場が空いていない")
             return problems
-        return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=(1, 1),
-                              options=deck_pokemon_candidates(state, use.player, self.excluded))
+        options = deck_pokemon_candidates(state, use.player, self.excluded)
+        return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=required_search_choices(options),
+                              options=options) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 # ---------------------------------------------------------------- v0.39（docs/selfdestruct-spread-count-v0.39.md）
@@ -6006,16 +6009,17 @@ class AttachEnergyFromDeckToSelf(AttackEffect):
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         candidates = deck_energy_candidates(state, use.player, self.energy_type)
-        return _decision_form(decision, _label(state, use), kind=ATTACH_FROM_DECK, player=use.player, choices=(0, 1), options=candidates)
+        return _decision_form(decision, _label(state, use), kind=ATTACH_FROM_DECK, player=use.player, choices=(0, 1), options=candidates) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
-def deck_evolution_candidates(state: GameState, player: int) -> dict[int, list[int]]:
+def deck_evolution_candidates(state: GameState, player: int, cards: Iterable[int] | None = None) -> dict[int, list[int]]:
     """プレイヤーの山札の進化カード（uid の小さい順。山札の並びを決定に写さない）と、そのカードを今重ねられる自分の場のポケモンの番号（バトル場 → ベンチ）
     （v0.42。エリカのピッピの「つきのちから」）。重ねられるかは通常の進化と同じ ``evolution.evolution_block``（おたがいの最初の番・名前・その番の最初から
     場にいたか・段階。p.310。ワザによる進化でも免除しない）。重ねられるポケモンのないカードは含めない。進化したあとの HP がダメージ以下になる組
-    （``UNRESOLVED_EVOLUTION_HP``）は含めたまま（呼ぶ側が選ぶと止める選択にする）。対応していない進化カード（デッキには入らない）は含めない。"""
+    （``UNRESOLVED_EVOLUTION_HP``）は含めたまま（呼ぶ側が選ぶと止める選択にする）。対応していない進化カード（デッキには入らない）は含めない。
+    v0.148: ``cards`` なら、山札の代わりにそのカード（山札を見る前の確かめの、山札にあるかもしれないカード ``searchable_deck_cards``）で同じ表を作る。"""
     found: dict[int, list[int]] = {}
-    for uid in sorted(state.players[player].deck):
+    for uid in sorted(state.players[player].deck if cards is None else cards):
         definition = state.card_def(uid)
         if definition.category != "pokemon" or not definition.is_evolution_pokemon or not definition.supported:
             continue
@@ -7592,7 +7596,10 @@ class EvolveFromDeckOnHeads(AttackEffect):
         label = _label(state, use)
         candidates = deck_evolution_candidates(state, use.player)
         if decision.kind == SEARCH_DECK:
-            problems = _decision_form(decision, label, kind=SEARCH_DECK, player=use.player, choices=(1, 1), options=tuple(candidates))
+            # v0.149: 選べるカードがなければ選べるもののない決定（0〜0 枚。山札にカードがあるときだけ出す。v0.84 の A3）
+            problems = _decision_form(decision, label, kind=SEARCH_DECK, player=use.player, choices=(1, 1) if candidates else (0, 0), options=tuple(candidates))
+            if not candidates and not state.players[use.player].deck:
+                problems.append(f"「{label}」の選べるもののない決定が、山札が 0 枚のときに出ている（0 枚なら決定を出さない）")
             # v0.43: 場に出たときに使える特殊能力を持つ進化カードは、選べるが選ぶと止める（PW4。HP で止めるカードを除く）
             blocked = set(decision.context_value("unresolved_choices", ()))
             entry = deck_evolution_entry_cards(state, use.player, candidates, blocked)  # v0.86: ［れんさしんか］の機会が来るカードも
@@ -11215,7 +11222,7 @@ class SearchTrainerOnHeads(AttackEffect):
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=(0, 1),
-                              options=deck_trainer_cards(state, use.player))
+                              options=deck_trainer_cards(state, use.player)) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 @dataclass(frozen=True)
@@ -11432,8 +11439,10 @@ class ReturnHandThenRevealBasicEnergy(AttackEffect):
         count = decision.context_value("count")
         if type(count) is not int or not 1 <= count <= self.max_cards:
             return [f"「{label}」の段階 2 の枚数 {count!r} が 1〜{self.max_cards} ではない"]
-        return _decision_form(decision, label, kind=SEARCH_DECK, player=use.player, choices=(count, count),
-                              options=deck_basic_energy_cards(state, use.player))
+        options = deck_basic_energy_cards(state, use.player)
+        # v0.150: もどしたあとの山札に基本エネルギーカードがなければ、選べるもののない決定（0〜0 枚）
+        return _decision_form(decision, label, kind=SEARCH_DECK, player=use.player, choices=required_search_choices(options, count),
+                              options=options) + empty_search_problems(state, use.player, label, decision)
 
 
 @dataclass(frozen=True)
@@ -12135,7 +12144,7 @@ class RevealBasicEnergyFromDeck(AttackEffect):
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=(0, 1),
-                              options=deck_basic_energy_cards(state, use.player))
+                              options=deck_basic_energy_cards(state, use.player)) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 # ---------------------------------------------------------------- v0.64（docs/geodude-line-unbounded-coins-v0.64.md）
@@ -12309,7 +12318,7 @@ class PutOwnerBasicFromDeckOntoBenchOnHeads(AttackEffect):
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=(0, 1),
-                              options=deck_owner_basic_pokemon(state, use.player, self.owner))
+                              options=deck_owner_basic_pokemon(state, use.player, self.owner)) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 @dataclass(frozen=True)
@@ -12426,16 +12435,26 @@ class CoinEvolveSelfFromDeck(PowerEffect):
         if _power_coin(state, use) is not CoinSide.HEADS:
             return
         candidates = self._candidates(state, use)
-        _, user = state.find_pokemon(use.pokemon_id)
-        if not candidates:
-            state.add_event("evolve_from_deck_none", player=use.player, pokemon_id=user.pokemon_id, power=str(use.key))
-            shuffle_deck(state, use.player, power=str(use.key))
+        if not state.players[use.player].deck:
+            self._none(state, use)  # v0.150: 山札が 0 枚（枚数は公開）。さがさないので決定を出さない
             return
+        # v0.150（docs/deck-search-decision-presence-v0.150.md 3 章）: 山札にカードがあれば、選べるカードがなくても選べるもののない決定（0〜0 枚）を出して答えを待つ（v0.84 の A3。
+        # 山札の中身で決定の有無を変えない。答えのあとの「進化しなかった」は、必ず重ねる説明の公開の結果）
         blocked = self._hp_blocked(state, use, candidates)
         extra = {} if not blocked else {"unresolved_choices": blocked, "unresolved_code": "UNRESOLVED_EVOLUTION_HP", "unresolved_reason": EVOLUTION_HP_REASON}
-        push_power_decision(state, use, kind=SEARCH_DECK, player=use.player, options=candidates, **extra)
+        count = 1 if candidates else 0
+        push_power_decision(state, use, kind=SEARCH_DECK, player=use.player, options=candidates, min_choices=count, max_choices=count, **extra)
+
+    def _none(self, state: GameState, use: PowerUse) -> None:
+        state.add_event("evolve_from_deck_none", player=use.player, pokemon_id=use.pokemon_id, power=str(use.key))
+        shuffle_deck(state, use.player, power=str(use.key))
 
     def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if not choices:
+            if self._candidates(state, use):
+                raise RuntimeError("［うか］で、山札に重ねられるカードがあるのに選ばなかった（1 枚を選ぶ決定。エンジンの不具合）")
+            self._none(state, use)  # v0.150: 選べるもののない決定の答え
+            return None
         card = choices[0]
         if card not in self._candidates(state, use) or card in self._hp_blocked(state, use, [card]):
             raise RuntimeError(f"［うか］で選んだカード {choices} が、このカードに重ねられる山札のカードではない（エンジンの不具合）")
@@ -12457,7 +12476,9 @@ class CoinEvolveSelfFromDeck(PowerEffect):
 
     def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
         candidates = self._candidates(state, use)
-        return _power_decision_form(decision, use, kind=SEARCH_DECK, choices=(1, 1), options=candidates, unresolved=self._hp_blocked(state, use, candidates))
+        return (_power_decision_form(decision, use, kind=SEARCH_DECK, choices=required_search_choices(candidates), options=candidates,
+                                     unresolved=self._hp_blocked(state, use, candidates))
+                + empty_search_problems(state, use.player, f"特殊能力 {use.key}", decision))
 
 
 # v0.45: GV1 の停止コード（v0.44 はコードのない問い。つきのちからで起こるので停止コードにした。``resolution.questions`` の ``evolution_permission_from_deck`` と同じ）
@@ -17229,6 +17250,93 @@ def possible_deck_cards(state: GameState, player: int) -> tuple[int, ...]:
     （ある 1 枚でもあれば止める保守的な確かめ）に使う。並びは uid の小さい順で、山札の並び・配分を写さない。実際に山札にあるかは分からない（サイドにあっても含む）。"""
     _, elsewhere = unseen_card_pool(state, player)
     return tuple(sorted((*state.players[player].deck, *elsewhere)))
+
+
+def searchable_deck_cards(state: GameState, player: int) -> tuple[int, ...]:
+    """v0.148（docs/attack-deck-evolution-preflight-v0.148.md 3 章）: 山札をさがす効果で、山札から選べるかもしれないカード（uid の小さい順）。山札にうらのカードがあれば
+    ``possible_deck_cards``（山札のすべてのカードと山札の外の見えないカード）、なければ山札のカード（どれもおもてで、山札にあることが分かっている）だけ。
+
+    山札のうらのカードの枚数・おもてのカードは公開なので、どちらを使うかも配分によらない。山札にうらのカードがないとき、サイドなどの見えないカードは山札にありえないので、
+    ``possible_deck_cards`` の保守的な含め方（山札が 0 枚でもサイドのカードを含む）で、使えたはずのワザを止めないようにする。"""
+    deck, _ = unseen_card_pool(state, player)
+    if not deck:
+        return tuple(sorted(state.players[player].deck))
+    return possible_deck_cards(state, player)
+
+
+def required_search_choices(options, count: int = 1) -> tuple[int, int]:
+    """v0.150（docs/deck-search-decision-presence-v0.150.md 3 章）: 山札をさがして、選べるカードがあれば必ず ``count`` 枚を選ぶ決定の選ぶ数。選べるものがなければ選べるもののない
+    決定（0〜0 枚。v0.84 の A3）。山札にカードがあれば、選べるものの有無によらず決定を出す（決定の有無で山札の中身を相手・観戦者に伝えない）。"""
+    return (count, count) if options else (0, 0)
+
+
+def empty_search_problems(state: GameState, player: int, label: str, decision: PendingDecision) -> list[str]:
+    """v0.150: 選べるもののない山札の決定は、山札にカードがあるとき（実際にさがすとき）だけ出す。山札が 0 枚（公開の枚数）なら、さがさないので決定を出さない。"""
+    if not decision.options and not state.players[player].deck:
+        return [f"「{label}」の選べるもののない決定が、山札が 0 枚のときに出ている（0 枚なら決定を出さない）"]
+    return []
+
+
+def deck_choice_may_only_stop(state: GameState, player: int, fits: Callable[[int], bool], stops: Callable[[int], bool], *, reserve: int = 0) -> bool:
+    """v0.148（docs/attack-deck-evolution-preflight-v0.148.md 3 章）: 山札を見て、選べるカード（``fits``）があれば必ず 1 枚を選ぶ決定で、選べるカードが山札にあって、そのどれもが
+    選ぶと止めるもの（``stops``）になる配分が、持ち主の知識と矛盾しないか（真なら、山札を見る前に止める）。
+
+    - 止めるカードが山札にあるかもしれない（``searchable_deck_cards`` に ``fits`` かつ ``stops`` のカードがある）
+    - かつ、止めないカード（``fits`` かつ ``stops`` でない）が山札に ``reserve`` + 1 枚以上あることを、配分を読まない下限（``deck_lower_bound_where``）で確かめられない
+
+    このとき、止めないカードをすべてサイドなど山札の外に置き、止めるカードを山札に置く配分がありうる（下限が 0 なら止めないカードはすべて山札の外に置ける。止めるカードは山札の
+    うらのカードと入れかえられる）。逆に、どちらかが成り立たなければ、どの配分でも止めないカードが山札にあるか、止めるカードが山札にない。結果は持ち主の知っている集合と公開の
+    枚数だけで決まり、実際の配分によらない。実際には止めないカードが山札にあっても止める（保守的）。``reserve`` は、同じ効果で先に山札から重ねるカードの枚数の上限（しんかのほうし。
+    先に重ねたカードが止めないカードを使い切るかもしれない）。
+
+    ``fits``・``stops`` は、カードがどこ（山札・サイド・置いておくカード）にあるかを読まず、カードの定義と公開の状態だけで決まる条件にすること（呼ぶ側の責任）。"""
+    if not any(fits(uid) and stops(uid) for uid in searchable_deck_cards(state, player)):
+        return False
+    return deck_lower_bound_where(state, player, lambda uid: fits(uid) and not stops(uid)) < 1 + reserve
+
+
+def deck_rainbow_possible(state: GameState, player: int) -> bool:
+    """v0.151（docs/deck-search-stop-oracles-v0.151.md 3 章）: 山札をさがす前に、山札にあるかもしれないカード（``searchable_deck_cards``。山札・うらのサイド・持ち主に見えない置いておく
+    カード）にレインボーエネルギー（RB2）があるか。持ち主の知っている集合と公開の枚数だけで決まり、実際の配分によらない（サイドにあって山札にない場合も真。保守的）。山札が 0 枚なら偽。"""
+    return bool(rainbow_cards_in(state, searchable_deck_cards(state, player)))
+
+
+def deck_count_may_fall_short(state: GameState, player: int, fits: Callable[[int], bool], count: int, *, added: int = 0) -> bool:
+    """v0.151（docs/deck-search-stop-oracles-v0.151.md 3 章）: 山札をさがす前に、山札の ``fits`` のカードの枚数 c が 0 < c < ``count``（FC1。説明の枚数より少ない）になる配分が、
+    持ち主の知識と矛盾しないか（真なら、山札を見る前に止める）。``added`` は、さがす前に山札に入ることが持ち主に分かっている ``fits`` のカードの枚数（てじなでもどすカード）。
+
+    c は「配分を読まない下限（``deck_lower_bound_where``）+ ``added``」以上、「山札にあるかもしれない ``fits`` のカードの枚数（``searchable_deck_cards``。山札の枚数を超えない）+ ``added``」
+    以下のどれにもなりうる（見えないカードを 1 枚ずつ入れかえられる）とみなし、範囲が 1〜``count`` - 1 と重なれば真。結果は持ち主の知っている集合と公開の枚数だけで決まり、実際の
+    配分によらない。実際には足りていても止める（保守的）。``fits`` は ``deck_lower_bound_where`` と同じく、カードの定義と公開の状態だけで決まる条件にすること（呼ぶ側の責任）。"""
+    possible = sum(1 for uid in searchable_deck_cards(state, player) if fits(uid))
+    upper = min(possible, len(state.players[player].deck)) + added
+    lower = deck_lower_bound_where(state, player, fits) + added
+    return max(lower, 1) <= min(upper, count - 1)
+
+
+def evolution_card_fits(state: GameState, pokemon: PokemonInPlay, card: int, *, evolves_from: str | None = None, name: str | None = None) -> bool:
+    """v0.148: カード ``card`` が、場のポケモン ``pokemon`` に山札から今重ねられる進化カードか（``self_deck_evolution_cards`` の 1 枚ずつの条件。カードの定義と公開の状態だけで決まり、
+    カードがどこにあるかを読まない）。"""
+    definition = state.card_def(card)
+    if definition.category != "pokemon" or not definition.is_evolution_pokemon or not definition.supported:
+        return False
+    if evolves_from is not None and definition.evolves_from != evolves_from:
+        return False
+    if name is not None and definition.name_ja != name:
+        return False
+    return evolution_block(state, pokemon, definition, from_deck=True) is None
+
+
+def possible_pair_detail(pairs: Iterable[tuple[int, int]]) -> str:
+    """v0.148: 山札にあるかもしれない進化カードと場のポケモンの組（GV1・DV2）で止める理由の文の後半。場のポケモンの番号（公開）だけを書き、カードの uid・名前・枚数・位置を書かない。"""
+    pokemon_ids = sorted({pokemon_id for _, pokemon_id in pairs})
+    return f"場のポケモン {pokemon_ids}（{POSSIBLE_DECK_EVOLUTION_DETAIL}）"
+
+
+# v0.148（docs/attack-deck-evolution-preflight-v0.148.md）: 山札から進化カードを重ねる効果を、山札を見る前に止める理由の文の後半。実際の山札の中身・サイドとの配分によらない決まった文
+POSSIBLE_DECK_EVOLUTION_DETAIL = (
+    "山札にあるかもしれない進化カードで決める。山札とサイドの見えないカードの配分を読まない、情報漏れを防ぐための保守的な確かめで、実際には山札にない場合も含む。v0.148"
+)
 
 
 # v0.137: 山札に選べるカードが（決まった枚数）あると、見えないカードの配分を読まずに確かめられないとき、使う前に止める理由の文の後半（ST1・FC1 の共通。docs/deck-search-oracle-v0.137.md）。
@@ -29293,7 +29401,9 @@ class DiscardDeckTopThenReturnTypeEnergy(TrainerEffect):
                                    f"（HC6。熱血!で山札が {len(p.deck)} 枚）")
         if discard_to_hand_suppressor(state) is not None:
             return  # v0.74: ポケモンタワーで手札に加える部分が消える（レインボーエネルギーを「炎」エネルギーカードとして加えるかを決める必要がない。FV1 で止めない。HC6 は別の問い）
-        hidden = rainbow_cards_in(state, (*p.deck, *(uid for uid in p.prizes if uid is not None)))
+        # v0.149（docs/optional-deck-evolution-presence-v0.149.md 4 章）: 山札にあるかもしれないカード（``searchable_deck_cards``。うらのサイドと持ち主に見えない置いておくカードを含み、
+        # おもてのサイドを含まない）で確かめる。v0.148 までは山札とすべてのサイドだけで、山札と持ち主に見えない置いておくカードの配分で受理・拒否が変わった
+        hidden = rainbow_cards_in(state, searchable_deck_cards(state, use.player))
         if hidden:
             raise UnsupportedError(FERVOR_RAINBOW_CODE, FERVOR_RAINBOW_REASON)
 
@@ -29357,7 +29467,9 @@ class LookTopTakePokemonThenShuffle(TrainerEffect):
             # v0.114（NB1）: neo の説明の「たねポケモン」（イントロパック★neo の印刷。UQ-NEO-TEXT-BABY-CATEGORIES の事例）。見る 7 枚にベイビィポケモンカードがあれば、選べるか（選べるカードが
             # あるか）が決まらない。見る前には分からないので、使ったプレイヤーに見えないカード（山札・サイド）にベイビィポケモンカードがあれば、使う前に止める（見る 7 枚の中身で受け付けるかを
             # 変えない。使ったプレイヤーが知っているのは、山札とサイドを合わせたカードまで）
-            hidden = (*state.players[use.player].deck, *state.players[use.player].prizes)
+            # v0.149（docs/optional-deck-evolution-presence-v0.149.md 4 章）: 山札にあるかもしれないカード（``searchable_deck_cards``。持ち主に見えない置いておくカードを含み、おもての
+            # サイドを含まない）。v0.148 までは山札とすべてのサイドだけで、山札と持ち主に見えない置いておくカードの配分で受理・拒否が変わった
+            hidden = searchable_deck_cards(state, use.player)
             if any(state.card_def(uid).is_baby_pokemon for uid in hidden):
                 raise neo_basic_baby_error(f"{use.card_id} の見る {self.look} 枚に、ベイビィポケモンカードがありうる（山札・サイド）")
 
@@ -29777,7 +29889,7 @@ class RevealNamedPokemonFromDeckAny(AttackEffect):
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         options = deck_named_pokemon(state, use.player, self.names)
-        return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=(0, len(options)), options=options)
+        return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=(0, len(options)), options=options) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 CALL_WILL_O_THE_WISP_TEXT = "コインを{coins}枚投げ、「おもて」の数ぶんの「{type}」エネルギーカードを自分のトラッシュから選び出し、手札に加える。"
@@ -29825,8 +29937,9 @@ class AttachEnergyFromDeckToSelfExactly(AttackEffect):
         return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, tuple(text.format(type=self.energy_type.ja) for text in STOKE_TEXTS))
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
-        return _decision_form(decision, _label(state, use), kind=ATTACH_FROM_DECK, player=use.player, choices=(1, 1),
-                              options=deck_energy_candidates(state, use.player, self.energy_type))
+        options = deck_energy_candidates(state, use.player, self.energy_type)
+        return _decision_form(decision, _label(state, use), kind=ATTACH_FROM_DECK, player=use.player, choices=required_search_choices(options),
+                              options=options) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 ENERGY_SUPPORT_TEXT = "自分の山札から「{type}」エネルギーカードを1枚選び出し、自分の控えポケモンにつける。その後、山札をよく切る。"
@@ -29850,8 +29963,9 @@ class AttachEnergyFromDeckToBench(AttackEffect):
         stage = decision.context_value("stage")
         bench = [p.pokemon_id for p in state.players[use.player].bench if energy_attach_block(state, p) is None]
         if stage == "card":
-            return _decision_form(decision, label, kind=ATTACH_FROM_DECK, player=use.player, choices=(1, 1),
-                                  options=deck_energy_candidates(state, use.player, self.energy_type))
+            options = deck_energy_candidates(state, use.player, self.energy_type)
+            return (_decision_form(decision, label, kind=ATTACH_FROM_DECK, player=use.player, choices=required_search_choices(options), options=options)
+                    + empty_search_problems(state, use.player, label, decision))
         if stage == "bench":
             problems = _decision_form(decision, label, kind=ATTACH_TO_BENCH, player=use.player, choices=(1, 1), options=bench)
             if decision.context_value("card") not in deck_energy_candidates(state, use.player, self.energy_type):
@@ -29883,7 +29997,8 @@ class CoinAttachEnergyFromDeckToSelf(AttackEffect):
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         options = deck_energy_candidates(state, use.player, self.energy_type)
-        return _decision_form(decision, _label(state, use), kind=ATTACH_FROM_DECK, player=use.player, choices=(0, min(self.max_cards, len(options))), options=options)
+        return _decision_form(decision, _label(state, use), kind=ATTACH_FROM_DECK, player=use.player, choices=(0, min(self.max_cards, len(options))),
+                              options=options) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 @dataclass(frozen=True)
@@ -30728,8 +30843,9 @@ class SearchTrainerRequiredOnHeads(AttackEffect):
         return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (REQUIRED_TRAINER_SEARCH_TEXT,))
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
-        return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=(1, 1),
-                              options=deck_trainer_cards(state, use.player))
+        options = deck_trainer_cards(state, use.player)
+        return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=required_search_choices(options),
+                              options=options) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 SNATCH_TRAINERS_TEXT = "コインを投げて「おもて」なら、相手の場のポケモン全員についている「トレーナーカード」を、すべてトラッシュする。"
@@ -33243,8 +33359,9 @@ class ChooseBenchThenAttachFromDeck(AttackEffect):
         label = _label(state, use)
         bench = [p.pokemon_id for p in state.players[use.player].bench]
         if decision.context_value("stage") == "card":
-            problems = _decision_form(decision, label, kind=ATTACH_FROM_DECK, player=use.player, choices=(1, 1),
-                                      options=deck_energy_candidates(state, use.player, self.energy_type))
+            options = deck_energy_candidates(state, use.player, self.energy_type)
+            problems = (_decision_form(decision, label, kind=ATTACH_FROM_DECK, player=use.player, choices=required_search_choices(options), options=options)
+                        + empty_search_problems(state, use.player, label, decision))
             if decision.context_value("target") not in bench:
                 problems.append(f"「{label}」でつける控えポケモン {decision.context_value('target')!r} が控えにいない")
             return problems
@@ -33476,7 +33593,8 @@ class RevealOneNamedPokemonFromDeck(AttackEffect):
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         options = deck_named_pokemon(state, use.player, self.names)
-        return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=(1, 1), options=options)
+        return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=required_search_choices(options),
+                              options=options) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 OUTRAGE_TEXT = "コインを投げて「うら」なら、このワザは失敗する。「おもて」なら、自分にのっているダメージカウンターの数×{per}のダメージを追加する。"
@@ -36399,10 +36517,11 @@ class DiscardDeckTopAttachTypeEnergyThenEndTurn(EntryPower):
             return UnsupportedError(DECK_SHORT_CODE, f"［おたけび］で山札の上から {self.count} 枚をトラッシュする（山札の枚数 {len(state.players[use.player].deck)}）: {DECK_SHORT_REASON}")
         if discard_protection(state):
             return None  # v0.119: ［アレルギーほうし］でつけないので、つけるカード・つける先は決めない
-        hidden = tuple(state.players[use.player].deck) + tuple(state.players[use.player].prizes)
-        rainbow = rainbow_cards_in(state, hidden)
-        if rainbow:
-            return rainbow_attach_error(self.energy_type, rainbow)
+        # v0.149（docs/optional-deck-evolution-presence-v0.149.md 4 章）: 山札にあるかもしれないカード（``searchable_deck_cards``。持ち主に見えない置いておくカードを含み、おもての
+        # サイドを含まない）。v0.148 までは山札とすべてのサイドだけで、山札と持ち主に見えない置いておくカードの配分で受理・拒否が変わり、理由の文に見えないカードの uid を書いた
+        hidden = searchable_deck_cards(state, use.player)
+        if rainbow_cards_in(state, hidden):
+            return rainbow_possible_in_deck_error(self.energy_type)
         miracle = [uid for uid in hidden if _miracle_effect(state, uid)]
         if miracle:
             return UnsupportedError(MIRACLE_TYPE_CODE, f"［おたけび］でトラッシュするかもしれないミラクルエネルギー: {MIRACLE_TYPE_REASON.format(type=self.energy_type.ja)}")
@@ -42965,8 +43084,9 @@ class PutNamedBasicFromDeckOntoBenchOrFail(AttackEffect):
             attack, what, (CALL_FOR_FAMILY_OR_FAIL_TEXT.format(name=self.names[0]), MULTIPLY_OR_FAIL_TEXT.format(name=self.names[0])))
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
-        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=(1, 1),
-                              options=bench_from_deck_candidates(state, use.player, self.names))
+        options = bench_from_deck_candidates(state, use.player, self.names)
+        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=required_search_choices(options),
+                              options=options) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 @dataclass(frozen=True)
@@ -43320,7 +43440,9 @@ class PutBabyFromDeckOntoBenchOrFail(AttackEffect):
         return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (PLAY_TOGETHER_TEXT,))
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
-        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=(1, 1), options=deck_baby_pokemon(state, use.player))
+        options = deck_baby_pokemon(state, use.player)
+        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=required_search_choices(options),
+                              options=options) + empty_search_problems(state, use.player, _label(state, use), decision)
 
 
 @dataclass(frozen=True)

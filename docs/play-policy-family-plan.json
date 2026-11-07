@@ -19,7 +19,7 @@
   "ledger": {
    "path": "docs/stop-policy-classification.json",
    "base_commit": "3e25ac5eff0f90dbea224045e77c2b60e025bf2d",
-   "entries": 425
+   "entries": 429
   },
   "research": {
    "path": "kyuura_engine/data/research_links.json",
@@ -1229,7 +1229,7 @@
     {
      "scene": "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK#coin-evolve-self-from-deck",
      "coverage": "needs_secret_review",
-     "note": "v0.147 で山札にあるかもしれないカードで確かめるように直した（提案の時点は blocked_by_defect。PSP-DECK-CONTENT-PRECHECKS の残り。この経路は比較プローブしていない）"
+     "note": "v0.147 で山札にあるかもしれないカードで確かめるように直した（提案の時点は blocked_by_defect。PSP-DECK-CONTENT-PRECHECKS の残り。この経路は v0.147 では比較プローブしていない。v0.148 で許可を手で与えた構築盤面の双子で確かめた）"
     }
    ],
    "excludes": [
@@ -2075,9 +2075,9 @@
     "docs/type-energy-colors-v0.88.md"
    ],
    "reachability_counts": {
-    "constructed_board": 3,
+    "constructed_board": 4,
     "legal_sequence": 1,
-    "static_only": 5
+    "static_only": 4
    }
   },
   {
@@ -2664,8 +2664,8 @@
     },
     {
      "scene": "UNRESOLVED_EVOLUTION_HP",
-     "coverage": "blocked_by_defect",
-     "note": "［うか］の経路は v0.147 で直した（提案の時点は PSP-DECK-CONTENT-PRECHECKS の残り）。ワザの宣言の前の先読みの H1 の経路は未確認の候補（PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE の範囲）"
+     "coverage": "needs_secret_review",
+     "note": "［うか］の経路は v0.147 で直した（提案の時点は PSP-DECK-CONTENT-PRECHECKS の残り）。ワザの宣言の前の先読みの H1 の経路は v0.148 で配分を読まない確かめにした（PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE。v0.147 の時点は blocked_by_defect）。規約を採る前に対の比べの確かめ直しが要る"
     },
     {
      "scene": "UNRESOLVED_DEVOLUTION_INTERMEDIATE_KNOCKOUT",
@@ -2719,8 +2719,8 @@
    "scene_count": 3,
    "code_count": 3,
    "coverage_counts": {
-    "blocked_by_defect": 1,
     "needs_implementation": 1,
+    "needs_secret_review": 1,
     "unverified": 1
    },
    "ruling_ids": [
@@ -3090,8 +3090,8 @@
     },
     {
      "scene": "UNRESOLVED_EVOLVE_AFTER_DEVOLUTION",
-     "coverage": "blocked_by_defect",
-     "note": "［うか］の漏れ（PSP-COCOON-DV2-ORACLE）は v0.147 で直した。ワザの宣言の前の先読みの漏れ（PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE。未修正）が残る"
+     "coverage": "needs_secret_review",
+     "note": "［うか］の漏れ（PSP-COCOON-DV2-ORACLE）は v0.147 で、ワザの宣言の前の先読みの漏れ（PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE）は v0.148 で直した（v0.147 の時点は blocked_by_defect）。規約を採る前に対の比べの確かめ直しが要る"
     }
    ],
    "excludes": [
@@ -3143,8 +3143,8 @@
    "scene_count": 5,
    "code_count": 5,
    "coverage_counts": {
-    "blocked_by_defect": 1,
-    "needs_implementation": 4
+    "needs_implementation": 4,
+    "needs_secret_review": 1
    },
    "ruling_ids": [
     "DV2",
@@ -3436,10 +3436,7 @@
    "fixed_in": "v0.146（docs/play-set-verification-v0.146.md 3 章）: 使う前の確かめを配分を読まない下限（deck_target_lower_bound・bench_entry_unconfirmed）に替え、停止の方針の台帳にfixed で加えた。not_done は提案の時点（調査の時点）の記録"
   }
  ],
- "defect_coupling": {
-  "UNRESOLVED_EVOLVE_AFTER_DEVOLUTION": "PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE",
-  "UNRESOLVED_EVOLUTION_HP": "PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE"
- },
+ "defect_coupling": {},
  "whole_game_channels": [
   {
    "id": "WG-SETUP-MULLIGAN",
@@ -3657,7 +3654,7 @@
    "name": "両モード共通の不具合の修正（モードと別の版）",
    "rules": [],
    "prerequisites": [],
-   "scope": "PSP-NJ1-NINJA-GYM-ORACLE（この調査で確認）・PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-DECK-CONTENT-PRECHECKS の残り（未確認）。v0.146・v0.147 でこの 4 つを直した（v0.147 の横断で見つけた PSP-POWER-PRECHECK-DECK-ORACLE も）。残りは PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE（v0.147 で見つけた。直していない）",
+   "scope": "PSP-NJ1-NINJA-GYM-ORACLE（この調査で確認）・PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-DECK-CONTENT-PRECHECKS の残り（未確認）。v0.146・v0.147 でこの 4 つを直した（v0.147 の横断で見つけた PSP-POWER-PRECHECK-DECK-ORACLE も）。v0.147 で見つけた PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE はv0.148 で直した。v0.148 で見つけた PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE と、v0.149 で見つけた PSP-HIDDEN-SET-ASIDE-DECK-POOL は v0.149 で直した。PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS（v0.149 で見つけた）は v0.150 で直した。v0.150 で見つけた PSP-DECK-SEARCH-STOP-ORACLES は v0.151 で直した",
    "done_when": "対の比べ（twin_command_problems）で漏れがない。blocked_by_defect の場面の規約を採れる状態",
    "remains": "研究上の論点（NJ1・PW3・DV2・GV1 の裁定）は未解決のまま"
   },
@@ -7866,10 +7863,9 @@
    "ruling_documents": [
     "docs/evolution-rules-v0.4a.md"
    ],
-   "coupled_defect": "PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE",
    "candidate": "PC-NON-DAMAGE-HP-KNOCKOUT",
-   "coverage": "blocked_by_defect",
-   "coverage_note": "［うか］の経路は v0.147 で直した（提案の時点は PSP-DECK-CONTENT-PRECHECKS の残り）。ワザの宣言の前の先読みの H1 の経路は未確認の候補（PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE の範囲）"
+   "coverage": "needs_secret_review",
+   "coverage_note": "［うか］の経路は v0.147 で直した（提案の時点は PSP-DECK-CONTENT-PRECHECKS の残り）。ワザの宣言の前の先読みの H1 の経路は v0.148 で配分を読まない確かめにした（PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE。v0.147 の時点は blocked_by_defect）。規約を採る前に対の比べの確かめ直しが要る"
   },
   {
    "id": "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK#coin-evolve-self-from-deck",
@@ -7898,7 +7894,7 @@
    ],
    "candidate": "PC-HIDDEN-SEARCH-EMPTY",
    "coverage": "needs_secret_review",
-   "coverage_note": "v0.147 で山札にあるかもしれないカードで確かめるように直した（提案の時点は blocked_by_defect。PSP-DECK-CONTENT-PRECHECKS の残り。この経路は比較プローブしていない）"
+   "coverage_note": "v0.147 で山札にあるかもしれないカードで確かめるように直した（提案の時点は blocked_by_defect。PSP-DECK-CONTENT-PRECHECKS の残り。この経路は v0.147 では比較プローブしていない。v0.148 で許可を手で与えた構築盤面の双子で確かめた）"
   },
   {
    "id": "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK#other",
@@ -7951,10 +7947,9 @@
    "ruling_documents": [
     "docs/mew-devolution-spray-v0.50.md"
    ],
-   "coupled_defect": "PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE",
    "candidate": "PC-ONCE-PER-TURN-IDENTITY",
-   "coverage": "blocked_by_defect",
-   "coverage_note": "［うか］の漏れ（PSP-COCOON-DV2-ORACLE）は v0.147 で直した。ワザの宣言の前の先読みの漏れ（PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE。未修正）が残る"
+   "coverage": "needs_secret_review",
+   "coverage_note": "［うか］の漏れ（PSP-COCOON-DV2-ORACLE）は v0.147 で、ワザの宣言の前の先読みの漏れ（PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE）は v0.148 で直した（v0.147 の時点は blocked_by_defect）。規約を採る前に対の比べの確かめ直しが要る"
   },
   {
    "id": "UNRESOLVED_EXTRA_ENERGY_COLORLESS",
@@ -9719,7 +9714,7 @@
    "mechanisms": [
     "command_rejection"
    ],
-   "reachability": "static_only",
+   "reachability": "constructed_board",
    "whole_game": false,
    "whole_game_basis": null,
    "secret_dependency": null,
@@ -15313,25 +15308,6 @@
    "candidate": null
   },
   {
-   "id": "PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE",
-   "parent": null,
-   "code": null,
-   "entry_kind": "silent_information_leak",
-   "family": null,
-   "ledger_classification": "A",
-   "plan_class": "D",
-   "class_reason": "情報漏れ（未修正）",
-   "mechanisms": [],
-   "reachability": "constructed_board",
-   "whole_game": false,
-   "whole_game_basis": null,
-   "secret_dependency": null,
-   "ruling_ids": [],
-   "kyuura_issue": null,
-   "ruling_documents": [],
-   "candidate": null
-  },
-  {
    "id": "RESEARCH:ko_prevention_self_effect",
    "parent": null,
    "code": null,
@@ -15871,16 +15847,16 @@
    "mode_policy_status": "decision_required"
   }
  ],
- "internal_guard_sites": 608,
+ "internal_guard_sites": 619,
  "counts": {
-  "scenes": 400,
+  "scenes": 399,
   "stop_code_scenes": 368,
   "stop_codes": 357,
   "by_plan_class": {
    "A": 327,
    "B": 33,
    "C": 14,
-   "D": 7,
+   "D": 6,
    "E": 19
   },
   "a_scenes": 327,
@@ -15892,10 +15868,9 @@
   "candidate_codes_with_duplicates": 166,
   "candidate_codes_unique": 163,
   "coverage": {
-   "blocked_by_defect": 2,
    "full": 3,
    "needs_implementation": 22,
-   "needs_secret_review": 13,
+   "needs_secret_review": 15,
    "partial": 1,
    "question_resolved_other_stops_possible": 4,
    "unverified": 126
@@ -15938,7 +15913,7 @@
   "whole_game_dynamic_channel_scenes": 12,
   "whole_game_a_scenes_with_candidate": 15,
   "new_findings": 1,
-  "internal_guard_sites_not_listed_as_scenes": 608,
+  "internal_guard_sites_not_listed_as_scenes": 619,
   "note": "場面は台帳の項目（事例のあるコードは事例）。重複を含む数は規約案ごとの対象の合計、重複を除いた数は場面・コードの集合の大きさ。内部ガードは場面に数えない（D。個数だけ）"
  }
 }

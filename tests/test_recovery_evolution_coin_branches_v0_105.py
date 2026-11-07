@@ -384,9 +384,13 @@ class EvolveFromDeckTest(unittest.TestCase):
     def test_waterfall_evolution_stays_optional(self):
         """既存のたきのぼりしんか（ロケット団のコイキング）は v0.44 のまま: 0〜1 枚を選べ、選ばない・選べるものがない場合も切る（任意性と切る条件を変えない）。"""
         state = board(mon(H.ROCKET_MAGIKARP, (W, W, W)), deck=[W, W])
-        none = attack(state, 1)
-        self.assertEqual(mine(state, none, f"{H.ROCKET_MAGIKARP}#1", "evolve_from_deck_none", "shuffle"), ["evolve_from_deck_none", "shuffle"])
-        self.assertIsNone(none.decision)  # 任意の進化は、選べるものがなければ決定を出さない（v0.44 のまま）
+        # v0.149（docs/optional-deck-evolution-presence-v0.149.md 2 章）: 選べるものがなくても、山札にカードがあれば決定（0〜1 枚）を出して答えを待つ（v0.148 までは決定を出さなかった。
+        # 決定の有無で山札の中身が相手に伝わった。PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE）。任意性（0〜1 枚）と、どの場合も切ることは変えない
+        searching = attack(state, 1)
+        self.assertEqual((searching.decision.kind, searching.decision.options, searching.decision.min_choices, searching.decision.max_choices), (SEARCH_DECK, (), 0, 1))
+        none = answer(searching, ())
+        self.assertEqual(mine(state, none, f"{H.ROCKET_MAGIKARP}#1", "evolve_from_deck_declined", "evolve_from_deck_none", "shuffle"),
+                         ["evolve_from_deck_declined", "shuffle"])
         state = board(mon(H.ROCKET_MAGIKARP, (W, W, W)), deck=[GYARADOS, W])
         asked = attack(state, 1)
         self.assertEqual((asked.decision.kind, asked.decision.min_choices, asked.decision.max_choices), (SEARCH_DECK, 0, 1))

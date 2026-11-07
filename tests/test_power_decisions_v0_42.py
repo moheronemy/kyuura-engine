@@ -895,7 +895,11 @@ class AttackTest(unittest.TestCase):
         self.assertEqual(after[after.index("turn_end") - 1], "shuffle")
         self.assertEqual(card_count(done, 0), card_count(state, 0))
         none = board(mon(ERIKAS_CLEFAIRY), bench=(), deck=(GRASS,))
-        after = kinds(attack(none, 0, H), len(none.log))
+        # v0.149（docs/optional-deck-evolution-presence-v0.149.md 2 章）: 山札にカードがあれば、重ねられるものがなくても選べるもののない決定（0〜0 枚）を出して答えを待つ（v0.84 の A3。
+        # 決定の有無で山札の中身を相手に伝えない）。答えのあとは v0.148 までと同じく何もせず切る
+        asked = attack(none, 0, H)
+        self.assertEqual((asked.decision.kind, asked.decision.options, asked.decision.max_choices), (SEARCH_DECK, (), 0))
+        after = kinds(answer(asked, ()), len(none.log))
         self.assertEqual(after[after.index("turn_end") - 2:after.index("turn_end")], ["evolve_from_deck_none", "shuffle"])
 
     def test_fairy_miracle_returns_to_hand(self):

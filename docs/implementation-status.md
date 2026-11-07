@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.147）
+# 実装状況（v0.1〜v0.164）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d`（v0.128 から。v0.129 の種族の身長の写しは別に `9242b9be89be0f747279f39c11875d1ed61763ec`。v0.126〜v0.127 は `57d01f45cfb8b086d03dc0525b329cf6adeff69b`、v0.125 は `134a664c6adf67d5604148a31b58e1a7d26d4d6d`、v0.124 は `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`、v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -81,6 +81,7 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 - サドン・デスの延長戦（サイド 1 枚でやり直す。v0.134 で実装した。[sudden-death-v0.134.md](sudden-death-v0.134.md)）
 - 旧裏の複数の時期のルールの切り替え（`RuleSet` は 2000.02.14版だけ）
 - 公式大会のレギュレーション（サイド 4 枚など）
+- 合法手の一覧（U7）。v0.160 で U7-1（決定への回答・番を終える）だけを実装した（[legal-actions-u7-1.md](legal-actions-u7-1.md)）。ほかは仕様案だけ（[legal-actions-api-design.md](legal-actions-api-design.md)・[legal-actions-api-implementation-plan.md](legal-actions-api-implementation-plan.md)。実装の識別の新しい方式の設計は [implementation-identity-design.md](implementation-identity-design.md)。状態のスナップショットの保存・復元は v0.157 で S1〜S4・S6 を、v0.158 で完全な再現用記録との接続の S5 を実装した。[state-snapshot-v0.158.md](state-snapshot-v0.158.md)・[state-snapshot-v0.157.md](state-snapshot-v0.157.md)・[state-snapshot-design.md](state-snapshot-design.md)。閲覧用記録は v0.155 で実装した。[view-record-v0.155.md](view-record-v0.155.md)。記録の再実行による再現は v0.154 で実装した。[replay-run-v0.154.md](replay-run-v0.154.md)。完全な再現用記録の収集と構造の検証は v0.153 で実装した。[replay-record-v0.153.md](replay-record-v0.153.md)。診断の型とコマンド実行結果のアダプタは v0.152 で実装した。[diagnostics-adapter-v0.152.md](diagnostics-adapter-v0.152.md)）（未承認。[diagnostics-replay-api-design.md](diagnostics-replay-api-design.md)・[実装計画](diagnostics-replay-api-implementation-plan.md)）
 - 画面、AI、通信（隠れた情報の管理は、v0.47 でプレイヤーに渡す観測 `observe`・`visible_log` を加えた。状態とログは内部の完全な記録のまま。[fossil-hidden-info-v0.47.md](fossil-hidden-info-v0.47.md) 5.1 節）
 
 ## 原典未確認
@@ -3820,6 +3821,170 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
 
+## v0.163: 合法手 API の準備の操作とホストの操作（U7-2）
+
+[legal-actions-u7-2.md](legal-actions-u7-2.md)。U7 全体の部分実装（番の候補は番を終えるだけ）。エンジンの処理（`engine.py`・`resolution/`・観測・アダプタ）は変えていない。規約集合の ID・版・中身・照合値は同じ。採用は U7-2 だけ（ADOPT-U7-2）。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 初期配置（2 段。化石・人形は区分つき） | 実装した（complete） | 3 章 | tests/test_legal_actions_u7_2.py |
+| 切り直しの補償の引く枚数 | 実装した（complete） | 3 章 | 同上 |
+| ホストの入口（ジャンケンの結果・延長戦の開始） | 実装した | 2・3 章 | 同上 |
+| 番の通常の操作（12 種類） | 未実装（対応しない種類として示す） | U7-3 以後 | — |
+
+## v0.162: U7 の決定の入力の監査
+
+[legal-actions-decision-audit.md](legal-actions-decision-audit.md)。操作の種類は増やしていない。エンジンの処理（`engine.py`・`resolution/`・観測・アダプタ）は変えていない。規約集合の ID・版・中身・照合値は同じ。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 決定 39 種類の情報境界（出し方ごと） | 確かめた（A 38・B 1。不具合なし） | 1〜4 章 | tests/test_legal_actions_decision_audit.py |
+| 39 種類の答えの並び（意味がある 6・意味がない 8・1 以下 25） | 確かめた | 3.1 節 | 同上 |
+| 決定を出す箇所の一覧とコードの走査の照らし（--check） | 加えた | 4 章 | 同上 |
+| 39 種類の外の答えの並び（12 種類） | 未確認（順不同と称さない） | 6 章 | — |
+
+## v0.161: U7-1 の補完
+
+[legal-actions-u7-1.md](legal-actions-u7-1.md) 9 章。操作の種類は増やしていない。エンジンの処理（`engine.py`・`resolution/`・観測・アダプタ）は変えていない。規約集合の ID・版・中身・照合値は同じ。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 決定の選べるものの情報境界（種類ごと）。未確認の種類・見えないカードの場面は入力を返さない | 直した（v0.160 は数を返していた） | 9.2 節 | tests/test_legal_actions_u7_1.py |
+| `energy_drain_discard`・`exp_all_energy`・`magma_pool_energy` | 確かめた | 9.1 節 | 同上 |
+| 答えの並びの意味（`arrange_deck_top` は意味がある。ほかは未確認） | 分類した | 9.3 節 | 同上 |
+| coverage（`scope_kinds`・`empty_reason`・決定の回答者を先に） | 直した | 9.4 節 | 同上 |
+| 返す値の写し・`from_state`・状態の所有権の契約 | 直した・記録した | 5 章 | 同上 |
+
+## v0.160: 合法手 API の最小の実装（U7-1）
+
+[legal-actions-u7-1.md](legal-actions-u7-1.md)。U7-1 の実装で、U7 全体の部分実装。エンジンの処理（`engine.py`・`resolution/`・観測・アダプタ）は変えていない。規約集合の ID・版・中身・照合値は同じ。採用は U7-1 と方針だけ（ADOPT-U7-1）。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 決定への回答（サイドを取る・バトル場に出す・ほかの決定）の候補・入力・送信 | 実装した（complete） | 3 章 | tests/test_legal_actions_u7_1.py |
+| 番を終える操作の候補・送信 | 実装した（main は partial） | 3 章 | 同上 |
+| 準備・ワザ・トレーナー・パワーなどの通常の番の操作・ホストの操作の入口 | 未実装（対応しない種類として示す） | U7-2 以後 | 同上 |
+| D-U7-DECISION-UID（決定の選べるものの uid） | コードを読んで確かめた（3 種類は未確認。実行時の確かめあり） | 2 章 | 同上 |
+
+## v0.159: U1〜U6 の総合検証
+
+[integration-verification-v0.159.md](integration-verification-v0.159.md)。機能は加えていない。エンジンの処理（`engine.py`・`resolution/`・観測）は変えていない。規約集合の ID・版・中身・照合値は同じ。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| `save_snapshot` の誤りの優先（状態を保存できなければ `origin`・`label` の形によらず `SnapshotSaveError`） | 直した | 2 章 | tests/test_integration_u1_u6_v0_159.py |
+| 閲覧用記録の構造の検証が、接続用確認値・スナップショットの形式の鍵を入ってはいけない項目として拒む | 直した | 2 章 | 同上 |
+| v0.158 の文書の旧記録の扱い（過去の実装で作った記録は実装の識別で unsupported） | 文書を訂正した | 2 章 | 同上 |
+| 検証者用のモジュールが `behavior_digest` の側に入る分け方 | 変えていない（利用者の判断） | 2 章 | — |
+
+## v0.158: 完全な再現用記録とスナップショットの接続（U6 の S5）
+
+[state-snapshot-v0.158.md](state-snapshot-v0.158.md)。エンジンの処理は変えていない（新しいモジュール `kyuura_engine/snapshot_replay.py`、`snapshot.py` の接続用確認値、`replay_record.py` の任意の拡張、`replay_run.py` の処理の分割だけ）。規約集合の ID・版・中身・照合値は同じ。採用は S5 の契約（[仕様](state-snapshot-design.md)・[実装計画](state-snapshot-implementation-plan.md)の `ADOPT-U6-S5`）。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| U6 の実装の状態の記録（部分の単位ごとの状態と全体の状態）・v0.157 の監査の記録の訂正 | 実装済み | 1 章 | tests/test_state_snapshot_design.py・tests/test_diagnostics_replay_api_design.py |
+| 接続位置と記録の識別（`RecordPosition`・`record_identity`） | 実装済み | 3 章 | tests/test_snapshot_replay_v0_158.py |
+| 接続の確かめ（構造・対応・位置・復元・初期の条件・確認値・保存する全項目）と残りの行の照合（`replay_from_snapshot`） | 実装済み | 4・6 章 | 同上 |
+| 接続用確認値（`kyuura-snapshot-state-sha256/1`）と記録の任意の拡張（`connection_checks`）・U4 の照合 | 実装済み | 5 章 | 同上 |
+| ReplayCollector の途中開始・記録の継ぎ足し・閲覧用記録の開始前の知識の復元・異なる規約集合での再開・合法手の一覧（U7） | 未実装 | 9 章 | — |
+
+## v0.157: 状態スナップショット（U6 の S1〜S4・S6）
+
+[state-snapshot-v0.157.md](state-snapshot-v0.157.md)。エンジンの処理は変えていない（新しいモジュール `kyuura_engine/snapshot.py` だけ）。規約集合の ID・版・中身・照合値は同じ。採用は判断事項 6 件と S1〜S4・S6 の実装（[仕様](state-snapshot-design.md)・[実装計画](state-snapshot-implementation-plan.md)の `ADOPT-U6-IMPL`）。v0.156 は仕様だけの作業で、版は 0.155.0 のままだった。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 仕様の訂正（分類の数の集計・カードの uid を値で保存） | 実装済み | 1 章・仕様 4 章 | tests/test_state_snapshot_design.py |
+| 型の対応表と書き出し（`save_snapshot`。保存の境界・登録・表せない値の拒否） | 実装済み | 3・4 章 | tests/test_state_snapshot_v0_157.py |
+| 安全な読み取り・対応の確かめ・組み立て・整合の確かめ（`restore_snapshot`・結果 6 種類） | 実装済み | 4 章 | 同上 |
+| 保存・復元のあとの継続の一致（3 つの規約集合・F1〜F9） | 実装済み | 5・6 章 | 同上 |
+| 最小のホストへの接続（`RestoredGame`） | 実装済み | 7 章 | 同上 |
+| 完全な記録の途中から再開して U4 で照らす（S5。v0.158 で実装）・合法手の一覧（U7） | 未実装 | 9 章 | — |
+
+## v0.155: 閲覧用記録（U5）
+
+[view-record-v0.155.md](view-record-v0.155.md)。エンジンの処理は変えていない（`state.py` の注釈の訂正だけ）。規約集合の ID・版・中身・照合値は同じ。採用は U5 と方針だけ（[仕様案](diagnostics-replay-api-design.md)の採用の記録）。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 閲覧用記録の収集（`ViewHost`・`ViewRecorder`。閲覧者を固定・拒否は本人だけ・過去の項目を固定） | 実装済み | 2〜6 章 | tests/test_view_record_v0_155.py |
+| 完全な記録からの変換（U4 の検証つきの再実行） | 実装済み | 4 章 | 同上 |
+| 閲覧用記録の JSON の読み書きと構造の検証 | 実装済み | 7 章 | 同上 |
+| JSON の保存・復元（U6）・合法手の一覧（U7） | 未実装 | 11 章 | — |
+
+## v0.154: 完全な再現用記録からの再実行と確認値の照合（U4）
+
+[replay-run-v0.154.md](replay-run-v0.154.md)。エンジンの処理は変えていない。規約集合の ID・版・中身・照合値は同じ。承認は U4 の実装と限定検証の範囲だけ（[仕様案](diagnostics-replay-api-design.md)の採用の記録）。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 記録の再実行と確認値の照合（`replay_run.replay`。seq の順・最初の不一致） | 実装済み | 2〜4 章 | tests/test_replay_run_v0_154.py |
+| 確認値の範囲の確かめ直し（`pending_moves` を境界ごとに確かめる） | 実装済み | 5 章 | 同上 |
+| 閲覧用記録（U5）・状態の復元（U6）・合法手の一覧（U7）・異なる版と規約集合の比べ | 未実装 | 12 章 | — |
+
+## v0.153: 完全な再現用記録の収集・読み書き・構造の検証（U3）
+
+[replay-record-v0.153.md](replay-record-v0.153.md)。エンジンの処理は変えていない。規約集合の ID・版・中身・照合値は同じ。採用は U3 と 4 つの方針だけ（[仕様案](diagnostics-replay-api-design.md)の採用の記録）。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 記録の収集（`ReplayCollector`。開始から一体で記録・拒否は任意・失敗で停止） | 実装済み | 2 章 | tests/test_replay_record_v0_153.py |
+| 記録の形式（`kyuura_replay_format` 1）・確認値（受理ごとの状態と乱数）・実装と環境の識別 | 実装済み | 3・4 章 | 同上 |
+| 記録の JSON の読み書きと構造の検証（不正・矛盾・途中切れ・非対応の区別） | 実装済み | 5 章 | 同上 |
+| 記録の再実行と確認値の照合（U4）・閲覧用記録・状態の復元 | 未実装 | 9 章 | — |
+
+## v0.152: 診断の型と情報境界・コマンド実行結果のアダプタ（U1・U2）
+
+[diagnostics-adapter-v0.152.md](diagnostics-adapter-v0.152.md)。エンジンの処理（受理の条件・状態・乱数・ログ・観測）は変えていない。規約集合の ID・版・中身・照合値は同じ。採用は U1・U2 と 6 つの方針だけ（[仕様案](diagnostics-replay-api-design.md)の採用の記録）。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| コマンド実行結果のアダプタ（`adapter.submit`・`start_game`・`HostedGame`。結果と状態の区別・次の操作の種類・続けられるか） | 実装済み | 2 章 | tests/test_diagnostics_adapter_v0_152.py |
+| 診断のコード表（台帳の停止コードと台帳の外のコード。表にないコードは対応漏れ）と決まった文 | 実装済み | 3 章 | 同上・scripts/build_diagnostic_catalog.py --check |
+| 見る人ごとの結果（本人・相手と観戦者）と検証者用の記録の分離 | 実装済み | 4 章 | 同上 |
+| 対戦記録の収集・再現・JSON の状態の読み込み・合法手の一覧 | 未実装（仕様案のまま） | 7 章 | — |
+
+## v0.151: 山札をさがす前の研究上の停止（RB2・FC1）が実際の山札を読む情報漏れの修正（両モード共通）
+
+[deck-search-stop-oracles-v0.151.md](deck-search-stop-oracles-v0.151.md)。新しい続行規約は採用していない。既存の集合の ID・版・中身・照合値は同じ。研究上の問い（FC1・RB2）は決めていない。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 山札からつける 7 つのワザの RB2 を、山札にあるかもしれないカード（うらのサイド・持ち主に見えない置いておくカードを含む）で宣言の前に決める（理由の文は決まった文）（PSP-DECK-SEARCH-STOP-ORACLES） | 修正（保守的に止める場合が増えた） | 2・3・6 章 | tests/test_deck_search_stop_oracles_v0_151.py |
+| ゆうでん・はらだいこの宣言の前、てじなの段階 1 の答えの FC1（ゆうでんは RB2 も）を、配分を読まない下限で決める | 修正（保守的に止める場合が増えた） | 2・3・6 章 | 同上・test_deck_search_decision_presence_v0_150 `SeparateStopOracleTest` |
+| 道具の予期した停止とてじなの方策を、エンジンと同じ配分を読まない条件にした | 修正 | 4 章 | test_variable_coins_search_attachments_v0_113 など |
+
+## v0.150: 山札をさがす効果の決定の有無による情報漏れの修正（両モード共通）
+
+[deck-search-decision-presence-v0.150.md](deck-search-decision-presence-v0.150.md)。新しい続行規約は採用していない。既存の集合の ID・版・中身・照合値は同じ。研究上の問い（FC1・RB2・HC7 など）は決めていない。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| ベンチに出す・見せて手札に加える・山札からつけるワザと［うか］は、山札にカードがあれば選べるカードがなくても決定を出す（必ず選ぶ説明は 0〜0、「てよい」は 0〜1 のまま。「てよい」の 0 枚の答えのログは選ばなかったときと同じで、理由は本人だけ）（PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS） | 修正（決定が 1 つ増える場合がある） | 2・3 章 | tests/test_deck_search_decision_presence_v0_150.py・test_optional_deck_evolution_presence_v0_149 `OtherDecisionPresenceNoLeakTest` |
+| ［おたけび］のミラクルエネルギーの確かめ（v0.149 の未確認事項） | 調べた範囲で問題なし（双子で確認） | 5.1 節 | 同 `HowlMiracleEnergyTwinTest` |
+| 山札をさがす前の RB2・FC1 が実際の山札を読む（ひなたぼっこ・はらだいこ・てじななど。PSP-DECK-SEARCH-STOP-ORACLES） | 未修正（記録だけ）。v0.151 で修正 | 6 章 | 同 `SeparateStopOracleTest`（expectedFailure） |
+
+## v0.149: 任意の山札進化の決定の有無と、秘密領域の候補集合の情報漏れの修正（両モード共通）
+
+[optional-deck-evolution-presence-v0.149.md](optional-deck-evolution-presence-v0.149.md)。新しい続行規約は採用していない。既存の集合の ID・版・中身・照合値は同じ。研究上の問い（FV1・RB1・NB1 など）は決めていない。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| たきのぼりしんか・つきのちからは、山札にカードがあれば選べる進化カードがなくても決定を出す（たきのぼりしんかの 0 枚の答えのログは `evolve_from_deck_declined`。理由は本人だけ）（PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE） | 修正（決定が 1 つ増える場合がある） | 2 章 | tests/test_optional_deck_evolution_presence_v0_149.py・test_attack_deck_evolution_preflight_v0_148 `DecisionPresenceNoLeakTest` |
+| 熱血!・マスターボール neo・［おたけび］・`hidden_deck_pool` の候補集合を、持ち主に見えない置いておくカードを含む山札にあるかもしれないカードにする（PSP-HIDDEN-SET-ASIDE-DECK-POOL） | 修正（保守的な制限が増え、おもてのサイドだけでは止めない） | 3・4 章 | 同 `HiddenSetAsideTwinTest`・`SetAsideBoundaryTest` |
+| おつかい・［うか］の決定の有無（PSP-DECK-SEARCH-DECISION-PRESENCE-OTHERS） | 未修正（記録だけ）。v0.150 で修正 | 6.6 節 | 同 `RemainingDecisionPresenceLeakTest`（expectedFailure） |
+
+## v0.148: ワザの宣言の前の先読みによる山札の情報漏れの修正（両モード共通）
+
+[attack-deck-evolution-preflight-v0.148.md](attack-deck-evolution-preflight-v0.148.md)。新しい続行規約は採用していない。既存の集合の ID・版・中身・照合値は同じ。研究上の問い（DV2・GV1・H1・PW4・NB2）は決めていない。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 山札から進化カードを重ねるワザ（たきのぼりしんか・つきのちから・からやぶりしんか・ひざしをあびる・ばくれつしんか・しんかのほうし・しんかのうた）の、山札を見る前の確かめ（宣言の前の先読み）を、山札にあるかもしれないカード（`searchable_deck_cards`）と配分を読まない下限（`deck_choice_may_only_stop`）で決める（PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE） | 修正（保守的な制限が増えた） | 3 章・6 章 | tests/test_attack_deck_evolution_preflight_v0_148.py |
+| ［うか］の GV1・H1（v0.147 で未確認） | 安全を確認（構築盤面） | 4 章・5 章 | 同 `PowerCocoonTest` |
+| 任意の山札からの進化の、受理のあとの決定の有無（PSP-OPTIONAL-DECK-EVOLUTION-DECISION-PRESENCE） | 未修正（記録だけ）。v0.149 で修正 | 6.3 節 | 同 `RemainingDecisionPresenceLeakTest`（expectedFailure） |
+
 ## v0.147: 秘密の山札の内容で使う前の受理・拒否・理由が変わる処理の修正（両モード共通）
 
 [deck-content-prechecks-v0.147.md](deck-content-prechecks-v0.147.md)。新しい続行規約は採用していない。既存の集合の ID・版・中身・照合値は同じ。研究上の問い（PW3・DV2・GV1・RB2・GG1・H1）は決めていない。
@@ -3827,7 +3992,7 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 項目 | 状態 | 根拠 | テスト |
 |---|---|---|---|
 | 使う前の確かめの山札の中身を読む 8 クラス（しんかのひかり・てしたをよぶ・［うか］・［ボスをよぶ］・ファイヤーブースト・［INCREASE］・［FIND］・［JOIN］・［YIELD］・［GIVE］）を、配分を読まない下限（`deck_lower_bound_where`）と山札にあるかもしれないカード（`possible_deck_cards`）で確かめる（PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-POWER-PRECHECK-DECK-ORACLE） | 実装済み・テスト済み（構築盤面） | 2・3 章 | test_deck_content_prechecks_v0_147 |
-| ワザの宣言の前の先読みが山札の組で DV2・GV1 を確かめる漏れ（PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE） | 未修正（記録だけ） | 4 章 | 同 `RemainingAttackLeakTest` |
+| ワザの宣言の前の先読みが山札の組で DV2・GV1 を確かめる漏れ（PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE） | 未修正（記録だけ）。v0.148 で修正 | 4 章 | 同 `RemainingAttackLeakTest`（v0.148 で回帰テストに替えた） |
 
 ## v0.146: 比較の記録の規約集合・キョウの忍者ジムの情報漏れの修正・PO の集合の境界の検証
 
@@ -4970,3 +5135,12 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 | 未対応の数（全対象 324・neo 148・拡張パック以外 176） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistrationTest` |
 | 14 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.164: クライアント向けの最小のアダプタ
+
+- `kyuura_engine/client_api.py`: 別リポジトリの GUI 向けの JSON の境界（契約 `kyuura-client-api`・形式 1。ゲームの版・規約集合・記録の形式とは別の番号）。`ClientHub` が U7 の `ActionHost` を包み、信頼されたホストが `player(actor)`・`spectator()`・`host()` で入口を作る。要求で主体・閲覧者を変えられない。知らない種類・版・項目・型は決まったコードで拒否し、状態を変えない
+- 応答と公開の更新を分けた。拒否は送り手だけ、受理のあとにだけ閲覧者（0・1・観戦者・ホスト）ごとに許された観測と状態の表示を送る。更新の番号は受理でだけ進み、秘密の値・エンジンの乱数を使わない。`operation_id` は対応づけだけ（重複の排除はない）
+- U7-2 の修正: ホストの送信の結果を全員向けの知らせ（拒否では `None`）から、ホストだけへの定型の診断 `HostNotice` にした。初期配置の `supported` は eligible の選べるものだけで作った入力の範囲の保証と明示した（`supported_scope`）
+- `examples/headless_client.py`: JSON の要求・応答だけで進める参照クライアント（番を終えるだけで山札がなくなって終局する）
+- 新しいファイルは識別の設計の部品 `client_api`（層 `api_format`）。識別の方式の移行・3 つの規約集合の変更はない。エンジンの処理は変えていない
+- 詳細: [client-api-v0.164.md](client-api-v0.164.md)

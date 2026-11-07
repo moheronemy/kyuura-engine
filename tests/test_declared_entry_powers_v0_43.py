@@ -1005,8 +1005,12 @@ class MoonPowerRouteTest(unittest.TestCase):
 
     def test_choosing_the_entry_power_card_stops(self):
         """ほかの進化カード（エリカのピクシー）もあれば、わるいカイリューは選べるが選ぶと止める（``entry_power_choices``。状態は変わらない）。隣の止まらない場合:
-        エリカのピクシーを選ぶ。"""
-        state = board(mon(ERIKAS_CLEFAIRY), bench=(mon(DARK_DRAGONAIR, ()),), deck=(DARK_DRAGONITE, ERIKAS_CLEFABLE, GRASS))
+        エリカのピクシーを選ぶ。
+
+        v0.148（docs/attack-deck-evolution-preflight-v0.148.md 6 章）: 盤面をサイド 0 枚にした（持ち主がエリカのピクシーが山札にあることを確かめられる盤面）。うらのサイドが 6 枚だと、
+        止めないカード（エリカのピクシー 1 枚）が山札にあることを配分を読まずに確かめられないので、宣言の前に止める（PW4。``test_only_an_entry_power_card_stops_before_the_declaration``
+        と同じ）。選べるが選ぶと止める決定の形の確かめは変えない。"""
+        state = board(mon(ERIKAS_CLEFAIRY), bench=(mon(DARK_DRAGONAIR, ()),), deck=(DARK_DRAGONITE, ERIKAS_CLEFABLE, GRASS), prizes=0)
         waiting = attack(state, 0, H)
         d = waiting.decision
         dragonite = card_of(state, 0, DARK_DRAGONITE, "deck")

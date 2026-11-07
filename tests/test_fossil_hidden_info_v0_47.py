@@ -623,6 +623,9 @@ class PreventEvolutionTest(unittest.TestCase):
         assert_rejected(self, theirs, EvolvePokemon(1, card_of(theirs, 1, HYPNO), theirs.players[1].active.pokemon_id), "EVOLUTION_PREVENTED")
         # 山札から重ねる特殊能力（［うか］）: 「おもて」でも重ねられるカードがない
         coin = apply_kernel(with_coin_results(state, H), UsePokemonPower(0, state.players[0].active.pokemon_id, 0))
+        # v0.150（docs/deck-search-decision-presence-v0.150.md 5.4 節）: 山札にカードがあるので、選べるもののない決定（0〜0 枚）に答えてから
+        self.assertEqual((coin.decision.options, coin.decision.min_choices, coin.decision.max_choices), ((), 0, 0))
+        coin = apply_kernel(coin, ResolveDecision(0, coin.decision.id, ()))
         self.assertIn("evolve_from_deck_none", [e["kind"] for e in coin.log])
         self.assertEqual(coin.card_def(coin.players[0].active.card).id, KOGAS_KAKUNA)
         audited(self, coin)

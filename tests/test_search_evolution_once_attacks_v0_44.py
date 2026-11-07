@@ -412,10 +412,14 @@ class SearchTest(unittest.TestCase):
         self.assertNotIn("shuffle", kinds(tails, len(state.log)))
 
     def test_errand_without_trainers_shuffles(self):
-        """「おもて」で山札にトレーナーがなければ選ぶものはなく（p.309）、山札を切る。"""
-        done = audited(self, attack(board(mon(ERIKAS_BULBASAUR, (G, G)), deck=[GRASS, WATER]), 1, H))
+        """「おもて」で山札にトレーナーがなければ選ぶものはなく（p.309）、山札を切る。v0.150（docs/deck-search-decision-presence-v0.150.md 5.4 節）: 山札にカードがあれば、選べるもののない決定（0〜1 枚。「加えてよい」）に
+        答えてから。ログは選ばなかったときと同じ reveal_from_deck_declined（理由 no_target は本人だけ）。"""
+        waiting = attack(board(mon(ERIKAS_BULBASAUR, (G, G)), deck=[GRASS, WATER]), 1, H)
+        self.assertEqual((waiting.decision.kind, waiting.decision.options, waiting.decision.min_choices, waiting.decision.max_choices), (SEARCH_DECK, (), 0, 1))
+        done = audited(self, answer(waiting, ()))
         self.assertIsNone(done.decision)
-        self.assertEqual([e for e in kinds(done, 0) if e in ("reveal_from_deck_none", "shuffle")][-2:], ["reveal_from_deck_none", "shuffle"])
+        self.assertEqual([e for e in kinds(done, 0) if e in ("reveal_from_deck_declined", "reveal_from_deck_none", "shuffle")][-2:], ["reveal_from_deck_declined", "shuffle"])
+        self.assertEqual([e["reason"] for e in events(done, 0, "reveal_from_deck_declined")], ["no_target"])
 
     def test_mischief_puts_opponent_discard_on_their_deck_top(self):
         """わるいいたずら: 「おもて」なら相手のトラッシュから 1 枚を選び、相手の山札の一番上にのせる（切らない）。相手のトラッシュが空ならコインも投げない。"""
@@ -440,8 +444,9 @@ class SearchTest(unittest.TestCase):
 class HandToDeckTest(unittest.TestCase):
     """てじな（最大 3 枚もどし、同じ枚数の基本エネルギーを見せて手札に加える）・ラッキーたまご（「うら」なら 2 枚もどす）。"""
 
-    def mime(self, hand, deck):
-        return board(mon(SABRINAS_MR_MIME, (P,)), hand=hand, deck=deck)
+    def mime(self, hand, deck, prizes=6):
+        # v0.151（docs/deck-search-stop-oracles-v0.151.md 5.4 節）: ``prizes`` を加えた（既定は今までと同じ）
+        return board(mon(SABRINAS_MR_MIME, (P,)), hand=hand, deck=deck, prizes=prizes)
 
     def test_sleight_returns_cards_and_reveals_as_many_basic_energies(self):
         """もどしたのと同じ枚数の基本エネルギーカードを山札から選び、見せて手札に加え、山札を切る。もどしたカードは山札に入る（選べる）。"""
@@ -469,9 +474,15 @@ class HandToDeckTest(unittest.TestCase):
             with self.subTest(choices=choices):
                 assert_rejected(self, waiting, ResolveDecision(0, d.id, choices), code, exception=UnsupportedError)
         audited(self, answer(answer(waiting, tuple(d.options[:1])), (card_of(waiting, 0, GRASS, "deck"),)))
-        none = self.mime([POTION, SWITCH], [RATTATA])
+        # v0.151（docs/deck-search-stop-oracles-v0.151.md 5.4 節）: 基本エネルギーカードがどこにもない（うらのサイドもコラッタ）と分かるときだけ、2 枚をもどす答えを受理する。サイドが炎エネルギーなら山札を見る前に FC1
+        none = self.mime([POTION, SWITCH], [RATTATA], prizes=[RATTATA] * 6)
+        waiting = attack(self.mime([POTION, SWITCH], [RATTATA]), 0)
+        assert_rejected(self, waiting, ResolveDecision(0, waiting.decision.id, tuple(waiting.decision.options)), FC1, exception=UnsupportedError)
         waiting = attack(none, 0)
-        done = audited(self, answer(waiting, tuple(waiting.decision.options)))
+        # v0.150（docs/deck-search-decision-presence-v0.150.md 5.4 節）: もどしたあとの山札に基本エネルギーカードがなくても、段階 2 の選べるもののない決定（0〜0 枚）に答えてから
+        stage2 = answer(waiting, tuple(waiting.decision.options))
+        self.assertEqual((stage2.decision.kind, stage2.decision.options, stage2.decision.min_choices, stage2.decision.max_choices), (SEARCH_DECK, (), 0, 0))
+        done = audited(self, answer(stage2, ()))
         self.assertIn("reveal_from_deck_none", kinds(done, len(waiting.log)))
         # もどすカードが基本エネルギーなら、そのカードを選び出せる（足りる）
         energy = self.mime([GRASS, POTION], [RATTATA])
@@ -557,13 +568,18 @@ class DeckEvolutionTest(unittest.TestCase):
         self.assertIn("evolve_from_deck_declined", kinds(declined, len(waiting.log)))
 
     def test_waterfall_evolution_keeps_the_normal_restrictions(self):
-        """この番に場に出したコイキング・おたがいの最初の番は進化できない（重ねられるカードがなく、山札を切るだけ）。"""
+        """この番に場に出したコイキング・おたがいの最初の番は進化できない（重ねられるカードがなく、山札を切るだけ）。
+
+        v0.149（docs/optional-deck-evolution-presence-v0.149.md 2 章）: 山札にカードがあれば、選べるカードがなくても決定（0〜1 枚。選べるものは空）を出して答えを待つ（v0.148 までは
+        決定を出さずに evolve_from_deck_none）。0 枚の答えのログは evolve_from_deck_declined（理由 no_target は本人だけ）。進化の制限（選べるものが空）は変えない。"""
         for spec, turn in (({"played_turn": TURN}, TURN), ({}, 1)):
             with self.subTest(spec=spec, turn=turn):
                 state = board(mon(ROCKET_MAGIKARP, (W, W, W), **spec), deck=[GYARADOS], turn=turn)
-                done = audited(self, attack(state, 1))
+                waiting = attack(state, 1)
+                self.assertEqual((waiting.decision.kind, waiting.decision.options), (SEARCH_DECK, ()))
+                done = audited(self, answer(waiting, ()))
                 self.assertEqual(done.cards[done.players[0].active.card].card_id, ROCKET_MAGIKARP)
-                self.assertIn("evolve_from_deck_none", kinds(done, len(state.log)))
+                self.assertEqual([e["reason"] for e in events(done, len(waiting.log), "evolve_from_deck_declined")], ["no_target"])
 
     def test_metamorphosis_power(self):
         """［うか］: 自分の番ごとに 1 回、コイン「おもて」でキョウのスピアーを山札から重ね、山札を切る。特殊能力なので番は終わらない。「うら」でも使ったことになる。"""
@@ -578,13 +594,18 @@ class DeckEvolutionTest(unittest.TestCase):
         tails = audited(self, power(state, pid, T))
         self.assertIn((pid, 0), tails.power_uses_this_turn)
         assert_rejected(self, tails, UsePokemonPower(0, pid, 0), "POWER_ALREADY_USED")
-        none = audited(self, power(board(mon(KOGAS_KAKUNA, (G,)), deck=[GRASS]), pid, H))
+        # v0.150（docs/deck-search-decision-presence-v0.150.md 5.4 節）: 山札にカードがあれば、重ねられるカードがなくても選べるもののない決定（0〜0 枚）に答えてから
+        asked = power(board(mon(KOGAS_KAKUNA, (G,)), deck=[GRASS]), pid, H)
+        self.assertEqual((asked.decision.kind, asked.decision.options, asked.decision.min_choices, asked.decision.max_choices), (SEARCH_DECK, (), 0, 0))
+        none = audited(self, answer(asked, ()))
         self.assertIn("evolve_from_deck_none", kinds(none, 0))
 
     def test_metamorphosis_keeps_the_normal_restrictions(self):
         """この番に進化したコクーンは「おもて」でも重ねられない（その番の最初から場にいない）。眠り・マヒ・こんらんのコクーンは使えない。"""
         state = board(mon(KOGAS_KAKUNA, (G,), evolved_turn=TURN), deck=[KOGAS_BEEDRILL])
-        done = audited(self, power(state, state.players[0].active.pokemon_id, H))
+        asked = power(state, state.players[0].active.pokemon_id, H)
+        self.assertEqual((asked.decision.options, asked.decision.min_choices, asked.decision.max_choices), ((), 0, 0))  # v0.150（docs/deck-search-decision-presence-v0.150.md 5.4 節）: 選べるもののない決定
+        done = audited(self, answer(asked, ()))
         self.assertIn("evolve_from_deck_none", kinds(done, 0))
         for status in ({"sleep": True}, {"paralysis": TURN - 1}, {"confusion": True}):
             with self.subTest(status=status):

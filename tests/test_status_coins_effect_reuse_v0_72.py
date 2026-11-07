@@ -668,10 +668,13 @@ class MoonGazeTest(unittest.TestCase):
 
     def test_no_basic_energy_in_the_deck(self):
         state = board(mon("GD4-012", (W,)), deck=[RATTATA, DCE])
-        done = audited(self, attack(state, 0))
+        # v0.150（docs/deck-search-decision-presence-v0.150.md 5.4 節）: 山札にカードがあれば、選べるもののない決定（0〜1 枚。「加えてよい」）に答えてから。ログは選ばなかったときと同じ reveal_from_deck_declined（理由 no_target は本人だけ）
+        waiting = attack(state, 0)
+        self.assertEqual((waiting.decision.options, waiting.decision.min_choices, waiting.decision.max_choices), ((), 0, 1))
+        done = audited(self, answer(waiting, ()))
         self.assertIsNone(done.decision)
         since = len(state.log)
-        self.assertEqual([e["category"] for e in events(done, since, "reveal_from_deck_none")], ["basic_energy"])
+        self.assertEqual([(e["category"], e["reason"]) for e in events(done, since, "reveal_from_deck_declined")], [("basic_energy", "no_target")])
         self.assertEqual(len(events(done, since, "shuffle")), 1)
 
 

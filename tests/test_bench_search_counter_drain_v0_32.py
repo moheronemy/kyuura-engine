@@ -345,12 +345,17 @@ class BenchFromDeckTest(unittest.TestCase):
         self.assertEqual(evolved.cards[evolved.players[0].bench[-1].card].card_id, WEEPINBELL)
 
     def test_no_target_in_the_deck(self):
-        """山札に選べるものがない（山札 0 枚を含む）: 決定を出さず、ベンチに出さない（p.309 の「処理の対象がない」内容は無視。H5・ゴミあさりと
-        同じ読み方）。そのあと山札を切る（0・1 枚なら乱数を使わない）。ワザは使ったことになり、番は終わる。"""
+        """山札に選べるものがない（山札 0 枚を含む）: ベンチに出さない（p.309 の「処理の対象がない」内容は無視。H5・ゴミあさりと
+        同じ読み方）。そのあと山札を切る（0・1 枚なら乱数を使わない）。ワザは使ったことになり、番は終わる。v0.150（docs/deck-search-decision-presence-v0.150.md
+        5.4 節）: 山札にカードがあれば、選べるもののない決定（0〜0 匹）を出して答えを待つ（決定の有無で山札の中身を相手に伝えない）。山札が 0 枚なら決定を出さない。"""
         for deck in ([GRASS, WATER, NIDORAN_F], [GRASS], []):
             state = self.oddish_board(deck)
             new = play(state, UseAttack(0, 1))
             with self.subTest(deck=deck):
+                if deck:
+                    d = new.decision
+                    self.assertEqual((d.kind, d.options, d.min_choices, d.max_choices), (BENCH_FROM_DECK, (), 0, 0))
+                    new = play(new, ResolveDecision(0, d.id, ()))
                 self.assertIsNone(new.decision)
                 log = events(new, len(state.log))
                 self.assertEqual([e["kind"] for e in log[:3]], ["attack", "bench_from_deck_none", "shuffle"])

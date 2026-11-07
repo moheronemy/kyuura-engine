@@ -405,7 +405,7 @@ class CoinSourceTest(unittest.TestCase):
         """「おもて」の数だけを使うコインは、先読みで N + 1 通りにまとめる（まとめない先読みと同じ答え。結果の数は少ないか同じ）。3 つの方法で同じ結果。実際の対戦は 1 枚ずつ投げる。"""
         cases = {
             "みんなでおどる": (board(mon(CLEFAIRY_N1, (W, W, W)), bench=(H.RATTATA, H.RATTATA), opponent=mon(CHANSEY), deck=[W, W, F] + [H.RATTATA] * 6), 1),
-            "ゆうでん": (board(mon(AMPHAROS, (L,)), bench=(mon(H.PIKACHU),), opponent=mon(CHANSEY), deck=[L, L, L] + [W] * 7), 0),
+            "ゆうでん": (board(mon(AMPHAROS, (L,)), bench=(mon(H.PIKACHU),), opponent=mon(CHANSEY), deck=[L] * 9 + [W] * 7), 0),  # v0.151（docs/deck-search-stop-oracles-v0.151.md 5.4 節）: 下限 3
             "むれでつつく": (board(mon(MURKROW, (W, W)), bench=(mon(MURKROW), mon(MURKROW_N1)), opponent=mon(CHANSEY)), 1),
             "くろいキバ": (board(mon(HOUNDOOM, (DARK, DARK, W)), opponent=mon(CHANSEY)), 1),
             "ファイヤーラッシュ": (board(mon(DARK_TYPHLOSION, (F, F)), bench=(mon(H.CHARMANDER, (F,)),), opponent=mon(CHANSEY)), 1),
@@ -478,8 +478,9 @@ class SquaredanceTest(unittest.TestCase):
 
 class AttractCurrentTest(unittest.TestCase):
     def state(self, deck=None, *, bench=None, active=None, **kw):
+        # v0.151（docs/deck-search-stop-oracles-v0.151.md 5.4 節）: 山札の「雷」エネルギーカードを 3 枚から 9 枚に（うらのサイド 6 枚。配分を読まない下限 9 - 6 = 3 が「おもて」の数の最大 3 以上。3 枚では山札を見る前に FC1 で止める）
         return board(active or mon(AMPHAROS, (L,)), bench=bench if bench is not None else (mon(H.PIKACHU), H.RATTATA), opponent=mon(CHANSEY),
-                     deck=deck if deck is not None else [L, L, L, W, W, W], **kw)
+                     deck=deck if deck is not None else [L] * 9 + [W, W, W], **kw)
 
     def test_damage_first_then_coins_choose_exactly_heads_and_distribute(self):
         """目安 20 のダメージ（説明の最初に省略）→ コイン 3 枚 → H 枚ちょうどの「雷」エネルギーカード → 1 枚ずつつける先（自分の場の今の色が「雷」のポケモン。バトル場もベンチも）→
@@ -556,12 +557,14 @@ class AttractCurrentTest(unittest.TestCase):
         for count in (1, 2):
             with self.subTest(count=count):
                 rejects(self, self.state([L] * count + [W] * 5), UseAttack(0, 0), QUESTIONS["stated_cards_short"].code)
-        self.assertEqual(attack(self.state([L] * 3 + [W] * 5), 0, HD, HD, HD).decision.kind, ATTACH_FROM_DECK)
+        # v0.151（docs/deck-search-stop-oracles-v0.151.md 5.4 節）: 足りるのは、配分を読まない下限（山札とうらのサイドの「雷」エネルギーカード - サイド 6 枚）が 3 以上のとき。実際に山札に 3〜8 枚あっても、サイドにあるかもしれないので止める
+        self.assertEqual(attack(self.state([L] * 9 + [W] * 5), 0, HD, HD, HD).decision.kind, ATTACH_FROM_DECK)
+        rejects(self, self.state([L] * 8 + [W] * 5), UseAttack(0, 0), QUESTIONS["stated_cards_short"].code)
         self.assertEqual(attack(self.state([W] * 5), 0, HD, HD, HD).decision.options, ())
 
     def test_rainbow_in_the_deck_is_rb2_when_needed_or_chosen(self):
         """山札のレインボーエネルギーは RB2: 「雷」エネルギーカードが H 枚以上あれば選べるが選ぶと止める。足りないならレインボーを選ばないと H 枚にならないので止める。"""
-        state = self.state([L, L, L, RAINBOW])
+        state = self.state([L] * 9 + [RAINBOW])  # v0.151（docs/deck-search-stop-oracles-v0.151.md 5.4 節）: 下限 3 で足りる山札（3 枚では山札を見る前に止める）
         asked = attack(state, 0, HD, TL, TL)
         rainbow = uid(state, RAINBOW, zone="deck")
         self.assertIn(rainbow, asked.decision.options)
@@ -578,10 +581,10 @@ class AttractCurrentTest(unittest.TestCase):
         beam.turn_number = TURN
         asked = attack(beam, 0, HD, TL, TL)
         self.assertEqual(answer(asked, asked.decision.options[:1]).decision.options, (pid(state, H.PIKACHU),))
-        countered = board(mon(AMPHAROS, (L,), damage=80), bench=(mon(H.PIKACHU),), opponent=mon(H.MACHAMP), deck=[L, L, L, W])
+        countered = board(mon(AMPHAROS, (L,), damage=80), bench=(mon(H.PIKACHU),), opponent=mon(H.MACHAMP), deck=[L] * 9 + [W])  # v0.151（docs/deck-search-stop-oracles-v0.151.md 5.4 節）: 下限 3
         asked = attack(countered, 0, HD, TL, TL)
         self.assertEqual(answer(asked, asked.decision.options[:1]).decision.options, (pid(countered, H.PIKACHU),))
-        alone = board(mon(AMPHAROS, (L,), damage=80), bench=(H.RATTATA,), opponent=mon(H.MACHAMP), deck=[L, L, L, W])
+        alone = board(mon(AMPHAROS, (L,), damage=80), bench=(H.RATTATA,), opponent=mon(H.MACHAMP), deck=[L] * 9 + [W])  # v0.151（docs/deck-search-stop-oracles-v0.151.md 5.4 節）: 下限 3
         done = attack(alone, 0)
         self.assertEqual((flips(alone, done), [e["reason"] for e in new_events(alone, done, "attach_energy_from_deck_none")]), ([], ["no_target"]))
 
@@ -641,7 +644,10 @@ class CallForFamilyTest(unittest.TestCase):
     def test_no_candidates_is_not_a_failure(self):
         """山札にヤミカラスがないのは処理の対象がない（p.309。出さずに切る）で、ワザの失敗とは別の理由。"""
         state = board(mon(MURKROW, (W,)), opponent=mon(CHANSEY), deck=[H.RATTATA, W])
-        done = attack(state, 0)
+        # v0.150（docs/deck-search-decision-presence-v0.150.md 5.4 節）: 山札にカードがあれば、選べるもののない決定（0〜0 匹）に答えてから、出さずに切る
+        asked = attack(state, 0)
+        self.assertEqual((asked.decision.kind, asked.decision.options, asked.decision.min_choices, asked.decision.max_choices), (BENCH_FROM_DECK, (), 0, 0))
+        done = answer(asked, ())
         self.assertEqual(kinds(state, done, "bench_from_deck_none", "attack_failed", "shuffle"), ["bench_from_deck_none", "shuffle"])
 
     def test_full_bench_fails_after_the_declaration(self):
@@ -865,7 +871,7 @@ class SaveAndFormatTest(unittest.TestCase):
 
         self.assertIn(26, FORMAT_VERSIONS)  # この版で形式を上げていない。今の最新の形式は tests/test_catalog_contract.py（docs/testing.md）
         self.assertEqual(max(FORMAT_VERSIONS), LATEST_FORMAT)
-        state = board(mon(AMPHAROS, (L,)), bench=(mon(H.PIKACHU),), opponent=mon(CHANSEY), deck=[L, L, L, W])
+        state = board(mon(AMPHAROS, (L,)), bench=(mon(H.PIKACHU),), opponent=mon(CHANSEY), deck=[L] * 9 + [W])  # v0.151（docs/deck-search-stop-oracles-v0.151.md 5.4 節）: 下限 3
         card = attack(state, 0, HD, HD, TL)
         target = answer(card, card.decision.options[:2])
         for waiting in (card, target):
@@ -880,7 +886,10 @@ class AuditTest(unittest.TestCase):
     カードの動き・基本となるダメージで確かめる。エンジンの処理を一時的に誤らせた正式な開始からの対戦（tools/existing_effect_games.py の局。v0.113 の 11 のワザがどれも出る組と開発用の
     seed。正式な対戦の seed 0〜3 とは別）で、監査がそれを見つける。"""
 
-    GAMES = ((("P113", "T113"), 102), (("L113", "D113"), 103), (("D113", "T113"), 106))
+    # v0.151（docs/deck-search-stop-oracles-v0.151.md 5.4 節）: L113 対 D113 の seed を 103 から 106 にした。L113 のレインボーエネルギー 1 枚がうらのサイドにあっても、せいでんきは
+    # 山札を見る前に RB2 で止まる（配分を読まない保守的な確かめ）ようになり、seed 103 の対戦の流れが変わってデンリュウ（ゆうでん・ギガボルト）が場に出なくなった。事前に決めた範囲
+    # （seed 103〜112 の順に、ゆうでん・ギガボルトを使い、監査・方策の不一致がない最初の seed）で選んだ
+    GAMES = ((("P113", "T113"), 102), (("L113", "D113"), 106), (("D113", "T113"), 106))
 
     @classmethod
     def problems_for(cls, patcher, *needles):

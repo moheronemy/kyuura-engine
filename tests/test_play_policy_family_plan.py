@@ -105,8 +105,12 @@ class PlanInvariantTest(unittest.TestCase):
     def test_detects_continuable_scene_with_open_defect(self):
         broken = _copy(self.plan)
         # 停止コードの名前は書かない（停止の方針の台帳がテストの中の停止コードの文字列を数えるので、設計案のデータから引く）
-        coupled = next(t for c in broken["candidates"] for t in c["targets"] if t["scene"] in broken["defect_coupling"])
-        target = coupled
+        # v0.148: 未修正の不具合と組になる場面がなくなった（DEFECT_COUPLING が空）ので、壊した設計案に組を 1 つ加えてから確かめる（今の設計案に組があるかによらず、
+        # 「不具合のある場面を続けられるとする」設計案を見つけることを確かめる）
+        target = next((t for c in broken["candidates"] for t in c["targets"] if t["scene"] in broken["defect_coupling"]), None)
+        if target is None:
+            target = next(t for c in broken["candidates"] for t in c["targets"])
+            broken["defect_coupling"][target["scene"]] = "PSP-TEST-OPEN-DEFECT"
         target["coverage"] = "full"
         self.assert_detects(broken, "blocked_by_defect でない")
 
