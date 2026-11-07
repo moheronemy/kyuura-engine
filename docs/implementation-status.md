@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.165）
+# 実装状況（v0.1〜v0.166）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d`（v0.128 から。v0.129 の種族の身長の写しは別に `9242b9be89be0f747279f39c11875d1ed61763ec`。v0.126〜v0.127 は `57d01f45cfb8b086d03dc0525b329cf6adeff69b`、v0.125 は `134a664c6adf67d5604148a31b58e1a7d26d4d6d`、v0.124 は `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`、v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -5159,3 +5159,13 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - `client_api` は同じ要求の形のまま扱う（契約 `kyuura-client-api`・形式 1、`kyuura_legal_actions_format` 1）。応答の形の追加だけ
 - 停止の台帳（`docs/stop-policy-classification.json`）はエンジンの行番号だけが変わった。診断のコード表の生成の動的な呼び出し箇所を `check_evolve` に直した（コード表は同じ）
 - 詳細: [legal-actions-u7-3.md](legal-actions-u7-3.md)
+
+## v0.166: 合法手 API のワザの候補と宣言の入力（U7-4）
+
+- `legal_actions`: 自分の番の MAIN で、ワザの宣言（`use_attack`。既存の `UseAttack`）の候補を、番の基本の操作の候補に続けて出す。1 段目はバトル場のポケモンが今持つワザ（`effects.available_attacks`。今の姿・［へんしん］・「思い出させる」・［サイコリンク］・許可で使えるワザ）、2 段目は宣言といっしょに選ぶもの（`stadium_coin`・`attack_power`・`with_power`。0 個以上・選んだ順。組は `options_by_choice`）
+- 宣言の確かめは `resolution/flow.py` の `_use_attack` の宣言の前の先読みより前の部分を、同じ順番・同じコード・同じ文のまま関数にした `check_use_attack`（状態・乱数・ログを変えない）。候補の作成・入力の検査はこれだけを呼び、`apply_command`・宣言の前の先読みは呼ばない。ゲーム上宣言できないワザ・組は出さず、未裁定・未対応は実行できない区分で示す
+- ワザの候補は `may_stop_later`（`preflight_not_evaluated`・`continuation_not_evaluated`）。`supported` にしない。自分のうらのバトル場のポケモンのワザは `unverified`
+- 対象・トラッシュするエネルギー・山札から選ぶカード・写すワザは受理のあとの既存の決定（`answer_decision`）。コインの結果を選ばせない
+- `client_api` は同じ要求の形のまま扱う（契約 `kyuura-client-api`・形式 1、`kyuura_legal_actions_format` 1）。応答の形の追加だけ。番の候補は partial（7 種類が未対応）
+- 停止の台帳（`docs/stop-policy-classification.json`）は `resolution/flow.py` の行番号だけが変わった
+- 詳細: [legal-actions-u7-4.md](legal-actions-u7-4.md)

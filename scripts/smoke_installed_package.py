@@ -4,7 +4,8 @@
 
 - ソースの木を読み込まない（``sys.path`` を変えない。読み込んだ ``kyuura_engine`` が site-packages の下になければ止める）
 - 公開の API だけを使う: 全サブパッケージの読み込み・版・同梱のカードデータと登録データ・規約集合の識別・``new_game``・``ClientHub`` の開始と
-  本人・相手・観戦者・ホストの入口・初期配置の操作・ホストのジャンケンの結果・番の基本の操作（v0.165。U7-3）・記録と保存の部品の読み込み・実装の識別
+  本人・相手・観戦者・ホストの入口・初期配置の操作・ホストのジャンケンの結果・番の基本の操作（v0.165。U7-3）・ワザの宣言（v0.166。U7-4）・記録と保存の部品の
+  読み込み・実装の識別
 - 結果を JSON で出す（``implementation_identity`` をソースの木の値と比べるのは呼ぶ側）。問題があれば終了コード 1
 """
 
@@ -77,6 +78,39 @@ def to_first_turn(endpoints) -> None:
     for cand in answer["candidates"]:
         if cand["kind"] == "report_janken":
             request(endpoints["host"], "submit", game=answer["game"], revision=answer["revision"], candidate=cand["id"], choices=[0])
+
+
+def declare_attack(endpoints, turns: int = 6) -> dict | None:
+    """v0.166（U7-4）: 番のプレイヤーが候補だけでエネルギーをつけ、実行できる最初のワザを、宣言といっしょに選ぶもの 0 個で送る。ワザがなければ番を終えて次の番へ。
+    受理のあとの決定には答えない（宣言の受理までを確かめる）。"""
+    for _ in range(turns):
+        current = None
+        for name in ("0", "1"):
+            answer = request(endpoints[name], "candidates")["response"]
+            if any(c["kind"] == "end_turn" for c in answer["candidates"]):
+                current = name
+        if current is None:
+            return None
+        answer = request(endpoints[current], "candidates")["response"]
+        for cand in answer["candidates"]:
+            if cand["kind"] == "attach_energy":
+                fields = {"game": answer["game"], "revision": answer["revision"], "candidate": cand["id"]}
+                choices = turn_action_choices(cand["kind"], request(endpoints[current], "inputs", **fields)["response"]["stages"])
+                if choices is not None:
+                    request(endpoints[current], "submit", **fields, choices=choices)
+                break
+        answer = request(endpoints[current], "candidates")["response"]
+        attack = next((c for c in answer["candidates"] if c["kind"] == "use_attack"), None)
+        fields = {"game": answer["game"], "revision": answer["revision"]}
+        if attack is not None:
+            stages = request(endpoints[current], "inputs", **fields, candidate=attack["id"])["response"]["stages"]
+            option = next((o for o in stages[0]["options"] if o.get("eligible")), None)
+            if option is not None and request(endpoints[current], "check", **fields, candidate=attack["id"], choices=[option["id"]])["response"]["valid"]:
+                sent = request(endpoints[current], "submit", **fields, candidate=attack["id"], choices=[option["id"]])
+                return {"player": current, "attack": option["name_ja"], "outcome": sent["outcome"], "status": (sent.get("result") or {}).get("status")}
+        end = next(c for c in answer["candidates"] if c["kind"] == "end_turn")
+        request(endpoints[current], "submit", **fields, candidate=end["id"])
+    return None
 
 
 def main() -> int:
@@ -163,6 +197,8 @@ def main() -> int:
                     break
         report["turn_action"] = sent
         check(problems, sent is not None and sent[1] == "accepted", "番の基本の操作が受理されない")
+        report["attack"] = declare_attack(endpoints)
+        check(problems, report["attack"] is not None and report["attack"]["outcome"] == "accepted", "ワザの宣言が受理されない")
 
     report["implementation_identity"] = replay_record.implementation_identity()
     report["problems"] = problems

@@ -794,7 +794,7 @@
   },
   {
    "id": "U7-4",
-   "status": "planned",
+   "status": "implemented",
    "name": "ワザ",
    "depends": [
     "U7-3"
@@ -967,6 +967,23 @@
   "decisions": [],
   "units": [
    "U7-3"
+  ]
+ },
+ "u7_4_adoption": {
+  "id": "ADOPT-U7-4",
+  "date": "2026-11-08",
+  "by": "利用者",
+  "scope": "U7-4（ワザの候補と宣言の入力。既存の UseAttack）の実装だけ。既存のコマンドの意味・受け付ける条件・宣言の前の先読み・状態の移り変わり・乱数・ログ・観測・続行規約・停止の扱い・コピーの範囲・裁定は変えない。トレーナー・特殊能力・スタジアムなど（U7-5）・識別の方式の移行・GUI・renderer の変更の承認ではない。実装: v0.166（docs/legal-actions-u7-4.md）",
+  "policies": [
+   "範囲はコマンドで決める（UseAttack の全項目: attack_index・card・stadium_coin・attack_power・with_power・with_powers）。ワザの名前・カード ID で範囲・処理を分けない",
+   "選べるワザは effects.available_attacks（今の姿・コピー・変身・許可で使えるワザ。公開の場から決まる）。宣言の確かめは resolution.flow.check_use_attack（宣言の前の先読みの前の部分を同じ順番・同じコード・同じ文のまま関数にしたもの）だけを使い、apply_command・宣言の前の先読みを試さない",
+   "ワザの対象・トラッシュするエネルギー・山札から選ぶカード・写すワザは受理のあとの既存の決定で答える（宣言の前へ移さない）。コインの結果を選ばせない",
+   "ゲーム上宣言できないワザ・組は出さず、未裁定・未対応は消さずに実行できない区分で示す。宣言の前の先読みと受理のあとを評価していないので、ワザの候補を supported にしない",
+   "U7-1〜U7-3 の取っ手・結果・coverage・client_api の契約を使う（番の候補は partial）"
+  ],
+  "decisions": [],
+  "units": [
+   "U7-4"
   ]
  },
  "disclosure": {
