@@ -738,6 +738,7 @@
  "units": [
   {
    "id": "U7-1",
+   "status": "implemented",
    "name": "枠組みと決定への回答（最初の縦の単位）",
    "depends": [],
    "scope": [
@@ -759,6 +760,7 @@
   },
   {
    "id": "U7-2",
+   "status": "planned",
    "name": "準備とホストの操作",
    "depends": [
     "U7-1"
@@ -776,6 +778,7 @@
   },
   {
    "id": "U7-3",
+   "status": "planned",
    "name": "通常の操作（ワザ・トレーナー・パワーの外）",
    "depends": [
     "U7-2"
@@ -791,6 +794,7 @@
   },
   {
    "id": "U7-4",
+   "status": "planned",
    "name": "ワザ",
    "depends": [
     "U7-3"
@@ -808,6 +812,7 @@
   },
   {
    "id": "U7-5",
+   "status": "planned",
    "name": "トレーナー・パワー・スタジアムとその他",
    "depends": [
     "U7-4"
@@ -824,6 +829,7 @@
   },
   {
    "id": "U7-6",
+   "status": "planned",
    "name": "GUI・ルールベースの AI への接続",
    "depends": [
     "U7-1"
@@ -845,19 +851,25 @@
    "id": "D-U7-API",
    "question": "入口の形（HostedGame.legal_actions(actor) と、状態を受け取る関数 legal_actions(state, actor) を両方にするか）",
    "recommendation": "ホストの入口を正とし、状態を受け取る関数はホストの中とテストだけ（取っ手を持たない）",
-   "status": "pending"
+   "status": "adopted",
+   "adoption": "ADOPT-U7-1",
+   "adopted": "ホストの入口（ActionHost）とクライアントの入口（ActorSession）を分ける。状態を受け取る公開の関数は作らない"
   },
   {
    "id": "D-U7-TOKEN",
    "question": "revision を乱数の不透明な値にするか、ホストの中の数（受理の数）を外に出すか",
    "recommendation": "不透明な値（受理の数は相手の見えない操作の数を伝えうる）",
-   "status": "pending"
+   "status": "adopted",
+   "adoption": "ADOPT-U7-1",
+   "adopted": "secrets の乱数の不透明な値（エンジンの乱数・状態のハッシュ・決定の番号を使わない）"
   },
   {
    "id": "D-U7-REFINE",
    "question": "段階的な入力を、問い合わせ（refine）で次の段を取る形にするか、候補に全段の制約を書く形にするか",
    "recommendation": "初版は候補に段の制約を書く（ワザの対象・トレーナーの枚数は受理のあとの決定）。問い合わせは U7-4 で必要になったときに加える",
-   "status": "pending"
+   "status": "adopted",
+   "adoption": "ADOPT-U7-1",
+   "adopted": "段階的に取得する（候補の一覧は段の種類だけ、選べるものと制約は inputs の問い合わせ）"
   },
   {
    "id": "D-U7-DISPLAY",
@@ -869,7 +881,9 @@
    "id": "D-U7-UNVERIFIED",
    "question": "判定未確定（unverified）の候補を実行できる候補にするか",
    "recommendation": "する（送れば apply_command が判定する。拒否の理由は双子で同じ）",
-   "status": "pending"
+   "status": "adopted",
+   "adoption": "ADOPT-U7-1",
+   "adopted": "unverified は保証がないことを示して送信を許す"
   },
   {
    "id": "D-U7-COMPLETENESS",
@@ -881,13 +895,79 @@
    "id": "D-U7-HOST-OPS",
    "question": "ジャンケンの結果・延長戦の開始をホストの操作主体の候補にするか",
    "recommendation": "する（プレイヤーの候補には出さない）",
-   "status": "pending"
+   "status": "adopted",
+   "adoption": "ADOPT-U7-1",
+   "adopted": "操作主体のある操作とホストの操作を区別する（プレイヤーには waiting_for_host を返す）。ホストの操作の入口は U7-2"
   },
   {
    "id": "D-U7-DECISION-UID",
    "question": "決定の選べるもの（observe の decision.options の value）に、決める人に見えないカードの uid が入る種類があるか",
    "recommendation": "U7-1 の前に確かめる（未確認）。入るなら、U7 の応答では見えないカードを値の番号で表し、uid を入れない",
-   "status": "pending"
+   "status": "checked",
+   "result": "コードを読んだ範囲（docs/legal-actions-u7-1.md 2 章）では入る種類はない。U7 は選ぶものを番号（o1…）で表し、uid は観測が card_id を渡すカードだけに付ける。見えないカードが来たら uid を出さず unverified にする（実行時の確かめ）。3 種類の出どころは未確認"
   }
- ]
+ ],
+ "u7_1_adoption": {
+  "id": "ADOPT-U7-1",
+  "date": "2026-11-07",
+  "by": "利用者",
+  "scope": "U7-1（決定への回答と番を終える）の最小の実装と、次の方針だけ。識別の方式の保留の判断（D-PROVENANCE ほか 7 件）・U7-2 以後の操作の種類の仕様・D-U7-DISPLAY・D-U7-COMPLETENESS の承認ではない。実装: v0.160（docs/legal-actions-u7-1.md）",
+  "policies": [
+   "候補の取得と実行を、信頼されたホストの境界で扱う",
+   "操作主体のある操作と、対戦全体のホストの操作を区別する",
+   "候補はホストが管理する不透明な取っ手に対応づける",
+   "受理した操作で、その対戦の既存の取っ手を失効させる",
+   "取っ手の生成にエンジンの乱数を使わない",
+   "ホストの再起動・状態の復元・状態の差し替えで取っ手を失効させる",
+   "拒否した操作だけでは、ほかの主体の取っ手を失効させない",
+   "必要な入力は段階的に取得し、組み合わせを全展開しない",
+   "未裁定・未実装を候補から黙って消さず、ゲーム上の禁止と区別する",
+   "unverified は保証がないことを明示し、送信を許可する。最終の判定は既存のエンジンに任せる",
+   "対応する操作の種類と、その範囲の完全性を明示する"
+  ],
+  "decisions": [
+   "D-U7-API",
+   "D-U7-TOKEN",
+   "D-U7-REFINE",
+   "D-U7-UNVERIFIED",
+   "D-U7-HOST-OPS"
+  ],
+  "units": [
+   "U7-1"
+  ]
+ },
+ "card_option_sources": {
+  "attach_from_discard": "自分のトラッシュ",
+  "attach_from_hand": "自分の手札",
+  "bench_from_discard": "自分のトラッシュ",
+  "deck_top_from_hand": "自分の手札",
+  "discard_energy": "場のポケモンについているエネルギー（公開）",
+  "discard_from_hand": "自分の手札",
+  "discard_opponent_energy": "相手の場のエネルギー（公開）",
+  "discard_stadium": "場のスタジアム（公開）",
+  "discard_to_deck": "トラッシュ（公開）",
+  "discard_to_deck_top": "相手のトラッシュ（公開）",
+  "energy_drain_discard": "未確認（効果の要求の options。実行時の確かめに任せる）",
+  "exp_all_energy": "未確認（続きの情報の options。実行時の確かめに任せる）",
+  "hand_to_active": "自分の手札",
+  "hand_to_deck": "自分の手札",
+  "magma_pool_energy": "未確認（反応の選択の options。実行時の確かめに任せる）",
+  "move_energy": "場のポケモンについているエネルギー（公開）",
+  "move_opponent_energy": "相手の場のエネルギー（公開）",
+  "post_knockout_power": "きぜつしたカード（トラッシュ。公開）",
+  "quiz_card": "自分の手札",
+  "recover_energy": "トラッシュ（公開）",
+  "recover_pokemon": "トラッシュ（公開）",
+  "recover_trainer": "トラッシュ（公開）",
+  "retrieve_energy": "トラッシュ（公開）",
+  "return_energy": "場のポケモンについているエネルギー（公開）",
+  "return_to_deck": "自分の手札",
+  "secret_plan_card": "自分の手札",
+  "select_attached_special_energy": "相手の場の特殊エネルギー（公開）",
+  "select_attached_trainer": "相手の場のついているトレーナー（公開）",
+  "select_evolution_card": "自分の手札",
+  "stadium_from_discard": "トラッシュ（公開）",
+  "swap_with_prize": "自分の手札",
+  "use_discard_trainer": "トラッシュ（公開）"
+ }
 }

@@ -1,6 +1,6 @@
 # 合法手 API（U7）の実装計画
 
-[legal-actions-api-design.md](legal-actions-api-design.md) の実装の順序と完了の基準です。計画だけで、実装していません。単位の表は `scripts/build_legal_actions_api_design.py` の `SPEC` から作ります（`--check` が依存の順・回帰テスト・完了の基準の有無を確かめる）。
+[legal-actions-api-design.md](legal-actions-api-design.md) の実装の順序と完了の基準です。U7-1 は v0.160 で実装しました（[legal-actions-u7-1.md](legal-actions-u7-1.md)）。ほかの単位は計画だけです。単位の表は `scripts/build_legal_actions_api_design.py` の `SPEC` から作ります（`--check` が依存の順・回帰テスト・完了の基準の有無を確かめる）。
 
 ## 1. 識別の方式との依存
 
@@ -12,14 +12,14 @@
 ## 2. 単位
 
 <!-- generated:units begin -->
-| 単位 | 名前 | 依存 | 範囲 | 回帰テスト | 完了の基準 |
-|---|---|---|---|---|---|
-| `U7-1` | 枠組みと決定への回答（最初の縦の単位） | なし | 応答の形式・取っ手（game・revision）・ホストの認証の境界・古い取っ手の拒否<br>決定への回答（ResolveDecision・TakePrize・PromoteActive）を observe の decision から作る（complete）<br>番を終える（EndTurn）<br>番でない・終局・停止は空の候補（complete） | T-TWIN-RESPONSE（決定）<br>T-STARTED-SEARCH<br>T-NO-SIDE-EFFECT<br>T-OTHER-ACTOR<br>T-STALE<br>T-NO-VERIFIER<br>候補どおりに送った回答を apply_command が受理する（既存の対戦の決定で） | 決定待ちのすべての種類（OPTION_MEANINGS の語彙）で候補ができ、漏れの回帰テストが通る。実装の識別の分類に legal_actions のファイルを加え、識別の設計の --check が通る |
-| `U7-2` | 準備とホストの操作 | U7-1 | PlaceStartingPokemon（たねポケモンの手札から。段: バトル場 → ベンチ）<br>DrawMulliganCards<br>ReportJankenResult・StartSuddenDeath（ホストの操作主体だけ） | T-TWIN-RESPONSE（準備）<br>準備の候補から作った操作で、固定デッキの対戦が始まる | 準備の段階が complete |
-| `U7-3` | 通常の操作（ワザ・トレーナー・パワーの外） | U7-2 | PlayBasicToBench・AttachEnergy・EvolvePokemon・Retreat（費用は条件で表す） | T-TWIN-RESPONSE（通常の操作）<br>T-NOT-HIDDEN | これらの種類について、本人の知識だけで決まる確かめを候補の作成に使う。scope に含めた種類を示し、main は partial |
-| `U7-4` | ワザ | U7-3 | UseAttack（ワザ → 任意の指定。対象は受理のあとの決定）<br>宣言の前の確かめのうち、本人の知識だけで決まるもの（v0.147〜v0.151 の持ち主の知識の関数）を processability に使う | T-TWIN-RESPONSE（v0.147〜v0.151 の双子の盤面）<br>T-TWIN-REFINE<br>T-NOT-HIDDEN（未裁定のワザ） | ワザの候補で、先読みを呼ばない。決められないものは unverified |
-| `U7-5` | トレーナー・パワー・スタジアムとその他 | U7-4 | PlayTrainer・UsePokemonPower・UseStadium・RemoveDisguise・DiscardFromPlay・RevealFaceDown・CheckFaceUpDeckCard<br>入力はカードの登録が宣言する（共通の処理にカード ID の分岐を加えない） | T-TWIN-RESPONSE（トレーナー・パワー）<br>登録のないカードは unverified（消さない） | すべてのコマンドの型に候補の種類がある。main が complete と称せるかは D-U7-COMPLETENESS |
-| `U7-6` | GUI・ルールベースの AI への接続 | U7-1 | API だけを使う方策（内部の状態・秘密の配分を読まない）<br>GUI の表示（processability ごとの表示）<br>既存の方策（tests/helpers の trainer_policy_command など）は内部の状態を読むので、公開の API に流用しない | API だけを使う方策で固定デッキの対戦が終局・停止まで進む<br>方策が受け取る値が応答だけであること | 決定・準備は U7-1・U7-2 のあとに接続できる。通常の操作は単位ごとに広げる |
+| 単位 | 状態 | 名前 | 依存 | 範囲 | 回帰テスト | 完了の基準 |
+|---|---|---|---|---|---|---|
+| `U7-1` | implemented | 枠組みと決定への回答（最初の縦の単位） | なし | 応答の形式・取っ手（game・revision）・ホストの認証の境界・古い取っ手の拒否<br>決定への回答（ResolveDecision・TakePrize・PromoteActive）を observe の decision から作る（complete）<br>番を終える（EndTurn）<br>番でない・終局・停止は空の候補（complete） | T-TWIN-RESPONSE（決定）<br>T-STARTED-SEARCH<br>T-NO-SIDE-EFFECT<br>T-OTHER-ACTOR<br>T-STALE<br>T-NO-VERIFIER<br>候補どおりに送った回答を apply_command が受理する（既存の対戦の決定で） | 決定待ちのすべての種類（OPTION_MEANINGS の語彙）で候補ができ、漏れの回帰テストが通る。実装の識別の分類に legal_actions のファイルを加え、識別の設計の --check が通る |
+| `U7-2` | planned | 準備とホストの操作 | U7-1 | PlaceStartingPokemon（たねポケモンの手札から。段: バトル場 → ベンチ）<br>DrawMulliganCards<br>ReportJankenResult・StartSuddenDeath（ホストの操作主体だけ） | T-TWIN-RESPONSE（準備）<br>準備の候補から作った操作で、固定デッキの対戦が始まる | 準備の段階が complete |
+| `U7-3` | planned | 通常の操作（ワザ・トレーナー・パワーの外） | U7-2 | PlayBasicToBench・AttachEnergy・EvolvePokemon・Retreat（費用は条件で表す） | T-TWIN-RESPONSE（通常の操作）<br>T-NOT-HIDDEN | これらの種類について、本人の知識だけで決まる確かめを候補の作成に使う。scope に含めた種類を示し、main は partial |
+| `U7-4` | planned | ワザ | U7-3 | UseAttack（ワザ → 任意の指定。対象は受理のあとの決定）<br>宣言の前の確かめのうち、本人の知識だけで決まるもの（v0.147〜v0.151 の持ち主の知識の関数）を processability に使う | T-TWIN-RESPONSE（v0.147〜v0.151 の双子の盤面）<br>T-TWIN-REFINE<br>T-NOT-HIDDEN（未裁定のワザ） | ワザの候補で、先読みを呼ばない。決められないものは unverified |
+| `U7-5` | planned | トレーナー・パワー・スタジアムとその他 | U7-4 | PlayTrainer・UsePokemonPower・UseStadium・RemoveDisguise・DiscardFromPlay・RevealFaceDown・CheckFaceUpDeckCard<br>入力はカードの登録が宣言する（共通の処理にカード ID の分岐を加えない） | T-TWIN-RESPONSE（トレーナー・パワー）<br>登録のないカードは unverified（消さない） | すべてのコマンドの型に候補の種類がある。main が complete と称せるかは D-U7-COMPLETENESS |
+| `U7-6` | planned | GUI・ルールベースの AI への接続 | U7-1 | API だけを使う方策（内部の状態・秘密の配分を読まない）<br>GUI の表示（processability ごとの表示）<br>既存の方策（tests/helpers の trainer_policy_command など）は内部の状態を読むので、公開の API に流用しない | API だけを使う方策で固定デッキの対戦が終局・停止まで進む<br>方策が受け取る値が応答だけであること | 決定・準備は U7-1・U7-2 のあとに接続できる。通常の操作は単位ごとに広げる |
 <!-- generated:units end -->
 
 最初に作る縦の小さな単位は **U7-1** です。応答の形式・取っ手・ホストの認証の境界・古い取っ手の拒否という枠組みを、決定への回答（既存の `observe` の `decision` をそのまま使えるので、新しい確かめを作らずに完全な候補にできる）と番を終える操作で通します。漏れの回帰テストの枠組み（双子の応答の比べ）もここで作り、あとの単位はテストの盤面を足すだけにします。

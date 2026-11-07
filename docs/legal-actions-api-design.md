@@ -1,6 +1,6 @@
 # 合法手 API（U7）の仕様案
 
-v0.159（U1〜U6 の総合検証）のあとの仕様案です。**仕様だけ**で、実装していません。エンジンの版は 0.159.0 のままです。実装の順序と完了の基準は [legal-actions-api-implementation-plan.md](legal-actions-api-implementation-plan.md)、実装の識別との関係は [implementation-identity-design.md](implementation-identity-design.md) の 5 章（U7 の行）です。
+v0.159（U1〜U6 の総合検証）のあとの仕様案です。v0.160 で U7-1（決定への回答・番を終える）だけを実装しました（[legal-actions-u7-1.md](legal-actions-u7-1.md)）。ほかの単位は仕様だけです。実装の順序と完了の基準は [legal-actions-api-implementation-plan.md](legal-actions-api-implementation-plan.md)、実装の識別との関係は [implementation-identity-design.md](implementation-identity-design.md) の 5 章（U7 の行）です。
 
 表と構造化した仕様（[legal-actions-api-design.json](legal-actions-api-design.json)）は `scripts/build_legal_actions_api_design.py` の `SPEC` から作ります（`--write`・`--check`。表を手で二重に書かない）。`--check` は、コマンドの型（`commands.py` の dataclass）・段階（`state.Phase`）・次の操作の種類（`diagnostics.NEXT_*`）・状態の区分・決定の選べるものの意味（`observation.OPTION_MEANINGS`）のすべてに対応があるかを、コードと名前で照らします。
 
@@ -257,16 +257,16 @@ v0.159（U1〜U6 の総合検証）のあとの仕様案です。**仕様だけ*
 ## 9. 判断事項（利用者の判断が要る）
 
 <!-- generated:decisions begin -->
-| ID | 問い | 推奨 | 状態 |
-|---|---|---|---|
-| `D-U7-API` | 入口の形（HostedGame.legal_actions(actor) と、状態を受け取る関数 legal_actions(state, actor) を両方にするか） | ホストの入口を正とし、状態を受け取る関数はホストの中とテストだけ（取っ手を持たない） | pending |
-| `D-U7-TOKEN` | revision を乱数の不透明な値にするか、ホストの中の数（受理の数）を外に出すか | 不透明な値（受理の数は相手の見えない操作の数を伝えうる） | pending |
-| `D-U7-REFINE` | 段階的な入力を、問い合わせ（refine）で次の段を取る形にするか、候補に全段の制約を書く形にするか | 初版は候補に段の制約を書く（ワザの対象・トレーナーの枚数は受理のあとの決定）。問い合わせは U7-4 で必要になったときに加える | pending |
-| `D-U7-DISPLAY` | 処理可能性ごとの表示・実行の扱い（PROCESSABILITY の表） | 表のとおり。どれも候補から消さない | pending |
-| `D-U7-UNVERIFIED` | 判定未確定（unverified）の候補を実行できる候補にするか | する（送れば apply_command が判定する。拒否の理由は双子で同じ） | pending |
-| `D-U7-COMPLETENESS` | 初版で main の候補を complete と称する範囲 | 称さない（partial と scope）。決定・準備・延長戦の開始・終局・停止だけ complete | pending |
-| `D-U7-HOST-OPS` | ジャンケンの結果・延長戦の開始をホストの操作主体の候補にするか | する（プレイヤーの候補には出さない） | pending |
-| `D-U7-DECISION-UID` | 決定の選べるもの（observe の decision.options の value）に、決める人に見えないカードの uid が入る種類があるか | U7-1 の前に確かめる（未確認）。入るなら、U7 の応答では見えないカードを値の番号で表し、uid を入れない | pending |
+| ID | 問い | 推奨 | 状態 | 採用・確かめの結果 |
+|---|---|---|---|---|
+| `D-U7-API` | 入口の形（HostedGame.legal_actions(actor) と、状態を受け取る関数 legal_actions(state, actor) を両方にするか） | ホストの入口を正とし、状態を受け取る関数はホストの中とテストだけ（取っ手を持たない） | adopted（ADOPT-U7-1） | ホストの入口（ActionHost）とクライアントの入口（ActorSession）を分ける。状態を受け取る公開の関数は作らない |
+| `D-U7-TOKEN` | revision を乱数の不透明な値にするか、ホストの中の数（受理の数）を外に出すか | 不透明な値（受理の数は相手の見えない操作の数を伝えうる） | adopted（ADOPT-U7-1） | secrets の乱数の不透明な値（エンジンの乱数・状態のハッシュ・決定の番号を使わない） |
+| `D-U7-REFINE` | 段階的な入力を、問い合わせ（refine）で次の段を取る形にするか、候補に全段の制約を書く形にするか | 初版は候補に段の制約を書く（ワザの対象・トレーナーの枚数は受理のあとの決定）。問い合わせは U7-4 で必要になったときに加える | adopted（ADOPT-U7-1） | 段階的に取得する（候補の一覧は段の種類だけ、選べるものと制約は inputs の問い合わせ） |
+| `D-U7-DISPLAY` | 処理可能性ごとの表示・実行の扱い（PROCESSABILITY の表） | 表のとおり。どれも候補から消さない | pending |  |
+| `D-U7-UNVERIFIED` | 判定未確定（unverified）の候補を実行できる候補にするか | する（送れば apply_command が判定する。拒否の理由は双子で同じ） | adopted（ADOPT-U7-1） | unverified は保証がないことを示して送信を許す |
+| `D-U7-COMPLETENESS` | 初版で main の候補を complete と称する範囲 | 称さない（partial と scope）。決定・準備・延長戦の開始・終局・停止だけ complete | pending |  |
+| `D-U7-HOST-OPS` | ジャンケンの結果・延長戦の開始をホストの操作主体の候補にするか | する（プレイヤーの候補には出さない） | adopted（ADOPT-U7-1） | 操作主体のある操作とホストの操作を区別する（プレイヤーには waiting_for_host を返す）。ホストの操作の入口は U7-2 |
+| `D-U7-DECISION-UID` | 決定の選べるもの（observe の decision.options の value）に、決める人に見えないカードの uid が入る種類があるか | U7-1 の前に確かめる（未確認）。入るなら、U7 の応答では見えないカードを値の番号で表し、uid を入れない | checked | コードを読んだ範囲（docs/legal-actions-u7-1.md 2 章）では入る種類はない。U7 は選ぶものを番号（o1…）で表し、uid は観測が card_id を渡すカードだけに付ける。見えないカードが来たら uid を出さず unverified にする（実行時の確かめ）。3 種類の出どころは未確認 |
 <!-- generated:decisions end -->
 
 ## 10. 検証と未確認

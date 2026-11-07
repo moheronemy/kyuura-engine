@@ -23,6 +23,7 @@ sys.path.insert(0, str(ROOT))
 OUTPUT = ROOT / "docs" / "legal-actions-api-design.json"
 DESIGN = ROOT / "docs" / "legal-actions-api-design.md"
 PLAN = ROOT / "docs" / "legal-actions-api-implementation-plan.md"
+U7_1 = ROOT / "docs" / "legal-actions-u7-1.md"
 
 _helpers_spec = importlib.util.spec_from_file_location("build_state_snapshot_design", ROOT / "scripts" / "build_state_snapshot_design.py")
 _H = importlib.util.module_from_spec(_helpers_spec)
@@ -33,6 +34,42 @@ ADOPTION = {
     "id": "ADOPT-U7-PRINCIPLES", "date": "2026-11-07", "by": "利用者",
     "scope": "U7 で、操作候補（本人が知る情報から提示できる操作）・必要な入力（対象・枚数などの段階的な選択）・処理可能性（今の規約集合と実装で扱える範囲）を区別すること。"
              "候補に載ることと、そのあとの全分岐が完走することは別の保証。実際の秘密の状態にコマンドを試し、通るものだけを一覧にする設計は採らない。最終の判定は apply_command に残す",
+}
+
+ADOPTION_U7_1 = {
+    "id": "ADOPT-U7-1", "date": "2026-11-07", "by": "利用者",
+    "scope": "U7-1（決定への回答と番を終える）の最小の実装と、次の方針だけ。識別の方式の保留の判断（D-PROVENANCE ほか 7 件）・U7-2 以後の操作の種類の仕様・D-U7-DISPLAY・"
+             "D-U7-COMPLETENESS の承認ではない。実装: v0.160（docs/legal-actions-u7-1.md）",
+    "policies": [
+        "候補の取得と実行を、信頼されたホストの境界で扱う",
+        "操作主体のある操作と、対戦全体のホストの操作を区別する",
+        "候補はホストが管理する不透明な取っ手に対応づける",
+        "受理した操作で、その対戦の既存の取っ手を失効させる",
+        "取っ手の生成にエンジンの乱数を使わない",
+        "ホストの再起動・状態の復元・状態の差し替えで取っ手を失効させる",
+        "拒否した操作だけでは、ほかの主体の取っ手を失効させない",
+        "必要な入力は段階的に取得し、組み合わせを全展開しない",
+        "未裁定・未実装を候補から黙って消さず、ゲーム上の禁止と区別する",
+        "unverified は保証がないことを明示し、送信を許可する。最終の判定は既存のエンジンに任せる",
+        "対応する操作の種類と、その範囲の完全性を明示する",
+    ],
+    "decisions": ["D-U7-API", "D-U7-TOKEN", "D-U7-REFINE", "D-U7-UNVERIFIED", "D-U7-HOST-OPS"],
+    "units": ["U7-1"],
+}
+
+# D-U7-DECISION-UID の確かめ（コードを読んだ判断）: 選べるものの意味が card で、山札をさがす決定（DECK_REVEALING_KINDS）・見た手札の決定（LOOKED_HAND_KINDS）でない種類の
+# 選べるものの出どころ（決定を出す箇所の options）。--check が、コードのその種類の一覧と照らす（加わった種類は分類を書くまで失敗する）
+CARD_OPTION_SOURCES = {
+    "attach_from_discard": "自分のトラッシュ", "attach_from_hand": "自分の手札", "bench_from_discard": "自分のトラッシュ", "deck_top_from_hand": "自分の手札",
+    "discard_energy": "場のポケモンについているエネルギー（公開）", "discard_from_hand": "自分の手札", "discard_opponent_energy": "相手の場のエネルギー（公開）",
+    "discard_stadium": "場のスタジアム（公開）", "discard_to_deck": "トラッシュ（公開）", "discard_to_deck_top": "相手のトラッシュ（公開）",
+    "energy_drain_discard": "未確認（効果の要求の options。実行時の確かめに任せる）", "exp_all_energy": "未確認（続きの情報の options。実行時の確かめに任せる）",
+    "hand_to_active": "自分の手札", "hand_to_deck": "自分の手札", "magma_pool_energy": "未確認（反応の選択の options。実行時の確かめに任せる）",
+    "move_energy": "場のポケモンについているエネルギー（公開）", "move_opponent_energy": "相手の場のエネルギー（公開）", "post_knockout_power": "きぜつしたカード（トラッシュ。公開）",
+    "quiz_card": "自分の手札", "recover_energy": "トラッシュ（公開）", "recover_pokemon": "トラッシュ（公開）", "recover_trainer": "トラッシュ（公開）",
+    "retrieve_energy": "トラッシュ（公開）", "return_energy": "場のポケモンについているエネルギー（公開）", "return_to_deck": "自分の手札", "secret_plan_card": "自分の手札",
+    "select_attached_special_energy": "相手の場の特殊エネルギー（公開）", "select_attached_trainer": "相手の場のついているトレーナー（公開）", "select_evolution_card": "自分の手札",
+    "stadium_from_discard": "トラッシュ（公開）", "swap_with_prize": "自分の手札", "use_discard_trainer": "トラッシュ（公開）",
 }
 
 PRINCIPLES = [
@@ -219,46 +256,52 @@ LEAK_TESTS = [
 ]
 
 UNITS = [
-    {"id": "U7-1", "name": "枠組みと決定への回答（最初の縦の単位）", "depends": [], "scope": ["応答の形式・取っ手（game・revision）・ホストの認証の境界・古い取っ手の拒否",
+    {"id": "U7-1", "status": "implemented", "name": "枠組みと決定への回答（最初の縦の単位）", "depends": [], "scope": ["応答の形式・取っ手（game・revision）・ホストの認証の境界・古い取っ手の拒否",
      "決定への回答（ResolveDecision・TakePrize・PromoteActive）を observe の decision から作る（complete）", "番を終える（EndTurn）", "番でない・終局・停止は空の候補（complete）"],
      "tests": ["T-TWIN-RESPONSE（決定）", "T-STARTED-SEARCH", "T-NO-SIDE-EFFECT", "T-OTHER-ACTOR", "T-STALE", "T-NO-VERIFIER", "候補どおりに送った回答を apply_command が受理する（既存の対戦の決定で）"],
      "done": "決定待ちのすべての種類（OPTION_MEANINGS の語彙）で候補ができ、漏れの回帰テストが通る。実装の識別の分類に legal_actions のファイルを加え、識別の設計の --check が通る"},
-    {"id": "U7-2", "name": "準備とホストの操作", "depends": ["U7-1"], "scope": ["PlaceStartingPokemon（たねポケモンの手札から。段: バトル場 → ベンチ）", "DrawMulliganCards", "ReportJankenResult・StartSuddenDeath（ホストの操作主体だけ）"],
+    {"id": "U7-2", "status": "planned", "name": "準備とホストの操作", "depends": ["U7-1"], "scope": ["PlaceStartingPokemon（たねポケモンの手札から。段: バトル場 → ベンチ）", "DrawMulliganCards", "ReportJankenResult・StartSuddenDeath（ホストの操作主体だけ）"],
      "tests": ["T-TWIN-RESPONSE（準備）", "準備の候補から作った操作で、固定デッキの対戦が始まる"], "done": "準備の段階が complete"},
-    {"id": "U7-3", "name": "通常の操作（ワザ・トレーナー・パワーの外）", "depends": ["U7-2"], "scope": ["PlayBasicToBench・AttachEnergy・EvolvePokemon・Retreat（費用は条件で表す）"],
+    {"id": "U7-3", "status": "planned", "name": "通常の操作（ワザ・トレーナー・パワーの外）", "depends": ["U7-2"], "scope": ["PlayBasicToBench・AttachEnergy・EvolvePokemon・Retreat（費用は条件で表す）"],
      "tests": ["T-TWIN-RESPONSE（通常の操作）", "T-NOT-HIDDEN"], "done": "これらの種類について、本人の知識だけで決まる確かめを候補の作成に使う。scope に含めた種類を示し、main は partial"},
-    {"id": "U7-4", "name": "ワザ", "depends": ["U7-3"], "scope": ["UseAttack（ワザ → 任意の指定。対象は受理のあとの決定）", "宣言の前の確かめのうち、本人の知識だけで決まるもの（v0.147〜v0.151 の持ち主の知識の関数）を processability に使う"],
+    {"id": "U7-4", "status": "planned", "name": "ワザ", "depends": ["U7-3"], "scope": ["UseAttack（ワザ → 任意の指定。対象は受理のあとの決定）", "宣言の前の確かめのうち、本人の知識だけで決まるもの（v0.147〜v0.151 の持ち主の知識の関数）を processability に使う"],
      "tests": ["T-TWIN-RESPONSE（v0.147〜v0.151 の双子の盤面）", "T-TWIN-REFINE", "T-NOT-HIDDEN（未裁定のワザ）"], "done": "ワザの候補で、先読みを呼ばない。決められないものは unverified"},
-    {"id": "U7-5", "name": "トレーナー・パワー・スタジアムとその他", "depends": ["U7-4"], "scope": ["PlayTrainer・UsePokemonPower・UseStadium・RemoveDisguise・DiscardFromPlay・RevealFaceDown・CheckFaceUpDeckCard",
+    {"id": "U7-5", "status": "planned", "name": "トレーナー・パワー・スタジアムとその他", "depends": ["U7-4"], "scope": ["PlayTrainer・UsePokemonPower・UseStadium・RemoveDisguise・DiscardFromPlay・RevealFaceDown・CheckFaceUpDeckCard",
      "入力はカードの登録が宣言する（共通の処理にカード ID の分岐を加えない）"], "tests": ["T-TWIN-RESPONSE（トレーナー・パワー）", "登録のないカードは unverified（消さない）"],
      "done": "すべてのコマンドの型に候補の種類がある。main が complete と称せるかは D-U7-COMPLETENESS"},
-    {"id": "U7-6", "name": "GUI・ルールベースの AI への接続", "depends": ["U7-1"], "scope": ["API だけを使う方策（内部の状態・秘密の配分を読まない）", "GUI の表示（processability ごとの表示）",
+    {"id": "U7-6", "status": "planned", "name": "GUI・ルールベースの AI への接続", "depends": ["U7-1"], "scope": ["API だけを使う方策（内部の状態・秘密の配分を読まない）", "GUI の表示（processability ごとの表示）",
      "既存の方策（tests/helpers の trainer_policy_command など）は内部の状態を読むので、公開の API に流用しない"],
      "tests": ["API だけを使う方策で固定デッキの対戦が終局・停止まで進む", "方策が受け取る値が応答だけであること"], "done": "決定・準備は U7-1・U7-2 のあとに接続できる。通常の操作は単位ごとに広げる"},
 ]
 
 DECISIONS = [
     {"id": "D-U7-API", "question": "入口の形（HostedGame.legal_actions(actor) と、状態を受け取る関数 legal_actions(state, actor) を両方にするか）", "recommendation":
-     "ホストの入口を正とし、状態を受け取る関数はホストの中とテストだけ（取っ手を持たない）", "status": "pending"},
+     "ホストの入口を正とし、状態を受け取る関数はホストの中とテストだけ（取っ手を持たない）", "status": "adopted", "adoption": "ADOPT-U7-1",
+     "adopted": "ホストの入口（ActionHost）とクライアントの入口（ActorSession）を分ける。状態を受け取る公開の関数は作らない"},
     {"id": "D-U7-TOKEN", "question": "revision を乱数の不透明な値にするか、ホストの中の数（受理の数）を外に出すか", "recommendation": "不透明な値（受理の数は相手の見えない操作の数を伝えうる）",
-     "status": "pending"},
+     "status": "adopted", "adoption": "ADOPT-U7-1", "adopted": "secrets の乱数の不透明な値（エンジンの乱数・状態のハッシュ・決定の番号を使わない）"},
     {"id": "D-U7-REFINE", "question": "段階的な入力を、問い合わせ（refine）で次の段を取る形にするか、候補に全段の制約を書く形にするか", "recommendation":
-     "初版は候補に段の制約を書く（ワザの対象・トレーナーの枚数は受理のあとの決定）。問い合わせは U7-4 で必要になったときに加える", "status": "pending"},
+     "初版は候補に段の制約を書く（ワザの対象・トレーナーの枚数は受理のあとの決定）。問い合わせは U7-4 で必要になったときに加える", "status": "adopted", "adoption": "ADOPT-U7-1",
+     "adopted": "段階的に取得する（候補の一覧は段の種類だけ、選べるものと制約は inputs の問い合わせ）"},
     {"id": "D-U7-DISPLAY", "question": "処理可能性ごとの表示・実行の扱い（PROCESSABILITY の表）", "recommendation": "表のとおり。どれも候補から消さない", "status": "pending"},
     {"id": "D-U7-UNVERIFIED", "question": "判定未確定（unverified）の候補を実行できる候補にするか", "recommendation": "する（送れば apply_command が判定する。拒否の理由は双子で同じ）",
-     "status": "pending"},
+     "status": "adopted", "adoption": "ADOPT-U7-1", "adopted": "unverified は保証がないことを示して送信を許す"},
     {"id": "D-U7-COMPLETENESS", "question": "初版で main の候補を complete と称する範囲", "recommendation": "称さない（partial と scope）。決定・準備・延長戦の開始・終局・停止だけ complete",
      "status": "pending"},
-    {"id": "D-U7-HOST-OPS", "question": "ジャンケンの結果・延長戦の開始をホストの操作主体の候補にするか", "recommendation": "する（プレイヤーの候補には出さない）", "status": "pending"},
+    {"id": "D-U7-HOST-OPS", "question": "ジャンケンの結果・延長戦の開始をホストの操作主体の候補にするか", "recommendation": "する（プレイヤーの候補には出さない）", "status": "adopted", "adoption": "ADOPT-U7-1",
+     "adopted": "操作主体のある操作とホストの操作を区別する（プレイヤーには waiting_for_host を返す）。ホストの操作の入口は U7-2"},
     {"id": "D-U7-DECISION-UID", "question": "決定の選べるもの（observe の decision.options の value）に、決める人に見えないカードの uid が入る種類があるか", "recommendation":
-     "U7-1 の前に確かめる（未確認）。入るなら、U7 の応答では見えないカードを値の番号で表し、uid を入れない", "status": "pending"},
+     "U7-1 の前に確かめる（未確認）。入るなら、U7 の応答では見えないカードを値の番号で表し、uid を入れない", "status": "checked",
+     "result": "コードを読んだ範囲（docs/legal-actions-u7-1.md 2 章）では入る種類はない。U7 は選ぶものを番号（o1…）で表し、uid は観測が card_id を渡すカードだけに付ける。"
+               "見えないカードが来たら uid を出さず unverified にする（実行時の確かめ）。3 種類の出どころは未確認"},
 ]
 
 SPEC = {
     "id": "LEGAL-ACTIONS-API-DESIGN", "status": "proposed", "approval": "not_approved", "adoption": ADOPTION, "principles": PRINCIPLES, "phases": PHASES,
     "operations": OPERATIONS, "next_map": NEXT_MAP, "input_kinds": INPUT_KINDS, "option_meaning_map": OPTION_MEANING_MAP, "processability": PROCESSABILITY,
     "completeness": COMPLETENESS, "response": RESPONSE, "candidate_fields": CANDIDATE_FIELDS, "info_boundary": INFO_BOUNDARY, "knowledge": KNOWLEDGE,
-    "revision": REVISION, "host": HOST, "leak_tests": LEAK_TESTS, "units": UNITS, "decisions": DECISIONS,
+    "revision": REVISION, "host": HOST, "leak_tests": LEAK_TESTS, "units": UNITS, "decisions": DECISIONS, "u7_1_adoption": ADOPTION_U7_1,
+    "card_option_sources": CARD_OPTION_SOURCES,
 }
 
 
@@ -289,15 +332,41 @@ def blocks(spec: dict) -> dict[str, list[str]]:
                     + _table(["場合", "拒否のコード", "次"], [[r["case"], f"`{r['code']}`", r["then"]] for r in spec["revision"]["rejections"]]),
         "host": [f"- {h}" for h in spec["host"]],
         "leak-tests": _table(["ID", "確かめること"], [[f"`{t['id']}`", t["what"]] for t in spec["leak_tests"]]),
-        "units": _table(["単位", "名前", "依存", "範囲", "回帰テスト", "完了の基準"],
-                        [[f"`{u['id']}`", u["name"], u["depends"] or "なし", u["scope"], u["tests"], u["done"]] for u in spec["units"]]),
-        "decisions": _table(["ID", "問い", "推奨", "状態"], [[f"`{d['id']}`", d["question"], d["recommendation"], d["status"]] for d in spec["decisions"]]),
+        "units": _table(["単位", "状態", "名前", "依存", "範囲", "回帰テスト", "完了の基準"],
+                        [[f"`{u['id']}`", u["status"], u["name"], u["depends"] or "なし", u["scope"], u["tests"], u["done"]] for u in spec["units"]]),
+        "decisions": _table(["ID", "問い", "推奨", "状態", "採用・確かめの結果"],
+                            [[f"`{d['id']}`", d["question"], d["recommendation"], d["status"] + (f"（{d['adoption']}）" if d.get("adoption") else ""),
+                              d.get("adopted") or d.get("result") or ""] for d in spec["decisions"]]),
+        "unit-adoption": [f"- `{spec['u7_1_adoption']['id']}`（{spec['u7_1_adoption']['date']}・{spec['u7_1_adoption']['by']}）: {spec['u7_1_adoption']['scope']}",
+                          "  - 方針:"] + [f"    - {x}" for x in spec["u7_1_adoption"]["policies"]]
+                         + ["  - 判断事項: " + "、".join(spec["u7_1_adoption"]["decisions"]), "  - 実装単位: " + "、".join(spec["u7_1_adoption"]["units"])],
+        "decision-kinds": _decision_kind_rows(spec),
     }
+
+
+def _decision_kind_rows(spec: dict) -> list[str]:
+    """決定の種類ごとの情報の範囲（コードの語彙から作る。card の出どころだけは CARD_OPTION_SOURCES）。"""
+    from kyuura_engine import observation as O
+
+    rows = []
+    for kind, meaning in sorted(O.OPTION_MEANINGS.items()):
+        if kind in O.DECK_REVEALING_KINDS:
+            source, when = "始まった検索・見たカード（決定は効果が山札を見たあとに出る）", "決定が出た時点（検索の開始のあと）"
+        elif kind in O.LOOKED_HAND_KINDS:
+            source, when = "効果で見た相手の手札", "決定が出た時点（見たあと）"
+        elif meaning == "card":
+            source, when = spec["card_option_sources"].get(kind, "分類なし"), "もとから見える（観測が card_id を渡すときだけ uid を付ける）"
+        else:
+            source, when = "カードでない値（" + meaning + "）", "—"
+        others = "種類・決める人だけ" if kind in O.HIDDEN_COUNT_KINDS else "種類・決める人・選ぶ数・選べるものの数"
+        rows.append([f"`{kind}`", meaning, source, when, others])
+    return _table(["決定の種類", "選べるものの意味", "選べるものの出どころ", "決める人が uid を知ってよい時点", "相手・観戦者に見えるもの"], rows)
 
 
 DESIGN_BLOCKS = ("adoption", "principles", "phases", "operations", "next", "inputs", "processability", "completeness", "response", "candidate", "boundary", "knowledge",
                  "revision", "host", "leak-tests", "decisions")
 PLAN_BLOCKS = ("units",)
+U7_1_BLOCKS = ("unit-adoption", "decision-kinds")
 
 # ---------------------------------------------------------------- 確かめ
 
@@ -305,6 +374,7 @@ PLAN_BLOCKS = ("units",)
 def code_vocabulary() -> dict[str, list[str]]:
     from kyuura_engine import commands as C
     from kyuura_engine import diagnostics as D
+    from kyuura_engine import observation as O
     from kyuura_engine.observation import OPTION_MEANINGS
     from kyuura_engine.state import Phase
 
@@ -314,6 +384,7 @@ def code_vocabulary() -> dict[str, list[str]]:
         "next": [v for k, v in vars(D).items() if k.startswith("NEXT_") and isinstance(v, str)],
         "statuses": list(D.STATE_STATUSES),
         "meanings": sorted(set(OPTION_MEANINGS.values())),
+        "plain_card_kinds": sorted(k for k, m in OPTION_MEANINGS.items() if m == "card" and k not in O.DECK_REVEALING_KINDS and k not in O.LOOKED_HAND_KINDS),
     }
 
 
@@ -330,6 +401,8 @@ def coverage_problems(spec: dict, code: dict[str, list[str]] | None = None) -> l
     problems += [f"next の種類 {n} の対応がない" for n in code["next"] if n not in spec["next_map"]]
     problems += [f"next の対応 {n} がコードにない" for n in spec["next_map"] if n not in code["next"]]
     problems += [f"決定の選べるものの意味 {m} に入力の種類の対応がない" for m in code["meanings"] if m not in spec["option_meaning_map"]]
+    problems += [f"カードを選ぶ決定 {k} の選べるものの出どころがない（D-U7-DECISION-UID）" for k in code.get("plain_card_kinds", []) if k not in spec["card_option_sources"]]
+    problems += [f"選べるものの出どころの決定 {k} がコードにない" for k in spec["card_option_sources"] if k not in code.get("plain_card_kinds", [])]
     return problems
 
 
@@ -407,19 +480,36 @@ def spec_problems(spec: dict) -> list[str]:
             tid = t.split("（")[0]
             if tid.startswith("T-") and tid not in test_ids:
                 problems.append(f"単位 {u['id']} のテスト {tid} が漏れの回帰テストの一覧にない")
+    adoption = spec["u7_1_adoption"]
     for d in spec["decisions"]:
-        if d.get("status") != "pending":
-            problems.append(f"判断事項 {d['id']} の状態が pending でない（採用の記録がない）")
+        if d.get("status") == "adopted":
+            if d.get("adoption") != adoption["id"] or d["id"] not in adoption["decisions"] or not d.get("adopted"):
+                problems.append(f"判断事項 {d['id']} の採用の記録（adoption・adopted）がない")
+        elif d.get("status") == "checked":
+            if not d.get("result"):
+                problems.append(f"判断事項 {d['id']} の確かめの結果がない")
+        elif d.get("status") != "pending":
+            problems.append(f"判断事項 {d['id']} の状態 {d.get('status')} が pending・adopted・checked でない")
+    if {d["id"] for d in spec["decisions"] if d.get("status") == "adopted"} != set(adoption["decisions"]):
+        problems.append("採用した判断事項と、U7-1 の採用の記録の判断事項が違う")
+    for need in ("D-U7-DISPLAY", "D-U7-COMPLETENESS"):
+        if next((d for d in spec["decisions"] if d["id"] == need), {}).get("status") != "pending":
+            problems.append(f"判断事項 {need} は U7-1 で採用していない（pending のまま）")
+    if {u["id"] for u in spec["units"] if u.get("status") == "implemented"} != set(adoption["units"]):
+        problems.append("実装した単位と、U7-1 の採用の記録の単位が違う")
+    if any(u.get("status") not in ("implemented", "planned") for u in spec["units"]):
+        problems.append("単位の状態が implemented・planned でない")
     return problems + coverage_problems(spec)
 
 
-def check(written: dict, design: str, plan: str) -> list[str]:
+def check(written: dict, design: str, plan: str, u7_1: str | None = None) -> list[str]:
     spec = build()
     problems = []
     if written != spec:
         problems.append("書いた JSON が、作り直した仕様案と違う（--write で作り直す）")
     rendered = blocks(spec)
-    for label, text, names in (("設計の文書", design, DESIGN_BLOCKS), ("実装計画の文書", plan, PLAN_BLOCKS)):
+    u7_1 = U7_1.read_text(encoding="utf-8") if u7_1 is None else u7_1
+    for label, text, names in (("設計の文書", design, DESIGN_BLOCKS), ("実装計画の文書", plan, PLAN_BLOCKS), ("U7-1 の文書", u7_1, U7_1_BLOCKS)):
         new, block_problems = render_into(text, rendered, names)
         problems += [f"{label}: {p}" for p in block_problems]
         if new != text:
@@ -441,7 +531,7 @@ def main() -> int:
             return 1
         OUTPUT.write_text(dump(spec), encoding="utf-8", newline="\n")
         rendered = blocks(spec)
-        for path, names in ((DESIGN, DESIGN_BLOCKS), (PLAN, PLAN_BLOCKS)):
+        for path, names in ((DESIGN, DESIGN_BLOCKS), (PLAN, PLAN_BLOCKS), (U7_1, U7_1_BLOCKS)):
             text, block_problems = render_into(path.read_text(encoding="utf-8"), rendered, names)
             if block_problems:
                 print("\n".join(f"{path.name}: {p}" for p in block_problems))
