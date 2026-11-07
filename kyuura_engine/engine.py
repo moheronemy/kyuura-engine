@@ -1983,7 +1983,28 @@ def _play_trainer(state: GameState, cmd: PlayTrainer, context: resolution.Contex
     v0.132（docs/slowking-mind-games-v0.132.md 5 章）: 相手の場に、手札から使うトレーナーに反応する特殊能力（［ちえくらべ］。``effects.trainer_reaction_sources``）がはたらいていれば、
     状態を変えない確かめ（上のすべて）を通って手札から出し、見せて名前を伝えたあと（スタジアムを出す・錯乱ジム・使うための条件・効果の前）に、持ち主が使うかを選ぶ（``_offer_trainer_reaction``。
     利用者が指定した規則）。場に錯乱ジムがあり、スタジアムカード以外なら、2 つのコインの前後が決まらないので手札から出す前に止める（MG1）
+
+    v0.169（U7-5c）: 手札から出す前の確かめを ``check_play_trainer`` に移した（同じ順番・同じコード・同じ文。動きは同じ）。
     """
+    p, definition, effect, use, reaction = check_play_trainer(state, cmd)
+
+    # 1・2. 手札から出して相手プレイヤーに見えるようにし、名前を伝える（p.310）
+    p.hand.remove(cmd.card)
+    state.trainer_in_use = TrainerInUse(cmd.player, cmd.card)
+    state.add_event("play_trainer", player=cmd.player, card=cmd.card, trainer=definition.name_ja)
+    if reaction:
+        _offer_trainer_reaction(state, use, effect, reaction[0])
+        return
+    _continue_trainer_use(state, use, effect, context)
+
+
+def check_play_trainer(state: GameState, cmd: PlayTrainer, *, use_condition: bool = True):
+    """``PlayTrainer`` を手札から出す前の確かめ（U7-5c。``_play_trainer`` の前半を、同じ順番・同じコード・同じ文のまま移した）。状態・乱数・ログを変えない。
+    (使うプレイヤーの場, カードの定義, 効果, 使用, 相手の場の［ちえくらべ］) を返す。
+
+    読むのは番・段階・本人の手札（あるか・枚数）・カードの定義・場の力と期限のある禁止（公開）・登録表・場のスタジアム（公開）と、カードごとの使うための条件
+    （``TrainerEffect.check_playable``）。``use_condition`` が偽なら、使うための条件だけを呼ばない（合法手 API が、読む情報を確かめていない条件を候補の作成で呼ばないため。
+    エンジンの処理はいつも真で呼ぶ）。"""
     p = _require_turn(state, cmd.player)
     _require_in_hand(state, cmd.player, cmd.card)
     definition = state.card_def(cmd.card)
@@ -2005,7 +2026,8 @@ def _play_trainer(state: GameState, cmd: PlayTrainer, context: resolution.Contex
         problem = state.effects.trainer_problem(definition)
         raise UnsupportedError("UNSUPPORTED_TRAINER", f"「{definition.name_ja}」は未対応（{problem}）")
     use = TrainerUse(cmd.player, cmd.card, definition.id)
-    effect.check_playable(state, use)
+    if use_condition:
+        effect.check_playable(state, use)
     extra_cost = stadium_trainer_cost(state, definition)
     if extra_cost is not None:
         needed = extra_cost[1].discard
@@ -2019,15 +2041,7 @@ def _play_trainer(state: GameState, cmd: PlayTrainer, context: resolution.Contex
     if reaction and not effect.is_stadium and stadium_of(state, TrainerCoinStadium) is not None:
         owner, holder, _, _ = reaction[0]
         raise UnsupportedError(MIND_GAMES_CHAOS_GYM_CODE, f"トレーナー {definition.id}・相手 {owner} のポケモン {holder.pokemon_id}・場の錯乱ジム: {MIND_GAMES_CHAOS_GYM_REASON}")
-
-    # 1・2. 手札から出して相手プレイヤーに見えるようにし、名前を伝える（p.310）
-    p.hand.remove(cmd.card)
-    state.trainer_in_use = TrainerInUse(cmd.player, cmd.card)
-    state.add_event("play_trainer", player=cmd.player, card=cmd.card, trainer=definition.name_ja)
-    if reaction:
-        _offer_trainer_reaction(state, use, effect, reaction[0])
-        return
-    _continue_trainer_use(state, use, effect, context)
+    return p, definition, effect, use, reaction
 
 
 def _continue_trainer_use(state: GameState, use: TrainerUse, effect, context: resolution.Context) -> None:

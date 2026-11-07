@@ -3,7 +3,8 @@
 対象は決定への回答（サイドを取る・バトル場に出す・ほかの決定）と「番を終える」（U7-1）、対戦の準備（初期配置・切り直しの補償の引く枚数）と、ホストの操作（ジャンケンの結果・
 延長戦の開始。U7-2。docs/legal-actions-u7-2.md）、番の基本の操作（ベンチに出す・エネルギーをつける・進化させる・にげる。U7-3。docs/legal-actions-u7-3.md）、ワザの宣言
 （U7-4。docs/legal-actions-u7-4.md）、場のポケモン 1 匹を指す操作（「ばける」でのせたカードをトラッシュする・なにかの化石・ピッピ人形をすてる・うらのカードを
-おもてにする。U7-5a・U7-5b。docs/legal-actions-u7-5ab.md）。ほかの操作の種類（トレーナー・特殊能力など）は候補に出さず、対応していない種類として示す（ゲーム上できないこととは別）。
+おもてにする。U7-5a・U7-5b。docs/legal-actions-u7-5ab.md）、手札のトレーナー（U7-5c。docs/legal-actions-u7-5c.md）。ほかの操作の種類（特殊能力・スタジアムの効果など）は
+候補に出さず、対応していない種類として示す（ゲーム上できないこととは別）。
 
 境界:
 
@@ -23,6 +24,7 @@ import json
 import secrets
 from collections import deque
 from dataclasses import dataclass, field
+from functools import partial
 from typing import Any
 
 from . import diagnostics as D
@@ -35,6 +37,7 @@ from .commands import (
     EvolvePokemon,
     PlaceStartingPokemon,
     PlayBasicToBench,
+    PlayTrainer,
     RemoveDisguise,
     ReportJankenResult,
     ResolveDecision,
@@ -63,6 +66,7 @@ from .engine import (
     check_discard_from_play,
     check_evolve,
     check_play_basic,
+    check_play_trainer,
     check_remove_disguise,
     check_retreat,
     check_retreat_declaration,
@@ -164,8 +168,9 @@ KIND_REMOVE_DISGUISE = "remove_disguise"  # U7-5a: 「ばける」でのせた�
 KIND_DISCARD_FROM_PLAY = "discard_from_play"  # U7-5a: 自分の場のなにかの化石・ピッピ人形をすてる（DiscardFromPlay）
 KIND_REVEAL_FACE_DOWN = "reveal_face_down"  # U7-5b: 自分の場のうらのカード（マチスの秘策）をおもてにする（RevealFaceDown）
 BOARD_KINDS = (KIND_REMOVE_DISGUISE, KIND_DISCARD_FROM_PLAY, KIND_REVEAL_FACE_DOWN)  # 場のポケモン 1 匹を指す操作（MAIN_KINDS の順）
+KIND_PLAY_TRAINER = "play_trainer"  # U7-5c: 手札のトレーナーカードを使う（PlayTrainer。宣言の入力は card だけ。対象・枚数などは受理のあとの決定）
 PLAYER_KINDS = (KIND_TAKE_PRIZE, KIND_PROMOTE_ACTIVE, KIND_ANSWER_DECISION, KIND_END_TURN, KIND_PLACE_STARTING, KIND_MULLIGAN_DRAW, *TURN_KINDS, KIND_USE_ATTACK,
-                *BOARD_KINDS)
+                *BOARD_KINDS, KIND_PLAY_TRAINER)  # implemented_kinds の並び（実装した順。U7-5c の play_trainer は最後に加えた）
 HOST_KINDS = (KIND_REPORT_JANKEN, KIND_START_SUDDEN_DEATH)
 IMPLEMENTED_KINDS = PLAYER_KINDS + HOST_KINDS
 HOST = "host"  # ホストの入口の操作主体（プレイヤーの番号ではない）
@@ -594,6 +599,8 @@ def _command(found: _Candidate, actor, values: tuple[int, ...]):
         return _attack_command(actor, values)
     if found.kind in _BOARD_COMMANDS:
         return _BOARD_COMMANDS[found.kind](actor, values[0])  # 場のポケモンの番号（pokemon_id）
+    if found.kind == KIND_PLAY_TRAINER:
+        return PlayTrainer(actor, values[0])  # 手札のトレーナーカード（uid）
     return ResolveDecision(actor, found.decision_id, values)
 
 
@@ -654,14 +661,16 @@ def _build(state: GameState, actor: int):
             candidates += _turn_candidates(state, actor)
             attack = _attack_candidate(state, actor)
             candidates += [] if attack is None else [attack]
+            trainer = _trainer_candidate(state, actor)  # U7-5c: MAIN_KINDS では use_attack と場のポケモン 1 匹を指す操作のあいだ
+            candidates += [] if trainer is None else [trainer]
             candidates += _board_candidates(state, actor)
         else:
             candidates += [_Candidate("", kind, {"processability": NOT_IMPLEMENTED, "reasons": ["state_not_supported"],
                                                  "guarantees": dict(_UNUSABLE_GUARANTEES.get(kind, GUARANTEE_TURN_ACTION))}, [],
-                                      disclosure=DISCLOSURE_UNCONFIRMED) for kind in (*TURN_KINDS, KIND_USE_ATTACK, *BOARD_KINDS)]
+                                      disclosure=DISCLOSURE_UNCONFIRMED) for kind in (*TURN_KINDS, KIND_USE_ATTACK, KIND_PLAY_TRAINER, *BOARD_KINDS)]
         for number, candidate in enumerate(candidates, 1):
             candidate.id = f"c{number}"  # 種類の並び（MAIN_KINDS の順）。番号は応答ごと（取っ手と組で使う）
-        evaluated = [k for k in MAIN_KINDS if k in (KIND_END_TURN, *TURN_KINDS, KIND_USE_ATTACK, *BOARD_KINDS)]  # MAIN_KINDS の順（scope_kinds は MAIN_KINDS のまま）
+        evaluated = [k for k in MAIN_KINDS if k in (KIND_END_TURN, *TURN_KINDS, KIND_USE_ATTACK, KIND_PLAY_TRAINER, *BOARD_KINDS)]  # MAIN_KINDS の順（scope_kinds は MAIN_KINDS のまま）
         return ACTOR_TO_ACT, candidates, evaluated, [k for k in MAIN_KINDS if k not in evaluated], PARTIAL, None
     return WAITING_FOR_PLAYER, [], [], [], UNDETERMINED, None  # 知らない段階（状態の区分と段階の組が上のどれでもない）は完全と称さない
 
@@ -1311,3 +1320,74 @@ def _board_candidates(state: GameState, actor: int) -> list[_Candidate]:
         out.append(_Candidate("", kind, public, [stage], disclosure=DISCLOSURE_CONFIRMED, values=tuple(values), executable=tuple(executable),
                               min_choices=1, max_choices=1))
     return out
+
+
+# ---------------------------------------------------------------- 手札のトレーナー（U7-5c。docs/legal-actions-u7-5c.md）
+
+REASON_USE_CONDITION = "use_condition_not_evaluated"  # カードごとの使うための条件を、読む情報を確かめていないので候補の作成・入力の検査で呼んでいない（使えるかは送信でエンジンが決める）
+GUARANTEE_TRAINER = {
+    "preconditions": "番・段階と、手札のトレーナーカードごとに、エンジンが手札から出す前の確かめ（engine.check_play_trainer。番・手札・トレーナーカードであること・トレーナーの使用の禁止・"
+                     "登録表・カードごとの使うための条件・リムーブ禁止ジムの追加の条件・MG1。コマンドの処理と同じ関数・同じ順番）を候補の作成に使う。使うための条件のうち、状態の複製の上で"
+                     "実際の山札から引いて試すもの（PLAYABLE_NOT_EVALUATED）は呼ばない（unverified）",
+    "acceptance": "保証しない。エンジンは受け付ける前に、［ちえくらべ］を使わない続き・効果の途中の決定の答えの続きを状態の複製の上で試し（_trainer_reaction_decline_check・_trainer_dead_end）、"
+                  "効果の処理の途中の未裁定・未対応で拒否することがある（状態は変わらない）。候補の作成・入力の検査は、これらを呼ばない。最終の判定は apply_command",
+    "after_acceptance": "評価していない（錯乱ジムのコイン・相手の［ちえくらべ］の決定・リムーブ禁止ジムの追加の条件・効果の対象や枚数や山札の検索・サイキックコントロールの使うカードは、どれも受理の"
+                        "あとの決定で、answer_decision の候補で答える。決めるのが相手のこともある。番を終えるトレーナーは番を終える）",
+    "supported_scope": "トレーナーの候補は supported にしない（受理の前の先読みと受理のあとを評価していないため）",
+}
+# 使うための条件（TrainerEffect.check_playable）のうち、候補の作成・入力の検査で呼ばないもの。条件を定義した型（effects.py）の名前。状態の複製の上で、実際の山札から引いて
+# 結果を試す（読む値をたどっていない。U7-5 の設計の PT-5e のうちの 5 つ）。effects.py の外で定義した条件も呼ばない（_use_condition_evaluated）
+PLAYABLE_NOT_EVALUATED = frozenset({"BlainesHeightQuiz", "BlainesQuiz", "GuessOpponentPrizeKind", "SetAsideGuessKindQuiz", "SwapPleaseTrainer"})
+# PT-5e のうち、試すのが場の処理だけ（入れ替え・特殊状態・回復。読むのは場・カードの定義・番・場の効果の記録。山札・サイド・手札・うらのカードの中身を読まない）とたどったもの。
+# 候補の作成で呼ぶ（docs/legal-actions-u7-5c.md 4 章）
+PLAYABLE_BOARD_TRIALS = frozenset({"CoinHealAndCureOwnActive", "CoinHealBothElseSleepBoth", "CoinStatusOnOpponentActiveTrainer", "ConditionOwnActiveTrainer",
+                                   "SwitchOpponentWithBench", "SwitchWithBench"})
+_UNUSABLE_GUARANTEES[KIND_PLAY_TRAINER] = GUARANTEE_TRAINER
+
+
+def _use_condition_owner(effect) -> type | None:
+    """使うための条件（``check_playable``）を定義した型（継承をたどる）。"""
+    return next((cls for cls in type(effect).__mro__ if "check_playable" in vars(cls)), None)
+
+
+def _use_condition_evaluated(effect) -> bool:
+    """候補の作成で、使うための条件を呼んでよいか（effects.py で定義し、PLAYABLE_NOT_EVALUATED でないもの）。登録のないカードは、check_play_trainer が条件の前に未対応として止める。"""
+    if effect is None:
+        return True
+    owner = _use_condition_owner(effect)
+    return owner is not None and owner.__module__ == "kyuura_engine.effects" and owner.__name__ not in PLAYABLE_NOT_EVALUATED
+
+
+def _trainer_candidate(state: GameState, actor: int) -> _Candidate | None:
+    """手札のトレーナーカードを使う（1 段。手札のカード 1 枚。``PlayTrainer``）。選べるものは本人の手札の並び。対象・枚数・費用・検索・任意の選択は、受理のあとの決定。
+
+    ゲーム上できない（エンジンの確かめが ``IllegalActionError``）カードは出さない。未裁定・未対応（``UnsupportedError``）は選べるものとして示し、実行できない区分にする。
+    使うための条件を呼ばないカード（``_use_condition_evaluated``）は unverified（使えるかを示さない。選べるものの数・並びは条件の結果によらない）。"""
+    p = state.players[actor]
+    options, values, executable, found_all = [], [], [], []
+    for uid in p.hand:
+        definition = state.card_def(uid)
+        if definition.category != "trainer":
+            continue
+        evaluated = _use_condition_evaluated(state.effects.trainer_effect(definition))
+        verdict, code = _probe(partial(check_play_trainer, use_condition=evaluated), state, PlayTrainer(actor, uid))
+        if verdict == ILLEGAL:
+            continue
+        if verdict == STOP:
+            found = (_stop_processability(code), [REASON_STOPS])
+        elif evaluated:
+            found = (MAY_STOP_LATER, [REASON_PREFLIGHT, REASON_CONTINUATION])
+        else:
+            found = (UNVERIFIED, [REASON_USE_CONDITION, REASON_PREFLIGHT, REASON_CONTINUATION])
+        values.append(uid)
+        executable.append(found[0] in EXECUTABLE)
+        found_all.append(found)
+        options.append(_option({"id": f"o{len(values)}", **_card_option(state, uid)}, found[0], sorted(found[1])))
+    if not options:
+        return None  # 手札にトレーナーカードがない・使えない（トレーナーの使用の禁止など。ゲーム上できない）
+    processability, reasons = _best(found_all)
+    stage = {"stage": 1, "input": INPUT_CHOOSE_OPTION, "role": "trainer", "meaning": "card", "count": {"min": 1, "max": 1}, "options": options,
+             "order": ORDER_NOT_APPLICABLE}
+    public = {"processability": processability, "reasons": reasons, "guarantees": dict(GUARANTEE_TRAINER), "choices_format": "[手札のカードの番号]"}
+    return _Candidate("", KIND_PLAY_TRAINER, public, [stage], disclosure=DISCLOSURE_CONFIRMED, values=tuple(values), executable=tuple(executable),
+                      min_choices=1, max_choices=1)
