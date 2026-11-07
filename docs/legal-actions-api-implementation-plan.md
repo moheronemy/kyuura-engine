@@ -31,6 +31,7 @@
 1. U7 の決定の入力の監査（v0.162。[legal-actions-decision-audit.md](legal-actions-decision-audit.md)）で、決定への回答の入力を一区切りにした
 2. U7-2: 準備とホストの操作（v0.163 で実装。[legal-actions-u7-2.md](legal-actions-u7-2.md)）
 3. U7-3〜U7-5。単位ごとに、最小のアダプタ（GUI・単純な AI への接続の確かめ）を挟む
+   - U7-5 は 7 種類を一度に実装せず、U7-5a〜U7-5g に分ける（[legal-actions-u7-5-design](legal-actions-u7-5-design.md)・[legal-actions-u7-5-implementation-plan](legal-actions-u7-5-implementation-plan.md)。承認前）
 4. U7 の節目の総合検証
 5. AI・GUI の実用化、識別の方式の移行、オンライン対戦の設計
 
