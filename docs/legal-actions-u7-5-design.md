@@ -39,6 +39,7 @@ U7-5 の対象の 7 種類のコマンド（`PlayTrainer`・`UsePokemonPower`・
   - 仕様の訂正:
     - `CORR-1`（E 群の意味）: 情報源が未確認の経路を、処理可能性の unverified だけで公開してよいと扱わない。処理可能性と入力の公開の安全性は別の軸。選べるもの・件数・理由を公開して安全と確かめられないなら、入力は返さない（unconfirmed）。型・生成箇所の登録だけで安全と認めない
     - `CORR-2`（GUI への影響の比べる相手）: 設計の報告の d0c5cfa はエンジンのコミット（GUI の main が固定するエンジン）で、GUI のコミットではない。公開されている最新の GUI は feature/engine-u7-4-attacks の 3649946（エンジン 9506d63・0.166.0 を固定）。GUI のコミットと固定するエンジンを分けて書く（GUI_REF）
+    - `CORR-3`（GUI の比べる相手と 3 段の入力の互換性（2026-11-08））: v0.171 の文書は 3649946 を今の GUI として書いていた。最新の公開の作業ブランチは feature/engine-u7-5-trainers-stadium の 9c36a8f（エンジン 0885d66・0.170.0 を固定）。3 段の入力の「新しい項目を無視するクライアントでも正しい組だけを選べる」は、depends_on_stage が指す段の選ぶもので options_by_choice を引くクライアントだけに成り立つ（U7-3 を前提に 1 段目で引くクライアントは閉じた側の失敗、options_by_choice を使わないクライアントの安全はサーバの入力の検査による。docs/legal-actions-u7-5fg-spec.md 0 章）
 <!-- generated:rest-record end -->
 
 ## 1. 対象と coverage の照合
@@ -308,10 +309,10 @@ U7-3・U7-4 と同じく、処理の受理の前の部分を、同じ順番・�
 GUI がすでに扱う入力の形との共通点・相違点です（CORR-2 で比べる相手を直した。設計の初版は、GUI の main が固定するエンジンのコミット d0c5cfa を GUI のコミットのように書いていた）。GUI リポジトリは読んだだけで、変更していません。GUI を実行していないので、実行していない互換性は保証しません。
 
 <!-- generated:rest-gui begin -->
-- GUI のコミット: `36499462cbdd68fe9e4b18b0c73428c9d628ddf3`（kyuura-engine-gui の `feature/engine-u7-4-attacks`）
-- その GUI が固定するエンジン: `9506d6305e90ec262fbe77740d9aa57f04b980b6`（版 0.166.0）
+- GUI のコミット: `9c36a8fe033f32b589cd57721725fdcc13c318f3`（kyuura-engine-gui の `feature/engine-u7-5-trainers-stadium`）
+- その GUI が固定するエンジン: `0885d664913bc8e57279ed9e44ac51cc97d5a6bf`（版 0.170.0）
 - GUI の main: `7660ab4d4c4064334952b2d3c9a01ede33c4973b`（固定するエンジン `d0c5cfa9483aacae0cce2fd8d28166b1d8465500`）
-- 確かめ方: 2026-11-08 に git fetch して、contract/kyuura-client-api-v1.json と web/src・server/tests の該当箇所を git show・git grep で読んだ（作業ツリーは変えていない）
+- 確かめ方: 2026-11-08 に GitHub の API（gh api）で、ブランチの一覧と、そのコミットの server/requirements.txt・contract/kyuura-client-api-v1.json を読み取りだけで読んだ（GUI のリポジトリに fetch も書き込みもしていない。作業ツリーには利用者の未コミットの変更があり、触れていない）
 - 限界: 公開されている GUI のブランチのうち最新のコミット。GUI を実行していないので、画面で動くことは確かめていない。これより新しい未公開の作業は確かめられない
 
 | 項目 | GUI（3649946） | U7-5 | 共通 |
@@ -355,7 +356,7 @@ U7 全体の完了の基準（案）と、D-U7-COMPLETENESS・D-U7-DISPLAY の�
 
 | 判断事項 | 今回決める部分 | 保留できる部分 |
 |---|---|---|
-| `D-U7-COMPLETENESS` | U7-5 の各単位のあとも main は partial のまま（E の確かめと R-1・R-2 が残るため）。complete の条件を C-6 で表すこと | U7-5 のすべての単位のあと、E が残らない段階・主体だけを complete と称するかの採用 |
+| `D-U7-COMPLETENESS` | U7-5 の各単位のあとも main は partial のまま（E の確かめと R-1・R-2 が残るため）。complete の条件を C-6 で表すこと。v0.171 のあとの推奨: 段階・主体ごとの判定と、既存の種類の中に残る経路を応答の coverage に residual・unverified_paths で示す（docs/legal-actions-u7-5fg-spec.md 5 章） | U7-5 のすべての単位のあと、E が残らない段階・主体だけを complete と称するかの採用 |
 | `D-U7-DISPLAY` | U7-5 で新しい区分を足さない（6 区分のまま）。CheckFaceUpDeckCard の FU2 を unresolved_ruling で表示し送れないこと | 区分ごとの GUI の表示（色・送信のボタン）。GUI の追従のときに決める |
 <!-- generated:rest-completion end -->
 
@@ -393,6 +394,10 @@ F-1・F-2 の再現は、作業用のスクリプト（リポジトリの外）�
 | `D-U75-FACE-UP` | CheckFaceUpDeckCard を候補にどう出すか（番でない主体を含めるか） | 番のプレイヤーの候補に unresolved_ruling だけで出す。番でない主体には出さない |
 | `D-U75-CHAOS` | F-1（錯乱ジムの借りる確かめの公開）をどう扱うか | U7-5 では直さない。エンジンの別の作業として、原典の記録と照らして扱いを決める（推測で裁定にしない） |
 | `D-U75-ENERGY2` | R-1（カツラの 2 枚目）を U7-5g で attach_energy の任意の段として加えるか | 加える（U7-3 の候補に任意の 3 段目。追加だけ） |
+| `D-U75-FACE-UP-ACTORS` | CheckFaceUpDeckCard の表示を、番でない主体（相手の番の、自分から見た相手の山札）にも出すか（エンジンは番を確かめず、どの場合も受け付けない） | 出さない（番のプレイヤーの MAIN だけ。どの場合も受け付けないので、実行できる経路は減らない） |
+| `D-U75-ENERGY2-SCHEMA` | R-1 の 3 段目を、1・2 段目の組で引く新しい項目（options_by_path・path_stages）で示すか、attach_energy の 2 段目を U7-5e の形（選び方ごとに別の番号・after）に変えるか | options_by_path（U7-3 の 2 段と GUI の attach_energy の画面の番号の意味を変えない。1 枚だけの入力は今の形のまま受け付ける） |
+| `D-U75-FACE-DOWN-POWER` | 自分のうらのカードの特殊能力を、本人にだけ、本当のカードの印刷の宣言する特殊能力として候補にするか（U7-4 のワザと同じ形。確かめを呼ばず unverified） | する（本人の知識だけで決まる入力に限る。おもてにした結果を予告しない。宣言のない型は入力を返さない） |
+| `D-U75-R2` | R-2（自分のうらのバトル場のポケモンの、宣言といっしょに選ぶもの）を扱うか | 扱わない（理由つきの未対応として残し、coverage の residual で示す）。扱うには、おもてにしたあとの確かめを候補の作成でどう扱うかの採用が先に要る |
 <!-- generated:rest-adoption-needed end -->
 
 ## 10. 検証と未確認

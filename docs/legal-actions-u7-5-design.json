@@ -1112,7 +1112,7 @@
  "decision_scope": [
   {
    "id": "D-U7-COMPLETENESS",
-   "now": "U7-5 の各単位のあとも main は partial のまま（E の確かめと R-1・R-2 が残るため）。complete の条件を C-6 で表すこと",
+   "now": "U7-5 の各単位のあとも main は partial のまま（E の確かめと R-1・R-2 が残るため）。complete の条件を C-6 で表すこと。v0.171 のあとの推奨: 段階・主体ごとの判定と、既存の種類の中に残る経路を応答の coverage に residual・unverified_paths で示す（docs/legal-actions-u7-5fg-spec.md 5 章）",
    "later": "U7-5 のすべての単位のあと、E が残らない段階・主体だけを complete と称するかの採用"
   },
   {
@@ -1687,10 +1687,11 @@
    ],
    "first": false,
    "basis": [
-    "どの場合も受け付けない。表示するのは FU2 の位置だけ（D-U75-FACE-UP）"
+    "どの場合も受け付けない。表示するのは FU2 の位置だけ（D-U75-FACE-UP）",
+    "おもてのカードは山札の上から続く並び（faceup.prefix_problems）なので、位置は公開の face_up_count だけで決まる（docs/legal-actions-u7-5fg-spec.md 1 章）"
    ],
    "changes": [
-    "legal_actions.py: 相手の山札のおもての 2 枚目より下の位置を unresolved_ruling で示す（送れない）"
+    "legal_actions.py: 番のプレイヤーの MAIN に、相手の山札のおもての 2 枚目より下の位置（owner・position。カード id・uid を出さない）を unresolved_ruling で示す（送る前に CANDIDATE_NOT_EXECUTABLE。エンジンに渡さない）"
    ],
    "tests": [
     [
@@ -1743,7 +1744,9 @@
    ],
    "done": "候補の位置が、おもての枚数（公開）だけで決まる双子（おもてのカードの中身を変える）が通る",
    "gui": "表示だけ（送信のボタンを出さない）",
-   "open": []
+   "open": [
+    "D-U75-FACE-UP-ACTORS（番でない主体に表示するか）"
+   ]
   },
   {
    "id": "U7-5g",
@@ -1756,11 +1759,13 @@
    ],
    "first": false,
    "basis": [
-    "7 種類で説明できない経路（R-1・R-2）が残る"
+    "7 種類で説明できない経路（R-1・R-2）が残る",
+    "v0.171 のあと: 自分のうらのカードの特殊能力（U7-5e が候補にしない）も残る経路（docs/legal-actions-u7-5fg-spec.md 3 章）"
    ],
    "changes": [
-    "R-1（カツラの 2 枚目）を attach_energy の任意の段として加える（ADOPT-U7-5AB で採用）・R-2 の見直し",
-    "段階・主体ごとの coverage の表し方（C-6）"
+    "R-1（カツラの 2 枚目）を attach_energy の任意の段として加える（ADOPT-U7-5AB で採用。3 段目の引き方は D-U75-ENERGY2-SCHEMA）・R-2 の見直し（D-U75-R2）",
+    "自分のうらのカードの特殊能力（D-U75-FACE-DOWN-POWER）",
+    "段階・主体ごとの coverage の表し方（C-6。residual・unverified_paths。D-U7-COMPLETENESS）"
    ],
    "tests": [
     [
@@ -1804,11 +1809,17 @@
      "helper"
     ]
    ],
-   "boards": [],
-   "done": "C-1〜C-6 を満たすかを、単位ごとの結果から判断できる",
+   "boards": [
+    "tests/test_energy_control_power_suppression_v0_59.py（カツラ）",
+    "tests/test_secret_plan_v0_67.py（うらのカード）"
+   ],
+   "done": "C-1〜C-6 を満たすかを、単位ごとの結果から判断できる（U7-5g-1〜3 の完了の基準は docs/legal-actions-u7-5fg-spec.md 6 章）",
    "gui": "coverage の表示",
    "open": [
-    "D-U7-COMPLETENESS"
+    "D-U7-COMPLETENESS",
+    "D-U75-ENERGY2-SCHEMA",
+    "D-U75-FACE-DOWN-POWER",
+    "D-U75-R2"
    ]
   }
  ],
@@ -1970,6 +1981,26 @@
    "id": "D-U75-ENERGY2",
    "question": "R-1（カツラの 2 枚目）を U7-5g で attach_energy の任意の段として加えるか",
    "recommendation": "加える（U7-3 の候補に任意の 3 段目。追加だけ）"
+  },
+  {
+   "id": "D-U75-FACE-UP-ACTORS",
+   "question": "CheckFaceUpDeckCard の表示を、番でない主体（相手の番の、自分から見た相手の山札）にも出すか（エンジンは番を確かめず、どの場合も受け付けない）",
+   "recommendation": "出さない（番のプレイヤーの MAIN だけ。どの場合も受け付けないので、実行できる経路は減らない）"
+  },
+  {
+   "id": "D-U75-ENERGY2-SCHEMA",
+   "question": "R-1 の 3 段目を、1・2 段目の組で引く新しい項目（options_by_path・path_stages）で示すか、attach_energy の 2 段目を U7-5e の形（選び方ごとに別の番号・after）に変えるか",
+   "recommendation": "options_by_path（U7-3 の 2 段と GUI の attach_energy の画面の番号の意味を変えない。1 枚だけの入力は今の形のまま受け付ける）"
+  },
+  {
+   "id": "D-U75-FACE-DOWN-POWER",
+   "question": "自分のうらのカードの特殊能力を、本人にだけ、本当のカードの印刷の宣言する特殊能力として候補にするか（U7-4 のワザと同じ形。確かめを呼ばず unverified）",
+   "recommendation": "する（本人の知識だけで決まる入力に限る。おもてにした結果を予告しない。宣言のない型は入力を返さない）"
+  },
+  {
+   "id": "D-U75-R2",
+   "question": "R-2（自分のうらのバトル場のポケモンの、宣言といっしょに選ぶもの）を扱うか",
+   "recommendation": "扱わない（理由つきの未対応として残し、coverage の residual で示す）。扱うには、おもてにしたあとの確かめを候補の作成でどう扱うかの採用が先に要る"
   }
  ],
  "adoption_record": {
@@ -2050,18 +2081,23 @@
     "id": "CORR-2",
     "subject": "GUI への影響の比べる相手",
     "text": "設計の報告の d0c5cfa はエンジンのコミット（GUI の main が固定するエンジン）で、GUI のコミットではない。公開されている最新の GUI は feature/engine-u7-4-attacks の 3649946（エンジン 9506d63・0.166.0 を固定）。GUI のコミットと固定するエンジンを分けて書く（GUI_REF）"
+   },
+   {
+    "id": "CORR-3",
+    "subject": "GUI の比べる相手と 3 段の入力の互換性（2026-11-08）",
+    "text": "v0.171 の文書は 3649946 を今の GUI として書いていた。最新の公開の作業ブランチは feature/engine-u7-5-trainers-stadium の 9c36a8f（エンジン 0885d66・0.170.0 を固定）。3 段の入力の「新しい項目を無視するクライアントでも正しい組だけを選べる」は、depends_on_stage が指す段の選ぶもので options_by_choice を引くクライアントだけに成り立つ（U7-3 を前提に 1 段目で引くクライアントは閉じた側の失敗、options_by_choice を使わないクライアントの安全はサーバの入力の検査による。docs/legal-actions-u7-5fg-spec.md 0 章）"
    }
   ]
  },
  "gui_ref": {
   "repository": "kyuura-engine-gui",
-  "branch": "feature/engine-u7-4-attacks",
-  "commit": "36499462cbdd68fe9e4b18b0c73428c9d628ddf3",
-  "pinned_engine": "9506d6305e90ec262fbe77740d9aa57f04b980b6",
-  "pinned_engine_version": "0.166.0",
+  "branch": "feature/engine-u7-5-trainers-stadium",
+  "commit": "9c36a8fe033f32b589cd57721725fdcc13c318f3",
+  "pinned_engine": "0885d664913bc8e57279ed9e44ac51cc97d5a6bf",
+  "pinned_engine_version": "0.170.0",
   "main_commit": "7660ab4d4c4064334952b2d3c9a01ede33c4973b",
   "main_pinned_engine": "d0c5cfa9483aacae0cce2fd8d28166b1d8465500",
-  "checked": "2026-11-08 に git fetch して、contract/kyuura-client-api-v1.json と web/src・server/tests の該当箇所を git show・git grep で読んだ（作業ツリーは変えていない）",
+  "checked": "2026-11-08 に GitHub の API（gh api）で、ブランチの一覧と、そのコミットの server/requirements.txt・contract/kyuura-client-api-v1.json を読み取りだけで読んだ（GUI のリポジトリに fetch も書き込みもしていない。作業ツリーには利用者の未コミットの変更があり、触れていない）",
   "limit": "公開されている GUI のブランチのうち最新のコミット。GUI を実行していないので、画面で動くことは確かめていない。これより新しい未公開の作業は確かめられない"
  }
 }

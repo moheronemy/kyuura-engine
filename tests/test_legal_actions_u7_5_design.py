@@ -49,7 +49,7 @@ class CheckTest(unittest.TestCase):
         self.assertEqual([u["id"] for u in spec["units"] if u["first"]], ["U7-5a"])
         self.assertEqual(spec["adoption"]["approval"], "not_approved")
         self.assertIn("T-F1", next(u for u in spec["units"] if u["id"] == "U7-5c")["depends"])  # F-1 はトレーナーの前に直す
-        self.assertEqual({c["id"] for c in spec["adoption_record"]["corrections"]}, {"CORR-1", "CORR-2"})
+        self.assertEqual({c["id"] for c in spec["adoption_record"]["corrections"]}, {"CORR-1", "CORR-2", "CORR-3"})
         self.assertNotEqual(spec["gui_ref"]["commit"], spec["gui_ref"]["pinned_engine"])  # GUI のコミットと固定するエンジンを分ける
 
 
