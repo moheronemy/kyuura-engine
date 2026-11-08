@@ -315,3 +315,45 @@ def build_choices_tuple(stages: list[dict[str, Any]], policy, context: dict[str,
         picks.append({"stage": None, "purpose": "tuple", "items": len(tuples), "index": index, "reason": reason})
     choices, meaning = tuples[index]
     return choices, picks, meaning, {"method": "tuple", "tuples": len(tuples)}
+
+
+# ---------------------------------------------------------------- V3-2: 完成した入力の処理可能性（docs/verification-ai-v3-2.md 4 章）
+
+PROCESSABILITY_RANK = ("supported", "may_stop_later", "unverified", "unresolved_ruling", "not_implemented", "technical_limit")
+
+
+def input_processability(stages: list[dict[str, Any]], choices: list[Any]) -> dict[str, Any]:
+    """完成した入力の、選んだものごとの処理可能性（依存する段は options_by_choice の参照、経路で引く段は options_by_path の参照、ほかは選べるもの）と、
+    その中でいちばん進めにくい区分（``class``）。候補の処理可能性（選べるもの・組の中でいちばん進めやすい区分）とは別の値。"""
+    items: list[dict[str, Any]] = []
+    selected: dict[int, list[str]] = {}
+    position = 0
+    for stage in stages:
+        number = stage["stage"]
+        if stage.get("input") == CHOOSE_VALUE:
+            items.append({"stage": number, "value": choices[position] if position < len(choices) else None, "processability": None})
+            selected[number] = []
+            position += 1
+            continue
+        source = stages[stage["options_from_stage"] - 1] if "options_from_stage" in stage else stage
+        by_id = {o["id"]: o for o in source.get("options", [])}
+        mine = []
+        while position < len(choices) and choices[position] in by_id and (
+                "options_from_stage" in stage or choices[position] in {o["id"] for o in stage.get("options", [])}):
+            mine.append(choices[position])
+            position += 1
+            if len(mine) >= stage.get("count", {}).get("max", 1):
+                break
+        refs: dict[str, dict[str, Any]] = {}
+        if "path_stages" in stage:
+            key = "/".join(selected.get(s, [""])[0] if len(selected.get(s, [])) == 1 else "" for s in stage["path_stages"])
+            refs = {r["option"]: r for r in stage.get("options_by_path", {}).get(key, [])}
+        elif "depends_on_stage" in stage and len(selected.get(stage["depends_on_stage"], [])) == 1:
+            refs = {r["option"]: r for r in stage.get("options_by_choice", {}).get(selected[stage["depends_on_stage"]][0], [])}
+        for oid in mine:
+            ref = refs.get(oid)
+            proc = (ref or {}).get("processability") or by_id[oid].get("processability")
+            items.append({"stage": number, "option": oid, "processability": proc, "from": "reference" if ref else "option"})
+        selected[number] = mine
+    known = [i["processability"] for i in items if i.get("processability") in PROCESSABILITY_RANK]
+    return {"items": items, "class": max(known, key=PROCESSABILITY_RANK.index) if known else None}

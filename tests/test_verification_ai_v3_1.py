@@ -107,7 +107,11 @@ class JudgeTest(unittest.TestCase):
         self.assertEqual(J.judge_normal(basic, meaning, {"ok": True, "outcome": "refused", "refusal": {"code": "CANDIDATE_INPUT_INVALID"}})[0], J.SUSPECT)
         rejected = lambda cat, did="X": {"ok": True, "outcome": D.REJECTED, "verifier": {"category": cat, "diagnostic_id": did}}
         self.assertEqual(J.judge_normal(basic, meaning, rejected(D.INVALID_INPUT))[0], J.SUSPECT)  # 前の確かめを満たす種類の invalid_input
-        self.assertEqual(J.judge_normal(basic, meaning, rejected(D.RULING_UNRESOLVED))[0], J.KNOWN_STOP)
+        # 判定の規則 2（V3-2）: 停止系の拒否は、コード表にある元のコードと、経路の理由がそろうときだけ known_stop（区分だけでは known_stop にしない。意図した差）
+        self.assertEqual(J.judge_normal(basic, meaning, rejected(D.RULING_UNRESOLVED))[0], J.UNDETERMINED)
+        explained = {**basic, "reasons": ["reactions_not_evaluated"]}
+        stop = {"ok": True, "outcome": D.REJECTED, "verifier": {"category": D.RULING_UNRESOLVED, "diagnostic_id": "X", "engine_code": "UNRESOLVED_MULLIGAN_COMPENSATION"}}
+        self.assertEqual(J.judge_normal(explained, meaning, stop)[0], J.KNOWN_STOP)
         self.assertEqual(J.judge_normal({**basic, "processability": "supported"}, meaning, rejected(D.RULING_UNRESOLVED))[0], J.SUSPECT)
         self.assertEqual(J.judge_normal({**basic, "processability": "unverified"}, meaning, rejected(D.INVALID_INPUT))[0], J.NORMAL_REJECTION)
         attack = {"kind": "use_attack", "processability": "may_stop_later"}

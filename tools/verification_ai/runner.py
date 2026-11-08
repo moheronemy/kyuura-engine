@@ -22,7 +22,7 @@ from kyuura_engine.client_api import ClientHub
 from . import actions as B
 from .judge import judge_normal, judge_termination
 from .metrics import Metrics, repetition_summary
-from .policies import STAGE, TUPLE, MixedPolicy, RulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
+from .policies import STAGE, TUPLE, BoundaryPolicy, MixedPolicy, RulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
 from kyuura_engine.replay_record import checks
 
 from .records import RecordingGame, canonical
@@ -46,7 +46,8 @@ STATE_INTEGRITY = "state_integrity"  # submit の結果が failed で、診断�
 EXCEPTION = "exception"  # ランナー・入口からの例外（入口は例外を投げない約束）
 INCONSISTENCY = "inconsistency"  # ランナーの照合の不一致で、続けられないもの（待っている主体と候補の状況の食い違い・だれも操作できない）
 START_REJECTED = "start_rejected"
-NEGATIVE_SIDE_EFFECT = "negative_side_effect"  # V3-1: 変異の要求の前後で副作用の疑い（その対戦の通常の進行を続けない）
+NEGATIVE_SIDE_EFFECT = "negative_side_effect"
+SCRIPT_COMPLETE = "script_complete"  # V3-2: 固定の到達の列の目的の場面を確かめ終えた（計画した止まり方）  # V3-1: 変異の要求の前後で副作用の疑い（その対戦の通常の進行を続けない）
 LIMIT_TERMINATIONS = (LIMIT_OPERATIONS, LIMIT_ACCEPTED, LIMIT_TURNS, LIMIT_TIME)
 KNOWN_HALT_CATEGORIES = frozenset({D.RULING_UNRESOLVED, D.UNSUPPORTED, D.TECHNICAL_LIMIT})
 
@@ -90,6 +91,7 @@ class Config:
     rules_version: int = 1  # V2 の補完: rules と mixed のルールの側の版（1 は V2 と同じ。2 は反復の抑制つき）
     repeat_threshold: int = 2  # V2 の補完: rules-v2 の閾値（同じ番の同じ操作の受理の回数）
     run_id: str = "v0"
+    decklists: tuple | None = None  # V3-2: 固定デッキの代わりに使うデッキリスト（2 つ。None なら deck0・deck1 の固定デッキ）
 
 
 class SubmitWithoutCheck(Exception):
@@ -123,9 +125,10 @@ class _Stop(Exception):
 
 
 class Runner:
-    def __init__(self, config: Config, *, clock=time.monotonic, policy_factory=None, wrap_endpoint=None, negative=None):
+    def __init__(self, config: Config, *, clock=time.monotonic, policy_factory=None, wrap_endpoint=None, negative=None, until=None):
         self.config = config
         self.negative = negative  # V3-1: 通常の進行の中の negative（None なら V0〜V2 と同じ動作）
+        self.until = until  # V3-2: 受理のあとに呼び、真なら SCRIPT_COMPLETE で止める（None なら V0〜V3-1 と同じ動作）
         self.limits = config.limits
         self.clock = clock
         self.policies = make_policies(config, policy_factory)
@@ -186,7 +189,11 @@ class Runner:
     def _start(self) -> None:
         c = self.config
         options = {} if c.conventions is None else {"conventions": c.conventions}
-        self.game, result = RecordingGame.start(preset_deck(c.deck0).cards(), preset_deck(c.deck1).cards(), c.game_seed, game_id=c.run_id, **options)
+        if c.decklists is not None:  # V3-2: 道具の固定の到達例のデッキリスト（固定デッキではない）
+            deck0, deck1 = list(c.decklists[0]), list(c.decklists[1])
+        else:
+            deck0, deck1 = preset_deck(c.deck0).cards(), preset_deck(c.deck1).cards()
+        self.game, result = RecordingGame.start(deck0, deck1, c.game_seed, game_id=c.run_id, **options)
         if self.game is None:
             raise _Stop(START_REJECTED, {"outcome": result.outcome, "diagnostic_id": None if result.diagnosis is None else result.diagnosis.diagnostic_id})
         self.hub = ClientHub(self.game, verifier=self._on_verifier)
@@ -325,7 +332,7 @@ class Runner:
             candidate = in_scope[index]
             self.metrics.selected(candidate)
             kind = candidate["kind"]
-            allowed = B.FALLBACK_PROCESSABILITY if scope["fallback_unverified"] else B.DEEP_PROCESSABILITY
+            allowed = B.FALLBACK_PROCESSABILITY if scope["fallback_unverified"] or self.config.profile == "boundary" else B.DEEP_PROCESSABILITY
             entry = self._attempt(actor, candidate, reason, scope)
             log = {"type": "attempt", "n": entry["n"], "position": self.position, "candidates": response,
                    "choice": {"candidate": candidate["id"], "reason": reason}}
@@ -379,6 +386,9 @@ class Runner:
                 choices, picks, meaning = [], [], []
                 self.metrics.built(kind, [], None)
             entry.update({"build": "ok", "choices": choices, "picks": picks, "meaning": meaning})
+            if self.config.profile == "boundary":  # V3-2: 候補の区分と完成した入力の区分を分けて記録する
+                entry["candidate_class"] = candidate.get("processability")
+                entry["input_processability"] = B.input_processability(stages, choices)
             log["choice"].update({"choices": choices, "picks": picks})
             signature = canonical([candidate_key(candidate), meaning])
             if signature in tried:
@@ -439,6 +449,8 @@ class Runner:
                     policy.observe_accepted(turn, key)  # 混合のランダムの側で受理された操作も履歴に入れる
                 if self.negative is not None:  # V3-1: 受理のあとの古い取っ手の試験（元の入力を正常に送り直すのではない）
                     self.negative.after_accept(self, actor, endpoint, entry)
+                if self.until is not None and self.until(self, entry):
+                    raise _Stop(SCRIPT_COMPLETE, {"attempt": entry["n"]})
                 return
             if outcome == D.FAILED or not sent.get("ok", True):
                 self.counters["failed"] += 1
@@ -521,6 +533,9 @@ class Runner:
                     reasons[c["id"]] = why
             return chosen
 
+        if self.config.profile == "boundary":  # V3-2: unverified を範囲に入れる（表示だけ・入力を返さない・実行できない区分は外したまま）
+            chosen = pick(B.FALLBACK_PROCESSABILITY)
+            return chosen, {"in_scope": len(chosen), "excluded": excluded, "fallback_unverified": False, "profile": "boundary"}, reasons
         chosen = pick(B.DEEP_PROCESSABILITY)
         fallback = False
         if not chosen:
@@ -609,6 +624,9 @@ def make_policies(config: Config, policy_factory=None) -> dict[Any, Any]:
     if config.policy == "uniform":
         players = {p: UniformPolicy(player_seed(config.policy_seed, p), config.distribution) for p in (0, 1)}
         host = UniformPolicy(host_seed(config.host_seed), config.distribution)
+    elif config.policy == "boundary":
+        players = {p: BoundaryPolicy(player_seed(config.policy_seed, p)) for p in (0, 1)}
+        host = UniformPolicy(host_seed(config.host_seed), STAGE)
     elif config.policy == "rules":
         players = {p: RulePolicy(player_seed(config.policy_seed, p), version=config.rules_version, threshold=config.repeat_threshold) for p in (0, 1)}
         host = UniformPolicy(host_seed(config.host_seed), STAGE)

@@ -15,6 +15,12 @@ from typing import Any
 from kyuura_engine import diagnostics as D
 from kyuura_engine.replay_record import checks
 
+# 判定の規則の版。1: V3-1（8091ed6）。2: V3-2（停止系の拒否を known_stop にする条件を、診断のコード表と経路の理由で絞る。docs/verification-ai-v3-2.md 5 章）
+JUDGE_RULES_VERSION = 2
+# 候補・選べるもの・組の理由のうち、エンジンの側の確かめを候補の作成では評価していないことを示すもの（停止・拒否がこの経路でありうると API が示している）
+EXPLAINING_REASONS = frozenset({"preflight_not_evaluated", "continuation_not_evaluated", "reactions_not_evaluated", "use_condition_not_evaluated",
+                                "face_down_reveal_not_evaluated", "segment_setup_not_evaluated", "turn_start_not_evaluated", "checkup_not_evaluated"})
+
 EXPECTED = "expected"
 NORMAL_REJECTION = "normal_rejection"
 KNOWN_STOP = "known_stop"
@@ -106,23 +112,47 @@ def judge_normal(candidate: dict[str, Any], meaning: list[dict[str, Any]], submi
     category = diag.get("category")
     if category is None or category == D.UNMAPPED:
         return SUSPECT, [f"diagnostic_unmapped:{diag.get('diagnostic_id')}"]
+    catalog = _catalog_category(diag.get("engine_code"))
+    if catalog is not None and catalog != category:
+        return SUSPECT, [f"diagnostic_category_mismatch:{category}!={catalog}"]
     eligible = all((m.get("option") or {}).get("eligible") is not False for m in meaning)
     face_down = FACE_DOWN_REASON in (candidate.get("reasons") or [])
     if candidate.get("kind") in PRECHECK_KINDS and eligible and not face_down and candidate.get("processability") != "unverified":
         if category == D.INVALID_INPUT:
             return SUSPECT, ["precheck_guarantee_rejected_invalid_input"]
-        if category in STOP_CATEGORIES:
-            if candidate.get("processability") == "supported":
-                return SUSPECT, ["supported_rejected_with_stop"]
-            return KNOWN_STOP, [category]
-        return UNDETERMINED, [f"precheck_kind_category:{category}"]
+        if category in STOP_CATEGORIES and candidate.get("processability") == "supported":
+            return SUSPECT, ["supported_rejected_with_stop"]
+        if category not in STOP_CATEGORIES:
+            return UNDETERMINED, [f"precheck_kind_category:{category}"]
     if category in STOP_CATEGORIES:
-        return KNOWN_STOP, [category]
+        return _known_stop_or_undetermined(candidate, meaning, diag, category, catalog)
     return NORMAL_REJECTION, [category]
 
 
+def _catalog_category(code) -> str | None:
+    """エンジンの元のコードの、診断のコード表の分類（コード表にないなら None）。"""
+    if not code:
+        return None
+    entry = D.default_catalog().get(code)
+    return None if entry is None else entry.category
+
+
+def _known_stop_or_undetermined(candidate, meaning, diag, category, catalog) -> tuple[str, list[str]]:
+    """停止系の拒否を known_stop にするのは、(1) 元のコードが診断のコード表にあり、分類が同じ、(2) その経路の候補か選んだものの理由が、エンジンの側の確かめを候補の作成では
+    評価していないことを示す（EXPLAINING_REASONS）ときだけ。処理可能性の区分（may_stop_later・unverified）だけでは known_stop にしない。足りなければ undetermined。"""
+    if catalog is None:
+        return UNDETERMINED, [f"stop_code_not_in_catalog:{diag.get('engine_code')}"]
+    reasons = set(candidate.get("reasons") or [])
+    for m in meaning:
+        reasons |= set((m.get("option") or {}).get("reasons") or [])
+    explained = sorted(reasons & EXPLAINING_REASONS)
+    if not explained:
+        return UNDETERMINED, [f"stop_not_explained_by_path:{diag.get('engine_code')}"]
+    return KNOWN_STOP, [category, diag.get("engine_code"), *explained]
+
+
 def judge_termination(termination: str, last_accepted_processability: str | None) -> tuple[str, list[str]]:
-    if termination == "game_over":
+    if termination in ("game_over", "script_complete"):
         return EXPECTED, []
     if termination == "halted_known":
         if last_accepted_processability == "supported":

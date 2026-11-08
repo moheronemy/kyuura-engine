@@ -15,6 +15,10 @@ from typing import Any
 INPUT_MUTATIONS = ("unknown_option", "duplicate", "count_over", "count_under", "path_mix", "non_executable")
 HANDLE_MUTATIONS = ("wrong_actor", "stale_after_accept")
 MUTATION_TYPES = INPUT_MUTATIONS + HANDLE_MUTATIONS
+# V3-2（docs/verification-ai-v3-2.md 3 章）: V3-1 の種類は変えずに加える
+V3_2_INPUT_MUTATIONS = ("path_mix_path", "duplicate_replace")
+V3_2_TYPES = ("unknown_option", "count_over", "count_under", "path_mix", "path_mix_path", "duplicate_replace", "non_executable", "wrong_actor",
+              "stale_after_accept")
 # 期待のコード（check と submit の両方。client_api の refetch_required の期待）
 EXPECTED = {
     "unknown_option": ("CANDIDATE_INPUT_INVALID", False),
@@ -25,6 +29,8 @@ EXPECTED = {
     "non_executable": ("CANDIDATE_NOT_EXECUTABLE", False),
     "wrong_actor": ("CANDIDATES_WRONG_ACTOR", True),
     "stale_after_accept": ("CANDIDATES_STALE", True),
+    "path_mix_path": ("CANDIDATE_INPUT_INVALID", False),
+    "duplicate_replace": ("CANDIDATE_INPUT_INVALID", False),
 }
 EXECUTABLE = frozenset({"supported", "may_stop_later", "unverified"})
 
@@ -82,7 +88,7 @@ def _executable(option: dict[str, Any]) -> bool:
 
 def mutate(kind: str, stages: list[dict[str, Any]], choices: list[Any], rng: random.Random) -> tuple[list[Any] | None, dict[str, Any]]:
     """入力の中身を変える変異を 1 つ作る。(変えた入力 か None, 記録)。記録は変えた段・位置・前後の値、または not_applicable の理由。"""
-    if kind not in INPUT_MUTATIONS:
+    if kind not in INPUT_MUTATIONS + V3_2_INPUT_MUTATIONS:
         raise ValueError(kind)
     if not stages or not choices:
         return None, {"not_applicable": "no_input"}
@@ -210,3 +216,60 @@ def single_difference(original: list[Any], mutated: list[Any]) -> bool:
     if len(longer) - len(shorter) != 1:
         return False
     return any(longer[:i] + longer[i + 1:] == shorter for i in range(len(longer)))
+
+
+# ---------------------------------------------------------------- V3-2: options_by_path の別の経路と、個数を保った重複
+
+
+def _option_of(stages, oid):
+    for s in stages:
+        for o in s.get("options", []):
+            if o["id"] == oid:
+                return s["stage"], o
+    return None, {}
+
+
+def _m_path_mix_path(stages, choices, spans, rng):
+    """``options_by_path`` の段で、上流の選び方（鍵）を保ち、その鍵の参照にない選ぶもの（ほかの鍵の参照にはある・この段にある番号）にかえる。
+
+    1 条件にするため、次は対象から外す: 後の段がこの段に依存する、この鍵の参照にもある（両方の経路で許される）、上流で選んだものと同じカード（``card``）を指す（同じカードを
+    2 回選ぶことにもなり、条件が重なる）、どの鍵の参照でも実行できる区分でない。"""
+    found = []
+    for k, (stage, (start, end)) in enumerate(zip(stages, spans)):
+        if "path_stages" not in stage or end - start != 1:
+            continue
+        if k + 1 < len(stages) and ("depends_on_stage" in stages[k + 1] or "path_stages" in stages[k + 1]):
+            continue
+        parts = []
+        for s in stage["path_stages"]:
+            a, b = spans[s - 1]
+            if b - a != 1:
+                parts = None
+                break
+            parts.append(choices[a])
+        if parts is None:
+            continue
+        key = "/".join(parts)
+        by_path = stage.get("options_by_path", {})
+        mine = {r["option"] for r in by_path.get(key, [])}
+        upstream_cards = {(_option_of(stages, c)[1]).get("card") for c in parts} - {None}
+        by_id = {o["id"]: o for o in stage.get("options", [])}
+        others = sorted({r["option"] for k2, refs in by_path.items() if k2 != key for r in refs if _executable(r)} - mine)
+        others = [o for o in others if o in by_id and _executable(by_id[o]) and by_id[o].get("card") not in upstream_cards]
+        if others:
+            found.append((stage["stage"], start, key, others))
+    if not found:
+        return None, {"not_applicable": "no_other_path_option_without_overlap"}
+    number, index, key, others = found[rng.randrange(len(found))]
+    pick = others[rng.randrange(len(others))]
+    return _replace(choices, index, pick), {"stage": number, "index": index, "key": key, "before": choices[index], "after": pick}
+
+
+def _m_duplicate_replace(stages, choices, spans, rng):
+    """同じ段（同じ役割）で 2 つ以上選んでいるとき、1 つを、その段の別の選んだものと同じ番号に置きかえる（個数は変えない）。役割の違う段の番号どうしは対象にしない。"""
+    places = [(stage["stage"], start, end) for stage, (start, end) in zip(stages, spans) if end - start >= 2]
+    if not places:
+        return None, {"not_applicable": "no_stage_with_two_choices"}
+    number, start, end = places[rng.randrange(len(places))]
+    i, j = rng.sample(range(start, end), 2)
+    return _replace(choices, j, choices[i]), {"stage": number, "index": j, "before": choices[j], "after": choices[i]}

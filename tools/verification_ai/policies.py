@@ -273,3 +273,40 @@ class MixedPolicy(RulePolicy):
         if self.mode == "random" or purpose != "candidate":
             return UniformPolicy.choose(self, purpose, items, context)
         return self._rule_candidate(items, context)
+
+
+# ---------------------------------------------------------------- V3-2: boundary の選び方（docs/verification-ai-v3-2.md 4 章）
+
+BOUNDARY_NAME = "boundary"
+BOUNDARY_VERSION = 1
+BOUNDARY_DISTRIBUTION = "boundary-class-uniform+uniform-stage"
+
+
+class BoundaryPolicy(UniformPolicy):
+    """候補の選択だけ: 渡された候補（ランナーの boundary の範囲。表示だけ・入力を返さない・実行できない区分は入っていない）の、候補の処理可能性の区分を列挙し、区分を均等に 1 つ、
+    その区分の候補を均等に 1 つ選ぶ（区分・候補が 1 つなら乱数を使わない）。入力は uniform-stage。合法性を判定しない。候補の区分は候補の値（選べるもの・組の中でいちばん
+    進めやすい区分）で、完成した入力の区分とは別（ランナーが記録する）。"""
+
+    name = BOUNDARY_NAME
+    version = BOUNDARY_VERSION
+
+    def __init__(self, seed: str, distribution: str = STAGE):
+        super().__init__(seed, STAGE)
+        self.distribution = BOUNDARY_DISTRIBUTION
+
+    def choose(self, purpose: str, items: list[Any], context: dict[str, Any]) -> tuple[int, str]:
+        if purpose != "candidate":
+            return UniformPolicy.choose(self, purpose, items, context)
+        if not items:
+            raise ValueError("選べるものがない場面で方策を呼んだ（行動生成の誤り）")
+        classes = sorted({c.get("processability") for c in items}, key=lambda v: (v is None, str(v)))
+        cls = classes[0]
+        if len(classes) > 1:
+            self.draws += 1
+            cls = classes[self._rng.randrange(len(classes))]
+        pool = [i for i, c in enumerate(items) if c.get("processability") == cls]
+        pick = pool[0]
+        if len(pool) > 1:
+            self.draws += 1
+            pick = pool[self._rng.randrange(len(pool))]
+        return pick, f"boundary:class:{cls}:{len(classes)}classes:{len(pool)}in_class"
