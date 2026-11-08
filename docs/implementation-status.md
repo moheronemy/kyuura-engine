@@ -5247,3 +5247,8 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 
 - エンジン `e26df79`（0.172.0）・GUI `b1037bc`・renderer `af88231` の組の総合検証の計画を作った。テスト・ビルド・総合検証は実行していない。エンジンのコードと版は変えていない
 - 詳細: [u7-integration-verification-plan.md](u7-integration-verification-plan.md)
+
+## 検証用 AI の仕様と実装計画（v0.172 のあと。設計だけ）
+
+- U7（エンジン `e26df79`・0.172.0）を通して対戦を進める検証用 AI の仕様と段階的な実装計画を作った。実装・テスト・対戦の実行はしていない。エンジンのコードと版は変えていない
+- 詳細: [verification-ai-design.md](verification-ai-design.md)・[verification-ai-implementation-plan.md](verification-ai-implementation-plan.md)
