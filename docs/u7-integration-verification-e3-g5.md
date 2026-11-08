@@ -108,6 +108,24 @@
 - 入れた renderer の package.json・README.md は renderer のリポジトリの `af88231` の木と同じ sha256。`dist-lib/` の 75 ファイルは固定コミットの木になく（入れるときに作るもの）、2 つの場所で 75 ファイルの sha256 がすべて同じ
 - renderer のリポジトリは読むだけで、変えていません
 
+#### 6.4.1 G5 の確かめ直し（2026-11-08。読むだけ）
+
+ファイルの読み取りと git の読み取り（`ls-tree`・`show`・`rev-parse`・`status`）だけで、前の記録と別の道具（`verifier/runs/2026-11-08-g5-recheck/tools/g5_recheck.py`）を使って確かめ直しました。インストール・サーバーの起動・テストの再実行はしていません。
+
+| 項目 | 作業場所 `kyuura-engine-gui-wt-u75fg` | クリーンな場所 `clean/gui-b1037bc` |
+|---|---|---|
+| HEAD・変更 | `b1037bc…`・なし | `b1037bc…`・なし |
+| `web/package.json`・`web/package-lock.json` | `b1037bc` の木と同じ sha256 | 同じ（2 つの場所で同じバイト） |
+| lockfile・`node_modules/.package-lock.json` | `resolved` は `git+ssh://…/kyuura-card-renderer.git#af88231…`・0.1.0 | 同じ |
+| 入れた renderer | 77 ファイル（package.json・README.md・`dist-lib/` 75・8,498,695 バイト） | 同じ。道の一覧と sha256 の違い 0 |
+| フォント `@fontsource/noto-sans-jp` | 5.3.1（lockfile も 5.3.1）・2,319 ファイル | 同じ。sha256 の違い 0 |
+
+- 生成物がコミットにないこと: renderer の `af88231` の木（109 ファイル）に `dist-lib/` のファイルはなく、`.gitignore` に `dist-lib` があります。GUI の `b1037bc` の木にも `node_modules`・`dist-lib` はありません。入れた renderer の package.json・README.md の 2 ファイルは、木の同じ道のファイルと同じ sha256 です
+- 入れるときに作られること: renderer の package.json の `prepare` は `npm run build:lib`、`files` は `dist-lib` だけです。クリーンな場所の 75 ファイルの更新時刻は 18:39:27 で、G4 の準備（checkout 18:38:12・`npm run setup` の終了 18:39:28）のあいだでした。`prepare` が動いたことを直接示すログは残っておらず、時刻と package.json からの読みです
+- 75 ファイルの内訳: 画像 51（png 50・jpg 1）は renderer の木の素材と同じバイトの写しで、残り 24 はビルドで作る `.js` 12・`.d.ts` 12 です。24 には CRLF・絶対パスらしい文字列・`sourceMappingURL` がありません。2 つの場所は生成の時刻が約 6 時間ちがいますが、改行・絶対パス・生成した環境による差は見つかりませんでした
+- 前の記録（`G5/renderer_clean.json`・`renderer_wt_u75fg.json`）の 75 ファイルの道と sha256 は、確かめ直しと全部同じでした
+- 気づいたこと（直していない）: G4 の準備は `GIT_SSH_COMMAND=fail` で成功したので、npm は GitHub の依存を ssh 以外の方法で取ったと読めますが、方法のログはありません。また、準備の出力に「skipping integrity check for git dependency」があり、Git の依存では lockfile の `integrity` は確かめられず、固定はコミットの id によります
+
 ### 6.5 接続層のプロセスの確かめ
 
 - e2e は 1 ファイルずつ別の Playwright のプロセス。JUnit の件数がファイルの件数と同じことで、意図したテストが選ばれたことを確かめた
@@ -120,7 +138,7 @@
 - e2e の道具は、終わったあと「今回の子孫と記録したプロセスで、まだ生きているもの」を `taskkill /T /F` で止めていました。子孫は ParentProcessId をたどって集めていましたが、この値は親が終わっても残り、pid は再利用されます。G4 の `u75.spec.ts` と `u75e.spec.ts` の実行で、終わった古い親と同じ pid のプロセスを経て、今回の実行でない常駐のアプリ・デスクトップの部品・サービスを子孫と誤って数え、181 件を止めようとしました（`taskkill /T /F` の呼び出し 181 回）。要求した 181 件のうち今回の実行の過程は 0 件です。失敗の行は 392（Access is denied 389・critical system process 3）。成功の行は道具が標準出力を捨てたので残っていません。18:5x の確かめで 53 件がいなかった（PowerToys・シェルの部品・WebView2・svchost の一部など）が、止められたのか自分で終わったのかは区別できません（2026-11-08 に訂正: 以前は「53 件が止まりました」と書いていた。調べ直しは証跡の `verifier/incident-2026-11-08-process-kill/REPORT.md`）。取り込みの境目は、Playwright のテストの CLI の node.exe（pid 1008）を ParentProcessId に持つものとして記録された wininit.exe・csrss.exe でした
 - 利用者の指示（他のアプリや他のセッションのプロセスを閉じない）に反します。テストの結果（JUnit）とは別で、上の件数は変わりませんが、その 2 件の資源の記録（最大の使用量・残り）は誤って数えたものを含むので使いません
 - 原因の調べ直しと、道具の最小限の修正・模擬の検証（実際のプロセスを操作しない）は `verifier/incident-2026-11-08-process-kill/` と `verifier/tools/2026-11-08-safe-cleanup/`（リポジトリの外）。禁止の道具は禁止のまま
-- 見つけたあと止める処理は実行していません。止まったプロセスを起動し直してはいません。道具は、子の作成時刻が親より後の鎖だけをたどり、後始末では止めずに記録だけにする形に直しました（直したあとの道具は実行していない）
+- 見つけたあと止める処理は実行していません。止まったプロセスを起動し直してはいません。道具は、子の作成時刻が親と実行の始まりより後の鎖だけをたどり、`taskkill` と強制の終了をなくして、後始末では自分で起動して握っている根への通常の終了の要求 1 回と、残りの記録だけにする形に直しました。直したあとの道具はレビュー前で、実際の実行はしていません（禁止の名前の 2 つは、ガードが名前を含む操作を拒否するので構文の確かめもしていない）。模擬のプロセスの一覧での試験は 20 件・12 件で、今回の実行でないプロセスへの要求 0 です
 
 ### 6.7 終わったあと
 
@@ -136,6 +154,8 @@
   - `G2/`・`G3/`・`G4/`・`G5/`・`AFTER/`・`G_RESULT.md`（JUnit・標準出力・標準エラー・events.jsonl・resources.jsonl）
   - `NOTES/listener_detection.md`・`NOTES/INCIDENT_g4_process_kill.md`
   - `tools/`（実行の道具。事故のときの形は `e2e_run_as_used_in_g2_g4.ps1`）
+- G5 の確かめ直し: `C:/dev/kyuura-engine-verification-u7/verifier/runs/2026-11-08-g5-recheck/`（`RESULT.md`・`out/g5_recheck.json`・道具）
+- 事故の調査: `verifier/incident-2026-11-08-process-kill/`（`REPORT.md`・記録の写し・分析・MANIFEST）。直した道具: `verifier/tools/2026-11-08-safe-cleanup/`
 - 集計: `public/runs/2026-11-08-e3-g5/summary.md`（中身を読んで秘密を含まないと確かめた数だけ）
 - 一覧: `MANIFEST.md`・`manifest.json`・`sha256.json`
 
