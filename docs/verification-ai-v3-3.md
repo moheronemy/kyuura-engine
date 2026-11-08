@@ -102,3 +102,36 @@
 
 実行（1 モジュールずつ、別のプロセス）: `tests.test_verification_ai_v3_3`（9）・`v3_2`（11）・`v3_1`（15）・`v2_repeat`（15。既存の方策の意味の列の sha256）・`v2`（19）・`v1`（19）・
 `v0`（24）: どれも失敗 0。
+
+## 8. 実行の結果（2026-11-08）
+
+実行: コミット `9125476`（`91254763724442ed81cd931c3fe362cc19537abd`。1〜7 章と同じコミット）。14:53:11Z〜14:53:13Z（UTC）。全体 2.1 秒。終了コード 0。計画（`plan.json`）は
+ケースの前に書いた。
+
+| ケース | 種類 | 要求 | 結果 | 判定 |
+|---|---|---|---|---|
+| C1 | boundary | 8 | 候補 `unverified`（理由 `face_down_reveal_not_evaluated`）・check valid・受理（決定待ち） | 通常の送信 `expected`、副作用（受理）`expected`（状態の置きかえ・確認値・更新の番号・全員への新しい更新は正当）。相手・観戦者の観測のうらのポケモンが 1 → 0（受理のあとにおもてになった） |
+| C2 | boundary | 10 | 候補 `unverified`・check valid・エンジンの拒否（`NO_DAMAGE_COUNTERS`。`invalid_input`） | 通常の送信 `normal_rejection`（受理を保証しない種類）、副作用（拒否）`expected`（どれも変わらない）、相手・観戦者の観測でうらのまま・カード id は見えない（前後とも）、同じ取っ手・同じ入力の check は valid（復帰 `expected`） |
+| C3 | boundary | 10 | ワザ（`may_stop_later`）の宣言は受理・決定待ち、答えは受理・停止 | どちらの送信も `expected`、副作用（受理）`expected`、停止は `known_stop`（`unresolved_ruling`・`UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT`・DU1 の根拠） |
+| C4 | negative | 6 | check・submit とも `CANDIDATE_NOT_EXECUTABLE`。エンジンに渡らない | `expected`、副作用なし、同じ取っ手の `end_turn` の check は valid（復帰 `expected`） |
+
+- `suspect` 0・`undetermined` 0・期待と違う 0
+- 復元の確かめ（C3。同じ開始のスナップショットからもう一度復元し、新しい取っ手で同じ選び方の操作を送った）: 段ごとの種類・入力の意味・結果・状態の区分が同じ、最後の確認値
+  （状態の sha256・乱数の指紋・ログの長さ・決定・停止）が同じ
+- これらは構築盤面（4 つの fixture）での結果で、通常の new_game から届いた証拠ではない。V3-2 までの固定の対戦の到達範囲と足さない
+
+## 9. 失敗・修正・再実行・未確かめ
+
+- fixture の誤り: 実行の前に 1 つ（6 章。F1 のカード ID）。エンジンの不具合ではない。直したあとの fixture で、整合の確かめと 4 ケースを実行した（ケースの再実行はしていない）
+- テスト: 失敗なし（7 章）
+- エンジンの不具合: 見つかっていない（`suspect` 0）
+- 未確かめ・対象の外: 構築盤面から始めた実行の完全な再現用記録・`replay_run`・`snapshot_replay`（new_game からでないので対象の外）、R-B、C1 の受理のあとに相手・観戦者へ見えるカード
+  id の中身（うらの数が 0 になったことだけを確かめた）、HC1（受理の前のエンジンの拒否で停止系の分類）は代表例に入れていない（停止系の拒否の `known_stop` は単体のテストだけ）、
+  ほかの規約集合、広いデッキ、探索
+
+## 10. 次の段階へ残すもの
+
+- `KNOWN_STOP_EVIDENCE` は DU1 だけ。ほかの停止（HC1・準備の停止 `UNRESOLVED_MULLIGAN_COMPENSATION` など）を `known_stop` にするには、それぞれの代表の条件の根拠の登録が要る
+- 経路で引く段の参照を読む変異（`count_over`・`non_executable`）は `unsupported_contract` のまま
+- new_game から `unverified` に届く固定の条件（V3-4 の探索の判断）、R-B、構築盤面の記録の形式（完全な再現用記録の外の、スナップショットから始まる記録）の判断
+- V3 の設計の残り・CN-1 のエンジンの側・D-12・きぜつの数え方は変わらない
