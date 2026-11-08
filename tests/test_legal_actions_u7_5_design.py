@@ -28,12 +28,13 @@ class CheckTest(unittest.TestCase):
         self.assertEqual(G.check(written(), design, plan), [])
 
     def test_seven_commands_and_implemented_kinds(self):
-        """7 種類のうち、v0.167 で U7-5a・U7-5b の 3 種類、v0.169 で U7-5c の PlayTrainer、v0.170 で U7-5d の UseStadium、v0.171 で U7-5e の UsePokemonPower を実装した。ほかの 1 種類は候補の種類がない。"""
+        """7 種類のうち、v0.167 で U7-5a・U7-5b の 3 種類、v0.169 で U7-5c の PlayTrainer、v0.170 で U7-5d の UseStadium、v0.171 で U7-5e の UsePokemonPower、v0.172 で U7-5f の
+        CheckFaceUpDeckCard（表示だけ）を実装した。候補の種類のないコマンドは残らない。"""
         from kyuura_engine import commands, legal_actions
 
         spec = written()
         done = {c for u in spec["units"] if u.get("status") == "implemented" for c in u["commands"]}
-        self.assertEqual(done, {"RemoveDisguise", "DiscardFromPlay", "RevealFaceDown", "PlayTrainer", "UseStadium", "UsePokemonPower"})
+        self.assertEqual(done, {"RemoveDisguise", "DiscardFromPlay", "RevealFaceDown", "PlayTrainer", "UseStadium", "UsePokemonPower", "CheckFaceUpDeckCard"})
         self.assertEqual(len(spec["commands"]), 7)
         for c in spec["commands"]:
             self.assertEqual(c["kind"] in legal_actions.IMPLEMENTED_KINDS, c["command"] in done, c["command"])
@@ -41,10 +42,10 @@ class CheckTest(unittest.TestCase):
 
     def test_only_adopted_units_are_implemented(self):
         spec = written()
-        self.assertEqual([u["id"] for u in spec["units"] if u.get("status") == "implemented"], ["U7-5a", "U7-5b", "T-F1", "U7-5c", "U7-5d", "U7-5e"])  # T-F1 は v0.168、U7-5c〜U7-5e は v0.169〜v0.171
-        self.assertEqual(spec["adoption_record"]["implemented_units"], ["U7-5a", "U7-5b", "T-F1", "U7-5c", "U7-5d", "U7-5e"])
-        for later in ("U7-5f", "U7-5g"):
-            self.assertNotEqual(next(u for u in spec["units"] if u["id"] == later).get("status"), "implemented", later)  # U7-5f 以降は未実装
+        # T-F1 は v0.168、U7-5c〜U7-5e は v0.169〜v0.171、U7-5f は v0.172
+        self.assertEqual([u["id"] for u in spec["units"] if u.get("status") == "implemented"], ["U7-5a", "U7-5b", "T-F1", "U7-5c", "U7-5d", "U7-5e", "U7-5f"])
+        self.assertEqual(spec["adoption_record"]["implemented_units"], ["U7-5a", "U7-5b", "T-F1", "U7-5c", "U7-5d", "U7-5e", "U7-5f"])
+        self.assertNotEqual(next(u for u in spec["units"] if u["id"] == "U7-5g").get("status"), "implemented")  # U7-5g は未実装
         self.assertEqual(next(f for f in spec["findings"] if f["id"] == "F-1")["status"], "fixed")
         self.assertEqual([u["id"] for u in spec["units"] if u["first"]], ["U7-5a"])
         self.assertEqual(spec["adoption"]["approval"], "not_approved")
@@ -87,8 +88,7 @@ class BrokenSpecTest(unittest.TestCase):
 
     def test_implemented_unit_without_kind(self):
         def mutate(spec):
-            next(u for u in spec["units"] if u["id"] == "U7-5f")["status"] = "implemented"
-            spec["adoption_record"]["implemented_units"].append("U7-5f")
+            next(c for c in spec["commands"] if c["command"] == "CheckFaceUpDeckCard")["kind"] = "check_face_up_deck_unknown"  # v0.172: U7-5f が実装済みになったので種類を壊す
         self.assert_found(mutate, "IMPLEMENTED_KINDS")
 
     def test_unknown_unit_status(self):
@@ -140,7 +140,8 @@ class BrokenSpecTest(unittest.TestCase):
     def test_dropped_command(self):
         def mutate(spec):
             spec["commands"] = spec["commands"][:-1]
-        self.assert_found(mutate, "調べた 7 種類")
+        # v0.172: 最後の CheckFaceUpDeckCard も実装済み（U7-5f）なので、未実装の数の比べ方ではなく、確かめの表が知らないコマンドとして見つける
+        self.assert_found(mutate, "知らないコマンド CheckFaceUpDeckCard")
 
     def test_scan_record_differs(self):
         def mutate(spec):

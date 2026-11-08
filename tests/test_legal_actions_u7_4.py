@@ -119,7 +119,7 @@ class MappingTest(unittest.TestCase):
         self.assertEqual(cov["offered_kinds"], [L.KIND_END_TURN, L.KIND_USE_ATTACK])
         self.assertEqual(cov["scope_kinds"], list(L.MAIN_KINDS))
         self.assertEqual(cov["not_covered_kinds"], [  # v0.167（U7-5a・U7-5b）: 3 種類は対応した種類。v0.169〜v0.171（U7-5c〜U7-5e）: play_trainer・use_stadium・use_power も
-                                                    "check_face_up_deck"])
+                                                    ])  # （v0.172（U7-5f）: check_face_up_deck も評価した種類（表示だけ。display_only_kinds）。未対応の種類はない）
         self.assertIn(L.KIND_USE_ATTACK, cov["implemented_kinds"])
         c = cand(r, L.KIND_USE_ATTACK)
         self.assertEqual((c["id"], c["processability"], c["reasons"]), ("c2", L.MAY_STOP_LATER, [L.REASON_CONTINUATION, L.REASON_PREFLIGHT]))

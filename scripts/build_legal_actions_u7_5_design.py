@@ -452,6 +452,7 @@ UNITS = [
      "gui": "2〜3 段（depends_on_stage = 2。前の段を変えたら、それに依存する後の段をすべて無効にする。ADOPT-U7-5AB）",
      "open": ["名前で解決できない呼び出し（状態のメソッド・登録表の引き・正規表現）の先（UP-5t）", "自分のうらのカードの特殊能力（候補にしない。R-2 と同じく残る）"]},
     {"id": "U7-5f", "name": "おもての山札の確かめ（CheckFaceUpDeckCard）", "commands": ["CheckFaceUpDeckCard"], "depends": ["U7-5a"], "first": False,
+     "status": "implemented", "implemented_in": "v0.172（docs/legal-actions-u7-5fg.md 1 章）",
      "basis": ["どの場合も受け付けない。表示するのは FU2 の位置だけ（D-U75-FACE-UP）",
                "おもてのカードは山札の上から続く並び（faceup.prefix_problems）なので、位置は公開の face_up_count だけで決まる（docs/legal-actions-u7-5fg-spec.md 1 章）"],
      "changes": [("legal_actions.py: 番のプレイヤーの MAIN に、相手の山札のおもての 2 枚目より下の位置（owner・position。カード id・uid を出さない）を unresolved_ruling で示す"
@@ -460,7 +461,7 @@ UNITS = [
                ["V-CONV", "sequence"], ["V-TWIN", "board"], ["V-INSTALL", "sequence"], ["V-REGRESS", "board"], ["V-JSON", "helper"]],
      "boards": ["tests/test_flash_faceup_deck_v0_126.py（フラッシュ）"],
      "done": "候補の位置が、おもての枚数（公開）だけで決まる双子（おもてのカードの中身を変える）が通る", "gui": "表示だけ（送信のボタンを出さない）",
-     "open": ["D-U75-FACE-UP-ACTORS（番でない主体に表示するか）"]},
+     "open": []},
     {"id": "U7-5g", "name": "残りの経路と coverage の閉じ方", "commands": [], "depends": ["U7-5c", "U7-5e", "U7-5f"], "first": False,
      "basis": ["7 種類で説明できない経路（R-1・R-2）が残る", "v0.171 のあと: 自分のうらのカードの特殊能力（U7-5e が候補にしない）も残る経路（docs/legal-actions-u7-5fg-spec.md 3 章）"],
      "changes": ["R-1（カツラの 2 枚目）を attach_energy の任意の段として加える（ADOPT-U7-5AB で採用。3 段目の引き方は D-U75-ENERGY2-SCHEMA）・R-2 の見直し（D-U75-R2）",
@@ -575,8 +576,17 @@ ADOPTION_RECORD = {
          "CheckFaceUpDeckCard・energy2・R-2 は実装しない。相手のうらのカードは公開の位置だけで示し、指定する組は unverified（D-U75-POWER-FACE-DOWN）"},
         {"id": "D-U75-STADIUM", "decision": "U7-5d（2026-11-08 の依頼）: 場のスタジアムの UseStadium だけを扱い、特殊能力・CheckFaceUpDeckCard・energy2 は実装しない。"
          "候補は使ってよい効果の登録（activated）から作り、選ばせるものは型の宣言（energy_choice）から作る。3 段の入力の基盤は先に作らない。キョウの忍者ジムの保守的な NJ1 は緩めない"},
+        # U7-5f・U7-5g（2026-11-08 の依頼）。採用は次の 5 つの範囲だけで、未裁定の解決・停止の解除・R-2 の実装・識別の方式の移行に広げない
+        {"id": "D-U75-FACE-UP-ACTORS", "decision": "初版の U7 では、CheckFaceUpDeckCard を番のプレイヤー（MAIN）だけに表示する。既存のコマンドの主体の制約ではなく、API の対応の範囲として"
+         "記録する（coverage の residual R-4。U7-5f で実装）"},
+        {"id": "D-U75-ENERGY2-SCHEMA", "decision": "カツラの 2 枚目は attach_energy の任意の 3 段目とし、1・2 段目の組で引く options_by_path（path_stages）で示す。経路の表し方・既存の項目との"
+         "併用・参照の確かめを固定する（U7-5g で実装）"},
+        {"id": "D-U75-FACE-DOWN-POWER", "decision": "本人が知る印刷の情報だけから安全に作れる特殊能力を候補にする。unverified だけを理由に公開を許さない（U7-5g で実装）"},
+        {"id": "D-U75-R2", "decision": "R-2 は今回も未対応のまま残す（coverage の residual で示す）"},
+        {"id": "D-U7-COMPLETENESS", "decision": "residual を機械で読める形で返す。未対応の宣言の経路が残るあいだ MAIN は partial のまま。候補の取得の網羅と、全部の操作の完走を分ける"
+         "（U7-5g で実装）"},
     ],
-    "implemented_units": ["U7-5a", "U7-5b", "T-F1", "U7-5c", "U7-5d", "U7-5e"],  # T-F1 は 2026-11-08 の依頼で v0.168。U7-5c は v0.169、U7-5d は v0.170、U7-5e は v0.171
+    "implemented_units": ["U7-5a", "U7-5b", "T-F1", "U7-5c", "U7-5d", "U7-5e", "U7-5f"],  # T-F1 は 2026-11-08 の依頼で v0.168。U7-5c は v0.169、U7-5d は v0.170、U7-5e は v0.171、U7-5f は v0.172
     "corrections": [
         {"id": "CORR-1", "subject": "E 群の意味", "text": "情報源が未確認の経路を、処理可能性の unverified だけで公開してよいと扱わない。処理可能性と入力の公開の安全性は別の軸。"
          "選べるもの・件数・理由を公開して安全と確かめられないなら、入力は返さない（unconfirmed）。型・生成箇所の登録だけで安全と認めない"},

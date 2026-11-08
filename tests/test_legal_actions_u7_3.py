@@ -128,7 +128,7 @@ class MappingTest(unittest.TestCase):
         self.assertEqual(cov["scope_kinds"], list(L.MAIN_KINDS))  # 評価した種類と、対応しない種類
         self.assertEqual(cov["not_covered_kinds"], [  # v0.166（U7-4）: use_attack は対応した種類（ここではエネルギーがなくワザの候補はない）。v0.169（U7-5c）: play_trainer も
                                                     # v0.167（U7-5a・U7-5b）: 場のポケモン 1 匹を指す 3 種類は対応した種類。v0.170（U7-5d）: use_stadium、v0.171（U7-5e）: use_power も
-                                                    "check_face_up_deck"])
+                                                    ])  # （v0.172（U7-5f）: check_face_up_deck も評価した種類（表示だけ。display_only_kinds）。未対応の種類はない）
         for kind in L.TURN_KINDS:
             self.assertIn(kind, cov["implemented_kinds"])
 

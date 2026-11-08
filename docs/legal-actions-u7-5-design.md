@@ -35,7 +35,12 @@ U7-5 の対象の 7 種類のコマンド（`PlayTrainer`・`UsePokemonPower`・
     - `D-U75-TRAINER`: U7-5c（2026-11-08 の依頼）: 手札の PlayTrainer だけを扱い、UsePokemonPower・UseStadium・CheckFaceUpDeckCard・energy2 は実装しない。カードの選択の表示は本人の手札だけで決まるので返す。読む情報を確かめていない使うための条件は呼ばず、処理可能性で示す（unverified）。F-9 の今の扱い（公開の情報だけで使えない場合も決定を出す）は変えない
     - `D-U75-POWER`: U7-5e（2026-11-08 の依頼）: UsePokemonPower を、型ごとの宣言の入力（D-U75-INPUT-DECL）と 2〜3 段の依存する入力（D-U75-CHAINED）で扱う。CheckFaceUpDeckCard・energy2・R-2 は実装しない。相手のうらのカードは公開の位置だけで示し、指定する組は unverified（D-U75-POWER-FACE-DOWN）
     - `D-U75-STADIUM`: U7-5d（2026-11-08 の依頼）: 場のスタジアムの UseStadium だけを扱い、特殊能力・CheckFaceUpDeckCard・energy2 は実装しない。候補は使ってよい効果の登録（activated）から作り、選ばせるものは型の宣言（energy_choice）から作る。3 段の入力の基盤は先に作らない。キョウの忍者ジムの保守的な NJ1 は緩めない
-  - 実装した単位: `U7-5a`、`U7-5b`、`T-F1`、`U7-5c`、`U7-5d`、`U7-5e`
+    - `D-U75-FACE-UP-ACTORS`: 初版の U7 では、CheckFaceUpDeckCard を番のプレイヤー（MAIN）だけに表示する。既存のコマンドの主体の制約ではなく、API の対応の範囲として記録する（coverage の residual R-4。U7-5f で実装）
+    - `D-U75-ENERGY2-SCHEMA`: カツラの 2 枚目は attach_energy の任意の 3 段目とし、1・2 段目の組で引く options_by_path（path_stages）で示す。経路の表し方・既存の項目との併用・参照の確かめを固定する（U7-5g で実装）
+    - `D-U75-FACE-DOWN-POWER`: 本人が知る印刷の情報だけから安全に作れる特殊能力を候補にする。unverified だけを理由に公開を許さない（U7-5g で実装）
+    - `D-U75-R2`: R-2 は今回も未対応のまま残す（coverage の residual で示す）
+    - `D-U7-COMPLETENESS`: residual を機械で読める形で返す。未対応の宣言の経路が残るあいだ MAIN は partial のまま。候補の取得の網羅と、全部の操作の完走を分ける（U7-5g で実装）
+  - 実装した単位: `U7-5a`、`U7-5b`、`T-F1`、`U7-5c`、`U7-5d`、`U7-5e`、`U7-5f`
   - 仕様の訂正:
     - `CORR-1`（E 群の意味）: 情報源が未確認の経路を、処理可能性の unverified だけで公開してよいと扱わない。処理可能性と入力の公開の安全性は別の軸。選べるもの・件数・理由を公開して安全と確かめられないなら、入力は返さない（unconfirmed）。型・生成箇所の登録だけで安全と認めない
     - `CORR-2`（GUI への影響の比べる相手）: 設計の報告の d0c5cfa はエンジンのコミット（GUI の main が固定するエンジン）で、GUI のコミットではない。公開されている最新の GUI は feature/engine-u7-4-attacks の 3649946（エンジン 9506d63・0.166.0 を固定）。GUI のコミットと固定するエンジンを分けて書く（GUI_REF）

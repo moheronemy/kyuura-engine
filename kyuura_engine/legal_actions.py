@@ -28,9 +28,11 @@ from functools import partial
 from typing import Any
 
 from . import diagnostics as D
+from . import faceup
 from .adapter import CommandResult, HostedGame, HostStoppedError
 from .commands import (
     AttachEnergy,
+    CheckFaceUpDeckCard,
     DiscardFromPlay,
     DrawMulliganCards,
     EndTurn,
@@ -185,8 +187,12 @@ BOARD_KINDS = (KIND_REMOVE_DISGUISE, KIND_DISCARD_FROM_PLAY, KIND_REVEAL_FACE_DO
 KIND_PLAY_TRAINER = "play_trainer"  # U7-5c: 手札のトレーナーカードを使う（PlayTrainer。宣言の入力は card だけ。対象・枚数などは受理のあとの決定）
 KIND_USE_STADIUM = "use_stadium"  # U7-5d: 場のスタジアムの、自分の番に使ってよい効果を使う（UseStadium。宣言の入力は energy だけ（選ばせる効果だけ）。コイン・決定は受理のあと）
 KIND_USE_POWER = "use_power"  # U7-5e: 自分の場のポケモンの、使用を宣言する特殊能力（UsePokemonPower。宣言の入力は型ごとの宣言の 0〜3 段。コイン・決定は受理のあと）
+# U7-5f: 相手の山札の 2 枚目より下のおもてのカードを確かめる要求（CheckFaceUpDeckCard）。表示だけの候補（エンジンはどの場合も受け付けない。2 枚目より下は FU2 で止める）。
+# 候補の表示に対応した種類で、ゲームの処理が実装済みという意味ではない（coverage の display_only_kinds）
+KIND_CHECK_FACE_UP_DECK = "check_face_up_deck"
+DISPLAY_ONLY_KINDS = (KIND_CHECK_FACE_UP_DECK,)  # 候補・入力を示すが、送ればエンジンに渡す前に CANDIDATE_NOT_EXECUTABLE（未裁定。ゲーム上の禁止ではない）
 PLAYER_KINDS = (KIND_TAKE_PRIZE, KIND_PROMOTE_ACTIVE, KIND_ANSWER_DECISION, KIND_END_TURN, KIND_PLACE_STARTING, KIND_MULLIGAN_DRAW, *TURN_KINDS, KIND_USE_ATTACK,
-                *BOARD_KINDS, KIND_PLAY_TRAINER, KIND_USE_STADIUM, KIND_USE_POWER)  # implemented_kinds の並び（実装した順。U7-5c・U7-5d・U7-5e の種類を最後に加えた）
+                *BOARD_KINDS, KIND_PLAY_TRAINER, KIND_USE_STADIUM, KIND_USE_POWER, KIND_CHECK_FACE_UP_DECK)  # implemented_kinds の並び（実装した順。U7-5c〜U7-5f の種類を最後に加えた）
 HOST_KINDS = (KIND_REPORT_JANKEN, KIND_START_SUDDEN_DEATH)
 IMPLEMENTED_KINDS = PLAYER_KINDS + HOST_KINDS
 HOST = "host"  # ホストの入口の操作主体（プレイヤーの番号ではない）
@@ -563,7 +569,8 @@ def _candidates(host: ActionHost, actor: int | str) -> dict[str, Any]:
         "situation": situation,
         "empty_reason": None if candidates else empty,
         "coverage": {"implemented_kinds": list(IMPLEMENTED_KINDS), "scope_kinds": _scope_kinds(evaluated + not_covered), "offered_kinds": offered,
-                     "not_covered_kinds": not_covered, "withheld_input_candidates": withheld, "completeness": completeness,
+                     "not_covered_kinds": not_covered, "display_only_kinds": [k for k in DISPLAY_ONLY_KINDS if k in evaluated], "withheld_input_candidates": withheld,
+                     "completeness": completeness,
                      "completeness_scope": "scope_kinds（この応答に明示した種類だけ。全コマンドの合法手ではない）"},
         "candidates": [{"id": c.id, "kind": c.kind, **c.public, "input_disclosure": c.disclosure,
                         "input_stages": [{"stage": s["stage"], "input": s["input"]} for s in c.inputs]} for c in candidates],
@@ -621,6 +628,8 @@ def _command(found: _Candidate, actor, values: tuple[int, ...]):
         return PlayTrainer(actor, values[0])  # 手札のトレーナーカード（uid）
     if found.kind == KIND_USE_STADIUM:
         return UseStadium(actor, values[0] if values else None)  # 選ばせる効果だけ、エネルギーカード（uid）
+    if found.kind == KIND_CHECK_FACE_UP_DECK:
+        return CheckFaceUpDeckCard(actor, 1 - actor, values[0])  # 表示だけの候補（_input_problem がいつも送る前に断るので、ここには来ない）
     if found.kind == KIND_USE_POWER:
         pokemon_id, power_index, card, fields = found.power
         return UsePokemonPower(actor, pokemon_id, power_index, card=card, **dict(zip(fields, values)))  # 段の順の値をコマンドの項目に置く
@@ -690,14 +699,20 @@ def _build(state: GameState, actor: int):
             stadium = _stadium_candidate(state, actor)  # U7-5d: MAIN_KINDS では play_trainer（と対応しない use_power）のあと、場のポケモン 1 匹を指す操作の前
             candidates += [] if stadium is None else [stadium]
             candidates += _board_candidates(state, actor)
+            face_up = _face_up_candidate(state, actor)  # U7-5f: MAIN_KINDS の最後（表示だけ）
+            candidates += [] if face_up is None else [face_up]
         else:
             candidates += [_Candidate("", kind, {"processability": NOT_IMPLEMENTED, "reasons": ["state_not_supported"],
                                                  "guarantees": dict(_UNUSABLE_GUARANTEES.get(kind, GUARANTEE_TURN_ACTION))}, [],
                                       disclosure=DISCLOSURE_UNCONFIRMED)
                            for kind in (*TURN_KINDS, KIND_USE_ATTACK, KIND_PLAY_TRAINER, KIND_USE_POWER, KIND_USE_STADIUM, *BOARD_KINDS)]
+            if _face_up_positions(state, 1 - actor):  # U7-5f: 示す位置があるときだけ（ほかの種類と同じく、続けられない状態の候補にする）
+                candidates.append(_Candidate("", KIND_CHECK_FACE_UP_DECK, {"processability": NOT_IMPLEMENTED, "reasons": ["state_not_supported"],
+                                                                           "guarantees": dict(GUARANTEE_FACE_UP)}, [], disclosure=DISCLOSURE_UNCONFIRMED))
         for number, candidate in enumerate(candidates, 1):
             candidate.id = f"c{number}"  # 種類の並び（MAIN_KINDS の順）。番号は応答ごと（取っ手と組で使う）
-        evaluated = [k for k in MAIN_KINDS if k in (KIND_END_TURN, *TURN_KINDS, KIND_USE_ATTACK, KIND_PLAY_TRAINER, KIND_USE_POWER, KIND_USE_STADIUM, *BOARD_KINDS)]
+        evaluated = [k for k in MAIN_KINDS if k in (KIND_END_TURN, *TURN_KINDS, KIND_USE_ATTACK, KIND_PLAY_TRAINER, KIND_USE_POWER, KIND_USE_STADIUM, *BOARD_KINDS,
+                                                    KIND_CHECK_FACE_UP_DECK)]
         return ACTOR_TO_ACT, candidates, evaluated, [k for k in MAIN_KINDS if k not in evaluated], PARTIAL, None
     return WAITING_FOR_PLAYER, [], [], [], UNDETERMINED, None  # 知らない段階（状態の区分と段階の組が上のどれでもない）は完全と称さない
 
@@ -839,6 +854,12 @@ def _input_problem(found: _Candidate, choices) -> tuple[str | None, tuple[int, .
     choices = tuple(choices)
     if found.kind in (KIND_END_TURN, KIND_START_SUDDEN_DEATH):
         return (None, ()) if not choices else (CANDIDATE_INPUT_INVALID, ())
+    if found.kind == KIND_CHECK_FACE_UP_DECK and found.inputs:
+        # U7-5f: 表示だけの候補。入力の形の誤り（知らない番号・数・重なり）を CANDIDATE_INPUT_INVALID、形の合う入力を CANDIDATE_NOT_EXECUTABLE（未裁定で送れない）と分ける
+        indexes = [found.option_index(choice) for choice in choices]
+        if None in indexes or len(set(indexes)) != len(indexes) or not found.min_choices <= len(indexes) <= found.max_choices:
+            return CANDIDATE_INPUT_INVALID, ()
+        return CANDIDATE_NOT_EXECUTABLE, ()
     if found.blocked():
         return CANDIDATE_NOT_EXECUTABLE, ()
     if found.disclosure == DISCLOSURE_UNCONFIRMED:
@@ -1711,3 +1732,39 @@ def _power_input_problem(found: _Candidate, choices: tuple) -> tuple[str | None,
     if not found.pairs.get(choices[-1], False):
         return CANDIDATE_NOT_EXECUTABLE, ()
     return None, tuple(found.ids[choice][1] for choice in choices)
+
+
+# ---------------------------------------------------------------- おもての山札の確かめ（U7-5f。docs/legal-actions-u7-5fg.md 1 章）
+
+GUARANTEE_FACE_UP = {
+    "preconditions": "番のプレイヤーの main の段階で、相手の山札のおもてのカードの枚数（観測の face_up_count。全員に公開）が 2 以上のときだけ示す。おもてのカードは山札の上から続く並び"
+                     "（faceup.prefix_problems の不変条件）なので、位置（2 枚目〜face_up_count 枚目）は公開の枚数だけから決まる。カード id・uid・名前は示さない",
+    "acceptance": "送れない。エンジン（CheckFaceUpDeckCard）はどの場合も受け付けず、2 枚目より下の相手のおもてのカードは FU2（未裁定）で止める。この候補は、送る前に "
+                  "CANDIDATE_NOT_EXECUTABLE で断り、エンジンに渡さない（入力の形の誤りは CANDIDATE_INPUT_INVALID）",
+    "after_acceptance": "なし（受け付けない）",
+    "supported_scope": "表示だけの候補（display_only_kinds）。候補を示すことは、ゲームの処理が実装済みという意味ではない。番のプレイヤーの main のほかの段階・主体には示さない"
+                       "（API の対応の範囲。エンジンのコマンドは番・段階を確かめない。coverage の residual R-4）",
+}
+_UNUSABLE_GUARANTEES[KIND_CHECK_FACE_UP_DECK] = GUARANTEE_FACE_UP
+
+
+def _face_up_positions(state: GameState, owner: int) -> list[int]:
+    """山札の持ち主 ``owner`` の、2 枚目より下のおもてのカードの位置（0 がいちばん上）。観測の face_up_count と同じ枚数だけから決める（カードを読まない）。"""
+    return list(range(1, len(faceup.face_up_in_deck(state, owner))))
+
+
+def _face_up_candidate(state: GameState, actor: int) -> _Candidate | None:
+    """相手の山札の 2 枚目より下のおもてのカードを確かめる要求（``CheckFaceUpDeckCard``）の、表示だけの候補（1 段。選べるものは owner・position）。
+
+    自分の山札（ALREADY_KNOWN）・いちばん上（ALREADY_VISIBLE）・おもてでない位置（NOT_FACE_UP）はゲーム上できないので示さない。示す位置はどれも FU2 で止まる（未裁定）。"""
+    owner = 1 - actor
+    positions = _face_up_positions(state, owner)
+    if not positions:
+        return None
+    processability = _stop_processability(faceup.FACE_UP_DECK_CHECK_CODE)
+    options = [_option({"id": f"o{n}", "owner": owner, "position": position}, processability, [REASON_STOPS]) for n, position in enumerate(positions, 1)]
+    stage = {"stage": 1, "input": INPUT_CHOOSE_OPTION, "role": "face_up_position", "meaning": "deck_position", "count": {"min": 1, "max": 1}, "options": options,
+             "order": ORDER_NOT_APPLICABLE, "note": "相手の山札の上からの位置（0 がいちばん上）。表示だけで送れない（未裁定）"}
+    public = {"processability": processability, "reasons": [REASON_STOPS], "guarantees": dict(GUARANTEE_FACE_UP), "choices_format": "[位置の番号]"}
+    return _Candidate("", KIND_CHECK_FACE_UP_DECK, public, [stage], disclosure=DISCLOSURE_CONFIRMED, values=tuple(positions),
+                      executable=(False,) * len(positions), min_choices=1, max_choices=1)

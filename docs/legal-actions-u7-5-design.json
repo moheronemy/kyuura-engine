@@ -1686,6 +1686,8 @@
     "U7-5a"
    ],
    "first": false,
+   "status": "implemented",
+   "implemented_in": "v0.172（docs/legal-actions-u7-5fg.md 1 章）",
    "basis": [
     "どの場合も受け付けない。表示するのは FU2 の位置だけ（D-U75-FACE-UP）",
     "おもてのカードは山札の上から続く並び（faceup.prefix_problems）なので、位置は公開の face_up_count だけで決まる（docs/legal-actions-u7-5fg-spec.md 1 章）"
@@ -1744,9 +1746,7 @@
    ],
    "done": "候補の位置が、おもての枚数（公開）だけで決まる双子（おもてのカードの中身を変える）が通る",
    "gui": "表示だけ（送信のボタンを出さない）",
-   "open": [
-    "D-U75-FACE-UP-ACTORS（番でない主体に表示するか）"
-   ]
+   "open": []
   },
   {
    "id": "U7-5g",
@@ -2061,6 +2061,26 @@
    {
     "id": "D-U75-STADIUM",
     "decision": "U7-5d（2026-11-08 の依頼）: 場のスタジアムの UseStadium だけを扱い、特殊能力・CheckFaceUpDeckCard・energy2 は実装しない。候補は使ってよい効果の登録（activated）から作り、選ばせるものは型の宣言（energy_choice）から作る。3 段の入力の基盤は先に作らない。キョウの忍者ジムの保守的な NJ1 は緩めない"
+   },
+   {
+    "id": "D-U75-FACE-UP-ACTORS",
+    "decision": "初版の U7 では、CheckFaceUpDeckCard を番のプレイヤー（MAIN）だけに表示する。既存のコマンドの主体の制約ではなく、API の対応の範囲として記録する（coverage の residual R-4。U7-5f で実装）"
+   },
+   {
+    "id": "D-U75-ENERGY2-SCHEMA",
+    "decision": "カツラの 2 枚目は attach_energy の任意の 3 段目とし、1・2 段目の組で引く options_by_path（path_stages）で示す。経路の表し方・既存の項目との併用・参照の確かめを固定する（U7-5g で実装）"
+   },
+   {
+    "id": "D-U75-FACE-DOWN-POWER",
+    "decision": "本人が知る印刷の情報だけから安全に作れる特殊能力を候補にする。unverified だけを理由に公開を許さない（U7-5g で実装）"
+   },
+   {
+    "id": "D-U75-R2",
+    "decision": "R-2 は今回も未対応のまま残す（coverage の residual で示す）"
+   },
+   {
+    "id": "D-U7-COMPLETENESS",
+    "decision": "residual を機械で読める形で返す。未対応の宣言の経路が残るあいだ MAIN は partial のまま。候補の取得の網羅と、全部の操作の完走を分ける（U7-5g で実装）"
    }
   ],
   "implemented_units": [
@@ -2069,7 +2089,8 @@
    "T-F1",
    "U7-5c",
    "U7-5d",
-   "U7-5e"
+   "U7-5e",
+   "U7-5f"
   ],
   "corrections": [
    {

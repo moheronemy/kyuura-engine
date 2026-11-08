@@ -171,7 +171,7 @@ class MappingTest(unittest.TestCase):
         host, r, c = stadium_cand(placed(H.LUCKY_STADIUM))
         cov = r["coverage"]
         self.assertEqual((cov["completeness"], cov["scope_kinds"]), (L.PARTIAL, list(L.MAIN_KINDS)))
-        self.assertEqual(cov["not_covered_kinds"], ["check_face_up_deck"])  # v0.171（U7-5e）: use_power は対応した種類
+        self.assertEqual(cov["not_covered_kinds"], [])  # v0.171（U7-5e）: use_power は対応した種類（v0.172（U7-5f）: check_face_up_deck も評価した種類（表示だけ。display_only_kinds）。未対応の種類はない）
         kinds = [x["kind"] for x in r["candidates"]]
         self.assertEqual(kinds, sorted(kinds, key=L.MAIN_KINDS.index))
         self.assertEqual((c["processability"], c["input_disclosure"], c["input_stages"], c["choices_format"]), (L.MAY_STOP_LATER, L.DISCLOSURE_NONE, [], "[]"))

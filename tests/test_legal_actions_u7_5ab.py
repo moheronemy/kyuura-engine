@@ -110,7 +110,7 @@ class MappingTest(unittest.TestCase):
         cov = r["coverage"]
         self.assertEqual(cov["completeness"], L.PARTIAL)
         self.assertEqual(cov["scope_kinds"], list(L.MAIN_KINDS))
-        self.assertEqual(cov["not_covered_kinds"], ["check_face_up_deck"])  # v0.169〜v0.171（U7-5c〜U7-5e）: play_trainer・use_stadium・use_power は対応した種類
+        self.assertEqual(cov["not_covered_kinds"], [])  # v0.169〜v0.171（U7-5c〜U7-5e）: play_trainer・use_stadium・use_power は対応した種類（v0.172（U7-5f）: check_face_up_deck も評価した種類（表示だけ。display_only_kinds）。未対応の種類はない）
         for kind in L.BOARD_KINDS:
             self.assertIn(kind, cov["implemented_kinds"])
         self.assertEqual(L.BOARD_KINDS, ("remove_disguise", "discard_from_play", "reveal_face_down"))
@@ -120,7 +120,7 @@ class MappingTest(unittest.TestCase):
     def test_kinds_absent_when_impossible(self):
         r = host_of(F.board(F.mon(F.HITMONCHAN), bench=[F.RATTATA])).session(0).candidates()
         self.assertFalse(set(L.BOARD_KINDS) & {c["kind"] for c in r["candidates"]})  # ゲーム上できない種類は候補を作らない
-        self.assertEqual(r["coverage"]["not_covered_kinds"], ["check_face_up_deck"])  # v0.169〜v0.171（U7-5c〜U7-5e）: play_trainer・use_stadium・use_power は対応した種類
+        self.assertEqual(r["coverage"]["not_covered_kinds"], [])  # v0.169〜v0.171（U7-5c〜U7-5e）: play_trainer・use_stadium・use_power は対応した種類（v0.172（U7-5f）: check_face_up_deck も評価した種類（表示だけ。display_only_kinds）。未対応の種類はない）
 
     def test_not_the_turn_player(self):
         for state in (disguised(), dolls(), face_down(S.DIGLETT)):
