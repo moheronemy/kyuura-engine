@@ -65,6 +65,7 @@ def game_header(config: Config, ident: dict[str, Any], argv: list[str], result: 
     return {"tool": {"name": "tools.verification_ai", "version": VERSION}, "engine": ident, "argv": argv, "run_id": config.run_id,
             "convention_set": result["record"].data["header"]["convention_set"], "decks": {"0": config.deck0, "1": config.deck1},
             "game_seed": config.game_seed, "policy_seed": config.policy_seed, "host_seed": config.host_seed, "distribution": config.distribution,
+            "policy": config.policy, "epsilon": config.epsilon if config.policy == "mixed" else None,
             "policies": result["policies"], "profile": config.profile, "limits": result["limits"], "started": started, "finished": finished}
 
 
@@ -171,6 +172,7 @@ def main(argv: list[str] | None = None) -> int:
     rp.add_argument("--baseline", required=True)
     rp.add_argument("--out", required=True)
     rp.add_argument("--engine-commit", required=True)
+    rp.add_argument("--label", default="v1")
     rn = sub.add_parser("run")
     rn.add_argument("--out", required=True)
     rn.add_argument("--engine-commit", required=True)

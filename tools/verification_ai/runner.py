@@ -214,13 +214,14 @@ class Runner:
         status = view["status"]
         self._cover("status", status["status"])
         self._cover("phase", status["phase"])
+        # V2 の訂正: 終わり方の判定より先に数える（e9fc20b は終局・停止の観測の変化を数えず、最後のサイドの減少が抜けていた）
+        self._track_prizes(view["observation"])
         if status["status"] == D.GAME_OVER:
             raise _Stop(GAME_OVER, {"result": view["observation"].get("result"), "segment": status["segment"]})
         if status["status"] == D.HALTED:
             halt = status.get("halt") or {}
             known = halt.get("category") in KNOWN_HALT_CATEGORIES
             raise _Stop(HALTED_KNOWN if known else HALTED_UNCLASSIFIED, {"halt": halt})
-        self._track_prizes(view["observation"])
         key = (status["segment"], view["observation"]["turn"])
         if key != self._turn_key:
             self._turn_key = key

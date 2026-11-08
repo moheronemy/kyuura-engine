@@ -231,6 +231,27 @@ class PrizeTest(unittest.TestCase):
         self.assertEqual(axes["prize_count_decrease"], {"player0": 1, "player1": 2})
         self.assertEqual(axes["prize_count_increase"], {"player0": 1})
 
+    def test_change_seen_with_game_over_is_counted(self):
+        """終局の観測のサイドの減少も数える（e9fc20b の実行では終わり方の判定が先で、最後の減少が抜けていた）。"""
+        calls = {"n": 0}
+
+        def wrap(actor, endpoint):
+            class Fake:
+                def handle(self, request):
+                    answer = endpoint.handle(request)
+                    if request["type"] == "view":
+                        calls["n"] += 1
+                        players = answer["observation"]["players"]
+                        if calls["n"] >= 3:  # 直前に見た枚数から 1 減った終局の観測
+                            answer["status"] = {**answer["status"], "status": "game_over"}
+                            players[1]["prizes"] = {**players[1]["prizes"], "count": calls["last"] - 1}
+                        calls["last"] = players[1]["prizes"]["count"]
+                    return answer
+            return Fake() if actor == V.HOST else endpoint
+        result = V.run_game(small("uniform"), wrap_endpoint=wrap)
+        self.assertEqual(result["termination"]["class"], V.GAME_OVER)
+        self.assertEqual(result["metrics"]["axes"].get("prize_count_decrease"), {"player1": 1})
+
 
 if __name__ == "__main__":
     unittest.main()
