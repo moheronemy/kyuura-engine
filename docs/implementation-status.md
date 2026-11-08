@@ -5216,4 +5216,5 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - スタジアムの候補は `supported` にしない。番の候補は partial のまま（`use_power`・`check_face_up_deck` が未対応。R-1・R-2 が残る）
 - U7-5 の設計の U7-5d を implemented にした（U7-5e 以降は未実装）。既存の U7 のテストの coverage の期待から `use_stadium` を外した（意図した差）
 - GUI への引き継ぎは U7-5a〜U7-5d をまとめた（GUI は 0.166.0 を固定）
+- 配布の確かめ: コミット `0885d664913bc8e57279ed9e44ac51cc97d5a6bf`（版 0.170.0）を、クリーンな仮想環境に Git の URL から通常のインストールをして、リポジトリの外から client_api の `play_trainer` と `use_stadium` を使うスモークテストをした（`behavior_digest` はソースの木と同じ）。配布物の中身の検査は required=62・problems=0
 - 詳細: [legal-actions-u7-5d.md](legal-actions-u7-5d.md)

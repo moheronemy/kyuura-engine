@@ -105,7 +105,7 @@ v0.146（[play-set-verification-v0.146](play-set-verification-v0.146.md) 3 章�
 - 公開されている GUI の最新の作業ブランチ: `feature/engine-u7-4-attacks` の `3649946`。エンジン `9506d63`（版 0.166.0）を固定
   - GUI の `main`（`7660ab4`）はエンジン `d0c5cfa`（v0.164）を固定しています
 - GUI の契約の表（`contract/kyuura-client-api-v1.json`）は、`implemented_kinds`・`gui_operable_kinds`・`stage_keys`・選べるものの項目・`reason_codes` を列挙し、知らない値・項目を「不明な応答」として操作を止めます
-- 導入を確かめた完全なコミットと版: 9 章のあとの文書だけのコミットで記録します
+- 導入を確かめた完全なコミットと版: `kyuura-engine @ git+https://github.com/moheronemy/kyuura-engine@0885d664913bc8e57279ed9e44ac51cc97d5a6bf`（版 0.170.0。9 章）。GUI の固定を 0.166.0（`9506d63`）からこのコミットに更新すると、U7-5a〜U7-5d の差（8.2 節）がまとめて入る
 
 ### 8.2 0.166.0 からの差（GUI の型・検証・表示に必要な変更）
 
@@ -166,7 +166,12 @@ v0.146（[play-set-verification-v0.146](play-set-verification-v0.146.md) 3 章�
   - 停止の台帳は作り直して、`engine.py`・`effects.py` の行番号だけが変わりました（836 行。ほかの項目の変化なし）
   - `check_implementation_assumptions --sites` の出力は基点 `13249d0` と同じ（56 行）
 - **lint**（ruff 0.17.2）: 新しいファイル・`legal_actions.py`・U7 のテスト・U7-5 の生成器は指摘なし。`engine.py`・`effects.py`・`__init__.py`・`test_preset_decks_v0_20.py` の指摘の数は基点と同じ
-- **配布と通常のインストール**: このあとの文書だけのコミットで記録します
+- **配布と通常のインストール**（コミット `0885d664913bc8e57279ed9e44ac51cc97d5a6bf`。版 0.170.0）
+  - `git archive` の木から作った wheel・sdist の中身の検査（`scripts/check_distribution.py`）: required=62・problems=0
+  - クリーンな仮想環境に、Git の URL から通常のインストール（編集可能なインストール・PYTHONPATH なし）。`direct_url.json` のコミットが一致
+  - リポジトリの外から `python -I` でスモークテスト（site-packages からの読み込み・全サブパッケージ・3 つの規約集合の照合値・初期配置・番の操作・ワザの宣言・U7-5a の `discard_from_play`・U7-5c の `play_trainer`・錯乱ジムの相手の答え）。問題 0
+  - client_api の `use_stadium`: ラッキースタジアムを `play_trainer` で場に出し（`role: "trainer"`・受理）、`use_stadium` の候補（`stadium` の持ち主 0・`no_input`・段なし・`may_stop_later`）で使った。`choices: ["o1"]` はホストの段の `refused`（`CANDIDATE_INPUT_INVALID`）、`choices: []` は受理。回数が記録され、同じ番の候補はなくなり、`not_covered_kinds` は `use_power`・`check_face_up_deck`
+  - 実装の識別の `behavior_digest` は、インストールしたものとソースの木で同じ（`ae9bfdbec9d95608842405245ed96ebfa7faf79f7fa4db2213db1b31eee65a17`）
 
 ## 10. 未確認・未対応
 
