@@ -5269,3 +5269,10 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 固定デッキ・既定の規約集合で 2 方式 × seed 11・12・13 の 6 局: seed 12・13 の 4 局が `game_over`、seed 11 の 2 局が開始の時点の既知の停止（`UNRESOLVED_MULLIGAN_COMPENSATION`）。どれも `replay_run` は `succeeded`・記録の対応の問題 0。`use_power`（3 段）に届いた。`options_by_path` などは届いていない
 - V2 以降（ルール・混合の方策・`boundary`・`negative`・双子・広い対象・最小化）は未実装
 - 詳細: [verification-ai-v1.md](verification-ai-v1.md)
+
+## 検証用 AI の V2（v0.172 のあと。エンジンは変えていない）
+
+- `tools/verification_ai` に、操作の種類だけで順位をつける rules-v1（ベンチ → 進化 → エネルギー → ワザ → ほかの送信できる操作 → 番を終える。同順位は方策の乱数で均等。入力は uniform-stage）と、選択のエピソードごとに混合の乱数で 1 回だけ方式を決める混合の方策を加えた。ランダム・ルール・混合は同じ行動生成・check・submit・記録・計測を使う
+- 固定デッキ・既定の規約集合・seed 11・12・13 で rules・mixed（ε 0.25）の 6 局を実行し、V1 の uniform-stage の 3 局を再利用して比べた（再利用の根拠は、V2 のコードでの seed 12 の再現が V1 の記録と一致したこと）。seed 11 は 3 方式とも開始の時点の既知の停止。rules の seed 13 はエナジートランスの繰り返しで受理の上限（1,000）に届いた（方策による繰り返し。エンジンの拒否・停止はない）。どの局も `replay_run` は `succeeded`・記録の対応の問題 0。きぜつは未計測
+- V3 以降（`boundary`・`negative`・双子・広い対象・最小化）は未実装
+- 詳細: [verification-ai-v2.md](verification-ai-v2.md)
