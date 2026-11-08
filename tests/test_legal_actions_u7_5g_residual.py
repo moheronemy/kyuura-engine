@@ -59,7 +59,7 @@ class FixedClassesTest(unittest.TestCase):
         setup_with_u7(host)
         main = host.session(0).candidates()["coverage"]
         self.assertEqual((main["completeness"], main["not_covered_kinds"]), (L.PARTIAL, []))  # 種類はそろったが、示さない経路が残る
-        self.assertLessEqual({"R-2", "R-3"}, set(main["partial_residual"]))
+        self.assertEqual(main["partial_residual"], ["R-2"])  # v0.172: R-1 は示し、R-3 は入力を返さない残り（種類の網羅は変えない）。R-2 だけが示さない経路
         other = host.session(1).candidates()
         self.assertEqual((other["coverage"]["completeness"], other["empty_reason"], other["coverage"]["residual"]["present"]), (L.COMPLETE, L.EMPTY_NOT_ACTOR, []))
         hosted = host.host_session().candidates()["coverage"]
@@ -71,7 +71,10 @@ class SituationTest(unittest.TestCase):
         c = cov(own_face_down(H.DIGLETT, active=True), 0)
         self.assertEqual(c["completeness"], L.PARTIAL)
         self.assertIn("R-2", c["partial_residual"])  # R-2 が残るあいだ partial（D-U75-R2）
-        self.assertEqual({i["id"]: i["scope"] for i in c["residual"]["present"] if i["id"] in ("R-2", "R-3")}, {"R-2": L.RESIDUAL_PUBLIC, "R-3": L.RESIDUAL_PUBLIC})
+        self.assertEqual([i for i in c["residual"]["present"] if i["id"] in ("R-2", "R-3")], [{"id": "R-2", "scope": L.RESIDUAL_PUBLIC}])  # ディグダ: 特殊能力がない（R-3 はない）
+        with_power = cov(own_face_down(H.ROCKET_CHARMANDER, active=True), 0)  # 2 段の特殊能力: 本人の候補から決まる R-3（本人の応答だけ）
+        self.assertEqual([i["scope"] for i in with_power["residual"]["present"] if i["id"] == "R-3"], [L.RESIDUAL_ACTOR])
+        self.assertEqual(cov(own_face_down(H.ROCKET_CHARMANDER, active=True), 1)["residual"]["present"], [])
         self.assertIn("completeness_basis", c)
 
     def test_non_turn_player_with_an_unresolved_request_is_not_called_complete(self):
