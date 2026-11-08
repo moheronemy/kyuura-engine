@@ -20,7 +20,8 @@ from kyuura_engine import preset_deck
 from kyuura_engine.client_api import ClientHub
 
 from . import actions as B
-from .policies import UniformPolicy, host_seed, player_seed
+from .metrics import Metrics
+from .policies import STAGE, TUPLE, UniformPolicy, host_seed, player_seed
 from kyuura_engine.replay_record import checks
 
 from .records import RecordingGame, canonical
@@ -81,6 +82,7 @@ class Config:
     host_seed: int = 1
     profile: str = "deep"
     limits: Limits = field(default_factory=Limits)
+    distribution: str = STAGE  # V1: STAGE（V0 と同じ）か TUPLE
     run_id: str = "v0"
 
 
@@ -119,8 +121,10 @@ class Runner:
         self.config = config
         self.limits = config.limits
         self.clock = clock
-        self.policies = {0: policy_factory(player_seed(config.policy_seed, 0)), 1: policy_factory(player_seed(config.policy_seed, 1)),
-                         HOST: policy_factory(host_seed(config.host_seed))}
+        self.policies = {0: policy_factory(player_seed(config.policy_seed, 0), config.distribution),
+                         1: policy_factory(player_seed(config.policy_seed, 1), config.distribution),
+                         HOST: policy_factory(host_seed(config.host_seed), config.distribution)}
+        self.metrics = Metrics()
         self.wrap_endpoint = wrap_endpoint or (lambda actor, endpoint: endpoint)
         self.trace: list[dict[str, Any]] = []  # 検証者用の操作の記録（全主体）
         self.actor_logs: dict[Any, list[dict[str, Any]]] = {0: [], 1: [], HOST: []}  # 主体ごとの、その主体が受け取った応答と選択（本人向け）
@@ -149,12 +153,16 @@ class Runner:
         except Exception as error:  # 入口は例外を投げない約束。ランナーの誤りも含めて、ほかの分類に変えずに記録する
             termination, detail = EXCEPTION, {"type": type(error).__name__, "message": str(error), "traceback": traceback.format_exc()}
         record = None if self.game is None else self.game.close()
+        self.metrics.axis("termination", termination)
+        if termination in (HALTED_KNOWN, HALTED_UNCLASSIFIED):
+            self.metrics.axis("halt", f"{(detail.get('halt') or {}).get('category')}:{(detail.get('halt') or {}).get('diagnostic_id')}")
         return {"termination": {"class": termination, "detail": detail, "at": self._where()}, "counters": dict(self.counters),
                 "anomalies": list(self.anomalies), "coverage": {k: dict(sorted(v.items())) for k, v in sorted(self.coverage.items())},
                 "trace": self.trace, "actor_logs": self.actor_logs, "record": record,
                 "policies": {str(k): {"name": p.name, "version": p.version, "distribution": p.distribution, "seed": p.seed, "draws": p.draws}
                              for k, p in self.policies.items()},
-                "limits": asdict(self.limits), "elapsed_seconds": round(self.clock() - self._started, 3)}
+                "limits": asdict(self.limits), "elapsed_seconds": round(self.clock() - self._started, 3),
+                "distribution": self.config.distribution, "metrics": self.metrics.to_dict()}
 
     # ---------------------------------------------------------------- 進行
 
@@ -255,7 +263,8 @@ class Runner:
             if cands["situation"] != L.ACTOR_TO_ACT:
                 raise _Stop(INCONSISTENCY, {"reason": "waiting_actor_not_to_act", "actor": actor, "situation": cands["situation"],
                                             "empty_reason": cands["empty_reason"]})
-            in_scope, scope = self._scope(cands, unbuildable)
+            in_scope, scope, reasons = self._scope(cands, unbuildable)
+            self.metrics.fetch(self.position, cands, in_scope, reasons)
             if not in_scope:
                 raise _Stop(INPUT_UNAVAILABLE, {"actor": actor, "empty_reason": cands["empty_reason"], "scope": scope,
                                                 "residual_present": cands["coverage"]["residual"]["present"], "unbuildable": unbuildable,
@@ -267,6 +276,8 @@ class Runner:
             context = {"view": own_view, "candidates": cands}
             index, reason = policy.choose("candidate", in_scope, context)
             candidate = in_scope[index]
+            self.metrics.selected(candidate)
+            kind = candidate["kind"]
             allowed = B.FALLBACK_PROCESSABILITY if scope["fallback_unverified"] else B.DEEP_PROCESSABILITY
             entry = self._attempt(actor, candidate, reason, scope)
             log = {"type": "attempt", "n": entry["n"], "position": self.position, "candidates": response,
@@ -281,11 +292,13 @@ class Runner:
                 if not answer.get("ok"):
                     entry["build"] = {"inputs_refused": inputs.get("refusal")}
                     self._anomaly("inputs_refused_on_fresh_handle", entry, {"refusal": inputs.get("refusal")})
+                    self.metrics.build_failed(kind, "inputs_refused")
                     continue
                 if "withheld" in inputs:
                     entry["build"] = {"withheld": inputs["withheld"]["code"]}
                     self.counters["withheld"] += 1
                     unbuildable[candidate_key(candidate)] = "withheld"
+                    self.metrics.build_failed(kind, "withheld")
                     continue
                 stages = inputs["stages"]
                 # 依存する段の形の確かめ（legal_actions.stage_dependency_problems）は、2 段目以降のすべてが depends_on_stage か path_stages を持つ段の並び
@@ -297,8 +310,13 @@ class Runner:
                     entry["build"] = {"stage_problems": problems}
                     raise _Stop(API_CONTRACT_UNKNOWN, {"reason": "stage_dependency_problems", "problems": problems, "attempt": entry["n"]})
                 entry["stages"] = stages
+                method = None
                 try:
-                    choices, picks, meaning = B.build_choices(stages, policy, {"view": own_view, "candidate": candidate}, allowed)
+                    if policy.distribution == TUPLE:
+                        choices, picks, meaning, method = B.build_choices_tuple(stages, policy, {"view": own_view, "candidate": candidate}, allowed)
+                        entry["build_method"] = method
+                    else:
+                        choices, picks, meaning = B.build_choices(stages, policy, {"view": own_view, "candidate": candidate}, allowed)
                 except B.ContractUnknown as error:
                     entry["build"] = {"contract_unknown": error.detail}
                     raise _Stop(API_CONTRACT_UNKNOWN, {"reason": "stage_contract", "detail": error.detail, "attempt": entry["n"]}) from None
@@ -306,21 +324,26 @@ class Runner:
                     entry["build"] = {"unbuildable": error.reason, "stage": error.stage}
                     self.counters["unbuildable"] += 1
                     unbuildable[candidate_key(candidate)] = error.reason
+                    self.metrics.build_failed(kind, error.reason)
                     continue
                 self._cover_stages(stages, meaning)
+                self.metrics.built(kind, stages, method)
             else:
                 choices, picks, meaning = [], [], []
+                self.metrics.built(kind, [], None)
             entry.update({"build": "ok", "choices": choices, "picks": picks, "meaning": meaning})
             log["choice"].update({"choices": choices, "picks": picks})
             signature = canonical([candidate_key(candidate), meaning])
             if signature in tried:
                 entry["build"] = "ok_already_tried"
                 self.counters["retry_same_input"] += 1
+                self.metrics.already_tried(kind)
                 continue
             checked = request(endpoint, "check", **handle, choices=choices)
             checked["_handle"], checked["_choices"] = handle, choices
             entry["check"] = {k: v for k, v in checked.items() if not k.startswith("_")}
             log["check"] = entry["check"]
+            self.metrics.checked(kind, bool(checked["response"]["valid"]))
             if not checked["response"]["valid"]:
                 self.counters["check_invalid"] += 1
                 tried.add(signature)
@@ -341,6 +364,7 @@ class Runner:
             log["submit"] = sent
             outcome = sent.get("outcome")
             self._cover("outcome", outcome)
+            self.metrics.submitted(kind, outcome, (sent.get("result") or {}).get("status") if outcome == D.ACCEPTED else None)
             if outcome == D.ACCEPTED:
                 self.counters["accepted"] += 1
                 self._cover("accepted_kind", candidate["kind"])
@@ -393,6 +417,7 @@ class Runner:
         unverified も許す（deep_fallback_unverified として記録）。範囲から除いた候補は理由ごとに数える。入力を作れなかった候補は、同じ状態では選び直さない。"""
         display = set(cands["coverage"]["display_only_kinds"])
         excluded: dict[str, int] = {}
+        reasons: dict[str, str] = {}
         for c in cands["candidates"]:
             self._cover("offered_kind", c["kind"])
 
@@ -412,12 +437,14 @@ class Runner:
                     chosen.append(c)
                 else:
                     excluded[why] = excluded.get(why, 0) + 1
+                    reasons[c["id"]] = why
             return chosen
 
         chosen = pick(B.DEEP_PROCESSABILITY)
         fallback = False
         if not chosen:
             excluded.clear()
+            reasons.clear()
             chosen = pick(B.FALLBACK_PROCESSABILITY)
             fallback = bool(chosen)
             if fallback:
@@ -426,7 +453,7 @@ class Runner:
             self._cover("scope_excluded", why)
         for item in cands["coverage"]["residual"]["present"]:
             self._cover("residual_present", item["id"])
-        return chosen, {"in_scope": len(chosen), "excluded": excluded, "fallback_unverified": fallback}
+        return chosen, {"in_scope": len(chosen), "excluded": excluded, "fallback_unverified": fallback}, reasons
 
     def _validate_candidates(self, actor, cands: dict[str, Any]) -> None:
         """知らない値を推測で扱わない（仕様 4.4 節）。"""

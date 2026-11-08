@@ -16,6 +16,10 @@ POLICY_VERSION = 1
 # 分布の名前（仕様 3.1 節）。候補を均等に選び、各段で前の段の選び方のもとで契約が許す選べるものを均等に選ぶ。完成した入力の組の均等（uniform-tuple）・
 # 全候補の操作の均等（uniform-action）ではない
 DISTRIBUTION = "uniform-candidate+uniform-stage"
+STAGE = DISTRIBUTION
+# V1: 候補は均等に選び、その候補の中で、契約の上で作れる完成した入力の組（上限 4,096）を均等に選ぶ。全候補を通した操作の均等ではない。上限を超えた候補は STAGE に戻す
+TUPLE = "uniform-candidate+uniform-tuple"
+DISTRIBUTIONS = (STAGE, TUPLE)
 
 
 class UniformPolicy:
@@ -23,9 +27,11 @@ class UniformPolicy:
 
     name = POLICY_NAME
     version = POLICY_VERSION
-    distribution = DISTRIBUTION
 
-    def __init__(self, seed: str):
+    def __init__(self, seed: str, distribution: str = STAGE):
+        if distribution not in DISTRIBUTIONS:
+            raise ValueError(f"知らない分布 {distribution!r}")
+        self.distribution = distribution  # 行動生成がどちらの組み立て方を使うか（選ぶ処理は同じ: 渡された並びの位置を均等に選ぶ）
         self.seed = seed
         self._rng = random.Random(seed)
         self.draws = 0

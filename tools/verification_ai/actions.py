@@ -206,3 +206,112 @@ def meaning_of(number: int, source: dict[str, Any], ids: list[str]) -> list[dict
     カード・場のポケモン・ワザ・処理可能性などの中身はすべて残す（比べで差を隠さない）。番号は応答ごとの値なので、意味の比べには使わない。"""
     by_id = {o["id"]: o for o in source.get("options", [])}
     return [{"stage": number, "option": {k: v for k, v in by_id[i].items() if k not in ("id", "after")}} for i in ids]
+
+
+# ---------------------------------------------------------------- V1: 候補の中の完成した入力の組の列挙（uniform-tuple。docs/verification-ai-v1.md 3.2 節）
+
+TUPLE_LIMIT = 4_096  # 列挙する完成した入力の組の数の上限（超えたら段ごとの方式に戻す）
+NODE_LIMIT = 65_536  # 列挙の途中で調べる部分の入力の数の上限（組が少なくても、途中の並びが多すぎる段で止まらないため）
+ORDER_KEEP = frozenset({"significant", "unconfirmed"})  # 並びを別の入力として数える（並びが結果に入る・確かめていない）
+ORDER_SET = frozenset({"not_significant", "not_applicable"})  # 並びを数えない（API の並びの 1 通りだけ）
+
+
+class TupleLimit(Exception):
+    """列挙の上限を超えた（``reason`` は ``tuple_limit``・``node_limit``）。"""
+
+    def __init__(self, reason: str, count: int):
+        super().__init__(f"{reason} ({count})")
+        self.reason = reason
+        self.count = count
+
+
+def _sequences(stage, ids: list[str], order_keep: bool):
+    """その段の、契約が許す選び方の並び（選ぶ数ごと。重なりなし）。並びを数えない段は API の並びの組だけ。total_units は units の合計で絞る。"""
+    lo, hi = _count(stage)
+    units = None
+    if "total_units" in stage:
+        units = {o["id"]: o.get("units") for o in stage.get("options", [])}
+        if any(type(units.get(i)) is not int for i in ids):
+            raise ContractUnknown(f"stage {stage['stage']}: total_units without integer units")
+    for k in range(lo, min(hi, len(ids)) + 1):
+        for combo in itertools.combinations(ids, k):
+            if units is not None and not stage["total_units"]["min"] <= sum(units[i] for i in combo) <= stage["total_units"]["max"]:
+                continue
+            if order_keep and k > 1:
+                yield from itertools.permutations(combo)
+            else:
+                yield combo
+
+
+def enumerate_inputs(stages: list[dict[str, Any]], allowed: frozenset[str] = DEEP_PROCESSABILITY, *, limit: int = TUPLE_LIMIT,
+                     node_limit: int = NODE_LIMIT) -> list[tuple[list[Any], list[dict[str, Any]]]]:
+    """候補の、契約の上で作れる完成した入力の組（choices, meaning）をすべて、段の順・API の並びの順に返す。
+
+    作れる組であって、合法・受理される組ではない（組ごとに check・エンジンの試行をしない）。並びが significant・unconfirmed の段は並びの違いを別の組として数え、
+    not_significant・not_applicable の段は API の並びの 1 通りだけを数える（``order`` がない 2 個以上の段は並びを数える。推測で並びを捨てない）。"""
+    for position, stage in enumerate(stages, 1):
+        unknown = sorted(set(stage) - STAGE_KEYS)
+        if unknown:
+            raise ContractUnknown(f"stage {position}: unknown keys {unknown}")
+        if stage.get("stage") != position:
+            raise ContractUnknown(f"stage number {stage.get('stage')!r} at position {position}")
+        if stage.get("input") not in (CHOOSE_OPTION, CHOOSE_VALUE):
+            raise ContractUnknown(f"stage {position}: unknown input {stage.get('input')!r}")
+        if "order" in stage and stage["order"] not in ORDER_KEEP | ORDER_SET:
+            raise ContractUnknown(f"stage {position}: unknown order {stage['order']!r}")
+    out: list[tuple[list[Any], list[dict[str, Any]]]] = []
+    nodes = [0]
+
+    def walk(k: int, selected: dict[int, list[str]], choices: list[Any], meaning: list[dict[str, Any]]) -> None:
+        if k == len(stages):
+            out.append((list(choices), list(meaning)))
+            if len(out) > limit:
+                raise TupleLimit("tuple_limit", len(out))
+            return
+        stage = stages[k]
+        number = stage["stage"]
+        if stage["input"] == CHOOSE_VALUE:
+            lo, hi = stage["range"]["min"], stage["range"]["max"]
+            if _count(stage) != (1, 1):
+                raise ContractUnknown(f"stage {number}: choose_value with count {stage['count']!r}")
+            if hi - lo + 1 > VALUE_RANGE_LIMIT:
+                raise Unbuildable("range_too_large", number)
+            for value in range(lo, hi + 1):
+                nodes[0] += 1
+                if nodes[0] > node_limit:
+                    raise TupleLimit("node_limit", nodes[0])
+                walk(k + 1, {**selected, number: []}, [*choices, value], [*meaning, {"stage": number, "value": value}])
+            return
+        ids = _allowed_ids(stages, stage, selected, allowed)
+        keep = stage.get("order") in ORDER_KEEP or ("order" not in stage and _count(stage)[1] > 1)
+        source = stages[stage["options_from_stage"] - 1] if "options_from_stage" in stage else stage
+        for seq in _sequences(stage, ids, keep):
+            nodes[0] += 1
+            if nodes[0] > node_limit:
+                raise TupleLimit("node_limit", nodes[0])
+            walk(k + 1, {**selected, number: list(seq)}, [*choices, *seq], [*meaning, *meaning_of(number, source, list(seq))])
+
+    walk(0, {}, [], [])
+    return out
+
+
+def build_choices_tuple(stages: list[dict[str, Any]], policy, context: dict[str, Any], allowed: frozenset[str] = DEEP_PROCESSABILITY, *,
+                        limit: int = TUPLE_LIMIT, node_limit: int = NODE_LIMIT):
+    """uniform-tuple: 候補の中の完成した入力の組を上限つきで列挙し、方策がその中から 1 つを選ぶ。(choices, picks, meaning, method) を返す。
+
+    上限を超えたら、段ごとの方式（``build_choices``）に戻し、``method`` に戻した事実と理由を書く（列挙は方策の乱数を使わないので、戻しても乱数の使い方は
+    段ごとの方式と同じ）。作れる組がなければ ``Unbuildable("no_constructible_tuple")``。"""
+    try:
+        tuples = enumerate_inputs(stages, allowed, limit=limit, node_limit=node_limit)
+    except TupleLimit as over:
+        choices, picks, meaning = build_choices(stages, policy, context, allowed)
+        return choices, picks, meaning, {"method": "stage_fallback", "reason": over.reason, "count_at_stop": over.count}
+    if not tuples:
+        raise Unbuildable("no_constructible_tuple")
+    picks: list[dict[str, Any]] = []
+    index = 0
+    if len(tuples) > 1:
+        index, reason = policy.choose("tuple", [m for _c, m in tuples], context)
+        picks.append({"stage": None, "purpose": "tuple", "items": len(tuples), "index": index, "reason": reason})
+    choices, meaning = tuples[index]
+    return choices, picks, meaning, {"method": "tuple", "tuples": len(tuples)}
