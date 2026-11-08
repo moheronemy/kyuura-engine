@@ -175,5 +175,23 @@ class FixedReachTest(unittest.TestCase):
         self.assertEqual(result["termination"]["class"], V.NEGATIVE_SIDE_EFFECT)
 
 
+class SummarizeTest(unittest.TestCase):
+    def test_run_writes_aggregate_from_saved_files(self):
+        """入力のない候補の完成した入力の区分は no_input と書く（None のキーで集計の書き出しが止まらない）。集計は保存した局のファイルだけから作る。"""
+        import json
+        import tempfile
+        from pathlib import Path
+
+        from tools.verification_ai import run_v3_2
+
+        with tempfile.TemporaryDirectory() as tmp:
+            code = run_v3_2.run(Path(tmp), "test", [])
+            self.assertIn(code, (0, 3))
+            agg = json.loads((Path(tmp) / "verifier" / "runs" / "v3-2-blaine-s1-default" / "aggregate.json").read_text(encoding="utf-8"))
+            boundary = next(r for r in agg["games"] if r["game"] == "boundary")["boundary"]
+            self.assertNotIn("None", boundary["built_input_class"])
+            self.assertEqual(run_v3_2.summarize(Path(tmp), "test", written_by="test"), code)
+
+
 if __name__ == "__main__":
     unittest.main()

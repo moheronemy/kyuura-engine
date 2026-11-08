@@ -266,31 +266,83 @@ def run(out: Path, engine_commit: str, argv: list[str]) -> int:
                                      "reasons": Counter(e["candidate_reason"].split(":")[2] for e in result["trace"]
                                                         if e.get("type") == "attempt" and e["candidate_reason"].startswith("boundary:")),
                                      "accepted_kinds": {k: v["outcome"].get("accepted", 0) for k, v in result["metrics"]["kinds"].items() if v["outcome"].get("accepted")}}})
+        print(json.dumps({"game": item["game"], "termination": result["termination"]["class"], "accepted": result["counters"]["accepted"],
+                          "replay_run": verification["replay_run"]["status"], "elapsed_seconds": result["elapsed_seconds"]}, ensure_ascii=False))
+    return summarize(out, engine_commit, total_seconds=round(time.monotonic() - start, 3))
+
+
+def _negative_summary(records: list[dict[str, Any]]) -> dict[str, Any]:
+    neg = [r for r in records if r.get("type") == "negative"]
+    rec = [r for r in records if r.get("type") == "negative_recovery"]
+    requests = Counter(q["request"] for r in neg if r.get("status") == "run" for q in r.get("responses", []))
+    return {"requests": {"check": requests.get("check", 0), "submit": requests.get("submit", 0)}, "recovery_checks": len(rec),
+            "status": {f"{k}:{s}": n for (k, s), n in sorted(Counter((r["mutation"], r.get("status")) for r in neg).items())},
+            "verdicts": {f"{k}:{v}": n for (k, v), n in sorted(Counter((r["mutation"], r.get("verdict")) for r in neg if r.get("verdict")).items())},
+            "recovery_verdicts": dict(Counter(r.get("verdict") for r in rec)),
+            "not_applicable": {r["mutation"]: r.get("not_applicable") or r.get("reason") for r in neg if r.get("status") in ("not_applicable", "not_run")}}
+
+
+def summarize(out: Path, engine_commit: str, *, total_seconds: float | None = None, written_by: str = "run") -> int:
+    """保存した局のファイル（header・result・verification・trace・negatives・options_by_path・attachment）だけから、集計（aggregate）と公開の集計を書く（対戦を走らせない）。"""
+    group = "v3-2-blaine-s1-default"
+    gdir = out / "verifier" / "runs" / group
+    plan = json.loads((gdir / "plan.json").read_text(encoding="utf-8"))
+    rows, problems = [], []
+    for item in plan["games"]:
+        d = gdir / item["game"]
+        if not (d / "result.json").exists():
+            rows.append({**item, "status": "not_run"})
+            continue
+        header = json.loads((d / "header.json").read_text(encoding="utf-8"))
+        result = json.loads((d / "result.json").read_text(encoding="utf-8"))
+        verification = json.loads((d / "verification.json").read_text(encoding="utf-8"))
+        trace = [json.loads(line) for line in (d / "trace.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
+        attempts = [e for e in trace if e.get("type") == "attempt"]
+        accepted = [e for e in attempts if (e.get("submit") or {}).get("outcome") == "accepted"]
+        term = result["termination"]["class"]
+        verdict, why = J.judge_termination(term, accepted[-1]["candidate"].get("processability") if accepted else None)
+        row = {**item, "status": "run", "started": header.get("started"), "finished": header.get("finished"), "termination": term,
+               "termination_detail": result["termination"]["detail"], "judge_termination": {"verdict": verdict, "reasons": why},
+               "accepted": result["counters"]["accepted"], "replay_run": verification["replay_run"]["status"],
+               "replay_matches_expectation": verification["replay_run"]["matches_expectation"],
+               "correspondence_problems": len(verification["correspondence_problems"]), "anomalies": [a["kind"] for a in result["anomalies"]],
+               "elapsed_seconds": result["elapsed_seconds"],
+               "normal_submit_verdicts": dict(Counter((e.get("judge") or {}).get("verdict") for e in attempts if e.get("judge"))),
+               "chooser": dict(Counter(e["candidate_reason"].split(":")[0] for e in attempts))}
+        if (d / "negatives.jsonl").exists():
+            records = [json.loads(line) for line in (d / "negatives.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
+            report = json.loads((d / "options_by_path.json").read_text(encoding="utf-8"))
+            row.update({"negative": _negative_summary(records), "attachment": json.loads((d / "attachment.json").read_text(encoding="utf-8")),
+                        "options_by_path": {k: report.get(k) for k in ("present", "path_stages", "count", "decline")} | {"keys": len(report.get("keys", {}))}})
+        else:
+            classes = Counter(str(e.get("candidate_class")) for e in attempts if "candidate_class" in e)
+            inputs = Counter(str((e.get("input_processability") or {}).get("class") or "no_input") for e in attempts if "input_processability" in e)
+            offered = result["metrics"]["axes"].get("offered_processability", {})
+            row.update({"boundary": {"offered_processability_fetches": offered, "chosen_candidate_class": dict(classes), "built_input_class": dict(inputs),
+                                     "unverified_offered": offered.get("unverified", 0), "unverified_chosen": classes.get("unverified", 0),
+                                     "accepted_kinds": {k: v["outcome"].get("accepted", 0) for k, v in result["metrics"]["kinds"].items() if v["outcome"].get("accepted")}}})
         rows.append(row)
         if not (row["replay_matches_expectation"] and not row["correspondence_problems"]):
             problems.append(f"{item['game']}: replay_run・記録の対応")
-        print(json.dumps({k: row.get(k) for k in ("game", "termination", "accepted", "replay_run", "attachment", "elapsed_seconds")}
-                         | ({"negative": {k: row["negative"][k] for k in ("requests", "recovery_checks", "status", "verdicts", "recovery_verdicts")}} if "negative" in row else {})
-                         | ({"boundary": row["boundary"]} if "boundary" in row else {}), ensure_ascii=False, default=str))
-    total = round(time.monotonic() - start, 3)
     suspects = sum(n for r in rows if r.get("negative") for k, n in r["negative"]["verdicts"].items() if k.endswith(":suspect"))
     suspects += sum((r.get("normal_submit_verdicts") or {}).get("suspect", 0) for r in rows)
-    aggregate = {"games": rows, "total_seconds": total, "suspect_count": suspects, "tool_problems": problems, "judge_rules_version": J.JUDGE_RULES_VERSION}
+    suspects += sum(1 for r in rows if (r.get("judge_termination") or {}).get("verdict") == J.SUSPECT)
+    aggregate = {"games": rows, "total_seconds": total_seconds, "suspect_count": suspects, "tool_problems": problems, "judge_rules_version": J.JUDGE_RULES_VERSION,
+                 "written_by": written_by}
     R.write_json(gdir / "aggregate.json", aggregate)
     R.write_json(out / "public" / "runs" / group / "summary.json", {
-        "tool": {"name": "tools.verification_ai", "version": VERSION}, "engine": {"git_commit": engine_commit, "version": ident["version"],
-                                                                               "behavior_digest": ident["implementation"]["behavior_digest"]},
+        "tool": {"name": "tools.verification_ai", "version": VERSION}, "engine": {"git_commit": engine_commit},
         "deck": {"source": DECK_SOURCE["file"], "content_sha256": DECK_SOURCE["content_sha256"]}, "convention_set": "default", "suspect_count": suspects,
-        "judge_rules_version": J.JUDGE_RULES_VERSION, "total_seconds": total,
-        "games": [{k: r.get(k) for k in ("game", "status", "termination", "accepted", "replay_run", "replay_matches_expectation", "correspondence_problems",
-                                         "normal_submit_verdicts", "options_by_path")}
+        "judge_rules_version": J.JUDGE_RULES_VERSION, "written_by": written_by,
+        "games": [{k: r.get(k) for k in ("game", "status", "termination", "judge_termination", "accepted", "replay_run", "replay_matches_expectation",
+                                         "correspondence_problems", "normal_submit_verdicts", "chooser", "options_by_path")}
                   | ({"negative": {k: r["negative"][k] for k in ("requests", "recovery_checks", "status", "verdicts", "recovery_verdicts")}} if r.get("negative") else {})
                   | ({"attachment": {k: (r.get("attachment") or {}).get(k) for k in ("energy2_in_command", "attached_by_observation", "input_length")}}
                      if r.get("attachment") else {})
                   | ({"boundary": {k: r["boundary"][k] for k in ("offered_processability_fetches", "chosen_candidate_class", "built_input_class",
                                                                     "unverified_offered", "unverified_chosen")}} if r.get("boundary") else {})
                   for r in rows]})
-    print(json.dumps({"group": group, "total_seconds": total, "suspect_count": suspects, "tool_problems": problems}, ensure_ascii=False))
+    print(json.dumps({"group": group, "suspect_count": suspects, "tool_problems": problems, "written_by": written_by}, ensure_ascii=False))
     if problems or any(r["status"] != "run" for r in rows):
         return 1
     return 3 if suspects else 0
@@ -303,7 +355,12 @@ def main(argv: list[str] | None = None) -> int:
     rn = sub.add_parser("run")
     rn.add_argument("--out", required=True)
     rn.add_argument("--engine-commit", required=True)
+    sm = sub.add_parser("summarize")  # 保存した局のファイルから集計を書き直す（対戦を走らせない）
+    sm.add_argument("--out", required=True)
+    sm.add_argument("--engine-commit", required=True)
     args = parser.parse_args(argv)
+    if args.cmd == "summarize":
+        return summarize(Path(args.out), args.engine_commit, written_by="summarize（保存した局のファイルから。対戦を走らせていない）")
     return run(Path(args.out), args.engine_commit, ["python", "-m", "tools.verification_ai.run_v3_2", *argv])
 
 
