@@ -77,7 +77,8 @@ U7-3 の 2 段（`depends_on_stage`・`options_by_choice`）を、意味を変�
 - 組み合わせの全部（全段の直積）は並べません。並べるのは、確かめを通った組の前の段の選び方ごとの続きだけです
 - 入力を変えたときに無効にする範囲: k 段目を変えたら、k+1 段目以降の選び方と、それまでの入力の検査（`check`）の結果は無効です（番号が別になるので、古い番号は新しい k 段目の `options_by_choice` にない）
 - `stage_dependency_problems` が、段の番号の並び・直前の段への依存（循環・前でない段）・存在しない参照・`after` と `options_by_choice` の食い違いを見つけます
-- 古いクライアント: `depends_on_stage`・`options_by_choice` の意味は U7-3 と同じなので、新しい項目を無視するクライアントは、直前の段の番号で引けば正しい組だけを選べます。項目の一覧で知らない項目を止めるクライアント（GUI の契約の表の `stage_keys`）は、`upstream_stages`・`after` を知るまで「不明な応答」として止めます（安全な側の失敗）。既存の項目の意味を変えていないので、形式の版は 1 のままです
+- 古いクライアント: `depends_on_stage`・`options_by_choice` の意味は U7-3 と同じです。項目の一覧で知らない項目を止めるクライアント（GUI の契約の表の `stage_keys`）は、`upstream_stages`・`after` を知るまで「不明な応答」として止めます（安全な側の失敗）。既存の項目の意味を変えていないので、形式の版は 1 のままです
+  - 訂正（CORR-3。[legal-actions-u7-5fg-spec](legal-actions-u7-5fg-spec.md) 0.2 節）: v0.171 では「新しい項目を無視するクライアントは、直前の段の番号で引けば正しい組だけを選べます」と書いていました。成り立つのは、各段の `depends_on_stage` が指す段の選ぶもので `options_by_choice` を引くクライアントだけです。U7-3 の 2 段を前提に 1 段目で引くクライアントは組が作れず（閉じた側の失敗）、`options_by_choice` を使わないクライアントの安全はサーバの入力の検査によります（小さな既知の入力で確かめた）
 
 ## 4. 情報源と、E 群・F-4・F-5 の結論
 
@@ -116,6 +117,7 @@ U7-3 の 2 段（`depends_on_stage`・`options_by_choice`）を、意味を変�
 ## 7. GUI への引き継ぎ（GUI リポジトリは変更していない）
 
 - 比べる相手（2026-11-08 に読み取りだけで確かめた）: GUI の最新の作業ブランチ `feature/engine-u7-4-attacks` の `3649946`（エンジン `9506d63`・0.166.0 を固定）。GUI の `main` の `7660ab4` はエンジン `d0c5cfa`（v0.164）を固定
+  - 訂正（CORR-3）: 上は古い比べる相手でした。最新の公開の作業ブランチは `feature/engine-u7-5-trainers-stadium` の `9c36a8f` で、エンジン `0885d66`（0.170.0）を固定しています（[legal-actions-u7-5fg-spec](legal-actions-u7-5fg-spec.md) 0.1 節）。0.170.0 からの差は、この章の `use_power` の項目です
 - 固定して導入を確かめた完全なコミットと版: `kyuura-engine @ git+https://github.com/moheronemy/kyuura-engine@74c8e1f8ca03d017d5c0a8a79e6fdaa33d25b7f8`（版 0.171.0。9 章）。GUI の固定を 0.166.0 からこのコミットに更新すると、U7-5a〜U7-5e の差がまとめて入る
 - 0.170.0 からの差（U7-5a〜U7-5d の差は [legal-actions-u7-5d](legal-actions-u7-5d.md) 8.2 節）
   - 新しい候補の種類 `use_power`（特殊能力の位置ごとに 1 つ。同じ種類の候補がいくつもある）
