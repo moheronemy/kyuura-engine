@@ -5323,3 +5323,10 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - R-5 の 8 経路の分類（A: 見えないカードの実行時の確かめ・B: 自分のうらのバトル場のにげる・C: この版が続けられない状態・今の登録では生成されない保守の守り 3 つ）と、最初の補完の計画（うらのバトル場のにげるの入力。実装は採用待ち）。準備の停止の規約集合ごとの既存の扱い。残件の一覧の分類を訂正した
 - 静的な監査（コード・テスト・保存した証跡の読みだけ）。テスト・対戦は実行していない
 - 詳細: [legal-actions-r5-audit.md](legal-actions-r5-audit.md)
+
+## v0.174: R-5 の P6（本人のうらのバトル場のポケモンのにげるの入力）
+
+- `legal_actions._retreat_candidate` のうらの分岐: 入力の公開を confirmed にし、控え・ついているカード（0〜枚数）の 2 段を返す。処理可能性は unverified のまま。にげるエネルギー・個数・タイプを読まず、`total_units`・`units` を省いて段 2 の `cost_evaluation`（not_evaluated）で示す。check は形だけ、submit は既存の `Retreat`。版は 0.174.0（`behavior_digest` が変わった）
+- 確かめ: 新しいテスト `tests/test_legal_actions_p6_face_down_retreat_v0_174.py`（構築盤面: 契約・形の検査・双子・U7 と client_api と直接のコマンドの一致の 3 場面）と関連のモジュール、配布物の照らし（required=62・problems=0）、コミット `f7bf450580bf0d02573b4d032271be6b8e12d699` の Git の URL からの通常のインストールのスモーク
+- R-5 の全体は解消していない（P2・P3〜P5・保守の守りが残る）。GUI・検証用 AI の追従は未着手。new_game からの到達は確かめていない
+- 詳細: [legal-actions-p6-face-down-retreat.md](legal-actions-p6-face-down-retreat.md)
