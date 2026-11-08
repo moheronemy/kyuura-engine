@@ -33,7 +33,8 @@ U7-5 の対象の 7 種類のコマンド（`PlayTrainer`・`UsePokemonPower`・
     - `D-U75-CHAOS`: F-1 は両モード共通の不具合として別の作業 T-F1 で直す（トレーナーの前）。U7-5a・b では裁定・動作を変えない
     - `D-U75-ENERGY2`: カツラの 2 枚目（AttachEnergy.energy2）は U7-5g に含める
     - `D-U75-TRAINER`: U7-5c（2026-11-08 の依頼）: 手札の PlayTrainer だけを扱い、UsePokemonPower・UseStadium・CheckFaceUpDeckCard・energy2 は実装しない。カードの選択の表示は本人の手札だけで決まるので返す。読む情報を確かめていない使うための条件は呼ばず、処理可能性で示す（unverified）。F-9 の今の扱い（公開の情報だけで使えない場合も決定を出す）は変えない
-  - 実装した単位: `U7-5a`、`U7-5b`、`T-F1`、`U7-5c`
+    - `D-U75-STADIUM`: U7-5d（2026-11-08 の依頼）: 場のスタジアムの UseStadium だけを扱い、特殊能力・CheckFaceUpDeckCard・energy2 は実装しない。候補は使ってよい効果の登録（activated）から作り、選ばせるものは型の宣言（energy_choice）から作る。3 段の入力の基盤は先に作らない。キョウの忍者ジムの保守的な NJ1 は緩めない
+  - 実装した単位: `U7-5a`、`U7-5b`、`T-F1`、`U7-5c`、`U7-5d`
   - 仕様の訂正:
     - `CORR-1`（E 群の意味）: 情報源が未確認の経路を、処理可能性の unverified だけで公開してよいと扱わない。処理可能性と入力の公開の安全性は別の軸。選べるもの・件数・理由を公開して安全と確かめられないなら、入力は返さない（unconfirmed）。型・生成箇所の登録だけで安全と認めない
     - `CORR-2`（GUI への影響の比べる相手）: 設計の報告の d0c5cfa はエンジンのコミット（GUI の main が固定するエンジン）で、GUI のコミットではない。公開されている最新の GUI は feature/engine-u7-4-attacks の 3649946（エンジン 9506d63・0.166.0 を固定）。GUI のコミットと固定するエンジンを分けて書く（GUI_REF）
@@ -179,6 +180,7 @@ U7-5 の対象の 7 種類のコマンド（`PlayTrainer`・`UsePokemonPower`・
 | US-1 | `UseStadium` | `kyuura_engine/stadiums.py::stadium_in_play` | `A` | `candidates` | 場のスタジアム |
 | US-2 | `UseStadium` | `kyuura_engine/effects.py::StadiumEffect.check_activation` | `B` | `inputs` | energy を選ばせる 2 の実装は入力がそろうと決まる。ほかは A。キョウの忍者ジムは A-own |
 | US-3 | `UseStadium` | `kyuura_engine/effects.py::CoinReturnOwnerPokemonStadium.check_activation` | `A` | `candidates` | 本人のうらのカードがあると、対象を調べる途中で FD1（F-3。本当のカードによらない） |
+| US-4 | `UseStadium` | `kyuura_engine/effects.py::CoinBenchOwnerBasicFromDeckStadium.check_activation` | `A-own` | `candidates` | v0.170: キョウの忍者ジムは持ち主の知識の下限（deck_target_lower_bound・bench_entry_unconfirmed）。山札を直接たどるのは、山札と見えないほかの場所を合わせた集合のエンジンの不具合の確かめ（placed_entry_power_guard）だけで、配分によらない。使える 8 の実装の閉包に状態の複製はない（docs/legal-actions-u7-5d.md 3 章） |
 | RD-1 | `RemoveDisguise` | `kyuura_engine/engine.py::_remove_disguise` | `A` | `candidates` | 番・自分の場・disguise（どれも公開） |
 | RD-2 | `RemoveDisguise` | `kyuura_engine/effects.py::max_hp_drops` | `D` | `none` | 処理のあとの確かめ（MH1・TK1）。値は公開だが、処理を試さないと決めない |
 | DF-1 | `DiscardFromPlay` | `kyuura_engine/effects.py::play_as_pokemon_effect` | `A` | `candidates` | おもてのカードの場での役割。うらのカードには呼ばない（F-2） |
@@ -195,7 +197,7 @@ U7-5 の対象の 7 種類のコマンド（`PlayTrainer`・`UsePokemonPower`・
 <!-- generated:rest-command-index begin -->
 - `PlayTrainer`: PT-1・PT-2・PT-3・PT-4・PT-5・PT-5o・PT-5e・PT-5t・PT-6・PT-7・PT-8・PT-9・PT-10
 - `UsePokemonPower`: UP-0・UP-1・UP-2・UP-3・UP-4・UP-5・UP-5o・UP-5e・UP-6
-- `UseStadium`: US-1・US-2・US-3
+- `UseStadium`: US-1・US-2・US-3・US-4
 - `RemoveDisguise`: RD-1・RD-2
 - `DiscardFromPlay`: DF-1・DF-2
 - `RevealFaceDown`: RF-1・RF-2

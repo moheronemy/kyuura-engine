@@ -194,6 +194,9 @@ CHECKS = [
      "note": "energy を選ばせる 2 の実装は入力がそろうと決まる。ほかは A。キョウの忍者ジムは A-own"},
     {"id": "US-3", "command": "UseStadium", "ref": f"{EFFECTS}::CoinReturnOwnerPokemonStadium.check_activation", "source": "A", "use": "candidates",
      "note": "本人のうらのカードがあると、対象を調べる途中で FD1（F-3。本当のカードによらない）"},
+    {"id": "US-4", "command": "UseStadium", "ref": f"{EFFECTS}::CoinBenchOwnerBasicFromDeckStadium.check_activation", "source": "A-own", "use": "candidates",
+     "note": "v0.170: キョウの忍者ジムは持ち主の知識の下限（deck_target_lower_bound・bench_entry_unconfirmed）。山札を直接たどるのは、山札と見えないほかの場所を合わせた集合の"
+             "エンジンの不具合の確かめ（placed_entry_power_guard）だけで、配分によらない。使える 8 の実装の閉包に状態の複製はない（docs/legal-actions-u7-5d.md 3 章）"},
     # RemoveDisguise
     {"id": "RD-1", "command": "RemoveDisguise", "ref": f"{ENGINE}::_remove_disguise", "source": "A", "use": "candidates", "note": "番・自分の場・disguise（どれも公開）"},
     {"id": "RD-2", "command": "RemoveDisguise", "ref": f"{EFFECTS}::max_hp_drops", "source": "D", "use": "none", "note": "処理のあとの確かめ（MH1・TK1）。値は公開だが、処理を試さないと決めない"},
@@ -419,12 +422,18 @@ UNITS = [
      "gui": "1 段。受理のあとの決定の種類が多い（検索・見たカード。U7-1 の DECK_REVEALING_KINDS の契約の例外）",
      "open": ["PT-5e の 5 の実装（実際の山札から引いて試す）の読む値をたどる", "effects.py の外の閉包（PT-5t・A 群の呼ぶ別のモジュールの関数の 2 段目より先）"]},
     {"id": "U7-5d", "name": "場のスタジアム（UseStadium）", "commands": ["UseStadium"], "depends": ["U7-5a"], "first": False,
-     "basis": ["9 の実装のうち energy を選ばせるのは 2 つ。ほかは選ばせるものがない。キョウの忍者ジムだけ A-own"],
-     "changes": ["engine.py: _use_stadium の check_activation までを check_use_stadium にする", "legal_actions.py: 選ばせるもののない候補と、energy の 1 段の候補"],
+     "status": "implemented", "implemented_in": "v0.170（docs/legal-actions-u7-5d.md）",
+     "basis": ["9 の実装のうち energy を選ばせるのは 2 つ。ほかは選ばせるものがない。キョウの忍者ジムだけ A-own",
+               "v0.170: 使える 8 の実装の check_activation の閉包に、状態の複製・U7-5c の場の試行（state_stop_after・switch_max_hp_drop_check）はない（US-4）"],
+     "changes": ["engine.py: _use_stadium の check_activation までを check_use_stadium にする（同じ順番・同じコード・同じ文）",
+                 "effects.py: StadiumEffect.energy_choice（選ばせるものの宣言。挙動は変えない）",
+                 "legal_actions.py: use_stadium。使ってよい効果（activated）だけ。選ばせるもののない候補と、energy の 1 段の候補"],
      "tests": [["V-NORMAL", "board"], ["V-DECL", "board"], ["V-NONTURN", "board"], ["V-LIMIT", "board"], ["V-NOSIDE", "board"], ["V-BADQUERY", "helper"],
                ["V-PARITY", "board"], ["V-HANDLE", "board"], ["V-CONV", "sequence"], ["V-TWIN", "board"], ["V-INSTALL", "sequence"], ["V-REGRESS", "board"], ["V-JSON", "helper"]],
      "boards": ["tests/test_stadiums_v0_57.py", "tests/test_remaining_stadiums_v0_74.py", "tests/test_ninja_gym_oracle_v0_146.py"],
-     "done": "持ち主でないプレイヤーの使用・同じ番の 2 回目（STADIUM_ALREADY_USED・LK1）・キョウの忍者ジムの双子が通る", "gui": "選ばせるもののない候補と 1 段の候補", "open": []},
+     "done": "持ち主でないプレイヤーの使用・同じ番の 2 回目（STADIUM_ALREADY_USED・LK1）・キョウの忍者ジムの双子が通る", "gui": "選ばせるもののない候補と 1 段の候補",
+     "open": ["キョウの忍者ジムの保守的な NJ1（山札の外の見えないカードの数より多くキョウのたねポケモンがないと止める。v0.146 のまま）",
+              "check_activation が呼ぶ別のモジュールの関数の 2 段目より先"]},
     {"id": "U7-5e", "name": "宣言する特殊能力（UsePokemonPower）", "commands": ["UsePokemonPower"], "depends": ["U7-5b", "U7-5d"], "first": False,
      "basis": ["宣言の入力の形が 9 通り（POWER_SHAPES）。形は check_usable の中にだけあり、登録が宣言していない", "相手のうらのカードを指す入力は X-1 の試行になる（D）"],
      "changes": ["effects.py: 型ごとの選ばせるものの宣言（D-U75-INPUT-DECL。挙動は変えない）", "engine.py: _use_pokemon_power の宣言の前の部分を check_use_pokemon_power にする（_reveal_for_action の扱いは D-U75-POWER-FACE-DOWN）",
@@ -540,8 +549,10 @@ ADOPTION_RECORD = {
         {"id": "D-U75-TRAINER", "decision": "U7-5c（2026-11-08 の依頼）: 手札の PlayTrainer だけを扱い、UsePokemonPower・UseStadium・CheckFaceUpDeckCard・energy2 は実装しない。"
          "カードの選択の表示は本人の手札だけで決まるので返す。読む情報を確かめていない使うための条件は呼ばず、処理可能性で示す（unverified）。F-9 の今の扱い（公開の情報だけで"
          "使えない場合も決定を出す）は変えない"},
+        {"id": "D-U75-STADIUM", "decision": "U7-5d（2026-11-08 の依頼）: 場のスタジアムの UseStadium だけを扱い、特殊能力・CheckFaceUpDeckCard・energy2 は実装しない。"
+         "候補は使ってよい効果の登録（activated）から作り、選ばせるものは型の宣言（energy_choice）から作る。3 段の入力の基盤は先に作らない。キョウの忍者ジムの保守的な NJ1 は緩めない"},
     ],
-    "implemented_units": ["U7-5a", "U7-5b", "T-F1", "U7-5c"],  # T-F1 は 2026-11-08 の依頼で v0.168 に実装（進め方の 2 番目）。U7-5c は同じ日の依頼で v0.169
+    "implemented_units": ["U7-5a", "U7-5b", "T-F1", "U7-5c", "U7-5d"],  # T-F1 は 2026-11-08 の依頼で v0.168 に実装（進め方の 2 番目）。U7-5c は同じ日の依頼で v0.169、U7-5d は v0.170
     "corrections": [
         {"id": "CORR-1", "subject": "E 群の意味", "text": "情報源が未確認の経路を、処理可能性の unverified だけで公開してよいと扱わない。処理可能性と入力の公開の安全性は別の軸。"
          "選べるもの・件数・理由を公開して安全と確かめられないなら、入力は返さない（unconfirmed）。型・生成箇所の登録だけで安全と認めない"},
