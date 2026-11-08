@@ -5310,3 +5310,10 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - V3-3: 既存のテストの盤面から作った fixture 4 つ（出典・sha256・変更・整合を記録。new_game から届いた証拠とは扱わない）を開始のスナップショットから復元し、公開の API だけで 4 ケースを実行した: `unverified` の受理（C1）、`unverified` のエンジンの拒否（C2。副作用なし・本当のカードを公開しない）、受理のあとの決定の答えでの既知の停止 DU1（C3。known_stop）、表示だけの FU2 への不正な要求（C4。CANDIDATE_NOT_EXECUTABLE）。どれも期待どおり、`suspect` 0・`undetermined` 0。C3 は同じスナップショットからの復元と新しい取っ手で同じ結果
 - 構築盤面から始めた実行の完全な再現用記録・`replay_run` は対象の外。V3-4 以降は未実装
 - 詳細: [verification-ai-v3-3.md](verification-ai-v3-3.md)
+
+## v0.173: CN-1（ClientHub・ActionHost が包む対戦の failure の接続）と残件の一覧
+
+- `ReplayCollector`・`ViewHost` に `failure` を加えた（包んだ `HostedGame` の値をそのまま返す。別の失敗の状態を持たない）。対応する包み: `HostedGame`・`ReplayCollector`・`ViewHost`（完全な記録あり・なし）・`RestoredGame`。版は 0.173.0（`behavior_digest` が変わったので、0.172.0 の記録・スナップショットは 0.173.0 では再実行・復元できない。既存の設計のまま）
+- 確かめ: 回帰テスト `tests/test_client_api_cn1_v0_173.py` と関連のモジュール、配布物の照らし（required=62・problems=0）、コミット `ca36ba83e30b2bc8efb51180d9387578615f5a9b` の Git の URL からの通常のインストールとリポジトリの外の接続のスモーク
+- 検証用 AI の V0〜V3-3 と U7 の残件の一覧と、次に進める 3 件の提案（実装は始めていない）
+- 詳細: [cn1-failure-v0.173.md](cn1-failure-v0.173.md)・[verification-ai-inventory.md](verification-ai-inventory.md)

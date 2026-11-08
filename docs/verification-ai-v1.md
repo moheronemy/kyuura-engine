@@ -112,6 +112,8 @@ V1 で決めた実装の判断（推奨案を基にしたもの。公開の契�
 
 ## 5. CN-1 のエンジンの側の独立の課題（今回は扱わない）
 
+v0.173 で案 B（正式な failure の口を揃える）を実施した（[cn1-failure-v0.173.md](cn1-failure-v0.173.md)）。以下は V1 の時点の記録。
+
 V0 で再現した CN-1（`ActionHost` が `failure` を読むが、`ReplayCollector`・`view_record.ViewHost` は持たない）は、道具の側の `RecordingGame` で接続しています。エンジンの側の
 扱いは、次のどちらかを別の作業として判断します。
 
