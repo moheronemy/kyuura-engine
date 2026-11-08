@@ -7,7 +7,7 @@
 - 構築盤面（tests.helpers.build_test_state。手札から PlayTrainer でスタジアムを出す。コインはテストの乱数の仕込み with_coin_results）: 代表のスタジアムの候補・入力・
   処理可能性・使う主体・回数・コインの両面・受理のあとの決定・取っ手・不正な入力・状態の不変・キョウの忍者ジムの双子（v0.146 の盤面）
 - new_game からの合法な操作の列（固定の seed。3 つの規約集合）: 準備を U7 で終え、ラッキースタジアムを U7 の play_trainer で場に出し、U7 の use_stadium で使う。直接の列と
-  同じ状態。完全な再現用記録の収集・U4 の再実行・閲覧用記録の構造。キョウの忍者ジムの v0.146 の列（seed 1・17）の双子
+  同じ状態。完全な再現用記録の収集・U4 の再実行・閲覧用記録の構造。キョウの忍者ジムの v0.146 の列（seed 1・17。双子ではなく、別の対戦による合法な到達例）
 
 停止コードの文字列はテストの中に書かない（区分・ホストの段のコード・エンジンの例外の型で確かめる）。
 """
@@ -171,7 +171,7 @@ class MappingTest(unittest.TestCase):
         host, r, c = stadium_cand(placed(H.LUCKY_STADIUM))
         cov = r["coverage"]
         self.assertEqual((cov["completeness"], cov["scope_kinds"]), (L.PARTIAL, list(L.MAIN_KINDS)))
-        self.assertEqual(cov["not_covered_kinds"], ["use_power", "check_face_up_deck"])
+        self.assertEqual(cov["not_covered_kinds"], ["check_face_up_deck"])  # v0.171（U7-5e）: use_power は対応した種類
         kinds = [x["kind"] for x in r["candidates"]]
         self.assertEqual(kinds, sorted(kinds, key=L.MAIN_KINDS.index))
         self.assertEqual((c["processability"], c["input_disclosure"], c["input_stages"], c["choices_format"]), (L.MAY_STOP_LATER, L.DISCLOSURE_NONE, [], "[]"))
@@ -304,8 +304,9 @@ class NinjaGymTest(unittest.TestCase):
                 c = stadium_cand(state)[2]
                 self.assertEqual(c["processability"], L.RULING_UNRESOLVED if koga == 1 else L.MAY_STOP_LATER)
 
-    def test_twins_from_new_game(self):
-        """v0.146 の合法な列（seed 1 はキョウのドガースが山札、seed 17 はサイド。直接のコマンドで準備を終える）: use_stadium の候補（番号を除く）・入力・入力の検査の応答が同じ
+    def test_legal_reach_examples_from_new_game(self):
+        """v0.146 の合法な列（seed 1 はキョウのドガースが山札、seed 17 はサイド。直接のコマンドで準備を終える）。2 つは別の対戦で、手札・場が違う（本人の知識と公開の情報が一致する双子ではない）。
+        別の対戦による合法な到達例として、use_stadium の候補（番号を除く）・入力・入力の検査の応答が同じ
         （ほかの手札は seed で違うので、候補の全体は比べない）。"""
 
         def stadium_part(state):
