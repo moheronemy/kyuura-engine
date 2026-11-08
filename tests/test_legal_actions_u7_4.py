@@ -118,7 +118,7 @@ class MappingTest(unittest.TestCase):
         self.assertEqual(cov["completeness"], L.PARTIAL)
         self.assertEqual(cov["offered_kinds"], [L.KIND_END_TURN, L.KIND_USE_ATTACK])
         self.assertEqual(cov["scope_kinds"], list(L.MAIN_KINDS))
-        self.assertEqual(cov["not_covered_kinds"], ["use_power", "use_stadium",  # v0.167（U7-5a・U7-5b）: 3 種類は対応した種類。v0.169（U7-5c）: play_trainer も
+        self.assertEqual(cov["not_covered_kinds"], ["use_power",  # v0.167（U7-5a・U7-5b）: 3 種類は対応した種類。v0.169（U7-5c）: play_trainer、v0.170（U7-5d）: use_stadium も
                                                     "check_face_up_deck"])
         self.assertIn(L.KIND_USE_ATTACK, cov["implemented_kinds"])
         c = cand(r, L.KIND_USE_ATTACK)

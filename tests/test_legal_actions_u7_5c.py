@@ -118,7 +118,7 @@ class MappingTest(unittest.TestCase):
         cov = r["coverage"]
         self.assertEqual(cov["completeness"], L.PARTIAL)
         self.assertEqual(cov["scope_kinds"], list(L.MAIN_KINDS))
-        self.assertEqual(cov["not_covered_kinds"], ["use_power", "use_stadium", "check_face_up_deck"])
+        self.assertEqual(cov["not_covered_kinds"], ["use_power", "check_face_up_deck"])  # v0.170（U7-5d）: use_stadium は対応した種類
         kinds = [c["kind"] for c in r["candidates"]]
         self.assertEqual(kinds, sorted(kinds, key=L.MAIN_KINDS.index))
         c = cand(r, L.KIND_PLAY_TRAINER)
