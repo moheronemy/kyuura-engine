@@ -25,6 +25,7 @@ import secrets
 from collections import deque
 from dataclasses import dataclass, field
 from functools import partial
+from itertools import pairwise
 from typing import Any
 
 from . import diagnostics as D
@@ -176,7 +177,7 @@ KIND_MULLIGAN_DRAW = "mulligan_draw"  # U7-2: 本人の切り直しの補償の�
 KIND_REPORT_JANKEN = "report_janken"  # U7-2: ホストの操作。ジャンケンの勝者（先攻）を伝える（ReportJankenResult。エンジンは乱数で決めない）
 KIND_START_SUDDEN_DEATH = "start_sudden_death"  # U7-2: ホストの操作。延長戦を始める（StartSuddenDeath。player を持たない）
 KIND_PLAY_BASIC = "play_basic"  # U7-3: 手札のたね・ベイビィポケモンのカードをベンチに出す（PlayBasicToBench）
-KIND_ATTACH_ENERGY = "attach_energy"  # U7-3: 手札のエネルギーカードを自分の場のポケモンにつける（AttachEnergy。1 枚。カツラの 2 枚目 energy2 は使わない）
+KIND_ATTACH_ENERGY = "attach_energy"  # U7-3: 手札のエネルギーカードを自分の場のポケモンにつける（AttachEnergy。v0.172（U7-5g）: カツラの 2 枚目 energy2 を任意の 3 段目で示す）
 KIND_EVOLVE = "evolve"  # U7-3: 手札の進化カード（ベイビィからはたねポケモンのカード）を自分の場のポケモンに重ねる（EvolvePokemon）
 KIND_RETREAT = "retreat"  # U7-3: バトル場のポケモンをにがす（Retreat）
 TURN_KINDS = (KIND_PLAY_BASIC, KIND_ATTACH_ENERGY, KIND_EVOLVE, KIND_RETREAT)
@@ -627,7 +628,8 @@ def _command(found: _Candidate, actor, values: tuple[int, ...]):
     if found.kind == KIND_PLAY_BASIC:
         return PlayBasicToBench(actor, values[0])
     if found.kind == KIND_ATTACH_ENERGY:
-        return AttachEnergy(actor, values[0], values[1])  # つけるカード, つける場のポケモン（いちばん上のカードの uid）
+        # つけるカード, つける場のポケモン（いちばん上のカードの uid）, U7-5g: 任意の 3 段目（カツラの 2 枚目。省けば 1 枚。v0.58 までと同じ形）
+        return AttachEnergy(actor, values[0], values[1], energy2=values[2] if len(values) > 2 else None)
     if found.kind == KIND_EVOLVE:
         return EvolvePokemon(actor, values[0], values[1])  # 進化カード, 進化させる場のポケモンの番号
     if found.kind == KIND_RETREAT:
@@ -1062,7 +1064,50 @@ def _attach_candidate(state: GameState, actor: int, quiet: bool) -> _Candidate |
     def evaluate(energy, target):
         return _verdict(*_probe(check_attach_energy, state, AttachEnergy(actor, energy, target)), quiet and not state.card_def(energy).is_special_energy)
 
-    return _pair_candidate(KIND_ATTACH_ENERGY, firsts, seconds, evaluate, ("energy", "target"), "[エネルギーカードの番号, つける場のポケモンの番号]")
+    candidate = _pair_candidate(KIND_ATTACH_ENERGY, firsts, seconds, evaluate, ("energy", "target"), "[エネルギーカードの番号, つける場のポケモンの番号]")
+    if candidate is not None and blaine_effects(state, actor):
+        _add_energy2_stage(state, actor, quiet, candidate, [uid for uid, _ in firsts])
+    return candidate
+
+
+def _add_energy2_stage(state: GameState, actor: int, quiet: bool, candidate: _Candidate, energies: list[int]) -> None:
+    """U7-5g（D-U75-ENERGY2-SCHEMA）: カツラの効果がこの番にはたらくとき（``effects.blaine_effects``。使ったトレーナーは公開）、attach_energy に任意の 3 段目 energy2 を加える。
+
+    3 段目の選べるものは、1・2 段目の組（エネルギーカード, つける場のポケモン）ごとに、本人の手札のほかのエネルギーカードで、エンジンの確かめ（``check_attach_energy`` に 3 枚の
+    組を渡す。``double_attach_check``・RB2・BL1 を含む。コマンドの処理と同じ関数・同じ順番）がゲーム上できないとしなかったもの。U7-3 の 2 段目の番号は 1 段目の選び方によらず
+    同じなので、3 段目は 1・2 段目の組で引く ``options_by_path``（鍵は path_stages の段の選ぶものの番号を "/" でつないだもの）で示す。カード名・カード ID で分けない。"""
+    pairs = list(candidate.pairs)  # (1 段目, 2 段目) の組。1 段目の選べるものの並び → 2 段目の並び
+    by_path: dict[str, list[dict[str, Any]]] = {}
+    results: dict[int, list[tuple[str, list[str]]]] = {}
+    triples: dict[tuple[str, str, int], tuple[str, list[str]]] = {}
+    for first, second in pairs:
+        energy, target = candidate.ids[first][1], candidate.ids[second][1]
+        for energy2 in energies:
+            if energy2 == energy:
+                continue  # 同じカードの 2 回の指定（DUPLICATE_CHOICE）は組にしない
+            special = state.card_def(energy).is_special_energy or state.card_def(energy2).is_special_energy
+            found = _verdict(*_probe(check_attach_energy, state, AttachEnergy(actor, energy, target, energy2=energy2)), quiet and not special)
+            if found is not None:
+                triples[(first, second, energy2)] = found
+                results.setdefault(energy2, []).append(found)
+    if not triples:
+        return  # 2 枚をつけられる組がない（「カツラのポケモン」がいない・「炎」エネルギーカードが 1 枚だけなど）: 3 段目を加えない
+    start = len(candidate.ids)
+    name = {uid: f"o{start + n}" for n, uid in enumerate([u for u in energies if u in results], 1)}
+    for (first, second, energy2), found in triples.items():
+        by_path.setdefault(f"{first}/{second}", []).append(_option({"option": name[energy2]}, *found))
+        candidate.pairs[(first, second, name[energy2])] = found[0] in EXECUTABLE
+    candidate.ids.update({oid: (3, uid) for uid, oid in name.items()})
+    options = [_option({"id": oid, **_card_option(state, uid)}, *_best(results[uid])) for uid, oid in name.items()]
+    candidate.inputs.append({
+        "stage": 3, "input": INPUT_CHOOSE_OPTION, "role": "energy2", "meaning": "card", "count": {"min": 0, "max": 1}, "options": options,
+        "order": ORDER_NOT_APPLICABLE, "decline": True, "path_stages": [1, 2], "options_by_path": by_path,
+        "note": "任意（省けば 1 枚だけつける）。選べるのは options_by_path（1・2 段目の選ぶものの番号を / でつないだ鍵ごと）。鍵がない組では選べない。1 段目か 2 段目を変えたら、"
+                "この段の選び方と入力の検査の結果は無効"})
+    candidate.max_choices = 3
+    candidate.public["processability"], candidate.public["reasons"] = _best([(candidate.public["processability"], candidate.public["reasons"]), *triples.values()])
+    candidate.public["choices_format"] = "[エネルギーカードの番号, つける場のポケモンの番号(, 2 枚目のエネルギーカードの番号)]（2 枚目は任意）"
+
 
 
 def _evolve_candidate(state: GameState, actor: int, quiet: bool) -> _Candidate | None:
@@ -1156,8 +1201,8 @@ def _turn_input_problem(found: _Candidate, choices: tuple) -> tuple[str | None, 
         values = tuple(found.ids[choice][1] for choice in choices)
         code = found.verify(values)
         return (code, ()) if code is not None else (None, values)
-    if len(choices) != 2 or stages != [1, 2] or tuple(choices) not in found.pairs:
-        return CANDIDATE_INPUT_INVALID, ()  # 組にない（ゲーム上できない組・数・段の並びが違う）
+    if len(choices) not in (2, 3) or stages != list(range(1, len(choices) + 1)) or tuple(choices) not in found.pairs:
+        return CANDIDATE_INPUT_INVALID, ()  # 組にない（ゲーム上できない組・数・段の並びが違う。U7-5g: 3 つめはその 1・2 段目の組の options_by_path にある energy2 だけ）
     if not found.pairs[tuple(choices)]:
         return CANDIDATE_NOT_EXECUTABLE, ()
     return None, tuple(found.ids[choice][1] for choice in choices)
@@ -1576,7 +1621,9 @@ def _power_domain(state: GameState, actor: int, domain: str, chosen: dict[str, i
 
 def stage_dependency_problems(stages: list[dict[str, Any]]) -> list[str]:
     """依存する段（U7-5e）の形の確かめ: 段の番号は 1 からの並び、depends_on_stage は直前の段、upstream_stages は前のすべての段、options_by_choice の鍵は前の段の選ぶもの、
-    参照する選ぶものはその段にあり、選ぶものの after は参照する鍵と同じ（存在しない参照・循環・前でない段への依存を見つける）。"""
+    参照する選ぶものはその段にあり、選ぶものの after は参照する鍵と同じ（存在しない参照・循環・前でない段への依存を見つける）。
+
+    U7-5g: 経路で引く段（``options_by_path``・``path_stages``）は ``_path_stage_problems`` が確かめる（options_by_choice・depends_on_stage と併用しない）。"""
     problems: list[str] = []
     ids_by_stage: dict[int, set[str]] = {}
     for position, stage in enumerate(stages, 1):
@@ -1586,6 +1633,9 @@ def stage_dependency_problems(stages: list[dict[str, Any]]) -> list[str]:
             continue
         ids = {option["id"] for option in stage.get("options", [])}
         ids_by_stage[number] = ids
+        if "options_by_path" in stage or "path_stages" in stage:
+            problems += _path_stage_problems(stages, stage, ids_by_stage)
+            continue
         if number == 1:
             if "depends_on_stage" in stage or "options_by_choice" in stage:
                 problems.append("1 段目が前の段に依存する")
@@ -1605,6 +1655,44 @@ def stage_dependency_problems(stages: list[dict[str, Any]]) -> list[str]:
             for option in stage.get("options", []):
                 if option.get("after") not in by_choice or option["id"] not in {ref["option"] for ref in by_choice[option["after"]]}:
                     problems.append(f"{number} 段目の選ぶもの {option['id']!r} の after {option.get('after')!r} が options_by_choice と合わない")
+    return problems
+
+
+def _path_stage_problems(stages: list[dict[str, Any]], stage: dict[str, Any], ids_by_stage: dict[int, set[str]]) -> list[str]:
+    """U7-5g（D-U75-ENERGY2-SCHEMA）: 前の段の選び方の組で引く段の形の確かめ。
+
+    - ``path_stages`` は、この段より前の段の番号の、増える並び（自分・あとの段を指さない。循環しない）。``options_by_path`` と組で持ち、``options_by_choice``・
+      ``depends_on_stage``・``upstream_stages`` と併用しない（どちらで引くかを 1 つに決める）
+    - ``options_by_path`` の鍵は、``path_stages`` の段の選ぶものの番号を段の順に "/" でつないだもの。どの番号もその段にあり、前の段どうしの組は、その段の
+      ``options_by_choice`` にある組（その段が前の段に依存するとき）
+    - 値は参照の並び（``option`` はこの段の選ぶもの。1 つの鍵の中で重ならない）"""
+    number = stage["stage"]
+    where = f"{number} 段目"
+    path_stages = stage.get("path_stages")
+    by_path = stage.get("options_by_path")
+    problems: list[str] = []
+    if not isinstance(path_stages, list) or not isinstance(by_path, dict):
+        return [f"{where}: path_stages と options_by_path は組で持つ"]
+    if any(key in stage for key in ("options_by_choice", "depends_on_stage", "upstream_stages")):
+        problems.append(f"{where}: options_by_path を options_by_choice・depends_on_stage・upstream_stages と併用している")
+    if (not path_stages or any(type(s) is not int or not 1 <= s < number for s in path_stages)
+            or any(a >= b for a, b in pairwise(path_stages))):
+        return [*problems, f"{where}: path_stages {path_stages!r} が前の段の増える並びでない（循環・あとの段・重なり）"]
+    ids = ids_by_stage[number]
+    for key, refs in by_path.items():
+        parts = key.split("/") if isinstance(key, str) else []
+        if len(parts) != len(path_stages) or any(part not in ids_by_stage.get(s, set()) for part, s in zip(parts, path_stages)):
+            problems.append(f"{where}: options_by_path の鍵 {key!r} が path_stages の段の選ぶものの組でない")
+            continue
+        for (a, sa), (b, sb) in zip(zip(parts, path_stages), zip(parts[1:], path_stages[1:])):
+            upper = stages[sb - 1]
+            if sb == sa + 1 and "options_by_choice" in upper and b not in {ref.get("option") for ref in upper["options_by_choice"].get(a, [])}:
+                problems.append(f"{where}: options_by_path の鍵 {key!r} の {a!r}・{b!r} は {sb} 段目の options_by_choice にない組")
+        options = [ref.get("option") for ref in refs]
+        if any(option not in ids for option in options):
+            problems.append(f"{where}: options_by_path の {key!r} が参照する選ぶものがこの段にない")
+        if len(set(options)) != len(options):
+            problems.append(f"{where}: options_by_path の {key!r} の参照が重なる")
     return problems
 
 
@@ -1797,15 +1885,12 @@ RESIDUAL_OUT_OF_SCOPE = "out_of_scope"  # API の対応の範囲の外（その�
 SITUATION_TURN_MAIN = "turn_player_main"  # 番のプレイヤーの MAIN（決定待ちでない）
 SITUATION_OTHER = "other_than_turn_player_main"  # ほかのすべての段階・主体（決定の回答者・番でないプレイヤー・準備）
 SITUATION_ANY = "any"
-RESIDUAL_ENERGY2 = "R-1"
+# R-1（カツラの 2 枚目）は v0.172 で attach_energy の任意の 3 段目として示すので、残りの分類にない（番号は欠番のまま。docs/legal-actions-u7-5fg.md 3 章）
 RESIDUAL_FACE_DOWN_ATTACK = "R-2"
 RESIDUAL_FACE_DOWN_POWER = "R-3"
 RESIDUAL_FACE_UP_SCOPE = "R-4"
 RESIDUAL_WITHHELD = "R-5"
 RESIDUAL_CLASSES = (
-    {"id": RESIDUAL_ENERGY2, "kind": KIND_ATTACH_ENERGY, "field": "energy2", "situation": SITUATION_TURN_MAIN, "status": RESIDUAL_NOT_OFFERED,
-     "reason": "input_not_offered", "subject": "blaine_second_energy",
-     "note": "カツラの効果で 2 枚目のエネルギーカードをいっしょにつける（AttachEnergy.energy2）。attach_energy の候補は 1 枚だけを示す"},
     {"id": RESIDUAL_FACE_DOWN_ATTACK, "kind": KIND_USE_ATTACK, "field": "declaration_options", "situation": SITUATION_TURN_MAIN, "status": RESIDUAL_NOT_OFFERED,
      "reason": REASON_FACE_DOWN, "subject": "own_face_down_active",
      "note": "自分のうらのバトル場のポケモンのワザといっしょに選ぶもの（クチバシティジムのコイン・ワザといっしょに使う特殊能力）。おもてにしたあとの確かめで決まるので示さない（D-U75-R2）"},
@@ -1829,8 +1914,6 @@ def _residual_present(state: GameState, actor: int, candidates: list[_Candidate]
     present: list[dict[str, Any]] = []
     p = state.players[actor]
     if KIND_END_TURN in evaluated:  # 番のプレイヤーの MAIN
-        if blaine_effects(state, actor):  # カツラの効果がこの番にはたらく（使ったトレーナーは公開）
-            present.append({"id": RESIDUAL_ENERGY2, "scope": RESIDUAL_PUBLIC})
         if p.active is not None and state.is_face_down(p.active):
             present.append({"id": RESIDUAL_FACE_DOWN_ATTACK, "scope": RESIDUAL_PUBLIC})
         if any(state.is_face_down(q) for q in p.in_play()):

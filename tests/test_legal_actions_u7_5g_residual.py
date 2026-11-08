@@ -48,7 +48,7 @@ class FixedClassesTest(unittest.TestCase):
             seen += [cov(state, a)["residual"]["classes"] for a in (0, 1)]
         for classes in seen:
             self.assertEqual(classes, FIXED)  # 状態・主体・カードによらない（該当するカードがあるときだけ出す方式にしない）
-        self.assertEqual([c["id"] for c in FIXED], ["R-1", "R-2", "R-3", "R-4", "R-5"])
+        self.assertEqual([c["id"] for c in FIXED], ["R-2", "R-3", "R-4", "R-5"])  # R-1（カツラの 2 枚目）は v0.172 で示す（tests/test_legal_actions_u7_5g_energy2.py）
         self.assertEqual({c["status"] for c in FIXED}, {L.RESIDUAL_NOT_OFFERED, L.RESIDUAL_OUT_OF_SCOPE, L.RESIDUAL_INPUT_WITHHELD})
 
     def test_new_game_phases(self):
