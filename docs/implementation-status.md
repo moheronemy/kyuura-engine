@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.164）
+# 実装状況（v0.1〜v0.171）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d`（v0.128 から。v0.129 の種族の身長の写しは別に `9242b9be89be0f747279f39c11875d1ed61763ec`。v0.126〜v0.127 は `57d01f45cfb8b086d03dc0525b329cf6adeff69b`、v0.125 は `134a664c6adf67d5604148a31b58e1a7d26d4d6d`、v0.124 は `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`、v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -5144,3 +5144,90 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - `examples/headless_client.py`: JSON の要求・応答だけで進める参照クライアント（番を終えるだけで山札がなくなって終局する）
 - 新しいファイルは識別の設計の部品 `client_api`（層 `api_format`）。識別の方式の移行・3 つの規約集合の変更はない。エンジンの処理は変えていない
 - 詳細: [client-api-v0.164.md](client-api-v0.164.md)
+
+### v0.164 の配布の修正（版は 0.164.0 のまま）
+
+- `pyproject.toml` の `packages = ["kyuura_engine"]` の固定の一覧では `kyuura_engine.resolution` が wheel・sdist に入らず、通常のインストールで `import kyuura_engine` が失敗した。`[tool.setuptools.packages.find]`（`kyuura_engine`・`kyuura_engine.*`。`namespaces = false`）で探し、sdist から `tests` を除く（`MANIFEST.in`）。`kyuura_engine` の中身・実装の識別は変えていない
+- 配布物を名前で照らす `scripts/check_distribution.py`、インストール先の確かめ `scripts/smoke_installed_package.py`、回帰テスト `tests/test_distribution.py`
+- 詳細と GUI が暫定の回避（`-e`）を外す手順: [installation.md](installation.md)
+
+## v0.165: 合法手 API の番の基本の操作（U7-3）
+
+- `legal_actions`: 自分の番の MAIN で、手札からベンチに出す（`play_basic`）・手札からエネルギーをつける（`attach_energy`）・手札から進化させる（`evolve`）・にげる（`retreat`）の候補を、番を終える候補に続けて出す。入力は段ごと（エネルギー・進化はカード → 場のポケモンの組を `options_by_choice`、にげるは控え → トラッシュするエネルギーで、費用は出すエネルギーの個数 `total_units`）
+- 選べるもの・組の確かめは `engine.py` のコマンドの処理の前半を関数にした `check_play_basic`・`check_attach_energy`・`check_evolve`・`check_retreat_declaration`・`check_retreat`（同じ順番・同じコード・同じ文。状態・乱数・ログを変えない）。ゲーム上できない選べるもの・組は出さず、未裁定・未対応は実行できない区分で示す
+- `supported` は受理のあとの反応・決定・停止のもとが場にないことを公開の情報で確かめた場合だけ（ほかは `may_stop_later`。自分のうらのカードの進化・にげるは `unverified`）
+- `client_api` は同じ要求の形のまま扱う（契約 `kyuura-client-api`・形式 1、`kyuura_legal_actions_format` 1）。応答の形の追加だけ
+- 停止の台帳（`docs/stop-policy-classification.json`）はエンジンの行番号だけが変わった。診断のコード表の生成の動的な呼び出し箇所を `check_evolve` に直した（コード表は同じ）
+- 詳細: [legal-actions-u7-3.md](legal-actions-u7-3.md)
+
+## v0.166: 合法手 API のワザの候補と宣言の入力（U7-4）
+
+- `legal_actions`: 自分の番の MAIN で、ワザの宣言（`use_attack`。既存の `UseAttack`）の候補を、番の基本の操作の候補に続けて出す。1 段目はバトル場のポケモンが今持つワザ（`effects.available_attacks`。今の姿・［へんしん］・「思い出させる」・［サイコリンク］・許可で使えるワザ）、2 段目は宣言といっしょに選ぶもの（`stadium_coin`・`attack_power`・`with_power`。0 個以上・選んだ順。組は `options_by_choice`）
+- 宣言の確かめは `resolution/flow.py` の `_use_attack` の宣言の前の先読みより前の部分を、同じ順番・同じコード・同じ文のまま関数にした `check_use_attack`（状態・乱数・ログを変えない）。候補の作成・入力の検査はこれだけを呼び、`apply_command`・宣言の前の先読みは呼ばない。ゲーム上宣言できないワザ・組は出さず、未裁定・未対応は実行できない区分で示す
+- ワザの候補は `may_stop_later`（`preflight_not_evaluated`・`continuation_not_evaluated`）。`supported` にしない。自分のうらのバトル場のポケモンのワザは `unverified`
+- 対象・トラッシュするエネルギー・山札から選ぶカード・写すワザは受理のあとの既存の決定（`answer_decision`）。コインの結果を選ばせない
+- `client_api` は同じ要求の形のまま扱う（契約 `kyuura-client-api`・形式 1、`kyuura_legal_actions_format` 1）。応答の形の追加だけ。番の候補は partial（7 種類が未対応）
+- 停止の台帳（`docs/stop-policy-classification.json`）は `resolution/flow.py` の行番号だけが変わった
+- GUI が固定するコミット: `9506d6305e90ec262fbe77740d9aa57f04b980b6`（版 0.166.0。Git の URL からの通常のインストールとスモークテストで確かめた。[legal-actions-u7-4.md](legal-actions-u7-4.md) 8 章）
+- 詳細: [legal-actions-u7-4.md](legal-actions-u7-4.md)
+
+## v0.167: 合法手 API の場のポケモン 1 匹を指す操作（U7-5a・U7-5b）
+
+- `legal_actions`: 自分の番の MAIN で、`remove_disguise`（既存の `RemoveDisguise`）・`discard_from_play`（`DiscardFromPlay`）・`reveal_face_down`（`RevealFaceDown`）の候補を、ワザの候補に続けて出す。1 段の `choose_option`（自分の場のポケモンの番号）
+- 受け付ける前の確かめは、`engine.py` の 3 つの処理の前半を、同じ順番・同じコード・同じ文のまま関数にした `check_remove_disguise`・`check_discard_from_play`・`check_reveal_face_down`（状態・乱数・ログを変えない。読むのは公開の値だけ）。処理は変えていない
+- 処理可能性: `remove_disguise` は `may_stop_later`（MH1・TK1 は処理のあとの確かめ）、`discard_from_play` は U7-3 と同じ条件で `supported`、`reveal_face_down` は `may_stop_later`（おもてにした結果を予告しない）。本人のうらのカードをすてる選べるものは FD1 の停止として示し、送る前に断る（直接のコマンドはエンジンが拒否する。意図した差）
+- うらのカードの本当のカードだけが違う双子で、実行前の候補・入力・件数・並び・制約・理由・不正な入力への応答が同じ
+- U7-3 のにげるの候補が、バトル場のなにかの化石・ピッピ人形（PF2）と自分のうらのバトル場のポケモン（FD1）で、候補の取得ごと失敗していたのを直した（`legal_actions.py` だけ）
+- 番の候補は partial（`play_trainer`・`use_power`・`use_stadium`・`check_face_up_deck` が未対応）。`scope_kinds` は `MAIN_KINDS` の順のまま。`client_api` は同じ要求の形（契約 `kyuura-client-api`・形式 1）
+- 採用の記録 ADOPT-U7-5AB と仕様の訂正（CORR-1: 情報源が未確認の経路は入力を返さない、CORR-2: GUI のコミットと固定するエンジンを分ける）を [legal-actions-u7-5-design.md](legal-actions-u7-5-design.md) に記録した。錯乱ジムの情報漏れ F-1 は、トレーナー（U7-5c）の前の独立した修正の作業 T-F1（今回は直していない）
+- 停止の台帳（`docs/stop-policy-classification.json`）は `engine.py` の行番号だけが変わった
+- GUI が固定するコミット: `669f3cafbffdc3a13c05b5f76c96e5a6925fca06`（版 0.167.0。Git の URL からの通常のインストールとスモークテストで確かめた。[legal-actions-u7-5ab.md](legal-actions-u7-5ab.md) 8 章）
+- 詳細: [legal-actions-u7-5ab.md](legal-actions-u7-5ab.md)
+
+## v0.168: 錯乱ジムで相手がかわりに使えるかの判定からの情報漏れの修正（T-F1）
+
+- 錯乱ジムの「うら」: 聞かずにトラッシュする（ログ `chaos_not_borrowable`）のは、公開の情報だけで使えないと決まるとき（カードの性質・トレーナーの使用の禁止）だけにした。ほかは、いつも相手に `ACCEPT_REQUEST` を出す。相手が使うための条件を満たせないのに「使う」と答えたら、答えを拒否する（状態・乱数・ログを変えない。拒否は答えた人にだけ返る）
+- ナツメのサイキックコントロール: 選べるものを公開の情報だけで作り、使うための条件を満たせないカードを選んだ答えを拒否する（選べるものの数・`discard_trainer_use_none` が使う人の手札の中身で変わっていた。F-8）
+- 新しい関数: `effects.borrow_public_unusable_reason`・`borrow_condition_stop`・`require_borrow_playable`。CH1・MG1・TL1 の止め方、使う前の確かめ・コイン・費用・効果の順は変えていない。続行規約・カード ID の分岐は加えていない
+- 意図した差: 相手が使うための条件を満たせない場面で、決定が出て「使わない」と答える操作列になる（v0.167 までは聞かずにトラッシュ）。公開の情報だけで満たせないと分かる条件も同じ扱い（F-9。戻すには型ごとの監査が要る）。既存のテストの期待を 1 か所直した
+- 停止の台帳（`docs/stop-policy-classification.json`）は `engine.py`・`effects.py` の行番号だけが変わった
+- U7-5 の設計の F-1・F-8 を fixed、T-F1 を implemented にし、U7-5c の依存が満たされたことを記録した（U7-5c は未実装）
+- 配布の確かめ: コミット `6e9d22098efd4c6e3c545f04dd6bbaae936a5dda`（版 0.168.0）を、クリーンな仮想環境に Git の URL から通常のインストールをして、リポジトリの外からスモークテストした（錯乱ジムの「使う」の拒否と「使わない」を含む。`behavior_digest` はソースの木と同じ）。配布物の中身の検査は required=62・problems=0
+- 詳細: [chaos-gym-borrow-t-f1.md](chaos-gym-borrow-t-f1.md)
+
+## v0.169: 合法手 API の手札のトレーナー（U7-5c）
+
+- 新しい候補の種類 `play_trainer`: 本人の手札から既存の `PlayTrainer` を送る（1 段。入力は手札のトレーナーカード 1 枚）。対象・枚数・費用・検索・錯乱ジム・［ちえくらべ］・サイキックコントロールは受理のあとの既存の決定（`answer_decision`）
+- `engine.check_play_trainer`: `_play_trainer` の手札から出す前の確かめを、同じ順番・同じコード・同じ文のまま関数にした（エンジンの動作は同じ）。`use_condition` が偽なら、カードごとの使うための条件だけを呼ばない
+- カードごとの使うための条件: A・A-own と、場だけを試す 6 つ（`PLAYABLE_BOARD_TRIALS`。読む値をたどった）は候補の作成で呼ぶ。実際の山札から引いて試す 5 つ（`PLAYABLE_NOT_EVALUATED`）は呼ばず `unverified`（理由 `use_condition_not_evaluated`）
+- トレーナーの候補は `supported` にしない（受理の前の先読み・受理のあとを評価していない）。番の候補は partial のまま（`use_power`・`use_stadium`・`check_face_up_deck` が未対応。R-1・R-2 が残る）
+- U7-5 の設計の U7-5c を implemented にした（U7-5d 以降は未実装）。既存の U7 のテストの coverage の期待から `play_trainer` を外した（意図した差）
+- T-F1 の検証記録の訂正（[chaos-gym-borrow-t-f1.md](chaos-gym-borrow-t-f1.md) 7 章。124 件は成功 123・失敗 1、期待を直したあとの 53 件の実行は失敗 3）
+- 配布の確かめ: コミット `3fc95d9ea9134794eb0f6c546f58299a1693d520`（版 0.169.0）を、クリーンな仮想環境に Git の URL から通常のインストールをして、リポジトリの外から client_api の `play_trainer` でトレーナーを使うスモークテストをした（`behavior_digest` はソースの木と同じ）。配布物の中身の検査は required=62・problems=0
+- 詳細: [legal-actions-u7-5c.md](legal-actions-u7-5c.md)
+
+## v0.170: 合法手 API の場のスタジアム（U7-5d）
+
+- 新しい候補の種類 `use_stadium`: 場のスタジアムの自分の番に使ってよい効果（既存の `UseStadium`）。番のプレイヤーが使う（スタジアムの持ち主でなくてよい）
+- 候補は使ってよい効果の登録（`StadiumEffect.activated`。登録した 24 の型のうち 8）から作る。常時の効果だけのスタジアムには候補を作らない
+- 選ばせるものの宣言 `StadiumEffect.energy_choice`（エンジンの挙動は変えない）: タマムシシティジム・ヤマブキシティジムは、自分の場のポケモンについているエネルギーカード 1 枚の 1 段の候補。ほかは入力のない候補
+- `engine.check_use_stadium`: `_use_stadium` の使う前の確かめを、同じ順番・同じコード・同じ文のまま関数にした（エンジンの動作は同じ）。使える 8 の実装の確かめの閉包に、状態の複製・U7-5c の場の試行はない
+- キョウの忍者ジムは持ち主の知識の下限（v0.146）のまま。保守的な NJ1 は緩めていない。配分だけを変えた双子で候補・入力・応答が同じ
+- スタジアムの候補は `supported` にしない。番の候補は partial のまま（`use_power`・`check_face_up_deck` が未対応。R-1・R-2 が残る）
+- U7-5 の設計の U7-5d を implemented にした（U7-5e 以降は未実装）。既存の U7 のテストの coverage の期待から `use_stadium` を外した（意図した差）
+- GUI への引き継ぎは U7-5a〜U7-5d をまとめた（GUI は 0.166.0 を固定）
+- 配布の確かめ: コミット `0885d664913bc8e57279ed9e44ac51cc97d5a6bf`（版 0.170.0）を、クリーンな仮想環境に Git の URL から通常のインストールをして、リポジトリの外から client_api の `play_trainer` と `use_stadium` を使うスモークテストをした（`behavior_digest` はソースの木と同じ）。配布物の中身の検査は required=62・problems=0
+- 詳細: [legal-actions-u7-5d.md](legal-actions-u7-5d.md)
+
+## v0.171: 合法手 API の宣言する特殊能力（U7-5e）
+
+- 新しい候補の種類 `use_power`: 自分の場のポケモンの、使用を宣言する特殊能力（既存の `UsePokemonPower`）。特殊能力の位置ごとに 1 つ（「ばける」でのせたカード・写した特殊能力を含む）。反応・ワザといっしょに使う力・常にはたらく力は候補にしない
+- 型ごとの入力の宣言 `effects.POWER_INPUT_STAGES`（D-U75-INPUT-DECL。エンジンの挙動は変えない）: 56 の型の段（入力なし 45・1 段 4・2 段 5・3 段 2）。宣言のない型は入力の形を推測しない
+- 依存する段（D-U75-CHAINED）: 2 段目以降の選ぶものの番号は前のすべての段の選び方ごとに別（`after`・`upstream_stages`。形式 1 への追加）。ほかの上流の番号を混ぜた入力は拒否する
+- `engine.check_use_pokemon_power`: `_use_pokemon_power` の宣言の前の確かめを、同じ順番・同じコード・同じ文のまま関数にした（エンジンの動作は同じ）
+- 状態の複製の上で試す 7 の実装は、パッケージ全体の呼び出しを名前で解決した閉包で、山札・サイド・置いておくカード・乱数・うらのカードの集合を読まないとたどった（名前で解決できない呼び出しは残る）。F-4 は双子で、本当のカードによらない FD1 と確かめた。相手のうらのカードを指定する組は unverified（F-5）
+- 特殊能力の候補は `supported` にしない。番の候補は partial のまま（`check_face_up_deck` が未対応。R-1・R-2・自分のうらのカードの特殊能力が残る）
+- U7-5 の設計の U7-5e を implemented にした（U7-5f・U7-5g は未実装）。既存の U7 のテストの coverage の期待から `use_power` を外した（意図した差）
+- U7-5d の文書の訂正: キョウの忍者ジムの seed 1・17 は双子ではなく、別の対戦による合法な到達例
+- 配布の確かめ: コミット `74c8e1f8ca03d017d5c0a8a79e6fdaa33d25b7f8`（版 0.171.0）を、クリーンな仮想環境に Git の URL から通常のインストールをして、リポジトリの外から client_api の `use_power`（2 段）を使うスモークテストをした（`behavior_digest` はソースの木と同じ）。配布物の中身の検査は required=62・problems=0
+- 詳細: [legal-actions-u7-5e.md](legal-actions-u7-5e.md)

@@ -110,17 +110,14 @@ def resume_decision(state: GameState, choices: tuple[int, ...], ctx: Context) ->
 # ---------------------------------------------------------------- ワザ
 
 
-def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
-    """v0.13 の ``engine._use_attack`` と同じ確認（同じ順番・同じコード）のあと、先読みと解決。"""
+def check_use_attack(state, cmd: UseAttack) -> tuple:
+    """ワザの宣言を受け付ける前の確かめ（v0.166。``_use_attack`` の先読みの前の部分を、同じ順番・同じコード・同じ文のまま関数にした）。状態・乱数・ログを変えない
+    （確かめて、だめなら例外を投げるだけ）。宣言の前の先読み（``preflight``）は含まない。合法手 API（U7-4）の候補の作成と入力の検査も、これを呼ぶ。
+
+    返す値: (確認したワザの宣言 ``AttackRequest``, 要素の並び, クチバシティジムのカード（投げないなら None）, ワザといっしょに使う力を持つポケモンの番号の並び)。"""
     request = attack_request(state, cmd)  # v0.13 の経路と同じ確認（checks.attack_request）
     attacker, attack, effect, key = request.attacker, request.attack, request.effect, request.key
     program = program_for(effect, attack.name_ja)  # 対応表にもなく v0.13 の約束でも処理できない実装は、ここで拒否（状態を変える前）
-    pid = attacker.pokemon_id
-    use = AttackUse(cmd.player, pid, key)
-
-    once = effect.once_after_entering_play  # v0.44: 場に出てから 1 回しか使えないワザ（宣言のときに使った記録を置く）
-
-    option = request.option
     coin_stadium = None
     if cmd.stadium_coin:
         # v0.57: クチバシティジムのコインを投げることを選んだ（ワザの宣言といっしょに選ぶ）。場にクチバシティジムがない・ワザを使うのが「マチスのポケモン」でないなら、
@@ -146,6 +143,19 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
         E.group_attack_powers_check(state, cmd.player, attacker, key, holders)
         if is_contract(program):
             raise UnsupportedError("UNSUPPORTED_ATTACK", "v0.13 の約束で書いたワザの実装では、ワザといっしょに使うほかのポケモンの特殊能力を扱わない（エンジンの未対応）")
+    return request, program, coin_stadium, holders
+
+
+def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
+    """v0.13 の ``engine._use_attack`` と同じ確認（同じ順番・同じコード）のあと、先読みと解決。"""
+    request, program, coin_stadium, holders = check_use_attack(state, cmd)
+    attacker, attack, effect, key = request.attacker, request.attack, request.effect, request.key
+    pid = attacker.pokemon_id
+    use = AttackUse(cmd.player, pid, key)
+
+    once = effect.once_after_entering_play  # v0.44: 場に出てから 1 回しか使えないワザ（宣言のときに使った記録を置く）
+
+    option = request.option
 
     def body(res: Resolution) -> None:
         E.freeze_forms(res.state)  # v0.124: 実際の処理も先読み（宣言の前の状態から始める）も、ワザの始めに変身の状態を固定する（CR-TRANSFORM-FROZEN-DURING-ACTION）

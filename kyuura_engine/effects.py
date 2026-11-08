@@ -20802,6 +20802,9 @@ STADIUM_UNDER_TRAINER_BAN_REASON = (
     "公式ルール・kyuura の記録・印刷の文面から決められないので扱わない（STB1。docs/stadiums-v0.57.md 4 章）")
 
 
+ENERGY_CHOICE_OWN_ATTACHED = "own_attached"  # v0.170（U7-5d）:``StadiumEffect.energy_choice``。使うプレイヤーの場のポケモンについているエネルギーカード 1 枚
+
+
 def _owner_named(name: str, owner: str) -> bool:
     """「(``owner``)のポケモン」か（名前の始まり。v0.44 の ``owner_pokemon``・v0.56 の ``_named_owner_pokemon`` と同じ判定。今の姿の名前を渡す）。"""
     return name.startswith(f"{owner}の")
@@ -20813,6 +20816,9 @@ class StadiumEffect(TrainerEffect):
 
     - ``is_stadium``: エンジンが、手札から使ったら場に出し（``zones.place_stadium``。トラッシュしない）、効果を場から問い合わせる印
     - ``activated``: 自分の番に使ってよい効果を持つ（``UseStadium``。タマムシ・セキチク・ヤマブキ）。``once_per_turn``: 自分の番ごとに 1 回（セキチク）
+    - ``energy_choice``（v0.170。U7-5d の入力の宣言。エンジンの挙動は変えない）: ``UseStadium.energy`` で選ばせるもの。None なら選ばせない（指定すると
+      ``STADIUM_CHOICE_NOT_USED``）。``ENERGY_CHOICE_OWN_ATTACHED`` なら、使うプレイヤーの場のポケモンについているエネルギーカード 1 枚（指定しないと ``STADIUM_CHOICE_REQUIRED``）。
+      合法手 API が入力の形を作るのに使う（``check_activation`` と食い違わないことをテストで確かめる）
     - ``on_placed``: 場に出た時の効果（せまいジム）
     - 効果の中身（ダメージの計算・にげる・ベンチ・反応）は、型ごとの問い合わせ（``stadium_damage_options``・``retreat_cost``・``stadiums.bench_limit`` など）が見る
     """
@@ -20822,6 +20828,7 @@ class StadiumEffect(TrainerEffect):
     is_stadium: ClassVar[bool] = True
     activated: ClassVar[bool] = False
     once_per_turn: ClassVar[bool] = False
+    energy_choice: ClassVar[str | None] = None
     what: ClassVar[str] = "スタジアム"
 
     def check(self, definition: CardDefinition) -> list[str]:
@@ -21083,6 +21090,7 @@ class CureByDiscardingEnergyStadium(StadiumEffect):
     owner: str = "エリカ"
     implementation_id = "cure_by_discarding_energy_stadium"
     activated: ClassVar[bool] = True
+    energy_choice: ClassVar[str | None] = ENERGY_CHOICE_OWN_ATTACHED  # U7-5d: トラッシュするエネルギーカード（_target）
 
     def text_problems(self, text: str) -> list[str]:
         ok = (text.startswith("お互いのプレイヤーは、のぞむなら、自分の番の中で、") and f"自分の「{self.owner}のポケモン」についているエネルギーカードを1枚トラッシュして" in text
@@ -21214,6 +21222,7 @@ class ReturnBasicEnergyStadium(StadiumEffect):
     owner: str = "ナツメ"
     implementation_id = "return_basic_energy_stadium"
     activated: ClassVar[bool] = True
+    energy_choice: ClassVar[str | None] = ENERGY_CHOICE_OWN_ATTACHED  # U7-5d: 手札に加える基本エネルギーカード（_target）
 
     def text_problems(self, text: str) -> list[str]:
         ok = text.startswith(f"お互いのプレイヤーは、自分の番に、自分の「{self.owner}のポケモン」についている「基本エネルギーカード」をはがし、手札に加えてよい。")
@@ -21867,7 +21876,25 @@ class TrainerCoinStadium(StadiumEffect):
 
 def borrow_unusable_reason(state: GameState, effect: TrainerEffect, use: TrainerUse) -> str | None:
     """錯乱ジムで、相手プレイヤー（``use.player``）がかわりに使えない理由（ポケモンにつけて使う・場に出して使うカード・使うための条件を満たせない・トレーナーの使用の禁止）。
-    使えるなら None。決められない（使うための条件の確認が ``UnsupportedError``）なら、その例外をそのまま投げる（呼ぶ側が、使うことを選ぶと止める選択にする）。"""
+    使えるなら None。決められない（使うための条件の確認が ``UnsupportedError``）なら、その例外をそのまま投げる（呼ぶ側が、使うことを選ぶと止める選択にする）。
+
+    v0.168（T-F1。docs/chaos-gym-borrow-t-f1.md）: 公開の情報で決まる部分（``borrow_public_unusable_reason``）と、使う人の手札・山札を読みうる使うための条件
+    （``check_playable``）を合わせた判定。後の部分は使う人だけが知る情報で決まるので、その結果を公開の分岐（決定を出すか・選べるものの数・公開のログ）に使わない。
+    v0.168 からエンジンの分岐には使わない（使う人だけが知る情報を含む判定として残す。答えたときの確かめは ``require_borrow_playable``）"""
+    reason = borrow_public_unusable_reason(state, effect, use)
+    if reason is not None:
+        return reason
+    try:
+        effect.check_playable(state, use)
+    except IllegalActionError as error:
+        return f"使うための条件を満たせない（{error.code}）"
+    return None
+
+
+def borrow_public_unusable_reason(state: GameState, effect: TrainerEffect, use: TrainerUse) -> str | None:
+    """v0.168（T-F1）: 錯乱ジム・サイキックコントロールで、相手のカードをかわりに使えない理由のうち、公開の情報だけで決まるもの（カードの性質: ポケモンにつけて使う・
+    場に出して使う・スタジアム。場の力・期限のある禁止によるトレーナーの使用の禁止）。なければ None。手札から出して使う禁止（TL1）は決められないので ``UnsupportedError``。
+    使うための条件（``check_playable``。使う人の手札・山札を読みうる）は見ない（``borrow_unusable_reason``）。"""
     if effect.stays_in_play or effect.enters_play or effect.is_stadium:
         return "ポケモンにつけて使うカード・場に出して使うカード"
     if trainer_use_blockers(state, use.player, from_hand=False):
@@ -21875,11 +21902,25 @@ def borrow_unusable_reason(state: GameState, effect: TrainerEffect, use: Trainer
     if trainer_use_blockers(state, use.player):
         # v0.80（TL1）: 「手札から「トレーナーカード」を出して使うことができない」プレイヤーが、錯乱ジムで相手の手札から出たカードをかわりに使えるか
         raise UnsupportedError(HAND_TRAINER_LOCK_BORROW_CODE, HAND_TRAINER_LOCK_BORROW_REASON)
+    return None
+
+
+def borrow_condition_stop(state: GameState, effect: TrainerEffect, use: TrainerUse) -> UnsupportedError | None:
+    """v0.168（T-F1）: 使う人（``use.player``）の使うための条件の確かめが決められない（``UnsupportedError``）なら、その例外（使うことを選ぶと止める選択にする。決定の続きの
+    情報で、答える人だけに見える）。満たせない（``IllegalActionError``）・満たせるなら None（満たせないことは、使う人が「使う」と答えたときに拒否する。公開の分岐にしない）。"""
     try:
         effect.check_playable(state, use)
-    except IllegalActionError as error:
-        return f"使うための条件を満たせない（{error.code}）"
+    except UnsupportedError as error:
+        return error
+    except IllegalActionError:
+        return None
     return None
+
+
+def require_borrow_playable(state: GameState, effect: TrainerEffect, use: TrainerUse) -> None:
+    """v0.168（T-F1）: 使う人が、相手のカードを「使う」と答えたときの使うための条件の確かめ。満たせなければ、そのカードの確かめの ``IllegalActionError`` をそのまま上げる
+    （答えの拒否。状態・乱数・ログを変えない。拒否は答えた人にだけ返り、相手・観戦者への公開の更新を作らない）。"""
+    effect.check_playable(state, use)
 
 
 # ---------------------------------------------------------------- v0.58 ナツメのサイキックコントロール（docs/stadium-reuse-special-energy-v0.58.md 4 章）
@@ -21905,7 +21946,9 @@ def discard_trainer_use_choices(state: GameState, user: int) -> tuple[tuple[int,
     - 相手のトラッシュのトレーナーカード（トラッシュにある間の印刷の分類。なにかの化石・ピッピ人形もトレーナーカード）で、効果の登録表に実装があるもの
     - ポケモンにつけて使うカード（``stays_in_play``）・場に出して使うカード（``enters_play``。ポケモンとして出す。``is_stadium``。スタジアムもバトル場の横に出して使う）は
       除く（効果の性質で決める。カード id で決めない。錯乱ジムの ``borrow_unusable_reason`` と同じ確かめ）
-    - 使うための条件（``check_playable``）を、使うプレイヤー ``user`` の手札・場で満たせないカードは除く（「満たせない時も、使うことができない」）。場のリムーブ禁止ジムの追加の
+    - v0.168（T-F1）: 使うための条件（``check_playable``）は使うプレイヤーの手札・山札を読みうるので、選べるもの（数は相手にも見える）を選り分けるのに使わない。
+      満たせないカードを選んだ答えは拒否する（``UseOpponentDiscardTrainer.resume``。「満たせない時も、使うことができない」）。v0.167 までは除いていた（相手に手札の中身が伝わった）
+    - （v0.167 までの説明）使うための条件（``check_playable``）を、使うプレイヤー ``user`` の手札・場で満たせないカードは除く（「満たせない時も、使うことができない」）。場のリムーブ禁止ジムの追加の
       条件（手札から 2 枚。このカードは手札にないので、手札の枚数そのもので数える）も条件に含める。決められない（``UnsupportedError``）なら選ぶと止める
     - 使うプレイヤーが番のプレイヤーでない（錯乱ジムで相手がサイキックコントロールを借りて使った）とき、説明が使ったプレイヤーの番を書くカード（``refers_to_user_turn``）は
       CH1（選ぶと止める）。自分の番に使うなら、借りたことだけで CH1 にしない
@@ -21921,12 +21964,17 @@ def discard_trainer_use_choices(state: GameState, user: int) -> tuple[tuple[int,
             continue
         use = TrainerUse(user, uid, definition.id)
         try:
-            reason = borrow_unusable_reason(state, effect, use)
+            reason = borrow_public_unusable_reason(state, effect, use)
         except UnsupportedError as error:
             options.append(uid)
             stops.append((uid, error.code, error.message))
             continue
         if reason is not None:
+            continue
+        stop = borrow_condition_stop(state, effect, use)  # 決められない使うための条件は選ぶと止める（答える人だけに見える）。満たせないカードは選べるものに残す
+        if stop is not None:
+            options.append(uid)
+            stops.append((uid, stop.code, stop.message))
             continue
         extra = stadium_trainer_cost(state, definition)
         if extra is not None and len(state.players[user].hand) < extra[1].discard:
@@ -21982,6 +22030,9 @@ class UseOpponentDiscardTrainer(TrainerEffect):
         options, _ = discard_trainer_use_choices(state, use.player)
         if card not in options:
             raise RuntimeError(f"サイキックコントロールで選んだカード {card} が、使えるカードではない（エンジンの不具合）")
+        # v0.168（T-F1）: 使うための条件は、選んだときに確かめる（満たせなければ答えの拒否。状態・乱数・ログを変えない）
+        definition = state.card_def(card)
+        require_borrow_playable(state, state.effects.trainer_effect(definition), TrainerUse(use.player, card, definition.id))
         return UseDiscardTrainer(card)
 
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
@@ -49751,3 +49802,67 @@ V0_133_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
     AttackKey("neo4-082", 1): _printed(CoinsPerOwnTypedCardsDiscardThenDamageThenOpponentEnergy(), "はかいのほのお", DESTRUCTIVE_FIRE_TEXT),
 })
 DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_133_ATTACKS)
+
+
+# ---------------------------------------------------------------- v0.171（U7-5e）: 宣言する特殊能力の、型ごとの宣言の入力（D-U75-INPUT-DECL。docs/legal-actions-u7-5e.md 3 章）
+#
+# ``UsePokemonPower`` の宣言といっしょに指定する項目（energy・source・target）の段の並びと、選べるものの場所。合法手 API が入力の形を作るのに使う（エンジンの挙動は変えない）。
+# 型は実装の型そのもの（継承した型は表に書くまで宣言がない）。表にない型は、入力の形を推測しない（合法手 API が入力を返さない）。各段は (コマンドの項目, 選べるものの場所):
+#
+# - ``POWER_CHOICE_OWN_POKEMON``: 使うプレイヤーの場のポケモン（場のポケモンの番号）
+# - ``POWER_CHOICE_OPPONENT_POKEMON``: 相手の場のポケモン（場のポケモンの番号）。``POWER_CHOICE_OPPONENT_BENCH``: 相手のベンチのポケモン
+# - ``POWER_CHOICE_ENERGY_ON_SOURCE``: 前の段の source のポケモンについているカード（uid）。``POWER_CHOICE_HAND_CARD``: 使うプレイヤーの手札のカード（uid）
+#
+# 段の並びは選ぶ順（コマンドの項目の並びとは別）。どの段も 1 つを選ぶ（任意の段はない。辞退は宣言しないこと）。コインの結果・受理のあとに選ぶものは含めない（既存の決定）
+POWER_CHOICE_OWN_POKEMON = "own_pokemon"
+POWER_CHOICE_OPPONENT_POKEMON = "opponent_pokemon"
+POWER_CHOICE_OPPONENT_BENCH = "opponent_bench"
+POWER_CHOICE_ENERGY_ON_SOURCE = "energy_on_source"
+POWER_CHOICE_HAND_CARD = "hand_card"
+POWER_CHOICES = (POWER_CHOICE_OWN_POKEMON, POWER_CHOICE_OPPONENT_POKEMON, POWER_CHOICE_OPPONENT_BENCH, POWER_CHOICE_ENERGY_ON_SOURCE, POWER_CHOICE_HAND_CARD)
+_POWER_E_S_T = (("source", POWER_CHOICE_OWN_POKEMON), ("energy", POWER_CHOICE_ENERGY_ON_SOURCE), ("target", POWER_CHOICE_OWN_POKEMON))
+_POWER_E_S = (("source", POWER_CHOICE_OWN_POKEMON), ("energy", POWER_CHOICE_ENERGY_ON_SOURCE))
+_POWER_EH_T = (("energy", POWER_CHOICE_HAND_CARD), ("target", POWER_CHOICE_OWN_POKEMON))
+_POWER_EH = (("energy", POWER_CHOICE_HAND_CARD),)
+_POWER_S_T = (("source", POWER_CHOICE_OWN_POKEMON), ("target", POWER_CHOICE_OWN_POKEMON))
+_POWER_OS_OT = (("source", POWER_CHOICE_OPPONENT_POKEMON), ("target", POWER_CHOICE_OPPONENT_POKEMON))
+_POWER_S = (("source", POWER_CHOICE_OWN_POKEMON),)
+_POWER_OBT = (("target", POWER_CHOICE_OPPONENT_BENCH),)
+POWER_INPUT_STAGES: Mapping[type, tuple[tuple[str, str], ...]] = MappingProxyType({
+    EnergyTransfer: _POWER_E_S_T,
+    MoveEnergyAmongNamed: _POWER_E_S_T,
+    TakeEnergyToSelf: _POWER_E_S,
+    ConvertBasicEnergyColor: _POWER_E_S,
+    AttachEnergyFromHand: _POWER_EH_T,
+    DiscardTypeEnergyFromHand: _POWER_EH,
+    MoveDamageCounter: _POWER_S_T,
+    MoveOpponentDamageCounter: _POWER_OS_OT,
+    MoveDamageCounterToSelf: _POWER_S,
+    MoveGroupCounterToSelf: _POWER_S,
+    StopOpponentBenchPowersThisTurn: _POWER_OBT,
+    ChargeBenchEnergyToSelf: (), ChooseFossilEvolvedThenCoinDevolveAll: (), CoinAttachEnergyFromDeckToOwnPokemon: (), CoinAttachFromDiscardToTypePokemon: (),
+    CoinBenchNamedFromDeck: (), CoinConditionOnEitherActive: (), CoinDamageOpponentActiveThenEndTurn: (), CoinEachPlayerLooksOpponentHand: (),
+    CoinEachPlayerShufflesOpponentDeck: (), CoinEvolveSelfFromDeck: (), CoinFossilAttackBonusThisTurn: (), CoinGroupAttackImmunityNextTurn: (),
+    CoinLookOpponentHandMayReturnTrainer: (), CoinPeekOpponentDeckTopMayShuffle: (), CoinPoisonMistUntilNextTurn: (), CoinPutStadiumFromDiscard: (),
+    CoinRecoverNamedFromDiscard: (), CoinRecoverTrainerWithBenchLetters: (), CoinReviveFromDeck: (), ConvertAttachedEnergy: (),
+    ConvertSelfToEnergy: (), CureBothActivesOncePerTurn: (), CureOneActiveConditionOnHeadsFromBench: (), DiscardThenDraw: (),
+    DrawThenPutHandCardOnDeckTop: (), GatherTypeEnergyCardsToSelf: (), HealOwnPokemonOnHeads: (), LookOpponentDeckTopKeepOrder: (),
+    LookOwnPrizeCard: (), PeekCard: (), RemoveOwnCounterOncePerTurn: (), ReturnActiveToHandWithBenchLetters: (),
+    ReturnHandThenDrawSameWithBenchLetters: (), ReturnSelfToHand: (), SearchDeckWithBenchLettersToHand: (), SearchEvolutionCardToHand: (),
+    Shapeshift: (), ShiftColor: (), SuperTransformPower: (), SwapPrizeWithDeckTop: (),
+    SwitchOpponentChosenByOpponent: (), SwitchOpponentOnHeads: (), SwitchSelfFromBench: (), TakeEnergiesToSelf: (),
+    TypeChangeSelfUntilTurnEnd: (),
+})
+# 使用を宣言するが、UsePokemonPower では使わない特殊能力（反応・ワザといっしょに使う力。既存の決定・ワザの宣言で答える）。合法手 API の use_power の候補にしない
+POWER_NOT_BY_COMMAND: frozenset[type] = frozenset({
+    PreventKnockOutOnHeads, ReturnToHandOnKnockOut, BeamOnKnockOut, FleeAfterAttackDamage, TakeBenchDamageInstead, BenchNamedFromDeckOnAttackDamage,
+    ReturnToDeckOnHeadsInsteadOfKnockOut, ExtraEnergyDamageWithAttack, AttackDeclaredPower, CoinsUntilTailsBonusToGroupAttack, CounterBonusToGroupAttack,
+})
+POWER_NOT_BY_COMMAND_BASES: tuple[type, ...] = (EntryPower, TriggeredPower)  # 場に出たとき・決まったときに機会を出す力（決定で答える）
+
+
+def power_by_command(effect) -> bool:
+    """v0.171（U7-5e）: ``UsePokemonPower`` で使う、使用を宣言する特殊能力か（反応・ワザといっしょに使う力・常にはたらく力でない）。入力の宣言があるかとは別。"""
+    return bool(effect.declared) and type(effect) not in POWER_NOT_BY_COMMAND and not isinstance(effect, POWER_NOT_BY_COMMAND_BASES) \
+        and not any(base in POWER_NOT_BY_COMMAND for base in type(effect).__mro__)
+

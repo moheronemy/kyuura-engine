@@ -475,10 +475,16 @@ class PsychicControlTest(unittest.TestCase):
         audited(self, state)
 
     def test_condition_is_paid_from_users_hand(self):
-        """超エネルギーリムーブの使うための条件（自分のポケモンのエネルギーカード）は、使ったプレイヤーの場で払う。満たせなければ選べるものに入らない。"""
+        """超エネルギーリムーブの使うための条件（自分のポケモンのエネルギーカード）は、使ったプレイヤーの場で払う。満たせなければ使えない。
+
+        v0.168（T-F1。docs/chaos-gym-borrow-t-f1.md）: 使うための条件は使うプレイヤーの手札・山札を読みうるので、選べるもの（数は相手にも見える）を選り分けるのに使わない。
+        満たせないカードは選べるものに残り、選ぶと答えを拒否する（v0.167 までは選べるものから除いていた。意図した差）。"""
         state = pc_board(opponent_discard=(SUPER_ENERGY_REMOVAL, POTION))
         after = play_pc(state)
-        self.assertEqual([after.cards[u].card_id for u in after.decision.options], [POTION])  # 使ったプレイヤーの対戦ポケモンにエネルギーがない
+        self.assertEqual([after.cards[u].card_id for u in after.decision.options], [SUPER_ENERGY_REMOVAL, POTION])
+        removal = next(u for u in after.decision.options if after.cards[u].card_id == SUPER_ENERGY_REMOVAL)
+        with self.assertRaises(IllegalActionError):
+            answer(after, (removal,))  # 使ったプレイヤーの対戦ポケモンにエネルギーがない（状態は変わらない）
         state = pc_board(opponent_discard=(SUPER_ENERGY_REMOVAL, POTION), active=mon(BROCKS_GRAVELER, (F,), damage=30))
         after = play_pc(state)
         self.assertEqual(sorted(after.cards[u].card_id for u in after.decision.options), sorted([SUPER_ENERGY_REMOVAL, POTION]))

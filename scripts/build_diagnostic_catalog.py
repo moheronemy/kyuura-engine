@@ -60,8 +60,8 @@ DYNAMIC_SITES = {
     ("kyuura_engine/effects.py", "_require_user_not_asleep_paralyzed_confused", "code"): ("POKEMON_ASLEEP", "POKEMON_PARALYZED", "POKEMON_CONFUSED"),
     ("kyuura_engine/effects.py", "attack_power_check", "code"): ("POKEMON_ASLEEP", "POKEMON_PARALYZED", "POKEMON_CONFUSED"),
     ("kyuura_engine/effects.py", "check_playable", "*prevented"): ("from_function", "kyuura_engine/evolution.py", "evolution_prevented"),
-    # evolution_block のタプルのうち DEVOLVED_THIS_TURN_CODE は、この呼び出しの直前で UnsupportedError として投げる（engine._evolve_pokemon）ので、不正な操作のコードから除く
-    ("kyuura_engine/engine.py", "_evolve_pokemon", "*block"): ("from_function", "kyuura_engine/evolution.py", "evolution_block", ("DEVOLVED_THIS_TURN_CODE",)),
+    # evolution_block のタプルのうち DEVOLVED_THIS_TURN_CODE は、この呼び出しの直前で UnsupportedError として投げる（engine.check_evolve。v0.165 で engine._evolve_pokemon の前半を関数にした）ので、不正な操作のコードから除く
+    ("kyuura_engine/engine.py", "check_evolve", "*block"): ("from_function", "kyuura_engine/evolution.py", "evolution_block", ("DEVOLVED_THIS_TURN_CODE",)),
 }
 
 CATEGORY_TEXTS = {

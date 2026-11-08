@@ -2,7 +2,7 @@
 
 `kyuura_engine.client_api` は、別のリポジトリで作る GUI が、エンジンの内部の型（`GameState`・決定・`CommandResult`・検証者用の記録）を知らずに使える、JSON にできる要求と応答の境界です。通信の方式に依存せず、同じプロセスで `handle(dict) -> dict` を呼びます。`kyuura_engine` の版は 0.164.0 です。
 
-実行は U7（`legal_actions`）と U2（`adapter`）に任せ、別の実行器・独自の合法性の判定は作っていません。対応する操作は U7-1・U7-2 の範囲だけです（決定への回答・番を終える・初期配置・切り直しの補償・ジャンケンの結果・延長戦の開始）。**番の候補は部分実装**です（番を終えるだけ。ほかの 12 種類は `not_covered_kinds`）。
+実行は U7（`legal_actions`）と U2（`adapter`）に任せ、別の実行器・独自の合法性の判定は作っていません。対応する操作は U7-1・U7-2 の範囲だけです（決定への回答・番を終える・初期配置・切り直しの補償・ジャンケンの結果・延長戦の開始）。**番の候補は部分実装**です（番を終えるだけ。ほかの 12 種類は `not_covered_kinds`）。**v0.166 の追記**: U7-4 で、ワザの宣言（`use_attack`。ワザ → 宣言といっしょに選ぶもの）を同じ要求の形で扱う（契約・形式の版は同じ。応答の形の追加と GUI の追従は [legal-actions-u7-4.md](legal-actions-u7-4.md) 7〜8 章）。番の候補は部分実装のまま（ほかの 7 種類が `not_covered_kinds`）。**v0.165 の追記**: U7-3 で、番の基本の操作 4 種類（`play_basic`・`attach_energy`・`evolve`・`retreat`）を同じ要求の形で扱う（契約・形式の版は同じ。応答の形の追加と GUI の追従は [legal-actions-u7-3.md](legal-actions-u7-3.md) 5〜6 章）。番の候補は部分実装のまま（ほかの 8 種類が `not_covered_kinds`）。
 
 ## 1. U7-2 の契約の確かめ（この版で直したもの）
 
@@ -120,14 +120,14 @@ admin = hub.host()           # ホストの操作（信頼されたアプリケ�
 
 ## 8. 導入（別リポジトリの GUI から）
 
-- 依存の方法（推奨）: このリポジトリの固定したコミットを Python のパッケージとして入れる（`pyproject.toml` の `kyuura-engine`。依存のパッケージはない。Python 3.11 以上）。例: `pip install "kyuura-engine @ git+https://github.com/moheronemy/kyuura-engine@<commit>"`。開発中は、手元の作業ツリーを編集可能でインストールする（`pip install -e <path>`）。パッケージの公開（PyPI など）はしていない
+- 依存の方法（推奨）: このリポジトリの固定したコミットを Python のパッケージとして入れる（`pyproject.toml` の `kyuura-engine`。依存のパッケージはない。Python 3.11 以上）。例: `pip install "kyuura-engine @ git+https://github.com/moheronemy/kyuura-engine@<commit>"`。**訂正**: v0.164 の最終コミット `d0c5cfa` までは配布物に `kyuura_engine.resolution` が入らず、この通常のインストールでは `import kyuura_engine` が失敗した。`e8c518f` 以降のコミットを固定する（[installation.md](installation.md)）。編集可能インストール（`pip install -e <path>`）はエンジンの開発用で、GUI の必須の手段ではない。パッケージの公開（PyPI など）はしていない
 - 同じプロセスで使う: ホストの側で `ClientHub` を作り、入口を GUI の部品へ配る。要求・応答は JSON のオブジェクト（`dict`）
 - 別のプロセス・通信で使う: 要求・応答をそのまま JSON の文字列にして通す（通信の方式・認証・再送はホストするアプリケーションが作る）
 - 契約の識別と形式の版（`kyuura-client-api`・1）を GUI の側でも確かめる。形式の版が変わったら、知らない版として扱う
 
 ## 9. 制限と引き継ぎ
 
-- 対応する操作は U7-1・U7-2 の範囲だけ（番の通常の操作 12 種類は U7-3〜U7-5）
+- 対応する操作は U7-1・U7-2 の範囲だけ（番の通常の操作 12 種類は U7-3〜U7-5）。v0.165 で U7-3 の 4 種類を加えた（ワザ・トレーナー・特殊能力など 8 種類は U7-4・U7-5）。v0.166 で U7-4 のワザを加えた（トレーナー・特殊能力など 7 種類は U7-5）。v0.167 で U7-5a・U7-5b の 3 種類（`remove_disguise`・`discard_from_play`・`reveal_face_down`）を加えた（トレーナー・特殊能力・スタジアム・`check_face_up_deck` の 4 種類が残る。[legal-actions-u7-5ab.md](legal-actions-u7-5ab.md)）
 - 認証・通信・永続化・再送の重複の排除・再接続の機能・履歴の配信は作っていない
 - 公開の更新は、この hub の入口から送って受理された操作だけから作る（ホストが包んだ対戦へ直接送った操作では作らない。直接送るのは契約の外）
 - 識別の方式の移行はしていない（新しいファイル `kyuura_engine/client_api.py` は識別の設計の部品 `client_api`（層 `api_format`）。現行の方式では `behavior_digest` に入る）

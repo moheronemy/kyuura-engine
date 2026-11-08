@@ -88,6 +88,8 @@ v0.159（U1〜U6 の総合検証）のあとの仕様案です。v0.160 で U7-1
 | `start_sudden_death` | `StartSuddenDeath` | host | なし | U7-2 |
 <!-- generated:operations end -->
 
+U7-5 の 7 種類（`play_trainer`〜`check_face_up_deck`）の宣言の入力・情報源・共通の処理の調査と、実装の単位への分け方は、[legal-actions-u7-5-design](legal-actions-u7-5-design.md)（構造化した仕様は [legal-actions-u7-5-design.json](legal-actions-u7-5-design.json)）と [legal-actions-u7-5-implementation-plan](legal-actions-u7-5-implementation-plan.md) にあります（承認前）。上の表の U7-5 の行の入力の段は、その調査の前の見込みです。
+
 `next`（U2）との対応（`next` は手がかりのまま。U7 の候補の一覧ではない）:
 
 <!-- generated:next begin -->
