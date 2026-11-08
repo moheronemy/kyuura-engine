@@ -20,6 +20,7 @@ from kyuura_engine import preset_deck
 from kyuura_engine.client_api import ClientHub
 
 from . import actions as B
+from .judge import judge_normal, judge_termination
 from .metrics import Metrics, repetition_summary
 from .policies import STAGE, TUPLE, MixedPolicy, RulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
 from kyuura_engine.replay_record import checks
@@ -45,6 +46,7 @@ STATE_INTEGRITY = "state_integrity"  # submit の結果が failed で、診断�
 EXCEPTION = "exception"  # ランナー・入口からの例外（入口は例外を投げない約束）
 INCONSISTENCY = "inconsistency"  # ランナーの照合の不一致で、続けられないもの（待っている主体と候補の状況の食い違い・だれも操作できない）
 START_REJECTED = "start_rejected"
+NEGATIVE_SIDE_EFFECT = "negative_side_effect"  # V3-1: 変異の要求の前後で副作用の疑い（その対戦の通常の進行を続けない）
 LIMIT_TERMINATIONS = (LIMIT_OPERATIONS, LIMIT_ACCEPTED, LIMIT_TURNS, LIMIT_TIME)
 KNOWN_HALT_CATEGORIES = frozenset({D.RULING_UNRESOLVED, D.UNSUPPORTED, D.TECHNICAL_LIMIT})
 
@@ -121,8 +123,9 @@ class _Stop(Exception):
 
 
 class Runner:
-    def __init__(self, config: Config, *, clock=time.monotonic, policy_factory=None, wrap_endpoint=None):
+    def __init__(self, config: Config, *, clock=time.monotonic, policy_factory=None, wrap_endpoint=None, negative=None):
         self.config = config
+        self.negative = negative  # V3-1: 通常の進行の中の negative（None なら V0〜V2 と同じ動作）
         self.limits = config.limits
         self.clock = clock
         self.policies = make_policies(config, policy_factory)
@@ -175,7 +178,8 @@ class Runner:
                              for k, p in self.policies.items()},
                 "limits": asdict(self.limits), "elapsed_seconds": round(self.clock() - self._started, 3),
                 "distribution": self.config.distribution, "metrics": self.metrics.to_dict(),
-                "repetition": repetition_summary(self.trace, self.actor_logs)}
+                "repetition": repetition_summary(self.trace, self.actor_logs),
+                **({"negative": self.negative.summary(), "judge_termination": self._judge_termination(termination)} if self.negative is not None else {})}
 
     # ---------------------------------------------------------------- 進行
 
@@ -409,6 +413,8 @@ class Runner:
                 continue
             if self.counters["operations"] >= self.limits.operations:
                 raise _Stop(LIMIT_OPERATIONS, {"operations": self.counters["operations"]})
+            if self.negative is not None:  # V3-1: check が valid のあと、通常の送信の前に変異を試す（通常の取っ手・方策の乱数を使わない）
+                self.negative.before_submit(self, actor, endpoint, entry, candidate, stages, handle, choices)
             before_state = self.game.state
             operation_id = f"{self.config.run_id}-{self.counters['operations'] + 1:06d}"
             self.last_result = None
@@ -420,6 +426,9 @@ class Runner:
             outcome = sent.get("outcome")
             self._cover("outcome", outcome)
             self.metrics.submitted(kind, outcome, (sent.get("result") or {}).get("status") if outcome == D.ACCEPTED else None)
+            if self.negative is not None:
+                verdict, why = judge_normal(candidate, meaning, entry["submit"])
+                entry["judge"] = {"verdict": verdict, "reasons": why}
             if outcome == D.ACCEPTED:
                 self.counters["accepted"] += 1
                 self._cover("accepted_kind", candidate["kind"])
@@ -428,6 +437,8 @@ class Runner:
                 self._episode["result"] = "accepted"
                 if hasattr(policy, "observe_accepted"):
                     policy.observe_accepted(turn, key)  # 混合のランダムの側で受理された操作も履歴に入れる
+                if self.negative is not None:  # V3-1: 受理のあとの古い取っ手の試験（元の入力を正常に送り直すのではない）
+                    self.negative.after_accept(self, actor, endpoint, entry)
                 return
             if outcome == D.FAILED or not sent.get("ok", True):
                 self.counters["failed"] += 1
@@ -452,6 +463,15 @@ class Runner:
             self._after_refusal_like(entry, actor)
             if rejections >= self.limits.rejections_per_position:
                 raise _Stop(NO_PROGRESS, {"actor": actor, "reason": "rejections_per_position", "rejections": rejections})
+
+    def negative_stop(self, detail: dict[str, Any]) -> None:
+        """V3-1: 変異の前後で副作用の疑いがあれば、その対戦の通常の進行を止める（前後の証跡は変異の記録にある）。"""
+        raise _Stop(NEGATIVE_SIDE_EFFECT, detail)
+
+    def _judge_termination(self, termination) -> dict[str, Any]:
+        accepted = [e for e in self.trace if e.get("type") == "attempt" and (e.get("submit") or {}).get("outcome") == D.ACCEPTED]
+        verdict, why = judge_termination(termination, accepted[-1]["candidate"].get("processability") if accepted else None)
+        return {"verdict": verdict, "reasons": why}
 
     def _attempt(self, actor, candidate, reason, scope) -> dict[str, Any]:
         self.counters["attempts"] += 1
