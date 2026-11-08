@@ -5260,3 +5260,12 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 固定条件の 1 対戦（`hitmonchan-dewgong` 対 `venusaur-parasect`・既定の規約集合・seed 1）: `game_over`・受理 130・番 46・`replay_run` は `succeeded`・意味の列 142 行が一致。届かなかった種類・入力の形は文書の 7.3 節
 - V1 以降（分布の拡張・ルールの方策・混合・`boundary`・`negative`・双子・広い対象・最小化）は未実装
 - 詳細: [verification-ai-v0.md](verification-ai-v0.md)
+
+## 検証用 AI の V1（v0.172 のあと。エンジンは変えていない）
+
+- `tools/verification_ai` に分布 `uniform-candidate+uniform-tuple`（候補の中の完成した入力の組を上限 4,096 で列挙。上限を超えたら段ごとの方式に戻して記録）と、選択の過程・到達範囲の計測（取得ごと・状態ごと・試みごとを分ける）を加えた。段ごとの方式（V0）の選び方は変えていない
+- 判断の整理（承認済み・暫定・保留・今回扱わない）と、CN-1 のエンジンの側の独立の課題（説明を直す案・failure の口を揃える案）を記録した
+- 保存済みの V0 の実行を別のプロセスで 1 局再現し、意味の列 142 行・終わり方・完全な記録の行・`replay_run` が一致した
+- 固定デッキ・既定の規約集合で 2 方式 × seed 11・12・13 の 6 局: seed 12・13 の 4 局が `game_over`、seed 11 の 2 局が開始の時点の既知の停止（`UNRESOLVED_MULLIGAN_COMPENSATION`）。どれも `replay_run` は `succeeded`・記録の対応の問題 0。`use_power`（3 段）に届いた。`options_by_path` などは届いていない
+- V2 以降（ルール・混合の方策・`boundary`・`negative`・双子・広い対象・最小化）は未実装
+- 詳細: [verification-ai-v1.md](verification-ai-v1.md)

@@ -155,7 +155,7 @@ V0 と、次の判断だけを採用しました。仕様の D-1〜D-12 を一�
 | `verifier/runs/<run>/a/views/` | 閲覧者ごとの記録（`view_records_from_replay`。プレイヤー 0・1・観戦者） | 検証者（それぞれの閲覧者に渡せる形） |
 | `verifier/runs/<run>/verification.json`・`invocation.json` | 再実行の結果・意味の比べ・記録の対応、実行のコマンドと終了コード | 検証者 |
 | `verifier/discarded/` | 採用しなかった実行の出力（理由の `README.md`） | 検証者 |
-| `public/runs/<run>/summary.json` | 終わり方・数・到達範囲・再実行の結果の集計だけ（seed・デッキの並び・カード・選択の中身・取っ手を含まないことを確かめた） | だれでも |
+| `public/runs/<run>/summary.json` | 終わり方・数・到達範囲・再実行の結果の集計だけ（乱数の状態・デッキの並び・カード・選択の中身・取っ手を含まないことを確かめた。V1 の訂正: 実行の名前 `…-g1-p1-h1` に固定の検証用の seed の値が現れる。seed は文書にも書く値で、秘密として扱わない。[verification-ai-v1.md](verification-ai-v1.md) 9 章） | だれでも |
 | `MANIFEST.md`・`manifest.json`・`sha256.json` | 配置の説明と、すべてのファイルの sha256 | — |
 
 完全な記録（`ReplayCollector`）にはエンジンに渡った操作（受理・拒否・failed）だけが入り、check で止めた試み・ホストの段の `refused`・入力を作れなかった試みは入りません。

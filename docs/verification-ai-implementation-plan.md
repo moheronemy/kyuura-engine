@@ -1,6 +1,6 @@
 # エンジン検証用 AI の段階的な実装計画（計画だけ。実装していない）
 
-仕様は [verification-ai-design.md](verification-ai-design.md) です。この文書は、その仕様を小さな段に分けた実装の計画です。V0 だけを実装しました（[verification-ai-v0.md](verification-ai-v0.md)）。V1〜V6 は未着手です。
+仕様は [verification-ai-design.md](verification-ai-design.md) です。この文書は、その仕様を小さな段に分けた実装の計画です。V0（[verification-ai-v0.md](verification-ai-v0.md)）と V1（[verification-ai-v1.md](verification-ai-v1.md)）を実装しました。V2〜V6 は未着手です。
 各段は、利用者の指示を受けてから始めます。
 
 共通の前提:
@@ -16,7 +16,7 @@
 | 段 | 内容 | 依存 |
 |---|---|---|
 | V0 | 公開 API だけで固定の 1 対戦を進め、上限つきで終わり、記録と再実行を確かめる（最初の実装の単位）。**実装した**（[verification-ai-v0.md](verification-ai-v0.md)） | なし |
-| V1 | ランダムの分布（`uniform-stage`・`uniform-tuple`）と到達範囲の集計。小さなデッキと規約集合の組 | V0 |
+| V1 | ランダムの分布（`uniform-stage`・`uniform-tuple`）と到達範囲の集計。小さなデッキと規約集合の組。**実装した**（[verification-ai-v1.md](verification-ai-v1.md)。デッキと規約集合は固定デッキ・既定の規約集合だけ） | V0 |
 | V2 | ルールの方策 `rules-v1` と混合の方策。選択の理由の記録 | V1 |
 | V3 | `boundary` のプロファイルと、`negative`（不正な入力）の試験 | V1 |
 | V4 | 情報境界の確かめの強化（双子・閲覧者ごとの記録の分離）と R-B（U7 の経路の再実行） | V0（V2 のあとが望ましい） |

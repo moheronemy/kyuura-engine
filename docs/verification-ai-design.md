@@ -4,7 +4,7 @@
 「検証用 AI」の仕様です。段階ごとの実装計画は [verification-ai-implementation-plan.md](verification-ai-implementation-plan.md) にあります。
 
 - この文書を作った時点（`17e31a9`）は調査・設計・文書化だけで、確認は文書とコードの静的な読み取りだけでした
-- 実装の状況: V0 だけを実装した（[verification-ai-v0.md](verification-ai-v0.md)。採用した判断はその 1.1 節。D-1〜D-12 の全体は採用していない）。V1 以降は未実装
+- 実装の状況: V0（[verification-ai-v0.md](verification-ai-v0.md)）と V1（[verification-ai-v1.md](verification-ai-v1.md)）を実装した。D-1〜D-12 の状態（承認済み・暫定・保留・今回扱わない）は V1 の文書の 2 章。V2 以降は未実装
 - 検証用 AI の目的は、勝つことではありません。ランダムの行動と小さなルールの行動を組み合わせて多様な操作の列を作り、異常を分類して記録することです
 - いちばん大事な原則: **ゲームの合法性（エンジン・U7）と AI の戦略を分ける**。戦略は、U7 が返した候補・入力の中で順位をつけるだけで、合法性を判定し直さない
 
