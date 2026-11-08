@@ -87,3 +87,78 @@ V3-1 の判定（規則 1。`8091ed6`）を読み直し、停止系の拒否を 
 
 規則 2 にしたので、`tests/test_verification_ai_v3_1.py` の `JudgeTest` の 1 行（停止系の拒否を、元のコードと経路の理由なしで `known_stop` と期待していた）を規則 2 の期待に直した
 （意図した差）。
+
+テストの実行（1 モジュールずつ、別のプロセス）: `tests.test_verification_ai_v3_2`（10 テスト）は 2 つ失敗（`FixedReachTest` の 1 枚・2 枚。完全な記録のコマンドの `type` を `AttachEnergy` と
+書いて探していたが、記録の値は `attach_energy` だった。道具の誤り）。`run_v3_2.py` を直して `FixedReachTest` だけ（2 テスト）を再実行: 失敗 0。ランナー・判定・変異・方策を変えたので
+`tests.test_verification_ai_v3_1`（15）・`v2_repeat`（15。既存の方策の意味の列の sha256）・`v2`（19）・`v1`（19）・`v0`（24）: 失敗 0。実行のあとに加えた `SummarizeTest`（1 テスト）
+だけを実行: 失敗 0（8.2 節）。
+
+## 8. 実行の結果（2026-11-08）
+
+### 8.1 実行と、集計の書き出しの失敗
+
+| 手順 | 内容 | 終了コード |
+|---|---|---|
+| 1 | `run_v3_2 run`（コミット `0cc21df`。1〜7 章と同じコミット）。14:34:05Z〜14:34:07Z（UTC）。計画（`plan.json`）を書いてから 3 局を 1 局ずつ実行し、局ごとの記録（完全な記録・操作の記録・本人向けの記録・変異・`options_by_path.json`・`attachment.json`・`verification.json`）を書いた。そのあと集計（`aggregate.json`）の書き出しで `TypeError`（BoundaryPolicy の局の、入力のない候補の完成した入力の区分が None で、キーの並べかえで止まった） | 1 |
+| 2 | 道具を直してコミット（`c2155a4`）。`run_v3_2 summarize` で、保存した局のファイルだけから集計と公開の集計を書いた（対戦を走らせていない。局の数は 3 のまま） | 0 |
+
+### 8.2 3 局の結果
+
+| 局 | 選び手 | 終わり方（判定） | 受理 | `replay_run` | 記録の対応 | 通常の送信の判定 |
+|---|---|---|---|---|---|---|
+| `one-card` | 固定の到達の列（`fixed-reach` 6） | `script_complete`（`expected`） | 6 | 期待 `succeeded`・結果 `succeeded` | 問題 0 | `expected` 6 |
+| `two-card` | 固定の到達の列（`fixed-reach` 6） | `script_complete`（`expected`） | 6 | 期待 `succeeded`・結果 `succeeded` | 問題 0 | `expected` 6 |
+| `boundary` | BoundaryPolicy（`boundary` 40）・ホストの係（均等 1） | `limit_operations`（`expected`。道具の上限） | 40 | 期待 `succeeded`・結果 `succeeded` | 問題 0 | （記録しない。negative のない局） |
+
+### 8.3 options_by_path（実際の応答。`two-card/options_by_path.json`）
+
+- 3 段目: `path_stages` は `[1, 2]`、`count` は 0〜1、`decline` 真。3 段目の選べるものは手札の炎 7 枚（`o9`〜`o15`。どれも `eligible` 真・`may_stop_later`）
+- 鍵は 7 つ（`o1/o8`〜`o7/o8`）。上流は 1 段目の炎のどれか（`o1`〜`o7`）と、2 段目のカツラのガーディ（`o8`。場で選べるのはこの 1 匹だけ）
+- 鍵ごとの参照は 6 つで、どれも `eligible` 真・`may_stop_later`。鍵ごとに使えない 3 段目の選ぶものは、1 段目で選んだ炎と同じカード 1 つだけ（例: 鍵 `o1/o8` では `o9`）
+- 3 段目を省いた入力は 2 つ（`one-card` の入力 `[o1, o8]`）、2 枚目ありは 3 つ（`two-card` の入力 `[o1, o8, o10]`）
+- 受理のあとの確かめ（`attachment.json`）: `one-card` はつけた場のポケモンの炎が 0 → 1、完全な記録のコマンドに `energy2` なし。`two-card` は 0 → 2、コマンドに `energy2` あり
+
+### 8.4 変異（つける操作の前）
+
+| 局 | 実行した変異（check / submit） | 判定 | 復帰の check |
+|---|---|---|---|
+| `one-card` | `unknown_option`・`wrong_actor`・`stale_after_accept`（3 / 3） | すべて `expected` | 1（`expected`） |
+| `two-card` | `unknown_option`・`wrong_actor`・`stale_after_accept`（3 / 3） | すべて `expected` | 1（`expected`） |
+
+- `suspect` 0・`undetermined` 0。変異の前後の確認値・状態のオブジェクト・新しい更新・更新の番号は変わらず、通常の送信は 1 回だけ
+- not_applicable:
+  - `path_mix_path`（両方の局）: 前提を満たす例がない。3 段目のほかの鍵にだけある選ぶものは、1 段目で選んだ炎と同じカードだけで、同じカードを 2 回選ぶ条件と重なる（3 章の予想どおり）。
+    **options_by_path の単一の条件の別の経路の混ぜ方は、この固定の条件では未到達**
+  - `duplicate_replace`（両方）: 2 つ以上選ぶ段がない（役割の違う段の炎を同じにすることは試験にしない）。**未到達**
+  - `count_over`: `one-card` は 3 段目が上限でない。`two-card` は理由が `no_extra_option` だが、実際の応答には同じ鍵の参照にほかの炎（`o11`〜`o15`）がある。V3-1 の `count_over` の関数
+    （`_allowed_now`）は経路で引く段の参照を読まないので、前提がないのではなく**道具が対応していない**（V3-1 の種類を変えない方針のため直していない）
+  - `count_under`: 最後の段が下限でない。`path_mix`（`options_by_choice`）: 2 段目の参照がどの 1 段目でも同じ。`non_executable`: 実行できない区分の選べるものがない
+
+### 8.5 BoundaryPolicy
+
+- 実装と単体の確かめ: 区分 → 候補の選び方、乱数の回数、boundary の範囲（表示だけ・入力を返さない・実行できない区分を入れない）、deep が変わらないこと（7 章）
+- 実際の対戦（`boundary` の局。40 操作）: 示された候補の区分は `supported`（取得ごと 60）・`may_stop_later`（47）だけで、**`unverified` は示されなかった（boundary の対象に未到達）**。
+  BoundaryPolicy が選んだ候補の区分は `supported` 18・`may_stop_later` 22、作った完成した入力の区分は `supported` 17・`may_stop_later` 2・入力なし 21
+- 受理した種類: `place_starting` 2・`mulligan_draw` 1・`report_janken` 1・`play_basic` 1・`play_trainer` 2・`attach_energy` 7・`retreat` 7・`end_turn` 19
+- 固定の到達の列で場面へ進めたもの（局 1・2）と、BoundaryPolicy が選んだもの（局 3）は、試みの記録の理由のコード（`fixed-reach:…`・`boundary:class:…`）で分かれている。正常な
+  2 枚目の実行（局 2）を、未確認の経路の確かめとは数えない
+
+### 8.6 判定の規則 2
+
+実際の対戦では拒否・停止がなく、停止系の拒否の判定（`known_stop`・`undetermined`）は単体のテストだけで確かめました（7 章の `JudgeRulesTest`）。
+
+## 9. 失敗・修正・再実行・未確かめ
+
+- 失敗と修正: テストの 2 つ（記録のコマンドの `type` の誤り。7 章のあと）、実行の集計の書き出し（8.1 節）。どちらも道具の誤り。エンジンの不具合は見つかっていない（`suspect` 0）
+- 再実行: 失敗したテストのクラスだけ・加えたテストだけ。対戦の再実行はしていない（3 局は 1 回ずつ。集計は保存したファイルから作った）
+- 未実行: なし
+- 未確かめ: `options_by_path` の単一の条件の別の経路と個数を保った重複（前提を満たす例がない）、経路で引く段の `count_over`（道具の未対応）、`unverified` の経路（boundary の対象に
+  未到達）、停止系の拒否の判定の実際の対戦、ほかの規約集合（S2A・PO）での同じ列（既存の U7 のテストは 3 つの規約集合で 2 枚をつけている）、別のプロセスでの再現
+
+## 10. V3-3 以降へ進むための残件
+
+- `options_by_path` の別の経路を単一の条件で試すには、鍵ごとの参照の差が「同じカード」でない固定の条件（場にカツラのポケモンとそうでないポケモンがいて、2 段目で経路が分かれる例など）が
+  要る。今の固定の条件では届かない（探索はしていない）
+- 経路で引く段の参照を読む `count_over` は、V3-1 の種類を変えるか、新しい種類として加えるかの判断が要る
+- `unverified` に届く固定の条件がない（構築した盤面の V3-3、探索の V3-4 の判断）
+- V3 の設計の残りの判断（D-V3-*）・R-B・CN-1 のエンジンの側・D-12・きぜつの数え方は変わらない
