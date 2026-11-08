@@ -55,7 +55,7 @@ class JudgeV3Test(unittest.TestCase):
         self.assertEqual(J.judge_normal(attack, [], rejected(D.RULING_UNRESOLVED, DU1))[0], J.UNDETERMINED)  # コード表・未評価の理由だけでは足りない
         self.assertEqual(J.judge_normal(attack, [], rejected(D.RULING_UNRESOLVED, DU1), evidence=DU1)[0], J.KNOWN_STOP)
         self.assertEqual(J.judge_normal(attack, [], rejected(D.RULING_UNRESOLVED, "UNRESOLVED_MULLIGAN_COMPENSATION"), evidence=DU1)[0], J.UNDETERMINED)
-        self.assertEqual(J.JUDGE_RULES_VERSION, 3)
+        self.assertEqual(J.JUDGE_RULES_VERSION, 4)  # P6 の追従で規則 4（docs/verification-ai-p6.md 4 章）。known_stop の規則 3 の中身（上の 3 つ）は変えていない
 
     def test_halt_after_accept(self):
         halt = {"category": D.RULING_UNRESOLVED, "diagnostic_id": DU1}

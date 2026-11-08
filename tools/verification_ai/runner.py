@@ -414,6 +414,8 @@ class Runner:
             log["check"] = entry["check"]
             self.metrics.checked(kind, bool(checked["response"]["valid"]))
             if not checked["response"]["valid"]:
+                if any(B.cost_not_evaluated(s) for s in stages):  # P6: check は形だけなので、契約から作った入力が通らないのは契約との矛盾（ほかの種類の check はエンジンの確かめを含む）
+                    self._anomaly("p6_check_invalid_for_generated_input", entry, {"refusal": checked["response"].get("refusal"), "choices": choices})
                 self.counters["check_invalid"] += 1
                 tried.add(signature)
                 rejections += 1
@@ -437,7 +439,7 @@ class Runner:
             self._cover("outcome", outcome)
             self.metrics.submitted(kind, outcome, (sent.get("result") or {}).get("status") if outcome == D.ACCEPTED else None)
             if self.negative is not None:
-                verdict, why = judge_normal(candidate, meaning, entry["submit"])
+                verdict, why = judge_normal(candidate, meaning, entry["submit"], stages=stages)  # 規則 4: P6 の段は stages の cost_evaluation で分ける
                 entry["judge"] = {"verdict": verdict, "reasons": why}
             if outcome == D.ACCEPTED:
                 self.counters["accepted"] += 1

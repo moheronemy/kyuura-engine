@@ -4,6 +4,10 @@
 ``upstream_stages``/``after``・``path_stages``/``options_by_path``・``options_from_stage``/``distinct_across_stages``・``total_units`` と選べるものの
 ``units``・``eligible``・``processability``）。カード名・カード ID・効果の型による判定は持たず、``kyuura_engine`` を import しません。
 
+v0.174.0（R-5 の P6）: 段の ``cost_evaluation``（本人のうらのバトル場のポケモンのにげるのトラッシュの段。費用・個数を評価していない）は、形を確かめたうえで、選ぶ数の範囲・
+重なりなし・選んだ順だけで選ぶ。費用・個数・足りるかを求めず、``total_units`` がないことを費用 0 と読まない。本人の観測の ``real``・カードの定義・内部の状態で補わない。
+作った入力は契約の上で作れる入力で、合法・受理されるとは言わない（check は形の確かめ。受理はエンジンがおもてにしてから決める）。
+
 - 知らない項目・知らない ``input`` は推測しない: ``ContractUnknown``
 - 入力を作れない（選べるものが足りない・経路の鍵がない必須の段・数え上げの上限）: ``Unbuildable``（理由のコードつき）
 - 選び方は方策に任せる（``policy.choose``）。均等の方策なら、各段で「前の段の選び方のもとで契約が許す選べるもの」を均等に選ぶ分布になる
@@ -16,12 +20,18 @@ from typing import Any
 
 CHOOSE_OPTION = "choose_option"
 CHOOSE_VALUE = "choose_value"
-# 段の項目（legal_actions.py が作る形。v0.172.0）。ここにない項目は ContractUnknown
+# 段の項目（legal_actions.py が作る形。v0.172.0。v0.174.0 で cost_evaluation）。ここにない項目は ContractUnknown
 STAGE_KEYS = frozenset({
     "stage", "input", "role", "meaning", "count", "range", "options", "order", "order_preserved", "distinct", "decline", "note", "decision_kind", "name",
     "depends_on_stage", "options_by_choice", "upstream_stages", "path_stages", "options_by_path", "options_from_stage", "distinct_across_stages", "total_units",
-    "bench", "remaining", "confused",
+    "bench", "remaining", "confused", "cost_evaluation",
 })
+# v0.174.0（R-5 の P6。docs/legal-actions-p6-face-down-retreat.md 2.2 節）: 段の cost_evaluation の、知っている形だけを受け付ける（ほかは ContractUnknown）
+COST_EVALUATION_KEYS = frozenset({"status", "reason", "omitted"})
+COST_NOT_EVALUATED = "not_evaluated"
+COST_REASONS = frozenset({"face_down_reveal_not_evaluated"})
+COST_OMITTED = ("total_units", "units")
+RETREAT_KIND, RETREAT_DISCARD_ROLE = "retreat", "discard"  # API の候補の種類と段の役割（にげるのトラッシュの段）。カード・効果では見分けない
 # 入力の組み立てに使う制約の項目（ほかの項目は表示用で、組み立てに使わない）
 VALUE_RANGE_LIMIT = 10_000  # choose_value の範囲の大きさの上限（無制限に並べない）
 TOTAL_UNITS_COMBINATIONS_LIMIT = 4_096  # total_units の段で調べる組み合わせの数の上限（無制限に列挙しない）
@@ -56,6 +66,54 @@ def option_allowed(option: dict[str, Any], allowed: frozenset[str]) -> bool:
     return proc is None or proc in allowed
 
 
+def cost_not_evaluated(stage: dict[str, Any]) -> bool:
+    """段が「費用・個数を評価していない」と示すか（cost_evaluation がある。形は ``check_cost_contract`` が確かめる）。"""
+    return "cost_evaluation" in stage
+
+
+def check_cost_contract(stage: dict[str, Any], kind: str | None) -> None:
+    """個数で数える段（total_units・units）と cost_evaluation の契約を確かめる（推測しない。合わなければ ContractUnknown）。
+
+    - cost_evaluation がある段: 形が {"status": "not_evaluated", "reason": 知っている理由, "omitted": ["total_units", "units"]} ちょうどで、total_units も、どの選べるものの
+      units もない（省いたと言う項目が残っていれば矛盾）。費用・個数を求めず、0 とも見なさない
+    - cost_evaluation のない段で、選べるものに units があるのに total_units がない: 契約の外
+    - にげる（候補の種類 ``retreat``）のトラッシュの段（role ``discard``）で、total_units も cost_evaluation もない: 契約の外（費用 0 と読まない）。候補の種類が分からない
+      呼び出し（``kind`` が None）では、この 1 つだけは確かめられない"""
+    number = stage.get("stage")
+    options = stage.get("options") or []
+    if "cost_evaluation" in stage:
+        cost = stage["cost_evaluation"]
+        if not isinstance(cost, dict) or set(cost) != COST_EVALUATION_KEYS:
+            raise ContractUnknown(f"stage {number}: cost_evaluation {cost!r}")
+        if cost["status"] != COST_NOT_EVALUATED:
+            raise ContractUnknown(f"stage {number}: cost_evaluation.status {cost['status']!r}")
+        if cost["reason"] not in COST_REASONS:
+            raise ContractUnknown(f"stage {number}: cost_evaluation.reason {cost['reason']!r}")
+        if not isinstance(cost["omitted"], list) or tuple(cost["omitted"]) != COST_OMITTED:
+            raise ContractUnknown(f"stage {number}: cost_evaluation.omitted {cost['omitted']!r}")
+        if "total_units" in stage or any("units" in o for o in options):
+            raise ContractUnknown(f"stage {number}: cost_evaluation with total_units/units")
+        if stage.get("input") != CHOOSE_OPTION:
+            raise ContractUnknown(f"stage {number}: cost_evaluation on {stage.get('input')!r}")
+        return
+    if "total_units" not in stage and any("units" in o for o in options):
+        raise ContractUnknown(f"stage {number}: units without total_units")
+    if kind == RETREAT_KIND and stage.get("role") == RETREAT_DISCARD_ROLE and "total_units" not in stage:
+        raise ContractUnknown(f"stage {number}: retreat discard without total_units or cost_evaluation")
+
+
+def _check_stages(stages: list[dict[str, Any]], kind: str | None) -> None:
+    for position, stage in enumerate(stages, 1):
+        unknown = sorted(set(stage) - STAGE_KEYS)
+        if unknown:
+            raise ContractUnknown(f"stage {position}: unknown keys {unknown}")
+        check_cost_contract(stage, kind)
+
+
+def _kind_of(context: dict[str, Any]) -> str | None:
+    return (context.get("candidate") or {}).get("kind")
+
+
 def build_choices(stages: list[dict[str, Any]], policy, context: dict[str, Any], allowed: frozenset[str] = DEEP_PROCESSABILITY):
     """段の順に選び、(choices, picks, meaning) を返す。picks は段ごとの選択の記録（場面・選べる数・選んだ位置・理由）、meaning は入力の意味の表現
     （``meaning_of`` と同じ形。再現の比べに使う）。"""
@@ -63,10 +121,8 @@ def build_choices(stages: list[dict[str, Any]], policy, context: dict[str, Any],
     picks: list[dict[str, Any]] = []
     meaning: list[dict[str, Any]] = []
     selected: dict[int, list[str]] = {}
+    _check_stages(stages, _kind_of(context))
     for position, stage in enumerate(stages, 1):
-        unknown = sorted(set(stage) - STAGE_KEYS)
-        if unknown:
-            raise ContractUnknown(f"stage {position}: unknown keys {unknown}")
         number = stage.get("stage")
         if number != position:
             raise ContractUnknown(f"stage number {number!r} at position {position}")
@@ -244,15 +300,14 @@ def _sequences(stage, ids: list[str], order_keep: bool):
 
 
 def enumerate_inputs(stages: list[dict[str, Any]], allowed: frozenset[str] = DEEP_PROCESSABILITY, *, limit: int = TUPLE_LIMIT,
-                     node_limit: int = NODE_LIMIT) -> list[tuple[list[Any], list[dict[str, Any]]]]:
+                     node_limit: int = NODE_LIMIT, kind: str | None = None) -> list[tuple[list[Any], list[dict[str, Any]]]]:
     """候補の、契約の上で作れる完成した入力の組（choices, meaning）をすべて、段の順・API の並びの順に返す。
 
     作れる組であって、合法・受理される組ではない（組ごとに check・エンジンの試行をしない）。並びが significant・unconfirmed の段は並びの違いを別の組として数え、
-    not_significant・not_applicable の段は API の並びの 1 通りだけを数える（``order`` がない 2 個以上の段は並びを数える。推測で並びを捨てない）。"""
+    not_significant・not_applicable の段は API の並びの 1 通りだけを数える（``order`` がない 2 個以上の段は並びを数える。推測で並びを捨てない）。
+    cost_evaluation の段（P6）は、選ぶ数の範囲と並びだけで数える（費用・個数で絞らない。``kind`` は候補の種類で、契約の確かめに使う）。"""
+    _check_stages(stages, kind)
     for position, stage in enumerate(stages, 1):
-        unknown = sorted(set(stage) - STAGE_KEYS)
-        if unknown:
-            raise ContractUnknown(f"stage {position}: unknown keys {unknown}")
         if stage.get("stage") != position:
             raise ContractUnknown(f"stage number {stage.get('stage')!r} at position {position}")
         if stage.get("input") not in (CHOOSE_OPTION, CHOOSE_VALUE):
@@ -302,7 +357,7 @@ def build_choices_tuple(stages: list[dict[str, Any]], policy, context: dict[str,
     上限を超えたら、段ごとの方式（``build_choices``）に戻し、``method`` に戻した事実と理由を書く（列挙は方策の乱数を使わないので、戻しても乱数の使い方は
     段ごとの方式と同じ）。作れる組がなければ ``Unbuildable("no_constructible_tuple")``。"""
     try:
-        tuples = enumerate_inputs(stages, allowed, limit=limit, node_limit=node_limit)
+        tuples = enumerate_inputs(stages, allowed, limit=limit, node_limit=node_limit, kind=_kind_of(context))
     except TupleLimit as over:
         choices, picks, meaning = build_choices(stages, policy, context, allowed)
         return choices, picks, meaning, {"method": "stage_fallback", "reason": over.reason, "count_at_stop": over.count}

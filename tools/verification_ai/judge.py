@@ -15,9 +15,26 @@ from typing import Any
 from kyuura_engine import diagnostics as D
 from kyuura_engine.replay_record import checks
 
+from .actions import RETREAT_KIND, cost_not_evaluated
+
 # 判定の規則の版。1: V3-1（8091ed6）。2: V3-2（停止系の拒否を known_stop にする条件を、診断のコード表と経路の理由で絞る。docs/verification-ai-v3-2.md 5 章）。
 # 3: V3-3（known_stop には、コード・分類・経路の理由に加えて、その停止の代表の条件の根拠（KNOWN_STOP_EVIDENCE の登録と、場面の側の宣言）が要る。docs/verification-ai-v3-3.md 3 章）
-JUDGE_RULES_VERSION = 3
+# 4: P6 の追従（docs/verification-ai-p6.md 4 章）。にげるの段に cost_evaluation（費用を評価していない）がある送信の拒否を、元のコードで分ける（P6_ENGINE_DECIDES は正常な拒否、
+#    P6_API_GUARANTEED は suspect、ほかは undetermined か停止の規則）。受理の中身を judge_p6_accepted で分ける。cost_evaluation のない送信の判定は規則 3 と同じ
+JUDGE_RULES_VERSION = 4
+# P6: エンジンがおもてにしたあとに確かめ、API（候補・inputs・check）が評価しないと契約で示すもの（engine._retreat → check_retreat_declaration・check_retreat の、
+# 本当のカード・おもてにしたあとの状態で決まる拒否）。元のコード → その送信の条件（なぜこの経路で正常な拒否か）。カード・場面ごとの登録ではない
+P6_ENGINE_DECIDES = {
+    "WRONG_RETREAT_COST": "トラッシュするエネルギーの個数が、おもてにした本当のカードのにげるエネルギーと合わない（段の cost_evaluation が not_evaluated。API は費用・個数を評価していない）",
+    "POKEMON_ASLEEP": "おもてにしたポケモンがねむり（うらの分岐は宣言の確かめを候補の作成で評価しない。GUARANTEE_FACE_DOWN_RETREAT の preconditions）",
+    "POKEMON_PARALYZED": "おもてにしたポケモンがマヒ（同上）",
+    "RETREAT_PREVENTED": "にげられない効果（同上）",
+    "LEAVE_ACTIVE_PREVENTED": "バトル場をはなれられない効果（同上）",
+    "RETREAT_ALREADY_FAILED": "この番にこんらんでにげるに失敗している（同上）",
+}
+# P6: 入力の形（候補・check）か候補を出す条件で API が満たすもの。check が valid のあとにこの拒否があれば、契約と矛盾する
+P6_API_GUARANTEED = frozenset({"DUPLICATE_CARD", "ENERGY_NOT_ATTACHED", "NOT_ON_BENCH", "NO_BENCH", "NOT_YOUR_TURN", "DECISION_PENDING"})
+P6_REVEALED, P6_RETREATED, P6_TRASHED = "secret_plan_revealed", "retreat", "secret_plan_discarded"
 # 停止の代表の条件の根拠（V3-3 の代表例だけを明示的に扱う）。元のコード → 条件・根拠。判定は、場面の側（fixture）が同じコードの根拠を宣言したときだけ known_stop にする。
 # ここにないコード・宣言のない場面の停止は undetermined（コード表にあり、経路が未評価であるだけでは、今回の停止の条件を説明したことにしない）
 KNOWN_STOP_EVIDENCE = {
@@ -107,8 +124,16 @@ def judge_recovery(resp: dict[str, Any], changed: list[str]) -> tuple[str, list[
     return EXPECTED, []
 
 
-def judge_normal(candidate: dict[str, Any], meaning: list[dict[str, Any]], submit: dict[str, Any], *, evidence: str | None = None) -> tuple[str, list[str]]:
-    """通常の進行の送信（check が valid のあと、同じ取っ手・同じ入力で、あいだに状態の変化がない）の判定（D-6 の表の 1〜3・9）。"""
+def is_p6(candidate: dict[str, Any], stages: list[dict[str, Any]] | None) -> bool:
+    """P6 の送信か: にげるの候補で、段に cost_evaluation（費用を評価していない）がある（API の契約の値だけで決める。カードでは見分けない）。"""
+    return candidate.get("kind") == RETREAT_KIND and any(cost_not_evaluated(s) for s in (stages or []))
+
+
+def judge_normal(candidate: dict[str, Any], meaning: list[dict[str, Any]], submit: dict[str, Any], *, evidence: str | None = None,
+                 stages: list[dict[str, Any]] | None = None) -> tuple[str, list[str]]:
+    """通常の進行の送信（check が valid のあと、同じ取っ手・同じ入力で、あいだに状態の変化がない）の判定（D-6 の表の 1〜3・9）。
+
+    規則 4（P6）: ``stages`` に cost_evaluation のあるにげるの送信の拒否は、元のコードで分ける。unverified だからといって、すべての拒否を正常にしない・すべてを suspect にしない"""
     outcome = submit.get("outcome")
     if outcome == D.ACCEPTED:
         return EXPECTED, []
@@ -125,6 +150,15 @@ def judge_normal(candidate: dict[str, Any], meaning: list[dict[str, Any]], submi
     catalog = _catalog_category(diag.get("engine_code"))
     if catalog is not None and catalog != category:
         return SUSPECT, [f"diagnostic_category_mismatch:{category}!={catalog}"]
+    if is_p6(candidate, stages):
+        code = diag.get("engine_code")
+        if code in P6_API_GUARANTEED:
+            return SUSPECT, [f"p6_structural_guarantee_rejected:{code}"]
+        if code in P6_ENGINE_DECIDES and catalog is not None:
+            return NORMAL_REJECTION, [category, code, "p6_engine_decides_after_reveal", "condition:" + P6_ENGINE_DECIDES[code]]
+        if category not in STOP_CATEGORIES:
+            return UNDETERMINED, [f"p6_rejection_not_explained:{code}"]
+        # 停止系の拒否は、規則 3 と同じく代表の条件の根拠がなければ known_stop にしない（下の _known_stop_or_undetermined）
     eligible = all((m.get("option") or {}).get("eligible") is not False for m in meaning)
     face_down = FACE_DOWN_REASON in (candidate.get("reasons") or [])
     if candidate.get("kind") in PRECHECK_KINDS and eligible and not face_down and candidate.get("processability") != "unverified":
@@ -137,6 +171,19 @@ def judge_normal(candidate: dict[str, Any], meaning: list[dict[str, Any]], submi
     if category in STOP_CATEGORIES:
         return _known_stop_or_undetermined(candidate, meaning, diag, category, catalog, evidence)
     return NORMAL_REJECTION, [category]
+
+
+def judge_p6_accepted(new_log_kinds: list[str]) -> tuple[str, list[str]]:
+    """P6 の受理の中身（検証者の側。受理のあとに加わったログの出来事の種類）: おもてにしてにげた・おもてにしたカードがたねポケモンでないので既存の処理でトラッシュした、の
+    どちらかなら expected。おもてにしていない・どちらでもない・両方あるなら undetermined（受理だけで正常としない）。"""
+    if not new_log_kinds or new_log_kinds[0] != P6_REVEALED:
+        return UNDETERMINED, [f"p6_accepted_without_reveal_first:{new_log_kinds[:2]}"]
+    retreated, trashed = P6_RETREATED in new_log_kinds, P6_TRASHED in new_log_kinds
+    if retreated and not trashed:
+        return EXPECTED, ["p6_revealed_and_retreated"]
+    if trashed and not retreated:
+        return EXPECTED, ["p6_revealed_not_basic_and_trashed"]
+    return UNDETERMINED, [f"p6_accepted_events:{new_log_kinds}"]
 
 
 def _catalog_category(code) -> str | None:
