@@ -112,3 +112,109 @@
 | 再現 | uniform-stage・seed 12 を 1 回（5.1 節） |
 | 上限 | 1 局は V0・V1 と同じ。全体の予算 1,200 秒 |
 | 入口 | `python -m tools.verification_ai.run_v2 run --out C:/dev/kyuura-engine-verification-vai --engine-commit <sha> --reuse <V1 の局のディレクトリ> --seeds 11 12 13 --epsilon 0.25 --repro-seed 12` |
+
+## 6. 使い方
+
+```
+cd C:\dev\kyuura-engine-vai
+python -m tools.verification_ai.run_v2 run --out C:/dev/kyuura-engine-verification-vai --engine-commit <コミット> --reuse C:/dev/kyuura-engine-verification-vai/verifier/runs/v1-hitmonchan-dewgong-vs-venusaur-parasect-default --seeds 11 12 13 --epsilon 0.25 --repro-seed 12
+python -m tools.verification_ai.run_v1 reproduce --baseline <V1 の局のディレクトリ> --out C:/dev/kyuura-engine-verification-vai --engine-commit <コミット> --label v2
+python -m tools.verification_ai.run_v0 manifest --out C:/dev/kyuura-engine-verification-vai --run <実行の名前> --command "<実行したコマンド>" --exit-code <n>
+```
+
+`run_v2 run` は、実行のディレクトリがすでにあれば止まります（既存の証跡を上書きしない）。方策は `Config(policy="uniform"|"rules"|"mixed", epsilon=…)` でも選べます。
+
+## 7. 実行の結果（2026-11-08）
+
+### 7.1 V2 の 6 局と再利用した 3 局
+
+実行: コミット `e9fc20b`（1 章〜5 章と同じコミット）。13:26:14Z〜13:26:45Z（UTC）。全体 28.7 秒（予算 1,200 秒）。終了コード 0。計画（`plan.json`）は対戦の前に書いた。
+
+| 局 | 由来 | 終わり方 | 番 | 操作 | 受理 | 試み | 入力を作れない | ワザの受理 | サイドを取る決定の受理 | バトル場に出す決定の受理 | 公開のサイドの枚数の減少 | 勝ち（参考） | `replay_run` |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| stage-s11 | V1 の再利用 | `halted_known` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 欠測 | — | `succeeded` |
+| stage-s12 | V1 の再利用 | `game_over` | 50 | 144 | 144 | 169 | 25 | 3 | 1 | 1 | 欠測 | 0 | `succeeded` |
+| stage-s13 | V1 の再利用 | `game_over` | 41 | 141 | 141 | 168 | 27 | 0 | 0 | 0 | 欠測 | 1 | `succeeded` |
+| rules-s11 | 新規 | `halted_known` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | — | `succeeded` |
+| rules-s12 | 新規 | `game_over` | 46 | 148 | 148 | 192 | 44 | 10 | 0 | 0 | 0 | 0 | `succeeded` |
+| rules-s13 | 新規 | `limit_accepted` | 7 | 1,000 | 1,000 | 1,483 | 483 | 3 | 0 | 0 | 0 | — | `succeeded` |
+| mixed-e0.25-s11 | 新規 | `halted_known` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | — | `succeeded` |
+| mixed-e0.25-s12 | 新規 | `game_over` | 55 | 152 | 152 | 176 | 24 | 22 | 0 | 0 | 0 | 1 | `succeeded` |
+| mixed-e0.25-s13 | 新規 | `game_over` | 48 | 215 | 215 | 252 | 37 | 26 | 6 | 5 | プレイヤー 0 が 5（下限。7.3 節） | 0 | `succeeded` |
+
+- seed 11 は 3 つの方式とも、開始の時点の既知の停止（`UNRESOLVED_MULLIGAN_COMPENSATION`。V1 と同じ）
+- どの局も、拒否・`refused`・check の invalid・`failed`・異常の候補は 0。記録の対応の問題は 0。`replay_run` は期待（閉じた記録は `succeeded`）どおり
+- 入力を作れなかったのはどの局もにげるの費用の不足（`total_units_unreachable`）だけ。範囲の外は受理の前に未裁定で止める `play_trainer`（rules-s13 は 0、ほかは 2〜86 回の取得）
+- 混合で実際に使った方式（プレイヤーのエピソード）: mixed-s12 はランダム 27・ルール 124（18%）、mixed-s13 はランダム 46・ルール 168（21%）。ホストの係のエピソードはどの局も均等の 1。
+  rules はルール 147（s12）・999（s13）
+- 入力の形: `upstream_stages`（特殊能力の 3 段）は rules-s13・mixed-s13 で届いた。`options_by_path` はどの局も届いていない（このデッキの組にカツラがない）
+- 決定の種類: `select_pokemon` はすべての局。`take_prize`・`promote_active` は stage-s12（1 回ずつ）と mixed-s13（6・5 回）だけ
+- 受理の数・ワザの受理・番の数は方式で違うが、同じ seed でも方式によってゲームの乱数の消費と操作の列が変わる。2 局ずつ（seed 11 を除く）の差を、優先順位の効果と断定しない。
+  勝ちは参考値
+
+### 7.2 rules-s13 の `limit_accepted`（方策による繰り返し）
+
+rules-s13 は、7 番目の番の途中で受理 1,000 に届いて止まりました。最後の 200 回の受理はすべてフシギバナのエナジートランス（`use_power`。自分の場の「草」エネルギーを
+別の自分のポケモンへつけかえる）で、エネルギーを場のポケモンのあいだで行き来させ続けていました。rules-v1 では `use_power`（順位 5）が `end_turn`（順位 6）より先なので、
+エナジートランスを使える限り番を終えません。
+
+- エンジンの拒否・停止・不整合は起きていない（どの送信も受理され、`replay_run` は `succeeded`）。カードの効果の上の回数の制限がない特殊能力を、方策が繰り返した
+- 既存の上限（受理 1,000）で止まり、終わり方は `limit_accepted` として記録された。`no_progress` にはならない（状態が毎回変わる）
+- V2 では、結果を見て優先順位を変えていない。繰り返しを防ぐ規則（同じ番の同じ種類の回数の上限など）は、V3 へ進む前の判断の材料（9 章）
+
+### 7.3 計測の不具合（`e9fc20b` の実行）
+
+- 公開のサイドの枚数の変化を、終わり方の判定のあとで数えていたので、終局の観測の変化（最後のサイドの減少）を数えていない。mixed-s13 の「プレイヤー 0 が 5」は、サイドを取る決定の
+  受理 6 回より少なく、下限として読む。`6d6564f` で数える順を直した（テスト `PrizeTest.test_change_seen_with_game_over_is_counted`）。表を埋めるための再実行はしていない
+- 局の見出し（`header.json`）に `policy`・`epsilon` の項目がない（`run_v1.game_header` の置換が効いていなかった。`6d6564f` で直した）。方策の名前・版・ε・混合の種・方式ごとの
+  エピソードの数は、各局の `result.json` の `policies` と `plan.json` にある
+- きぜつは未計測（5.2 節）
+
+### 7.4 事前に選んだ 1 条件の再現（uniform-stage・seed 12）
+
+| 項目 | 結果 |
+|---|---|
+| 基準 | V1 の保存済みの局 `stage-s12`（コミット `5d5e04e`） |
+| 実行 | 新しいプロセスで `run_v1 reproduce --label v2`（コミット `6d6564f`。13:28:49Z〜13:28:53Z。終了コード 0） |
+| 意味の列 | 169 行すべて一致（完全な一致） |
+| 終わり方・完全な記録の行・`replay_run` | `game_over` で一致・一致・`succeeded`。記録の対応の問題 0 |
+
+同じ 1 回の確かめの最初の試み（13:27:12Z）は、`--label` を受け付けず終了コード 2 で止まりました（対戦は始まっていない。7.3 節の置換の誤り）。直してから 1 回実行した結果が
+上の表です。この再現の記録は V2 の計測を持ち、公開のサイドの枚数の減少はプレイヤー 0 が 1（サイドを取る決定の受理 1 と同じ）でした。比べる表の再利用の行は、この値で埋めず欠測のままにしています。
+
+## 8. テスト
+
+`tests/test_verification_ai_v2.py`（19 テスト）。ランナー・`run_v1` を変えたので `tests/test_verification_ai_v1.py`（19）・`tests/test_verification_ai_v0.py`（24）も実行した。
+
+| クラス | 確かめること |
+|---|---|
+| `PriorityTest` | 優先順位、1 つに決まれば乱数を使わない、同順位は方策の乱数で均等、`end_turn` だけ、準備・決定の種類だけの場面は均等への切りかえ、入力は uniform-stage、ホストの係はどの方策でも均等 |
+| `MixedTest` | ε = 0・ε = 1、固定の種での方式の列と記録（`draw`・ε）、エピソードの途中で方式を変えない、エピソードの前の選択を断る、種の導き方 |
+| `EpisodeTest` | 試みとエピソードの対応・受理の数とエピソードの数・check の invalid が続くときに方式が固定のまま `no_progress` で止まる |
+| `BoundaryTest` | ルールの方策に渡る値が本人の JSON だけ、ルール・混合で check を経ない送信がない |
+| `RandomUnchangedTest` | 均等の方策のエピソードの始めは乱数を使わない、ε = 1 の混合は均等と、ε = 0 は rules-v1 と同じ意味の列、既定の設定は V0・V1 と同じ方策・種・分布 |
+| `ComparisonRowTest` | 再利用の行の V2 の計測を欠測にする・きぜつは欠測 |
+| `PrizeTest` | サイドの枚数の増減の数え方・終局の観測の減少も数える |
+
+実行（1 モジュールずつ、別のプロセス）:
+
+1. `tests.test_verification_ai_v2`（17 テスト）・`v0`（24）・`v1`（19）: 失敗 0（実行の前）
+2. `ComparisonRowTest` を加えて `v2`（18）・`v1`（19）: 失敗 0（`run_v1` の変更のあと）
+3. 7.3 節の訂正のあと `v2`（19）・`v1`（19）・`v0`（24）: `v2` の 1 つが失敗（`test_change_seen_with_game_over_is_counted`。テストが準備でサイドが 0 から 6 に増えることを考えず、
+   減少を作れていなかった。テストの誤り）。テストを直して `tests.test_verification_ai_v2.PrizeTest` だけを再実行: 2 テスト・失敗 0
+
+## 9. 失敗・修正・再実行・未確かめと、V3 へ進む前の残件
+
+- 失敗と修正: 7.3 節（サイドの数え方の順・見出しの項目と `--label` の置換）、8 章の 3（テストの誤り）。再現の最初の試みの終了コード 2（7.4 節）
+- 再実行: 再現の試みを直したあとの 1 回、失敗したテストのクラスだけの 1 回。対戦の再実行はしていない（6 局は 1 回ずつ）
+- 未実行: なし（計画の 6 局と再現の 1 回）
+- 未確かめ: きぜつの数・終局の条件（公開の観測の `result` は勝者だけ）、`options_by_path`・スタジアム・場のポケモン 1 匹を指す操作・延長戦・受理のあとの停止・拒否・残り（R-2〜R-5）
+  への到達、S2A・PO の規約集合とほかのデッキ、V2 のコードでの rules・mixed の局の別のプロセスでの再現
+
+V3 へ進む前の残件:
+
+- rules-v1 の繰り返し（7.2 節）: 回数の制限のない特殊能力を優先順位で繰り返すと、番が終わらず受理の上限で止まる。方策の規則（同じ番の同じ種類の回数の上限・繰り返しの検出で
+  順位を下げるなど）を加えるか、上限で止まる結果のままにするかの判断。合法性の判断ではなく方策の判断
+- 判断の保留のまま: D-6（拒否を異常の候補にする種類の表）、D-12（デッキと規約集合の組。`options_by_path` などに届かせるには組が要る）、CN-1 のエンジンの側（V1 の 5 章）
+- 届かなかった範囲を、V3 の `boundary` で調べるか、デッキの組で届かせるか
+- きぜつ・終局の条件を公開の情報から数える方法（公開のログ `visible_log` を読むか）の判断
