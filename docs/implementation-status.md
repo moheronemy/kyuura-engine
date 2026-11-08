@@ -5229,4 +5229,5 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 特殊能力の候補は `supported` にしない。番の候補は partial のまま（`check_face_up_deck` が未対応。R-1・R-2・自分のうらのカードの特殊能力が残る）
 - U7-5 の設計の U7-5e を implemented にした（U7-5f・U7-5g は未実装）。既存の U7 のテストの coverage の期待から `use_power` を外した（意図した差）
 - U7-5d の文書の訂正: キョウの忍者ジムの seed 1・17 は双子ではなく、別の対戦による合法な到達例
+- 配布の確かめ: コミット `74c8e1f8ca03d017d5c0a8a79e6fdaa33d25b7f8`（版 0.171.0）を、クリーンな仮想環境に Git の URL から通常のインストールをして、リポジトリの外から client_api の `use_power`（2 段）を使うスモークテストをした（`behavior_digest` はソースの木と同じ）。配布物の中身の検査は required=62・problems=0
 - 詳細: [legal-actions-u7-5e.md](legal-actions-u7-5e.md)

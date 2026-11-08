@@ -116,7 +116,7 @@ U7-3 の 2 段（`depends_on_stage`・`options_by_choice`）を、意味を変�
 ## 7. GUI への引き継ぎ（GUI リポジトリは変更していない）
 
 - 比べる相手（2026-11-08 に読み取りだけで確かめた）: GUI の最新の作業ブランチ `feature/engine-u7-4-attacks` の `3649946`（エンジン `9506d63`・0.166.0 を固定）。GUI の `main` の `7660ab4` はエンジン `d0c5cfa`（v0.164）を固定
-- 固定して導入を確かめた完全なコミットと版: 9 章のあとの文書だけのコミットで記録します
+- 固定して導入を確かめた完全なコミットと版: `kyuura-engine @ git+https://github.com/moheronemy/kyuura-engine@74c8e1f8ca03d017d5c0a8a79e6fdaa33d25b7f8`（版 0.171.0。9 章）。GUI の固定を 0.166.0 からこのコミットに更新すると、U7-5a〜U7-5e の差がまとめて入る
 - 0.170.0 からの差（U7-5a〜U7-5d の差は [legal-actions-u7-5d](legal-actions-u7-5d.md) 8.2 節）
   - 新しい候補の種類 `use_power`（特殊能力の位置ごとに 1 つ。同じ種類の候補がいくつもある）
   - 候補の項目 `pokemon`（使うポケモン。U7-5a の場のポケモンの形）・`power`（`index`・`name_ja`・`card`・`card_id`。印刷したカード）
@@ -176,4 +176,12 @@ U7-3 の 2 段（`depends_on_stage`・`options_by_choice`）を、意味を変�
   - 停止の台帳は作り直して、`engine.py` の行番号だけが変わりました（10 行）
   - `check_implementation_assumptions --sites` の出力は基点 `c207fd1` と同じ（56 行）
 - **lint**（ruff 0.17.2）: 新しいファイル・`legal_actions.py`・U7 のテスト・U7-5 の生成器は指摘なし。`engine.py`・`effects.py` の指摘の数は基点と同じ
-- **配布と通常のインストール**: このあとの文書だけのコミットで記録します
+- **配布と通常のインストール**（コミット `74c8e1f8ca03d017d5c0a8a79e6fdaa33d25b7f8`。版 0.171.0）
+  - `git archive` の木から作った wheel・sdist の中身の検査（`scripts/check_distribution.py`）: required=62・problems=0
+  - クリーンな仮想環境に、Git の URL から通常のインストール（編集可能なインストール・PYTHONPATH なし）。`direct_url.json` のコミットが一致
+  - リポジトリの外から `python -I` でスモークテスト。問題 0
+    - 確かめたもの: site-packages からの読み込み・全サブパッケージ・3 つの規約集合の照合値・初期配置・番の操作・ワザの宣言・`discard_from_play`・`play_trainer`・錯乱ジムの相手の答え・`use_stadium`
+  - client_api の `use_power`: ロケット団のヒトカゲの［ほのおをもらう］（`source` → `energy` の 2 段。2 段目の `upstream_stages` は `[1]`）
+    - ほかの上流の番号を混ぜた入力は `CANDIDATE_INPUT_INVALID`、正しい組は検査が有効で受理。炎エネルギーがヒトカゲに移った
+    - 1 回目のスモークでは、スモークの準備（初期配置でバトル場の 1 匹だけを置く）で場にポケモンが 2 匹そろわず、この確かめに届きませんでした。スモークの側で client_api の `play_basic` でベンチに出すように直して成功（エンジンは変えていない）
+  - 実装の識別の `behavior_digest` は、インストールしたものとソースの木で同じ（`e87cafea9b2ee323893ae665cf851f00fe4ffce6244fdd68568b5e13e94932fb`）
