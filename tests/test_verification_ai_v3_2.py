@@ -130,16 +130,17 @@ class JudgeRulesTest(unittest.TestCase):
 
     def test_known_stop_needs_catalog_and_path_reason(self):
         attack = {"kind": "use_attack", "processability": "may_stop_later", "reasons": ["continuation_not_evaluated", "preflight_not_evaluated"]}
-        self.assertEqual(J.judge_normal(attack, [], self.rejected(D.RULING_UNRESOLVED, "UNRESOLVED_MULLIGAN_COMPENSATION"))[0], J.KNOWN_STOP)
+        # 規則 3（V3-3）: コード表・経路の理由があっても、代表の条件の根拠（KNOWN_STOP_EVIDENCE と場面の宣言）がなければ undetermined（意図した差）
+        self.assertEqual(J.judge_normal(attack, [], self.rejected(D.RULING_UNRESOLVED, "UNRESOLVED_MULLIGAN_COMPENSATION"))[0], J.UNDETERMINED)
         self.assertEqual(J.judge_normal({**attack, "reasons": []}, [], self.rejected(D.RULING_UNRESOLVED, "UNRESOLVED_MULLIGAN_COMPENSATION"))[0],
                          J.UNDETERMINED)  # 区分だけでは known_stop にしない
         self.assertEqual(J.judge_normal(attack, [], self.rejected(D.RULING_UNRESOLVED, "NO_SUCH_CODE"))[0], J.UNDETERMINED)  # コード表にない元のコード
         self.assertEqual(J.judge_normal(attack, [], self.rejected(D.UNSUPPORTED, "UNRESOLVED_MULLIGAN_COMPENSATION"))[0], J.SUSPECT)  # 分類の食い違い
         unverified = {"kind": "use_power", "processability": "unverified", "reasons": ["face_down_reveal_not_evaluated"]}
-        self.assertEqual(J.judge_normal(unverified, [], self.rejected(D.RULING_UNRESOLVED, "UNRESOLVED_MULLIGAN_COMPENSATION"))[0], J.KNOWN_STOP)
+        self.assertEqual(J.judge_normal(unverified, [], self.rejected(D.RULING_UNRESOLVED, "UNRESOLVED_MULLIGAN_COMPENSATION"))[0], J.UNDETERMINED)  # 規則 3
         self.assertEqual(J.judge_normal(attack, [], {"ok": True, "outcome": "refused", "refusal": {"code": "CANDIDATE_INPUT_INVALID"}})[0], J.SUSPECT)
         self.assertEqual(J.judge_normal(attack, [], {"ok": True, "outcome": D.FAILED})[0], J.SUSPECT)
-        self.assertEqual(J.JUDGE_RULES_VERSION, 2)
+        self.assertGreaterEqual(J.JUDGE_RULES_VERSION, 2)
 
 
 def reach_run(energy2, **patches):

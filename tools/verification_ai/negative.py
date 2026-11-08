@@ -93,10 +93,10 @@ def mutate(kind: str, stages: list[dict[str, Any]], choices: list[Any], rng: ran
     if not stages or not choices:
         return None, {"not_applicable": "no_input"}
     if any(s.get("input") != "choose_option" for s in stages):
-        return None, {"not_applicable": "value_stage"}
+        return None, {"unsupported_contract": "value_stage"}  # V3-3 の訂正: 値の段は生成器が対応していない（前提不足ではない）
     spans = _segments(stages, choices)
     if spans is None or any("options_from_stage" in s for s in stages):
-        return None, {"not_applicable": "stage_layout_not_mapped"}  # 初期配置などの段の対応はこの変異の対象の外
+        return None, {"unsupported_contract": "stage_layout_not_mapped"}  # V3-3 の訂正: 初期配置などの段の対応は生成器が対応していない
     return globals()[f"_m_{kind}"](stages, list(choices), spans, rng)
 
 
@@ -129,6 +129,8 @@ def _m_count_over(stages, choices, spans, rng):
     stage, (start, end) = stages[-1], spans[-1]
     if end - start != stage["count"]["max"]:
         return None, {"not_applicable": "last_stage_not_at_max"}
+    if "path_stages" in stage:
+        return None, {"unsupported_contract": "path_stage_references_not_read"}  # V3-3 の訂正: 経路で引く段の参照を読まない（V3-2 では no_extra_option と記録した）
     allowed = _allowed_now(stages, choices, spans, len(stages) - 1)
     extra = [o for o in allowed if o not in choices[start:end]]
     if not extra:
@@ -202,6 +204,8 @@ def _m_non_executable(stages, choices, spans, rng):
         if bad:
             places.append((stage["stage"], start, bad))
     if not places:
+        if any("path_stages" in s and e - b == 1 for s, (b, e) in zip(stages, spans)):
+            return None, {"unsupported_contract": "path_stage_references_not_read"}  # V3-3 の訂正: 経路で引く段の参照を読まない
         return None, {"not_applicable": "no_non_executable_option"}
     number, index, bad = places[rng.randrange(len(places))]
     pick = bad[rng.randrange(len(bad))]
@@ -273,3 +277,17 @@ def _m_duplicate_replace(stages, choices, spans, rng):
     number, start, end = places[rng.randrange(len(places))]
     i, j = rng.sample(range(start, end), 2)
     return _replace(choices, j, choices[i]), {"stage": number, "index": j, "before": choices[j], "after": choices[i]}
+
+
+# ---------------------------------------------------------------- V3-3: 変異の結果の分類（docs/verification-ai-v3-3.md 2 章）
+
+NOT_APPLICABLE = "not_applicable"  # 前提を満たさない（その入力・状態では作れない）
+UNSUPPORTED_CONTRACT = "unsupported_contract"  # 生成器がその段の契約に対応していない（前提がないとは言えない）
+NOT_RUN = "not_run"  # 予算・位置の選び方・1 つの状態の種類の上限・元の入力が受理されないで試さなかった
+RUN = "run"  # 作って送った
+OUTCOME_CLASSES = (RUN, NOT_APPLICABLE, UNSUPPORTED_CONTRACT, NOT_RUN)
+
+
+def outcome_status(change: dict) -> str:
+    """``mutate`` が None を返したときの理由の辞書から、記録の状態（not_applicable か unsupported_contract）。"""
+    return UNSUPPORTED_CONTRACT if "unsupported_contract" in change else NOT_APPLICABLE

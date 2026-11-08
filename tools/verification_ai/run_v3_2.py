@@ -141,7 +141,7 @@ class AttachNegativeSession(NegativeSession):
             else:
                 mutated, change = N.mutate(kind, stages, list(choices), self.rng)
                 if mutated is None:
-                    self._record({**base, "status": "not_applicable", **change}, runner)
+                    self._record({**base, "status": N.outcome_status(change), **change}, runner)
                     continue
                 if not N.single_difference(list(choices), mutated):
                     self._record({**base, "status": "not_applicable", "reason": "not_single_difference", "mutated_choices": mutated}, runner)
@@ -279,7 +279,8 @@ def _negative_summary(records: list[dict[str, Any]]) -> dict[str, Any]:
             "status": {f"{k}:{s}": n for (k, s), n in sorted(Counter((r["mutation"], r.get("status")) for r in neg).items())},
             "verdicts": {f"{k}:{v}": n for (k, v), n in sorted(Counter((r["mutation"], r.get("verdict")) for r in neg if r.get("verdict")).items())},
             "recovery_verdicts": dict(Counter(r.get("verdict") for r in rec)),
-            "not_applicable": {r["mutation"]: r.get("not_applicable") or r.get("reason") for r in neg if r.get("status") in ("not_applicable", "not_run")}}
+            "not_applicable": {r["mutation"]: r.get("not_applicable") or r.get("unsupported_contract") or r.get("reason") for r in neg
+                               if r.get("status") in ("not_applicable", "unsupported_contract", "not_run")}}
 
 
 def summarize(out: Path, engine_commit: str, *, total_seconds: float | None = None, written_by: str = "run") -> int:

@@ -83,10 +83,10 @@ class MutationTest(unittest.TestCase):
     def test_not_applicable_layouts(self):
         self.assertEqual(N.mutate("unknown_option", [], [], rng())[1], {"not_applicable": "no_input"})
         value = [{"stage": 1, "input": "choose_value", "range": {"min": 0, "max": 2}, "count": {"min": 1, "max": 1}}]
-        self.assertEqual(N.mutate("unknown_option", value, [1], rng())[1], {"not_applicable": "value_stage"})
+        self.assertEqual(N.mutate("unknown_option", value, [1], rng())[1], {"unsupported_contract": "value_stage"})  # V3-3: 生成器の未対応（意図した差）
         placement = [{"stage": 1, "input": "choose_option", "count": {"min": 1, "max": 1}, "options": [opt("o1"), opt("o2")]},
                      {"stage": 2, "input": "choose_option", "count": {"min": 0, "max": 5}, "options_from_stage": 1, "distinct_across_stages": True}]
-        self.assertEqual(N.mutate("unknown_option", placement, ["o1", "o2"], rng())[1], {"not_applicable": "stage_layout_not_mapped"})
+        self.assertEqual(N.mutate("unknown_option", placement, ["o1", "o2"], rng())[1], {"unsupported_contract": "stage_layout_not_mapped"})  # V3-3
 
     def test_single_difference(self):
         self.assertTrue(N.single_difference(["a", "b"], ["a", "c"]))
@@ -111,7 +111,7 @@ class JudgeTest(unittest.TestCase):
         self.assertEqual(J.judge_normal(basic, meaning, rejected(D.RULING_UNRESOLVED))[0], J.UNDETERMINED)
         explained = {**basic, "reasons": ["reactions_not_evaluated"]}
         stop = {"ok": True, "outcome": D.REJECTED, "verifier": {"category": D.RULING_UNRESOLVED, "diagnostic_id": "X", "engine_code": "UNRESOLVED_MULLIGAN_COMPENSATION"}}
-        self.assertEqual(J.judge_normal(explained, meaning, stop)[0], J.KNOWN_STOP)
+        self.assertEqual(J.judge_normal(explained, meaning, stop)[0], J.UNDETERMINED)  # 規則 3（V3-3）: 代表の条件の根拠がなければ known_stop にしない（意図した差）
         self.assertEqual(J.judge_normal({**basic, "processability": "supported"}, meaning, rejected(D.RULING_UNRESOLVED))[0], J.SUSPECT)
         self.assertEqual(J.judge_normal({**basic, "processability": "unverified"}, meaning, rejected(D.INVALID_INPUT))[0], J.NORMAL_REJECTION)
         attack = {"kind": "use_attack", "processability": "may_stop_later"}
@@ -133,7 +133,7 @@ class JudgeTest(unittest.TestCase):
         self.assertEqual(J.judge_recovery({"response": {"valid": True}}, []), (J.EXPECTED, []))
 
     def test_termination(self):
-        self.assertEqual(J.judge_termination("halted_known", "may_stop_later")[0], J.KNOWN_STOP)
+        self.assertEqual(J.judge_termination("halted_known", "may_stop_later")[0], J.UNDETERMINED)  # 規則 3（V3-3）。意図した差
         self.assertEqual(J.judge_termination("halted_known", "supported")[0], J.UNDETERMINED)
         self.assertEqual(J.judge_termination("halted_unclassified", None)[0], J.SUSPECT)
         self.assertEqual(J.judge_termination("limit_accepted", None), (J.EXPECTED, ["tool_limit"]))

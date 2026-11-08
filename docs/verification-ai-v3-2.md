@@ -162,3 +162,19 @@ V3-1 の判定（規則 1。`8091ed6`）を読み直し、停止系の拒否を 
 - 経路で引く段の参照を読む `count_over` は、V3-1 の種類を変えるか、新しい種類として加えるかの判断が要る
 - `unverified` に届く固定の条件がない（構築した盤面の V3-3、探索の V3-4 の判断）
 - V3 の設計の残りの判断（D-V3-*）・R-B・CN-1 のエンジンの側・D-12・きぜつの数え方は変わらない
+
+## 11. 訂正と補完（V3-3 で追記。2026-11-08）
+
+過去の証跡は直さず、この文書の誤りと記録の不足を訂正します。対戦の再実行はしていません。
+
+- テストの件数（7 章のあとの実行の記録の補完。この会話の実行の出力から。件数のための再実行はしていない）:
+  1. `tests.test_verification_ai_v3_2` の最初の実行: `Ran 10 tests`・`FAILED (failures=2)`。失敗は `FixedReachTest.test_one_and_two_cards` の 1 つのテストの 2 つの subTest（1 枚・2 枚）で、
+     「2 つ失敗」と書いたのは 2 つのテストではなく 2 つの subTest の失敗の数
+  2. `tests.test_verification_ai_v3_2.FixedReachTest` だけ: `Ran 2 tests`・`OK`
+  3. 実行のあとに `SummarizeTest` を加え、`tests.test_verification_ai_v3_2.SummarizeTest` だけ: `Ran 1 test`・`OK`
+  4. **V3-2 のコード（`c2155a4`）で、`tests.test_verification_ai_v3_2` の全体（11 テスト）を 1 回で通した実行はない**。V3-3 で変異・判定を変えたあとのコードでの全体の実行は
+     [verification-ai-v3-3.md](verification-ai-v3-3.md) 7 章（V3-2 のコードの結果ではない）
+- 分類の訂正: 8.4 節の `two-card` の `count_over` の `no_extra_option` は、前提の不足ではなく、生成器（`_allowed_now`）が経路で引く段の参照を読まないことによる見送りでした
+  （`unsupported_contract`）。同じく、経路で引く段の `non_executable` の `no_non_executable_option` も、生成器が経路で引く段の参照を読まないので `unsupported_contract` にあたります。
+  保存した V3-2 の記録（`negatives.jsonl`）の値は書きかえていません（V3-3 の 2 章の分類で読む）
+- 判定の規則: V3-2 の局の判定は規則 2 です。規則 3（V3-3）では、根拠のない停止系の拒否・停止は `known_stop` にしません。V3-2 の局には停止系の拒否・停止がなかったので、判定の結果は変わりません

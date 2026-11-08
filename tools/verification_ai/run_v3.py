@@ -58,8 +58,11 @@ class NegativeSession:
         order.sort(key=lambda kind: self.executed[kind])  # 試した回数の少ない種類から（同じ回数は乱数の順）
         tried = 0
         sent_any = False
-        for kind in order:
+        for index, kind in enumerate(order):
             if tried >= self.per_position:
+                for rest in order[index:]:  # V3-3: 1 つの状態の種類の上限で試さなかった種類を記録する（要求は送らない）
+                    self._record({"position": position, "attempt": entry["n"], "actor": actor, "candidate_kind": candidate["kind"], "mutation": rest,
+                                  "status": N.NOT_RUN, "reason": "per_position_limit"}, runner)
                 break
             base = {"position": position, "attempt": entry["n"], "actor": actor, "candidate_kind": candidate["kind"], "mutation": kind,
                     "base_choices": list(choices), "handle_for_reference": dict(handle)}
@@ -75,7 +78,7 @@ class NegativeSession:
             else:
                 mutated, change = N.mutate(kind, stages, list(choices), self.rng)
                 if mutated is None:
-                    self._record({**base, "status": "not_applicable", **change}, runner)
+                    self._record({**base, "status": N.outcome_status(change), **change}, runner)
                     continue
                 if not N.single_difference(list(choices), mutated):
                     self._record({**base, "status": "not_applicable", "reason": "not_single_difference", "mutated_choices": mutated}, runner)

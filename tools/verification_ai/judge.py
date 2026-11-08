@@ -15,8 +15,18 @@ from typing import Any
 from kyuura_engine import diagnostics as D
 from kyuura_engine.replay_record import checks
 
-# 判定の規則の版。1: V3-1（8091ed6）。2: V3-2（停止系の拒否を known_stop にする条件を、診断のコード表と経路の理由で絞る。docs/verification-ai-v3-2.md 5 章）
-JUDGE_RULES_VERSION = 2
+# 判定の規則の版。1: V3-1（8091ed6）。2: V3-2（停止系の拒否を known_stop にする条件を、診断のコード表と経路の理由で絞る。docs/verification-ai-v3-2.md 5 章）。
+# 3: V3-3（known_stop には、コード・分類・経路の理由に加えて、その停止の代表の条件の根拠（KNOWN_STOP_EVIDENCE の登録と、場面の側の宣言）が要る。docs/verification-ai-v3-3.md 3 章）
+JUDGE_RULES_VERSION = 3
+# 停止の代表の条件の根拠（V3-3 の代表例だけを明示的に扱う）。元のコード → 条件・根拠。判定は、場面の側（fixture）が同じコードの根拠を宣言したときだけ known_stop にする。
+# ここにないコード・宣言のない場面の停止は undetermined（コード表にあり、経路が未評価であるだけでは、今回の停止の条件を説明したことにしない）
+KNOWN_STOP_EVIDENCE = {
+    "UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT": {
+        "condition": "ドライアップ（ファイヤーのワザ）のコインの「おもて」の数が、選んだ相手のポケモンについている「水」エネルギーより多い（受理のあとの決定の答えで止まる。DU1）",
+        "source": ["tests/test_legal_actions_u7_4.py: EnergyDiscardStopTest.test_rejected_vs_stop_after_acceptance",
+                   "tests/test_deferred_shortage_user_promos_v0_127.py: dry_board・run"],
+    },
+}
 # 候補・選べるもの・組の理由のうち、エンジンの側の確かめを候補の作成では評価していないことを示すもの（停止・拒否がこの経路でありうると API が示している）
 EXPLAINING_REASONS = frozenset({"preflight_not_evaluated", "continuation_not_evaluated", "reactions_not_evaluated", "use_condition_not_evaluated",
                                 "face_down_reveal_not_evaluated", "segment_setup_not_evaluated", "turn_start_not_evaluated", "checkup_not_evaluated"})
@@ -97,7 +107,7 @@ def judge_recovery(resp: dict[str, Any], changed: list[str]) -> tuple[str, list[
     return EXPECTED, []
 
 
-def judge_normal(candidate: dict[str, Any], meaning: list[dict[str, Any]], submit: dict[str, Any]) -> tuple[str, list[str]]:
+def judge_normal(candidate: dict[str, Any], meaning: list[dict[str, Any]], submit: dict[str, Any], *, evidence: str | None = None) -> tuple[str, list[str]]:
     """通常の進行の送信（check が valid のあと、同じ取っ手・同じ入力で、あいだに状態の変化がない）の判定（D-6 の表の 1〜3・9）。"""
     outcome = submit.get("outcome")
     if outcome == D.ACCEPTED:
@@ -125,7 +135,7 @@ def judge_normal(candidate: dict[str, Any], meaning: list[dict[str, Any]], submi
         if category not in STOP_CATEGORIES:
             return UNDETERMINED, [f"precheck_kind_category:{category}"]
     if category in STOP_CATEGORIES:
-        return _known_stop_or_undetermined(candidate, meaning, diag, category, catalog)
+        return _known_stop_or_undetermined(candidate, meaning, diag, category, catalog, evidence)
     return NORMAL_REJECTION, [category]
 
 
@@ -137,7 +147,7 @@ def _catalog_category(code) -> str | None:
     return None if entry is None else entry.category
 
 
-def _known_stop_or_undetermined(candidate, meaning, diag, category, catalog) -> tuple[str, list[str]]:
+def _known_stop_or_undetermined(candidate, meaning, diag, category, catalog, evidence=None) -> tuple[str, list[str]]:
     """停止系の拒否を known_stop にするのは、(1) 元のコードが診断のコード表にあり、分類が同じ、(2) その経路の候補か選んだものの理由が、エンジンの側の確かめを候補の作成では
     評価していないことを示す（EXPLAINING_REASONS）ときだけ。処理可能性の区分（may_stop_later・unverified）だけでは known_stop にしない。足りなければ undetermined。"""
     if catalog is None:
@@ -148,16 +158,49 @@ def _known_stop_or_undetermined(candidate, meaning, diag, category, catalog) -> 
     explained = sorted(reasons & EXPLAINING_REASONS)
     if not explained:
         return UNDETERMINED, [f"stop_not_explained_by_path:{diag.get('engine_code')}"]
-    return KNOWN_STOP, [category, diag.get("engine_code"), *explained]
+    code = diag.get("engine_code")
+    if code not in KNOWN_STOP_EVIDENCE or evidence != code:  # 規則 3: 代表の条件の根拠がなければ known_stop にしない
+        return UNDETERMINED, [f"stop_condition_not_evidenced:{code}"]
+    return KNOWN_STOP, [category, code, *explained, "evidence:" + KNOWN_STOP_EVIDENCE[code]["condition"]]
 
 
-def judge_termination(termination: str, last_accepted_processability: str | None) -> tuple[str, list[str]]:
+def judge_halt_after_accept(halt: dict[str, Any] | None, *, evidence: str | None = None) -> tuple[str, list[str]]:
+    """受理のあとに停止した（受理の前の拒否とは別）。公開の停止の診断の分類が既知・コード表にあり、場面がそのコードの代表の条件を宣言したときだけ known_stop。"""
+    halt = halt or {}
+    category, code = halt.get("category"), halt.get("diagnostic_id")
+    if category == D.UNMAPPED or code is None:
+        return SUSPECT, [f"halt_unmapped:{code}"]
+    if category not in STOP_CATEGORIES:
+        return SUSPECT, [f"halt_unclassified:{category}"]
+    catalog = _catalog_category(code)
+    if catalog is None:
+        return UNDETERMINED, [f"halt_code_not_in_catalog:{code}"]
+    if catalog != category:
+        return SUSPECT, [f"halt_category_mismatch:{category}!={catalog}"]
+    if code not in KNOWN_STOP_EVIDENCE or evidence != code:
+        return UNDETERMINED, [f"halt_condition_not_evidenced:{code}"]
+    return KNOWN_STOP, [category, code, "evidence:" + KNOWN_STOP_EVIDENCE[code]["condition"]]
+
+
+def judge_effects(outcome: str | None, changed: list[str]) -> tuple[str, list[str]]:
+    """副作用の判定を、受理と拒否で分ける（V3-3）。拒否・断り: どれも変わらない。受理: 状態の置きかえと更新の番号の前進があって当然で（ほかの変化も正当）、
+    それがなければ undetermined。受理のあとの停止・公開の更新は、無副作用の失敗と判定しない。"""
+    if outcome in (D.REJECTED, "refused", None):
+        return (EXPECTED, []) if not changed else (SUSPECT, ["side_effect:" + ",".join(changed)])
+    if outcome == D.ACCEPTED:
+        missing = [name for name in ("state_object_replaced", "update_number") if name not in changed]
+        return (EXPECTED, ["accepted_changes:" + ",".join(changed)]) if not missing else (UNDETERMINED, ["accepted_without:" + ",".join(missing)])
+    return SUSPECT, [f"outcome:{outcome}"]
+
+
+def judge_termination(termination: str, last_accepted_processability: str | None, *, halt: dict[str, Any] | None = None,
+                      evidence: str | None = None) -> tuple[str, list[str]]:
     if termination in ("game_over", "script_complete"):
         return EXPECTED, []
     if termination == "halted_known":
         if last_accepted_processability == "supported":
             return UNDETERMINED, ["halt_after_supported"]  # supported_scope は受理のあとの完走を保証しない
-        return KNOWN_STOP, []
+        return judge_halt_after_accept(halt, evidence=evidence) if halt is not None else (UNDETERMINED, ["halt_condition_not_evidenced"])
     if termination in ("limit_operations", "limit_accepted", "limit_turns", "limit_time"):
         return EXPECTED, ["tool_limit"]
     if termination == "input_unavailable":
