@@ -20802,6 +20802,9 @@ STADIUM_UNDER_TRAINER_BAN_REASON = (
     "公式ルール・kyuura の記録・印刷の文面から決められないので扱わない（STB1。docs/stadiums-v0.57.md 4 章）")
 
 
+ENERGY_CHOICE_OWN_ATTACHED = "own_attached"  # v0.170（U7-5d）:``StadiumEffect.energy_choice``。使うプレイヤーの場のポケモンについているエネルギーカード 1 枚
+
+
 def _owner_named(name: str, owner: str) -> bool:
     """「(``owner``)のポケモン」か（名前の始まり。v0.44 の ``owner_pokemon``・v0.56 の ``_named_owner_pokemon`` と同じ判定。今の姿の名前を渡す）。"""
     return name.startswith(f"{owner}の")
@@ -20813,6 +20816,9 @@ class StadiumEffect(TrainerEffect):
 
     - ``is_stadium``: エンジンが、手札から使ったら場に出し（``zones.place_stadium``。トラッシュしない）、効果を場から問い合わせる印
     - ``activated``: 自分の番に使ってよい効果を持つ（``UseStadium``。タマムシ・セキチク・ヤマブキ）。``once_per_turn``: 自分の番ごとに 1 回（セキチク）
+    - ``energy_choice``（v0.170。U7-5d の入力の宣言。エンジンの挙動は変えない）: ``UseStadium.energy`` で選ばせるもの。None なら選ばせない（指定すると
+      ``STADIUM_CHOICE_NOT_USED``）。``ENERGY_CHOICE_OWN_ATTACHED`` なら、使うプレイヤーの場のポケモンについているエネルギーカード 1 枚（指定しないと ``STADIUM_CHOICE_REQUIRED``）。
+      合法手 API が入力の形を作るのに使う（``check_activation`` と食い違わないことをテストで確かめる）
     - ``on_placed``: 場に出た時の効果（せまいジム）
     - 効果の中身（ダメージの計算・にげる・ベンチ・反応）は、型ごとの問い合わせ（``stadium_damage_options``・``retreat_cost``・``stadiums.bench_limit`` など）が見る
     """
@@ -20822,6 +20828,7 @@ class StadiumEffect(TrainerEffect):
     is_stadium: ClassVar[bool] = True
     activated: ClassVar[bool] = False
     once_per_turn: ClassVar[bool] = False
+    energy_choice: ClassVar[str | None] = None
     what: ClassVar[str] = "スタジアム"
 
     def check(self, definition: CardDefinition) -> list[str]:
@@ -21083,6 +21090,7 @@ class CureByDiscardingEnergyStadium(StadiumEffect):
     owner: str = "エリカ"
     implementation_id = "cure_by_discarding_energy_stadium"
     activated: ClassVar[bool] = True
+    energy_choice: ClassVar[str | None] = ENERGY_CHOICE_OWN_ATTACHED  # U7-5d: トラッシュするエネルギーカード（_target）
 
     def text_problems(self, text: str) -> list[str]:
         ok = (text.startswith("お互いのプレイヤーは、のぞむなら、自分の番の中で、") and f"自分の「{self.owner}のポケモン」についているエネルギーカードを1枚トラッシュして" in text
@@ -21214,6 +21222,7 @@ class ReturnBasicEnergyStadium(StadiumEffect):
     owner: str = "ナツメ"
     implementation_id = "return_basic_energy_stadium"
     activated: ClassVar[bool] = True
+    energy_choice: ClassVar[str | None] = ENERGY_CHOICE_OWN_ATTACHED  # U7-5d: 手札に加える基本エネルギーカード（_target）
 
     def text_problems(self, text: str) -> list[str]:
         ok = text.startswith(f"お互いのプレイヤーは、自分の番に、自分の「{self.owner}のポケモン」についている「基本エネルギーカード」をはがし、手札に加えてよい。")

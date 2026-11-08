@@ -45,10 +45,12 @@ from .commands import (
     RevealFaceDown,
     StartSuddenDeath,
     UseAttack,
+    UseStadium,
 )
 from .conventions import continuation_for
 from .decisions import ARRANGE_DECK_TOP, value_range
 from .effects import (
+    ENERGY_CHOICE_OWN_ATTACHED,
     PLAY_AS_POKEMON_SETUP_CODE,
     AttackCoinStadium,
     attack_power_slot,
@@ -71,6 +73,7 @@ from .engine import (
     check_retreat,
     check_retreat_declaration,
     check_reveal_face_down,
+    check_use_stadium,
 )
 from .errors import HiddenPropertyRead, IllegalActionError, UnsupportedError
 from .observation import (
@@ -80,7 +83,7 @@ from .observation import (
     observe,
 )
 from .resolution.flow import check_use_attack
-from .stadiums import bench_limit
+from .stadiums import bench_limit, stadium_in_play
 from .state import GameState, Phase
 
 FORMAT_KEY = "kyuura_legal_actions_format"
@@ -169,8 +172,9 @@ KIND_DISCARD_FROM_PLAY = "discard_from_play"  # U7-5a: 自分の場のなにか�
 KIND_REVEAL_FACE_DOWN = "reveal_face_down"  # U7-5b: 自分の場のうらのカード（マチスの秘策）をおもてにする（RevealFaceDown）
 BOARD_KINDS = (KIND_REMOVE_DISGUISE, KIND_DISCARD_FROM_PLAY, KIND_REVEAL_FACE_DOWN)  # 場のポケモン 1 匹を指す操作（MAIN_KINDS の順）
 KIND_PLAY_TRAINER = "play_trainer"  # U7-5c: 手札のトレーナーカードを使う（PlayTrainer。宣言の入力は card だけ。対象・枚数などは受理のあとの決定）
+KIND_USE_STADIUM = "use_stadium"  # U7-5d: 場のスタジアムの、自分の番に使ってよい効果を使う（UseStadium。宣言の入力は energy だけ（選ばせる効果だけ）。コイン・決定は受理のあと）
 PLAYER_KINDS = (KIND_TAKE_PRIZE, KIND_PROMOTE_ACTIVE, KIND_ANSWER_DECISION, KIND_END_TURN, KIND_PLACE_STARTING, KIND_MULLIGAN_DRAW, *TURN_KINDS, KIND_USE_ATTACK,
-                *BOARD_KINDS, KIND_PLAY_TRAINER)  # implemented_kinds の並び（実装した順。U7-5c の play_trainer は最後に加えた）
+                *BOARD_KINDS, KIND_PLAY_TRAINER, KIND_USE_STADIUM)  # implemented_kinds の並び（実装した順。U7-5c の play_trainer、U7-5d の use_stadium を最後に加えた）
 HOST_KINDS = (KIND_REPORT_JANKEN, KIND_START_SUDDEN_DEATH)
 IMPLEMENTED_KINDS = PLAYER_KINDS + HOST_KINDS
 HOST = "host"  # ホストの入口の操作主体（プレイヤーの番号ではない）
@@ -601,6 +605,8 @@ def _command(found: _Candidate, actor, values: tuple[int, ...]):
         return _BOARD_COMMANDS[found.kind](actor, values[0])  # 場のポケモンの番号（pokemon_id）
     if found.kind == KIND_PLAY_TRAINER:
         return PlayTrainer(actor, values[0])  # 手札のトレーナーカード（uid）
+    if found.kind == KIND_USE_STADIUM:
+        return UseStadium(actor, values[0] if values else None)  # 選ばせる効果だけ、エネルギーカード（uid）
     return ResolveDecision(actor, found.decision_id, values)
 
 
@@ -663,14 +669,17 @@ def _build(state: GameState, actor: int):
             candidates += [] if attack is None else [attack]
             trainer = _trainer_candidate(state, actor)  # U7-5c: MAIN_KINDS では use_attack と場のポケモン 1 匹を指す操作のあいだ
             candidates += [] if trainer is None else [trainer]
+            stadium = _stadium_candidate(state, actor)  # U7-5d: MAIN_KINDS では play_trainer（と対応しない use_power）のあと、場のポケモン 1 匹を指す操作の前
+            candidates += [] if stadium is None else [stadium]
             candidates += _board_candidates(state, actor)
         else:
             candidates += [_Candidate("", kind, {"processability": NOT_IMPLEMENTED, "reasons": ["state_not_supported"],
                                                  "guarantees": dict(_UNUSABLE_GUARANTEES.get(kind, GUARANTEE_TURN_ACTION))}, [],
-                                      disclosure=DISCLOSURE_UNCONFIRMED) for kind in (*TURN_KINDS, KIND_USE_ATTACK, KIND_PLAY_TRAINER, *BOARD_KINDS)]
+                                      disclosure=DISCLOSURE_UNCONFIRMED)
+                           for kind in (*TURN_KINDS, KIND_USE_ATTACK, KIND_PLAY_TRAINER, KIND_USE_STADIUM, *BOARD_KINDS)]
         for number, candidate in enumerate(candidates, 1):
             candidate.id = f"c{number}"  # 種類の並び（MAIN_KINDS の順）。番号は応答ごと（取っ手と組で使う）
-        evaluated = [k for k in MAIN_KINDS if k in (KIND_END_TURN, *TURN_KINDS, KIND_USE_ATTACK, KIND_PLAY_TRAINER, *BOARD_KINDS)]  # MAIN_KINDS の順（scope_kinds は MAIN_KINDS のまま）
+        evaluated = [k for k in MAIN_KINDS if k in (KIND_END_TURN, *TURN_KINDS, KIND_USE_ATTACK, KIND_PLAY_TRAINER, KIND_USE_STADIUM, *BOARD_KINDS)]  # MAIN_KINDS の順
         return ACTOR_TO_ACT, candidates, evaluated, [k for k in MAIN_KINDS if k not in evaluated], PARTIAL, None
     return WAITING_FOR_PLAYER, [], [], [], UNDETERMINED, None  # 知らない段階（状態の区分と段階の組が上のどれでもない）は完全と称さない
 
@@ -816,6 +825,8 @@ def _input_problem(found: _Candidate, choices) -> tuple[str | None, tuple[int, .
         return CANDIDATE_NOT_EXECUTABLE, ()
     if found.disclosure == DISCLOSURE_UNCONFIRMED:
         return INPUT_BOUNDARY_UNCONFIRMED, ()
+    if found.kind == KIND_USE_STADIUM and not found.inputs:
+        return (None, ()) if not choices else (CANDIDATE_INPUT_INVALID, ())  # U7-5d: 選ばせるもののない効果（energy を指定しない）
     if found.value_bounds is not None:
         if len(choices) != 1 or type(choices[0]) is not int or not found.value_bounds[0] <= choices[0] <= found.value_bounds[1]:
             return CANDIDATE_INPUT_INVALID, ()
@@ -1390,4 +1401,73 @@ def _trainer_candidate(state: GameState, actor: int) -> _Candidate | None:
              "order": ORDER_NOT_APPLICABLE}
     public = {"processability": processability, "reasons": reasons, "guarantees": dict(GUARANTEE_TRAINER), "choices_format": "[手札のカードの番号]"}
     return _Candidate("", KIND_PLAY_TRAINER, public, [stage], disclosure=DISCLOSURE_CONFIRMED, values=tuple(values), executable=tuple(executable),
+                      min_choices=1, max_choices=1)
+
+
+# ---------------------------------------------------------------- 場のスタジアム（U7-5d。docs/legal-actions-u7-5d.md）
+
+GUARANTEE_STADIUM = {
+    "preconditions": "番・段階と、場のスタジアム・自分の番に使ってよい効果（StadiumEffect.activated）があることと、エネルギーカードを選ばせる効果（energy_choice）では選べるものごとに、"
+                     "エンジンが受け付ける前の確かめ（engine.check_use_stadium。番・場のスタジアム・実装の check_activation（選ばせるもの・回数の記録・トレーナーの使用の禁止・場・"
+                     "トラッシュ。キョウの忍者ジムは持ち主の知識の下限）。コマンドの処理と同じ関数・同じ順番）を候補の作成に使う",
+    "acceptance": "保証しない。エンジンはコマンドの終わりに、受け付けられない状態（MH1 など）にならないかを確かめ、当たれば拒否する（状態は変わらない）。最終の判定は apply_command",
+    "after_acceptance": "評価していない（スタジアムのコイン（「うら」でも使ったことになる）・効果の決定（セキチクシティジムのポケモン・ラジオとうの見る枚数・キョウの忍者ジムの山札のカード・"
+                        "エネルギーの回収）は受理のあとの決定で、answer_decision の候補で答える。空いたバトル場の勝ち負け・交代がある）",
+    "supported_scope": "スタジアムの候補は supported にしない（受理のあとを評価していないため）",
+}
+_UNUSABLE_GUARANTEES[KIND_USE_STADIUM] = GUARANTEE_STADIUM
+
+
+def _stadium_found(verdict: str | None, code: str | None) -> tuple[str, list[str]] | None:
+    if verdict == ILLEGAL:
+        return None
+    if verdict == STOP:
+        return _stop_processability(code), [REASON_STOPS]
+    return MAY_STOP_LATER, [REASON_CONTINUATION]
+
+
+def _stadium_candidate(state: GameState, actor: int) -> _Candidate | None:
+    """場のスタジアムの、自分の番に使ってよい効果（``UseStadium``）。スタジアムの持ち主でなくても使える（番のプレイヤーが使う）。
+
+    - 場にスタジアムがない・使ってよい効果がない（常時の効果だけ。``activated`` が偽）: 候補を作らない
+    - 選ばせるもののない効果（``energy_choice`` が None）: 入力のない候補（``choices`` は空）。ゲーム上できない（回数・STADIUM_CHOICE_NOT_USED など）なら候補を作らない。
+      未裁定・未対応なら実行できない区分で示す
+    - エネルギーカードを選ばせる効果（``ENERGY_CHOICE_OWN_ATTACHED``）: 1 段。選べるものは本人の場のポケモン（バトル場 → ベンチ）についているエネルギーカード（公開）ごとに、
+      エンジンの確かめを通ったもの"""
+    found = stadium_in_play(state)
+    if found is None:
+        return None
+    stadium, effect = found
+    if not effect.activated:
+        return None
+    public_stadium = {"card": stadium.card, "card_id": state.cards[stadium.card].card_id, "owner": stadium.owner}
+    if effect.energy_choice is None:
+        result = _stadium_found(*_probe(check_use_stadium, state, UseStadium(actor)))
+        if result is None:
+            return None
+        public = {"processability": result[0], "reasons": result[1], "guarantees": dict(GUARANTEE_STADIUM), "choices_format": "[]", "stadium": public_stadium}
+        return _Candidate("", KIND_USE_STADIUM, public, [], disclosure=DISCLOSURE_NONE)
+    if effect.energy_choice != ENERGY_CHOICE_OWN_ATTACHED:
+        # 知らない選ばせるものの宣言: 入力の形を作らない（候補から消さず、入力を返さない）
+        public = {"processability": NOT_IMPLEMENTED, "reasons": ["input_boundary_unconfirmed"], "guarantees": dict(GUARANTEE_STADIUM), "stadium": public_stadium}
+        return _Candidate("", KIND_USE_STADIUM, public, [], disclosure=DISCLOSURE_UNCONFIRMED)
+    options, values, executable, found_all = [], [], [], []
+    for pokemon, base in _field(state, actor):
+        for energy in pokemon.energy:
+            result = _stadium_found(*_probe(check_use_stadium, state, UseStadium(actor, energy)))
+            if result is None:
+                continue
+            values.append(energy)
+            executable.append(result[0] in EXECUTABLE)
+            found_all.append(result)
+            # エネルギーカード（ついているカードは公開）と、ついている本人の場のポケモン（U7-5a と同じ形。うらのカードは face_down で示し、カード id を出さない）
+            options.append(_option({"id": f"o{len(values)}", "card": energy, "card_id": state.cards[energy].card_id, "holder": dict(base)}, *result))
+    if not options:
+        return None  # 選べるエネルギーカードがない（ついていない・「(持ち主)のポケモン」でない・基本エネルギーでない。ゲーム上できない）
+    processability, reasons = _best(found_all)
+    stage = {"stage": 1, "input": INPUT_CHOOSE_OPTION, "role": "energy", "meaning": "card", "count": {"min": 1, "max": 1}, "options": options,
+             "order": ORDER_NOT_APPLICABLE}
+    public = {"processability": processability, "reasons": reasons, "guarantees": dict(GUARANTEE_STADIUM), "choices_format": "[エネルギーカードの番号]",
+              "stadium": public_stadium}
+    return _Candidate("", KIND_USE_STADIUM, public, [stage], disclosure=DISCLOSURE_CONFIRMED, values=tuple(values), executable=tuple(executable),
                       min_choices=1, max_choices=1)

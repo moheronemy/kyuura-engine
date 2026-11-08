@@ -2577,6 +2577,19 @@ def _resume_power(state: GameState, decision, choices: tuple[int, ...], context:
     return _after_power_step(state, use, context, converted, defer=True)
 
 
+def check_use_stadium(state: GameState, cmd: UseStadium):
+    """``UseStadium`` を受け付ける前の確かめ（U7-5d。``_use_stadium`` の前半を、同じ順番・同じコード・同じ文のまま移した）。状態・乱数・ログを変えない。
+    (場のスタジアム, 効果) を返す。読むのは番・段階・場のスタジアムと、実装の ``check_activation``（選ばせるもの・回数の記録・トレーナーの使用の禁止・場・トラッシュ。
+    キョウの忍者ジムは持ち主の知識の下限。docs/legal-actions-u7-5d.md 3 章）。"""
+    _require_turn(state, cmd.player)
+    found = stadium_in_play(state)
+    if found is None:
+        raise IllegalActionError("NO_STADIUM", "場にスタジアムカードがない")
+    stadium, effect = found
+    effect.check_activation(state, cmd.player, cmd.energy, stadium)
+    return stadium, effect
+
+
 def _use_stadium(state: GameState, cmd: UseStadium, context: resolution.Context) -> None:
     """場のスタジアムカードの、自分の番に使ってよい効果を使う（v0.57。docs/stadiums-v0.57.md 4 章。タマムシシティジム・セキチクシティジム・ヤマブキシティジム）。
 
@@ -2588,13 +2601,10 @@ def _use_stadium(state: GameState, cmd: UseStadium, context: resolution.Context)
       再開先 ``"stadium"``（``_resume_stadium``）で続ける。終わったら空いたバトル場（セキチクシティジムでバトル場のポケモンを山札にもどした）の勝ち負け・交代
       （``resolution.after_stadium``）。番は終わらない
     - トレーナーカードを手札から使うこと・特殊能力の使用ではない（かがくへんかガス・特殊状態は関係しない）。トレーナーの使用の禁止の対象かは STB1
+
+    v0.170（U7-5d）: 使う前の確かめを ``check_use_stadium`` に移した（同じ順番・同じコード・同じ文。動きは同じ）。
     """
-    _require_turn(state, cmd.player)
-    found = stadium_in_play(state)
-    if found is None:
-        raise IllegalActionError("NO_STADIUM", "場にスタジアムカードがない")
-    stadium, effect = found
-    effect.check_activation(state, cmd.player, cmd.energy, stadium)
+    stadium, effect = check_use_stadium(state, cmd)
     state.add_event("stadium_used", player=cmd.player, card=stadium.card, owner=stadium.owner)
     if effect.records_uses:  # v0.74: 「自分の番ごとに1回」と、同じ番の再使用を確かめる効果（PRN-027 のラッキースタジアム）
         state.stadium_uses_this_turn = state.stadium_uses_this_turn + ((cmd.player, stadium.card),)
