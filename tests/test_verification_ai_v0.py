@@ -50,13 +50,13 @@ def boom(*args, **kwargs):
 
 
 class CN1Test(unittest.TestCase):
-    def test_view_host_and_collector_lack_failure(self):
-        """v0.172.0: ReplayCollector・ViewHost は failure を持たず、ClientHub の候補の取得で AttributeError が入口の外へ出る（CN-1 の再現）。"""
+    def test_view_host_and_collector_have_failure(self):
+        """v0.172.0 では ReplayCollector・ViewHost が failure を持たず、ClientHub の候補の取得で AttributeError が入口の外へ出た（CN-1）。v0.173.0 で正式に直した:
+        どちらも failure（失敗のない対戦では None）を持ち、ClientHub で候補を取れる（意図した差。詳しい確かめは tests/test_client_api_cn1_v0_173.py）。"""
         for name, game in (("ViewHost", ViewHost.start(*DECKS, 1)[0]), ("ReplayCollector", ReplayCollector.start(*DECKS, 1, include_git=False)[0])):
             with self.subTest(name):
-                self.assertFalse(hasattr(game, "failure"))
-                with self.assertRaises(AttributeError):
-                    ClientHub(game).player(0).handle({**REQ, "type": "candidates"})
+                self.assertIsNone(game.failure)
+                self.assertTrue(ClientHub(game).player(0).handle({**REQ, "type": "candidates"})["ok"])
 
     def test_wrapper_connects(self):
         game, _ = R.RecordingGame.start(*DECKS, 1)

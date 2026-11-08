@@ -17,16 +17,15 @@ from kyuura_engine.replay_record import ReplayCollector, current_identity, dumps
 
 
 class RecordingGame:
-    """``ReplayCollector`` を ``adapter.HostedGame`` と同じ形（``state``・``submit``・``failure``）にする包み（CN-1）。
+    """検証用 AI の対戦（``ReplayCollector`` を包む）。担うのは、開始の決まった設定（拒否も記録・git を呼ばない）・拒否で状態が変わらないことの照合の確認値
+    （``last_check``）・記録の取り出しと閉じ方。
 
-    ``legal_actions.ActionHost`` は包んだ対戦の ``failure`` を読むが、``ReplayCollector``・``view_record.ViewHost`` は ``failure`` を持たない
-    （v0.172.0。``tests/test_verification_ai_v0.py`` の CN1Test で確かめた）。この包みは、送った操作の公開の結果（``CommandResult.outcome``）が ``failed``
-    なら、その結果を ``failure`` として持ち、それより後の送信を ``HostedGame`` と同じく ``HostStoppedError`` で断る（失敗を隠さない。いつも None を
-    返すことはしない）。``ActionHost`` からの送信だけを受ける（別の経路で送らない）。"""
+    CN-1: v0.172.0 では ``ReplayCollector``・``view_record.ViewHost`` が ``failure`` を持たず、この包みが失敗の状態を自分で持っていた。v0.173.0 で
+    ``ReplayCollector.failure`` が包んだ ``HostedGame`` の値を返すようになったので、この包みは独自の失敗の状態を持たず、収集器の値をそのまま返す（失敗を
+    隠さない。ラッパーごとに別の失敗の状態を持たない）。``ActionHost`` からの送信だけを受ける（別の経路で送らない）。"""
 
     def __init__(self, collector: ReplayCollector):
         self._collector = collector
-        self._failure = None
 
     @classmethod
     def start(cls, deck0, deck1, seed, *, conventions=None, game_id=None):
@@ -39,15 +38,12 @@ class RecordingGame:
 
     @property
     def failure(self):
-        return self._failure
+        return self._collector.failure  # v0.173.0: 収集器（包んだ HostedGame）の値
 
     def submit(self, command, *, submitter=None, operation_id=None):
-        if self._failure is not None:
+        if self.failure is not None:  # HostedGame と同じく、処理できない結果のあとは HostStoppedError（収集器は CollectorStoppedError を投げる）
             raise HostStoppedError("処理できない結果のあとの対戦には、操作を送れない（検証者が調べる）")
-        result = self._collector.submit(command, submitter=submitter, operation_id=operation_id)
-        if result.outcome == D.FAILED:
-            self._failure = result
-        return result
+        return self._collector.submit(command, submitter=submitter, operation_id=operation_id)
 
     def view(self, viewer):
         return self._collector.view(viewer)
