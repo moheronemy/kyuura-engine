@@ -5242,3 +5242,8 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - U7-5 の設計の U7-5f・U7-5g を implemented にした。GUI の比べる相手を main の `088822c`（エンジン `74c8e1f`・0.171.0 を固定）に直した。既存の U7 のテストの coverage の期待から `check_face_up_deck` を外した（意図した差）
 - 配布の確かめ: コミット `e26df79cc6dec913c1d15b5d8203df066334d65d`（版 0.172.0）を、クリーンな仮想環境に Git の URL から通常のインストールをして、リポジトリの外から client_api のカツラの 2 枚目・本人のうらのカードの特殊能力・`check_face_up_deck` を使うスモークテストをした（`behavior_digest` はソースの木と同じ）。配布物の中身の検査は required=62・problems=0
 - 詳細: [legal-actions-u7-5fg.md](legal-actions-u7-5fg.md)
+
+## U7 の総合検証の計画（v0.172 のあと。計画だけ）
+
+- エンジン `e26df79`（0.172.0）・GUI `b1037bc`・renderer `af88231` の組の総合検証の計画を作った。テスト・ビルド・総合検証は実行していない。エンジンのコードと版は変えていない
+- 詳細: [u7-integration-verification-plan.md](u7-integration-verification-plan.md)

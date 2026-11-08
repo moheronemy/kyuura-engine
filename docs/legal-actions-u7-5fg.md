@@ -241,3 +241,4 @@ GUI は読み取りだけで確かめました（GitHub の API。GUI のリポ�
 
 - 残る未対応は 2.2 節の分類のとおりです。PT-5e（山札から引いて試すトレーナー 5 つ）は直していません（`unverified_paths` の `use_condition_not_evaluated` で示す）
 - U7-5 のすべての単位を実装しました。U7 の総合の検証（全体のテスト・状態の監査・lockstep・大きな対戦）と GUI の追従は、別の作業です
+- U7 の総合検証の計画（実行していない）: [u7-integration-verification-plan.md](u7-integration-verification-plan.md)
