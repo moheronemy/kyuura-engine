@@ -21,7 +21,7 @@ from kyuura_engine.client_api import ClientHub
 
 from . import actions as B
 from .metrics import Metrics
-from .policies import STAGE, TUPLE, UniformPolicy, host_seed, player_seed
+from .policies import STAGE, TUPLE, MixedPolicy, RulePolicy, UniformPolicy, host_seed, mix_seed, player_seed
 from kyuura_engine.replay_record import checks
 
 from .records import RecordingGame, canonical
@@ -82,7 +82,9 @@ class Config:
     host_seed: int = 1
     profile: str = "deep"
     limits: Limits = field(default_factory=Limits)
-    distribution: str = STAGE  # V1: STAGE（V0 と同じ）か TUPLE
+    distribution: str = STAGE  # V1: STAGE（V0 と同じ）か TUPLE（policy が uniform のときだけ）
+    policy: str = "uniform"  # V2: uniform・rules・mixed
+    epsilon: float = 0.25  # V2: mixed のランダムの確率（エピソードごと）
     run_id: str = "v0"
 
 
@@ -117,13 +119,13 @@ class _Stop(Exception):
 
 
 class Runner:
-    def __init__(self, config: Config, *, clock=time.monotonic, policy_factory=UniformPolicy, wrap_endpoint=None):
+    def __init__(self, config: Config, *, clock=time.monotonic, policy_factory=None, wrap_endpoint=None):
         self.config = config
         self.limits = config.limits
         self.clock = clock
-        self.policies = {0: policy_factory(player_seed(config.policy_seed, 0), config.distribution),
-                         1: policy_factory(player_seed(config.policy_seed, 1), config.distribution),
-                         HOST: policy_factory(host_seed(config.host_seed), config.distribution)}
+        self.policies = make_policies(config, policy_factory)
+        self.episode_count = 0
+        self._prizes = None
         self.metrics = Metrics()
         self.wrap_endpoint = wrap_endpoint or (lambda actor, endpoint: endpoint)
         self.trace: list[dict[str, Any]] = []  # 検証者用の操作の記録（全主体）
@@ -136,6 +138,7 @@ class Runner:
         self.hub: ClientHub | None = None
         self.last_result = None  # 検証者用の CommandResult（方策に渡さない）
         self.position = 0
+        self._episode = None
         self._turn_key = None
         self._started = None
 
@@ -154,12 +157,15 @@ class Runner:
             termination, detail = EXCEPTION, {"type": type(error).__name__, "message": str(error), "traceback": traceback.format_exc()}
         record = None if self.game is None else self.game.close()
         self.metrics.axis("termination", termination)
+        if self._episode is not None and self._episode["result"] is None:
+            self._episode["result"] = termination
         if termination in (HALTED_KNOWN, HALTED_UNCLASSIFIED):
             self.metrics.axis("halt", f"{(detail.get('halt') or {}).get('category')}:{(detail.get('halt') or {}).get('diagnostic_id')}")
         return {"termination": {"class": termination, "detail": detail, "at": self._where()}, "counters": dict(self.counters),
                 "anomalies": list(self.anomalies), "coverage": {k: dict(sorted(v.items())) for k, v in sorted(self.coverage.items())},
                 "trace": self.trace, "actor_logs": self.actor_logs, "record": record,
-                "policies": {str(k): {"name": p.name, "version": p.version, "distribution": p.distribution, "seed": p.seed, "draws": p.draws}
+                "policies": {str(k): {"name": p.name, "version": p.version, "distribution": p.distribution, "seed": p.seed, "draws": p.draws,
+                                      **({"epsilon": p.epsilon, "mix_seed": p.mix_seed, "episodes": dict(p.episodes)} if isinstance(p, MixedPolicy) else {})}
                              for k, p in self.policies.items()},
                 "limits": asdict(self.limits), "elapsed_seconds": round(self.clock() - self._started, 3),
                 "distribution": self.config.distribution, "metrics": self.metrics.to_dict()}
@@ -214,6 +220,7 @@ class Runner:
             halt = status.get("halt") or {}
             known = halt.get("category") in KNOWN_HALT_CATEGORIES
             raise _Stop(HALTED_KNOWN if known else HALTED_UNCLASSIFIED, {"halt": halt})
+        self._track_prizes(view["observation"])
         key = (status["segment"], view["observation"]["turn"])
         if key != self._turn_key:
             self._turn_key = key
@@ -245,11 +252,39 @@ class Runner:
 
     # ---------------------------------------------------------------- 1 つの状態での試み
 
+    def _track_prizes(self, observation) -> None:
+        """公開の観測のサイドの枚数の増減（V2）。サイドを取った・きぜつしたとは同じでない（山札からサイドへ加える効果もある）ので、枚数の変化として数える。"""
+        counts = [p["prizes"]["count"] for p in observation["players"]]
+        if self._prizes is not None:
+            for player, (before, now) in enumerate(zip(self._prizes, counts)):
+                if now < before:
+                    self.metrics.axis("prize_count_decrease", f"player{player}", before - now)
+                elif now > before:
+                    self.metrics.axis("prize_count_increase", f"player{player}", now - before)
+        self._prizes = counts
+
     def _act(self, actor) -> None:
         endpoint = self.endpoints[actor]
         policy = self.policies[actor]
         own_view = request(endpoint, "view")
-        self.actor_logs[actor].append({"type": "position", "position": self.position, "view": own_view})
+        # V2: 選択のエピソード（この状態でのこの主体の選択。受理・対戦の終わり・上限で区切る。拒否では状態が変わらないので同じエピソードのまま）
+        info = policy.begin_episode() if hasattr(policy, "begin_episode") else {"mode": "random"}
+        self.episode_count += 1
+        self._episode = {"type": "episode", "episode": self.episode_count, "actor": actor, "position": self.position, "policy": policy.name, **info,
+                         "attempts": 0, "result": None}
+        self.trace.append(self._episode)
+        self.metrics.axis("episode_mode", f"{policy.name}:{info['mode']}")
+        self.actor_logs[actor].append({"type": "position", "position": self.position, "view": own_view, "episode": dict(self._episode)})
+        try:
+            self._episode_loop(actor, endpoint, policy, own_view)
+        except _Stop as stop:
+            self._episode["result"] = stop.termination
+            raise
+        finally:
+            self.metrics.axis("episode_attempts", min(self._episode["attempts"], 10))
+            self.metrics.axis("episode_result", f"{info['mode']}:{self._episode['result']}")
+
+    def _episode_loop(self, actor, endpoint, policy, own_view) -> None:
         rejections = draws = 0
         tried: set[str] = set()
         unbuildable: dict[str, str] = {}
@@ -370,6 +405,7 @@ class Runner:
                 self._cover("accepted_kind", candidate["kind"])
                 self._after_accept(entry, sent)
                 self.position += 1
+                self._episode["result"] = "accepted"
                 return
             if outcome == D.FAILED or not sent.get("ok", True):
                 self.counters["failed"] += 1
@@ -401,6 +437,9 @@ class Runner:
         self._cover("chosen_processability", candidate.get("processability"))
         entry = {"type": "attempt", "n": self.counters["attempts"], "position": self.position, "actor": actor, "candidate": candidate,
                  "candidate_reason": reason, "scope": scope, "build": None, "elapsed": round(self._elapsed(), 3)}
+        if self._episode is not None:
+            self._episode["attempts"] += 1
+            entry["episode"] = self._episode["episode"]
         self.trace.append(entry)
         return entry
 
@@ -515,3 +554,25 @@ class Runner:
 
 def run_game(config: Config, **kwargs) -> dict[str, Any]:
     return Runner(config, **kwargs).run()
+
+
+def make_policies(config: Config, policy_factory=None) -> dict[Any, Any]:
+    """主体ごとの方策（V2）。ホストの係（ジャンケンの勝者）は、どの方策でも均等（UniformPolicy。V0・V1 と同じ種）。
+
+    ``policy_factory`` を渡したとき（テスト）は、V1 までと同じく 3 つの主体にその方策を使う。"""
+    if policy_factory is not None:
+        return {0: policy_factory(player_seed(config.policy_seed, 0), config.distribution),
+                1: policy_factory(player_seed(config.policy_seed, 1), config.distribution),
+                HOST: policy_factory(host_seed(config.host_seed), config.distribution)}
+    if config.policy == "uniform":
+        players = {p: UniformPolicy(player_seed(config.policy_seed, p), config.distribution) for p in (0, 1)}
+        host = UniformPolicy(host_seed(config.host_seed), config.distribution)
+    elif config.policy == "rules":
+        players = {p: RulePolicy(player_seed(config.policy_seed, p)) for p in (0, 1)}
+        host = UniformPolicy(host_seed(config.host_seed), STAGE)
+    elif config.policy == "mixed":
+        players = {p: MixedPolicy(player_seed(config.policy_seed, p), epsilon=config.epsilon, mix_seed_text=mix_seed(config.policy_seed, p)) for p in (0, 1)}
+        host = UniformPolicy(host_seed(config.host_seed), STAGE)
+    else:
+        raise ValueError(f"知らない方策 {config.policy!r}")
+    return {**players, HOST: host}

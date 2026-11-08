@@ -68,12 +68,12 @@ def game_header(config: Config, ident: dict[str, Any], argv: list[str], result: 
             "policies": result["policies"], "profile": config.profile, "limits": result["limits"], "started": started, "finished": finished}
 
 
-def reproduce(baseline: Path, out: Path, engine_commit: str, argv: list[str]) -> int:
+def reproduce(baseline: Path, out: Path, engine_commit: str, argv: list[str], label: str = "v1") -> int:
     base_header = json.loads((baseline / "header.json").read_text(encoding="utf-8"))
     base_result = json.loads((baseline / "result.json").read_text(encoding="utf-8"))
     base_meaning = read_jsonl(baseline / "meaning.jsonl")
     base_record = json.loads((baseline / "full_record.json").read_text(encoding="utf-8"))
-    name = f"v1-repro-of-{baseline.parent.name}-{baseline.name}"
+    name = f"{label}-repro-of-{baseline.parent.name}-{baseline.name}"
     limits = Limits(**base_header["limits"])
     config = Config(deck0=base_header["decks"]["0"], deck1=base_header["decks"]["1"], game_seed=base_header["game_seed"], policy_seed=base_header["policy_seed"],
                     host_seed=base_header["host_seed"], profile=base_header["profile"], limits=limits,
@@ -180,7 +180,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     full = ["python", "-m", "tools.verification_ai.run_v1", *argv]
     if args.cmd == "reproduce":
-        return reproduce(Path(args.baseline), Path(args.out), args.engine_commit, full)
+        return reproduce(Path(args.baseline), Path(args.out), args.engine_commit, full, args.label)
     if len(args.seeds) * len(args.distributions) > 6:
         parser.error("V1 の実行は 6 局まで")
     return run_matrix(Path(args.out), args.engine_commit, args.seeds, args.distributions, args.budget_seconds, full)
