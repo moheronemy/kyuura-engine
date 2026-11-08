@@ -381,3 +381,4 @@ kyuura-engine-verification-u7/
 - 実行した: 3 つのリポジトリの履歴・リモート・未コミットの変更の読み取り（`git fetch`・`rev-parse`・`branch --contains`・`status`）、文書とコードの読み取り、静的な数え上げ（テストのモジュールのファイルの数・e2e の呼び出し先）、既存の一時の証跡の JUnit・summary を読むこと
 - 実行していない: テスト・ビルド・対戦の探索・lockstep・監査・配布の確かめ・GUI のサーバーの起動・総合検証。依存の更新もしていない
 - この計画の E0・E1・E2・G0・G1 は、あとで先行して実行した（[u7-integration-verification-e0-g1.md](u7-integration-verification-e0-g1.md)。G1 はメモリ不足で途中まで）
+- その後、E1 の双子の読み取りの点検と G1 の残り 9 件を再開して終えた（同じ文書の 9 章。G1 の 14 件すべてに成功の結果。2 回の実行に分かれる）
