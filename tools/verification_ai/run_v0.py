@@ -88,7 +88,7 @@ def execute(config: Config, out: Path, engine_commit: str | None, argv: list[str
     R.write_json(pdir / "summary.json", {
         "tool": {"name": "tools.verification_ai", "version": VERSION}, "engine": {"git_commit": engine_commit, "version": ident["version"],
                                                                                 "behavior_digest": ident["implementation"]["behavior_digest"]},
-        "convention_set": data_a["header"]["convention_set"]["set_id"] if isinstance(data_a["header"]["convention_set"], dict) else None,
+        "convention_set": "{id}@{version}".format(**data_a["header"]["convention_set"]),
         "decks": {"0": config.deck0, "1": config.deck1}, "policy": {"name": a["policies"]["0"]["name"], "distribution": a["policies"]["0"]["distribution"]},
         "profile": config.profile, "limits": a["limits"],
         "runs": {label: {"termination": res["termination"]["class"], "counters": res["counters"], "coverage": res["coverage"],
