@@ -269,6 +269,19 @@ GUARANTEE_TURN_ACTION = {
                         "場にないことを公開の情報で確かめた場合だけ。ほかは may_stop_later（受理のあとを評価していない）",
     "supported_scope": "supported は上の条件の範囲の保証で、受理のあとの全分岐の完走の保証ではない（こんらんのコインなど、乱数で決まる続きを含む）",
 }
+# v0.174（R-5 の P6。docs/legal-actions-p6-face-down-retreat.md）: 本人のうらのバトル場のポケモンのにげる
+GUARANTEE_FACE_DOWN_RETREAT = {
+    "preconditions": "番のプレイヤーの main の段階で、本人のバトル場のポケモンがうら（マチスの秘策）で、控えがいる。選べるものは本人のベンチ（公開）と、バトル場のポケモンについているカード"
+                     "（公開）だけから作る。にげるの宣言の確かめ（check_retreat_declaration）・にげるエネルギー（retreat_cost）・カードごとのエネルギーの個数・入力の組の確かめ"
+                     "（check_retreat）は呼ばない（うらのあいだ決まらない値を読まない。状態の複製の上でおもてにして試さない）",
+    "acceptance": "保証しない。入力の検査は形（選べるものの番号・段の並び・重なり）だけ。エンジンはコマンドの入口で、番・決定待ちでないことを確かめたあと、このポケモンをおもてにする"
+                  "（_reveal_for_action）。本当のカードが「たねポケモン」なら、おもてにしたあとふつうに確かめ、受け付けなければコマンドごと拒否する（状態・乱数・ログはもどり、おもてに"
+                  "したことも公開されない）。「たねポケモン」でなければ、ついているカードといっしょにトラッシュし、コマンドを受け付けたことにする（にげるはおこらない）。最終の判定は apply_command",
+    "after_acceptance": "評価していない（受理のあと、おもてにしたカード・にげた・トラッシュしたことは全員に公開される。空いたバトル場は既存の決定で答える）",
+    "supported_scope": "うらのバトル場のにげるの候補は unverified（候補の作成・入力の検査で確かめていない）。unverified は公開の許可ではない（入力は公開の値とうらであることだけで決まる）。"
+                       "段 2 の cost_evaluation が not_evaluated のあいだ、にげるエネルギー・個数を求めない（total_units・units を省く）",
+}
+COST_NOT_EVALUATED = "not_evaluated"  # 段の cost_evaluation.status: 費用・個数を評価していない（total_units・units を省いた）
 GUARANTEE_ATTACK = {
     "preconditions": "番・段階と、ワザ・宣言といっしょに選ぶものごとに、エンジンが宣言を受け付ける前の確かめ（resolution.flow.check_use_attack。checks.attack_request・要素の並び・"
                      "クチバシティジムのコイン・ワザといっしょに使う特殊能力の確かめ。コマンドの処理と同じ関数・同じ順番）を候補の作成と入力の検査に使う",
@@ -1140,24 +1153,22 @@ def _retreat_candidate(state: GameState, actor: int, quiet: bool) -> _Candidate 
         if found is None:
             return None  # ねむり・マヒ・にげられない効果・こんらんで失敗した番（ゲーム上できない）
         processability, reasons = found
-    try:
-        cost = retreat_cost(state, actor)
-    except HiddenPropertyRead:
-        if not face_down:
-            raise
-        # U7-5b で直した: 自分のうらのバトル場のポケモンは、にげるエネルギーがうらのあいだ決まらない（FD1。本当のカードによらない）。v0.166 までは候補の取得そのものが
-        # 例外で失敗していた。費用・トラッシュするエネルギーの段を示せないので、入力を返さない（INPUT_BOUNDARY_UNCONFIRMED。送ればエンジンがおもてにしてから確かめる）
-        public = {"processability": processability, "reasons": reasons, "guarantees": dict(GUARANTEE_TURN_ACTION),
-                  "choices_format": "[入れ替える控えの番号, トラッシュするエネルギーの番号, ...]（エネルギーは選んだ順）"}
-        return _Candidate("", KIND_RETREAT, public, [], disclosure=DISCLOSURE_UNCONFIRMED)
-    except UnsupportedError:
-        if processability in EXECUTABLE:
-            raise  # 宣言の確かめを通ったのに費用が決まらない（エンジンの不具合。ここで隠さない）
-        # U7-5a で直した: 宣言の確かめが止める（バトル場のなにかの化石・ピッピ人形の PF2 など）とき、費用も同じ理由で決まらない。v0.166 までは候補の取得そのものが
-        # 例外で失敗していた。選べるものを示さない、実行できない候補にする（U7-4 の印刷のワザのないうらのカードと同じ形）
-        public = {"processability": processability, "reasons": reasons, "guarantees": dict(GUARANTEE_TURN_ACTION),
-                  "choices_format": "[入れ替える控えの番号, トラッシュするエネルギーの番号, ...]（エネルギーは選んだ順）"}
-        return _Candidate("", KIND_RETREAT, public, [], disclosure=DISCLOSURE_CONFIRMED)
+    cost = None
+    if not face_down:
+        # v0.174（R-5 の P6）: 自分のうらのバトル場のポケモンは、にげるエネルギーを求めない（うらのあいだ決まらない FD1。retreat_cost を呼ばない）。U7-5b〜v0.173 は、ここで
+        # HiddenPropertyRead を受けて入力を返さなかった（INPUT_BOUNDARY_UNCONFIRMED）。v0.166 までは候補の取得そのものが例外で失敗していた
+        try:
+            cost = retreat_cost(state, actor)
+        except HiddenPropertyRead:
+            raise  # うらでないバトル場のポケモンの読み取り（ここで隠さない）
+        except UnsupportedError:
+            if processability in EXECUTABLE:
+                raise  # 宣言の確かめを通ったのに費用が決まらない（エンジンの不具合。ここで隠さない）
+            # U7-5a で直した: 宣言の確かめが止める（バトル場のなにかの化石・ピッピ人形の PF2 など）とき、費用も同じ理由で決まらない。v0.166 までは候補の取得そのものが
+            # 例外で失敗していた。選べるものを示さない、実行できない候補にする（U7-4 の印刷のワザのないうらのカードと同じ形）
+            public = {"processability": processability, "reasons": reasons, "guarantees": dict(GUARANTEE_TURN_ACTION),
+                      "choices_format": "[入れ替える控えの番号, トラッシュするエネルギーの番号, ...]（エネルギーは選んだ順）"}
+            return _Candidate("", KIND_RETREAT, public, [], disclosure=DISCLOSURE_CONFIRMED)
     ids, bench_options, energy_options = {}, [], []
     for index, pokemon in enumerate(p.bench):
         oid = f"o{len(ids) + 1}"
@@ -1166,17 +1177,27 @@ def _retreat_candidate(state: GameState, actor: int, quiet: bool) -> _Candidate 
     for uid in active.energy:
         oid = f"o{len(ids) + 1}"
         ids[oid] = (2, uid)
-        energy_options.append({"id": oid, "card": uid, "card_id": state.cards[uid].card_id, "special": state.card_def(uid).is_special_energy,
-                               "units": energy_unit_count(state, (uid,), active), "processability": processability})
+        shown = {"id": oid, "card": uid, "card_id": state.cards[uid].card_id, "special": state.card_def(uid).is_special_energy}  # ついているカード（公開。エネルギーカードはおもて）
+        if face_down:
+            # 個数（units）は持ち主のポケモンのタイプ・場の効果で変わる読み方を含むので求めない（energy_unit_count を呼ばない）
+            energy_options.append(_option(shown, processability, reasons))
+        else:
+            energy_options.append({**shown, "units": energy_unit_count(state, (uid,), active), "processability": processability})
+    discard = {"stage": 2, "input": INPUT_CHOOSE_OPTION, "role": "discard", "meaning": "card", "count": {"min": 0, "max": len(energy_options)},
+               "options": energy_options, "distinct": True, "order": ORDER_SIGNIFICANT, "order_preserved": True}
+    if face_down:
+        discard["cost_evaluation"] = {"status": COST_NOT_EVALUATED, "reason": REASON_FACE_DOWN, "omitted": ["total_units", "units"]}
+        discard["note"] = ("うらのバトル場のポケモン: にげるエネルギーとカードごとのエネルギーの個数は評価していない（cost_evaluation。total_units・units を省いた。0 と見なさない・"
+                           "本当のカードから求めない）。トラッシュの並びは選んだ順。足りるか・余るかは、エンジンがおもてにしてから確かめる")
+    else:
+        discard["total_units"] = {"min": cost.minimum, "max": cost.maximum}
+        discard["note"] = ("トラッシュするカードの出すエネルギーの個数（units。カードの枚数ではない）の合計が total_units の範囲。1 枚で 2 個のカードは分けられない。トラッシュの並びは"
+                           "選んだ順。余る個数・読み方で変わる数・入れ替えの前後で変わる効果は、入力の検査（エンジンの確かめ）が止める")
+    if active.conditions.confused:
+        discard["confused"] = True
     stages = [{"stage": 1, "input": INPUT_CHOOSE_OPTION, "role": "new_active", "meaning": "pokemon", "count": {"min": 1, "max": 1}, "options": bench_options,
-               "order": ORDER_NOT_APPLICABLE},
-              {"stage": 2, "input": INPUT_CHOOSE_OPTION, "role": "discard", "meaning": "card", "count": {"min": 0, "max": len(energy_options)},
-               "options": energy_options, "distinct": True, "order": ORDER_SIGNIFICANT, "order_preserved": True,
-               "total_units": {"min": cost.minimum, "max": cost.maximum},
-               "note": "トラッシュするカードの出すエネルギーの個数（units。カードの枚数ではない）の合計が total_units の範囲。1 枚で 2 個のカードは分けられない。トラッシュの並びは"
-                       "選んだ順。余る個数・読み方で変わる数・入れ替えの前後で変わる効果は、入力の検査（エンジンの確かめ）が止める",
-               **({"confused": True} if active.conditions.confused else {})}]
-    public = {"processability": processability, "reasons": reasons, "guarantees": dict(GUARANTEE_TURN_ACTION),
+               "order": ORDER_NOT_APPLICABLE}, discard]
+    public = {"processability": processability, "reasons": reasons, "guarantees": dict(GUARANTEE_FACE_DOWN_RETREAT if face_down else GUARANTEE_TURN_ACTION),
               "choices_format": "[入れ替える控えの番号, トラッシュするエネルギーの番号, ...]（エネルギーは選んだ順）"}
 
     def verify(values):
