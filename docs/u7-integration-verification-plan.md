@@ -382,3 +382,4 @@ kyuura-engine-verification-u7/
 - 実行していない: テスト・ビルド・対戦の探索・lockstep・監査・配布の確かめ・GUI のサーバーの起動・総合検証。依存の更新もしていない
 - この計画の E0・E1・E2・G0・G1 は、あとで先行して実行した（[u7-integration-verification-e0-g1.md](u7-integration-verification-e0-g1.md)。G1 はメモリ不足で途中まで）
 - その後、E1 の双子の読み取りの点検と G1 の残り 9 件を再開して終えた（同じ文書の 9 章。G1 の 14 件すべてに成功の結果。2 回の実行に分かれる）
+- 必須の段の残り（E3・E4・E5・G2・G3・G4・G5）を実行した（[u7-integration-verification-e3-g5.md](u7-integration-verification-e3-g5.md)。失敗 0。待ち受けの観測の訂正と、G4 の後始末の事故を含む）。X1〜X4 は実行していない
