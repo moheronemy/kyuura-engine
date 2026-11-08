@@ -65,6 +65,7 @@ from .effects import (
     AttackCoinStadium,
     attack_power_slot,
     available_attacks,
+    blaine_effects,
     current_form,
     energy_unit_count,
     group_attack_power_slot,
@@ -557,6 +558,14 @@ class HostSession(_Session):
 def _candidates(host: ActionHost, actor: int | str) -> dict[str, Any]:
     state = host._state()
     situation, candidates, evaluated, not_covered, completeness, empty = _build_host(state) if actor == HOST else _build(state, actor)
+    present = [] if actor == HOST else _residual_present(state, actor, candidates, evaluated)
+    if any(item["id"] == RESIDUAL_FACE_UP_SCOPE for item in present):
+        not_covered = [*not_covered, KIND_CHECK_FACE_UP_DECK]  # U7-5g: 番のプレイヤーの MAIN のほかで、エンジンが FU2 で止める要求がある（ゲーム上できないのではない。API の対応の範囲の外）
+        empty = EMPTY_NOT_COVERED if not candidates else empty
+    scope = _scope_kinds(evaluated + not_covered)
+    partial_by = [c["id"] for c in RESIDUAL_CLASSES if c["status"] == RESIDUAL_NOT_OFFERED and c["kind"] in evaluated]
+    if completeness == COMPLETE and (not_covered or partial_by):
+        completeness = PARTIAL
     offered = list(dict.fromkeys(c.kind for c in candidates))  # 候補がある種類（evaluated のうち。ゲーム上できない種類は候補がない）
     token = host._issue(actor, state, candidates)
     withheld = [c.id for c in candidates if c.disclosure == DISCLOSURE_UNCONFIRMED]
@@ -568,10 +577,13 @@ def _candidates(host: ActionHost, actor: int | str) -> dict[str, Any]:
         "status": D.status_of(state),
         "situation": situation,
         "empty_reason": None if candidates else empty,
-        "coverage": {"implemented_kinds": list(IMPLEMENTED_KINDS), "scope_kinds": _scope_kinds(evaluated + not_covered), "offered_kinds": offered,
+        "coverage": {"implemented_kinds": list(IMPLEMENTED_KINDS), "scope_kinds": scope, "offered_kinds": offered,
                      "not_covered_kinds": not_covered, "display_only_kinds": [k for k in DISPLAY_ONLY_KINDS if k in evaluated], "withheld_input_candidates": withheld,
                      "completeness": completeness,
-                     "completeness_scope": "scope_kinds（この応答に明示した種類だけ。全コマンドの合法手ではない）"},
+                     "completeness_scope": "scope_kinds（この応答に明示した種類だけ。全コマンドの合法手ではない）",
+                     "completeness_basis": COMPLETENESS_BASIS, "partial_residual": partial_by,
+                     "residual": {"classes": [dict(c) for c in RESIDUAL_CLASSES], "present": present},
+                     "unverified_paths": _unverified_paths(candidates)},
         "candidates": [{"id": c.id, "kind": c.kind, **c.public, "input_disclosure": c.disclosure,
                         "input_stages": [{"stage": s["stage"], "input": s["input"]} for s in c.inputs]} for c in candidates],
     })
@@ -713,7 +725,9 @@ def _build(state: GameState, actor: int):
             candidate.id = f"c{number}"  # 種類の並び（MAIN_KINDS の順）。番号は応答ごと（取っ手と組で使う）
         evaluated = [k for k in MAIN_KINDS if k in (KIND_END_TURN, *TURN_KINDS, KIND_USE_ATTACK, KIND_PLAY_TRAINER, KIND_USE_POWER, KIND_USE_STADIUM, *BOARD_KINDS,
                                                     KIND_CHECK_FACE_UP_DECK)]
-        return ACTOR_TO_ACT, candidates, evaluated, [k for k in MAIN_KINDS if k not in evaluated], PARTIAL, None
+        not_covered = [k for k in MAIN_KINDS if k not in evaluated]
+        # v0.172（U7-5g）: partial は、対応しない種類と、評価した種類の中の示さない経路（residual の not_offered）から _candidates が決める（ここで決め打ちしない）
+        return ACTOR_TO_ACT, candidates, evaluated, not_covered, PARTIAL if not_covered else COMPLETE, None
     return WAITING_FOR_PLAYER, [], [], [], UNDETERMINED, None  # 知らない段階（状態の区分と段階の組が上のどれでもない）は完全と称さない
 
 
@@ -1768,3 +1782,82 @@ def _face_up_candidate(state: GameState, actor: int) -> _Candidate | None:
     public = {"processability": processability, "reasons": [REASON_STOPS], "guarantees": dict(GUARANTEE_FACE_UP), "choices_format": "[位置の番号]"}
     return _Candidate("", KIND_CHECK_FACE_UP_DECK, public, [stage], disclosure=DISCLOSURE_CONFIRMED, values=tuple(positions),
                       executable=(False,) * len(positions), min_choices=1, max_choices=1)
+
+
+# ---------------------------------------------------------------- coverage の残り（U7-5g。docs/legal-actions-u7-5fg.md 2 章）
+
+# 残りの分類の区分。classes は API 全体で決まった一覧（どの応答も同じ値。状態・カードによらない）。present は、その応答の状況で当てはまる残り。scope が public の残りは公開の状態
+# だけから決まり（どの閲覧者が見ても同じ事実）、actor の残りは本人の候補（本人の知識）から決まる（本人の応答にだけ現れる。相手・観戦者の応答・更新には出さない）
+RESIDUAL_API = "api"
+RESIDUAL_PUBLIC = "public"
+RESIDUAL_ACTOR = "actor"
+RESIDUAL_NOT_OFFERED = "not_offered"  # 種類の候補は出すが、この経路の入力を示さない（選べない）。scope_kinds の種類にあれば completeness は partial
+RESIDUAL_INPUT_WITHHELD = "input_withheld"  # 候補は出すが、入力（選べるもの・数・並び）を返さない（INPUT_BOUNDARY_UNCONFIRMED）。種類の網羅は変えない
+RESIDUAL_OUT_OF_SCOPE = "out_of_scope"  # API の対応の範囲の外（その状況では種類を評価しない）。当てはまる応答では not_covered_kinds に種類を加える
+SITUATION_TURN_MAIN = "turn_player_main"  # 番のプレイヤーの MAIN（決定待ちでない）
+SITUATION_OTHER = "other_than_turn_player_main"  # ほかのすべての段階・主体（決定の回答者・番でないプレイヤー・準備）
+SITUATION_ANY = "any"
+RESIDUAL_ENERGY2 = "R-1"
+RESIDUAL_FACE_DOWN_ATTACK = "R-2"
+RESIDUAL_FACE_DOWN_POWER = "R-3"
+RESIDUAL_FACE_UP_SCOPE = "R-4"
+RESIDUAL_WITHHELD = "R-5"
+RESIDUAL_CLASSES = (
+    {"id": RESIDUAL_ENERGY2, "kind": KIND_ATTACH_ENERGY, "field": "energy2", "situation": SITUATION_TURN_MAIN, "status": RESIDUAL_NOT_OFFERED,
+     "reason": "input_not_offered", "subject": "blaine_second_energy",
+     "note": "カツラの効果で 2 枚目のエネルギーカードをいっしょにつける（AttachEnergy.energy2）。attach_energy の候補は 1 枚だけを示す"},
+    {"id": RESIDUAL_FACE_DOWN_ATTACK, "kind": KIND_USE_ATTACK, "field": "declaration_options", "situation": SITUATION_TURN_MAIN, "status": RESIDUAL_NOT_OFFERED,
+     "reason": REASON_FACE_DOWN, "subject": "own_face_down_active",
+     "note": "自分のうらのバトル場のポケモンのワザといっしょに選ぶもの（クチバシティジムのコイン・ワザといっしょに使う特殊能力）。おもてにしたあとの確かめで決まるので示さない（D-U75-R2）"},
+    {"id": RESIDUAL_FACE_DOWN_POWER, "kind": KIND_USE_POWER, "field": "pokemon", "situation": SITUATION_TURN_MAIN, "status": RESIDUAL_NOT_OFFERED,
+     "reason": REASON_FACE_DOWN, "subject": "own_face_down_pokemon",
+     "note": "自分のうらのカードの特殊能力（本当のカードの印刷の特殊能力）。候補にしない"},
+    {"id": RESIDUAL_FACE_UP_SCOPE, "kind": KIND_CHECK_FACE_UP_DECK, "field": "position", "situation": SITUATION_OTHER, "status": RESIDUAL_OUT_OF_SCOPE,
+     "reason": "api_scope_turn_player_main", "subject": "opponent_face_up_deck_below_top",
+     "note": "CheckFaceUpDeckCard はエンジンが番・段階を確かめず、相手の山札の 2 枚目より下のおもてのカードは FU2（未裁定）で止める。U7 は番のプレイヤーの MAIN にだけ表示する"
+             "（D-U75-FACE-UP-ACTORS。コマンドの主体の制約ではなく API の対応の範囲）"},
+    {"id": RESIDUAL_WITHHELD, "kind": None, "field": "inputs", "situation": SITUATION_ANY, "status": RESIDUAL_INPUT_WITHHELD, "reason": "input_boundary_unconfirmed",
+     "subject": "withheld_input_candidates",
+     "note": "情報境界を確かめていない入力（決定の種類・宣言のない特殊能力の型・自分のうらのバトル場のポケモンのにげるなど）。候補は出し、入力を返さない"},
+)
+COMPLETENESS_BASIS = ("complete は、scope_kinds の種類の候補の取得が網羅していること（対応しない種類がなく、scope_kinds の種類に residual の not_offered の分類がない）だけを言う。"
+                      "全部の操作が受理・完走することではない（処理可能性・unverified_paths は別の軸）")
+
+
+def _residual_present(state: GameState, actor: int, candidates: list[_Candidate], evaluated: list[str]) -> list[dict[str, Any]]:
+    """その応答の状況で当てはまる残り。public は公開の状態だけから、actor は本人の候補だけから決める。"""
+    present: list[dict[str, Any]] = []
+    p = state.players[actor]
+    if KIND_END_TURN in evaluated:  # 番のプレイヤーの MAIN
+        if blaine_effects(state, actor):  # カツラの効果がこの番にはたらく（使ったトレーナーは公開）
+            present.append({"id": RESIDUAL_ENERGY2, "scope": RESIDUAL_PUBLIC})
+        if p.active is not None and state.is_face_down(p.active):
+            present.append({"id": RESIDUAL_FACE_DOWN_ATTACK, "scope": RESIDUAL_PUBLIC})
+        if any(state.is_face_down(q) for q in p.in_play()):
+            present.append({"id": RESIDUAL_FACE_DOWN_POWER, "scope": RESIDUAL_PUBLIC})
+    elif D.status_of(state) not in (D.HALTED, D.GAME_OVER, D.SUDDEN_DEATH_PENDING) and _face_up_positions(state, 1 - actor):
+        present.append({"id": RESIDUAL_FACE_UP_SCOPE, "scope": RESIDUAL_PUBLIC})  # 相手の山札のおもての枚数（公開）が 2 以上
+    present += [{"id": RESIDUAL_WITHHELD, "scope": RESIDUAL_ACTOR, "candidate": c.id} for c in candidates if c.disclosure == DISCLOSURE_UNCONFIRMED]
+    return present
+
+
+def _unverified_paths(candidates: list[_Candidate]) -> list[dict[str, Any]]:
+    """処理可能性が unverified の候補・選べるもの・組の理由ごとの候補（送るまで受理が分からない経路。completeness とは別の軸）。"""
+    found: dict[str, list[str]] = {}
+
+    def visit(value, cid: str) -> None:
+        if isinstance(value, dict):
+            if value.get("processability") == UNVERIFIED:
+                for reason in value.get("reasons") or ["unverified"]:
+                    if cid not in found.setdefault(reason, []):
+                        found[reason].append(cid)
+            for item in value.values():
+                visit(item, cid)
+        elif isinstance(value, list):
+            for item in value:
+                visit(item, cid)
+
+    for c in candidates:
+        visit(c.public, c.id)
+        visit(c.inputs, c.id)
+    return [{"reason": reason, "candidates": ids} for reason, ids in sorted(found.items())]
