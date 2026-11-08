@@ -4,7 +4,7 @@ V0〜V2（とその補完）のランダム・ルール・混合の通常の進�
 ゲームの合法性（エンジン・U7）と AI の戦略を分けたまま、境界の経路を選ぶ方針（boundary）と、不正な入力の試験（negative）と、異常の判定（D-6）を、それぞれ別の部品にします。
 
 - 今回は調査・設計・文書化だけです。実装・対戦の実行・テスト・ビルドはしていません。確かめは文書とコードの静的な読み取りだけです
-- 採用待ちの事項（9 章）は、まだ承認・実装されたものではありません
+- 採用待ちの事項（9 章）は、まだ承認・実装されたものではありません（V3-1 だけを実装した: [verification-ai-v3-1.md](verification-ai-v3-1.md)。V3-2 以降と、V3-1 で使っていない判断は採用待ちのまま）
 - 既存の文書: [仕様](verification-ai-design.md)・[実装計画](verification-ai-implementation-plan.md)・[V0](verification-ai-v0.md)・[V1](verification-ai-v1.md)・[V2](verification-ai-v2.md)・
   [V2 の補完](verification-ai-v2-repeat.md)
 

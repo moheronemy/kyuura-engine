@@ -4,7 +4,7 @@
 「検証用 AI」の仕様です。段階ごとの実装計画は [verification-ai-implementation-plan.md](verification-ai-implementation-plan.md) にあります。
 
 - この文書を作った時点（`17e31a9`）は調査・設計・文書化だけで、確認は文書とコードの静的な読み取りだけでした
-- 実装の状況: V0（[verification-ai-v0.md](verification-ai-v0.md)）・V1（[verification-ai-v1.md](verification-ai-v1.md)）・V2（[verification-ai-v2.md](verification-ai-v2.md)。補完の rules-v2: [verification-ai-v2-repeat.md](verification-ai-v2-repeat.md)）を実装した。D-1〜D-12 の状態（承認済み・暫定・保留・今回扱わない）は V1 の文書の 2 章（V2 で D-7 の混合の単位を選択のエピソードに決めた。V2 の文書の 4 章）。V3 以降は未実装（V3 の boundary・negative の仕様と限定的な実装計画: [verification-ai-v3-design.md](verification-ai-v3-design.md)。D-6 の判定の基準は採用待ち）
+- 実装の状況: V0（[verification-ai-v0.md](verification-ai-v0.md)）・V1（[verification-ai-v1.md](verification-ai-v1.md)）・V2（[verification-ai-v2.md](verification-ai-v2.md)。補完の rules-v2: [verification-ai-v2-repeat.md](verification-ai-v2-repeat.md)）を実装した。D-1〜D-12 の状態（承認済み・暫定・保留・今回扱わない）は V1 の文書の 2 章（V2 で D-7 の混合の単位を選択のエピソードに決めた。V2 の文書の 4 章）。V3 は V3-1（通常の進行の中の negative）だけを実装した（[verification-ai-v3-1.md](verification-ai-v3-1.md)。仕様と計画: [verification-ai-v3-design.md](verification-ai-v3-design.md)。D-6 は V3-1 の範囲だけを補足して使い、全体は採用待ち）。V3-2 以降は未実装
 - 検証用 AI の目的は、勝つことではありません。ランダムの行動と小さなルールの行動を組み合わせて多様な操作の列を作り、異常を分類して記録することです
 - いちばん大事な原則: **ゲームの合法性（エンジン・U7）と AI の戦略を分ける**。戦略は、U7 が返した候補・入力の中で順位をつけるだけで、合法性を判定し直さない
 

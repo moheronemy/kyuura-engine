@@ -5288,3 +5288,10 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 
 - deep・boundary・negative を分けた V3 の仕様、D-6 の異常の判定の基準の案（判定の区分と、check・submit・受理のあとの表）、negative の変異と副作用の確かめ、最初の単位（固定デッキの通常の進行の中の negative）と段階の計画を作った。実装・テスト・対戦の実行はしていない。採用待ち
 - 詳細: [verification-ai-v3-design.md](verification-ai-v3-design.md)
+
+## 検証用 AI の V3-1（通常の進行の中の negative。v0.172 のあと。エンジンは変えていない）
+
+- `tools/verification_ai` に、1 条件だけを変える変異（`negative.py`）・判定（`judge.py`）・実行の入口（`run_v3.py`）を加えた。候補を取得せず、方策と別の乱数で、check が valid のあと送る前に変異を試し、同じ取っ手の元の入力の check で復帰を確かめ、古い取っ手は受理のあとに試す。副作用の疑いで止める
+- 固定デッキ・既定の規約集合・uniform-stage・seed 12・13 の 2 局: 変異の要求 96（check 48・submit 48）と復帰の check 24 がすべて期待どおり（`suspect` 0・`undetermined` 0）。通常の進行の意味の列・完全な記録の行・終わり方は V1 の記録と一致、`replay_run` は `succeeded`。`duplicate` は未到達
+- V3-2 以降（boundary・構築した盤面・探索・R-B）は未実装
+- 詳細: [verification-ai-v3-1.md](verification-ai-v3-1.md)
