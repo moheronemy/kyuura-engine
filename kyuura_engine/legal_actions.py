@@ -45,6 +45,7 @@ from .commands import (
     RevealFaceDown,
     StartSuddenDeath,
     UseAttack,
+    UsePokemonPower,
     UseStadium,
 )
 from .conventions import continuation_for
@@ -52,12 +53,21 @@ from .decisions import ARRANGE_DECK_TOP, value_range
 from .effects import (
     ENERGY_CHOICE_OWN_ATTACHED,
     PLAY_AS_POKEMON_SETUP_CODE,
+    POWER_CHOICE_ENERGY_ON_SOURCE,
+    POWER_CHOICE_HAND_CARD,
+    POWER_CHOICE_OPPONENT_BENCH,
+    POWER_CHOICE_OPPONENT_POKEMON,
+    POWER_CHOICE_OWN_POKEMON,
+    POWER_CHOICES,
+    POWER_INPUT_STAGES,
     AttackCoinStadium,
     attack_power_slot,
     available_attacks,
+    current_form,
     energy_unit_count,
     group_attack_power_slot,
     play_as_pokemon_in_hand,
+    power_by_command,
     powers_of,
     retreat_cost,
     stadium_of,
@@ -73,6 +83,7 @@ from .engine import (
     check_retreat,
     check_retreat_declaration,
     check_reveal_face_down,
+    check_use_pokemon_power,
     check_use_stadium,
 )
 from .errors import HiddenPropertyRead, IllegalActionError, UnsupportedError
@@ -173,8 +184,9 @@ KIND_REVEAL_FACE_DOWN = "reveal_face_down"  # U7-5b: 自分の場のうらのカ
 BOARD_KINDS = (KIND_REMOVE_DISGUISE, KIND_DISCARD_FROM_PLAY, KIND_REVEAL_FACE_DOWN)  # 場のポケモン 1 匹を指す操作（MAIN_KINDS の順）
 KIND_PLAY_TRAINER = "play_trainer"  # U7-5c: 手札のトレーナーカードを使う（PlayTrainer。宣言の入力は card だけ。対象・枚数などは受理のあとの決定）
 KIND_USE_STADIUM = "use_stadium"  # U7-5d: 場のスタジアムの、自分の番に使ってよい効果を使う（UseStadium。宣言の入力は energy だけ（選ばせる効果だけ）。コイン・決定は受理のあと）
+KIND_USE_POWER = "use_power"  # U7-5e: 自分の場のポケモンの、使用を宣言する特殊能力（UsePokemonPower。宣言の入力は型ごとの宣言の 0〜3 段。コイン・決定は受理のあと）
 PLAYER_KINDS = (KIND_TAKE_PRIZE, KIND_PROMOTE_ACTIVE, KIND_ANSWER_DECISION, KIND_END_TURN, KIND_PLACE_STARTING, KIND_MULLIGAN_DRAW, *TURN_KINDS, KIND_USE_ATTACK,
-                *BOARD_KINDS, KIND_PLAY_TRAINER, KIND_USE_STADIUM)  # implemented_kinds の並び（実装した順。U7-5c の play_trainer、U7-5d の use_stadium を最後に加えた）
+                *BOARD_KINDS, KIND_PLAY_TRAINER, KIND_USE_STADIUM, KIND_USE_POWER)  # implemented_kinds の並び（実装した順。U7-5c・U7-5d・U7-5e の種類を最後に加えた）
 HOST_KINDS = (KIND_REPORT_JANKEN, KIND_START_SUDDEN_DEATH)
 IMPLEMENTED_KINDS = PLAYER_KINDS + HOST_KINDS
 HOST = "host"  # ホストの入口の操作主体（プレイヤーの番号ではない）
@@ -335,6 +347,8 @@ class _Candidate:
     ids: dict[str, tuple[int, int]] = field(default_factory=dict)  # U7-3 の 2 段の操作: 選ぶものの番号 → (段, 値)
     pairs: dict[tuple[str, str], bool] = field(default_factory=dict)  # U7-3 のエネルギー・進化: (1 段目, 2 段目) の組 → 実行できるか（ない組はゲーム上できない）
     verify: Any = None  # U7-3 のにげる: 入力の検査でエンジンの確かめを呼ぶ（候補を作った状態に結びつける。取っ手が同じ状態を確かめてから呼ぶ）
+    parents: dict[str, str | None] = field(default_factory=dict)  # U7-5e の依存する段: 選ぶものの番号 → 前の段の選ぶものの番号（1 段目は None）
+    power: tuple | None = None  # U7-5e: (使うポケモンの番号, 特殊能力の位置, 印刷したカード（コマンドの card）, 段ごとのコマンドの項目)
 
     def blocked(self) -> bool:
         return self.public.get("processability") not in EXECUTABLE
@@ -607,6 +621,9 @@ def _command(found: _Candidate, actor, values: tuple[int, ...]):
         return PlayTrainer(actor, values[0])  # 手札のトレーナーカード（uid）
     if found.kind == KIND_USE_STADIUM:
         return UseStadium(actor, values[0] if values else None)  # 選ばせる効果だけ、エネルギーカード（uid）
+    if found.kind == KIND_USE_POWER:
+        pokemon_id, power_index, card, fields = found.power
+        return UsePokemonPower(actor, pokemon_id, power_index, card=card, **dict(zip(fields, values)))  # 段の順の値をコマンドの項目に置く
     return ResolveDecision(actor, found.decision_id, values)
 
 
@@ -669,6 +686,7 @@ def _build(state: GameState, actor: int):
             candidates += [] if attack is None else [attack]
             trainer = _trainer_candidate(state, actor)  # U7-5c: MAIN_KINDS では use_attack と場のポケモン 1 匹を指す操作のあいだ
             candidates += [] if trainer is None else [trainer]
+            candidates += _power_candidates(state, actor)  # U7-5e: MAIN_KINDS では play_trainer のあと、use_stadium の前（特殊能力の位置ごとに 1 つ）
             stadium = _stadium_candidate(state, actor)  # U7-5d: MAIN_KINDS では play_trainer（と対応しない use_power）のあと、場のポケモン 1 匹を指す操作の前
             candidates += [] if stadium is None else [stadium]
             candidates += _board_candidates(state, actor)
@@ -676,10 +694,10 @@ def _build(state: GameState, actor: int):
             candidates += [_Candidate("", kind, {"processability": NOT_IMPLEMENTED, "reasons": ["state_not_supported"],
                                                  "guarantees": dict(_UNUSABLE_GUARANTEES.get(kind, GUARANTEE_TURN_ACTION))}, [],
                                       disclosure=DISCLOSURE_UNCONFIRMED)
-                           for kind in (*TURN_KINDS, KIND_USE_ATTACK, KIND_PLAY_TRAINER, KIND_USE_STADIUM, *BOARD_KINDS)]
+                           for kind in (*TURN_KINDS, KIND_USE_ATTACK, KIND_PLAY_TRAINER, KIND_USE_POWER, KIND_USE_STADIUM, *BOARD_KINDS)]
         for number, candidate in enumerate(candidates, 1):
             candidate.id = f"c{number}"  # 種類の並び（MAIN_KINDS の順）。番号は応答ごと（取っ手と組で使う）
-        evaluated = [k for k in MAIN_KINDS if k in (KIND_END_TURN, *TURN_KINDS, KIND_USE_ATTACK, KIND_PLAY_TRAINER, KIND_USE_STADIUM, *BOARD_KINDS)]  # MAIN_KINDS の順
+        evaluated = [k for k in MAIN_KINDS if k in (KIND_END_TURN, *TURN_KINDS, KIND_USE_ATTACK, KIND_PLAY_TRAINER, KIND_USE_POWER, KIND_USE_STADIUM, *BOARD_KINDS)]
         return ACTOR_TO_ACT, candidates, evaluated, [k for k in MAIN_KINDS if k not in evaluated], PARTIAL, None
     return WAITING_FOR_PLAYER, [], [], [], UNDETERMINED, None  # 知らない段階（状態の区分と段階の組が上のどれでもない）は完全と称さない
 
@@ -825,6 +843,8 @@ def _input_problem(found: _Candidate, choices) -> tuple[str | None, tuple[int, .
         return CANDIDATE_NOT_EXECUTABLE, ()
     if found.disclosure == DISCLOSURE_UNCONFIRMED:
         return INPUT_BOUNDARY_UNCONFIRMED, ()
+    if found.kind == KIND_USE_POWER:
+        return _power_input_problem(found, choices)
     if found.kind == KIND_USE_STADIUM and not found.inputs:
         return (None, ()) if not choices else (CANDIDATE_INPUT_INVALID, ())  # U7-5d: 選ばせるもののない効果（energy を指定しない）
     if found.value_bounds is not None:
@@ -1471,3 +1491,223 @@ def _stadium_candidate(state: GameState, actor: int) -> _Candidate | None:
               "stadium": public_stadium}
     return _Candidate("", KIND_USE_STADIUM, public, [stage], disclosure=DISCLOSURE_CONFIRMED, values=tuple(values), executable=tuple(executable),
                       min_choices=1, max_choices=1)
+
+
+# ---------------------------------------------------------------- 宣言する特殊能力（U7-5e。docs/legal-actions-u7-5e.md）
+
+GUARANTEE_POWER = {
+    "preconditions": "番・段階と、使う特殊能力ごとに、エンジンが宣言を受け付ける前の確かめ（engine.check_use_pokemon_power。番・自分の場のポケモン・特殊能力の位置・登録・"
+                     "宣言する力か・消す効果・写した特殊能力・特殊能力ごとの check_usable・DV3。コマンドの処理と同じ関数・同じ順番）を、宣言の入力の組ごとに候補の作成に使う。"
+                     "入力の段は型ごとの宣言（effects.POWER_INPUT_STAGES）から作る。指定するうらのカード（エンジンがおもてにしてから確かめる）を含む組は確かめない（unverified）",
+    "acceptance": "保証しない。エンジンはコマンドの入口で指定したうらのカードをおもてにし（本当のカードによらない拒否にそろえる）、コマンドの終わりに受け付けられない状態（MH1 など）に"
+                  "ならないかを確かめる。候補の作成・入力の検査は、これらを呼ばない。最終の判定は apply_command",
+    "after_acceptance": "評価していない（特殊能力のコイン・効果の決定（answer_decision の候補で答える）・あまごいでつけた事実への反応・きぜつ・空いたバトル場の交代がある）",
+    "supported_scope": "特殊能力の候補は supported にしない（受理の前の入口の処理と受理のあとを評価していないため）",
+}
+_UNUSABLE_GUARANTEES[KIND_USE_POWER] = GUARANTEE_POWER
+_POWER_MEANING = {POWER_CHOICE_OWN_POKEMON: "pokemon", POWER_CHOICE_OPPONENT_POKEMON: "pokemon", POWER_CHOICE_OPPONENT_BENCH: "pokemon",
+                  POWER_CHOICE_ENERGY_ON_SOURCE: "card", POWER_CHOICE_HAND_CARD: "card"}
+
+
+def _public_pokemon(state: GameState, pokemon, zone: str, index: int | None, *, own: bool) -> dict[str, Any]:
+    """場のポケモンの公開の値。相手のうらのカードは、公開された位置（場のポケモンの番号・場所）だけを示す（カードの uid・カード id・名前を出さない）。"""
+    if own or not state.is_face_down(pokemon):
+        return _pokemon_option(state, pokemon, zone, index)
+    option = {"pokemon": pokemon.pokemon_id, "zone": zone, "face_down": True}
+    if index is not None:
+        option["bench_index"] = index
+    return option
+
+
+def _power_domain(state: GameState, actor: int, domain: str, chosen: dict[str, int]):
+    """宣言の段の選べるもの: [(値, 公開の値, 指定するとエンジンがおもてにするうらのカードか)]。並びは場の並び（バトル場 → ベンチ）・手札の並び・ついている並び。"""
+    me, them = state.players[actor], state.players[1 - actor]
+    if domain in (POWER_CHOICE_OWN_POKEMON, POWER_CHOICE_OPPONENT_POKEMON, POWER_CHOICE_OPPONENT_BENCH):
+        own = domain == POWER_CHOICE_OWN_POKEMON
+        side = me if own else them
+        places = [] if domain == POWER_CHOICE_OPPONENT_BENCH or side.active is None else [(side.active, "active", None)]
+        places += [(q, "bench", i) for i, q in enumerate(side.bench)]
+        return [(q.pokemon_id, _public_pokemon(state, q, zone, i, own=own), state.is_face_down(q)) for q, zone, i in places]
+    if domain == POWER_CHOICE_ENERGY_ON_SOURCE:
+        found = state.find_pokemon(chosen.get("source"))
+        if found is None:
+            return []
+        source = found[1]
+        return [(uid, {"card": uid, "card_id": state.cards[uid].card_id}, state.is_face_down(source)) for uid in source.energy]
+    if domain == POWER_CHOICE_HAND_CARD:
+        return [(uid, _card_option(state, uid), False) for uid in me.hand]
+    return []
+
+
+def stage_dependency_problems(stages: list[dict[str, Any]]) -> list[str]:
+    """依存する段（U7-5e）の形の確かめ: 段の番号は 1 からの並び、depends_on_stage は直前の段、upstream_stages は前のすべての段、options_by_choice の鍵は前の段の選ぶもの、
+    参照する選ぶものはその段にあり、選ぶものの after は参照する鍵と同じ（存在しない参照・循環・前でない段への依存を見つける）。"""
+    problems: list[str] = []
+    ids_by_stage: dict[int, set[str]] = {}
+    for position, stage in enumerate(stages, 1):
+        number = stage.get("stage")
+        if number != position:
+            problems.append(f"段の番号 {number!r} が並び {position} と違う")
+            continue
+        ids = {option["id"] for option in stage.get("options", [])}
+        ids_by_stage[number] = ids
+        if number == 1:
+            if "depends_on_stage" in stage or "options_by_choice" in stage:
+                problems.append("1 段目が前の段に依存する")
+            continue
+        if stage.get("depends_on_stage") != number - 1:
+            problems.append(f"{number} 段目の depends_on_stage {stage.get('depends_on_stage')!r} が直前の段でない（循環・前でない段）")
+        if "upstream_stages" in stage and stage["upstream_stages"] != list(range(1, number)):
+            problems.append(f"{number} 段目の upstream_stages {stage['upstream_stages']!r} が前のすべての段でない")
+        by_choice = stage.get("options_by_choice", {})
+        for key, refs in by_choice.items():
+            if key not in ids_by_stage.get(number - 1, set()):
+                problems.append(f"{number} 段目の options_by_choice の鍵 {key!r} が前の段にない")
+            for ref in refs:
+                if ref.get("option") not in ids:
+                    problems.append(f"{number} 段目の options_by_choice が参照する {ref.get('option')!r} がこの段にない")
+        if "upstream_stages" in stage:
+            for option in stage.get("options", []):
+                if option.get("after") not in by_choice or option["id"] not in {ref["option"] for ref in by_choice[option["after"]]}:
+                    problems.append(f"{number} 段目の選ぶもの {option['id']!r} の after {option.get('after')!r} が options_by_choice と合わない")
+    return problems
+
+
+def _power_verdict(state: GameState, cmd: UsePokemonPower, designated_face_down: bool) -> tuple[str, list[str]] | None:
+    if designated_face_down:
+        return UNVERIFIED, [REASON_FACE_DOWN]  # エンジンがおもてにしてから確かめる（本当のカードを候補の作成では読まない。結果を予告しない）
+    verdict, code = _probe(check_use_pokemon_power, state, cmd)
+    if verdict == ILLEGAL:
+        return None
+    if verdict == STOP:
+        return _stop_processability(code), [REASON_STOPS]
+    return MAY_STOP_LATER, [REASON_CONTINUATION]
+
+
+def _power_candidates(state: GameState, actor: int) -> list[_Candidate]:
+    """宣言する特殊能力（``UsePokemonPower``）。特殊能力の位置ごとに 1 つの候補（使うポケモン・特殊能力・印刷したカード（「ばける」・写し）は候補が決める）。宣言といっしょに
+    指定する項目は、型ごとの宣言（``effects.POWER_INPUT_STAGES``）の段（0〜3 段）。受理のあとの決定・コインは入力にしない。
+
+    - 使用を宣言しない力（常にはたらく）・UsePokemonPower で使わない力（反応・ワザといっしょに使う力）: 候補にしない（既存の決定・ワザの宣言で答える）
+    - 自分のうらのカードの特殊能力: 候補にしない（本当のカードの力をうらのあいだ示さない。U7-4 の R-2 と同じく残る経路。docs 5 章）
+    - 宣言のない型・知らない場所の段: 入力の形を推測せず、入力を返さない（not_implemented・unconfirmed）
+    - 使う特殊能力の段の確かめ（番・登録・消す効果・写した力・DV3）がゲーム上できない（IllegalActionError）: 候補にしない。未裁定・未対応: 実行できない候補（入力なし）"""
+    out: list[_Candidate] = []
+    for pokemon, base in _field(state, actor):
+        if state.is_face_down(pokemon):
+            continue
+        form_card = current_form(state, pokemon).card
+        for slot in powers_of(state, pokemon):
+            effect = slot.effect
+            if effect is not None and not power_by_command(effect):
+                continue
+            card = None if slot.card == form_card else slot.card
+            head = UsePokemonPower(actor, pokemon.pokemon_id, slot.key.power_index, card=card)
+            public_power = {"index": slot.key.power_index, "name_ja": slot.power.name_ja, "card": slot.card, "card_id": slot.key.card_id}
+            common = {"guarantees": dict(GUARANTEE_POWER), "pokemon": dict(base), "power": public_power}
+            verdict, code = _probe(partial(check_use_pokemon_power, use_condition=False), state, head)
+            if verdict == ILLEGAL:
+                continue
+            if verdict == STOP:
+                public = {"processability": _stop_processability(code), "reasons": [REASON_STOPS], **common, "choices_format": "[]"}
+                out.append(_Candidate("", KIND_USE_POWER, public, [], disclosure=DISCLOSURE_NONE))
+                continue
+            decl = POWER_INPUT_STAGES.get(type(effect))
+            if decl is None or any(domain not in POWER_CHOICES for _, domain in decl):
+                public = {"processability": NOT_IMPLEMENTED, "reasons": ["input_boundary_unconfirmed"], **common}
+                out.append(_Candidate("", KIND_USE_POWER, public, [], disclosure=DISCLOSURE_UNCONFIRMED))
+                continue
+            candidate = _power_candidate(state, actor, pokemon, slot, card, decl, common)
+            if candidate is not None:
+                out.append(candidate)
+    return out
+
+
+def _power_paths(state: GameState, actor: int, pokemon, slot, card, decl) -> list[tuple[list, tuple[str, list[str]]]]:
+    """宣言の入力の組（段の順）ごとの確かめの結果。ゲーム上できない組は含めない。"""
+    paths: list[tuple[list, tuple[str, list[str]]]] = []
+
+    def walk(k: int, chosen: dict[str, int], path: list) -> None:
+        if k == len(decl):
+            cmd = UsePokemonPower(actor, pokemon.pokemon_id, slot.key.power_index, card=card, **chosen)
+            found = _power_verdict(state, cmd, any(item[2] for item in path))
+            if found is not None:
+                paths.append((list(path), found))
+            return
+        field_name, domain = decl[k]
+        for value, shown, face_down in _power_domain(state, actor, domain, chosen):
+            walk(k + 1, {**chosen, field_name: value}, [*path, (value, shown, face_down)])
+
+    walk(0, {}, [])
+    return paths
+
+
+def _power_candidate(state: GameState, actor: int, pokemon, slot, card, decl, common) -> _Candidate | None:
+    head = (pokemon.pokemon_id, slot.key.power_index, card, tuple(field_name for field_name, _ in decl))
+    plain = UsePokemonPower(actor, pokemon.pokemon_id, slot.key.power_index, card=card)
+    if not decl:
+        found = _power_verdict(state, plain, False)
+        if found is None:
+            return None
+        public = {"processability": found[0], "reasons": found[1], **common, "choices_format": "[]"}
+        return _Candidate("", KIND_USE_POWER, public, [], disclosure=DISCLOSURE_NONE, power=head)
+    paths = _power_paths(state, actor, pokemon, slot, card, decl)
+    if not paths:
+        # 選べる組がない: 指定しないコマンドが未裁定・未対応で止めるなら（選べるものがないときの決められない場合）、実行できない候補で示す。ゲーム上できないなら候補を作らない
+        found = _power_verdict(state, plain, False)
+        if found is None or found[0] in EXECUTABLE:
+            return None
+        public = {"processability": found[0], "reasons": found[1], **common, "choices_format": "[]"}
+        return _Candidate("", KIND_USE_POWER, public, [], disclosure=DISCLOSURE_NONE)
+    # 選ぶものは、前のすべての段の選び方（値の並び）ごとに別のもの。番号は段の順・最初に現れた順に o1, o2, …
+    seen: dict[tuple, dict[str, Any]] = {}
+    results_by_prefix: dict[tuple, list[tuple[str, list[str]]]] = {}
+    final_by_prefix: dict[tuple, bool] = {}
+    for path, found in paths:
+        prefix: tuple = ()
+        for value, shown, _face_down in path:
+            prefix = (*prefix, value)
+            seen.setdefault(prefix, shown)
+            results_by_prefix.setdefault(prefix, []).append(found)
+        final_by_prefix[prefix] = found[0] in EXECUTABLE
+    first = {prefix: n for n, prefix in enumerate(seen)}
+    order = sorted(seen, key=lambda prefix: (len(prefix), first[prefix]))
+    name = {prefix: f"o{n}" for n, prefix in enumerate(order, 1)}
+    ids = {name[prefix]: (len(prefix), prefix[-1]) for prefix in order}
+    parents = {name[prefix]: name.get(prefix[:-1]) for prefix in order}
+    shown_of = {name[prefix]: seen[prefix] for prefix in order}
+    results = {name[prefix]: results_by_prefix[prefix] for prefix in order}
+    finals = {name[prefix]: ok for prefix, ok in final_by_prefix.items()}
+    stages = []
+    for k, (field_name, domain) in enumerate(decl, 1):
+        in_stage = [oid for oid, (stage_number, _) in ids.items() if stage_number == k]
+        options = [_option({"id": oid, **shown_of[oid], **({"after": parents[oid]} if k > 1 else {})}, *_best(results[oid])) for oid in in_stage]
+        stage = {"stage": k, "input": INPUT_CHOOSE_OPTION, "role": field_name, "meaning": _POWER_MEANING[domain], "count": {"min": 1, "max": 1}, "options": options,
+                 "order": ORDER_NOT_APPLICABLE}
+        if k > 1:
+            by_choice: dict[str, list] = {}
+            for oid in in_stage:
+                by_choice.setdefault(parents[oid], []).append(_option({"option": oid}, *_best(results[oid])))
+            stage.update({"depends_on_stage": k - 1, "upstream_stages": list(range(1, k)), "options_by_choice": by_choice,
+                          "note": "選べるものは options_by_choice（前の段の選ぶものの番号ごと）。番号は前のすべての段の選び方ごとに別（after が前の段の番号）。前の段を変えたら、"
+                                  "この段とあとの段の選び方・入力の検査の結果は無効"})
+        stages.append(stage)
+    processability, reasons = _best([found for _, found in paths])
+    public = {"processability": processability, "reasons": reasons, **common,
+              "choices_format": "[" + ", ".join(f"{field_name} の番号" for field_name, _ in decl) + "]（段の順）"}
+    return _Candidate("", KIND_USE_POWER, public, stages, disclosure=DISCLOSURE_CONFIRMED, ids=ids, pairs=finals, parents=parents,
+                      min_choices=len(decl), max_choices=len(decl), power=head)
+
+
+def _power_input_problem(found: _Candidate, choices: tuple) -> tuple[str | None, tuple]:
+    """宣言する特殊能力の入力（段の順に 1 つずつ。並びは変えない）。段の数・段の番号・前の段との依存（ほかの上流の選び方の番号を混ぜない）が違えば CANDIDATE_INPUT_INVALID。"""
+    if not found.inputs:
+        return (None, ()) if not choices else (CANDIDATE_INPUT_INVALID, ())
+    if len(choices) != len(found.inputs) or any(type(choice) is not str or choice not in found.ids for choice in choices):
+        return CANDIDATE_INPUT_INVALID, ()
+    for k, choice in enumerate(choices, 1):
+        if found.ids[choice][0] != k or found.parents[choice] != (choices[k - 2] if k > 1 else None):
+            return CANDIDATE_INPUT_INVALID, ()
+    if not found.pairs.get(choices[-1], False):
+        return CANDIDATE_NOT_EXECUTABLE, ()
+    return None, tuple(found.ids[choice][1] for choice in choices)

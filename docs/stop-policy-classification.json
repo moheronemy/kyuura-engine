@@ -6811,7 +6811,7 @@
    },
    "implementation_sites": [
     "kyuura_engine/effects.py:48482",
-    "kyuura_engine/engine.py:5868",
+    "kyuura_engine/engine.py:5882",
     "kyuura_engine/resolution/questions.py:486"
    ],
    "implementation_sites_total": 3,
@@ -6820,7 +6820,7 @@
      "mechanism": "command_rejection",
      "sites": [
       "kyuura_engine/effects.py:48482",
-      "kyuura_engine/engine.py:5868",
+      "kyuura_engine/engine.py:5882",
       "kyuura_engine/resolution/questions.py:486"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
@@ -6853,7 +6853,7 @@
     "status": "static_only",
     "evidence": [
      "kyuura_engine/effects.py:48482",
-     "kyuura_engine/engine.py:5868",
+     "kyuura_engine/engine.py:5882",
      "kyuura_engine/resolution/questions.py:486"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
@@ -28498,7 +28498,7 @@
    },
    "implementation_sites": [
     "kyuura_engine/engine.py:2351",
-    "kyuura_engine/engine.py:2413"
+    "kyuura_engine/engine.py:2444"
    ],
    "implementation_sites_total": 2,
    "current_stop": [
@@ -28506,7 +28506,7 @@
      "mechanism": "command_rejection",
      "sites": [
       "kyuura_engine/engine.py:2351",
-      "kyuura_engine/engine.py:2413"
+      "kyuura_engine/engine.py:2444"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }

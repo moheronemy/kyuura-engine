@@ -2384,7 +2384,38 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower, context: resoluti
       ダメージカウンターをのせて HP 以上になったポケモン（ゲンガーの「のろい」。きぜつの制限がない）のきぜつ・サイド・勝ち負け・ふしちょう・交代、
       自分を手札にもどして空いたバトル場（メノクラゲの「おくびょう」。きぜつではない）の勝ち負け・交代。そのあと番のプレイヤーの番にもどる
       （続き ``CONTINUE_TURN``。ワザのあとと違い、番は終わらない）。
+
+    v0.171（U7-5e）: 宣言の前の確かめを ``check_use_pokemon_power`` に移した（同じ順番・同じコード・同じ文。動きは同じ）。
     """
+    user, slot, effect, use = check_use_pokemon_power(state, cmd)
+    power = slot.power
+
+    # 1. 宣言（p.311）。2. の条件は check_usable で確かめた。3. 説明にしたがって処理する。v0.49: いちばん上のカードでないカード（「ばける」でのせたカード）の
+    # 特殊能力なら、そのカード（``card``・``card_id``。表のカード）も書く
+    extra = {} if use.card is None else {"card": use.card, "card_id": slot.key.card_id}
+    state.add_event(
+        "pokemon_power", player=cmd.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=power.name_ja, power_index=cmd.power, **extra
+    )
+    if effect.once_per_turn:
+        # v0.42: 「自分の番ごとに1回」の記録は宣言のとき（v0.31 のしぜんになおるは処理の中で記録していた。状態の結果は同じ）。v0.49: 印刷したカードで区別する
+        state.power_uses_this_turn = state.power_uses_this_turn + (power_use_record(state, use),)
+    attached = state.find_pokemon(use.target) if isinstance(effect, AttachEnergyFromHand) else None
+    pre_status = None if attached is None else (int(attached[1].conditions.asleep), int(attached[1].conditions.paralyzed), int(attached[1].conditions.confused))
+    outcome = effect.resolve(state, use)
+    if attached is not None:
+        # v0.86: あまごい（手札からつける特殊能力）でつけた事実への反応（［エナジーしんか］・［かんでん］。``reactions``）。特殊能力の処理のあとに続ける
+        steps = reactions.attach_steps(state, cmd.player, attached[0], attached[1], (use.energy,), pre_status)
+        if steps is not None:
+            outcome = reactions.Followup(steps)
+    _after_power_step(state, use, context, steps=outcome.steps if isinstance(outcome, reactions.Followup) else ())
+
+
+def check_use_pokemon_power(state: GameState, cmd: UsePokemonPower, *, use_condition: bool = True):
+    """``UsePokemonPower`` の宣言の前の確かめ（U7-5e。``_use_pokemon_power`` の前半を、同じ順番・同じコード・同じ文のまま移した）。状態・乱数・ログを変えない。
+    (使うポケモン, 特殊能力の位置, 効果, 使用) を返す。うらのカードをおもてにする処理（``_reveal_for_action``）は含まない（コマンドの入口が先にする）。
+
+    ``use_condition`` が偽なら、特殊能力ごとの確かめ（``check_usable``）だけを呼ばない（合法手 API が、宣言の入力をそろえる前に、使う特殊能力の段の確かめ（番・場・登録・
+    消す効果・写した特殊能力・DV3）だけを見るため。エンジンの処理はいつも真で呼ぶ）。"""
     p = _require_turn(state, cmd.player)
     user = p.find_by_pokemon_id(cmd.pokemon)
     if user is None:
@@ -2463,29 +2494,12 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower, context: resoluti
     copied = copied_declared_power_problem(state, user, slot) or copied_source_use_problem(state, user, slot)  # v0.124
     if copied is not None:
         raise UnsupportedError(copied[0], f"場のポケモン {user.pokemon_id} の特殊能力「{power.name_ja}」: {copied[1]}")
-    effect.check_usable(state, use)
+    if use_condition:
+        effect.check_usable(state, use)
     if effect.once_per_turn and power_reuse_after_devolution(state, use):
         # v0.50: 今の番に退化してまたいちばん上になったカードで、退化の前（進化させる前）にこの番に使っていた（DV3。パワーごとの確かめがすべて通ったあと）
         raise UnsupportedError(POWER_REUSE_AFTER_DEVOLUTION_CODE, f"ポケモン {use.pokemon_id}: {POWER_REUSE_AFTER_DEVOLUTION_REASON}")
-
-    # 1. 宣言（p.311）。2. の条件は check_usable で確かめた。3. 説明にしたがって処理する。v0.49: いちばん上のカードでないカード（「ばける」でのせたカード）の
-    # 特殊能力なら、そのカード（``card``・``card_id``。表のカード）も書く
-    extra = {} if use.card is None else {"card": use.card, "card_id": slot.key.card_id}
-    state.add_event(
-        "pokemon_power", player=cmd.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=power.name_ja, power_index=cmd.power, **extra
-    )
-    if effect.once_per_turn:
-        # v0.42: 「自分の番ごとに1回」の記録は宣言のとき（v0.31 のしぜんになおるは処理の中で記録していた。状態の結果は同じ）。v0.49: 印刷したカードで区別する
-        state.power_uses_this_turn = state.power_uses_this_turn + (power_use_record(state, use),)
-    attached = state.find_pokemon(use.target) if isinstance(effect, AttachEnergyFromHand) else None
-    pre_status = None if attached is None else (int(attached[1].conditions.asleep), int(attached[1].conditions.paralyzed), int(attached[1].conditions.confused))
-    outcome = effect.resolve(state, use)
-    if attached is not None:
-        # v0.86: あまごい（手札からつける特殊能力）でつけた事実への反応（［エナジーしんか］・［かんでん］。``reactions``）。特殊能力の処理のあとに続ける
-        steps = reactions.attach_steps(state, cmd.player, attached[0], attached[1], (use.energy,), pre_status)
-        if steps is not None:
-            outcome = reactions.Followup(steps)
-    _after_power_step(state, use, context, steps=outcome.steps if isinstance(outcome, reactions.Followup) else ())
+    return user, slot, effect, use
 
 
 def _after_power_step(state: GameState, use: PowerUse, context: resolution.Context, converted=None, *, steps: tuple = (), used: bool = True,

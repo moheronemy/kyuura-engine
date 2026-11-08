@@ -49802,3 +49802,67 @@ V0_133_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
     AttackKey("neo4-082", 1): _printed(CoinsPerOwnTypedCardsDiscardThenDamageThenOpponentEnergy(), "はかいのほのお", DESTRUCTIVE_FIRE_TEXT),
 })
 DEFAULT_EFFECTS = _with_attacks(DEFAULT_EFFECTS, V0_133_ATTACKS)
+
+
+# ---------------------------------------------------------------- v0.171（U7-5e）: 宣言する特殊能力の、型ごとの宣言の入力（D-U75-INPUT-DECL。docs/legal-actions-u7-5e.md 3 章）
+#
+# ``UsePokemonPower`` の宣言といっしょに指定する項目（energy・source・target）の段の並びと、選べるものの場所。合法手 API が入力の形を作るのに使う（エンジンの挙動は変えない）。
+# 型は実装の型そのもの（継承した型は表に書くまで宣言がない）。表にない型は、入力の形を推測しない（合法手 API が入力を返さない）。各段は (コマンドの項目, 選べるものの場所):
+#
+# - ``POWER_CHOICE_OWN_POKEMON``: 使うプレイヤーの場のポケモン（場のポケモンの番号）
+# - ``POWER_CHOICE_OPPONENT_POKEMON``: 相手の場のポケモン（場のポケモンの番号）。``POWER_CHOICE_OPPONENT_BENCH``: 相手のベンチのポケモン
+# - ``POWER_CHOICE_ENERGY_ON_SOURCE``: 前の段の source のポケモンについているカード（uid）。``POWER_CHOICE_HAND_CARD``: 使うプレイヤーの手札のカード（uid）
+#
+# 段の並びは選ぶ順（コマンドの項目の並びとは別）。どの段も 1 つを選ぶ（任意の段はない。辞退は宣言しないこと）。コインの結果・受理のあとに選ぶものは含めない（既存の決定）
+POWER_CHOICE_OWN_POKEMON = "own_pokemon"
+POWER_CHOICE_OPPONENT_POKEMON = "opponent_pokemon"
+POWER_CHOICE_OPPONENT_BENCH = "opponent_bench"
+POWER_CHOICE_ENERGY_ON_SOURCE = "energy_on_source"
+POWER_CHOICE_HAND_CARD = "hand_card"
+POWER_CHOICES = (POWER_CHOICE_OWN_POKEMON, POWER_CHOICE_OPPONENT_POKEMON, POWER_CHOICE_OPPONENT_BENCH, POWER_CHOICE_ENERGY_ON_SOURCE, POWER_CHOICE_HAND_CARD)
+_POWER_E_S_T = (("source", POWER_CHOICE_OWN_POKEMON), ("energy", POWER_CHOICE_ENERGY_ON_SOURCE), ("target", POWER_CHOICE_OWN_POKEMON))
+_POWER_E_S = (("source", POWER_CHOICE_OWN_POKEMON), ("energy", POWER_CHOICE_ENERGY_ON_SOURCE))
+_POWER_EH_T = (("energy", POWER_CHOICE_HAND_CARD), ("target", POWER_CHOICE_OWN_POKEMON))
+_POWER_EH = (("energy", POWER_CHOICE_HAND_CARD),)
+_POWER_S_T = (("source", POWER_CHOICE_OWN_POKEMON), ("target", POWER_CHOICE_OWN_POKEMON))
+_POWER_OS_OT = (("source", POWER_CHOICE_OPPONENT_POKEMON), ("target", POWER_CHOICE_OPPONENT_POKEMON))
+_POWER_S = (("source", POWER_CHOICE_OWN_POKEMON),)
+_POWER_OBT = (("target", POWER_CHOICE_OPPONENT_BENCH),)
+POWER_INPUT_STAGES: Mapping[type, tuple[tuple[str, str], ...]] = MappingProxyType({
+    EnergyTransfer: _POWER_E_S_T,
+    MoveEnergyAmongNamed: _POWER_E_S_T,
+    TakeEnergyToSelf: _POWER_E_S,
+    ConvertBasicEnergyColor: _POWER_E_S,
+    AttachEnergyFromHand: _POWER_EH_T,
+    DiscardTypeEnergyFromHand: _POWER_EH,
+    MoveDamageCounter: _POWER_S_T,
+    MoveOpponentDamageCounter: _POWER_OS_OT,
+    MoveDamageCounterToSelf: _POWER_S,
+    MoveGroupCounterToSelf: _POWER_S,
+    StopOpponentBenchPowersThisTurn: _POWER_OBT,
+    ChargeBenchEnergyToSelf: (), ChooseFossilEvolvedThenCoinDevolveAll: (), CoinAttachEnergyFromDeckToOwnPokemon: (), CoinAttachFromDiscardToTypePokemon: (),
+    CoinBenchNamedFromDeck: (), CoinConditionOnEitherActive: (), CoinDamageOpponentActiveThenEndTurn: (), CoinEachPlayerLooksOpponentHand: (),
+    CoinEachPlayerShufflesOpponentDeck: (), CoinEvolveSelfFromDeck: (), CoinFossilAttackBonusThisTurn: (), CoinGroupAttackImmunityNextTurn: (),
+    CoinLookOpponentHandMayReturnTrainer: (), CoinPeekOpponentDeckTopMayShuffle: (), CoinPoisonMistUntilNextTurn: (), CoinPutStadiumFromDiscard: (),
+    CoinRecoverNamedFromDiscard: (), CoinRecoverTrainerWithBenchLetters: (), CoinReviveFromDeck: (), ConvertAttachedEnergy: (),
+    ConvertSelfToEnergy: (), CureBothActivesOncePerTurn: (), CureOneActiveConditionOnHeadsFromBench: (), DiscardThenDraw: (),
+    DrawThenPutHandCardOnDeckTop: (), GatherTypeEnergyCardsToSelf: (), HealOwnPokemonOnHeads: (), LookOpponentDeckTopKeepOrder: (),
+    LookOwnPrizeCard: (), PeekCard: (), RemoveOwnCounterOncePerTurn: (), ReturnActiveToHandWithBenchLetters: (),
+    ReturnHandThenDrawSameWithBenchLetters: (), ReturnSelfToHand: (), SearchDeckWithBenchLettersToHand: (), SearchEvolutionCardToHand: (),
+    Shapeshift: (), ShiftColor: (), SuperTransformPower: (), SwapPrizeWithDeckTop: (),
+    SwitchOpponentChosenByOpponent: (), SwitchOpponentOnHeads: (), SwitchSelfFromBench: (), TakeEnergiesToSelf: (),
+    TypeChangeSelfUntilTurnEnd: (),
+})
+# 使用を宣言するが、UsePokemonPower では使わない特殊能力（反応・ワザといっしょに使う力。既存の決定・ワザの宣言で答える）。合法手 API の use_power の候補にしない
+POWER_NOT_BY_COMMAND: frozenset[type] = frozenset({
+    PreventKnockOutOnHeads, ReturnToHandOnKnockOut, BeamOnKnockOut, FleeAfterAttackDamage, TakeBenchDamageInstead, BenchNamedFromDeckOnAttackDamage,
+    ReturnToDeckOnHeadsInsteadOfKnockOut, ExtraEnergyDamageWithAttack, AttackDeclaredPower, CoinsUntilTailsBonusToGroupAttack, CounterBonusToGroupAttack,
+})
+POWER_NOT_BY_COMMAND_BASES: tuple[type, ...] = (EntryPower, TriggeredPower)  # 場に出たとき・決まったときに機会を出す力（決定で答える）
+
+
+def power_by_command(effect) -> bool:
+    """v0.171（U7-5e）: ``UsePokemonPower`` で使う、使用を宣言する特殊能力か（反応・ワザといっしょに使う力・常にはたらく力でない）。入力の宣言があるかとは別。"""
+    return bool(effect.declared) and type(effect) not in POWER_NOT_BY_COMMAND and not isinstance(effect, POWER_NOT_BY_COMMAND_BASES) \
+        and not any(base in POWER_NOT_BY_COMMAND for base in type(effect).__mro__)
+
