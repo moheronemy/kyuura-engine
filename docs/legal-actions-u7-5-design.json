@@ -648,12 +648,12 @@
    "note": "持ち主の知識の関数を呼ぶ 4 の実装（scan.check_usable.owner_knowledge）"
   },
   {
-   "id": "UP-5e",
+   "id": "UP-5t",
    "command": "UsePokemonPower",
    "ref": "kyuura_engine/effects.py::state_stop_after",
-   "source": "E",
-   "use": "none",
-   "note": "状態の複製の上で効果を試す 7 の実装（scan.check_usable.trials）"
+   "source": "A",
+   "use": "candidates",
+   "note": "状態の複製の上で効果を試す 7 の実装（scan.check_usable.trials）。v0.171: パッケージ全体の呼び出しを名前で解決した閉包（効果のフックは同じ名前の実装をすべて根にした）で、山札・サイド・置いておくカード・乱数・うらのカードの集合を読まない（読むのは場・カードの定義・本人の手札。複製の上の書き込みだけ）とたどった。名前で解決できない呼び出し（状態のメソッド・登録表の引き・正規表現）は残る。指定するうらのカードを含む組は確かめない（docs/legal-actions-u7-5e.md 4 章）"
   },
   {
    "id": "UP-6",
@@ -1598,14 +1598,17 @@
     "U7-5d"
    ],
    "first": false,
+   "status": "implemented",
+   "implemented_in": "v0.171（docs/legal-actions-u7-5e.md）",
    "basis": [
     "宣言の入力の形が 9 通り（POWER_SHAPES）。形は check_usable の中にだけあり、登録が宣言していない",
-    "相手のうらのカードを指す入力は X-1 の試行になる（D）"
+    "相手のうらのカードを指す入力は X-1 の試行になる（D）",
+    "v0.171: 型ごとの宣言 effects.POWER_INPUT_STAGES（56 の型）。3 段の依存は、前のすべての段の選び方ごとに別の番号（after・upstream_stages）"
    ],
    "changes": [
     "effects.py: 型ごとの選ばせるものの宣言（D-U75-INPUT-DECL。挙動は変えない）",
     "engine.py: _use_pokemon_power の宣言の前の部分を check_use_pokemon_power にする（_reveal_for_action の扱いは D-U75-POWER-FACE-DOWN）",
-    "legal_actions.py: 特殊能力 → 選ばせるもの（2〜3 段）"
+    "legal_actions.py: 特殊能力の位置ごとの候補 → 選ばせるもの（0〜3 段）"
    ],
    "tests": [
     [
@@ -1669,8 +1672,8 @@
    "done": "形ごとに 1 つ以上の代表で、宣言の入力・受理のあとの決定・回数の制限が通る。相手のうらのカードは公開の位置・識別だけで扱う（ADOPT-U7-5AB）。E の 7 の実装は、たどるまで入力を返さない（CORR-1）",
    "gui": "2〜3 段（depends_on_stage = 2。前の段を変えたら、それに依存する後の段をすべて無効にする。ADOPT-U7-5AB）",
    "open": [
-    "UP-5e の 7 の実装の読む値をたどる",
-    "型ごとの入力の宣言の作成と、コマンドの作成・確かめとの対応のテスト（ADOPT-U7-5AB）"
+    "名前で解決できない呼び出し（状態のメソッド・登録表の引き・正規表現）の先（UP-5t）",
+    "自分のうらのカードの特殊能力（候補にしない。R-2 と同じく残る）"
    ]
   },
   {
@@ -1852,15 +1855,15 @@
   },
   {
    "id": "F-4",
-   "kind": "保守的な停止（未確認）",
-   "status": "unconfirmed",
+   "kind": "保守的な停止",
+   "status": "reproduced",
    "summary": "［シフト］の色の候補（shift_color_options）と ConvertSelfToEnergy の対象の確かめが、相手のうらのカードの項目を読み、FD1 で止まりうる",
-   "evidence": "監査の読み取りだけ（再現していない）",
+   "evidence": "v0.171: 相手のベンチにうらのカード（マチスの秘策。本当のカードがディグダかユンゲラーかだけが違う双子）があると、モルフォンの［へんしょく］はどちらも FD1（HiddenPropertyRead）で止まり、候補は unresolved_ruling（実行できない区分）で同じ。tests/test_legal_actions_u7_5e.py の FaceDownTwinTest",
    "refs": [
     "kyuura_engine/effects.py::ShiftColor.check_usable",
     "kyuura_engine/effects.py::ConvertSelfToEnergy.check_usable"
    ],
-   "impact": "U7-5e で E として扱い、双子で確かめる"
+   "impact": "本当のカードによらない保守的な停止（漏れではない）。U7-5e は止まる候補として示す（消さない）。止め方は変えていない"
   },
   {
    "id": "F-5",
@@ -2021,6 +2024,10 @@
     "decision": "U7-5c（2026-11-08 の依頼）: 手札の PlayTrainer だけを扱い、UsePokemonPower・UseStadium・CheckFaceUpDeckCard・energy2 は実装しない。カードの選択の表示は本人の手札だけで決まるので返す。読む情報を確かめていない使うための条件は呼ばず、処理可能性で示す（unverified）。F-9 の今の扱い（公開の情報だけで使えない場合も決定を出す）は変えない"
    },
    {
+    "id": "D-U75-POWER",
+    "decision": "U7-5e（2026-11-08 の依頼）: UsePokemonPower を、型ごとの宣言の入力（D-U75-INPUT-DECL）と 2〜3 段の依存する入力（D-U75-CHAINED）で扱う。CheckFaceUpDeckCard・energy2・R-2 は実装しない。相手のうらのカードは公開の位置だけで示し、指定する組は unverified（D-U75-POWER-FACE-DOWN）"
+   },
+   {
     "id": "D-U75-STADIUM",
     "decision": "U7-5d（2026-11-08 の依頼）: 場のスタジアムの UseStadium だけを扱い、特殊能力・CheckFaceUpDeckCard・energy2 は実装しない。候補は使ってよい効果の登録（activated）から作り、選ばせるものは型の宣言（energy_choice）から作る。3 段の入力の基盤は先に作らない。キョウの忍者ジムの保守的な NJ1 は緩めない"
    }
@@ -2030,7 +2037,8 @@
    "U7-5b",
    "T-F1",
    "U7-5c",
-   "U7-5d"
+   "U7-5d",
+   "U7-5e"
   ],
   "corrections": [
    {

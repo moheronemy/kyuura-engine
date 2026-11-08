@@ -186,7 +186,8 @@ CHECKS = [
     {"id": "UP-5", "command": "UsePokemonPower", "ref": f"{EFFECTS}::PowerEffect.check_usable", "source": "B", "use": "inputs",
      "note": "宣言の入力（energy・source・target）がそろうと決まる。入力のない 45 の実装は A として候補に使える"},
     {"id": "UP-5o", "command": "UsePokemonPower", "ref": f"{EFFECTS}::possible_deck_cards", "source": "A-own", "use": "candidates", "note": "持ち主の知識の関数を呼ぶ 4 の実装（scan.check_usable.owner_knowledge）"},
-    {"id": "UP-5e", "command": "UsePokemonPower", "ref": f"{EFFECTS}::state_stop_after", "source": "E", "use": "none", "note": "状態の複製の上で効果を試す 7 の実装（scan.check_usable.trials）"},
+    {"id": "UP-5t", "command": "UsePokemonPower", "ref": f"{EFFECTS}::state_stop_after", "source": "A", "use": "candidates",
+     "note": "状態の複製の上で効果を試す 7 の実装（scan.check_usable.trials）。v0.171: パッケージ全体の呼び出しを名前で解決した閉包（効果のフックは同じ名前の実装をすべて根にした）で、山札・サイド・置いておくカード・乱数・うらのカードの集合を読まない（読むのは場・カードの定義・本人の手札。複製の上の書き込みだけ）とたどった。名前で解決できない呼び出し（状態のメソッド・登録表の引き・正規表現）は残る。指定するうらのカードを含む組は確かめない（docs/legal-actions-u7-5e.md 4 章）"},
     {"id": "UP-6", "command": "UsePokemonPower", "ref": f"{EFFECTS}::power_reuse_after_devolution", "source": "A", "use": "candidates", "note": "DV3（停止として表示）"},
     # UseStadium
     {"id": "US-1", "command": "UseStadium", "ref": "kyuura_engine/stadiums.py::stadium_in_play", "source": "A", "use": "candidates", "note": "場のスタジアム"},
@@ -435,16 +436,18 @@ UNITS = [
      "open": ["キョウの忍者ジムの保守的な NJ1（山札の外の見えないカードの数より多くキョウのたねポケモンがないと止める。v0.146 のまま）",
               "check_activation が呼ぶ別のモジュールの関数の 2 段目より先"]},
     {"id": "U7-5e", "name": "宣言する特殊能力（UsePokemonPower）", "commands": ["UsePokemonPower"], "depends": ["U7-5b", "U7-5d"], "first": False,
-     "basis": ["宣言の入力の形が 9 通り（POWER_SHAPES）。形は check_usable の中にだけあり、登録が宣言していない", "相手のうらのカードを指す入力は X-1 の試行になる（D）"],
+     "status": "implemented", "implemented_in": "v0.171（docs/legal-actions-u7-5e.md）",
+     "basis": ["宣言の入力の形が 9 通り（POWER_SHAPES）。形は check_usable の中にだけあり、登録が宣言していない", "相手のうらのカードを指す入力は X-1 の試行になる（D）",
+               "v0.171: 型ごとの宣言 effects.POWER_INPUT_STAGES（56 の型）。3 段の依存は、前のすべての段の選び方ごとに別の番号（after・upstream_stages）"],
      "changes": ["effects.py: 型ごとの選ばせるものの宣言（D-U75-INPUT-DECL。挙動は変えない）", "engine.py: _use_pokemon_power の宣言の前の部分を check_use_pokemon_power にする（_reveal_for_action の扱いは D-U75-POWER-FACE-DOWN）",
-                 "legal_actions.py: 特殊能力 → 選ばせるもの（2〜3 段）"],
+                 "legal_actions.py: 特殊能力の位置ごとの候補 → 選ばせるもの（0〜3 段）"],
      "tests": [["V-NORMAL", "board"], ["V-DECL", "board"], ["V-NONTURN", "board"], ["V-LIMIT", "board"], ["V-NOSIDE", "board"], ["V-BADQUERY", "helper"],
                ["V-PARITY", "board"], ["V-HANDLE", "board"], ["V-CONV", "sequence"], ["V-TWIN", "board"], ["V-INSTALL", "sequence"], ["V-REGRESS", "board"], ["V-JSON", "helper"]],
      "boards": ["tests/test_power_decisions_v0_42.py", "tests/test_pokemon_powers_v0_5.py（エナジートランス）", "tests/test_rain_dance_v0_6.py"],
      "done": "形ごとに 1 つ以上の代表で、宣言の入力・受理のあとの決定・回数の制限が通る。相手のうらのカードは公開の位置・識別だけで扱う（ADOPT-U7-5AB）。"
              "E の 7 の実装は、たどるまで入力を返さない（CORR-1）",
      "gui": "2〜3 段（depends_on_stage = 2。前の段を変えたら、それに依存する後の段をすべて無効にする。ADOPT-U7-5AB）",
-     "open": ["UP-5e の 7 の実装の読む値をたどる", "型ごとの入力の宣言の作成と、コマンドの作成・確かめとの対応のテスト（ADOPT-U7-5AB）"]},
+     "open": ["名前で解決できない呼び出し（状態のメソッド・登録表の引き・正規表現）の先（UP-5t）", "自分のうらのカードの特殊能力（候補にしない。R-2 と同じく残る）"]},
     {"id": "U7-5f", "name": "おもての山札の確かめ（CheckFaceUpDeckCard）", "commands": ["CheckFaceUpDeckCard"], "depends": ["U7-5a"], "first": False,
      "basis": ["どの場合も受け付けない。表示するのは FU2 の位置だけ（D-U75-FACE-UP）"],
      "changes": ["legal_actions.py: 相手の山札のおもての 2 枚目より下の位置を unresolved_ruling で示す（送れない）"],
@@ -484,10 +487,12 @@ FINDINGS = [
      "summary": "セキチクシティジムの対象を調べる途中で、本人の場にうらのカードがあると、ほかに対象があっても FD1 で止まりうる",
      "evidence": "監査で CoinReturnOwnerPokemonStadium.check_activation の対象の走査が form_def(...).name_ja を読むことを確かめた（再現はしていない）",
      "refs": [f"{EFFECTS}::CoinReturnOwnerPokemonStadium.check_activation"], "impact": "本当のカードによらない。U7-5d で双子に含める"},
-    {"id": "F-4", "kind": "保守的な停止（未確認）", "status": "unconfirmed",
+    {"id": "F-4", "kind": "保守的な停止", "status": "reproduced",
      "summary": "［シフト］の色の候補（shift_color_options）と ConvertSelfToEnergy の対象の確かめが、相手のうらのカードの項目を読み、FD1 で止まりうる",
-     "evidence": "監査の読み取りだけ（再現していない）", "refs": [f"{EFFECTS}::ShiftColor.check_usable", f"{EFFECTS}::ConvertSelfToEnergy.check_usable"],
-     "impact": "U7-5e で E として扱い、双子で確かめる"},
+     "evidence": "v0.171: 相手のベンチにうらのカード（マチスの秘策。本当のカードがディグダかユンゲラーかだけが違う双子）があると、モルフォンの［へんしょく］はどちらも FD1"
+                 "（HiddenPropertyRead）で止まり、候補は unresolved_ruling（実行できない区分）で同じ。tests/test_legal_actions_u7_5e.py の FaceDownTwinTest",
+     "refs": [f"{EFFECTS}::ShiftColor.check_usable", f"{EFFECTS}::ConvertSelfToEnergy.check_usable"],
+     "impact": "本当のカードによらない保守的な停止（漏れではない）。U7-5e は止まる候補として示す（消さない）。止め方は変えていない"},
     {"id": "F-5", "kind": "入口の確かめの順", "status": "code_basis",
      "summary": "UsePokemonPower は、指定した source・target・energy のうらのカードを、番の確かめ・入力の形の確かめより前におもてにする（_reveal_for_action）。"
                 "拒否のコードは _identity_independent が本当のカードによらないものにそろえる",
@@ -549,10 +554,12 @@ ADOPTION_RECORD = {
         {"id": "D-U75-TRAINER", "decision": "U7-5c（2026-11-08 の依頼）: 手札の PlayTrainer だけを扱い、UsePokemonPower・UseStadium・CheckFaceUpDeckCard・energy2 は実装しない。"
          "カードの選択の表示は本人の手札だけで決まるので返す。読む情報を確かめていない使うための条件は呼ばず、処理可能性で示す（unverified）。F-9 の今の扱い（公開の情報だけで"
          "使えない場合も決定を出す）は変えない"},
+        {"id": "D-U75-POWER", "decision": "U7-5e（2026-11-08 の依頼）: UsePokemonPower を、型ごとの宣言の入力（D-U75-INPUT-DECL）と 2〜3 段の依存する入力（D-U75-CHAINED）で扱う。"
+         "CheckFaceUpDeckCard・energy2・R-2 は実装しない。相手のうらのカードは公開の位置だけで示し、指定する組は unverified（D-U75-POWER-FACE-DOWN）"},
         {"id": "D-U75-STADIUM", "decision": "U7-5d（2026-11-08 の依頼）: 場のスタジアムの UseStadium だけを扱い、特殊能力・CheckFaceUpDeckCard・energy2 は実装しない。"
          "候補は使ってよい効果の登録（activated）から作り、選ばせるものは型の宣言（energy_choice）から作る。3 段の入力の基盤は先に作らない。キョウの忍者ジムの保守的な NJ1 は緩めない"},
     ],
-    "implemented_units": ["U7-5a", "U7-5b", "T-F1", "U7-5c", "U7-5d"],  # T-F1 は 2026-11-08 の依頼で v0.168 に実装（進め方の 2 番目）。U7-5c は同じ日の依頼で v0.169、U7-5d は v0.170
+    "implemented_units": ["U7-5a", "U7-5b", "T-F1", "U7-5c", "U7-5d", "U7-5e"],  # T-F1 は 2026-11-08 の依頼で v0.168。U7-5c は v0.169、U7-5d は v0.170、U7-5e は v0.171
     "corrections": [
         {"id": "CORR-1", "subject": "E 群の意味", "text": "情報源が未確認の経路を、処理可能性の unverified だけで公開してよいと扱わない。処理可能性と入力の公開の安全性は別の軸。"
          "選べるもの・件数・理由を公開して安全と確かめられないなら、入力は返さない（unconfirmed）。型・生成箇所の登録だけで安全と認めない"},

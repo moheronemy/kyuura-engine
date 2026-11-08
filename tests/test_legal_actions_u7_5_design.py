@@ -28,12 +28,12 @@ class CheckTest(unittest.TestCase):
         self.assertEqual(G.check(written(), design, plan), [])
 
     def test_seven_commands_and_implemented_kinds(self):
-        """7 種類のうち、v0.167 で U7-5a・U7-5b の 3 種類、v0.169 で U7-5c の PlayTrainer、v0.170 で U7-5d の UseStadium を実装した。ほかの 2 種類は候補の種類がない。"""
+        """7 種類のうち、v0.167 で U7-5a・U7-5b の 3 種類、v0.169 で U7-5c の PlayTrainer、v0.170 で U7-5d の UseStadium、v0.171 で U7-5e の UsePokemonPower を実装した。ほかの 1 種類は候補の種類がない。"""
         from kyuura_engine import commands, legal_actions
 
         spec = written()
         done = {c for u in spec["units"] if u.get("status") == "implemented" for c in u["commands"]}
-        self.assertEqual(done, {"RemoveDisguise", "DiscardFromPlay", "RevealFaceDown", "PlayTrainer", "UseStadium"})
+        self.assertEqual(done, {"RemoveDisguise", "DiscardFromPlay", "RevealFaceDown", "PlayTrainer", "UseStadium", "UsePokemonPower"})
         self.assertEqual(len(spec["commands"]), 7)
         for c in spec["commands"]:
             self.assertEqual(c["kind"] in legal_actions.IMPLEMENTED_KINDS, c["command"] in done, c["command"])
@@ -41,10 +41,10 @@ class CheckTest(unittest.TestCase):
 
     def test_only_adopted_units_are_implemented(self):
         spec = written()
-        self.assertEqual([u["id"] for u in spec["units"] if u.get("status") == "implemented"], ["U7-5a", "U7-5b", "T-F1", "U7-5c", "U7-5d"])  # T-F1 は v0.168、U7-5c は v0.169、U7-5d は v0.170
-        self.assertEqual(spec["adoption_record"]["implemented_units"], ["U7-5a", "U7-5b", "T-F1", "U7-5c", "U7-5d"])
-        for later in ("U7-5e", "U7-5f", "U7-5g"):
-            self.assertNotEqual(next(u for u in spec["units"] if u["id"] == later).get("status"), "implemented", later)  # U7-5e 以降は未実装
+        self.assertEqual([u["id"] for u in spec["units"] if u.get("status") == "implemented"], ["U7-5a", "U7-5b", "T-F1", "U7-5c", "U7-5d", "U7-5e"])  # T-F1 は v0.168、U7-5c〜U7-5e は v0.169〜v0.171
+        self.assertEqual(spec["adoption_record"]["implemented_units"], ["U7-5a", "U7-5b", "T-F1", "U7-5c", "U7-5d", "U7-5e"])
+        for later in ("U7-5f", "U7-5g"):
+            self.assertNotEqual(next(u for u in spec["units"] if u["id"] == later).get("status"), "implemented", later)  # U7-5f 以降は未実装
         self.assertEqual(next(f for f in spec["findings"] if f["id"] == "F-1")["status"], "fixed")
         self.assertEqual([u["id"] for u in spec["units"] if u["first"]], ["U7-5a"])
         self.assertEqual(spec["adoption"]["approval"], "not_approved")
@@ -82,7 +82,7 @@ class BrokenSpecTest(unittest.TestCase):
 
     def test_unit_counted_as_implemented(self):
         def mutate(spec):
-            next(u for u in spec["units"] if u["id"] == "U7-5e")["status"] = "implemented"  # v0.170: U7-5d も実装済みになったので、未実装の U7-5e で確かめる
+            next(u for u in spec["units"] if u["id"] == "U7-5g")["status"] = "implemented"  # v0.171: U7-5e も実装済みになったので、未実装の U7-5g で確かめる
         self.assert_found(mutate, "採用の記録にない単位")
 
     def test_implemented_unit_without_kind(self):

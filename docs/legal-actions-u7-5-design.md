@@ -33,8 +33,9 @@ U7-5 の対象の 7 種類のコマンド（`PlayTrainer`・`UsePokemonPower`・
     - `D-U75-CHAOS`: F-1 は両モード共通の不具合として別の作業 T-F1 で直す（トレーナーの前）。U7-5a・b では裁定・動作を変えない
     - `D-U75-ENERGY2`: カツラの 2 枚目（AttachEnergy.energy2）は U7-5g に含める
     - `D-U75-TRAINER`: U7-5c（2026-11-08 の依頼）: 手札の PlayTrainer だけを扱い、UsePokemonPower・UseStadium・CheckFaceUpDeckCard・energy2 は実装しない。カードの選択の表示は本人の手札だけで決まるので返す。読む情報を確かめていない使うための条件は呼ばず、処理可能性で示す（unverified）。F-9 の今の扱い（公開の情報だけで使えない場合も決定を出す）は変えない
+    - `D-U75-POWER`: U7-5e（2026-11-08 の依頼）: UsePokemonPower を、型ごとの宣言の入力（D-U75-INPUT-DECL）と 2〜3 段の依存する入力（D-U75-CHAINED）で扱う。CheckFaceUpDeckCard・energy2・R-2 は実装しない。相手のうらのカードは公開の位置だけで示し、指定する組は unverified（D-U75-POWER-FACE-DOWN）
     - `D-U75-STADIUM`: U7-5d（2026-11-08 の依頼）: 場のスタジアムの UseStadium だけを扱い、特殊能力・CheckFaceUpDeckCard・energy2 は実装しない。候補は使ってよい効果の登録（activated）から作り、選ばせるものは型の宣言（energy_choice）から作る。3 段の入力の基盤は先に作らない。キョウの忍者ジムの保守的な NJ1 は緩めない
-  - 実装した単位: `U7-5a`、`U7-5b`、`T-F1`、`U7-5c`、`U7-5d`
+  - 実装した単位: `U7-5a`、`U7-5b`、`T-F1`、`U7-5c`、`U7-5d`、`U7-5e`
   - 仕様の訂正:
     - `CORR-1`（E 群の意味）: 情報源が未確認の経路を、処理可能性の unverified だけで公開してよいと扱わない。処理可能性と入力の公開の安全性は別の軸。選べるもの・件数・理由を公開して安全と確かめられないなら、入力は返さない（unconfirmed）。型・生成箇所の登録だけで安全と認めない
     - `CORR-2`（GUI への影響の比べる相手）: 設計の報告の d0c5cfa はエンジンのコミット（GUI の main が固定するエンジン）で、GUI のコミットではない。公開されている最新の GUI は feature/engine-u7-4-attacks の 3649946（エンジン 9506d63・0.166.0 を固定）。GUI のコミットと固定するエンジンを分けて書く（GUI_REF）
@@ -175,7 +176,7 @@ U7-5 の対象の 7 種類のコマンド（`PlayTrainer`・`UsePokemonPower`・
 | UP-4 | `UsePokemonPower` | `kyuura_engine/effects.py::copied_declared_power_problem` | `A` | `candidates` | 写した特殊能力（TF1・SV3） |
 | UP-5 | `UsePokemonPower` | `kyuura_engine/effects.py::PowerEffect.check_usable` | `B` | `inputs` | 宣言の入力（energy・source・target）がそろうと決まる。入力のない 45 の実装は A として候補に使える |
 | UP-5o | `UsePokemonPower` | `kyuura_engine/effects.py::possible_deck_cards` | `A-own` | `candidates` | 持ち主の知識の関数を呼ぶ 4 の実装（scan.check_usable.owner_knowledge） |
-| UP-5e | `UsePokemonPower` | `kyuura_engine/effects.py::state_stop_after` | `E` | `none` | 状態の複製の上で効果を試す 7 の実装（scan.check_usable.trials） |
+| UP-5t | `UsePokemonPower` | `kyuura_engine/effects.py::state_stop_after` | `A` | `candidates` | 状態の複製の上で効果を試す 7 の実装（scan.check_usable.trials）。v0.171: パッケージ全体の呼び出しを名前で解決した閉包（効果のフックは同じ名前の実装をすべて根にした）で、山札・サイド・置いておくカード・乱数・うらのカードの集合を読まない（読むのは場・カードの定義・本人の手札。複製の上の書き込みだけ）とたどった。名前で解決できない呼び出し（状態のメソッド・登録表の引き・正規表現）は残る。指定するうらのカードを含む組は確かめない（docs/legal-actions-u7-5e.md 4 章） |
 | UP-6 | `UsePokemonPower` | `kyuura_engine/effects.py::power_reuse_after_devolution` | `A` | `candidates` | DV3（停止として表示） |
 | US-1 | `UseStadium` | `kyuura_engine/stadiums.py::stadium_in_play` | `A` | `candidates` | 場のスタジアム |
 | US-2 | `UseStadium` | `kyuura_engine/effects.py::StadiumEffect.check_activation` | `B` | `inputs` | energy を選ばせる 2 の実装は入力がそろうと決まる。ほかは A。キョウの忍者ジムは A-own |
@@ -196,7 +197,7 @@ U7-5 の対象の 7 種類のコマンド（`PlayTrainer`・`UsePokemonPower`・
 
 <!-- generated:rest-command-index begin -->
 - `PlayTrainer`: PT-1・PT-2・PT-3・PT-4・PT-5・PT-5o・PT-5e・PT-5t・PT-6・PT-7・PT-8・PT-9・PT-10
-- `UsePokemonPower`: UP-0・UP-1・UP-2・UP-3・UP-4・UP-5・UP-5o・UP-5e・UP-6
+- `UsePokemonPower`: UP-0・UP-1・UP-2・UP-3・UP-4・UP-5・UP-5o・UP-5t・UP-6
 - `UseStadium`: US-1・US-2・US-3・US-4
 - `RemoveDisguise`: RD-1・RD-2
 - `DiscardFromPlay`: DF-1・DF-2
@@ -368,7 +369,7 @@ U7 全体の完了の基準（案）と、D-U7-COMPLETENESS・D-U7-DISPLAY の�
 | F-1 | 情報境界 | `fixed` | 錯乱ジムの「うら」で、相手がかわりに使えるかの確かめ（borrow_unusable_reason → check_playable）が相手の手札の中身を読み、その結果が公開のログ chaos_not_borrowable（理由にコード）と、決定 ACCEPT_REQUEST が出るかで、使ったプレイヤーに伝わる | 双子（使ったプレイヤーの手札にポケモン育て屋さんとリザードン、場にヒトカゲ。相手のバトル場もヒトカゲ。相手の手札 1 枚がリザードンか水エネルギーかだけが違う）で、片方は ACCEPT_REQUEST（相手）、片方は chaos_not_borrowable（NO_EVOLUTION_TARGET）<br>履歴: v0.166 のあとの U7-5 の設計の調査で見つけ、作業用のスクリプトの双子で再現した（2026-11-08）<br>履歴: T-F1 で、修正の前の木に回帰テスト（tests/test_chaos_gym_borrow_t_f1.py）を加えて再び再現した（漏れを見つけた失敗 4 件）<br>履歴: v0.168（T-F1。docs/chaos-gym-borrow-t-f1.md）で直した: 公開の分岐を公開の情報だけで決め、使うための条件は「使う」と答えたときに確かめる | `kyuura_engine/engine.py::_chaos_tails`<br>`kyuura_engine/effects.py::borrow_unusable_reason` | U7 の候補は作らないが、受理のあとの決定と公開のログで起こる。両モード共通の不具合として、トレーナー（U7-5c）の前の独立の作業 T-F1 で直した（v0.168）。処理の段階: トレーナーを使う手順の錯乱ジムの「うら」のあと（engine._chaos_tails）。停止のコード（CH1・MG1・TL1）は不具合ではなく、変えていない |
 | F-2 | 拒否のコードの不一致 | `reproduced` | 本人のうらのカードを DiscardFromPlay で指すと、NOT_DISCARDABLE ではなく FD1（HiddenPropertyRead）で拒否する（理由の文を作るときに名前を読む） | マチスの秘策でうらにしたディグダ・プラスパワー・ユンゲラーのどれでも同じ FD1（本当のカードによらない。漏れではない） | `kyuura_engine/engine.py::_discard_from_play`<br>`kyuura_engine/effects.py::play_as_pokemon_effect` | エンジンの拒否は変えない。U7-5a はエンジンの確かめの判定（UnsupportedError）どおり、選べるものとして示して実行できない区分にする（送る前に CANDIDATE_NOT_EXECUTABLE）。ゲーム上の禁止として消さない |
 | F-3 | 保守的な停止 | `code_basis` | セキチクシティジムの対象を調べる途中で、本人の場にうらのカードがあると、ほかに対象があっても FD1 で止まりうる | 監査で CoinReturnOwnerPokemonStadium.check_activation の対象の走査が form_def(...).name_ja を読むことを確かめた（再現はしていない） | `kyuura_engine/effects.py::CoinReturnOwnerPokemonStadium.check_activation` | 本当のカードによらない。U7-5d で双子に含める |
-| F-4 | 保守的な停止（未確認） | `unconfirmed` | ［シフト］の色の候補（shift_color_options）と ConvertSelfToEnergy の対象の確かめが、相手のうらのカードの項目を読み、FD1 で止まりうる | 監査の読み取りだけ（再現していない） | `kyuura_engine/effects.py::ShiftColor.check_usable`<br>`kyuura_engine/effects.py::ConvertSelfToEnergy.check_usable` | U7-5e で E として扱い、双子で確かめる |
+| F-4 | 保守的な停止 | `reproduced` | ［シフト］の色の候補（shift_color_options）と ConvertSelfToEnergy の対象の確かめが、相手のうらのカードの項目を読み、FD1 で止まりうる | v0.171: 相手のベンチにうらのカード（マチスの秘策。本当のカードがディグダかユンゲラーかだけが違う双子）があると、モルフォンの［へんしょく］はどちらも FD1（HiddenPropertyRead）で止まり、候補は unresolved_ruling（実行できない区分）で同じ。tests/test_legal_actions_u7_5e.py の FaceDownTwinTest | `kyuura_engine/effects.py::ShiftColor.check_usable`<br>`kyuura_engine/effects.py::ConvertSelfToEnergy.check_usable` | 本当のカードによらない保守的な停止（漏れではない）。U7-5e は止まる候補として示す（消さない）。止め方は変えていない |
 | F-5 | 入口の確かめの順 | `code_basis` | UsePokemonPower は、指定した source・target・energy のうらのカードを、番の確かめ・入力の形の確かめより前におもてにする（_reveal_for_action）。拒否のコードは _identity_independent が本当のカードによらないものにそろえる | engine.py の _reveal_for_action と _apply_checked を読んだ（再現していない） | `kyuura_engine/engine.py::_reveal_for_action`<br>`kyuura_engine/engine.py::_apply_checked` | 候補の作成はこの順を写さない。相手のうらのカードを指す入力は unverified（D-U75-POWER-FACE-DOWN） |
 | F-6 | 入口の確かめの範囲 | `code_basis` | CheckFaceUpDeckCard は番・段階を確かめない（どの場合も受け付けないので、状態は変わらない） | engine.py の _check_face_up_deck_card | `kyuura_engine/engine.py::_check_face_up_deck_card` | 番でない主体の候補に出すかは D-U75-FACE-UP |
 | F-8 | 情報境界（F-1 と同じ共通の経路） | `fixed` | ナツメのサイキックコントロールの選べるもの（相手のトラッシュのトレーナー）を、使う人の使うための条件（手札・山札を読みうる）で選り分けていたので、選べるものの数（相手にも見える option_count）と、選べるものがないときの公開のログ discard_trainer_use_none が、使う人の手札の中身で変わった | T-F1 の回帰テストの双子（使う人の手札の 1 枚がヒトカゲか水エネルギーか。相手のトラッシュにポケモン交換おじさん）で、修正の前は相手の観測が違った | `kyuura_engine/effects.py::discard_trainer_use_choices`<br>`kyuura_engine/effects.py::UseOpponentDiscardTrainer.resume` | v0.168（T-F1）で直した。選べるものは公開の情報だけで作り、満たせないカードを選んだ答えを拒否する |
