@@ -192,9 +192,28 @@ check / submit（["o1"]）→ CANDIDATE_NOT_EXECUTABLE ／（["o9"]）→ CANDID
 
 構築盤面（`build_test_state` の値を直接置いたもの。U7-5f の 0・1・2・4 枚）、補助関数の確かめ（段の形の確かめ・unverified_paths の集め方）、`build_test_state` の盤面から `apply_command` で進めた合法な列、new_game からの合法な列を、各テストの冒頭で分けて書いています。
 
-### 6.2 実行した検証
+### 6.2 実行した検証（2026-11-08）
 
-（7 章のあとに記録します）
+1 モジュール（またはテストの方法 1 つ）ずつ別のプロセスで、並列なしに流しました。開始・終了・件数・終了コードは作業用の記録（summary.jsonl）に残しています。資源不足の停止はありませんでした。
+
+| 対象 | モジュール | 件数 | 結果 |
+|---|---|---|---|
+| 新しい U7-5f・g のテスト | `test_legal_actions_u7_5f`・`u7_5g_residual`・`u7_5g_energy2`・`u7_5g_face_down_power` | 8・9・11・10 | どれも終了コード 0 |
+| U7・client_api の既存のテスト | `test_legal_actions_u7_1`・`u7_2`・`u7_3`・`u7_4`・`u7_5ab`・`u7_5c`・`u7_5d`・`u7_5e`・`u7_5_design`・`u7_5fg_spec`・`api_design`・`decision_audit`・`test_client_api` | 42・17・29・27・27・32・25・24・27・9・13・15・9 | どれも終了コード 0 |
+| 直接関係する既存のテスト | `test_distribution`・`test_preset_decks_v0_20`（版）・`test_energy_control_power_suppression_v0_59`（カツラ）・`test_secret_plan_v0_67`（うらのカード） | 12・15・27・24 | どれも終了コード 0 |
+| README・実装状況を読むテストの方法 | 14 の方法（`DocumentTest` など。1 つずつ） | 14 | どれも終了コード 0 |
+
+- 合わせて 21 モジュール・412 件（`test_secret_plan_v0_67` は U7-5g-2 の実装のあと、legal_actions.py を変えていない木で流した）（ほかに文書を読む方法 14 件）。全体のテスト、状態の監査、全 108 バッチ、4,356 局、lockstep、広いストレステストは流していません
+- 仕様・台帳・生成物の検査: `scripts/build_legal_actions_u7_5_design.py --check`（problems=0）、`scripts/build_stop_policy_classification.py --check`（終了コード 0。停止の台帳は変わらない）、`scripts/check_implementation_assumptions.py --check`（problems=0）、`scripts/check_normalization_revalidation.py --check`（problems=0）
+- lint: 変えたファイルに ruff 0.17.2（指摘なし）
+- エンジン: `88ad4d9` からの `kyuura_engine/` の差は `legal_actions.py` と版の文字列（`__init__.py`）だけです
+- 配布: コミット `e26df79cc6dec913c1d15b5d8203df066334d65d`（版 0.172.0）の `git archive` から作った wheel・sdist に、既存の配布物の中身の検査（`scripts/check_distribution.py`）をかけた（required=62・problems=0）。クリーンな仮想環境に、Git の URL（`git+https://github.com/moheronemy/kyuura-engine@e26df79cc6dec913c1d15b5d8203df066334d65d`）から通常のインストールをし（`-e`・PYTHONPATH は使わない）、リポジトリの外を作業ディレクトリにして、`-I` で client_api のスモークテストを流した（終了コード 0・problems なし）
+  - カツラの 2 枚目: 3 段の入力（`path_stages: [1, 2]`・`count` 0〜1）で 2 枚をつけて受理。同じカードの 3 段目は `CANDIDATE_INPUT_INVALID`
+  - 本人のうらのカードの特殊能力（マンキーの［スパイ］）: `unverified`・入力なし。検査のあとも相手・観戦者の公開の更新は 0 件で、相手の候補の応答に能力の名前・カード id がない。送信は受理され、おもてにしたあとに受理のあとの決定がある
+  - フラッシュのあとの `check_face_up_deck`: 位置 1〜4（項目は `owner`・`position` と区分だけ）、送信は `CANDIDATE_NOT_EXECUTABLE`。相手（番でないプレイヤー）の応答は R-4 で partial
+  - 既存の経路（初期配置・番の基本の操作・ワザ・場の操作・錯乱ジム・トレーナー・スタジアム・特殊能力）も通った。3 つの規約集合の照合値は固定の値と同じ
+  - `behavior_digest` は `07a189c9bd196c489a9a59b247ff23681d78d7cd1edc666516f966ed1e3a6c18` で、ソースの木（`e26df79`）の値と同じ
+- 確かめていないこと: GUI の実行（画面での動作）、全体のテストと大きな対戦、名前で解決できない呼び出しの先（UP-5t の限界のまま）
 
 ## 7. GUI への引き継ぎ
 
@@ -210,7 +229,7 @@ GUI は読み取りだけで確かめました（GitHub の API。GUI のリポ�
 | うらのカードの特殊能力 | `power_keys` に `face_down` がなく、`power_candidate_pokemon_keys` にも `face_down` がない（その候補で止まる。安全な側の失敗） | `power.face_down`・`pokemon.face_down` の表示（本人の画面だけ）。入力なし・1 段だけ |
 | coverage の新しい項目 | coverage の項目の表はない | `residual`・`partial_residual`・`unverified_paths`・`display_only_kinds` の表示 |
 
-- 導入を確かめるエンジン: 配布の版 0.172.0 のコミット（6.2 節に完全なコミットを書く）。形式の版は client_api・合法手 API とも 1 のまま
+- 導入を確かめたエンジン: `e26df79cc6dec913c1d15b5d8203df066334d65d`（版 0.172.0。Git の URL からの通常のインストールで確かめた。6.2 節）。形式の版は client_api・合法手 API とも 1 のまま
 - 種類・role・追加の項目: `check_face_up_deck`（role `face_up_position`・meaning `deck_position`・選べるものの項目 `owner`・`position`）、attach_energy の 3 段目（role `energy2`・meaning `card`・段の項目 `path_stages`・`options_by_path`）、use_power の `power.face_down`
 - 無効にする範囲: attach_energy は 1 段目か 2 段目を変えたら 3 段目と check を捨てる。use_power の 0・1 段のうらのカードの特殊能力は U7-5e と同じ
 - residual と coverage の表示: `partial_residual` がある応答は「一部の経路を示していない」と表示し、`complete` を「全部の操作が完走する」と表示しない。`residual.present` の `scope: actor` は本人の画面だけのもの
