@@ -66,6 +66,8 @@ def game_header(config: Config, ident: dict[str, Any], argv: list[str], result: 
             "convention_set": result["record"].data["header"]["convention_set"], "decks": {"0": config.deck0, "1": config.deck1},
             "game_seed": config.game_seed, "policy_seed": config.policy_seed, "host_seed": config.host_seed, "distribution": config.distribution,
             "policy": config.policy, "epsilon": config.epsilon if config.policy == "mixed" else None,
+            "rules_version": config.rules_version if config.policy in ("rules", "mixed") else None,
+            "repeat_threshold": config.repeat_threshold if config.policy in ("rules", "mixed") and config.rules_version == 2 else None,
             "policies": result["policies"], "profile": config.profile, "limits": result["limits"], "started": started, "finished": finished}
 
 
@@ -76,9 +78,16 @@ def reproduce(baseline: Path, out: Path, engine_commit: str, argv: list[str], la
     base_record = json.loads((baseline / "full_record.json").read_text(encoding="utf-8"))
     name = f"{label}-repro-of-{baseline.parent.name}-{baseline.name}"
     limits = Limits(**base_header["limits"])
+    # 方策の設定は見出しから読む（V0・V1 の見出しは policy を持たないので均等。V2 の補完: rules・mixed の版・ε・閾値）
+    policy = base_header.get("policy") or "uniform"
+    rule_options = {"policy": policy}
+    if policy in ("rules", "mixed"):
+        rule_options.update(rules_version=base_header.get("rules_version") or 1, repeat_threshold=base_header.get("repeat_threshold") or 2)
+    if policy == "mixed":
+        rule_options["epsilon"] = base_header["epsilon"]
+    distribution = base_header.get("distribution") or base_header["policies"]["0"]["distribution"]
     config = Config(deck0=base_header["decks"]["0"], deck1=base_header["decks"]["1"], game_seed=base_header["game_seed"], policy_seed=base_header["policy_seed"],
-                    host_seed=base_header["host_seed"], profile=base_header["profile"], limits=limits,
-                    distribution=base_header["policies"]["0"]["distribution"], run_id=name)
+                    host_seed=base_header["host_seed"], profile=base_header["profile"], limits=limits, distribution=distribution, run_id=name, **rule_options)
     started = now()
     result = run_game(config)
     finished = now()

@@ -20,8 +20,8 @@ from kyuura_engine import preset_deck
 from kyuura_engine.client_api import ClientHub
 
 from . import actions as B
-from .metrics import Metrics
-from .policies import STAGE, TUPLE, MixedPolicy, RulePolicy, UniformPolicy, host_seed, mix_seed, player_seed
+from .metrics import Metrics, repetition_summary
+from .policies import STAGE, TUPLE, MixedPolicy, RulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
 from kyuura_engine.replay_record import checks
 
 from .records import RecordingGame, canonical
@@ -85,6 +85,8 @@ class Config:
     distribution: str = STAGE  # V1: STAGE（V0 と同じ）か TUPLE（policy が uniform のときだけ）
     policy: str = "uniform"  # V2: uniform・rules・mixed
     epsilon: float = 0.25  # V2: mixed のランダムの確率（エピソードごと）
+    rules_version: int = 1  # V2 の補完: rules と mixed のルールの側の版（1 は V2 と同じ。2 は反復の抑制つき）
+    repeat_threshold: int = 2  # V2 の補完: rules-v2 の閾値（同じ番の同じ操作の受理の回数）
     run_id: str = "v0"
 
 
@@ -132,7 +134,8 @@ class Runner:
         self.actor_logs: dict[Any, list[dict[str, Any]]] = {0: [], 1: [], HOST: []}  # 主体ごとの、その主体が受け取った応答と選択（本人向け）
         self.anomalies: list[dict[str, Any]] = []
         self.counters = {"operations": 0, "accepted": 0, "turns": 0, "attempts": 0, "check_invalid": 0, "rejected": 0, "refused": 0, "failed": 0,
-                         "unbuildable": 0, "withheld": 0, "retry_same_input": 0, "deep_fallback_unverified": 0}
+                         "unbuildable": 0, "withheld": 0, "retry_same_input": 0, "deep_fallback_unverified": 0,
+                         "policy_suppressed": 0}  # V2 の補完: 戦略の選好で送らなかった試み（API・check・エンジンの拒否とは別）
         self.coverage: dict[str, dict[str, int]] = {}
         self.game: RecordingGame | None = None
         self.hub: ClientHub | None = None
@@ -165,10 +168,14 @@ class Runner:
                 "anomalies": list(self.anomalies), "coverage": {k: dict(sorted(v.items())) for k, v in sorted(self.coverage.items())},
                 "trace": self.trace, "actor_logs": self.actor_logs, "record": record,
                 "policies": {str(k): {"name": p.name, "version": p.version, "distribution": p.distribution, "seed": p.seed, "draws": p.draws,
-                                      **({"epsilon": p.epsilon, "mix_seed": p.mix_seed, "episodes": dict(p.episodes)} if isinstance(p, MixedPolicy) else {})}
+                                      **({"epsilon": p.epsilon, "mix_seed": p.mix_seed, "episodes": dict(p.episodes), "rules_version": p.rules_version}
+                                         if isinstance(p, MixedPolicy) else {}),
+                                      **({"repeat_threshold": p.memory.threshold, "demote_after": p.memory.demote_after}
+                                         if isinstance(p, RulePolicy) and p.memory is not None else {})}
                              for k, p in self.policies.items()},
                 "limits": asdict(self.limits), "elapsed_seconds": round(self.clock() - self._started, 3),
-                "distribution": self.config.distribution, "metrics": self.metrics.to_dict()}
+                "distribution": self.config.distribution, "metrics": self.metrics.to_dict(),
+                "repetition": repetition_summary(self.trace, self.actor_logs)}
 
     # ---------------------------------------------------------------- 進行
 
@@ -375,6 +382,18 @@ class Runner:
                 self.counters["retry_same_input"] += 1
                 self.metrics.already_tried(kind)
                 continue
+            # V2 の補完: 同じ意味の操作の鍵と、送る前の方策の評価（戦略の選好。rules-v2 のルールの側だけが送らないことがある）
+            key = action_key(actor, candidate, stages, meaning)
+            turn = turn_of(own_view)
+            entry["action_key"], entry["turn"] = short_key(key), list(turn)
+            if hasattr(policy, "review"):
+                verdict = policy.review(candidate, key, turn)
+                entry["policy_review"] = verdict
+                if not verdict["send"]:
+                    entry["build"] = "suppressed_by_policy"
+                    self.counters["policy_suppressed"] += 1
+                    self.metrics.policy_suppressed(kind, verdict["reason"])
+                    continue
             checked = request(endpoint, "check", **handle, choices=choices)
             checked["_handle"], checked["_choices"] = handle, choices
             entry["check"] = {k: v for k, v in checked.items() if not k.startswith("_")}
@@ -407,6 +426,8 @@ class Runner:
                 self._after_accept(entry, sent)
                 self.position += 1
                 self._episode["result"] = "accepted"
+                if hasattr(policy, "observe_accepted"):
+                    policy.observe_accepted(turn, key)  # 混合のランダムの側で受理された操作も履歴に入れる
                 return
             if outcome == D.FAILED or not sent.get("ok", True):
                 self.counters["failed"] += 1
@@ -569,10 +590,11 @@ def make_policies(config: Config, policy_factory=None) -> dict[Any, Any]:
         players = {p: UniformPolicy(player_seed(config.policy_seed, p), config.distribution) for p in (0, 1)}
         host = UniformPolicy(host_seed(config.host_seed), config.distribution)
     elif config.policy == "rules":
-        players = {p: RulePolicy(player_seed(config.policy_seed, p)) for p in (0, 1)}
+        players = {p: RulePolicy(player_seed(config.policy_seed, p), version=config.rules_version, threshold=config.repeat_threshold) for p in (0, 1)}
         host = UniformPolicy(host_seed(config.host_seed), STAGE)
     elif config.policy == "mixed":
-        players = {p: MixedPolicy(player_seed(config.policy_seed, p), epsilon=config.epsilon, mix_seed_text=mix_seed(config.policy_seed, p)) for p in (0, 1)}
+        players = {p: MixedPolicy(player_seed(config.policy_seed, p), epsilon=config.epsilon, mix_seed_text=mix_seed(config.policy_seed, p),
+                                  rule_version=config.rules_version, threshold=config.repeat_threshold) for p in (0, 1)}
         host = UniformPolicy(host_seed(config.host_seed), STAGE)
     else:
         raise ValueError(f"知らない方策 {config.policy!r}")

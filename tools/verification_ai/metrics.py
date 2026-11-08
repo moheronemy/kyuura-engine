@@ -41,7 +41,7 @@ class Metrics:
         return self.kinds.setdefault(kind, {
             "offered_fetches": 0, "offered_states": set(), "in_scope_fetches": 0, "in_scope_states": set(), "excluded": {},
             "selection_opportunities": 0, "expected_selections": 0.0, "selected": 0, "build_ok": 0, "build_failed": {}, "build_method": {},
-            "already_tried": 0, "check_valid": 0, "check_invalid": 0, "submitted": 0, "outcome": {}, "after_accept": {}})
+            "already_tried": 0, "policy_suppressed": 0, "check_valid": 0, "check_invalid": 0, "submitted": 0, "outcome": {}, "after_accept": {}})
 
     def axis(self, name: str, key, n: int = 1) -> None:
         _inc(self.axes.setdefault(name, {}), key, n)
@@ -94,6 +94,11 @@ class Metrics:
 
     def already_tried(self, kind: str) -> None:
         self._kind(kind)["already_tried"] += 1
+
+    def policy_suppressed(self, kind: str, reason: str) -> None:
+        """V2 の補完: 戦略の選好で送らなかった（API が入力を返さない・check の拒否・合法でないとは別）。"""
+        self._kind(kind)["policy_suppressed"] += 1
+        self.axis("policy_suppressed_reason", reason)
 
     def checked(self, kind: str, valid: bool) -> None:
         self._kind(kind)["check_valid" if valid else "check_invalid"] += 1
@@ -162,3 +167,35 @@ def _key(candidate: dict[str, Any]) -> str:
     import json
 
     return json.dumps({k: v for k, v in candidate.items() if k != "id"}, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def repetition_summary(trace: list[dict[str, Any]], actor_logs) -> dict[str, Any]:
+    """番ごとの同じ意味の操作の受理の回数（V2 の補完。どの方策の記録からも数える。保存した V2 の記録にも使える）。
+
+    番は、試みの状態（``position``）の主体の観測（主体ごとの記録の ``position`` の行の ``view``）の（区間, 番の番号）。鍵は ``policies.action_key``。"""
+    from collections import Counter
+
+    from .policies import action_key, turn_of
+
+    logs = actor_logs.items() if isinstance(actor_logs, dict) else actor_logs
+    turns = {}
+    for actor, rows in logs:
+        for r in rows:
+            if r.get("type") == "position":
+                turns[(str(actor), r["position"])] = turn_of(r["view"])
+    per_turn: dict[tuple, Counter] = {}
+    powers: Counter = Counter()
+    for e in trace:
+        if e.get("type") != "attempt" or (e.get("submit") or {}).get("outcome") != "accepted":
+            continue
+        turn = turns.get((str(e["actor"]), e["position"]))
+        key = action_key(e["actor"], e["candidate"], e.get("stages") or [], e.get("meaning") or [])
+        per_turn.setdefault((str(e["actor"]), turn), Counter())[key] += 1
+        if e["candidate"].get("kind") == "use_power":
+            powers[(e["candidate"].get("power") or {}).get("name_ja")] += 1
+    maxima = sorted(((max(c.values()), actor, turn) for (actor, turn), c in per_turn.items()), reverse=True)
+    return {"actor_turns": len(per_turn), "max_same_action_per_turn": maxima[0][0] if maxima else 0,
+            "actor_turns_with_repeat": sum(1 for c in per_turn.values() if max(c.values()) >= 2),
+            "repeated_actions": sum(1 for c in per_turn.values() for n in c.values() if n >= 2),
+            "top": [{"actor": a, "turn": list(t) if t else None, "max": m} for m, a, t in maxima[:5]],
+            "accepted_power_uses": dict(powers)}
