@@ -5252,3 +5252,11 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 
 - U7（エンジン `e26df79`・0.172.0）を通して対戦を進める検証用 AI の仕様と段階的な実装計画を作った。実装・テスト・対戦の実行はしていない。エンジンのコードと版は変えていない
 - 詳細: [verification-ai-design.md](verification-ai-design.md)・[verification-ai-implementation-plan.md](verification-ai-implementation-plan.md)
+
+## 検証用 AI の V0（v0.172 のあと。エンジンは変えていない）
+
+- `tools/verification_ai`（配布物の外）: `client_api` の入口だけで固定条件の 1 対戦を進め、上限つきで終わり、操作・診断・終わり方を記録する。完全な記録の `replay_run` と、方策の seed による意味の列の再現を確かめる
+- CN-1（`ActionHost` が `ReplayCollector`・`ViewHost` を包めない）を再現し、道具の側の包みで接続した（エンジンの側の扱いは未判断）
+- 固定条件の 1 対戦（`hitmonchan-dewgong` 対 `venusaur-parasect`・既定の規約集合・seed 1）: `game_over`・受理 130・番 46・`replay_run` は `succeeded`・意味の列 142 行が一致。届かなかった種類・入力の形は文書の 7.3 節
+- V1 以降（分布の拡張・ルールの方策・混合・`boundary`・`negative`・双子・広い対象・最小化）は未実装
+- 詳細: [verification-ai-v0.md](verification-ai-v0.md)

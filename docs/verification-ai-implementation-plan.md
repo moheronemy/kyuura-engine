@@ -1,7 +1,7 @@
 # エンジン検証用 AI の段階的な実装計画（計画だけ。実装していない）
 
-仕様は [verification-ai-design.md](verification-ai-design.md) です。この文書は、その仕様を小さな段に分けた実装の計画です。どの段も未着手で、今回は実装・テスト・対戦の実行を
-していません。各段は、利用者の指示を受けてから始めます。
+仕様は [verification-ai-design.md](verification-ai-design.md) です。この文書は、その仕様を小さな段に分けた実装の計画です。V0 だけを実装しました（[verification-ai-v0.md](verification-ai-v0.md)）。V1〜V6 は未着手です。
+各段は、利用者の指示を受けてから始めます。
 
 共通の前提:
 
@@ -15,7 +15,7 @@
 
 | 段 | 内容 | 依存 |
 |---|---|---|
-| V0 | 公開 API だけで固定の 1 対戦を進め、上限つきで終わり、記録と再実行を確かめる（最初の実装の単位） | なし |
+| V0 | 公開 API だけで固定の 1 対戦を進め、上限つきで終わり、記録と再実行を確かめる（最初の実装の単位）。**実装した**（[verification-ai-v0.md](verification-ai-v0.md)） | なし |
 | V1 | ランダムの分布（`uniform-stage`・`uniform-tuple`）と到達範囲の集計。小さなデッキと規約集合の組 | V0 |
 | V2 | ルールの方策 `rules-v1` と混合の方策。選択の理由の記録 | V1 |
 | V3 | `boundary` のプロファイルと、`negative`（不正な入力）の試験 | V1 |
@@ -45,7 +45,7 @@
 
 1. 対戦が、仕様の 6.1 節のどれか 1 つの終わり方で上限の中に終わる（`game_over` でなくてもよい。終わり方と理由が記録にある）
 2. 操作はすべて `PlayerEndpoint`・`HostEndpoint` の `handle` を通り、ランナー・方策・行動生成のどこからも `HostedGame.submit`・`apply_command` を直接呼ばない（テストで確かめる）
-3. 送った入力の前に、毎回 `check` を呼んでいる。`stage_dependency_problems` の問題が 0
+3. 送った入力の前に、毎回 `check` を呼んでいる。依存する段の並びでの `stage_dependency_problems` の問題が 0（V0 の訂正: 前の段に依存しない 2 段目には当てない）
 4. 完全な記録の `replay_run.replay` が `succeeded`（`failed` で止めた対戦なら `recorded_failure`）。閲覧者ごとの記録の `validate_view_record` の問題が 0
 5. 同じ `game_seed`・`policy_seed`・`host_seed` でもう 1 回走らせると、操作の列（取っ手を除く）が同じ（R-C）
 6. 方策に渡した値がすべて JSON の値で、その主体の入口の応答と同じ。`policies.py` が `kyuura_engine` を import しない
@@ -125,7 +125,10 @@
 | 長い対戦での異常の分類 | なし（U7 を通る長い対戦の検証はまだない） | V0〜V5 |
 | 3 つの規約集合 | U7 の `ConnectionTest` は 3 つの集合で 1 列ずつ | V1 の組 |
 
-## 今回していないこと
+## 計画を作った時点（`17e31a9`）でしていないこと
+
+V0 の実装と実行の結果は [verification-ai-v0.md](verification-ai-v0.md) にあります。
+
 
 - 検証用 AI の実装、対戦の実行・探索、テスト・ビルド、全体のテスト、大量の対戦、lockstep、状態の監査、既存の総合検証の再実行
 - エンジン・GUI・renderer・kyuura・カードデータ・固定デッキ・規約集合の変更

@@ -3,7 +3,8 @@
 この文書は、合法手 API（U7）を通して対戦を自動で進め、エンジンの不具合・入力 API の不足・状態の不整合・情報境界の問題を見つけて、再現できる記録を残すための
 「検証用 AI」の仕様です。段階ごとの実装計画は [verification-ai-implementation-plan.md](verification-ai-implementation-plan.md) にあります。
 
-- 今回は調査・設計・文書化だけです。AI の実装、対戦の実行・探索、テスト・ビルド、既存の総合検証の再実行はしていません。確認は文書とコードの静的な読み取りだけです
+- この文書を作った時点（`17e31a9`）は調査・設計・文書化だけで、確認は文書とコードの静的な読み取りだけでした
+- 実装の状況: V0 だけを実装した（[verification-ai-v0.md](verification-ai-v0.md)。採用した判断はその 1.1 節。D-1〜D-12 の全体は採用していない）。V1 以降は未実装
 - 検証用 AI の目的は、勝つことではありません。ランダムの行動と小さなルールの行動を組み合わせて多様な操作の列を作り、異常を分類して記録することです
 - いちばん大事な原則: **ゲームの合法性（エンジン・U7）と AI の戦略を分ける**。戦略は、U7 が返した候補・入力の中で順位をつけるだけで、合法性を判定し直さない
 
@@ -35,7 +36,7 @@
 | `check` | `legal_actions.py:609` | 候補の公開の制約だけの検査（`valid`・`refusal`）。受理の保証ではない |
 | `submit` | `legal_actions.py:653` | 候補と入力から既存のコマンドを作り、包んだ対戦の `submit` に送る。結果は `accepted`・`rejected`・`failed`・`refused`（ホストの段の拒否） |
 | `ClientHub`・`PlayerEndpoint`・`HostEndpoint`・`SpectatorEndpoint` | `kyuura_engine/client_api.py:94`・`:244`・`:262`・`:256` | JSON の要求と応答（`handle(dict) -> dict`。例外を投げない）。`take_updates` で閲覧者ごとの公開の更新。`verifier` の呼び出しで検証者用の `CommandResult` をホストの側だけが受け取る |
-| `stage_dependency_problems` | `legal_actions.py:1622` | 段の形（依存・経路の鍵・循環）の確かめ。行動生成が受け取った段に毎回かけ、問題があれば異常にする |
+| `stage_dependency_problems` | `legal_actions.py:1622` | 依存する段の形（依存・経路の鍵・循環）の確かめ。2 段目以降のすべてが `depends_on_stage` か `path_stages` を持つ段の並びにかけ、問題があれば止める（V0 の訂正: 前の段に依存しない 2 段目（初期配置・にげる）はこの関数の対象の外。[verification-ai-v0.md](verification-ai-v0.md) 3.2 節） |
 
 段の契約（行動生成が読む項目。`legal_actions.py` で作られる形）:
 
@@ -270,7 +271,7 @@ U7 の版が変わったら照らし直します。文を実行時に読んで�
 
 ### 4.4 知らない値
 
-段の知らない項目、知らない `processability`・`input`・`situation`・`empty_reason`・残りの id、`stage_dependency_problems` の問題は、推測で扱わず、その場で止めて
+段の知らない項目、知らない `processability`・`input`・`situation`・`empty_reason`・残りの id、依存する段の並びでの `stage_dependency_problems` の問題は、推測で扱わず、その場で止めて
 `api_contract_unknown` として記録します（API が変わったことを見逃さないため）。
 
 ### 4.5 実行のプロファイル
@@ -348,7 +349,7 @@ U7 の版が変わったら照らし直します。文を実行時に読んで�
 
 - `check` が `valid` なのに `submit` が `CANDIDATE_INPUT_INVALID`、または `check` が `invalid` なのに同じ入力の `submit` が受理（`boundary` で比べたときだけ）
 - `supported`（と 4.2 節の表の種類の `may_stop_later` の eligible の組）の拒否（`guarantee_mismatch`）
-- `stage_dependency_problems` の問題、`options_by_choice` などが参照する選ぶものがない
+- 依存する段の並びでの `stage_dependency_problems` の問題、`options_by_choice` などが参照する選ぶものがない
 - `candidates` の `situation` と `status.waiting` の主体の食い違い、だれも操作できないのに終局・停止でない（`deadlock`）
 - 拒否・断りのあとに、ほかの閲覧者へ公開の更新が出た。受理のあとの更新の `number` が連続しない。更新の観測が同じ主体の `view` と違う
 - 受理のあとの `refetch_required` が真でない
