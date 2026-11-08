@@ -18,7 +18,7 @@
 | V0 | 公開 API だけで固定の 1 対戦を進め、上限つきで終わり、記録と再実行を確かめる（最初の実装の単位）。**実装した**（[verification-ai-v0.md](verification-ai-v0.md)） | なし |
 | V1 | ランダムの分布（`uniform-stage`・`uniform-tuple`）と到達範囲の集計。小さなデッキと規約集合の組。**実装した**（[verification-ai-v1.md](verification-ai-v1.md)。デッキと規約集合は固定デッキ・既定の規約集合だけ） | V0 |
 | V2 | ルールの方策 `rules-v1` と混合の方策。選択の理由の記録。**実装した**（[verification-ai-v2.md](verification-ai-v2.md)。優先順位は操作の種類だけ・混合は選択のエピソードごと。補完の反復の抑制 rules-v2: [verification-ai-v2-repeat.md](verification-ai-v2-repeat.md)） | V1 |
-| V3 | `boundary` のプロファイルと、`negative`（不正な入力）の試験。仕様と限定的な実装計画（V3-1〜V3-4）: [verification-ai-v3-design.md](verification-ai-v3-design.md)。**V3-1 だけを実装した**（[verification-ai-v3-1.md](verification-ai-v3-1.md)）。V3-2 以降は採用待ち | V1 |
+| V3 | `boundary` のプロファイルと、`negative`（不正な入力）の試験。仕様と限定的な実装計画（V3-1〜V3-4）: [verification-ai-v3-design.md](verification-ai-v3-design.md)。**V3-1 と V3-2（カツラの固定の到達例に絞った）を実装した**（[verification-ai-v3-1.md](verification-ai-v3-1.md)・[verification-ai-v3-2.md](verification-ai-v3-2.md)）。V3-3 以降は採用待ち | V1 |
 | V4 | 情報境界の確かめの強化（双子・閲覧者ごとの記録の分離）と R-B（U7 の経路の再実行） | V0（V2 のあとが望ましい） |
 | V5 | 対象の拡大（seed・デッキ・規約集合）と上限つきの複数対戦の実行。証跡の保存 | V1〜V4 |
 | V6（将来） | 異常の列の最小化（自動の縮小） | V5 |

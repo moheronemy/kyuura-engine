@@ -5295,3 +5295,11 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 固定デッキ・既定の規約集合・uniform-stage・seed 12・13 の 2 局: 変異の要求 96（check 48・submit 48）と復帰の check 24 がすべて期待どおり（`suspect` 0・`undetermined` 0）。通常の進行の意味の列・完全な記録の行・終わり方は V1 の記録と一致、`replay_run` は `succeeded`。`duplicate` は未到達
 - V3-2 以降（boundary・構築した盤面・探索・R-B）は未実装
 - 詳細: [verification-ai-v3-1.md](verification-ai-v3-1.md)
+
+## 検証用 AI の V3-2（カツラの固定の到達例。v0.172 のあと。エンジンは変えていない）
+
+- 固定の到達例（`tests/test_legal_actions_u7_5g_energy2.py` の `BLAINE_DECK`・seed 1 を出典と sha256 つきで道具に写した。固定デッキではない）を、公開の API の候補・入力・check・submit で進め、エネルギーを 1 枚・2 枚つけた（別々の対戦）。`options_by_path` の実際の応答（鍵・参照・使えない選ぶもの）と、受理のあとの観測・完全な記録での付与（1 枚・2 枚）を確かめた。`replay_run` は `succeeded`
+- 変異: `unknown_option`・`wrong_actor`・`stale_after_accept` はすべて期待どおり（`suspect` 0）。`options_by_path` の単一の条件の別の経路と個数を保った重複は、この条件に前提を満たす例がなく未到達。経路で引く段の `count_over` は道具が対応していない
+- BoundaryPolicy（候補の区分 → 候補の均等。範囲に unverified を加える）を加えたが、この条件の 40 操作では `unverified` は示されなかった。判定の規則 2（停止系の拒否はコード表の元のコードと経路の理由がそろうときだけ known_stop）
+- 集計の書き出しの失敗（道具の誤り）は、対戦をやり直さず保存したファイルから集計を作った。V3-3 以降は未実装
+- 詳細: [verification-ai-v3-2.md](verification-ai-v3-2.md)
