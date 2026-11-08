@@ -40,7 +40,7 @@ U7-5 の対象の 7 種類のコマンド（`PlayTrainer`・`UsePokemonPower`・
     - `D-U75-FACE-DOWN-POWER`: 本人が知る印刷の情報だけから安全に作れる特殊能力を候補にする。unverified だけを理由に公開を許さない（U7-5g で実装）
     - `D-U75-R2`: R-2 は今回も未対応のまま残す（coverage の residual で示す）
     - `D-U7-COMPLETENESS`: residual を機械で読める形で返す。未対応の宣言の経路が残るあいだ MAIN は partial のまま。候補の取得の網羅と、全部の操作の完走を分ける（U7-5g で実装）
-  - 実装した単位: `U7-5a`、`U7-5b`、`T-F1`、`U7-5c`、`U7-5d`、`U7-5e`、`U7-5f`
+  - 実装した単位: `U7-5a`、`U7-5b`、`T-F1`、`U7-5c`、`U7-5d`、`U7-5e`、`U7-5f`、`U7-5g`
   - 仕様の訂正:
     - `CORR-1`（E 群の意味）: 情報源が未確認の経路を、処理可能性の unverified だけで公開してよいと扱わない。処理可能性と入力の公開の安全性は別の軸。選べるもの・件数・理由を公開して安全と確かめられないなら、入力は返さない（unconfirmed）。型・生成箇所の登録だけで安全と認めない
     - `CORR-2`（GUI への影響の比べる相手）: 設計の報告の d0c5cfa はエンジンのコミット（GUI の main が固定するエンジン）で、GUI のコミットではない。公開されている最新の GUI は feature/engine-u7-4-attacks の 3649946（エンジン 9506d63・0.166.0 を固定）。GUI のコミットと固定するエンジンを分けて書く（GUI_REF）
@@ -314,10 +314,10 @@ U7-3・U7-4 と同じく、処理の受理の前の部分を、同じ順番・�
 GUI がすでに扱う入力の形との共通点・相違点です（CORR-2 で比べる相手を直した。設計の初版は、GUI の main が固定するエンジンのコミット d0c5cfa を GUI のコミットのように書いていた）。GUI リポジトリは読んだだけで、変更していません。GUI を実行していないので、実行していない互換性は保証しません。
 
 <!-- generated:rest-gui begin -->
-- GUI のコミット: `9c36a8fe033f32b589cd57721725fdcc13c318f3`（kyuura-engine-gui の `feature/engine-u7-5-trainers-stadium`）
-- その GUI が固定するエンジン: `0885d664913bc8e57279ed9e44ac51cc97d5a6bf`（版 0.170.0）
-- GUI の main: `7660ab4d4c4064334952b2d3c9a01ede33c4973b`（固定するエンジン `d0c5cfa9483aacae0cce2fd8d28166b1d8465500`）
-- 確かめ方: 2026-11-08 に GitHub の API（gh api）で、ブランチの一覧と、そのコミットの server/requirements.txt・contract/kyuura-client-api-v1.json を読み取りだけで読んだ（GUI のリポジトリに fetch も書き込みもしていない。作業ツリーには利用者の未コミットの変更があり、触れていない）
+- GUI のコミット: `088822c58628fbf366363bcaaa713b1370125e86`（kyuura-engine-gui の `main`）
+- その GUI が固定するエンジン: `74c8e1f8ca03d017d5c0a8a79e6fdaa33d25b7f8`（版 0.171.0）
+- GUI の main: `088822c58628fbf366363bcaaa713b1370125e86`（固定するエンジン `74c8e1f8ca03d017d5c0a8a79e6fdaa33d25b7f8`）
+- 確かめ方: 2026-11-08 に GitHub の API（gh api）で、ブランチの一覧・main の最近のコミット・088822c の server/requirements.txt・contract/kyuura-client-api-v1.json を読み取りだけで読んだ（GUI のリポジトリに fetch も書き込みもしていない。作業ツリーには利用者の未コミットの変更があり、触れていない）
 - 限界: 公開されている GUI のブランチのうち最新のコミット。GUI を実行していないので、画面で動くことは確かめていない。これより新しい未公開の作業は確かめられない
 
 | 項目 | GUI（3649946） | U7-5 | 共通 |

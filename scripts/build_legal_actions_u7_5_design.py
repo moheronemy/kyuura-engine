@@ -295,12 +295,17 @@ INPUT_RULES = [
     "check_usable と食い違わないことを型ごとのテストで確かめる（D-U75-INPUT-DECL。エンジンの挙動は変えない）"),
 ]
 # CORR-2: 比べる相手は GUI のコミット（GUI のリポジトリ）。GUI が固定するエンジンのコミットとは別に書く。読み取りだけで確かめた（GUI は実行していない）
-# CORR-3（2026-11-08。U7-5f・g の仕様の作業）: v0.171 までの 3649946（feature/engine-u7-4-attacks。エンジン 9506d63・0.166.0）は古い比べる相手。最新の公開の作業ブランチは下
-GUI_REF = {"repository": "kyuura-engine-gui", "branch": "feature/engine-u7-5-trainers-stadium", "commit": "9c36a8fe033f32b589cd57721725fdcc13c318f3",
-           "pinned_engine": "0885d664913bc8e57279ed9e44ac51cc97d5a6bf", "pinned_engine_version": "0.170.0",
-           "main_commit": "7660ab4d4c4064334952b2d3c9a01ede33c4973b", "main_pinned_engine": "d0c5cfa9483aacae0cce2fd8d28166b1d8465500",
-           "checked": "2026-11-08 に GitHub の API（gh api）で、ブランチの一覧と、そのコミットの server/requirements.txt・contract/kyuura-client-api-v1.json を読み取りだけで読んだ"
-                      "（GUI のリポジトリに fetch も書き込みもしていない。作業ツリーには利用者の未コミットの変更があり、触れていない）",
+# CORR-3（2026-11-08。U7-5f・g の仕様の作業）: v0.171 までの 3649946（feature/engine-u7-4-attacks。エンジン 9506d63・0.166.0）は古い比べる相手。
+# v0.172（U7-5f・g の実装の作業）: GUI の公開のブランチは main だけになり、main の 088822c（e3bb682 を取り込んだ PR #2 のマージ）がエンジン 74c8e1f（0.171.0）を固定する。
+# その前の比べる相手（9c36a8f。feature/engine-u7-5-trainers-stadium。エンジン 0885d66・0.170.0）は docs/legal-actions-u7-5fg-spec.md 0.1 節の記録のまま
+GUI_REF = {"repository": "kyuura-engine-gui", "branch": "main", "commit": "088822c58628fbf366363bcaaa713b1370125e86",
+           "pinned_engine": "74c8e1f8ca03d017d5c0a8a79e6fdaa33d25b7f8", "pinned_engine_version": "0.171.0",
+           "main_commit": "088822c58628fbf366363bcaaa713b1370125e86", "main_pinned_engine": "74c8e1f8ca03d017d5c0a8a79e6fdaa33d25b7f8",
+           "includes": "e3bb682f969ee68ca5853c270c95d156cad31472（文書: 0.171.0 の固定。PR #2 の最後のコミット）",
+           "previous": {"commit": "9c36a8fe033f32b589cd57721725fdcc13c318f3", "branch": "feature/engine-u7-5-trainers-stadium",
+                        "pinned_engine": "0885d664913bc8e57279ed9e44ac51cc97d5a6bf", "pinned_engine_version": "0.170.0"},
+           "checked": "2026-11-08 に GitHub の API（gh api）で、ブランチの一覧・main の最近のコミット・088822c の server/requirements.txt・contract/kyuura-client-api-v1.json を"
+                      "読み取りだけで読んだ（GUI のリポジトリに fetch も書き込みもしていない。作業ツリーには利用者の未コミットの変更があり、触れていない）",
            "limit": "公開されている GUI のブランチのうち最新のコミット。GUI を実行していないので、画面で動くことは確かめていない。これより新しい未公開の作業は確かめられない"}
 GUI_INPUTS = [
     {"item": "入力の種類", "gui": "choose_option・choose_value（contract の input_kinds）", "u7_5": "choose_option だけ", "same": True},
@@ -450,7 +455,8 @@ UNITS = [
      "done": "形ごとに 1 つ以上の代表で、宣言の入力・受理のあとの決定・回数の制限が通る。相手のうらのカードは公開の位置・識別だけで扱う（ADOPT-U7-5AB）。"
              "E の 7 の実装は、たどるまで入力を返さない（CORR-1）",
      "gui": "2〜3 段（depends_on_stage = 2。前の段を変えたら、それに依存する後の段をすべて無効にする。ADOPT-U7-5AB）",
-     "open": ["名前で解決できない呼び出し（状態のメソッド・登録表の引き・正規表現）の先（UP-5t）", "自分のうらのカードの特殊能力（候補にしない。R-2 と同じく残る）"]},
+     "open": ["名前で解決できない呼び出し（状態のメソッド・登録表の引き・正規表現）の先（UP-5t）",
+              "自分のうらのカードの特殊能力（v0.171 は候補にしなかった。v0.172 の U7-5g-2 で 0・1 段の型を候補にした）"]},
     {"id": "U7-5f", "name": "おもての山札の確かめ（CheckFaceUpDeckCard）", "commands": ["CheckFaceUpDeckCard"], "depends": ["U7-5a"], "first": False,
      "status": "implemented", "implemented_in": "v0.172（docs/legal-actions-u7-5fg.md 1 章）",
      "basis": ["どの場合も受け付けない。表示するのは FU2 の位置だけ（D-U75-FACE-UP）",
@@ -463,6 +469,7 @@ UNITS = [
      "done": "候補の位置が、おもての枚数（公開）だけで決まる双子（おもてのカードの中身を変える）が通る", "gui": "表示だけ（送信のボタンを出さない）",
      "open": []},
     {"id": "U7-5g", "name": "残りの経路と coverage の閉じ方", "commands": [], "depends": ["U7-5c", "U7-5e", "U7-5f"], "first": False,
+     "status": "implemented", "implemented_in": "v0.172（docs/legal-actions-u7-5fg.md 2〜4 章。U7-5g-3 coverage の residual・U7-5g-1 カツラの 2 枚目・U7-5g-2 うらのカードの特殊能力）",
      "basis": ["7 種類で説明できない経路（R-1・R-2）が残る", "v0.171 のあと: 自分のうらのカードの特殊能力（U7-5e が候補にしない）も残る経路（docs/legal-actions-u7-5fg-spec.md 3 章）"],
      "changes": ["R-1（カツラの 2 枚目）を attach_energy の任意の段として加える（ADOPT-U7-5AB で採用。3 段目の引き方は D-U75-ENERGY2-SCHEMA）・R-2 の見直し（D-U75-R2）",
                  "自分のうらのカードの特殊能力（D-U75-FACE-DOWN-POWER）", "段階・主体ごとの coverage の表し方（C-6。residual・unverified_paths。D-U7-COMPLETENESS）"],
@@ -470,7 +477,8 @@ UNITS = [
                ["V-CONV", "sequence"], ["V-INSTALL", "sequence"], ["V-REGRESS", "board"], ["V-JSON", "helper"]],
      "boards": ["tests/test_energy_control_power_suppression_v0_59.py（カツラ）", "tests/test_secret_plan_v0_67.py（うらのカード）"],
      "done": "C-1〜C-6 を満たすかを、単位ごとの結果から判断できる（U7-5g-1〜3 の完了の基準は docs/legal-actions-u7-5fg-spec.md 6 章）", "gui": "coverage の表示",
-     "open": ["D-U7-COMPLETENESS", "D-U75-ENERGY2-SCHEMA", "D-U75-FACE-DOWN-POWER", "D-U75-R2"]},
+     "open": ["R-2（D-U75-R2。未対応のまま。coverage の residual で示す）",
+              "R-3 のうち入力を返さない型（自分のうらのカードの、宣言の段が 2 段以上・宣言のない型・登録のない特殊能力）"]},
 ]
 
 # ---------------------------------------------------------------- 調査で見つけたこと（エンジンは直さない）
@@ -586,7 +594,7 @@ ADOPTION_RECORD = {
         {"id": "D-U7-COMPLETENESS", "decision": "residual を機械で読める形で返す。未対応の宣言の経路が残るあいだ MAIN は partial のまま。候補の取得の網羅と、全部の操作の完走を分ける"
          "（U7-5g で実装）"},
     ],
-    "implemented_units": ["U7-5a", "U7-5b", "T-F1", "U7-5c", "U7-5d", "U7-5e", "U7-5f"],  # T-F1 は 2026-11-08 の依頼で v0.168。U7-5c は v0.169、U7-5d は v0.170、U7-5e は v0.171、U7-5f は v0.172
+    "implemented_units": ["U7-5a", "U7-5b", "T-F1", "U7-5c", "U7-5d", "U7-5e", "U7-5f", "U7-5g"],  # T-F1 は v0.168。U7-5c〜U7-5e は v0.169〜v0.171、U7-5f・U7-5g は v0.172
     "corrections": [
         {"id": "CORR-1", "subject": "E 群の意味", "text": "情報源が未確認の経路を、処理可能性の unverified だけで公開してよいと扱わない。処理可能性と入力の公開の安全性は別の軸。"
          "選べるもの・件数・理由を公開して安全と確かめられないなら、入力は返さない（unconfirmed）。型・生成箇所の登録だけで安全と認めない"},

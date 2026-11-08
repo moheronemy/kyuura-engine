@@ -116,7 +116,10 @@ class DocumentTest(unittest.TestCase):
                        "D-U75-ENERGY2-SCHEMA", "D-U75-FACE-DOWN-POWER", "D-U75-R2", "D-U7-COMPLETENESS"):
             self.assertIn(phrase, text)
         spec = json.loads((ROOT / "docs" / "legal-actions-u7-5-design.json").read_text(encoding="utf-8"))
-        self.assertEqual((spec["gui_ref"]["commit"], spec["gui_ref"]["pinned_engine"]), ("9c36a8fe033f32b589cd57721725fdcc13c318f3", "0885d664913bc8e57279ed9e44ac51cc97d5a6bf"))
+        # v0.172: GUI の比べる相手は main の 088822c（エンジン 74c8e1f・0.171.0）。この文書の 9c36a8f は前の比べる相手（gui_ref の previous）
+        self.assertEqual((spec["gui_ref"]["commit"], spec["gui_ref"]["pinned_engine"]), ("088822c58628fbf366363bcaaa713b1370125e86", "74c8e1f8ca03d017d5c0a8a79e6fdaa33d25b7f8"))
+        self.assertEqual((spec["gui_ref"]["previous"]["commit"], spec["gui_ref"]["previous"]["pinned_engine"]),
+                         ("9c36a8fe033f32b589cd57721725fdcc13c318f3", "0885d664913bc8e57279ed9e44ac51cc97d5a6bf"))
         needed = {d["id"] for d in spec["adoption_needed"]}
         self.assertLessEqual({"D-U75-FACE-UP-ACTORS", "D-U75-ENERGY2-SCHEMA", "D-U75-FACE-DOWN-POWER", "D-U75-R2"}, needed)
         self.assertEqual(next(u for u in spec["units"] if u["id"] == "U7-5f").get("status"), "implemented")  # v0.172: 採用のあとの作業（docs/legal-actions-u7-5fg.md）で実装した

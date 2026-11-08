@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.171）
+# 実装状況（v0.1〜v0.172）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d`（v0.128 から。v0.129 の種族の身長の写しは別に `9242b9be89be0f747279f39c11875d1ed61763ec`。v0.126〜v0.127 は `57d01f45cfb8b086d03dc0525b329cf6adeff69b`、v0.125 は `134a664c6adf67d5604148a31b58e1a7d26d4d6d`、v0.124 は `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`、v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -5231,3 +5231,13 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - U7-5d の文書の訂正: キョウの忍者ジムの seed 1・17 は双子ではなく、別の対戦による合法な到達例
 - 配布の確かめ: コミット `74c8e1f8ca03d017d5c0a8a79e6fdaa33d25b7f8`（版 0.171.0）を、クリーンな仮想環境に Git の URL から通常のインストールをして、リポジトリの外から client_api の `use_power`（2 段）を使うスモークテストをした（`behavior_digest` はソースの木と同じ）。配布物の中身の検査は required=62・problems=0
 - 詳細: [legal-actions-u7-5e.md](legal-actions-u7-5e.md)
+
+## v0.172: 合法手 API の U7-5f・U7-5g
+
+- 新しい候補の種類 `check_face_up_deck`（U7-5f）: 既存の `CheckFaceUpDeckCard` の表示だけの候補。番のプレイヤーの MAIN に、相手の山札の 2 枚目より下のおもての位置（`owner`・`position`。公開の `face_up_count` だけから決める）を `unresolved_ruling` で示し、送る前に `CANDIDATE_NOT_EXECUTABLE` で断る（入力の形の誤りは `CANDIDATE_INPUT_INVALID`）。番のプレイヤーの MAIN のほかには示さない（API の対応の範囲。D-U75-FACE-UP-ACTORS）
+- coverage の残り（U7-5g-3。D-U7-COMPLETENESS）: API 全体で決まった残りの分類 `residual.classes`（R-2〜R-5）と、その応答に当てはまる残り `residual.present`（公開の状態から決まる `public`・本人の候補から決まる `actor`）。completeness は対応しない種類と `partial_residual`（scope_kinds の種類の `not_offered` の分類）から決める。R-2 が残るあいだ番のプレイヤーの MAIN は partial。相手の山札のおもてが 2 枚以上なら、番でないプレイヤー・決定の回答者の応答も partial（R-4）。`unverified_paths`・`display_only_kinds` を加えた
+- カツラの 2 枚目（U7-5g-1。D-U75-ENERGY2-SCHEMA）: カツラの効果がはたらく番の attach_energy に任意の 3 段目 `energy2`。1・2 段目の組で引く `options_by_path`（`path_stages`）。選べるものは `check_attach_energy` に 3 枚の組を渡した確かめから。1 枚の入力は今までの意味のまま
+- 本人のうらのカードの特殊能力（U7-5g-2。D-U75-FACE-DOWN-POWER）: 本人が知る本当のカードの印刷の宣言する特殊能力を、本人の候補にだけ示す（エンジンの確かめを呼ばない。おもてにしない）。0・1 段の型は unverified の入力、2 段以上・宣言のない型・登録のない力は入力を返さない（R-3）
+- R-2（自分のうらのバトル場のポケモンのワザといっしょに選ぶもの）は未対応のまま（D-U75-R2）
+- U7-5 の設計の U7-5f・U7-5g を implemented にした。GUI の比べる相手を main の `088822c`（エンジン `74c8e1f`・0.171.0 を固定）に直した。既存の U7 のテストの coverage の期待から `check_face_up_deck` を外した（意図した差）
+- 詳細: [legal-actions-u7-5fg.md](legal-actions-u7-5fg.md)

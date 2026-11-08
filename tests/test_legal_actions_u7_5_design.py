@@ -42,10 +42,11 @@ class CheckTest(unittest.TestCase):
 
     def test_only_adopted_units_are_implemented(self):
         spec = written()
-        # T-F1 は v0.168、U7-5c〜U7-5e は v0.169〜v0.171、U7-5f は v0.172
-        self.assertEqual([u["id"] for u in spec["units"] if u.get("status") == "implemented"], ["U7-5a", "U7-5b", "T-F1", "U7-5c", "U7-5d", "U7-5e", "U7-5f"])
-        self.assertEqual(spec["adoption_record"]["implemented_units"], ["U7-5a", "U7-5b", "T-F1", "U7-5c", "U7-5d", "U7-5e", "U7-5f"])
-        self.assertNotEqual(next(u for u in spec["units"] if u["id"] == "U7-5g").get("status"), "implemented")  # U7-5g は未実装
+        # T-F1 は v0.168、U7-5c〜U7-5e は v0.169〜v0.171、U7-5f・U7-5g は v0.172（どの単位も実装済み。R-2 は U7-5g の open に残る）
+        units = ["U7-5a", "U7-5b", "T-F1", "U7-5c", "U7-5d", "U7-5e", "U7-5f", "U7-5g"]
+        self.assertEqual([u["id"] for u in spec["units"] if u.get("status") == "implemented"], units)
+        self.assertEqual(spec["adoption_record"]["implemented_units"], units)
+        self.assertTrue(any("R-2" in item for item in next(u for u in spec["units"] if u["id"] == "U7-5g")["open"]))
         self.assertEqual(next(f for f in spec["findings"] if f["id"] == "F-1")["status"], "fixed")
         self.assertEqual([u["id"] for u in spec["units"] if u["first"]], ["U7-5a"])
         self.assertEqual(spec["adoption"]["approval"], "not_approved")
@@ -83,7 +84,7 @@ class BrokenSpecTest(unittest.TestCase):
 
     def test_unit_counted_as_implemented(self):
         def mutate(spec):
-            next(u for u in spec["units"] if u["id"] == "U7-5g")["status"] = "implemented"  # v0.171: U7-5e も実装済みになったので、未実装の U7-5g で確かめる
+            spec["adoption_record"]["implemented_units"].remove("U7-5g")  # v0.172: どの単位も実装済みになったので、採用の記録から 1 つ外して確かめる
         self.assert_found(mutate, "採用の記録にない単位")
 
     def test_implemented_unit_without_kind(self):

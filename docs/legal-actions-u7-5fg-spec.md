@@ -3,6 +3,7 @@
 U7-5 の計画（[legal-actions-u7-5-design](legal-actions-u7-5-design.md)・[legal-actions-u7-5-implementation-plan](legal-actions-u7-5-implementation-plan.md)）の残る 2 つの単位（U7-5f・U7-5g）の実装の仕様と完了の基準です。
 
 - 今回は調査と仕様だけです。残る経路の実装、coverage の complete 化、既存の裁定の変更はしていません
+- v0.172 で、判断待ちの 5 つを採用し、U7-5f・U7-5g を実装しました（[legal-actions-u7-5fg](legal-actions-u7-5fg.md)）。この文書の「判断待ち」「推奨」は、採用の前の記録のままです
 - エンジンの動作、候補・入力の処理、識別の方式、3 つの規約集合、カードデータ、固定デッキ、参照データは変えていません
 - 基点: `6413638`（U7-5e の最終コミット。main は `0c00b56` のまま）。作業ブランチ `claude/u7-5fg-spec`
 - 判断を表す 3 つの区分: **採用済み**（利用者が採用した原則。ADOPT-U7-5AB と各単位の依頼）／**推奨**（今回の推奨案）／**判断待ち**（利用者の採用が要る）

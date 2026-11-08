@@ -128,5 +128,19 @@ class TwinTest(unittest.TestCase):
             self.assertEqual(get(ca), get(cb))
 
 
+class DocumentTest(unittest.TestCase):
+    def test_document_matches_the_classes(self):
+        import pathlib
+        import re
+
+        text = (pathlib.Path(__file__).resolve().parent.parent / "docs" / "legal-actions-u7-5fg.md").read_text(encoding="utf-8")
+        section = text.split("### 2.2", 1)[1].split("###", 1)[0]
+        rows = re.findall(r"^\| (R-\d) \| .*? \| .*? \| `(\w+)` \|", section, flags=re.MULTILINE)
+        self.assertEqual(rows, [(c["id"], c["status"]) for c in FIXED])  # 文書の表と、応答の classes が同じ
+        for phrase in ("D-U75-FACE-UP-ACTORS", "D-U75-ENERGY2-SCHEMA", "D-U75-FACE-DOWN-POWER", "D-U75-R2", "D-U7-COMPLETENESS", "options_by_path", "path_stages",
+                       "display_only_kinds", "partial_residual", "unverified_paths", "088822c58628fbf366363bcaaa713b1370125e86", "74c8e1f8ca03d017d5c0a8a79e6fdaa33d25b7f8"):
+            self.assertIn(phrase, text)
+
+
 if __name__ == "__main__":
     unittest.main()
