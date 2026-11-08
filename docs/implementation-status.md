@@ -5283,3 +5283,8 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - seed 13（固定デッキ・既定の規約集合）: rules-v2・mixed（rules-v2・ε 0.25）とも `game_over`。同じ番の同じ操作の受理の最大は 2（V2 の rules-v1 は 168 で受理の上限）。`replay_run` は `succeeded`。mixed の別のプロセスでの再現は 290 行が一致
 - V3 以降は未実装
 - 詳細: [verification-ai-v2-repeat.md](verification-ai-v2-repeat.md)
+
+## 検証用 AI の V3 の仕様と計画（v0.172 のあと。設計だけ）
+
+- deep・boundary・negative を分けた V3 の仕様、D-6 の異常の判定の基準の案（判定の区分と、check・submit・受理のあとの表）、negative の変異と副作用の確かめ、最初の単位（固定デッキの通常の進行の中の negative）と段階の計画を作った。実装・テスト・対戦の実行はしていない。採用待ち
+- 詳細: [verification-ai-v3-design.md](verification-ai-v3-design.md)
