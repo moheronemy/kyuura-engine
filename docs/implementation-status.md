@@ -5330,3 +5330,10 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 確かめ: 新しいテスト `tests/test_legal_actions_p6_face_down_retreat_v0_174.py`（構築盤面: 契約・形の検査・双子・U7 と client_api と直接のコマンドの一致の 3 場面）と関連のモジュール、配布物の照らし（required=62・problems=0）、コミット `f7bf450580bf0d02573b4d032271be6b8e12d699` の Git の URL からの通常のインストールのスモーク
 - R-5 の全体は解消していない（P2・P3〜P5・保守の守りが残る）。GUI・検証用 AI の追従は未着手。new_game からの到達は確かめていない
 - 詳細: [legal-actions-p6-face-down-retreat.md](legal-actions-p6-face-down-retreat.md)
+
+## v0.174 のあと: 検証用 AI の P6 への追従（エンジンの版は 0.174.0 のまま）
+
+- 行動生成が段の `cost_evaluation` を厳密に確かめ、選ぶ数・重なりなし・選んだ順だけで選ぶ（uniform-stage・uniform-tuple。費用・個数を求めない）。判定の規則 4（P6 の拒否を元のコードで分け、受理の中身を分ける）
+- 確かめ: `tests/test_verification_ai_p6.py` と既存の検証用 AI のテスト、構築盤面 3 つの固定確認（`tools.verification_ai.run_p6`。受理・エネルギー不足の拒否・トラッシュと受理のあとの決定。suspect 0）。new_game からの到達ではない
+- GUI の追従は未着手
+- 詳細: [verification-ai-p6.md](verification-ai-p6.md)
