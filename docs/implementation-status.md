@@ -5276,3 +5276,10 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 固定デッキ・既定の規約集合・seed 11・12・13 で rules・mixed（ε 0.25）の 6 局を実行し、V1 の uniform-stage の 3 局を再利用して比べた（再利用の根拠は、V2 のコードでの seed 12 の再現が V1 の記録と一致したこと）。seed 11 は 3 方式とも開始の時点の既知の停止。rules の seed 13 はエナジートランスの繰り返しで受理の上限（1,000）に届いた（方策による繰り返し。エンジンの拒否・停止はない）。どの局も `replay_run` は `succeeded`・記録の対応の問題 0。きぜつは未計測
 - V3 以降（`boundary`・`negative`・双子・広い対象・最小化）は未実装
 - 詳細: [verification-ai-v2.md](verification-ai-v2.md)
+
+## 検証用 AI の V2 の補完（反復の抑制。v0.172 のあと。エンジンは変えていない）
+
+- rules-v2（`RulePolicy(version=2)`）: 同じ番・同じ主体で同じ意味の操作（主体・種類・対象・入力の意味）が 2 回受理されたら、送る前の評価で抑え、同じエピソードで 2 回抑えた候補を end_turn より後ろへ下げる。候補・処理可能性は書き換えない（戦略上の選好）。mixed はルールの側の版を指定でき、ランダムの側は抑えないが受理を履歴に入れる。rules-v1・uniform-stage・uniform-tuple・mixed（rules-v1）の意味の列は変えていない
+- seed 13（固定デッキ・既定の規約集合）: rules-v2・mixed（rules-v2・ε 0.25）とも `game_over`。同じ番の同じ操作の受理の最大は 2（V2 の rules-v1 は 168 で受理の上限）。`replay_run` は `succeeded`。mixed の別のプロセスでの再現は 290 行が一致
+- V3 以降は未実装
+- 詳細: [verification-ai-v2-repeat.md](verification-ai-v2-repeat.md)
