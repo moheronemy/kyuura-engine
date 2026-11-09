@@ -1771,8 +1771,10 @@ def _power_candidates(state: GameState, actor: int) -> list[_Candidate]:
 GUARANTEE_FACE_DOWN_POWER = {
     "preconditions": "番のプレイヤーの main の段階で、本人のうらのカード（マチスの秘策）の、本人が知る本当のカード（観測の real。本人の応答にだけ出す）の印刷の特殊能力のうち、"
                      "登録があり、使用を宣言して UsePokemonPower で使う力（effects.power_by_command）。エンジンの確かめ（check_use_pokemon_power）は呼ばない。候補の作成で"
-                     "カードをおもてにしない・状態の複製の上でおもてにして試さない。入力は型ごとの宣言（effects.POWER_INPUT_STAGES）が 0・1 段の型だけで、選べるものは宣言の場所"
-                     "（場の公開の値・本人の手札）の並び。数は宣言で 1。2 段以上・宣言のない型・登録のない力は入力を返さない（coverage の residual R-3）",
+                     "カードをおもてにしない・状態の複製の上でおもてにして試さない。入力は型ごとの宣言（effects.POWER_INPUT_STAGES）の段（0〜3 段）で、選べるものは宣言の場所"
+                     "（場の公開の値・ついているカード・本人の手札）の並び。どの段も数は 1。2〜3 段（v0.175）は前の段の選び方ごとの番号（options_by_choice・after）の構造の組で、"
+                     "受け付けるかで絞らない。入力の検査（check）は段の数・番号・前の段との依存だけを確かめる。宣言のない型・登録のない力・知らない場所の段・選べるもの（完成する組）の"
+                     "ない段は入力を返さない（coverage の residual R-3）",
     "acceptance": "保証しない。エンジンはコマンドの入口で、番・決定待ちでないことを確かめたあと、このポケモンをおもてにする（_reveal_for_action）。本当のカードが「たねポケモン」なら、"
                   "おもてにしたあとふつうに確かめ（check_use_pokemon_power）、受け付けなければコマンドごと拒否する（状態・ログはもどり、おもてにしたことも公開されない）。"
                   "「たねポケモン」でなければ、ついているカードといっしょにトラッシュし、コマンドを受け付けたことにする（特殊能力はおこらない）。最終の判定は apply_command",
@@ -1782,14 +1784,52 @@ GUARANTEE_FACE_DOWN_POWER = {
                        "うらのバトル場のポケモンのワザといっしょに選ぶもの（R-2）には広げない",
 }
 _FACE_DOWN_POWER_DOMAINS = frozenset({POWER_CHOICE_OWN_POKEMON, POWER_CHOICE_OPPONENT_POKEMON, POWER_CHOICE_OPPONENT_BENCH, POWER_CHOICE_HAND_CARD})  # 前の段によらない場所
+_FACE_DOWN_MIN_STAGED, _FACE_DOWN_MAX_STAGED = 2, 3  # v0.175（U-R3a）: 構造の組で示す宣言の段の数
+_FACE_DOWN_STAGED_NOTE = ("うらのカードの特殊能力（2〜3 段）: 選べるものは宣言の場所の並び。あとの段は前の段の選び方ごとの番号（options_by_choice）。組は構造だけで、受け付けるかは"
+                          "確かめていない（エンジンがおもてにしてから確かめる）")
+
+
+def _face_down_staged_declaration(decl) -> bool:
+    """v0.175（U-R3a）: うらのカードの宣言の段を、公開の値・本人の手札だけの構造の組で示せるか。どの段も前の段によらない場所か、``energy_on_source``（前の段で自分の場の
+    ``source`` を選んだときだけ。選んだポケモンについているカードは公開）。知らない場所・``source`` のない ``energy_on_source`` は示さない（入力を返さない）。"""
+    seen_source = False
+    for field_name, domain in decl:
+        if domain == POWER_CHOICE_ENERGY_ON_SOURCE:
+            if not seen_source:
+                return False
+        elif domain not in _FACE_DOWN_POWER_DOMAINS:
+            return False
+        if field_name == "source" and domain == POWER_CHOICE_OWN_POKEMON:
+            seen_source = True
+    return True
+
+
+def _face_down_power_paths(state: GameState, actor: int, decl) -> list[tuple[list, tuple[str, list[str]]]]:
+    """v0.175（U-R3a）: うらのカードの 2〜3 段の宣言の、構造の組（段の順の (値, 公開の値, うらか)）。選べるものは宣言の場所の並び（``_power_domain``。場の公開の値・
+    ついているカード・本人の手札）だけで、エンジンの確かめ（check_use_pokemon_power・check_usable）を呼ばない・おもてにしない・状態を複製して試さない。受け付けるか
+    （タイプ・同じポケモン・回数など）は先読みして絞らない。あとの段の選べるものがない前の段の選び方は、組が完成しないので含めない（構造の欠け）。どの組も unverified。"""
+    paths: list[tuple[list, tuple[str, list[str]]]] = []
+    found = (UNVERIFIED, [REASON_FACE_DOWN])
+
+    def walk(k: int, chosen: dict[str, int], path: list) -> None:
+        if k == len(decl):
+            paths.append((list(path), found))
+            return
+        field_name, domain = decl[k]
+        for value, shown, face_down in _power_domain(state, actor, domain, chosen):
+            walk(k + 1, {**chosen, field_name: value}, [*path, (value, shown, face_down)])
+
+    walk(0, {}, [])
+    return paths
 
 
 def _face_down_power_candidates(state: GameState, actor: int, pokemon, base: dict[str, Any]) -> list[_Candidate]:
     """本人のうらのカードの、本当のカードの印刷の宣言する特殊能力（D-U75-FACE-DOWN-POWER）。本人の候補にだけ現れる（相手・観戦者の応答・更新には出さない）。
 
-    入力を作るのは、選べるもの・数・制約・理由が本人の知識だけで決まる型だけ: 宣言の段が 0 段（入力なし）か、前の段によらない場所の 1 段（場の公開の値・本人の手札）。
-    どの選べるものも unverified（確かめていない。エンジンがおもてにしてから決める）。2 段以上の型（2 段目の選べるものは 1 段目の確かめのあとで決まり、確かめを呼ばずに並べると
-    全部の組をそのまま示すことになる）・宣言のない型・登録のない力・選べるもののない段は、入力を返さない（unconfirmed。residual R-3）。"""
+    入力を作るのは、選べるもの・数・制約・理由が本人の知識だけで決まる型だけ: 宣言の段が 0 段（入力なし）か、前の段によらない場所の 1 段（場の公開の値・本人の手札）か、
+    v0.175（U-R3a。docs/legal-actions-u-r3a-v0.175.md）から 2〜3 段（``_face_down_staged_declaration``。どの段も公開の値・本人の手札で、確かめを呼ばない構造の組。
+    おもてのカードの候補のように受け付けるかで組を絞らないので、check の保証は形だけ）。どの選べるものも unverified（確かめていない。エンジンがおもてにしてから決める）。
+    宣言のない型・登録のない力・知らない場所の段・選べるもの（完成する組）のない段は、入力を返さない（unconfirmed。residual R-3）。"""
     definition = state.printed_def(pokemon.card)
     if definition.category != "pokemon":
         return []  # 本当のカードがポケモンでない（印刷の特殊能力がない。おもてにする操作は reveal_face_down）
@@ -1801,12 +1841,18 @@ def _face_down_power_candidates(state: GameState, actor: int, pokemon, base: dic
         common = {"guarantees": dict(GUARANTEE_FACE_DOWN_POWER), "pokemon": dict(base),
                   "power": {"index": index, "name_ja": power.name_ja, "card": pokemon.card, "card_id": definition.id, "face_down": True}}
         decl = None if effect is None else POWER_INPUT_STAGES.get(type(effect))
+        head = (pokemon.pokemon_id, index, None, tuple(field_name for field_name, _ in (decl or ())))
+        if decl is not None and _FACE_DOWN_MIN_STAGED <= len(decl) <= _FACE_DOWN_MAX_STAGED and _face_down_staged_declaration(decl):
+            # v0.175（U-R3a。docs/legal-actions-u-r3a-v0.175.md）: 2〜3 段は、宣言の場所の並びの構造の組（確かめない）。完成する組がなければ入力を返さない（R-3 のまま）
+            paths = _face_down_power_paths(state, actor, decl)
+            if paths:
+                out.append(_staged_power_candidate(decl, paths, common, head, first_note=_FACE_DOWN_STAGED_NOTE))
+                continue
         values = [] if not decl or len(decl) != 1 or decl[0][1] not in _FACE_DOWN_POWER_DOMAINS else _power_domain(state, actor, decl[0][1], {})
         if decl is None or (decl and not values):
             public = {"processability": NOT_IMPLEMENTED, "reasons": [REASON_FACE_DOWN, "input_boundary_unconfirmed"], **common}
             out.append(_Candidate("", KIND_USE_POWER, public, [], disclosure=DISCLOSURE_UNCONFIRMED))
             continue
-        head = (pokemon.pokemon_id, index, None, tuple(field_name for field_name, _ in decl))
         if not decl:
             public = {"processability": UNVERIFIED, "reasons": [REASON_FACE_DOWN], **common, "choices_format": "[]"}
             out.append(_Candidate("", KIND_USE_POWER, public, [], disclosure=DISCLOSURE_NONE, power=head))
@@ -1858,6 +1904,13 @@ def _power_candidate(state: GameState, actor: int, pokemon, slot, card, decl, co
             return None
         public = {"processability": found[0], "reasons": found[1], **common, "choices_format": "[]"}
         return _Candidate("", KIND_USE_POWER, public, [], disclosure=DISCLOSURE_NONE)
+    return _staged_power_candidate(decl, paths, common, head)
+
+
+def _staged_power_candidate(decl, paths: list[tuple[list, tuple[str, list[str]]]], common: dict[str, Any], head: tuple,
+                            first_note: str | None = None) -> _Candidate:
+    """宣言の段（1〜3 段）と、組（段の順の (値, 公開の値, うらか)）ごとの結果から、段・番号・``options_by_choice``・``after`` を組み立てる（U7-5e。v0.175 で
+    うらのカードの 2〜3 段と共用にした。おもてのカードの出力は変えない）。"""
     # 選ぶものは、前のすべての段の選び方（値の並び）ごとに別のもの。番号は段の順・最初に現れた順に o1, o2, …
     seen: dict[tuple, dict[str, Any]] = {}
     results_by_prefix: dict[tuple, list[tuple[str, list[str]]]] = {}
@@ -1883,6 +1936,8 @@ def _power_candidate(state: GameState, actor: int, pokemon, slot, card, decl, co
         options = [_option({"id": oid, **shown_of[oid], **({"after": parents[oid]} if k > 1 else {})}, *_best(results[oid])) for oid in in_stage]
         stage = {"stage": k, "input": INPUT_CHOOSE_OPTION, "role": field_name, "meaning": _POWER_MEANING[domain], "count": {"min": 1, "max": 1}, "options": options,
                  "order": ORDER_NOT_APPLICABLE}
+        if k == 1 and first_note is not None:
+            stage["note"] = first_note
         if k > 1:
             by_choice: dict[str, list] = {}
             for oid in in_stage:
@@ -1972,8 +2027,8 @@ RESIDUAL_CLASSES = (
      "note": "自分のうらのバトル場のポケモンのワザといっしょに選ぶもの（クチバシティジムのコイン・ワザといっしょに使う特殊能力）。おもてにしたあとの確かめで決まるので示さない（D-U75-R2）"},
     {"id": RESIDUAL_FACE_DOWN_POWER, "kind": KIND_USE_POWER, "field": "power_inputs", "situation": SITUATION_TURN_MAIN, "status": RESIDUAL_INPUT_WITHHELD,
      "reason": REASON_FACE_DOWN, "subject": "own_face_down_pokemon",
-     "note": "自分のうらのカードの特殊能力のうち、入力を本人の知識だけで作れないもの（宣言の段が 2 段以上・宣言のない型・登録のない力・選べるもののない段）。候補は出し、入力を返さない"
-             "（v0.172。0・1 段の型は unverified で示す）"},
+     "note": "自分のうらのカードの特殊能力のうち、入力を本人の知識だけで作れないもの（宣言のない型・登録のない力・知らない場所の段・選べるもの（完成する組）のない段）。候補は出し、"
+             "入力を返さない（v0.172 から 0・1 段、v0.175 から 2〜3 段の型は unverified で示す）"},
     {"id": RESIDUAL_FACE_UP_SCOPE, "kind": KIND_CHECK_FACE_UP_DECK, "field": "position", "situation": SITUATION_OTHER, "status": RESIDUAL_OUT_OF_SCOPE,
      "reason": "api_scope_turn_player_main", "subject": "opponent_face_up_deck_below_top",
      "note": "CheckFaceUpDeckCard はエンジンが番・段階を確かめず、相手の山札の 2 枚目より下のおもてのカードは FU2（未裁定）で止める。U7 は番のプレイヤーの MAIN にだけ表示する"

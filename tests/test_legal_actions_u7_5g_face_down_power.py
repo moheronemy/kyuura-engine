@@ -74,7 +74,9 @@ class CandidateTest(unittest.TestCase):
         self.assertEqual(L.stage_dependency_problems(stages), [])
 
     def test_multi_stage_power_withholds_inputs(self):
-        state = placed(ROCKET_CHARMANDER)
+        # v0.175（U-R3a）: 2 段の型は構造の組を示す（tests/test_legal_actions_u_r3a_v0_175.py）。入力を返さないのは、組が完成しない場面（自分の場のどのポケモンにも
+        # ついているカードがない）。v0.172〜v0.174 はエネルギーのある盤面でも返さなかった（意図した差）
+        state = S.place(S.board(hand=(ROCKET_CHARMANDER,), active={"card": H.HITMONCHAN, "energy": []}), ROCKET_CHARMANDER)
         _h, session, r, c = one(state)
         self.assertEqual((c["processability"], c["input_disclosure"]), (L.NOT_IMPLEMENTED, L.DISCLOSURE_UNCONFIRMED))
         answer = session.inputs(r["game"], r["revision"], c["id"])
