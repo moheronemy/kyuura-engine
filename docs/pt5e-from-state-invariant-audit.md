@@ -1,7 +1,7 @@
 # PT5E-FROM-STATE-INVARIANT の監査と最小修正の計画（構築した状態の公開入口の整合性）
 
 [PT-5e の補完](legal-actions-pt5e-audit.md)（v0.176.0。9.2 節）で、`ClientHub.from_state` が不変条件の崩れた状態を受け付けることが分かりました。
-この文書は、その入口と関連する公開入口の契約・実装の監査と、最小修正の計画です。**調査・設計・文書化だけで、入口の修正・テスト・ビルド・対戦・モジュールの読み込みはしていません。**
+この文書は、その入口と関連する公開入口の契約・実装の監査と、最小修正の計画です。追記（v0.177）: 利用者が案 B を採用し、v0.177.0 で実装しました（9 章）。1〜8 章は監査のときの記録のままです。**調査・設計・文書化だけで、入口の修正・テスト・ビルド・対戦・モジュールの読み込みはしていません。**
 エンジン・AI・GUI・renderer・データ・固定デッキ・規約集合・裁定・識別方式・版（0.176.0）は変えていません。
 
 ## 0. 基点と範囲
@@ -181,3 +181,92 @@
 - 信頼された内部の組み立て・`ActionHost.game` の直接の変更・低層の API からは、崩れた状態がありうる（契約で呼び出し側の責任にする。PT-5e のガードと、コマンドの終わりの確かめで補う）
 - `check_invariants` が見ない整合（乱数・効果の登録・構造・`pending_moves`）は入口でも見ない
 - 既存のテストの盤面が受け付けられるかは、実装のときの回帰で初めて分かる（静的には決められない）
+
+## 9. 実装の結果（v0.177.0。利用者が案 B を採用）
+
+1〜8 章は監査のときの記録（版 0.176.0・基点 `7533fbb`）のままです。利用者が 4 章の案 B と、7 章の 1〜3（新しい例外の型・入口で規約集合と決定の再開先は見ない）を採用し、v0.177.0 で実装しました。
+
+### 9.1 共通の確かめと拒否の時期
+
+- 共通の関数 `adapter.checked_state_copy(state)` を 1 つ加え、`ClientHub.from_state`・`ActionHost.from_state` の両方がそれだけを呼ぶ（確かめを重ねて書いていない）
+  1. 型: `type(state) is GameState`（子のクラスは受け付けない）。違えば `TypeError`（使い方の誤り。複製しない）
+  2. 複製（`state.clone()`）
+  3. 複製を既存の `engine.check_invariants` で確かめる
+  4. 問題があれば `UnusableStateError`。通った複製だけで `HostedGame` を作り、そのあとで `ActionHost`・`ClientHub`・セッション・取っ手を作る
+- 置き場所は `adapter.py`（`HostedGame` のとなり）。`adapter` はもともと `engine` を import しているので、新しい依存・循環はない。`legal_actions`・`client_api` は `adapter` から import する
+- 確かめるのは複製（ホストが持つもの）なので、確かめたあとに呼び出し側が渡した状態を変えても、ホストの対戦には影響しない
+- 信頼された内部の組み立て（`HostedGame(state)`・`ActionHost(game)`・`ClientHub(game)`）は確かめない（変えていない）。期待する前提（`new_game`・`apply_command` が返した状態、`restore_snapshot` が復元した状態、`checked_state_copy` を通した状態）を docstring に書いた。崩れた状態をここへ直接渡すのは、低層の振る舞いを確かめる検証者・テストだけ（通常の使い方ではない）
+- 無検査で通す公開の選択肢は加えていない。PT-5e の候補の側のガード・`apply_command` の実行のあとの確かめ・スナップショットの確かめは残した
+
+### 9.2 例外の型・code・文・詳しい問題
+
+| 場合 | 結果 |
+|---|---|
+| 型の違い（`GameState` でない・子のクラス） | `TypeError`（固定の文） |
+| 複製の失敗（`clone` の `Exception`） | `UnusableStateError`・`code` `STATE_CHECK_ERROR`・`stage` `clone`・`problems` 空・元の例外は `__cause__` |
+| `check_invariants` が問題を返した | `UnusableStateError`・`code` `STATE_INTEGRITY`・`stage` `check`・`problems` は問題の文のタプル |
+| `check_invariants` の中の `Exception` | `UnusableStateError`・`code` `STATE_CHECK_ERROR`・`stage` `check`・`problems` 空・元の例外は `__cause__` |
+| `MemoryError` | 投げ直す（変えない） |
+| `KeyboardInterrupt`・`SystemExit` など（`Exception` の子でないもの） | 捕まえない（`except Exception` だけ） |
+
+- `UnusableStateError` は `ValueError` の子で、`EngineError`・`StateIntegrityError`（処理の結果の不整合。`failed` の結果）とは別の型。公開の位置は `kyuura_engine.adapter.UnusableStateError`（`client_api`・`legal_actions` からも同じものを参照できる）
+- `str()` は `code` ごとの固定の文だけ（問題の文・カードの番号などの値を入れない）。`problems` はホスト・検証者だけが読む（カードの番号・ゾーンが入り、秘密を含みうる）
+- 入口を作る前に投げるので、プレイヤー向けの JSON の応答・公開の更新は存在しない。JSON の要求・応答のスキーマとエラーのコード表は変えていない
+- 範囲: Python のオブジェクトを受け取るホスト向けの入口で、信頼できないデータの読み込み（デシリアライズ）ではない。任意の壊れたオブジェクト・悪意のある値に対して安全であるとは保証しない（外部の入力は `snapshot.restore_snapshot`）。不変条件を満たすことは、合法な対戦から到達できることではない。入口のあとにホストが状態を直接変えることは防がない
+
+### 9.3 有効な状態と不整合な状態の結果
+
+| 状態（作り方） | `ClientHub.from_state`・`ActionHost.from_state` |
+|---|---|
+| 準備中（`start_game` の new_game の状態） | 受け付ける。候補は `ClientHub.start` と同じ（取っ手を除く） |
+| 番の途中（構築盤面）・決定待ち（パソコン通信のあと）・終局（ピカチュウの対戦 seed 0）・停止（準備の停止 seed 1・途中停止）・サドン・デス（構築）・テスト用の効果の登録の盤面 | 受け付ける。ホストは複製を持ち、渡した状態は変わらない。状態の知らせ（`status_of`）はそのまま |
+| おもての山札の印が続かない・同じカードが 2 か所・持ち主でないゾーン・未知の番号 | 拒否（`STATE_INTEGRITY`。`problems` は `check_invariants` の結果と同じ）。渡した状態は変わらない |
+| 秘密の位置だけが違う崩れた状態 2 つ（相手の山札の 2 枚目・7 枚目） | 2 つの入口・2 つの状態で、例外の型・`code`・`stage`・文が同じ |
+| スナップショット | 保存・復元した状態は受け付ける。スナップショットが保存を断る崩れた状態は、入口も断る |
+| 信頼された内部の組み立て `ClientHub(A.HostedGame(...))`（検証者専用） | 今のまま受け付ける。崩れた状態の候補は PT-5e のガードで `unverified` |
+
+確かめるのは不変条件だけです。効果の登録・規約集合の正しさは確かめません（テスト用の効果の登録の盤面も、不変条件を満たせば受け付ける）。
+
+### 9.4 テストの盤面の変更と根拠
+
+- 既存の盤面で、新しい確かめに拒否されたものは**なかった**（`from_state` を使う 17 モジュールを含む回帰がすべて 1 回目で失敗 0）
+- 意図した変更は PT-5e のテストの 2 件だけ（契約の変更）:
+  - `test_from_state_accepts_a_broken_invariant_but_the_condition_is_not_evaluated` → `test_from_state_rejects_a_broken_invariant_and_the_condition_is_not_evaluated_internally`: 2 つの入口の拒否（同じ型・code・文）を確かめる形にした。崩れた状態の候補と送信の結果の比べは、信頼された内部の組み立て（`queries(..., internal=True)`）で残した（主張は同じ）
+  - `test_broken_invariant_keeps_the_engine_rejection_private`: 包み方だけを `ClientHub(A.HostedGame(state.clone()))` に変えた（検証者専用。通常の使い方ではない）。主張は同じ
+
+### 9.5 テスト
+
+| 種類 | 結果 |
+|---|---|
+| 新しいモジュール `tests/test_from_state_integrity_v0_177.py` | 12 件 OK |
+| PT-5e のモジュール（2 件を変えた） | 14 件 OK |
+| 回帰（1 つずつ別のプロセス）: `from_state` を使う 16（PT-5e を除く。エンジン 14・AI のテスト 2）、`client_api_cn1`・`state_snapshot_v0_157`・`snapshot_replay_v0_158`・`view_record_v0_155`・`replay_record_v0_153`、AI の `v3_3`・`p6`・`u_r3a`・`v0176_follow`、版のあとの `preset_decks_v0_20`・`distribution` | すべて OK |
+| 合計 | 29 モジュール、失敗 0、修正・再実行なし。版のコミットの前の 27 モジュールで約 4.5 分 |
+
+全体のテスト・GUI・E2E・AI の実対戦・大量の対戦・seed の探索・lockstep・状態の監査はしていない。
+
+### 9.6 版・識別・配布
+
+- 版 0.177.0。識別方式は同じ（`kyuura-package-files-sha256/1`）。`client_api.py`・`legal_actions.py`（振る舞いのファイル）を変えたので `behavior_digest` が `337caa88…32ea` から `68ee4ab4949862c43f1eb403d7c2311f43aaa6b902f482c4dc318be5b5c84727` に、`adapter.py`（計測のファイル）を変えたので `instrumentation_digest` が `e7d36df3…3034` から `d34367481dd69bd72c715e1977feb93b3c19596a01f3b53a104eca2e7e06146d` に変わった
+- 0.176.0 の完全な記録・スナップショットは、0.177.0 では再実行・復元できない（実装の識別が違う。既存の設計）。過去の証跡は旧い実装と対応づけたまま残す。旧いスナップショットの識別を書きかえて使わない
+- 新しい実行時のファイルはない（配布するファイルは 62 で同じ。`pyproject.toml` の差は版だけで、新しい依存はない）。wheel の照らしは required=62・problems=0
+- 配布用の固定コミット `01317a649e65461dfeffabfa0b4893840ae6d9ee` を、リポジトリの外の新しい venv に Git の URL から通常のインストールをして、スモークを 1 回した（終了コード 0）: `direct_url` のコミットが一致、editable でなく site-packages から読み込み、版と実装の識別がソースと一致、依存なし、パッケージのファイルは 62（`__pycache__` を除く）。new_game の状態を 2 つの入口が受け付け、テスト専用に変えた状態（重複・秘密の位置だけが違う印 2 つ）を 2 つの入口が同じ型・code・固定の文で拒否、型の違いは `TypeError`、渡した状態は変わらない
+
+### 9.7 公開入口の契約と、残る低層の API の前提
+
+| 入口 | v0.177 の契約 |
+|---|---|
+| `ClientHub.from_state`・`ActionHost.from_state` | 外から作った状態をプレイヤーの入口へつなぐ公開の入口。型・複製・不変条件を確かめ、通らなければ hub・セッション・取っ手を作らずに拒否 |
+| `HostedGame(state)`・`ActionHost(game)`・`ClientHub(game)`・`ViewRecorder.attach` | 信頼された内部の組み立て（確かめない）。前提: `new_game`・`apply_command`・`restore_snapshot`・`checked_state_copy` を通った状態。崩れた状態を渡すのは検証者・テストだけ |
+| `apply_command`・`adapter.submit`・`observe` | 低層。入力の状態の整合は呼び出し側の責任。返す状態は今までどおりコマンドの終わりに確かめる |
+| `restore_snapshot`・`RestoredGame` | 外部の入力（ファイル）の境界。今までどおり（最も厳しい確かめ） |
+
+### 9.8 GUI・検証用 AI への影響
+
+- GUI（`dbb6456`。読み取りだけ）: 固定例・テスト専用盤面はどちらも不変条件を満たす状態だけを `ClientHub.from_state` に渡すので、拒否されない見込み（実際の GUI では確かめていない）。追従（固定のコミットを `01317a6` 以降に・契約の engine の値・版のテスト・`engine-contract.md` の `from_state` の行に受け付ける条件と `UnusableStateError` を書く・接続層が例外を画面に出すなら固定の文だけにする）は別の作業
+- 検証用 AI: 実行のコードは `from_state` を使わない。テスト（`v0`・`v1`・`v3_3`・`p6`・`u_r3a`・`v0176_follow`）は失敗 0。AI のコードは変えていない。保存済みの証跡の版（0.176.0 以前）は変えていない
+
+### 9.9 証跡と残る制限
+
+- 証跡: `C:/dev/kyuura-engine-verification-vai/verifier/runs/pt5e-from-state-fix/`（採用の記録・実行の前の計画・例外の契約・コマンドと終了コード・テストの盤面の変更の理由・テストの出力・配布と導入の結果）と `public/runs/pt5e-from-state-fix/summary.json`。既存の 509 ファイルが変わっていないことを確かめてから、マニフェストを 556 ファイルに更新した（`sha256.json` の sha256 は `1341313a68b25342fee581082f68407639358b69498c4c5ef30f13727a8ae0ad`）
+- 残る制限: 8 章のとおり（不変条件は到達可能性より弱い・信頼された内部の組み立てと低層の API からは崩れた状態がありうる・`check_invariants` が見ない整合は入口でも見ない）。加えて、入口のあとにホストが状態を直接変えることは防がない。規約集合・決定の再開先は入口で見ない（コマンドごとの既存の拒否のまま）。任意の壊れたオブジェクト・悪意のある値への安全は保証しない

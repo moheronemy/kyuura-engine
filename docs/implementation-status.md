@@ -5385,5 +5385,14 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 
 - `ClientHub.from_state`・`ActionHost.from_state` は渡した状態を複製するが `check_invariants` を確かめない（確かめるのは `new_game`・`apply_command` の返す状態と、スナップショットの保存・復元だけ）。テスト専用の改変で崩した状態では、送信の結果が秘密の位置で分かれる（通常の対戦・スナップショットからは届かない）
 - 推奨: 2 つの `from_state` の共通の下位の関数で、複製を `check_invariants` で確かめ、ホスト・取っ手を作る前に固定の文の例外で拒否する。信頼された内部の組み立て（`HostedGame(state)` など）は変えず契約を明記、無検査の選択肢は加えない、PT-5e の候補の側のガードは残す
-- 採用の判断・実装・テストは未着手
+- 採用の判断・実装・テストは未着手（このときの記録。v0.177 で実装した。次の節）
 - 詳細: [pt5e-from-state-invariant-audit.md](pt5e-from-state-invariant-audit.md)
+
+## v0.177: PT5E-FROM-STATE-INVARIANT（from_state の共通の状態の確かめ）
+
+- `adapter.checked_state_copy`（型 → 複製 → 複製の `check_invariants`）を `ClientHub.from_state`・`ActionHost.from_state` の両方が呼び、不整合な状態を hub・セッション・取っ手を作る前に `adapter.UnusableStateError`（`ValueError` の子。`code` `STATE_INTEGRITY`・`STATE_CHECK_ERROR`。文は固定。`problems` はホスト・検証者だけ）で拒否する。型の違いは `TypeError`。`MemoryError` は投げ直し、`KeyboardInterrupt`・`SystemExit` は捕まえない
+- 変えていないもの: `HostedGame(state)`・`ActionHost(game)`・`ClientHub(game)`（信頼された内部。前提を契約に書いた）、PT-5e の候補の側のガード、`apply_command` の実行のあとの確かめ、JSON のスキーマ、規約集合・決定の再開先の確かめ（コマンドごとのまま）。無検査の選択肢は加えていない
+- 確かめ: 新しいテスト `tests/test_from_state_integrity_v0_177.py`（12 件）と 29 モジュールの回帰（失敗 0。既存の盤面で拒否されたものはない。PT-5e の 2 件を契約の変更に合わせた）、配布物の照らし（required=62・problems=0）、コミット `01317a649e65461dfeffabfa0b4893840ae6d9ee` の Git の URL からの通常のインストールのスモーク
+- 版は 0.177.0（`behavior_digest`・`instrumentation_digest` が変わった）。0.176.0 の記録・スナップショットは 0.177.0 では再実行・復元できない（既存の設計）
+- 残る: GUI の追従、不変条件が到達可能性より弱いこと、低層の API・内部の組み立てからの崩れた状態（契約で呼び出し側の責任）
+- 詳細: [pt5e-from-state-invariant-audit.md](pt5e-from-state-invariant-audit.md) 9 章
