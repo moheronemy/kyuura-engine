@@ -187,7 +187,7 @@ class JudgeTest(unittest.TestCase):
         return J.judge_normal(self.CAND, [], sub, stages=p6() if stages is None else stages)
 
     def test_version(self):
-        self.assertEqual(J.JUDGE_RULES_VERSION, 4)
+        self.assertEqual(J.JUDGE_RULES_VERSION, 5)  # U-R3a の追従で規則 5（docs/verification-ai-u-r3a.md 3 章）。規則 4（P6）の中身は変えていない（下の 2 つのテスト）
 
     def test_p6_rejections(self):
         cat = J._catalog_category

@@ -18,9 +18,10 @@ from kyuura_engine import diagnostics as D
 from kyuura_engine import legal_actions as L
 from kyuura_engine import preset_deck
 from kyuura_engine.client_api import ClientHub
+from kyuura_engine.observation import visible_log
 
 from . import actions as B
-from .judge import judge_normal, judge_termination
+from .judge import is_face_down_power, judge_face_down_power_accepted, judge_normal, judge_termination
 from .metrics import Metrics, repetition_summary
 from .policies import STAGE, TUPLE, BoundaryPolicy, MixedPolicy, RulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
 from kyuura_engine.replay_record import checks
@@ -416,6 +417,8 @@ class Runner:
             if not checked["response"]["valid"]:
                 if any(B.cost_not_evaluated(s) for s in stages):  # P6: check は形だけなので、契約から作った入力が通らないのは契約との矛盾（ほかの種類の check はエンジンの確かめを含む）
                     self._anomaly("p6_check_invalid_for_generated_input", entry, {"refusal": checked["response"].get("refusal"), "choices": choices})
+                elif is_face_down_power(candidate) and stages:  # U-R3a（規則 5）: うらのカードの特殊能力の check も構造だけなので、契約から作った入力が通らないのは矛盾
+                    self._anomaly("face_down_power_check_invalid_for_generated_input", entry, {"refusal": checked["response"].get("refusal"), "choices": choices})
                 self.counters["check_invalid"] += 1
                 tried.add(signature)
                 rejections += 1
@@ -441,6 +444,11 @@ class Runner:
             if self.negative is not None:
                 verdict, why = judge_normal(candidate, meaning, entry["submit"], stages=stages)  # 規則 4: P6 の段は stages の cost_evaluation で分ける
                 entry["judge"] = {"verdict": verdict, "reasons": why}
+            if outcome == D.ACCEPTED and self.negative is not None and is_face_down_power(candidate):
+                # 規則 5: 受理の中身（おもてにして使った・トラッシュ）を、受理のあとに加わった公開のログ（観戦者に見える出来事）で分ける
+                public_before = len(visible_log(before_state, None))
+                verdict, why = judge_face_down_power_accepted(candidate, visible_log(self.game.state, None)[public_before:])
+                entry["judge_face_down_power_accepted"] = {"verdict": verdict, "reasons": why}
             if outcome == D.ACCEPTED:
                 self.counters["accepted"] += 1
                 self._cover("accepted_kind", candidate["kind"])

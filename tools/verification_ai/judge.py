@@ -21,7 +21,24 @@ from .actions import RETREAT_KIND, cost_not_evaluated
 # 3: V3-3（known_stop には、コード・分類・経路の理由に加えて、その停止の代表の条件の根拠（KNOWN_STOP_EVIDENCE の登録と、場面の側の宣言）が要る。docs/verification-ai-v3-3.md 3 章）
 # 4: P6 の追従（docs/verification-ai-p6.md 4 章）。にげるの段に cost_evaluation（費用を評価していない）がある送信の拒否を、元のコードで分ける（P6_ENGINE_DECIDES は正常な拒否、
 #    P6_API_GUARANTEED は suspect、ほかは undetermined か停止の規則）。受理の中身を judge_p6_accepted で分ける。cost_evaluation のない送信の判定は規則 3 と同じ
-JUDGE_RULES_VERSION = 4
+# 5: U-R3a の追従（docs/verification-ai-u-r3a.md 3 章）。本人のうらのカードの特殊能力の送信（候補の power・pokemon に face_down、理由に face_down_reveal_not_evaluated）の
+#    拒否を、元のコードと、その条件に要る段が選んだ入力にあることで分ける（FACE_DOWN_POWER_ENGINE_DECIDES は正常な拒否、FACE_DOWN_POWER_API_GUARANTEED と構造の段に
+#    よる保証のコードは suspect、ほかは undetermined か停止の規則）。受理の中身を judge_face_down_power_accepted で分ける。ほかの送信（P6・おもての特殊能力をふくむ）は規則 4 と同じ
+JUDGE_RULES_VERSION = 5
+# U-R3a: うらのカードの特殊能力で、エンジンがおもてにしたあとに確かめ、API が評価しないと契約で示すもの（GUARANTEE_FACE_DOWN_POWER: 構造の組は受け付けるかで絞らない）。
+# 元のコード → (その条件に要る段の role（どれか 1 つが選んだ入力にあること。空なら段は問わない）, 条件の説明)。カード・効果の型ごとの登録ではない
+FACE_DOWN_POWER_ENGINE_DECIDES = {
+    "WRONG_ENERGY_TYPE": (("energy",), "選んだエネルギーカードのタイプが、おもてにした本当のカードの特殊能力の条件と合わない（構造の組はタイプで絞らない）"),
+    "NOT_BASIC_ENERGY": (("energy",), "選んだカードが基本エネルギーカードでない（手札の並びは種類で絞らない）"),
+    "SAME_POKEMON": (("source", "target"), "選んだポケモンが使うポケモン自身・移動元と移動先が同じ（構造の組は同じポケモンの組を外さない）"),
+    "WRONG_POKEMON_TYPE": (("target",), "選んだポケモンのタイプが条件と合わない（場の並びはタイプで絞らない）"),
+    "NO_DAMAGE_COUNTERS": (("source",), "選んだ移動元にダメージカウンターがない（場の並びはダメージで絞らない）"),
+    "WOULD_KNOCK_OUT": (("target",), "移すと移動先がきぜつする（場の並びは残り HP で絞らない）"),
+    "POWER_ALREADY_USED": ((), "おもてにした本当のカードのこの特殊能力を、この番にもう使った"),
+}
+# U-R3a: 入力の形（宣言の項目・候補を出す条件）で API が満たすもの。check が valid のあとにこの拒否があれば契約と矛盾する
+FACE_DOWN_POWER_API_GUARANTEED = frozenset({"POWER_CHOICE_MISSING", "POWER_CHOICE_NOT_USED", "NOT_YOUR_TURN", "DECISION_PENDING"})
+FACE_DOWN_POWER_REVEALED, FACE_DOWN_POWER_USED, FACE_DOWN_POWER_TRASHED = "secret_plan_revealed", "pokemon_power", "secret_plan_discarded"
 # P6: エンジンがおもてにしたあとに確かめ、API（候補・inputs・check）が評価しないと契約で示すもの（engine._retreat → check_retreat_declaration・check_retreat の、
 # 本当のカード・おもてにしたあとの状態で決まる拒否）。元のコード → その送信の条件（なぜこの経路で正常な拒否か）。カード・場面ごとの登録ではない
 P6_ENGINE_DECIDES = {
@@ -150,6 +167,11 @@ def judge_normal(candidate: dict[str, Any], meaning: list[dict[str, Any]], submi
     catalog = _catalog_category(diag.get("engine_code"))
     if catalog is not None and catalog != category:
         return SUSPECT, [f"diagnostic_category_mismatch:{category}!={catalog}"]
+    if is_face_down_power(candidate):
+        found = _face_down_power_rejection(diag.get("engine_code"), category, catalog, meaning, stages)
+        if found is not None:
+            return found
+        # 停止系の拒否は、規則 3 と同じく代表の条件の根拠がなければ known_stop にしない（下の _known_stop_or_undetermined）
     if is_p6(candidate, stages):
         code = diag.get("engine_code")
         if code in P6_API_GUARANTEED:
@@ -171,6 +193,55 @@ def judge_normal(candidate: dict[str, Any], meaning: list[dict[str, Any]], submi
     if category in STOP_CATEGORIES:
         return _known_stop_or_undetermined(candidate, meaning, diag, category, catalog, evidence)
     return NORMAL_REJECTION, [category]
+
+
+def is_face_down_power(candidate: dict[str, Any]) -> bool:
+    """本人のうらのカードの特殊能力の送信か（API の契約の値だけで決める: use_power で、power・pokemon の face_down と理由 face_down_reveal_not_evaluated）。"""
+    return (candidate.get("kind") == "use_power" and (candidate.get("power") or {}).get("face_down") is True
+            and (candidate.get("pokemon") or {}).get("face_down") is True and FACE_DOWN_REASON in (candidate.get("reasons") or []))
+
+
+def _chosen_roles(meaning: list[dict[str, Any]], stages: list[dict[str, Any]] | None) -> set[str]:
+    by_number = {s.get("stage"): s.get("role") for s in (stages or [])}
+    return {by_number.get(m.get("stage")) for m in meaning} - {None}
+
+
+def _face_down_power_rejection(code, category, catalog, meaning, stages) -> tuple[str, list[str]] | None:
+    """規則 5: うらのカードの特殊能力の拒否。停止系は None（呼ぶ側が停止の規則で判定する）。"""
+    roles = _chosen_roles(meaning, stages)
+    if code in FACE_DOWN_POWER_API_GUARANTEED:
+        return SUSPECT, [f"face_down_power_structural_guarantee_rejected:{code}"]
+    # 構造の段の保証: 前の段の source に依存するエネルギーの段（ついているカードの並び）を選んだのに「ついていない」は契約と矛盾する
+    energy_on_source = any(s.get("role") == "energy" and "depends_on_stage" in s for s in (stages or []))
+    if code == "ENERGY_NOT_ATTACHED" and energy_on_source and "energy" in roles:
+        return SUSPECT, ["face_down_power_structural_guarantee_rejected:ENERGY_NOT_ATTACHED"]
+    if code in FACE_DOWN_POWER_ENGINE_DECIDES and catalog is not None and category not in STOP_CATEGORIES:
+        needed, condition = FACE_DOWN_POWER_ENGINE_DECIDES[code]
+        if needed and not roles & set(needed):
+            return UNDETERMINED, [f"face_down_power_condition_without_role:{code}:{','.join(needed)}"]
+        return NORMAL_REJECTION, [category, code, "face_down_power_engine_decides_after_reveal", "condition:" + condition]
+    if category not in STOP_CATEGORIES:
+        return UNDETERMINED, [f"face_down_power_rejection_not_explained:{code}"]
+    return None
+
+
+def judge_face_down_power_accepted(candidate: dict[str, Any], new_public_events: list[dict[str, Any]]) -> tuple[str, list[str]]:
+    """規則 5: うらのカードの特殊能力の受理の中身（検証者の側。受理のあとに加わった公開のログの出来事。観戦者に見えるもの）。最初の出来事が、候補のポケモンをおもてにした
+    secret_plan_revealed で、そのあと同じポケモンの pokemon_power があり secret_plan_discarded がなければ「おもてにして使った」、同じポケモンの secret_plan_discarded があり
+    pokemon_power がなければ「たねでないのでトラッシュ」。おもてにしていない・どちらでもない・両方なら undetermined（受理だけで正常としない）。"""
+    pid = (candidate.get("pokemon") or {}).get("pokemon")
+    if not new_public_events or new_public_events[0].get("kind") != FACE_DOWN_POWER_REVEALED or new_public_events[0].get("pokemon_id") != pid:
+        return UNDETERMINED, [f"face_down_power_accepted_without_reveal_first:{[e.get('kind') for e in new_public_events[:2]]}"]
+    revealed = new_public_events[0].get("card_id")
+    used = any(e.get("kind") == FACE_DOWN_POWER_USED and e.get("pokemon_id") == pid for e in new_public_events[1:])
+    trashed = any(e.get("kind") == FACE_DOWN_POWER_TRASHED and e.get("pokemon_id") == pid for e in new_public_events[1:])
+    if revealed is None:
+        return UNDETERMINED, ["face_down_power_revealed_card_not_public"]
+    if used and not trashed:
+        return EXPECTED, ["face_down_power_revealed_and_used", f"revealed:{revealed}"]
+    if trashed and not used:
+        return EXPECTED, ["face_down_power_revealed_not_basic_and_trashed", f"revealed:{revealed}"]
+    return UNDETERMINED, [f"face_down_power_accepted_events:{[e.get('kind') for e in new_public_events]}"]
 
 
 def judge_p6_accepted(new_log_kinds: list[str]) -> tuple[str, list[str]]:
