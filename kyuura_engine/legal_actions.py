@@ -1459,17 +1459,22 @@ def _board_candidates(state: GameState, actor: int) -> list[_Candidate]:
 REASON_USE_CONDITION = "use_condition_not_evaluated"  # カードごとの使うための条件を、読む情報を確かめていないので候補の作成・入力の検査で呼んでいない（使えるかは送信でエンジンが決める）
 GUARANTEE_TRAINER = {
     "preconditions": "番・段階と、手札のトレーナーカードごとに、エンジンが手札から出す前の確かめ（engine.check_play_trainer。番・手札・トレーナーカードであること・トレーナーの使用の禁止・"
-                     "登録表・カードごとの使うための条件・リムーブ禁止ジムの追加の条件・MG1。コマンドの処理と同じ関数・同じ順番）を候補の作成に使う。使うための条件のうち、状態の複製の上で"
-                     "実際の山札から引いて試すもの（PLAYABLE_NOT_EVALUATED）は呼ばない（unverified）",
+                     "登録表・カードごとの使うための条件・リムーブ禁止ジムの追加の条件・MG1。コマンドの処理と同じ関数・同じ順番）を候補の作成に使う。v0.176: 状態の複製の上で山札から"
+                     "引いて試す使うための条件（PLAYABLE_FACE_UP_PREFIX_TRIALS）も呼ぶ。結果は本人の手札・公開の枚数と、おもての山札の並びの不変条件で決まる。その不変条件が"
+                     "成り立たない状態では呼ばない（unverified）。effects.py の外で定義した条件も呼ばない（unverified）",
     "acceptance": "保証しない。エンジンは受け付ける前に、［ちえくらべ］を使わない続き・効果の途中の決定の答えの続きを状態の複製の上で試し（_trainer_reaction_decline_check・_trainer_dead_end）、"
                   "効果の処理の途中の未裁定・未対応で拒否することがある（状態は変わらない）。候補の作成・入力の検査は、これらを呼ばない。最終の判定は apply_command",
     "after_acceptance": "評価していない（錯乱ジムのコイン・相手の［ちえくらべ］の決定・リムーブ禁止ジムの追加の条件・効果の対象や枚数や山札の検索・サイキックコントロールの使うカードは、どれも受理の"
                         "あとの決定で、answer_decision の候補で答える。決めるのが相手のこともある。番を終えるトレーナーは番を終える）",
     "supported_scope": "トレーナーの候補は supported にしない（受理の前の先読みと受理のあとを評価していないため）",
 }
-# 使うための条件（TrainerEffect.check_playable）のうち、候補の作成・入力の検査で呼ばないもの。条件を定義した型（effects.py）の名前。状態の複製の上で、実際の山札から引いて
-# 結果を試す（読む値をたどっていない。U7-5 の設計の PT-5e のうちの 5 つ）。effects.py の外で定義した条件も呼ばない（_use_condition_evaluated）
-PLAYABLE_NOT_EVALUATED = frozenset({"BlainesHeightQuiz", "BlainesQuiz", "GuessOpponentPrizeKind", "SetAsideGuessKindQuiz", "SwapPleaseTrainer"})
+# 使うための条件（TrainerEffect.check_playable）のうち、候補の作成・入力の検査で呼ばないもの。条件を定義した型（effects.py）の名前。effects.py の外で定義した条件も
+# 呼ばない（_use_condition_evaluated）。v0.169〜v0.175 は山札から引いて試す 5 つ（PT-5e）だった。v0.176 で監査した（docs/legal-actions-pt5e-audit.md）ので空
+PLAYABLE_NOT_EVALUATED: frozenset[str] = frozenset()
+# v0.176（PT-5e。docs/legal-actions-pt5e-audit.md）: 状態の複製の上で実際の山札から引いて試す 5 つ（クイズ 4 種・とりかえっこプリーズ）。結果は本人の手札・公開の枚数と、おもての
+# 山札の並びの不変条件（faceup.prefix_problems。おもてのカードは上から続く）だけで決まる。候補の作成で呼ぶのは、その不変条件が成り立つ状態だけ（成り立たない状態は、構築した
+# 盤面の入口から入りうる。そこでは引いて試す結果が並びで変わりうるので、呼ばずに unverified のまま）
+PLAYABLE_FACE_UP_PREFIX_TRIALS = frozenset({"BlainesHeightQuiz", "BlainesQuiz", "GuessOpponentPrizeKind", "SetAsideGuessKindQuiz", "SwapPleaseTrainer"})
 # PT-5e のうち、試すのが場の処理だけ（入れ替え・特殊状態・回復。読むのは場・カードの定義・番・場の効果の記録。山札・サイド・手札・うらのカードの中身を読まない）とたどったもの。
 # 候補の作成で呼ぶ（docs/legal-actions-u7-5c.md 4 章）
 PLAYABLE_BOARD_TRIALS = frozenset({"CoinHealAndCureOwnActive", "CoinHealBothElseSleepBoth", "CoinStatusOnOpponentActiveTrainer", "ConditionOwnActiveTrainer",
@@ -1482,12 +1487,15 @@ def _use_condition_owner(effect) -> type | None:
     return next((cls for cls in type(effect).__mro__ if "check_playable" in vars(cls)), None)
 
 
-def _use_condition_evaluated(effect) -> bool:
-    """候補の作成で、使うための条件を呼んでよいか（effects.py で定義し、PLAYABLE_NOT_EVALUATED でないもの）。登録のないカードは、check_play_trainer が条件の前に未対応として止める。"""
+def _use_condition_evaluated(effect, state: GameState) -> bool:
+    """候補の作成で、使うための条件を呼んでよいか（effects.py で定義し、PLAYABLE_NOT_EVALUATED でないもの。PLAYABLE_FACE_UP_PREFIX_TRIALS は、おもての山札の並びの
+    不変条件が成り立つ状態だけ）。登録のないカードは、check_play_trainer が条件の前に未対応として止める。"""
     if effect is None:
         return True
     owner = _use_condition_owner(effect)
-    return owner is not None and owner.__module__ == "kyuura_engine.effects" and owner.__name__ not in PLAYABLE_NOT_EVALUATED
+    if owner is None or owner.__module__ != "kyuura_engine.effects" or owner.__name__ in PLAYABLE_NOT_EVALUATED:
+        return False
+    return owner.__name__ not in PLAYABLE_FACE_UP_PREFIX_TRIALS or not faceup.prefix_problems(state)
 
 
 def _trainer_candidate(state: GameState, actor: int) -> _Candidate | None:
@@ -1501,7 +1509,7 @@ def _trainer_candidate(state: GameState, actor: int) -> _Candidate | None:
         definition = state.card_def(uid)
         if definition.category != "trainer":
             continue
-        evaluated = _use_condition_evaluated(state.effects.trainer_effect(definition))
+        evaluated = _use_condition_evaluated(state.effects.trainer_effect(definition), state)
         verdict, code = _probe(partial(check_play_trainer, use_condition=evaluated), state, PlayTrainer(actor, uid))
         if verdict == ILLEGAL:
             continue

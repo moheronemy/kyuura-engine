@@ -153,7 +153,7 @@ U7_5_REFERENCE = {
     "subunits": ["U7-5a", "U7-5b", "T-F1", "U7-5c", "U7-5d", "U7-5e", "U7-5f", "U7-5g"],
     "remaining": ["R-2（自分のうらのバトル場のポケモンのワザといっしょに選ぶもの。示さない）", "R-3（自分のうらのカードの特殊能力のうち入力を返さない型）",
                   "R-4（番のプレイヤーの MAIN のほかの CheckFaceUpDeckCard。API の範囲外）", "R-5（入力を返さない候補）",
-                  "PT-5e（山札から引いて試すトレーナー 5 つ。unverified_paths の use_condition_not_evaluated）", "UP-5t（名前で解決できない呼び出しの先）",
+                  "PT-5e（山札から引いて試すトレーナー 5 つ。v0.176 で候補の作成で使うための条件を呼ぶ。おもての山札の並びの不変条件が成り立たない状態・受理の前の先読みは残る）", "UP-5t（名前で解決できない呼び出しの先）",
                   "番のプレイヤーの MAIN の completeness は partial（R-2）。complete でも全部の操作の受理・完走ではない"],
     "basis": "docs/legal-actions-u7-5fg.md 2.2 節・8 章、docs/legal-actions-u7-5-design.md",
 }

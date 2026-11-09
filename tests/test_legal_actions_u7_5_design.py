@@ -74,7 +74,9 @@ class BrokenSpecTest(unittest.TestCase):
 
     def test_unconfirmed_check_used_by_candidates(self):
         def mutate(spec):
-            next(c for c in spec["checks"] if c["source"] == "E")["use"] = "inputs"
+            # v0.176: PT-5e を A にしたので E の確かめはない。PT-5e を E に戻して inputs に使う形を作る
+            check = next(c for c in spec["checks"] if c["id"] == "PT-5e")
+            check["source"], check["use"] = "E", "inputs"
         self.assert_found(mutate, "候補・inputs・check に使う")
 
     def test_unknown_source_class(self):
@@ -109,6 +111,7 @@ class BrokenSpecTest(unittest.TestCase):
 
     def test_unconfirmed_path_counted_as_closed(self):
         def mutate(spec):
+            next(c for c in spec["checks"] if c["id"] == "PT-5e")["source"] = "E"  # v0.176: PT-5e を A にしたので、E の確かめを作ってから残る事項を消す
             next(u for u in spec["units"] if "PlayTrainer" in u["commands"])["open"] = []
         self.assert_found(mutate, "残る事項")
 

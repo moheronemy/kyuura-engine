@@ -168,7 +168,7 @@ U7-5 の対象の 7 種類のコマンド（`PlayTrainer`・`UsePokemonPower`・
 | PT-4 | `PlayTrainer` | `kyuura_engine/effects.py::EffectRegistry.trainer_effect` | `A` | `candidates` | 登録の有無（本人の手札のカードの定義と登録表） |
 | PT-5 | `PlayTrainer` | `kyuura_engine/effects.py::TrainerEffect.check_playable` | `A` | `candidates` | 77 の実装のうち、下の 2 群を除くもの（場・トラッシュ・枚数・本人の手札） |
 | PT-5o | `PlayTrainer` | `kyuura_engine/effects.py::deck_target_lower_bound` | `A-own` | `candidates` | 持ち主の知識の関数を呼ぶ 6 の実装（scan.check_playable.owner_knowledge） |
-| PT-5e | `PlayTrainer` | `kyuura_engine/effects.py::quiz_draw_outcome_stop` | `E` | `none` | 状態の複製の上で効果を試す 11 の実装（scan.check_playable.trials）のうち、実際の山札から引いて試す 5 つ（クイズ 4 種・とりかえっこプリーズ。legal_actions.PLAYABLE_NOT_EVALUATED）。たどっていない。v0.169: 候補・inputs・check で呼ばず unverified（入力は本人の手札だけで決まる） |
+| PT-5e | `PlayTrainer` | `kyuura_engine/effects.py::quiz_draw_outcome_stop` | `A` | `candidates` | 状態の複製の上で効果を試す 11 の実装（scan.check_playable.trials）のうち、実際の山札から引いて試す 5 つ（クイズ 4 種・とりかえっこプリーズ。6 枚）。v0.169〜v0.175 は E（たどっていない。候補・inputs・check で呼ばず unverified）。v0.176: 閉包をたどり（docs/legal-actions-pt5e-audit.md）、結果が本人の手札・公開の枚数とおもての山札の並びの不変条件だけで決まることを確かめたので、候補の作成で呼ぶ（legal_actions.PLAYABLE_FACE_UP_PREFIX_TRIALS。不変条件が成り立たない状態では呼ばない） |
 | PT-5t | `PlayTrainer` | `kyuura_engine/effects.py::switch_max_hp_drop_check` | `A` | `candidates` | v0.169: 11 の試行のうち、試すのが場の処理だけ（入れ替え・特殊状態・回復）の 6 つ（legal_actions.PLAYABLE_BOARD_TRIALS）。effects.py の閉包と、呼ぶ別のモジュールの関数の1 段目までをたどり、山札・サイド・手札・うらのカードの中身を読まないことを確かめた（うらのカードの定義は本当のカードによらず FD1。docs/legal-actions-u7-5c.md 4 章） |
 | PT-6 | `PlayTrainer` | `kyuura_engine/effects.py::stadium_trainer_cost` | `A` | `candidates` | リムーブ禁止ジム（本人の手札の枚数） |
 | PT-7 | `PlayTrainer` | `kyuura_engine/effects.py::trainer_reaction_sources` | `A` | `candidates` | 相手の場の［ちえくらべ］と錯乱ジム（MG1） |

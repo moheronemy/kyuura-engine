@@ -164,9 +164,10 @@ CHECKS = [
     {"id": "PT-5", "command": "PlayTrainer", "ref": f"{EFFECTS}::TrainerEffect.check_playable", "source": "A", "use": "candidates",
      "note": "77 の実装のうち、下の 2 群を除くもの（場・トラッシュ・枚数・本人の手札）"},
     {"id": "PT-5o", "command": "PlayTrainer", "ref": f"{EFFECTS}::deck_target_lower_bound", "source": "A-own", "use": "candidates", "note": "持ち主の知識の関数を呼ぶ 6 の実装（scan.check_playable.owner_knowledge）"},
-    {"id": "PT-5e", "command": "PlayTrainer", "ref": f"{EFFECTS}::quiz_draw_outcome_stop", "source": "E", "use": "none",  # CORR-1: たどるまで候補の作成で呼ばない
-     "note": "状態の複製の上で効果を試す 11 の実装（scan.check_playable.trials）のうち、実際の山札から引いて試す 5 つ（クイズ 4 種・とりかえっこプリーズ。"
-             "legal_actions.PLAYABLE_NOT_EVALUATED）。たどっていない。v0.169: 候補・inputs・check で呼ばず unverified（入力は本人の手札だけで決まる）"},
+    {"id": "PT-5e", "command": "PlayTrainer", "ref": f"{EFFECTS}::quiz_draw_outcome_stop", "source": "A", "use": "candidates",
+     "note": "状態の複製の上で効果を試す 11 の実装（scan.check_playable.trials）のうち、実際の山札から引いて試す 5 つ（クイズ 4 種・とりかえっこプリーズ。6 枚）。"
+             "v0.169〜v0.175 は E（たどっていない。候補・inputs・check で呼ばず unverified）。v0.176: 閉包をたどり（docs/legal-actions-pt5e-audit.md）、結果が本人の手札・公開の枚数と"
+             "おもての山札の並びの不変条件だけで決まることを確かめたので、候補の作成で呼ぶ（legal_actions.PLAYABLE_FACE_UP_PREFIX_TRIALS。不変条件が成り立たない状態では呼ばない）"},
     {"id": "PT-5t", "command": "PlayTrainer", "ref": f"{EFFECTS}::switch_max_hp_drop_check", "source": "A", "use": "candidates",
      "note": "v0.169: 11 の試行のうち、試すのが場の処理だけ（入れ替え・特殊状態・回復）の 6 つ（legal_actions.PLAYABLE_BOARD_TRIALS）。effects.py の閉包と、呼ぶ別のモジュールの関数の"
              "1 段目までをたどり、山札・サイド・手札・うらのカードの中身を読まないことを確かめた（うらのカードの定義は本当のカードによらず FD1。docs/legal-actions-u7-5c.md 4 章）"},
@@ -419,7 +420,8 @@ UNITS = [
      "status": "implemented", "implemented_in": "v0.169（docs/legal-actions-u7-5c.md）",
      "basis": ["宣言の入力は card だけ。対象・枚数・検索はすべて受理のあとの決定（answer_decision で答えられる）",
                "受理の前の確かめ（PT-1〜PT-7）は A・A-own で、カードごとの確かめの 11 の実装（試行）だけが E",
-               "v0.169: E の 11 のうち、試すのが場の処理だけの 6 は読む値をたどって候補の作成で呼ぶ（PT-5t）。実際の山札から引いて試す 5 は呼ばない（PT-5e。unverified）"],
+               "v0.169: E の 11 のうち、試すのが場の処理だけの 6 は読む値をたどって候補の作成で呼ぶ（PT-5t）。実際の山札から引いて試す 5 は呼ばない（PT-5e。unverified）",
+               "v0.176: PT-5e の 5 の実装（6 枚）の閉包をたどり、候補の作成で呼ぶ（おもての山札の並びの不変条件が成り立つ状態だけ。docs/legal-actions-pt5e-audit.md）"],
      "changes": ["engine.py: _play_trainer の手札から出す前の部分を check_play_trainer にする（同じ順番・同じコード・同じ文。use_condition が偽なら使うための条件だけを呼ばない）",
                  ("legal_actions.py: 1 段の候補 play_trainer（選べるものは本人の手札のトレーナーカード）。登録なしは not_implemented、停止は診断のコード表の分類。"
                   "使うための条件を呼ばないカード（PLAYABLE_NOT_EVALUATED）は unverified（入力は本人の手札だけで決まるので返す。条件の結果で選べるものを選り分けない）")],
@@ -429,7 +431,7 @@ UNITS = [
      "done": "A-own の 6 の実装で双子が通る。錯乱ジムの「うら」・［ちえくらべ］・サイキックコントロールは受理のあとの決定として new_game からの列でつながる。"
              "E のうち読む値をたどっていない 5 の実装は、使うための条件を呼ばず unverified（対応済みに数えない）",
      "gui": "1 段。受理のあとの決定の種類が多い（検索・見たカード。U7-1 の DECK_REVEALING_KINDS の契約の例外）",
-     "open": ["PT-5e の 5 の実装（実際の山札から引いて試す）の読む値をたどる", "effects.py の外の閉包（PT-5t・A 群の呼ぶ別のモジュールの関数の 2 段目より先）"]},
+     "open": ["effects.py の外の閉包（PT-5t・A 群の呼ぶ別のモジュールの関数の 2 段目より先）"]},
     {"id": "U7-5d", "name": "場のスタジアム（UseStadium）", "commands": ["UseStadium"], "depends": ["U7-5a"], "first": False,
      "status": "implemented", "implemented_in": "v0.170（docs/legal-actions-u7-5d.md）",
      "basis": ["9 の実装のうち energy を選ばせるのは 2 つ。ほかは選ばせるものがない。キョウの忍者ジムだけ A-own",
