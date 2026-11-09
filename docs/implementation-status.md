@@ -5380,3 +5380,10 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 確かめ: 関連する AI のモジュール 10 個を 1 つずつ別のプロセスで実行し、失敗 0。パッケージの版・`behavior_digest` は前後で同じ
 - 残る: GUI の追従、通常の対戦で 6 枚が選ばれる場面、受理の前の先読み（D）、`ClientHub.from_state` の入口の不変条件
 - 詳細: [verification-ai-v0176-follow.md](verification-ai-v0176-follow.md)
+
+## v0.176 のあと: PT5E-FROM-STATE-INVARIANT の監査と最小修正の計画（文書だけ。エンジンの版は 0.176.0 のまま）
+
+- `ClientHub.from_state`・`ActionHost.from_state` は渡した状態を複製するが `check_invariants` を確かめない（確かめるのは `new_game`・`apply_command` の返す状態と、スナップショットの保存・復元だけ）。テスト専用の改変で崩した状態では、送信の結果が秘密の位置で分かれる（通常の対戦・スナップショットからは届かない）
+- 推奨: 2 つの `from_state` の共通の下位の関数で、複製を `check_invariants` で確かめ、ホスト・取っ手を作る前に固定の文の例外で拒否する。信頼された内部の組み立て（`HostedGame(state)` など）は変えず契約を明記、無検査の選択肢は加えない、PT-5e の候補の側のガードは残す
+- 採用の判断・実装・テストは未着手
+- 詳細: [pt5e-from-state-invariant-audit.md](pt5e-from-state-invariant-audit.md)
