@@ -5364,3 +5364,10 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 最初の補完案（6 枚の条件を候補で呼ぶ。版 0.176.0）と、現状維持の根拠、候補の入口の双子の計画。採用待ち・未実装
 - 静的な監査（コード・テスト・文書の読み）。モジュールの読み込み・テスト・対戦は実行していない
 - 詳細: [legal-actions-pt5e-audit.md](legal-actions-pt5e-audit.md)
+
+## v0.176: PT-5e（山札から引いて試すトレーナー 6 枚の使うための条件を候補で呼ぶ）
+
+- `legal_actions`: 5 つの型（6 枚）を `PLAYABLE_FACE_UP_PREFIX_TRIALS` にし、おもての山札の並びの不変条件が成り立つ状態で、実行時と同じ `check_play_trainer` を候補の作成で呼ぶ。通れば `may_stop_later`（受理・完走は保証しない）、ゲーム上使えなければ選べるものに出さない、未裁定・未対応は実行できない区分。崩れた状態は `unverified` のまま。`PLAYABLE_NOT_EVALUATED` は空。エンジンのゲームの処理・裁定は変えていない。版は 0.176.0（`behavior_digest` が変わった）
+- 確かめ: 新しいテスト `tests/test_legal_actions_pt5e_v0_176.py`（前提 A・B、双子 42 組、対照、3 経路の一致）と関連のモジュール、配布物の照らし（required=62・problems=0）、コミット `6f627007a2a7101be066ac6ba035e838a75e36e1` の Git の URL からの通常のインストールのスモーク
+- 残る: 受理の前の先読みの読む値、構築盤面の入口の不変条件（独立した課題）、new_game からの到達、GUI・検証用 AI の追従（AI の `v2_repeat` の GOLDEN は保証の文の変更で変わる）
+- 詳細: [legal-actions-pt5e-audit.md](legal-actions-pt5e-audit.md) 9 章
