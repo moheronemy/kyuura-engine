@@ -182,6 +182,8 @@ GUI に要る追従（今回は着手しない）:
 | check のあとの正常な拒否 | 候補の理由に `face_down_reveal_not_evaluated` があるので、受け付ける前の確かめの保証の外（`judge.py:163-164`）。P6 の規則（`is_p6`）は `retreat` だけ。`WRONG_ENERGY_TYPE`（`invalid_input`）は `normal_rejection` になる見込みで、suspect にしない |
 | 受理の「使った」と「トラッシュ」 | 区別しない。`judge_p6_accepted` は P6 の固定確認だけで使い、通常の判定は受理の中身を分けない |
 
+追記: このあと検証用 AI を追従させた（[verification-ai-u-r3a.md](verification-ai-u-r3a.md)。判定の規則 5）。下は追従の前の読み取り。
+
 AI に要る追従（今回は着手しない）:
 
 - うらの特殊能力の受理の中身を分ける判定（`secret_plan_revealed` のあとが `pokemon_power` か `secret_plan_discarded` か）

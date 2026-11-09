@@ -5350,3 +5350,10 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 確かめ: 新しいテスト `tests/test_legal_actions_u_r3a_v0_175.py`（構築盤面: 受理・`WRONG_ENERGY_TYPE` の拒否・トラッシュの U7 と client_api と直接のコマンドの一致、形の検査、相手の秘密だけの双子、公開されたカード id）と関連のモジュール、配布物の照らし（required=62・problems=0）、コミット `81e9e99f76c2a2071fbbc50f852d6c28a026d080` の Git の URL からの通常のインストールのスモーク
 - R-3 の全体は解消していない（組が完成しない場面・今の登録では生成されない経路が残る）。GUI・検証用 AI の追従は未着手。new_game からの到達は確かめていない
 - 詳細: [legal-actions-u-r3a-v0.175.md](legal-actions-u-r3a-v0.175.md)
+
+## v0.175 のあと: 検証用 AI の U-R3a への追従（エンジンの版は 0.175.0 のまま）
+
+- 行動生成・方策は既存のまま（依存する段の扱いで 2〜3 段を作れる）。判定の規則 5（うらのカードの特殊能力の拒否を、元のコードと条件に要る段で分け、受理の中身を公開のログで分ける）
+- 確かめ: `tests/test_verification_ai_u_r3a.py` と既存の検証用 AI のテスト、構築盤面 3 つの固定確認（`tools.verification_ai.run_u_r3a`。受理・`WRONG_ENERGY_TYPE` の拒否と無副作用・3 段のトラッシュ。suspect 0）。new_game からの到達ではない
+- GUI の追従は未着手
+- 詳細: [verification-ai-u-r3a.md](verification-ai-u-r3a.md)
