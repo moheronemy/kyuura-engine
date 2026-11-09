@@ -30,7 +30,7 @@ from typing import Any
 
 from . import diagnostics as D
 from . import faceup
-from .adapter import CommandResult, HostedGame, HostStoppedError
+from .adapter import CommandResult, HostedGame, HostStoppedError, UnusableStateError, checked_state_copy  # noqa: F401（UnusableStateError は入口の拒否の型として公開）
 from .commands import (
     AttachEnergy,
     CheckFaceUpDeckCard,
@@ -415,6 +415,7 @@ class ActionHost:
     """
 
     def __init__(self, game, *, on_result=None):
+        # 渡した対戦（の状態）を確かめない（信頼された内部の組み立て。v0.177 でも変えていない。外から作った状態は from_state で確かめる）
         self._game = game
         self._game_id = secrets.token_hex(_TOKEN_BYTES)
         self._issued: dict[str, _Issued] = {}
@@ -433,8 +434,11 @@ class ActionHost:
 
     @classmethod
     def from_state(cls, state: GameState, *, on_result=None) -> ActionHost:
-        """状態の複製を ``HostedGame`` で包む（渡した状態を、あとから変えてもホストの対戦に影響しない）。"""
-        return cls(HostedGame(state.clone()), on_result=on_result)
+        """状態の複製を ``HostedGame`` で包む（渡した状態を、あとから変えてもホストの対戦に影響しない）。
+
+        v0.177（PT5E-FROM-STATE-INVARIANT）: ``adapter.checked_state_copy`` で、型・複製・複製の不変条件を確かめてから包む。不整合なら ``UnusableStateError``
+        （``TypeError`` は型の違い）で、ホスト・セッション・取っ手を作らない。``ClientHub.from_state`` と同じ確かめ。"""
+        return cls(HostedGame(checked_state_copy(state)), on_result=on_result)
 
     @property
     def game(self):

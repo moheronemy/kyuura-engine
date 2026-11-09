@@ -5,8 +5,8 @@
 
 確かめの種類を分ける:
 
-- 前提 A（おもての山札の並びの不変条件）: 通常の進行・スナップショットの復元・``ClientHub.from_state`` での扱い。不変条件の崩れた状態（テスト専用の改変）では、引いて試す結果が
-  本人に見えない並びで変わりうること、そのため候補では呼ばない（unverified のまま）こと
+- 前提 A（おもての山札の並びの不変条件）: 通常の進行・スナップショットの復元・``ClientHub.from_state`` での扱い（v0.177 から崩れた状態を拒否する）。不変条件の崩れた
+  状態（テスト専用の改変。信頼された内部の組み立てでだけ包む）では、引いて試す結果が本人に見えない並びで変わりうること、そのため候補では呼ばない（unverified のまま）こと
 - 前提 B（浅い複製の共有）: ``GameState.clone`` が元と共有する可変の値と、引いて試す処理が変える場所。試しても元の状態・乱数・ログ・決定が変わらない
 - 双子（T1 山札の順序・T2 本人の山札とサイドの配分・T3 相手の秘密）: 比べる前に、本人と観戦者の観測・公開のログが同じで、完全な状態が違うことを確かめる。候補・件数・並び・
   eligible・処理可能性・理由・保証・inputs・check の答えが同じ。候補・inputs・check の前後で状態・乱数・ログ・決定が変わらず、更新が 0 件
@@ -118,10 +118,13 @@ def twin_pair(card, mode, kind):
     return staged(table(card), mode), staged(table(card, **variant), mode)
 
 
-def queries(state, actor=0):
-    """client_api の入口で、本人の候補・すべての候補の inputs・選べるものごとと不正な入力への check の答え（取っ手を除く）。前後の状態・乱数・ログ・決定と、全員への更新。"""
+def queries(state, actor=0, *, internal=False):
+    """client_api の入口で、本人の候補・すべての候補の inputs・選べるものごとと不正な入力への check の答え（取っ手を除く）。前後の状態・乱数・ログ・決定と、全員への更新。
+
+    ``internal``（v0.177）: 不変条件の崩れた状態の低層の振る舞いを確かめるときだけ、信頼された内部の組み立て ``ClientHub(A.HostedGame(state.clone()))`` を使う
+    （検証者専用。通常の使い方ではない。``ClientHub.from_state`` は崩れた状態を拒否する）。"""
     original = fingerprint(state)
-    hub = ClientHub.from_state(state)
+    hub = ClientHub(A.HostedGame(state.clone())) if internal else ClientHub.from_state(state)
     me = hub.player(actor)
     before = (snap(hub._host.game.state), fingerprint(hub._host.game.state))
     r = me.handle({**CONTRACT, "type": "candidates"})["response"]
@@ -202,14 +205,23 @@ class PrefixPremiseTest(unittest.TestCase):
         with self.assertRaises(SN.SnapshotSaveError):
             SN.save_snapshot(broken, label="pt5e-broken")
 
-    def test_from_state_accepts_a_broken_invariant_but_the_condition_is_not_evaluated(self):
-        """独立した課題の再現（docs/legal-actions-pt5e-audit.md 9.2 節）: ClientHub.from_state は不変条件を確かめない。崩れた状態では、引いて試す結果が本人に見えない相手の
-        おもての位置で変わる（本人の観測は同じ）。候補は条件を呼ばず unverified のまま（位置によらない）。"""
+    def test_from_state_rejects_a_broken_invariant_and_the_condition_is_not_evaluated_internally(self):
+        """独立した課題 PT5E-FROM-STATE-INVARIANT（docs/pt5e-from-state-invariant-audit.md）: v0.177 から ClientHub.from_state・ActionHost.from_state は、不変条件の崩れた
+        状態を、hub・セッション・取っ手を作る前に UnusableStateError（STATE_INTEGRITY。固定の文）で拒否する。v0.176 では受け付けていた（契約の変更）。
+
+        崩れた状態の低層の振る舞い（検証者専用。信頼された内部の組み立て ``HostedGame``）: 引いて試す結果は本人に見えない相手のおもての位置で変わる（本人の観測は同じ）。
+        候補は条件を呼ばず unverified のまま（位置によらない。PT-5e の候補の側のガードは残す）。"""
         base = staged(table(QUIZ3), "top_only")
         far, near = broken_marks(base, 1, 6), broken_marks(base, 1, 1)  # 相手の山札の 7 枚目・2 枚目だけがおもて（いちばん上はうら）
+        rejected = []
         for state in (far, near):
             self.assertNotEqual(FU.prefix_problems(state), [])
-            ClientHub.from_state(state)  # 受け付ける（確かめない）
+            for entry in (ClientHub.from_state, L.ActionHost.from_state):
+                with self.assertRaises(A.UnusableStateError) as caught:
+                    entry(state)
+                rejected.append((type(caught.exception), caught.exception.code, str(caught.exception)))
+        self.assertEqual(len(set(rejected)), 1)  # 秘密の位置・入口によらず、型・code・文が同じ
+        self.assertEqual(rejected[0][1], A.STATE_INTEGRITY_CODE)
         self.assertEqual(observe(far, 0), observe(near, 0))
         use = TrainerUse(0, card_in_hand(far, QUIZ3, 0), QUIZ3)
         self.assertIsNone(E.quiz_draw_outcome_stop(far, 0, 3))
@@ -217,7 +229,7 @@ class PrefixPremiseTest(unittest.TestCase):
         with self.assertRaises(UnsupportedError):
             E.BlainesQuiz(E.BLAINES_QUIZ_3_TEXT).check_playable(near, use)
         self.assertEqual([status(trainer_option(s, QUIZ3)[0]) for s in (far, near)], [NOT_EVALUATED, NOT_EVALUATED])
-        self.assertEqual(queries(far)[0], queries(near)[0])
+        self.assertEqual(queries(far, internal=True)[0], queries(near, internal=True)[0])
         # 送ったときの結果は、崩れた状態ではエンジンの経路で位置によって分かれる（near: 使う前の FU3 の拒否、far: 受理のあとのコマンドの終わりの不変条件の確かめで failed）。
         # 候補の補完とは別の、構築盤面の入口の課題として記録する（9.2 節）
         outcomes = []
@@ -227,12 +239,15 @@ class PrefixPremiseTest(unittest.TestCase):
         self.assertEqual(outcomes, [(D.FAILED, "STATE_INTEGRITY"), (D.REJECTED, FU3)])
 
     def test_broken_invariant_keeps_the_engine_rejection_private(self):
-        """不変条件の崩れた状態（評価しない）では、使えないカードも unverified で示し、送るとエンジンが本人にだけ拒否する（v0.175 までと同じ）。"""
+        """不変条件の崩れた状態（評価しない）では、使えないカードも unverified で示し、送るとエンジンが本人にだけ拒否する（v0.175 までと同じ）。
+
+        v0.177: ClientHub.from_state は崩れた状態を拒否するので、低層の振る舞いを確かめるこのテストは、信頼された内部の組み立て ``ClientHub(A.HostedGame(...))`` を使う
+        （検証者専用。通常の使い方ではない）。主張は変えていない。"""
         state = broken_marks(staged(table(SWAP, hand=()), "both"), 1, 2)  # フラッシュを使ったあと、手札はとりかえっこプリーズだけ
         self.assertEqual([state.cards[u].card_id for u in state.players[0].hand], [SWAP])
         option, c = trainer_option(state, SWAP)
         self.assertEqual(status(option), NOT_EVALUATED)
-        hub = ClientHub.from_state(state)
+        hub = ClientHub(A.HostedGame(state.clone()))  # 信頼された内部の組み立て（検証者専用）
         me = hub.player(0)
         r = me.handle({**CONTRACT, "type": "candidates"})["response"]
         fields = {"game": r["game"], "revision": r["revision"], "candidate": c["id"]}
