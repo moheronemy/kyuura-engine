@@ -75,7 +75,10 @@ def meaning_sequence(trace: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
     1 行は 1 回の試み（入力を作れなかった・check で止めた・送ったもの）。含めるもの: 主体・候補の中身（応答ごとの番号 ``id`` を除く）・入力の意味
     （``actions.meaning_of``）・作れたか・check の結果・送信の結果と断り・拒否のコード。除くもの: 取っ手（``game``・``revision``）・``operation_id``・
-    応答ごとの候補と選ぶものの番号・時間。ほかは除かない（差を隠す広い正規化をしない）。"""
+    応答ごとの候補と選ぶものの番号・時間。ほかは除かない（差を隠す広い正規化をしない）。
+
+    形式 ``LEGACY_MEANING_FORMAT``（保存済みの証跡と照らすために変えない）。行動と API の契約の値（保証の文など）が 1 つの行に混ざるので、0.176.0 の保証の文の
+    変更だけでも指紋が変わる。行動の再現は ``action_sequence``、契約の値は ``contract_sequence`` で分けて比べる（docs/verification-ai-v0176-follow.md）。"""
     out = []
     for entry in trace:
         if entry.get("type") != "attempt":
@@ -94,6 +97,79 @@ def meaning_sequence(trace: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "diagnostic_id": (submit.get("verifier") or {}).get("diagnostic_id"),
         })
     return out
+
+
+LEGACY_MEANING_FORMAT = "meaning/v1"  # meaning_sequence（0.175.0 までの証跡・GOLDEN の形式。評価の値・保証の文を含む。変えない）
+ACTION_FORMAT = "action-meaning/v2"  # action_sequence（行動・入力・結果の再現の比べ）
+CONTRACT_FORMAT = "candidate-contract/v1"  # contract_sequence（API の契約の値の比べ。action_sequence と同じ行に対応する）
+
+
+def _without(d: dict[str, Any] | None, fields) -> dict[str, Any] | None:
+    return None if d is None else {k: v for k, v in d.items() if k not in fields}
+
+
+def _attempt_rows(trace: list[dict[str, Any]]):
+    return [e for e in trace if e.get("type") == "attempt"]
+
+
+def action_sequence(trace: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """行動の列（形式 ``ACTION_FORMAT``）。1 行は 1 回の試み（``meaning_sequence`` と同じ行）。
+
+    含めるもの: 主体・候補の種類と対象（候補の中身から評価の値 ``policies.EVAL_FIELDS`` を除いたもの。反復の抑制の鍵 ``action_key`` と同じ除き方）・選んだ入力
+    （段の番号と、選べるものの中身から同じ評価の値を除いたもの、または ``value``。選んだ順のまま。並びに意味のない段も並べかえない＝方策の選び方の差も見える）・
+    作れたか・check の結果と断りのコード・送信の結果・断りと拒否のコード・診断のコード。
+    除くもの（行動の意味を見分けない値）: 取っ手（``id``・``after``・``game``・``revision``・``operation_id``）、評価・説明の値（``processability``・``reasons``・
+    ``eligible``・``guarantees``・``choices_format``・``input_stages``・``input_disclosure``）。除いた評価・説明の値は ``contract_sequence`` で別に比べる。"""
+    from .policies import EVAL_FIELDS  # 反復の抑制の鍵と同じ集合（方策の側の定義を 1 か所にする）
+
+    out = []
+    for entry in _attempt_rows(trace):
+        submit = entry.get("submit") or {}
+        check = entry.get("check") or {}
+        meaning = entry.get("meaning")
+        out.append({
+            "actor": entry["actor"],
+            "kind": entry["candidate"].get("kind"),
+            "candidate": _without(entry["candidate"], EVAL_FIELDS),
+            "input": None if meaning is None else [
+                {"stage": m["stage"], "value": m["value"]} if "value" in m else {"stage": m["stage"], "option": _without(m.get("option"), EVAL_FIELDS)}
+                for m in meaning],
+            "build": entry["build"],
+            "check_valid": (check.get("response") or {}).get("valid"),
+            "check_refusal": ((check.get("response") or {}).get("refusal") or {}).get("code"),
+            "outcome": submit.get("outcome"),
+            "refusal": (submit.get("refusal") or {}).get("code"),
+            "diagnostic_id": (submit.get("verifier") or {}).get("diagnostic_id"),
+        })
+    return out
+
+
+def contract_sequence(trace: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """API の契約の値の列（形式 ``CONTRACT_FORMAT``）。``action_sequence`` と同じ行に対応する（同じ試み）。
+
+    含めるもの: 候補の評価・説明の値（``policies.EVAL_FIELDS`` のうち取っ手 ``id``・``after`` を除いたもの: 処理可能性・理由・eligible・保証の文・
+    choices_format・入力の段の要約・入力の公開）、inputs の段の契約（応答のまま。制約・注記・選べるものとその評価の値を含む）、選んだ選べるものの評価の値。
+    正規化しない（保証の文の変更もここで差になる）。"""
+    from .policies import EVAL_FIELDS
+
+    keep = EVAL_FIELDS - {"id", "after"}
+    out = []
+    for entry in _attempt_rows(trace):
+        meaning = entry.get("meaning")
+        out.append({
+            "actor": entry["actor"],
+            "kind": entry["candidate"].get("kind"),
+            "candidate": {k: v for k, v in entry["candidate"].items() if k in keep},
+            "stages": entry.get("stages"),
+            "chosen": None if meaning is None else [
+                {"stage": m["stage"], **{k: v for k, v in (m.get("option") or {}).items() if k in keep}} for m in meaning if "value" not in m],
+        })
+    return out
+
+
+def sequence_digest(rows: list[dict[str, Any]], fmt: str) -> dict[str, Any]:
+    """列の指紋（形式の名前つき。形式の違う指紋どうしを同じ値として比べない）。"""
+    return {"format": fmt, "length": len(rows), "sha256": hashlib.sha256(canonical(rows).encode()).hexdigest()}
 
 
 def compare_meanings(a: list[dict[str, Any]], b: list[dict[str, Any]], bound: int) -> dict[str, Any]:

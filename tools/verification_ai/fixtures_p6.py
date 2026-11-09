@@ -1,7 +1,7 @@
 """P6 の追従の構築盤面（検証者の側の固定の fixture。docs/verification-ai-p6.md 5 章）。
 
 カード固有の準備（どのカードをうらにするか・エネルギーを何枚つけるか）とケースの選び方は、このモジュールに閉じ込めます（共通の行動生成・方策・判定には入れない）。
-盤面は、エンジンの P6 のテスト（``tests/test_legal_actions_p6_face_down_retreat_v0_174.py`` の ``face_down_active``）の関数で、今の実装（0.174.0）から作ります。
+盤面は、エンジンの P6 のテスト（``tests/test_legal_actions_p6_face_down_retreat_v0_174.py`` の ``face_down_active``）の関数で、実行するときのエンジンの実装から作ります（P6 の追従の実行 p6-ai-follow のときは 0.174.0。版と実装の識別は実行の記録に残る）。
 作ったあとの操作は公開の API（candidates・inputs・check・submit）だけで行います。通常の new_game から届いた証拠とは扱いません。旧版のスナップショットは使いません。
 """
 

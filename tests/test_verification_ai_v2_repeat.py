@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import unittest
 
@@ -212,22 +211,60 @@ class ReproduceHeaderTest(unittest.TestCase):
             self.assertEqual(run_v1.reproduce(base, root, "test", [], "t"), 0)
 
 
-GOLDEN = {  # V2 の補完の前のコード（1aad030）で取った意味の列の sha256（上限 80 の操作）
-    "uniform-stage-s12": (dict(policy="uniform"), 87, "1d6b14f228b135084715eaf1267ecbdb4dfe18bd857541b61a89682505f7c048"),
-    "uniform-tuple-s12": (dict(policy="uniform", distribution=TUPLE), 88, "7431e4966a9568d1060f4b04998189b4ae0c7444cdf0e9a4397769f09ecf47ed"),
-    "rules-v1-s13": (dict(policy="rules"), 106, "7219cde8295951e4ad4ad834c400fc3c8ba597ccc90f59876715539b9b3243ca"),
-    "mixed-v1-s13": (dict(policy="mixed", epsilon=0.25), 96, "f1862fa778d3be376cfb188e9274cb7c78e42ad13694e8ddc3573cda15f4dbe5"),
+GAMES = {  # 上限 80 の操作の小さな対戦（V2 の補完の前から同じ 4 つ）
+    "uniform-stage-s12": dict(policy="uniform"),
+    "uniform-tuple-s12": dict(policy="uniform", distribution=TUPLE),
+    "rules-v1-s13": dict(policy="rules"),
+    "mixed-v1-s13": dict(policy="mixed", epsilon=0.25),
+}
+# 旧形式 meaning/v1（行動と API の契約の値が 1 行に混ざる）の指紋。V2 の補完の前のコード（1aad030）で取り、1c0fc07（エンジン 0.175.0）でも同じ値だった。
+# 0.176.0（PT-5e）で play_trainer の保証の文（preconditions）が変わり、行動・入力・結果は同じまま、この指紋だけが変わった（docs/verification-ai-v0176-follow.md 2 章）。
+# 来歴として残し、今のコードとは比べない（下の新しい形式の値と同じ意味の値として比べない）
+LEGACY_MEANING_V1_AT_0175 = {
+    "uniform-stage-s12": (87, "1d6b14f228b135084715eaf1267ecbdb4dfe18bd857541b61a89682505f7c048"),
+    "uniform-tuple-s12": (88, "7431e4966a9568d1060f4b04998189b4ae0c7444cdf0e9a4397769f09ecf47ed"),
+    "rules-v1-s13": (106, "7219cde8295951e4ad4ad834c400fc3c8ba597ccc90f59876715539b9b3243ca"),
+    "mixed-v1-s13": (96, "f1862fa778d3be376cfb188e9274cb7c78e42ad13694e8ddc3573cda15f4dbe5"),
+}
+# 行動の列（形式 action-meaning/v2）。1c0fc07（0.175.0）と 0.176.0 で同じ値（行の数も旧形式と同じ）。方策・入力生成・乱数・エンジンの結果が変われば変わる
+ACTION_GOLDEN = {
+    "uniform-stage-s12": (87, "36167caf044bace0d2f0c74e663621f66b8a4cbeb707de6d052fdb9fd3492240"),
+    "uniform-tuple-s12": (88, "24144fc4789aebdb387c3f1736ceae3a3e7540e3d7a5daf7268a6c6a0de02e3d"),
+    "rules-v1-s13": (106, "41f4ca027c16bedf30a09745e04f4c7778f416494fd1bbe1570b43a1448fdd4e"),
+    "mixed-v1-s13": (96, "3cca650466f3c0c02af7a24fe53e28e7e746b6237bd8a3e32581c317b07274cd"),
+}
+# API の契約の値の列（形式 candidate-contract/v1）。エンジン 0.176.0 の値（0.175.0 との差は play_trainer の preconditions の文だけ）。
+# エンジンの契約の値（保証の文・処理可能性・理由・段の制約など）が変われば変わる。変わったら差を調べ、来歴つきで更新する（一括で更新しない）
+CONTRACT_GOLDEN_0176 = {
+    "uniform-stage-s12": (87, "0316ba75ecf78a08fd415d3c126733541ebf76365b1f4385d660e43eb3afb4f8"),
+    "uniform-tuple-s12": (88, "b1fb93db141b49b79bdccb2918ddf679f17886fa4434d7178061322837ba92e9"),
+    "rules-v1-s13": (106, "19e3c47021bb21ffbdaac7b734e5103e29d765025e4c343c96794431970b959e"),
+    "mixed-v1-s13": (96, "2c82ac33c32ef412e6f4e897a337669789a48b9b75ae8078df7a2df4eaa1fc19"),
 }
 
 
 class UnchangedTest(unittest.TestCase):
     def test_existing_policies_keep_their_sequences(self):
-        for name, (kw, length, digest) in GOLDEN.items():
+        """行動の列と契約の値の列を、別の指紋で照らす（形式の名前つき）。check を経ない送信がないことも確かめる。"""
+        for name, kw in GAMES.items():
             with self.subTest(name):
                 seed = int(name[-2:])
                 result = V.run_game(V.Config(game_seed=seed, policy_seed=seed, host_seed=seed, limits=V.Limits(operations=80, seconds=60), **kw))
-                seq = R.meaning_sequence(result["trace"])
-                self.assertEqual((len(seq), hashlib.sha256(R.canonical(seq).encode()).hexdigest()), (length, digest))
+                action = R.sequence_digest(R.action_sequence(result["trace"]), R.ACTION_FORMAT)
+                contract = R.sequence_digest(R.contract_sequence(result["trace"]), R.CONTRACT_FORMAT)
+                self.assertEqual((action["format"], action["length"], action["sha256"]), (R.ACTION_FORMAT, *ACTION_GOLDEN[name]))
+                self.assertEqual((contract["format"], contract["length"], contract["sha256"]), (R.CONTRACT_FORMAT, *CONTRACT_GOLDEN_0176[name]))
+                self.assertEqual(len(R.meaning_sequence(result["trace"])), LEGACY_MEANING_V1_AT_0175[name][0])  # 行の数は旧形式と同じ（指紋は比べない）
+                for e in result["trace"]:
+                    if e.get("type") == "attempt" and e.get("submit") is not None:
+                        self.assertIs(((e.get("check") or {}).get("response") or {}).get("valid"), True, e.get("n"))  # check を経ない送信がない
+
+    def test_legacy_fingerprints_are_kept_as_history(self):
+        """旧形式の指紋は形式の名前と版を分けて残す（新しい形式の値と同じ集合に入れない）。"""
+        for name in GAMES:
+            self.assertNotEqual(LEGACY_MEANING_V1_AT_0175[name][1], ACTION_GOLDEN[name][1])
+            self.assertNotEqual(LEGACY_MEANING_V1_AT_0175[name][1], CONTRACT_GOLDEN_0176[name][1])
+        self.assertEqual((R.LEGACY_MEANING_FORMAT, R.ACTION_FORMAT, R.CONTRACT_FORMAT), ("meaning/v1", "action-meaning/v2", "candidate-contract/v1"))
 
 
 if __name__ == "__main__":
