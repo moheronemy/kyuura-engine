@@ -5343,3 +5343,10 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 今の条件をコードから整理し、型ごとに分類した（A: 2〜3 段の 7 つの型。うちたねはロケット団のヒトカゲの［ほのおをもらう］だけ。B: 1 段で選べるものが 0。E: 登録のない力・宣言のない型など、今の登録では生成されない）。最初の補完 U-R3a（2〜3 段の構造の組を `unverified` で示す）の計画。採用待ち・未実装
 - 静的な監査（コード・テスト・文書の読みと、`effects.py` の構文の読み）。テスト・対戦は実行していない
 - 詳細: [legal-actions-r3-audit.md](legal-actions-r3-audit.md)
+
+## v0.175: R-3 の U-R3a（本人のうらのカードの、宣言の段が 2〜3 段の特殊能力の構造の入力）
+
+- `legal_actions._face_down_power_candidates` の 2〜3 段の分岐: どの段も公開の値・本人の手札で作れる宣言の、構造の組（受け付けるかで絞らない）を、U7-5e と同じ `options_by_choice`・`after` で返す。入力の公開は confirmed、処理可能性は unverified。エンジンの確かめを呼ばない・おもてにしない。check・submit・エンジンの処理は変えていない。版は 0.175.0（`behavior_digest` が変わった）
+- 確かめ: 新しいテスト `tests/test_legal_actions_u_r3a_v0_175.py`（構築盤面: 受理・`WRONG_ENERGY_TYPE` の拒否・トラッシュの U7 と client_api と直接のコマンドの一致、形の検査、相手の秘密だけの双子、公開されたカード id）と関連のモジュール、配布物の照らし（required=62・problems=0）、コミット `81e9e99f76c2a2071fbbc50f852d6c28a026d080` の Git の URL からの通常のインストールのスモーク
+- R-3 の全体は解消していない（組が完成しない場面・今の登録では生成されない経路が残る）。GUI・検証用 AI の追従は未着手。new_game からの到達は確かめていない
+- 詳細: [legal-actions-u-r3a-v0.175.md](legal-actions-u-r3a-v0.175.md)
