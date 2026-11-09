@@ -5357,3 +5357,10 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 確かめ: `tests/test_verification_ai_u_r3a.py` と既存の検証用 AI のテスト、構築盤面 3 つの固定確認（`tools.verification_ai.run_u_r3a`。受理・`WRONG_ENERGY_TYPE` の拒否と無副作用・3 段のトラッシュ。suspect 0）。new_game からの到達ではない
 - GUI の追従は未着手
 - 詳細: [verification-ai-u-r3a.md](verification-ai-u-r3a.md)
+
+## v0.175 のあと: PT-5e（山札から引いて試すトレーナー）の監査（文書だけ。エンジンの版は 0.175.0 のまま）
+
+- `PLAYABLE_NOT_EVALUATED` の 5 つの型・6 枚（`PMCG6-082`・`GD5-016`・`GD5-017`・`neo4-105`・`neo1-080`・`PR1-027`）の使うための条件を、呼び出しの閉包までたどった。結果は本人の手札・公開の枚数・おもての山札の不変条件だけで決まる（A）。受理の前の先読みは D、受理のあとは C
+- 最初の補完案（6 枚の条件を候補で呼ぶ。版 0.176.0）と、現状維持の根拠、候補の入口の双子の計画。採用待ち・未実装
+- 静的な監査（コード・テスト・文書の読み）。モジュールの読み込み・テスト・対戦は実行していない
+- 詳細: [legal-actions-pt5e-audit.md](legal-actions-pt5e-audit.md)
