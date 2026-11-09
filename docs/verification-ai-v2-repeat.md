@@ -93,6 +93,8 @@
 既存の方策の保持: 実装の前のコード（`1aad030`）で取った、上限 80 の小さな対戦の意味の列の sha256 が、実装のあとも同じ（uniform-stage・uniform-tuple の seed 12、rules-v1・
 mixed（rules-v1）の seed 13。`tests/test_verification_ai_v2_repeat.py` の `UnchangedTest`）。
 
+追記（0.176.0 への AI の追従）: この意味の列（形式 `meaning/v1`）は API の契約の値（保証の文など）もふくむので、0.176.0 の `play_trainer` の保証の文の変更だけで 4 つの指紋が変わった（行動・入力・結果は同じ）。`UnchangedTest` は、行動の列（`action-meaning/v2`）と契約の値の列（`candidate-contract/v1`）を別の指紋で照らすようにし、上の旧い指紋は 0.175.0 までの来歴として残した（[verification-ai-v0176-follow.md](verification-ai-v0176-follow.md)）。
+
 ## 6. テスト
 
 `tests/test_verification_ai_v2_repeat.py`（15 テスト）。

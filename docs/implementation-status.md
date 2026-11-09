@@ -5371,3 +5371,12 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 確かめ: 新しいテスト `tests/test_legal_actions_pt5e_v0_176.py`（前提 A・B、双子 42 組、対照、3 経路の一致）と関連のモジュール、配布物の照らし（required=62・problems=0）、コミット `6f627007a2a7101be066ac6ba035e838a75e36e1` の Git の URL からの通常のインストールのスモーク
 - 残る: 受理の前の先読みの読む値、構築盤面の入口の不変条件（独立した課題）、new_game からの到達、GUI・検証用 AI の追従（AI の `v2_repeat` の GOLDEN は保証の文の変更で変わる）
 - 詳細: [legal-actions-pt5e-audit.md](legal-actions-pt5e-audit.md) 9 章
+
+## v0.176 のあと: 検証用 AI の 0.176.0 への追従（AI の側だけ。エンジンの版は 0.176.0 のまま）
+
+- `tools/verification_ai/records.py`: 行動の列（`action_sequence`・形式 `action-meaning/v2`）と API の契約の値の列（`contract_sequence`・形式 `candidate-contract/v1`）を分け、形式の名前つきの指紋（`sequence_digest`）にした。旧形式 `meaning_sequence`（`meaning/v1`）は保存済みの証跡のために変えていない
+- `v2_repeat` の 4 件の失敗の原因: 旧形式の指紋が候補の保証の文をふくみ、`play_trainer` の `guarantees.preconditions` の文の変更だけで変わった（0.175.0 と 0.176.0 の小さな対戦 6 つで、違う葉はこの文だけ。行動の列は同じ）
+- PT-5e: 通る 6 枚は deep の既存の条件で選ぶ対象に入る。使えないものは出ない、実行できない区分は選ばない、崩れた状態の `unverified` は deep で選ばない。判定・方策・入力生成・乱数・反復の抑制は変えていない
+- 確かめ: 関連する AI のモジュール 10 個を 1 つずつ別のプロセスで実行し、失敗 0。パッケージの版・`behavior_digest` は前後で同じ
+- 残る: GUI の追従、通常の対戦で 6 枚が選ばれる場面、受理の前の先読み（D）、`ClientHub.from_state` の入口の不変条件
+- 詳細: [verification-ai-v0176-follow.md](verification-ai-v0176-follow.md)
