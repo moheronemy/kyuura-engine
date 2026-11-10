@@ -233,13 +233,22 @@ ACTION_GOLDEN = {
     "rules-v1-s13": (106, "41f4ca027c16bedf30a09745e04f4c7778f416494fd1bbe1570b43a1448fdd4e"),
     "mixed-v1-s13": (96, "3cca650466f3c0c02af7a24fe53e28e7e746b6237bd8a3e32581c317b07274cd"),
 }
-# API の契約の値の列（形式 candidate-contract/v1）。エンジン 0.176.0 の値（0.175.0 との差は play_trainer の preconditions の文だけ）。
+# API の契約の値の列（形式 candidate-contract/v1）。エンジン 0.176.0 の値（0.175.0 との差は play_trainer の preconditions の文だけ）。0.177.0 でも同じ値。来歴として残す（今のコードとは下の 0.178.0 の値で比べる）。
 # エンジンの契約の値（保証の文・処理可能性・理由・段の制約など）が変われば変わる。変わったら差を調べ、来歴つきで更新する（一括で更新しない）
 CONTRACT_GOLDEN_0176 = {
     "uniform-stage-s12": (87, "0316ba75ecf78a08fd415d3c126733541ebf76365b1f4385d660e43eb3afb4f8"),
     "uniform-tuple-s12": (88, "b1fb93db141b49b79bdccb2918ddf679f17886fa4434d7178061322837ba92e9"),
     "rules-v1-s13": (106, "19e3c47021bb21ffbdaac7b734e5103e29d765025e4c343c96794431970b959e"),
     "mixed-v1-s13": (96, "2c82ac33c32ef412e6f4e897a337669789a48b9b75ae8078df7a2df4eaa1fc19"),
+}
+# エンジン 0.178.0（UP-5t-C1）の契約の値。0.176.0 の値との差は rules-v1-s13・mixed-v1-s13 の 2 つだけで、原因は use_power の保証の文（preconditions）に
+# 1 文（「v0.178: 確かめが相手のうらのカードの本当のカードを使ったら…unverified」）が加わったことだけ。差のある行は use_power の行（rules 46 行・mixed 22 行。どれも
+# may_stop_later で、今回のガードが働く候補ではない）の candidate.guarantees.preconditions だけで、行動の列・trace のほかの値・終わり方は同じ（同じプロセスで 0.177.0 の文に
+# 戻すと 0.176.0 の値に一致する。応答を書きかえる修正ではなく調査の証拠。docs/verification-ai-v0178-follow.md 2 章）。use_power の行のない 2 つの対戦は 0.176.0 と同じ値
+CONTRACT_GOLDEN_0178 = {
+    **CONTRACT_GOLDEN_0176,
+    "rules-v1-s13": (106, "240da53e1555a54877e09759591b7c265f4ab6194cb07f333c2c02ba659faf4c"),
+    "mixed-v1-s13": (96, "5fac889de1b442186a6dfb3e0755b254f8ba95ba447bd7b96df5d67cef256f37"),
 }
 
 
@@ -253,7 +262,7 @@ class UnchangedTest(unittest.TestCase):
                 action = R.sequence_digest(R.action_sequence(result["trace"]), R.ACTION_FORMAT)
                 contract = R.sequence_digest(R.contract_sequence(result["trace"]), R.CONTRACT_FORMAT)
                 self.assertEqual((action["format"], action["length"], action["sha256"]), (R.ACTION_FORMAT, *ACTION_GOLDEN[name]))
-                self.assertEqual((contract["format"], contract["length"], contract["sha256"]), (R.CONTRACT_FORMAT, *CONTRACT_GOLDEN_0176[name]))
+                self.assertEqual((contract["format"], contract["length"], contract["sha256"]), (R.CONTRACT_FORMAT, *CONTRACT_GOLDEN_0178[name]))
                 self.assertEqual(len(R.meaning_sequence(result["trace"])), LEGACY_MEANING_V1_AT_0175[name][0])  # 行の数は旧形式と同じ（指紋は比べない）
                 for e in result["trace"]:
                     if e.get("type") == "attempt" and e.get("submit") is not None:
@@ -264,6 +273,10 @@ class UnchangedTest(unittest.TestCase):
         for name in GAMES:
             self.assertNotEqual(LEGACY_MEANING_V1_AT_0175[name][1], ACTION_GOLDEN[name][1])
             self.assertNotEqual(LEGACY_MEANING_V1_AT_0175[name][1], CONTRACT_GOLDEN_0176[name][1])
+            self.assertNotEqual(LEGACY_MEANING_V1_AT_0175[name][1], CONTRACT_GOLDEN_0178[name][1])
+        changed = {n for n in GAMES if CONTRACT_GOLDEN_0176[n] != CONTRACT_GOLDEN_0178[n]}
+        self.assertEqual(changed, {"rules-v1-s13", "mixed-v1-s13"})  # 0.178.0 で更新したのは use_power の行のある 2 つだけ（一括で更新しない）
+        self.assertTrue(all(CONTRACT_GOLDEN_0176[n][0] == CONTRACT_GOLDEN_0178[n][0] for n in GAMES))  # 行の数は同じ
         self.assertEqual((R.LEGACY_MEANING_FORMAT, R.ACTION_FORMAT, R.CONTRACT_FORMAT), ("meaning/v1", "action-meaning/v2", "candidate-contract/v1"))
 
 
