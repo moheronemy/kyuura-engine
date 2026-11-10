@@ -5404,3 +5404,12 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 相手の対戦ポケモンがうらのカード（マチスの秘策）のとき、［くさいかふん］・［えんかくさいみん］の候補の試行が本当のカードを読み、候補の側にはエンジンの `_identity_independent` に当たる保護がない（C。応答が実際に変わるかは未確認）
 - 次の最小の作業の案（UP-5t-C1。候補の側で相手のうらのカードの本当のカードを読んだら `unverified`）と双子の計画を記した。実装・テストは未着手
 - 詳細: [legal-actions-up5t-audit.md](legal-actions-up5t-audit.md)
+
+## v0.178: UP-5t-C1（特殊能力の候補の確かめが、相手のうらのカードの本当のカードを使ったら使わない）
+
+- `legal_actions._power_verdict`: `check_use_pokemon_power` を新しい空の `zones.IDENTITY_CONSULTED` のもとで呼び（外側の値を `finally` で戻す）、相手のうらのカードを使ったら、受け付ける・拒否・停止のどれでも結果を使わず `unverified`（`face_down_reveal_not_evaluated`）。ほかの例外は投げ直す。エンジンの処理・裁定・`_identity_independent` は変えていない
+- 対象の経路: ［くさいかふん］（PMCG4-006）・［えんかくさいみん］（PMCG4-033）の試行が、相手のうらの対戦ポケモンをおもてにして「たねポケモン」かを見る（UP-5t の監査の C）。修正の前の構築盤面では外へ出る差は出なかったが、本当のカードの読みは実行で確かめた
+- 確かめ: 新しいテスト `tests/test_legal_actions_up5t_c1_v0_178.py`（11 件。双子・対照・記録の扱い・3 経路）と関連のモジュール。検証用 AI の `v2_repeat` は契約の値の指紋 2 つが保証の文の変更で変わる（AI の追従で更新）。配布物の照らし（required=62・problems=0）、コミット `8f5329d6fb9eeeb783f3d6f57128069ffc0d98a0` の Git の URL からの通常のインストールのスモーク
+- 版は 0.178.0（`behavior_digest` が変わった）。0.177.0 の記録・スナップショットは 0.178.0 では再実行・復元できない（既存の設計）
+- 残る: UP-5t の D（静的な監査だけ）、GUI・AI の追従
+- 詳細: [legal-actions-up5t-audit.md](legal-actions-up5t-audit.md) 11 章
