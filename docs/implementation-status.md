@@ -5466,3 +5466,11 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 確かめ: `tests/test_verification_ai_batch_judge.py`（11 件。U-R3a の fixture を本物の runner からバッチの判定の入口まで）と、batch・v2_repeat・v0179_follow・u_r3a・v3_1・v3_3 を 1 つずつ別のプロセスで実行した。パッケージの版・実装の識別は前後で同じ
 - 残る: 準備の停止の known_stop の根拠、P6 の受理の中身の判定の接続、局数を増やす前の証跡の量の判断
 - 詳細: [verification-ai-batch.md](verification-ai-batch.md) 11 章〜15 章
+
+## v0.179 のあと: P6 の受理の中身の判定の接続（AI の側だけ。エンジンの版は 0.179.0 のまま）
+
+- 判定: runner が P6 の受理のあとの公開のログも trace に記録し、単局の判定とバッチが同じ入口（`judge_recorded_accepted_content`。P6 は既存の `judge_p6_accepted`）を使う。規則の版 5 のまま。U-R3a と P6 を分けて数える
+- 停止方針（計画の形式 3）: 受理の中身の記録の欠けを undetermined の分類 `accepted_content_unrecorded`（初期値 stop）にし、根拠不足の停止と分けた
+- 確かめ: `tests/test_verification_ai_p6_accepted.py`（8 件。既存の P6 の 3 つの構築盤面を本物の runner からバッチの判定の入口まで）と、関連する 8 モジュールを 1 つずつ別のプロセスで実行した。新しい対戦は実行していない。パッケージの版・実装の識別は前後で同じ
+- 旧記録: 30 局・99 局の trace には P6 の受理の公開のログの記録がない（P6 の送信は両方とも 0 件）。旧バッチは新しい版で再開しない
+- 詳細: [verification-ai-batch.md](verification-ai-batch.md) 16 章

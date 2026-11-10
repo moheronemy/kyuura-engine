@@ -12,6 +12,8 @@
 
 > 補完（11 章〜15 章）: そのあと、バッチの判定を単局の runner と揃え（受理の中身の判定の接続）、undetermined を理由で分類する停止方針（計画の形式 2）と、
 > 証跡の量の区分を加えて、別の計画で 99 局を実行しました。0 章〜10 章は初回（`f560e87`・計画の形式 1・`vai-batch-b1`）の記録で、書きかえていません。
+>
+> 補完 3（16 章）: P6 の受理の中身の判定を、単局の runner とバッチに同じ入口で接続しました（計画の形式 3）。新しい対戦・バッチは実行していません。
 
 ## 0. 基点と範囲
 
@@ -716,7 +718,148 @@ known_stop の登録（`KNOWN_STOP_EVIDENCE`）は増やしていません。
 ### 15.4 次に広げる前の残件
 
 - known_stop の根拠は DU1 だけなので、準備の停止（`UNRESOLVED_MULLIGAN_COMPENSATION`）は根拠不足の undetermined のまま。登録するかは、代表の条件の根拠をテストで作ってからの判断。
-- P6 の受理の中身の判定（`judge_p6_accepted`）は、runner・バッチに接続していない（`run_p6` の道具だけ）。
+- P6 の受理の中身の判定（`judge_p6_accepted`）は、runner・バッチに接続していない（`run_p6` の道具だけ）。→ 16 章で接続した。
 - 証跡は 1 局あたり平均 5.2 MB（99 局で 514 MB）。局数を増やす前に、量と再開の照合の時間の扱いを判断する。
 - 拒否・停止・入力を返さない候補に届く局が少ない。デッキ・規約集合を広げるかは、別の計画で判断する。
 - 勝敗・きぜつの数え方は未計測。
+
+## 16. 補完 3: P6 の受理の中身の判定の接続
+
+15.4 節の残件「P6 の受理の中身の判定（`judge_p6_accepted`）が runner・バッチに接続していない」を補った。判定の経路の抜けを補う作業だけで、新しい対戦・バッチは実行していない。
+基点は `77f6a8a`（`claude/vai-batch-100`）、ブランチは `claude/vai-p6-accepted`、コードとテストのコミットは `c303da6`。
+
+### 16.1 接続した範囲
+
+U-R3a（11 章）と同じ仕組みをそのまま使い、P6 だけの別の判定は作っていない。
+
+| 部分 | 変更 |
+|---|---|
+| `judge.py` | 既存の `judge_p6_accepted`（規則 4。出来事の種類の並び）は変えない。記録した値に当てる `judge_recorded_p6`、受理の中身の種類を決める `accepted_content_check`（U-R3a は `face_down_power_accepted`、P6 は `p6_accepted`。API の契約の値だけで決め、カードでは見分けない）、共通の入口 `judge_recorded_accepted_content`、記録から公開されたカード ID を読む `revealed_card_id`（証跡用で、判定には使わない）を足した |
+| `runner.py` | P6 の送信（にげるの候補で、段に `cost_evaluation` がある）が受理されたときも、観戦者に見える公開のログの差分を `public_events_after_accept` に記録する。検証者の trace だけで、方策には渡さない。単局の判定（変異の実行の中）は共通の入口を使い、`judge_p6_accepted` の欄に付ける |
+| `batch.py` | `judge_trace` の受理の中身を共通の入口に替えた。合計（`accepted_content.counts`）に加えて、種類ごと（`by_check`）に数える。行に `check`・記録の有無・公開されたカード ID を残す |
+
+- **規則の版**: 判定の規則は変えていないので、5 のまま。
+- **入力・check・submit の経路**: 変えていない。エンジンの合法性・処理の順も同じ。
+- **受理のあとの決定**: promote_active などへの回答は、別の試みの entry に記録される。受理の中身の記録は、受理の直後から決定の前までの出来事だけ。
+
+### 16.2 受理の中身
+
+既存の `judge_p6_accepted` に、記録した公開のログの出来事の種類の並びを渡す。
+
+| 記録 | 判定 | 理由 |
+|---|---|---|
+| 最初が `secret_plan_revealed` で、`retreat` があり `secret_plan_discarded` がない | expected | `p6_revealed_and_retreated`（おもてにしてにげた） |
+| 最初が `secret_plan_revealed` で、`secret_plan_discarded` があり `retreat` がない | expected | `p6_revealed_not_basic_and_trashed`（たねでないのでトラッシュ） |
+| 最初がおもてにする出来事でない・どちらもない・両方ある | undetermined | `p6_accepted_events:…` など（推測で割り当てない） |
+| 記録そのものがない | undetermined | `p6_public_events_not_recorded` |
+
+- うらのカードの数が減ったことだけでは区別しない。
+- 送信の判定（`judge_normal`）と受理の中身は別の軸で数え、同じ送信を 2 回数えない。
+- 拒否・断りには受理の中身の判定を付けない。
+
+### 16.3 記録がないときの扱いと停止方針
+
+- **新しい分類**: 受理の中身の記録の欠けを、undetermined の分類 `accepted_content_unrecorded` にした。初期値は stop。
+  - U-R3a の `face_down_power_public_events_not_recorded` も同じ分類になる。11 章の時点では unclassified（stop）だったので、止まることは同じで分類の名前だけが変わる。
+  - 根拠不足の停止（`evidence_missing_stop`）とは別の分類なので、99 局の計画のように根拠不足を続ける設定でも、記録の欠けでは止まる。
+- **記録はあるが出来事が合わないもの**: unclassified（stop）のまま。
+- **停止の確かめ**: `--acknowledge-stop` を渡すまで再開しない。集計・再実行で勝手に外れないことをテストで確かめた。
+
+### 16.4 記録形式・道具の識別・旧記録との関係
+
+| 項目 | 前（99 局） | 今回 |
+|---|---|---|
+| 計画の形式 | `kyuura-vai-batch-plan/2` | `kyuura-vai-batch-plan/3`（undetermined の分類が 1 つ増えた） |
+| 完了の形式 | `kyuura-vai-batch-complete/2` | `kyuura-vai-batch-complete/3`（要約の judge に `accepted_content_by_check`） |
+| TOOL_VERSION | 2 | 3 |
+| 道具の識別 | `420244af…a54b` | `d40e2b8c1df043048cbccc62d7773f3bbe51b02ee596e94d537e2080df23b3cf` |
+| 判定の規則の版 | 5 | 5 |
+
+- **旧 trace**: 30 局（`vai-batch-b1`）・99 局（`vai-batch-b2`）の trace には、P6 の受理の公開のログの記録がない。新しい判定を当てても、P6 の受理の中身は判定できない（undetermined: `accepted_content_unrecorded`）。
+  - 読むだけで数えたところ、両方とも P6 の送信は 0 件だった（固定デッキ 1 組には、うらのポケモンを作るカードがない）。
+  - 旧バッチの `judge.json`・集計は書き換えていない。
+- **旧バッチの再開**: 道具の識別と計画の形式が変わったので、旧バッチを新しい版で再開・再集計することは保証しない（既存の照合が断る）。
+- **集計**: 既存の形式に `judge.accepted_content_by_check` を足しただけ（U-R3a と P6 を分ける）。完了局の保存・ハッシュ照合・再開の識別・ロック・累積時間・証跡量の計算は変えていない。
+
+### 16.5 限定検証（構築盤面）
+
+既存の P6 の 3 つの構築盤面（`tools/verification_ai/fixtures_p6.py`）を使った。
+
+- **出典**: エンジンのテスト `tests/test_legal_actions_p6_face_down_retreat_v0_174.py` の `face_down_active` と、`tests/test_secret_plan_v0_67.py`。
+- **変更点**: fixture は変えていない。スナップショットを復元して、本物の runner（`runner.Runner` のテスト用の派生 `FixtureRunner`）で動かした。
+- **入力の選び方**: ケースの選び手（方策ではない）が、共通の行動生成の段の中から選んだ。
+- **不変条件**: 復元前に `check_invariants`・状態の使用可否・スナップショットの構造を記録した。
+
+new_game から届いた証拠とは扱わない。
+
+| fixture | 送信 | 結果 | 送信の判定 | 受理の中身（単局 = バッチ） | 公開されたカード ID |
+|---|---|---|---|---|---|
+| P6A（本当のカードはたね・にげる 0） | にげる・エネルギー 0 枚 | 受理 | expected | expected `p6_revealed_and_retreated` | PMCG1-060 |
+| P6B（たね・にげる 3） | にげる・エネルギー 1 枚 | 拒否 `WRONG_RETREAT_COST` | normal_rejection | 判定しない（対象外） | 公開されない |
+| P6C（1 進化） | にげる・エネルギー 0 枚 → promote_active | 受理 → 受理 | expected・expected | expected `p6_revealed_not_basic_and_trashed`（にげるの送信だけ） | PMCG1-046 |
+
+確かめたこと:
+
+- **判定の一致**: 単局の判定（変異の実行の中の `judge_p6_accepted` の欄）とバッチの `judge_trace` の受理の中身・終わり方の判定が同じ値だった。記録した公開のログも同じだった。
+- **元の値を変えない**: `judge_trace` は結果の写しに当てるだけで、元の API の応答・trace を変えない。
+- **受理の公開と取っ手**:
+  - 受理の前は、相手の観測で本人のバトル場がうらで、カード ID は見えない。
+  - 受理で、相手の公開のログに `secret_plan_revealed`（上のカード ID）が加わる。
+  - 状態の置きかえと更新の番号の前進があり、`judge_effects` は expected。
+  - 古い取っ手の check は `CANDIDATES_STALE`。
+- **拒否の無副作用（P6B）**: 送信の前後で次のものが変わらなかった。うらのまま、相手・観戦者の公開のログも増えない。
+  - 状態のオブジェクト
+  - 確認値（状態・乱数・ログの長さ・決定・停止）
+  - 他者への新しい更新・更新の番号
+- **交代の決定（P6C）**: 受理の中身の記録は `secret_plan_revealed`・`secret_plan_discarded` までで、promote_active は別の送信として判定した。受理の中身の判定は付けない。
+- **記録を除いた場合**: P6A・P6C とも undetermined（`accepted_content_unrecorded`）になった。初期値でも、根拠不足を続ける設定でも、バッチの停止方針が止めた。偽物の adapter のバッチで、停止の確かめが自動で外れないことも確かめた。
+- **方策に渡る値**: 完全な状態・検証者の記録（公開のログの記録・判定）は入っていない。
+- **回帰**: U-R3a の受理の中身（11 章の 2 つの fixture）・既存の P6 の固定確認（`run_p6` の 3 ケース）・既存の方策の行動の指紋（v2_repeat の ACTION_GOLDEN）は変わらない。
+
+### 16.6 テスト
+
+関連するモジュールを 1 つずつ別のプロセスで実行し、JUnit の XML も保存した。9 モジュールすべて 1 回目で通った（合計 41.1 秒）。
+
+| モジュール | 件数 | 秒 |
+|---|---|---|
+| `tests.test_verification_ai_p6_accepted`（新規） | 8 | 2.7 |
+| `tests.test_verification_ai_batch_judge` | 11 | 3.5 |
+| `tests.test_verification_ai_batch` | 27 | 8.6 |
+| `tests.test_verification_ai_p6` | 16 | 2.1 |
+| `tests.test_verification_ai_u_r3a` | 12 | 2.1 |
+| `tests.test_verification_ai_v2_repeat` | 16 | 12.3 |
+| `tests.test_verification_ai_v3_1` | 15 | 4.4 |
+| `tests.test_verification_ai_v3_3` | 9 | 2.4 |
+| `tests.test_verification_ai_v0179_follow` | 11 | 3.0 |
+
+- **既存のテストの変更**（新しい分類に合わせた 3 か所）:
+  - `test_verification_ai_batch` の計画の初期値
+  - `test_verification_ai_batch_judge` の記録の欠けの分類
+  - 停止方針の分類の並び
+- **開発中の失敗**: なし。
+- **対象外**: 全体テスト・GUI・E2E・seed の探索・大量の対戦・lockstep・状態の監査。
+
+### 16.7 識別・証跡
+
+- **識別**: パッケージの版 0.179.0・`behavior_digest` `67c4c15b…7fca` は前後で同じ。エンジン本体・GUI・renderer・データ・固定デッキ・規約集合・裁定・識別方式・方策は変えていない。
+- **作業の記録**: `C:/dev/kyuura-engine-verification-vai/verifier/runs/vai-p6-accepted/`
+  - 事前の計画 `PLAN.md`・テストの出力と JUnit（`tests/run1/`）・コマンド・終了コード
+  - fixture の出典（`fixtures/`）・判定の比べ（`compare.json`）・停止の確かめ（`stop_check.json`）
+  - 旧 trace の P6 の数（`old_traces.json`）・識別（`identity.json`）
+- **公開用**: `public/runs/vai-p6-accepted/summary.json`。受理で公開されたカード ID だけを書き、拒否の P6B の本当のカードは書かない。
+- **マニフェスト**: 既存の 2325 件を照らしたあと（不一致 0）、2359 ファイルで書き直した（34 件を追加）。
+  - `sha256.json`: `2a62759a77f599f50aeb31f9e276f35e2df0a818c6147ad140ba37ea17877e7d`
+
+### 16.8 未確認と、次のバッチ計画へ渡す事項
+
+**未確認**
+
+- new_game からの対戦での P6 の受理。固定デッキ 1 組には、うらのポケモンを作るカードがなく、99 局で 0 件だった。
+- 実際の対戦での `accepted_content_unrecorded` の停止。テストの中で記録を除いた場合だけ確かめた。
+
+**次のバッチ計画へ渡す事項**
+
+- 次のバッチは、計画の形式 3・TOOL_VERSION 3 の新しい計画で始める。旧バッチ（b1・b2）は、この版で再開・再集計しない。
+- 停止方針の `accepted_content_unrecorded` は初期値 stop。続ける設定にするなら、計画を作る前に理由を書く。
+- P6・U-R3a の受理に届くには、うらのポケモンを作るカード（マチスの秘策など）を含むデッキが要る。デッキ・規約集合を広げるかは、別の計画で判断する。
+- 15.4 節の残りの残件（準備の停止の known_stop の根拠・証跡の量・到達の偏り・勝敗の数え方）は、そのまま残る。
