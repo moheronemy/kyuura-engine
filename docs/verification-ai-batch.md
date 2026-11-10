@@ -10,6 +10,9 @@
 ゲームの合法性はエンジンと API が決め、戦略は方策が決めるという分け方は変えていません。
 バッチの値（計画・台帳・ロック）は、方策・行動生成に渡しません。
 
+> 補完（11 章〜15 章）: そのあと、バッチの判定を単局の runner と揃え（受理の中身の判定の接続）、undetermined を理由で分類する停止方針（計画の形式 2）と、
+> 証跡の量の区分を加えて、別の計画で 99 局を実行しました。0 章〜10 章は初回（`f560e87`・計画の形式 1・`vai-batch-b1`）の記録で、書きかえていません。
+
 ## 0. 基点と範囲
 
 | 項目 | 値 |
@@ -46,7 +49,7 @@ judge（規則の版 5）は、保存する trace に、局が終わったあと
 
 - 送信ごとに `judge_normal` を当てる。V3-1 の変異の実行の中で runner が当てるのと同じ引数
 - 終わり方に `judge_termination` を当てる。halted_known では、公開の停止の値を渡す
-- `judge_face_down_power_accepted` は当てない。受理の前後の公開のログが要るため。当てなかった数を `not_applied` に記録する
+- `judge_face_down_power_accepted` は当てない。受理の前後の公開のログが要るため。当てなかった数を `not_applied` に記録する（初回の時点。補完で接続した。11 章）
 
 方策の順位・反復の抑制・乱数の消費は変えていません。
 計画の経路（規約集合を `ID@版` で明示し、既定値を展開した設定）でも、`v2_repeat` の `ACTION_GOLDEN` の 2 件が同じことをテストで確かめました。
@@ -433,3 +436,285 @@ OS のプロセスの終了や本当のメモリの枯渇は使わず、例外�
 - デッキ・規約集合を広げるときは、計画を別に作る（今の計画に足さない）。
 - `judge_face_down_power_accepted` は、バッチでは当てていない。受理の前後の公開のログが要る。
 - 勝敗・きぜつの数え方は未計測（既存の残件）。
+
+## 11. 補完 1: バッチと単局の判定を揃える
+
+基点は `origin/claude/vai-batch` の `b17d314`（実装 `f560e87`）です。作業ブランチは `claude/vai-batch-100`（同じ専用の worktree）で、補完のコードのコミットは `e9f7e1b` です。
+事前の計画は証跡の `verifier/runs/vai-batch-100/PLAN.md` です。補完のコードの下書きと開発中のテストのあと、正式なテスト・コミット・100 局の実行の前に書きました。
+
+### 11.1 判定の経路
+
+| 判定 | 単局の runner（V3-1 の変異の実行の中） | バッチ（`judge_trace`） |
+|---|---|---|
+| 送信 | `judge_normal(candidate, meaning, submit, stages=…)` | 同じ関数・同じ引数（保存した trace の entry から） |
+| 受理の中身（本人のうらのカードの特殊能力） | `judge_recorded_face_down_power(entry)` | 同じ関数（同じ entry） |
+| 終わり方 | `judge_run_termination(class, detail, trace)` | 同じ関数 |
+
+受理の中身の判定のために、runner を次のように変えました。
+
+- 本人のうらのカードの特殊能力の送信が受理されたら、受理のあとに加わった公開のログ（観戦者に見える `visible_log`）を、trace の entry の `public_events_after_accept` に記録する。変異の実行かどうかによらない。
+- この値は検証者の trace にだけあり、方策・行動生成には渡さない。
+- 変異の実行の中の判定（`judge_face_down_power_accepted` の値）は、記録した同じ値に共通の入口で当てる。
+- 判定の規則（`judge_face_down_power_accepted`）は変えていない。規則の版は 5 のまま。
+
+受理の中身の判定は次のとおりです。
+
+- 最初の公開の出来事が、候補のポケモンをおもてにしたこと（`secret_plan_revealed`）であること。
+- そのあと同じポケモンの `pokemon_power` だけがあれば「おもてにして使った」、`secret_plan_discarded` だけがあれば「たねでないのでトラッシュ」。
+- おもてにしていない・どちらでもない・両方がある・記録がない（`face_down_power_public_events_not_recorded`）ときは undetermined。推測しない。
+
+件数は重ねて数えません。
+
+- 送信の判定は、1 つの送信に 1 件（`counts`）。
+- 受理の中身の判定は、別の軸（`accepted_content`）で数える。
+- runner が変異の実行の中で付けた値は、バッチでは数えない（バッチは変異の実行をしない）。
+
+終わり方の判定の変化は次のとおりです。
+
+- runner の変異の実行の中の判定でも、halted_known では公開の停止の値を渡すようにした。初回のバッチと同じ条件になる。
+- 既知の停止は、どちらも undetermined のまま。理由に停止のコードが付く（例 `halt_condition_not_evidenced:UNRESOLVED_MULLIGAN_COMPENSATION`）。
+- 過去の V3 の証跡は書きかえていない。`run_v3_2.py` は自分で `judge_termination` を呼ぶ別の道具で、変えていない。
+
+### 11.2 既存の fixture での接続の確かめ
+
+新しい 99 局がこの経路に届くとは限らないので、既存の U-R3a の fixture（`fixtures_u_r3a`）で確かめました。実際に 99 局では届きませんでした（13 章）。
+
+1. 盤面を作り、スナップショットから復元する。
+2. 本物の runner（プロファイル boundary・操作 1 回）に通す。選び手はテストのケースの選び手で、方策ではない。
+3. 保存される trace にバッチの `judge_trace` を当てる。
+
+| fixture | 選んだ入力 | バッチの受理の中身の判定 |
+|---|---|---|
+| UR3A-RC | コラッタの炎エネルギー | expected・`face_down_power_revealed_and_used` |
+| UR3A-VN | エビワラー → 闘エネルギー → エビワラー | expected・`face_down_power_revealed_not_basic_and_trashed` |
+
+- 同じ fixture を変異の実行の中の判定つきで走らせると、同じ entry に同じ判定・同じ公開のログ・同じ終わり方の判定が付いた。
+- 公開のログの記録を外すと undetermined（`face_down_power_public_events_not_recorded`）になり、分類 unclassified でバッチは止まる。
+
+## 12. 補完 2: undetermined の停止方針と証跡の量
+
+### 12.1 undetermined の分類（計画の形式 `kyuura-vai-batch-plan/2`）
+
+undetermined は、送信・受理の中身・終わり方のどれでも、1 つずつ出どころと理由を残し、理由の先頭で分類します。
+known_stop の登録（`KNOWN_STOP_EVIDENCE`）は増やしていません。
+
+| 分類 | 理由の例 | 今回の扱い |
+|---|---|---|
+| `evidence_missing_stop`（根拠不足の停止） | `stop_condition_not_evidenced:<コード>`・`halt_condition_not_evidenced:<コード>`（分類とコード表は合うが、代表の条件の根拠がない） | 保存して続け、理由ごとに数える |
+| `unknown_diagnostic`（未知の診断） | `stop_code_not_in_catalog:<コード>`・`halt_code_not_in_catalog:<コード>` | 保存して止める |
+| `contract_unknown`（契約の未知） | `unknown_outcome:<値>`・終わり方 `api_contract_unknown` | 保存して止める |
+| `no_progress` | 終わり方 `no_progress` | 保存して止める |
+| `unclassified` | 上のどれでもない（`stop_not_explained_by_path`・`precheck_kind_category`・`halt_after_supported`・受理の中身の undetermined など） | 保存して止める |
+
+ほかの判定と終わり方の扱いは次のとおりです。
+
+| 区分 | 扱い |
+|---|---|
+| known_stop | 保存して続ける（`on_known_stop`） |
+| suspect（送信・受理の中身・終わり方の合計） | 保存して止める |
+| 終わり方 `api_contract_unknown` | 保存して止める（形式 1 では続けていた） |
+| 終わり方 `halted_unclassified`・`failed`・`state_integrity`・`exception`・`inconsistency` など | 保存して止める |
+| 異常の候補・replay_run の期待との不一致・記録の対応の問題 | 保存して止める |
+
+`evidence_missing_stop` は、計画で `continue` か `stop` を選べます（`plan --undetermined-evidence-missing`）。ほかの分類は止めます。計画にない分類も止めます。
+停止の確かめ（`--acknowledge-stop`）は変えていません。集計・再実行・コードから自動で確かめることはありません。
+
+### 12.2 終わり方と判定の違い
+
+| 終わり方（runner の分類） | judge の終わり方の判定 | 理由 |
+|---|---|---|
+| `game_over` | expected | — |
+| `halted_known`（公開の停止の分類が未裁定・未対応・技術的な制限） | undetermined（`evidence_missing_stop`） | 終わり方は「分類が既知の停止」の意味で、正常とは言わない。judge は、停止のコードの代表の条件の根拠（DU1 だけ登録）がなければ known_stop にしない（規則 3） |
+| `halted_known`（最後に受理した候補が supported） | undetermined（`unclassified`） | supported は受理のあとの完走を保証しないので、根拠のない停止を正常としない |
+| `limit_*` | expected（`tool_limit`） | 道具の上限で、エンジンの問題ではない |
+| `input_unavailable` | known_limitation | API が入力を示さない既知の制限 |
+| `no_progress`・`api_contract_unknown` | undetermined | 理由を判定できない |
+| `halted_unclassified`・`failed`・`state_integrity`・`exception`・`inconsistency` | suspect | — |
+
+生の値は次の場所に残します。
+
+- 停止の値: 要約の `termination_detail.halt`、`judge.json` の `termination.halt`
+- 判定の理由: `judge.json` の各行と `undetermined`
+- 送信の診断（`diagnostic_id`・分類・エンジンのコード・断りのコード）: `judge.json` の各行
+
+### 12.3 証跡の量の区分
+
+| 区分 | 対象 |
+|---|---|
+| `management` | `plan.json`・`plan.sha256`・`ledger.jsonl`・`LOCK`（集計の最中はロックを持つ） |
+| `game_complete`（ゲームの証跡） | 照合に通った完了の attempt のディレクトリのすべてのファイル（表の各ファイル・`files.sha256.json`・`COMPLETE.json`） |
+| `attempt_not_complete` | 完了マーカーのない attempt のディレクトリのファイル |
+| `derived` | `aggregate.json` と public の `summary.json`（集計の時点の大きさ） |
+| `other` | 上のどれでもない |
+
+- 集計を作り直しても、`game_complete` は変わりません（13 章で確かめた）。
+- 局を始める前・書き出す前の上限の確かめは、今までどおりバッチのディレクトリ全体で行います。
+- 全ファイルのハッシュの照合はそのままです。圧縮・間引き・照合の省略・新しい保存の仕組みは加えていません。
+- 初回の 30 局（`vai-batch-b1`）の証跡は残しています。補完のあとのコードでは道具の識別が違うので、b1 は再実行・再集計しません。
+
+## 13. 最大 100 局の実行（`vai-batch-b2`）
+
+### 13.1 条件
+
+| 項目 | 値 |
+|---|---|
+| 実行のコミット | `e9f7e1b`（計画の保存の前にコミット） |
+| デッキ・規約集合 | 固定デッキ `hitmonchan-dewgong` vs `venusaur-parasect`・`CS-KYUURA-CURRENT@1`（どちらも 1 つだけ） |
+| seed | 2001〜2033（33 個。初回の 1001〜1010 と重ならない。実行の前に固定） |
+| 方式 | uniform-stage・rules-v2・mixed（ルールの側 rules-v2・ε 0.25）。seed ごとに 3 方式で 99 局 |
+| 単局の上限 | 既定（送信 2000・受理 1000・番 200・120 秒） |
+| 全体の上限 | 局数 100・累積 900 秒（予備 150 秒）・証跡 2 GiB（予備 64 MiB）・1 局 3 attempt |
+| 停止方針 | 12.1 節（`evidence_missing_stop` だけ続ける） |
+| 計画の sha256 | `ef2a29ccdafc655f71240dfd7a3ccffb9484833c780315e456db58cd4545edb9` |
+
+中断はなかったので、再開の確かめのための停止はしていません。1 つのセッションで 99 局を順に実行しました（終了コード 0、`completed`）。
+
+### 13.2 結果
+
+| 項目 | 値 |
+|---|---|
+| 局 | 計画 99・完了 99・未完了 0・未着手 0。attempt 99（未完了 0） |
+| 終わり方 | `game_over` 95・`halted_known` 3・`limit_accepted` 1 |
+| 送信の判定 | 15654 件がすべて expected |
+| 受理の中身の判定 | 0 件（本人のうらのカードの特殊能力の受理に届かなかった） |
+| 終わり方の判定 | expected 96・undetermined 3 |
+| known_stop | 0 |
+| undetermined | 3 件。すべて `evidence_missing_stop`（`halt_condition_not_evidenced:UNRESOLVED_MULLIGAN_COMPENSATION`。seed 2025 の 3 方式で、準備の時点の停止） |
+| suspect・異常の候補・拒否・断り・failed・check の invalid | すべて 0 |
+| 停止方針で止めた局 | なし |
+| replay_run | 99 局すべて `succeeded`（期待どおり）、記録の対応の問題 0 |
+| 時間 | 累積 279.8 秒（見込みの加算なし）。1 局の runner の時間は中央値 1.66 秒・最大 19.2 秒 |
+| メモリ | 自分のプロセスの最大の作業セット 345 MB（99 局で計測。プロセスの開始からの最大） |
+| 証跡 | ゲームの証跡 514.2 MB（1188 ファイル）・管理 0.25 MB・未完了 0・その他 0 |
+
+`limit_accepted` の 1 局は rules-v2 の seed 2004 です。49 番で受理が 1000 に届きました。道具の上限で、判定は expected（`tool_limit`）です。
+
+方式ごとの値は次のとおりです。
+
+| 方式 | 局 | 終わり方 | 番の数 | 受理 | 方策の抑え |
+|---|---|---|---|---|---|
+| uniform-stage | 33 | game_over 32・halted_known 1 | 0〜70（合計 1258） | 0〜191（合計 3880） | 0 |
+| rules-v2 | 33 | game_over 31・halted_known 1・limit_accepted 1 | 0〜60（合計 1029） | 0〜1000（合計 6711） | 589 |
+| mixed | 33 | game_over 32・halted_known 1 | 0〜54（合計 1175） | 0〜328（合計 5063） | 40 |
+
+### 13.3 提示・選択・送信・受理
+
+段階ごとの数（99 局の合計）です。提示と範囲は候補の取得ごとの回数で、選択・送信・受理とは単位が違います。
+
+| 操作 | 提示 | 範囲 | 選択 | 入力の作成 | 送信 | 受理 |
+|---|---|---|---|---|---|---|
+| use_power | 12600 | 12600 | 5047 | 5047 | 4420 | 4420 |
+| end_turn | 17926 | 17926 | 2269 | 2269 | 2269 | 2269 |
+| attach_energy | 4402 | 4402 | 2032 | 2032 | 2032 | 2032 |
+| play_trainer | 9628 | 7706 | 1997 | 1997 | 1997 | 1997 |
+| use_attack | 2702 | 2702 | 1192 | 1192 | 1192 | 1192 |
+| answer_decision | 935 | 935 | 935 | 935 | 935 | 935 |
+| play_basic | 1694 | 1694 | 801 | 801 | 801 | 801 |
+| retreat | 16755 | 13014 | 4041 | 621 | 619 | 619 |
+| evolve | 1266 | 1266 | 547 | 547 | 547 | 547 |
+| take_prize | 243 | 243 | 243 | 243 | 243 | 243 |
+| promote_active | 218 | 218 | 218 | 218 | 218 | 218 |
+| place_starting | 192 | 192 | 192 | 192 | 192 | 192 |
+| report_janken | 96 | 96 | 96 | 96 | 96 | 96 |
+| mulligan_draw | 93 | 93 | 93 | 93 | 93 | 93 |
+
+- 提示された 14 種類のすべてが、選択・送信・受理まで進みました。
+- 方式ごとの提示・選択・送信・受理は、集計の `by.mode` にあります。
+- 入力の形は `choose_option` 28503・`choose_value` 189 でした。
+- 決定の種類は select_pokemon 935・take_prize 243・promote_active 218 でした。
+- 段の性質は depends_on_stage・upstream_stages・options_from_stage・total_units・distinct_across_stages・count_max_over_1 に届きました。
+- 任意の段は、使わない 1413・使う 592 でした。
+
+範囲の外・入力の作成の失敗・方策の抑えは、それぞれ別の数です。
+
+| 区分 | 数 | 中身 |
+|---|---|---|
+| 範囲の外 | 1922 回 | 受理の前に未裁定で止める play_trainer（`unresolved_ruling`） |
+| 範囲の外 | 3741 回 | にげるで入力を作れなかった候補を、同じ状態では選び直さない（`unbuildable:total_units_unreachable`） |
+| 入力の作成の失敗 | 3420 回 | にげるの費用の不足（`total_units_unreachable`） |
+| 方策の抑え | 629 件 | `repeat_suppressed` 465・`candidate_demoted` 164。use_power 627・retreat 2。エンジンの拒否ではない |
+
+届かなかったものは次のとおりです。
+
+- 拒否・断り・入力を返さない候補・unverified の選択・deep の代替
+- 本人のうらのカードの特殊能力の受理
+- 表示だけの候補の提示
+
+これらの数は、固定デッキ 1 組・規約集合 1 つでの 99 局の観測です。網羅性・強さ・正しさの証明ではありません。完走の割合も強さの指標ではありません。勝敗は集計していません。
+
+### 13.4 集計だけの再実行
+
+保存した結果から集計を 2 回作り直しました（対戦・replay_run はやり直していない）。
+
+- 局・attempt・終わり方・判定・数・方式ごとの値・段階の数・到達範囲・局ごとの行・replay_run は、3 つとも同じだった。
+- ゲームの証跡は 514176979 バイト・1188 ファイルで、3 つとも同じだった。
+- 変わったのは次の 2 つだけ（`sessions/aggregate_only_compare.json`）:
+  - 派生のファイルの量: 0 → 142284 → 142294。前の `aggregate.json` と公開の要約の大きさ。
+  - 管理のファイルの量: 1 バイト。集計の最中のロックの中身。
+
+## 14. テスト（補完）
+
+新しいテスト `tests/test_verification_ai_batch_judge.py`（11 件）を書きました。
+
+- 既存の fixture → 本物の runner → バッチの判定の入口。使った・トラッシュの 2 つ。単局の判定と同じ値
+- 公開のログの記録がないとき・出来事が合わないときの undetermined
+- halted_known の停止のコードの保持と分類、undetermined の分類の表
+- 根拠不足の停止だけを続ける初期値と、止める設定。未知の分類・未知の診断・契約の未知・no_progress・suspect（受理の中身）・api_contract_unknown で止める
+- known_stop で続ける
+- 停止のあと、集計・再実行で確かめが勝手に外れない
+- 集計を作り直してもゲームの証跡の量が変わらない（未完了の attempt を別に数える）
+- 受理のあとの公開のログを記録しても、既存の方策の行動の指紋（`ACTION_GOLDEN`）が同じ
+
+既存の `tests/test_verification_ai_batch.py`（27 件）は、偽物の要約を新しい判定の形に直しました。
+
+- 完了局の再実行の防止・ハッシュの照合・停止の確かめのテストは、そのまま通った。
+- 計画の停止方針の初期値の確かめは、新しい形に直した。
+
+正式な実行は、1 つずつ別のプロセスで行い、JUnit の XML も保存しました（証跡の `verifier/runs/vai-batch-100/tests/run1/`）。すべて 1 回目で通りました。
+
+| モジュール | 結果 |
+|---|---|
+| batch_judge | 3.2 秒 |
+| batch | 7.6 秒 |
+| v2_repeat | 10.7 秒（行動の指紋と契約の値の指紋が同じ） |
+| v0179_follow | 2.8 秒 |
+| u_r3a | 1.9 秒 |
+| v3_1 | 4.0 秒 |
+| v3_3 | 2.1 秒 |
+
+開発中（証跡の外）に、次の 2 つを直しました。
+
+- 既存のバッチのテストの偽物が、古い形の要約を返していた（5 件の失敗）。
+- 新しいテストの停止の分類の値の書き誤り（`unresolved_ruling`）。
+
+## 15. 識別・証跡・未確認・残件
+
+### 15.1 識別
+
+- パッケージの版 0.179.0 と `behavior_digest` `67c4c15b…7fca` は、補完の前（`vai-batch/identity_after.json`）と後（`vai-batch-100/identity_after.json`）で同じだった。
+- 道具の識別は `420244af…a54b` で、計画と実行で同じだった。
+
+### 15.2 証跡
+
+| 保存先 | 中身 |
+|---|---|
+| `C:/dev/kyuura-engine-verification-vai/verifier/runs/vai-batch-100/` | 事前の計画・テストの出力と JUnit・計画とセッションの出力と終了コード・集計だけの再実行の比べ・識別・コマンド |
+| `verifier/runs/vai-batch-b2/` | 計画・台帳・99 局の attempt（判定の根拠 `judge.json`・資源の記録 `COMPLETE.json` の memory を含む）・集計 |
+| `public/runs/vai-batch-b2/summary.json` | 非機密の集計 |
+
+MANIFEST_PLACEHOLDER
+
+### 15.3 未確認
+
+- 本人のうらのカードの特殊能力の受理の判定は、fixture でだけ確かめた。99 局では届かなかった。
+- 停止方針で実際に止まる局（suspect・未知の診断など）。99 局では起きなかった。
+- 根拠不足以外の undetermined は、99 局では出なかった。
+- 本当の異常終了のあとの再開・本当の `MemoryError`・POSIX でのメモリの計測。
+
+### 15.4 次に広げる前の残件
+
+- known_stop の根拠は DU1 だけなので、準備の停止（`UNRESOLVED_MULLIGAN_COMPENSATION`）は根拠不足の undetermined のまま。登録するかは、代表の条件の根拠をテストで作ってからの判断。
+- P6 の受理の中身の判定（`judge_p6_accepted`）は、runner・バッチに接続していない（`run_p6` の道具だけ）。
+- 証跡は 1 局あたり平均 5.2 MB（99 局で 514 MB）。局数を増やす前に、量と再開の照合の時間の扱いを判断する。
+- 拒否・停止・入力を返さない候補に届く局が少ない。デッキ・規約集合を広げるかは、別の計画で判断する。
+- 勝敗・きぜつの数え方は未計測。

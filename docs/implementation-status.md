@@ -5456,3 +5456,13 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 確かめ: `tests/test_verification_ai_batch.py`（27 件）と `v2_repeat`・`v0179_follow`・`v0` を 1 つずつ別のプロセスで実行した。パッケージの版・実装の識別は前後で同じ
 - 残る: 停止のある局の known_stop の根拠（既存の残件）、大量の対戦の前の証跡の量と再開の照合の時間の判断
 - 詳細: [verification-ai-batch.md](verification-ai-batch.md)
+
+## v0.179 のあと: 逐次バッチの判定の補完と 99 局（AI の側だけ。エンジンの版は 0.179.0 のまま）
+
+- 判定: runner が本人のうらのカードの特殊能力の受理のあとの公開のログを trace に記録し、単局の判定とバッチが同じ入口（`judge_recorded_face_down_power`・`judge_run_termination`）を使う。規則の版 5 のまま。受理の中身は送信の判定と別に数える
+- 停止方針（計画の形式 2）: undetermined を理由で分類（根拠不足の停止・未知の診断・契約の未知・no_progress・その他）。根拠不足の停止だけ続け、ほかは止める。known_stop の登録は増やしていない
+- 証跡の量: 管理・ゲーム（完了局）・未完了・派生に分け、集計を作り直してもゲームの証跡の量は変わらない
+- 99 局（`hitmonchan-dewgong` vs `venusaur-parasect`・`CS-KYUURA-CURRENT@1`・seed 2001〜2033 × uniform-stage・rules-v2・mixed）: game_over 95・halted_known 3（`UNRESOLVED_MULLIGAN_COMPENSATION`。根拠不足の undetermined）・limit_accepted 1。送信 15654 件の判定はすべて expected、suspect・異常の候補・拒否は 0、replay_run は 99 局とも期待どおり。累積 280 秒・ゲームの証跡 514 MB
+- 確かめ: `tests/test_verification_ai_batch_judge.py`（11 件。U-R3a の fixture を本物の runner からバッチの判定の入口まで）と、batch・v2_repeat・v0179_follow・u_r3a・v3_1・v3_3 を 1 つずつ別のプロセスで実行した。パッケージの版・実装の識別は前後で同じ
+- 残る: 準備の停止の known_stop の根拠、P6 の受理の中身の判定の接続、局数を増やす前の証跡の量の判断
+- 詳細: [verification-ai-batch.md](verification-ai-batch.md) 11 章〜15 章
