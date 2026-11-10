@@ -160,3 +160,5 @@ mixed（rules-v1）の seed 13。`tests/test_verification_ai_v2_repeat.py` の `
 - 鍵ごとの閾値は、組の多い操作（エナジートランスのつけかえ）の番の中の合計を小さくしない。番の中の同じ種類の回数で抑えるかは、方策の判断として残る（今回は変えていない）
 - 抑えたあとに、費用の不足のにげる（入力を作れない）を選ぶことが多い。選び直しの効率は今回の対象外（V2 の 2 章）のまま
 - V2 の残件（D-6・D-12・CN-1 のエンジンの側・きぜつと終局の条件の数え方・届かなかった範囲を V3 の `boundary` かデッキの組で届かせるか）は変わらない
+
+追記（0.179.0 への AI の追従）: 0.179.0 で play_trainer の保証の文に 1 文が加わり、4 つの対戦すべての契約の値の指紋（`candidate-contract/v1`）が変わった（差は play_trainer の行の `candidate.guarantees.preconditions` だけ。行動の列・反復の鍵は同じ）。`CONTRACT_GOLDEN_0179` を加えて 4 つを更新し、0.178.0・0.176.0 の値は来歴として残した（[verification-ai-v0179-follow.md](verification-ai-v0179-follow.md)）。

@@ -5439,3 +5439,11 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 版は 0.179.0（`behavior_digest` が変わった）。0.178.0 の記録・スナップショットは 0.179.0 では再実行・復元できない（既存の設計）
 - 残る: GUI・AI の追従、UP-5t の D（静的な前提）、監査の 4.5 節の 7 型の前提
 - 詳細: [legal-actions-up5t-d-trainer-audit.md](legal-actions-up5t-d-trainer-audit.md) 12 章
+
+## v0.179 のあと: 検証用 AI の 0.179.0 への追従（AI の側だけ。エンジンの版は 0.179.0 のまま）
+
+- `v2_repeat` の 4 件の失敗（4 つの対戦の `candidate-contract/v1`）の原因: play_trainer の行の `candidate.guarantees.preconditions` だけが違う（保証の文に加わった 1 文）。行動の列・trace のほかの値・終わり方・反復の抑制の鍵は同じ。`CONTRACT_GOLDEN_0179` を加えて 4 つを更新し、0.178.0 の値は来歴として残した。行動の固定値は変えていない
+- 範囲: play_trainer の候補の区分・選べるものの区分・完成入力の区分を分けて確かめた。同じ候補に may_stop_later と unverified の選べるものが混ざると、候補は deep の範囲に残り、deep は unverified の選べるものだけを選ばない。boundary・代替（deep の範囲が空のときだけ）は選べる。判定は変えていない（規則 5）
+- 確かめ: 新しいテスト `tests/test_verification_ai_v0179_follow.py`（11 件）と、`v2_repeat`・`v0178_follow`・`v0176_follow`・`p6`・`u_r3a` を 1 つずつ別のプロセスで実行した。パッケージの版・実装の識別は前後で同じ
+- 残る: GUI の追従（固定するのは `4b6e3fea9212c50622dcfea7142dcc76fd14b09d`）、UP-5t の D、おもての山札の位置を読むトレーナー 7 型の前提
+- 詳細: [verification-ai-v0179-follow.md](verification-ai-v0179-follow.md)
