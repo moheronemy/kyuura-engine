@@ -95,6 +95,8 @@ mixed（rules-v1）の seed 13。`tests/test_verification_ai_v2_repeat.py` の `
 
 追記（0.176.0 への AI の追従）: この意味の列（形式 `meaning/v1`）は API の契約の値（保証の文など）もふくむので、0.176.0 の `play_trainer` の保証の文の変更だけで 4 つの指紋が変わった（行動・入力・結果は同じ）。`UnchangedTest` は、行動の列（`action-meaning/v2`）と契約の値の列（`candidate-contract/v1`）を別の指紋で照らすようにし、上の旧い指紋は 0.175.0 までの来歴として残した（[verification-ai-v0176-follow.md](verification-ai-v0176-follow.md)）。
 
+追記（0.178.0 への AI の追従）: 0.178.0 で use_power の保証の文に 1 文が加わり、rules-v1-s13・mixed-v1-s13 の契約の値の指紋（`candidate-contract/v1`）だけが変わった（行動の列は同じ）。`CONTRACT_GOLDEN_0178` を加えて 2 つだけを更新し、0.176.0 の値は来歴として残した（[verification-ai-v0178-follow.md](verification-ai-v0178-follow.md)）。
+
 ## 6. テスト
 
 `tests/test_verification_ai_v2_repeat.py`（15 テスト）。

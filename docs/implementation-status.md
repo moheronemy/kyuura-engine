@@ -5413,3 +5413,11 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 版は 0.178.0（`behavior_digest` が変わった）。0.177.0 の記録・スナップショットは 0.178.0 では再実行・復元できない（既存の設計）
 - 残る: UP-5t の D（静的な監査だけ）、GUI・AI の追従
 - 詳細: [legal-actions-up5t-audit.md](legal-actions-up5t-audit.md) 11 章
+
+## v0.178 のあと: 検証用 AI の 0.178.0 への追従（AI の側だけ。エンジンの版は 0.178.0 のまま）
+
+- `v2_repeat` の 2 件の失敗（rules-v1-s13・mixed-v1-s13 の `candidate-contract/v1`）の原因: use_power の行の `candidate.guarantees.preconditions` だけが違う（保証の文に加わった 1 文）。行動の列・trace のほかの値は同じ。`CONTRACT_GOLDEN_0178` を加えて 2 つだけを来歴つきで更新した
+- 範囲: ガードが働く候補（相手のバトル場がうら）は `unverified` で、deep の通常の範囲から除く（ほかの候補があるので代替は起きない。範囲が空のときだけ既存の代替）。boundary には入る。おもての対照は `may_stop_later`。判定・方策・入力生成・反復の抑制は変えていない
+- 確かめ: 新しいテスト `tests/test_verification_ai_v0178_follow.py`（9 件）と関連する AI のモジュール 5 個を、1 つずつ別のプロセスで実行した。パッケージの版・実装の識別は前後で同じ
+- 残る: GUI の追従（固定するのは `8f5329d6fb9eeeb783f3d6f57128069ffc0d98a0`）、UP-5t の D、トレーナーの候補への拡張
+- 詳細: [verification-ai-v0178-follow.md](verification-ai-v0178-follow.md)
