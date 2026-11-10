@@ -702,7 +702,9 @@ known_stop の登録（`KNOWN_STOP_EVIDENCE`）は増やしていません。
 | `verifier/runs/vai-batch-b2/` | 計画・台帳・99 局の attempt（判定の根拠 `judge.json`・資源の記録 `COMPLETE.json` の memory を含む）・集計 |
 | `public/runs/vai-batch-b2/summary.json` | 非機密の集計 |
 
-MANIFEST_PLACEHOLDER
+マニフェストは、既存の 1100 件（初回の `vai-batch-b1` を含む）を照らしたあと（不一致 0）、2325 ファイルで書き直しました（1225 件を追加、消したもの・変わったものはなし）。
+
+- `sha256.json`: `86e5e1b9ad01388938302afe9317b8ed1883312236956792e3ac27dd706fd079`
 
 ### 15.3 未確認
 
