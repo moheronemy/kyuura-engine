@@ -5447,3 +5447,12 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 確かめ: 新しいテスト `tests/test_verification_ai_v0179_follow.py`（11 件）と、`v2_repeat`・`v0178_follow`・`v0176_follow`・`p6`・`u_r3a` を 1 つずつ別のプロセスで実行した。パッケージの版・実装の識別は前後で同じ
 - 残る: GUI の追従（固定するのは `4b6e3fea9212c50622dcfea7142dcc76fd14b09d`）、UP-5t の D、おもての山札の位置を読むトレーナー 7 型の前提
 - 詳細: [verification-ai-v0179-follow.md](verification-ai-v0179-follow.md)
+
+## v0.179 のあと: 検証用 AI の上限つき逐次バッチ（AI の側だけ。エンジンの版は 0.179.0 のまま）
+
+- `tools/verification_ai/batch.py`: 計画（既定値を展開・計画の sha256）、同じプロセスで 1 局ずつ、attempt ごとの確定保存（一時ファイル → `os.replace`・ハッシュの表・最後に `COMPLETE.json`）、照合つきの再開（未完了の attempt は残して別の attempt）、ロック（PID で自動解除しない）、追記だけの台帳（累積の時間）、全体の時間・局数・証跡の量の上限、停止方針（suspect・異常の候補・replay の不一致・例外系で止め、undetermined は数えて続ける）、保存済みの局からの集計。単局は既存の runner・方策・行動生成・replay_run をそのまま使い、judge は保存する trace に後から当てる
+- runner: `MemoryError` を `exception` の終わり方に変えずに投げ直す（1 か所）。方策の順位・反復の抑制・乱数の消費は変えていない（計画の経路で `ACTION_GOLDEN` が同じ）
+- 初回の 30 局（`hitmonchan-dewgong` vs `venusaur-parasect`・`CS-KYUURA-CURRENT@1`・seed 1001〜1010 × uniform-stage・rules-v2・mixed）: すべて `game_over`、送信 4126 件と終わり方 30 件の判定はすべて expected、異常の候補・拒否は 0、replay_run は 30 局とも期待どおり。7 局で正常に止めて再開し、完了局を再実行しないことを確かめた（累積 73 秒）
+- 確かめ: `tests/test_verification_ai_batch.py`（27 件）と `v2_repeat`・`v0179_follow`・`v0` を 1 つずつ別のプロセスで実行した。パッケージの版・実装の識別は前後で同じ
+- 残る: 停止のある局の known_stop の根拠（既存の残件）、大量の対戦の前の証跡の量と再開の照合の時間の判断
+- 詳細: [verification-ai-batch.md](verification-ai-batch.md)
