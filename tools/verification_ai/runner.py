@@ -21,7 +21,7 @@ from kyuura_engine.client_api import ClientHub
 from kyuura_engine.observation import visible_log
 
 from . import actions as B
-from .judge import is_face_down_power, judge_normal, judge_recorded_face_down_power, judge_run_termination
+from .judge import accepted_content_check, is_face_down_power, judge_normal, judge_recorded_accepted_content, judge_run_termination
 from .metrics import Metrics, repetition_summary
 from .policies import STAGE, TUPLE, BoundaryPolicy, MixedPolicy, RulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
 from kyuura_engine.replay_record import checks
@@ -446,14 +446,16 @@ class Runner:
             if self.negative is not None:
                 verdict, why = judge_normal(candidate, meaning, entry["submit"], stages=stages)  # 規則 4: P6 の段は stages の cost_evaluation で分ける
                 entry["judge"] = {"verdict": verdict, "reasons": why}
-            if outcome == D.ACCEPTED and is_face_down_power(candidate):
-                # 規則 5: 受理の中身（おもてにして使った・トラッシュ）を分けるために、受理のあとに加わった公開のログ（観戦者に見える出来事）を検証者の trace に記録する
-                # （方策には渡さない。逐次バッチも同じ記録に同じ判定を当てる: judge.judge_recorded_face_down_power）
+            content_check = accepted_content_check(entry)
+            if content_check is not None:
+                # 規則 5（U-R3a）・規則 4（P6）: 受理の中身（おもてにして使った・にげた・たねでないのでトラッシュ）を分けるために、受理のあとに加わった公開のログ
+                # （観戦者に見える出来事）を検証者の trace に記録する（方策には渡さない。逐次バッチも同じ記録に同じ判定を当てる: judge.judge_recorded_accepted_content）。
+                # 受理のあとの決定（promote_active など）への回答は、別の試みの entry に記録される
                 public_before = len(visible_log(before_state, None))
                 entry["public_events_after_accept"] = visible_log(self.game.state, None)[public_before:]
                 if self.negative is not None:
-                    verdict, why = judge_recorded_face_down_power(entry)
-                    entry["judge_face_down_power_accepted"] = {"verdict": verdict, "reasons": why}
+                    _same, verdict, why = judge_recorded_accepted_content(entry)
+                    entry["judge_" + content_check] = {"verdict": verdict, "reasons": why}
             if outcome == D.ACCEPTED:
                 self.counters["accepted"] += 1
                 self._cover("accepted_kind", candidate["kind"])

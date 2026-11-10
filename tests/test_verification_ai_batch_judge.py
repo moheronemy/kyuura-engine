@@ -148,9 +148,10 @@ class FixtureConnectionTest(unittest.TestCase):
         judged = B.judge_trace(result)
         self.assertEqual(judged["accepted_content"]["counts"], {J.UNDETERMINED: 1})
         self.assertEqual(judged["accepted_content"]["rows"][0]["reasons"], [J.FACE_DOWN_POWER_EVENTS_NOT_RECORDED])
-        self.assertEqual([u["category"] for u in judged["undetermined"]], [B.UNCLASSIFIED])
+        # P6 の接続（docs/verification-ai-batch.md 16 章）で、記録の欠けは unclassified から accepted_content_unrecorded（初期値 stop）に分けた
+        self.assertEqual([u["category"] for u in judged["undetermined"]], [B.ACCEPTED_CONTENT_UNRECORDED])
         stop, _ = B.stop_reasons(summary_and_rest(B.judge_summary(judged)), B._policy_dict(B.StopPolicy()))
-        self.assertEqual(stop, ["undetermined:unclassified:1"])
+        self.assertEqual(stop, ["undetermined:accepted_content_unrecorded:1"])
 
     def test_events_that_do_not_match_are_undetermined(self):
         candidate = {"kind": "use_power", "pokemon": {"pokemon": 7, "face_down": True}, "power": {"face_down": True}, "reasons": [J.FACE_DOWN_REASON]}
@@ -200,7 +201,7 @@ class PolicyTest(unittest.TestCase):
         policy = B._policy_dict(B.StopPolicy())
         self.assertEqual(B.stop_reasons(summary(undetermined=[und(B.EVIDENCE_MISSING_STOP)] * 2), policy),
                          ([], ["undetermined:evidence_missing_stop:2"]))
-        for category in (B.UNKNOWN_DIAGNOSTIC, B.CONTRACT_UNKNOWN, B.NO_PROGRESS, B.UNCLASSIFIED, "something_new"):
+        for category in (B.UNKNOWN_DIAGNOSTIC, B.CONTRACT_UNKNOWN, B.NO_PROGRESS, B.ACCEPTED_CONTENT_UNRECORDED, B.UNCLASSIFIED, "something_new"):
             self.assertEqual(B.stop_reasons(summary(undetermined=[und(category)]), policy)[0], [f"undetermined:{category}:1"], category)
         self.assertEqual(B.stop_reasons(summary(known_stop=2), policy), ([], ["known_stop:2"]))
         self.assertEqual(B.stop_reasons(summary(content={"suspect": 1}), policy)[0], ["suspect:1"])

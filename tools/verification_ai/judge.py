@@ -342,6 +342,46 @@ def judge_recorded_face_down_power(entry: dict[str, Any]) -> tuple[str, list[str
     return judge_face_down_power_accepted(entry["candidate"], events)
 
 
+P6_EVENTS_NOT_RECORDED = "p6_public_events_not_recorded"
+ACCEPTED_FACE_DOWN_POWER, ACCEPTED_P6 = "face_down_power_accepted", "p6_accepted"  # 受理の中身の判定の種類（U-R3a・P6）
+ACCEPTED_CONTENT_NOT_RECORDED = (FACE_DOWN_POWER_EVENTS_NOT_RECORDED, P6_EVENTS_NOT_RECORDED)
+
+
+def judge_recorded_p6(entry: dict[str, Any]) -> tuple[str, list[str]]:
+    """受理された P6 の送信の中身を、runner が受理の直後に記録した公開のログ（``public_events_after_accept``）の出来事の種類の並びで、既存の ``judge_p6_accepted``
+    （規則 4。変えない）に当てる。記録がなければ undetermined にし、推測しない（うらのカードの数が減ったことなどから補わない）。"""
+    events = entry.get("public_events_after_accept")
+    if events is None:
+        return UNDETERMINED, [P6_EVENTS_NOT_RECORDED]
+    return judge_p6_accepted([e.get("kind") for e in events])
+
+
+def accepted_content_check(entry: dict[str, Any]) -> str | None:
+    """受理の中身を判定する送信の種類（API の契約の値だけで決める。カードでは見分けない）: 受理された本人のうらのカードの特殊能力（U-R3a）・P6 のにげる。ほかは None。"""
+    if (entry.get("submit") or {}).get("outcome") != D.ACCEPTED:
+        return None
+    if is_face_down_power(entry["candidate"]):
+        return ACCEPTED_FACE_DOWN_POWER
+    if is_p6(entry["candidate"], entry.get("stages")):
+        return ACCEPTED_P6
+    return None
+
+
+def judge_recorded_accepted_content(entry: dict[str, Any]) -> tuple[str, str, list[str]] | None:
+    """受理の中身の判定の共通の入口（単局の runner と逐次バッチが同じ記録・同じ引数で呼ぶ）。(種類, 判定, 理由) か、対象でなければ None。"""
+    check = accepted_content_check(entry)
+    if check is None:
+        return None
+    verdict, why = (judge_recorded_face_down_power if check == ACCEPTED_FACE_DOWN_POWER else judge_recorded_p6)(entry)
+    return check, verdict, why
+
+
+def revealed_card_id(entry: dict[str, Any]) -> str | None:
+    """記録した公開のログの最初の出来事が secret_plan_revealed なら、そのカード ID（観戦者に公開された値。証跡の確かめ用で、判定には使わない）。"""
+    events = entry.get("public_events_after_accept") or []
+    return events[0].get("card_id") if events and events[0].get("kind") == P6_REVEALED else None
+
+
 def judge_run_termination(termination: str, detail: dict[str, Any] | None, trace: list[dict[str, Any]]) -> tuple[str, list[str]]:
     """runner の終わり方の判定（``judge_termination``）に、最後に受理した候補の処理可能性と、halted_known なら公開の停止の値（runner の終わり方の詳細の ``halt``）を渡す。"""
     accepted = [e for e in trace if e.get("type") == "attempt" and (e.get("submit") or {}).get("outcome") == D.ACCEPTED]

@@ -32,10 +32,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
-PLAN_FORMAT = "kyuura-vai-batch-plan/2"  # 2: 停止方針の undetermined を理由の分類ごとに指定（1 は 30 局の初回 vai-batch-b1）
-COMPLETE_FORMAT = "kyuura-vai-batch-complete/2"  # 2: 要約の judge に受理の中身・undetermined の分類・known_stop
+PLAN_FORMAT = "kyuura-vai-batch-plan/3"  # 3: undetermined の分類に accepted_content_unrecorded（2 は 99 局 vai-batch-b2・1 は 30 局の初回 vai-batch-b1）
+COMPLETE_FORMAT = "kyuura-vai-batch-complete/3"  # 3: 要約の judge に受理の中身の種類ごと（U-R3a・P6）の件数（2 は vai-batch-b2）
 TOOL_NAME = "tools.verification_ai.batch"
-TOOL_VERSION = 2
+TOOL_VERSION = 3
 
 # 方式（計画を作るときだけ使う。計画には Config の全項目を展開して書くので、ここを後で変えても既存の計画の局は変わらない）
 MODES: dict[str, dict[str, Any]] = {
@@ -56,8 +56,10 @@ EVIDENCE_MISSING_STOP = "evidence_missing_stop"  # 停止・停止系の拒否�
 UNKNOWN_DIAGNOSTIC = "unknown_diagnostic"  # 停止のコードが診断のコード表にない
 CONTRACT_UNKNOWN = "contract_unknown"  # 知らない送信の結果・終わり方 api_contract_unknown
 NO_PROGRESS = "no_progress"  # 終わり方 no_progress（同じ状態の拒否・選び直しの上限）
+# 受理の中身（U-R3a・P6）を判定する公開のログの記録が trace にない（記録の欠け・古い trace）。根拠不足の停止（evidence_missing_stop）とは別
+ACCEPTED_CONTENT_UNRECORDED = "accepted_content_unrecorded"
 UNCLASSIFIED = "unclassified"
-UNDETERMINED_CATEGORIES = (EVIDENCE_MISSING_STOP, UNKNOWN_DIAGNOSTIC, CONTRACT_UNKNOWN, NO_PROGRESS, UNCLASSIFIED)
+UNDETERMINED_CATEGORIES = (EVIDENCE_MISSING_STOP, UNKNOWN_DIAGNOSTIC, CONTRACT_UNKNOWN, NO_PROGRESS, ACCEPTED_CONTENT_UNRECORDED, UNCLASSIFIED)
 REQUIRED_FILES = ("header.json", "trace.jsonl", "actors/0.jsonl", "actors/1.jsonl", "actors/host.jsonl", "full_record.json", "result.json",
                   "verification.json", "judge.json", "sequences.json")
 TABLE = "files.sha256.json"
@@ -96,7 +98,7 @@ class StopPolicy:
     on_suspect: str = "stop"
     on_known_stop: str = "continue"
     on_undetermined: dict = field(default_factory=lambda: {EVIDENCE_MISSING_STOP: "continue", UNKNOWN_DIAGNOSTIC: "stop", CONTRACT_UNKNOWN: "stop",
-                                                            NO_PROGRESS: "stop", UNCLASSIFIED: "stop"})
+                                                            NO_PROGRESS: "stop", ACCEPTED_CONTENT_UNRECORDED: "stop", UNCLASSIFIED: "stop"})
     on_anomaly: str = "stop"
     on_verification_problem: str = "stop"  # replay_run の期待との不一致・記録の対応の問題
 
@@ -323,6 +325,10 @@ class EngineAdapter:
         return GameOutput(files=files, summary=summary)
 
 
+# judge.ACCEPTED_CONTENT_NOT_RECORDED と同じ値（batch は judge を遅れて読み込むので、ここに写す。テストで一致を確かめる）
+ACCEPTED_CONTENT_NOT_RECORDED_REASONS = ("face_down_power_public_events_not_recorded", "p6_public_events_not_recorded")
+
+
 def undetermined_category(source: str, reasons: list[str], termination: str | None = None) -> str:
     """undetermined の理由の分類（停止方針で使う）。judge の理由の文字列の先頭で決め、どれにも当たらないものは unclassified（停止の初期値）。"""
     if source == "termination" and termination == "api_contract_unknown":
@@ -336,6 +342,8 @@ def undetermined_category(source: str, reasons: list[str], termination: str | No
         return UNKNOWN_DIAGNOSTIC
     if first.startswith("unknown_outcome:"):
         return CONTRACT_UNKNOWN
+    if source == "accepted_content" and first in ACCEPTED_CONTENT_NOT_RECORDED_REASONS:
+        return ACCEPTED_CONTENT_UNRECORDED
     return UNCLASSIFIED
 
 
@@ -343,15 +351,15 @@ def judge_trace(result: dict[str, Any]) -> dict[str, Any]:
     """保存する trace に、既存の judge（規則の版 5）をあとから当てる（runner の進行・方策に影響しない）。単局の runner（V3-1 の変異の実行の中の判定）と同じ入口・引数:
 
     - 送信（submit を送った試み）ごとに ``judge_normal``（1 つの送信に 1 回。件数は ``counts``）
-    - 受理された本人のうらのカードの特殊能力の送信の中身に ``judge_recorded_face_down_power``（runner が受理の直後に記録した公開のログ。記録がなければ undetermined。
-      送信の判定とは別の軸で数える＝``accepted_content``。同じ送信を 2 回数えない）
+    - 受理された本人のうらのカードの特殊能力（U-R3a）・P6 のにげるの送信の中身に ``judge_recorded_accepted_content``（runner が受理の直後に記録した公開のログ。
+      記録がなければ undetermined。送信の判定とは別の軸で数える＝``accepted_content``。種類ごとは ``by_check``。同じ送信を 2 回数えない）
     - 終わり方に ``judge_run_termination``（halted_known では公開の停止の値を渡す）
 
     undetermined は 1 つずつ、出どころ・理由・分類（``undetermined_category``）を残す。行には生の診断（diagnostic_id・分類・エンジンのコード）を残す。"""
-    from .judge import JUDGE_RULES_VERSION, KNOWN_STOP, UNDETERMINED, is_face_down_power, judge_normal, judge_recorded_face_down_power, judge_run_termination
+    from .judge import JUDGE_RULES_VERSION, KNOWN_STOP, UNDETERMINED, judge_normal, judge_recorded_accepted_content, judge_run_termination, revealed_card_id
 
     rows, counts, by_kind = [], {}, {}
-    content_rows, content_counts = [], {}
+    content_rows, content_counts, content_by_check = [], {}, {}
     undetermined = []
     for e in result["trace"]:
         if e.get("type") != "attempt" or e.get("submit") is None:
@@ -366,10 +374,13 @@ def judge_trace(result: dict[str, Any]) -> dict[str, Any]:
         by_kind.setdefault(kind, {})[verdict] = by_kind.setdefault(kind, {}).get(verdict, 0) + 1
         if verdict == UNDETERMINED:
             undetermined.append({"source": "submit", "attempt": e["n"], "kind": kind, "reasons": why, "category": undetermined_category("submit", why)})
-        if e["submit"].get("outcome") == "accepted" and is_face_down_power(e["candidate"]):
-            v2, why2 = judge_recorded_face_down_power(e)
-            content_rows.append({"attempt": e["n"], "kind": kind, "check": "face_down_power_accepted", "verdict": v2, "reasons": why2})
+        content = judge_recorded_accepted_content(e)
+        if content is not None:
+            check, v2, why2 = content
+            content_rows.append({"attempt": e["n"], "kind": kind, "check": check, "verdict": v2, "reasons": why2,
+                                 "events_recorded": "public_events_after_accept" in e, "revealed_card_id": revealed_card_id(e)})
             content_counts[v2] = content_counts.get(v2, 0) + 1
+            content_by_check.setdefault(check, {})[v2] = content_by_check.setdefault(check, {}).get(v2, 0) + 1
             if v2 == UNDETERMINED:
                 undetermined.append({"source": "accepted_content", "attempt": e["n"], "kind": kind, "reasons": why2,
                                      "category": undetermined_category("accepted_content", why2)})
@@ -381,14 +392,15 @@ def judge_trace(result: dict[str, Any]) -> dict[str, Any]:
                              "category": undetermined_category("termination", why, term["class"])})
     known_stop = [r["attempt"] for r in rows if r["verdict"] == KNOWN_STOP] + (["termination"] if verdict == KNOWN_STOP else [])
     return {"rules_version": JUDGE_RULES_VERSION, "counts": dict(sorted(counts.items())), "by_kind": by_kind, "rows": rows,
-            "accepted_content": {"counts": dict(sorted(content_counts.items())), "rows": content_rows},
+            "accepted_content": {"counts": dict(sorted(content_counts.items())), "by_check": content_by_check, "rows": content_rows},
             "termination": {"verdict": verdict, "reasons": why, "class": term["class"], "halt": detail.get("halt")},
             "undetermined": undetermined, "known_stop": known_stop}
 
 
 def judge_summary(judged: dict[str, Any]) -> dict[str, Any]:
     """COMPLETE.json の要約に入れる判定（件数と undetermined の一覧。行は judge.json）。"""
-    return {"submits": judged["counts"], "accepted_content": judged["accepted_content"]["counts"], "termination": judged["termination"],
+    return {"submits": judged["counts"], "accepted_content": judged["accepted_content"]["counts"],
+            "accepted_content_by_check": judged["accepted_content"]["by_check"], "termination": judged["termination"],
             "undetermined": judged["undetermined"], "known_stop": len(judged["known_stop"])}
 
 
@@ -931,6 +943,7 @@ def _aggregate(bdir: Path, plan: dict[str, Any], plan_sha: str, state: dict[str,
     terminations, judge_submits, judge_term, anomalies, counters, coverage, axes, funnel, by_kind_outcome = {}, {}, {}, {}, {}, {}, {}, {}, {}
     replay, stops, notes, seconds, mems, sizes = {}, [], [], [], [], []
     content, undetermined_by, known_stop, term_vs_judge, raw_codes, halts = {}, {}, 0, {}, {}, {}
+    content_by_check: dict[str, dict[str, int]] = {}
     for entry, done in complete:
         s = done["summary"]
         adir = bdir / "games" / entry["game_id"] / done["attempt"]
@@ -942,6 +955,9 @@ def _aggregate(bdir: Path, plan: dict[str, Any], plan_sha: str, state: dict[str,
         _add(judge_term, s["judge"]["termination"]["verdict"])
         for k, v in (s["judge"].get("accepted_content") or {}).items():
             _add(content, k, v)
+        for check, verdicts in (s["judge"].get("accepted_content_by_check") or {}).items():
+            for k, v in verdicts.items():
+                _add(content_by_check.setdefault(check, {}), k, v)
         for item in s["judge"].get("undetermined") or []:
             bucket = undetermined_by.setdefault(item["category"], {"count": 0, "reasons": {}, "sources": {}})
             bucket["count"] += 1
@@ -1023,7 +1039,8 @@ def _aggregate(bdir: Path, plan: dict[str, Any], plan_sha: str, state: dict[str,
                      "ledger_broken_lines": broken, "policy_stops": [e.get("game") for e in events if e.get("event") == "policy_stop"],
                      "acknowledged": [e.get("game") for e in events if e.get("event") == "stop_acknowledged"]},
         "terminations": terminations,
-        "judge": {"submits": judge_submits, "termination": judge_term, "accepted_content": content, "known_stop": known_stop,
+        "judge": {"submits": judge_submits, "termination": judge_term, "accepted_content": content, "accepted_content_by_check": content_by_check,
+                  "known_stop": known_stop,
                   "undetermined_by_category": undetermined_by, "termination_vs_judge": term_vs_judge, "non_accepted_submits_by_verdict": raw_codes,
                   "halts": halts},
         "anomalies": anomalies,

@@ -139,7 +139,7 @@ class PlanTest(Base):
         self.assertEqual(plan["limits"]["max_games"], 30)
         self.assertEqual(plan["stop_policy"]["on_suspect"], "stop")
         self.assertEqual(plan["stop_policy"]["on_undetermined"], {"evidence_missing_stop": "continue", "unknown_diagnostic": "stop", "contract_unknown": "stop",
-                                                                  "no_progress": "stop", "unclassified": "stop"})
+                                                                  "no_progress": "stop", "accepted_content_unrecorded": "stop", "unclassified": "stop"})
         self.assertEqual(plan["stop_policy"]["on_known_stop"], "continue")
         self.assertIn("api_contract_unknown", plan["stop_policy"]["stop_terminations"])
         B.load_plan(self.bdir(), a)
