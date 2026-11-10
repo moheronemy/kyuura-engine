@@ -18,16 +18,22 @@ from pathlib import Path
 from tools.verification_ai import batch as B
 
 
-def summary(termination="game_over", submits=None, term_verdict="expected", anomalies=(), replay_ok=True, correspondence=0):
+def summary(termination="game_over", submits=None, term_verdict="expected", anomalies=(), replay_ok=True, correspondence=0, undetermined=(), known_stop=0,
+            content=None, term_reasons=()):
     return {"termination": termination, "termination_detail": {}, "counters": {"turns": 2, "accepted": 3, "operations": 4},
-            "anomalies": list(anomalies), "judge": {"submits": submits or {"expected": 3}, "termination": {"verdict": term_verdict, "reasons": []},
-                                                    "not_applied": {"face_down_power_accepted": 0}},
+            "anomalies": list(anomalies), "judge": {"submits": submits or {"expected": 3}, "accepted_content": content or {},
+                                                    "termination": {"verdict": term_verdict, "reasons": list(term_reasons), "class": termination, "halt": None},
+                                                    "undetermined": [dict(u) for u in undetermined], "known_stop": known_stop},
             "replay_run": {"expected": "succeeded", "status": "succeeded" if replay_ok else "mismatch", "matches_expectation": replay_ok},
             "correspondence_problems": correspondence, "elapsed_seconds": 0.5, "sequences": {"action": {"sha256": "a"}, "contract": {"sha256": "c"}}}
 
 
 RESULT = {"coverage": {"chosen_kind": {"end_turn": 2}, "input": {"choose_option": 1}}, "metrics": {"axes": {"decision_kind": {"x": 1}}, "kinds": {
     "end_turn": {**{f: 1 for f in B.FUNNEL}, "outcome": {"accepted": 1}, "build_failed": {}, "excluded": {}}}}}
+
+
+EVIDENCE_MISSING = {"source": "termination", "attempt": None, "kind": None, "reasons": ["halt_condition_not_evidenced:UNRESOLVED_X"],
+                    "category": "evidence_missing_stop"}
 
 
 class Heavy:
@@ -78,7 +84,8 @@ class FakeAdapter:
             self.clock.t += self.step
         heavy = Heavy(self.size)
         self.refs.append(weakref.ref(heavy))
-        files = [(name, json.dumps({"game": gid, "name": name, "pad": len(heavy.data)}).encode() + b"\n") for name in B.REQUIRED_FILES if name != "result.json"]
+        files = [(name, json.dumps({"game": gid, "name": name, "pad": len(heavy.data), "rows": []}).encode() + b"\n")
+                 for name in B.REQUIRED_FILES if name != "result.json"]
         files.append(("result.json", json.dumps(RESULT).encode()))
         if self.size > 1000:
             files.append(("big.bin", bytes(heavy.data)))
@@ -131,7 +138,10 @@ class PlanTest(Base):
             self.assertIn(key, plan)
         self.assertEqual(plan["limits"]["max_games"], 30)
         self.assertEqual(plan["stop_policy"]["on_suspect"], "stop")
-        self.assertEqual(plan["stop_policy"]["on_undetermined"], "continue")
+        self.assertEqual(plan["stop_policy"]["on_undetermined"], {"evidence_missing_stop": "continue", "unknown_diagnostic": "stop", "contract_unknown": "stop",
+                                                                  "no_progress": "stop", "unclassified": "stop"})
+        self.assertEqual(plan["stop_policy"]["on_known_stop"], "continue")
+        self.assertIn("api_contract_unknown", plan["stop_policy"]["stop_terminations"])
         B.load_plan(self.bdir(), a)
 
     def test_plan_refuses_overwrite_too_many_games_and_duplicates(self):
@@ -389,11 +399,11 @@ class PolicyTest(Base):
         self.assertEqual(a.calls, ["g001-uniform-stage-s1", "g002-uniform-stage-s2"])
 
     def test_undetermined_continues_and_is_counted(self):
-        a = FakeAdapter(script={"g001-uniform-stage-s1": summary(termination="halted_known", term_verdict="undetermined")})
+        a = FakeAdapter(script={"g001-uniform-stage-s1": summary(termination="halted_known", term_verdict="undetermined", undetermined=[EVIDENCE_MISSING])})
         self.plan(a, seeds=(1, 2))
         r = self.run_(a)
         self.assertEqual(r.status, "completed")
-        self.assertEqual(r.ran[0]["note"], ["undetermined:1"])
+        self.assertEqual(r.ran[0]["note"], ["undetermined:evidence_missing_stop:1"])
         agg = json.loads((self.bdir() / "aggregate.json").read_text(encoding="utf-8"))
         self.assertEqual(agg["judge"]["termination"], {"expected": 1, "undetermined": 1})
 

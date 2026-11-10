@@ -21,7 +21,7 @@ from kyuura_engine.client_api import ClientHub
 from kyuura_engine.observation import visible_log
 
 from . import actions as B
-from .judge import is_face_down_power, judge_face_down_power_accepted, judge_normal, judge_termination
+from .judge import is_face_down_power, judge_normal, judge_recorded_face_down_power, judge_run_termination
 from .metrics import Metrics, repetition_summary
 from .policies import STAGE, TUPLE, BoundaryPolicy, MixedPolicy, RulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
 from kyuura_engine.replay_record import checks
@@ -185,7 +185,7 @@ class Runner:
                 "limits": asdict(self.limits), "elapsed_seconds": round(self.clock() - self._started, 3),
                 "distribution": self.config.distribution, "metrics": self.metrics.to_dict(),
                 "repetition": repetition_summary(self.trace, self.actor_logs),
-                **({"negative": self.negative.summary(), "judge_termination": self._judge_termination(termination)} if self.negative is not None else {})}
+                **({"negative": self.negative.summary(), "judge_termination": self._judge_termination(termination, detail)} if self.negative is not None else {})}
 
     # ---------------------------------------------------------------- 進行
 
@@ -446,11 +446,14 @@ class Runner:
             if self.negative is not None:
                 verdict, why = judge_normal(candidate, meaning, entry["submit"], stages=stages)  # 規則 4: P6 の段は stages の cost_evaluation で分ける
                 entry["judge"] = {"verdict": verdict, "reasons": why}
-            if outcome == D.ACCEPTED and self.negative is not None and is_face_down_power(candidate):
-                # 規則 5: 受理の中身（おもてにして使った・トラッシュ）を、受理のあとに加わった公開のログ（観戦者に見える出来事）で分ける
+            if outcome == D.ACCEPTED and is_face_down_power(candidate):
+                # 規則 5: 受理の中身（おもてにして使った・トラッシュ）を分けるために、受理のあとに加わった公開のログ（観戦者に見える出来事）を検証者の trace に記録する
+                # （方策には渡さない。逐次バッチも同じ記録に同じ判定を当てる: judge.judge_recorded_face_down_power）
                 public_before = len(visible_log(before_state, None))
-                verdict, why = judge_face_down_power_accepted(candidate, visible_log(self.game.state, None)[public_before:])
-                entry["judge_face_down_power_accepted"] = {"verdict": verdict, "reasons": why}
+                entry["public_events_after_accept"] = visible_log(self.game.state, None)[public_before:]
+                if self.negative is not None:
+                    verdict, why = judge_recorded_face_down_power(entry)
+                    entry["judge_face_down_power_accepted"] = {"verdict": verdict, "reasons": why}
             if outcome == D.ACCEPTED:
                 self.counters["accepted"] += 1
                 self._cover("accepted_kind", candidate["kind"])
@@ -492,9 +495,8 @@ class Runner:
         """V3-1: 変異の前後で副作用の疑いがあれば、その対戦の通常の進行を止める（前後の証跡は変異の記録にある）。"""
         raise _Stop(NEGATIVE_SIDE_EFFECT, detail)
 
-    def _judge_termination(self, termination) -> dict[str, Any]:
-        accepted = [e for e in self.trace if e.get("type") == "attempt" and (e.get("submit") or {}).get("outcome") == D.ACCEPTED]
-        verdict, why = judge_termination(termination, accepted[-1]["candidate"].get("processability") if accepted else None)
+    def _judge_termination(self, termination, detail=None) -> dict[str, Any]:
+        verdict, why = judge_run_termination(termination, detail, self.trace)  # 逐次バッチと同じ入口（halted_known では公開の停止の値を渡す）
         return {"verdict": verdict, "reasons": why}
 
     def _attempt(self, actor, candidate, reason, scope) -> dict[str, Any]:

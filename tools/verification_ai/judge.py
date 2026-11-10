@@ -326,3 +326,25 @@ def judge_termination(termination: str, last_accepted_processability: str | None
     if termination in ("api_contract_unknown", "no_progress"):
         return UNDETERMINED, []
     return SUSPECT, []  # halted_unclassified・failed・state_integrity・exception・inconsistency・negative_side_effect
+
+
+# ---------------------------------------------------------------- 記録した値に当てる入口（単局の runner と逐次バッチで共通。規則は上と同じで、規則の版は変えない）
+
+FACE_DOWN_POWER_EVENTS_NOT_RECORDED = "face_down_power_public_events_not_recorded"
+
+
+def judge_recorded_face_down_power(entry: dict[str, Any]) -> tuple[str, list[str]]:
+    """受理された本人のうらのカードの特殊能力の送信の中身を、runner が受理の直後に記録した公開のログ（``public_events_after_accept``。観戦者に見える出来事）で
+    ``judge_face_down_power_accepted`` に当てる。記録がなければ（古い trace・記録の欠け）undetermined にし、推測しない。"""
+    events = entry.get("public_events_after_accept")
+    if events is None:
+        return UNDETERMINED, [FACE_DOWN_POWER_EVENTS_NOT_RECORDED]
+    return judge_face_down_power_accepted(entry["candidate"], events)
+
+
+def judge_run_termination(termination: str, detail: dict[str, Any] | None, trace: list[dict[str, Any]]) -> tuple[str, list[str]]:
+    """runner の終わり方の判定（``judge_termination``）に、最後に受理した候補の処理可能性と、halted_known なら公開の停止の値（runner の終わり方の詳細の ``halt``）を渡す。"""
+    accepted = [e for e in trace if e.get("type") == "attempt" and (e.get("submit") or {}).get("outcome") == D.ACCEPTED]
+    last = accepted[-1]["candidate"].get("processability") if accepted else None
+    halt = (detail or {}).get("halt") if termination == "halted_known" and isinstance(detail, dict) else None
+    return judge_termination(termination, last, halt=halt)
