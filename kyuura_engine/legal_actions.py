@@ -30,6 +30,7 @@ from typing import Any
 
 from . import diagnostics as D
 from . import faceup
+from . import zones as _zones
 from .adapter import CommandResult, HostedGame, HostStoppedError, UnusableStateError, checked_state_copy  # noqa: F401（UnusableStateError は入口の拒否の型として公開）
 from .commands import (
     AttachEnergy,
@@ -1611,7 +1612,8 @@ def _stadium_candidate(state: GameState, actor: int) -> _Candidate | None:
 GUARANTEE_POWER = {
     "preconditions": "番・段階と、使う特殊能力ごとに、エンジンが宣言を受け付ける前の確かめ（engine.check_use_pokemon_power。番・自分の場のポケモン・特殊能力の位置・登録・"
                      "宣言する力か・消す効果・写した特殊能力・特殊能力ごとの check_usable・DV3。コマンドの処理と同じ関数・同じ順番）を、宣言の入力の組ごとに候補の作成に使う。"
-                     "入力の段は型ごとの宣言（effects.POWER_INPUT_STAGES）から作る。指定するうらのカード（エンジンがおもてにしてから確かめる）を含む組は確かめない（unverified）",
+                     "入力の段は型ごとの宣言（effects.POWER_INPUT_STAGES）から作る。指定するうらのカード（エンジンがおもてにしてから確かめる）を含む組は確かめない（unverified）。"
+                     "v0.178: 確かめが相手のうらのカードの本当のカードを使ったら（状態の複製の上の試行でおもてにした）、その結果を使わない（unverified）",
     "acceptance": "保証しない。エンジンはコマンドの入口で指定したうらのカードをおもてにし（本当のカードによらない拒否にそろえる）、コマンドの終わりに受け付けられない状態（MH1 など）に"
                   "ならないかを確かめる。候補の作成・入力の検査は、これらを呼ばない。最終の判定は apply_command",
     "after_acceptance": "評価していない（特殊能力のコイン・効果の決定（answer_decision の候補で答える）・あまごいでつけた事実への反応・きぜつ・空いたバトル場の交代がある）",
@@ -1729,10 +1731,34 @@ def _path_stage_problems(stages: list[dict[str, Any]], stage: dict[str, Any], id
     return problems
 
 
+def _probe_without_opponent_identity(state: GameState, cmd: UsePokemonPower) -> tuple[tuple[str | None, str | None], bool]:
+    """v0.178（UP-5t-C1。docs/legal-actions-up5t-audit.md 11 章）: ``check_use_pokemon_power`` を ``_probe`` と同じに呼び、そのあいだに相手のうらのカードの
+    本当のカードを使ったか（``zones.designate_face_down`` が ``IDENTITY_CONSULTED`` に相手を記録したか）を返す。((ILLEGAL・STOP・None, コード), 使ったか)。
+
+    - 記録の並びは、この呼び出しのあいだだけ新しい空の並びにし、``finally`` で前の値（外側の記録。ふつうは None）に必ず戻す。外側の並びには書かない
+    - 記録は、本当のカードを読む前（``_secret_plan_keeps`` の前）に付く。使ったら、受け付ける・拒否（IllegalActionError）・停止（UnsupportedError）のどれでも
+      結果を使わない（呼ぶ側が unverified にする）。エンジンの ``_identity_independent``（ありうるカードを置きかえて確かめ直す）は候補の作成に持ち込まない
+    - ほかの例外は捕まえない（記録だけを戻して投げ直す。``MemoryError``・``KeyboardInterrupt``・``SystemExit`` を含め、未確認に変えない）
+    - 状態・乱数・ログ・決定は変えない（``check_use_pokemon_power`` の約束。試行は複製の上）"""
+    saved = _zones.IDENTITY_CONSULTED
+    _zones.IDENTITY_CONSULTED = []
+    try:
+        outcome = _probe(check_use_pokemon_power, state, cmd)
+        consulted = any(owner != cmd.player for owner in _zones.IDENTITY_CONSULTED)
+    finally:
+        _zones.IDENTITY_CONSULTED = saved
+    return outcome, consulted
+
+
 def _power_verdict(state: GameState, cmd: UsePokemonPower, designated_face_down: bool) -> tuple[str, list[str]] | None:
     if designated_face_down:
         return UNVERIFIED, [REASON_FACE_DOWN]  # エンジンがおもてにしてから確かめる（本当のカードを候補の作成では読まない。結果を予告しない）
-    verdict, code = _probe(check_use_pokemon_power, state, cmd)
+    (verdict, code), consulted = _probe_without_opponent_identity(state, cmd)
+    if consulted:
+        # v0.178（UP-5t-C1）: 使うための条件の確かめ（状態の複製の上の試行）が、相手のうらのカードの本当のカードを使った（おもてにして「たねポケモン」かを見た）。
+        # 結果（候補にしない・実行できない区分・may_stop_later）は本当のカードによりうるので使わない。エンジンが受け付けるかは、コマンドの処理が本当のカードに
+        # よらずに決める（_identity_independent）
+        return UNVERIFIED, [REASON_FACE_DOWN]
     if verdict == ILLEGAL:
         return None
     if verdict == STOP:
