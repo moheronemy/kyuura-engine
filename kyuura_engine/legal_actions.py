@@ -1466,7 +1466,8 @@ GUARANTEE_TRAINER = {
     "preconditions": "番・段階と、手札のトレーナーカードごとに、エンジンが手札から出す前の確かめ（engine.check_play_trainer。番・手札・トレーナーカードであること・トレーナーの使用の禁止・"
                      "登録表・カードごとの使うための条件・リムーブ禁止ジムの追加の条件・MG1。コマンドの処理と同じ関数・同じ順番）を候補の作成に使う。v0.176: 状態の複製の上で山札から"
                      "引いて試す使うための条件（PLAYABLE_FACE_UP_PREFIX_TRIALS）も呼ぶ。結果は本人の手札・公開の枚数と、おもての山札の並びの不変条件で決まる。その不変条件が"
-                     "成り立たない状態では呼ばない（unverified）。effects.py の外で定義した条件も呼ばない（unverified）",
+                     "成り立たない状態では呼ばない（unverified）。effects.py の外で定義した条件も呼ばない（unverified）。v0.179: 確かめが相手のうらのカードの本当のカードを"
+                     "使ったら、その結果（受け付ける・拒否・停止）を使わない（unverified。そのあとの公開の確かめの拒否も示さない）",
     "acceptance": "保証しない。エンジンは受け付ける前に、［ちえくらべ］を使わない続き・効果の途中の決定の答えの続きを状態の複製の上で試し（_trainer_reaction_decline_check・_trainer_dead_end）、"
                   "効果の処理の途中の未裁定・未対応で拒否することがある（状態は変わらない）。候補の作成・入力の検査は、これらを呼ばない。最終の判定は apply_command",
     "after_acceptance": "評価していない（錯乱ジムのコイン・相手の［ちえくらべ］の決定・リムーブ禁止ジムの追加の条件・効果の対象や枚数や山札の検索・サイキックコントロールの使うカードは、どれも受理の"
@@ -1507,7 +1508,11 @@ def _trainer_candidate(state: GameState, actor: int) -> _Candidate | None:
     """手札のトレーナーカードを使う（1 段。手札のカード 1 枚。``PlayTrainer``）。選べるものは本人の手札の並び。対象・枚数・費用・検索・任意の選択は、受理のあとの決定。
 
     ゲーム上できない（エンジンの確かめが ``IllegalActionError``）カードは出さない。未裁定・未対応（``UnsupportedError``）は選べるものとして示し、実行できない区分にする。
-    使うための条件を呼ばないカード（``_use_condition_evaluated``）は unverified（使えるかを示さない。選べるものの数・並びは条件の結果によらない）。"""
+    使うための条件を呼ばないカード（``_use_condition_evaluated``）は unverified（使えるかを示さない。選べるものの数・並びは条件の結果によらない）。
+
+    v0.179（PT-5t-C1。docs/legal-actions-up5t-d-trainer-audit.md 12 章）: 確かめ（状態の複製の上の試行）が相手のうらのカードの本当のカードを使ったら（``_probe_recording_identity``）、
+    受け付ける・拒否・停止のどれでも結果を使わず、その選べるものを unverified（``face_down_reveal_not_evaluated``）にする。拒否でも外さない（外すと選べるものの数・並びが
+    本当のカードによりうる）。そのあとの公開の確かめ（リムーブ禁止ジム・MG1）の拒否・停止も示さない（保守的。送ればエンジンが本当のカードによらずに決める）。"""
     p = state.players[actor]
     options, values, executable, found_all = [], [], [], []
     for uid in p.hand:
@@ -1515,7 +1520,14 @@ def _trainer_candidate(state: GameState, actor: int) -> _Candidate | None:
         if definition.category != "trainer":
             continue
         evaluated = _use_condition_evaluated(state.effects.trainer_effect(definition), state)
-        verdict, code = _probe(partial(check_play_trainer, use_condition=evaluated), state, PlayTrainer(actor, uid))
+        (verdict, code), consulted = _probe_recording_identity(partial(check_play_trainer, use_condition=evaluated), state, PlayTrainer(actor, uid))
+        if consulted:
+            found = (UNVERIFIED, [REASON_FACE_DOWN, REASON_PREFLIGHT, REASON_CONTINUATION])
+            values.append(uid)
+            executable.append(found[0] in EXECUTABLE)
+            found_all.append(found)
+            options.append(_option({"id": f"o{len(values)}", **_card_option(state, uid)}, found[0], sorted(found[1])))
+            continue
         if verdict == ILLEGAL:
             continue
         if verdict == STOP:
@@ -1740,10 +1752,17 @@ def _probe_without_opponent_identity(state: GameState, cmd: UsePokemonPower) -> 
       結果を使わない（呼ぶ側が unverified にする）。エンジンの ``_identity_independent``（ありうるカードを置きかえて確かめ直す）は候補の作成に持ち込まない
     - ほかの例外は捕まえない（記録だけを戻して投げ直す。``MemoryError``・``KeyboardInterrupt``・``SystemExit`` を含め、未確認に変えない）
     - 状態・乱数・ログ・決定は変えない（``check_use_pokemon_power`` の約束。試行は複製の上）"""
+    return _probe_recording_identity(check_use_pokemon_power, state, cmd)
+
+
+def _probe_recording_identity(check, state: GameState, cmd) -> tuple[tuple[str | None, str | None], bool]:
+    """v0.179（PT-5t-C1）: ``_probe_without_opponent_identity`` の本体を、確かめの関数（``check_use_pokemon_power``・``check_play_trainer``）によらない形にしたもの。
+    ``check(state, cmd)`` を ``_probe`` と同じに呼び、((ILLEGAL・STOP・None, コード), 相手のうらのカードの本当のカードを使ったか) を返す。``cmd.player`` が使うプレイヤー。
+    記録の並びはこの呼び出しのあいだだけ新しい空の並びにし、``finally`` で前の値（外側の記録。外側の並びには書かない）に戻す。ほかの例外は記録だけを戻して投げ直す。"""
     saved = _zones.IDENTITY_CONSULTED
     _zones.IDENTITY_CONSULTED = []
     try:
-        outcome = _probe(check_use_pokemon_power, state, cmd)
+        outcome = _probe(check, state, cmd)
         consulted = any(owner != cmd.player for owner in _zones.IDENTITY_CONSULTED)
     finally:
         _zones.IDENTITY_CONSULTED = saved
