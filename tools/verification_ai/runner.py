@@ -1,0 +1,649 @@
+"""検証ランナー（D）。``client_api`` の入口だけで 1 対戦を進め、上限・終わり方の分類・照合・記録を行う（docs/verification-ai-v0.md 4 章〜6 章）。
+
+- 操作は ``PlayerEndpoint``・``HostEndpoint`` の ``handle`` だけで送る。``HostedGame.submit``・``apply_command`` を直接呼ばない
+- 方策に渡すのは、その主体の入口の応答（JSON の値）だけ。ランナーが記録のために持つ完全な情報（状態・``CommandResult``・完全な記録）は渡さない
+- 1 回の試みを 4 段階で分ける: 候補にある → 入力を作れる → check を通る → submit が受理される（受理のあとの完走は、次の試みの状態の区分と終わり方で見る）
+- 単一のプロセス・上限つき。時間は単調時計で、要求と要求のあいだ（安全な処理の境界）で確かめる。1 回のエンジンの呼び出しの途中では止めない
+"""
+
+from __future__ import annotations
+
+import json
+import time
+import traceback
+from dataclasses import asdict, dataclass, field
+from typing import Any
+
+from kyuura_engine import diagnostics as D
+from kyuura_engine import legal_actions as L
+from kyuura_engine import preset_deck
+from kyuura_engine.client_api import ClientHub
+from kyuura_engine.observation import visible_log
+
+from . import actions as B
+from .judge import is_face_down_power, judge_face_down_power_accepted, judge_normal, judge_termination
+from .metrics import Metrics, repetition_summary
+from .policies import STAGE, TUPLE, BoundaryPolicy, MixedPolicy, RulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
+from kyuura_engine.replay_record import checks
+
+from .records import RecordingGame, canonical
+
+CONTRACT = {"contract": "kyuura-client-api", "format": 1}
+HOST = "host"
+
+# 対戦の終わり方（1 つの対戦に 1 つ。仕様 6.1 節）
+GAME_OVER = "game_over"
+HALTED_KNOWN = "halted_known"  # 停止の公開の診断の分類が既知の未裁定・未対応・技術的な制限
+HALTED_UNCLASSIFIED = "halted_unclassified"  # 停止したが、分類が上の 3 つでない（既知の停止として扱わない）
+INPUT_UNAVAILABLE = "input_unavailable"  # 操作するはずの主体に、範囲の中で送れる入力がない（R-2〜R-5・入力を返さない・作れない）
+API_CONTRACT_UNKNOWN = "api_contract_unknown"  # 知らない段の項目・値・段の形の問題
+NO_PROGRESS = "no_progress"  # 同じ状態での拒否・選び直しの上限
+LIMIT_OPERATIONS = "limit_operations"
+LIMIT_ACCEPTED = "limit_accepted"
+LIMIT_TURNS = "limit_turns"
+LIMIT_TIME = "limit_time"
+FAILED = "failed"  # submit の結果が failed（状態の不整合でない）・処理できない結果のあとの入口
+STATE_INTEGRITY = "state_integrity"  # submit の結果が failed で、診断の分類が state_integrity
+EXCEPTION = "exception"  # ランナー・入口からの例外（入口は例外を投げない約束）
+INCONSISTENCY = "inconsistency"  # ランナーの照合の不一致で、続けられないもの（待っている主体と候補の状況の食い違い・だれも操作できない）
+START_REJECTED = "start_rejected"
+NEGATIVE_SIDE_EFFECT = "negative_side_effect"
+SCRIPT_COMPLETE = "script_complete"  # V3-2: 固定の到達の列の目的の場面を確かめ終えた（計画した止まり方）  # V3-1: 変異の要求の前後で副作用の疑い（その対戦の通常の進行を続けない）
+LIMIT_TERMINATIONS = (LIMIT_OPERATIONS, LIMIT_ACCEPTED, LIMIT_TURNS, LIMIT_TIME)
+KNOWN_HALT_CATEGORIES = frozenset({D.RULING_UNRESOLVED, D.UNSUPPORTED, D.TECHNICAL_LIMIT})
+
+KNOWN_SITUATIONS = frozenset({L.ACTOR_TO_ACT, L.WAITING_FOR_PLAYER, L.WAITING_FOR_HOST, L.GAME_OVER, L.HALTED})
+KNOWN_PROCESSABILITY = frozenset(L.PROCESSABILITY)
+KNOWN_DISCLOSURE = frozenset({L.DISCLOSURE_CONFIRMED, L.DISCLOSURE_UNCONFIRMED, L.DISCLOSURE_NONE})
+
+
+@dataclass(frozen=True)
+class Limits:
+    """上限（docs/verification-ai-v0.md 4.3 節）。
+
+    - ``operations``: 送った ``submit`` の要求の数（受理・拒否・failed・ホストの段の refused のすべて。check だけで止めた試みは数えない）
+    - ``accepted``: 受理された ``submit`` の数
+    - ``turns``: 始まった番の数（公開の状態の区間と番の番号の組が変わり、番の番号が 1 以上になった回数。延長戦の区間の番も数える）
+    - ``seconds``: 実行の開始からの単調時計の秒（要求と要求のあいだで確かめる。1 回のエンジンの呼び出しの途中では止めない）
+    - ``rejections_per_position``: 同じ状態（受理のあいだ）での check の invalid・拒否・refused の合計
+    - ``draws_per_position``: 同じ状態での候補の選び直しの回数（入力を作れなかった・試した入力をまた選んだを含む）"""
+
+    operations: int = 2000
+    accepted: int = 1000
+    turns: int = 200
+    seconds: float = 120.0
+    rejections_per_position: int = 16
+    draws_per_position: int = 64
+
+
+@dataclass(frozen=True)
+class Config:
+    deck0: str = "hitmonchan-dewgong"
+    deck1: str = "venusaur-parasect"
+    conventions: str | None = None  # None は既定の規約集合
+    game_seed: int = 1
+    policy_seed: int = 1
+    host_seed: int = 1
+    profile: str = "deep"
+    limits: Limits = field(default_factory=Limits)
+    distribution: str = STAGE  # V1: STAGE（V0 と同じ）か TUPLE（policy が uniform のときだけ）
+    policy: str = "uniform"  # V2: uniform・rules・mixed
+    epsilon: float = 0.25  # V2: mixed のランダムの確率（エピソードごと）
+    rules_version: int = 1  # V2 の補完: rules と mixed のルールの側の版（1 は V2 と同じ。2 は反復の抑制つき）
+    repeat_threshold: int = 2  # V2 の補完: rules-v2 の閾値（同じ番の同じ操作の受理の回数）
+    run_id: str = "v0"
+    decklists: tuple | None = None  # V3-2: 固定デッキの代わりに使うデッキリスト（2 つ。None なら deck0・deck1 の固定デッキ）
+
+
+class SubmitWithoutCheck(Exception):
+    """valid な check のない入力を送ろうとした（ランナーの誤り）。"""
+
+
+def request(endpoint, kind: str, **fields) -> dict[str, Any]:
+    """入口へ JSON の要求を送り、JSON の応答を受け取る（文字列を通して、内部のオブジェクトを持ち出さない）。"""
+    text = json.dumps({**CONTRACT, "type": kind, **fields}, ensure_ascii=False)
+    answer = endpoint.handle(json.loads(text))
+    return json.loads(json.dumps(answer, ensure_ascii=False))
+
+
+def submit_checked(endpoint, handle: dict[str, str], choices: list, checked: dict[str, Any], *, operation_id: str) -> dict[str, Any]:
+    """check の応答が valid で、同じ取っ手・同じ入力のときだけ submit を送る（check の前の送信を防ぐ）。"""
+    if not checked or not (checked.get("response") or {}).get("valid") or checked.get("_handle") != handle or checked.get("_choices") != choices:
+        raise SubmitWithoutCheck("valid な check のない入力は送らない")
+    return request(endpoint, "submit", **handle, choices=choices, operation_id=operation_id)
+
+
+def candidate_key(candidate: dict[str, Any]) -> str:
+    """同じ状態の中で候補を見分ける値（応答ごとの番号 ``id`` を除いた中身）。"""
+    return canonical({k: v for k, v in candidate.items() if k != "id"})
+
+
+class _Stop(Exception):
+    def __init__(self, termination: str, detail: dict[str, Any] | None = None):
+        super().__init__(termination)
+        self.termination = termination
+        self.detail = detail or {}
+
+
+class Runner:
+    def __init__(self, config: Config, *, clock=time.monotonic, policy_factory=None, wrap_endpoint=None, negative=None, until=None):
+        self.config = config
+        self.negative = negative  # V3-1: 通常の進行の中の negative（None なら V0〜V2 と同じ動作）
+        self.until = until  # V3-2: 受理のあとに呼び、真なら SCRIPT_COMPLETE で止める（None なら V0〜V3-1 と同じ動作）
+        self.limits = config.limits
+        self.clock = clock
+        self.policies = make_policies(config, policy_factory)
+        self.episode_count = 0
+        self._prizes = None
+        self.metrics = Metrics()
+        self.wrap_endpoint = wrap_endpoint or (lambda actor, endpoint: endpoint)
+        self.trace: list[dict[str, Any]] = []  # 検証者用の操作の記録（全主体）
+        self.actor_logs: dict[Any, list[dict[str, Any]]] = {0: [], 1: [], HOST: []}  # 主体ごとの、その主体が受け取った応答と選択（本人向け）
+        self.anomalies: list[dict[str, Any]] = []
+        self.counters = {"operations": 0, "accepted": 0, "turns": 0, "attempts": 0, "check_invalid": 0, "rejected": 0, "refused": 0, "failed": 0,
+                         "unbuildable": 0, "withheld": 0, "retry_same_input": 0, "deep_fallback_unverified": 0,
+                         "policy_suppressed": 0}  # V2 の補完: 戦略の選好で送らなかった試み（API・check・エンジンの拒否とは別）
+        self.coverage: dict[str, dict[str, int]] = {}
+        self.game: RecordingGame | None = None
+        self.hub: ClientHub | None = None
+        self.last_result = None  # 検証者用の CommandResult（方策に渡さない）
+        self.position = 0
+        self._episode = None
+        self._turn_key = None
+        self._started = None
+
+    # ---------------------------------------------------------------- 入口
+
+    def run(self) -> dict[str, Any]:
+        self._started = self.clock()
+        termination, detail = None, {}
+        try:
+            self._start()
+            while True:
+                self._loop_once()
+        except _Stop as stop:
+            termination, detail = stop.termination, stop.detail
+        except Exception as error:  # 入口は例外を投げない約束。ランナーの誤りも含めて、ほかの分類に変えずに記録する
+            termination, detail = EXCEPTION, {"type": type(error).__name__, "message": str(error), "traceback": traceback.format_exc()}
+        record = None if self.game is None else self.game.close()
+        self.metrics.axis("termination", termination)
+        if self._episode is not None and self._episode["result"] is None:
+            self._episode["result"] = termination
+        if termination in (HALTED_KNOWN, HALTED_UNCLASSIFIED):
+            self.metrics.axis("halt", f"{(detail.get('halt') or {}).get('category')}:{(detail.get('halt') or {}).get('diagnostic_id')}")
+        return {"termination": {"class": termination, "detail": detail, "at": self._where()}, "counters": dict(self.counters),
+                "anomalies": list(self.anomalies), "coverage": {k: dict(sorted(v.items())) for k, v in sorted(self.coverage.items())},
+                "trace": self.trace, "actor_logs": self.actor_logs, "record": record,
+                "policies": {str(k): {"name": p.name, "version": p.version, "distribution": p.distribution, "seed": p.seed, "draws": p.draws,
+                                      **({"epsilon": p.epsilon, "mix_seed": p.mix_seed, "episodes": dict(p.episodes), "rules_version": p.rules_version}
+                                         if isinstance(p, MixedPolicy) else {}),
+                                      **({"repeat_threshold": p.memory.threshold, "demote_after": p.memory.demote_after}
+                                         if isinstance(p, RulePolicy) and p.memory is not None else {})}
+                             for k, p in self.policies.items()},
+                "limits": asdict(self.limits), "elapsed_seconds": round(self.clock() - self._started, 3),
+                "distribution": self.config.distribution, "metrics": self.metrics.to_dict(),
+                "repetition": repetition_summary(self.trace, self.actor_logs),
+                **({"negative": self.negative.summary(), "judge_termination": self._judge_termination(termination)} if self.negative is not None else {})}
+
+    # ---------------------------------------------------------------- 進行
+
+    def _start(self) -> None:
+        c = self.config
+        options = {} if c.conventions is None else {"conventions": c.conventions}
+        if c.decklists is not None:  # V3-2: 道具の固定の到達例のデッキリスト（固定デッキではない）
+            deck0, deck1 = list(c.decklists[0]), list(c.decklists[1])
+        else:
+            deck0, deck1 = preset_deck(c.deck0).cards(), preset_deck(c.deck1).cards()
+        self.game, result = RecordingGame.start(deck0, deck1, c.game_seed, game_id=c.run_id, **options)
+        if self.game is None:
+            raise _Stop(START_REJECTED, {"outcome": result.outcome, "diagnostic_id": None if result.diagnosis is None else result.diagnosis.diagnostic_id})
+        self.hub = ClientHub(self.game, verifier=self._on_verifier)
+        self.endpoints = {0: self.wrap_endpoint(0, self.hub.player(0)), 1: self.wrap_endpoint(1, self.hub.player(1)), HOST: self.wrap_endpoint(HOST, self.hub.host())}
+
+    def _on_verifier(self, actor, result) -> None:
+        self.last_result = result
+
+    def _elapsed(self) -> float:
+        return self.clock() - self._started
+
+    def _check_time(self) -> None:
+        if self._elapsed() >= self.limits.seconds:
+            raise _Stop(LIMIT_TIME, {"seconds": self.limits.seconds})
+
+    def _check_limits(self) -> None:
+        self._check_time()
+        if self.counters["operations"] >= self.limits.operations:
+            raise _Stop(LIMIT_OPERATIONS, {"operations": self.counters["operations"]})
+        if self.counters["accepted"] >= self.limits.accepted:
+            raise _Stop(LIMIT_ACCEPTED, {"accepted": self.counters["accepted"]})
+
+    def _cover(self, axis: str, key) -> None:
+        bucket = self.coverage.setdefault(axis, {})
+        bucket[str(key)] = bucket.get(str(key), 0) + 1
+
+    def _where(self) -> dict[str, Any]:
+        return {"attempt": self.counters["attempts"], "accepted": self.counters["accepted"], "operations": self.counters["operations"],
+                "turns": self.counters["turns"], "position": self.position}
+
+    def _loop_once(self) -> None:
+        self._check_limits()
+        view = request(self.endpoints[HOST], "view")
+        if not view.get("ok"):
+            raise _Stop(FAILED, {"host_view_error": view.get("error")})
+        status = view["status"]
+        self._cover("status", status["status"])
+        self._cover("phase", status["phase"])
+        # V2 の訂正: 終わり方の判定より先に数える（e9fc20b は終局・停止の観測の変化を数えず、最後のサイドの減少が抜けていた）
+        self._track_prizes(view["observation"])
+        if status["status"] == D.GAME_OVER:
+            raise _Stop(GAME_OVER, {"result": view["observation"].get("result"), "segment": status["segment"]})
+        if status["status"] == D.HALTED:
+            halt = status.get("halt") or {}
+            known = halt.get("category") in KNOWN_HALT_CATEGORIES
+            raise _Stop(HALTED_KNOWN if known else HALTED_UNCLASSIFIED, {"halt": halt})
+        key = (status["segment"], view["observation"]["turn"])
+        if key != self._turn_key:
+            self._turn_key = key
+            if key[1] >= 1:
+                if self.counters["turns"] >= self.limits.turns:
+                    raise _Stop(LIMIT_TURNS, {"turns": self.counters["turns"]})
+                self.counters["turns"] += 1
+        waiting = status["waiting"]
+        if not waiting:
+            raise _Stop(INCONSISTENCY, {"reason": "nobody_waiting", "status": status})
+        if len(waiting) != 1:
+            raise _Stop(INCONSISTENCY, {"reason": "several_waiting", "waiting": waiting})
+        by = waiting[0]["by"]
+        self._cover("waiting", waiting[0]["kind"])
+        actor = self._resolve_actor(by, waiting[0])
+        self._act(actor)
+
+    def _resolve_actor(self, by, waiting) -> Any:
+        """待っている主体。``players``（準備で両方）は 0 → 1 の決まった順で、候補の状況が actor_to_act の方（V0 の暫定の順。D-8 は未採用）。"""
+        if by in (0, 1, HOST):
+            return by
+        if by == "players":
+            for actor in (0, 1):
+                r = request(self.endpoints[actor], "candidates")
+                if r.get("ok") and r["response"]["situation"] == L.ACTOR_TO_ACT:
+                    return actor
+            raise _Stop(INCONSISTENCY, {"reason": "players_waiting_but_no_actor", "waiting": waiting})
+        raise _Stop(API_CONTRACT_UNKNOWN, {"reason": "unknown_waiting_by", "waiting": waiting})
+
+    # ---------------------------------------------------------------- 1 つの状態での試み
+
+    def _track_prizes(self, observation) -> None:
+        """公開の観測のサイドの枚数の増減（V2）。サイドを取った・きぜつしたとは同じでない（山札からサイドへ加える効果もある）ので、枚数の変化として数える。"""
+        counts = [p["prizes"]["count"] for p in observation["players"]]
+        if self._prizes is not None:
+            for player, (before, now) in enumerate(zip(self._prizes, counts)):
+                if now < before:
+                    self.metrics.axis("prize_count_decrease", f"player{player}", before - now)
+                elif now > before:
+                    self.metrics.axis("prize_count_increase", f"player{player}", now - before)
+        self._prizes = counts
+
+    def _act(self, actor) -> None:
+        endpoint = self.endpoints[actor]
+        policy = self.policies[actor]
+        own_view = request(endpoint, "view")
+        # V2: 選択のエピソード（この状態でのこの主体の選択。受理・対戦の終わり・上限で区切る。拒否では状態が変わらないので同じエピソードのまま）
+        info = policy.begin_episode() if hasattr(policy, "begin_episode") else {"mode": "random"}
+        self.episode_count += 1
+        self._episode = {"type": "episode", "episode": self.episode_count, "actor": actor, "position": self.position, "policy": policy.name, **info,
+                         "attempts": 0, "result": None}
+        self.trace.append(self._episode)
+        self.metrics.axis("episode_mode", f"{policy.name}:{info['mode']}")
+        self.actor_logs[actor].append({"type": "position", "position": self.position, "view": own_view, "episode": dict(self._episode)})
+        try:
+            self._episode_loop(actor, endpoint, policy, own_view)
+        except _Stop as stop:
+            self._episode["result"] = stop.termination
+            raise
+        finally:
+            self.metrics.axis("episode_attempts", min(self._episode["attempts"], 10))
+            self.metrics.axis("episode_result", f"{info['mode']}:{self._episode['result']}")
+
+    def _episode_loop(self, actor, endpoint, policy, own_view) -> None:
+        rejections = draws = 0
+        tried: set[str] = set()
+        unbuildable: dict[str, str] = {}
+        while True:
+            self._check_limits()
+            response = request(endpoint, "candidates")
+            if not response.get("ok"):
+                raise _Stop(FAILED, {"candidates_error": response.get("error")})
+            cands = response["response"]
+            self._validate_candidates(actor, cands)
+            if cands["situation"] != L.ACTOR_TO_ACT:
+                raise _Stop(INCONSISTENCY, {"reason": "waiting_actor_not_to_act", "actor": actor, "situation": cands["situation"],
+                                            "empty_reason": cands["empty_reason"]})
+            in_scope, scope, reasons = self._scope(cands, unbuildable)
+            self.metrics.fetch(self.position, cands, in_scope, reasons)
+            if not in_scope:
+                raise _Stop(INPUT_UNAVAILABLE, {"actor": actor, "empty_reason": cands["empty_reason"], "scope": scope,
+                                                "residual_present": cands["coverage"]["residual"]["present"], "unbuildable": unbuildable,
+                                                "withheld": cands["coverage"]["withheld_input_candidates"]})
+            draws += 1
+            if draws > self.limits.draws_per_position:
+                raise _Stop(NO_PROGRESS, {"actor": actor, "reason": "draws_per_position", "draws": draws - 1, "rejections": rejections})
+            handle_base = {"game": cands["game"], "revision": cands["revision"]}
+            context = {"view": own_view, "candidates": cands}
+            index, reason = policy.choose("candidate", in_scope, context)
+            candidate = in_scope[index]
+            self.metrics.selected(candidate)
+            kind = candidate["kind"]
+            allowed = B.FALLBACK_PROCESSABILITY if scope["fallback_unverified"] or self.config.profile == "boundary" else B.DEEP_PROCESSABILITY
+            entry = self._attempt(actor, candidate, reason, scope)
+            log = {"type": "attempt", "n": entry["n"], "position": self.position, "candidates": response,
+                   "choice": {"candidate": candidate["id"], "reason": reason}}
+            self.actor_logs[actor].append(log)
+            handle = {**handle_base, "candidate": candidate["id"]}
+            stages: list = []
+            if candidate["input_stages"]:
+                answer = request(endpoint, "inputs", **handle)
+                log["inputs"] = answer
+                inputs = answer.get("response") or {}
+                if not answer.get("ok"):
+                    entry["build"] = {"inputs_refused": inputs.get("refusal")}
+                    self._anomaly("inputs_refused_on_fresh_handle", entry, {"refusal": inputs.get("refusal")})
+                    self.metrics.build_failed(kind, "inputs_refused")
+                    continue
+                if "withheld" in inputs:
+                    entry["build"] = {"withheld": inputs["withheld"]["code"]}
+                    self.counters["withheld"] += 1
+                    unbuildable[candidate_key(candidate)] = "withheld"
+                    self.metrics.build_failed(kind, "withheld")
+                    continue
+                stages = inputs["stages"]
+                # 依存する段の形の確かめ（legal_actions.stage_dependency_problems）は、2 段目以降のすべてが depends_on_stage か path_stages を持つ段の並び
+                # （エネルギー・進化・ワザ・特殊能力・カツラの 2 枚目）だけが対象。前の段に依存しない 2 段目（初期配置の options_from_stage・にげるのトラッシュ）は
+                # この関数の対象の外で、当てると「直前の段でない」と報告する（設計書の当初の記述の誤り。docs/verification-ai-v0.md 3.2 節）
+                dependent = len(stages) > 1 and all("depends_on_stage" in s or "path_stages" in s for s in stages[1:])
+                problems = L.stage_dependency_problems(stages) if dependent else []
+                if problems:
+                    entry["build"] = {"stage_problems": problems}
+                    raise _Stop(API_CONTRACT_UNKNOWN, {"reason": "stage_dependency_problems", "problems": problems, "attempt": entry["n"]})
+                entry["stages"] = stages
+                method = None
+                try:
+                    if policy.distribution == TUPLE:
+                        choices, picks, meaning, method = B.build_choices_tuple(stages, policy, {"view": own_view, "candidate": candidate}, allowed)
+                        entry["build_method"] = method
+                    else:
+                        choices, picks, meaning = B.build_choices(stages, policy, {"view": own_view, "candidate": candidate}, allowed)
+                except B.ContractUnknown as error:
+                    entry["build"] = {"contract_unknown": error.detail}
+                    raise _Stop(API_CONTRACT_UNKNOWN, {"reason": "stage_contract", "detail": error.detail, "attempt": entry["n"]}) from None
+                except B.Unbuildable as error:
+                    entry["build"] = {"unbuildable": error.reason, "stage": error.stage}
+                    self.counters["unbuildable"] += 1
+                    unbuildable[candidate_key(candidate)] = error.reason
+                    self.metrics.build_failed(kind, error.reason)
+                    continue
+                self._cover_stages(stages, meaning)
+                self.metrics.built(kind, stages, method)
+            else:
+                choices, picks, meaning = [], [], []
+                self.metrics.built(kind, [], None)
+            entry.update({"build": "ok", "choices": choices, "picks": picks, "meaning": meaning})
+            if self.config.profile == "boundary":  # V3-2: 候補の区分と完成した入力の区分を分けて記録する
+                entry["candidate_class"] = candidate.get("processability")
+                entry["input_processability"] = B.input_processability(stages, choices)
+            log["choice"].update({"choices": choices, "picks": picks})
+            signature = canonical([candidate_key(candidate), meaning])
+            if signature in tried:
+                entry["build"] = "ok_already_tried"
+                self.counters["retry_same_input"] += 1
+                self.metrics.already_tried(kind)
+                continue
+            # V2 の補完: 同じ意味の操作の鍵と、送る前の方策の評価（戦略の選好。rules-v2 のルールの側だけが送らないことがある）
+            key = action_key(actor, candidate, stages, meaning)
+            turn = turn_of(own_view)
+            entry["action_key"], entry["turn"] = short_key(key), list(turn)
+            if hasattr(policy, "review"):
+                verdict = policy.review(candidate, key, turn)
+                entry["policy_review"] = verdict
+                if not verdict["send"]:
+                    entry["build"] = "suppressed_by_policy"
+                    self.counters["policy_suppressed"] += 1
+                    self.metrics.policy_suppressed(kind, verdict["reason"])
+                    continue
+            checked = request(endpoint, "check", **handle, choices=choices)
+            checked["_handle"], checked["_choices"] = handle, choices
+            entry["check"] = {k: v for k, v in checked.items() if not k.startswith("_")}
+            log["check"] = entry["check"]
+            self.metrics.checked(kind, bool(checked["response"]["valid"]))
+            if not checked["response"]["valid"]:
+                if any(B.cost_not_evaluated(s) for s in stages):  # P6: check は形だけなので、契約から作った入力が通らないのは契約との矛盾（ほかの種類の check はエンジンの確かめを含む）
+                    self._anomaly("p6_check_invalid_for_generated_input", entry, {"refusal": checked["response"].get("refusal"), "choices": choices})
+                elif is_face_down_power(candidate) and stages:  # U-R3a（規則 5）: うらのカードの特殊能力の check も構造だけなので、契約から作った入力が通らないのは矛盾
+                    self._anomaly("face_down_power_check_invalid_for_generated_input", entry, {"refusal": checked["response"].get("refusal"), "choices": choices})
+                self.counters["check_invalid"] += 1
+                tried.add(signature)
+                rejections += 1
+                self._after_refusal_like(entry, actor)
+                if rejections >= self.limits.rejections_per_position:
+                    raise _Stop(NO_PROGRESS, {"actor": actor, "reason": "rejections_per_position", "rejections": rejections})
+                continue
+            if self.counters["operations"] >= self.limits.operations:
+                raise _Stop(LIMIT_OPERATIONS, {"operations": self.counters["operations"]})
+            if self.negative is not None:  # V3-1: check が valid のあと、通常の送信の前に変異を試す（通常の取っ手・方策の乱数を使わない）
+                self.negative.before_submit(self, actor, endpoint, entry, candidate, stages, handle, choices)
+            before_state = self.game.state
+            operation_id = f"{self.config.run_id}-{self.counters['operations'] + 1:06d}"
+            self.last_result = None
+            sent = submit_checked(endpoint, handle, choices, checked, operation_id=operation_id)
+            self.counters["operations"] += 1
+            entry["operation_id"] = operation_id
+            entry["submit"] = self._submit_entry(sent)
+            log["submit"] = sent
+            outcome = sent.get("outcome")
+            self._cover("outcome", outcome)
+            self.metrics.submitted(kind, outcome, (sent.get("result") or {}).get("status") if outcome == D.ACCEPTED else None)
+            if self.negative is not None:
+                verdict, why = judge_normal(candidate, meaning, entry["submit"], stages=stages)  # 規則 4: P6 の段は stages の cost_evaluation で分ける
+                entry["judge"] = {"verdict": verdict, "reasons": why}
+            if outcome == D.ACCEPTED and self.negative is not None and is_face_down_power(candidate):
+                # 規則 5: 受理の中身（おもてにして使った・トラッシュ）を、受理のあとに加わった公開のログ（観戦者に見える出来事）で分ける
+                public_before = len(visible_log(before_state, None))
+                verdict, why = judge_face_down_power_accepted(candidate, visible_log(self.game.state, None)[public_before:])
+                entry["judge_face_down_power_accepted"] = {"verdict": verdict, "reasons": why}
+            if outcome == D.ACCEPTED:
+                self.counters["accepted"] += 1
+                self._cover("accepted_kind", candidate["kind"])
+                self._after_accept(entry, sent)
+                self.position += 1
+                self._episode["result"] = "accepted"
+                if hasattr(policy, "observe_accepted"):
+                    policy.observe_accepted(turn, key)  # 混合のランダムの側で受理された操作も履歴に入れる
+                if self.negative is not None:  # V3-1: 受理のあとの古い取っ手の試験（元の入力を正常に送り直すのではない）
+                    self.negative.after_accept(self, actor, endpoint, entry)
+                if self.until is not None and self.until(self, entry):
+                    raise _Stop(SCRIPT_COMPLETE, {"attempt": entry["n"]})
+                return
+            if outcome == D.FAILED or not sent.get("ok", True):
+                self.counters["failed"] += 1
+                category = entry["submit"].get("verifier", {}).get("category")
+                raise _Stop(STATE_INTEGRITY if category == D.STATE_INTEGRITY else FAILED, {"attempt": entry["n"], "submit": entry["submit"]})
+            if outcome == D.REJECTED:
+                self.counters["rejected"] += 1
+                if candidate.get("processability") == L.SUPPORTED:
+                    self._anomaly("supported_rejected", entry, {"diagnostic": entry["submit"].get("verifier")})
+            elif outcome == L.REFUSED:
+                self.counters["refused"] += 1
+                code = (sent.get("refusal") or {}).get("code")
+                self._cover("refusal", code)
+                if code in (L.CANDIDATE_INPUT_INVALID, L.CANDIDATE_NOT_EXECUTABLE, L.INPUT_BOUNDARY_UNCONFIRMED):
+                    self._anomaly("check_valid_but_submit_refused", entry, {"code": code})
+            else:
+                raise _Stop(API_CONTRACT_UNKNOWN, {"reason": "unknown_outcome", "outcome": outcome, "attempt": entry["n"]})
+            if self.game.state is not before_state or checks(self.game.state) != self.game.last_check():
+                self._anomaly("state_changed_on_rejection", entry, {})
+            tried.add(signature)
+            rejections += 1
+            self._after_refusal_like(entry, actor)
+            if rejections >= self.limits.rejections_per_position:
+                raise _Stop(NO_PROGRESS, {"actor": actor, "reason": "rejections_per_position", "rejections": rejections})
+
+    def negative_stop(self, detail: dict[str, Any]) -> None:
+        """V3-1: 変異の前後で副作用の疑いがあれば、その対戦の通常の進行を止める（前後の証跡は変異の記録にある）。"""
+        raise _Stop(NEGATIVE_SIDE_EFFECT, detail)
+
+    def _judge_termination(self, termination) -> dict[str, Any]:
+        accepted = [e for e in self.trace if e.get("type") == "attempt" and (e.get("submit") or {}).get("outcome") == D.ACCEPTED]
+        verdict, why = judge_termination(termination, accepted[-1]["candidate"].get("processability") if accepted else None)
+        return {"verdict": verdict, "reasons": why}
+
+    def _attempt(self, actor, candidate, reason, scope) -> dict[str, Any]:
+        self.counters["attempts"] += 1
+        self._cover("chosen_kind", candidate["kind"])
+        self._cover("chosen_processability", candidate.get("processability"))
+        entry = {"type": "attempt", "n": self.counters["attempts"], "position": self.position, "actor": actor, "candidate": candidate,
+                 "candidate_reason": reason, "scope": scope, "build": None, "elapsed": round(self._elapsed(), 3)}
+        if self._episode is not None:
+            self._episode["attempts"] += 1
+            entry["episode"] = self._episode["episode"]
+        self.trace.append(entry)
+        return entry
+
+    def _submit_entry(self, sent: dict[str, Any]) -> dict[str, Any]:
+        out = {"ok": sent.get("ok"), "outcome": sent.get("outcome"), "refusal": sent.get("refusal"), "refetch_required": sent.get("refetch_required"),
+               "result": sent.get("result"), "error": sent.get("error")}
+        r = self.last_result
+        if r is not None and r.diagnosis is not None:  # 検証者用の診断（ホストの側の verifier の呼び出しから。方策に渡さない）
+            out["verifier"] = {"diagnostic_id": r.diagnosis.diagnostic_id, "category": r.diagnosis.category, "engine_code": r.verifier.engine_code}
+        return out
+
+    def _scope(self, cands: dict[str, Any], unbuildable: dict[str, str]):
+        """プロファイル deep の範囲（仕様 4.5 節）: 処理可能性が supported・may_stop_later、入力を返す、表示だけでない候補。範囲の中に候補がなければ、
+        unverified も許す（deep_fallback_unverified として記録）。範囲から除いた候補は理由ごとに数える。入力を作れなかった候補は、同じ状態では選び直さない。"""
+        display = set(cands["coverage"]["display_only_kinds"])
+        excluded: dict[str, int] = {}
+        reasons: dict[str, str] = {}
+        for c in cands["candidates"]:
+            self._cover("offered_kind", c["kind"])
+
+        def pick(allowed):
+            chosen = []
+            for c in cands["candidates"]:
+                why = None
+                if c["kind"] in display:
+                    why = "display_only"
+                elif c["input_disclosure"] == L.DISCLOSURE_UNCONFIRMED:
+                    why = "input_withheld"
+                elif c.get("processability") not in allowed:
+                    why = f"processability:{c.get('processability')}"
+                elif candidate_key(c) in unbuildable:
+                    why = f"unbuildable:{unbuildable[candidate_key(c)]}"
+                if why is None:
+                    chosen.append(c)
+                else:
+                    excluded[why] = excluded.get(why, 0) + 1
+                    reasons[c["id"]] = why
+            return chosen
+
+        if self.config.profile == "boundary":  # V3-2: unverified を範囲に入れる（表示だけ・入力を返さない・実行できない区分は外したまま）
+            chosen = pick(B.FALLBACK_PROCESSABILITY)
+            return chosen, {"in_scope": len(chosen), "excluded": excluded, "fallback_unverified": False, "profile": "boundary"}, reasons
+        chosen = pick(B.DEEP_PROCESSABILITY)
+        fallback = False
+        if not chosen:
+            excluded.clear()
+            reasons.clear()
+            chosen = pick(B.FALLBACK_PROCESSABILITY)
+            fallback = bool(chosen)
+            if fallback:
+                self.counters["deep_fallback_unverified"] += 1
+        for why, n in excluded.items():
+            self._cover("scope_excluded", why)
+        for item in cands["coverage"]["residual"]["present"]:
+            self._cover("residual_present", item["id"])
+        return chosen, {"in_scope": len(chosen), "excluded": excluded, "fallback_unverified": fallback}, reasons
+
+    def _validate_candidates(self, actor, cands: dict[str, Any]) -> None:
+        """知らない値を推測で扱わない（仕様 4.4 節）。"""
+        if cands["situation"] not in KNOWN_SITUATIONS:
+            raise _Stop(API_CONTRACT_UNKNOWN, {"reason": "unknown_situation", "value": cands["situation"]})
+        self._cover("situation", cands["situation"])
+        known_ids = {c["id"] for c in cands["coverage"]["residual"]["classes"]}
+        for item in cands["coverage"]["residual"]["present"]:
+            if item["id"] not in known_ids:
+                raise _Stop(API_CONTRACT_UNKNOWN, {"reason": "unknown_residual", "value": item})
+        for c in cands["candidates"]:
+            if c.get("processability") not in KNOWN_PROCESSABILITY:
+                raise _Stop(API_CONTRACT_UNKNOWN, {"reason": "unknown_processability", "value": c.get("processability"), "kind": c["kind"]})
+            if c["input_disclosure"] not in KNOWN_DISCLOSURE:
+                raise _Stop(API_CONTRACT_UNKNOWN, {"reason": "unknown_disclosure", "value": c["input_disclosure"], "kind": c["kind"]})
+
+    def _cover_stages(self, stages, meaning) -> None:
+        for stage in stages:
+            self._cover("input", stage["input"])
+            for feature in ("depends_on_stage", "upstream_stages", "options_by_path", "options_from_stage", "total_units", "distinct_across_stages"):
+                if feature in stage:
+                    self._cover("stage_feature", feature)
+            if "decision_kind" in stage:
+                self._cover("decision_kind", stage["decision_kind"])
+            if stage.get("count", {}).get("min") == 0:
+                chosen = sum(1 for m in meaning if m["stage"] == stage["stage"])
+                self._cover("optional_stage", "declined" if chosen == 0 else "used")
+            if stage.get("count", {}).get("max", 0) > 1:
+                self._cover("stage_feature", "count_max_over_1")
+        self._cover("stage_count", len(stages))
+
+    def _anomaly(self, kind: str, entry: dict[str, Any], detail: dict[str, Any]) -> None:
+        item = {"kind": kind, "attempt": entry["n"], "position": entry["position"], "actor": entry["actor"], "detail": detail}
+        entry.setdefault("anomalies", []).append(kind)
+        self.anomalies.append(item)
+
+    def _after_refusal_like(self, entry, actor) -> None:
+        """拒否・断り・check の invalid のあと: ほかの閲覧者に公開の更新が出ない。"""
+        for audience in (0, 1, "spectator", "host"):
+            got = self.hub.take_updates(audience)
+            if got:
+                self._anomaly("update_after_rejection", entry, {"audience": audience, "count": len(got)})
+
+    def _after_accept(self, entry, sent) -> None:
+        if not sent.get("refetch_required"):
+            self._anomaly("accepted_without_refetch", entry, {})
+        for audience in (0, 1, "spectator", "host"):
+            got = self.hub.take_updates(audience)
+            numbers = [u.get("number") for u in got]
+            if numbers != [self.counters["accepted"]]:
+                self._anomaly("update_numbers", entry, {"audience": audience, "numbers": numbers, "expected": self.counters["accepted"]})
+                continue
+            if audience in (0, 1, "spectator"):
+                endpoint = self.endpoints[audience] if audience in (0, 1) else self.hub.spectator()
+                now = request(endpoint, "view")
+                if now.get("observation") != got[0].get("observation"):
+                    self._anomaly("update_observation_differs_from_view", entry, {"audience": audience})
+
+
+def run_game(config: Config, **kwargs) -> dict[str, Any]:
+    return Runner(config, **kwargs).run()
+
+
+def make_policies(config: Config, policy_factory=None) -> dict[Any, Any]:
+    """主体ごとの方策（V2）。ホストの係（ジャンケンの勝者）は、どの方策でも均等（UniformPolicy。V0・V1 と同じ種）。
+
+    ``policy_factory`` を渡したとき（テスト）は、V1 までと同じく 3 つの主体にその方策を使う。"""
+    if policy_factory is not None:
+        return {0: policy_factory(player_seed(config.policy_seed, 0), config.distribution),
+                1: policy_factory(player_seed(config.policy_seed, 1), config.distribution),
+                HOST: policy_factory(host_seed(config.host_seed), config.distribution)}
+    if config.policy == "uniform":
+        players = {p: UniformPolicy(player_seed(config.policy_seed, p), config.distribution) for p in (0, 1)}
+        host = UniformPolicy(host_seed(config.host_seed), config.distribution)
+    elif config.policy == "boundary":
+        players = {p: BoundaryPolicy(player_seed(config.policy_seed, p)) for p in (0, 1)}
+        host = UniformPolicy(host_seed(config.host_seed), STAGE)
+    elif config.policy == "rules":
+        players = {p: RulePolicy(player_seed(config.policy_seed, p), version=config.rules_version, threshold=config.repeat_threshold) for p in (0, 1)}
+        host = UniformPolicy(host_seed(config.host_seed), STAGE)
+    elif config.policy == "mixed":
+        players = {p: MixedPolicy(player_seed(config.policy_seed, p), epsilon=config.epsilon, mix_seed_text=mix_seed(config.policy_seed, p),
+                                  rule_version=config.rules_version, threshold=config.repeat_threshold) for p in (0, 1)}
+        host = UniformPolicy(host_seed(config.host_seed), STAGE)
+    else:
+        raise ValueError(f"知らない方策 {config.policy!r}")
+    return {**players, HOST: host}

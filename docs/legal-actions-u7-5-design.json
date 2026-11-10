@@ -539,9 +539,9 @@
    "id": "PT-5e",
    "command": "PlayTrainer",
    "ref": "kyuura_engine/effects.py::quiz_draw_outcome_stop",
-   "source": "E",
-   "use": "none",
-   "note": "状態の複製の上で効果を試す 11 の実装（scan.check_playable.trials）のうち、実際の山札から引いて試す 5 つ（クイズ 4 種・とりかえっこプリーズ。legal_actions.PLAYABLE_NOT_EVALUATED）。たどっていない。v0.169: 候補・inputs・check で呼ばず unverified（入力は本人の手札だけで決まる）"
+   "source": "A",
+   "use": "candidates",
+   "note": "状態の複製の上で効果を試す 11 の実装（scan.check_playable.trials）のうち、実際の山札から引いて試す 5 つ（クイズ 4 種・とりかえっこプリーズ。6 枚）。v0.169〜v0.175 は E（たどっていない。候補・inputs・check で呼ばず unverified）。v0.176: 閉包をたどり（docs/legal-actions-pt5e-audit.md）、結果が本人の手札・公開の枚数とおもての山札の並びの不変条件だけで決まることを確かめたので、候補の作成で呼ぶ（legal_actions.PLAYABLE_FACE_UP_PREFIX_TRIALS。不変条件が成り立たない状態では呼ばない）"
   },
   {
    "id": "PT-5t",
@@ -1432,7 +1432,8 @@
    "basis": [
     "宣言の入力は card だけ。対象・枚数・検索はすべて受理のあとの決定（answer_decision で答えられる）",
     "受理の前の確かめ（PT-1〜PT-7）は A・A-own で、カードごとの確かめの 11 の実装（試行）だけが E",
-    "v0.169: E の 11 のうち、試すのが場の処理だけの 6 は読む値をたどって候補の作成で呼ぶ（PT-5t）。実際の山札から引いて試す 5 は呼ばない（PT-5e。unverified）"
+    "v0.169: E の 11 のうち、試すのが場の処理だけの 6 は読む値をたどって候補の作成で呼ぶ（PT-5t）。実際の山札から引いて試す 5 は呼ばない（PT-5e。unverified）",
+    "v0.176: PT-5e の 5 の実装（6 枚）の閉包をたどり、候補の作成で呼ぶ（おもての山札の並びの不変条件が成り立つ状態だけ。docs/legal-actions-pt5e-audit.md）"
    ],
    "changes": [
     "engine.py: _play_trainer の手札から出す前の部分を check_play_trainer にする（同じ順番・同じコード・同じ文。use_condition が偽なら使うための条件だけを呼ばない）",
@@ -1496,7 +1497,6 @@
    "done": "A-own の 6 の実装で双子が通る。錯乱ジムの「うら」・［ちえくらべ］・サイキックコントロールは受理のあとの決定として new_game からの列でつながる。E のうち読む値をたどっていない 5 の実装は、使うための条件を呼ばず unverified（対応済みに数えない）",
    "gui": "1 段。受理のあとの決定の種類が多い（検索・見たカード。U7-1 の DECK_REVEALING_KINDS の契約の例外）",
    "open": [
-    "PT-5e の 5 の実装（実際の山札から引いて試す）の読む値をたどる",
     "effects.py の外の閉包（PT-5t・A 群の呼ぶ別のモジュールの関数の 2 段目より先）"
    ]
   },
@@ -1673,7 +1673,7 @@
    "gui": "2〜3 段（depends_on_stage = 2。前の段を変えたら、それに依存する後の段をすべて無効にする。ADOPT-U7-5AB）",
    "open": [
     "名前で解決できない呼び出し（状態のメソッド・登録表の引き・正規表現）の先（UP-5t）",
-    "自分のうらのカードの特殊能力（候補にしない。R-2 と同じく残る）"
+    "自分のうらのカードの特殊能力（v0.171 は候補にしなかった。v0.172 の U7-5g-2 で 0・1 段の型を候補にした）"
    ]
   },
   {
@@ -1686,6 +1686,8 @@
     "U7-5a"
    ],
    "first": false,
+   "status": "implemented",
+   "implemented_in": "v0.172（docs/legal-actions-u7-5fg.md 1 章）",
    "basis": [
     "どの場合も受け付けない。表示するのは FU2 の位置だけ（D-U75-FACE-UP）",
     "おもてのカードは山札の上から続く並び（faceup.prefix_problems）なので、位置は公開の face_up_count だけで決まる（docs/legal-actions-u7-5fg-spec.md 1 章）"
@@ -1744,9 +1746,7 @@
    ],
    "done": "候補の位置が、おもての枚数（公開）だけで決まる双子（おもてのカードの中身を変える）が通る",
    "gui": "表示だけ（送信のボタンを出さない）",
-   "open": [
-    "D-U75-FACE-UP-ACTORS（番でない主体に表示するか）"
-   ]
+   "open": []
   },
   {
    "id": "U7-5g",
@@ -1758,6 +1758,8 @@
     "U7-5f"
    ],
    "first": false,
+   "status": "implemented",
+   "implemented_in": "v0.172（docs/legal-actions-u7-5fg.md 2〜4 章。U7-5g-3 coverage の residual・U7-5g-1 カツラの 2 枚目・U7-5g-2 うらのカードの特殊能力）",
    "basis": [
     "7 種類で説明できない経路（R-1・R-2）が残る",
     "v0.171 のあと: 自分のうらのカードの特殊能力（U7-5e が候補にしない）も残る経路（docs/legal-actions-u7-5fg-spec.md 3 章）"
@@ -1816,10 +1818,8 @@
    "done": "C-1〜C-6 を満たすかを、単位ごとの結果から判断できる（U7-5g-1〜3 の完了の基準は docs/legal-actions-u7-5fg-spec.md 6 章）",
    "gui": "coverage の表示",
    "open": [
-    "D-U7-COMPLETENESS",
-    "D-U75-ENERGY2-SCHEMA",
-    "D-U75-FACE-DOWN-POWER",
-    "D-U75-R2"
+    "R-2（D-U75-R2。未対応のまま。coverage の residual で示す）",
+    "R-3 のうち入力を返さない型（自分のうらのカードの、宣言の段が 2 段以上・宣言のない型・登録のない特殊能力）"
    ]
   }
  ],
@@ -2061,6 +2061,26 @@
    {
     "id": "D-U75-STADIUM",
     "decision": "U7-5d（2026-11-08 の依頼）: 場のスタジアムの UseStadium だけを扱い、特殊能力・CheckFaceUpDeckCard・energy2 は実装しない。候補は使ってよい効果の登録（activated）から作り、選ばせるものは型の宣言（energy_choice）から作る。3 段の入力の基盤は先に作らない。キョウの忍者ジムの保守的な NJ1 は緩めない"
+   },
+   {
+    "id": "D-U75-FACE-UP-ACTORS",
+    "decision": "初版の U7 では、CheckFaceUpDeckCard を番のプレイヤー（MAIN）だけに表示する。既存のコマンドの主体の制約ではなく、API の対応の範囲として記録する（coverage の residual R-4。U7-5f で実装）"
+   },
+   {
+    "id": "D-U75-ENERGY2-SCHEMA",
+    "decision": "カツラの 2 枚目は attach_energy の任意の 3 段目とし、1・2 段目の組で引く options_by_path（path_stages）で示す。経路の表し方・既存の項目との併用・参照の確かめを固定する（U7-5g で実装）"
+   },
+   {
+    "id": "D-U75-FACE-DOWN-POWER",
+    "decision": "本人が知る印刷の情報だけから安全に作れる特殊能力を候補にする。unverified だけを理由に公開を許さない（U7-5g で実装）"
+   },
+   {
+    "id": "D-U75-R2",
+    "decision": "R-2 は今回も未対応のまま残す（coverage の residual で示す）"
+   },
+   {
+    "id": "D-U7-COMPLETENESS",
+    "decision": "residual を機械で読める形で返す。未対応の宣言の経路が残るあいだ MAIN は partial のまま。候補の取得の網羅と、全部の操作の完走を分ける（U7-5g で実装）"
    }
   ],
   "implemented_units": [
@@ -2069,7 +2089,9 @@
    "T-F1",
    "U7-5c",
    "U7-5d",
-   "U7-5e"
+   "U7-5e",
+   "U7-5f",
+   "U7-5g"
   ],
   "corrections": [
    {
@@ -2091,13 +2113,20 @@
  },
  "gui_ref": {
   "repository": "kyuura-engine-gui",
-  "branch": "feature/engine-u7-5-trainers-stadium",
-  "commit": "9c36a8fe033f32b589cd57721725fdcc13c318f3",
-  "pinned_engine": "0885d664913bc8e57279ed9e44ac51cc97d5a6bf",
-  "pinned_engine_version": "0.170.0",
-  "main_commit": "7660ab4d4c4064334952b2d3c9a01ede33c4973b",
-  "main_pinned_engine": "d0c5cfa9483aacae0cce2fd8d28166b1d8465500",
-  "checked": "2026-11-08 に GitHub の API（gh api）で、ブランチの一覧と、そのコミットの server/requirements.txt・contract/kyuura-client-api-v1.json を読み取りだけで読んだ（GUI のリポジトリに fetch も書き込みもしていない。作業ツリーには利用者の未コミットの変更があり、触れていない）",
+  "branch": "main",
+  "commit": "088822c58628fbf366363bcaaa713b1370125e86",
+  "pinned_engine": "74c8e1f8ca03d017d5c0a8a79e6fdaa33d25b7f8",
+  "pinned_engine_version": "0.171.0",
+  "main_commit": "088822c58628fbf366363bcaaa713b1370125e86",
+  "main_pinned_engine": "74c8e1f8ca03d017d5c0a8a79e6fdaa33d25b7f8",
+  "includes": "e3bb682f969ee68ca5853c270c95d156cad31472（文書: 0.171.0 の固定。PR #2 の最後のコミット）",
+  "previous": {
+   "commit": "9c36a8fe033f32b589cd57721725fdcc13c318f3",
+   "branch": "feature/engine-u7-5-trainers-stadium",
+   "pinned_engine": "0885d664913bc8e57279ed9e44ac51cc97d5a6bf",
+   "pinned_engine_version": "0.170.0"
+  },
+  "checked": "2026-11-08 に GitHub の API（gh api）で、ブランチの一覧・main の最近のコミット・088822c の server/requirements.txt・contract/kyuura-client-api-v1.json を読み取りだけで読んだ（GUI のリポジトリに fetch も書き込みもしていない。作業ツリーには利用者の未コミットの変更があり、触れていない）",
   "limit": "公開されている GUI のブランチのうち最新のコミット。GUI を実行していないので、画面で動くことは確かめていない。これより新しい未公開の作業は確かめられない"
  }
 }

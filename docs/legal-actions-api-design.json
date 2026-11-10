@@ -812,8 +812,8 @@
   },
   {
    "id": "U7-5",
-   "status": "planned",
-   "name": "トレーナー・パワー・スタジアムとその他（U7-5a〜U7-5g に分けた。U7-5a・U7-5b は v0.167 で実装: docs/legal-actions-u7-5ab.md。単位の状態は docs/legal-actions-u7-5-design.json）",
+   "status": "implemented",
+   "name": "トレーナー・パワー・スタジアムとその他（U7-5a〜U7-5g と T-F1 に分け、v0.167〜v0.172 ですべて実装。単位ごとの状態と採用の記録は docs/legal-actions-u7-5-design.json。残件は docs/legal-actions-api-design.json の u7_5_reference の remaining）",
    "depends": [
     "U7-4"
    ],
@@ -985,6 +985,32 @@
   "units": [
    "U7-4"
   ]
+ },
+ "u7_5_reference": {
+  "source": "docs/legal-actions-u7-5-design.json",
+  "units": [
+   "U7-5"
+  ],
+  "subunits": [
+   "U7-5a",
+   "U7-5b",
+   "T-F1",
+   "U7-5c",
+   "U7-5d",
+   "U7-5e",
+   "U7-5f",
+   "U7-5g"
+  ],
+  "remaining": [
+   "R-2（自分のうらのバトル場のポケモンのワザといっしょに選ぶもの。示さない）",
+   "R-3（自分のうらのカードの特殊能力のうち入力を返さない型）",
+   "R-4（番のプレイヤーの MAIN のほかの CheckFaceUpDeckCard。API の範囲外）",
+   "R-5（入力を返さない候補）",
+   "PT-5e（山札から引いて試すトレーナー 5 つ。v0.176 で候補の作成で使うための条件を呼ぶ。おもての山札の並びの不変条件が成り立たない状態・受理の前の先読みは残る）",
+   "UP-5t（名前で解決できない呼び出しの先）",
+   "番のプレイヤーの MAIN の completeness は partial（R-2）。complete でも全部の操作の受理・完走ではない"
+  ],
+  "basis": "docs/legal-actions-u7-5fg.md 2.2 節・8 章、docs/legal-actions-u7-5-design.md"
  },
  "disclosure": {
   "accept_request": {

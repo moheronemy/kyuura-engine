@@ -467,7 +467,7 @@ class MappingTest(unittest.TestCase):
         self.assertIn(L.KIND_USE_POWER, L.IMPLEMENTED_KINDS)
         _h, r, _c = power_cand(venusaur_board())
         cov = r["coverage"]
-        self.assertEqual((cov["completeness"], cov["scope_kinds"], cov["not_covered_kinds"]), (L.PARTIAL, list(L.MAIN_KINDS), ["check_face_up_deck"]))
+        self.assertEqual((cov["completeness"], cov["scope_kinds"], cov["not_covered_kinds"]), (L.PARTIAL, list(L.MAIN_KINDS), []))  # （v0.172（U7-5f）: check_face_up_deck も評価した種類（表示だけ。display_only_kinds）。未対応の種類はない）
         kinds = [c["kind"] for c in r["candidates"]]
         self.assertEqual(kinds, sorted(kinds, key=L.MAIN_KINDS.index))
 

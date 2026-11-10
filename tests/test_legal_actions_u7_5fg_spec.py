@@ -103,9 +103,9 @@ class CurrentCodeTest(unittest.TestCase):
 
     def test_residual_paths_are_not_offered_yet(self):
         r = host_of(venusaur_board()).session(0).candidates()
-        self.assertEqual(r["coverage"]["not_covered_kinds"], ["check_face_up_deck"])  # U7-5f は未実装
+        self.assertEqual(r["coverage"]["not_covered_kinds"], [])  # v0.172: U7-5f は実装した（表示だけの種類。display_only_kinds）
         self.assertEqual(r["coverage"]["completeness"], L.PARTIAL)
-        self.assertNotIn("residual", r["coverage"])  # 5.3 節の residual は未実装（推奨だけ）
+        self.assertIn("R-2", r["coverage"]["partial_residual"])  # v0.172: 5.3 節の residual を実装した（R-2 が残るあいだ MAIN は partial。D-U7-COMPLETENESS）
 
 
 class DocumentTest(unittest.TestCase):
@@ -116,11 +116,13 @@ class DocumentTest(unittest.TestCase):
                        "D-U75-ENERGY2-SCHEMA", "D-U75-FACE-DOWN-POWER", "D-U75-R2", "D-U7-COMPLETENESS"):
             self.assertIn(phrase, text)
         spec = json.loads((ROOT / "docs" / "legal-actions-u7-5-design.json").read_text(encoding="utf-8"))
-        self.assertEqual((spec["gui_ref"]["commit"], spec["gui_ref"]["pinned_engine"]), ("9c36a8fe033f32b589cd57721725fdcc13c318f3", "0885d664913bc8e57279ed9e44ac51cc97d5a6bf"))
+        # v0.172: GUI の比べる相手は main の 088822c（エンジン 74c8e1f・0.171.0）。この文書の 9c36a8f は前の比べる相手（gui_ref の previous）
+        self.assertEqual((spec["gui_ref"]["commit"], spec["gui_ref"]["pinned_engine"]), ("088822c58628fbf366363bcaaa713b1370125e86", "74c8e1f8ca03d017d5c0a8a79e6fdaa33d25b7f8"))
+        self.assertEqual((spec["gui_ref"]["previous"]["commit"], spec["gui_ref"]["previous"]["pinned_engine"]),
+                         ("9c36a8fe033f32b589cd57721725fdcc13c318f3", "0885d664913bc8e57279ed9e44ac51cc97d5a6bf"))
         needed = {d["id"] for d in spec["adoption_needed"]}
         self.assertLessEqual({"D-U75-FACE-UP-ACTORS", "D-U75-ENERGY2-SCHEMA", "D-U75-FACE-DOWN-POWER", "D-U75-R2"}, needed)
-        for unit in ("U7-5f", "U7-5g"):
-            self.assertNotEqual(next(u for u in spec["units"] if u["id"] == unit).get("status"), "implemented", unit)  # 実装は採用のあとの別の作業
+        self.assertEqual(next(u for u in spec["units"] if u["id"] == "U7-5f").get("status"), "implemented")  # v0.172: 採用のあとの作業（docs/legal-actions-u7-5fg.md）で実装した
         self.assertIn("CORR-3", {c["id"] for c in spec["adoption_record"]["corrections"]})
 
 

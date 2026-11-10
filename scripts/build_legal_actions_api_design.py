@@ -146,6 +146,18 @@ ADOPTION_U7_3 = {
     "decisions": [],
     "units": ["U7-3"],
 }
+# 2026-11-08（U7 の総合検証の E0〜G1 の作業）: U7-5 の採用と実装は U7-5 の設計（scripts/build_legal_actions_u7_5_design.py の ADOPTION_RECORD）が単位ごとに記録する。
+# ここでは U7-5 を implemented とする根拠として、その記録の実装した単位を参照する（check が JSON と照らす）。残件は implemented の外に残る
+U7_5_REFERENCE = {
+    "source": "docs/legal-actions-u7-5-design.json", "units": ["U7-5"],
+    "subunits": ["U7-5a", "U7-5b", "T-F1", "U7-5c", "U7-5d", "U7-5e", "U7-5f", "U7-5g"],
+    "remaining": ["R-2（自分のうらのバトル場のポケモンのワザといっしょに選ぶもの。示さない）", "R-3（自分のうらのカードの特殊能力のうち入力を返さない型）",
+                  "R-4（番のプレイヤーの MAIN のほかの CheckFaceUpDeckCard。API の範囲外）", "R-5（入力を返さない候補）",
+                  "PT-5e（山札から引いて試すトレーナー 5 つ。v0.176 で候補の作成で使うための条件を呼ぶ。おもての山札の並びの不変条件が成り立たない状態・受理の前の先読みは残る）", "UP-5t（名前で解決できない呼び出しの先）",
+                  "番のプレイヤーの MAIN の completeness は partial（R-2）。complete でも全部の操作の受理・完走ではない"],
+    "basis": "docs/legal-actions-u7-5fg.md 2.2 節・8 章、docs/legal-actions-u7-5-design.md",
+}
+
 ADOPTION_U7_4 = {
     "id": "ADOPT-U7-4", "date": "2026-11-08", "by": "利用者",
     "scope": "U7-4（ワザの候補と宣言の入力。既存の UseAttack）の実装だけ。既存のコマンドの意味・受け付ける条件・宣言の前の先読み・状態の移り変わり・乱数・ログ・観測・続行規約・"
@@ -357,8 +369,8 @@ UNITS = [
      "tests": ["T-TWIN-RESPONSE（通常の操作）", "T-NOT-HIDDEN"], "done": "これらの種類について、本人の知識だけで決まる確かめを候補の作成に使う。scope に含めた種類を示し、main は partial"},
     {"id": "U7-4", "status": "implemented", "name": "ワザ", "depends": ["U7-3"], "scope": ["UseAttack（ワザ → 任意の指定。対象は受理のあとの決定）", "宣言の前の確かめのうち、本人の知識だけで決まるもの（v0.147〜v0.151 の持ち主の知識の関数）を processability に使う"],
      "tests": ["T-TWIN-RESPONSE（v0.147〜v0.151 の双子の盤面）", "T-TWIN-REFINE", "T-NOT-HIDDEN（未裁定のワザ）"], "done": "ワザの候補で、先読みを呼ばない。決められないものは unverified"},
-    {"id": "U7-5", "status": "planned", "name": "トレーナー・パワー・スタジアムとその他（U7-5a〜U7-5g に分けた。U7-5a・U7-5b は v0.167 で実装: docs/legal-actions-u7-5ab.md。"
-     "単位の状態は docs/legal-actions-u7-5-design.json）", "depends": ["U7-4"], "scope": ["PlayTrainer・UsePokemonPower・UseStadium・RemoveDisguise・DiscardFromPlay・RevealFaceDown・CheckFaceUpDeckCard",
+    {"id": "U7-5", "status": "implemented", "name": "トレーナー・パワー・スタジアムとその他（U7-5a〜U7-5g と T-F1 に分け、v0.167〜v0.172 ですべて実装。"
+     "単位ごとの状態と採用の記録は docs/legal-actions-u7-5-design.json。残件は docs/legal-actions-api-design.json の u7_5_reference の remaining）", "depends": ["U7-4"], "scope": ["PlayTrainer・UsePokemonPower・UseStadium・RemoveDisguise・DiscardFromPlay・RevealFaceDown・CheckFaceUpDeckCard",
      "入力はカードの登録が宣言する（共通の処理にカード ID の分岐を加えない）"], "tests": ["T-TWIN-RESPONSE（トレーナー・パワー）", "登録のないカードは unverified（消さない）"],
      "done": "すべてのコマンドの型に候補の種類がある。main が complete と称せるかは D-U7-COMPLETENESS"},
     {"id": "U7-6", "status": "planned", "name": "GUI・ルールベースの AI への接続", "depends": ["U7-1"], "scope": ["API だけを使う方策（内部の状態・秘密の配分を読まない）", "GUI の表示（processability ごとの表示）",
@@ -393,7 +405,7 @@ SPEC = {
     "id": "LEGAL-ACTIONS-API-DESIGN", "status": "proposed", "approval": "not_approved", "adoption": ADOPTION, "principles": PRINCIPLES, "phases": PHASES,
     "operations": OPERATIONS, "next_map": NEXT_MAP, "input_kinds": INPUT_KINDS, "option_meaning_map": OPTION_MEANING_MAP, "processability": PROCESSABILITY,
     "completeness": COMPLETENESS, "response": RESPONSE, "candidate_fields": CANDIDATE_FIELDS, "info_boundary": INFO_BOUNDARY, "knowledge": KNOWLEDGE,
-    "revision": REVISION, "host": HOST, "leak_tests": LEAK_TESTS, "units": UNITS, "decisions": DECISIONS, "u7_1_adoption": ADOPTION_U7_1, "u7_2_adoption": ADOPTION_U7_2, "u7_3_adoption": ADOPTION_U7_3, "u7_4_adoption": ADOPTION_U7_4,
+    "revision": REVISION, "host": HOST, "leak_tests": LEAK_TESTS, "units": UNITS, "decisions": DECISIONS, "u7_1_adoption": ADOPTION_U7_1, "u7_2_adoption": ADOPTION_U7_2, "u7_3_adoption": ADOPTION_U7_3, "u7_4_adoption": ADOPTION_U7_4, "u7_5_reference": U7_5_REFERENCE,
     "disclosure": {k: {"status": v[0], "basis": v[1]} for k, v in sorted(DISCLOSURE.items())}, "disclosure_by_contract": DISCLOSURE_BY_CONTRACT,
     "order": {k: {"status": v[0], "basis": v[1]} for k, v in sorted(ORDER.items())},
     "audit_categories": {
@@ -698,15 +710,36 @@ def spec_problems(spec: dict) -> list[str]:
     for need in ("D-U7-DISPLAY", "D-U7-COMPLETENESS"):
         if next((d for d in spec["decisions"] if d["id"] == need), {}).get("status") != "pending":
             problems.append(f"判断事項 {need} は U7-1 で採用していない（pending のまま）")
-    records = [adoption["units"], spec["u7_2_adoption"]["units"], spec["u7_3_adoption"]["units"], spec["u7_4_adoption"]["units"]]
+    records = [adoption["units"], spec["u7_2_adoption"]["units"], spec["u7_3_adoption"]["units"], spec["u7_4_adoption"]["units"], spec["u7_5_reference"]["units"]]
     adopted_units = set().union(*map(set, records))
     if {u["id"] for u in spec["units"] if u.get("status") == "implemented"} != adopted_units:
-        problems.append("実装した単位と、U7-1〜U7-4 の採用の記録の単位が違う")
+        problems.append("実装した単位と、U7-1〜U7-4 の採用の記録と U7-5 の設計の参照の単位が違う")
     if sum(len(set(r)) for r in records) != len(adopted_units):
         problems.append("同じ単位を 2 つの採用の記録が実装したことになっている")
     if any(u.get("status") not in ("implemented", "planned") for u in spec["units"]):
         problems.append("単位の状態が implemented・planned でない")
     return problems + coverage_problems(spec)
+
+
+def u7_5_reference_problems(spec: dict, design_json: dict | None = None) -> list[str]:
+    """U7-5 を implemented とする根拠（U7-5 の設計の JSON の単位がすべて implemented で、採用の記録の実装した単位と同じ）を照らす。"""
+    ref = spec.get("u7_5_reference")
+    if ref is None:
+        return ["U7-5 の設計の参照（u7_5_reference）がない"]
+    if design_json is None:
+        design_json = json.loads((ROOT / ref["source"]).read_text(encoding="utf-8"))
+    units = {u["id"]: u.get("status", "planned") for u in design_json.get("units", [])}
+    implemented = set(design_json.get("adoption_record", {}).get("implemented_units", []))
+    problems = []
+    if set(units) != set(ref["subunits"]):
+        problems.append(f"U7-5 の設計の単位 {sorted(units)} が、参照の単位 {sorted(ref['subunits'])} と違う")
+    status = next((u.get("status") for u in spec["units"] if u["id"] == "U7-5"), None)
+    all_done = all(v == "implemented" for v in units.values()) and implemented == set(units)
+    if status == "implemented" and not all_done:
+        problems.append("U7-5 を implemented にしているが、U7-5 の設計の単位がすべて implemented ではない（または採用の記録と違う）")
+    if status != "implemented" and all_done:
+        problems.append("U7-5 の設計の単位がすべて implemented なのに、U7-5 の状態が implemented でない")
+    return problems
 
 
 def check(written: dict, design: str, plan: str, u7_1: str | None = None, audit: str | None = None, u7_2: str | None = None, u7_3: str | None = None,
@@ -721,6 +754,7 @@ def check(written: dict, design: str, plan: str, u7_1: str | None = None, audit:
     u7_2 = U7_2.read_text(encoding="utf-8") if u7_2 is None else u7_2
     u7_3 = U7_3.read_text(encoding="utf-8") if u7_3 is None else u7_3
     u7_4 = U7_4.read_text(encoding="utf-8") if u7_4 is None else u7_4
+    problems += u7_5_reference_problems(written)
     for label, text, names in (("設計の文書", design, DESIGN_BLOCKS), ("実装計画の文書", plan, PLAN_BLOCKS), ("U7-1 の文書", u7_1, U7_1_BLOCKS),
                                ("監査の文書", audit, AUDIT_BLOCKS), ("U7-2 の文書", u7_2, U7_2_BLOCKS), ("U7-3 の文書", u7_3, U7_3_BLOCKS),
                                ("U7-4 の文書", u7_4, U7_4_BLOCKS)):

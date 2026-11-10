@@ -31,6 +31,7 @@ from kyuura_engine.snapshot import (
     save_snapshot,
 )
 from tests import helpers as H
+from tests.log_audit import owned_card_ids
 from tests.test_legal_actions_u7_1 import snap
 
 HD, TL = CoinSide.HEADS, CoinSide.TAILS
@@ -61,6 +62,11 @@ def public(state):
     return observe(state, 0), observe(state, None), visible_log(state, 0), visible_log(state, None)
 
 
+def before(state, viewers):
+    """双子の前提（2026-11-08。U7 の総合検証の双子の読み取りの点検）: 比べる見る人の観測・見えるログと、所有するカードの id（デッキリストの知識）。"""
+    return tuple((observe(state, v), visible_log(state, v)) for v in viewers), tuple(owned_card_ids(state, p) for p in viewers if p is not None)
+
+
 def answer(state, choices):
     d = state.decision
     return apply_command(state, ResolveDecision(d.player, d.id, tuple(choices)))
@@ -82,7 +88,9 @@ class TwinTest(unittest.TestCase):
         for name, (trainer, usable, unusable) in TWINS.items():
             with self.subTest(trainer=name):
                 mine = {H.POKEMON_BREEDER: [trainer, H.CHARIZARD], H.POKEMON_TRADER: TRADER_HAND}.get(trainer, [trainer])
-                states = [tails(board(mine, hand), trainer) for hand in (usable, unusable)]
+                pre = [board(mine, hand) for hand in (usable, unusable)]
+                self.assertEqual(before(pre[0], (0, None)), before(pre[1], (0, None)))  # 前提: 0 と観戦者の公開の情報・0 の知識が同じ（違うのは 1 の手札の中身だけ）
+                states = [tails(state, trainer) for state in pre]
                 self.assertEqual(public(states[0]), public(states[1]))
                 for state in states:
                     self.assertEqual((state.decision.kind, state.decision.player, state.decision.options), (ACCEPT_REQUEST, 1, (1,)))
@@ -91,19 +99,24 @@ class TwinTest(unittest.TestCase):
         """エネルギー転送（山札から基本エネルギーを選ぶ）: かわりに使う人の基本エネルギーが山札にあるかサイドにあるかだけが違う双子（持ち主の知識の下限は配分によらない）。"""
         a = tails(board([H.ENERGY_SEARCH], [H.WATER], deck1=[H.RATTATA] * 7 + [H.WATER], prizes1=[H.RATTATA, H.RATTATA]), H.ENERGY_SEARCH)
         b = tails(board([H.ENERGY_SEARCH], [H.WATER], deck1=[H.RATTATA] * 8, prizes1=[H.RATTATA, H.WATER]), H.ENERGY_SEARCH)
+        pre_a = board([H.ENERGY_SEARCH], [H.WATER], deck1=[H.RATTATA] * 7 + [H.WATER], prizes1=[H.RATTATA, H.RATTATA])
+        pre_b = board([H.ENERGY_SEARCH], [H.WATER], deck1=[H.RATTATA] * 8, prizes1=[H.RATTATA, H.WATER])
+        self.assertEqual(before(pre_a, (0, 1, None)), before(pre_b, (0, 1, None)))  # 前提: 0・1（決定に答える人）・観戦者の公開の情報と知識が同じ（違うのは 1 の山札とサイドの配分だけ）
         self.assertEqual(public(a), public(b))
         self.assertEqual(public(answer(a, ())), public(answer(b, ())))
 
     def test_psychic_control_choices_do_not_depend_on_the_users_hand(self):
         """ナツメのサイキックコントロール（同じ確かめで、相手のトラッシュから使えるカードを選ぶ）: 使う人（0）の手札の中身だけが違う双子で、相手（1）と観戦者に見える値が同じ。"""
-        views, states = [], []
+        views, states, pres = [], [], []
         for hand in ([H.CHARMANDER], [H.WATER]):
             me = {"active": {"card": H.CHARMANDER, "energy": [H.FIRE]}, "bench": [H.RATTATA], "hand": [H.SABRINAS_PSYCHIC_CONTROL, *hand], "deck": [H.FIRE] * 8}
             them = {"active": {"card": H.CHARMANDER, "energy": [H.FIRE]}, "hand": [H.WATER], "deck": [H.FIRE] * 8, "discard": [H.POKEMON_TRADER]}
             state = H.build_test_state([me, them], turn_number=5)
+            pres.append(before(state, (1, None)))  # 前提: 1 と観戦者の公開の情報・1 の知識（違うのは 0 の手札の中身だけ）
             state = apply_command(H.with_coin_results(state, HD), PlayTrainer(0, uid(state, 0, H.SABRINAS_PSYCHIC_CONTROL)))
             views.append((observe(state, 1), observe(state, None), visible_log(state, 1), visible_log(state, None)))
             states.append(state)
+        self.assertEqual(pres[0], pres[1])
         self.assertEqual(views[0], views[1])
         for state in states:
             self.assertEqual((state.decision.kind, state.decision.options), (USE_DISCARD_TRAINER, (uid(state, 1, H.POKEMON_TRADER, "discard"),)))

@@ -1,6 +1,6 @@
 # 合法手 API（U7）の実装計画
 
-[legal-actions-api-design.md](legal-actions-api-design.md) の実装の順序と完了の基準です。U7-1 は v0.160 で実装しました（[legal-actions-u7-1.md](legal-actions-u7-1.md)）。ほかの単位は計画だけです。単位の表は `scripts/build_legal_actions_api_design.py` の `SPEC` から作ります（`--check` が依存の順・回帰テスト・完了の基準の有無を確かめる）。
+[legal-actions-api-design.md](legal-actions-api-design.md) の実装の順序と完了の基準です。U7-1 は v0.160 で実装しました（[legal-actions-u7-1.md](legal-actions-u7-1.md)）。U7-2〜U7-4 は v0.163〜v0.166、U7-5（U7-5a〜U7-5g と T-F1）は v0.167〜v0.172 で実装しました（単位ごとの状態は [legal-actions-u7-5-design](legal-actions-u7-5-design.md)）。U7-6 は計画だけです。実装した単位にも残件があります（R-2〜R-5・PT-5e・UP-5t。下の表の U7-5 と `legal-actions-api-design.json` の `u7_5_reference`、[legal-actions-u7-5fg.md](legal-actions-u7-5fg.md) 8 章）。U7 の総合検証の計画は [u7-integration-verification-plan.md](u7-integration-verification-plan.md) です。（2026-11-08 に訂正。それまでは「ほかの単位は計画だけです」・U7-5 を planned としていた）単位の表は `scripts/build_legal_actions_api_design.py` の `SPEC` から作ります（`--check` が依存の順・回帰テスト・完了の基準の有無を確かめる）。
 
 ## 1. 識別の方式との依存
 
@@ -18,7 +18,7 @@
 | `U7-2` | implemented | 準備とホストの操作 | U7-1 | PlaceStartingPokemon（たねポケモンの手札から。段: バトル場 → ベンチ）<br>DrawMulliganCards<br>ReportJankenResult・StartSuddenDeath（ホストの操作主体だけ） | T-TWIN-RESPONSE（準備）<br>準備の候補から作った操作で、固定デッキの対戦が始まる | 準備の段階が complete |
 | `U7-3` | implemented | 通常の操作（ワザ・トレーナー・パワーの外） | U7-2 | PlayBasicToBench・AttachEnergy・EvolvePokemon・Retreat（費用は条件で表す） | T-TWIN-RESPONSE（通常の操作）<br>T-NOT-HIDDEN | これらの種類について、本人の知識だけで決まる確かめを候補の作成に使う。scope に含めた種類を示し、main は partial |
 | `U7-4` | implemented | ワザ | U7-3 | UseAttack（ワザ → 任意の指定。対象は受理のあとの決定）<br>宣言の前の確かめのうち、本人の知識だけで決まるもの（v0.147〜v0.151 の持ち主の知識の関数）を processability に使う | T-TWIN-RESPONSE（v0.147〜v0.151 の双子の盤面）<br>T-TWIN-REFINE<br>T-NOT-HIDDEN（未裁定のワザ） | ワザの候補で、先読みを呼ばない。決められないものは unverified |
-| `U7-5` | planned | トレーナー・パワー・スタジアムとその他（U7-5a〜U7-5g に分けた。U7-5a・U7-5b は v0.167 で実装: docs/legal-actions-u7-5ab.md。単位の状態は docs/legal-actions-u7-5-design.json） | U7-4 | PlayTrainer・UsePokemonPower・UseStadium・RemoveDisguise・DiscardFromPlay・RevealFaceDown・CheckFaceUpDeckCard<br>入力はカードの登録が宣言する（共通の処理にカード ID の分岐を加えない） | T-TWIN-RESPONSE（トレーナー・パワー）<br>登録のないカードは unverified（消さない） | すべてのコマンドの型に候補の種類がある。main が complete と称せるかは D-U7-COMPLETENESS |
+| `U7-5` | implemented | トレーナー・パワー・スタジアムとその他（U7-5a〜U7-5g と T-F1 に分け、v0.167〜v0.172 ですべて実装。単位ごとの状態と採用の記録は docs/legal-actions-u7-5-design.json。残件は docs/legal-actions-api-design.json の u7_5_reference の remaining） | U7-4 | PlayTrainer・UsePokemonPower・UseStadium・RemoveDisguise・DiscardFromPlay・RevealFaceDown・CheckFaceUpDeckCard<br>入力はカードの登録が宣言する（共通の処理にカード ID の分岐を加えない） | T-TWIN-RESPONSE（トレーナー・パワー）<br>登録のないカードは unverified（消さない） | すべてのコマンドの型に候補の種類がある。main が complete と称せるかは D-U7-COMPLETENESS |
 | `U7-6` | planned | GUI・ルールベースの AI への接続 | U7-1 | API だけを使う方策（内部の状態・秘密の配分を読まない）<br>GUI の表示（processability ごとの表示）<br>既存の方策（tests/helpers の trainer_policy_command など）は内部の状態を読むので、公開の API に流用しない | API だけを使う方策で固定デッキの対戦が終局・停止まで進む<br>方策が受け取る値が応答だけであること | 決定・準備は U7-1・U7-2 のあとに接続できる。通常の操作は単位ごとに広げる |
 <!-- generated:units end -->
 

@@ -17,7 +17,7 @@ from typing import Any
 
 from . import diagnostics as D
 from . import legal_actions as L
-from .adapter import HostStoppedError
+from .adapter import HostStoppedError, UnusableStateError, checked_state_copy  # noqa: F401（UnusableStateError は入口の拒否の型として公開）
 from .observation import observe
 
 CONTRACT = "kyuura-client-api"
@@ -120,10 +120,14 @@ class ClientHub:
 
     @classmethod
     def from_state(cls, state, *, verifier=None) -> ClientHub:
-        """状態の複製から（ホスト・テストの側。復元した状態から始めるとき）。"""
+        """状態の複製から（ホスト・テストの側。復元した状態から始めるとき）。
+
+        v0.177（PT5E-FROM-STATE-INVARIANT）: ``adapter.checked_state_copy`` で、型・複製・複製の不変条件を確かめてから包む（``ActionHost.from_state`` と同じ確かめ）。
+        不整合なら ``UnusableStateError``（``TypeError`` は型の違い）で、hub・セッション・取っ手を作らない。例外の文は固定で、詳しい問題（``problems``）はホスト・
+        検証者だけが読む（プレイヤー向けの応答・公開の更新には出さない）。``ClientHub(game)`` の直接の組み立ては確かめない（信頼された内部）。"""
         from .adapter import HostedGame
 
-        return cls(HostedGame(state.clone()), verifier=verifier)
+        return cls(HostedGame(checked_state_copy(state)), verifier=verifier)
 
     def player(self, actor) -> PlayerEndpoint:
         """認証したプレイヤー（0・1）の入口。本人だけに渡す（ホストの責任）。"""

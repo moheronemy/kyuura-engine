@@ -6,6 +6,8 @@
 - ``submit``: 状態とコマンドから ``CommandResult`` を作る。拒否なら元の状態をそのまま持つ（状態・乱数・ログは変わらない。``apply_command`` の約束）
 - ``start_game``: ``new_game`` の前に seed の形を確かめ、デッキ・規約集合の拒否も同じ形で返す
 - ``HostedGame``: 信頼されたホストが状態を持ち、受理したときだけ状態を進める最小の境界（見る人は状態を持たないので、前の状態から操作をやり直せない）
+- ``checked_state_copy``（v0.177。PT5E-FROM-STATE-INVARIANT）: ホストが外から渡した状態を、``legal_actions.ActionHost.from_state``・``client_api.ClientHub.from_state`` の
+  共通の入口で確かめる（型 → 複製 → 複製の ``check_invariants``）。不整合なら ``UnusableStateError``（ホスト・セッション・取っ手を作る前）
 
 例外の捕まえ方（アダプタの責任の範囲）:
 
@@ -29,7 +31,7 @@ from .commands import (
     TakePrize,
     command_to_dict,
 )
-from .engine import apply_command, new_game
+from .engine import apply_command, check_invariants, new_game
 from .errors import EngineError, StateIntegrityError
 from .observation import observe
 from .state import GameState, Phase
@@ -237,12 +239,75 @@ def start_game(deck0, deck1, seed, *, operation_id: str | None = None, catalog: 
     return _accepted(state, stage=D.STAGE_SETUP, actor=None, operation_id=operation_id, command_record=record, catalog=catalog)
 
 
+STATE_INTEGRITY_CODE = "STATE_INTEGRITY"  # UnusableStateError.code: 複製が不変条件（check_invariants）を満たさない
+STATE_CHECK_ERROR_CODE = "STATE_CHECK_ERROR"  # UnusableStateError.code: 複製・確かめの途中で例外になり、確かめられない
+_UNUSABLE_STATE_TEXTS = {
+    STATE_INTEGRITY_CODE: "渡した状態は不変条件を満たさないので、対戦の入口を作れない（詳しい問題はホスト・検証者が problems で調べる）",
+    STATE_CHECK_ERROR_CODE: "渡した状態を確かめられなかったので、対戦の入口を作れない（元の例外はホスト・検証者が __cause__ で調べる）",
+}
+
+
+class UnusableStateError(ValueError):
+    """ホストが外から渡した状態を、対戦の入口（``ActionHost.from_state``・``ClientHub.from_state``）が受け付けない（v0.177。PT5E-FROM-STATE-INVARIANT）。
+
+    ホストの使い方の誤り（入口の拒否）で、処理の結果の不整合（``StateIntegrityError``。``failed`` の結果）とは別の型。``EngineError`` の子ではない。
+
+    - ``code``: ``STATE_INTEGRITY``（複製が不変条件を満たさない）か ``STATE_CHECK_ERROR``（複製・確かめの途中の例外。元の例外は ``__cause__``）
+    - ``stage``: ``clone`` か ``check``
+    - ``problems``: 不変条件の問題の文のタプル（``STATE_INTEGRITY`` のときだけ。ほかは空）。**ホスト・検証者だけが読む**（カードの番号・ゾーンが入り、秘密を含みうる）。
+      プレイヤー向けの応答・公開の更新には入れない（入口を作る前に投げるので、応答も更新もない）
+    - ``str()``: ``code`` ごとの固定の文だけ（問題の文・値を入れない）
+    """
+
+    def __init__(self, code: str, stage: str, problems=()):
+        super().__init__(_UNUSABLE_STATE_TEXTS[code])
+        self.code = code
+        self.stage = stage
+        self.problems = tuple(problems)
+
+
+def checked_state_copy(state: GameState) -> GameState:
+    """ホストが外から渡した状態の複製を、対戦の入口で使えるかを確かめて返す（v0.177。``ActionHost.from_state``・``ClientHub.from_state`` の共通の入口）。
+
+    1. 型: ``GameState`` そのもの（子のクラスは受け付けない）でなければ ``TypeError``（使い方の誤り。複製しない）
+    2. 複製（``state.clone()``）。渡した状態は変えない。あとから渡した状態を変えても、返した複製に影響しない
+    3. 複製を ``engine.check_invariants`` で確かめる（問題があれば ``UnusableStateError``・``STATE_INTEGRITY``）
+    4. 2・3 の途中の ``Exception`` は ``UnusableStateError``・``STATE_CHECK_ERROR``（元の例外は ``__cause__``）。``MemoryError`` は投げ直し、``Exception`` の子でない
+       終了（``KeyboardInterrupt``・``SystemExit`` など）は捕まえない
+
+    保証しないこと: 不変条件を満たすことは、合法な対戦から到達できることではない。規約集合・決定の再開先・効果の登録・カードデータ・乱数は確かめない（規約集合・
+    決定の再開先はコマンドごとに処理の前に確かめる）。Python のオブジェクトを受け取るホスト向けの入口で、信頼できないデータの読み込み（デシリアライズ）ではない。
+    任意の壊れたオブジェクト・悪意のある値に対して安全であるとは保証しない（外部の入力は ``snapshot.restore_snapshot`` を使う）。返したあとにホストが状態を直接
+    変えることは防がない（``ActionHost`` の状態の所有権の約束）。"""
+    if type(state) is not GameState:
+        raise TypeError("対戦の入口に渡せるのは GameState の状態だけ")
+    try:
+        copy = state.clone()
+    except Exception as error:
+        if isinstance(error, MemoryError):
+            raise
+        raise UnusableStateError(STATE_CHECK_ERROR_CODE, "clone") from error
+    try:
+        problems = check_invariants(copy)
+    except Exception as error:
+        if isinstance(error, MemoryError):
+            raise
+        raise UnusableStateError(STATE_CHECK_ERROR_CODE, "check") from error
+    if problems:
+        raise UnusableStateError(STATE_INTEGRITY_CODE, "check", problems)
+    return copy
+
+
 class HostStoppedError(Exception):
     """処理できない結果（failed）のあとの ``HostedGame`` に操作を送った（使い方の誤り。検証者が調べる前に続けない）。"""
 
 
 class HostedGame:
     """信頼されたホストが状態を持つ最小の境界。受理したときだけ状態を進め、拒否では前の状態のまま。処理できない結果のあとは操作を受け付けない。
+
+    渡した状態をそのまま持ち（複製しない）、確かめない（v0.177 でも変えていない。信頼された内部の組み立て）。期待する前提: 状態は ``new_game``・``apply_command`` が
+    返したもの、``snapshot.restore_snapshot`` が復元したもの、または ``checked_state_copy`` を通したもの。外から作った状態をプレイヤーの入口へつなぐときは、
+    ``ActionHost.from_state``・``ClientHub.from_state`` を使う。崩れた状態をここへ直接渡すのは、低層の振る舞いを確かめる検証者・テストだけ（通常の使い方ではない）。
 
     見る人には ``view``（観測）と ``CommandResult.view_for`` の結果だけを渡す。状態（``state``）はホストの中だけで使う。"""
 

@@ -100,6 +100,19 @@ class ContractTest(unittest.TestCase):
         self.assertIn("単位 U7-1 があとの単位 U7-3 に依存する", problems)
         self.assertIn("単位 U7-2 のテスト T-UNKNOWN-FOR-TEST が漏れの回帰テストの一覧にない", problems)
 
+    def test_u7_5_status_follows_the_u7_5_design_record(self):
+        # 2026-11-08: U7-5 の implemented は、U7-5 の設計の JSON の単位がすべて implemented で採用の記録と同じことから決まる
+        spec = written()
+        design = json.loads((ROOT / spec["u7_5_reference"]["source"]).read_text(encoding="utf-8"))
+        self.assertEqual(B.u7_5_reference_problems(spec, design), [])
+        broken = json.loads(json.dumps(design))
+        broken["units"][-1]["status"] = "planned"
+        self.assertTrue(any("すべて implemented ではない" in p for p in B.u7_5_reference_problems(spec, broken)))
+        planned = json.loads(json.dumps(spec))
+        next(u for u in planned["units"] if u["id"] == "U7-5")["status"] = "planned"
+        self.assertTrue(any("U7-5 の状態が implemented でない" in p for p in B.u7_5_reference_problems(planned, design)))
+        self.assertTrue(any("U7-5 の設計の参照の単位が違う" in p for p in B.spec_problems(planned)))
+
     def test_unknown_input_kind_is_detected(self):
         spec = written()
         spec["operations"][0]["inputs"].append("choose_everything")

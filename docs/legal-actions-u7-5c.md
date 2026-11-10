@@ -189,5 +189,6 @@ U7-5 の設計の静的な走査（`scan.check_playable`。effects.py の 77 の
 
 - PT-5e の 5 つ（実際の山札から引いて試す）の読む値は、たどっていません（`unverified`）
 - 場だけを試す 6 つと A 群の閉包のうち、別のモジュールの関数の 2 段目より先は、名前と読む属性だけを見ました
+  - 訂正（CORR-4。v0.178 のあとの監査。[legal-actions-up5t-d-trainer-audit.md](legal-actions-up5t-d-trainer-audit.md) 4.7 節）: 6 つのうち `CoinStatusOnOpponentActiveTrainer`・`CoinHealBothElseSleepBoth` は、相手のバトル場がうらのカードのとき、2 段目より先（`conditions._prevented` → `zones.designate_face_down`）で本当のカードの印刷の定義を読みます。4.2 節の「うらのカードの中身を読まない」はこの 2 つについて正しくありません（本文は書き換えていない）
 - D の先読み（`_trainer_dead_end` など）による受理の前の拒否は、候補で予告しません（`may_stop_later`）
 - U7-5d（`UseStadium`）・U7-5e（`UsePokemonPower`）・U7-5f（`CheckFaceUpDeckCard`）・U7-5g（R-1・R-2・coverage の閉じ方）は未実装です

@@ -118,7 +118,7 @@ class MappingTest(unittest.TestCase):
         cov = r["coverage"]
         self.assertEqual(cov["completeness"], L.PARTIAL)
         self.assertEqual(cov["scope_kinds"], list(L.MAIN_KINDS))
-        self.assertEqual(cov["not_covered_kinds"], ["check_face_up_deck"])  # v0.170・v0.171（U7-5d・U7-5e）: use_stadium・use_power は対応した種類
+        self.assertEqual(cov["not_covered_kinds"], [])  # v0.170・v0.171（U7-5d・U7-5e）: use_stadium・use_power は対応した種類（v0.172（U7-5f）: check_face_up_deck も評価した種類（表示だけ。display_only_kinds）。未対応の種類はない）
         kinds = [c["kind"] for c in r["candidates"]]
         self.assertEqual(kinds, sorted(kinds, key=L.MAIN_KINDS.index))
         c = cand(r, L.KIND_PLAY_TRAINER)
@@ -272,41 +272,47 @@ class UseConditionTest(unittest.TestCase):
     def test_classification_matches_the_design_scan(self):
         spec = json.loads((ROOT / "docs" / "legal-actions-u7-5-design.json").read_text(encoding="utf-8"))
         trials = set(spec["scan"]["check_playable"]["trials"])
-        self.assertEqual(L.PLAYABLE_NOT_EVALUATED | L.PLAYABLE_BOARD_TRIALS, trials)
-        self.assertFalse(L.PLAYABLE_NOT_EVALUATED & L.PLAYABLE_BOARD_TRIALS)
+        # v0.176（PT-5e）: 山札から引いて試す 5 つは PLAYABLE_FACE_UP_PREFIX_TRIALS（呼ぶ。おもての山札の並びの不変条件が成り立つ状態だけ）。PLAYABLE_NOT_EVALUATED は空
+        self.assertEqual(L.PLAYABLE_NOT_EVALUATED, frozenset())
+        self.assertEqual(L.PLAYABLE_FACE_UP_PREFIX_TRIALS | L.PLAYABLE_BOARD_TRIALS, trials)
+        self.assertFalse(L.PLAYABLE_FACE_UP_PREFIX_TRIALS & L.PLAYABLE_BOARD_TRIALS)
         for name in trials:
             self.assertIn("check_playable", vars(getattr(E, name)), name)  # 条件を定義した型の名前（継承した型は定義した型で引く）
 
-    def test_draw_trials_are_not_called_by_queries(self):
+    def test_draw_trials_are_called_by_queries(self):
+        """v0.176（PT-5e）: 山札から引いて試す条件も、候補の作成で呼ぶ（v0.175 までは呼ばず unverified）。check は候補の記録を使い、条件を呼び直さない。"""
         for card, cls in ((QUIZ3, E.BlainesQuiz), (SWAP, E.SwapPleaseTrainer)):
             with self.subTest(card=card):
                 state = board([card, H.RATTATA])
+                calls = []
+                original = cls.check_playable
 
-                def forbidden(self, state, use):
-                    raise AssertionError("候補・inputs・check で呼んだ")
+                def recorded(self, state, use, original=original):
+                    calls.append(use.card)
+                    return original(self, state, use)
 
                 host = host_of(state)
                 session = host.session(0)
                 before = snap(host.game.state)
-                with mock.patch.object(cls, "check_playable", forbidden):
+                with mock.patch.object(cls, "check_playable", recorded):
                     r, c, inputs = inputs_of(session, L.KIND_PLAY_TRAINER)
+                    built = len(calls)
                     option = inputs["stages"][0]["options"][0]
                     self.assertTrue(session.check(r["game"], r["revision"], c["id"], [option["id"]])["valid"])
-                self.assertEqual((option["processability"], option["eligible"]), (L.UNVERIFIED, True))
-                self.assertEqual(sorted(option["reasons"]), sorted([L.REASON_USE_CONDITION, L.REASON_PREFLIGHT, L.REASON_CONTINUATION]))
+                self.assertEqual((built, len(calls)), (1, 1))
+                self.assertEqual((option["processability"], option["eligible"]), (L.MAY_STOP_LATER, True))
+                self.assertEqual(sorted(option["reasons"]), sorted([L.REASON_PREFLIGHT, L.REASON_CONTINUATION]))
                 self.assertEqual(snap(host.game.state), before)
 
-    def test_unverified_card_rejected_by_engine_privately(self):
-        state = board([SWAP])  # 手札にほかのカードがない: 候補では確かめず、送るとエンジンが拒否する（状態は変わらない。拒否は送った人にだけ）
+    def test_unusable_draw_trial_is_not_offered(self):
+        """v0.176（PT-5e）: 手札にほかのカードがないとりかえっこプリーズは、使うための条件でゲーム上使えない（Illegal）ので選べるものに出さない（v0.175 までは unverified で示し、
+        送るとエンジンが本人にだけ拒否した）。直接のコマンドは同じコードで拒否する（意図した API 上の差: 送る前に候補にない）。"""
+        state = board([SWAP])
         hub = ClientHub.from_state(state.clone())
         me = hub.player(0)
         r = me.handle({**CONTRACT, "type": "candidates"})["response"]
-        c = cand(r, L.KIND_PLAY_TRAINER)
-        fields = {"game": r["game"], "revision": r["revision"], "candidate": c["id"]}
-        sent = me.handle({**CONTRACT, "type": "submit", **fields, "choices": ["o1"]})
-        self.assertEqual(sent["outcome"], D.REJECTED)
-        self.assertEqual([hub.take_updates(a) for a in (1, "spectator")], [[], []])
-        self.assertTrue(me.handle({**CONTRACT, "type": "check", **fields, "choices": ["o1"]})["response"]["valid"])  # 拒否では取っ手を失効させない
+        self.assertIsNone(cand(r, L.KIND_PLAY_TRAINER))
+        self.assertEqual([hub.take_updates(a) for a in (0, 1, "spectator", "host")], [[], [], [], []])
         with self.assertRaises(IllegalActionError):
             apply_command(state, PlayTrainer(0, uid(state, SWAP)))
 

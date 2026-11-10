@@ -35,7 +35,12 @@ U7-5 の対象の 7 種類のコマンド（`PlayTrainer`・`UsePokemonPower`・
     - `D-U75-TRAINER`: U7-5c（2026-11-08 の依頼）: 手札の PlayTrainer だけを扱い、UsePokemonPower・UseStadium・CheckFaceUpDeckCard・energy2 は実装しない。カードの選択の表示は本人の手札だけで決まるので返す。読む情報を確かめていない使うための条件は呼ばず、処理可能性で示す（unverified）。F-9 の今の扱い（公開の情報だけで使えない場合も決定を出す）は変えない
     - `D-U75-POWER`: U7-5e（2026-11-08 の依頼）: UsePokemonPower を、型ごとの宣言の入力（D-U75-INPUT-DECL）と 2〜3 段の依存する入力（D-U75-CHAINED）で扱う。CheckFaceUpDeckCard・energy2・R-2 は実装しない。相手のうらのカードは公開の位置だけで示し、指定する組は unverified（D-U75-POWER-FACE-DOWN）
     - `D-U75-STADIUM`: U7-5d（2026-11-08 の依頼）: 場のスタジアムの UseStadium だけを扱い、特殊能力・CheckFaceUpDeckCard・energy2 は実装しない。候補は使ってよい効果の登録（activated）から作り、選ばせるものは型の宣言（energy_choice）から作る。3 段の入力の基盤は先に作らない。キョウの忍者ジムの保守的な NJ1 は緩めない
-  - 実装した単位: `U7-5a`、`U7-5b`、`T-F1`、`U7-5c`、`U7-5d`、`U7-5e`
+    - `D-U75-FACE-UP-ACTORS`: 初版の U7 では、CheckFaceUpDeckCard を番のプレイヤー（MAIN）だけに表示する。既存のコマンドの主体の制約ではなく、API の対応の範囲として記録する（coverage の residual R-4。U7-5f で実装）
+    - `D-U75-ENERGY2-SCHEMA`: カツラの 2 枚目は attach_energy の任意の 3 段目とし、1・2 段目の組で引く options_by_path（path_stages）で示す。経路の表し方・既存の項目との併用・参照の確かめを固定する（U7-5g で実装）
+    - `D-U75-FACE-DOWN-POWER`: 本人が知る印刷の情報だけから安全に作れる特殊能力を候補にする。unverified だけを理由に公開を許さない（U7-5g で実装）
+    - `D-U75-R2`: R-2 は今回も未対応のまま残す（coverage の residual で示す）
+    - `D-U7-COMPLETENESS`: residual を機械で読める形で返す。未対応の宣言の経路が残るあいだ MAIN は partial のまま。候補の取得の網羅と、全部の操作の完走を分ける（U7-5g で実装）
+  - 実装した単位: `U7-5a`、`U7-5b`、`T-F1`、`U7-5c`、`U7-5d`、`U7-5e`、`U7-5f`、`U7-5g`
   - 仕様の訂正:
     - `CORR-1`（E 群の意味）: 情報源が未確認の経路を、処理可能性の unverified だけで公開してよいと扱わない。処理可能性と入力の公開の安全性は別の軸。選べるもの・件数・理由を公開して安全と確かめられないなら、入力は返さない（unconfirmed）。型・生成箇所の登録だけで安全と認めない
     - `CORR-2`（GUI への影響の比べる相手）: 設計の報告の d0c5cfa はエンジンのコミット（GUI の main が固定するエンジン）で、GUI のコミットではない。公開されている最新の GUI は feature/engine-u7-4-attacks の 3649946（エンジン 9506d63・0.166.0 を固定）。GUI のコミットと固定するエンジンを分けて書く（GUI_REF）
@@ -163,7 +168,7 @@ U7-5 の対象の 7 種類のコマンド（`PlayTrainer`・`UsePokemonPower`・
 | PT-4 | `PlayTrainer` | `kyuura_engine/effects.py::EffectRegistry.trainer_effect` | `A` | `candidates` | 登録の有無（本人の手札のカードの定義と登録表） |
 | PT-5 | `PlayTrainer` | `kyuura_engine/effects.py::TrainerEffect.check_playable` | `A` | `candidates` | 77 の実装のうち、下の 2 群を除くもの（場・トラッシュ・枚数・本人の手札） |
 | PT-5o | `PlayTrainer` | `kyuura_engine/effects.py::deck_target_lower_bound` | `A-own` | `candidates` | 持ち主の知識の関数を呼ぶ 6 の実装（scan.check_playable.owner_knowledge） |
-| PT-5e | `PlayTrainer` | `kyuura_engine/effects.py::quiz_draw_outcome_stop` | `E` | `none` | 状態の複製の上で効果を試す 11 の実装（scan.check_playable.trials）のうち、実際の山札から引いて試す 5 つ（クイズ 4 種・とりかえっこプリーズ。legal_actions.PLAYABLE_NOT_EVALUATED）。たどっていない。v0.169: 候補・inputs・check で呼ばず unverified（入力は本人の手札だけで決まる） |
+| PT-5e | `PlayTrainer` | `kyuura_engine/effects.py::quiz_draw_outcome_stop` | `A` | `candidates` | 状態の複製の上で効果を試す 11 の実装（scan.check_playable.trials）のうち、実際の山札から引いて試す 5 つ（クイズ 4 種・とりかえっこプリーズ。6 枚）。v0.169〜v0.175 は E（たどっていない。候補・inputs・check で呼ばず unverified）。v0.176: 閉包をたどり（docs/legal-actions-pt5e-audit.md）、結果が本人の手札・公開の枚数とおもての山札の並びの不変条件だけで決まることを確かめたので、候補の作成で呼ぶ（legal_actions.PLAYABLE_FACE_UP_PREFIX_TRIALS。不変条件が成り立たない状態では呼ばない） |
 | PT-5t | `PlayTrainer` | `kyuura_engine/effects.py::switch_max_hp_drop_check` | `A` | `candidates` | v0.169: 11 の試行のうち、試すのが場の処理だけ（入れ替え・特殊状態・回復）の 6 つ（legal_actions.PLAYABLE_BOARD_TRIALS）。effects.py の閉包と、呼ぶ別のモジュールの関数の1 段目までをたどり、山札・サイド・手札・うらのカードの中身を読まないことを確かめた（うらのカードの定義は本当のカードによらず FD1。docs/legal-actions-u7-5c.md 4 章） |
 | PT-6 | `PlayTrainer` | `kyuura_engine/effects.py::stadium_trainer_cost` | `A` | `candidates` | リムーブ禁止ジム（本人の手札の枚数） |
 | PT-7 | `PlayTrainer` | `kyuura_engine/effects.py::trainer_reaction_sources` | `A` | `candidates` | 相手の場の［ちえくらべ］と錯乱ジム（MG1） |
@@ -309,10 +314,10 @@ U7-3・U7-4 と同じく、処理の受理の前の部分を、同じ順番・�
 GUI がすでに扱う入力の形との共通点・相違点です（CORR-2 で比べる相手を直した。設計の初版は、GUI の main が固定するエンジンのコミット d0c5cfa を GUI のコミットのように書いていた）。GUI リポジトリは読んだだけで、変更していません。GUI を実行していないので、実行していない互換性は保証しません。
 
 <!-- generated:rest-gui begin -->
-- GUI のコミット: `9c36a8fe033f32b589cd57721725fdcc13c318f3`（kyuura-engine-gui の `feature/engine-u7-5-trainers-stadium`）
-- その GUI が固定するエンジン: `0885d664913bc8e57279ed9e44ac51cc97d5a6bf`（版 0.170.0）
-- GUI の main: `7660ab4d4c4064334952b2d3c9a01ede33c4973b`（固定するエンジン `d0c5cfa9483aacae0cce2fd8d28166b1d8465500`）
-- 確かめ方: 2026-11-08 に GitHub の API（gh api）で、ブランチの一覧と、そのコミットの server/requirements.txt・contract/kyuura-client-api-v1.json を読み取りだけで読んだ（GUI のリポジトリに fetch も書き込みもしていない。作業ツリーには利用者の未コミットの変更があり、触れていない）
+- GUI のコミット: `088822c58628fbf366363bcaaa713b1370125e86`（kyuura-engine-gui の `main`）
+- その GUI が固定するエンジン: `74c8e1f8ca03d017d5c0a8a79e6fdaa33d25b7f8`（版 0.171.0）
+- GUI の main: `088822c58628fbf366363bcaaa713b1370125e86`（固定するエンジン `74c8e1f8ca03d017d5c0a8a79e6fdaa33d25b7f8`）
+- 確かめ方: 2026-11-08 に GitHub の API（gh api）で、ブランチの一覧・main の最近のコミット・088822c の server/requirements.txt・contract/kyuura-client-api-v1.json を読み取りだけで読んだ（GUI のリポジトリに fetch も書き込みもしていない。作業ツリーには利用者の未コミットの変更があり、触れていない）
 - 限界: 公開されている GUI のブランチのうち最新のコミット。GUI を実行していないので、画面で動くことは確かめていない。これより新しい未公開の作業は確かめられない
 
 | 項目 | GUI（3649946） | U7-5 | 共通 |

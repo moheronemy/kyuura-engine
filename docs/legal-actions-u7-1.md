@@ -33,7 +33,7 @@
 | 入口 | 使う人 | 内容 |
 |---|---|---|
 | `ActionHost(game, *, on_result=None)`・`ActionHost.start(deck0, deck1, seed, **options)` | ホスト | ホストが持つ対戦（`adapter.HostedGame`・`snapshot.RestoredGame`・`view_record.ViewHost` と同じ形）を包む。実行は包んだ対戦の `submit`（U2 の `CommandResult`）だけで、別の実行器を作らない |
-| `ActionHost.from_state(state, *, on_result=None)` | ホスト | 状態を複製して `HostedGame` で包む（渡した状態の別名を変えてもホストの対戦に影響しない。v0.161） |
+| `ActionHost.from_state(state, *, on_result=None)` | ホスト | （v0.177: 複製を不変条件で確かめ、不整合なら `UnusableStateError`。[pt5e-from-state-invariant-audit.md](pt5e-from-state-invariant-audit.md) 9 章）状態を複製して `HostedGame` で包む（渡した状態の別名を変えてもホストの対戦に影響しない。v0.161） |
 | `ActionHost.session(actor)` | ホスト | 認証した操作主体（0・1）を結びつけた `ActorSession` を作る。0・1 でなければ `ValueError`（観戦者・ホストの操作の入口は U7-1 にない） |
 | `ActionHost.replace_game(game)`・`invalidate()` | ホスト | 再起動・復元・状態の差し替え（新しい世代。取っ手をすべて失効）・すべての取っ手の失効 |
 | `ActorSession.candidates()` | クライアント | 操作候補（状況・対応の範囲・候補の一覧。入力は段の種類だけ） |

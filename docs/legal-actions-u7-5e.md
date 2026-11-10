@@ -117,6 +117,7 @@ U7-3 の 2 段（`depends_on_stage`・`options_by_choice`）を、意味を変�
 ## 7. GUI への引き継ぎ（GUI リポジトリは変更していない）
 
 - 比べる相手（2026-11-08 に読み取りだけで確かめた）: GUI の最新の作業ブランチ `feature/engine-u7-4-attacks` の `3649946`（エンジン `9506d63`・0.166.0 を固定）。GUI の `main` の `7660ab4` はエンジン `d0c5cfa`（v0.164）を固定
+  - v0.172: 自分のうらのカードの特殊能力は、U7-5g-2 で 0・1 段の型を本人の候補に加えました（[legal-actions-u7-5fg](legal-actions-u7-5fg.md) 4 章）。GUI の比べる相手は main の `088822c`（エンジン `74c8e1f`・0.171.0）です
   - 訂正（CORR-3）: 上は古い比べる相手でした。最新の公開の作業ブランチは `feature/engine-u7-5-trainers-stadium` の `9c36a8f` で、エンジン `0885d66`（0.170.0）を固定しています（[legal-actions-u7-5fg-spec](legal-actions-u7-5fg-spec.md) 0.1 節）。0.170.0 からの差は、この章の `use_power` の項目です
 - 固定して導入を確かめた完全なコミットと版: `kyuura-engine @ git+https://github.com/moheronemy/kyuura-engine@74c8e1f8ca03d017d5c0a8a79e6fdaa33d25b7f8`（版 0.171.0。9 章）。GUI の固定を 0.166.0 からこのコミットに更新すると、U7-5a〜U7-5e の差がまとめて入る
 - 0.170.0 からの差（U7-5a〜U7-5d の差は [legal-actions-u7-5d](legal-actions-u7-5d.md) 8.2 節）
@@ -155,6 +156,7 @@ U7-3 の 2 段（`depends_on_stage`・`options_by_choice`）を、意味を変�
 ## 8. 未確認・未対応
 
 - 名前で解決できない呼び出し（状態のメソッド・登録表の引き・正規表現）の先（UP-5t の走査の限界）
+  - 追記（v0.177 のあと）: 静的な監査を [legal-actions-up5t-audit.md](legal-actions-up5t-audit.md) にまとめた。4 章の「うらのカードの定義の読みは、本当のカードによらず FD1」は、`CoinConditionOnEitherActive` の試行が相手のうらの対戦ポケモンを `designate_face_down`（`printed_def`）で読む経路を除く（候補の側の保護がない。監査の 3.1 節）。955 の閉包の走査は保存されていない
 - U7-5c の山札から引いて試す 5 つ（PT-5e）の読む値
 - 自分のうらのカードの特殊能力（候補にしない）・R-1・R-2（U7-5g）・`CheckFaceUpDeckCard`（U7-5f）
 - GUI の画面での 3 段の入力は確かめていません

@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.171）
+# 実装状況（v0.1〜v0.172）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `71d1728938fb4c8fefde9b82779cdef74beb612d`（v0.128 から。v0.129 の種族の身長の写しは別に `9242b9be89be0f747279f39c11875d1ed61763ec`。v0.126〜v0.127 は `57d01f45cfb8b086d03dc0525b329cf6adeff69b`、v0.125 は `134a664c6adf67d5604148a31b58e1a7d26d4d6d`、v0.124 は `b9e7cff6d2b2c6b4539ec45e61bf453879adab3a`、v0.123 は `74b3ceb883dd815495d13b9987433fb14b36e44d`、v0.121〜v0.122 は `2fe0bc042ce187d191843819262f8036abbb343d`、v0.114〜v0.120 は `e519b99e2adcc6c2cd0998569ae5ee1101de6e89`、v0.97〜v0.113 は `73a169063463bbf7bcaa3137d70cbf9721d11534`、v0.69〜v0.96 は `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`、v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -5231,3 +5231,219 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - U7-5d の文書の訂正: キョウの忍者ジムの seed 1・17 は双子ではなく、別の対戦による合法な到達例
 - 配布の確かめ: コミット `74c8e1f8ca03d017d5c0a8a79e6fdaa33d25b7f8`（版 0.171.0）を、クリーンな仮想環境に Git の URL から通常のインストールをして、リポジトリの外から client_api の `use_power`（2 段）を使うスモークテストをした（`behavior_digest` はソースの木と同じ）。配布物の中身の検査は required=62・problems=0
 - 詳細: [legal-actions-u7-5e.md](legal-actions-u7-5e.md)
+
+## v0.172: 合法手 API の U7-5f・U7-5g
+
+- 新しい候補の種類 `check_face_up_deck`（U7-5f）: 既存の `CheckFaceUpDeckCard` の表示だけの候補。番のプレイヤーの MAIN に、相手の山札の 2 枚目より下のおもての位置（`owner`・`position`。公開の `face_up_count` だけから決める）を `unresolved_ruling` で示し、送る前に `CANDIDATE_NOT_EXECUTABLE` で断る（入力の形の誤りは `CANDIDATE_INPUT_INVALID`）。番のプレイヤーの MAIN のほかには示さない（API の対応の範囲。D-U75-FACE-UP-ACTORS）
+- coverage の残り（U7-5g-3。D-U7-COMPLETENESS）: API 全体で決まった残りの分類 `residual.classes`（R-2〜R-5）と、その応答に当てはまる残り `residual.present`（公開の状態から決まる `public`・本人の候補から決まる `actor`）。completeness は対応しない種類と `partial_residual`（scope_kinds の種類の `not_offered` の分類）から決める。R-2 が残るあいだ番のプレイヤーの MAIN は partial。相手の山札のおもてが 2 枚以上なら、番でないプレイヤー・決定の回答者の応答も partial（R-4）。`unverified_paths`・`display_only_kinds` を加えた
+- カツラの 2 枚目（U7-5g-1。D-U75-ENERGY2-SCHEMA）: カツラの効果がはたらく番の attach_energy に任意の 3 段目 `energy2`。1・2 段目の組で引く `options_by_path`（`path_stages`）。選べるものは `check_attach_energy` に 3 枚の組を渡した確かめから。1 枚の入力は今までの意味のまま
+- 本人のうらのカードの特殊能力（U7-5g-2。D-U75-FACE-DOWN-POWER）: 本人が知る本当のカードの印刷の宣言する特殊能力を、本人の候補にだけ示す（エンジンの確かめを呼ばない。おもてにしない）。0・1 段の型は unverified の入力、2 段以上・宣言のない型・登録のない力は入力を返さない（R-3）
+- R-2（自分のうらのバトル場のポケモンのワザといっしょに選ぶもの）は未対応のまま（D-U75-R2）
+- U7-5 の設計の U7-5f・U7-5g を implemented にした。GUI の比べる相手を main の `088822c`（エンジン `74c8e1f`・0.171.0 を固定）に直した。既存の U7 のテストの coverage の期待から `check_face_up_deck` を外した（意図した差）
+- 配布の確かめ: コミット `e26df79cc6dec913c1d15b5d8203df066334d65d`（版 0.172.0）を、クリーンな仮想環境に Git の URL から通常のインストールをして、リポジトリの外から client_api のカツラの 2 枚目・本人のうらのカードの特殊能力・`check_face_up_deck` を使うスモークテストをした（`behavior_digest` はソースの木と同じ）。配布物の中身の検査は required=62・problems=0
+- 詳細: [legal-actions-u7-5fg.md](legal-actions-u7-5fg.md)
+
+## U7 の総合検証の計画（v0.172 のあと。計画だけ）
+
+- エンジン `e26df79`（0.172.0）・GUI `b1037bc`・renderer `af88231` の組の総合検証の計画を作った。テスト・ビルド・総合検証は実行していない。エンジンのコードと版は変えていない
+- 詳細: [u7-integration-verification-plan.md](u7-integration-verification-plan.md)
+
+## 検証用 AI の仕様と実装計画（v0.172 のあと。設計だけ）
+
+- U7（エンジン `e26df79`・0.172.0）を通して対戦を進める検証用 AI の仕様と段階的な実装計画を作った。実装・テスト・対戦の実行はしていない。エンジンのコードと版は変えていない
+- 詳細: [verification-ai-design.md](verification-ai-design.md)・[verification-ai-implementation-plan.md](verification-ai-implementation-plan.md)
+
+## 検証用 AI の V0（v0.172 のあと。エンジンは変えていない）
+
+- `tools/verification_ai`（配布物の外）: `client_api` の入口だけで固定条件の 1 対戦を進め、上限つきで終わり、操作・診断・終わり方を記録する。完全な記録の `replay_run` と、方策の seed による意味の列の再現を確かめる
+- CN-1（`ActionHost` が `ReplayCollector`・`ViewHost` を包めない）を再現し、道具の側の包みで接続した（エンジンの側の扱いは未判断）
+- 固定条件の 1 対戦（`hitmonchan-dewgong` 対 `venusaur-parasect`・既定の規約集合・seed 1）: `game_over`・受理 130・番 46・`replay_run` は `succeeded`・意味の列 142 行が一致。届かなかった種類・入力の形は文書の 7.3 節
+- V1 以降（分布の拡張・ルールの方策・混合・`boundary`・`negative`・双子・広い対象・最小化）は未実装
+- 詳細: [verification-ai-v0.md](verification-ai-v0.md)
+
+## 検証用 AI の V1（v0.172 のあと。エンジンは変えていない）
+
+- `tools/verification_ai` に分布 `uniform-candidate+uniform-tuple`（候補の中の完成した入力の組を上限 4,096 で列挙。上限を超えたら段ごとの方式に戻して記録）と、選択の過程・到達範囲の計測（取得ごと・状態ごと・試みごとを分ける）を加えた。段ごとの方式（V0）の選び方は変えていない
+- 判断の整理（承認済み・暫定・保留・今回扱わない）と、CN-1 のエンジンの側の独立の課題（説明を直す案・failure の口を揃える案）を記録した
+- 保存済みの V0 の実行を別のプロセスで 1 局再現し、意味の列 142 行・終わり方・完全な記録の行・`replay_run` が一致した
+- 固定デッキ・既定の規約集合で 2 方式 × seed 11・12・13 の 6 局: seed 12・13 の 4 局が `game_over`、seed 11 の 2 局が開始の時点の既知の停止（`UNRESOLVED_MULLIGAN_COMPENSATION`）。どれも `replay_run` は `succeeded`・記録の対応の問題 0。`use_power`（3 段）に届いた。`options_by_path` などは届いていない
+- V2 以降（ルール・混合の方策・`boundary`・`negative`・双子・広い対象・最小化）は未実装
+- 詳細: [verification-ai-v1.md](verification-ai-v1.md)
+
+## 検証用 AI の V2（v0.172 のあと。エンジンは変えていない）
+
+- `tools/verification_ai` に、操作の種類だけで順位をつける rules-v1（ベンチ → 進化 → エネルギー → ワザ → ほかの送信できる操作 → 番を終える。同順位は方策の乱数で均等。入力は uniform-stage）と、選択のエピソードごとに混合の乱数で 1 回だけ方式を決める混合の方策を加えた。ランダム・ルール・混合は同じ行動生成・check・submit・記録・計測を使う
+- 固定デッキ・既定の規約集合・seed 11・12・13 で rules・mixed（ε 0.25）の 6 局を実行し、V1 の uniform-stage の 3 局を再利用して比べた（再利用の根拠は、V2 のコードでの seed 12 の再現が V1 の記録と一致したこと）。seed 11 は 3 方式とも開始の時点の既知の停止。rules の seed 13 はエナジートランスの繰り返しで受理の上限（1,000）に届いた（方策による繰り返し。エンジンの拒否・停止はない）。どの局も `replay_run` は `succeeded`・記録の対応の問題 0。きぜつは未計測
+- V3 以降（`boundary`・`negative`・双子・広い対象・最小化）は未実装
+- 詳細: [verification-ai-v2.md](verification-ai-v2.md)
+
+## 検証用 AI の V2 の補完（反復の抑制。v0.172 のあと。エンジンは変えていない）
+
+- rules-v2（`RulePolicy(version=2)`）: 同じ番・同じ主体で同じ意味の操作（主体・種類・対象・入力の意味）が 2 回受理されたら、送る前の評価で抑え、同じエピソードで 2 回抑えた候補を end_turn より後ろへ下げる。候補・処理可能性は書き換えない（戦略上の選好）。mixed はルールの側の版を指定でき、ランダムの側は抑えないが受理を履歴に入れる。rules-v1・uniform-stage・uniform-tuple・mixed（rules-v1）の意味の列は変えていない
+- seed 13（固定デッキ・既定の規約集合）: rules-v2・mixed（rules-v2・ε 0.25）とも `game_over`。同じ番の同じ操作の受理の最大は 2（V2 の rules-v1 は 168 で受理の上限）。`replay_run` は `succeeded`。mixed の別のプロセスでの再現は 290 行が一致
+- V3 以降は未実装
+- 詳細: [verification-ai-v2-repeat.md](verification-ai-v2-repeat.md)
+
+## 検証用 AI の V3 の仕様と計画（v0.172 のあと。設計だけ）
+
+- deep・boundary・negative を分けた V3 の仕様、D-6 の異常の判定の基準の案（判定の区分と、check・submit・受理のあとの表）、negative の変異と副作用の確かめ、最初の単位（固定デッキの通常の進行の中の negative）と段階の計画を作った。実装・テスト・対戦の実行はしていない。採用待ち
+- 詳細: [verification-ai-v3-design.md](verification-ai-v3-design.md)
+
+## 検証用 AI の V3-1（通常の進行の中の negative。v0.172 のあと。エンジンは変えていない）
+
+- `tools/verification_ai` に、1 条件だけを変える変異（`negative.py`）・判定（`judge.py`）・実行の入口（`run_v3.py`）を加えた。候補を取得せず、方策と別の乱数で、check が valid のあと送る前に変異を試し、同じ取っ手の元の入力の check で復帰を確かめ、古い取っ手は受理のあとに試す。副作用の疑いで止める
+- 固定デッキ・既定の規約集合・uniform-stage・seed 12・13 の 2 局: 変異の要求 96（check 48・submit 48）と復帰の check 24 がすべて期待どおり（`suspect` 0・`undetermined` 0）。通常の進行の意味の列・完全な記録の行・終わり方は V1 の記録と一致、`replay_run` は `succeeded`。`duplicate` は未到達
+- V3-2 以降（boundary・構築した盤面・探索・R-B）は未実装
+- 詳細: [verification-ai-v3-1.md](verification-ai-v3-1.md)
+
+## 検証用 AI の V3-2（カツラの固定の到達例。v0.172 のあと。エンジンは変えていない）
+
+- 固定の到達例（`tests/test_legal_actions_u7_5g_energy2.py` の `BLAINE_DECK`・seed 1 を出典と sha256 つきで道具に写した。固定デッキではない）を、公開の API の候補・入力・check・submit で進め、エネルギーを 1 枚・2 枚つけた（別々の対戦）。`options_by_path` の実際の応答（鍵・参照・使えない選ぶもの）と、受理のあとの観測・完全な記録での付与（1 枚・2 枚）を確かめた。`replay_run` は `succeeded`
+- 変異: `unknown_option`・`wrong_actor`・`stale_after_accept` はすべて期待どおり（`suspect` 0）。`options_by_path` の単一の条件の別の経路と個数を保った重複は、この条件に前提を満たす例がなく未到達。経路で引く段の `count_over` は道具が対応していない
+- BoundaryPolicy（候補の区分 → 候補の均等。範囲に unverified を加える）を加えたが、この条件の 40 操作では `unverified` は示されなかった。判定の規則 2（停止系の拒否はコード表の元のコードと経路の理由がそろうときだけ known_stop）
+- 集計の書き出しの失敗（道具の誤り）は、対戦をやり直さず保存したファイルから集計を作った。V3-3 以降は未実装
+- 詳細: [verification-ai-v3-2.md](verification-ai-v3-2.md)
+
+## 検証用 AI の V3-3（構築盤面の代表例）と V3-2 の補完（v0.172 のあと。エンジンは変えていない）
+
+- V3-2 の補完: 変異の結果を `run`・`not_applicable`・`unsupported_contract`（生成器の未対応）・`not_run` に分けた。判定の規則 3（停止系の拒否・受理のあとの停止を known_stop にするには、コード表のコード・分類・経路の理由に加えて代表の条件の根拠の登録と場面の宣言が要る。根拠がなければ undetermined）。受理と拒否で副作用の判定を分けた。V3-2 の文書に件数・分類の訂正を追記した
+- V3-3: 既存のテストの盤面から作った fixture 4 つ（出典・sha256・変更・整合を記録。new_game から届いた証拠とは扱わない）を開始のスナップショットから復元し、公開の API だけで 4 ケースを実行した: `unverified` の受理（C1）、`unverified` のエンジンの拒否（C2。副作用なし・本当のカードを公開しない）、受理のあとの決定の答えでの既知の停止 DU1（C3。known_stop）、表示だけの FU2 への不正な要求（C4。CANDIDATE_NOT_EXECUTABLE）。どれも期待どおり、`suspect` 0・`undetermined` 0。C3 は同じスナップショットからの復元と新しい取っ手で同じ結果
+- 構築盤面から始めた実行の完全な再現用記録・`replay_run` は対象の外。V3-4 以降は未実装
+- 詳細: [verification-ai-v3-3.md](verification-ai-v3-3.md)
+
+## v0.173: CN-1（ClientHub・ActionHost が包む対戦の failure の接続）と残件の一覧
+
+- `ReplayCollector`・`ViewHost` に `failure` を加えた（包んだ `HostedGame` の値をそのまま返す。別の失敗の状態を持たない）。対応する包み: `HostedGame`・`ReplayCollector`・`ViewHost`（完全な記録あり・なし）・`RestoredGame`。版は 0.173.0（`behavior_digest` が変わったので、0.172.0 の記録・スナップショットは 0.173.0 では再実行・復元できない。既存の設計のまま）
+- 確かめ: 回帰テスト `tests/test_client_api_cn1_v0_173.py` と関連のモジュール、配布物の照らし（required=62・problems=0）、コミット `ca36ba83e30b2bc8efb51180d9387578615f5a9b` の Git の URL からの通常のインストールとリポジトリの外の接続のスモーク
+- 検証用 AI の V0〜V3-3 と U7 の残件の一覧と、次に進める 3 件の提案（実装は始めていない）
+- 詳細: [cn1-failure-v0.173.md](cn1-failure-v0.173.md)・[verification-ai-inventory.md](verification-ai-inventory.md)
+
+## v0.173 のあと: R-5（入力を返さない候補）の監査（文書だけ。エンジンの版は 0.173.0 のまま）
+
+- R-5 の 8 経路の分類（A: 見えないカードの実行時の確かめ・B: 自分のうらのバトル場のにげる・C: この版が続けられない状態・今の登録では生成されない保守の守り 3 つ）と、最初の補完の計画（うらのバトル場のにげるの入力。実装は採用待ち）。準備の停止の規約集合ごとの既存の扱い。残件の一覧の分類を訂正した
+- 静的な監査（コード・テスト・保存した証跡の読みだけ）。テスト・対戦は実行していない
+- 詳細: [legal-actions-r5-audit.md](legal-actions-r5-audit.md)
+
+## v0.174: R-5 の P6（本人のうらのバトル場のポケモンのにげるの入力）
+
+- `legal_actions._retreat_candidate` のうらの分岐: 入力の公開を confirmed にし、控え・ついているカード（0〜枚数）の 2 段を返す。処理可能性は unverified のまま。にげるエネルギー・個数・タイプを読まず、`total_units`・`units` を省いて段 2 の `cost_evaluation`（not_evaluated）で示す。check は形だけ、submit は既存の `Retreat`。版は 0.174.0（`behavior_digest` が変わった）
+- 確かめ: 新しいテスト `tests/test_legal_actions_p6_face_down_retreat_v0_174.py`（構築盤面: 契約・形の検査・双子・U7 と client_api と直接のコマンドの一致の 3 場面）と関連のモジュール、配布物の照らし（required=62・problems=0）、コミット `f7bf450580bf0d02573b4d032271be6b8e12d699` の Git の URL からの通常のインストールのスモーク
+- R-5 の全体は解消していない（P2・P3〜P5・保守の守りが残る）。GUI・検証用 AI の追従は未着手。new_game からの到達は確かめていない
+- 詳細: [legal-actions-p6-face-down-retreat.md](legal-actions-p6-face-down-retreat.md)
+
+## v0.174 のあと: 検証用 AI の P6 への追従（エンジンの版は 0.174.0 のまま）
+
+- 行動生成が段の `cost_evaluation` を厳密に確かめ、選ぶ数・重なりなし・選んだ順だけで選ぶ（uniform-stage・uniform-tuple。費用・個数を求めない）。判定の規則 4（P6 の拒否を元のコードで分け、受理の中身を分ける）
+- 確かめ: `tests/test_verification_ai_p6.py` と既存の検証用 AI のテスト、構築盤面 3 つの固定確認（`tools.verification_ai.run_p6`。受理・エネルギー不足の拒否・トラッシュと受理のあとの決定。suspect 0）。new_game からの到達ではない
+- GUI の追従は未着手
+- 詳細: [verification-ai-p6.md](verification-ai-p6.md)
+
+## v0.174 のあと: R-3（本人のうらのカードの特殊能力のうち、入力を返さない型）の監査（文書だけ。エンジンの版は 0.174.0 のまま）
+
+- 今の条件をコードから整理し、型ごとに分類した（A: 2〜3 段の 7 つの型。うちたねはロケット団のヒトカゲの［ほのおをもらう］だけ。B: 1 段で選べるものが 0。E: 登録のない力・宣言のない型など、今の登録では生成されない）。最初の補完 U-R3a（2〜3 段の構造の組を `unverified` で示す）の計画。採用待ち・未実装
+- 静的な監査（コード・テスト・文書の読みと、`effects.py` の構文の読み）。テスト・対戦は実行していない
+- 詳細: [legal-actions-r3-audit.md](legal-actions-r3-audit.md)
+
+## v0.175: R-3 の U-R3a（本人のうらのカードの、宣言の段が 2〜3 段の特殊能力の構造の入力）
+
+- `legal_actions._face_down_power_candidates` の 2〜3 段の分岐: どの段も公開の値・本人の手札で作れる宣言の、構造の組（受け付けるかで絞らない）を、U7-5e と同じ `options_by_choice`・`after` で返す。入力の公開は confirmed、処理可能性は unverified。エンジンの確かめを呼ばない・おもてにしない。check・submit・エンジンの処理は変えていない。版は 0.175.0（`behavior_digest` が変わった）
+- 確かめ: 新しいテスト `tests/test_legal_actions_u_r3a_v0_175.py`（構築盤面: 受理・`WRONG_ENERGY_TYPE` の拒否・トラッシュの U7 と client_api と直接のコマンドの一致、形の検査、相手の秘密だけの双子、公開されたカード id）と関連のモジュール、配布物の照らし（required=62・problems=0）、コミット `81e9e99f76c2a2071fbbc50f852d6c28a026d080` の Git の URL からの通常のインストールのスモーク
+- R-3 の全体は解消していない（組が完成しない場面・今の登録では生成されない経路が残る）。GUI・検証用 AI の追従は未着手。new_game からの到達は確かめていない
+- 詳細: [legal-actions-u-r3a-v0.175.md](legal-actions-u-r3a-v0.175.md)
+
+## v0.175 のあと: 検証用 AI の U-R3a への追従（エンジンの版は 0.175.0 のまま）
+
+- 行動生成・方策は既存のまま（依存する段の扱いで 2〜3 段を作れる）。判定の規則 5（うらのカードの特殊能力の拒否を、元のコードと条件に要る段で分け、受理の中身を公開のログで分ける）
+- 確かめ: `tests/test_verification_ai_u_r3a.py` と既存の検証用 AI のテスト、構築盤面 3 つの固定確認（`tools.verification_ai.run_u_r3a`。受理・`WRONG_ENERGY_TYPE` の拒否と無副作用・3 段のトラッシュ。suspect 0）。new_game からの到達ではない
+- GUI の追従は未着手
+- 詳細: [verification-ai-u-r3a.md](verification-ai-u-r3a.md)
+
+## v0.175 のあと: PT-5e（山札から引いて試すトレーナー）の監査（文書だけ。エンジンの版は 0.175.0 のまま）
+
+- `PLAYABLE_NOT_EVALUATED` の 5 つの型・6 枚（`PMCG6-082`・`GD5-016`・`GD5-017`・`neo4-105`・`neo1-080`・`PR1-027`）の使うための条件を、呼び出しの閉包までたどった。結果は本人の手札・公開の枚数・おもての山札の不変条件だけで決まる（A）。受理の前の先読みは D、受理のあとは C
+- 最初の補完案（6 枚の条件を候補で呼ぶ。版 0.176.0）と、現状維持の根拠、候補の入口の双子の計画。採用待ち・未実装
+- 静的な監査（コード・テスト・文書の読み）。モジュールの読み込み・テスト・対戦は実行していない
+- 詳細: [legal-actions-pt5e-audit.md](legal-actions-pt5e-audit.md)
+
+## v0.176: PT-5e（山札から引いて試すトレーナー 6 枚の使うための条件を候補で呼ぶ）
+
+- `legal_actions`: 5 つの型（6 枚）を `PLAYABLE_FACE_UP_PREFIX_TRIALS` にし、おもての山札の並びの不変条件が成り立つ状態で、実行時と同じ `check_play_trainer` を候補の作成で呼ぶ。通れば `may_stop_later`（受理・完走は保証しない）、ゲーム上使えなければ選べるものに出さない、未裁定・未対応は実行できない区分。崩れた状態は `unverified` のまま。`PLAYABLE_NOT_EVALUATED` は空。エンジンのゲームの処理・裁定は変えていない。版は 0.176.0（`behavior_digest` が変わった）
+- 確かめ: 新しいテスト `tests/test_legal_actions_pt5e_v0_176.py`（前提 A・B、双子 42 組、対照、3 経路の一致）と関連のモジュール、配布物の照らし（required=62・problems=0）、コミット `6f627007a2a7101be066ac6ba035e838a75e36e1` の Git の URL からの通常のインストールのスモーク
+- 残る: 受理の前の先読みの読む値、構築盤面の入口の不変条件（独立した課題）、new_game からの到達、GUI・検証用 AI の追従（AI の `v2_repeat` の GOLDEN は保証の文の変更で変わる）
+- 詳細: [legal-actions-pt5e-audit.md](legal-actions-pt5e-audit.md) 9 章
+
+## v0.176 のあと: 検証用 AI の 0.176.0 への追従（AI の側だけ。エンジンの版は 0.176.0 のまま）
+
+- `tools/verification_ai/records.py`: 行動の列（`action_sequence`・形式 `action-meaning/v2`）と API の契約の値の列（`contract_sequence`・形式 `candidate-contract/v1`）を分け、形式の名前つきの指紋（`sequence_digest`）にした。旧形式 `meaning_sequence`（`meaning/v1`）は保存済みの証跡のために変えていない
+- `v2_repeat` の 4 件の失敗の原因: 旧形式の指紋が候補の保証の文をふくみ、`play_trainer` の `guarantees.preconditions` の文の変更だけで変わった（0.175.0 と 0.176.0 の小さな対戦 6 つで、違う葉はこの文だけ。行動の列は同じ）
+- PT-5e: 通る 6 枚は deep の既存の条件で選ぶ対象に入る。使えないものは出ない、実行できない区分は選ばない、崩れた状態の `unverified` は deep で選ばない。判定・方策・入力生成・乱数・反復の抑制は変えていない
+- 確かめ: 関連する AI のモジュール 10 個を 1 つずつ別のプロセスで実行し、失敗 0。パッケージの版・`behavior_digest` は前後で同じ
+- 残る: GUI の追従、通常の対戦で 6 枚が選ばれる場面、受理の前の先読み（D）、`ClientHub.from_state` の入口の不変条件
+- 詳細: [verification-ai-v0176-follow.md](verification-ai-v0176-follow.md)
+
+## v0.176 のあと: PT5E-FROM-STATE-INVARIANT の監査と最小修正の計画（文書だけ。エンジンの版は 0.176.0 のまま）
+
+- `ClientHub.from_state`・`ActionHost.from_state` は渡した状態を複製するが `check_invariants` を確かめない（確かめるのは `new_game`・`apply_command` の返す状態と、スナップショットの保存・復元だけ）。テスト専用の改変で崩した状態では、送信の結果が秘密の位置で分かれる（通常の対戦・スナップショットからは届かない）
+- 推奨: 2 つの `from_state` の共通の下位の関数で、複製を `check_invariants` で確かめ、ホスト・取っ手を作る前に固定の文の例外で拒否する。信頼された内部の組み立て（`HostedGame(state)` など）は変えず契約を明記、無検査の選択肢は加えない、PT-5e の候補の側のガードは残す
+- 採用の判断・実装・テストは未着手（このときの記録。v0.177 で実装した。次の節）
+- 詳細: [pt5e-from-state-invariant-audit.md](pt5e-from-state-invariant-audit.md)
+
+## v0.177: PT5E-FROM-STATE-INVARIANT（from_state の共通の状態の確かめ）
+
+- `adapter.checked_state_copy`（型 → 複製 → 複製の `check_invariants`）を `ClientHub.from_state`・`ActionHost.from_state` の両方が呼び、不整合な状態を hub・セッション・取っ手を作る前に `adapter.UnusableStateError`（`ValueError` の子。`code` `STATE_INTEGRITY`・`STATE_CHECK_ERROR`。文は固定。`problems` はホスト・検証者だけ）で拒否する。型の違いは `TypeError`。`MemoryError` は投げ直し、`KeyboardInterrupt`・`SystemExit` は捕まえない
+- 変えていないもの: `HostedGame(state)`・`ActionHost(game)`・`ClientHub(game)`（信頼された内部。前提を契約に書いた）、PT-5e の候補の側のガード、`apply_command` の実行のあとの確かめ、JSON のスキーマ、規約集合・決定の再開先の確かめ（コマンドごとのまま）。無検査の選択肢は加えていない
+- 確かめ: 新しいテスト `tests/test_from_state_integrity_v0_177.py`（12 件）と 29 モジュールの回帰（失敗 0。既存の盤面で拒否されたものはない。PT-5e の 2 件を契約の変更に合わせた）、配布物の照らし（required=62・problems=0）、コミット `01317a649e65461dfeffabfa0b4893840ae6d9ee` の Git の URL からの通常のインストールのスモーク
+- 版は 0.177.0（`behavior_digest`・`instrumentation_digest` が変わった）。0.176.0 の記録・スナップショットは 0.177.0 では再実行・復元できない（既存の設計）
+- 残る: GUI の追従、不変条件が到達可能性より弱いこと、低層の API・内部の組み立てからの崩れた状態（契約で呼び出し側の責任）
+- 詳細: [pt5e-from-state-invariant-audit.md](pt5e-from-state-invariant-audit.md) 9 章
+
+## v0.177 のあと: UP-5t の静的な監査（文書だけ。エンジンの版は 0.177.0 のまま）
+
+- 状態の複製の上で試す特殊能力の 7 型（8 枚）の `check_usable` から、ソースの構文だけで呼び出しを追った（strict 201・broad 2,449 の関数。件数は網羅の証明ではない）
+- 6 型と、相手の対戦ポケモンがうらでない `CoinConditionOnEitherActive` は、公開の値・本人の手札だけを読み、試行は複製の上だけ（A）
+- 相手の対戦ポケモンがうらのカード（マチスの秘策）のとき、［くさいかふん］・［えんかくさいみん］の候補の試行が本当のカードを読み、候補の側にはエンジンの `_identity_independent` に当たる保護がない（C。応答が実際に変わるかは未確認）
+- 次の最小の作業の案（UP-5t-C1。候補の側で相手のうらのカードの本当のカードを読んだら `unverified`）と双子の計画を記した。実装・テストは未着手
+- 詳細: [legal-actions-up5t-audit.md](legal-actions-up5t-audit.md)
+
+## v0.178: UP-5t-C1（特殊能力の候補の確かめが、相手のうらのカードの本当のカードを使ったら使わない）
+
+- `legal_actions._power_verdict`: `check_use_pokemon_power` を新しい空の `zones.IDENTITY_CONSULTED` のもとで呼び（外側の値を `finally` で戻す）、相手のうらのカードを使ったら、受け付ける・拒否・停止のどれでも結果を使わず `unverified`（`face_down_reveal_not_evaluated`）。ほかの例外は投げ直す。エンジンの処理・裁定・`_identity_independent` は変えていない
+- 対象の経路: ［くさいかふん］（PMCG4-006）・［えんかくさいみん］（PMCG4-033）の試行が、相手のうらの対戦ポケモンをおもてにして「たねポケモン」かを見る（UP-5t の監査の C）。修正の前の構築盤面では外へ出る差は出なかったが、本当のカードの読みは実行で確かめた
+- 確かめ: 新しいテスト `tests/test_legal_actions_up5t_c1_v0_178.py`（11 件。双子・対照・記録の扱い・3 経路）と関連のモジュール。検証用 AI の `v2_repeat` は契約の値の指紋 2 つが保証の文の変更で変わる（AI の追従で更新）。配布物の照らし（required=62・problems=0）、コミット `8f5329d6fb9eeeb783f3d6f57128069ffc0d98a0` の Git の URL からの通常のインストールのスモーク
+- 版は 0.178.0（`behavior_digest` が変わった）。0.177.0 の記録・スナップショットは 0.178.0 では再実行・復元できない（既存の設計）
+- 残る: UP-5t の D（静的な監査だけ）、GUI・AI の追従
+- 詳細: [legal-actions-up5t-audit.md](legal-actions-up5t-audit.md) 11 章
+
+## v0.178 のあと: 検証用 AI の 0.178.0 への追従（AI の側だけ。エンジンの版は 0.178.0 のまま）
+
+- `v2_repeat` の 2 件の失敗（rules-v1-s13・mixed-v1-s13 の `candidate-contract/v1`）の原因: use_power の行の `candidate.guarantees.preconditions` だけが違う（保証の文に加わった 1 文）。行動の列・trace のほかの値は同じ。`CONTRACT_GOLDEN_0178` を加えて 2 つだけを来歴つきで更新した
+- 範囲: ガードが働く候補（相手のバトル場がうら）は `unverified` で、deep の通常の範囲から除く（ほかの候補があるので代替は起きない。範囲が空のときだけ既存の代替）。boundary には入る。おもての対照は `may_stop_later`。判定・方策・入力生成・反復の抑制は変えていない
+- 確かめ: 新しいテスト `tests/test_verification_ai_v0178_follow.py`（9 件）と関連する AI のモジュール 5 個を、1 つずつ別のプロセスで実行した。パッケージの版・実装の識別は前後で同じ
+- 残る: GUI の追従（固定するのは `8f5329d6fb9eeeb783f3d6f57128069ffc0d98a0`）、UP-5t の D、トレーナーの候補への拡張
+- 詳細: [verification-ai-v0178-follow.md](verification-ai-v0178-follow.md)
+
+## v0.178 のあと: UP-5t の D とトレーナーの候補の情報境界の静的な監査（文書だけ。エンジンの版は 0.178.0 のまま）
+
+- 型注釈から受け手を推論する走査（ソースの構文だけ。`kyuura_engine` を import しない）で、UP-5t の D（名前で解決した状態のメソッド 129 か所・多態 34 か所）を絞った。129 か所と多態の 31 か所は型で解決し、本当のカードを読む関数に届く 7 型は `CoinConditionOnEitherActive`（v0.178 で対処済み）だけ。残る D は型注釈・登録・スレッドの前提
+- 以前の broad の閉包（2,449）は上限ではなかった（基底のメソッドの中の `self.m` が下の型の上書きに届く 69 の関数を含まない。どれも登録の文面の照らし）
+- トレーナーの 77 の `check_playable` のうち、相手のうらのカードの本当のカードを読むのは、ねむれ!ねむれ!（PMCG4-054）・トロピカルウインド（PR1-074）の試行（相手のバトル場がうらのとき）だけ。判定が本当のカードによりうるが、候補の側に保護がない（C。外へ出る差は未再現）。U7-5c 4.2 節の記録を CORR-4 で訂正した
+- 次の最小の作業の案（PT-5t-C1。UP-5t-C1 と同じ記録の方式をトレーナーの候補に付け、使ったら `unverified`）と双子の計画を記した。公開の情報で事前に区別する案と比べた。実装・テストは未着手
+- 詳細: [legal-actions-up5t-d-trainer-audit.md](legal-actions-up5t-d-trainer-audit.md)
+
+## v0.179: PT-5t-C1（トレーナーの候補の確かめが、相手のうらのカードの本当のカードを使ったら使わない）
+
+- `legal_actions._trainer_candidate`: `check_play_trainer` を UP-5t-C1 と同じ記録（`zones.IDENTITY_CONSULTED`。呼び出しのあいだだけ新しい空の並び、`finally` で戻す）のもとで呼び、相手のうらのカードを使ったら、受け付ける・拒否・停止のどれでも結果を使わず、その選べるものを `unverified`（`face_down_reveal_not_evaluated`）にする（拒否でも外さない）。記録の本体を `_probe_recording_identity` に移した（特殊能力の側の振る舞いは同じ）。submit・効果の処理・裁定は変えていない
+- 対象の経路: ねむれ!ねむれ!（PMCG4-054）・トロピカルウインド（PR1-074）の試行が、相手のうらのバトル場をおもてにして「たねポケモン」かを見る（監査の 4.3 節の C）。修正の前の構築盤面（2 型 × 本当のカード 3 種）では外へ出る差は出なかったが、本当のカードの読みは実行で確かめた
+- 記録のあとの公開の拒否（リムーブ禁止ジム・MG1）も `unverified` に覆う（保守的。今の登録の 2 型では起こらない）。候補の側の評価を弱めただけで、エンジンの合法性は緩めていない
+- 確かめ: 新しいテスト `tests/test_legal_actions_pt5t_c1_v0_179.py`（14 件。双子・対照・記録の扱い・3 経路）と関連の 8 モジュール、版のあとの `preset_decks_v0_20`・`distribution`。検証用 AI の `v2_repeat` は契約の値の指紋 4 つが保証の文の変更で変わる（行動の列は同じ。AI の追従で更新）。配布物の照らし（required=62・problems=0）、固定コミット `4b6e3fea9212c50622dcfea7142dcc76fd14b09d` の通常のインストールとスモーク
+- 版は 0.179.0（`behavior_digest` が変わった）。0.178.0 の記録・スナップショットは 0.179.0 では再実行・復元できない（既存の設計）
+- 残る: GUI・AI の追従、UP-5t の D（静的な前提）、監査の 4.5 節の 7 型の前提
+- 詳細: [legal-actions-up5t-d-trainer-audit.md](legal-actions-up5t-d-trainer-audit.md) 12 章
+
+## v0.179 のあと: 検証用 AI の 0.179.0 への追従（AI の側だけ。エンジンの版は 0.179.0 のまま）
+
+- `v2_repeat` の 4 件の失敗（4 つの対戦の `candidate-contract/v1`）の原因: play_trainer の行の `candidate.guarantees.preconditions` だけが違う（保証の文に加わった 1 文）。行動の列・trace のほかの値・終わり方・反復の抑制の鍵は同じ。`CONTRACT_GOLDEN_0179` を加えて 4 つを更新し、0.178.0 の値は来歴として残した。行動の固定値は変えていない
+- 範囲: play_trainer の候補の区分・選べるものの区分・完成入力の区分を分けて確かめた。同じ候補に may_stop_later と unverified の選べるものが混ざると、候補は deep の範囲に残り、deep は unverified の選べるものだけを選ばない。boundary・代替（deep の範囲が空のときだけ）は選べる。判定は変えていない（規則 5）
+- 確かめ: 新しいテスト `tests/test_verification_ai_v0179_follow.py`（11 件）と、`v2_repeat`・`v0178_follow`・`v0176_follow`・`p6`・`u_r3a` を 1 つずつ別のプロセスで実行した。パッケージの版・実装の識別は前後で同じ
+- 残る: GUI の追従（固定するのは `4b6e3fea9212c50622dcfea7142dcc76fd14b09d`）、UP-5t の D、おもての山札の位置を読むトレーナー 7 型の前提
+- 詳細: [verification-ai-v0179-follow.md](verification-ai-v0179-follow.md)

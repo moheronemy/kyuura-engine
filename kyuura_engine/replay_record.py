@@ -338,6 +338,14 @@ class ReplayCollector:
     def stopped(self) -> bool:
         return self._end is not None
 
+    @property
+    def failure(self) -> CommandResult | None:
+        """処理できない結果（failed）を受け取っていれば、その結果。なければ None（v0.173。CN-1）。
+
+        包んだ ``HostedGame`` の値をそのまま返す（収集器は別の失敗の状態を持たない）。``legal_actions.ActionHost``・``client_api.ClientHub`` が包む対戦の形
+        （``state``・``submit``・``failure``）にそろえるためで、検証者用の値を含む結果はホストの中だけで使う（見る人に渡さない）。"""
+        return self._game.failure
+
     def view(self, viewer):
         return self._game.view(viewer)
 

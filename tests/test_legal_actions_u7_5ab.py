@@ -110,7 +110,7 @@ class MappingTest(unittest.TestCase):
         cov = r["coverage"]
         self.assertEqual(cov["completeness"], L.PARTIAL)
         self.assertEqual(cov["scope_kinds"], list(L.MAIN_KINDS))
-        self.assertEqual(cov["not_covered_kinds"], ["check_face_up_deck"])  # v0.169〜v0.171（U7-5c〜U7-5e）: play_trainer・use_stadium・use_power は対応した種類
+        self.assertEqual(cov["not_covered_kinds"], [])  # v0.169〜v0.171（U7-5c〜U7-5e）: play_trainer・use_stadium・use_power は対応した種類（v0.172（U7-5f）: check_face_up_deck も評価した種類（表示だけ。display_only_kinds）。未対応の種類はない）
         for kind in L.BOARD_KINDS:
             self.assertIn(kind, cov["implemented_kinds"])
         self.assertEqual(L.BOARD_KINDS, ("remove_disguise", "discard_from_play", "reveal_face_down"))
@@ -120,7 +120,7 @@ class MappingTest(unittest.TestCase):
     def test_kinds_absent_when_impossible(self):
         r = host_of(F.board(F.mon(F.HITMONCHAN), bench=[F.RATTATA])).session(0).candidates()
         self.assertFalse(set(L.BOARD_KINDS) & {c["kind"] for c in r["candidates"]})  # ゲーム上できない種類は候補を作らない
-        self.assertEqual(r["coverage"]["not_covered_kinds"], ["check_face_up_deck"])  # v0.169〜v0.171（U7-5c〜U7-5e）: play_trainer・use_stadium・use_power は対応した種類
+        self.assertEqual(r["coverage"]["not_covered_kinds"], [])  # v0.169〜v0.171（U7-5c〜U7-5e）: play_trainer・use_stadium・use_power は対応した種類（v0.172（U7-5f）: check_face_up_deck も評価した種類（表示だけ。display_only_kinds）。未対応の種類はない）
 
     def test_not_the_turn_player(self):
         for state in (disguised(), dolls(), face_down(S.DIGLETT)):
@@ -281,8 +281,10 @@ class RevealFaceDownTest(Same, unittest.TestCase):
         self.assertEqual([c["kind"] for c in host.session(0).candidates()["candidates"]], [L.KIND_PROMOTE_ACTIVE])
         self.assertEqual(answer_with_u7(host).outcome, D.ACCEPTED)
 
-    def test_face_down_active_retreat_withholds_inputs(self):
-        """自分のうらのバトル場のポケモン: にげるエネルギーが決まらない（FD1）。v0.166 までは候補の取得が失敗していた。にげるは unverified で、入力を返さない（双子で同じ）。"""
+    def test_face_down_active_retreat_returns_inputs_without_cost(self):
+        """自分のうらのバトル場のポケモン: にげるエネルギーはうらのあいだ決まらない（FD1）。v0.166 までは候補の取得が失敗し、v0.173 までは入力を返さなかった（R-5）。
+        v0.174（P6。docs/legal-actions-p6-face-down-retreat.md）: にげるは unverified のまま、控えとついているカードの入力を返し、費用・個数は cost_evaluation で評価していないと示す
+        （双子で同じ。詳しい確かめは tests/test_legal_actions_p6_face_down_retreat_v0_174.py）。"""
         seen = []
         for real in (S.DIGLETT, S.KADABRA):
             state = face_down(real)
@@ -290,9 +292,12 @@ class RevealFaceDownTest(Same, unittest.TestCase):
             session = host_of(state).session(0)
             r = session.candidates()
             retreat = cand(r, L.KIND_RETREAT)
-            self.assertEqual((retreat["processability"], retreat["input_disclosure"]), (L.UNVERIFIED, L.DISCLOSURE_UNCONFIRMED))
+            self.assertEqual((retreat["processability"], retreat["input_disclosure"]), (L.UNVERIFIED, L.DISCLOSURE_CONFIRMED))
             inputs = session.inputs(r["game"], r["revision"], retreat["id"])
-            self.assertEqual((inputs["stages"], inputs["withheld"]["code"]), ([], L.INPUT_BOUNDARY_UNCONFIRMED))
+            self.assertNotIn("withheld", inputs)
+            self.assertEqual([s["role"] for s in inputs["stages"]], ["new_active", "discard"])
+            self.assertEqual(inputs["stages"][1]["cost_evaluation"]["status"], L.COST_NOT_EVALUATED)
+            self.assertNotIn("total_units", inputs["stages"][1])
             seen.append((without_handles(r), inputs["stages"]))
         self.assertEqual(seen[0], seen[1])
 

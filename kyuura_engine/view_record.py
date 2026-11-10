@@ -240,6 +240,14 @@ class ViewHost:
         """ホストの中だけで使う今の状態。"""
         return self._game.state
 
+    @property
+    def failure(self) -> CommandResult | None:
+        """処理できない結果（failed）を受け取っていれば、その結果。なければ None（v0.173。CN-1）。
+
+        包んだ対戦（``ReplayCollector`` か ``HostedGame``）の値をそのまま返す（閲覧用記録の収集は別の失敗の状態を持たない）。``legal_actions.ActionHost``・
+        ``client_api.ClientHub`` が包む対戦の形にそろえるためで、ホストの中だけで使う（閲覧用記録・見る人には渡さない）。"""
+        return self._game.failure
+
     def submit(self, command, *, submitter: int | None = None, operation_id: str | None = None) -> CommandResult:
         result = self._game.submit(command, submitter=submitter, operation_id=operation_id)
         for recorder in self._recorders.values():
