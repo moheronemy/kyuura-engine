@@ -163,6 +163,8 @@ class Runner:
                 self._loop_once()
         except _Stop as stop:
             termination, detail = stop.termination, stop.detail
+        except MemoryError:  # バッチ: 資源の枯渇は対戦の結果（exception）に変えない（KeyboardInterrupt・SystemExit は Exception でないので、もとから通る）
+            raise
         except Exception as error:  # 入口は例外を投げない約束。ランナーの誤りも含めて、ほかの分類に変えずに記録する
             termination, detail = EXCEPTION, {"type": type(error).__name__, "message": str(error), "traceback": traceback.format_exc()}
         record = None if self.game is None else self.game.close()
