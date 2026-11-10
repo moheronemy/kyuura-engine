@@ -156,6 +156,7 @@ U7-3 の 2 段（`depends_on_stage`・`options_by_choice`）を、意味を変�
 ## 8. 未確認・未対応
 
 - 名前で解決できない呼び出し（状態のメソッド・登録表の引き・正規表現）の先（UP-5t の走査の限界）
+  - 追記（v0.177 のあと）: 静的な監査を [legal-actions-up5t-audit.md](legal-actions-up5t-audit.md) にまとめた。4 章の「うらのカードの定義の読みは、本当のカードによらず FD1」は、`CoinConditionOnEitherActive` の試行が相手のうらの対戦ポケモンを `designate_face_down`（`printed_def`）で読む経路を除く（候補の側の保護がない。監査の 3.1 節）。955 の閉包の走査は保存されていない
 - U7-5c の山札から引いて試す 5 つ（PT-5e）の読む値
 - 自分のうらのカードの特殊能力（候補にしない）・R-1・R-2（U7-5g）・`CheckFaceUpDeckCard`（U7-5f）
 - GUI の画面での 3 段の入力は確かめていません
