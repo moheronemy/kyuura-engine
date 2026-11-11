@@ -27,6 +27,7 @@ C1・C2 の結果の確認（[verification-ai-batch-plan3.md](verification-ai-ba
   （`batch.required_files`）。偽なら従来と同じ（`observe/` を作らない）
 - 単局: `Runner(config, recorder=observe.ObservationRecorder())`。局の終わりに `recorder.files()`（保存するバイト列）・`recorder.summary()`
 - 記録を有効にした計画で、記録が `complete` でない局は、停止方針 `on_observation_problem`（既定 stop）で止める
+- （TOOL_VERSION 6 から）`plan` では `--observation` か `--no-observation` の明示が必須。要約に観測の状態がない局も止め、完了マーカーの `evidence` で停止つきの完了を区別する（[verification-ai-decklist.md](verification-ai-decklist.md) 7 章）
 
 ## 3. 記録の形式
 

@@ -59,7 +59,7 @@ judge（規則の版 5）は、保存する trace に、局が終わったあと
 使い方は次のとおりです（作業ツリーの根で実行）。
 
 ```
-python -m tools.verification_ai.batch plan --out <証跡> --batch <名前> --engine-commit <sha> --tool-commit <sha> --seeds 1001 ... --modes uniform-stage rules-v2 mixed
+python -m tools.verification_ai.batch plan --out <証跡> --batch <名前> --engine-commit <sha> --tool-commit <sha> --seeds 1001 ... --modes uniform-stage rules-v2 mixed --observation
 python -m tools.verification_ai.batch run --out <証跡> --batch <名前> [--stop-after-games N] [--acknowledge-stop <game_id> ...]
 python -m tools.verification_ai.batch aggregate --out <証跡> --batch <名前>
 python -m tools.verification_ai.batch unlock --out <証跡> --batch <名前> --session <ロックのセッション ID>
@@ -865,3 +865,4 @@ new_game から届いた証拠とは扱わない。
 - 15.4 節の残りの残件（準備の停止の known_stop の根拠・証跡の量・到達の偏り・勝敗の数え方）は、そのまま残る。
 - 次の小規模バッチの計画と、その C1・C2（54 局）の実行の結果は [verification-ai-batch-plan3.md](verification-ai-batch-plan3.md)（結果は 10 章、結果の確認と判定の規則 6 は 11 章）。
 - 主体別の観測・更新・公開ログの記録（計画の形式 4・TOOL_VERSION 5。`--observation` で有効）は [verification-ai-observation.md](verification-ai-observation.md)。形式 3 以前の計画は、この版で再開しない。
+- 明示的なデッキリスト（`--decklist0`・`--decklist1`）・方式 `boundary`・観測の記録の失敗と欠落のときの完了の扱い（計画・完了の形式 5・TOOL_VERSION 6。`plan` は `--observation` か `--no-observation` の明示が必須）は [verification-ai-decklist.md](verification-ai-decklist.md)。形式 4 以前の計画は、この版で再開しない。
