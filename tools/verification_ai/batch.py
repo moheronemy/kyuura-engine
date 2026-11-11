@@ -6,7 +6,9 @@
 4. 完了局を照合して再開する（計画・実装識別・局の設定・必須ファイル・ハッシュ。正常な完了局は再実行しない。未完了の attempt は残し、別の attempt として最初から）
 5. 保存済みの局から集計する（``aggregate``。対戦をやり直さない）
 
-    python -m tools.verification_ai.batch plan --out <証跡> --batch <名前> --engine-commit <sha> --tool-commit <sha> --seeds 1001 1002 ... --modes uniform-stage rules-v2 mixed
+    python -m tools.verification_ai.batch plan --out <証跡> --batch <名前> --engine-commit <sha> --tool-commit <sha> --seeds 1001 1002 ... --modes uniform-stage rules-v2 mixed boundary \\
+        --observation [--deck0 <固定デッキ> | --decklist0 <JSON>] [--deck1 <固定デッキ> | --decklist1 <JSON>]
+    python -m tools.verification_ai.batch decklist --file <JSON>   （明示リストの形・確認値・deck_problems を確かめるだけ）
     python -m tools.verification_ai.batch run --out <証跡> --batch <名前> [--stop-after-games N] [--acknowledge-stop <game_id> ...]
     python -m tools.verification_ai.batch aggregate --out <証跡> --batch <名前>
     python -m tools.verification_ai.batch unlock --out <証跡> --batch <名前> --session <ロックのセッション ID>
@@ -32,10 +34,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
-PLAN_FORMAT = "kyuura-vai-batch-plan/4"  # 4: 主体別の観測の記録の設定 observation（docs/verification-ai-observation.md）。3 は C1・C2（undetermined の分類に accepted_content_unrecorded）・2 は 99 局 vai-batch-b2・1 は 30 局の初回 vai-batch-b1
-COMPLETE_FORMAT = "kyuura-vai-batch-complete/4"  # 4: 要約に主体別の観測の記録の状態（observation。有効な計画だけ）。3 は C1・C2（受理の中身の種類ごとの件数）・2 は vai-batch-b2
+PLAN_FORMAT = "kyuura-vai-batch-plan/5"  # 5: 局のデッキの記録（固定デッキ・明示リスト。展開の順・確認値・deck_problems の結果）・方式 boundary・方策とプロファイルの組の照合（docs/verification-ai-decklist.md）。4: 主体別の観測の記録の設定 observation（docs/verification-ai-observation.md）。3 は C1・C2（undetermined の分類に accepted_content_unrecorded）・2 は 99 局 vai-batch-b2・1 は 30 局の初回 vai-batch-b1
+COMPLETE_FORMAT = "kyuura-vai-batch-complete/5"  # 5: 証跡の判定 evidence（complete_without_stop・complete_with_stop）。照合で停止の理由を要約から計算し直す。4: 要約に主体別の観測の記録の状態（observation。有効な計画だけ）。3 は C1・C2（受理の中身の種類ごとの件数）・2 は vai-batch-b2
 TOOL_NAME = "tools.verification_ai.batch"
-TOOL_VERSION = 5  # 5: 主体別の観測・更新・公開ログの記録（observe。計画で有効にしたときだけ）。4 は judge の規則 6（docs/verification-ai-batch-plan3.md 11 章）。3 は C1・C2（9385cc3）
+TOOL_VERSION = 6  # 6: 明示的なデッキリスト・方式 boundary・観測の記録の要約の欠けで止める（docs/verification-ai-decklist.md）。5: 主体別の観測・更新・公開ログの記録（observe。計画で有効にしたときだけ）。4 は judge の規則 6（docs/verification-ai-batch-plan3.md 11 章）。3 は C1・C2（9385cc3）
 
 # 方式（計画を作るときだけ使う。計画には Config の全項目を展開して書くので、ここを後で変えても既存の計画の局は変わらない）
 MODES: dict[str, dict[str, Any]] = {
@@ -44,7 +46,25 @@ MODES: dict[str, dict[str, Any]] = {
     "rules-v1": {"policy": "rules", "rules_version": 1},
     "rules-v2": {"policy": "rules", "rules_version": 2, "repeat_threshold": 2},
     "mixed": {"policy": "mixed", "rules_version": 2, "epsilon": 0.25, "repeat_threshold": 2},
+    # V3-2 の boundary（方策 BoundaryPolicy とプロファイル boundary の組。docs/verification-ai-v3-2.md 4 章）。処理可能性の区分を均等に選び、その中で候補を均等に選ぶ
+    "boundary": {"policy": "boundary", "profile": "boundary"},
 }
+STAGE_DISTRIBUTION = "uniform-candidate+uniform-stage"  # policies.STAGE と同じ値（テストで一致を確かめる）
+TUPLE_DISTRIBUTION = "uniform-candidate+uniform-tuple"  # policies.TUPLE と同じ値
+# 方策・プロファイル・分布の組（既存の実装で定義した組だけ）。ほかの組（rules・mixed・uniform の boundary プロファイル、boundary の方策の deep など）は計画を作るときに拒否し、
+# 別の方式へ読み替えない
+SUPPORTED_SETTINGS = (("uniform", "deep", STAGE_DISTRIBUTION), ("uniform", "deep", TUPLE_DISTRIBUTION), ("rules", "deep", STAGE_DISTRIBUTION),
+                      ("mixed", "deep", STAGE_DISTRIBUTION), ("boundary", "boundary", STAGE_DISTRIBUTION))
+DEFAULT_DECKS = {"0": "hitmonchan-dewgong", "1": "venusaur-parasect"}
+PRESET_EXPANSION = "preset-entries-in-order/1"  # 固定デッキ: PresetDeck.cards()（登録の項目の並びのまま。decklist.EXPANSION と同じ規則）
+
+
+def setting_problems(config: dict[str, Any]) -> list[str]:
+    """計画の局の設定の、方策・プロファイル・分布の組の問題（定義していない組は拒否する）。"""
+    combo = (config.get("policy"), config.get("profile"), config.get("distribution"))
+    if combo not in SUPPORTED_SETTINGS:
+        return [f"方策・プロファイル・分布の組 {list(combo)} は定義していない（定義した組 {[list(c) for c in SUPPORTED_SETTINGS]}）"]
+    return []
 
 # 局の終わり方（runner の分類）と停止方針。KeyboardInterrupt・SystemExit・MemoryError は分類に入らない（対戦の結果に変えない）
 CONTINUE_TERMINATIONS = ("game_over", "halted_known", "input_unavailable", "no_progress",
@@ -232,11 +252,51 @@ class EngineAdapter:
         identity = C.resolve_for_new_game(conventions)
         return f"{identity.set_id}@{identity.version}", identity.record()
 
-    def deck_check(self, name: str) -> dict[str, Any]:
+    def legality(self, cards: list[str]) -> dict[str, Any]:
+        """デッキの合法性（エンジンの deck_problems だけ。この道具は枚数・カードの登録・たねの有無を判定しない）。"""
+        from kyuura_engine import deck_problems
+        from kyuura_engine.rules import RULES_2000_02_14
+
+        if getattr(self, "_engine", None) is None:
+            engine = self.identity()["engine"]
+            self._engine = {"version": engine["version"], "behavior_digest": engine["implementation"]["behavior_digest"]}
+        problems = list(deck_problems(list(cards)))
+        return {"checked_by": "kyuura_engine.deck.deck_problems", "rules": RULES_2000_02_14.id, "engine": dict(self._engine), "ok": not problems,
+                "problems": problems}
+
+    def deck_record(self, spec: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+        """デッキの指定（固定デッキ ``{"kind": "preset", "preset": 名前}`` か、明示リスト ``{"kind": "decklist", "decklist": 内容, "input": 入力の記録}``）の記録と、
+        実行用の並び。記録は内容・展開の順・確認値（内容 content_sha256・展開した並び sha256）・合法性。"""
         from kyuura_engine import preset_deck
 
-        cards = list(preset_deck(name).cards())
-        return {"preset": name, "cards": len(cards), "sha256": sha256_bytes(canonical(cards).encode())}
+        from . import decklist as DL
+
+        if spec.get("kind") == "preset":
+            deck = preset_deck(spec["preset"])
+            cards = list(deck.cards())
+            record = {"kind": "preset", "preset": spec["preset"], "expansion": PRESET_EXPANSION, "cards": len(cards),
+                      "sha256": sha256_bytes(canonical(cards).encode()), "content_method": DL.CONTENT_METHOD, "content_sha256": DL.content_sha256(deck.entries)}
+        elif spec.get("kind") == "decklist":
+            decklist = DL.validate(spec["decklist"])
+            cards = DL.expand(decklist["cards"])
+            record = DL.describe(decklist)
+            if spec.get("input") is not None:
+                record["input"] = spec["input"]
+        else:
+            raise BatchRefused([f"知らないデッキの指定 {spec.get('kind')!r}"])
+        record["legality"] = self.legality(cards)
+        return record, cards
+
+    @staticmethod
+    def deck_spec(record: dict[str, Any]) -> dict[str, Any]:
+        """計画のデッキの記録から、もとの指定を作り直す（照合用。外部ファイルは読まない）。"""
+        if record.get("kind") == "preset":
+            return {"kind": "preset", "preset": record.get("preset")}
+        if record.get("kind") == "decklist":
+            return {"kind": "decklist", "decklist": {"format": record.get("format"), "label": record.get("label"), "source": record.get("source"),
+                                                     "cards": record.get("entries"), "content_sha256": record.get("content_sha256")},
+                    "input": record.get("input")}
+        return {"kind": record.get("kind")}
 
     def policies_of(self, config) -> dict[str, Any]:
         from .runner import HOST, make_policies
@@ -253,17 +313,30 @@ class EngineAdapter:
         return out
 
     def entry(self, *, game_id: str, mode: str, seed: int, deck0: str, deck1: str, conventions: str | None, group: str,
-              game_limits: dict[str, Any] | None = None) -> dict[str, Any]:
+              game_limits: dict[str, Any] | None = None, decklists: dict[str, Any] | None = None) -> dict[str, Any]:
+        """計画の 1 局。``decklists`` は側（"0"・"1"）ごとの明示リスト（``decklist.load_file`` の値）。その側の ``deck0``・``deck1`` は表示用の名前
+        （``decklist:<content_sha256 の先頭 12 桁>``）。明示リストが 1 つでもあれば、両側の実行用の並びを ``config.decklists`` に書く（固定デッキの側は PresetDeck.cards() の並び）。"""
         from .runner import Config, Limits
 
         key, conv_record = self.conventions_key(conventions)
         options = MODES[mode]
+        specs = {}
+        for side, name in (("0", deck0), ("1", deck1)):
+            specs[side] = {"kind": "decklist", **decklists[side]} if decklists and side in decklists else {"kind": "preset", "preset": name}
+        records, cards = {}, {}
+        for side, spec in specs.items():
+            records[side], cards[side] = self.deck_record(spec)
+        illegal = [f"{game_id}: デッキ {side} が deck_problems で不合格（対戦を始めない）: {p}" for side in ("0", "1") for p in records[side]["legality"]["problems"]]
+        if illegal:
+            raise BatchRefused(illegal)
+        explicit = any(spec["kind"] == "decklist" for spec in specs.values())
         config = Config(deck0=deck0, deck1=deck1, conventions=key, game_seed=seed, policy_seed=seed, host_seed=seed, limits=Limits(**(game_limits or {})),
-                        run_id=game_id, **options)
-        expanded = asdict(config)
-        expanded["decklists"] = None
-        return {"game_id": game_id, "mode": mode, "comparison_group": group, "config": expanded,
-                "decks": {"0": self.deck_check(deck0), "1": self.deck_check(deck1)},
+                        run_id=game_id, decklists=(tuple(cards["0"]), tuple(cards["1"])) if explicit else None, **options)
+        expanded = json.loads(canonical(asdict(config)))
+        problems = setting_problems(expanded)
+        if problems:
+            raise BatchRefused([f"{game_id}: {p}" for p in problems])
+        return {"game_id": game_id, "mode": mode, "comparison_group": group, "config": expanded, "decks": records,
                 "conventions": {"key": key, "digest": conv_record["digest"]}, "policies": self.policies_of(config)}
 
     def config_of(self, entry: dict[str, Any]):
@@ -271,15 +344,39 @@ class EngineAdapter:
 
         c = dict(entry["config"])
         c["limits"] = Limits(**c["limits"])
+        if c.get("decklists") is not None:
+            c["decklists"] = tuple(tuple(side) for side in c["decklists"])
         return Config(**c)
 
     def check_entry(self, entry: dict[str, Any]) -> list[str]:
         """計画の局の設定が、今のデッキ・規約集合・方策の値と同じか（暗黙に変わっていないか）。"""
-        problems = []
+        from . import decklist as DL
+
+        gid = entry["game_id"]
+        problems = [f"{gid}: {p}" for p in setting_problems(entry["config"])]
         config = self.config_of(entry)
+        decks = entry.get("decks") or {}
+        explicit = any((decks.get(side) or {}).get("kind") == "decklist" for side in ("0", "1"))
+        if (config.decklists is not None) != explicit:
+            problems.append(f"{gid}: config.decklists（実行用の並び）とデッキの記録の種類が合わない")
         for side, name in (("0", config.deck0), ("1", config.deck1)):
-            if self.deck_check(name) != entry["decks"][side]:
-                problems.append(f"{entry['game_id']}: デッキ {name} の内容の確認値が計画と違う")
+            recorded = decks.get(side) or {}
+            try:
+                current, cards = self.deck_record(self.deck_spec(recorded))
+            except (DL.DecklistError, BatchRefused, KeyError, TypeError) as error:
+                problems.append(f"{gid}: デッキ {side} の記録を照らせない（{type(error).__name__}: {error}）")
+                continue
+            if current != recorded:
+                diff = sorted(k for k in set(current) | set(recorded) if current.get(k) != recorded.get(k))
+                problems.append(f"{gid}: デッキ {side}（{name}）の記録が計画と違う {diff}（内容・展開・確認値・合法性）")
+            if not current["legality"]["ok"]:
+                problems.append(f"{gid}: デッキ {side} が deck_problems で不合格（対戦を始めない）")
+            if config.decklists is not None and list(config.decklists[int(side)]) != cards:
+                problems.append(f"{gid}: デッキ {side} の実行用の並び（config.decklists）が記録の展開と違う")
+            if recorded.get("kind") == "decklist" and name != "decklist:" + str(recorded.get("content_sha256"))[:12]:
+                problems.append(f"{gid}: デッキ {side} の表示用の名前 {name} が明示リストの確認値と合わない")
+            if recorded.get("kind") == "preset" and name != recorded.get("preset"):
+                problems.append(f"{gid}: デッキ {side} の名前 {name} が固定デッキの記録と合わない")
         key, record = self.conventions_key(config.conventions)
         if {"key": key, "digest": record["digest"]} != entry["conventions"]:
             problems.append(f"{entry['game_id']}: 規約集合の識別が計画と違う")
@@ -295,6 +392,9 @@ class EngineAdapter:
         from .run_v1 import check_record, game_header
         from .runner import run_game
 
+        problems = self.check_entry(entry)  # 実行の前の照合（デッキの内容・並び・deck_problems・方式の組・規約集合・方策）。合わなければ対戦を始めない
+        if problems:
+            raise BatchRefused(problems)
         config = self.config_of(entry)
         recorder = None
         if observation_enabled(plan):
@@ -309,7 +409,9 @@ class EngineAdapter:
         sequences = {"action": R.sequence_digest(R.action_sequence(result["trace"]), R.ACTION_FORMAT),
                      "contract": R.sequence_digest(R.contract_sequence(result["trace"]), R.CONTRACT_FORMAT)}
         header = game_header(config, R.identity(plan["commits"]["engine"]), ["python", "-m", TOOL_NAME, "run"], result, started, finished)
-        header["batch"] = {"game_id": entry["game_id"], "mode": entry["mode"], "comparison_group": entry["comparison_group"]}
+        header["batch"] = {"game_id": entry["game_id"], "mode": entry["mode"], "comparison_group": entry["comparison_group"],
+                           "decks": {side: {k: d.get(k) for k in ("kind", "preset", "label", "expansion", "content_sha256", "sha256")}
+                                     for side, d in entry["decks"].items()}}
         files = [("header.json", json_bytes(header)), ("trace.jsonl", jsonl_bytes(result["trace"]))]
         for actor, rows in result["actor_logs"].items():
             files.append((f"actors/{actor}.jsonl", jsonl_bytes(rows)))
@@ -418,7 +520,7 @@ def judge_summary(judged: dict[str, Any]) -> dict[str, Any]:
             "undetermined": judged["undetermined"], "known_stop": len(judged["known_stop"])}
 
 
-def stop_reasons(summary: dict[str, Any], policy: dict[str, Any]) -> tuple[list[str], list[str]]:
+def stop_reasons(summary: dict[str, Any], policy: dict[str, Any], observation_required: bool = False) -> tuple[list[str], list[str]]:
     """完了した局の要約から、停止方針で止める理由と、続けるが数えるもの（note）を返す。
 
     suspect は送信・受理の中身・終わり方の合計。undetermined は分類ごとに ``on_undetermined`` に従う（知らない分類は止める）。known_stop は ``on_known_stop``。"""
@@ -449,7 +551,9 @@ def stop_reasons(summary: dict[str, Any], policy: dict[str, Any]) -> tuple[list[
         (stop if policy["on_verification_problem"] == "stop" else note).append(
             f"verification:replay={replay.get('status')}/expected={replay.get('expected')},correspondence={summary.get('correspondence_problems')}")
     obs = summary.get("observation")
-    if obs is not None and obs.get("status") != "complete":
+    if obs is None and observation_required:  # 観測の記録を有効にした計画で、局の要約に記録の状態がない（記録しなかった・要約の欠け）
+        (stop if policy.get("on_observation_problem", "stop") == "stop" else note).append("observation:missing")
+    elif obs is not None and obs.get("status") != "complete":
         (stop if policy.get("on_observation_problem", "stop") == "stop" else note).append(
             f"observation:{obs.get('status')}:" + ",".join(sorted(obs.get("problem_codes") or {})))
     return stop, note
@@ -475,14 +579,48 @@ def required_files(plan: dict[str, Any]) -> tuple[str, ...]:
     return REQUIRED_FILES + tuple(FILES)
 
 
-def make_plan(out: Path, batch_id: str, *, engine_commit: str, tool_commit: str, seeds: list[int], modes: list[str], deck0: str, deck1: str,
-              conventions: str | None = None, limits: BatchLimits = BatchLimits(), stop_policy: StopPolicy = StopPolicy(),
-              adapter=None, note: str = "", game_limits: dict[str, Any] | None = None, observation: bool = False) -> dict[str, Any]:
-    """計画を作って保存する（既にあれば作らない）。並び: seed ごとに方式を並べる（比較の組 = デッキ・規約集合・seed。game_id は局ごとに別）。"""
+def resolve_decks(deck0: str | None, deck1: str | None, decklists: dict[str, Any] | None) -> tuple[dict[str, str], dict[str, Any]]:
+    """側ごとに、固定デッキの名前か明示リストのどちらか 1 つ（両方の指定は曖昧なので拒否）。どちらもなければ既定の固定デッキ。"""
+    from . import decklist as DL
+
+    decklists = dict(decklists or {})
+    problems = [f"知らない側 {side!r}（\"0\"・\"1\" だけ）" for side in sorted(decklists) if side not in ("0", "1")]
+    names = {}
+    for side, preset in (("0", deck0), ("1", deck1)):
+        if side not in decklists:
+            names[side] = preset or DEFAULT_DECKS[side]
+            continue
+        item = decklists[side]
+        if preset is not None:
+            problems.append(f"デッキ {side}: 固定デッキ {preset!r} と明示リストを同時に指定した（どちらか 1 つ）")
+        if type(item) is not dict or set(item) - {"decklist", "input"} or "decklist" not in item:
+            problems.append(f"デッキ {side}: 明示リストの指定は decklist（と input）だけ")
+            continue
+        try:
+            item = {"decklist": DL.validate(item["decklist"]), "input": item.get("input")}
+        except DL.DecklistError as error:
+            problems += [f"デッキ {side}: {p}" for p in error.problems]
+            continue
+        decklists[side] = item
+        names[side] = "decklist:" + item["decklist"]["content_sha256"][:12]
+    if problems:
+        raise BatchRefused(problems)
+    return names, decklists
+
+
+def make_plan(out: Path, batch_id: str, *, engine_commit: str, tool_commit: str, seeds: list[int], modes: list[str], deck0: str | None = None,
+              deck1: str | None = None, conventions: str | None = None, limits: BatchLimits = BatchLimits(), stop_policy: StopPolicy = StopPolicy(),
+              adapter=None, note: str = "", game_limits: dict[str, Any] | None = None, observation: bool = False,
+              decklists: dict[str, Any] | None = None) -> dict[str, Any]:
+    """計画を作って保存する（既にあれば作らない）。並び: seed ごとに方式を並べる（比較の組 = デッキ・規約集合・seed。game_id は局ごとに別）。
+
+    ``decklists`` は側（"0"・"1"）ごとの明示リスト（``decklist.load_file`` の値）。内容は計画に取り込み、再開でファイルを読み直さない。"""
     adapter = adapter or EngineAdapter(engine_commit)
     bdir = batch_dir(out, batch_id)
     if bdir.exists():
         raise BatchRefused([f"{bdir} はすでにある（既存の証跡を上書きしない）"])
+    names, decklists = resolve_decks(deck0, deck1, decklists)
+    deck0, deck1 = names["0"], names["1"]
     unknown = [m for m in modes if m not in MODES]
     if unknown:
         raise BatchRefused([f"知らない方式 {unknown}"])
@@ -495,7 +633,7 @@ def make_plan(out: Path, batch_id: str, *, engine_commit: str, tool_commit: str,
             conv_key = adapter.conventions_key(conventions)[0]
             group = f"{deck0}-vs-{deck1}/{conv_key}/s{seed}"
             games.append(adapter.entry(game_id=f"g{n:03d}-{mode}-s{seed}", mode=mode, seed=seed, deck0=deck0, deck1=deck1, conventions=conventions, group=group,
-                                       game_limits=game_limits))
+                                       game_limits=game_limits, **({"decklists": decklists} if decklists else {})))
     if len(games) > limits.max_games:
         raise BatchRefused([f"計画の局数 {len(games)} が上限 {limits.max_games} を超える"])
     plan = {"format": PLAN_FORMAT, "batch_id": batch_id, "written": now(), "identity": adapter.identity(),
@@ -504,6 +642,14 @@ def make_plan(out: Path, batch_id: str, *, engine_commit: str, tool_commit: str,
             "order": "seed ごとに方式を並べる", "games": games,
             "observation": {"enabled": bool(observation), "format": "kyuura-vai-observation/1" if observation else None,
                             "note": "主体別の観測・更新・公開ログの記録（observe/。docs/verification-ai-observation.md）。有効なら局の必須ファイルに入る"},
+            "decks": {"names": names, "explicit_sides": sorted(decklists),
+                      "rules": ["明示リストは計画を作るときに 1 回だけ読み、内容を各局の decks に取り込む（再開でファイルを読み直さない）",
+                                "展開: 項目の並びのまま、カード ID を枚数ぶん続けて並べる（固定デッキの PresetDeck.cards() と同じ規則）。ID 順へ並べかえない",
+                                "content_sha256 は並びに依らない内容の確認値、sha256 は展開した並び（初期配列）の確認値。同じ内容でも並びが違えば sha256 と対戦は別",
+                                "合法性はエンジンの deck_problems だけ。計画を作るとき・再開の照合・各局の開始の前に当て、不合格なら対戦を始めない",
+                                "出典（source）は来歴の記録で、信頼性・合法性を保証しない"]},
+            "settings": {"supported": [list(c) for c in SUPPORTED_SETTINGS],
+                         "note": "方策・プロファイル・分布の組。定義した組だけを計画に書き、別の方式へ読み替えない"},
             "rules": ["実行の前に書いた計画。結果を見て seed・デッキ・方式を差し替えない・局を増やさない",
                       "単局の上限は各局の config.limits（runner.Limits の既定）", "上限に達したら未着手を残して止める（自動で延長しない）"],
             "note": note}
@@ -537,6 +683,8 @@ def load_plan(bdir: Path, adapter) -> tuple[dict[str, Any], str]:
         problems.append(f"計画の形式 {plan.get('format')} を知らない（旧形式の計画を新しい版で再開できるとは保証しない）")
     elif not isinstance(plan.get("observation"), dict) or type(plan["observation"].get("enabled")) is not bool:
         problems.append("計画の observation（主体別の観測の記録の設定）がない・形が違う")
+    elif not isinstance(plan.get("decks"), dict):
+        problems.append("計画の decks（デッキの指定の要約）がない")
     if plan.get("batch_id") != bdir.name:
         problems.append("計画の batch_id がディレクトリ名と違う")
     current = adapter.identity()
@@ -688,7 +836,27 @@ def verify_complete(adir: Path, *, plan: dict[str, Any], plan_sha: str, entry: d
         path = adir / name
         if path.is_file() and sha256_file(path) != digest:
             problems.append(f"{adir}: {name} の sha256 が表と違う（破損か書きかえ）")
+    summary_ = marker.get("summary") if isinstance(marker.get("summary"), dict) else {}
+    stop, noted = stop_reasons(summary_, plan["stop_policy"], observation_enabled(plan))
+    if marker.get("stop") != stop or marker.get("note") != noted:
+        problems.append(f"{adir}: {MARKER} の stop・note が要約から計算した停止の理由と違う（計算 {stop}）")
+    if marker.get("evidence") != evidence_verdict(stop):
+        problems.append(f"{adir}: {MARKER} の evidence が停止の理由と合わない")
+    if observation_enabled(plan):
+        from .observe import SUMMARY
+
+        try:
+            saved = json.loads((adir / SUMMARY).read_text(encoding="utf-8")).get("status")
+        except (OSError, ValueError, AttributeError):
+            saved = None
+        if saved != (summary_.get("observation") or {}).get("status"):
+            problems.append(f"{adir}: {SUMMARY} の状態 {saved} が {MARKER} の要約の観測の状態と違う")
     return marker, problems
+
+
+def evidence_verdict(stop: list[str]) -> str:
+    """完了マーカーの証跡の判定。停止の理由があれば complete_with_stop（記録は保存したが、検証の証跡として成功とは扱わない）。"""
+    return "complete_with_stop" if stop else "complete_without_stop"
 
 
 def scan(bdir: Path, plan: dict[str, Any], plan_sha: str) -> dict[str, Any]:
@@ -879,8 +1047,8 @@ def _run_attempt(bdir, entry, plan, plan_sha, adapter, ledger, session, elapsed,
             raise OSError(f"必須のファイルがない: {missing}")
         table_bytes = json_bytes(table)
         atomic_write(adir / TABLE, table_bytes)
-        stop, noted = stop_reasons(output.summary, policy)
-        marker = {"format": COMPLETE_FORMAT, "batch_id": plan["batch_id"], "game_id": gid, "attempt": n, "session": session, "written": now(),
+        stop, noted = stop_reasons(output.summary, policy, observation_enabled(plan))
+        marker = {"evidence": evidence_verdict(stop), "format": COMPLETE_FORMAT, "batch_id": plan["batch_id"], "game_id": gid, "attempt": n, "session": session, "written": now(),
                   "plan_sha256": plan_sha, "game_sha256": game_sha(entry), "identity": plan["identity"], "files_table_sha256": sha256_bytes(table_bytes),
                   "required": list(required_files(plan)), "bytes": size, "memory": used_memory, "attempt_seconds": round(elapsed() - start, 3),
                   "summary": output.summary, "stop": stop, "note": noted}
@@ -1086,7 +1254,8 @@ def _aggregate(bdir: Path, plan: dict[str, Any], plan_sha: str, state: dict[str,
                                                                          "behavior_digest": plan["identity"]["engine"]["implementation"]["behavior_digest"]},
         "commits": plan["commits"], "limits": plan["limits"], "stop_policy": plan["stop_policy"],
         "games": {"planned": len(games), "complete": len(complete), "started_incomplete": len(started) - len(complete),
-                  "not_started": len(games) - len(started)},
+                  "not_started": len(games) - len(started), "complete_without_stop": sum(1 for _, done in complete if not done["stop"]),
+                  "complete_with_stop": sum(1 for _, done in complete if done["stop"])},
         "attempts": {"total": len(attempts), "complete": sum(a["status"] == "complete" for a in attempts),
                      "incomplete": sum(a["status"] == "incomplete" for a in attempts), "invalid": sum(a["status"] == "invalid" for a in attempts)},
         "sessions": {"ended": [{k: e.get(k) for k in ("status", "stop", "elapsed")} for e in sessions], "accounted_seconds": acc,
@@ -1146,8 +1315,10 @@ def main(argv: list[str] | None = None) -> int:
     pl.add_argument("--tool-commit", required=True)
     pl.add_argument("--seeds", type=int, nargs="+", required=True)
     pl.add_argument("--modes", nargs="+", choices=sorted(MODES), required=True)
-    pl.add_argument("--deck0", default="hitmonchan-dewgong")
-    pl.add_argument("--deck1", default="venusaur-parasect")
+    pl.add_argument("--deck0", default=None, help=f"固定デッキ（既定 {DEFAULT_DECKS['0']}）。--decklist0 と同時に指定しない")
+    pl.add_argument("--deck1", default=None, help=f"固定デッキ（既定 {DEFAULT_DECKS['1']}）。--decklist1 と同時に指定しない")
+    pl.add_argument("--decklist0", default=None, help="明示リストの JSON（kyuura-vai-decklist/1）。計画に取り込む")
+    pl.add_argument("--decklist1", default=None, help="明示リストの JSON（kyuura-vai-decklist/1）。計画に取り込む")
     pl.add_argument("--conventions", default=None)
     pl.add_argument("--max-games", type=int, default=BatchLimits.max_games)
     pl.add_argument("--budget-seconds", type=float, default=BatchLimits.budget_seconds)
@@ -1155,7 +1326,11 @@ def main(argv: list[str] | None = None) -> int:
     pl.add_argument("--undetermined-evidence-missing", choices=("continue", "stop"), default="continue",
                     help="根拠不足の停止による undetermined の扱い（ほかの分類は止める）")
     pl.add_argument("--note", default="")
-    pl.add_argument("--observation", action="store_true", help="主体別の観測・更新・公開ログの記録（observe/）を局の必須ファイルにする")
+    obs = pl.add_mutually_exclusive_group(required=True)  # 既定を置かない（記録の有無を計画ごとに明示する）
+    obs.add_argument("--observation", dest="observation", action="store_true", help="主体別の観測・更新・公開ログの記録（observe/）を局の必須ファイルにする")
+    obs.add_argument("--no-observation", dest="observation", action="store_false", help="観測の記録をしない")
+    dl = sub.add_parser("decklist", help="明示リストの形・確認値・deck_problems を確かめる（計画は作らない・対戦しない）")
+    dl.add_argument("--file", required=True)
     rn = sub.add_parser("run")
     rn.add_argument("--out", required=True)
     rn.add_argument("--batch", required=True)
@@ -1170,12 +1345,33 @@ def main(argv: list[str] | None = None) -> int:
     ul.add_argument("--batch", required=True)
     ul.add_argument("--session", required=True)
     args = parser.parse_args(argv)
+    if args.cmd == "decklist":
+        from . import decklist as DL
+
+        try:
+            loaded = DL.load_file(Path(args.file))
+        except DL.DecklistError as error:
+            print(json.dumps({"refused": error.problems}, ensure_ascii=False, indent=1))
+            return 2
+        record, cards = EngineAdapter().deck_record({"kind": "decklist", **loaded})
+        print(json.dumps(record, ensure_ascii=False, indent=1))
+        return 0 if record["legality"]["ok"] else 2
     out = Path(args.out)
     try:
         if args.cmd == "plan":
+            from . import decklist as DL
+
+            loaded = {}
+            for side, path in (("0", args.decklist0), ("1", args.decklist1)):
+                if path is not None:
+                    try:
+                        loaded[side] = DL.load_file(Path(path))
+                    except DL.DecklistError as error:
+                        raise BatchRefused([f"デッキ {side}: {p}" for p in error.problems]) from None
             limits = BatchLimits(max_games=args.max_games, budget_seconds=args.budget_seconds, evidence_max_bytes=args.evidence_max_mb * MB)
             plan = make_plan(out, args.batch, engine_commit=args.engine_commit, tool_commit=args.tool_commit, seeds=args.seeds, modes=args.modes,
                              deck0=args.deck0, deck1=args.deck1, conventions=args.conventions, limits=limits, note=args.note, observation=args.observation,
+                             decklists=loaded or None,
                              stop_policy=StopPolicy(on_undetermined={**StopPolicy().on_undetermined,
                                                                      EVIDENCE_MISSING_STOP: args.undetermined_evidence_missing}))
             print(json.dumps({"batch": args.batch, "games": len(plan["games"]),

@@ -191,7 +191,8 @@ class ResumeTest(Base):
         self.assertEqual((r3.status, r3.ran), ("completed", []))
         self.assertEqual(len(a.calls), 3)
         agg = json.loads((self.bdir() / "aggregate.json").read_text(encoding="utf-8"))
-        self.assertEqual(agg["games"], {"planned": 3, "complete": 3, "started_incomplete": 0, "not_started": 0})
+        self.assertEqual(agg["games"], {"planned": 3, "complete": 3, "started_incomplete": 0, "not_started": 0, "complete_without_stop": 3,
+                                       "complete_with_stop": 0})
         self.assertEqual(agg["attempts"]["total"], 3)
 
     def test_corrupted_or_foreign_results_are_not_adopted(self):

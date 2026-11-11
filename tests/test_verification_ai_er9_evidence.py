@@ -88,7 +88,7 @@ class RecordedConditionTest(unittest.TestCase):
         self.assertEqual(J.judge_normal(candidate(), [], rejected(), stages=stages()),
                          (J.UNDETERMINED, [f"stop_condition_not_evidenced:{ER9}"]))
         self.assertEqual(J.JUDGE_RULES_VERSION, 6)
-        self.assertEqual(B.TOOL_VERSION, 5)  # 5: 主体別の観測の記録（observe）を足した版。判定の規則は 6 のまま
+        self.assertEqual(B.TOOL_VERSION, 6)  # 6: 明示的なデッキリスト・方式 boundary（5: 主体別の観測の記録）。判定の規則は 6 のまま
 
     def test_policy_and_input_generation_do_not_use_it(self):
         """方策・行動生成・runner は規則 6 の部品を使わない（判定は保存する trace にあとから当てるだけ。乱数・入力の作り方は変わらない）。"""
