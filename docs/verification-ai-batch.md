@@ -863,4 +863,4 @@ new_game から届いた証拠とは扱わない。
 - 停止方針の `accepted_content_unrecorded` は初期値 stop。続ける設定にするなら、計画を作る前に理由を書く。
 - P6・U-R3a の受理に届くには、うらのポケモンを作るカード（マチスの秘策など）を含むデッキが要る。デッキ・規約集合を広げるかは、別の計画で判断する。
 - 15.4 節の残りの残件（準備の停止の known_stop の根拠・証跡の量・到達の偏り・勝敗の数え方）は、そのまま残る。
-- 次の小規模バッチの計画と、その C1・C2（54 局）の実行の結果は [verification-ai-batch-plan3.md](verification-ai-batch-plan3.md)（結果は 10 章）。
+- 次の小規模バッチの計画と、その C1・C2（54 局）の実行の結果は [verification-ai-batch-plan3.md](verification-ai-batch-plan3.md)（結果は 10 章、結果の確認と判定の規則 6 は 11 章）。
