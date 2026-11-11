@@ -126,8 +126,12 @@ class _Stop(Exception):
 
 
 class Runner:
-    def __init__(self, config: Config, *, clock=time.monotonic, policy_factory=None, wrap_endpoint=None, negative=None, until=None):
+    def __init__(self, config: Config, *, clock=time.monotonic, policy_factory=None, wrap_endpoint=None, negative=None, until=None, recorder=None):
         self.config = config
+        if recorder is not None and negative is not None:
+            raise ValueError("主体別の観測の記録（recorder）は negative と組み合わせない（変異の送信は記録の行に対応付けない）")
+        # 主体別の観測・更新・公開ログの記録（observe.ObservationRecorder。None なら従来と同じ動作）。検証者の側だけで使い、方策・行動生成に渡さない
+        self.recorder = recorder
         self.negative = negative  # V3-1: 通常の進行の中の negative（None なら V0〜V2 と同じ動作）
         self.until = until  # V3-2: 受理のあとに呼び、真なら SCRIPT_COMPLETE で止める（None なら V0〜V3-1 と同じ動作）
         self.limits = config.limits
@@ -167,6 +171,7 @@ class Runner:
             raise
         except Exception as error:  # 入口は例外を投げない約束。ランナーの誤りも含めて、ほかの分類に変えずに記録する
             termination, detail = EXCEPTION, {"type": type(error).__name__, "message": str(error), "traceback": traceback.format_exc()}
+        self._rec("finish", termination, None if self.game is None else self.game.state)
         record = None if self.game is None else self.game.close()
         self.metrics.axis("termination", termination)
         if self._episode is not None and self._episode["result"] is None:
@@ -201,9 +206,23 @@ class Runner:
             raise _Stop(START_REJECTED, {"outcome": result.outcome, "diagnostic_id": None if result.diagnosis is None else result.diagnosis.diagnostic_id})
         self.hub = ClientHub(self.game, verifier=self._on_verifier)
         self.endpoints = {0: self.wrap_endpoint(0, self.hub.player(0)), 1: self.wrap_endpoint(1, self.hub.player(1)), HOST: self.wrap_endpoint(HOST, self.hub.host())}
+        self._rec("start", self.game.state)
 
     def _on_verifier(self, actor, result) -> None:
         self.last_result = result
+        self._rec("result", actor, result)
+
+    def _rec(self, event: str, *args) -> None:
+        """記録の呼び出し（recorder がなければ何もしない）。記録の例外は記録の失敗として残し、対戦の進行・判定には伝えない（MemoryError は run と同じく通す）。"""
+        recorder = self.recorder
+        if recorder is None or recorder.failure is not None:
+            return
+        try:
+            getattr(recorder, "on_" + event)(*args)
+        except MemoryError:
+            raise
+        except Exception as error:  # noqa: BLE001
+            recorder.fail(event, error)
 
     def _elapsed(self) -> float:
         return self.clock() - self._started
@@ -422,6 +441,7 @@ class Runner:
                 elif is_face_down_power(candidate) and stages:  # U-R3a（規則 5）: うらのカードの特殊能力の check も構造だけなので、契約から作った入力が通らないのは矛盾
                     self._anomaly("face_down_power_check_invalid_for_generated_input", entry, {"refusal": checked["response"].get("refusal"), "choices": choices})
                 self.counters["check_invalid"] += 1
+                self._rec("check_invalid", entry, self.game.state)
                 tried.add(signature)
                 rejections += 1
                 self._after_refusal_like(entry, actor)
@@ -441,6 +461,8 @@ class Runner:
             entry["submit"] = self._submit_entry(sent)
             log["submit"] = sent
             outcome = sent.get("outcome")
+            self._rec("submitted", entry, operation_id, sent, before_state, self.game.state,
+                      self.counters["accepted"] + 1 if outcome == D.ACCEPTED else None)
             self._cover("outcome", outcome)
             self.metrics.submitted(kind, outcome, (sent.get("result") or {}).get("status") if outcome == D.ACCEPTED else None)
             if self.negative is not None:
@@ -606,6 +628,7 @@ class Runner:
         """拒否・断り・check の invalid のあと: ほかの閲覧者に公開の更新が出ない。"""
         for audience in (0, 1, "spectator", "host"):
             got = self.hub.take_updates(audience)
+            self._rec("drained", audience, got)
             if got:
                 self._anomaly("update_after_rejection", entry, {"audience": audience, "count": len(got)})
 
@@ -614,6 +637,7 @@ class Runner:
             self._anomaly("accepted_without_refetch", entry, {})
         for audience in (0, 1, "spectator", "host"):
             got = self.hub.take_updates(audience)
+            self._rec("drained", audience, got)
             numbers = [u.get("number") for u in got]
             if numbers != [self.counters["accepted"]]:
                 self._anomaly("update_numbers", entry, {"audience": audience, "numbers": numbers, "expected": self.counters["accepted"]})

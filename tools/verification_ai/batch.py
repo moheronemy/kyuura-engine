@@ -32,10 +32,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
-PLAN_FORMAT = "kyuura-vai-batch-plan/3"  # 3: undetermined の分類に accepted_content_unrecorded（2 は 99 局 vai-batch-b2・1 は 30 局の初回 vai-batch-b1）
-COMPLETE_FORMAT = "kyuura-vai-batch-complete/3"  # 3: 要約の judge に受理の中身の種類ごと（U-R3a・P6）の件数（2 は vai-batch-b2）
+PLAN_FORMAT = "kyuura-vai-batch-plan/4"  # 4: 主体別の観測の記録の設定 observation（docs/verification-ai-observation.md）。3 は C1・C2（undetermined の分類に accepted_content_unrecorded）・2 は 99 局 vai-batch-b2・1 は 30 局の初回 vai-batch-b1
+COMPLETE_FORMAT = "kyuura-vai-batch-complete/4"  # 4: 要約に主体別の観測の記録の状態（observation。有効な計画だけ）。3 は C1・C2（受理の中身の種類ごとの件数）・2 は vai-batch-b2
 TOOL_NAME = "tools.verification_ai.batch"
-TOOL_VERSION = 4  # 4: judge の規則 6（記録した送信の値で確かめる停止の根拠。docs/verification-ai-batch-plan3.md 11 章）。3 は C1・C2（9385cc3）
+TOOL_VERSION = 5  # 5: 主体別の観測・更新・公開ログの記録（observe。計画で有効にしたときだけ）。4 は judge の規則 6（docs/verification-ai-batch-plan3.md 11 章）。3 は C1・C2（9385cc3）
 
 # 方式（計画を作るときだけ使う。計画には Config の全項目を展開して書くので、ここを後で変えても既存の計画の局は変わらない）
 MODES: dict[str, dict[str, Any]] = {
@@ -101,6 +101,7 @@ class StopPolicy:
                                                             NO_PROGRESS: "stop", ACCEPTED_CONTENT_UNRECORDED: "stop", UNCLASSIFIED: "stop"})
     on_anomaly: str = "stop"
     on_verification_problem: str = "stop"  # replay_run の期待との不一致・記録の対応の問題
+    on_observation_problem: str = "stop"  # 主体別の観測の記録が complete でない（欠け・矛盾・記録の失敗）。観測の記録を有効にした計画だけ
 
 
 @dataclass
@@ -295,8 +296,13 @@ class EngineAdapter:
         from .runner import run_game
 
         config = self.config_of(entry)
+        recorder = None
+        if observation_enabled(plan):
+            from .observe import ObservationRecorder
+
+            recorder = ObservationRecorder()  # 局ごとに作り、局のファイルを書いたら捨てる（全局の観測をためない）
         started = now()
-        result = run_game(config)
+        result = run_game(config, recorder=recorder)
         finished = now()
         verification = check_record(result)
         judged = judge_trace(result)
@@ -313,6 +319,8 @@ class EngineAdapter:
         files.append(("verification.json", json_bytes(verification)))
         files.append(("judge.json", json_bytes(judged)))
         files.append(("sequences.json", json_bytes(sequences)))
+        if recorder is not None:
+            files.extend(recorder.files())
         term = result["termination"]
         detail = term["detail"] if isinstance(term["detail"], dict) else {}
         summary = {"termination": term["class"],
@@ -322,6 +330,9 @@ class EngineAdapter:
                    "replay_run": {k: verification["replay_run"][k] for k in ("expected", "status", "matches_expectation")},
                    "correspondence_problems": len(verification["correspondence_problems"]),
                    "elapsed_seconds": result["elapsed_seconds"], "sequences": sequences}
+        if recorder is not None:
+            obs = recorder.summary()
+            summary["observation"] = {k: obs[k] for k in ("format", "status", "rows", "by_kind", "problem_codes", "problems_total", "failure")}
         return GameOutput(files=files, summary=summary)
 
 
@@ -437,6 +448,10 @@ def stop_reasons(summary: dict[str, Any], policy: dict[str, Any]) -> tuple[list[
     if replay.get("matches_expectation") is not True or summary.get("correspondence_problems"):
         (stop if policy["on_verification_problem"] == "stop" else note).append(
             f"verification:replay={replay.get('status')}/expected={replay.get('expected')},correspondence={summary.get('correspondence_problems')}")
+    obs = summary.get("observation")
+    if obs is not None and obs.get("status") != "complete":
+        (stop if policy.get("on_observation_problem", "stop") == "stop" else note).append(
+            f"observation:{obs.get('status')}:" + ",".join(sorted(obs.get("problem_codes") or {})))
     return stop, note
 
 
@@ -447,9 +462,22 @@ def batch_dir(out: Path, batch_id: str) -> Path:
     return out / "verifier" / "runs" / batch_id
 
 
+def observation_enabled(plan: dict[str, Any]) -> bool:
+    return bool((plan.get("observation") or {}).get("enabled"))
+
+
+def required_files(plan: dict[str, Any]) -> tuple[str, ...]:
+    """局の必須ファイル（観測の記録を有効にした計画では observe/ の 5 つも必須。欠けた局を完了にしない）。"""
+    if not observation_enabled(plan):
+        return REQUIRED_FILES
+    from .observe import FILES
+
+    return REQUIRED_FILES + tuple(FILES)
+
+
 def make_plan(out: Path, batch_id: str, *, engine_commit: str, tool_commit: str, seeds: list[int], modes: list[str], deck0: str, deck1: str,
               conventions: str | None = None, limits: BatchLimits = BatchLimits(), stop_policy: StopPolicy = StopPolicy(),
-              adapter=None, note: str = "", game_limits: dict[str, Any] | None = None) -> dict[str, Any]:
+              adapter=None, note: str = "", game_limits: dict[str, Any] | None = None, observation: bool = False) -> dict[str, Any]:
     """計画を作って保存する（既にあれば作らない）。並び: seed ごとに方式を並べる（比較の組 = デッキ・規約集合・seed。game_id は局ごとに別）。"""
     adapter = adapter or EngineAdapter(engine_commit)
     bdir = batch_dir(out, batch_id)
@@ -474,6 +502,8 @@ def make_plan(out: Path, batch_id: str, *, engine_commit: str, tool_commit: str,
             "commits": {"engine": engine_commit, "tool": tool_commit}, "limits": asdict(limits), "stop_policy": _policy_dict(stop_policy),
             "seed_use": "ゲーム・方策・ホストの seed を同じ値にする（runner の player_seed・host_seed・mix_seed で主体ごとに分ける）",
             "order": "seed ごとに方式を並べる", "games": games,
+            "observation": {"enabled": bool(observation), "format": "kyuura-vai-observation/1" if observation else None,
+                            "note": "主体別の観測・更新・公開ログの記録（observe/。docs/verification-ai-observation.md）。有効なら局の必須ファイルに入る"},
             "rules": ["実行の前に書いた計画。結果を見て seed・デッキ・方式を差し替えない・局を増やさない",
                       "単局の上限は各局の config.limits（runner.Limits の既定）", "上限に達したら未着手を残して止める（自動で延長しない）"],
             "note": note}
@@ -504,7 +534,9 @@ def load_plan(bdir: Path, adapter) -> tuple[dict[str, Any], str]:
         raise BatchRefused([f"plan.json の sha256 {digest} が plan.sha256 {recorded} と違う（計画が変わった）"])
     plan = json.loads(data)
     if plan.get("format") != PLAN_FORMAT:
-        problems.append(f"計画の形式 {plan.get('format')} を知らない")
+        problems.append(f"計画の形式 {plan.get('format')} を知らない（旧形式の計画を新しい版で再開できるとは保証しない）")
+    elif not isinstance(plan.get("observation"), dict) or type(plan["observation"].get("enabled")) is not bool:
+        problems.append("計画の observation（主体別の観測の記録の設定）がない・形が違う")
     if plan.get("batch_id") != bdir.name:
         problems.append("計画の batch_id がディレクトリ名と違う")
     current = adapter.identity()
@@ -642,7 +674,11 @@ def verify_complete(adir: Path, *, plan: dict[str, Any], plan_sha: str, entry: d
         return marker, problems + [f"{adir}: {TABLE} が読めない ({error})"]
     if marker.get("files_table_sha256") != sha256_bytes(table_bytes):
         problems.append(f"{adir}: {TABLE} の sha256 が {MARKER} と違う")
-    for name in marker.get("required", REQUIRED_FILES):
+    required = list(marker.get("required", REQUIRED_FILES))
+    missing_from_marker = [name for name in required_files(plan) if name not in required]
+    if missing_from_marker:
+        problems.append(f"{adir}: {MARKER} の required に計画の必須ファイルがない {missing_from_marker}")
+    for name in sorted(set(required) | set(required_files(plan))):
         if name not in table:
             problems.append(f"{adir}: 必須のファイル {name} が表にない")
     on_disk = {p.relative_to(adir).as_posix() for p in adir.rglob("*") if p.is_file()} - {TABLE, MARKER}
@@ -838,7 +874,7 @@ def _run_attempt(bdir, entry, plan, plan_sha, adapter, ledger, session, elapsed,
         for name, digest in table.items():  # 読み直して照合する（書き込みの誤りを完了にしない）
             if sha256_file(adir / name) != digest:
                 raise OSError(f"{name} を読み直した sha256 が書いた値と違う")
-        missing = [name for name in REQUIRED_FILES if name not in table]
+        missing = [name for name in required_files(plan) if name not in table]
         if missing:
             raise OSError(f"必須のファイルがない: {missing}")
         table_bytes = json_bytes(table)
@@ -846,7 +882,7 @@ def _run_attempt(bdir, entry, plan, plan_sha, adapter, ledger, session, elapsed,
         stop, noted = stop_reasons(output.summary, policy)
         marker = {"format": COMPLETE_FORMAT, "batch_id": plan["batch_id"], "game_id": gid, "attempt": n, "session": session, "written": now(),
                   "plan_sha256": plan_sha, "game_sha256": game_sha(entry), "identity": plan["identity"], "files_table_sha256": sha256_bytes(table_bytes),
-                  "required": list(REQUIRED_FILES), "bytes": size, "memory": used_memory, "attempt_seconds": round(elapsed() - start, 3),
+                  "required": list(required_files(plan)), "bytes": size, "memory": used_memory, "attempt_seconds": round(elapsed() - start, 3),
                   "summary": output.summary, "stop": stop, "note": noted}
         atomic_write(adir / MARKER, json_bytes(marker))  # 最後に書く
     except (KeyboardInterrupt, SystemExit, MemoryError) as error:
@@ -893,12 +929,16 @@ def evidence_breakdown(bdir: Path, state: dict[str, Any], public_summary: Path |
     complete = {(gid, info["complete"]["attempt"]) for gid, info in state["games"].items() if info["complete"]}
     out = {"management": 0, "game_complete": 0, "attempt_not_complete": 0, "derived": 0, "other": 0}
     files = {k: 0 for k in out}
+    within = {"bytes": 0, "files": 0}  # game_complete のうち主体別の観測の記録（observe/）。区分の合計には重ねて足さない
     for path in bdir.rglob("*"):
         if not path.is_file():
             continue
         parts = path.relative_to(bdir).parts
         if parts[0] == "games" and len(parts) >= 4:
             key = "game_complete" if (parts[1], parts[2]) in complete else "attempt_not_complete"
+            if key == "game_complete" and parts[3] == "observe":
+                within["bytes"] += path.stat().st_size
+                within["files"] += 1
         elif len(parts) == 1 and parts[0] in MANAGEMENT_FILES:
             key = "management"
         elif len(parts) == 1 and parts[0] in DERIVED_FILES:
@@ -910,8 +950,8 @@ def evidence_breakdown(bdir: Path, state: dict[str, Any], public_summary: Path |
     if public_summary is not None and public_summary.is_file():
         out["derived"] += public_summary.stat().st_size
         files["derived"] += 1
-    return {"bytes": out, "files": files,
-            "definition": {"management": "plan.json・plan.sha256・ledger.jsonl・LOCK", "game_complete": "照合に通った完了の attempt のディレクトリのすべてのファイル",
+    return {"bytes": out, "files": files, "game_complete_observation": within,
+            "definition": {"game_complete_observation": "game_complete のうち observe/（主体別の観測の記録）の大きさ。区分の合計に重ねて足さない","management": "plan.json・plan.sha256・ledger.jsonl・LOCK", "game_complete": "照合に通った完了の attempt のディレクトリのすべてのファイル",
                            "attempt_not_complete": "完了マーカーのない attempt（中断・失敗・証跡の上限）のディレクトリのファイル",
                            "derived": "aggregate.json と public の summary.json（集計の時点の大きさ）", "other": "上のどれでもないファイル"}}
 
@@ -947,6 +987,7 @@ def _aggregate(bdir: Path, plan: dict[str, Any], plan_sha: str, state: dict[str,
     replay, stops, notes, seconds, mems, sizes = {}, [], [], [], [], []
     content, undetermined_by, known_stop, term_vs_judge, raw_codes, halts = {}, {}, 0, {}, {}, {}
     content_by_check: dict[str, dict[str, int]] = {}
+    observation = {"enabled": observation_enabled(plan), "status": {}, "rows": 0, "by_kind": {}, "problem_codes": {}, "games_without": 0}
     for entry, done in complete:
         s = done["summary"]
         adir = bdir / "games" / entry["game_id"] / done["attempt"]
@@ -967,6 +1008,16 @@ def _aggregate(bdir: Path, plan: dict[str, Any], plan_sha: str, state: dict[str,
             _add(bucket["reasons"], (item["reasons"] or [""])[0])
             _add(bucket["sources"], item["source"])
         known_stop += s["judge"].get("known_stop", 0)
+        obs = s.get("observation")
+        if obs is not None:
+            _add(observation["status"], obs["status"])
+            observation["rows"] += obs["rows"]
+            for k, v in (obs.get("by_kind") or {}).items():
+                _add(observation["by_kind"], k, v)
+            for k, v in (obs.get("problem_codes") or {}).items():
+                _add(observation["problem_codes"], k, v)
+        else:
+            observation["games_without"] += 1
         tj = term_vs_judge.setdefault(s["termination"], {"games": 0, "verdict": {}, "reasons": {}})
         tj["games"] += 1
         _add(tj["verdict"], s["judge"]["termination"]["verdict"])
@@ -1046,7 +1097,7 @@ def _aggregate(bdir: Path, plan: dict[str, Any], plan_sha: str, state: dict[str,
                   "known_stop": known_stop,
                   "undetermined_by_category": undetermined_by, "termination_vs_judge": term_vs_judge, "non_accepted_submits_by_verdict": raw_codes,
                   "halts": halts},
-        "anomalies": anomalies,
+        "anomalies": anomalies, "observation": observation,
         "counters": counters, "replay_run": replay, "by": by,
         "time": {"game_seconds_sum": round(sum(seconds), 3), "game_seconds_max": max(seconds, default=None),
                  "game_seconds_median": statistics.median(seconds) if seconds else None},
@@ -1104,6 +1155,7 @@ def main(argv: list[str] | None = None) -> int:
     pl.add_argument("--undetermined-evidence-missing", choices=("continue", "stop"), default="continue",
                     help="根拠不足の停止による undetermined の扱い（ほかの分類は止める）")
     pl.add_argument("--note", default="")
+    pl.add_argument("--observation", action="store_true", help="主体別の観測・更新・公開ログの記録（observe/）を局の必須ファイルにする")
     rn = sub.add_parser("run")
     rn.add_argument("--out", required=True)
     rn.add_argument("--batch", required=True)
@@ -1123,7 +1175,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.cmd == "plan":
             limits = BatchLimits(max_games=args.max_games, budget_seconds=args.budget_seconds, evidence_max_bytes=args.evidence_max_mb * MB)
             plan = make_plan(out, args.batch, engine_commit=args.engine_commit, tool_commit=args.tool_commit, seeds=args.seeds, modes=args.modes,
-                             deck0=args.deck0, deck1=args.deck1, conventions=args.conventions, limits=limits, note=args.note,
+                             deck0=args.deck0, deck1=args.deck1, conventions=args.conventions, limits=limits, note=args.note, observation=args.observation,
                              stop_policy=StopPolicy(on_undetermined={**StopPolicy().on_undetermined,
                                                                      EVIDENCE_MISSING_STOP: args.undetermined_evidence_missing}))
             print(json.dumps({"batch": args.batch, "games": len(plan["games"]),
