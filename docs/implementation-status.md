@@ -5498,3 +5498,4 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 観測の記録の失敗・欠落: 要約の観測の状態の欠けでも止める。完了マーカーに `evidence`（停止つき・停止なし）。照合で停止の理由を要約から計算し直し、`observe/summary.json` と照らす。CLI は `--observation` か `--no-observation` の明示が必須
 - 計画・完了の形式 5・TOOL_VERSION 6（形式 4 以前は再開しない）。関連の 10 モジュール 163 件が成功。新しい対戦バッチは実行していない
 - 詳細: [verification-ai-decklist.md](verification-ai-decklist.md)
+- 次の小規模バッチの計画 4（計画だけ・未実行。明示リスト `L67-U`・`LUCKY_DECK` 対 `CONNECT_DECK`、rules-v2 と boundary、観測の記録つき 12 局）: [verification-ai-batch-plan4.md](verification-ai-batch-plan4.md)（採用の判断が要ること 8 章）

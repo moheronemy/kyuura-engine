@@ -866,3 +866,4 @@ new_game から届いた証拠とは扱わない。
 - 次の小規模バッチの計画と、その C1・C2（54 局）の実行の結果は [verification-ai-batch-plan3.md](verification-ai-batch-plan3.md)（結果は 10 章、結果の確認と判定の規則 6 は 11 章）。
 - 主体別の観測・更新・公開ログの記録（計画の形式 4・TOOL_VERSION 5。`--observation` で有効）は [verification-ai-observation.md](verification-ai-observation.md)。形式 3 以前の計画は、この版で再開しない。
 - 明示的なデッキリスト（`--decklist0`・`--decklist1`）・方式 `boundary`・観測の記録の失敗と欠落のときの完了の扱い（計画・完了の形式 5・TOOL_VERSION 6。`plan` は `--observation` か `--no-observation` の明示が必須）は [verification-ai-decklist.md](verification-ai-decklist.md)。形式 4 以前の計画は、この版で再開しない。
+- 明示リストと boundary を使う観測の記録つきの小規模バッチの計画案（D1・D2。計画だけ・未実行）は [verification-ai-batch-plan4.md](verification-ai-batch-plan4.md)。
