@@ -35,7 +35,7 @@ from typing import Any, Callable
 PLAN_FORMAT = "kyuura-vai-batch-plan/3"  # 3: undetermined の分類に accepted_content_unrecorded（2 は 99 局 vai-batch-b2・1 は 30 局の初回 vai-batch-b1）
 COMPLETE_FORMAT = "kyuura-vai-batch-complete/3"  # 3: 要約の judge に受理の中身の種類ごと（U-R3a・P6）の件数（2 は vai-batch-b2）
 TOOL_NAME = "tools.verification_ai.batch"
-TOOL_VERSION = 3
+TOOL_VERSION = 4  # 4: judge の規則 6（記録した送信の値で確かめる停止の根拠。docs/verification-ai-batch-plan3.md 11 章）。3 は C1・C2（9385cc3）
 
 # 方式（計画を作るときだけ使う。計画には Config の全項目を展開して書くので、ここを後で変えても既存の計画の局は変わらない）
 MODES: dict[str, dict[str, Any]] = {
@@ -348,7 +348,7 @@ def undetermined_category(source: str, reasons: list[str], termination: str | No
 
 
 def judge_trace(result: dict[str, Any]) -> dict[str, Any]:
-    """保存する trace に、既存の judge（規則の版 5）をあとから当てる（runner の進行・方策に影響しない）。単局の runner（V3-1 の変異の実行の中の判定）と同じ入口・引数:
+    """保存する trace に、既存の judge（規則の版 6）をあとから当てる（runner の進行・方策に影響しない）。単局の runner（V3-1 の変異の実行の中の判定）と同じ入口・引数:
 
     - 送信（submit を送った試み）ごとに ``judge_normal``（1 つの送信に 1 回。件数は ``counts``）
     - 受理された本人のうらのカードの特殊能力（U-R3a）・P6 のにげるの送信の中身に ``judge_recorded_accepted_content``（runner が受理の直後に記録した公開のログ。
@@ -356,7 +356,8 @@ def judge_trace(result: dict[str, Any]) -> dict[str, Any]:
     - 終わり方に ``judge_run_termination``（halted_known では公開の停止の値を渡す）
 
     undetermined は 1 つずつ、出どころ・理由・分類（``undetermined_category``）を残す。行には生の診断（diagnostic_id・分類・エンジンのコード）を残す。"""
-    from .judge import JUDGE_RULES_VERSION, KNOWN_STOP, UNDETERMINED, judge_normal, judge_recorded_accepted_content, judge_run_termination, revealed_card_id
+    from .judge import (JUDGE_RULES_VERSION, KNOWN_STOP, UNDETERMINED, judge_normal, judge_recorded_accepted_content, judge_run_termination,
+                        recorded_stop_evidence, revealed_card_id)
 
     rows, counts, by_kind = [], {}, {}
     content_rows, content_counts, content_by_check = [], {}, {}
@@ -364,7 +365,9 @@ def judge_trace(result: dict[str, Any]) -> dict[str, Any]:
     for e in result["trace"]:
         if e.get("type") != "attempt" or e.get("submit") is None:
             continue
-        verdict, why = judge_normal(e["candidate"], e.get("meaning") or [], e["submit"], stages=e.get("stages"))
+        # 規則 6: 記録した送信の API の値で代表の条件を満たす停止だけ、そのコードを根拠として渡す（満たさなければ None で、規則 5 と同じ）
+        evidence = recorded_stop_evidence(e["candidate"], e.get("meaning") or [], e.get("stages"), e["submit"])
+        verdict, why = judge_normal(e["candidate"], e.get("meaning") or [], e["submit"], stages=e.get("stages"), evidence=evidence)
         kind = e["candidate"].get("kind")
         diag = e["submit"].get("verifier") or {}
         rows.append({"attempt": e["n"], "kind": kind, "outcome": e["submit"].get("outcome"), "refusal": (e["submit"].get("refusal") or {}).get("code"),

@@ -24,7 +24,10 @@ from .actions import RETREAT_KIND, cost_not_evaluated
 # 5: U-R3a の追従（docs/verification-ai-u-r3a.md 3 章）。本人のうらのカードの特殊能力の送信（候補の power・pokemon に face_down、理由に face_down_reveal_not_evaluated）の
 #    拒否を、元のコードと、その条件に要る段が選んだ入力にあることで分ける（FACE_DOWN_POWER_ENGINE_DECIDES は正常な拒否、FACE_DOWN_POWER_API_GUARANTEED と構造の段に
 #    よる保証のコードは suspect、ほかは undetermined か停止の規則）。受理の中身を judge_face_down_power_accepted で分ける。ほかの送信（P6・おもての特殊能力をふくむ）は規則 4 と同じ
-JUDGE_RULES_VERSION = 5
+# 6: C1 の確認（docs/verification-ai-batch-plan3.md 11 章）。停止の代表の条件の根拠を、場面の側の宣言のほかに、記録した送信の API の値で確かめる道を 1 つだけ足す
+#    （RECORDED_STOP_CONDITIONS。今は UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE（ER9）だけ）。recorded_stop_evidence が条件をすべて満たすときだけ根拠のコードを返し、
+#    逐次バッチの判定 batch.judge_trace がそれを evidence として渡す。コードが同じでも条件を満たさない送信・ほかのコードは規則 5 と同じ（undetermined のまま）
+JUDGE_RULES_VERSION = 6
 # U-R3a: うらのカードの特殊能力で、エンジンがおもてにしたあとに確かめ、API が評価しないと契約で示すもの（GUARANTEE_FACE_DOWN_POWER: 構造の組は受け付けるかで絞らない）。
 # 元のコード → (その条件に要る段の role（どれか 1 つが選んだ入力にあること。空なら段は問わない）, 条件の説明)。カード・効果の型ごとの登録ではない
 FACE_DOWN_POWER_ENGINE_DECIDES = {
@@ -60,6 +63,20 @@ KNOWN_STOP_EVIDENCE = {
         "source": ["tests/test_legal_actions_u7_4.py: EnergyDiscardStopTest.test_rejected_vs_stop_after_acceptance",
                    "tests/test_deferred_shortage_user_promos_v0_127.py: dry_board・run"],
     },
+    # 規則 6: 逐次バッチでは、記録した送信の API の値で条件を確かめたときだけ根拠にする（RECORDED_STOP_CONDITIONS・recorded_stop_evidence）
+    "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE": {
+        "condition": "エネルギー回収の回収の決定（retrieve_energy。最小 0・選べる基本エネルギーカードが 1 枚以上）に 0 枚を答えた（ER9。決定は待ったまま・1 枚以上を選び直せる）",
+        "source": ["docs/rules-2000-02-14.md: ER9", "docs/energy-retrieval-v0.23.md: ER9",
+                   "kyuura_engine/effects.py: DiscardFromHandThenRetrieveEnergy.resume（RETRIEVE_ENERGY の min_choices 0。空の答えで UnsupportedError）",
+                   "docs/stop-policy-classification.json: UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE（answer_rejection・ER9）",
+                   "tests/test_energy_retrieval_v0_23.py: test_zero_cards_is_unresolved_and_keeps_the_decision"],
+    },
+}
+# 規則 6: 記録した送信の値だけで代表の条件を確かめる停止のコード → 決定の種類（段の decision_kind）。条件は recorded_stop_evidence:
+# 候補が answer_decision・段が 1 つで decision_kind が登録の種類・最小 0・最大 1 以上・選べるものが 1 つ以上・選んだものが 0・拒否で、検証者の診断と公開の結果の
+# コードがそろう・拒否のあとも同じ主体の決定待ち（status awaiting_decision・next が本人の answer_decision だけ）・取り直しが要らない。カード・場面ごとの登録ではない
+RECORDED_STOP_CONDITIONS = {
+    "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE": "retrieve_energy",
 }
 # 候補・選べるもの・組の理由のうち、エンジンの側の確かめを候補の作成では評価していないことを示すもの（停止・拒否がこの経路でありうると API が示している）
 EXPLAINING_REASONS = frozenset({"preflight_not_evaluated", "continuation_not_evaluated", "reactions_not_evaluated", "use_condition_not_evaluated",
@@ -280,6 +297,30 @@ def _known_stop_or_undetermined(candidate, meaning, diag, category, catalog, evi
     if code not in KNOWN_STOP_EVIDENCE or evidence != code:  # 規則 3: 代表の条件の根拠がなければ known_stop にしない
         return UNDETERMINED, [f"stop_condition_not_evidenced:{code}"]
     return KNOWN_STOP, [category, code, *explained, "evidence:" + KNOWN_STOP_EVIDENCE[code]["condition"]]
+
+
+def recorded_stop_evidence(candidate: dict[str, Any], meaning: list[dict[str, Any]], stages: list[dict[str, Any]] | None,
+                           submit: dict[str, Any]) -> str | None:
+    """規則 6: 記録した送信（候補・段・選んだ意味・submit の応答と検証者の診断）の API の値だけで、RECORDED_STOP_CONDITIONS の代表の条件をすべて満たせば
+    そのコードを返す（judge_normal の evidence に渡す）。どれか 1 つでも満たさない・登録のないコードなら None（コード名だけでは根拠にしない）。"""
+    diag = submit.get("verifier") or {}
+    result = submit.get("result") or {}
+    code = diag.get("engine_code")
+    kind = RECORDED_STOP_CONDITIONS.get(code)
+    if kind is None or submit.get("outcome") != D.REJECTED or not (diag.get("diagnostic_id") == result.get("diagnostic_id") == code):
+        return None
+    if candidate.get("kind") != "answer_decision" or not stages or len(stages) != 1 or meaning:
+        return None
+    stage = stages[0]
+    count = stage.get("count") or {}
+    if (stage.get("decision_kind") != kind or count.get("min") != 0 or not isinstance(count.get("max"), int) or count["max"] < 1
+            or not stage.get("options")):
+        return None
+    viewer = result.get("viewer")
+    if (result.get("status") != "awaiting_decision" or result.get("next") != [{"kind": "answer_decision", "player": viewer}]
+            or viewer not in (0, 1) or submit.get("refetch_required") is not False):
+        return None
+    return code
 
 
 def judge_halt_after_accept(halt: dict[str, Any] | None, *, evidence: str | None = None) -> tuple[str, list[str]]:
