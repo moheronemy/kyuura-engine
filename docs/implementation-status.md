@@ -5475,8 +5475,9 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 旧記録: 30 局・99 局の trace には P6 の受理の公開のログの記録がない（P6 の送信は両方とも 0 件）。旧バッチは新しい版で再開しない
 - 詳細: [verification-ai-batch.md](verification-ai-batch.md) 16 章
 
-## v0.179 のあと: 検証用 AI の次の小規模バッチの計画（計画だけ。未実行）
+## v0.179 のあと: 検証用 AI の次の小規模バッチの計画と実行（C1・C2）
 
 - 推奨: 計画の形式 3 の 2 計画・合計 54 局・上限 10 分・1 GiB。C1 は固定デッキ第2版（新しいトレーナー・決定）、C2 は第1版の組の `CS-KYUURA-PLAY-S2A@1`（準備の停止の続行と、続行のない局の 99 局との一致）
 - マチスの秘策・スタジアム・P6・U-R3a・unverified の選択は、バッチのデッキリストと boundary の方式の実装が要るので、追加案に分けた
 - 詳細: [verification-ai-batch-plan3.md](verification-ai-batch-plan3.md)（採用の判断が要ること 8 章）
+- 実行（C1・C2 を採用。2026-11-11）: 54 局すべて完了（C1 game_over 27、C2 game_over 26・limit_accepted 1）・replay_run 54 局とも成功・停止 0・suspect 0。C1 は第2版だけのトレーナー 5 種類の使用が受理され、決定の種類が 3 から 8 に増えた。エネルギー回収の 0 枚の選択の拒否 15（`UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`。judge は根拠不足の undetermined）。C2 は比較条件 24 組が 99 局と行動の列で一致し、回帰条件 seed 2025 の 3 局は開始で `PC-SETUP-MULLIGAN-COUNT` を 1 回適用して最後まで進んだ。エンジン・方策・道具のコードは変えていない（比較の処理は証跡に保存）。詳細は同じ文書の 10 章

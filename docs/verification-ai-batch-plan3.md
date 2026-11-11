@@ -1,6 +1,6 @@
 # 検証用 AI の次の小規模バッチの計画（計画の形式 3）
 
-- 状態: **計画だけ（未実行）**。対戦・テスト・ビルド・seed の探索はしていない。調査は、コード・文書・保存済みの証跡の読み取りと、テキストの検索だけで行った（`kyuura_engine` を import していない）。
+- 状態: **C1・C2 を採用して実行した（10 章）**。1〜9 章は実行の前に書いた計画のまま（そのときは対戦・テスト・ビルド・seed の探索をせず、コード・文書・保存済みの証跡の読み取りとテキストの検索だけで調べた）。
 - 基点: `claude/vai-p6-accepted` の `8531071`（実装 `c303da6`）。`origin/main`（`7b3d53c`）には未取り込み（`git merge-base --is-ancestor 8531071 origin/main` が 1）。
   配布の確かめ済みのコミット `4b6e3fe` から `8531071` まで、`kyuura_engine/` の差分はない。
 - ブランチ: `claude/vai-batch-plan3`（文書だけ）。
@@ -223,3 +223,134 @@
 4. 実行する（単一のプロセス・逐次）。停止方針で止まったら、そこで報告する。
 5. 集計し、`convention_applied` と操作の列の指紋を、99 局の保存済みの局と比べる。
 6. 証跡を `verifier/`（完全な記録・trace・判定）と `public/`（非機密の集計）に置き、マニフェストを更新する。
+
+## 10. 実行の結果（C1・C2。2026-11-11）
+
+利用者が 3 章の C1・C2 を採用し、そのまま実行した（PO・新しいデッキ・boundary・seed の探索は足していない。予算は延長していない）。
+9 章の下書き（[verification-ai-batch-plan3.json](verification-ai-batch-plan3.json)）は確定の計画ではない。確定の計画は、証跡の `plan.json` と `plan.sha256`。
+
+### 10.1 基点・確定の計画・実行の前の確認
+
+- 実行コミット: `claude/vai-batch-plan3` の `9385cc3`（エンジン・道具とも。P6 の判定の接続 `c303da6` を含む。`origin/main` `7b3d53c` には未取り込み）。リポジトリのコードは変えていない
+- 識別: 版 0.179.0・`behavior_digest` `67c4c15b…7fca`（99 局と同じ）・道具 TOOL_VERSION 3・道具の識別 `d40e2b8c…b3cf`・計画の形式 3・完了の形式 3。実行の後の識別も同じ（`identity_after.json`）
+- デッキ（`preflight.json`）: 4 デッキとも 60 枚で、`deck_problems` は空。内容の確認値（`canonical(cards)` の sha256。batch の `deck_check` と同じ方法）:
+
+| デッキ | 確認値 |
+|---|---|
+| `hitmonchan-dewgong` | `cf9746e3b7e1f11d…` |
+| `venusaur-parasect` | `2e3c9044590c7ef0…` |
+| `hitmonchan-dewgong-v2` | `66e569289363117e…` |
+| `venusaur-parasect-v2` | `a0831f9d5ac0c094…` |
+
+  第2版だけのカード: PMCG1-007 モンジャラ・PMCG1-072 突風・PMCG1-076 エネルギー回収・PMCG1-090 パソコン通信・PMCG1-093 ポケモン交換おじさん・PMCG1-094 ポケモン育て屋さん（第1版だけは PMCG1-079）
+- 規約集合: C1 `CS-KYUURA-CURRENT@1`（`sha256:9a9b95c6…3cee`）、C2 `CS-KYUURA-PLAY-S2A@1`（`sha256:b317a3f0…10c4`）
+- 確定の計画:
+
+| 計画 | 局 | 上限 | `plan.sha256` |
+|---|---|---|---|
+| `vai-batch-c1` | 27 | 360 秒・640 MiB | `e8956a7f0485d57e8f7c025f226700cb58533ecaf000920332c65b83908cbd20` |
+| `vai-batch-c2` | 27 | 240 秒・384 MiB | `d675ef4ee4a479ab4098a7e2f4125839376b9dac3bf43fe27349fb8e50e5642b` |
+
+  各局の `game_id`（`g001-uniform-stage-s3001` など）は一意。ゲーム・方策・ホストの seed は同じ値（runner が主体ごとに分ける）。mixed は rules-v2・ε 0.25。単局の上限は既定（操作 2000・受理 1000・番 200・120 秒）。次の局を始める予備は 150 秒。停止方針は 3.4 節のとおり（既定）。計画の各局のデッキの確認値・規約集合・実装識別が `preflight.json` と同じことを確かめた
+
+### 10.2 完了・停止・時間・資源
+
+| | C1 | C2 |
+|---|---|---|
+| 完了／計画 | 27／27（未完了・未着手 0。attempt は各局 1） | 27／27（同じ） |
+| 終わり方 | game_over 27 | game_over 26・limit_accepted 1（seed 2004・rules-v2。99 局の同じ局も limit_accepted） |
+| 停止・承認・再開 | なし（1 セッション） | なし（1 セッション） |
+| replay_run | 27 局とも succeeded（期待どおり） | 27 局とも succeeded（期待どおり） |
+| 累積の時間 | 81.234 秒（局の合計 57.1 秒・中央 1.93 秒・最大 6.13 秒） | 91.826 秒（局の合計 64.2 秒・中央 1.63 秒・最大 19.0 秒） |
+| 自分のプロセスの最大の作業セット | 192,962,560 バイト | 348,213,248 バイト |
+| ゲームの証跡 | 144,615,723 バイト（約 138 MiB） | 159,768,826 バイト（約 152 MiB） |
+
+合計 173.1 秒（予算 600 秒）・約 290 MiB（予算 1 GiB）。
+
+方策ごと（各 9 局。上限に届いた局は C2 の rules-v2 の 1 局だけ）:
+
+| | C1 受理・番 | C1 方策の抑制 | C2 受理・番 | C2 方策の抑制 |
+|---|---|---|---|---|
+| uniform-stage | 1109・360 | 0 | 1171・370 | 0 |
+| rules-v2 | 1911・372 | 124 | 2053・248 | 226 |
+| mixed | 1643・386 | 14 | 1351・320 | 8 |
+
+### 10.3 判定
+
+- C1: 送信 4678 のうち、受理 4663 は expected。拒否 15 は undetermined（分類 `evidence_missing_stop`。理由 `stop_condition_not_evidenced:UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`）で、停止方針どおり記録して続けた。終わり方 27 は expected。suspect 0・known_stop 0・受理の中身（U-R3a・P6）0・異常 0
+  - 15 件はどれも、エネルギー回収の受理のあとの決定 `retrieve_energy`（段の枚数 最小 0・最大 1〜2）で 0 枚を選んだ送信。check は valid、送信は `unresolved_ruling` の拒否。裁定の記録（[rules-2000-02-14.md](rules-2000-02-14.md) ER9。「最大2枚」が 0 枚を含むかは決まらない）どおりの停止で、決定は待ったまま。replay_run は 27 局とも成功で、拒否による状態の変化は検出されていない
+  - そのあと同じ入力の再送は 5 回抑えられ（`retry_same_input`）、15 件とも 1〜2 枚を選んで受理された
+  - undetermined になったのは、このコードの代表の条件の根拠（`KNOWN_STOP_EVIDENCE`）が judge にないため。不具合候補とは扱わない。根拠を足すかは別の作業
+- C2: 受理 4575 は expected。拒否 0。終わり方 27 は expected（limit_accepted は道具の上限）。undetermined・suspect・known_stop・異常は 0
+
+### 10.4 到達（C1）
+
+候補の種類（提示）は 99 局と同じ 14 種類（API の 20 種類のうち）。提示されていない 6 種類（`use_stadium`・`reveal_face_down`・`remove_disguise`・`discard_from_play`・`start_sudden_death`・`check_face_up_deck`）は未到達のまま。
+選んだ候補の処理可能性は supported・may_stop_later だけ、状況は actor_to_act だけ、check の invalid・断り・入力の生成の失敗による停止は 0。
+
+新しく届いたもの:
+
+- 送信の結果の rejected（15。上の 10.3 節）
+- 決定の種類が 3 → 8（`discard_from_hand` 129・`search_deck` 102・`retrieve_energy` 71・`return_to_deck` 24・`select_evolution_card` 6 が新しい。ほか `select_pokemon` 183・`take_prize` 86・`promote_active` 80）
+
+第2版だけのカードの到達（`reach_c1_v2cards.json`。「選べるものにあった」は選んだ候補の入力の段にあった試み。デッキにあることとは別に数える）:
+
+| カード | 選べるものにあった局 | 選ばれた局 | 受理された局 | 使用の受理（候補の種類） | 直後の決定（件数） |
+|---|---|---|---|---|---|
+| PMCG1-007 モンジャラ | 24 | 22 | 22 | play_basic 27（ほかに場のポケモンとして attach_energy 49・use_attack 43 など） | — |
+| PMCG1-072 突風 | 27 | 24 | 24 | play_trainer 57 | select_pokemon 57（すべて受理） |
+| PMCG1-076 エネルギー回収 | 27 | 24 | 24 | play_trainer 51 | discard_from_hand 51・retrieve_energy 71（受理 102・拒否 15・再送の抑制 5） |
+| PMCG1-090 パソコン通信 | 26 | 26 | 26 | play_trainer 78 | discard_from_hand 78・search_deck 78（すべて受理） |
+| PMCG1-093 ポケモン交換おじさん | 26 | 22 | 22 | play_trainer 24 | return_to_deck 24・search_deck 24（すべて受理） |
+| PMCG1-094 ポケモン育て屋さん | 19 | 18 | 18 | play_trainer 6 | select_evolution_card 6・select_pokemon 6（すべて受理） |
+
+- 「選ばれた局」「受理された局」は、使用のほかに、決定の答えとして選ばれた場合（パソコン通信でトラッシュする手札など）も数える。使用の受理の件数は右の列
+- 「直後の決定」は、受理された play_trainer の直後に続いた answer_decision を、trace の並びで対応づけたもの（エンジンが「このトレーナーの決定」と示した値ではない）
+- ポケモン育て屋さんの使用の受理は 6 件と少ない
+- 範囲外: 処理可能性 unresolved_ruling で除いた候補 290、入力を作れない（`total_units_unreachable`）1062。方策の抑制 138（同じ行動の反復の抑制）
+
+### 10.5 S2A の規約の適用と、99 局との比較（C2）
+
+比較は `compare_c2_b2.py`（証跡に保存。保存したファイルを読むだけで、方策・行動生成を動かさない）。`convention_applied` はログにだけあり、完全な記録・trace には直接書かれないので、
+保存した完全な記録を `replay_run.replay` の observer で再実行して読んだ（各局の検証の replay_run と同じ入口。54 局とも成功）。
+
+比べた形式・道具の違い: 計画の形式 3 と 2、完了の形式 3 と 2、道具の版 3 と 2（識別 `d40e2b8c…` と `420244af…`）、停止方針の `on_undetermined` に `accepted_content_unrecorded` があるか、バッチの上限。
+局の設定（config の全項目）の違いは、27 組とも `conventions` と `run_id` だけ。方策（名前・版・分布・seed・ε・閾値）とデッキは 27 組とも同じ。
+
+| 群 | 組 | 規約の適用 | 行動の列（action-meaning/v2） | 契約の値の列 | 完全な記録の操作の行 | 判定 |
+|---|---|---|---|---|---|---|
+| 比較条件（seed 2001〜2008） | 24 | 0 | 24 組とも同じ（長さも同じ） | 24 組とも同じ | 24 組とも同じ | 一致 24 |
+| 回帰条件（seed 2025） | 3 | 各 1 | 位置 0 から違う（99 局は 0 行） | 位置 0 から違う | 違う（99 局は 0 行） | 適用後の差 3 |
+
+- 比較条件 24 組の完全な記録の違いは、記録・API の識別の違いだけ: 見出しの `convention_set`・`initial.conventions`・`game_id`・開始の確認値、各行の確認値のうち `state` だけ（`rng`・`log_length`・`status` などは同じ）、`operation_id` の局の識別の部分だけ（残りは同じ）。
+  `state` の確認値は規約集合の識別を含む状態の指紋なので、行動の意味の違いとは扱わない。終わり方も 24 組とも同じ（game_over 23・limit_accepted 1）
+- 回帰条件（seed 2025・3 方式）:
+  - 99 局（CURRENT）: 3 局とも開始で `halted_known`（`UNRESOLVED_MULLIGAN_COMPENSATION`。操作 0。judge は termination undetermined・`evidence_missing_stop`）
+  - C2（S2A）: 3 局とも開始で `PC-SETUP-MULLIGAN-COUNT`@1 を 1 回適用（場面 `UNRESOLVED_MULLIGAN_COMPENSATION#initial-setup`・コード `UNRESOLVED_MULLIGAN_COMPENSATION`・記録の行 0 の前＝最初の試みの前。公開の値 player 0・rounds_both 1・rounds_single 1）。そのあと game_over まで進んだ（受理 137・158・171）。適用はこの 1 回だけで、ほかの場面（`#sudden-death-segment` など）の適用はない
+  - 最初の違いは適用の位置（試みの 0 行目の前）で、適用より前の違いはない。適用後の差は、規約の適用と矛盾しない差だが、規約だけの因果的な効果とは断定しない（比べる相手は開始で止まっていて、適用のない進み方は観測できない）
+  - 回帰条件は結果を見て選んだ seed なので、比較条件の 24 組と分けて数えた
+- 不具合候補・判断不能は 0
+
+### 10.6 失敗・修正・再実行・未確認
+
+- 比較・到達の小さな処理のテスト（`test_compare_scripts.py`。人工の例と、保存済みの 99 局の記録 3 つ。13 件）: 1 回目に 1 件の失敗（`reach_cards.py` の数えの関数に、数の 1 を鍵として渡していた）。直して 2 回目 13 件 OK。そのあと比較に「確認値の違う項目」と「局の識別を除いた operation_id」を足して再実行（3 回目 13 件 OK。判定の件数は 1 回目と同じ）。1 回目の出力は `compare_c2_b2_run1.json` として残した
+- マニフェストの 1 回目: 出力を証跡の中に書いたため、書き込み中の出力自体がマニフェストに入った。また public の要約に seed と局の識別が入っていた（public の約束に反する）。1 回目で足した 697 項目だけを除いて、前の `sha256.json`（`2a62759a…7e7d`）にバイト単位で戻ったことをハッシュで確かめ、public の要約を群ごとの件数だけに直して、出力を証跡の外へ書いて 2 回目を実行した
+- 対戦の再実行はない（各局 attempt-001 だけ）
+- 未確認: 決定の答えの入力に、見えてはいけない情報が含まれないか（山札を探す決定 `search_deck` の選べるもの）は、この単位では調べていない。判定は受理・拒否・終わり方の契約までで、カードの効果の結果の正しさ（状態の中身）は調べていない。勝敗は数えていない
+
+### 10.7 証跡
+
+保存先 `C:/dev/kyuura-engine-verification-vai/`:
+
+- `verifier/runs/vai-batch-c1/`・`verifier/runs/vai-batch-c2/`: 計画・台帳・各局（完全な記録・trace・本人向けの記録・判定・replay_run・指紋）・集計
+- `verifier/runs/vai-batch-c/`: 実行の前の確認（`preflight.py`・`preflight.json`）・計画と実行と集計の出力と終了コード（`sessions/` ほか）・比較（`compare_c2_b2.py`・`compare_c2_b2.json`）・到達（`reach_cards.py`・`reach_c1_v2cards.json`）・テスト・`identity_after.json`・`commands.txt`
+- `public/runs/vai-batch-c1/`・`public/runs/vai-batch-c2/`・`public/runs/vai-batch-c/`: seed・局の識別・デッキの並び・選択の中身を含まない集計
+- マニフェスト: 既存の 2359 項目を照らして不一致・欠け 0、696 項目を足して 3055 項目。`sha256.json` = `53a604a6750219601e7de742315654c02ecd73899451fd47dc35730f0a4bfe60`
+
+### 10.8 次に広げる前の判断材料
+
+1. 第2版のトレーナーの決定（5 種類）は届いた。ポケモン育て屋さんの使用の受理は 6 件と少ない。
+2. `UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE` の拒否は、裁定の記録どおりの停止だが、judge には代表の条件の根拠がない（undetermined）。judge に根拠を足すかを判断する。
+3. API は、この決定で 0 枚を選べる段（最小 0）を示し、check も valid を返す。そのため、方策は 0 枚を選んで拒否されうる。候補の保証の文は受理を保証していないので、契約には反しない。この組み合わせを残すか、文書で明示するかを判断する。
+4. S2A の比較条件 24 組は、99 局と行動の列が一致した。回帰条件では、補償の規約の 1 回の適用のあと、対戦が最後まで進んだ。延長戦の区間の場面（`#sudden-death-segment`）と、ほかの続行規約の場面には届いていない。
+5. P6・U-R3a・スタジアム・未提示の 6 種類・unverified の選択・check の invalid・断りは未到達のまま。届くには、6 章のデッキリストと boundary の方式の実装が要る（この単位の対象外）。

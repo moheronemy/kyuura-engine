@@ -37,5 +37,11 @@
     {"id": "additional-3-stadium", "what": "LUCKY_DECK（tests/test_legal_actions_u7_5d.py:398-406）かニンジャジムのデッキで use_stadium", "needs": ["batch のデッキリスト"]},
     {"id": "additional-4-u-r3a", "what": "マチスの秘策と特殊能力を持つポケモンを入れた新しい検証用のデッキ（候補だけ）", "needs": ["新しいデッキの採用", "batch のデッキリスト", "boundary の方式"]},
     {"id": "additional-5-fixed-selector", "what": "new_game からの固定の選び手による合法な列（自然な方策の実行とは別に数える）", "needs": ["道具の実装"]}
-  ]
+  ],
+  "execution": {"note": "下書き（status draft）のまま残す。採用して実行した確定の計画は証跡の plan.json・plan.sha256。結果は文書の 10 章",
+                "commit": "9385cc3fc4ab5a8fc7a0ee0d0a41ee14043ac74c",
+                "plans": {"vai-batch-c1": {"plan_sha256": "e8956a7f0485d57e8f7c025f226700cb58533ecaf000920332c65b83908cbd20", "complete": 27, "terminations": {"game_over": 27}, "accounted_seconds": 81.234},
+                          "vai-batch-c2": {"plan_sha256": "d675ef4ee4a479ab4098a7e2f4125839376b9dac3bf43fe27349fb8e50e5642b", "complete": 27, "terminations": {"game_over": 26, "limit_accepted": 1}, "accounted_seconds": 91.826}},
+                "evidence": ["verifier/runs/vai-batch-c1", "verifier/runs/vai-batch-c2", "verifier/runs/vai-batch-c"],
+                "manifest_sha256": "53a604a6750219601e7de742315654c02ecd73899451fd47dc35730f0a4bfe60"}
 }
