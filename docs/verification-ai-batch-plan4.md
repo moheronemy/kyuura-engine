@@ -1,7 +1,7 @@
 # 検証用 AI の小規模バッチの計画 4（明示的なデッキリスト・boundary・観測の記録つき）
 
-- 状態: **計画だけ（採用の前の案）**。対戦・seed の探索・テスト・ビルドは実行していない。`kyuura_engine`・`tools.verification_ai` を import せず、コード・文書・テストのテキストを読んで調べた。
-  `decklist` コマンド・`deck_problems`・確定の `plan.json` の作成と照合は、実行の承認のあとの事前確認（6 章）に残している。**合法性の検査は未実施**。
+- 状態: **推奨 12 局を採用して実行した（11 章。2026-11-12）**。18 局案は採らなかった。1〜10 章は実行の前に書いた計画のまま（そのときは対戦・seed の探索・テスト・ビルドをせず、
+  `kyuura_engine`・`tools.verification_ai` を import せずに調べた）。事前確認（`decklist` コマンド・`deck_problems`・確定の `plan.json`）の結果は 11.1 節。
 - 基点: `claude/vai-batch-plan3` の `060cdeb`（実装 `58fa44b`。明示的なデッキリスト・方式 boundary・観測の記録を含む公開のコミット）。origin と一致・未コミットの変更なし。
   `origin/main`（`7b3d53c`）には未取り込み（`git merge-base --is-ancestor 060cdeb origin/main` が 1）。
 - 識別（読んだ値。今回は計算していない）: 計画・完了の形式 5、TOOL_VERSION 6、判定の規則 6、エンジン 0.179.0・`behavior_digest` `67c4c15b…7fca`、道具の識別 `4f97edbf…2deb`
@@ -246,3 +246,163 @@ B は `play_trainer`（PRN-015 とほか）・`use_stadium`）に、次を分け
 - `kyuura_engine`・`tools.verification_ai` の import（登録・盤面・合法性を実行して調べていない）
 - 新しい方策・固定の選び手・judge の根拠の追加・記録の圧縮・差分化・間引き
 - エンジン本体・AI のコード・GUI・renderer・カードデータ・既存の固定デッキ・規約集合・裁定・識別方式・版の変更
+
+## 11. 実行の結果（D1・D2。2026-11-12）
+
+利用者が推奨の 12 局を採用し、そのまま実行した。条件・局数・予算は足していない。デッキ・seed・方策・プロファイルは計画のまま（到達させるための変更はしていない）。
+下書き（[verification-ai-batch-plan4.json](verification-ai-batch-plan4.json)）は確定の計画ではない。確定の計画は証跡の `plan.json` と `plan.sha256`。
+
+### 11.1 基点・事前確認・確定の計画
+
+- 実行コミット: `claude/vai-batch-plan3` の `76cd566`（エンジン・道具とも。実装 `58fa44b`・文書 `060cdeb` を含む。`origin/main` `7b3d53c` には未取り込み）。リポジトリのコードは変えていない
+- 識別: 版 0.179.0・`behavior_digest` `67c4c15b…7fca`・`instrumentation_digest` `d3436748…146d`・TOOL_VERSION 6・道具の識別 `4f97edbf…2deb`・判定の規則 6・計画と完了の形式 5。実行のあとも同じ（`identity_after.json`）
+- 規約集合: `CS-KYUURA-CURRENT@1`（`sha256:9a9b95c6…3cee`）だけ
+- 明示リスト（`kyuura-vai-decklist/1`。ラベル・出典・項目は下書きのまま。`decklist --file` の結果）:
+
+| リスト | 項目 | `content_sha256` | 展開の `sha256` | 元の配列との照合 | `deck_problems` |
+|---|---|---|---|---|---|
+| `L67-U` | 14 | `72690cee…0e67` | `5fb91539…c4f3` | `L67`（`existing_effect_games.deck_cards`）との差は、フーディン 2 枚の挿入と超エネルギー 14 → 12 だけ | 空（ok） |
+| `LUCKY_DECK` | 10 | `4af00364…6fc0` | `857abd7d…4eb8` | テストの `LUCKY_DECK` と同じ並び | 空（ok） |
+| `CONNECT_DECK` | 9 | `45b5b6c8…9bad` | `6ae10e56…d6f8` | テストの `CONNECT_DECK` と同じ並び | 空（ok） |
+
+- 確定の計画（`--observation`）。下書き・事前確認との照合（`check_plans.json`）は問題 0。照らした項目は、game_id の並び、ゲーム・方策・ホストの seed、方式ごとの方策・プロファイル・分布、
+  単局の上限、規約集合、デッキの確認値・項目・合法性・ラベル・出典、上限、停止方針、observation:
+
+| 計画 | 局 | 上限 | `plan.sha256` |
+|---|---|---|---|
+| `vai-batch-d1` | 6 | 360 秒・640 MiB | `e3cba61365b230b63fb90781fb136d16ae6b5fb0f0b989de9337cf749520796a` |
+| `vai-batch-d2` | 6 | 240 秒・384 MiB | `1cb4643905d27af20b67c4f547fe7165b0dfcfb8cec47cbbdac3758acc6d785f` |
+
+### 11.2 完了・停止・時間・資源
+
+| | D1 | D2 |
+|---|---|---|
+| 完了／未完了／未着手 | 6／0／0（attempt は各局 1） | 6／0／0（同じ） |
+| 完了マーカー | 停止なしの完了 6 | 停止なしの完了 6 |
+| 終わり方 | game_over 6 | game_over 6 |
+| バッチの停止・承認・再開 | なし（1 セッション） | なし（1 セッション） |
+| replay_run | 6 局とも succeeded（期待 succeeded） | 同じ |
+| 受理・番 | 779・254 | 1082・390 |
+| 累積の時間（予算） | 23.217 秒（360 秒） | 33.584 秒（240 秒） |
+| 局の時間 | 合計 16.8 秒・中央 2.43 秒・最大 7.06 秒 | 合計 25.6 秒・中央 4.15 秒・最大 5.33 秒 |
+| 自分のプロセスの最大の作業セット | 243,707,904 バイト | 226,852,864 バイト |
+| 局の証跡（うち observe/） | 52,065,387 バイト（28,378,095） | 81,851,342 バイト（47,901,665） |
+
+合計 56.8 秒（予算 600 秒）・約 128 MiB（予算 1 GiB）。観測の記録は局の証跡の 55〜59%（記録なしの部分に対して約 2.2〜2.4 倍）、受理 1 回あたり約 36 KB（D1）・44 KB（D2）。
+
+### 11.3 判定
+
+- D1: 送信 779 はすべて受理で expected。終わり方 6 は expected。拒否・断り・check の invalid・undetermined・suspect・known_stop・異常は 0
+- D2: 送信 1082 はすべて受理で expected。ほかは D1 と同じく 0
+- 観測の記録: 12 局とも `complete`（問題 0）。行の数は送信と同じ（779・1082）
+- 受理の中身（P6・U-R3a。`judge.accepted_content_by_check`）: **0 件**（その送信がなかった）
+
+### 11.4 到達: D1（うらのカード）
+
+保存済みの記録を読むだけのスクリプト（`analyze_d.py`）で数えた。提示は主体ごとの候補の応答、範囲・選択・入力・check・送信・結果は trace、公開の出来事は観戦者の閲覧用記録から読む。
+「提示」は候補の応答に含まれた回数、「選択」以降は方策が選んだ試み。
+
+| 経路 | 方式 | 提示 | 範囲の外（理由） | 選択 | 入力 | check valid | 送信 | 受理 |
+|---|---|---|---|---|---|---|---|---|
+| マチスの秘策の play_trainer（提示の列は、選んだ候補の段に PMCG5-093 があった回数） | rules-v2 | 5 | — | 3 | 3 | 3 | 3 | 3 |
+| | boundary | 24 | — | 15 | 15 | 15 | 15 | 15 |
+| `reveal_face_down`（may_stop_later） | rules-v2 | 3 | 0 | 2 | 2 | 2 | 2 | 2 |
+| | boundary | 1 | 0 | 1 | 1 | 1 | 1 | 1 |
+| うらのカードへの進化（evolve。unverified・`face_down_reveal_not_evaluated`） | rules-v2 | 3 | 3（`processability:unverified`） | 0 | — | — | — | — |
+| | boundary | 1 | 0 | 0 | — | — | — | — |
+| P6（うらのバトル場のにげる） | 両方 | **0** | — | 0 | — | — | — | — |
+| U-R3a（うらのフーディンの特殊能力） | 両方 | **0** | — | 0 | — | — | — | — |
+| うらのカードのワザ | 両方 | 0 | — | 0 | — | — | — | — |
+
+- 秘策の結果（公開のログ）:
+  - うらで出した 3（rules-v2 2・boundary 1）
+  - 出さなかった（0 枚の答え）4
+  - ベンチがいっぱいで何もしなかった（`secret_plan_none` の `bench_full`）11（boundary だけ）
+  - 決定 `secret_plan_card` の答えは 0 枚 4・1 枚 3（すべて受理）
+- うらで出したカードは、マチスの秘策 2・超エネルギー 1。**フーディンはうらで出されなかった**（手札の選べるものにあった場面はある）
+- 3 枚とも、出したのと同じ番に `reveal_face_down`（`cause: choice`）でおもてにされた。たねポケモンでないので、ベンチでトラッシュされた（`secret_plan_discarded`）
+- 対戦の段階で、うらのカードがバトル場にあった時点は 0（ベンチだけ）。そのため P6・U-R3a・うらのカードのワザの候補は一度も提示されなかった
+- ポケモンいれかえ・突風の決定（`select_pokemon`）と、きぜつのあとの交代（`promote_active`）は届いた。ただし、うらのカードがある時点では起きなかった
+- unverified の候補の選択・送信は **0**（boundary は unverified の提示 1 回を選ばなかった）。拒否・正常な拒否も 0
+
+### 11.5 到達: D2（スタジアム）
+
+| 経路 | 方式 | 提示 | 範囲の外（理由） | 選択 | 入力 | check valid | 送信 | 受理 |
+|---|---|---|---|---|---|---|---|---|
+| スタジアムを手札から出す play_trainer（選んだカードはすべて PRN-015） | rules-v2 | 48 | 0 | 10 | 10 | 10 | 10 | 10 |
+| | boundary | 48 | 0 | 10 | 10 | 10 | 10 | 10 |
+| 場のスタジアムを使う `use_stadium` | rules-v2 | 392 | 12（`processability:unresolved_ruling`） | 81 | 81 | 81 | 81 | 81 |
+| | boundary | 364 | 6（同じ） | 107 | 107 | 107 | 107 | 107 |
+
+- `use_stadium` の受理のうち、スタジアムの持ち主でない側（スタジアムを持たない `CONNECT_DECK`）が使ったもの: rules-v2 47・boundary 56。使用はプレイヤーごと・番ごとに最大 1 回
+- 使ったあとの決定はない（コインを投げ、おもてなら引く）。コインの出来事は公開のログにある
+- 場のラッキースタジアムの上に、同じ名前のラッキースタジアムを出した置きかえ（`stadium_discarded` の `reason: replaced`）が 14 回（各方式 7）
+- そのあと `use_stadium` が unresolved_ruling（理由 `stops_before_acceptance`）の候補として 18 回提示され、deep・boundary とも範囲の外にした
+  - 候補には停止のコードが出ないので、これが RS1（`UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT`。[remaining-stadiums-v0.74.md](remaining-stadiums-v0.74.md)）かは、この記録では確かめていない
+- seed 1（回帰条件）: rules-v2 の局では、プレイヤー 0 が 1 番目の番にスタジアムを出した（U7 の接続のテストと同じ時点）。boundary の局は 5 番目の番だった。到達の保証にはしない
+
+### 11.6 deep・代替・boundary の違い
+
+- deep（rules-v2）の代替（`deep_fallback_unverified`）は D1・D2 とも 0
+  - 理由の `rule2:fallback:no_priority`（D1 41・D2 73）は、優先順位の表にない種類（決定の答えなど）だけの場面での均等の選択で、unverified の代替ではない
+- unverified の候補（うらのカードへの進化）: deep は 3 回とも範囲の外にした。boundary は範囲に入れた（1）が、区分を均等に選ぶ選択で選ばれなかった
+- 選んだ候補の区分は、どちらの方式も supported・may_stop_later だけ
+- boundary の選択はすべて `boundary:class:…`（D1 570・D2 635）。ほかは準備の均等の選択 3（各計画）
+- 完成した入力の区分（`input_processability`）は、選んだ候補の区分とは別に trace に記録された（boundary の局）。unverified の入力は 0
+- 反復の抑制:
+  - boundary には反復の抑制がない。D1 では、ベンチがいっぱいの時点で秘策を 11 回使った（受理・効果なし）
+  - rules-v2 の反復の抑制は D1 で 18（retreat 6・use_power 12）、D2 で 0
+- 同じ seed でも、方式によって操作の列と乱数の消費が変わる。到達の差を方策の因果的な効果と断定しない
+
+### 11.7 観測の記録による確認（到達した場面だけ）
+
+12 局の閲覧用記録（本人 2・観戦者 1）を、保存済みの記録から照らした。違反は 0。
+
+| 項目 | 確かめたこと | 件数 |
+|---|---|---|
+| 記録の整合 | 次の 6 点: `files.sha256.json` と実ファイル・完了マーカーの表の確認値、observe の状態 `complete`、閲覧用記録の項目数と構造、行の連番と受理番号の連続、行と trace の送信の operation_id・主体の対応、replay_run | 12 局とも問題 0 |
+| 本人だけに見える候補 | 候補の応答はその主体の記録（`actors/<主体>.jsonl`）にだけあり、応答の主体と一致する | 不一致 0 |
+| うらのカードの本当のカード（秘策） | 対戦の段階のうらの場のポケモンで、本人の観測に `real`（カード id）がある。相手・観戦者の観測には、カード・カード id・名前・HP・ワザ・特殊能力がない | 本人 3・相手 3・観戦者 3 |
+| うらのカード（準備） | 準備の段階でうらで置いたたねが、相手・観戦者の観測にカードを持たない | D1 相手 20・観戦者 20、D2 相手 43・観戦者 43 |
+| うらで出す出来事 | `secret_plan_placed` は本人にカードがあり、相手・観戦者は `hidden.card` が null | 3・3・3 |
+| 受理のあとの正当な公開 | `secret_plan_revealed`（`reveal_face_down` の受理）が、3 主体の同じ項目に同じカード id（PMCG5-093 2・PMCG1-101 1）で出る。同じ受理でトラッシュされる（印刷の文面どおり、たねでないので） | 3 |
+| 決定の選べるもの | 保留中の決定の選べるものは、決める主体の観測にだけある（D1: `secret_plan_card`・`select_pokemon`・`take_prize`・`promote_active`、D2: `discard_energy`・`forced_switch`・`promote_active`・`take_prize`） | 違反 0 |
+| `secret_plan_card` の数 | `HIDDEN_COUNT_KINDS` ではないので、相手・観戦者に `option_count` が見える。その値は同じ時点の決める主体の公開の手札の枚数と同じ（手札のすべてが選べるもの）で、公開の情報より多くを示さない | 14 回とも同じ |
+| 相手が答える決定 | 番のプレイヤーでない主体が決める決定（`promote_active`。D2 は `take_prize` 1 も）で、選べるものが決める主体にだけある | D1 13・D2 22 の時点 |
+| 選べるものの数を伏せる決定（`HIDDEN_COUNT_KINDS`） | — | **未出現**（確かめていない） |
+| 拒否のときの他者への更新・本人だけの診断 | — | **未出現**（拒否 0） |
+| P6・U-R3a の受理の内訳 | — | **未出現**（送信 0） |
+
+### 11.8 言えること・言えないこと
+
+- 言えること:
+  - 明示リスト・boundary・観測の記録をそろえた形式 5 の計画が、12 局とも停止なしで完了した。replay_run・観測の記録・判定に問題はなかった
+  - 次の経路は、new_game からの自然な方策の実行で届いた: マチスの秘策の使用・うらで出す・おもてにする・トラッシュ、スタジアムを出す・使う（持ち主でない側の使用を含む）
+- 言えないこと: P6・U-R3a・unverified の選択・正常な拒否は、この 12 局では届かなかった。これを、未実装・不具合がないことの証明にも、届かないことの証明にもしない
+- 届かなかった理由（記録から読める範囲）:
+  - うらで出したカードは、すべて同じ番におもてにされた（deep・boundary とも `reveal_face_down` を選んだ）
+  - うらのカードがバトル場へ移る時点がなかった
+  - フーディンをうらで出す選択がなかった
+- 少数局の勝敗・完走率を、網羅性・強さの証明にしない
+
+### 11.9 次へ広げる判断材料（今回は実行しない）
+
+- P6・U-R3a へ自然な方策で届かせるには、うらのカードが番をまたいで残り、バトル場へ移る必要がある
+  - いまの方策では、うらで出した直後に `reveal_face_down`（may_stop_later。rules の優先順位 5）が選ばれやすい
+  - 方策・範囲を変えずに局を増やすか、構築盤面・固定の選び手の確認（別の枠）で補うかの判断が要る
+- 証跡の見込み: 観測の記録つきで 1 局平均約 9〜14 MB（局ごとは 0.8〜20 MB。12 局で約 128 MiB）
+- 同じ名前のスタジアムの置きかえのあとの `use_stadium` の停止（unresolved_ruling）のコードは、候補からは読めない。確かめるなら記録を再実行して読む（別の作業）
+- 正常な拒否・選べるものの数を伏せる決定・P6・U-R3a の観測の境界は、未出現のまま
+
+### 11.10 証跡
+
+`C:/dev/kyuura-engine-verification-vai/` に保存した。
+
+- `verifier/runs/vai-batch-d/`:
+  - 事前計画 `00_plan.md`、`preflight.py`・`preflight.json`、`decklists/`
+  - `decklist_check_*`（1 回目の文字化けの出力は `run1_decklist_check_encoding/`）、`d1_plan_*`・`d2_plan_*`
+  - `check_plans.py`・`check_plans.json`、`sessions/`（実行・集計の標準出力・終了コード）
+  - `analyze_d.py`・`analyze_d.json`（1 回目の `analyze_run1.json` も残す）、`identity_after.json`、`build_public.py`、`commands.txt`
+- `verifier/runs/vai-batch-d1/`・`vai-batch-d2/`: 計画・台帳・各局の完全な記録・trace・判定・観測の記録・集計
+- `public/runs/vai-batch-d/`・`vai-batch-d1/`・`vai-batch-d2/` の `summary.json`: 件数だけ（seed・局の識別・選択の中身・カード ID なし）
+- マニフェスト: 既存の 3,231 項目を照らして不一致 0、273 項目を追加して 3,504 項目。`sha256.json` は `6d774a82…b425` から `a9bf7e83694589eff071b1921848c30800c266f622bbfc16a565e3632a56b1e7`（更新のログは証跡の外に書いた）
