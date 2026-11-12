@@ -1,6 +1,6 @@
 {
   "status": "draft",
-  "status_note": "利用者の採用の前の下書き。実装・テスト・対戦はしていない。確定の計画は、実装と承認のあとの事前確認で tools.verification_ai.batch plan が作る plan.json と plan.sha256",
+  "status_note": "設計のときの下書き（版 1 は実装した。implementation を参照）。対戦はしていない。確定の計画は、実装と承認のあとの事前確認で tools.verification_ai.batch plan が作る plan.json と plan.sha256",
   "document": "docs/verification-ai-reach-policy.md",
   "base": {"branch": "claude/vai-batch-plan3", "commit": "d53a2fd3422a77534056a0a41e4af5209cf10a18", "run_commit_of_plan4": "76cd5669bb9cc70f8d1381d9b4a0c7511f8e18a7",
            "engine_version": "0.179.0", "plan_format": "kyuura-vai-batch-plan/5", "complete_format": "kyuura-vai-batch-complete/5", "tool_version": 6,
@@ -36,5 +36,13 @@
                           "what": "L67-U の超エネルギー PMCG1-101 12 → 10、ロケット団のヒトカゲ PMCG4-012 を 2 枚",
                           "why": "U-R3a の「おもてにして使った」受理・使ったあとの正常な拒否は、宣言が 2〜3 段のたねのポケモンが要る（L67-U のフーディンは 2 進化でトラッシュだけ）",
                           "note": "炎エネルギーがないので使うと WRONG_ENERGY_TYPE の拒否が見込まれる。「使った」受理には炎エネルギーも要る。採用するなら decklist と deck_problems で確かめて別の計画にする"},
-  "evidence_of_design": "C:/dev/kyuura-engine-verification-vai/verifier/runs/vai-reach-design"
+  "evidence_of_design": "C:/dev/kyuura-engine-verification-vai/verifier/runs/vai-reach-design",
+  "implementation": {"status": "implemented（版 1。新しい対戦バッチは未実行）", "branch": "claude/vai-reach-policy", "base": "f1229e0f2e83b4e350be662bff96ae807d7e8c31",
+                     "implementation_commit": "07b08e6", "document": "docs/verification-ai-reach-policy.md 12 章",
+                     "clarified": ["目標の試行は両方の主体を合わせて 1 局 1 回", "達成は目標の操作の submit を実際に呼んだ時点（notify_submit）", "そのあと両方の主体が rules-v2 と deep",
+                                   "保護の期間は主体ごと・最初に保護した自分の番を 1 番目・番の移行で数える・消えても数え直さない", "期間を使い切った主体も rules-v2 と deep"],
+                     "plan_format": "kyuura-vai-batch-plan/6", "complete_format": "kyuura-vai-batch-complete/6", "tool_version": 7, "judge_rules_version": 6,
+                     "tool_digest": "a8cd978386b026b25292c69c25ef286c8fcf58a9b601508bc6c0748a4c8b9fcf", "engine_behavior_digest_unchanged": true,
+                     "first_run_status": "未実行（次の実行の単位）",
+                     "evidence": "C:/dev/kyuura-engine-verification-vai/verifier/runs/vai-reach-impl"}
 }
