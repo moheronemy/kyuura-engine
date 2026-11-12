@@ -45,5 +45,7 @@
                      "tool_digest": "a8cd978386b026b25292c69c25ef286c8fcf58a9b601508bc6c0748a4c8b9fcf", "engine_behavior_digest_unchanged": true,
                      "first_run_status": "実行した（2026-11-13。vai-batch-r1・4 局完了・停止なし。P6 受理 2・U-R3a 受理 1。13 章）",
                      "first_run": {"branch": "claude/vai-batch-r1", "run_commit": "de81f642ec6b3ace9b748cc0c0a9e2f9727bc598", "plan_sha256": "1840d86fadb7d7bde650d1e90fbfb6503c642eeebc827d11dd287aaa6e9e4fdd", "evidence": "C:/dev/kyuura-engine-verification-vai/verifier/runs/vai-batch-r1・vai-batch-r"},
-                     "evidence": "C:/dev/kyuura-engine-verification-vai/verifier/runs/vai-reach-impl"}
+                     "evidence": "C:/dev/kyuura-engine-verification-vai/verifier/runs/vai-reach-impl"},
+  "next_design": {"status": "設計だけ（2026-11-13。reach 版 2・vai-batch-r2。未実装・未実行）", "document": "docs/verification-ai-reach-policy.md 14 章",
+                  "draft": "docs/verification-ai-reach-r2-plan.json", "corrections_of_first_run_text": "docs/verification-ai-reach-policy.md 13.10 節"}
 }

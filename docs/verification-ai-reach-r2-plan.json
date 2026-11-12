@@ -1,0 +1,89 @@
+{
+  "status": "draft",
+  "status_note": "設計だけ（2026-11-13）。reach 版 2 は未実装、vai-batch-r2 は未実行。合法性・識別・確認値の null は未確認（unconfirmed）。確定の計画は、実装と承認のあとの事前確認で tools.verification_ai.batch plan が作る plan.json と plan.sha256",
+  "document": "docs/verification-ai-reach-policy.md 14 章",
+  "base": {"branch": "claude/vai-batch-r1", "commit": "bc9197bfe49b9e5344737d3bc89b85451c303f12", "run_commit_of_r1": "de81f642ec6b3ace9b748cc0c0a9e2f9727bc598",
+           "engine_version": "0.179.0", "plan_format": "kyuura-vai-batch-plan/6", "tool_version": 7, "judge_rules_version": 6, "main_contains_base": false,
+           "work_branch": "claude/vai-reach-r2-design"},
+  "goals": {
+    "p6": {"what": "うらのたねポケモンをおもてにして、実際ににげる", "accepted_content": "p6_revealed_and_retreated",
+           "other_outcomes": ["p6_revealed_not_basic_and_trashed", "normal_rejection（WRONG_RETREAT_COST など。規則 4）"]},
+    "u_r3a": {"what": "ロケット団のヒトカゲ（PMCG4-012）をおもてにして、特殊能力［ほのおをもらう］を実際に使う", "accepted_content": "face_down_power_revealed_and_used",
+              "power": {"card_id": "PMCG4-012", "effect": "TakeEnergyToSelf(FIRE)", "stages": ["source", "energy"],
+                        "engine_checks_after_reveal": ["POKEMON_ASLEEP・POKEMON_PARALYZED・POKEMON_CONFUSED", "SAME_POKEMON", "ENERGY_NOT_ATTACHED", "WRONG_ENERGY_TYPE", "POWER_ALREADY_USED", "つける先の制限"]},
+              "other_outcomes": ["normal_rejection（WRONG_ENERGY_TYPE・SAME_POKEMON。規則 5）"]}
+  },
+  "r1_recheck": {
+    "p6": {"offered_positions": 3, "submitted": 2, "accepted": 2, "trashed_not_basic": 2, "retreated": 0, "placed_face_down": 6, "placed_basic": 0},
+    "u_r3a": {"offered_positions": 1, "submitted": 1, "accepted": 1, "trashed_not_basic": 1, "used": 0},
+    "corrections": {
+      "input_build_failure_zero": "目標の操作（R0）の入力についての件数。R1 の通常のにげるの入力を作れなかった 6 回（total_units_unreachable）は別",
+      "UNSUPPORTED_SECRET_PLAN_LOST_TARGET": "コード表にある既知のコードだが、判定は根拠つきの known_stop ではなく undetermined（stop_condition_not_evidenced。停止方針の分類 evidence_missing_stop）",
+      "originals_unchanged": true
+    }
+  },
+  "deck": {
+    "recommended": "L67-URC", "both_sides": true, "used_for_modes": ["reach2-p6", "reach2-u-r3a"],
+    "source_chain": ["tools/existing_effect_games.py DECKS[\"L67\"]", "L67-U（計画 4。content_sha256 72690ceea38984aadb80d52be05e1e0ab5db544478387ab40ec7807a7e330e67）", "L67-URC"],
+    "cards_in_expansion_order": [["PMCG1-052", 4], ["PMCG1-058", 4], ["PMCG1-043", 4], ["PMCG1-046", 3], ["PMCG1-049", 2], ["PMCG4-012", 4],
+                                 ["PMCG5-093", 4], ["PMCG1-074", 2], ["PMCG1-073", 2], ["PMCG1-071", 2], ["PMCG1-081", 2], ["PMCG1-079", 2], ["PMCG1-072", 2],
+                                 ["PMCG1-102", 11], ["PMCG1-101", 8], ["PMCG1-098", 4]],
+    "total": 60,
+    "changes_from_L67-U": [{"card": "PMCG4-012", "from": 0, "to": 4, "why": "U-R3a の対象（たね・宣言 2 段）。同じ名前の上限 4"},
+                           {"card": "PMCG1-098", "from": 0, "to": 4, "why": "［ほのおをもらう］の対象の基本炎エネルギー"},
+                           {"card": "PMCG1-102", "from": 15, "to": 11, "why": "炎エネルギーの枠"},
+                           {"card": "PMCG1-101", "from": 12, "to": 8, "why": "ヒトカゲの枠"}],
+    "card_sources": {"PMCG4-012": ["kyuura_engine/data/kyuura_cards.json（kyuura の採用・jp_print ロケット団）", "kyuura_engine/effects.py PowerKey(\"PMCG4-012\", 0)", "docs/declared-entry-powers-v0.43.md"],
+                     "PMCG1-098": ["kyuura_engine/data/kyuura_cards.json（基本エネルギー・炎）"]},
+    "static_expectation": "60 枚・同じ名前 4 枚以下・たねポケモンあり・play_scope standard（見込み）",
+    "deck_problems": null, "content_sha256": null, "expanded_sha256": null, "legality_status": "unconfirmed（実行の単位の事前確認で decklist --file）",
+    "alternative": {"id": "L67-URC-min", "what": "L67-U の超エネルギー 12 → 8、PMCG4-012 +2・PMCG1-098 +2", "recommended": false},
+    "existing_decks_and_card_data_changed": false
+  },
+  "policy": {
+    "name": "reach", "version": 2, "keeps_version_1": true,
+    "version_1_note": "version 1 の設定は同じ選び方・同じ乱数の使い方のまま（既存の方式 reach-p6・reach-u-r3a は変えない）",
+    "new_setting": {"target_input_cards": "R0 の段の選好に使うカード ID の並び（P6 は空だけ）"},
+    "rule_changes_v2_only": {
+      "V2-a": "R2 は両方の目標で、手札に place_cards があるときだけ（なければ基礎 rules-v2）",
+      "V2-b": "秘策の決定は版 1 と同じ",
+      "V2-c": "U-R3a で target_input_cards が空でないとき、うらでない自分のポケモンにそのカードがついているときだけ R0。それまで目標の候補は DEMOTED_RANK",
+      "V2-d": "R0 の option の段で card_id が target_input_cards のもの、pokemon の段ではそのカードがついたうらでないポケモンを優先。なければ均等"
+    },
+    "uses": ["版 1 の 3.7 節のもの", "本人の観測の自分の場のポケモンの card・face_down・energy の card_id", "段の選べるものの card・card_id・face_down・meaning", "計画の target_input_cards"],
+    "does_not_use": ["観測の real", "相手の手札・山札・サイド・うらのカード", "エンジンの内部状態・乱数", "効果の試行", "check・submit の結果による推測", "カードの効果・費用・タイプ・段階"],
+    "not_legality": "V2-c・V2-d は選好で、特殊状態・使用回数・同じポケモン・エネルギーの種類を方策は確かめない（エンジンが決める）",
+    "changed_parts": {"tools/verification_ai/reach.py": "版ごとの検証・V2-a〜d", "tools/verification_ai/batch.py": "方式 reach2-p6・reach2-u-r3a・TOOL_VERSION 8"},
+    "unchanged_parts": ["runner.py", "actions.py", "judge.py", "observe.py", "reach_report.py", "kyuura_engine"]
+  },
+  "modes": {
+    "reach2-p6": {"policy": "reach", "profile": "boundary", "rules_version": 2, "repeat_threshold": 2,
+                  "reach": {"goal": "p6", "version": 2, "place_trainers": ["PMCG5-093"], "place_cards": ["PMCG1-052", "PMCG1-043"], "move_to_active": true,
+                            "protect_own_turns": 3, "tries_per_game": 1, "base": "rules-v2", "target_input_cards": []}},
+    "reach2-u-r3a": {"policy": "reach", "profile": "boundary", "rules_version": 2, "repeat_threshold": 2,
+                     "reach": {"goal": "u_r3a", "version": 2, "place_trainers": ["PMCG5-093"], "place_cards": ["PMCG4-012"], "move_to_active": false,
+                               "protect_own_turns": 3, "tries_per_game": 1, "base": "rules-v2", "target_input_cards": ["PMCG1-098"]}}
+  },
+  "format_after_implementation": {"plan_format": "kyuura-vai-batch-plan/6（推奨。J2-9）", "tool_version": 8, "judge_rules_version": 6, "tool_digest": null, "status": "unconfirmed"},
+  "run_plan": {
+    "batch": "vai-batch-r2", "decklist0": "L67-URC", "decklist1": "L67-URC", "conventions": "CS-KYUURA-CURRENT@1（既定）",
+    "modes": ["reach2-p6", "reach2-u-r3a"], "seeds": [4201, 4202],
+    "seed_selection": "今回事前に固定（既存の計画と重ならない。結果で差し替えない）。ゲーム・方策・ホストの seed を同じ値にする",
+    "games_expected": ["g001-reach2-p6-s4201", "g002-reach2-u-r3a-s4201", "g003-reach2-p6-s4202", "g004-reach2-u-r3a-s4202"],
+    "max_games": 4, "budget_seconds": 300, "game_reserve_seconds": 150, "evidence_max_mb": 512, "evidence_reserve_mb": 64, "attempts": 3,
+    "game_limits": "runner.Limits の既定（操作 2000・受理 1000・番 200・120 秒）", "target_submits_per_game": 1, "observation": true,
+    "stop_policy": "r1 と同じ既定（--undetermined-evidence-missing continue。known_stop・evidence_missing_stop は続け、ほかの undetermined・suspect・観測の欠けや問題・受理の中身の記録の欠け・異常・failed・state_integrity は止める。replay の不一致は止めて報告。--acknowledge-stop・unlock は自動で使わない）",
+    "fixed_in_plan": ["方式名と config.reach の全項目", "明示リストの確認値と deck_problems の結果", "seed", "局の並び", "上限", "停止方針", "識別", "plan.sha256"],
+    "no_additions": "未到達でも局・seed・予算・条件を足さない。4 局で到達を保証しない",
+    "plan_sha256": null
+  },
+  "measurement_stages": ["必要なカードが手札", "秘策の選択", "うらで出す", "必要な位置（P6）・入力の準備（U-R3a）", "候補", "入力", "check", "実送信", "結果", "受理の中身"],
+  "implementation_units": ["R2-1 方策の版 2 と単体テスト", "R2-2 方式・TOOL_VERSION 8 と伝播のテスト", "R2-3 fixture の確認（構築盤面）", "R2-4 4 局の実行（別の単位・承認のあと）"],
+  "known_limits": {"peak_working_set_bytes_r1": 797843456, "trace_episode_reach_is_before_refresh": true, "not_changed_in_this_unit": true},
+  "decisions_pending": ["J2-1 版 2", "J2-2 方式名", "J2-3 P6 の対象（ディグダ・ケーシィ）", "J2-4 デッキ L67-URC", "J2-5 1 つのバッチ", "J2-6 V2-c・V2-d", "J2-7 保護 3 番", "J2-8 手札に残す選好は採用しない", "J2-9 形式 6・TOOL_VERSION 8", "J2-10 証跡の側のスクリプト"],
+  "unconfirmed": ["L67-URC の deck_problems・content_sha256・展開の sha256", "実装後の識別・plan.sha256", "規約集合での PMCG4-012・PMCG1-098 の扱い", "選べるものと観測の card の対応（1 場面だけ）", "new_game からの到達の頻度", "U-R3a の特殊状態による拒否の判定（判定表にない）"],
+  "evidence": {"dir": "C:/dev/kyuura-engine-verification-vai/verifier/runs/vai-reach-r2-design", "public": "public/runs/vai-reach-r2-design/summary.json",
+               "manifest_entries_before": 3710, "manifest_sha256_before": "2ff91f0a9172a687922e8208c46c820365e4f2ab8d2c54380125fdeb77de79c4",
+               "manifest_entries_after": 3729, "manifest_added": 19, "manifest_mismatch_of_existing": 0,
+               "manifest_sha256_after": "9efba97d3593e93806962f79db32ab97fb68c0d9c0576c03fe994a1848b44518", "manifest_log": "証跡の外（作業用ディレクトリの manifest_r2design_stdout.txt）"}
+}
