@@ -76,14 +76,30 @@
     "stop_policy": "r1 と同じ既定（--undetermined-evidence-missing continue。known_stop・evidence_missing_stop は続け、ほかの undetermined・suspect・観測の欠けや問題・受理の中身の記録の欠け・異常・failed・state_integrity は止める。replay の不一致は止めて報告。--acknowledge-stop・unlock は自動で使わない）",
     "fixed_in_plan": ["方式名と config.reach の全項目", "明示リストの確認値と deck_problems の結果", "seed", "局の並び", "上限", "停止方針", "識別", "plan.sha256"],
     "no_additions": "未到達でも局・seed・予算・条件を足さない。4 局で到達を保証しない",
-    "plan_sha256": null
+    "plan_sha256": "e29a67ffee4c1496bf9c6cd54d25d83247cfdcfc805d42d443786e5ded53884e"
   },
   "measurement_stages": ["必要なカードが手札", "秘策の選択", "うらで出す", "必要な位置（P6）・入力の準備（U-R3a）", "候補", "入力", "check", "実送信", "結果", "受理の中身"],
-  "implementation_units": ["R2-1 方策の版 2 と単体テスト（済み）", "R2-2 方式・TOOL_VERSION 8 と伝播のテスト（済み）", "R2-3 fixture の確認（構築盤面。済み）", "R2-4 4 局の実行（別の単位・承認のあと。未実行）"],
+  "implementation_units": ["R2-1 方策の版 2 と単体テスト（済み）", "R2-2 方式・TOOL_VERSION 8 と伝播のテスト（済み）", "R2-3 fixture の確認（構築盤面。済み）", "R2-4 4 局の実行（済み。run_result）"],
   "known_limits": {"peak_working_set_bytes_r1": 797843456, "trace_episode_reach_is_before_refresh": true, "not_changed_in_this_unit": true},
   "decisions_adopted_2026_11_13": "J2-1〜J2-9 は推奨値を採用、J2-10 は証跡の側のスクリプト（下の並びは設計のときの未決の一覧として残す）",
   "decisions_pending": ["J2-1 版 2", "J2-2 方式名", "J2-3 P6 の対象（ディグダ・ケーシィ）", "J2-4 デッキ L67-URC", "J2-5 1 つのバッチ", "J2-6 V2-c・V2-d", "J2-7 保護 3 番", "J2-8 手札に残す選好は採用しない", "J2-9 形式 6・TOOL_VERSION 8", "J2-10 証跡の側のスクリプト"],
   "unconfirmed": ["L67-URC の deck_problems・content_sha256・展開の sha256", "実装後の識別・plan.sha256", "規約集合での PMCG4-012・PMCG1-098 の扱い", "選べるものと観測の card の対応（1 場面だけ）", "new_game からの到達の頻度", "U-R3a の特殊状態による拒否の判定（判定表にない）"],
+  "run_result": {
+    "date": "2026-11-13",
+    "document": "docs/verification-ai-reach-policy.md 16 章",
+    "work_branch": "claude/vai-batch-r2",
+    "run_commit": "22a23a29c54fad48e8041b7ecfdd7a6a2035a3fd",
+    "kind": "到達を狙う方策による new_game からの実行",
+    "deck": {"id": "L67-URC", "content_sha256": "ff8b0872fd50b86db1e45a0fdc3f6503aecd364bcb5785a0b669605146478287", "expanded_sha256": "0cebfe9afdfcea2dff9703e8414b909e26191742125a838d3bea68e840d5e6c2", "deck_problems": []},
+    "plan_sha256": "e29a67ffee4c1496bf9c6cd54d25d83247cfdcfc805d42d443786e5ded53884e",
+    "games": {"complete_without_stop": 4, "complete_with_stop": 0, "incomplete": 0, "not_started": 0, "attempts": 4},
+    "results": {"g001-reach2-p6-s4201": "主体 0 が R2 → ディグダを置く → R1（通常のにげる）→ R0 で受理 p6_revealed_and_retreated", "g002-reach2-u-r3a-s4201": "主体 0 が R2 → ヒトカゲを置く → R0（準備あり・参照が観測と一致）で受理 face_down_power_revealed_and_used", "g003-reach2-p6-s4202": "未到達（主体 0 の R2 はベンチ 5 匹で置けない、主体 1 は秘策と対象が同時に手札にない）", "g004-reach2-u-r3a-s4202": "未到達（g003 と同じ。行動の列の指紋も同じ）"},
+    "judge": {"submits_expected": 1009, "undetermined": 0, "known_stop": 0, "rejected": 0, "replay_run_succeeded": 4},
+    "observation": {"complete": 4, "problems": 0, "boundary_violations": 0},
+    "resources": {"accounted_seconds": 35.032, "peak_working_set_bytes": 370405376, "game_evidence_bytes": 75552145, "observation_bytes": 41307349, "batch_bytes": 75625332},
+    "not_appeared": ["拒否のときの観測の不変", "期限による復帰", "準備のない U-R3a の候補を下げる場面", "promote_active による P6", "トラッシュ・目標の拒否"],
+    "evidence": {"batch": "C:/dev/kyuura-engine-verification-vai/verifier/runs/vai-batch-r2", "work": "C:/dev/kyuura-engine-verification-vai/verifier/runs/vai-batch-r2-run", "public": ["public/runs/vai-batch-r2/summary.json", "public/runs/vai-batch-r2-run/summary.json"], "manifest_entries_before": 3775, "manifest_entries_after": 3908, "manifest_mismatch_of_existing": 0, "manifest_sha256_before": "26b66ffc73a14639ab09f4f5b79e6c727bcf8e48562ca07f01477bd81b300121", "manifest_sha256_after": "807040637142caf85348b7e00dfee781c86a86661b2c01d88ad2ed244b8ea00a"}
+  },
   "implementation": {
     "date": "2026-11-13",
     "document": "docs/verification-ai-reach-policy.md 15 章",
