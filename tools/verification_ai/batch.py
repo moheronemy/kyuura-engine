@@ -38,7 +38,7 @@ from typing import Any, Callable
 PLAN_FORMAT = "kyuura-vai-batch-plan/6"  # 6: 到達目的の方策 reach の方式（reach-p6・reach-u-r3a）と設定 config.reach・方式と局の設定の一致の照合（docs/verification-ai-reach-policy.md 12 章）。形式 5 以前の計画は再開しない（移行・上書きしない。それを作った版の道具で扱う）。5: 局のデッキの記録（固定デッキ・明示リスト。展開の順・確認値・deck_problems の結果）・方式 boundary・方策とプロファイルの組の照合（docs/verification-ai-decklist.md）。4: 主体別の観測の記録の設定 observation（docs/verification-ai-observation.md）。3 は C1・C2（undetermined の分類に accepted_content_unrecorded）・2 は 99 局 vai-batch-b2・1 は 30 局の初回 vai-batch-b1
 COMPLETE_FORMAT = "kyuura-vai-batch-complete/6"  # 6: 計画の形式 6 に合わせた（マーカーの項目は 5 と同じ）。5: 証跡の判定 evidence（complete_without_stop・complete_with_stop）。照合で停止の理由を要約から計算し直す。4: 要約に主体別の観測の記録の状態（observation。有効な計画だけ）。3 は C1・C2（受理の中身の種類ごとの件数）・2 は vai-batch-b2
 TOOL_NAME = "tools.verification_ai.batch"
-TOOL_VERSION = 7  # 7: 到達目的の方策 reach 版 1（tools/verification_ai/reach.py）・runner の範囲のプロファイルの問い合わせと submit の通知・到達の段の集計 reach_report。6: 明示的なデッキリスト・方式 boundary・観測の記録の要約の欠けで止める（docs/verification-ai-decklist.md）。5: 主体別の観測・更新・公開ログの記録（observe。計画で有効にしたときだけ）。4 は judge の規則 6（docs/verification-ai-batch-plan3.md 11 章）。3 は C1・C2（9385cc3）
+TOOL_VERSION = 8  # 8: reach 版 2 と方式 reach2-p6・reach2-u-r3a（docs/verification-ai-reach-policy.md 14 章・15 章。計画の形式 6・完了の形式 6・判定の規則 6 は同じ。TOOL_VERSION 7 の計画は実装識別の違いで再開しない）。7: 到達目的の方策 reach 版 1（tools/verification_ai/reach.py）・runner の範囲のプロファイルの問い合わせと submit の通知・到達の段の集計 reach_report。6: 明示的なデッキリスト・方式 boundary・観測の記録の要約の欠けで止める（docs/verification-ai-decklist.md）。5: 主体別の観測・更新・公開ログの記録（observe。計画で有効にしたときだけ）。4 は judge の規則 6（docs/verification-ai-batch-plan3.md 11 章）。3 は C1・C2（9385cc3）
 
 # 方式（計画を作るときだけ使う。計画には Config の全項目を展開して書くので、ここを後で変えても既存の計画の局は変わらない）
 MODES: dict[str, dict[str, Any]] = {
@@ -57,6 +57,14 @@ MODES: dict[str, dict[str, Any]] = {
     "reach-u-r3a": {"policy": "reach", "profile": "boundary", "rules_version": 2, "repeat_threshold": 2,
                     "reach": {"goal": "u_r3a", "version": 1, "place_trainers": ["PMCG5-093"], "place_cards": ["PMCG1-049"], "move_to_active": False,
                               "protect_own_turns": 3, "tries_per_game": 1, "base": "rules-v2"}},
+    # reach 版 2（docs/verification-ai-reach-policy.md 14 章・15 章）。版 1 の方式は変えない。P6 の対象はにげる 0 のたねポケモン ディグダ（PMCG1-052）・ケーシィ（PMCG1-043）、
+    # U-R3a の対象はロケット団のヒトカゲ（PMCG4-012）と、その特殊能力［ほのおをもらう］の入力に選ぶ基本炎エネルギー（PMCG1-098）。カード ID は設定の値だけ
+    "reach2-p6": {"policy": "reach", "profile": "boundary", "rules_version": 2, "repeat_threshold": 2,
+                  "reach": {"goal": "p6", "version": 2, "place_trainers": ["PMCG5-093"], "place_cards": ["PMCG1-052", "PMCG1-043"], "move_to_active": True,
+                            "protect_own_turns": 3, "tries_per_game": 1, "base": "rules-v2", "target_input_cards": []}},
+    "reach2-u-r3a": {"policy": "reach", "profile": "boundary", "rules_version": 2, "repeat_threshold": 2,
+                     "reach": {"goal": "u_r3a", "version": 2, "place_trainers": ["PMCG5-093"], "place_cards": ["PMCG4-012"], "move_to_active": False,
+                               "protect_own_turns": 3, "tries_per_game": 1, "base": "rules-v2", "target_input_cards": ["PMCG1-098"]}},
 }
 STAGE_DISTRIBUTION = "uniform-candidate+uniform-stage"  # policies.STAGE と同じ値（テストで一致を確かめる）
 TUPLE_DISTRIBUTION = "uniform-candidate+uniform-tuple"  # policies.TUPLE と同じ値
