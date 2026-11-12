@@ -5499,3 +5499,4 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 計画・完了の形式 5・TOOL_VERSION 6（形式 4 以前は再開しない）。関連の 10 モジュール 163 件が成功。新しい対戦バッチは実行していない
 - 詳細: [verification-ai-decklist.md](verification-ai-decklist.md)
 - 次の小規模バッチの計画 4（明示リスト `L67-U`・`LUCKY_DECK` 対 `CONNECT_DECK`、rules-v2 と boundary、観測の記録つき 12 局）: 2026-11-12 に実行し、12 局とも停止なしで完了。マチスの秘策・おもてにする・スタジアムの play_trainer と use_stadium は届き、P6・U-R3a・unverified の選択は届かなかった（11 章）。[verification-ai-batch-plan4.md](verification-ai-batch-plan4.md)（採用の判断が要ること 8 章）
+- 到達目的の方策 `reach`（P6・U-R3a を目標に、秘策の決定・うらの控えの入れ替え先・おもてにする操作の選び方を変える。合法性はエンジンのまま。`real` を使わない）: 仕様と最大 4 局の計画だけ（2026-11-12。実装・テスト・対戦はしていない。採用の判断待ち）。[verification-ai-reach-policy.md](verification-ai-reach-policy.md)
