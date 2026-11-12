@@ -1,6 +1,6 @@
 {
   "status": "draft",
-  "status_note": "設計だけ（2026-11-13）。reach 版 2 は未実装、vai-batch-r2 は未実行。合法性・識別・確認値の null は未確認（unconfirmed）。確定の計画は、実装と承認のあとの事前確認で tools.verification_ai.batch plan が作る plan.json と plan.sha256",
+  "status_note": "設計（2026-11-13）のあと reach 版 2 を実装した（2026-11-13。implementation の項。docs/verification-ai-reach-policy.md 15 章）。vai-batch-r2 は未実行。合法性・識別・確認値の null は未確認（unconfirmed）。確定の計画は、実装と承認のあとの事前確認で tools.verification_ai.batch plan が作る plan.json と plan.sha256",
   "document": "docs/verification-ai-reach-policy.md 14 章",
   "base": {"branch": "claude/vai-batch-r1", "commit": "bc9197bfe49b9e5344737d3bc89b85451c303f12", "run_commit_of_r1": "de81f642ec6b3ace9b748cc0c0a9e2f9727bc598",
            "engine_version": "0.179.0", "plan_format": "kyuura-vai-batch-plan/6", "tool_version": 7, "judge_rules_version": 6, "main_contains_base": false,
@@ -64,7 +64,8 @@
                      "reach": {"goal": "u_r3a", "version": 2, "place_trainers": ["PMCG5-093"], "place_cards": ["PMCG4-012"], "move_to_active": false,
                                "protect_own_turns": 3, "tries_per_game": 1, "base": "rules-v2", "target_input_cards": ["PMCG1-098"]}}
   },
-  "format_after_implementation": {"plan_format": "kyuura-vai-batch-plan/6（推奨。J2-9）", "tool_version": 8, "judge_rules_version": 6, "tool_digest": null, "status": "unconfirmed"},
+  "format_after_implementation": {"plan_format": "kyuura-vai-batch-plan/6（J2-9）", "complete_format": "kyuura-vai-batch-complete/6", "tool_version": 8, "judge_rules_version": 6,
+                                  "tool_digest": "dbca28bd06ba4602a1f3c334f8b0154067149cf35a460777cb7e4e6865afceba", "status": "implemented"},
   "run_plan": {
     "batch": "vai-batch-r2", "decklist0": "L67-URC", "decklist1": "L67-URC", "conventions": "CS-KYUURA-CURRENT@1（既定）",
     "modes": ["reach2-p6", "reach2-u-r3a"], "seeds": [4201, 4202],
@@ -78,10 +79,29 @@
     "plan_sha256": null
   },
   "measurement_stages": ["必要なカードが手札", "秘策の選択", "うらで出す", "必要な位置（P6）・入力の準備（U-R3a）", "候補", "入力", "check", "実送信", "結果", "受理の中身"],
-  "implementation_units": ["R2-1 方策の版 2 と単体テスト", "R2-2 方式・TOOL_VERSION 8 と伝播のテスト", "R2-3 fixture の確認（構築盤面）", "R2-4 4 局の実行（別の単位・承認のあと）"],
+  "implementation_units": ["R2-1 方策の版 2 と単体テスト（済み）", "R2-2 方式・TOOL_VERSION 8 と伝播のテスト（済み）", "R2-3 fixture の確認（構築盤面。済み）", "R2-4 4 局の実行（別の単位・承認のあと。未実行）"],
   "known_limits": {"peak_working_set_bytes_r1": 797843456, "trace_episode_reach_is_before_refresh": true, "not_changed_in_this_unit": true},
+  "decisions_adopted_2026_11_13": "J2-1〜J2-9 は推奨値を採用、J2-10 は証跡の側のスクリプト（下の並びは設計のときの未決の一覧として残す）",
   "decisions_pending": ["J2-1 版 2", "J2-2 方式名", "J2-3 P6 の対象（ディグダ・ケーシィ）", "J2-4 デッキ L67-URC", "J2-5 1 つのバッチ", "J2-6 V2-c・V2-d", "J2-7 保護 3 番", "J2-8 手札に残す選好は採用しない", "J2-9 形式 6・TOOL_VERSION 8", "J2-10 証跡の側のスクリプト"],
   "unconfirmed": ["L67-URC の deck_problems・content_sha256・展開の sha256", "実装後の識別・plan.sha256", "規約集合での PMCG4-012・PMCG1-098 の扱い", "選べるものと観測の card の対応（1 場面だけ）", "new_game からの到達の頻度", "U-R3a の特殊状態による拒否の判定（判定表にない）"],
+  "implementation": {
+    "date": "2026-11-13",
+    "document": "docs/verification-ai-reach-policy.md 15 章",
+    "base": "claude/vai-reach-r2-design 1106e185a328df77bcd82cbd8808930f43172020",
+    "work_branch": "claude/vai-reach-r2-impl",
+    "code_commit": "b63adadb24dfeca2a768cb5f9ecd324bf11ea26d",
+    "changed": ["tools/verification_ai/reach.py", "tools/verification_ai/batch.py", "tests/test_verification_ai_reach_v2.py（新規 27 件）", "tests/test_verification_ai_reach.py・tests/test_verification_ai_er9_evidence.py（TOOL_VERSION の期待値だけ）"],
+    "unchanged": ["runner.py", "actions.py", "judge.py", "observe.py", "reach_report.py", "kyuura_engine", "カードデータ・固定デッキ・規約集合"],
+    "reference_matching": "観測のおもての自分のポケモンの pokemon_id・card・card_id とエネルギーの card・card_id に、選べるものの pokemon・card・card_id が一致するときだけ優先。欠け・不一致・あいまいは均等",
+    "not_ready": "目標の候補を DEMOTED_RANK へ下げるだけ（除かない）",
+    "tool_identity": {"before": "a8cd978386b026b25292c69c25ef286c8fcf58a9b601508bc6c0748a4c8b9fcf（tool_version 7。vai-batch-r1 の計画と同じ）", "after": "dbca28bd06ba4602a1f3c334f8b0154067149cf35a460777cb7e4e6865afceba（tool_version 8）", "engine_unchanged": true},
+    "old_plans": "TOOL_VERSION 7 の計画は実装識別の違いで再開を拒否する（移行・上書きしない。作ったコミットの道具で扱う）",
+    "version_1_unchanged": {"scripted_digest": {"reach-p6": "6f1bd13e9740441d8b8c192a444ca976f8629249a9c1b775a010b393223c1f8e", "reach-u-r3a": "228d096f16e5730f9b8d4894b3e04031a19d0835d44673f1605210b24537b249"}, "random_scenes_same": "200 局×30 場面×2 方式"},
+    "fixtures": {"origin": "constructed_fixture", "new_game": false, "p6_secret_plan_chain": ["R2 秘策 受理", "決定の回答 ディグダ 受理", "R1 にげる（うらの控えへ）受理", "R0 P6 受理 p6_revealed_and_retreated"], "p6_no_target": "R2 を当てず rules-v2（エネルギーをつける）", "UR3A-RC": "R0 コラッタ → 炎エネルギー 受理 face_down_power_revealed_and_used（公開ログ secret_plan_revealed → pokemon_power → move_energy）", "UR3A-RC_wrong_energy": "R0 エビワラー → 闘エネルギー（ケースの選び手）拒否 normal_rejection WRONG_ENERGY_TYPE"},
+    "tests": {"modules": 9, "tests": 161, "failures": 0, "errors": 0, "skipped": 0, "development_failures": "新しいモジュールの 1 回目に失敗 4（テストの誤りだけ。方策は直していない）→ 2 回目 27 件成功"},
+    "unconfirmed": ["L67-URC の deck_problems・確認値", "規約集合での PMCG4-012・PMCG1-098 の扱い", "new_game からの到達の頻度", "実際の対戦で選べるものと観測の参照がいつも一致するか", "U-R3a の特殊状態による拒否の判定（判定表にない）"],
+    "evidence": {"dir": "C:/dev/kyuura-engine-verification-vai/verifier/runs/vai-reach-r2-impl", "public": "public/runs/vai-reach-r2-impl/summary.json", "manifest_entries_before": 3729, "manifest_added": 46, "manifest_entries_after": 3775, "manifest_mismatch_of_existing": 0, "manifest_sha256_before": "9efba97d3593e93806962f79db32ab97fb68c0d9c0576c03fe994a1848b44518", "manifest_sha256_after": "26b66ffc73a14639ab09f4f5b79e6c727bcf8e48562ca07f01477bd81b300121"}
+  },
   "evidence": {"dir": "C:/dev/kyuura-engine-verification-vai/verifier/runs/vai-reach-r2-design", "public": "public/runs/vai-reach-r2-design/summary.json",
                "manifest_entries_before": 3710, "manifest_sha256_before": "2ff91f0a9172a687922e8208c46c820365e4f2ab8d2c54380125fdeb77de79c4",
                "manifest_entries_after": 3729, "manifest_added": 19, "manifest_mismatch_of_existing": 0,

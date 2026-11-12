@@ -1,6 +1,6 @@
 # 検証用 AI の到達目的の方策 `reach`（P6・U-R3a）の仕様と段階的な計画
 
-- 状態: **版 1 を実装した（12 章。2026-11-12。作業ブランチ `claude/vai-reach-policy`）。6 章の 4 局を実行した（13 章。2026-11-13。`vai-batch-r1`・作業ブランチ `claude/vai-batch-r1`。到達を狙った方策による new_game からの実行。P6 2 局とも・U-R3a 1 局で目標の操作を送って受理）。次の 2 経路（P6 のおもてにしてにげる・U-R3a のロケット団のヒトカゲの使用）の小規模確認の仕様と計画を設計した（14 章。2026-11-13。reach 版 2 の案・未実装・未実行）。13 章の表現の限定は 13.10 節**。12 章の明確化は、1〜11 章（設計のときの記述）より優先する。設計のときは、実装・テスト・ビルド・対戦・seed の探索はしなかった。`kyuura_engine`・`tools.verification_ai` を import せず、コード・文書・
+- 状態: **版 1 を実装した（12 章。2026-11-12。作業ブランチ `claude/vai-reach-policy`）。6 章の 4 局を実行した（13 章。2026-11-13。`vai-batch-r1`・作業ブランチ `claude/vai-batch-r1`。到達を狙った方策による new_game からの実行。P6 2 局とも・U-R3a 1 局で目標の操作を送って受理）。次の 2 経路（P6 のおもてにしてにげる・U-R3a のロケット団のヒトカゲの使用）の小規模確認の仕様と計画を設計した（14 章。2026-11-13）。reach 版 2 を実装した（15 章。2026-11-13。作業ブランチ `claude/vai-reach-r2-impl`。関連テスト・構築盤面の確認つき。`vai-batch-r2` の 4 局と L67-URC の合法性の確かめは未実行）。13 章の表現の限定は 13.10 節**。12 章の明確化は、1〜11 章（設計のときの記述）より優先する。設計のときは、実装・テスト・ビルド・対戦・seed の探索はしなかった。`kyuura_engine`・`tools.verification_ai` を import せず、コード・文書・
   保存済みの証跡を読んで決めた。機械で読める下書きは [verification-ai-reach-policy.json](verification-ai-reach-policy.json)（`status: draft`）
 - 基点: `claude/vai-batch-plan3` の `d53a2fd`（計画 4 の結果の文書。実行のコミットは `76cd566`。既存の方策・明示リスト・boundary・観測の記録を含む公開のコミット）。
   origin と一致・未コミットの変更なし。`origin/main`（`7b3d53c`）には未取り込み（`git merge-base --is-ancestor` が 1）。作業ブランチは `claude/vai-reach-policy-plan`
@@ -776,3 +776,118 @@ U-R3a の「準備ができないまま期限切れ」を加える。R1 の入�
 - `public/runs/vai-reach-r2-design/summary.json`: 確かめた件数と状態だけ（seed・局の識別・カード ID・選択の中身なし）
 - マニフェスト: 既存の 3,710 項目を照らして不一致 0、19 項目を追加して 3,729 項目。`sha256.json` は `2ff91f0a…c4` から
   `9efba97d3593e93806962f79db32ab97fb68c0d9c0576c03fe994a1848b44518`（更新のログは証跡の外に書いた。下書きの JSON の `evidence` にも記録）
+
+## 15. `reach` 版 2 の実装（2026-11-13。実装・関連テスト・文書だけ。`vai-batch-r2` は未実行）
+
+14 章の推奨案（J2-1〜J2-9 の推奨値。J2-10 は証跡の側のスクリプト）をそのまま採用して実装した。L67-URC の `deck_problems`・確定計画の作成・バッチの実行・seed の探索はしていない。
+
+### 15.1 基点・作業ブランチ・範囲
+
+- 基点: `claude/vai-reach-r2-design` の `1106e18`（14 章の文書。origin と一致・未コミットの変更なし。`origin/main`（`7b3d53c`）には未取り込み）。作業ブランチは `claude/vai-reach-r2-impl`（専用の worktree）
+- 変えたコード: `tools/verification_ai/reach.py`（版 2）・`tools/verification_ai/batch.py`（方式 2 つ・TOOL_VERSION 8）だけ。runner・行動生成（actions）・観測の記録（observe）・
+  判定（judge）・`reach_report`・エンジン・裁定・カードデータ・固定デッキ・規約集合・GUI・renderer・パッケージ版は変えていない
+- テスト: 新しい `tests/test_verification_ai_reach_v2.py`（27 件）。既存のテストは、`TOOL_VERSION` の期待値（7 → 8）だけを 2 か所（`test_verification_ai_reach.py`・`test_verification_ai_er9_evidence.py`）直した
+
+### 15.2 版 2 の選好（設定の `version` が 2 のときだけ働く）
+
+| 規則 | 実装 | 準備不足・対象なしのとき |
+|---|---|---|
+| V2-a（R2） | 手札に `place_trainers`（秘策）と `place_cards` の両方があるときだけ、秘策の候補を先に選ぶ。秘策の決定の段では `place_cards` のカードを選び、置く数は 1（対象がなければ 0 を選べる。版 1 と同じ） | 対象（P6 はディグダ・ケーシィ）が手札になければ R2 を当てず、rules-v2 の順位（同じ乱数の使い方） |
+| V2-b（秘策の決定） | 版 1 と同じ | — |
+| V2-c（R0 の条件） | `target_input_cards` が空でなければ、本人の観測で、おもての自分のポケモン（`face_down` が真でない）にそのカードがついているのが見えるときだけ目標の候補を R0 で選ぶ | 見えないあいだ、目標の候補は `DEMOTED_RANK`（end_turn より後ろ）へ下げる。候補を消さない（下げた候補しか残らなければ選び、送れば 1 回を使う）。理由は保護のあいだ `reach:protect:priority…`、保護の期間でなければ `reach:hold:priority…` |
+| V2-d（R0 の入力） | 選べるものに `pokemon` がある段（ポケモンの段）は、対象のカードがついたおもてのポケモンを、カードの段は対象のカードそのものを優先する（それぞれ均等に選ぶ） | 合うものがない・すべて合うなら均等（`reach:<goal>:R0:input_…:none|all:uniform`。既存の通常の入力生成と同じ） |
+
+- 対応づけは公開の参照だけで行う（`own_input_references`）。観測の自分の場のおもてのポケモンの `pokemon_id`・`card`・`card_id` と、そのエネルギーの `card`・`card_id` を読み、選べるものの
+  `pokemon`・`card`・`card_id` がすべて一致するときだけ優先する。表示の順・カードの名前では対応づけない。同じカード（コラッタ 2 匹・炎エネルギー 2 枚）も `pokemon`・`card` の参照で区別する
+- 参照が整数でない・欠ける項目、観測の中で同じ参照が 2 回出る項目（あいまい）は準備として数えない（推測しない）。うらのポケモンについているカードは数えない
+- 段の依存を保つ: ポケモンの段で選んだポケモンの番号をエピソードの中で覚え、あとのカードの段では、そのポケモンについている対象のカードだけを優先する。準備のないポケモンを選んだ（均等の結果）なら、
+  あとの段のカードも優先しない。選べるものの範囲・段ごとの許可・上流の選択による絞り込みは行動生成（`_allowed_ids`）のまま
+- 準備が見えても、特殊状態・使用回数・同じポケモン・エネルギーの種類・つける先の制限で拒否されることはありうる。方策は能力の合法性を確かめない（エンジンが決める。拒否は規則 5 の正常な拒否、
+  判定表にない理由は undetermined で、14.3 節の注意のまま）
+- P6 の目標の操作（うらのバトル場のにげる）の入力は版 1 と同じ均等（`target_input_cards` は P6 では空だけを許す）。にげる費用を方策で計算しない
+- 版 2 の方策の状態（`state()`。trace のエピソードと結果の `reach_state`）に `version`・`input_ready`・`input_cards_seen`（数だけ。参照の値は書かない）を加えた。版 1 の状態の形は変えない
+
+### 15.3 設定・方式・形式・道具の識別・旧計画との関係
+
+- 設定の検証は版ごと（`KEYS_BY_VERSION`）: 版 1 は今までの 8 項目、版 2 は `target_input_cards` を加えた 9 項目。知らない版（3・文字列・真偽値）・知らない項目・欠けた項目・
+  版 1 の設定の `target_input_cards`・版 2 の P6 の空でない `target_input_cards`・版 2 の P6 の空の `place_cards`・重なり・空の文字列は拒否する（別の版・方式へ読み替えない）
+- 方式（`batch.MODES`。両方の主体に同じ設定）:
+  - `reach2-p6`: `{"goal": "p6", "version": 2, "place_trainers": ["PMCG5-093"], "place_cards": ["PMCG1-052", "PMCG1-043"], "move_to_active": true, "protect_own_turns": 3, "tries_per_game": 1, "base": "rules-v2", "target_input_cards": []}`
+  - `reach2-u-r3a`: `{"goal": "u_r3a", "version": 2, "place_trainers": ["PMCG5-093"], "place_cards": ["PMCG4-012"], "move_to_active": false, "protect_own_turns": 3, "tries_per_game": 1, "base": "rules-v2", "target_input_cards": ["PMCG1-098"]}`
+  - どちらも方策 `reach`・プロファイル `boundary`・`rules_version` 2・`repeat_threshold` 2。カード ID はテストでカード定義と照らした（ディグダ・ケーシィはにげる 0 のたね、PMCG4-012 はたねで
+    特殊能力 0 の登録が `TakeEnergyToSelf`、PMCG1-098 は基本エネルギー）。共通の行動生成・範囲・判定にカード別の分岐は加えていない
+- 計画への固定: 局の `config.reach`（目標・版・対象のカード・入力の対象のカード・保護の番数・回数・土台）と方策の記録（`policies.*.version` 2・`distribution`
+  `reach-v2-goal+rules-v2-candidate+target-input-stage`・`reach`）が `plan.json` に入り、`plan.sha256` で固定される。再開の照合（`check_entry`）は方式の定義と局の設定の一致・設定の検証を当てる
+- 形式: 計画 `kyuura-vai-batch-plan/6`・完了 `kyuura-vai-batch-complete/6`・判定の規則 6 は変えない（J2-9）。TOOL_VERSION は 8
+- 道具の識別: 基点の `tools/verification_ai/*.py` の要約 `a8cd9783…`（`vai-batch-r1` の計画の値と同じ）→ 変更後 TOOL_VERSION 8・要約
+  `dbca28bd06ba4602a1f3c334f8b0154067149cf35a460777cb7e4e6865afceba`（変わったファイルは `batch.py`・`reach.py` だけ）。エンジンは 0.179.0・behavior_digest `67c4c15b…` のまま（r1 の計画と同じ）
+- 旧計画: TOOL_VERSION 7 で作った計画（`vai-batch-r1` など）は、形式 6 のままでも計画の実装識別（道具の版・要約）が今の道具と違うので、この道具では再開・完了の照合を拒否する
+  （`load_plan` の「実装識別が計画と違う」。テストで確かめた）。移行・上書きはしない。読むときは、それを作ったコミット（`de81f64` など）の道具で扱う。版 1 の方式 `reach-p6`・`reach-u-r3a` は
+  この道具でも同じ設定で計画を作れるが、道具の識別が違うので r1 の計画とは別の計画になる
+
+### 15.4 版 1・既存方策への非干渉
+
+- 版 1 の既存テスト 27 件は、TOOL_VERSION の期待値のほかは変えずに成功
+- 版 1 の代表的な同じ条件（`scripted_sequence`: R0・R1・R2・保護・基礎・submit の通知・復帰を含む）の選択・理由・乱数の消費・状態の指紋が、基点の `reach.py`（`1106e18` の写し）と今の `reach.py` で同じ
+  （reach-p6 `6f1bd13e…`・reach-u-r3a `228d096f…`。テストに固定）。証跡の側で、乱数の種を変えた 200 局×30 場面×2 方式もすべて同じ
+- 版 2 でも、試行を使ったあと・保護の期限のあとは rules-v2 と deep に戻る（15.5 節の fixture・人工の応答）
+- uniform・rules・mixed（`test_verification_ai_v2_repeat`）・boundary（`test_verification_ai_decklist_boundary`）の既存の行動の指紋は変えずに成功
+- 情報境界: 本人のうらのカードの `real`・相手の手札・相手の場の中身だけが違う双子で、選び方と乱数の消費が同じ。`reach.py` は `kyuura_engine` を import せず、文字列 `"real"` を読まず、
+  check・submit の結果・エンジンの状態・乱数の状態を読まない（構文木で確かめた）。複製の上の試行はしない
+
+### 15.5 fixture（構築盤面。new_game からの到達ではない）の入力・check・送信・結果・受理の中身
+
+共通の行動生成・`check`・`submit_checked`・共通の `judge` を使った（テストの `drive` と同じ流れ。方策は位置を選ぶだけ）。
+
+| fixture | 選んだ候補（規則） | 入力（段の理由） | check | 送信の結果 | 公開ログ・受理の中身・judge | 回数・復帰 |
+|---|---|---|---|---|---|---|
+| 秘策の盤面（`tests/test_secret_plan_v0_67` の board。手札に秘策・ディグダ・闘エネルギー） 1 | 秘策（R2） | 秘策 | 有効 | 受理 | — | 0 |
+| 同 2 | 秘策の決定の回答（rules-v2） | 置く数 1・ディグダ（`place:count1`・`place:card`） | 有効 | 受理 | — | 0 |
+| 同 3 | 通常のにげる（R1） | 入れ替え先 = うらのディグダ（`R1:face_down_new_active`）・闘エネルギー 2 枚 | 有効 | 受理 | — | 0 |
+| 同 4 | P6（R0） | 入れ替え先 = エビワラー（トラッシュの段は 0〜0） | 有効 | 受理 | `secret_plan_revealed` → `retreat`・**`p6_revealed_and_retreated`**・expected | 1・両方の主体が deep |
+| 秘策の盤面（手札に秘策・闘エネルギー。対象なし） | エネルギーをつける（rules-v2。R2 を当てない） | 均等 | 有効 | 受理 | — | 0 |
+| UR3A-RC（ベンチにうらのロケット団のヒトカゲ、炎・水エネルギーのコラッタ、闘エネルギー 2 枚のエビワラー） | うらの特殊能力（R0。準備が見える） | コラッタ（`R0:input_host`）→ 炎エネルギー（`R0:input_card`）。どちらも候補が 1 つで乱数を使わない | 有効 | 受理 | `secret_plan_revealed` → `pokemon_power` → `move_energy`・**`face_down_power_revealed_and_used`**・expected | 1・両方の主体が deep |
+| UR3A-RC（入力はケースの選び手 `fixtures_u_r3a.hitmonchan_fighting`。方策ではない） | うらの特殊能力（R0） | エビワラー → 闘エネルギー | 有効（構造だけ） | 拒否 | 公開ログの追加 0・**normal_rejection（invalid_input・`WRONG_ENERGY_TYPE`）** | 1（submit を呼んだので達成）・両方の主体が deep |
+
+- UR3A-RC と同じ形の人工の応答で、版 2 の方策は乱数の種を 8 つ変えてもコラッタ・炎エネルギーを選んだ（エビワラー・闘エネルギーを選ばない）
+- 保護の期限（主体ごと 3 番・同じ番では増えない・うらのカードが消えても数え直さない・期限は該当の主体だけ）と、局全体で 1 回（2 回目の通知では増えない）は人工の応答で確かめた
+- 観測の記録・公開ログ・judge への伝播: 短い本物の 1 局（固定デッキ・操作 40。秘策・ヒトカゲはないので到達を狙わない）で、版 2 の設定・状態が結果・trace・観測の記録（`observe/summary.json` が complete）・
+  `reach_report` に届くことを確かめた。fixture の実行は new_game からの到達に数えない
+
+### 15.6 テスト・失敗・修正・再実行
+
+- 関連テストを 1 モジュールずつ別プロセスで実行し、出力・終了コード・JUnit を保存した: `test_verification_ai_reach_v2` 27・`reach` 27・`er9_evidence` 7・`v2_repeat` 16・`decklist_boundary` 23・
+  `batch` 27・`batch_judge` 11・`u_r3a` 12・`v0176_follow` 11 の 9 モジュール 161 件。すべて成功（失敗 0・エラー 0・スキップ 0）
+- 開発中の失敗: 新しいモジュールの 1 回目は失敗 4（どれもテストの誤り。期待の規則の名前 2、WRONG_ENERGY_TYPE の fixture で検証者の側の診断を記録に写していなかった 1、参照の欠けの場面の
+  理由の文字列の主張が細かすぎた 1）。テストだけ直して 2 回目に 27 件成功。方策のコードは直していない。成功したモジュールは繰り返していない
+- 作業の失敗（記録だけ）: パッチの当て方（Bash の heredoc）が構文の誤りで何も書かずに止まった → スクリプトのファイルにして当て直した。比べの出力の場所の指定を相対にして worktree に書かれた → すぐ証跡へ移した。
+  識別のスクリプトに r1 の計画の場所を誤って渡して止まった（何も書いていない）→ 直して再実行
+
+### 15.7 未確認・既存の限界
+
+- `L67-URC` の `deck_problems`・`content_sha256`・展開の sha256、規約集合 CS-KYUURA-CURRENT@1 での PMCG4-012・PMCG1-098 の扱い（計画を作るときに確かめる。今回はしていない）
+- new_game からの到達の頻度（fixture は構築盤面）。実際の対戦の観測で、選べるものの参照と観測の参照がいつも一致するか（UR3A-RC と人工の応答で確かめた。一致しなければ均等に戻るので止まらない）
+- ヒトカゲが特殊状態で拒否された場合、判定表にない理由なので undetermined になり既定の方針で止まる見込み（14.3 節。判定は変えていない）
+- 準備のない目標の候補は除かないので、ほかの候補がない場面では送って 1 回を使いうる（end_turn がある場面ではまず起こらない）
+- 既存の限界（14.10 節。今回は直していない）: r1 のメモリのピーク約 798 MB、trace のエピソードの `reach` は状態を更新する前の値
+
+### 15.8 4 局の実行の前に残る確認（次の実行の単位）
+
+1. `L67-URC` の明示リストのファイルを作り、`decklist`（`deck_problems`）で合法性と確認値を確かめる（不合格なら実行しない）
+2. この作業ブランチのコミットから `batch plan` で確定計画（`vai-batch-r2`・seed 4201・4202・方式 `reach2-p6`・`reach2-u-r3a`・観測の記録つき・14.7 節の上限と停止方針）を作り、
+   `plan.sha256`・道具の識別（TOOL_VERSION 8・要約）・エンジンの識別を記録する
+3. 計画の局の `config.reach` と方策の記録が 15.3 節の値と同じか、計画の作成の前後で既存の証跡のマニフェストを照らす
+4. 実行の承認（4 局。未到達でも局・seed・条件を足さない）
+
+### 15.9 証跡
+
+`C:/dev/kyuura-engine-verification-vai/verifier/runs/vai-reach-r2-impl/`（新しく作った。既存の証跡は書き換えていない）:
+
+- `00_plan.md`（事前計画。変更の前に保存）・`commands.txt`（コマンド・終了コード・失敗と再実行）
+- `dev_dump_ur3a_rc.py`・`.json`（開発中の確認。送らない）、`reach_1106e18.py`（基点の版 1）・`compare_v1_old_new.py`・`.json`（版 1 の前後の比べ）
+- `tests/`（`dev1_*`・`dev2_*`・`run1_*` の出力・JUnit の XML・終了コード）・`junit_run.py`・`run_tests.sh`
+- `fixture_results.py`・`.json`（fixture の入力・check・送信・結果・受理の中身。本当のカードを含むので検証者の側だけ）
+- `identity.py`・`identity.json`・`tools_1106e18.tar`（道具・エンジンの識別の前後）
+- `public/runs/vai-reach-r2-impl/summary.json`: 確かめた件数と状態だけ（seed・局の識別・カード ID・選択の中身なし）
+- マニフェスト: 既存の 3,729 項目を照らして不一致 0、46 項目を追加して 3,775 項目。`sha256.json` は `9efba97d…18b44518` から
+  `26b66ffc73a14639ab09f4f5b79e6c727bcf8e48562ca07f01477bd81b300121`（更新のログは証跡の外の作業用ディレクトリ）
