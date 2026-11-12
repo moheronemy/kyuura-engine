@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import ctypes
+import copy
 import hashlib
 import json
 import os
@@ -34,10 +35,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
-PLAN_FORMAT = "kyuura-vai-batch-plan/5"  # 5: 局のデッキの記録（固定デッキ・明示リスト。展開の順・確認値・deck_problems の結果）・方式 boundary・方策とプロファイルの組の照合（docs/verification-ai-decklist.md）。4: 主体別の観測の記録の設定 observation（docs/verification-ai-observation.md）。3 は C1・C2（undetermined の分類に accepted_content_unrecorded）・2 は 99 局 vai-batch-b2・1 は 30 局の初回 vai-batch-b1
-COMPLETE_FORMAT = "kyuura-vai-batch-complete/5"  # 5: 証跡の判定 evidence（complete_without_stop・complete_with_stop）。照合で停止の理由を要約から計算し直す。4: 要約に主体別の観測の記録の状態（observation。有効な計画だけ）。3 は C1・C2（受理の中身の種類ごとの件数）・2 は vai-batch-b2
+PLAN_FORMAT = "kyuura-vai-batch-plan/6"  # 6: 到達目的の方策 reach の方式（reach-p6・reach-u-r3a）と設定 config.reach・方式と局の設定の一致の照合（docs/verification-ai-reach-policy.md 12 章）。形式 5 以前の計画は再開しない（移行・上書きしない。それを作った版の道具で扱う）。5: 局のデッキの記録（固定デッキ・明示リスト。展開の順・確認値・deck_problems の結果）・方式 boundary・方策とプロファイルの組の照合（docs/verification-ai-decklist.md）。4: 主体別の観測の記録の設定 observation（docs/verification-ai-observation.md）。3 は C1・C2（undetermined の分類に accepted_content_unrecorded）・2 は 99 局 vai-batch-b2・1 は 30 局の初回 vai-batch-b1
+COMPLETE_FORMAT = "kyuura-vai-batch-complete/6"  # 6: 計画の形式 6 に合わせた（マーカーの項目は 5 と同じ）。5: 証跡の判定 evidence（complete_without_stop・complete_with_stop）。照合で停止の理由を要約から計算し直す。4: 要約に主体別の観測の記録の状態（observation。有効な計画だけ）。3 は C1・C2（受理の中身の種類ごとの件数）・2 は vai-batch-b2
 TOOL_NAME = "tools.verification_ai.batch"
-TOOL_VERSION = 6  # 6: 明示的なデッキリスト・方式 boundary・観測の記録の要約の欠けで止める（docs/verification-ai-decklist.md）。5: 主体別の観測・更新・公開ログの記録（observe。計画で有効にしたときだけ）。4 は judge の規則 6（docs/verification-ai-batch-plan3.md 11 章）。3 は C1・C2（9385cc3）
+TOOL_VERSION = 7  # 7: 到達目的の方策 reach 版 1（tools/verification_ai/reach.py）・runner の範囲のプロファイルの問い合わせと submit の通知・到達の段の集計 reach_report。6: 明示的なデッキリスト・方式 boundary・観測の記録の要約の欠けで止める（docs/verification-ai-decklist.md）。5: 主体別の観測・更新・公開ログの記録（observe。計画で有効にしたときだけ）。4 は judge の規則 6（docs/verification-ai-batch-plan3.md 11 章）。3 は C1・C2（9385cc3）
 
 # 方式（計画を作るときだけ使う。計画には Config の全項目を展開して書くので、ここを後で変えても既存の計画の局は変わらない）
 MODES: dict[str, dict[str, Any]] = {
@@ -48,13 +49,21 @@ MODES: dict[str, dict[str, Any]] = {
     "mixed": {"policy": "mixed", "rules_version": 2, "epsilon": 0.25, "repeat_threshold": 2},
     # V3-2 の boundary（方策 BoundaryPolicy とプロファイル boundary の組。docs/verification-ai-v3-2.md 4 章）。処理可能性の区分を均等に選び、その中で候補を均等に選ぶ
     "boundary": {"policy": "boundary", "profile": "boundary"},
+    # 到達目的の方策 reach 版 1（docs/verification-ai-reach-policy.md）。土台は rules-v2。目標を試すあいだのプロファイルは boundary（試行・保護のあとは deep。runner が方策に問う）。
+    # カード ID は実行の設定（config.reach）だけに置き、共通の行動生成・範囲・判定には入れない。両方の主体に同じ設定
+    "reach-p6": {"policy": "reach", "profile": "boundary", "rules_version": 2, "repeat_threshold": 2,
+                 "reach": {"goal": "p6", "version": 1, "place_trainers": ["PMCG5-093"], "place_cards": [], "move_to_active": True, "protect_own_turns": 3,
+                           "tries_per_game": 1, "base": "rules-v2"}},
+    "reach-u-r3a": {"policy": "reach", "profile": "boundary", "rules_version": 2, "repeat_threshold": 2,
+                    "reach": {"goal": "u_r3a", "version": 1, "place_trainers": ["PMCG5-093"], "place_cards": ["PMCG1-049"], "move_to_active": False,
+                              "protect_own_turns": 3, "tries_per_game": 1, "base": "rules-v2"}},
 }
 STAGE_DISTRIBUTION = "uniform-candidate+uniform-stage"  # policies.STAGE と同じ値（テストで一致を確かめる）
 TUPLE_DISTRIBUTION = "uniform-candidate+uniform-tuple"  # policies.TUPLE と同じ値
 # 方策・プロファイル・分布の組（既存の実装で定義した組だけ）。ほかの組（rules・mixed・uniform の boundary プロファイル、boundary の方策の deep など）は計画を作るときに拒否し、
 # 別の方式へ読み替えない
 SUPPORTED_SETTINGS = (("uniform", "deep", STAGE_DISTRIBUTION), ("uniform", "deep", TUPLE_DISTRIBUTION), ("rules", "deep", STAGE_DISTRIBUTION),
-                      ("mixed", "deep", STAGE_DISTRIBUTION), ("boundary", "boundary", STAGE_DISTRIBUTION))
+                      ("mixed", "deep", STAGE_DISTRIBUTION), ("boundary", "boundary", STAGE_DISTRIBUTION), ("reach", "boundary", STAGE_DISTRIBUTION))
 DEFAULT_DECKS = {"0": "hitmonchan-dewgong", "1": "venusaur-parasect"}
 PRESET_EXPANSION = "preset-entries-in-order/1"  # 固定デッキ: PresetDeck.cards()（登録の項目の並びのまま。decklist.EXPANSION と同じ規則）
 
@@ -64,6 +73,17 @@ def setting_problems(config: dict[str, Any]) -> list[str]:
     combo = (config.get("policy"), config.get("profile"), config.get("distribution"))
     if combo not in SUPPORTED_SETTINGS:
         return [f"方策・プロファイル・分布の組 {list(combo)} は定義していない（定義した組 {[list(c) for c in SUPPORTED_SETTINGS]}）"]
+    if config.get("policy") == "reach":
+        from .reach import ReachSettingsError, validate_settings
+
+        try:
+            validate_settings(config.get("reach"))
+        except ReachSettingsError as error:
+            return [f"reach の設定が不正: {error}"]
+        if config.get("rules_version") != 2:
+            return ["reach の土台は rules-v2（rules_version 2）"]
+    elif config.get("reach") is not None:
+        return ["reach の設定は方策 reach のときだけ"]
     return []
 
 # 局の終わり方（runner の分類）と停止方針。KeyboardInterrupt・SystemExit・MemoryError は分類に入らない（対戦の結果に変えない）
@@ -304,7 +324,7 @@ class EngineAdapter:
         out = {}
         for actor, p in make_policies(config).items():  # 作るだけ（乱数を引かない）
             item = {"name": p.name, "version": p.version, "distribution": p.distribution, "seed": p.seed}
-            for attr in ("epsilon", "mix_seed", "rules_version", "threshold"):
+            for attr in ("epsilon", "mix_seed", "rules_version", "threshold", "reach"):
                 if getattr(p, attr, None) is not None:
                     item[attr] = getattr(p, attr)
             if getattr(p, "memory", None) is not None:
@@ -331,7 +351,7 @@ class EngineAdapter:
             raise BatchRefused(illegal)
         explicit = any(spec["kind"] == "decklist" for spec in specs.values())
         config = Config(deck0=deck0, deck1=deck1, conventions=key, game_seed=seed, policy_seed=seed, host_seed=seed, limits=Limits(**(game_limits or {})),
-                        run_id=game_id, decklists=(tuple(cards["0"]), tuple(cards["1"])) if explicit else None, **options)
+                        run_id=game_id, decklists=(tuple(cards["0"]), tuple(cards["1"])) if explicit else None, **copy.deepcopy(options))
         expanded = json.loads(canonical(asdict(config)))
         problems = setting_problems(expanded)
         if problems:
@@ -354,6 +374,15 @@ class EngineAdapter:
 
         gid = entry["game_id"]
         problems = [f"{gid}: {p}" for p in setting_problems(entry["config"])]
+        mode = MODES.get(entry.get("mode"))
+        if mode is None:
+            problems.append(f"{gid}: 知らない方式 {entry.get('mode')!r}")
+        else:  # 方式の定義（reach の目標・版・保護・回数を含む）と局の設定が同じか（計画を作ったあとで変えていないか）
+            differ = sorted(k for k, v in mode.items() if entry["config"].get(k) != v)
+            if differ:
+                problems.append(f"{gid}: 局の設定 {differ} が方式 {entry.get('mode')} の定義と違う")
+        if problems:
+            return problems
         config = self.config_of(entry)
         decks = entry.get("decks") or {}
         explicit = any((decks.get(side) or {}).get("kind") == "decklist" for side in ("0", "1"))

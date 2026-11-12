@@ -294,7 +294,7 @@ class PlanDeckTest(Tmp):
     def test_old_plan_formats_are_not_resumed(self):
         self.make()
         bdir = B.batch_dir(self.tmp, "p")
-        for fmt in ("kyuura-vai-batch-plan/4", "kyuura-vai-batch-plan/3"):
+        for fmt in ("kyuura-vai-batch-plan/5", "kyuura-vai-batch-plan/4", "kyuura-vai-batch-plan/3"):  # 5 は reach の前の形式（道具の TOOL_VERSION 6）
             with self.subTest(fmt):
                 self.tamper(bdir, lambda p: p.__setitem__("format", fmt))
                 with self.assertRaises(B.BatchRefused):

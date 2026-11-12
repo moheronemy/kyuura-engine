@@ -24,6 +24,7 @@ from . import actions as B
 from .judge import accepted_content_check, is_face_down_power, judge_normal, judge_recorded_accepted_content, judge_run_termination
 from .metrics import Metrics, repetition_summary
 from .policies import STAGE, TUPLE, BoundaryPolicy, MixedPolicy, RulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
+from .reach import ReachBudget, ReachPolicy
 from kyuura_engine.replay_record import checks
 
 from .records import RecordingGame, canonical
@@ -93,6 +94,7 @@ class Config:
     repeat_threshold: int = 2  # V2 の補完: rules-v2 の閾値（同じ番の同じ操作の受理の回数）
     run_id: str = "v0"
     decklists: tuple | None = None  # V3-2: 固定デッキの代わりに使うデッキリスト（2 つ。None なら deck0・deck1 の固定デッキ）
+    reach: dict | None = None  # 到達目的の方策 reach の設定（policy が reach のときだけ。reach.validate_settings。docs/verification-ai-reach-policy.md）
 
 
 class SubmitWithoutCheck(Exception):
@@ -185,7 +187,8 @@ class Runner:
                                       **({"epsilon": p.epsilon, "mix_seed": p.mix_seed, "episodes": dict(p.episodes), "rules_version": p.rules_version}
                                          if isinstance(p, MixedPolicy) else {}),
                                       **({"repeat_threshold": p.memory.threshold, "demote_after": p.memory.demote_after}
-                                         if isinstance(p, RulePolicy) and p.memory is not None else {})}
+                                         if isinstance(p, RulePolicy) and p.memory is not None else {}),
+                                      **({"reach": p.reach, "reach_state": p.state()} if isinstance(p, ReachPolicy) else {})}
                              for k, p in self.policies.items()},
                 "limits": asdict(self.limits), "elapsed_seconds": round(self.clock() - self._started, 3),
                 "distribution": self.config.distribution, "metrics": self.metrics.to_dict(),
@@ -339,7 +342,9 @@ class Runner:
             if cands["situation"] != L.ACTOR_TO_ACT:
                 raise _Stop(INCONSISTENCY, {"reason": "waiting_actor_not_to_act", "actor": actor, "situation": cands["situation"],
                                             "empty_reason": cands["empty_reason"]})
-            in_scope, scope, reasons = self._scope(cands, unbuildable)
+            # reach: 範囲のプロファイルを方策に問う（目標を試すあいだは boundary、試行を使ったあと・保護を使い切ったあとは deep）。ほかの方策は計画のプロファイルのまま
+            profile = policy.scope_profile(own_view) if hasattr(policy, "scope_profile") else self.config.profile
+            in_scope, scope, reasons = self._scope(cands, unbuildable, profile)
             self.metrics.fetch(self.position, cands, in_scope, reasons)
             if not in_scope:
                 raise _Stop(INPUT_UNAVAILABLE, {"actor": actor, "empty_reason": cands["empty_reason"], "scope": scope,
@@ -354,8 +359,10 @@ class Runner:
             candidate = in_scope[index]
             self.metrics.selected(candidate)
             kind = candidate["kind"]
-            allowed = B.FALLBACK_PROCESSABILITY if scope["fallback_unverified"] or self.config.profile == "boundary" else B.DEEP_PROCESSABILITY
+            allowed = B.FALLBACK_PROCESSABILITY if scope["fallback_unverified"] or profile == "boundary" else B.DEEP_PROCESSABILITY
             entry = self._attempt(actor, candidate, reason, scope)
+            if hasattr(policy, "scope_profile"):
+                entry["scope_profile"] = profile
             log = {"type": "attempt", "n": entry["n"], "position": self.position, "candidates": response,
                    "choice": {"candidate": candidate["id"], "reason": reason}}
             self.actor_logs[actor].append(log)
@@ -408,7 +415,7 @@ class Runner:
                 choices, picks, meaning = [], [], []
                 self.metrics.built(kind, [], None)
             entry.update({"build": "ok", "choices": choices, "picks": picks, "meaning": meaning})
-            if self.config.profile == "boundary":  # V3-2: 候補の区分と完成した入力の区分を分けて記録する
+            if profile == "boundary":  # V3-2: 候補の区分と完成した入力の区分を分けて記録する
                 entry["candidate_class"] = candidate.get("processability")
                 entry["input_processability"] = B.input_processability(stages, choices)
             log["choice"].update({"choices": choices, "picks": picks})
@@ -456,6 +463,8 @@ class Runner:
             operation_id = f"{self.config.run_id}-{self.counters['operations'] + 1:06d}"
             self.last_result = None
             sent = submit_checked(endpoint, handle, choices, checked, operation_id=operation_id)
+            if hasattr(policy, "notify_submit"):  # reach: submit を実際に呼んだことだけを送った主体の方策へ（送った候補と操作の鍵。結果は渡さない）
+                policy.notify_submit(candidate, key)
             self.counters["operations"] += 1
             entry["operation_id"] = operation_id
             entry["submit"] = self._submit_entry(sent)
@@ -543,7 +552,7 @@ class Runner:
             out["verifier"] = {"diagnostic_id": r.diagnosis.diagnostic_id, "category": r.diagnosis.category, "engine_code": r.verifier.engine_code}
         return out
 
-    def _scope(self, cands: dict[str, Any], unbuildable: dict[str, str]):
+    def _scope(self, cands: dict[str, Any], unbuildable: dict[str, str], profile: str | None = None):
         """プロファイル deep の範囲（仕様 4.5 節）: 処理可能性が supported・may_stop_later、入力を返す、表示だけでない候補。範囲の中に候補がなければ、
         unverified も許す（deep_fallback_unverified として記録）。範囲から除いた候補は理由ごとに数える。入力を作れなかった候補は、同じ状態では選び直さない。"""
         display = set(cands["coverage"]["display_only_kinds"])
@@ -571,7 +580,7 @@ class Runner:
                     reasons[c["id"]] = why
             return chosen
 
-        if self.config.profile == "boundary":  # V3-2: unverified を範囲に入れる（表示だけ・入力を返さない・実行できない区分は外したまま）
+        if (profile or self.config.profile) == "boundary":  # V3-2: unverified を範囲に入れる（表示だけ・入力を返さない・実行できない区分は外したまま）
             chosen = pick(B.FALLBACK_PROCESSABILITY)
             return chosen, {"in_scope": len(chosen), "excluded": excluded, "fallback_unverified": False, "profile": "boundary"}, reasons
         chosen = pick(B.DEEP_PROCESSABILITY)
@@ -669,6 +678,15 @@ def make_policies(config: Config, policy_factory=None) -> dict[Any, Any]:
         host = UniformPolicy(host_seed(config.host_seed), STAGE)
     elif config.policy == "rules":
         players = {p: RulePolicy(player_seed(config.policy_seed, p), version=config.rules_version, threshold=config.repeat_threshold) for p in (0, 1)}
+        host = UniformPolicy(host_seed(config.host_seed), STAGE)
+    elif config.policy == "reach":
+        if config.rules_version != 2:
+            raise ValueError("reach の土台は rules-v2（rules_version 2）")
+        if config.reach is None:
+            raise ValueError("reach の設定（config.reach）がない")
+        budget = ReachBudget(config.reach.get("tries_per_game") if isinstance(config.reach, dict) else None)  # 局ごとの 1 回（両方の主体で共有する実行の制御）
+        players = {p: ReachPolicy(player_seed(config.policy_seed, p), actor=p, settings=config.reach, budget=budget, threshold=config.repeat_threshold)
+                   for p in (0, 1)}
         host = UniformPolicy(host_seed(config.host_seed), STAGE)
     elif config.policy == "mixed":
         players = {p: MixedPolicy(player_seed(config.policy_seed, p), epsilon=config.epsilon, mix_seed_text=mix_seed(config.policy_seed, p),
