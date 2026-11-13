@@ -421,7 +421,7 @@ class PlanV2Test(unittest.TestCase):
     def test_plan_fixes_version_2_settings_and_identity(self):
         plan = self.plan("p")
         self.assertEqual((plan["format"], B.COMPLETE_FORMAT, B.TOOL_VERSION, plan["identity"]["tool"]["version"]),
-                         ("kyuura-vai-batch-plan/6", "kyuura-vai-batch-complete/6", 8, 8))
+                         ("kyuura-vai-batch-plan/6", "kyuura-vai-batch-complete/6", 9, 9))  # 9: 判定の規則 7（reach 版 2 の設定・選び方は同じ）
         for entry, settings in zip(plan["games"], (P6_V2, UR_V2)):
             self.assertEqual((entry["config"]["policy"], entry["config"]["profile"], entry["config"]["rules_version"], entry["config"]["reach"]),
                              ("reach", "boundary", 2, settings))

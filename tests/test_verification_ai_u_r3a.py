@@ -169,7 +169,7 @@ class JudgeTest(unittest.TestCase):
         return J.judge_normal(candidate, meaning(*chosen), sub, stages=two_stage() if stages is None else stages)
 
     def test_version(self):
-        self.assertEqual(J.JUDGE_RULES_VERSION, 6)  # 規則 6（C1 の確認）は規則 5 の中身を変えていない
+        self.assertEqual(J.JUDGE_RULES_VERSION, 7)  # 規則 6（C1 の確認）・規則 7（LOST_TARGET の P1。うらの使い手は対象外）は規則 5 の中身を変えていない
 
     def test_face_down_power_rejections(self):
         cat = J._catalog_category

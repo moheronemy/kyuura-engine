@@ -224,7 +224,7 @@ class JudgeTest(unittest.TestCase):
         for label, (submit, verdict) in cases.items():
             with self.subTest(label):
                 self.assertEqual(J.judge_normal(c, [], submit, stages=[])[0], verdict)
-        self.assertEqual(J.JUDGE_RULES_VERSION, 6)  # この追従では判定の規則を変えていない（規則 6 はあとの C1 の確認）
+        self.assertEqual(J.JUDGE_RULES_VERSION, 7)  # この追従では判定の規則を変えていない（規則 6 はあとの C1 の確認、規則 7 はあとの LOST_TARGET の P1）
 
 
 class FingerprintTest(unittest.TestCase):

@@ -162,7 +162,7 @@ class CheckSubmitJudgeTest(unittest.TestCase):
         self.assertIn(J.FACE_DOWN_REASON, notes)
         self.assertEqual(J.judge_halt_after_accept({"category": D.UNMAPPED, "diagnostic_id": "X"})[0], J.SUSPECT)  # 受理のあとの停止は別に読む
         self.assertEqual(J.judge_halt_after_accept({"category": D.RULING_UNRESOLVED, "diagnostic_id": stop})[0], J.UNDETERMINED)
-        self.assertEqual(J.JUDGE_RULES_VERSION, 6)  # この追従では判定の規則を変えていない（規則 6 はあとの C1 の確認）
+        self.assertEqual(J.JUDGE_RULES_VERSION, 7)  # この追従では判定の規則を変えていない（規則 6 はあとの C1 の確認、規則 7 はあとの LOST_TARGET の P1）
 
 
 class FingerprintTest(unittest.TestCase):

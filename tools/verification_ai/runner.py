@@ -21,7 +21,7 @@ from kyuura_engine.client_api import ClientHub
 from kyuura_engine.observation import visible_log
 
 from . import actions as B
-from .judge import accepted_content_check, is_face_down_power, judge_normal, judge_recorded_accepted_content, judge_run_termination
+from .judge import accepted_content_check, is_face_down_power, judge_normal, judge_recorded_accepted_content, judge_run_termination, submit_evidence
 from .metrics import Metrics, repetition_summary
 from .policies import STAGE, TUPLE, BoundaryPolicy, MixedPolicy, RulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
 from .reach import ReachBudget, ReachPolicy
@@ -475,7 +475,10 @@ class Runner:
             self._cover("outcome", outcome)
             self.metrics.submitted(kind, outcome, (sent.get("result") or {}).get("status") if outcome == D.ACCEPTED else None)
             if self.negative is not None:
-                verdict, why = judge_normal(candidate, meaning, entry["submit"], stages=stages)  # 規則 4: P6 の段は stages の cost_evaluation で分ける
+                # 規則 6・7: 逐次バッチ（batch.judge_trace）と同じ入口・同じ値（この送信の行・trace・本人の送信前の観測 actor_logs・記録の header）で根拠を決める。
+                # 判定のための observe・candidates・inputs・check・submit はしない（既に取って保存した値だけ）
+                evidence = submit_evidence(entry, trace=self.trace, actor_logs=self.actor_logs, header=self._record_header)
+                verdict, why = judge_normal(candidate, meaning, entry["submit"], stages=stages, evidence=evidence)  # 規則 4: P6 の段は stages の cost_evaluation で分ける
                 entry["judge"] = {"verdict": verdict, "reasons": why}
             content_check = accepted_content_check(entry)
             if content_check is not None:
@@ -523,6 +526,15 @@ class Runner:
             self._after_refusal_like(entry, actor)
             if rejections >= self.limits.rejections_per_position:
                 raise _Stop(NO_PROGRESS, {"actor": actor, "reason": "rejections_per_position", "rejections": rejections})
+
+    def _record_header(self) -> dict[str, Any] | None:
+        """規則 7 の L12 だけが読む、今の対戦の完全な記録の header（識別と依存）。記録を持たない対戦（テストの fixture など）では None。"""
+        record = getattr(self.game, "record", None)
+        if not callable(record):
+            return None
+        from .batch import record_header
+
+        return record_header(record())
 
     def negative_stop(self, detail: dict[str, Any]) -> None:
         """V3-1: 変異の前後で副作用の疑いがあれば、その対戦の通常の進行を止める（前後の証跡は変異の記録にある）。"""
