@@ -18572,13 +18572,26 @@ class DiscardAttachedEnergyTrainer(TrainerEffect):
         opponent = 1 - use.player
         if stage == 2:
             _, target = state.find_pokemon(choices[0])
+            self._require_not_keep_voided(state, use, target)  # v0.181: 指定でおもてにした（段階 3 の決定を出す前）
             push_trainer_decision(state, use, kind=DISCARD_OPPONENT_ENERGY, player=use.player, options=tuple(target.energy),
                                   min_choices=self.opponent_cards, max_choices=self.opponent_cards, context=(("stage", 3), ("target", target.pokemon_id)))
             return
         holders = [p for p in state.players[opponent].in_play() if any(uid in p.energy for uid in choices)]
         if len(holders) != 1:
             raise RuntimeError(f"はがすエネルギーカード {choices} が、相手の場のポケモン 1 匹についていない（エンジンの不具合）")
+        self._require_not_keep_voided(state, use, holders[0])  # v0.181: 指定でおもてにした（トラッシュする前）
         discard_attached_energy_cards(state, opponent, holders[0], choices, trainer=use.card, user=use.player)
+
+    def _require_not_keep_voided(self, state: GameState, use: TrainerUse, pokemon: PokemonInPlay) -> None:
+        """v0.181（docs/keep-designated-energy-removal-v0.181.md）: 答えで選んだ相手のポケモン（選んだエネルギーカードのついているポケモン）が、今の場で［KEEP］によって
+        このトレーナーのトラッシュする効果がなくなるなら、決定の時点の KP1（``_voided``・``unresolved_choices``）と同じ通常の拒否（``KEEP_TARGET_CODE``）。
+
+        決定を出す時点では、うらのカード（マチスの秘策）は特殊能力を持たないので［KEEP］を数えない。答えでそのうらを効果の対象として指定し（``engine._designate_answer``）、
+        おもてにした本当のカードが［KEEP］を持つたねなら、ここで初めてはたらく。トラッシュの効果がなくなる対象を選んだときの扱いは KP1 と同じ記録で決まらない問いなので、
+        効果なしで受理せずに止める（状態は ``_apply_once`` の複製の上なので、呼び出し元は変わらない。理由の文に本当のカードを書かない）。おもての［KEEP］は決定の時点で KP1
+        の選択になっているので、ここには来ない。"""
+        if pokemon.energy and energy_discard_void(state, pokemon, cause=DISCARD_BY_TRAINER, by_player=use.player) is not None:
+            raise UnsupportedError(KEEP_TARGET_CODE, KEEP_TARGET_REASON)
 
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
         what = f"トレーナー {use.card_id}"
