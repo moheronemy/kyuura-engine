@@ -5508,3 +5508,12 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 大量対戦へ向けた資源と実行予算の設計（2026-11-13。保存済みの 8 バッチ・コードの読み取りと集計だけ。実装・対戦なし）: 時間・メモリ（プロセスの累積ピーク）・証跡の量の整理、保持・再開の照合・上限の構造、次の 2 計画の下書き（通常の進行 30 局・観測なし、到達目的 12 局・観測あり。合計 900 秒・1792 MiB。現行の道具のまま実行でき、保存方式の変更は不要）。[verification-ai-scale-budget.md](verification-ai-scale-budget.md)
 - 資源設計の推奨案の実行 `vai-batch-s1`・`vai-batch-s2`（2026-11-13。L67-URC 同士。A は rules-v2・boundary の 30 局・観測なし、B は reach2 の 12 局・観測あり。1 局ずつ実行し、局の間で容量を確認）: 42 局が完了し、停止・予算や容量による終了はなし。replay は期待どおりで、累積 237.5 秒・209.2 秒。B の目標の実送信は P6 4 局・U-R3a 1 局で、すべて受理。[verification-ai-scale-budget.md](verification-ai-scale-budget.md) 9 章
 - `vai-batch-s1` の拒否 8・undetermined 2・再送回避 5 の保存済みの記録による確認（2026-11-13。調査・文書化だけ）: 拒否は 8 件ともエンジンの rejected で、契約・裁定・judge と一致 5・judge の根拠が未登録 3（undetermined 2 を含む）。判定の不一致・情報漏れらしいものは 0。契約の文面の不一致 1（うらのバトル場のワザの候補の guarantees）。[verification-ai-batch-s1-rejection-audit.md](verification-ai-batch-s1-rejection-audit.md)
+
+## v0.180: S1 監査の F-1（うらのバトル場のワザの候補の保証の文を実装に合わせる）
+
+- `legal_actions.GUARANTEE_FACE_DOWN_ATTACK` を新しく作り、`_attack_candidate` でバトル場がうら（公開）のときだけ付ける。0.179.0 までは、check_use_attack を呼ばないうらの分岐に、おもての `GUARANTEE_ATTACK`（check_use_attack を使う）を付けていた。新しい文は、check_use_attack と先読みを呼ばない・check は形だけ・受理・必要なエネルギー・ワザの実行の完了を保証しない・受理のあとを予告しない、とする。本当のカードでは分けない
+- 直したのは保証の文と実装の対応だけで、ゲームの処理・拒否の判定・裁定は変えていない。候補・入力・check・submit・状態遷移・乱数、おもてのワザの保証、judge（規則 6）は同じ。S1 監査の「不具合らしいものなし」は、ゲームの処理と拒否の判定の範囲の結論
+- 確かめ: 修正の前後の応答の比べ（差は、うらの 4 例の `guarantees` の 4 項目だけ）、新しいテスト `tests/test_legal_actions_f1_v0_180.py`（8 件。元の文に戻すと失敗）、関連の 10 モジュール、版のあとの `preset_decks_v0_20`・`distribution`。検証用 AI の `v2_repeat` の行動・契約の値の指紋は変わらない（固定値は更新していない）。配布物の照らし（required=62・problems=0）、固定コミット `27ba35d7d325aabe4a8804c57e095e00fc3b81c6` の通常のインストールとスモーク
+- 版は 0.180.0（`behavior_digest` が変わった。`instrumentation_digest`・道具の識別・判定の規則の版は同じ）。0.179.0 の記録・スナップショットは 0.180.0 では再実行・復元できない（既存の設計）
+- 残る: GUI の追従、LOST_TARGET の根拠の登録（judge の規則 7）、ほかの保証の文の整理
+- 詳細: [legal-actions-f1-face-down-attack-guarantee.md](legal-actions-f1-face-down-attack-guarantee.md)

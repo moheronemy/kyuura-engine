@@ -93,6 +93,8 @@
   - processability（unverified）、理由（`face_down_reveal_not_evaluated`）、acceptance（保証しない）は実際と合っています。
   - 拒否も judge の判定も変わりません。ただし、文面だけを読むと、エネルギーの費用が確かめ済みだと誤読しえます。
   - 証跡 `finding_F1_face_down_attack_guarantee.md` に記録しました。直すのは、API の別の単位です。
+  - **v0.180.0 で直しました**（[legal-actions-f1-face-down-attack-guarantee.md](legal-actions-f1-face-down-attack-guarantee.md)）。うらの分岐だけに実装に合う保証の文を付け、候補・入力・判定・裁定は変えていません。
+- この監査の「不具合らしいものは見つからなかった」は、ゲームの処理と拒否の判定に不整合が見つからなかった、という範囲の結論です。F-1 の保証の文の不一致は、それとは別に記録したものです。
 - 情報漏れらしいものは見つかりませんでした。
   - R3・R4 の本当のカードは、送った本人のカードです。
   - 拒否の理由の文に本当のカードは入らず、ほかの閲覧者への更新も出ていません。
