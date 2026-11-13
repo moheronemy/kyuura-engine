@@ -5533,3 +5533,10 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 保存済みの s1・r1 への当て直し（2026-11-14。判定・比較だけ）: 記録時の判定の基礎は今と同じ（basis 一致）。変わったのは s1 の P1 の 2 行だけ（undetermined → known_stop）。r1 の P3 は undetermined のまま。ほかの行・受理の中身・終わり方は同じ。元の証跡は変えていない（設計文書 14 章）
 - 残る: P2・P3 の登録
 - 詳細: [verification-ai-lost-target-own-face-down-design.md](verification-ai-lost-target-own-face-down-design.md) 13 章
+
+## 検証用 AI: LOST_TARGET の P3 の根拠登録の設計（2026-11-14。設計だけ・未実装）
+
+- 決定への回答でうらのカードを指定する経路を、本人のうら（P3s。本当のカードで受理か拒否かが決まる）と相手のうら（P3o。本当のカードによらず同じコード）に分けた。保存済みの r1 の 1 件は P3s
+- 推奨: P3s のうち、保存済みの実例の効果の型の `select_pokemon` だけを、送信前の本人の観測・カードデータ・エンジンの効果の登録で条件 D1〜D12 をすべて確かめたときだけ known_stop にする。記録の追加は要らない
+- 登録は、コード単位の入口のまま P3 の項目を別の鍵で 1 つ足す（P1 の条件・理由は変えない）。basis は P3 用の 7 ファイル。規則 8・`TOOL_VERSION` 10・形式 6 のまま（推奨）
+- 詳細: [verification-ai-lost-target-p3-decision-design.md](verification-ai-lost-target-p3-decision-design.md)
