@@ -5540,3 +5540,15 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 推奨: P3s のうち、保存済みの実例の効果の型の `select_pokemon` だけを、送信前の本人の観測・カードデータ・エンジンの効果の登録で条件 D1〜D12 をすべて確かめたときだけ known_stop にする。記録の追加は要らない
 - 登録は、コード単位の入口のまま P3 の項目を別の鍵で 1 つ足す（P1 の条件・理由は変えない）。basis は P3 用の 7 ファイル。規則 8・`TOOL_VERSION` 10・形式 6 のまま（推奨）
 - 詳細: [verification-ai-lost-target-p3-decision-design.md](verification-ai-lost-target-p3-decision-design.md)
+
+## エンジンの不具合の候補: 指定でおもてにした［KEEP］とエネルギー・リムーブ（2026-11-14。調査だけ・未修正）
+
+- 相手のうらについたエネルギーをエネルギー・リムーブで選ぶと、内部の `RuntimeError` になる。本当のカードが［KEEP］を持つたねなら本物の処理で、ほかのカードでも置きかえの試しで起こる。
+  - 原因: 回答時の指定でおもてにしたあと、［KEEP］を確かめ直さずにトラッシュする（`require_discard_not_voided` の確かめの漏れ）。
+  - 構築盤面で確定した。new_game からの到達は未確認。
+- 修正案（`resume` の段階 3 の確かめ）と、E12 の期待値が直し方で変わること: [verification-ai-e12-energy-removal-keep-investigation.md](verification-ai-e12-energy-removal-keep-investigation.md)
+
+## 検証用 AI: LOST_TARGET の P3s の規則 8（実装待ち）
+
+- エンジンの根拠テスト E7〜E11（本人のうら）は成功した。judge の規則 8・`TOOL_VERSION` 10 は未実装。
+- 上の不具合の候補は P3s の条件に影響しない。影響するのは P3o の性質の記録（E12）の扱いだけ（調査の文書 9 章）

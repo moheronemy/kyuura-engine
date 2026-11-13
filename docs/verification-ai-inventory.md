@@ -40,6 +40,7 @@ R-2〜R-5 は、どれも「API が未実装」という 1 つの分類ではな
 | 受理の前に未裁定で止める `play_trainer` | 固定デッキの対戦で 1 局 2〜86 回の取得で示され、`deep` の範囲から外した（V1・V2）。どのトレーナーかの集計はしていない | そのトレーナーを使えない（対戦は進む） | なし | 保存した操作の記録から、どのカード・停止のコードかを数え直す（新しい対戦は回さない） | 中 | 要る（カードごと） | カードとコードの一覧 |
 | FU2 | 表示だけの候補（`check_face_up_deck`）。送れば `CANDIDATE_NOT_EXECUTABLE`（V3-3 の C4 で確かめた） | おもての山札の 2 枚目より下を確かめられない | なし | 裁定が決まるまで扱わない | 低 | 要る | 裁定と、それに合わせた候補・テスト |
 | DU1・HC1 | 既知の停止（DU1 は V3-3 の C3 で受理のあとの停止を確かめた。HC1 は U7-4 のテストだけ） | その場面で対戦が止まる | なし | 裁定の扱いは別の作業 | 低 | 要る | — |
+| 指定でおもてにした［KEEP］とエネルギー・リムーブ（エンジンの不具合の候補） | 相手のうらについたエネルギーをエネルギー・リムーブで選ぶと、内部の `RuntimeError`（`require_discard_not_voided`）になる。構築盤面で確定した（[E12 の調査](verification-ai-e12-energy-removal-keep-investigation.md)） | API では `failed`（`INTERNAL_ERROR`）で、対戦を続けられない。new_game からの到達は未確認 | なし | 直し方（KP1 で止めるか、効果がなくなるとして受理するか）を決め、`resume` の段階 3（超エネルギーリムーブは段階 2）で確かめる。正負の回帰テスト（調査の文書 8 章） | 中 | 要る（KEEP で効果がなくなるカードを選んだときの扱い） | 修正と回帰テスト、E12 の期待値の確定 |
 
 PT-5e・UP-5t は未裁定・未実装ではなく、情報境界の監査が未完了の項目なので 7 章へ移した。
 
@@ -58,7 +59,7 @@ PT-5e・UP-5t は未裁定・未実装ではなく、情報境界の監査が未
 
 | id | 現状と根拠 | 影響 | 回避策 | 次の最小の作業 | 優先度 | 裁定 | 完了の確認 |
 |---|---|---|---|---|---|---|---|
-| known_stop の根拠の登録 | `judge.KNOWN_STOP_EVIDENCE` は DU1（規則 3。V3-3）と ER9（規則 6。記録した API の値で条件を確かめたときだけ。[verification-ai-batch-plan3.md](verification-ai-batch-plan3.md) 11 章） | ほかの停止はどれも `undetermined` になる（不具合の疑いと既知の停止を分けられない） | 結果を人が読む | HC1・準備の停止・FU2 のエンジンの停止の代表の条件と根拠（テスト）を登録する。`UNSUPPORTED_SECRET_PLAN_LOST_TARGET` は経路が 3 つあり、本人のうらのカードを特殊能力で指定する経路の条件案と負のテストを記録した（未実装。[verification-ai-batch-s1-rejection-audit.md](verification-ai-batch-s1-rejection-audit.md) 4 章）。その経路（P1）の根拠・適用条件・負のテスト・実装の順序を設計した（[verification-ai-lost-target-own-face-down-design.md](verification-ai-lost-target-own-face-down-design.md)）。P1 は規則 7（TOOL_VERSION 9）で登録した（同じ文書 13 章）。保存済みの s1・r1 への当て直しで変わったのは s1 の P1 の 2 行だけ（14 章）。P3 は設計だけ（[verification-ai-lost-target-p3-decision-design.md](verification-ai-lost-target-p3-decision-design.md)。未実装）。P2 は未着手 | 中（検証の判定） | 不要（既存の裁定の記録を読む） | 登録と、それぞれの代表の場面のテスト |
+| known_stop の根拠の登録 | `judge.KNOWN_STOP_EVIDENCE` は DU1（規則 3。V3-3）と ER9（規則 6。記録した API の値で条件を確かめたときだけ。[verification-ai-batch-plan3.md](verification-ai-batch-plan3.md) 11 章） | ほかの停止はどれも `undetermined` になる（不具合の疑いと既知の停止を分けられない） | 結果を人が読む | HC1・準備の停止・FU2 のエンジンの停止の代表の条件と根拠（テスト）を登録する。`UNSUPPORTED_SECRET_PLAN_LOST_TARGET` は経路が 3 つあり、本人のうらのカードを特殊能力で指定する経路の条件案と負のテストを記録した（未実装。[verification-ai-batch-s1-rejection-audit.md](verification-ai-batch-s1-rejection-audit.md) 4 章）。その経路（P1）の根拠・適用条件・負のテスト・実装の順序を設計した（[verification-ai-lost-target-own-face-down-design.md](verification-ai-lost-target-own-face-down-design.md)）。P1 は規則 7（TOOL_VERSION 9）で登録した（同じ文書 13 章）。保存済みの s1・r1 への当て直しで変わったのは s1 の P1 の 2 行だけ（14 章）。P3 は設計だけ（[verification-ai-lost-target-p3-decision-design.md](verification-ai-lost-target-p3-decision-design.md)。未実装）。P3s の規則 8 は実装待ち（エンジンの根拠テスト E7〜E11 は成功。E12 の扱いは [E12 の調査](verification-ai-e12-energy-removal-keep-investigation.md) 9 章）。P2 は未着手 | 中（検証の判定） | 不要（既存の裁定の記録を読む） | 登録と、それぞれの代表の場面のテスト |
 | D-6 の全体の採用 | V3-1〜V3-3 の範囲だけを補足して使っている（V3 の設計の 3 章は採用待ち） | 判定の基準が文書と実装で段階的 | — | 判定の表（V3 の設計の 3.2 節）を、規則 3 に合わせて書き直して採用を受ける | 低 | 不要 | 採用の記録 |
 | 種類ごとの受理の保証の表 | `judge.PRECHECK_KINDS` を `GUARANTEE_*` の文から作った（機械が読める保証の区分は API にない） | API の保証の文が変わると、判定の表とずれうる | 版ごとに照らす | U7 の応答に機械が読める保証の区分を加えるかを判断（API の変更） | 低 | 不要 | — |
 
