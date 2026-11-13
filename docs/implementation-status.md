@@ -5525,3 +5525,10 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 実装の順序: エンジンのテストだけの追加（版は 0.180.0 のまま）→ judge の規則 7（TOOL_VERSION 9 を推奨。計画・完了の形式は同じ）→ 別の単位での s1 への当て直し（変わるのは 2 行だけの見込み。保存済みの 8,904 送信への静的な事前評価で、条件を満たすのは対象の 2 件だけ）
 - 採用の判断が残る: judge の入力を本人の観測へ広げるか（推奨: 広げる）、evidence の鍵（推奨: コード単位のまま）、根拠の矛盾の扱い（推奨: undetermined）。採らないなら undetermined を続ける
 - 詳細: [verification-ai-lost-target-own-face-down-design.md](verification-ai-lost-target-own-face-down-design.md)
+
+## 検証用 AI: LOST_TARGET の P1 の根拠登録（judge の規則 7。2026-11-14）
+
+- エンジンの根拠テスト `tests/test_lost_target_own_face_down_v0_180.py`（E1〜E6）: おもての使い手の特殊能力で本人のたねでないうらを指定すると、状態・乱数・ログ・決定・相手と観戦者の観測を変えずに `UNSUPPORTED_SECRET_PLAN_LOST_TARGET` で拒否する。たね・ベイビィならおもてにして進む。エンジンの動作・版（0.180.0）・識別は変えていない
+- judge の規則 7（`TOOL_VERSION` 9。計画・完了の形式は 6 のまま）: 送信前の本人の観測とカードデータ・`card_is_basic_in_text` で L1〜L12 をすべて確かめたときだけ known_stop。欠け・矛盾・対象外の経路は規則 6 と同じ undetermined（分類・停止方針も同じ）。単局の runner と `batch.judge_trace` は同じ `judge.submit_evidence` を呼ぶ
+- 残る: 保存済みの s1 への当て直し（別の単位。0.179.0 の記録なので基礎のファイルの識別 `basis` を渡す）、P2・P3 の登録
+- 詳細: [verification-ai-lost-target-own-face-down-design.md](verification-ai-lost-target-own-face-down-design.md) 13 章

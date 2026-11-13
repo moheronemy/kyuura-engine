@@ -301,3 +301,123 @@ L1〜L11 を、保存済みの s1・r1 のすべての送信（8,904 件。s1 7,
   - 対応表 `correspondence.md`（非公開。局・本当のカード・入力を含む）
   - コマンドと失敗
 - 公開用は `public/runs/lost-target-own-face-down-design/summary.json`（件数と分類だけ）です。
+
+## 13. 実装の結果（2026-11-14。エンジンの根拠テスト・judge の規則 7・単局とバッチの共通の接続）
+
+この章は、上の推奨案（A1 広げる・A2 コード単位・A3 矛盾は undetermined・A4 TOOL_VERSION 9）を実装した結果です。保存済みの s1 への当て直し、P2・P3 の登録、新しい対戦はしていません。
+
+### 13.1 基点・ブランチ
+
+- 基点は `claude/lost-target-own-face-down-design` の `eb1c201`（origin と一致。`origin/main` の祖先ではない。main への取り込みは仮定しない）。
+- 専用の worktree で、新しいブランチ `claude/lost-target-p1-judge-rule7` を `eb1c201` から作りました。
+
+### 13.2 エンジン側の根拠テスト（E1〜E6）
+
+`tests/test_lost_target_own_face_down_v0_180.py`（6 件）。盤面は `tests/test_secret_plan_v0_67.py` の `place`・`full`・`face_down`・`uid_of`・`opponent_turn` と `build_test_state` で作ります。使い手はロケット団のヒトカゲ（［ほのおをもらう］。段は source → energy）です。
+
+| id | 内容 | 結果 |
+|---|---|---|
+| E1 | source に本人のたねでないうら（エネルギー 2 種・1 進化。energy もそのうらについている） | このコード。状態（ログ・決定・番・場）・乱数・相手と観戦者の観測とログが変わらない。理由の文に本当のカードの ID・名前がない。`IDENTITY_CONSULTED` を残さない |
+| E2 | source はおもて、energy だけが本人のたねでないうらについている | E1 と同じ |
+| E3 | 本人のうらがたね | このコードにならない。おもてにして特殊能力を使う（炎）。合わないタイプなら `WRONG_ENERGY_TYPE` で状態は変わらない |
+| E4 | 本人のうらがベイビィ（ネオより前の説明の「たねポケモン」） | E3 と同じ |
+| E5 | 相手の場にも別のうらがあり、指定は本人のうらだけ | E1 と同じ。本当のカードによらない確かめ（`_identity_independent`）を呼ばない |
+| E6 | 本人のたねのうら（source。先に指定）と、たねでないうら（energy のついているポケモン。後に指定） | このコード。先におもてにしたたねもふくめ、状態は変わらない |
+
+- 6 件とも期待どおりでした。エンジンの動作・裁定・カードデータは変えていません。
+- 相手のうらの指定（P2）は、既存の `tests/test_secret_plan_v0_67.py` の `test_power_target_on_a_face_down_card_is_refused_for_every_identity` のままです（変えていない）。
+- テストの追加の前後で、パッケージの版 0.180.0・`behavior_digest`（`08038e06…`）・`instrumentation_digest`（`d3436748…`）は同じでした。
+
+### 13.3 judge の規則 7
+
+`tools/verification_ai/judge.py` に次を加えました。`judge_normal`・`_known_stop_or_undetermined`・`recorded_stop_evidence`（ER9）は変えていません。
+
+- `own_view_for(actor_logs, entry)`: 送信の主体の、type=position・position・episode（番号と主体）が同じ観測の行がちょうど 1 つのときだけ、その view を返します。`actor_logs` は runner の結果の値でも、保存した `actors/<主体>.jsonl` を読んだ辞書でも同じ行を返します。
+- `lost_target_failure(entry, *, trace, actor_logs, header, basis=None)`: L1〜L12 を順に確かめ、満たさない最初の条件の id（`L1`〜`L12`）か None を返します。返す値は条件の id だけで、場のポケモンの番号・uid・カード ID・本当のカードを持ちません。
+- `own_face_down_lost_target_evidence`・`submit_evidence`: 単局とバッチの共通の入口です。`submit_evidence` は規則 6（ER9）か規則 7（P1）の条件をすべて満たしたときだけコードを返します。
+- `KNOWN_STOP_EVIDENCE` に `UNSUPPORTED_SECRET_PLAN_LOST_TARGET` を加えました。条件の文は P1 だけ（固定の文字列）で、source に E1〜E6・`zones.designate_face_down`・`engine._reveal_for_action`・secret-plan-preflight-v0.67.md を挙げます。
+- `JUDGE_RULES_VERSION = 7`。
+- たねの判定は `effects.card_is_basic_in_text(定義, TEXT_PRE_NEO)` をそのまま呼びます（judge に段階の読み直しを複製しない）。定義は `cards.load_card_pool()` です。
+
+実装で詳しくした点（設計 5 章との差）:
+
+- **L4 の理由の範囲**: 設計は「候補の理由に `face_down_reveal_not_evaluated`」としていました。本物の runner に構築盤面を通すと、候補がおもてだけの組（おもてのポケモンを source にする組）もふくむ場合、候補の理由は `continuation_not_evaluated` になり、`face_down_reveal_not_evaluated` は選んだうらの選べるものの側にだけ付きました（s1 の 2 件は候補の側にもありました）。そこで L4 の理由は「候補か、選んだ選べるもの」にあることとしました。これは `_known_stop_or_undetermined` が理由を集める範囲と同じです。記録の形式は変えていません。うらの指定そのものは L8・L9（観測）で確かめます。
+- **L12 の確かめ方**: 記録の header（`engine` と `dependencies`）を読みます。既定のカードプール（`card_pool == "default"`）で、カードデータの出どころ（repository・commit・path）が今のカードプールと同じことが前提です。そのうえで、次の (a) か (b) のどちらかが要ります。
+  - (a) 記録の `behavior_digest`・方式が今の実装と同じ（実行中の runner・バッチはこれで満たす）
+  - (b) 呼ぶ側が、記録を作ったエンジンの基礎のファイル（`cards.py`・`data/kyuura_cards.json`・`effects.py`・`engine.py`・`zones.py`）から同じ方式（`kyuura-lost-target-basis-sha256/1`。実装の識別と同じ正規化）で計算した値 `basis` を渡し、それが今の値と同じ
+  - header がない対戦（記録を持たない fixture など）や、どちらも確かめられないときは L12 で外れ、undetermined のままです。
+  - s1 の記録は 0.179.0（`behavior_digest` が今と違う）なので、当て直しでは (b) が要ります。`batch.judge_trace(result, basis=...)` で渡します。
+- **根拠が成り立たないとき**: evidence は None で、判定・理由・分類は規則 6 と同じです（先頭は `stop_condition_not_evidenced:`、分類 `evidence_missing_stop`、停止方針は続ける）。規則 7 の失敗の条件の id は判定の行に足しません。refused・failed・分類の食い違いは、`judge_normal` が先に suspect にします（上書きしない）。
+
+### 13.4 単局とバッチの接続と情報の境界
+
+- `batch.judge_trace(result, *, basis=None)`: 送信ごとに `submit_evidence(e, trace=result["trace"], actor_logs=result.get("actor_logs"), header=記録の header, basis=basis)` を evidence にします。header は `batch.record_header(result["record"])` で、L12 を確かめるときだけ読みます（操作の記録は読まない）。
+- runner の単局の判定（`negative` があるときだけ）: 同じ `submit_evidence` に `self.trace`・`self.actor_logs`・`self._record_header`（`self.game.record()` の header。記録を持たない対戦では None）を渡します。これまでこの判定は evidence を渡していなかったので、ER9 の条件を満たす送信も、ここで known_stop になります（逐次バッチと同じになる）。
+- 判定のための observe・candidates・inputs・check・submit はしません。本人の観測は、runner がエピソードの初めに取って方策にも渡した値を再利用します。完全な記録の操作・相手の観測・replay へは進みません。
+- 方策・行動生成・乱数・記録の形式・公開の API の応答は変えていません。方策・行動生成・変異・集計・記録の部品は規則 7 の部品を使いません（テストで確かめる）。
+- 判定の行・理由・集計に、場のポケモンの番号・uid・card_id・本当のカードを入れません。
+
+### 13.5 テスト
+
+新しいモジュール `tests/test_verification_ai_lost_target_p1.py`（31 件）:
+
+- 正: J1（s1 と同じ形）・J2（energy だけがうら）・J3（たねとたねでないうらの両方）・target の段・候補でなく選べるものにだけ理由がある形・J9（カードの一覧のすべてで、規則 7 の判定とエンジンの `zones._secret_plan_keeps` が同じ答え）
+- 負: N1（相手のうら）・N2（本人と相手の混在）・N3（決定への回答。拒否のあとの形が同じでも種類で外れる）・N4（うらの使い手）・理由がどこにもない・N5（すべてたね・ベイビィ）・N6（うらの指定なし）・N7（観測の欠け・重複・別のエピソード・別の位置・別の番・決定・番の主体でない・段階・失敗の応答・actor_logs なし）・N8（同じエピソードの前の受理）・N9（参照の欠け・食い違い・重複、role・meaning・段の欠け）・N10（real・card_id・カードの一覧）・N11（拒否のあとの形 6 種）・N12（同じ形の別のコード）・N13（refused・failed・分類の食い違いは suspect のまま）・N14（通常の受理・拒否）・N15（理由・行・要約に秘密がない）・N16（分類と停止方針）
+- L12: header の有無・関数の header・実装の違い・basis の一致と不一致・方式の違い・カードデータの違い・カードプールの違い、`batch.judge_trace` への basis の受け渡し
+- 本物の runner（構築盤面。new_game からの対戦の実績には数えない）: たねでないうらで、バッチの入口と単局の判定が同じ known_stop・同じ理由。単局の判定を有効にしても要求の回数と行動の列が同じ（判定のための要求がない）。J10（runner の actor_logs と、保存する形の actors/*.jsonl で同じ観測と同じ判定）。たねのうらは受理（expected）、header のない対戦は L12 で undetermined（単局とバッチで同じ）
+- 境界: 方策・行動生成・変異・集計・記録・reach・observe の部品に規則 7 の部品がない。runner が呼ぶのは `submit_evidence` 1 か所だけ
+
+既存のテストは、版の数の期待値だけを規則 7・TOOL_VERSION 9 に更新しました（er9_evidence・p6・u_r3a・v0178_follow・v0179_follow・v3_3・reach・reach_v2）。判定の中身の期待値は変えていません。実行の結果は 13.7 です。
+
+### 13.6 版・識別・形式・旧計画
+
+| 項目 | 前 | 後 |
+|---|---|---|
+| パッケージの版 | 0.180.0 | 0.180.0（同じ） |
+| `behavior_digest` | `08038e06…` | 同じ |
+| `instrumentation_digest` | `d3436748…` | 同じ |
+| `TOOL_VERSION` | 8 | 9 |
+| 道具の識別（`tool_digest`） | `dbca28bd…`（26 ファイル） | `383e30c4…`（26 ファイル。変わった） |
+| 判定の規則 | 6 | 7 |
+| 計画・完了の形式 | `kyuura-vai-batch-plan/6`・`kyuura-vai-batch-complete/6` | 同じ |
+
+- TOOL_VERSION 8 の計画は、道具の識別の違いで再開しません（既存の設計。移行・上書きしない）。既存の judge.json・集計・COMPLETE・台帳は変えていません。
+- 検証用 AI の行動・契約の値の指紋（`test_verification_ai_v2_repeat`）は固定値のままです（13.7）。
+
+### 13.7 実行したテストと結果
+
+テストは 1 モジュールずつ別のプロセスで実行し、出力・終了コード・JUnit を証跡に保存しました。
+
+| 実行 | 内容 | 結果 |
+|---|---|---|
+| run1-engine | E1〜E6 の最初の実行 | 失敗（エラー 5）。テストの側の誤り（カードの定義の属性名を `name` と書いた。正しくは `name_ja`）。拒否のコードと状態の比べは、その前の行までで通っていた |
+| run2-engine | 属性名だけを直して再実行 | 6 件すべて成功 |
+| run3-judge | 規則 7 のテストの最初の実行 | 失敗 5。(1) 停止方針の戻り値の 2 つ目（続ける理由の一覧）を空と期待したテストの誤り 2。(2) 本物の runner の候補で L4 が外れた 3（13.3 の「L4 の理由の範囲」。候補の理由に `face_down_reveal_not_evaluated` がなく、選べるものの側にだけあった） |
+| run4-judge | テストの期待を直し、L4 を「候補か選んだ選べるもの」に直して再実行 | 31 件すべて成功 |
+| run5-related | 新しい 2 モジュールと関係する 14 モジュール（secret_plan_v0_67・er9_evidence・batch_judge・batch・u_r3a・p6・p6_accepted・v3_1・v3_3・v0178_follow・v0179_follow・reach・reach_v2・v2_repeat） | 16 モジュール・256 件すべて成功（失敗・エラー・skip 0）。v2_repeat の行動・契約の値の指紋は固定値のまま |
+
+判定例（証跡の `judge_examples.json`。構築盤面）:
+
+- 本物の runner に通した構築盤面: たねでないうら → known_stop、たねのうら → 受理（expected。L1 で外れる）、header のない対戦 → undetermined（L12）。3 例とも、バッチの入口と単局の判定が同じ値
+- 人工の負の例: 相手のうら L9・決定待ちの形 L3・うらの使い手 L4・すべてたね L11・観測なし L6・一覧にないカード L10。どれも undetermined で分類は evidence_missing_stop
+
+全体のテスト・GUI・E2E・新しいバッチ・seed の探索・保存済み s1 への当て直しはしていません。
+
+### 13.8 未確認
+
+- 保存済みの s1 の 2 件に規則 7 を当てた結果（別の単位）。0.179.0 の記録なので、当て直しの単位が `7ee54b7` の基礎のファイルから `basis` を計算して渡す必要があります。
+- 本物の new_game からの対戦で、規則 7 が known_stop を出すこと（今回は構築盤面だけ）。
+- P4（受理後の処理の中の指定）が実際の対戦で起きるか。s1・r1 以外のバッチの同じコード。
+- L4 の範囲を広げたので、s1・r1 の 8,904 送信への静的な事前評価（11 章。候補の理由だけで見た）と同じ結果になるかは、当て直しで確かめます。
+
+### 13.9 保存済み s1 への当て直しに要る作業（次の単位）
+
+1. 新しい証跡の単位で、s1 の 2 局と、同じ batch の全局の trace・`actors/*.jsonl`・`full_record.json` の header・judge.json を読む（元のファイルは書かない。前後の sha256 で確かめる）
+2. `7ee54b7` の `kyuura_engine` の基礎のファイル（`cards.py`・`data/kyuura_cards.json`・`effects.py`・`engine.py`・`zones.py`）を `git show` で取り出し、`judge.lost_target_basis(root)` と同じ方式で値を計算する。今の値と同じことを確かめてから `basis` として渡す
+3. 各局に `batch.judge_trace({"trace", "actor_logs", "record", "termination"}, basis=...)` を当て、規則 6 の judge.json と比べる。受け入れ条件は 6.4 節のとおり（変わるのは s1 の 2 行だけ、undetermined −2・known_stop +2、r1 の P3 は変わらない、完全な記録の command と入力の参照の一致）
+4. 結果を別のファイルに書き、文書に記録する（集計・COMPLETE・台帳は変えない）
+
+### 13.10 証跡
+
+- `C:\dev\kyuura-engine-verification-vai\verifier\runs\lost-target-p1-judge-rule7\`: 事前計画、識別の前後（`identity_before.json`・`identity_after_engine_tests.json`・`identity_after.json`）、テストの出力・終了コード・JUnit（`tests/run1-engine`〜`run5-related`）、判定例、コマンドと失敗の記録
+- 公開用は `public/runs/lost-target-p1-judge-rule7/summary.json`（件数と分類だけ）
