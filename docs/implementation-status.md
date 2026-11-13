@@ -5517,3 +5517,11 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 版は 0.180.0（`behavior_digest` が変わった。`instrumentation_digest`・道具の識別・判定の規則の版は同じ）。0.179.0 の記録・スナップショットは 0.180.0 では再実行・復元できない（既存の設計）
 - 残る: GUI の追従、LOST_TARGET の根拠の登録（judge の規則 7）、ほかの保証の文の整理
 - 詳細: [legal-actions-f1-face-down-attack-guarantee.md](legal-actions-f1-face-down-attack-guarantee.md)
+
+## 検証用 AI: LOST_TARGET の根拠登録の設計（P1。2026-11-13。設計だけ・未実装）
+
+- `UNSUPPORTED_SECRET_PLAN_LOST_TARGET` の経路を、本人のうらのカードを指定（P1）・相手のうらのカードを指定（P2）・決定への回答（P3）・使い手がうら・処理の中の指定に分け、最初の登録の対象を P1 に限った
+- 根拠は、送信前の本人の観測（runner がエピソードの初めに取り、方策にも渡している view。`actors/<主体>.jsonl`）とエンジンのカードデータ（`card_is_basic_in_text`）。送信の値・診断だけでは本当のカードの条件を確かめられない。適用条件 L1〜L12、負のテスト N1〜N16、エンジンのテスト E1〜E6 を決めた
+- 実装の順序: エンジンのテストだけの追加（版は 0.180.0 のまま）→ judge の規則 7（TOOL_VERSION 9 を推奨。計画・完了の形式は同じ）→ 別の単位での s1 への当て直し（変わるのは 2 行だけの見込み。保存済みの 8,904 送信への静的な事前評価で、条件を満たすのは対象の 2 件だけ）
+- 採用の判断が残る: judge の入力を本人の観測へ広げるか（推奨: 広げる）、evidence の鍵（推奨: コード単位のまま）、根拠の矛盾の扱い（推奨: undetermined）。採らないなら undetermined を続ける
+- 詳細: [verification-ai-lost-target-own-face-down-design.md](verification-ai-lost-target-own-face-down-design.md)
