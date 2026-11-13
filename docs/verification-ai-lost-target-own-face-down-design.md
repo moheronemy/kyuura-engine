@@ -421,3 +421,88 @@ L1〜L11 を、保存済みの s1・r1 のすべての送信（8,904 件。s1 7,
 
 - `C:\dev\kyuura-engine-verification-vai\verifier\runs\lost-target-p1-judge-rule7\`: 事前計画、識別の前後（`identity_before.json`・`identity_after_engine_tests.json`・`identity_after.json`）、テストの出力・終了コード・JUnit（`tests/run1-engine`〜`run5-related`）、判定例、コマンドと失敗の記録
 - 公開用は `public/runs/lost-target-p1-judge-rule7/summary.json`（件数と分類だけ）
+
+## 14. 保存済みの s1・r1 への当て直し（2026-11-14。判定・比較・文書化だけ）
+
+規則 7（実装 `38bf379`）を、保存済みの `vai-batch-s1`（30 局）と `vai-batch-r1`（4 局）の全局に当て直しました。保存済みの記録を規則 7 で再評価した結果です。新しい対戦の実績や、当時のバッチが known_stop として実行された証拠には数えません。判定が変わっても、当時の停止・続行・行動が変わったわけではありません（当時は規則 6 で判定し、undetermined の evidence_missing_stop は続ける方針でした）。
+
+- 基点は `claude/lost-target-p1-judge-rule7` の `26e82b8`。専用の worktree で、新しいブランチ `claude/lost-target-p1-rejudge-s1` を作りました。
+- 当て直しの時のエンジン・道具: 0.180.0（`behavior_digest` `08038e06…`）・TOOL_VERSION 9・`tool_digest` `383e30c4…`・判定の規則 7・形式 6。
+- エンジン・judge・runner・方策・テストは変えていません。ゲーム・replay・API への要求はしていません。
+
+### 14.1 元の証跡の保護
+
+- 両バッチの全ファイル（s1 364・r1 72）の sha256 を、当て直しの前・後・限定確認の後に一覧にしました。3 つとも同じでした。
+- 新しい判定は、証跡の `rejudged/` に別のファイルで書きました。trace・主体別の記録・完全な記録・judge.json・aggregate・COMPLETE・台帳・計画・マニフェストは書いていません。
+- 旧計画の再開・バッチの再確定・旧ツールの集計の置き換えではありません。
+
+### 14.2 判定の基礎（L12）の照合
+
+| 項目 | s1 | r1 |
+|---|---|---|
+| 実行コミット（header.json の `engine.git_commit`） | `7ee54b7791c68e6246f55f1926b03e0ffc32f015` | `de81f642ec6b3ace9b748cc0c0a9e2f9727bc598` |
+| 記録の `behavior_digest` | `67c4c15b…`（0.179.0。今と違う） | 同じ |
+| 基礎の識別 `basis`（記録時） | `a871823d…` | `a871823d…` |
+| 今の `lost_target_basis()` | `a871823d…` | 同じ |
+| カードプールの前提（`card_pool` default・`card_data` が今の出どころと同じ） | 30 局とも一致 | 4 局とも一致 |
+
+- 記録時のファイルは、公開のリモートのブランチに含まれるコミットから `git show <commit>:kyuura_engine/<file>` で取り出しました（実行していない）。
+- それを `judge.lost_target_basis(root)` にそのまま渡しました。方式は `replay_record._digest`・`_normalized` と同じで、対象・並びは `LOST_TARGET_BASIS_FILES` です。
+- 5 ファイル（cards.py・data/kyuura_cards.json・effects.py・engine.py・zones.py）は、どれも正規化 sha256 が今と同じでした。
+- そのため、34 局すべてに `basis` を渡しました。basis を渡さなければ、対象の 2 件は L12 で外れます（undetermined のまま）。
+
+### 14.3 結果
+
+| | s1 規則 6 | s1 規則 7 | r1 規則 6 | r1 規則 7 |
+|---|---|---|---|---|
+| 送信 | 7,184 | 7,184 | 1,720 | 1,720 |
+| expected | 7,176 | 7,176 | 1,719 | 1,719 |
+| normal_rejection | 6 | 6 | 0 | 0 |
+| undetermined | 2 | 0 | 1 | 1 |
+| known_stop | 0 | 2 | 0 | 0 |
+
+- 判定が変わった送信の行は 2 行だけでした。s1 の P1 の 2 件（S1-a・S1-b）が `use_power` で undetermined → known_stop になり、変わった項目は verdict と reasons だけです。
+  - 新しい理由: `unsupported`・コード・`face_down_reveal_not_evaluated`・`evidence:`（固定の条件の文）
+- 種類ごとの件数の差は、s1 の `use_power` の undetermined −2・known_stop +2 だけでした。
+- 受理の中身の判定・終わり方の判定は 34 局とも同じでした。ほかの送信の行も同じです。
+- undetermined の一覧から消えたのは、その 2 件（分類 evidence_missing_stop）だけです。加わったものは 0 です。
+- r1 の P3（`answer_decision`）は undetermined のままです。L3（拒否のあとが決定待ち）で外れ、理由の先頭 `stop_condition_not_evidenced:` と分類 evidence_missing_stop も同じです。
+- ほかの経路の対照: s1・r1 で、このコードの送信はこの 3 件だけでした。ほかのコードの拒否（s1 の normal_rejection 6）と受理は変わりません。
+- メタデータの差は `rules_version` 6 → 7（34 局）だけで、judge.json の項目の並びは同じでした。判定の結果の差（上の 2 行）とは分けて数えています。
+- 対象 2 件の照合（判定には使っていない）: 完全な記録の operations で、同じ operation_id の command（`use_pokemon_power`。rejected・同じ診断）の使い手・source・target・energy は、trace の候補と選んだ意味の参照と同じでした。本人の観測でも、source は主体の場のうらで、energy はその source についていました。
+
+### 14.4 限定確認（人工の入力と、対象の記録のメモリ上の写し）
+
+リポジトリのテストとコードは変えていません。証跡のスクリプトから、実際の判定関数に入力を渡しました（16 件すべて期待どおり）。
+
+- L4 の実装は、候補の `reasons` と、選んだ意味（`meaning[].option`）の `reasons` だけを集めます。段の選べるもの（`stages[].options`）は読みません。
+  - 選ばなかった選べるものだけに `face_down_reveal_not_evaluated` がある入力は L4 で外れ、undetermined のままでした。
+  - 選んだ選べるものにあれば known_stop でした。
+- basis の欠け・不一致: L12 で外れ、undetermined です。一致すれば known_stop です。
+- 本人の観測の欠け・同じエピソードの前の受理（古い観測）・別の番・参照の不一致: L6・L8 で外れ、undetermined です。
+- P3 の形: L3 で外れます。拒否のあとの形を P1 と同じにしても、種類で L4 に外れます。
+- 保存済みの対象の行: basis ありで known_stop、basis なしで L12。観測の行を除くか重ねると L6、参照を変えると L8 です。
+- 根拠が成り立たないときは、どれも理由の先頭が `stop_condition_not_evidenced:` で、分類は evidence_missing_stop でした。
+
+### 14.5 前の実装の 2 つの変更の区別
+
+規則 7 の実装（`38bf379`）には、性質の違う変更が 2 つあります。
+
+1. **P1 の新しい根拠の登録**（規則 7 の本体）。この章の当て直しで、保存済みの s1・r1 への効果を確かめたのはこれです。
+2. **単局の runner の判定（変異の実行の中）に、既存の ER9 の根拠（規則 6）を渡す接続の補完**。前は単局の判定に evidence を渡していませんでした。
+   - この当て直しは逐次バッチの入口（`batch.judge_trace`）だけを使いました。バッチの入口は、もともと ER9 の根拠を渡していました。
+   - そのため、単局の ER9 の判定の変化は、ここでは新たに確かめていません。
+
+### 14.6 未確認と残件
+
+- 未確認:
+  - new_game からの対戦で、規則 7 が known_stop を出すこと
+  - s1・r1 以外の保存済みのバッチの同じコード
+  - 単局の runner での ER9 の根拠の受け渡しの変化（14.5）
+  - P4（受理後の処理の中の指定）の実際の発生
+- 残件:
+  - P2（相手のうら）・P3（決定への回答）の根拠の登録（経路単位の鍵の判断を含む）
+  - 規則 7 での新しいバッチを実行するか（別の判断）
+- 証跡: `C:\dev\kyuura-engine-verification-vai\verifier\runs\lost-target-p1-rejudge-s1\`
+  - 事前計画、識別、basis の取り出しと照合、前後の sha256、当て直しのスクリプトと出力、規則 6 と 7 の行の差、限定確認、コマンド
+- 公開用は `public/runs/lost-target-p1-rejudge-s1/summary.json`（件数と分類だけ）です。

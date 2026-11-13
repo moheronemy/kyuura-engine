@@ -5530,5 +5530,6 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 
 - エンジンの根拠テスト `tests/test_lost_target_own_face_down_v0_180.py`（E1〜E6）: おもての使い手の特殊能力で本人のたねでないうらを指定すると、状態・乱数・ログ・決定・相手と観戦者の観測を変えずに `UNSUPPORTED_SECRET_PLAN_LOST_TARGET` で拒否する。たね・ベイビィならおもてにして進む。エンジンの動作・版（0.180.0）・識別は変えていない
 - judge の規則 7（`TOOL_VERSION` 9。計画・完了の形式は 6 のまま）: 送信前の本人の観測とカードデータ・`card_is_basic_in_text` で L1〜L12 をすべて確かめたときだけ known_stop。欠け・矛盾・対象外の経路は規則 6 と同じ undetermined（分類・停止方針も同じ）。単局の runner と `batch.judge_trace` は同じ `judge.submit_evidence` を呼ぶ
-- 残る: 保存済みの s1 への当て直し（別の単位。0.179.0 の記録なので基礎のファイルの識別 `basis` を渡す）、P2・P3 の登録
+- 保存済みの s1・r1 への当て直し（2026-11-14。判定・比較だけ）: 記録時の判定の基礎は今と同じ（basis 一致）。変わったのは s1 の P1 の 2 行だけ（undetermined → known_stop）。r1 の P3 は undetermined のまま。ほかの行・受理の中身・終わり方は同じ。元の証跡は変えていない（設計文書 14 章）
+- 残る: P2・P3 の登録
 - 詳細: [verification-ai-lost-target-own-face-down-design.md](verification-ai-lost-target-own-face-down-design.md) 13 章
