@@ -175,3 +175,9 @@ E12 の期待値（どの本当のカードでも `UNSUPPORTED_SECRET_PLAN_LOST_
 - 非公開: `kyuura-engine-verification-vai/verifier/runs/e12-energy-removal-keep-investigation/`
   - 事前計画、出典とハッシュ、再現と対照のスクリプト・出力、試しの記録、識別（前後同じ）、コマンドと終了コード、結果のまとめ。
 - 公開: `public/runs/e12-energy-removal-keep-investigation/summary.json`（件数と分類だけ）。
+
+## 12. 修正の結果（2026-11-14 の追記）
+
+- 0.181.0 で、7 章の案 A（KP1 と同じ通常の拒否）・8 章の位置で直した。詳細は [v0.181 の修正](keep-designated-energy-removal-v0.181.md)。
+- E12 の場面は、どの本当のカードでも `UNRESOLVED_KEEP_PROTECTED_TARGET` になる（LOST_TARGET ではない）。
+- 超エネルギーリムーブの段階 2 も同じ前提の漏れがあったので、同じ単位で直した。

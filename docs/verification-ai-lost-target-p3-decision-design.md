@@ -273,6 +273,10 @@ E12 は P3o の性質の記録で、登録はしない。
 - E12 の期待値は直し方で変わる（未確定）。
 - P3s（E7〜E11・D1〜D12）には影響しない。
 - 詳細は [E12 の調査](verification-ai-e12-energy-removal-keep-investigation.md)。
+- 0.181.0 で直した（[v0.181 の修正](keep-designated-energy-removal-v0.181.md)）。
+  - E12 の期待値は、元の「どの本当のカードでも `UNSUPPORTED_SECRET_PLAN_LOST_TARGET`」から「どの本当のカードでも `UNRESOLVED_KEEP_PROTECTED_TARGET`」に変わる。
+  - 理由は、置きかえの試しの順で［KEEP］のたねが `_NONBASIC` より先に拒否するため。本当のカードによらないという性質は同じ。
+  - P3s を再開するときの基点・basis の注意は、同じ文書の 9 章。
 
 ### 6.3 judge 側の正負テスト
 
