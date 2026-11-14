@@ -5205,7 +5205,7 @@ class RevealPokemonFromDeck(Element):
         card = choices[0]
         if card not in self.candidates(run):
             raise RuntimeError(f"山札から選び出したカード {choices} が、選べるポケモンのカードではない（エンジンの不具合）")
-        reveal_deck_to_hand(run.state, run.player, card, effect=str(run.key))
+        reveal_deck_to_hand(run.state, run.player, card, effect=str(run.key), identify=True)
         self._shuffle(run)
 
     def _shuffle(self, run: AttackRun) -> None:
@@ -6387,7 +6387,7 @@ class RevealNamedPokemonFromDeck(Element):
             if len(set(choices)) != len(choices) or any(card not in candidates for card in choices):
                 raise RuntimeError(f"選んだカード {choices} が、山札の選べるポケモンのカードではない（エンジンの不具合）")
             for card in sorted(choices):
-                reveal_deck_to_hand(run.state, run.player, card, effect=str(run.key))
+                reveal_deck_to_hand(run.state, run.player, card, effect=str(run.key), identify=True)
         elif self.exactly_one:
             if candidates:
                 raise RuntimeError(f"ワザ {run.key} で、山札に選べるカードがあるのに選ばなかった（1 枚を選ぶ決定。エンジンの不具合）")
@@ -6935,7 +6935,7 @@ class RevealTrainerFromDeck(Element):
             if len(set(choices)) != len(choices) or len(choices) > run.heads(self.heads_of) or any(card not in candidates for card in choices):
                 raise RuntimeError(f"選んだカード {choices} が、山札の選べるカード（{self.category}）の「おもて」の数以下ではない（エンジンの不具合）")
             for card in sorted(choices):  # v0.113: 選んだカードだけを見せて手札に加える（山札の uid の小さい順。選んだ順によらない）
-                reveal_deck_to_hand(run.state, run.player, card, effect=str(run.key))
+                reveal_deck_to_hand(run.state, run.player, card, effect=str(run.key), identify=True)
             if not choices:
                 # v0.150: 理由（選ばなかった・選べるものがなかった）は本人だけ（``observation.PRIVATE_FIELDS``。決定は v0.113 から山札の中身によらず出している）
                 run.state.add_event("reveal_from_deck_declined", player=run.player, pokemon_id=run.fs.frame.source_pid, effect=str(run.key), category=self.category,
@@ -6945,7 +6945,7 @@ class RevealTrainerFromDeck(Element):
         if choices:
             if choices[0] not in self.candidates(run):
                 raise RuntimeError(f"選んだカード {choices} が、山札の選べるカード（{self.category}）ではない（エンジンの不具合）")
-            reveal_deck_to_hand(run.state, run.player, choices[0], effect=str(run.key))
+            reveal_deck_to_hand(run.state, run.player, choices[0], effect=str(run.key), identify=True)
         else:
             # v0.150: 「加えてよい」の 0 枚と、選べるものがなかったことを同じログにし、理由（``reason``）は本人だけが見る（``observation.PRIVATE_FIELDS``）
             run.state.add_event("reveal_from_deck_declined", player=run.player, pokemon_id=run.fs.frame.source_pid, effect=str(run.key), category=self.category,
@@ -7351,7 +7351,7 @@ class ReturnHandThenRevealEnergy(Element):
         if len(choices) != count or any(uid not in candidates for uid in choices):
             raise RuntimeError(f"てじなで選んだカード {choices} が、山札の基本エネルギーカード {count} 枚ではない（エンジンの不具合）")
         for uid in (uid for uid in candidates if uid in choices):  # 山札の uid の小さい順（選んだ順によらない）
-            reveal_deck_to_hand(state, run.player, uid, effect=str(run.key))
+            reveal_deck_to_hand(state, run.player, uid, effect=str(run.key), identify=True)
         shuffle_in_attack(run, self, run.player)
 
     def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
@@ -9310,7 +9310,7 @@ class EachPlayerLooksTakesBasicEnergy(EachPlayerStep):
             reason = "declined" if self.options(run, player) else "no_target"
             run.state.add_event("deck_top_take_declined", player=player, effect=str(run.key), attacker=run.player, reason=reason)
         for uid in sorted(choices, key=run.state.players[player].deck.index):
-            reveal_deck_to_hand(run.state, player, uid, effect=str(run.key))
+            reveal_deck_to_hand(run.state, player, uid, effect=str(run.key), identify=True)
         shuffle_in_attack(run, self, player)
 
     def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:

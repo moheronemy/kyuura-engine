@@ -263,6 +263,54 @@ class IdentifiedTest(unittest.TestCase):
                 ["effects.py:SearchDeckWithBenchLettersToHand.resume"])
 
     # ---- C ワザの要素（programs.py）
+    def t150(self, name, where):
+        p = next(x for x in T150.PATHS if x.name.startswith(name))
+        st = T150.board(p)
+        steps = [(0, "use_attack", [[p.index]], "宣言")]
+        for f in p.prelude:
+            steps.append(lambda run, f=f: (0, "answer_decision", [list(f(run.state))], "前の決定"))
+        steps.append(lambda run: (0, "answer_decision", [[next(u for u in run.state.players[0].deck if run.state.cards[u].card_id == p.target)]], "加える"))
+        return self.go(st, steps, [where])
+
+    def test_c_denrei(self):
+        self.t150("でんれい", "programs.py:RevealPokemonFromDeck.resume")
+
+    def test_c_named_pokemon_any_and_exactly_one(self):
+        self.t150("くらげのむれ", "programs.py:RevealNamedPokemonFromDeck.resume")
+        self.t150("りゅうのきずな", "programs.py:RevealNamedPokemonFromDeck.resume")
+
+    def test_c_trainer_or_energy_zero_to_one_required_and_energy(self):
+        for name in ("おつかい", "ひらめく", "おつきみ"):
+            with self.subTest(name=name):
+                self.t150(name, "programs.py:RevealTrainerFromDeck.resume")
+
+    def test_c_heads_or_fewer(self):
+        st = T113.board(T113.mon(T113.CLEFAIRY_N1, (T113.W,) * 3), bench=(H.RATTATA, H.RATTATA), opponent=T113.mon(T113.CHANSEY), deck=[T113.W, T113.W, T113.F] + [H.RATTATA] * 6)
+        st = H.with_coin_results(st, HD, HD, HD, HD, HD)
+        run = self.go(st, [(0, "use_attack", [[1]], ""), (0, "answer_decision", [[uid(st, 0, "deck", T113.W), uid(st, 0, "deck", T113.F)]], "加える")],
+                      ["programs.py:RevealTrainerFromDeck.resume"])
+        self.assertEqual(len(run.targets), 2)
+
+    def test_c_tejina_return_hidden_then_reveal(self):
+        run = self.t150("てじな", "programs.py:ReturnHandThenRevealEnergy.resume")
+        for key in ("1", "spectator", "host"):
+            back = [e["event"] for e in run.log(key) if e["event"]["kind"] == "hand_to_deck"]
+            self.assertEqual(len(back), 1)
+            self.assertNotIn("cards", back[0])  # 見せないもどし（対象外）は伏せたまま
+            self.assertNotIn("card_id", back[0])
+
+    def test_c_mizukaki_both_players(self):
+        W = T84.W
+        st = T84.board(T84.mon(H.LIGHT_GOLDUCK, (W,), evolved_from="PMCG3-010"), deck=[W, H.RATTATA, W, W, W], opponent_deck=[W, H.RATTATA, W, W, W])
+        run = self.go(st, [(0, "use_attack", [[0]], ""), (0, "answer_decision", [[uid(st, 0, "deck", W)]], "加える（使った人）"),
+                           (1, "answer_decision", [[uid(st, 1, "deck", W)]], "加える（相手）")], ["programs.py:EachPlayerLooksTakesBasicEnergy.apply"])
+        self.assertEqual(sorted(x["owner"] for x in run.targets), [0, 1])
+        for key, own in (("0", 0), ("1", 1)):
+            other = 1 - own
+            looked = [e["event"] for e in run.log(key) if e["event"]["kind"] == "look_at_deck_top" and e["event"]["player"] == other]
+            self.assertEqual(["cards" in e for e in looked], [False])  # 相手の見た束は伏せたまま
+
+
 class PrivateControlTest(unittest.TestCase):
     """非公開の対照（対象外の経路は変えていない）。"""
 
@@ -295,6 +343,30 @@ class PrivateControlTest(unittest.TestCase):
 
 
 class ScopeTest(unittest.TestCase):
+    def test_identify_true_sites(self):
+        """補助の確かめ: identify=True を渡すのは、交換おじさんの 2 か所と、この版の 17 か所（effects.py 11・programs.py 6）だけ。"""
+        import ast
+        found = []
+        for rel in ("kyuura_engine/effects.py", "kyuura_engine/resolution/programs.py"):
+            tree = ast.parse((ROOT / rel).read_text(encoding="utf-8"))
+            for cls in [n for n in tree.body if isinstance(n, ast.ClassDef)]:
+                for n in ast.walk(cls):
+                    if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in ("reveal_deck_to_hand", "return_hand_to_deck"):
+                        if any(k.arg == "identify" for k in n.keywords):
+                            self.assertTrue(any(k.arg == "identify" and isinstance(k.value, ast.Constant) and k.value.value is True for k in n.keywords))
+                            found.append((rel.split("/")[-1], cls.name, n.func.id))
+        expected = sorted([("effects.py", "TradePokemonWithDeck", "return_hand_to_deck"), ("effects.py", "TradePokemonWithDeck", "reveal_deck_to_hand"),
+                           ("effects.py", "SearchDeckTrainer", "reveal_deck_to_hand"), ("effects.py", "LookTopTakePokemonThenShuffle", "reveal_deck_to_hand"),
+                           ("effects.py", "CoinsSearchBasicEnergyPerHeads", "reveal_deck_to_hand"), ("effects.py", "ReturnHandEnergyThenCoinSearchBasicEnergy", "return_hand_to_deck"),
+                           ("effects.py", "ReturnHandEnergyThenCoinSearchBasicEnergy", "reveal_deck_to_hand"), ("effects.py", "RevealDeckTopTakeSameNamed", "reveal_deck_to_hand"),
+                           ("effects.py", "LookTopTakeTrainerThenShuffleLock", "reveal_deck_to_hand"), ("effects.py", "BreederCoupleSearch", "reveal_deck_to_hand"),
+                           ("effects.py", "SearchEvolutionCardToHand", "reveal_deck_to_hand"), ("effects.py", "EachPlayerSearchToolOnEntry", "reveal_deck_to_hand"),
+                           ("effects.py", "SearchDeckWithBenchLettersToHand", "reveal_deck_to_hand"),
+                           ("programs.py", "RevealPokemonFromDeck", "reveal_deck_to_hand"), ("programs.py", "RevealNamedPokemonFromDeck", "reveal_deck_to_hand"),
+                           ("programs.py", "RevealTrainerFromDeck", "reveal_deck_to_hand"), ("programs.py", "RevealTrainerFromDeck", "reveal_deck_to_hand"),
+                           ("programs.py", "ReturnHandThenRevealEnergy", "reveal_deck_to_hand"), ("programs.py", "EachPlayerLooksTakesBasicEnergy", "reveal_deck_to_hand")])
+        self.assertEqual(sorted(found), expected)
+
     def test_helper_default_stays_false(self):
         import inspect
         for fn in (zones.return_hand_to_deck, zones.reveal_deck_to_hand):
