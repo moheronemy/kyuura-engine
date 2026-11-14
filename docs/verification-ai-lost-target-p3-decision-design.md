@@ -519,3 +519,5 @@ fixture・構築盤面は、new_game からの到達の実績に数えない。
 2. 旧 r1 の扱い。10.7 節の案を採るか、undetermined のまま残すか。
 3. P3o・ほかの効果の型・ほかの再開先の登録と、P2 の登録。
 4. GUI の追従（規則 8 は検証者の側だけなので、API・GUI の契約は変わらない）。
+
+- 2026-11-14 の追記: 操作・決定・規約の経路の棚卸しと次の小規模バッチの設計（P1・P3s は主目的にしない。P2・P3o の登録は別の単位）: [verification-ai-coverage-inventory-next-batch.md](verification-ai-coverage-inventory-next-batch.md)

@@ -1,0 +1,81 @@
+{
+  "status": "draft",
+  "status_note": "利用者の採用の前の下書き。実行できる確定計画ではない。確定計画は実行の単位で tools.verification_ai.batch plan が書く plan.json・plan.sha256。実行時にしか分からない値（実行コミット・0.181.0 での deck_problems・実装識別の照合・plan.sha256・キャッシュ）は null で、未確認",
+  "document": "docs/verification-ai-coverage-inventory-next-batch.md",
+  "date": "2026-11-14",
+  "base": {"branch": "claude/vai-coverage-inventory", "from": "e7d91c2227a25a72d045f62ec4dfe23d0abb6168", "code_same_as": "db8f2f2", "main_contains_base": false},
+  "identity_expected": {
+    "engine_version": "0.181.0", "behavior_digest": "5e0cb4acafd075f7f4f7d861bf948ac69df36a9e15a9cb8f6beba01e898c7238",
+    "tool_version": 10, "tool_digest": "7b56ed5ad5d02fea30c336a10d810d4d4b6164b5f30b14b95796fb2736d50622",
+    "judge_rules": 8, "plan_format": "kyuura-vai-batch-plan/6", "complete_format": "kyuura-vai-batch-complete/6",
+    "p1_basis": "d1729754fde6c50d1f3944904189a8e5bcf193fa39943c8e88e0643d85dd2a28", "p3_basis": "bb6d1730818a589d4a75f9efe96fcc0d03e04c082d623d644fc6cf523aa70435",
+    "confirmed": null, "note": "前の単位（vai-batch-u1）で実装から取った値。この単位では計算していない。実行の単位で取り直して照らす"
+  },
+  "implementation_changes_required": [],
+  "user_caps": {"max_games_total": 12, "budget_seconds_total": 600, "evidence_total_mib": 1024, "observation": true, "execution": "単一プロセス・逐次"},
+  "total": {"games": 9, "budget_seconds": 600, "evidence_max_mib": 832, "plans": 3, "order": ["vai-batch-w1", "vai-batch-w2", "vai-batch-w3"]},
+  "common": {
+    "out": "C:/dev/kyuura-engine-verification-vai",
+    "engine_commit": null, "tool_commit": null,
+    "observation_cli": "--observation",
+    "stop_policy_cli": "--undetermined-evidence-missing continue",
+    "stop_policy": {
+      "continue": ["known_stop", "undetermined:evidence_missing_stop", "terminations: game_over・halted_known・input_unavailable・no_progress・limit_*"],
+      "stop": ["suspect", "undetermined:unknown_diagnostic・contract_unknown・no_progress・accepted_content_unrecorded・unclassified", "観測の記録の問題", "状態の不整合", "failed", "replay の不一致", "書き込みの失敗", "terminations: halted_unclassified・failed・state_integrity・exception・inconsistency・start_rejected・negative_side_effect・api_contract_unknown"],
+      "acknowledge": "--acknowledge-stop・unlock は自動で使わない"
+    },
+    "batch_limits_fixed_by_tool": {"game_reserve_seconds": 150, "evidence_reserve_mib": 64, "max_attempts_per_game": 3},
+    "game_limits_default": {"operations": 2000, "accepted": 1000, "turns": 200, "seconds": 120.0, "rejections_per_position": 16, "draws_per_position": 64},
+    "decks_legality_on_0_181_0": null,
+    "run_procedure": {
+      "s1_cache": "実行の worktree・コミット・Python に対応する新しい外部の checked hash の pyc キャッシュ（prepare_pyc_cache.py）。準備の時間・容量はバッチと分けて記録",
+      "dry_run": "run_seq_pyc.py --dry-run で use_cache 真・batch run を呼ばないことを確かめる",
+      "run": "run --stop-after-games 1 を -B と PYTHONPYCACHEPREFIX で 1 局ずつ",
+      "capacity_before_each_game": "max(128 MiB, その計画で保存済みの最大 1 局 × 1.5) を、計画の残りと出力先の空き（キャッシュが占めたあと）の両方で確かめる。足りなければ未着手",
+      "never": ["予算の延長", "局の追加", "seed の差し替え", "記録の削除・圧縮・移動", "照合の省略", "その場での修正と再実行"],
+      "cache_dir": null
+    },
+    "seed_check": {"new_range_checked": [8001, 8100], "files": 319, "hits": 0, "max_seed_seen": 7002, "regression_seed": 2025, "regression_seed_existing_uses": {"vai-batch-b2": 18, "vai-batch-c2": 18}}
+  },
+  "plans": [
+    {
+      "batch": "vai-batch-w1", "target": "T-A 選択肢の数を伏せる決定（discard_from_hand・search_deck・return_to_deck・select_evolution_card）・retrieve_energy と、決定への回答の未裁定の拒否（UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE）を観測の記録つきで確かめる",
+      "deck0": "hitmonchan-dewgong-v2", "deck1": "venusaur-parasect-v2", "deck_kind": "固定デッキ（エンジンの公開のもの。変えない）",
+      "conventions_cli": null, "conventions": "CS-KYUURA-CURRENT@1",
+      "modes": ["rules-v2", "boundary"], "seeds": [8001, 8002, 8003], "seed_kind": "new",
+      "games": 6, "game_ids_order": "g001-rules-v2-s8001, g002-boundary-s8001, g003-rules-v2-s8002, g004-boundary-s8002, g005-rules-v2-s8003, g006-boundary-s8003",
+      "max_games": 6, "budget_seconds": 270, "evidence_max_mb": 384,
+      "estimate": {"last_start_central": 39.4, "last_start_pess": 101.7, "window": 120, "bytes_central": 155789144, "bytes_pess": 199539982, "source": "verifier/runs/vai-coverage-inventory/out/estimate.json"},
+      "plan_sha256": null
+    },
+    {
+      "batch": "vai-batch-w2", "target": "T-B 既存の別の規約集合 CS-KYUURA-PLAY-S2A@1 の続行規約 PC-SETUP-MULLIGAN-COUNT@1 が準備で処理を決めること（公開ログの convention_applied）を観測の記録つきで確かめる",
+      "deck0": "hitmonchan-dewgong", "deck1": "venusaur-parasect", "deck_kind": "固定デッキ（b2・C2 と同じ。--deck0・--deck1 を省いた既定）",
+      "conventions_cli": "--conventions CS-KYUURA-PLAY-S2A@1", "conventions": "CS-KYUURA-PLAY-S2A@1",
+      "modes": ["rules-v2", "boundary"], "seeds": [2025], "seed_kind": "regression",
+      "seed_kind_note": "b2（既定の集合）で準備の停止、C2（S2A）で続行した結果を見て選んだ回帰条件。旧記録の再開・復元・replay ではなく 0.181.0 での新規の実行。同じ場面を保証しない。2 局の独立を仮定しない",
+      "games": 2, "game_ids_order": "g001-rules-v2-s2025, g002-boundary-s2025",
+      "max_games": 2, "budget_seconds": 170, "evidence_max_mb": 256,
+      "estimate": {"last_start_central": 9.2, "last_start_pess": 54.0, "window": 20, "note": "悲観（1 局目が尾）では 2 局目が未着手"},
+      "plan_sha256": null
+    },
+    {
+      "batch": "vai-batch-w3", "target": "T-B の対照: 既定の規約集合で同じ seed の準備の停止 UNRESOLVED_MULLIGAN_COMPENSATION（halted_known）を観測の記録つきで確かめる",
+      "deck0": "hitmonchan-dewgong", "deck1": "venusaur-parasect", "deck_kind": "固定デッキ（既定）",
+      "conventions_cli": null, "conventions": "CS-KYUURA-CURRENT@1",
+      "modes": ["rules-v2"], "seeds": [2025], "seed_kind": "regression",
+      "games": 1, "game_ids_order": "g001-rules-v2-s2025",
+      "max_games": 1, "budget_seconds": 160, "evidence_max_mb": 192,
+      "expected_judge": "halted_known・halt_condition_not_evidenced（evidence_missing_stop・続行と指定した分類）の見込み。受理 0 の停止での観測の記録の形は未出現（問題なら止めて報告）",
+      "plan_sha256": null
+    }
+  ],
+  "not_in_this_plan": [
+    "受理の前に未裁定で止める候補の送信（範囲を広げる方策・判定の根拠が要る）",
+    "remove_disguise・start_sudden_death・相手が答える決定・反応の決定（新しい明示リストか構築盤面が要る）",
+    "P2・P3o の根拠登録（judge の単位）",
+    "R-2〜R-5（API の制約。局数では解消しない）",
+    "規約集合 PO",
+    "P1・P3s・P6・U-R3a・スタジアムの再確認を主目的にすること"
+  ]
+}
