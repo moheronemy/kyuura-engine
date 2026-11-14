@@ -9416,7 +9416,7 @@ class SearchEvolutionCardToHand(PowerEffect):
     def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         if choices[0] not in deck_evolution_cards(state, use.player):
             raise RuntimeError(f"しんかのひかりで選んだカード {choices} が、山札の進化カードではない（エンジンの不具合）")
-        reveal_deck_to_hand(state, use.player, choices[0], power=str(use.key))
+        reveal_deck_to_hand(state, use.player, choices[0], power=str(use.key), identify=True)
         shuffle_deck(state, use.player, power=str(use.key))
 
     def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
@@ -34682,7 +34682,7 @@ class EachPlayerSearchToolOnEntry(EntryPower):
         if choices:
             if choices[0] not in deck_tool_cards(state, player):
                 raise RuntimeError(f"おくりもので選んだカード {choices} が、山札のポケモンのどうぐではない（エンジンの不具合）")
-            reveal_deck_to_hand(state, player, choices[0], power=str(use.key))
+            reveal_deck_to_hand(state, player, choices[0], power=str(use.key), identify=True)
         else:
             state.add_event("gift_take_none", player=player, power=str(use.key), reason="declined" if deck_tool_cards(state, player) else "no_target")
         shuffle_deck(state, player, power=str(use.key))
@@ -40524,7 +40524,7 @@ class SearchDeckWithBenchLettersToHand(PowerEffect):
     def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         if choices[0] not in self.options(state, use):
             raise RuntimeError(f"特殊能力 {use.key} で選んだカード {choices} が、山札の選べるカードではない（エンジンの不具合）")
-        reveal_deck_to_hand(state, use.player, choices[0], power=str(use.key))
+        reveal_deck_to_hand(state, use.player, choices[0], power=str(use.key), identify=True)
         shuffle_deck(state, use.player, power=str(use.key))
 
     def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:

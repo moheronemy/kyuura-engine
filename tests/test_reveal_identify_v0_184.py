@@ -240,6 +240,28 @@ class IdentifiedTest(unittest.TestCase):
                      (0, "answer_decision", [[uid(st, 0, "deck", H.LIGHT_MACHOKE)]], "加える")], ["effects.py:BreederCoupleSearch.resume"])
 
     # ---- B 特殊能力（effects.py）
+    def test_b_evolutionary_light(self):
+        st = T43.board(T43.mon(T43.DARK_DRAGONAIR, ()), deck=(T43.FIRE, T43.DARK_DRAGONITE, T43.RATTATA, T43.ERIKAS_CLEFABLE, T43.GRASS), prizes=0)
+        self.go(st, [(0, "use_power", [[st.players[0].active.pokemon_id]], ""), (0, "answer_decision", [[uid(st, 0, "deck", T43.DARK_DRAGONITE)]], "加える")],
+                ["effects.py:SearchEvolutionCardToHand.resume"])
+
+    def test_b_gift_both_players(self):
+        berry = "neo1-073"
+        togepi = T84.mon(H.TOGEPI_NEO1, (T84.W,), played_turn=1)
+        st = T84.board(togepi, hand=(H.LIGHT_TOGETIC,), opponent=T84.mon(H.HITMONCHAN), deck=[T84.W, berry, T84.W], opponent_deck=[T84.W, berry, T84.W])
+        run = self.go(st, [(0, "evolve", [[uid(st, 0, "hand", H.LIGHT_TOGETIC)], [st.players[0].active.pokemon_id]], ""), (0, "answer_decision", [[1]], "使う"),
+                           (0, "answer_decision", [[1]], "見る"), (0, "answer_decision", [[uid(st, 0, "deck", berry)]], "加える（使った人）"),
+                           (1, "answer_decision", [[1]], "見る（相手）"), (1, "answer_decision", [[uid(st, 1, "deck", berry)]], "加える（相手）")],
+                      ["effects.py:EachPlayerSearchToolOnEntry.resume"])
+        self.assertEqual(sorted(x["owner"] for x in run.targets), [0, 1])
+
+    def test_b_find(self):
+        m = T97.mon
+        st = T97.board(m(H.RATTATA), bench=(m(T97.UF), m(T97.UI), m(T97.UN), m(T97.UD)), deck=[T97.W, H.POTION, T97.W], prizes=0)
+        finder = next(p for p in st.players[0].bench if st.cards[p.card].card_id == T97.UF)
+        self.go(st, [(0, "use_power", [[finder.pokemon_id]], ""), (0, "answer_decision", [[uid(st, 0, "deck", H.POTION)]], "加える")],
+                ["effects.py:SearchDeckWithBenchLettersToHand.resume"])
+
     # ---- C ワザの要素（programs.py）
 class PrivateControlTest(unittest.TestCase):
     """非公開の対照（対象外の経路は変えていない）。"""
