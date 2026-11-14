@@ -97,6 +97,7 @@
 4. そのあとで、この単位の残りの 6 分類（57 件）を同じ方法で確かめます。
 
 - 2026-11-14 の追記: 1 の再現（構築盤面。もどすカード・探したカードの両方で、相手・観戦者が識別できない）と、修正方式の設計（出来事に `card_id` を足す案 A。ポケモン交換おじさんの呼ぶ箇所だけ）: [trader-reveal-identification-design.md](trader-reveal-identification-design.md)。残り 57 件は未調査のまま。
+- 2026-11-14 の追記: 残りの 6 分類・57 件を保存済みの記録で確かめた（識別できる 32・正しく非公開 21・交換おじさんの探したカードの既知の不具合 4・新しい候補 0・未調査 0）: [verification-ai-w1-publication-audit-remaining.md](verification-ai-w1-publication-audit-remaining.md)
 - 2026-11-14 の追記: 案 A を 0.182.0 で実装した（2 つの出来事に `card_id`。エンジンの出来事と閲覧用記録は修正済み、client_api の配信・GUI は未実装）: [trader-reveal-identification-v0.182.md](trader-reveal-identification-v0.182.md)。残り 57 件は未調査のまま。
 
 ## 5. 未確認・失敗・修正
