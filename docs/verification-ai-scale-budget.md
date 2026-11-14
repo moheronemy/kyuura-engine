@@ -474,3 +474,8 @@
   - 同じ seed による対戦の統計的独立性は仮定しません。
   - 元の「独立な 2 局として数えません」は、実行件数を減らす意味ではありません。
 - 枠 A の拒否 8 件・undetermined 2 件・再送回避 5 件の確認は [verification-ai-batch-s1-rejection-audit.md](verification-ai-batch-s1-rejection-audit.md) です（保存済みの記録の読み取りだけ）。
+
+## 10. 次の計画での参照（2026-11-14 追記）
+
+- エンジン 0.181.0・規則 8 の次の小規模バッチ（枠 A 6 局・枠 B 8 局、観測の記録つき）の見積もりは、この文書の s1・s2 の実測と r1・r2 を参照した: [verification-ai-batch-plan-p3s-v0181.md](verification-ai-batch-plan-p3s-v0181.md) 5 章。
+- この文書の見積もり・実行結果の数値は変えていない。
