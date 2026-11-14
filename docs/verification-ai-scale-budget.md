@@ -483,3 +483,4 @@
 - S-1 を次のバッチの外側の手順にした: [verification-ai-pyc-cache-procedure.md](verification-ai-pyc-cache-procedure.md)（準備の時間・容量は道具の累積時間・ゲームの証跡と別に記録する）。
 - その手順の実運用（vai-batch-u1・4 局）: 開始の照合 1 セッション 1.6〜1.7 秒・単独の最終集計 1.9 秒（[verification-ai-pyc-cache-procedure.md](verification-ai-pyc-cache-procedure.md) 9 章）。
 - 次の小規模バッチ（w1〜w3。9 局・600 秒・832 MiB）の見積もりは、t1・u1・C1・C2・b2・s2 の実測を参照した: [verification-ai-coverage-inventory-next-batch.md](verification-ai-coverage-inventory-next-batch.md) 5.2 節。
+- その実行（w1〜w3・9 局・S-1）: 累積 38.6 秒・ゲームの証跡 65.2 MB・プロセスの累積ピーク最大 226.7 MB（[verification-ai-coverage-inventory-next-batch.md](verification-ai-coverage-inventory-next-batch.md) 10 章 10.7 節）。

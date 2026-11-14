@@ -3,6 +3,7 @@
 2026-11-14。調査・設計・文書化だけです。実装・テスト・対戦・seed の探索・judge や replay の実行・`deck_problems`・キャッシュの作成・確定計画の作成はしていません。
 `kyuura_engine`・`tools.verification_ai` は import していません。コードは文字として読み、保存済みの JSON は証跡の側の補助スクリプトで数えただけです。
 
+- 実行の結果: 推奨案を採用して実行しました（10 章。9 局すべて完了。実行の前の照合で ER9 の見込みと C2 の証拠の記述を訂正）。
 - 機械可読の下書き: [verification-ai-coverage-next-batch-plan.json](verification-ai-coverage-next-batch-plan.json)（`status: draft`。確定計画ではありません）。
 - 証跡: `kyuura-engine-verification-vai/verifier/runs/vai-coverage-inventory/`（事前計画 `PLAN.md`、スクリプト `scripts/`、出力 `out/`）。
 
@@ -72,6 +73,7 @@
 - 拒否のコードは、記録がある範囲で次のとおりです。
   - s1: `WRONG_ENERGY_TYPE` 4・`WRONG_RETREAT_COST` 1・`INSUFFICIENT_ENERGY` 1。
   - C1: `UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE` 15（決定への回答の拒否。evidence_missing_stop）。
+  - **訂正（2026-11-14、実行の前の照合。10.1 節）**: 上の「evidence_missing_stop」は C1 の保存した judge（規則 5）の分類です。規則 6 で ER9 の条件つきの根拠が登録され、C1 の当て直しでは 15 件とも known_stop でした（[計画 3](verification-ai-batch-plan3.md) 11 章）。
   - `UNSUPPORTED_SECRET_PLAN_LOST_TARGET` 5（P1 3: s1 2・u1 1、P3s 2: r1 1・t2 1）。
   - 古い道具のバッチ（b1・b2）は判定のコードの内訳を持ちません。
 - 残り（residual）は R-2 だけが出ています（r1・s1・t1・t2）。R-3〜R-5 は対戦で出ていません。R-2〜R-5 は API の制約で、局数を増やしても解消しません。
@@ -105,6 +107,8 @@
 | 続行規約 `PC-SETUP-MULLIGAN-COUNT@1`（`CS-KYUURA-PLAY-S2A@1`） | C2（S2A・0.179.0・観測なし）で同じ seed 2025 の 3 方式とも game_over まで進んだ。記録に、規約を当てたログ `convention_applied` はない（C2 の道具は公開ログの観測を保存していない）。**規約が実際に処理を決めたことの直接の記録はない** |
 | 規約集合 PO | 対戦の記録なし |
 | 受理の前に未裁定で止める候補 | `play_trainer` 10,104・`discard_from_play` 634・`use_stadium` 36 は、どの方式でも範囲の外（`unresolved_ruling`）。送信していない |
+
+- **訂正（2026-11-14、実行の前の照合。10.1 節）**: 上の行の「記録に `convention_applied` はない」「直接の記録はない」は不正確でした。各局の保存ファイルに文字列はありませんが、当時の比較（`vai-batch-c/compare_c2_b2.json`）は、保存した完全な記録を `replay_run.replay` の observer で再実行した状態のログから、seed 2025 の 3 局で `convention_applied`（`PC-SETUP-MULLIGAN-COUNT`・版 1・場面 initial-setup）を 1 回ずつ読んでいました（[計画 3](verification-ai-batch-plan3.md) 10.5 節）。0.179.0・観測の記録なしの結果である点は同じです。
 
 ## 4. 次に狙う対象の選定
 
@@ -150,6 +154,7 @@
   - w3 は停止の対照なので 1 方式だけにしました。
 - **停止方針**（既定）:
   - known_stop と、続行と指定した evidence_missing_stop は、保存して続けます。T-A の `UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE` の拒否と、w3 の準備の停止（`halt_condition_not_evidenced`）は、どちらも evidence_missing_stop の見込みです。
+  - **訂正（2026-11-14）**: T-A の ER9 の拒否は、規則 6 の条件をすべて満たせば known_stop（続行）、満たさなければ evidence_missing_stop（続行）、経路の理由がなければ unclassified（停止）です。一律に evidence_missing_stop とは見込みません（10.1 節）。
   - suspect・未知の診断や契約・分類不能・`accepted_content_unrecorded`・観測の記録の欠けや矛盾や失敗・状態の不整合・failed・replay の不一致・書き込みの失敗は、保存して止めます。
   - judge は緩めません。
 
@@ -207,6 +212,7 @@
 | 本人だけの情報 | 山札・手札のカードの中身が、選べるものとして本人にだけ見えること。受理のあとの公開ログに出るのは、全員に見えるはずの値だけであること |
 | 拒否（`UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`） | 拒否の行で 3 主体の観測の sha256 とログの位置が前後で同じ、更新が届かない、閲覧用記録の項目は本人の own_rejection だけ、同じ主体の決定待ちが続くこと（応答の `status`・`next`・`refetch_required`） |
 | 判定 | 根拠の登録がないので evidence_missing_stop の undetermined の見込みです（続行）。known_stop にしません。未知の分類なら止めます |
+| （訂正 2026-11-14） | 上の行の見込みは誤り。ER9 は規則 6 の条件（10.1 節）をすべて満たせば known_stop、満たさなければ evidence_missing_stop。結果は送信の条件と根拠の充足で評価する |
 | 効果の中身 | 受理の中身の確認があるのは P6・U-R3a・うらの特殊能力だけです。T-A の効果（探す・回収）は、公開ログの出来事（手札の数・トラッシュ・山札の数の変化）が選んだ数と合うかを、読むだけで比べます。合わなくても判定規則は変えず、記録して報告します |
 | replay | replay_run が期待どおり（succeeded）であること |
 | 未到達 | 種類ごとに、前提（トレーナーを使わなかった）・方策の非選択・入力の生成・check・別の拒否で分けます。決まらなければ不明とします。未到達でも局を足しません |
@@ -259,3 +265,219 @@
   - 観測の記録で時間が約 2 倍になる仮定。
   - w3 の受理 0 の停止での観測の記録の形。
   - `UNRESOLVED_*` の 2 つのコードのカタログの項目（文字列の存在だけを確かめた）。
+
+## 10. 推奨案の実行結果（vai-batch-w1・w2・w3。2026-11-14）
+
+利用者の指示で、5 章の推奨案（T-A・T-B）をそのまま採用して実行しました。コード・デッキ・規約集合・seed・方式・局数・予算は変えていません。
+局の追加・予算の延長・停止の承認・ロックの解除・全体テスト・seed の探索はしていません。
+
+seed 2025 は、結果を見て選んだ回帰条件です。旧記録の再開・復元・replay ではなく、新しい版での新規の実行です。この 9 局は、到達率・強さ・網羅性・統計的独立性の証明ではありません。
+
+### 10.1 実行の前の 2 点の照合と訂正（`vai-batch-w-run/raw/precheck_reconciliation.json`）
+
+**A. ER9（`UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`）の判定**
+
+- **登録**: 規則 6 で登録され、規則 8 でも変わっていません。場所は `judge.KNOWN_STOP_EVIDENCE`・`RECORDED_STOP_CONDITIONS`・`recorded_stop_evidence` です。
+- **根拠を渡す条件**（記録した API の値で、すべて満たすときだけ）:
+  - 送信が拒否され、検証者と公開の診断がどちらも ER9。
+  - 候補が `answer_decision` で、段が 1 つ。
+  - 選んだ意味が空（0 枚）。
+  - 段の決定の種類が `retrieve_energy`、最小 0・最大 1 以上、選べるものがある。
+  - 応答が同じ主体の決定待ち（`awaiting_decision`・`next` がその主体の `answer_decision` だけ）で、`refetch_required` が偽。
+- **入口**: `batch.judge_trace` → `submit_evidence`（ER9 を最初に確かめる）→ `judge_normal` → `_known_stop_or_undetermined`。
+- **分かれ目と停止方針**:
+
+| 場合 | 判定 | 停止方針 |
+|---|---|---|
+| 条件をすべて満たし、経路の理由がある | known_stop | 続行 |
+| 条件のどれかを満たさない | undetermined（evidence_missing_stop） | 続行 |
+| 経路の理由がない | undetermined（unclassified） | 停止 |
+| コード表にない | undetermined（unknown_diagnostic） | 停止 |
+
+- **来歴**: C1 の保存した judge（規則 5）では 15 件とも undetermined でした。規則 6 の当て直し（`vai-batch-c-audit/rejudge_after.json`）では 15 件とも known_stop でした。
+- **訂正**: この文書の「一律に evidence_missing_stop の見込み」は誤りでした。3.1 節・5.1 節・7.1 節に訂正を付けました（元の文は残した）。
+
+**B. C2 の規約の適用の証拠**
+
+| 区分 | 内容 |
+|---|---|
+| 実際の適用の出来事（構造化された記録） | **あった**。当時の `compare_c2_b2.py` が、保存した完全な記録を `replay_run.replay` の observer で再実行し、状態のログから読んだ（`vai-batch-c/compare_c2_b2.json`）。seed 2025 の 3 局で各 1 回。<br>値: `convention_applied`・`PC-SETUP-MULLIGAN-COUNT`・版 1・場面 `UNRESOLVED_MULLIGAN_COMPENSATION#initial-setup`・`rounds_both` 1・`rounds_single` 1・開始のあと（`after_seq` 0）・ログの 14 番目。b2 の同じ局は 0 件 |
+| 保存ファイルの直接の記録 | なかった（各局の trace・actors・full_record に文字列はない。当時の道具は公開ログの観測を保存していない） |
+| コードの条件による裏づけ | `conventions.record_application` が、続行規約が実際に処理を決めたときに公開のログを書く。S2A は `PC-SETUP-MULLIGAN-COUNT@1` をふくむ |
+| game_over までの進行からの推論 | 既定の集合（b2）では準備の停止、S2A（C2）では進んだ（補助的な根拠だけ） |
+| 今回新たに確かめた部分 | 0.181.0 で、保存した観測の記録（閲覧用記録の公開ログ）に、3 主体で同じ値・同じ位置で出ること（10.6 節） |
+
+- **訂正**: 3.3 節の「直接の記録はない」は不正確でした。訂正を付けました（元の文は残した）。
+- 当時の文書（[計画 3](verification-ai-batch-plan3.md) 10.5 節の「各 1」）は、replay の状態のログによるものとして正しいままです。
+- 説明できない矛盾はなかったので、承認待ちを挟まず実行に進みました。
+
+### 10.2 基点・識別・デッキ・確定計画・キャッシュ
+
+- 基点は `claude/vai-coverage-inventory` の `31b157f` です（origin と一致・無視をふくめ変更 0。main は祖先で、基点は main に入っていない）。
+- worktree は `C:\dev\kyuura-engine-lt15`、ブランチは `claude/vai-batch-w`、実行コミットは `31b157f` です（`db8f2f2` からコードの差なし）。
+- 識別: エンジン 0.181.0・behavior `5e0cb4ac…`、`TOOL_VERSION` 10・`7b56ed5a…`、規則 8、形式 6、P1 basis `d1729754…`、P3 basis `bb6d1730…`。
+- 規約集合:
+  - `CS-KYUURA-CURRENT@1`（`sha256:9a9b95c6…`。12 の構成。`PC-SETUP-MULLIGAN-COUNT` をふくまない）
+  - `CS-KYUURA-PLAY-S2A@1`（`sha256:b317a3f0…`。17 の構成。`PC-SETUP-MULLIGAN-COUNT@1` をふくむ）
+- デッキ（固定デッキ。計画と同じ関数 `adapter.deck_record` の記録）:
+  - 4 つとも 60 枚・`deck_problems` 空です。
+  - エンジンの定義から、既存の関数で計算した内容と展開の確認値が、記録と同じでした（`scripts/deck_consistency.py` → `deck_consistency.json`）。
+
+| デッキ | content_sha256 | 展開の sha256 |
+|---|---|---|
+| hitmonchan-dewgong-v2 | `37fa81e1…` | `66e56928…` |
+| venusaur-parasect-v2 | `ff4ae4f2…` | `a0831f9d…` |
+| hitmonchan-dewgong | `bf40f5ec…` | `cf9746e3…` |
+| venusaur-parasect | `d98267a2…` | `2e3c9044…` |
+
+- seed: 8001〜8003 は保存済みの 319 ファイルになく（最大 7002）、2025 は 8 ファイル（b2・c2）でした。
+- 確定計画（既存の `batch plan`。局の並び・方式・seed・デッキ・規約集合・観測・上限・停止方針・識別を下書きと照らして ok）:
+
+| 計画 | plan.sha256 | 局の並び |
+|---|---|---|
+| w1 | `fea2cbf849eb1ba8de565537f239d88e7d0bc3a6a1f1c6354267d869c27bb764` | seed 8001〜8003 ごとに rules-v2 → boundary |
+| w2 | `4c3e8ff211e527316955a3e9d052ae2a808c6ef6d194f24e8a805540ba7c0e61` | 2025: rules-v2 → boundary |
+| w3 | `8fec2c783274e4e80247a8ab5261abde877f5d79d98c844dc30d27e6971a3d26` | 2025: rules-v2 |
+
+- w2・w3 の局の設定は、b2・C2 の同じ seed・方式の局と、規約集合と `run_id` 以外が同じです（計画の形式・道具の識別は違う）。
+- キャッシュ（S-1）: `C:\dev\kyuura-engine-pyc-cache\b5e0cb4a-t7b56ed5a-cpython-314-31b157f-w\`。
+  - lt15・`31b157f`・同じ Python 3.14.6 で作りました。184 個・13,732,359 バイト・すべて checked hash です。
+  - 準備の実時間は 25.4 秒（コンパイル 10.9 秒）で、累積時間の外です。
+  - dry-run は 3 計画とも `use_cache` 真で、`batch run` を呼んでいません。
+  - 準備のとき・各計画の前後・最終集計のあとの sha256 は、すべて同じでした。lt15 に `__pycache__` はできていません。
+
+### 10.3 件数と終わり方
+
+| | w1 | w2 | w3 |
+|---|---|---|---|
+| 計画・完了・停止つき完了・未完了・未着手 | 6・6・0・0・0 | 2・2・0・0・0 | 1・1・0・0・0 |
+| 試行 | 6 | 2 | 1 |
+| 終わり方 | game_over 6 | game_over 2 | halted_known 1 |
+| replay_run | 6 局とも succeeded（期待どおり） | 2 局とも succeeded | succeeded（期待どおり） |
+| 判定 | known_stop 1（ER9）・undetermined 0 | known_stop 0・undetermined 0 | 終わり方の undetermined 1（evidence_missing_stop。続行と指定した分類） |
+| 受理・拒否 | 714・1 | — | 受理 0 |
+| 停止・承認・再開・ロックの解除 | なし | なし | なし |
+| 読むだけの確認の問題 | 0 | 0 | 0 |
+
+- 各計画のあとで、保存・必須ファイル・全ハッシュ・判定・replay を確かめてから次へ進みました。
+- 最終集計（同じキャッシュで各 1 回）は、主要件数（局・試行・件数・終わり方・判定）が run の終わりの集計と同じでした。`aggregate.json` 以外のゲームの証跡のハッシュ（105・37・20 ファイル）も変わっていません。
+  - 差は派生の量だけです。w3 は派生のファイルの数も違いました。1 セッションの計画で、run の終わりの集計の時点に `aggregate.json` がまだなかったためです。
+
+### 10.4 T-A: 選択肢の数を伏せる決定と情報境界（w1）
+
+決定の種類ごとの流れ（w1 の 6 局。`analyze_ta.json`）:
+
+| 決定の種類 | 伏せる | 提示 | 選択 | 入力の生成 ok | check valid | 送信 | 受理 | 拒否 |
+|---|---|---|---|---|---|---|---|---|
+| discard_from_hand | はい | 26 | 26 | 26 | 26 | 26 | 26 | 0 |
+| search_deck | はい | 25 | 25 | 25 | 25 | 25 | 25 | 0 |
+| return_to_deck | はい | 4 | 4 | 4 | 4 | 4 | 4 | 0 |
+| select_evolution_card | はい | 1 | 1 | 1 | 1 | 1 | 1 | 0 |
+| retrieve_energy | いいえ | 6 | 6 | 6 | 6 | 6 | 5 | 1（ER9） |
+| select_pokemon | いいえ | 31 | 31 | 31 | 31 | 31 | 31 | 0 |
+
+- **決定の公開の範囲**（3 閲覧者の閲覧用記録。違反 0）:
+  - 伏せる 4 種類では、決める主体以外に届く決定の項目は `kind`・`player` だけでした（`option_count`・最小と最大・選べるものはない）。
+  - 伏せない種類（`retrieve_energy`・`select_pokemon`・`promote_active`・`take_prize`）では、決める主体以外に選べるものの数と最小・最大は届きます。選べるものそのものは届きません。
+  - 決める主体には、選べるもの（本人の山札・手札のカード）が届きました。本人が山札を探して見るのは正当な情報なので、漏れとしていません。
+  - 既存の境界の確かめ（`analyze_t_reach.py` の `boundary`）でも、6 局とも違反 0 でした。
+- **選んだカードの公開の範囲**（受理のあと、相手・観戦者の閲覧用記録の出来事に、選んだカードの uid が出たか。`analyze_publication.json`。ログはカードを uid で書く）:
+
+| トレーナー | 決定 | 相手・観戦者に選んだカードが出たか | カードの文面との照らし |
+|---|---|---|---|
+| パソコン通信 | 手札からすてる | 出た（`discard_from_hand`） | すてたカードはトラッシュ（公開）。合う |
+| パソコン通信 | 山札から選ぶ | **出ない**（`search_deck` の出来事は、選んだカードを隠す項目） | 「山札から好きなカードを 1 枚選んで手札にする」。見せる文がない。合う |
+| エネルギー回収 | 手札からすてる・トラッシュから回収 | 出た | トラッシュは公開。合う |
+| ポケモン交換おじさん | 手札から山札にもどす・山札から選ぶ | 出た（`return_to_deck`・`reveal_from_deck`） | 「交換するカードは相手に見せなければならない」。合う |
+| ポケモン育て屋さん | 進化カード | 出た（`evolve`） | 場に出す。合う |
+
+- 観測・更新・公開ログ・行の対応（行の番号・受理の番号・trace の送信との対応・閲覧用記録の項目と行の対応）に、欠けや矛盾はありませんでした。
+- 選択肢の数を伏せる決定の情報境界を、観測の記録つきの実際の対戦で確かめたのは、これが初めてです。0.181.0・道具 10 の結果です。
+
+### 10.5 T-A: ER9 の根拠・判定・拒否のあとの継続（w1 の 1 件）
+
+| 確認 | 結果 |
+|---|---|
+| 場面 | エネルギー回収の回収の決定（`retrieve_energy`。最小 0・最大 2・選べるもの 11）。方策は枚数を均等に選び（`uniform:count`）、0 枚を送った |
+| check | 実行した。valid（断りなし） |
+| 規則 6 の条件（記録の値で 1 つずつ） | 10 項目すべて満たした（拒否・コードの一致・`answer_decision`・段 1 つ・0 枚・`retrieve_energy`・最小 0 最大 2・選べるものあり・同じ主体の決定待ち・`refetch_required` 偽） |
+| 判定（規則 8） | **known_stop**。理由は `[unresolved_ruling, UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE, continuation_not_evaluated, evidence:<ER9 の条件の文>]`。経路の理由は候補の `continuation_not_evaluated` |
+| 拒否のあとの観測 | 3 主体の観測の sha256 とログの位置が前後で同じ。閲覧用記録の項目は本人の `own_rejection` だけ。更新はどの主体にも届いていない |
+| 決定の継続と選び直し | 同じエピソードの次の試みが、同じ `retrieve_energy` の決定に 1 枚を選んで受理された |
+| 再送回避と反復の抑制 | 拒否済みの入力の再送回避（`retry_same_input`）は 0、方策の反復の抑制（`policy_suppressed`）も 0。選び直しは方策が別の入力（1 枚）を選んだもので、どちらの仕組みでもない |
+
+### 10.6 T-B: S2A の続行規約と既定の集合の対照（w2・w3）
+
+**w2（S2A・2 局）**
+
+- 2 局とも、開始の閲覧用記録の項目（対応表の行 0・受理の前）に、公開ログの 15 番目（ログの位置 14）として `convention_applied` が 1 回出ました。
+  - 値: `convention` `PC-SETUP-MULLIGAN-COUNT`・`version` 1・`scene` `UNRESOLVED_MULLIGAN_COMPENSATION#initial-setup`・`code` `UNRESOLVED_MULLIGAN_COMPENSATION`・`rounds_both` 1・`rounds_single` 1・`player` 0・`turn` 0。
+- 本人・相手・観戦者の 3 閲覧者で、値と位置が同じでした。項目は公開の値だけで、手札・山札のカードを書く項目はありません。
+- 値は、C2 で replay の状態のログから読んだ値（10.1 節）と同じでした。
+- 適用のあと、初期配置・サイドを置く・引くへ進み、補償の決定（`mulligan_draw`）を経て、2 局とも game_over でした。
+  - 準備の進行を止めずに続けたことの根拠は、適用の出来事そのものです。進んだことだけで適用済みとはしていません。
+
+**w3（既定の集合・1 局）**
+
+- 準備で `UNRESOLVED_MULLIGAN_COMPENSATION`（分類 `unresolved_ruling`）の停止になりました。終わり方は halted_known、受理は 0 です。
+  - 停止の出来事は `halted`（`mulligan_rounds` [[0, 1], [1]]）で、3 閲覧者で同じでした。結果の観測も 3 主体で同じでした。
+- 観測の記録は complete でした。対応表の行は開始と終わりの 2 つで、閲覧用記録の項目は各閲覧者 1 つ（開始）です。受理 0 の停止の観測の形を、初めて記録で確かめました。
+- 終わり方と判定は分けて記録しました。
+  - 終わり方: halted_known（停止方針の続行の終わり方）。
+  - 判定: 終わり方の undetermined。理由は `halt_condition_not_evidenced:UNRESOLVED_MULLIGAN_COMPENSATION`、分類は evidence_missing_stop で、続行と指定した分類です。根拠の登録はないので、known_stop にしていません。
+
+**w2 と w3 の比較**（観戦者の公開ログの並び。同じ seed・同じデッキ。独立を仮定しない）
+
+- 最初の 14 の出来事は同じでした（作成・切る・引く・切り直し 3 回・引く）。
+- 15 番目で初めて違います。w2 は `convention_applied`、w3 は `halted` です。
+- それより後の差（勝敗・番の数など）を、規約だけの因果的な効果とは断定しません。
+
+### 10.7 時間・メモリ・保存量・容量の確認
+
+時間（秒）の測り方:
+
+- 台帳の値（開始の照合・対戦と保存）は直接の値です。
+- セッションの終わりの自動の集計は、ファイルの更新時刻による測定です。
+- 起動・ロック、集計のあと〜終わりは、外側の時刻との差による推定です。
+- 区間の合計は外側の実時間と一致しましたが、それだけで境界が正確とは言いません。
+
+| 区間 | w1（6 セッション） | w2（2） | w3（1） |
+|---|---|---|---|
+| 開始の照合（台帳） | 1.603〜1.700 | 1.616〜1.630 | 1.585 |
+| 対戦・保存（台帳） | 0.43〜6.39（合計 17.24） | 2.44〜3.73 | 0.15 |
+| 自動の集計（更新時刻） | 0.083〜0.144 | 0.066〜0.084 | 0.045 |
+| 起動・ロック（推定） | 0.108〜0.129 | 0.110〜0.118 | 0.127 |
+| 集計のあと → 終わり（推定） | 0.10〜0.44 | 0.22〜0.29 | 0.09 |
+| 外側の実時間（合計） | 30.18 | 10.34 | 2.02 |
+| 累積時間（道具） | 27.346（予算 270） | 9.45（170） | 1.753（160） |
+| 最終集計（単独・外側の実時間） | 1.92 | 1.87 | 1.85 |
+
+- 合計: 9 局・累積 38.55 秒（予算 600）。キャッシュの準備 25.4 秒は別に数えます。
+- メモリは、各局の attempt_end の `PeakWorkingSetSize`（1 セッション 1 局のプロセスの累積ピーク。起動・照合・その局の実行と保存までの値）です。
+  - w1 は中央値 147.5 MB・最大 226.7 MB、w2 は 155.0・170.4 MB、w3 は 86.6 MB でした。
+- 量（バイト）:
+
+| | w1 | w2 | w3 |
+|---|---|---|---|
+| ゲームの証跡 | 46,705,744 | 18,505,700 | 38,359 |
+| うち観測の記録 | 26,310,100 | 10,224,687 | 19,392 |
+| 管理（計画・台帳） | 27,709 | 12,259 | 8,438 |
+| 派生（集計） | 27,593 | 20,711 | 9,415 |
+
+- キャッシュ（派生物。証跡の外）は 13,732,359 バイトです。
+- 容量の確認: 必要量は 3 計画とも最後まで 128 MiB でした。
+  - 残りの最小は w1 366.0 MB・w2 257.2 MB・w3 201.3 MB です。出力先の空きの最小は 262.84 GB で、キャッシュが占めたあとの値です。
+  - 容量・予算による終了はありません。w2・w3 も、予備の窓の中で全局が始まりました。
+
+### 10.8 失敗・修正・再実行・未確認
+
+- 対戦の局の再実行はしていません。計画・コード・デッキは変えていません。
+- 補助スクリプトの修正と再実行（読むだけのもの。1 回目の出力は `raw/*run1*` に残した）:
+  - 事前確認の 1 回目で、規約集合の構成の鍵の名前を誤りました（`conventions` → `members`）。S2A に続行規約がないと誤って出たので、直して再実行しました。
+  - 計画の照合の 1 回目で、固定デッキの記録の `entries`（明示リストだけにある項目）を比べて、誤った不一致を出しました。エンジンの定義から既存の関数で確認値を計算して比べる方法に直し、再実行しました。
+- 未確認:
+  - 伏せる 22 種類のうち、残り 18 種類（今のデッキにカードがない）。
+  - ER9 で条件を満たさない形・経路の理由がない形（未出現）。
+  - S2A のほかの続行規約・規約集合 PO。
+  - w2・w3 のあとの進行の差の原因。
+  - 局の固有のメモリのピーク。

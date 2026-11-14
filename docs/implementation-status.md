@@ -5567,7 +5567,8 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
   - 開始の照合（約 11.7 秒）の原因の調査: [verification-ai-startup-check-investigation.md](verification-ai-startup-check-investigation.md)（エンジンのソースの毎回のコンパイル。改善案は設計だけ）
   - S-1（外部の pyc キャッシュ）を次のバッチの外側の手順にした（対戦なしで区間 11.8 → 1.74〜1.83 秒を確認）: [verification-ai-pyc-cache-procedure.md](verification-ai-pyc-cache-procedure.md)
   - 実運用（vai-batch-u1・4 局すべて完了）: 開始の照合 1.6〜1.7 秒、完全な照合・replay・観測の記録は従来どおり。S-1 を標準の手順にできると判断（同じ文書 9 章）
-- 未確認の操作・決定・規約の経路の棚卸しと、次の小規模バッチ（選択肢の数を伏せる決定と S2A の続行規約。設計・下書きだけで未実行）: [verification-ai-coverage-inventory-next-batch.md](verification-ai-coverage-inventory-next-batch.md)
+- 未確認の操作・決定・規約の経路の棚卸しと、次の小規模バッチ（選択肢の数を伏せる決定と S2A の続行規約）: [verification-ai-coverage-inventory-next-batch.md](verification-ai-coverage-inventory-next-batch.md)
+  - 実行（vai-batch-w1〜w3・9 局すべて完了）: 伏せる 4 種類の決定の情報境界を観測の記録つきで確認（違反 0）、ER9 は規則 6 の条件を満たして known_stop、S2A の convention_applied を 3 閲覧者の公開ログで確認、既定の集合の準備の停止を受理 0 の観測で確認（[verification-ai-coverage-inventory-next-batch.md](verification-ai-coverage-inventory-next-batch.md) 10 章）
 
 ### 以前の記録（実装待ちのとき）
 
