@@ -479,3 +479,4 @@
 
 - エンジン 0.181.0・規則 8 の次の小規模バッチ（枠 A 6 局・枠 B 8 局、観測の記録つき）の見積もりは、この文書の s1・s2 の実測と r1・r2 を参照した: [verification-ai-batch-plan-p3s-v0181.md](verification-ai-batch-plan-p3s-v0181.md) 5 章。
 - この文書の見積もり・実行結果の数値は変えていない。
+- その実行で開始の照合が 1 セッションあたり約 11.7 秒（この文書の s1・s2 は 1.6〜2.0 秒）になった原因の調査と改善案: [verification-ai-startup-check-investigation.md](verification-ai-startup-check-investigation.md)（pyc を書けない `-B` での毎回のコンパイル。完全な照合は変えない案 S-1 を推奨）。
