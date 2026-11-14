@@ -366,3 +366,154 @@ E12 は P3o の性質の記録で、登録はしない。
 | `hashes_before*.json`・`hashes_after*.json` | r1・s1 の読む前後のハッシュ |
 
 公開用の要約 `public/runs/lost-target-p3-design/summary.json` は件数と分類だけ。
+
+## 10. 実装の結果（2026-11-14。規則 8・エンジン 0.181.0）
+
+この章は、4〜6 章の推奨案（登録方式 A、P3 用 basis 7 ファイル、規則 8、`TOOL_VERSION` 10、形式 6）を、E12 を直したエンジン 0.181.0 を基点に実装した結果です。
+保存済みの s1・r1 への当て直し、P2・P3o の登録、新しい対戦、GUI の追従はしていません。
+
+### 10.1 基点
+
+- ブランチは `claude/lost-target-p3s-judge-rule8-v0181`。基点は `claude/e12-keep-energy-removal-fix` の `acde830` で、エンジンは 0.181.0（配布の確かめは `a2b29e9`）。
+- 0.180.0 で止めた作業（`claude/lost-target-p3s-judge-rule8`・`1eed4d1`・未追跡のテスト）は使わず、変えていない。
+  - エンジンの根拠テストは、その証跡の写し（SHA-256 `79d45767…`）から取り込んだ。
+- エンジン（動作・裁定・カードデータ・実装の識別）は変えていない。
+
+### 10.2 エンジンの根拠テスト（6.2 節）
+
+| id | 0.181.0 のテスト | 結果 |
+|---|---|---|
+| E7〜E11 | `tests/test_lost_target_p3_decision_v0_181.py`（写しから E12 のクラスを除いたもの） | 5 件とも成功（期待どおり） |
+| E12 | 0.181.0 の `tests/test_keep_designated_energy_removal_v0_181.py` を再利用（`EnergyRemovalDesignatedKeepTest.test_opponent_face_down_energy_is_kp1_for_every_identity`・`ClientApiTwinTest`） | 同じ場面を確かめているので、新しいテストは足していない |
+
+**E12 の期待値の変更**:
+
+- 元の期待: どの本当のカードでも `UNSUPPORTED_SECRET_PLAN_LOST_TARGET`。
+- 0.181.0 の期待: どの本当のカードでも `UNRESOLVED_KEEP_PROTECTED_TARGET`（KP1）。内部のエラーにならず、通常の拒否になる。
+- 理由（[v0.181](keep-designated-energy-removal-v0.181.md) 4 章）: 置きかえの試しの順で、［KEEP］のたねが `_NONBASIC` より先に拒否するため。
+- E12 は相手のうら（P3o）の対照と、v0.180 の内部の例外の回帰の確かめで、P3s の正の根拠ではない。
+
+### 10.3 judge（規則 8）
+
+**登録**:
+
+- `KNOWN_STOP_EVIDENCE` に鍵 `LOST_TARGET_P3_EVIDENCE` = `"UNSUPPORTED_SECRET_PLAN_LOST_TARGET#P3"` を足した。項目は `code`（元の診断コード）・`condition`・`source`。
+  - 鍵は経路の名前で、生の診断コードではない。
+  - 判定の行の `engine_code`・`diagnostic_id` は元のコードのまま。診断のコード表には何も足していない。
+- `_known_stop_or_undetermined` の照合を変えた。`entry = KNOWN_STOP_EVIDENCE.get(evidence)` で、`entry is None or entry.get("code", evidence) != code` なら undetermined。
+  - 既存の 3 項目（DU1・ER9・P1）は `code` を持たないので、規則 7 と同じ式になる。
+
+**条件**: `decision_lost_target_failure(entry, *, trace, actor_logs, header, basis_p3=None)` が D1〜D12（4.2 節）を順に確かめ、満たさない最初の id を返す。
+
+- D7 は、観測の `trainer_in_use`（`player`・`user` が本人）の `card_id` から、エンジンの `DEFAULT_EFFECTS.trainer_entry` を読む。
+  - 効果が `AttachedDamageReduction` で、`implementation_id` が `LOST_TARGET_DECISION_EFFECTS` にあり、`ends_on_lost_target` が偽のときだけ通る。カード ID の一覧は持たない。
+- D10・D11 は P1 の L10 と同じ `effects.card_is_basic_in_text(definition, TEXT_PRE_NEO)` を使う。
+- D12 は次の 2 つをどちらも満たすときだけ通る。
+  - header の依存が今と同じ（既定のカードプール・カードデータの出どころ・効果の登録の id `DEFAULT_EFFECTS.id`）。
+  - (a) `behavior_digest` が今と同じか、(b) 呼ぶ側の `basis_p3` が今の P3 の basis と同じ（方式・ファイルの並び・要約のすべて）。
+  - P1 の `basis` は読まない。
+- 判定のために効果を実行・再開しない。内部の状態を復元しない。
+- 返す値は条件の id だけ。
+
+**共通の入口**: `submit_evidence(..., basis=None, basis_p3=None)` は、ER9 → P1（`basis` だけ）→ P3s（`basis_p3` だけ）の順に呼ぶ。
+
+**P1 は変えていない**: L1〜L12、`LOST_TARGET_BASIS_FILES`・方式、理由の文、`_basis_matches` の結果。依存の確かめを `_recorded_pool_matches`・`_same_behavior` に分けて共有したが、P1 の結果は同じ。
+
+**根拠が成り立つときの理由**: `[unsupported, UNSUPPORTED_SECRET_PLAN_LOST_TARGET, continuation_not_evaluated, "evidence:" + P3 の条件の文]`。
+
+**成り立たないとき**: 規則 7 と同じ判定・理由・分類で、停止方針も同じ。
+
+- 理由の先頭は `stop_condition_not_evidenced:`、分類は `evidence_missing_stop`。
+- 経路の理由がなければ、既存の `stop_not_explained_by_path`。
+- refused・failed・分類の食い違いは、既存の suspect のまま。
+
+### 10.4 P3 用 basis
+
+- 方式は `kyuura-lost-target-p3-basis-sha256/1`。
+- ファイルはこの順: `cards.py`・`data/kyuura_cards.json`・`effects.py`・`engine.py`・`zones.py`・`decisions.py`・`observation.py`。
+- 正規化と要約は `replay_record._digest` と同じ（P1 の `lost_target_basis` と同じ関数）。
+  - 並べたファイルの順に、パッケージの中の相対パスと、改行を LF にそろえた内容から sha256 を作る。
+
+| | 0.181.0（今） | 旧 r1 を記録したエンジン（`de81f642`・0.179.0） |
+|---|---|---|
+| P3 の basis | `bb6d1730…` | 違う |
+| P1 の basis | `d1729754…` | 違う |
+| 7 ファイルの blob | — | `effects.py` だけが違う（v0.181 の修正） |
+
+### 10.5 単局・バッチの共通の接続
+
+- 単局の runner は変えていない。今の `submit_evidence(entry, trace=self.trace, actor_logs=self.actor_logs, header=self._record_header)` のまま。
+  - 実行中の記録は今のエンジンが作るので、D12 は (a) で決まる。
+- バッチは `batch.judge_trace(result, *, basis=None, basis_p3=None)`。`basis_p3` は保存済みの記録の当て直しだけが渡す。
+- 判定のための observe・candidates・inputs・check・submit はしない。方策に新しい値を渡さない。完全な記録・相手の秘密は読まない。
+- 構築盤面を本物の runner に通し、次を確かめた。
+  - バッチの入口と単局の入口で同じ判定・同じ理由になる。
+  - 要求の回数と行動の列が同じ。
+  - 保存した `actors/*.jsonl` を読んでも同じ行になる。
+  - たねのうらは受理（expected）、header のない対戦は D12 で undetermined。
+- 記録・計画・完了の形式は変えていない（6 のまま）。runner の新しい取得は要らなかった。
+
+### 10.6 識別
+
+| 項目 | 前（`acde830`） | 後 |
+|---|---|---|
+| エンジン版・behavior・instrumentation | 0.181.0・`5e0cb4ac…`・`d3436748…` | 同じ |
+| `TOOL_VERSION`・道具の識別 | 9・`383e30c4…` | 10・`7b56ed5a…` |
+| 判定の規則・計画の形式・完了の形式 | 7・6・6 | 8・6・6 |
+| P1 の basis | `d1729754…` | 同じ |
+| P3 の basis | なし | `bb6d1730…` |
+
+`TOOL_VERSION` 9 の計画は、道具の識別の違いで再開しない（移行・上書きしない）。
+
+### 10.7 旧 r1 を直接当て直せない理由と、互換性の案（実装しない）
+
+**直接当て直せない理由**:
+
+- r1 は 0.179.0（`de81f642`）で記録した。
+  - header の `behavior_digest` は 0.181.0 と違うので、D12 の (a) は通らない。
+  - 7 ファイルのうち `effects.py` が違うので、(b) の P3 の basis も一致しない。
+- 規則 8 を r1 に当てても、P3 の行は D12 で undetermined のまま。
+- 今回、この不一致を例外にしたり、変更が P3 の経路と無関係だと推測して通したりはしていない。
+  - しないこと: ファイルの除外、部分一致、新しい basis の旧記録への流用、記録時の識別の書き換え。
+
+**互換性を個別に評価する仕組みの案**（どれも実装していない。採るかは別の判断）:
+
+| 案 | 中身 | 影響 |
+|---|---|---|
+| A | 旧記録用の basis の許容リスト。記録したエンジンの basis と、その差が P3 の経路に関係しないことを人が監査した記録を、鍵つきで判定に渡す | 監査の記録と、その誤りの扱いが要る。判定の条件が緩む方向なので、根拠の出どころを証跡に固定する必要がある |
+| B | 関数単位の basis。ファイル全体ではなく、経路の関数のソースだけを要約する | 方式が変わる（P1 と揃わない）。抽出の誤りで同じ処理を違うと判定する・違う処理を同じと判定するおそれがある |
+| C | 再現での確かめ。旧記録の完全な記録を、今のエンジンで決定の時点まで再現して同じ拒否になることを確かめる | 0.180.0 以前の記録は 0.181.0 で再実行・復元できない（既存の設計）。実装の範囲が大きい |
+
+推奨は、旧 r1 は undetermined のまま残し、0.181.0 以降の新しい記録で P3s の到達を確かめること。
+
+### 10.8 テスト
+
+**新しいテスト** `tests/test_verification_ai_lost_target_p3.py`（27 件）:
+
+- 登録と照合: 鍵と生のコードの区別、既存の項目の照合が同じ、P3 の鍵を別のコードに渡しても通らない。
+- 正: 保存済みの r1 の形、選んだ選べるものだけに理由がある形、たねでない本当のカードの種類。
+- 負: 6.3 節の条件。
+  - 相手のうら、おもての対象、たね・ベイビィ、real の欠け、決定の形と複数選択、別の回答者と観測の欠け・重複・古さ。
+  - `trainer_in_use` の欠け・借りて使う・表にない効果・`ends_on_lost_target` が真、選べるものが本人の場と違う、参照の欠け・重複。
+  - 未選択の選べるものだけの理由、候補の種類、拒否のあとの形、別のコード・refused・failed・通常の受理と拒否、停止方針、秘密の混入なし。
+- P1 の不変、basis（P1 の basis だけ・P3 の basis の欠け・旧値・ファイルの不足・方式の違い・依存の違い）、batch の `basis_p3`。
+- 本物の runner で単局とバッチが一致すること、方策などの部品が規則 8 を使わない境界。
+
+**既存のテスト**:
+
+- 規則・道具の版の期待値だけを更新した（9 ファイル。判定の中身の期待値は変えていない）。
+- P1 の 31 件は、規則の版の期待値を除いて同じまま通った。
+
+**関連**（1 モジュールずつ別プロセスで実行し、すべて成功）:
+
+- ER9、P6（受理をふくむ）、U-R3a、batch、batch_judge、v3_1、v3_3、0.178・0.179 の追従、decklist_boundary、reach・reach_v2、v2_repeat。
+- 検証用 AI の行動・契約の指紋は固定値のまま通った。
+
+fixture・構築盤面は、new_game からの到達の実績に数えない。
+
+### 10.9 残る作業
+
+1. 0.181.0 以降の新しい記録（new_game からの対戦）で、P3s の場面に到達して規則 8 の判定を確かめる（今回は構築盤面だけ）。
+2. 旧 r1 の扱い。10.7 節の案を採るか、undetermined のまま残すか。
+3. P3o・ほかの効果の型・ほかの再開先の登録と、P2 の登録。
+4. GUI の追従（規則 8 は検証者の側だけなので、API・GUI の契約は変わらない）。

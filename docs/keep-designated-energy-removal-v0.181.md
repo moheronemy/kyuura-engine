@@ -157,6 +157,8 @@
 - **E12 の期待値**: 0.181.0 では `UNRESOLVED_KEEP_PROTECTED_TARGET`（本当のカードによらない）。停止中のテストの期待値は直す必要がある。
   - E12 は P3o の性質の記録で、P3s の条件 D1〜D12 には影響しない。
 - judge の規則 8 と P3s の根拠登録は、まだしていない。
+- 2026-11-14 追記: 0.181.0 を基点に再開し、規則 8（`TOOL_VERSION` 10）を実装した（[P3 設計 10 章](verification-ai-lost-target-p3-decision-design.md)）。
+  - 旧 r1 は 0.179.0（`de81f642`）の記録で、`effects.py` が違うので P3 の basis は一致しない（当て直しは undetermined のまま）。
 
 ## 10. 未確認
 

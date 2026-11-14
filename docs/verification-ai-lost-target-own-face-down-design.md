@@ -503,6 +503,7 @@ L1〜L11 を、保存済みの s1・r1 のすべての送信（8,904 件。s1 7,
 - 残件:
   - P2（相手のうら）・P3（決定への回答）の根拠の登録（経路単位の鍵の判断を含む）
     - 2026-11-14 追記: P3 の設計（条件 D1〜D12、P1 を変えない登録方式、P3 用の basis、テストと当て直しの受け入れ条件）を [verification-ai-lost-target-p3-decision-design.md](verification-ai-lost-target-p3-decision-design.md) に置いた（設計だけ・未実装）
+    - 2026-11-14 追記: P3s を規則 8（エンジン 0.181.0）で実装した。P1 の条件・理由・basis は変えていない（[P3 設計 10 章](verification-ai-lost-target-p3-decision-design.md)）
   - 規則 7 での新しいバッチを実行するか（別の判断）
 - 証跡: `C:\dev\kyuura-engine-verification-vai\verifier\runs\lost-target-p1-rejudge-s1\`
   - 事前計画、識別、basis の取り出しと照合、前後の sha256、当て直しのスクリプトと出力、規則 6 と 7 の行の差、限定確認、コマンド

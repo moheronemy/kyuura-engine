@@ -5556,7 +5556,14 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - behavior_digest と、検証用 AI の P1 の basis（`effects.py`）が変わった。道具の版・判定の規則・形式は同じ。配布の確かめの固定コミットは `a2b29e9`。
 - 詳細: [v0.181 の修正](keep-designated-energy-removal-v0.181.md)
 
-## 検証用 AI: LOST_TARGET の P3s の規則 8（実装待ち）
+## 検証用 AI: LOST_TARGET の P3s の規則 8（2026-11-14。エンジン 0.181.0 で実装）
+
+- 判定の規則 8・`TOOL_VERSION` 10（計画・完了の形式は 6 のまま）。条件 D1〜D12 をすべて確かめたときだけ、根拠の鍵 `UNSUPPORTED_SECRET_PLAN_LOST_TARGET#P3` で known_stop にする（生の診断コードは変えない）。
+- P3 用 basis は 7 ファイル。P1 の判定・理由・basis は変えていない。単局とバッチは同じ入口（`batch.judge_trace` に `basis_p3`）。
+- 旧 r1（0.179.0 の記録）は `effects.py` が違うので basis が一致せず、当て直しても undetermined のまま（互換性の案は文書だけ）。
+- 詳細: [P3 設計 10 章](verification-ai-lost-target-p3-decision-design.md)
+
+### 以前の記録（実装待ちのとき）
 
 - エンジンの根拠テスト E7〜E11（本人のうら）は成功した。judge の規則 8・`TOOL_VERSION` 10 は未実装。
 - 上の不具合の候補は P3s の条件に影響しない。影響するのは P3o の性質の記録（E12）の扱いだけ（調査の文書 9 章）
