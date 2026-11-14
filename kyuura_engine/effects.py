@@ -6777,7 +6777,7 @@ class TradePokemonWithDeck(TrainerEffect):
     def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         if decision.kind == RETURN_TO_DECK:
             (returned,) = choices
-            return_hand_to_deck(state, use.player, returned)
+            return_hand_to_deck(state, use.player, returned, identify=True)  # v0.182: 見せたカードを識別できるように card_id を書く
             options = sorted(uid for uid in state.players[use.player].deck if _is_pokemon_card(state, uid, text_era(use.card_id)))
             push_trainer_decision(
                 state, use, kind=SEARCH_DECK, player=use.player, options=options, context=(("returned", returned),),
@@ -6785,7 +6785,7 @@ class TradePokemonWithDeck(TrainerEffect):
             )
             return
         (card,) = choices
-        reveal_deck_to_hand(state, use.player, card)
+        reveal_deck_to_hand(state, use.player, card, identify=True)  # v0.182: 同上
         shuffle_deck(state, use.player)
 
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:

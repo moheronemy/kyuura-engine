@@ -183,14 +183,16 @@ class ReturnStageTest(Base):
         self.assertEqual((self.pending.trainer_in_use.player, self.pending.trainer_in_use.card), (0, self.card))
 
     def test_returned_card_goes_to_the_deck_and_is_shown(self):
-        """選んだカードは手札から山札（一番下）に移る（トラッシュではない）。ログ return_to_deck の card は公開。乱数を使わない。"""
+        """選んだカードは手札から山札（一番下）に移る（トラッシュではない）。ログ return_to_deck の card は公開。乱数を使わない。
+        v0.182: ログに見せたカードの card_id を加える（相手・観戦者が見せた時点で識別できる。docs/trader-reveal-identification-v0.182.md）。
+        v0.24〜v0.181 の期待は {"kind": "return_to_deck", "turn": TURN, "player": 0, "card": dewgong}（card_id なし）。"""
         dewgong = self.pending.decision.options[0]
         searching = self.answer(self.pending, (dewgong,))
         q = searching.players[0]
         self.assertNotIn(dewgong, q.hand)
         self.assertEqual(q.deck[-1], dewgong)
         self.assertNotIn(dewgong, q.discard)
-        self.assertEqual(dict(searching.log[-1]), {"kind": "return_to_deck", "turn": TURN, "player": 0, "card": dewgong})
+        self.assertEqual(dict(searching.log[-1]), {"kind": "return_to_deck", "turn": TURN, "player": 0, "card": dewgong, "card_id": DEWGONG})
         self.assertEqual(rng_fingerprint(searching.rng), rng_fingerprint(self.state.rng))
         self.assertEqual(searching.decision.kind, SEARCH_DECK)
 
@@ -291,7 +293,8 @@ class SearchStageTest(Base):
 
     def test_shown_cards_and_hidden_deck(self):
         """見せるカード（もどしたカード・手に入れたカード）だけをログに書く。山札の中身（決定の選べるもの）はログに書かない。shuffle は誰の
-        山札かだけ。"""
+        山札かだけ。v0.182: 見せる 2 つの出来事に、そのカードの card_id を加える（v0.24〜v0.181 の期待は card_id なしの
+        {"kind": "return_to_deck", ..., "card": returned}・{"kind": "reveal_from_deck", ..., "card": target}。docs/trader-reveal-identification-v0.182.md）。"""
         state, returned, searching = self.at_search()
         options = searching.decision.options
         target = by_id(searching, 0, "deck", IVYSAUR)[0]
@@ -299,8 +302,8 @@ class SearchStageTest(Base):
         events = [dict(e) for e in done.log[len(state.log):]]
         self.assertEqual([e["kind"] for e in events], ["play_trainer", "return_to_deck", "reveal_from_deck", "shuffle", "discard_trainer"])
         self.assertEqual((events[1], events[2], events[3]), (
-            {"kind": "return_to_deck", "turn": TURN, "player": 0, "card": returned},
-            {"kind": "reveal_from_deck", "turn": TURN, "player": 0, "card": target},
+            {"kind": "return_to_deck", "turn": TURN, "player": 0, "card": returned, "card_id": state.cards[returned].card_id},
+            {"kind": "reveal_from_deck", "turn": TURN, "player": 0, "card": target, "card_id": IVYSAUR},
             {"kind": "shuffle", "turn": TURN, "player": 0}))
         others = {u for u in options if u not in (target, returned)} | {u for u in state.players[0].deck if not is_pokemon_card(state, u)}
         for e in events:
