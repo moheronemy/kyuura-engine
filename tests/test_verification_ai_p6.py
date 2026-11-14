@@ -187,7 +187,7 @@ class JudgeTest(unittest.TestCase):
         return J.judge_normal(self.CAND, [], sub, stages=p6() if stages is None else stages)
 
     def test_version(self):
-        self.assertEqual(J.JUDGE_RULES_VERSION, 7)  # LOST_TARGET の P1 で規則 7。C1 の確認で規則 6（記録した送信の値で確かめる停止の根拠。docs/verification-ai-batch-plan3.md 11 章）。U-R3a の追従で規則 5（docs/verification-ai-u-r3a.md 3 章）。規則 4（P6）の中身は変えていない（下の 2 つのテスト）
+        self.assertEqual(J.JUDGE_RULES_VERSION, 8)  # LOST_TARGET の P3s で規則 8。LOST_TARGET の P1 で規則 7。C1 の確認で規則 6（記録した送信の値で確かめる停止の根拠。docs/verification-ai-batch-plan3.md 11 章）。U-R3a の追従で規則 5（docs/verification-ai-u-r3a.md 3 章）。規則 4（P6）の中身は変えていない（下の 2 つのテスト）
 
     def test_p6_rejections(self):
         cat = J._catalog_category

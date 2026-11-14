@@ -120,8 +120,8 @@ def judge(e, actor_logs=None, *, trace=None, hdr="default", basis=None):
 
 class VersionTest(unittest.TestCase):
     def test_versions_and_registration(self):
-        self.assertEqual(J.JUDGE_RULES_VERSION, 7)
-        self.assertEqual(B.TOOL_VERSION, 9)
+        self.assertEqual(J.JUDGE_RULES_VERSION, 8)  # 規則 8（P3s）を足した。P1 の条件・理由・basis は規則 7 のまま
+        self.assertEqual(B.TOOL_VERSION, 10)
         self.assertEqual((B.PLAN_FORMAT, B.COMPLETE_FORMAT), ("kyuura-vai-batch-plan/6", "kyuura-vai-batch-complete/6"))
         self.assertEqual(J.LOST_TARGET_CODE, Z.SECRET_PLAN_LOST_TARGET_CODE)
         self.assertIn(CODE, J.KNOWN_STOP_EVIDENCE)
@@ -366,7 +366,7 @@ class NegativeTest(unittest.TestCase):
         self.assertEqual(judged["rows"][0]["reasons"], [D.UNSUPPORTED, CODE, "face_down_reveal_not_evaluated", "evidence:" + J.KNOWN_STOP_EVIDENCE[CODE]["condition"]])
         self.assertEqual(judged["rows"][1]["reasons"], UNDET[1])
         self.assertEqual(judged["known_stop"], [N])
-        self.assertEqual(judged["rules_version"], 7)
+        self.assertEqual(judged["rules_version"], 8)
 
     def test_n16_stop_policy_unchanged(self):
         """N16: 根拠が成り立たないときの undetermined の分類と停止方針は規則 6 と同じ（evidence_missing_stop は続ける）。known_stop も続ける。"""

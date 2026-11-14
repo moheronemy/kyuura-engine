@@ -38,7 +38,7 @@ from typing import Any, Callable
 PLAN_FORMAT = "kyuura-vai-batch-plan/6"  # 6: 到達目的の方策 reach の方式（reach-p6・reach-u-r3a）と設定 config.reach・方式と局の設定の一致の照合（docs/verification-ai-reach-policy.md 12 章）。形式 5 以前の計画は再開しない（移行・上書きしない。それを作った版の道具で扱う）。5: 局のデッキの記録（固定デッキ・明示リスト。展開の順・確認値・deck_problems の結果）・方式 boundary・方策とプロファイルの組の照合（docs/verification-ai-decklist.md）。4: 主体別の観測の記録の設定 observation（docs/verification-ai-observation.md）。3 は C1・C2（undetermined の分類に accepted_content_unrecorded）・2 は 99 局 vai-batch-b2・1 は 30 局の初回 vai-batch-b1
 COMPLETE_FORMAT = "kyuura-vai-batch-complete/6"  # 6: 計画の形式 6 に合わせた（マーカーの項目は 5 と同じ）。5: 証跡の判定 evidence（complete_without_stop・complete_with_stop）。照合で停止の理由を要約から計算し直す。4: 要約に主体別の観測の記録の状態（observation。有効な計画だけ）。3 は C1・C2（受理の中身の種類ごとの件数）・2 は vai-batch-b2
 TOOL_NAME = "tools.verification_ai.batch"
-TOOL_VERSION = 9  # 9: judge の規則 7（LOST_TARGET の P1。judge.submit_evidence に本人の送信前の観測と記録の header を渡す。docs/verification-ai-lost-target-own-face-down-design.md 13 章。計画の形式 6・完了の形式 6 は同じ。TOOL_VERSION 8 の計画は道具の識別の違いで再開しない）。8: reach 版 2 と方式 reach2-p6・reach2-u-r3a（docs/verification-ai-reach-policy.md 14 章・15 章。計画の形式 6・完了の形式 6・判定の規則 6 は同じ。TOOL_VERSION 7 の計画は実装識別の違いで再開しない）。7: 到達目的の方策 reach 版 1（tools/verification_ai/reach.py）・runner の範囲のプロファイルの問い合わせと submit の通知・到達の段の集計 reach_report。6: 明示的なデッキリスト・方式 boundary・観測の記録の要約の欠けで止める（docs/verification-ai-decklist.md）。5: 主体別の観測・更新・公開ログの記録（observe。計画で有効にしたときだけ）。4 は judge の規則 6（docs/verification-ai-batch-plan3.md 11 章）。3 は C1・C2（9385cc3）
+TOOL_VERSION = 10  # 10: judge の規則 8（LOST_TARGET の P3s。judge.submit_evidence・judge_trace に basis_p3。docs/verification-ai-lost-target-p3-decision-design.md 10 章。エンジン 0.181.0。計画の形式 6・完了の形式 6 は同じ。TOOL_VERSION 9 の計画は道具の識別の違いで再開しない）。9: judge の規則 7（LOST_TARGET の P1。judge.submit_evidence に本人の送信前の観測と記録の header を渡す。docs/verification-ai-lost-target-own-face-down-design.md 13 章。計画の形式 6・完了の形式 6 は同じ。TOOL_VERSION 8 の計画は道具の識別の違いで再開しない）。8: reach 版 2 と方式 reach2-p6・reach2-u-r3a（docs/verification-ai-reach-policy.md 14 章・15 章。計画の形式 6・完了の形式 6・判定の規則 6 は同じ。TOOL_VERSION 7 の計画は実装識別の違いで再開しない）。7: 到達目的の方策 reach 版 1（tools/verification_ai/reach.py）・runner の範囲のプロファイルの問い合わせと submit の通知・到達の段の集計 reach_report。6: 明示的なデッキリスト・方式 boundary・観測の記録の要約の欠けで止める（docs/verification-ai-decklist.md）。5: 主体別の観測・更新・公開ログの記録（observe。計画で有効にしたときだけ）。4 は judge の規則 6（docs/verification-ai-batch-plan3.md 11 章）。3 は C1・C2（9385cc3）
 
 # 方式（計画を作るときだけ使う。計画には Config の全項目を展開して書くので、ここを後で変えても既存の計画の局は変わらない）
 MODES: dict[str, dict[str, Any]] = {
@@ -506,9 +506,10 @@ def record_header(record) -> dict[str, Any] | None:
     return header if isinstance(header, dict) else None
 
 
-def judge_trace(result: dict[str, Any], *, basis: dict[str, Any] | None = None) -> dict[str, Any]:
-    """保存する trace に、既存の judge（規則の版 7）をあとから当てる（runner の進行・方策に影響しない）。単局の runner（V3-1 の変異の実行の中の判定）と同じ入口・引数。
-    ``basis`` は保存済みの記録の当て直しだけが渡す、記録を作ったエンジンの判定の基礎の識別（``judge.lost_target_basis``。規則 7 の L12）:
+def judge_trace(result: dict[str, Any], *, basis: dict[str, Any] | None = None, basis_p3: dict[str, Any] | None = None) -> dict[str, Any]:
+    """保存する trace に、既存の judge（規則の版 8）をあとから当てる（runner の進行・方策に影響しない）。単局の runner（V3-1 の変異の実行の中の判定）と同じ入口・引数。
+    ``basis``・``basis_p3`` は保存済みの記録の当て直しだけが渡す、記録を作ったエンジンの判定の基礎の識別（``judge.lost_target_basis``。規則 7 の L12。
+    ``judge.lost_target_p3_basis``。規則 8 の D12。それぞれ別の方式で、片方をもう片方に使わない）:
 
     - 送信（submit を送った試み）ごとに ``judge_normal``（1 つの送信に 1 回。件数は ``counts``）
     - 受理された本人のうらのカードの特殊能力（U-R3a）・P6 のにげるの送信の中身に ``judge_recorded_accepted_content``（runner が受理の直後に記録した公開のログ。
@@ -522,13 +523,13 @@ def judge_trace(result: dict[str, Any], *, basis: dict[str, Any] | None = None) 
     rows, counts, by_kind = [], {}, {}
     content_rows, content_counts, content_by_check = [], {}, {}
     undetermined = []
-    header = lambda: record_header(result.get("record"))  # noqa: E731  # 規則 7 の L12 だけが読む（識別と依存。操作の記録は読まない）
+    header = lambda: record_header(result.get("record"))  # noqa: E731  # 規則 7 の L12・規則 8 の D12 だけが読む（識別と依存。操作の記録は読まない）
     for e in result["trace"]:
         if e.get("type") != "attempt" or e.get("submit") is None:
             continue
-        # 規則 6（ER9）・規則 7（LOST_TARGET の P1）: 条件をすべて満たす停止だけ、そのコードを根拠として渡す（満たさなければ None で、規則 5 と同じ）。
+        # 規則 6（ER9）・規則 7（LOST_TARGET の P1）・規則 8（P3s）: 条件をすべて満たす停止だけ、その根拠の鍵を渡す（満たさなければ None で、規則 5 と同じ）。
         # 単局の runner と同じ入口（judge.submit_evidence）に、同じ trace・actor_logs（本人の送信前の観測）・記録の header を渡す
-        evidence = submit_evidence(e, trace=result["trace"], actor_logs=result.get("actor_logs"), header=header, basis=basis)
+        evidence = submit_evidence(e, trace=result["trace"], actor_logs=result.get("actor_logs"), header=header, basis=basis, basis_p3=basis_p3)
         verdict, why = judge_normal(e["candidate"], e.get("meaning") or [], e["submit"], stages=e.get("stages"), evidence=evidence)
         kind = e["candidate"].get("kind")
         diag = e["submit"].get("verifier") or {}

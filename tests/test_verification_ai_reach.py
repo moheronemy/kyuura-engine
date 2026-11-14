@@ -293,7 +293,7 @@ class PlanTest(unittest.TestCase):
     def test_plan_fixes_reach_settings_and_identity(self):
         plan = self.plan("p")
         self.assertEqual((plan["format"], B.PLAN_FORMAT, B.COMPLETE_FORMAT, B.TOOL_VERSION),
-                         ("kyuura-vai-batch-plan/6", "kyuura-vai-batch-plan/6", "kyuura-vai-batch-complete/6", 9))  # 9: 判定の規則 7。8: reach 版 2 を加えた（版 1 の設定・選び方は同じ）
+                         ("kyuura-vai-batch-plan/6", "kyuura-vai-batch-plan/6", "kyuura-vai-batch-complete/6", 10))  # 10: 判定の規則 8。9: 判定の規則 7。8: reach 版 2 を加えた（版 1 の設定・選び方は同じ）
         for entry, settings in zip(plan["games"], (P6_SETTINGS, UR3A_SETTINGS)):
             self.assertEqual((entry["config"]["policy"], entry["config"]["profile"], entry["config"]["rules_version"], entry["config"]["reach"]),
                              ("reach", "boundary", 2, settings))
