@@ -5581,6 +5581,7 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
   - 選んだカードの公開の識別の確認: ポケモン交換おじさんでもどしたカードを相手・観戦者が識別できない（ログは uid だけ。公開不足の不具合候補。残り 6 分類は未調査）: [verification-ai-w1-publication-audit.md](verification-ai-w1-publication-audit.md)
   - 構築盤面での再現（もどす・探すの両方）と修正方式の設計（未実装。client_api がログを配らないので GUI の表示は別の段階）: [trader-reveal-identification-design.md](trader-reveal-identification-design.md)
   - client_api の可視ログの配信の設計（入口に読み取りの要求 `log`。受理の時点の写しを位置で返す。形式 1 のまま。未実装。GUI の接続層の `hidden.seed` の扱いも要る）: [client-api-visible-log-delivery-design.md](client-api-visible-log-delivery-design.md)
+  - 交換おじさん以外の 18 の呼ぶ箇所の静的な分類: 識別の公開が要るのに出来事が uid だけ（交換おじさんと同じ原因の候補）17・未確定 1（化石の発掘）。実際の盤面・配信では未確認・修正は未着手: [reveal-call-sites-identification-audit.md](reveal-call-sites-identification-audit.md)
   - w1 の公開の監査の残り 57 件（保存済みの記録）: 識別できる 32・正しく非公開 21・交換おじさんの探したカードの既知の不具合 4（0.182.0 の修正範囲）・新しい候補 0。w1 の 61 件はすべて確かめた: [verification-ai-w1-publication-audit-remaining.md](verification-ai-w1-publication-audit-remaining.md)
   - 0.183.0 でエンジンの側を実装した（要求 `log`・閲覧者ごとの写し・最大 256 件・`baseline_end`・`CLIENT_LOG_POSITION_UNKNOWN`。GUI の接続・安全検査・表示は未実装）: [client-api-visible-log-v0.183.md](client-api-visible-log-v0.183.md)
   - 0.182.0 で案 A を実装した（`return_to_deck`・`reveal_from_deck` に `card_id`。交換おじさんの 2 か所だけ）。エンジンの出来事と閲覧用記録は修正済み、client_api の配信・GUI は未実装、ほかの 18 の呼ぶ箇所と w1 の残り 57 件は未確認: [trader-reveal-identification-v0.182.md](trader-reveal-identification-v0.182.md)
