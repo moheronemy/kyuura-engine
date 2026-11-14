@@ -106,6 +106,8 @@ Internet Archive のスキャン [J38]（PDF 372 ページ、`PDF n = p.(n-2)`�
 | `shuffle`（既存） | `player` | 全員 | その山札を切った（並びは書かない） |
 | `search_deck`（v0.22 から。変えていない） | `player`・`card`（非公開） | `card` は選んだプレイヤーだけ | パソコン通信で山札から選び出した（見せない。CS14） |
 
+- v0.182 の追記: 交換おじさんの `return_to_deck`・`reveal_from_deck` に、見せたカードの `card_id`（全員）を加えた。v0.24〜v0.181 の項目は上の表のとおり `player`・`card` だけで、相手・観戦者は uid だけではどのカードかを識別できなかった: [trader-reveal-identification-v0.182.md](trader-reveal-identification-v0.182.md)
+
 山札の中身（段階 2 の選べるもの）はログに書きません（PT12）。パソコン通信の `search_deck` の `card` は非公開のままで、ポケモン交換おじさんの手に入れたカードは別のイベント（`reveal_from_deck`）で公開にしました（同じ扱いにしない）。
 
 ログの監査（tests/log_audit.py）は `return_to_deck`（持ち主・手札にあったこと・たねポケモンか進化カードであること）と `reveal_from_deck`（持ち主・手札・トラッシュにないこと・たねポケモンか進化カードであること）を手札の組み立て直しに加えました。

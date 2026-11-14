@@ -5556,6 +5556,15 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - behavior_digest と、検証用 AI の P1 の basis（`effects.py`）が変わった。道具の版・判定の規則・形式は同じ。配布の確かめの固定コミットは `a2b29e9`。
 - 詳細: [v0.181 の修正](keep-designated-energy-removal-v0.181.md)
 
+## v0.182: ポケモン交換おじさんの見せる 2 枚の識別（0.182.0）
+
+- 出来事 `return_to_deck`・`reveal_from_deck` に、見せたカードの `card_id` を加えた（`zones` の 2 つの関数のキーワードの引数 `identify`。既定は偽で、交換おじさんの 2 か所だけが指定）。
+  - 相手・観戦者が、見せた時点の閲覧用記録の出来事で識別できる。パソコン通信の `search_deck` は非公開のまま。
+  - ほかの 18 の呼ぶ箇所・配信・観測・閲覧用記録の形式・乱数・決定・候補は変えていない。新しい裁定は入れていない。
+- 状態: エンジンの出来事と閲覧用記録は修正済み。client_api（形式 1）のログの配信と GUI の表示は未実装。ほかの 18 の呼ぶ箇所と w1 の残り 57 件は未確認。
+- behavior_digest と、検証用 AI の P1・P3 の basis が変わった。道具の版・判定の規則・形式は同じ。配布の確かめの固定コミットは `95206ec`。
+- 詳細: [trader-reveal-identification-v0.182.md](trader-reveal-identification-v0.182.md)
+
 ## 検証用 AI: LOST_TARGET の P3s の規則 8（2026-11-14。エンジン 0.181.0 で実装）
 
 - 判定の規則 8・`TOOL_VERSION` 10（計画・完了の形式は 6 のまま）。条件 D1〜D12 をすべて確かめたときだけ、根拠の鍵 `UNSUPPORTED_SECRET_PLAN_LOST_TARGET#P3` で known_stop にする（生の診断コードは変えない）。
@@ -5571,6 +5580,7 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
   - 実行（vai-batch-w1〜w3・9 局すべて完了）: 伏せる 4 種類の決定の情報境界を観測の記録つきで確認（違反 0）、ER9 は規則 6 の条件を満たして known_stop、S2A の convention_applied を 3 閲覧者の公開ログで確認、既定の集合の準備の停止を受理 0 の観測で確認（[verification-ai-coverage-inventory-next-batch.md](verification-ai-coverage-inventory-next-batch.md) 10 章）
   - 選んだカードの公開の識別の確認: ポケモン交換おじさんでもどしたカードを相手・観戦者が識別できない（ログは uid だけ。公開不足の不具合候補。残り 6 分類は未調査）: [verification-ai-w1-publication-audit.md](verification-ai-w1-publication-audit.md)
   - 構築盤面での再現（もどす・探すの両方）と修正方式の設計（未実装。client_api がログを配らないので GUI の表示は別の段階）: [trader-reveal-identification-design.md](trader-reveal-identification-design.md)
+  - 0.182.0 で案 A を実装した（`return_to_deck`・`reveal_from_deck` に `card_id`。交換おじさんの 2 か所だけ）。エンジンの出来事と閲覧用記録は修正済み、client_api の配信・GUI は未実装、ほかの 18 の呼ぶ箇所と w1 の残り 57 件は未確認: [trader-reveal-identification-v0.182.md](trader-reveal-identification-v0.182.md)
 
 ### 以前の記録（実装待ちのとき）
 

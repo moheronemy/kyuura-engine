@@ -4,6 +4,8 @@
 
 - 発端: [w1 の公開の識別の確認](verification-ai-w1-publication-audit.md)（相手・観戦者の閲覧用記録だけでは、もどしたカードを識別できない。公開不足の不具合候補）。
 - 証跡: `kyuura-engine-verification-vai/verifier/runs/trader-reveal-identification/`（事前計画 `PLAN.md`、スクリプト `scripts/`、出力 `out/`）。
+- 実装（2026-11-14 の追記）: 6 章の案 A を 0.182.0 で実装した（エンジンの出来事と閲覧用記録だけ。client_api の配信・GUI は未実装）: [trader-reveal-identification-v0.182.md](trader-reveal-identification-v0.182.md)。
+  - 訂正: 6 章・7 章・8 章の「ほかの 8 の呼ぶ箇所」は、実際は 18（`effects.py` の 12・`resolution/programs.py` の 6）。設計の時点で `effects.py` の一部だけを数えていた。案の選択は変わらない（同じ文書 3 章）。
 
 **区別**
 
