@@ -4,6 +4,7 @@
 
 - 前の単位: [v0.182 の実装](trader-reveal-identification-v0.182.md)。`return_to_deck`・`reveal_from_deck` に `card_id` を足し、エンジンの出来事と閲覧用記録は修正済みです。client_api のログの配信と GUI の表示は未実装でした（同じ文書 7 章の段階 2・3）。
 - 証跡: `kyuura-engine-verification-vai/verifier/runs/trader-log-delivery-design/`（事前計画 `PLAN.md`、作業の記録 `commands.txt`、補助スクリプト `scripts/`、出力 `out/`）。
+- 実装（2026-11-14 の追記）: 案 B と J1〜J7 の推奨値を 0.183.0 でエンジンの側だけ実装した（J8 と 9 章の GUI は未実装）: [client-api-visible-log-v0.183.md](client-api-visible-log-v0.183.md)
 
 **結論**
 

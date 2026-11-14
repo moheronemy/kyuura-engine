@@ -52,6 +52,7 @@ admin = hub.host()           # ホストの操作（信頼されたアプリケ�
 | `inputs` | プレイヤー・ホスト | `game`・`revision`・`candidate`（文字列） |
 | `check` | プレイヤー・ホスト | 上と `choices`（文字列・整数の配列。任意） |
 | `submit` | プレイヤー・ホスト | 上と `choices`・`operation_id`（文字列。任意） |
+| `log`（v0.183） | すべて | `from`（任意の位置 `{"segment", "index"}`）。その入口の閲覧者の可視ログの写しを位置から最大 256 件。範囲外は `CLIENT_LOG_POSITION_UNKNOWN`（[client-api-visible-log-v0.183.md](client-api-visible-log-v0.183.md)） |
 
 誤りの扱い（例外を投げず、決まった文の `error` を返す。要求の値を文に入れない。状態・取っ手・更新を変えない）:
 
