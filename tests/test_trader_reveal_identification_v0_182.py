@@ -250,9 +250,11 @@ class HelperDefaultTest(unittest.TestCase):
         self.assertEqual(dict(state.log[-1]), {"kind": "reveal_from_deck", "turn": PT.TURN, "player": 0, "card": card})
 
     def test_only_trader_passes_identify(self):
-        """パッケージの中で identify=True を渡すのは effects.TradePokemonWithDeck の 2 つの呼ぶ箇所だけ。ほかの呼ぶ箇所（effects.py の 12・
-        resolution/programs.py の 6。設計の時点で数えた 8 は effects.py の一部だけだった。docs/trader-reveal-identification-v0.182.md）は既定のまま。"""
-        counts, with_identify = {}, []
+        """パッケージの中で identify=True を渡す呼ぶ箇所。v0.182〜v0.183 の期待は effects.TradePokemonWithDeck の 2 つだけ（ほかの 18 は既定のまま。設計の時点で数えた 8 は
+        effects.py の一部だけだった。docs/trader-reveal-identification-v0.182.md）。v0.184（docs/reveal-identify-v0.184.md）から、見せる 17 の呼ぶ箇所にも渡す。ここでは、交換おじさんの
+        2 つがあること・渡す箇所が許した一覧（交換おじさん 2 と v0.184 の 17 のクラス）の中だけにあること・化石の発掘（判断待ち）が既定のままであることを確かめる。
+        v0.184 の 17 の一覧と数は tests/test_reveal_identify_v0_184.py の ScopeTest。"""
+        counts, with_identify, without = {}, [], []
         for path in sorted((ROOT / "kyuura_engine").rglob("*.py")):
             src = path.read_text(encoding="utf-8")
             if path.name == "zones.py":
@@ -263,12 +265,21 @@ class HelperDefaultTest(unittest.TestCase):
             for m in calls:
                 line = src[m.start():src.index("\n", m.start())]
                 self.assertNotIn("identify=False", line)
+                where = (path.name, re.findall(r"^class (\w+)", src[:m.start()], re.M)[-1], m.group(1))
                 if "identify" in line:
                     self.assertIn("identify=True", line)
-                    with_identify.append((path.name, re.findall(r"^class (\w+)", src[:m.start()], re.M)[-1], m.group(1)))
+                    with_identify.append(where)
+                else:
+                    without.append(where)
         self.assertEqual(counts, {"kyuura_engine/effects.py": 14, "kyuura_engine/resolution/programs.py": 6})
-        self.assertEqual(with_identify, [("effects.py", "TradePokemonWithDeck", "return_hand_to_deck"),
-                                         ("effects.py", "TradePokemonWithDeck", "reveal_deck_to_hand")])
+        self.assertEqual([w for w in with_identify if w[1] == "TradePokemonWithDeck"],
+                         [("effects.py", "TradePokemonWithDeck", "return_hand_to_deck"), ("effects.py", "TradePokemonWithDeck", "reveal_deck_to_hand")])
+        allowed = {"TradePokemonWithDeck", "SearchDeckTrainer", "LookTopTakePokemonThenShuffle", "CoinsSearchBasicEnergyPerHeads", "ReturnHandEnergyThenCoinSearchBasicEnergy",
+                   "RevealDeckTopTakeSameNamed", "LookTopTakeTrainerThenShuffleLock", "BreederCoupleSearch", "SearchEvolutionCardToHand", "EachPlayerSearchToolOnEntry",
+                   "SearchDeckWithBenchLettersToHand", "RevealPokemonFromDeck", "RevealNamedPokemonFromDeck", "RevealTrainerFromDeck", "ReturnHandThenRevealEnergy",
+                   "EachPlayerLooksTakesBasicEnergy"}
+        self.assertTrue({w[1] for w in with_identify} <= allowed, with_identify)
+        self.assertIn(("effects.py", "SearchNamedFromDeckOrDiscard", "reveal_deck_to_hand"), without)
 
 
 class OldFormatTest(TraderBase):

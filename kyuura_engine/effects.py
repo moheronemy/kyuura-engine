@@ -17537,7 +17537,7 @@ class SearchDeckTrainer(TrainerEffect):
             if card not in self.candidates(state, use):
                 raise RuntimeError(f"{use.card_id} で選んだカード {card} が、山札の選べるカードではない（決定の確認の漏れ。エンジンの不具合）")
             if self.reveal:
-                reveal_deck_to_hand(state, use.player, card)
+                reveal_deck_to_hand(state, use.player, card, identify=True)
             else:
                 search_deck_to_hand(state, use.player, card)
         shuffle_deck(state, use.player)
@@ -29559,7 +29559,7 @@ class LookTopTakePokemonThenShuffle(TrainerEffect):
         (card,) = choices
         if card not in self.candidates(state, use):
             raise RuntimeError(f"{use.card_id} で選んだカード {card} が、見たカードのポケモンのカードではない（決定の確認の漏れ。エンジンの不具合）")
-        reveal_deck_to_hand(state, use.player, card)
+        reveal_deck_to_hand(state, use.player, card, identify=True)
         shuffle_deck(state, use.player)
 
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
@@ -31429,7 +31429,7 @@ class CoinsSearchBasicEnergyPerHeads(TrainerEffect):
         for card in sorted(choices):
             if card not in options:
                 raise RuntimeError(f"エネルギーアークで選んだカード {card} が、山札の基本エネルギーカードではない（エンジンの不具合）")
-            reveal_deck_to_hand(state, use.player, card)
+            reveal_deck_to_hand(state, use.player, card, identify=True)
         shuffle_deck(state, use.player)
 
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
@@ -31500,7 +31500,7 @@ class ReturnHandEnergyThenCoinSearchBasicEnergy(TrainerEffect):
             (card,) = choices
             if card not in self._hand(state, use):
                 raise RuntimeError(f"エネルギー増幅装置で選んだカード {card} が、手札のエネルギーカードではない（エンジンの不具合）")
-            return_hand_to_deck(state, use.player, card)
+            return_hand_to_deck(state, use.player, card, identify=True)
             shuffle_deck(state, use.player)
             if not _trainer_coin(state, use):
                 return
@@ -31513,7 +31513,7 @@ class ReturnHandEnergyThenCoinSearchBasicEnergy(TrainerEffect):
         for card in sorted(choices):
             if card not in options:
                 raise RuntimeError(f"エネルギー増幅装置で選んだカード {card} が、山札の基本エネルギーカードではない（エンジンの不具合）")
-            reveal_deck_to_hand(state, use.player, card)
+            reveal_deck_to_hand(state, use.player, card, identify=True)
         shuffle_deck(state, use.player)
 
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
@@ -31792,7 +31792,7 @@ class RevealDeckTopTakeSameNamed(TrainerEffect):
         cards = tuple(state.players[use.player].deck[:self.look])
         state.add_event("reveal_deck_top", player=use.player, count=self.look, cards=cards, trainer_card=use.card)
         for card in same_name_groups(state, cards):
-            reveal_deck_to_hand(state, use.player, card)
+            reveal_deck_to_hand(state, use.player, card, identify=True)
         shuffle_deck(state, use.player)
 
 
@@ -31837,7 +31837,7 @@ class LookTopTakeTrainerThenShuffleLock(TrainerEffect):
         (card,) = choices
         if card not in self.candidates(state, use):
             raise RuntimeError(f"ポケモンギアで選んだカード {card} が、見たカードのトレーナーカードではない（エンジンの不具合）")
-        reveal_deck_to_hand(state, use.player, card)
+        reveal_deck_to_hand(state, use.player, card, identify=True)
         shuffle_deck(state, use.player)
         add_hand_trainer_lock(state, use)
 
@@ -34897,7 +34897,7 @@ class BreederCoupleSearch(TrainerEffect):
         if choices:
             if choices[0] not in options:
                 raise RuntimeError(f"ポケモン育て屋夫婦で選んだカード {choices} が、山札の進化カードではない（エンジンの不具合）")
-            reveal_deck_to_hand(state, use.player, choices[0])
+            reveal_deck_to_hand(state, use.player, choices[0], identify=True)
             taken = taken + (choices[0],)
         else:
             _trainer_take_none(state, use, "deck", no_target=True)
