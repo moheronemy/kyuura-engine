@@ -5565,7 +5565,8 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 次の小規模バッチの計画（通常の進行の枠 A と P3s 確認の枠 B）: [verification-ai-batch-plan-p3s-v0181.md](verification-ai-batch-plan-p3s-v0181.md)
   - 実行（vai-batch-t1・t2。14 局すべて完了）: B の回帰の局で P3s に到達し、規則 8 で known_stop。A の通常の進行は拒否・停止なし（同じ文書 10 章）
   - 開始の照合（約 11.7 秒）の原因の調査: [verification-ai-startup-check-investigation.md](verification-ai-startup-check-investigation.md)（エンジンのソースの毎回のコンパイル。改善案は設計だけ）
-  - S-1（外部の pyc キャッシュ）を次のバッチの外側の手順にした（対戦なしで区間 11.8 → 1.74〜1.83 秒を確認。実際のバッチは未実行）: [verification-ai-pyc-cache-procedure.md](verification-ai-pyc-cache-procedure.md)
+  - S-1（外部の pyc キャッシュ）を次のバッチの外側の手順にした（対戦なしで区間 11.8 → 1.74〜1.83 秒を確認）: [verification-ai-pyc-cache-procedure.md](verification-ai-pyc-cache-procedure.md)
+  - 実運用（vai-batch-u1・4 局すべて完了）: 開始の照合 1.6〜1.7 秒、完全な照合・replay・観測の記録は従来どおり。S-1 を標準の手順にできると判断（同じ文書 9 章）
 
 ### 以前の記録（実装待ちのとき）
 

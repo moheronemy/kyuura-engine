@@ -150,3 +150,4 @@
 - S-1 を次のバッチの外側の手順として整え、対戦なしで確かめた: [verification-ai-pyc-cache-procedure.md](verification-ai-pyc-cache-procedure.md)。
 - checked hash の外部キャッシュ（184 個・13.7 MB。準備 25.3 秒）で、区間の再現は t1 1.74 秒・t2 1.83 秒（キャッシュなし 11.8〜12.0 秒）。照合の対象・結果・識別は同じで、元の証跡・コードは変わらない。
 - 実際のバッチでの効果は、次のバッチの実行で確かめる（未実行）。
+- 2026-11-14 の追記: vai-batch-u1（4 局）で、開始の照合 1.60〜1.66 秒・単独の最終集計 1.9 秒を実測した（[verification-ai-pyc-cache-procedure.md](verification-ai-pyc-cache-procedure.md) 9 章）。6 章の「局のあとの集計（約 12 秒）」は単独で実行した最終集計の時間で、セッションの中の自動の集計は t-run でも短かった（同じ 9.4 節の訂正）。

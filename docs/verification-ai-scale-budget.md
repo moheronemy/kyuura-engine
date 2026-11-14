@@ -481,3 +481,4 @@
 - この文書の見積もり・実行結果の数値は変えていない。
 - その実行で開始の照合が 1 セッションあたり約 11.7 秒（この文書の s1・s2 は 1.6〜2.0 秒）になった原因の調査と改善案: [verification-ai-startup-check-investigation.md](verification-ai-startup-check-investigation.md)（pyc を書けない `-B` での毎回のコンパイル。完全な照合は変えない案 S-1 を推奨）。
 - S-1 を次のバッチの外側の手順にした: [verification-ai-pyc-cache-procedure.md](verification-ai-pyc-cache-procedure.md)（準備の時間・容量は道具の累積時間・ゲームの証跡と別に記録する）。
+- その手順の実運用（vai-batch-u1・4 局）: 開始の照合 1 セッション 1.6〜1.7 秒・単独の最終集計 1.9 秒（[verification-ai-pyc-cache-procedure.md](verification-ai-pyc-cache-procedure.md) 9 章）。
