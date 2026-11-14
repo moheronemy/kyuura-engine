@@ -5562,7 +5562,8 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - P3 用 basis は 7 ファイル。P1 の判定・理由・basis は変えていない。単局とバッチは同じ入口（`batch.judge_trace` に `basis_p3`）。
 - 旧 r1（0.179.0 の記録）は `effects.py` が違うので basis が一致せず、当て直しても undetermined のまま（互換性の案は文書だけ）。
 - 詳細: [P3 設計 10 章](verification-ai-lost-target-p3-decision-design.md)
-- 次の小規模バッチの計画（通常の進行の枠 A と P3s 確認の枠 B。設計・下書きだけで未実行）: [verification-ai-batch-plan-p3s-v0181.md](verification-ai-batch-plan-p3s-v0181.md)
+- 次の小規模バッチの計画（通常の進行の枠 A と P3s 確認の枠 B）: [verification-ai-batch-plan-p3s-v0181.md](verification-ai-batch-plan-p3s-v0181.md)
+  - 実行（vai-batch-t1・t2。14 局すべて完了）: B の回帰の局で P3s に到達し、規則 8 で known_stop。A の通常の進行は拒否・停止なし（同じ文書 10 章）
 
 ### 以前の記録（実装待ちのとき）
 
