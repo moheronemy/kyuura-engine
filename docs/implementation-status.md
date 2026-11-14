@@ -5570,6 +5570,7 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 未確認の操作・決定・規約の経路の棚卸しと、次の小規模バッチ（選択肢の数を伏せる決定と S2A の続行規約）: [verification-ai-coverage-inventory-next-batch.md](verification-ai-coverage-inventory-next-batch.md)
   - 実行（vai-batch-w1〜w3・9 局すべて完了）: 伏せる 4 種類の決定の情報境界を観測の記録つきで確認（違反 0）、ER9 は規則 6 の条件を満たして known_stop、S2A の convention_applied を 3 閲覧者の公開ログで確認、既定の集合の準備の停止を受理 0 の観測で確認（[verification-ai-coverage-inventory-next-batch.md](verification-ai-coverage-inventory-next-batch.md) 10 章）
   - 選んだカードの公開の識別の確認: ポケモン交換おじさんでもどしたカードを相手・観戦者が識別できない（ログは uid だけ。公開不足の不具合候補。残り 6 分類は未調査）: [verification-ai-w1-publication-audit.md](verification-ai-w1-publication-audit.md)
+  - 構築盤面での再現（もどす・探すの両方）と修正方式の設計（未実装。client_api がログを配らないので GUI の表示は別の段階）: [trader-reveal-identification-design.md](trader-reveal-identification-design.md)
 
 ### 以前の記録（実装待ちのとき）
 
