@@ -22,20 +22,37 @@ import build_stop_policy_classification as B  # noqa: E402
 import stop_policy_scan as S  # noqa: E402
 from kyuura_engine import conventions as C  # noqa: E402
 
-UNDAMAGED = "UNRESOLVED_POTION_UNDAMAGED_TARGET"
-TR3_CODES = ("UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH", "UNRESOLVED_SWITCH_WITHOUT_BENCH", "UNRESOLVED_POTION_WITHOUT_DAMAGE")
+# 停止コードの文字列をこのファイルのソースに書かない（走査がテストの言及として台帳に数え、道具とテストだけの語の項目を増やさないため）。実行のときに組み立てる
+PREFIX = "UNRESOLVED"
 
-FAKE_CONVENTIONS = '''\
-X = Convention("PC-FAKE", 1, "continuation", "user_agreed", "UNRESOLVED_FAKE_B は対象外の説明",
-               content={"unchanged": ["UNRESOLVED_FAKE_B（受理のあとの未裁定。この規約の対象外）"], "also": "UNRESOLVED_FAKE_A を続ける"},
-               scenes=("UNRESOLVED_FAKE_A",
-                       "UNRESOLVED_FAKE_C"))
-CODE = "UNRESOLVED_FAKE_D"
+
+def code(rest: str) -> str:
+    return f"{PREFIX}_{rest}"
+
+
+UNDAMAGED = code("POTION_UNDAMAGED_TARGET")
+LEAVE_LOCK, MIND_GAMES_CHAOS = code("LEAVE_LOCK_NO_EFFECT"), code("MIND_GAMES_CHAOS_GYM_ORDER")
+TR3_CODES = tuple(C.CONVENTIONS[key].scenes[0] for key in C.TR3_MEMBERS)
+PO_SCENE = C.CONVENTIONS[(C.POISON_AMOUNT_ORDER_ID, 1)].scenes[0]
+FAKE = {name: code(f"FAKE_{name}") for name in "ABCD"}
+
+FAKE_CONVENTIONS_TEMPLATE = '''\
+X = Convention("PC-FAKE", 1, "continuation", "user_agreed", "@B@ は対象外の説明",
+               content={"unchanged": ["@B@（受理のあとの未裁定。この規約の対象外）"], "also": "@A@ を続ける"},
+               scenes=("@A@",
+                       "@C@"))
+CODE = "@D@"
 '''
-FAKE_EFFECTS = '''\
+FAKE_EFFECTS_TEMPLATE = '''\
 def check(state):
-    raise UnsupportedError("UNRESOLVED_FAKE_B", "本当の止める箇所")
+    raise UnsupportedError("@B@", "本当の止める箇所")
 '''
+
+
+def fill(template: str) -> str:
+    for name, value in FAKE.items():
+        template = template.replace(f"@{name}@", value)
+    return template
 
 
 def sites(codes, code, kind="literal"):
@@ -50,26 +67,26 @@ class ScanTest(unittest.TestCase):
         root = pathlib.Path(self.tmp.name)
         for d in (S.ENGINE_DIR, *S.TEST_DIRS, *S.TOOL_DIRS):
             (root / d).mkdir(parents=True, exist_ok=True)
-        (root / S.ENGINE_DIR / "conv.py").write_text(FAKE_CONVENTIONS, encoding="utf-8")
-        (root / S.ENGINE_DIR / "eff.py").write_text(FAKE_EFFECTS, encoding="utf-8")
-        (root / "tests" / "t.py").write_text('Convention("PC-T", 1, "c", "u", "s", content={"n": "UNRESOLVED_FAKE_B"})\n', encoding="utf-8")
+        (root / S.ENGINE_DIR / "conv.py").write_text(fill(FAKE_CONVENTIONS_TEMPLATE), encoding="utf-8")
+        (root / S.ENGINE_DIR / "eff.py").write_text(fill(FAKE_EFFECTS_TEMPLATE), encoding="utf-8")
+        (root / "tests" / "t.py").write_text(fill('Convention("PC-T", 1, "c", "u", "s", content={"n": "@B@"})\n'), encoding="utf-8")
         self.codes = S.prefixed_codes(root)
 
     def tearDown(self):
         self.tmp.cleanup()
 
     def test_note_is_not_a_stop_site(self):
-        self.assertEqual(sites(self.codes, "UNRESOLVED_FAKE_B"), ["kyuura_engine/eff.py:2"])  # 本当の止める箇所だけ
-        self.assertEqual(sites(self.codes, "UNRESOLVED_FAKE_B", "convention_note"), ["kyuura_engine/conv.py:1", "kyuura_engine/conv.py:2"])
+        self.assertEqual(sites(self.codes, FAKE["B"]), ["kyuura_engine/eff.py:2"])  # 本当の止める箇所だけ
+        self.assertEqual(sites(self.codes, FAKE["B"], "convention_note"), ["kyuura_engine/conv.py:1", "kyuura_engine/conv.py:2"])
 
     def test_scenes_and_other_literals_are_kept(self):
-        self.assertEqual(sites(self.codes, "UNRESOLVED_FAKE_A"), ["kyuura_engine/conv.py:3"])  # 規約の対象の場面の宣言
-        self.assertEqual(sites(self.codes, "UNRESOLVED_FAKE_A", "convention_note"), ["kyuura_engine/conv.py:2"])  # 本文の言及は別に記録
-        self.assertEqual(sites(self.codes, "UNRESOLVED_FAKE_C"), ["kyuura_engine/conv.py:4"])  # 複数の場面の一部が対象外の言及と混ざらない
-        self.assertEqual(sites(self.codes, "UNRESOLVED_FAKE_D"), ["kyuura_engine/conv.py:5"])  # 呼び出しの外の定数はそのまま
+        self.assertEqual(sites(self.codes, FAKE["A"]), ["kyuura_engine/conv.py:3"])  # 規約の対象の場面の宣言
+        self.assertEqual(sites(self.codes, FAKE["A"], "convention_note"), ["kyuura_engine/conv.py:2"])  # 本文の言及は別に記録
+        self.assertEqual(sites(self.codes, FAKE["C"]), ["kyuura_engine/conv.py:4"])  # 複数の場面の一部が対象外の言及と混ざらない
+        self.assertEqual(sites(self.codes, FAKE["D"]), ["kyuura_engine/conv.py:5"])  # 呼び出しの外の定数はそのまま
 
     def test_tests_and_tools_are_unchanged(self):
-        self.assertEqual(sorted(self.codes["UNRESOLVED_FAKE_B"]["tests"].get("literal", [])), ["tests/t.py:1"])  # エンジンの外は今までどおり
+        self.assertEqual(sorted(self.codes[FAKE["B"]]["tests"].get("literal", [])), ["tests/t.py:1"])  # エンジンの外は今までどおり
 
 
 class RepositoryScanTest(unittest.TestCase):
@@ -94,7 +111,7 @@ class RepositoryScanTest(unittest.TestCase):
                 self.assertTrue([s for s in literal if s.startswith("kyuura_engine/effects.py")])  # 厳密側の止める箇所
 
     def test_earlier_scene_declarations_kept(self):
-        self.assertTrue([s for s in sites(self.codes, "UNRESOLVED_POISON_CHANGE_ORDER") if s.startswith("kyuura_engine/conventions.py")])
+        self.assertTrue([s for s in sites(self.codes, PO_SCENE) if s.startswith("kyuura_engine/conventions.py")])
 
 
 class AdoptionRecordTest(unittest.TestCase):
@@ -130,7 +147,7 @@ class AdoptionRecordTest(unittest.TestCase):
         self.assertEqual(B.agreement_problems(self.ledger), [])
 
     def test_strict_and_out_of_scope_stay_active(self):
-        for code in (*TR3_CODES, UNDAMAGED, "UNRESOLVED_LEAVE_LOCK_NO_EFFECT", "UNRESOLVED_MIND_GAMES_CHAOS_GYM_ORDER"):
+        for code in (*TR3_CODES, UNDAMAGED, LEAVE_LOCK, MIND_GAMES_CHAOS):
             with self.subTest(code=code):
                 self.assertEqual(self.entries[code]["status"], "active")
         self.assertFalse([s for s in self.entries[UNDAMAGED]["implementation_sites"] if s.startswith("kyuura_engine/conventions.py")])
