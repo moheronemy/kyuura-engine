@@ -137,7 +137,29 @@ CONTINUATION_AGREEMENTS += [
      "statement": "PC-POISON-MIST-SOURCE-LEFT@1: ［ポイズンミスト］を使ったポケモンが場をはなれたら、その発生源の記録の効果は終わる。発生源が場にいるまま力が消えた記録（#power-lost）は対象外。",
      "reading": "UNRESOLVED_POISON_MIST_SOURCE#source-left（effects.poison_check_amount）。#power-lost・ほかの特殊能力の発生源・効果の重複の細部は対象外"},
 ]
-AGREED_CONVENTION_STATUS = "user_agreed"  # 規約（conventions）だけが使える。合意 AGR-MODE-BASELINE-USER で基礎集合に入れた利用者指定。続行規約の採用ではない
+# v0.186（docs/play-convention-tr3-v0.186.md）: 突風・ポケモンいれかえ・きずぐすりの続行規約 3 件の採用（2026-11-15 の利用者の指示。S2a・PO とは別の依頼なので項目ごとの出典 ``source``）。
+# 採用したのは開発用の部分的な集合 CS-KYUURA-PLAY-TR3@1 の 3 規約の中身だけ（厳密側・既存の集合・対象外の未裁定は変えない）。採用は 0.186.0 の時点のもので、この記録は台帳の生成の入力へ
+# 後から写したもの（docs/stop-ledger-drift-audit.md 8 章。新しい採用ではない）
+TR3_AGREEMENT_SOURCE = {"by": "user", "on": "2026-11-15",
+                        "where": ("本会話の利用者の指示（作業ブランチ claude/play-convention-tr3-impl の依頼の採用方針: 3 条件とも使用不可・カード消費なし・通常使用と代用使用に同じ条件・"
+                                  "明示的に選択した新しいプレイ用規約集合だけで有効。判断一覧は docs/play-convention-three-trainers.md）"),
+                        "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用。厳密側の集合・ほかの未決の場面の判断ではない）"}
+CONTINUATION_AGREEMENTS += [
+    {"id": "AGR-PLAY-TR3-SET", "source": TR3_AGREEMENT_SOURCE,
+     "statement": "続行側として、開発用の部分的な集合 CS-KYUURA-PLAY-TR3@1（CS-KYUURA-PLAY-PO@1 の 20 規約と TR3 の 3 規約）を登録する。完成したプレイ用とは表示しない。",
+     "reading": "conventions.SETS の CS-KYUURA-PLAY-TR3@1（usage development・completeness halts_at_undecided）。CS-KYUURA-CURRENT@1・S2A@1・PO@1 は同じ ID・版・中身のまま。既定の集合は変えない"},
+    {"id": "AGR-PLAY-TR3-GUST", "source": TR3_AGREEMENT_SOURCE,
+     "statement": "PC-GUST-WITHOUT-OPPONENT-BENCH@1: 突風は、使う人の相手のベンチが空なら使えない（規約による不正な操作 NO_OPPONENT_BENCH。カードを消費しない）。通常の使用と代用の使用に同じ条件。",
+     "reading": "UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH（effects.SwitchOpponentWithBench.check_playable）。厳密側の停止（GW5）は active のまま。AL2・SG1・MH1・MG1・受理のあとの対象の喪失は対象外"},
+    {"id": "AGR-PLAY-TR3-SWITCH", "source": TR3_AGREEMENT_SOURCE,
+     "statement": "PC-SWITCH-WITHOUT-BENCH@1: ポケモンいれかえは、使う人のベンチが空なら使えない（規約による不正な操作 NO_BENCH。カードを消費しない）。通常の使用と代用の使用に同じ条件。",
+     "reading": "UNRESOLVED_SWITCH_WITHOUT_BENCH（effects.SwitchWithBench.check_playable）。厳密側の停止は active のまま。AL2・MH1・MG1 は対象外"},
+    {"id": "AGR-PLAY-TR3-POTION", "source": TR3_AGREEMENT_SOURCE,
+     "statement": "PC-POTION-WITHOUT-DAMAGE@1: きずぐすりは、使う人の場にダメージのあるポケモンがいなければ使えない（規約による不正な操作 NO_DAMAGE_COUNTERS。カードを消費しない）。通常の使用と代用の使用に同じ条件。",
+     "reading": ("UNRESOLVED_POTION_WITHOUT_DAMAGE（effects.RemoveDamageCounters.check_playable）。厳密側の停止は active のまま。"
+                 "ダメージのないポケモンを選んだとき（UNRESOLVED_POTION_UNDAMAGED_TARGET。受理のあとの未裁定）・MG1 は対象外")},
+]
+AGREED_CONVENTION_STATUS ="user_agreed"  # 規約（conventions）だけが使える。合意 AGR-MODE-BASELINE-USER で基礎集合に入れた利用者指定。続行規約の採用ではない
 MODE_DEFINITIONS_HISTORY = {
     "STRICT-A": "厳密モードの定義としては採用しない（過去の検討案。AGR-MODE-STRICT・AGR-MODE-BASELINE-USER と合わない）。研究・照合の用途の集合として別に作るかは決めていない",
     "STRICT-B": "AGR-MODE-STRICT・AGR-MODE-BASELINE-USER に置きかえた。STRICT-B が含めていたエンジンの簡略化・実装上の仮定を基礎集合に入れるかは未決（DEC-BASELINE-NONUSER）",
@@ -188,6 +210,9 @@ DECISION_STATUS = {
     "DEC-LASTING-READINGS": {"status": "partly_agreed", "agreements": ["AGR-PLAY-PO-MIST-SOURCE-LEFT"],
                              "note": ("v0.145: PO3 の #source-left（発生源が場をはなれた［ポイズンミスト］の記録）だけを続行側の規約 PC-POISON-MIST-SOURCE-LEFT@1 として採用。#power-lost・"
                                       "ほかの持続する効果の発生源（PC-LASTING-SOURCE-CHANGE の候補）・厳密側は未決のまま")},
+    "DEC-USE-WITHOUT-EFFECT": {"status": "partly_agreed", "agreements": ["AGR-PLAY-TR3-GUST", "AGR-PLAY-TR3-SWITCH", "AGR-PLAY-TR3-POTION"],
+                               "note": ("v0.186: GW5・UNRESOLVED_SWITCH_WITHOUT_BENCH・UNRESOLVED_POTION_WITHOUT_DAMAGE の 3 場面だけを、続行側の集合 CS-KYUURA-PLAY-TR3@1 の規約（使えない。"
+                                        "P-UWE-1 の形）として採用。ほかのコード（PF-USE-WITHOUT-EFFECT の残り）・PC-USE-WITHOUT-TARGET の案・厳密側は未決のまま")},
     "DEC-EXISTING-USER-SPECS": {"status": "partly_agreed", "agreements": ["AGR-MODE-BASELINE-USER"],
                                 "note": "利用者指定（12 件・USER-ID 9 つ）は基礎集合に入れる。エンジンの簡略化・実装上の仮定・データの訂正の扱いは DEC-BASELINE-NONUSER・DEC-CARD-DATA-CORRECTIONS で未決"},
 }
@@ -1281,6 +1306,17 @@ UPDATES = [
      "new_entries": [],
      "unchanged": ("研究の停止コード（FC1・RB2 を含む）は active のまま。止めるコードは同じで、山札を見る前の止める条件が配分を読まない確かめになった（保守的に止める場合が増えた）。"
                    "族・規約・判断事項・合意の記録は変えていない")},
+    {"version": "0.186.0", "work": "突風・ポケモンいれかえ・きずぐすりの続行規約 3 件の採用・実装（開発用の部分的な集合 CS-KYUURA-PLAY-TR3@1）",
+     "document": "docs/play-convention-tr3-v0.186.md",
+     "base": {"commit": "6df781fffb731d9eca2fb07126aaadd772f6baa5", "branch_of_base": "claude/play-convention-three-trainers（v0.185 と判断一覧を含む。main には未取り込み）"},
+     "approval": ("利用者の採用は continuation_agreements の AGR-PLAY-TR3-* の 4 項目（2026-11-15。続行側の集合の規約の採用で、公式の裁定・kyuura の研究上の解決ではない）。"
+                  "DEC-USE-WITHOUT-EFFECT を partly_agreed（続行側の 3 場面だけ）にした。厳密側・既存の集合・対象外の未裁定は変えていない。"
+                  "この項目と採用の記録は、0.186.0 のあとの生成の道具の修正の単位（docs/stop-ledger-drift-audit.md 8 章）で入力に写した（台帳は 0.186.0 の時点では作り直していない）"),
+     "changed_entries": ["decision_status（DEC-USE-WITHOUT-EFFECT）",
+                         "3 つの停止コードの implementation_sites・current_stop（規約の場面の宣言 conventions.py の箇所が加わった。PO の前例と同じ）",
+                         "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"],
+     "new_entries": ["continuation_agreements（AGR-PLAY-TR3-* の 4 項目。項目ごとの出典 source）"],
+     "unchanged": "研究の停止コードは active のまま（厳密側・S2a・PO の集合では今のまま止まる）。族・安全境界・規約（conventions）・方針の案は変えていない"},
 ]
 # 分類の時点（基点 3e25ac5）の集計（counts）の写し。今の counts は現行コードから作り直した値
 COUNTS_AT_CLASSIFICATION = {"research_stop_codes": 316, "runtime_codes_outside_table": 40, "runtime_codes_outside_table_active": 39, "test_tool_only_codes": 8, "cases": 15, "codes_with_cases": 7, "problems_new": 4, "problems_from_inventory": 28, "conventions": 18, "internal_guard_sites_current": 602, "internal_guard_sites_matched_to_inventory": 600, "internal_guard_sites_new_since_inventory": ["kyuura_engine/engine.py:445", "kyuura_engine/resolution/programs.py:10739"], "safety_boundaries": 8, "families": 23, "decisions": 29, "by_reachability": {"constructed_board": 145, "legal_sequence": 25, "static_only": 185}, "by_family": {"PF-COPY-TRANSFORM": 34, "PF-DAMAGE-SCOPE": 22, "PF-EFFECT-TIMING": 13, "PF-ENERGY-TYPE": 21, "PF-ESP-REDO": 4, "PF-HIDDEN-INFORMATION": 8, "PF-HISTORY-LASTING": 20, "PF-KNOCKOUT-TIMING": 15, "PF-POWER-SUPPRESSION": 11, "PF-PROTECTED-TARGET-EFFECT": 12, "PF-REACTION-DURING-PROCESS": 10, "PF-RUNTIME-CONTINUATION": 15, "PF-RUNTIME-COPY-GAPS": 5, "PF-RUNTIME-DATA": 5, "PF-RUNTIME-GENERIC": 1, "PF-RUNTIME-REGISTRY": 7, "PF-RUNTIME-SEARCH-LIMIT": 6, "PF-SETUP-PLAY-AS-POKEMON": 5, "PF-SIMULTANEOUS-ORDER": 26, "PF-STATED-COUNT-SHORT": 11, "PF-TEXT-READING": 34, "PF-UP-TO-ZERO": 13, "PF-USE-WITHOUT-EFFECT": 57}, "by_play_group": {"1": 316, "2": 39, "3": 89, "4": 6, "5": 20, "6": 1}, "by_mechanism": {"answer_rejection": 13, "command_rejection": 339, "deck_validation": 1, "deferred_interruption": 2, "pokemon_check_halt": 10, "setup_halt": 2}, "by_status": {"active": 402, "fixed": 5, "historical": 2, "unverified": 1}, "note": "停止コード・事例・規約・内部ガードは別の数。事例はコードの下位で、コードの数に足さない。棚卸しと同じ項目は独立した不足として数えない"}

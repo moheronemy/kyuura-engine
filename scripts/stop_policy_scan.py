@@ -47,13 +47,40 @@ def parsed(path: pathlib.Path) -> tuple[str, ast.AST, dict[int, str]]:
     return _PARSED[path]
 
 
-def token_occurrences(root: pathlib.Path, path: pathlib.Path) -> list[tuple[str, int, str]]:
-    """(コード, 行, 種類) の並び。種類は literal（文字列リテラルの中）・comment・name（識別子の一部。定数名など）。"""
+CONVENTION_CALL = "Convention"  # 規約の定義（kyuura_engine.conventions.Convention）の呼び出し
+CONVENTION_SCENES = "scenes"  # 規約が当たる場面の宣言（規約の対象のコード。ほかの引数は文・内容・参照の文字列）
+
+
+def convention_note_spans(path: pathlib.Path) -> list[tuple[tuple[int, int], tuple[int, int]]]:
+    """v0.186 の後（docs/stop-ledger-drift-audit.md 8 章）: ``Convention(...)`` の呼び出しの引数のうち、``scenes=`` 以外（文・内容・参照）の式の範囲（(行, バイトの列) の始めと終わり）。
+    この範囲の文字列にある停止コードは、規約の本文の言及（対象外の注記・説明・参照）で、止める箇所でも規約の対象でもない。``scenes=`` の場面の宣言は含めない。"""
+    _, tree, _ = parsed(path)
+    spans = []
+    for node in ast.walk(tree):
+        if _call_name(node) != CONVENTION_CALL:
+            continue
+        for expr in [*node.args, *(kw.value for kw in node.keywords if kw.arg != CONVENTION_SCENES)]:
+            spans.append(((expr.lineno, expr.col_offset), (expr.end_lineno, expr.end_col_offset)))
+    return spans
+
+
+def token_occurrences(root: pathlib.Path, path: pathlib.Path, *, convention_notes: bool = False) -> list[tuple[str, int, str]]:
+    """(コード, 行, 種類) の並び。種類は literal（文字列リテラルの中）・comment・name（識別子の一部。定数名など）。
+
+    ``convention_notes`` なら（エンジンのファイル）、``Convention(...)`` の ``scenes=`` 以外の引数の中の文字列を ``convention_note`` にする（``literal`` に数えない。
+    ``convention_note_spans``）。ast の列はバイトの位置なので、トークンの列（文字の位置）をその行のバイトの位置に直して比べる。"""
     found = []
     text = path.read_text(encoding="utf-8")
+    spans = convention_note_spans(path) if convention_notes else []
+    lines = text.splitlines(keepends=True)
     for tok in tokenize.generate_tokens(io.StringIO(text).readline):
         if tok.type == tokenize.STRING or getattr(tokenize, "FSTRING_MIDDLE", -1) == tok.type:
             kind = "literal"
+            if spans:
+                line, col = tok.start
+                pos = (line, len(lines[line - 1][:col].encode("utf-8")))
+                if any(start <= pos < end for start, end in spans):
+                    kind = "convention_note"
         elif tok.type == tokenize.COMMENT:
             kind = "comment"
         elif tok.type == tokenize.NAME:
@@ -81,11 +108,12 @@ def module_code_constants(root: pathlib.Path) -> dict[str, str]:
 
 
 def prefixed_codes(root: pathlib.Path) -> dict[str, dict]:
-    """コード → {"engine": {"literal": [...], "comment": [...], "name": [...]}, "tests": {...}, "tools": {...}}（位置は "path:line"）。"""
+    """コード → {"engine": {"literal": [...], "comment": [...], "name": [...], "convention_note": [...]}, "tests": {...}, "tools": {...}}（位置は "path:line"）。
+    ``convention_note`` はエンジンの規約の本文の言及（止める箇所・規約の対象として数えない。``token_occurrences``）。"""
     codes: dict[str, dict] = {}
 
     def add(area: str, path: pathlib.Path) -> None:
-        for code, line, kind in token_occurrences(root, path):
+        for code, line, kind in token_occurrences(root, path, convention_notes=area == "engine"):
             entry = codes.setdefault(code, {"engine": {}, "tests": {}, "tools": {}})
             entry[area].setdefault(kind, []).append(f"{rel(root, path)}:{line}")
 
