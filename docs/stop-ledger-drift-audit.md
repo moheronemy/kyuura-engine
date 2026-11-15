@@ -147,3 +147,98 @@
   - `c5f3c5d` の時点で台帳が一致していたか（生成を繰り返していない）
   - `reachability.evidence` の静的な根拠のうち、実際に盤面で到達しているか（各テストを実行していない）
   - リポジトリの外の証拠（`C:/dev/kyuura-engine-verification`）が後から変わったときの差（今回は観測の差 0）
+
+## 8. 追記: 生成の道具の F の修正と TR3 の採用の記録（2026-11-15）
+
+6 章で推奨した最小の次の単位を行いました。正式な台帳・`ruleset-mode-design.md` の生成の区画・実行時のデータ（`convention_records.json`・`diagnostic_catalog.json`）は書き出していません。版も上げていません。0〜7 章は調査の時点の記述のままです。
+
+- 基点は `4b55e7c` です。作業は worktree `C:\dev\kyuura-engine-lt41`、ブランチ `claude/ledger-generator-tr3-fix` で行いました。
+- コミットは 2 つです。
+  - `0cf9f54`: 走査の修正・入力・限定テスト
+  - `56b1a4b`: テストが停止コードの文字列をソースに書かないようにした
+- 証跡は `kyuura-engine-verification-vai/verifier/runs/ledger-generator-tr3-fix/` です。
+
+### 8.1 F の原因と修正
+
+- **原因**: 3 件の F（L0909・L0913・L0917）は、1 つの誤検出から出た 3 つの出力でした。
+  - 走査（`scripts/stop_policy_scan.py` の `token_occurrences`）は、エンジンのファイルの文字列の中の停止コードを、すべて `literal` として数えていました。
+  - TR3 の規約 `PC-POTION-WITHOUT-DAMAGE@1` の `content.unchanged`（`conventions.py` の 1 つの文字列。除外の注記）にある `UNRESOLVED_POTION_UNDAMAGED_TARGET` も、`literal` に数えられました。
+  - 生成の道具は `literal` を `implementation_sites`（とその数）と、`current_stop` の `command_rejection` の箇所に使うため、3 か所に出ました。
+- **修正**（既存の構造 `parsed`・`_call_name` を使う最小の変更）:
+  - エンジンのファイルの `Convention(...)` の呼び出しで、`scenes=` のほかの引数（文・内容・参照）の式の範囲にある文字列の停止コードを、種類 `convention_note` にします。`literal` には数えません。
+  - `scenes=`（規約の対象の場面の宣言）と、呼び出しの外の文字列（定数・本当の `UnsupportedError`）は、今までどおり `literal` です。
+  - 判定は ast の範囲（バイトの列）とトークンの位置で行います。コード名・ファイル名の特例はありません。テスト・道具の側の数え方も変えていません。
+  - 今の `conventions.py` で `scenes=` の外にあった停止コードの文字列は、この 1 つだけでした（ほかはすべて `scenes=` か呼び出しの外）。
+
+### 8.2 TR3 の採用の記録（生成の入力）
+
+`scripts/build_stop_policy_classification.py` の既存の形式（S2a・PO と同じ）で加えました。
+
+- `continuation_agreements`: `AGR-PLAY-TR3-SET`・`-GUST`・`-SWITCH`・`-POTION`
+  - 項目ごとの出典は `TR3_AGREEMENT_SOURCE` で、2026-11-15 の利用者の指示です。公式の裁定・kyuura の解決としては記録しません。
+  - 規約 ID・場面は、エンジンの登録（`kyuura_engine.conventions`）と同じです。
+  - 対象外（AL2・SG1・MH1・MG1・`UNRESOLVED_POTION_UNDAMAGED_TARGET` など）は、`reading` に「対象外」と書きました。
+- `decision_status` の `DEC-USE-WITHOUT-EFFECT`: `partly_agreed` にしました（3 場面だけ。ほかのコードと厳密側は未決のまま）。
+- `UPDATES` の 0.186.0 の項目: 採用は 0.186.0 の時点のものとし、この記録はそのあとの単位で入力に写した、と書きました。新しい採用の履歴は作っていません。
+- 厳密側の停止（3 つのコード）と対象外の未裁定は active のままです。規約は、`CS-KYUURA-PLAY-TR3@1` を明示的に選んだときだけ当たります（エンジンは変えていない）。
+
+### 8.3 限定テスト
+
+`tests/test_stop_policy_generator_tr3_v0_186.py`（9 テスト）で確かめたこと:
+
+- 合成の木で:
+  - 除外の注記を数えない
+  - 同じコードの本当の止める箇所は数える
+  - 場面の宣言と、呼び出しの外の定数は数える
+  - 複数の場面の一部だけが対象外の言及と混ざらない
+  - テストの側は変わらない
+- 今のコードで:
+  - UNDAMAGED_TARGET の `conventions.py` の箇所が消え、`effects.py` の箇所が残る
+  - TR3 の 3 つのコードの場面の宣言と、厳密側の箇所が残る
+  - PO の場面の宣言が残る
+- 作り直した台帳（`build()` の戻り値）で:
+  - TR3 の記録と登録が一致する
+  - DEC-USE-WITHOUT-EFFECT が反映される
+  - 厳密側と対象外は active のまま
+
+実行の結果:
+
+- 修正の前（`4b55e7c` の展開にこのテストを置いた）: 5 失敗・5 誤りで、期待どおりの失敗だけでした。
+- 修正のあと: 新しいテスト・`test_stop_policy_classification`・`test_diagnostics_adapter_v0_152`（台帳を読む）の 3 モジュールが成功しました。
+- 1 回目のテストは、合成の停止コードと実在のコードの言及をソースに書いていました。そのため、隔離した生成で次の差が出ました（予想外の差）。
+  - 合成の語 4 つが、`test_tool_only_code` の項目として加わった
+  - テストの言及も加わった
+- 停止コードの文字列を、実行のときに組み立てる形に直しました（走査で見つかる語は 0）。直したテストも、修正の前の木では同じ 5 失敗・5 誤りでした。
+
+### 8.4 隔離した再生成と差の照合
+
+- `56b1a4b` の `git archive` の展開先 2 つで、通常の `--write`・`--check` を実行しました（どちらも exit 0）。
+  - 出力の台帳は同じでした（`dd261fe1…`）。
+  - 設計の文書の生成の区画は変わりませんでした（`2e60c63d…`）。
+- 前の調査の生成（`f7ce4ee`）と比べた差は 11 件で、すべて意味の差です。行番号の差・順の差はありません。
+  - F の修正による削除 3 件: UNDAMAGED_TARGET の `implementation_sites` の要素・`implementation_sites_total` 4→3・`current_stop` の要素
+  - TR3 の採用の記録による追加 8 件:
+    - 採用の 4 項目
+    - `DEC-USE-WITHOUT-EFFECT` の 3 つの項目
+    - `updates`: 0.186.0 の項目を最後に足した 1 件。並びの要素に id がないので 1 件と数えた。前の 13 項目は同じ
+- 今の台帳と比べた差は 1,679 件です（前の調査の 1,674 − 3 + 8）。
+  - 前の分類表の 1,671 件は、中身（パス・種類・前・後）がそのまま対応しました（A 1,558・B 2・C 73・D 38）。
+  - 消えたのは F の L0909・L0913・L0917 だけ、加わったのは上の 8 件だけでした（`out/mapping_to_previous.json`）。
+- 出力の項目数（`out/output_item_counts.json`）:
+  - `entries` は 433 で、前の生成と同じです（今の台帳は 429）。
+  - `continuation_agreements` は 10→14、`updates` は 13→14、`partly_agreed` の判断事項は 11→12 です。
+  - `by_status` は前の生成と同じです（active 411）。
+- 実装の識別（behavior・instrumentation・P1・P3 の basis・道具の識別）は、修正の前後で同じでした。`scripts/` と `tests/` は識別の対象の外です。
+
+### 8.5 残る差と判断事項
+
+- 判断なしで同期できる差（A・B・C の 67）と、TR3 の記録（D と 8.2 節の 8 件）は、生成の道具の上では揃いました。
+- **変えていない判断事項**:
+  - 道具とテストだけの語の 4 項目と件数の 2（C の 6）
+  - 既存の 8 語の扱い
+  - 設計案への 4 語の対応先
+  - 同期すると場面の索引が変わり `behavior_digest` も変わる点（5 章）
+- 次は、この判断を受けてから、台帳・場面の索引・設計案の作り直しと版を 1 つの単位で行います。
+- 未確認:
+  - 全体のテスト
+  - リポジトリの外の証拠が変わったときの差
