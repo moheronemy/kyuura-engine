@@ -394,6 +394,7 @@ seed 2025 は、結果を見て選んだ回帰条件です。旧記録の再開�
 | ポケモン育て屋さん | 進化カード | 出た（`evolve`） | 場に出す。合う |
 
 - **訂正（2026-11-14、限定）**: 上の表の「出た」「合う」は、相手・観戦者の閲覧用記録の出来事に uid が出たことだけで判断していました（相手・観戦者が uid とカード ID の対応を知れるかは確かめていない）。識別の観点で確かめた結果（[verification-ai-w1-publication-audit.md](verification-ai-w1-publication-audit.md)）: ポケモン交換おじさんでもどしたカードは、相手・観戦者とも 4 件すべてで、その時点までに識別できる情報がありませんでした（公開不足の不具合候補）。ほかの行は、その単位では未調査です（uid の出現だけの判断のまま）。元の表は残しています。
+  - 2026-11-15 の追記: 残りの化石の発掘・スロットゲームの束は、公開の要件と最小の修正仕様を設計した（未実装）: [fossil-slot-reveal-identification-design.md](fossil-slot-reveal-identification-design.md)。
   - 2026-11-15 の追記: D の 17 か所は 0.184.0 で修正した（残り: 化石の発掘の判断・スロットゲームの束・GUI の依存の更新）: [reveal-identify-v0.184.md](reveal-identify-v0.184.md)。
   - 2026-11-15 の追記: D の 17 か所は構築盤面で再現し、修正範囲を確定した（修正は次の単位）: [reveal-call-sites-repro-fix-design.md](reveal-call-sites-repro-fix-design.md)。
   - 2026-11-14 の追記: ほかの 18 の呼ぶ箇所は静的に分類した（D 17・E 1。盤面での確かめと修正は次の単位）: [reveal-call-sites-identification-audit.md](reveal-call-sites-identification-audit.md)。

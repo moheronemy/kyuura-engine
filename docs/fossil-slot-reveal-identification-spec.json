@@ -1,0 +1,45 @@
+{
+ "format": "kyuura-engine reveal identification spec draft 1",
+ "status": "draft (design only; not implemented)",
+ "document": "docs/fossil-slot-reveal-identification-design.md",
+ "base": {"engine_branch": "claude/reveal-identify-v0184", "engine_commit": "eecef47", "distribution_commit": "a9add68b1e56a574e9bc1672951d48cad2b3b814", "engine_version": "0.184.0",
+          "gui_branch": "feature/engine-0184-reveal-identify", "gui_commit": "bd665a7"},
+ "version_rule": "decide at implementation from the then-current version; this draft does not bump",
+ "items": [
+  {
+   "id": "F",
+   "title": "化石の発掘（ES1-035）の山札の側",
+   "locate": {"file": "kyuura_engine/effects.py", "class": "SearchNamedFromDeckOrDiscard", "method": "resume", "call": "reveal_deck_to_hand"},
+   "change": "pass identify=True",
+   "event": {"kind": "reveal_from_deck", "added_fields": ["card_id"], "card_id": "card_id of the shown card itself at generation"},
+   "unchanged": ["kyuura_engine/zones.py helper default identify=False", "trash branch retrieve_trainer", "decision search_deck_or_discard and HIDDEN_COUNT_KINDS", "Pokemon Tower branch", "shuffle"],
+   "acceptance": ["F1 card_id correct for viewers 0,1,spectator,host; equals view record", "F2 no uid-card_id pair to non-owners before acceptance", "F3 past entries unchanged",
+                  "N2 trash/none/no-target/tower identical to 0.184.0", "N6 identify=True call sites exactly 20; helper default False"]
+  },
+  {
+   "id": "S",
+   "title": "スロットゲーム（neo1-090）の束",
+   "locate": {"file": "kyuura_engine/effects.py", "class": "RevealDeckTopTakeSameNamed", "method": "resolve", "call": "state.add_event(\"reveal_deck_top\", ...)"},
+   "change": "add field card_ids at the same add_event",
+   "event": {
+    "kind": "reveal_deck_top",
+    "kept_fields": ["kind", "turn", "player", "count", "cards", "trainer_card"],
+    "added_fields": ["card_ids"],
+    "card_ids": {"type": "array of string", "length": "== len(cards) == count", "order": "same as cards (deck top first)", "value": "card_ids[i] == card_id of uid cards[i] at generation",
+                 "duplicates": "kept per position; never merged or sorted", "partial": "never (all or field absent)", "masking": "not a uid field; cards[i] may be masked to null per viewer, positions unchanged"},
+    "consistency_with_taken": "each following reveal_from_deck in the same acceptance has card in cards and card_id == card_ids at that position",
+    "not_added": ["names", "images", "whole deck list", "uid-card table", "same-name judgement"]
+   },
+   "generation_point": "after the first shuffle, before moving cards to hand; fixed at generation, never backfilled",
+   "short_deck": "TOP1 UNRESOLVED_DECK_TOP_SHORT before use; no bundle event; empty bundle never generated",
+   "single_generator": true,
+   "acceptance": ["S1-S4 length/order/value for 2+1, 3 same, 3 same card_id, no pair, name variants", "S5 single generator", "N1 TOP1 unchanged", "N3 own-only bundles and private searches unchanged",
+                  "N4 before/after equal except added card_id/card_ids", "N5 old-format records load without backfill"]
+  }
+ ],
+ "visibility": {"owner": "already knows; field added", "opponent": "newly identifies", "spectator": "same as opponent (PUBLIC_EVENTS)", "host": "reads spectator copy"},
+ "old_format": "read as unidentified; never infer from uid, later state, known decks, or names",
+ "gui_followup": {"F": "existing revealed-cards panel; pin bump and contract description only", "S": ["add reveal_deck_top to identified_events", "validate card_ids string array with len == len(cards); cards int or null; reject partial",
+                  "one row: player showed top 3: name+ID in event order", "no card_ids: 3 cards without identification; unknown ID per card", "keep baseline note and per-viewer logs"]},
+ "decisions": {"J-F1": "write card_id (recommended)", "J-F2": "do not change retrieve_trainer (recommended)", "J-S1": "parallel array card_ids (recommended)", "J-S2": "no ordering semantics", "J-S3": "reject partial", "J-3": "same version, separate commits"}
+}

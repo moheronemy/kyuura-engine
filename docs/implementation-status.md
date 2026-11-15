@@ -5581,6 +5581,7 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
   - 選んだカードの公開の識別の確認: ポケモン交換おじさんでもどしたカードを相手・観戦者が識別できない（ログは uid だけ。公開不足の不具合候補。残り 6 分類は未調査）: [verification-ai-w1-publication-audit.md](verification-ai-w1-publication-audit.md)
   - 構築盤面での再現（もどす・探すの両方）と修正方式の設計（未実装。client_api がログを配らないので GUI の表示は別の段階）: [trader-reveal-identification-design.md](trader-reveal-identification-design.md)
   - client_api の可視ログの配信の設計（入口に読み取りの要求 `log`。受理の時点の写しを位置で返す。形式 1 のまま。未実装。GUI の接続層の `hidden.seed` の扱いも要る）: [client-api-visible-log-delivery-design.md](client-api-visible-log-delivery-design.md)
+  - 化石の発掘とスロットゲームの束の公開の要件と最小の修正仕様（設計だけ。推奨: 化石の発掘の山札の側に `identify=True`、`reveal_deck_top` に `cards` と並行の `card_ids`。未実装・版は変えていない）: [fossil-slot-reveal-identification-design.md](fossil-slot-reveal-identification-design.md)
   - 0.184.0 で D の 17 か所を修正した（見せたカードの `card_id`。共有のカードは実行していない・GUI の依存の更新は未実施・化石の発掘は判断待ち・スロットゲームの束全体は未修正）: [reveal-identify-v0.184.md](reveal-identify-v0.184.md)
   - D の 17 の呼ぶ箇所の構築盤面での再現（17 か所とも、相手・観戦者に届く出来事は uid だけで識別できない。非公開の対照は維持）と修正範囲の確定（各呼ぶ箇所の `identify=True`。修正は未着手。化石の発掘・スロットゲームの束全体は別の判断）: [reveal-call-sites-repro-fix-design.md](reveal-call-sites-repro-fix-design.md)
   - 交換おじさん以外の 18 の呼ぶ箇所の静的な分類: 識別の公開が要るのに出来事が uid だけ（交換おじさんと同じ原因の候補）17・未確定 1（化石の発掘）。実際の盤面・配信では未確認・修正は未着手: [reveal-call-sites-identification-audit.md](reveal-call-sites-identification-audit.md)
