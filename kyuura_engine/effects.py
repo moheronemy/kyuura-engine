@@ -31772,7 +31772,7 @@ class RevealDeckTopTakeSameNamed(TrainerEffect):
     """あなたの山札をよく切り、その上から ``look`` 枚のカードを見て、相手プレイヤーにも見せる。その中に 2 枚以上「同じ名前のカード」があったら、それらをあなたの手札に加える。その後、
     「同じ名前のカード」でなかったカードを山札にもどし、その山札をよく切る（v0.80。スロットゲーム（neo1-090。kyuura の種類 ``goldenrod_game_corner``））。
 
-    - 切る → 見せる（ログ ``reveal_deck_top`` の ``cards`` は公開）→ 同じ名前のカード（``same_name_groups``）をすべて見せて手札に加える（``zones.reveal_deck_to_hand``）→ 切る
+    - 切る → 見せる（ログ ``reveal_deck_top`` の ``cards`` は公開。v0.185 から同じ長さ・同じ順の ``card_ids`` も）→ 同じ名前のカード（``same_name_groups``）をすべて見せて手札に加える（``zones.reveal_deck_to_hand``）→ 切る
       （同じ名前のカードがなくても、見せた 3 枚をもどして切る）。決定はない（選ぶものがない）
     - 山札が ``look`` 枚より少ないときは TOP1（使う前）
     """
@@ -31791,7 +31791,10 @@ class RevealDeckTopTakeSameNamed(TrainerEffect):
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         shuffle_deck(state, use.player)
         cards = tuple(state.players[use.player].deck[:self.look])
-        state.add_event("reveal_deck_top", player=use.player, count=self.look, cards=cards, trainer_card=use.card)
+        # v0.185（docs/fossil-slot-reveal-v0.185.md）: 見せた束のカードの ID を、cards と同じ長さ・同じ順に（card_ids[i] は cards[i] のカード。同じ ID も位置ごと）。
+        # 束を見せた時点（切ったあと・手札に加える前）の値で、あとの状態から補わない。順は cards と同じというだけで、あとの山札の順の意味はない
+        card_ids = tuple(state.cards[uid].card_id for uid in cards)
+        state.add_event("reveal_deck_top", player=use.player, count=self.look, cards=cards, card_ids=card_ids, trainer_card=use.card)
         for card in same_name_groups(state, cards):
             reveal_deck_to_hand(state, use.player, card, identify=True)
         shuffle_deck(state, use.player)

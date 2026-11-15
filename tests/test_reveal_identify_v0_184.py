@@ -220,7 +220,10 @@ class IdentifiedTest(unittest.TestCase):
                       [lambda run: (0, "play_trainer", [[uid(run.state, 0, "hand", T80.SLOT_GAME)]], "見せて加える")], ["effects.py:RevealDeckTopTakeSameNamed.resolve"])
         bundle = [e["event"] for e in run.log("1") if e["event"]["kind"] == "reveal_deck_top"]
         self.assertEqual(len(bundle), 1)
-        self.assertNotIn("card_id", bundle[0])  # 束全体の出来事は対象外（変えていない。uid だけ）
+        # v0.184 の期待は「束全体の出来事は対象外（card_id・card_ids がない。uid だけ）」。v0.185（docs/fossil-slot-reveal-v0.185.md）から束に card_ids を書く
+        # （束の確かめは tests/test_fossil_slot_reveal_v0_185.py）。ここでは、束が個別の card_id を持たないことだけを残す
+        self.assertNotIn("card_id", bundle[0])
+        self.assertEqual(len(bundle[0]["card_ids"]), len(bundle[0]["cards"]))
 
     def test_a_pokegear(self):
         st = T80.board([T80.POKEGEAR], deck=[H.POTION, T80.W, H.SWITCH, T80.W, T80.W, T80.W, T80.W])
