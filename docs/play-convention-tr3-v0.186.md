@@ -111,7 +111,7 @@
 | 生成物のあと | 6（94 テスト。台帳・診断・総数・設計案・仕様） | すべて成功 |
 | 版のあと | 3（43 テスト。版の期待・配布の形・新しいテスト） | すべて成功 |
 | 最終のコード（版のあと） | 7（162 テスト。固定の指紋・規約集合・client_api・候補・錯乱ジム・再現用記録・診断） | すべて成功 |
-| 文書のあと | 文書を読むテスト（証跡の `scripts/tests/docs`） | 6 章のコミットのあとに実行 |
+| 文書のあと | 15（README・実装状況を読む各版のテストと配布の形。証跡の `scripts/tests/docs`） | すべて成功 |
 
 - 新しいテスト（`tests/test_play_convention_tr3_v0_186.py`）の盤面は、構築盤面です（`build_test_state` で作った盤面の規約集合だけを置きかえる）。`new_game` で確かめたのは、TR3 を明示して対戦を作れることと、既定の集合が変わらないことだけです。3 条件の場面に対戦の中で到達した実績ではありません。
 - 設計の V1〜V8 との対応: V1 は `StrictTest`。V2・V3 は `Tr3Test.test_rejected_by_convention_without_change`。V4 は `test_targets_present_are_unchanged`。V5 は `SubstituteTest`。V6 は `test_other_unresolved_are_not_hidden`・`test_mind_games_chaos_gym_is_not_hidden`・`CandidateTest.test_other_reasons_are_not_converted`。V7 は `CandidateTest`（混在・規約の除外だけ・秘密への非依存）。V8 は `RecordTest`・`RegistrationTest`。
