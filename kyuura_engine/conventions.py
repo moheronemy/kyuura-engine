@@ -341,8 +341,58 @@ SETS = MappingProxyType({
                                                "だけを続け、ほかの未決の場面（#power-lost をふくむ）では今の停止コードで止める（完成したプレイ用の集合ではない）")),
 })
 
+# ---------------------------------------------------------------- v0.186: 突風・ポケモンいれかえ・きずぐすりの続行規約（docs/play-convention-tr3-v0.186.md）
+#
+# 利用者の採用（2026-11-15。設計 docs/play-convention-three-trainers.md の推奨値）。プレイ用の取り決めで、公式の裁定・エラッタ・kyuura の研究上の解決ではない（GW5 など厳密側の
+# 停止コードは active のまま）。今の挙動の集合・S2a・PO の集合には入れず、新しい開発用の部分的な集合 CS-KYUURA-PLAY-TR3@1 だけに入れる。処理はどれも、受理の前の確かめ
+# （``check_playable``。手札から使う・錯乱ジムでかわりに使う・サイキックコントロールで使う、の同じ関数）で、未裁定の停止の代わりに規約による不正な操作として拒否する
+
+TR3_SET_ID = "CS-KYUURA-PLAY-TR3"
+TR3_ADOPTION = ("利用者の採用（2026-11-15。3 条件とも使えない・カードを消費しない。通常の使用と代用の使用に同じ条件）。プレイ用の取り決めで、公式の裁定・エラッタ・"
+                "kyuura の研究上の解決ではない")
+TR3_REFERENCES = ("docs/play-convention-tr3-v0.186.md", "docs/play-convention-three-trainers.md")
+
+GUST_WITHOUT_OPPONENT_BENCH_ID = "PC-GUST-WITHOUT-OPPONENT-BENCH"
+SWITCH_WITHOUT_BENCH_ID = "PC-SWITCH-WITHOUT-BENCH"
+POTION_WITHOUT_DAMAGE_ID = "PC-POTION-WITHOUT-DAMAGE"
+
+_TR3_PATHS = "手札から使う（PlayTrainer）・錯乱ジムの「うら」でかわりに使う・サイキックコントロールで使う（同じ check_playable。使う人から見た条件）"
+_TR3_UNCHANGED_COMMON = ["受理のあとに対象がいなくなった場合（v0.67 の ends_on_lost_target など。今の処理のまま）", "対象がいる場合の処理",
+                         "ほかの未裁定（AL2・SG1・MH1・MH2・TK1・MG1 など。今の停止のまま）", "ほかのカード（同じ形の問いのほかのカード）", "厳密側・既存の集合の停止"]
+_TR3_CONVENTIONS = (
+    Convention(GUST_WITHOUT_OPPONENT_BENCH_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "突風（登録の型 SwitchOpponentWithBench）は、使う人の相手のベンチが空なら使えない（規約による不正な操作として拒否する。カードは手札のまま・状態・乱数・ログを変えない）",
+               content={"adoption": TR3_ADOPTION, "applies_when": "受理の前（check_playable）に、使う人の相手のベンチ（公開の値）が空",
+                        "identification": "効果の登録の型 SwitchOpponentWithBench（再録の版をふくむ）。カード ID では分けない", "paths": _TR3_PATHS,
+                        "rejection_code": "NO_OPPONENT_BENCH", "unchanged": _TR3_UNCHANGED_COMMON},
+               scenes=("UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH",), references=TR3_REFERENCES),
+    Convention(SWITCH_WITHOUT_BENCH_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "ポケモンいれかえ（登録の型 SwitchWithBench）は、使う人のベンチが空なら使えない（規約による不正な操作として拒否する。カードは手札のまま・状態・乱数・ログを変えない）",
+               content={"adoption": TR3_ADOPTION, "applies_when": "受理の前（check_playable）に、使う人のベンチ（公開の値）が空",
+                        "identification": "効果の登録の型 SwitchWithBench（再録の版をふくむ）。カード ID では分けない", "paths": _TR3_PATHS,
+                        "rejection_code": "NO_BENCH", "unchanged": _TR3_UNCHANGED_COMMON},
+               scenes=("UNRESOLVED_SWITCH_WITHOUT_BENCH",), references=TR3_REFERENCES),
+    Convention(POTION_WITHOUT_DAMAGE_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "きずぐすり（登録の型 RemoveDamageCounters）は、使う人の場（バトル場とベンチ）にダメージのあるポケモンがいなければ使えない（規約による不正な操作として拒否する。"
+               "カードは手札のまま・状態・乱数・ログを変えない）",
+               content={"adoption": TR3_ADOPTION, "applies_when": "受理の前（check_playable）に、使う人の場のどのポケモンもダメージ（公開の値）が 0",
+                        "identification": "効果の登録の型 RemoveDamageCounters（再録の版をふくむ）。カード ID では分けない", "paths": _TR3_PATHS,
+                        "rejection_code": "NO_DAMAGE_COUNTERS",
+                        "unchanged": _TR3_UNCHANGED_COMMON + ["ダメージのないポケモンを選んだとき（UNRESOLVED_POTION_UNDAMAGED_TARGET。受理のあとの未裁定）"]},
+               scenes=("UNRESOLVED_POTION_WITHOUT_DAMAGE",), references=TR3_REFERENCES),
+)
+TR3_MEMBERS = tuple((c.id, c.version) for c in _TR3_CONVENTIONS)
+
+CONVENTIONS = MappingProxyType({**CONVENTIONS, **{(c.id, c.version): c for c in _TR3_CONVENTIONS}})
+SETS = MappingProxyType({
+    **SETS,
+    (TR3_SET_ID, 1): ConventionSet(TR3_SET_ID, 1, USAGE_DEVELOPMENT, _CURRENT_MEMBERS + S2A_MEMBERS + PO_MEMBERS + TR3_MEMBERS,
+                                   description=("v0.186 の開発用の部分的な集合: CS-KYUURA-PLAY-PO@1 の 20 規約と、突風・ポケモンいれかえ・きずぐすりの続行規約 3 件。11 規約の場面だけを"
+                                                "続け、ほかの未決の場面では今の停止コードで止める（完成したプレイ用の集合ではない）")),
+})
+
 # この版のエンジンが処理を持つ続行規約（``Registry.implemented_continuations``）
-IMPLEMENTED_CONTINUATIONS = frozenset(S2A_MEMBERS + PO_MEMBERS)
+IMPLEMENTED_CONTINUATIONS = frozenset(S2A_MEMBERS + PO_MEMBERS + TR3_MEMBERS)
 # 形式 34 までの書き出し（規約集合の項目がない）に書いてよい集合: 記録のない状態の意味（その版のエンジンの今の挙動）と同じ意味の集合だけ
 IMPLICIT_IN_OLD_FORMATS = frozenset({(CURRENT_SET_ID, 1), (LEGACY_SET_ID, 1)})
 
@@ -370,12 +420,17 @@ PINNED_CONVENTION_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
     ("PC-POISON-AMOUNT-ORDER", 1): "sha256:daf99cffee744cb70043c21f67702ebe6bef5fde1911e3e82ffeb19d3535e5aa",
     ("PC-POISON-MIST-TARGETS", 1): "sha256:e5e48dd17d5af226ae38f3004a21ae3bf9fd2639b1454f00a1a09f30d6d021d5",
     ("PC-POISON-MIST-SOURCE-LEFT", 1): "sha256:dbf6b8e8bae49b5c884446e367abd9a861d71f701ec420cc8feedfaf8b4609e6",
+    # v0.186: 突風・ポケモンいれかえ・きずぐすりの続行規約（利用者の採用。2026-11-15）
+    ("PC-GUST-WITHOUT-OPPONENT-BENCH", 1): "sha256:1e6d415ed92b89f1f02cb913e88096bd69a1f8b84b9d3e26ea4bacd3ae4dab57",
+    ("PC-SWITCH-WITHOUT-BENCH", 1): "sha256:734c11c8869565c280b3c2384dd10a07b888060aeee7a7cd2ade84a520ebb48f",
+    ("PC-POTION-WITHOUT-DAMAGE", 1): "sha256:ed5f64a10954cd3561061e0fe7c8adc084283553024c876cf58f75008d9ffebe",
 })
 PINNED_SET_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
     ("CS-KYUURA-CURRENT", 1): "sha256:9a9b95c689d86fa01a5b710984560efda3c08f4dbf1d7c6218094ac8666f3cee",
     ("CS-KYUURA-LEGACY-UNRECORDED", 1): "sha256:abf39e6d87755507a9169537608596246f4ed9a9bf0c2e8794ffa44a97742407",
     ("CS-KYUURA-PLAY-S2A", 1): "sha256:b317a3f050206577bff35ac05c87fdb4224ee28c6c0222e4e7f8460b5e9410c4",  # v0.143: 開発用の部分的な集合
     ("CS-KYUURA-PLAY-PO", 1): "sha256:06d512194feee1857319f0c765ab2162d5259e4519895ed057d176d15fc43528",  # v0.145: 開発用の部分的な集合
+    ("CS-KYUURA-PLAY-TR3", 1): "sha256:a7b800cff2a8614d7b181cc3a8a39f68ec4e17be9ceab0a04e75a48c4358ffb4",  # v0.186: 開発用の部分的な集合
 })
 
 

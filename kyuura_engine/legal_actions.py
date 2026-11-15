@@ -1533,13 +1533,21 @@ def _trainer_candidate(state: GameState, actor: int) -> _Candidate | None:
         if definition.category != "trainer":
             continue
         evaluated = _use_condition_evaluated(state.effects.trainer_effect(definition), state)
-        (verdict, code), consulted = _probe_recording_identity(partial(check_play_trainer, use_condition=evaluated), state, PlayTrainer(actor, uid))
+        rejected_by: list[str] = []
+        (verdict, code), consulted = _probe_recording_identity(partial(_check_trainer_noting_convention, rejected_by, evaluated), state, PlayTrainer(actor, uid))
         if consulted:
             found = (UNVERIFIED, [REASON_FACE_DOWN, REASON_PREFLIGHT, REASON_CONTINUATION])
             values.append(uid)
             executable.append(found[0] in EXECUTABLE)
             found_all.append(found)
             options.append(_option({"id": f"o{len(values)}", **_card_option(state, uid)}, found[0], sorted(found[1])))
+            continue
+        if verdict == ILLEGAL and rejected_by:
+            # v0.186（docs/play-convention-tr3-v0.186.md）: 状態の規約集合の続行規約による不正な操作（規約による除外）。選べるものに残し、実行できない（eligible は偽）。
+            # 処理可能性の区分ではない（v0.143 の配置の excluded_by_convention と同じく processability を書かない）。候補全体の区分には数えない
+            values.append(uid)
+            executable.append(False)
+            options.append({"id": f"o{len(values)}", **_card_option(state, uid), "eligible": False, "convention": rejected_by[0]})
             continue
         if verdict == ILLEGAL:
             continue
@@ -1555,7 +1563,8 @@ def _trainer_candidate(state: GameState, actor: int) -> _Candidate | None:
         options.append(_option({"id": f"o{len(values)}", **_card_option(state, uid)}, found[0], sorted(found[1])))
     if not options:
         return None  # 手札にトレーナーカードがない・使えない（トレーナーの使用の禁止など。ゲーム上できない）
-    processability, reasons = _best(found_all)
+    # v0.186: 選べるものが規約による除外だけなら、実行できるものがない（v0.143 の配置の前例と同じ not_implemented・no_eligible_card）
+    processability, reasons = _best(found_all) if found_all else (NOT_IMPLEMENTED, ["no_eligible_card"])
     stage = {"stage": 1, "input": INPUT_CHOOSE_OPTION, "role": "trainer", "meaning": "card", "count": {"min": 1, "max": 1}, "options": options,
              "order": ORDER_NOT_APPLICABLE}
     public = {"processability": processability, "reasons": reasons, "guarantees": dict(GUARANTEE_TRAINER), "choices_format": "[手札のカードの番号]"}
@@ -1766,6 +1775,18 @@ def _probe_without_opponent_identity(state: GameState, cmd: UsePokemonPower) -> 
     - ほかの例外は捕まえない（記録だけを戻して投げ直す。``MemoryError``・``KeyboardInterrupt``・``SystemExit`` を含め、未確認に変えない）
     - 状態・乱数・ログ・決定は変えない（``check_use_pokemon_power`` の約束。試行は複製の上）"""
     return _probe_recording_identity(check_use_pokemon_power, state, cmd)
+
+
+def _check_trainer_noting_convention(rejected_by: list[str], use_condition: bool, state: GameState, cmd) -> None:
+    """v0.186: ``check_play_trainer`` を同じに呼び、続行規約による不正な操作（``IllegalActionError`` の属性 ``convention``）なら、その規約（``"ID@版"``）を ``rejected_by`` に書いて
+    投げ直す（結果の分類は ``_probe`` のまま。カード ID・規約の名前で分けない）。"""
+    try:
+        check_play_trainer(state, cmd, use_condition=use_condition)
+    except IllegalActionError as error:
+        convention = getattr(error, "convention", None)
+        if convention is not None:
+            rejected_by.append(convention)
+        raise
 
 
 def _probe_recording_identity(check, state: GameState, cmd) -> tuple[tuple[str | None, str | None], bool]:

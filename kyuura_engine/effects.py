@@ -7064,6 +7064,22 @@ def _select_own_pokemon_problems(
     return problems
 
 
+def unresolved_or_convention_rejection(state: GameState, code: str, reason: str, illegal_code: str, illegal_reason: str) -> IllegalActionError | UnsupportedError:
+    """v0.186（docs/play-convention-tr3-v0.186.md）: 受理の前の確かめで未裁定の条件が成り立ったときに投げる例外を返す。状態の規約集合に、その場面（停止コード）の続行規約が
+    あれば、規約による不正な操作（``IllegalActionError(illegal_code)``。理由の文に規約 ID、属性 ``convention`` に ``"ID@版"``。v0.143 の配置の拒否と同じ形）。なければ、規約が
+    ないことを確かめて今の未裁定の停止（``UnsupportedError(code, reason)``。コード・文は今と同じ）。カード ID・モードの名前で分けない（場面は停止コードだけ）。状態を変えない。"""
+    from .conventions import continuation_for, stop_without_continuation
+
+    lookup = continuation_for(state, code)
+    if lookup is not None:
+        convention = f"{lookup.convention[0]}@{lookup.convention[1]}"
+        error = IllegalActionError(illegal_code, f"{illegal_reason}（規約 {convention}: プレイ用の取り決めで使えない。カードは手札のまま）")
+        error.convention = convention
+        return error
+    stop_without_continuation(state, code)
+    return UnsupportedError(code, reason)
+
+
 @dataclass(frozen=True)
 class RemoveDamageCounters(TrainerEffect):
     """自分の場のポケモンを 1 匹選び、のっているダメージカウンターを ``counters`` 個とりのぞく
@@ -7086,10 +7102,12 @@ class RemoveDamageCounters(TrainerEffect):
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         if not any(pokemon.damage > 0 for pokemon in state.players[use.player].in_play()):
-            raise UnsupportedError(
-                "UNRESOLVED_POTION_WITHOUT_DAMAGE",
+            # v0.186: 続行規約 PC-POTION-WITHOUT-DAMAGE@1（CS-KYUURA-PLAY-TR3@1 だけ）があれば規約による不正な操作。なければ今の未裁定の停止
+            raise unresolved_or_convention_rejection(
+                state, "UNRESOLVED_POTION_WITHOUT_DAMAGE",
                 "自分の場にダメージカウンターののったポケモンがいない。このときに「きずぐすり」を使えるかは、"
                 "『オフィシャルブック2000』（p.254・p.310）から決められないので扱わない",
+                "NO_DAMAGE_COUNTERS", "自分の場にダメージカウンターののったポケモンがいないので、「きずぐすり」を使えない",
             )
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
@@ -7154,10 +7172,12 @@ class SwitchWithBench(TrainerEffect):
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         if not state.players[use.player].bench:
-            raise UnsupportedError(
-                "UNRESOLVED_SWITCH_WITHOUT_BENCH",
+            # v0.186: 続行規約 PC-SWITCH-WITHOUT-BENCH@1（CS-KYUURA-PLAY-TR3@1 だけ）があれば規約による不正な操作。なければ今の未裁定の停止
+            raise unresolved_or_convention_rejection(
+                state, "UNRESOLVED_SWITCH_WITHOUT_BENCH",
                 "控えポケモンがいない。このときに「ポケモンいれかえ」を使えるかは、"
                 "『オフィシャルブック2000』（p.254・p.310）から決められないので扱わない",
+                "NO_BENCH", "自分に控えポケモンがいないので、「ポケモンいれかえ」を使えない",
             )
         require_active_can_leave(state, use.player, "「ポケモンいれかえ」を使う")  # v0.93: AL2（手札から出す前）
         switch_max_hp_drop_check(state, use.player)  # v0.48: MH1（手札から出す前。決定への答えで止めない）
@@ -7309,10 +7329,12 @@ class SwitchOpponentWithBench(TrainerEffect):
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         if not state.players[1 - use.player].bench:
-            raise UnsupportedError(
-                "UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH",
+            # v0.186: 続行規約 PC-GUST-WITHOUT-OPPONENT-BENCH@1（CS-KYUURA-PLAY-TR3@1 だけ）があれば規約による不正な操作。なければ今の未裁定の停止（GW5）
+            raise unresolved_or_convention_rejection(
+                state, "UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH",
                 "相手に控えポケモンがいない。このときに「突風」を使えるかは、『オフィシャルブック2000』（p.255・p.310）から決められない"
                 "ので扱わない（第1弾の印刷の文面の「相手に控えがいない場合は使えない」は、p.255 の最新の説明にない）",
+                "NO_OPPONENT_BENCH", "相手に控えポケモンがいないので、「突風」を使えない",
             )
         require_active_can_leave(state, 1 - use.player, "「突風」を使う")  # v0.93: AL2（手札から出す前）
         returning = _returning_lock_sources(state, use.player)
