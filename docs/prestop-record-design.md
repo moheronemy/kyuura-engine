@@ -1,5 +1,7 @@
 # 範囲の外にした未裁定の候補のカードを、検証者用の記録に残す機能の設計
 
+→ 2026-11-15 に実装した（TOOL_VERSION 11・計画と完了の形式 7。11 章）。以下 0〜10 章は設計の時点の記述です。
+
 2026-11-15。調査・設計・文書化だけです。実装・テスト・ビルド・対戦・judge・replay・追加の計測はしていません。`kyuura_engine`・`tools.verification_ai` は import していません（コードを文字として読んだだけ）。
 
 - 基点: `claude/prestop-ruling-breakdown` の `7f51ce4`（origin と一致。main `b1e4430` の子孫で main には入っていない。コードは main と同じ）。作業は worktree `C:\dev\kyuura-engine-lt30`・ブランチ `claude/prestop-record-design`。
@@ -222,3 +224,90 @@
   - 取っ手を捨てる経路（`_purge`）に実際に入らないこと
   - 範囲の中が空で止まる取得に、未裁定の候補が出る頻度（保存済みの記録には、その取得の候補の応答が残っていない）
   - `use_stadium` の入力のない候補（選ばせない効果）の頻度
+
+## 11. 実装の結果（2026-11-15。TOOL_VERSION 11・計画と完了の形式 7）
+
+基点は `1850b4c`（この設計のコミット）、作業はブランチ `claude/prestop-record-impl`・worktree `C:\dev\kyuura-engine-lt31` です。設計の推奨案をそのまま採りました。エンジン・方策・判定の規則・データは変えていません。
+
+### 11.1 変えたもの
+
+| 箇所 | 内容 |
+|---|---|
+| `tools/verification_ai/prestop.py`（新しい） | 記録器 `PrestopRecorder`、計画の設定 `plan_setting`・`setting_problems`、照合 `reconcile`・`excluded_by_kind` |
+| `runner.py` | 引数 `prestop`（変異 `negative` との併用は `ValueError`）。`_episode_loop` の `_scope`・`metrics.fetch` の直後に `_prestop_fetch`（範囲が空の停止と方策の選択の前）。記録用の要求は `request(endpoint, "inputs", game=…, revision=…, candidate=…)` の 1 か所だけ |
+| `batch.py` | 計画の項目 `prestop_inputs`（無効も明示。plan.sha256 に入る）、`load_plan` での設定の照合、`required_files`（有効なら `prestop/inputs.jsonl`・`prestop/summary.json`）、局の要約 `prestop`・`prestop_problems`、停止方針 `on_prestop_problem`、`verify_complete` の照合、集計 `prestop` と量 `game_complete_prestop`、CLI の `--prestop-inputs`・`--no-prestop-inputs`（どちらかが必須） |
+| 版 | 計画 `kyuura-vai-batch-plan/7`・完了 `kyuura-vai-batch-complete/7`・`TOOL_VERSION` 11。判定の規則 8 は同じ |
+
+- 通常の経路の再利用: 範囲の外の候補は方策に選ばれないので、通常の経路でその候補の inputs は取られません（構造上、再利用元はない）。選ばれた候補の一部の選択肢だけが未裁定の場合は、既存の actors の `inputs` の記録をそのまま使います（新しい記録をしない）。
+
+### 11.2 件数の定義と照合式（`prestop/summary.json`。局ごと）
+
+- `offered`（対象の候補の提示の延べ）・`offered_by_kind`・`keys`（一意な鍵）・`repeats`（同じ鍵の 2 回目以降）
+- 鍵ごとに 1 つ: `no_stages`・`attempted`（`ok`・`withheld`・`refused`・`contract_unknown`・`error`・`oversize` のどれか 1 つ）・`skipped_fetch_cap`・`skipped_bytes_cap`・`skipped_after_failure`
+- 保存: `rows`・`rows_bytes`（`prestop/inputs.jsonl` の実際の UTF-8 のバイト数。改行をふくむ）・`unsaved_bytes_cap`・`unsaved_failure`
+- `seconds`（記録用の要求の合計。局の単調時計・バッチの累積時間の内側）・`fetches`（候補の取得の回数）・`capped`・`status`（`complete`・`capped`・`failed`）・`failure`・`counts_complete`
+
+照合式（`prestop.reconcile`。完了の照合・テストで同じ関数）:
+
+1. `offered == keys + repeats`、`offered == Σ offered_by_kind`
+2. `keys == no_stages + attempted + skipped_fetch_cap + skipped_bytes_cap + skipped_after_failure`
+3. `attempted == ok + withheld + refused + contract_unknown + error + oversize`
+4. `rows == attempted − unsaved_bytes_cap − unsaved_failure`、`rows_bytes ==` ファイルの長さ・行の数 `== rows`・`rows_bytes ≤ max_rows_bytes`、`attempted ≤ max_fetches_per_game`
+5. `status` は `failure` と `capped` から決まる値と同じ
+6. 局: `offered_by_kind[k] == result.json の metrics.kinds[k].excluded["processability:unresolved_ruling"]`（記録の数え上げが途中で失敗した `counts_complete: false` の局は除き、その局は `failed` で止まる）
+7. バッチ: 局ごとの要約を 1 回ずつ足す（同じ単位の数どうしだけ。種類の集合を 1 回だけたどる）
+
+上限（局ごと。計画の `prestop_inputs.limits`。既定値より大きくできない）: 要求 256 回・応答 1 回 16,384 バイト（JSON の UTF-8）・`prestop/inputs.jsonl` 1,048,576 バイト。設計の `max_bytes_per_game` は、対象が inputs.jsonl だけであることを名前で示すため `max_rows_bytes` にした（値は同じ）。
+
+- 要求の前に、本文のない行すら入らないと分かれば要求しない（`skipped_bytes_cap`）
+- 応答が 16 KiB を超えたら本文を保存せず、量と理由（`oversize`・`response_too_large`）だけを残す
+- 行が 1 MiB を超えるなら書かず（`unsaved_bytes_cap`）、それ以降は要求しない。別のファイルへ逃がさない
+- `summary.json` は固定の件数・状態・時間・失敗だけ（1 MiB の対象外。候補別の一覧は入れない）。2 つのファイルとも、既存のバッチの証跡の量（局のファイルの合計）に入る
+
+### 11.3 失敗・停止・再開
+
+- withheld・refused（stale・`CLIENT_GAME_UNAVAILABLE` をふくむ）・形式の不正: 記録して続ける。candidates を取り直さない。通常の anomalies・停止・judge には入れない
+- 通常の例外: 記録の失敗。その局の記録をやめ、対戦は既存の経路で続ける。要約の状態は `failed`。完了のマーカーに `prestop:failed:…` の停止の理由が付き（`complete_with_stop`）、その局を保存したあとでバッチを止める（`stopped_policy`）。停止の承認は自動で解除しない
+- `MemoryError` は通す。`KeyboardInterrupt`・`SystemExit` は捕まえない（既存の未完了の試行の扱い）
+- 上限の到達（`capped`）は止めずに、完了のマーカーの note に `prestop:capped:…` を残す
+- 有効な計画では、2 つのファイルを必須ファイル・ハッシュの表・完了のマーカーに入れる。完了の照合で、`summary.json` とマーカーの要約の一致、照合式の計算し直し、ファイルの欠け・破損を確かめ、合わない局を完了として採らない
+- 形式 6 以前の計画は再開しない（移行・上書きしない）。旧記録へ後から inputs を足したり、取得済みと扱ったりしない
+
+### 11.4 非干渉と時間
+
+- 本物の runner の固定の短い局（固定デッキ・方式 uniform-stage・seed 12・80 操作。既存の `v2_repeat` の固定値と同じ局）で、有効と無効を比べ、次が同じことを確かめた: 行動の列と契約の列の指紋、各試みの入力と選んだ理由、方策の乱数の消費、状態と乱数の確認値（`checks`）、終わり方・counters・anomalies・metrics・coverage、actors の記録（取っ手の値だけを置き換えて比べた）、通常の要求の種類・順・候補
+- 同じ局で、記録用の要求の前後で、取っ手の保持の数・更新の箱の長さ・状態のオブジェクト・ログの長さ・`ActionHost._purge` の呼び出しの数が同じで、応答はすべて `ok`・`refetch_required: false`（古い取っ手の経路に入らない）
+- 実時間: 記録用の要求の時間は局の単調時計（`Limits.seconds`）とバッチの累積時間の内側で、要約の `seconds` に残る。比べた局は時間の上限（60 秒）に十分な余裕があった。**上限の近くで終わる局では、実時間の増加で終わり方が変わりうる**ので、「有効・無効で終わり方まで常に同じ」とは保証しない
+
+### 11.5 識別（変更の前後。`identity.py`）
+
+| 項目 | 前（`1850b4c`） | 後 |
+|---|---|---|
+| エンジンの版・behavior_digest・instrumentation_digest | 0.185.0・`a3b65dbe…`・`d3436748…` | 同じ |
+| P1・P3 の basis | `06ec1daf…`・`6a8287f9…` | 同じ |
+| 判定の規則 | 8 | 8 |
+| TOOL_VERSION・道具の識別 | 10・`7b56ed5a…`（26 ファイル） | 11・`6e0616cc…`（27 ファイル） |
+| 計画・完了の形式 | 6・6 | 7・7 |
+
+### 11.6 テスト（1 モジュールずつ別のプロセス。UTF-8 の出力・終了コード・JUnit は証跡の `scripts/tests/`）
+
+| 実行 | モジュール | 件数 | 結果 |
+|---|---|---|---|
+| 新しいテストの 1 回目（`attempt1_new`） | `test_verification_ai_prestop` | 22 | 失敗 1（テストの誤り: actors の記録を比べるとき、実行ごとに乱数で発行される取っ手の値 `game`・`revision` を置き換えていなかった。製品のコードは変えていない） |
+| 新しいテスト（直したあと） | 同じ | 22 | 成功 |
+| 関係する既存のテスト（batch・判定・明示リスト・ER9・P1・P3・観測・P6 の受理・reach・reach 版 2・v2_repeat の指紋） | 11 | 220 | 成功 |
+| runner を使う既存のテスト（P6・U-R3a・V0〜V3-3・0.176〜0.179 の追従） | 11 | 156 | 成功 |
+
+- 既存のテストで期待を直したのは版の値だけです（`TOOL_VERSION` 10 → 11、形式 6 → 7。旧の期待は注記に残した。er9・P1・P3・reach・reach 版 2）。計画の CLI のテスト（明示リスト）は、`--no-prestop-inputs` を足しました（記録の有無の明示が必須になったため）。
+- `v2_repeat` の行動の指紋の固定値は変えていません。有効にした本物のバッチの局でも、同じ固定値と一致しました。
+- 新しいテストの内容: 対象の選定（候補全体だけ・段なし・選択肢の一部だけの候補を対象にしない）、重複（取っ手だけが違う取り直し・中身が違う・主体が違う）、上限（256 回、16,384 と 16,385 バイト（マルチバイトの文字で作った応答）、1 MiB の境界の行の実バイト数と改行、本文つきの行が入らないときに書かずに止める）、失敗（stale・`CLIENT_GAME_UNAVAILABLE`・withheld・形式の不正・通常の例外・`MemoryError`・`KeyboardInterrupt`・`SystemExit`）、照合式の不一致の検出、計画の設定の拒否、変異との併用の拒否、本物の runner の非干渉（11.4 節）、本物のバッチ（保存・必須ファイル・ハッシュ・完了の照合・破損と欠けの検出・集計・公開の出力にカード ID が出ない・無効の計画は今と同じ・記録の失敗でその局のあとに止まり承認なしに再開しない・再開で完了局の記録が変わらない・旧形式と不正な設定の計画を再開しない）、方策・行動生成・判定・指標が記録を読まないこと
+- 構築盤面と短いテストは、新しいバッチの実績に数えていません
+- 実行していないもの: 全体テスト・GUI・E2E・新しい対戦のバッチ・seed の探索・旧記録への judge・replay の当て直し
+
+### 11.7 初回の限定バッチに残る確認
+
+- 照合式 6・7 を、新しいバッチの局で確かめる（前回の 2 倍の誤りを繰り返さない）
+- `refused`・`contract_unknown`・`error`・`oversize`・上限の到達が 0 か、0 でないなら件数と理由
+- 記録用の要求の時間の合計と、累積時間に対する割合。時間の上限の近くで終わった局の有無
+- カード別の出現の表（内訳の調査の更新は別の単位。旧記録は変えない）
+- 未確認のまま: 範囲の中が空で止まる取得での未裁定の候補の頻度、入力のない `use_stadium` の候補の頻度、長い局・reach の方式での時間とメモリ

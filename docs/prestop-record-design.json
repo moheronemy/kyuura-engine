@@ -1,28 +1,98 @@
 {
  "status": "draft",
  "doc": "docs/prestop-record-design.md",
- "base": {"branch": "claude/prestop-ruling-breakdown", "commit": "7f51ce4", "code_same_as": "b1e4430"},
+ "base": {
+  "branch": "claude/prestop-ruling-breakdown",
+  "commit": "7f51ce4",
+  "code_same_as": "b1e4430"
+ },
  "engine_change": false,
  "plan_field": {
   "name": "prestop_inputs",
-  "default": {"enabled": false},
-  "enabled_example": {"enabled": true, "version": 1, "limits": {"max_fetches_per_game": 256, "max_response_bytes": 16384, "max_bytes_per_game": 1048576}}
+  "default": {
+   "enabled": false
+  },
+  "enabled_example": {
+   "enabled": true,
+   "version": 1,
+   "limits": {
+    "max_fetches_per_game": 256,
+    "max_response_bytes": 16384,
+    "max_bytes_per_game": 1048576
+   }
+  }
  },
- "versions": {"plan_format": "kyuura-vai-batch-plan/7", "complete_format": "kyuura-vai-batch-complete/7", "tool_version": 11, "judge_rules_version": 8,
-              "engine_version": "unchanged", "behavior_digest": "unchanged", "p1_basis": "unchanged", "p3_basis": "unchanged"},
+ "versions": {
+  "plan_format": "kyuura-vai-batch-plan/7",
+  "complete_format": "kyuura-vai-batch-complete/7",
+  "tool_version": 11,
+  "judge_rules_version": 8,
+  "engine_version": "unchanged",
+  "behavior_digest": "unchanged",
+  "p1_basis": "unchanged",
+  "p3_basis": "unchanged"
+ },
  "hook": {
   "where": "runner.Runner._episode_loop: after _scope and metrics.fetch, before the empty-scope stop and policy.choose",
   "target": "candidates with reasons[id] == 'processability:unresolved_ruling' and non-empty input_stages",
   "request": "inputs on the actor's own endpoint with the same fetch's game, revision and candidate id",
-  "never": ["check", "submit", "candidates", "policy calls", "random draws", "writes to trace, actor_logs, metrics, coverage, counters, anomalies"]
+  "never": [
+   "check",
+   "submit",
+   "candidates",
+   "policy calls",
+   "random draws",
+   "writes to trace, actor_logs, metrics, coverage, counters, anomalies"
+  ]
  },
- "record_key": ["actor", "position", "candidate.kind", "sha256(candidate without id)"],
- "files": {"rows": "prestop/inputs.jsonl", "summary": "prestop/summary.json", "format": "kyuura-vai-prestop-inputs/1", "required_only_when_enabled": true},
- "row_fields": ["format", "seq", "actor", "position", "episode", "fetch", "candidate{id,kind,processability,reasons,input_disclosure,input_stages,stadium?,content_sha256,guarantees_sha256}",
-                "source=record_fetch", "status(ok|withheld|refused|contract_unknown|no_stages|error)", "refusal?", "withheld?",
-                "stages[{stage,input,role,meaning,count,options[{id,card,card_id?,face_down?,pokemon?,zone?,processability,eligible,reasons?}]}]", "bytes", "seconds"],
- "summary_fields": ["format", "enabled", "status(complete|capped|failed)", "limits", "offered{kind:n}", "record_keys", "fetched", "ok", "withheld", "refused",
-                    "contract_unknown", "no_stages", "error", "skipped_cap", "repeats", "bytes", "seconds", "failure?"],
+ "record_key": [
+  "actor",
+  "position",
+  "candidate.kind",
+  "sha256(candidate without id)"
+ ],
+ "files": {
+  "rows": "prestop/inputs.jsonl",
+  "summary": "prestop/summary.json",
+  "format": "kyuura-vai-prestop-inputs/1",
+  "required_only_when_enabled": true
+ },
+ "row_fields": [
+  "format",
+  "seq",
+  "actor",
+  "position",
+  "episode",
+  "fetch",
+  "candidate{id,kind,processability,reasons,input_disclosure,input_stages,stadium?,content_sha256,guarantees_sha256}",
+  "source=record_fetch",
+  "status(ok|withheld|refused|contract_unknown|no_stages|error)",
+  "refusal?",
+  "withheld?",
+  "stages[{stage,input,role,meaning,count,options[{id,card,card_id?,face_down?,pokemon?,zone?,processability,eligible,reasons?}]}]",
+  "bytes",
+  "seconds"
+ ],
+ "summary_fields": [
+  "format",
+  "enabled",
+  "status(complete|capped|failed)",
+  "limits",
+  "offered{kind:n}",
+  "record_keys",
+  "fetched",
+  "ok",
+  "withheld",
+  "refused",
+  "contract_unknown",
+  "no_stages",
+  "error",
+  "skipped_cap",
+  "repeats",
+  "bytes",
+  "seconds",
+  "failure?"
+ ],
  "failures": {
   "refusal": "record status refused; game continues; not a runner anomaly",
   "withheld": "record status withheld; continue",
@@ -39,16 +109,54 @@
  ],
  "defaults_basis": {
   "source": "verifier/runs/prestop-record-design/out/sizing.json (272 saved games, read only)",
-  "record_keys_per_game": {"median": 8, "p95": 51, "p99": 102, "max": 214, "sum": 4188},
+  "record_keys_per_game": {
+   "median": 8,
+   "p95": 51,
+   "p99": 102,
+   "max": 214,
+   "sum": 4188
+  },
   "fetch_per_record_key_max": 6,
   "positions_with_changed_candidate_content": 0,
-  "play_trainer_inputs_bytes_when_chosen": {"median": 669, "max": 2736}
+  "play_trainer_inputs_bytes_when_chosen": {
+   "median": 669,
+   "max": 2736
+  }
  },
- "acceptance_tests": ["A1 on/off same action and contract digests, choices, outcomes, counters, metrics", "A2 same RNG consumption", "A3 handles, updates, log positions, state object unchanged",
-                      "A4 candidate/actor/position mapping", "A5 dedup and caps", "A6 withheld/refused/contract_unknown/Exception/MemoryError/KeyboardInterrupt",
-                      "A7 save, required files, hashes, COMPLETE, resume", "A8 no secrets in public outputs", "A9 disabled plan unchanged", "A10 face_down options keep no card_id"],
- "out_of_scope": ["stop codes in API", "policies that submit unresolved candidates", "ruling decisions", "GUI", "backfilling old records"],
- "interference_conditions": ["wall time counts toward Limits.seconds and batch budget; games near limits may end differently",
-                             "_lookup purges stale handles only if the state object changed between fetch and the record request",
-                             "exceptions from the record request are caught as recorder failure (game continues)"]
+ "acceptance_tests": [
+  "A1 on/off same action and contract digests, choices, outcomes, counters, metrics",
+  "A2 same RNG consumption",
+  "A3 handles, updates, log positions, state object unchanged",
+  "A4 candidate/actor/position mapping",
+  "A5 dedup and caps",
+  "A6 withheld/refused/contract_unknown/Exception/MemoryError/KeyboardInterrupt",
+  "A7 save, required files, hashes, COMPLETE, resume",
+  "A8 no secrets in public outputs",
+  "A9 disabled plan unchanged",
+  "A10 face_down options keep no card_id"
+ ],
+ "out_of_scope": [
+  "stop codes in API",
+  "policies that submit unresolved candidates",
+  "ruling decisions",
+  "GUI",
+  "backfilling old records"
+ ],
+ "interference_conditions": [
+  "wall time counts toward Limits.seconds and batch budget; games near limits may end differently",
+  "_lookup purges stale handles only if the state object changed between fetch and the record request",
+  "exceptions from the record request are caught as recorder failure (game continues)"
+ ],
+ "implementation": {
+  "status": "implemented",
+  "chapter": 11,
+  "branch": "claude/prestop-record-impl",
+  "tool_version": 11,
+  "plan_format": "kyuura-vai-batch-plan/7",
+  "complete_format": "kyuura-vai-batch-complete/7",
+  "limits_key_renamed": {
+   "max_bytes_per_game": "max_rows_bytes"
+  },
+  "first_limited_batch": "not_run"
+ }
 }
