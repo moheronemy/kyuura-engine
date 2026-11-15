@@ -181,9 +181,15 @@ class RepositoryTest(unittest.TestCase):
 
     def test_old_schema_ledger_reading_unchanged(self):
         committed = json.loads(B.OUTPUT.read_text(encoding="utf-8"))
-        self.assertEqual(committed["schema_version"], 1)  # 正式な台帳は旧形式のまま（この単位で同期しない）
+        # v0.187: 正式な台帳を schema 2 に同期した（0.186 の時点の期待「正式な台帳は旧形式のまま」から変えた）
+        self.assertEqual(committed["schema_version"], 2)
         self.assertEqual(B.check(committed, None), [])
         self.assertEqual(R.build(committed, json.loads(R.ASSUMPTIONS.read_text(encoding="utf-8")))["scene_index"], self.records["scene_index"])
+        # 旧形式（schema 1）の台帳には、分類の検査が何も足さない（形式の番号だけを 2 に書き換える移行はしない）
+        old = copy.deepcopy(committed)
+        old["schema_version"] = 1
+        old.pop("token_classification", None)
+        self.assertEqual(B.token_classification_problems(old), [])
 
     def test_this_test_adds_no_tokens(self):
         codes = S.prefixed_codes(ROOT)

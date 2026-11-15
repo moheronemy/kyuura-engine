@@ -2982,11 +2982,6 @@
     "id": "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE"
    },
    {
-    "codes": [],
-    "entry_kind": "test_tool_only_code",
-    "id": "UNRESOLVED_EFFECT_AFTER_NO_DAMAGES"
-   },
-   {
     "codes": [
      "UNRESOLVED_ENERGY_BURN_TRANSFER"
     ],
@@ -4401,11 +4396,6 @@
     "id": "UNRESOLVED_SECRET_PLAN_MINEFIELD"
    },
    {
-    "codes": [],
-    "entry_kind": "test_tool_only_code",
-    "id": "UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE"
-   },
-   {
     "codes": [
      "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES"
     ],
@@ -4616,31 +4606,6 @@
     "id": "UNRESOLVED_SWITCH_WITHOUT_BENCH"
    },
    {
-    "codes": [],
-    "entry_kind": "test_tool_only_code",
-    "id": "UNRESOLVED_TEST"
-   },
-   {
-    "codes": [],
-    "entry_kind": "test_tool_only_code",
-    "id": "UNRESOLVED_TEST_AFTER_COIN"
-   },
-   {
-    "codes": [],
-    "entry_kind": "test_tool_only_code",
-    "id": "UNRESOLVED_TEST_EFFECT"
-   },
-   {
-    "codes": [],
-    "entry_kind": "test_tool_only_code",
-    "id": "UNRESOLVED_TEST_FORM"
-   },
-   {
-    "codes": [],
-    "entry_kind": "test_tool_only_code",
-    "id": "UNRESOLVED_TEST_PREFLIGHT"
-   },
-   {
     "codes": [
      "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT"
     ],
@@ -4835,11 +4800,6 @@
     ],
     "entry_kind": "research_stop_code",
     "id": "UNRESOLVED_WANT_WITHOUT_TARGET"
-   },
-   {
-    "codes": [],
-    "entry_kind": "test_tool_only_code",
-    "id": "UNRESOLVED_X"
    },
    {
     "codes": [

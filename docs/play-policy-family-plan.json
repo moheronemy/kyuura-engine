@@ -19,7 +19,7 @@
   "ledger": {
    "path": "docs/stop-policy-classification.json",
    "base_commit": "3e25ac5eff0f90dbea224045e77c2b60e025bf2d",
-   "entries": 429
+   "entries": 433
   },
   "research": {
    "path": "kyuura_engine/data/research_links.json",
@@ -15152,174 +15152,6 @@
    "candidate": null
   },
   {
-   "id": "UNRESOLVED_EFFECT_AFTER_NO_DAMAGES",
-   "parent": null,
-   "code": null,
-   "entry_kind": "test_tool_only_code",
-   "family": null,
-   "ledger_classification": "E",
-   "plan_class": "E",
-   "class_reason": "テスト・道具だけのコード（エンジンでは投げない）",
-   "mechanisms": [
-    "not_raised"
-   ],
-   "reachability": "test_only_mutation",
-   "whole_game": false,
-   "whole_game_basis": null,
-   "secret_dependency": null,
-   "ruling_ids": [],
-   "kyuura_issue": null,
-   "ruling_documents": [],
-   "candidate": null
-  },
-  {
-   "id": "UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE",
-   "parent": null,
-   "code": null,
-   "entry_kind": "test_tool_only_code",
-   "family": null,
-   "ledger_classification": "E",
-   "plan_class": "E",
-   "class_reason": "テスト・道具だけのコード（エンジンでは投げない）",
-   "mechanisms": [
-    "not_raised"
-   ],
-   "reachability": "test_only_mutation",
-   "whole_game": false,
-   "whole_game_basis": null,
-   "secret_dependency": null,
-   "ruling_ids": [],
-   "kyuura_issue": null,
-   "ruling_documents": [],
-   "candidate": null
-  },
-  {
-   "id": "UNRESOLVED_TEST",
-   "parent": null,
-   "code": null,
-   "entry_kind": "test_tool_only_code",
-   "family": null,
-   "ledger_classification": "E",
-   "plan_class": "E",
-   "class_reason": "テスト・道具だけのコード（エンジンでは投げない）",
-   "mechanisms": [
-    "not_raised"
-   ],
-   "reachability": "test_only_mutation",
-   "whole_game": false,
-   "whole_game_basis": null,
-   "secret_dependency": null,
-   "ruling_ids": [],
-   "kyuura_issue": null,
-   "ruling_documents": [],
-   "candidate": null
-  },
-  {
-   "id": "UNRESOLVED_TEST_AFTER_COIN",
-   "parent": null,
-   "code": null,
-   "entry_kind": "test_tool_only_code",
-   "family": null,
-   "ledger_classification": "E",
-   "plan_class": "E",
-   "class_reason": "テスト・道具だけのコード（エンジンでは投げない）",
-   "mechanisms": [
-    "not_raised"
-   ],
-   "reachability": "test_only_mutation",
-   "whole_game": false,
-   "whole_game_basis": null,
-   "secret_dependency": null,
-   "ruling_ids": [],
-   "kyuura_issue": null,
-   "ruling_documents": [],
-   "candidate": null
-  },
-  {
-   "id": "UNRESOLVED_TEST_EFFECT",
-   "parent": null,
-   "code": null,
-   "entry_kind": "test_tool_only_code",
-   "family": null,
-   "ledger_classification": "E",
-   "plan_class": "E",
-   "class_reason": "テスト・道具だけのコード（エンジンでは投げない）",
-   "mechanisms": [
-    "not_raised"
-   ],
-   "reachability": "test_only_mutation",
-   "whole_game": false,
-   "whole_game_basis": null,
-   "secret_dependency": null,
-   "ruling_ids": [],
-   "kyuura_issue": null,
-   "ruling_documents": [],
-   "candidate": null
-  },
-  {
-   "id": "UNRESOLVED_TEST_FORM",
-   "parent": null,
-   "code": null,
-   "entry_kind": "test_tool_only_code",
-   "family": null,
-   "ledger_classification": "E",
-   "plan_class": "E",
-   "class_reason": "テスト・道具だけのコード（エンジンでは投げない）",
-   "mechanisms": [
-    "not_raised"
-   ],
-   "reachability": "test_only_mutation",
-   "whole_game": false,
-   "whole_game_basis": null,
-   "secret_dependency": null,
-   "ruling_ids": [],
-   "kyuura_issue": null,
-   "ruling_documents": [],
-   "candidate": null
-  },
-  {
-   "id": "UNRESOLVED_TEST_PREFLIGHT",
-   "parent": null,
-   "code": null,
-   "entry_kind": "test_tool_only_code",
-   "family": null,
-   "ledger_classification": "E",
-   "plan_class": "E",
-   "class_reason": "テスト・道具だけのコード（エンジンでは投げない）",
-   "mechanisms": [
-    "not_raised"
-   ],
-   "reachability": "test_only_mutation",
-   "whole_game": false,
-   "whole_game_basis": null,
-   "secret_dependency": null,
-   "ruling_ids": [],
-   "kyuura_issue": null,
-   "ruling_documents": [],
-   "candidate": null
-  },
-  {
-   "id": "UNRESOLVED_X",
-   "parent": null,
-   "code": null,
-   "entry_kind": "test_tool_only_code",
-   "family": null,
-   "ledger_classification": "E",
-   "plan_class": "E",
-   "class_reason": "テスト・道具だけのコード（エンジンでは投げない）",
-   "mechanisms": [
-    "not_raised"
-   ],
-   "reachability": "test_only_mutation",
-   "whole_game": false,
-   "whole_game_basis": null,
-   "secret_dependency": null,
-   "ruling_ids": [],
-   "kyuura_issue": null,
-   "ruling_documents": [],
-   "candidate": null
-  },
-  {
    "id": "RESEARCH:ko_prevention_self_effect",
    "parent": null,
    "code": null,
@@ -15861,7 +15693,7 @@
  ],
  "internal_guard_sites": 619,
  "counts": {
-  "scenes": 399,
+  "scenes": 391,
   "stop_code_scenes": 368,
   "stop_codes": 357,
   "by_plan_class": {
@@ -15869,7 +15701,7 @@
    "B": 33,
    "C": 14,
    "D": 6,
-   "E": 19
+   "E": 11
   },
   "a_scenes": 327,
   "a_scenes_with_candidate": 171,
