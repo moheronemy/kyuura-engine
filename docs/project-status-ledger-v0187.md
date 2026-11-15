@@ -55,7 +55,7 @@
 
 | ID | 内容 | 根拠 | 確認範囲 | 残る限界 |
 |---|---|---|---|---|
-| L-TR3 | 3 枚のトレーナーのプレイ用の続行規約（開発用の集合 `CS-KYUURA-PLAY-TR3@1`）の採用・エンジンの実装と、GUI の明示選択・規約による使用不可の表示 | [play-convention-three-trainers.md](play-convention-three-trainers.md)（判断一覧 `6df781f`。採用 2026-11-15）・[play-convention-tr3-v0.186.md](play-convention-tr3-v0.186.md)（`121e1e6`・`ff7720c`・`a1b7659`・`8bf0e1d`・`f7ce4ee`）。GUI `8fe0f2a`・`25eb435`・`68ac189`・`b613973`（GUI 文書 29 章） | 構築盤面（エンジン 9 盤面のスモークをソースと導入物で、0.187.0 でも同じ結果）。GUI は構築盤面 12 の実応答・pytest・vitest・ブラウザ 2 が exit 0 | new_game の通常の対戦での 3 条件の場面への到達・完走は確かめていない（構築盤面の成功を到達の実績に読み替えない）。既定の集合は変えていない。厳密側の停止は残る |
+| L-TR3 | 3 枚のトレーナーのプレイ用の続行規約（開発用の集合 `CS-KYUURA-PLAY-TR3@1`）の採用・エンジンの実装と、GUI の明示選択・規約による使用不可の表示 | [play-convention-three-trainers.md](play-convention-three-trainers.md)（判断一覧 `6df781f`。採用 2026-11-15）・[play-convention-tr3-v0.186.md](play-convention-tr3-v0.186.md)（`121e1e6`・`ff7720c`・`a1b7659`・`8bf0e1d`・`f7ce4ee`）。GUI `8fe0f2a`・`25eb435`・`68ac189`・`b613973`（GUI 文書 29 章） | 構築盤面（エンジン 9 盤面のスモークをソースと導入物で、0.187.0 でも同じ結果）。GUI は構築盤面 12 の実応答・pytest・vitest・ブラウザ 2 が exit 0 | new_game の通常の対戦での 3 条件の場面への到達・完走は確かめていない（構築盤面の成功を到達の実績に読み替えない）。既定の集合は変えていない。厳密側の停止は残る。→ 2026-11-16: 通常の対戦の確認の小規模バッチを計画した（未実行。この項目の完了は変えない）: [TR3 の new_game 確認バッチの計画](tr3-newgame-batch-plan.md) |
 | L-REVEAL17 | 見せる 17 の呼ぶ箇所の `card_id`（0.184.0） | [v0185](project-status-ledger-v0185.md) 2 章 | v0185 のとおり | v0185 のとおり |
 | L-FOSSILSLOT | 化石の発掘・スロットゲームの束（0.185.0） | [v0185](project-status-ledger-v0185.md) 2 章 | v0185 のとおり | v0185 のとおり |
 | L-NULL | 束の `cards` の `null` と `card_ids` の契約 | [v0185](project-status-ledger-v0185.md) 2 章 | v0185 のとおり | v0185 のとおり |
