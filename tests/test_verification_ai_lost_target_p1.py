@@ -121,8 +121,8 @@ def judge(e, actor_logs=None, *, trace=None, hdr="default", basis=None):
 class VersionTest(unittest.TestCase):
     def test_versions_and_registration(self):
         self.assertEqual(J.JUDGE_RULES_VERSION, 8)  # 規則 8（P3s）を足した。P1 の条件・理由・basis は規則 7 のまま
-        self.assertEqual(B.TOOL_VERSION, 10)
-        self.assertEqual((B.PLAN_FORMAT, B.COMPLETE_FORMAT), ("kyuura-vai-batch-plan/6", "kyuura-vai-batch-complete/6"))
+        self.assertEqual(B.TOOL_VERSION, 11)  # 11: prestop の記録（TOOL_VERSION 11・計画と完了の形式 7。docs/prestop-record-design.md）。旧の期待は 10
+        self.assertEqual((B.PLAN_FORMAT, B.COMPLETE_FORMAT), ("kyuura-vai-batch-plan/7", "kyuura-vai-batch-complete/7"))  # 旧の期待は形式 6
         self.assertEqual(J.LOST_TARGET_CODE, Z.SECRET_PLAN_LOST_TARGET_CODE)
         self.assertIn(CODE, J.KNOWN_STOP_EVIDENCE)
         self.assertNotIn(CODE, J.RECORDED_STOP_CONDITIONS)  # 規則 6 の仕組み（送信の値だけ）には入れない

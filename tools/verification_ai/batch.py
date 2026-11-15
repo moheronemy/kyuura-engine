@@ -35,10 +35,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
-PLAN_FORMAT = "kyuura-vai-batch-plan/6"  # 6: 到達目的の方策 reach の方式（reach-p6・reach-u-r3a）と設定 config.reach・方式と局の設定の一致の照合（docs/verification-ai-reach-policy.md 12 章）。形式 5 以前の計画は再開しない（移行・上書きしない。それを作った版の道具で扱う）。5: 局のデッキの記録（固定デッキ・明示リスト。展開の順・確認値・deck_problems の結果）・方式 boundary・方策とプロファイルの組の照合（docs/verification-ai-decklist.md）。4: 主体別の観測の記録の設定 observation（docs/verification-ai-observation.md）。3 は C1・C2（undetermined の分類に accepted_content_unrecorded）・2 は 99 局 vai-batch-b2・1 は 30 局の初回 vai-batch-b1
-COMPLETE_FORMAT = "kyuura-vai-batch-complete/6"  # 6: 計画の形式 6 に合わせた（マーカーの項目は 5 と同じ）。5: 証跡の判定 evidence（complete_without_stop・complete_with_stop）。照合で停止の理由を要約から計算し直す。4: 要約に主体別の観測の記録の状態（observation。有効な計画だけ）。3 は C1・C2（受理の中身の種類ごとの件数）・2 は vai-batch-b2
+PLAN_FORMAT = "kyuura-vai-batch-plan/7"  # 7: 範囲の外の未裁定の候補の inputs の記録の設定 prestop_inputs（docs/prestop-record-design.md。無効も明示。形式 6 以前の計画は再開しない）。6: 到達目的の方策 reach の方式（reach-p6・reach-u-r3a）と設定 config.reach・方式と局の設定の一致の照合（docs/verification-ai-reach-policy.md 12 章）。形式 5 以前の計画は再開しない（移行・上書きしない。それを作った版の道具で扱う）。5: 局のデッキの記録（固定デッキ・明示リスト。展開の順・確認値・deck_problems の結果）・方式 boundary・方策とプロファイルの組の照合（docs/verification-ai-decklist.md）。4: 主体別の観測の記録の設定 observation（docs/verification-ai-observation.md）。3 は C1・C2（undetermined の分類に accepted_content_unrecorded）・2 は 99 局 vai-batch-b2・1 は 30 局の初回 vai-batch-b1
+COMPLETE_FORMAT = "kyuura-vai-batch-complete/7"  # 7: 要約に prestop（有効な計画だけ。prestop/summary.json と同じ値）。6: 計画の形式 6 に合わせた（マーカーの項目は 5 と同じ）。5: 証跡の判定 evidence（complete_without_stop・complete_with_stop）。照合で停止の理由を要約から計算し直す。4: 要約に主体別の観測の記録の状態（observation。有効な計画だけ）。3 は C1・C2（受理の中身の種類ごとの件数）・2 は vai-batch-b2
 TOOL_NAME = "tools.verification_ai.batch"
-TOOL_VERSION = 10  # 10: judge の規則 8（LOST_TARGET の P3s。judge.submit_evidence・judge_trace に basis_p3。docs/verification-ai-lost-target-p3-decision-design.md 10 章。エンジン 0.181.0。計画の形式 6・完了の形式 6 は同じ。TOOL_VERSION 9 の計画は道具の識別の違いで再開しない）。9: judge の規則 7（LOST_TARGET の P1。judge.submit_evidence に本人の送信前の観測と記録の header を渡す。docs/verification-ai-lost-target-own-face-down-design.md 13 章。計画の形式 6・完了の形式 6 は同じ。TOOL_VERSION 8 の計画は道具の識別の違いで再開しない）。8: reach 版 2 と方式 reach2-p6・reach2-u-r3a（docs/verification-ai-reach-policy.md 14 章・15 章。計画の形式 6・完了の形式 6・判定の規則 6 は同じ。TOOL_VERSION 7 の計画は実装識別の違いで再開しない）。7: 到達目的の方策 reach 版 1（tools/verification_ai/reach.py）・runner の範囲のプロファイルの問い合わせと submit の通知・到達の段の集計 reach_report。6: 明示的なデッキリスト・方式 boundary・観測の記録の要約の欠けで止める（docs/verification-ai-decklist.md）。5: 主体別の観測・更新・公開ログの記録（observe。計画で有効にしたときだけ）。4 は judge の規則 6（docs/verification-ai-batch-plan3.md 11 章）。3 は C1・C2（9385cc3）
+TOOL_VERSION = 11  # 11: 範囲の外の未裁定の候補の inputs の検証者用の記録（prestop。runner._prestop_fetch・prestop.PrestopRecorder。計画で明示的に有効にしたときだけ。計画・完了の形式 7・判定の規則 8 は同じ。TOOL_VERSION 10 の計画は形式の違いで再開しない）。10: judge の規則 8（LOST_TARGET の P3s。judge.submit_evidence・judge_trace に basis_p3。docs/verification-ai-lost-target-p3-decision-design.md 10 章。エンジン 0.181.0。計画の形式 6・完了の形式 6 は同じ。TOOL_VERSION 9 の計画は道具の識別の違いで再開しない）。9: judge の規則 7（LOST_TARGET の P1。judge.submit_evidence に本人の送信前の観測と記録の header を渡す。docs/verification-ai-lost-target-own-face-down-design.md 13 章。計画の形式 6・完了の形式 6 は同じ。TOOL_VERSION 8 の計画は道具の識別の違いで再開しない）。8: reach 版 2 と方式 reach2-p6・reach2-u-r3a（docs/verification-ai-reach-policy.md 14 章・15 章。計画の形式 6・完了の形式 6・判定の規則 6 は同じ。TOOL_VERSION 7 の計画は実装識別の違いで再開しない）。7: 到達目的の方策 reach 版 1（tools/verification_ai/reach.py）・runner の範囲のプロファイルの問い合わせと submit の通知・到達の段の集計 reach_report。6: 明示的なデッキリスト・方式 boundary・観測の記録の要約の欠けで止める（docs/verification-ai-decklist.md）。5: 主体別の観測・更新・公開ログの記録（observe。計画で有効にしたときだけ）。4 は judge の規則 6（docs/verification-ai-batch-plan3.md 11 章）。3 は C1・C2（9385cc3）
 
 # 方式（計画を作るときだけ使う。計画には Config の全項目を展開して書くので、ここを後で変えても既存の計画の局は変わらない）
 MODES: dict[str, dict[str, Any]] = {
@@ -150,6 +150,7 @@ class StopPolicy:
     on_anomaly: str = "stop"
     on_verification_problem: str = "stop"  # replay_run の期待との不一致・記録の対応の問題
     on_observation_problem: str = "stop"  # 主体別の観測の記録が complete でない（欠け・矛盾・記録の失敗）。観測の記録を有効にした計画だけ
+    on_prestop_problem: str = "stop"  # TOOL_VERSION 11: 範囲の外の未裁定の候補の inputs の記録の失敗・要約の欠け・照合式の不一致（上限の到達 capped は止めずに数える）。有効な計画だけ
 
 
 @dataclass
@@ -438,8 +439,13 @@ class EngineAdapter:
             from .observe import ObservationRecorder
 
             recorder = ObservationRecorder()  # 局ごとに作り、局のファイルを書いたら捨てる（全局の観測をためない）
+        prestop = None
+        if prestop_enabled(plan):
+            from .prestop import PrestopRecorder
+
+            prestop = PrestopRecorder(plan["prestop_inputs"]["limits"])  # 局ごとに作る。記録用の要求の時間は局の単調時計・バッチの累積時間の中
         started = now()
-        result = run_game(config, recorder=recorder)
+        result = run_game(config, recorder=recorder, prestop=prestop)
         finished = now()
         verification = check_record(result)
         judged = judge_trace(result)
@@ -460,6 +466,8 @@ class EngineAdapter:
         files.append(("sequences.json", json_bytes(sequences)))
         if recorder is not None:
             files.extend(recorder.files())
+        if prestop is not None:
+            files.extend(prestop.files())
         term = result["termination"]
         detail = term["detail"] if isinstance(term["detail"], dict) else {}
         summary = {"termination": term["class"],
@@ -472,6 +480,11 @@ class EngineAdapter:
         if recorder is not None:
             obs = recorder.summary()
             summary["observation"] = {k: obs[k] for k in ("format", "status", "rows", "by_kind", "problem_codes", "problems_total", "failure")}
+        if prestop is not None:
+            from . import prestop as P
+
+            summary["prestop"] = prestop.summary()  # prestop/summary.json と同じ値（完了の照合で比べる）
+            summary["prestop_problems"] = P.reconcile(summary["prestop"], rows=prestop.rows_bytes(), excluded_by_kind=P.excluded_by_kind(result["metrics"]))
         return GameOutput(files=files, summary=summary)
 
 
@@ -570,7 +583,8 @@ def judge_summary(judged: dict[str, Any]) -> dict[str, Any]:
             "undetermined": judged["undetermined"], "known_stop": len(judged["known_stop"])}
 
 
-def stop_reasons(summary: dict[str, Any], policy: dict[str, Any], observation_required: bool = False) -> tuple[list[str], list[str]]:
+def stop_reasons(summary: dict[str, Any], policy: dict[str, Any], observation_required: bool = False,
+                 prestop_required: bool = False) -> tuple[list[str], list[str]]:
     """完了した局の要約から、停止方針で止める理由と、続けるが数えるもの（note）を返す。
 
     suspect は送信・受理の中身・終わり方の合計。undetermined は分類ごとに ``on_undetermined`` に従う（知らない分類は止める）。known_stop は ``on_known_stop``。"""
@@ -606,6 +620,18 @@ def stop_reasons(summary: dict[str, Any], policy: dict[str, Any], observation_re
     elif obs is not None and obs.get("status") != "complete":
         (stop if policy.get("on_observation_problem", "stop") == "stop" else note).append(
             f"observation:{obs.get('status')}:" + ",".join(sorted(obs.get("problem_codes") or {})))
+    # TOOL_VERSION 11: 範囲の外の未裁定の候補の inputs の記録。失敗・要約の欠け・照合式の不一致は止める（既定）。上限の到達は欠落として数えて続ける
+    pre = summary.get("prestop")
+    on_pre = stop if policy.get("on_prestop_problem", "stop") == "stop" else note
+    if pre is None and prestop_required:
+        on_pre.append("prestop:missing")
+    elif pre is not None:
+        if pre.get("status") == "failed":
+            on_pre.append(f"prestop:failed:{(pre.get('failure') or {}).get('where')}")
+        if summary.get("prestop_problems"):
+            on_pre.append(f"prestop:inconsistent:{len(summary['prestop_problems'])}")
+        if pre.get("status") == "capped":
+            note.append("prestop:capped:" + ",".join(pre.get("capped") or []))
     return stop, note
 
 
@@ -620,13 +646,23 @@ def observation_enabled(plan: dict[str, Any]) -> bool:
     return bool((plan.get("observation") or {}).get("enabled"))
 
 
-def required_files(plan: dict[str, Any]) -> tuple[str, ...]:
-    """局の必須ファイル（観測の記録を有効にした計画では observe/ の 5 つも必須。欠けた局を完了にしない）。"""
-    if not observation_enabled(plan):
-        return REQUIRED_FILES
-    from .observe import FILES
+def prestop_enabled(plan: dict[str, Any]) -> bool:
+    """TOOL_VERSION 11: 範囲の外の未裁定の候補の inputs の記録を計画で有効にしたか（prestop_inputs.enabled）。"""
+    return bool((plan.get("prestop_inputs") or {}).get("enabled"))
 
-    return REQUIRED_FILES + tuple(FILES)
+
+def required_files(plan: dict[str, Any]) -> tuple[str, ...]:
+    """局の必須ファイル（観測の記録を有効にした計画では observe/ の 5 つ、prestop の記録を有効にした計画では prestop/ の 2 つも必須。欠けた局を完了にしない）。"""
+    out = REQUIRED_FILES
+    if observation_enabled(plan):
+        from .observe import FILES
+
+        out = out + tuple(FILES)
+    if prestop_enabled(plan):
+        from .prestop import FILES as PRESTOP_FILES
+
+        out = out + tuple(PRESTOP_FILES)
+    return out
 
 
 def resolve_decks(deck0: str | None, deck1: str | None, decklists: dict[str, Any] | None) -> tuple[dict[str, str], dict[str, Any]]:
@@ -661,14 +697,20 @@ def resolve_decks(deck0: str | None, deck1: str | None, decklists: dict[str, Any
 def make_plan(out: Path, batch_id: str, *, engine_commit: str, tool_commit: str, seeds: list[int], modes: list[str], deck0: str | None = None,
               deck1: str | None = None, conventions: str | None = None, limits: BatchLimits = BatchLimits(), stop_policy: StopPolicy = StopPolicy(),
               adapter=None, note: str = "", game_limits: dict[str, Any] | None = None, observation: bool = False,
-              decklists: dict[str, Any] | None = None) -> dict[str, Any]:
+              decklists: dict[str, Any] | None = None, prestop_inputs: bool = False, prestop_limits: dict[str, int] | None = None) -> dict[str, Any]:
     """計画を作って保存する（既にあれば作らない）。並び: seed ごとに方式を並べる（比較の組 = デッキ・規約集合・seed。game_id は局ごとに別）。
 
     ``decklists`` は側（"0"・"1"）ごとの明示リスト（``decklist.load_file`` の値）。内容は計画に取り込み、再開でファイルを読み直さない。"""
+    from . import prestop as P
+
     adapter = adapter or EngineAdapter(engine_commit)
     bdir = batch_dir(out, batch_id)
     if bdir.exists():
         raise BatchRefused([f"{bdir} はすでにある（既存の証跡を上書きしない）"])
+    try:
+        prestop_setting = P.plan_setting(prestop_inputs, prestop_limits)  # 無効も明示して計画に書く（plan.sha256 に入る）
+    except ValueError as error:
+        raise BatchRefused([str(error)]) from None
     names, decklists = resolve_decks(deck0, deck1, decklists)
     deck0, deck1 = names["0"], names["1"]
     unknown = [m for m in modes if m not in MODES]
@@ -692,6 +734,7 @@ def make_plan(out: Path, batch_id: str, *, engine_commit: str, tool_commit: str,
             "order": "seed ごとに方式を並べる", "games": games,
             "observation": {"enabled": bool(observation), "format": "kyuura-vai-observation/1" if observation else None,
                             "note": "主体別の観測・更新・公開ログの記録（observe/。docs/verification-ai-observation.md）。有効なら局の必須ファイルに入る"},
+            "prestop_inputs": prestop_setting,
             "decks": {"names": names, "explicit_sides": sorted(decklists),
                       "rules": ["明示リストは計画を作るときに 1 回だけ読み、内容を各局の decks に取り込む（再開でファイルを読み直さない）",
                                 "展開: 項目の並びのまま、カード ID を枚数ぶん続けて並べる（固定デッキの PresetDeck.cards() と同じ規則）。ID 順へ並べかえない",
@@ -735,6 +778,10 @@ def load_plan(bdir: Path, adapter) -> tuple[dict[str, Any], str]:
         problems.append("計画の observation（主体別の観測の記録の設定）がない・形が違う")
     elif not isinstance(plan.get("decks"), dict):
         problems.append("計画の decks（デッキの指定の要約）がない")
+    else:
+        from .prestop import setting_problems
+
+        problems += setting_problems(plan.get("prestop_inputs"))  # 型・未知の項目・矛盾・上限の範囲（黙って既定にしない）
     if plan.get("batch_id") != bdir.name:
         problems.append("計画の batch_id がディレクトリ名と違う")
     current = adapter.identity()
@@ -887,7 +934,7 @@ def verify_complete(adir: Path, *, plan: dict[str, Any], plan_sha: str, entry: d
         if path.is_file() and sha256_file(path) != digest:
             problems.append(f"{adir}: {name} の sha256 が表と違う（破損か書きかえ）")
     summary_ = marker.get("summary") if isinstance(marker.get("summary"), dict) else {}
-    stop, noted = stop_reasons(summary_, plan["stop_policy"], observation_enabled(plan))
+    stop, noted = stop_reasons(summary_, plan["stop_policy"], observation_enabled(plan), prestop_enabled(plan))
     if marker.get("stop") != stop or marker.get("note") != noted:
         problems.append(f"{adir}: {MARKER} の stop・note が要約から計算した停止の理由と違う（計算 {stop}）")
     if marker.get("evidence") != evidence_verdict(stop):
@@ -901,7 +948,30 @@ def verify_complete(adir: Path, *, plan: dict[str, Any], plan_sha: str, entry: d
             saved = None
         if saved != (summary_.get("observation") or {}).get("status"):
             problems.append(f"{adir}: {SUMMARY} の状態 {saved} が {MARKER} の要約の観測の状態と違う")
+    if prestop_enabled(plan):
+        problems += _verify_prestop(adir, summary_)
+    elif "prestop" in summary_:
+        problems.append(f"{adir}: prestop を無効にした計画の要約に prestop がある")
     return marker, problems
+
+
+def _verify_prestop(adir: Path, summary_: dict[str, Any]) -> list[str]:
+    """TOOL_VERSION 11: prestop/ の 2 つのファイルと完了マーカーの要約を照らす（要約の欠け・ファイルの欠け・不整合を黙って受け入れない）。"""
+    from . import prestop as P
+
+    out = []
+    try:
+        saved = json.loads((adir / P.SUMMARY).read_text(encoding="utf-8"))
+        rows = (adir / P.ROWS).read_bytes()
+        result = json.loads((adir / "result.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        return [f"{adir}: prestop の記録が読めない ({error})"]
+    if saved != summary_.get("prestop"):
+        out.append(f"{adir}: {P.SUMMARY} が {MARKER} の要約の prestop と違う")
+    computed = P.reconcile(saved, rows=rows, excluded_by_kind=P.excluded_by_kind(result.get("metrics") or {}))
+    if computed != summary_.get("prestop_problems"):
+        out.append(f"{adir}: prestop の照合式を計算し直した結果 {computed} が {MARKER} の prestop_problems と違う")
+    return out
 
 
 def evidence_verdict(stop: list[str]) -> str:
@@ -1097,7 +1167,7 @@ def _run_attempt(bdir, entry, plan, plan_sha, adapter, ledger, session, elapsed,
             raise OSError(f"必須のファイルがない: {missing}")
         table_bytes = json_bytes(table)
         atomic_write(adir / TABLE, table_bytes)
-        stop, noted = stop_reasons(output.summary, policy, observation_enabled(plan))
+        stop, noted = stop_reasons(output.summary, policy, observation_enabled(plan), prestop_enabled(plan))
         marker = {"evidence": evidence_verdict(stop), "format": COMPLETE_FORMAT, "batch_id": plan["batch_id"], "game_id": gid, "attempt": n, "session": session, "written": now(),
                   "plan_sha256": plan_sha, "game_sha256": game_sha(entry), "identity": plan["identity"], "files_table_sha256": sha256_bytes(table_bytes),
                   "required": list(required_files(plan)), "bytes": size, "memory": used_memory, "attempt_seconds": round(elapsed() - start, 3),
@@ -1148,6 +1218,7 @@ def evidence_breakdown(bdir: Path, state: dict[str, Any], public_summary: Path |
     out = {"management": 0, "game_complete": 0, "attempt_not_complete": 0, "derived": 0, "other": 0}
     files = {k: 0 for k in out}
     within = {"bytes": 0, "files": 0}  # game_complete のうち主体別の観測の記録（observe/）。区分の合計には重ねて足さない
+    within_prestop = {"bytes": 0, "files": 0}  # TOOL_VERSION 11: game_complete のうち prestop/。区分の合計には重ねて足さない
     for path in bdir.rglob("*"):
         if not path.is_file():
             continue
@@ -1157,6 +1228,9 @@ def evidence_breakdown(bdir: Path, state: dict[str, Any], public_summary: Path |
             if key == "game_complete" and parts[3] == "observe":
                 within["bytes"] += path.stat().st_size
                 within["files"] += 1
+            if key == "game_complete" and parts[3] == "prestop":
+                within_prestop["bytes"] += path.stat().st_size
+                within_prestop["files"] += 1
         elif len(parts) == 1 and parts[0] in MANAGEMENT_FILES:
             key = "management"
         elif len(parts) == 1 and parts[0] in DERIVED_FILES:
@@ -1168,8 +1242,10 @@ def evidence_breakdown(bdir: Path, state: dict[str, Any], public_summary: Path |
     if public_summary is not None and public_summary.is_file():
         out["derived"] += public_summary.stat().st_size
         files["derived"] += 1
-    return {"bytes": out, "files": files, "game_complete_observation": within,
-            "definition": {"game_complete_observation": "game_complete のうち observe/（主体別の観測の記録）の大きさ。区分の合計に重ねて足さない","management": "plan.json・plan.sha256・ledger.jsonl・LOCK", "game_complete": "照合に通った完了の attempt のディレクトリのすべてのファイル",
+    return {"bytes": out, "files": files, "game_complete_observation": within, "game_complete_prestop": within_prestop,
+            "definition": {"game_complete_observation": "game_complete のうち observe/（主体別の観測の記録）の大きさ。区分の合計に重ねて足さない",
+                           "game_complete_prestop": "game_complete のうち prestop/（範囲の外の未裁定の候補の inputs の記録）の大きさ。区分の合計に重ねて足さない",
+                           "management": "plan.json・plan.sha256・ledger.jsonl・LOCK", "game_complete": "照合に通った完了の attempt のディレクトリのすべてのファイル",
                            "attempt_not_complete": "完了マーカーのない attempt（中断・失敗・証跡の上限）のディレクトリのファイル",
                            "derived": "aggregate.json と public の summary.json（集計の時点の大きさ）", "other": "上のどれでもないファイル"}}
 
@@ -1206,6 +1282,14 @@ def _aggregate(bdir: Path, plan: dict[str, Any], plan_sha: str, state: dict[str,
     content, undetermined_by, known_stop, term_vs_judge, raw_codes, halts = {}, {}, 0, {}, {}, {}
     content_by_check: dict[str, dict[str, int]] = {}
     observation = {"enabled": observation_enabled(plan), "status": {}, "rows": 0, "by_kind": {}, "problem_codes": {}, "games_without": 0}
+    from . import prestop as P
+
+    # TOOL_VERSION 11: 範囲の外の未裁定の候補の inputs の記録。局ごとの要約を 1 回ずつ足す（同じ単位の数どうしだけ。種類の集合を 1 回だけたどる）
+    prestop = {"enabled": prestop_enabled(plan), "games": 0, "games_without": 0, "status": {}, "counts": {k: 0 for k in P.COUNTERS},
+               "offered_by_kind": {}, "capped": {}, "seconds": 0.0, "games_with_problems": 0,
+               "reading": ["offered は対象の候補の提示の延べ、keys は一意な鍵、attempted は記録用の要求の数で、単位が違う（足さない）",
+                           "skipped_*・unsaved_*・withheld・refused・contract_unknown・error・oversize は未取得・未保存で、0 件や正常な取得として扱わない",
+                           "停止コードは記録にない。カード別の詳細は検証者用の prestop/inputs.jsonl だけ"]}
     for entry, done in complete:
         s = done["summary"]
         adir = bdir / "games" / entry["game_id"] / done["attempt"]
@@ -1236,6 +1320,21 @@ def _aggregate(bdir: Path, plan: dict[str, Any], plan_sha: str, state: dict[str,
                 _add(observation["problem_codes"], k, v)
         else:
             observation["games_without"] += 1
+        pre = s.get("prestop")
+        if pre is not None:
+            prestop["games"] += 1
+            _add(prestop["status"], pre["status"])
+            for k in P.COUNTERS:
+                prestop["counts"][k] += pre[k]
+            for k, v in pre["offered_by_kind"].items():
+                _add(prestop["offered_by_kind"], k, v)
+            for k in pre["capped"]:
+                _add(prestop["capped"], k)
+            prestop["seconds"] = round(prestop["seconds"] + pre["seconds"], 6)
+            if s.get("prestop_problems"):
+                prestop["games_with_problems"] += 1
+        else:
+            prestop["games_without"] += 1
         tj = term_vs_judge.setdefault(s["termination"], {"games": 0, "verdict": {}, "reasons": {}})
         tj["games"] += 1
         _add(tj["verdict"], s["judge"]["termination"]["verdict"])
@@ -1316,7 +1415,7 @@ def _aggregate(bdir: Path, plan: dict[str, Any], plan_sha: str, state: dict[str,
                   "known_stop": known_stop,
                   "undetermined_by_category": undetermined_by, "termination_vs_judge": term_vs_judge, "non_accepted_submits_by_verdict": raw_codes,
                   "halts": halts},
-        "anomalies": anomalies, "observation": observation,
+        "anomalies": anomalies, "observation": observation, "prestop": prestop,
         "counters": counters, "replay_run": replay, "by": by,
         "time": {"game_seconds_sum": round(sum(seconds), 3), "game_seconds_max": max(seconds, default=None),
                  "game_seconds_median": statistics.median(seconds) if seconds else None},
@@ -1379,6 +1478,10 @@ def main(argv: list[str] | None = None) -> int:
     obs = pl.add_mutually_exclusive_group(required=True)  # 既定を置かない（記録の有無を計画ごとに明示する）
     obs.add_argument("--observation", dest="observation", action="store_true", help="主体別の観測・更新・公開ログの記録（observe/）を局の必須ファイルにする")
     obs.add_argument("--no-observation", dest="observation", action="store_false", help="観測の記録をしない")
+    pre = pl.add_mutually_exclusive_group(required=True)  # TOOL_VERSION 11: 既定を置かない（記録の有無を計画ごとに明示する）
+    pre.add_argument("--prestop-inputs", dest="prestop_inputs", action="store_true",
+                     help="範囲の外の未裁定の候補の inputs の検証者用の記録（prestop/）を局の必須ファイルにする（上限は既定値）")
+    pre.add_argument("--no-prestop-inputs", dest="prestop_inputs", action="store_false", help="prestop の記録をしない")
     dl = sub.add_parser("decklist", help="明示リストの形・確認値・deck_problems を確かめる（計画は作らない・対戦しない）")
     dl.add_argument("--file", required=True)
     rn = sub.add_parser("run")
@@ -1421,7 +1524,7 @@ def main(argv: list[str] | None = None) -> int:
             limits = BatchLimits(max_games=args.max_games, budget_seconds=args.budget_seconds, evidence_max_bytes=args.evidence_max_mb * MB)
             plan = make_plan(out, args.batch, engine_commit=args.engine_commit, tool_commit=args.tool_commit, seeds=args.seeds, modes=args.modes,
                              deck0=args.deck0, deck1=args.deck1, conventions=args.conventions, limits=limits, note=args.note, observation=args.observation,
-                             decklists=loaded or None,
+                             decklists=loaded or None, prestop_inputs=args.prestop_inputs,
                              stop_policy=StopPolicy(on_undetermined={**StopPolicy().on_undetermined,
                                                                      EVIDENCE_MISSING_STOP: args.undetermined_evidence_missing}))
             print(json.dumps({"batch": args.batch, "games": len(plan["games"]),

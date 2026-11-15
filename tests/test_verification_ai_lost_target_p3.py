@@ -131,8 +131,8 @@ POSITIVE_REASONS = [D.UNSUPPORTED, CODE, "continuation_not_evaluated", "evidence
 
 class RegistrationTest(unittest.TestCase):
     def test_versions_key_and_code(self):
-        self.assertEqual((J.JUDGE_RULES_VERSION, B.TOOL_VERSION), (8, 10))
-        self.assertEqual((B.PLAN_FORMAT, B.COMPLETE_FORMAT), ("kyuura-vai-batch-plan/6", "kyuura-vai-batch-complete/6"))
+        self.assertEqual((J.JUDGE_RULES_VERSION, B.TOOL_VERSION), (8, 11))  # 11: prestop の記録（TOOL_VERSION 11・計画と完了の形式 7。docs/prestop-record-design.md）。旧の期待は (8, 10)
+        self.assertEqual((B.PLAN_FORMAT, B.COMPLETE_FORMAT), ("kyuura-vai-batch-plan/7", "kyuura-vai-batch-complete/7"))  # 旧の期待は形式 6
         self.assertEqual(KEY, "UNSUPPORTED_SECRET_PLAN_LOST_TARGET#P3")
         self.assertNotEqual(KEY, CODE)  # 根拠の鍵（経路の名前）と生の診断コードは別
         self.assertEqual(J.KNOWN_STOP_EVIDENCE[KEY]["code"], CODE)

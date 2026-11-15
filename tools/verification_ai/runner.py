@@ -128,10 +128,16 @@ class _Stop(Exception):
 
 
 class Runner:
-    def __init__(self, config: Config, *, clock=time.monotonic, policy_factory=None, wrap_endpoint=None, negative=None, until=None, recorder=None):
+    def __init__(self, config: Config, *, clock=time.monotonic, policy_factory=None, wrap_endpoint=None, negative=None, until=None, recorder=None,
+                 prestop=None):
         self.config = config
         if recorder is not None and negative is not None:
             raise ValueError("主体別の観測の記録（recorder）は negative と組み合わせない（変異の送信は記録の行に対応付けない）")
+        if prestop is not None and negative is not None:
+            raise ValueError("範囲の外の未裁定の候補の inputs の記録（prestop）は negative と組み合わせない（docs/prestop-record-design.md）")
+        # TOOL_VERSION 11: 範囲の外の未裁定の候補の inputs の検証者用の記録（prestop.PrestopRecorder。None なら従来と同じ動作）。方策・行動生成・trace・actor_logs・
+        # metrics に渡さない・書かない。記録用の要求は _prestop_fetch だけが送る（同じ取得の取っ手の inputs だけ。check・submit・candidates は送らない）
+        self.prestop = prestop
         # 主体別の観測・更新・公開ログの記録（observe.ObservationRecorder。None なら従来と同じ動作）。検証者の側だけで使い、方策・行動生成に渡さない
         self.recorder = recorder
         self.negative = negative  # V3-1: 通常の進行の中の negative（None なら V0〜V2 と同じ動作）
@@ -226,6 +232,25 @@ class Runner:
             raise
         except Exception as error:  # noqa: BLE001
             recorder.fail(event, error)
+
+    def _prestop_fetch(self, actor, endpoint, cands: dict[str, Any], reasons: dict[str, str]) -> None:
+        """TOOL_VERSION 11: 範囲の外の未裁定の候補の inputs を、同じ取得の取っ手（game・revision）で本人の入口へ要求して記録する（docs/prestop-record-design.md）。
+
+        応答は記録器だけが持つ（方策・trace・actor_logs・metrics・coverage・counters・anomalies へ渡さない）。古い取っ手でも candidates を取り直さない。
+        記録の例外は記録の失敗として残し、対戦の進行・判定には伝えない（MemoryError は通す。KeyboardInterrupt・SystemExit は Exception でないので通る）。"""
+        recorder = self.prestop
+        episode = None if self._episode is None else self._episode.get("episode")
+        game, revision = cands["game"], cands["revision"]
+
+        def fetch_inputs(candidate_id: str) -> dict[str, Any]:
+            return request(endpoint, "inputs", game=game, revision=revision, candidate=candidate_id)
+
+        try:
+            recorder.on_fetch(actor, self.position, episode, cands, reasons, fetch_inputs)
+        except MemoryError:
+            raise
+        except Exception as error:  # noqa: BLE001
+            recorder.fail("on_fetch", error, counts_complete=False)
 
     def _elapsed(self) -> float:
         return self.clock() - self._started
@@ -346,6 +371,8 @@ class Runner:
             profile = policy.scope_profile(own_view) if hasattr(policy, "scope_profile") else self.config.profile
             in_scope, scope, reasons = self._scope(cands, unbuildable, profile)
             self.metrics.fetch(self.position, cands, in_scope, reasons)
+            if self.prestop is not None:  # TOOL_VERSION 11: 範囲を決めたあと・範囲が空の停止と方策の選択の前（in_scope・reasons・unbuildable を変えない）
+                self._prestop_fetch(actor, endpoint, cands, reasons)
             if not in_scope:
                 raise _Stop(INPUT_UNAVAILABLE, {"actor": actor, "empty_reason": cands["empty_reason"], "scope": scope,
                                                 "residual_present": cands["coverage"]["residual"]["present"], "unbuildable": unbuildable,
