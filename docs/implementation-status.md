@@ -5447,3 +5447,151 @@ kyuura 9242b9b の公式図鑑の種族の身長（全国図鑑 No.001〜251・�
 - 確かめ: 新しいテスト `tests/test_verification_ai_v0179_follow.py`（11 件）と、`v2_repeat`・`v0178_follow`・`v0176_follow`・`p6`・`u_r3a` を 1 つずつ別のプロセスで実行した。パッケージの版・実装の識別は前後で同じ
 - 残る: GUI の追従（固定するのは `4b6e3fea9212c50622dcfea7142dcc76fd14b09d`）、UP-5t の D、おもての山札の位置を読むトレーナー 7 型の前提
 - 詳細: [verification-ai-v0179-follow.md](verification-ai-v0179-follow.md)
+
+## v0.179 のあと: 検証用 AI の上限つき逐次バッチ（AI の側だけ。エンジンの版は 0.179.0 のまま）
+
+- `tools/verification_ai/batch.py`: 計画（既定値を展開・計画の sha256）、同じプロセスで 1 局ずつ、attempt ごとの確定保存（一時ファイル → `os.replace`・ハッシュの表・最後に `COMPLETE.json`）、照合つきの再開（未完了の attempt は残して別の attempt）、ロック（PID で自動解除しない）、追記だけの台帳（累積の時間）、全体の時間・局数・証跡の量の上限、停止方針（suspect・異常の候補・replay の不一致・例外系で止め、undetermined は数えて続ける）、保存済みの局からの集計。単局は既存の runner・方策・行動生成・replay_run をそのまま使い、judge は保存する trace に後から当てる
+- runner: `MemoryError` を `exception` の終わり方に変えずに投げ直す（1 か所）。方策の順位・反復の抑制・乱数の消費は変えていない（計画の経路で `ACTION_GOLDEN` が同じ）
+- 初回の 30 局（`hitmonchan-dewgong` vs `venusaur-parasect`・`CS-KYUURA-CURRENT@1`・seed 1001〜1010 × uniform-stage・rules-v2・mixed）: すべて `game_over`、送信 4126 件と終わり方 30 件の判定はすべて expected、異常の候補・拒否は 0、replay_run は 30 局とも期待どおり。7 局で正常に止めて再開し、完了局を再実行しないことを確かめた（累積 73 秒）
+- 確かめ: `tests/test_verification_ai_batch.py`（27 件）と `v2_repeat`・`v0179_follow`・`v0` を 1 つずつ別のプロセスで実行した。パッケージの版・実装の識別は前後で同じ
+- 残る: 停止のある局の known_stop の根拠（既存の残件）、大量の対戦の前の証跡の量と再開の照合の時間の判断
+- 詳細: [verification-ai-batch.md](verification-ai-batch.md)
+
+## v0.179 のあと: 逐次バッチの判定の補完と 99 局（AI の側だけ。エンジンの版は 0.179.0 のまま）
+
+- 判定: runner が本人のうらのカードの特殊能力の受理のあとの公開のログを trace に記録し、単局の判定とバッチが同じ入口（`judge_recorded_face_down_power`・`judge_run_termination`）を使う。規則の版 5 のまま。受理の中身は送信の判定と別に数える
+- 停止方針（計画の形式 2）: undetermined を理由で分類（根拠不足の停止・未知の診断・契約の未知・no_progress・その他）。根拠不足の停止だけ続け、ほかは止める。known_stop の登録は増やしていない
+- 証跡の量: 管理・ゲーム（完了局）・未完了・派生に分け、集計を作り直してもゲームの証跡の量は変わらない
+- 99 局（`hitmonchan-dewgong` vs `venusaur-parasect`・`CS-KYUURA-CURRENT@1`・seed 2001〜2033 × uniform-stage・rules-v2・mixed）: game_over 95・halted_known 3（`UNRESOLVED_MULLIGAN_COMPENSATION`。根拠不足の undetermined）・limit_accepted 1。送信 15654 件の判定はすべて expected、suspect・異常の候補・拒否は 0、replay_run は 99 局とも期待どおり。累積 280 秒・ゲームの証跡 514 MB
+- 確かめ: `tests/test_verification_ai_batch_judge.py`（11 件。U-R3a の fixture を本物の runner からバッチの判定の入口まで）と、batch・v2_repeat・v0179_follow・u_r3a・v3_1・v3_3 を 1 つずつ別のプロセスで実行した。パッケージの版・実装の識別は前後で同じ
+- 残る: 準備の停止の known_stop の根拠、P6 の受理の中身の判定の接続、局数を増やす前の証跡の量の判断
+- 詳細: [verification-ai-batch.md](verification-ai-batch.md) 11 章〜15 章
+
+## v0.179 のあと: P6 の受理の中身の判定の接続（AI の側だけ。エンジンの版は 0.179.0 のまま）
+
+- 判定: runner が P6 の受理のあとの公開のログも trace に記録し、単局の判定とバッチが同じ入口（`judge_recorded_accepted_content`。P6 は既存の `judge_p6_accepted`）を使う。規則の版 5 のまま。U-R3a と P6 を分けて数える
+- 停止方針（計画の形式 3）: 受理の中身の記録の欠けを undetermined の分類 `accepted_content_unrecorded`（初期値 stop）にし、根拠不足の停止と分けた
+- 確かめ: `tests/test_verification_ai_p6_accepted.py`（8 件。既存の P6 の 3 つの構築盤面を本物の runner からバッチの判定の入口まで）と、関連する 8 モジュールを 1 つずつ別のプロセスで実行した。新しい対戦は実行していない。パッケージの版・実装の識別は前後で同じ
+- 旧記録: 30 局・99 局の trace には P6 の受理の公開のログの記録がない（P6 の送信は両方とも 0 件）。旧バッチは新しい版で再開しない
+- 詳細: [verification-ai-batch.md](verification-ai-batch.md) 16 章
+
+## v0.179 のあと: 検証用 AI の次の小規模バッチの計画と実行（C1・C2）
+
+- 推奨: 計画の形式 3 の 2 計画・合計 54 局・上限 10 分・1 GiB。C1 は固定デッキ第2版（新しいトレーナー・決定）、C2 は第1版の組の `CS-KYUURA-PLAY-S2A@1`（準備の停止の続行と、続行のない局の 99 局との一致）
+- マチスの秘策・スタジアム・P6・U-R3a・unverified の選択は、バッチのデッキリストと boundary の方式の実装が要るので、追加案に分けた
+- 詳細: [verification-ai-batch-plan3.md](verification-ai-batch-plan3.md)（採用の判断が要ること 8 章）
+- 実行（C1・C2 を採用。2026-11-11）: 54 局すべて完了（C1 game_over 27、C2 game_over 26・limit_accepted 1）・replay_run 54 局とも成功・バッチの停止 0（送信の拒否 15・受理の上限による終わり 1 は別に数える）・suspect 0。C1 は第2版だけのトレーナー 5 種類の使用が受理され、決定の種類が 3 から 8 に増えた。エネルギー回収の 0 枚の選択の拒否 15（`UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`。judge は根拠不足の undetermined）。C2 は比較条件 24 組が 99 局と行動の列で一致し、回帰条件 seed 2025 の 3 局は開始で `PC-SETUP-MULLIGAN-COUNT` を 1 回適用して最後まで進んだ。エンジン・方策・道具のコードは変えていない（比較の処理は証跡に保存）。詳細は同じ文書の 10 章
+- 結果の確認（3 点。新しい対戦なし）: ER9 の拒否 15 件を記録で照合し、judge の規則 6（記録した API の値で条件を確かめたときだけ known_stop。TOOL_VERSION 4）を加えた。保存済みの 153 局への当て直しで変わったのは C1 の 15 行だけ。最小 0 の段・check・実行時の拒否の契約と同じ形の箇所を整理（API は変えていない）。`search_deck` などの情報の公開は、保存した範囲（本人の観測・試み）の全件で漏れなし（更新・ログ・観戦者の観測は未保存）。詳細は同じ文書の 11 章
+
+## v0.179 のあと: 検証用 AI の主体別の観測・更新・公開ログの記録（AI の側だけ。エンジンの版は 0.179.0 のまま）
+
+- 送信ごとに、プレイヤー 0・1・観戦者の送信前後の観測・その送信で新たに発生した更新・新たに公開されたログを、ローカルの通し番号・operation_id・受理番号と対応付けて残す（`tools/verification_ai/observe.py`。主体別の内容はエンジンの閲覧用記録、対応表は `observe/rows.jsonl`）。計画で有効にしたときだけ（計画の形式 4・TOOL_VERSION 5）。既存の `actors/<主体>.jsonl`・trace・完全な記録の意味は変えていない
+- 記録側は更新を取り出さない（runner の通常の取り出しの写しだけ）。取り出されなかった更新・記録の失敗は欠けとして残す。記録の有効・無効で行動の列・乱数・最後の状態・通常の更新は同じ（fixture の 6 ケースと、既存の行動の指紋の設定）
+- 限定確認: 検索の選べるものは回答者だけ、相手が答える決定の入力は答える主体だけ、ポケモン交換おじさんのカードは全員のログ、ER9 の拒否は本人だけ、P6・U-R3a の受理の公開ログは受理の中身の判定へ同じく渡る。関連の 8 モジュール 129 件が成功。新しい対戦バッチは実行していない。証跡量は 1 局あたり約 2.2 倍
+- 詳細: [verification-ai-observation.md](verification-ai-observation.md)
+
+## v0.179 のあと: 検証用 AI のバッチの明示的なデッキリストと方式 boundary（AI の側だけ。エンジンの版は 0.179.0 のまま）
+
+- 計画で、側ごとに固定デッキか明示リスト（形式 `kyuura-vai-decklist/1`: 形式の版・ラベル・出典・[カード ID, 枚数] の並び・内容の確認値）のどちらか 1 つを指定できる（`tools/verification_ai/decklist.py`。厳密な検証。外部ファイルは計画を作るときに 1 回だけ読んで取り込む）。展開は項目の並びのまま（固定デッキと同じ規則）。`content_sha256` は並びに依らない内容、`sha256` は展開した並び（初期配列）の確認値。固定デッキの並び・確認値は変えていない
+- 合法性はエンジンの `deck_problems` だけ。計画を作るとき・再開の照合・各局の開始の直前に当て、結果を記録し、不合格なら対戦を始めない
+- 方式 `boundary` = 方策 boundary + プロファイル boundary（V3-2 の組）。定義した方策・プロファイル・分布の組だけを計画に書き、ほかは拒否する。deep の範囲・代替・順位・乱数の消費は変えていない
+- 観測の記録の失敗・欠落: 要約の観測の状態の欠けでも止める。完了マーカーに `evidence`（停止つき・停止なし）。照合で停止の理由を要約から計算し直し、`observe/summary.json` と照らす。CLI は `--observation` か `--no-observation` の明示が必須
+- 計画・完了の形式 5・TOOL_VERSION 6（形式 4 以前は再開しない）。関連の 10 モジュール 163 件が成功。新しい対戦バッチは実行していない
+- 詳細: [verification-ai-decklist.md](verification-ai-decklist.md)
+- 次の小規模バッチの計画 4（明示リスト `L67-U`・`LUCKY_DECK` 対 `CONNECT_DECK`、rules-v2 と boundary、観測の記録つき 12 局）: 2026-11-12 に実行し、12 局とも停止なしで完了。マチスの秘策・おもてにする・スタジアムの play_trainer と use_stadium は届き、P6・U-R3a・unverified の選択は届かなかった（11 章）。[verification-ai-batch-plan4.md](verification-ai-batch-plan4.md)（採用の判断が要ること 8 章）
+- 到達目的の方策 `reach`（P6・U-R3a を目標に、秘策の決定・うらの控えの入れ替え先・おもてにする操作の選び方を変える。合法性はエンジンのまま。`real` を使わない）: 仕様と最大 4 局の計画だけ（2026-11-12。実装・テスト・対戦はしていない。採用の判断待ち）。[verification-ai-reach-policy.md](verification-ai-reach-policy.md)
+- 到達目的の方策 `reach` 版 1 を実装（2026-11-12。方式 `reach-p6`・`reach-u-r3a`、計画・完了の形式 6・TOOL_VERSION 7、判定の規則 6 とエンジンは変えない）。目標の試行は両方の主体を合わせて 1 局 1 回で、submit を実際に呼んだ時点で達成とし、そのあと・保護の 3 番を使い切ったあとは rules-v2 と deep に戻る。関連の 16 モジュール 260 件が成功。fixture（構築盤面）で P6・U-R3a の送信まで確かめた。new_game からの 4 局は未実行。[verification-ai-reach-policy.md](verification-ai-reach-policy.md) 12 章
+- 到達目的の方策 `reach` 版 1 の限定確認 `vai-batch-r1`（2026-11-13。L67-U 同士・seed 4101・4102・4 局・観測の記録つき。到達を狙った方策による new_game からの実行）: 4 局完了・停止なし。P6 は 2 局とも、U-R3a は 1 局で目標の操作を 1 回送って受理（受理の中身はどれも「たねでないのでトラッシュ」。「おもてにしてにげた」「おもてにして使った」は未出現）。[verification-ai-reach-policy.md](verification-ai-reach-policy.md) 13 章
+- 到達目的の方策 `reach` の次の小規模確認 `vai-batch-r2`（P6 のおもてにしてにげる・U-R3a のロケット団のヒトカゲの使用）の仕様と計画（2026-11-13。設計だけ・未実装・未実行）: reach 版 2（P6 の対象をディグダ・ケーシィに限定・ヒトカゲの入力を炎エネルギーへ寄せる選好）と、明示リスト `L67-URC`・seed 4201・4202 の最大 4 局。r1 の結果の表現の限定（入力生成失敗 0 は目標の操作だけ・`UNSUPPORTED_SECRET_PLAN_LOST_TARGET` は undetermined）も記録。[verification-ai-reach-policy.md](verification-ai-reach-policy.md) 13.10 節・14 章
+- 到達目的の方策 `reach` 版 2 を実装（2026-11-13。方式 `reach2-p6`・`reach2-u-r3a`、TOOL_VERSION 8、計画・完了の形式 6・判定の規則 6・エンジンは変えない。版 1 の選び方・乱数の消費は同じ）。関連の 9 モジュール 161 件が成功。構築盤面で「おもてにしてにげた」「おもてにして使った」の受理と `WRONG_ENERGY_TYPE` の正常な拒否を確かめた（new_game からの到達ではない）。`vai-batch-r2` の 4 局と L67-URC の合法性の確かめは未実行。[verification-ai-reach-policy.md](verification-ai-reach-policy.md) 15 章
+- reach 版 2 の小規模確認 `vai-batch-r2`（2026-11-13。L67-URC 同士・seed 4201・4202・4 局・観測の記録つき。到達を狙った方策による new_game からの実行）: 4 局完了・停止なし。P6 は 1 局で「おもてにしてにげた」（`p6_revealed_and_retreated`）、U-R3a は 1 局で「おもてにして特殊能力を使った」（`face_down_power_revealed_and_used`）を受理。ほかの 2 局は秘策でうらのカードを出せず未到達。[verification-ai-reach-policy.md](verification-ai-reach-policy.md) 16 章
+- 大量対戦へ向けた資源と実行予算の設計（2026-11-13。保存済みの 8 バッチ・コードの読み取りと集計だけ。実装・対戦なし）: 時間・メモリ（プロセスの累積ピーク）・証跡の量の整理、保持・再開の照合・上限の構造、次の 2 計画の下書き（通常の進行 30 局・観測なし、到達目的 12 局・観測あり。合計 900 秒・1792 MiB。現行の道具のまま実行でき、保存方式の変更は不要）。[verification-ai-scale-budget.md](verification-ai-scale-budget.md)
+- 資源設計の推奨案の実行 `vai-batch-s1`・`vai-batch-s2`（2026-11-13。L67-URC 同士。A は rules-v2・boundary の 30 局・観測なし、B は reach2 の 12 局・観測あり。1 局ずつ実行し、局の間で容量を確認）: 42 局が完了し、停止・予算や容量による終了はなし。replay は期待どおりで、累積 237.5 秒・209.2 秒。B の目標の実送信は P6 4 局・U-R3a 1 局で、すべて受理。[verification-ai-scale-budget.md](verification-ai-scale-budget.md) 9 章
+- `vai-batch-s1` の拒否 8・undetermined 2・再送回避 5 の保存済みの記録による確認（2026-11-13。調査・文書化だけ）: 拒否は 8 件ともエンジンの rejected で、契約・裁定・judge と一致 5・judge の根拠が未登録 3（undetermined 2 を含む）。判定の不一致・情報漏れらしいものは 0。契約の文面の不一致 1（うらのバトル場のワザの候補の guarantees）。[verification-ai-batch-s1-rejection-audit.md](verification-ai-batch-s1-rejection-audit.md)
+
+## v0.180: S1 監査の F-1（うらのバトル場のワザの候補の保証の文を実装に合わせる）
+
+- `legal_actions.GUARANTEE_FACE_DOWN_ATTACK` を新しく作り、`_attack_candidate` でバトル場がうら（公開）のときだけ付ける。0.179.0 までは、check_use_attack を呼ばないうらの分岐に、おもての `GUARANTEE_ATTACK`（check_use_attack を使う）を付けていた。新しい文は、check_use_attack と先読みを呼ばない・check は形だけ・受理・必要なエネルギー・ワザの実行の完了を保証しない・受理のあとを予告しない、とする。本当のカードでは分けない
+- 直したのは保証の文と実装の対応だけで、ゲームの処理・拒否の判定・裁定は変えていない。候補・入力・check・submit・状態遷移・乱数、おもてのワザの保証、judge（規則 6）は同じ。S1 監査の「不具合らしいものなし」は、ゲームの処理と拒否の判定の範囲の結論
+- 確かめ: 修正の前後の応答の比べ（差は、うらの 4 例の `guarantees` の 4 項目だけ）、新しいテスト `tests/test_legal_actions_f1_v0_180.py`（8 件。元の文に戻すと失敗）、関連の 10 モジュール、版のあとの `preset_decks_v0_20`・`distribution`。検証用 AI の `v2_repeat` の行動・契約の値の指紋は変わらない（固定値は更新していない）。配布物の照らし（required=62・problems=0）、固定コミット `27ba35d7d325aabe4a8804c57e095e00fc3b81c6` の通常のインストールとスモーク
+- 版は 0.180.0（`behavior_digest` が変わった。`instrumentation_digest`・道具の識別・判定の規則の版は同じ）。0.179.0 の記録・スナップショットは 0.180.0 では再実行・復元できない（既存の設計）
+- 残る: GUI の追従、LOST_TARGET の根拠の登録（judge の規則 7）、ほかの保証の文の整理
+- 詳細: [legal-actions-f1-face-down-attack-guarantee.md](legal-actions-f1-face-down-attack-guarantee.md)
+
+## 検証用 AI: LOST_TARGET の根拠登録の設計（P1。2026-11-13。設計だけ・未実装）
+
+- `UNSUPPORTED_SECRET_PLAN_LOST_TARGET` の経路を、本人のうらのカードを指定（P1）・相手のうらのカードを指定（P2）・決定への回答（P3）・使い手がうら・処理の中の指定に分け、最初の登録の対象を P1 に限った
+- 根拠は、送信前の本人の観測（runner がエピソードの初めに取り、方策にも渡している view。`actors/<主体>.jsonl`）とエンジンのカードデータ（`card_is_basic_in_text`）。送信の値・診断だけでは本当のカードの条件を確かめられない。適用条件 L1〜L12、負のテスト N1〜N16、エンジンのテスト E1〜E6 を決めた
+- 実装の順序: エンジンのテストだけの追加（版は 0.180.0 のまま）→ judge の規則 7（TOOL_VERSION 9 を推奨。計画・完了の形式は同じ）→ 別の単位での s1 への当て直し（変わるのは 2 行だけの見込み。保存済みの 8,904 送信への静的な事前評価で、条件を満たすのは対象の 2 件だけ）
+- 採用の判断が残る: judge の入力を本人の観測へ広げるか（推奨: 広げる）、evidence の鍵（推奨: コード単位のまま）、根拠の矛盾の扱い（推奨: undetermined）。採らないなら undetermined を続ける
+- 詳細: [verification-ai-lost-target-own-face-down-design.md](verification-ai-lost-target-own-face-down-design.md)
+
+## 検証用 AI: LOST_TARGET の P1 の根拠登録（judge の規則 7。2026-11-14）
+
+- エンジンの根拠テスト `tests/test_lost_target_own_face_down_v0_180.py`（E1〜E6）: おもての使い手の特殊能力で本人のたねでないうらを指定すると、状態・乱数・ログ・決定・相手と観戦者の観測を変えずに `UNSUPPORTED_SECRET_PLAN_LOST_TARGET` で拒否する。たね・ベイビィならおもてにして進む。エンジンの動作・版（0.180.0）・識別は変えていない
+- judge の規則 7（`TOOL_VERSION` 9。計画・完了の形式は 6 のまま）: 送信前の本人の観測とカードデータ・`card_is_basic_in_text` で L1〜L12 をすべて確かめたときだけ known_stop。欠け・矛盾・対象外の経路は規則 6 と同じ undetermined（分類・停止方針も同じ）。単局の runner と `batch.judge_trace` は同じ `judge.submit_evidence` を呼ぶ
+- 保存済みの s1・r1 への当て直し（2026-11-14。判定・比較だけ）: 記録時の判定の基礎は今と同じ（basis 一致）。変わったのは s1 の P1 の 2 行だけ（undetermined → known_stop）。r1 の P3 は undetermined のまま。ほかの行・受理の中身・終わり方は同じ。元の証跡は変えていない（設計文書 14 章）
+- 残る: P2・P3 の登録
+- 詳細: [verification-ai-lost-target-own-face-down-design.md](verification-ai-lost-target-own-face-down-design.md) 13 章
+
+## 検証用 AI: LOST_TARGET の P3 の根拠登録の設計（2026-11-14。設計だけ・未実装）
+
+- 決定への回答でうらのカードを指定する経路を、本人のうら（P3s。本当のカードで受理か拒否かが決まる）と相手のうら（P3o。本当のカードによらず同じコード）に分けた。保存済みの r1 の 1 件は P3s
+- 推奨: P3s のうち、保存済みの実例の効果の型の `select_pokemon` だけを、送信前の本人の観測・カードデータ・エンジンの効果の登録で条件 D1〜D12 をすべて確かめたときだけ known_stop にする。記録の追加は要らない
+- 登録は、コード単位の入口のまま P3 の項目を別の鍵で 1 つ足す（P1 の条件・理由は変えない）。basis は P3 用の 7 ファイル。規則 8・`TOOL_VERSION` 10・形式 6 のまま（推奨）
+- 詳細: [verification-ai-lost-target-p3-decision-design.md](verification-ai-lost-target-p3-decision-design.md)
+
+## エンジンの不具合の候補: 指定でおもてにした［KEEP］とエネルギー・リムーブ（2026-11-14。調査。v0.181 で修正）
+
+- 相手のうらについたエネルギーをエネルギー・リムーブで選ぶと、内部の `RuntimeError` になる。本当のカードが［KEEP］を持つたねなら本物の処理で、ほかのカードでも置きかえの試しで起こる。
+  - 原因: 回答時の指定でおもてにしたあと、［KEEP］を確かめ直さずにトラッシュする（`require_discard_not_voided` の確かめの漏れ）。
+  - 構築盤面で確定した。new_game からの到達は未確認。
+- 修正案（`resume` の段階 3 の確かめ）と、E12 の期待値が直し方で変わること: [verification-ai-e12-energy-removal-keep-investigation.md](verification-ai-e12-energy-removal-keep-investigation.md)
+
+## v0.181: 指定でおもてにした［KEEP］とエネルギー・リムーブの修正（0.181.0）
+
+- エネルギー・リムーブ・超エネルギーリムーブで、答えの指定でおもてにしたカードが［KEEP］を持つたねなら、決定の時点と同じ KP1（`UNRESOLVED_KEEP_PROTECTED_TARGET`）の通常の拒否にする。
+  - v0.180 までは内部の `RuntimeError` だった。
+  - 本当のカードによらず、同じコード・同じ文になる。新しい裁定は入れていない。
+- behavior_digest と、検証用 AI の P1 の basis（`effects.py`）が変わった。道具の版・判定の規則・形式は同じ。配布の確かめの固定コミットは `a2b29e9`。
+- 詳細: [v0.181 の修正](keep-designated-energy-removal-v0.181.md)
+
+## v0.182: ポケモン交換おじさんの見せる 2 枚の識別（0.182.0）
+
+- 出来事 `return_to_deck`・`reveal_from_deck` に、見せたカードの `card_id` を加えた（`zones` の 2 つの関数のキーワードの引数 `identify`。既定は偽で、交換おじさんの 2 か所だけが指定）。
+  - 相手・観戦者が、見せた時点の閲覧用記録の出来事で識別できる。パソコン通信の `search_deck` は非公開のまま。
+  - ほかの 18 の呼ぶ箇所・配信・観測・閲覧用記録の形式・乱数・決定・候補は変えていない。新しい裁定は入れていない。
+- 状態: エンジンの出来事と閲覧用記録は修正済み。client_api（形式 1）のログの配信と GUI の表示は未実装。ほかの 18 の呼ぶ箇所と w1 の残り 57 件は未確認。
+- behavior_digest と、検証用 AI の P1・P3 の basis が変わった。道具の版・判定の規則・形式は同じ。配布の確かめの固定コミットは `95206ec`。
+- 詳細: [trader-reveal-identification-v0.182.md](trader-reveal-identification-v0.182.md)
+
+## 検証用 AI: LOST_TARGET の P3s の規則 8（2026-11-14。エンジン 0.181.0 で実装）
+
+- 判定の規則 8・`TOOL_VERSION` 10（計画・完了の形式は 6 のまま）。条件 D1〜D12 をすべて確かめたときだけ、根拠の鍵 `UNSUPPORTED_SECRET_PLAN_LOST_TARGET#P3` で known_stop にする（生の診断コードは変えない）。
+- P3 用 basis は 7 ファイル。P1 の判定・理由・basis は変えていない。単局とバッチは同じ入口（`batch.judge_trace` に `basis_p3`）。
+- 旧 r1（0.179.0 の記録）は `effects.py` が違うので basis が一致せず、当て直しても undetermined のまま（互換性の案は文書だけ）。
+- 詳細: [P3 設計 10 章](verification-ai-lost-target-p3-decision-design.md)
+- 次の小規模バッチの計画（通常の進行の枠 A と P3s 確認の枠 B）: [verification-ai-batch-plan-p3s-v0181.md](verification-ai-batch-plan-p3s-v0181.md)
+  - 実行（vai-batch-t1・t2。14 局すべて完了）: B の回帰の局で P3s に到達し、規則 8 で known_stop。A の通常の進行は拒否・停止なし（同じ文書 10 章）
+  - 開始の照合（約 11.7 秒）の原因の調査: [verification-ai-startup-check-investigation.md](verification-ai-startup-check-investigation.md)（エンジンのソースの毎回のコンパイル。改善案は設計だけ）
+  - S-1（外部の pyc キャッシュ）を次のバッチの外側の手順にした（対戦なしで区間 11.8 → 1.74〜1.83 秒を確認）: [verification-ai-pyc-cache-procedure.md](verification-ai-pyc-cache-procedure.md)
+  - 実運用（vai-batch-u1・4 局すべて完了）: 開始の照合 1.6〜1.7 秒、完全な照合・replay・観測の記録は従来どおり。S-1 を標準の手順にできると判断（同じ文書 9 章）
+- 未確認の操作・決定・規約の経路の棚卸しと、次の小規模バッチ（選択肢の数を伏せる決定と S2A の続行規約）: [verification-ai-coverage-inventory-next-batch.md](verification-ai-coverage-inventory-next-batch.md)
+  - 実行（vai-batch-w1〜w3・9 局すべて完了）: 伏せる 4 種類の決定の情報境界を観測の記録つきで確認（違反 0）、ER9 は規則 6 の条件を満たして known_stop、S2A の convention_applied を 3 閲覧者の公開ログで確認、既定の集合の準備の停止を受理 0 の観測で確認（[verification-ai-coverage-inventory-next-batch.md](verification-ai-coverage-inventory-next-batch.md) 10 章）
+  - 選んだカードの公開の識別の確認: ポケモン交換おじさんでもどしたカードを相手・観戦者が識別できない（ログは uid だけ。公開不足の不具合候補。残り 6 分類は未調査）: [verification-ai-w1-publication-audit.md](verification-ai-w1-publication-audit.md)
+  - 構築盤面での再現（もどす・探すの両方）と修正方式の設計（未実装。client_api がログを配らないので GUI の表示は別の段階）: [trader-reveal-identification-design.md](trader-reveal-identification-design.md)
+  - client_api の可視ログの配信の設計（入口に読み取りの要求 `log`。受理の時点の写しを位置で返す。形式 1 のまま。未実装。GUI の接続層の `hidden.seed` の扱いも要る）: [client-api-visible-log-delivery-design.md](client-api-visible-log-delivery-design.md)
+  - 0.185.0 で化石の発掘の山札の側（`reveal_from_deck` の `card_id`）とスロットゲームの束（`reveal_deck_top` の `card_ids`）を修正した（トラッシュの側は既存の公開のまま・GUI の束の表示と依存の更新は未実施・uid の方式全体は対象外）: [fossil-slot-reveal-v0.185.md](fossil-slot-reveal-v0.185.md)
+  - 化石の発掘とスロットゲームの束の公開の要件と最小の修正仕様（設計だけ。推奨: 化石の発掘の山札の側に `identify=True`、`reveal_deck_top` に `cards` と並行の `card_ids`。未実装・版は変えていない）: [fossil-slot-reveal-identification-design.md](fossil-slot-reveal-identification-design.md)
+  - 0.184.0 で D の 17 か所を修正した（見せたカードの `card_id`。共有のカードは実行していない・GUI の依存の更新は未実施・化石の発掘は判断待ち・スロットゲームの束全体は未修正）: [reveal-identify-v0.184.md](reveal-identify-v0.184.md)
+  - D の 17 の呼ぶ箇所の構築盤面での再現（17 か所とも、相手・観戦者に届く出来事は uid だけで識別できない。非公開の対照は維持）と修正範囲の確定（各呼ぶ箇所の `identify=True`。修正は未着手。化石の発掘・スロットゲームの束全体は別の判断）: [reveal-call-sites-repro-fix-design.md](reveal-call-sites-repro-fix-design.md)
+  - 交換おじさん以外の 18 の呼ぶ箇所の静的な分類: 識別の公開が要るのに出来事が uid だけ（交換おじさんと同じ原因の候補）17・未確定 1（化石の発掘）。実際の盤面・配信では未確認・修正は未着手: [reveal-call-sites-identification-audit.md](reveal-call-sites-identification-audit.md)
+  - w1 の公開の監査の残り 57 件（保存済みの記録）: 識別できる 32・正しく非公開 21・交換おじさんの探したカードの既知の不具合 4（0.182.0 の修正範囲）・新しい候補 0。w1 の 61 件はすべて確かめた: [verification-ai-w1-publication-audit-remaining.md](verification-ai-w1-publication-audit-remaining.md)
+  - 0.183.0 でエンジンの側を実装した（要求 `log`・閲覧者ごとの写し・最大 256 件・`baseline_end`・`CLIENT_LOG_POSITION_UNKNOWN`。GUI の接続・安全検査・表示は未実装）: [client-api-visible-log-v0.183.md](client-api-visible-log-v0.183.md)
+  - 0.182.0 で案 A を実装した（`return_to_deck`・`reveal_from_deck` に `card_id`。交換おじさんの 2 か所だけ）。エンジンの出来事と閲覧用記録は修正済み、client_api の配信・GUI は未実装、ほかの 18 の呼ぶ箇所と w1 の残り 57 件は未確認: [trader-reveal-identification-v0.182.md](trader-reveal-identification-v0.182.md)
+
+### 以前の記録（実装待ちのとき）
+
+- エンジンの根拠テスト E7〜E11（本人のうら）は成功した。judge の規則 8・`TOOL_VERSION` 10 は未実装。
+- 上の不具合の候補は P3s の条件に影響しない。影響するのは P3o の性質の記録（E12）の扱いだけ（調査の文書 9 章）
+- 0.181.0 で E12 の期待値は KP1 に変わった。再開するときの基点・basis の注意: [v0.181 の修正](keep-designated-energy-removal-v0.181.md) 9 章

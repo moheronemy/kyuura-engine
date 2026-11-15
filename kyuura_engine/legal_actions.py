@@ -292,6 +292,19 @@ GUARANTEE_ATTACK = {
     "after_acceptance": "評価していない（コイン・ワザの途中の決定・きぜつ・サイド・バトル場に出す決定・反応で、決定待ち・停止がありうる。決定は受理のあと answer_decision の候補で答える）",
     "supported_scope": "ワザの候補は supported にしない（宣言の前の先読みと受理のあとを評価していないため）",
 }
+# v0.180（F-1。docs/legal-actions-f1-face-down-attack-guarantee.md）: 本人のうらのバトル場のポケモンのワザの候補（_face_down_attack_candidate）だけの保証。GUARANTEE_ATTACK の
+# 「check_use_attack を使う」は、うらの分岐では成り立たない（呼ばない）。うらであること（公開）だけで選び、本当のカードの違いでは分けない。候補・入力・判定の動作は変えていない
+GUARANTEE_FACE_DOWN_ATTACK = {
+    "preconditions": "番のプレイヤーの main の段階で、本人のバトル場のポケモンがうら（マチスの秘策）であること。選べるワザは、本人が知る本当のカード（観測の real。本人の応答に"
+                     "だけ出す）の印刷のワザの並び。エンジンが宣言を受け付ける前の確かめ（resolution.flow.check_use_attack。必要なエネルギー・特殊状態・ワザを使えない効果などを"
+                     "含む）と宣言の前の先読みは、候補の作成でも入力の検査でも呼ばない（状態の複製の上でおもてにして試さない）。宣言といっしょに選ぶものは示さない。入力の検査（check）は"
+                     "形（ワザの番号が 1 つで、ほかを選ばないこと）だけを確かめる",
+    "acceptance": "保証しない。check が valid でも、エンジンの確かめを通したことを意味しない（必要なエネルギーが足りるか・ワザを使えるかは確かめていない）。送信のあとの判定は"
+                  "エンジンがコマンドの入口から行い（_reveal_for_action を含む）、受け付けなければコマンドごと拒否する。最終の判定は apply_command",
+    "after_acceptance": "評価していない（受理のあとに何が起こるか（ワザを使ったか、その続きの決定・停止を含む）を予告しない）",
+    "supported_scope": "うらのバトル場のワザの候補は unverified（候補の作成・入力の検査でエンジンの確かめを呼んでいない）。unverified は受理・必要なエネルギー・ワザの実行の完了の"
+                       "保証ではなく、公開の許可でもない",
+}
 GUARANTEE_END_TURN = {
     "preconditions": "番のプレイヤーの main の段階（require_turn と同じ公開の条件）だけを確かめた",
     "acceptance": "保証しない（最終の判定は apply_command）",
@@ -1273,9 +1286,9 @@ def _attack_candidate(state: GameState, actor: int) -> _Candidate | None:
     active = state.players[actor].active
     if active is None:
         return None
-    guarantees = dict(GUARANTEE_ATTACK)
     if state.is_face_down(active):
-        return _face_down_attack_candidate(state, active, guarantees)
+        return _face_down_attack_candidate(state, active, dict(GUARANTEE_FACE_DOWN_ATTACK))  # v0.180（F-1）: うらの分岐だけの保証（うらであることは公開）
+    guarantees = dict(GUARANTEE_ATTACK)
     specs: dict[str, tuple] = {}
     attack_options, verdicts = [], {}
     for option in available_attacks(state, active):

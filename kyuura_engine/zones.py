@@ -537,7 +537,8 @@ def search_deck_to_hand(state: GameState, player: int, card: int, *, power: str 
     state.add_event("search_deck", player=player, card=card, **extra)
 
 
-def reveal_deck_to_hand(state: GameState, player: int, card: int, *, effect: str | None = None, power: str | None = None) -> None:
+def reveal_deck_to_hand(state: GameState, player: int, card: int, *, effect: str | None = None, power: str | None = None,
+                        identify: bool = False) -> None:
     """自分の山札のカード ``card`` を、相手に見せてから、同じ uid のまま手札の最後に加える（v0.24。ポケモン交換おじさんの「あなたの山札から
     「たねポケモン」または「進化カード」を1枚選び出し、相手プレイヤーに見せてから、手札に加える。」。p.259）。山札の残りの並びは変えない
     （切るのは呼ぶ側）。
@@ -546,11 +547,16 @@ def reveal_deck_to_hand(state: GameState, player: int, card: int, *, effect: str
     ``"reveal_from_deck"`` の ``card`` は全員に見える情報（見せる指示がある）。選べたほかの山札のカードはログに書かない。選んでよいかの確認は
     呼ぶ側が済ませる。v0.38: ワザの効果（キョウのポッポの「でんれい」）で見せるときは、ログに ``effect``（ワザ）を加える（トレーナーのログの形は
     v0.24 と同じ）。v0.43: 特殊能力（わるいハクリューの［しんかのひかり］）で見せるときは ``power``（``PowerKey`` の文字列）を加える。
+    v0.182: ``identify`` が真のときだけ、ログに見せたカードの ``card_id`` を加える（相手・観戦者が、見せた時点でどのカードかを識別できる。
+    docs/trader-reveal-identification-design.md の案 A）。既定は偽で、ログの形は今までどおり。真を渡すのはポケモン交換おじさん
+    （``effects.TradePokemonWithDeck``）だけ。ほかの呼ぶ側の扱いは未確認（変えていない）。
     """
     _deck_to_hand(state, player, card)
     extra = {} if effect is None else {"effect": effect}
     if power is not None:
         extra["power"] = power
+    if identify:
+        extra["card_id"] = state.cards[card].card_id
     state.add_event("reveal_from_deck", player=player, card=card, **extra)
 
 
@@ -564,20 +570,23 @@ def _deck_to_hand(state: GameState, player: int, card: int) -> None:
     p.hand.append(card)
 
 
-def return_hand_to_deck(state: GameState, player: int, card: int) -> None:
+def return_hand_to_deck(state: GameState, player: int, card: int, *, identify: bool = False) -> None:
     """自分の手札のカード ``card`` を、相手に見せてから、同じ uid のまま自分の山札の一番下にもどす（v0.24。ポケモン交換おじさんの「手札から
     「たねポケモン」または「進化カード」を1枚選び、相手プレイヤーに見せてから、あなたの山札にもどす。」。p.259）。
 
     山札のどこにもどすかは書かれていない。このカードのあとで山札を選び出し、よく切る（どこにもどしても選べるものは同じ）ので、一番下
     （``deck`` の最後）にもどす（実装上の仮定。docs/pokemon-trader-v0.24.md の PT7）。ログの ``"return_to_deck"`` の ``card`` は全員に
     見える情報（見せる指示がある）。選んでよいかの確認は呼ぶ側が済ませる。手札にない・持ち主が違うなら ``RuntimeError``（状態を変える前）。
+    v0.182: ``identify`` が真のときだけ、ログに見せたカードの ``card_id`` を加える（``reveal_deck_to_hand`` と同じ。既定は偽で、ログの形は今までどおり。
+    真を渡すのはポケモン交換おじさんだけ）。
     """
     p = state.players[player]
     if card not in p.hand or state.cards[card].owner != player:
         raise RuntimeError(f"プレイヤー {player} の手札のカード {card} を山札にもどせない（確認の漏れ。エンジンの不具合）")
     p.hand.remove(card)
     p.deck.append(card)
-    state.add_event("return_to_deck", player=player, card=card)
+    extra = {"card_id": state.cards[card].card_id} if identify else {}
+    state.add_event("return_to_deck", player=player, card=card, **extra)
 
 
 def return_hand_cards_to_deck(state: GameState, player: int, cards: tuple[int, ...], *, effect: str | None = None,

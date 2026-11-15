@@ -21,9 +21,10 @@ from kyuura_engine.client_api import ClientHub
 from kyuura_engine.observation import visible_log
 
 from . import actions as B
-from .judge import is_face_down_power, judge_face_down_power_accepted, judge_normal, judge_termination
+from .judge import accepted_content_check, is_face_down_power, judge_normal, judge_recorded_accepted_content, judge_run_termination, submit_evidence
 from .metrics import Metrics, repetition_summary
 from .policies import STAGE, TUPLE, BoundaryPolicy, MixedPolicy, RulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
+from .reach import ReachBudget, ReachPolicy
 from kyuura_engine.replay_record import checks
 
 from .records import RecordingGame, canonical
@@ -93,6 +94,7 @@ class Config:
     repeat_threshold: int = 2  # V2 の補完: rules-v2 の閾値（同じ番の同じ操作の受理の回数）
     run_id: str = "v0"
     decklists: tuple | None = None  # V3-2: 固定デッキの代わりに使うデッキリスト（2 つ。None なら deck0・deck1 の固定デッキ）
+    reach: dict | None = None  # 到達目的の方策 reach の設定（policy が reach のときだけ。reach.validate_settings。docs/verification-ai-reach-policy.md）
 
 
 class SubmitWithoutCheck(Exception):
@@ -126,8 +128,12 @@ class _Stop(Exception):
 
 
 class Runner:
-    def __init__(self, config: Config, *, clock=time.monotonic, policy_factory=None, wrap_endpoint=None, negative=None, until=None):
+    def __init__(self, config: Config, *, clock=time.monotonic, policy_factory=None, wrap_endpoint=None, negative=None, until=None, recorder=None):
         self.config = config
+        if recorder is not None and negative is not None:
+            raise ValueError("主体別の観測の記録（recorder）は negative と組み合わせない（変異の送信は記録の行に対応付けない）")
+        # 主体別の観測・更新・公開ログの記録（observe.ObservationRecorder。None なら従来と同じ動作）。検証者の側だけで使い、方策・行動生成に渡さない
+        self.recorder = recorder
         self.negative = negative  # V3-1: 通常の進行の中の negative（None なら V0〜V2 と同じ動作）
         self.until = until  # V3-2: 受理のあとに呼び、真なら SCRIPT_COMPLETE で止める（None なら V0〜V3-1 と同じ動作）
         self.limits = config.limits
@@ -163,8 +169,11 @@ class Runner:
                 self._loop_once()
         except _Stop as stop:
             termination, detail = stop.termination, stop.detail
+        except MemoryError:  # バッチ: 資源の枯渇は対戦の結果（exception）に変えない（KeyboardInterrupt・SystemExit は Exception でないので、もとから通る）
+            raise
         except Exception as error:  # 入口は例外を投げない約束。ランナーの誤りも含めて、ほかの分類に変えずに記録する
             termination, detail = EXCEPTION, {"type": type(error).__name__, "message": str(error), "traceback": traceback.format_exc()}
+        self._rec("finish", termination, None if self.game is None else self.game.state)
         record = None if self.game is None else self.game.close()
         self.metrics.axis("termination", termination)
         if self._episode is not None and self._episode["result"] is None:
@@ -178,12 +187,13 @@ class Runner:
                                       **({"epsilon": p.epsilon, "mix_seed": p.mix_seed, "episodes": dict(p.episodes), "rules_version": p.rules_version}
                                          if isinstance(p, MixedPolicy) else {}),
                                       **({"repeat_threshold": p.memory.threshold, "demote_after": p.memory.demote_after}
-                                         if isinstance(p, RulePolicy) and p.memory is not None else {})}
+                                         if isinstance(p, RulePolicy) and p.memory is not None else {}),
+                                      **({"reach": p.reach, "reach_state": p.state()} if isinstance(p, ReachPolicy) else {})}
                              for k, p in self.policies.items()},
                 "limits": asdict(self.limits), "elapsed_seconds": round(self.clock() - self._started, 3),
                 "distribution": self.config.distribution, "metrics": self.metrics.to_dict(),
                 "repetition": repetition_summary(self.trace, self.actor_logs),
-                **({"negative": self.negative.summary(), "judge_termination": self._judge_termination(termination)} if self.negative is not None else {})}
+                **({"negative": self.negative.summary(), "judge_termination": self._judge_termination(termination, detail)} if self.negative is not None else {})}
 
     # ---------------------------------------------------------------- 進行
 
@@ -199,9 +209,23 @@ class Runner:
             raise _Stop(START_REJECTED, {"outcome": result.outcome, "diagnostic_id": None if result.diagnosis is None else result.diagnosis.diagnostic_id})
         self.hub = ClientHub(self.game, verifier=self._on_verifier)
         self.endpoints = {0: self.wrap_endpoint(0, self.hub.player(0)), 1: self.wrap_endpoint(1, self.hub.player(1)), HOST: self.wrap_endpoint(HOST, self.hub.host())}
+        self._rec("start", self.game.state)
 
     def _on_verifier(self, actor, result) -> None:
         self.last_result = result
+        self._rec("result", actor, result)
+
+    def _rec(self, event: str, *args) -> None:
+        """記録の呼び出し（recorder がなければ何もしない）。記録の例外は記録の失敗として残し、対戦の進行・判定には伝えない（MemoryError は run と同じく通す）。"""
+        recorder = self.recorder
+        if recorder is None or recorder.failure is not None:
+            return
+        try:
+            getattr(recorder, "on_" + event)(*args)
+        except MemoryError:
+            raise
+        except Exception as error:  # noqa: BLE001
+            recorder.fail(event, error)
 
     def _elapsed(self) -> float:
         return self.clock() - self._started
@@ -318,7 +342,9 @@ class Runner:
             if cands["situation"] != L.ACTOR_TO_ACT:
                 raise _Stop(INCONSISTENCY, {"reason": "waiting_actor_not_to_act", "actor": actor, "situation": cands["situation"],
                                             "empty_reason": cands["empty_reason"]})
-            in_scope, scope, reasons = self._scope(cands, unbuildable)
+            # reach: 範囲のプロファイルを方策に問う（目標を試すあいだは boundary、試行を使ったあと・保護を使い切ったあとは deep）。ほかの方策は計画のプロファイルのまま
+            profile = policy.scope_profile(own_view) if hasattr(policy, "scope_profile") else self.config.profile
+            in_scope, scope, reasons = self._scope(cands, unbuildable, profile)
             self.metrics.fetch(self.position, cands, in_scope, reasons)
             if not in_scope:
                 raise _Stop(INPUT_UNAVAILABLE, {"actor": actor, "empty_reason": cands["empty_reason"], "scope": scope,
@@ -333,8 +359,10 @@ class Runner:
             candidate = in_scope[index]
             self.metrics.selected(candidate)
             kind = candidate["kind"]
-            allowed = B.FALLBACK_PROCESSABILITY if scope["fallback_unverified"] or self.config.profile == "boundary" else B.DEEP_PROCESSABILITY
+            allowed = B.FALLBACK_PROCESSABILITY if scope["fallback_unverified"] or profile == "boundary" else B.DEEP_PROCESSABILITY
             entry = self._attempt(actor, candidate, reason, scope)
+            if hasattr(policy, "scope_profile"):
+                entry["scope_profile"] = profile
             log = {"type": "attempt", "n": entry["n"], "position": self.position, "candidates": response,
                    "choice": {"candidate": candidate["id"], "reason": reason}}
             self.actor_logs[actor].append(log)
@@ -387,7 +415,7 @@ class Runner:
                 choices, picks, meaning = [], [], []
                 self.metrics.built(kind, [], None)
             entry.update({"build": "ok", "choices": choices, "picks": picks, "meaning": meaning})
-            if self.config.profile == "boundary":  # V3-2: 候補の区分と完成した入力の区分を分けて記録する
+            if profile == "boundary":  # V3-2: 候補の区分と完成した入力の区分を分けて記録する
                 entry["candidate_class"] = candidate.get("processability")
                 entry["input_processability"] = B.input_processability(stages, choices)
             log["choice"].update({"choices": choices, "picks": picks})
@@ -420,6 +448,7 @@ class Runner:
                 elif is_face_down_power(candidate) and stages:  # U-R3a（規則 5）: うらのカードの特殊能力の check も構造だけなので、契約から作った入力が通らないのは矛盾
                     self._anomaly("face_down_power_check_invalid_for_generated_input", entry, {"refusal": checked["response"].get("refusal"), "choices": choices})
                 self.counters["check_invalid"] += 1
+                self._rec("check_invalid", entry, self.game.state)
                 tried.add(signature)
                 rejections += 1
                 self._after_refusal_like(entry, actor)
@@ -434,21 +463,33 @@ class Runner:
             operation_id = f"{self.config.run_id}-{self.counters['operations'] + 1:06d}"
             self.last_result = None
             sent = submit_checked(endpoint, handle, choices, checked, operation_id=operation_id)
+            if hasattr(policy, "notify_submit"):  # reach: submit を実際に呼んだことだけを送った主体の方策へ（送った候補と操作の鍵。結果は渡さない）
+                policy.notify_submit(candidate, key)
             self.counters["operations"] += 1
             entry["operation_id"] = operation_id
             entry["submit"] = self._submit_entry(sent)
             log["submit"] = sent
             outcome = sent.get("outcome")
+            self._rec("submitted", entry, operation_id, sent, before_state, self.game.state,
+                      self.counters["accepted"] + 1 if outcome == D.ACCEPTED else None)
             self._cover("outcome", outcome)
             self.metrics.submitted(kind, outcome, (sent.get("result") or {}).get("status") if outcome == D.ACCEPTED else None)
             if self.negative is not None:
-                verdict, why = judge_normal(candidate, meaning, entry["submit"], stages=stages)  # 規則 4: P6 の段は stages の cost_evaluation で分ける
+                # 規則 6・7: 逐次バッチ（batch.judge_trace）と同じ入口・同じ値（この送信の行・trace・本人の送信前の観測 actor_logs・記録の header）で根拠を決める。
+                # 判定のための observe・candidates・inputs・check・submit はしない（既に取って保存した値だけ）
+                evidence = submit_evidence(entry, trace=self.trace, actor_logs=self.actor_logs, header=self._record_header)
+                verdict, why = judge_normal(candidate, meaning, entry["submit"], stages=stages, evidence=evidence)  # 規則 4: P6 の段は stages の cost_evaluation で分ける
                 entry["judge"] = {"verdict": verdict, "reasons": why}
-            if outcome == D.ACCEPTED and self.negative is not None and is_face_down_power(candidate):
-                # 規則 5: 受理の中身（おもてにして使った・トラッシュ）を、受理のあとに加わった公開のログ（観戦者に見える出来事）で分ける
+            content_check = accepted_content_check(entry)
+            if content_check is not None:
+                # 規則 5（U-R3a）・規則 4（P6）: 受理の中身（おもてにして使った・にげた・たねでないのでトラッシュ）を分けるために、受理のあとに加わった公開のログ
+                # （観戦者に見える出来事）を検証者の trace に記録する（方策には渡さない。逐次バッチも同じ記録に同じ判定を当てる: judge.judge_recorded_accepted_content）。
+                # 受理のあとの決定（promote_active など）への回答は、別の試みの entry に記録される
                 public_before = len(visible_log(before_state, None))
-                verdict, why = judge_face_down_power_accepted(candidate, visible_log(self.game.state, None)[public_before:])
-                entry["judge_face_down_power_accepted"] = {"verdict": verdict, "reasons": why}
+                entry["public_events_after_accept"] = visible_log(self.game.state, None)[public_before:]
+                if self.negative is not None:
+                    _same, verdict, why = judge_recorded_accepted_content(entry)
+                    entry["judge_" + content_check] = {"verdict": verdict, "reasons": why}
             if outcome == D.ACCEPTED:
                 self.counters["accepted"] += 1
                 self._cover("accepted_kind", candidate["kind"])
@@ -486,13 +527,21 @@ class Runner:
             if rejections >= self.limits.rejections_per_position:
                 raise _Stop(NO_PROGRESS, {"actor": actor, "reason": "rejections_per_position", "rejections": rejections})
 
+    def _record_header(self) -> dict[str, Any] | None:
+        """規則 7 の L12 だけが読む、今の対戦の完全な記録の header（識別と依存）。記録を持たない対戦（テストの fixture など）では None。"""
+        record = getattr(self.game, "record", None)
+        if not callable(record):
+            return None
+        from .batch import record_header
+
+        return record_header(record())
+
     def negative_stop(self, detail: dict[str, Any]) -> None:
         """V3-1: 変異の前後で副作用の疑いがあれば、その対戦の通常の進行を止める（前後の証跡は変異の記録にある）。"""
         raise _Stop(NEGATIVE_SIDE_EFFECT, detail)
 
-    def _judge_termination(self, termination) -> dict[str, Any]:
-        accepted = [e for e in self.trace if e.get("type") == "attempt" and (e.get("submit") or {}).get("outcome") == D.ACCEPTED]
-        verdict, why = judge_termination(termination, accepted[-1]["candidate"].get("processability") if accepted else None)
+    def _judge_termination(self, termination, detail=None) -> dict[str, Any]:
+        verdict, why = judge_run_termination(termination, detail, self.trace)  # 逐次バッチと同じ入口（halted_known では公開の停止の値を渡す）
         return {"verdict": verdict, "reasons": why}
 
     def _attempt(self, actor, candidate, reason, scope) -> dict[str, Any]:
@@ -515,7 +564,7 @@ class Runner:
             out["verifier"] = {"diagnostic_id": r.diagnosis.diagnostic_id, "category": r.diagnosis.category, "engine_code": r.verifier.engine_code}
         return out
 
-    def _scope(self, cands: dict[str, Any], unbuildable: dict[str, str]):
+    def _scope(self, cands: dict[str, Any], unbuildable: dict[str, str], profile: str | None = None):
         """プロファイル deep の範囲（仕様 4.5 節）: 処理可能性が supported・may_stop_later、入力を返す、表示だけでない候補。範囲の中に候補がなければ、
         unverified も許す（deep_fallback_unverified として記録）。範囲から除いた候補は理由ごとに数える。入力を作れなかった候補は、同じ状態では選び直さない。"""
         display = set(cands["coverage"]["display_only_kinds"])
@@ -543,7 +592,7 @@ class Runner:
                     reasons[c["id"]] = why
             return chosen
 
-        if self.config.profile == "boundary":  # V3-2: unverified を範囲に入れる（表示だけ・入力を返さない・実行できない区分は外したまま）
+        if (profile or self.config.profile) == "boundary":  # V3-2: unverified を範囲に入れる（表示だけ・入力を返さない・実行できない区分は外したまま）
             chosen = pick(B.FALLBACK_PROCESSABILITY)
             return chosen, {"in_scope": len(chosen), "excluded": excluded, "fallback_unverified": False, "profile": "boundary"}, reasons
         chosen = pick(B.DEEP_PROCESSABILITY)
@@ -600,6 +649,7 @@ class Runner:
         """拒否・断り・check の invalid のあと: ほかの閲覧者に公開の更新が出ない。"""
         for audience in (0, 1, "spectator", "host"):
             got = self.hub.take_updates(audience)
+            self._rec("drained", audience, got)
             if got:
                 self._anomaly("update_after_rejection", entry, {"audience": audience, "count": len(got)})
 
@@ -608,6 +658,7 @@ class Runner:
             self._anomaly("accepted_without_refetch", entry, {})
         for audience in (0, 1, "spectator", "host"):
             got = self.hub.take_updates(audience)
+            self._rec("drained", audience, got)
             numbers = [u.get("number") for u in got]
             if numbers != [self.counters["accepted"]]:
                 self._anomaly("update_numbers", entry, {"audience": audience, "numbers": numbers, "expected": self.counters["accepted"]})
@@ -639,6 +690,15 @@ def make_policies(config: Config, policy_factory=None) -> dict[Any, Any]:
         host = UniformPolicy(host_seed(config.host_seed), STAGE)
     elif config.policy == "rules":
         players = {p: RulePolicy(player_seed(config.policy_seed, p), version=config.rules_version, threshold=config.repeat_threshold) for p in (0, 1)}
+        host = UniformPolicy(host_seed(config.host_seed), STAGE)
+    elif config.policy == "reach":
+        if config.rules_version != 2:
+            raise ValueError("reach の土台は rules-v2（rules_version 2）")
+        if config.reach is None:
+            raise ValueError("reach の設定（config.reach）がない")
+        budget = ReachBudget(config.reach.get("tries_per_game") if isinstance(config.reach, dict) else None)  # 局ごとの 1 回（両方の主体で共有する実行の制御）
+        players = {p: ReachPolicy(player_seed(config.policy_seed, p), actor=p, settings=config.reach, budget=budget, threshold=config.repeat_threshold)
+                   for p in (0, 1)}
         host = UniformPolicy(host_seed(config.host_seed), STAGE)
     elif config.policy == "mixed":
         players = {p: MixedPolicy(player_seed(config.policy_seed, p), epsilon=config.epsilon, mix_seed_text=mix_seed(config.policy_seed, p),

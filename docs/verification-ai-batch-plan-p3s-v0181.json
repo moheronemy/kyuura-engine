@@ -1,0 +1,119 @@
+{
+  "status": "draft",
+  "status_note": "利用者の採用の前の下書き。実行できる確定計画ではない。確定計画は、実行の単位で tools.verification_ai.batch plan が書く plan.json・plan.sha256。実行時にしか分からない値（実行コミット・合法性の確かめ・実装識別の照合・plan.sha256）は null で、未確認",
+  "document": "docs/verification-ai-batch-plan-p3s-v0181.md",
+  "date": "2026-11-14",
+  "base": {
+    "branch": "claude/vai-batch-plan-p3s-v0181",
+    "from": "6a57ee93549caddf7991bafb6fd3fb99a4d0c412",
+    "from_branch": "claude/lost-target-p3s-judge-rule8-v0181",
+    "implementation_commit": "db8f2f2",
+    "code_same_as_implementation_commit": true,
+    "code_same_note": "db8f2f2 から 6a57ee9 までで tools・kyuura_engine・tests の差はない（git diff --stat が空）。origin/main（7b3d53c）の子孫で、main には入っていない"
+  },
+  "identity_expected": {
+    "tool_name": "tools.verification_ai.batch",
+    "tool_version": 10,
+    "tool_digest": "7b56ed5ad5d02fea30c336a10d810d4d4b6164b5f30b14b95796fb2736d50622",
+    "engine_version": "0.181.0",
+    "behavior_digest": "5e0cb4acafd075f7f4f7d861bf948ac69df36a9e15a9cb8f6beba01e898c7238",
+    "instrumentation_digest": "d34367481dd69bd72c715e1977feb93b3c19596a01f3b53a104eca2e7e06146d",
+    "plan_format": "kyuura-vai-batch-plan/6",
+    "complete_format": "kyuura-vai-batch-complete/6",
+    "judge_rules": 8,
+    "p3_basis": "bb6d1730818a589d4a75f9efe96fcc0d03e04c082d623d644fc6cf523aa70435",
+    "p1_basis": "d1729754fde6c50d1f3944904189a8e5bcf193fa39943c8e88e0643d85dd2a28",
+    "confirmed": null,
+    "note": "P3s の規則 8 の単位（lost-target-p3s-judge-rule8-v0181 の identity_after.json）の値。実行の単位で plan が書く identity と照らすまで未確認。新しい記録の D12 は (a) behavior_digest の一致で決まり、basis は渡さない"
+  },
+  "implementation_changes_required": [],
+  "user_caps": {"max_games_total": 24, "budget_seconds_total": 600, "evidence_total_mib": 1024, "execution": "単一プロセス・逐次（計画ごとに 1 局ずつ。同時に走らせない）", "observation": "両枠とも有効"},
+  "total": {"games": 14, "budget_seconds": 600, "evidence_max_mib": 1024, "plans": 2, "order": ["vai-batch-t1", "vai-batch-t2"]},
+  "common": {
+    "out": "C:/dev/kyuura-engine-verification-vai",
+    "engine_commit": null,
+    "tool_commit": null,
+    "commit_note": "実行の単位で決める（tools・kyuura_engine が db8f2f2 と同じコミット。値は実行の前に記録する）",
+    "decklist_file": "C:/dev/kyuura-engine-verification-vai/verifier/runs/vai-batch-r/decklists/decklist-L67-U.json",
+    "decklist": {
+      "label": "L67-U",
+      "file_sha256": "097b7db9621cc28ece7f26188feb4e4163ce02166020fce510b94b356ded5e40",
+      "content_sha256": "72690ceea38984aadb80d52be05e1e0ab5db544478387ab40ec7807a7e330e67",
+      "expanded_sha256_r1": "5fb91539995ceb23993439fa66a327becc1a06ff4b12bd6694ef0eff33c4c4f3",
+      "cards": 60,
+      "legality_on_0_181_0": null,
+      "legality_note": "r1・d1 の実行の前（0.179.0）に ok。0.181.0 では batch decklist と plan の deck_problems を実行の単位で当てる（未実施）"
+    },
+    "conventions": {"cli": null, "key": "CS-KYUURA-CURRENT@1", "note": "--conventions を付けない（既定）"},
+    "observation_cli": "--observation",
+    "stop_policy": {
+      "cli": "--undetermined-evidence-missing continue",
+      "continue_terminations": ["game_over", "halted_known", "input_unavailable", "no_progress", "limit_operations", "limit_accepted", "limit_turns", "limit_time"],
+      "stop_terminations": ["halted_unclassified", "failed", "state_integrity", "exception", "inconsistency", "start_rejected", "negative_side_effect", "api_contract_unknown"],
+      "on_unknown_termination": "stop",
+      "on_suspect": "stop",
+      "on_known_stop": "continue",
+      "on_undetermined": {"evidence_missing_stop": "continue", "unknown_diagnostic": "stop", "contract_unknown": "stop", "no_progress": "stop", "accepted_content_unrecorded": "stop", "unclassified": "stop"},
+      "on_anomaly": "stop",
+      "on_verification_problem": "stop",
+      "on_observation_problem": "stop",
+      "acknowledge": "停止したら証跡を確かめて報告し、--acknowledge-stop・unlock は使わない（利用者の判断を待つ）"
+    },
+    "batch_limits_fixed_by_tool": {"game_reserve_seconds": 150, "evidence_reserve_mib": 64, "max_attempts_per_game": 3},
+    "game_limits_default": {"operations": 2000, "accepted": 1000, "turns": 200, "seconds": 120.0, "rejections_per_position": 16, "draws_per_position": 64},
+    "run_procedure": {
+      "command": "batch run --stop-after-games 1 を 1 回ずつ逐次に呼ぶ",
+      "before_each_game": "必要量 = max(128 MiB, その計画で保存済みの最大 1 局の証跡 × 1.5)。残り（計画の上限 − 計画のディレクトリの現在量）と出力先の空きの両方が必要量以上のときだけ呼ぶ。足りなければ未着手を残して終える",
+      "never": ["予算の延長", "局の追加・seed の差し替え", "記録の削除・移動・圧縮", "--acknowledge-stop", "unlock", "ほかのプロセスの検索・終了"],
+      "note": "128 MiB・1.5 倍は運用上の余裕で、1 局の最大の量の保証ではない"
+    },
+    "seed_use": "ゲーム・方策・ホストの seed を同じ値にする（batch の既定）",
+    "seed_selection": {
+      "regression": [4101, 4102],
+      "regression_note": "P3s が出た r1 の結果を見て選んだ回帰条件。旧記録の再開・復元・正式な replay ではなく、0.181.0・規則 8 の新しい計画での新規実行。同じ経路への到達を保証しない",
+      "new": [6001, 6002, 6003, 6004, 6005],
+      "new_note": "6001 からの連続区間を事前に固定（結果で選ばない・探索しない）。保存済みの plan.json・header.json 298 個（16 の検証ルート）に 6001〜6100 の seed はない（最大 5021）"
+    }
+  },
+  "plans": [
+    {
+      "batch": "vai-batch-t1",
+      "frame": "A 通常の進行（0.181.0 での受理・拒否・未対応・停止の観測）",
+      "decklist0": "L67-U",
+      "decklist1": "L67-U",
+      "modes": ["rules-v2", "boundary"],
+      "seeds": [6001, 6002, 6003],
+      "seed_kind": "new",
+      "games": 6,
+      "game_ids_order": "g001-rules-v2-s6001, g002-boundary-s6001, g003-rules-v2-s6002, g004-boundary-s6002, g005-rules-v2-s6003, g006-boundary-s6003",
+      "observation": true,
+      "max_games": 6,
+      "budget_seconds": 250,
+      "evidence_max_mb": 320,
+      "estimate": {"time_central_seconds": 89.2, "time_window_seconds": 100, "time_pessimistic_seconds": 112.0, "bytes_central": 169666332, "bytes_pessimistic": 216570742, "bytes_window": 192834992, "source": "verifier/runs/vai-batch-plan-p3s-v0181/out/estimate.json"},
+      "p3s_note": "P3s を狙わない。両デッキにディフェンダーと秘策があるので、出れば同じ規則 8 で判定し、グループ（枠 A）の結果として数える",
+      "plan_sha256": null
+    },
+    {
+      "batch": "vai-batch-t2",
+      "frame": "B P3s 確認（r1 の回帰条件 ＋ 新しい seed）",
+      "decklist0": "L67-U",
+      "decklist1": "L67-U",
+      "modes": ["reach-p6", "reach-u-r3a"],
+      "seeds": [4101, 4102, 6004, 6005],
+      "seed_kind": {"4101": "regression", "4102": "regression", "6004": "new", "6005": "new"},
+      "games": 8,
+      "game_ids_order": "g001-reach-p6-s4101, g002-reach-u-r3a-s4101, g003-reach-p6-s4102, g004-reach-u-r3a-s4102（ここまで r1 の計画と同じ局の識別・デッキ・方式・seed・並び）, g005-reach-p6-s6004, g006-reach-u-r3a-s6004, g007-reach-p6-s6005, g008-reach-u-r3a-s6005",
+      "groups": {"regression": ["g001", "g002", "g003", "g004"], "new_seed": ["g005", "g006", "g007", "g008"]},
+      "observation": true,
+      "max_games": 8,
+      "budget_seconds": 350,
+      "evidence_max_mb": 704,
+      "estimate": {"time_central_seconds": 163.1, "time_window_seconds": 200, "time_pessimistic_seconds": 382.6, "bytes_central": 303167281, "bytes_pessimistic": 737039895, "bytes_window": 595488176, "source": "verifier/runs/vai-batch-plan-p3s-v0181/out/estimate.json"},
+      "regression_check": "g001〜g004 の config（seed・方式・方策の設定 config.reach・プロファイル・分布・単局の上限・規約集合）とデッキの内容・展開が、r1 の plan.json の同じ局と同じこと（識別・コミット・合法性の記録・書いた時刻は違ってよい）を、読むだけのスクリプトで照らす",
+      "p3s_unreached_is_result": true,
+      "plan_sha256": null
+    }
+  ],
+  "not_in_this_plan": ["reach 版 2 の方式（reach が働いているあいだ、秘策で置くカードにたねを優先するので、P3s の前提を作りにくい）", "新しいデッキ・方策（別の実装・採用の単位）", "旧 r1 の当て直し・basis の互換性", "P3o・P2 の登録"]
+}

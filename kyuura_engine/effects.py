@@ -6777,7 +6777,7 @@ class TradePokemonWithDeck(TrainerEffect):
     def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         if decision.kind == RETURN_TO_DECK:
             (returned,) = choices
-            return_hand_to_deck(state, use.player, returned)
+            return_hand_to_deck(state, use.player, returned, identify=True)  # v0.182: 見せたカードを識別できるように card_id を書く
             options = sorted(uid for uid in state.players[use.player].deck if _is_pokemon_card(state, uid, text_era(use.card_id)))
             push_trainer_decision(
                 state, use, kind=SEARCH_DECK, player=use.player, options=options, context=(("returned", returned),),
@@ -6785,7 +6785,7 @@ class TradePokemonWithDeck(TrainerEffect):
             )
             return
         (card,) = choices
-        reveal_deck_to_hand(state, use.player, card)
+        reveal_deck_to_hand(state, use.player, card, identify=True)  # v0.182: 同上
         shuffle_deck(state, use.player)
 
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
@@ -9416,7 +9416,7 @@ class SearchEvolutionCardToHand(PowerEffect):
     def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         if choices[0] not in deck_evolution_cards(state, use.player):
             raise RuntimeError(f"しんかのひかりで選んだカード {choices} が、山札の進化カードではない（エンジンの不具合）")
-        reveal_deck_to_hand(state, use.player, choices[0], power=str(use.key))
+        reveal_deck_to_hand(state, use.player, choices[0], power=str(use.key), identify=True)
         shuffle_deck(state, use.player, power=str(use.key))
 
     def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
@@ -17537,7 +17537,7 @@ class SearchDeckTrainer(TrainerEffect):
             if card not in self.candidates(state, use):
                 raise RuntimeError(f"{use.card_id} で選んだカード {card} が、山札の選べるカードではない（決定の確認の漏れ。エンジンの不具合）")
             if self.reveal:
-                reveal_deck_to_hand(state, use.player, card)
+                reveal_deck_to_hand(state, use.player, card, identify=True)
             else:
                 search_deck_to_hand(state, use.player, card)
         shuffle_deck(state, use.player)
@@ -18572,13 +18572,26 @@ class DiscardAttachedEnergyTrainer(TrainerEffect):
         opponent = 1 - use.player
         if stage == 2:
             _, target = state.find_pokemon(choices[0])
+            self._require_not_keep_voided(state, use, target)  # v0.181: 指定でおもてにした（段階 3 の決定を出す前）
             push_trainer_decision(state, use, kind=DISCARD_OPPONENT_ENERGY, player=use.player, options=tuple(target.energy),
                                   min_choices=self.opponent_cards, max_choices=self.opponent_cards, context=(("stage", 3), ("target", target.pokemon_id)))
             return
         holders = [p for p in state.players[opponent].in_play() if any(uid in p.energy for uid in choices)]
         if len(holders) != 1:
             raise RuntimeError(f"はがすエネルギーカード {choices} が、相手の場のポケモン 1 匹についていない（エンジンの不具合）")
+        self._require_not_keep_voided(state, use, holders[0])  # v0.181: 指定でおもてにした（トラッシュする前）
         discard_attached_energy_cards(state, opponent, holders[0], choices, trainer=use.card, user=use.player)
+
+    def _require_not_keep_voided(self, state: GameState, use: TrainerUse, pokemon: PokemonInPlay) -> None:
+        """v0.181（docs/keep-designated-energy-removal-v0.181.md）: 答えで選んだ相手のポケモン（選んだエネルギーカードのついているポケモン）が、今の場で［KEEP］によって
+        このトレーナーのトラッシュする効果がなくなるなら、決定の時点の KP1（``_voided``・``unresolved_choices``）と同じ通常の拒否（``KEEP_TARGET_CODE``）。
+
+        決定を出す時点では、うらのカード（マチスの秘策）は特殊能力を持たないので［KEEP］を数えない。答えでそのうらを効果の対象として指定し（``engine._designate_answer``）、
+        おもてにした本当のカードが［KEEP］を持つたねなら、ここで初めてはたらく。トラッシュの効果がなくなる対象を選んだときの扱いは KP1 と同じ記録で決まらない問いなので、
+        効果なしで受理せずに止める（状態は ``_apply_once`` の複製の上なので、呼び出し元は変わらない。理由の文に本当のカードを書かない）。おもての［KEEP］は決定の時点で KP1
+        の選択になっているので、ここには来ない。"""
+        if pokemon.energy and energy_discard_void(state, pokemon, cause=DISCARD_BY_TRAINER, by_player=use.player) is not None:
+            raise UnsupportedError(KEEP_TARGET_CODE, KEEP_TARGET_REASON)
 
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
         what = f"トレーナー {use.card_id}"
@@ -29546,7 +29559,7 @@ class LookTopTakePokemonThenShuffle(TrainerEffect):
         (card,) = choices
         if card not in self.candidates(state, use):
             raise RuntimeError(f"{use.card_id} で選んだカード {card} が、見たカードのポケモンのカードではない（決定の確認の漏れ。エンジンの不具合）")
-        reveal_deck_to_hand(state, use.player, card)
+        reveal_deck_to_hand(state, use.player, card, identify=True)
         shuffle_deck(state, use.player)
 
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
@@ -29614,7 +29627,8 @@ class SearchNamedFromDeckOrDiscard(TrainerEffect):
             if card not in self.candidates(state, use):
                 raise RuntimeError(f"{use.card_id} で選んだカード {card} が、選べるカードではない（決定の確認の漏れ。エンジンの不具合）")
             if card in p.deck:
-                reveal_deck_to_hand(state, use.player, card)
+                # v0.185（docs/fossil-slot-reveal-v0.185.md）: 見せたカード自身の card_id を書く（名前からの推論に頼らない）。トラッシュの側は変えない（公開の場所）
+                reveal_deck_to_hand(state, use.player, card, identify=True)
             else:
                 return_discard_to_hand(state, use.player, (card,))
                 state.add_event("retrieve_trainer", player=use.player, card=card, trainer_card=use.card)
@@ -31416,7 +31430,7 @@ class CoinsSearchBasicEnergyPerHeads(TrainerEffect):
         for card in sorted(choices):
             if card not in options:
                 raise RuntimeError(f"エネルギーアークで選んだカード {card} が、山札の基本エネルギーカードではない（エンジンの不具合）")
-            reveal_deck_to_hand(state, use.player, card)
+            reveal_deck_to_hand(state, use.player, card, identify=True)
         shuffle_deck(state, use.player)
 
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
@@ -31487,7 +31501,7 @@ class ReturnHandEnergyThenCoinSearchBasicEnergy(TrainerEffect):
             (card,) = choices
             if card not in self._hand(state, use):
                 raise RuntimeError(f"エネルギー増幅装置で選んだカード {card} が、手札のエネルギーカードではない（エンジンの不具合）")
-            return_hand_to_deck(state, use.player, card)
+            return_hand_to_deck(state, use.player, card, identify=True)
             shuffle_deck(state, use.player)
             if not _trainer_coin(state, use):
                 return
@@ -31500,7 +31514,7 @@ class ReturnHandEnergyThenCoinSearchBasicEnergy(TrainerEffect):
         for card in sorted(choices):
             if card not in options:
                 raise RuntimeError(f"エネルギー増幅装置で選んだカード {card} が、山札の基本エネルギーカードではない（エンジンの不具合）")
-            reveal_deck_to_hand(state, use.player, card)
+            reveal_deck_to_hand(state, use.player, card, identify=True)
         shuffle_deck(state, use.player)
 
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
@@ -31758,7 +31772,7 @@ class RevealDeckTopTakeSameNamed(TrainerEffect):
     """あなたの山札をよく切り、その上から ``look`` 枚のカードを見て、相手プレイヤーにも見せる。その中に 2 枚以上「同じ名前のカード」があったら、それらをあなたの手札に加える。その後、
     「同じ名前のカード」でなかったカードを山札にもどし、その山札をよく切る（v0.80。スロットゲーム（neo1-090。kyuura の種類 ``goldenrod_game_corner``））。
 
-    - 切る → 見せる（ログ ``reveal_deck_top`` の ``cards`` は公開）→ 同じ名前のカード（``same_name_groups``）をすべて見せて手札に加える（``zones.reveal_deck_to_hand``）→ 切る
+    - 切る → 見せる（ログ ``reveal_deck_top`` の ``cards`` は公開。v0.185 から同じ長さ・同じ順の ``card_ids`` も）→ 同じ名前のカード（``same_name_groups``）をすべて見せて手札に加える（``zones.reveal_deck_to_hand``）→ 切る
       （同じ名前のカードがなくても、見せた 3 枚をもどして切る）。決定はない（選ぶものがない）
     - 山札が ``look`` 枚より少ないときは TOP1（使う前）
     """
@@ -31777,9 +31791,12 @@ class RevealDeckTopTakeSameNamed(TrainerEffect):
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         shuffle_deck(state, use.player)
         cards = tuple(state.players[use.player].deck[:self.look])
-        state.add_event("reveal_deck_top", player=use.player, count=self.look, cards=cards, trainer_card=use.card)
+        # v0.185（docs/fossil-slot-reveal-v0.185.md）: 見せた束のカードの ID を、cards と同じ長さ・同じ順に（card_ids[i] は cards[i] のカード。同じ ID も位置ごと）。
+        # 束を見せた時点（切ったあと・手札に加える前）の値で、あとの状態から補わない。順は cards と同じというだけで、あとの山札の順の意味はない
+        card_ids = tuple(state.cards[uid].card_id for uid in cards)
+        state.add_event("reveal_deck_top", player=use.player, count=self.look, cards=cards, card_ids=card_ids, trainer_card=use.card)
         for card in same_name_groups(state, cards):
-            reveal_deck_to_hand(state, use.player, card)
+            reveal_deck_to_hand(state, use.player, card, identify=True)
         shuffle_deck(state, use.player)
 
 
@@ -31824,7 +31841,7 @@ class LookTopTakeTrainerThenShuffleLock(TrainerEffect):
         (card,) = choices
         if card not in self.candidates(state, use):
             raise RuntimeError(f"ポケモンギアで選んだカード {card} が、見たカードのトレーナーカードではない（エンジンの不具合）")
-        reveal_deck_to_hand(state, use.player, card)
+        reveal_deck_to_hand(state, use.player, card, identify=True)
         shuffle_deck(state, use.player)
         add_hand_trainer_lock(state, use)
 
@@ -34669,7 +34686,7 @@ class EachPlayerSearchToolOnEntry(EntryPower):
         if choices:
             if choices[0] not in deck_tool_cards(state, player):
                 raise RuntimeError(f"おくりもので選んだカード {choices} が、山札のポケモンのどうぐではない（エンジンの不具合）")
-            reveal_deck_to_hand(state, player, choices[0], power=str(use.key))
+            reveal_deck_to_hand(state, player, choices[0], power=str(use.key), identify=True)
         else:
             state.add_event("gift_take_none", player=player, power=str(use.key), reason="declined" if deck_tool_cards(state, player) else "no_target")
         shuffle_deck(state, player, power=str(use.key))
@@ -34884,7 +34901,7 @@ class BreederCoupleSearch(TrainerEffect):
         if choices:
             if choices[0] not in options:
                 raise RuntimeError(f"ポケモン育て屋夫婦で選んだカード {choices} が、山札の進化カードではない（エンジンの不具合）")
-            reveal_deck_to_hand(state, use.player, choices[0])
+            reveal_deck_to_hand(state, use.player, choices[0], identify=True)
             taken = taken + (choices[0],)
         else:
             _trainer_take_none(state, use, "deck", no_target=True)
@@ -40511,7 +40528,7 @@ class SearchDeckWithBenchLettersToHand(PowerEffect):
     def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         if choices[0] not in self.options(state, use):
             raise RuntimeError(f"特殊能力 {use.key} で選んだカード {choices} が、山札の選べるカードではない（エンジンの不具合）")
-        reveal_deck_to_hand(state, use.player, choices[0], power=str(use.key))
+        reveal_deck_to_hand(state, use.player, choices[0], power=str(use.key), identify=True)
         shuffle_deck(state, use.player, power=str(use.key))
 
     def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:

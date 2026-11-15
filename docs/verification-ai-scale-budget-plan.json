@@ -1,0 +1,119 @@
+{
+  "status": "draft",
+  "status_note": "利用者の採用の前の下書き。実行できる確定計画ではない。確定計画は、実行の単位で tools.verification_ai.batch plan が書く plan.json・plan.sha256。実装後・実行時にしか分からない識別値と、未実施の合法性の確かめは null",
+  "document": "docs/verification-ai-scale-budget.md",
+  "date": "2026-11-13",
+  "base": {
+    "branch": "claude/vai-scale-budget",
+    "from": "b8cd148b48199a0c567ac4d8cbeed26ab46bf584",
+    "r2_run_commit": "22a23a29c54fad48e8041b7ecfdd7a6a2035a3fd",
+    "code_same_as_r2_run_commit": true,
+    "code_same_note": "22a23a2 から b8cd148 までの差は docs/ の 4 ファイルだけ（tools・kyuura_engine・tests は同じ）"
+  },
+  "identity_expected": {
+    "tool_name": "tools.verification_ai.batch",
+    "tool_version": 8,
+    "tool_digest": "dbca28bd06ba4602a1f3c334f8b0154067149cf35a460777cb7e4e6865afceba",
+    "engine_version": "0.179.0",
+    "behavior_digest": "67c4c15bafcf00b81f7abe7ef2396742181d27744b2af7efd1657f4c90767fca",
+    "plan_format": "kyuura-vai-batch-plan/6",
+    "complete_format": "kyuura-vai-batch-complete/6",
+    "judge_rules": 6,
+    "confirmed": null,
+    "note": "r2 の実行の値。実行の単位で plan が書く identity と照らすまで未確認"
+  },
+  "implementation_changes_required": [],
+  "implementation_candidates_not_required": ["I-1 集計・照合の時間の記録", "I-2 証跡の予備の指定", "I-3 局ごとのメモリの記録"],
+  "user_caps": {"max_games_total": 100, "budget_seconds_total": 900, "evidence_total_mib": 2048, "execution": "単一プロセス・逐次（計画ごとに 1 プロセス。同時に走らせない）"},
+  "total": {"games": 42, "budget_seconds": 900, "evidence_max_mib": 1792, "plans": 2, "order": ["vai-batch-s1", "vai-batch-s2"]},
+  "common": {
+    "out": "C:/dev/kyuura-engine-verification-vai",
+    "engine_commit": null,
+    "tool_commit": null,
+    "commit_note": "実行の単位で決める（tools・kyuura_engine が 22a23a2 と同じコミット。値は実行の前に記録する）",
+    "decklist_file": "C:/dev/kyuura-engine-verification-vai/verifier/runs/vai-batch-r2-run/decklists/decklist-L67-URC.json",
+    "decklist": {
+      "label": "L67-URC",
+      "content_sha256": "ff8b0872fd50b86db1e45a0fdc3f6503aecd364bcb5785a0b669605146478287",
+      "expanded_sha256": "0cebfe9afdfcea2dff9703e8414b909e26191742125a838d3bea68e840d5e6c2",
+      "cards": 60,
+      "legality_for_these_plans": null,
+      "legality_note": "r2 の実行の前に ok（problems 空）。この 2 計画では batch decklist と plan の deck_problems を実行の単位で当てる（未実施）"
+    },
+    "conventions": {"cli": null, "key": "CS-KYUURA-CURRENT@1", "note": "--conventions を付けない（既定）"},
+    "stop_policy": {
+      "cli": "--undetermined-evidence-missing continue",
+      "continue_terminations": ["game_over", "halted_known", "input_unavailable", "no_progress", "limit_operations", "limit_accepted", "limit_turns", "limit_time"],
+      "stop_terminations": ["halted_unclassified", "failed", "state_integrity", "exception", "inconsistency", "start_rejected", "negative_side_effect", "api_contract_unknown"],
+      "on_unknown_termination": "stop",
+      "on_suspect": "stop",
+      "on_known_stop": "continue",
+      "on_undetermined": {"evidence_missing_stop": "continue", "unknown_diagnostic": "stop", "contract_unknown": "stop", "no_progress": "stop", "accepted_content_unrecorded": "stop", "unclassified": "stop"},
+      "on_anomaly": "stop",
+      "on_verification_problem": "stop",
+      "on_observation_problem": "stop",
+      "acknowledge": "停止したら証跡を確かめて報告し、--acknowledge-stop・unlock は使わない（利用者の判断を待つ）"
+    },
+    "batch_limits_fixed_by_tool": {"game_reserve_seconds": 150, "evidence_reserve_mib": 64, "max_attempts_per_game": 3},
+    "game_limits_default": {"operations": 2000, "accepted": 1000, "turns": 200, "seconds": 120.0, "rejections_per_position": 16, "draws_per_position": 64},
+    "run_options": {"stop_after_games": null, "acknowledge_stop": [], "unlock": false},
+    "seed_use": "ゲーム・方策・ホストの seed を同じ値にする（batch の既定）",
+    "seed_selection": "5001 からの未使用の連続区間を事前に固定（既存の計画の seed は 1〜4202。到達の結果・局の内容で選ばない・探索しない）"
+  },
+  "plans": [
+    {
+      "batch": "vai-batch-s1",
+      "frame": "A 通常の進行を広く確かめる",
+      "decklist0": "L67-URC",
+      "decklist1": "L67-URC",
+      "modes": ["rules-v2", "boundary"],
+      "seeds": [5001, 5002, 5003, 5004, 5005, 5006, 5007, 5008, 5009, 5010, 5011, 5012, 5013, 5014, 5015],
+      "games": 30,
+      "game_ids_order": "seed ごとに方式を並べる: g001-rules-v2-s5001, g002-boundary-s5001, …, g029-rules-v2-s5015, g030-boundary-s5015",
+      "observation": false,
+      "observation_cli": "--no-observation",
+      "max_games": 30,
+      "budget_seconds": 480,
+      "evidence_max_mb": 768,
+      "estimate": {"time_seconds": 275.279, "time_window_seconds": 330.0, "bytes": 559148473, "evidence_window_bytes": 738197504, "source": "verifier/runs/vai-scale-budget/estimate.json"},
+      "cannot_confirm": ["観測の前後", "主体ごとの更新", "公開ログの範囲", "観戦者の情報境界"],
+      "plan_sha256": null
+    },
+    {
+      "batch": "vai-batch-s2",
+      "frame": "B 到達目的（P6・U-R3a）",
+      "decklist0": "L67-URC",
+      "decklist1": "L67-URC",
+      "modes": ["reach2-p6", "reach2-u-r3a"],
+      "seeds": [5016, 5017, 5018, 5019, 5020, 5021],
+      "games": 12,
+      "game_ids_order": "g001-reach2-p6-s5016, g002-reach2-u-r3a-s5016, …, g011-reach2-p6-s5021, g012-reach2-u-r3a-s5021",
+      "observation": true,
+      "observation_cli": "--observation",
+      "max_games": 12,
+      "budget_seconds": 420,
+      "evidence_max_mb": 1024,
+      "estimate": {"time_seconds": 229.16, "time_window_seconds": 270.0, "bytes": 504709865, "evidence_window_bytes": 1006632960, "source": "verifier/runs/vai-scale-budget/estimate.json"},
+      "memory_reference_bytes": 797843456,
+      "memory_reference_note": "r1 の観測つきの受理上限の局のあとのプロセスの累積ピーク。参考値で、上限ではない",
+      "plan_sha256": null
+    }
+  ],
+  "storage": {"method": "現行の完全保存", "change_required": false, "not_recommended": ["異常局だけを完全に保存する間引き", "ハッシュの照合の省略"], "not_done_here": ["圧縮", "削除", "移動", "形式の変更"]},
+  "not_measured": [
+    "数百 MB 以上の完了局の再ハッシュの時間（開始の scan・集計）",
+    "aggregate の所要時間",
+    "局ごとの固有のメモリのピーク・マシンの空きメモリ",
+    "99 局を超える局数での working set",
+    "L67-URC での rules-v2・boundary の時間・量",
+    "reach 版 2 の受理上限の局の有無と量",
+    "到達の頻度"
+  ],
+  "evidence": {
+    "unit": "C:/dev/kyuura-engine-verification-vai/verifier/runs/vai-scale-budget",
+    "public": "public/runs/vai-scale-budget/summary.json",
+    "manifest_sha256_before": null,
+    "manifest_sha256_after": null,
+    "manifest_note": "このファイルはマニフェストの更新の前にコミットするので null。値はマニフェストの更新ログ（証跡の外）と作業の報告に残す"
+  }
+}
