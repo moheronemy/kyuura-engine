@@ -1317,6 +1317,16 @@ UPDATES = [
                          "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"],
      "new_entries": ["continuation_agreements（AGR-PLAY-TR3-* の 4 項目。項目ごとの出典 source）"],
      "unchanged": "研究の停止コードは active のまま（厳密側・S2a・PO の集合では今のまま止まる）。族・安全境界・規約（conventions）・方針の案は変えていない"},
+    {"version": "0.187.0", "work": "停止の方針の台帳・設計案・実行時の場面の索引の正式な同期（案 B: テスト・道具だけの語の役割と schema_version 2）",
+     "document": "docs/token-sync-v0.187.md",
+     "base": {"commit": "c2c50e86eff0fe335bad70bf250c74fbd4681bab", "branch_of_base": "claude/test-only-token-impl（生成の道具・分類の入力 d83f8f3 を含む。main には未取り込み）"},
+     "approval": ("利用者の採用は案 B（2026-11-16。台帳の分類の方針の採用で、ゲームの裁定・規約の採用ではない）と、その正式な同期と版上げの指示（2026-11-16）。"
+                  "新しい分類の方針は加えていない。0.186.0 のあとに入力へ写した蓄積の差の修正（docs/stop-ledger-drift-audit.md）と TR3 の採用の記録も、この同期で初めて正式な台帳に入った"),
+     "changed_entries": ["テスト・道具だけの 12 件の status・token_role・token_role_basis（fixture 9・mutation_operand 1・non_code_identifier 1 は test_only、historical_engine_code 1 は historical）",
+                         "蓄積の差（停止箇所の行番号・テストの参照・current_stop・implementation_sites・到達可能性。docs/stop-ledger-drift-audit.md の A〜D と F の修正）"],
+     "new_entries": ["token_classification（入力・役割の意味・状態・問題）", "counts.test_tool_only_by_role", "schema_version 2"],
+     "unchanged": ("研究の停止コード・事例・族・安全境界・規約（conventions）・方針の案は変えていない。停止コード → 場面の対応と current_behavior は同じで、"
+                   "実行時の場面の索引からテスト・道具だけの 8 件が消えた（新規 4 件は入らない）。ゲームの処理・裁定・規約の内容は変えていない")},
 ]
 # 分類の時点（基点 3e25ac5）の集計（counts）の写し。今の counts は現行コードから作り直した値
 COUNTS_AT_CLASSIFICATION = {"research_stop_codes": 316, "runtime_codes_outside_table": 40, "runtime_codes_outside_table_active": 39, "test_tool_only_codes": 8, "cases": 15, "codes_with_cases": 7, "problems_new": 4, "problems_from_inventory": 28, "conventions": 18, "internal_guard_sites_current": 602, "internal_guard_sites_matched_to_inventory": 600, "internal_guard_sites_new_since_inventory": ["kyuura_engine/engine.py:445", "kyuura_engine/resolution/programs.py:10739"], "safety_boundaries": 8, "families": 23, "decisions": 29, "by_reachability": {"constructed_board": 145, "legal_sequence": 25, "static_only": 185}, "by_family": {"PF-COPY-TRANSFORM": 34, "PF-DAMAGE-SCOPE": 22, "PF-EFFECT-TIMING": 13, "PF-ENERGY-TYPE": 21, "PF-ESP-REDO": 4, "PF-HIDDEN-INFORMATION": 8, "PF-HISTORY-LASTING": 20, "PF-KNOCKOUT-TIMING": 15, "PF-POWER-SUPPRESSION": 11, "PF-PROTECTED-TARGET-EFFECT": 12, "PF-REACTION-DURING-PROCESS": 10, "PF-RUNTIME-CONTINUATION": 15, "PF-RUNTIME-COPY-GAPS": 5, "PF-RUNTIME-DATA": 5, "PF-RUNTIME-GENERIC": 1, "PF-RUNTIME-REGISTRY": 7, "PF-RUNTIME-SEARCH-LIMIT": 6, "PF-SETUP-PLAY-AS-POKEMON": 5, "PF-SIMULTANEOUS-ORDER": 26, "PF-STATED-COUNT-SHORT": 11, "PF-TEXT-READING": 34, "PF-UP-TO-ZERO": 13, "PF-USE-WITHOUT-EFFECT": 57}, "by_play_group": {"1": 316, "2": 39, "3": 89, "4": 6, "5": 20, "6": 1}, "by_mechanism": {"answer_rejection": 13, "command_rejection": 339, "deck_validation": 1, "deferred_interruption": 2, "pokemon_check_halt": 10, "setup_halt": 2}, "by_status": {"active": 402, "fixed": 5, "historical": 2, "unverified": 1}, "note": "停止コード・事例・規約・内部ガードは別の数。事例はコードの下位で、コードの数に足さない。棚卸しと同じ項目は独立した不足として数えない"}
