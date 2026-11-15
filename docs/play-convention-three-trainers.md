@@ -6,6 +6,8 @@
 - 前提: [突風の GW5 の判断用の資料](gust-gw5-decision.md)（11 章の画像照合をふくむ）・[3 枚の未裁定の整理](prestop-three-trainers.md)・[規約集合の基盤（v0.142）](ruleset-foundation-v0.142.md)・[モードの設計](ruleset-mode-design.md)・[S2a の続行規約（v0.143）](play-policy-s2a-v0.143.md)・[停止の方針の判断事項](stop-policy-decisions.md)・[共通規約の設計案](play-policy-family-plan.md)。
 - 証跡: `kyuura-engine-verification-vai/verifier/runs/play-convention-three-trainers/`。
 
+2026-11-15 の追記: 利用者が 3 条件とも B（使えない・カードを消費しない。通常の使用と代用の使用に同じ条件）を採用し、0.186.0 で、新しい開発用の集合 `CS-KYUURA-PLAY-TR3@1` の続行規約として実装した（7.2 節の 7 項目は推奨値。停止の方針の台帳は作り直していない。GUI の追従は未着手）: [v0.186](play-convention-tr3-v0.186.md)。以下はその前の判断の時点の記述です。
+
 この文書は「史実の裁定の確定」ではなく、「未裁定の場面をプレイ用にどう扱うか」の設計です。厳密モード（今の挙動の集合 `CS-KYUURA-CURRENT@1`）の扱いは変えません。
 
 ## 0. 先に結論
