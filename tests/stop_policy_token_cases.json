@@ -1,0 +1,35 @@
+{
+ "description": "tests/test_stop_policy_token_roles_v0_186.py の入力（案 B。docs/test-only-token-design.md）。停止コードの形の文字列はこのファイル（.py でないのでスキャナの走査の外）に置き、テストが一時の入力へ展開する。expected_roles は今のリポジトリの 12 語の期待（out/tokens.json の対応表と同じ）。real_codes はリポジトリの実在の停止コードの例",
+ "expected_roles": {
+  "UNRESOLVED_TEST": "fixture",
+  "UNRESOLVED_TEST_AFTER_COIN": "fixture",
+  "UNRESOLVED_TEST_EFFECT": "fixture",
+  "UNRESOLVED_TEST_FORM": "fixture",
+  "UNRESOLVED_TEST_PREFLIGHT": "fixture",
+  "UNRESOLVED_X": "fixture",
+  "UNRESOLVED_MIND_GAMES_CHAOS_GYM": "fixture",
+  "UNRESOLVED_NOT_IN_TABLE": "fixture",
+  "UNRESOLVED_OTHER": "fixture",
+  "UNRESOLVED_EFFECT_AFTER_NO_DAMAGES": "mutation_operand",
+  "UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE": "historical_engine_code",
+  "UNSUPPORTED_CONTRACT": "non_code_identifier"
+ },
+ "real_codes": {
+  "tr3": ["UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH", "UNRESOLVED_SWITCH_WITHOUT_BENCH", "UNRESOLVED_POTION_WITHOUT_DAMAGE"],
+  "out_of_scope": ["UNRESOLVED_POTION_UNDAMAGED_TARGET", "UNRESOLVED_LEAVE_LOCK_NO_EFFECT", "UNRESOLVED_MIND_GAMES_CHAOS_GYM_ORDER"],
+  "mutation_pair": "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE"
+ },
+ "synthetic": {
+  "fixture": "UNRESOLVED_SYN_FIXTURE",
+  "mutation": "UNRESOLVED_SYN_MUTATION",
+  "mutation_pair": "UNRESOLVED_SYN_REAL",
+  "historical": "UNRESOLVED_SYN_HISTORICAL",
+  "identifier": "UNSUPPORTED_SYN_IDENTIFIER",
+  "unclassified": "UNRESOLVED_SYN_UNCLASSIFIED",
+  "moved_to_engine": "UNRESOLVED_SYN_MOVED",
+  "engine_and_tests": "UNRESOLVED_SYN_ENGINE_AND_TESTS",
+  "note_only": "UNRESOLVED_SYN_NOTE_ONLY",
+  "real_but_absent": "UNRESOLVED_SYN_REAL_ABSENT",
+  "stale": "UNRESOLVED_SYN_STALE"
+ }
+}

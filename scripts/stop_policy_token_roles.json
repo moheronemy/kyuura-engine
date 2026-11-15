@@ -1,0 +1,17 @@
+{
+ "description": "停止の方針の台帳の分類の入力（案 B。docs/test-only-token-design.md 3 章）: エンジンに出ず、テスト・道具の文字列にだけ出る語の役割の明示の登録。識別子だけの語（non_code_identifier）は自動で判定するので登録しない。各行は役割・根拠・出現のファイル（evidence。スキャナの出現と照らす）を持つ。mutation_operand は対の実在のコード（paired_code）、historical_engine_code は外した版（removed_in）とその語を書いた文書（documents）を持つ。この .json はスキャナの走査の外（.py でない）なので、登録そのものが出現の証拠にならない",
+ "adopted": "2026-11-16 の利用者の採用（案 B）",
+ "tokens": {
+  "UNRESOLVED_TEST": {"role": "fixture", "basis": "テストの登録表・偽の効果が投げる架空の停止コード（UnsupportedError の第 1 引数。テスト専用の文）", "evidence": ["tests/test_coin_attacks.py", "tests/test_contract_adapter_v0_16.py", "tests/test_effect_preflight_v0_3d.py"]},
+  "UNRESOLVED_TEST_AFTER_COIN": {"role": "fixture", "basis": "テストの偽の効果が、コインとダメージのあとに投げる架空のコード", "evidence": ["tests/test_self_damage.py"]},
+  "UNRESOLVED_TEST_EFFECT": {"role": "fixture", "basis": "テストの偽の効果が、効果の途中で投げる架空のコード", "evidence": ["tests/test_slowking_mind_games_v0_132.py"]},
+  "UNRESOLVED_TEST_FORM": {"role": "fixture", "basis": "mock.patch で attack_state_stop_after が返す架空のコード", "evidence": ["tests/test_damage_modifiers_condition_bonuses_v0_108.py"]},
+  "UNRESOLVED_TEST_PREFLIGHT": {"role": "fixture", "basis": "テストの偽の確かめが返す架空のコード", "evidence": ["tests/test_confusion_attacks.py"]},
+  "UNRESOLVED_X": {"role": "fixture", "basis": "記録・規約の照会・検証用 AI の判定のテストの架空のコード（規約の場面でないコードの例など）", "evidence": ["tests/test_cross_version_compatibility.py", "tests/test_play_policy_s2a_v0_143.py", "tests/test_verification_ai_batch.py"]},
+  "UNRESOLVED_MIND_GAMES_CHAOS_GYM": {"role": "fixture", "basis": "候補の試行のテストが投げる架空の UnsupportedError（実在の UNRESOLVED_MIND_GAMES_CHAOS_GYM_ORDER とは別の名前。エンジンにはない）", "evidence": ["tests/test_legal_actions_pt5t_c1_v0_179.py"]},
+  "UNRESOLVED_NOT_IN_TABLE": {"role": "fixture", "basis": "検証用 AI の判定のテストで、診断のカタログにない停止コードの例（stop_not_in_catalog）", "evidence": ["tests/test_verification_ai_v0178_follow.py", "tests/test_verification_ai_v0179_follow.py"]},
+  "UNRESOLVED_OTHER": {"role": "fixture", "basis": "検証用 AI の判定の規則 6 のテストで、公開のコードが違う場合の例（public_code_differs）", "evidence": ["tests/test_verification_ai_er9_evidence.py"]},
+  "UNRESOLVED_EFFECT_AFTER_NO_DAMAGES": {"role": "mutation_operand", "basis": "変異の道具の V03（研究の対応表の実在のコードの名前を誤らせる変異の置きかえの値）", "evidence": ["tools/mutants.py"], "paired_code": "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE"},
+  "UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE": {"role": "historical_engine_code", "basis": "v0.2f〜v0.3c にエンジンが投げた実在のコード（self_damage_problem）。v0.3d で原典の根拠（p.90 の解説）が見つかり、自分へのダメージにも弱点・抵抗力を計算するようにして外した。今はテストの説明文と文書にだけ出る。裁定が解決済みという読み替えではなく、エンジンから外したコードの記録", "evidence": ["tests/test_self_damage.py"], "removed_in": "v0.3d（3654be2）", "documents": ["docs/architecture-v0.2f.md", "docs/api-review.md"]}
+ }
+}

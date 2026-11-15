@@ -1591,6 +1591,125 @@ CODE_DECISION = {"UNRESOLVED_MULLIGAN_COMPENSATION": ["DEC-MULLIGAN-COMPENSATION
                  "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT": ["DEC-DEFERRED-RESUME"], "UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET": ["DEC-INFO-LEAK-FIXES"],
                  "UNRESOLVED_STATED_CARDS_SHORT": ["DEC-INFO-LEAK-FIXES"]}
 
+# ---------------------------------------------------------------------------------------------------------------------------------------------------
+# テスト・道具だけの語の役割（案 B。2026-11-16 の利用者の採用。docs/test-only-token-design.md 3 章）。台帳には役割と根拠つきで残し、実際の停止と区別する。
+# 状態が active・unverified でないものは、場面の索引・設計案の場面に入らない（build_play_policy_family_plan.scenes_from_ledger の既存のフィルタ）
+# ---------------------------------------------------------------------------------------------------------------------------------------------------
+LEDGER_SCHEMA_VERSION = 2  # 2: テスト・道具だけの語の token_role・token_role_basis・状態 test_only、counts.test_tool_only_by_role、token_classification
+TOKEN_ROLES_INPUT = ROOT / "scripts" / "stop_policy_token_roles.json"  # 明示の登録（.py でないのでスキャナの走査の外。登録が出現の証拠にならない）
+TOKEN_ROLE_FIXTURE, TOKEN_ROLE_MUTATION, TOKEN_ROLE_HISTORICAL = "fixture", "mutation_operand", "historical_engine_code"
+TOKEN_ROLE_IDENTIFIER, TOKEN_ROLE_UNCLASSIFIED = "non_code_identifier", "unclassified"
+REGISTRABLE_TOKEN_ROLES = (TOKEN_ROLE_FIXTURE, TOKEN_ROLE_MUTATION, TOKEN_ROLE_HISTORICAL)
+TOKEN_STATUS = {TOKEN_ROLE_FIXTURE: "test_only", TOKEN_ROLE_MUTATION: "test_only", TOKEN_ROLE_IDENTIFIER: "test_only",
+                TOKEN_ROLE_HISTORICAL: "historical", TOKEN_ROLE_UNCLASSIFIED: "unverified"}  # 未分類は保守的に場面の索引に残す（実際の停止を落とさない）
+TOKEN_ROLE_MEANINGS = {
+    TOKEN_ROLE_FIXTURE: "テストが作った架空の値（エンジンでは投げない）",
+    TOKEN_ROLE_MUTATION: "変異の道具の値（実在のコードの名前を誤らせる置きかえ。エンジンでは投げない）",
+    TOKEN_ROLE_HISTORICAL: "過去にエンジンが投げた実在のコード（今はエンジンにない。外した版と文書を根拠に持つ。裁定の解決の記録ではない）",
+    TOKEN_ROLE_IDENTIFIER: "停止コードでない識別子（テスト・道具の識別子の名前としてだけ出る。自動の判定）",
+    TOKEN_ROLE_UNCLASSIFIED: "未分類（分類の入力の不足。--check が失敗する）",
+}
+# 診断の区分（--check の問題の先頭）。生成物の古さ（GENERATED_STALE）と分類の入力の不足・矛盾を分ける
+TAG_INPUT_MISSING, TAG_CONFLICT, TAG_REVIEW, TAG_STALE_REGISTRATION = "分類の入力の不足", "分類の矛盾", "分類の要確認", "分類の登録が古い"
+GENERATED_STALE = "生成物が古い"
+
+
+def load_token_roles(path: pathlib.Path = TOKEN_ROLES_INPUT) -> dict:
+    return load_json(path)["tokens"] if path.exists() else {}
+
+
+def real_stop_codes() -> set[str]:
+    """実在の停止コードの表（研究の対応表の stop_codes と、診断のカタログのコード）。棚卸しは使わない（v0.133 の棚卸しは架空の値も stop_code として載せている）。"""
+    catalog = ROOT / "kyuura_engine" / "data" / "diagnostic_catalog.json"
+    return set(load_json(RESEARCH)["stop_codes"]) | (set(load_json(catalog)["codes"]) if catalog.exists() else set())
+
+
+def classify_test_only_tokens(codes: dict, registry: dict, real_codes: set[str], root: pathlib.Path = ROOT) -> tuple[dict, list[str]]:
+    """エンジンに出ない語の役割を決め、矛盾・不足を問題にする（docs/test-only-token-design.md 3 章の判定の順）。``codes`` は ``stop_policy_scan.prefixed_codes`` の形。
+
+    1. エンジンの literal・name に出る語は停止コード（ここでは扱わない。登録があれば矛盾）
+    2. エンジンには comment・convention_note だけで出る語は要確認（止める箇所にも開発用にも自動ではしない）
+    3. エンジンに出ず、実在の停止コードの表にある語は矛盾（未分類のまま残す）
+    4. エンジンに出ず、テスト・道具では識別子（name）だけの語は non_code_identifier（自動）
+    5. エンジンに出ず、テスト・道具の文字列にある語は、明示の登録の役割。登録がなければ unclassified
+    返り値は (語 → {"role", "status", "basis"}, 問題の並び)。問題の文は TAG_* で始まる。"""
+    roles: dict[str, dict] = {}
+    problems: list[str] = []
+
+    def files(occ: dict, kinds=("literal", "comment", "name")) -> set[str]:
+        return {s.rsplit(":", 1)[0] for area in ("tests", "tools") for k in kinds for s in occ.get(area, {}).get(k, [])}
+
+    for code in sorted(codes):
+        engine = codes[code].get("engine", {})
+        if engine and not (engine.get("literal") or engine.get("name")):
+            problems.append(f"{TAG_REVIEW}: {code} はエンジンには説明（{'・'.join(sorted(engine))}）だけで出る。止める箇所か・開発用かを決めていない")
+    test_only = sorted(c for c, v in codes.items() if not v.get("engine") and (v.get("tests") or v.get("tools")))
+    for code in test_only:
+        occ = codes[code]
+        kinds = {k for area in ("tests", "tools") for k in occ.get(area, {})}
+        reg = registry.get(code)
+        if code in real_codes:
+            roles[code] = {"role": TOKEN_ROLE_UNCLASSIFIED, "status": TOKEN_STATUS[TOKEN_ROLE_UNCLASSIFIED],
+                           "basis": "実在の停止コードの表にあるのに、エンジンに出ない（停止コードが消えたか、名前の誤りの可能性）"}
+            problems.append(f"{TAG_CONFLICT}: {code} は実在の停止コードの表（研究の対応表・診断のカタログ）にあるのに、エンジンに出ない")
+            continue
+        if kinds <= {"name"}:
+            roles[code] = {"role": TOKEN_ROLE_IDENTIFIER, "status": TOKEN_STATUS[TOKEN_ROLE_IDENTIFIER],
+                           "basis": f"テスト・道具の識別子の名前としてだけ出る（{', '.join(sorted(files(occ, ('name',))))}）。停止コードの値として使われない（自動の判定）"}
+            if reg is not None:
+                problems.append(f"{TAG_CONFLICT}: {code} は識別子としてだけ出る（自動の判定 {TOKEN_ROLE_IDENTIFIER}）のに、{reg.get('role')} として登録されている")
+            continue
+        if reg is None:
+            roles[code] = {"role": TOKEN_ROLE_UNCLASSIFIED, "status": TOKEN_STATUS[TOKEN_ROLE_UNCLASSIFIED], "basis": "明示の登録がない"}
+            problems.append(f"{TAG_INPUT_MISSING}: {code} はエンジンに出ず、テスト・道具の文字列に出る（{', '.join(sorted(files(occ)))}）が、"
+                            f"{TOKEN_ROLES_INPUT.relative_to(ROOT).as_posix()} に役割の登録がない")
+            continue
+        role, ok = reg.get("role"), True
+        where = files(occ)
+        if role not in REGISTRABLE_TOKEN_ROLES:
+            problems.append(f"{TAG_CONFLICT}: {code} の登録の役割 {role} は登録できない（{'・'.join(REGISTRABLE_TOKEN_ROLES)} のどれか）")
+            ok = False
+        if not reg.get("basis"):
+            problems.append(f"{TAG_CONFLICT}: {code} の登録に根拠の文がない")
+            ok = False
+        evidence = reg.get("evidence") or []
+        if not evidence or not set(evidence) <= where:
+            problems.append(f"{TAG_CONFLICT}: {code} の登録の出現のファイル {evidence} が、スキャナの出現 {sorted(where)} にない")
+            ok = False
+        if role == TOKEN_ROLE_MUTATION:
+            if reg.get("paired_code") not in real_codes:
+                problems.append(f"{TAG_CONFLICT}: {code} の変異の対の実在のコード {reg.get('paired_code')} が、実在の停止コードの表にない")
+                ok = False
+            if "tools/mutants.py" not in evidence:
+                problems.append(f"{TAG_CONFLICT}: {code} は変異の値なのに、変異の道具（tools/mutants.py）に出ない")
+                ok = False
+        if role == TOKEN_ROLE_HISTORICAL:
+            documents = reg.get("documents") or []
+            if not reg.get("removed_in") or not documents:
+                problems.append(f"{TAG_CONFLICT}: {code} は過去の実在のコードなのに、外した版（removed_in）か文書（documents）がない")
+                ok = False
+            for doc in documents:
+                path = root / doc
+                if not path.exists() or code not in path.read_text(encoding="utf-8"):
+                    problems.append(f"{TAG_CONFLICT}: {code} の根拠の文書 {doc} に、その語がない")
+                    ok = False
+        elif reg.get("removed_in") or reg.get("documents"):
+            problems.append(f"{TAG_CONFLICT}: {code} は {role} なのに、過去の実在のコードの根拠（removed_in・documents）を持つ（区別できない）")
+            ok = False
+        if ok:
+            basis = reg["basis"] + (f"（外した版 {reg['removed_in']}。文書 {', '.join(reg['documents'])}）" if role == TOKEN_ROLE_HISTORICAL else "")
+            roles[code] = {"role": role, "status": TOKEN_STATUS[role], "basis": basis}
+        else:
+            roles[code] = {"role": TOKEN_ROLE_UNCLASSIFIED, "status": TOKEN_STATUS[TOKEN_ROLE_UNCLASSIFIED], "basis": "登録が条件を満たさない（--check の問題）"}
+    for code in sorted(set(registry) - set(test_only)):
+        engine = codes.get(code, {}).get("engine", {})
+        if engine.get("literal") or engine.get("name"):
+            problems.append(f"{TAG_CONFLICT}: 登録した {code} が、エンジンの止める箇所（literal・name）に出る（登録を外すか、停止コードとして扱う）")
+        elif code not in codes:
+            problems.append(f"{TAG_STALE_REGISTRATION}: 登録した {code} が、もうどこにも出ない")
+    return roles, problems
+
+
 # 道具の対戦の記録（初期状態からの合法な操作の列）。リポジトリの外の検証の証拠（v0.134〜v0.136 の検証の作業で保存）。ハッシュは --write の時点で計算して台帳に書く
 TOOL_EVIDENCE_ROOT = pathlib.Path("C:/dev/kyuura-engine-verification")
 OBSERVATION_KEYS = ("halt_codes", "unresolved_rejections")
@@ -1869,10 +1988,12 @@ def build() -> dict:
             entry["mode_policy_status"] = "unconsidered"
             entry["policy_basis"] = "現行では投げない（v0.34 で解消）。現行の停止として数えない"
         entries.append(entry)
-    test_only = sorted(c for c, v in codes.items() if not v["engine"] and (v["tests"] or v["tools"]))
+    token_roles, token_problems = classify_test_only_tokens(codes, load_token_roles(), real_stop_codes())  # 案 B（schema 2）
+    test_only = sorted(token_roles)
     for code in test_only:
         inv = inv_entries.get(code)
-        entries.append({"id": code, "entry_kind": "test_tool_only_code", "inventory_ref": code if inv else None, "status": "active",
+        entries.append({"id": code, "entry_kind": "test_tool_only_code", "inventory_ref": code if inv else None, "status": token_roles[code]["status"],
+                        "token_role": token_roles[code]["role"], "token_role_basis": token_roles[code]["basis"],
                         "classification": inv["classification"] if inv else "E", "classification_basis": "テスト・道具の中だけのコード（合成した登録表・比べの印・文字列の断片）",
                         "family": None, "play_groups": ["6"], "decision_refs": [], "mode_policy_status": "unconsidered",
                         "reachability": {"status": "test_only_mutation", "evidence": (codes[code]["tests"].get("literal", []) + codes[code]["tools"].get("literal", []))[:3],
@@ -1945,6 +2066,7 @@ def build() -> dict:
         "runtime_codes_outside_table": len(runtime_codes),
         "runtime_codes_outside_table_active": sum(1 for e in runtime_codes if e["status"] == "active"),
         "test_tool_only_codes": sum(1 for e in entries if e["entry_kind"] == "test_tool_only_code"),
+        "test_tool_only_by_role": {r: n for r in TOKEN_STATUS if (n := sum(1 for e in entries if e.get("token_role") == r))},
         "cases": sum(1 for e in entries if e["entry_kind"] == "case"),
         "codes_with_cases": len(CASES),
         "problems_new": len(PROBLEMS),
@@ -1977,7 +2099,10 @@ def build() -> dict:
         counts[key] = dict(sorted(counts[key].items(), key=lambda kv: str(kv[0])))
 
     return {
-        "schema_version": 1,
+        "schema_version": LEDGER_SCHEMA_VERSION,
+        "token_classification": {"input": TOKEN_ROLES_INPUT.relative_to(ROOT).as_posix(), "roles": TOKEN_ROLE_MEANINGS, "statuses": TOKEN_STATUS,
+                                 "real_code_sources": ["kyuura_engine/data/research_links.json stop_codes", "kyuura_engine/data/diagnostic_catalog.json codes"],
+                                 "problems": token_problems},
         "title": "停止コードと未対応処理の分類（厳密モード・プレイ用モードの将来の導入に向けて）",
         "scope": ("調査・分類・設計の記録。モードの実装・既存の動作・裁定・保存形式は変えていない。利用者と合意したのはモードの定義の 6 項目（mode_agreements）だけで、"
                   "既存の利用者指定を基礎集合に入れること以外の方針の案（族の候補・個々の続行規約・規約集合の識別など）は承認を受けていない"),
@@ -2101,7 +2226,36 @@ def check(ledger: dict, fresh: dict) -> list[str]:
                 if sc not in SAFETY_CONDITIONS:
                     problems.append(f"族 {family} の {candidate.get('id')}: 安全条件 {sc} がない")
     if fresh is not None and stable(_without_tool(ledger)) != stable(_without_tool(fresh)):
-        problems.append("現行コードから作り直した台帳と、書き出した台帳が違う（--write で作り直して差を確かめる）")
+        problems.append(f"{GENERATED_STALE}: 現行コードから作り直した台帳と、書き出した台帳が違う（--write で作り直して差を確かめる）")
+    problems += token_classification_problems(ledger)
+    if fresh is not None:
+        problems += [p for p in token_classification_problems(fresh) if p not in problems]  # 書き出した台帳が古くても、今の分類の入力の不足・矛盾は知らせる
+    return problems
+
+
+def token_classification_problems(ledger: dict) -> list[str]:
+    """v0.186 の後（案 B）: schema 2 の台帳のテスト・道具だけの語の検査。schema 1 の台帳（旧形式）は旧形式として扱い、何も足さない。
+    未分類は、台帳に書いてあっても自動で承認しない（--write のあとの --check でも失敗する）。"""
+    if ledger.get("schema_version", 1) < 2:
+        return []
+    problems = list((ledger.get("token_classification") or {}).get("problems", []))
+    for e in ledger["entries"]:
+        if e["entry_kind"] != "test_tool_only_code":
+            continue
+        role = e.get("token_role")
+        if role not in TOKEN_STATUS:
+            problems.append(f"{TAG_INPUT_MISSING}: {e['id']} の役割 {role} がない・知らない")
+        elif e["status"] != TOKEN_STATUS[role]:
+            problems.append(f"{TAG_CONFLICT}: {e['id']} の状態 {e['status']} が役割 {role} の状態 {TOKEN_STATUS[role]} と違う")
+        elif role == TOKEN_ROLE_UNCLASSIFIED and not any(e["id"] in p for p in problems):
+            problems.append(f"{TAG_INPUT_MISSING}: {e['id']} は未分類（unclassified）")
+        if not e.get("token_role_basis"):
+            problems.append(f"{TAG_INPUT_MISSING}: {e['id']} に役割の根拠がない")
+    counts = ledger.get("counts", {})
+    if sum(counts.get("by_status", {}).values()) != len(ledger["entries"]):
+        problems.append("台帳の状態ごとの数の合計が、項目の数と違う")
+    if sum(counts.get("test_tool_only_by_role", {}).values()) != counts.get("test_tool_only_codes"):
+        problems.append("テスト・道具だけの語の役割ごとの数の合計が、test_tool_only_codes と違う")
     return problems
 
 
@@ -2314,9 +2468,11 @@ def main() -> int:
         RULESET_DESIGN_DOC.write_text(with_generated_blocks(text, fresh), encoding="utf-8", newline="\n")
         print(f"wrote generated blocks of {RULESET_DESIGN_DOC.relative_to(ROOT).as_posix()}")
     ledger = load_json(OUTPUT)
+    built = fresh
     if not TOOL_EVIDENCE_ROOT.exists():
         fresh = None  # 道具の証拠がない環境では、作り直した台帳との比べを省く（不変条件だけ確かめる）
     problems = check(ledger, fresh)
+    problems += [p for p in token_classification_problems(built) if p not in problems]  # 分類の入力の不足・矛盾は、道具の証拠の有無によらず知らせる
     for problem in problems:
         print("PROBLEM", problem)
     print(json.dumps(ledger["counts"], ensure_ascii=False, indent=1))
