@@ -12,8 +12,8 @@
 | 今回の 17 の呼ぶ箇所 | 実装した。それぞれ構築盤面で実際に通し、4 つの入口の log と閲覧用記録で確かめた（20 事例） |
 | 同じ呼ぶ箇所を通るほかのカード | 同じ行・同じ分岐を通るので同じ修正がかかる（共有の処理による裏づけ）。実行はしていない（3 章） |
 | GUI | 既存の表示（`7a4b3d9` の「見せたカード」の欄）で扱える見込み。0.184.0 への依存の更新・限定の確かめは未実施 |
-| 化石の発掘 | 判断待ち（既定のまま。テストで確かめた）。設計: [fossil-slot-reveal-identification-design.md](fossil-slot-reveal-identification-design.md)（推奨 `identify=True`。未実装） |
-| スロットゲームの束全体（`reveal_deck_top`） | 未修正（加えたカードだけを識別できるようになった）。設計: 同じ文書（推奨 `card_ids`。未実装） |
+| 化石の発掘 | 判断待ち（既定のまま。テストで確かめた）。設計: [fossil-slot-reveal-identification-design.md](fossil-slot-reveal-identification-design.md)。2026-11-15 の追記: 0.185.0 で山札の側に `identify=True`（[fossil-slot-reveal-v0.185.md](fossil-slot-reveal-v0.185.md)） |
+| スロットゲームの束全体（`reveal_deck_top`） | 未修正（加えたカードだけを識別できるようになった）。設計: 同じ文書。2026-11-15 の追記: 0.185.0 で束に `card_ids`（同じ文書） |
 | uid の方式全体 | 今回の対象外 |
 
 ## 1. 基点と識別

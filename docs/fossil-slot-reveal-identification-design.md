@@ -5,6 +5,7 @@
   GUI は `origin/feature/engine-0184-reveal-identify` @ `bd665a7`（`7a4b3d9` を含む。GUI の main には未取り込み）を読むだけ。調査の時点で、どちらにもこれより新しい公開の変更はありませんでした。
 - 前の文書: [静的な監査](reveal-call-sites-identification-audit.md)（化石の発掘は E）・[再現と修正の設計](reveal-call-sites-repro-fix-design.md)・[0.184.0 の実装](reveal-identify-v0.184.md)。
 - 機械可読の仕様の下書き: [fossil-slot-reveal-identification-spec.json](fossil-slot-reveal-identification-spec.json)。
+- 実装の結果（2026-11-15 の追記）: 推奨値（J-F1・J-F2・J-S1・J-S2・J-3）のとおり 0.185.0 で実装した（F・S は別のコミット。GUI の追従は未実施）: [fossil-slot-reveal-v0.185.md](fossil-slot-reveal-v0.185.md)
 - 2 つの論点は別のものです。**F**（化石の発掘）と **S**（スロットゲームの束）は、別々に採用・実装・受け入れできます。
 
 ## 0. 結論

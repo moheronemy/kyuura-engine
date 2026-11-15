@@ -6,6 +6,7 @@
   - [設計](trader-reveal-identification-design.md)（6 章で「ほかの 8 の呼ぶ箇所」と書いたが、正しくは 18）
   - [0.182.0 の修正](trader-reveal-identification-v0.182.md)（3 章で 18 に訂正）
   - [w1 の監査](verification-ai-w1-publication-audit.md)・[w1 の残り 57 件](verification-ai-w1-publication-audit-remaining.md)
+- 修正（2026-11-15 の追記）: E の化石の発掘（山札の側の `card_id`）とスロットゲームの束（`card_ids`）を 0.185.0 で修正した（トラッシュの側は既存の公開のまま）: [fossil-slot-reveal-v0.185.md](fossil-slot-reveal-v0.185.md)
 - 設計（2026-11-15 の追記）: E の化石の発掘とスロットゲームの束の公開の要件と最小の修正仕様（推奨: 化石の発掘は `identify=True`・束は `card_ids`。未実装）: [fossil-slot-reveal-identification-design.md](fossil-slot-reveal-identification-design.md)
 - 修正（2026-11-15 の追記）: D の 17 か所を 0.184.0 で修正した（E の化石の発掘・スロットゲームの束は未修正）: [reveal-identify-v0.184.md](reveal-identify-v0.184.md)
 - 続き（2026-11-15 の追記）: D の 17 か所を構築盤面で実際に通し、17 か所とも公開の不足を再現した（訂正 0。修正範囲は各呼ぶ箇所の `identify=True`。修正は未着手）: [reveal-call-sites-repro-fix-design.md](reveal-call-sites-repro-fix-design.md)
