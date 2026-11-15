@@ -8577,7 +8577,11 @@
     "docs/gust-v0.21.md"
    ],
    "candidate": "PC-USE-WITHOUT-TARGET",
-   "coverage": "unverified"
+   "coverage": "unverified",
+   "adopted_convention": [
+    "PC-GUST-WITHOUT-OPPONENT-BENCH",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_HAND_TRAINER_LOCK_BORROW",
@@ -11141,7 +11145,11 @@
     "docs/trainers-v0.2b.md"
    ],
    "candidate": "PC-USE-WITHOUT-EFFECT",
-   "coverage": "unverified"
+   "coverage": "unverified",
+   "adopted_convention": [
+    "PC-POTION-WITHOUT-DAMAGE",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_POWER_COUNTER_MOVE_TO_SAME_POKEMON",
@@ -13542,7 +13550,11 @@
     "docs/trainers-v0.2b.md"
    ],
    "candidate": "PC-USE-WITHOUT-TARGET",
-   "coverage": "unverified"
+   "coverage": "unverified",
+   "adopted_convention": [
+    "PC-SWITCH-WITHOUT-BENCH",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT",

@@ -85,6 +85,19 @@ SPEC_ADOPTIONS = {
                                    "related_candidate": "PC-LASTING-SOURCE-CHANGE",
                                    "note": "PC-LASTING-SOURCE-CHANGE（proposal のまま）と同じ原則の［ポイズンミスト］の記録だけの規約。案そのものは採用していない"},
 }
+# v0.186（docs/play-convention-tr3-v0.186.md）: 判断一覧（docs/play-convention-three-trainers.md）の 3 条件の続行規約の採用（候補ではない。PC-USE-WITHOUT-TARGET の対象の 3 場面だけ。
+# 案そのものは proposal のまま）
+_TR3_ADOPTION = {"on": "2026-11-15", "by": "user", "version": "0.186.0", "set": ["CS-KYUURA-PLAY-TR3", 1], "document": "docs/play-convention-tr3-v0.186.md",
+                 "spec": "docs/play-convention-three-trainers.md", "not_recorded_as": "公式の裁定・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用）"}
+_TR3_NOTE = "PC-USE-WITHOUT-TARGET（proposal のまま）の対象のうち、この場面だけの規約（使えない・カードを消費しない）。案そのもの・ほかの対象は採用していない"
+SPEC_ADOPTIONS.update({
+    "PC-GUST-WITHOUT-OPPONENT-BENCH": {**_TR3_ADOPTION, "convention": ["PC-GUST-WITHOUT-OPPONENT-BENCH", 1], "scenes": ["UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH"],
+                                       "related_candidate": "PC-USE-WITHOUT-TARGET", "note": _TR3_NOTE},
+    "PC-SWITCH-WITHOUT-BENCH": {**_TR3_ADOPTION, "convention": ["PC-SWITCH-WITHOUT-BENCH", 1], "scenes": ["UNRESOLVED_SWITCH_WITHOUT_BENCH"],
+                                "related_candidate": "PC-USE-WITHOUT-TARGET", "note": _TR3_NOTE},
+    "PC-POTION-WITHOUT-DAMAGE": {**_TR3_ADOPTION, "convention": ["PC-POTION-WITHOUT-DAMAGE", 1], "scenes": ["UNRESOLVED_POTION_WITHOUT_DAMAGE"],
+                                 "related_candidate": "PC-USE-WITHOUT-TARGET", "note": _TR3_NOTE},
+})
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
 # 区分（利用者の依頼の A〜E。台帳の classification とは別の軸）

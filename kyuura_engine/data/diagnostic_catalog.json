@@ -899,7 +899,7 @@
    "origins": [
     "engine_illegal"
    ],
-   "basis": "IllegalActionError の呼び出し（2 か所）",
+   "basis": "IllegalActionError の呼び出し（3 か所）",
    "scenes": [],
    "case": null,
    "case_status": "not_applicable",
@@ -914,7 +914,7 @@
    "origins": [
     "engine_illegal"
    ],
-   "basis": "IllegalActionError の呼び出し（5 か所）",
+   "basis": "IllegalActionError の呼び出し（6 か所）",
    "scenes": [],
    "case": null,
    "case_status": "not_applicable",
@@ -1004,7 +1004,7 @@
    "origins": [
     "engine_illegal"
    ],
-   "basis": "IllegalActionError の呼び出し（7 か所）",
+   "basis": "IllegalActionError の呼び出し（8 か所）",
    "scenes": [],
    "case": null,
    "case_status": "not_applicable",
