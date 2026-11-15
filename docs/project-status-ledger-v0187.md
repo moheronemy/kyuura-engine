@@ -1,0 +1,171 @@
+# 現在の完了・未完了一覧（エンジン・検証用 AI・GUI。0.187.0 と GUI の追従の時点）
+
+整理日: 2026-11-16。状態の整理と文書化だけです。実装・再検証・テスト・ビルド・対戦・seed 探索・judge・replay・生成物の再生成はしていません。
+
+この文書は [0.185.0 の時点の一覧](project-status-ledger-v0185.md)（v0185）を引き継ぐ、今の一覧です。v0185 はファイル名に版を持つ時点の記録なので、改名・書き換えをせず、冒頭にこの文書への参照だけを足しました。v0185 の項目は、状態が変わらないものも ID と 1 行の内容でここに載せ、詳しい根拠は v0185 の表を参照します。
+
+| 対象 | 参照したコミット | 内容 |
+|---|---|---|
+| エンジン | `274f9e3`（`claude/token-sync-v0187`。origin と一致。main `b1e4430` に入っていない） | 0.187.0。配布の確かめの固定は `d562ec16e3f493569ed0251cbcf9062ceccdbb1a` |
+| 検証用 AI | 同じ `274f9e3` の `tools/verification_ai` | `TOOL_VERSION` 11・判定の規則 8・計画と完了の形式 7（0.186.0・0.187.0 で変わらない） |
+| GUI | `bf1e3b6`（`feature/engine-0187-scene-index`。origin と一致。GUI の main `593be09` に入っていない） | エンジンの固定は 0.187.0（`d562ec1`）。GUI は公開コミットと既存の検証記録の読み取りだけで、再確認・再実行はしていない |
+
+- 証跡: `kyuura-engine-verification-vai/verifier/runs/status-ledger-v0187/`（事前計画・基点の確かめ・状態の対応表 `out/status_table.json`・文書との照合・訂正の一覧）。
+- 取り込み・更新・ブランチの削除: エンジン・GUI とも、想定の参照先と公開の参照が一致しました。main への統合は仮定していません（6 章）。
+
+**読み方**
+
+- 各項目は 1 か所にだけ置きます。同じ内容の別の文書・報告は、その行の「根拠」にまとめました。ほかの項目は ID で参照し、内容をくりかえしません。
+- 確認の種類: 静的（コード・記録の読み取り）、人工（偽物の応答）、構築（構築盤面の実応答）、固定（固定例）、new_game（new_game からの対戦。バッチ名と版）。
+- 「報告値」は、記録にある値で、この整理で再実行していないものです。終了コードと件数は分けて書きます。
+- 「GUI 文書」は GUI の `docs/engine-contract.md` の章（`bf1e3b6`）です。
+
+## 1. 完了
+
+件数: 22（今回の範囲の新しい項目 7・v0185 からの持ち越し 15）。閉じます。確認の範囲と残る限界を書きます。
+
+| ID | 内容 | 根拠 | 確認範囲 | 残る限界 |
+|---|---|---|---|---|
+| C-PRESTOP-REC | 受理の前に未裁定で範囲の外にした候補の inputs を検証者用に記録する機能（prestop。TOOL_VERSION 11・計画と完了の形式 7）と、初回確認バッチ x1（4 局）の照合・カード別の内訳 | [prestop-record-design.md](prestop-record-design.md) 11 章（実装 `fa992b3`）・[prestop-first-batch-plan.md](prestop-first-batch-plan.md) 9 章（実行コミット `6ac3d3d`・文書 `36c8c0d`） | new_game（x1・0.185.0・4 局すべて完了）。R1〜R6 成立。カード別: 突風 81・きずぐすり 44・ポケモンいれかえ 2・本人のうら 15（選択肢の延べ） | 4 局だけ（頻度・網羅は推定しない）。`use_stadium` は未出現。停止コードは記録にない（→ U-X1CODE） |
+| C-OBSLINK | prestop の記録と本人向けの観測の対応づけ（派生の記録）と、3 枚の主な条件の評価 | [prestop-observation-link-design.md](prestop-observation-link-design.md) 8・9 章（設計 `ba70c25`・適用 `e25f201`） | x1 の 4 局: 127 行（3 枚の選択肢）すべて `linked`、カードと局面の組 80。主な条件は突風 81・きずぐすり 44・ポケモンいれかえ 2 がすべて成立（不成立・判定不能 0）。L1〜L7 成立 | x1 だけ（→ U-OBS-OTHER）。主な条件の成立は停止の原因の確定ではない（→ U-X1CODE）。ほかの条件（AL2 など）は調べていない |
+| C-GW5-EVIDENCE | 突風の GW5 の判断用の資料・再録の版のカード画像と p.255 の図版の照合・その証跡の正式な取り込み | [gust-gw5-decision.md](gust-gw5-decision.md) 0〜10 章（`1699b84`）・11 章（`a100e27`）・12 章（`6df781f`）。証跡ストアの `gust-gw5-image-check`（マニフェストの追記のあと 7,772 件・不一致 0） | 元の 46 件が元の `MANIFEST.sha256` と一致・受け渡しの zip とバイトまで一致。画像の転記の一致を確かめた | 画像の転記の一致は、独立したほかの資料での確認ではない。マニフェストの一致は、作成より前の真正性を証明しない。史実の裁定は未確定（→ U-TR3-RULINGS） |
+| C-CANDLABEL | GUI の候補の一覧で、実行できる選択肢がない候補を中立的に「実行できる選択肢なし」（補足「入力画面で理由を確認できます」）と表示 | GUI `fa6c440`（表示）・`5452ec3`（GUI 文書 29.11 節） | 修正の前に新しい表示のテストが失敗（exit 1）、修正のあと型検査と限定の vitest が exit 0（GUI の検証記録 0186cl） | ブラウザ・E2E・接続層は再実行していない（差分は文言と表示の分岐だけ） |
+| C-LEDGER-GEN | 停止の方針の台帳の生成の差の調査と分類、生成の道具の誤検出（F）の修正、TR3 の採用の記録の生成の入力への追加 | [stop-ledger-drift-audit.md](stop-ledger-drift-audit.md)（調査 `4b55e7c`・修正 `0cf9f54`・`56b1a4b`・`883f07c`） | 差 1,674（生）・116（意味）を A 1,558・B 2・C 73・D 38・E 0・F 3 に分類。F は生成の道具で直し、限定テストで確かめた | 正式な台帳への反映は C-TOKEN-B（0.187.0）で行った |
+| C-TOKEN-B | テスト・道具だけの語 12 件の分類（案 B）の採用・生成の道具の実装と、0.187.0 での台帳・設計案・実行時の場面の索引の正式な同期・配布の確かめ | [test-only-token-design.md](test-only-token-design.md)（設計 `154a42f`・実装 `d83f8f3`・`c2c50e8`）・[token-sync-v0.187.md](token-sync-v0.187.md)（同期 `31ce43d`・版 `d562ec1`・文書 `f0ad833`・`274f9e3`） | 台帳 schema 2・by_status active 399・test_only 11・historical 3・fixed 20。場面 398 → 390（停止コード → 場面の対応と current_behavior は同じ）。生成の検査 13 が exit 0。配布（`d562ec16…`）の wheel・非 editable 導入・ソースと導入物のスモークが一致 | behavior_digest の変化は場面の索引（ゲームのデータ）と版の文字列によるもので、ゲームの処理は変えていない。テストの静的な参照は実際の到達の実績ではない |
+| C-GUI0187 | GUI の kyuura-engine 0.187.0（`d562ec16e3f493569ed0251cbcf9062ceccdbb1a`）への依存の固定と、場面の索引の整理への追従 | GUI `e5cdeac`（依存・契約・テスト）・`bf1e3b6`（GUI 文書 30 章）。GUI の検証記録 `kyuura-engine-verification-gui-0187` | 型検査・ビルド・pytest・vitest（10 ファイル 101 件）が exit 0。pytest の 117 件は件数の要約行がなく進捗の点（72 + 45）から数えた報告値で、成功の根拠は終了コード 0。実応答の比べ（0.186.0 と 0.187.0）の差は版とランダムな取っ手だけ。除かれた 8 場面への参照は GUI の追跡ファイルに 0 件 | ブラウザ・E2E は再実行していない。既存の 0.186.0 の `.venv` からの入れ替えそのものは確かめていない。lt5 はこの GUI の作業では検証できず、操作もしていない |
+| C-TRADER | ポケモン交換おじさんの、もどすカードと探したカードの識別（0.182.0） | [v0185](project-status-ledger-v0185.md) 1 章 | v0185 のとおり | v0185 のとおり |
+| C-LOG | client_api の読み取りの要求 `log`（0.183.0） | [v0185](project-status-ledger-v0185.md) 1 章 | v0185 のとおり | v0185 のとおり |
+| C-W1AUDIT | w1 の公開の監査（61 回答） | [v0185](project-status-ledger-v0185.md) 1 章 | v0185 のとおり | v0185 のとおり |
+| C-ER9 | ER9 の条件つきの根拠（規則 6） | [v0185](project-status-ledger-v0185.md) 1 章 | v0185 のとおり | v0185 のとおり |
+| C-P1 | LOST_TARGET の P1（規則 7） | [v0185](project-status-ledger-v0185.md) 1 章 | v0185 のとおり | v0185 のとおり |
+| C-P3S | LOST_TARGET の P3s（規則 8） | [v0185](project-status-ledger-v0185.md) 1 章 | v0185 のとおり | v0185 のとおり |
+| C-KEEP | 指定でおもてにした［KEEP］とエネルギー・リムーブ（0.181.0） | [v0185](project-status-ledger-v0185.md) 1 章 | v0185 のとおり | v0185 のとおり |
+| C-CN1 | 収集器の `failure`（0.173.0） | [v0185](project-status-ledger-v0185.md) 1 章 | v0185 のとおり | v0185 のとおり |
+| C-RUNNER | 検証用 AI の逐次バッチ・再開・保存・照合 | [v0185](project-status-ledger-v0185.md) 1 章 | v0185 のとおり | v0185 のとおり |
+| C-S1 | 外部の checked-hash の pyc キャッシュ | [v0185](project-status-ledger-v0185.md) 1 章 | v0185 のとおり | v0185 のとおり |
+| C-RETREAT | 同じ番に何度もにげる（仕様どおり） | [v0185](project-status-ledger-v0185.md) 1 章 | v0185 のとおり | v0185 のとおり |
+| C-HOLDER | エネルギーの選べるものに付属先を示す（GUI） | [v0185](project-status-ledger-v0185.md) 1 章 | v0185 のとおり | v0185 のとおり |
+| C-GUITEXT | GUI が独自に書く確約の説明文の修正 | [v0185](project-status-ledger-v0185.md) 1 章 | v0185 のとおり | v0185 のとおり |
+| C-F1 | うらのバトル場のワザの候補の保証文（0.180.0） | [v0185](project-status-ledger-v0185.md) 1 章 | v0185 のとおり | v0185 のとおり |
+| C-FROMSTATE | 構築した状態の入口の不変条件（0.177.0） | [v0185](project-status-ledger-v0185.md) 1 章 | v0185 のとおり | v0185 のとおり |
+
+## 2. 実装・限定確認済み（確認範囲に限界がある。閉じる）
+
+件数: 11（今回の範囲の新しい項目 1・v0185 からの持ち越し 10）。未確認の経路があることだけで未完了に戻しません。構築盤面の成功を new_game からの到達の実績に読み替えません。
+
+| ID | 内容 | 根拠 | 確認範囲 | 残る限界 |
+|---|---|---|---|---|
+| L-TR3 | 3 枚のトレーナーのプレイ用の続行規約（開発用の集合 `CS-KYUURA-PLAY-TR3@1`）の採用・エンジンの実装と、GUI の明示選択・規約による使用不可の表示 | [play-convention-three-trainers.md](play-convention-three-trainers.md)（判断一覧 `6df781f`。採用 2026-11-15）・[play-convention-tr3-v0.186.md](play-convention-tr3-v0.186.md)（`121e1e6`・`ff7720c`・`a1b7659`・`8bf0e1d`・`f7ce4ee`）。GUI `8fe0f2a`・`25eb435`・`68ac189`・`b613973`（GUI 文書 29 章） | 構築盤面（エンジン 9 盤面のスモークをソースと導入物で、0.187.0 でも同じ結果）。GUI は構築盤面 12 の実応答・pytest・vitest・ブラウザ 2 が exit 0 | new_game の通常の対戦での 3 条件の場面への到達・完走は確かめていない（構築盤面の成功を到達の実績に読み替えない）。既定の集合は変えていない。厳密側の停止は残る |
+| L-REVEAL17 | 見せる 17 の呼ぶ箇所の `card_id`（0.184.0） | [v0185](project-status-ledger-v0185.md) 2 章 | v0185 のとおり | v0185 のとおり |
+| L-FOSSILSLOT | 化石の発掘・スロットゲームの束（0.185.0） | [v0185](project-status-ledger-v0185.md) 2 章 | v0185 のとおり | v0185 のとおり |
+| L-NULL | 束の `cards` の `null` と `card_ids` の契約 | [v0185](project-status-ledger-v0185.md) 2 章 | v0185 のとおり | v0185 のとおり |
+| L-P6 | 本人のうらのバトル場のにげる（0.174.0） | [v0185](project-status-ledger-v0185.md) 2 章 | v0185 のとおり | v0185 のとおり |
+| L-UR3A | 本人のうらのカードの 2〜3 段の特殊能力（0.175.0） | [v0185](project-status-ledger-v0185.md) 2 章 | v0185 のとおり | v0185 のとおり |
+| L-PT5E | 山札から引いて試すトレーナー 6 枚の使う条件（0.176.0） | [v0185](project-status-ledger-v0185.md) 2 章 | v0185 のとおり | v0185 のとおり |
+| L-UP5T | 相手のうらのカードを読む候補（0.178.0・0.179.0） | [v0185](project-status-ledger-v0185.md) 2 章 | v0185 のとおり | v0185 のとおり |
+| L-HIDDEN | 選択肢の数を伏せる決定の情報境界 | [v0185](project-status-ledger-v0185.md) 2 章 | v0185 のとおり | v0185 のとおり |
+| L-S2A | 準備の補償の続行規約（S2A） | [v0185](project-status-ledger-v0185.md) 2 章 | v0185 のとおり | v0185 のとおり |
+| L-KINDS | 候補の種類の到達 | [v0185](project-status-ledger-v0185.md) 2 章 | v0185 のとおり | v0185 のとおり |
+
+## 3. 未実装・未対応・未裁定
+
+件数: 14（今回の範囲の新しい項目 3・v0185 からの持ち越し 11）。今の時点で、確かめられたエンジンの不具合は 0 件です（v0185 と同じ。今回の範囲で新しい不具合は見つかっていません）。
+
+| ID | 内容 | 区分 | 根拠 | 確認範囲 | 残る限界・扱い |
+|---|---|---|---|---|---|
+| U-TR3-RULINGS | 突風の GW5（相手に控えがいないとき）・ポケモンいれかえ・きずぐすりの 3 条件の史実の裁定 | 未裁定（研究上の未解決） | [gust-gw5-decision.md](gust-gw5-decision.md)・[prestop-three-trainers.md](prestop-three-trainers.md)・[play-convention-three-trainers.md](play-convention-three-trainers.md) | 厳密側・既定の集合では、今も未裁定の停止（`UNRESOLVED_*`） | プレイ用の規約の採用（L-TR3）は史実の裁定の確定ではない。裁定の資料が見つかったときに扱う（U-RULINGS と同じ扱い） |
+| U-X1CODE | x1 の受理の前の未裁定の候補の、実際の停止コード・停止の原因 | 記録の制限（未対応） | [prestop-first-batch-plan.md](prestop-first-batch-plan.md) 9.4 節・[prestop-observation-link-design.md](prestop-observation-link-design.md) 8.3 節 | 記録に停止コードはない。カードと主な条件は分かる | 主な条件の成立から停止コードを推定しない。確定には、記録に停止コードを残す変更か別の調べが要る |
+| U-OBS-OTHER | x1 のほかのバッチへの、観測との対応づけの分析 | 未実施 | [prestop-observation-link-design.md](prestop-observation-link-design.md) 8 章（x1 だけに適用） | 未実施 | 旧 13 バッチには prestop の記録がないので、同じ方法では対応づけられない（新しい記録のあるバッチが要る） |
+| R-2 | うらのバトル場のワザといっしょに選ぶもの（`not_offered`） | API 制約（判断待ち D-U75-R2） | [v0185](project-status-ledger-v0185.md) 3 章 | v0185 のとおり | v0185 のとおり |
+| R-3 | うらのカードの 2 段以上の特殊能力の、組が完成しない場面 | API 制約 | [v0185](project-status-ledger-v0185.md) 3 章 | v0185 のとおり | v0185 のとおり |
+| R-4 | 番のプレイヤーの MAIN のほかの `CheckFaceUpDeckCard` | API 範囲の外（FU2 の裁定が先） | [v0185](project-status-ledger-v0185.md) 3 章 | v0185 のとおり | v0185 のとおり |
+| R-5 | 入力を返さない候補の残り | API 制約 | [v0185](project-status-ledger-v0185.md) 3 章 | v0185 のとおり | v0185 のとおり |
+| U-PRESTOP | 受理の前に未裁定で止める候補（旧 13 バッチの延べ 5,052・317・18） | 未裁定による停止（範囲の外） | [v0185](project-status-ledger-v0185.md) 3 章 | v0185 のとおり | 旧 13 バッチの記録にはカード・停止コードがない。新しい記録は C-PRESTOP-REC・C-OBSLINK、3 枚の続行規約は L-TR3、停止コードは U-X1CODE |
+| U-SETUP | 準備の停止 `UNRESOLVED_MULLIGAN_COMPENSATION` | 研究上の未解決（既定の集合では止める） | [v0185](project-status-ledger-v0185.md) 3 章 | v0185 のとおり | v0185 のとおり（D-SETUP） |
+| U-RULINGS | FU2・DU1・HC1・KP1・FC1 などの既知の未裁定の停止 | 未裁定（研究上の未解決） | [v0185](project-status-ledger-v0185.md) 3 章 | v0185 のとおり | v0185 のとおり。3 枚の条件は U-TR3-RULINGS に分けた |
+| U-JUDGE | known_stop の根拠のない停止（P2・P3o ほか） | 検証用 AI の判定の未対応 | [v0185](project-status-ledger-v0185.md) 3 章 | v0185 のとおり | v0185 のとおり |
+| U-MUTATE | 変異の生成器が扱えない契約 | 検証用 AI の未対応 | [v0185](project-status-ledger-v0185.md) 3 章 | v0185 のとおり | v0185 のとおり |
+| U-RECORD | 構築盤面の正式な記録形式・R-B の再実行ほか | 記録インターフェースの制限 | [v0185](project-status-ledger-v0185.md) 3 章 | v0185 のとおり | v0185 のとおり |
+| U-METRIC | きぜつの数え方、C1 の公開カード ID の保存 | 計測の未対応 | [v0185](project-status-ledger-v0185.md) 3 章 | v0185 のとおり | v0185 のとおり |
+
+## 4. 利用者の判断待ち
+
+件数: 4（今回の範囲の新しい項目 0・v0185 からの持ち越し 4）。
+
+| ID | 内容 | 根拠 | 確認範囲 | 残る限界 |
+|---|---|---|---|---|
+| D-CHECK | GUI で `answer_decision` を check のあとにだけ送れるようにするか | [v0185](project-status-ledger-v0185.md) 4 章 | v0185 のとおり | 利用者の判断 |
+| D-R1 | 旧 r1 の P3 の行の basis の不一致を緩めない | [v0185](project-status-ledger-v0185.md) 4 章 | v0185 のとおり | 利用者の判断 |
+| D-SETUP | 既定の規約集合で準備の補償の続行規約を採るか | [v0185](project-status-ledger-v0185.md) 4 章 | v0185 のとおり | 利用者の判断 |
+| D-6 | V3 の判定の表（D-6）の全体の採用 | [v0185](project-status-ledger-v0185.md) 4 章 | v0185 のとおり | 利用者の判断 |
+
+## 5. 性能課題・対象外・完了の条件の外
+
+件数: 6（今回の範囲の新しい項目 1・v0185 からの持ち越し 5）。
+
+| ID | 内容 | 区分 | 根拠 | 確認範囲 | 残る限界・扱い |
+|---|---|---|---|---|---|
+| X-FULLTEST | エンジン・GUI の全体のテスト | 未実施（今回の完了の条件の外） | [token-sync-v0.187.md](token-sync-v0.187.md) 4 章・GUI 文書 29.7・30.5 節 | 各単位で関連のモジュールだけ（1 モジュールずつ） | 上の項目を閉じる条件にしない |
+| P-LOG | ログの保持の量・受理の手間 | 性能課題 | [v0185](project-status-ledger-v0185.md) 4 章 | v0185 のとおり | v0185 のとおり |
+| P-SCALE | 大量の対戦の照合時間・証跡の量 | 性能課題 | [v0185](project-status-ledger-v0185.md) 4 章 | v0185 のとおり | v0185 のとおり |
+| P-POLICY | にげるの選び直し・番の中の合計・変異の位置・分布の偏り | 方策の改善（範囲の外） | [v0185](project-status-ledger-v0185.md) 4 章 | v0185 のとおり | v0185 のとおり |
+| X-UID | uid の方式全体の安全性 | 対象外 | [v0185](project-status-ledger-v0185.md) 4 章 | v0185 のとおり | v0185 のとおり |
+| X-HISTORY | GUI の全部の出来事の履歴の画面・相手の今の山札の復元 | 対象外 | [v0185](project-status-ledger-v0185.md) 4 章 | v0185 のとおり | v0185 のとおり |
+
+## 6. main への統合状況（2026-11-16。公開の履歴）
+
+件数: 2（今回の範囲の新しい項目 2・v0185 からの持ち越し 0）。
+
+| ID | 内容 | 根拠 | 確認範囲 | 残る限界 |
+|---|---|---|---|---|
+| M-ENGINE | エンジン（検証用 AI をふくむ）の main への統合 | 公開の履歴（main = origin/main `b1e4430`、作業ブランチ `claude/token-sync-v0187` `274f9e3`） | main から 274f9e3 まで 29 コミットの一本の履歴（`claude/status-ledger-v0185` 〜 `claude/token-sync-v0187` の各作業ブランチはその祖先）。どれも main に入っていない。開いている PR の head は公開の参照にない | main への統合（PR の作成・マージ）は利用者の判断 |
+| M-GUI | GUI の main への統合 | 公開の履歴（GUI の main `593be09`、`feature/engine-0187-scene-index` `bf1e3b6`） | `feature/engine-0186-play-tr3`（`b613973`）⊂ `feature/engine-0186-candidate-list-label`（`5452ec3`）⊂ `feature/engine-0187-scene-index`（`bf1e3b6`）の 8 コミット。どれも main に入っていない。開いている PR の head は公開の参照にない | main への統合は利用者の判断。GUI の 0.187.0 はエンジンの作業ブランチのコミット `d562ec1` に固定（エンジンの main ではない） |
+
+合計 59 項目（今回の範囲の新しい項目 14）。件数は上の表の行から数えました（v0185 の件数に合わせていません）。
+
+## 7. 記録の精度（確認済み・報告値・未確認の区別）
+
+- **GUI 0.187.0 の pytest:** 終了コード 0 は記録で確認済みです。117 件は、pytest の `-q` の出力に件数の要約行がなく、進捗の点（72 + 45）から数えた報告値です。成功の根拠は終了コードで、件数とは分けます。
+- **lt5（停止中の worktree）:** GUI の 0.187.0 の作業では git の作業ツリーとして読めず、検証できていません。その作業では操作もしていません（GUI の検証記録の `final_checks.txt`）。この整理では、読み取りだけで HEAD `1eed4d1` と未追跡のテストの sha256 が前の記録と同じことを確かめました。
+- **画像の照合（C-GW5-EVIDENCE）:** 再録の版のカード画像と図版の転記の一致です。独立したほかの資料での確認ではありません。
+- **マニフェスト:** 一致は、登録より後に変わっていないことを示します。登録より前の真正性は証明しません。
+- **テストの静的な参照:** テストが場面の ID・停止コードを参照していることは、new_game からの実際の到達の証拠ではありません。
+- **behavior_digest の変化（0.187.0）:** 実行時の場面の索引（ゲームのデータ `convention_records.json`）と版の文字列によるものです。ゲームの処理（`engine.py`・`resolution/`・`effects.py`・`conventions.py`）・診断のカタログは変えていません（[token-sync-v0.187.md](token-sync-v0.187.md) 5 章）。
+- **観察（操作していない・根拠にしていない）:** GUI の worktree 3 つ（`-wt-0186`・`-wt-0186cl`・`-wt-0187`）に未コミットの変更（159・165・166 ファイル。追加と削除が同じ行数の全体の書き換えの形）がありました。今回の参照は公開コミットだけです。
+
+## 8. 訂正した古い記述（元の文は消さず、今の状態と根拠を追記）
+
+| 記述（場所） | 今の状態 | 追記した場所 |
+|---|---|---|
+| 「停止の方針の台帳は作り直していない（別の単位）」「GUI の追従は未着手」（README の v0.186 の行） | 台帳は 0.187.0 で同期（C-TOKEN-B）。GUI は 0.186.0（L-TR3・C-CANDLABEL）と 0.187.0（C-GUI0187）に追従（main 未統合） | README の同じ行 |
+| 「GUI の依存の更新は別の単位」（README の v0.187 の行・実装状況の末尾・[token-sync-v0.187.md](token-sync-v0.187.md) 7 章） | GUI `bf1e3b6` で追従（C-GUI0187） | 同じ 3 か所 |
+| 「残り: GUI の依存の更新」（[inventory](verification-ai-inventory.md) の冒頭） | 同上 | inventory の同じ行 |
+| 「GUI（別の単位）」「GUI の集合の選択と表示の確かめは別の単位」（[play-convention-tr3-v0.186.md](play-convention-tr3-v0.186.md) の冒頭と 7 章） | GUI 文書 29 章で追従（L-TR3） | 同じ文書の 7 章 |
+| 「設計だけ・未実装」「未実行」（[実装状況](implementation-status.md) の prestop・観測の対応づけの各行） | 実装・x1 の実行・適用まで済んだ（C-PRESTOP-REC・C-OBSLINK）。各行の後の行・追記にすでに結果があるので、末尾にこの一覧への参照を足した | 実装状況の末尾 |
+| 「次の候補 1」（v0185 の U-PRESTOP の行・6 章） | 内訳の調べは済み、新しい記録で C-PRESTOP-REC。今の候補はこの文書の 10 章 | v0185 の冒頭（この文書への参照） |
+
+**GUI の文書の訂正の候補（今回は GUI を変えていない）:**
+
+- GUI 文書 30.5 節の「R3 … 117 件成功」: 件数は進捗の点からの数で、成功の根拠は終了コード 0、と区別して書く候補。
+- GUI 文書 29.8 節の未確認「new_game からの 3 条件の場面への到達」は 0.187.0 でも同じ（L-TR3）。30 章からの参照を足す候補。
+
+## 9. 状態の対応表との照合
+
+証跡の `out/status_table.json` の項目と、この文書の表の行を、ID・章で 1 対 1 に照らしました（`scripts/check_doc_table.py` → `out/doc_table_check.json`）。
+
+## 10. 次の候補（最大 3 つ）
+
+| 順 | 候補 | 影響 | 必要な資源 | 情報境界・道具 |
+|---|---|---|---|---|
+| 1 | L-TR3 の到達: 開発用の集合 `CS-KYUURA-PLAY-TR3@1` を明示した new_game の小規模確認バッチ（x1 と同じ条件の対照をふくむ）の計画と実行 | 中〜大（規約の続行が通常の対戦で起きることと完走を確かめる。構築盤面の確認を補う） | 小〜中（数局。既存の逐次バッチと prestop・観測の記録） | 扱える（検証用 AI は集合の指定に対応。公開は件数だけ） |
+| 2 | U-JUDGE: P2・P3o の根拠の条件の設計 | 中 | 中（設計とエンジンの根拠テスト） | 扱える |
+| 3 | R-2: うらのバトル場のワザといっしょに選ぶものの情報境界の設計判断 | 小〜中 | 中（設計・API・GUI） | 設計の判断が要る |
+
+- main への統合（M-ENGINE・M-GUI）と、判断待ち（4 章）は、作業の候補ではなく利用者の判断です。
+- U-OBS-OTHER は、旧 13 バッチに prestop の記録がないので、候補 1 のような新しい記録のあとで扱えます。
+
+**推奨する次の 1 単位: 候補 1（TR3 の new_game 小規模確認バッチ。まず計画だけ）**
+
+- 目的: TR3 の 3 条件が new_game の通常の対戦で規約による使用不可として扱われ、局が完走することを、少数の局で確かめる。
+- 範囲: 計画（seed・デッキ・集合・受け入れ条件・予算）を先に決めて保存し、承認のあとに実行する。
+- 実行しないこと: 規約の追加・裁定の確定・既定の集合の変更・GUI の変更。

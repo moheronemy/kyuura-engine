@@ -132,7 +132,7 @@
 ## 7. 残る作業と GUI への引き継ぎ
 
 - **停止の方針の台帳を揃える**（別の単位。→ 2026-11-15 に差を調べて分類した: [停止の方針の台帳の生成の差の調査](stop-ledger-drift-audit.md)。→ 生成の道具の F の修正と TR3 の採用の記録の入力を済ませた（同じ文書の 8 章）。台帳はまだ作り直していない）: v0.151 のあとの版の差をまとめて作り直し、差を分類します。TR3 の採用の記録（`continuation_agreements` の AGR-PLAY-TR3-*・DEC-USE-WITHOUT-EFFECT を partly_agreed・`UPDATES` の 0.186.0）も、そこで加えます。今回は、台帳の生成の道具も JSON も変えていません。
-- **GUI**（別の単位）: GUI の契約の表（`contract/kyuura-client-api-v1.json` の `trainer_option_keys`）に `convention` がないので、TR3 の対戦の候補を「不明な応答」として止めます。既定の集合の対戦は影響を受けません（`convention` は TR3 でだけ出る）。最小の追従は次の 3 つです。
+- **GUI**（別の単位。→ 2026-11-15: GUI `b613973`（GUI 文書 29 章）で TR3 の明示選択・`convention` の受け付け・規約による使用不可の表示に追従した。GUI の main 未統合: [現在の完了・未完了一覧（0.187.0）](project-status-ledger-v0187.md) の L-TR3）: GUI の契約の表（`contract/kyuura-client-api-v1.json` の `trainer_option_keys`）に `convention` がないので、TR3 の対戦の候補を「不明な応答」として止めます。既定の集合の対戦は影響を受けません（`convention` は TR3 でだけ出る）。最小の追従は次の 3 つです。
   - 集合の選択に `CS-KYUURA-PLAY-TR3@1` を加える
   - `trainer_option_keys` に `convention` を加える
   - 規約による除外の表示（配置の `excluded_by_convention` の表示「規約による扱い」と同じ形）を加える
