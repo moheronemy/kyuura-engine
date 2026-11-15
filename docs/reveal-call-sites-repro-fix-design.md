@@ -3,6 +3,8 @@
 2026-11-15（実行は 2026-11-14〜15）。再現の確かめ・修正の設計・文書化だけです。製品のコード（エンジン・GUI・judge・runner・方策・データ）・tools・リポジトリのテストは変えていません。新しい対戦・全体テスト・seed の探索・旧記録の judge・replay もしていません。
 
 - 前の単位: [18 の呼ぶ箇所の静的な分類](reveal-call-sites-identification-audit.md)（D 17・E 1）。交換おじさんの修正は [0.182.0](trader-reveal-identification-v0.182.md)、配信は [0.183.0 の log](client-api-visible-log-v0.183.md)。
+- 修正（2026-11-15 の追記）: 7 章の範囲を 0.184.0 で実装した（17 か所に `identify=True`。GUI の追従は未実施）: [reveal-identify-v0.184.md](reveal-identify-v0.184.md)
+  - 訂正: 3 章の「17 か所の 20 事例」は 19 事例の誤り（6・7 は 1 つの事例）。実行の全体は D の 19 事例・対照 2・交換おじさん 1 の 22 事例・55 段（同じ文書 7 章）。
 - 証跡: `kyuura-engine-verification-vai/verifier/runs/reveal-call-sites-repro/`（事前計画 `PLAN.md`、作業の記録 `commands.txt`、スクリプト `scripts/`、出力 `out/`）。
 
 **結論**

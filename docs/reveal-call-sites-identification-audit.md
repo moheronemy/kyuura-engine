@@ -6,6 +6,7 @@
   - [設計](trader-reveal-identification-design.md)（6 章で「ほかの 8 の呼ぶ箇所」と書いたが、正しくは 18）
   - [0.182.0 の修正](trader-reveal-identification-v0.182.md)（3 章で 18 に訂正）
   - [w1 の監査](verification-ai-w1-publication-audit.md)・[w1 の残り 57 件](verification-ai-w1-publication-audit-remaining.md)
+- 修正（2026-11-15 の追記）: D の 17 か所を 0.184.0 で修正した（E の化石の発掘・スロットゲームの束は未修正）: [reveal-identify-v0.184.md](reveal-identify-v0.184.md)
 - 続き（2026-11-15 の追記）: D の 17 か所を構築盤面で実際に通し、17 か所とも公開の不足を再現した（訂正 0。修正範囲は各呼ぶ箇所の `identify=True`。修正は未着手）: [reveal-call-sites-repro-fix-design.md](reveal-call-sites-repro-fix-design.md)
 - 証跡: `kyuura-engine-verification-vai/verifier/runs/reveal-call-sites-audit/`（事前計画 `PLAN.md`、作業の記録 `commands.txt`、補助スクリプト `scripts/`、出力 `out/`）。
 
