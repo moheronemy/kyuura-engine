@@ -334,17 +334,19 @@ class PrivateControlTest(unittest.TestCase):
                     self.assertNotIn("card_id", search[0])
 
     def test_fossil_excavation_unchanged(self):
-        """化石の発掘（E。判断待ち）は既定のまま: 山札から見せる出来事に card_id を書かない。"""
+        """化石の発掘の山札の側。v0.184 の期待は「判断待ちで既定のまま（identify=True を渡さない）」だった。v0.185（docs/fossil-slot-reveal-v0.185.md）から、山札の側の
+        1 か所だけ identify=True を渡す（トラッシュの側は変えない）。公開の値の確かめは tests/test_fossil_slot_reveal_v0_185.py。"""
         src = (ROOT / "kyuura_engine" / "effects.py").read_text(encoding="utf-8")
         start = src.index("class SearchNamedFromDeckOrDiscard(")
         body = src[start:src.index("\nclass ", start + 1)]
-        self.assertIn("reveal_deck_to_hand(state, use.player, card)", body)
-        self.assertNotIn("identify=True", body)
+        self.assertIn("reveal_deck_to_hand(state, use.player, card, identify=True)", body)
+        self.assertEqual(body.count("identify=True"), 1)
 
 
 class ScopeTest(unittest.TestCase):
     def test_identify_true_sites(self):
-        """補助の確かめ: identify=True を渡すのは、交換おじさんの 2 か所と、この版の 17 か所（effects.py 11・programs.py 6）だけ。"""
+        """補助の確かめ: identify=True を渡すのは、交換おじさんの 2 か所と、v0.184 の 17 か所（effects.py 11・programs.py 6）と、v0.185 の化石の発掘の山札の側 1 か所だけ
+        （v0.184 の期待は 19 か所。化石の発掘はなかった）。"""
         import ast
         found = []
         for rel in ("kyuura_engine/effects.py", "kyuura_engine/resolution/programs.py"):
@@ -362,6 +364,7 @@ class ScopeTest(unittest.TestCase):
                            ("effects.py", "LookTopTakeTrainerThenShuffleLock", "reveal_deck_to_hand"), ("effects.py", "BreederCoupleSearch", "reveal_deck_to_hand"),
                            ("effects.py", "SearchEvolutionCardToHand", "reveal_deck_to_hand"), ("effects.py", "EachPlayerSearchToolOnEntry", "reveal_deck_to_hand"),
                            ("effects.py", "SearchDeckWithBenchLettersToHand", "reveal_deck_to_hand"),
+                           ("effects.py", "SearchNamedFromDeckOrDiscard", "reveal_deck_to_hand"),  # v0.185
                            ("programs.py", "RevealPokemonFromDeck", "reveal_deck_to_hand"), ("programs.py", "RevealNamedPokemonFromDeck", "reveal_deck_to_hand"),
                            ("programs.py", "RevealTrainerFromDeck", "reveal_deck_to_hand"), ("programs.py", "RevealTrainerFromDeck", "reveal_deck_to_hand"),
                            ("programs.py", "ReturnHandThenRevealEnergy", "reveal_deck_to_hand"), ("programs.py", "EachPlayerLooksTakesBasicEnergy", "reveal_deck_to_hand")])

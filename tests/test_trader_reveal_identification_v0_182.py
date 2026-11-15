@@ -253,7 +253,8 @@ class HelperDefaultTest(unittest.TestCase):
         """パッケージの中で identify=True を渡す呼ぶ箇所。v0.182〜v0.183 の期待は effects.TradePokemonWithDeck の 2 つだけ（ほかの 18 は既定のまま。設計の時点で数えた 8 は
         effects.py の一部だけだった。docs/trader-reveal-identification-v0.182.md）。v0.184（docs/reveal-identify-v0.184.md）から、見せる 17 の呼ぶ箇所にも渡す。ここでは、交換おじさんの
         2 つがあること・渡す箇所が許した一覧（交換おじさん 2 と v0.184 の 17 のクラス）の中だけにあること・化石の発掘（判断待ち）が既定のままであることを確かめる。
-        v0.184 の 17 の一覧と数は tests/test_reveal_identify_v0_184.py の ScopeTest。"""
+        v0.185（docs/fossil-slot-reveal-v0.185.md）から、化石の発掘の山札の側にも渡す（v0.184 の期待「化石の発掘は既定のまま」は、許した一覧に化石の発掘を足し、
+        化石の発掘の呼ぶ箇所が渡す側にあることに直した）。一覧と数は tests/test_reveal_identify_v0_184.py の ScopeTest。"""
         counts, with_identify, without = {}, [], []
         for path in sorted((ROOT / "kyuura_engine").rglob("*.py")):
             src = path.read_text(encoding="utf-8")
@@ -277,9 +278,9 @@ class HelperDefaultTest(unittest.TestCase):
         allowed = {"TradePokemonWithDeck", "SearchDeckTrainer", "LookTopTakePokemonThenShuffle", "CoinsSearchBasicEnergyPerHeads", "ReturnHandEnergyThenCoinSearchBasicEnergy",
                    "RevealDeckTopTakeSameNamed", "LookTopTakeTrainerThenShuffleLock", "BreederCoupleSearch", "SearchEvolutionCardToHand", "EachPlayerSearchToolOnEntry",
                    "SearchDeckWithBenchLettersToHand", "RevealPokemonFromDeck", "RevealNamedPokemonFromDeck", "RevealTrainerFromDeck", "ReturnHandThenRevealEnergy",
-                   "EachPlayerLooksTakesBasicEnergy"}
+                   "EachPlayerLooksTakesBasicEnergy", "SearchNamedFromDeckOrDiscard"}
         self.assertTrue({w[1] for w in with_identify} <= allowed, with_identify)
-        self.assertIn(("effects.py", "SearchNamedFromDeckOrDiscard", "reveal_deck_to_hand"), without)
+        self.assertIn(("effects.py", "SearchNamedFromDeckOrDiscard", "reveal_deck_to_hand"), with_identify)  # v0.185
 
 
 class OldFormatTest(TraderBase):

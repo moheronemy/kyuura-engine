@@ -29627,7 +29627,8 @@ class SearchNamedFromDeckOrDiscard(TrainerEffect):
             if card not in self.candidates(state, use):
                 raise RuntimeError(f"{use.card_id} で選んだカード {card} が、選べるカードではない（決定の確認の漏れ。エンジンの不具合）")
             if card in p.deck:
-                reveal_deck_to_hand(state, use.player, card)
+                # v0.185（docs/fossil-slot-reveal-v0.185.md）: 見せたカード自身の card_id を書く（名前からの推論に頼らない）。トラッシュの側は変えない（公開の場所）
+                reveal_deck_to_hand(state, use.player, card, identify=True)
             else:
                 return_discard_to_hand(state, use.player, (card,))
                 state.add_event("retrieve_trainer", player=use.player, card=card, trainer_card=use.card)
