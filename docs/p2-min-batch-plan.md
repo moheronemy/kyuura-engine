@@ -343,4 +343,4 @@
   - L67-U の均等の選び方で、裏向きのカードが相手の番まで残る確率
   - デッキの構成（ベンチの埋まりやすさ）の影響
 - new_game での P2-min の実績は 0 のまま、未出現のままです（構築盤面の確認は [P2 の設計](verification-ai-lost-target-p2-p3o-design.md) 9 章で済み）。
-- **所在だけ記録**: 2 局目の undetermined（回答の決定の `UNRESOLVED_RECOVER_ZERO_ENERGY`）の根拠の設計は、今回の対象の外です。（→ 2026-11-16 に別の作業で設計した: [UNRESOLVED_RECOVER_ZERO_ENERGY の根拠条件の設計](verification-ai-recover-zero-energy-design.md)）
+- **所在だけ記録**: 2 局目の undetermined（回答の決定の `UNRESOLVED_RECOVER_ZERO_ENERGY`）の根拠の設計は、今回の対象の外です。（→ 2026-11-16 に別の作業で設計した: [UNRESOLVED_RECOVER_ZERO_ENERGY の根拠条件の設計](verification-ai-recover-zero-energy-design.md)。→ 判定の規則 10 で実装した。この保存例の正式な再判定はしていない: 同じ文書の 8 章）

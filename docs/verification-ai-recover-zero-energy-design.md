@@ -237,3 +237,137 @@ ER9 の表（`RECORDED_STOP_CONDITIONS`）に `recover_energy` を足すだけ�
   - ほかの旧記録への当てはまり
   - basis の値を `_digest` で計算すること（実装のとき）
 - **失敗と直したこと:** 抽出スクリプトの 1 回目は、本人の観測の決定の項目名を読み違え（`decision` を `pending_decision` として読んだ）、R10 が偽になった。出力は `out/saved_case_attempt1_wrong_key.json` として残した。直そうとしたコマンドが引用の誤りで失敗し、直していないスクリプトがもう一度走った（`out/saved_case_attempt2_rerun_unedited.json`。中身は 1 回目と同じ）。ファイルを編集して直した 3 回目で、R10 を含むすべての条件が真になった。
+
+## 8. 実装の結果（2026-11-16。判定の規則 10・TOOL_VERSION 13）
+
+- 実装と、構築盤面での限定の確認だけを行いました。
+- 保存済みのバッチ（vai-batch-p2n1）の正式な再判定はしていません。元の judge.json・trace・COMPLETE は変えていません。
+- 新しい対戦、エンジンの処理・裁定・規約の変更もしていません。
+- 証跡: `kyuura-engine-verification-vai/verifier/runs/recover-zero-judge-r10/`。
+
+### 8.1 エンジンの前提（テストで確認。エンジンは変えていない）
+
+[tests/test_recover_zero_energy_premise_v0_187.py](../tests/test_recover_zero_energy_premise_v0_187.py)（6 件）で次を確認しました。
+
+- **投げる箇所:** 構文木の文字列の定数で数えると、`UNRESOLVED_RECOVER_ZERO_ENERGY` は `resolution/programs.py` の `RecoverEnergy.resume` の 1 か所だけです。`raise UnsupportedError(...)` の最初の引数で、説明文の中の名前は別の、より長い文字列なので数えません。
+- **最小 0 の決定:** `kind=RECOVER_ENERGY` で決定を作る `suspend` は 3 要素あります。
+  - `RecoverEnergy`: 最小 0
+  - `RecoverEnergyByHeads`: 最小は「おもて」の数で、0 なら決定を出さない
+  - `RecoverSpecialEnergy`: 既定の 1
+  - 要素を作る効果 `RecoverEnergyAndSelfDamage` の登録は、ゴースのエナジーへんかんだけです。
+- **0 枚の回答:** 決定の確認（`checks.decision_choices`）を通り、そのあと状態を変える前に対象のコードで拒否されます。状態・乱数の指紋・ログ・決定（同じオブジェクト・番号・本人）は変わりません。
+- **1 枚以上の回答:** 1 枚は受理されます。重なり（`DUPLICATE_CHOICE`）と数の超過（`INVALID_CHOICE_COUNT`）は別のコードです。
+- **ワザのコピーの経路:**
+  - ピッピ（PMCG1-067）とピクシー（PMCG2-044）の「ゆびをふる」（`CopyOpponentAttackEffect`。登録はこの 2 枚だけ）で相手のゴースのエナジーへんかんを選ぶと、同じ決定の種類・最小・再開先（`attack`）・拒否になります（文脈 `copied`）。この 2 つの経路だけを対象にふくめました。
+  - メタモンの［へんしん］でも同じコードに届くことを構築盤面で見ましたが、決定を出したワザがバトル場の印刷のカードのワザではないので、対象の外です（R13。下の 8.2）。
+  - 思い出させる・サイコリンク・ものまね・げんしのきおく・にんぎょうつかい・カスミのコダックの「ちょうのうりょく」などは確かめておらず、対象の外です。
+
+前提はすべて成り立ちました。エンジンの同時の修正はしていません。
+
+### 8.2 判定（`tools/verification_ai/judge.py`）
+
+- **規則:** ER9 とは別の根拠の項目（`KNOWN_STOP_EVIDENCE["UNRESOLVED_RECOVER_ZERO_ENERGY"]`。鍵は元のコードそのもの）と、判定の関数 `recover_zero_energy_failure`・`recover_zero_energy_evidence` を足しました。ER9 の表（`RECORDED_STOP_CONDITIONS`）は変えていません。
+- **確かめる順:** R1〜R10 → R13 → R11（`RECOVER_ZERO_CONDITIONS`）。最初に満たさない条件の id を返します。
+
+| 条件 | 実装 |
+|---|---|
+| R1 | rejected・ok・refusal なし・error なしで、診断の engine_code・diagnostic_id と結果の diagnostic_id がそろって対象のコード |
+| R2 | 分類が診断・結果・コード表で `unresolved_ruling` |
+| R3 | 候補が `answer_decision` で、候補の理由に `EXPLAINING_REASONS` のどれか |
+| R4 | 段がちょうど 1 つ（stage 1・`recover_energy`・`choose_option`・`card`） |
+| R5 | 最小が整数 0、最大が整数で 1 以上・選べるものの数以下 |
+| R6 | 選べるものが 1 つ以上、id・card が重ならない |
+| R7 | `meaning == []` かつ `choices == []` |
+| R8 | check が ok・取り直し不要・valid・断りなし |
+| R9 | 拒否のあとも `awaiting_decision`・`decision_answer`・continuable・`next` が本人の `answer_decision` だけ・viewer が本人・halt なし・取り直し不要 |
+| R10 | 送信前の本人の観測がちょうど 1 つで、決定待ち・本人の番・同じ番。観測の決定が `recover_energy`・本人・`card`・最小 0・最大と選べるものの数と値の並びが段と同じ。同じエピソードで送信より前の受理がない（古くない） |
+| R13（実装で追加） | 決定を出した経路が確かめた経路: 同じ trace の、送信より前の受理の最後が (a) 本人の印刷のカードのワザ（route `form`・選べるものの card と card_id が送信前の本人の観測のバトル場と同じ・登録の効果が `RecoverEnergyAndSelfDamage`）の `use_attack` で本人の決定待ちになった、または (b) `select_attack` への本人の 1 つの答え（選んだワザの登録の効果が `RecoverEnergyAndSelfDamage`）で、その前の受理が本人の印刷のカードの `CopyOpponentAttackEffect` の `use_attack` |
+| R11 | 専用の basis（8.3） |
+| R12 | `submit_evidence` が確かめる（下） |
+
+- **共通の入口と重なり（R12）:** `submit_evidence` は、規則 6（ER9）・規則 10・規則 7（P1）・規則 9（P2-min）・規則 8（P3s）をすべて評価し、根拠を返すものがちょうど 1 つのときだけその鍵を返します。2 つ以上なら矛盾として None です。規則 9 までの「ER9 が根拠を返せば、ほかを見ずに返す」をやめ、呼ぶ順で重なりを隠しません（重ならない入力の結果は同じ）。
+- **単局とバッチ:** 単局の runner（`runner.py`。変異の実行の中の判定）と逐次バッチ（`batch.judge_trace`）は、同じ `submit_evidence` を呼びます。`judge_trace` に `basis_r` を足しました。runner は記録の header の識別で判定し、basis を渡しません。
+- **対象の外（undetermined のまま）:** 欠落・矛盾・古い観測・対象外の決定・効果・経路、basis の不一致。refused・failed（`judge_normal` が suspect にする）と、受理のあとの停止（`judge_halt_after_accept` は根拠を受け取らず、`halt_condition_not_evidenced`）には使いません。
+- **回答し直しの受理:** 構築盤面のテストで補足として確かめていますが、条件には使いません。
+
+### 8.3 専用の basis と旧記録
+
+- **方式:** `kyuura-recover-zero-basis-sha256/1`。`replay_record._digest` と同じ正規化・要約で、次の 8 ファイルを要約します。
+- **ファイル:** 設計の 4 ファイル（`resolution/programs.py`・`decisions.py`・`engine.py`・`legal_actions.py`）に、実装で 4 ファイルを足しました。
+
+| 足したファイル | 理由 |
+|---|---|
+| `resolution/flow.py` | 決定への答えを要素の resume に渡す `resume_decision` があるのは、`engine.py` ではなくここ |
+| `checks.py` | 決定の確認の入口 `decision_choices` |
+| `observation.py` | R10 の観測の決定と、R13 のバトル場の card・card_id の形 |
+| `effects.py` | R13 が引く効果の登録（設計 5.3 節では入れない予定だったが、経路の限定を足したので要る） |
+
+- **一致の条件**（`_r_basis_matches`）: 記録の依存（カードプール・カードデータの出どころ・効果の登録）が今と同じで、次のどちらか。
+  - (a) 呼ぶ側が渡した `basis_r` が、今の基礎と方式・ファイルの並び・要約まで同じ。
+  - (b) `basis_r` を渡さず、記録の実装の識別（方式・behavior_digest）が今のエンジンと同じ。かつ、基礎のファイルがすべて behavior のファイル（instrumentation でない）にふくまれる。behavior_digest が基礎のファイルの中身を覆うので、今のファイルが記録を作ったファイルと同じだと確かめられます。
+
+**旧記録の扱い:**
+
+- 記録・header・計画に basis を後付けしません。
+- `basis_r` を渡して合わなければ、(b) が成り立っても一致としません。
+- 実装の識別が違う記録は、記録を作ったエンジンのパッケージから `recover_zero_basis(root)` で計算した値を渡したときだけ一致します。対応するソースを示せなければ undetermined のままです。
+- 許可リスト・例外はありません。P1・P2・P3 の basis は読みません。
+
+### 8.4 テストと単局・バッチの一致
+
+[tests/test_verification_ai_recover_zero_r10.py](../tests/test_verification_ai_recover_zero_r10.py)（20 件）。実装の前に走らせて失敗することを確かめ（65 のエラー・2 つの失敗）、実装のあとで通りました。
+
+- **正:**
+  - 保存例と同じ形（0〜2・選べるもの 4）
+  - 最大 1
+  - ゆびをふる（ピッピ・ピクシー）
+  - 起点と送信のあいだに拒否があっても通る
+- **負:**
+  - 1・2 枚の答え、`choices` と `meaning` の食い違い
+  - 別の決定（`retrieve_energy`）・最小 1・別のコード（ER9・超エネルギー回収・`INVALID_CHOICE_COUNT`）・公開のコードの違い・分類の違い・別のワザの起点
+  - 段の欠落・空・2 つ・入力や意味の違い・最大 0・最大の超過・最大が文字列・選べるものなし・card の重なり・id の重なり・card のない選べるもの
+  - 候補の種類・理由なし
+  - check の欠落・invalid・断り・取り直し
+  - 拒否のあとの status・next（ほかの主体・番の操作）・viewer・取り直し・halt・stage
+  - refused・failed・error、受理のあとの停止
+  - 観測の欠落・重なり・viewer・ok でない・番でない・段階・決定なし・番の違い・種類・最小・最大・値の並び・数・決定の本人、同じエピソードの前の受理
+  - 経路（起点なし・あいだのほかの主体の受理・起点が決定待ちでない・route・ワザの位置・メタモン・起点の観測なし・ゆびをふるのない選択・選んだワザの違い）
+  - basis（同じ・同じで正しい basis・同じで違う basis・header なし・識別の違い・識別が違い正しい basis・違う要約・違うファイルの並び・P2 の basis・効果の登録の違い・方式の違い）
+  - ほかの規則との重なり（4 つの規則それぞれが根拠を返すと None）
+  - ER9 の送信は ER9 のまま
+- **構築盤面:**
+  - ゴース・ピッピ・ピクシーの盤面を本物の runner に通しました。逐次バッチの入口・単局の runner の判定・保存した形（trace・`actors/*.jsonl`）からの読み直しが、同じ known_stop の行になりました。
+  - メタモンの盤面は R13 で undetermined でした。
+  - header なしは、両方の入口で undetermined（`evidence_missing_stop`）でした。
+  - 識別を変えた記録は、`basis_r` を渡したときだけ known_stop で、P2 の basis では undetermined でした。
+  - 停止の方針では止めず、判定の行にカード ID はありません。
+
+**関連のテスト:** 対象と理由を実行前に `spec/test_selection.md` に記録し、1 モジュールずつ別のプロセスで走らせました（結果は 8.5）。版の期待は 11 モジュールで、規則 9→10・TOOL_VERSION 12→13 に更新しました（旧の期待を注記に残しています。そのうち 1 行は再実行のあとに直しました）。固定の指紋は更新していません。
+
+### 8.5 規則・識別の前後（実測）
+
+| 項目 | 前（fe4e405） | 後 |
+|---|---|---|
+| 判定の規則 | 9 | 10 |
+| TOOL_VERSION | 12 | 13 |
+| 道具の要約（tools/verification_ai） | 8cfa17bb… | be95aa1e… |
+| 計画・完了の形式 | kyuura-vai-batch-plan/7・kyuura-vai-batch-complete/7 | kyuura-vai-batch-plan/7・kyuura-vai-batch-complete/7 |
+| エンジンの版 | 0.187.0 | 0.187.0 |
+| behavior_digest | ae974fff… | ae974fff… |
+| instrumentation_digest | 13c773a8… | 13c773a8… |
+| P1 の basis | 2ed8732f… | 2ed8732f… |
+| P3 の basis | 9499db41… | 9499db41… |
+| P2 の basis | 720f4641… | 720f4641… |
+| 規則 10 の basis | （なし） | a3a9c84c… |
+
+- 旧の計画（TOOL_VERSION 12）は、既存の道具の識別の照合で再開しません。再開を通す回避の処理は足していません。
+- 形式の変更は要りませんでした。
+
+**関連のテストの結果:** 23 モジュール中、1 回目に 22 が終了コード 0、`tests.test_verification_ai_lost_target_p3` が 1 つの失敗でした。原因は、版の期待のタプルの形の 1 行（`(9, 12)`）を更新し忘れたことです。その行を `(10, 13)` にして、同じモジュールだけ再実行し、通りました（1 回目の出力は `tests_out/tests.test_verification_ai_lost_target_p3_attempt1_failed.txt` に残しています）。既知の時間に依存する prestop のテストも、今回は通りました。全体のテストはしていません。
+
+### 8.6 保存例と、次の単位
+
+- この実装で、vai-batch-p2n1 の 2 局目の 1 件を正式に再判定してはいません。保存済みの判定（規則 9 の undetermined）はそのままです。
+- **当て直す場合の最小の単位:** 保存済みの 2 局の記録から、新しい作業の場所で `batch.judge_trace` を読み直しの形（trace・actors・記録の header）で当て直します。結果は新しいファイルに書き、元の judge.json・COMPLETE は変えません。
+  - 記録の header の behavior_digest は今と同じなので、basis は (b) の条件で確かめる見込みです。
+  - ほかの判定の行が変わらないこと（差分は対象の 1 行だけ）も照らします。
