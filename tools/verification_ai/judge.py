@@ -35,7 +35,13 @@ from .actions import RETREAT_KIND, cost_not_evaluated
 #    select_pokemon 1 つ）への回答で本人のうらのカードを指定した UNSUPPORTED_SECRET_PLAN_LOST_TARGET の拒否を、条件 D1〜D12 をすべて確かめたときだけ、別の鍵
 #    （LOST_TARGET_P3_EVIDENCE）の根拠にする（decision_lost_target_failure）。生の診断コードは変えない。照合は根拠の項目の code（なければ鍵）と元のコードが同じとき
 #    だけ（既存の項目では規則 7 と同じ式）。P1 の条件・理由・basis は変えない。条件を満たさない送信（相手のうら・複数選択・ほかの効果・再開先・basis の不足をふくむ）は規則 7 と同じ
-JUDGE_RULES_VERSION = 8
+# 9: LOST_TARGET の P2-min（docs/verification-ai-lost-target-p2-p3o-design.md 2 章・9 章。エンジン 0.187.0）。おもてのゲンガーの［のろい］（効果の型
+#    MoveOpponentDamageCounter。implementation_id move_opponent_damage_counter）の target に相手のうらを 1 匹だけ指定し、source は相手のおもての送信の
+#    UNSUPPORTED_SECRET_PLAN_LOST_TARGET の拒否を、条件 Q1〜Q12 をすべて確かめたときだけ、別の鍵（LOST_TARGET_P2_EVIDENCE）の根拠にする
+#    （opponent_face_down_lost_target_failure）。相手の本当のカード（real）・相手の観測・完全な記録は読まない（エンジンは相手のうらの指定をありうるカードの公開の一覧で
+#    確かめ直すので、結果は相手の正体によらない。静的な前提 S1〜S3 は tests/test_lost_target_p2_min_v0_187.py）。P1・P3s の条件・理由・basis は変えない。
+#    submit_evidence は、P1・P2・P3s のうち根拠を返すものがちょうど 1 つのときだけその鍵を返す（2 つ以上は起こらないはずの矛盾なので、どれにも決めない）。P3o は未登録
+JUDGE_RULES_VERSION = 9
 # U-R3a: うらのカードの特殊能力で、エンジンがおもてにしたあとに確かめ、API が評価しないと契約で示すもの（GUARANTEE_FACE_DOWN_POWER: 構造の組は受け付けるかで絞らない）。
 # 元のコード → (その条件に要る段の role（どれか 1 つが選んだ入力にあること。空なら段は問わない）, 条件の説明)。カード・効果の型ごとの登録ではない
 FACE_DOWN_POWER_ENGINE_DECIDES = {
@@ -101,6 +107,19 @@ KNOWN_STOP_EVIDENCE = {
                    "kyuura_engine/zones.py: designate_face_down・_secret_plan_keeps",
                    "kyuura_engine/effects.py: AttachedDamageReduction（本人の場の select_pokemon・再開先 trainer・文脈なし）",
                    "docs/verification-ai-lost-target-p3-decision-design.md: 4 章（D1〜D12）"],
+    },
+    # 規則 9: P2-min だけ（ゲンガーの［のろい］の target に相手のうら 1 匹）。根拠は opponent_face_down_lost_target_failure が Q1〜Q12 をすべて確かめたときだけ渡す
+    "UNSUPPORTED_SECRET_PLAN_LOST_TARGET#P2": {
+        "code": "UNSUPPORTED_SECRET_PLAN_LOST_TARGET",
+        "condition": "おもての使い手のゲンガーの［のろい］（相手の場のダメージカウンターを相手の場の別のポケモンへ。効果の型 MoveOpponentDamageCounter）の target に、"
+                     "送信前の本人の観測で相手の場のうらのカードを 1 匹だけ指定し、source は相手の場のおもてのポケモン（P2-min。エンジンは入口で can_lose=False で指定し、"
+                     "相手のうらの本当のカードによらず、ありうるカードの公開の一覧の「たねでない」の試しで状態を変える前に止め、番は続く）",
+        "source": ["tests/test_lost_target_p2_min_v0_187.py: S1〜S3・本当のカードによらない同じ拒否・source の指定は NO_DAMAGE_COUNTERS",
+                   "tests/test_secret_plan_v0_67.py: IdentityIndependenceTest.test_power_target_on_a_face_down_card_is_refused_for_every_identity",
+                   "kyuura_engine/engine.py: _apply_checked・_identity_independent・_public_pool・_NONBASIC・_reveal_for_action",
+                   "kyuura_engine/zones.py: designate_face_down",
+                   "kyuura_engine/effects.py: MoveOpponentDamageCounter（check_usable は入口の指定のあと）",
+                   "docs/verification-ai-lost-target-p2-p3o-design.md: 2 章（Q1〜Q11）・9 章（Q12 と効果の限定）"],
     },
 }
 # 規則 6: 記録した送信の値だけで代表の条件を確かめる停止のコード → 決定の種類（段の decision_kind）。条件は recorded_stop_evidence:
@@ -739,17 +758,166 @@ def own_face_down_decision_lost_target_evidence(entry: dict[str, Any], *, trace,
     return LOST_TARGET_P3_EVIDENCE if failure is None else None
 
 
-def submit_evidence(entry: dict[str, Any], *, trace, actor_logs, header, basis=None, basis_p3=None) -> str | None:
+# ---------------------------------------------------------------- 規則 9: LOST_TARGET の P2-min（ゲンガーの［のろい］の target に相手のうら 1 匹。検証者の側だけ）
+
+LOST_TARGET_P2_EVIDENCE = "UNSUPPORTED_SECRET_PLAN_LOST_TARGET#P2"  # KNOWN_STOP_EVIDENCE の鍵（経路の名前）。生の診断コードではない
+# 初回に登録する効果の型（implementation_id）。カード ID・名前の表ではない。エンジンの登録（DEFAULT_EFFECTS.power_entry）から候補の力の型を引いて照らす
+LOST_TARGET_P2_POWER_EFFECTS = frozenset({"move_opponent_damage_counter"})
+LOST_TARGET_P2_CONDITIONS = ("Q1", "Q2", "Q3", "Q4", "Q12", "Q5", "Q6", "Q7", "Q8", "Q9", "Q10", "Q11")  # 確かめる順（Q12 は効果の限定で、候補の確かめ Q4 のすぐあと）
+LOST_TARGET_P2_ROLES = ("source", "target")
+# Q11 の判定の基礎（設計 5 章・9 章）: 入口の指定と、ありうるカードの試し（engine.py・zones.py）、公開のカードの一覧とたねの判定（cards.py・data/kyuura_cards.json・effects.py）、
+# 効果の型の check_usable の順（effects.py）、観測の相手のうらの形（observation.py）、入口の指定がうらかを決める値（state.py の is_face_down・find_pokemon。実装のときに
+# 設計の 6 ファイルに足した。P1・P3 の basis は変えない）
+LOST_TARGET_P2_BASIS_METHOD = "kyuura-lost-target-p2-basis-sha256/1"
+LOST_TARGET_P2_BASIS_FILES = ("cards.py", "data/kyuura_cards.json", "effects.py", "engine.py", "zones.py", "observation.py", "state.py")
+
+
+def lost_target_p2_basis(root=None) -> dict[str, Any]:
+    """Q11 の判定の基礎の識別（``lost_target_basis`` と同じ方式で、``LOST_TARGET_P2_BASIS_FILES`` だけを要約）。``root`` はパッケージのディレクトリ（省略時は今のエンジン）。"""
+    from pathlib import Path
+
+    from kyuura_engine.replay_record import PACKAGE_ROOT, _digest
+
+    base = Path(root) if root is not None else PACKAGE_ROOT
+    return {"method": LOST_TARGET_P2_BASIS_METHOD, "files": list(LOST_TARGET_P2_BASIS_FILES), "digest": _digest(base, LOST_TARGET_P2_BASIS_FILES)}
+
+
+_P2_BASIS: dict[str, Any] | None = None
+
+
+def _current_p2_basis() -> dict[str, Any]:
+    global _P2_BASIS
+    if _P2_BASIS is None:
+        _P2_BASIS = lost_target_p2_basis()
+    return _P2_BASIS
+
+
+def _p2_basis_matches(header, basis_p2) -> bool:
+    """Q11: 記録の依存が今のカードプール・カードデータ・効果の登録と同じで、(a) 実装の識別が今と同じか、(b) 呼ぶ側の ``basis_p2`` が今の P2 の基礎と同じ
+    （方式・ファイルの並び・要約がすべて同じ）。P1・P3 の basis は読まない（方式・ファイルが違うので一致とみなさない）。"""
+    from kyuura_engine.effects import DEFAULT_EFFECTS
+
+    header = _recorded_pool_matches(header)
+    if header is None or (header.get("dependencies") or {}).get("effects") != DEFAULT_EFFECTS.id:
+        return False
+    if _same_behavior(header):
+        return True
+    expected = _current_p2_basis()
+    return (isinstance(basis_p2, dict) and basis_p2.get("method") == expected["method"] and basis_p2.get("files") == expected["files"]
+            and basis_p2.get("digest") == expected["digest"])
+
+
+def opponent_face_down_lost_target_failure(entry: dict[str, Any], *, trace: list[dict[str, Any]] | None, actor_logs, header, basis_p2=None) -> str | None:
+    """規則 9: 送信 ``entry`` が P2-min の条件 Q1〜Q12（設計 2 章・9 章）をすべて満たすなら None、満たさない最初の条件の id を返す。
+
+    使う値: 送信の行（候補・段・選んだ意味・submit の応答と検証者の診断）、同じ trace の同じエピソードの前の送信、本人の送信前の観測（``own_view_for``。相手の本当のカード
+    を持たない）、記録の header の依存と実装の識別、エンジンの効果の登録（候補の力の型）。相手の real・相手の観測・完全な記録・replay・選ばなかった選べるものは使わない。
+    返す値は条件の id だけで、場のポケモンの番号・uid・カード ID を持たない。"""
+    candidate, submit = entry.get("candidate") or {}, entry.get("submit") or {}
+    diag, result = submit.get("verifier") or {}, submit.get("result") or {}
+    actor = entry.get("actor")
+    # Q1: エンジンの拒否（ホストの断り・failed・エラーを除く）
+    if submit.get("outcome") != D.REJECTED or submit.get("ok") is not True or submit.get("refusal") is not None or submit.get("error") is not None:
+        return "Q1"
+    # Q2: コードと分類（検証者の診断・公開の結果・コード表）
+    if not (diag.get("engine_code") == diag.get("diagnostic_id") == result.get("diagnostic_id") == LOST_TARGET_CODE
+            and diag.get("category") == result.get("category") == D.UNSUPPORTED == _catalog_category(LOST_TARGET_CODE)):
+        return "Q2"
+    # Q3: 拒否のあとも同じ主体の番（入口で止まった形。状態が変わらない＝取り直しが要らない）
+    if (actor not in (0, 1) or result.get("status") != "in_progress" or result.get("continuable") is not True
+            or result.get("next") != [{"kind": "turn_action", "player": actor}] or result.get("viewer") != actor or result.get("halt") is not None
+            or submit.get("refetch_required") is not False):
+        return "Q3"
+    # Q4: おもての使い手の特殊能力。理由 face_down_reveal_not_evaluated が、候補か選んだ選べるもの（_known_stop_or_undetermined と同じ範囲）にある
+    user, power = candidate.get("pokemon") or {}, candidate.get("power") or {}
+    meaning = entry.get("meaning") or []
+    reasons = set(candidate.get("reasons") or [])
+    for m in meaning:
+        reasons |= set(((m.get("option") if isinstance(m, dict) else None) or {}).get("reasons") or [])
+    if (candidate.get("kind") != "use_power" or not isinstance(user.get("card_id"), str) or user.get("face_down") is True or power.get("face_down") is True
+            or FACE_DOWN_REASON not in reasons or type(user.get("pokemon")) is not int):
+        return "Q4"
+    # Q12: 効果の限定。候補の力が使い手の印刷の力（写した力でない）で、エンジンの登録の効果の型が LOST_TARGET_P2_POWER_EFFECTS（今は［のろい］の型だけ）
+    from kyuura_engine.effects import DEFAULT_EFFECTS, MoveOpponentDamageCounter
+
+    entry_ = (DEFAULT_EFFECTS.power_entry(power["card_id"], power["index"])
+              if isinstance(power.get("card_id"), str) and type(power.get("index")) is int else None)
+    effect = getattr(entry_, "effect", None)
+    if (power.get("card_id") != user.get("card_id") or power.get("card") != user.get("card") or not isinstance(effect, MoveOpponentDamageCounter)
+            or getattr(effect, "implementation_id", None) not in LOST_TARGET_P2_POWER_EFFECTS):
+        return "Q12"
+    # Q5: 選んだ段は source・target（meaning pokemon）がちょうど 1 つずつ（energy の段・ほかの段を選んだら外す）
+    by_number = {s.get("stage"): s for s in (entry.get("stages") or []) if isinstance(s, dict)}
+    chosen = {}
+    for m in meaning:
+        stage = by_number.get(m.get("stage")) if isinstance(m, dict) else None
+        role = (stage or {}).get("role")
+        if (stage is None or role not in LOST_TARGET_P2_ROLES or stage.get("meaning") != "pokemon" or role in chosen
+                or not isinstance(m.get("option"), dict) or type(m["option"].get("pokemon")) is not int):
+            return "Q5"
+        chosen[role] = m["option"]
+    if set(chosen) != set(LOST_TARGET_P2_ROLES):
+        return "Q5"
+    # Q6: 送信前の本人の観測がちょうど 1 つで、送信の時点と同じ（番・段階・決定・同じエピソードの前に受理がない）
+    view = own_view_for(actor_logs, entry)
+    observation = (view or {}).get("observation") if isinstance(view, dict) else None
+    if not isinstance(observation, dict) or view.get("ok") is not True or view.get("viewer") != actor:
+        return "Q6"
+    from .policies import turn_of
+
+    if (observation.get("viewer") != actor or observation.get("current_player") != actor or observation.get("phase") != "main"
+            or observation.get("decision") is not None or not isinstance(entry.get("turn"), list) or list(turn_of(view)) != entry["turn"]):
+        return "Q6"
+    if not isinstance(trace, list) or any(
+            isinstance(x, dict) and x.get("type") == "attempt" and x.get("episode") == entry.get("episode") and type(x.get("n")) is int
+            and x["n"] < entry.get("n", 0) and (x.get("submit") or {}).get("outcome") == D.ACCEPTED for x in trace):
+        return "Q6"
+    rows = _field_rows(observation)
+    if rows is None:
+        return "Q6"
+    # Q7: 使い手は観測の主体の場にちょうど 1 つあり、うらでない
+    users = [(owner, z) for owner, z in rows if z.get("pokemon_id") == user["pokemon"]]
+    if len(users) != 1 or users[0][0] != actor or users[0][1].get("face_down") is True:
+        return "Q7"
+    # Q8: 参照がちょうど 1 つに合い、選べるものと観測の face_down が同じ
+    designated = {}
+    for role, option in chosen.items():
+        hits = [(owner, z) for owner, z in rows if z.get("pokemon_id") == option["pokemon"]]
+        if len(hits) != 1 or (option.get("face_down") is True) != (hits[0][1].get("face_down") is True):
+            return "Q8"
+        designated[role] = hits[0]
+    # Q9: 持ち主。target は相手の場のうら、source は相手の場のおもて（指定したうらはちょうど 1 つで相手の場。本人のうらを指定しない）
+    (t_owner, t_zone), (s_owner, s_zone) = designated["target"], designated["source"]
+    if t_owner != 1 - actor or t_zone.get("face_down") is not True or s_owner != 1 - actor or s_zone.get("face_down") is True:
+        return "Q9"
+    # Q10: 情報の境界の整合（相手のうらの観測の行に本当のカードがない）
+    if "real" in t_zone:
+        return "Q10"
+    # Q11: 判定の基礎が記録を作ったエンジンと同じ
+    if not _p2_basis_matches(header, basis_p2):
+        return "Q11"
+    return None
+
+
+def opponent_face_down_lost_target_evidence(entry: dict[str, Any], *, trace, actor_logs, header, basis_p2=None) -> str | None:
+    """規則 9: P2-min の条件 Q1〜Q12 をすべて満たせば ``LOST_TARGET_P2_EVIDENCE``（judge_normal の evidence。鍵の名前）、そうでなければ None。"""
+    failure = opponent_face_down_lost_target_failure(entry, trace=trace, actor_logs=actor_logs, header=header, basis_p2=basis_p2)
+    return LOST_TARGET_P2_EVIDENCE if failure is None else None
+
+
+def submit_evidence(entry: dict[str, Any], *, trace, actor_logs, header, basis=None, basis_p3=None, basis_p2=None) -> str | None:
     """送信の判定（judge_normal）に渡す根拠の共通の入口。単局の runner（変異の実行の中の判定）と逐次バッチ（batch.judge_trace）が、同じ送信の行・同じ trace・同じ
-    actor_logs・同じ記録の header で呼ぶ。規則 6（recorded_stop_evidence。ER9）・規則 7（own_face_down_lost_target_evidence。P1。``basis`` だけを使う）・規則 8
-    （own_face_down_decision_lost_target_evidence。P3s。``basis_p3`` だけを使う）の順に、条件をすべて満たすときだけ根拠の鍵を返す。"""
+    actor_logs・同じ記録の header で呼ぶ。規則 6（recorded_stop_evidence。ER9）を先に見て、満たせばその鍵を返す。次に規則 7（own_face_down_lost_target_evidence。P1。
+    ``basis`` だけを使う）・規則 9（opponent_face_down_lost_target_evidence。P2-min。``basis_p2`` だけを使う）・規則 8（own_face_down_decision_lost_target_evidence。
+    P3s。``basis_p3`` だけを使う）を確かめ、根拠を返すものがちょうど 1 つのときだけその鍵を返す（条件は互いに重ならない。2 つ以上なら矛盾として None）。"""
     found = recorded_stop_evidence(entry.get("candidate") or {}, entry.get("meaning") or [], entry.get("stages"), entry.get("submit") or {})
     if found is not None:
         return found
-    found = own_face_down_lost_target_evidence(entry, trace=trace, actor_logs=actor_logs, header=header, basis=basis)
-    if found is not None:
-        return found
-    return own_face_down_decision_lost_target_evidence(entry, trace=trace, actor_logs=actor_logs, header=header, basis_p3=basis_p3)
+    found = [key for key in (own_face_down_lost_target_evidence(entry, trace=trace, actor_logs=actor_logs, header=header, basis=basis),
+                             opponent_face_down_lost_target_evidence(entry, trace=trace, actor_logs=actor_logs, header=header, basis_p2=basis_p2),
+                             own_face_down_decision_lost_target_evidence(entry, trace=trace, actor_logs=actor_logs, header=header, basis_p3=basis_p3))
+             if key is not None]
+    return found[0] if len(found) == 1 else None
 
 
 def judge_halt_after_accept(halt: dict[str, Any] | None, *, evidence: str | None = None) -> tuple[str, list[str]]:
