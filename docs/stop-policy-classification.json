@@ -8783,7 +8783,7 @@
    ],
    "tests": {
     "assert_like_lines": 4,
-    "mention_lines": 6,
+    "mention_lines": 7,
     "files": [
      "tests/helpers.py",
      "tests/test_energy_retrieval_v0_23.py",
@@ -8792,9 +8792,10 @@
      "tests/test_unresolved_boundaries_v0_4e.py",
      "tests/test_verification_ai_er9_evidence.py",
      "tests/test_verification_ai_lost_target_p3.py",
-     "tests/test_verification_ai_observation.py"
+     "tests/test_verification_ai_observation.py",
+     "tests/test_verification_ai_recover_zero_r10.py"
     ],
-    "files_total": 8,
+    "files_total": 9,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -12472,16 +12473,17 @@
    ],
    "tests": {
     "assert_like_lines": 2,
-    "mention_lines": 12,
+    "mention_lines": 13,
     "files": [
      "tests/test_counter_keep_energy_protection_v0_101.py",
      "tests/test_keep_designated_energy_removal_v0_181.py",
      "tests/test_lost_target_p3_decision_v0_181.py",
      "tests/test_research_links_v0_18e.py",
      "tests/test_unresolved_boundaries_v0_4e.py",
+     "tests/test_verification_ai_lost_target_p2.py",
      "tests/test_verification_ai_lost_target_p3.py"
     ],
-    "files_total": 6,
+    "files_total": 7,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -20709,12 +20711,14 @@
    ],
    "tests": {
     "assert_like_lines": 2,
-    "mention_lines": 4,
+    "mention_lines": 8,
     "files": [
      "tests/test_haunter_line_v0_9.py",
-     "tests/test_unresolved_boundaries_v0_4e.py"
+     "tests/test_recover_zero_energy_premise_v0_187.py",
+     "tests/test_unresolved_boundaries_v0_4e.py",
+     "tests/test_verification_ai_recover_zero_r10.py"
     ],
-    "files_total": 2,
+    "files_total": 4,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -20734,7 +20738,9 @@
     "status": "constructed_board",
     "evidence": [
      "tests/test_haunter_line_v0_9.py",
-     "tests/test_unresolved_boundaries_v0_4e.py"
+     "tests/test_recover_zero_energy_premise_v0_187.py",
+     "tests/test_unresolved_boundaries_v0_4e.py",
+     "tests/test_verification_ai_recover_zero_r10.py"
     ],
     "basis": "テストに表明らしい行がある（静的）。盤面の作り方・行の実行は個別に確かめていない"
    }
@@ -22687,11 +22693,13 @@
    ],
    "tests": {
     "assert_like_lines": 3,
-    "mention_lines": 14,
+    "mention_lines": 17,
     "files": [
      "tests/helpers.py",
      "tests/test_counts_coins_compositions_v0_106.py",
      "tests/test_final_pmcg_cards_v0_68.py",
+     "tests/test_legal_actions_r2_stadium_coin_v0_188.py",
+     "tests/test_preflight_face_down_attacker_v0_189.py",
      "tests/test_secret_plan_v0_67.py",
      "tests/test_spread_damage_allocation_v0_115.py",
      "tests/test_unown_bear_yield_vanish_give_v0_98.py",
@@ -22701,7 +22709,7 @@
      "tests/test_unresolved_boundaries_v0_4e.py",
      "tests/test_variable_coins_search_attachments_v0_113.py"
     ],
-    "files_total": 11,
+    "files_total": 13,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -22723,8 +22731,8 @@
      "tests/helpers.py",
      "tests/test_counts_coins_compositions_v0_106.py",
      "tests/test_final_pmcg_cards_v0_68.py",
-     "tests/test_secret_plan_v0_67.py",
-     "tests/test_spread_damage_allocation_v0_115.py"
+     "tests/test_legal_actions_r2_stadium_coin_v0_188.py",
+     "tests/test_preflight_face_down_attacker_v0_189.py"
     ],
     "basis": "テストに表明らしい行がある（静的）。盤面の作り方・行の実行は個別に確かめていない"
    }
@@ -24263,14 +24271,15 @@
    ],
    "tests": {
     "assert_like_lines": 0,
-    "mention_lines": 4,
+    "mention_lines": 5,
     "files": [
      "tests/test_research_links_v0_18e.py",
      "tests/test_search_recovery_trainers_v0_73.py",
      "tests/test_unresolved_boundaries_v0_4e.py",
-     "tests/test_verification_ai_er9_evidence.py"
+     "tests/test_verification_ai_er9_evidence.py",
+     "tests/test_verification_ai_recover_zero_r10.py"
     ],
-    "files_total": 4,
+    "files_total": 5,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -26488,14 +26497,15 @@
    ],
    "tests": {
     "assert_like_lines": 0,
-    "mention_lines": 4,
+    "mention_lines": 5,
     "files": [
      "tests/helpers.py",
      "tests/test_baby_rules_evolution_v0_114.py",
+     "tests/test_preflight_face_down_attacker_v0_189.py",
      "tests/test_stadiums_v0_57.py",
      "tests/test_unresolved_boundaries_v0_4e.py"
     ],
-    "files_total": 4,
+    "files_total": 5,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -28268,14 +28278,14 @@
     "note": "研究の対応表の外（エンジンの未対応・技術上限・データ・汎用）"
    },
    "implementation_sites": [
-    "kyuura_engine/resolution/flow.py:186"
+    "kyuura_engine/resolution/flow.py:192"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/resolution/flow.py:186"
+      "kyuura_engine/resolution/flow.py:192"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -28300,7 +28310,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/resolution/flow.py:186"
+     "kyuura_engine/resolution/flow.py:192"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -28712,7 +28722,7 @@
    },
    "implementation_sites": [
     "kyuura_engine/effects.py:3648",
-    "kyuura_engine/resolution/flow.py:179",
+    "kyuura_engine/resolution/flow.py:185",
     "kyuura_engine/resolution/preflight.py:1",
     "kyuura_engine/resolution/programs.py:15917",
     "kyuura_engine/resolution/programs.py:2419",
@@ -28724,7 +28734,7 @@
      "mechanism": "command_rejection",
      "sites": [
       "kyuura_engine/effects.py:3648",
-      "kyuura_engine/resolution/flow.py:179",
+      "kyuura_engine/resolution/flow.py:185",
       "kyuura_engine/resolution/preflight.py:1",
       "kyuura_engine/resolution/programs.py:15917",
       "kyuura_engine/resolution/programs.py:2419",
@@ -28734,18 +28744,19 @@
     }
    ],
    "tests": {
-    "assert_like_lines": 6,
+    "assert_like_lines": 7,
     "mention_lines": 16,
     "files": [
      "tests/test_barrier_resume_coin_bonus_v0_34.py",
      "tests/test_coin_groups_damage_order_v0_35.py",
      "tests/test_hand_bench_attack_conditions_v0_121.py",
      "tests/test_preflight_consolidation_v0_16c.py",
+     "tests/test_preflight_face_down_attacker_v0_189.py",
      "tests/test_preflight_v0_15c.py",
      "tests/test_secret_plan_v0_67.py",
      "tests/test_spread_damage_allocation_v0_115.py"
     ],
-    "files_total": 7,
+    "files_total": 8,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -28767,7 +28778,7 @@
      "tests/test_coin_groups_damage_order_v0_35.py",
      "tests/test_hand_bench_attack_conditions_v0_121.py",
      "tests/test_preflight_consolidation_v0_16c.py",
-     "tests/test_preflight_v0_15c.py"
+     "tests/test_preflight_face_down_attacker_v0_189.py"
     ],
     "basis": "テストに表明らしい行がある（静的）。盤面の作り方・行の実行は個別に確かめていない"
    }
@@ -28968,15 +28979,16 @@
    ],
    "tests": {
     "assert_like_lines": 2,
-    "mention_lines": 6,
+    "mention_lines": 7,
     "files": [
      "tests/test_final_pmcg_cards_v0_68.py",
      "tests/test_secret_plan_single_identity_v0_117.py",
      "tests/test_secret_plan_v0_67.py",
      "tests/test_verification_ai_lost_target_p1.py",
+     "tests/test_verification_ai_lost_target_p2.py",
      "tests/test_verification_ai_lost_target_p3.py"
     ],
-    "files_total": 5,
+    "files_total": 6,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -28998,7 +29010,7 @@
      "tests/test_secret_plan_single_identity_v0_117.py",
      "tests/test_secret_plan_v0_67.py",
      "tests/test_verification_ai_lost_target_p1.py",
-     "tests/test_verification_ai_lost_target_p3.py"
+     "tests/test_verification_ai_lost_target_p2.py"
     ],
     "basis": "テストに表明らしい行がある（静的）。盤面の作り方・行の実行は個別に確かめていない"
    }
@@ -29038,17 +29050,19 @@
     }
    ],
    "tests": {
-    "assert_like_lines": 6,
-    "mention_lines": 9,
+    "assert_like_lines": 9,
+    "mention_lines": 14,
     "files": [
      "tests/test_keep_designated_energy_removal_v0_181.py",
      "tests/test_lost_target_own_face_down_v0_180.py",
+     "tests/test_lost_target_p2_min_v0_187.py",
      "tests/test_lost_target_p3_decision_v0_181.py",
      "tests/test_secret_plan_v0_67.py",
      "tests/test_verification_ai_lost_target_p1.py",
+     "tests/test_verification_ai_lost_target_p2.py",
      "tests/test_verification_ai_lost_target_p3.py"
     ],
-    "files_total": 6,
+    "files_total": 8,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -29066,9 +29080,9 @@
     "evidence": [
      "tests/test_keep_designated_energy_removal_v0_181.py",
      "tests/test_lost_target_own_face_down_v0_180.py",
+     "tests/test_lost_target_p2_min_v0_187.py",
      "tests/test_lost_target_p3_decision_v0_181.py",
-     "tests/test_secret_plan_v0_67.py",
-     "tests/test_verification_ai_lost_target_p1.py"
+     "tests/test_secret_plan_v0_67.py"
     ],
     "basis": "テストに表明らしい行がある（静的）。盤面の作り方・行の実行は個別に確かめていない"
    }
