@@ -26,32 +26,64 @@
    "0": "decklist L67-U (vai-batch-d/decklists/decklist-L67-U.json, sha256 097b7db9621cc28e..., content 72690ceea389..., expansion 5fb91539...)",
    "1": "same as 0"
   },
-  "modes": ["rules-v2", "boundary"],
+  "modes": [
+   "rules-v2",
+   "boundary"
+  ],
   "conventions": {
    "key": "CS-KYUURA-PLAY-TR3@1",
    "digest_prefix": "sha256:a7b800cf",
    "usage": "development",
    "members": 23,
-   "tr3_members": ["PC-GUST-WITHOUT-OPPONENT-BENCH@1", "PC-SWITCH-WITHOUT-BENCH@1", "PC-POTION-WITHOUT-DAMAGE@1"]
+   "tr3_members": [
+    "PC-GUST-WITHOUT-OPPONENT-BENCH@1",
+    "PC-SWITCH-WITHOUT-BENCH@1",
+    "PC-POTION-WITHOUT-DAMAGE@1"
+   ]
   },
-  "seeds": [9002, 9003],
+  "seeds": [
+   9002,
+   9003
+  ],
   "seed_rule": "9002 から上へ、連続 2 値がどちらも未使用の最初の組（保存済みの plan.json・header.json 336 ファイル・24 ストア。9000〜9100 は 9001 だけ使用）",
-  "order": ["g001 rules-v2 9002", "g002 boundary 9002", "g003 rules-v2 9003", "g004 boundary 9003"],
+  "order": [
+   "g001 rules-v2 9002",
+   "g002 boundary 9002",
+   "g003 rules-v2 9003",
+   "g004 boundary 9003"
+  ],
   "games": 4,
   "game_limits": "default runner.Limits (operations 2000, accepted 1000, turns 200, seconds 120)",
-  "batch_limits": {"max_games": 4, "budget_seconds": 300, "evidence_max_mb": 512, "game_reserve_seconds": "default 150", "evidence_reserve_mib": "default 64"},
+  "batch_limits": {
+   "max_games": 4,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "game_reserve_seconds": "default 150",
+   "evidence_reserve_mib": "default 64"
+  },
   "observation": true,
-  "prestop_inputs": {"enabled": true, "limits": "default (256 fetches, 16384 bytes, 1 MiB)"},
+  "prestop_inputs": {
+   "enabled": true,
+   "limits": "default (256 fetches, 16384 bytes, 1 MiB)"
+  },
   "undetermined_evidence_missing": "continue",
   "negative": false,
   "cli": "python -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr3n1 --engine-commit <HEAD> --tool-commit <HEAD> --seeds 9002 9003 --modes rules-v2 boundary --decklist0 <L67-U> --decklist1 <L67-U> --conventions CS-KYUURA-PLAY-TR3@1 --max-games 4 --budget-seconds 300 --evidence-max-mb 512 --observation --prestop-inputs --undetermined-evidence-missing continue",
-  "not_included": ["CURRENT との比べの対戦", "規約の有効・無効の比べ", "デッキの改造", "未出現のときの追加の局"]
+  "not_included": [
+   "CURRENT との比べの対戦",
+   "規約の有効・無効の比べ",
+   "デッキの改造",
+   "未出現のときの追加の局"
+  ]
  },
  "s1_cache": {
   "dir_pattern": "C:\\dev\\kyuura-engine-pyc-cache\\bae974ff-t6e0616c-cpython-314-<HEAD7>-tr3n1",
   "prepare_script": "vai-batch-x1-run/scripts/prepare_pyc_cache_x1.py (copy, as is)",
   "run_script": "vai-batch-x1-run/scripts/run_seq_pyc_x1.py --sessions 1 (copy, as is)",
-  "per_game_checks": ["cache_same.py", "check_game.py"],
+  "per_game_checks": [
+   "cache_same.py",
+   "check_game.py"
+  ],
   "dry_run_required": true,
   "capacity_rule": "max(128 MiB, largest saved complete attempt x 1.5) for both remaining and disk free"
  },
@@ -87,8 +119,17 @@
    "C2": "zero refusals with the 3 convention codes",
    "C3": "games progressed using usable options"
   },
-  "count_only": ["terminations", "per-convention appearance (direct/indirect/not appeared)", "out-of-scope unresolved and stops", "fetch status", "time and size"],
-  "not_pass_conditions": ["3 conditions appear", "all games game_over"]
+  "count_only": [
+   "terminations",
+   "per-convention appearance (direct/indirect/not appeared)",
+   "out-of-scope unresolved and stops",
+   "fetch status",
+   "time and size"
+  ],
+  "not_pass_conditions": [
+   "3 conditions appear",
+   "all games game_over"
+  ]
  },
  "stop_policy": {
   "limits_reached": "record as termination and continue (default)",
@@ -118,5 +159,65 @@
   "evidence_mb_upper_guess": 100,
   "basis": "x1 (0.185.0, same decks and modes, observation and prestop): game 0.33-9.24 s, accounted 36.187 s, evidence 47.2 MB for 4 games"
  },
- "execution": null
+ "execution": {
+  "status": "executed",
+  "chapter": 10,
+  "run_commit": "f69459a23e3898b3f2dbd1a1a3e6aecc9feef290",
+  "plan_sha256": "96332e6092d1c3cf8cd642346ca08683a3dc52742888c53757b10ccd287bb917",
+  "cache_dir": "C:\\dev\\kyuura-engine-pyc-cache\\bae974ff-t6e0616c-cpython-314-f69459a-tr3n1",
+  "cache_files": 185,
+  "cache_bytes": 13792512,
+  "games": {
+   "planned": 4,
+   "complete": 4,
+   "complete_with_stop": 0,
+   "not_started": 0,
+   "attempts_each": 1,
+   "terminations": {
+    "game_over": 4
+   }
+  },
+  "accounted_seconds": 35.537,
+  "game_seconds_sum": 21.965,
+  "outer_wall_seconds": 38.25,
+  "prestop_seconds": 0.001194,
+  "peak_working_set_bytes_max": 205819904,
+  "game_evidence_bytes": 51036691,
+  "validity": {
+   "V1": true,
+   "V2": true,
+   "V3": true,
+   "V4": true,
+   "V5": true
+  },
+  "to_confirm": {
+   "C1": "0 excluded options chosen/checked/submitted (883 chosen options)",
+   "C2": "0 refusals",
+   "C3": "accepted 736, play_trainer 86"
+  },
+  "direct_by_convention": {
+   "PC-GUST-WITHOUT-OPPONENT-BENCH@1": {
+    "games": 3,
+    "options": 18,
+    "positions": 12
+   },
+   "PC-SWITCH-WITHOUT-BENCH@1": {
+    "games": 3,
+    "options": 10,
+    "positions": 10
+   },
+   "PC-POTION-WITHOUT-DAMAGE@1": {
+    "games": 3,
+    "options": 28,
+    "positions": 24
+   }
+  },
+  "no_eligible_card": {
+   "rows": 141,
+   "positions": 117,
+   "chosen": 0,
+   "indirect_linked": 117
+  },
+  "evidence": "verifier/runs/vai-batch-tr3n1-run/"
+ }
 }
