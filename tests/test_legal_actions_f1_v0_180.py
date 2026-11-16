@@ -36,7 +36,9 @@ REALS = (H.RATTATA, H.ONIX, H.KADABRA, H.FIRE)  # たね（ワザ 1）・たね�
 ATTACK_0179_SHA256 = "f1e79cef13b69200910504f90614393b2b2344d6dad71b47d25eff260ec5bc5b"
 # v0.188（R-2 の初回対応。docs/legal-actions-r2-face-down-declaration-design.md 10 章）: うらの分岐がクチバシティジムのコインを示すようになり、preconditions・acceptance の文を
 # 実装に合わせた（0.180.0〜0.187.0 の値は aa316b12cb9a79033e6d80685a4fbffacfa2e13b1af310bda57d76049b6f1d0c）。おもての GUARANTEE_ATTACK は変えていない
-FACE_DOWN_ATTACK_SHA256 = "37edd7c4884937ee2502341280afc124a58561495c52aa72bed20159185042cd"
+# v0.190（R-2 の［めいれい］。docs/r2-with-power-design.md）: うらの分岐が［めいれい］（with_power）も示し、check が同じ力を 2 つ選ぶ組を拒否するようになり、preconditions・
+# acceptance の文を実装に合わせた（0.188.0〜0.189.0 の値は 37edd7c4884937ee2502341280afc124a58561495c52aa72bed20159185042cd）
+FACE_DOWN_ATTACK_SHA256 = "4accf876b58f005f94cb42710550fe6942252ca2311cd94f510f86240cadd376"
 
 
 def sha256(value):
