@@ -1,0 +1,245 @@
+{
+ "format": "kyuura-r2-face-down-declaration-design/1",
+ "base": {
+  "branch": "claude/p2n1-rule10-derived",
+  "commit": "f0f1171d55faef0e33e152077eb76fa79dfd26f4",
+  "engine": "0.187.0",
+  "tool_version": 13,
+  "judge_rules_version": 10,
+  "plan_format": 7
+ },
+ "r2": {
+  "residual_id": "R-2",
+  "kind": "use_attack",
+  "field": "declaration_options",
+  "status": "not_offered",
+  "reason": "face_down_reveal_not_evaluated",
+  "decision": "D-U75-R2",
+  "docs": [
+   "docs/legal-actions-u7-5fg-spec.md: 3 章",
+   "docs/legal-actions-u7-5-design.md: D-U75-R2",
+   "docs/project-status-ledger-v0187.md: R-2"
+  ]
+ },
+ "layers": [
+  {
+   "layer": "attack",
+   "face_up": "kyuura_engine/legal_actions.py:1281 _attack_candidate（available_attacks・check_use_attack）",
+   "face_down": "kyuura_engine/legal_actions.py:1372 _face_down_attack_candidate（printed_def・unverified）",
+   "when": "candidates"
+  },
+  {
+   "layer": "attack_conditions",
+   "face_up": "kyuura_engine/resolution/flow.py:113 check_use_attack",
+   "face_down": "submit（engine.py:1075 _reveal_for_action のあと）",
+   "when": "check/submit"
+  },
+  {
+   "layer": "declaration_options",
+   "face_up": "kyuura_engine/legal_actions.py:1357 _addon_specs と組ごとの check_use_attack",
+   "face_down": "示さない（R-2）",
+   "when": "declaration"
+  },
+  {
+   "layer": "post_accept_decisions",
+   "face_up": "受理のあとの決定",
+   "face_down": "おもてにして受理されたあとの決定",
+   "when": "after_accept"
+  },
+  {
+   "layer": "after_reveal",
+   "face_up": null,
+   "face_down": "たねか・今の姿・使用条件・宣言といっしょのものの可否",
+   "when": "submit"
+  }
+ ],
+ "addons": [
+  {
+   "addon": "stadium_coin",
+   "field": "UseAttack.stadium_coin",
+   "generated_by": "kyuura_engine/legal_actions.py:1357 _addon_specs",
+   "engine_check": [
+    "kyuura_engine/resolution/flow.py:113 check_use_attack",
+    "kyuura_engine/effects.py:21829 stadium_attack_coin_available",
+    "kyuura_engine/effects.py:20843 _owner_named"
+   ],
+   "registered": {
+    "stadiums": [
+     "GD3-024",
+     "PMCG5-076"
+    ],
+    "owner_pokemon": 28,
+    "owner_pokemon_basic_or_baby": 18,
+    "owner_basic_with_powers": 0
+   },
+   "relevant_to_face_down_attacker": true,
+   "initial_scope": true
+  },
+  {
+   "addon": "attack_power",
+   "field": "UseAttack.attack_power",
+   "generated_by": "kyuura_engine/legal_actions.py:1357 _addon_specs",
+   "engine_check": [
+    "kyuura_engine/effects.py:37446 attack_power_check"
+   ],
+   "registered": [
+    [
+     "neo1-040",
+     false
+    ]
+   ],
+   "relevant_to_face_down_attacker": false,
+   "why": "登録はランターン（1 進化）だけ。たねでないうらはおもてにするとトラッシュしワザはおこらない",
+   "initial_scope": false
+  },
+  {
+   "addon": "with_power",
+   "field": "UseAttack.with_power / with_powers",
+   "generated_by": "kyuura_engine/legal_actions.py:1357 _addon_specs（group_attack_power_slot。持ち主のうらは除く）",
+   "engine_check": [
+    "kyuura_engine/effects.py:45912 group_attack_power_check",
+    "AttackDeclaredPower.usable_for・other_use_problem"
+   ],
+   "registered": [
+    [
+     "PR1-068",
+     "CommandBonusToNamedAttackers",
+     false
+    ],
+    [
+     "neo2-030",
+     "CounterBonusToGroupAttack",
+     true
+    ],
+    [
+     "neo4-065",
+     "CoinsUntilTailsBonusToGroupAttack",
+     true
+    ]
+   ],
+   "relevant_to_face_down_attacker": true,
+   "initial_scope": false,
+   "why": "条件（usable_for・この番の使用・並びの重なり・複数の持ち主）が多い。別の単位"
+  }
+ ],
+ "outcomes_now": {
+  "not_a_candidate": "印刷のワザがない（not_implemented）・番でない",
+  "input_not_constructible": "R-2（段 2 が空）",
+  "check_refuses": "入力の形の誤り（_not_checked はエンジンを呼ばない）",
+  "submit_rejects": "おもてにしたあとのエンジンの確かめ（状態はもどる）",
+  "decision_after_accept": "ワザの対象など。たねでないうらはトラッシュして受理"
+ },
+ "information": [
+  {
+   "item": "real と印刷の名前・ワザ・特殊能力",
+   "actor": "知る",
+   "opponent": "受理まで知らない",
+   "spectator": "受理まで知らない",
+   "verifier": "本人の記録"
+  },
+  {
+   "item": "スタジアム・番・おもての特殊能力・持続する効果・この番の力の使用",
+   "actor": "知る",
+   "opponent": "知る",
+   "spectator": "知る",
+   "verifier": "知る"
+  },
+  {
+   "item": "宣言といっしょのものの可否（おもてにした状態の上）",
+   "actor": "多くは求められるが、今の姿はおもてにする処理で決まる",
+   "opponent": null,
+   "spectator": null,
+   "verifier": null
+  },
+  {
+   "item": "相手のうら・山札・手札・サイド",
+   "actor": "知らない",
+   "opponent": "本人のものだけ",
+   "spectator": "知らない",
+   "verifier": "本人の記録"
+  }
+ ],
+ "options": {
+  "A": "今のまま",
+  "B": "本人の知識だけで構造的に作れるものを限定して示す",
+  "C": "公開のあとの決定に移す（選ぶ時点が変わる。推奨しない）"
+ },
+ "recommendation": "B",
+ "minimal_spec": {
+  "conditions": [
+   "番のプレイヤーの MAIN・本人のバトル場がうら",
+   "場に AttackCoinStadium",
+   "printed_def(active.card) の名前が owner で始まる（_owner_named）",
+   "printed_def(active.card) が特殊能力を持たない（今の姿を変えうるカードを除く）"
+  ],
+  "reads_allowed": [
+   "printed_def(active.card)（本人の応答だけ）",
+   "stadium_of",
+   "番・段階"
+  ],
+  "reads_forbidden": [
+   "相手のうら・山札・手札・サイド",
+   "完全な記録",
+   "_reveal_for_action・check_use_attack・stadium_attack_coin_available の呼び出し",
+   "先読み"
+  ],
+  "stage2": {
+   "options": "stadium_coin 1 つ（_addon_specs と同じ値の形）",
+   "processability": "unverified",
+   "reasons": [
+    "face_down_reveal_not_evaluated"
+   ],
+   "count": {
+    "min": 0,
+    "max": 1
+   },
+   "options_by_choice": "どのワザにも同じ"
+  },
+  "check": "形だけ（_not_checked のまま）",
+  "submit": "エンジンの今の順（変えない）",
+  "residual_r2": "残す",
+  "out_of_scope": [
+   "attack_power",
+   "with_power",
+   "特殊能力を持つ本当のカード",
+   "マチスのでない",
+   "スタジアムなし",
+   "印刷のワザなし"
+  ]
+ },
+ "compatibility": {
+  "engine_version": "0.188.0 の見込み（legal_actions.py は behavior）",
+  "instrumentation": "不変",
+  "p1_p2_p3_basis": "不変",
+  "rule10_basis": "変わる（legal_actions.py をふくむ）",
+  "api_format": "不変",
+  "gui": "既存の段 2 の扱いで足りる見込み（未実行）",
+  "verification_ai": "道具は不変。エンジンの識別の違いで旧計画は再開しない",
+  "snapshot": "形式不変"
+ },
+ "decisions_for_user": [
+  "D-R2-1",
+  "D-R2-2",
+  "D-R2-3",
+  "D-R2-4"
+ ],
+ "tests_planned": [
+  "生成",
+  "許可した差だけ",
+  "相手の秘密の双子",
+  "相手・観戦者への境界の双子",
+  "漏れ",
+  "不正な入力",
+  "拒否のとき",
+  "公開のあとの一致",
+  "対象外の回帰"
+ ],
+ "existing_tests": [
+  "tests/test_legal_actions_f1_v0_180.py",
+  "tests/test_legal_actions_up5t_c1_v0_178.py",
+  "tests/test_legal_actions_pt5t_c1_v0_179.py",
+  "tests/test_legal_actions_u7_5g_residual.py",
+  "tests/test_secret_plan_single_identity_v0_117.py",
+  "tests/test_power_suppression_lasting_locks_v0_92.py"
+ ]
+}

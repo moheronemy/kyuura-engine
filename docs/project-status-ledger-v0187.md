@@ -76,7 +76,7 @@
 | U-TR3-RULINGS | 突風の GW5（相手に控えがいないとき）・ポケモンいれかえ・きずぐすりの 3 条件の史実の裁定 | 未裁定（研究上の未解決） | [gust-gw5-decision.md](gust-gw5-decision.md)・[prestop-three-trainers.md](prestop-three-trainers.md)・[play-convention-three-trainers.md](play-convention-three-trainers.md) | 厳密側・既定の集合では、今も未裁定の停止（`UNRESOLVED_*`） | プレイ用の規約の採用（L-TR3）は史実の裁定の確定ではない。裁定の資料が見つかったときに扱う（U-RULINGS と同じ扱い） |
 | U-X1CODE | x1 の受理の前の未裁定の候補の、実際の停止コード・停止の原因 | 記録の制限（未対応） | [prestop-first-batch-plan.md](prestop-first-batch-plan.md) 9.4 節・[prestop-observation-link-design.md](prestop-observation-link-design.md) 8.3 節 | 記録に停止コードはない。カードと主な条件は分かる | 主な条件の成立から停止コードを推定しない。確定には、記録に停止コードを残す変更か別の調べが要る |
 | U-OBS-OTHER | x1 のほかのバッチへの、観測との対応づけの分析 | 未実施 | [prestop-observation-link-design.md](prestop-observation-link-design.md) 8 章（x1 だけに適用） | 未実施 | 旧 13 バッチには prestop の記録がないので、同じ方法では対応づけられない（新しい記録のあるバッチが要る） |
-| R-2 | うらのバトル場のワザといっしょに選ぶもの（`not_offered`） | API 制約（判断待ち D-U75-R2） | [v0185](project-status-ledger-v0185.md) 3 章 | v0185 のとおり | v0185 のとおり |
+| R-2 | うらのバトル場のワザといっしょに選ぶもの（`not_offered`） | API 制約（判断待ち D-U75-R2） | [v0185](project-status-ledger-v0185.md) 3 章 | v0185 のとおり | v0185 のとおり。→ 2026-11-16: 情報境界と API の扱いを設計した（未実装。推奨 B: 本人の本当のカードの名前と場のスタジアムだけで決まるクチバシティジムのコインだけを示す。判断 D-R2-1〜4）: [R-2 の情報境界と API の扱いの設計](legal-actions-r2-face-down-declaration-design.md) |
 | R-3 | うらのカードの 2 段以上の特殊能力の、組が完成しない場面 | API 制約 | [v0185](project-status-ledger-v0185.md) 3 章 | v0185 のとおり | v0185 のとおり |
 | R-4 | 番のプレイヤーの MAIN のほかの `CheckFaceUpDeckCard` | API 範囲の外（FU2 の裁定が先） | [v0185](project-status-ledger-v0185.md) 3 章 | v0185 のとおり | v0185 のとおり |
 | R-5 | 入力を返さない候補の残り | API 制約 | [v0185](project-status-ledger-v0185.md) 3 章 | v0185 のとおり | v0185 のとおり |
