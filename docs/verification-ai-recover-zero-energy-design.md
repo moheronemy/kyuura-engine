@@ -371,3 +371,75 @@ ER9 の表（`RECORDED_STOP_CONDITIONS`）に `recover_energy` を足すだけ�
 - **当て直す場合の最小の単位:** 保存済みの 2 局の記録から、新しい作業の場所で `batch.judge_trace` を読み直しの形（trace・actors・記録の header）で当て直します。結果は新しいファイルに書き、元の judge.json・COMPLETE は変えません。
   - 記録の header の behavior_digest は今と同じなので、basis は (b) の条件で確かめる見込みです。
   - ほかの判定の行が変わらないこと（差分は対象の 1 行だけ）も照らします。
+
+## 9. 保存済みの vai-batch-p2n1 の 2 局への派生評価（2026-11-16）
+
+8.6 節の次の単位として、判定の規則 10 を保存済みの 2 局に派生評価として当てました。
+
+- **元の判定はそのまま:** 元のバッチの規則 9 の判定（judge.json・COMPLETE・aggregate・ledger・計画・ハッシュの表）は保存したまま変えていません。
+- **派生評価の保存先:** 元のバッチの外の `kyuura-engine-verification-vai/verifier/runs/p2n1-rule10-derived/derived-1/` です。
+- **評価に使ったもの:** コミット `9a64f8e`（実装 `824c555` とコードの差 0）と、評価用の worktree `kyuura-engine-lt55` です。
+- **使わなかった手段:** batch run・resume・`--acknowledge-stop`・unlock・テスト・対戦・replay は使っていません。
+
+### 9.1 渡した証拠
+
+渡したのは、今の `batch.judge_trace` に、`batch.play` が渡すのと同じ種類の値です。
+
+- trace（`trace.jsonl`）
+- 本人の観測（`actors/0.jsonl`・`1.jsonl`・`host.jsonl`）
+- 記録の header のうち、判定が読む識別と依存（`engine`・`dependencies`）
+- 終了の情報（`result.json` の `termination`）
+
+どの入力も、局の `files.sha256.json` と照らしてから使いました。完全な記録の操作・初期の状態・replay は使っていません。
+
+### 9.2 識別と basis の確かめ方
+
+- **記録と評価のソース:** 2 局の記録の header の behavior_digest（`ae974fff…`）・instrumentation_digest（`13c773a8…`）・依存（既定のカードプール・カードデータの出どころ・効果の登録）は、評価のソースの識別と同じでした。
+- **規則と道具の版:** 記録時は判定の規則 9・TOOL_VERSION 12（計画の識別）、評価時は規則 10・TOOL_VERSION 13 です。局の header の `tool.version` の `v1` は、局の道具の名前の版で、TOOL_VERSION ではありません。
+- **basis の 8 ファイル:** どれも behavior のファイル（instrumentation でない）にふくまれます。実行コミット `0069029` の同じファイルとも、バイト単位で同じでした。
+- **basis の渡し方:** `basis_r` は渡していません。実装の (b) の道（記録の behavior_digest が今と同じで、基礎のファイルを覆う）で確かめ、`_r_basis_matches` は 2 局とも真でした。
+- **後付けなし:** 記録・header・計画に basis や新しい識別を書き足していません。
+
+### 9.3 結果
+
+**行の対応:** 送信行は 457 行（1 局目 218・2 局目 239）です。試みの番号で 1 対 1 に対応し、欠落・重複・対応不能はありませんでした。trace の送信の数とも同じで、並びも同じです。
+
+**差の分類:**
+
+| 種類 | 1 局目 | 2 局目 |
+|---|---|---|
+| 正規化していない全差分の箇所 | 1 | 9 |
+| メタデータの差 | `rules_version` 9→10 | `rules_version` 9→10 |
+| 判定内容の差（行） | 0 | 1 行（試み 200） |
+| 判定内容の差（行の差から決まる集計） | 0 | `counts`・`by_kind.answer_decision` の undetermined 1→0・known_stop 0→1、`undetermined` の一覧から試み 200 が外れ、`known_stop` に試み 200 |
+| 終わり方の判定 | 同じ | 同じ |
+
+**変わった 1 行:**
+
+- 2 局目の `UNRESOLVED_RECOVER_ZERO_ENERGY`（`answer_decision`・rejected）の行が、undetermined（`stop_condition_not_evidenced`）から known_stop に変わりました。
+- 理由は `unresolved_ruling`・コード・`continuation_not_evaluated`・規則 10 の根拠の条件です。
+- 規則 10 の条件（R1〜R11・R13）の確かめは、最初に満たさない条件なし（None）でした。根拠は対象のコードの 1 つだけで、R12 の重なりもありません。
+
+**変わらなかったもの:**
+
+- ほかの 456 行の判定・理由・診断は、まったく同じでした。
+- 受理の中身の判定と、終わり方の判定も同じです。
+- 無視した項目はありません（全差分・メタデータの差・判定内容の差を `compare.json` に分けて保存）。
+
+**単局・バッチ・再生成:**
+
+- 対象の 1 行に、同じ証拠で単局の入口（runner と同じ `submit_evidence` → `judge_normal`）を当てると、バッチの行と判定・理由が同じでした。
+- 同じ入力から `derived-2/` に作り直すと、6 ファイルすべてがバイト単位で同じでした（非決定的な項目なし）。
+
+### 9.4 言えること・言えないこと
+
+**言えること:**
+
+- 規則 10 は、保存例の 1 件を設計どおり known_stop と判定します。ほかの判定の内容は変えません。
+- P2-min が new_game で未出現という結果（[P2-min の new_game 小規模確認バッチ](p2-min-batch-plan.md) 10 章）は変わりません。
+
+**言えないこと・していないこと:**
+
+- 元のバッチの終わり方・停止の方針・完了の状態は変えていません。新しい規則なら当時どう進んだかという、反実仮想の対戦の結果も推測していません。
+- この派生評価は、`UNRESOLVED_RECOVER_ZERO_ENERGY` の未裁定（H4。「最大2枚」が 0 枚を含むか）そのものを解決したものではありません。エンジンは今も 0 枚の答えを止めます。
+- ほかの旧バッチには当てていません。
