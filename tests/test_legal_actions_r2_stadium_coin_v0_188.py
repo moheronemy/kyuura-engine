@@ -211,15 +211,14 @@ class SubmitTest(unittest.TestCase):
                 self.assertNotEqual(rng_fingerprint(with_coin.game.state.rng), rng_fingerprint(without.game.state.rng))  # コインを投げた
 
     def test_basic_target_rejected_by_the_engine_same_as_direct(self):
-        """エンジンがコインつきで拒否するワザ（マチスのコイルのたいあたり。既存の先読みが、ほかのコインの結果をコマンドの入口の状態（おもてにする前）の複製で試し、
-        うらのカードの項目を読んで止まる。0.187.0 の直接のコマンドと同じ）: U7 でも同じ拒否で、状態・乱数・ログは変わらない。コインを選ばなければ受理される。"""
+        """マチスのコイルのたいあたり（コインつき）。0.188.0 では、既存の先読みが、ほかのコインの結果をコマンドの入口の状態（おもてにする前）の複製で試し、うらのカードの項目を読んで
+        UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY で拒否した（U7 でも同じ拒否・状態不変）。v0.189 でその不整合を直した（docs/r2-coin-preflight-design.md。
+        tests/test_preflight_face_down_attacker_v0_189.py）ので、U7 と直接のコマンドで同じく受理する（テストの名前は 0.188.0 のまま）。コインを選ばなくても受理される。"""
         state = face_down_board(TARGET_BASIC)
         for side in (HD, TL):
             with self.subTest(side=side):
                 rigged = H.with_coin_bits(state, *[side] * 8)
-                host, result = self.assert_same(rigged, ["o2", "o3"], UseAttack(0, 1, stadium_coin=True), D.REJECTED)
-                self.assertEqual(result.view.diagnostic_id, "UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY")
-                self.assertEqual(snap(host.game.state), snap(rigged))
+                self.assert_same(rigged, ["o2", "o3"], UseAttack(0, 1, stadium_coin=True), D.ACCEPTED)  # v0.189: 0.188.0 は REJECTED（FD1）
                 self.assert_same(rigged, ["o2"], UseAttack(0, 1), D.ACCEPTED)
 
     def test_non_basic_target_is_trashed_without_a_coin(self):

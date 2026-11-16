@@ -152,6 +152,12 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
     attacker, attack, effect, key = request.attacker, request.attack, request.effect, request.key
     pid = attacker.pokemon_id
     use = AttackUse(cmd.player, pid, key)
+    # v0.189（docs/r2-coin-preflight-design.md 5 章の案 1）: ほかの結果を試す複製の元。ふつうは ``ctx.original``（コマンドの入口の状態）。このコマンドの入口で使い手をおもてにした
+    # （``ctx.original`` ではうら。engine._reveal_for_action）なら、handler の入口の状態（おもてにして変身の状態を固定したあと・この確かめのあと・実際の処理の前）の複製にする。
+    # 入口の状態では使い手がうらのままで、本処理では存在しない状態の上でうらのカードの項目を読んでしまう（FD1）。derived_full・legacy が試す状態と同じになる。使い手以外のうらの
+    # カードはこの複製でもうらのまま（FD1 の境界は変えない）
+    entered = ctx.original.find_pokemon(pid)
+    base = state.clone() if entered is not None and ctx.original.is_face_down(entered[1]) else ctx.original
 
     once = effect.once_after_entering_play  # v0.44: 場に出てから 1 回しか使えないワザ（宣言のときに使った記録を置く）
 
@@ -180,7 +186,7 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
                 f"ワザ「{attack.name_ja}」の宣言の前の先読みで試す結果の数が上限（{P.MAX_BRANCHES}）を超えた。原典で決められない場合に当たる結果が"
                 f"ないことを確かめられないので扱わない{extra}",
             )
-        v013_checks.check(ctx.original, use, effect, ctx.original.find_pokemon(pid)[1], ctx.trace, mode="legacy_after_limit")
+        v013_checks.check(base, use, effect, base.find_pokemon(pid)[1], ctx.trace, mode="legacy_after_limit")  # v0.189: 先読みと同じ複製の元
 
     if is_contract(program) and unknown:
         raise UnsupportedError("UNSUPPORTED_LEGACY_PREFLIGHT",
@@ -192,7 +198,7 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
         body(Resolution(state, catalog=ctx.catalog, trace=ctx.trace))
         return
     if ctx.preflight == "derived":
-        P.after_real_run(state, ctx.original, body, ctx.catalog, ctx.trace, on_limit)  # 実際の処理を含む
+        P.after_real_run(state, base, body, ctx.catalog, ctx.trace, on_limit)  # 実際の処理を含む。v0.189: ほかの結果は base の複製で試す
         return
     if ctx.preflight == "legacy" and type(effect) in v013_checks.VERIFIED and coin_stadium is None and not unknown:  # v0.67: 知らない選択・役割があればすべての結果を試す
         # v0.57: クチバシティジムのコインを投げるワザは、v0.13 の止める関数が知らない（コインの +10・自分への 10）ので、すべての結果を試す方法で確かめる
