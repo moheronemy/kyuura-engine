@@ -1,0 +1,200 @@
+# P2-min の new_game 小規模確認バッチの計画（計画だけ）
+
+2026-11-16。計画と文書化だけです。確定計画（`plan.json`・`plan.sha256`）・キャッシュの準備・対戦・テスト・ビルド・seed 探索・judge・replay はしていません。エンジン・judge・検証用 AI・GUI・方策・規約は変えていません。
+
+- 基点: `claude/lost-target-p2-min` の `309ee16`（origin と一致。main `b1e4430` の子孫で main に入っていない）。コードは実装のコミット `b780981` と差 0。作業は worktree `C:\dev\kyuura-engine-lt50`・ブランチ `claude/p2-min-batch-plan`。
+- 識別（読み取りで測った値。実行のときに測り直す）: エンジン 0.187.0・behavior `ae974fff…`・`TOOL_VERSION` 12・道具 `8cfa17bb…`・判定の規則 9・計画と完了の形式 7・P2 の basis `720f4641…`（7 ファイル）。
+- 機械可読の下書き: [p2-min-batch-plan.json](p2-min-batch-plan.json)（`status: draft`。確定計画ではない）。
+- 証跡: `kyuura-engine-verification-vai/verifier/runs/p2-min-batch-plan/`（事前計画・デッキの検査・seed の調べ・明示リスト案 `decklists/decklist-P42.json`）。
+
+**位置づけ**:
+
+- P2-min の実装は完了しています（[P2・P3o の設計](verification-ai-lost-target-p2-p3o-design.md) 9 章。構築盤面と単局・バッチの判定で確認済み）。
+- この計画は、通常の対戦で P2-min が出るかを見る別の単位で、実装の完了の条件ではありません。
+- 出なかったことだけでは、実装の不良とは扱いません。
+
+## 0. 推奨案（要約）
+
+| 項目 | 値 |
+|---|---|
+| 計画 | 1 つ: `vai-batch-p2n1` |
+| デッキ | 主体 0: 明示リスト **P42**（`tools/existing_effect_games.py` の `DECKS["P42"]` を改変せずに明示リストにした新しいファイル。ゲンガー 2・ゴースト 3・ゴース 4）。主体 1: 明示リスト **L67-U**（マチスの秘策 4。x1・TR3 と同じファイル） |
+| 方式 | `boundary` だけ |
+| 規約集合 | `CS-KYUURA-PLAY-TR3@1`（`--conventions` で明示） |
+| seed と並び | 9004 → 9005（seed ごとに boundary の 1 局） |
+| 局 | 2（g001 boundary・9004、g002 boundary・9005） |
+| 単局の上限 | 既定（`runner.Limits`: 操作 2000・受理 1000・番 200・120 秒） |
+| バッチの上限 | `--max-games 2`・`--budget-seconds 300`・`--evidence-max-mb 512`（次の局を始める条件の 150 秒・64 MiB は既定） |
+| 記録 | `--observation`・`--prestop-inputs`（上限は既定） |
+| 停止方針 | 既定（`--undetermined-evidence-missing continue`） |
+| 変異 | なし。単一のプロセス・逐次。1 局ごとに止めて確かめる |
+
+入れないもの:
+
+- rules-v2 の局（目的の選べるものが `unverified` で、deep の範囲では外れる）
+- デッキの向きの入れ替え
+- 出現を増やすデッキの改造・方策の変更
+- 未出現のときの追加の局・seed の追加・予算の延長
+
+## 1. 出現の条件（静的に説明できること）と、既存の方策で選べる根拠
+
+**静的に説明できること**（コードと既存のテストで確かめた。対戦の実績ではない）:
+
+| 段階 | 条件 | 根拠（コード・テスト） | このデッキの組で |
+|---|---|---|---|
+| A1 ゲンガーが場に出る | ゴース（たね）→ ゴースト → ゲンガー（PMCG3-031）と、2 回の進化 | 通常の `play_basic`・`evolve` の候補（boundary の範囲） | P42 にゴース 4・ゴースト 3・ゲンガー 2 |
+| A2 ［のろい］を使える | おもてのゲンガー・自分の番・この番にまだ使っていない・ねむり・マヒ・こんらんでない・力を消す効果がない。source に相手のダメージのあるポケモン | `effects.MoveOpponentDamageCounter.check_usable`。候補の作成は `legal_actions._power_candidates`（使う段の確かめがゲーム上できなければ候補にしない） | L67-U・P42 に、力を消すポケモンはない |
+| A3 相手のダメージのあるおもて | 相手（L67-U）のポケモンにダメージカウンター 1 つ以上 | P42 のワザのダメージ（ほかにフーディンの［ダメージスワップ］の移動もある） | ワザで相手のバトル場にダメージがのる |
+| A4 相手のうら（今回の指定の対象） | マチスの秘策で、L67-U が手札のカードをうらにしてベンチに出し、そのまま場に残る | `effects.PlaceFaceDownOnBench`・`state.face_down_cards`。本人の観測で相手のうらは `pokemon_id`・`face_down` つき（`observation._face_down_pokemon`） | L67-U にマチスの秘策 4 |
+| A5 準備の伏せ札でない | 対戦準備（番 0）の盤面の伏せ（観測で `{"face_down": true}` だけ・`pokemon_id` なし）は `face_down_cards` と別で、うらの指定にならない | `observation.py` の番 0 の伏せと `_face_down_pokemon`。judge の Q6（段階 main）・Q8（番号の参照） | — |
+| A6 boundary の範囲と入力 | 候補 `use_power`（［のろい］）は may_stop_later などで範囲に入る。target の段の相手のうらの選べるものは `unverified`・理由 `face_down_reveal_not_evaluated` で、boundary（`unverified` を許す）なら選べる | `runner` の boundary の範囲（`FALLBACK_PROCESSABILITY`）・`actions.option_allowed`。エンジンのテスト `test_observation_and_input_reference_link_without_the_real_card`（候補と target の選べるものが入力として組み立てられる） | — |
+| A7 P2-min の選び方 | 候補の区分を均等 → 区分の中の候補を均等 → source の段で相手のダメージのあるおもて、target の段で相手のうらを、どちらも均等に選ぶ | `policies.BoundaryPolicy`（候補の選択だけが区分の均等。入力は段ごとの均等） | 方策の重み・優先は変えない |
+
+**既存の方策で選べる根拠**:
+
+- `BoundaryPolicy` は、候補の種類・カードを読まずに、区分と候補を均等に選びます。
+- 選べるものは、`option_allowed`（`eligible` 偽・範囲の外の区分を外す）を通ったものから段ごとに均等に選びます。
+- 相手のうらの target は `unverified` なので、boundary の局では選べるものに残ります。
+- 方策・方式・入力の優先は変えていません。選べない入力はありません（rules-v2 の deep の範囲では外れるので、boundary だけにする）。
+
+**出現を下げうる既存の動き**（変えない。結果の解釈に残す）:
+
+- マチスの秘策を使うかは、L67-U の側の boundary の均等の選び方による。
+- うらのカードは、持ち主の `reveal_face_down`（boundary の候補）・進化・L67-U 自身の特殊能力の指定（P1。たねでなければトラッシュ）などで、場からうらでなくなりうる。
+- ［のろい］を選んでも、source に相手のうら（ダメージ 0）を選ぶと `NO_DAMAGE_COUNTERS` の拒否になる（別の経路）。target に相手のおもてを選べば受理される。
+- 2 回の進化とダメージ・うらの同時の成立には番が要り、局の長さ・終わり方による。
+
+**到達の静的な説明と、実際の出現の実績は別です。** この計画は出現を保証しません。
+
+## 2. デッキの選定
+
+- 既存の登録デッキ（`kyuura_engine/decks.py` の `PRESET_DECKS`）にゲンガーはありません。
+- 既存の明示リスト（`vai-batch-d/decklists/` の L67-U・LUCKY_DECK・CONNECT_DECK など）にもありません。
+- `tools/existing_effect_games.py` の `DECKS` では、ゲンガー（PMCG3-031）は `P42` と `M50` にあります。
+  - `P42` は、ゴース・ゴースト・ゲンガーの進化の系統と共通のトレーナー（L67-U と同じ 6 種）と超エネルギーだけの単純な構成なので選びました。
+  - `M50` は、ミュウ・しんかスプレーをふくみ、進化の後もどりがあるので選びませんでした。
+- **明示リスト案 `decklist-P42.json`**（新しいファイル。既存のファイルは上書きしない）:
+  - `DECKS["P42"]` を改変せずに、同じ並びで写しました。マチスの秘策は入っていません。
+  - 60 枚・13 種。content `a4ed8e25…`・展開 `243c137f…`・ファイル `41cc8911a66ba352…`。
+  - 既存の CLI（`batch decklist --file`）で `legality.ok` 真・problems 空（engine 0.187.0 `ae974fff…`）でした。
+- 相手は L67-U（x1・TR3 と同じファイル。content `72690cee…`・展開 `5fb91539…`）です。同じ CLI で合法でした。
+- 向き: 主体 0 が P42（ゲンガー）、主体 1 が L67-U（マチスの秘策）。先手はホストのジャンケンで決まります（計画で選ばない）。
+
+## 3. 規約集合（TR3）
+
+- `CS-KYUURA-PLAY-TR3@1`（23 規約）には、［のろい］・うらの指定・LOST_TARGET に関わる規約はありません。
+- 入口の経路（`engine._apply`・`_apply_checked`・`_identity_independent`・`_reveal_for_action`・`zones.designate_face_down`・`MoveOpponentDamageCounter.check_usable`）は、状態の規約集合の確かめ（`require_state_conventions`）のほかに規約を参照しません（静的に確かめた）。
+  - そのため、P2-min の厳密な拒否は TR3 でも同じです。
+- TR3 には、既定の集合では準備で止まるマリガンの補償の続行規約（`PC-SETUP-MULLIGAN-COUNT`）と、両デッキにある突風・ポケモンいれかえ・きずぐすりの続行規約がふくまれます。通常の進行を妨げる既知の停止を減らせます。
+
+## 4. 規模・seed・予算の根拠
+
+- **seed:**
+  - 保存済みの `plan.json`・`header.json` を 24 ストアで読みました（341 ファイル・読めないもの 0）。9000〜9100 の使用は 9001〜9003 だけでした。
+  - 規則「9004 から上へ、連続 2 値がどちらも未使用の最初の組」で **9004・9005** にしました。対戦で試して選んでいません。
+- **局:** 初期案のとおり 2 です。デッキの組 1・boundary だけで、条件を増やす理由はありません（増やしても出現は保証されない）。
+- **時間・量:**
+  - このデッキの組の保存済みの局はありません。
+  - 単局の上限は 120 秒で、1 局目が上限まで使っても、残り 180 秒は次の局の条件（150 秒）を満たします。
+  - 過去の局の最大は、L67-U どうしで 9.24 秒・約 15 MB（x1・TR3）、固定デッキで 19.2 秒・45 MB（観測あり）です。
+  - 2 局で 300 秒・512 MiB は足りる見込みです（保証ではない）。
+- 毎局の前の必要量は max(128 MiB, 保存済みの最大 1 局 × 1.5) です（外側のスクリプトのまま）。足りなければ未着手を残して終えます。
+
+## 5. 到達の段階・known_stop・未出現の集計（`analyze_p2.py`。実行の単位で作る。読み取りだけ）
+
+段階は、それぞれの保存記録から直接確かめられるものだけを、独立に数えます。途中の段階が成り立ったことから、あとの段階を推測しません。
+
+| # | 段階 | 記録（直接） |
+|---|---|---|
+| P0 | 対戦の作成・保存・終わり方 | 完了マーカー・`result.json` の `termination`・台帳 |
+| P1s | ゲンガーが P42 の側の場に出た | P42 の主体の本人の観測（`actors/0.jsonl` の position の行の場の `card_id`） |
+| P2s | ［のろい］が候補に出た | 同じ主体の試みの行の候補（`use_power`・`power.card_id` が PMCG3-031・`index` 0） |
+| P3s | P2s の局面で、相手（L67-U）の場にダメージのあるおもてと、うらが同時にあった | 同じ局面の本人の観測（相手の行の `damage`・`face_down`） |
+| P4s | P2-min の入力が選ばれ、送信された | 試みの行の選んだ候補（［のろい］）・`meaning`（source が相手のおもて、target が相手のうら）・送信 |
+| P5s | 対象の拒否（`UNSUPPORTED_SECRET_PLAN_LOST_TARGET`）と、判定の規則 9 の known_stop | trace の送信の結果と、`judge.json` の行（理由の `evidence:` が P2 の条件の文） |
+| P6s | 条件の不足による undetermined・別の経路の拒否 | `judge.json`（undetermined と分類）、拒否のコード（例: source にうらを選んだ `NO_DAMAGE_COUNTERS`、P1 の known_stop） |
+
+- 単位は、延べ（試みの行）・局・局面（(主体, position)）を分け、取り直しを別に数えます。
+- **出現したとき**（P5s が 1 以上）は、次を確かめます。
+  - 保存記録から、`judge.opponent_face_down_lost_target_failure` が None（Q1〜Q12）であること。
+  - 記録の header と実装の識別が同じこと（Q11 の (a)）。実行のときの P2 の basis の値も記録します。
+  - 保存記録から `batch.judge_trace` を作り直した行が `judge.json` の行と同じこと。
+  - 単局の入口と同じ関数（`submit_evidence`）を使うことは、実装の構造と既存のテスト（`RunnerConnectionTest`）に依ります。今回の局の中では単局の判定を走らせません。
+- 相手の `real`・完全な記録・後の公開は、判定の根拠に使いません（判定は本人の観測だけを読む）。
+- **出現しなかったとき**: 「未出現」として、どの段階まで直接の記録があったかを書きます。候補・入力が欠ける不具合（例: P2s の局面で、P3s の条件があるのに target に相手のうらの選べるものがない）は、未出現と分けて、不具合の候補として記録します。
+
+## 6. 既存の手順との適合
+
+| 項目 | 状況 |
+|---|---|
+| 計画の CLI | `batch plan --decklist0 <P42> --decklist1 <L67-U> --conventions CS-KYUURA-PLAY-TR3@1 --modes boundary --seeds 9004 9005 --max-games 2 …`。`TOOL_VERSION` 12 の識別が計画に入る（形式 7 は同じ） |
+| 判定 | 局の終わりの `batch.judge_trace` が、実行中のエンジンと同じ実装の識別で Q11 の (a) を満たす（`basis_p2` は要らない）。P2 の basis の値は証跡に記録する |
+| 完了の照合 | `batch.verify_complete`・`prestop.reconcile`（`check_game.py`）は版によらない |
+| 外側のスクリプト | `vai-batch-tr3n1-run/scripts` の逐次（`run_seq_pyc_tr3n1.py`）・キャッシュの準備（`prepare_pyc_cache_tr3n1.py`。読み込みの確かめに judge・prestop をふくむ）・局の照合・キャッシュの照合・ハッシュ・prestop の分析をそのまま写す。計画の照合は期待値（デッキ・方式・seed・局数・計画名・実行コミット）だけを変えた写し。関門は TR3 用の `gate.py` の代わりに P2 用を作る（規約集合・照合・選択と送信の確かめ） |
+| キャッシュ | 実行コミット・Python・識別ごとに新しく準備する（`C:\dev\kyuura-engine-pyc-cache\bae974ff-t8cfa17b-cpython-314-<HEAD 7 桁>-p2n1` など）。準備直後の全ファイルの表と、毎セッションの前後で照らす |
+
+**実行の手順**（次の単位。ここでは実行しない）:
+
+1. worktree・実行コミット（完全なハッシュ）・`kyuura_engine`・`tools`・`tests` が `b780981` と差 0・識別
+2. 関連の確かめ（7 章）
+3. デッキの検査（P42・L67-U）・seed の再確認
+4. 確定計画（CLI）→ 計画の照合 → `plan.sha256`
+5. キャッシュの準備 → 表 → dry-run
+6. 1 局目 → 局の照合・関門 → 2 局目
+7. 集計の作り直し 1 回・不変の確かめ・`analyze_p2.py`・`analyze_prestop.py`
+
+**停止の条件**（止めたら残りを呼ばない）:
+
+- 記録の失敗・照合の不一致・必須ファイルとハッシュの欠け・suspect・replay の不一致・契約の外・キャッシュの不一致・時間と容量の不足・既存の停止方針の停止（unclassified の undetermined など）
+
+**続けるもの**（局の終わり方として記録する）:
+
+- 通常の終わり・上限による終わり・prestop の上限（note）・対象外の既知の停止（known_stop）・`evidence_missing_stop` の undetermined
+
+**自動で行わないもの**:
+
+- `--acknowledge-stop`・unlock・局の再実行・追加の局・seed の変更・予算の延長
+
+## 7. 受け入れ条件
+
+**実行の妥当性**（成り立たなければ結果を使わない）:
+
+| # | 条件 |
+|---|---|
+| V1 | 実行コミットのコードが `b780981` と差 0・変更 0・識別が 0 章の値と同じ |
+| V2 | 計画の 2 局が P42 対 L67-U・boundary・TR3 で、`plan.sha256` に固定されている |
+| V3 | 完了した各局の `header.json` の規約集合と、デッキの記録が計画と同じ |
+| V4 | 完了の照合・判定・replay・観測・prestop の照合（R1〜R6）が成り立つ |
+| V5 | キャッシュの中身が準備のときと同じ |
+
+**確かめたいこと**（成り立たないときは、その内容を結果として記録する）:
+
+| # | 条件 |
+|---|---|
+| C1 | P4s があれば、その送信の判定は規則 9 の known_stop で、Q1〜Q12 が保存記録から成り立ち、作り直した判定の行が同じ。known_stop でなければ、失敗の条件の id を記録して原因を調べる（不具合の候補） |
+| C2 | P3s の局面で［のろい］が選ばれたとき、target の段に相手のうらの選べるものがある（ないなら候補・入力の不具合の候補） |
+
+**数えるだけ**（合否にしない）: P0〜P6s の各段階・known_stop と undetermined の数・ほかの拒否・時間と量。
+
+- **P2-min が出なかった（P4s が 0）こと自体は合否にしません。** 2 局から出現の頻度を推定しません。
+
+## 8. 実行の前に残る確認と、必要な最小の修正
+
+- 関連テストの確かめ: 実行コミットで、規則 9・P1・P3・バッチ・固定の指紋・prestop のテストを 1 モジュールずつ実行します。
+  - prestop の上限のテスト（`test_row_too_big_after_request_is_not_written_and_stops_requests`）は、時間に依存して時々失敗する既知の別件です（[P2 の設計](verification-ai-lost-target-p2-p3o-design.md) 9.4 節）。
+  - 失敗したときは、同じテストの同じ理由（記録の行の所要時間の文字列の長さ）かを確かめ、別のプロセスで再実行した結果と分けて記録します。今回も直しません。
+  - ほかの失敗は止めて調べます。
+- 外側の関門と分析: P2 用の `gate.py`・`analyze_p2.py` を実行の単位で作ります（証跡の側。読み取りだけ）。エンジン・道具の修正は要りません。
+- 実行のときに確定する値（下書きでは null）: 実行コミット・識別・P2 の basis・デッキの検査・`plan.sha256`・キャッシュの場所と準備の記録・dry-run・出力先の空き・外側のスクリプトの写しの sha256。
+
+## 9. 失敗・未確認
+
+- **失敗:**
+  - P42 の明示リストを作る 1 回目は、PowerShell の引用の誤りで構文エラーになり、何も書きませんでした。
+  - 続く P42 のデッキの検査は、ファイルがないので失敗しました。
+  - スクリプトのファイル（証跡の `scripts/make_decklist_p42.py`）に分けて作り直し、検査し直しました。
+- **未確認:**
+  - このデッキの組の局の長さ・量
+  - ［のろい］・相手のうら・ダメージのあるおもてが同時に成り立つ頻度
+  - P42 のほかのカードの未裁定・未対応による停止
+  - new_game での P2-min の出現
