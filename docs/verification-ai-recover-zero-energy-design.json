@@ -1,0 +1,311 @@
+{
+ "format": "kyuura-recover-zero-energy-design/1",
+ "code": "UNRESOLVED_RECOVER_ZERO_ENERGY",
+ "ruling": {
+  "id": "H4",
+  "documents": [
+   "docs/haunter-line-v0.9.md",
+   "docs/rules-2000-02-14.md"
+  ],
+  "kyuura_issue": "UQ-ENERGY-CONVERSION-ZERO",
+  "kind": "research_unresolved"
+ },
+ "base": {
+  "branch": "claude/p2n1-secret-plan-trace",
+  "commit": "1dfc12462b59530189f51bbe29312937d0edf2be",
+  "run_commit": "00690294c64ad99e7ca43c83bcb22e8cc2be02e3",
+  "code_diff_run_to_base": 0,
+  "engine": "0.187.0",
+  "tool_version": 12,
+  "judge_rules_version": 9,
+  "plan_format": 7
+ },
+ "conclusion": "A",
+ "scope": {
+  "element": "resolution.programs.RecoverEnergy",
+  "decision_kind": "recover_energy",
+  "min_choices": 0,
+  "resume": "resolution",
+  "stage": "decision_answer",
+  "registered_attacks": [
+   "化石の秘密のゴース エナジーへんかん（attack_index 1）"
+  ],
+  "copied_attack_paths": "同じ要素なのでふくむ"
+ },
+ "engine_sites": {
+  "raise": [
+   "kyuura_engine/resolution/programs.py:2903"
+  ],
+  "raise_total": 1,
+  "ledger_static_sites": [
+   "kyuura_engine/effects.py:2095（説明文の中の名前）",
+   "kyuura_engine/resolution/programs.py:2904"
+  ],
+  "min_zero_recover_energy_suspend": [
+   "kyuura_engine/resolution/programs.py:2897"
+  ],
+  "other_recover_energy_suspend": {
+   "kyuura_engine/resolution/programs.py:6449": "最小=最大=おもての数（1 以上）",
+   "kyuura_engine/resolution/programs.py:14600": "1〜1"
+  },
+  "order": [
+   "checks.decision_choices",
+   "decisions.check_choices",
+   "engine._answer_decision_once",
+   "resolution.resume_decision",
+   "RecoverEnergy.resume"
+  ],
+  "dry_choices": "1 枚以上だけ（all_answers minimum=1）"
+ },
+ "conditions": [
+  {
+   "id": "R1",
+   "text": "rejected・診断と結果のコードがそろう",
+   "code_refs": [
+    "kyuura_engine/resolution/programs.py:2903"
+   ],
+   "record_fields": [
+    "trace.submit"
+   ],
+   "share": "common_with_er9",
+   "saved_case": true
+  },
+  {
+   "id": "R2",
+   "text": "分類 unresolved_ruling（コード表と一致）",
+   "code_refs": [
+    "kyuura_engine/data/diagnostic_catalog.json: UNRESOLVED_RECOVER_ZERO_ENERGY"
+   ],
+   "record_fields": [
+    "trace.submit"
+   ],
+   "share": "existing_judge",
+   "saved_case": true
+  },
+  {
+   "id": "R3",
+   "text": "answer_decision・経路の理由",
+   "code_refs": [
+    "tools/verification_ai/judge.py:335 _known_stop_or_undetermined"
+   ],
+   "record_fields": [
+    "trace.candidate"
+   ],
+   "share": "existing_judge",
+   "saved_case": true
+  },
+  {
+   "id": "R4",
+   "text": "段 1 つ・recover_energy・choose_option・card",
+   "code_refs": [
+    "kyuura_engine/resolution/programs.py:2897",
+    "kyuura_engine/legal_actions.py"
+   ],
+   "record_fields": [
+    "trace.stages"
+   ],
+   "share": "individual",
+   "saved_case": true
+  },
+  {
+   "id": "R5",
+   "text": "最小 0・最大 1 以上で選べるもの以下",
+   "code_refs": [
+    "kyuura_engine/resolution/programs.py:2897"
+   ],
+   "record_fields": [
+    "trace.stages"
+   ],
+   "share": "common_with_er9_plus_upper_bound",
+   "saved_case": true
+  },
+  {
+   "id": "R6",
+   "text": "選べるもの 1 以上・重ならない",
+   "code_refs": [
+    "kyuura_engine/resolution/programs.py:2895"
+   ],
+   "record_fields": [
+    "trace.stages"
+   ],
+   "share": "common_with_er9",
+   "saved_case": true
+  },
+  {
+   "id": "R7",
+   "text": "空の回答",
+   "code_refs": [
+    "kyuura_engine/resolution/programs.py:2902"
+   ],
+   "record_fields": [
+    "trace.meaning",
+    "actors.choice"
+   ],
+   "share": "common_with_er9",
+   "saved_case": true
+  },
+  {
+   "id": "R8",
+   "text": "check valid",
+   "code_refs": [
+    "kyuura_engine/decisions.py:694 check_choices"
+   ],
+   "record_fields": [
+    "trace.check"
+   ],
+   "share": "individual",
+   "saved_case": true
+  },
+  {
+   "id": "R9",
+   "text": "拒否のあとも本人の決定待ち",
+   "code_refs": [
+    "kyuura_engine/engine.py:2763 _answer_decision_once",
+    "tests/test_haunter_line_v0_9.py: test_zero_cards_is_unresolved"
+   ],
+   "record_fields": [
+    "trace.submit.result"
+   ],
+   "share": "common_with_er9",
+   "saved_case": true
+  },
+  {
+   "id": "R10",
+   "text": "送信前の本人の観測の決定と段の一致・古くない",
+   "code_refs": [
+    "kyuura_engine/observation.py（決定の観測）"
+   ],
+   "record_fields": [
+    "actors.position.view.observation.decision",
+    "actors.attempt.inputs"
+   ],
+   "share": "individual",
+   "saved_case": true
+  },
+  {
+   "id": "R11",
+   "text": "basis（4 ファイル）",
+   "code_refs": [
+    "tools/verification_ai/judge.py:471 _basis_matches"
+   ],
+   "record_fields": [
+    "header.engine.implementation"
+   ],
+   "share": "individual",
+   "saved_case": true
+  },
+  {
+   "id": "R12",
+   "text": "ほかの根拠の規則と重ならない",
+   "code_refs": [
+    "tools/verification_ai/judge.py:908 submit_evidence"
+   ],
+   "record_fields": [
+    "submit_evidence"
+   ],
+   "share": "routing",
+   "saved_case": "routing_not_evaluated_without_judge"
+  }
+ ],
+ "excluded": [
+  "recover_energy で最小 1 以上",
+  "ER9・ほかの 0 枚のコード",
+  "受理のあとの停止",
+  "refused",
+  "failed",
+  "1 枚以上の回答の拒否",
+  "宣言の拒否"
+ ],
+ "basis": {
+  "method": "kyuura-recover-zero-basis-sha256/1",
+  "status": "proposed",
+  "files": {
+   "resolution/programs.py": "投げる箇所 1 つ・最小 0 の recover_energy は 1 要素",
+   "decisions.py": "決定の確認の順序",
+   "engine.py": "再開先の振り分け・複製の上の処理",
+   "legal_actions.py": "段の値が決定を写す"
+  },
+  "not_included": {
+   "effects.py": "条件はカードの登録に依存しない"
+  },
+  "run_commit_file_sha256": {
+   "resolution/programs.py": "c57eca41370007c3661941ca55ddd48ffeaf925452d54ece6a973264a1366980",
+   "decisions.py": "6cbe7f8eb19fe8066835e6c1dc0c78f67fd13a371a840ec9b9fcb72030df24b3",
+   "engine.py": "20e1530a91a5aaa6613ef8ce551cd610c5dba66771b40f26f707cd6009e9ae8c",
+   "legal_actions.py": "a927b2f9e7cc113a992e1a11f4214aa58d3597a961966f5865d24b4102ca31e6"
+  }
+ },
+ "er9_comparison": {
+  "common": [
+   "拒否・コードの一致",
+   "answer_decision・段 1 つ",
+   "空の回答",
+   "最小 0・最大 1 以上・選べるもの 1 以上",
+   "本人の決定待ち・next",
+   "refetch 不要",
+   "submit_evidence の入口"
+  ],
+  "individual": [
+   "decision_kind",
+   "再開先（trainer と resolution）",
+   "最大の上限",
+   "本人の観測との一致（R10）",
+   "basis（ER9 はなし）"
+  ],
+  "er9_changed": false
+ },
+ "saved_case": {
+  "game": "vai-batch-p2n1 の 2 局目（試行 1）",
+  "trace_n": 200,
+  "position": 190,
+  "episode": 191,
+  "actor": 0,
+  "operation_id": "g002-boundary-s9005-000191",
+  "origin_trace_n": 199,
+  "chosen": 0,
+  "options": 4,
+  "saved_verdict": "undetermined",
+  "saved_category": "evidence_missing_stop",
+  "record_conditions_all_true": true,
+  "observation_unchanged_all_viewers": true,
+  "reanswered_same_position": [
+   {
+    "n": 201,
+    "kind": "answer_decision",
+    "chosen": 1,
+    "outcome": "accepted"
+   }
+  ],
+  "rejudged": false
+ },
+ "impact": {
+  "judge_rules_version": "9→10",
+  "tool_version": "12→13",
+  "plan_format": 7,
+  "complete_format": 7,
+  "engine_version": "変えない",
+  "saved_judgements": "書き換えない"
+ },
+ "tests_planned": [
+  "正: 保存例の形",
+  "正: 最大 1",
+  "負: 1・2 枚",
+  "負: 別の決定",
+  "負: 別のコード",
+  "負: 欠落",
+  "負: 古さ",
+  "負: 矛盾",
+  "負: 拒否のあとの状態",
+  "区別: refused・failed・受理後停止",
+  "負: basis",
+  "非干渉: ER9・P1・P2-min・P3s",
+  "一致: 単局・バッチ・読み直し",
+  "エンジンの静的な前提"
+ ],
+ "unverified": [
+  "原典に記述がないことの再確認",
+  "ER9 の規則 6 の前提",
+  "ほかの旧記録への当てはまり",
+  "basis の _digest の値"
+ ]
+}

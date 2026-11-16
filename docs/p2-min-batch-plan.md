@@ -235,7 +235,7 @@
 | 2 | game_over | なし | `undetermined:evidence_missing_stop:1` | 238・1 | 9.42 秒 | 17.0 MB |
 
 - 計画 2・完了 2（停止つき 0）・未着手 0。試行は各局 1 回。バッチの終わりは `completed`。
-- 2 局目の拒否 1 は、回答の決定の `UNRESOLVED_RECOVER_ZERO_ENERGY` です。根拠が登録されていない既存の未裁定で、判定は undetermined（`evidence_missing_stop`。停止方針では続ける）でした。P2・LOST_TARGET とは関係ありません。
+- 2 局目の拒否 1 は、回答の決定の `UNRESOLVED_RECOVER_ZERO_ENERGY` です。根拠が登録されていない既存の未裁定で、判定は undetermined（`evidence_missing_stop`。停止方針では続ける）でした。P2・LOST_TARGET とは関係ありません。（→ 2026-11-16: この 1 件の根拠条件を設計した。結論は A（限定した known_stop の条件を登録できる。未実装。保存済みの判定は変えていない）: [UNRESOLVED_RECOVER_ZERO_ENERGY の根拠条件の設計](verification-ai-recover-zero-energy-design.md)）
 - 局ごとの確かめ（`check_game.py`・P2 用の関門 `gate_p2.py`。14 条件）は、2 局とも成り立ちました。
   - 完了の照合（`batch.verify_complete`）の問題 0・R2〜R5・観測 complete・replay の期待どおり・prestop の状態 complete・停止の理由なし・対応の問題 0・異常なし
   - header の規約集合が TR3（照合値・23 規約）・デッキが計画と同じ・実装の識別と実行コミットが同じ
@@ -343,4 +343,4 @@
   - L67-U の均等の選び方で、裏向きのカードが相手の番まで残る確率
   - デッキの構成（ベンチの埋まりやすさ）の影響
 - new_game での P2-min の実績は 0 のまま、未出現のままです（構築盤面の確認は [P2 の設計](verification-ai-lost-target-p2-p3o-design.md) 9 章で済み）。
-- **所在だけ記録**: 2 局目の undetermined（回答の決定の `UNRESOLVED_RECOVER_ZERO_ENERGY`）の根拠の設計は、今回の対象の外です。
+- **所在だけ記録**: 2 局目の undetermined（回答の決定の `UNRESOLVED_RECOVER_ZERO_ENERGY`）の根拠の設計は、今回の対象の外です。（→ 2026-11-16 に別の作業で設計した: [UNRESOLVED_RECOVER_ZERO_ENERGY の根拠条件の設計](verification-ai-recover-zero-energy-design.md)）
