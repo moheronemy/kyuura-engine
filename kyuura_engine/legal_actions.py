@@ -2159,7 +2159,8 @@ RESIDUAL_WITHHELD = "R-5"
 RESIDUAL_CLASSES = (
     {"id": RESIDUAL_FACE_DOWN_ATTACK, "kind": KIND_USE_ATTACK, "field": "declaration_options", "situation": SITUATION_TURN_MAIN, "status": RESIDUAL_NOT_OFFERED,
      "reason": REASON_FACE_DOWN, "subject": "own_face_down_active",
-     "note": "自分のうらのバトル場のポケモンのワザといっしょに選ぶもの（クチバシティジムのコイン・ワザといっしょに使う特殊能力）。おもてにしたあとの確かめで決まるので示さない（D-U75-R2）"},
+     "note": "自分のうらのバトル場のポケモンのワザといっしょに選ぶもの（ワザといっしょに使う特殊能力など）。おもてにしたあとの確かめで決まるので示さない（D-U75-R2）。"
+             "v0.188 から、クチバシティジムのコインだけは、本人が知る本当のカードの名前・特殊能力の有無と場のスタジアムで決まるとき unverified で示す（R-2 は残る）"},
     {"id": RESIDUAL_FACE_DOWN_POWER, "kind": KIND_USE_POWER, "field": "power_inputs", "situation": SITUATION_TURN_MAIN, "status": RESIDUAL_INPUT_WITHHELD,
      "reason": REASON_FACE_DOWN, "subject": "own_face_down_pokemon",
      "note": "自分のうらのカードの特殊能力のうち、入力を本人の知識だけで作れないもの（宣言のない型・登録のない力・知らない場所の段・選べるもの（完成する組）のない段）。候補は出し、"
