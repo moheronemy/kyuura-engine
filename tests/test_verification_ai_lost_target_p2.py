@@ -127,8 +127,8 @@ def judge(e, actor_logs=None, *, trace=None, hdr="default", basis_p2=None):
 
 class VersionTest(unittest.TestCase):
     def test_versions_registration_and_basis(self):
-        self.assertEqual(J.JUDGE_RULES_VERSION, 9)
-        self.assertEqual(B.TOOL_VERSION, 12)
+        self.assertEqual(J.JUDGE_RULES_VERSION, 10)  # 規則 10（UNRESOLVED_RECOVER_ZERO_ENERGY）を足した（旧の期待は 9）。
+        self.assertEqual(B.TOOL_VERSION, 13)  # 13: 規則 10（旧の期待は 12）。
         self.assertEqual((B.PLAN_FORMAT, B.COMPLETE_FORMAT), ("kyuura-vai-batch-plan/7", "kyuura-vai-batch-complete/7"))  # 形式は変えない
         self.assertEqual(J.LOST_TARGET_P2_EVIDENCE, KEY)
         self.assertEqual(J.KNOWN_STOP_EVIDENCE[KEY]["code"], CODE)
@@ -280,7 +280,7 @@ class NegativeTest(unittest.TestCase):
         result = {"trace": [positive, negative], "actor_logs": logs(view()), "record": {"header": header()}, "termination": {"class": "limit_operations", "detail": {}}}
         judged = B.judge_trace(result)
         self.assertEqual([r["verdict"] for r in judged["rows"]], [J.KNOWN_STOP, J.UNDETERMINED])
-        self.assertEqual(judged["rules_version"], 9)
+        self.assertEqual(judged["rules_version"], 10)  # 規則 10（UNRESOLVED_RECOVER_ZERO_ENERGY）を足した（旧の期待は 9）。
         summary = summary_and_rest(B.judge_summary(judged))
         stops, notes = B.stop_reasons(summary, B._policy_dict(B.StopPolicy()))
         self.assertEqual(stops, [])

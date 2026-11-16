@@ -41,7 +41,11 @@ from .actions import RETREAT_KIND, cost_not_evaluated
 #    （opponent_face_down_lost_target_failure）。相手の本当のカード（real）・相手の観測・完全な記録は読まない（エンジンは相手のうらの指定をありうるカードの公開の一覧で
 #    確かめ直すので、結果は相手の正体によらない。静的な前提 S1〜S3 は tests/test_lost_target_p2_min_v0_187.py）。P1・P3s の条件・理由・basis は変えない。
 #    submit_evidence は、P1・P2・P3s のうち根拠を返すものがちょうど 1 つのときだけその鍵を返す（2 つ以上は起こらないはずの矛盾なので、どれにも決めない）。P3o は未登録
-JUDGE_RULES_VERSION = 9
+# 10: UNRESOLVED_RECOVER_ZERO_ENERGY（docs/verification-ai-recover-zero-energy-design.md 5 章・8 章。エンジン 0.187.0）。エナジーへんかんの決定（recover_energy・最小 0）への
+#    0 枚の答えの拒否を、記録した送信の値・本人の送信前の観測・決定を出した経路（本人の印刷のワザか、ゆびをふる）・専用の basis（RECOVER_ZERO_BASIS_FILES）で、条件 R1〜R11・
+#    R13 をすべて確かめたときだけ根拠にする（recover_zero_energy_failure）。ER9 の表（RECORDED_STOP_CONDITIONS）には足さない。submit_evidence は 5 つの規則をすべて見て、
+#    根拠を返すものがちょうど 1 つのときだけその鍵を返す（R12。規則 9 までの「ER9 を先に返す」をやめ、呼ぶ順で重なりを隠さない。重ならない入力の結果は同じ）
+JUDGE_RULES_VERSION = 10
 # U-R3a: うらのカードの特殊能力で、エンジンがおもてにしたあとに確かめ、API が評価しないと契約で示すもの（GUARANTEE_FACE_DOWN_POWER: 構造の組は受け付けるかで絞らない）。
 # 元のコード → (その条件に要る段の role（どれか 1 つが選んだ入力にあること。空なら段は問わない）, 条件の説明)。カード・効果の型ごとの登録ではない
 FACE_DOWN_POWER_ENGINE_DECIDES = {
@@ -120,6 +124,17 @@ KNOWN_STOP_EVIDENCE = {
                    "kyuura_engine/zones.py: designate_face_down",
                    "kyuura_engine/effects.py: MoveOpponentDamageCounter（check_usable は入口の指定のあと）",
                    "docs/verification-ai-lost-target-p2-p3o-design.md: 2 章（Q1〜Q11）・9 章（Q12 と効果の限定）"],
+    },
+    # 規則 10: エナジーへんかんの 0 枚の答え。根拠は recover_zero_energy_failure が R1〜R11・R13 をすべて確かめ、ほかの規則が根拠を返さないときだけ渡す
+    "UNRESOLVED_RECOVER_ZERO_ENERGY": {
+        "condition": "ワザの途中の回収の決定（recover_energy。最小 0・選べるエネルギーカードが 1 枚以上。本人の印刷のエナジーへんかんか、ゆびをふるで選んだエナジーへんかん）に"
+                     "0 枚を答え、受理の前に拒否され、同じ本人の決定待ちが残った（H4。「最大2枚」が 0 枚を含むかは原典で決められない。1 枚以上を選び直せる）",
+        "source": ["docs/haunter-line-v0.9.md: H4", "docs/rules-2000-02-14.md: H4",
+                   "kyuura_engine/resolution/programs.py: RecoverEnergy.run（min_choices 0）・RecoverEnergy.resume（空の答えで UnsupportedError。投げる箇所はここだけ）",
+                   "docs/stop-policy-classification.json: UNRESOLVED_RECOVER_ZERO_ENERGY（answer_rejection・H4）",
+                   "tests/test_haunter_line_v0_9.py: test_zero_cards_is_unresolved",
+                   "tests/test_recover_zero_energy_premise_v0_187.py: 投げる箇所 1 つ・最小 0 の要素 1 つ・ゆびをふるの経路",
+                   "docs/verification-ai-recover-zero-energy-design.md: 5 章（R1〜R12）・8 章（R13 と basis）"],
     },
 }
 # 規則 6: 記録した送信の値だけで代表の条件を確かめる停止のコード → 決定の種類（段の decision_kind）。条件は recorded_stop_evidence:
@@ -905,15 +920,234 @@ def opponent_face_down_lost_target_evidence(entry: dict[str, Any], *, trace, act
     return LOST_TARGET_P2_EVIDENCE if failure is None else None
 
 
-def submit_evidence(entry: dict[str, Any], *, trace, actor_logs, header, basis=None, basis_p3=None, basis_p2=None) -> str | None:
+# ---------------------------------------------------------------- 規則 10: UNRESOLVED_RECOVER_ZERO_ENERGY（エナジーへんかんの決定への 0 枚の答え。検証者の側だけ）
+
+RECOVER_ZERO_CODE = "UNRESOLVED_RECOVER_ZERO_ENERGY"  # KNOWN_STOP_EVIDENCE の鍵（元のコードそのもの。投げる箇所は RecoverEnergy.resume の 1 か所）
+RECOVER_ZERO_DECISION = "recover_energy"
+# 確かめる順。R12（ほかの根拠の規則と重ならない）は submit_evidence が確かめる。R13 は実装のときに足した決定を出した経路の限定（設計 8 章）
+RECOVER_ZERO_CONDITIONS = ("R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9", "R10", "R13", "R11")
+# R11 の判定の基礎（設計 5.3 節の 4 ファイルに、実装で 4 ファイルを足した。設計 8 章）:
+# - resolution/programs.py: 投げる箇所が 1 つ（RecoverEnergy.resume）・最小 0 の recover_energy を出すのがこの要素だけ・要素の作り方
+# - resolution/flow.py: 決定への答えを解決の基盤の要素の resume に渡す（resume_decision）
+# - decisions.py・checks.py: 決定の確認（decision_choices → check_choices）が数の範囲の中の 0 枚を通し、再開より先に形の不正を拒否する順序
+# - engine.py: _answer_decision_once の再開先の振り分けと、apply_command が複製の上で処理して拒否で状態を変えないこと
+# - legal_actions.py: API の段の値（decision_kind・count・選べるもの）が決定を写すこと
+# - observation.py: 本人の観測の決定（R10）と場のポケモンの card・card_id（R13）の形
+# - effects.py: R13 が引く効果の登録（RecoverEnergyAndSelfDamage・CopyOpponentAttackEffect）
+RECOVER_ZERO_BASIS_METHOD = "kyuura-recover-zero-basis-sha256/1"
+RECOVER_ZERO_BASIS_FILES = ("resolution/programs.py", "resolution/flow.py", "decisions.py", "checks.py", "engine.py", "legal_actions.py", "observation.py",
+                            "effects.py")
+
+
+def recover_zero_basis(root=None) -> dict[str, Any]:
+    """R11 の判定の基礎の識別（``lost_target_basis`` と同じ正規化・要約の方式で、``RECOVER_ZERO_BASIS_FILES`` だけを要約）。``root`` はパッケージのディレクトリ
+    （省略時は今のエンジン）。保存済みの記録の当て直しでは、記録を作ったエンジンのパッケージから同じ関数で計算して渡す。"""
+    from pathlib import Path
+
+    from kyuura_engine.replay_record import PACKAGE_ROOT, _digest
+
+    base = Path(root) if root is not None else PACKAGE_ROOT
+    return {"method": RECOVER_ZERO_BASIS_METHOD, "files": list(RECOVER_ZERO_BASIS_FILES), "digest": _digest(base, RECOVER_ZERO_BASIS_FILES)}
+
+
+_R_BASIS: dict[str, Any] | None = None
+
+
+def _current_r_basis() -> dict[str, Any]:
+    global _R_BASIS
+    if _R_BASIS is None:
+        _R_BASIS = recover_zero_basis()
+    return _R_BASIS
+
+
+def _r_basis_matches(header, basis_r) -> bool:
+    """R11: 記録の依存が今のカードプール・カードデータ・効果の登録と同じで、次のどちらか。
+
+    (a) 呼ぶ側の ``basis_r``（記録を作ったエンジンの同じファイルから同じ方式で計算した値）が、今の基礎と方式・ファイルの並び・要約まですべて同じ
+    (b) ``basis_r`` がなく、記録の実装の識別（方式・behavior_digest）が今のエンジンの識別と同じで、基礎のファイルがすべて behavior のファイルにふくまれる（behavior_digest が
+        基礎のファイルの中身を覆うので、今のファイルが記録を作ったファイルと同じだと確かめられる。記録・header に basis を書き足すことはしない）
+
+    ``basis_r`` を渡して合わなければ、(b) が成り立っても False（矛盾を通さない）。P1・P2・P3 の basis は読まない。"""
+    from kyuura_engine.effects import DEFAULT_EFFECTS
+    from kyuura_engine.replay_record import INSTRUMENTATION_FILES, PACKAGE_ROOT, package_files
+
+    header = _recorded_pool_matches(header)
+    if header is None or (header.get("dependencies") or {}).get("effects") != DEFAULT_EFFECTS.id:
+        return False
+    expected = _current_r_basis()
+    if basis_r is not None:
+        return (isinstance(basis_r, dict) and basis_r.get("method") == expected["method"] and basis_r.get("files") == expected["files"]
+                and basis_r.get("digest") == expected["digest"])
+    names = package_files(PACKAGE_ROOT)
+    return _same_behavior(header) and all(f in names and f not in INSTRUMENTATION_FILES for f in RECOVER_ZERO_BASIS_FILES)
+
+
+def _own_active(actor_logs, entry: dict[str, Any], actor) -> dict[str, Any] | None:
+    view = own_view_for(actor_logs, entry)
+    observation = (view or {}).get("observation") if isinstance(view, dict) else None
+    if not isinstance(observation, dict) or view.get("ok") is not True or view.get("viewer") != actor or observation.get("viewer") != actor:
+        return None
+    rows = _field_rows(observation)
+    side = (observation.get("players") or [None, None])[actor] if rows is not None else None
+    active = side.get("active") if isinstance(side, dict) else None
+    return active if isinstance(active, dict) and active.get("face_down") is not True else None
+
+
+def _awaits_own_answer(x: dict[str, Any], actor) -> bool:
+    submit = x.get("submit") or {}
+    result = submit.get("result") or {}
+    return (x.get("actor") == actor and submit.get("outcome") == D.ACCEPTED and submit.get("ok") is True and result.get("status") == "awaiting_decision"
+            and result.get("next") == [{"kind": "answer_decision", "player": actor}] and result.get("viewer") == actor and result.get("halt") is None)
+
+
+def _printed_attack_origin(x: dict[str, Any], actor, actor_logs, effect_type) -> bool:
+    """受理された本人の use_attack で、選んだワザがバトル場の本人の印刷のカードのワザ（route form・選べるものの card と card_id が送信前の本人の観測のバトル場と同じ）で、
+    エンジンの登録の効果が ``effect_type``。"""
+    from kyuura_engine.effects import DEFAULT_EFFECTS
+
+    meaning = x.get("meaning")
+    if not _awaits_own_answer(x, actor) or (x.get("candidate") or {}).get("kind") != "use_attack" or not isinstance(meaning, list):
+        return False
+    attack = [m for m in meaning if isinstance(m, dict) and isinstance(m.get("option"), dict) and "attack_index" in m["option"]]
+    if len(attack) != 1:
+        return False
+    option = attack[0]["option"]
+    if option.get("route") != "form" or type(option.get("card")) is not int or not isinstance(option.get("card_id"), str) or type(option.get("attack_index")) is not int:
+        return False
+    active = _own_active(actor_logs, x, actor)
+    if active is None or active.get("card") != option["card"] or active.get("card_id") != option["card_id"]:
+        return False
+    registered = DEFAULT_EFFECTS.attack_entry(option["card_id"], option["attack_index"])
+    return isinstance(getattr(registered, "effect", None), effect_type)
+
+
+def _recover_zero_route(entry: dict[str, Any], trace, actor_logs, actor) -> bool:
+    """R13: 決定を出した経路が、確かめた経路のどれか（tests/test_recover_zero_energy_premise_v0_187.py の構築盤面）。同じ trace の、この送信より前の受理のうち最後のもの
+    （主体を問わない）から見る。あいだの拒否・断りは状態を変えないので問わない。
+
+    - 本人の印刷のワザ: 最後の受理が、本人のバトル場の印刷のカードのワザ（効果の登録が RecoverEnergyAndSelfDamage）の use_attack で、本人の決定待ちになった
+    - ゆびをふる: 最後の受理が、select_attack の決定への本人の 1 つの答え（選んだワザの効果の登録が RecoverEnergyAndSelfDamage）で本人の決定待ちになり、その前の受理が
+      本人のバトル場の印刷のカードのワザ（効果の登録が CopyOpponentAttackEffect。ピッピ・ピクシー）の use_attack で本人の決定待ちになった
+
+    メタモンの［へんしん］・思い出させる・サイコリンク・ものまねなど、ほかの経路は外す（選べるもののカードがバトル場の印刷のカードでない・route が form でない・効果の型が違う）。"""
+    from kyuura_engine.effects import DEFAULT_EFFECTS, CopyOpponentAttackEffect, RecoverEnergyAndSelfDamage
+
+    if not isinstance(trace, list) or type(entry.get("n")) is not int:
+        return False
+    before = sorted((x for x in trace if isinstance(x, dict) and x.get("type") == "attempt" and type(x.get("n")) is int and x["n"] < entry["n"]
+                     and (x.get("submit") or {}).get("outcome") == D.ACCEPTED), key=lambda x: x["n"])
+    if not before:
+        return False
+    last = before[-1]
+    if _printed_attack_origin(last, actor, actor_logs, RecoverEnergyAndSelfDamage):
+        return True
+    stages, meaning = last.get("stages"), last.get("meaning")
+    if (not _awaits_own_answer(last, actor) or (last.get("candidate") or {}).get("kind") != "answer_decision" or not isinstance(stages, list) or len(stages) != 1
+            or not isinstance(stages[0], dict) or stages[0].get("decision_kind") != "select_attack" or not isinstance(meaning, list) or len(meaning) != 1
+            or not isinstance(meaning[0], dict) or not isinstance(meaning[0].get("option"), dict)):
+        return False
+    chosen = meaning[0]["option"].get("attack")
+    if not isinstance(chosen, dict) or not isinstance(chosen.get("card_id"), str) or type(chosen.get("attack_index")) is not int:
+        return False
+    if not isinstance(getattr(DEFAULT_EFFECTS.attack_entry(chosen["card_id"], chosen["attack_index"]), "effect", None), RecoverEnergyAndSelfDamage):
+        return False
+    return len(before) >= 2 and _printed_attack_origin(before[-2], actor, actor_logs, CopyOpponentAttackEffect)
+
+
+def recover_zero_energy_failure(entry: dict[str, Any], *, trace: list[dict[str, Any]] | None, actor_logs, header, basis_r=None) -> str | None:
+    """規則 10: 送信 ``entry`` が条件 R1〜R11・R13（設計 5.2 節・8 章。確かめる順は ``RECOVER_ZERO_CONDITIONS``）をすべて満たすなら None、満たさない最初の条件の id を返す。
+
+    使う値: 送信の行（候補・段・選んだもの・check・submit の応答と検証者の診断）、同じ trace の前の受理（決定を出した経路と、観測の古さ）、本人の送信前の観測
+    （``own_view_for``）、記録の header の依存と実装の識別、エンジンの効果の登録。相手の観測・完全な記録・replay・後の送信（回答し直しの受理）は使わない。
+    返す値は条件の id だけ（カード・uid を持たない）。"""
+    candidate, submit = entry.get("candidate") or {}, entry.get("submit") or {}
+    diag, result = submit.get("verifier") or {}, submit.get("result") or {}
+    actor = entry.get("actor")
+    # R1: エンジンの拒否（ホストの断り・failed・エラーを除く）で、検証者の診断と公開の結果のコードがそろう
+    if (submit.get("outcome") != D.REJECTED or submit.get("ok") is not True or submit.get("refusal") is not None or submit.get("error") is not None
+            or not diag.get("engine_code") == diag.get("diagnostic_id") == result.get("diagnostic_id") == RECOVER_ZERO_CODE):
+        return "R1"
+    # R2: 分類（診断・結果・コード表）が unresolved_ruling
+    if not diag.get("category") == result.get("category") == D.RULING_UNRESOLVED == _catalog_category(RECOVER_ZERO_CODE):
+        return "R2"
+    # R3: 決定への回答の候補で、経路の理由（EXPLAINING_REASONS）が候補にある
+    if candidate.get("kind") != "answer_decision" or not set(candidate.get("reasons") or []) & EXPLAINING_REASONS:
+        return "R3"
+    # R4: 段はちょうど 1 つの recover_energy（choose_option・meaning card）
+    stages = entry.get("stages")
+    if not isinstance(stages, list) or len(stages) != 1 or not isinstance(stages[0], dict):
+        return "R4"
+    stage = stages[0]
+    if (stage.get("stage") != 1 or stage.get("decision_kind") != RECOVER_ZERO_DECISION or stage.get("input") != "choose_option"
+            or stage.get("meaning") != "card"):
+        return "R4"
+    # R5: 最小 0・最大が整数で 1 以上、選べるものの数以下
+    count, options = stage.get("count") or {}, stage.get("options")
+    if (type(count.get("min")) is not int or count["min"] != 0 or type(count.get("max")) is not int or count["max"] < 1
+            or not isinstance(options, list) or count["max"] > len(options)):
+        return "R5"
+    # R6: 選べるものが 1 つ以上で、id・card が重ならない
+    if not options or not all(isinstance(o, dict) and isinstance(o.get("id"), str) and type(o.get("card")) is int for o in options):
+        return "R6"
+    ids, cards = [o["id"] for o in options], [o["card"] for o in options]
+    if len(set(ids)) != len(ids) or len(set(cards)) != len(cards):
+        return "R6"
+    # R7: 答えが空（選んだ意味と、選んだ選べるもの）
+    if entry.get("meaning") != [] or entry.get("choices") != []:
+        return "R7"
+    # R8: 送信の前の check が valid（取り直しが要らない・断りがない）
+    checked = entry.get("check") or {}
+    response = checked.get("response") or {}
+    if checked.get("ok") is not True or checked.get("refetch_required") is not False or response.get("valid") is not True or response.get("refusal") is not None:
+        return "R8"
+    # R9: 拒否のあとも同じ主体の決定待ち（同じ決定が残る形）
+    if (actor not in (0, 1) or result.get("status") != "awaiting_decision" or result.get("stage") != "decision_answer" or result.get("continuable") is not True
+            or result.get("next") != [{"kind": "answer_decision", "player": actor}] or result.get("viewer") != actor or result.get("halt") is not None
+            or submit.get("refetch_required") is not False):
+        return "R9"
+    # R10: 送信前の本人の観測がちょうど 1 つで送信の時点と同じ（決定待ち・同じ番・同じエピソードの前に受理がない）。観測の決定が段と同じ
+    view = own_view_for(actor_logs, entry)
+    observation = (view or {}).get("observation") if isinstance(view, dict) else None
+    if not isinstance(observation, dict) or view.get("ok") is not True or view.get("viewer") != actor:
+        return "R10"
+    from .policies import turn_of
+
+    decision = observation.get("decision")
+    if (observation.get("viewer") != actor or observation.get("current_player") != actor or observation.get("phase") != "decision"
+            or not isinstance(decision, dict) or not isinstance(entry.get("turn"), list) or list(turn_of(view)) != entry["turn"]):
+        return "R10"
+    seen = decision.get("options")
+    if (decision.get("player") != actor or decision.get("kind") != RECOVER_ZERO_DECISION or decision.get("meaning") != "card"
+            or decision.get("min_choices") != 0 or decision.get("max_choices") != count["max"] or decision.get("option_count") != len(options)
+            or not isinstance(seen, list) or [o.get("value") if isinstance(o, dict) else None for o in seen] != cards):
+        return "R10"
+    if any(isinstance(x, dict) and x.get("type") == "attempt" and x.get("episode") == entry.get("episode") and type(x.get("n")) is int
+           and x["n"] < entry.get("n", 0) and (x.get("submit") or {}).get("outcome") == D.ACCEPTED for x in trace or []):
+        return "R10"
+    # R13: 決定を出した経路が、確かめた経路（本人の印刷のエナジーへんかん・ゆびをふる）
+    if not _recover_zero_route(entry, trace, actor_logs, actor):
+        return "R13"
+    # R11: 判定の基礎が記録を作ったエンジンと同じ
+    if not _r_basis_matches(header, basis_r):
+        return "R11"
+    return None
+
+
+def recover_zero_energy_evidence(entry: dict[str, Any], *, trace, actor_logs, header, basis_r=None) -> str | None:
+    """規則 10: 条件 R1〜R11・R13 をすべて満たせば ``RECOVER_ZERO_CODE``（judge_normal の evidence）、そうでなければ None。"""
+    failure = recover_zero_energy_failure(entry, trace=trace, actor_logs=actor_logs, header=header, basis_r=basis_r)
+    return RECOVER_ZERO_CODE if failure is None else None
+
+
+def submit_evidence(entry: dict[str, Any], *, trace, actor_logs, header, basis=None, basis_p3=None, basis_p2=None, basis_r=None) -> str | None:
     """送信の判定（judge_normal）に渡す根拠の共通の入口。単局の runner（変異の実行の中の判定）と逐次バッチ（batch.judge_trace）が、同じ送信の行・同じ trace・同じ
-    actor_logs・同じ記録の header で呼ぶ。規則 6（recorded_stop_evidence。ER9）を先に見て、満たせばその鍵を返す。次に規則 7（own_face_down_lost_target_evidence。P1。
-    ``basis`` だけを使う）・規則 9（opponent_face_down_lost_target_evidence。P2-min。``basis_p2`` だけを使う）・規則 8（own_face_down_decision_lost_target_evidence。
-    P3s。``basis_p3`` だけを使う）を確かめ、根拠を返すものがちょうど 1 つのときだけその鍵を返す（条件は互いに重ならない。2 つ以上なら矛盾として None）。"""
-    found = recorded_stop_evidence(entry.get("candidate") or {}, entry.get("meaning") or [], entry.get("stages"), entry.get("submit") or {})
-    if found is not None:
-        return found
-    found = [key for key in (own_face_down_lost_target_evidence(entry, trace=trace, actor_logs=actor_logs, header=header, basis=basis),
+    actor_logs・同じ記録の header で呼ぶ。規則 6（recorded_stop_evidence。ER9）・規則 10（recover_zero_energy_evidence。``basis_r`` だけを使う。R12）・規則 7
+    （own_face_down_lost_target_evidence。P1。``basis`` だけ）・規則 9（opponent_face_down_lost_target_evidence。P2-min。``basis_p2`` だけ）・規則 8
+    （own_face_down_decision_lost_target_evidence。P3s。``basis_p3`` だけ）をすべて確かめ、根拠を返すものがちょうど 1 つのときだけその鍵を返す（条件はコード・経路で
+    互いに重ならない。2 つ以上なら矛盾として None。規則 9 までは ER9 を先に見て返していたが、規則 10 から呼ぶ順で重なりを隠さない）。"""
+    found = [key for key in (recorded_stop_evidence(entry.get("candidate") or {}, entry.get("meaning") or [], entry.get("stages"), entry.get("submit") or {}),
+                             recover_zero_energy_evidence(entry, trace=trace, actor_logs=actor_logs, header=header, basis_r=basis_r),
+                             own_face_down_lost_target_evidence(entry, trace=trace, actor_logs=actor_logs, header=header, basis=basis),
                              opponent_face_down_lost_target_evidence(entry, trace=trace, actor_logs=actor_logs, header=header, basis_p2=basis_p2),
                              own_face_down_decision_lost_target_evidence(entry, trace=trace, actor_logs=actor_logs, header=header, basis_p3=basis_p3))
              if key is not None]
