@@ -34,7 +34,9 @@ REQ = {"contract": "kyuura-client-api", "format": 1}
 REALS = (H.RATTATA, H.ONIX, H.KADABRA, H.FIRE)  # たね（ワザ 1）・たね（ワザ 2）・1 進化（ワザ 2）・エネルギー（印刷のワザなし）
 # 0.179.0 の GUARANTEE_ATTACK（おもてのワザ。変えない）と、0.180.0 の GUARANTEE_FACE_DOWN_ATTACK の値（JSON・キーの順・区切りの空白なし）の sha256
 ATTACK_0179_SHA256 = "f1e79cef13b69200910504f90614393b2b2344d6dad71b47d25eff260ec5bc5b"
-FACE_DOWN_ATTACK_SHA256 = "aa316b12cb9a79033e6d80685a4fbffacfa2e13b1af310bda57d76049b6f1d0c"
+# v0.188（R-2 の初回対応。docs/legal-actions-r2-face-down-declaration-design.md 10 章）: うらの分岐がクチバシティジムのコインを示すようになり、preconditions・acceptance の文を
+# 実装に合わせた（0.180.0〜0.187.0 の値は aa316b12cb9a79033e6d80685a4fbffacfa2e13b1af310bda57d76049b6f1d0c）。おもての GUARANTEE_ATTACK は変えていない
+FACE_DOWN_ATTACK_SHA256 = "37edd7c4884937ee2502341280afc124a58561495c52aa72bed20159185042cd"
 
 
 def sha256(value):
@@ -48,7 +50,7 @@ def wording_problems(guarantees):
     if ("を候補の作成と入力の検査に使う" in pre or "resolution.flow.check_use_attack" not in pre
             or "含む）と宣言の前の先読みは、候補の作成でも入力の検査でも呼ばない" not in pre):
         problems.append("preconditions: check_use_attack を使うと読める")
-    if "入力の検査（check）は形（ワザの番号が 1 つで、ほかを選ばないこと）だけを確かめる" not in pre:
+    if "入力の検査（check）は形（ワザの番号が 1 つで、そのあとに示したものを重ねずに選ぶこと）だけを確かめる" not in pre:  # v0.188: コインを示す場合を含む形
         problems.append("preconditions: 構造の検査だけであることがない")
     if not acc.startswith("保証しない。") or "check が valid でも、エンジンの確かめを通したことを意味しない" not in acc:
         problems.append("acceptance: check と送信後の判定を分けていない")

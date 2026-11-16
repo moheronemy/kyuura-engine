@@ -65,6 +65,7 @@ from .effects import (
     POWER_CHOICES,
     POWER_INPUT_STAGES,
     AttackCoinStadium,
+    _owner_named,
     attack_power_slot,
     available_attacks,
     blaine_effects,
@@ -297,9 +298,12 @@ GUARANTEE_ATTACK = {
 GUARANTEE_FACE_DOWN_ATTACK = {
     "preconditions": "番のプレイヤーの main の段階で、本人のバトル場のポケモンがうら（マチスの秘策）であること。選べるワザは、本人が知る本当のカード（観測の real。本人の応答に"
                      "だけ出す）の印刷のワザの並び。エンジンが宣言を受け付ける前の確かめ（resolution.flow.check_use_attack。必要なエネルギー・特殊状態・ワザを使えない効果などを"
-                     "含む）と宣言の前の先読みは、候補の作成でも入力の検査でも呼ばない（状態の複製の上でおもてにして試さない）。宣言といっしょに選ぶものは示さない。入力の検査（check）は"
-                     "形（ワザの番号が 1 つで、ほかを選ばないこと）だけを確かめる",
-    "acceptance": "保証しない。check が valid でも、エンジンの確かめを通したことを意味しない（必要なエネルギーが足りるか・ワザを使えるかは確かめていない）。送信のあとの判定は"
+                     "含む）と宣言の前の先読みは、候補の作成でも入力の検査でも呼ばない（状態の複製の上でおもてにして試さない）。宣言といっしょに選ぶものは、v0.188（R-2 の初回対応）から、"
+                     "場のスタジアムがクチバシティジム（AttackCoinStadium）で、本人が知る本当のカードの印刷の名前が「マチスの」で始まり、そのカードが特殊能力を持たないときだけ、"
+                     "そのコイン（stadium_coin）を 1 つ、どのワザにも同じく示す（ほかのものは示さない）。入力の検査（check）は形（ワザの番号が 1 つで、そのあとに示したものを重ねずに"
+                     "選ぶこと）だけを確かめる",
+    "acceptance": "保証しない。check が valid でも、エンジンの確かめを通したことを意味しない（必要なエネルギーが足りるか・ワザを使えるか・コインを投げられるかは確かめていない。"
+                  "コインを選んで受理されても、コインを投げたことを意味しない）。送信のあとの判定は"
                   "エンジンがコマンドの入口から行い（_reveal_for_action を含む）、受け付けなければコマンドごと拒否する。最終の判定は apply_command",
     "after_acceptance": "評価していない（受理のあとに何が起こるか（ワザを使ったか、その続きの決定・停止を含む）を予告しない）",
     "supported_scope": "うらのバトル場のワザの候補は unverified（候補の作成・入力の検査でエンジンの確かめを呼んでいない）。unverified は受理・必要なエネルギー・ワザの実行の完了の"
@@ -1287,7 +1291,7 @@ def _attack_candidate(state: GameState, actor: int) -> _Candidate | None:
     if active is None:
         return None
     if state.is_face_down(active):
-        return _face_down_attack_candidate(state, active, dict(GUARANTEE_FACE_DOWN_ATTACK))  # v0.180（F-1）: うらの分岐だけの保証（うらであることは公開）
+        return _face_down_attack_candidate(state, actor, active, dict(GUARANTEE_FACE_DOWN_ATTACK))  # v0.180（F-1）: うらの分岐だけの保証（うらであることは公開）
     guarantees = dict(GUARANTEE_ATTACK)
     specs: dict[str, tuple] = {}
     attack_options, verdicts = [], {}
@@ -1359,7 +1363,7 @@ def _addon_specs(state: GameState, actor: int, active) -> list[tuple[tuple, dict
     found: list[tuple[tuple, dict[str, Any]]] = []
     stadium = stadium_of(state, AttackCoinStadium)
     if stadium is not None:
-        found.append(((ADDON_STADIUM_COIN,), {"addon": ADDON_STADIUM_COIN, "card": stadium[0].card, "card_id": state.cards[stadium[0].card].card_id}))
+        found.append(_stadium_coin_addon(state, stadium))
     if any(attack_power_slot(state, active, option.key) is not None for option in available_attacks(state, active)):
         found.append(((ADDON_ATTACK_POWER,), {"addon": ADDON_ATTACK_POWER, "pokemon": active.pokemon_id}))
     for pokemon, shown in _field(state, actor):
@@ -1369,9 +1373,28 @@ def _addon_specs(state: GameState, actor: int, active) -> list[tuple[tuple, dict
     return found
 
 
-def _face_down_attack_candidate(state: GameState, active, guarantees) -> _Candidate:
+def _stadium_coin_addon(state: GameState, stadium) -> tuple[tuple, dict[str, Any]]:
+    """クチバシティジムのコイン（宣言といっしょに選ぶもの）の値と表示（場のスタジアムのカード。公開）。おもて・うらの分岐で同じ形。"""
+    return (ADDON_STADIUM_COIN,), {"addon": ADDON_STADIUM_COIN, "card": stadium[0].card, "card_id": state.cards[stadium[0].card].card_id}
+
+
+def _face_down_addon_specs(state: GameState, actor: int, definition) -> list[tuple[tuple, dict[str, Any]]]:
+    """v0.188（R-2 の初回対応。docs/legal-actions-r2-face-down-declaration-design.md 10 章）: うらのバトル場のポケモンのワザといっしょに示すもの。クチバシティジムのコインだけ。
+
+    読むのは、番のプレイヤー・場のスタジアム（公開）と、本人が知る本当のカードの印刷の定義 ``definition``（名前・特殊能力の有無。本人の応答にだけ出る）だけ。おもてにする
+    処理・エンジンの確かめ（``check_use_attack``・``stadium_attack_coin_available``）・乱数は使わない。エンジンは今の姿の名前で決める（``form_def``）ので、公開のあとに
+    今の姿を変えうる特殊能力を持つカードは示さない。「たねポケモン」かでは分けない（公開のあとの結果を予告しない）。"""
+    stadium = stadium_of(state, AttackCoinStadium)
+    if (stadium is None or actor != state.current_player or definition.category != "pokemon" or definition.powers
+            or not _owner_named(definition.name_ja, stadium[1].owner)):
+        return []
+    return [_stadium_coin_addon(state, stadium)]
+
+
+def _face_down_attack_candidate(state: GameState, actor: int, active, guarantees) -> _Candidate:
     """自分のうらのバトル場のポケモン（マチスの秘策）: エンジンがおもてにしてから確かめる（「たねポケモン」でなければトラッシュし、ワザは使わない）。選べるワザは本人が知る本当の
-    カード（観測の real。本人だけに見える）の印刷のワザで、エンジンの確かめは呼ばない（unverified）。宣言といっしょに選ぶものは示さない。"""
+    カード（観測の real。本人だけに見える）の印刷のワザで、エンジンの確かめは呼ばない（unverified）。宣言といっしょに選ぶものは、v0.188 から ``_face_down_addon_specs``
+    （クチバシティジムのコインだけ。どのワザにも同じ。unverified）。示さないときの 2 段目は 0.187.0 と同じ。"""
     definition = state.printed_def(active.card)
     options, specs = [], {}
     for attack in definition.attacks if definition.category == "pokemon" else ():
@@ -1382,14 +1405,35 @@ def _face_down_attack_candidate(state: GameState, active, guarantees) -> _Candid
     if not options:
         public = {"processability": NOT_IMPLEMENTED, "reasons": [REASON_FACE_DOWN, REASON_NO_PRINTED_ATTACK], "guarantees": guarantees}
         return _Candidate("", KIND_USE_ATTACK, public, [], disclosure=DISCLOSURE_CONFIRMED)
+    attack_ids = list(specs)
+    addons = _face_down_addon_specs(state, actor, definition)
+    ids = {oid: (1, spec) for oid, spec in specs.items()}
+    pairs = {(oid, ""): True for oid in attack_ids}
+    if not addons:
+        second = {"stage": 2, "input": INPUT_CHOOSE_OPTION, "role": "declaration_options", "meaning": "declaration_option", "count": {"min": 0, "max": 0},
+                  "options": [], "depends_on_stage": 1, "options_by_choice": {oid: [] for oid in attack_ids}, "distinct": True, "decline": True,
+                  "order": ORDER_NOT_APPLICABLE, "note": "うらのカードのワザといっしょに選ぶものは示さない（おもてにする前に確かめられない）"}
+        choices_format = "[ワザの番号]"
+    else:
+        addon_options = []
+        for spec, shown in addons:
+            aid = f"o{len(ids) + 1}"
+            ids[aid] = (2, spec)
+            pairs.update({(oid, aid): True for oid in attack_ids})
+            addon_options.append(_option({"id": aid, **shown}, UNVERIFIED, [REASON_FACE_DOWN]))
+        by_choice = {oid: [_option({"option": o["id"]}, UNVERIFIED, [REASON_FACE_DOWN]) for o in addon_options] for oid in attack_ids}
+        second = {"stage": 2, "input": INPUT_CHOOSE_OPTION, "role": "declaration_options", "meaning": "declaration_option",
+                  "count": {"min": 0, "max": len(addon_options)}, "options": addon_options, "depends_on_stage": 1, "options_by_choice": by_choice, "distinct": True,
+                  "decline": True, "order": ORDER_SIGNIFICANT, "order_preserved": True,
+                  "note": "宣言といっしょに選ぶもの（0 個でもよい）。うらのカードでは、本人が知る本当のカードの名前と場のスタジアムだけで決まるクチバシティジムのコインだけを示す"
+                          "（どのワザにも同じ）。おもてにする前には確かめていない（unverified）。選んでも、コインを投げることは保証しない（エンジンがおもてにしてから決める）。"
+                          "ワザの対象などは、受理のあとの決定で答える"}
+        choices_format = "[ワザの番号, 宣言といっしょに選ぶものの番号, ...]（いっしょに選ぶものは選んだ順。0 個でもよい）"
     stages = [{"stage": 1, "input": INPUT_CHOOSE_OPTION, "role": "attack", "meaning": "attack", "count": {"min": 1, "max": 1}, "options": options,
-               "order": ORDER_NOT_APPLICABLE},
-              {"stage": 2, "input": INPUT_CHOOSE_OPTION, "role": "declaration_options", "meaning": "declaration_option", "count": {"min": 0, "max": 0},
-               "options": [], "depends_on_stage": 1, "options_by_choice": {oid: [] for oid in specs}, "distinct": True, "decline": True,
-               "order": ORDER_NOT_APPLICABLE, "note": "うらのカードのワザといっしょに選ぶものは示さない（おもてにする前に確かめられない）"}]
-    public = {"processability": UNVERIFIED, "reasons": [REASON_FACE_DOWN], "guarantees": guarantees, "choices_format": "[ワザの番号]"}
-    return _Candidate("", KIND_USE_ATTACK, public, stages, disclosure=DISCLOSURE_CONFIRMED, ids={oid: (1, spec) for oid, spec in specs.items()},
-                      pairs={(oid, ""): True for oid in specs}, min_choices=1, max_choices=1, verify=_not_checked)
+               "order": ORDER_NOT_APPLICABLE}, second]
+    public = {"processability": UNVERIFIED, "reasons": [REASON_FACE_DOWN], "guarantees": guarantees, "choices_format": choices_format}
+    return _Candidate("", KIND_USE_ATTACK, public, stages, disclosure=DISCLOSURE_CONFIRMED, ids=ids, pairs=pairs, min_choices=1,
+                      max_choices=1 + len(addons), verify=_not_checked)
 
 
 def _not_checked(values) -> str | None:
