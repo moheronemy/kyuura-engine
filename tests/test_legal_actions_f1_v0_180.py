@@ -40,7 +40,10 @@ ATTACK_0179_SHA256 = "f1e79cef13b69200910504f90614393b2b2344d6dad71b47d25eff260e
 # acceptance の文を実装に合わせた（0.188.0〜0.189.0 の値は 37edd7c4884937ee2502341280afc124a58561495c52aa72bed20159185042cd）
 # v0.191（R-2 のアンノーンの［XXXXX］・［ANGER］。docs/r2-unown-design.md）: うらの分岐が、分類済みの型の使い手に、別のおもての持ち主の［XXXXX］・［ANGER］を対象のワザにだけ
 # 示すようになり、preconditions・acceptance の文を実装に合わせた（0.190.0 の値は 4accf876b58f005f94cb42710550fe6942252ca2311cd94f510f86240cadd376）
-FACE_DOWN_ATTACK_SHA256 = "28f68001a145edb2d25ca70c2e8a8acbc73b74903a4ccbda75e4ba7c996bfba6"
+# v0.192（R-2 のアンノーンの自己持ち主。docs/r2-unown-self-holder-design.md）: うらの分岐が、使い手自身の［XXXXX］・［ANGER］を本当のカードの登録の力で先に示し、check が
+# その力を登録から読むようになり、preconditions に 2 か所の文を加えた（acceptance・after_acceptance・supported_scope は同じ。0.191.0 の値は
+# 28f68001a145edb2d25ca70c2e8a8acbc73b74903a4ccbda75e4ba7c996bfba6）
+FACE_DOWN_ATTACK_SHA256 = "20b7aa61d70ba243fc2fef424c703296e37ff8cb195fd5a96ff3181cdb0a6889"
 
 
 def sha256(value):

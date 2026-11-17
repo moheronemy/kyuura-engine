@@ -134,8 +134,8 @@ def with_injected_prevented(state, holder_id):
 class OfferTest(unittest.TestCase):
     """示す条件を満たすとき、2 段目に持ち主ごとに［XXXXX］・［ANGER］を示す（対象のワザにだけ）。"""
 
-    def assert_offered(self, state, expected):
-        """``expected``: [(持ち主の場の番号, 力の名前), ...]（場の並び）。"""
+    def assert_offered(self, state, expected, note=None):
+        """``expected``: [(持ち主の場の番号, 力の名前), ...]（場の並び）。``note``: v0.192 から、使い手自身の力を示すときは NOTE_FACE_DOWN_SELF_GROUP_POWERS。"""
         _h, session, r, c, inputs = attack_of(state)
         self.assertEqual((c["processability"], c["reasons"], c["input_disclosure"]), (L.UNVERIFIED, [L.REASON_FACE_DOWN], L.DISCLOSURE_CONFIRMED))
         self.assertEqual(c["guarantees"], L.GUARANTEE_FACE_DOWN_ATTACK)
@@ -151,7 +151,7 @@ class OfferTest(unittest.TestCase):
                          {aid: [{"option": o["id"], "eligible": True, "processability": L.UNVERIFIED, "reasons": [L.REASON_FACE_DOWN]} for o in second["options"]]
                           for aid in ids})
         self.assertEqual((second["distinct"], second["decline"], second["depends_on_stage"], second["order"], second["order_preserved"], second["note"]),
-                         (True, True, 1, L.ORDER_SIGNIFICANT, True, L.NOTE_FACE_DOWN_GROUP_POWERS))
+                         (True, True, 1, L.ORDER_SIGNIFICANT, True, note or L.NOTE_FACE_DOWN_GROUP_POWERS))
         self.assertEqual(c["choices_format"], "[ワザの番号, 宣言といっしょに選ぶものの番号, ...]（いっしょに選ぶものは選んだ順。0 個でもよい）")
         return session, r, c, inputs, ids, powers
 
@@ -168,11 +168,17 @@ class OfferTest(unittest.TestCase):
         self.assert_offered(state, [(holders(state, UNOWN_A)[0], A_POWER)])
 
     def test_every_classified_cause_group_is_offered(self):
-        """使い手の本当のカードの型の原因群（常にはたらく N・宣言して使う Y・場に出したとき I・［XXXXX］の X・［ANGER］の A・［PERFORM］の P）。どれも別の持ち主を示す。"""
+        """使い手の本当のカードの型の原因群（常にはたらく N・宣言して使う Y・場に出したとき I・［XXXXX］の X・［ANGER］の A・［PERFORM］の P）。どれも別の持ち主を示す。
+        v0.192 から、本当のカードが X・A なら、使い手自身の力を先頭に示す（tests/test_legal_actions_r2_unown_self_v0_192.py。0.191.0 では示さなかった）。"""
+        own = {UNOWN_X: X_POWER, UNOWN_A: A_POWER}
         for real in (UNOWN_N, UNOWN_Y, UNOWN_I, UNOWN_X, UNOWN_A, UNOWN_P):
             with self.subTest(real=real):
                 state = fd(real, bench=(mon(UNOWN_A, damage=20), mon(UNOWN_X)))
-                self.assert_offered(state, [(holders(state, UNOWN_A)[0], A_POWER), (holders(state, UNOWN_X)[0], X_POWER)])
+                others = [(holders(state, UNOWN_A)[0], A_POWER), (holders(state, UNOWN_X)[0], X_POWER)]
+                if real in own:
+                    self.assert_offered(state, [(state.players[0].active.pokemon_id, own[real]), *others], note=L.NOTE_FACE_DOWN_SELF_GROUP_POWERS)
+                else:
+                    self.assert_offered(state, others)
 
     def test_multiple_holders_in_field_order_and_the_same_power_twice_is_refused(self):
         state = fd(bench=(mon(UNOWN_X), mon(UNOWN_A, damage=20), mon(UNOWN_X), mon(UNOWN_A, damage=10)))  # ベンチは 5 匹まで（うらの使い手の場所を残す）
@@ -261,10 +267,15 @@ class NotOfferedTest(unittest.TestCase):
         self.assertEqual(check_code(session, r, c, [ids[0], f"o{len(ids) + 1}"]), L.CANDIDATE_INPUT_INVALID)
         self.assertIsNone(check_code(session, r, c, [ids[0]]))
 
-    def test_self_holder_is_not_offered(self):
-        """自己持ち主（R3。本当のカードが X・A で、ほかに持ち主がいない）は示さない（エンジンは公開のあとに受け付けうるが、対象外）。"""
-        self.assert_not_offered(fd(UNOWN_X, bench=(mon(H.RATTATA),)))
-        self.assert_not_offered(fd(UNOWN_A, bench=(mon(H.RATTATA),)))
+    def test_self_holder_is_offered_from_v0_192(self):
+        """自己持ち主（R3。本当のカードが X・A で、ほかに持ち主がいない）: 0.191.0 では示さなかった（対象外）。v0.192 から示す（条件・値・check・送信・情報境界は
+        tests/test_legal_actions_r2_unown_self_v0_192.py）。"""
+        for real, power in ((UNOWN_X, X_POWER), (UNOWN_A, A_POWER)):
+            with self.subTest(real=real):
+                state = fd(real, bench=(mon(H.RATTATA),))
+                _h, _s, _r, _c, inputs = attack_of(state)
+                self.assertEqual([(o["pokemon"], o["zone"], o["power"]) for o in powers_of(inputs["stages"])],
+                                 [(state.players[0].active.pokemon_id, "active", power)])
 
     def test_transform_route_is_not_offered(self):
         """変身の経路（本当のカードがメタモン 2 種。相手のバトル場がアンノーンでも）は示さない（TF・R4）。メタモンは印刷のワザがないので、うらの分岐の候補は 0.180.0 からの
