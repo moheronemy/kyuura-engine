@@ -38,7 +38,9 @@ ATTACK_0179_SHA256 = "f1e79cef13b69200910504f90614393b2b2344d6dad71b47d25eff260e
 # 実装に合わせた（0.180.0〜0.187.0 の値は aa316b12cb9a79033e6d80685a4fbffacfa2e13b1af310bda57d76049b6f1d0c）。おもての GUARANTEE_ATTACK は変えていない
 # v0.190（R-2 の［めいれい］。docs/r2-with-power-design.md）: うらの分岐が［めいれい］（with_power）も示し、check が同じ力を 2 つ選ぶ組を拒否するようになり、preconditions・
 # acceptance の文を実装に合わせた（0.188.0〜0.189.0 の値は 37edd7c4884937ee2502341280afc124a58561495c52aa72bed20159185042cd）
-FACE_DOWN_ATTACK_SHA256 = "4accf876b58f005f94cb42710550fe6942252ca2311cd94f510f86240cadd376"
+# v0.191（R-2 のアンノーンの［XXXXX］・［ANGER］。docs/r2-unown-design.md）: うらの分岐が、分類済みの型の使い手に、別のおもての持ち主の［XXXXX］・［ANGER］を対象のワザにだけ
+# 示すようになり、preconditions・acceptance の文を実装に合わせた（0.190.0 の値は 4accf876b58f005f94cb42710550fe6942252ca2311cd94f510f86240cadd376）
+FACE_DOWN_ATTACK_SHA256 = "28f68001a145edb2d25ca70c2e8a8acbc73b74903a4ccbda75e4ba7c996bfba6"
 
 
 def sha256(value):

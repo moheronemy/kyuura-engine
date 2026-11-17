@@ -11257,13 +11257,14 @@
    ],
    "tests": {
     "assert_like_lines": 0,
-    "mention_lines": 5,
+    "mention_lines": 6,
     "files": [
+     "tests/test_legal_actions_r2_unown_v0_191.py",
      "tests/test_research_links_v0_18e.py",
      "tests/test_unbounded_coins_heal_allocation_v0_118.py",
      "tests/test_unresolved_boundaries_v0_4e.py"
     ],
-    "files_total": 3,
+    "files_total": 4,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -16121,14 +16122,15 @@
    ],
    "tests": {
     "assert_like_lines": 1,
-    "mention_lines": 3,
+    "mention_lines": 4,
     "files": [
      "tests/helpers.py",
      "tests/test_baby_rules_evolution_v0_114.py",
+     "tests/test_legal_actions_r2_unown_v0_191.py",
      "tests/test_reactive_decisions_v0_65.py",
      "tests/test_unresolved_boundaries_v0_4e.py"
     ],
-    "files_total": 4,
+    "files_total": 5,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -16149,6 +16151,7 @@
     "evidence": [
      "tests/helpers.py",
      "tests/test_baby_rules_evolution_v0_114.py",
+     "tests/test_legal_actions_r2_unown_v0_191.py",
      "tests/test_reactive_decisions_v0_65.py",
      "tests/test_unresolved_boundaries_v0_4e.py"
     ],
@@ -19060,7 +19063,7 @@
    ],
    "tests": {
     "assert_like_lines": 21,
-    "mention_lines": 37,
+    "mention_lines": 38,
     "files": [
      "tests/test_barrier_resume_coin_bonus_v0_34.py",
      "tests/test_bench_search_counter_drain_v0_32.py",
@@ -19080,10 +19083,10 @@
      "tests/test_harden_games_v0_4b.py",
      "tests/test_harden_v0_4b.py",
      "tests/test_legacy_reference_v0_16.py",
-     "tests/test_light_powers_evolution_v0_84.py",
-     "tests/test_neo_trainer_components_v0_80.py"
+     "tests/test_legal_actions_r2_unown_v0_191.py",
+     "tests/test_light_powers_evolution_v0_84.py"
     ],
-    "files_total": 32,
+    "files_total": 33,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },

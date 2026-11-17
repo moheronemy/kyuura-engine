@@ -29,6 +29,7 @@ from itertools import pairwise
 from typing import Any
 
 from . import diagnostics as D
+from . import effects as _effects
 from . import faceup
 from . import zones as _zones
 from .adapter import CommandResult, HostedGame, HostStoppedError, UnusableStateError, checked_state_copy  # noqa: F401（UnusableStateError は入口の拒否の型として公開）
@@ -66,7 +67,9 @@ from .effects import (
     POWER_CHOICES,
     POWER_INPUT_STAGES,
     AttackCoinStadium,
+    CoinsUntilTailsBonusToGroupAttack,
     CommandBonusToNamedAttackers,
+    CounterBonusToGroupAttack,
     _owner_named,
     attack_power_slot,
     available_attacks,
@@ -305,10 +308,14 @@ GUARANTEE_FACE_DOWN_ATTACK = {
                      "場のスタジアムがクチバシティジム（AttackCoinStadium）で、本人が知る本当のカードの印刷の名前が「マチスの」で始まり、そのカードが特殊能力を持たないときだけ、"
                      "そのコイン（stadium_coin）を 1 つ、どのワザにも同じく示す。v0.190 から、そのカードが特殊能力を持たず、印刷の名前が、自分の場のおもてのポケモン（使い手と別）の"
                      "［めいれい］（CommandBonusToNamedAttackers）の対象の名前と完全に同じで、その持ち主の力が消えておらず使えない効果も受けていないときだけ、持ち主ごとに"
-                     "その力（with_power）を、どのワザにも同じく示す（ほかのものは示さない）。入力の検査（check）は形（ワザの番号が 1 つで、そのあとに示したものを重ねずに"
+                     "その力（with_power）を、どのワザにも同じく示す。v0.191 から、そのカードの印刷の名前のグループが、自分の場のおもてのポケモン（使い手と別）の"
+                     "［XXXXX］・［ANGER］（CoinsUntilTailsBonusToGroupAttack・CounterBonusToGroupAttack）の対象のグループと同じで、そのカードの特殊能力の型がすべて"
+                     "分類済みの型（FACE_DOWN_GROUP_POWER_ATTACKER_TYPES）で、その持ち主の力が消えておらず使えない効果も受けておらず、この番のほかの個体の使用の記録も"
+                     "ないときだけ、持ち主ごとにその力（with_power）を、印刷の名前がその力の対象のワザと同じワザにだけ示す（ほかのものは示さない）。入力の検査（check）は形（ワザの番号が 1 つで、そのあとに示したものを重ねずに"
                      "選ぶこと）だけを確かめる（v0.190: 同じ力を 2 つ選ぶ組は、示した持ち主の力の登録だけで拒否する。エンジンの確かめは呼ばない）",
     "acceptance": "保証しない。check が valid でも、エンジンの確かめを通したことを意味しない（必要なエネルギーが足りるか・ワザを使えるか・コインを投げられるかは確かめていない。"
-                  "コインを選んで受理されても、コインを投げたことを意味しない。［めいれい］を選んで受理されても、ダメージが増えたことを意味しない）。送信のあとの判定は"
+                  "コインを選んで受理されても、コインを投げたことを意味しない。［めいれい］・［XXXXX］・［ANGER］を選んで受理されても、ダメージが増えたことを意味しない。"
+                  "［XXXXX］を選ぶと、未裁定の既存の停止（XP1 など）で拒否されうる）。送信のあとの判定は"
                   "エンジンがコマンドの入口から行い（_reveal_for_action を含む）、受け付けなければコマンドごと拒否する。最終の判定は apply_command",
     "after_acceptance": "評価していない（受理のあとに何が起こるか（ワザを使ったか、その続きの決定・停止を含む）を予告しない）",
     "supported_scope": "うらのバトル場のワザの候補は unverified（候補の作成・入力の検査でエンジンの確かめを呼んでいない）。unverified は受理・必要なエネルギー・ワザの実行の完了の"
@@ -1406,7 +1413,8 @@ def _face_down_command_specs(state: GameState, actor: int, definition) -> list[t
 
     示すのは、持ち主がうらでない自分の場のポケモン（使い手と別）で、その力が ``group_attack_power_slot`` の［めいれい］、本当のカードの印刷の名前がその力の ``names`` の
     どれかと完全に同じ（特殊能力を持たない本当のカードは、公開のあとの今の姿の名前が印刷の名前と同じ）、持ち主の力が消えていない（``power_suppressed``）・使えない効果を
-    受けていない（``powers_use_prevented``）とき。どれも公開の場から決まる。ほかのワザといっしょに使う力（アンノーンの［XXXXX］・［ANGER］）は示さない（別の単位）。"""
+    受けていない（``powers_use_prevented``）とき。どれも公開の場から決まる。アンノーンの［XXXXX］・［ANGER］は、ここでは示さない（v0.191 の
+    ``_face_down_group_power_specs``。特殊能力を持つ本当のカードの分岐）。"""
     active = state.players[actor].active
     found = []
     for pokemon, shown in _field(state, actor):
@@ -1417,6 +1425,61 @@ def _face_down_command_specs(state: GameState, actor: int, definition) -> list[t
                 or power_suppressed(state, slot.power, pokemon) or powers_use_prevented(state, pokemon) is not None):
             continue
         found.append(((ADDON_WITH_POWER, pokemon.pokemon_id), {"addon": ADDON_WITH_POWER, **shown, "power": slot.power.name_ja}))
+    return found
+
+
+# v0.191（R-2 のアンノーンの［XXXXX］・［ANGER］。docs/r2-unown-design.md 3 章・6 章）: うらの使い手の本当のカードが持ってよい特殊能力の効果の型（閉じた範囲。型の名前）。
+# 登録の名前のグループ「アンノーン」の 22 型を、公開のあと（zones.reveal_face_down は場に出す処理ではない）に使い手の姿・名前のグループ・力の有効性・宣言のときのコインを
+# 変えないと、コードと型の確かめ（変身・力を消す・［いあつ］・［はんこう］の型でない）で分類した（docs/r2-unown-design.json の types。どれも R2 の使い手として A）。
+# ここにない型（新しい登録・変身の型・分類していない型）を持つカードには示さない。登録の全件がこの範囲に入ることは tests/test_legal_actions_r2_unown_v0_191.py が確かめる
+FACE_DOWN_GROUP_POWER_ATTACKER_TYPES = frozenset({
+    "AddActiveDamageReceivedToNamedAttack", "BenchNameGroupFromDeckOnEntry", "CoinAttachEnergyFromDeckToOwnPokemon", "CoinEachPlayerLooksOpponentHand",
+    "CoinEachPlayerShufflesOpponentDeck", "CoinGroupAttackImmunityNextTurn", "CoinRecoverTrainerWithBenchLetters", "CoinReturnOtherGroupToHandOnEntry",
+    "CoinsUntilTailsBonusToGroupAttack", "CounterBonusToGroupAttack", "CountersOnOpponentRetreatWhileActive", "EachPlayerMayReturnHandThenDrawOnEntry",
+    "HealAllNameGroupOnEntry", "LookOpponentDeckTopKeepOrder", "LookOwnPrizeCard", "MoveGroupCounterToSelf", "ReduceOwnGroupDamageFromType",
+    "ReturnActiveToHandWithBenchLetters", "ReturnHandThenDrawSameWithBenchLetters", "SearchDeckWithBenchLettersToHand", "VoidOpponentEnergyDiscardOnGroup",
+    "ZeroGroupRetreatCostFromBench",
+})
+_FACE_DOWN_GROUP_POWERS = (CoinsUntilTailsBonusToGroupAttack, CounterBonusToGroupAttack)  # 示す持ち主の力（［XXXXX］・［ANGER］）
+
+
+def _classified_group_attacker(state: GameState, definition) -> bool:
+    """v0.191: 本当のカード ``definition``（本人が知る印刷の定義）の特殊能力が 1 つ以上あり、どれも登録があり、その効果の型が分類済みの範囲
+    （``FACE_DOWN_GROUP_POWER_ATTACKER_TYPES``。名前と、effects のその名前のクラスそのもの）にあるか。登録・型だけを読む（状態・乱数を読まない）。"""
+    if not definition.powers:
+        return False
+    for power in definition.powers:
+        entry = state.effects.power_entry(definition.id, power.index)
+        kind = None if entry is None else type(entry.effect)
+        if kind is None or kind.__name__ not in FACE_DOWN_GROUP_POWER_ATTACKER_TYPES or getattr(_effects, kind.__name__, None) is not kind:
+            return False
+    return True
+
+
+def _face_down_group_power_specs(state: GameState, actor: int, definition) -> list[tuple[tuple, dict[str, Any], frozenset[int]]]:
+    """v0.191（R-2 のアンノーンの［XXXXX］・［ANGER］。docs/r2-unown-design.md 6 章）: うらのバトル場のポケモンのワザといっしょに示す、自分の場の別のおもてのポケモンの
+    ［XXXXX］（``CoinsUntilTailsBonusToGroupAttack``）・［ANGER］（``CounterBonusToGroupAttack``）と、それを示すワザの番号。値・表示はおもての宣言（``_addon_specs``）と同じ
+    （持ち主ごとに 1 つ。場の並び）。
+
+    示すのは、本当のカードの印刷の名前のグループが力の ``group`` と同じで、本当のカードの特殊能力の型がすべて分類済み（``_classified_group_attacker``）、印刷のワザの名前が
+    力の ``attack_name`` のワザがあり、持ち主がうらでない自分の場のポケモン（使い手と別）で、持ち主の力が消えていない（``power_suppressed``）・使えない効果を受けていない
+    （``powers_use_prevented``）・この番のほかの個体の使用の記録がない（``other_use_problem``）とき。どれも本人の知識と公開の場から決まる（エンジンの確かめ・公開・乱数を
+    使わない）。自己持ち主（使い手自身の力。公開の前は力がない）・変身の経路・分類にない型は示さない。XP1・NT1・v0.4b の停止は予告しない（送信のときのエンジンが決める）。"""
+    if not _classified_group_attacker(state, definition):
+        return []
+    active = state.players[actor].active
+    found = []
+    for pokemon, shown in _field(state, actor):
+        if pokemon is active or state.is_face_down(pokemon):
+            continue
+        slot = group_attack_power_slot(state, pokemon)
+        if slot is None or type(slot.effect) not in _FACE_DOWN_GROUP_POWERS or definition.name_group != slot.effect.group:
+            continue
+        attacks = frozenset(attack.index for attack in definition.attacks if attack.name_ja == slot.effect.attack_name)
+        if (not attacks or power_suppressed(state, slot.power, pokemon) or powers_use_prevented(state, pokemon) is not None
+                or slot.effect.other_use_problem(state, actor, pokemon.pokemon_id) is not None):
+            continue
+        found.append(((ADDON_WITH_POWER, pokemon.pokemon_id), {"addon": ADDON_WITH_POWER, **shown, "power": slot.power.name_ja}, attacks))
     return found
 
 
@@ -1436,7 +1499,8 @@ def _face_down_verify(state: GameState, addons):
 def _face_down_attack_candidate(state: GameState, actor: int, active, guarantees) -> _Candidate:
     """自分のうらのバトル場のポケモン（マチスの秘策）: エンジンがおもてにしてから確かめる（「たねポケモン」でなければトラッシュし、ワザは使わない）。選べるワザは本人が知る本当の
     カード（観測の real。本人だけに見える）の印刷のワザで、エンジンの確かめは呼ばない（unverified）。宣言といっしょに選ぶものは、v0.188 から ``_face_down_addon_specs``
-    （クチバシティジムのコイン、v0.190 から［めいれい］。どのワザにも同じ。unverified）。示さないときの 2 段目は 0.187.0 と同じ。"""
+    （クチバシティジムのコイン、v0.190 から［めいれい］。どのワザにも同じ。unverified）と、v0.191 から ``_face_down_group_power_specs``（［XXXXX］・［ANGER］。その力の
+    対象のワザにだけ。unverified）。示さないときの 2 段目は 0.187.0 と同じ。"""
     definition = state.printed_def(active.card)
     options, specs = [], {}
     for attack in definition.attacks if definition.category == "pokemon" else ():
@@ -1448,7 +1512,11 @@ def _face_down_attack_candidate(state: GameState, actor: int, active, guarantees
         public = {"processability": NOT_IMPLEMENTED, "reasons": [REASON_FACE_DOWN, REASON_NO_PRINTED_ATTACK], "guarantees": guarantees}
         return _Candidate("", KIND_USE_ATTACK, public, [], disclosure=DISCLOSURE_CONFIRMED)
     attack_ids = list(specs)
-    addons = _face_down_addon_specs(state, actor, definition)
+    # (値, 表示, 示すワザの番号の集合（None はどのワザにも）)。コイン・［めいれい］（特殊能力を持たない本当のカード）と［XXXXX］・［ANGER］（分類済みの型の特殊能力を
+    # 持つ本当のカード）は同時に出ない。並びは コイン → 場の並び
+    entries = [(spec, shown, None) for spec, shown in _face_down_addon_specs(state, actor, definition)]
+    entries += _face_down_group_power_specs(state, actor, definition)
+    addons = [(spec, shown) for spec, shown, _attacks in entries]
     ids = {oid: (1, spec) for oid, spec in specs.items()}
     pairs = {(oid, ""): True for oid in attack_ids}
     if not addons:
@@ -1458,16 +1526,24 @@ def _face_down_attack_candidate(state: GameState, actor: int, active, guarantees
         choices_format = "[ワザの番号]"
     else:
         addon_options = []
-        for spec, shown in addons:
+        by_choice = {oid: [] for oid in attack_ids}
+        for spec, shown, attacks in entries:
             aid = f"o{len(ids) + 1}"
             ids[aid] = (2, spec)
-            pairs.update({(oid, aid): True for oid in attack_ids})
+            for oid in attack_ids:
+                if attacks is None or specs[oid][1] in attacks:  # v0.191: ［XXXXX］・［ANGER］は対象のワザ（めざめるパワー）とだけ組にする
+                    pairs[(oid, aid)] = True
+                    by_choice[oid].append(_option({"option": aid}, UNVERIFIED, [REASON_FACE_DOWN]))
             addon_options.append(_option({"id": aid, **shown}, UNVERIFIED, [REASON_FACE_DOWN]))
-        by_choice = {oid: [_option({"option": o["id"]}, UNVERIFIED, [REASON_FACE_DOWN]) for o in addon_options] for oid in attack_ids}
+        if any(attacks is not None for _spec, _shown, attacks in entries):
+            note = NOTE_FACE_DOWN_GROUP_POWERS
+        elif all(spec[0] == ADDON_STADIUM_COIN for spec, _shown in addons):
+            note = NOTE_FACE_DOWN_COIN
+        else:
+            note = NOTE_FACE_DOWN_ADDONS
         second = {"stage": 2, "input": INPUT_CHOOSE_OPTION, "role": "declaration_options", "meaning": "declaration_option",
                   "count": {"min": 0, "max": len(addon_options)}, "options": addon_options, "depends_on_stage": 1, "options_by_choice": by_choice, "distinct": True,
-                  "decline": True, "order": ORDER_SIGNIFICANT, "order_preserved": True,
-                  "note": NOTE_FACE_DOWN_COIN if all(spec[0] == ADDON_STADIUM_COIN for spec, _shown in addons) else NOTE_FACE_DOWN_ADDONS}
+                  "decline": True, "order": ORDER_SIGNIFICANT, "order_preserved": True, "note": note}
         choices_format = "[ワザの番号, 宣言といっしょに選ぶものの番号, ...]（いっしょに選ぶものは選んだ順。0 個でもよい）"
     stages = [{"stage": 1, "input": INPUT_CHOOSE_OPTION, "role": "attack", "meaning": "attack", "count": {"min": 1, "max": 1}, "options": options,
                "order": ORDER_NOT_APPLICABLE}, second]
@@ -1483,6 +1559,11 @@ NOTE_FACE_DOWN_ADDONS = ("宣言といっしょに選ぶもの（0 個でもよ�
                          "ポケモンとその力）だけで決まるもの（クチバシティジムのコイン・［めいれい］）を示す（どのワザにも同じ）。with_power は選んだ順に宣言する。おもてにする前には"
                          "確かめていない（unverified）。選んでも、コインを投げること・力を使えることは保証しない（エンジンがおもてにしてから決める）。同じ力を 2 つ選ぶ組は入力の検査が"
                          "拒否する。ワザの対象などは、受理のあとの決定で答える")  # v0.190（［めいれい］を示すとき）
+NOTE_FACE_DOWN_GROUP_POWERS = ("宣言といっしょに選ぶもの（0 個でもよい）。うらのカードでは、本人が知る本当のカードの名前のグループ・特殊能力の型・ワザの名前と、公開の場"
+                               "（自分の場の、使い手と別のおもてのポケモンとその力）だけで決まる［XXXXX］・［ANGER］を、その力の対象のワザにだけ示す（options_by_choice）。"
+                               "with_power は選んだ順に宣言する。おもてにする前には確かめていない（unverified）。選んでも、力を使えること・コインを投げること・ダメージが増えることは"
+                               "保証しない（エンジンがおもてにしてから決め、未裁定の停止で拒否されうる）。同じ力を 2 つ選ぶ組は入力の検査が拒否する。ワザの対象などは、受理の"
+                               "あとの決定で答える")  # v0.191（［XXXXX］・［ANGER］を示すとき）
 
 
 def _not_checked(values) -> str | None:
