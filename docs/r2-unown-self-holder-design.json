@@ -1,0 +1,336 @@
+{
+ "format": 1,
+ "title": "R-2 自己持ち主（R3）の設計の対応表",
+ "date": "2026-11-17",
+ "base": {
+  "branch": "claude/r2-unown-with-power",
+  "commit": "05dd591",
+  "distribution_commit": "084157dd84047acf30ec9943a946fd87ba774882",
+  "engine_version": "0.191.0"
+ },
+ "status_values": {
+  "static": "コードの読み取り",
+  "static_and_extracted": "コードの読み取りと登録の抽出（実行）",
+  "static_needs_precondition": "静的。実装の前提テストで確かめる",
+  "static_and_saved": "静的と前回の保存結果",
+  "static_and_saved_damage_only": "静的と前回の保存結果（ダメージとログの種類だけ）"
+ },
+ "cards": [
+  {
+   "card_id": "neo2-030",
+   "name": "アンノーンA",
+   "power_type": "CounterBonusToGroupAttack",
+   "power_name": "ANGER[アンガー]",
+   "exclusive_key": [
+    "holder_counters",
+    "アンノーン",
+    "A",
+    "ANGER"
+   ],
+   "uses_coins": false,
+   "records_turn_use": false,
+   "counts_holder_counters": true,
+   "stage": "basic",
+   "is_baby_pokemon": false,
+   "attack": "めざめるパワー",
+   "attack_program": [
+    "Damage"
+   ],
+   "in_attacker_types": true,
+   "in_holder_types": true
+  },
+  {
+   "card_id": "neo4-065",
+   "name": "アンノーンX",
+   "power_type": "CoinsUntilTailsBonusToGroupAttack",
+   "power_name": "XXXXX[?????]",
+   "exclusive_key": [
+    "coins_until_tails",
+    "アンノーン",
+    "X",
+    "XXXXX"
+   ],
+   "uses_coins": true,
+   "records_turn_use": true,
+   "counts_holder_counters": false,
+   "stage": "basic",
+   "is_baby_pokemon": false,
+   "attack": "めざめるパワー",
+   "attack_program": [
+    "Damage"
+   ],
+   "in_attacker_types": true,
+   "in_holder_types": true
+  }
+ ],
+ "current_exclusions": [
+  {
+   "where": "kyuura_engine/legal_actions.py:1473",
+   "what": "_face_down_group_power_specs が使い手を除く"
+  },
+  {
+   "where": "kyuura_engine/effects.py:45874",
+   "what": "group_attack_power_slot がうらの持ち主に None"
+  },
+  {
+   "where": "kyuura_engine/state.py:2674",
+   "what": "card_def がうらのカードに FACE_DOWN_DEFINITION（力なし）"
+  },
+  {
+   "where": "kyuura_engine/legal_actions.py:1489",
+   "what": "_face_down_verify が場から力を読む（うらの持ち主では None.effect）"
+  }
+ ],
+ "conditions": [
+  {
+   "id": "C1",
+   "condition": "持ち主が自分の場にいる",
+   "engine_after_reveal": "group_attack_power_check: find_pokemon(holder_id) の持ち主",
+   "pre_reveal_evaluation": "使い手は本人のバトル場",
+   "information_source": "public",
+   "code": [
+    "kyuura_engine/effects.py:45912"
+   ],
+   "existing_evidence": [
+    "r2-unown-with-power/out/precondition_direct.json#E_fd_self_X",
+    "r2-unown-with-power/out/precondition_direct.json#E_fd_self_A"
+   ],
+   "status": "static"
+  },
+  {
+   "id": "C2",
+   "condition": "持ち主の力が持ち主の型",
+   "engine_after_reveal": "group_attack_power_slot(revealed) = powers_of の最初の AttackDeclaredPower",
+   "pre_reveal_evaluation": "印刷の並びで最初の AttackDeclaredPower 型の登録の力が _FACE_DOWN_GROUP_POWERS",
+   "information_source": "own_knowledge",
+   "code": [
+    "kyuura_engine/effects.py:45872",
+    "kyuura_engine/effects.py:14992",
+    "kyuura_engine/legal_actions.py:1443"
+   ],
+   "existing_evidence": [
+    "extract/self_holder_extract.json"
+   ],
+   "status": "static_and_extracted"
+  },
+  {
+   "id": "C3",
+   "condition": "使い手の名前のグループとワザの名前",
+   "engine_after_reveal": "usable_for: in_name_group(form_def) と attack_of(key).name_ja",
+   "pre_reveal_evaluation": "definition.name_group == effect.group、印刷のワザの名前 == effect.attack_name",
+   "information_source": "own_knowledge",
+   "code": [
+    "kyuura_engine/effects.py:45787",
+    "kyuura_engine/effects.py:47907",
+    "kyuura_engine/effects.py:13053"
+   ],
+   "existing_evidence": [
+    "extract/self_holder_extract.json"
+   ],
+   "status": "static_and_extracted"
+  },
+  {
+   "id": "C4",
+   "condition": "使い手の型が閉じた範囲",
+   "engine_after_reveal": "（エンジンは型で分けない）",
+   "pre_reveal_evaluation": "_classified_group_attacker（22 型。広げない）",
+   "information_source": "own_knowledge",
+   "code": [
+    "kyuura_engine/legal_actions.py:1435",
+    "kyuura_engine/legal_actions.py:1446"
+   ],
+   "existing_evidence": [
+    "extract/self_holder_extract.json"
+   ],
+   "status": "static_and_extracted"
+  },
+  {
+   "id": "C5",
+   "condition": "たね・ベイビィでない",
+   "engine_after_reveal": "reveal_face_down が残す（たね）・scared_by はベイビィだけ",
+   "pre_reveal_evaluation": "definition がたねで is_baby_pokemon が偽",
+   "information_source": "own_knowledge",
+   "code": [
+    "kyuura_engine/zones.py:82",
+    "kyuura_engine/effects.py:46679"
+   ],
+   "existing_evidence": [
+    "extract/self_holder_extract.json"
+   ],
+   "status": "static_and_extracted"
+  },
+  {
+   "id": "C6",
+   "condition": "個体の力が止まっていない",
+   "engine_after_reveal": "power_suppressed の powers_stopped(holder)",
+   "pre_reveal_evaluation": "active.persistent_effects が空（powers_stopped is None）",
+   "information_source": "public",
+   "code": [
+    "kyuura_engine/continuous.py:127",
+    "kyuura_engine/persistent.py:655",
+    "kyuura_engine/engine.py:2863"
+   ],
+   "existing_evidence": [],
+   "status": "static_needs_precondition"
+  },
+  {
+   "id": "C7",
+   "condition": "［いあつ］",
+   "engine_after_reveal": "power_suppressed の scared_by(holder)",
+   "pre_reveal_evaluation": "本当のカードがベイビィでない（C5）",
+   "information_source": "own_knowledge",
+   "code": [
+    "kyuura_engine/effects.py:46679"
+   ],
+   "existing_evidence": [],
+   "status": "static"
+  },
+  {
+   "id": "C8",
+   "condition": "場の力を消す効果",
+   "engine_after_reveal": "power_suppressed の goop_gas・attack_power_suppressions・attack_field_power_suppressions・suppressors_of(power)・ふしぎなガス",
+   "pre_reveal_evaluation": "power_suppressed(state, 仮の力の Power, None, owner=actor)",
+   "information_source": "public",
+   "code": [
+    "kyuura_engine/continuous.py:110",
+    "kyuura_engine/continuous.py:62",
+    "kyuura_engine/continuous.py:35"
+   ],
+   "existing_evidence": [],
+   "status": "static_needs_precondition"
+  },
+  {
+   "id": "C9",
+   "condition": "使えない効果",
+   "engine_after_reveal": "powers_use_prevented(holder)",
+   "pre_reveal_evaluation": "active.persistent_effects が空（powers_use_prevented is None）",
+   "information_source": "public",
+   "code": [
+    "kyuura_engine/persistent.py:646"
+   ],
+   "existing_evidence": [],
+   "status": "static_needs_precondition"
+  },
+  {
+   "id": "C10",
+   "condition": "この番のほかの X の記録",
+   "engine_after_reveal": "other_use_problem(state, player, holder_id)",
+   "pre_reveal_evaluation": "同じ関数を active.pokemon_id で",
+   "information_source": "public",
+   "code": [
+    "kyuura_engine/effects.py:45792"
+   ],
+   "existing_evidence": [],
+   "status": "static_needs_precondition"
+  },
+  {
+   "id": "C11",
+   "condition": "同じ力を 2 つ",
+   "engine_after_reveal": "concurrent_use_problem（POWER_ALREADY_USED）",
+   "pre_reveal_evaluation": "仮の力の exclusive_key と別の持ち主の exclusive_key（check が CANDIDATE_INPUT_INVALID）",
+   "information_source": "own_knowledge_and_public",
+   "code": [
+    "kyuura_engine/effects.py:45897",
+    "kyuura_engine/legal_actions.py:1486"
+   ],
+   "existing_evidence": [],
+   "status": "static_needs_precondition"
+  },
+  {
+   "id": "C12",
+   "condition": "同じ持ち主を 2 回",
+   "engine_after_reveal": "declared_power_holders（DUPLICATE_POWER）",
+   "pre_reveal_evaluation": "形の検査（同じ選択肢の重なり）",
+   "information_source": "input_shape",
+   "code": [
+    "kyuura_engine/legal_actions.py:1574"
+   ],
+   "existing_evidence": [],
+   "status": "static"
+  },
+  {
+   "id": "C13",
+   "condition": "［ANGER］の自己の追加",
+   "engine_after_reveal": "declared_power_amounts がダメージの要素の始めに使い手のカウンターを数える",
+   "pre_reveal_evaluation": "予告しない（不変条件で 0）",
+   "information_source": "public",
+   "code": [
+    "kyuura_engine/resolution/programs.py:15220",
+    "kyuura_engine/engine.py:2863",
+    "kyuura_engine/zones.py:138"
+   ],
+   "existing_evidence": [
+    "r2-unown-with-power/out/precondition_direct.json#E_fd_self_A"
+   ],
+   "status": "static_and_saved_damage_only"
+  },
+  {
+   "id": "C14",
+   "condition": "［XXXXX］の未裁定の停止",
+   "engine_after_reveal": "XP1（flow.py:362）・NT1（:368）・v0.4b（programs.py:15260）",
+   "pre_reveal_evaluation": "予告しない（submit で既存の停止）",
+   "information_source": "decided_at_submit",
+   "code": [
+    "kyuura_engine/resolution/flow.py:362",
+    "kyuura_engine/resolution/flow.py:368",
+    "kyuura_engine/resolution/programs.py:15260"
+   ],
+   "existing_evidence": [],
+   "status": "static_needs_precondition"
+  },
+  {
+   "id": "C15",
+   "condition": "公開の時点",
+   "engine_after_reveal": "_reveal_for_action → reveal_face_down（コマンドの入口。拒否で戻る）",
+   "pre_reveal_evaluation": "呼ばない",
+   "information_source": "not_used",
+   "code": [
+    "kyuura_engine/engine.py:1075",
+    "kyuura_engine/zones.py:82"
+   ],
+   "existing_evidence": [
+    "r2-unown-with-power/out/precondition_direct.json#E_fd_self_X",
+    "r2-unown-with-power/out/precondition_direct.json#E_fd_self_A"
+   ],
+   "status": "static_and_saved"
+  }
+ ],
+ "evaluation": {
+  "XXXXX": {
+   "recommended": "B",
+   "A": "直接のコマンドが受け付ける宣言を API で言えない",
+   "B": "仮の力で適格性を構造的に決められる。受理のあとに決まるのはコインと既存の停止",
+   "C": "新しい処理・記録・語彙は要らない"
+  },
+  "ANGER": {
+   "recommended": "B",
+   "alternative": "A",
+   "A": "効果はいつも 0（失う追加はない）",
+   "B": "同じ根拠。効果 0 の選択を除かない既存の原則と同じ",
+   "C": "要らない"
+  }
+ },
+ "saved_results": {
+  "source": "r2-unown-with-power/out/precondition_direct.json",
+  "engine_version_at_record": "0.190.0",
+  "self_holder_cases": [
+   "E_fd_self_X",
+   "E_fd_self_A"
+  ],
+  "not_covered": [
+   "suppression_use_prevented_used_record",
+   "coexistence_with_other_holders",
+   "xp1_nt1_v04b_with_self_x",
+   "anger_counters_value",
+   "api_and_information_boundary"
+  ]
+ },
+ "decisions": [
+  "D-R3-1",
+  "D-R3-2",
+  "D-R3-3",
+  "D-R3-4",
+  "D-R3-5"
+ ],
+ "recommended_unit": "R3（自己持ち主の［XXXXX］・［ANGER］をいっしょに。閉じた 22 型は広げない）"
+}
