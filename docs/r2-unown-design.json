@@ -1,0 +1,1030 @@
+{
+ "format": "kyuura-r2-unown-design/1",
+ "base": {
+  "branch": "claude/r2-with-power-command",
+  "commit": "5876a7304dcfe3d1121c44ebc0be53631c52b47b",
+  "distribution_commit": "daf271833de645de5707e5554b7c10f13b51075a",
+  "engine": "0.190.0",
+  "tool_version": 13,
+  "judge_rules_version": 10,
+  "plan_format": 7,
+  "gui_reference": {
+   "branch": "feature/engine-0190-r2-with-power",
+   "commit": "c9c3e0c"
+  }
+ },
+ "extraction": {
+  "method": "読み取り専用のスクリプト（DEFAULT_EFFECTS・load_card_pool。状態・対戦は作らない）",
+  "counts": {
+   "name_group_unown": 26,
+   "name_prefix_unown": 26,
+   "hidden_power_attack": 26,
+   "basic_or_baby": 26,
+   "playable": 26,
+   "distinct_printed_names": 26,
+   "powers_total": 26,
+   "distinct_power_names": 26,
+   "distinct_types": 22,
+   "distinct_implementation_ids": 22,
+   "distinct_type_params": 26,
+   "unsupported_powers": 0,
+   "holders": 2
+  },
+  "previous_report": {
+   "cards": 26,
+   "power_types": 22,
+   "result": "一致。22 は効果型（implementation_id も 22）の数で、能力名は 26・(型, パラメータ) は 26"
+  },
+  "types_shared_by_cards": {
+   "CoinAttachEnergyFromDeckToOwnPokemon": [
+    "neo3-033",
+    "neo4-062"
+   ],
+   "ReduceOwnGroupDamageFromType": [
+    "PF2-001",
+    "neo2-025",
+    "neo2-027"
+   ],
+   "SearchDeckWithBenchLettersToHand": [
+    "PRN-034",
+    "neo2-026"
+   ]
+  },
+  "attacks": "26 枚とも印刷のワザは「めざめるパワー」1 つ（ワザの位置 0）",
+  "risk_class_instances": {
+   "SuppressOtherPowers": [],
+   "ScareOpponentBabies": [],
+   "FailAndReturnOnAttack": [],
+   "TransformIntoDefender": [],
+   "SuperTransformPower": [],
+   "AttackDeclaredPower": [
+    "CounterBonusToGroupAttack",
+    "CoinsUntilTailsBonusToGroupAttack"
+   ],
+   "ExtraEnergyDamageWithAttack": [],
+   "ContinuousPower": [
+    "ReduceOwnGroupDamageFromType",
+    "VoidOpponentEnergyDiscardOnGroup",
+    "CountersOnOpponentRetreatWhileActive",
+    "AddActiveDamageReceivedToNamedAttack",
+    "ZeroGroupRetreatCostFromBench"
+   ]
+  },
+  "non_unown_basic_transformers": [
+   {
+    "card_id": "ES2-032",
+    "name": "メタモン",
+    "type": "SuperTransformPower"
+   },
+   {
+    "card_id": "PMCG3-042",
+    "name": "メタモン",
+    "type": "TransformIntoDefender"
+   }
+  ]
+ },
+ "holders": [
+  {
+   "card_id": "neo2-030",
+   "power_index": 0,
+   "type": "CounterBonusToGroupAttack",
+   "params": {
+    "letter": "A",
+    "power_name": "ANGER",
+    "group": "アンノーン",
+    "attack_name": "めざめるパワー",
+    "per": 10
+   },
+   "exclusive_key": [
+    "holder_counters",
+    "アンノーン",
+    "A",
+    "ANGER"
+   ],
+   "in_group": true
+  },
+  {
+   "card_id": "neo4-065",
+   "power_index": 0,
+   "type": "CoinsUntilTailsBonusToGroupAttack",
+   "params": {
+    "letter": "X",
+    "power_name": "XXXXX",
+    "group": "アンノーン",
+    "attack_name": "めざめるパワー",
+    "per": 10
+   },
+   "exclusive_key": [
+    "coins_until_tails",
+    "アンノーン",
+    "X",
+    "XXXXX"
+   ],
+   "in_group": true
+  }
+ ],
+ "cards": [
+  {
+   "card_id": "PF2-001",
+   "name": "アンノーン[N]",
+   "letter": "N",
+   "stage": "basic",
+   "power": "NORMAL df[ノーマル ディーエフ]",
+   "type": "ReduceOwnGroupDamageFromType"
+  },
+  {
+   "card_id": "PF2-002",
+   "name": "アンノーン[E]",
+   "letter": "E",
+   "stage": "basic",
+   "power": "ENGAGE[エンゲージ]",
+   "type": "EachPlayerMayReturnHandThenDrawOnEntry"
+  },
+  {
+   "card_id": "PF2-003",
+   "name": "アンノーン[O]",
+   "letter": "O",
+   "stage": "basic",
+   "power": "OBSERVE[オブザーブ]",
+   "type": "LookOpponentDeckTopKeepOrder"
+  },
+  {
+   "card_id": "PRN-034",
+   "name": "アンノーン[J]",
+   "letter": "J",
+   "stage": "basic",
+   "power": "JOIN[ジョイン]",
+   "type": "SearchDeckWithBenchLettersToHand"
+  },
+  {
+   "card_id": "PRN-035",
+   "name": "アンノーン[R]",
+   "letter": "R",
+   "stage": "basic",
+   "power": "REASSURE[リーアシュア]",
+   "type": "HealAllNameGroupOnEntry"
+  },
+  {
+   "card_id": "neo2-023",
+   "name": "アンノーンI",
+   "letter": "I",
+   "stage": "basic",
+   "power": "INCREASE[インクリーズ]",
+   "type": "BenchNameGroupFromDeckOnEntry"
+  },
+  {
+   "card_id": "neo2-025",
+   "name": "アンノーンD",
+   "letter": "D",
+   "stage": "basic",
+   "power": "DARK df[ダーク ディーエフ]",
+   "type": "ReduceOwnGroupDamageFromType"
+  },
+  {
+   "card_id": "neo2-026",
+   "name": "アンノーンF",
+   "letter": "F",
+   "stage": "basic",
+   "power": "FIND[ファインド]",
+   "type": "SearchDeckWithBenchLettersToHand"
+  },
+  {
+   "card_id": "neo2-027",
+   "name": "アンノーンM",
+   "letter": "M",
+   "stage": "basic",
+   "power": "METAL df[メタル ディーエフ]",
+   "type": "ReduceOwnGroupDamageFromType"
+  },
+  {
+   "card_id": "neo2-028",
+   "name": "アンノーンU",
+   "letter": "U",
+   "stage": "basic",
+   "power": "UNDO[アンドゥ]",
+   "type": "ReturnActiveToHandWithBenchLetters"
+  },
+  {
+   "card_id": "neo2-030",
+   "name": "アンノーンA",
+   "letter": "A",
+   "stage": "basic",
+   "power": "ANGER[アンガー]",
+   "type": "CounterBonusToGroupAttack"
+  },
+  {
+   "card_id": "neo3-030",
+   "name": "アンノーンK",
+   "letter": "K",
+   "stage": "basic",
+   "power": "KEEP[キープ]",
+   "type": "VoidOpponentEnergyDiscardOnGroup"
+  },
+  {
+   "card_id": "neo3-032",
+   "name": "アンノーンB",
+   "letter": "B",
+   "stage": "basic",
+   "power": "BEAR[ベアー]",
+   "type": "MoveGroupCounterToSelf"
+  },
+  {
+   "card_id": "neo3-033",
+   "name": "アンノーンY",
+   "letter": "Y",
+   "stage": "basic",
+   "power": "YIELD[イールド]",
+   "type": "CoinAttachEnergyFromDeckToOwnPokemon"
+  },
+  {
+   "card_id": "neo4-050",
+   "name": "アンノーンL",
+   "letter": "L",
+   "stage": "basic",
+   "power": "LAUGH [ラフ]",
+   "type": "CoinEachPlayerShufflesOpponentDeck"
+  },
+  {
+   "card_id": "neo4-051",
+   "name": "アンノーンS",
+   "letter": "S",
+   "stage": "basic",
+   "power": "SEARCH[サーチ]",
+   "type": "LookOwnPrizeCard"
+  },
+  {
+   "card_id": "neo4-052",
+   "name": "アンノーンT",
+   "letter": "T",
+   "stage": "basic",
+   "power": "TELL[テル]",
+   "type": "CoinEachPlayerLooksOpponentHand"
+  },
+  {
+   "card_id": "neo4-053",
+   "name": "アンノーンV",
+   "letter": "V",
+   "stage": "basic",
+   "power": "VANISH[バニッシュ]",
+   "type": "CoinReturnOtherGroupToHandOnEntry"
+  },
+  {
+   "card_id": "neo4-057",
+   "name": "アンノーンC",
+   "letter": "C",
+   "stage": "basic",
+   "power": "CHASE[チェイス]",
+   "type": "CountersOnOpponentRetreatWhileActive"
+  },
+  {
+   "card_id": "neo4-058",
+   "name": "アンノーンP",
+   "letter": "P",
+   "stage": "basic",
+   "power": "PERFORM[パフォーム]",
+   "type": "AddActiveDamageReceivedToNamedAttack"
+  },
+  {
+   "card_id": "neo4-059",
+   "name": "アンノーンQ",
+   "letter": "Q",
+   "stage": "basic",
+   "power": "QUICKEN[クイックン]",
+   "type": "CoinGroupAttackImmunityNextTurn"
+  },
+  {
+   "card_id": "neo4-060",
+   "name": "アンノーンZ",
+   "letter": "Z",
+   "stage": "basic",
+   "power": "ZOOM[ズーム]",
+   "type": "ZeroGroupRetreatCostFromBench"
+  },
+  {
+   "card_id": "neo4-062",
+   "name": "アンノーンG",
+   "letter": "G",
+   "stage": "basic",
+   "power": "GIVE[ギブ]",
+   "type": "CoinAttachEnergyFromDeckToOwnPokemon"
+  },
+  {
+   "card_id": "neo4-063",
+   "name": "アンノーンH",
+   "letter": "H",
+   "stage": "basic",
+   "power": "HELP[ヘルプ]",
+   "type": "ReturnHandThenDrawSameWithBenchLetters"
+  },
+  {
+   "card_id": "neo4-064",
+   "name": "アンノーンW",
+   "letter": "W",
+   "stage": "basic",
+   "power": "WANT[ウォント]",
+   "type": "CoinRecoverTrainerWithBenchLetters"
+  },
+  {
+   "card_id": "neo4-065",
+   "name": "アンノーンX",
+   "letter": "X",
+   "stage": "basic",
+   "power": "XXXXX[?????]",
+   "type": "CoinsUntilTailsBonusToGroupAttack"
+  }
+ ],
+ "classes": {
+  "A": "公開前の本人向け・公開情報だけで必要条件を確定できる",
+  "B": "公開後に変わる条件があるが、限定条件で安全に扱える可能性がある",
+  "C": "公開・試行・非公開情報なしでは確定できず、今回は提示しない",
+  "D": "この宣言経路では起こらない"
+ },
+ "types": [
+  {
+   "type": "AddActiveDamageReceivedToNamedAttack",
+   "definition": "kyuura_engine/effects.py:40992",
+   "kind": "ContinuousPower（in_play。［PERFORM］。reads_history）",
+   "cards": [
+    "neo4-058"
+   ],
+   "card_count": 1,
+   "declared": false,
+   "risk_class_instances": [
+    "ContinuousPower"
+   ],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "-",
+   "notes": "使い手自身の「めざめるパワー」のダメージに、前の相手の番にバトル場で受けたダメージを加える。うらのあいだはダメージを受けない（受ける時におもてにする）ので、公開の直後は 0 の見込み（静的。未実行）。宣言の可否・持ち主の力にはかかわらない（ダメージの量だけ）"
+  },
+  {
+   "type": "BenchNameGroupFromDeckOnEntry",
+   "definition": "kyuura_engine/effects.py:40413",
+   "kind": "EntryPower（場に出したとき）",
+   "cards": [
+    "neo2-023"
+   ],
+   "card_count": 1,
+   "declared": true,
+   "risk_class_instances": [],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "-",
+   "notes": "公開は場に出すことではない（zones.reveal_face_down は enter_play・offer_entry_power を呼ばない）。機会は出ない"
+  },
+  {
+   "type": "CoinAttachEnergyFromDeckToOwnPokemon",
+   "definition": "kyuura_engine/effects.py:40748",
+   "kind": "PowerEffect（宣言して使う。UsePokemonPower）",
+   "cards": [
+    "neo3-033",
+    "neo4-062"
+   ],
+   "card_count": 2,
+   "declared": true,
+   "risk_class_instances": [],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "-",
+   "notes": "使うには UsePokemonPower（うらのカードならその前におもてにする）。ワザの宣言の公開では resolve されない。番ごとの回数の記録は使ったときだけ"
+  },
+  {
+   "type": "CoinEachPlayerLooksOpponentHand",
+   "definition": "kyuura_engine/effects.py:40263",
+   "kind": "PowerEffect（宣言して使う。UsePokemonPower）",
+   "cards": [
+    "neo4-052"
+   ],
+   "card_count": 1,
+   "declared": true,
+   "risk_class_instances": [],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "-",
+   "notes": "使うには UsePokemonPower（うらのカードならその前におもてにする）。ワザの宣言の公開では resolve されない。番ごとの回数の記録は使ったときだけ"
+  },
+  {
+   "type": "CoinEachPlayerShufflesOpponentDeck",
+   "definition": "kyuura_engine/effects.py:40233",
+   "kind": "PowerEffect（宣言して使う。UsePokemonPower）",
+   "cards": [
+    "neo4-050"
+   ],
+   "card_count": 1,
+   "declared": true,
+   "risk_class_instances": [],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "-",
+   "notes": "使うには UsePokemonPower（うらのカードならその前におもてにする）。ワザの宣言の公開では resolve されない。番ごとの回数の記録は使ったときだけ"
+  },
+  {
+   "type": "CoinGroupAttackImmunityNextTurn",
+   "definition": "kyuura_engine/effects.py:45073",
+   "kind": "PowerEffect（宣言して使う。UsePokemonPower）",
+   "cards": [
+    "neo4-059"
+   ],
+   "card_count": 1,
+   "declared": true,
+   "risk_class_instances": [],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "-",
+   "notes": "使うには UsePokemonPower（うらのカードならその前におもてにする）。ワザの宣言の公開では resolve されない。番ごとの回数の記録は使ったときだけ"
+  },
+  {
+   "type": "CoinRecoverTrainerWithBenchLetters",
+   "definition": "kyuura_engine/effects.py:47981",
+   "kind": "PowerEffect（宣言して使う。UsePokemonPower）",
+   "cards": [
+    "neo4-064"
+   ],
+   "card_count": 1,
+   "declared": true,
+   "risk_class_instances": [],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "-",
+   "notes": "使うには UsePokemonPower（うらのカードならその前におもてにする）。ワザの宣言の公開では resolve されない。番ごとの回数の記録は使ったときだけ"
+  },
+  {
+   "type": "CoinReturnOtherGroupToHandOnEntry",
+   "definition": "kyuura_engine/effects.py:40876",
+   "kind": "EntryPower（場に出したとき）",
+   "cards": [
+    "neo4-053"
+   ],
+   "card_count": 1,
+   "declared": true,
+   "risk_class_instances": [],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "-",
+   "notes": "同上"
+  },
+  {
+   "type": "CoinsUntilTailsBonusToGroupAttack",
+   "definition": "kyuura_engine/effects.py:45745",
+   "kind": "AttackDeclaredPower（［XXXXX］の型そのもの）",
+   "cards": [
+    "neo4-065"
+   ],
+   "card_count": 1,
+   "declared": true,
+   "risk_class_instances": [
+    "AttackDeclaredPower"
+   ],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "選んだときだけ、［XXXXX］のコインが XP1（手順 4・5・ベイビィ・クチバシティジム）・NT1・v0.4b の停止の条件になる（resolution/flow.py の power_coins）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "B",
+   "notes": "使い手として公開されても、選ばなければ使わない。自己持ち主（R3）は公開の前に持ち主の力がない（group_attack_power_slot が None）ので、本当のカードの力で仮に評価する必要がある（B）。コインを投げるので XP1・NT1・v0.4b の停止の対象（submit。おもてと同じ）"
+  },
+  {
+   "type": "CounterBonusToGroupAttack",
+   "definition": "kyuura_engine/effects.py:47869",
+   "kind": "AttackDeclaredPower（［ANGER］の型そのもの）",
+   "cards": [
+    "neo2-030"
+   ],
+   "card_count": 1,
+   "declared": true,
+   "risk_class_instances": [
+    "AttackDeclaredPower"
+   ],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "B",
+   "notes": "自己持ち主（R3）は、うらのあいだダメージがない（不変条件）ので、公開のあとも追加は 0（使うことは不正でない）。コインはない（XP1 にかかわらない）"
+  },
+  {
+   "type": "CountersOnOpponentRetreatWhileActive",
+   "definition": "kyuura_engine/effects.py:45045",
+   "kind": "ContinuousPower（active。［CHASE］）",
+   "cards": [
+    "neo4-057"
+   ],
+   "card_count": 1,
+   "declared": false,
+   "risk_class_instances": [
+    "ContinuousPower"
+   ],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "-",
+   "notes": "相手のにげるに反応する。公開してバトル場に残っても、自分のワザの宣言にはかかわらない"
+  },
+  {
+   "type": "EachPlayerMayReturnHandThenDrawOnEntry",
+   "definition": "kyuura_engine/effects.py:40030",
+   "kind": "EntryPower（場に出したとき）",
+   "cards": [
+    "PF2-002"
+   ],
+   "card_count": 1,
+   "declared": true,
+   "risk_class_instances": [],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "-",
+   "notes": "同上"
+  },
+  {
+   "type": "HealAllNameGroupOnEntry",
+   "definition": "kyuura_engine/effects.py:40106",
+   "kind": "EntryPower（場に出したとき）",
+   "cards": [
+    "PRN-035"
+   ],
+   "card_count": 1,
+   "declared": true,
+   "risk_class_instances": [],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "-",
+   "notes": "同上"
+  },
+  {
+   "type": "LookOpponentDeckTopKeepOrder",
+   "definition": "kyuura_engine/effects.py:40156",
+   "kind": "PowerEffect（宣言して使う。UsePokemonPower）",
+   "cards": [
+    "PF2-003"
+   ],
+   "card_count": 1,
+   "declared": true,
+   "risk_class_instances": [],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "-",
+   "notes": "使うには UsePokemonPower（うらのカードならその前におもてにする）。ワザの宣言の公開では resolve されない。番ごとの回数の記録は使ったときだけ"
+  },
+  {
+   "type": "LookOwnPrizeCard",
+   "definition": "kyuura_engine/effects.py:40197",
+   "kind": "PowerEffect（宣言して使う。UsePokemonPower）",
+   "cards": [
+    "neo4-051"
+   ],
+   "card_count": 1,
+   "declared": true,
+   "risk_class_instances": [],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "-",
+   "notes": "使うには UsePokemonPower（うらのカードならその前におもてにする）。ワザの宣言の公開では resolve されない。番ごとの回数の記録は使ったときだけ"
+  },
+  {
+   "type": "MoveGroupCounterToSelf",
+   "definition": "kyuura_engine/effects.py:40686",
+   "kind": "PowerEffect（宣言して使う。UsePokemonPower）",
+   "cards": [
+    "neo3-032"
+   ],
+   "card_count": 1,
+   "declared": true,
+   "risk_class_instances": [],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "-",
+   "notes": "使うには UsePokemonPower（うらのカードならその前におもてにする）。ワザの宣言の公開では resolve されない。番ごとの回数の記録は使ったときだけ"
+  },
+  {
+   "type": "ReduceOwnGroupDamageFromType",
+   "definition": "kyuura_engine/effects.py:40581",
+   "kind": "ContinuousPower（in_play）",
+   "cards": [
+    "PF2-001",
+    "neo2-025",
+    "neo2-027"
+   ],
+   "card_count": 3,
+   "declared": false,
+   "risk_class_instances": [
+    "ContinuousPower"
+   ],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "-",
+   "notes": "自分の場のアンノーンが受けるダメージを減らす。自分のワザの宣言・持ち主の力にはかかわらない（D: この経路で起こらない）"
+  },
+  {
+   "type": "ReturnActiveToHandWithBenchLetters",
+   "definition": "kyuura_engine/effects.py:47924",
+   "kind": "PowerEffect（宣言して使う。UsePokemonPower）",
+   "cards": [
+    "neo2-028"
+   ],
+   "card_count": 1,
+   "declared": true,
+   "risk_class_instances": [],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "-",
+   "notes": "使うには UsePokemonPower（うらのカードならその前におもてにする）。ワザの宣言の公開では resolve されない。番ごとの回数の記録は使ったときだけ"
+  },
+  {
+   "type": "ReturnHandThenDrawSameWithBenchLetters",
+   "definition": "kyuura_engine/effects.py:41046",
+   "kind": "PowerEffect（宣言して使う。UsePokemonPower）",
+   "cards": [
+    "neo4-063"
+   ],
+   "card_count": 1,
+   "declared": true,
+   "risk_class_instances": [],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "-",
+   "notes": "使うには UsePokemonPower（うらのカードならその前におもてにする）。ワザの宣言の公開では resolve されない。番ごとの回数の記録は使ったときだけ"
+  },
+  {
+   "type": "SearchDeckWithBenchLettersToHand",
+   "definition": "kyuura_engine/effects.py:40510",
+   "kind": "PowerEffect（宣言して使う。UsePokemonPower）",
+   "cards": [
+    "PRN-034",
+    "neo2-026"
+   ],
+   "card_count": 2,
+   "declared": true,
+   "risk_class_instances": [],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "-",
+   "notes": "使うには UsePokemonPower（うらのカードならその前におもてにする）。ワザの宣言の公開では resolve されない。番ごとの回数の記録は使ったときだけ"
+  },
+  {
+   "type": "VoidOpponentEnergyDiscardOnGroup",
+   "definition": "kyuura_engine/effects.py:41242",
+   "kind": "ContinuousPower（in_play。［KEEP］）",
+   "cards": [
+    "neo3-030"
+   ],
+   "card_count": 1,
+   "declared": false,
+   "risk_class_instances": [
+    "ContinuousPower"
+   ],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "-",
+   "notes": "相手の効果のエネルギーのトラッシュを無効にする。宣言・持ち主の力にかかわらない"
+  },
+  {
+   "type": "ZeroGroupRetreatCostFromBench",
+   "definition": "kyuura_engine/effects.py:13031",
+   "kind": "ContinuousPower（bench。［ZOOM］）",
+   "cards": [
+    "neo4-060"
+   ],
+   "card_count": 1,
+   "declared": false,
+   "risk_class_instances": [
+    "ContinuousPower"
+   ],
+   "aspects": {
+    "attacker_form": "変わらない（変身・「ばける」の型ではない。公開のあとの form_def は印刷の定義。name_group は「アンノーン」）",
+    "power_validity": "変わらない（SuppressOtherPowers・ScareOpponentBabies・止める効果の型ではない）",
+    "use_condition": "変わらない（公開では resolve・使用の記録を呼ばない）",
+    "target_condition": "変わらない（in_name_group は印刷の定義の name_group で「アンノーン」。ワザは印刷の「めざめるパワー」）",
+    "declaration": "変わらない（ワザの宣言の可否は追加の選択と別。既存の unverified のまま）",
+    "coins_addons": "変わらない（FailAndReturnOnAttack でなく、手順 4・5 のコインを加えない）",
+    "reveal_side_effects": "なし（zones.reveal_face_down はログと face_down_cards の更新だけ。たねなので残る）"
+   },
+   "class_as_attacker_r2": "A",
+   "class_as_self_holder_r3": "-",
+   "notes": "ベンチにいるときだけ。使い手はバトル場なので、はたらかない"
+  }
+ ],
+ "paths": [
+  {
+   "id": "R2-X",
+   "summary": "うらのアンノーン（本当のカード）が「めざめるパワー」を使い、自分の場のおもての別のアンノーンX の［XXXXX］を宣言する",
+   "class": "A",
+   "note": "持ち主の条件は公開の場で決まり公開で変わらない。使い手の条件は本当のカードの印刷の name_group とワザの名前。コインによる XP1・NT1・v0.4b の停止は submit で起こりうる（予告しない。おもてと同じ）"
+  },
+  {
+   "id": "R2-A",
+   "summary": "同じく、別のおもてのアンノーンA の［ANGER］",
+   "class": "A",
+   "note": "コインなし。追加の量は持ち主のダメージカウンター（公開）"
+  },
+  {
+   "id": "R3-X",
+   "summary": "公開した使い手（本当のカードがアンノーンX）自身の［XXXXX］",
+   "class": "B",
+   "note": "公開の前は持ち主の力がない。本当のカードの力で、力が消えているかを、うらの持ち主のまま問い合わせて公開のあとと同じになることは静的に言えるが、新しい仮の評価の経路になる"
+  },
+  {
+   "id": "R3-A",
+   "summary": "公開した使い手（本当のカードがアンノーンA）自身の［ANGER］",
+   "class": "B",
+   "note": "R3-X と同じ。加えて追加はいつも 0（うらのあいだはダメージがない）"
+  },
+  {
+   "id": "TF",
+   "summary": "本当のカードが変身する特殊能力を持つたね（メタモン 2 枚）で、公開のあとの姿がアンノーンになりうる",
+   "class": "C",
+   "note": "公開のあとの姿は相手のバトル場と変身の条件（TF1 の残る部分）で決まる。R4 と同じく対象外"
+  },
+  {
+   "id": "D-1",
+   "summary": "持ち主がうら（使い手と別）・相手の場・持ち主の力が消えている・使えない・この番にほかの X を使った",
+   "class": "D",
+   "note": "エンジンが拒否する（ATTACK_POWER_NOT_AVAILABLE・POWER_SUPPRESSED・POWER_USE_PREVENTED・POWER_ALREADY_USED）。示さない"
+  },
+  {
+   "id": "D-2",
+   "summary": "本当のカードの名前のグループがアンノーンでない・ワザが「めざめるパワー」でない",
+   "class": "D",
+   "note": "usable_for が拒否する。示さない"
+  }
+ ],
+ "xp1": [
+  {
+   "combination": "［XXXXX］＋クチバシティジムのコイン（うらのアンノーン）",
+   "registry": "起こらない（コインは本当のカードが「マチスの」で始まり特殊能力を持たないときだけ示す）",
+   "structure": "人工なら同じ段に並べられる",
+   "check": "形と exclusive_key だけなので受け付ける",
+   "submit": "使い手がマチスのポケモンでないので STADIUM_COIN_NOT_AVAILABLE（拒否）。仮にマチスのアンノーンなら XP1（UNRESOLVED_GROUP_POWER_COIN_ORDER）"
+  },
+  {
+   "combination": "［XXXXX］＋相手のバトル場のベイビィポケモン",
+   "registry": "起こる（通常例）",
+   "structure": "［XXXXX］だけを示す（ルールのコインは選ぶものではない）",
+   "check": "受け付ける",
+   "submit": "XP1 で停止（拒否。状態は変わらない見込み。おもての既存テストは状態不変を確認）"
+  },
+  {
+   "combination": "［XXXXX］＋使い手のこんらん・すなかけ・［はんこう］",
+   "registry": "起こらない（うらのあいだ特殊状態・持続する効果はない。アンノーンに FailAndReturnOnAttack はない）",
+   "structure": "-",
+   "check": "-",
+   "submit": "-"
+  },
+  {
+   "combination": "［XXXXX］＋相手の変わり身の術",
+   "registry": "起こる（通常例）",
+   "structure": "［XXXXX］だけを示す",
+   "check": "受け付ける",
+   "submit": "NT1 で停止（power_coins が条件に入る）"
+  },
+  {
+   "combination": "［XXXXX］＋相手のダメージを受けない状態（v0.4b）",
+   "registry": "起こる（通常例）",
+   "structure": "［XXXXX］だけを示す",
+   "check": "受け付ける",
+   "submit": "UNRESOLVED_PREVENTED_COIN_DAMAGE で停止"
+  },
+  {
+   "combination": "［ANGER］",
+   "registry": "-",
+   "structure": "-",
+   "check": "-",
+   "submit": "コインを投げないので XP1 の条件に入らない"
+  },
+  {
+   "combination": "［XXXXX］＋［ANGER］",
+   "registry": "起こる",
+   "structure": "同じ段に並ぶ",
+   "check": "受け付ける（exclusive_key が違う）",
+   "submit": "受け付ける見込み（おもての既存テストで確認済み）"
+  },
+  {
+   "combination": "2 匹の［XXXXX］・2 匹の［ANGER］",
+   "registry": "起こる",
+   "structure": "同じ段に並ぶ",
+   "check": "CANDIDATE_INPUT_INVALID（v0.190 と同じ）",
+   "submit": "POWER_ALREADY_USED"
+  },
+  {
+   "combination": "［XXXXX］・［ANGER］＋［めいれい］",
+   "registry": "起こらない（アンノーンは［めいれい］の names にない）",
+   "structure": "人工なら並べられる",
+   "check": "受け付ける",
+   "submit": "［めいれい］が ATTACK_POWER_NOT_AVAILABLE"
+  }
+ ],
+ "recommendation": {
+  "next_unit": "R2: 別のおもての持ち主の［XXXXX］・［ANGER］（根拠が同じ処理群）。自己持ち主（R3）は対象外",
+  "attacker": [
+   "番のプレイヤーの main・本人のバトル場がうら（呼び出し元の条件）",
+   "printed_def(active.card) がポケモンで、name_group が力の group（型の値）と同じ",
+   "本当のカードの特殊能力の型が、この表で分類した型（22）のどれか（新しい型は示さない。登録の全件のテストで止める）",
+   "選ぶワザの印刷の名前が力の attack_name（型の値）と同じ（options_by_choice をワザごとにする）"
+  ],
+  "holder": [
+   "自分の場のおもてのポケモンで、使い手と別",
+   "group_attack_power_slot が CoinsUntilTailsBonusToGroupAttack か CounterBonusToGroupAttack",
+   "power_suppressed・powers_use_prevented・effect.other_use_problem がどれも当たらない（公開の場だけ。状態を変えない既存の問い合わせ）"
+  ],
+  "stage2": {
+   "order": "コイン → 場の並び（バトル場 → ベンチ。使い手のバトル場は除くのでベンチの並び）",
+   "count": "0〜選択肢の数",
+   "order_kind": "significant",
+   "distinct": true,
+   "decline": true,
+   "processability": "unverified",
+   "reasons": [
+    "face_down_reveal_not_evaluated"
+   ],
+   "eligible": "条件を満たしたものだけ（満たさないものは出さない）",
+   "concurrent": "同じ exclusive_key の 2 つは check が CANDIDATE_INPUT_INVALID"
+  },
+  "check": "形（ワザ 1 つ・そのワザの組にある選択・重ならない）と exclusive_key の重なりだけ。エンジンは呼ばない。XP1・NT1・v0.4b は予告しない",
+  "submit": "エンジンの今の順（公開 → たねなので残る → check_use_attack（group_attack_powers_check）→ 先読み → 処理）。変えない",
+  "not_adopted": [
+   "宣言の選択を受理のあとへ移す案（選ぶ時点が変わる）",
+   "R3 の自己持ち主（B）",
+   "XP1・NT1 を候補で予測して外す案（エンジンの条件の写しになる）"
+  ]
+ },
+ "decisions_for_user": [
+  "D-R2U-1",
+  "D-R2U-2",
+  "D-R2U-3",
+  "D-R2U-4",
+  "D-R2U-5"
+ ],
+ "compatibility": {
+  "engine_version": "0.191.0 の見込み",
+  "behavior": "変わる見込み",
+  "rule10_basis": "変わる見込み（legal_actions.py）",
+  "instrumentation": "不変の見込み",
+  "p1_p2_p3": "不変の見込み",
+  "tool": "不変（TOOL_VERSION 13）",
+  "api_format": "不変（addon の with_power は既存。options_by_choice はおもてで既存）",
+  "guarantee_text": "GUARANTEE_FACE_DOWN_ATTACK の文を変える（test_legal_actions_f1_v0_180 の固定の sha256 を原因つきで更新）",
+  "verification_ai": "方策は変えない（旧計画は識別の違いで再開しない）",
+  "gui": "既存の段 2 の扱いで表示できる見込み（ワザごとに違う options_by_choice は未確認）"
+ }
+}
