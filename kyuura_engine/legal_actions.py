@@ -74,6 +74,7 @@ from .effects import (
     attack_power_slot,
     available_attacks,
     blaine_effects,
+    copied_declared_power_problem,
     current_form,
     energy_unit_count,
     group_attack_power_slot,
@@ -1303,7 +1304,9 @@ def _attack_candidate(state: GameState, actor: int) -> _Candidate | None:
     """ワザの宣言（1 段目: バトル場のポケモンが今持つワザ、2 段目: 宣言といっしょに選ぶもの（0 個以上・選んだ順））。ゲーム上宣言できるワザがなければ候補を作らない。
 
     選べるワザは ``effects.available_attacks``（今の姿・「思い出させる」・［サイコリンク］・許可で使えるワザ。公開の場から決まる）。ワザ・組ごとに ``check_use_attack``
-    （エンジンが宣言を受け付ける前の確かめ。宣言の前の先読みは含まない）を呼ぶ。IllegalActionError のワザ・組は出さず、UnsupportedError は実行できない区分で示す。"""
+    （エンジンが宣言を受け付ける前の確かめ。宣言の前の先読みは含まない）を呼ぶ。IllegalActionError のワザ・組は出さず、UnsupportedError は実行できない区分で示す。
+    v0.193（C-TF1）: 変身で写した、写すことを確かめていない力（``_copied_addon``。エンジンは ``UNSUPPORTED_TRANSFORM_COPIED_POWER`` で拒否する）は、宣言といっしょに選ぶものとして
+    示さない（組を作らない。番号は欠番のまま）。"""
     active = state.players[actor].active
     if active is None:
         return None
@@ -1311,7 +1314,7 @@ def _attack_candidate(state: GameState, actor: int) -> _Candidate | None:
         return _face_down_attack_candidate(state, actor, active, dict(GUARANTEE_FACE_DOWN_ATTACK))  # v0.180（F-1）: うらの分岐だけの保証（うらであることは公開）
     guarantees = dict(GUARANTEE_ATTACK)
     specs: dict[str, tuple] = {}
-    attack_options, verdicts = [], {}
+    attack_options, verdicts, keys = [], {}, {}
     for option in available_attacks(state, active):
         spec = ("attack", option.attack_index, option.card)
         verdict, code = _probe(check_use_attack, state, _attack_command(actor, (spec,)))
@@ -1319,6 +1322,7 @@ def _attack_candidate(state: GameState, actor: int) -> _Candidate | None:
             continue
         oid = f"o{len(specs) + 1}"
         specs[oid] = spec
+        keys[oid] = option.key
         verdicts[oid] = _attack_verdict(verdict, code)
         # card_id はワザの登録の定義（AttackOption.card_id。state.card_def から決まる。うらのカードの本当のカードを読まない）
         base = {"id": oid, "card": option.card, "card_id": option.card_id, "attack_index": option.attack_index, "route": option.route}
@@ -1343,6 +1347,8 @@ def _attack_candidate(state: GameState, actor: int) -> _Candidate | None:
         if found[0] not in EXECUTABLE:
             continue  # 選ぶと止めるワザ: いっしょに選ぶものを確かめない（ワザごと実行できない）
         for spec, _shown in addons:
+            if _copied_addon(state, active, spec, keys[aid]):
+                continue  # v0.193（C-TF1）: 写すことを確かめていない写した力は示さない（エンジンは未対応で止める。番号は欠番のまま）
             verdict, code = _probe(check_use_attack, state, _attack_command(actor, (specs[aid], spec)))
             if verdict == ILLEGAL:
                 continue
@@ -1388,6 +1394,21 @@ def _addon_specs(state: GameState, actor: int, active) -> list[tuple[tuple, dict
         if slot is not None:
             found.append(((ADDON_WITH_POWER, pokemon.pokemon_id), {"addon": ADDON_WITH_POWER, **shown, "power": slot.power.name_ja}))
     return found
+
+
+def _copied_addon(state: GameState, active, spec: tuple, key) -> bool:
+    """v0.193（C-TF1。docs/r2-transform-hydro-design.md 10 章）: ワザ ``key`` といっしょに選ぶもの ``spec`` が、変身で写した、写すことを確かめていない力か。エンジンの確かめ
+    （``copied_attack_power_check``）と同じ構造の確かめ ``copied_declared_power_problem``（v0.124。今の姿・力の供給元のカード・型だけを読む）の結果を使い、エンジンを試さない。
+    使い手自身の力（``attack_power``・``with_power`` の使い手）と、場の持ち主の力（``with_power``）の両方。コイン・写していない力は False（ほかの選択肢を巻き込まない）。"""
+    if spec[0] == ADDON_ATTACK_POWER:
+        holder, slot = active, attack_power_slot(state, active, key)
+    elif spec[0] == ADDON_WITH_POWER:
+        found = state.find_pokemon(spec[1])
+        holder = None if found is None else found[1]
+        slot = None if holder is None else group_attack_power_slot(state, holder)
+    else:
+        return False
+    return slot is not None and copied_declared_power_problem(state, holder, slot) is not None
 
 
 def _stadium_coin_addon(state: GameState, stadium) -> tuple[tuple, dict[str, Any]]:

@@ -37445,7 +37445,7 @@ def attack_power_slot(state: GameState, attacker: PokemonInPlay, key: AttackKey)
 
 def attack_power_check(state: GameState, attacker: PokemonInPlay, key: AttackKey) -> PowerSlot:
     """ワザ ``key`` といっしょに特殊能力を使うことを選んだ（``UseAttack.attack_power``）ときの確かめ（v0.88。状態を変えない）。使えないなら ``IllegalActionError``、数え方が決まらないなら
-    ``UnsupportedError``。使えるならその特殊能力。"""
+    ``UnsupportedError``。使えるならその特殊能力。v0.193: 変身で写した力で、写すことを確かめていないなら ``UnsupportedError``（``copied_attack_power_check``）。"""
     from .continuous import power_suppressed
     from .persistent import powers_use_prevented
 
@@ -37461,6 +37461,7 @@ def attack_power_check(state: GameState, attacker: PokemonInPlay, key: AttackKey
         raise IllegalActionError("POWER_SUPPRESSED", f"特殊能力「{slot.power.name_ja}」は、ほかの効果で使えず、その力も消えている")
     if powers_use_prevented(state, attacker) is not None:
         raise IllegalActionError("POWER_USE_PREVENTED", f"ポケモン {attacker.pokemon_id} は、相手のワザの効果で特殊能力を使うことができない")
+    copied_attack_power_check(state, attacker, slot)  # v0.193（C-TF1）: 写した力は、数え方の確かめ（RB1・BZ2・MEC1・CE1・CE2・TE1）の前に
     effect = slot.effect
     for cards, error in ((ambiguous_rainbow_cards(state, attacker, effect.energy_type), rainbow_type_error),
                          (converted_energy_cards(state, attacker, effect.energy_type), converted_energy_error)):
@@ -37471,6 +37472,17 @@ def attack_power_check(state: GameState, attacker: PokemonInPlay, key: AttackKey
     if problem is not None:
         raise problem
     return slot
+
+
+def copied_attack_power_check(state: GameState, user: PokemonInPlay, slot: PowerSlot) -> None:
+    """v0.193（C-TF1。docs/r2-transform-hydro-design.md 10 章）: ワザといっしょに使う力 ``slot`` を、持つポケモン ``user`` が変身で写した力として使うときの確かめ（状態を変えない）。
+    ``UsePokemonPower`` と同じ ``copied_declared_power_problem``（v0.124 の 3.1 節。写すことを確かめた ``COPY_VERIFIED_DECLARED`` でなければ ``UNSUPPORTED_TRANSFORM_COPIED_POWER``）で、
+    止めるなら ``UnsupportedError``。写した力でない（自分のカードの力・変身していない持ち主の力）なら何もしない。
+
+    位置は ``UsePokemonPower`` と同じく、使えない・消える効果の確かめ（``power_suppressed``・``powers_use_prevented``）のあと、力の型ごとの確かめ（数え方・この番の使用の記録）の前。"""
+    copied = copied_declared_power_problem(state, user, slot)
+    if copied is not None:
+        raise UnsupportedError(copied[0], f"場のポケモン {user.pokemon_id} の特殊能力「{slot.power.name_ja}」: {copied[1]}")
 
 
 def attack_power_modifier(state: GameState, attacker: PokemonInPlay, key: AttackKey) -> DamageModifier | None:
@@ -45911,7 +45923,7 @@ def group_attack_powers_check(state: GameState, player: int, attacker: PokemonIn
 
 def group_attack_power_check(state: GameState, player: int, attacker: PokemonInPlay, key: AttackKey, holder_id: int) -> tuple[PokemonInPlay, PowerSlot]:
     """v0.118: ワザ ``key`` といっしょに、場の番号 ``holder_id`` のポケモンの［XXXXX］を使うことを選んだ（``UseAttack.with_power``）ときの確かめ（状態を変えない）。使えないなら
-    ``IllegalActionError``。使えるなら (発生源, 特殊能力)。"""
+    ``IllegalActionError``。使えるなら (発生源, 特殊能力)。v0.193: 持ち主が変身で写した力で、写すことを確かめていないなら ``UnsupportedError``（``copied_attack_power_check``）。"""
     from .continuous import power_suppressed
     from .persistent import powers_use_prevented
 
@@ -45930,6 +45942,7 @@ def group_attack_power_check(state: GameState, player: int, attacker: PokemonInP
         raise IllegalActionError("POWER_SUPPRESSED", f"特殊能力「{slot.power.name_ja}」は、ほかの効果で使えず、その力も消えている")
     if powers_use_prevented(state, holder) is not None:
         raise IllegalActionError("POWER_USE_PREVENTED", f"ポケモン {holder_id} は、相手のワザの効果で特殊能力を使うことができない")
+    copied_attack_power_check(state, holder, slot)  # v0.193（C-TF1）: 持ち主が変身で写した力（使い手自身でも、ほかの持ち主でも同じ）
     used = effect.other_use_problem(state, player, holder_id)
     if used is not None:
         raise used
