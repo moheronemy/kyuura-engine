@@ -1,0 +1,583 @@
+{
+ "format": 1,
+ "title": "R-2 の残り: 変身の経路と［すいりょくはつでん］の設計（調査・設計だけ）",
+ "date": "2026-11-18",
+ "document": "docs/r2-transform-hydro-design.md",
+ "base": {
+  "branch": "claude/r2-unown-self-holder",
+  "commit": "8163910681999835a86260c07890956e382ed478",
+  "distribution_fixed": "58087397890db729f12085b4fbe71a38638b372c",
+  "version": "0.192.0",
+  "tool_version": 13,
+  "judge_rules": 10,
+  "formats": 7,
+  "gui_reference": {
+   "branch": "feature/engine-0192-r2-unown-self",
+   "commit": "a83a45c"
+  }
+ },
+ "status_values": {
+  "A": "keep as is (not offered)",
+  "B": "limited offer from public information",
+  "C": "separate unit (API or evidence design needed first)",
+  "confirmation": [
+   "executed_this_unit",
+   "saved_result",
+   "existing_test_read",
+   "static"
+  ]
+ },
+ "registrations": {
+  "hydroelectric": [
+   {
+    "card_id": "neo1-040",
+    "name": "ランターン",
+    "stage": "stage1",
+    "basic": false,
+    "baby": false,
+    "printed_attacks": [
+     "まぶしいひかり"
+    ],
+    "power_index": 0,
+    "attack_name": "まぶしいひかり",
+    "energy_type": "water",
+    "per": 10
+   }
+  ],
+  "form_change": {
+   "form_copy_defender": [
+    {
+     "card_id": "PMCG3-042",
+     "name": "メタモン",
+     "stage": "basic",
+     "basic": true,
+     "baby": false,
+     "printed_attacks": [],
+     "type": "TransformIntoDefender"
+    }
+   ],
+   "form_copy_chosen": [
+    {
+     "card_id": "ES2-032",
+     "name": "メタモン",
+     "stage": "basic",
+     "basic": true,
+     "baby": false,
+     "printed_attacks": [],
+     "type": "SuperTransformPower"
+    }
+   ],
+   "form_disguise": [
+    {
+     "card_id": "PMCG5-019",
+     "name": "タケシのキュウコン",
+     "stage": "stage1",
+     "basic": false,
+     "baby": false,
+     "printed_attacks": [
+      "おにび"
+     ],
+     "type": "Shapeshift"
+    }
+   ]
+  },
+  "attack_supply_not_form_change": [
+   {
+    "card_id": "GD6-004",
+    "name": "ナツメのフーディン",
+    "stage": "stage2",
+    "basic": false,
+    "type": "AttacksOfOwnTypePokemon"
+   },
+   {
+    "card_id": "PMCG6-053",
+    "name": "ナツメのフーディン",
+    "stage": "stage2",
+    "basic": false,
+    "type": "AttacksOfOwnTypePokemon"
+   },
+   {
+    "card_id": "ES3-025",
+    "name": "スリーパー",
+    "stage": "stage1",
+    "basic": false,
+    "type": "DollUsesHolderAttacks"
+   },
+   {
+    "card_id": "PF3-001",
+    "name": "ウソッキー",
+    "stage": "basic",
+    "basic": true,
+    "type": "UseDefenderAttacks"
+   },
+   {
+    "card_id": "neo3-042",
+    "name": "プテラ",
+    "stage": "stage1",
+    "basic": false,
+    "type": "PreEvolutionAttacksForEvolvedActives"
+   }
+  ],
+  "attack_declared_powers": [
+   {
+    "card_id": "PR1-068",
+    "name": "サカキのニドキング",
+    "type": "CommandBonusToNamedAttackers",
+    "basic": false
+   },
+   {
+    "card_id": "neo2-030",
+    "name": "アンノーンA",
+    "type": "CounterBonusToGroupAttack",
+    "basic": true
+   },
+   {
+    "card_id": "neo4-065",
+    "name": "アンノーンX",
+    "type": "CoinsUntilTailsBonusToGroupAttack",
+    "basic": true
+   }
+  ],
+  "copy_verified_declared": [
+   "RemoveOwnCounterOncePerTurn",
+   "HealOwnPokemonOnHeads",
+   "EnergyTransfer",
+   "DiscardThenDraw"
+  ],
+  "hydro_in_copy_verified_declared": false,
+  "confirmation": "executed_this_unit"
+ },
+ "source_checks": {
+  "attack_power_check_calls_copied_declared_power_problem": false,
+  "attack_power_slot_reads_powers_of": true,
+  "group_attack_powers_check_calls_copied_declared_power_problem": false,
+  "copied_power_problem_returns_none_for_declared": true,
+  "freeze_forms_skips_when_frozen": true,
+  "transform_capable_reads_card_power_slots": true,
+  "confirmation": "executed_this_unit"
+ },
+ "processing_order": [
+  {
+   "step": 1,
+   "what": "command entry, clone",
+   "code": "kyuura_engine/engine.py:_apply_checked"
+  },
+  {
+   "step": 2,
+   "what": "freeze forms at entry (before reveal; the face-down attacker is not transform-capable here)",
+   "code": "kyuura_engine/engine.py:915 freeze_forms(new)"
+  },
+  {
+   "step": 3,
+   "what": "reveal; non-basic is trashed and the command is accepted without the handler",
+   "code": "kyuura_engine/engine.py:_reveal_for_action; kyuura_engine/zones.py:reveal_face_down"
+  },
+  {
+   "step": 4,
+   "what": "post-reveal form by query",
+   "code": "kyuura_engine/effects.py:current_form, live_form, transform_defender, transform_works"
+  },
+  {
+   "step": 5,
+   "what": "attack lookup by current form (card=None) and with-attack power checks",
+   "code": "kyuura_engine/checks.py:attack_request; kyuura_engine/effects.py:find_attack_option, attack_power_check, group_attack_powers_check"
+  },
+  {
+   "step": 6,
+   "what": "freeze forms in the attack body; skipped when the entry freeze was non-empty",
+   "code": "kyuura_engine/resolution/flow.py:167 E.freeze_forms(res.state)"
+  },
+  {
+   "step": 7,
+   "what": "preflight from the handler entry state, then main processing",
+   "code": "kyuura_engine/resolution/flow.py:_use_attack"
+  }
+ ],
+ "static_findings": [
+  {
+   "id": "SF1",
+   "what": "copied with-attack powers do not pass copied_declared_power_problem (only UsePokemonPower calls it); ExtraEnergyDamageWithAttack is not in COPY_VERIFIED_DECLARED",
+   "routes": [
+    "T1-L",
+    "T1-U"
+   ],
+   "code": "kyuura_engine/effects.py:attack_power_check, group_attack_powers_check, copied_declared_power_problem; kyuura_engine/engine.py:2494",
+   "confirmation": "static (source call check executed)"
+  },
+  {
+   "id": "SF2",
+   "what": "the Water count of ［すいりょくはつでん］ does not ask TE1 for a ［へんしん］ Ditto",
+   "routes": [
+    "T1-L"
+   ],
+   "code": "kyuura_engine/effects.py:ExtraEnergyDamageWithAttack.extra_units; kyuura_engine/resolution/programs.py:transform_energy_question",
+   "confirmation": "static"
+  },
+  {
+   "id": "SF3",
+   "what": "a revealed Ditto is frozen only when the entry freeze was empty (no other transform-capable Pokemon in play)",
+   "routes": [
+    "T1-L",
+    "T1-U",
+    "T1-P"
+   ],
+   "code": "kyuura_engine/engine.py:915; kyuura_engine/resolution/flow.py:167; kyuura_engine/effects.py:freeze_forms",
+   "confirmation": "static"
+  },
+  {
+   "id": "SF4",
+   "what": "face-down stage 1 uses card=None (current form index); safe today only because transform-capable cards have no printed attacks",
+   "routes": [
+    "T1-P"
+   ],
+   "code": "kyuura_engine/legal_actions.py:_attack_command, _face_down_attack_candidate",
+   "confirmation": "static (registry fact executed)"
+  }
+ ],
+ "routes": [
+  {
+   "id": "L1",
+   "attacker_real": [
+    "neo1-040"
+   ],
+   "defender": "any",
+   "after_reveal": "trashed (not basic); no attack, no power",
+   "current_offer": "stage 1 printed attack, stage 2 empty",
+   "info": [
+    "self_printed"
+   ],
+   "conclusion": "A",
+   "reason": "reveal trashes it; offering ［すいりょくはつでん］ would never be used",
+   "previous_trash_explanation_applies": true,
+   "confirmation": "static"
+  },
+  {
+   "id": "T1-L",
+   "attacker_real": [
+    "PMCG3-042"
+   ],
+   "defender": "face-up Lanturn",
+   "after_reveal": "stays; Lanturn form; copied ［すいりょくはつでん］",
+   "current_offer": "no stages (no_printed_attack)",
+   "info": [
+    "self_printed",
+    "public_field"
+   ],
+   "conclusion": "C",
+   "reason": "stage 1 absent; SF1, SF2, SF3 unconfirmed; no saved result",
+   "previous_trash_explanation_applies": false,
+   "confirmation": "static"
+  },
+  {
+   "id": "T1-U",
+   "attacker_real": [
+    "PMCG3-042"
+   ],
+   "defender": "face-up Unown",
+   "after_reveal": "Unown form; copied ［XXXXX］/［ANGER］; other holders usable by name group",
+   "current_offer": "no stages",
+   "info": [
+    "self_printed",
+    "public_field"
+   ],
+   "conclusion": "C",
+   "reason": "stage 1 absent; copied self holder hits SF1; SF3",
+   "previous_trash_explanation_applies": false,
+   "confirmation": "saved_result + static"
+  },
+  {
+   "id": "T1-P",
+   "attacker_real": [
+    "PMCG3-042"
+   ],
+   "defender": "other face-up Pokemon",
+   "after_reveal": "that form's attacks only",
+   "current_offer": "no stages",
+   "info": [
+    "self_printed",
+    "public_field"
+   ],
+   "conclusion": "C",
+   "reason": "prerequisite stage-1 change (source of attacks, guarantee text, GUI); SF3 first",
+   "previous_trash_explanation_applies": false,
+   "confirmation": "static"
+  },
+  {
+   "id": "T2",
+   "attacker_real": [
+    "ES2-032"
+   ],
+   "defender": "any",
+   "after_reveal": "printed form (no use record); no attacks",
+   "current_offer": "no stages",
+   "info": [
+    "self_printed"
+   ],
+   "conclusion": "A",
+   "reason": "no form change on reveal; saved INVALID_ATTACK",
+   "previous_trash_explanation_applies": false,
+   "confirmation": "saved_result"
+  },
+  {
+   "id": "D1",
+   "attacker_real": [
+    "PMCG5-019"
+   ],
+   "defender": "any",
+   "after_reveal": "trashed (not basic)",
+   "current_offer": "stage 1 printed attack",
+   "info": [
+    "self_printed"
+   ],
+   "conclusion": "A",
+   "reason": "no disguise while face down (invariant); trashed",
+   "previous_trash_explanation_applies": true,
+   "confirmation": "static"
+  },
+  {
+   "id": "S1",
+   "attacker_real": [
+    "PF3-001",
+    "ES3-025",
+    "neo3-042",
+    "GD6-004",
+    "PMCG6-053"
+   ],
+   "defender": "any",
+   "after_reveal": "printed form; extra attack routes only",
+   "current_offer": "stage 1 printed attacks only (card=None)",
+   "info": [
+    "self_printed"
+   ],
+   "conclusion": "A",
+   "reason": "not a form change; supply routes are not offered; cannot hold ［すいりょくはつでん］",
+   "previous_trash_explanation_applies": "evolution cards only",
+   "confirmation": "static"
+  },
+  {
+   "id": "O1",
+   "attacker_real": [
+    "PMCG3-042"
+   ],
+   "defender": "face down",
+   "after_reveal": "copied definition is FaceDownDefinition; reading attacks raises HiddenPropertyRead (FD1)",
+   "current_offer": "no stages",
+   "info": [
+    "public_field (face-down flag)",
+    "opponent_private (identity; not used)"
+   ],
+   "conclusion": "A",
+   "reason": "needs the opponent's secret; never offered for any identity",
+   "confirmation": "static"
+  },
+  {
+   "id": "O2",
+   "attacker_real": [
+    "PMCG3-042"
+   ],
+   "defender": "absent",
+   "after_reveal": "printed form; no attacks",
+   "current_offer": "no stages",
+   "info": [
+    "public_field"
+   ],
+   "conclusion": "A",
+   "reason": "nothing to copy",
+   "confirmation": "static"
+  },
+  {
+   "id": "O3",
+   "attacker_real": [
+    "PMCG3-042"
+   ],
+   "defender": "disguised / trainer as Pokemon / evolution without base",
+   "after_reveal": "TF2 / TF3 (command not accepted)",
+   "current_offer": "no stages",
+   "info": [
+    "public_field"
+   ],
+   "conclusion": "A",
+   "reason": "engine stops",
+   "confirmation": "static"
+  },
+  {
+   "id": "O4",
+   "attacker_real": [
+    "PMCG3-042"
+   ],
+   "defender": "copying stops (suppressing/transforming powers, baby form with ［いあつ］)",
+   "after_reveal": "TF1 remainder / unsupported",
+   "current_offer": "no stages",
+   "info": [
+    "public_field"
+   ],
+   "conclusion": "A",
+   "reason": "engine stops",
+   "confirmation": "static"
+  },
+  {
+   "id": "O5",
+   "attacker_real": [
+    "PMCG3-042"
+   ],
+   "defender": "face up, ［へんしん］ suppressed by the public field",
+   "after_reveal": "printed form; no attacks",
+   "current_offer": "no stages",
+   "info": [
+    "public_field"
+   ],
+   "conclusion": "A",
+   "reason": "no form change",
+   "confirmation": "static"
+  }
+ ],
+ "information_boundary": [
+  {
+   "item": "real card of the face-down attacker (Ditto / Lanturn), its printed stage, attacks, powers",
+   "class": "self_printed",
+   "use": "route split"
+  },
+  {
+   "item": "defender face-up / face-down / absent",
+   "class": "public_field",
+   "use": "O1, O2"
+  },
+  {
+   "item": "defender top card and its printed attacks and powers",
+   "class": "public_field",
+   "use": "post-reveal form (T1)"
+  },
+  {
+   "item": "defender disguise / trainer as Pokemon / evolution without base",
+   "class": "public_field",
+   "use": "O3"
+  },
+  {
+   "item": "power suppression on the field, opponent ［いあつ］",
+   "class": "public_field",
+   "use": "O4, O5"
+  },
+  {
+   "item": "identity of the opponent's face-down active",
+   "class": "opponent_private",
+   "use": "never"
+  },
+  {
+   "item": "opponent hand, deck, prizes",
+   "class": "opponent_private",
+   "use": "never"
+  },
+  {
+   "item": "acceptance of copied powers, TE1, form during the attack",
+   "class": "known_only_after_reveal_or_trial",
+   "use": "not predicted"
+  }
+ ],
+ "rejected_approaches": [
+  {
+   "approach": "reveal on a clone and call check_use_attack",
+   "reason": "changes the guarantee; copies unverified acceptance as verified"
+  },
+  {
+   "approach": "preflight on a clone including coins",
+   "reason": "no need; heavy; coin-dependent acceptance"
+  },
+  {
+   "approach": "call freeze_forms during candidate creation",
+   "reason": "mutates state; no effect on a face-down attacker"
+  },
+  {
+   "approach": "move the declaration choice to a post-reveal decision",
+   "reason": "changes the game choice point (p.309); no equivalence proof"
+  }
+ ],
+ "saved_results": [
+  {
+   "path": "kyuura-engine-verification-vai/verifier/runs/r2-unown-with-power/out/precondition_direct.json",
+   "case": "F_fd_ditto_transform_vs_unown_with_X",
+   "result": "accepted, 40, step 6, revealed, PMCG3-042"
+  },
+  {
+   "path": "kyuura-engine-verification-vai/verifier/runs/r2-unown-with-power/out/precondition_direct.json",
+   "case": "F_fd_ditto_super_vs_unown_with_X",
+   "result": "INVALID_ATTACK, unchanged"
+  },
+  {
+   "path": "kyuura-engine-verification-vai/verifier/runs/r2-with-power-design/out/with_power.json",
+   "case": "ExtraEnergyDamageWithAttack holders",
+   "result": "neo1-040 only, stage1"
+  },
+  {
+   "path": "kyuura-engine-verification-vai/verifier/runs/r2-face-down-declaration-design/out/addons.json",
+   "case": "attack_power_holders_basic_or_baby",
+   "result": "0"
+  },
+  {
+   "path": null,
+   "case": "L1 and T1-L direct commands",
+   "result": "no saved result"
+  }
+ ],
+ "existing_tests_read": [
+  "tests/test_legal_actions_r2_unown_v0_191.py:test_transform_route_is_not_offered"
+ ],
+ "precondition_tests": [
+  "PT1",
+  "PT2",
+  "PT3",
+  "PT4",
+  "PT5",
+  "PT6",
+  "PT7",
+  "PT8",
+  "PT9",
+  "PT10",
+  "PT11"
+ ],
+ "recommended_unit": {
+  "id": "C-TF0",
+  "kind": "precondition check with direct commands on constructed boards; no offer change, no engine change",
+  "covers": [
+   "PT1",
+   "PT2",
+   "PT3",
+   "PT4",
+   "PT5",
+   "PT6",
+   "PT7"
+  ],
+  "addresses": [
+   "SF1",
+   "SF2",
+   "SF3",
+   "SF4"
+  ]
+ },
+ "decisions": [
+  {
+   "id": "D-TF-1",
+   "question": "keep L1, T2, D1, S1, O1-O5 as A",
+   "recommendation": "yes"
+  },
+  {
+   "id": "D-TF-2",
+   "question": "T1 routes as C; face-down Ditto stays without stages",
+   "recommendation": "yes"
+  },
+  {
+   "id": "D-TF-3",
+   "question": "next unit is C-TF0",
+   "recommendation": "yes"
+  },
+  {
+   "id": "D-TF-4",
+   "question": "if T1 is offered later: stage 1 only, UseAttack.card = copied card, extra reason or display keys",
+   "recommendation": "decide after C-TF0"
+  },
+  {
+   "id": "D-TF-5",
+   "question": "stop SF1-SF3 as unsupported or unresolved in the engine",
+   "recommendation": "decide after C-TF0, separately from the offer"
+  }
+ ]
+}
