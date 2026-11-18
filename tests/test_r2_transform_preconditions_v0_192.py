@@ -13,6 +13,10 @@ v0.193（C-TF1。設計の 10 章）: SF1 を直した（写した力の宣言�
 ``test_r2_transform_copied_power_v0_193`` に置く。このモジュールは SF1 の旧動作を期待値にしていなかったので、期待は変えない（``CopiedPowerExistingStopTest`` は前から
 ``UsePokemonPower`` の側の既存の停止）。SF2 の写した［すいりょくはつでん］の経路は宣言で止まり、数えるところに着かない（数え方の裁定は未決のまま）。SF3（姿の固定）は直していない
 （きつねびの再現はワザといっしょに使う力を使わないので、この修正では隠れない。証跡に残す）。
+
+v0.194（C-TF2。docs/r2-transform-frozen-reveal-design.md）: SF3 を直した（ワザの宣言でおもてにした使い手の姿を、公開の直後に既存の固定へ足す）。修正の後の期待は
+``test_r2_transform_frozen_reveal_v0_194`` に置く。このモジュールは SF3 の旧動作を期待値にしていなかったので、期待は変えない（``FrozenAfterRevealTest`` のほかがいない対照は、
+固定の時点が公開の直後になるだけで、固定する姿・結果は同じ）。
 """
 
 from __future__ import annotations

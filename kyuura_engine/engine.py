@@ -155,6 +155,7 @@ from .effects import (
     copied_declared_power_problem,
     copied_source_use_problem,
     freeze_forms,
+    freeze_revealed_form,
     revert_ko_drop_check,
     release_frozen_forms,
     settle_super_transforms,
@@ -1099,6 +1100,10 @@ def _reveal_for_action(state: GameState, command, context: resolution.Context) -
         if reveal_face_down(state, command.player, subject, cause=kind) is None:
             resolution.after_power(state, context, knock_outs=False)
             return True
+        if isinstance(command, UseAttack):
+            # v0.194（C-TF2。docs/r2-transform-frozen-reveal-design.md 5.2 節）: 入口の固定は公開の前なので、おもてにした使い手の今の姿を、ワザの使用の確かめ・先読み・コスト・
+            # コイン・効果の前に、既存の固定へ足す（ほかの項目は変えない。CR-TRANSFORM-FROZEN-DURING-ACTION）。宣言する特殊能力・進化・にげるの公開（SF3-P など）は対象外
+            freeze_revealed_form(state, subject)
     if isinstance(command, UsePokemonPower):
         for pid in (command.source, command.target):
             located = state.find_pokemon(pid) if type(pid) is int else None

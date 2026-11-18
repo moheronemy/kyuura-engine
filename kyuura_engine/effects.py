@@ -15310,6 +15310,24 @@ def freeze_forms(state: GameState) -> None:
     state.frozen_forms = tuple(frozen)
 
 
+def freeze_revealed_form(state: GameState, pokemon: PokemonInPlay) -> None:
+    """v0.194（C-TF2。docs/r2-transform-frozen-reveal-design.md 5.2 節・案 A）: ワザのコマンドの入口でうらの使い手 ``pokemon`` をおもてにした直後に、変身する特殊能力を持てば、
+    その今の姿を固定に加える。入口の固定（``freeze_forms``）は公開の前で、うらの使い手（特殊能力を持たない）を入れず、ワザの始めの ``freeze_forms`` は固定が空でなければ何もしない
+    ので、場にほかの変身できるポケモンがいると、公開した使い手の姿を固定しなかった（SF3。0.193.0 まで）。
+
+    既に固定しているポケモン・ばけているポケモン・変身する特殊能力を持たないポケモンなら何もしない。ほかの項目の値は変えず、並びは ``freeze_forms`` と同じ（プレイヤー → ``in_play()``）。
+    姿は ``live_form`` で求める（変身がはたらかなければ printed。相手のバトル場がうらなら、そのカードの uid だけで正体を読まない）。ログ・乱数を変えない。"""
+    from .state import FrozenForm  # v0.124
+
+    if form_frozen(state, pokemon) or pokemon.disguise is not None or not transform_capable(state, pokemon):
+        return
+    form = live_form(state, pokemon)
+    added = FrozenForm(pokemon.pokemon_id, form.card, form.kind, form.defender)
+    # 既存の項目はそのまま残す（安定な並べかえ。場にいない項目があっても落とさず、あとに置く）。既存の項目は freeze_forms の並びなので、相対の順は変わらない
+    rank = {q.pokemon_id: i for i, q in enumerate(q for player in state.players for q in player.in_play())}
+    state.frozen_forms = tuple(sorted((*state.frozen_forms, added), key=lambda frozen: rank.get(frozen.pokemon, len(rank))))
+
+
 TRANSFORM_REVERT_KO_CODE = "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING"
 TRANSFORM_REVERT_KO_REASON = (
     "ワザ・宣言する特殊能力・トレーナーカードの処理が終わって変身の状態が変わり（もどる・姿が変わる）、HP がのっているダメージ以下になる（またはならなくなる）。もどったポケモンがきぜつすることは"
