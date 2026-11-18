@@ -48,6 +48,7 @@ v0.124（[docs/super-transform-dark-pulse-v0.124.md](super-transform-dark-pulse-
 - 保証の文 `GUARANTEE_ATTACK`（0.179.0 からの固定値）は変えていません。示す組は今も `check_use_attack` で確かめ、示さない組はそれが止める組の一部です。
   U7-4 の「止める組み合わせは `CANDIDATE_NOT_EXECUTABLE`」に対して、未検証の写した力だけは示さない（未提示の番号として `CANDIDATE_INPUT_INVALID`）という例外です。
   - 追記（2026-11-18、C-TF2）: この例外と U7-4 の文書・`GUARANTEE_ATTACK` の整合を確かめ、U7-4 の文書の訂正候補 AC-1〜3 を記録しました（API・定数は変えない）: [C-TF2 の修正設計](r2-transform-frozen-reveal-design.md)（2.2 節）
+  - 追記（2026-11-19）: AC-1〜AC-3 を U7-4 の文書に入れました（[U7-4 の文書](legal-actions-u7-4.md) 4.1 節・10 章）
   `UsePokemonPower` の候補（写した力は実行できない候補で示す）は変えていません。
 - うらのメタモンのワザの候補は今の `no_printed_attack`（not_implemented・段なし）の保留のままです。変身のあとのワザ・2 段目は示しません。うらの使い手の 2 段目が読むのはベンチの持ち主だけで、
   ベンチのポケモンは写した姿を持たない（化石のメタモンはバトル場でだけ変身し、［すごいへんしん］はバトル場をはなれるともどる。v0.124 の 5 章・v0.125 のテスト）ので、その分岐は変えていません（静的な確かめ）。
