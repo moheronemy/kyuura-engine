@@ -317,3 +317,101 @@ C-TF0 の結果、エンジンの処理が確かめられた場合に限って�
 - 相手のうらのバトル場を写すメタモンが FD1 で止まること（静的。`engine._apply` の説明と `FaceDownDefinition`）。
 - 拡張シートのメタモンが、うらのあいだに［すごいへんしん］の記録を持たないこと。記録はおもてで使ったときだけ作られ、うらのカードは手札から出た新しい場のポケモン、という読み取りです（静的）。
 - GUI での表示、new_game から到達した対戦でこれらの場面に来るか。
+
+## 9. C-TF0 の結果（2026-11-18。前提確認・限定テスト・分類）
+
+**範囲:** 構築盤面から直接のコマンドを送った確認です（PT1〜PT7）。**new_game から到達した対戦の結果ではありません。** 候補・入力 API の変身の経路は未対応のまま（うらのメタモンは「段なし」）で、
+PT8〜PT11 はしていません。エンジン・API・judge・検証用 AI・GUI・生成器・裁定・規約・版・形式は変えていません。コイン（0.188.0）・先読み修正（0.189.0）・［めいれい］（0.190.0）・アンノーンの
+別の持ち主（0.191.0）・自己持ち主（0.192.0）は完了済みのままです。
+
+- 基点 `claude/r2-transform-design` = `c4cc1ac`、作業は worktree `kyuura-engine-lt68`・ブランチ `claude/r2-transform-c-tf0`。
+- 証跡は `kyuura-engine-verification-vai/verifier/runs/r2-transform-c-tf0/`（再現スクリプト `scripts/c_tf0_direct.py`・対照 `scripts/compare.py`・提示の確かめ `scripts/offer_probe.py`、
+  結果 `out/c_tf0_direct.json`・`out/comparisons.json`・`out/offer_probe.json`・`out/classification.json`）。
+- 盤面は既存のテストの補助関数（`tests/test_secret_plan_v0_67` の `board`・`place`・`to_active`、`tests/helpers.build_test_state`）だけで作り、実行の前に不変条件・書き出し・観測を確かめました
+  （82 件すべて空）。人工の注入（ダメージ・持続する効果を直接入れる）はしていません。
+- 実行の前からある決められない姿（`form_problems`）のある盤面は、正しい対戦では先に止まっているので対照に使いません（2 件。D）。
+- 姿の固定の観測は、再現スクリプトのプロセスの中だけで `freeze_forms`・`release_frozen_forms` を包んで記録しました（値は変えない）。製品のコードは変えていません。
+
+### 9.1 実行と性質（結果に依存しない確かめ）
+
+| 項目 | 結果 |
+|---|---|
+| ケース | 82（決定への答え 14） |
+| 拒否 | 26 件。送信と 3 つの先読みの方法のすべてで状態・乱数・ログ・決定が不変 26 件 |
+| 受理（うらの使い手） | 26 件。公開は 1 回ずつ（相手の観測でも 1 回）26 件。ダメージの出来事は 1 回以下 |
+| 受理（おもての対照） | 30 件（公開なし） |
+| 先読みの方法（derived・legacy・derived_full） | 82/82 件で同じ状態・同じコード |
+| 相手の秘密だけが違う組（手札・うらのベンチの正体・うらのバトル場の正体） | 3/3 組で結果・本人の出来事が同じ（比較から外した項目は盤面の説明・観測の記録・コマンドの uid だけ） |
+
+### 9.2 SF1〜SF3・card 指定の実結果と分類
+
+分類: **A** 既存仕様どおり・**B** 不具合候補（期待との差を説明できる）・**C** 未裁定・資料不足・**D** 正しい盤面では再現できない・対象外。
+
+| 論点 | 再現した事実 | 静的な説明 | 仕様上の評価 | 分類 |
+|---|---|---|---|---|
+| SF1 写した with-attack の力 | うら・おもてのメタモン（ワザの相手はおもてのランターン、水 3）が `attack_power=True` で受理、20 → 50（2 段階の追加 30）。`card=None` と `card=写す相手` で同じ。アンノーンX を写したメタモンを自己持ち主にした `with_power` も受理（20 → 60）。同じ写した［すいりょくはつでん］を `UsePokemonPower` で使うと `UNSUPPORTED_TRANSFORM_COPIED_POWER` | `attack_power_check`・`group_attack_power_check` は `copied_declared_power_problem` を呼ばない | v0.124 の文書 3.1 節・8 章: 写すことを確かめていない宣言する特殊能力は未対応（確かめたのは `COPY_VERIFIED_DECLARED` の 4 つ）。`ExtraEnergyDamageWithAttack`・`CoinsUntilTailsBonusToGroupAttack` は入っていない。期待は宣言のときの `UNSUPPORTED_TRANSFORM_COPIED_POWER` | **B** |
+| SF2 「水」の数と TE1 | 水 2・闘 1 で 40（読み方 2 つで多い数が 2 と 3 に分かれるが TE1 で止めない）。水 3 で 50（雷雷の支払いに使う 2 枚も多い数に入る）。本物のランターンは雷雷水 30・雷雷水水 40 | `extra_units` は `energy_type_readings` を見ない。支払いを「水」以外で払う前提で数える | TE1（v0.49）は［へんしん］のメタモンの色のエネルギーを数えるとき、読み方で数が変われば止める（`transform_energy_question`・`energy_color_presence`）。混ざった場合は既存の方針との差。水だけの場合の「必要なエネルギーよりも多く」の数え方は記録で決まらない | 混ざった場合 **B（SF1 に従属）**。水だけ **C** |
+| SF3 公開したメタモンの固定の時点 | ほかの変身できるポケモン（自分のベンチの化石のメタモン・相手のベンチのメタモン）がいると、入口の固定にはそのポケモンだけが入り、使い手は固定されない。きつねび（ロコンを写す）で入れ替える答えは両方とも `UNRESOLVED_REACTIVE_SWITCH_TRANSFORMED_ATTACKER`（RX1）で止まる。ほかがいない・先におもての対照は固定され、フシギダネに 20（炎の弱点）・ゼニガメに 10 | 入口の固定（`engine.py:915`）は公開の前で、うらの使い手を入れない。ワザの始めの固定（`flow.py:167`）は、すでに固定があれば何もしない | CR-TRANSFORM-FROZEN-DURING-ACTION（CONFIRMED）・v0.124 の文書 3.5 節（「RX1 は起こらなくなり」）。期待は対照と同じ処理（20・10）。今は止める側に倒れ、違うダメージは出ていない | **B** |
+| card 指定（PT2） | 公開のあとの番号は写す相手のワザの位置（ラプラス 2 つ・R団のミュウツー 3 つ・ランターン 1 つ）。`card=None` と `card=写す相手の uid` は同じ状態。メタモン自身の uid・相手のベンチのカード・ワザの数を超える番号は `INVALID_ATTACK`（不変） | `find_attack_option` は今の姿のワザから選ぶ | v0.49 の `UseAttack.card`（省くと今の姿のカード） | **A** |
+| SF4 印刷のワザを持つ変身の登録 | 今の登録にない（メタモン 2 枚にワザがない） | 1 段目の `card=None` が印刷の位置で写す相手のワザを指す | 将来の登録の制約。今の不具合ではない | **D**（将来の制約として別記） |
+
+### 9.3 ケースごとの分類
+
+| ケース | 結果 | 分類 |
+|---|---|---|
+| `PT1_fd_ditto_vs_lanturn_WWW_plain`・`PT1_up_ditto_vs_lanturn_WWW_plain` | 受理 20（写したワザを、どの色でも払って使う（v0.49・v0.124）） | **A** |
+| `PT1_fd_ditto_vs_lanturn_WWW_power`・`PT1_fd_ditto_vs_lanturn_WWW_power_card_copied`・`PT1_up_ditto_vs_lanturn_WWW_power` | 受理 50（SF1） | **B** |
+| `PT1_up_ditto_vs_lanturn_UsePokemonPower_copied` | 拒否 UNSUPPORTED_TRANSFORM_COPIED_POWER（既存の停止（v0.124 3.1 節）） | **A** |
+| `PT1_up_real_lanturn_LLW_power`・`PT1_up_real_lanturn_LLW_plain` | 受理 20・受理 30（v0.88 の［すいりょくはつでん］） | **A** |
+| `SF1U_fd_ditto_vs_unownX_self_with_power`・`SF1U_up_ditto_vs_unownX_self_with_power` | 受理 60（SF1（写した［XXXXX］の自己持ち主）） | **B** |
+| `SF1U_up_ditto_vs_unownX_plain`・`SF1U_up_real_unownX_self_with_power` | 受理 20・受理 30（写したワザ・本物の自己持ち主（0.192.0）） | **A** |
+| `PT6_up_ditto_WWF_power`・`PT6_up_ditto_FFW_power`・`PT6_up_ditto_LLW_power`・`PT6_up_ditto_LLWW_power`・`PT6_fd_ditto_WWF_power` | 受理 30・受理 40（SF2（TE1 を聞かない。SF1 に従属）） | **B** |
+| `PT6_up_ditto_WWW_power`・`PT6_up_ditto_WW_power` | 受理 40・受理 50（SF2（水だけ。支払いの水を多い数に入れるか。SF1 に従属）） | **C** |
+| `PT6_up_ditto_WWW_plain`・`PT6_up_ditto_WW_plain`・`PT6_up_ditto_WWF_plain`・`PT6_up_ditto_FFW_plain`・`PT6_up_ditto_LLW_plain`・`PT6_up_ditto_LLWW_plain` | 受理 20（力を使わなければ数えない） | **A** |
+| `PT6_up_real_lanturn_LLW_power`・`PT6_up_real_lanturn_LLWW_power`・`PT6_up_real_lanturn_LLWF_power` | 受理 30・受理 40（v0.88 の［すいりょくはつでん］） | **A** |
+| `PT2_fd_lanturn_1atk_idx0_cardNone`・`PT2_fd_lanturn_1atk_idx0_cardCopied`・`PT2_fd_lanturn_1atk_idx1_cardNone`・`PT2_fd_lanturn_1atk_idx1_cardCopied`・`PT2_fd_lanturn_1atk_idx2_cardNone`・`PT2_fd_lanturn_1atk_idx2_cardCopied`・`PT2_fd_lanturn_1atk_idx0_cardOwnUid`・`PT2_fd_lanturn_1atk_idx0_cardOpponentBench`・`PT2_up_lanturn_1atk_idx1_cardNone`・`PT2_up_lanturn_1atk_idx1_cardCopied`・`PT2_fd_lapras_2atk_idx0_cardNone`・`PT2_fd_lapras_2atk_idx0_cardCopied`・`PT2_fd_lapras_2atk_idx1_cardNone`・`PT2_fd_lapras_2atk_idx1_cardCopied`・`PT2_fd_lapras_2atk_idx2_cardNone`・`PT2_fd_lapras_2atk_idx2_cardCopied`・`PT2_fd_lapras_2atk_idx0_cardOwnUid`・`PT2_fd_lapras_2atk_idx0_cardOpponentBench`・`PT2_up_lapras_2atk_idx1_cardNone`・`PT2_up_lapras_2atk_idx1_cardCopied`・`PT2_fd_rmewtwo_3atk_idx0_cardNone`・`PT2_fd_rmewtwo_3atk_idx0_cardCopied`・`PT2_fd_rmewtwo_3atk_idx1_cardNone`・`PT2_fd_rmewtwo_3atk_idx1_cardCopied`・`PT2_fd_rmewtwo_3atk_idx2_cardNone`・`PT2_fd_rmewtwo_3atk_idx2_cardCopied`・`PT2_fd_rmewtwo_3atk_idx0_cardOwnUid`・`PT2_fd_rmewtwo_3atk_idx0_cardOpponentBench`・`PT2_up_rmewtwo_3atk_idx1_cardNone`・`PT2_up_rmewtwo_3atk_idx1_cardCopied` | 受理 10・受理 20・受理 40・受理（ダメージなし）・拒否 INSUFFICIENT_ENERGY・拒否 INVALID_ATTACK（v0.49 の UseAttack.card・今の姿のワザの位置） | **A** |
+| `PT3_fd_ditto_vs_face_down_active`・`PT3_fd_ditto_vs_face_down_active_other_identity` | 拒否 UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY（FD1（正体に依らない）） | **A** |
+| `PT3_fd_ditto_vs_mysterious_fossil` | 拒否 INVALID_ATTACK（写す相手にワザがない（TF2 の前に INVALID_ATTACK）） | **A** |
+| `PT3_up_ditto_vs_mysterious_fossil` | 拒否 INVALID_ATTACK（実行の前から TF2（対照に使わない）） | **D** |
+| `PT4_fd_ditto_vs_lanturn_own_muk`・`PT4_up_ditto_vs_lanturn_own_muk` | 拒否 INVALID_ATTACK（［へんしん］が消えて印刷のまま（ワザなし）） | **A** |
+| `PT4_fd_ditto_vs_feraligatr_active` | 拒否 UNRESOLVED_TRANSFORM_COPIED_POWER（TF1 の残る部分（写す力が抑止の力）） | **A** |
+| `PT4_up_ditto_vs_feraligatr_active` | 受理 50（実行の前から TF1 の残る部分（対照に使わない）） | **D** |
+| `PT4_fd_ditto_vs_pichu_no_scare`・`PT4_up_ditto_vs_pichu_no_scare` | 受理（ダメージなし）（ベイビィを写す（［いあつ］なし）） | **A** |
+| `PT5_fd_ditto_vs_vulpix_other_ditto_on_bench`・`PT5_fd_ditto_vs_vulpix_opponent_bench_ditto` | 受理（ダメージなし）（SF3（入れ替える答えが RX1）） | **B** |
+| `PT5_fd_ditto_vs_vulpix_no_other`・`PT5_up_ditto_vs_vulpix_other_ditto_on_bench`・`PT5_up_ditto_vs_vulpix_no_other` | 受理（ダメージなし）（CR-TRANSFORM-FROZEN-DURING-ACTION） | **A** |
+| `SECRET_fd_ditto_vs_lanturn_opp_fd_bench_rattata`・`SECRET_fd_ditto_vs_lanturn_opp_fd_bench_lapras`・`SECRET_fd_ditto_vs_lanturn_opp_hand_fire`・`SECRET_fd_ditto_vs_lanturn_opp_hand_grass` | 受理 50（情報境界: 相手の秘密に依らない（受理の値そのものは SF1 の B）） | **A** |
+| `L1_fd_lanturn_plain`・`L1_fd_lanturn_power`・`D1_fd_brocks_ninetales` | 受理（ダメージなし）（たねでないので公開してトラッシュ（v0.67）） | **A** |
+| `T2_fd_ditto_super_vs_lanturn`・`T2_fd_ditto_super_vs_lanturn_plain` | 拒否 INVALID_ATTACK（うらの［すごいへんしん］は記録がなく、ワザなし） | **A** |
+| `(PT3) 相手のバトル場が空` | main の番の正しい盤面では作れない | **D** |
+| `(PT4) ベイビィの姿と相手の［いあつ］の循環` | ［いあつ］はバトル場でだけはたらき、写す相手も相手のバトル場なので作れない | **D** |
+
+### 9.4 影響範囲（B）
+
+- **SF1:** うらから公開したメタモンだけでなく、**おもてのメタモン**でも起こります。入力 API は、おもてのメタモンが写したランターンの［すいりょくはつでん］（`attack_power`）と、アンノーンX の［XXXXX］（`with_power`）を 2 段目に示します（`out/offer_probe.json`。うらのメタモンは今も段なし）。0.192.0 より前からの動きで、今回の単位で生まれたものではありません。new_game からこの場面に来るかは確かめていません。
+- **SF2:** SF1 の経路でだけ起こります。SF1 を直す（写した with-attack の力を未対応で止める）と、ここには来なくなります。
+- **SF3:** うらのメタモンがワザで公開され、場（どちらの側でも）にほかの変身できるポケモン（`transform_capable`）がいるときだけです。入れ替えのあとにダメージの要素があるワザ（きつねび・ひきずりだす）は RX1 で止まり、ないワザ（ふきとばし）は止まらずにワザの途中で姿が変わりえます（後者は静的。今回の盤面では結果の差は出ていない）。
+
+### 9.5 次に必要な判断と、最小の修正の単位（提案。今回は直していない）
+
+- **推奨する次の 1 単位: SF1 の修正（C-TF1）。** `attack_power_check` と、写した力の持ち主の `group_attack_power_check` で、`copied_declared_power_problem` と同じ確かめを通し、
+  `COPY_VERIFIED_DECLARED` にない写した力は既存の `UNSUPPORTED_TRANSFORM_COPIED_POWER` で止める。新しい停止コードは作らない（既存の仕様の適用漏れ）。
+  - 最小の再現: おもての化石のメタモン（水 3）・相手のバトル場はおもてのランターン、`UseAttack(0, 0, attack_power=True)`。今は受理して 50、期待は拒否（不変）。
+  - 変わるもの: 版・behavior（受理 → 拒否）・候補（おもてのメタモンの 2 段目の `attack_power`・`with_power` を示さない、か示して拒否するか）・停止の台帳。利用者が決める（D-TF-6）。
+- **SF3 は別の単位（C-TF2）にします。** 公開のあとに、固定にない変身できる使い手を固定へ加える（入口の固定を公開のあとに移すか、ワザの始めの固定が足りない分を足す）。期待値は対照と同じ（9.2 節）。
+- **SF2（水だけの数え方）は C:** 写した［すいりょくはつでん］を使えるようにする（`COPY_VERIFIED_DECLARED` に入れる）ときに、裁定（多い「水」に支払いの「水」を入れるか）か、TE1 と同じ問いで止めるかを決めます。SF1 を直す間は決めなくてよいです。
+- **T1 の候補（D-TF-2・D-TF-4）は保留のまま** です。今回の結果だけで示せるとはしません（SF1〜SF3 の扱いが決まってから）。
+
+| 番号 | 事項 | 推奨 |
+|---|---|---|
+| D-TF-6 | SF1 を、既存の `UNSUPPORTED_TRANSFORM_COPIED_POWER` の適用漏れとして直す単位（C-TF1）を次にする。候補の側（おもてのメタモンの 2 段目）をいっしょに変えるか | する。候補は拒否と合わせて示さない |
+| D-TF-7 | SF3 を、CR-TRANSFORM-FROZEN-DURING-ACTION の適用漏れとして直す単位（C-TF2）にする | C-TF1 のあと |
+| D-TF-8 | SF2 の水だけの数え方を、写した力を確かめるときに決める（裁定か TE1 と同じ問い） | 今は決めない |
+
+### 9.6 限定テストと互換性
+
+- 追加: `tests/test_r2_transform_preconditions_v0_192.py`（10 件）。期待値は既存の仕様から決まるものだけです（`card` と番号・既存の停止 FD1・TF1 の残る部分・`UNSUPPORTED_TRANSFORM_COPIED_POWER`・`INVALID_ATTACK`・ほかがいないときの固定・L1/D1 のトラッシュ・相手の秘密に依らない結果・拒否の不変）。SF1〜SF3 の今の動きは期待値にしていません。
+- 停止のコードは、エンジンの定数（`errors.SECRET_PLAN_HIDDEN_CODE`・`effects.TRANSFORM_POWER_CODE`・`effects.TRANSFORM_COPIED_UNSUPPORTED_CODE`）で参照しました。人工のコードは増やしていません。
+- **停止の台帳の生成検査:** 生成器は定数の参照もテストの参照として数えるので、隔離生成の台帳は正式の台帳と 10 路（3 コード: FD1・TF1 の残る部分・`UNSUPPORTED_TRANSFORM_COPIED_POWER` の `tests` の件数とファイルの一覧）だけ違います。分類はすべて test_reference です（`out/ledger_diff_final.json`）。
+  そのため、このブランチでは `scripts/build_stop_policy_classification.py --check` が「生成物が古い」で終了コード 1 になります（基点 `c4cc1ac` では 0）。**今回は正式の同期をしていません**（台帳の同期は別の作業）。
+- 関連テスト: 13 モジュールを 1 つずつ別のプロセスで実行し、13 が成功（`out/tests_final/exit_codes.json`）。全体のテスト・対戦・seed の探索・旧記録の judge/replay はしていません。
+- 版 0.192.0・TOOL_VERSION 13・判定の規則 10・形式 7・API の形式 1・behavior・instrumentation・各 basis・道具の識別は変えていません（`out/identity.json`）。

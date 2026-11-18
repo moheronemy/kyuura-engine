@@ -579,5 +579,380 @@
    "question": "stop SF1-SF3 as unsupported or unresolved in the engine",
    "recommendation": "decide after C-TF0, separately from the offer"
   }
- ]
+ ],
+ "c_tf0": {
+  "date": "2026-11-18",
+  "kind": "precondition_check_direct_commands_on_constructed_boards",
+  "reached_from_new_game": false,
+  "offer_changed": false,
+  "base": "c4cc1ac7050fedc353fe6c2533480dad0b762b6a",
+  "branch": "claude/r2-transform-c-tf0",
+  "evidence": "kyuura-engine-verification-vai/verifier/runs/r2-transform-c-tf0/",
+  "classes": {
+   "A": "matches existing spec",
+   "B": "bug candidate (difference from spec explained)",
+   "C": "unresolved ruling or insufficient record",
+   "D": "not reproducible on a valid board / out of scope"
+  },
+  "findings": [
+   {
+    "id": "SF1",
+    "class": "B",
+    "reproduced": true,
+    "spec": "v0.124 3.1 / 8: unverified copied declared powers are UNSUPPORTED_TRANSFORM_COPIED_POWER",
+    "expected": "reject at declaration with UNSUPPORTED_TRANSFORM_COPIED_POWER",
+    "actual": "accepted; copied power applied (Lanturn 20->50, Unown X self 20->60)",
+    "face_up_too": true,
+    "offered_by_api_for_face_up_ditto": true
+   },
+   {
+    "id": "SF2",
+    "class": "B (subordinate to SF1) / C (all-Water count)",
+    "reproduced": true,
+    "spec": "TE1 (v0.49): stop when Ditto's any-colour reading changes a typed-energy count",
+    "actual": "no TE1; extra_units ignores readings and counts paying Waters"
+   },
+   {
+    "id": "SF3",
+    "class": "B",
+    "reproduced": true,
+    "spec": "CR-TRANSFORM-FROZEN-DURING-ACTION (CONFIRMED), v0.124 3.5",
+    "expected": "same as controls (Bulbasaur 20, Squirtle 10)",
+    "actual": "switch answers rejected with UNRESOLVED_REACTIVE_SWITCH_TRANSFORMED_ATTACKER (RX1)",
+    "condition": "face-down attacker revealed by the attack and another transform_capable Pokemon in play (either side)"
+   },
+   {
+    "id": "card",
+    "class": "A",
+    "reproduced": true,
+    "spec": "v0.49 UseAttack.card",
+    "actual": "card=None == card=copied uid; other uids INVALID_ATTACK"
+   },
+   {
+    "id": "SF4",
+    "class": "D",
+    "reproduced": false,
+    "note": "future registration constraint (no transform card with printed attacks); not a current bug"
+   }
+  ],
+  "cases": [
+   {
+    "cases": [
+     "PT1_fd_ditto_vs_lanturn_WWW_plain",
+     "PT1_up_ditto_vs_lanturn_WWW_plain"
+    ],
+    "result": "受理 20（写したワザを、どの色でも払って使う（v0.49・v0.124））",
+    "class": "A"
+   },
+   {
+    "cases": [
+     "PT1_fd_ditto_vs_lanturn_WWW_power",
+     "PT1_fd_ditto_vs_lanturn_WWW_power_card_copied",
+     "PT1_up_ditto_vs_lanturn_WWW_power"
+    ],
+    "result": "受理 50（SF1）",
+    "class": "B"
+   },
+   {
+    "cases": [
+     "PT1_up_ditto_vs_lanturn_UsePokemonPower_copied"
+    ],
+    "result": "拒否 UNSUPPORTED_TRANSFORM_COPIED_POWER（既存の停止（v0.124 3.1 節））",
+    "class": "A"
+   },
+   {
+    "cases": [
+     "PT1_up_real_lanturn_LLW_power",
+     "PT1_up_real_lanturn_LLW_plain"
+    ],
+    "result": "受理 20・受理 30（v0.88 の［すいりょくはつでん］）",
+    "class": "A"
+   },
+   {
+    "cases": [
+     "SF1U_fd_ditto_vs_unownX_self_with_power",
+     "SF1U_up_ditto_vs_unownX_self_with_power"
+    ],
+    "result": "受理 60（SF1（写した［XXXXX］の自己持ち主））",
+    "class": "B"
+   },
+   {
+    "cases": [
+     "SF1U_up_ditto_vs_unownX_plain",
+     "SF1U_up_real_unownX_self_with_power"
+    ],
+    "result": "受理 20・受理 30（写したワザ・本物の自己持ち主（0.192.0））",
+    "class": "A"
+   },
+   {
+    "cases": [
+     "PT6_up_ditto_WWF_power",
+     "PT6_up_ditto_FFW_power",
+     "PT6_up_ditto_LLW_power",
+     "PT6_up_ditto_LLWW_power",
+     "PT6_fd_ditto_WWF_power"
+    ],
+    "result": "受理 30・受理 40（SF2（TE1 を聞かない。SF1 に従属））",
+    "class": "B"
+   },
+   {
+    "cases": [
+     "PT6_up_ditto_WWW_power",
+     "PT6_up_ditto_WW_power"
+    ],
+    "result": "受理 40・受理 50（SF2（水だけ。支払いの水を多い数に入れるか。SF1 に従属））",
+    "class": "C"
+   },
+   {
+    "cases": [
+     "PT6_up_ditto_WWW_plain",
+     "PT6_up_ditto_WW_plain",
+     "PT6_up_ditto_WWF_plain",
+     "PT6_up_ditto_FFW_plain",
+     "PT6_up_ditto_LLW_plain",
+     "PT6_up_ditto_LLWW_plain"
+    ],
+    "result": "受理 20（力を使わなければ数えない）",
+    "class": "A"
+   },
+   {
+    "cases": [
+     "PT6_up_real_lanturn_LLW_power",
+     "PT6_up_real_lanturn_LLWW_power",
+     "PT6_up_real_lanturn_LLWF_power"
+    ],
+    "result": "受理 30・受理 40（v0.88 の［すいりょくはつでん］）",
+    "class": "A"
+   },
+   {
+    "cases": [
+     "PT2_fd_lanturn_1atk_idx0_cardNone",
+     "PT2_fd_lanturn_1atk_idx0_cardCopied",
+     "PT2_fd_lanturn_1atk_idx1_cardNone",
+     "PT2_fd_lanturn_1atk_idx1_cardCopied",
+     "PT2_fd_lanturn_1atk_idx2_cardNone",
+     "PT2_fd_lanturn_1atk_idx2_cardCopied",
+     "PT2_fd_lanturn_1atk_idx0_cardOwnUid",
+     "PT2_fd_lanturn_1atk_idx0_cardOpponentBench",
+     "PT2_up_lanturn_1atk_idx1_cardNone",
+     "PT2_up_lanturn_1atk_idx1_cardCopied",
+     "PT2_fd_lapras_2atk_idx0_cardNone",
+     "PT2_fd_lapras_2atk_idx0_cardCopied",
+     "PT2_fd_lapras_2atk_idx1_cardNone",
+     "PT2_fd_lapras_2atk_idx1_cardCopied",
+     "PT2_fd_lapras_2atk_idx2_cardNone",
+     "PT2_fd_lapras_2atk_idx2_cardCopied",
+     "PT2_fd_lapras_2atk_idx0_cardOwnUid",
+     "PT2_fd_lapras_2atk_idx0_cardOpponentBench",
+     "PT2_up_lapras_2atk_idx1_cardNone",
+     "PT2_up_lapras_2atk_idx1_cardCopied",
+     "PT2_fd_rmewtwo_3atk_idx0_cardNone",
+     "PT2_fd_rmewtwo_3atk_idx0_cardCopied",
+     "PT2_fd_rmewtwo_3atk_idx1_cardNone",
+     "PT2_fd_rmewtwo_3atk_idx1_cardCopied",
+     "PT2_fd_rmewtwo_3atk_idx2_cardNone",
+     "PT2_fd_rmewtwo_3atk_idx2_cardCopied",
+     "PT2_fd_rmewtwo_3atk_idx0_cardOwnUid",
+     "PT2_fd_rmewtwo_3atk_idx0_cardOpponentBench",
+     "PT2_up_rmewtwo_3atk_idx1_cardNone",
+     "PT2_up_rmewtwo_3atk_idx1_cardCopied"
+    ],
+    "result": "受理 10・受理 20・受理 40・受理（ダメージなし）・拒否 INSUFFICIENT_ENERGY・拒否 INVALID_ATTACK（v0.49 の UseAttack.card・今の姿のワザの位置）",
+    "class": "A"
+   },
+   {
+    "cases": [
+     "PT3_fd_ditto_vs_face_down_active",
+     "PT3_fd_ditto_vs_face_down_active_other_identity"
+    ],
+    "result": "拒否 UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY（FD1（正体に依らない））",
+    "class": "A"
+   },
+   {
+    "cases": [
+     "PT3_fd_ditto_vs_mysterious_fossil"
+    ],
+    "result": "拒否 INVALID_ATTACK（写す相手にワザがない（TF2 の前に INVALID_ATTACK））",
+    "class": "A"
+   },
+   {
+    "cases": [
+     "PT3_up_ditto_vs_mysterious_fossil"
+    ],
+    "result": "拒否 INVALID_ATTACK（実行の前から TF2（対照に使わない））",
+    "class": "D"
+   },
+   {
+    "cases": [
+     "PT4_fd_ditto_vs_lanturn_own_muk",
+     "PT4_up_ditto_vs_lanturn_own_muk"
+    ],
+    "result": "拒否 INVALID_ATTACK（［へんしん］が消えて印刷のまま（ワザなし））",
+    "class": "A"
+   },
+   {
+    "cases": [
+     "PT4_fd_ditto_vs_feraligatr_active"
+    ],
+    "result": "拒否 UNRESOLVED_TRANSFORM_COPIED_POWER（TF1 の残る部分（写す力が抑止の力））",
+    "class": "A"
+   },
+   {
+    "cases": [
+     "PT4_up_ditto_vs_feraligatr_active"
+    ],
+    "result": "受理 50（実行の前から TF1 の残る部分（対照に使わない））",
+    "class": "D"
+   },
+   {
+    "cases": [
+     "PT4_fd_ditto_vs_pichu_no_scare",
+     "PT4_up_ditto_vs_pichu_no_scare"
+    ],
+    "result": "受理（ダメージなし）（ベイビィを写す（［いあつ］なし））",
+    "class": "A"
+   },
+   {
+    "cases": [
+     "PT5_fd_ditto_vs_vulpix_other_ditto_on_bench",
+     "PT5_fd_ditto_vs_vulpix_opponent_bench_ditto"
+    ],
+    "result": "受理（ダメージなし）（SF3（入れ替える答えが RX1））",
+    "class": "B"
+   },
+   {
+    "cases": [
+     "PT5_fd_ditto_vs_vulpix_no_other",
+     "PT5_up_ditto_vs_vulpix_other_ditto_on_bench",
+     "PT5_up_ditto_vs_vulpix_no_other"
+    ],
+    "result": "受理（ダメージなし）（CR-TRANSFORM-FROZEN-DURING-ACTION）",
+    "class": "A"
+   },
+   {
+    "cases": [
+     "SECRET_fd_ditto_vs_lanturn_opp_fd_bench_rattata",
+     "SECRET_fd_ditto_vs_lanturn_opp_fd_bench_lapras",
+     "SECRET_fd_ditto_vs_lanturn_opp_hand_fire",
+     "SECRET_fd_ditto_vs_lanturn_opp_hand_grass"
+    ],
+    "result": "受理 50（情報境界: 相手の秘密に依らない（受理の値そのものは SF1 の B））",
+    "class": "A"
+   },
+   {
+    "cases": [
+     "L1_fd_lanturn_plain",
+     "L1_fd_lanturn_power",
+     "D1_fd_brocks_ninetales"
+    ],
+    "result": "受理（ダメージなし）（たねでないので公開してトラッシュ（v0.67））",
+    "class": "A"
+   },
+   {
+    "cases": [
+     "T2_fd_ditto_super_vs_lanturn",
+     "T2_fd_ditto_super_vs_lanturn_plain"
+    ],
+    "result": "拒否 INVALID_ATTACK（うらの［すごいへんしん］は記録がなく、ワザなし）",
+    "class": "A"
+   },
+   {
+    "cases": [
+     "(PT3) 相手のバトル場が空"
+    ],
+    "result": "main の番の正しい盤面では作れない",
+    "class": "D"
+   },
+   {
+    "cases": [
+     "(PT4) ベイビィの姿と相手の［いあつ］の循環"
+    ],
+    "result": "［いあつ］はバトル場でだけはたらき、写す相手も相手のバトル場なので作れない",
+    "class": "D"
+   }
+  ],
+  "summary": {
+   "rejections": 26,
+   "rejections_unchanged": 26,
+   "accepted": 56,
+   "accepted_face_down_reveal_once": 26,
+   "accepted_face_down": 26,
+   "accepted_face_up_no_reveal": 30,
+   "accepted_damage_at_most_once": 56,
+   "preflight_modes_agree": 82,
+   "preflight_cases": 82,
+   "secret_groups_equal": 3,
+   "secret_groups": 3
+  },
+  "offer_probe": {
+   "up_ditto_vs_lanturn_WWW": {
+    "processability": "may_stop_later",
+    "stage_option_addons": [
+     [
+      null
+     ],
+     [
+      "attack_power"
+     ]
+    ],
+    "state_unchanged": true
+   },
+   "up_real_lanturn_LLW": {
+    "processability": "may_stop_later",
+    "stage_option_addons": [
+     [
+      null
+     ],
+     [
+      "attack_power"
+     ]
+    ],
+    "state_unchanged": true
+   },
+   "up_ditto_vs_unownX": {
+    "processability": "may_stop_later",
+    "stage_option_addons": [
+     [
+      null
+     ],
+     [
+      "with_power"
+     ]
+    ],
+    "state_unchanged": true
+   },
+   "fd_ditto_vs_lanturn_WWW": {
+    "processability": "not_implemented",
+    "stage_option_addons": [],
+    "state_unchanged": true
+   },
+   "fd_ditto_vs_unownX": {
+    "processability": "not_implemented",
+    "stage_option_addons": [],
+    "state_unchanged": true
+   }
+  },
+  "decisions": [
+   {
+    "id": "D-TF-6",
+    "what": "fix SF1 as a missed application of UNSUPPORTED_TRANSFORM_COPIED_POWER (C-TF1); whether to change the face-up Ditto stage-2 offer together",
+    "recommendation": "yes; do not offer what is rejected"
+   },
+   {
+    "id": "D-TF-7",
+    "what": "fix SF3 as a missed application of CR-TRANSFORM-FROZEN-DURING-ACTION (C-TF2)",
+    "recommendation": "after C-TF1"
+   },
+   {
+    "id": "D-TF-8",
+    "what": "decide SF2 all-Water count when verifying the copied power (ruling or TE1-like stop)",
+    "recommendation": "not now"
+   }
+  ],
+  "recommended_next_unit": "C-TF1 (SF1 fix)",
+  "t1_offer": "still on hold (D-TF-2, D-TF-4)",
+  "test_module": "tests/test_r2_transform_preconditions_v0_192.py",
+  "related_test_modules": 13,
+  "related_test_modules_ok": 13
+ }
 }
