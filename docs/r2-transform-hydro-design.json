@@ -954,5 +954,124 @@
   "test_module": "tests/test_r2_transform_preconditions_v0_192.py",
   "related_test_modules": 13,
   "related_test_modules_ok": 13
+ },
+ "c_tf1": {
+  "date": "2026-11-18",
+  "kind": "fix (SF1) + limited tests + version + distribution check",
+  "version": "0.193.0",
+  "new_ruling": false,
+  "new_stop_code": false,
+  "base": "af1ccb4",
+  "implementation_commit": "ff70892",
+  "distribution_commit": "a85b773",
+  "branch": "claude/r2-transform-c-tf1",
+  "document": "docs/r2-transform-copied-power-v0.193.md",
+  "evidence": "kyuura-engine-verification-vai/verifier/runs/r2-transform-c-tf1",
+  "check": {
+   "function": "kyuura_engine/effects.py:copied_attack_power_check",
+   "reuses": "copied_declared_power_problem",
+   "code": "UNSUPPORTED_TRANSFORM_COPIED_POWER",
+   "attack_power_order": [
+    "special conditions",
+    "power_suppressed",
+    "powers_use_prevented",
+    "copied (new)",
+    "counting (RB1/BZ2/MEC1/CE1/CE2/TE1)"
+   ],
+   "group_order": [
+    "holder in play",
+    "power present",
+    "usable_for",
+    "power_suppressed",
+    "powers_use_prevented",
+    "copied (new)",
+    "other_use_problem"
+   ],
+   "differences_from_use_pokemon_power": [
+    "confused copied Lanturn keeps POKEMON_CONFUSED",
+    "copied Lanturn with undetermined counting gets UNSUPPORTED instead of the counting stop"
+   ]
+  },
+  "api": {
+   "function": "kyuura_engine/legal_actions.py:_copied_addon",
+   "face_up_stage2": "unverified copied powers not offered (ids left as gaps; check -> CANDIDATE_INPUT_INVALID)",
+   "guarantee_attack_changed": false,
+   "face_down_ditto": "no_printed_attack hold kept",
+   "use_pokemon_power_candidates_changed": false
+  },
+  "results": {
+   "copied_attack_power": "rejected (was accepted 50 / 40)",
+   "copied_self_xxxxx": "rejected (was 60)",
+   "copied_self_anger": "rejected (was 20)",
+   "copied_in_with_powers": "rejected in either order (was 60)",
+   "other_real_holder_only": "accepted 20 (unchanged)",
+   "originals": "unchanged (30, 30, 10, 30)"
+  },
+  "sf2": "copied hydroelectric path rejected before counting; Water-only ruling undecided (D-TF-8)",
+  "sf3": "not fixed; C-TF0 PT5 records unchanged (C-TF2, D-TF-7)",
+  "c_tf0_rerun": {
+   "records": 83,
+   "same": 67,
+   "changed": 16,
+   "changed_all_sf1_to_unsupported": true
+  },
+  "tests": {
+   "module": "tests/test_r2_transform_copied_power_v0_193.py",
+   "count": 19,
+   "failed_before_fix": 7,
+   "passed_before_fix": 12,
+   "related_modules_ok": 27,
+   "after_version_modules_ok": 10
+  },
+  "identity": {
+   "behavior": [
+    "bfa6dc06",
+    "9e821a38"
+   ],
+   "instrumentation_same": true,
+   "p1": [
+    "2ed8732f",
+    "2ca139aa"
+   ],
+   "p2": [
+    "720f4641",
+    "0a7c9c0a"
+   ],
+   "p3": [
+    "9499db41",
+    "5b97bec6"
+   ],
+   "r": [
+    "b130de9a",
+    "e55ca070"
+   ],
+   "tool_version": 13,
+   "tool_digest_same": true,
+   "judge_rules": 10,
+   "formats": 7,
+   "api_format": 1
+  },
+  "ledger": {
+   "paths": 226,
+   "line_position": 213,
+   "test_reference": 10,
+   "implementation_sites_added": 2,
+   "unclassified": 0,
+   "synced": true,
+   "check_exit": 0
+  },
+  "distribution": {
+   "wheel_sha256": "5B59FF8515C052A25AFB67786BBD3A866388BBE6E33426A5A706DD108A8F8465",
+   "check_distribution": "required=62 problems=0",
+   "install": "git URL + full hash, non-editable, no requires, 62 files, identity equal",
+   "smoke_result_sha256": "f5c68cff7f21c360d67624ea0ea73e3beb8d79e8a5a2e1072fe4494d1c7bfd17"
+  },
+  "remaining": [
+   "SF3 (C-TF2, D-TF-7)",
+   "Water-only count (D-TF-8)",
+   "face-down Ditto T1 offer (D-TF-2, D-TF-4)",
+   "GUI dependency update (separate unit)",
+   "reach from new_game not checked"
+  ]
  }
 }

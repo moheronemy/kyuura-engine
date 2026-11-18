@@ -415,3 +415,15 @@ PT8〜PT11 はしていません。エンジン・API・judge・検証用 AI・G
   そのため、このブランチでは `scripts/build_stop_policy_classification.py --check` が「生成物が古い」で終了コード 1 になります（基点 `c4cc1ac` では 0）。**今回は正式の同期をしていません**（台帳の同期は別の作業）。
 - 関連テスト: 13 モジュールを 1 つずつ別のプロセスで実行し、13 が成功（`out/tests_final/exit_codes.json`）。全体のテスト・対戦・seed の探索・旧記録の judge/replay はしていません。
 - 版 0.192.0・TOOL_VERSION 13・判定の規則 10・形式 7・API の形式 1・behavior・instrumentation・各 basis・道具の識別は変えていません（`out/identity.json`）。
+
+## 10. C-TF1 の採用と修正の結果（2026-11-18。0.193.0）
+
+- D-TF-6 を採り、SF1 を既存の `UNSUPPORTED_TRANSFORM_COPIED_POWER` の適用漏れとして直しました（新しい裁定・停止コード・規約はない）。候補は拒否と合わせて示しません（D-TF-6 の推奨）。
+- 直接のコマンド: `attack_power_check` と `group_attack_power_check` が、使えない・消える効果の確かめのあと、力の型ごとの確かめの前に `copied_attack_power_check`（`copied_declared_power_problem`）を呼びます。
+  本来のカードの力・写していない別の持ち主の力・`COPY_VERIFIED_DECLARED` の経路は変えません。判定の順と、`UsePokemonPower` との 2 つの違い（こんらんのコード・写した力の数え方の停止）は [v0.193 の文書](r2-transform-copied-power-v0.193.md) 2 章。
+- 入力 API: おもての使い手の 2 段目で、同じ構造の確かめが止める写した力を示しません（番号は欠番）。0.192.0 の 9.4 節の影響（おもてのメタモンの 2 段目の `attack_power`・`with_power`）はなくなりました。
+- SF2: 写した［すいりょくはつでん］の経路は宣言で未対応になり、数えるところに着きません。TE1 を回避した計算を正当なものにはしていません。水だけの数え方は未裁定のまま（D-TF-8）。
+- SF3: 直していません。C-TF0 の記録を流し直すと、きつねびの 5 つの記録は同じ（RX1 の再現は残る）。C-TF2（D-TF-7）。
+- `card=None` と明示の `card` の扱いは変えていません（C-TF0 の記録の PT2 は同じ）。
+- 裏向きメタモンの T1 の候補（D-TF-2・D-TF-4）は保留のまま。
+- 実装 `ff70892`・版 `a85b773`（配布の確かめの固定コミット）。テスト・識別・basis・生成物・配布の確かめは [v0.193 の文書](r2-transform-copied-power-v0.193.md)。

@@ -300,3 +300,7 @@ R-2 に残る変身の経路（TF・R4）と［すいりょくはつでん］を
 ## 19. 変身の経路の前提確認 C-TF0（2026-11-18）
 
 C-TF0（構築盤面の直接のコマンド。new_game からの到達ではない。候補・入力 API は未対応のまま）: SF1（写した with-attack の力が `UNSUPPORTED_TRANSFORM_COPIED_POWER` を通らない。おもてのメタモンでも起こり、候補にも出る）と SF3（ほかの変身できるポケモンがいると公開したメタモンの姿を固定しない。RX1 で止まる）は不具合候補（B）、SF2 は SF1 に従属（水だけの数え方は C）、card 指定は A、SF4 は将来の制約。推奨する次の単位は C-TF1（SF1 の修正）。T1 の候補は保留のまま。コイン・［めいれい］・アンノーンの自己／別の持ち主は完了済みのまま: [変身の経路の前提確認 C-TF0](r2-transform-hydro-design.md)（9 章）
+
+## 20. 変身で写した力の未対応 C-TF1（2026-11-18。0.193.0）
+
+C-TF1（0.193.0）: 変身で写した、ワザといっしょに宣言する特殊能力（［すいりょくはつでん］の `attack_power`・［XXXXX］・［ANGER］の `with_power`・`with_powers`）に、v0.124 の既存の確かめ `copied_declared_power_problem` を当てた（`COPY_VERIFIED_DECLARED` になければ既存の `UNSUPPORTED_TRANSFORM_COPIED_POWER` で宣言を拒否。新しい裁定・停止コード・規約ではなく、既存の制限の適用漏れ（C-TF0 の SF1）の修正）。入力 API は、おもての使い手の 2 段目で同じ確かめが止める写した力を示さない（直接のコマンドと一致。本来の持ち主・写していない別の持ち主は変えない）。SF2 の写した［すいりょくはつでん］の経路は未対応の拒否になり、数え方の裁定は未決のまま。SF3（姿の固定）と裏向きメタモンの候補（no_printed_attack の保留）は残件、GUI の依存の更新は別の単位。配布の確かめの固定コミットは `a85b773`: [v0.193 の文書](r2-transform-copied-power-v0.193.md)・[設計の 10 章](r2-transform-hydro-design.md)
