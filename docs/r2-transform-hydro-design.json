@@ -1073,5 +1073,29 @@
    "GUI dependency update (separate unit)",
    "reach from new_game not checked"
   ]
+ },
+ "c_tf2": {
+  "date": "2026-11-18",
+  "kind": "investigation_design_documentation_only",
+  "document": "docs/r2-transform-frozen-reveal-design.md",
+  "table": "docs/r2-transform-frozen-reveal-design.json",
+  "sf3_fix": "not_implemented",
+  "c_tf1": "completed_unchanged",
+  "engine_version": "0.193.0",
+  "cause": "entry freeze (engine.py:915) runs before the reveal and skips the face-down attacker; attack-body freeze (flow.py:167) is a no-op when frozen_forms is non-empty",
+  "recommendation": "A: add only the revealed attacker to the existing frozen info right after the reveal",
+  "correction_c_tf1_ledger": "c_tf1.ledger.implementation_sites_added (2) counts added site values; in paths the 'other' kind is 3 (213 + 10 + 3 = 226)",
+  "api_doc_correction_candidates": [
+   "AC-1",
+   "AC-2",
+   "AC-3"
+  ],
+  "decisions": [
+   "D-TF-9",
+   "D-TF-10",
+   "D-TF-11",
+   "D-TF-12",
+   "D-TF-13"
+  ]
  }
 }
