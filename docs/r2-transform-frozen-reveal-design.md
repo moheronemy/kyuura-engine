@@ -323,3 +323,36 @@ if isinstance(command, UseAttack):
 - `freeze_revealed_form` が隠れた項目を読まないこと（FD1 の位置が変わらないこと）は、実装のときに TC9 で確かめます。
 - new_game からこの場面に届くか、GUI は確かめていません。
 - 文書の追加が生成検査に影響するかは実行していません。C-TF1 では新しい文書を加えたあとも生成検査は 0 でした。
+
+## 11. 実装の結果（v0.194、2026-11-18）
+
+- 案 A を実装した（[v0.194 の文書](r2-transform-frozen-reveal-v0.194.md)）。実装・テスト・台帳 `c52f906`、版 `f747dc9`（配布の確かめの固定コミット）。
+- 5.2 節の案からの違い: 不変条件の内部の例外（場にいない項目で RuntimeError）を入れず、安定な並べかえで差しこんだ。例外を足すと停止の台帳の内部の確かめの数が変わり、機械的でない差になるため（隔離生成で確かめた。場にいない項目は落とさない）。
+- 修正前の 0.193.0 の対照（証跡 `r2-transform-c-tf2-impl/out/probe_before.json`）で、TC3 のおもての対照は 10 でした。TC7 の対照は下の表のとおりです。
+- 20 ケースの結果（F 5・K 15。passed_existing は既存のテストで維持）:
+
+| ID | 区分 | 結果 | 内容 |
+|---|---|---|---|
+| TC1 | F | passed | 修正前は RX1。修正後は unresolved_choices が空、フシギダネ 20・ゼニガメ 10、ワザのあと固定は空。おもての対照と一致 |
+| TC2 | F | passed | 修正前は RX1。修正後はフシギダネ 20。相手のメタモンの項目は printed のまま |
+| TC3 | F_new | passed | おもての対照を修正前に実測して 10（相手のメタモンは printed の固定）。修正後のうらも 10 |
+| TC4 | K | passed | 入れ替えない答えは 10 のまま |
+| TC5 | K | passed | ほかがいない盤面の結果・固定の中身は同じ。固定の時点が公開の直後になり、ワザの始めの freeze_forms は何もしない（観測だけの差） |
+| TC6 | K | passed | おもての 2 件は同じ |
+| TC7 | F_static | not_reachable | うらのカードにダメージはのらない（不変条件）ので、うらの使い手が宣言のときにダメージを持つ妥当な構築盤面がない。ダメージなしのふきとばしで、固定の項目がおもての対照と同じことを確かめた。おもての対照（ダメージ 40）は derived・derived_full が TK1、legacy は決定を出す（既存の方法の差。変えていない） |
+| TC8 | K | passed_existing | 既存のテスト（C-TF0 の test_suppressed_transform_has_no_attacks）で維持 |
+| TC9 | K | passed | 相手のバトル場がうらなら、ほかのメタモンの有無によらず FD1 |
+| TC10 | K | passed_existing | C-TF0 のテスト（TF1 の残り・TF2・TF3）で維持 |
+| TC11 | F_K | passed | 決定待ちの snapshot の往復で足した項目を保つ（修正前は答えが RX1）。決定のないコマンドの終わりに固定が残らない |
+| TC12 | K | passed_corrected | 設計の期待（保存した固定のまま続ける）を訂正: 0.193.0 の決定待ちの snapshot は restore_snapshot の識別の検査で unsupported（implementation_differs・engine_version_differs）。補修しない |
+| TC13 | K | passed | SF3 の盤面と対照で、3 つの先読みの方法の状態が一致 |
+| TC14 | K | passed | おもての対照は API と直接のコマンドで同じ状態。うらのメタモンの候補は no_printed_attack の保留のまま（段なし） |
+| TC15 | K | passed | FD1・C-TF1 の写した力の拒否・RX1 の残る経路（v0.65 のテスト）で、状態・乱数・ログ・決定は不変 |
+| TC16 | K | passed | 既存の項目（自分のベンチ・相手のベンチのメタモン、printed）は不変。並びはおもての対照と同じ（攻撃者 → 自分のベンチ → 相手のベンチ） |
+| TC17 | K | passed | C-TF1 のテスト・スモークで写した力の拒否と提示は同じ |
+| TC18 | K | passed | たねでない公開はトラッシュして受理。固定を足さない |
+| TC19 | K | passed | すごいへんしんのメタモン（ES2-032）はワザを持たず、うら・おもてとも INVALID_ATTACK（同じ） |
+| TC20 | K | unconfirmed | log_audit の log_problems は new_game から進めたログ用で、構築盤面に使えない |
+
+- 設計にない追加の確かめ: サイドンのげきとつ（入れ替えのあと自分にも 20）は、修正前のうら（ほかのメタモンあり）は宣言ごと RX1、修正後はおもての対照と同じ（50・自分に 20）。
+- 7 章の「PT5 は 3 件が変わる見込み」は 2 件でした（`other_ditto_on_bench`・`opponent_bench_ditto`）。C-TF0 の記録 83 のほかは、同じ・版の文字列による状態のハッシュ・固定の時点の観測だけの差です。
