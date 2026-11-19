@@ -1,0 +1,1320 @@
+{
+ "status": "design_only",
+ "not_adopted": true,
+ "not_implemented": true,
+ "date": "2026-11-19",
+ "doc": "docs/fd1-face-down-discard-design.md",
+ "base": {
+  "branch": "claude/potion-undamaged-design",
+  "commit": "792055cd17291949711f91a8f465e8869cb9d410",
+  "engine_version": "0.194.0"
+ },
+ "work_branch": "claude/fd1-discard-design",
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/fd1-discard-design/",
+ "scene": {
+  "candidate_kind": "discard_from_play",
+  "stop_code": "UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY",
+  "ruling_id": "FD1",
+  "code_class": "static",
+  "measured_in_saved_records": 0,
+  "static_basis": [
+   "engine.check_discard_from_play（play_as_pokemon_effect が None → 理由の文の name_ja → HiddenPropertyRead）",
+   "state.card_def（うらのあいだ FACE_DOWN_DEFINITION。種類ポケモン・段階たね・場での役割なし）",
+   "effects.PlayAsPokemon の登録は PMCG3-046（なにかの化石）・PMCG1-091（ピッピ人形）だけ",
+   "docs/legal-actions-u7-5-design.md F-2（本当のカードによらない同じ FD1。漏れではない）",
+   "docs/secret-plan-preflight-v0.67.md 5 章"
+  ]
+ },
+ "routes": [
+  {
+   "route": "DiscardFromPlay",
+   "in_scope": true
+  },
+  {
+   "route": "RevealFaceDown",
+   "in_scope": false,
+   "note": "比べる相手。たねポケモンでなければトラッシュ・公開"
+  },
+  {
+   "route": "効果によるトラッシュ・きぜつ",
+   "in_scope": false
+  },
+  {
+   "route": "ほかの FD1（名前・タイプ・へんしん・決定の答え）",
+   "in_scope": false
+  }
+ ],
+ "information_boundary": {
+  "before_choice": "候補・inputs・prestop は主体だけへの応答。相手・観戦者の観測ではうら・本当のカードとカード番号なし（26/26）",
+  "check": "CANDIDATE_NOT_EXECUTABLE（本当のカードによらない。送った例なし）",
+  "reject": "FD1。理由の文に本当のカードなし。保存記録の拒否の行ではどの見る人にも観測の更新 0（この場面の拒否は記録になし）",
+  "accept": "今はない。比べる相手の reveal_face_down は secret_plan_revealed・secret_plan_discarded を全員に公開",
+  "design_condition": "正体だけが違う局面で、受理の前の候補・inputs・check・拒否の値が同じ"
+ },
+ "options": {
+  "A": {
+   "summary": "現状維持",
+   "executable_moves_added": 0,
+   "recommended": true
+  },
+  "B_display": {
+   "summary": "うらのカードは場からすてられない、を規約にする",
+   "executable_moves_added": 0,
+   "effect": "表示と拒否のコードだけ",
+   "recommended": false
+  },
+  "B_allow": {
+   "summary": "うらのカードは場からすてられる、を規約にする",
+   "executable_moves_added": "1 局面に 1 つ（20 局面）",
+   "basis": "なし（文面にない手）",
+   "recommended": false
+  },
+  "C": {
+   "summary": "裁定・記録の追加",
+   "needed_for_this_decision": false,
+   "items": [
+    "うらのカードを化石・人形として扱えるかの裁定（not_in_kyuura）",
+    "バトル場での処理の差"
+   ]
+  }
+ },
+ "recommendation": "A",
+ "executable_move_increase": {
+  "identity_independent": 0,
+  "reason": [
+   "公開の値だけの適格は全部か無しかで、中間の条件は正体を読む",
+   "全部を許すと文面にない手を足す（20 局面の本当のカードはどれも本当の値ではすてられない）",
+   "本当の化石・人形をトラッシュする結果は reveal_face_down で今も届く"
+  ]
+ },
+ "decisions_before_adoption": [
+  {
+   "id": "F1",
+   "item": "規約で扱うか",
+   "recommended": "扱わない（A）",
+   "alternative": "B-表示"
+  },
+  {
+   "id": "F2",
+   "item": "B-許可を検討するか",
+   "recommended": "しない",
+   "alternative": "C がそろったら別の単位"
+  },
+  {
+   "id": "F3",
+   "item": "今の拒否の区分",
+   "recommended": "FD1 のまま",
+   "alternative": "NOT_DISCARDABLE（エンジンの変更）"
+  },
+  {
+   "id": "F4",
+   "item": "ほかの FD1",
+   "recommended": "一括で扱わない"
+  }
+ ],
+ "verification_cases": [
+  "V1 厳密側",
+  "V2 正体だけが違う対照（5 通りで同じ値）",
+  "V3 規約有効側（B-表示）",
+  "V4 受理したあとの公開（reveal_face_down）",
+  "V5 拒否のときの巻き戻し",
+  "V6 ほかの FD1 への非干渉",
+  "V7 おもての化石・人形"
+ ],
+ "related_designs": [
+  {
+   "doc": "docs/play-convention-potion-target.md",
+   "status": "設計済み・採用保留"
+  }
+ ],
+ "unconfirmed": [
+  "この場面の check・送信の実際の値",
+  "バトル場のうらのカードでの処理の差",
+  "うらのカードを化石・人形として扱えるかの裁定",
+  "化石・人形を入れたデッキでの場面"
+ ],
+ "check": {
+  "totals": {
+   "presentations": 26,
+   "positions": 20,
+   "retakes": 6,
+   "games": 9,
+   "conditions": [
+    "C1",
+    "C3"
+   ],
+   "rows_without_problems": 26,
+   "targets": 26,
+   "targets_own_face_down": 26,
+   "targets_hidden_to_opponent_and_spectator": 26,
+   "targets_secret_plan_in_record": 26,
+   "targets_by_slot": {
+    "bench": 26
+   },
+   "same_candidate_executable_options": 0,
+   "presentations_with_other_executable_candidates": 26,
+   "presentations_with_reveal_candidate_executable": 26,
+   "chosen_kinds_first_attempt": {
+    "reveal_face_down": 6,
+    "play_trainer": 5,
+    "retreat": 8,
+    "use_power": 1
+   },
+   "chosen_discard_from_play": 0,
+   "measured_code_rows": 0
+  },
+  "real_cards_first_attempt_owner_only_counts": {
+   "energy|None|超エネルギー": 6,
+   "pokemon|None|ユンゲラー": 7,
+   "trainer|None|プラスパワー": 3,
+   "trainer|None|マチスの秘策": 3,
+   "trainer|None|ディフェンダー": 1
+  },
+  "rows": [
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "condition": "C1",
+     "game": "g001-rules-v2-s9007",
+     "actor": 0,
+     "position": 25,
+     "attempt_n": 26,
+     "retake": false
+    },
+    "candidate": {
+     "id": "c4",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 5,
+      "owner_view_slot": "bench:1",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 3,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "reveal_face_down",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m3",
+     "condition": "C3",
+     "game": "g001-rules-v2-s9007",
+     "actor": 1,
+     "position": 17,
+     "attempt_n": 18,
+     "retake": false
+    },
+    "candidate": {
+     "id": "c4",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 4,
+      "owner_view_slot": "bench:0",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 4,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "play_trainer",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m3",
+     "condition": "C3",
+     "game": "g001-rules-v2-s9007",
+     "actor": 1,
+     "position": 19,
+     "attempt_n": 20,
+     "retake": false
+    },
+    "candidate": {
+     "id": "c4",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 4,
+      "owner_view_slot": "bench:0",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 4,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "play_trainer",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m3",
+     "condition": "C3",
+     "game": "g001-rules-v2-s9007",
+     "actor": 1,
+     "position": 21,
+     "attempt_n": 22,
+     "retake": false
+    },
+    "candidate": {
+     "id": "c3",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 4,
+      "owner_view_slot": "bench:0",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 3,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "reveal_face_down",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "condition": "C1",
+     "game": "g002-rules-v2-s9008",
+     "actor": 0,
+     "position": 12,
+     "attempt_n": 13,
+     "retake": false
+    },
+    "candidate": {
+     "id": "c3",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 5,
+      "owner_view_slot": "bench:1",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 3,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "retreat",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "condition": "C1",
+     "game": "g002-rules-v2-s9008",
+     "actor": 0,
+     "position": 12,
+     "attempt_n": 14,
+     "retake": true
+    },
+    "candidate": {
+     "id": "c3",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 5,
+      "owner_view_slot": "bench:1",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 3,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "reveal_face_down",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m3",
+     "condition": "C3",
+     "game": "g002-rules-v2-s9008",
+     "actor": 1,
+     "position": 139,
+     "attempt_n": 144,
+     "retake": false
+    },
+    "candidate": {
+     "id": "c6",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 14,
+      "owner_view_slot": "bench:2",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 6,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "retreat",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m3",
+     "condition": "C3",
+     "game": "g002-rules-v2-s9008",
+     "actor": 1,
+     "position": 140,
+     "attempt_n": 145,
+     "retake": false
+    },
+    "candidate": {
+     "id": "c6",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 14,
+      "owner_view_slot": "bench:2",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 6,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "use_power",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m3",
+     "condition": "C3",
+     "game": "g002-rules-v2-s9008",
+     "actor": 1,
+     "position": 141,
+     "attempt_n": 146,
+     "retake": false
+    },
+    "candidate": {
+     "id": "c6",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 14,
+      "owner_view_slot": "bench:2",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 6,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "reveal_face_down",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m3",
+     "condition": "C3",
+     "game": "g002-rules-v2-s9008",
+     "actor": 1,
+     "position": 159,
+     "attempt_n": 165,
+     "retake": false
+    },
+    "candidate": {
+     "id": "c6",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 15,
+      "owner_view_slot": "bench:1",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 6,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "reveal_face_down",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "condition": "C1",
+     "game": "g003-rules-v2-s9009",
+     "actor": 1,
+     "position": 9,
+     "attempt_n": 10,
+     "retake": false
+    },
+    "candidate": {
+     "id": "c3",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 4,
+      "owner_view_slot": "bench:0",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 3,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "retreat",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "condition": "C1",
+     "game": "g003-rules-v2-s9009",
+     "actor": 1,
+     "position": 9,
+     "attempt_n": 11,
+     "retake": true
+    },
+    "candidate": {
+     "id": "c3",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 4,
+      "owner_view_slot": "bench:0",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 3,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "reveal_face_down",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m3",
+     "condition": "C3",
+     "game": "g003-rules-v2-s9009",
+     "actor": 1,
+     "position": 9,
+     "attempt_n": 10,
+     "retake": false
+    },
+    "candidate": {
+     "id": "c3",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 5,
+      "owner_view_slot": "bench:0",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 3,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "retreat",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m3",
+     "condition": "C3",
+     "game": "g003-rules-v2-s9009",
+     "actor": 1,
+     "position": 9,
+     "attempt_n": 11,
+     "retake": true
+    },
+    "candidate": {
+     "id": "c3",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 5,
+      "owner_view_slot": "bench:0",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 3,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "reveal_face_down",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "condition": "C1",
+     "game": "g004-rules-v2-s9010",
+     "actor": 0,
+     "position": 13,
+     "attempt_n": 16,
+     "retake": false
+    },
+    "candidate": {
+     "id": "c4",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 6,
+      "owner_view_slot": "bench:2",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 4,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "retreat",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "condition": "C1",
+     "game": "g004-rules-v2-s9010",
+     "actor": 0,
+     "position": 13,
+     "attempt_n": 17,
+     "retake": true
+    },
+    "candidate": {
+     "id": "c4",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 6,
+      "owner_view_slot": "bench:2",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 4,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "reveal_face_down",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "condition": "C1",
+     "game": "g004-rules-v2-s9010",
+     "actor": 1,
+     "position": 20,
+     "attempt_n": 26,
+     "retake": false
+    },
+    "candidate": {
+     "id": "c4",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 8,
+      "owner_view_slot": "bench:2",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 4,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "play_trainer",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "condition": "C1",
+     "game": "g004-rules-v2-s9010",
+     "actor": 1,
+     "position": 22,
+     "attempt_n": 28,
+     "retake": false
+    },
+    "candidate": {
+     "id": "c4",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 8,
+      "owner_view_slot": "bench:2",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 4,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "play_trainer",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "condition": "C1",
+     "game": "g004-rules-v2-s9010",
+     "actor": 1,
+     "position": 23,
+     "attempt_n": 29,
+     "retake": false
+    },
+    "candidate": {
+     "id": "c4",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 8,
+      "owner_view_slot": "bench:2",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 4,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "retreat",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "condition": "C1",
+     "game": "g004-rules-v2-s9010",
+     "actor": 1,
+     "position": 24,
+     "attempt_n": 30,
+     "retake": false
+    },
+    "candidate": {
+     "id": "c4",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 8,
+      "owner_view_slot": "bench:2",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 4,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "play_trainer",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "condition": "C1",
+     "game": "g004-rules-v2-s9010",
+     "actor": 1,
+     "position": 25,
+     "attempt_n": 31,
+     "retake": false
+    },
+    "candidate": {
+     "id": "c3",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 8,
+      "owner_view_slot": "bench:2",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 3,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "retreat",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "condition": "C1",
+     "game": "g004-rules-v2-s9010",
+     "actor": 1,
+     "position": 25,
+     "attempt_n": 32,
+     "retake": true
+    },
+    "candidate": {
+     "id": "c3",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 8,
+      "owner_view_slot": "bench:2",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 3,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "reveal_face_down",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "condition": "C1",
+     "game": "g005-rules-v2-s9011",
+     "actor": 0,
+     "position": 23,
+     "attempt_n": 29,
+     "retake": false
+    },
+    "candidate": {
+     "id": "c3",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 6,
+      "owner_view_slot": "bench:1",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 3,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "reveal_face_down",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "condition": "C1",
+     "game": "g006-rules-v2-s9012",
+     "actor": 0,
+     "position": 196,
+     "attempt_n": 287,
+     "retake": false
+    },
+    "candidate": {
+     "id": "c4",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 13,
+      "owner_view_slot": "bench:4",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 4,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "retreat",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "condition": "C1",
+     "game": "g006-rules-v2-s9012",
+     "actor": 0,
+     "position": 196,
+     "attempt_n": 288,
+     "retake": true
+    },
+    "candidate": {
+     "id": "c4",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 13,
+      "owner_view_slot": "bench:4",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 4,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "play_trainer",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "condition": "C1",
+     "game": "g006-rules-v2-s9012",
+     "actor": 0,
+     "position": 197,
+     "attempt_n": 289,
+     "retake": false
+    },
+    "candidate": {
+     "id": "c3",
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "prestop_rows": 1,
+    "targets": [
+     {
+      "pokemon_id": 13,
+      "owner_view_slot": "bench:4",
+      "owner_view_face_down": true,
+      "prestop_face_down": true,
+      "prestop_eligible": false,
+      "prestop_processability": "unresolved_ruling",
+      "opponent_view_face_down": true,
+      "opponent_view_has_real_or_card": false,
+      "spectator_view_face_down": true,
+      "spectator_view_has_real_or_card": false,
+      "secret_plan_placed_in_record": true
+     }
+    ],
+    "same_candidate_executable_options": 0,
+    "other_executable_candidates": 3,
+    "reveal_face_down_candidate": [
+     "may_stop_later"
+    ],
+    "chosen_kind": "reveal_face_down",
+    "chosen_discard_from_play": false,
+    "measured_code": false,
+    "problems": []
+   }
+  ]
+ }
+}
