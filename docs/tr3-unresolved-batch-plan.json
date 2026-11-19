@@ -667,5 +667,151 @@
   "対戦",
   "コード・規約・GUI の変更",
   "analyze_unresolved.py の作成"
- ]
+ ],
+ "pilot_execution": {
+  "date": "2026-11-19",
+  "doc_section": "12 章",
+  "execution_commit": "891e1fbe146a275be1ccc6d37ec2091656b48e7e",
+  "worktree": "C:\\dev\\kyuura-engine-lt75",
+  "branch": "claude/vai-batch-tr3u1",
+  "evidence": "verifier/runs/vai-batch-tr3u1-run/",
+  "identity_equal_to_plan": true,
+  "seeds_unused_recheck": true,
+  "plan_sha256": {
+   "vai-batch-tr3u1-p1": "fcd71df4bc6e8a579fc758bb2541890f518d62b42ea79d57c81255a6a058bd65",
+   "vai-batch-tr3u1-p2": "bca76518f63a632e683120c63671beb193abf3d6bd3e0c0e9db95bea16c28dd2",
+   "vai-batch-tr3u1-p3": "64c045209af9ad6b486ff9072dfdddf1c8fb193159b044bd6990f4066db7debc",
+   "vai-batch-tr3u1-p4": "147091147ce765be55bcb1222d25c580124164028a9de3938e5f505a1958d139",
+   "vai-batch-tr3u1-m1": "02e89790dfe084886056ae3c565af38ade843f07d21697cf7eb6406196f6f648",
+   "vai-batch-tr3u1-m2": "0c55b6371db62afeea37cc376e0a18a8921457a3d17546a0b4776da878c1c201",
+   "vai-batch-tr3u1-m3": "aa020f1ee37b24bc5c762ca1f3c1ec55dcd887b0147216b3050f6e1393551bbc",
+   "vai-batch-tr3u1-m4": "d9deb571f50f5b12f5b1100d4e091ebdb83b7aca01fc26f83dd0bef325b3f198"
+  },
+  "plan_check_problems": 0,
+  "cache": {
+   "dir": "C:\\dev\\kyuura-engine-pyc-cache\\bb636dd9-tbe95aa1-cpython-314-891e1fb-tr3u1",
+   "pyc_files": 185,
+   "bytes": 13863950,
+   "prepare_wall_seconds": 42.3
+  },
+  "games": {
+   "planned_pilot": 4,
+   "complete": 4,
+   "complete_with_stop": 0,
+   "incomplete": 0,
+   "not_started_pilot": 0,
+   "main_started": 0,
+   "main_not_started": 24
+  },
+  "gates": {
+   "P-1": true,
+   "P-2": true,
+   "P-3": true,
+   "P-4": true,
+   "P-5": true,
+   "P-6": true,
+   "P-7": true,
+   "P-8": true
+  },
+  "budget_ok_for_m1": true,
+  "verdict": "proceed",
+  "time": {
+   "tool_accounted_seconds_by_plan": {
+    "p1": 2.595,
+    "p2": 2.101,
+    "p3": 11.457,
+    "p4": 11.677
+   },
+   "outer_seconds_sum": 113.17,
+   "cache_prepare_seconds": 42.3
+  },
+  "evidence_bytes": {
+   "games_complete": 34554987,
+   "plan_dirs_total": 34882824
+  },
+  "remaining_after_pilot": {
+   "program_remaining_tool_seconds": 3572.17,
+   "program_remaining_outer_seconds": 7086.83,
+   "program_remaining_evidence_bytes": 2112600824,
+   "drive_free_bytes": 261735735296
+  },
+  "projection_main": {
+   "tool_seconds_main_x6": 167.0,
+   "tool_seconds_main_x6_x1_5": 250.5,
+   "evidence_bytes_main_x6": 207329922,
+   "evidence_bytes_main_x6_x1_5": 310994883,
+   "outer_seconds_main_x6": 679.0,
+   "note": "先行の p1・p2 は短い局（受理 37・21）で、見込みは低めに出うる。1 局は上限 120 秒まで伸びうるので、毎局の前の残予算の確かめで扱う"
+  },
+  "tallies": {
+   "termination": {
+    "game_over": 4
+   },
+   "rejected_by_code": {
+    "UNRESOLVED_RECOVER_ZERO_ENERGY|unresolved_ruling": 4
+   },
+   "reanswer": {
+    "reanswered_accepted": 4
+   },
+   "candidate_level": {
+    "use_stadium|stops_before_acceptance": {
+     "total": 2,
+     "first_attempt_only": 1,
+     "rows": 2,
+     "positions": 1,
+     "games": 1
+    }
+   },
+   "option_level_in_fetched_inputs": {
+    "answer_decision|": {
+     "total": 11,
+     "first_attempt_only": 11,
+     "rows": 3,
+     "positions": 3,
+     "games": 1
+    }
+   },
+   "prestop_status": {
+    "complete": 4
+   },
+   "prestop_unrecorded": {},
+   "convention_direct": {
+    "PC-POTION-WITHOUT-DAMAGE@1|eligible=False": {
+     "total": 5,
+     "first_attempt_only": 5,
+     "rows": 5,
+     "positions": 5,
+     "games": 2
+    },
+    "PC-SWITCH-WITHOUT-BENCH@1|eligible=False": {
+     "total": 4,
+     "first_attempt_only": 4,
+     "rows": 4,
+     "positions": 4,
+     "games": 1
+    }
+   },
+   "convention_id_unknown": {
+    "play_trainer|no_eligible_card": {
+     "total": 13,
+     "first_attempt_only": 11,
+     "rows": 13,
+     "positions": 11,
+     "games": 2
+    }
+   },
+   "t1_no_printed_attack_games": 0,
+   "unbuildable": 46
+  },
+  "not_gate_conditions": [
+   "完走率",
+   "特定の未裁定の出現",
+   "T1 の対象カードの未出現（デッキにない）"
+  ],
+  "not_done": [
+   "本実行の 24 局",
+   "規約の候補の順位",
+   "CURRENT に対する改善率"
+  ]
+ }
 }
