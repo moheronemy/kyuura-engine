@@ -813,5 +813,301 @@
    "規約の候補の順位",
    "CURRENT に対する改善率"
   ]
+ },
+ "main_execution": {
+  "date": "2026-11-19",
+  "doc_section": "13 章",
+  "execution_commit": "891e1fbe146a275be1ccc6d37ec2091656b48e7e",
+  "doc_base": "d1232a536ea780c19cdd9bb1b726a62683ee25e3",
+  "worktree": "C:\\dev\\kyuura-engine-lt75（実行中は 891e1fb に切り離し）",
+  "branch": "claude/vai-batch-tr3u1",
+  "evidence": "verifier/runs/vai-batch-tr3u1-main-run/",
+  "precheck": {
+   "identity_equal_to_pilot": true,
+   "main_plans_sha256_equal_and_not_started": true,
+   "pilot_games_equal": true,
+   "pilot_gates_all_true": true,
+   "cache_same": true
+  },
+  "games": {
+   "games_started": 24,
+   "by_condition": {
+    "C1": {
+     "planned": 6,
+     "started": 6,
+     "complete": 6,
+     "incomplete": 0,
+     "not_started": 0,
+     "termination": {
+      "game_over": 6
+     }
+    },
+    "C2": {
+     "planned": 6,
+     "started": 6,
+     "complete": 6,
+     "incomplete": 0,
+     "not_started": 0,
+     "termination": {
+      "game_over": 6
+     }
+    },
+    "C3": {
+     "planned": 6,
+     "started": 6,
+     "complete": 6,
+     "incomplete": 0,
+     "not_started": 0,
+     "termination": {
+      "game_over": 6
+     }
+    },
+    "C4": {
+     "planned": 6,
+     "started": 6,
+     "complete": 6,
+     "incomplete": 0,
+     "not_started": 0,
+     "termination": {
+      "game_over": 6
+     }
+    }
+   }
+  },
+  "batch_status": {
+   "vai-batch-tr3u1-m1": "completed",
+   "vai-batch-tr3u1-m2": "completed",
+   "vai-batch-tr3u1-m3": "completed",
+   "vai-batch-tr3u1-m4": "completed"
+  },
+  "stopped": null,
+  "time": {
+   "main_tool_accounted_seconds": 238.012,
+   "program_tool_used_seconds": 265.842,
+   "main_outer_seconds": 746.925,
+   "program_outer_used_seconds": 860.095
+  },
+  "bytes": {
+   "main_games_complete": 326341944,
+   "program_plan_dirs": 361497285
+  },
+  "remaining_after_main": {
+   "program_remaining_tool_seconds": 3334.158,
+   "program_remaining_outer_seconds": 6339.905,
+   "program_remaining_evidence_bytes": 1785986363,
+   "drive_free_bytes": 262275313664
+  },
+  "tallies": {
+   "termination": {
+    "game_over": 24
+   },
+   "rejected_by_code": {
+    "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE|unresolved_ruling": 3,
+    "UNRESOLVED_RECOVER_ZERO_ENERGY|unresolved_ruling": 1
+   },
+   "rejected_games": {
+    "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE|unresolved_ruling": 3,
+    "UNRESOLVED_RECOVER_ZERO_ENERGY|unresolved_ruling": 1
+   },
+   "reanswer": {
+    "reanswered_accepted": 4
+   },
+   "candidate_level": {
+    "discard_from_play|stops_before_acceptance": {
+     "total": 26,
+     "first_attempt_only": 20,
+     "rows": 26,
+     "positions": 20,
+     "games": 9
+    },
+    "play_trainer|stops_before_acceptance": {
+     "total": 17,
+     "first_attempt_only": 17,
+     "rows": 17,
+     "positions": 17,
+     "games": 3
+    },
+    "use_stadium|stops_before_acceptance": {
+     "total": 14,
+     "first_attempt_only": 7,
+     "rows": 14,
+     "positions": 7,
+     "games": 4
+    }
+   },
+   "option_level_in_fetched_inputs": {
+    "answer_decision|": {
+     "total": 41,
+     "first_attempt_only": 41,
+     "rows": 17,
+     "positions": 17,
+     "games": 8
+    },
+    "play_trainer|stops_before_acceptance": {
+     "total": 7,
+     "first_attempt_only": 7,
+     "rows": 7,
+     "positions": 7,
+     "games": 4
+    }
+   },
+   "prestop_status": {
+    "complete": 24
+   },
+   "prestop_unrecorded": {},
+   "convention_direct": {
+    "PC-GUST-WITHOUT-OPPONENT-BENCH@1|eligible=False": {
+     "total": 3,
+     "first_attempt_only": 3,
+     "rows": 3,
+     "positions": 3,
+     "games": 3
+    },
+    "PC-POTION-WITHOUT-DAMAGE@1|eligible=False": {
+     "total": 33,
+     "first_attempt_only": 21,
+     "rows": 30,
+     "positions": 30,
+     "games": 11
+    },
+    "PC-SWITCH-WITHOUT-BENCH@1|eligible=False": {
+     "total": 4,
+     "first_attempt_only": 4,
+     "rows": 4,
+     "positions": 4,
+     "games": 2
+    }
+   },
+   "convention_id_unknown": {
+    "play_trainer|no_eligible_card": {
+     "total": 154,
+     "first_attempt_only": 115,
+     "rows": 154,
+     "positions": 115,
+     "games": 12
+    }
+   },
+   "unverified": {
+    "evolve|face_down_reveal_not_evaluated": {
+     "total": 7,
+     "first_attempt_only": 7,
+     "rows": 7,
+     "positions": 7,
+     "games": 2
+    }
+   },
+   "t1_no_printed_attack_games": 0,
+   "unbuildable": 876,
+   "sums": {
+    "elapsed_seconds": 155.42,
+    "bytes": 326341944,
+    "accepted": 4165,
+    "rejected": 4,
+    "attempts": 5219
+   }
+  },
+  "table_a": [],
+  "table_b": [
+   {
+    "key": "candidate|discard_from_play|face_down",
+    "level": "candidate",
+    "games": 9,
+    "positions": 20,
+    "conditions": [
+     "C1",
+     "C3"
+    ],
+    "code_class": "static",
+    "static_code": "UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY"
+   },
+   {
+    "key": "option|select_pokemon|play_trainer|PMCG1-071",
+    "level": "option_in_fetched_inputs",
+    "games": 8,
+    "positions": 13,
+    "conditions": [
+     "C1",
+     "C2",
+     "C3"
+    ],
+    "code_class": "static",
+    "static_code": "UNRESOLVED_POTION_UNDAMAGED_TARGET"
+   },
+   {
+    "key": "candidate|use_stadium|",
+    "level": "candidate",
+    "games": 4,
+    "positions": 7,
+    "conditions": [
+     "C4"
+    ],
+    "code_class": "unknown",
+    "static_code": null
+   },
+   {
+    "key": "candidate|play_trainer|PMCG1-076",
+    "level": "option_in_fetched_inputs",
+    "games": 4,
+    "positions": 7,
+    "conditions": [
+     "C2"
+    ],
+    "code_class": "static",
+    "static_code": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET"
+   },
+   {
+    "key": "candidate|play_trainer|PMCG1-076",
+    "level": "candidate",
+    "games": 3,
+    "positions": 17,
+    "conditions": [
+     "C2"
+    ],
+    "code_class": "static",
+    "static_code": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET"
+   }
+  ],
+  "candidates": [
+   {
+    "rank": 1,
+    "code": "UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY",
+    "code_class": "static",
+    "scene": "自分の番に、マチスの秘策でうらにして場に出したポケモンを、場からすてる（discard_from_play）候補",
+    "games_max": 9,
+    "positions_sum": 20
+   },
+   {
+    "rank": 2,
+    "code": "UNRESOLVED_POTION_UNDAMAGED_TARGET",
+    "code_class": "static",
+    "scene": "きずぐすりを使ったあとの対象の選択で、ダメージカウンターののっていない自分のポケモン",
+    "games_max": 8,
+    "positions_sum": 13
+   },
+   {
+    "rank": 3,
+    "code": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "code_class": "static",
+    "scene": "自分のトラッシュに基本エネルギーカードがないときに、エネルギー回収を使う",
+    "games_max": 4,
+    "positions_sum": 24
+   }
+  ],
+  "excluded": [
+   {
+    "key": "candidate|use_stadium|",
+    "games": 4,
+    "reason": "コード不明・条件が 1 つに決まらない",
+    "needed": "use_stadium の候補の停止のコード（候補の記録にコードを足すエンジンの API の変更）か、そのときの場の状態（トレーナーの使用の禁止・同じ名前のスタジアムの入れかえ）の記録"
+   }
+  ],
+  "corrections": [
+   "12.1 節の plan.sha256 の完全な値の参照（out/plan_sha256_all.txt → out/check_plan.json）"
+  ],
+  "not_done": [
+   "規約の採用",
+   "CURRENT との効果の比べ",
+   "頻度・改善率"
+  ]
  }
 }
