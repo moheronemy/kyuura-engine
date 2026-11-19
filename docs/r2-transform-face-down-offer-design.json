@@ -1,0 +1,171 @@
+{
+ "unit": "T1-design",
+ "title": "R-2 transform route T1: offering stage-1 attacks to a face-down Fossil Ditto when the copied form is fixed by public information (design only)",
+ "document": "docs/r2-transform-face-down-offer-design.md",
+ "date": "2026-11-19",
+ "status": {
+  "kind": "design_documentation_only",
+  "engine_version": "0.194.0",
+  "engine_changed": false,
+  "tests_or_scripts_executed": false,
+  "judgement": "proceed_with_conditions",
+  "pre_implementation_boards_needed": false
+ },
+ "base": {
+  "branch": "claude/u7-4-ac-doc-correction",
+  "commit": "7ee15018725ab1d8ade2d38ef8b8ed3887529a9a",
+  "origin_main": "b1e4430",
+  "in_main": false,
+  "package_diff_from_c_tf2_fix_c52f906": [
+   "kyuura_engine/__init__.py (version)",
+   "pyproject.toml (version)"
+  ],
+  "gui_reference": {
+   "branch": "feature/engine-0194-contract-u7-4",
+   "commit": "97f49a5"
+  },
+  "work_branch": "claude/r2-transform-fd-offer-design"
+ },
+ "reference_check": {
+  "source": "verifier/runs/r2-transform-c-tf2-impl/out/c_tf0_direct_on_c_tf2.json",
+  "card_none_vs_copied_uid_pairs": {
+   "face_down": 9,
+   "face_up": 3,
+   "all_fields_equal": true
+  },
+  "fields_compared": [
+   "outcome",
+   "damage",
+   "opponent_active_damage",
+   "attacker_form",
+   "attacker_card",
+   "frozen_forms_after",
+   "rng_changed",
+   "board_after",
+   "events",
+   "public_events_viewer1",
+   "reveal_events",
+   "coin_flips",
+   "decision",
+   "attacker_energy_after",
+   "diagnosis",
+   "preflight_modes_agree"
+  ],
+  "wrong_uid": "INVALID_ATTACK (own uid, opponent bench uid)",
+  "index_out_of_range": "INVALID_ATTACK",
+  "insufficient_energy": "INSUFFICIENT_ENERGY",
+  "face_up_candidate_card": {
+   "source": "kyuura-engine-verification-gui-0194/verifier/runs/2026-11-19-0194/probe/responses.json",
+   "tf1_copy_x": {
+    "card": 19,
+    "card_id": "neo4-065",
+    "route": "form"
+   },
+   "tf1_copy_lanturn": {
+    "card": 21,
+    "card_id": "neo1-040",
+    "route": "form"
+   }
+  }
+ },
+ "offer_conditions": {
+  "T1-C1": {
+   "condition": "real card's only power is TransformIntoDefender; basic, not baby; no printed attack",
+   "else": "current candidate (T2: hold)",
+   "saved": "T2_fd_ditto_super_*: INVALID_ATTACK"
+  },
+  "T1-C2": {
+   "condition": "opponent active present and face up",
+   "else": "hold",
+   "saved": "PT3_fd_ditto_vs_face_down_active*: UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY"
+  },
+  "T1-C3": {
+   "condition": "defender not disguised, not trainer-as-pokemon, not evolution without base (TF2, TF3)",
+   "else": "hold",
+   "saved": "PT3_fd_ditto_vs_mysterious_fossil: INVALID_ATTACK"
+  },
+  "T1-C4": {
+   "condition": "no defender power stopped by copied_power_problem; not baby form with opponent scare",
+   "else": "hold",
+   "saved": "PT4_fd_ditto_vs_feraligatr_active: UNRESOLVED_TRANSFORM_COPIED_POWER"
+  },
+  "T1-C5": {
+   "condition": "no suppression source on the field (sources read by continuous.power_suppressed)",
+   "else": "hold",
+   "saved": "PT4_fd_ditto_vs_lanturn_own_muk: INVALID_ATTACK"
+  },
+  "T1-C6": {
+   "condition": "defender has >= 1 attack and none has a form-route problem (once after entering play, usable while asleep)",
+   "else": "hold",
+   "saved": null
+  },
+  "T1-C7": {
+   "condition": "face-down invariants (no damage, conditions, persistent effects, stack)",
+   "else": "hold",
+   "saved": "invariant"
+  },
+  "other_transform_capable_on_field": {
+   "offer": true,
+   "saved": "PT5_fd_ditto_vs_vulpix_other_ditto_on_bench, PT5_fd_ditto_vs_vulpix_opponent_bench_ditto: accepted, same as face-up"
+  }
+ },
+ "candidate_shape": {
+  "stage1": "defender top card printed attacks in printed order; card = defender top uid; card_id = defender card id; face_down true; no route",
+  "value": "(\"attack\", attack_index, defender_top_uid) -> UseAttack(actor, attack_index, card=uid)",
+  "processability": "unverified",
+  "reasons": [
+   "face_down_reveal_not_evaluated"
+  ],
+  "stage2": "empty",
+  "contract_vocabulary_added": [],
+  "card_id_meaning_changes": "copied card (public), not the real card"
+ },
+ "check": "shape and pairs only; no reveal, no engine check, no trial on a copy",
+ "submit": {
+  "builds": "UseAttack(card=uid)",
+  "stale": "CANDIDATES_STALE",
+  "mismatch_after_reveal": "INVALID_ATTACK (engine)",
+  "rejection": "reveal undone; state, rng, log, decision unchanged (C-TF0 9.1: 26/26)"
+ },
+ "impact": {
+  "guarantee_face_down_attack": "preconditions must be extended; fixed value cee8fc93... changes; engine F-1 test and GUI server/tests/test_f1.py pins",
+  "version": "bump once",
+  "behavior_and_bases": "change expected (measured in the implementation unit)",
+  "stop_codes": "none added",
+  "gui": "contract doc and display follow-up for card_id meaning; contract table unchanged"
+ },
+ "acceptance": [
+  "AC-T1-1",
+  "AC-T1-2",
+  "AC-T1-3",
+  "AC-T1-4",
+  "AC-T1-5",
+  "AC-T1-6",
+  "AC-T1-7",
+  "AC-T1-8"
+ ],
+ "implementation_boards": {
+  "B-1": "fd Ditto (W W) vs face-up Lapras; face-up control",
+  "B-2": "B-1 with face-down opponent active",
+  "B-3": "B-1 with Mysterious Fossil / Feraligatr",
+  "B-4": "B-1 with own Muk (chemical gas)",
+  "B-5": "defender with once/asleep-usable attack (no saved record)",
+  "B-6": "B-1 plus own bench Ditto vs Vulpix (switch)"
+ },
+ "decisions": {
+  "D-T1-1": "proceed (recommended)",
+  "D-T1-2": "card = defender top uid (recommended)",
+  "D-T1-3": "hold if any suppression source (recommended)",
+  "D-T1-4": "hold whole candidate when a defender attack has a form-route problem (recommended)",
+  "D-T1-5": "no new contract vocabulary; follow up card_id meaning (recommended)",
+  "D-T1-6": "extend guarantee preconditions and bump version (required in the implementation unit)"
+ },
+ "out_of_scope": [
+  "stage 2",
+  "hydro pump counting (SF2, D-TF-8)",
+  "SF4",
+  "SF3-P",
+  "SF5",
+  "O-REV"
+ ]
+}

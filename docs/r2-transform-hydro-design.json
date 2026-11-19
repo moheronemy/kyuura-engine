@@ -1097,5 +1097,23 @@
    "D-TF-12",
    "D-TF-13"
   ]
+ },
+ "t1_offer_design": {
+  "date": "2026-11-19",
+  "kind": "design_documentation_only",
+  "document": "docs/r2-transform-face-down-offer-design.md",
+  "table": "docs/r2-transform-face-down-offer-design.json",
+  "engine_version": "0.194.0",
+  "judgement": "proceed_with_conditions",
+  "scope": "stage 1 only",
+  "value": "(\"attack\", attack_index, defender_top_uid)",
+  "decisions": [
+   "D-T1-1",
+   "D-T1-2",
+   "D-T1-3",
+   "D-T1-4",
+   "D-T1-5",
+   "D-T1-6"
+  ]
  }
 }
