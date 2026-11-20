@@ -1,0 +1,899 @@
+{
+ "status": "design_only",
+ "not_adopted": true,
+ "not_implemented": true,
+ "date": "2026-11-20",
+ "doc": "docs/er9-energy-retrieval-zero-design.md",
+ "base": {
+  "branch": "claude/fd1-discard-design",
+  "commit": "10da29da432bdbe52dd31946443f258db7be9a92",
+  "engine_version": "0.194.0"
+ },
+ "work_branch": "claude/er9-zero-choice-design",
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/er9-zero-choice-design/",
+ "scene": {
+  "stop_code": "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE",
+  "ruling": "ER9",
+  "category": "unresolved_ruling",
+  "raised_as": "unsupported",
+  "decision_kind": "retrieve_energy",
+  "effect_type": "DiscardFromHandThenRetrieveEnergy",
+  "cards": [
+   "PMCG1-076",
+   "GD1-014（再録）",
+   "GD4-014（再録）",
+   "GD6-014（再録）",
+   "QSG-047（再録）"
+  ],
+  "raised_at": "kyuura_engine/effects.py DiscardFromHandThenRetrieveEnergy.resume（空の答え。状態を変える前）",
+  "kyuura_issue": {
+   "id": "UQ-ENERGY-RETRIEVAL-ZERO-CHOICE",
+   "status": "UNRESOLVED",
+   "official_material": "insufficient",
+   "research_commit": "71d1728"
+  }
+ },
+ "out_of_scope": [
+  {
+   "code": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+   "ruling": "ER10",
+   "when": "使う前（check_playable）"
+  },
+  {
+   "code": "UNRESOLVED_RECOVER_ZERO_ENERGY",
+   "ruling": "H4",
+   "when": "ワザの決定の答え"
+  },
+  {
+   "code": "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_ZERO_CHOICE",
+   "ruling": "SR2",
+   "when": "同じ resume・別のコード"
+  },
+  {
+   "code": "PC-UP-TO-ZERO",
+   "kind": "規約の族の案（DEC-UP-TO-ZERO は proposal）",
+   "when": "ほかの「最大N」の場面"
+  }
+ ],
+ "sources_on_zero": [
+  {
+   "source": "P43 p.257 最新の説明",
+   "text": "最大2枚選び出し、手札に加える",
+   "zero": "書かれていない"
+  },
+  {
+   "source": "P43 p.257 解説",
+   "zero": "記述なし"
+  },
+  {
+   "source": "p.257 図版・再録の版の印刷",
+   "text": "手札に加えてよい",
+   "zero": "最新の説明ではないので根拠にしない（ER9・v0.71）"
+  },
+  {
+   "source": "P43 p.310",
+   "zero": "費用は手順 3・残りの説明は手順 4。取り消しの手順はない"
+  },
+  {
+   "source": "会報 Vol.5（1998）",
+   "zero": "1 枚のこと。基準の資料ではない"
+  },
+  {
+   "source": "ER7・ER11・ER16",
+   "zero": "トラッシュしたカードは選べない・選べるものは使う前と同じ・段階 1 は取り消さない（ER16 は実装上の判断）"
+  }
+ ],
+ "options": {
+  "A": {
+   "zero_answer": "拒否（ER9）・決定は待ったまま",
+   "rejections_in_records": 3,
+   "accepted_answers_increase": 0
+  },
+  "B": {
+   "zero_answer": "受理・何も手札に加えずに使い終える",
+   "rejections_in_records": 0,
+   "accepted_answers_increase": 1,
+   "recommended": true
+  },
+  "C": {
+   "zero_answer": "入力で選べない（最小 1）・送れば INVALID_CHOICE_COUNT",
+   "rejections_in_records": "0（入力の誤りに変わる）",
+   "accepted_answers_increase": 0,
+   "changes": [
+    "決定を出す処理",
+    "decision_problems の数の範囲",
+    "合法手 API の decline"
+   ]
+  }
+ },
+ "recommended": {
+  "convention": {
+   "id": "PC-ENERGY-RETRIEVAL-ZERO",
+   "version": 1,
+   "layer": "continuation",
+   "scenes": [
+    "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE"
+   ],
+   "name_status": "案"
+  },
+  "set": {
+   "id": "CS-KYUURA-PLAY-TR4",
+   "version": 1,
+   "usage": "development",
+   "completeness": "halts_at_undecided",
+   "name_status": "案",
+   "note": "きずぐすりの規約と同じ単位で採るかは採用の時に決める"
+  },
+  "unchanged_sets": [
+   "CS-KYUURA-CURRENT@1",
+   "CS-KYUURA-PLAY-TR3@1（sha256:a7b800cf…）",
+   "既定の集合"
+  ],
+  "conditions": [
+   "状態の規約集合にこの規約がある",
+   "答えが空",
+   "TrainerInUse.user が None・via が None",
+   "錯乱ジム・リムーブ禁止ジムが場にない"
+  ],
+  "hook": "DiscardFromHandThenRetrieveEnergy.resume の空の答えの分岐で continuation_for(state, self.ZERO_CHOICE[0]) → record_application(player, available) → 戻る",
+  "on_zero": {
+   "cost": "もどさない（トラッシュのまま）",
+   "retrieve": "なし（return_discard_to_hand を呼ばない）",
+   "trainer": "持ち主のトラッシュ（_finish_trainer・discard_trainer）",
+   "hand": "回収の答えでは変わらない",
+   "decision": "終わり",
+   "next": "MAIN（同じ番の操作）",
+   "log": [
+    "convention_applied（convention・version・scene・code・player・available）",
+    "discard_trainer"
+   ],
+   "no_log": [
+    "retrieve_energy"
+   ],
+   "disclosure": "公開の値だけ",
+   "not_cancel": true
+  },
+  "stages": {
+   "candidate": "変えない",
+   "inputs": "変えない（0〜min(2, 数)・decline 真）",
+   "check": "変えない（有効）",
+   "submit": {
+    "convention_set": "受理・in_progress・次は番の操作",
+    "strict": "拒否 ER9・awaiting_decision"
+   }
+  },
+  "paths": [
+   {
+    "path": "手札から（PMCG1-076）",
+    "in_records": {
+     "rejected": 3,
+     "accepted": 7
+    },
+    "initial_scope": true
+   },
+   {
+    "path": "再録の版",
+    "in_records": 0,
+    "initial_scope": true
+   },
+   {
+    "path": "錯乱ジム（借りた使用・おもての使用）",
+    "in_records": 0,
+    "initial_scope": false
+   },
+   {
+    "path": "サイキックコントロール",
+    "in_records": 0,
+    "initial_scope": false
+   },
+   {
+    "path": "リムーブ禁止ジムの追加の条件のあと",
+    "in_records": 0,
+    "initial_scope": false
+   }
+  ],
+  "unchanged": [
+   "1 枚以上の答え",
+   "選ぶ数の上限",
+   "選べるもの（ER6・ER7）",
+   "費用の決定",
+   "ER10・PT1",
+   "SR1・SR2",
+   "H4",
+   "手札以外の経路",
+   "判定の規則 6"
+  ]
+ },
+ "judge_and_old_records": {
+  "rule6": "変えない（RECORDED_STOP_CONDITIONS）",
+  "old_records": "記録の集合（TR3@1）のまま ER9 の既知の停止",
+  "accepted_zero_judgement": "未確認（実装の単位で確かめる）"
+ },
+ "acceptance_tests": [
+  "V1 厳密側の ER9",
+  "V2 規約有効の 0 枚の受理",
+  "V3 費用・移動",
+  "V4 1 枚以上の対照",
+  "V5 不正な入力からの答え直し",
+  "V6 合法手 API",
+  "V7 ER10・PT1",
+  "V8 H4・SR2",
+  "V9 手札以外の経路",
+  "V10 再録の版",
+  "V11 集合と旧記録",
+  "V12 ログの監査"
+ ],
+ "decisions_for_adoption": [
+  {
+   "id": "D1",
+   "item": "規約を置くか",
+   "recommended": "置く（B）",
+   "alternative": "A・C"
+  },
+  {
+   "id": "D2",
+   "item": "0 枚の扱い",
+   "recommended": "受理して使い終える（費用はもどさない）",
+   "alternative": "取り消し（推奨しない）"
+  },
+  {
+   "id": "D3",
+   "item": "範囲",
+   "recommended": "ER9 の 1 場面",
+   "alternative": "族 PC-UP-TO-ZERO"
+  },
+  {
+   "id": "D4",
+   "item": "経路",
+   "recommended": "手札からの通常の使用と再録の版",
+   "alternative": "錯乱ジム・サイキックコントロール・リムーブ禁止ジムも"
+  },
+  {
+   "id": "D5",
+   "item": "組み込み先と名前",
+   "recommended": "PC-ENERGY-RETRIEVAL-ZERO@1 を TR4@1（案）に",
+   "alternative": "TR3@2"
+  },
+  {
+   "id": "D6",
+   "item": "記録の項目",
+   "recommended": "player・available",
+   "alternative": "項目なし"
+  }
+ ],
+ "measure_after_adoption": [
+  "0 枚の答えの受理の数",
+  "その後の対戦の進み方・終わり方・完走の割合",
+  "時間・量"
+ ],
+ "unconfirmed": [
+  "手札以外の経路の到達（ソースだけ）",
+  "再録の版の対戦",
+  "0 枚を受理したあとの対戦の進み方",
+  "拒否の直後のエンジンの内部状態の照合値",
+  "judge の規約を当てた受理の扱い",
+  "名前と観測・リプレイの形式への影響"
+ ],
+ "not_done": [
+  "規約・コード・版の変更",
+  "新しい対戦",
+  "judge・replay"
+ ],
+ "check": {
+  "total": {
+   "cases": 3,
+   "games": 3,
+   "conditions": [
+    "C2"
+   ],
+   "cases_without_problems": 3,
+   "games_read": 24,
+   "halts_with_er9": 0,
+   "rejected_submit_er9": 3,
+   "check_valid_on_empty_answer": 3,
+   "decline_true_min0": 3,
+   "reanswered_accepted": 3,
+   "use_paths": {
+    "hand": 3
+   },
+   "game_end": {
+    "game_over": 3
+   },
+   "controls_one_or_more": 4,
+   "controls_chosen_count": {
+    "1": 3,
+    "2": 1
+   },
+   "controls_paths": {
+    "hand": 4
+   },
+   "related_code_mentions_in_full_records": {
+    "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET": 0,
+    "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_ZERO_CHOICE": 0,
+    "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_WITHOUT_TARGET": 0,
+    "UNRESOLVED_RECOVER_ZERO_ENERGY": 2,
+    "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE": 6
+   }
+  },
+  "cases": [
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m2",
+     "condition": "C2",
+     "game": "g001-rules-v2-s9007",
+     "actor": 1,
+     "position": 78,
+     "attempt_n": 94,
+     "operation_id": "g001-rules-v2-s9007-000079",
+     "decision_id": 15
+    },
+    "use": {
+     "operation_id": "g001-rules-v2-s9007-000077",
+     "command_type": "play_trainer",
+     "card_id": "PMCG1-076",
+     "via": null,
+     "source_zone": null,
+     "chaos_check_logged": false,
+     "stadium_in_play": false,
+     "events_from_use_to_decision": [
+      "play_trainer",
+      "discard_from_hand"
+     ]
+    },
+    "cost": {
+     "operation_id": "g001-rules-v2-s9007-000078",
+     "discarded_card_ids": [
+      "PMCG1-097"
+     ],
+     "fixed_at": "accepted_before_retrieve_decision",
+     "next_decision": {
+      "id": 15,
+      "kind": "retrieve_energy",
+      "player": 1
+     }
+    },
+    "decision": {
+     "kind": "retrieve_energy",
+     "min": 0,
+     "max": 2,
+     "options": 4,
+     "option_card_ids": {
+      "PMCG1-097": 4
+     },
+     "discarded_excluded": true,
+     "hand_count": 2,
+     "discard_count": 19
+    },
+    "inputs": {
+     "decision_kind": "retrieve_energy",
+     "count": {
+      "max": 2,
+      "min": 0
+     },
+     "decline": true,
+     "options": 4,
+     "option_processability": {
+      "may_stop_later": 4
+     },
+     "candidate": [
+      {
+       "kind": "answer_decision",
+       "processability": "may_stop_later",
+       "reasons": [
+        "continuation_not_evaluated"
+       ]
+      }
+     ]
+    },
+    "answer": {
+     "choices": [],
+     "reason": "rule2:fallback:no_priority",
+     "picks": [
+      {
+       "index": 0,
+       "items": 3,
+       "purpose": "count",
+       "reason": "uniform:count",
+       "stage": 1
+      }
+     ]
+    },
+    "check": {
+     "refusal": null,
+     "valid": true
+    },
+    "submit": {
+     "outcome": "rejected",
+     "diagnostic_id": "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE",
+     "case_id": "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE",
+     "category": "unresolved_ruling",
+     "continuable": true,
+     "status": "awaiting_decision",
+     "stage": "decision_answer",
+     "next": [
+      {
+       "kind": "answer_decision",
+       "player": 1
+      }
+     ],
+     "halt": null
+    },
+    "after_rejection": {
+     "viewers": {
+      "0": {
+       "before_equals_after": true,
+       "updates": 0
+      },
+      "1": {
+       "before_equals_after": true,
+       "updates": 0
+      },
+      "spectator": {
+       "before_equals_after": true,
+       "updates": 0
+      }
+     },
+     "own_rejection_notice": true,
+     "engine_state_hash_after_rejection": null
+    },
+    "reanswer": {
+     "attempts": [
+      {
+       "n": 95,
+       "chosen_count": 2,
+       "check_valid": true,
+       "outcome": "accepted",
+       "diagnostic_id": null,
+       "same_inputs_as_rejected": true
+      }
+     ],
+     "accepted_operation_id": "g001-rules-v2-s9007-000080",
+     "accepted_choices_count": 2,
+     "events": [
+      {
+       "kind": "retrieve_energy",
+       "cards": [
+        106,
+        118
+       ],
+       "card": null
+      },
+      {
+       "kind": "discard_trainer",
+       "cards": null,
+       "card": 95
+      }
+     ],
+     "next": [
+      {
+       "kind": "turn_action",
+       "player": 1
+      }
+     ],
+     "status": "in_progress"
+    },
+    "game_end": {
+     "termination": "game_over",
+     "halt": null,
+     "evidence": "complete_without_stop",
+     "judge_verdict": "expected"
+    },
+    "problems": [],
+    "accepted_answers": {
+     "current": 10,
+     "with_B": 11,
+     "with_C": 10
+    }
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m2",
+     "condition": "C2",
+     "game": "g002-rules-v2-s9008",
+     "actor": 1,
+     "position": 125,
+     "attempt_n": 153,
+     "operation_id": "g002-rules-v2-s9008-000126",
+     "decision_id": 18
+    },
+    "use": {
+     "operation_id": "g002-rules-v2-s9008-000124",
+     "command_type": "play_trainer",
+     "card_id": "PMCG1-076",
+     "via": null,
+     "source_zone": null,
+     "chaos_check_logged": false,
+     "stadium_in_play": false,
+     "events_from_use_to_decision": [
+      "play_trainer",
+      "discard_from_hand"
+     ]
+    },
+    "cost": {
+     "operation_id": "g002-rules-v2-s9008-000125",
+     "discarded_card_ids": [
+      "PMCG1-097"
+     ],
+     "fixed_at": "accepted_before_retrieve_decision",
+     "next_decision": {
+      "id": 18,
+      "kind": "retrieve_energy",
+      "player": 1
+     }
+    },
+    "decision": {
+     "kind": "retrieve_energy",
+     "min": 0,
+     "max": 2,
+     "options": 4,
+     "option_card_ids": {
+      "PMCG1-097": 4
+     },
+     "discarded_excluded": true,
+     "hand_count": 4,
+     "discard_count": 20
+    },
+    "inputs": {
+     "decision_kind": "retrieve_energy",
+     "count": {
+      "max": 2,
+      "min": 0
+     },
+     "decline": true,
+     "options": 4,
+     "option_processability": {
+      "may_stop_later": 4
+     },
+     "candidate": [
+      {
+       "kind": "answer_decision",
+       "processability": "may_stop_later",
+       "reasons": [
+        "continuation_not_evaluated"
+       ]
+      }
+     ]
+    },
+    "answer": {
+     "choices": [],
+     "reason": "rule2:fallback:no_priority",
+     "picks": [
+      {
+       "index": 0,
+       "items": 3,
+       "purpose": "count",
+       "reason": "uniform:count",
+       "stage": 1
+      }
+     ]
+    },
+    "check": {
+     "refusal": null,
+     "valid": true
+    },
+    "submit": {
+     "outcome": "rejected",
+     "diagnostic_id": "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE",
+     "case_id": "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE",
+     "category": "unresolved_ruling",
+     "continuable": true,
+     "status": "awaiting_decision",
+     "stage": "decision_answer",
+     "next": [
+      {
+       "kind": "answer_decision",
+       "player": 1
+      }
+     ],
+     "halt": null
+    },
+    "after_rejection": {
+     "viewers": {
+      "0": {
+       "before_equals_after": true,
+       "updates": 0
+      },
+      "1": {
+       "before_equals_after": true,
+       "updates": 0
+      },
+      "spectator": {
+       "before_equals_after": true,
+       "updates": 0
+      }
+     },
+     "own_rejection_notice": true,
+     "engine_state_hash_after_rejection": null
+    },
+    "reanswer": {
+     "attempts": [
+      {
+       "n": 154,
+       "chosen_count": 2,
+       "check_valid": true,
+       "outcome": "accepted",
+       "diagnostic_id": null,
+       "same_inputs_as_rejected": true
+      }
+     ],
+     "accepted_operation_id": "g002-rules-v2-s9008-000127",
+     "accepted_choices_count": 2,
+     "events": [
+      {
+       "kind": "retrieve_energy",
+       "cards": [
+        115,
+        112
+       ],
+       "card": null
+      },
+      {
+       "kind": "discard_trainer",
+       "cards": null,
+       "card": 96
+      }
+     ],
+     "next": [
+      {
+       "kind": "turn_action",
+       "player": 1
+      }
+     ],
+     "status": "in_progress"
+    },
+    "game_end": {
+     "termination": "game_over",
+     "halt": null,
+     "evidence": "complete_without_stop",
+     "judge_verdict": "expected"
+    },
+    "problems": [],
+    "accepted_answers": {
+     "current": 10,
+     "with_B": 11,
+     "with_C": 10
+    }
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m2",
+     "condition": "C2",
+     "game": "g005-rules-v2-s9011",
+     "actor": 0,
+     "position": 36,
+     "attempt_n": 38,
+     "operation_id": "g005-rules-v2-s9011-000037",
+     "decision_id": 8
+    },
+    "use": {
+     "operation_id": "g005-rules-v2-s9011-000035",
+     "command_type": "play_trainer",
+     "card_id": "PMCG1-076",
+     "via": null,
+     "source_zone": null,
+     "chaos_check_logged": false,
+     "stadium_in_play": false,
+     "events_from_use_to_decision": [
+      "play_trainer",
+      "discard_from_hand"
+     ]
+    },
+    "cost": {
+     "operation_id": "g005-rules-v2-s9011-000036",
+     "discarded_card_ids": [
+      "PMCG1-071"
+     ],
+     "fixed_at": "accepted_before_retrieve_decision",
+     "next_decision": {
+      "id": 8,
+      "kind": "retrieve_energy",
+      "player": 0
+     }
+    },
+    "decision": {
+     "kind": "retrieve_energy",
+     "min": 0,
+     "max": 2,
+     "options": 6,
+     "option_card_ids": {
+      "PMCG1-102": 4,
+      "PMCG1-099": 2
+     },
+     "discarded_excluded": true,
+     "hand_count": 3,
+     "discard_count": 17
+    },
+    "inputs": {
+     "decision_kind": "retrieve_energy",
+     "count": {
+      "max": 2,
+      "min": 0
+     },
+     "decline": true,
+     "options": 6,
+     "option_processability": {
+      "may_stop_later": 6
+     },
+     "candidate": [
+      {
+       "kind": "answer_decision",
+       "processability": "may_stop_later",
+       "reasons": [
+        "continuation_not_evaluated"
+       ]
+      }
+     ]
+    },
+    "answer": {
+     "choices": [],
+     "reason": "rule2:fallback:no_priority",
+     "picks": [
+      {
+       "index": 0,
+       "items": 3,
+       "purpose": "count",
+       "reason": "uniform:count",
+       "stage": 1
+      }
+     ]
+    },
+    "check": {
+     "refusal": null,
+     "valid": true
+    },
+    "submit": {
+     "outcome": "rejected",
+     "diagnostic_id": "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE",
+     "case_id": "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE",
+     "category": "unresolved_ruling",
+     "continuable": true,
+     "status": "awaiting_decision",
+     "stage": "decision_answer",
+     "next": [
+      {
+       "kind": "answer_decision",
+       "player": 0
+      }
+     ],
+     "halt": null
+    },
+    "after_rejection": {
+     "viewers": {
+      "0": {
+       "before_equals_after": true,
+       "updates": 0
+      },
+      "1": {
+       "before_equals_after": true,
+       "updates": 0
+      },
+      "spectator": {
+       "before_equals_after": true,
+       "updates": 0
+      }
+     },
+     "own_rejection_notice": true,
+     "engine_state_hash_after_rejection": null
+    },
+    "reanswer": {
+     "attempts": [
+      {
+       "n": 39,
+       "chosen_count": 2,
+       "check_valid": true,
+       "outcome": "accepted",
+       "diagnostic_id": null,
+       "same_inputs_as_rejected": true
+      }
+     ],
+     "accepted_operation_id": "g005-rules-v2-s9011-000038",
+     "accepted_choices_count": 2,
+     "events": [
+      {
+       "kind": "retrieve_energy",
+       "cards": [
+        41,
+        53
+       ],
+       "card": null
+      },
+      {
+       "kind": "discard_trainer",
+       "cards": null,
+       "card": 36
+      }
+     ],
+     "next": [
+      {
+       "kind": "turn_action",
+       "player": 0
+      }
+     ],
+     "status": "in_progress"
+    },
+    "game_end": {
+     "termination": "game_over",
+     "halt": null,
+     "evidence": "complete_without_stop",
+     "judge_verdict": "expected"
+    },
+    "problems": [],
+    "accepted_answers": {
+     "current": 21,
+     "with_B": 22,
+     "with_C": 21
+    }
+   }
+  ],
+  "controls": [
+   {
+    "batch": "vai-batch-tr3u1-m2",
+    "game": "g001-rules-v2-s9007",
+    "actor": 1,
+    "operation_id": "g001-rules-v2-s9007-000022",
+    "chosen": 1,
+    "min": 0,
+    "max": 2,
+    "options": 2,
+    "events": [
+     "retrieve_energy",
+     "discard_trainer"
+    ],
+    "user": 1,
+    "via": null,
+    "owner": 1
+   },
+   {
+    "batch": "vai-batch-tr3u1-m2",
+    "game": "g001-rules-v2-s9007",
+    "actor": 0,
+    "operation_id": "g001-rules-v2-s9007-000225",
+    "chosen": 1,
+    "min": 0,
+    "max": 2,
+    "options": 3,
+    "events": [
+     "retrieve_energy",
+     "discard_trainer"
+    ],
+    "user": 0,
+    "via": null,
+    "owner": 0
+   },
+   {
+    "batch": "vai-batch-tr3u1-m2",
+    "game": "g002-rules-v2-s9008",
+    "actor": 0,
+    "operation_id": "g002-rules-v2-s9008-000069",
+    "chosen": 2,
+    "min": 0,
+    "max": 2,
+    "options": 6,
+    "events": [
+     "retrieve_energy",
+     "discard_trainer"
+    ],
+    "user": 0,
+    "via": null,
+    "owner": 0
+   },
+   {
+    "batch": "vai-batch-tr3u1-m2",
+    "game": "g006-rules-v2-s9012",
+    "actor": 0,
+    "operation_id": "g006-rules-v2-s9012-000025",
+    "chosen": 1,
+    "min": 0,
+    "max": 1,
+    "options": 1,
+    "events": [
+     "retrieve_energy",
+     "discard_trainer"
+    ],
+    "user": 0,
+    "via": null,
+    "owner": 0
+   }
+  ]
+ }
+}
