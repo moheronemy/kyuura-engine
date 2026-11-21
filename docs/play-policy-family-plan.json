@@ -12038,7 +12038,11 @@
     "docs/haunter-line-v0.9.md"
    ],
    "candidate": "PC-UP-TO-ZERO",
-   "coverage": "unverified"
+   "coverage": "unverified",
+   "adopted_convention": [
+    "PC-ENERGY-CONVERSION-ZERO",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET",

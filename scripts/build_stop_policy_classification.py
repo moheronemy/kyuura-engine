@@ -175,6 +175,24 @@ CONTINUATION_AGREEMENTS += [
      "reading": ("UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE（effects.DiscardFromHandThenRetrieveEnergy.resume の空の答え。経路は effects.retrieval_from_hand）。厳密側の停止（ER9）は active のまま。"
                  "錯乱ジム・サイキックコントロール・［ちえくらべ］を聞いた使用・ER10・超エネルギー回収（SR2）・ワザの UNRESOLVED_RECOVER_ZERO_ENERGY・ほかの「最大N」の場面は対象外")},
 ]
+# v0.196（docs/play-convention-tr6-v0.196.md）: エナジーへんかんの 0 枚の答えの続行規約の採用（2026-11-21 の利用者の指示。設計 docs/h4-recover-zero-design.md の案 B）。
+# 採用したのは開発用の部分的な集合 CS-KYUURA-PLAY-TR6@1 の 1 規約の中身だけ（厳密側・既存の集合・ほかの「最大N」の場面・メタモンの［へんしん］の経路は変えない）。この記録は実装と同じ単位で入力へ
+TR6_AGREEMENT_SOURCE = {"by": "user", "on": "2026-11-21",
+                        "where": ("本会話の利用者の指示（作業ブランチ claude/h4-zero-v0196 の依頼の採用方針: 案 B「0 枚を受理して、自分への 10 ダメージへ進む」・ゴース（PMCG3-029）自身の"
+                                  "エナジーへんかんと、ピッピ・ピクシーのゆびをふるがそのワザを実行する経路だけ・メタモンの［へんしん］は対象外・明示的に選択した新しいプレイ用規約集合"
+                                  "CS-KYUURA-PLAY-TR6@1 だけで有効。設計は docs/h4-recover-zero-design.md）"),
+                        "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用。厳密側の集合・ほかの未決の場面の判断ではない）"}
+CONTINUATION_AGREEMENTS += [
+    {"id": "AGR-PLAY-TR6-SET", "source": TR6_AGREEMENT_SOURCE,
+     "statement": "続行側として、開発用の部分的な集合 CS-KYUURA-PLAY-TR6@1（CS-KYUURA-PLAY-TR4@1 の 24 規約と TR6 の 1 規約）を登録する。完成したプレイ用とは表示しない。",
+     "reading": ("conventions.SETS の CS-KYUURA-PLAY-TR6@1（usage development・completeness halts_at_undecided）。CS-KYUURA-CURRENT@1・S2A@1・PO@1・TR3@1・TR4@1 は同じ ID・版・中身のまま。"
+                 "既定の集合は変えない。TR5 は ER10 の設計の案の名前なので使わない")},
+    {"id": "AGR-PLAY-TR6-ENERGY-CONVERSION-ZERO", "source": TR6_AGREEMENT_SOURCE,
+     "statement": ("PC-ENERGY-CONVERSION-ZERO@1: エナジーへんかんの回収の決定で 0 枚と答えたら、受理して何も手札に加えずにワザの続き（自分への 10 ダメージ）へ進む。ワザを使ったポケモン自身の"
+                   "印刷のエナジーへんかんと、ピッピ・ピクシーのゆびをふるで相手のポケモン自身のエナジーへんかんを使う経路だけ。"),
+     "reading": ("UNRESOLVED_RECOVER_ZERO_ENERGY（resolution.programs.RecoverEnergy.resume の空の答え。経路は RecoverEnergy._zero_convention_path）。厳密側の停止（H4）は active のまま。"
+                 "メタモンの［へんしん］・ほかのワザのコピー・トラッシュにエネルギーがないとき（H5）・ER9・ER10・SR2・ほかの「最大N」の場面は対象外")},
+]
 AGREED_CONVENTION_STATUS ="user_agreed"  # 規約（conventions）だけが使える。合意 AGR-MODE-BASELINE-USER で基礎集合に入れた利用者指定。続行規約の採用ではない
 MODE_DEFINITIONS_HISTORY = {
     "STRICT-A": "厳密モードの定義としては採用しない（過去の検討案。AGR-MODE-STRICT・AGR-MODE-BASELINE-USER と合わない）。研究・照合の用途の集合として別に作るかは決めていない",
@@ -229,9 +247,11 @@ DECISION_STATUS = {
     "DEC-USE-WITHOUT-EFFECT": {"status": "partly_agreed", "agreements": ["AGR-PLAY-TR3-GUST", "AGR-PLAY-TR3-SWITCH", "AGR-PLAY-TR3-POTION"],
                                "note": ("v0.186: GW5・UNRESOLVED_SWITCH_WITHOUT_BENCH・UNRESOLVED_POTION_WITHOUT_DAMAGE の 3 場面だけを、続行側の集合 CS-KYUURA-PLAY-TR3@1 の規約（使えない。"
                                         "P-UWE-1 の形）として採用。ほかのコード（PF-USE-WITHOUT-EFFECT の残り）・PC-USE-WITHOUT-TARGET の案・厳密側は未決のまま")},
-    "DEC-UP-TO-ZERO": {"status": "partly_agreed", "agreements": ["AGR-PLAY-TR4-ENERGY-RETRIEVAL-ZERO"],
+    "DEC-UP-TO-ZERO": {"status": "partly_agreed", "agreements": ["AGR-PLAY-TR4-ENERGY-RETRIEVAL-ZERO", "AGR-PLAY-TR6-ENERGY-CONVERSION-ZERO"],
                        "note": ("v0.195: UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE（ER9）の 1 場面の、手札からの通常の使用だけを、続行側の集合 CS-KYUURA-PLAY-TR4@1 の規約（0 枚を受理して使い終える。"
-                                "P-UTZ-2 の形）として採用。ほかのコード（PF-UP-TO-ZERO の残り 12 件。SR2・H4 をふくむ）・PC-UP-TO-ZERO の案・厳密側は未決のまま")},
+                                "P-UTZ-2 の形）として採用。v0.196: UNRESOLVED_RECOVER_ZERO_ENERGY（H4）の 1 場面の、エナジーへんかん自身とゆびをふるの経路だけを、続行側の集合 "
+                                "CS-KYUURA-PLAY-TR6@1 の規約（0 枚を受理して自分へのダメージへ進む。P-UTZ-2 の形）として採用。ほかのコード（PF-UP-TO-ZERO の残り 11 件。SR2 をふくむ）・"
+                                "PC-UP-TO-ZERO の案・厳密側は未決のまま")},
     "DEC-EXISTING-USER-SPECS": {"status": "partly_agreed", "agreements": ["AGR-MODE-BASELINE-USER"],
                                 "note": "利用者指定（12 件・USER-ID 9 つ）は基礎集合に入れる。エンジンの簡略化・実装上の仮定・データの訂正の扱いは DEC-BASELINE-NONUSER・DEC-CARD-DATA-CORRECTIONS で未決"},
 }
@@ -1356,6 +1376,17 @@ UPDATES = [
                          "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"],
      "new_entries": ["continuation_agreements（AGR-PLAY-TR4-* の 2 項目。項目ごとの出典 source）"],
      "unchanged": ("研究の停止コードは active のまま（厳密側・S2a・PO・TR3 の集合と、初回の範囲の外の経路では今のまま止まる）。族・安全境界・規約（conventions）・方針の案"
+                   "（PC-UP-TO-ZERO は proposal のまま）は変えていない")},
+    {"version": "0.196.0", "work": "エナジーへんかんの 0 枚の答えの続行規約 1 件の採用・実装（開発用の部分的な集合 CS-KYUURA-PLAY-TR6@1）",
+     "document": "docs/play-convention-tr6-v0.196.md",
+     "base": {"commit": "4caa8b1049af526dfa4e5b71c8b66d0077d8cb6f", "branch_of_base": "claude/h4-recover-zero-design（0.195.0 と H4 の設計。main には未取り込み）"},
+     "approval": ("利用者の採用は continuation_agreements の AGR-PLAY-TR6-* の 2 項目（2026-11-21。続行側の集合の規約の採用で、公式の裁定・kyuura の研究上の解決ではない）。"
+                  "DEC-UP-TO-ZERO の partly_agreed に H4 の 1 場面を加えた。厳密側・既存の集合・ほかの「最大N」の場面は変えていない。採用の記録は実装と同じ単位で入力へ入れた"),
+     "changed_entries": ["decision_status（DEC-UP-TO-ZERO）",
+                         "UNRESOLVED_RECOVER_ZERO_ENERGY の implementation_sites・current_stop（規約の場面の宣言 conventions.py の箇所が加わった。TR4 の前例と同じ）",
+                         "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"],
+     "new_entries": ["continuation_agreements（AGR-PLAY-TR6-* の 2 項目。項目ごとの出典 source）"],
+     "unchanged": ("研究の停止コードは active のまま（厳密側・S2a・PO・TR3・TR4 の集合と、対象の外の経路では今のまま止まる）。族・安全境界・規約（conventions）・方針の案"
                    "（PC-UP-TO-ZERO は proposal のまま）は変えていない")},
 ]
 # 分類の時点（基点 3e25ac5）の集計（counts）の写し。今の counts は現行コードから作り直した値

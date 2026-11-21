@@ -108,6 +108,17 @@ SPEC_ADOPTIONS.update({
                                  "note": ("PC-UP-TO-ZERO（proposal のまま）の対象のうち、この場面の手札からの通常の使用だけの規約（0 枚を受理して使い終える）。案そのもの・ほかの対象"
                                           "（SR2・H4 をふくむ）・錯乱ジム・サイキックコントロール・［ちえくらべ］を聞いた使用は採用していない")},
 })
+# v0.196（docs/play-convention-tr6-v0.196.md）: 設計（docs/h4-recover-zero-design.md）の案 B の採用（候補ではない。PC-UP-TO-ZERO の対象の 1 場面の、元のワザとゆびをふるの経路だけ。
+# 案そのものは proposal のまま）
+_TR6_ADOPTION = {"on": "2026-11-21", "by": "user", "version": "0.196.0", "set": ["CS-KYUURA-PLAY-TR6", 1], "document": "docs/play-convention-tr6-v0.196.md",
+                 "spec": "docs/h4-recover-zero-design.md", "not_recorded_as": "公式の裁定・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用）"}
+SPEC_ADOPTIONS.update({
+    "PC-ENERGY-CONVERSION-ZERO": {**_TR6_ADOPTION, "convention": ["PC-ENERGY-CONVERSION-ZERO", 1], "scenes": ["UNRESOLVED_RECOVER_ZERO_ENERGY"],
+                                  "related_candidate": "PC-UP-TO-ZERO",
+                                  "note": ("PC-UP-TO-ZERO（proposal のまま）の対象のうち、この場面（H4）の、ゴース自身のエナジーへんかんと、ピッピ・ピクシーのゆびをふるで相手のゴース自身の"
+                                           "エナジーへんかんを使う経路だけの規約（0 枚を受理して自分へのダメージへ進む）。案そのもの・ほかの対象（SR2 をふくむ）・メタモンの［へんしん］の経路は"
+                                           "採用していない")},
+})
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
 # 区分（利用者の依頼の A〜E。台帳の classification とは別の軸）
