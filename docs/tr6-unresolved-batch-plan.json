@@ -1,0 +1,1122 @@
+{
+ "status": "draft",
+ "not_a_confirmed_plan": true,
+ "doc": "docs/tr6-unresolved-batch-plan.md",
+ "date": "2026-11-22",
+ "purpose": "TR6 を明示して選び、ルールベース AI の対戦から、次にどの未裁定を扱えば対戦を続けられる場面や実際に選べる手が増えるかを調べる（新しい seed・4 条件）",
+ "duplicate_check": {
+  "result": "none",
+  "checked": [
+   "公開のブランチの名前",
+   "全公開ブランチの docs のファイル名",
+   "証跡の実行フォルダの名前",
+   "保存済みの plan.json の CS-KYUURA-PLAY-TR6"
+  ],
+  "only_tr6_plan_found": "vai-batch-h4c-tr6（H4 の比較: C3 の 2 局・旧 seed 9006・9009。新しい seed・4 条件の監査ではない）"
+ },
+ "base": {
+  "branch": "claude/h4-tr4-tr6-compare",
+  "commit": "0887b1e27c5a020da8f3ecff6583d5854ebe330c",
+  "in_main": false,
+  "execution_candidate": "7f7712acebd022ac5c9a7d5a346b89d3a2ab9690",
+  "execution_candidate_is_ancestor": true,
+  "remote_branches_containing_candidate": [
+   "origin/claude/h4-zero-v0196",
+   "origin/claude/h4-tr4-tr6-compare"
+  ],
+  "code_diff_candidate_to_base": 0,
+  "commits_after_candidate": {
+   "count": 4,
+   "paths": "docs only"
+  },
+  "work": {
+   "worktree": "C:\\dev\\kyuura-engine-lt86",
+   "branch": "claude/tr6-unresolved-batch-plan"
+  }
+ },
+ "expected_identity": {
+  "engine_version": "0.196.0",
+  "behavior_digest": "4a8edcf09117881bc1bd5971c45bcba6f27e2329001cd58bf6c4eb0170c6b3fc",
+  "behavior_files": 58,
+  "instrumentation_digest": "13c773a8892efc0736d8896544d2f29bd8d6ce94a534502a852daabf07eba27a",
+  "tool_version": 13,
+  "tool_digest": "be95aa1e5c6fc5ee45755f9741d7fbbda7ddea5567b7968b7f44ecadd4935a41",
+  "judge_rules_version": 10,
+  "plan_format": "kyuura-vai-batch-plan/7",
+  "complete_format": "kyuura-vai-batch-complete/7",
+  "basis": {
+   "lost_target_p1": "e1d389e7afc41c7cbafd4cb433db7fb4948bda449486543f9795109329fc7a59",
+   "lost_target_p3": "89d12d2eda30a1d1e90cc299ffd4aa30c74f7acdb20ff9fb9336316801dc2f5b",
+   "lost_target_p2": "d652db2467a7f5223cac5de88ea5e1c9a5b4a482cb815accf00e928073b2be4d",
+   "recover_zero": "b3864eca11e2733581175f4bb05024a67fbbb9a98468e68e2f6ceee20ac8d1b0"
+  },
+  "conventions": {
+   "key": "CS-KYUURA-PLAY-TR6@1",
+   "pinned": "sha256:aa53bc52cfc1d2193a3e1692efc585cf7daef23251c5d08dd09d7e554cf6ead2",
+   "computed": "sha256:aa53bc52cfc1d2193a3e1692efc585cf7daef23251c5d08dd09d7e554cf6ead2",
+   "usage": "development",
+   "completeness": "halts_at_undecided",
+   "members": 25,
+   "validate_problems": [],
+   "base_set": {
+    "key": "CS-KYUURA-PLAY-TR4@1",
+    "members": 24,
+    "digest": "sha256:15af975a643c8d5844bf76e0a85ab20020ca331b01c463aeb344047806435552"
+   },
+   "tr6_minus_tr4": [
+    "PC-ENERGY-CONVERSION-ZERO@1"
+   ],
+   "tr4_minus_tr6": [],
+   "added_convention_digest_equal": true
+  },
+  "equal_to_h4_comparison_identity": true,
+  "saved_tr6_four_condition_batches": 0
+ },
+ "mode": {
+  "name": "rules-v2",
+  "policy": "rules",
+  "rules_version": 2,
+  "repeat_threshold": 2,
+  "profile": "deep",
+  "distribution": "uniform-candidate+uniform-stage",
+  "game_limits": {
+   "operations": 2000,
+   "accepted": 1000,
+   "turns": 200,
+   "seconds": 120,
+   "rejections_per_position": 16,
+   "draws_per_position": 64
+  },
+  "observation": true,
+  "prestop_inputs": {
+   "enabled": true,
+   "limits": {
+    "max_fetches_per_game": 256,
+    "max_response_bytes": 16384,
+    "max_rows_bytes": 1048576
+   }
+  },
+  "undetermined_evidence_missing": "continue",
+  "negative": false,
+  "sequential_single_process": true
+ },
+ "conditions": {
+  "C1": {
+   "deck0": {
+    "decklist": "verifier/runs/vai-batch-d/decklists/decklist-L67-U.json"
+   },
+   "deck1": {
+    "decklist": "verifier/runs/vai-batch-d/decklists/decklist-L67-U.json"
+   },
+   "legality_ok": [
+    true,
+    true
+   ],
+   "expanded_sha256": [
+    "5fb91539995ceb23993439fa66a327becc1a06ff4b12bd6694ef0eff33c4c4f3",
+    "5fb91539995ceb23993439fa66a327becc1a06ff4b12bd6694ef0eff33c4c4f3"
+   ],
+   "er9_h4_cards": [
+    {},
+    {}
+   ],
+   "tr3_cards": [
+    {
+     "switch": 2,
+     "potion": 2,
+     "gust": 2
+    },
+    {
+     "switch": 2,
+     "potion": 2,
+     "gust": 2
+    }
+   ],
+   "role": "baseline"
+  },
+  "C2": {
+   "deck0": {
+    "preset": "hitmonchan-dewgong-v2"
+   },
+   "deck1": {
+    "preset": "venusaur-parasect-v2"
+   },
+   "legality_ok": [
+    true,
+    true
+   ],
+   "expanded_sha256": [
+    null,
+    null
+   ],
+   "er9_h4_cards": [
+    {
+     "er9_energy_retrieval": 2
+    },
+    {
+     "er9_energy_retrieval": 2
+    }
+   ],
+   "tr3_cards": [
+    {
+     "switch": 3,
+     "potion": 2,
+     "gust": 3
+    },
+    {
+     "switch": 3,
+     "potion": 2,
+     "gust": 2
+    }
+   ]
+  },
+  "C3": {
+   "deck0": {
+    "decklist": "verifier/runs/p2-min-batch-plan/decklists/decklist-P42.json"
+   },
+   "deck1": {
+    "decklist": "verifier/runs/vai-batch-d/decklists/decklist-L67-U.json"
+   },
+   "legality_ok": [
+    true,
+    true
+   ],
+   "expanded_sha256": [
+    "243c137f76af2a6c22ddbf17ce9afd40c391393fe75097723d0ef07e880aa6d2",
+    "5fb91539995ceb23993439fa66a327becc1a06ff4b12bd6694ef0eff33c4c4f3"
+   ],
+   "er9_h4_cards": [
+    {
+     "h4_energy_conversion": 4
+    },
+    {}
+   ],
+   "tr3_cards": [
+    {
+     "switch": 2,
+     "potion": 2,
+     "gust": 2
+    },
+    {
+     "switch": 2,
+     "potion": 2,
+     "gust": 2
+    }
+   ]
+  },
+  "C4": {
+   "deck0": {
+    "decklist": "verifier/runs/vai-batch-d/decklists/decklist-LUCKY_DECK.json"
+   },
+   "deck1": {
+    "decklist": "verifier/runs/vai-batch-d/decklists/decklist-CONNECT_DECK.json"
+   },
+   "legality_ok": [
+    true,
+    true
+   ],
+   "expanded_sha256": [
+    "857abd7d7d40b041be0e1c92a5c0bdda357ef9c1e0441793f8550f905b204eb8",
+    "6ae10e56108322e0d0b38f76a329246786a08ce81fda7426614e310fc7e3d6f8"
+   ],
+   "er9_h4_cards": [
+    {},
+    {}
+   ],
+   "tr3_cards": [
+    {},
+    {}
+   ]
+  },
+  "same_as": "TR3 の本実行の 4 条件（docs/tr3-unresolved-batch-plan.md 2 章）。席の向き・ファイルも同じ。カード ID の一覧・確認値は vai-batch-tr3u1-run の deck_profile と同じ"
+ },
+ "seeds": {
+  "pilot": [
+   9013
+  ],
+  "main": [
+   9014,
+   9015,
+   9016,
+   9017,
+   9018,
+   9019
+  ],
+  "rule": "9013 から上へ、連続 7 値がすべて未使用の最初の組（先頭 1 値が先行・残り 6 値が本実行）",
+  "scan": {
+   "stores": 30,
+   "files": 402,
+   "unreadable": 0,
+   "used_values": 106,
+   "used_9000_9200": [
+    9001,
+    9002,
+    9003,
+    9004,
+    9005,
+    9006,
+    9007,
+    9008,
+    9009,
+    9010,
+    9011,
+    9012
+   ],
+   "max_used": 9012
+  },
+  "on_recheck_change": "実行を止めて計画を直す（その場で別の値に替えない）",
+  "no_replacement_by_observation": true
+ },
+ "plans": [
+  {
+   "batch_id": "vai-batch-tr6a-p1",
+   "stage": "pilot",
+   "condition": "C1",
+   "seeds": [
+    9013
+   ],
+   "max_games": 1,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "cli": "python -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr6a-p1 --seeds 9013 --decklist0 <L67-U> --decklist1 <L67-U> --max-games 1 --budget-seconds 300 --evidence-max-mb 512 --engine-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --tool-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --modes rules-v2 --conventions CS-KYUURA-PLAY-TR6@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch_id": "vai-batch-tr6a-p2",
+   "stage": "pilot",
+   "condition": "C2",
+   "seeds": [
+    9013
+   ],
+   "max_games": 1,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "cli": "python -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr6a-p2 --seeds 9013 --deck0 hitmonchan-dewgong-v2 --deck1 venusaur-parasect-v2 --max-games 1 --budget-seconds 300 --evidence-max-mb 512 --engine-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --tool-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --modes rules-v2 --conventions CS-KYUURA-PLAY-TR6@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch_id": "vai-batch-tr6a-p3",
+   "stage": "pilot",
+   "condition": "C3",
+   "seeds": [
+    9013
+   ],
+   "max_games": 1,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "cli": "python -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr6a-p3 --seeds 9013 --decklist0 <P42> --decklist1 <L67-U> --max-games 1 --budget-seconds 300 --evidence-max-mb 512 --engine-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --tool-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --modes rules-v2 --conventions CS-KYUURA-PLAY-TR6@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch_id": "vai-batch-tr6a-p4",
+   "stage": "pilot",
+   "condition": "C4",
+   "seeds": [
+    9013
+   ],
+   "max_games": 1,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "cli": "python -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr6a-p4 --seeds 9013 --decklist0 <LUCKY_DECK> --decklist1 <CONNECT_DECK> --max-games 1 --budget-seconds 300 --evidence-max-mb 512 --engine-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --tool-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --modes rules-v2 --conventions CS-KYUURA-PLAY-TR6@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch_id": "vai-batch-tr6a-m1",
+   "stage": "main",
+   "condition": "C1",
+   "seeds": [
+    9014,
+    9015,
+    9016,
+    9017,
+    9018,
+    9019
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr6a-m1 --seeds 9014 9015 9016 9017 9018 9019 --decklist0 <L67-U> --decklist1 <L67-U> --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --tool-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --modes rules-v2 --conventions CS-KYUURA-PLAY-TR6@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch_id": "vai-batch-tr6a-m2",
+   "stage": "main",
+   "condition": "C2",
+   "seeds": [
+    9014,
+    9015,
+    9016,
+    9017,
+    9018,
+    9019
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr6a-m2 --seeds 9014 9015 9016 9017 9018 9019 --deck0 hitmonchan-dewgong-v2 --deck1 venusaur-parasect-v2 --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --tool-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --modes rules-v2 --conventions CS-KYUURA-PLAY-TR6@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch_id": "vai-batch-tr6a-m3",
+   "stage": "main",
+   "condition": "C3",
+   "seeds": [
+    9014,
+    9015,
+    9016,
+    9017,
+    9018,
+    9019
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr6a-m3 --seeds 9014 9015 9016 9017 9018 9019 --decklist0 <P42> --decklist1 <L67-U> --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --tool-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --modes rules-v2 --conventions CS-KYUURA-PLAY-TR6@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch_id": "vai-batch-tr6a-m4",
+   "stage": "main",
+   "condition": "C4",
+   "seeds": [
+    9014,
+    9015,
+    9016,
+    9017,
+    9018,
+    9019
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr6a-m4 --seeds 9014 9015 9016 9017 9018 9019 --decklist0 <LUCKY_DECK> --decklist1 <CONNECT_DECK> --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --tool-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --modes rules-v2 --conventions CS-KYUURA-PLAY-TR6@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  }
+ ],
+ "order": [
+  "vai-batch-tr6a-p1:9013",
+  "vai-batch-tr6a-p2:9013",
+  "vai-batch-tr6a-p3:9013",
+  "vai-batch-tr6a-p4:9013",
+  "vai-batch-tr6a-m1:9014",
+  "vai-batch-tr6a-m2:9014",
+  "vai-batch-tr6a-m3:9014",
+  "vai-batch-tr6a-m4:9014",
+  "vai-batch-tr6a-m1:9015",
+  "vai-batch-tr6a-m2:9015",
+  "vai-batch-tr6a-m3:9015",
+  "vai-batch-tr6a-m4:9015",
+  "vai-batch-tr6a-m1:9016",
+  "vai-batch-tr6a-m2:9016",
+  "vai-batch-tr6a-m3:9016",
+  "vai-batch-tr6a-m4:9016",
+  "vai-batch-tr6a-m1:9017",
+  "vai-batch-tr6a-m2:9017",
+  "vai-batch-tr6a-m3:9017",
+  "vai-batch-tr6a-m4:9017",
+  "vai-batch-tr6a-m1:9018",
+  "vai-batch-tr6a-m2:9018",
+  "vai-batch-tr6a-m3:9018",
+  "vai-batch-tr6a-m4:9018",
+  "vai-batch-tr6a-m1:9019",
+  "vai-batch-tr6a-m2:9019",
+  "vai-batch-tr6a-m3:9019",
+  "vai-batch-tr6a-m4:9019"
+ ],
+ "games": {
+  "pilot": 4,
+  "main_max": 24,
+  "total_max": 28
+ },
+ "budget": {
+  "per_plan_defaults": {
+   "game_reserve_seconds": 150,
+   "evidence_reserve_mib": 64,
+   "max_attempts_per_game": 3
+  },
+  "program": {
+   "tool_accounted_seconds": 3600,
+   "outer_wall_seconds": 7200,
+   "evidence_mib": 2048
+  },
+  "start_next_game_requires": {
+   "plan_remaining_seconds": 150,
+   "program_remaining_tool_seconds": 150,
+   "program_remaining_wall_seconds": 600
+  },
+  "free_space_before_each_game": {
+   "plan_remaining_evidence_mib": 384,
+   "program_remaining_evidence_mib": 384,
+   "drive_free_mib": 4096,
+   "rule": "max(384 MiB, 保存済みの最大 1 局 × 1.5)"
+  },
+  "inherited_from": "docs/tr3-unresolved-batch-plan.md 4.2 節",
+  "on_shortage": "次の局を始めず、未着手を残して終える（延長・追加・acknowledge-stop・unlock はしない）"
+ },
+ "estimates": {
+  "source": "verifier/runs/tr6-unresolved-batch-plan/out/budget_estimate.json",
+  "by_source_condition": {
+   "tr3u1_pilot": {
+    "C1": {
+     "games": 1,
+     "versions": [
+      "0.194.0"
+     ],
+     "conventions": [
+      "CS-KYUURA-PLAY-TR3"
+     ],
+     "attempt_seconds": {
+      "n": 1,
+      "min": 0.802,
+      "median": 0.802,
+      "max": 0.802,
+      "sum": 0.802
+     },
+     "bytes": {
+      "n": 1,
+      "min": 2017641,
+      "median": 2017641,
+      "max": 2017641,
+      "sum": 2017641
+     },
+     "accepted": {
+      "n": 1,
+      "min": 37,
+      "median": 37,
+      "max": 37,
+      "sum": 37
+     },
+     "terminations": {
+      "game_over": 1
+     },
+     "peak_ws_max": 93454336
+    },
+    "C2": {
+     "games": 1,
+     "versions": [
+      "0.194.0"
+     ],
+     "conventions": [
+      "CS-KYUURA-PLAY-TR3"
+     ],
+     "attempt_seconds": {
+      "n": 1,
+      "min": 0.436,
+      "median": 0.436,
+      "max": 0.436,
+      "sum": 0.436
+     },
+     "bytes": {
+      "n": 1,
+      "min": 927383,
+      "median": 927383,
+      "max": 927383,
+      "sum": 927383
+     },
+     "accepted": {
+      "n": 1,
+      "min": 21,
+      "median": 21,
+      "max": 21,
+      "sum": 21
+     },
+     "terminations": {
+      "game_over": 1
+     },
+     "peak_ws_max": 85938176
+    },
+    "C3": {
+     "games": 1,
+     "versions": [
+      "0.194.0"
+     ],
+     "conventions": [
+      "CS-KYUURA-PLAY-TR3"
+     ],
+     "attempt_seconds": {
+      "n": 1,
+      "min": 9.785,
+      "median": 9.785,
+      "max": 9.785,
+      "sum": 9.785
+     },
+     "bytes": {
+      "n": 1,
+      "min": 14636928,
+      "median": 14636928,
+      "max": 14636928,
+      "sum": 14636928
+     },
+     "accepted": {
+      "n": 1,
+      "min": 201,
+      "median": 201,
+      "max": 201,
+      "sum": 201
+     },
+     "terminations": {
+      "game_over": 1
+     },
+     "peak_ws_max": 205152256
+    },
+    "C4": {
+     "games": 1,
+     "versions": [
+      "0.194.0"
+     ],
+     "conventions": [
+      "CS-KYUURA-PLAY-TR3"
+     ],
+     "attempt_seconds": {
+      "n": 1,
+      "min": 9.993,
+      "median": 9.993,
+      "max": 9.993,
+      "sum": 9.993
+     },
+     "bytes": {
+      "n": 1,
+      "min": 16973035,
+      "median": 16973035,
+      "max": 16973035,
+      "sum": 16973035
+     },
+     "accepted": {
+      "n": 1,
+      "min": 211,
+      "median": 211,
+      "max": 211,
+      "sum": 211
+     },
+     "terminations": {
+      "game_over": 1
+     },
+     "peak_ws_max": 219320320
+    }
+   },
+   "tr3u1_main": {
+    "C1": {
+     "games": 6,
+     "versions": [
+      "0.194.0"
+     ],
+     "conventions": [
+      "CS-KYUURA-PLAY-TR3"
+     ],
+     "attempt_seconds": {
+      "n": 6,
+      "min": 0.752,
+      "median": 3.7554999999999996,
+      "max": 19.937,
+      "sum": 37.145
+     },
+     "bytes": {
+      "n": 6,
+      "min": 1437426,
+      "median": 8225759.0,
+      "max": 31785343,
+      "sum": 67986762
+     },
+     "accepted": {
+      "n": 6,
+      "min": 29,
+      "median": 128.5,
+      "max": 355,
+      "sum": 920
+     },
+     "terminations": {
+      "game_over": 6
+     },
+     "peak_ws_max": 327995392
+    },
+    "C2": {
+     "games": 6,
+     "versions": [
+      "0.194.0"
+     ],
+     "conventions": [
+      "CS-KYUURA-PLAY-TR3"
+     ],
+     "attempt_seconds": {
+      "n": 6,
+      "min": 0.511,
+      "median": 1.9949999999999999,
+      "max": 10.774,
+      "sum": 25.772
+     },
+     "bytes": {
+      "n": 6,
+      "min": 1195105,
+      "median": 4709131.0,
+      "max": 19247111,
+      "sum": 47989424
+     },
+     "accepted": {
+      "n": 6,
+      "min": 23,
+      "median": 75.0,
+      "max": 253,
+      "sum": 652
+     },
+     "terminations": {
+      "game_over": 6
+     },
+     "peak_ws_max": 241872896
+    },
+    "C3": {
+     "games": 6,
+     "versions": [
+      "0.194.0"
+     ],
+     "conventions": [
+      "CS-KYUURA-PLAY-TR3"
+     ],
+     "attempt_seconds": {
+      "n": 6,
+      "min": 0.864,
+      "median": 11.947,
+      "max": 30.938,
+      "sum": 78.466
+     },
+     "bytes": {
+      "n": 6,
+      "min": 2067549,
+      "median": 16716319.5,
+      "max": 44151608,
+      "sum": 112233828
+     },
+     "accepted": {
+      "n": 6,
+      "min": 42,
+      "median": 227.0,
+      "max": 482,
+      "sum": 1365
+     },
+     "terminations": {
+      "game_over": 6
+     },
+     "peak_ws_max": 414355456
+    },
+    "C4": {
+     "games": 6,
+     "versions": [
+      "0.194.0"
+     ],
+     "conventions": [
+      "CS-KYUURA-PLAY-TR3"
+     ],
+     "attempt_seconds": {
+      "n": 6,
+      "min": 4.709,
+      "median": 10.18,
+      "max": 11.161,
+      "sum": 55.346
+     },
+     "bytes": {
+      "n": 6,
+      "min": 9278150,
+      "median": 17476103.0,
+      "max": 19476740,
+      "sum": 98131930
+     },
+     "accepted": {
+      "n": 6,
+      "min": 135,
+      "median": 219.5,
+      "max": 230,
+      "sum": 1228
+     },
+     "terminations": {
+      "game_over": 6
+     },
+     "peak_ws_max": 241299456
+    }
+   },
+   "er9c": {
+    "C2": {
+     "games": 12,
+     "versions": [
+      "0.195.0"
+     ],
+     "conventions": [
+      "CS-KYUURA-PLAY-TR3",
+      "CS-KYUURA-PLAY-TR4"
+     ],
+     "attempt_seconds": {
+      "n": 12,
+      "min": 0.494,
+      "median": 1.6099999999999999,
+      "max": 11.985,
+      "sum": 39.367
+     },
+     "bytes": {
+      "n": 12,
+      "min": 1195103,
+      "median": 4722723.5,
+      "max": 33728957,
+      "sum": 111254227
+     },
+     "accepted": {
+      "n": 12,
+      "min": 23,
+      "median": 75.0,
+      "max": 360,
+      "sum": 1445
+     },
+     "terminations": {
+      "game_over": 12
+     },
+     "peak_ws_max": 348438528
+    }
+   },
+   "h4c": {
+    "C3": {
+     "games": 4,
+     "versions": [
+      "0.196.0"
+     ],
+     "conventions": [
+      "CS-KYUURA-PLAY-TR4",
+      "CS-KYUURA-PLAY-TR6"
+     ],
+     "attempt_seconds": {
+      "n": 4,
+      "min": 2.334,
+      "median": 6.8004999999999995,
+      "max": 13.091,
+      "sum": 29.026
+     },
+     "bytes": {
+      "n": 4,
+      "min": 6119587,
+      "median": 16856392.5,
+      "max": 29760511,
+      "sum": 69592883
+     },
+     "accepted": {
+      "n": 4,
+      "min": 96,
+      "median": 225.5,
+      "max": 336,
+      "sum": 883
+     },
+     "terminations": {
+      "game_over": 4
+     },
+     "peak_ws_max": 320569344
+    }
+   }
+  },
+  "ledgers": {
+   "tr3u1_pilot": {
+    "tool_accounted_seconds": 27.83,
+    "dir_bytes": 34702697,
+    "outer_seconds_per_game": {
+     "n": 4,
+     "min": 22.972,
+     "median": 28.514499999999998,
+     "max": 33.169,
+     "sum": 113.17
+    },
+    "program_ledger": "vai-batch-tr3u1-run/out/program_ledger.jsonl"
+   },
+   "tr3u1_main": {
+    "tool_accounted_seconds": 238.012,
+    "dir_bytes": 326794588,
+    "outer_seconds_per_game": {
+     "n": 25,
+     "min": 19.987,
+     "median": 27.747,
+     "max": 55.539,
+     "sum": 746.925
+    },
+    "program_ledger": "vai-batch-tr3u1-main-run/out/program_ledger.jsonl"
+   },
+   "er9c": {
+    "tool_accounted_seconds": 59.409,
+    "dir_bytes": 111434202,
+    "outer_seconds_per_game": {
+     "n": 12,
+     "min": 16.228,
+     "median": 25.5135,
+     "max": 41.303,
+     "sum": 303.896
+    },
+    "program_ledger": "vai-batch-er9c-run/out/program_ledger.jsonl"
+   },
+   "h4c": {
+    "tool_accounted_seconds": 35.683,
+    "dir_bytes": 69710307,
+    "outer_seconds_per_game": {
+     "n": 4,
+     "min": 23.465,
+     "median": 30.083,
+     "max": 36.142,
+     "sum": 119.773
+    },
+    "program_ledger": "vai-batch-h4c-run/out/program_ledger.jsonl"
+   }
+  },
+  "forecast": {
+   "basis": "TR3 の監査（0.194.0・TR3@1・seed 9006〜9012）の実測。版・規約集合・seed が違うので参考の見通しで、予算は変えない",
+   "pilot_tool_seconds_sum_tr3": 27.83,
+   "main_tool_seconds_sum_tr3": 238.012,
+   "main_bytes_tr3": 326794588,
+   "pilot_bytes_tr3": 34702697,
+   "per_game_max_seconds_tr3": 30.938,
+   "per_game_max_bytes_tr3": 44151608,
+   "upper_tool_seconds_28_games_at_limit": 3416,
+   "total_tool_x1_5": 398.8,
+   "total_bytes_x1_5": 542245927
+  },
+  "note": "版・規約集合・seed が違うので参考。TR3 の本実行の外側の台帳は手順の直しによる照合のやり直し 1 行をふくむ（25 行）"
+ },
+ "forecast_update_after_pilot": [
+  "条件ごとの先行 1 局の道具・外側・量を記録",
+  "本実行の見通し = 条件ごとの先行 1 局 × 6 の和、その 1.5 倍、TR3 の監査の見通しとの比（道具 1.43・量 1.58）を当てた値",
+  "全体の残りと並べて記録（超えても進み、毎局の前の確かめで扱う。予算は変えない）",
+  "先行の最大 1 局 × 1.5 が 384 MiB を超えたら証跡の下限をその値にする（下げない）",
+  "局数・seed・並びは変えない"
+ ],
+ "measurement": {
+  "termination": {
+   "classes": [
+    "game_over",
+    "limit_operations",
+    "limit_accepted",
+    "limit_turns",
+    "limit_time",
+    "halted_known/unresolved_ruling",
+    "halted_known/other",
+    "input_unavailable",
+    "no_progress",
+    "anomaly",
+    "other"
+   ],
+   "denominator": "始めた局（条件ごと・全体）",
+   "batch_stop_separate": [
+    "session_end の status",
+    "外側の呼び出しの終わり方",
+    "全体の上限による打ち切り",
+    "未着手",
+    "未完了の試行"
+   ]
+  },
+  "rejections": {
+   "columns": [
+    "送信の拒否（コード・category・continuable）",
+    "check・送信の断り",
+    "判定の区分",
+    "答え直して続いた拒否",
+    "受理されずに局が終わった拒否",
+    "道具が送信を抑止した試み（同じ局面の後の試みで submit なし）"
+   ],
+   "denominator": "送信の数と check の数"
+  },
+  "exclusions": {
+   "levels": [
+    "候補全体（processability unresolved_ruling）",
+    "取得済み入力の中の選択肢"
+   ],
+   "units": {
+    "gross": "延べ",
+    "without_retake": "取り直しを除いた延べ",
+    "positions": "局面（主体, position）",
+    "games": "局"
+   },
+   "denominators": {
+    "candidates": "候補の応答のある試みの行の数とその候補の延べ",
+    "options": "取得した inputs の数とその選択肢の延べ（prestop は別）",
+    "games": "始めた局"
+   },
+   "code_basis": [
+    "measured",
+    "static",
+    "unknown"
+   ],
+   "unrecorded_separate": {
+    "not_fetched": "inputs を取得していない候補の選択肢",
+    "cap_omitted": [
+     "capped",
+     "skipped_fetch_cap",
+     "skipped_bytes_cap",
+     "unsaved_bytes_cap"
+    ],
+    "read_failure": [
+     "unsaved_failure",
+     "failure",
+     "withheld",
+     "refused",
+     "contract_unknown",
+     "oversize",
+     "分析の読めない行"
+    ],
+    "not_run": [
+     "未完了の試行",
+     "未着手の局"
+    ]
+   }
+  },
+  "conventions": {
+   "er9": {
+    "id": "PC-ENERGY-RETRIEVAL-ZERO@1",
+    "accepted_applied": "convention_applied の数と判定 expected",
+    "residual_rejections": "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE の拒否（経路: 錯乱ジムのおもて・うら・サイキックコントロール・ちえくらべ・不明）"
+   },
+   "h4": {
+    "id": "PC-ENERGY-CONVERSION-ZERO@1",
+    "accepted_applied": "convention_applied の数と判定 expected（経路: 元のワザ・ゆびをふる）",
+    "residual_rejections": "UNRESOLVED_RECOVER_ZERO_ENERGY の拒否（経路: メタモンのへんしん・ほかのコピー・不明）"
+   },
+   "others": [
+    "convention_applied の規約 ID ごと",
+    "eligible 偽かつ規約 ID のある選択肢",
+    "規約 ID のある断り",
+    "規約 ID 不明の no_eligible_card",
+    "入力の提示の制約（not_implemented・unverified・coverage.residual・withheld_input_candidates・unbuildable）"
+   ],
+   "no_inference_from_absence": true
+  },
+  "old_tr3_audit": {
+   "use": "参考として並べるだけ（出た・出なかった）",
+   "not_tr6_effect": true,
+   "doc": "docs/tr3-unresolved-batch-plan.md 13 章"
+  },
+  "analysis_script": {
+   "name": "analyze_tr6a.py",
+   "made_in": "次の単位",
+   "bases": [
+    "vai-batch-tr3u1-run/scripts/analyze_unresolved.py",
+    "vai-batch-h4c-run/scripts/analyze_h4c_game.py"
+   ],
+   "pre_check_on_saved": [
+    "vai-batch-h4c-tr6 の 2 局",
+    "vai-batch-er9c-tr4 の 1 局"
+   ],
+   "stdlib_only": true,
+   "no_engine_import": true,
+   "writes_game_evidence": false
+  }
+ },
+ "pilot_gates": {
+  "P-1": "確定計画と識別（7f7712a・変更 0・識別が同じ・plan.sha256 が同じ・計画の照合の問題 0）",
+  "P-2": "TR6 の一致（計画・header・full_record・観測・送信の結果）",
+  "P-3": "完了記録とハッシュ（verify_complete の問題 0）",
+  "P-4": "観測 complete・prestop R2〜R5・判定の termination・既存の最終状態の replay の照合・異常 0",
+  "P-5": "contract_unknown 0・規約で eligible 偽の選択・check・送信 0",
+  "P-6": "5 章の項目が読める（読めない行 0）",
+  "P-7": "集計の一致（カウンタ・prestop・analyze_tr6a の合計）",
+  "P-8": "キャッシュの不変"
+ },
+ "go_main": {
+  "requires": [
+   "先行 4 局で P-1〜P-8 がすべて成立",
+   "4.2 節の残予算と空き容量で m1 の 9014 を始められる"
+  ],
+  "not_conditions": [
+   "特定の停止の出現",
+   "特定の規約の出現",
+   "完走率"
+  ],
+  "on_fail": "本実行を始めず報告して終える。直しは別の単位。同じ計画の再実行・seed とデッキの替えはしない"
+ },
+ "stop_policy": {
+  "stop": [
+   "記録の失敗",
+   "照合の不一致・ファイルの欠け",
+   "suspect",
+   "状態の不整合",
+   "replay の不一致",
+   "api_contract_unknown",
+   "保存の失敗",
+   "キャッシュの不一致",
+   "外側の確かめの失敗",
+   "道具の停止方針で止まった",
+   "重大な例外（未完了の試行）"
+  ],
+  "continue": [
+   "game_over",
+   "局の上限",
+   "halted_known・input_unavailable・no_progress の終わり方（continue_terminations）",
+   "prestop の上限（未記録として数える）",
+   "known_stop（答え直して続いた拒否）",
+   "evidence_missing_stop の undetermined"
+  ],
+  "end_normally": [
+   "残予算・空き容量の不足（未着手を残す）"
+  ],
+  "separate_counts": [
+   "未着手",
+   "未完了"
+  ],
+  "never_automatic": [
+   "acknowledge-stop",
+   "unlock",
+   "予算の延長",
+   "局の追加",
+   "再試行",
+   "seed・デッキの替え"
+  ]
+ },
+ "report": {
+  "table_a": "対戦を終わらせた条件",
+  "table_b": "複数局（2 局以上）で実行できる手を減らした条件",
+  "er9_h4_table": "受理と残った拒否を分けた別の表",
+  "candidates_max": 3,
+  "outlook_classes": [
+   "受理できる回答や手が増える見込み",
+   "表示・診断だけが変わる見込み"
+  ],
+  "selection": [
+   "条件（カードと場面）を特定できたものだけ",
+   "研究上の未解決だけ（未対応・異常・入力 API は別の一覧）",
+   "表 A → 表 B の影響した局 → 条件の数",
+   "判断に要ること（場面・選択肢・カードの消費・既存の規約との重なり）を書く"
+  ],
+  "unidentified_needs_evidence": {
+   "code_unknown_candidate": "候補の記録に停止のコードを足す API の変更（別の単位）か、場の状態の記録と静的照合",
+   "no_prestop_stage": "観測からの結び付け（評価と書く）か、道具の変更（TOOL_VERSION が変わる別の単位）",
+   "static_only": "そのときの状態を観測で照らした記録",
+   "path_unknown": "その使用の状態のログの出来事"
+  },
+  "not_said": [
+   "TR3・CURRENT に対する完走率の改善",
+   "一般の頻度",
+   "過去の監査・比較との合算"
+  ],
+  "public": "件数と分類・状態だけ（カード ID・seed・局の識別を出さない）"
+ },
+ "to_fill_before_run": {
+  "execution_commit": null,
+  "worktree": null,
+  "identity_remeasured": null,
+  "seed_recheck": null,
+  "deck_hashes": null,
+  "plan_sha256": null,
+  "cache": null,
+  "dry_run_use_cache": null,
+  "drive_free_mib": null,
+  "outer_script_sha256_and_diffs": null,
+  "analyze_tr6a_sha256_and_check": null,
+  "pilot_measurements": null,
+  "updated_forecast": null
+ },
+ "decisions": {
+  "conditions": "C1〜C4",
+  "games": "pilot 4・main 24",
+  "seeds": "9013・9014〜9019",
+  "budget": "TR3 の監査の上限",
+  "execution_commit": "7f7712a を切り離して使う",
+  "convention_id_record_extension": "しない",
+  "stop_code_in_candidates": "しない"
+ },
+ "not_done_here": [
+  "plan.json・plan.sha256 の生成",
+  "キャッシュの準備",
+  "対戦",
+  "judge・replay",
+  "製品のコード・規約・judge・GUI・版の変更",
+  "旧記録の basis の不一致への対応"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/tr6-unresolved-batch-plan/"
+}
