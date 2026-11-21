@@ -1,5 +1,5 @@
 {
- "status": "design_only",
+ "status": "adopted_and_implemented",
  "not_adopted": true,
  "not_implemented": true,
  "date": "2026-11-21",
@@ -768,5 +768,43 @@
   "新しい対戦",
   "judge・replay",
   "kyuura の変更"
- ]
+ ],
+ "adoption": {
+  "on": "2026-11-21",
+  "by": "user",
+  "choice": "B",
+  "version": "0.196.0",
+  "document": "docs/play-convention-tr6-v0.196.md",
+  "fixed_commit": "7f7712acebd022ac5c9a7d5a346b89d3a2ab9690",
+  "convention": {
+   "id": "PC-ENERGY-CONVERSION-ZERO",
+   "version": 1,
+   "digest": "sha256:6a35ebb8f6aa772e051d0ade7a8fd6d771537d2f1205365b4c039a19dea44594"
+  },
+  "set": {
+   "id": "CS-KYUURA-PLAY-TR6",
+   "version": 1,
+   "members": 25,
+   "digest": "sha256:aa53bc52cfc1d2193a3e1692efc585cf7daef23251c5d08dd09d7e554cf6ead2"
+  },
+  "decisions": {
+   "D1": "置く（B）",
+   "D2": "元のワザとピッピ・ピクシーのゆびをふる（相手のゴース自身のワザ）だけ。へんしん・ほかのコピーは H4 のまま",
+   "D3": "convention_applied だけ",
+   "D4": "CS-KYUURA-PLAY-TR6@1（TR4@1 + 1）",
+   "D5": "受理は expected・厳密側は規則 10 の known_stop。judge は変えていない",
+   "D6": "H4 の 1 場面だけ"
+  },
+  "boards": {
+   "S1": "pass",
+   "S2": "pass",
+   "S3": "pass",
+   "S4": "pass（へんしんは H4）",
+   "S5": "pass",
+   "S6": "pass",
+   "S7": "記録時のソースで known_stop 5/5・今のエンジンでは R11 で undetermined（基点 0.195.0 から）",
+   "S8": "pass（最小 1 以上の要素は静的）",
+   "S9": "pass"
+  }
+ }
 }
