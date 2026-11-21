@@ -7603,7 +7603,11 @@
     "docs/energy-retrieval-v0.23.md"
    ],
    "candidate": "PC-UP-TO-ZERO",
-   "coverage": "unverified"
+   "coverage": "unverified",
+   "adopted_convention": [
+    "PC-ENERGY-RETRIEVAL-ZERO",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_ENERGY_STADIUM_WITHOUT_TARGET",

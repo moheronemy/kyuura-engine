@@ -159,6 +159,22 @@ CONTINUATION_AGREEMENTS += [
      "reading": ("UNRESOLVED_POTION_WITHOUT_DAMAGE（effects.RemoveDamageCounters.check_playable）。厳密側の停止は active のまま。"
                  "ダメージのないポケモンを選んだとき（UNRESOLVED_POTION_UNDAMAGED_TARGET。受理のあとの未裁定）・MG1 は対象外")},
 ]
+# v0.195（docs/play-convention-tr4-v0.195.md）: エネルギー回収の 0 枚の答えの続行規約の採用（2026-11-21 の利用者の指示。設計 docs/er9-energy-retrieval-zero-design.md の案 B）。
+# 採用したのは開発用の部分的な集合 CS-KYUURA-PLAY-TR4@1 の 1 規約の中身だけ（厳密側・既存の集合・ほかの「最大N」の場面・初回の範囲の外の経路は変えない）。この記録は実装と同じ単位で入力へ
+TR4_AGREEMENT_SOURCE = {"by": "user", "on": "2026-11-21",
+                        "where": ("本会話の利用者の指示（作業ブランチ claude/er9-zero-choice-v0195 の依頼の採用方針: 案 B「0 枚を受理して、エネルギー回収の使用を終える」・手札から"
+                                  "通常に使ったエネルギー回収と再録の版だけ・明示的に選択した新しいプレイ用規約集合だけで有効。設計は docs/er9-energy-retrieval-zero-design.md）"),
+                        "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用。厳密側の集合・ほかの未決の場面の判断ではない）"}
+CONTINUATION_AGREEMENTS += [
+    {"id": "AGR-PLAY-TR4-SET", "source": TR4_AGREEMENT_SOURCE,
+     "statement": "続行側として、開発用の部分的な集合 CS-KYUURA-PLAY-TR4@1（CS-KYUURA-PLAY-TR3@1 の 23 規約と TR4 の 1 規約）を登録する。完成したプレイ用とは表示しない。",
+     "reading": "conventions.SETS の CS-KYUURA-PLAY-TR4@1（usage development・completeness halts_at_undecided）。CS-KYUURA-CURRENT@1・S2A@1・PO@1・TR3@1 は同じ ID・版・中身のまま。既定の集合は変えない"},
+    {"id": "AGR-PLAY-TR4-ENERGY-RETRIEVAL-ZERO", "source": TR4_AGREEMENT_SOURCE,
+     "statement": ("PC-ENERGY-RETRIEVAL-ZERO@1: 手札から通常に使ったエネルギー回収（再録の版をふくむ）の回収の決定で 0 枚と答えたら、受理して使い終える（費用はもどさない・手札に加えない・"
+                   "このカードは持ち主のトラッシュ・同じ番にもどる。使用の取り消しではない）。"),
+     "reading": ("UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE（effects.DiscardFromHandThenRetrieveEnergy.resume の空の答え。経路は effects.retrieval_from_hand）。厳密側の停止（ER9）は active のまま。"
+                 "錯乱ジム・サイキックコントロール・［ちえくらべ］を聞いた使用・ER10・超エネルギー回収（SR2）・ワザの UNRESOLVED_RECOVER_ZERO_ENERGY・ほかの「最大N」の場面は対象外")},
+]
 AGREED_CONVENTION_STATUS ="user_agreed"  # 規約（conventions）だけが使える。合意 AGR-MODE-BASELINE-USER で基礎集合に入れた利用者指定。続行規約の採用ではない
 MODE_DEFINITIONS_HISTORY = {
     "STRICT-A": "厳密モードの定義としては採用しない（過去の検討案。AGR-MODE-STRICT・AGR-MODE-BASELINE-USER と合わない）。研究・照合の用途の集合として別に作るかは決めていない",
@@ -213,6 +229,9 @@ DECISION_STATUS = {
     "DEC-USE-WITHOUT-EFFECT": {"status": "partly_agreed", "agreements": ["AGR-PLAY-TR3-GUST", "AGR-PLAY-TR3-SWITCH", "AGR-PLAY-TR3-POTION"],
                                "note": ("v0.186: GW5・UNRESOLVED_SWITCH_WITHOUT_BENCH・UNRESOLVED_POTION_WITHOUT_DAMAGE の 3 場面だけを、続行側の集合 CS-KYUURA-PLAY-TR3@1 の規約（使えない。"
                                         "P-UWE-1 の形）として採用。ほかのコード（PF-USE-WITHOUT-EFFECT の残り）・PC-USE-WITHOUT-TARGET の案・厳密側は未決のまま")},
+    "DEC-UP-TO-ZERO": {"status": "partly_agreed", "agreements": ["AGR-PLAY-TR4-ENERGY-RETRIEVAL-ZERO"],
+                       "note": ("v0.195: UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE（ER9）の 1 場面の、手札からの通常の使用だけを、続行側の集合 CS-KYUURA-PLAY-TR4@1 の規約（0 枚を受理して使い終える。"
+                                "P-UTZ-2 の形）として採用。ほかのコード（PF-UP-TO-ZERO の残り 12 件。SR2・H4 をふくむ）・PC-UP-TO-ZERO の案・厳密側は未決のまま")},
     "DEC-EXISTING-USER-SPECS": {"status": "partly_agreed", "agreements": ["AGR-MODE-BASELINE-USER"],
                                 "note": "利用者指定（12 件・USER-ID 9 つ）は基礎集合に入れる。エンジンの簡略化・実装上の仮定・データの訂正の扱いは DEC-BASELINE-NONUSER・DEC-CARD-DATA-CORRECTIONS で未決"},
 }
@@ -1327,6 +1346,17 @@ UPDATES = [
      "new_entries": ["token_classification（入力・役割の意味・状態・問題）", "counts.test_tool_only_by_role", "schema_version 2"],
      "unchanged": ("研究の停止コード・事例・族・安全境界・規約（conventions）・方針の案は変えていない。停止コード → 場面の対応と current_behavior は同じで、"
                    "実行時の場面の索引からテスト・道具だけの 8 件が消えた（新規 4 件は入らない）。ゲームの処理・裁定・規約の内容は変えていない")},
+    {"version": "0.195.0", "work": "エネルギー回収の 0 枚の答えの続行規約 1 件の採用・実装（開発用の部分的な集合 CS-KYUURA-PLAY-TR4@1）",
+     "document": "docs/play-convention-tr4-v0.195.md",
+     "base": {"commit": "a4863dc3097dd2f326d9b77d93070ca1ce1b487e", "branch_of_base": "claude/er9-zero-choice-design（0.194.0 と ER9 の設計。main には未取り込み）"},
+     "approval": ("利用者の採用は continuation_agreements の AGR-PLAY-TR4-* の 2 項目（2026-11-21。続行側の集合の規約の採用で、公式の裁定・kyuura の研究上の解決ではない）。"
+                  "DEC-UP-TO-ZERO を partly_agreed（続行側の 1 場面の手札からの通常の使用だけ）にした。厳密側・既存の集合・ほかの「最大N」の場面は変えていない。採用の記録は実装と同じ単位で入力へ入れた"),
+     "changed_entries": ["decision_status（DEC-UP-TO-ZERO）",
+                         "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE の implementation_sites・current_stop（規約の場面の宣言 conventions.py の箇所が加わった。PO・TR3 の前例と同じ）",
+                         "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"],
+     "new_entries": ["continuation_agreements（AGR-PLAY-TR4-* の 2 項目。項目ごとの出典 source）"],
+     "unchanged": ("研究の停止コードは active のまま（厳密側・S2a・PO・TR3 の集合と、初回の範囲の外の経路では今のまま止まる）。族・安全境界・規約（conventions）・方針の案"
+                   "（PC-UP-TO-ZERO は proposal のまま）は変えていない")},
 ]
 # 分類の時点（基点 3e25ac5）の集計（counts）の写し。今の counts は現行コードから作り直した値
 COUNTS_AT_CLASSIFICATION = {"research_stop_codes": 316, "runtime_codes_outside_table": 40, "runtime_codes_outside_table_active": 39, "test_tool_only_codes": 8, "cases": 15, "codes_with_cases": 7, "problems_new": 4, "problems_from_inventory": 28, "conventions": 18, "internal_guard_sites_current": 602, "internal_guard_sites_matched_to_inventory": 600, "internal_guard_sites_new_since_inventory": ["kyuura_engine/engine.py:445", "kyuura_engine/resolution/programs.py:10739"], "safety_boundaries": 8, "families": 23, "decisions": 29, "by_reachability": {"constructed_board": 145, "legal_sequence": 25, "static_only": 185}, "by_family": {"PF-COPY-TRANSFORM": 34, "PF-DAMAGE-SCOPE": 22, "PF-EFFECT-TIMING": 13, "PF-ENERGY-TYPE": 21, "PF-ESP-REDO": 4, "PF-HIDDEN-INFORMATION": 8, "PF-HISTORY-LASTING": 20, "PF-KNOCKOUT-TIMING": 15, "PF-POWER-SUPPRESSION": 11, "PF-PROTECTED-TARGET-EFFECT": 12, "PF-REACTION-DURING-PROCESS": 10, "PF-RUNTIME-CONTINUATION": 15, "PF-RUNTIME-COPY-GAPS": 5, "PF-RUNTIME-DATA": 5, "PF-RUNTIME-GENERIC": 1, "PF-RUNTIME-REGISTRY": 7, "PF-RUNTIME-SEARCH-LIMIT": 6, "PF-SETUP-PLAY-AS-POKEMON": 5, "PF-SIMULTANEOUS-ORDER": 26, "PF-STATED-COUNT-SHORT": 11, "PF-TEXT-READING": 34, "PF-UP-TO-ZERO": 13, "PF-USE-WITHOUT-EFFECT": 57}, "by_play_group": {"1": 316, "2": 39, "3": 89, "4": 6, "5": 20, "6": 1}, "by_mechanism": {"answer_rejection": 13, "command_rejection": 339, "deck_validation": 1, "deferred_interruption": 2, "pokemon_check_halt": 10, "setup_halt": 2}, "by_status": {"active": 402, "fixed": 5, "historical": 2, "unverified": 1}, "note": "停止コード・事例・規約・内部ガードは別の数。事例はコードの下位で、コードの数に足さない。棚卸しと同じ項目は独立した不足として数えない"}

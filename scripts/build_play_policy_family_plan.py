@@ -98,6 +98,16 @@ SPEC_ADOPTIONS.update({
     "PC-POTION-WITHOUT-DAMAGE": {**_TR3_ADOPTION, "convention": ["PC-POTION-WITHOUT-DAMAGE", 1], "scenes": ["UNRESOLVED_POTION_WITHOUT_DAMAGE"],
                                  "related_candidate": "PC-USE-WITHOUT-TARGET", "note": _TR3_NOTE},
 })
+# v0.195（docs/play-convention-tr4-v0.195.md）: 設計（docs/er9-energy-retrieval-zero-design.md）の案 B の採用（候補ではない。PC-UP-TO-ZERO の対象の 1 場面の、手札からの通常の使用だけ。
+# 案そのものは proposal のまま）
+_TR4_ADOPTION = {"on": "2026-11-21", "by": "user", "version": "0.195.0", "set": ["CS-KYUURA-PLAY-TR4", 1], "document": "docs/play-convention-tr4-v0.195.md",
+                 "spec": "docs/er9-energy-retrieval-zero-design.md", "not_recorded_as": "公式の裁定・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用）"}
+SPEC_ADOPTIONS.update({
+    "PC-ENERGY-RETRIEVAL-ZERO": {**_TR4_ADOPTION, "convention": ["PC-ENERGY-RETRIEVAL-ZERO", 1], "scenes": ["UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE"],
+                                 "related_candidate": "PC-UP-TO-ZERO",
+                                 "note": ("PC-UP-TO-ZERO（proposal のまま）の対象のうち、この場面の手札からの通常の使用だけの規約（0 枚を受理して使い終える）。案そのもの・ほかの対象"
+                                          "（SR2・H4 をふくむ）・錯乱ジム・サイキックコントロール・［ちえくらべ］を聞いた使用は採用していない")},
+})
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
 # 区分（利用者の依頼の A〜E。台帳の classification とは別の軸）
