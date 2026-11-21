@@ -1,0 +1,1882 @@
+{
+ "status": "design_only",
+ "not_adopted": true,
+ "not_implemented": true,
+ "date": "2026-11-21",
+ "doc": "docs/er10-energy-retrieval-without-target-design.md",
+ "base": {
+  "branch": "claude/vai-batch-er9c",
+  "commit": "6d9a5accb7636410a0b9c91543d6767aa2447d61",
+  "engine_version": "0.195.0",
+  "origin_matches": true
+ },
+ "batch_source": {
+  "commit": "891e1fbe146a275be1ccc6d37ec2091656b48e7e",
+  "engine_version": "0.194.0",
+  "diff_to_base": [
+   "kyuura_engine/__init__.py",
+   "kyuura_engine/conventions.py",
+   "kyuura_engine/effects.py",
+   "pyproject.toml",
+   "scripts（生成の道具 2）",
+   "tests（3）"
+  ],
+  "er10_path_changed": false,
+  "check_playable_region_sha256": "c5396321338bbf882c77e3c07481e88badc6dd38f7d63a1f3432bf64e5a3546a"
+ },
+ "work_branch": "claude/er10-energy-retrieval-without-target-design",
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/er10-no-target-design/",
+ "materials": {
+  "main_run": "vai-batch-tr3u1-main-run",
+  "plans": [
+   "vai-batch-tr3u1-m1",
+   "vai-batch-tr3u1-m2",
+   "vai-batch-tr3u1-m3",
+   "vai-batch-tr3u1-m4"
+  ],
+  "games_read": 24
+ },
+ "scene": {
+  "stop_code": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+  "ruling": "ER10",
+  "category": "unresolved_ruling",
+  "raised_as": "unsupported",
+  "site": "kyuura_engine/effects.py DiscardFromHandThenRetrieveEnergy.check_playable",
+  "when": "使う宣言の前（費用の前）",
+  "order": [
+   "INSUFFICIENT_CARDS_IN_HAND（ER2・不正な操作）",
+   "UNRESOLVED_POKEMON_TOWER_TRAINER_WITHOUT_EFFECT（PT1）",
+   "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET（ER10）",
+   "リムーブ禁止ジムの追加の費用",
+   "MG1"
+  ],
+  "effect_type": "DiscardFromHandThenRetrieveEnergy",
+  "cards": [
+   "PMCG1-076",
+   "GD1-014（再録）",
+   "GD4-014（再録）",
+   "GD6-014（再録）",
+   "QSG-047（再録）"
+  ],
+  "kyuura_issue": "UQ-ENERGY-RETRIEVAL-WITHOUT-TARGET",
+  "research_commit": "71d1728938fb4c8fefde9b82779cdef74beb612d"
+ },
+ "out_of_scope": [
+  {
+   "code": "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE",
+   "ruling": "ER9"
+  },
+  {
+   "code": "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+   "ruling": "SR1"
+  },
+  {
+   "code": "UNRESOLVED_POKEMON_TOWER_TRAINER_WITHOUT_EFFECT",
+   "ruling": "PT1"
+  },
+  {
+   "code": "UNRESOLVED_RECOVER_ZERO_ENERGY",
+   "ruling": "H4"
+  }
+ ],
+ "recount": {
+  "candidate_level": {
+   "rows": 17,
+   "without_retakes": 17,
+   "positions": 17,
+   "games": 3,
+   "static_er10": {
+    "matched": 17
+   },
+   "excluded_cards": {
+    "PMCG1-076": 17
+   },
+   "excluded_option_count": 21,
+   "chosen_kind": {
+    "evolve": 1,
+    "attach_energy": 6,
+    "use_attack": 4,
+    "play_basic": 1,
+    "end_turn": 5
+   },
+   "submit_outcome": {
+    "accepted": 17
+   },
+   "actors": {
+    "0": 5,
+    "1": 12
+   },
+   "hand_basic_energy_positions": 12
+  },
+  "option_level_in_fetched_inputs": {
+   "rows": 7,
+   "without_retakes": 7,
+   "positions": 7,
+   "games": 4,
+   "static_er10": {
+    "matched": 7
+   },
+   "excluded_cards": {
+    "PMCG1-076": 7
+   },
+   "excluded_option_count": 7,
+   "chosen_kind": {
+    "play_trainer": 7
+   },
+   "chosen_played_card": {
+    "PMCG1-081": 2,
+    "PMCG1-090": 1,
+    "PMCG1-072": 1,
+    "PMCG1-077": 1,
+    "PMCG1-071": 1,
+    "PMCG1-074": 1
+   },
+   "submit_outcome": {
+    "accepted": 7
+   },
+   "actors": {
+    "1": 6,
+    "0": 1
+   },
+   "hand_basic_energy_positions": 2
+  },
+  "overlap_positions": [],
+  "union_positions": 24,
+  "union_games": 4,
+  "earlier_report": {
+   "tr3_plan_13_5": "4 局・24 局面（候補全体 3 局・17 局面 + 選択肢 4 局・7 局面。局の和集合 4）",
+   "matches": true,
+   "er9_design_er10_zero": "full_record の実測のコード（拒否・停止）が 0。候補・選択肢の除外の数とは別"
+  },
+  "mapped_to_er10": {
+   "candidate": "17/17",
+   "option": "7/7"
+  },
+  "measured_rejections_er10": 0,
+  "measured_er10_strings_in_game_files": 0,
+  "problems": 0,
+  "only_end_turn_alternative_positions": 5,
+  "two_energy_retrieval_in_hand_positions": 4,
+  "static_unfetched_positions": 10,
+  "static_scan_classes": {
+   "recorded_candidate": 17,
+   "recorded_option": 7,
+   "play_trainer_executable_inputs_not_fetched": 10
+  },
+  "energy_retrieval_accepted_uses_m2_games": 7
+ },
+ "code_classes": {
+  "measured": 0,
+  "static_source_match": 24,
+  "unknown": 0
+ },
+ "cases": [
+  {
+   "layer": "candidate",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g003-rules-v2-s9009",
+   "actor": 0,
+   "position": 14,
+   "attempt_n": 16,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     1
+    ]
+   ],
+   "options_source": "prestop",
+   "executable_trainer_options": [],
+   "convention_excluded_options": [],
+   "executable_other_candidates": [
+    "attach_energy",
+    "end_turn",
+    "evolve",
+    "retreat"
+   ],
+   "state": {
+    "turn": 4,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 1,
+    "discard_basic_energy": 0,
+    "hand_size": 4,
+    "hand_energy_retrieval": 1,
+    "hand_others": 3,
+    "hand_basic_energy": 2,
+    "observation_sha256": "fd15b941960449a3672a214e356d1e5d12876d57d2bea54f57fc93c6cf34ffef"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "evolve",
+    "played_card_id": null,
+    "choices_card_ids": [
+     "PMCG1-030",
+     "PMCG1-029"
+    ],
+    "submit_outcome": "accepted",
+    "operation_id": "g003-rules-v2-s9009-000015"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "candidate",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g003-rules-v2-s9009",
+   "actor": 0,
+   "position": 15,
+   "attempt_n": 17,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     1
+    ]
+   ],
+   "options_source": "prestop",
+   "executable_trainer_options": [],
+   "convention_excluded_options": [],
+   "executable_other_candidates": [
+    "attach_energy",
+    "end_turn",
+    "retreat"
+   ],
+   "state": {
+    "turn": 4,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 1,
+    "discard_basic_energy": 0,
+    "hand_size": 3,
+    "hand_energy_retrieval": 1,
+    "hand_others": 2,
+    "hand_basic_energy": 2,
+    "observation_sha256": "2b8475e927b62e9f0e9f95e0341f8e70a8755b1c6eb5d9a65f6a2f49c192785a"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "attach_energy",
+    "played_card_id": null,
+    "choices_card_ids": [
+     "PMCG1-102",
+     "PMCG1-058"
+    ],
+    "submit_outcome": "accepted",
+    "operation_id": "g003-rules-v2-s9009-000016"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "candidate",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g003-rules-v2-s9009",
+   "actor": 0,
+   "position": 16,
+   "attempt_n": 18,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     1
+    ]
+   ],
+   "options_source": "prestop",
+   "executable_trainer_options": [],
+   "convention_excluded_options": [],
+   "executable_other_candidates": [
+    "end_turn",
+    "retreat",
+    "use_attack"
+   ],
+   "state": {
+    "turn": 4,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 1,
+    "discard_basic_energy": 0,
+    "hand_size": 2,
+    "hand_energy_retrieval": 1,
+    "hand_others": 1,
+    "hand_basic_energy": 1,
+    "observation_sha256": "4e9f871e0472c27d56ba22ac08f4dc05f623614ae83e2b67217204b60616dc9f"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "use_attack",
+    "played_card_id": null,
+    "choices_card_ids": [
+     "PMCG1-058"
+    ],
+    "submit_outcome": "accepted",
+    "operation_id": "g003-rules-v2-s9009-000017"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "candidate",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g003-rules-v2-s9009",
+   "actor": 0,
+   "position": 19,
+   "attempt_n": 21,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     1
+    ]
+   ],
+   "options_source": "prestop",
+   "executable_trainer_options": [],
+   "convention_excluded_options": [],
+   "executable_other_candidates": [
+    "attach_energy",
+    "end_turn",
+    "play_basic",
+    "retreat",
+    "use_attack"
+   ],
+   "state": {
+    "turn": 6,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 1,
+    "discard_basic_energy": 0,
+    "hand_size": 3,
+    "hand_energy_retrieval": 1,
+    "hand_others": 2,
+    "hand_basic_energy": 1,
+    "observation_sha256": "49b25de34ce2960b7b953c28ad6bcd32083c17323b4c5272a39ec01dbf3f141e"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "play_basic",
+    "played_card_id": null,
+    "choices_card_ids": [
+     "PMCG1-060"
+    ],
+    "submit_outcome": "accepted",
+    "operation_id": "g003-rules-v2-s9009-000020"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "candidate",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g003-rules-v2-s9009",
+   "actor": 0,
+   "position": 20,
+   "attempt_n": 22,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     1
+    ]
+   ],
+   "options_source": "prestop",
+   "executable_trainer_options": [],
+   "convention_excluded_options": [],
+   "executable_other_candidates": [
+    "attach_energy",
+    "end_turn",
+    "retreat",
+    "use_attack"
+   ],
+   "state": {
+    "turn": 6,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 1,
+    "discard_basic_energy": 0,
+    "hand_size": 2,
+    "hand_energy_retrieval": 1,
+    "hand_others": 1,
+    "hand_basic_energy": 1,
+    "observation_sha256": "22d8ce89242257cafe4858eee2c6ec7fb55638cd710243fcf65bddc9c7ecacfc"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "attach_energy",
+    "played_card_id": null,
+    "choices_card_ids": [
+     "PMCG1-099",
+     "PMCG1-030"
+    ],
+    "submit_outcome": "accepted",
+    "operation_id": "g003-rules-v2-s9009-000021"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "option",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g003-rules-v2-s9009",
+   "actor": 1,
+   "position": 3,
+   "attempt_n": 4,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     1
+    ]
+   ],
+   "options_source": "fetched_inputs",
+   "executable_trainer_options": [
+    "PMCG1-081",
+    "PMCG1-090"
+   ],
+   "convention_excluded_options": [
+    [
+     "PMCG1-071",
+     "PC-POTION-WITHOUT-DAMAGE@1"
+    ],
+    [
+     "PMCG1-073",
+     "PC-SWITCH-WITHOUT-BENCH@1"
+    ]
+   ],
+   "executable_other_candidates": [
+    "end_turn",
+    "play_trainer"
+   ],
+   "state": {
+    "turn": 1,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 0,
+    "discard_basic_energy": 0,
+    "hand_size": 7,
+    "hand_energy_retrieval": 1,
+    "hand_others": 6,
+    "hand_basic_energy": 0,
+    "observation_sha256": "1f34e7d2c7fcd99b51cd58c74ddb58a61ecd742a6ed9f5e73a77739a33015063"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "play_trainer",
+    "played_card_id": "PMCG1-081",
+    "choices_card_ids": [
+     "PMCG1-081"
+    ],
+    "submit_outcome": "accepted",
+    "operation_id": "g003-rules-v2-s9009-000004"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "option",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g003-rules-v2-s9009",
+   "actor": 1,
+   "position": 4,
+   "attempt_n": 5,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     1
+    ]
+   ],
+   "options_source": "fetched_inputs",
+   "executable_trainer_options": [
+    "PMCG1-090"
+   ],
+   "convention_excluded_options": [
+    [
+     "PMCG1-071",
+     "PC-POTION-WITHOUT-DAMAGE@1"
+    ],
+    [
+     "PMCG1-073",
+     "PC-SWITCH-WITHOUT-BENCH@1"
+    ]
+   ],
+   "executable_other_candidates": [
+    "end_turn",
+    "play_trainer"
+   ],
+   "state": {
+    "turn": 1,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 0,
+    "discard_basic_energy": 0,
+    "hand_size": 6,
+    "hand_energy_retrieval": 1,
+    "hand_others": 5,
+    "hand_basic_energy": 0,
+    "observation_sha256": "04d703dbf10d366a6fd7373cd03662c1caa434a9239be3eb6ae82816562e1644"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "play_trainer",
+    "played_card_id": "PMCG1-090",
+    "choices_card_ids": [
+     "PMCG1-090"
+    ],
+    "submit_outcome": "accepted",
+    "operation_id": "g003-rules-v2-s9009-000005"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "option",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g003-rules-v2-s9009",
+   "actor": 1,
+   "position": 7,
+   "attempt_n": 8,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     1
+    ]
+   ],
+   "options_source": "fetched_inputs",
+   "executable_trainer_options": [
+    "PMCG1-072"
+   ],
+   "convention_excluded_options": [
+    [
+     "PMCG1-073",
+     "PC-SWITCH-WITHOUT-BENCH@1"
+    ]
+   ],
+   "executable_other_candidates": [
+    "end_turn",
+    "play_trainer"
+   ],
+   "state": {
+    "turn": 1,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 3,
+    "discard_basic_energy": 0,
+    "hand_size": 4,
+    "hand_energy_retrieval": 1,
+    "hand_others": 3,
+    "hand_basic_energy": 0,
+    "observation_sha256": "546ea24049f3def2905bb304117e34d375f425b6b74527620b8a0bfd17c9a360"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "play_trainer",
+    "played_card_id": "PMCG1-072",
+    "choices_card_ids": [
+     "PMCG1-072"
+    ],
+    "submit_outcome": "accepted",
+    "operation_id": "g003-rules-v2-s9009-000008"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "candidate",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g003-rules-v2-s9009",
+   "actor": 1,
+   "position": 9,
+   "attempt_n": 10,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     1
+    ]
+   ],
+   "options_source": "prestop",
+   "executable_trainer_options": [],
+   "convention_excluded_options": [],
+   "executable_other_candidates": [
+    "end_turn"
+   ],
+   "state": {
+    "turn": 1,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 4,
+    "discard_basic_energy": 0,
+    "hand_size": 3,
+    "hand_energy_retrieval": 1,
+    "hand_others": 2,
+    "hand_basic_energy": 0,
+    "observation_sha256": "34c45547ef3e074c56e212354b7b02bab0eb0849679daef5c53d4b3bc0cd7dcd"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "end_turn",
+    "played_card_id": null,
+    "choices_card_ids": [],
+    "submit_outcome": "accepted",
+    "operation_id": "g003-rules-v2-s9009-000010"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "candidate",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g003-rules-v2-s9009",
+   "actor": 1,
+   "position": 13,
+   "attempt_n": 15,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     1
+    ]
+   ],
+   "options_source": "prestop",
+   "executable_trainer_options": [],
+   "convention_excluded_options": [],
+   "executable_other_candidates": [
+    "end_turn"
+   ],
+   "state": {
+    "turn": 3,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 5,
+    "discard_basic_energy": 0,
+    "hand_size": 4,
+    "hand_energy_retrieval": 1,
+    "hand_others": 3,
+    "hand_basic_energy": 0,
+    "observation_sha256": "63c358a2171bb8a18fdc95bec704a729f7d9a4f4b3b3b4ef9675ed76830a5e28"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "end_turn",
+    "played_card_id": null,
+    "choices_card_ids": [],
+    "submit_outcome": "accepted",
+    "operation_id": "g003-rules-v2-s9009-000014"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "candidate",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g003-rules-v2-s9009",
+   "actor": 1,
+   "position": 17,
+   "attempt_n": 19,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     1
+    ]
+   ],
+   "options_source": "prestop",
+   "executable_trainer_options": [],
+   "convention_excluded_options": [],
+   "executable_other_candidates": [
+    "attach_energy",
+    "end_turn"
+   ],
+   "state": {
+    "turn": 5,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 5,
+    "discard_basic_energy": 0,
+    "hand_size": 5,
+    "hand_energy_retrieval": 1,
+    "hand_others": 4,
+    "hand_basic_energy": 1,
+    "observation_sha256": "4b1f8c6ef9283f6a01381cc5a9aa1d96103cc155edeece04e931b13b0a1d5b7a"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "attach_energy",
+    "played_card_id": null,
+    "choices_card_ids": [
+     "PMCG1-097",
+     "PMCG2-003"
+    ],
+    "submit_outcome": "accepted",
+    "operation_id": "g003-rules-v2-s9009-000018"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "candidate",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g003-rules-v2-s9009",
+   "actor": 1,
+   "position": 18,
+   "attempt_n": 20,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     1
+    ]
+   ],
+   "options_source": "prestop",
+   "executable_trainer_options": [],
+   "convention_excluded_options": [],
+   "executable_other_candidates": [
+    "end_turn"
+   ],
+   "state": {
+    "turn": 5,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 5,
+    "discard_basic_energy": 0,
+    "hand_size": 4,
+    "hand_energy_retrieval": 1,
+    "hand_others": 3,
+    "hand_basic_energy": 0,
+    "observation_sha256": "d008a04ff62f8c135abd19e8b962d3834efa2db21738d1764939f505523e20e9"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "end_turn",
+    "played_card_id": null,
+    "choices_card_ids": [],
+    "submit_outcome": "accepted",
+    "operation_id": "g003-rules-v2-s9009-000019"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "option",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g004-rules-v2-s9010",
+   "actor": 1,
+   "position": 4,
+   "attempt_n": 5,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     1
+    ]
+   ],
+   "options_source": "fetched_inputs",
+   "executable_trainer_options": [
+    "PMCG1-077",
+    "PMCG1-090",
+    "PMCG1-077",
+    "PMCG1-081"
+   ],
+   "convention_excluded_options": [],
+   "executable_other_candidates": [
+    "end_turn",
+    "play_trainer",
+    "retreat"
+   ],
+   "state": {
+    "turn": 1,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 0,
+    "discard_basic_energy": 0,
+    "hand_size": 6,
+    "hand_energy_retrieval": 1,
+    "hand_others": 5,
+    "hand_basic_energy": 0,
+    "observation_sha256": "2a1ba56dd16bc79c25eab07b67248a0848ea687aca4f6555e33430c72ac0eeec"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "play_trainer",
+    "played_card_id": "PMCG1-077",
+    "choices_card_ids": [
+     "PMCG1-077"
+    ],
+    "submit_outcome": "accepted",
+    "operation_id": "g004-rules-v2-s9010-000005"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "option",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g005-rules-v2-s9011",
+   "actor": 1,
+   "position": 26,
+   "attempt_n": 28,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     1
+    ]
+   ],
+   "options_source": "fetched_inputs",
+   "executable_trainer_options": [
+    "PMCG1-071"
+   ],
+   "convention_excluded_options": [],
+   "executable_other_candidates": [
+    "end_turn",
+    "play_trainer"
+   ],
+   "state": {
+    "turn": 2,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 0,
+    "discard_basic_energy": 0,
+    "hand_size": 6,
+    "hand_energy_retrieval": 1,
+    "hand_others": 5,
+    "hand_basic_energy": 2,
+    "observation_sha256": "1f5a9f18be7cb7d167954376f43fb929ab905666ff746f5477264d37e7121313"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "play_trainer",
+    "played_card_id": "PMCG1-071",
+    "choices_card_ids": [
+     "PMCG1-071"
+    ],
+    "submit_outcome": "accepted",
+    "operation_id": "g005-rules-v2-s9011-000027"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "candidate",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g005-rules-v2-s9011",
+   "actor": 1,
+   "position": 28,
+   "attempt_n": 30,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     1
+    ]
+   ],
+   "options_source": "prestop",
+   "executable_trainer_options": [],
+   "convention_excluded_options": [],
+   "executable_other_candidates": [
+    "end_turn"
+   ],
+   "state": {
+    "turn": 2,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 1,
+    "discard_basic_energy": 0,
+    "hand_size": 5,
+    "hand_energy_retrieval": 1,
+    "hand_others": 4,
+    "hand_basic_energy": 2,
+    "observation_sha256": "f280cb1c332d3765ca799d2864f4182ce00660c4e6e1975f55bf0175c9567847"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "end_turn",
+    "played_card_id": null,
+    "choices_card_ids": [],
+    "submit_outcome": "accepted",
+    "operation_id": "g005-rules-v2-s9011-000029"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "candidate",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g005-rules-v2-s9011",
+   "actor": 1,
+   "position": 31,
+   "attempt_n": 33,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     1
+    ]
+   ],
+   "options_source": "prestop",
+   "executable_trainer_options": [],
+   "convention_excluded_options": [],
+   "executable_other_candidates": [
+    "attach_energy",
+    "end_turn"
+   ],
+   "state": {
+    "turn": 4,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 1,
+    "discard_basic_energy": 0,
+    "hand_size": 6,
+    "hand_energy_retrieval": 1,
+    "hand_others": 5,
+    "hand_basic_energy": 2,
+    "observation_sha256": "3aadfe58d8fcfc0716a9a1abd4012a2a357bd40302666f81f955099dd62e63cf"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "attach_energy",
+    "played_card_id": null,
+    "choices_card_ids": [
+     "PMCG1-097",
+     "PMCG2-003"
+    ],
+    "submit_outcome": "accepted",
+    "operation_id": "g005-rules-v2-s9011-000032"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "candidate",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g005-rules-v2-s9011",
+   "actor": 1,
+   "position": 32,
+   "attempt_n": 34,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     1
+    ]
+   ],
+   "options_source": "prestop",
+   "executable_trainer_options": [],
+   "convention_excluded_options": [],
+   "executable_other_candidates": [
+    "end_turn",
+    "use_attack"
+   ],
+   "state": {
+    "turn": 4,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 1,
+    "discard_basic_energy": 0,
+    "hand_size": 5,
+    "hand_energy_retrieval": 1,
+    "hand_others": 4,
+    "hand_basic_energy": 1,
+    "observation_sha256": "02f467e52576b60b3b130dee17c4705704204fa3e4b380c5798b3ee6578fd454"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "use_attack",
+    "played_card_id": null,
+    "choices_card_ids": [
+     "PMCG2-003"
+    ],
+    "submit_outcome": "accepted",
+    "operation_id": "g005-rules-v2-s9011-000033"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "candidate",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g005-rules-v2-s9011",
+   "actor": 1,
+   "position": 38,
+   "attempt_n": 41,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     2
+    ]
+   ],
+   "options_source": "prestop",
+   "executable_trainer_options": [],
+   "convention_excluded_options": [],
+   "executable_other_candidates": [
+    "attach_energy",
+    "end_turn",
+    "use_attack"
+   ],
+   "state": {
+    "turn": 6,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 1,
+    "discard_basic_energy": 0,
+    "hand_size": 6,
+    "hand_energy_retrieval": 2,
+    "hand_others": 5,
+    "hand_basic_energy": 1,
+    "observation_sha256": "1feb11aac4498c69427325776dd29e55bdef410f6606b03dbc672904dbf05bb6"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "attach_energy",
+    "played_card_id": null,
+    "choices_card_ids": [
+     "PMCG1-097",
+     "PMCG2-003"
+    ],
+    "submit_outcome": "accepted",
+    "operation_id": "g005-rules-v2-s9011-000040"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "candidate",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g005-rules-v2-s9011",
+   "actor": 1,
+   "position": 39,
+   "attempt_n": 42,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     2
+    ]
+   ],
+   "options_source": "prestop",
+   "executable_trainer_options": [],
+   "convention_excluded_options": [],
+   "executable_other_candidates": [
+    "end_turn",
+    "use_attack"
+   ],
+   "state": {
+    "turn": 6,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 1,
+    "discard_basic_energy": 0,
+    "hand_size": 5,
+    "hand_energy_retrieval": 2,
+    "hand_others": 4,
+    "hand_basic_energy": 0,
+    "observation_sha256": "a0e04d634cc61c76737300e4ade46dbd7c201fa5db29ae89fa34be9cd4288659"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "use_attack",
+    "played_card_id": null,
+    "choices_card_ids": [
+     "PMCG2-003"
+    ],
+    "submit_outcome": "accepted",
+    "operation_id": "g005-rules-v2-s9011-000041"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "candidate",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g005-rules-v2-s9011",
+   "actor": 1,
+   "position": 45,
+   "attempt_n": 48,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     2
+    ]
+   ],
+   "options_source": "prestop",
+   "executable_trainer_options": [],
+   "convention_excluded_options": [],
+   "executable_other_candidates": [
+    "attach_energy",
+    "end_turn",
+    "use_attack"
+   ],
+   "state": {
+    "turn": 8,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 1,
+    "discard_basic_energy": 0,
+    "hand_size": 6,
+    "hand_energy_retrieval": 2,
+    "hand_others": 5,
+    "hand_basic_energy": 1,
+    "observation_sha256": "3d015aeb58b260253b12e0dabd29fa39da7845d81f1158090ee57d3f8c3dfabc"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "attach_energy",
+    "played_card_id": null,
+    "choices_card_ids": [
+     "PMCG1-097",
+     "PMCG2-003"
+    ],
+    "submit_outcome": "accepted",
+    "operation_id": "g005-rules-v2-s9011-000047"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "candidate",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g005-rules-v2-s9011",
+   "actor": 1,
+   "position": 46,
+   "attempt_n": 49,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     2
+    ]
+   ],
+   "options_source": "prestop",
+   "executable_trainer_options": [],
+   "convention_excluded_options": [],
+   "executable_other_candidates": [
+    "end_turn",
+    "use_attack"
+   ],
+   "state": {
+    "turn": 8,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 1,
+    "discard_basic_energy": 0,
+    "hand_size": 5,
+    "hand_energy_retrieval": 2,
+    "hand_others": 4,
+    "hand_basic_energy": 0,
+    "observation_sha256": "a257a3e0528ca9a0f898fb5385d67c737d093193042134ce952a99b8a0be66f7"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "use_attack",
+    "played_card_id": null,
+    "choices_card_ids": [
+     "PMCG2-003"
+    ],
+    "submit_outcome": "accepted",
+    "operation_id": "g005-rules-v2-s9011-000048"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "option",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g006-rules-v2-s9012",
+   "actor": 0,
+   "position": 16,
+   "attempt_n": 17,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     1
+    ]
+   ],
+   "options_source": "fetched_inputs",
+   "executable_trainer_options": [
+    "PMCG1-081"
+   ],
+   "convention_excluded_options": [],
+   "executable_other_candidates": [
+    "end_turn",
+    "play_trainer"
+   ],
+   "state": {
+    "turn": 4,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 0,
+    "discard_basic_energy": 0,
+    "hand_size": 2,
+    "hand_energy_retrieval": 1,
+    "hand_others": 1,
+    "hand_basic_energy": 0,
+    "observation_sha256": "26126634ece4a058de59e289cdb171592c4e97b44f013c822089679215ad11b3"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "play_trainer",
+    "played_card_id": "PMCG1-081",
+    "choices_card_ids": [
+     "PMCG1-081"
+    ],
+    "submit_outcome": "accepted",
+    "operation_id": "g006-rules-v2-s9012-000017"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "option",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g006-rules-v2-s9012",
+   "actor": 1,
+   "position": 5,
+   "attempt_n": 6,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     1
+    ]
+   ],
+   "options_source": "fetched_inputs",
+   "executable_trainer_options": [
+    "PMCG1-074"
+   ],
+   "convention_excluded_options": [
+    [
+     "PMCG1-071",
+     "PC-POTION-WITHOUT-DAMAGE@1"
+    ]
+   ],
+   "executable_other_candidates": [
+    "end_turn",
+    "play_trainer"
+   ],
+   "state": {
+    "turn": 1,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 0,
+    "discard_basic_energy": 0,
+    "hand_size": 6,
+    "hand_energy_retrieval": 1,
+    "hand_others": 5,
+    "hand_basic_energy": 2,
+    "observation_sha256": "a775128260118f64b708daa2fd19b0466aaea8f1b5820eaa4006397f6937769d"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "play_trainer",
+    "played_card_id": "PMCG1-074",
+    "choices_card_ids": [
+     "PMCG1-074"
+    ],
+    "submit_outcome": "accepted",
+    "operation_id": "g006-rules-v2-s9012-000006"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  },
+  {
+   "layer": "candidate",
+   "batch": "vai-batch-tr3u1-m2",
+   "game": "g006-rules-v2-s9012",
+   "actor": 1,
+   "position": 6,
+   "attempt_n": 7,
+   "retake": false,
+   "excluded_cards": [
+    [
+     "PMCG1-076",
+     1
+    ]
+   ],
+   "options_source": "prestop",
+   "executable_trainer_options": [],
+   "convention_excluded_options": [],
+   "executable_other_candidates": [
+    "end_turn"
+   ],
+   "state": {
+    "turn": 1,
+    "phase": "main",
+    "decision": null,
+    "trainer_in_use": null,
+    "stadium": null,
+    "discard_size": 1,
+    "discard_basic_energy": 0,
+    "hand_size": 7,
+    "hand_energy_retrieval": 1,
+    "hand_others": 6,
+    "hand_basic_energy": 4,
+    "observation_sha256": "f634e086aa798954d6d97811f70db43270e6446af27b0bab09b46632143a1988"
+   },
+   "user": "owner",
+   "path": "hand",
+   "cost_paid_before_candidate": false,
+   "chosen": {
+    "candidate_kind": "end_turn",
+    "played_card_id": null,
+    "choices_card_ids": [],
+    "submit_outcome": "accepted",
+    "operation_id": "g006-rules-v2-s9012-000007"
+   },
+   "code": {
+    "measured": null,
+    "static": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "static_conditions": {
+     "no_stadium": true,
+     "main_no_decision": true,
+     "hand_other_ge_1": true,
+     "no_basic_energy_in_discard": true,
+     "excluded_only_energy_retrieval": true,
+     "excluded_uids_in_hand": true
+    }
+   }
+  }
+ ],
+ "sources": [
+  {
+   "source": "P43 p.257 最新の説明",
+   "text": "手札からカードを1枚選んでトラッシュしなければ、このカードは使えない。あなたのトラッシュから「基本エネルギーカード」を最大2枚選び出し、手札に加える。ただし、このカードを使うためにトラッシュしたカードを選ぶことはできない。",
+   "without_target": "書かれていない"
+  },
+  {
+   "source": "P43 p.257 解説",
+   "without_target": "記述なし"
+  },
+  {
+   "source": "P43 p.310",
+   "without_target": "対象がない場合の手順なし"
+  },
+  {
+   "source": "P43 p.309",
+   "without_target": "ワザの規定。トレーナーには当てはめない"
+  },
+  {
+   "source": "kyuura UQ-ENERGY-RETRIEVAL-WITHOUT-TARGET（71d1728）",
+   "status": "UNRESOLVED",
+   "official_material": "insufficient",
+   "reachability": "自然な対戦での発生は確認していない"
+  },
+  {
+   "source": "kyuura UQ-CARD-USE-WITHOUT-TARGET（71d1728）",
+   "status": "UNRESOLVED"
+  }
+ ],
+ "source_refs": [
+  "kyuura_engine/effects.py DiscardFromHandThenRetrieveEnergy（check_playable・resume・decision_problems）",
+  "kyuura_engine/effects.py _retrievable_energy・check_tower_trainer・borrow_condition_stop・require_borrow_playable・unresolved_or_convention_rejection",
+  "kyuura_engine/engine.py check_play_trainer",
+  "kyuura_engine/legal_actions.py _trainer_candidate・_probe",
+  "kyuura_engine/conventions.py PINNED_SET_DIGESTS",
+  "kyuura_engine/data/diagnostic_catalog.json UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+  "docs/stop-policy-classification.json（PF-USE-WITHOUT-EFFECT）"
+ ],
+ "history_refs": [
+  "docs/energy-retrieval-v0.23.md（ER10・ER11）",
+  "docs/rules-2000-02-14.md",
+  "docs/tr3-unresolved-batch-plan.md 13 章",
+  "docs/er9-energy-retrieval-zero-design.md",
+  "docs/play-convention-tr4-v0.195.md",
+  "docs/er9-tr4-compare-batch-plan.md 6 章",
+  "docs/play-convention-three-trainers.md",
+  "docs/play-policy-family-plan.md（PC-USE-WITHOUT-TARGET）"
+ ],
+ "options": {
+  "A": {
+   "name": "現状維持",
+   "executable_actions_added": 0,
+   "rejections_in_records": 0,
+   "continued": "24 局面ともほかの操作を受理",
+   "recommended": true
+  },
+  "B": {
+   "name": "この場面で使えないとする規約",
+   "executable_actions_added": 0,
+   "effect": "表示・診断だけ",
+   "where": "check_playable（費用の前。候補・入力は同じ確かめで規約による除外。check・submit は CANDIDATE_NOT_EXECUTABLE のまま）",
+   "candidate_level_after": "not_implemented・no_eligible_card（prestop が入力を取得しない）",
+   "precedent": "TR3 の 3 規約・族の案 PC-USE-WITHOUT-TARGET の推奨（案）"
+  },
+  "C": {
+   "name": "対象がなくても使えるとする規約",
+   "executable_actions_added_recorded_options": 28,
+   "positions_recorded": 24,
+   "positions_static_unfetched": 10,
+   "cost": "手札 1 枚を払いもどさない",
+   "cost_discarded_basic_energy": "対象にならない（ER7）",
+   "retrieve_decision": "出さない（案）",
+   "log": [
+    "play_trainer",
+    "discard_from_hand",
+    "convention_applied（available 0）",
+    "discard_trainer"
+   ],
+   "no_retrieve_energy": true,
+   "new_effects": [
+    "回収なしで手札 1 枚をトラッシュ",
+    "費用のカードがのちの回収の対象になりうる（2 枚目のエネルギー回収など）",
+    "トレーナーの使用への反応の対象",
+    "番を終える前の手が 1 つ増える"
+   ]
+  }
+ },
+ "er9_boundary": {
+  "reaches_same_decision": false,
+  "min_count_and_empty_answer": "ER10 には決定がない",
+  "cost": "C ならもどさない（ER9 と同じ向き）",
+  "tr4_three_pairs": "ER9 の場面の検証だけ。ER10 には数えない",
+  "sets_unchanged": {
+   "CS-KYUURA-PLAY-TR3@1": "sha256:a7b800cff2a8614d7b181cc3a8a39f68ec4e17be9ceab0a04e75a48c4358ffb4",
+   "CS-KYUURA-PLAY-TR4@1": "sha256:15af975a643c8d5844bf76e0a85ab20020ca331b01c463aeb344047806435552"
+  },
+  "proposal_set": {
+   "id": "CS-KYUURA-PLAY-TR5",
+   "version": 1,
+   "base": "CS-KYUURA-PLAY-TR4@1",
+   "name_status": "案"
+  }
+ },
+ "recommendation": {
+  "choice": "keep_current",
+  "label": "現状維持",
+  "revisit_if": "TR4 の 0 枚の終わり方と対象 0 の場面をそろえたいと利用者が判断したとき（C を手札からの通常の使用に限って設計）"
+ },
+ "c_spec_if_chosen": {
+  "convention": {
+   "id": "PC-ENERGY-RETRIEVAL-WITHOUT-TARGET",
+   "version": 1,
+   "layer": "continuation",
+   "scenes": [
+    "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET"
+   ],
+   "name_status": "案"
+  },
+  "sites": [
+   "check_playable の ER10 の分岐",
+   "resume の費用のあとの選べるもの 0 の分岐"
+  ],
+  "initial_scope": "use_from_hand"
+ },
+ "decisions_for_adoption": [
+  {
+   "id": "D1",
+   "item": "規約を置くか",
+   "recommended": "置かない（A）",
+   "alternative": "B・C"
+  },
+  {
+   "id": "D2",
+   "item": "C の費用",
+   "recommended": "手札 1 枚を払い、もどさない",
+   "alternative": "費用なし（推奨しない）"
+  },
+  {
+   "id": "D3",
+   "item": "C の回収の決定",
+   "recommended": "出さない",
+   "alternative": "選べるもの 0 の決定"
+  },
+  {
+   "id": "D4",
+   "item": "C のログ",
+   "recommended": "convention_applied（available 0）と discard_trainer",
+   "alternative": "別の出来事を加える"
+  },
+  {
+   "id": "D5",
+   "item": "経路",
+   "recommended": "手札からの通常の使用だけ",
+   "alternative": "代用の経路にも当てる"
+  },
+  {
+   "id": "D6",
+   "item": "集合",
+   "recommended": "TR4@1 を含む新しい開発用の集合",
+   "alternative": "TR3@1 を基にする"
+  },
+  {
+   "id": "D7",
+   "item": "B の場合の分析",
+   "recommended": "prestop の取得範囲か候補の規約 ID を決める",
+   "alternative": "何もしない"
+  },
+  {
+   "id": "D8",
+   "item": "族の案との関係",
+   "recommended": "ER10 の 1 場面だけ",
+   "alternative": "PC-USE-WITHOUT-TARGET をまとめて決める"
+  },
+  {
+   "id": "D9",
+   "item": "kyuura への報告",
+   "recommended": "到達の記録を報告事項にする",
+   "alternative": null
+  }
+ ],
+ "acceptance_tests": [
+  "V1 厳密側",
+  "V2 対象 0 枚",
+  "V3 対象 1 枚以上",
+  "V4 費用で捨てたカードの除外",
+  "V5 ER9",
+  "V6 ポケモンタワー",
+  "V7 対象外の使用経路",
+  "V8 超エネルギー回収",
+  "V9 再録の版",
+  "V10 2 枚目のエネルギー回収（C）",
+  "V11 集合と旧記録",
+  "V12 合法手 API とログの監査"
+ ],
+ "minimal_boards": [
+  "E0 基本（トラッシュ 0）",
+  "E1 対照（トラッシュに基本エネルギー 1）",
+  "E2 ER2（手札がエネルギー回収だけ）",
+  "E3 ポケモンタワー",
+  "E4 リムーブ禁止ジム",
+  "E5 錯乱ジムの代わりの使用",
+  "E6 サイキックコントロール"
+ ],
+ "kyuura_report_candidate": "UQ-ENERGY-RETRIEVAL-WITHOUT-TARGET の到達: TR3 の本実行で条件の成り立つ局面が記録された除外として 24 局面・4 局（使用の送信なし）",
+ "unconfirmed": [
+  "代用の経路・ポケモンタワー・リムーブ禁止ジム・再録の版の ER10（ソースだけ）",
+  "入力を取得していない 10 局面の選択肢（静的だけ）",
+  "vai-batch-er9c の 12 局の ER10 の除外（読んでいない）",
+  "C の新しい手を方策が選ぶか・その後の進み方"
+ ],
+ "not_done": [
+  "規約の採用",
+  "コード・版の変更",
+  "新しい対戦",
+  "judge・replay",
+  "kyuura の変更"
+ ]
+}
