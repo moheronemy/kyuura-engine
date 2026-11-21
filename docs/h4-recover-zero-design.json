@@ -1,0 +1,772 @@
+{
+ "status": "design_only",
+ "not_adopted": true,
+ "not_implemented": true,
+ "date": "2026-11-21",
+ "doc": "docs/h4-recover-zero-design.md",
+ "base": {
+  "branch": "claude/er10-energy-retrieval-without-target-design",
+  "commit": "d098dd7bd89bcaa613b0e47f3e0ffff168097758",
+  "engine_version": "0.195.0",
+  "origin_matches": true
+ },
+ "batch_source": {
+  "commit": "891e1fbe146a275be1ccc6d37ec2091656b48e7e",
+  "engine_version": "0.194.0",
+  "h4_path_changed": false,
+  "zero_diff": [
+   "kyuura_engine/resolution",
+   "kyuura_engine/decisions.py",
+   "kyuura_engine/engine.py",
+   "kyuura_engine/legal_actions.py",
+   "kyuura_engine/checks.py",
+   "tools/verification_ai"
+  ],
+  "region_sha256": {
+   "programs.RecoverEnergy": "0f709fbc87775db924210d10af607f453ef41d4085413b426d738f8eab9e915f",
+   "effects.RecoverEnergyAndSelfDamage": "852e55fbedcdd78fcdae70df0f180e488c35c61d9a41f9678973bad58e44f99c",
+   "effects.CopyOpponentAttackEffect": "c8b9b229dac0ed2f446056560811837a579370556a4b225efa5868c26d9f536b"
+  }
+ },
+ "work_branch": "claude/h4-recover-zero-design",
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/h4-recover-zero-design/",
+ "scene": {
+  "stop_code": "UNRESOLVED_RECOVER_ZERO_ENERGY",
+  "ruling": "H4",
+  "category": "unresolved_ruling",
+  "raised_as": "unsupported",
+  "decision_kind": "recover_energy",
+  "element": "resolution.programs.RecoverEnergy",
+  "site": "RecoverEnergy.resume",
+  "registered_effect": "PMCG3-029 attack 1（エナジーへんかん）",
+  "kyuura_issue": "UQ-ENERGY-CONVERSION-ZERO",
+  "research_commit": "71d1728938fb4c8fefde9b82779cdef74beb612d"
+ },
+ "out_of_scope": [
+  "ER9",
+  "ER10",
+  "SR1・SR2",
+  "PC-UP-TO-ZERO のほかの場面",
+  "RecoverEnergyByHeads",
+  "RecoverSpecialEnergy"
+ ],
+ "recount": {
+  "rejections": 5,
+  "positions_without_retakes": 5,
+  "games": 2,
+  "decisions": 5,
+  "accepted_final_answers": 5,
+  "pilot": {
+   "rejections": 4,
+   "games": 1,
+   "same_decision_retry": false,
+   "decision_numbers": [
+    3,
+    18,
+    19,
+    23
+   ]
+  },
+  "main": {
+   "rejections": 1,
+   "games": 1
+  },
+  "submitted_reanswers": 5,
+  "not_submitted_same_answer": 12,
+  "game_interrupted": 0
+ },
+ "games": [
+  {
+   "attempt": "verifier/runs/vai-batch-tr3u1-p3/games/g001-rules-v2-s9006/attempt-001",
+   "termination": "game_over",
+   "h4_judge_verdicts": [
+    "known_stop",
+    "known_stop",
+    "known_stop",
+    "known_stop"
+   ],
+   "engine_commit": "891e1fbe146a275be1ccc6d37ec2091656b48e7e",
+   "engine_version": "0.194.0"
+  },
+  {
+   "attempt": "verifier/runs/vai-batch-tr3u1-m3/games/g003-rules-v2-s9009/attempt-001",
+   "termination": "game_over",
+   "h4_judge_verdicts": [
+    "known_stop"
+   ],
+   "engine_commit": "891e1fbe146a275be1ccc6d37ec2091656b48e7e",
+   "engine_version": "0.194.0"
+  }
+ ],
+ "cases": [
+  {
+   "batch": "vai-batch-tr3u1-p3",
+   "game": "g001-rules-v2-s9006",
+   "actor": 0,
+   "position": 27,
+   "attempt_n": 28,
+   "turn": 7,
+   "decision_number": 3,
+   "origin_operation": "g001-rules-v2-s9006-000027",
+   "origin_command": {
+    "attack_index": 1,
+    "card": 10,
+    "player": 0,
+    "type": "use_attack"
+   },
+   "attack": {
+    "card_id": "PMCG3-029",
+    "card": 10,
+    "attack_index": 1,
+    "name_ja": "エナジーへんかん",
+    "route": "form",
+    "path": "original"
+   },
+   "decision": {
+    "kind": "recover_energy",
+    "player": 0,
+    "min": 0,
+    "max": 1,
+    "options": 1,
+    "option_card_ids": [
+     "PMCG1-101"
+    ],
+    "source": "自分のトラッシュのエネルギーカード"
+   },
+   "inputs": {
+    "decline": true,
+    "count": {
+     "max": 1,
+     "min": 0
+    },
+    "candidate": [
+     [
+      "answer_decision",
+      "may_stop_later",
+      [
+       "continuation_not_evaluated"
+      ]
+     ]
+    ]
+   },
+   "policy_choice": [],
+   "check": {
+    "refusal": null,
+    "valid": true
+   },
+   "submit": {
+    "outcome": "rejected",
+    "diagnostic_id": "UNRESOLVED_RECOVER_ZERO_ENERGY",
+    "case_id": "UNRESOLVED_RECOVER_ZERO_ENERGY",
+    "category": "unresolved_ruling",
+    "continuable": true,
+    "status": "awaiting_decision",
+    "stage": "decision_answer",
+    "next": [
+     {
+      "kind": "answer_decision",
+      "player": 0
+     }
+    ],
+    "halt": null,
+    "refetch_required": false,
+    "refusal": null
+   },
+   "rejection_unchanged_for_all_viewers": true,
+   "reanswer": {
+    "not_submitted_same_answer": 10,
+    "submitted": 1,
+    "accepted_cards": 1,
+    "same_decision_number": true
+   },
+   "after_accept_events": [
+    "recover_energy",
+    "damage",
+    "turn_end",
+    "pokemon_check",
+    "turn_start",
+    "draw"
+   ],
+   "accepted_answers_now": 1,
+   "accepted_answers_with_zero": 2,
+   "internal_state_after_rejection": "unknown（記録にない。観測の照合値・ログの範囲・決定番号で確認）"
+  },
+  {
+   "batch": "vai-batch-tr3u1-p3",
+   "game": "g001-rules-v2-s9006",
+   "actor": 0,
+   "position": 108,
+   "attempt_n": 126,
+   "turn": 35,
+   "decision_number": 18,
+   "origin_operation": "g001-rules-v2-s9006-000109",
+   "origin_command": {
+    "attack_index": 1,
+    "card": 13,
+    "player": 0,
+    "type": "use_attack"
+   },
+   "attack": {
+    "card_id": "PMCG3-029",
+    "card": 13,
+    "attack_index": 1,
+    "name_ja": "エナジーへんかん",
+    "route": "form",
+    "path": "original"
+   },
+   "decision": {
+    "kind": "recover_energy",
+    "player": 0,
+    "min": 0,
+    "max": 2,
+    "options": 7,
+    "option_card_ids": [
+     "PMCG1-101"
+    ],
+    "source": "自分のトラッシュのエネルギーカード"
+   },
+   "inputs": {
+    "decline": true,
+    "count": {
+     "max": 2,
+     "min": 0
+    },
+    "candidate": [
+     [
+      "answer_decision",
+      "may_stop_later",
+      [
+       "continuation_not_evaluated"
+      ]
+     ]
+    ]
+   },
+   "policy_choice": [],
+   "check": {
+    "refusal": null,
+    "valid": true
+   },
+   "submit": {
+    "outcome": "rejected",
+    "diagnostic_id": "UNRESOLVED_RECOVER_ZERO_ENERGY",
+    "case_id": "UNRESOLVED_RECOVER_ZERO_ENERGY",
+    "category": "unresolved_ruling",
+    "continuable": true,
+    "status": "awaiting_decision",
+    "stage": "decision_answer",
+    "next": [
+     {
+      "kind": "answer_decision",
+      "player": 0
+     }
+    ],
+    "halt": null,
+    "refetch_required": false,
+    "refusal": null
+   },
+   "rejection_unchanged_for_all_viewers": true,
+   "reanswer": {
+    "not_submitted_same_answer": 1,
+    "submitted": 1,
+    "accepted_cards": 1,
+    "same_decision_number": true
+   },
+   "after_accept_events": [
+    "recover_energy",
+    "damage",
+    "turn_end",
+    "pokemon_check",
+    "turn_start",
+    "draw"
+   ],
+   "accepted_answers_now": 28,
+   "accepted_answers_with_zero": 29,
+   "internal_state_after_rejection": "unknown（記録にない。観測の照合値・ログの範囲・決定番号で確認）"
+  },
+  {
+   "batch": "vai-batch-tr3u1-p3",
+   "game": "g001-rules-v2-s9006",
+   "actor": 0,
+   "position": 112,
+   "attempt_n": 132,
+   "turn": 37,
+   "decision_number": 19,
+   "origin_operation": "g001-rules-v2-s9006-000114",
+   "origin_command": {
+    "attack_index": 1,
+    "card": 13,
+    "player": 0,
+    "type": "use_attack"
+   },
+   "attack": {
+    "card_id": "PMCG3-029",
+    "card": 13,
+    "attack_index": 1,
+    "name_ja": "エナジーへんかん",
+    "route": "form",
+    "path": "original"
+   },
+   "decision": {
+    "kind": "recover_energy",
+    "player": 0,
+    "min": 0,
+    "max": 2,
+    "options": 6,
+    "option_card_ids": [
+     "PMCG1-101"
+    ],
+    "source": "自分のトラッシュのエネルギーカード"
+   },
+   "inputs": {
+    "decline": true,
+    "count": {
+     "max": 2,
+     "min": 0
+    },
+    "candidate": [
+     [
+      "answer_decision",
+      "may_stop_later",
+      [
+       "continuation_not_evaluated"
+      ]
+     ]
+    ]
+   },
+   "policy_choice": [],
+   "check": {
+    "refusal": null,
+    "valid": true
+   },
+   "submit": {
+    "outcome": "rejected",
+    "diagnostic_id": "UNRESOLVED_RECOVER_ZERO_ENERGY",
+    "case_id": "UNRESOLVED_RECOVER_ZERO_ENERGY",
+    "category": "unresolved_ruling",
+    "continuable": true,
+    "status": "awaiting_decision",
+    "stage": "decision_answer",
+    "next": [
+     {
+      "kind": "answer_decision",
+      "player": 0
+     }
+    ],
+    "halt": null,
+    "refetch_required": false,
+    "refusal": null
+   },
+   "rejection_unchanged_for_all_viewers": true,
+   "reanswer": {
+    "not_submitted_same_answer": 0,
+    "submitted": 1,
+    "accepted_cards": 1,
+    "same_decision_number": true
+   },
+   "after_accept_events": [
+    "recover_energy",
+    "damage",
+    "turn_end",
+    "pokemon_check",
+    "turn_start",
+    "draw"
+   ],
+   "accepted_answers_now": 21,
+   "accepted_answers_with_zero": 22,
+   "internal_state_after_rejection": "unknown（記録にない。観測の照合値・ログの範囲・決定番号で確認）"
+  },
+  {
+   "batch": "vai-batch-tr3u1-p3",
+   "game": "g001-rules-v2-s9006",
+   "actor": 0,
+   "position": 125,
+   "attempt_n": 146,
+   "turn": 41,
+   "decision_number": 23,
+   "origin_operation": "g001-rules-v2-s9006-000128",
+   "origin_command": {
+    "attack_index": 1,
+    "card": 12,
+    "player": 0,
+    "type": "use_attack"
+   },
+   "attack": {
+    "card_id": "PMCG3-029",
+    "card": 12,
+    "attack_index": 1,
+    "name_ja": "エナジーへんかん",
+    "route": "form",
+    "path": "original"
+   },
+   "decision": {
+    "kind": "recover_energy",
+    "player": 0,
+    "min": 0,
+    "max": 2,
+    "options": 8,
+    "option_card_ids": [
+     "PMCG1-101"
+    ],
+    "source": "自分のトラッシュのエネルギーカード"
+   },
+   "inputs": {
+    "decline": true,
+    "count": {
+     "max": 2,
+     "min": 0
+    },
+    "candidate": [
+     [
+      "answer_decision",
+      "may_stop_later",
+      [
+       "continuation_not_evaluated"
+      ]
+     ]
+    ]
+   },
+   "policy_choice": [],
+   "check": {
+    "refusal": null,
+    "valid": true
+   },
+   "submit": {
+    "outcome": "rejected",
+    "diagnostic_id": "UNRESOLVED_RECOVER_ZERO_ENERGY",
+    "case_id": "UNRESOLVED_RECOVER_ZERO_ENERGY",
+    "category": "unresolved_ruling",
+    "continuable": true,
+    "status": "awaiting_decision",
+    "stage": "decision_answer",
+    "next": [
+     {
+      "kind": "answer_decision",
+      "player": 0
+     }
+    ],
+    "halt": null,
+    "refetch_required": false,
+    "refusal": null
+   },
+   "rejection_unchanged_for_all_viewers": true,
+   "reanswer": {
+    "not_submitted_same_answer": 0,
+    "submitted": 1,
+    "accepted_cards": 2,
+    "same_decision_number": true
+   },
+   "after_accept_events": [
+    "recover_energy",
+    "damage",
+    "turn_end",
+    "pokemon_check",
+    "turn_start",
+    "draw"
+   ],
+   "accepted_answers_now": 36,
+   "accepted_answers_with_zero": 37,
+   "internal_state_after_rejection": "unknown（記録にない。観測の照合値・ログの範囲・決定番号で確認）"
+  },
+  {
+   "batch": "vai-batch-tr3u1-m3",
+   "game": "g003-rules-v2-s9009",
+   "actor": 0,
+   "position": 86,
+   "attempt_n": 96,
+   "turn": 26,
+   "decision_number": 16,
+   "origin_operation": "g003-rules-v2-s9009-000086",
+   "origin_command": {
+    "attack_index": 1,
+    "card": 10,
+    "player": 0,
+    "type": "use_attack"
+   },
+   "attack": {
+    "card_id": "PMCG3-029",
+    "card": 10,
+    "attack_index": 1,
+    "name_ja": "エナジーへんかん",
+    "route": "form",
+    "path": "original"
+   },
+   "decision": {
+    "kind": "recover_energy",
+    "player": 0,
+    "min": 0,
+    "max": 2,
+    "options": 6,
+    "option_card_ids": [
+     "PMCG1-101"
+    ],
+    "source": "自分のトラッシュのエネルギーカード"
+   },
+   "inputs": {
+    "decline": true,
+    "count": {
+     "max": 2,
+     "min": 0
+    },
+    "candidate": [
+     [
+      "answer_decision",
+      "may_stop_later",
+      [
+       "continuation_not_evaluated"
+      ]
+     ]
+    ]
+   },
+   "policy_choice": [],
+   "check": {
+    "refusal": null,
+    "valid": true
+   },
+   "submit": {
+    "outcome": "rejected",
+    "diagnostic_id": "UNRESOLVED_RECOVER_ZERO_ENERGY",
+    "case_id": "UNRESOLVED_RECOVER_ZERO_ENERGY",
+    "category": "unresolved_ruling",
+    "continuable": true,
+    "status": "awaiting_decision",
+    "stage": "decision_answer",
+    "next": [
+     {
+      "kind": "answer_decision",
+      "player": 0
+     }
+    ],
+    "halt": null,
+    "refetch_required": false,
+    "refusal": null
+   },
+   "rejection_unchanged_for_all_viewers": true,
+   "reanswer": {
+    "not_submitted_same_answer": 1,
+    "submitted": 1,
+    "accepted_cards": 1,
+    "same_decision_number": true
+   },
+   "after_accept_events": [
+    "recover_energy",
+    "damage",
+    "discard_attached_trainer",
+    "turn_end",
+    "pokemon_check",
+    "turn_start",
+    "draw"
+   ],
+   "accepted_answers_now": 21,
+   "accepted_answers_with_zero": 22,
+   "internal_state_after_rejection": "unknown（記録にない。観測の照合値・ログの範囲・決定番号で確認）"
+  }
+ ],
+ "controls_28_games": {
+  "decisions": 15,
+  "by_phase": {
+   "main": 9,
+   "pilot": 6
+  },
+  "first_answer_cards": {
+   "main:0": 1,
+   "main:1": 4,
+   "main:2": 4,
+   "pilot:0": 4,
+   "pilot:2": 1,
+   "pilot:1": 1
+  },
+  "first_rejected_h4": 5,
+  "origin_types": {
+   "use_attack": 15
+  },
+  "recover_energy_events": 15,
+  "events_effect_vs_pokemon": {
+   "PMCG3-029#1": 15
+  },
+  "games_with_select_attack": 0,
+  "games_with_yubiwofuru_name": 0,
+  "judge_h4_rows": {
+   "main:known_stop": 1,
+   "pilot:known_stop": 4
+  }
+ },
+ "paths": {
+  "recorded": [
+   "元のワザ（PMCG3-029 の use_attack・route form）: 15 決定・5 拒否"
+  ],
+  "source_or_tests_only": [
+   "ピッピ PMCG1-067・ピクシー PMCG2-044 の［ゆびをふる］（test_metronome_paths_use_the_same_element_decision_and_resume）",
+   "メタモンの［へんしん］（judge の資料の構築盤面で同じコードに届くことを見ただけ。規則 10 の対象の外）",
+   "ポケモンタワー・［アレルギーほうし］（要素を実行しない）",
+   "トラッシュにエネルギーなし（H5。決定なし）"
+  ],
+  "copy_in_records": 0
+ },
+ "sources": [
+  {
+   "source": "P43 p.158 最新の説明",
+   "text": "自分のトラッシュから、「エネルギーカード」を最大2枚選び出し、手札に加える。その後、自分に10ダメージ。",
+   "zero": "書かれていない"
+  },
+  {
+   "source": "印刷の文面（kyuura の写し）",
+   "text": "自分のトラッシュから最大2枚のエネルギーカードを選び、手札に加える。その後、自分に10ダメージ。",
+   "zero": "書かれていない"
+  },
+  {
+   "source": "P43 p.158 解説",
+   "zero": "2 枚の例だけ"
+  },
+  {
+   "source": "P43 p.309",
+   "zero": "対象がないとき（H5）の根拠。H4 には答えない"
+  },
+  {
+   "source": "kyuura UQ-ENERGY-CONVERSION-ZERO（71d1728）",
+   "status": "UNRESOLVED",
+   "official_material": "insufficient"
+  }
+ ],
+ "source_refs": [
+  "kyuura_engine/resolution/programs.py RecoverEnergy（run・resume・dry_choices）・対応表 10340 行",
+  "kyuura_engine/resolution/flow.py resume_decision",
+  "kyuura_engine/checks.py decision_choices",
+  "kyuura_engine/effects.py RecoverEnergyAndSelfDamage・CopyOpponentAttackEffect・登録 PMCG3-029",
+  "kyuura_engine/conventions.py continuation_for・record_application・APPLIED_FIELDS",
+  "tools/verification_ai/judge.py 規則 10",
+  "tests/test_recover_zero_energy_premise_v0_187.py",
+  "tests/test_haunter_line_v0_9.py"
+ ],
+ "history_refs": [
+  "docs/haunter-line-v0.9.md（H4・H5）",
+  "docs/rules-2000-02-14.md",
+  "docs/verification-ai-recover-zero-energy-design.md（規則 10）",
+  "docs/tr3-unresolved-batch-plan.md 12・13 章",
+  "docs/er9-energy-retrieval-zero-design.md",
+  "docs/play-convention-tr4-v0.195.md",
+  "docs/play-policy-family-plan.md（PC-UP-TO-ZERO）"
+ ],
+ "options": {
+  "A": {
+   "name": "現状維持",
+   "rejections": 5,
+   "reanswers_submitted": 5,
+   "not_submitted_same_answer": 12,
+   "games_interrupted": 0,
+   "accepted_answers_added": 0
+  },
+  "B": {
+   "name": "限定して 0 枚を受理する",
+   "accepted_answers_added_per_decision": 1,
+   "rejections_after": 0,
+   "recommended_candidate": true,
+   "after_zero": {
+    "cost": "変わらない（費用でトラッシュしない）",
+    "card_moves": "なし",
+    "rest_of_attack": "自分に 10 ダメージ（H5 と同じ道）",
+    "turn": "ワザの終わり → 相手の番",
+    "log": [
+     "convention_applied（player・available）",
+     "damage（self）"
+    ],
+    "no_recover_energy_event": true
+   },
+   "same_convention_for_copy": true
+  },
+  "C": {
+   "name": "1 枚以上を必須にする",
+   "rejections_avoided_at_input": 5,
+   "accepted_answers_added": 0,
+   "zero_targets": "別の条件（H5・決定なし）のまま"
+  }
+ },
+ "recommendation": {
+  "choice": "limited_convention_candidate",
+  "label": "限定規約の採用候補（B）",
+  "convention": {
+   "id": "PC-RECOVER-ZERO-ENERGY",
+   "version": 1,
+   "layer": "continuation",
+   "scenes": [
+    "UNRESOLVED_RECOVER_ZERO_ENERGY"
+   ],
+   "name_status": "案"
+  },
+  "set": {
+   "base": "CS-KYUURA-PLAY-TR4@1",
+   "added": 1,
+   "id": null,
+   "id_note": "採用の単位で決める。ER10 の案 CS-KYUURA-PLAY-TR5 と重ねない"
+  },
+  "unchanged_sets": {
+   "CS-KYUURA-PLAY-TR3@1": "sha256:a7b800cff2a8614d7b181cc3a8a39f68ec4e17be9ceab0a04e75a48c4358ffb4",
+   "CS-KYUURA-PLAY-TR4@1": "sha256:15af975a643c8d5844bf76e0a85ab20020ca331b01c463aeb344047806435552"
+  },
+  "site": "RecoverEnergy.resume の空の答えの分岐"
+ },
+ "decisions_for_adoption": [
+  {
+   "id": "D1",
+   "item": "規約を置くか",
+   "recommended": "置く（B）",
+   "alternative": "A・C"
+  },
+  {
+   "id": "D2",
+   "item": "経路",
+   "recommended": "要素で引き、元のワザとコピーの経路の両方",
+   "alternative": "元のワザだけ（copied で外す）"
+  },
+  {
+   "id": "D3",
+   "item": "ログ",
+   "recommended": "convention_applied だけ・recover_energy なし",
+   "alternative": "0 枚の recover_energy"
+  },
+  {
+   "id": "D4",
+   "item": "集合",
+   "recommended": "TR4@1 を含む新しい開発用の集合",
+   "alternative": "TR3@1 を基にする"
+  },
+  {
+   "id": "D5",
+   "item": "judge",
+   "recommended": "規約の受理の分類を実装の単位で確かめる・規則 10 と旧記録は変えない",
+   "alternative": null
+  },
+  {
+   "id": "D6",
+   "item": "族の案との関係",
+   "recommended": "H4 の 1 場面だけ",
+   "alternative": "PC-UP-TO-ZERO をまとめて"
+  }
+ ],
+ "acceptance_boards": [
+  "S1 厳密側",
+  "S2 規約有効の 0 枚",
+  "S3 1 枚以上の対照",
+  "S4 コピーの経路（ゆびをふる 2・へんしん）",
+  "S5 対象 0 枚（H5・タワー・アレルギーほうし）",
+  "S6 自分へのダメージできぜつ",
+  "S7 旧記録との互換",
+  "S8 ほかの要素・カード",
+  "S9 合法手 API とログの監査"
+ ],
+ "unconfirmed": [
+  "コピーの経路の規約の処理",
+  "へんしんの経路の全体",
+  "judge の規約の受理の分類",
+  "0 枚を受理したあとの対戦の進み方",
+  "拒否の時点の内部状態の照合値",
+  "史料の再調査"
+ ],
+ "not_done": [
+  "規約の採用",
+  "コード・judge・版の変更",
+  "構築盤面の実行",
+  "新しい対戦",
+  "judge・replay",
+  "kyuura の変更"
+ ]
+}
