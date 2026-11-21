@@ -434,8 +434,55 @@ SETS = MappingProxyType({
                                                 "続け、ほかの未決の場面では今の停止コードで止める（完成したプレイ用の集合ではない）")),
 })
 
+# ---------------------------------------------------------------- v0.196: エナジーへんかんの 0 枚の答えの続行規約（docs/play-convention-tr6-v0.196.md）
+#
+# 利用者の採用（2026-11-21。設計 docs/h4-recover-zero-design.md の案 B）。プレイ用の取り決めで、公式の裁定・エラッタ・kyuura の研究上の解決ではない（H4 の停止コードは
+# 厳密側・既存の集合・対象の外の経路で active のまま）。今の挙動の集合・S2a・PO・TR3・TR4 の集合には入れず、新しい開発用の部分的な集合 CS-KYUURA-PLAY-TR6@1 だけに入れる
+# （TR5 は ER10 の設計の案で使った名前なので使わない）。処理はワザの途中の回収の決定の再開（``resolution.programs.RecoverEnergy.resume`` の空の答えの分岐）で、未裁定の停止の
+# 代わりに何も手札に加えずに次の要素へ進む（``convention_applied`` を書く）
+
+TR6_SET_ID = "CS-KYUURA-PLAY-TR6"
+TR6_ADOPTION = ("利用者の採用（2026-11-21。案 B: 0 枚を受理して、何も手札に加えずにワザの続き（自分へのダメージ）へ進む。ワザを使ったポケモン自身の印刷のエナジーへんかんと、"
+                "ピッピ・ピクシーのゆびをふるで相手のポケモン自身のエナジーへんかんを使う経路だけ・明示的に選んだ新しいプレイ用の集合だけで有効）。プレイ用の取り決めで、"
+                "公式の裁定・エラッタ・kyuura の研究上の解決ではない")
+TR6_REFERENCES = ("docs/play-convention-tr6-v0.196.md", "docs/h4-recover-zero-design.md")
+
+ENERGY_CONVERSION_ZERO_ID = "PC-ENERGY-CONVERSION-ZERO"
+
+_TR6_CONVENTIONS = (
+    Convention(ENERGY_CONVERSION_ZERO_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "エナジーへんかん（解決の基盤の要素 RecoverEnergy。自分のトラッシュのエネルギーカードを最大 2 枚手札に加える）の選択で、選べるカードがあっても 0 枚を選べる。"
+               "0 枚を選んだら、何も手札に加えずにワザの続き（自分へのダメージ）を処理する",
+               content={"adoption": TR6_ADOPTION,
+                        "applies_when": "ワザの途中の回収の決定（recover_energy。最小 0）の答えが空で、ワザの経路が下の 2 つのどちらか（決定の再開の時点の状態の値で決める）",
+                        "identification": ("解決の基盤の要素 RecoverEnergy（効果の登録の型 RecoverEnergyAndSelfDamage から作る。カード ID では分けない）。最小が 1 以上の回収の要素"
+                                           "（RecoverEnergyByHeads・RecoverSpecialEnergy）は H4 を投げないので当たらない"),
+                        "path": ("元のワザ: 宣言したワザと処理しているワザが同じで、ワザを使ったポケモンの印刷のカードがそのワザのカード。"
+                                 "ゆびをふる: 宣言したワザの効果の登録の型が CopyOpponentAttackEffect（ピッピ・ピクシー）で、ワザを使ったポケモンの印刷のカードが宣言したワザのカード、"
+                                 "処理しているワザ（copied）のカードが相手のバトル場のポケモンの印刷のカード"),
+                        "not_applied_paths": ["メタモンの［へんしん］で持つワザ（ワザを使ったポケモンの印刷のカードがワザのカードでない）",
+                                              "ゆびをふるのほかのワザのコピー（カスミのコダックのちょうのうりょく・思い出させるなど。効果の型が違う）",
+                                              "ゆびをふるで、相手の［へんしん］などで持つワザを選んだとき（相手の印刷のカードがワザのカードでない）"],
+                        "on_zero": {"cost": "変わらない（ワザの費用でエネルギーをトラッシュしない）", "recover": "なし（手札に加えない）",
+                                    "next": "次の要素（自分への 10 ダメージ。きぜつの確かめと番の進行は今の処理）", "decision": "終わり"},
+                        "record": ["player", "available"],
+                        "unchanged": ["1 枚以上の答え", "選ぶ数の上限・選べるもの", "トラッシュにエネルギーカードがないとき（H5。決定なし）",
+                                      "ポケモンタワー・［アレルギーほうし］（要素を処理しない）", "先読み（1 枚以上だけを試す）", "エネルギー回収（ER9・ER10）・超エネルギー回収（SR1・SR2）",
+                                      "ほかの「最大 N 枚」の場面", "厳密側・既存の集合の停止"]},
+               scenes=("UNRESOLVED_RECOVER_ZERO_ENERGY",), references=TR6_REFERENCES),
+)
+TR6_MEMBERS = tuple((c.id, c.version) for c in _TR6_CONVENTIONS)
+
+CONVENTIONS = MappingProxyType({**CONVENTIONS, **{(c.id, c.version): c for c in _TR6_CONVENTIONS}})
+SETS = MappingProxyType({
+    **SETS,
+    (TR6_SET_ID, 1): ConventionSet(TR6_SET_ID, 1, USAGE_DEVELOPMENT, _CURRENT_MEMBERS + S2A_MEMBERS + PO_MEMBERS + TR3_MEMBERS + TR4_MEMBERS + TR6_MEMBERS,
+                                   description=("v0.196 の開発用の部分的な集合: CS-KYUURA-PLAY-TR4@1 の 24 規約と、エナジーへんかんの 0 枚の答えの続行規約 1 件。13 規約の場面だけを"
+                                                "続け、ほかの未決の場面では今の停止コードで止める（完成したプレイ用の集合ではない）")),
+})
+
 # この版のエンジンが処理を持つ続行規約（``Registry.implemented_continuations``）
-IMPLEMENTED_CONTINUATIONS = frozenset(S2A_MEMBERS + PO_MEMBERS + TR3_MEMBERS + TR4_MEMBERS)
+IMPLEMENTED_CONTINUATIONS = frozenset(S2A_MEMBERS + PO_MEMBERS + TR3_MEMBERS + TR4_MEMBERS + TR6_MEMBERS)
 # 形式 34 までの書き出し（規約集合の項目がない）に書いてよい集合: 記録のない状態の意味（その版のエンジンの今の挙動）と同じ意味の集合だけ
 IMPLICIT_IN_OLD_FORMATS = frozenset({(CURRENT_SET_ID, 1), (LEGACY_SET_ID, 1)})
 
@@ -469,6 +516,8 @@ PINNED_CONVENTION_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
     ("PC-POTION-WITHOUT-DAMAGE", 1): "sha256:ed5f64a10954cd3561061e0fe7c8adc084283553024c876cf58f75008d9ffebe",
     # v0.195: エネルギー回収の 0 枚の答えの続行規約（利用者の採用。2026-11-21）
     ("PC-ENERGY-RETRIEVAL-ZERO", 1): "sha256:42427e752631572b425d391783f362c0b88982328fd9231b57da0c1455fdba01",
+    # v0.196: エナジーへんかんの 0 枚の答えの続行規約（利用者の採用。2026-11-21）
+    ("PC-ENERGY-CONVERSION-ZERO", 1): "sha256:6a35ebb8f6aa772e051d0ade7a8fd6d771537d2f1205365b4c039a19dea44594",
 })
 PINNED_SET_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
     ("CS-KYUURA-CURRENT", 1): "sha256:9a9b95c689d86fa01a5b710984560efda3c08f4dbf1d7c6218094ac8666f3cee",
@@ -477,6 +526,7 @@ PINNED_SET_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
     ("CS-KYUURA-PLAY-PO", 1): "sha256:06d512194feee1857319f0c765ab2162d5259e4519895ed057d176d15fc43528",  # v0.145: 開発用の部分的な集合
     ("CS-KYUURA-PLAY-TR3", 1): "sha256:a7b800cff2a8614d7b181cc3a8a39f68ec4e17be9ceab0a04e75a48c4358ffb4",  # v0.186: 開発用の部分的な集合
     ("CS-KYUURA-PLAY-TR4", 1): "sha256:15af975a643c8d5844bf76e0a85ab20020ca331b01c463aeb344047806435552",  # v0.195: 開発用の部分的な集合
+    ("CS-KYUURA-PLAY-TR6", 1): "sha256:aa53bc52cfc1d2193a3e1692efc585cf7daef23251c5d08dd09d7e554cf6ead2",  # v0.196: 開発用の部分的な集合
 })
 
 

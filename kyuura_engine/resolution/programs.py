@@ -2898,13 +2898,45 @@ class RecoverEnergy(Element):
                     max_choices=min(self.max_cards, len(candidates)))
         return True
 
+    @staticmethod
+    def _zero_convention_path(run: AttackRun) -> bool:
+        """v0.196（docs/play-convention-tr6-v0.196.md）: 0 枚の答えの続行規約を当てる経路か（決定の再開の時点の状態の値だけで決める。状態を変えない。カード ID の定数で分けない）。
+
+        - 元のワザ: 宣言したワザと処理しているワザが同じで、ワザを使ったポケモンの印刷のカードがそのワザのカード（メタモンの［へんしん］などで持つワザは、印刷のカードが違うので外れる）
+        - 相手のワザを自分のワザとして使う効果のうち、効果の登録の型が ``CopyOpponentAttackEffect`` のワザ（ピッピ・ピクシーの「ゆびをふる」）: ワザを使ったポケモンの印刷のカードが
+          宣言したワザのカードで、処理しているワザ（``copied``）のカードが相手のバトル場のポケモンの印刷のカード（相手が［へんしん］などで持つワザは外れる）
+        """
+        state = run.state
+        printed = state.card_def(run.attacker().card).id
+        key, declared = run.key, run.declared
+        if declared == key:
+            return printed == key.card_id
+        entry = state.effects.attack_entry(declared.card_id, declared.attack_index)
+        if entry is None or not isinstance(entry.effect, E.CopyOpponentAttackEffect) or printed != declared.card_id:
+            return False
+        source = state.players[1 - run.player].active
+        return source is not None and state.card_def(source.card).id == key.card_id
+
     def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         if not choices:
-            raise UnsupportedError(
+            stop = UnsupportedError(
                 "UNRESOLVED_RECOVER_ZERO_ENERGY",
                 "トラッシュにエネルギーカードがあるときに 0 枚を選べるか（「最大2枚選び出し」が 0 枚を含むか）は『オフィシャルブック2000』"
                 "（p.158）から決められないので扱わない。1 枚以上を選ぶ",
             )
+            # v0.196: 状態の規約集合にこの場面（停止コード）の続行規約があり、対象の経路なら、受理して何も手札に加えずに戻る（次の要素の自分へのダメージは呼ぶ側の続きで処理する）。
+            # ほかは今までどおり止める（状態を変える前）
+            lookup = None
+            if self._zero_convention_path(run):
+                from ..conventions import continuation_for
+
+                lookup = continuation_for(run.state, stop.code)
+            if lookup is None:
+                raise stop
+            from ..conventions import record_application
+
+            record_application(run.state, lookup, player=run.player, available=len(decision.options))
+            return
         for uid in choices:
             if uid not in self._candidates(run):
                 raise RuntimeError(f"手札に加えるカード {uid} が、ワザを使ったプレイヤーのトラッシュのエネルギーカードではない（エンジンの不具合）")

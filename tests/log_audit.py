@@ -10566,6 +10566,11 @@ TR4_RULES = {
 }
 TR4_ENERGY_RETRIEVAL_CARDS = frozenset({"PMCG1-076", "GD1-014", "GD4-014", "GD6-014", "QSG-047"})
 TR4_NOT_PLAIN_USE = frozenset({"chaos_check", "chaos_answered", "trainer_reaction_answered"})
+# v0.196（docs/play-convention-tr6-v0.196.md）: エナジーへんかんの 0 枚の答えの続行規約の記録（規約 → (版, 場面, 項目)）。エナジーへんかんのワザ（カード#ワザの位置）の一覧も監査が独立に持つ
+TR6_RULES = {
+    "PC-ENERGY-CONVERSION-ZERO": (1, {"UNRESOLVED_RECOVER_ZERO_ENERGY"}, {"player", "available"}),
+}
+TR6_ENERGY_CONVERSION_EFFECTS = frozenset({"PMCG3-029#1"})
 S2A_PLAY_AS_CARDS = frozenset({"PMCG1-091", "PMCG3-046"})  # ピッピ人形・なにかの化石（ポケモンとして場に出せるトレーナー）
 S2A_SHORT_ELEMENTS = {"UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT": "discard_water_energy_cards", "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT": "return_energy_cards_to_hand"}
 
@@ -10630,9 +10635,10 @@ def s2a_problems(state) -> list[str]:
         for e in log:
             if e["kind"] != "convention_applied":
                 continue
-            rule = S2A_RULES.get(e.get("convention")) or PO_RULES.get(e.get("convention")) or TR4_RULES.get(e.get("convention"))  # v0.145: PO・v0.195: TR4 の規約
+            rule = (S2A_RULES.get(e.get("convention")) or PO_RULES.get(e.get("convention")) or TR4_RULES.get(e.get("convention"))
+                    or TR6_RULES.get(e.get("convention")))  # v0.145: PO・v0.195: TR4・v0.196: TR6 の規約
             if rule is None or e.get("version") != rule[0] or (e.get("convention"), e.get("version")) not in members:
-                problems.append(f"{where} の {e['turn']} 番の規約の記録 {e.get('convention')}@{e.get('version')} が、状態の規約集合の S2a・PO・TR4 の規約ではない")
+                problems.append(f"{where} の {e['turn']} 番の規約の記録 {e.get('convention')}@{e.get('version')} が、状態の規約集合の S2a・PO・TR4・TR6 の規約ではない")
                 continue
             if e.get("scene") not in rule[1] or e.get("code") != str(e.get("scene")).split("#")[0]:
                 problems.append(f"{where} の {e['turn']} 番の規約の記録の場面 {e.get('scene')}・コード {e.get('code')} が、規約 {e['convention']} の場面ではない")
@@ -10757,6 +10763,21 @@ def s2a_problems(state) -> list[str]:
                     or after is None or after["kind"] != "discard_trainer" or after.get("card") != played["card"] or after.get("player") != e.get("player")
                     or not isinstance(e.get("available"), int) or isinstance(e.get("available"), bool) or e["available"] < 1):
                 problems.append(f"{where} の {e['turn']} 番のエネルギー回収の 0 枚の規約の記録が、手札から使ったエネルギー回収の費用のトラッシュと使い終えるあいだにない"
+                                f"（プレイヤー {e.get('player')}・選べた数 {e.get('available')}）")
+        # 7. v0.196: エナジーへんかんの 0 枚の規約の記録は、同じプレイヤーのワザ（attack）のあと・同じ番の中で、あいだに recover_energy がなく、すぐあとが同じプレイヤーの
+        # エナジーへんかん（監査の一覧のワザ）の自分へのダメージ。available は 1 以上
+        for i, e in enumerate(log):
+            if e["kind"] != "convention_applied" or e.get("convention") not in TR6_RULES:
+                continue
+            start = max((k for k in range(i) if log[k]["kind"] == "attack"), default=None)
+            between = log[start + 1:i] if start is not None else []
+            after = log[i + 1] if i + 1 < len(log) else None
+            if (start is None or log[start].get("player") != e.get("player") or log[start].get("turn") != e.get("turn")
+                    or any(x["kind"] in ("recover_energy", "turn_end", "turn_start") for x in between)
+                    or after is None or after["kind"] != "damage" or after.get("target") != "self" or after.get("player") != e.get("player")
+                    or after.get("effect") not in TR6_ENERGY_CONVERSION_EFFECTS
+                    or not isinstance(e.get("available"), int) or isinstance(e.get("available"), bool) or e["available"] < 1):
+                problems.append(f"{where} の {e['turn']} 番のエナジーへんかんの 0 枚の規約の記録が、同じプレイヤーのワザとエナジーへんかんの自分へのダメージのあいだにない"
                                 f"（プレイヤー {e.get('player')}・選べた数 {e.get('available')}）")
         # 4. 枚数の不足の規約の記録の場所（ワザ・トレーナーの使用のあと、番の終わりの前）
         last_use = None

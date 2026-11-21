@@ -71,13 +71,19 @@ class StaticPremiseTest(unittest.TestCase):
             for node in ast.walk(tree):
                 if isinstance(node, ast.Constant) and node.value == CODE:
                     sites.append((name, *where[node]))
-        self.assertEqual(sites, [("resolution/programs.py", "RecoverEnergy", "resume")])
-        # その定数は raise UnsupportedError(...) の最初の引数
+        # v0.196: conventions.py のモジュールの段の 1 つは、続行規約 PC-ENERGY-CONVERSION-ZERO@1 の場面の登録（投げる箇所ではない。下で場面だけであることを確かめる）
+        self.assertEqual(sites, [("conventions.py", None, None), ("resolution/programs.py", "RecoverEnergy", "resume")])
+        from kyuura_engine import conventions as C
+
+        self.assertEqual([key for key, c in C.CONVENTIONS.items() if CODE in c.scenes], [("PC-ENERGY-CONVERSION-ZERO", 1)])
+        # その定数は UnsupportedError(...) の最初の引数（v0.196 から、作った例外を規約が当たらないときに raise する。作る箇所・投げる箇所はどちらも 1 つ）
         source = inspect.getsource(P.RecoverEnergy.resume)
         tree = ast.parse(source.lstrip() if source.startswith(" ") else source)
-        raises = [n for n in ast.walk(tree) if isinstance(n, ast.Raise) and isinstance(n.exc, ast.Call)
-                  and getattr(n.exc.func, "id", None) == "UnsupportedError" and isinstance(n.exc.args[0], ast.Constant) and n.exc.args[0].value == CODE]
-        self.assertEqual(len(raises), 1)
+        built = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and getattr(n.func, "id", None) == "UnsupportedError"
+                 and isinstance(n.args[0], ast.Constant) and n.args[0].value == CODE]
+        self.assertEqual(len(built), 1)
+        raises = [n for n in ast.walk(tree) if isinstance(n, ast.Raise)]
+        self.assertEqual([ast.unparse(n.exc) for n in raises if not isinstance(n.exc, ast.Call)], ["stop"])
         # 説明文の中の名前（effects.py の RecoverEnergyAndSelfDamage）は、投げる箇所ではない
         self.assertIn(CODE, E.RecoverEnergyAndSelfDamage.__doc__)
 
