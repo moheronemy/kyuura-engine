@@ -10560,6 +10560,12 @@ PO_RULES = {
     "PC-POISON-MIST-TARGETS": (1, {"UNRESOLVED_POISON_MIST_EARLIER_POISON"}, {"pokemon_id", "amount", "poison_mists"}),
     "PC-POISON-MIST-SOURCE-LEFT": (1, {"UNRESOLVED_POISON_MIST_SOURCE#source-left"}, {"pokemon_id", "amount", "ended_mists"}),
 }
+# v0.195（docs/play-convention-tr4-v0.195.md）: エネルギー回収の 0 枚の答えの続行規約の記録（規約 → (版, 場面, 項目)）。エネルギー回収の版の一覧も監査が独立に持つ
+TR4_RULES = {
+    "PC-ENERGY-RETRIEVAL-ZERO": (1, {"UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE"}, {"player", "available"}),
+}
+TR4_ENERGY_RETRIEVAL_CARDS = frozenset({"PMCG1-076", "GD1-014", "GD4-014", "GD6-014", "QSG-047"})
+TR4_NOT_PLAIN_USE = frozenset({"chaos_check", "chaos_answered", "trainer_reaction_answered"})
 S2A_PLAY_AS_CARDS = frozenset({"PMCG1-091", "PMCG3-046"})  # ピッピ人形・なにかの化石（ポケモンとして場に出せるトレーナー）
 S2A_SHORT_ELEMENTS = {"UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT": "discard_water_energy_cards", "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT": "return_energy_cards_to_hand"}
 
@@ -10624,9 +10630,9 @@ def s2a_problems(state) -> list[str]:
         for e in log:
             if e["kind"] != "convention_applied":
                 continue
-            rule = S2A_RULES.get(e.get("convention")) or PO_RULES.get(e.get("convention"))  # v0.145: PO の規約
+            rule = S2A_RULES.get(e.get("convention")) or PO_RULES.get(e.get("convention")) or TR4_RULES.get(e.get("convention"))  # v0.145: PO・v0.195: TR4 の規約
             if rule is None or e.get("version") != rule[0] or (e.get("convention"), e.get("version")) not in members:
-                problems.append(f"{where} の {e['turn']} 番の規約の記録 {e.get('convention')}@{e.get('version')} が、状態の規約集合の S2a・PO の規約ではない")
+                problems.append(f"{where} の {e['turn']} 番の規約の記録 {e.get('convention')}@{e.get('version')} が、状態の規約集合の S2a・PO・TR4 の規約ではない")
                 continue
             if e.get("scene") not in rule[1] or e.get("code") != str(e.get("scene")).split("#")[0]:
                 problems.append(f"{where} の {e['turn']} 番の規約の記録の場面 {e.get('scene')}・コード {e.get('code')} が、規約 {e['convention']} の場面ではない")
@@ -10736,6 +10742,22 @@ def s2a_problems(state) -> list[str]:
                     or id(e) not in inside or len(set(run)) != len(run)):
                 problems.append(f"{where} の {e['turn']} 番のどくの量の規約の記録 {e.get('convention')}（ポケモン {e.get('pokemon_id')}）が、ポケモンチェックの中の同じポケモンの"
                                 f"どくのダメージの直前にない")
+        # 6. v0.195: エネルギー回収の 0 枚の規約の記録は、手札から使ったエネルギー回収（監査の一覧の版）の費用の discard_from_hand の直後で、すぐあとに同じカードの
+        # discard_trainer がある（あいだに retrieve_energy・錯乱ジム・［ちえくらべ］・スタジアムの追加の条件の出来事がない）。記録のプレイヤーは使ったプレイヤー、available は 1 以上
+        for i, e in enumerate(log):
+            if e["kind"] != "convention_applied" or e.get("convention") not in TR4_RULES:
+                continue
+            start = max((k for k in range(i) if log[k]["kind"] == "play_trainer"), default=None)
+            played = log[start] if start is not None else None
+            between = log[start + 1:i] if start is not None else []
+            after = log[i + 1] if i + 1 < len(log) else None
+            if (played is None or state.cards[played["card"]].card_id not in TR4_ENERGY_RETRIEVAL_CARDS or "via" in played or "source_zone" in played
+                    or played.get("player") != e.get("player") or [x["kind"] for x in between] != ["discard_from_hand"] or "stadium_card" in between[0]
+                    or between[0].get("player") != e.get("player") or any(x["kind"] in TR4_NOT_PLAIN_USE for x in between)
+                    or after is None or after["kind"] != "discard_trainer" or after.get("card") != played["card"] or after.get("player") != e.get("player")
+                    or not isinstance(e.get("available"), int) or isinstance(e.get("available"), bool) or e["available"] < 1):
+                problems.append(f"{where} の {e['turn']} 番のエネルギー回収の 0 枚の規約の記録が、手札から使ったエネルギー回収の費用のトラッシュと使い終えるあいだにない"
+                                f"（プレイヤー {e.get('player')}・選べた数 {e.get('available')}）")
         # 4. 枚数の不足の規約の記録の場所（ワザ・トレーナーの使用のあと、番の終わりの前）
         last_use = None
         for e in log:

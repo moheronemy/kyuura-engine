@@ -391,8 +391,51 @@ SETS = MappingProxyType({
                                                 "続け、ほかの未決の場面では今の停止コードで止める（完成したプレイ用の集合ではない）")),
 })
 
+# ---------------------------------------------------------------- v0.195: エネルギー回収の 0 枚の答えの続行規約（docs/play-convention-tr4-v0.195.md）
+#
+# 利用者の採用（2026-11-21。設計 docs/er9-energy-retrieval-zero-design.md の案 B）。プレイ用の取り決めで、公式の裁定・エラッタ・kyuura の研究上の解決ではない（ER9 の停止コードは
+# 厳密側・既存の集合・初回の範囲の外の経路で active のまま）。今の挙動の集合・S2a・PO・TR3 の集合には入れず、新しい開発用の部分的な集合 CS-KYUURA-PLAY-TR4@1 だけに入れる。
+# 処理は受理のあとの答えの確かめ（``DiscardFromHandThenRetrieveEnergy.resume`` の空の答えの分岐）で、未裁定の停止の代わりに受理して使い終える（``convention_applied`` を書く）
+
+TR4_SET_ID = "CS-KYUURA-PLAY-TR4"
+TR4_ADOPTION = ("利用者の採用（2026-11-21。案 B: 0 枚を受理して、エネルギー回収の使用を終える。手札から通常に使ったエネルギー回収だけ・明示的に選んだ新しいプレイ用の集合だけで"
+                "有効）。プレイ用の取り決めで、公式の裁定・エラッタ・kyuura の研究上の解決ではない")
+TR4_REFERENCES = ("docs/play-convention-tr4-v0.195.md", "docs/er9-energy-retrieval-zero-design.md")
+
+ENERGY_RETRIEVAL_ZERO_ID = "PC-ENERGY-RETRIEVAL-ZERO"
+
+_TR4_CONVENTIONS = (
+    Convention(ENERGY_RETRIEVAL_ZERO_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "エネルギー回収（登録の型 DiscardFromHandThenRetrieveEnergy）の基本エネルギーカードの選択で、選べるカードがあっても 0 枚を選べる。0 枚を選んだら、手札に加えずに"
+               "このカードを使い終える（使うためにトラッシュしたカードはもどさない。使用の取り消しではない）",
+               content={"adoption": TR4_ADOPTION,
+                        "applies_when": "回収の決定（retrieve_energy）の答えが空で、使用が手札からの通常の使用（受理のあとの答えの確かめ。状態の値で決める）",
+                        "identification": ("効果の登録の型 DiscardFromHandThenRetrieveEnergy（再録の版をふくむ。カード ID では分けない）。超エネルギー回収（SuperEnergyRetrieval）は"
+                                           "別の停止コード（UNRESOLVED_SUPER_ENERGY_RETRIEVAL_ZERO_CHOICE）なので当たらない"),
+                        "path": ("手札からの通常の使用: 状態の使用中の記録（TrainerInUse）の user・via が None・外側の使用（trainer_stack）がない、かつ、このカードの最後の "
+                                 "play_trainer（手札から。via・source_zone がない）のあとに、錯乱ジムのコイン（chaos_check）・かわりに使うかの答え（chaos_answered）・"
+                                 "［ちえくらべ］の答え（trainer_reaction_answered）・スタジアムの追加の条件のトラッシュ（discard_from_hand の stadium_card）がない"),
+                        "not_applied_paths": ["錯乱ジムのコインが「おもて」で持ち主が使う", "錯乱ジムの「うら」で相手がかわりに使う", "サイキックコントロールで相手のトラッシュから使う",
+                                              "［ちえくらべ］を使うかを聞いたあとの使用（ER9 の停止のまま）"],
+                        "on_zero": {"cost": "もどさない（トラッシュのまま）", "retrieve": "なし（手札に加えない）", "trainer": "持ち主のトラッシュ（discard_trainer）",
+                                    "decision": "終わり", "next": "同じ番の MAIN"},
+                        "record": ["player", "available"],
+                        "unchanged": ["1 枚以上の答え", "選ぶ数の上限・選べるもの（費用にしたカードを除く）", "費用の決定", "使う前の確かめ（ER10・ポケモンタワー）",
+                                      "超エネルギー回収（SR1・SR2）", "ワザの UNRESOLVED_RECOVER_ZERO_ENERGY", "ほかの「最大 N 枚」の場面", "厳密側・既存の集合の停止"]},
+               scenes=("UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE",), references=TR4_REFERENCES),
+)
+TR4_MEMBERS = tuple((c.id, c.version) for c in _TR4_CONVENTIONS)
+
+CONVENTIONS = MappingProxyType({**CONVENTIONS, **{(c.id, c.version): c for c in _TR4_CONVENTIONS}})
+SETS = MappingProxyType({
+    **SETS,
+    (TR4_SET_ID, 1): ConventionSet(TR4_SET_ID, 1, USAGE_DEVELOPMENT, _CURRENT_MEMBERS + S2A_MEMBERS + PO_MEMBERS + TR3_MEMBERS + TR4_MEMBERS,
+                                   description=("v0.195 の開発用の部分的な集合: CS-KYUURA-PLAY-TR3@1 の 23 規約と、エネルギー回収の 0 枚の答えの続行規約 1 件。12 規約の場面だけを"
+                                                "続け、ほかの未決の場面では今の停止コードで止める（完成したプレイ用の集合ではない）")),
+})
+
 # この版のエンジンが処理を持つ続行規約（``Registry.implemented_continuations``）
-IMPLEMENTED_CONTINUATIONS = frozenset(S2A_MEMBERS + PO_MEMBERS + TR3_MEMBERS)
+IMPLEMENTED_CONTINUATIONS = frozenset(S2A_MEMBERS + PO_MEMBERS + TR3_MEMBERS + TR4_MEMBERS)
 # 形式 34 までの書き出し（規約集合の項目がない）に書いてよい集合: 記録のない状態の意味（その版のエンジンの今の挙動）と同じ意味の集合だけ
 IMPLICIT_IN_OLD_FORMATS = frozenset({(CURRENT_SET_ID, 1), (LEGACY_SET_ID, 1)})
 
@@ -424,6 +467,8 @@ PINNED_CONVENTION_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
     ("PC-GUST-WITHOUT-OPPONENT-BENCH", 1): "sha256:1e6d415ed92b89f1f02cb913e88096bd69a1f8b84b9d3e26ea4bacd3ae4dab57",
     ("PC-SWITCH-WITHOUT-BENCH", 1): "sha256:734c11c8869565c280b3c2384dd10a07b888060aeee7a7cd2ade84a520ebb48f",
     ("PC-POTION-WITHOUT-DAMAGE", 1): "sha256:ed5f64a10954cd3561061e0fe7c8adc084283553024c876cf58f75008d9ffebe",
+    # v0.195: エネルギー回収の 0 枚の答えの続行規約（利用者の採用。2026-11-21）
+    ("PC-ENERGY-RETRIEVAL-ZERO", 1): "sha256:42427e752631572b425d391783f362c0b88982328fd9231b57da0c1455fdba01",
 })
 PINNED_SET_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
     ("CS-KYUURA-CURRENT", 1): "sha256:9a9b95c689d86fa01a5b710984560efda3c08f4dbf1d7c6218094ac8666f3cee",
@@ -431,6 +476,7 @@ PINNED_SET_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
     ("CS-KYUURA-PLAY-S2A", 1): "sha256:b317a3f050206577bff35ac05c87fdb4224ee28c6c0222e4e7f8460b5e9410c4",  # v0.143: 開発用の部分的な集合
     ("CS-KYUURA-PLAY-PO", 1): "sha256:06d512194feee1857319f0c765ab2162d5259e4519895ed057d176d15fc43528",  # v0.145: 開発用の部分的な集合
     ("CS-KYUURA-PLAY-TR3", 1): "sha256:a7b800cff2a8614d7b181cc3a8a39f68ec4e17be9ceab0a04e75a48c4358ffb4",  # v0.186: 開発用の部分的な集合
+    ("CS-KYUURA-PLAY-TR4", 1): "sha256:15af975a643c8d5844bf76e0a85ab20020ca331b01c463aeb344047806435552",  # v0.195: 開発用の部分的な集合
 })
 
 

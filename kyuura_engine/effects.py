@@ -6628,6 +6628,31 @@ def _retrievable_energy(state: GameState, player: int, excluded: tuple[int, ...]
     return tuple(uid for uid in state.players[player].discard if state.card_def(uid).is_basic_energy and uid not in excluded)
 
 
+# v0.195: この使用の play_trainer のあとにあれば、手札からの通常の使用ではない出来事（錯乱ジムのコイン・かわりに使うかの答え・［ちえくらべ］を使うかの答え）
+_NOT_PLAIN_USE_EVENTS = frozenset({"chaos_check", "chaos_answered", "trainer_reaction_answered"})
+
+
+def retrieval_from_hand(state: GameState, use: TrainerUse) -> bool:
+    """v0.195（docs/play-convention-tr4-v0.195.md）: 使用中のトレーナー ``use`` が、手札からの通常の使用か（回収の決定を再開する時点で、状態の値だけで決める。状態を変えない）。
+
+    - 状態の使用中の記録（``TrainerInUse``）がこのカードで、使うのは持ち主（``user`` が None）・外側の使用がない（``via`` が None・``trainer_stack`` が空）
+    - このカードの最後の ``play_trainer`` が持ち主の手札から（``via``・``source_zone`` がない）で、そのあとに錯乱ジムのコイン・かわりに使うかの答え・［ちえくらべ］を使うかの答え・
+      スタジアムの追加の条件のトラッシュ（``discard_from_hand`` の ``stadium_card``）がない
+
+    錯乱ジムのコインが「おもて」で持ち主がそのまま使う場合は、使用中の記録が手札からの使用と同じなので、ログ（状態の一部。書き出し・復元で残る）のこの使用の出来事で分ける。
+    観測の「使ったプレイヤー」・答えの時点の場のスタジアムからは決めない（リムーブ禁止ジムはエネルギー回収に条件を加えないので、場にあっても通常の使用）。"""
+    tiu = state.trainer_in_use
+    if tiu is None or tiu.card != use.card or tiu.player != use.player or tiu.user is not None or tiu.via is not None or state.trainer_stack:
+        return False
+    since = max((i for i, e in enumerate(state.log) if e["kind"] == "play_trainer" and e.get("card") == use.card), default=None)
+    if since is None:
+        return False
+    played = state.log[since]
+    if played.get("player") != use.player or "via" in played or "source_zone" in played:
+        return False
+    return not any(e["kind"] in _NOT_PLAIN_USE_EVENTS or (e["kind"] == "discard_from_hand" and "stadium_card" in e) for e in state.log[since + 1:])
+
+
 @dataclass(frozen=True)
 class DiscardFromHandThenRetrieveEnergy(TrainerEffect):
     """使うための条件として手札から ``discard`` 枚を選んでトラッシュし、その後、自分のトラッシュの基本エネルギーカードを最大 ``retrieve`` 枚選び
@@ -6697,7 +6722,17 @@ class DiscardFromHandThenRetrieveEnergy(TrainerEffect):
             )
             return
         if not choices:
-            raise UnsupportedError(*self.ZERO_CHOICE)
+            # v0.195（docs/play-convention-tr4-v0.195.md）: 状態の規約集合にこの場面（停止コード）の続行規約があり、手札からの通常の使用なら、受理して使い終える（費用は
+            # もどさない・手札に加えない。このカードは呼ぶ側の使い終える処理で持ち主のトラッシュ）。経路は状態の値で決める（retrieval_from_hand）。ほかは今までどおり止める
+            lookup = None
+            if retrieval_from_hand(state, use):
+                from .conventions import continuation_for, record_application
+
+                lookup = continuation_for(state, self.ZERO_CHOICE[0])
+            if lookup is None:
+                raise UnsupportedError(*self.ZERO_CHOICE)
+            record_application(state, lookup, player=use.player, available=len(decision.options))
+            return
         cards = tuple(uid for uid in state.players[use.player].discard if uid in choices)
         return_discard_to_hand(state, use.player, cards)
         state.add_event("retrieve_energy", player=use.player, cards=cards)
