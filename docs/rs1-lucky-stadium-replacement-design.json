@@ -3687,5 +3687,333 @@
   "deck_zero": "使える使用の「おもて」: coin_flip のあと draw の出来事、引いた枚数 0、負けにしない。入れかえ後の B は RS1 でコインの前に止まる",
   "conclusion": "ラッキースタジアムの別個体だけを対象にした規約の設計へ進める（採用ではない。裁定は確定しない）。SX2・FG1・エネルギースタジアム・忍者ジムへの適用は別の判断",
   "saved_positions": "保存記録の 14 局面は静的な照合のまま（盤面の実測とは別に数える）"
+ },
+ "convention_design": {
+  "date": "2026-11-23",
+  "doc_section": "12",
+  "status": "design_only_not_registered",
+  "base": {
+   "branch": "claude/rs1-board-verification",
+   "commit": "a3b410b1184152d56835f543a3a2d96b72e56ae0"
+  },
+  "work_branch": "claude/rs1-lucky-convention-design",
+  "implementation_reference": "bca9623e0b7859185f8ec2c703d38c0f3b2ddc0c",
+  "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-rs1-convention-design-run/",
+  "evidence_classes": {
+   "saved_positions_14": "static_match",
+   "boards_13_plus_order_4": "measured_current_behavior",
+   "convention_side": "design_expectation"
+  },
+  "correction": {
+   "section": "7",
+   "was": "RS1 は 3 つの名前（ラッキー・エネルギー・忍者ジム）で共有",
+   "now": "0.197.0 では 5 つの効果の型が _check_stadium_use_count を通る",
+   "types": {
+    "CureByDiscardingEnergyStadium": [
+     "GD4-027",
+     "PMCG5-078"
+    ],
+    "ReturnBasicEnergyStadium": [
+     "GD6-025",
+     "PMCG6-090"
+    ],
+    "CoinRetrieveBasicEnergyStadium": [
+     "NIP1X-009",
+     "neo4-101"
+    ],
+    "CoinReturnOwnerPokemonStadium": [
+     "PMCG6-086"
+    ],
+    "CoinBenchOwnerBasicFromDeckStadium": [
+     "PR1-067"
+    ],
+    "CoinHealOwnActiveStadium": [
+     "neo3-054"
+    ],
+    "LookDeckTopStadium": [
+     "neo4-112"
+    ],
+    "CoinDrawStadium": [
+     "NIP2X-009",
+     "PRN-015",
+     "PRN-016",
+     "PRN-017",
+     "PRN-018",
+     "PRN-019",
+     "PRN-020",
+     "PRN-021",
+     "PRN-022",
+     "neo4-106",
+     "PRN-027"
+    ]
+   }
+  },
+  "convention": {
+   "id": "PC-LUCKY-STADIUM-REPLACEMENT",
+   "version": 1,
+   "id_free": true,
+   "layer": "continuation",
+   "approval": "user_adoption_required",
+   "scene": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#lucky-once-stated-replacement",
+   "other_case": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#other",
+   "text": "「自分の番ごとに1回」のラッキースタジアムをこの番に使ったあと、同じ名前の別のカードに入れかわったとき、新しいカードの効果を 1 回使える。回数はプレイヤー・自分の番・カードの個体で数える",
+   "applies_when": [
+    "場のカードの効果の型が CoinDrawStadium で once_stated が真",
+    "(使うプレイヤー, 場のカード) の記録がない（あれば SX2 か STADIUM_ALREADY_USED）",
+    "トレーナーの使用の禁止がない（あれば STB1）",
+    "この番の、そのプレイヤーの同じ名前の別のカードの記録が 1 件以上（今の RS1 の条件）",
+    "その記録のすべてのカードの効果の型が CoinDrawStadium で once_stated が真"
+   ],
+   "target_versions": [
+    "NIP2X-009",
+    "PRN-015",
+    "PRN-016",
+    "PRN-017",
+    "PRN-018",
+    "PRN-019",
+    "PRN-020",
+    "PRN-021",
+    "PRN-022",
+    "neo4-106"
+   ],
+   "target_count": 10,
+   "excluded_same_type": [
+    "PRN-027"
+   ],
+   "identification": {
+    "by": "効果の登録の型と once_stated（カード ID で分岐しない）",
+    "old_card": "stadium_uses_this_turn の uid → state.cards[uid].card_id（CardInstance は frozen）",
+    "public": "使ったときに場に表で出ていた（stadium_placed・stadium_used に uid）",
+    "save_restore": "snapshot が cards と stadium_uses_this_turn を値で保存・復元（11 章 M10）",
+    "unidentifiable_found": false,
+    "to_check": "記録のカードが非公開の場所へ移っても版だけを読むこと（secret_dependency public_only）"
+   },
+   "counting": "player × own turn × card instance",
+   "chain_example": "A 使用 → B → B 使用 → C: C も 1 回（記録 A・B がどれも対象の版）",
+   "unchanged": [
+    "番の最初の 1 回",
+    "STADIUM_ALREADY_USED（同じ個体の 2 回目）",
+    "SX2",
+    "STB1",
+    "LK1",
+    "PRN-027 を使った記録がある入れかえ（RS1・#other）",
+    "FG1",
+    "エネルギースタジアム・キョウの忍者ジム・いやしの野原・ラジオとうの RS1（#other）",
+    "名前の違うスタジアムの記録を数えないこと",
+    "候補・入力・確かめの契約",
+    "規約を選ばない集合の挙動"
+   ]
+  },
+  "paths": {
+   "shared_check": "engine.check_use_stadium → CoinDrawStadium.check_activation → _check_stadium_use_count（今の RS1 の分岐の位置）",
+   "candidate_api": {
+    "without": {
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "inputs": "no_input",
+     "check": "CANDIDATE_NOT_EXECUTABLE",
+     "submit": "CANDIDATE_NOT_EXECUTABLE"
+    },
+    "with": {
+     "processability": "may_stop_later",
+     "reasons": [
+      "continuation_not_evaluated"
+     ],
+     "inputs": "no_input",
+     "check": "valid",
+     "submit": "accepted"
+    }
+   },
+   "direct_command": {
+    "without": {
+     "outcome": "rejected",
+     "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+     "apply_command": "UnsupportedError"
+    },
+    "with": {
+     "outcome": "accepted",
+     "apply_command": "no exception"
+    }
+   },
+   "pass_condition": "候補 API の受理と直接のコマンドの受理が同じ状態から同じ結果（assert_same_as_direct の形）",
+   "record_application": "受理した処理（_use_stadium）だけで書く。確かめの結果を check_use_stadium から渡し、記録を足す前の状態で判定する"
+  },
+  "on_accept": {
+   "log_order": [
+    "stadium_used",
+    "convention_applied",
+    "coin_flip",
+    "draw（おもて）"
+   ],
+   "coin": 1,
+   "heads": "1 枚引く（手札 +1・山札 -1）",
+   "tails": "何もしない",
+   "deck_zero_heads": "draw の出来事が出る・引く枚数 0・負けにしない（11 章 M12 の今の挙動）",
+   "record": "(使ったプレイヤー, 新しい個体の uid) が 1 件増える。stadium_used と 1 対 1",
+   "convention_applied": {
+    "when": "規約が RS1 の代わりに受理を決めたときだけ 1 回",
+    "fields": [
+     "convention",
+     "version",
+     "scene",
+     "code",
+     "player",
+     "card",
+     "used_cards"
+    ],
+    "fields_missing_in_APPLIED_FIELDS": [
+     "card",
+     "used_cards"
+    ]
+   }
+  },
+  "set": {
+   "id": "CS-KYUURA-PLAY-TR8",
+   "version": 1,
+   "id_free": true,
+   "usage": "development",
+   "members": 27,
+   "composition": "CS-KYUURA-PLAY-TR7@1 の 26 規約 + PC-LUCKY-STADIUM-REPLACEMENT@1",
+   "existing_unchanged": {
+    "CS-KYUURA-CURRENT@1": "sha256:9a9b95c689d86fa01a5b710984560efda3c08f4dbf1d7c6218094ac8666f3cee",
+    "CS-KYUURA-LEGACY-UNRECORDED@1": "sha256:abf39e6d87755507a9169537608596246f4ed9a9bf0c2e8794ffa44a97742407",
+    "CS-KYUURA-PLAY-S2A@1": "sha256:b317a3f050206577bff35ac05c87fdb4224ee28c6c0222e4e7f8460b5e9410c4",
+    "CS-KYUURA-PLAY-PO@1": "sha256:06d512194feee1857319f0c765ab2162d5259e4519895ed057d176d15fc43528",
+    "CS-KYUURA-PLAY-TR3@1": "sha256:a7b800cff2a8614d7b181cc3a8a39f68ec4e17be9ceab0a04e75a48c4358ffb4",
+    "CS-KYUURA-PLAY-TR4@1": "sha256:15af975a643c8d5844bf76e0a85ab20020ca331b01c463aeb344047806435552",
+    "CS-KYUURA-PLAY-TR6@1": "sha256:aa53bc52cfc1d2193a3e1692efc585cf7daef23251c5d08dd09d7e554cf6ead2",
+    "CS-KYUURA-PLAY-TR7@1": "sha256:4ee438eac0d76a1ec4fed207764fb0741c21b50f138ae3c699d73d7d6d828c45"
+   },
+   "all_existing_pinned_equal_computed": true
+  },
+  "verification_table": [
+   {
+    "id": "V1",
+    "board": "PRN-015 A を使い PRN-016 B に入れかえ",
+    "without": "RS1",
+    "with": "受理・convention_applied 1"
+   },
+   {
+    "id": "V2",
+    "board": "V1 のあと B を使い PRN-017 C に入れかえ",
+    "without": "RS1",
+    "with": "C を受理・convention_applied 通算 2・C の前の記録 A・B"
+   },
+   {
+    "id": "V3",
+    "board": "B の 2 回目",
+    "without": "—",
+    "with": "候補なし・STADIUM_ALREADY_USED"
+   },
+   {
+    "id": "V4",
+    "board": "A が［じくうへんかん］でもどる（B を使う／使わない）",
+    "without": "SX2",
+    "with": "SX2"
+   },
+   {
+    "id": "V5",
+    "board": "対象の版の中の異版（PRN-015→NIP2X-009・→neo4-106・neo4-106→PRN-015・PRN-016→PRN-022）",
+    "without": "RS1",
+    "with": "受理"
+   },
+   {
+    "id": "V6",
+    "board": "PRN-027 の対照 (a)(b)(c)",
+    "without": "LK1 / RS1 / RS1",
+    "with": "LK1 / RS1（#other）/ 受理"
+   },
+   {
+    "id": "V7",
+    "board": "翌番・相手の番",
+    "without": "使える",
+    "with": "使える・convention_applied なし"
+   },
+   {
+    "id": "V8",
+    "board": "保存と復元（V1 の直後・V2 の C の直後）",
+    "without": "前後で同じ（RS1）",
+    "with": "前後で同じ（受理）・規約集合 TR8@1"
+   },
+   {
+    "id": "V9",
+    "board": "先行する停止（STB1・2 回目＋禁止・SX2＋禁止）",
+    "without": "STB1 / STADIUM_ALREADY_USED / SX2",
+    "with": "同じ"
+   },
+   {
+    "id": "V10",
+    "board": "山札 0・コインの両方",
+    "without": "RS1（コインの前）",
+    "with": "受理・おもては draw の出来事 0 枚・負けなし・うらはコインだけ"
+   },
+   {
+    "id": "V11",
+    "board": "範囲の外（エネルギースタジアム・忍者ジム・いやしの野原・ラジオとう・セキチクシティジム）",
+    "without": "RS1×4・FG1",
+    "with": "同じ"
+   },
+   {
+    "id": "V12",
+    "board": "名前の違うスタジアムをはさむ（ラッキー A → セキチク使用 → ラッキー B）",
+    "without": "RS1",
+    "with": "受理"
+   },
+   {
+    "id": "V13",
+    "board": "集合の固定（CURRENT・既定・TR7@1）",
+    "without": "11 章と同じ",
+    "with": "変わらない"
+   }
+  ],
+  "check_items": [
+   "候補（区分・理由・入力）",
+   "check・submit",
+   "直接のコマンドの結果と診断",
+   "コイン（固定して両方）と公開ログ（convention_applied の有無と回数）",
+   "使用の記録の前後",
+   "拒否のときの状態・ログ・乱数の不変"
+  ],
+  "saved_positions_expected": {
+   "class": "static",
+   "positions": 14,
+   "new_moves_each": 1,
+   "heads_draw_positions": 13,
+   "deck_zero_positions": 1,
+   "chain_possible": 0,
+   "known": [
+    "コイン 1 枚と最大 1 枚のドロー",
+    "手札にラッキースタジアムなし"
+   ],
+   "untested": [
+    "方策がその手を選ぶか",
+    "その後の展開・勝ち負け・完走率",
+    "TR8@1 の対戦での頻度",
+    "14 局面は TR3・TR6・TR7@1 の局で TR8@1 の局ではない"
+   ]
+  },
+  "decisions_before_adoption": [
+   "採るか（個体で数える・ラッキースタジアムだけの範囲）",
+   "当時の資料の調査を先にするか",
+   "SX2・FG1・ほかの 4 つの型への適用（別の判断）"
+  ],
+  "technical_tasks": [
+   "RS1 の事例の分割（CASES・convention_records.json・台帳の数え・停止の方針の文書の再生成）",
+   "APPLIED_FIELDS に card・used_cards",
+   "確かめの結果を受理の処理へ渡す（確かめで記録しない・記録を足す前に判定）",
+   "固定のダイジェストの追加と既存の値の不変のテスト・IMPLEMENTED_CONTINUATIONS",
+   "judge が規約で受理した use_stadium と convention_applied を扱うか（実測していない）",
+   "旧個体の版の判定が公開の情報だけによることの構築盤面での確認",
+   "候補 API は停止のコードを出さない（規約なしの検証は直接の診断と候補の区分を別に照らす）"
+  ],
+  "not_done": [
+   "規約・集合の登録と実装",
+   "構築盤面・対戦の実行",
+   "史料の追加の調査",
+   "judge・方策・GUI・版の変更",
+   "main への push・マージ・PR"
+  ]
  }
 }
