@@ -886,5 +886,57 @@
   "remaining 9 TR6 games",
   "--acknowledge-stop",
   "guidebook reread"
- ]
+ ],
+ "adoption": {
+  "on": "2026-11-22",
+  "by": "user",
+  "option": "B",
+  "version": "0.197.0",
+  "doc": "docs/play-convention-tr7-v0.197.md",
+  "convention": [
+   "PC-T19B-NULLIFIED-STATUS-COIN",
+   1
+  ],
+  "set": [
+   "CS-KYUURA-PLAY-TR7",
+   1
+  ],
+  "set_members": "CS-KYUURA-PLAY-TR6@1 25 + 1",
+  "commits": {
+   "implementation": "7f04644",
+   "generated": "70572ec",
+   "version_pin": "bca9623e0b7859185f8ec2c703d38c0f3b2ddc0c"
+  },
+  "decisions": {
+   "D1": "flip once; result unused",
+   "D2": "Status T19b branch; ConfuseOnHeads, PoisonOnHeads, ParalyzeOnHeads (S6 confirmed)",
+   "D3": "current element form + convention_applied (player, target_owner, pokemon_id, element) before the attack coin",
+   "D4": "PC-T19B-NULLIFIED-STATUS-COIN@1 / CS-KYUURA-PLAY-TR7@1 (family PC-NULLIFIED-ELEMENT-COIN stays proposal)",
+   "D5": "judge unchanged; TR7 acceptance expected; strict rejection stays evidence_missing_stop",
+   "D6": "policy unchanged"
+  },
+  "applied_types": [
+   "ConfuseOnHeads",
+   "PoisonOnHeads",
+   "ParalyzeOnHeads"
+  ],
+  "held": [
+   "other Status types (otherwise etc.)",
+   "the other 14 T19b sites",
+   "copy / transform paths",
+   "other codes of the family"
+  ],
+  "boards_measured": {
+   "S1": "strict rejected on all 4 coin scripts incl. transparency tails; state/RNG/log/views unchanged",
+   "S2": "2 coins (power then attack), 1 convention_applied, no damage/status, turn ends; attack coin heads and tails",
+   "S3": "1 coin, no record, knock out, take_prize",
+   "S4": "unchanged",
+   "S5": "same as strict",
+   "S6": "same as S2",
+   "S7": "T19b kept",
+   "S8": "existing sets unchanged",
+   "S9": "API/views/audit ok, judge expected; replay of constructed records not applicable"
+  },
+  "normal_games": "not confirmed"
+ }
 }

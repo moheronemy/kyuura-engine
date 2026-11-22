@@ -4,6 +4,7 @@
 - **範囲:** 保存記録・ソース・史料の照合と文書化だけです。規約の採用、構築盤面の実行、コード・方策・judge・GUI・版の変更、新しい対戦、旧記録の judge・replay の再実行はしていません。TR6 の監査の残り 9 局は未着手のままで、`--acknowledge-stop` は使っていません。
 - **対象:** TR6 の監査の本実行の C3・seed 9017 の局（`vai-batch-tr6a-m3` の `g004-rules-v2-s9017`）で、フーディン（PMCG1-049）の［あやしいひかり］が `UNRESOLVED_EVADED_EFFECT_COIN`（裁定 T19b。kyuura の論点 `UQ-COIN-IN-NULLIFIED-ELEMENT`）で拒否された場面です。
 - **照合表:** [t19b-evaded-effect-coin-design.json](t19b-evaded-effect-coin-design.json)。**証跡:** `kyuura-engine-verification-vai/verifier/runs/t19b-evaded-effect-coin-design/`。
+- **2026-11-22 の追記:** 利用者が案 B を採用し、0.197.0 で実装しました（規約 `PC-T19B-NULLIFIED-STATUS-COIN@1`・集合 `CS-KYUURA-PLAY-TR7@1`。[v0.197 の文書](play-convention-tr7-v0.197.md)・8 章）。下の 0〜7 章は設計の時点の記録のまま残します（仮の名前 `PC-EVADED-STATUS-COIN`・TR7 は 8 章の名前に置きかわりました）。
 - **関連:** [TR6 の監査の計画と結果](tr6-unresolved-batch-plan.md)（13 章）・[「とうめい」の裁定](transparency-v0.9.md)（T19b）・[プレイ用規約の族の計画](play-policy-family-plan.md)（`PC-NULLIFIED-ELEMENT-COIN`）。
 
 ## 0. 先に結論
@@ -250,3 +251,34 @@
 | S7 対象外の経路の維持 | 新しい集合 | `Status` の `otherwise` の型・相手のエネルギーのトラッシュのコイン・ワザ全体のコイン（［ゴッドバード］の型）をゴーストに。「ダメージを受けない」・バリアーの相手 | とうめい「おもて」 | どれも今と同じコード（T19b・`UNRESOLVED_PREVENTED_*`）で拒否。状態は変わらない |
 | S8 既存の集合の維持 | — | 集合の定義 | — | `CS-KYUURA-PLAY-TR6@1` を含む既存の集合のメンバーと照合値、既定の集合が変わらない。新しい集合は TR6@1 の 25 規約 + 1 |
 | S9 記録の再現 | 新しい集合 | S2・S3 の対戦の記録 | — | full_record の replay が一致し、閲覧用記録の 3 者の観測が更新と一致する。judge の分類は記録するだけ（D5 が決まるまで合否にしない） |
+
+## 8. 採用の判断と実装の結果（2026-11-22。0.197.0）
+
+利用者が案 B を採用し、0.197.0 で実装しました。詳しい結果は [v0.197 の文書](play-convention-tr7-v0.197.md) にあります。固定コミットは `bca9623`、証跡は `kyuura-engine-verification-vai/verifier/runs/t19b-status-coin-v0197/` です。
+
+### 8.1 D1〜D6 の決定
+
+| ID | 決定 |
+|---|---|
+| D1 | 投げる。ワザを使った側がコインを 1 回投げ、結果は効果に使わない（推した答えのとおり） |
+| D2 | `Status` の T19b の分岐だけ。`ConfuseOnHeads` を対象にし、`PoisonOnHeads`・`ParalyzeOnHeads` はソースと構築盤面（S6）で同じ無効化の条件と再開先を確かめたので加えた。ほかの型・ほかの 14 か所・コピーや［へんしん］の経路は T19b のまま |
+| D3 | 今の要素の処理の形のまま（「おもて」なら受けない記録 `attack_evaded`）と、`convention_applied` 1 件（`player`・`target_owner`・`pokemon_id`・`element`）。規約の記録はワザのコインの直前 |
+| D4 | 規約 `PC-T19B-NULLIFIED-STATUS-COIN@1`（依頼で示された ID。族の案 `PC-NULLIFIED-ELEMENT-COIN` は proposal のまま）・集合 `CS-KYUURA-PLAY-TR7@1`（TR6@1 の 25 規約 + 1） |
+| D5 | judge は変えない。TR7 の受理は今の judge で `expected` になった。厳密側の拒否は今のまま `evidence_missing_stop`（根拠表の T19b の項目は別の単位） |
+| D6 | 方策は変えない（別の単位） |
+
+### 8.2 S1〜S9 の実測
+
+| 盤面 | 結果 |
+|---|---|
+| S1 | 厳密側（CURRENT@1・TR4@1・TR6@1）は、ダメージ 30・0 と台本の 4 通りすべてで T19b。「とうめい」が「うら」の台本でも拒否された（先読みが「おもて」の枝で問いに当たる）。状態・乱数・ログ・閲覧の記録は変わらず、本人に拒否の応答 |
+| S2 | TR7 の「おもて」: コインはゴースト側の `power` → ワザを使った側の `attack` の 2 回（ワザのコインは「おもて」「うら」の両方を試した）。乱数の消費 2・規約の記録 1・ダメージと特殊状態なし・番が終わる |
+| S3 | TR7 の「うら」・HP 以上: コインは `power` の 1 回、規約の記録なし、きぜつとサイドの決定 |
+| S4 | TR7 の「うら」・HP 未満: 今の処理と同じ |
+| S5 | ねむり・かがくへんかガス・最終ダメージ 0・ゴーストでない相手・「ダメージを受けない」相手で、TR7 と厳密側が同じ（修正の前の記録とも同じ） |
+| S6 | ビードルの［どくばり］・ゴースの［したでなめる］も S2 と同じ形。どちらも適用した |
+| S7 | ドガースの［くさいガス］（「うら」の効果のある型）・ミュウツー ES3-026 の［サイコブラスト］（エネルギーのトラッシュのコイン）は TR7 でも T19b |
+| S8 | 既存の集合の照合値・メンバーは同じ。既定の集合は CURRENT@1 |
+| S9 | 候補・入力・check は同じで submit だけが違う。閲覧者 3 者の記録の増え方は同じ。judge は TR7 で `expected`。構築盤面の記録の再実行は、記録が再現用の形式でないため確かめていない |
+
+通常の対戦（new_game）でこの場面に届くか・完走するかは、確かめていません。
