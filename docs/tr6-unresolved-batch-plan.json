@@ -279,7 +279,7 @@
    "budget_seconds": 300,
    "evidence_max_mb": 512,
    "cli": "python -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr6a-p1 --seeds 9013 --decklist0 <L67-U> --decklist1 <L67-U> --max-games 1 --budget-seconds 300 --evidence-max-mb 512 --engine-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --tool-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --modes rules-v2 --conventions CS-KYUURA-PLAY-TR6@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "a8bb54649ecab3aacae1f01576b911190cc364c19d134e8eb118a6f41807cbf6"
   },
   {
    "batch_id": "vai-batch-tr6a-p2",
@@ -292,7 +292,7 @@
    "budget_seconds": 300,
    "evidence_max_mb": 512,
    "cli": "python -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr6a-p2 --seeds 9013 --deck0 hitmonchan-dewgong-v2 --deck1 venusaur-parasect-v2 --max-games 1 --budget-seconds 300 --evidence-max-mb 512 --engine-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --tool-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --modes rules-v2 --conventions CS-KYUURA-PLAY-TR6@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "095c24b136dfd1d778ec136add252d693a79c4db48cc62a1456d260297b452b1"
   },
   {
    "batch_id": "vai-batch-tr6a-p3",
@@ -305,7 +305,7 @@
    "budget_seconds": 300,
    "evidence_max_mb": 512,
    "cli": "python -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr6a-p3 --seeds 9013 --decklist0 <P42> --decklist1 <L67-U> --max-games 1 --budget-seconds 300 --evidence-max-mb 512 --engine-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --tool-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --modes rules-v2 --conventions CS-KYUURA-PLAY-TR6@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "7ee6b36aaea7a733892be7330126e10b5d40ed66be3b29764a628a2f6cfa2de1"
   },
   {
    "batch_id": "vai-batch-tr6a-p4",
@@ -318,7 +318,7 @@
    "budget_seconds": 300,
    "evidence_max_mb": 512,
    "cli": "python -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr6a-p4 --seeds 9013 --decklist0 <LUCKY_DECK> --decklist1 <CONNECT_DECK> --max-games 1 --budget-seconds 300 --evidence-max-mb 512 --engine-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --tool-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --modes rules-v2 --conventions CS-KYUURA-PLAY-TR6@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "b9a5c5569a55068e266d9d922ad7068ced309602f88bad1761004dfea68ec12c"
   },
   {
    "batch_id": "vai-batch-tr6a-m1",
@@ -336,7 +336,7 @@
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
    "cli": "python -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr6a-m1 --seeds 9014 9015 9016 9017 9018 9019 --decklist0 <L67-U> --decklist1 <L67-U> --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --tool-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --modes rules-v2 --conventions CS-KYUURA-PLAY-TR6@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "365d1f36498c504de7a2a2775a0a9b9ea88693e8457a3d7b0ef63d9bd1cc3835"
   },
   {
    "batch_id": "vai-batch-tr6a-m2",
@@ -354,7 +354,7 @@
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
    "cli": "python -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr6a-m2 --seeds 9014 9015 9016 9017 9018 9019 --deck0 hitmonchan-dewgong-v2 --deck1 venusaur-parasect-v2 --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --tool-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --modes rules-v2 --conventions CS-KYUURA-PLAY-TR6@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "7cb9f7304acfaec62acc9b67d9e5bebbac0dea882a86ba803daa2350f8237fe1"
   },
   {
    "batch_id": "vai-batch-tr6a-m3",
@@ -372,7 +372,7 @@
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
    "cli": "python -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr6a-m3 --seeds 9014 9015 9016 9017 9018 9019 --decklist0 <P42> --decklist1 <L67-U> --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --tool-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --modes rules-v2 --conventions CS-KYUURA-PLAY-TR6@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "2b87a3d1780a9438dd6d016c910364bdd0bdf322e20519c5543a062b9626f333"
   },
   {
    "batch_id": "vai-batch-tr6a-m4",
@@ -390,7 +390,7 @@
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
    "cli": "python -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr6a-m4 --seeds 9014 9015 9016 9017 9018 9019 --decklist0 <LUCKY_DECK> --decklist1 <CONNECT_DECK> --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --tool-commit 7f7712acebd022ac5c9a7d5a346b89d3a2ab9690 --modes rules-v2 --conventions CS-KYUURA-PLAY-TR6@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "0aa890178604318e7738e3c02a885569a8919c0cd5fabfa613bd91eea008f98e"
   }
  ],
  "order": [
@@ -1087,19 +1087,147 @@
   "public": "件数と分類・状態だけ（カード ID・seed・局の識別を出さない）"
  },
  "to_fill_before_run": {
-  "execution_commit": null,
-  "worktree": null,
-  "identity_remeasured": null,
-  "seed_recheck": null,
-  "deck_hashes": null,
-  "plan_sha256": null,
-  "cache": null,
-  "dry_run_use_cache": null,
-  "drive_free_mib": null,
-  "outer_script_sha256_and_diffs": null,
-  "analyze_tr6a_sha256_and_check": null,
-  "pilot_measurements": null,
-  "updated_forecast": null
+  "execution_commit": "7f7712acebd022ac5c9a7d5a346b89d3a2ab9690",
+  "worktree": "C:\\dev\\kyuura-engine-lt87（ブランチ claude/tr6a-pilot。実行は切り離して）",
+  "identity_remeasured": "計画の expected_identity と全項目で同じ（vai-batch-tr6a-run/out/identity_check.json）",
+  "seed_recheck": {
+   "stores": 30,
+   "files": 402,
+   "unreadable": 0,
+   "used_9000_9200": [
+    9001,
+    9002,
+    9003,
+    9004,
+    9005,
+    9006,
+    9007,
+    9008,
+    9009,
+    9010,
+    9011,
+    9012
+   ],
+   "selected": [
+    9013,
+    9014,
+    9015,
+    9016,
+    9017,
+    9018,
+    9019
+   ],
+   "unchanged": true
+  },
+  "deck_hashes": "4 つの明示リストの content・展開の sha256 と固定デッキの構成は計画のときと同じ（out/deck_profile.json）",
+  "plan_sha256": {
+   "vai-batch-tr6a-p1": "a8bb54649ecab3aacae1f01576b911190cc364c19d134e8eb118a6f41807cbf6",
+   "vai-batch-tr6a-p2": "095c24b136dfd1d778ec136add252d693a79c4db48cc62a1456d260297b452b1",
+   "vai-batch-tr6a-p3": "7ee6b36aaea7a733892be7330126e10b5d40ed66be3b29764a628a2f6cfa2de1",
+   "vai-batch-tr6a-p4": "b9a5c5569a55068e266d9d922ad7068ced309602f88bad1761004dfea68ec12c",
+   "vai-batch-tr6a-m1": "365d1f36498c504de7a2a2775a0a9b9ea88693e8457a3d7b0ef63d9bd1cc3835",
+   "vai-batch-tr6a-m2": "7cb9f7304acfaec62acc9b67d9e5bebbac0dea882a86ba803daa2350f8237fe1",
+   "vai-batch-tr6a-m3": "2b87a3d1780a9438dd6d016c910364bdd0bdf322e20519c5543a062b9626f333",
+   "vai-batch-tr6a-m4": "0aa890178604318e7738e3c02a885569a8919c0cd5fabfa613bd91eea008f98e"
+  },
+  "cache": {
+   "dir": "C:\\dev\\kyuura-engine-pyc-cache\\b4a8edcf-tbe95aa1-cpython-314-7f7712a-tr6a",
+   "pyc_files": 185,
+   "bytes": 13879602,
+   "all_checked_hash": true,
+   "python": "3.14.6"
+  },
+  "dry_run_use_cache": {
+   "plans": 8,
+   "use_cache": true,
+   "capacity_ok": true,
+   "batch_run_called": false
+  },
+  "drive_free_mib": 247424,
+  "outer_script_sha256_and_diffs": "vai-batch-tr6a-run/raw/script_sources_sha256.txt・raw/*.diff",
+  "analyze_tr6a_sha256_and_check": {
+   "sha256": "49a711475383f81e462f8f5f5e683d0e672c38b7351c36529ddd5d0c7a5967fe",
+   "saved_games_check": "ok（out/analyze_check.json）"
+  },
+  "pilot_measurements": {
+   "vai-batch-tr6a-p1": {
+    "condition": "C1",
+    "termination": "game_over",
+    "turns": 32,
+    "accepted": 121,
+    "rejected": 0,
+    "attempts": 141,
+    "attempt_seconds": 2.067,
+    "attempt_bytes": 7860929,
+    "tool_accounted_seconds": 4.524,
+    "outer_seconds": 19.793
+   },
+   "vai-batch-tr6a-p2": {
+    "condition": "C2",
+    "termination": "game_over",
+    "turns": 37,
+    "accepted": 137,
+    "rejected": 0,
+    "attempts": 168,
+    "attempt_seconds": 2.581,
+    "attempt_bytes": 10058529,
+    "tool_accounted_seconds": 4.983,
+    "outer_seconds": 20.166
+   },
+   "vai-batch-tr6a-p3": {
+    "condition": "C3",
+    "termination": "game_over",
+    "turns": 52,
+    "accepted": 137,
+    "rejected": 0,
+    "attempts": 150,
+    "attempt_seconds": 2.964,
+    "attempt_bytes": 9735471,
+    "tool_accounted_seconds": 5.439,
+    "outer_seconds": 20.855
+   },
+   "vai-batch-tr6a-p4": {
+    "condition": "C4",
+    "termination": "game_over",
+    "turns": 63,
+    "accepted": 202,
+    "rejected": 0,
+    "attempts": 263,
+    "attempt_seconds": 4.745,
+    "attempt_bytes": 16975697,
+    "tool_accounted_seconds": 7.577,
+    "outer_seconds": 23.346
+   }
+  },
+  "updated_forecast": {
+   "body_x6": {
+    "tool_seconds": 135.138,
+    "outer_seconds": 504.96,
+    "evidence_bytes": 268729614
+   },
+   "upper_x1_5": {
+    "tool_seconds": 202.707,
+    "outer_seconds": 757.44,
+    "evidence_bytes": 403094421
+   },
+   "upper_tr3_ratio": {
+    "tool_seconds": 193.247,
+    "outer_seconds": null,
+    "evidence_bytes": 424592790
+   },
+   "remaining_after_pilot": {
+    "tool_seconds": 3577.477,
+    "outer_seconds": 7115.84,
+    "evidence_bytes": 2102515256,
+    "drive_free_bytes": 259443326976
+   },
+   "evidence_floor_bytes": 402653184,
+   "evidence_floor_rule": "max(384 MiB, 先行の最大 1 局 × 1.5)。先行の最大 1 局 × 1.5 が 384 MiB 未満なので 384 MiB のまま",
+   "within_remaining": {
+    "body": true,
+    "upper_x1_5": true
+   }
+  }
  },
  "decisions": {
   "conditions": "C1〜C4",
@@ -1118,5 +1246,314 @@
   "製品のコード・規約・judge・GUI・版の変更",
   "旧記録の basis の不一致への対応"
  ],
- "evidence": "kyuura-engine-verification-vai/verifier/runs/tr6-unresolved-batch-plan/"
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/tr6-unresolved-batch-plan/",
+ "pilot_execution": {
+  "date": "2026-11-22",
+  "doc_section": "12 章",
+  "execution_commit": "7f7712acebd022ac5c9a7d5a346b89d3a2ab9690",
+  "worktree": "C:\\dev\\kyuura-engine-lt87",
+  "branch": "claude/tr6a-pilot",
+  "evidence": "verifier/runs/vai-batch-tr6a-run/",
+  "duplicate_found": false,
+  "identity_equal_to_plan": true,
+  "seeds_unused_recheck": true,
+  "plan_sha256": {
+   "vai-batch-tr6a-p1": "a8bb54649ecab3aacae1f01576b911190cc364c19d134e8eb118a6f41807cbf6",
+   "vai-batch-tr6a-p2": "095c24b136dfd1d778ec136add252d693a79c4db48cc62a1456d260297b452b1",
+   "vai-batch-tr6a-p3": "7ee6b36aaea7a733892be7330126e10b5d40ed66be3b29764a628a2f6cfa2de1",
+   "vai-batch-tr6a-p4": "b9a5c5569a55068e266d9d922ad7068ced309602f88bad1761004dfea68ec12c",
+   "vai-batch-tr6a-m1": "365d1f36498c504de7a2a2775a0a9b9ea88693e8457a3d7b0ef63d9bd1cc3835",
+   "vai-batch-tr6a-m2": "7cb9f7304acfaec62acc9b67d9e5bebbac0dea882a86ba803daa2350f8237fe1",
+   "vai-batch-tr6a-m3": "2b87a3d1780a9438dd6d016c910364bdd0bdf322e20519c5543a062b9626f333",
+   "vai-batch-tr6a-m4": "0aa890178604318e7738e3c02a885569a8919c0cd5fabfa613bd91eea008f98e"
+  },
+  "plan_check_problems": 0,
+  "plan_vs_tr3u1_problems": 0,
+  "games": {
+   "planned_pilot": 4,
+   "started": 4,
+   "complete": 4,
+   "complete_with_stop": 0,
+   "incomplete": 0,
+   "not_started_pilot": 0,
+   "main_started": 0,
+   "main_not_started": 24
+  },
+  "gates": {
+   "P-1": true,
+   "P-2": true,
+   "P-3": true,
+   "P-4": true,
+   "P-5": true,
+   "P-6": true,
+   "P-7": true,
+   "P-8": true
+  },
+  "totals": {
+   "started": 4,
+   "complete": 4,
+   "incomplete": 0,
+   "not_started_pilot": 0,
+   "terminations": {
+    "game_over": 4
+   },
+   "halt_codes": {},
+   "tool_accounted_seconds": 22.523,
+   "outer_seconds": 84.16,
+   "plan_dir_bytes_pilot": 44788269,
+   "attempt_bytes": 44630626,
+   "attempt_seconds": 12.357,
+   "accepted": 597,
+   "rejected": 0,
+   "attempts": 722
+  },
+  "items": {
+   "termination": {
+    "by_class": {
+     "game_over": 4
+    },
+    "measured_halt_codes": {},
+    "batch_stops": "なし（4 計画とも completed）"
+   },
+   "rejections": {
+    "rejected_by_code": {},
+    "follow_up_by_code": {},
+    "refusals": {},
+    "tool_counters": {
+     "policy_suppressed": 7,
+     "withheld": 0,
+     "refused": 0,
+     "check_invalid": 0,
+     "retry_same_input": 0,
+     "failed": 0
+    }
+   },
+   "exclusions": [
+    {
+     "level": "candidate",
+     "key": "candidate|discard_from_play|face_down",
+     "units": {
+      "total": 7,
+      "first_attempt_only": 4,
+      "rows": 7,
+      "positions": 4,
+      "games": 2
+     },
+     "units_from_sources": null,
+     "conditions": [
+      "C1",
+      "C3"
+     ],
+     "class": "static",
+     "code": "UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY",
+     "basis": "kyuura_engine/engine.py:2686 check_discard_from_play（2689: うらのカードは FD1・HiddenPropertyRead で拒否。play_as_pokemon_effect でうらの項目を読む）、errors.py:51・54（SECRET_PLAN_HIDDEN_CODE・HiddenPropertyRead）",
+     "card": "prestop の選択肢はすべて face_down（カードは特定しない。C1・C3 で うらで場に出すのはマチスの秘策 PMCG5-093 を持つ L67-U の側だけ。デッキの構成）"
+    },
+    {
+     "level": "candidate",
+     "key": "candidate|use_stadium|",
+     "units": {
+      "total": 2,
+      "first_attempt_only": 1,
+      "rows": 2,
+      "positions": 1,
+      "games": 1
+     },
+     "units_from_sources": null,
+     "conditions": [
+      "C4"
+     ],
+     "class": "unknown",
+     "code": null,
+     "basis": "prestop は選択肢の段がない（no_stages 1・取得 0）。候補の記録に停止のコードがない",
+     "card": "記録になし（C4 のスタジアムはラッキースタジアム PRN-015 の見込み。デッキの構成）"
+    },
+    {
+     "level": "option_in_fetched_inputs",
+     "key": "option|play_trainer|PMCG1-076",
+     "units": null,
+     "units_from_sources": {
+      "rows": 2,
+      "positions": 2,
+      "games": 1,
+      "conditions": [
+       "C2"
+      ]
+     },
+     "conditions": [
+      "C2"
+     ],
+     "class": "static",
+     "code": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+     "basis": "kyuura_engine/effects.py:6683 WITHOUT_TARGET・6694 check_playable（トラッシュに基本エネルギーがないと UnsupportedError）。ほかの停止の経路は check_tower_trainer（effects.py:21650・PT1 ポケモンタワー）だけで、C2 のデッキにポケモンタワーはない",
+     "card": "エネルギー回収（PMCG1-076。取得した play_trainer の inputs の選択肢のおもての card_id）"
+    },
+    {
+     "level": "option_in_fetched_inputs",
+     "key": "option|select_pokemon|play_trainer|PMCG1-071",
+     "units": null,
+     "units_from_sources": {
+      "rows": 5,
+      "positions": 5,
+      "games": 3,
+      "conditions": [
+       "C1",
+       "C2",
+       "C3"
+      ]
+     },
+     "conditions": [
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "class": "static",
+     "code": "UNRESOLVED_POTION_UNDAMAGED_TARGET",
+     "basis": "kyuura_engine/effects.py:7156〜7157 RemoveDamageCounters（unresolved_choices = ダメージ 0 の自分の場のポケモン。unresolved_code はこの 1 つ）",
+     "card": "きずぐすり（PMCG1-071。出所の操作の選択肢の card_id。sources_pilot.json）"
+    }
+   ],
+   "exclusion_option_units": {
+    "answer_decision|": {
+     "total": 16,
+     "first_attempt_only": 16,
+     "rows": 5,
+     "positions": 5,
+     "games": 3
+    },
+    "play_trainer|stops_before_acceptance": {
+     "total": 2,
+     "first_attempt_only": 2,
+     "rows": 2,
+     "positions": 2,
+     "games": 1
+    }
+   },
+   "prestop_unrecorded": {
+    "capped": 0,
+    "skipped_fetch_cap": 0,
+    "skipped_bytes_cap": 0,
+    "unsaved_bytes_cap": 0,
+    "unsaved_failure": 0,
+    "failure": 0,
+    "withheld": 0,
+    "refused": 0,
+    "contract_unknown": 0,
+    "oversize": 0,
+    "error": 0,
+    "skipped_after_failure": 0
+   },
+   "measured_codes": 0,
+   "conventions": {
+    "convention_direct": {
+     "PC-POTION-WITHOUT-DAMAGE@1|eligible=False": {
+      "total": 7,
+      "first_attempt_only": 6,
+      "rows": 7,
+      "positions": 7,
+      "games": 2
+     },
+     "PC-SWITCH-WITHOUT-BENCH@1|eligible=False": {
+      "total": 1,
+      "first_attempt_only": 1,
+      "rows": 1,
+      "positions": 1,
+      "games": 1
+     }
+    },
+    "convention_id_unknown": {
+     "play_trainer|no_eligible_card": {
+      "total": 17,
+      "first_attempt_only": 10,
+      "rows": 17,
+      "positions": 10,
+      "games": 3
+     }
+    },
+    "unverified": {
+     "evolve|face_down_reveal_not_evaluated": {
+      "total": 1,
+      "first_attempt_only": 1,
+      "rows": 1,
+      "positions": 1,
+      "games": 1
+     }
+    },
+    "unbuildable": 118,
+    "residual_present": {},
+    "convention_applied": {},
+    "er9": {
+     "zero_answers": 0,
+     "accepted_applied": 0,
+     "accepted_not_applied": 0,
+     "rejected": 0
+    },
+    "h4": {
+     "zero_answers": 0,
+     "accepted_applied": 0,
+     "accepted_not_applied": 0,
+     "rejected": 0
+    }
+   }
+  },
+  "forecast_main": {
+   "body_x6": {
+    "tool_seconds": 135.138,
+    "outer_seconds": 504.96,
+    "evidence_bytes": 268729614
+   },
+   "upper_x1_5": {
+    "tool_seconds": 202.707,
+    "outer_seconds": 757.44,
+    "evidence_bytes": 403094421
+   },
+   "upper_tr3_ratio": {
+    "tool_seconds": 193.247,
+    "outer_seconds": null,
+    "evidence_bytes": 424592790
+   },
+   "remaining_after_pilot": {
+    "tool_seconds": 3577.477,
+    "outer_seconds": 7115.84,
+    "evidence_bytes": 2102515256,
+    "drive_free_bytes": 259443326976
+   },
+   "evidence_floor_bytes": 402653184,
+   "evidence_floor_rule": "max(384 MiB, 先行の最大 1 局 × 1.5)。先行の最大 1 局 × 1.5 が 384 MiB 未満なので 384 MiB のまま",
+   "within_remaining": {
+    "body": true,
+    "upper_x1_5": true
+   }
+  },
+  "budget_m1": {
+   "ok": true,
+   "failed": [],
+   "values": {
+    "plan_remaining_seconds": 900.0,
+    "program_tool_used_seconds": 22.523,
+    "program_remaining_tool_seconds": 3577.477,
+    "program_outer_used_seconds": 84.16,
+    "program_remaining_outer_seconds": 7115.84,
+    "plan_remaining_evidence_bytes": 1073688231,
+    "program_evidence_bytes": 44968392,
+    "program_remaining_evidence_bytes": 2102515256,
+    "required_bytes": 402653184,
+    "max_complete_attempt_bytes": 16981453,
+    "drive_free_bytes": 259443326976
+   }
+  },
+  "verdict": "proceed",
+  "main_plans_not_started_and_fixed": true,
+  "not_conditions": [
+   "完走率",
+   "特定の停止の出現",
+   "ER9・H4 の規約の出現"
+  ],
+  "failures": [
+   "F1 マニフェストの照合のストアの選び（27 → 25。読み取りだけ）",
+   "F2 TR3 の計画との照らしの初版が方策の seed の文字列を除いていなかった",
+   "F3 関門のまとめの初版が prestop の R6 の形を読み違えた（P-4 偽 × 4。証跡は不変）",
+   "F4 analyze_tr6a.py の最初の作成がシェルの引用で何も書かずに終わった"
+  ]
+ }
 }
