@@ -119,6 +119,17 @@ SPEC_ADOPTIONS.update({
                                            "エナジーへんかんを使う経路だけの規約（0 枚を受理して自分へのダメージへ進む）。案そのもの・ほかの対象（SR2 をふくむ）・メタモンの［へんしん］の経路は"
                                            "採用していない")},
 })
+# v0.197（docs/play-convention-tr7-v0.197.md）: 設計（docs/t19b-evaded-effect-coin-design.md）の案 B の採用（候補ではない。PC-NULLIFIED-ELEMENT-COIN の対象の 1 場面の、特殊状態の
+# 要素の経路だけ。案そのものは proposal のまま）
+_TR7_ADOPTION = {"on": "2026-11-22", "by": "user", "version": "0.197.0", "set": ["CS-KYUURA-PLAY-TR7", 1], "document": "docs/play-convention-tr7-v0.197.md",
+                 "spec": "docs/t19b-evaded-effect-coin-design.md", "not_recorded_as": "公式の裁定・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用）"}
+SPEC_ADOPTIONS.update({
+    "PC-T19B-NULLIFIED-STATUS-COIN": {**_TR7_ADOPTION, "convention": ["PC-T19B-NULLIFIED-STATUS-COIN", 1], "scenes": ["UNRESOLVED_EVADED_EFFECT_COIN"],
+                                      "related_candidate": "PC-NULLIFIED-ELEMENT-COIN",
+                                      "note": ("PC-NULLIFIED-ELEMENT-COIN（proposal のまま）の対象のうち、この場面（T19b）の、特殊状態の要素（ConfuseOnHeads・PoisonOnHeads・ParalyzeOnHeads の"
+                                               "元のワザ）の経路だけの規約（ワザのコインを 1 回投げ、結果を使わずに続ける）。案そのもの・T19b のほかの箇所・ほかの対象"
+                                               "（UNRESOLVED_PREVENTED_COIN_DAMAGE・UNRESOLVED_PREVENTED_EFFECT_COIN など）は採用していない")},
+})
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
 # 区分（利用者の依頼の A〜E。台帳の classification とは別の軸）

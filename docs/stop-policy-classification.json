@@ -377,6 +377,25 @@
     "continuation_agreements（AGR-PLAY-TR6-* の 2 項目。項目ごとの出典 source）"
    ],
    "unchanged": "研究の停止コードは active のまま（厳密側・S2a・PO・TR3・TR4 の集合と、対象の外の経路では今のまま止まる）。族・安全境界・規約（conventions）・方針の案（PC-UP-TO-ZERO は proposal のまま）は変えていない"
+  },
+  {
+   "version": "0.197.0",
+   "work": "「とうめい」で受けないと決まったあとの特殊状態のワザのコインの続行規約 1 件の採用・実装（開発用の部分的な集合 CS-KYUURA-PLAY-TR7@1）",
+   "document": "docs/play-convention-tr7-v0.197.md",
+   "base": {
+    "commit": "a90ef86f748876a1581e71f4e469834e6c7939be",
+    "branch_of_base": "claude/t19b-evaded-effect-coin-design（0.196.0 と T19b の設計。main には未取り込み）"
+   },
+   "approval": "利用者の採用は continuation_agreements の AGR-PLAY-TR7-* の 2 項目（2026-11-22。続行側の集合の規約の採用で、公式の裁定・kyuura の研究上の解決ではない）。DEC-NULLIFIED-COINS を partly_agreed にし、T19b の 1 場面の特殊状態の要素の経路を加えた。厳密側・既存の集合・ほかの T19b の箇所・ほかのコードは変えていない。採用の記録は実装と同じ単位で入力へ入れた",
+   "changed_entries": [
+    "decision_status（DEC-NULLIFIED-COINS）",
+    "UNRESOLVED_EVADED_EFFECT_COIN の implementation_sites・current_stop（規約の場面の宣言 conventions.py の箇所が加わった。TR4・TR6 の前例と同じ）",
+    "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"
+   ],
+   "new_entries": [
+    "continuation_agreements（AGR-PLAY-TR7-* の 2 項目。項目ごとの出典 source）"
+   ],
+   "unchanged": "研究の停止コードは active のまま（厳密側・S2a・PO・TR3・TR4・TR6 の集合と、対象の外の経路では今のまま止まる）。族・安全境界・規約（conventions）・方針の案（PC-NULLIFIED-ELEMENT-COIN は proposal のまま）は変えていない"
   }
  ],
  "counts_at_classification": {
@@ -777,6 +796,28 @@
     },
     "statement": "PC-ENERGY-CONVERSION-ZERO@1: エナジーへんかんの回収の決定で 0 枚と答えたら、受理して何も手札に加えずにワザの続き（自分への 10 ダメージ）へ進む。ワザを使ったポケモン自身の印刷のエナジーへんかんと、ピッピ・ピクシーのゆびをふるで相手のポケモン自身のエナジーへんかんを使う経路だけ。",
     "reading": "UNRESOLVED_RECOVER_ZERO_ENERGY（resolution.programs.RecoverEnergy.resume の空の答え。経路は RecoverEnergy._zero_convention_path）。厳密側の停止（H4）は active のまま。メタモンの［へんしん］・ほかのワザのコピー・トラッシュにエネルギーがないとき（H5）・ER9・ER10・SR2・ほかの「最大N」の場面は対象外"
+   },
+   {
+    "id": "AGR-PLAY-TR7-SET",
+    "source": {
+     "by": "user",
+     "on": "2026-11-22",
+     "where": "本会話の利用者の指示（作業ブランチ claude/t19b-status-coin-v0197 の依頼の採用方針: 案 B「「とうめい」の「おもて」でワザのダメージと特殊状態を受けないと決まったら、ワザを使った側がコインを 1 回投げ、結果を効果に使わず、ワザの処理を続ける」・規約 PC-T19B-NULLIFIED-STATUS-COIN@1・特殊状態の要素の T19b の分岐だけ・ConfuseOnHeads を対象とし、PoisonOnHeads・ParalyzeOnHeads は構築盤面とソースで同じ無効化の条件と再開先を確かめた型だけ・明示的に選択した新しいプレイ用規約集合 CS-KYUURA-PLAY-TR7@1 だけで有効。設計は docs/t19b-evaded-effect-coin-design.md）",
+     "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用。厳密側の集合・ほかの未決の場面の判断ではない）"
+    },
+    "statement": "続行側として、開発用の部分的な集合 CS-KYUURA-PLAY-TR7@1（CS-KYUURA-PLAY-TR6@1 の 25 規約と TR7 の 1 規約）を登録する。完成したプレイ用とは表示しない。",
+    "reading": "conventions.SETS の CS-KYUURA-PLAY-TR7@1（usage development・completeness halts_at_undecided）。CS-KYUURA-CURRENT@1・S2A@1・PO@1・TR3@1・TR4@1・TR6@1 は同じ ID・版・中身のまま。既定の集合は変えない"
+   },
+   {
+    "id": "AGR-PLAY-TR7-NULLIFIED-STATUS-COIN",
+    "source": {
+     "by": "user",
+     "on": "2026-11-22",
+     "where": "本会話の利用者の指示（作業ブランチ claude/t19b-status-coin-v0197 の依頼の採用方針: 案 B「「とうめい」の「おもて」でワザのダメージと特殊状態を受けないと決まったら、ワザを使った側がコインを 1 回投げ、結果を効果に使わず、ワザの処理を続ける」・規約 PC-T19B-NULLIFIED-STATUS-COIN@1・特殊状態の要素の T19b の分岐だけ・ConfuseOnHeads を対象とし、PoisonOnHeads・ParalyzeOnHeads は構築盤面とソースで同じ無効化の条件と再開先を確かめた型だけ・明示的に選択した新しいプレイ用規約集合 CS-KYUURA-PLAY-TR7@1 だけで有効。設計は docs/t19b-evaded-effect-coin-design.md）",
+     "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用。厳密側の集合・ほかの未決の場面の判断ではない）"
+    },
+    "statement": "PC-T19B-NULLIFIED-STATUS-COIN@1: 相手の対戦ポケモンがワザのダメージの要素で「とうめい」の「おもて」になり、そのワザのダメージと効果を受けないと決まったら、特殊状態にするかだけを決めるワザのコインを、ワザを使った側が 1 回投げ、結果を使わずにワザの続きへ進む。効果の登録の型 ConfuseOnHeads・PoisonOnHeads・ParalyzeOnHeads の元のワザだけ。",
+    "reading": "UNRESOLVED_EVADED_EFFECT_COIN（resolution.programs.Status.run のこの要素のコインの前の T19b の分岐。経路は Status._nullified_coin_path）。厳密側の停止（T19b）は active のまま。ほかの T19b の箇所・ほかの型の特殊状態の要素・コピーや［へんしん］で持つワザ・PC-NULLIFIED-ELEMENT-COIN のほかの停止コードは対象外"
    }
   ]
  },
@@ -1844,23 +1885,23 @@
     "current_sites": 615,
     "inventory_refs": 598,
     "new_since_inventory": [
-     "kyuura_engine/conventions.py:905",
-     "kyuura_engine/conventions.py:922",
-     "kyuura_engine/conventions.py:936",
-     "kyuura_engine/conventions.py:939",
+     "kyuura_engine/conventions.py:955",
+     "kyuura_engine/conventions.py:972",
+     "kyuura_engine/conventions.py:986",
+     "kyuura_engine/conventions.py:989",
      "kyuura_engine/effects.py:12512",
      "kyuura_engine/effects.py:46608",
-     "kyuura_engine/resolution/programs.py:10998",
-     "kyuura_engine/resolution/programs.py:6751",
-     "kyuura_engine/resolution/programs.py:7135",
-     "kyuura_engine/resolution/programs.py:13513",
-     "kyuura_engine/resolution/programs.py:14353",
-     "kyuura_engine/resolution/programs.py:5234",
-     "kyuura_engine/resolution/programs.py:6295",
-     "kyuura_engine/resolution/programs.py:7369",
-     "kyuura_engine/resolution/programs.py:4615",
-     "kyuura_engine/resolution/programs.py:6425",
-     "kyuura_engine/resolution/programs.py:6769"
+     "kyuura_engine/resolution/programs.py:11028",
+     "kyuura_engine/resolution/programs.py:6781",
+     "kyuura_engine/resolution/programs.py:7165",
+     "kyuura_engine/resolution/programs.py:13543",
+     "kyuura_engine/resolution/programs.py:14383",
+     "kyuura_engine/resolution/programs.py:5264",
+     "kyuura_engine/resolution/programs.py:6325",
+     "kyuura_engine/resolution/programs.py:7399",
+     "kyuura_engine/resolution/programs.py:4645",
+     "kyuura_engine/resolution/programs.py:6455",
+     "kyuura_engine/resolution/programs.py:6799"
     ],
     "per_file": {
      "kyuura_engine/coins.py": 3,
@@ -2943,7 +2984,11 @@
    "document": "docs/stop-policy-decisions.md"
   },
   "DEC-NULLIFIED-COINS": {
-   "status": "decision_required",
+   "status": "partly_agreed",
+   "agreements": [
+    "AGR-PLAY-TR7-NULLIFIED-STATUS-COIN"
+   ],
+   "note": "v0.197: UNRESOLVED_EVADED_EFFECT_COIN（T19b）の 1 場面の、特殊状態の要素の経路（ConfuseOnHeads・PoisonOnHeads・ParalyzeOnHeads の元のワザ）だけを、続行側の集合 CS-KYUURA-PLAY-TR7@1 の規約（ワザのコインを 1 回投げ、結果を使わずに続ける）として採用。T19b のほかの箇所・ほかのコード（UNRESOLVED_PREVENTED_COIN_DAMAGE・UNRESOLVED_PREVENTED_EFFECT_COIN など）・PC-NULLIFIED-ELEMENT-COIN の案・厳密側は未決のまま",
    "document": "docs/stop-policy-decisions.md"
   },
   "DEC-DAMAGE-READINGS": {
@@ -3307,25 +3352,25 @@
   "internal_guard_sites_current": 619,
   "internal_guard_sites_matched_to_inventory": 600,
   "internal_guard_sites_new_since_inventory": [
-   "kyuura_engine/conventions.py:905",
-   "kyuura_engine/conventions.py:922",
-   "kyuura_engine/conventions.py:936",
-   "kyuura_engine/conventions.py:939",
+   "kyuura_engine/conventions.py:955",
+   "kyuura_engine/conventions.py:972",
+   "kyuura_engine/conventions.py:986",
+   "kyuura_engine/conventions.py:989",
    "kyuura_engine/effects.py:12512",
    "kyuura_engine/effects.py:46608",
    "kyuura_engine/engine.py:459",
    "kyuura_engine/engine.py:886",
-   "kyuura_engine/resolution/programs.py:10998",
-   "kyuura_engine/resolution/programs.py:6751",
-   "kyuura_engine/resolution/programs.py:7135",
-   "kyuura_engine/resolution/programs.py:13513",
-   "kyuura_engine/resolution/programs.py:14353",
-   "kyuura_engine/resolution/programs.py:5234",
-   "kyuura_engine/resolution/programs.py:6295",
-   "kyuura_engine/resolution/programs.py:7369",
-   "kyuura_engine/resolution/programs.py:4615",
-   "kyuura_engine/resolution/programs.py:6425",
-   "kyuura_engine/resolution/programs.py:6769"
+   "kyuura_engine/resolution/programs.py:11028",
+   "kyuura_engine/resolution/programs.py:6781",
+   "kyuura_engine/resolution/programs.py:7165",
+   "kyuura_engine/resolution/programs.py:13543",
+   "kyuura_engine/resolution/programs.py:14383",
+   "kyuura_engine/resolution/programs.py:5264",
+   "kyuura_engine/resolution/programs.py:6325",
+   "kyuura_engine/resolution/programs.py:7399",
+   "kyuura_engine/resolution/programs.py:4645",
+   "kyuura_engine/resolution/programs.py:6455",
+   "kyuura_engine/resolution/programs.py:6799"
   ],
   "safety_boundaries": 8,
   "families": 23,
@@ -3843,22 +3888,22 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/resolution/programs.py:3749",
-    "kyuura_engine/resolution/programs.py:3754",
-    "kyuura_engine/resolution/programs.py:6195",
-    "kyuura_engine/resolution/programs.py:7688",
-    "kyuura_engine/resolution/programs.py:9571"
+    "kyuura_engine/resolution/programs.py:3779",
+    "kyuura_engine/resolution/programs.py:3784",
+    "kyuura_engine/resolution/programs.py:6225",
+    "kyuura_engine/resolution/programs.py:7718",
+    "kyuura_engine/resolution/programs.py:9601"
    ],
    "implementation_sites_total": 5,
    "current_stop": [
     {
      "mechanism": "answer_rejection",
      "sites": [
-      "kyuura_engine/resolution/programs.py:3749",
-      "kyuura_engine/resolution/programs.py:3754",
-      "kyuura_engine/resolution/programs.py:6195",
-      "kyuura_engine/resolution/programs.py:7688",
-      "kyuura_engine/resolution/programs.py:9571"
+      "kyuura_engine/resolution/programs.py:3779",
+      "kyuura_engine/resolution/programs.py:3784",
+      "kyuura_engine/resolution/programs.py:6225",
+      "kyuura_engine/resolution/programs.py:7718",
+      "kyuura_engine/resolution/programs.py:9601"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -4769,10 +4814,10 @@
    },
    "implementation_sites": [
     "kyuura_engine/effects.py:4971",
-    "kyuura_engine/resolution/programs.py:5256",
-    "kyuura_engine/resolution/programs.py:5296",
-    "kyuura_engine/resolution/programs.py:7359",
-    "kyuura_engine/resolution/programs.py:7819"
+    "kyuura_engine/resolution/programs.py:5286",
+    "kyuura_engine/resolution/programs.py:5326",
+    "kyuura_engine/resolution/programs.py:7389",
+    "kyuura_engine/resolution/programs.py:7849"
    ],
    "implementation_sites_total": 5,
    "current_stop": [
@@ -4780,10 +4825,10 @@
      "mechanism": "answer_rejection",
      "sites": [
       "kyuura_engine/effects.py:4971",
-      "kyuura_engine/resolution/programs.py:5256",
-      "kyuura_engine/resolution/programs.py:5296",
-      "kyuura_engine/resolution/programs.py:7359",
-      "kyuura_engine/resolution/programs.py:7819"
+      "kyuura_engine/resolution/programs.py:5286",
+      "kyuura_engine/resolution/programs.py:5326",
+      "kyuura_engine/resolution/programs.py:7389",
+      "kyuura_engine/resolution/programs.py:7849"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -6539,12 +6584,12 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/resolution/programs.py:10409",
-    "kyuura_engine/resolution/programs.py:4004",
-    "kyuura_engine/resolution/programs.py:4023",
-    "kyuura_engine/resolution/programs.py:4075",
-    "kyuura_engine/resolution/programs.py:4135",
-    "kyuura_engine/resolution/programs.py:4156",
+    "kyuura_engine/resolution/programs.py:10439",
+    "kyuura_engine/resolution/programs.py:4034",
+    "kyuura_engine/resolution/programs.py:4053",
+    "kyuura_engine/resolution/programs.py:4105",
+    "kyuura_engine/resolution/programs.py:4165",
+    "kyuura_engine/resolution/programs.py:4186",
     "kyuura_engine/resolution/questions.py:98"
    ],
    "implementation_sites_total": 7,
@@ -6552,12 +6597,12 @@
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/resolution/programs.py:10409",
-      "kyuura_engine/resolution/programs.py:4004",
-      "kyuura_engine/resolution/programs.py:4023",
-      "kyuura_engine/resolution/programs.py:4075",
-      "kyuura_engine/resolution/programs.py:4135",
-      "kyuura_engine/resolution/programs.py:4156",
+      "kyuura_engine/resolution/programs.py:10439",
+      "kyuura_engine/resolution/programs.py:4034",
+      "kyuura_engine/resolution/programs.py:4053",
+      "kyuura_engine/resolution/programs.py:4105",
+      "kyuura_engine/resolution/programs.py:4165",
+      "kyuura_engine/resolution/programs.py:4186",
       "kyuura_engine/resolution/questions.py:98"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
@@ -7785,12 +7830,12 @@
    },
    "implementation_sites": [
     "kyuura_engine/effects.py:17891",
-    "kyuura_engine/resolution/programs.py:13603",
-    "kyuura_engine/resolution/programs.py:2781",
-    "kyuura_engine/resolution/programs.py:4435",
-    "kyuura_engine/resolution/programs.py:6502",
-    "kyuura_engine/resolution/programs.py:6541",
-    "kyuura_engine/resolution/programs.py:6851"
+    "kyuura_engine/resolution/programs.py:13633",
+    "kyuura_engine/resolution/programs.py:2811",
+    "kyuura_engine/resolution/programs.py:4465",
+    "kyuura_engine/resolution/programs.py:6532",
+    "kyuura_engine/resolution/programs.py:6571",
+    "kyuura_engine/resolution/programs.py:6881"
    ],
    "implementation_sites_total": 7,
    "current_stop": [
@@ -7798,12 +7843,12 @@
      "mechanism": "answer_rejection",
      "sites": [
       "kyuura_engine/effects.py:17891",
-      "kyuura_engine/resolution/programs.py:13603",
-      "kyuura_engine/resolution/programs.py:2781",
-      "kyuura_engine/resolution/programs.py:4435",
-      "kyuura_engine/resolution/programs.py:6502",
-      "kyuura_engine/resolution/programs.py:6541",
-      "kyuura_engine/resolution/programs.py:6851"
+      "kyuura_engine/resolution/programs.py:13633",
+      "kyuura_engine/resolution/programs.py:2811",
+      "kyuura_engine/resolution/programs.py:4465",
+      "kyuura_engine/resolution/programs.py:6532",
+      "kyuura_engine/resolution/programs.py:6571",
+      "kyuura_engine/resolution/programs.py:6881"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -7875,7 +7920,7 @@
     "kyuura_engine/effects.py:29513",
     "kyuura_engine/effects.py:29539",
     "kyuura_engine/effects.py:35379",
-    "kyuura_engine/resolution/programs.py:2786",
+    "kyuura_engine/resolution/programs.py:2816",
     "kyuura_engine/resolution/questions.py:96"
    ],
    "implementation_sites_total": 5,
@@ -7886,7 +7931,7 @@
       "kyuura_engine/effects.py:29513",
       "kyuura_engine/effects.py:29539",
       "kyuura_engine/effects.py:35379",
-      "kyuura_engine/resolution/programs.py:2786",
+      "kyuura_engine/resolution/programs.py:2816",
       "kyuura_engine/resolution/questions.py:96"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
@@ -8167,14 +8212,14 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
-    "kyuura_engine/resolution/programs.py:14081"
+    "kyuura_engine/resolution/programs.py:14111"
    ],
    "implementation_sites_total": 1,
    "current_stop": [
     {
      "mechanism": "answer_rejection",
      "sites": [
-      "kyuura_engine/resolution/programs.py:14081"
+      "kyuura_engine/resolution/programs.py:14111"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -8206,7 +8251,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/resolution/programs.py:14081"
+     "kyuura_engine/resolution/programs.py:14111"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
    }
@@ -8310,7 +8355,7 @@
     {
      "mechanism": "deferred_interruption",
      "sites": [
-      "kyuura_engine/resolution/programs.py:15928"
+      "kyuura_engine/resolution/programs.py:15958"
      ],
      "basis": "static: Halt(code=…)・check_quantity(code=…) の定数"
     },
@@ -9500,17 +9545,21 @@
     "unverified_scope": "公式資料に記述がないことの再確認、kyuura の固定コミットより後の記録"
    },
    "implementation_sites": [
+    "kyuura_engine/conventions.py:518",
     "kyuura_engine/effects.py:903",
     "kyuura_engine/effects.py:905",
+    "kyuura_engine/resolution/programs.py:2214",
     "kyuura_engine/resolution/questions.py:36"
    ],
-   "implementation_sites_total": 3,
+   "implementation_sites_total": 5,
    "current_stop": [
     {
      "mechanism": "command_rejection",
      "sites": [
+      "kyuura_engine/conventions.py:518",
       "kyuura_engine/effects.py:903",
       "kyuura_engine/effects.py:905",
+      "kyuura_engine/resolution/programs.py:2214",
       "kyuura_engine/resolution/questions.py:36"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
@@ -9518,8 +9567,9 @@
    ],
    "tests": {
     "assert_like_lines": 12,
-    "mention_lines": 16,
+    "mention_lines": 18,
     "files": [
+     "tests/log_audit.py",
      "tests/test_barrier_resume_coin_bonus_v0_34.py",
      "tests/test_bench_switch_combined_v0_38.py",
      "tests/test_cd4_opponent_energy_coins_v0_33.py",
@@ -9532,12 +9582,13 @@
      "tests/test_haunter_games_v0_9.py",
      "tests/test_heal_counter_status_v0_41.py",
      "tests/test_legacy_reference_v0_16.py",
+     "tests/test_play_convention_tr7_v0_197.py",
      "tests/test_power_decisions_v0_42.py",
      "tests/test_selected_target_damage_v0_89.py",
      "tests/test_transparency_v0_9.py",
      "tests/test_unresolved_boundaries_v0_4e.py"
     ],
-    "files_total": 16,
+    "files_total": 18,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -9555,11 +9606,11 @@
    "reachability": {
     "status": "constructed_board",
     "evidence": [
+     "tests/log_audit.py",
      "tests/test_barrier_resume_coin_bonus_v0_34.py",
      "tests/test_bench_switch_combined_v0_38.py",
      "tests/test_cd4_opponent_energy_coins_v0_33.py",
-     "tests/test_coin_failure_status_flight_v0_107.py",
-     "tests/test_conditional_damage_energy_v0_45.py"
+     "tests/test_coin_failure_status_flight_v0_107.py"
     ],
     "basis": "テストに表明らしい行がある（静的）。盤面の作り方・行の実行は個別に確かめていない"
    }
@@ -20801,7 +20852,7 @@
    "implementation_sites": [
     "kyuura_engine/conventions.py:472",
     "kyuura_engine/effects.py:2095",
-    "kyuura_engine/resolution/programs.py:2923"
+    "kyuura_engine/resolution/programs.py:2953"
    ],
    "implementation_sites_total": 3,
    "current_stop": [
@@ -20810,7 +20861,7 @@
      "sites": [
       "kyuura_engine/conventions.py:472",
       "kyuura_engine/effects.py:2095",
-      "kyuura_engine/resolution/programs.py:2923"
+      "kyuura_engine/resolution/programs.py:2953"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -21091,7 +21142,7 @@
     "kyuura_engine/effects.py:4078",
     "kyuura_engine/effects.py:5767",
     "kyuura_engine/effects.py:5807",
-    "kyuura_engine/resolution/programs.py:6049",
+    "kyuura_engine/resolution/programs.py:6079",
     "kyuura_engine/resolution/questions.py:66"
    ],
    "implementation_sites_total": 7,
@@ -21104,7 +21155,7 @@
       "kyuura_engine/effects.py:4078",
       "kyuura_engine/effects.py:5767",
       "kyuura_engine/effects.py:5807",
-      "kyuura_engine/resolution/programs.py:6049",
+      "kyuura_engine/resolution/programs.py:6079",
       "kyuura_engine/resolution/questions.py:66"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
@@ -23995,7 +24046,7 @@
    "implementation_sites": [
     "kyuura_engine/effects.py:11145",
     "kyuura_engine/effects.py:17651",
-    "kyuura_engine/resolution/programs.py:9785",
+    "kyuura_engine/resolution/programs.py:9815",
     "kyuura_engine/resolution/questions.py:160"
    ],
    "implementation_sites_total": 4,
@@ -24005,7 +24056,7 @@
      "sites": [
       "kyuura_engine/effects.py:11145",
       "kyuura_engine/effects.py:17651",
-      "kyuura_engine/resolution/programs.py:9785",
+      "kyuura_engine/resolution/programs.py:9815",
       "kyuura_engine/resolution/questions.py:160"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
@@ -27530,8 +27581,8 @@
    },
    "implementation_sites": [
     "kyuura_engine/conventions.py:63",
-    "kyuura_engine/conventions.py:846",
-    "kyuura_engine/conventions.py:910"
+    "kyuura_engine/conventions.py:896",
+    "kyuura_engine/conventions.py:960"
    ],
    "implementation_sites_total": 3,
    "current_stop": [
@@ -27539,8 +27590,8 @@
      "mechanism": "command_rejection",
      "sites": [
       "kyuura_engine/conventions.py:63",
-      "kyuura_engine/conventions.py:846",
-      "kyuura_engine/conventions.py:910"
+      "kyuura_engine/conventions.py:896",
+      "kyuura_engine/conventions.py:960"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
     }
@@ -27591,8 +27642,8 @@
     "kyuura_engine/effects.py:12304",
     "kyuura_engine/effects.py:41205",
     "kyuura_engine/effects.py:47508",
-    "kyuura_engine/resolution/programs.py:4023",
-    "kyuura_engine/resolution/programs.py:4156",
+    "kyuura_engine/resolution/programs.py:4053",
+    "kyuura_engine/resolution/programs.py:4186",
     "kyuura_engine/resolution/questions.py:105"
    ],
    "implementation_sites_total": 7,
@@ -27604,8 +27655,8 @@
       "kyuura_engine/effects.py:12304",
       "kyuura_engine/effects.py:41205",
       "kyuura_engine/effects.py:47508",
-      "kyuura_engine/resolution/programs.py:4023",
-      "kyuura_engine/resolution/programs.py:4156",
+      "kyuura_engine/resolution/programs.py:4053",
+      "kyuura_engine/resolution/programs.py:4186",
       "kyuura_engine/resolution/questions.py:105"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
@@ -27899,7 +27950,7 @@
    },
    "implementation_sites": [
     "kyuura_engine/effects.py:3397",
-    "kyuura_engine/resolution/programs.py:3248",
+    "kyuura_engine/resolution/programs.py:3278",
     "kyuura_engine/resolution/programs.py:586"
    ],
    "implementation_sites_total": 3,
@@ -27908,7 +27959,7 @@
      "mechanism": "not_raised",
      "sites": [
       "kyuura_engine/effects.py:3397",
-      "kyuura_engine/resolution/programs.py:3248",
+      "kyuura_engine/resolution/programs.py:3278",
       "kyuura_engine/resolution/programs.py:586"
      ],
      "basis": "static: コメントだけ（v0.34 で解消）"
@@ -28338,7 +28389,7 @@
     "note": "研究の対応表の外（エンジンの未対応・技術上限・データ・汎用）"
    },
    "implementation_sites": [
-    "kyuura_engine/resolution/programs.py:12827",
+    "kyuura_engine/resolution/programs.py:12857",
     "kyuura_engine/resolution/questions.py:500"
    ],
    "implementation_sites_total": 2,
@@ -28346,7 +28397,7 @@
     {
      "mechanism": "command_rejection",
      "sites": [
-      "kyuura_engine/resolution/programs.py:12827",
+      "kyuura_engine/resolution/programs.py:12857",
       "kyuura_engine/resolution/questions.py:500"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
@@ -28374,7 +28425,7 @@
    "reachability": {
     "status": "static_only",
     "evidence": [
-     "kyuura_engine/resolution/programs.py:12827",
+     "kyuura_engine/resolution/programs.py:12857",
      "kyuura_engine/resolution/questions.py:500"
     ],
     "basis": "エンジンに定義・参照がある。発生は未確認"
@@ -28658,7 +28709,7 @@
    },
    "implementation_sites": [
     "kyuura_engine/effects.py:20652",
-    "kyuura_engine/resolution/programs.py:8365",
+    "kyuura_engine/resolution/programs.py:8395",
     "kyuura_engine/resolution/questions.py:352"
    ],
    "implementation_sites_total": 3,
@@ -28667,7 +28718,7 @@
      "mechanism": "command_rejection",
      "sites": [
       "kyuura_engine/effects.py:20652",
-      "kyuura_engine/resolution/programs.py:8365",
+      "kyuura_engine/resolution/programs.py:8395",
       "kyuura_engine/resolution/questions.py:352"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"
@@ -28840,8 +28891,8 @@
     "kyuura_engine/effects.py:3648",
     "kyuura_engine/resolution/flow.py:185",
     "kyuura_engine/resolution/preflight.py:1",
-    "kyuura_engine/resolution/programs.py:15949",
-    "kyuura_engine/resolution/programs.py:2419",
+    "kyuura_engine/resolution/programs.py:15979",
+    "kyuura_engine/resolution/programs.py:2449",
     "kyuura_engine/resolution/v013_checks.py:1"
    ],
    "implementation_sites_total": 6,
@@ -28852,8 +28903,8 @@
       "kyuura_engine/effects.py:3648",
       "kyuura_engine/resolution/flow.py:185",
       "kyuura_engine/resolution/preflight.py:1",
-      "kyuura_engine/resolution/programs.py:15949",
-      "kyuura_engine/resolution/programs.py:2419",
+      "kyuura_engine/resolution/programs.py:15979",
+      "kyuura_engine/resolution/programs.py:2449",
       "kyuura_engine/resolution/v013_checks.py:1"
      ],
      "basis": "static: UnsupportedError の文字列・定数の位置（決定で HALTED に変わる共通処理を含む）"

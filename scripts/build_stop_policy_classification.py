@@ -193,6 +193,27 @@ CONTINUATION_AGREEMENTS += [
      "reading": ("UNRESOLVED_RECOVER_ZERO_ENERGY（resolution.programs.RecoverEnergy.resume の空の答え。経路は RecoverEnergy._zero_convention_path）。厳密側の停止（H4）は active のまま。"
                  "メタモンの［へんしん］・ほかのワザのコピー・トラッシュにエネルギーがないとき（H5）・ER9・ER10・SR2・ほかの「最大N」の場面は対象外")},
 ]
+# v0.197（docs/play-convention-tr7-v0.197.md）: 「とうめい」で受けないと決まったあとの特殊状態のワザのコインの続行規約の採用（2026-11-22 の利用者の指示。設計
+# docs/t19b-evaded-effect-coin-design.md の案 B）。採用したのは開発用の部分的な集合 CS-KYUURA-PLAY-TR7@1 の 1 規約の中身だけ（厳密側・既存の集合・ほかの T19b の箇所・
+# PC-NULLIFIED-ELEMENT-COIN のほかの停止コードは変えない）。この記録は実装と同じ単位で入力へ
+TR7_AGREEMENT_SOURCE = {"by": "user", "on": "2026-11-22",
+                        "where": ("本会話の利用者の指示（作業ブランチ claude/t19b-status-coin-v0197 の依頼の採用方針: 案 B「「とうめい」の「おもて」でワザのダメージと特殊状態を受けないと"
+                                  "決まったら、ワザを使った側がコインを 1 回投げ、結果を効果に使わず、ワザの処理を続ける」・規約 PC-T19B-NULLIFIED-STATUS-COIN@1・特殊状態の要素の T19b の"
+                                  "分岐だけ・ConfuseOnHeads を対象とし、PoisonOnHeads・ParalyzeOnHeads は構築盤面とソースで同じ無効化の条件と再開先を確かめた型だけ・明示的に選択した"
+                                  "新しいプレイ用規約集合 CS-KYUURA-PLAY-TR7@1 だけで有効。設計は docs/t19b-evaded-effect-coin-design.md）"),
+                        "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用。厳密側の集合・ほかの未決の場面の判断ではない）"}
+CONTINUATION_AGREEMENTS += [
+    {"id": "AGR-PLAY-TR7-SET", "source": TR7_AGREEMENT_SOURCE,
+     "statement": "続行側として、開発用の部分的な集合 CS-KYUURA-PLAY-TR7@1（CS-KYUURA-PLAY-TR6@1 の 25 規約と TR7 の 1 規約）を登録する。完成したプレイ用とは表示しない。",
+     "reading": ("conventions.SETS の CS-KYUURA-PLAY-TR7@1（usage development・completeness halts_at_undecided）。CS-KYUURA-CURRENT@1・S2A@1・PO@1・TR3@1・TR4@1・TR6@1 は同じ ID・版・"
+                 "中身のまま。既定の集合は変えない")},
+    {"id": "AGR-PLAY-TR7-NULLIFIED-STATUS-COIN", "source": TR7_AGREEMENT_SOURCE,
+     "statement": ("PC-T19B-NULLIFIED-STATUS-COIN@1: 相手の対戦ポケモンがワザのダメージの要素で「とうめい」の「おもて」になり、そのワザのダメージと効果を受けないと決まったら、特殊状態に"
+                   "するかだけを決めるワザのコインを、ワザを使った側が 1 回投げ、結果を使わずにワザの続きへ進む。効果の登録の型 ConfuseOnHeads・PoisonOnHeads・ParalyzeOnHeads の"
+                   "元のワザだけ。"),
+     "reading": ("UNRESOLVED_EVADED_EFFECT_COIN（resolution.programs.Status.run のこの要素のコインの前の T19b の分岐。経路は Status._nullified_coin_path）。厳密側の停止（T19b）は active の"
+                 "まま。ほかの T19b の箇所・ほかの型の特殊状態の要素・コピーや［へんしん］で持つワザ・PC-NULLIFIED-ELEMENT-COIN のほかの停止コードは対象外")},
+]
 AGREED_CONVENTION_STATUS ="user_agreed"  # 規約（conventions）だけが使える。合意 AGR-MODE-BASELINE-USER で基礎集合に入れた利用者指定。続行規約の採用ではない
 MODE_DEFINITIONS_HISTORY = {
     "STRICT-A": "厳密モードの定義としては採用しない（過去の検討案。AGR-MODE-STRICT・AGR-MODE-BASELINE-USER と合わない）。研究・照合の用途の集合として別に作るかは決めていない",
@@ -252,6 +273,10 @@ DECISION_STATUS = {
                                 "P-UTZ-2 の形）として採用。v0.196: UNRESOLVED_RECOVER_ZERO_ENERGY（H4）の 1 場面の、エナジーへんかん自身とゆびをふるの経路だけを、続行側の集合 "
                                 "CS-KYUURA-PLAY-TR6@1 の規約（0 枚を受理して自分へのダメージへ進む。P-UTZ-2 の形）として採用。ほかのコード（PF-UP-TO-ZERO の残り 11 件。SR2 をふくむ）・"
                                 "PC-UP-TO-ZERO の案・厳密側は未決のまま")},
+    "DEC-NULLIFIED-COINS": {"status": "partly_agreed", "agreements": ["AGR-PLAY-TR7-NULLIFIED-STATUS-COIN"],
+                            "note": ("v0.197: UNRESOLVED_EVADED_EFFECT_COIN（T19b）の 1 場面の、特殊状態の要素の経路（ConfuseOnHeads・PoisonOnHeads・ParalyzeOnHeads の元のワザ）だけを、"
+                                     "続行側の集合 CS-KYUURA-PLAY-TR7@1 の規約（ワザのコインを 1 回投げ、結果を使わずに続ける）として採用。T19b のほかの箇所・ほかのコード"
+                                     "（UNRESOLVED_PREVENTED_COIN_DAMAGE・UNRESOLVED_PREVENTED_EFFECT_COIN など）・PC-NULLIFIED-ELEMENT-COIN の案・厳密側は未決のまま")},
     "DEC-EXISTING-USER-SPECS": {"status": "partly_agreed", "agreements": ["AGR-MODE-BASELINE-USER"],
                                 "note": "利用者指定（12 件・USER-ID 9 つ）は基礎集合に入れる。エンジンの簡略化・実装上の仮定・データの訂正の扱いは DEC-BASELINE-NONUSER・DEC-CARD-DATA-CORRECTIONS で未決"},
 }
@@ -1388,6 +1413,18 @@ UPDATES = [
      "new_entries": ["continuation_agreements（AGR-PLAY-TR6-* の 2 項目。項目ごとの出典 source）"],
      "unchanged": ("研究の停止コードは active のまま（厳密側・S2a・PO・TR3・TR4 の集合と、対象の外の経路では今のまま止まる）。族・安全境界・規約（conventions）・方針の案"
                    "（PC-UP-TO-ZERO は proposal のまま）は変えていない")},
+    {"version": "0.197.0", "work": "「とうめい」で受けないと決まったあとの特殊状態のワザのコインの続行規約 1 件の採用・実装（開発用の部分的な集合 CS-KYUURA-PLAY-TR7@1）",
+     "document": "docs/play-convention-tr7-v0.197.md",
+     "base": {"commit": "a90ef86f748876a1581e71f4e469834e6c7939be", "branch_of_base": "claude/t19b-evaded-effect-coin-design（0.196.0 と T19b の設計。main には未取り込み）"},
+     "approval": ("利用者の採用は continuation_agreements の AGR-PLAY-TR7-* の 2 項目（2026-11-22。続行側の集合の規約の採用で、公式の裁定・kyuura の研究上の解決ではない）。"
+                  "DEC-NULLIFIED-COINS を partly_agreed にし、T19b の 1 場面の特殊状態の要素の経路を加えた。厳密側・既存の集合・ほかの T19b の箇所・ほかのコードは変えていない。"
+                  "採用の記録は実装と同じ単位で入力へ入れた"),
+     "changed_entries": ["decision_status（DEC-NULLIFIED-COINS）",
+                         "UNRESOLVED_EVADED_EFFECT_COIN の implementation_sites・current_stop（規約の場面の宣言 conventions.py の箇所が加わった。TR4・TR6 の前例と同じ）",
+                         "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"],
+     "new_entries": ["continuation_agreements（AGR-PLAY-TR7-* の 2 項目。項目ごとの出典 source）"],
+     "unchanged": ("研究の停止コードは active のまま（厳密側・S2a・PO・TR3・TR4・TR6 の集合と、対象の外の経路では今のまま止まる）。族・安全境界・規約（conventions）・方針の案"
+                   "（PC-NULLIFIED-ELEMENT-COIN は proposal のまま）は変えていない")},
 ]
 # 分類の時点（基点 3e25ac5）の集計（counts）の写し。今の counts は現行コードから作り直した値
 COUNTS_AT_CLASSIFICATION = {"research_stop_codes": 316, "runtime_codes_outside_table": 40, "runtime_codes_outside_table_active": 39, "test_tool_only_codes": 8, "cases": 15, "codes_with_cases": 7, "problems_new": 4, "problems_from_inventory": 28, "conventions": 18, "internal_guard_sites_current": 602, "internal_guard_sites_matched_to_inventory": 600, "internal_guard_sites_new_since_inventory": ["kyuura_engine/engine.py:445", "kyuura_engine/resolution/programs.py:10739"], "safety_boundaries": 8, "families": 23, "decisions": 29, "by_reachability": {"constructed_board": 145, "legal_sequence": 25, "static_only": 185}, "by_family": {"PF-COPY-TRANSFORM": 34, "PF-DAMAGE-SCOPE": 22, "PF-EFFECT-TIMING": 13, "PF-ENERGY-TYPE": 21, "PF-ESP-REDO": 4, "PF-HIDDEN-INFORMATION": 8, "PF-HISTORY-LASTING": 20, "PF-KNOCKOUT-TIMING": 15, "PF-POWER-SUPPRESSION": 11, "PF-PROTECTED-TARGET-EFFECT": 12, "PF-REACTION-DURING-PROCESS": 10, "PF-RUNTIME-CONTINUATION": 15, "PF-RUNTIME-COPY-GAPS": 5, "PF-RUNTIME-DATA": 5, "PF-RUNTIME-GENERIC": 1, "PF-RUNTIME-REGISTRY": 7, "PF-RUNTIME-SEARCH-LIMIT": 6, "PF-SETUP-PLAY-AS-POKEMON": 5, "PF-SIMULTANEOUS-ORDER": 26, "PF-STATED-COUNT-SHORT": 11, "PF-TEXT-READING": 34, "PF-UP-TO-ZERO": 13, "PF-USE-WITHOUT-EFFECT": 57}, "by_play_group": {"1": 316, "2": 39, "3": 89, "4": 6, "5": 20, "6": 1}, "by_mechanism": {"answer_rejection": 13, "command_rejection": 339, "deck_validation": 1, "deferred_interruption": 2, "pokemon_check_halt": 10, "setup_halt": 2}, "by_status": {"active": 402, "fixed": 5, "historical": 2, "unverified": 1}, "note": "停止コード・事例・規約・内部ガードは別の数。事例はコードの下位で、コードの数に足さない。棚卸しと同じ項目は独立した不足として数えない"}

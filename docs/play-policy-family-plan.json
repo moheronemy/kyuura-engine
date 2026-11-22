@@ -7844,7 +7844,11 @@
     "docs/transparency-v0.9.md"
    ],
    "candidate": "PC-NULLIFIED-ELEMENT-COIN",
-   "coverage": "unverified"
+   "coverage": "unverified",
+   "adopted_convention": [
+    "PC-T19B-NULLIFIED-STATUS-COIN",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_EVOLUTION_HP",
